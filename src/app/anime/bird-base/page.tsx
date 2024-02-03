@@ -1,7 +1,8 @@
+'use client';
+
 import {BlurFilter} from 'pixi.js';
 import {Stage, Container, Sprite, Text, useTick} from '@pixi/react';
 import {useReducer, useRef} from 'react';
-import suiBirdJump from './resources/images/sui_bird_jump.png';
 
 const reducer = (_: any, {data}: any) => data;
 
@@ -31,15 +32,17 @@ const Bunny = () => {
         });
     });
 
-    return <Sprite image={suiBirdJump} scale={0.5} {...motion} />;
+    return <Sprite image={'/images/sui-bird-jump.png'} scale={0.5} {...motion} />;
 };
 
-export const Game = () => {
+const BirdBasePage = () => {
     return (
-        <Stage width={1024} height={768} options={{backgroundAlpha: 0}}>
-            <Container x={512} y={384}>
+        <Stage width={1920} height={1080} options={{backgroundAlpha: 0}}>
+            <Container x={960} y={540}>
                 <Bunny/>
             </Container>
         </Stage>
     );
 };
+
+export default BirdBasePage;
