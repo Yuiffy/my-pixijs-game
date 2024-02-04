@@ -16,6 +16,9 @@ export default function Home() {
     {
       title: '小鸟基础动画', href: '/anime/bird-base', description: '研究pixijs用', target: '',
     },
+    {
+      title: '小鸟刚体动画', href: '/anime/bird-matter-js-demo', description: '研究matter js用', target: '',
+    },
     // {title: '熊蛙棋 Bear Frog Chess', href: 'http://www.yuiffy.com/bear-frog-chess/', description: '又被称为枪棋/炮棋，在4x4的棋盘上12颗棋子的简单的双人对战棋类游戏'},
     // {title: '冻鳗榜单王', href: 'http://rank.yuiffy.com', description: '能够对动画/游戏/食物等进行打分和发布排行榜的榜单网站'},
     // {title: '贪吃蛇 Greedy Hebi', href: 'hebi/hebi.html', description: '简单畅快的贪吃蛇游戏'},
