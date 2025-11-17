@@ -40,7 +40,7 @@ function Bunny() {
       restitution: 0.2,
       friction: 0.01,
     });
-    const ground = Matter.Bodies.rectangle(0, 1080+60, 5000, 120, { isStatic: true });
+    const ground = Matter.Bodies.rectangle(0, 1080 + 60, 5000, 120, { isStatic: true });
     const ground2 = Matter.Bodies.rectangle(-100, 0, 10, 5000, { isStatic: true });
     const ground3 = Matter.Bodies.rectangle(1920 + 100, 0, 10, 5000, { isStatic: true });
 
