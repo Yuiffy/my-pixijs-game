@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岁己SUI的周表 - 2025.11.17~11.23</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #fdf6e3 0%, #f4f1e8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        
+        .schedule-container {
+            width: 900px;
+            min-height: 600px;
+            background: #faf7f0;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(139, 69, 19, 0.1);
+            border: 2px solid rgba(160, 82, 45, 0.1);
+            display: flex;
+            position: relative;
+            overflow: visible;
+        }
+        
+        .schedule-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 218, 185, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 228, 181, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .left-section {
+            flex: 2;
+            padding: 30px 30px 40px 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #8B4513;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: #A0522D;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+        
+        .date-range {
+            background: rgba(210, 180, 140, 0.2);
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 13px;
+            color: #8B4513;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+        
+        .schedule-table {
+            width: 100%;
+        }
+        
+        .schedule-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .schedule-item:hover {
+            background: rgba(255, 228, 181, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .day-label {
+            width: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #A0522D;
+            text-align: center;
+            margin-right: 20px;
+        }
+        
+        .day-label.rest {
+            color: #D2691E;
+            font-weight: 500;
+        }
+        
+        .schedule-content {
+            flex: 1;
+            font-size: 14px;
+            color: #5D4E37;
+            line-height: 1.3;
+        }
+        
+        .schedule-content .emoji {
+            font-size: 16px;
+            margin-right: 8px;
+        }
+        
+        .rest-day {
+            background: rgba(210, 180, 140, 0.1);
+            opacity: 0.7;
+        }
+        
+        .right-section {
+            flex: 1;
+            padding: 30px 20px 40px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: stretch;
+            position: relative;
+            z-index: 1;
+            gap: 20px;
+        }
+        
+        .memo-section {
+            background: rgba(255, 239, 213, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px dashed rgba(160, 82, 45, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .memo-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #8B4513;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .memo-content {
+            font-size: 12px;
+            color: #5D4E37;
+            line-height: 1.5;
+            font-style: italic;
+        }
+        
+        .character-section {
+            text-align: center;
+            position: relative;
+        }
+        
+        .character {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #FFE4B5 0%, #F4A460 100%);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            box-shadow: 0 8px 20px rgba(160, 82, 45, 0.2);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        .character-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8B4513;
+            margin-bottom: 5px;
+        }
+        
+        .character-tag {
+            font-size: 11px;
+            color: #A0522D;
+            background: rgba(255, 228, 181, 0.5);
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        
+        .weekly-note {
+            background: rgba(255, 228, 181, 0.3);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #D2691E;
+        }
+        
+        .weekly-note-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #8B4513;
+            margin-bottom: 8px;
+        }
+        
+        .weekly-note-content {
+            font-size: 11px;
+            color: #5D4E37;
+            line-height: 1.4;
+        }
+        
+        .special-highlight {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.2) 100%);
+            border: 1px solid rgba(255, 165, 0, 0.4);
+        }
+        
+        .feather-decoration {
+            position: absolute;
+            color: rgba(255, 228, 181, 0.6);
+            font-size: 20px;
+            animation: featherFloat 4s ease-in-out infinite;
+        }
+        
+        @keyframes featherFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+            50% { transform: translateY(-15px) rotate(10deg); opacity: 0.8; }
+        }
+        
+        .feather-decoration:nth-child(1) {
+            top: 10%;
+            right: 10%;
+            animation-delay: 0s;
+        }
+        
+        .feather-decoration:nth-child(2) {
+            top: 60%;
+            right: 5%;
+            animation-delay: 1s;
+        }
+        
+        .feather-decoration:nth-child(3) {
+            top: 80%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+    </style>
+</head>
+<body>
+    <div class="schedule-container">
+        <!-- 装饰性羽毛 -->
+        <div class="feather-decoration">🪶</div>
+        <div class="feather-decoration">🪶</div>
+        <div class="feather-decoration">🪶</div>
+        
+        <div class="left-section">
+            <h1 class="title">岁己SUI的周表</h1>
+            <div class="subtitle">小饼干的投喂时间表 📅</div>
+            
+            <div class="date-range">
+                2025.11.17 ~ 11.23
+            </div>
+            
+            <div class="schedule-table">
+                <div class="schedule-item rest-day">
+                    <div class="day-label rest">周一</div>
+                    <div class="schedule-content">
+                        <span class="emoji">😴</span>休息日 - 好好休息，充电准备！
+                    </div>
+                </div>
+                
+                <div class="schedule-item">
+                    <div class="day-label">周二</div>
+                    <div class="schedule-content">
+                        <span class="emoji">🎵</span>19:40 唱歌聊天 2小时<br>
+                        <span class="emoji">🎮</span>然后玩星之卡比 2小时
+                    </div>
+                </div>
+                
+                <div class="schedule-item special-highlight">
+                    <div class="day-label">周三</div>
+                    <div class="schedule-content">
+                        <span class="emoji">🌙</span>22:00 煮面回 (3D人头麦助眠)<br>
+                        <span class="emoji">🍜</span>温柔助眠，伴随入眠
+                    </div>
+                </div>
+                
+                <div class="schedule-item">
+                    <div class="day-label">周四</div>
+                    <div class="schedule-content">
+                        <span class="emoji">🎵</span>19:40 唱歌聊天 2小时<br>
+                        <span class="emoji">🎬</span>然后看豆瓣TOP250电影 2小时
+                    </div>
+                </div>
+                
+                <div class="schedule-item">
+                    <div class="day-label">周五</div>
+                    <div class="schedule-content">
+                        <span class="emoji">🎵</span>19:40 唱歌聊天 2小时<br>
+                        <span class="emoji">🎮</span>然后玩星之卡比 2小时
+                    </div>
+                </div>
+                
+                <div class="schedule-item">
+                    <div class="day-label">周六</div>
+                    <div class="schedule-content">
+                        <span class="emoji">🎵</span>19:40 唱歌聊天 2小时<br>
+                        <span class="emoji">🎬</span>然后看豆瓣TOP250电影 2小时
+                    </div>
+                </div>
+                
+                <div class="schedule-item rest-day">
+                    <div class="day-label rest">周日</div>
+                    <div class="schedule-content">
+                        <span class="emoji">🛌</span>休息日 - 养精蓄锐，下周见！
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-section">
+            <div class="memo-section">
+                <div class="memo-title">今日锐评 💭</div>
+                <div class="memo-content">
+                    "又到了小饼干们期待的时间啦~ <br>本周有特别的煮面回，记得准时来听我的温柔助眠哦！<br><br>不许说我唱歌难听！😤"
+                </div>
+            </div>
+            
+            <div class="character-section">
+                <div class="character">🐦</div>
+                <div class="character-name">岁己SUI</div>
+                <div class="character-tag">小鸟公主</div>
+            </div>
+            
+            <div class="weekly-note">
+                <div class="weekly-note-title">本周亮点 ✨</div>
+                <div class="weekly-note-content">
+                    • 周一、周日休息日<br>
+                    • 周二至周六每晚直播<br>
+                    • 周三22:00煮面回特别安排<br>
+                    • 星之卡比与电影交替进行
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
