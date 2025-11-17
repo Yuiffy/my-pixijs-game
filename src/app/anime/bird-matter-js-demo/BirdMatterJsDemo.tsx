@@ -35,8 +35,8 @@ function Bunny() {
     //   restitution: 0.5,
     //   friction: 0.01,
     // }); // x y w h
-    const box = Bodies.circle(960, -6000, 400, {
-      density: 0.01,
+    const box = Bodies.circle(960, -3000, 400, {
+      density: 0.1,
       restitution: 0.2,
       friction: 0.01,
     });

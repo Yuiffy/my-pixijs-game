@@ -11,6 +11,14 @@ interface BigButtonItem {
 }
 
 export default function Home() {
+  // Next.js 静态导出行为：
+  // - 开发环境：public/html/sui_weekly_schedule.html 需要完整路径（带 .html）
+  // - 生产环境：静态导出后变成 out/html/sui_weekly_schedule（不带 .html 后缀）
+  // 因此需要根据环境动态设置链接
+  const weeklyScheduleHref = process.env.NODE_ENV === 'development'
+    ? '/html/sui_weekly_schedule.html'
+    : '/html/sui_weekly_schedule';
+
   const bigButtonData: BigButtonItem[] = [
     { title: '岁己按钮 SUI Button', href: 'https://button.suiji.site', description: '岁己声音按钮' },
     {
@@ -20,7 +28,7 @@ export default function Home() {
       title: '小鸟刚体动画', href: '/anime/bird-matter-js-demo', description: '研究matter js用', target: '',
     },
     {
-      title: '周表模版', href: '/html/sui_weekly_schedule.html', description: '我来替主播写周表！', target: '',
+      title: '周表模版', href: weeklyScheduleHref, description: '我来替主播写周表！', target: '',
     },
     // {title: '熊蛙棋 Bear Frog Chess', href: 'http://www.yuiffy.com/bear-frog-chess/', description: '又被称为枪棋/炮棋，在4x4的棋盘上12颗棋子的简单的双人对战棋类游戏'},
     // {title: '冻鳗榜单王', href: 'http://rank.yuiffy.com', description: '能够对动画/游戏/食物等进行打分和发布排行榜的榜单网站'},
@@ -61,7 +69,7 @@ export default function Home() {
       <div className="row">
         <div className="text-center">
           <Space direction="vertical" size={1} style={{ display: 'flex' }}>
-            <Button type="link" href="https://www.yuiffy.com">带鱼主页</Button>
+            <Button type="link" href="https://www.daifish.top">带鱼主页</Button>
           </Space>
 
         </div>
