@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import {
-  Typography, Card, Tag, Divider, Timeline, Tabs, ConfigProvider, theme, Row, Col, Statistic, Modal,
+  Typography, Card, Tag, Divider, Timeline, Tabs, ConfigProvider, theme, Row, Col, Statistic, Image as AntImage,
 } from 'antd';
 import {
   ThunderboltOutlined, HistoryOutlined, ReadOutlined, CrownOutlined,
 } from '@ant-design/icons';
-import Image from 'next/image';
+import NextImage from 'next/image';
 
 const { Text } = Typography;
 
@@ -183,7 +183,7 @@ export default function SuiWikiPage() {
                 minHeight: '14rem',
               }}
             >
-              <Image
+              <NextImage
                 src={stage.image.src}
                 alt={stage.image.caption}
                 fill
@@ -226,7 +226,7 @@ export default function SuiWikiPage() {
                 <div className="absolute -top-4 left-1 text-purple-200/70 text-2xl">🪶</div>
                 <div className="absolute -bottom-3 right-0 text-purple-200/70 text-xl">✨</div>
                 <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.65)] bg-slate-900/80">
-                  <Image
+                  <NextImage
                     src="/images/wiki/sui_charactor_half_body.jpg"
                     alt="Sui 头像"
                     fill
@@ -288,10 +288,10 @@ export default function SuiWikiPage() {
                           <button
                             type="button"
                             onClick={() => openMedia(outfitMedia)}
-                            className="group relative w-full rounded-2xl overflow-hidden border border-purple-900/40 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-gradient-to-b from-slate-900/80 to-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                          className="group relative w-full rounded-2xl overflow-hidden border border-purple-900/40 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-gradient-to-b from-slate-900/80 to-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                             style={{ aspectRatio: outfitMedia.ratio }}
                           >
-                            <Image
+                            <NextImage
                               src={outfitMedia.src}
                               alt="岁己 · 羽织立绘"
                               fill
@@ -366,7 +366,7 @@ export default function SuiWikiPage() {
                           style={{ aspectRatio: conceptArtwork.ratio }}
                         >
                           <div className="relative w-full h-full">
-                            <Image
+                            <NextImage
                               src={conceptArtwork.src}
                               alt={conceptArtwork.caption}
                               fill
@@ -426,7 +426,7 @@ export default function SuiWikiPage() {
                                         if (event.key === 'Enter') openMedia(media);
                                       }}
                                     >
-                                      <Image
+                                      <NextImage
                                         src={media.src}
                                         alt={media.caption}
                                         fill
@@ -472,43 +472,24 @@ export default function SuiWikiPage() {
             ]}
           />
         </div>
-        <Modal
-          open={Boolean(activeMedia)}
-          onCancel={closeMedia}
-          footer={null}
-          centered
-          width={900}
-          destroyOnClose
-          closable
-          maskClosable
-          styles={{
-            mask: { backdropFilter: 'blur(8px)', backgroundColor: 'rgba(2,6,23,0.85)' },
-            content: { background: 'transparent', boxShadow: 'none' },
-            body: { padding: 0 },
+        <AntImage.PreviewGroup
+          preview={{
+            visible: Boolean(activeMedia),
+            onVisibleChange: (visible) => {
+              if (!visible) {
+                closeMedia();
+              }
+            },
           }}
         >
           {activeMedia && (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl border border-purple-900/40 shadow-[0_20px_70px_rgba(0,0,0,0.7)] p-4 flex flex-col items-center gap-4">
-              <div
-                className="relative w-full bg-black/30 rounded-2xl overflow-hidden"
-                style={{
-                  aspectRatio: activeMedia.ratio || undefined,
-                  minHeight: '35vh',
-                  maxHeight: '70vh',
-                }}
-              >
-                <Image
-                  src={activeMedia.src}
-                  alt={activeMedia.caption}
-                  fill
-                  sizes="100vw"
-                  className="object-contain"
-                />
-              </div>
-              <p className="text-center text-slate-200 text-sm px-6">{activeMedia.caption}</p>
-            </div>
+            <AntImage
+              src={activeMedia.src}
+              alt={activeMedia.caption}
+              style={{ display: 'none' }}
+            />
           )}
-        </Modal>
+        </AntImage.PreviewGroup>
 
         {/* CSS Animations embedded for this page */}
         <style jsx global>{`
