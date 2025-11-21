@@ -193,6 +193,25 @@
             font-size: 50px;
             box-shadow: 0 8px 20px rgba(160, 82, 45, 0.2);
             animation: float 3s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        .character.character-image,
+        .character.character-svg {
+            padding: 0;
+            background: rgba(255, 234, 208, 0.9);
+        }
+
+        .character.character-emoji {
+            font-size: 50px;
+        }
+
+        .character img,
+        .character svg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
 
         @keyframes float {
@@ -341,7 +360,7 @@
             </div>
 
             <div class="character-section">
-                <div class="character">🐦</div>
+                <div class="character character-emoji" id="character-visual" role="img" aria-label="岁己SUI">🐦</div>
                 <div class="character-name">岁己SUI</div>
                 <div class="character-tag">小鸟公主</div>
             </div>
@@ -352,6 +371,7 @@
                     • 上五休一，每周不固定<br>
                     • 没有专门歌回，但每天会唱歌<br>
                     • 周三22:00煮面回特别安排<br>
+                    • 周日会下午播<br>
                     • 游戏打得很可爱
                 </div>
             </div>
@@ -394,8 +414,15 @@
                     date: '2025-11-22',
                     highlight: 'noodle',
                     activities: [
-                        { emoji: '🎵', text: '14:40 唱唱聊聊~' },
+                        { emoji: '🎵', text: '14:40 下午播~唱唱聊聊~' },
                         { emoji: '🎬', text: '16:40 玩《马里奥银河》' }
+                    ]
+                },
+                {
+                    date: '2025-11-23',
+                    // highlight: 'noodle',
+                    activities: [
+                        { emoji: '🎵', text: '14:40 小播一下~今天居然不休息哦~' },
                     ]
                 }
             ],
@@ -436,6 +463,42 @@
                     startIndex: 0,
                     countTowardsRotation: true
                 }
+            ],
+            characterPool: [
+                {
+                    type: 'image',
+                    src: '/images/sui-bird-jump.png',
+                    alt: '岁己SUI跳跳鸟',
+                    name: '岁己SUI',
+                    tag: '跳跳小鸟'
+                },
+                {
+                    type: 'image',
+                    src: '/images/wiki/sui_clothes_stand.png',
+                    alt: '岁己SUI小鸟立绘',
+                    tag: '元气御鸟',
+                    objectPosition: 'center 15%'
+                },
+                {
+                    type: 'image',
+                    src: '/images/wiki/sui_charactor_half_body.png',
+                    alt: '岁己半身像',
+                    tag: '小猫帽~'
+                },
+                {
+                    type: 'emoji',
+                    emoji: '🐦',
+                    name: '岁己SUI',
+                    tag: '小鸟公主'
+                },
+                {
+                    type: 'image',
+                    src: '/images/wiki/killmanybird.jpg',
+                    alt: '岁己击杀多名蝙蝠',
+                    tag: '鬼杀队·鸟之呼吸',
+                    objectPosition: 'center 15%',
+                    transform: 'scale(1.3) translateX(-4%)'
+                }
             ]
         };
     </script>
@@ -448,13 +511,17 @@
             const MS_IN_DAY = 24 * 60 * 60 * 1000;
 
             const config = window.scheduleConfig || {};
+            const urlParams = new URLSearchParams(window.location.search);
+            const weekParam = urlParams.get('week');
             const today = getToday(config.timezone);
-            const weekDates = getWeekDates(today, config.weekStart || 1);
+            const referenceDate = resolveReferenceDate(weekParam, today);
+            const weekDates = getWeekDates(referenceDate, config.weekStart || 1);
             const anchorDate = getRestAnchorDate(config) || weekDates[0];
             const schedule = buildSchedule(weekDates, config, anchorDate);
 
-            updateMeta(weekDates);
+            updateMeta(weekDates, { previewNote: getPreviewNote(weekParam, referenceDate, today) });
             renderSchedule(schedule);
+            renderCharacterVisual(config);
 
             function getToday(timezone) {
                 if (!timezone) {
@@ -636,13 +703,14 @@
                 return result >= 0 ? result : result + divisor;
             }
 
-            function updateMeta(dates) {
+            function updateMeta(dates, options = {}) {
                 const rangeText = `${formatDateDisplay(dates[0])} ~ ${formatDateDisplay(dates[dates.length - 1])}`;
+                const suffix = options.previewNote ? ` · ${options.previewNote}` : '';
                 const rangeEl = document.querySelector('.date-range');
                 if (rangeEl) {
-                    rangeEl.textContent = rangeText;
+                    rangeEl.textContent = `${rangeText}${suffix}`;
                 }
-                document.title = `岁己SUI的周表 - ${rangeText}`;
+                document.title = `岁己SUI的周表 - ${rangeText}${options.previewNote ? ` (${options.previewNote})` : ''}`;
             }
 
             function applyHighlight(target, value) {
@@ -688,6 +756,66 @@
                     item.appendChild(content);
                     container.appendChild(item);
                 });
+            }
+
+            function renderCharacterVisual(cfg = {}) {
+                const pool = getCharacterPool(cfg);
+                if (!pool.length) return;
+                const target = document.getElementById('character-visual');
+                if (!target) return;
+
+                const pick = pool[Math.floor(Math.random() * pool.length)];
+                if (!pick) return;
+
+                const nameEl = document.querySelector('.character-name');
+                const tagEl = document.querySelector('.character-tag');
+
+                target.innerHTML = '';
+                target.classList.remove('character-image', 'character-emoji', 'character-svg');
+
+                if (pick.type === 'image' && pick.src) {
+                    const img = document.createElement('img');
+                    img.src = pick.src;
+                    img.alt = pick.alt || pick.name || '岁己SUI随机形象';
+                    if (pick.objectPosition) {
+                        img.style.objectPosition = pick.objectPosition;
+                    }
+                    if (pick.transform) {
+                        img.style.transform = pick.transform;
+                    }
+                    if (pick.styles && typeof pick.styles === 'object') {
+                        Object.entries(pick.styles).forEach(([key, value]) => {
+                            if (value !== undefined && value !== null) {
+                                img.style[key] = value;
+                            }
+                        });
+                    }
+                    target.appendChild(img);
+                    target.classList.add('character-image');
+                } else if (pick.type === 'svg' && pick.content) {
+                    target.innerHTML = pick.content;
+                    target.classList.add('character-svg');
+                } else {
+                    target.textContent = pick.emoji || pick.content || '🐦';
+                    target.classList.add('character-emoji');
+                }
+
+                if (pick.name && nameEl) {
+                    nameEl.textContent = pick.name;
+                }
+                if (pick.tag && tagEl) {
+                    tagEl.textContent = pick.tag;
+                }
+                target.setAttribute('aria-label', pick.alt || pick.name || '岁己SUI');
+            }
+
+            function getCharacterPool(cfg = {}) {
+                if (cfg.characterPool && cfg.characterPool.length) {
+                    return cfg.characterPool;
+                }
+                return [
+                    { type: 'emoji', emoji: '🐦', name: '岁己SUI', tag: '小鸟公主' }
+                ];
             }
         })();
     </script>
