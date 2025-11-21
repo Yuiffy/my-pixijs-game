@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Typography, Card, Tag, Divider, Timeline, Tabs, ConfigProvider, theme, Row, Col, Statistic,
 } from 'antd';
@@ -155,6 +155,8 @@ const journeyStages = [
 
 export default function SuiWikiPage() {
   const [activeMedia, setActiveMedia] = useState<MediaItem | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const modalContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -166,10 +168,27 @@ export default function SuiWikiPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   const openMedia = (media: MediaItem) => {
     setActiveMedia(media);
   };
   const closeMedia = () => setActiveMedia(null);
+  const toggleFullscreen = () => {
+    const node = modalContentRef.current;
+    if (!node || !node.requestFullscreen) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      node.requestFullscreen().catch(() => {});
+    }
+  };
 
   const journeyTimelineItems = journeyStages.map((stage) => ({
     color: stage.color,
@@ -187,14 +206,17 @@ export default function SuiWikiPage() {
           >
             <div
               className="relative w-full bg-black/30"
-              style={{ aspectRatio: stage.image.ratio || '16 / 9' }}
+              style={{
+                aspectRatio: stage.image.ratio || undefined,
+                minHeight: '14rem',
+              }}
             >
               <Image
                 src={stage.image.src}
                 alt={stage.image.caption}
                 fill
                 sizes="(max-width: 768px) 100vw, 60vw"
-                className="object-contain transition-transform duration-500 group-hover:scale-105"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
             </div>
             <p className="text-xs text-slate-200/80 px-4 py-3 text-left">{stage.image.caption}</p>
@@ -398,7 +420,7 @@ export default function SuiWikiPage() {
                                         alt={media.caption}
                                         fill
                                         sizes="(max-width: 640px) 100vw, 50vw"
-                                        className="object-contain transition-transform duration-500 hover:scale-105"
+                                        className="object-cover transition-transform duration-500 hover:scale-105"
                                       />
                                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent px-3 py-2">
                                         <p className="text-[11px] text-purple-100">{media.caption}</p>
@@ -430,7 +452,7 @@ export default function SuiWikiPage() {
                     <div className="px-4 py-8 md:px-12">
                       <Timeline
                         mode="alternate"
-                        items={journeyTimelineItems}
+            items={journeyTimelineItems}
                       />
                     </div>
                   </Card>
@@ -446,7 +468,8 @@ export default function SuiWikiPage() {
             role="presentation"
           >
             <div
-              className="relative max-w-4xl w-full bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl border border-purple-900/40 shadow-[0_20px_70px_rgba(0,0,0,0.7)] p-6"
+              ref={modalContentRef}
+              className="relative w-full max-w-[90vw] h-full max-h-[90vh] bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl border border-purple-900/40 shadow-[0_20px_70px_rgba(0,0,0,0.7)] p-6 flex flex-col"
               onClick={(event) => event.stopPropagation()}
             >
               <button
@@ -457,9 +480,16 @@ export default function SuiWikiPage() {
               >
                 ×
               </button>
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="absolute right-14 top-4 text-xs text-purple-200 px-3 py-1 rounded-full border border-purple-500/60 hover:bg-purple-500/10"
+              >
+                {isFullscreen ? '退出全屏' : '全屏查看'}
+              </button>
               <div
-                className="relative w-full bg-black/40 rounded-2xl overflow-hidden"
-                style={{ aspectRatio: activeMedia.ratio || '16 / 9' }}
+                className="relative w-full flex-1 bg-black/30 rounded-2xl overflow-hidden"
+                style={{ aspectRatio: activeMedia.ratio || undefined }}
               >
                 <Image
                   src={activeMedia.src}
