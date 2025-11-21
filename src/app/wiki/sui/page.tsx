@@ -89,6 +89,11 @@ const techniques: Technique[] = [
     type: '直线突进',
     desc: '爆发性的直线加速，配合滑翔翼使用，像捕猎的游隼一样瞬间拉近距离。',
     scene: '屋顶追逐：逃跑的鬼被速度线模糊的岁己瞬间追上并超越，鬼的头颅在惯性作用下滚落。',
+    media: [
+      {
+        src: '/images/wiki/skill3.png', caption: '疾隼的特写', ratio: '9 / 16',
+      },
+    ],
   },
   {
     id: 4,
