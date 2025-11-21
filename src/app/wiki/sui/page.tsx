@@ -561,6 +561,7 @@ export default function SuiWikiPage() {
           />
         </div>
         <AntImage.PreviewGroup
+          key={`${activeMedia?.src}-${activeMedia?.caption}`}
           preview={{
             visible: Boolean(activeMedia),
             onVisibleChange: (visible) => {
