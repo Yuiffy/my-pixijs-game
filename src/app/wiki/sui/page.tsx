@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Typography, Card, Tag, Divider, Timeline, Tabs, ConfigProvider, theme, Row, Col, Statistic,
 } from 'antd';
@@ -9,7 +9,13 @@ import {
 } from '@ant-design/icons';
 import Image from 'next/image';
 
-const { Title, Paragraph, Text } = Typography;
+const { Text } = Typography;
+
+type MediaItem = {
+  src: string;
+  caption: string;
+  ratio?: string;
+};
 
 // --- Data Definitions ---
 
@@ -35,6 +41,10 @@ const techniques = [
     type: '基础型',
     desc: '极致速度的一刀斩，附带紫色羽毛光效。',
     scene: '初次任务：深夜森林中，鬼从树后扑来，岁己头也不回，反手一刀，鬼在空中一分为二，切口处飘落发光羽毛。',
+    media: [
+      { src: '/images/wiki/skill1_big.jpg', caption: '夜空俯瞰的羽击全景，羽翼光效化作紫色风暴。', ratio: '3 / 4' },
+      { src: '/images/wiki/skill1.jpg', caption: '回身斩瞬间的特写，刀锋与羽毛残影交织。', ratio: '9 / 16' },
+    ],
   },
   {
     id: 2,
@@ -83,82 +93,117 @@ const techniques = [
     type: '最终绝杀',
     desc: '透支体力，在空中进行数百次超高速、不规则的立体机动斩击。刀光和羽毛填满天空，将敌人撕裂成无数碎块。',
     scene: '无限城：岁己开启斑纹，在童磨的冰莲花血鬼术中发动，整个屏幕被紫光占据，童磨的冰雕和本体被瞬间粉碎。',
+    media: [
+      { src: '/images/wiki/vstm.jpg', caption: '无限城上空的终之型，全身光翼展开，刀芒切裂冰莲。', ratio: '9 / 16' },
+    ],
   },
 ];
+const outfitMedia: MediaItem = {
+  src: '/images/wiki/sui_clothes_stand.jpg',
+  caption: '羽织装配示意 · 全身立绘',
+  ratio: '9 / 16',
+};
 
-const wikiImages = [
-  { src: '/images/wiki/wiki_snapshot.jpg', title: '档案封面', description: '早期概念设定图，展示岁己的鸟柱羽织与紫色光翼。' },
-  { src: '/images/wiki/skill1_big.jpg', title: '壹之型·羽击（全景）', description: '一之型的广角镜头，大张力挥刀与紫色羽毛光效铺满画面。' },
-  { src: '/images/wiki/skill1.jpg', title: '壹之型·羽击（动作特写）', description: '同一招式的细节截帧，展示出刀刃破空与回身反手的瞬间。' },
-  { src: '/images/wiki/killmanybird.jpg', title: '一战成名·蝙蝠鬼群', description: '村庄夜战中单人面对蝙蝠鬼群，记录了她成名之战的终章。' },
-  { src: '/images/wiki/vstm.jpg', title: '对上弦贰·童磨', description: '无限城战中切断冰莲的瞬间，突出滑翔骨架与冰雾对冲。' },
-];
-
-const journey = [
+const journeyStages = [
   {
+    key: 'past',
+    title: '悲惨过去',
+    description: '居住在深山的家人被一只拥有飞行能力的异形鬼袭击。年幼的岁己躲在高树的鸟巢中幸存。她立誓要成为支配天空的人，不再让任何鬼在头顶作祟。',
     color: 'gray',
-    children: (
-      <>
-        <Text strong className="text-lg text-purple-300">悲惨过去</Text>
-        <br />
-        <Text className="text-gray-300">
-          居住在深山的家人被一只拥有飞行能力的异形鬼袭击。年幼的岁己躲在高树的鸟巢中幸存。她立誓要成为支配天空的人，不再让任何鬼在头顶作祟。
-        </Text>
-      </>
-    ),
+    image: {
+      src: '/images/wiki/wiki_snapshot.jpg',
+      caption: '童年写下的誓言手记，羽毛标记象征她对天空的执着。',
+      ratio: '3 / 4',
+    },
   },
   {
+    key: 'exam',
+    title: '最终选拔',
+    description: '她没有在地面躲藏，而是利用自制的简易滑翔翼在树冠层顶端移动，像鹰一样俯冲猎杀鬼，展现了独特的空战天赋。',
     color: 'purple',
-    children: (
-      <>
-        <Text strong className="text-lg text-purple-300">最终选拔</Text>
-        <br />
-        <Text className="text-gray-300">
-          她没有在地面躲藏，而是利用自制的简易滑翔翼在树冠层顶端移动，像鹰一样俯冲猎杀鬼，展现了独特的空战天赋。
-        </Text>
-      </>
-    ),
   },
   {
+    key: 'fame',
+    title: '一战成名',
+    description: '在成为甲级队员后，某个村庄遭遇棘手的“蝙蝠鬼群”袭击。普通队员无法应对空中的群鬼。岁己单枪匹马冲入夜空，利用滑翔装备缠斗一整夜，将所有鬼斩杀。黎明时，她站在屋顶，身后是被斩断的鬼之翼，宛如堕天使，因此获得了主公的关注。',
     color: '#a855f7',
-    children: (
-      <>
-        <Text strong className="text-lg text-purple-300">一战成名</Text>
-        <br />
-        <Text className="text-gray-300">
-          在成为甲级队员后，某个村庄遭遇棘手的“蝙蝠鬼群”袭击。普通队员无法应对空中的群鬼。岁己单枪匹马冲入夜空，利用滑翔装备缠斗一整夜，将所有鬼斩杀。黎明时，她站在屋顶，身后是被斩断的鬼之翼，宛如堕天使，因此获得了主公的关注。
-        </Text>
-      </>
-    ),
+    image: {
+      src: '/images/wiki/killmanybird.jpg',
+      caption: '蝙蝠鬼群夜战的决胜瞬间，紫光漩涡吞噬整片天空。',
+      ratio: '16 / 9',
+    },
   },
   {
+    key: 'pillar',
+    title: '晋升为柱',
+    description: '凭借对空战的绝对统治力，她在两年内成功讨伐了一位下弦，并积累了惊人的斩杀数，被主公破格提拔为鸟柱。',
     color: '#d8b4fe',
     dot: <CrownOutlined style={{ fontSize: '20px' }} />,
-    children: (
-      <>
-        <Text strong className="text-lg text-purple-300">晋升为柱</Text>
-        <br />
-        <Text className="text-gray-300">
-          凭借对空战的绝对统治力，她在两年内成功讨伐了一位下弦，并积累了惊人的斩杀数，被主公破格提拔为鸟柱。
-        </Text>
-      </>
-    ),
   },
   {
+    key: 'infinite',
+    title: '无限城战绩',
+    description: '是少数能对上弦之贰·童磨造成有效干扰的柱。她的极致空战机动性让她能够勉强躲避冰雾，并成功利用特制羽织切断童磨释放血鬼术的冰莲，为队友争取时间。',
     color: 'red',
-    children: (
-      <>
-        <Text strong className="text-lg text-purple-300">无限城战绩</Text>
-        <br />
-        <Text className="text-gray-300">
-          是少数能对上弦之贰·童磨造成有效干扰的柱。她的极致空战机动性让她能够勉强躲避冰雾，并成功利用特制羽织切断童磨释放血鬼术的冰莲，为队友争取时间。
-        </Text>
-      </>
-    ),
+    image: {
+      src: '/images/wiki/vstm.jpg',
+      caption: '无限城屋檐之上与童磨对峙，羽织与冰莲交织成紫色光翼。',
+      ratio: '9 / 16',
+    },
   },
 ];
 
 export default function SuiWikiPage() {
+  const [activeMedia, setActiveMedia] = useState<MediaItem | null>(null);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveMedia(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  const openMedia = (media: MediaItem) => {
+    setActiveMedia(media);
+  };
+  const closeMedia = () => setActiveMedia(null);
+
+  const journeyTimelineItems = journeyStages.map((stage) => ({
+    color: stage.color,
+    dot: stage.dot,
+    children: (
+      <>
+        <Text strong className="text-lg text-purple-300">{stage.title}</Text>
+        <br />
+        <Text className="text-gray-300">{stage.description}</Text>
+        {stage.image && (
+          <button
+            type="button"
+            onClick={() => openMedia(stage.image!)}
+            className="mt-4 block w-full rounded-2xl overflow-hidden border border-purple-900/30 bg-slate-950/40 shadow-inner shadow-black/40 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+          >
+            <div
+              className="relative w-full bg-black/30"
+              style={{ aspectRatio: stage.image.ratio || '16 / 9' }}
+            >
+              <Image
+                src={stage.image.src}
+                alt={stage.image.caption}
+                fill
+                sizes="(max-width: 768px) 100vw, 60vw"
+                className="object-contain transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
+            <p className="text-xs text-slate-200/80 px-4 py-3 text-left">{stage.image.caption}</p>
+          </button>
+        )}
+      </>
+    ),
+  }));
+
   return (
     <ConfigProvider
       theme={{
@@ -178,9 +223,23 @@ export default function SuiWikiPage() {
 
           <div className="z-10 text-center p-4 animate-fade-in-up">
             <div className="mb-4 relative inline-block">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.6)] bg-slate-800 flex items-center justify-center">
-                {/* Using existing asset as avatar */}
-                <Image src="/images/sui-bird-jump.png" alt="Sui Avatar" width={100} height={100} className="object-contain" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-36 h-36 rounded-full bg-purple-500/10 blur-2xl" />
+              </div>
+              <div className="relative w-32 h-32">
+                <div className="absolute inset-0 rounded-full border border-purple-500/50 blur-sm" />
+                <div className="absolute inset-1 rounded-full border border-purple-300/40 animate-slow-spin" />
+                <div className="absolute -top-4 left-1 text-purple-200/70 text-2xl">🪶</div>
+                <div className="absolute -bottom-3 right-0 text-purple-200/70 text-xl">✨</div>
+                <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.65)] bg-slate-900/80">
+                  <Image
+                    src="/images/wiki/sui_charactor_half_body.jpg"
+                    alt="Sui 头像"
+                    fill
+                    sizes="128px"
+                    className="object-contain scale-110"
+                  />
+                </div>
               </div>
               <Tag color="purple" className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 text-sm border-none shadow-lg">
                 鳥柱
@@ -232,7 +291,26 @@ export default function SuiWikiPage() {
                           </div>
                         </Col>
                         <Col xs={24} md={10} className="flex flex-col gap-4">
-                          {/* Stats or additional visual */}
+                          <button
+                            type="button"
+                            onClick={() => openMedia(outfitMedia)}
+                            className="group relative w-full rounded-2xl overflow-hidden border border-purple-900/40 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-gradient-to-b from-slate-900/80 to-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                            style={{ aspectRatio: outfitMedia.ratio }}
+                          >
+                            <Image
+                              src={outfitMedia.src}
+                              alt="岁己 · 羽织立绘"
+                              fill
+                              sizes="(max-width: 768px) 100vw, 40vw"
+                              className="object-contain transition-transform duration-500 group-hover:scale-105"
+                              priority
+                            />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent px-4 py-3">
+                              <span className="block text-purple-200 font-semibold tracking-wide">羽织装配示意</span>
+                              <span className="text-xs text-slate-200/80">特制滑翔骨架 + 哥特羽缘</span>
+                              <span className="text-[10px] text-purple-300/80">点击展开查看全图</span>
+                            </div>
+                          </button>
                           <Card size="small" title="战斗能力值 (估)" className="bg-slate-800 border-none">
                             <Row gutter={16}>
                               <Col span={12}><Statistic title="速度" value={100} suffix="/100" valueStyle={{ color: '#d8b4fe' }} /></Col>
@@ -270,30 +348,6 @@ export default function SuiWikiPage() {
                       </Row>
                     </Card>
 
-                    {/* Visual Gallery */}
-                    <Card className="bg-slate-900/80 border-purple-900/30 shadow-xl">
-                      <Divider orientation="left" className="border-purple-500"><span className="text-purple-300 text-lg">Ⅲ. 视觉资料库</span></Divider>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                        {wikiImages.map((img) => (
-                          <div key={img.src} className="bg-slate-950/40 rounded-2xl border border-purple-900/30 p-4 hover:border-purple-500/70 transition-colors duration-300 shadow-inner shadow-black/40">
-                            <div className="relative h-48 w-full overflow-hidden rounded-xl">
-                              <Image
-                                src={img.src}
-                                alt={img.title}
-                                fill
-                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                className="object-cover transition-transform duration-500 hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent" />
-                              <div className="absolute bottom-3 left-4 right-4">
-                                <p className="text-purple-200 font-semibold text-base drop-shadow">{img.title}</p>
-                              </div>
-                            </div>
-                            <p className="text-xs text-slate-400 mt-3 leading-relaxed">{img.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
                   </div>
                 ),
               },
@@ -325,6 +379,34 @@ export default function SuiWikiPage() {
                                 <span className="text-purple-400 font-bold mr-2">登场:</span>
                                 {tech.scene}
                               </div>
+                              {tech.media && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                  {tech.media.map((media) => (
+                                    <div
+                                      key={media.src}
+                                      role="button"
+                                      tabIndex={0}
+                                      className="relative w-full rounded-xl overflow-hidden border border-purple-900/30 bg-slate-950/40 shadow-inner shadow-black/40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                                      style={{ aspectRatio: media.ratio || '16 / 9' }}
+                                      onClick={() => openMedia(media)}
+                                      onKeyDown={(event) => {
+                                        if (event.key === 'Enter') openMedia(media);
+                                      }}
+                                    >
+                                      <Image
+                                        src={media.src}
+                                        alt={media.caption}
+                                        fill
+                                        sizes="(max-width: 640px) 100vw, 50vw"
+                                        className="object-contain transition-transform duration-500 hover:scale-105"
+                                      />
+                                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent px-3 py-2">
+                                        <p className="text-[11px] text-purple-100">{media.caption}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             {/* Decorative background element */}
                             <div className="absolute -right-4 -bottom-4 text-9xl opacity-5 select-none pointer-events-none rotate-12">🪶</div>
@@ -348,7 +430,7 @@ export default function SuiWikiPage() {
                     <div className="px-4 py-8 md:px-12">
                       <Timeline
                         mode="alternate"
-                        items={journey}
+                        items={journeyTimelineItems}
                       />
                     </div>
                   </Card>
@@ -357,6 +439,40 @@ export default function SuiWikiPage() {
             ]}
           />
         </div>
+        {activeMedia && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+            onClick={closeMedia}
+            role="presentation"
+          >
+            <div
+              className="relative max-w-4xl w-full bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl border border-purple-900/40 shadow-[0_20px_70px_rgba(0,0,0,0.7)] p-6"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={closeMedia}
+                className="absolute right-4 top-4 text-slate-400 hover:text-white text-xl"
+                aria-label="关闭"
+              >
+                ×
+              </button>
+              <div
+                className="relative w-full bg-black/40 rounded-2xl overflow-hidden"
+                style={{ aspectRatio: activeMedia.ratio || '16 / 9' }}
+              >
+                <Image
+                  src={activeMedia.src}
+                  alt={activeMedia.caption}
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              </div>
+              <p className="text-center text-slate-200 mt-5 text-sm">{activeMedia.caption}</p>
+            </div>
+          </div>
+        )}
 
         {/* CSS Animations embedded for this page */}
         <style jsx global>{`
@@ -368,11 +484,18 @@ export default function SuiWikiPage() {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
           }
+          @keyframes slowOrbit {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
           .animate-fade-in-up {
             animation: fadeInUp 0.8s ease-out forwards;
           }
           .animate-slide-in {
             animation: slideIn 0.5s ease-out forwards;
+          }
+          .animate-slow-spin {
+            animation: slowOrbit 12s linear infinite;
           }
           /* Customize Antd Tabs for Dark Theme */
           .custom-tabs .ant-tabs-nav::before {
