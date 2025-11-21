@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Typography, Card, Tag, Divider, Timeline, Tabs, ConfigProvider, theme, Row, Col, Statistic,
+  Typography, Card, Tag, Divider, Timeline, Tabs, ConfigProvider, theme, Row, Col, Statistic, Modal,
 } from 'antd';
 import {
   ThunderboltOutlined, HistoryOutlined, ReadOutlined, CrownOutlined,
@@ -104,17 +104,18 @@ const outfitMedia: MediaItem = {
   ratio: '9 / 16',
 };
 
+const conceptArtwork: MediaItem = {
+  src: '/images/wiki/wiki_snapshot.jpg',
+  caption: '早期概念稿',
+  ratio: '3 / 4',
+};
+
 const journeyStages = [
   {
     key: 'past',
     title: '悲惨过去',
     description: '居住在深山的家人被一只拥有飞行能力的异形鬼袭击。年幼的岁己躲在高树的鸟巢中幸存。她立誓要成为支配天空的人，不再让任何鬼在头顶作祟。',
     color: 'gray',
-    image: {
-      src: '/images/wiki/wiki_snapshot.jpg',
-      caption: '童年写下的誓言手记，羽毛标记象征她对天空的执着。',
-      ratio: '3 / 4',
-    },
   },
   {
     key: 'exam',
@@ -155,40 +156,11 @@ const journeyStages = [
 
 export default function SuiWikiPage() {
   const [activeMedia, setActiveMedia] = useState<MediaItem | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const modalContentRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setActiveMedia(null);
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
 
   const openMedia = (media: MediaItem) => {
     setActiveMedia(media);
   };
   const closeMedia = () => setActiveMedia(null);
-  const toggleFullscreen = () => {
-    const node = modalContentRef.current;
-    if (!node || !node.requestFullscreen) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.();
-    } else {
-      node.requestFullscreen().catch(() => {});
-    }
-  };
 
   const journeyTimelineItems = journeyStages.map((stage) => ({
     color: stage.color,
@@ -370,6 +342,45 @@ export default function SuiWikiPage() {
                       </Row>
                     </Card>
 
+                    {/* Concept Artwork */}
+                    <Card className="bg-slate-900/80 border-purple-900/30 shadow-xl">
+                      <Divider orientation="left" className="border-purple-500"><span className="text-purple-300 text-lg">Ⅲ. 早期角色概念稿</span></Divider>
+                      <div className="flex flex-col md:flex-row gap-6 items-center">
+                        <div className="flex-1">
+                          <p className="text-slate-300 leading-relaxed">
+                              这是概念稿。
+                          </p>
+                          <button
+                            type="button"
+                            className="mt-4 inline-flex items-center gap-2 text-sm text-purple-200 border border-purple-500/40 px-4 py-2 rounded-full hover:bg-purple-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                            onClick={() => openMedia(conceptArtwork)}
+                          >
+                            查看原稿
+                            <span aria-hidden>⤴</span>
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openMedia(conceptArtwork)}
+                          className="flex-3 w-full max-h-64 group rounded-3xl overflow-hidden border border-purple-900/40 bg-slate-950/50 shadow-inner shadow-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                          style={{ aspectRatio: conceptArtwork.ratio }}
+                        >
+                          <div className="relative w-full h-full">
+                            <Image
+                              src={conceptArtwork.src}
+                              alt={conceptArtwork.caption}
+                              fill
+                              sizes="100vw, 40vw"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent px-4 py-3">
+                              <p className="text-xs text-slate-200/80">{conceptArtwork.caption}</p>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </Card>
+
                   </div>
                 ),
               },
@@ -461,35 +472,30 @@ export default function SuiWikiPage() {
             ]}
           />
         </div>
-        {activeMedia && (
-          <div
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
-            onClick={closeMedia}
-            role="presentation"
-          >
-            <div
-              ref={modalContentRef}
-              className="relative w-full max-w-[90vw] h-full max-h-[90vh] bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl border border-purple-900/40 shadow-[0_20px_70px_rgba(0,0,0,0.7)] p-6 flex flex-col"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={closeMedia}
-                className="absolute right-4 top-4 text-slate-400 hover:text-white text-xl"
-                aria-label="关闭"
-              >
-                ×
-              </button>
-              <button
-                type="button"
-                onClick={toggleFullscreen}
-                className="absolute right-14 top-4 text-xs text-purple-200 px-3 py-1 rounded-full border border-purple-500/60 hover:bg-purple-500/10"
-              >
-                {isFullscreen ? '退出全屏' : '全屏查看'}
-              </button>
+        <Modal
+          open={Boolean(activeMedia)}
+          onCancel={closeMedia}
+          footer={null}
+          centered
+          width={900}
+          destroyOnClose
+          closable
+          maskClosable
+          styles={{
+            mask: { backdropFilter: 'blur(8px)', backgroundColor: 'rgba(2,6,23,0.85)' },
+            content: { background: 'transparent', boxShadow: 'none' },
+            body: { padding: 0 },
+          }}
+        >
+          {activeMedia && (
+            <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl border border-purple-900/40 shadow-[0_20px_70px_rgba(0,0,0,0.7)] p-4 flex flex-col items-center gap-4">
               <div
-                className="relative w-full flex-1 bg-black/30 rounded-2xl overflow-hidden"
-                style={{ aspectRatio: activeMedia.ratio || undefined }}
+                className="relative w-full bg-black/30 rounded-2xl overflow-hidden"
+                style={{
+                  aspectRatio: activeMedia.ratio || undefined,
+                  minHeight: '35vh',
+                  maxHeight: '70vh',
+                }}
               >
                 <Image
                   src={activeMedia.src}
@@ -499,10 +505,10 @@ export default function SuiWikiPage() {
                   className="object-contain"
                 />
               </div>
-              <p className="text-center text-slate-200 mt-5 text-sm">{activeMedia.caption}</p>
+              <p className="text-center text-slate-200 text-sm px-6">{activeMedia.caption}</p>
             </div>
-          </div>
-        )}
+          )}
+        </Modal>
 
         {/* CSS Animations embedded for this page */}
         <style jsx global>{`
