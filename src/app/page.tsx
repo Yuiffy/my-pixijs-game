@@ -1,7 +1,5 @@
-import Image from 'next/image';
-import { Button, Card, Space } from 'antd';
+import { Button, Space } from 'antd';
 import Script from 'next/script';
-import Head from 'next/head';
 
 interface BigButtonItem {
   title: string
@@ -11,13 +9,8 @@ interface BigButtonItem {
 }
 
 export default function Home() {
-  // Next.js 静态导出行为：
-  // - 开发环境：public/html/sui_weekly_schedule.html 需要完整路径（带 .html）
-  // - 生产环境：静态导出后变成 out/html/sui_weekly_schedule（不带 .html 后缀）
-  // 因此需要根据环境动态设置链接哦
-  const weeklyScheduleHref = process.env.NODE_ENV === 'development'
-    ? '/html/sui_weekly_schedule.html'
-    : '/html/sui_weekly_schedule';
+  // 现在通过 Vercel 运行 Next.js，不再做静态导出，统一指向 public 下的 HTML
+  const weeklyScheduleHref = '/html/sui_weekly_schedule.html';
 
   const bigButtonData: BigButtonItem[] = [
     { title: '岁己按钮 SUI Button', href: 'https://button.suiji.site', description: '岁己声音按钮' },
