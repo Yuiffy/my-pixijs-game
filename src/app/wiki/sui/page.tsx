@@ -76,6 +76,11 @@ const techniques: Technique[] = [
     type: '反击技',
     desc: '在半空中利用极小支点进行不可思议的锐角转向，躲避攻击并借力反杀敌人身后。',
     scene: '狭窄巷道：被多臂鬼逼入绝境，双脚在墙面一蹬，在空中划出“V”字形，倒悬着斩首。',
+    media: [
+      {
+        src: '/images/wiki/skill2.png', caption: '空中燕返的特写', ratio: '9 / 16',
+      },
+    ],
   },
   {
     id: 3,
@@ -92,6 +97,11 @@ const techniques: Technique[] = [
     type: '范围攻击 (AOE)',
     desc: '在极短时间内的无死角连续斩击，形成紫色的羽毛风暴漩涡，绞碎复数敌人。',
     scene: '蝙蝠鬼群：被数十只飞行鬼包围，岁己中心爆发出紫光，所有蝙蝠鬼化为碎块落下。',
+    media: [
+      {
+        src: '/images/wiki/skill4.png', caption: '群鸟乱舞的羽毛风暴', ratio: '9 / 16',
+      },
+    ],
   },
   {
     id: 5,
