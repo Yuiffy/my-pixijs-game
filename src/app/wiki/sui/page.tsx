@@ -17,7 +17,7 @@ type MediaItem = {
   ratio?: string;
 };
 
-// --- Data Definitions ---
+// --- Data Definitions ---嗷
 
 const basicInfo = [
   { label: '姓名', value: '岁己 (SUI / 歲己)' },

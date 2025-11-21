@@ -14,7 +14,7 @@ export default function Home() {
   // Next.js 静态导出行为：
   // - 开发环境：public/html/sui_weekly_schedule.html 需要完整路径（带 .html）
   // - 生产环境：静态导出后变成 out/html/sui_weekly_schedule（不带 .html 后缀）
-  // 因此需要根据环境动态设置链接
+  // 因此需要根据环境动态设置链接哦
   const weeklyScheduleHref = process.env.NODE_ENV === 'development'
     ? '/html/sui_weekly_schedule.html'
     : '/html/sui_weekly_schedule';
