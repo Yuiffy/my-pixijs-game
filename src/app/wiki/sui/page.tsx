@@ -200,6 +200,11 @@ const journeyStages = [
     description: '凭借对空战的绝对统治力，她在两年内成功讨伐了一位下弦，并积累了惊人的斩杀数，被主公破格提拔为鸟柱。',
     color: '#d8b4fe',
     dot: <CrownOutlined style={{ fontSize: '20px' }} />,
+    image: {
+      src: '/images/wiki/to_be_zhu.jpg',
+      caption: '在柱的会议中，岁己晋升为鸟柱。',
+      ratio: '10 / 16',
+    },
   },
   {
     key: 'infinite',
