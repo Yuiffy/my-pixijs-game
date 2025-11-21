@@ -86,6 +86,14 @@ const techniques = [
   },
 ];
 
+const wikiImages = [
+  { src: '/images/wiki/wiki_snapshot.jpg', title: '档案封面', description: '早期概念设定图，展示岁己的鸟柱羽织与紫色光翼。' },
+  { src: '/images/wiki/skill1_big.jpg', title: '壹之型·羽击（全景）', description: '一之型的广角镜头，大张力挥刀与紫色羽毛光效铺满画面。' },
+  { src: '/images/wiki/skill1.jpg', title: '壹之型·羽击（动作特写）', description: '同一招式的细节截帧，展示出刀刃破空与回身反手的瞬间。' },
+  { src: '/images/wiki/killmanybird.jpg', title: '一战成名·蝙蝠鬼群', description: '村庄夜战中单人面对蝙蝠鬼群，记录了她成名之战的终章。' },
+  { src: '/images/wiki/vstm.jpg', title: '对上弦贰·童磨', description: '无限城战中切断冰莲的瞬间，突出滑翔骨架与冰雾对冲。' },
+];
+
 const journey = [
   {
     color: 'gray',
@@ -260,6 +268,31 @@ export default function SuiWikiPage() {
                           </div>
                         </Col>
                       </Row>
+                    </Card>
+
+                    {/* Visual Gallery */}
+                    <Card className="bg-slate-900/80 border-purple-900/30 shadow-xl">
+                      <Divider orientation="left" className="border-purple-500"><span className="text-purple-300 text-lg">Ⅲ. 视觉资料库</span></Divider>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                        {wikiImages.map((img) => (
+                          <div key={img.src} className="bg-slate-950/40 rounded-2xl border border-purple-900/30 p-4 hover:border-purple-500/70 transition-colors duration-300 shadow-inner shadow-black/40">
+                            <div className="relative h-48 w-full overflow-hidden rounded-xl">
+                              <Image
+                                src={img.src}
+                                alt={img.title}
+                                fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                className="object-cover transition-transform duration-500 hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent" />
+                              <div className="absolute bottom-3 left-4 right-4">
+                                <p className="text-purple-200 font-semibold text-base drop-shadow">{img.title}</p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-3 leading-relaxed">{img.description}</p>
+                          </div>
+                        ))}
+                      </div>
                     </Card>
                   </div>
                 ),
