@@ -30,6 +30,9 @@ export default function Home() {
     {
       title: '周表模版', href: weeklyScheduleHref, description: '我来替主播写周表！', target: '',
     },
+    {
+      title: '鬼灭之刃·岁己 Wiki', href: '/wiki/sui', description: '鸟柱·岁己 (SUI) 档案 | 鸟之呼吸流派解析', target: '_self',
+    },
     // {title: '熊蛙棋 Bear Frog Chess', href: 'http://www.yuiffy.com/bear-frog-chess/', description: '又被称为枪棋/炮棋，在4x4的棋盘上12颗棋子的简单的双人对战棋类游戏'},
     // {title: '冻鳗榜单王', href: 'http://rank.yuiffy.com', description: '能够对动画/游戏/食物等进行打分和发布排行榜的榜单网站'},
     // {title: '贪吃蛇 Greedy Hebi', href: 'hebi/hebi.html', description: '简单畅快的贪吃蛇游戏'},
@@ -50,10 +53,10 @@ export default function Home() {
         <p className="text-4xl font-bold">岁己SUI应援站</p>
       </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
+      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left gap-4">
         {bigButtonData.map(({
-          title, href, description, target = '_blank',
-        }) => (
+                              title, href, description, target = '_blank',
+                            }) => (
           <a
             key={title}
             href={href}
