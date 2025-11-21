@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import {
-  Typography, Card, Tag, Divider, Timeline, Tabs, ConfigProvider, theme, Row, Col, Statistic, Image as AntImage,
+  Typography, Card, Tag,
+  Divider, Timeline, Tabs, ConfigProvider,
+  theme, Row, Col, Statistic, Image as AntImage,
 } from 'antd';
 import {
   ThunderboltOutlined, HistoryOutlined, ReadOutlined, CrownOutlined,
@@ -259,7 +261,9 @@ export default function SuiWikiPage() {
                 key: '1',
                 label: (
                   <span className="px-4 flex items-center gap-2">
-                    <ReadOutlined /> 档案资料
+                    <ReadOutlined />
+                    {' '}
+                    档案资料
                   </span>
                 ),
                 children: (
@@ -288,7 +292,7 @@ export default function SuiWikiPage() {
                           <button
                             type="button"
                             onClick={() => openMedia(outfitMedia)}
-                          className="group relative w-full rounded-2xl overflow-hidden border border-purple-900/40 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-gradient-to-b from-slate-900/80 to-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                            className="group relative w-full rounded-2xl overflow-hidden border border-purple-900/40 shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-gradient-to-b from-slate-900/80 to-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                             style={{ aspectRatio: outfitMedia.ratio }}
                           >
                             <NextImage
@@ -348,7 +352,7 @@ export default function SuiWikiPage() {
                       <div className="flex flex-col md:flex-row gap-6 items-center">
                         <div className="flex-1">
                           <p className="text-slate-300 leading-relaxed">
-                              这是概念稿。
+                            这是概念稿。
                           </p>
                           <button
                             type="button"
@@ -388,7 +392,9 @@ export default function SuiWikiPage() {
                 key: '2',
                 label: (
                   <span className="px-4 flex items-center gap-2">
-                    <ThunderboltOutlined /> 呼吸招式
+                    <ThunderboltOutlined />
+                    {' '}
+                    呼吸招式
                   </span>
                 ),
                 children: (
@@ -454,7 +460,9 @@ export default function SuiWikiPage() {
                 key: '3',
                 label: (
                   <span className="px-4 flex items-center gap-2">
-                    <HistoryOutlined /> 传奇历程
+                    <HistoryOutlined />
+                    {' '}
+                    传奇历程
                   </span>
                 ),
                 children: (
@@ -463,7 +471,7 @@ export default function SuiWikiPage() {
                     <div className="px-4 py-8 md:px-12">
                       <Timeline
                         mode="alternate"
-            items={journeyTimelineItems}
+                        items={journeyTimelineItems}
                       />
                     </div>
                   </Card>
@@ -492,7 +500,8 @@ export default function SuiWikiPage() {
         </AntImage.PreviewGroup>
 
         {/* CSS Animations embedded for this page */}
-        <style jsx global>{`
+        <style jsx global>
+          {`
           @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -531,7 +540,8 @@ export default function SuiWikiPage() {
             color: #d8b4fe !important;
             text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
           }
-        `}</style>
+        `}
+        </style>
       </div>
     </ConfigProvider>
   );
