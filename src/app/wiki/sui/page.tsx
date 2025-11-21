@@ -101,7 +101,7 @@ const techniques = [
   },
 ];
 const outfitMedia: MediaItem = {
-  src: '/images/wiki/sui_clothes_stand.jpg',
+  src: '/images/wiki/sui_clothes_stand.png',
   caption: '羽织装配示意 · 全身立绘',
   ratio: '9 / 16',
 };
@@ -110,6 +110,12 @@ const conceptArtwork: MediaItem = {
   src: '/images/wiki/wiki_snapshot.jpg',
   caption: '早期概念稿',
   ratio: '3 / 4',
+};
+
+const heroPortrait: MediaItem = {
+  src: '/images/wiki/sui_charactor_half_body.png',
+  caption: '岁己头像特写',
+  ratio: '1 / 1',
 };
 
 const journeyStages = [
@@ -227,14 +233,20 @@ export default function SuiWikiPage() {
                 <div className="absolute inset-1 rounded-full border border-purple-300/40 animate-slow-spin" />
                 <div className="absolute -top-4 left-1 text-purple-200/70 text-2xl">🪶</div>
                 <div className="absolute -bottom-3 right-0 text-purple-200/70 text-xl">✨</div>
-                <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.65)] bg-slate-900/80">
+                <button
+                  type="button"
+                  onClick={() => openMedia(heroPortrait)}
+                  className="relative w-full h-full rounded-full overflow-hidden border-4 border-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.65)] bg-slate-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                  aria-label="查看岁己头像"
+                >
                   <NextImage
-                    src="/images/wiki/sui_charactor_half_body.jpg"
+                    src={heroPortrait.src}
                     alt="Sui 头像"
                     fill
-                    className="object-cover object-top"
+                    className="object-cover object-[center_25%]"
+                    priority
                   />
-                </div>
+                </button>
               </div>
               <Tag color="purple" className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 text-sm border-none shadow-lg">
                 鳥柱
