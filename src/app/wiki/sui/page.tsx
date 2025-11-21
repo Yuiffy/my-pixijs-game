@@ -201,7 +201,7 @@ const journeyStages = [
     color: '#d8b4fe',
     dot: <CrownOutlined style={{ fontSize: '20px' }} />,
     image: {
-      src: '/images/wiki/to_be_zhu.jpg',
+      src: '/images/wiki/to_be_zhu.png',
       caption: '在柱的会议中，岁己晋升为鸟柱。',
       ratio: '10 / 16',
     },
