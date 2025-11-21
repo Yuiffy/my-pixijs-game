@@ -176,12 +176,22 @@ const journeyStages = [
     title: '悲惨过去',
     description: '居住在深山的家人被一只拥有飞行能力的异形鬼袭击。年幼的岁己躲在高树的鸟巢中幸存。她立誓要成为支配天空的人，不再让任何鬼在头顶作祟。',
     color: 'gray',
+    image: {
+      src: '/images/wiki/sui_little.png',
+      caption: '岁己躲在树上',
+      ratio: '16 / 9',
+    },
   },
   {
     key: 'exam',
     title: '最终选拔',
     description: '她没有在地面躲藏，而是利用自制的简易滑翔翼在树冠层顶端移动，像鹰一样俯冲猎杀鬼，展现了独特的空战天赋。',
     color: 'purple',
+    image: {
+      src: '/images/wiki/sui_test_battle.jpg',
+      caption: '岁己在最终选拔中展现了独特的空战天赋',
+      ratio: '16 / 9',
+    },
   },
   {
     key: 'fame',
