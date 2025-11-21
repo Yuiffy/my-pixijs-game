@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -110,6 +111,14 @@
             margin-right: 20px;
         }
 
+        .date-label {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #C08B5A;
+            font-weight: 400;
+        }
+
         .day-label.rest {
             color: #D2691E;
             font-weight: 500;
@@ -187,8 +196,15 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
 
         .character-name {
@@ -232,6 +248,24 @@
             border: 1px solid rgba(255, 165, 0, 0.4);
         }
 
+        .special-highlight.highlight-noodle {
+            background: linear-gradient(135deg, rgba(255, 228, 196, 0.85) 0%, rgba(255, 204, 153, 0.6) 100%);
+            border-color: rgba(222, 149, 81, 0.7);
+            box-shadow: 0 10px 25px rgba(222, 149, 81, 0.25);
+        }
+
+        .special-highlight.highlight-sun {
+            background: linear-gradient(135deg, rgba(255, 250, 205, 0.9) 0%, rgba(255, 239, 213, 0.7) 100%);
+            border-color: rgba(255, 215, 0, 0.6);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.25);
+        }
+
+        .special-highlight.highlight-festival {
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.85) 0%, rgba(255, 105, 180, 0.55) 100%);
+            border-color: rgba(255, 105, 180, 0.65);
+            box-shadow: 0 10px 25px rgba(255, 105, 180, 0.2);
+        }
+
         .feather-decoration {
             position: absolute;
             color: rgba(255, 228, 181, 0.6);
@@ -240,8 +274,17 @@
         }
 
         @keyframes featherFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
-            50% { transform: translateY(-15px) rotate(10deg); opacity: 0.8; }
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: translateY(-15px) rotate(10deg);
+                opacity: 0.8;
+            }
         }
 
         .feather-decoration:nth-child(1) {
@@ -263,6 +306,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="schedule-container">
         <!-- 装饰性羽毛 -->
@@ -278,58 +322,11 @@
                 2025.11.17 ~ 11.23
             </div>
 
-            <div class="schedule-table">
-                <div class="schedule-item rest-day">
-                    <div class="day-label rest">周一</div>
-                    <div class="schedule-content">
-                        <span class="emoji">😴</span>休息日 - 好好休息，充电准备！
-                    </div>
-                </div>
-
+            <div class="schedule-table" id="schedule-table">
                 <div class="schedule-item">
-                    <div class="day-label">周二</div>
+                    <div class="day-label">加载中</div>
                     <div class="schedule-content">
-                        <span class="emoji">🎵</span>20:00 唱歌聊天 2小时<br>
-                        <span class="emoji">🎮</span>然后玩星之卡比 2小时
-                    </div>
-                </div>
-
-                <div class="schedule-item special-highlight">
-                    <div class="day-label">周三</div>
-                    <div class="schedule-content">
-                        <span class="emoji">🌙</span>22:00 煮面回 (3D人头麦助眠)<br>
-                        <span class="emoji">🍜</span>温柔助眠，伴随入眠
-                    </div>
-                </div>
-
-                <div class="schedule-item">
-                    <div class="day-label">周四</div>
-                    <div class="schedule-content">
-                        <span class="emoji">🎵</span>19:40 唱歌聊天 2小时<br>
-                        <span class="emoji">🎬</span>然后看TOP250电影 2小时
-                    </div>
-                </div>
-
-                <div class="schedule-item">
-                    <div class="day-label">周五</div>
-                    <div class="schedule-content">
-                        <span class="emoji">🎵</span>19:40 唱歌聊天 2小时<br>
-                        <span class="emoji">🎮</span>然后玩星之卡比 2小时
-                    </div>
-                </div>
-
-                <div class="schedule-item">
-                    <div class="day-label">周六</div>
-                    <div class="schedule-content">
-                        <span class="emoji">🎵</span>19:40 唱歌聊天 2小时<br>
-                        <span class="emoji">🎬</span>然后看TOP250电影 2小时
-                    </div>
-                </div>
-
-                <div class="schedule-item rest-day">
-                    <div class="day-label rest">周日</div>
-                    <div class="schedule-content">
-                        <span class="emoji">🛌</span>休息日 - 养精蓄锐，下周见！
+                        <span class="emoji">⏳</span>正在根据设定计算本周的活动...
                     </div>
                 </div>
             </div>
@@ -360,5 +357,340 @@
             </div>
         </div>
     </div>
+
+    <script id="schedule-config">
+        window.scheduleConfig = {
+            timezone: 'Asia/Shanghai',
+            weekStart: 1,
+            restCopy: '休息日 - 养精蓄锐，下周见！',
+            fallbackCopy: '自由调休，灵感待机中～',
+            restRule: {
+                workDays: 5,
+                restDays: 1,
+                anchorDate: null,
+                anchorIsRest: false
+            },
+            restOverrides: {
+                '2025-11-17': true,
+            },
+            specialActivities: [
+                {
+                    date: '2025-11-20',
+                    // highlight: true,
+                    activities: [
+                        { emoji: '🎵', text: '19:40 唱歌聊天 2小时暖场' },
+                        { emoji: '🎬', text: '21:40 看《大话西游之月光宝盒》' }
+                    ]
+                },
+                {
+                    date: '2025-11-21',
+                    // highlight: true,
+                    activities: [
+                        { emoji: '🎵', text: '19:40 唱歌聊天 2小时暖场' },
+                        { emoji: '🎬', text: '21:40 看《大话西游之大圣娶亲》' }
+                    ]
+                },
+                {
+                    date: '2025-11-22',
+                    highlight: 'noodle',
+                    activities: [
+                        { emoji: '🎵', text: '14:40 唱唱聊聊~' },
+                        { emoji: '🎬', text: '16:40 玩《马里奥银河》' }
+                    ]
+                }
+            ],
+            weeklyFixed: {
+                3: {
+                    highlight: 'sun',
+                    activities: [
+                        { emoji: '🌙', text: '22:00 煮面回 (3D人头麦助眠)' },
+                        { emoji: '🍜', text: '温柔助眠，伴随入眠' }
+                    ]
+                },
+                7: {
+                    // highlight: 'sun',
+                    activities: [
+                        { emoji: '☀️', text: '14:30 下午播，唱唱聊聊~' }
+                    ]
+                }
+            },
+            defaultTemplates: [
+                {
+                    weekdays: [2, 4, 5, 6],
+                    activities: [
+                        { emoji: '🎵', text: '19:40 唱歌聊天 2小时' }
+                    ]
+                }
+            ],
+            rotationSlots: [
+                {
+                    weekdays: [2, 4, 5, 6],
+                    pool: [
+                        [
+                            { emoji: '🎮', text: '然后玩星之卡比 2小时' }
+                        ],
+                        [
+                            { emoji: '🎬', text: '然后看TOP250电影 2小时' }
+                        ]
+                    ],
+                    startIndex: 0,
+                    countTowardsRotation: true
+                }
+            ]
+        };
+    </script>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            const MS_IN_DAY = 24 * 60 * 60 * 1000;
+
+            const config = window.scheduleConfig || {};
+            const today = getToday(config.timezone);
+            const weekDates = getWeekDates(today, config.weekStart || 1);
+            const anchorDate = getRestAnchorDate(config) || weekDates[0];
+            const schedule = buildSchedule(weekDates, config, anchorDate);
+
+            updateMeta(weekDates);
+            renderSchedule(schedule);
+
+            function getToday(timezone) {
+                if (!timezone) {
+                    return stripTime(new Date());
+                }
+                const formatter = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: timezone,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                return stripTime(new Date(formatter.format(new Date())));
+            }
+
+            function stripTime(date) {
+                return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            }
+
+            function getWeekDates(reference, weekStart) {
+                const startIndex = Math.min(Math.max(weekStart, 1), 7);
+                const currentWeekday = reference.getDay() === 0 ? 7 : reference.getDay();
+                const diff = currentWeekday - startIndex;
+                const weekStartDate = new Date(reference);
+                weekStartDate.setDate(reference.getDate() - diff);
+                const result = [];
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(weekStartDate);
+                    day.setDate(weekStartDate.getDate() + i);
+                    result.push(day);
+                }
+                return result;
+            }
+
+            function formatDateDisplay(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}.${m}.${d}`;
+            }
+
+            function formatISODate(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            function getRestAnchorDate(cfg) {
+                if (cfg.restRule && cfg.restRule.anchorDate) {
+                    return new Date(cfg.restRule.anchorDate);
+                }
+                const specials = (cfg.specialActivities || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+                if (specials.length) {
+                    return new Date(specials[specials.length - 1].date);
+                }
+                return null;
+            }
+
+            function buildSchedule(dates, cfg, anchor) {
+                const specialMap = new Map((cfg.specialActivities || []).map(item => [item.date, item]));
+                const weeklyFixed = normalizeWeeklyFixed(cfg.weeklyFixed || {});
+                const restOverrides = cfg.restOverrides || {};
+                const defaultTemplates = cfg.defaultTemplates || [];
+                const rotationSlots = (cfg.rotationSlots || []).map((slot, index) => ({
+                    ...slot,
+                    state: slot.startIndex || 0,
+                    index
+                }));
+
+                return dates.map(date => {
+                    const iso = formatISODate(date);
+                    const weekdayIndex = date.getDay() === 0 ? 7 : date.getDay();
+                    const special = specialMap.get(iso);
+                    const override = restOverrides.hasOwnProperty(iso) ? restOverrides[iso] : undefined;
+                    const isRest = special
+                        ? false
+                        : typeof override === 'boolean'
+                            ? override
+                            : shouldRest(date, anchor, cfg.restRule);
+
+                    const base = {
+                        date,
+                        iso,
+                        weekdayIndex,
+                        dayLabel: DAY_LABELS[weekdayIndex - 1],
+                        dateDisplay: formatDateDisplay(date),
+                        activities: [],
+                        isRest,
+                        highlight: false,
+                        highlightType: null
+                    };
+
+                    if (isRest) {
+                        base.activities = [{
+                            emoji: '😴',
+                            text: cfg.restCopy || '休息日 - 调整状态，灵感蓄力中！'
+                        }];
+                        return base;
+                    }
+
+                    if (special) {
+                        base.activities = cloneActivities(special.activities || []);
+                        applyHighlight(base, special.highlight);
+                        return base;
+                    }
+
+                    if (weeklyFixed[weekdayIndex]) {
+                        const weeklyConfig = weeklyFixed[weekdayIndex];
+                        base.activities.push(...cloneActivities(weeklyConfig.activities || []));
+                        applyHighlight(base, weeklyConfig.highlight);
+                    }
+
+                    defaultTemplates.forEach(template => {
+                        if ((template.weekdays || []).includes(weekdayIndex)) {
+                            base.activities.push(...cloneActivities(template.activities || []));
+                        }
+                    });
+
+                    rotationSlots.forEach(slot => {
+                        if ((slot.weekdays || []).includes(weekdayIndex)) {
+                            if (slot.prefix) {
+                                base.activities.push(...cloneActivities(slot.prefix));
+                            }
+                            const pool = slot.pool || [];
+                            if (pool.length) {
+                                const selection = pool[slot.state % pool.length] || [];
+                                base.activities.push(...cloneActivities(selection));
+                                if (slot.countTowardsRotation !== false) {
+                                    slot.state++;
+                                }
+                            }
+                        }
+                    });
+
+                    if (!base.activities.length) {
+                        base.activities.push({
+                            emoji: '🌀',
+                            text: cfg.fallbackCopy || '待机中，随缘开播~'
+                        });
+                    }
+
+                    return base;
+                });
+            }
+
+            function normalizeWeeklyFixed(source) {
+                return Object.entries(source).reduce((acc, [key, value]) => {
+                    if (Array.isArray(value)) {
+                        acc[Number(key)] = { activities: value };
+                    } else if (value && typeof value === 'object') {
+                        const activities = Array.isArray(value.activities) ? value.activities : [];
+                        acc[Number(key)] = {
+                            activities,
+                            highlight: value.highlight
+                        };
+                    }
+                    return acc;
+                }, {});
+            }
+
+            function cloneActivities(list) {
+                return (list || []).map(item => ({ emoji: item.emoji || '•', text: item.text || '' }));
+            }
+
+            function shouldRest(date, anchor, rule = {}) {
+                if (!anchor || !rule) return false;
+                const workDays = Math.max(1, rule.workDays || 5);
+                const restDays = Math.max(1, rule.restDays || 1);
+                const cycle = workDays + restDays;
+                const anchorIsRest = !!rule.anchorIsRest;
+                const diff = Math.floor((stripTime(date) - stripTime(anchor)) / MS_IN_DAY);
+                const offset = anchorIsRest ? workDays : 0;
+                const normalized = mod(diff - offset, cycle);
+                return normalized === workDays;
+            }
+
+            function mod(value, divisor) {
+                const result = value % divisor;
+                return result >= 0 ? result : result + divisor;
+            }
+
+            function updateMeta(dates) {
+                const rangeText = `${formatDateDisplay(dates[0])} ~ ${formatDateDisplay(dates[dates.length - 1])}`;
+                const rangeEl = document.querySelector('.date-range');
+                if (rangeEl) {
+                    rangeEl.textContent = rangeText;
+                }
+                document.title = `岁己SUI的周表 - ${rangeText}`;
+            }
+
+            function applyHighlight(target, value) {
+                if (!value) return;
+                target.highlight = true;
+                target.highlightType = typeof value === 'string' ? value : 'default';
+            }
+
+            function renderSchedule(data) {
+                const container = document.getElementById('schedule-table');
+                if (!container) return;
+                container.innerHTML = '';
+
+                data.forEach(day => {
+                    const item = document.createElement('div');
+                    item.className = 'schedule-item';
+                    item.dataset.date = day.iso;
+
+                    if (day.isRest) {
+                        item.classList.add('rest-day');
+                    }
+                    if (day.highlight) {
+                        item.classList.add('special-highlight');
+                        if (day.highlightType) {
+                            item.classList.add(`highlight-${day.highlightType}`);
+                        }
+                    }
+
+                    const label = document.createElement('div');
+                    label.className = `day-label${day.isRest ? ' rest' : ''}`;
+                    label.innerHTML = `${day.dayLabel}<span class="date-label">${day.dateDisplay}</span>`;
+
+                    const content = document.createElement('div');
+                    content.className = 'schedule-content';
+
+                    day.activities.forEach(activity => {
+                        const row = document.createElement('div');
+                        row.innerHTML = `<span class="emoji">${activity.emoji || '•'}</span>${activity.text || ''}`;
+                        content.appendChild(row);
+                    });
+
+                    item.appendChild(label);
+                    item.appendChild(content);
+                    container.appendChild(item);
+                });
+            }
+        })();
+    </script>
 </body>
+
 </html>
