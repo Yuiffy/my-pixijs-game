@@ -55,8 +55,8 @@ export default function Home() {
 
       <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left gap-4">
         {bigButtonData.map(({
-                              title, href, description, target = '_blank',
-                            }) => (
+          title, href, description, target = '_blank',
+        }) => (
           <a
             key={title}
             href={href}
