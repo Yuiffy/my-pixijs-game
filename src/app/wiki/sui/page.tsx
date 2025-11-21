@@ -100,6 +100,11 @@ const techniques: Technique[] = [
     type: '单点突破',
     desc: '跳至高空垂直俯冲，将重力势能叠加到刀尖。威力足以击穿高硬度防御。',
     scene: '对战硬壳下弦：岁己在圆月背景下倒转俯冲，刀尖凝聚紫芒，一击击穿了鬼的坚硬外壳。',
+    media: [
+      {
+        src: '/images/wiki/skill5.png', caption: '岁己使用奈落之喙，威力足以击穿高硬度防御', ratio: '9 / 16',
+      },
+    ],
   },
   {
     id: 6,
@@ -108,6 +113,11 @@ const techniques: Technique[] = [
     type: '幻惑与位移',
     desc: '利用高速移动制造出极其逼真的紫色残影，扰乱敌人感知。敌人击中的永远是即将消散的残影。',
     scene: '对抗感知鬼：鬼的攻击穿透了岁己身体，但“岁己”化为烟雾消散，真身无声息地出现在鬼的视觉死角。',
+    media: [
+      {
+        src: '/images/wiki/skill6.png', caption: '岁己使用鵺之影，制造出逼真的幻影迷惑敌人', ratio: '9 / 16',
+      },
+    ],
   },
   {
     id: 99,
