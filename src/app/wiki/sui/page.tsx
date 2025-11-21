@@ -17,6 +17,18 @@ type MediaItem = {
   src: string;
   caption: string;
   ratio?: string;
+  fullWidth?: boolean;
+  objectPosition?: string;
+};
+
+type Technique = {
+  id: number;
+  nameCN: string;
+  nameJP: string;
+  type: string;
+  desc: string;
+  scene: string;
+  media?: MediaItem[];
 };
 
 // --- Data Definitions ---嗷
@@ -35,7 +47,7 @@ const stylesInfo = {
   visual: '招式斩击会爆发幽紫色的光芒，伴随着大量发光的幻影羽毛飘落。高级招式中，刀气会化作巨大的紫色猛禽幻影。',
 };
 
-const techniques = [
+const techniques: Technique[] = [
   {
     id: 1,
     nameCN: '壹之型 · 羽击',
@@ -44,8 +56,17 @@ const techniques = [
     desc: '极致速度的一刀斩，附带紫色羽毛光效。',
     scene: '初次任务：深夜森林中，鬼从树后扑来，岁己头也不回，反手一刀，鬼在空中一分为二，切口处飘落发光羽毛。',
     media: [
-      { src: '/images/wiki/skill1_big.jpg', caption: '夜空俯瞰的羽击全景，羽翼光效化作紫色风暴。', ratio: '3 / 4' },
-      { src: '/images/wiki/skill1.jpg', caption: '回身斩瞬间的特写，刀锋与羽毛残影交织。', ratio: '9 / 16' },
+      {
+        src: '/images/wiki/skill1.jpg', caption: '回身斩瞬间的特写，刀锋与羽毛残影交织。', ratio: '9 / 16',
+        //  fullWidth: true,
+      },
+      {
+        src: '/images/wiki/skill1_big.jpg',
+        caption: '夜空俯瞰的羽击全景，羽翼光效化作紫色风暴。',
+        ratio: '9 / 16',
+        objectPosition: 'center',
+        // fullWidth: true,
+      },
     ],
   },
   {
@@ -96,7 +117,13 @@ const techniques = [
     desc: '透支体力，在空中进行数百次超高速、不规则的立体机动斩击。刀光和羽毛填满天空，将敌人撕裂成无数碎块。',
     scene: '无限城：岁己开启斑纹，在童磨的冰莲花血鬼术中发动，整个屏幕被紫光占据，童磨的冰雕和本体被瞬间粉碎。',
     media: [
-      { src: '/images/wiki/vstm.jpg', caption: '无限城上空的终之型，全身光翼展开，刀芒切裂冰莲。', ratio: '9 / 16' },
+      {
+        src: '/images/wiki/vstm.jpg',
+        caption: '无限城上空的终之型，全身光翼展开，刀芒切裂冰莲。',
+        ratio: '16 / 20',
+        objectPosition: 'top center',
+        // fullWidth: true,
+      },
     ],
   },
 ];
@@ -437,7 +464,7 @@ export default function SuiWikiPage() {
                                       key={media.src}
                                       role="button"
                                       tabIndex={0}
-                                      className="relative w-full rounded-xl overflow-hidden border border-purple-900/30 bg-slate-950/40 shadow-inner shadow-black/40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                                      className={`relative w-full rounded-xl overflow-hidden border border-purple-900/30 bg-slate-950/40 shadow-inner shadow-black/40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${media.fullWidth ? 'sm:col-span-2' : ''}`}
                                       style={{ aspectRatio: media.ratio || '16 / 9' }}
                                       onClick={() => openMedia(media)}
                                       onKeyDown={(event) => {
@@ -450,6 +477,7 @@ export default function SuiWikiPage() {
                                         fill
                                         sizes="(max-width: 640px) 100vw, 50vw"
                                         className="object-cover transition-transform duration-500 hover:scale-105"
+                                        style={{ objectPosition: media.objectPosition || 'center' }}
                                       />
                                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent px-3 py-2">
                                         <p className="text-[11px] text-purple-100">{media.caption}</p>
