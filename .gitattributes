@@ -1,0 +1,34 @@
+# 先让 Git 自己判断：文本统一 LF
+* text=auto
+
+# 常用源码强制 LF（可按实际语言增删），为避免windows下自动变成CRLF问题，可以运行：git config core.autocrlf false
+*.kt   text eol=lf
+*.java text eol=lf
+*.dart text eol=lf
+*.gradle text eol=lf
+*.json text eol=lf
+*.arb text eol=lf
+*.md   text eol=lf
+*.js   text eol=lf
+*.ts   text eol=lf
+*.py   text eol=lf
+*.yaml text eol=lf
+*.sh   text eol=lf
+*.mako text eol=lf
+*.tsx  text eol=lf
+
+# 通用二进制一次写全，省得日后踩坑
+# (binary == -text -diff)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.mp4  binary
+*.mov  binary
+*.zip  binary
+*.7z   binary
+*.gz   binary
+*.jar  binary
+*.swiftmodule binary
+*.framework binary
