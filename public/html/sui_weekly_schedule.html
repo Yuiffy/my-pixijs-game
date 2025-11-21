@@ -102,6 +102,29 @@
             transform: translateX(5px);
         }
 
+        .schedule-item.today {
+            border: 1px solid rgba(255, 140, 0, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 165, 0, 0.25);
+            position: relative;
+        }
+
+        .schedule-item.today::after {
+            content: '今天';
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            font-size: 12px;
+            color: #fff;
+            background: linear-gradient(120deg, #ffa500, #ff7a18);
+            padding: 2px 8px;
+            border-radius: 999px;
+            box-shadow: 0 4px 12px rgba(255, 122, 24, 0.4);
+        }
+
+        .schedule-item.today .day-label {
+            color: #d2691e;
+        }
+
         .day-label {
             width: 50px;
             font-size: 16px;
@@ -520,7 +543,7 @@
             const schedule = buildSchedule(weekDates, config, anchorDate);
 
             updateMeta(weekDates, { previewNote: getPreviewNote(weekParam, referenceDate, today) });
-            renderSchedule(schedule);
+            renderSchedule(schedule, formatISODate(today));
             renderCharacterVisual(config);
 
             function getToday(timezone) {
@@ -719,7 +742,7 @@
                 target.highlightType = typeof value === 'string' ? value : 'default';
             }
 
-            function renderSchedule(data) {
+            function renderSchedule(data, todayIso) {
                 const container = document.getElementById('schedule-table');
                 if (!container) return;
                 container.innerHTML = '';
@@ -729,6 +752,9 @@
                     item.className = 'schedule-item';
                     item.dataset.date = day.iso;
 
+                    if (todayIso && day.iso === todayIso) {
+                        item.classList.add('today');
+                    }
                     if (day.isRest) {
                         item.classList.add('rest-day');
                     }
