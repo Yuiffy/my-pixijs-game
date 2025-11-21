@@ -817,6 +817,100 @@
                     { type: 'emoji', emoji: '🐦', name: '岁己SUI', tag: '小鸟公主' }
                 ];
             }
+
+            function resolveReferenceDate(param, today) {
+                if (!param) return today;
+                const trimmed = String(param).trim();
+                if (!trimmed) return today;
+                const normalized = trimmed.toLowerCase();
+
+                if (normalized === 'next') {
+                    return addDays(today, 7);
+                }
+                if (normalized === 'prev' || normalized === 'previous') {
+                    return addDays(today, -7);
+                }
+
+                const weekOffsetMatch = normalized.match(/^([+-]?\d+)w$/);
+                if (weekOffsetMatch) {
+                    const offset = Number(weekOffsetMatch[1]);
+                    if (!Number.isNaN(offset)) {
+                        return addDays(today, offset * 7);
+                    }
+                }
+
+                const dayOffsetMatch = normalized.match(/^([+-]?\d+)d$/);
+                if (dayOffsetMatch) {
+                    const offset = Number(dayOffsetMatch[1]);
+                    if (!Number.isNaN(offset)) {
+                        return addDays(today, offset);
+                    }
+                }
+
+                const parsed = parseDateParam(trimmed);
+                if (parsed) {
+                    return parsed;
+                }
+
+                return today;
+            }
+
+            function parseDateParam(value) {
+                const normalized = value.replace(/\./g, '-');
+                const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+                if (!match) return null;
+                const [, y, m, d] = match;
+                const year = Number(y);
+                const month = Number(m) - 1;
+                const day = Number(d);
+                const candidate = new Date(year, month, day);
+                if (
+                    Number.isNaN(candidate.getTime()) ||
+                    candidate.getFullYear() !== year ||
+                    candidate.getMonth() !== month ||
+                    candidate.getDate() !== day
+                ) {
+                    return null;
+                }
+                return stripTime(candidate);
+            }
+
+            function addDays(date, amount) {
+                const result = new Date(date);
+                result.setDate(result.getDate() + Number(amount || 0));
+                return stripTime(result);
+            }
+
+            function getPreviewNote(param, referenceDate, today) {
+                if (!param) return '';
+                const trimmed = String(param).trim();
+                if (!trimmed) return '';
+                if (referenceDate.getTime() === today.getTime()) {
+                    return '';
+                }
+
+                const normalized = trimmed.toLowerCase();
+                if (normalized === 'next') return '预览：下周';
+                if (normalized === 'prev' || normalized === 'previous') return '预览：上周';
+
+                const weekOffsetMatch = normalized.match(/^([+-]?\d+)w$/);
+                if (weekOffsetMatch) {
+                    const offset = Number(weekOffsetMatch[1]);
+                    if (!Number.isNaN(offset) && offset !== 0) {
+                        return offset > 0 ? `预览：+${offset}周` : `预览：${offset}周`;
+                    }
+                }
+
+                const dayOffsetMatch = normalized.match(/^([+-]?\d+)d$/);
+                if (dayOffsetMatch) {
+                    const offset = Number(dayOffsetMatch[1]);
+                    if (!Number.isNaN(offset) && offset !== 0) {
+                        return offset > 0 ? `预览：+${offset}天` : `预览：${offset}天`;
+                    }
+                }
+
+                return `预览：${formatDateDisplay(referenceDate)} 所在周`;
+            }
         })();
     </script>
 </body>
