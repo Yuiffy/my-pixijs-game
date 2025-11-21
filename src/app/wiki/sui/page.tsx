@@ -572,6 +572,7 @@ export default function SuiWikiPage() {
         >
           {activeMedia && (
             <AntImage
+              key={activeMedia.src}
               src={activeMedia.src}
               alt={activeMedia.caption}
               style={{ display: 'none' }}
