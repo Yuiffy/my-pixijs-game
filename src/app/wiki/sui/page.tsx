@@ -133,7 +133,7 @@ const journeyStages = [
     image: {
       src: '/images/wiki/killmanybird.jpg',
       caption: '蝙蝠鬼群夜战的决胜瞬间，紫光漩涡吞噬整片天空。',
-      ratio: '16 / 9',
+      ratio: '10 / 16',
     },
   },
   {
@@ -232,8 +232,7 @@ export default function SuiWikiPage() {
                     src="/images/wiki/sui_charactor_half_body.jpg"
                     alt="Sui 头像"
                     fill
-                    sizes="128px"
-                    className="object-contain scale-110"
+                    className="object-cover object-top"
                   />
                 </div>
               </div>
@@ -350,9 +349,10 @@ export default function SuiWikiPage() {
                     <Card className="bg-slate-900/80 border-purple-900/30 shadow-xl">
                       <Divider orientation="left" className="border-purple-500"><span className="text-purple-300 text-lg">Ⅲ. 早期角色概念稿</span></Divider>
                       <div className="flex flex-col md:flex-row gap-6 items-center">
-                        <div className="flex-1">
+
+                        <div className="flex-1 min-w-[200px]">
                           <p className="text-slate-300 leading-relaxed">
-                            这是概念稿。
+                            在最初的设计中，有岁己SUI作为鸟柱，但装扮太过现代化，并且特色盖过主角，该角色被删除，剧情挪到虫柱、恋柱、花柱身上。
                           </p>
                           <button
                             type="button"
@@ -366,7 +366,7 @@ export default function SuiWikiPage() {
                         <button
                           type="button"
                           onClick={() => openMedia(conceptArtwork)}
-                          className="flex-3 w-full max-h-64 group rounded-3xl overflow-hidden border border-purple-900/40 bg-slate-950/50 shadow-inner shadow-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                          className="flex-2 w-full max-h-64 group rounded-3xl overflow-hidden border border-purple-900/40 bg-slate-950/50 shadow-inner shadow-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                           style={{ aspectRatio: conceptArtwork.ratio }}
                         >
                           <div className="relative w-full h-full">
