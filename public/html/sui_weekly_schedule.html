@@ -126,16 +126,16 @@
 
         .schedule-container {
             width: 100%;
-            max-width: 1100px; /* 再次加宽，确保横向空间充足 */
+            max-width: 1100px;
             min-height: 650px;
             background: var(--container-bg);
-            border-radius: 32px; /* 更大的圆角 */
+            border-radius: 32px;
             box-shadow: 0 25px 60px var(--shadow-color);
             border: 4px solid var(--container-border);
             display: flex;
             flex-direction: row;
             position: relative;
-            overflow: hidden; /* 隐藏溢出，看起来更整洁 */
+            overflow: hidden;
             margin-bottom: 40px;
             transition: all 0.5s ease;
         }
@@ -148,10 +148,11 @@
                 max-width: 100%;
                 border-radius: 20px;
                 border-width: 2px;
+                margin-top: 20px; /* 留出顶部空间给颜色按钮 */
             }
             
             .left-section {
-                padding: 25px 20px; /* 减少移动端内边距 */
+                padding: 25px 20px !important;
             }
 
             .title {
@@ -159,24 +160,95 @@
             }
             
             .right-section {
-                padding: 30px 20px;
+                padding: 30px 20px !important;
             }
             
             .feather-decoration {
                 display: none;
             }
+
+            /* 小屏下：日程项改为垂直排列 */
+            .schedule-item {
+                flex-direction: column;
+                align-items: flex-start !important;
+                padding: 15px !important;
+                gap: 10px;
+            }
+
+            .day-label {
+                width: 100% !important;
+                flex-direction: row !important; /* 周几和日期并排 */
+                justify-content: flex-start !important;
+                margin-right: 0 !important;
+                margin-bottom: 5px;
+                padding-bottom: 8px;
+                border-bottom: 1px dashed rgba(0,0,0,0.05);
+            }
+
+            .day-name {
+                font-size: 20px !important;
+                margin-bottom: 0 !important;
+                margin-right: 10px;
+            }
+
+            .date-label {
+                margin-top: 4px; /* 对齐基线 */
+            }
+
+            .schedule-content {
+                width: 100%;
+                padding-left: 5px;
+            }
+
+            /* 小屏下：主题切换器自动收起 */
+            .theme-switcher {
+                top: 20px !important;
+                right: 0 !important; /* 贴着右边 */
+                padding: 8px !important;
+                transform: translateX(calc(100% - 15px)); /* 默认缩进去，只露一点点 */
+                transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+                background: rgba(255, 255, 255, 0.95) !important;
+                box-shadow: -2px 2px 10px rgba(0,0,0,0.1) !important;
+                cursor: pointer;
+            }
+
+            /* 添加一个小把手提示用户可以点击 */
+            .theme-switcher::before {
+                content: "◀"; /* 或者用颜色点 */
+                position: absolute;
+                left: 4px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 10px;
+                color: #888;
+                opacity: 0.8;
+            }
+
+            /* 展开状态 */
+            .theme-switcher.expanded {
+                transform: translateX(0) !important;
+            }
+            
+            .theme-switcher.expanded::before {
+                content: "▶"; /* 展开后箭头变向 */
+                right: auto;
+                left: -12px; /* 移到左边 */
+                color: transparent; /* 展开后隐藏箭头，因为手指可能会遮挡 */
+            }
         }
 
         .left-section {
-            flex: 3.5; /* 左侧占比进一步加大 */
-            padding: 50px; /* 增加内边距，看起来更高端 */
+            flex: 3.5;
+            padding: 50px;
             position: relative;
             z-index: 1;
         }
 
         .title {
             font-family: 'Noto Serif SC', serif;
-            font-size: 48px; /* 标题更大 */
+            font-size: 48px;
             font-weight: 900;
             color: var(--text-title);
             margin-bottom: 12px;
@@ -197,7 +269,7 @@
             background: var(--date-pill-bg);
             padding: 12px 30px;
             border-radius: 50px;
-            font-size: 20px; /* 日期更大 */
+            font-size: 20px;
             font-weight: 700;
             color: var(--text-title);
             text-align: center;
@@ -215,8 +287,8 @@
         .schedule-item {
             display: flex;
             align-items: center;
-            margin-bottom: 16px; /* 间距适中 */
-            padding: 14px 24px; /* 减小上下 padding，更紧凑但保持左右宽敞 */
+            margin-bottom: 16px;
+            padding: 14px 24px;
             border-radius: 18px;
             transition: all 0.3s ease;
             background: var(--item-bg);
@@ -241,7 +313,7 @@
         }
         
         .day-name {
-            font-size: 24px; /* 周几更大 */
+            font-size: 24px;
             font-weight: 900;
             color: var(--text-title);
             line-height: 1;
@@ -257,13 +329,13 @@
         }
 
         .day-label.rest .day-name {
-            color: var(--note-border); /* 休息日颜色跟随主题 */
+            color: var(--note-border);
             opacity: 0.8;
         }
 
         .schedule-content {
             flex: 1;
-            font-size: 19px; /* 内容字号显著加大，适合截图 */
+            font-size: 19px;
             color: var(--text-primary);
             line-height: 1.4;
             font-weight: 500;
@@ -274,8 +346,10 @@
             margin-right: 12px;
             vertical-align: -3px;
             display: inline-block;
-            width: 30px; /* 对齐 emoji */
+            width: 30px;
             text-align: center;
+            /* 强制 Emoji 使用系统字体，避免 Noto 字体覆盖导致不显示 */
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
         }
         
         .activity-row {
@@ -292,7 +366,7 @@
         }
 
         .right-section {
-            flex: 1.4; /* 右侧稍微放宽 */
+            flex: 1.4;
             padding: 50px 40px;
             display: flex;
             flex-direction: column;
@@ -327,7 +401,7 @@
         }
 
         .memo-content {
-            font-size: 17px; /* 右侧文字加大 */
+            font-size: 17px;
             color: var(--text-primary);
             line-height: 1.7;
             font-style: italic;
@@ -340,7 +414,7 @@
         }
 
         .character {
-            width: 180px; /* 头像加大 */
+            width: 180px;
             height: 180px;
             background: linear-gradient(135deg, #FFE4B5 0%, #F4A460 100%);
             border-radius: 50%;
@@ -359,6 +433,11 @@
         .character.character-svg {
             padding: 0;
             background: #fff;
+        }
+
+        .character.character-emoji {
+            /* 强制 Emoji 使用系统字体，避免 Noto 字体覆盖导致不显示 */
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
         }
 
         .character img {
@@ -400,7 +479,7 @@
         }
 
         .weekly-note-content {
-            font-size: 16px; /* 须知文字加大 */
+            font-size: 16px;
             color: var(--text-primary);
             line-height: 1.7;
         }
@@ -408,7 +487,7 @@
         /* 特殊高亮样式适配主题 */
         .special-highlight {
             border: 1px solid var(--note-border);
-            background: var(--item-hover-bg); /* 简化高亮逻辑，使用hover色 */
+            background: var(--item-hover-bg);
         }
 
         .feather-decoration {
@@ -419,6 +498,8 @@
             animation: featherFloat 5s ease-in-out infinite;
             z-index: 0;
             pointer-events: none;
+            /* 强制 Emoji 使用系统字体 */
+            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
         }
 
         @keyframes featherFloat {
@@ -468,7 +549,7 @@
 
 <body>
     <!-- 主题切换器 -->
-    <div class="theme-switcher">
+    <div class="theme-switcher" id="themeSwitcher">
         <div class="theme-btn" style="background: #f4f1e8;" onclick="setTheme('default')" title="温暖米色"></div>
         <div class="theme-btn" style="background: #1a1c2c;" onclick="setTheme('dark')" title="高端黑金"></div>
         <div class="theme-btn" style="background: #e1bee7;" onclick="setTheme('blue')" title="清爽蓝调"></div>
@@ -476,7 +557,7 @@
     </div>
 
     <div class="schedule-container">
-        <!-- 装饰性羽毛 -->
+        <!-- 装饰性羽毛 - 换回普通羽毛emoji -->
         <div class="feather-decoration">🪶</div>
         <div class="feather-decoration">✨</div>
         <div class="feather-decoration">🪶</div>
@@ -638,6 +719,29 @@
                 }
             });
         }
+
+        // 移动端主题切换器交互
+        document.addEventListener('DOMContentLoaded', function() {
+            const switcher = document.getElementById('themeSwitcher');
+            if (switcher) {
+                // 仅在移动端生效的点击展开逻辑
+                switcher.addEventListener('click', function(e) {
+                    // 检查是否是移动端视图 (使用innerWidth或CSS media query检测)
+                    if (window.innerWidth <= 850) {
+                        // 如果点击的是按钮本身，不收起，让setTheme执行
+                        if (e.target.classList.contains('theme-btn')) {
+                            // 延迟收起，让用户看到反馈
+                            setTimeout(() => {
+                                this.classList.remove('expanded');
+                            }, 300);
+                        } else {
+                            // 点击空白处，切换展开/收起
+                            this.classList.toggle('expanded');
+                        }
+                    }
+                });
+            }
+        });
 
         (function () {
             'use strict';
