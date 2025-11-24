@@ -36,7 +36,7 @@
             --note-border: #D2691E;
             
             --date-pill-bg: rgba(210, 180, 140, 0.25);
-            --decoration-opacity: 0.15; /* SVG 颜色较深，稍微降低透明度 */
+            --decoration-opacity: 0.15; 
             --decoration-color: #8B4513;
         }
 
@@ -139,7 +139,8 @@
             display: flex;
             flex-direction: row;
             position: relative;
-            overflow: hidden;
+            /* overflow: hidden;  允许SVG溢出一点点更有层次感，或者根据需要开启 */
+            overflow: hidden; 
             margin-bottom: 40px;
             transition: all 0.5s ease;
         }
@@ -167,8 +168,13 @@
                 padding: 30px 20px !important;
             }
             
+            /* 在移动端，如果SVG完全隐藏也可以，
+               这里选择保留并调整位置，避免遮挡
+            */
             .feather-decoration {
-                display: none;
+                /* display: none; */ 
+                opacity: 0.1 !important; /* 降低透明度 */
+                z-index: 0 !important; /* 确保在底层 */
             }
 
             /* 小屏下：日程项改为垂直排列 */
@@ -206,13 +212,10 @@
 
             /* 小屏下：主题切换器自动收起 */
             .theme-switcher {
-                top: 20px !important;
-                right: 0 !important; /* 贴着右边 */
-                padding: 8px 12px 8px 18px !important; /* 左边多留点空给把手 */
-                /* 默认缩进去，只露一点点 
-                   100% 是自身宽度
-                   -20px 是露出的宽度
-                */
+                top: 15px !important;
+                right: 0 !important; 
+                padding: 8px 12px 8px 18px !important;
+                /* 默认缩进 */
                 transform: translateX(calc(100% - 24px)); 
                 transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
                 border-top-right-radius: 0 !important;
@@ -223,11 +226,12 @@
                 box-shadow: -2px 2px 10px rgba(0,0,0,0.1) !important;
                 cursor: pointer;
                 border: 1px solid rgba(0,0,0,0.05);
+                z-index: 2000; /* 确保层级最高，不被任何东西挡住 */
             }
 
             /* 小把手指示器 */
             .theme-switcher::before {
-                content: "🎨"; /* 调色盘 Emoji */
+                content: "🎨";
                 position: absolute;
                 left: 4px;
                 top: 50%;
@@ -241,11 +245,10 @@
             /* 展开状态 */
             .theme-switcher.expanded {
                 transform: translateX(0) !important;
-                padding-left: 12px !important; /* 展开后恢复正常内边距 */
+                padding-left: 12px !important;
             }
             
             .theme-switcher.expanded::before {
-                content: ""; /* 展开后隐藏把手 */
                 display: none;
             }
         }
@@ -359,7 +362,7 @@
             display: inline-block;
             width: 30px;
             text-align: center;
-            /* 强制 Emoji 使用系统字体，避免 Noto 字体覆盖导致不显示 */
+            /* 强制 Emoji 使用系统字体 */
             font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
         }
         
@@ -447,7 +450,6 @@
         }
 
         .character.character-emoji {
-            /* 强制 Emoji 使用系统字体，避免 Noto 字体覆盖导致不显示 */
             font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
         }
 
@@ -508,7 +510,7 @@
             width: 60px;
             height: 60px;
             animation: featherFloat 6s ease-in-out infinite;
-            z-index: 0;
+            z-index: 2; /* 提高层级，避免被内容背景完全遮挡，但要注意透明度 */
             pointer-events: none;
         }
         
@@ -516,7 +518,7 @@
         .feather-decoration svg {
             width: 100%;
             height: 100%;
-            fill: currentColor; /* 允许通过 color 属性控制颜色 */
+            fill: currentColor; 
         }
 
         @keyframes featherFloat {
@@ -524,9 +526,36 @@
             50% { transform: translateY(-25px) rotate(10deg); }
         }
 
-        .feather-decoration:nth-child(1) { top: 5%; right: 5%; animation-delay: 0s; width: 80px; height: 80px; }
-        .feather-decoration:nth-child(2) { top: 45%; left: 2%; animation-delay: 2s; transform: scaleX(-1); width: 50px; height: 50px; }
-        .feather-decoration:nth-child(3) { bottom: 5%; right: 8%; animation-delay: 4s; }
+        /* 调整 SVG 位置，避免遮挡关键文字，但又要有装饰感 */
+        .feather-decoration:nth-child(1) { 
+            top: 2%; 
+            right: 2%; 
+            animation-delay: 0s; 
+            width: 100px; 
+            height: 100px; 
+            opacity: 0.1; /* 进一步降低不透明度，作为背景纹理 */
+        }
+        
+        .feather-decoration:nth-child(2) { 
+            top: 40%; 
+            left: 0%; 
+            animation-delay: 2s; 
+            transform: scaleX(-1); 
+            width: 80px; 
+            height: 80px; 
+            opacity: 0.1;
+        }
+        
+        /* 右下角这个容易挡住文字，移到更边缘或更底部 */
+        .feather-decoration:nth-child(3) { 
+            bottom: 1%; 
+            right: 2%; 
+            animation-delay: 4s; 
+            width: 120px;
+            height: 120px;
+            opacity: 0.08; /* 很淡 */
+            z-index: 0; /* 这个放到底层去 */
+        }
 
         /* --- 主题切换控件 --- */
         .theme-switcher {
@@ -574,11 +603,11 @@
     </div>
 
     <div class="schedule-container">
-        <!-- 装饰性 SVG - 替代原来的 Emoji -->
+        <!-- 装饰性 SVG -->
         <!-- 1. Feather -->
         <div class="feather-decoration">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" fill="currentColor" opacity="0.3"></path>
+                <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" fill="currentColor"></path>
                 <path d="M16 8L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
                 <path d="M17.5 15H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
             </svg>
