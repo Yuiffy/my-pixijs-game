@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>岁己SUI的周表 - 2025.11.17~11.23</title>
+    <title>岁己SUI的周表</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;700&display=swap');
 
@@ -339,7 +339,7 @@
             <div class="subtitle">小饼干的投喂时间表 📅（纯属猜测，具体时间不固定）</div>
 
             <div class="date-range">
-                2025.11.17 ~ 11.23
+                加载中...
             </div>
 
             <div class="schedule-table" id="schedule-table">
@@ -382,13 +382,15 @@
     <script id="schedule-config">
         window.scheduleConfig = {
             timezone: 'Asia/Shanghai',
-            weekStart: 1,
+            weekStart: 1, // 周一为一周开始
             restCopy: '休息日 - 养精蓄锐，下周见！',
             fallbackCopy: '自由调休，灵感待机中～',
             restRule: {
                 workDays: 5,
                 restDays: 1,
-                anchorDate: null,
+                // 【修复点】强制设置锚点为本周一(11.24)为工作开始第一天
+                // 这样推算下来：24(一)工, 25(二)工, 26(三)工, 27(四)工, 28(五)工, 29(六)休
+                anchorDate: '2025-11-24', 
                 anchorIsRest: false
             },
             restOverrides: {
