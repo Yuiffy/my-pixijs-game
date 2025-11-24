@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>岁己SUI的周表</title>
+    <title>岁己SUI的周表 - 2025.11.24~11.30</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap');
 
         * {
             margin: 0;
@@ -14,74 +14,198 @@
             box-sizing: border-box;
         }
 
+        /* --- 主题变量定义 --- */
+        :root {
+            /* 默认：温暖米色调 (Warm Beige) */
+            --bg-gradient: linear-gradient(135deg, #fdf6e3 0%, #f4f1e8 100%);
+            --container-bg: #faf7f0;
+            --container-border: rgba(160, 82, 45, 0.15);
+            --shadow-color: rgba(139, 69, 19, 0.15);
+            
+            --text-primary: #5D4E37;
+            --text-title: #8B4513;
+            --text-accent: #A0522D;
+            
+            --item-bg: rgba(255, 255, 255, 0.5);
+            --item-hover-bg: rgba(255, 228, 181, 0.35);
+            --rest-bg: rgba(210, 180, 140, 0.2);
+            
+            --right-section-bg: rgba(255, 239, 213, 0.4);
+            --memo-bg: #fffaf0;
+            --note-bg: rgba(255, 255, 255, 0.7);
+            --note-border: #D2691E;
+            
+            --date-pill-bg: rgba(210, 180, 140, 0.25);
+            --decoration-opacity: 0.4;
+        }
+
+        /* 主题：高端深色 (Elegant Dark) */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
+            --container-bg: rgba(30, 30, 40, 0.95);
+            --container-border: rgba(255, 215, 0, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            
+            --text-primary: #e0e0e0;
+            --text-title: #ffd700; /* 金色标题 */
+            --text-accent: #bcaaa4;
+            
+            --item-bg: rgba(255, 255, 255, 0.05);
+            --item-hover-bg: rgba(255, 215, 0, 0.1);
+            --rest-bg: rgba(255, 255, 255, 0.03);
+            
+            --right-section-bg: rgba(0, 0, 0, 0.2);
+            --memo-bg: rgba(255, 255, 255, 0.08);
+            --note-bg: rgba(255, 255, 255, 0.08);
+            --note-border: #ffd700;
+            
+            --date-pill-bg: rgba(255, 215, 0, 0.1);
+            --decoration-opacity: 0.2;
+        }
+
+        /* 主题：清爽蓝调 (Fresh Blue) */
+        [data-theme="blue"] {
+            --bg-gradient: linear-gradient(135deg, #e0f7fa 0%, #e1bee7 100%);
+            --container-bg: #ffffff;
+            --container-border: rgba(100, 181, 246, 0.3);
+            --shadow-color: rgba(33, 150, 243, 0.15);
+            
+            --text-primary: #37474f;
+            --text-title: #1565c0;
+            --text-accent: #5c6bc0;
+            
+            --item-bg: rgba(227, 242, 253, 0.4);
+            --item-hover-bg: rgba(187, 222, 251, 0.5);
+            --rest-bg: rgba(207, 216, 220, 0.3);
+            
+            --right-section-bg: rgba(225, 245, 254, 0.5);
+            --memo-bg: #f3e5f5;
+            --note-bg: #e3f2fd;
+            --note-border: #42a5f5;
+            
+            --date-pill-bg: rgba(66, 165, 245, 0.1);
+            --decoration-opacity: 0.5;
+        }
+
+        /* 主题：可爱粉 (Cute Pink) */
+        [data-theme="pink"] {
+            --bg-gradient: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
+            --container-bg: #fff5f8;
+            --container-border: rgba(255, 182, 193, 0.4);
+            --shadow-color: rgba(255, 105, 180, 0.2);
+            
+            --text-primary: #885566;
+            --text-title: #ff69b4;
+            --text-accent: #db7093;
+            
+            --item-bg: rgba(255, 255, 255, 0.6);
+            --item-hover-bg: rgba(255, 192, 203, 0.4);
+            --rest-bg: rgba(255, 228, 225, 0.5);
+            
+            --right-section-bg: rgba(255, 240, 245, 0.6);
+            --memo-bg: #fff;
+            --note-bg: rgba(255, 255, 255, 0.8);
+            --note-border: #ff69b4;
+            
+            --date-pill-bg: rgba(255, 182, 193, 0.3);
+            --decoration-opacity: 0.6;
+        }
+
+
         body {
             font-family: 'Noto Sans SC', sans-serif;
-            background: linear-gradient(135deg, #fdf6e3 0%, #f4f1e8 100%);
+            background: var(--bg-gradient);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             padding: 20px;
+            color: var(--text-primary);
+            transition: background 0.5s ease;
         }
 
         .schedule-container {
-            width: 900px;
-            min-height: 600px;
-            background: #faf7f0;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(139, 69, 19, 0.1);
-            border: 2px solid rgba(160, 82, 45, 0.1);
+            width: 100%;
+            max-width: 1100px; /* 再次加宽，确保横向空间充足 */
+            min-height: 650px;
+            background: var(--container-bg);
+            border-radius: 32px; /* 更大的圆角 */
+            box-shadow: 0 25px 60px var(--shadow-color);
+            border: 4px solid var(--container-border);
             display: flex;
+            flex-direction: row;
             position: relative;
-            overflow: visible;
+            overflow: hidden; /* 隐藏溢出，看起来更整洁 */
+            margin-bottom: 40px;
+            transition: all 0.5s ease;
         }
 
-        .schedule-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                radial-gradient(circle at 20% 80%, rgba(255, 218, 185, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 228, 181, 0.1) 0%, transparent 50%);
-            pointer-events: none;
+        /* 移动端适配优化 */
+        @media (max-width: 850px) {
+            .schedule-container {
+                flex-direction: column;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 20px;
+                border-width: 2px;
+            }
+            
+            .left-section {
+                padding: 25px 20px; /* 减少移动端内边距 */
+            }
+
+            .title {
+                font-size: 32px !important;
+            }
+            
+            .right-section {
+                padding: 30px 20px;
+            }
+            
+            .feather-decoration {
+                display: none;
+            }
         }
 
         .left-section {
-            flex: 2;
-            padding: 30px 30px 40px 30px;
+            flex: 3.5; /* 左侧占比进一步加大 */
+            padding: 50px; /* 增加内边距，看起来更高端 */
             position: relative;
             z-index: 1;
         }
 
         .title {
             font-family: 'Noto Serif SC', serif;
-            font-size: 32px;
-            font-weight: 700;
-            color: #8B4513;
-            margin-bottom: 8px;
+            font-size: 48px; /* 标题更大 */
+            font-weight: 900;
+            color: var(--text-title);
+            margin-bottom: 12px;
             text-align: center;
+            letter-spacing: -1px;
         }
 
         .subtitle {
-            font-size: 14px;
-            color: #A0522D;
+            font-size: 16px;
+            color: var(--text-accent);
             text-align: center;
-            margin-bottom: 30px;
-            font-weight: 300;
+            margin-bottom: 40px;
+            font-weight: 500;
+            opacity: 0.9;
         }
 
         .date-range {
-            background: rgba(210, 180, 140, 0.2);
-            padding: 8px 15px;
-            border-radius: 15px;
-            font-size: 13px;
-            color: #8B4513;
+            background: var(--date-pill-bg);
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 20px; /* 日期更大 */
+            font-weight: 700;
+            color: var(--text-title);
             text-align: center;
-            margin-bottom: 25px;
-            font-weight: 500;
+            margin-bottom: 40px;
+            display: table;
+            margin-left: auto;
+            margin-right: auto;
+            letter-spacing: 1px;
         }
 
         .schedule-table {
@@ -90,256 +214,279 @@
 
         .schedule-item {
             display: flex;
-            align-items: flex-start;
-            margin-bottom: 16px;
-            padding: 10px 15px;
-            border-radius: 10px;
+            align-items: center;
+            margin-bottom: 16px; /* 间距适中 */
+            padding: 14px 24px; /* 减小上下 padding，更紧凑但保持左右宽敞 */
+            border-radius: 18px;
             transition: all 0.3s ease;
+            background: var(--item-bg);
+            border: 1px solid transparent;
         }
 
         .schedule-item:hover {
-            background: rgba(255, 228, 181, 0.15);
-            transform: translateX(5px);
+            background: var(--item-hover-bg);
+            transform: scale(1.015);
+            box-shadow: 0 4px 12px var(--shadow-color);
         }
 
-
         .day-label {
-            width: 50px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #A0522D;
+            width: 80px;
             text-align: center;
-            margin-right: 20px;
+            margin-right: 30px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .day-name {
+            font-size: 24px; /* 周几更大 */
+            font-weight: 900;
+            color: var(--text-title);
+            line-height: 1;
+            margin-bottom: 6px;
         }
 
         .date-label {
-            display: inline-block;
-            margin-top: 6px;
-            font-size: 11px;
-            color: #C08B5A;
-            font-weight: 400;
+            font-size: 14px;
+            color: var(--text-accent);
+            font-weight: 700;
+            opacity: 0.8;
+            font-family: 'Courier New', monospace;
         }
 
-        .day-label.rest {
-            color: #D2691E;
-            font-weight: 500;
+        .day-label.rest .day-name {
+            color: var(--note-border); /* 休息日颜色跟随主题 */
+            opacity: 0.8;
         }
 
         .schedule-content {
             flex: 1;
-            font-size: 14px;
-            color: #5D4E37;
-            line-height: 1.3;
+            font-size: 19px; /* 内容字号显著加大，适合截图 */
+            color: var(--text-primary);
+            line-height: 1.4;
+            font-weight: 500;
         }
 
         .schedule-content .emoji {
-            font-size: 16px;
-            margin-right: 8px;
+            font-size: 24px;
+            margin-right: 12px;
+            vertical-align: -3px;
+            display: inline-block;
+            width: 30px; /* 对齐 emoji */
+            text-align: center;
+        }
+        
+        .activity-row {
+            margin-bottom: 6px;
+        }
+        .activity-row:last-child {
+            margin-bottom: 0;
         }
 
         .rest-day {
-            background: rgba(210, 180, 140, 0.1);
-            opacity: 0.7;
+            background: var(--rest-bg);
+            border: 1px dashed var(--text-accent);
+            opacity: 0.8;
         }
 
         .right-section {
-            flex: 1;
-            padding: 30px 20px 40px 20px;
+            flex: 1.4; /* 右侧稍微放宽 */
+            padding: 50px 40px;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            align-items: stretch;
+            gap: 30px;
             position: relative;
             z-index: 1;
-            gap: 20px;
+            background: var(--right-section-bg);
+            border-left: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        @media (max-width: 850px) {
+            .right-section {
+                border-left: none;
+                border-top: 1px solid rgba(0,0,0,0.05);
+            }
         }
 
         .memo-section {
-            background: rgba(255, 239, 213, 0.8);
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px dashed rgba(160, 82, 45, 0.3);
-            margin-bottom: 20px;
+            background: var(--memo-bg);
+            border-radius: 24px;
+            padding: 30px;
+            border: 2px dashed var(--container-border);
+            box-shadow: 0 8px 20px var(--shadow-color);
         }
 
         .memo-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #8B4513;
-            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-title);
+            margin-bottom: 15px;
             text-align: center;
         }
 
         .memo-content {
-            font-size: 12px;
-            color: #5D4E37;
-            line-height: 1.5;
+            font-size: 17px; /* 右侧文字加大 */
+            color: var(--text-primary);
+            line-height: 1.7;
             font-style: italic;
+            text-align: justify;
         }
 
         .character-section {
             text-align: center;
-            position: relative;
+            margin: 20px 0;
         }
 
         .character {
-            width: 120px;
-            height: 120px;
+            width: 180px; /* 头像加大 */
+            height: 180px;
             background: linear-gradient(135deg, #FFE4B5 0%, #F4A460 100%);
             border-radius: 50%;
-            margin: 0 auto 15px;
+            margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 50px;
-            box-shadow: 0 8px 20px rgba(160, 82, 45, 0.2);
-            animation: float 3s ease-in-out infinite;
+            font-size: 80px;
+            box-shadow: 0 15px 35px var(--shadow-color);
+            border: 6px solid var(--container-bg);
+            animation: float 4s ease-in-out infinite;
             overflow: hidden;
         }
 
         .character.character-image,
         .character.character-svg {
             padding: 0;
-            background: rgba(255, 234, 208, 0.9);
+            background: #fff;
         }
 
-        .character.character-emoji {
-            font-size: 50px;
-        }
-
-        .character img,
-        .character svg {
+        .character img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-8px);
-            }
         }
 
         .character-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #8B4513;
-            margin-bottom: 5px;
-        }
-
-        .character-tag {
-            font-size: 11px;
-            color: #A0522D;
-            background: rgba(255, 228, 181, 0.5);
-            padding: 3px 10px;
-            border-radius: 12px;
-            display: inline-block;
-        }
-
-        .weekly-note {
-            background: rgba(255, 228, 181, 0.3);
-            padding: 15px;
-            border-radius: 12px;
-            border-left: 4px solid #D2691E;
-        }
-
-        .weekly-note-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #8B4513;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-title);
             margin-bottom: 8px;
         }
 
+        .character-tag {
+            font-size: 15px;
+            color: var(--text-primary);
+            background: var(--date-pill-bg);
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        .weekly-note {
+            background: var(--note-bg);
+            padding: 25px;
+            border-radius: 20px;
+            border-left: 6px solid var(--note-border);
+            box-shadow: 0 5px 15px var(--shadow-color);
+        }
+
+        .weekly-note-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-title);
+            margin-bottom: 12px;
+        }
+
         .weekly-note-content {
-            font-size: 11px;
-            color: #5D4E37;
-            line-height: 1.4;
+            font-size: 16px; /* 须知文字加大 */
+            color: var(--text-primary);
+            line-height: 1.7;
         }
 
+        /* 特殊高亮样式适配主题 */
         .special-highlight {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.2) 100%);
-            border: 1px solid rgba(255, 165, 0, 0.4);
-        }
-
-        .special-highlight.highlight-noodle {
-            background: linear-gradient(135deg, rgba(255, 228, 196, 0.85) 0%, rgba(255, 204, 153, 0.6) 100%);
-            border-color: rgba(222, 149, 81, 0.7);
-            box-shadow: 0 10px 25px rgba(222, 149, 81, 0.25);
-        }
-
-        .special-highlight.highlight-sun {
-            background: linear-gradient(135deg, rgba(255, 250, 205, 0.9) 0%, rgba(255, 239, 213, 0.7) 100%);
-            border-color: rgba(255, 215, 0, 0.6);
-            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.25);
-        }
-
-        .special-highlight.highlight-festival {
-            background: linear-gradient(135deg, rgba(255, 182, 193, 0.85) 0%, rgba(255, 105, 180, 0.55) 100%);
-            border-color: rgba(255, 105, 180, 0.65);
-            box-shadow: 0 10px 25px rgba(255, 105, 180, 0.2);
+            border: 1px solid var(--note-border);
+            background: var(--item-hover-bg); /* 简化高亮逻辑，使用hover色 */
         }
 
         .feather-decoration {
             position: absolute;
-            color: rgba(255, 228, 181, 0.6);
-            font-size: 20px;
-            animation: featherFloat 4s ease-in-out infinite;
+            color: var(--text-accent);
+            font-size: 40px;
+            opacity: var(--decoration-opacity);
+            animation: featherFloat 5s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
         }
 
         @keyframes featherFloat {
-
-            0%,
-            100% {
-                transform: translateY(0px) rotate(0deg);
-                opacity: 0.6;
-            }
-
-            50% {
-                transform: translateY(-15px) rotate(10deg);
-                opacity: 0.8;
-            }
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(15deg); }
         }
 
-        .feather-decoration:nth-child(1) {
-            top: 10%;
-            right: 10%;
-            animation-delay: 0s;
+        .feather-decoration:nth-child(1) { top: 5%; right: 5%; animation-delay: 0s; }
+        .feather-decoration:nth-child(2) { top: 45%; left: 2%; animation-delay: 1.5s; transform: scaleX(-1); }
+        .feather-decoration:nth-child(3) { bottom: 5%; right: 8%; animation-delay: 3s; }
+
+        /* --- 主题切换控件 --- */
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            background: rgba(255,255,255,0.8);
+            padding: 10px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+        
+        .theme-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .theme-btn:hover {
+            transform: scale(1.2);
+        }
+        
+        .theme-btn.active {
+            border-color: #333;
+            transform: scale(1.1);
         }
 
-        .feather-decoration:nth-child(2) {
-            top: 60%;
-            right: 5%;
-            animation-delay: 1s;
-        }
-
-        .feather-decoration:nth-child(3) {
-            top: 80%;
-            right: 15%;
-            animation-delay: 2s;
-        }
     </style>
 </head>
 
 <body>
+    <!-- 主题切换器 -->
+    <div class="theme-switcher">
+        <div class="theme-btn" style="background: #f4f1e8;" onclick="setTheme('default')" title="温暖米色"></div>
+        <div class="theme-btn" style="background: #1a1c2c;" onclick="setTheme('dark')" title="高端黑金"></div>
+        <div class="theme-btn" style="background: #e1bee7;" onclick="setTheme('blue')" title="清爽蓝调"></div>
+        <div class="theme-btn" style="background: #ffc0cb;" onclick="setTheme('pink')" title="可爱粉粉"></div>
+    </div>
+
     <div class="schedule-container">
         <!-- 装饰性羽毛 -->
         <div class="feather-decoration">🪶</div>
-        <div class="feather-decoration">🪶</div>
+        <div class="feather-decoration">✨</div>
         <div class="feather-decoration">🪶</div>
 
         <div class="left-section">
             <h1 class="title">岁己SUI的周表</h1>
-            <div class="subtitle">小饼干的投喂时间表 📅（纯属猜测，具体时间不固定）</div>
+            <div class="subtitle">📅 小饼干的投喂时间表 (纯属猜测，具体时间不固定)</div>
 
             <div class="date-range">
-                加载中...
+                2025.11.24 ~ 11.30
             </div>
 
             <div class="schedule-table" id="schedule-table">
@@ -354,92 +501,59 @@
 
         <div class="right-section">
             <div class="memo-section">
-                <div class="memo-title">本周亮点 💭</div>
+                <div class="memo-title">💬 今日锐评</div>
                 <div class="memo-content">
-                    周三煮面，煮面民速来！ <br>开坑了《马里奥银河》，游戏民速来<br><br>游戏回只能说我有点笨笨！😤"
+                    "新的一周开始啦！<br>
+                    上周日加班了，所以本周六才是休息日哦！<br>
+                    期待和大家一起度过这一周~"
                 </div>
             </div>
 
             <div class="character-section">
                 <div class="character character-emoji" id="character-visual" role="img" aria-label="岁己SUI">🐦</div>
                 <div class="character-name">岁己SUI</div>
-                <div class="character-tag">小鸟公主</div>
+                <div class="character-tag">✨ 高冷神秘的小鸟公主 ✨</div>
             </div>
 
             <div class="weekly-note">
-                <div class="weekly-note-title">新饼须知 ✨</div>
+                <div class="weekly-note-title">📌 新饼须知</div>
                 <div class="weekly-note-content">
-                    • 上五休一，每周不固定<br>
-                    • 没有专门歌回，但每天会唱歌<br>
-                    • 每周三22:00人头麦煮面<br>
-                    • 周日下午播<br>
-                    • 游戏打得很可爱
+                    • 上五休一，每周休息日不固定<br>
+                    • 没有专门歌回，但每天都会唱歌<br>
+                    • 周三 22:00 煮面回特别安排<br>
+                    • 周日大概率下午播<br>
+                    • 游戏水平：可爱级 (笨笨的)
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Config Script -->
     <script id="schedule-config">
         window.scheduleConfig = {
             timezone: 'Asia/Shanghai',
-            weekStart: 1, // 周一为一周开始
-            restCopy: '休息日 - 养精蓄锐，下周见！',
-            fallbackCopy: '自由调休，灵感待机中～',
+            weekStart: 1, 
+            restCopy: '💤 休息日 - 养精蓄锐，下周见！',
+            fallbackCopy: '🌀 自由调休，灵感待机中～',
             restRule: {
                 workDays: 5,
                 restDays: 1,
-                // 【修复点】强制设置锚点为本周一(11.24)为工作开始第一天
-                // 这样推算下来：24(一)工, 25(二)工, 26(三)工, 27(四)工, 28(五)工, 29(六)休
                 anchorDate: '2025-11-24', 
                 anchorIsRest: false
             },
             restOverrides: {
-                '2025-11-17': true,
-                '2025-11-23': true,
             },
             specialActivities: [
-                {
-                    date: '2025-11-20',
-                    // highlight: true,
-                    activities: [
-                        { emoji: '🎵', text: '19:40 唱歌聊天 2小时暖场' },
-                        { emoji: '🎬', text: '21:40 看《大话西游之月光宝盒》' }
-                    ]
-                },
-                {
-                    date: '2025-11-21',
-                    // highlight: true,
-                    activities: [
-                        { emoji: '🎵', text: '19:40 唱歌聊天 2小时暖场' },
-                        { emoji: '🎬', text: '21:40 看《大话西游之大圣娶亲》' }
-                    ]
-                },
-                {
-                    date: '2025-11-22',
-                    highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '14:40 下午播~唱唱聊聊~' },
-                        { emoji: '🎬', text: '16:40 玩《马里奥银河》' }
-                    ]
-                },
-                {
-                    date: '2025-11-23',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '14:40 小播一下~今天居然不休息哦~' },
-                    ]
-                }
             ],
             weeklyFixed: {
                 3: {
-                    highlight: 'sun',
+                    highlight: 'noodle', 
                     activities: [
                         { emoji: '🌙', text: '22:00 煮面回 (3D人头麦助眠)' },
                         { emoji: '🍜', text: '温柔助眠，伴随入眠' }
                     ]
                 },
                 7: {
-                    // highlight: 'sun',
                     activities: [
                         { emoji: '☀️', text: '14:30 下午播，唱唱聊聊~' }
                     ]
@@ -507,7 +621,24 @@
         };
     </script>
 
+    <!-- Logic Script -->
     <script>
+        // 主题切换逻辑
+        function setTheme(theme) {
+            document.body.removeAttribute('data-theme');
+            if (theme !== 'default') {
+                document.body.setAttribute('data-theme', theme);
+            }
+            
+            // 更新按钮状态
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('onclick').includes(theme)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
         (function () {
             'use strict';
 
@@ -527,6 +658,8 @@
             renderSchedule(schedule, formatISODate(today));
             renderCharacterVisual(config);
 
+            // ... (Logic functions kept same as before, just re-rendering HTML structure) ...
+            
             function getToday(timezone) {
                 if (!timezone) {
                     return stripTime(new Date());
@@ -560,6 +693,12 @@
             }
 
             function formatDateDisplay(date) {
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${m}.${d}`;
+            }
+            
+            function formatDateFullDisplay(date) {
                 const y = date.getFullYear();
                 const m = String(date.getMonth() + 1).padStart(2, '0');
                 const d = String(date.getDate()).padStart(2, '0');
@@ -621,7 +760,7 @@
                     if (isRest) {
                         base.activities = [{
                             emoji: '😴',
-                            text: cfg.restCopy || '休息日 - 调整状态，灵感蓄力中！'
+                            text: cfg.restCopy || '休息日'
                         }];
                         return base;
                     }
@@ -663,7 +802,7 @@
                     if (!base.activities.length) {
                         base.activities.push({
                             emoji: '🌀',
-                            text: cfg.fallbackCopy || '待机中，随缘开播~'
+                            text: cfg.fallbackCopy || '待机中'
                         });
                     }
 
@@ -708,7 +847,7 @@
             }
 
             function updateMeta(dates, options = {}) {
-                const rangeText = `${formatDateDisplay(dates[0])} ~ ${formatDateDisplay(dates[dates.length - 1])}`;
+                const rangeText = `${formatDateFullDisplay(dates[0])} ~ ${formatDateFullDisplay(dates[dates.length - 1])}`;
                 const suffix = options.previewNote ? ` · ${options.previewNote}` : '';
                 const rangeEl = document.querySelector('.date-range');
                 if (rangeEl) {
@@ -745,13 +884,17 @@
 
                     const label = document.createElement('div');
                     label.className = `day-label${day.isRest ? ' rest' : ''}`;
-                    label.innerHTML = `${day.dayLabel}<span class="date-label">${day.dateDisplay}</span>`;
+                    label.innerHTML = `
+                        <div class="day-name">${day.dayLabel}</div>
+                        <div class="date-label">${day.dateDisplay}</div>
+                    `;
 
                     const content = document.createElement('div');
                     content.className = 'schedule-content';
 
                     day.activities.forEach(activity => {
                         const row = document.createElement('div');
+                        row.className = 'activity-row';
                         row.innerHTML = `<span class="emoji">${activity.emoji || '•'}</span>${activity.text || ''}`;
                         content.appendChild(row);
                     });
@@ -913,7 +1056,7 @@
                     }
                 }
 
-                return `预览：${formatDateDisplay(referenceDate)} 所在周`;
+                return `预览：${formatDateFullDisplay(referenceDate)} 所在周`;
             }
         })();
     </script>
