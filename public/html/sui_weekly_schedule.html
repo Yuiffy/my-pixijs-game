@@ -21,22 +21,22 @@
             --container-bg: #faf7f0;
             --container-border: rgba(160, 82, 45, 0.15);
             --shadow-color: rgba(139, 69, 19, 0.15);
-            
+
             --text-primary: #5D4E37;
             --text-title: #8B4513;
             --text-accent: #A0522D;
-            
+
             --item-bg: rgba(255, 255, 255, 0.5);
             --item-hover-bg: rgba(255, 228, 181, 0.35);
             --rest-bg: rgba(210, 180, 140, 0.2);
-            
+
             --right-section-bg: rgba(255, 239, 213, 0.4);
             --memo-bg: #fffaf0;
             --note-bg: rgba(255, 255, 255, 0.7);
             --note-border: #D2691E;
-            
+
             --date-pill-bg: rgba(210, 180, 140, 0.25);
-            --decoration-opacity: 0.15; 
+            --decoration-opacity: 0.15;
             --decoration-color: #8B4513;
         }
 
@@ -46,20 +46,21 @@
             --container-bg: rgba(30, 30, 40, 0.95);
             --container-border: rgba(255, 215, 0, 0.2);
             --shadow-color: rgba(0, 0, 0, 0.5);
-            
+
             --text-primary: #e0e0e0;
-            --text-title: #ffd700; /* 金色标题 */
+            --text-title: #ffd700;
+            /* 金色标题 */
             --text-accent: #bcaaa4;
-            
+
             --item-bg: rgba(255, 255, 255, 0.05);
             --item-hover-bg: rgba(255, 215, 0, 0.1);
             --rest-bg: rgba(255, 255, 255, 0.03);
-            
+
             --right-section-bg: rgba(0, 0, 0, 0.2);
             --memo-bg: rgba(255, 255, 255, 0.08);
             --note-bg: rgba(255, 255, 255, 0.08);
             --note-border: #ffd700;
-            
+
             --date-pill-bg: rgba(255, 215, 0, 0.1);
             --decoration-opacity: 0.1;
             --decoration-color: #ffd700;
@@ -71,20 +72,20 @@
             --container-bg: #ffffff;
             --container-border: rgba(100, 181, 246, 0.3);
             --shadow-color: rgba(33, 150, 243, 0.15);
-            
+
             --text-primary: #37474f;
             --text-title: #1565c0;
             --text-accent: #5c6bc0;
-            
+
             --item-bg: rgba(227, 242, 253, 0.4);
             --item-hover-bg: rgba(187, 222, 251, 0.5);
             --rest-bg: rgba(207, 216, 220, 0.3);
-            
+
             --right-section-bg: rgba(225, 245, 254, 0.5);
             --memo-bg: #f3e5f5;
             --note-bg: #e3f2fd;
             --note-border: #42a5f5;
-            
+
             --date-pill-bg: rgba(66, 165, 245, 0.1);
             --decoration-opacity: 0.2;
             --decoration-color: #1565c0;
@@ -96,20 +97,20 @@
             --container-bg: #fff5f8;
             --container-border: rgba(255, 182, 193, 0.4);
             --shadow-color: rgba(255, 105, 180, 0.2);
-            
+
             --text-primary: #885566;
             --text-title: #ff69b4;
             --text-accent: #db7093;
-            
+
             --item-bg: rgba(255, 255, 255, 0.6);
             --item-hover-bg: rgba(255, 192, 203, 0.4);
             --rest-bg: rgba(255, 228, 225, 0.5);
-            
+
             --right-section-bg: rgba(255, 240, 245, 0.6);
             --memo-bg: #fff;
             --note-bg: rgba(255, 255, 255, 0.8);
             --note-border: #ff69b4;
-            
+
             --date-pill-bg: rgba(255, 182, 193, 0.3);
             --decoration-opacity: 0.3;
             --decoration-color: #ff69b4;
@@ -140,7 +141,7 @@
             flex-direction: row;
             position: relative;
             /* overflow: hidden;  允许SVG溢出一点点更有层次感，或者根据需要开启 */
-            overflow: hidden; 
+            overflow: hidden;
             margin-bottom: 40px;
             transition: all 0.5s ease;
         }
@@ -153,9 +154,10 @@
                 max-width: 100%;
                 border-radius: 20px;
                 border-width: 2px;
-                margin-top: 20px; /* 留出顶部空间给颜色按钮 */
+                margin-top: 20px;
+                /* 留出顶部空间给颜色按钮 */
             }
-            
+
             .left-section {
                 padding: 25px 20px !important;
             }
@@ -163,18 +165,20 @@
             .title {
                 font-size: 32px !important;
             }
-            
+
             .right-section {
                 padding: 30px 20px !important;
             }
-            
+
             /* 在移动端，如果SVG完全隐藏也可以，
                这里选择保留并调整位置，避免遮挡
             */
             .feather-decoration {
-                /* display: none; */ 
-                opacity: 0.1 !important; /* 降低透明度 */
-                z-index: 0 !important; /* 确保在底层 */
+                /* display: none; */
+                opacity: 0.1 !important;
+                /* 降低透明度 */
+                z-index: 0 !important;
+                /* 确保在底层 */
             }
 
             /* 小屏下：日程项改为垂直排列 */
@@ -187,12 +191,13 @@
 
             .day-label {
                 width: 100% !important;
-                flex-direction: row !important; /* 周几和日期并排 */
+                flex-direction: row !important;
+                /* 周几和日期并排 */
                 justify-content: flex-start !important;
                 margin-right: 0 !important;
                 margin-bottom: 5px;
                 padding-bottom: 8px;
-                border-bottom: 1px dashed rgba(0,0,0,0.05);
+                border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
             }
 
             .day-name {
@@ -202,7 +207,8 @@
             }
 
             .date-label {
-                margin-top: 4px; /* 对齐基线 */
+                margin-top: 4px;
+                /* 对齐基线 */
             }
 
             .schedule-content {
@@ -213,20 +219,21 @@
             /* 小屏下：主题切换器自动收起 */
             .theme-switcher {
                 top: 15px !important;
-                right: 0 !important; 
+                right: 0 !important;
                 padding: 8px 12px 8px 18px !important;
                 /* 默认缩进 */
-                transform: translateX(calc(100% - 24px)); 
+                transform: translateX(calc(100% - 24px));
                 transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
                 border-top-right-radius: 0 !important;
                 border-bottom-right-radius: 0 !important;
                 border-top-left-radius: 20px !important;
                 border-bottom-left-radius: 20px !important;
                 background: rgba(255, 255, 255, 0.95) !important;
-                box-shadow: -2px 2px 10px rgba(0,0,0,0.1) !important;
+                box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.1) !important;
                 cursor: pointer;
-                border: 1px solid rgba(0,0,0,0.05);
-                z-index: 2000; /* 确保层级最高，不被任何东西挡住 */
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                z-index: 2000;
+                /* 确保层级最高，不被任何东西挡住 */
             }
 
             /* 小把手指示器 */
@@ -247,7 +254,7 @@
                 transform: translateX(0) !important;
                 padding-left: 12px !important;
             }
-            
+
             .theme-switcher.expanded::before {
                 display: none;
             }
@@ -325,7 +332,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .day-name {
             font-size: 24px;
             font-weight: 900;
@@ -365,10 +372,11 @@
             /* 强制 Emoji 使用系统字体 */
             font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
         }
-        
+
         .activity-row {
             margin-bottom: 6px;
         }
+
         .activity-row:last-child {
             margin-bottom: 0;
         }
@@ -388,13 +396,13 @@
             position: relative;
             z-index: 1;
             background: var(--right-section-bg);
-            border-left: 1px solid rgba(0,0,0,0.05);
+            border-left: 1px solid rgba(0, 0, 0, 0.05);
         }
-        
+
         @media (max-width: 850px) {
             .right-section {
                 border-left: none;
-                border-top: 1px solid rgba(0,0,0,0.05);
+                border-top: 1px solid rgba(0, 0, 0, 0.05);
             }
         }
 
@@ -510,51 +518,62 @@
             width: 60px;
             height: 60px;
             animation: featherFloat 6s ease-in-out infinite;
-            z-index: 2; /* 提高层级，避免被内容背景完全遮挡，但要注意透明度 */
+            z-index: 2;
+            /* 提高层级，避免被内容背景完全遮挡，但要注意透明度 */
             pointer-events: none;
         }
-        
+
         /* SVG 样式 */
         .feather-decoration svg {
             width: 100%;
             height: 100%;
-            fill: currentColor; 
+            fill: currentColor;
         }
 
         @keyframes featherFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-25px) rotate(10deg); }
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-25px) rotate(10deg);
+            }
         }
 
         /* 调整 SVG 位置，避免遮挡关键文字，但又要有装饰感 */
-        .feather-decoration:nth-child(1) { 
-            top: 2%; 
-            right: 2%; 
-            animation-delay: 0s; 
-            width: 100px; 
-            height: 100px; 
-            opacity: 0.1; /* 进一步降低不透明度，作为背景纹理 */
+        .feather-decoration:nth-child(1) {
+            top: 2%;
+            right: 2%;
+            animation-delay: 0s;
+            width: 100px;
+            height: 100px;
+            opacity: 0.1;
+            /* 进一步降低不透明度，作为背景纹理 */
         }
-        
-        .feather-decoration:nth-child(2) { 
-            top: 40%; 
-            left: 0%; 
-            animation-delay: 2s; 
-            transform: scaleX(-1); 
-            width: 80px; 
-            height: 80px; 
+
+        .feather-decoration:nth-child(2) {
+            top: 40%;
+            left: 0%;
+            animation-delay: 2s;
+            transform: scaleX(-1);
+            width: 80px;
+            height: 80px;
             opacity: 0.1;
         }
-        
+
         /* 右下角这个容易挡住文字，移到更边缘或更底部 */
-        .feather-decoration:nth-child(3) { 
-            bottom: 1%; 
-            right: 2%; 
-            animation-delay: 4s; 
+        .feather-decoration:nth-child(3) {
+            bottom: 1%;
+            right: 2%;
+            animation-delay: 4s;
             width: 120px;
             height: 120px;
-            opacity: 0.08; /* 很淡 */
-            z-index: 0; /* 这个放到底层去 */
+            opacity: 0.08;
+            /* 很淡 */
+            z-index: 0;
+            /* 这个放到底层去 */
         }
 
         /* --- 主题切换控件 --- */
@@ -564,14 +583,14 @@
             right: 20px;
             display: flex;
             gap: 10px;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255, 255, 255, 0.8);
             padding: 10px;
             border-radius: 50px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(5px);
             z-index: 1000;
         }
-        
+
         .theme-btn {
             width: 30px;
             height: 30px;
@@ -580,16 +599,15 @@
             cursor: pointer;
             transition: transform 0.2s;
         }
-        
+
         .theme-btn:hover {
             transform: scale(1.2);
         }
-        
+
         .theme-btn.active {
             border-color: #333;
             transform: scale(1.1);
         }
-
     </style>
 </head>
 
@@ -614,8 +632,10 @@
         </div>
         <!-- 2. Sparkles -->
         <div class="feather-decoration">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                    d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
             </svg>
         </div>
         <!-- 3. Feather (Repeated) -->
@@ -651,7 +671,7 @@
                 <div class="memo-content">
                     周三煮面，煮面民速来！ <br>
                     开坑了《马里奥银河》，游戏民速来~<br>
-                    游戏回只能说我有点笨笨！😤"
+                    游戏回只能说我有点笨笨！😤
 
                 </div>
             </div>
@@ -679,22 +699,63 @@
     <script id="schedule-config">
         window.scheduleConfig = {
             timezone: 'Asia/Shanghai',
-            weekStart: 1, 
-            restCopy: '💤 休息日 - 养精蓄锐，下周见！',
+            weekStart: 1,
+            restCopy: '💤 休息日 - 养精蓄锐，明天见！',
             fallbackCopy: '🌀 自由调休，灵感待机中～',
             restRule: {
                 workDays: 5,
                 restDays: 1,
-                anchorDate: '2025-11-24', 
+                anchorDate: '2025-11-24',
                 anchorIsRest: false
             },
             restOverrides: {
+                '2025-11-17': true,
+                '2025-11-23': true,
             },
             specialActivities: [
+                {
+                    date: '2025-11-20',
+                    // highlight: true,
+                    activities: [
+                        { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
+                        { emoji: '🎬', text: '21:40 看《大话西游之月光宝盒》' }
+                    ]
+                },
+                {
+                    date: '2025-11-21',
+                    // highlight: true,
+                    activities: [
+                        { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
+                        { emoji: '🎬', text: '21:40 看《大话西游之大圣娶亲》' }
+                    ]
+                },
+                {
+                    date: '2025-11-22',
+                    highlight: 'noodle',
+                    activities: [
+                        { emoji: '🎵', text: '14:40 下午播~唱唱聊聊~' },
+                        { emoji: '🎬', text: '16:40 玩《马里奥银河》' }
+                    ]
+                },
+                {
+                    date: '2025-11-23',
+                    // highlight: 'noodle',
+                    activities: [
+                        { emoji: '🎵', text: '14:40 小播一下~今天居然不休息哦~' },
+                    ]
+                },
+                {
+                    date: '2025-11-24',
+                    // highlight: 'noodle',
+                    activities: [
+                        { emoji: '🎵', text: '19:50 唱唱聊聊 2小时' },
+                        { emoji: '🎬', text: '21:50 看《剪刀手爱德华》' }
+                    ]
+                },
             ],
             weeklyFixed: {
                 3: {
-                    highlight: 'noodle', 
+                    highlight: 'noodle',
                     activities: [
                         { emoji: '🌙', text: '22:00 煮面回 (3D人头麦助眠)' },
                         { emoji: '🍜', text: '温柔助眠，伴随入眠' }
@@ -710,7 +771,7 @@
                 {
                     weekdays: [1, 2, 4, 5, 6],
                     activities: [
-                        { emoji: '🎵', text: '19:40 唱歌聊天 2小时' }
+                        { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' }
                     ]
                 }
             ],
@@ -776,7 +837,7 @@
             if (theme !== 'default') {
                 document.body.setAttribute('data-theme', theme);
             }
-            
+
             // 更新按钮状态
             document.querySelectorAll('.theme-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -787,11 +848,11 @@
         }
 
         // 移动端主题切换器交互
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const switcher = document.getElementById('themeSwitcher');
             if (switcher) {
                 // 仅在移动端生效的点击展开逻辑
-                switcher.addEventListener('click', function(e) {
+                switcher.addEventListener('click', function (e) {
                     // 检查是否是移动端视图 (使用innerWidth或CSS media query检测)
                     if (window.innerWidth <= 850) {
                         // 如果点击的是按钮本身，不收起，让setTheme执行
@@ -829,7 +890,7 @@
             renderCharacterVisual(config);
 
             // ... (Logic functions kept same as before, just re-rendering HTML structure) ...
-            
+
             function getToday(timezone) {
                 if (!timezone) {
                     return stripTime(new Date());
@@ -867,7 +928,7 @@
                 const d = String(date.getDate()).padStart(2, '0');
                 return `${m}.${d}`;
             }
-            
+
             function formatDateFullDisplay(date) {
                 const y = date.getFullYear();
                 const m = String(date.getMonth() + 1).padStart(2, '0');
