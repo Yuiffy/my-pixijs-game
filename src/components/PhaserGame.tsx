@@ -46,7 +46,7 @@ class MainScene extends Phaser.Scene {
   preload() {
     this.load.image('sui', '/images/sui-bird-jump.png');
 
-    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+    const graphics = this.make.graphics({ x: 0, y: 0 });
     graphics.fillStyle(0x5e3f28, 1);
     graphics.fillRoundedRect(0, 0, 200, 32, 8);
     graphics.fillStyle(0x8b5a2b, 1);
@@ -68,7 +68,7 @@ class MainScene extends Phaser.Scene {
 
     // === 创建平台 ===
     this.platforms = this.physics.add.staticGroup();
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10; i += 1) {
       this.spawnPlatform(i === 0);
     }
 
@@ -167,7 +167,7 @@ class MainScene extends Phaser.Scene {
     this.dashText?.setText('THUNDER FLASH!').setColor('#ffff00');
 
     // 生成多个闪电粒子
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 8; i += 1) {
       // 随机分布在玩家周围
       const offsetX = Phaser.Math.Between(-40, 40);
       const offsetY = Phaser.Math.Between(-40, 40);
@@ -347,6 +347,7 @@ export default function PhaserGame() {
       scene: [MainScene],
     };
     const newGame = new Phaser.Game(config);
+    // eslint-disable-next-line consistent-return
     return () => {
       newGame.destroy(true);
     };
