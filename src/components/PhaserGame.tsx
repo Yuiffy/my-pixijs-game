@@ -1,54 +1,83 @@
 'use client';
 
-// 这一行虽然不能完全阻止SSR报错，但必须加上
-
 import { useEffect, useRef } from 'react';
 import * as Phaser from 'phaser';
 
-// === 您的游戏逻辑 ===
 class MainScene extends Phaser.Scene {
   player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody | null = null;
 
+  platforms: Phaser.Physics.Arcade.StaticGroup | null = null;
+
+  // 键位控制
   cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
+
+  wasd: {
+    up: Phaser.Input.Keyboard.Key;
+    left: Phaser.Input.Keyboard.Key;
+    down: Phaser.Input.Keyboard.Key;
+    right: Phaser.Input.Keyboard.Key;
+    dash: Phaser.Input.Keyboard.Key;
+    dashAlt: Phaser.Input.Keyboard.Key;
+    restart: Phaser.Input.Keyboard.Key; // 新增 R 键重开
+  } | null = null;
+
+  // UI 与 状态
+  scoreText: Phaser.GameObjects.Text | null = null;
+
+  dashText: Phaser.GameObjects.Text | null = null;
+
+  score: number = 0;
+
+  highestY: number = 0;
+
+  minCameraY: number = 0;
+
+  // 游戏逻辑变量
+  canDash: boolean = true;
+
+  isDashing: boolean = false;
+
+  isGameOver: boolean = false; // 新增游戏结束状态
 
   constructor() {
     super('MainScene');
   }
 
   preload() {
-    // 1. 加载主角
     this.load.image('sui', '/images/sui-bird-jump.png');
 
-    // 2. 绘制圆角矩形地板纹理
-    const graphics = this.make.graphics({ x: 0, y: 0 });
-    graphics.fillStyle(0x5e3f28, 1); // 深棕色
+    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+    graphics.fillStyle(0x5e3f28, 1);
     graphics.fillRoundedRect(0, 0, 200, 32, 8);
-    graphics.fillStyle(0x8b5a2b, 1); // 浅棕色
+    graphics.fillStyle(0x8b5a2b, 1);
     graphics.fillRoundedRect(4, 4, 192, 24, 6);
     graphics.generateTexture('platform_texture', 200, 32);
   }
 
   create() {
-    const platforms = this.physics.add.staticGroup();
+    // === 初始化变量 ===
+    this.score = 0;
+    this.highestY = 600;
+    this.minCameraY = 0;
+    this.canDash = true;
+    this.isDashing = false;
+    this.isGameOver = false;
 
-    // 底部地板
-    platforms.create(200, 580, 'platform_texture').setScale(2, 1).refreshBody();
-    platforms.create(600, 580, 'platform_texture').setScale(2, 1).refreshBody();
+    // 取消底部碰撞
+    this.physics.world.setBoundsCollision(true, true, false, false);
 
-    // 空中平台
-    platforms.create(600, 450, 'platform_texture');
-    platforms.create(100, 350, 'platform_texture');
-    platforms.create(700, 250, 'platform_texture');
-    platforms.create(350, 200, 'platform_texture').setScale(0.5, 1).refreshBody(); // 窄平台
-    platforms.create(550, 200, 'platform_texture').setScale(0.5, 1).refreshBody();
+    // === 创建平台 ===
+    this.platforms = this.physics.add.staticGroup();
+    for (let i = 0; i < 10; i++) {
+      this.spawnPlatform(i === 0);
+    }
 
-    // 主角
-    this.player = this.physics.add.sprite(100, 500, 'sui');
+    // === 创建主角 ===
+    this.player = this.physics.add.sprite(400, 450, 'sui');
     this.player.setBounce(0.1);
     this.player.setCollideWorldBounds(true);
     this.player.setScale(0.4);
 
-    // 瘦身核心代码
     const bodyWidth = this.player.width * 0.5;
     const bodyHeight = this.player.height * 0.85;
     this.player.body.setSize(bodyWidth, bodyHeight);
@@ -57,30 +86,223 @@ class MainScene extends Phaser.Scene {
       (this.player.height - bodyHeight) / 2 + 10,
     );
 
-    this.physics.add.collider(this.player, platforms);
+    if (this.platforms) {
+      this.physics.add.collider(this.player, this.platforms);
+    }
 
+    // === 摄像机 ===
+    this.cameras.main.centerOn(400, 300);
+    this.cameras.main.setBackgroundColor('#1a1a2e');
+
+    // === 绑定按键 ===
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
+      this.wasd = this.input.keyboard.addKeys({
+        up: Phaser.Input.Keyboard.KeyCodes.W,
+        left: Phaser.Input.Keyboard.KeyCodes.A,
+        down: Phaser.Input.Keyboard.KeyCodes.S,
+        right: Phaser.Input.Keyboard.KeyCodes.D,
+        dash: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+        dashAlt: Phaser.Input.Keyboard.KeyCodes.K,
+        restart: Phaser.Input.Keyboard.KeyCodes.R,
+      }) as any;
+    }
+
+    // === UI 显示 ===
+    this.scoreText = this.add.text(16, 16, 'Score: 0', {
+      fontSize: '32px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setScrollFactor(0).setDepth(10);
+
+    this.dashText = this.add.text(16, 50, 'DASH: READY', {
+      fontSize: '20px',
+      color: '#00ff00',
+      stroke: '#000000',
+      strokeThickness: 2,
+    }).setScrollFactor(0).setDepth(10);
+  }
+
+  spawnPlatform(isStartPlatform = false) {
+    if (!this.platforms) return;
+
+    let x; let
+      y;
+    if (isStartPlatform) {
+      x = 400; y = 580;
+    } else {
+      x = Phaser.Math.Between(50, 750);
+      y = this.highestY - Phaser.Math.Between(90, 170);
+    }
+
+    const platform = this.platforms.create(x, y, 'platform_texture');
+    const scale = isStartPlatform ? 2 : Phaser.Math.FloatBetween(0.5, 1.0);
+    platform.setScale(scale, 1).refreshBody();
+
+    if (y < this.highestY) this.highestY = y;
+
+    platform.body.checkCollision.down = false;
+    platform.body.checkCollision.left = false;
+    platform.body.checkCollision.right = false;
+  }
+
+  performDash() {
+    if (!this.canDash || !this.player || this.isGameOver) return;
+
+    this.canDash = false;
+    this.isDashing = true;
+
+    // ⚡ 强力弹射逻辑
+    const dashSpeed = 1500; // 提升速度 (原900)
+    const direction = this.player.flipX ? 1 : -1;
+
+    this.player.setVelocityX(direction * dashSpeed);
+    // 稍微给一点向上的分量，防止贴地冲刺被摩擦力减速太快，感觉更像“飞行”
+    this.player.setVelocityY(-200);
+    this.player.body.allowGravity = false;
+
+    this.player.setTint(0x00ffff);
+    this.dashText?.setText('DASH: >>>').setColor('#00ffff');
+
+    this.time.delayedCall(250, () => { // 稍微延长一点冲刺时间 (0.2s -> 0.25s)
+      this.isDashing = false;
+      if (this.player?.body) {
+        this.player.body.allowGravity = true;
+        this.player.setVelocityX(this.player.body.velocity.x * 0.5); // 保留一半惯性
+        this.player.setTint(0x888888);
+      }
+      this.dashText?.setText('DASH: CD...').setColor('#aaaaaa');
+    });
+
+    this.time.delayedCall(1000, () => {
+      this.canDash = true;
+      if (this.player?.active && !this.isGameOver) {
+        this.player.clearTint();
+      }
+      this.dashText?.setText('DASH: READY').setColor('#00ff00');
+    });
+  }
+
+  // ☠️ 显示游戏结束画面
+  showGameOver() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+
+    // 暂停物理引擎
+    this.physics.pause();
+    if (this.player) this.player.setTint(0xff0000);
+
+    // 获取屏幕中心 (因为摄像机可能滚动了，所以用 ScrollFactor(0) 固定在屏幕上最方便)
+    const centerX = 400;
+    const centerY = 300;
+
+    // 1. 半透明黑色背景
+    const bg = this.add.rectangle(centerX, centerY, 800, 600, 0x000000, 0.7);
+    bg.setScrollFactor(0).setDepth(20);
+
+    // 2. Game Over 文字
+    this.add.text(centerX, centerY - 50, 'GAME OVER', {
+      fontSize: '64px',
+      color: '#ff4444',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 6,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+
+    // 3. 最终得分
+    this.add.text(centerX, centerY + 30, `Final Score: ${this.score}`, {
+      fontSize: '48px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+
+    // 4. 重开提示
+    this.add.text(centerX, centerY + 100, 'Click or Press R to Restart', {
+      fontSize: '24px',
+      color: '#aaaaaa',
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+
+    // 5. 绑定重开事件 (点击屏幕 或 按R)
+    this.input.once('pointerdown', () => this.scene.restart());
+    if (this.input.keyboard) {
+      this.input.keyboard.once('keydown-R', () => this.scene.restart());
     }
   }
 
   update() {
-    if (!this.player || !this.cursors) return;
-    const speed = 300;
+    if (!this.player || !this.cursors || !this.platforms || !this.wasd || this.isGameOver) return;
 
-    if (this.cursors.left.isDown) {
+    if (this.isDashing) {
+      this.checkGameStatus();
+      return;
+    }
+
+    const left = this.cursors.left.isDown || this.wasd.left.isDown;
+    const right = this.cursors.right.isDown || this.wasd.right.isDown;
+    const up = this.cursors.up.isDown || this.wasd.up.isDown || this.cursors.space.isDown;
+    const dash = Phaser.Input.Keyboard.JustDown(this.cursors.shift)
+                 || Phaser.Input.Keyboard.JustDown(this.wasd.dash)
+                 || Phaser.Input.Keyboard.JustDown(this.wasd.dashAlt);
+
+    const speed = 300;
+    if (left) {
       this.player.setVelocityX(-speed);
       this.player.setFlipX(false);
-    } else if (this.cursors.right.isDown) {
+    } else if (right) {
       this.player.setVelocityX(speed);
       this.player.setFlipX(true);
     } else {
       this.player.setVelocityX(0);
     }
 
-    const isTouchingGround = this.player.body.touching.down || this.player.body.blocked.down;
-    if (this.cursors.up.isDown && isTouchingGround) {
-      this.player.setVelocityY(-550);
+    const isTouchingGround = this.player.body.touching.down;
+    if (up && isTouchingGround) {
+      this.player.setVelocityY(-600);
+    }
+
+    if (dash) {
+      this.performDash();
+    }
+
+    this.checkGameStatus();
+  }
+
+  checkGameStatus() {
+    if (!this.player || !this.platforms) return;
+
+    // --- 摄像机 ---
+    const targetCamY = this.player.y - 200;
+    if (this.minCameraY === 0) this.minCameraY = this.cameras.main.scrollY;
+    if (targetCamY < this.minCameraY) {
+      this.minCameraY = targetCamY;
+      this.cameras.main.scrollY = this.minCameraY;
+    }
+
+    // --- 平台循环 ---
+    const cameraBottom = this.cameras.main.scrollY + 600;
+    this.platforms.children.iterate((child: any) => {
+      const platform = child as Phaser.Physics.Arcade.Sprite;
+      if (platform.y > cameraBottom + 50) {
+        platform.y = this.highestY - Phaser.Math.Between(100, 170);
+        platform.x = Phaser.Math.Between(50, 750);
+        this.highestY = platform.y;
+        platform.setScale(Phaser.Math.FloatBetween(0.5, 1.0), 1).refreshBody();
+      }
+      return true;
+    });
+
+    // --- 死亡判定 ---
+    if (this.player.y > cameraBottom + 100) {
+      this.showGameOver(); // 改为调用结算画面
+    }
+
+    // --- 分数 ---
+    const currentScore = Math.max(0, Math.floor((600 - this.player.y) / 10));
+    if (currentScore > this.score) {
+      this.score = currentScore;
+      this.scoreText?.setText(`Score: ${this.score}`);
     }
   }
 }
@@ -97,18 +319,55 @@ export default function PhaserGame() {
       parent: gameContainer.current,
       physics: {
         default: 'arcade',
-        arcade: { gravity: { x: 0, y: 600 }, debug: false }, // debug: true 可以看绿色的碰撞框
+        arcade: {
+          gravity: { x: 0, y: 1000 },
+          debug: false,
+        },
       },
       scene: [MainScene],
     };
     const newGame = new Phaser.Game(config);
-    // eslint-disable-next-line consistent-return
     return () => {
       newGame.destroy(true);
     };
   }, []);
 
   return (
-    <div ref={gameContainer} className="border-4 border-yellow-600 rounded-lg overflow-hidden shadow-2xl" />
+    <div className="flex flex-col items-center">
+      <div ref={gameContainer} className="border-4 border-yellow-600 rounded-lg overflow-hidden shadow-2xl" />
+
+      {/* 更新操作说明 */}
+      <div className="mt-6 bg-gray-800 p-4 rounded-lg text-gray-300 text-sm max-w-2xl text-center shadow-lg border border-gray-700">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+          <div className="text-right font-bold text-white">移动 / Move:</div>
+          <div className="text-left">
+            <span className="bg-gray-700 px-2 py-1 rounded text-white">WASD</span>
+            {' '}
+            或
+            {' '}
+            <span className="bg-gray-700 px-2 py-1 rounded text-white">← ↑ →</span>
+          </div>
+
+          <div className="text-right font-bold text-white">冲刺 / Dash:</div>
+          <div className="text-left">
+            <span className="bg-gray-700 px-2 py-1 rounded text-white">Shift</span>
+            {' '}
+            或
+            {' '}
+            <span className="bg-gray-700 px-2 py-1 rounded text-white">K</span>
+          </div>
+
+          <div className="text-right font-bold text-white">重开 / Restart:</div>
+          <div className="text-left">
+            <span className="bg-gray-700 px-2 py-1 rounded text-white">R</span>
+            {' '}
+            或
+            {' '}
+            <span className="bg-gray-700 px-2 py-1 rounded text-white">点击屏幕</span>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-gray-500">Tips: 冲刺可以无视重力飞行，甚至可以在空中二段位移！</p>
+      </div>
+    </div>
   );
 }
