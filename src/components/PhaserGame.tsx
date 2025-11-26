@@ -50,7 +50,7 @@ class MainScene extends Phaser.Scene {
 
     // 瘦身核心代码
     const bodyWidth = this.player.width * 0.5;
-    const bodyHeight = this.player.height * 0.6;
+    const bodyHeight = this.player.height * 0.85;
     this.player.body.setSize(bodyWidth, bodyHeight);
     this.player.body.setOffset(
       (this.player.width - bodyWidth) / 2,
