@@ -20,7 +20,7 @@ class MainScene extends Phaser.Scene {
     this.load.image('sui', '/images/sui-bird-jump.png');
 
     // 2. 绘制圆角矩形地板纹理
-    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+    const graphics = this.make.graphics({ x: 0, y: 0 });
     graphics.fillStyle(0x5e3f28, 1); // 深棕色
     graphics.fillRoundedRect(0, 0, 200, 32, 8);
     graphics.fillStyle(0x8b5a2b, 1); // 浅棕色
@@ -102,7 +102,10 @@ export default function PhaserGame() {
       scene: [MainScene],
     };
     const newGame = new Phaser.Game(config);
-    return () => { newGame.destroy(true); };
+    // eslint-disable-next-line consistent-return
+    return () => {
+      newGame.destroy(true);
+    };
   }, []);
 
   return (
