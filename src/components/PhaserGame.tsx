@@ -18,7 +18,7 @@ class MainScene extends Phaser.Scene {
     right: Phaser.Input.Keyboard.Key;
     dash: Phaser.Input.Keyboard.Key;
     dashAlt: Phaser.Input.Keyboard.Key;
-    restart: Phaser.Input.Keyboard.Key; // 新增 R 键重开
+    restart: Phaser.Input.Keyboard.Key;
   } | null = null;
 
   // UI 与 状态
@@ -37,7 +37,7 @@ class MainScene extends Phaser.Scene {
 
   isDashing: boolean = false;
 
-  isGameOver: boolean = false; // 新增游戏结束状态
+  isGameOver: boolean = false;
 
   constructor() {
     super('MainScene');
@@ -77,6 +77,8 @@ class MainScene extends Phaser.Scene {
     this.player.setBounce(0.1);
     this.player.setCollideWorldBounds(true);
     this.player.setScale(0.4);
+    // 确保主角渲染在闪电之下，或者之上，这里设高一点避免被普通平台遮挡
+    this.player.setDepth(10);
 
     const bodyWidth = this.player.width * 0.5;
     const bodyHeight = this.player.height * 0.85;
@@ -114,14 +116,14 @@ class MainScene extends Phaser.Scene {
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4,
-    }).setScrollFactor(0).setDepth(10);
+    }).setScrollFactor(0).setDepth(20);
 
     this.dashText = this.add.text(16, 50, 'DASH: READY', {
       fontSize: '20px',
-      color: '#00ff00',
+      color: '#ffff00', // 初始改为雷电黄
       stroke: '#000000',
       strokeThickness: 2,
-    }).setScrollFactor(0).setDepth(10);
+    }).setScrollFactor(0).setDepth(20);
   }
 
   spawnPlatform(isStartPlatform = false) {
@@ -153,26 +155,52 @@ class MainScene extends Phaser.Scene {
     this.canDash = false;
     this.isDashing = true;
 
-    // ⚡ 强力弹射逻辑
-    const dashSpeed = 1500; // 提升速度 (原900)
+    const dashSpeed = 1500;
     const direction = this.player.flipX ? 1 : -1;
 
     this.player.setVelocityX(direction * dashSpeed);
-    // 稍微给一点向上的分量，防止贴地冲刺被摩擦力减速太快，感觉更像“飞行”
     this.player.setVelocityY(-200);
     this.player.body.allowGravity = false;
 
-    this.player.setTint(0x00ffff);
-    this.dashText?.setText('DASH: >>>').setColor('#00ffff');
+    // ⚡ 视觉特效：雷之呼吸
+    this.player.setTint(0xffff00); // 变身金黄色
+    this.dashText?.setText('THUNDER FLASH!').setColor('#ffff00');
 
-    this.time.delayedCall(250, () => { // 稍微延长一点冲刺时间 (0.2s -> 0.25s)
+    // 生成多个闪电粒子
+    for (let i = 0; i < 8; i++) {
+      // 随机分布在玩家周围
+      const offsetX = Phaser.Math.Between(-40, 40);
+      const offsetY = Phaser.Math.Between(-40, 40);
+
+      const lightning = this.add.text(this.player.x + offsetX, this.player.y + offsetY, '⚡', {
+        fontSize: `${Phaser.Math.Between(20, 45)}px`,
+      });
+
+      lightning.setOrigin(0.5);
+      lightning.setAlpha(0.8); // 半透明
+      lightning.setDepth(15); // 在玩家上面
+
+      // 粒子动画：向后飞散 + 消失
+      this.tweens.add({
+        targets: lightning,
+        x: lightning.x - (direction * 100), // 向冲刺反方向拖尾
+        y: lightning.y + Phaser.Math.Between(-20, 20),
+        alpha: 0,
+        scale: 0.5,
+        duration: 350,
+        ease: 'Power2',
+        onComplete: () => lightning.destroy(),
+      });
+    }
+
+    this.time.delayedCall(250, () => {
       this.isDashing = false;
       if (this.player?.body) {
         this.player.body.allowGravity = true;
-        this.player.setVelocityX(this.player.body.velocity.x * 0.5); // 保留一半惯性
-        this.player.setTint(0x888888);
+        this.player.setVelocityX(this.player.body.velocity.x * 0.5);
+        this.player.setTint(0x888888); // 冷却变灰
       }
-      this.dashText?.setText('DASH: CD...').setColor('#aaaaaa');
+      this.dashText?.setText('Charging...').setColor('#aaaaaa');
     });
 
     this.time.delayedCall(1000, () => {
@@ -180,51 +208,43 @@ class MainScene extends Phaser.Scene {
       if (this.player?.active && !this.isGameOver) {
         this.player.clearTint();
       }
-      this.dashText?.setText('DASH: READY').setColor('#00ff00');
+      this.dashText?.setText('DASH: READY').setColor('#ffff00'); // 冷却完毕变黄
     });
   }
 
-  // ☠️ 显示游戏结束画面
   showGameOver() {
     if (this.isGameOver) return;
     this.isGameOver = true;
 
-    // 暂停物理引擎
     this.physics.pause();
     if (this.player) this.player.setTint(0xff0000);
 
-    // 获取屏幕中心 (因为摄像机可能滚动了，所以用 ScrollFactor(0) 固定在屏幕上最方便)
     const centerX = 400;
     const centerY = 300;
 
-    // 1. 半透明黑色背景
     const bg = this.add.rectangle(centerX, centerY, 800, 600, 0x000000, 0.7);
-    bg.setScrollFactor(0).setDepth(20);
+    bg.setScrollFactor(0).setDepth(30);
 
-    // 2. Game Over 文字
     this.add.text(centerX, centerY - 50, 'GAME OVER', {
       fontSize: '64px',
       color: '#ff4444',
       fontStyle: 'bold',
       stroke: '#000000',
       strokeThickness: 6,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(31);
 
-    // 3. 最终得分
     this.add.text(centerX, centerY + 30, `Final Score: ${this.score}`, {
       fontSize: '48px',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(31);
 
-    // 4. 重开提示
     this.add.text(centerX, centerY + 100, 'Click or Press R to Restart', {
       fontSize: '24px',
       color: '#aaaaaa',
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(21);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(31);
 
-    // 5. 绑定重开事件 (点击屏幕 或 按R)
     this.input.once('pointerdown', () => this.scene.restart());
     if (this.input.keyboard) {
       this.input.keyboard.once('keydown-R', () => this.scene.restart());
@@ -295,7 +315,7 @@ class MainScene extends Phaser.Scene {
 
     // --- 死亡判定 ---
     if (this.player.y > cameraBottom + 100) {
-      this.showGameOver(); // 改为调用结算画面
+      this.showGameOver();
     }
 
     // --- 分数 ---
@@ -366,7 +386,7 @@ export default function PhaserGame() {
             <span className="bg-gray-700 px-2 py-1 rounded text-white">点击屏幕</span>
           </div>
         </div>
-        <p className="mt-3 text-xs text-gray-500">Tips: 冲刺可以无视重力飞行，甚至可以在空中二段位移！</p>
+        <p className="mt-3 text-xs text-yellow-500">Tips: 冲刺 (Shift) 现在附带雷电特效！⚡</p>
       </div>
     </div>
   );
