@@ -29,21 +29,26 @@ export const friendSnippets: StorySnippet[] = [
     }
   },
 
-  // 同行：露营
+  // 同行：露营 (已修复：只允许当前队友触发)
   {
     id: 'companion_camping',
     tags: ['wild_daily'],
     weight: 20,
     req: (hero, world) => {
-      const companions = getAvailableCompanions(hero, world);
-      return companions.length > 0 && hero.locationId.startsWith('wild_');
+    // 🆕 修复：检查是否存在 companionId，而不是查找所有好友
+      return !!world.companionId && hero.locationId.startsWith('wild_');
     },
     run: (hero, world) => {
-      const companions = getAvailableCompanions(hero, world);
-      const selected = companions[0];
-      const updatedNpc = updateLastInteraction(selected.npc, world.turn);
+    // 🆕 修复：直接获取当前队友，而不是列表里的第一个好友
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '一阵风吹过，你独自一人。', type: 'narrative' }] };
 
-      const personality = selected.npc.personality || 'gentle';
+      const updatedNpc = updateLastInteraction(companion, world.turn);
+      const relation = hero.relations.find(r => r.targetId === companion.id);
+      const currentVal = relation?.value || 0;
+      const currentType = relation?.type || 'friend';
+
+      const personality = companion.personality || 'gentle';
       const dialogues = {
         gentle: '今晚的月色真美，不如我们在此休息一晚？',
         bold: '天色已晚，我们就在这里扎营吧！',
@@ -59,35 +64,39 @@ export const friendSnippets: StorySnippet[] = [
 
       return {
         lines: [
-          { text: `【${selected.npc.name}】对你说：`, type: 'narrative' },
-          { text: `"${dialogue}"`, type: 'dialogue', speaker: selected.npc.name },
+          { text: `【${companion.name}】对你说：`, type: 'narrative' },
+          { text: `"${dialogue}"`, type: 'dialogue', speaker: companion.name },
           { text: '你们找了一处避风的地方搭起帐篷。', type: 'action' }
         ],
         addNpc: updatedNpc,
         addRelation: {
-          targetId: selected.npc.id,
-          type: selected.relation.type,
-          value: selected.relation.value + 2
+          targetId: companion.id,
+          type: currentType,
+          value: currentVal + 2
         }
       };
     }
   },
 
-  // 同行：吃饭
+  // 同行：吃饭 (已修复：只允许当前队友触发)
   {
     id: 'companion_meal',
     tags: ['city_daily'],
     weight: 20,
     req: (hero, world) => {
-      const companions = getAvailableCompanions(hero, world);
-      return companions.length > 0 && hero.locationId.startsWith('city_');
+    // 🆕 修复：检查 companionId
+      return !!world.companionId && hero.locationId.startsWith('city_');
     },
     run: (hero, world) => {
-      const companions = getAvailableCompanions(hero, world);
-      const selected = companions[0];
-      const updatedNpc = updateLastInteraction(selected.npc, world.turn);
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '你独自一人走进酒楼。', type: 'narrative' }] };
 
-      const personality = selected.npc.personality || 'gentle';
+      const updatedNpc = updateLastInteraction(companion, world.turn);
+      const relation = hero.relations.find(r => r.targetId === companion.id);
+      const currentVal = relation?.value || 0;
+      const currentType = relation?.type || 'friend';
+
+      const personality = companion.personality || 'gentle';
       const meals = {
         gentle: '清蒸鲈鱼',
         bold: '红烧肉',
@@ -103,15 +112,15 @@ export const friendSnippets: StorySnippet[] = [
 
       return {
         lines: [
-          { text: `【${selected.npc.name}】邀请你一起用餐。`, type: 'narrative' },
-          { text: `"我点了${meal}，希望合你口味。"`, type: 'dialogue', speaker: selected.npc.name },
+          { text: `【${companion.name}】邀请你一起用餐。`, type: 'narrative' },
+          { text: `"我点了${meal}，希望合你口味。"`, type: 'dialogue', speaker: companion.name },
           { text: '你们一边享用美食，一边聊着江湖趣事。', type: 'action' }
         ],
         addNpc: updatedNpc,
         addRelation: {
-          targetId: selected.npc.id,
-          type: selected.relation.type,
-          value: selected.relation.value + 3
+          targetId: companion.id,
+          type: currentType,
+          value: currentVal + 3
         }
       };
     }
