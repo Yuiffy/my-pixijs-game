@@ -231,40 +231,38 @@ export const SNIPPETS: StorySnippet[] = [
     tags: ['sect_daily', 'city_daily', 'wild_daily'],
     weight: 0.1,
     run: (hero, world) => {
-      const choices: StoryChoice[] = [
-        {
-          text: '闭关修炼 (跳过时间)',
-          result: {
-            lines: [
-              { text: '山中无甲子，寒尽不知年。你专心修炼，不问世事。', type: 'time-pass' },
-            ],
-            addTurn: 3,
-          },
-        },
-      ];
+      const choices: StoryChoice[] = [];
 
       // 根据位置添加不同的选项
       if (hero.locationId === 'loc_city') {
-        // 在城中：可以四处打听、去茶馆、去武馆等
+        // 在城中：可以四处打听、去茶馆等
         const gossipEvents = [
           {
             text: '你听到茶馆里有人在谈论最近江湖上的传闻。',
             detail: '据说某个门派最近发生了大事，但具体是什么，没人说得清楚。',
+            effect: () => ({ addItem: '江湖传闻' }),
           },
           {
             text: '你在集市上遇到一个说书人，正在讲江湖故事。',
             detail: '你听了一会儿，虽然都是些老故事，但也算解闷。',
+            effect: () => ({}),
           },
           {
             text: '你向几个江湖人士打听消息。',
             detail: '他们告诉你最近城外似乎有些不太平，建议你小心。',
+            effect: () => ({ addFlag: 'heard_rumors' }),
           },
           {
-            text: '你在酒馆里听到一些醉汉在吹牛。',
-            detail: '虽然大部分都是胡言乱语，但你也听到了一些有趣的信息。',
+            text: '你在酒馆里遇到一个醉汉，他告诉你一些有趣的信息。',
+            detail: '虽然大部分都是胡言乱语，但你也听到了一些有用的线索。',
+            effect: () => {
+              const items = ['地图', '指南针', '火折子'];
+              return { addItem: rand(items) };
+            },
           },
         ];
         const gossipEvent = rand(gossipEvents);
+        const eventEffect = gossipEvent.effect();
 
         choices.push({
           text: '四处打听 (寻找机缘)',
@@ -275,25 +273,48 @@ export const SNIPPETS: StorySnippet[] = [
               { text: gossipEvent.detail, type: 'inner' },
             ],
             addTurn: 1,
+            ...eventEffect,
+          },
+        });
+
+        // 在城中可以去茶馆
+        choices.push({
+          text: '去茶馆坐坐',
+          result: {
+            lines: [
+              { text: '你走进一家茶馆，找了个位置坐下。', type: 'action' },
+              { text: '你点了一壶茶，慢慢品味，听着周围人的谈话。', type: 'narrative' },
+              { text: '你感觉心情平静了不少。', type: 'inner' },
+            ],
+            addTurn: 1,
           },
         });
       } else if (hero.locationId === 'loc_wild') {
-        // 在野外：可以探索、寻找资源等
+        // 在野外：可以探索、寻找资源、闭关修炼
         const exploreEvents = [
           {
             text: '你在野外四处探索，希望能找到一些有用的东西。',
-            detail: '虽然没找到什么特别的东西，但你对这片区域更加熟悉了。',
+            detail: '你发现了一些草药，小心地收集起来。',
+            effect: () => ({ addItem: '草药' }),
           },
           {
             text: '你仔细观察周围的环境，寻找可能的线索。',
             detail: '你发现了一些奇怪的痕迹，但无法确定是什么留下的。',
+            effect: () => ({ addFlag: 'found_strange_tracks' }),
           },
           {
             text: '你向路过的旅人打听消息。',
             detail: '他们告诉你前面可能有危险，建议你绕路。',
+            effect: () => ({}),
+          },
+          {
+            text: '你在一个隐蔽的地方发现了一个小包裹。',
+            detail: '打开一看，里面有一些银两和一张地图。',
+            effect: () => ({ addItem: rand(['银两', '地图']) }),
           },
         ];
         const exploreEvent = rand(exploreEvents);
+        const eventEffect = exploreEvent.effect();
 
         choices.push({
           text: '四处探索 (寻找机缘)',
@@ -303,18 +324,53 @@ export const SNIPPETS: StorySnippet[] = [
               { text: exploreEvent.detail, type: 'narrative' },
             ],
             addTurn: 1,
+            ...eventEffect,
+          },
+        });
+
+        // 在野外可以闭关修炼
+        choices.push({
+          text: '闭关修炼 (跳过时间)',
+          result: {
+            lines: [
+              { text: '你在野外找到一处僻静之地，开始闭关修炼。', type: 'action' },
+              { text: '山中无甲子，寒尽不知年。你专心修炼，不问世事。', type: 'time-pass' },
+            ],
+            addTurn: 3,
           },
         });
       } else if (hero.locationId === 'loc_sect_main') {
-        // 在门派：可以找师兄弟聊天、向师父请教等
+        // 在门派：可以找师兄弟聊天、闭关修炼、向师父请教
+        const disciples = world.npcs.filter((n: Person) => n.sectId === hero.sectId && n.role === 'disciple' && n.id !== hero.id);
+        if (disciples.length > 0) {
+          const randomDisciple = rand(disciples) as Person;
+          const discipleRel = hero.relations.find((r) => r.targetId === randomDisciple.id);
+          choices.push({
+            text: '找师兄弟闲聊',
+            result: {
+              lines: [
+                { text: `你找到师兄弟【${randomDisciple.name}】，一起闲聊江湖趣事。`, type: 'action' },
+                { text: '你们聊得很开心，感觉师门情谊更加深厚了。', type: 'narrative' },
+              ],
+              addTurn: 1,
+              addRelation: {
+                targetId: randomDisciple.id,
+                type: 'friend',
+                value: (discipleRel?.value || 0) + 10,
+              },
+            },
+          });
+        }
+
+        // 在门派可以闭关修炼
         choices.push({
-          text: '找师兄弟闲聊',
+          text: '闭关修炼 (跳过时间)',
           result: {
             lines: [
-              { text: '你找到几位师兄弟，一起闲聊江湖趣事。', type: 'action' },
-              { text: '你们聊得很开心，感觉师门情谊更加深厚了。', type: 'narrative' },
+              { text: '你回到自己的房间，开始闭关修炼。', type: 'action' },
+              { text: '山中无甲子，寒尽不知年。你专心修炼，不问世事。', type: 'time-pass' },
             ],
-            addTurn: 1,
+            addTurn: 3,
           },
         });
       }
@@ -349,7 +405,7 @@ export const SNIPPETS: StorySnippet[] = [
         });
       }
 
-      // 如果只有一个选项（闭关修炼），直接执行，不显示选择
+      // 如果只有一个选项，直接执行，不显示选择
       if (choices.length === 1) {
         return choices[0].result;
       }
