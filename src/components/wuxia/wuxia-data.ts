@@ -34,23 +34,44 @@ export interface Person {
   role: 'leader' | 'disciple' | 'hero' | 'villager' | 'merchant' | 'bandit' | 'mystery' | 'boss';
   gender: 'male' | 'female';
   age: number;
-  status: 'alive' | 'dead';
+  birthYear?: number;
+  birthMonth?: number;
+  status: 'alive' | 'dead' | 'missing';
   relations: Relation[];
   locationId: string;
   inventory: string[];
-  flags: Record<string, boolean>;
+  flags: Record<string, any>;
   arts: string[];
-  knowledge: string[]; // 🆕 新增：江湖情报库
-  personality?: Personality; // 🆕 性格
-  appearance?: Appearance; // 🆕 外表描述
-  lastSeenAppearance?: Appearance; // 🆕 上次见面的外表（用于对比）
-  lastUsedMove?: string; // 🆕 上次使用的招式（用于对比）
-  meetCount?: number; // 🆕 见面次数
-  // 🆕 门派状态跟踪
-  expelled?: boolean; // 是否被逐出师门
-  joinSectTime?: number; // 入派时间（回合数）
-  leaveSectTime?: number; // 出派时间（回合数）
-  sectHistory?: SectHistory[]; // 门派历史记录
+  knowledge: string[];
+  personality?: string;
+  appearance?: {
+    face?: string;
+    build?: string;
+    clothing?: string;
+    weapon?: string;
+  };
+  identity?: {
+    type: 'traitor' | 'retired_elder' | 'wandering_hero';
+    originalSect?: string;
+    relatedNpcId?: string;
+    relationDesc?: string;
+  };
+  schedule?: {
+    targetLocationId: string;
+    stayTurns: number;
+  };
+  lastSeenAppearance?: Appearance;
+  lastUsedMove?: string;
+  meetCount?: number;
+  sectHistory?: Array<{
+    sectId: string;
+    action: 'join' | 'expel' | 'leave';
+    time: number;
+    reason?: string;
+  }>;
+  expelled?: boolean;
+  joinSectTime?: number;
+  leaveSectTime?: number;
 }
 
 export interface SectHistory {
@@ -65,24 +86,24 @@ export interface Sect {
   name: string;
   type: 'good' | 'evil';
   locationId: string;
-  // 🆕 扩展字段
-  recruitGender?: 'male' | 'female' | 'both'; // 收徒性别限制
-  history?: string; // 历史介绍
-  description?: string; // 门派描述
-  leader?: string; // 掌门人ID（可动态更换）
-  chiefDisciple?: string; // 首席弟子ID（可动态更换）
-  members?: string[]; // 成员ID列表
-  reputation?: number; // 门派声望（0-100）
+  recruitGender?: 'male' | 'female' | 'both';
+  history?: string;
+  description?: string;
+  leader?: string;
+  chiefDisciple?: string;
+  members?: string[];
+  reputation?: number;
+  relations?: Record<string, number>; // sectId -> relationship value (-100 to 100)
 }
 
 export interface Location {
   id: string;
   name: string;
   type: 'sect' | 'city' | 'wild' | 'village' | 'inn' | 'government';
-  x?: number; // 🆕 地图坐标X
-  y?: number; // 🆕 地图坐标Y
-  parentId?: string; // 🆕 父地点（如客栈属于城市）
-  connections?: string[]; // 🆕 连接的地点ID列表
+  x?: number; // 地图坐标X
+  y?: number; // 地图坐标Y
+  parentId?: string; // 父地点（如客栈属于城市）
+  connections?: string[]; // 连接的地点ID列表
 }
 
 export enum StoryStage {
@@ -119,9 +140,9 @@ export interface SnippetResult {
   addRelation?: Relation;
   addFlag?: string;
   addArt?: string;
-  addKnowledge?: string; // 🆕 新增：获得情报指令
-  setCompanion?: string; // 🆕 设置同行伙伴（NPC ID）
-  removeCompanion?: boolean; // 🆕 移除同行伙伴
+  addKnowledge?: string; // 新增：获得情报指令
+  setCompanion?: string; // 设置同行伙伴（NPC ID）
+  removeCompanion?: boolean; // 移除同行伙伴
   advanceStage?: boolean;
   addTurn?: number;
   endGame?: boolean;
@@ -139,13 +160,13 @@ export interface StorySnippet {
 }
 
 // ==========================================
-// 🎲 随机生成库 & 武功库
+// 随机生成库 & 武功库
 // ==========================================
 
 export const MALE_FIRST_NAMES = ['风', '云', '雪', '冲', '无忌', '不败', '寻欢', '留香', '过', '靖', '康', '松', '竹', '虎', '龙', '天', '峰', '逍', '遥', '破天', '翠山', '平之', '复', '延庆', '不群', '沧海', '伯光', '问天'];
 export const FEMALE_FIRST_NAMES = ['灵珊', '盈盈', '语嫣', '素素', '莫愁', '芷若', '敏', '嫣然', '婉清', '弄玉', '铁心', '凤凰', '蓉', '念慈', '如是', '小玩', '双', '弗之', '龙儿', '语花', '木兰', '岁', '岁己', '小岁'];
 export const LAST_NAMES = ['李', '张', '独孤', '令狐', '东方', '西门', '慕容', '郭', '杨', '陆', '花', '叶', '林', '岳', '萧', '沈', '燕', '楚', '袁', '胡', '苗', '范', '欧阳', '上官', '段', '乔', '李', '张'];
-// 🆕 完整的门派数据结构
+// 完整的门派数据结构
 export const SECTS_DATA: Sect[] = [
   {
     id: 'sect_qingyun',
@@ -249,7 +270,7 @@ export const SECTS_DATA: Sect[] = [
   },
 ];
 
-// 🆕 保留原有数组用于兼容性（只包含名称）
+// 保留原有数组用于兼容性（只包含名称）
 export const SECT_NAMES = SECTS_DATA.map((sect) => sect.name);
 
 const CITY_PREFIXES = ['襄', '洛', '长', '扬', '苏', '杭', '汴', '京', '成', '渝', '金', '姑'];
@@ -270,7 +291,7 @@ export const genName = (gender: 'male' | 'female') => {
 export const genCityName = () => `${rand(CITY_PREFIXES)}${rand(CITY_SUFFIXES)}城`;
 export const genWildName = () => `${rand(WILD_PREFIXES)}${rand(WILD_SUFFIXES)}`;
 
-// 🆕 性格描述
+// 性格描述
 const PERSONALITY_DESCRIPTIONS: Record<Personality, string> = {
   gentle: '温文尔雅',
   bold: '豪爽直率',
@@ -282,10 +303,10 @@ const PERSONALITY_DESCRIPTIONS: Record<Personality, string> = {
   passionate: '热情如火',
 };
 
-// 🆕 生成性格
+// 生成性格
 export const genPersonality = (): Personality => rand(['gentle', 'bold', 'cunning', 'righteous', 'mysterious', 'playful', 'serious', 'passionate'] as Personality[]);
 
-// 🆕 生成外表
+// 生成外表
 export const genAppearance = (gender: 'male' | 'female', role: Person['role']): Appearance => {
   const maleFaces = ['剑眉星目', '浓眉大眼', '面如冠玉', '英气逼人', '棱角分明', '温润如玉'];
   const femaleFaces = ['眉目如画', '清丽脱俗', '明眸皓齿', '娇美动人', '英姿飒爽', '温婉可人'];
@@ -306,7 +327,104 @@ export const genAppearance = (gender: 'male' | 'female', role: Person['role']): 
   };
 };
 
-// 🆕 描述角色外表（首次见面）
+// 描述角色外表（首次见面）
+export const getAgeDescription = (person: Person): string => {
+  if (person.age < 20) return '弱冠之年';
+  if (person.age < 30) return '风华正茂';
+  if (person.age < 40) return '而立之年';
+  if (person.age < 50) return '不惑之年';
+  if (person.age < 60) return '知天命之年';
+  return '花甲之年';
+};
+
+export const initSectRelations = (sects: Sect[]): void => {
+  sects.forEach((s1: Sect) => {
+    // Ensure relations object exists
+    const relations: { [key: string]: number } = s1.relations || {};
+    s1.relations = relations;
+
+    sects.forEach((s2: Sect) => {
+      if (s1.id === s2.id) return;
+
+      let baseValue = 0;
+      if (s1.type !== s2.type) {
+        // 正邪不两立
+        baseValue = -60 - Math.floor(Math.random() * 40); // -60 ~ -100 for enemies
+      } else {
+        // 同为正派或邪派，关系较好但可能有竞争
+        baseValue = 10 + Math.floor(Math.random() * 40); // 10 ~ 50 for allies
+      }
+
+      relations[s2.id] = baseValue;
+    });
+  });
+};
+
+export const generateHiddenMaster = (worldNpcs: Person[], sects: Sect[], locations: Location[]): Person => {
+  // 随机选择一个门派作为隐藏高手的出身
+  const sourceSect = rand(sects);
+  const leader = worldNpcs.find(n => n.id === sourceSect.leader);
+
+  // 随机生成年龄和性别
+  const gender = Math.random() > 0.5 ? 'male' : 'female';
+  const age = 60 + Math.floor(Math.random() * 30); // 60-90岁
+
+  // 随机选择一种身份模板
+  const relationTemplates = [
+    { type: 'traitor', desc: '昔日因偷练禁术被逐出的长老', relVal: -80, relType: 'rival' },
+    { type: 'retired_elder', desc: '看不惯现任掌门作风而归隐的师叔', relVal: -20, relType: 'master' },
+    { type: 'wandering_hero', desc: '掌门的结拜义兄，云游四海', relVal: 80, relType: 'friend' }
+  ];
+  const template = rand(relationTemplates);
+
+  // 创建隐藏高手
+  const master: Person = {
+    id: `npc_hidden_master_${Date.now()}`,
+    name: genName(gender),
+    sectId: 'none', // 无门派
+    role: 'mystery',
+    gender,
+    age,
+    birthYear: new Date().getFullYear() - age,
+    status: 'alive',
+    relations: [],
+    locationId: rand(locations.filter(l => l.type === 'wild' || l.type === 'city')).id, // 随机一个野外或城市
+    inventory: ['绝世秘籍残页'],
+    flags: {},
+    arts: [],
+    knowledge: [],
+    personality: 'mysterious',
+    appearance: {
+      face: '鹤发童颜，双目如电',
+      build: '身形枯瘦却如苍松劲柏',
+      clothing: '一袭洗得发白的旧道袍',
+      weapon: '无'
+    },
+    identity: {
+      type: template.type as any,
+      originalSect: sourceSect.id,
+      relatedNpcId: leader?.id,
+      relationDesc: template.desc
+    }
+  };
+
+  // 添加门派的镇派武学
+  const sectArts = getSectArts(sourceSect.name);
+  if (sectArts.length > 0) {
+    // 只添加最强的武学
+    master.arts.push(sectArts[sectArts.length - 1].name);
+  }
+
+  // 添加与掌门的关系
+  if (leader) {
+    master.relations.push({ targetId: leader.id, type: template.relType, value: template.relVal });
+    if (!leader.relations) leader.relations = [];
+    leader.relations.push({ targetId: master.id, type: template.relType, value: template.relVal });
+  }
+
+  return master;
+};
+
 export const describeAppearance = (person: Person): string => {
   if (!person.appearance) return '';
   const {
@@ -317,7 +435,7 @@ export const describeAppearance = (person: Person): string => {
   return desc;
 };
 
-// 🆕 描述角色外表变化（再次见面）
+// 描述角色外表变化（再次见面）
 export const describeAppearanceChange = (person: Person): string => {
   if (!person.appearance || !person.lastSeenAppearance) return describeAppearance(person);
 
@@ -339,7 +457,7 @@ export const describeAppearanceChange = (person: Person): string => {
   return `【${person.name}】${changes.join('，')}。`;
 };
 
-// 🆕 描述招式对比
+// 描述招式对比
 export const describeMoveComparison = (
   person: Person,
   currentMove: string,
@@ -360,21 +478,78 @@ export const describeMoveComparison = (
   return `【${person.name}】上次用的是"${person.lastUsedMove}"，这次却换成了"${currentMove}"，招式变化莫测！`;
 };
 
-// 🆕 战斗系统：多回合战斗
-export const generateBattle = (
+// 战斗系统：多回合战斗（支持同伴参与和内外功配合）
+// 返回战斗过程的剧情线数组
+const generateBattle = (
   hero: Person,
   enemy: Person,
   heroArt: MartialArt,
   enemyArt: MartialArt | null,
   rounds: number = 3,
+  world?: any,
 ): StoryLine[] => {
   const lines: StoryLine[] = [];
   const heroMoves = heroArt.moves;
   const enemyMoves = enemyArt?.moves || ['一刀砍来', '横劈', '直刺', '横扫', '当头一刀'];
 
+    // 获取同伴（如果有）
+  const companion = world?.companionId ? world.npcs.find((n: Person) => n.id === world.companionId) : null;
+  let companionArt: MartialArt | null = null;
+  if (companion && companion.arts.length > 0) {
+    const art = getArtByName(companion.arts[0]);
+    if (art) {
+      companionArt = art;
+    }
+  }
+
+  // 战斗开始
   lines.push({ text: '战斗开始！', type: 'action' });
 
+  // 记录战斗开始时间
+  const battleStartTime = Date.now();
+
+  // 同伴加入战斗
+  if (companion) {
+    const companionSect = world?.sects ?
+      getSectById(companion.sectId, world.sects) :
+      getSectById(companion.sectId);
+    const sectName = companionSect?.name || '无门无派';
+
+    lines.push({
+      text: `【${companion.name}】大喝一声：\"${companion.gender === 'female' ? '小女子' : '在下'}【${companion.name}】，${getSectById(companion.sectId, world?.sects)?.name || '无门无派'}弟子，特来助阵！\"`,
+      type: 'dialogue',
+      speaker: companion.name
+    });
+  }
+
+  let heroHp = 100;
+  let enemyHp = 100;
+  let companionHp = companion ? 100 : 0;
+
+  // 获取内功加成
+  const heroInnerArt = hero.arts.find((art: string) => {
+    const artObj = getArtByName(art);
+    return artObj?.type === 'inner';
+  });
+  const heroInnerBonus = heroInnerArt ? 10 : 0;
+
+  const enemyInnerArt = enemy.arts.find((art: string) => {
+    const artObj = getArtByName(art);
+    return artObj?.type === 'inner';
+  });
+  const enemyInnerBonus = enemyInnerArt ? 10 : 0;
+
+  const companionInnerArt = companion?.arts.find((art: string) => {
+    const artObj = getArtByName(art);
+    return artObj?.type === 'inner';
+  });
+  const companionInnerBonus = companionInnerArt ? 10 : 0;
+
   for (let i = 0; i < rounds; i++) {
+    // 每回合开始前检查状态
+    if (enemyHp <= 0) break;
+    if (heroHp <= 0 && (!companion || companionHp <= 0)) break;
+
     const heroMove = rand(heroMoves);
     const enemyMove = rand(enemyMoves);
 
@@ -390,31 +565,140 @@ export const generateBattle = (
       lines.push({ text: `【${enemy.name}】${enemyMove}！`, type: 'action' });
     }
 
-    lines.push({ text: `你使出【${heroArt.name}】中的"${heroMove}"！`, type: 'action' });
+    // 玩家行动
+    if (heroHp > 0) {
+      lines.push({ text: `你使出【${heroArt.name}】中的"${heroMove}"！`, type: 'action' });
 
-    // 判断胜负（简化版，可以根据武功强弱调整）
-    const heroWins = Math.random() > 0.3; // 70%概率获胜
-    if (heroWins) {
-      lines.push({ text: `${heroArt.desc}，你占据了上风！`, type: 'narrative' });
-    } else {
-      lines.push({ text: '对方招式凌厉，你稍落下风。', type: 'narrative' });
+      // 计算伤害（基础伤害 + 内功加成）
+      const baseDamage = 10 + Math.floor(Math.random() * 20);
+      const totalDamage = baseDamage + heroInnerBonus;
+      enemyHp = Math.max(0, enemyHp - totalDamage);
+
+      lines.push({
+        text: `【${enemy.name}】受到${totalDamage}点伤害！${enemyHp > 0 ? '' : '【倒地不起】'}`,
+        type: 'narrative'
+      });
+    }
+
+    // 同伴行动
+    if (companion && companionHp > 0 && enemyHp > 0) {
+      if (companionArt) {
+        const companionMove = rand(companionArt.moves);
+        lines.push({
+          text: `【${companion.name}】使出【${companionArt.name}】中的"${companionMove}"！`,
+          type: 'action'
+        });
+
+        // 同伴造成伤害
+        const companionDamage = 8 + Math.floor(Math.random() * 15) + companionInnerBonus;
+        enemyHp = Math.max(0, enemyHp - companionDamage);
+        lines.push({
+          text: `【${enemy.name}】受到${companionDamage}点伤害！${enemyHp > 0 ? '' : '【倒地不起】'}`,
+          type: 'narrative'
+        });
+      }
+    }
+
+    // 敌人行动（如果还活着）
+    if (enemyHp > 0) {
+      // 敌人选择攻击目标（玩家或同伴）
+      const attackCompanion = companion && companionHp > 0 && (heroHp <= 0 || Math.random() > 0.5);
+
+      if (attackCompanion && companion) {
+        // 攻击同伴
+        const enemyDamage = 10 + Math.floor(Math.random() * 15) + enemyInnerBonus;
+        companionHp = Math.max(0, companionHp - enemyDamage);
+        lines.push({
+          text: `【${enemy.name}】向【${companion.name}】发起攻击，造成${enemyDamage}点伤害！${companionHp > 0 ? '' : '【同伴不支倒地】'}`,
+          type: 'action'
+        });
+      } else if (heroHp > 0) {
+        // 攻击玩家
+        const enemyDamage = 10 + Math.floor(Math.random() * 20) + enemyInnerBonus;
+        heroHp = Math.max(0, heroHp - enemyDamage);
+        lines.push({
+          text: `【${enemy.name}】向你发起攻击，造成${enemyDamage}点伤害！${heroHp > 0 ? '' : '【你感到一阵剧痛】'}`,
+          type: 'action'
+        });
+      }
+    }
+
+    // 战斗状态更新
+    if (enemyHp <= 0) {
+      lines.push({ text: `【${enemy.name}】已经无力再战！`, type: 'narrative' });
+    } else if (heroHp <= 0 && (!companion || companionHp <= 0)) {
+      lines.push({ text: '你已经无力再战...', type: 'narrative' });
     }
   }
 
-  // 最终结果
-  const finalWin = Math.random() > 0.2; // 80%概率最终获胜
-  if (finalWin) {
-    lines.push({ text: `经过${rounds}个回合的激战，你终于击败了【${enemy.name}】！`, type: 'narrative' });
-  } else {
-    lines.push({ text: `经过${rounds}个回合的激战，【${enemy.name}】见占不到便宜，转身逃走了。`, type: 'narrative' });
-  }
+  // 计算战斗持续时间（秒）
+  const battleDuration = Math.floor((Date.now() - battleStartTime) / 1000);
 
-  return lines;
+  // 战斗结果
+  if (enemyHp <= 0) {
+    lines.push({
+      text: `经过${rounds}个回合的激战，${companion && companionHp > 0 ? `在【${companion.name}】的协助下，` : ''}你终于击败了【${enemy.name}】！`,
+      type: 'narrative'
+    });
+
+    // 增加与同伴的关系（如果参与战斗）
+    if (companion && companionHp > 0) {
+      lines.push({
+        text: `【${companion.name}】微笑着说：\"配合得不错！\"`,
+        type: 'dialogue',
+        speaker: companion.name
+      });
+      // 这里可以添加增加关系的逻辑
+    }
+
+    // 添加胜利信息
+    lines.push({
+      text: `你获得了胜利！${companion && companionHp > 0 ? `多亏了【${companion.name}】的协助！` : ''}`,
+      type: 'narrative'
+    });
+
+    // 添加击败标记
+    if (world) {
+      if (!world.flags) world.flags = {};
+      world.flags[`defeated_${enemy.id}`] = true;
+    }
+
+    // 记录敌人最后使用的招式
+    if (enemy) {
+      enemy.lastUsedMove = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
+    }
+
+    return lines;
+  } else {
+    lines.push({
+      text: `【${enemy.name}】见你们实力不俗，冷笑一声转身离去：\"今日就放过你们，下次可没这么走运了！\"`,
+      type: 'narrative'
+    });
+
+    // 添加逃跑信息
+    lines.push({
+      text: `【${enemy.name}】见你们实力不俗，冷笑一声转身离去："今日就放过你们，下次可没这么走运了！"`,
+      type: 'narrative'
+    });
+
+    // 添加逃跑标记
+    if (world) {
+      if (!world.flags) world.flags = {};
+      world.flags[`fled_from_${enemy.id}`] = true;
+    }
+
+    // 记录敌人最后使用的招式
+    if (enemy) {
+      enemy.lastUsedMove = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
+    }
+
+    return lines;
+  }
 };
 
 // 🆕 同行事件：露营
 export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
-  const personalityDialogue: Record<Personality, string> = {
+  const personalityDialogue = {
     gentle: '\'今晚月色真美，不如我们在此休息一晚？\'',
     bold: '\'天色已晚，我们就在这里扎营吧！\'',
     cunning: '\'前面可能有危险，不如先在这里休息。\'',
@@ -423,9 +707,12 @@ export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
     playful: '\'好累啊！我们在这里休息吧，我带了干粮！\'',
     serious: '\'按照计划，我们应该在这里休息。\'',
     passionate: '\'今晚我们一起看星星吧！\'',
-  };
+  } as const;
 
-  const dialogue = personalityDialogue[companion.personality || 'gentle'];
+  const defaultDialogue = '\'我们在这里休息一晚吧。\'';
+  const dialogue = companion.personality && personalityDialogue[companion.personality as keyof typeof personalityDialogue]
+    ? personalityDialogue[companion.personality as keyof typeof personalityDialogue]
+    : defaultDialogue;
 
   return [
     { text: `天色渐晚，【${companion.name}】提议在此露营。`, type: 'narrative' },
@@ -433,11 +720,11 @@ export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
     { text: '你们一起生火做饭，围坐在篝火旁聊天。', type: 'action' },
     { text: '夜晚的江湖，似乎也没有那么危险了。', type: 'inner' },
   ];
-};
+}
 
 // 🆕 同行事件：吃饭
 export const generateCompanionMealEvent = (companion: Person): StoryLine[] => {
-  const personalityDialogue: Record<Personality, string> = {
+  const personalityDialogue = {
     gentle: '\'少侠，不如我们找个地方用膳？\'',
     bold: '\'走，我请客！我们去最好的酒楼！\'',
     cunning: '\'我知道一家不错的店，物美价廉。\'',
@@ -446,9 +733,12 @@ export const generateCompanionMealEvent = (companion: Person): StoryLine[] => {
     playful: '\'我饿了！我们去吃好吃的吧！\'',
     serious: '\'该用膳了，我们去前面的酒楼。\'',
     passionate: '\'我知道一家店，那里的菜特别好吃！\'',
-  };
+  } as const;
 
-  const dialogue = personalityDialogue[companion.personality || 'gentle'];
+  const defaultDialogue = '\'我们去吃饭吧。\'';
+  const dialogue = companion.personality && personalityDialogue[companion.personality as keyof typeof personalityDialogue]
+    ? personalityDialogue[companion.personality as keyof typeof personalityDialogue]
+    : defaultDialogue;
 
   return [
     { text: `【${companion.name}】提议一起去用膳。`, type: 'narrative' },
@@ -760,7 +1050,9 @@ export const getArtByName = (artName: string) => {
 };
 
 // 🆕 辅助函数：根据ID获取门派数据
-export const getSectById = (sectId: string): Sect | undefined => SECTS_DATA.find((sect) => sect.id === sectId);
+export const getSectById = (sectId: string, sects: Sect[] = SECTS_DATA): Sect | undefined => {
+  return sects.find((sect) => sect.id === sectId);
+};
 
 // 🆕 辅助函数：根据名称获取门派数据
 export const getSectByName = (sectName: string): Sect | undefined => SECTS_DATA.find((sect) => sect.name === sectName);
@@ -863,6 +1155,146 @@ export const leaveSect = (person: Person, sect: Sect, turn: number, action: 'lea
 // ==========================================
 // 🎭 预设剧情库
 // ==========================================
+
+// 动态事件：门派仇杀
+const eventRumorDuel: StorySnippet = {
+  id: 'event_rumor_duel',
+  tags: ['wild_daily'],
+  weight: 200,
+  req: (hero, world) => hero.knowledge.includes('rumor_duel') &&
+                       hero.locationId.startsWith('wild_') &&
+                       !hero.flags.watched_duel,
+  run: (hero, world) => {
+    const sects = world.sects as Sect[];
+    let sectA: Sect | null = null;
+    let sectB: Sect | null = null;
+
+    // 找出关系最差的两个门派
+    for (const s1 of sects) {
+      for (const [s2Id, val] of Object.entries(s1.relations || {})) {
+        if (val < -50) {
+          sectA = s1;
+          sectB = sects.find(s => s.id === s2Id) || null;
+          if (sectA && sectB) break;
+        }
+      }
+      if (sectA && sectB) break;
+    }
+
+    // 回退：随机选一个正派一个邪派
+    if (!sectA || !sectB) {
+      sectA = sects.find(s => s.type === 'good') || sects[0];
+      sectB = sects.find(s => s.type === 'evil') || sects[1];
+    }
+
+    return {
+      lines: [
+        { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
+        { text: `果然！两拨人马正在对峙。看服饰，分别是【${sectA.name}】和【${sectB.name}】的弟子。`, type: 'narrative' },
+        { text: `"${sectB.name}的妖人，今日就要算清旧账！"`, type: 'dialogue', speaker: `${sectA.name}弟子` },
+        { text: `"哼，${sectA.name}这帮伪君子，死到临头还嘴硬！"`, type: 'dialogue', speaker: `${sectB.name}弟子` },
+      ],
+      choices: [
+        {
+          text: `助【${sectA.name}】铲除奸邪`,
+          result: {
+            lines: [
+              { text: '你拔剑而出，加入了战团。', type: 'action' },
+              { text: `【${sectA.name}】弟子见有强援，士气大振，一举击溃了对手。`, type: 'narrative' },
+              { text: `此役之后，你与【${sectA.name}】的关系更近了一步，但也彻底得罪了【${sectB.name}】。`, type: 'inner' },
+            ],
+            addFlag: 'watched_duel',
+            // 这里可以添加关系变化
+          },
+        },
+        {
+          text: `助【${sectB.name}】行事`,
+          result: {
+            lines: [
+              { text: '你竟然选择了帮助被围攻的"妖人"一方。', type: 'action' },
+              { text: `【${sectB.name}】弟子颇感意外，但有了你的帮助，他们成功反杀。`, type: 'narrative' },
+              { text: '"少侠好胆识！若不嫌弃，可来我派喝杯血酒！"', type: 'dialogue', speaker: `${sectB.name}弟子` },
+            ],
+            addFlag: 'watched_duel',
+          },
+        },
+        {
+          text: '两不相帮，此时不走更待何时',
+          result: {
+            lines: [{ text: '江湖仇杀，冤冤相报何时了。你摇了摇头，悄然离去。', type: 'action' }],
+            addFlag: 'watched_duel',
+          }
+        }
+      ],
+    };
+  },
+};
+
+// 动态事件：偶遇隐世高人
+const eventMeetHiddenMaster: StorySnippet = {
+  id: 'event_meet_hidden_master',
+  tags: ['wild_daily', 'city_daily'],
+  weight: 200,
+  req: (hero, world) => {
+    const master = world.npcs.find((n: Person) => n.role === 'mystery' && n.locationId === hero.locationId);
+    return !!master && !hero.flags[`met_${master.id}`];
+  },
+  run: (hero, world) => {
+    const master = world.npcs.find((n: Person) => n.role === 'mystery' && n.locationId === hero.locationId) as Person;
+    const identity = master.identity || { originalSect: '未知门派', relationDesc: '神秘莫测的高手' };
+    const originalSectName = getSectById(identity.originalSect || '')?.name || '某门派';
+    const callSelf = master.age > 60 ? '老夫' : '在下';
+
+    return {
+      lines: [
+        { text: `你在${hero.locationId.includes('wild')?'山林深处':'闹市角落'}，发现一位气度不凡的${master.gender==='male'?'老者':'老妇'}。`, type: 'narrative' },
+        { text: describeAppearance(master), type: 'narrative' },
+        { text: `此人正是传闻中的【${master.name}】，${identity.relationDesc}。`, type: 'inner' },
+        { text: `"${callSelf}已不问江湖世事多年，没想到还有娃娃能找到这里。"`, type: 'dialogue', speaker: master.name },
+      ],
+      choices: [
+        {
+          text: `前辈，晚辈对【${originalSectName}】武学仰慕已久`,
+          result: {
+            lines: [
+              { text: `听到${originalSectName}，${master.name}眼中闪过一丝复杂的神色。`, type: 'narrative' },
+              { text: '"哼，那个地方...罢了。看你根骨不错，既然有缘，我就指点你几招，能不能领悟看你造化。"', type: 'dialogue', speaker: master.name },
+              { text: '你们就在此地盘桓数日，高人悉心指点。', type: 'time-pass' },
+            ],
+            addArt: master.arts.length > 0 ? master.arts[0] : undefined,
+            addFlag: `met_${master.id}`,
+            addRelation: { targetId: master.id, type: 'master', value: 30 },
+            addTurn: 3
+          }
+        },
+        {
+          text: '晚辈斗胆，想请前辈赐教！(切磋)',
+          result: {
+            lines: [
+              { text: '你拔出兵刃，身上战意升腾。', type: 'action' },
+              { text: '"哈哈哈！好！比起那些唯唯诺诺的徒子徒孙，老夫更喜欢你这种狂妄的小子！"', type: 'dialogue', speaker: master.name },
+              { text: '（切磋过程省略...）你虽然败了，但在实战中获益良多。', type: 'narrative' }
+            ],
+            addFlag: `met_${master.id}`,
+            addRelation: { targetId: master.id, type: 'acquaintance', value: 20 },
+            addTurn: 1
+          }
+        },
+        {
+          text: '晚辈唐突，这就告退',
+          result: {
+            lines: [
+              { text: '你抱拳行礼，准备离开。', type: 'action' },
+              { text: '"哼，无趣。"', type: 'dialogue', speaker: master.name },
+              { text: '你感觉错过了什么...', type: 'inner' }
+            ],
+            addFlag: `met_${master.id}`,
+          }
+        }
+      ]
+    };
+  }
+};
 
 export const SNIPPETS: StorySnippet[] = [
 

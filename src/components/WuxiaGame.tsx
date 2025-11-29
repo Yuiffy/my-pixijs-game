@@ -4,10 +4,10 @@ import React, {
   useState, useEffect, useRef, useCallback,
 } from 'react';
 import {
-  Person, Sect, Location, StoryStage,
+  Person, Sect, Location, StoryStage, Relation,
   SECT_NAMES, SNIPPETS,
   rand, genName, generateWorldMap, getReachableLocations, findPath,
-  SnippetResult, StoryChoice,
+  SnippetResult, StoryChoice, initSectRelations, generateHiddenMaster, getSectById,
 } from './wuxia/wuxia-data';
 
 type StoryBlock = {
@@ -77,12 +77,20 @@ export default function WuxiaGame() {
       // 🆕 使用新的地理系统生成地图
       const finalLocations = generateWorldMap();
 
+      // 初始化门派，添加relations字段
       const newSects: Sect[] = SECT_NAMES.map((name, idx) => {
         const sectLocation = finalLocations.find((l) => l.id === `sect_${idx}`);
         return {
-          id: `sect_${idx}`, name, type: Math.random() > 0.7 ? 'evil' : 'good', locationId: sectLocation?.id || finalLocations[0].id,
+          id: `sect_${idx}`,
+          name,
+          type: Math.random() > 0.7 ? 'evil' : 'good',
+          locationId: sectLocation?.id || finalLocations[0].id,
+          relations: {} // 初始化relations
         };
       });
+
+      // 初始化门派关系
+      initSectRelations(newSects);
 
       const newNpcs: Person[] = [];
       newSects.forEach((sect) => {
@@ -124,9 +132,17 @@ export default function WuxiaGame() {
         });
       });
 
+      // 生成隐藏高手 (1-3个)
+      const hiddenMasterCount = 1 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < hiddenMasterCount; i++) {
+        const master = generateHiddenMaster(newNpcs, newSects, finalLocations);
+        newNpcs.push(master);
+      }
+
+      // 创建玩家角色
       const mySect = rand(newSects);
       const myMaster = newNpcs.find((n) => n.sectId === mySect.id && n.role === 'leader');
-      // 🆕 找到玩家门派对应的地点
+      // 找到玩家门派对应的地点
       const mySectLocation = finalLocations.find((l) => l.id === `sect_${newSects.indexOf(mySect)}`) || finalLocations.find((l) => l.type === 'sect');
       const hero: Person = {
         id: 'hero',
@@ -135,13 +151,14 @@ export default function WuxiaGame() {
         role: 'disciple',
         gender: 'male',
         age: 16,
+        birthYear: new Date().getFullYear() - 16, // 添加出生年份
         status: 'alive',
-        relations: myMaster ? [{ targetId: myMaster.id, type: 'master', value: 50 }] : [],
+        relations: myMaster ? [{ targetId: myMaster.id, type: 'apprentice', value: 50 }] : [],
         locationId: mySectLocation?.id || finalLocations[0].id,
         inventory: [],
         flags: {},
         arts: [],
-        knowledge: [],
+        knowledge: ['rumor_duel'], // 添加江湖传闻知识
       };
 
       if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice', value: 50 });
