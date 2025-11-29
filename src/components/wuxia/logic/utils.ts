@@ -1,4 +1,4 @@
-import { Appearance, Location, Person, Personality, Sect, RelationType } from './types';
+import { Appearance, Location, Person, Personality, Sect, RelationType, Relation } from './types';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, SECTS_DATA, CITY_PREFIXES, CITY_SUFFIXES, WILD_PREFIXES, WILD_SUFFIXES } from './constants';
 import { getSectArts } from './skills';
 
@@ -443,6 +443,45 @@ export const describeAppearance = (person: Person): string => {
 };
 
 // 描述角色外表变化（再次见面）
+export const getSectMembersList = (sect: Sect, world: any): string => {
+  if (!sect.members || sect.members.length === 0) {
+    return '本派目前没有弟子。';
+  }
+
+  const memberNames = sect.members.map(memberId => {
+    const member = world.npcs.find((n: Person) => n.id === memberId);
+    return member ? member.name : '未知弟子';
+  });
+
+  return `本派弟子：${memberNames.join('、')}，共 ${memberNames.length} 人。`;
+};
+
+export const updateLastInteraction = (npc: Person, turn: number): Person => {
+  return {
+    ...npc,
+    flags: {
+      ...npc.flags,
+      lastInteraction: turn
+    }
+  };
+};
+
+export const getAvailableCompanions = (hero: Person, world: any): { npc: Person, relation: Relation }[] => {
+  return hero.relations
+    .filter((r: Relation) => (r.type === 'friend' || r.type === 'crush' || r.type === 'apprentice') &&
+      r.value > 30)
+    .map((r: Relation) => {
+      const npc = world.npcs.find((n: Person) => n.id === r.targetId);
+      return npc ? { npc, relation: r } : null;
+    })
+    .filter((item): item is { npc: Person, relation: Relation } => item !== null)
+    .sort((a, b) => {
+      const aLast = a.npc.flags?.lastInteraction || 0;
+      const bLast = b.npc.flags?.lastInteraction || 0;
+      return aLast - bLast || b.relation.value - a.relation.value;
+    });
+};
+
 export const describeAppearanceChange = (person: Person): string => {
   if (!person.appearance || !person.lastSeenAppearance) return describeAppearance(person);
 

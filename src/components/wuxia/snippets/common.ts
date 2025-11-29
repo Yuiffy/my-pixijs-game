@@ -1,8 +1,8 @@
 import { generateBattle } from "../logic/battle";
 import { SECTS_DATA, MERCHANT_ITEMS } from "../logic/constants";
 import { SECT_ARTS, getSectArts, getArtByName } from "../logic/skills";
-import { MartialArt, Person, Personality, RelationType, Sect, StoryChoice, StoryLine, StorySnippet, StoryStage, Location } from "../logic/types";
-import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance } from "../logic/utils";
+import { MartialArt, Person, Personality, RelationType, Sect, StoryChoice, StoryLine, StorySnippet, StoryStage, Location, Relation } from "../logic/types";
+import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance, getSectMembersList, getAvailableCompanions, updateLastInteraction } from "../logic/utils";
 
 // 同行事件：露营
 export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
@@ -2172,22 +2172,70 @@ export const commonSnippets: StorySnippet[] = [
   // 👥 同行事件系统
   // ===================================
 
+  // 查看本派弟子
+  {
+    id: 'display_sect_members',
+    tags: ['sect_daily'],
+    weight: 30,
+    req: (hero, world) => {
+      const currentSect = world.sects.find((s: Sect) => s.id === hero.sectId);
+      return currentSect && currentSect.members && currentSect.members.length > 0;
+    },
+    run: (hero, world) => {
+      const currentSect = world.sects.find((s: Sect) => s.id === hero.sectId);
+      const memberList = getSectMembersList(currentSect, world);
+
+      return {
+        lines: [
+          { text: '你查看了一下本派弟子名册：', type: 'action' },
+          { text: memberList, type: 'narrative' }
+        ]
+      };
+    }
+  },
+
   // 同行：露营
   {
-    id: 'companion_camp',
+    id: 'companion_camping',
     tags: ['wild_daily'],
     weight: 20,
-    req: (hero, world) => !!world.companionId && hero.locationId.startsWith('wild_'),
-    run: (hero, world) => {
-      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
-      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
-
-      const lines = generateCompanionCampEvent(companion);
-      return {
-        lines,
-        addTurn: 1,
-      };
+    req: (hero, world) => {
+      const companions = getAvailableCompanions(hero, world);
+      return companions.length > 0 && hero.locationId.startsWith('wild_');
     },
+    run: (hero, world) => {
+      const companions = getAvailableCompanions(hero, world);
+      const selected = companions[0];
+      const updatedNpc = updateLastInteraction(selected.npc, world.turn);
+
+      const personality = selected.npc.personality || 'gentle';
+      const dialogues = {
+        gentle: '今晚的月色真美，不如我们在此休息一晚？',
+        bold: '天色已晚，我们就在这里扎营吧！',
+        cunning: '前面可能有危险，不如先在这里休息。',
+        righteous: '行侠仗义也要注意休息，我们在此过夜吧。',
+        mysterious: '...（默默开始准备露营）',
+        playful: '好累啊！我们在这里休息吧，我带了干粮！',
+        serious: '天色不早了，我们在这里扎营。',
+        passionate: '能和你一起看星星，真是太好了！'
+      };
+
+      const dialogue = dialogues[personality] || '我们在这里休息一晚吧。';
+
+      return {
+        lines: [
+          { text: `【${selected.npc.name}】对你说：`, type: 'narrative' },
+          { text: `"${dialogue}"`, type: 'dialogue', speaker: selected.npc.name },
+          { text: '你们找了一处避风的地方搭起帐篷。', type: 'action' }
+        ],
+        addNpc: updatedNpc,
+        addRelation: {
+          targetId: selected.npc.id,
+          type: selected.relation.type,
+          value: selected.relation.value + 2
+        }
+      };
+    }
   },
 
   // 同行：吃饭
@@ -2195,22 +2243,43 @@ export const commonSnippets: StorySnippet[] = [
     id: 'companion_meal',
     tags: ['city_daily'],
     weight: 20,
-    req: (hero, world) => !!world.companionId && hero.locationId.startsWith('city_'),
-    run: (hero, world) => {
-      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
-      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
-
-      const lines = generateCompanionMealEvent(companion);
-      return {
-        lines,
-        addTurn: 1,
-        addRelation: {
-          targetId: companion.id,
-          type: hero.relations.find((r) => r.targetId === companion.id)?.type || 'friend',
-          value: (hero.relations.find((r) => r.targetId === companion.id)?.value || 0) + 5,
-        },
-      };
+    req: (hero, world) => {
+      const companions = getAvailableCompanions(hero, world);
+      return companions.length > 0 && hero.locationId.startsWith('city_');
     },
+    run: (hero, world) => {
+      const companions = getAvailableCompanions(hero, world);
+      const selected = companions[0];
+      const updatedNpc = updateLastInteraction(selected.npc, world.turn);
+
+      const personality = selected.npc.personality || 'gentle';
+      const meals = {
+        gentle: '清蒸鲈鱼',
+        bold: '红烧肉',
+        cunning: '叫花鸡',
+        righteous: '素斋',
+        mysterious: '不知道是什么的神秘料理',
+        playful: '糖醋排骨',
+        serious: '白切鸡',
+        passionate: '麻辣火锅'
+      };
+
+      const meal = meals[personality] || '家常小菜';
+
+      return {
+        lines: [
+          { text: `【${selected.npc.name}】邀请你一起用餐。`, type: 'narrative' },
+          { text: `"我点了${meal}，希望合你口味。"`, type: 'dialogue', speaker: selected.npc.name },
+          { text: '你们一边享用美食，一边聊着江湖趣事。', type: 'action' }
+        ],
+        addNpc: updatedNpc,
+        addRelation: {
+          targetId: selected.npc.id,
+          type: selected.relation.type,
+          value: selected.relation.value + 3
+        }
+      };
+    }
   },
 
   // 同行：聊天
