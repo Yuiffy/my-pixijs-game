@@ -392,11 +392,11 @@ export default function WuxiaGame() {
       <div className="min-h-screen bg-stone-900 text-stone-300 flex flex-col items-center justify-center font-serif">
         <h1 className="text-5xl text-amber-600 mb-12 font-bold tracking-widest border-4 border-stone-700 p-6">侠客风云录</h1>
         <div className="flex gap-8">
-          <button onClick={() => initGame(1)} className="hover:scale-105 transition bg-stone-800 p-8 rounded border border-stone-600 hover:border-amber-500 w-64">
+          <button type="button" onClick={() => initGame(1)} className="hover:scale-105 transition bg-stone-800 p-8 rounded border border-stone-600 hover:border-amber-500 w-64">
             <h3 className="text-2xl text-amber-500 mb-2">名门之后</h3>
             <p className="text-sm text-stone-500">属性均衡，其实不凡。</p>
           </button>
-          <button onClick={() => initGame(2)} className="hover:scale-105 transition bg-stone-800 p-8 rounded border border-stone-600 hover:border-amber-500 w-64">
+          <button type="button" onClick={() => initGame(2)} className="hover:scale-105 transition bg-stone-800 p-8 rounded border border-stone-600 hover:border-amber-500 w-64">
             <h3 className="text-2xl text-amber-500 mb-2">市井无赖</h3>
             <p className="text-sm text-stone-500">机灵过人，福源深厚。</p>
           </button>
@@ -430,6 +430,7 @@ export default function WuxiaGame() {
                 return (
                   <button
                     key={idx}
+                    type="button"
                     disabled={!canChoose}
                     onClick={() => choice.action(engine)}
                     className={`w-full p-3 text-left border rounded transition ${canChoose
@@ -454,6 +455,7 @@ export default function WuxiaGame() {
                 {currentLocation.connections.map((conn) => (
                   <button
                     key={conn.target}
+                    type="button"
                     onClick={() => handleTravel(conn.target, conn.travelTime, conn.desc)}
                     className="w-full p-3 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded text-left flex justify-between group"
                   >
@@ -470,8 +472,8 @@ export default function WuxiaGame() {
             <div>
               <h4 className="text-stone-500 text-xs uppercase mb-3 tracking-widest">行动 Actions</h4>
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={handleTrain} className="p-3 bg-stone-800 border border-stone-700 hover:border-amber-600">修炼武功</button>
-                <button onClick={handleRest} className="p-3 bg-stone-800 border border-stone-700 hover:border-green-600">原地休息</button>
+                <button type="button" onClick={handleTrain} className="p-3 bg-stone-800 border border-stone-700 hover:border-amber-600">修炼武功</button>
+                <button type="button" onClick={handleRest} className="p-3 bg-stone-800 border border-stone-700 hover:border-green-600">原地休息</button>
               </div>
             </div>
           </div>
