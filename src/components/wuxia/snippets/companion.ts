@@ -1,7 +1,7 @@
 import { generateBattle } from "../logic/battle";
 import { SECTS_DATA, MERCHANT_ITEMS } from "../logic/constants";
 import { SECT_ARTS, getSectArts, getArtByName } from "../logic/skills";
-import { StorySnippet, Sect, Person, StoryChoice, StoryStage, MartialArt, RelationType, StoryLine, Personality, Location } from "../logic/types";
+import { StorySnippet, Sect, Person, StoryChoice, StoryStage, MartialArt, RelationType, StoryLine, Personality, LocationInfo } from "../logic/types";
 import { getSectById, describeAppearance, rand, genName, genPersonality, genAppearance, describeAppearanceChange } from "../logic/utils";
 import { generateCompanionCampEvent, generateCompanionMealEvent, generateCompanionRomanticEvent } from "./common";
 
@@ -144,3 +144,146 @@ const eventMeetHiddenMaster: StorySnippet = {
     };
   }
 };
+
+export const compainionSnippets: StorySnippet[] = [
+  // 1. 传闻：野外约战
+  {
+    id: 'event_rumor_duel',
+    tags: ['wild_daily'],
+    weight: 50, // 降低权重，减少触发频率
+    // 条件：在野外 + 有对应的rumor_duel情报 + 没看过这个特定门派的战斗 + 冷却时间
+    req: (hero, world) => {
+      if (!hero.locationId.startsWith('wild_')) return false;
+      // 添加冷却时间，至少10回合才能再次触发
+      if (hero.flags.last_duel_event && world.turn - hero.flags.last_duel_event < 10) return false;
+
+      // 查找所有的rumor_duel情报
+      const duelRumors = hero.knowledge.filter(k => k.startsWith('rumor_duel:'));
+      if (duelRumors.length === 0) return false;
+
+      // 获取第一个未触发过的rumor
+      for (const rumor of duelRumors) {
+        const [_, sectIds] = rumor.split(':');
+        const [sect1Id, sect2Id] = sectIds.split(',');
+        const flag = `watched_duel_${sect1Id}_${sect2Id}`;
+
+        if (!hero.flags[flag]) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+    run: (hero, world) => {
+      // 获取第一个未触发过的rumor
+      const duelRumor = hero.knowledge.find(k => k.startsWith('rumor_duel:'));
+      const [, sectIds] = duelRumor!.split(':');
+      const [sect1Id, sect2Id] = sectIds.split(',');
+
+      // 获取门派信息
+      const sect1 = SECTS_DATA.find(s => s.id === sect1Id);
+      const sect2 = SECTS_DATA.find(s => s.id === sect2Id);
+
+      if (!sect1 || !sect2) {
+        // 如果找不到门派信息，使用默认值
+        return {
+          lines: [
+            { text: '你来到传闻中的地点，但似乎什么也没发生。', type: 'narrative' },
+            { text: '可能是消息有误，或者你来晚了。', type: 'inner' },
+          ],
+          addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+          addFlags: { last_duel_event: world.turn },
+        };
+      }
+
+      // 根据门派类型决定描述
+      const sect1Desc = sect1.type === 'good' ? '弟子' : '恶徒';
+      const sect2Desc = sect2.type === 'good' ? '弟子' : '恶徒';
+
+      // 随机选择哪一方先说话
+      const firstSpeaker = Math.random() > 0.5 ? sect1 : sect2;
+      // 使用firstSpeaker和sect1/sect2的关系来决定第二说话者
+      const secondSpeaker = firstSpeaker === sect1 ? sect2 : sect1;
+
+      // 先自动观察战斗
+      const initialLines: StoryLine[] = [
+        { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
+        { text: '果然！前方空地上，两拨人马正在对峙。', type: 'narrative' },
+        { text: `左边是${sect1.name}的${sect1Desc}，右边是${sect2.name}的${sect2Desc}。`, type: 'narrative' },
+        { text: `“今日不是你死，就是我亡！”${firstSpeaker.name}的弟子大喝道。`, type: 'dialogue', speaker: `${firstSpeaker.name}弟子` },
+        { text: '双方剑拔弩张，战斗一触即发。你决定先观察情况...', type: 'narrative' },
+      ];
+
+      // 随机决定战斗发展
+      const battleOutcome = Math.random();
+
+      // 30% 机会出现需要玩家干预的情况
+      if (battleOutcome < 0.3) {
+        // 需要玩家做出选择
+        return {
+          lines: [
+            ...initialLines,
+            { text: `战斗开始不久，你注意到${sect1.name}的弟子似乎处于下风。`, type: 'narrative' },
+            { text: `“啊！”一名${sect1.name}的弟子被击倒在地，情况危急！`, type: 'action' },
+            { text: '你意识到，现在必须做出选择了...', type: 'inner' },
+          ],
+          choices: [
+            {
+              text: `帮助${sect1.name}`,
+              result: {
+                lines: [
+                  { text: `你大喝一声：“住手！”拔剑冲入战团。`, type: 'action' },
+                  { text: `${sect1.name}弟子见有援军，顿时士气大振。`, type: 'narrative' },
+                  { text: `在你的帮助下，${sect2.name}的人马很快不敌撤退。`, type: 'action' },
+                  { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: `${sect1.name}弟子` },
+                ],
+                addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+                addFlags: { last_duel_event: world.turn },
+                updateRelations: [
+                  { target: `sect:${sect1Id}`, type: 'friendly', value: 20 },
+                  { target: `sect:${sect2Id}`, type: 'hostile', value: 10 },
+                ],
+                ...(Math.random() < 0.5 ? {
+                  addKnowledge: `met_${sect1Id}_disciple`,
+                  lines: [
+                    { text: `“在下${sect1.name}弟子${genName('male')}，不知少侠如何称呼？”`, type: 'dialogue', speaker: `${sect1.name}弟子` },
+                    { text: '你与对方交换了姓名，江湖路远，后会有期。', type: 'narrative' },
+                  ]
+                } : {})
+              },
+            },
+            {
+              text: '继续观察',
+              result: {
+                lines: [
+                  { text: '你决定继续观察，不轻易介入这场纷争。', type: 'action' },
+                  { text: `最终，${sect1.name}的弟子们虽然受伤不轻，但还是击退了${sect2.name}的进攻。`, type: 'narrative' },
+                  { text: '“哼！这次算你们走运！”', type: 'dialogue', speaker: `${sect2.name}弟子` },
+                ],
+                addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+                addFlags: { last_duel_event: world.turn },
+              },
+            },
+          ],
+        };
+      }
+      // 战斗自然结束，不需要玩家干预
+      const winner = battleOutcome < 0.65 ? sect1 : sect2;
+      const loser = winner === sect1 ? sect2 : sect1;
+
+      return {
+        lines: [
+          ...initialLines,
+          { text: '双方激烈交战，你来我往，战况胶着。', type: 'narrative' },
+          { text: `经过一番激战，${winner.name}逐渐占据上风。`, type: 'narrative' },
+          { text: `“撤！”${loser.name}的弟子见势不妙，迅速撤退。`, type: 'action' },
+          { text: `“哼，算他们跑得快！”${winner.name}的弟子收起武器。`, type: 'dialogue', speaker: `${winner.name}弟子` },
+          { text: '你默默记下这场战斗的结果，悄然离去。', type: 'narrative' },
+        ],
+        addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+        addFlags: { last_duel_event: world.turn },
+      };
+
+    },
+  }
+];

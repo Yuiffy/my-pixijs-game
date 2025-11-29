@@ -1,4 +1,4 @@
-import { Appearance, Location, Person, Personality, Sect, RelationType, Relation } from './types';
+import { Appearance, LocationInfo, Person, Personality, Sect, RelationType, Relation } from './types';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, SECTS_DATA, CITY_PREFIXES, CITY_SUFFIXES, WILD_PREFIXES, WILD_SUFFIXES } from './constants';
 import { getSectArts } from './skills';
 
@@ -73,14 +73,14 @@ export const initSectRelations = (sects: Sect[]): void => {
 };
 
 // 🆕 地理系统：生成复杂的世界地图
-export const generateWorldMap = (): Location[] => {
-  const locations: Location[] = [];
+export const generateWorldMap = (): LocationInfo[] => {
+  const locations: LocationInfo[] = [];
 
   // 生成多个城市
-  const cities: Location[] = [];
+  const cities: LocationInfo[] = [];
   for (let i = 0; i < 3; i += 1) {
     const cityId = `city_${i}`;
-    const city: Location = {
+    const city: LocationInfo = {
       id: cityId,
       name: genCityName(),
       type: 'city',
@@ -92,14 +92,14 @@ export const generateWorldMap = (): Location[] => {
     locations.push(city);
 
     // 每个城市有客栈和官府
-    const inn: Location = {
+    const inn: LocationInfo = {
       id: `${cityId}_inn`,
       name: `${city.name}·悦来客栈`,
       type: 'inn',
       parentId: cityId,
       connections: [],
     };
-    const government: Location = {
+    const government: LocationInfo = {
       id: `${cityId}_government`,
       name: `${city.name}·官府`,
       type: 'government',
@@ -110,10 +110,10 @@ export const generateWorldMap = (): Location[] => {
   }
 
   // 生成村庄
-  const villages: Location[] = [];
+  const villages: LocationInfo[] = [];
   for (let i = 0; i < 2; i += 1) {
     const villageId = `village_${i}`;
-    const village: Location = {
+    const village: LocationInfo = {
       id: villageId,
       name: `${rand(['小', '大', '古', '新'])}${rand(['村', '庄', '镇'])}`,
       type: 'village',
@@ -126,9 +126,9 @@ export const generateWorldMap = (): Location[] => {
   }
 
   // 生成多个门派
-  const sects: Location[] = [];
+  const sects: LocationInfo[] = [];
   SECTS_DATA.forEach((sectData, idx) => {
-    const sect: Location = {
+    const sect: LocationInfo = {
       id: sectData.locationId,
       name: `${sectData.name}驻地`,
       type: 'sect',
@@ -141,10 +141,10 @@ export const generateWorldMap = (): Location[] => {
   });
 
   // 生成野外区域（连接各个地点）
-  const wilds: Location[] = [];
+  const wilds: LocationInfo[] = [];
   for (let i = 0; i < 5; i += 1) {
     const wildId = `wild_${i}`;
-    const wild: Location = {
+    const wild: LocationInfo = {
       id: wildId,
       name: genWildName(),
       type: 'wild',
@@ -215,7 +215,7 @@ export const generateWorldMap = (): Location[] => {
 
 // ... 其他辅助函数如 findPath, getReachableLocations, describeAppearance 等
 // 🆕 路径查找：找到从A到B的路径
-export const findPath = (fromId: string, toId: string, locations: Location[]): string[] => {
+export const findPath = (fromId: string, toId: string, locations: LocationInfo[]): string[] => {
   if (fromId === toId) return [];
 
   const visited = new Set<string>();
@@ -244,16 +244,16 @@ export const findPath = (fromId: string, toId: string, locations: Location[]): s
 };
 
 // 🆕 获取可到达的地点列表
-export const getReachableLocations = (currentId: string, locations: Location[]): Location[] => {
+export const getReachableLocations = (currentId: string, locations: LocationInfo[]): LocationInfo[] => {
   const current = locations.find((l) => l.id === currentId);
   if (!current || !current.connections) return [];
 
   return current.connections
     .map((id) => locations.find((l) => l.id === id))
-    .filter((loc): loc is Location => loc !== undefined);
+    .filter((loc): loc is LocationInfo => loc !== undefined);
 };
 
-export const LOCATION_TEMPLATES: Location[] = [
+export const LOCATION_TEMPLATES: LocationInfo[] = [
   { id: 'loc_sect_main', name: '门派驻地', type: 'sect' },
   { id: 'loc_city', name: '随机城市', type: 'city' },
   { id: 'loc_wild', name: '随机险地', type: 'wild' },
@@ -362,7 +362,7 @@ export const leaveSect = (person: Person, sect: Sect, turn: number, action: 'lea
   return { person: updatedPerson, sect: updatedSect };
 };
 
-export const generateHiddenMaster = (worldNpcs: Person[], sects: Sect[], locations: Location[]): Person => {
+export const generateHiddenMaster = (worldNpcs: Person[], sects: Sect[], locations: LocationInfo[]): Person => {
   // 随机选择一个门派作为隐藏高手的出身
   const sourceSect = rand(sects);
   const leader = worldNpcs.find(n => n.id === sourceSect.leader);

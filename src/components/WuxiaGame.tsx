@@ -4,7 +4,7 @@ import React, {
   useState, useEffect, useRef, useCallback,
 } from 'react';
 import { SECT_NAMES } from './wuxia/logic/constants';
-import { Person, Sect, StoryStage, SnippetResult, Location } from './wuxia/logic/types';
+import { Person, Sect, StoryStage, SnippetResult, LocationInfo } from './wuxia/logic/types';
 import { generateWorldMap, initSectRelations, genName, generateHiddenMaster, rand } from './wuxia/logic/utils';
 import { SNIPPETS } from './wuxia/snippets';
 
@@ -28,7 +28,7 @@ export default function WuxiaGame() {
   const [world, setWorld] = useState<{
     npcs: Person[];
     sects: Sect[];
-    locations: Location[];
+    locations: LocationInfo[];
     heroId: string;
     stage: StoryStage;
     turnInStage: number;

@@ -75,7 +75,7 @@ export interface Sect {
   relations?: Record<string, number>;
 }
 
-export interface Location {
+export interface LocationInfo {
   id: string;
   name: string;
   type: 'sect' | 'city' | 'wild' | 'village' | 'inn' | 'government';
