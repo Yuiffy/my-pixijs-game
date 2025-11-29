@@ -670,12 +670,7 @@ const generateBattle = (
 
     return lines;
   } else {
-    lines.push({
-      text: `【${enemy.name}】见你们实力不俗，冷笑一声转身离去：\"今日就放过你们，下次可没这么走运了！\"`,
-      type: 'narrative'
-    });
-
-    // 添加逃跑信息
+    // 添加逃跑信息和标记
     lines.push({
       text: `【${enemy.name}】见你们实力不俗，冷笑一声转身离去："今日就放过你们，下次可没这么走运了！"`,
       type: 'narrative'
@@ -1310,12 +1305,73 @@ export const SNIPPETS: StorySnippet[] = [
 
       // --- 城市选项：打听情报 ---
       if (hero.locationId.startsWith('city_')) {
+        // 获取有敌对关系的两个门派
+        const getRivalSects = () => {
+          const sects = [...SECTS_DATA];
+
+          // 先尝试找敌对关系明显的门派
+          for (const sect1 of sects) {
+            if (!sect1.relations) continue;
+
+            // 找关系最差的门派
+            let worstRelation = 0;
+            let rivalSect: Sect | null = null;
+
+            for (const [sectId, relation] of Object.entries(sect1.relations)) {
+              if (relation < worstRelation) {
+                const sect = sects.find(s => s.id === sectId);
+                if (sect) {
+                  worstRelation = relation;
+                  rivalSect = sect;
+                }
+              }
+            }
+
+            if (rivalSect) {
+              return [sect1, rivalSect];
+            }
+          }
+
+          // 如果没有明显敌对关系，则随机选择两个不同阵营的门派
+          const goodSects = sects.filter(s => s.type === 'good');
+          const evilSects = sects.filter(s => s.type === 'evil');
+
+          if (goodSects.length > 0 && evilSects.length > 0) {
+            return [
+              goodSects[Math.floor(Math.random() * goodSects.length)],
+              evilSects[Math.floor(Math.random() * evilSects.length)]
+            ];
+          }
+
+          // 如果还是不行，就随便选两个不同的
+          if (sects.length >= 2) {
+            const first = Math.floor(Math.random() * sects.length);
+            let second;
+            do {
+              second = Math.floor(Math.random() * sects.length);
+            } while (second === first);
+
+            return [sects[first], sects[second]];
+          }
+
+          // 最后保底
+          return [
+            { id: 'sect_qingyun', name: '青云门', type: 'good' },
+            { id: 'sect_xuedao', name: '血刀堂', type: 'evil' }
+          ];
+        };
+
+        const [sect1, sect2] = getRivalSects();
+
+        // 存储具体门派信息到rumor中
         const gossipEvents = [
           {
             text: '你听到茶馆里有人在谈论最近江湖上的传闻。',
-            detail: '"听说【血刀堂】和【青云门】的弟子最近在城外野林子里约架，怕是要出人命啊。"',
-            // 🆕 效果：添加具体的情报字符串
-            effect: () => ({ addKnowledge: 'rumor_duel' }),
+            detail: `"听说【${sect1.name}】和【${sect2.name}】的弟子最近在城外野林子里约架，怕是要出人命啊。"`,
+            effect: () => ({
+              addKnowledge: `rumor_duel:${sect1.id},${sect2.id}`,
+              addFlag: `rumor_duel_${sect1.id}_${sect2.id}`
+            }),
           },
           {
             text: '你在集市上遇到一个神秘的说书人。',
@@ -1470,42 +1526,104 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'event_rumor_duel',
     tags: ['wild_daily'],
     weight: 200, // 高权重，有情报必触发
-    // 🆕 条件：在野外 + 有情报 + 没看过热闹
-    req: (hero) => hero.knowledge.includes('rumor_duel') && hero.locationId.startsWith('wild_') && !hero.flags.watched_duel,
-    run: (hero, world) => ({
-      lines: [
-        { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
-        { text: '果然！前方空地上，两拨人马正在对峙。', type: 'narrative' },
-        { text: '左边是身穿青衣的青云门弟子，右边是手持血刀的血刀堂恶徒。', type: 'narrative' },
-        { text: '“今日不是你死，就是我亡！”双方剑拔弩张。', type: 'dialogue', speaker: '青云弟子' },
-      ],
-      choices: [
-        {
-          text: '助青云门一臂之力',
-          result: {
-            lines: [
-              { text: '你大喝一声：“路见不平，拔刀相助！”冲入战团。', type: 'action' },
-              { text: '青云弟子见有援军，士气大振。', type: 'narrative' },
-              { text: '一番激战后，血刀堂恶徒溃败而逃。', type: 'action' },
-              { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: '青云弟子' },
-            ],
-            addFlag: 'watched_duel', // 标记已完成
-            // 可以在这里 addRelation
+    // 条件：在野外 + 有对应的rumor_duel情报 + 没看过这个特定门派的战斗
+    req: (hero, world) => {
+      if (!hero.locationId.startsWith('wild_')) return false;
+
+      // 查找所有的rumor_duel情报
+      const duelRumors = hero.knowledge.filter(k => k.startsWith('rumor_duel:'));
+      if (duelRumors.length === 0) return false;
+
+      // 获取第一个未触发过的rumor
+      for (const rumor of duelRumors) {
+        const [_, sectIds] = rumor.split(':');
+        const [sect1Id, sect2Id] = sectIds.split(',');
+        const flag = `watched_duel_${sect1Id}_${sect2Id}`;
+
+        if (!hero.flags[flag]) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+    run: (hero, world) => {
+      // 获取第一个未触发过的rumor
+      const duelRumor = hero.knowledge.find(k => k.startsWith('rumor_duel:'));
+      const [_, sectIds] = duelRumor!.split(':');
+      const [sect1Id, sect2Id] = sectIds.split(',');
+
+      // 获取门派信息
+      const sect1 = SECTS_DATA.find(s => s.id === sect1Id);
+      const sect2 = SECTS_DATA.find(s => s.id === sect2Id);
+
+      if (!sect1 || !sect2) {
+        // 如果找不到门派信息，使用默认值
+        return {
+          lines: [
+            { text: '你来到传闻中的地点，但似乎什么也没发生。', type: 'narrative' },
+            { text: '可能是消息有误，或者你来晚了。', type: 'inner' },
+          ],
+          addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+        };
+      }
+
+      // 根据门派类型决定描述
+      const sect1Desc = sect1.type === 'good' ? '弟子' : '恶徒';
+      const sect2Desc = sect2.type === 'good' ? '弟子' : '恶徒';
+
+      // 随机选择哪一方先说话
+      const firstSpeaker = Math.random() > 0.5 ? sect1 : sect2;
+      const secondSpeaker = firstSpeaker === sect1 ? sect2 : sect1;
+
+      return {
+        lines: [
+          { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
+          { text: '果然！前方空地上，两拨人马正在对峙。', type: 'narrative' },
+          { text: `左边是${sect1.name}的${sect1Desc}，右边是${sect2.name}的${sect2Desc}。`, type: 'narrative' },
+          { text: '“今日不是你死，就是我亡！”双方剑拔弩张。', type: 'dialogue', speaker: `${firstSpeaker.name}弟子` },
+        ],
+        choices: [
+          {
+            text: `帮助${sect1.name}`,
+            result: {
+              lines: [
+                { text: `你大喝一声：“路见不平，拔刀相助！”冲入战团帮助${sect1.name}。`, type: 'action' },
+                { text: `${sect1.name}弟子见有援军，士气大振。`, type: 'narrative' },
+                { text: `一番激战后，${sect2.name}的人马溃败而逃。`, type: 'action' },
+                { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: `${sect1.name}弟子` },
+              ],
+              addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+              // 可以在这里添加关系变化
+            },
           },
-        },
-        {
-          text: '坐山观虎斗',
-          result: {
-            lines: [
-              { text: '你躲在树后，静静看着双方拼得两败俱伤。', type: 'action' },
-              { text: '最后双方都倒在血泊中，你悄悄离开了。', type: 'narrative' },
-              { text: '虽然有些不厚道，但江湖本就如此残酷。', type: 'inner' },
-            ],
-            addFlag: 'watched_duel',
+          {
+            text: `帮助${sect2.name}`,
+            result: {
+              lines: [
+                { text: `你决定帮助${sect2.name}，悄悄从侧面突袭${sect1.name}的弟子。`, type: 'action' },
+                { text: `${sect2.name}的人见你出手相助，顿时士气大振。`, type: 'narrative' },
+                { text: `经过一番激战，${sect1.name}的弟子们不敌撤退。`, type: 'action' },
+                { text: '“哈哈哈，干得好！我记下你这份情了。”', type: 'dialogue', speaker: `${sect2.name}弟子` },
+              ],
+              addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+              // 可以在这里添加关系变化
+            },
           },
-        },
-      ],
-    }),
+          {
+            text: '坐山观虎斗',
+            result: {
+              lines: [
+                { text: '你躲在树后，静静看着双方拼得两败俱伤。', type: 'action' },
+                { text: `最后双方都伤亡惨重，${sect1.name}和${sect2.name}的仇恨似乎更深了。`, type: 'narrative' },
+                { text: '虽然有些不厚道，但江湖本就如此残酷。', type: 'inner' },
+              ],
+              addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+            },
+          },
+        ],
+      };
+    },
   },
 
   // 2. 传闻：隐世高手
