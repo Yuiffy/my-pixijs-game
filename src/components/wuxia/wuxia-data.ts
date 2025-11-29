@@ -370,7 +370,12 @@ export const generateHiddenMaster = (worldNpcs: Person[], sects: Sect[], locatio
   const age = 60 + Math.floor(Math.random() * 30); // 60-90岁
 
   // 随机选择一种身份模板
-  const relationTemplates = [
+  const relationTemplates: Array<{
+    type: 'traitor' | 'retired_elder' | 'wandering_hero';
+    desc: string;
+    relVal: number;
+    relType: RelationType;
+  }> = [
     { type: 'traitor', desc: '昔日因偷练禁术被逐出的长老', relVal: -80, relType: 'rival' },
     { type: 'retired_elder', desc: '看不惯现任掌门作风而归隐的师叔', relVal: -20, relType: 'master' },
     { type: 'wandering_hero', desc: '掌门的结拜义兄，云游四海', relVal: 80, relType: 'friend' }
@@ -762,7 +767,14 @@ export const generateCompanionRomanticEvent = (
     passionate: `'少侠，${genderText === '她' ? '我' : '我'}的心意，你明白吗？'`,
   };
 
-  const dialogue = romanticDialogue[companion.personality || 'gentle'];
+  // Get a valid personality, defaulting to 'gentle' if not set or invalid
+  const personality = (companion.personality &&
+    ['gentle', 'bold', 'cunning', 'righteous', 'mysterious', 'playful', 'serious', 'passionate']
+      .includes(companion.personality)
+    ? companion.personality
+    : 'gentle') as Personality;
+
+  const dialogue = romanticDialogue[personality];
 
   return [
     { text: `【${companion.name}】似乎有话要对你说。`, type: 'narrative' },
