@@ -1,577 +1,421 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+ useState, useEffect, useRef, useCallback 
+} from 'react';
 
 // ==========================================
-// 1. 核心数据结构定义 (Data Structures)
+// 1. 世界架构 (World Architecture)
 // ==========================================
 
-// --- 基础属性 ---
-type Stats = {
-  strength: number; // 武力 (决定战斗伤害)
-  agility: number; // 身法 (决定逃跑/闪避)
-  insight: number; // 悟性 (决定习武速度)
-  charm: number; // 魅力 (决定NPC交互)
-  health: number; // 当前气血
-  maxHealth: number;// 最大气血
-  money: number; // 银两
-};
+type RelationType = 'master' | 'apprentice' | 'parent' | 'child' | 'friend' | 'enemy' | 'crush';
 
-// --- 物品与武学 ---
-type Item = {
+interface Person {
   id: string;
   name: string;
-  desc: string;
-  type: 'weapon' | 'consumable' | 'quest';
-  effect?: (hero: Hero) => Partial<Stats>; // 使用效果
-};
-
-type Skill = {
-  id: string;
-  name: string;
-  desc: string;
-  level: number; // 层数 (1-10)
-  proficiency: number;// 当前熟练度 (0-100)
-};
-
-// --- 人际关系 ---
-type Relation = {
-  npcId: string;
-  name: string;
-  affinity: number; // 好感度 (-100 ~ 100)
-  knownInfo: string[]; // 已知情报
-};
-
-// --- 世界地图节点 ---
-type LocationId = 'village' | 'forest' | 'city' | 'sect_gate' | 'sect_hall' | 'cliff';
-
-type Location = {
-  id: LocationId;
-  name: string;
-  desc: string; // 环境描写
-  connections: { target: LocationId; travelTime: number; desc: string }[]; // 连接点
-  npcs: string[]; // 该地点可能出现的NPC
-};
-
-// --- 玩家主角 ---
-type Hero = {
-  name: string;
-  origin: string;
-  age: number; // 岁
-  time: number; // 游戏经过的总天数
-  location: LocationId;
-  stats: Stats;
-  inventory: Item[];
-  skills: Skill[];
-  relations: Relation[];
-};
-
-// --- 日志系统 ---
-type LogType = 'travel' | 'event' | 'battle' | 'inner' | 'dialogue' | 'system';
-type LogEntry = {
-  id: number;
-  type: LogType;
-  text: string;
-  timeDisplay: string; // "16岁 三月"
-};
-
-// --- 事件系统 ---
-type Choice = {
-  text: string;
-  action: (game: GameEngine) => void;
-  condition?: (hero: Hero) => boolean;
-};
-
-type GameEvent = {
-  id: string;
-  title?: string;
-  text: string; // 事件描述
-  choices: Choice[];
-};
-
-// ==========================================
-// 2. 静态数据配置 (Content Assets)
-// ==========================================
-
-const WORLD_MAP: Record<LocationId, Location> = {
-  village: {
-    id: 'village',
-    name: '稻香村',
-    desc: '充满泥土芬芳的小村落，村口的大黄狗懒洋洋地趴着。远处炊烟袅袅，一片祥和。',
-    connections: [
-      { target: 'forest', travelTime: 2, desc: '沿着蜿蜒的小路向后山进发' },
-      { target: 'city', travelTime: 5, desc: '搭乘牛车前往繁华的襄阳城' },
-    ],
-    npcs: ['village_chief', 'beggar'],
-  },
-  forest: {
-    id: 'forest',
-    name: '迷雾林',
-    desc: '树木参天，遮云蔽日。林深处偶尔传来野兽的嘶吼声，令人不寒而栗。',
-    connections: [
-      { target: 'village', travelTime: 2, desc: '退回稻香村' },
-      { target: 'cliff', travelTime: 3, desc: '攀爬至后山悬崖' },
-    ],
-    npcs: ['bandit'],
-  },
-  city: {
-    id: 'city',
-    name: '襄阳城',
-    desc: '车水马龙，人声鼎沸。叫卖声、马蹄声交织在一起。',
-    connections: [
-      { target: 'village', travelTime: 5, desc: '返回乡下' },
-      { target: 'sect_gate', travelTime: 3, desc: '前往城外的门派驻地' },
-    ],
-    npcs: ['merchant', 'bully'],
-  },
-  cliff: {
-    id: 'cliff',
-    name: '断肠崖',
-    desc: '寒风呼啸，深不见底。常有轻生者在此了断，亦有高人在此埋藏秘籍。',
-    connections: [
-      { target: 'forest', travelTime: 3, desc: '小心翼翼地下山' },
-    ],
-    npcs: [],
-  },
-  sect_gate: {
-    id: 'sect_gate',
-    name: '青云门山门',
-    desc: '气势恢宏的石牌坊，两名身着青衣的弟子正在守卫。',
-    connections: [
-      { target: 'city', travelTime: 3, desc: '下山回城' },
-      { target: 'sect_hall', travelTime: 1, desc: '进入内门广场' },
-    ],
-    npcs: ['guard'],
-  },
-  sect_hall: {
-    id: 'sect_hall',
-    name: '大雄宝殿',
-    desc: '庄严肃穆，香火缭绕。',
-    connections: [
-      { target: 'sect_gate', travelTime: 1, desc: '离开大殿' },
-    ],
-    npcs: ['master'],
-  },
-};
-
-// ==========================================
-// 3. 游戏引擎逻辑 (Game Logic)
-// ==========================================
-
-// 为了在回调中修改状态，我们定义一个接口
-interface GameEngine {
-  setHero: React.Dispatch<React.SetStateAction<Hero>>;
-  addLog: (type: LogType, text: string) => void;
-  setCurrentEvent: React.Dispatch<React.SetStateAction<GameEvent | null>>;
-  passTime: (days: number) => void;
-  hero: Hero; // 当前快照
+  sectId: string;
+  role: 'leader' | 'elder' | 'disciple' | 'rogue';
+  gender: 'male' | 'female';
+  age: number;
+  status: 'alive' | 'dead' | 'missing';
+  relations: { targetId: string; type: RelationType }[];
+  locationId: string;
 }
 
+interface Sect {
+  id: string;
+  name: string;
+  type: 'good' | 'evil' | 'neutral';
+  locationId: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
+  region: string;
+}
+
+// 剧情片段类型
+type StoryBlock = {
+  id: string;
+  text: string;
+  type: 'narrative' | 'dialogue' | 'action' | 'time-pass';
+  speaker?: string; // 如果是对话
+};
+
+// 选项类型
+type Choice = {
+  text: string;
+  action: () => void;
+};
+
+// ==========================================
+// 2. 随机生成库 (Generators)
+// ==========================================
+
+const FIRST_NAMES = ['风', '云', '雪', '冲', '无忌', '不败', '寻欢', '留香', '过', '靖', '康', '灵珊', '盈盈', '语嫣', '松', '竹', '梅'];
+const LAST_NAMES = ['李', '张', '独孤', '令狐', '东方', '西门', '慕容', '郭', '杨', '陆', '花', '叶', '林', '岳'];
+const SECT_NAMES = ['青云门', '血刀堂', '听雨阁', '万兽山庄', '丐帮', '少林', '峨眉', '武当', '唐门'];
+const LOCATIONS = [
+  { id: 'loc_1', name: '藏经阁', region: '少林' },
+  { id: 'loc_2', name: '聚义厅', region: '丐帮' },
+  { id: 'loc_3', name: '思过崖', region: '华山' },
+  { id: 'loc_4', name: '悦来客栈', region: '襄阳' },
+  { id: 'loc_5', name: '无名荒野', region: '野外' },
+];
+
+const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const genName = () => `${rand(LAST_NAMES)}${rand(FIRST_NAMES)}`;
+
+// ==========================================
+// 3. 核心组件
+// ==========================================
+
 export default function WuxiaGame() {
-  // --- State ---
-  const [hero, setHero] = useState<Hero | null>(null);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [currentEvent, setCurrentEvent] = useState<GameEvent | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // --- 游戏状态 ---
+  const [isStarted, setIsStarted] = useState(false);
+  const [world, setWorld] = useState<{
+    npcs: Person[];
+    sects: Sect[];
+    locations: Location[];
+    heroId: string;
+  } | null>(null);
+
+  const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
+  const [choices, setChoices] = useState<Choice[]>([]);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true); // 自动播放模式
+  const [turnCount, setTurnCount] = useState(0); // 🚀 关键修复：回合计数器
+
+  // 记录上一次的事件类型，防止复读机
+  const lastEventType = useRef<string>('');
+
+  // 滚动锚点
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // --- 辅助函数：添加剧情 ---
+  const addStory = useCallback((text: string, type: StoryBlock['type'] = 'narrative', speaker?: string) => {
+    setStoryLog((prev) => [...prev, {
+ id: Date.now().toString() + Math.random(), text, type, speaker 
+}]);
+  }, []);
 
   // 自动滚动
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [logs, currentEvent]);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [storyLog, choices]);
 
-  // --- Helpers ---
-  const formatTime = (totalDays: number) => {
-    const year = Math.floor(totalDays / 360) + 16; // 16岁开始
-    const month = Math.floor((totalDays % 360) / 30) + 1;
-    const day = (totalDays % 30) + 1;
-    return `${year}岁 ${month}月${day}日`;
-  };
+  // --- 阶段 1: 世界生成 (World Gen) ---
+  const generateWorld = () => {
+    const newSects: Sect[] = SECT_NAMES.map((name, idx) => ({
+      id: `sect_${idx}`,
+      name,
+      type: Math.random() > 0.7 ? 'evil' : 'good',
+      locationId: rand(LOCATIONS).id,
+    }));
 
-  const addLog = (type: LogType, text: string) => {
-    setLogs((prev) => [...prev, {
-      id: Date.now(),
-      type,
-      text,
-      timeDisplay: hero ? formatTime(hero.time) : '序章',
-    }]);
-  };
+    const newNpcs: Person[] = [];
 
-  // 模拟的时间流逝
-  const passTime = (days: number) => {
-    setHero((prev) => {
-      if (!prev) return null;
-      return { ...prev, time: prev.time + days };
+    // 生成掌门和弟子
+    newSects.forEach((sect) => {
+      // 掌门
+      const leader: Person = {
+        id: `npc_${newNpcs.length}`,
+name: genName(),
+sectId: sect.id,
+        role: 'leader',
+gender: 'male',
+age: 40 + Math.floor(Math.random() * 40),
+        status: 'alive',
+relations: [],
+locationId: sect.locationId,
+      };
+      newNpcs.push(leader);
+
+      // 弟子
+      for (let i = 0; i < 3; i++) {
+        const disciple: Person = {
+          id: `npc_${newNpcs.length}`,
+name: genName(),
+sectId: sect.id,
+          role: 'disciple',
+gender: Math.random() > 0.5 ? 'male' : 'female',
+          age: 16 + Math.floor(Math.random() * 10),
+          status: 'alive',
+relations: [{ targetId: leader.id, type: 'master' }],
+locationId: sect.locationId,
+        };
+        // 掌门收徒
+        leader.relations.push({ targetId: disciple.id, type: 'apprentice' });
+        newNpcs.push(disciple);
+      }
     });
-  };
 
-  // 封装引擎对象传给事件回调
-  const engine: GameEngine = {
-    setHero,
-    addLog,
-    setCurrentEvent,
-    passTime,
-    hero: hero as Hero, // 注意：在事件回调中这里可能不是最新的，但够用了
-  };
-
-  // --- 核心动作 ---
-
-  // 1. 初始化游戏
-  const initGame = (roleType: number) => {
-    const baseHero: Hero = {
-      name: roleType === 1 ? '萧峰' : '韦小宝',
-      origin: roleType === 1 ? '名门之后' : '市井无赖',
-      age: 16,
-      time: 0,
-      location: 'village',
-      stats: roleType === 1
-        ? {
-          strength: 80, agility: 40, insight: 50, charm: 60, health: 100, maxHealth: 100, money: 50,
-        }
-        : {
-          strength: 20, agility: 80, insight: 90, charm: 90, health: 80, maxHealth: 80, money: 0,
-        },
-      inventory: [{
-        id: 'bread', name: '干粮', desc: '普通的干粮', type: 'consumable',
-      }],
-      skills: [{
-        id: 'basic_fist', name: '太祖长拳', desc: '武林流传最广的入门拳法', level: 1, proficiency: 0,
-      }],
-      relations: [],
+    // 生成主角
+    const mySect = rand(newSects);
+    const myMaster = newNpcs.find((n) => n.sectId === mySect.id && n.role === 'leader');
+    const hero: Person = {
+      id: 'hero',
+name: '你',
+sectId: mySect.id,
+      role: 'disciple',
+gender: 'male',
+age: 16,
+      status: 'alive',
+relations: myMaster ? [{ targetId: myMaster.id, type: 'master' }] : [],
+      locationId: mySect.locationId,
     };
 
-    setHero(baseHero);
-    setLogs([]);
-    addLog('system', `你出生于${baseHero.origin}，取名${baseHero.name}。`);
-    addLog('inner', '(深吸一口气) 这江湖的风，甚是喧嚣。');
-    addLog('travel', `你现在身处【${WORLD_MAP.village.name}】。${WORLD_MAP.village.desc}`);
+    if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice' });
+
+    setWorld({
+ npcs: [...newNpcs, hero], sects: newSects, locations: LOCATIONS, heroId: 'hero' 
+});
+    setIsStarted(true);
+    setTurnCount(0);
+    lastEventType.current = '';
+
+    // 开篇叙事
+    setStoryLog([]);
+    addStory(`【世界生成完毕】 共 ${newSects.length} 个门派，${newNpcs.length + 1} 位侠客。`, 'action');
+    addStory(`你出生在 ${mySect.name}，师承掌门【${myMaster?.name}】。`, 'narrative');
+    addStory('十六岁那年，春暖花开，你在门派后山练剑...', 'narrative');
+
+    // 启动剧情引擎
+    setTimeout(() => setTurnCount(1), 1000);
   };
 
-  // 2. 移动逻辑
-  const handleTravel = (targetId: LocationId, days: number, travelDesc: string) => {
-    if (!hero) return;
+  // --- 阶段 2: 剧情驱动引擎 (Narrative Engine) ---
 
-    addLog('travel', `决定前往${WORLD_MAP[targetId].name}。(${travelDesc})`);
-    passTime(days);
+  // 模拟一段时间流逝，并决定发生什么
+  const nextTurn = useCallback(() => {
+    setWorld((currentWorld) => {
+      if (!currentWorld) return null;
+      const { heroId, npcs } = currentWorld;
+      const hero = npcs.find((n) => n.id === heroId);
+      if (!hero) return currentWorld;
 
-    // 随机事件判定
-    if (Math.random() > 0.7) {
-      triggerRandomEvent(targetId);
-    } else {
-      completeTravel(targetId);
-    }
-  };
+      const roll = Math.random();
+      let eventType = '';
 
-  const completeTravel = (targetId: LocationId) => {
-    setHero((prev) => (prev ? { ...prev, location: targetId } : null));
-    addLog('travel', `经过跋涉，抵达了【${WORLD_MAP[targetId].name}】。`);
-    addLog('event', WORLD_MAP[targetId].desc);
-  };
+      // --- 事件 A: 师父召唤 (关键节点) ---
+      // 只有之前没发生过，且在门派内时触发
+      if (roll < 0.05 && lastEventType.current !== 'master_call' && hero.locationId === currentWorld.sects.find((s) => s.id === hero.sectId)?.locationId) {
+        const master = npcs.find((n) => n.relations.some((r) => r.targetId === heroId && r.type === 'apprentice'));
+        if (master) {
+          setIsAutoPlaying(false); // 暂停自动播放
+          eventType = 'master_call';
+          addStory('这一日，忽然有小童来报。', 'time-pass');
+          addStory(`“${hero.name}，掌门唤你去大殿一叙。”`, 'dialogue', '小童');
 
-  // 3. 随机事件触发器
-  const triggerRandomEvent = (targetLocationId: LocationId) => {
-    const events: GameEvent[] = [
-      {
-        id: 'meet_beggar',
-        text: '路边草丛突然钻出一个衣衫褴褛的老乞丐，拦住了你的去路：“少年人，我看你骨骼惊奇，想不想买本秘籍？”',
-        choices: [
-          {
-            text: '花费10两银子购买',
-            condition: (h) => h.stats.money >= 10,
-            action: (g) => {
-              g.setHero((h) => ({
-                ...h,
-                stats: { ...h.stats, money: h.stats.money - 10 },
-                inventory: [...h.inventory, {
-                  id: 'fake_book', name: '无名秘籍', desc: '画风潦草的小人书', type: 'consumable',
-                }],
-              }));
-              g.addLog('dialogue', '你掏出银两递给老乞丐。老乞丐嘿嘿一笑，塞给你一本破书就跑了。');
-              g.setCurrentEvent(null);
-              completeTravel(targetLocationId);
+          setChoices([
+            {
+              text: '立刻前往大殿',
+              action: () => {
+                setChoices([]);
+                addStory('你不敢怠慢，整理衣冠，快步前往大殿。', 'action');
+                addStory(`大殿之上，${master.name}负手而立，神色凝重。`, 'narrative');
+                addStory('“徒儿，如今江湖动荡，为师有一件要事需你去办。”', 'dialogue', master.name);
+
+                // 嵌套选择：接受任务
+                setChoices([
+                  {
+                    text: '弟子义不容辞',
+                    action: () => {
+                      setChoices([]);
+                      addStory('“弟子愿为门派分忧！”你朗声应道。', 'dialogue', '你');
+                      addStory('师父满意地点了点头，“好！我要你去襄阳城送一封密信。”', 'dialogue', master.name);
+                      setTimeout(() => {
+                        addStory('辞别师父后，你背起行囊，踏上了前往襄阳的道路。', 'narrative');
+                        setIsAutoPlaying(true); // 恢复自动
+                        setTurnCount((c) => c + 1);
+                      }, 1000);
+                    },
+                  },
+                  {
+                    text: '面露难色',
+                    action: () => {
+                      setChoices([]);
+                      addStory('你犹豫了一下，“师父，弟子武功低微，恐怕...”', 'dialogue', '你');
+                      addStory('师父叹了口气，“罢了，也是为师操之过急。你且退下吧。”', 'dialogue', master.name);
+                      setIsAutoPlaying(true);
+                      setTurnCount((c) => c + 1);
+                    },
+                  },
+                ]);
+              },
             },
-          },
-          {
-            text: '大声呵斥骗子',
-            action: (g) => {
-              g.addLog('dialogue', '你怒目圆睁：“光天化日朗朗乾坤，竟敢行骗！” 老乞丐被你的气势吓跑了。');
-              g.setHero((h) => ({ ...h, stats: { ...h.stats, charm: h.stats.charm + 1 } })); // 魅力+1
-              g.addLog('system', '正气凛然，【魅力】提升了。');
-              g.setCurrentEvent(null);
-              completeTravel(targetLocationId);
+            {
+              text: '假装没听见，继续睡觉',
+              action: () => {
+                setChoices([]);
+                addStory('你翻了个身，心想：“天大的事也等我睡醒再说。”', 'inner');
+                addStory('结果下午就被师父罚站了两个时辰。', 'narrative');
+                setIsAutoPlaying(true);
+                setTurnCount((c) => c + 1);
+              },
             },
-          },
-          {
-            text: '无视离开',
-            action: (g) => {
-              g.addLog('inner', '（还是不要多管闲事为妙，赶路要紧。）');
-              g.setCurrentEvent(null);
-              completeTravel(targetLocationId);
+          ]);
+          lastEventType.current = eventType;
+          return currentWorld;
+        }
+      }
+
+      // --- 事件 B: 同门互动 ---
+      // 防止连续遇到同门
+      if (roll < 0.4 && lastEventType.current !== 'brother_event') {
+        const brothers = npcs.filter((n) => n.sectId === hero.sectId && n.id !== heroId && n.role === 'disciple');
+        const brother = rand(brothers);
+        if (brother) {
+          eventType = 'brother_event';
+          addStory(`你在演武场碰到了同门【${brother.name}】。`, 'narrative');
+
+          const interactions = [
+            () => {
+              addStory(`你们切磋了三十回合，${brother.name}剑法精妙，你略逊一筹。`, 'action');
+              addStory(`“${hero.name}，承让了！”${brother.name}收剑笑道。`, 'dialogue', brother.name);
             },
-          },
-        ],
-      },
-      {
-        id: 'cliff_fall',
-        text: '脚下的山路突然崩塌！你失去了平衡，向深渊滑落！',
-        choices: [
-          {
-            text: '施展轻功跳跃 (需身法>30)',
-            condition: (h) => h.stats.agility > 30,
-            action: (g) => {
-              g.addLog('battle', '千钧一发之际，你提气轻身，脚踩落石借力腾空，稳稳落在安全处。');
-              g.addLog('system', '危机时刻激发了潜能，【身法】提升了。');
-              g.setHero((h) => ({ ...h, stats: { ...h.stats, agility: h.stats.agility + 2 } }));
-              g.setCurrentEvent(null);
-              completeTravel(targetLocationId);
+            () => {
+              addStory(`${brother.name}偷偷塞给你半只烧鸡，“刚从厨房顺的，快吃。”`, 'dialogue', brother.name);
+              addStory('这烧鸡真香。', 'inner');
             },
-          },
-          {
-            text: '抓住路边的树枝',
-            action: (g) => {
-              g.addLog('event', '你死死抓住了悬崖边的枯树枝，手掌被划得鲜血淋漓，好不容易爬了上来。');
-              g.setHero((h) => ({ ...h, stats: { ...h.stats, health: h.stats.health - 20 } }));
-              g.addLog('system', '受了皮外伤，气血 -20。');
-              g.setCurrentEvent(null);
-              completeTravel(targetLocationId);
+            () => {
+              addStory(`${brother.name}正坐在台阶上发呆，似乎在想念山下的某位姑娘。`, 'narrative');
             },
-          },
-        ],
-      },
-    ];
+            () => {
+              addStory(`“听说掌门最近心情不好，你可别去触霉头。”${brother.name}小声提醒你。`, 'dialogue', brother.name);
+            },
+          ];
+          rand(interactions)();
+        }
+      }
 
-    const randomEvent = events[Math.floor(Math.random() * events.length)];
-    setCurrentEvent(randomEvent);
-  };
+      // --- 事件 C: 独自修炼 (默认) ---
+      // 只有当没触发别的事件时触发
+      if (!eventType) {
+        eventType = 'training';
+        // 如果上次也是修炼，这就尴尬了，尝试换个文案
+        const trainingTxts = [
+          '你在瀑布下冲刷筋骨，感悟水流之势。',
+          '夜深人静，你挑灯研读拳谱，忽有所悟。',
+          '今日无事，你在后山打坐，内力运行了一个周天。',
+          '你对着木桩练习了一下午的基本剑招，汗如雨下。',
+          '山中岁月无甲子，转眼又是半月过去。',
+          '你下山采办物资，顺便在茶馆听了一下午的说书。',
+        ];
+        // 尽量不重复上一句 (简单去重)
+        let text = rand(trainingTxts);
+        // 如果重复了就再随一次
+        if (storyLog.length > 0 && storyLog[storyLog.length - 1].text === text) {
+          text = rand(trainingTxts);
+        }
+        addStory(text, 'narrative');
+      }
 
-  // 4. 修炼逻辑
-  const handleTrain = () => {
-    if (!hero) return;
-    addLog('event', `你在${WORLD_MAP[hero.location].name}找了一处僻静之地，开始打坐修炼。`);
-    passTime(5); // 修炼耗时5天
-
-    // 简单的熟练度增加逻辑
-    const skill = hero.skills[0]; // 默认练第一个技能
-    const expGain = 10 + Math.floor(hero.stats.insight / 10);
-
-    let newProficiency = skill.proficiency + expGain;
-    let newLevel = skill.level;
-    let levelUp = false;
-
-    if (newProficiency >= 100) {
-      newLevel += 1;
-      newProficiency -= 100;
-      levelUp = true;
-    }
-
-    setHero((prev) => {
-      if (!prev) return null;
-      const newSkills = [...prev.skills];
-      newSkills[0] = { ...skill, level: newLevel, proficiency: newProficiency };
-      return { ...prev, skills: newSkills };
+      lastEventType.current = eventType;
+      return currentWorld;
     });
 
-    addLog('system', `修炼了5天，${skill.name}熟练度 +${expGain}。`);
-    if (levelUp) {
-      addLog('inner', `突然间福至心灵，你感觉丹田内力涌动，${skill.name}竟然突破到了第 ${newLevel} 层！`);
+    // 🚀 关键修复：在逻辑执行完后，更新回合数，触发 useEffect
+    setTurnCount((prev) => prev + 1);
+  }, [addStory, storyLog]);
+
+  // --- 游戏循环 (Game Loop) ---
+  // 🚀 依赖列表加入了 turnCount
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isStarted && isAutoPlaying && choices.length === 0) {
+      timer = setTimeout(() => {
+        nextTurn();
+      }, 2500); // 每2.5秒推进一次剧情
     }
-  };
+    return () => clearTimeout(timer);
+  }, [isStarted, isAutoPlaying, choices, turnCount, nextTurn]);
 
-  // 5. 休息逻辑
-  const handleRest = () => {
-    if (!hero) return;
-    addLog('event', '感觉有些疲惫，你决定休息几天。');
-    passTime(1);
-    setHero((prev) => (prev ? { ...prev, stats: { ...prev.stats, health: Math.min(prev.stats.health + 20, prev.stats.maxHealth) } } : null));
-    addLog('system', '体力恢复了，气血 +20。');
-  };
-
-  // --- 界面渲染 ---
-
-  if (!hero) {
+  // --- 渲染 ---
+  if (!isStarted) {
     return (
-      <div className="min-h-screen bg-stone-900 text-stone-300 flex flex-col items-center justify-center font-serif">
-        <h1 className="text-5xl text-amber-600 mb-12 font-bold tracking-widest border-4 border-stone-700 p-6">侠客风云录</h1>
-        <div className="flex gap-8">
-          <button type="button" onClick={() => initGame(1)} className="hover:scale-105 transition bg-stone-800 p-8 rounded border border-stone-600 hover:border-amber-500 w-64">
-            <h3 className="text-2xl text-amber-500 mb-2">名门之后</h3>
-            <p className="text-sm text-stone-500">属性均衡，其实不凡。</p>
-          </button>
-          <button type="button" onClick={() => initGame(2)} className="hover:scale-105 transition bg-stone-800 p-8 rounded border border-stone-600 hover:border-amber-500 w-64">
-            <h3 className="text-2xl text-amber-500 mb-2">市井无赖</h3>
-            <p className="text-sm text-stone-500">机灵过人，福源深厚。</p>
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-stone-950 text-stone-200 font-serif">
+        <h1 className="text-6xl font-bold mb-8 text-amber-600 tracking-widest" style={{ writingMode: 'vertical-rl' }}>
+          江湖演义
+        </h1>
+        <button
+          onClick={generateWorld}
+          className="px-8 py-3 text-xl border border-stone-600 hover:border-amber-500 hover:text-amber-500 transition rounded"
+        >
+          {world ? '重新生成世界' : '开始新的轮回'}
+        </button>
       </div>
     );
   }
 
-  const currentLocation = WORLD_MAP[hero.location];
-
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-300 font-serif flex">
-      {/* 左侧：世界与行动 */}
-      <div className="w-1/3 border-r border-stone-800 p-6 flex flex-col bg-stone-900">
+    <div className="flex justify-center min-h-screen bg-stone-950 font-serif text-lg leading-loose selection:bg-amber-900">
+      <div className="w-full max-w-3xl flex flex-col h-screen">
 
-        {/* 地点信息 */}
-        <div className="mb-8 text-center border-b border-stone-800 pb-6">
-          <div className="text-xs text-stone-500 mb-2">{formatTime(hero.time)}</div>
-          <h2 className="text-3xl text-amber-500 font-bold mb-4">{currentLocation.name}</h2>
-          <p className="text-sm text-stone-400 leading-loose italic">{currentLocation.desc}</p>
+        {/* 顶部：当前状态简报 (类似小说章节名) */}
+        <div className="p-4 border-b border-stone-800 text-center text-stone-500 text-sm">
+          第一回 初入江湖 | 
+{' '}
+{world?.sects.find(s => s.id === world.npcs.find(n => n.id === 'hero')?.sectId)?.name}弟子 | 回合: 
+{' '}
+{turnCount}
         </div>
 
-        {/* 交互区域 */}
-        {currentEvent ? (
-          <div className="flex-1 bg-stone-800 rounded p-6 shadow-inner animate-pulse border border-amber-900/50">
-            <h3 className="text-xl text-amber-400 mb-4 font-bold">⚠ 突发事件</h3>
-            <p className="mb-6 leading-relaxed">{currentEvent.text}</p>
-            <div className="space-y-3">
-              {currentEvent.choices.map((choice, idx) => {
-                const canChoose = choice.condition ? choice.condition(hero) : true;
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    disabled={!canChoose}
-                    onClick={() => choice.action(engine)}
-                    className={`w-full p-3 text-left border rounded transition ${canChoose
-                      ? 'border-stone-600 hover:bg-stone-700 hover:border-amber-500 text-stone-300'
-                      : 'border-stone-800 text-stone-600 cursor-not-allowed'
-                    }`}
-                  >
-                    {idx + 1}
-                    .
-                    {choice.text}
-                    {!canChoose && <span className="float-right text-xs text-red-900">(条件不足)</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-stone-500 text-xs uppercase mb-3 tracking-widest">前往 Travel</h4>
-              <div className="space-y-2">
-                {currentLocation.connections.map((conn) => (
-                  <button
-                    key={conn.target}
-                    type="button"
-                    onClick={() => handleTravel(conn.target, conn.travelTime, conn.desc)}
-                    className="w-full p-3 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded text-left flex justify-between group"
-                  >
-                    <span className="group-hover:text-amber-400 transition">{WORLD_MAP[conn.target].name}</span>
-                    <span className="text-xs text-stone-600">
-                      {conn.travelTime}
-                      天
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* 中间：小说正文流 */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-6 scrollbar-hide">
+          {storyLog.map((block) => (
+            <div key={block.id} className={`animate-fade-in ${block.type === 'inner' ? 'text-stone-500 italic' : 'text-stone-300'}`}>
+              {block.type === 'time-pass' && (
+                <div className="text-center text-stone-600 my-8">—— · ——</div>
+              )}
 
-            <div>
-              <h4 className="text-stone-500 text-xs uppercase mb-3 tracking-widest">行动 Actions</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={handleTrain} className="p-3 bg-stone-800 border border-stone-700 hover:border-amber-600">修炼武功</button>
-                <button type="button" onClick={handleRest} className="p-3 bg-stone-800 border border-stone-700 hover:border-green-600">原地休息</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+              {block.type === 'action' && (
+                <div className="text-amber-700/80 mb-1 text-base">⚔️</div>
+              )}
 
-      {/* 中间：叙事流 (Log) */}
-      <div className="flex-1 p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-700" ref={scrollRef}>
-        <div className="max-w-2xl mx-auto space-y-6">
-          {logs.map((log) => (
-            <div key={log.id} className="animate-fade-in group">
-              <div className="flex items-baseline mb-1">
-                <span className="text-xs text-stone-600 font-mono w-24 shrink-0">{log.timeDisplay}</span>
-                {log.type === 'inner' && <span className="text-xs text-purple-400 bg-purple-900/20 px-1 rounded">心理</span>}
-                {log.type === 'battle' && <span className="text-xs text-red-400 bg-red-900/20 px-1 rounded">战斗</span>}
-                {log.type === 'event' && <span className="text-xs text-yellow-400 bg-yellow-900/20 px-1 rounded">遭遇</span>}
-              </div>
-              <p className={`text-lg leading-loose ${log.type === 'inner' ? 'text-stone-400 italic'
-                : log.type === 'battle' ? 'text-red-200'
-                  : log.type === 'system' ? 'text-stone-500 text-sm'
-                    : 'text-stone-200'
-              }`}
-              >
-                {log.text}
-              </p>
+              {block.speaker && (
+                <span className="font-bold text-amber-600 mr-2">
+                  {block.speaker}
+：
+</span>
+              )}
+
+              <span>{block.text}</span>
             </div>
           ))}
-        </div>
-      </div>
 
-      {/* 右侧：人物面板 */}
-      <div className="w-64 bg-stone-900 border-l border-stone-800 p-6 text-sm">
-        <h3 className="text-amber-600 font-bold text-xl mb-6">{hero.name}</h3>
+          {/* 选项区域 (嵌入在文末) */}
+          {choices.length > 0 && (
+            <div className="mt-8 space-y-3 pl-4 border-l-2 border-amber-800/50 animate-slide-up">
+              {choices.map((choice, idx) => (
+                <button
+                  key={idx}
+                  onClick={choice.action}
+                  className="block w-full text-left p-4 bg-stone-900 border border-stone-800 hover:border-amber-600 hover:bg-stone-800 transition rounded group"
+                >
+                  <span className="text-amber-700 font-bold mr-3 group-hover:text-amber-500">
+                    {['甲', '乙', '丙', '丁'][idx]}
+{' '}
+.
+</span>
+                  <span className="text-stone-300 group-hover:text-stone-100">{choice.text}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
-        <div className="mb-6">
-          <h4 className="text-stone-500 mb-2 border-b border-stone-800 pb-1">基础属性</h4>
-          <div className="grid grid-cols-2 gap-y-2 text-stone-300">
-            <div>
-              气血:
-              <span className={hero.stats.health < 30 ? 'text-red-500' : 'text-green-500'}>
-                {hero.stats.health}
-                /
-                {hero.stats.maxHealth}
-              </span>
-            </div>
-            <div>
-              银两:
-              <span className="text-yellow-500">{hero.stats.money}</span>
-            </div>
-            <div>
-              武力:
-              {hero.stats.strength}
-            </div>
-            <div>
-              身法:
-              {hero.stats.agility}
-            </div>
-            <div>
-              悟性:
-              {hero.stats.insight}
-            </div>
-            <div>
-              魅力:
-              {hero.stats.charm}
-            </div>
-          </div>
+          {/* 正在输入的加载符 */}
+          {choices.length === 0 && (
+            <div className="h-8 flex items-center text-stone-700 text-sm animate-pulse">
+              <span className="mr-2">✍️</span>
+{' '}
+剧情推演中...
+</div>
+          )}
+
+          <div ref={bottomRef} />
         </div>
 
-        <div className="mb-6">
-          <h4 className="text-stone-500 mb-2 border-b border-stone-800 pb-1">武学造诣</h4>
-          <ul className="space-y-3">
-            {hero.skills.map((skill) => (
-              <li key={skill.id}>
-                <div className="flex justify-between text-amber-200">
-                  <span>{skill.name}</span>
-                  <span>
-                    Lv.
-                    {skill.level}
-                  </span>
-                </div>
-                <div className="w-full bg-stone-800 h-1 mt-1 rounded-full overflow-hidden">
-                  <div className="bg-amber-700 h-full transition-all duration-500" style={{ width: `${skill.proficiency}%` }} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-stone-500 mb-2 border-b border-stone-800 pb-1">行囊</h4>
-          <div className="flex flex-wrap gap-2">
-            {hero.inventory.map((item, idx) => (
-              <span key={idx} className="bg-stone-800 border border-stone-700 px-2 py-1 text-xs rounded text-stone-400" title={item.desc}>
-                {item.name}
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
