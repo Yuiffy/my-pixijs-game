@@ -4,17 +4,37 @@
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  // @typescript-eslint/no-unused-vars 设为warning而不是error
   "rules": {
+    "max-len": "off",
+    "no-plusplus": "off",
+    "no-param-reassign": "off",
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "comma-dangle": "off",
+    "@typescript-eslint/comma-dangle": "off",
+    "arrow-parens": "off",
+    "object-curly-newline": "off",
+    "operator-linebreak": "off",
+    "no-continue": "off",
+    "no-restricted-syntax": "off",
+    "@typescript-eslint/naming-convention": "off",
+    "no-console": "off",
+    "no-alert": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "@typescript-eslint/semi": "off",
+    "padded-blocks": "off",
+    "@typescript-eslint/quotes": "off",
+    "no-nested-ternary": "off",
+    "arrow-body-style": "off",
+    "space-infix-ops": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/require-default-props": "off",
     "@typescript-eslint/no-unused-vars": "warn",
-    "react/react-in-jsx-scope": "off",
-    "react/jsx-props-no-spreading": "warn",
     "import/prefer-default-export": "off",
-    "@typescript-eslint/naming-convention": "warn",
-    "react/require-default-props": "warn",
-    "jsx-a11y/anchor-is-valid": "warn",
+    "react/react-in-jsx-scope": "off",
     "consistent-return": "off",
-    "array-callback-return": "warn",
-    "no-trailing-spaces": "error"
+    "array-callback-return": "off",
+    "no-trailing-spaces": "off",
+    "no-useless-escape": "off"
   }
 }

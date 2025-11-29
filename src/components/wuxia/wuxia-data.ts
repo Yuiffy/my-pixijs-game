@@ -1410,8 +1410,8 @@ const eventRumorDuel: StorySnippet = {
   tags: ['wild_daily'],
   weight: 200,
   req: (hero, world) => hero.knowledge.includes('rumor_duel') &&
-                       hero.locationId.startsWith('wild_') &&
-                       !hero.flags.watched_duel,
+    hero.locationId.startsWith('wild_') &&
+    !hero.flags.watched_duel,
   run: (hero, world) => {
     const sects = world.sects as Sect[];
     let sectA: Sect | null = null;
@@ -1495,7 +1495,7 @@ const eventMeetHiddenMaster: StorySnippet = {
 
     return {
       lines: [
-        { text: `你在${hero.locationId.includes('wild')?'山林深处':'闹市角落'}，发现一位气度不凡的${master.gender==='male'?'老者':'老妇'}。`, type: 'narrative' },
+        { text: `你在${hero.locationId.includes('wild') ? '山林深处' : '闹市角落'}，发现一位气度不凡的${master.gender === 'male' ? '老者' : '老妇'}。`, type: 'narrative' },
         { text: describeAppearance(master), type: 'narrative' },
         { text: `此人正是传闻中的【${master.name}】，${identity.relationDesc}。`, type: 'inner' },
         { text: `"${callSelf}已不问江湖世事多年，没想到还有娃娃能找到这里。"`, type: 'dialogue', speaker: master.name },
@@ -1620,8 +1620,18 @@ export const SNIPPETS: StorySnippet[] = [
 
           // 最后保底
           return [
-            { id: 'sect_qingyun', name: '青云门', type: 'good' },
-            { id: 'sect_xuedao', name: '血刀堂', type: 'evil' },
+            {
+              id: 'sect_qingyun',
+              name: '青云门',
+              type: 'good',
+              locationId: 'loc_qingyun'
+            },
+            {
+              id: 'sect_xuedao',
+              name: '血刀堂',
+              type: 'evil',
+              locationId: 'loc_xuedao'
+            },
           ];
         };
 
@@ -2172,7 +2182,7 @@ export const SNIPPETS: StorySnippet[] = [
     req: (hero, world, turn) => turn >= 1,
     run: (hero, world) => {
       const enemyRel = hero.relations.find((r) => r.type === 'enemy');
-      const enemyName = enemyRel ? world.npcs.find((n:Person) => n.id === enemyRel.targetId)?.name : '神秘人';
+      const enemyName = enemyRel ? world.npcs.find((n: Person) => n.id === enemyRel.targetId)?.name : '神秘人';
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
 
       return {
@@ -2237,7 +2247,7 @@ export const SNIPPETS: StorySnippet[] = [
     req: (hero) => !!hero.flags.ready_for_final,
     run: (hero, world) => {
       const enemyRel = hero.relations.find((r) => r.type === 'enemy');
-      const enemyName = enemyRel ? world.npcs.find((n:Person) => n.id === enemyRel.targetId)?.name : '魔教教主';
+      const enemyName = enemyRel ? world.npcs.find((n: Person) => n.id === enemyRel.targetId)?.name : '魔教教主';
 
       // 🆕 核心修复：选择最厉害的武功（优先门派武功，然后按类型排序）
       let bestArt: MartialArt | null = null;
