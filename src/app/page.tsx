@@ -29,6 +29,9 @@ export default function Home() {
     {
       title: '是小鸟就上一百层 Sui Bird jump', href: '/game/jumpone', description: 'Sui 的无尽跳跃游戏', target: '_self',
     },
+    {
+      title: '武侠小说生成器', href: '/game/wuxia', description: '江湖风云录 - 文字冒险游戏（剧情暂时与岁己无关，开发中）', target: '_self',
+    },
     // {title: '熊蛙棋 Bear Frog Chess', href: 'http://www.yuiffy.com/bear-frog-chess/', description: '又被称为枪棋/炮棋，在4x4的棋盘上12颗棋子的简单的双人对战棋类游戏'},
     // {title: '冻鳗榜单王', href: 'http://rank.yuiffy.com', description: '能够对动画/游戏/食物等进行打分和发布排行榜的榜单网站'},
     // {title: '贪吃蛇 Greedy Hebi', href: 'hebi/hebi.html', description: '简单畅快的贪吃蛇游戏'},
