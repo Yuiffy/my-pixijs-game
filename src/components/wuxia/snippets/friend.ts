@@ -1,4 +1,4 @@
-import { StorySnippet, Sect, Person, Personality, StoryStage } from "../logic/types";
+import { StorySnippet, Sect, Person, Personality, StoryStage, RelationType } from "../logic/types";
 import { getSectMembersList, getAvailableCompanions, updateLastInteraction, rand, genName } from "../logic/utils";
 import { generateCompanionRomanticEvent } from "./common";
 
@@ -43,7 +43,7 @@ export const friendSnippets: StorySnippet[] = [
 
       const addRelations = [];
       for (const companionId of companionIds) {
-        addRelations.push({ targetId: companionId, type: 'friend', value: 2 });
+        addRelations.push({ targetId: companionId, type: 'friend' as RelationType, value: 2 });
       }
 
       return {

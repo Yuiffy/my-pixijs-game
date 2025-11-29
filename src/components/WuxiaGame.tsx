@@ -279,7 +279,6 @@ export default function WuxiaGame() {
             }
           };
 
-          if (result.addRelation) updateRelation(result.addRelation);
           if (result.addRelations) result.addRelations.forEach(updateRelation);
 
           if (result.addFlag) newFlags[result.addFlag] = true;

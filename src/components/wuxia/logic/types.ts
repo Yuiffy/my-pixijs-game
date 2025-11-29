@@ -1,3 +1,10 @@
+export enum BattleOutcome {
+  VICTORY = 'victory',
+  DEFEAT = 'defeat',
+  ESCAPE = 'escape',
+  COMPANION_ESCAPE = 'companion_escape'
+}
+
 export type RelationType = 'master' | 'apprentice' | 'friend' | 'enemy' | 'acquaintance' | 'crush' | 'spouse' | 'rival';
 
 export interface Relation {

@@ -721,7 +721,41 @@ export const getBattleOutcomeChoices = (
                     type: 'friend' as RelationType,
                     value: allyWantsToKill ? 15 : -10
                   }
-                ]
+                ],
+                // 处理后续剧情
+                ...(Math.random() > 0.5 ? {
+                  lines: [
+                    ...(allyWantsToKill ? [
+                      {
+                        text: `【${ally.name}】收起染血的武器，转身对你说道："少侠武艺高强，在下佩服。"`,
+                        type: 'dialogue' as const,
+                        speaker: ally.name
+                      },
+                      {
+                        text: `"不知少侠接下来有何打算？若是不嫌弃，在下愿与少侠同行，共闯江湖！"`,
+                        type: 'dialogue' as const,
+                        speaker: ally.name
+                      }
+                    ] : [
+                      {
+                        text: `【${ally.name}】看着你，欲言又止："少侠..."`,
+                        type: 'dialogue' as const,
+                        speaker: ally.name
+                      },
+                      {
+                        text: `"但说无妨。"你说道。`,
+                        type: 'dialogue' as const,
+                        speaker: '你'
+                      },
+                      {
+                        text: `"在下与少侠一见如故，不知能否有幸与少侠结伴同行？"`,
+                        type: 'dialogue' as const,
+                        speaker: ally.name
+                      }
+                    ])
+                  ],
+                  choices: getCompanionInviteChoices(ally, hero)
+                } : {})
               }
             }
           ]

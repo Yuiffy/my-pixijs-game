@@ -1,7 +1,7 @@
 import { generateBattle } from "../logic/battle";
 import { MERCHANT_ITEMS } from "../logic/constants";
 import { getArtByName, getSectArts, SECT_ARTS } from "../logic/skills";
-import { StorySnippet, StoryStage, Person, Sect, RelationType, MartialArt, StoryLine, LocationInfo } from "../logic/types";
+import { StorySnippet, StoryStage, Person, Sect, RelationType, MartialArt, StoryLine, LocationInfo, BattleOutcome } from "../logic/types";
 import {
   rand,
   genName,
@@ -586,7 +586,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
               choices: (() => {
                 const battleResult = generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
                 if (battleResult.outcome === 'victory') {
-                  return getBattleOutcomeChoices(npc2, hero, world, -20);
+                  return getBattleOutcomeChoices(npc2, hero, world, -20, npc1);
                 }
                 // 战斗未获胜时，增加与帮助对象的友好度，并提供结伴选项
                 return [{
@@ -621,8 +621,8 @@ export const otherPeopleSnippets: StorySnippet[] = [
               addNpc: [npc1, npc2],
               choices: (() => {
                 const battleResult = generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
-                if (battleResult.outcome === 'victory') {
-                  return getBattleOutcomeChoices(npc1, hero, world, -20);
+                if (battleResult.outcome === BattleOutcome.VICTORY) {
+                  return getBattleOutcomeChoices(npc1, hero, world, -20, npc2);
                 }
                 // 战斗未获胜时，增加与帮助对象的友好度，并提供结伴选项
                 return [{

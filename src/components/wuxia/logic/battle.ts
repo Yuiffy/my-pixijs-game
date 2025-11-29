@@ -1,6 +1,6 @@
 // src/components/wuxia/logic/battle.ts
 
-import { Person, MartialArt, StoryLine } from './types';
+import { Person, MartialArt, StoryLine, BattleOutcome } from './types';
 import { getSectById, rand } from './utils';
 import { gameOverSnippets } from '../snippets/gameOver';
 import { getArtByName } from './skills';
@@ -19,7 +19,7 @@ export const generateBattle = (
   enemyArt: MartialArt | null,
   options: number | BattleOptions = 5, // 兼容旧调用方式
   world?: any,
-): { lines: StoryLine[]; outcome: 'victory' | 'defeat' | 'escape' } => {
+): { lines: StoryLine[]; outcome: BattleOutcome } => {
   // 解析参数
   const rounds = typeof options === 'number' ? options : (options.rounds || 5);
   const canChooseOutcome = typeof options === 'number' ? false : (options.canChooseOutcome || false);
@@ -324,17 +324,15 @@ export const generateBattle = (
   // ==========================================
 
   // 🆕 Feature 2: 兜底环节 (主角倒下，同伴还活着)
-  if (heroHp <= 0 && enemyHp > 0 && companion && companionHp > 20) {
-    const saveText = rand(battleDescriptions.companion.save).replace('{name}', companion.name);
-    lines.push({ text: saveText, type: 'action' });
+  if (companion && companionHp > 0 && heroHp <= 0) {
     lines.push({
-      text: `"${hero.name}！快走！别管我！"`,
+      text: `【${companion.name}】见你受伤，大喝一声："少侠快走！我来断后！"`,
       type: 'dialogue',
       speaker: companion.name
     });
     lines.push({ text: `趁着【${companion.name}】拼死拖住敌人的瞬间，你被推入草丛，勉强逃离了战场...`, type: 'narrative' });
     // 这里并没有判死，视为一种特殊的"逃跑"
-    return { lines, outcome: 'escape' as const };
+    return { lines, outcome: BattleOutcome.COMPANION_ESCAPE };
   }
 
   // 胜利
@@ -352,7 +350,7 @@ export const generateBattle = (
     // Feature 3: 如果允许选择结果，则不自动生成击杀/逃跑文案，直接返回
     if (canChooseOutcome) {
       lines.push({ text: `【${enemy.name}】已无力再战，任由你发落。`, type: 'narrative' });
-      return { lines, outcome: 'victory' as const };
+      return { lines, outcome: BattleOutcome.VICTORY };
     }
 
     // 默认的自动结算逻辑 (兼容旧代码)
@@ -392,7 +390,7 @@ export const generateBattle = (
       }
     }
   } else {
-    // 平局/超时
+    // 平局或逃跑
     lines.push({
       text: `双方久战力竭，【${enemy.name}】见奈何不了你，${rand(['虚晃一招', '冷哼一声'])}，跳出战圈离去。`,
       type: 'narrative'
@@ -404,10 +402,10 @@ export const generateBattle = (
 
   // 返回战斗结果
   if (enemyHp <= 0) {
-    return { lines, outcome: 'victory' as const };
+    return { lines, outcome: BattleOutcome.VICTORY };
   }
   if (heroHp <= 0) {
-    return { lines, outcome: 'defeat' as const };
+    return { lines, outcome: BattleOutcome.DEFEAT };
   }
-  return { lines, outcome: 'escape' as const };
+  return { lines, outcome: BattleOutcome.ESCAPE };
 };
