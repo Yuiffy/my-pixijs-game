@@ -32,6 +32,7 @@ export interface Person {
   inventory: string[];
   flags: Record<string, boolean>;
   arts: string[];
+  knowledge: string[]; // 🆕 新增：江湖情报库
 }
 
 export interface Sect {
@@ -81,6 +82,7 @@ export interface SnippetResult {
   addRelation?: Relation;
   addFlag?: string;
   addArt?: string;
+  addKnowledge?: string; // 🆕 新增：获得情报指令
   advanceStage?: boolean;
   addTurn?: number;
   endGame?: boolean;
@@ -233,157 +235,97 @@ export const SNIPPETS: StorySnippet[] = [
     run: (hero, world) => {
       const choices: StoryChoice[] = [];
 
-      // 根据位置添加不同的选项
+      // --- 城市选项：打听情报 ---
       if (hero.locationId === 'loc_city') {
-        // 在城中：可以四处打听、去茶馆等
         const gossipEvents = [
           {
             text: '你听到茶馆里有人在谈论最近江湖上的传闻。',
-            detail: '据说某个门派最近发生了大事，但具体是什么，没人说得清楚。',
-            effect: () => ({ addItem: '江湖传闻' }),
+            detail: '“听说【血刀堂】和【青云门】的弟子最近在城外野林子里约架，怕是要出人命啊。”',
+            // 🆕 效果：添加具体的情报字符串
+            effect: () => ({ addKnowledge: 'rumor_duel' }),
           },
           {
-            text: '你在集市上遇到一个说书人，正在讲江湖故事。',
-            detail: '你听了一会儿，虽然都是些老故事，但也算解闷。',
-            effect: () => ({}),
+            text: '你在集市上遇到一个神秘的说书人。',
+            detail: '他压低声音说：“听说某位归隐的前辈高人，最近在城外野地现身了。”',
+            effect: () => ({ addKnowledge: 'rumor_hidden_master' }),
           },
           {
             text: '你向几个江湖人士打听消息。',
-            detail: '他们告诉你最近城外似乎有些不太平，建议你小心。',
-            effect: () => ({ addFlag: 'heard_rumors' }),
-          },
-          {
-            text: '你在酒馆里遇到一个醉汉，他告诉你一些有趣的信息。',
-            detail: '虽然大部分都是胡言乱语，但你也听到了一些有用的线索。',
-            effect: () => {
-              const items = ['地图', '指南针', '火折子'];
-              return { addItem: rand(items) };
-            },
+            detail: '他们告诉你最近城里治安不错，没啥大事。',
+            effect: () => ({}), // 无事发生
           },
         ];
+
+        // 动态生成打听结果
         const gossipEvent = rand(gossipEvents);
-        const eventEffect = gossipEvent.effect();
 
         choices.push({
-          text: '四处打听 (寻找机缘)',
+          text: '去茶馆打听消息 (获取情报)',
           result: {
             lines: [
-              { text: '你四处打听最近江湖上有没有什么新鲜事。', type: 'action' },
-              { text: gossipEvent.text, type: 'narrative' },
-              { text: gossipEvent.detail, type: 'inner' },
+              { text: '你走进茶馆，点了一壶茶，竖起耳朵。', type: 'action' },
+              { text: gossipEvent.detail, type: 'narrative' },
             ],
             addTurn: 1,
-            ...eventEffect,
+            ...gossipEvent.effect(),
           },
         });
 
-        // 在城中可以去茶馆
         choices.push({
-          text: '去茶馆坐坐',
+          text: '去集市逛逛',
           result: {
-            lines: [
-              { text: '你走进一家茶馆，找了个位置坐下。', type: 'action' },
-              { text: '你点了一壶茶，慢慢品味，听着周围人的谈话。', type: 'narrative' },
-              { text: '你感觉心情平静了不少。', type: 'inner' },
-            ],
+            lines: [{ text: '集市上琳琅满目，你随意逛了逛。', type: 'narrative' }],
             addTurn: 1,
           },
         });
-      } else if (hero.locationId === 'loc_wild') {
-        // 在野外：可以探索、寻找资源、闭关修炼
-        const exploreEvents = [
-          {
-            text: '你在野外四处探索，希望能找到一些有用的东西。',
-            detail: '你发现了一些草药，小心地收集起来。',
-            effect: () => ({ addItem: '草药' }),
-          },
-          {
-            text: '你仔细观察周围的环境，寻找可能的线索。',
-            detail: '你发现了一些奇怪的痕迹，但无法确定是什么留下的。',
-            effect: () => ({ addFlag: 'found_strange_tracks' }),
-          },
-          {
-            text: '你向路过的旅人打听消息。',
-            detail: '他们告诉你前面可能有危险，建议你绕路。',
-            effect: () => ({}),
-          },
-          {
-            text: '你在一个隐蔽的地方发现了一个小包裹。',
-            detail: '打开一看，里面有一些银两和一张地图。',
-            effect: () => ({ addItem: rand(['银两', '地图']) }),
-          },
-        ];
-        const exploreEvent = rand(exploreEvents);
-        const eventEffect = exploreEvent.effect();
+      }
 
+      // --- 野外选项：探索 ---
+      else if (hero.locationId === 'loc_wild') {
         choices.push({
           text: '四处探索 (寻找机缘)',
           result: {
-            lines: [
-              { text: exploreEvent.text, type: 'action' },
-              { text: exploreEvent.detail, type: 'narrative' },
-            ],
+            lines: [{ text: '你在野外四处搜寻...', type: 'action' }],
             addTurn: 1,
-            ...eventEffect,
           },
         });
 
-        // 在野外可以闭关修炼
         choices.push({
-          text: '闭关修炼 (跳过时间)',
+          text: '闭关修炼',
           result: {
             lines: [
               { text: '你在野外找到一处僻静之地，开始闭关修炼。', type: 'action' },
-              { text: '山中无甲子，寒尽不知年。你专心修炼，不问世事。', type: 'time-pass' },
-            ],
-            addTurn: 3,
-          },
-        });
-      } else if (hero.locationId === 'loc_sect_main') {
-        // 在门派：可以找师兄弟聊天、闭关修炼、向师父请教
-        const disciples = world.npcs.filter((n: Person) => n.sectId === hero.sectId && n.role === 'disciple' && n.id !== hero.id);
-        if (disciples.length > 0) {
-          const randomDisciple = rand(disciples) as Person;
-          const discipleRel = hero.relations.find((r) => r.targetId === randomDisciple.id);
-          choices.push({
-            text: '找师兄弟闲聊',
-            result: {
-              lines: [
-                { text: `你找到师兄弟【${randomDisciple.name}】，一起闲聊江湖趣事。`, type: 'action' },
-                { text: '你们聊得很开心，感觉师门情谊更加深厚了。', type: 'narrative' },
-              ],
-              addTurn: 1,
-              addRelation: {
-                targetId: randomDisciple.id,
-                type: 'friend',
-                value: (discipleRel?.value || 0) + 10,
-              },
-            },
-          });
-        }
-
-        // 在门派可以闭关修炼
-        choices.push({
-          text: '闭关修炼 (跳过时间)',
-          result: {
-            lines: [
-              { text: '你回到自己的房间，开始闭关修炼。', type: 'action' },
-              { text: '山中无甲子，寒尽不知年。你专心修炼，不问世事。', type: 'time-pass' },
+              { text: '山中无甲子，寒尽不知年。', type: 'time-pass' },
             ],
             addTurn: 3,
           },
         });
       }
 
-      // 移动选项
+      // --- 门派选项 ---
+      else if (hero.locationId === 'loc_sect_main') {
+        choices.push({
+          text: '找师兄弟闲聊',
+          result: {
+            lines: [{ text: '你与同门闲聊，增进了感情。', type: 'narrative' }],
+            addTurn: 1,
+          },
+        });
+        choices.push({
+          text: '闭关修炼',
+          result: {
+            lines: [{ text: '你回到房间，专心修炼内功。', type: 'action' }],
+            addTurn: 3,
+          },
+        });
+      }
+
+      // --- 通用移动选项 ---
       if (hero.locationId !== 'loc_sect_main') {
         choices.push({
           text: '返回师门',
           result: {
-            lines: [
-              { text: '外面的世界虽然精彩，但师门才是家。', type: 'action' },
-              { text: '你收拾行装，踏上了回师门的路。', type: 'narrative' },
-            ],
+            lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
             newLocationId: 'loc_sect_main',
             addTurn: 2,
           },
@@ -395,19 +337,23 @@ export const SNIPPETS: StorySnippet[] = [
         choices.push({
           text: `下山前往【${city.name}】`,
           result: {
-            lines: [
-              { text: '静极思动，你决定下山看看。', type: 'action' },
-              { text: '你告别师门，踏上了前往城中的路。', type: 'narrative' },
-            ],
+            lines: [{ text: '静极思动，你决定下山看看。', type: 'action' }],
             newLocationId: 'loc_city',
             addTurn: 1,
           },
         });
       }
 
-      // 如果只有一个选项，直接执行，不显示选择
-      if (choices.length === 1) {
-        return choices[0].result;
+      if (hero.locationId === 'loc_city') {
+        const wild = world.locations.find((l: Location) => l.id === 'loc_wild');
+        choices.push({
+          text: `前往【${wild.name}】探险`,
+          result: {
+            lines: [{ text: '听说野外有不少机缘，你决定去碰碰运气。', type: 'action' }],
+            newLocationId: 'loc_wild',
+            addTurn: 2,
+          },
+        });
       }
 
       return {
@@ -417,6 +363,86 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
+  // ===================================
+  // 🕵️‍♀️ 情报触发事件 (Rumor Events)
+  // ===================================
+
+  // 1. 传闻：野外约战
+  {
+    id: 'event_rumor_duel',
+    tags: ['wild_daily'],
+    weight: 200, // 高权重，有情报必触发
+    // 🆕 条件：在野外 + 有情报 + 没看过热闹
+    req: (hero) => hero.knowledge.includes('rumor_duel') && hero.locationId === 'loc_wild' && !hero.flags.watched_duel,
+    run: (hero, world) => ({
+      lines: [
+        { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
+        { text: '果然！前方空地上，两拨人马正在对峙。', type: 'narrative' },
+        { text: '左边是身穿青衣的青云门弟子，右边是手持血刀的血刀堂恶徒。', type: 'narrative' },
+        { text: '“今日不是你死，就是我亡！”双方剑拔弩张。', type: 'dialogue', speaker: '青云弟子' },
+      ],
+      choices: [
+        {
+          text: '助青云门一臂之力',
+          result: {
+            lines: [
+              { text: '你大喝一声：“路见不平，拔刀相助！”冲入战团。', type: 'action' },
+              { text: '青云弟子见有援军，士气大振。', type: 'narrative' },
+              { text: '一番激战后，血刀堂恶徒溃败而逃。', type: 'action' },
+              { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: '青云弟子' },
+            ],
+            addFlag: 'watched_duel', // 标记已完成
+            // 可以在这里 addRelation
+          },
+        },
+        {
+          text: '坐山观虎斗',
+          result: {
+            lines: [
+              { text: '你躲在树后，静静看着双方拼得两败俱伤。', type: 'action' },
+              { text: '最后双方都倒在血泊中，你悄悄离开了。', type: 'narrative' },
+              { text: '虽然有些不厚道，但江湖本就如此残酷。', type: 'inner' },
+            ],
+            addFlag: 'watched_duel',
+          },
+        },
+      ],
+    }),
+  },
+
+  // 2. 传闻：隐世高手
+  {
+    id: 'event_rumor_master',
+    tags: ['wild_daily'],
+    weight: 200,
+    req: (hero) => hero.knowledge.includes('rumor_hidden_master') && hero.locationId === 'loc_wild' && !hero.flags.met_hidden_master,
+    run: (hero, world) => {
+      const art = rand(SECT_ARTS.default); // 随机给个基础武功
+      return {
+        lines: [
+          { text: '你在野外苦苦搜寻传闻中的高人踪迹。', type: 'action' },
+          { text: '忽然一阵琴声传来，你循声而去，见一位老者正在抚琴。', type: 'narrative' },
+          { text: '“既然来了，何不现身一见？”老者头也不回地说道。', type: 'dialogue', speaker: '神秘老者' },
+          { text: '你上前行礼，老者见你态度诚恳，便指点了你几句。', type: 'narrative' },
+        ],
+        choices: [
+          {
+            text: '虚心请教',
+            result: {
+              lines: [
+                { text: '你获益良多，对【${art.name}】有了新的领悟。', type: 'inner' },
+                { text: '再抬头时，老者已不知去向。', type: 'narrative' },
+              ],
+              addArt: art.name,
+              addFlag: 'met_hidden_master',
+            },
+          },
+        ],
+      };
+    },
+  },
+
+  // ... (保留之前的其他 SNIPPETS) ...
   // ===================================
   // Phase 0: 初出茅庐
   // ===================================

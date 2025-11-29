@@ -6,7 +6,7 @@ import React, {
 import {
   Person, Sect, Location, StoryStage,
   SECT_NAMES, LOCATION_TEMPLATES, SNIPPETS,
-  rand, genName, genCityName, genWildName, SnippetResult,
+  rand, genName, genCityName, genWildName, SnippetResult, StoryChoice,
 } from './wuxia/wuxia-data';
 
 type StoryBlock = {
@@ -97,9 +97,10 @@ export default function WuxiaGame() {
           inventory: [],
           flags: {},
           arts: [],
+          knowledge: [],
         };
         newNpcs.push(leader);
-        Array.from({ length: 2 }, () => {
+        for (let i = 0; i < 2; i++) {
           const gender = Math.random() > 0.5 ? 'male' : 'female';
           const disciple: Person = {
             id: `npc_${newNpcs.length}`,
@@ -114,10 +115,10 @@ export default function WuxiaGame() {
             inventory: [],
             flags: {},
             arts: [],
+            knowledge: [],
           };
           newNpcs.push(disciple);
-          return null;
-        });
+        }
       });
 
       const mySect = rand(newSects);
@@ -135,6 +136,7 @@ export default function WuxiaGame() {
         inventory: [],
         flags: {},
         arts: [],
+        knowledge: [],
       };
 
       if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice', value: 50 });
@@ -157,20 +159,17 @@ export default function WuxiaGame() {
 
       addStory(`【世界生成完毕】 你出生在 ${mySect.name}，师承掌门【${myMaster?.name}】。`, 'action');
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error(e);
-      // eslint-disable-next-line no-alert
       alert('世界生成失败，请检查控制台。');
     }
   };
 
-  const applySnippetResult = useCallback((result: SnippetResult) => {
+  const applySnippetResult = (result: SnippetResult) => {
     result.lines.forEach((line) => addStory(line.text, line.type, line.speaker));
 
     if (result.choices && result.choices.length > 0) {
       setIsAutoPlaying(false);
-      setChoices(result.choices.map((c, idx) => ({
-        id: `choice-${Date.now()}-${idx}-${c.text.slice(0, 20)}`,
+      setChoices(result.choices.map((c) => ({
         text: c.text,
         action: () => {
           setChoices([]);
@@ -211,6 +210,7 @@ export default function WuxiaGame() {
         if (n.id === 'hero') {
           const newInv = [...n.inventory];
           const newArts = [...n.arts];
+          const newKnowledge = [...n.knowledge];
           const newRelations = [...n.relations];
           const newFlags = { ...n.flags };
 
@@ -220,17 +220,13 @@ export default function WuxiaGame() {
             if (idx > -1) newInv.splice(idx, 1);
           }
           if (result.addRelation) {
-            const existingIdx = newRelations.findIndex(
-              (r) => r.targetId === result.addRelation!.targetId,
-            );
-            if (existingIdx > -1) {
-              newRelations[existingIdx] = result.addRelation;
-            } else {
-              newRelations.push(result.addRelation);
-            }
+            const existingIdx = newRelations.findIndex((r) => r.targetId === result.addRelation!.targetId);
+            if (existingIdx > -1) newRelations[existingIdx] = result.addRelation;
+            else newRelations.push(result.addRelation);
           }
           if (result.addFlag) newFlags[result.addFlag] = true;
           if (result.addArt) newArts.push(result.addArt);
+          if (result.addKnowledge) newKnowledge.push(result.addKnowledge);
 
           return {
             ...n,
@@ -238,6 +234,7 @@ export default function WuxiaGame() {
             relations: newRelations,
             flags: newFlags,
             arts: newArts,
+            knowledge: newKnowledge,
             locationId: result.newLocationId || n.locationId,
           };
         }
@@ -248,7 +245,7 @@ export default function WuxiaGame() {
         ...w, npcs: newNpcs, stage: newStage, turnInStage: newTurnInStage + 1,
       };
     });
-  }, [addStory, world]);
+  };
 
   const nextTurn = useCallback(() => {
     if (!world || isEnded) return;
