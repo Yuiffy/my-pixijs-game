@@ -4,7 +4,7 @@ import { SECT_ARTS, getSectArts, getArtByName } from "../logic/skills";
 import { MartialArt, Person, Personality, RelationType, Sect, StoryChoice, StoryLine, StorySnippet, StoryStage, Location } from "../logic/types";
 import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance } from "../logic/utils";
 
-// 🆕 同行事件：露营
+// 同行事件：露营
 export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
   const personalityDialogue = {
     gentle: '\'今晚月色真美，不如我们在此休息一晚？\'',
@@ -17,80 +17,366 @@ export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
     passionate: '\'今晚我们一起看星星吧！\'',
   } as const;
 
+  // 根据性格生成不同的互动
+  const personalityInteractions = {
+    gentle: [
+      `【${companion.name}】轻轻整理着篝火，火光映照在脸上，显得格外柔和。`,
+      `【${companion.name}】从行囊中取出一包茶叶，\'这是我从家乡带来的，要尝尝吗？\'`
+    ],
+    bold: [
+      `【${companion.name}】三下五除二就搭好了帐篷，\'这种粗活交给我就行！\'`,
+      `【${companion.name}】警惕地环顾四周，\'你休息吧，我来守夜。\'`
+    ],
+    cunning: [
+      `【${companion.name}】若有所思地看着火堆，\'这附近似乎有些不对劲，我们得小心。\'`,
+      `【${companion.name}】从怀中掏出一张地图，\'明天我们可以走这条路...\'`
+    ],
+    righteous: [
+      `【${companion.name}】正襟危坐，\'江湖险恶，我们应当互相照应。\'`,
+      `【${companion.name}】将干粮分给你，\'你多吃点，明天还要赶路。\'`
+    ],
+    mysterious: [
+      `【${companion.name}】坐在火堆旁，目光深邃地望着远方，不知在想些什么。`,
+      `【${companion.name}】从怀中取出一支竹笛，吹奏起悠扬的曲调。`
+    ],
+    playful: [
+      `【${companion.name}】兴奋地翻着行囊，\'看！我带了肉干和酒！\'`,
+      `【${companion.name}】突然从背后拍你一下，\'吓到了吧？哈哈哈！\'`
+    ],
+    serious: [
+      `【${companion.name}】仔细检查着装备，\'明天的路不好走，得做好准备。\'`,
+      `【${companion.name}】认真地擦拭着武器，神情专注。`
+    ],
+    passionate: [
+      `【${companion.name}】兴奋地指着星空，\'看，那是北斗七星！\'`,
+      `【${companion.name}】突然握住你的手，\'能和你一起闯荡江湖，真好。\'`
+    ]
+  };
+
   const defaultDialogue = '\'我们在这里休息一晚吧。\'';
   const dialogue = companion.personality && personalityDialogue[companion.personality as keyof typeof personalityDialogue]
     ? personalityDialogue[companion.personality as keyof typeof personalityDialogue]
     : defaultDialogue;
 
-  return [
-    { text: `天色渐晚，【${companion.name}】提议在此露营。`, type: 'narrative' },
-    { text: dialogue, type: 'dialogue', speaker: companion.name },
-    { text: '你们一起生火做饭，围坐在篝火旁聊天。', type: 'action' },
-    { text: '夜晚的江湖，似乎也没有那么危险了。', type: 'inner' },
-  ];
-}
+  // 随机选择互动内容
+  const interactions = personalityInteractions[companion.personality as keyof typeof personalityInteractions] ||
+    ['你们一起生火做饭，围坐在篝火旁聊天。'];
+  const randomInteraction = interactions[Math.floor(Math.random() * interactions.length)];
 
-// 🆕 同行事件：吃饭
+  return [
+    { text: `天色渐晚，【${companion.name}】提议在此露营。`, type: 'narrative' as const },
+    { text: dialogue, type: 'dialogue' as const, speaker: companion.name },
+    { text: randomInteraction, type: 'action' as const },
+    { text: '夜晚的江湖，在篝火的映照下显得格外宁静。', type: 'inner' as const },
+  ];
+};
+
+// 同行事件：吃饭
 export const generateCompanionMealEvent = (companion: Person): StoryLine[] => {
+  // 根据性格生成不同的对话
   const personalityDialogue = {
-    gentle: '\'少侠，不如我们找个地方用膳？\'',
-    bold: '\'走，我请客！我们去最好的酒楼！\'',
-    cunning: '\'我知道一家不错的店，物美价廉。\'',
+    gentle: '\'少侠，走了这么久，不如我们找个地方用膳？\'',
+    bold: '\'走，我请客！听说前面有家酒楼不错！\'',
+    cunning: '\'我知道一家小店，虽然不起眼，但味道极佳。\'',
     righteous: '\'行侠仗义也要填饱肚子，我们去吃饭吧。\'',
-    mysterious: '\'...（指向一家小店）',
-    playful: '\'我饿了！我们去吃好吃的吧！\'',
-    serious: '\'该用膳了，我们去前面的酒楼。\'',
-    passionate: '\'我知道一家店，那里的菜特别好吃！\'',
+    mysterious: '\'...（指向一家不起眼的小店）这里。\'',
+    playful: '\'我肚子都饿扁啦！我们去吃好吃的吧！\'',
+    serious: '\'已到用膳时分，我们去前面的酒楼。\'',
+    passionate: '\'啊！我知道一家店的招牌菜特别好吃！你一定要尝尝！\'',
   } as const;
+
+  // 根据性格生成不同的互动
+  const personalityInteractions = {
+    gentle: [
+      `【${companion.name}】细心地为你布菜，\'这个不错，你尝尝看。\'`,
+      `【${companion.name}】为你倒了一杯茶，\'这是上好的龙井，可以解腻。\'`
+    ],
+    bold: [
+      `【${companion.name}】豪迈地拍桌，\'小二，把你们这的招牌菜都上一份！\'`,
+      `【${companion.name}】举起酒杯，\'来，干了这杯！\'`
+    ],
+    cunning: [
+      `【${companion.name}】环顾四周，压低声音说：\'这家的老板不简单，据说...\'`,
+      `【${companion.name}】从怀中掏出一个小包，\'我带了点特制的调料，尝尝看。\'`
+    ],
+    righteous: [
+      `【${companion.name}】看到店外有乞丐，吩咐小二：\'给那位老人家也送一份饭菜。\'`,
+      `【${companion.name}】正色道：\'江湖儿女，当以义气为重。\'`
+    ],
+    mysterious: [
+      `【${companion.name}】默默地吃着饭，眼神却时刻注意着周围。`,
+      `【${companion.name}】突然停下筷子，\'有人跟踪我们。\'`
+    ],
+    playful: [
+      `【${companion.name}】夹起一块肉，\'啊——张嘴！\'`,
+      `【${companion.name}】调皮地抢走你碗里的菜，\'这个归我啦！\'`
+    ],
+    serious: [
+      `【${companion.name}】仔细地品尝每道菜，\'火候刚好，刀工也不错。\'`,
+      `【${companion.name}】放下筷子，\'吃完这顿，我们该继续赶路了。\'`
+    ],
+    passionate: [
+      `【${companion.name}】兴奋地介绍，\'这道菜要这样吃才最美味！\'`,
+      `【${companion.name}】眼中闪着光，\'能和你一起吃饭，真开心！\'`
+    ]
+  };
 
   const defaultDialogue = '\'我们去吃饭吧。\'';
   const dialogue = companion.personality && personalityDialogue[companion.personality as keyof typeof personalityDialogue]
     ? personalityDialogue[companion.personality as keyof typeof personalityDialogue]
     : defaultDialogue;
 
+  // 随机选择互动内容
+  const interactions = personalityInteractions[companion.personality as keyof typeof personalityInteractions] ||
+    ['你们一边吃饭，一边聊着江湖见闻。'];
+  const randomInteraction = interactions[Math.floor(Math.random() * interactions.length)];
+
+  // 随机选择餐馆类型
+  const restaurantTypes = [
+    '路边小摊', '江湖酒馆', '茶楼', '农家小院', '河边凉亭', '城隍庙前'
+  ];
+  const restaurant = restaurantTypes[Math.floor(Math.random() * restaurantTypes.length)];
+
   return [
-    { text: `【${companion.name}】提议一起去用膳。`, type: 'narrative' },
-    { text: dialogue, type: 'dialogue', speaker: companion.name },
-    { text: '你们在酒楼里点了几道小菜，边吃边聊。', type: 'action' },
-    { text: '江湖路上的这顿饭，格外温馨。', type: 'inner' },
+    { text: `【${companion.name}】提议去吃饭。`, type: 'narrative' as const },
+    { text: dialogue, type: 'dialogue' as const, speaker: companion.name },
+    { text: `你们在${restaurant}找了个位置坐下。`, type: 'action' as const },
+    { text: generateGroupInteraction([companion], randomInteraction), type: 'action' as const },
+    { text: '饭菜的香气和同伴的陪伴，让这顿饭格外美味。', type: 'inner' as const },
   ];
 };
 
-// 🆕 同行事件：暧昧对话（好感度高）
+// 生成队伍描述
+export const getPartyDescription = (companions: Person[]): string => {
+  if (companions.length === 0) return '';
+
+  const companionNames = companions.map(c => `【${c.name}】`);
+
+  if (companionNames.length === 1) {
+    return `你和${companionNames[0]}`;
+  } if (companionNames.length === 2) {
+    return `你们三人（${companionNames.join('、')}）`;
+  }
+  return `你们一行人（${companionNames.slice(0, -1).join('、')}和${companionNames[companionNames.length - 1]}）`;
+
+};
+
+// 生成队伍活动描述
+export const generateGroupActivity = (companions: Person[], activity: string): string => {
+  const groupDesc = getPartyDescription(companions);
+  if (!groupDesc) return activity;
+
+  const activities = [
+    `${groupDesc}结伴${activity}`,
+    `${groupDesc}一起${activity}`,
+    `${groupDesc}结伴同行，${activity}`,
+    `${groupDesc}结伴而行，${activity}`,
+    `${groupDesc}结伴${activity}，有说有笑`,
+    `${groupDesc}结伴${activity}，其乐融融`,
+    `${groupDesc}结伴${activity}，一路畅谈`,
+    `${groupDesc}结伴${activity}，互相照应`,
+    `${groupDesc}结伴${activity}，热闹非常`,
+    `${groupDesc}结伴${activity}，欢声笑语`
+  ];
+
+  return activities[Math.floor(Math.random() * activities.length)];
+};
+
+// 生成队伍互动描述
+export const generateGroupInteraction = (companions: Person[], interaction: string): string => {
+  if (companions.length === 0) return interaction;
+
+  const companion = companions[Math.floor(Math.random() * companions.length)];
+  const others = companions.filter(c => c !== companion);
+  const othersDesc = others.length > 0 ? `，${others.map(c => c.name).join('、')}也` : '';
+
+  const interactions = [
+    `【${companion.name}】${interaction}${othersDesc}加入其中`,
+    `【${companion.name}】${interaction}，其他人${others.length > 1 ? '纷纷' : ''}响应`,
+    `【${companion.name}】${interaction}，大家${others.length > 1 ? '都' : ''}表示赞同`,
+    `【${companion.name}】${interaction}，众人${others.length > 1 ? '齐声' : ''}应和`,
+    `【${companion.name}】${interaction}，${others.length > 1 ? '大家' : ''}相视一笑`
+  ];
+
+  return interactions[Math.floor(Math.random() * interactions.length)];
+};
+
+// 生成队伍旅行事件
+export const generateGroupTravelEvent = (companions: Person[]): StoryLine[] => {
+  if (companions.length === 0) return [];
+
+  const travelActivities = [
+    '欣赏沿途风景',
+    '讨论武学心得',
+    '分享江湖见闻',
+    '切磋武艺',
+    '寻找休息之处',
+    '采集草药',
+    '打猎野味',
+    '寻找水源',
+    '避开危险地带',
+    '规划路线'
+  ];
+
+  const activity = travelActivities[Math.floor(Math.random() * travelActivities.length)];
+  const groupDesc = getPartyDescription(companions);
+
+  const lines: StoryLine[] = [
+    {
+      text: generateGroupActivity(companions, `继续前行，${activity}。`),
+      type: 'narrative' as const
+    }
+  ];
+
+  // 随机添加同伴互动
+  if (Math.random() > 0.5) {
+    const companion = companions[Math.floor(Math.random() * companions.length)];
+    const interactions = [
+      `【${companion.name}】主动走在前面探路`,
+      `【${companion.name}】分享了一些干粮给大家`,
+      `【${companion.name}】讲起了一个有趣的江湖故事`,
+      `【${companion.name}】提醒大家注意安全`,
+      `【${companion.name}】哼起了小曲`
+    ];
+
+    lines.push({
+      text: interactions[Math.floor(Math.random() * interactions.length)],
+      type: 'action' as const
+    });
+  }
+
+  return lines;
+};
+
+// 同行事件：暧昧对话（好感度高）
 export const generateCompanionRomanticEvent = (
   companion: Person,
   relationValue: number,
 ): StoryLine[] => {
-  if (relationValue < 80) return [];
+  // 根据好感度分级
+  const relationshipLevel = relationValue < 60 ? 'acquaintance' :
+    relationValue < 80 ? 'friend' :
+      relationValue < 90 ? 'close' : 'intimate';
+
+  if (relationshipLevel === 'acquaintance') return [];
 
   const genderText = companion.gender === 'female' ? '她' : '他';
-  const romanticDialogue: Record<Personality, string> = {
-    gentle: `'少侠，${genderText === '她' ? '我' : '我'}...其实一直想和你说...'`,
-    bold: `'少侠，${genderText === '她' ? '我' : '我'}觉得和你在一起很开心！'`,
-    cunning: `'少侠，你知道吗？${genderText === '她' ? '我' : '我'}其实...'`,
-    righteous: `'少侠，${genderText === '她' ? '我' : '我'}敬佩你的为人。'`,
-    mysterious: `'...（${genderText}深深看了你一眼）'`,
-    playful: `'少侠，${genderText === '她' ? '我' : '我'}喜欢你！'`,
-    serious: `'少侠，${genderText === '她' ? '我' : '我'}想和你一直走下去。'`,
-    passionate: `'少侠，${genderText === '她' ? '我' : '我'}的心意，你明白吗？'`,
+  const selfText = genderText === '她' ? '我' : '我';
+
+  // 不同关系等级的基础对话
+  const baseDialogue: Record<Personality, Record<string, string>> = {
+    gentle: {
+      friend: `'少侠，能与你同行，真是${selfText}的荣幸。'`,
+      close: `'少侠，${selfText}...其实一直想和你说...'`,
+      intimate: `'少侠，${selfText}...${selfText}心悦于你。'`
+    },
+    bold: {
+      friend: `'少侠，咱们真是投缘！'`,
+      close: `'喂，少侠，${selfText}觉得你这个人挺不错的！'`,
+      intimate: `'少侠！${selfText}喜欢你！就这么简单！'`
+    },
+    cunning: {
+      friend: `'少侠，你知道吗？${selfText}发现你比看起来要有趣得多。'`,
+      close: `'少侠，${selfText}观察你很久了...你比那些凡夫俗子强多了。'`,
+      intimate: `'少侠，${selfText}这一生从未对任何人动心...直到遇见你。'`
+    },
+    righteous: {
+      friend: `'少侠，江湖路远，能与你这样的侠义之士同行，是${selfText}的福分。'`,
+      close: `'少侠，${selfText}觉得，能与你一起行侠仗义，是${selfText}的荣幸。'`,
+      intimate: `'少侠，${selfText}愿与你携手江湖，共度余生。'`
+    },
+    mysterious: {
+      friend: `'...（${genderText}若有所思地看着你）'`,
+      close: `'少侠...（${genderText}欲言又止）'`,
+      intimate: `'...（${genderText}轻轻握住你的手）'`
+    },
+    playful: {
+      friend: `'嘻嘻，少侠，你猜${selfText}现在在想什么？'`,
+      close: `'少侠～${selfText}觉得你好像比昨天更帅/漂亮了呢！'`,
+      intimate: `'少侠！${selfText}...${selfText}喜欢你！最喜欢了！'`
+    },
+    serious: {
+      friend: `'少侠，${selfText}很欣赏你的为人。'`,
+      close: `'少侠，有些话，${selfText}觉得应该告诉你...'`,
+      intimate: `'少侠，${selfText}此生非君不嫁/不娶。'`
+    },
+    passionate: {
+      friend: `'少侠！和${selfText}一起闯荡江湖吧！'`,
+      close: `'少侠！${selfText}...${selfText}好像...'`,
+      intimate: `'少侠！${selfText}爱你！从第一眼见到你就爱上你了！'`
+    }
   };
 
-  // Get a valid personality, defaulting to 'gentle' if not set or invalid
-  const personality = (companion.personality &&
-    ['gentle', 'bold', 'cunning', 'righteous', 'mysterious', 'playful', 'serious', 'passionate']
-      .includes(companion.personality)
-    ? companion.personality
-    : 'gentle') as Personality;
+  // 根据关系等级和性格选择对话
+  const dialogue = companion.personality
+    ? baseDialogue[companion.personality][relationshipLevel]
+    : `'少侠，${selfText}...'`;
 
-  const dialogue = romanticDialogue[personality];
+  // 互动描述
+  const interactions = {
+    gentle: [
+      `${genderText}的脸颊微微泛红，目光温柔。`,
+      `${genderText}轻轻整理了一下衣角，显得有些紧张。`
+    ],
+    bold: [
+      `${genderText}爽朗地笑着，用力拍了拍你的肩膀。`,
+      `${genderText}目光灼灼地看着你，毫不掩饰自己的感情。`
+    ],
+    cunning: [
+      `${genderText}的眼中闪过一丝狡黠，嘴角微微上扬。`,
+      `${genderText}靠近你，压低声音说道。`
+    ],
+    righteous: [
+      `${genderText}正色看着你，神情庄重。`,
+      `${genderText}站得笔直，仿佛在宣布一件重要的事情。`
+    ],
+    mysterious: [
+      `${genderText}沉默不语，只是用深邃的目光看着你。`,
+      `月光下，${genderText}的侧脸显得格外迷人。`
+    ],
+    playful: [
+      `${genderText}调皮地眨了眨眼，脸上带着狡黠的笑容。`,
+      `${genderText}突然凑近你，又迅速退开，咯咯地笑了起来。`
+    ],
+    serious: [
+      `${genderText}的表情异常认真，仿佛在思考什么重要的事情。`,
+      `${genderText}深吸一口气，似乎下定了决心。`
+    ],
+    passionate: [
+      `${genderText}的眼中闪烁着炽热的光芒。`,
+      `${genderText}激动地握住你的手，心跳声清晰可闻。`
+    ]
+  };
 
+  const interaction = companion.personality
+    ? interactions[companion.personality][Math.floor(Math.random() * 2)]
+    : `${genderText}似乎想对你说些什么。`;
+
+  // 根据关系等级决定剧情深度
+  if (relationshipLevel === 'friend') {
+    return [
+      { text: `【${companion.name}】似乎对你很有好感。`, type: 'narrative' as const },
+      { text: dialogue, type: 'dialogue' as const, speaker: companion.name },
+      { text: interaction, type: 'action' as const },
+    ];
+  } if (relationshipLevel === 'close') {
+    return [
+      { text: `【${companion.name}】看着你的眼神中带着一丝特别的情感。`, type: 'narrative' as const },
+      { text: dialogue, type: 'dialogue' as const, speaker: companion.name },
+      { text: interaction, type: 'action' as const },
+      { text: `你感觉自己的心跳似乎漏了一拍。`, type: 'inner' as const },
+    ];
+  }
+  // intimate
   return [
-    { text: `【${companion.name}】似乎有话要对你说。`, type: 'narrative' },
-    { text: dialogue, type: 'dialogue', speaker: companion.name },
-    { text: `${genderText}的脸微微泛红，${genderText === '她' ? '她' : '他'}的眼神中带着某种期待。`, type: 'narrative' },
+    { text: `【${companion.name}】深情地注视着你，眼中满是柔情。`, type: 'narrative' as const },
+    { text: dialogue, type: 'dialogue' as const, speaker: companion.name },
+    { text: interaction, type: 'action' as const },
+    { text: `${genderText}的呼吸变得有些急促，${genderText}的脸颊染上了一抹红晕。`, type: 'action' as const },
+    { text: `你感到一阵悸动，仿佛整个世界都只剩下了你们两人。`, type: 'inner' as const },
   ];
-};
 
+};
 export const commonSnippets: StorySnippet[] = [
   {
     id: 'idle_action_menu',
@@ -112,7 +398,7 @@ export const commonSnippets: StorySnippet[] = [
             result: {
               lines: [
                 { text: '你走进一家热闹的茶馆，找了个靠窗的位置坐下。', type: 'action' as const },
-                { text: '店小二热情地迎上来：“客官，来点什么茶？”', type: 'dialogue' as const, speaker: '店小二' },
+                { text: '店小二热情地迎上来：“客官，来点什么茶？”', type: 'dialogue' as const, speaker: '店小二' }
               ],
               addTurn: 1,
               addFlag: 'lastAction_tavern',
