@@ -13,9 +13,10 @@ export interface Relation {
 export interface MartialArt {
   id: string;
   name: string;
-  type: 'inner' | 'outer'; // 内功 | 外功
+  type: 'inner' | 'outer';
+  weapon: 'fist' | 'sword' | 'blade' | 'stick' | 'hidden';
   desc: string;
-  moves: string[]; // 招式列表
+  moves: string[];
 }
 
 export interface Person {
@@ -30,7 +31,7 @@ export interface Person {
   locationId: string;
   inventory: string[];
   flags: Record<string, boolean>;
-  arts: string[]; // 🆕 已学会的武功ID
+  arts: string[];
 }
 
 export interface Sect {
@@ -79,7 +80,7 @@ export interface SnippetResult {
   addNpc?: Person;
   addRelation?: Relation;
   addFlag?: string;
-  addArt?: string; // 🆕 学会武功
+  addArt?: string;
   advanceStage?: boolean;
   endGame?: boolean;
   choices?: StoryChoice[];
@@ -109,7 +110,10 @@ const CITY_SUFFIXES = ['阳', '州', '安', '陵', '京', '都'];
 const WILD_PREFIXES = ['迷雾', '断肠', '绝情', '黑风', '落日', '万劫', '无量', '缥缈', '恶人', '神农'];
 const WILD_SUFFIXES = ['林', '谷', '崖', '山', '窟', '岭', '沼', '漠'];
 
-export const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+export const rand = <T>(arr: T[]): T => {
+  if (!arr || arr.length === 0) return {} as T;
+  return arr[Math.floor(Math.random() * arr.length)];
+};
 
 export const genName = (gender: 'male' | 'female') => {
   const firstNames = gender === 'male' ? MALE_FIRST_NAMES : FEMALE_FIRST_NAMES;
@@ -125,74 +129,81 @@ export const LOCATION_TEMPLATES: Location[] = [
   { id: 'loc_wild', name: '随机险地', type: 'wild' },
 ];
 
-// 🆕 武功数据
-// 简单起见，Key 使用门派名字的一部分，或者 'generic'
+// 武功数据 (带武器类型)
 export const SECT_ARTS: Record<string, MartialArt[]> = {
   青云门: [
     {
-      id: 'qy_sword', name: '神剑御雷真诀', type: 'outer', desc: '引九天玄雷，剑势刚猛无俦', moves: ['平地惊雷', '雷动九天', '电闪雷鸣'],
+      id: 'qy_sword', name: '神剑御雷真诀', type: 'outer', weapon: 'sword', desc: '引九天玄雷，剑势刚猛无俦', moves: ['平地惊雷', '雷动九天', '电闪雷鸣'],
     },
     {
-      id: 'qy_inner', name: '太极玄清道', type: 'inner', desc: '道法自然，生生不息', moves: ['固本培元', '清心寡欲'],
+      id: 'qy_inner', name: '太极玄清道', type: 'inner', weapon: 'fist', desc: '道法自然，生生不息', moves: ['固本培元', '清心寡欲'],
     },
   ],
   血刀堂: [
     {
-      id: 'xd_blade', name: '血魔刀法', type: 'outer', desc: '刀刀见血，诡异莫测', moves: ['血流成河', '嗜血如命', '魔刀降世'],
+      id: 'xd_blade', name: '血魔刀法', type: 'outer', weapon: 'blade', desc: '刀刀见血，诡异莫测', moves: ['血流成河', '嗜血如命', '魔刀降世'],
     },
     {
-      id: 'xd_inner', name: '修罗阴煞功', type: 'inner', desc: '寒气逼人，阴毒无比', moves: ['阴风怒号', '煞气护体'],
+      id: 'xd_inner', name: '修罗阴煞功', type: 'inner', weapon: 'fist', desc: '寒气逼人，阴毒无比', moves: ['阴风怒号', '煞气护体'],
     },
   ],
   丐帮: [
     {
-      id: 'gb_palm', name: '降龙十八掌', type: 'outer', desc: '天下第一阳刚掌法', moves: ['亢龙有悔', '飞龙在天', '见龙在田', '神龙摆尾'],
+      id: 'gb_palm', name: '降龙十八掌', type: 'outer', weapon: 'fist', desc: '天下第一阳刚掌法', moves: ['亢龙有悔', '飞龙在天', '见龙在田', '神龙摆尾'],
     },
     {
-      id: 'gb_stick', name: '打狗棒法', type: 'outer', desc: '变化精微，招式奥妙', moves: ['天下无狗', '棒打双犬'],
+      id: 'gb_stick', name: '打狗棒法', type: 'outer', weapon: 'stick', desc: '变化精微，招式奥妙', moves: ['天下无狗', '棒打双犬', '恶犬拦路'],
     },
   ],
   少林: [
     {
-      id: 'sl_fist', name: '罗汉拳', type: 'outer', desc: '佛门正宗，中正平和', moves: ['黑虎掏心', '双峰贯耳'],
+      id: 'sl_fist', name: '罗汉拳', type: 'outer', weapon: 'fist', desc: '佛门正宗，中正平和', moves: ['黑虎掏心', '双峰贯耳'],
     },
     {
-      id: 'sl_inner', name: '易筋经', type: 'inner', desc: '脱胎换骨，内力无穷', moves: ['洗髓伐毛', '金刚不坏'],
+      id: 'sl_inner', name: '易筋经', type: 'inner', weapon: 'fist', desc: '脱胎换骨，内力无穷', moves: ['洗髓伐毛', '金刚不坏'],
     },
   ],
   武当: [
     {
-      id: 'wd_sword', name: '太极剑', type: 'outer', desc: '以柔克刚，连绵不绝', moves: ['揽雀尾', '单鞭', '白鹤亮翅'],
+      id: 'wd_sword', name: '太极剑', type: 'outer', weapon: 'sword', desc: '以柔克刚，连绵不绝', moves: ['揽雀尾', '单鞭', '白鹤亮翅'],
     },
     {
-      id: 'wd_inner', name: '纯阳无极功', type: 'inner', desc: '纯阳紫气，百毒不侵', moves: ['紫气东来', '三花聚顶'],
+      id: 'wd_inner', name: '纯阳无极功', type: 'inner', weapon: 'fist', desc: '纯阳紫气，百毒不侵', moves: ['紫气东来', '三花聚顶'],
     },
   ],
   华山: [
     {
-      id: 'hs_sword', name: '独孤九剑', type: 'outer', desc: '破尽天下招式，只攻不守', moves: ['破剑式', '破刀式', '总决式'],
+      id: 'hs_sword', name: '独孤九剑', type: 'outer', weapon: 'sword', desc: '破尽天下招式，只攻不守', moves: ['破剑式', '破刀式', '总决式'],
     },
     {
-      id: 'hs_inner', name: '紫霞神功', type: 'inner', desc: '面若紫霞，绵里藏针', moves: ['紫气东来', '霞光万丈'],
+      id: 'hs_inner', name: '紫霞神功', type: 'inner', weapon: 'fist', desc: '面若紫霞，绵里藏针', moves: ['紫气东来', '霞光万丈'],
     },
   ],
   default: [
     {
-      id: 'basic_fist', name: '太祖长拳', type: 'outer', desc: '江湖流传最广的拳法', moves: ['冲拳', '劈掌'],
+      id: 'basic_fist', name: '太祖长拳', type: 'outer', weapon: 'fist', desc: '江湖流传最广的拳法', moves: ['冲拳', '劈掌'],
     },
     {
-      id: 'basic_inner', name: '吐纳法', type: 'inner', desc: '基础呼吸吐纳之术', moves: ['气沉丹田'],
+      id: 'basic_inner', name: '吐纳法', type: 'inner', weapon: 'fist', desc: '基础呼吸吐纳之术', moves: ['气沉丹田'],
     },
   ],
 };
 
 // 辅助函数：获取某门派的武功
-const getSectArts = (sectName: string) => {
-  // 模糊匹配
+export const getSectArts = (sectName: string) => {
   for (const key in SECT_ARTS) {
     if (sectName.includes(key)) return SECT_ARTS[key];
   }
   return SECT_ARTS.default;
+};
+
+// 辅助函数：根据名称获取武功对象
+export const getArtByName = (artName: string) => {
+  for (const key in SECT_ARTS) {
+    const found = SECT_ARTS[key].find((a) => a.name === artName);
+    if (found) return found;
+  }
+  return SECT_ARTS.default[0];
 };
 
 // ==========================================
@@ -334,8 +345,8 @@ export const SNIPPETS: StorySnippet[] = [
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
       const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
       const arts = getSectArts(sectName);
-      // 随机给一个武功
-      const rewardArt = rand(arts) || arts[0];
+      // 🆕 随机给一个本门派的外功
+      const rewardArt = arts.find((a) => a.type === 'outer') || arts[0];
 
       return {
         lines: [
@@ -346,7 +357,7 @@ export const SNIPPETS: StorySnippet[] = [
         ],
         removeItem: '回信',
         addFlag: 'quest_letter_done',
-        addArt: rewardArt.name, // 🆕 记录学会的武功
+        addArt: rewardArt.name, // 🆕 学会招式
         advanceStage: true,
         addTurn: 1,
       };
@@ -357,6 +368,7 @@ export const SNIPPETS: StorySnippet[] = [
   // Phase 1: 江湖扬名 (RISING)
   // ===================================
 
+  // 1. 强制结识宿敌
   {
     id: 'force_meet_villain',
     tags: ['sect_daily', 'city_daily', 'wild_daily'],
@@ -381,7 +393,6 @@ export const SNIPPETS: StorySnippet[] = [
         arts: [],
       };
 
-      // 随机一个反派武功
       const evilArts = SECT_ARTS['血刀堂'];
       const villainMove = rand(evilArts[0].moves);
 
@@ -400,13 +411,15 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
+  // 2. 强制邂逅恋人 (新增强制保底)
   {
-    id: 'meet_crush',
+    id: 'force_meet_crush',
     tags: ['city_daily', 'wild_daily'],
-    weight: 50,
+    weight: 150,
     stageMin: StoryStage.RISING,
     stageMax: StoryStage.RISING,
-    req: (hero) => !hero.relations.some((r) => r.type === 'crush' || r.type === 'spouse'),
+    // 如果呆了超过 3 回合还没对象
+    req: (hero, world, turn) => !hero.relations.some((r) => r.type === 'crush' || r.type === 'spouse') && turn > 3,
     run: (hero, world) => {
       const targetGender = hero.gender === 'male' ? 'female' : 'male';
       const newName = genName(targetGender);
@@ -453,13 +466,14 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
+  // 3. 强制推进到 CRISIS
   {
     id: 'force_advance_to_crisis',
     tags: ['sect_daily', 'city_daily', 'wild_daily'],
     weight: 200,
     stageMin: StoryStage.RISING,
     stageMax: StoryStage.RISING,
-    req: (hero, world, turn) => turn > 5,
+    req: (hero, world, turn) => turn > 8,
     run: () => ({
       lines: [
         { text: '时光飞逝，转眼又是一年。', type: 'time-pass' },
@@ -502,6 +516,7 @@ export const SNIPPETS: StorySnippet[] = [
   // Phase 3: 决战巅峰 (CLIMAX)
   // ===================================
 
+  // 1. 苦练 (必须先练一次)
   {
     id: 'climax_training',
     tags: ['wild_daily'],
@@ -510,25 +525,23 @@ export const SNIPPETS: StorySnippet[] = [
     stageMax: StoryStage.CLIMAX,
     req: (hero) => !hero.flags.ready_for_final,
     run: (hero, world) => {
-      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
-      const arts = getSectArts(sectName);
-      // 找到一个内功和一个外功
-      const innerArt = arts.find((a) => a.type === 'inner') || arts[0];
-      const outerArt = arts.find((a) => a.type === 'outer') || arts[0];
-      const move = rand(outerArt.moves);
+      // 🆕 核心修复：使用主角已学会的武功
+      const artName = hero.arts.length > 0 ? hero.arts[0] : '太祖长拳';
+      const art = getArtByName(artName);
+      const move = rand(art.moves);
 
       return {
         lines: [
           { text: '身负血仇，你在深山中日夜苦练。', type: 'narrative' },
-          { text: `你默念【${innerArt.name}】口诀，${innerArt.desc}。`, type: 'action' },
-          { text: `寒来暑往，你一遍遍演练【${outerArt.name}】中的“${move}”。`, type: 'action' },
-          { text: '终于，你感觉内力充盈，剑意通明，神功大成！', type: 'inner' },
+          { text: `你默念【${art.name}】心法，${art.desc}。`, type: 'action' },
+          { text: `寒来暑往，你一遍遍演练“${move}”。`, type: 'action' },
+          { text: '终于，你感觉内力充盈，神功大成！', type: 'inner' },
         ],
         choices: [
           {
             text: '杀回城市，找仇人算账！',
             result: {
-              lines: [{ text: '你提剑下山，杀气腾腾。', type: 'action' }],
+              lines: [{ text: '你提着兵刃下山，杀气腾腾。', type: 'action' }],
               addFlag: 'ready_for_final',
               newLocationId: 'loc_city',
             },
@@ -538,6 +551,7 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
+  // 2. 决战
   {
     id: 'final_battle_start',
     tags: ['city_daily'],
@@ -548,10 +562,15 @@ export const SNIPPETS: StorySnippet[] = [
       const enemyRel = hero.relations.find((r) => r.type === 'enemy');
       const enemyName = enemyRel ? world.npcs.find((n:Person) => n.id === enemyRel.targetId)?.name : '魔教教主';
 
-      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
-      const arts = getSectArts(sectName);
-      const ultArt = rand(arts) || arts[0];
-      const ultMove = rand(ultArt.moves);
+      // 🆕 核心修复：使用主角武功 & 动态武器描述
+      const artName = hero.arts.length > 0 ? hero.arts[0] : '太祖长拳';
+      const art = getArtByName(artName);
+      const ultMove = rand(art.moves);
+
+      let weaponAction = '收剑入鞘';
+      if (art.weapon === 'blade') weaponAction = '收刀入鞘';
+      if (art.weapon === 'fist') weaponAction = '收势调息';
+      if (art.weapon === 'stick') weaponAction = '收起棍棒';
 
       return {
         lines: [
@@ -561,14 +580,14 @@ export const SNIPPETS: StorySnippet[] = [
         ],
         choices: [
           {
-            text: `使出绝学【${ultArt.name}】`,
+            text: `使出绝学【${art.name}】`,
             result: {
               lines: [
-                { text: `你大喝一声，使出【${ultArt.name}】中的绝杀“${ultMove}”！`, type: 'action' },
-                { text: `${ultArt.desc}，剑气瞬间贯穿了对手的防御。`, type: 'action' },
-                { text: '三百回合后，你一剑刺穿了对方的咽喉。', type: 'action' },
+                { text: `你大喝一声，使出【${art.name}】中的绝杀“${ultMove}”！`, type: 'action' },
+                { text: `${art.desc}，凌厉的攻势瞬间贯穿了对手的防御。`, type: 'action' },
+                { text: '三百回合后，你一击命中对方要害。', type: 'action' },
                 { text: '一切都结束了。', type: 'inner' },
-                { text: '你收剑入鞘，看着天边的朝阳，转身没入人海。', type: 'narrative' },
+                { text: `你${weaponAction}，看着天边的朝阳，转身没入人海。`, type: 'narrative' },
                 { text: '江湖上从此多了一个传说。', type: 'narrative' },
               ],
               endGame: true,
@@ -580,7 +599,7 @@ export const SNIPPETS: StorySnippet[] = [
             result: {
               lines: [
                 { text: '你深知对方武功高强，只有这一条路。', type: 'inner' },
-                { text: '你放弃防守，任由对方一掌打在胸口，同时长剑刺入对方心脏。', type: 'action' },
+                { text: '你放弃防守，任由对方一掌打在胸口，同时发出致命一击。', type: 'action' },
                 { text: '两个身影同时倒下，风雪掩盖了一切。', type: 'narrative' },
               ],
               endGame: true,

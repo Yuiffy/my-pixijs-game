@@ -70,42 +70,26 @@ export default function WuxiaGame() {
   };
 
   const generateWorld = () => {
-    const finalLocations = LOCATION_TEMPLATES.map((loc) => {
-      if (loc.type === 'city') return { ...loc, name: genCityName() };
-      if (loc.type === 'wild') return { ...loc, name: genWildName() };
-      return loc;
-    });
+    try {
+      const finalLocations = LOCATION_TEMPLATES.map((loc) => {
+        if (loc.type === 'city') return { ...loc, name: genCityName() };
+        if (loc.type === 'wild') return { ...loc, name: genWildName() };
+        return loc;
+      });
 
-    const newSects: Sect[] = SECT_NAMES.map((name, idx) => ({
-      id: `sect_${idx}`, name, type: Math.random() > 0.7 ? 'evil' : 'good', locationId: 'loc_sect_main',
-    }));
+      const newSects: Sect[] = SECT_NAMES.map((name, idx) => ({
+        id: `sect_${idx}`, name, type: Math.random() > 0.7 ? 'evil' : 'good', locationId: 'loc_sect_main',
+      }));
 
-    const newNpcs: Person[] = [];
-    newSects.forEach((sect) => {
-      const leader: Person = {
-        id: `npc_${newNpcs.length}`,
-        name: genName('male'),
-        sectId: sect.id,
-        role: 'leader',
-        gender: 'male',
-        age: 50,
-        status: 'alive',
-        relations: [],
-        locationId: sect.locationId,
-        inventory: [],
-        flags: {},
-        arts: [],
-      };
-      newNpcs.push(leader);
-      for (let i = 0; i < 2; i++) {
-        const gender = Math.random() > 0.5 ? 'male' : 'female';
-        const disciple: Person = {
+      const newNpcs: Person[] = [];
+      newSects.forEach((sect) => {
+        const leader: Person = {
           id: `npc_${newNpcs.length}`,
-          name: genName(gender),
+          name: genName('male'),
           sectId: sect.id,
-          role: 'disciple',
-          gender,
-          age: 18,
+          role: 'leader',
+          gender: 'male',
+          age: 50,
           status: 'alive',
           relations: [],
           locationId: sect.locationId,
@@ -113,46 +97,67 @@ export default function WuxiaGame() {
           flags: {},
           arts: [],
         };
-        newNpcs.push(disciple);
-      }
-    });
+        newNpcs.push(leader);
+        for (let i = 0; i < 2; i++) {
+          const gender = Math.random() > 0.5 ? 'male' : 'female';
+          const disciple: Person = {
+            id: `npc_${newNpcs.length}`,
+            name: genName(gender),
+            sectId: sect.id,
+            role: 'disciple',
+            gender,
+            age: 18,
+            status: 'alive',
+            relations: [],
+            locationId: sect.locationId,
+            inventory: [],
+            flags: {},
+            arts: [],
+          };
+          newNpcs.push(disciple);
+        }
+      });
 
-    const mySect = rand(newSects);
-    const myMaster = newNpcs.find((n) => n.sectId === mySect.id && n.role === 'leader');
-    const hero: Person = {
-      id: 'hero',
-      name: '你',
-      sectId: mySect.id,
-      role: 'disciple',
-      gender: 'male',
-      age: 16,
-      status: 'alive',
-      relations: myMaster ? [{ targetId: myMaster.id, type: 'master' }] : [],
-      locationId: mySect.locationId,
-      inventory: [],
-      flags: {},
-      arts: [],
-    };
+      const mySect = rand(newSects);
+      const myMaster = newNpcs.find((n) => n.sectId === mySect.id && n.role === 'leader');
+      const hero: Person = {
+        id: 'hero',
+        name: '你',
+        sectId: mySect.id,
+        role: 'disciple',
+        gender: 'male',
+        age: 16,
+        status: 'alive',
+        relations: myMaster ? [{ targetId: myMaster.id, type: 'master' }] : [],
+        locationId: mySect.locationId,
+        inventory: [],
+        flags: {},
+        arts: [],
+      };
 
-    if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice' });
+      if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice' });
 
-    setWorld({
-      npcs: [...newNpcs, hero],
-      sects: newSects,
-      locations: finalLocations,
-      heroId: 'hero',
-      stage: StoryStage.BEGINNING,
-      turnInStage: 0,
-    });
+      setWorld({
+        npcs: [...newNpcs, hero],
+        sects: newSects,
+        locations: finalLocations,
+        heroId: 'hero',
+        stage: StoryStage.BEGINNING,
+        turnInStage: 0,
+      });
 
-    setIsStarted(true);
-    setIsEnded(false);
-    setIsAutoPlaying(true); // 🌟 修复：重置自动播放状态
-    setStoryLog([]);
-    setChoices([]);
-    snippetCooldowns.current.clear();
+      setIsStarted(true);
+      setIsEnded(false);
+      setIsAutoPlaying(true);
+      setStoryLog([]);
+      setChoices([]);
+      snippetCooldowns.current.clear();
 
-    addStory(`【世界生成完毕】 你出生在 ${mySect.name}，师承掌门【${myMaster?.name}】。`, 'action');
+      addStory(`【世界生成完毕】 你出生在 ${mySect.name}，师承掌门【${myMaster?.name}】。`, 'action');
+    } catch (e) {
+      console.error(e);
+      alert('世界生成失败，请检查控制台。');
+    }
   };
 
   const applySnippetResult = (result: SnippetResult) => {
@@ -215,7 +220,6 @@ export default function WuxiaGame() {
             else newRelations.push(result.addRelation);
           }
           if (result.addFlag) newFlags[result.addFlag] = true;
-          // 🆕 学会新武功
           if (result.addArt) newArts.push(result.addArt);
 
           return {
@@ -286,16 +290,11 @@ export default function WuxiaGame() {
       setIsAutoPlaying(false);
       addStory('一时无事，你决定做点什么：', 'time-pass');
 
-      // 这里的逻辑已被 wuxia-data.ts 中的 idle_action_menu 接管，
-      // 但为了保险（万一 data 里的 req 没配好），保留这个兜底逻辑。
-      // 实际上如果 idle_action_menu 配置正确，代码永远走不到这里。
-      // 但为了稳健性，我们手动触发一次 idle_action_menu
       const idleSnippet = SNIPPETS.find((s) => s.id === 'idle_action_menu');
       if (idleSnippet) {
         const result = idleSnippet.run(hero, world);
         applySnippetResult(result);
       } else {
-        // 真·兜底
         setChoices([{ text: '冥想', action: () => { setChoices([]); setIsAutoPlaying(true); } }]);
       }
     }
@@ -304,9 +303,10 @@ export default function WuxiaGame() {
   useEffect(() => {
     if (isStarted && isAutoPlaying && !isEnded && choices.length === 0) {
       if (timerRef.current) clearTimeout(timerRef.current);
+      // 🚀 极速模式：50ms
       timerRef.current = setTimeout(() => {
         nextTurn();
-      }, 2500);
+      }, 50);
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -360,11 +360,7 @@ export default function WuxiaGame() {
             </div>
           ))}
           {choices.length === 0 && !isEnded && (
-            <div className="h-8 flex items-center text-stone-700 text-sm animate-pulse">
-              <span className="mr-2">✍️</span>
-              {' '}
-              剧情推演中...
-            </div>
+            <div className="h-4" />
           )}
 
           {choices.length > 0 && (
