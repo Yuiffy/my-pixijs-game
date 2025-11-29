@@ -31,6 +31,7 @@ export default function WuxiaGame() {
     locations: Location[];
     heroId: string;
     stage: StoryStage;
+    turnInStage: number; // 🆕 追踪当前阶段回合数
   } | null>(null);
 
   const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
@@ -138,6 +139,7 @@ export default function WuxiaGame() {
       locations: finalLocations,
       heroId: 'hero',
       stage: StoryStage.BEGINNING,
+      turnInStage: 0, // 🆕 初始化回合
     });
 
     setIsStarted(true);
@@ -152,6 +154,7 @@ export default function WuxiaGame() {
   const applySnippetResult = (result: SnippetResult) => {
     result.lines.forEach((line) => addStory(line.text, line.type, line.speaker));
 
+    // 🧠 核心：选项处理
     if (result.choices && result.choices.length > 0) {
       setIsAutoPlaying(false);
       setChoices(result.choices.map((c) => ({
@@ -180,9 +183,11 @@ export default function WuxiaGame() {
       if (!w) return null;
       let newNpcs = [...w.npcs];
       let newStage = w.stage;
+      let newTurnInStage = w.turnInStage;
 
       if (result.advanceStage) {
         newStage = Math.min(newStage + 1, StoryStage.ENDING);
+        newTurnInStage = 0; // 🆕 换章节时重置回合数
         const stageNames = ['初出茅庐', '江湖扬名', '阴谋浮现', '决战巅峰', '大结局'];
         setTimeout(() => addStory(`【 第${newStage + 1}章：${stageNames[newStage]} 】`, 'time-pass'), 100);
       }
@@ -214,7 +219,9 @@ export default function WuxiaGame() {
         return n;
       });
 
-      return { ...w, npcs: newNpcs, stage: newStage };
+      return {
+        ...w, npcs: newNpcs, stage: newStage, turnInStage: newTurnInStage + 1,
+      };
     });
   };
 
@@ -241,7 +248,8 @@ export default function WuxiaGame() {
       const maxStage = s.stageMax ?? StoryStage.ENDING;
       const stageMatch = world.stage >= minStage && world.stage <= maxStage;
       const inCooldown = snippetCooldowns.current.has(s.id);
-      const meetReq = s.req ? s.req(hero, world) : true;
+      // 🆕 传入 turnInStage
+      const meetReq = s.req ? s.req(hero, world, world.turnInStage) : true;
       return hasTag && stageMatch && !inCooldown && meetReq;
     });
 
@@ -265,29 +273,39 @@ export default function WuxiaGame() {
       const result = selectedSnippet.run(hero, world);
       applySnippetResult(result);
     } else {
-      // 🧠 发呆保护：提供有意义的行动选项
+      // 🆕 发呆保护：提供强力选项
       setIsAutoPlaying(false);
       addStory('一时无事，你决定做点什么：', 'time-pass');
 
       const manualChoices: UIChoice[] = [
         {
-          text: '四处闲逛 (触发随机事件)',
+          text: '打听消息 (推进剧情)',
           action: () => {
             setChoices([]);
-            // 强制重置所有 CD，增加遇到事件的概率
             snippetCooldowns.current.clear();
-            addStory('你在附近转了转...', 'narrative');
+            // 强制增加回合数，以触发保底
+            setWorld((w) => (w ? { ...w, turnInStage: w.turnInStage + 2 } : null));
+            addStory('你在附近四处打听...', 'narrative');
+            setIsAutoPlaying(true);
+          },
+        },
+        {
+          text: '闭关修炼 (跳过时间)',
+          action: () => {
+            setChoices([]);
+            setWorld((w) => (w ? { ...w, turnInStage: w.turnInStage + 3 } : null));
+            addStory('山中无甲子，寒尽不知年。', 'time-pass');
             setIsAutoPlaying(true);
           },
         },
       ];
 
-      // 回城保护
+      // 回城选项
       if (location?.type !== 'city') {
         const city = world.locations.find((l) => l.type === 'city');
         if (city) {
           manualChoices.push({
-            text: `前往${city.name} (脱离当前区域)`,
+            text: `前往${city.name}`,
             action: () => {
               setChoices([]);
               applySnippetResult({ lines: [{ text: '你决定换个地方碰碰运气。', type: 'action' }], newLocationId: city.id });
@@ -296,17 +314,6 @@ export default function WuxiaGame() {
           });
         }
       }
-
-      // 强制冥想推进 (针对“等一年”这种条件)
-      manualChoices.push({
-        text: '闭关冥想 (推进时间)',
-        action: () => {
-          setChoices([]);
-          addStory('你闭关苦修，不问世事。', 'time-pass');
-          // 冥想虽然不加属性，但能刷新CD和推进世界随机数
-          setIsAutoPlaying(true);
-        },
-      });
 
       setChoices(manualChoices);
     }
@@ -346,6 +353,10 @@ export default function WuxiaGame() {
           </span>
           <span className="text-xs border border-stone-700 px-2 rounded">
             {stageNames[world?.stage || 0]}
+            {' '}
+            (第
+            {world?.turnInStage}
+            旬)
           </span>
         </div>
 
