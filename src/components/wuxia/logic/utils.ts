@@ -554,7 +554,7 @@ export const getBattleOutcomeChoices = (
         ],
         addFlag: `killed_${enemy.id}`,
         removeItem: enemy.id,
-        addRelations: [{ targetId: enemy.id, type: 'enemy', value: -100 }]
+        addRelations: [{ targetId: enemy.id, type: 'enemy' as RelationType, value: -100 }]
       }
     },
     {
@@ -565,7 +565,7 @@ export const getBattleOutcomeChoices = (
           { text: '你收起兵刃："滚吧。"', type: 'dialogue' as const, speaker: '你' },
           { text: `【${enemy.name}】连滚带爬地逃走了。`, type: 'narrative' as const }
         ],
-        addRelation: { targetId: enemy.id, type: 'acquaintance', value: baseRelationVal + 10 }
+        addRelation: { targetId: enemy.id, type: 'acquaintance' as RelationType, value: baseRelationVal + 10 }
       }
     },
     {
@@ -576,7 +576,7 @@ export const getBattleOutcomeChoices = (
           { text: '"我看你身手不错，不如随我一同闯荡江湖？"', type: 'dialogue' as const, speaker: '你' },
           { text: `【${enemy.name}】一愣，随即拱手："愿效犬马之劳！"`, type: 'dialogue' as const, speaker: enemy.name }
         ],
-        addRelation: { targetId: enemy.id, type: 'friend', value: 60 },
+        addRelation: { targetId: enemy.id, type: 'friend' as RelationType, value: 60 },
         addToParty: enemy.id // 🆕 修改：使用 addToParty
       }
     }

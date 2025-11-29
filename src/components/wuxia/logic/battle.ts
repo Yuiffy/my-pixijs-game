@@ -2,6 +2,7 @@
 
 import { Person, MartialArt, StoryLine } from './types';
 import { getSectById, rand } from './utils';
+import { gameOverSnippets } from '../snippets/gameOver';
 import { getArtByName } from './skills';
 
 // 战斗配置接口
@@ -375,8 +376,21 @@ export const generateBattle = (
       type: 'dialogue',
       speaker: enemy.name
     });
-    lines.push({ text: '你的意识逐渐模糊，最后看到的是一片黑暗...', type: 'narrative' });
-    // 逻辑层需要在 applySnippetResult 里处理 endGame
+
+    // 标记玩家为死亡状态
+    hero.status = 'dead';
+
+    // 触发濒死体验事件
+    const nearDeathSnippet = gameOverSnippets.find((s: { id: string }) => s.id === 'near_death_experience');
+    if (nearDeathSnippet) {
+      const result = nearDeathSnippet.run(hero, world);
+      lines.push(...result.lines);
+
+      if (result.endGame && world) {
+        if (!world.flags) world.flags = {};
+        world.flags.gameOver = true;
+      }
+    }
   } else {
     // 平局/超时
     lines.push({

@@ -93,7 +93,7 @@ export enum StoryStage {
   ENDING = 4,
 }
 
-export type SnippetTag = 'sect_daily' | 'city_daily' | 'wild_daily' | 'quest' | 'relationship' | 'main_story';
+export type SnippetTag = 'sect_daily' | 'city_daily' | 'wild_daily' | 'quest' | 'relationship' | 'main_story' | 'game_over';
 
 export interface StoryLine {
   text: string;
