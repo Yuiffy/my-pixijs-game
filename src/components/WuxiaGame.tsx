@@ -5,9 +5,9 @@ import React, {
 } from 'react';
 import {
   Person, Sect, Location,
-  FIRST_NAMES, LAST_NAMES, SECT_NAMES, LOCATIONS, SNIPPETS,
-  rand, genName, SnippetResult,
-} from './wuxia-data';
+  FIRST_NAMES, LAST_NAMES, SECT_NAMES, LOCATION_TEMPLATES, SNIPPETS,
+  rand, genName, genCityName, genWildName, SnippetResult,
+} from './wuxia/wuxia-data';
 
 type StoryBlock = {
   id: string;
@@ -23,6 +23,7 @@ type Choice = {
 
 export default function WuxiaGame() {
   const [isStarted, setIsStarted] = useState(false);
+
   const [world, setWorld] = useState<{
     npcs: Person[];
     sects: Sect[];
@@ -33,7 +34,6 @@ export default function WuxiaGame() {
   const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
   const [choices, setChoices] = useState<Choice[]>([]);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  // 使用 ref 来追踪定时器，防止严格模式下的双重触发
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const lastSnippetId = useRef<string>('');
@@ -51,6 +51,13 @@ export default function WuxiaGame() {
 
   // --- 世界生成 ---
   const generateWorld = () => {
+    // 1. 动态生成地名
+    const finalLocations = LOCATION_TEMPLATES.map((loc) => {
+      if (loc.type === 'city') return { ...loc, name: genCityName() };
+      if (loc.type === 'wild') return { ...loc, name: genWildName() };
+      return loc;
+    });
+
     const newSects: Sect[] = SECT_NAMES.map((name, idx) => ({
       id: `sect_${idx}`, name, type: Math.random() > 0.7 ? 'evil' : 'good', locationId: 'loc_sect_main',
     }));
@@ -102,13 +109,13 @@ export default function WuxiaGame() {
       relations: myMaster ? [{ targetId: myMaster.id, type: 'master' }] : [],
       locationId: mySect.locationId,
       inventory: [],
-      flags: {}, // 🚩 初始化 Flags
+      flags: {},
     };
 
     if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice' });
 
     setWorld({
-      npcs: [...newNpcs, hero], sects: newSects, locations: LOCATIONS, heroId: 'hero',
+      npcs: [...newNpcs, hero], sects: newSects, locations: finalLocations, heroId: 'hero',
     });
     setIsStarted(true);
     setStoryLog([]);
@@ -120,16 +127,17 @@ export default function WuxiaGame() {
 
   // --- 逻辑处理 ---
   const applySnippetResult = (result: SnippetResult) => {
-    // 1. 输出文本
     result.lines.forEach((line) => addStory(line.text, line.type, line.speaker));
 
-    // 2. 如果有移动，追加一条文本（不再使用 setTimeout，防止竞态）
     if (result.newLocationId) {
-      const locName = LOCATIONS.find((l) => l.id === result.newLocationId)?.name;
-      addStory(`... 经过跋涉，你来到了${locName}。`, 'time-pass');
+      // 注意：这里需要去当前的 world 状态里找名字，不能再用 data.ts 里的静态 LOCATIONS 了
+      // 但 applySnippetResult 拿不到 world 状态（闭包陷阱），所以我们推迟到 setWorld 内部做？
+      // 或者简化：在 setWorld 里处理。
+      // 这里先简单处理，只显示“前往新地点”，具体名字在 setWorld 渲染后顶部状态栏会更新。
+      // 或者更好的方式：在 run 函数里就把地名拼进去（已在 wuxia-data.ts 做了优化）。
+      addStory('... 经过跋涉，你抵达了目的地。', 'time-pass');
     }
 
-    // 3. 处理副作用
     setWorld((w) => {
       if (!w) return null;
       let newNpcs = [...w.npcs];
@@ -157,7 +165,6 @@ export default function WuxiaGame() {
               newRelations.push(result.addRelation);
             }
           }
-          // 🚩 处理标记添加
           if (result.addFlag) {
             newFlags[result.addFlag] = true;
           }
@@ -179,17 +186,11 @@ export default function WuxiaGame() {
 
   // --- 核心循环 ---
   const nextTurn = useCallback(() => {
-    // 这里我们不能直接读取最新的 world，因为 useCallback 闭包问题
-    // 所以我们使用 setWorld 的回调函数形式来获取最新状态，
-    // 但因为我们需要基于状态来决定逻辑，所以这招行不通。
-    // 正确做法：将 world 作为 dependency，或者使用 ref 存储 world。
-    // 在本例中，因为 world 变化会触发 useEffect 重新设置定时器，所以直接用 world 即可。
-
     if (!world) return;
     const hero = world.npcs.find((n) => n.id === world.heroId);
     if (!hero) return;
 
-    const location = LOCATIONS.find((l) => l.id === hero.locationId);
+    const location = world.locations.find((l) => l.id === hero.locationId);
 
     const possibleTags: string[] = [];
     if (location?.type === 'sect') possibleTags.push('sect_daily');
@@ -222,31 +223,30 @@ export default function WuxiaGame() {
       const result = selectedSnippet.run(hero, world);
       applySnippetResult(result);
     } else {
+      // 🧠 核心修复：如果没有可选剧情（说明都被去重过滤了），则重置去重记录
+      // 这样下一回合就可以重复播放了，避免无限发呆
+      lastSnippetId.current = '';
       addStory('一时无事，你看着天空发呆。', 'narrative');
     }
   }, [world, addStory]);
 
-  // 游戏循环控制
   useEffect(() => {
     if (isStarted && isAutoPlaying && choices.length === 0) {
-      // 清除上一个
       if (timerRef.current) clearTimeout(timerRef.current);
-
-      // 设置下一个
       timerRef.current = setTimeout(() => {
         nextTurn();
       }, 2500);
     }
-
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isStarted, isAutoPlaying, choices, nextTurn]); // nextTurn 变了（即world变了）就会重置定时器
+  }, [isStarted, isAutoPlaying, choices, world]);
+  // 注意：这里依赖 world 而不是 nextTurn，因为 nextTurn 也是依赖 world 的。
+  // 只要 world 变了，effect 就会重置定时器，这是对的。
 
-  // 渲染
   if (!isStarted) return <div className="flex flex-col items-center justify-center min-h-screen bg-stone-950 text-amber-600 font-serif"><button onClick={generateWorld} className="text-4xl border p-4 hover:bg-stone-900">开始江湖演义</button></div>;
 
-  const currentLocName = LOCATIONS.find((l) => l.id === world?.npcs.find((n) => n.id === 'hero')?.locationId)?.name;
+  const currentLocName = world?.locations.find((l) => l.id === world?.npcs.find((n) => n.id === 'hero')?.locationId)?.name;
   const hero = world?.npcs.find((n) => n.id === 'hero');
 
   return (

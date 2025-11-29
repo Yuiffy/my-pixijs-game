@@ -14,14 +14,14 @@ export interface Person {
   id: string;
   name: string;
   sectId: string;
-  role: 'leader' | 'disciple' | 'hero' | 'villager' | 'merchant';
+  role: 'leader' | 'disciple' | 'hero' | 'villager' | 'merchant' | 'bandit';
   gender: 'male' | 'female';
   age: number;
   status: 'alive' | 'dead';
   relations: Relation[];
   locationId: string;
   inventory: string[];
-  flags: Record<string, boolean>; // 🧠 核心修复：剧情标记系统
+  flags: Record<string, boolean>;
 }
 
 export interface Sect {
@@ -51,13 +51,12 @@ export interface StoryLine {
 
 export interface SnippetResult {
   lines: StoryLine[];
-  // 状态变更指令
   addItem?: string;
   removeItem?: string;
   newLocationId?: string;
   addNpc?: Person;
   addRelation?: Relation;
-  addFlag?: string; // 🚩 新增：添加剧情标记
+  addFlag?: string;
   addTurn?: number;
 }
 
@@ -70,35 +69,41 @@ export interface StorySnippet {
 }
 
 // ==========================================
-// 静态数据库
+// 🎲 随机生成库 (Generators)
 // ==========================================
 
 export const FIRST_NAMES = ['风', '云', '雪', '冲', '无忌', '不败', '寻欢', '留香', '过', '靖', '康', '灵珊', '盈盈', '语嫣', '松', '竹', '梅', '兰', '虎', '龙', '天', '峰', '逍', '遥', '破天', '翠山', '素素', '莫愁'];
 export const LAST_NAMES = ['李', '张', '独孤', '令狐', '东方', '西门', '慕容', '郭', '杨', '陆', '花', '叶', '林', '岳', '萧', '沈', '燕', '楚', '袁', '胡', '苗', '范'];
 export const SECT_NAMES = ['青云门', '血刀堂', '听雨阁', '万兽山庄', '丐帮', '少林', '峨眉', '武当', '华山', '昆仑'];
 
-export const LOCATIONS: Location[] = [
-  { id: 'loc_sect_main', name: '门派驻地', type: 'sect' },
-  { id: 'loc_city_xiangyang', name: '襄阳城', type: 'city' },
-  { id: 'loc_wild_forest', name: '迷雾林', type: 'wild' },
-];
+// 地名生成库
+const CITY_PREFIXES = ['襄', '洛', '长', '扬', '苏', '杭', '汴', '京', '成', '渝'];
+const CITY_SUFFIXES = ['阳', '州', '安', '陵', '京', '都'];
+const WILD_PREFIXES = ['迷雾', '断肠', '绝情', '黑风', '落日', '万劫', '无量', '缥缈'];
+const WILD_SUFFIXES = ['林', '谷', '崖', '山', '窟', '岭', '沼'];
 
 export const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 export const genName = () => `${rand(LAST_NAMES)}${rand(FIRST_NAMES)}`;
+export const genCityName = () => `${rand(CITY_PREFIXES)}${rand(CITY_SUFFIXES)}城`;
+export const genWildName = () => `${rand(WILD_PREFIXES)}${rand(WILD_SUFFIXES)}`;
+
+// 基础位置模板 (ID固定，名字动态生成)
+export const LOCATION_TEMPLATES: Location[] = [
+  { id: 'loc_sect_main', name: '门派驻地', type: 'sect' },
+  { id: 'loc_city', name: '随机城市', type: 'city' }, // 名字会被覆盖
+  { id: 'loc_wild', name: '随机险地', type: 'wild' }, // 名字会被覆盖
+];
 
 // ==========================================
 // 🎭 预设剧情库
 // ==========================================
 
 export const SNIPPETS: StorySnippet[] = [
-  // --- 任务链 1：送信 (Quest: Letter) ---
-
-  // 1. 接任务
+  // --- 任务链：送信 ---
   {
-    id: 'quest_letter_start',
+    id: 'quest_start_letter',
     tags: ['sect_daily'],
-    weight: 100,
-    // 条件：没做过这个任务 (!flags.quest_letter_done) 且 没在做 (!inventory.has)
+    weight: 50,
     req: (hero, world) => hero.locationId === 'loc_sect_main'
       && !hero.flags.quest_letter_done
       && !hero.inventory.includes('密信')
@@ -106,38 +111,34 @@ export const SNIPPETS: StorySnippet[] = [
       && Math.random() < 0.3,
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
+      // 获取当前世界的城市名
+      const city = world.locations.find((l: Location) => l.id === 'loc_city');
       return {
         lines: [
           { text: '忽然有小童来报，掌门唤你去大殿一叙。', type: 'time-pass' },
           { text: `“徒儿，如今江湖动荡，为师有一件要事。”${master.name}神色凝重。`, type: 'dialogue', speaker: master.name },
-          { text: '“我要你去襄阳城，送一封密信给当地的大侠。”', type: 'dialogue', speaker: master.name },
+          { text: `“我要你去【${city.name}】，送一封密信给当地的大侠。”`, type: 'dialogue', speaker: master.name },
           { text: '“弟子定不辱使命！”你接过密信，即刻启程。', type: 'dialogue', speaker: '你' },
         ],
         addItem: '密信',
-        newLocationId: 'loc_city_xiangyang', // 自动出发
+        newLocationId: 'loc_city',
         addTurn: 3,
       };
     },
   },
-
-  // 2. 送信 (动态复用角色)
   {
-    id: 'quest_letter_deliver',
+    id: 'quest_deliver_dynamic',
     tags: ['city_daily'],
     weight: 200,
-    req: (hero) => hero.inventory.includes('密信') && hero.locationId === 'loc_city_xiangyang',
+    req: (hero) => hero.inventory.includes('密信') && hero.locationId === 'loc_city',
     run: (hero, world) => {
-      // 优先找熟人，其次找现成大侠，最后生成新的
       const knownHeroId = hero.relations.find((r) => r.type === 'acquaintance')?.targetId;
       let targetNpc = knownHeroId ? world.npcs.find((n:Person) => n.id === knownHeroId) : null;
-
       if (!targetNpc) {
-        targetNpc = world.npcs.find((n: Person) => n.locationId === 'loc_city_xiangyang' && n.role === 'hero');
+        targetNpc = world.npcs.find((n: Person) => n.locationId === 'loc_city' && n.role === 'hero');
       }
 
       let isNewNpc = false;
-      const isAcquaintance = !!knownHeroId && (targetNpc?.id === knownHeroId);
-
       if (!targetNpc) {
         isNewNpc = true;
         targetNpc = {
@@ -149,17 +150,18 @@ export const SNIPPETS: StorySnippet[] = [
           age: 30 + Math.floor(Math.random() * 20),
           status: 'alive',
           relations: [],
-          locationId: 'loc_city_xiangyang',
+          locationId: 'loc_city',
           inventory: [],
           flags: {},
         };
       }
 
+      const cityName = world.locations.find((l: Location) => l.id === 'loc_city').name;
       const lines: StoryLine[] = [
-        { text: '你怀揣密信，在襄阳城中打听接头人的下落。', type: 'narrative' },
+        { text: `你怀揣密信，在${cityName}中打听接头人的下落。`, type: 'narrative' },
       ];
 
-      if (isAcquaintance) {
+      if (knownHeroId && targetNpc) {
         lines.push({ text: `你轻车熟路地来到了【${targetNpc.name}】府上。`, type: 'narrative' });
         lines.push({ text: '“又是你这小家伙，这回又带了什么消息？”', type: 'dialogue', speaker: targetNpc.name });
       } else {
@@ -183,13 +185,11 @@ export const SNIPPETS: StorySnippet[] = [
       };
     },
   },
-
-  // 3. 回门派
   {
-    id: 'quest_letter_return',
+    id: 'quest_return_sect',
     tags: ['city_daily'],
     weight: 100,
-    req: (hero) => hero.inventory.includes('回信') && hero.locationId === 'loc_city_xiangyang',
+    req: (hero) => hero.inventory.includes('回信') && hero.locationId === 'loc_city',
     run: () => ({
       lines: [
         { text: '任务已了，归心似箭，你连夜赶路返回师门。', type: 'action' },
@@ -198,8 +198,6 @@ export const SNIPPETS: StorySnippet[] = [
       addTurn: 5,
     }),
   },
-
-  // 4. 完成任务 (关键：打标记)
   {
     id: 'quest_letter_complete',
     tags: ['sect_daily'],
@@ -215,13 +213,13 @@ export const SNIPPETS: StorySnippet[] = [
           { text: '你感觉自己的武学修为精进了一层。', type: 'inner' },
         ],
         removeItem: '回信',
-        addFlag: 'quest_letter_done', // 🚩 打上标记，防止再次触发
+        addFlag: 'quest_letter_done',
         addTurn: 1,
       };
     },
   },
 
-  // --- 任务链 2：下山历练 (送信完成后触发) ---
+  // --- 任务链：下山历练 ---
   {
     id: 'quest_explore_start',
     tags: ['sect_daily'],
@@ -229,24 +227,68 @@ export const SNIPPETS: StorySnippet[] = [
     req: (hero) => hero.locationId === 'loc_sect_main' && hero.flags.quest_letter_done && !hero.flags.quest_explore_start,
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
+      const wildName = world.locations.find((l: Location) => l.id === 'loc_wild').name;
       return {
         lines: [
           { text: '数日后，师父再次把你叫到身前。', type: 'time-pass' },
           { text: '“你如今武功已成，不应再困守山门。去江湖上闯荡一番吧。”', type: 'dialogue', speaker: master.name },
-          { text: '“听说迷雾林最近有异兽出没，你可以去看看。”', type: 'dialogue', speaker: master.name },
+          { text: `“听说【${wildName}】最近有异兽出没，你可以去看看。”`, type: 'dialogue', speaker: master.name },
           { text: '你拜别恩师，下山而去。', type: 'action' },
         ],
         addFlag: 'quest_explore_start',
-        newLocationId: 'loc_wild_forest',
+        newLocationId: 'loc_wild',
         addTurn: 1,
       };
     },
   },
 
   // ===================================
-  // 日常库
+  // 🌲 野外日常库 (大幅扩充)
   // ===================================
+  {
+    id: 'wild_explore_quiet',
+    tags: ['wild_daily'],
+    run: (hero, world) => {
+      const wildName = world.locations.find((l:Location) => l.id === hero.locationId).name;
+      return { lines: [{ text: `你在${wildName}中小心翼翼地前行，四周静得可怕。`, type: 'narrative' }] };
+    },
+  },
+  {
+    id: 'wild_find_herb',
+    tags: ['wild_daily'],
+    run: () => ({
+      lines: [
+        { text: '你在悬崖边发现了一株灵芝。', type: 'narrative' },
+        { text: '你小心翼翼地将其采下，服下后觉得丹田微热。', type: 'action' },
+      ],
+    }),
+  },
+  {
+    id: 'wild_meet_beast',
+    tags: ['wild_daily'],
+    weight: 2,
+    run: () => ({
+      lines: [
+        { text: '草丛中突然窜出一只吊睛白额大虫！', type: 'action' },
+        { text: '你拔剑出鞘，与大虫激战数十回合，终于将其击退。', type: 'action' },
+        { text: '“好险，差点就交代在这里了。”', type: 'inner' },
+      ],
+    }),
+  },
+  {
+    id: 'wild_ancient_ruins',
+    tags: ['wild_daily'],
+    run: () => ({
+      lines: [
+        { text: '你发现了一个荒废的山洞，洞壁上刻着一些模糊的剑痕。', type: 'narrative' },
+        { text: '你观摩许久，似乎领悟到了一丝剑意。', type: 'inner' },
+      ],
+    }),
+  },
 
+  // ===================================
+  // 门派与城市日常
+  // ===================================
   {
     id: 'sect_train_waterfall',
     tags: ['sect_daily'],
@@ -275,11 +317,14 @@ export const SNIPPETS: StorySnippet[] = [
   {
     id: 'city_tea',
     tags: ['city_daily'],
-    run: () => ({ lines: [{ text: '襄阳城内热闹非凡，你在茶馆听了一下午的说书。', type: 'narrative' }] }),
+    run: (hero, world) => {
+      const cityName = world.locations.find((l:Location) => l.id === hero.locationId).name;
+      return { lines: [{ text: `${cityName}内热闹非凡，你在茶馆听了一下午的说书。`, type: 'narrative' }] };
+    },
   },
   {
-    id: 'wild_explore',
-    tags: ['wild_daily'],
-    run: () => ({ lines: [{ text: '你在迷雾林中小心翼翼地前行，四周静得可怕。', type: 'narrative' }] }),
+    id: 'city_market',
+    tags: ['city_daily'],
+    run: () => ({ lines: [{ text: '集市上人来人往，你买了一些干粮备用。', type: 'narrative' }] }),
   },
 ];

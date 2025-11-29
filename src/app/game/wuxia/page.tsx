@@ -1,4 +1,4 @@
-import WuxiaGame from '@/components/wuxia/WuxiaGame';
+import WuxiaGame from '@/components/WuxiaGame';
 
 export const metadata = {
   title: '武侠小说生成器 | Jianghu Simulator',
