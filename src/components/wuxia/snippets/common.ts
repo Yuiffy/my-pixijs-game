@@ -98,168 +98,173 @@ export const commonSnippets: StorySnippet[] = [
     weight: 100, // 🆕 提高权重，确保总是能选择移动
     run: (hero, world) => {
       const choices: StoryChoice[] = [];
+      const lastAction = hero.flags.lastAction || 'explore';
+      const actionCount = (hero.flags.actionCount || 0) + 1;
+      const shouldOfferTraining = actionCount % 3 === 0; // 每3次行动提供一次修炼选项
 
-      // --- 城市选项：打听情报 ---
+      // 根据地点和上次行动决定当前行动
       if (hero.locationId.startsWith('city_')) {
-        // 获取有敌对关系的两个门派
-        const getRivalSects = (): [Sect, Sect] => {
-          const sects = [...SECTS_DATA];
-
-          // 先尝试找敌对关系明显的门派
-          const sectWithRival = sects.find((sect1) => {
-            if (!sect1.relations) return false;
-
-            // 找关系最差的门派
-            const worstRelation = Object.entries(sect1.relations).reduce((worst, [sectId, relation]) => {
-              if (relation < worst.relation) {
-                const sect = sects.find((s) => s.id === sectId);
-                if (sect) {
-                  return { relation, sect };
-                }
-              }
-              return worst;
-            }, { relation: 0, sect: null as Sect | null });
-
-            return worstRelation.sect !== null;
-          });
-
-          if (sectWithRival) {
-            const worstRelation = Object.entries(sectWithRival.relations || {}).reduce((worst, [sectId, relation]) => {
-              if (relation < worst.relation) {
-                const sect = sects.find((s) => s.id === sectId);
-                if (sect) {
-                  return { relation, sect };
-                }
-              }
-              return worst;
-            }, { relation: 0, sect: null as Sect | null });
-
-            if (worstRelation.sect) {
-              return [sectWithRival, worstRelation.sect];
+        // --- 城市选项 ---
+        const cityActivities = [
+          {
+            text: '去茶馆坐坐',
+            desc: '茶馆是打听消息的好地方，江湖人士常在此聚集。',
+            result: {
+              lines: [
+                { text: '你走进一家热闹的茶馆，找了个靠窗的位置坐下。', type: 'action' as const },
+                { text: '店小二热情地迎上来：“客官，来点什么茶？”', type: 'dialogue' as const, speaker: '店小二' },
+              ],
+              addTurn: 1,
+              addFlag: 'lastAction_tavern',
+              addKnowledge: `city_${hero.locationId}_tavern_visited`,
+            }
+          },
+          {
+            text: '逛集市',
+            desc: '集市上人来人往，或许能遇到有趣的事。',
+            result: {
+              lines: [
+                { text: '你在集市上闲逛，叫卖声此起彼伏。', type: 'action' as const },
+                { text: '各种小摊贩在兜售着各式各样的物品。', type: 'narrative' as const },
+              ],
+              addTurn: 1,
+              addFlag: 'lastAction_market',
             }
           }
-
-          // 如果没有明显敌对关系，则随机选择两个不同阵营的门派
-          const goodSects = sects.filter((s) => s.type === 'good');
-          const evilSects = sects.filter((s) => s.type === 'evil');
-
-          if (goodSects.length > 0 && evilSects.length > 0) {
-            return [
-              goodSects[Math.floor(Math.random() * goodSects.length)],
-              evilSects[Math.floor(Math.random() * evilSects.length)],
-            ];
-          }
-
-          // 如果还是不行，就随便选两个不同的
-          if (sects.length >= 2) {
-            const first = Math.floor(Math.random() * sects.length);
-            let second;
-            do {
-              second = Math.floor(Math.random() * sects.length);
-            } while (second === first);
-
-            return [sects[first], sects[second]];
-          }
-
-          // 最后保底
-          return [
-            {
-              id: 'sect_qingyun',
-              name: '青云门',
-              type: 'good',
-              locationId: 'loc_qingyun'
-            },
-            {
-              id: 'sect_xuedao',
-              name: '血刀堂',
-              type: 'evil',
-              locationId: 'loc_xuedao'
-            },
-          ];
-        };
-
-        const [sect1, sect2] = getRivalSects();
-
-        // 存储具体门派信息到rumor中
-        const gossipEvents = [
-          {
-            text: '你听到茶馆里有人在谈论最近江湖上的传闻。',
-            detail: `"听说【${sect1.name}】和【${sect2.name}】的弟子最近在城外野林子里约架，怕是要出人命啊。"`,
-            effect: () => ({
-              addKnowledge: `rumor_duel:${sect1.id},${sect2.id}`,
-              addFlag: `rumor_duel_${sect1.id}_${sect2.id}`
-            }),
-          },
-          {
-            text: '你在集市上遇到一个神秘的说书人。',
-            detail: '他压低声音说："听说某位归隐的前辈高人，最近在城外野地现身了。"',
-            effect: () => ({ addKnowledge: 'rumor_hidden_master' }),
-          },
-          {
-            text: '你向几个江湖人士打听消息。',
-            detail: '他们告诉你最近城里治安不错，没啥大事。',
-            effect: () => ({}), // 无事发生
-          },
         ];
 
-        // 动态生成打听结果
-        const gossipEvent = rand(gossipEvents);
-
-        choices.push({
-          text: '去茶馆打听消息 (获取情报)',
-          result: {
-            lines: [
-              { text: '你走进茶馆，点了一壶茶，竖起耳朵。', type: 'action' },
-              { text: gossipEvent.detail, type: 'narrative' },
-            ],
-            addTurn: 1,
-            ...gossipEvent.effect(),
-          },
+        // 添加城市活动选项
+        cityActivities.forEach(activity => {
+          choices.push({
+            text: activity.text,
+            desc: activity.desc,
+            result: {
+              ...activity.result,
+              addFlags: {
+                lastAction: activity.text.replace('去', '').trim(),
+                actionCount
+              }
+            }
+          });
         });
 
-        choices.push({
-          text: '去集市逛逛',
-          result: {
-            lines: [{ text: '集市上琳琅满目，你随意逛了逛。', type: 'narrative' }],
-            addTurn: 1,
-          },
-        });
       } else if (hero.locationId.startsWith('wild_')) {
-        // --- 野外选项：探索 ---
+        // --- 野外选项 ---
+        const exploreTexts = [
+          '你沿着山间小径前行，欣赏着周围的风景。',
+          '你小心翼翼地穿过一片密林，注意着周围的动静。',
+          '你登上一处高地，眺望远方的山峦。',
+          '你发现一条清澈的小溪，决定沿着溪流行走。',
+        ];
+
+        // 探索选项
         choices.push({
-          text: '四处探索 (寻找机缘)',
+          text: '继续探索',
+          desc: '在野外继续寻找机缘。',
           result: {
-            lines: [{ text: '你在野外四处搜寻...', type: 'action' }],
+            lines: [
+              { text: rand(exploreTexts), type: 'narrative' },
+            ],
             addTurn: 1,
+            addFlags: {
+              lastAction: 'explore',
+              actionCount,
+              consecutiveExplores: (hero.flags.consecutiveExplores || 0) + 1
+            }
           },
         });
 
-        choices.push({
-          text: '闭关修炼',
-          result: {
-            lines: [
-              { text: '你在野外找到一处僻静之地，开始闭关修炼。', type: 'action' },
-              { text: '山中无甲子，寒尽不知年。', type: 'time-pass' },
-            ],
-            addTurn: 3,
-          },
-        });
+        // 每3次行动提供一次修炼选项
+        if (shouldOfferTraining) {
+          choices.push({
+            text: '找地方静修',
+            desc: '在野外寻找一个安静的地方修炼内功。',
+            result: {
+              lines: [
+                { text: '你找到一处僻静的山洞，开始打坐调息。', type: 'action' as const },
+                { text: '时间在静修中悄然流逝...', type: 'time-pass' as const },
+              ],
+              addTurn: 2,
+              addFlags: {
+                lastAction: 'meditate',
+                actionCount: 0, // 重置行动计数
+                consecutiveExplores: 0
+              },
+              // 修炼效果
+              addExp: 5,
+              addMaxHp: Math.floor(Math.random() * 3) + 1
+            },
+          });
+        }
+
       } else if (hero.locationId.startsWith('sect_')) {
         // --- 门派选项 ---
-        choices.push({
-          text: '找师兄弟闲聊',
-          result: {
-            lines: [{ text: '你与同门闲聊，增进了感情。', type: 'narrative' }],
-            addTurn: 1,
+        const sectActivities = [
+          {
+            text: '与同门切磋',
+            desc: '找师兄弟切磋武艺，提升实战经验。',
+            result: {
+              lines: [
+                { text: '你找到一位同门师兄，请他指点几招。', type: 'action' as const },
+                { text: '经过一番切磋，你觉得自己的武功又精进了些。', type: 'narrative' as const },
+              ],
+              addTurn: 1,
+              addExp: 3,
+              addFlag: 'lastAction_sparring',
+            }
           },
+          {
+            text: '研读武学典籍',
+            desc: '在藏经阁中研读武学典籍，提升武学造诣。',
+            result: {
+              lines: [
+                { text: '你在藏经阁中找到一本武学秘籍，开始仔细研读。', type: 'action' as const },
+                { text: '书中的武学精要让你茅塞顿开。', type: 'narrative' as const },
+              ],
+              addTurn: 1,
+              addExp: 4,
+              addFlag: 'lastAction_study',
+            }
+          }
+        ];
+
+        // 添加门派活动选项
+        sectActivities.forEach(activity => {
+          choices.push({
+            text: activity.text,
+            desc: activity.desc,
+            result: {
+              ...activity.result,
+              addFlags: {
+                lastAction: activity.text,
+                actionCount
+              }
+            }
+          });
         });
-        choices.push({
-          text: '闭关修炼',
-          result: {
-            lines: [{ text: '你回到房间，专心修炼内功。', type: 'action' }],
-            addTurn: 3,
-          },
-        });
+
+        // 每3次行动提供一次闭关选项
+        if (shouldOfferTraining) {
+          choices.push({
+            text: '闭关修炼',
+            desc: '闭关修炼内功心法，大幅提升修为。',
+            result: {
+              lines: [
+                { text: '你向师父禀明要闭关修炼的打算。', type: 'action' as const },
+                { text: '师父点点头：“去吧，记住，习武之人，心要静。”', type: 'dialogue' as const, speaker: '师父' },
+                { text: '你在静室中潜心修炼，物我两忘...', type: 'time-pass' as const },
+              ],
+              addTurn: 3,
+              addExp: 10,
+              addMaxHp: 5,
+              addFlags: {
+                lastAction: 'seclusion',
+                actionCount: 0, // 重置行动计数
+                lastSeclusion: world.turn
+              }
+            },
+          });
+        }
       }
 
       // --- 通用移动选项 ---
@@ -396,80 +401,85 @@ export const commonSnippets: StorySnippet[] = [
       // 使用firstSpeaker和sect1/sect2的关系来决定第二说话者
       const secondSpeaker = firstSpeaker === sect1 ? sect2 : sect1;
 
+      // 先自动观察战斗
+      const initialLines: StoryLine[] = [
+        { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
+        { text: '果然！前方空地上，两拨人马正在对峙。', type: 'narrative' },
+        { text: `左边是${sect1.name}的${sect1Desc}，右边是${sect2.name}的${sect2Desc}。`, type: 'narrative' },
+        { text: `“今日不是你死，就是我亡！”${firstSpeaker.name}的弟子大喝道。`, type: 'dialogue', speaker: `${firstSpeaker.name}弟子` },
+        { text: '双方剑拔弩张，战斗一触即发。你决定先观察情况...', type: 'narrative' },
+      ];
+
+      // 随机决定战斗发展
+      const battleOutcome = Math.random();
+
+      // 30% 机会出现需要玩家干预的情况
+      if (battleOutcome < 0.3) {
+        // 需要玩家做出选择
+        return {
+          lines: [
+            ...initialLines,
+            { text: `战斗开始不久，你注意到${sect1.name}的弟子似乎处于下风。`, type: 'narrative' },
+            { text: `“啊！”一名${sect1.name}的弟子被击倒在地，情况危急！`, type: 'action' },
+            { text: '你意识到，现在必须做出选择了...', type: 'inner' },
+          ],
+          choices: [
+            {
+              text: `帮助${sect1.name}`,
+              result: {
+                lines: [
+                  { text: `你大喝一声：“住手！”拔剑冲入战团。`, type: 'action' },
+                  { text: `${sect1.name}弟子见有援军，顿时士气大振。`, type: 'narrative' },
+                  { text: `在你的帮助下，${sect2.name}的人马很快不敌撤退。`, type: 'action' },
+                  { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: `${sect1.name}弟子` },
+                ],
+                addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+                addFlags: { last_duel_event: world.turn },
+                updateRelations: [
+                  { target: `sect:${sect1Id}`, type: 'friendly', value: 20 },
+                  { target: `sect:${sect2Id}`, type: 'hostile', value: 10 },
+                ],
+                ...(Math.random() < 0.5 ? {
+                  addKnowledge: `met_${sect1Id}_disciple`,
+                  lines: [
+                    { text: `“在下${sect1.name}弟子${genName('male')}，不知少侠如何称呼？”`, type: 'dialogue', speaker: `${sect1.name}弟子` },
+                    { text: '你与对方交换了姓名，江湖路远，后会有期。', type: 'narrative' },
+                  ]
+                } : {})
+              },
+            },
+            {
+              text: '继续观察',
+              result: {
+                lines: [
+                  { text: '你决定继续观察，不轻易介入这场纷争。', type: 'action' },
+                  { text: `最终，${sect1.name}的弟子们虽然受伤不轻，但还是击退了${sect2.name}的进攻。`, type: 'narrative' },
+                  { text: '“哼！这次算你们走运！”', type: 'dialogue', speaker: `${sect2.name}弟子` },
+                ],
+                addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+                addFlags: { last_duel_event: world.turn },
+              },
+            },
+          ],
+        };
+      }
+      // 战斗自然结束，不需要玩家干预
+      const winner = battleOutcome < 0.65 ? sect1 : sect2;
+      const loser = winner === sect1 ? sect2 : sect1;
+
       return {
         lines: [
-          { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
-          { text: '果然！前方空地上，两拨人马正在对峙。', type: 'narrative' },
-          { text: `左边是${sect1.name}的${sect1Desc}，右边是${sect2.name}的${sect2Desc}。`, type: 'narrative' },
-          { text: '“今日不是你死，就是我亡！”双方剑拔弩张。', type: 'dialogue', speaker: `${firstSpeaker.name}弟子` },
+          ...initialLines,
+          { text: '双方激烈交战，你来我往，战况胶着。', type: 'narrative' },
+          { text: `经过一番激战，${winner.name}逐渐占据上风。`, type: 'narrative' },
+          { text: `“撤！”${loser.name}的弟子见势不妙，迅速撤退。`, type: 'action' },
+          { text: `“哼，算他们跑得快！”${winner.name}的弟子收起武器。`, type: 'dialogue', speaker: `${winner.name}弟子` },
+          { text: '你默默记下这场战斗的结果，悄然离去。', type: 'narrative' },
         ],
-        choices: [
-          {
-            text: `帮助${sect1.name}`,
-            result: {
-              lines: [
-                { text: `你大喝一声：“路见不平，拔刀相助！”冲入战团帮助${sect1.name}。`, type: 'action' },
-                { text: `${sect1.name}弟子见有援军，士气大振。`, type: 'narrative' },
-                { text: `一番激战后，${sect2.name}的人马溃败而逃。`, type: 'action' },
-                { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: `${sect1.name}弟子` },
-              ],
-              addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-              addFlags: { last_duel_event: world.turn },
-              updateRelations: [
-                { target: `sect:${sect1Id}`, type: 'friendly', value: 20 },
-                { target: `sect:${sect2Id}`, type: 'hostile', value: 10 },
-              ],
-              ...(Math.random() < 0.3 ? {
-                addKnowledge: `met_${sect1Id}_disciple`,
-                lines: [
-                  { text: `“在下${sect1.name}弟子${genName('male')}，不知少侠如何称呼？”`, type: 'dialogue', speaker: `${sect1.name}弟子` },
-                  { text: '你与对方交换了姓名，江湖路远，后会有期。', type: 'narrative' },
-                ]
-              } : {})
-            },
-          },
-          {
-            text: `帮助${sect2.name}`,
-            result: {
-              lines: [
-                { text: `你决定帮助${sect2.name}，悄悄从侧面突袭${sect1.name}的弟子。`, type: 'action' },
-                { text: `${sect2.name}的人见你出手相助，顿时士气大振。`, type: 'narrative' },
-                { text: `经过一番激战，${sect1.name}的弟子们不敌撤退。`, type: 'action' },
-                { text: '“哈哈哈，干得好！我记下你这份情了。”', type: 'dialogue', speaker: `${sect2.name}弟子` },
-              ],
-              addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-              addFlags: { last_duel_event: world.turn },
-              updateRelations: [
-                { target: `sect:${sect2Id}`, type: 'friendly', value: 20 },
-                { target: `sect:${sect1Id}`, type: 'hostile', value: 10 },
-              ],
-              ...(Math.random() < 0.3 ? {
-                addKnowledge: `met_${sect2Id}_disciple`,
-                lines: [
-                  { text: `“好身手！在下${sect2.name}弟子${genName(Math.random() > 0.5 ? 'male' : 'female')}，不知少侠尊姓大名？”`, type: 'dialogue', speaker: `${sect2.name}弟子` },
-                  { text: '你与对方交换了姓名，江湖路远，后会有期。', type: 'narrative' },
-                ]
-              } : {})
-            },
-          },
-          {
-            text: '坐山观虎斗',
-            result: {
-              lines: [
-                { text: '你躲在树后，静静看着双方拼得两败俱伤。', type: 'action' },
-                { text: `最后双方都伤亡惨重，${sect1.name}和${sect2.name}的仇恨似乎更深了。`, type: 'narrative' },
-                { text: '虽然有些不厚道，但江湖本就如此残酷。', type: 'inner' },
-              ],
-              addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-              addFlags: { last_duel_event: world.turn },
-              updateRelations: [
-                { target: `sect:${sect1Id}`, type: 'hostile', value: 5 },
-                { target: `sect:${sect2Id}`, type: 'hostile', value: 5 },
-              ],
-            },
-          },
-        ],
+        addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+        addFlags: { last_duel_event: world.turn },
       };
+
     },
   },
 
@@ -875,9 +885,9 @@ export const commonSnippets: StorySnippet[] = [
             text: '使用其他武功（可能不敌）',
             result: {
               lines: [
-                { text: '你使出了其他武功，但威力不足。', type: 'action' },
-                { text: '对手见你招式不够精妙，攻势更加凌厉。', type: 'narrative' },
-                { text: '你渐渐落入下风，只能勉强招架。', type: 'action' },
+                { text: '你使出了其他武功，但威力不足。', type: 'action' as const },
+                { text: '对手见你招式不够精妙，攻势更加凌厉。', type: 'narrative' as const },
+                { text: '你渐渐落入下风，只能勉强招架。', type: 'action' as const },
               ],
               choices: [
                 {

@@ -39,7 +39,7 @@ export interface Person {
   flags: Record<string, any>;
   arts: string[];
   knowledge: string[];
-  personality?: string;
+  personality?: Personality;
   appearance?: Appearance;
   identity?: {
     type: 'traitor' | 'retired_elder' | 'wandering_hero';
@@ -103,6 +103,7 @@ export interface StoryLine {
 
 export interface StoryChoice {
   text: string;
+  desc?: string; // Add optional description
   result: SnippetResult;
 }
 
@@ -114,12 +115,15 @@ export interface SnippetResult {
   addNpc?: Person | Person[];
   addRelation?: Relation;
   addFlag?: string;
+  addFlags?: Record<string, any>;
   addArt?: string;
   addKnowledge?: string;
   setCompanion?: string;
   removeCompanion?: boolean;
   advanceStage?: boolean;
   addTurn?: number;
+  addExp?: number;
+  addMaxHp?: number;
   endGame?: boolean;
   choices?: StoryChoice[];
 }
