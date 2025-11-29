@@ -114,6 +114,7 @@ export interface SnippetResult {
   newLocationId?: string;
   addNpc?: Person | Person[];
   addRelation?: Relation;
+  addRelations?: Relation[]; // 🆕 新增：支持批量添加/更新关系
   addFlag?: string;
   addFlags?: Record<string, any>;
   addArt?: string;

@@ -4,7 +4,7 @@ import React, {
   useState, useEffect, useRef, useCallback,
 } from 'react';
 import { SECT_NAMES } from './wuxia/logic/constants';
-import { Person, Sect, StoryStage, SnippetResult, LocationInfo } from './wuxia/logic/types';
+import { Person, Sect, StoryStage, SnippetResult, LocationInfo, Relation } from './wuxia/logic/types';
 import { generateWorldMap, initSectRelations, genName, generateHiddenMaster, rand } from './wuxia/logic/utils';
 import { SNIPPETS } from './wuxia/snippets';
 
@@ -18,6 +18,7 @@ type StoryBlock = {
 type UIChoice = {
   id: string;
   text: string;
+  desc?: string; // 支持描述
   action: () => void;
 };
 
@@ -32,7 +33,7 @@ export default function WuxiaGame() {
     heroId: string;
     stage: StoryStage;
     turnInStage: number;
-    companionId?: string; // 🆕 同行伙伴ID
+    companionId?: string;
   } | null>(null);
 
   const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
@@ -72,10 +73,7 @@ export default function WuxiaGame() {
 
   const generateWorld = () => {
     try {
-      // 🆕 使用新的地理系统生成地图
       const finalLocations = generateWorldMap();
-
-      // 初始化门派，添加relations字段
       const newSects: Sect[] = SECT_NAMES.map((name, idx) => {
         const sectLocation = finalLocations.find((l) => l.id === `sect_${idx}`);
         return {
@@ -83,11 +81,10 @@ export default function WuxiaGame() {
           name,
           type: Math.random() > 0.7 ? 'evil' : 'good',
           locationId: sectLocation?.id || finalLocations[0].id,
-          relations: {} // 初始化relations
+          relations: {}
         };
       });
 
-      // 初始化门派关系
       initSectRelations(newSects);
 
       const newNpcs: Person[] = [];
@@ -130,17 +127,14 @@ export default function WuxiaGame() {
         });
       });
 
-      // 生成隐藏高手 (1-3个)
       const hiddenMasterCount = 1 + Math.floor(Math.random() * 3);
       for (let i = 0; i < hiddenMasterCount; i++) {
         const master = generateHiddenMaster(newNpcs, newSects, finalLocations);
         newNpcs.push(master);
       }
 
-      // 创建玩家角色
       const mySect = rand(newSects);
       const myMaster = newNpcs.find((n) => n.sectId === mySect.id && n.role === 'leader');
-      // 找到玩家门派对应的地点
       const mySectLocation = finalLocations.find((l) => l.id === `sect_${newSects.indexOf(mySect)}`) || finalLocations.find((l) => l.type === 'sect');
       const hero: Person = {
         id: 'hero',
@@ -149,14 +143,14 @@ export default function WuxiaGame() {
         role: 'disciple',
         gender: 'male',
         age: 16,
-        birthYear: new Date().getFullYear() - 16, // 添加出生年份
+        birthYear: new Date().getFullYear() - 16,
         status: 'alive',
         relations: myMaster ? [{ targetId: myMaster.id, type: 'apprentice', value: 50 }] : [],
         locationId: mySectLocation?.id || finalLocations[0].id,
         inventory: [],
         flags: {},
         arts: [],
-        knowledge: ['rumor_duel'], // 添加江湖传闻知识
+        knowledge: ['rumor_duel'],
       };
 
       if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice', value: 50 });
@@ -193,9 +187,9 @@ export default function WuxiaGame() {
       setChoices(result.choices.map((c, idx) => ({
         id: `choice-${Date.now()}-${idx}-${c.text.slice(0, 20)}`,
         text: c.text,
+        desc: c.desc, // Pass description
         action: () => {
           setChoices([]);
-          // 注意：这里递归调用了 applySnippetResult，在 useCallback 中是允许的
           applySnippetResult(c.result);
           if (!c.result.endGame && !c.result.choices) setIsAutoPlaying(true);
         },
@@ -204,14 +198,9 @@ export default function WuxiaGame() {
     }
 
     if (result.newLocationId) {
-      // 注意：这里使用了 world 状态，为了避免闭包陷阱，建议用函数式更新或在依赖中小心处理
-      // 但由于 logic 比较复杂，我们先用 ref 或简单的 fix
-      // 这里最简单的改法是去掉 world 依赖，改为 setWorld((w) => ...)
-      // 上面的代码已经是 setWorld((w) => ...) 了，所以这里只需要处理 locName
-      // 我们可以暂时忽略 locName 的实时获取，或者接受 world 作为依赖（如下所示）
       setStoryLog((prev) => [...prev, {
         id: Date.now().toString() + Math.random(),
-        text: `... 经过跋涉，你来到了新的地点。`, // 简化，避免依赖 world.locations
+        text: `... 经过跋涉，你来到了新的地点。`,
         type: 'time-pass'
       }]);
     }
@@ -243,11 +232,8 @@ export default function WuxiaGame() {
         }
       }
 
-      // ... (中间的逻辑保持不变) ...
-      // 这里为了节省篇幅省略了中间的 Npc 更新逻辑，请保留你原有的代码
       newNpcs = newNpcs.map((n) => {
         if (n.id === 'hero') {
-          // ... 原有的 hero 更新逻辑 ...
           const newInv = [...n.inventory];
           const newArts = [...n.arts];
           const newKnowledge = [...n.knowledge];
@@ -259,16 +245,22 @@ export default function WuxiaGame() {
             const idx = newInv.indexOf(result.removeItem);
             if (idx > -1) newInv.splice(idx, 1);
           }
-          if (result.addRelation) {
+
+          // 🆕 支持批量更新关系
+          const updateRelation = (rel: Relation) => {
             const existingIdx = newRelations.findIndex(
-              (r) => r.targetId === result.addRelation!.targetId,
+              (r) => r.targetId === rel.targetId,
             );
             if (existingIdx > -1) {
-              newRelations[existingIdx] = result.addRelation;
+              newRelations[existingIdx] = rel;
             } else {
-              newRelations.push(result.addRelation);
+              newRelations.push(rel);
             }
-          }
+          };
+
+          if (result.addRelation) updateRelation(result.addRelation);
+          if (result.addRelations) result.addRelations.forEach(updateRelation);
+
           if (result.addFlag) newFlags[result.addFlag] = true;
           if (result.addArt) newArts.push(result.addArt);
           if (result.addKnowledge) newKnowledge.push(result.addKnowledge);
@@ -301,7 +293,7 @@ export default function WuxiaGame() {
         companionId: newCompanionId,
       };
     });
-  }, [addStory]); // ✅ 依赖项只留 addStory 即可
+  }, [addStory]);
 
   const nextTurn = useCallback(() => {
     if (!world || isEnded) return;
@@ -381,7 +373,6 @@ export default function WuxiaGame() {
   useEffect(() => {
     if (isStarted && isAutoPlaying && !isEnded && choices.length === 0) {
       if (timerRef.current) clearTimeout(timerRef.current);
-      // 🚀 极速模式：50ms
       timerRef.current = setTimeout(() => {
         nextTurn();
       }, 50);
@@ -468,11 +459,18 @@ export default function WuxiaGame() {
                   onClick={choice.action}
                   className="block w-full text-left p-4 bg-stone-900 border border-stone-800 hover:border-amber-600 transition rounded group"
                 >
-                  <span className="text-amber-700 font-bold mr-3">
-                    {idx + 1}
-                    .
-                  </span>
-                  {choice.text}
+                  <div className="flex items-center">
+                    <span className="text-amber-700 font-bold mr-3">
+                      {idx + 1}
+                      .
+                    </span>
+                    <span>{choice.text}</span>
+                  </div>
+                  {choice.desc && (
+                    <div className="text-stone-500 text-sm ml-6 mt-1">
+                      {choice.desc}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

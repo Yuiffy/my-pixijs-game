@@ -2,7 +2,7 @@ import { generateBattle } from "../logic/battle";
 import { MERCHANT_ITEMS } from "../logic/constants";
 import { getArtByName, getSectArts, SECT_ARTS } from "../logic/skills";
 import { StorySnippet, StoryStage, Person, Sect, RelationType, MartialArt, StoryLine, LocationInfo } from "../logic/types";
-import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance } from "../logic/utils";
+import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance, getBattleOutcomeChoices, getCompanionNamesList } from "../logic/utils";
 
 export const otherPeopleSnippets: StorySnippet[] = [
 
@@ -457,7 +457,169 @@ export const otherPeopleSnippets: StorySnippet[] = [
       };
     },
   },
+  // 🆕 Feature 1: 查看队伍信息 (新增片段)
+  {
+    id: 'check_party_status',
+    tags: ['city_daily', 'wild_daily'],
+    weight: 10,
+    run: (hero, world) => {
+      const names = getCompanionNamesList(hero, world);
+      return {
+        lines: [
+          { text: '你清点了一下随行的人员。', type: 'action' },
+          { text: `当前队伍：${names}`, type: 'narrative' }
+        ]
+      };
+    }
+  },
 
+  // 🆕 Feature 4: 野外遭遇双人对战 (选择帮谁 + 外貌描述)
+  {
+    id: 'wild_duel_intervention',
+    tags: ['wild_daily'],
+    weight: 40,
+    req: (hero) => hero.locationId.startsWith('wild_'),
+    run: (hero, world) => {
+    // 生成两名NPC
+      const npc1: Person = {
+        id: `npc_duel_1_${Date.now()}`,
+        name: genName(Math.random() > 0.5 ? 'male' : 'female'),
+        sectId: 'none',
+        role: 'hero',
+        gender: 'male',
+        age: 25,
+        status: 'alive',
+        relations: [],
+        locationId: hero.locationId,
+        inventory: [],
+        flags: {},
+        arts: [],
+        knowledge: [],
+        appearance: genAppearance('male', 'hero')
+      };
+      const npc2: Person = {
+        id: `npc_duel_2_${Date.now()}`,
+        name: genName(Math.random() > 0.5 ? 'male' : 'female'),
+        sectId: 'none',
+        role: 'bandit',
+        gender: 'male',
+        age: 30,
+        status: 'alive',
+        relations: [],
+        locationId: hero.locationId,
+        inventory: [],
+        flags: {},
+        arts: [],
+        knowledge: [],
+        appearance: genAppearance('male', 'bandit')
+      };
+
+      const desc1 = describeAppearance(npc1);
+      const desc2 = describeAppearance(npc2);
+
+      return {
+        lines: [
+          { text: '前方传来兵刃相交之声，你悄悄靠近查看。', type: 'action' },
+          { text: '只见两人正在激烈缠斗。', type: 'narrative' },
+          { text: `左边一人，${desc1}。`, type: 'narrative' }, // 先描述外貌
+          { text: `右边一人，${desc2}。`, type: 'narrative' },
+          { text: '两人似乎都已挂彩，战况焦灼。', type: 'narrative' }
+        ],
+        choices: [
+          {
+            text: `帮助【${npc1.name}】`,
+            result: {
+              lines: [
+                { text: `你大喝一声，拔剑助阵【${npc1.name}】！`, type: 'action' },
+                // 战斗逻辑：你打 npc2
+                ...generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world)
+              ],
+              addNpc: [npc1, npc2],
+              // 如果战斗胜利，提供战后选择 (Feature 3)
+              // 注意：这里简化处理，假设帮忙就会导致胜利并进入处置阶段
+              choices: getBattleOutcomeChoices(npc2, hero, world, -20)
+            }
+          },
+          {
+            text: `帮助【${npc2.name}】`,
+            result: {
+              lines: [
+                { text: `你居然选择了帮助那个看着像恶人的【${npc2.name}】！`, type: 'action' },
+                ...generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world)
+              ],
+              addNpc: [npc1, npc2],
+              choices: getBattleOutcomeChoices(npc1, hero, world, -20)
+            }
+          },
+          {
+            text: '静观其变',
+            result: {
+              lines: [{ text: '你决定不插手江湖恩怨，悄然离去。', type: 'narrative' }]
+            }
+          }
+        ]
+      };
+    }
+  },
+
+  // 🆕 修改：在路上遇到山贼 (集成 Feature 3: 打败后选择)
+  {
+    id: 'travel_bandits_advanced',
+    tags: ['wild_daily'],
+    weight: 35,
+    req: (hero) => hero.locationId.startsWith('wild_'),
+    run: (hero, world) => {
+      const banditName = genName('male');
+      const banditNpc: Person = {
+        id: `npc_bandit_${Date.now()}`,
+        name: banditName,
+        sectId: 'none',
+        role: 'bandit',
+        gender: 'male',
+        age: 30,
+        status: 'alive',
+        relations: [],
+        locationId: hero.locationId,
+        inventory: [],
+        flags: {},
+        arts: [],
+        knowledge: []
+      };
+
+      const bestArt = hero.arts.length > 0 ? getArtByName(hero.arts[0]) : getArtByName('太祖长拳');
+
+      // 使用新的参数 canChooseOutcome: true
+      const battleLines = generateBattle(hero, banditNpc, bestArt, null, { rounds: 5, canChooseOutcome: true }, world);
+
+      // 简单判断是否胜利 (非严谨判定，最好 generateBattle 返回结构体，但为了兼容暂且如此)
+      const isVictory = !battleLines.some(l => l.text.includes('昏死过去') || l.text.includes('逃离'));
+
+      return {
+        lines: [
+          { text: '路边草丛突然跳出一个蒙面大汉！', type: 'action' },
+          { text: `【${banditName}】: "留下买路财！"`, type: 'dialogue', speaker: banditName },
+        ],
+        choices: [
+          {
+            text: '动手！',
+            result: {
+              lines: battleLines,
+              addNpc: banditNpc,
+              // 只有胜利了才显示处置选项
+              choices: isVictory ? getBattleOutcomeChoices(banditNpc, hero, world) : []
+            }
+          },
+          {
+            text: '破财消灾',
+            result: {
+              lines: [{ text: '你丢下一些银两，趁对方捡钱时离开了。', type: 'action' }],
+              removeItem: '银两'
+            }
+          }
+        ]
+      };
+    }
+  },
   // 与敌人再次相遇
   {
     id: 'meet_enemy_again',
@@ -508,130 +670,6 @@ export const otherPeopleSnippets: StorySnippet[] = [
   // ===================================
   // 🚶 移动中的遭遇
   // ===================================
-
-  // 在路上遇到山贼
-  {
-    id: 'travel_bandits',
-    tags: ['wild_daily'],
-    weight: 30,
-    req: (hero) => hero.locationId.startsWith('wild_'),
-    run: (hero, world) => {
-      // 🆕 山贼有名字和性别
-      const banditGender = Math.random() > 0.7 ? 'female' : 'male'; // 30%概率是女山贼
-      const banditName = genName(banditGender);
-      const banditNpc: Person = {
-        id: `npc_bandit_${Date.now()}`,
-        name: banditName,
-        sectId: 'none',
-        role: 'bandit',
-        gender: banditGender,
-        age: 25,
-        status: 'alive',
-        relations: [],
-        locationId: hero.locationId,
-        inventory: [],
-        flags: {},
-        arts: [],
-        knowledge: [],
-      };
-
-      // 🆕 选择最厉害的武功用于战斗
-      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
-      const sectArts = getSectArts(sectName);
-      const learnedSectArts = sectArts.filter((a) => hero.arts.includes(a.name));
-      let bestArt: MartialArt;
-      if (learnedSectArts.length > 0) {
-        const outerArts = learnedSectArts.filter((a) => a.type === 'outer');
-        bestArt = outerArts.length > 0 ? outerArts[0] : learnedSectArts[0];
-      } else if (hero.arts.length > 0) {
-        bestArt = getArtByName(hero.arts[0]);
-      } else {
-        bestArt = getArtByName('太祖长拳');
-      }
-      const move = rand(bestArt.moves);
-
-      return {
-        lines: [
-          { text: '你正在赶路，突然从树林中跳出几个山贼！', type: 'action' },
-          { text: `'此路是我开，此树是我栽！要想从此过，留下买路财！'为首的【${banditName}】大声喝道。`, type: 'dialogue', speaker: banditName },
-        ],
-        choices: [
-          {
-            text: `使出【${bestArt.name}】迎战`,
-            result: {
-              lines: generateBattle(hero, banditNpc, bestArt, null, 3),
-              addItem: '银两',
-              addNpc: banditNpc,
-            },
-          },
-          {
-            text: '智取',
-            result: {
-              lines: [
-                { text: '你灵机一动，假装是某个大门派的弟子。', type: 'action' },
-              ],
-              choices: [
-                {
-                  text: '继续',
-                  result: (() => {
-                    const success = Math.random() > 0.3; // 70%成功率
-                    if (success) {
-                      return {
-                        lines: [
-                          { text: '山贼们被你的气势吓到，不敢动手，让你通过了。', type: 'narrative' },
-                        ],
-                        addNpc: banditNpc,
-                      };
-                    }
-                    // 失败的情况，需要战斗或逃跑
-                    return {
-                      lines: [
-                        { text: `但山贼头目【${banditName}】见多识广，识破了你的伎俩。`, type: 'narrative' },
-                        { text: `'敢骗我？找死！'【${banditName}】大怒，拔刀就上。`, type: 'dialogue', speaker: banditName },
-                      ],
-                      addNpc: banditNpc,
-                      choices: [
-                        {
-                          text: `使出【${bestArt.name}】迎战`,
-                          result: {
-                            lines: [
-                              { text: `你使出【${bestArt.name}】中的"${move}"，与山贼激战。`, type: 'action' },
-                              { text: '一番激战后，你击退了山贼，但自己也受了些轻伤。', type: 'narrative' },
-                            ],
-                            addItem: '银两',
-                          },
-                        },
-                        {
-                          text: '逃跑',
-                          result: {
-                            lines: [
-                              { text: '你见势不妙，转身就逃。', type: 'action' },
-                              { text: '山贼紧追不舍，你拼尽全力才逃脱。', type: 'narrative' },
-                            ],
-                          },
-                        },
-                      ],
-                    };
-                  })(),
-                },
-              ],
-            },
-          },
-          {
-            text: '给钱消灾',
-            result: {
-              lines: [
-                { text: '你不想节外生枝，给了山贼一些银两。', type: 'action' },
-                { text: `'算你识相！'【${banditName}】满意地离开了。`, type: 'dialogue', speaker: banditName },
-              ],
-              addNpc: banditNpc,
-            },
-          },
-        ],
-      };
-    },
-  },
-
   // 在路上发现秘籍
   {
     id: 'travel_find_manual',

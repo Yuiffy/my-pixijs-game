@@ -1,22 +1,35 @@
+// src/components/wuxia/logic/battle.ts
+
 import { Person, MartialArt, StoryLine } from './types';
 import { getSectById, rand } from './utils';
-import { getArtByName } from './skills'; // 注意这里可能需要根据实际导出调整
+import { getArtByName } from './skills';
 
-// 战斗系统：多回合战斗（支持同伴参与和内外功配合）
-// 返回战斗过程的剧情线数组
+// 战斗配置接口
+interface BattleOptions {
+  rounds?: number;
+  canChooseOutcome?: boolean; // 是否允许玩家选择战胜后的结果（Feature 3）
+}
+
+// 战斗系统：多回合战斗（支持同伴参与、挡刀、兜底）
 export const generateBattle = (
   hero: Person,
   enemy: Person,
   heroArt: MartialArt,
   enemyArt: MartialArt | null,
-  rounds: number = 5, // 增加默认回合数以支持更丰富的战斗描写
+  options: number | BattleOptions = 5, // 兼容旧调用方式
   world?: any,
 ): StoryLine[] => {
+  // 解析参数
+  const rounds = typeof options === 'number' ? options : (options.rounds || 5);
+  const canChooseOutcome = typeof options === 'number' ? false : (options.canChooseOutcome || false);
+
   const lines: StoryLine[] = [];
   const heroMoves = heroArt.moves;
   const enemyMoves = enemyArt?.moves || ['一刀砍来', '横劈', '直刺', '横扫', '当头一刀'];
 
-  // 战斗描述词库
+  // ==========================================
+  // 📜 战斗描述词库 (完整保留)
+  // ==========================================
   const battleDescriptions = {
     heroAttack: [
       '只见你身形一闪，',
@@ -51,12 +64,6 @@ export const generateBattle = (
       '不料{}早有准备，侧身让过',
       '{}不慌不忙，举重若轻地化解了这招',
     ],
-    counter: [
-      '随即反手一掌，',
-      '紧接着一个回马枪，',
-      '趁势欺身而上，',
-      '身形一转，反手就是一拳，',
-    ],
     dialogue: {
       start: [
         `'今日就让你见识见识我【${enemy.name}】的厉害！'`,
@@ -88,16 +95,34 @@ export const generateBattle = (
         `'下辈子记得擦亮眼睛！'`,
       ],
     },
+    // 🆕 新增：同伴互动描述
+    companion: {
+      join: [
+        `【{name}】拔出武器，坚定地站在你身旁："我也来帮忙！"`,
+        `"想动我的朋友？先问问我手中的兵刃！"【{name}】喝道。`,
+        `【{name}】与你并肩而立，"我们一起上！"`,
+      ],
+      protect: [
+        `千钧一发之际，【{name}】冲过来替你挡下了这一击！`,
+        `"小心！"【{name}】一把推开你，自己却受了伤。`,
+      ],
+      save: [
+        `"休想伤他！"【{name}】爆发出一股惊人的气势，拼死拦住了敌人。`,
+        `【{name}】不仅没有退缩，反而更加勇猛，为你争取了宝贵的喘息机会。`
+      ]
+    }
   };
+
+  // ==========================================
+  // 🛠️ 战斗准备
+  // ==========================================
 
   // 获取同伴（如果有）
   const companion = world?.companionId ? world.npcs.find((n: Person) => n.id === world.companionId) : null;
   let companionArt: MartialArt | null = null;
   if (companion && companion.arts.length > 0) {
     const art = getArtByName(companion.arts[0]);
-    if (art) {
-      companionArt = art;
-    }
+    if (art) companionArt = art;
   }
 
   // 战斗开始
@@ -111,76 +136,64 @@ export const generateBattle = (
     type: 'narrative'
   });
 
-  // 记录战斗开始时间
-  const battleStartTime = Date.now();
-
-  // 同伴加入战斗
+  // 🆕 Feature 2: 同伴加入战斗
   if (companion) {
-    const companionSect = world?.sects ?
-      getSectById(companion.sectId, world.sects) :
-      getSectById(companion.sectId);
-    const sectName = companionSect?.name || '无门无派';
-
+    const joinText = rand(battleDescriptions.companion.join).replace('{name}', companion.name);
     lines.push({
-      text: `【${companion.name}】大喝一声：\"${companion.gender === 'female' ? '小女子' : '在下'}【${companion.name}】，${getSectById(companion.sectId, world?.sects)?.name || '无门无派'}弟子，特来助阵！\"`,
+      text: joinText,
       type: 'dialogue',
       speaker: companion.name
     });
   }
 
-  // 战斗属性
+  // 战斗属性初始化
   let heroHp = 100;
   let enemyHp = 100;
   let companionHp = companion ? 100 : 0;
-  let heroChi = 100; // 内力值
+  let heroChi = 100;
   let enemyChi = 100;
   let companionChi = 100;
   let roundCount = 0;
 
-  // 获取内功加成
-  const heroInnerArt = hero.arts.find((art: string) => {
-    const artObj = getArtByName(art);
-    return artObj?.type === 'inner';
-  });
-  const heroInnerBonus = heroInnerArt ? 15 : 0;
+  // 内功加成计算
+  const getInnerBonus = (p: Person) => {
+    if (!p) return 0;
+    const inner = p.arts.find(a => getArtByName(a)?.type === 'inner');
+    return inner ? 15 : 0;
+  };
+  const heroInnerBonus = getInnerBonus(hero);
+  const enemyInnerBonus = getInnerBonus(enemy);
+  const companionInnerBonus = companion ? getInnerBonus(companion) : 0;
 
-  const enemyInnerArt = enemy.arts.find((art: string) => {
-    const artObj = getArtByName(art);
-    return artObj?.type === 'inner';
-  });
-  const enemyInnerBonus = enemyInnerArt ? 15 : 0;
-
-  const companionInnerArt = companion?.arts.find((art: string) => {
-    const artObj = getArtByName(art);
-    return artObj?.type === 'inner';
-  });
-  const companionInnerBonus = companionInnerArt ? 10 : 0;
-
-  // 战斗主循环
+  // ==========================================
+  // ⚔️ 战斗主循环
+  // ==========================================
+  // 只要主角活着，或者同伴还活着（可以兜底），战斗就继续
   while (roundCount < rounds && enemyHp > 0 && (heroHp > 0 || (companion && companionHp > 0))) {
     roundCount++;
     const heroMove = rand(heroMoves);
     const enemyMove = rand(enemyMoves);
-    const isCritical = Math.random() < 0.2; // 20% 暴击几率
-    const isDodge = Math.random() < 0.15; // 15% 闪避几率
+    const isCritical = Math.random() < 0.2;
+    const isDodge = Math.random() < 0.15;
 
-    // 每3回合恢复一些内力
+    // 回气
     if (roundCount % 3 === 0) {
       heroChi = Math.min(100, heroChi + 10 + heroInnerBonus);
       enemyChi = Math.min(100, enemyChi + 10 + enemyInnerBonus);
       if (companion) companionChi = Math.min(100, companionChi + 10 + companionInnerBonus);
     }
 
-    // 随机添加战斗对话（20%几率）
+    // 随机战斗对话
     if (Math.random() < 0.2) {
+      const speaker = Math.random() > 0.5 ? enemy.name : (companion && Math.random() > 0.5 ? companion.name : '你');
       lines.push({
         text: rand(battleDescriptions.dialogue.during),
         type: 'dialogue',
-        speaker: Math.random() > 0.5 ? enemy.name : (companion && Math.random() > 0.5 ? companion.name : '你')
+        speaker
       });
     }
 
-    // 玩家行动
+    // --- 1. 玩家行动 ---
     if (heroHp > 0) {
       const moveDescription = rand(battleDescriptions.heroAttack);
       lines.push({
@@ -188,7 +201,6 @@ export const generateBattle = (
         type: 'action'
       });
 
-      // 计算伤害（基础伤害 + 内功加成 + 暴击）
       let baseDamage = 10 + Math.floor(Math.random() * 15) + Math.floor(heroChi * 0.1);
       if (isCritical) {
         baseDamage = Math.floor(baseDamage * 1.5);
@@ -196,244 +208,180 @@ export const generateBattle = (
       }
 
       const totalDamage = baseDamage + heroInnerBonus;
-      enemyHp = Math.max(0, enemyHp - totalDamage);
-      heroChi = Math.max(0, heroChi - 5); // 消耗内力
 
-      // 伤害描述
       if (isDodge) {
         lines.push({
           text: rand(battleDescriptions.dodge).replace('{}', `【${enemy.name}】`),
           type: 'narrative'
         });
       } else {
+        enemyHp = Math.max(0, enemyHp - totalDamage);
+        heroChi = Math.max(0, heroChi - 5);
         const damageText = isCritical
           ? rand(battleDescriptions.critical).replace('{}', `【${enemy.name}】`)
           : rand(battleDescriptions.damage).replace('{}', `【${enemy.name}】`);
-
-        lines.push({
-          text: `${damageText}（-${totalDamage}）`,
-          type: 'narrative'
-        });
-
-        // 敌人血量低时可能触发特殊对话
-        if (enemyHp < 30 && enemyHp + totalDamage >= 30) {
-          lines.push({
-            text: rand(battleDescriptions.dialogue.lowHealth),
-            type: 'dialogue',
-            speaker: enemy.name
-          });
-        }
+        lines.push({ text: `${damageText}（-${totalDamage}）`, type: 'narrative' });
       }
     }
 
-    // 检查敌人是否被击败
     if (enemyHp <= 0) break;
 
-    // 同伴行动
-    if (companion && companionHp > 0 && enemyHp > 0) {
-      if (companionArt) {
-        const companionMove = rand(companionArt.moves);
+    // --- 2. 🆕 同伴行动 (Feature 2) ---
+    if (companion && companionHp > 0) {
+      // 同伴有几率攻击或助威
+      const companionAction = Math.random();
+
+      if (companionAction < 0.6) { // 60% 攻击
+        const cMove = companionArt ? rand(companionArt.moves) : '猛击';
+        const cArtName = companionArt ? companionArt.name : '基础拳脚';
+
         lines.push({
-          text: `【${companion.name}】身形一转，使出【${companionArt.name}】中的"${companionMove}"！`,
+          text: `【${companion.name}】寻找破绽，使出【${cArtName}】中的"${cMove}"夹击敌人！`,
           type: 'action'
         });
 
-        // 同伴造成伤害
-        const companionDamage = 8 + Math.floor(Math.random() * 12) +
-          Math.floor(companionChi * 0.08) + companionInnerBonus;
-        enemyHp = Math.max(0, enemyHp - companionDamage);
+        const cDamage = 8 + Math.floor(Math.random() * 12) + Math.floor(companionChi * 0.08) + companionInnerBonus;
+        enemyHp = Math.max(0, enemyHp - cDamage);
         companionChi = Math.max(0, companionChi - 4);
 
         lines.push({
-          text: `【${enemy.name}】被逼退数步，${rand(['气息微乱', '脸色一变', '闷哼一声'])}（-${companionDamage}）`,
+          text: `【${enemy.name}】腹背受敌，被击退数步（-${cDamage}）`,
           type: 'narrative'
         });
+      } else { // 40% 助威/恢复
+        lines.push({
+          text: `【${companion.name}】在一旁喊道："打得好！就是这样！"`,
+          type: 'dialogue',
+          speaker: companion.name
+        });
+        // 助威稍微恢复一点内力
+        heroChi = Math.min(100, heroChi + 10);
       }
     }
 
-    // 检查敌人是否被击败
     if (enemyHp <= 0) break;
 
-    // 敌人行动
+    // --- 3. 敌人行动 ---
     if (enemyHp > 0) {
-      // 敌人选择攻击目标（玩家或同伴）
-      const attackCompanion = companion && companionHp > 0 &&
-        (heroHp <= 0 || (companionHp < 50 && Math.random() > 0.3) || Math.random() > 0.6);
+      // 确定目标：如果主角倒了，必定打同伴；否则70%打主角
+      let target = 'hero';
+      if (heroHp <= 0) target = 'companion';
+      else if (companion && companionHp > 0 && Math.random() > 0.7) target = 'companion';
 
-      if (attackCompanion && companion) {
+      const enemyMoveDesc = rand(battleDescriptions.enemyAttack);
+      const enemyDmgBase = 10 + Math.floor(Math.random() * 20) + Math.floor(enemyChi * 0.12);
+
+      if (target === 'hero') {
+        // 🆕 Feature 2: 同伴挡刀逻辑
+        // 触发条件：有同伴，同伴血量健康(>30)，主角血量危急(<30) 或 随机概率(10%)
+        const shouldBlock = companion && companionHp > 30 && (heroHp < 30 || Math.random() < 0.1);
+
+        if (shouldBlock) {
+          const protectText = rand(battleDescriptions.companion.protect).replace('{name}', companion.name);
+          lines.push({ text: `【${enemy.name}】使出"${enemyMove}"直取你要害！`, type: 'action' });
+          lines.push({ text: protectText, type: 'action' });
+
+          companionHp = Math.max(0, companionHp - enemyDmgBase);
+          lines.push({ text: `【${companion.name}】替你承受了重击，嘴角溢出鲜血（-${enemyDmgBase}）。`, type: 'narrative' });
+        } else {
+          // 正常攻击主角
+          lines.push({ text: `${enemyMoveDesc}【${enemy.name}】对你使出"${enemyMove}"！`, type: 'action' });
+          heroHp = Math.max(0, heroHp - enemyDmgBase);
+          enemyChi = Math.max(0, enemyChi - 5);
+
+          if (heroHp > 0) {
+            lines.push({
+              text: `你${rand(['急忙招架', '侧身闪避', '运功抵挡'])}，${rand(['但仍被劲气所伤', '却还是被擦中', '被震得连退数步'])}（-${enemyDmgBase}）`,
+              type: 'narrative'
+            });
+          } else {
+            lines.push({ text: `你只觉胸口一痛，眼前一黑，支撑不住倒了下去...`, type: 'narrative' });
+          }
+        }
+      } else if (companion) {
         // 攻击同伴
-        const enemyMoveDesc = rand(battleDescriptions.enemyAttack);
-        lines.push({
-          text: `${enemyMoveDesc}【${enemy.name}】对【${companion.name}】使出"${enemyMove}"！`,
-          type: 'action'
-        });
-
-        const enemyDamage = 10 + Math.floor(Math.random() * 15) + Math.floor(enemyChi * 0.1);
-        companionHp = Math.max(0, companionHp - enemyDamage);
-        enemyChi = Math.max(0, enemyChi - 5);
+        lines.push({ text: `${enemyMoveDesc}【${enemy.name}】转身攻向【${companion.name}】！`, type: 'action' });
+        companionHp = Math.max(0, companionHp - enemyDmgBase);
 
         if (companionHp > 0) {
-          lines.push({
-            text: `【${companion.name}】${rand(['勉强招架', '急忙闪避', '仓促格挡'])}，${rand(['但依然受了些轻伤', '却还是被劲气所伤', '被震得连退数步'])}（-${enemyDamage}）`,
-            type: 'narrative'
-          });
+          lines.push({ text: `【${companion.name}】勉强挡下这一击，显得有些吃力（-${enemyDmgBase}）。`, type: 'narrative' });
         } else {
-          lines.push({
-            text: `【${companion.name}】不敌重击，${rand(['口吐鲜血', '闷哼一声', '眼前一黑'])}，倒在地上不省人事！`,
-            type: 'narrative'
-          });
-        }
-      } else if (heroHp > 0) {
-        // 攻击玩家
-        const enemyMoveDesc = rand(battleDescriptions.enemyAttack);
-        lines.push({
-          text: `${enemyMoveDesc}【${enemy.name}】对你使出"${enemyMove}"！`,
-          type: 'action'
-        });
-
-        const enemyDamage = 10 + Math.floor(Math.random() * 20) + Math.floor(enemyChi * 0.12);
-        heroHp = Math.max(0, heroHp - enemyDamage);
-        enemyChi = Math.max(0, enemyChi - 5);
-
-        if (heroHp > 0) {
-          lines.push({
-            text: `你${rand(['急忙招架', '侧身闪避', '运功抵挡'])}，${rand(['但仍被劲气所伤', '却还是被擦中', '被震得连退数步'])}（-${enemyDamage}）`,
-            type: 'narrative'
-          });
-        } else {
-          lines.push({
-            text: `你${rand(['只觉胸口一痛', '感到一阵天旋地转', '再也支撑不住'])}，眼前一黑，昏死过去...`,
-            type: 'narrative'
-          });
+          lines.push({ text: `【${companion.name}】惨叫一声，被击飞出去，不知生死！`, type: 'narrative' });
         }
       }
     }
+  } // 循环结束
+
+  // ==========================================
+  // 🏁 战斗结算
+  // ==========================================
+
+  // 🆕 Feature 2: 兜底环节 (主角倒下，同伴还活着)
+  if (heroHp <= 0 && enemyHp > 0 && companion && companionHp > 20) {
+    const saveText = rand(battleDescriptions.companion.save).replace('{name}', companion.name);
+    lines.push({ text: saveText, type: 'action' });
+    lines.push({
+      text: `"${hero.name}！快走！别管我！"`,
+      type: 'dialogue',
+      speaker: companion.name
+    });
+    lines.push({ text: `趁着【${companion.name}】拼死拖住敌人的瞬间，你被推入草丛，勉强逃离了战场...`, type: 'narrative' });
+    // 这里并没有判死，视为一种特殊的"逃跑"
+    return lines;
   }
 
-  // 计算战斗持续时间（秒）
-  const battleDuration = Math.floor((Date.now() - battleStartTime) / 1000);
-
-  // 战斗结果
+  // 胜利
   if (enemyHp <= 0) {
-    // 敌人被击败
-    const victoryType = Math.random();
+    lines.push({ text: `【${enemy.name}】${rand(['口吐鲜血', '双目圆睁'])}，倒在地上动弹不得。`, type: 'narrative' });
 
-    if (victoryType < 0.3) {
-      // 30% 击杀
-      lines.push({
-        text: `【${enemy.name}】${rand(['口吐鲜血', '双目圆睁', '发出一声不甘的怒吼'])}，${rand(['轰然倒地', '气绝身亡', '当场毙命'])}！`,
-        type: 'narrative'
-      });
-      lines.push({
-        text: `经过${roundCount}个回合的激战，你${companion && companionHp > 0 ? `与【${companion.name}】合力` : ''}击杀了【${enemy.name}】！`,
-        type: 'narrative'
-      });
-
-      // 添加击杀标记
-      if (world) {
-        if (!world.flags) world.flags = {};
-        world.flags[`killed_${enemy.id}`] = true;
-        world.flags[`defeated_${enemy.id}`] = true;
-      }
-    } else if (victoryType < 0.8) {
-      // 50% 击败
-      const escapeLine = rand([
-        `【${enemy.name}】见势不妙，${rand(['虚晃一招', '丢下一颗烟幕弹', '突然转身'])}，${rand(['仓皇逃窜', '迅速离去', '消失在山林间'])}`,
-        `【${enemy.name}】${rand(['强撑着身体', '捂着伤口'])}，${rand(['咬牙切齿地说道', '狠狠瞪了你一眼'])}："${rand(battleDescriptions.dialogue.victory)}"`,
-        `【${enemy.name}】${rand(['单膝跪地', '连退数步'])}，${rand(['吐出一口鲜血', '脸色苍白'])}："${rand(battleDescriptions.dialogue.victory)}"`
-      ]);
-
-      lines.push({
-        text: escapeLine,
-        type: 'narrative'
-      });
-
-      // 添加击败标记
-      if (world) {
-        if (!world.flags) world.flags = {};
-        world.flags[`defeated_${enemy.id}`] = true;
-      }
-    } else {
-      // 20% 投降
-      lines.push({
-        text: `【${enemy.name}】突然收招后退，单膝跪地："${rand(['少侠武功高强', '在下心服口服', '是在下有眼不识泰山'])}，${rand(['请饶在下一命', '甘拜下风', '愿听差遣'])}！"`,
-        type: 'dialogue',
-        speaker: enemy.name
-      });
-
-      // 添加投降标记
-      if (world) {
-        if (!world.flags) world.flags = {};
-        world.flags[`surrendered_${enemy.id}`] = true;
-        world.flags[`defeated_${enemy.id}`] = true;
-      }
-    }
-
-    // 增加与同伴的关系（如果参与战斗）
     if (companion && companionHp > 0) {
       lines.push({
-        text: `【${companion.name}】${rand(['微微一笑', '收起武器', '松了一口气'])}："${rand(['配合得不错！', '干得漂亮！', '我们赢了！'])}"`,
+        text: `【${companion.name}】${rand(['擦了擦汗', '收起武器'])}："好险，我们赢了！"`,
         type: 'dialogue',
         speaker: companion.name
       });
     }
 
-  } else if (heroHp <= 0 && (!companion || companionHp <= 0)) {
-    // 玩家战败
-    const defeatType = Math.random();
+    // 🆕 Feature 3: 如果允许选择结果，则不自动生成击杀/逃跑文案，直接返回
+    if (canChooseOutcome) {
+      lines.push({ text: `【${enemy.name}】已无力再战，任由你发落。`, type: 'narrative' });
+      return lines;
+    }
 
-    if (defeatType < 0.7) {
-      // 70% 敌人嘲讽后离开
-      lines.push({
-        text: `【${enemy.name}】${rand(['居高临下地看着你', '轻蔑地哼了一声'])}："${rand(battleDescriptions.dialogue.defeat)}"`,
-        type: 'dialogue',
-        speaker: enemy.name
-      });
-      lines.push({
-        text: `【${enemy.name}】${rand(['转身离去', '扬长而去', '消失在夜色中'])}，留下${companion ? '你们' : '你'}不省人事地倒在地上...`,
-        type: 'narrative'
-      });
-    } else {
-      // 30% 被俘虏或其它结局
-      lines.push({
-        text: `【${enemy.name}】${rand(['一把抓起你', '命令手下'])}："${rand(['带回去！', '把他们绑起来！', '关进地牢！'])}"`,
-        type: 'dialogue',
-        speaker: enemy.name
-      });
-      lines.push({
-        text: '你的意识逐渐模糊，最后看到的是一片黑暗...',
-        type: 'narrative'
-      });
-
-      // 添加被俘标记
+    // 默认的自动结算逻辑 (兼容旧代码)
+    const victoryType = Math.random();
+    if (victoryType < 0.3) {
+      lines.push({ text: `你上前补了一刀，彻底了结了祸患。`, type: 'action' });
       if (world) {
         if (!world.flags) world.flags = {};
-        world.flags[`captured_by_${enemy.id}`] = true;
+        world.flags[`killed_${enemy.id}`] = true;
       }
+    } else {
+      lines.push({
+        text: `【${enemy.name}】见势不妙，${rand(['虚晃一招', '丢下一颗烟幕弹'])}，狼狈逃窜。`,
+        type: 'narrative'
+      });
     }
-  } else {
-    // 战斗超时或其它情况
+  }
+  // 失败 (且无同伴兜底)
+  else if (heroHp <= 0) {
     lines.push({
-      text: `【${enemy.name}】见久战不下，${rand(['虚晃一招', '突然收招'])}："${rand(['今日就到此为止', '改日再战', '后会有期'])}！"`,
+      text: `【${enemy.name}】${rand(['居高临下地看着你', '轻蔑地哼了一声'])}："${rand(battleDescriptions.dialogue.defeat)}"`,
       type: 'dialogue',
       speaker: enemy.name
     });
+    lines.push({ text: '你的意识逐渐模糊，最后看到的是一片黑暗...', type: 'narrative' });
+    // 逻辑层需要在 applySnippetResult 里处理 endGame
+  } else {
+    // 平局/超时
     lines.push({
-      text: `【${enemy.name}】${rand(['纵身一跃', '施展轻功', '转身离去'])}，${rand(['消失在夜色中', '转眼不见踪影', '迅速离开'])}。`,
+      text: `双方久战力竭，【${enemy.name}】见奈何不了你，${rand(['虚晃一招', '冷哼一声'])}，跳出战圈离去。`,
       type: 'narrative'
     });
   }
 
-  // 记录敌人最后使用的招式
-  if (enemy) {
-    enemy.lastUsedMove = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
-  }
-
-  // 添加战斗总结
-  lines.push({
-    text: `\n战斗结束，共进行了${roundCount}个回合。`,
-    type: 'narrative'
-  });
+  // 记录敌人招式
+  if (enemy) enemy.lastUsedMove = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
 
   return lines;
 };
