@@ -513,12 +513,13 @@ export const otherPeopleSnippets: StorySnippet[] = [
     req: (hero) => hero.locationId.startsWith('wild_'),
     run: (hero, world) => {
     // 生成两名NPC
+      const gender1 = Math.random() > 0.5 ? 'male' : 'female';
       const npc1: Person = {
         id: `npc_duel_1_${Date.now()}`,
-        name: genName(Math.random() > 0.5 ? 'male' : 'female'),
+        name: genName(gender1),
         sectId: 'none',
         role: 'hero',
-        gender: 'male',
+        gender: gender1,
         age: 25,
         status: 'alive',
         relations: [],
@@ -527,14 +528,15 @@ export const otherPeopleSnippets: StorySnippet[] = [
         flags: {},
         arts: [],
         knowledge: [],
-        appearance: genAppearance('male', 'hero')
+        appearance: genAppearance(gender1, 'hero')
       };
+      const gender2 = Math.random() > 0.5 ? 'male' : 'female';
       const npc2: Person = {
         id: `npc_duel_2_${Date.now()}`,
-        name: genName(Math.random() > 0.5 ? 'male' : 'female'),
+        name: genName(gender2),
         sectId: 'none',
         role: 'bandit',
-        gender: 'male',
+        gender: gender2,
         age: 30,
         status: 'alive',
         relations: [],
@@ -543,7 +545,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
         flags: {},
         arts: [],
         knowledge: [],
-        appearance: genAppearance('male', 'bandit')
+        appearance: genAppearance(gender2, 'bandit')
       };
 
       const desc1 = describeAppearance(npc1);
@@ -601,35 +603,89 @@ export const otherPeopleSnippets: StorySnippet[] = [
     weight: 35,
     req: (hero) => hero.locationId.startsWith('wild_'),
     run: (hero, world) => {
-      const banditName = genName('male');
+      // 随机生成山贼性别和名字
+      const banditGender = Math.random() > 0.7 ? 'female' : 'male';
+      const banditName = genName(banditGender);
+
+      // 随机选择门派（包括无门派）
+      const sects = ['none', 'wudang', 'shaolin', 'emei', 'kunlun', 'huashan', 'gaibang', 'mingjiao'];
+      const sectId = rand(sects);
+
+      // 随机武器
+      const weapons = ['单刀', '双刀', '长剑', '短剑', '长枪', '长棍', '双钩', '软鞭', '判官笔', '铁扇'];
+      const weapon = rand(weapons);
+
+      // 随机外貌特征
+      const appearances = [
+        '脸上有一道狰狞的刀疤',
+        '眼神阴鸷',
+        '满脸横肉',
+        '身形魁梧',
+        '目光如炬',
+        '面带煞气',
+        '身形瘦削',
+        '步履轻盈'
+      ];
+      const appearance = rand(appearances);
+
+      // 随机出场方式
+      const entrances = [
+        `路旁树影中缓缓走出一人，${appearance}，手中${weapon}寒光闪闪`,
+        `前方山石后转出一人，${appearance}，${weapon}横在胸前`,
+        `头顶树梢一阵轻响，一人飘然落下，${appearance}，${weapon}直指你面门`,
+        `道旁草丛中突然窜出一人，${appearance}，${weapon}在阳光下泛着冷光`
+      ];
+
+      // 随机台词
+      const dialogues = [
+        `"此路是我开，此树是我栽，要想从此过，留下买路财！"`,
+        `"看你这身打扮，定是富家子弟，把值钱的东西都交出来！"`,
+        `"哼，今日遇到我${banditName}，算你倒霉！"`,
+        `"识相的把钱财留下，否则休怪${banditGender === 'male' ? '大爷' : '姑奶奶'}不客气！"`,
+        `"嘿嘿，好久没开张了，今天总算等到只肥羊！"`
+      ];
+
+      // 根据门派调整描述
+      let sectInfo = '';
+      if (sectId !== 'none') {
+        const sectNames: Record<string, string> = {
+          wudang: '武当',
+          shaolin: '少林',
+          emei: '峨眉',
+          kunlun: '昆仑',
+          huashan: '华山',
+          gaibang: '丐帮',
+          mingjiao: '明教'
+        };
+        sectInfo = `，看其招数似是${sectNames[sectId]}派的路数`;
+      }
+
       const banditNpc: Person = {
         id: `npc_bandit_${Date.now()}`,
         name: banditName,
-        sectId: 'none',
+        sectId,
         role: 'bandit',
-        gender: 'male',
-        age: 30,
+        gender: banditGender,
+        age: 25 + Math.floor(Math.random() * 20), // 25-45岁
         status: 'alive',
         relations: [],
         locationId: hero.locationId,
         inventory: [],
         flags: {},
         arts: [],
-        knowledge: []
+        knowledge: [],
+        appearance: genAppearance(banditGender, 'bandit')
       };
 
       const bestArt = hero.arts.length > 0 ? getArtByName(hero.arts[0]) : getArtByName('太祖长拳');
-
-      // 使用新的参数 canChooseOutcome: true
       const battleLines = generateBattle(hero, banditNpc, bestArt, null, { rounds: 5, canChooseOutcome: true }, world);
-
-      // 简单判断是否胜利 (非严谨判定，最好 generateBattle 返回结构体，但为了兼容暂且如此)
       const isVictory = !battleLines.some(l => l.text.includes('昏死过去') || l.text.includes('逃离'));
 
       return {
         lines: [
-          { text: '路边草丛突然跳出一个蒙面大汉！', type: 'action' },
-          { text: `【${banditName}】: "留下买路财！"`, type: 'dialogue', speaker: banditName },
+          { text: `${rand(entrances)}。`, type: 'action' },
+          { text: `【${banditName}】: ${rand(dialogues)}`, type: 'dialogue', speaker: banditName },
+          { text: `对方手持${weapon}，${appearance}${sectInfo}。`, type: 'narrative' },
         ],
         choices: [
           {
