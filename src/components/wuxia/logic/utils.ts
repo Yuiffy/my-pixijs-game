@@ -442,6 +442,15 @@ export const describeAppearance = (person: Person): string => {
   return desc;
 };
 
+/**
+ * 过滤掉已死亡的NPC
+ * @param npcs 要过滤的NPC数组
+ * @returns 存活的NPC数组
+ */
+export const filterAliveNpcs = (npcs: Person[]): Person[] => {
+  return npcs.filter(npc => npc.status !== 'dead' && !npc.flags?.isDead);
+};
+
 // 描述角色外表变化（再次见面）
 export const getSectMembersList = (sect: Sect, world: any): string => {
   if (!sect.members || sect.members.length === 0) {
@@ -552,11 +561,15 @@ export const getBattleOutcomeChoices = (
       result: {
         lines: [
           { text: '你眼神一冷，手起刀落。', type: 'action' as const },
-          { text: `【${enemy.name}】倒在了血泊中。`, type: 'narrative' as const }
+          { text: `【${enemy.name}】倒在了血泊中。`, type: 'narrative' as const },
+          { text: `【${enemy.name}】已气绝身亡。`, type: 'narrative' as const }
         ],
         addFlag: `killed_${enemy.id}`,
         removeItem: enemy.id,
-        addRelations: [{ targetId: enemy.id, type: 'enemy' as RelationType, value: -100 }]
+        addRelations: [{ targetId: enemy.id, type: 'enemy' as RelationType, value: -100 }],
+        // Mark the NPC as dead and remove them from the world
+        setNpcStatus: { id: enemy.id, status: 'dead' as const },
+        removeFromWorld: [enemy.id]
       }
     },
     {

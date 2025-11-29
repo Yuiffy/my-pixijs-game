@@ -338,6 +338,30 @@ export default function WuxiaGame() {
             });
           }
 
+          // 设置NPC状态（如设置为死亡），支持单个或批量设置
+          if (result.setNpcStatus) {
+            const statusUpdates = Array.isArray(result.setNpcStatus) ? result.setNpcStatus : [result.setNpcStatus];
+
+            statusUpdates.forEach(update => {
+              console.log(`设置NPC ${update.id} 状态为: ${update.status}`);
+              const npcIndex = newNpcs.findIndex(n => n.id === update.id);
+
+              if (npcIndex !== -1) {
+                newNpcs[npcIndex] = {
+                  ...newNpcs[npcIndex],
+                  status: update.status,
+                  flags: {
+                    ...newNpcs[npcIndex].flags,
+                    isDead: update.status === 'dead' ? true : undefined
+                  }
+                };
+                console.log(`已更新NPC ${update.id} 状态为 ${update.status}`);
+              } else {
+                console.warn(`未找到NPC: ${update.id}`);
+              }
+            });
+          }
+
           if (result.addArt) {
             console.log(`添加武学: ${result.addArt}`);
             newArts.push(result.addArt);
@@ -385,6 +409,15 @@ export default function WuxiaGame() {
             newParty.push(memberId);
           }
         });
+      }
+
+      // 从世界中移除NPC
+      if (result.removeFromWorld) {
+        const npcIdsToRemove = Array.isArray(result.removeFromWorld) ? result.removeFromWorld : [result.removeFromWorld];
+        console.log('从世界中移除NPC:', npcIdsToRemove);
+        newNpcs = newNpcs.filter(npc => !npcIdsToRemove.includes(npc.id));
+        // 同时从队伍中移除
+        newParty = newParty.filter(id => !npcIdsToRemove.includes(id));
       }
 
       // 离开队伍 (支持单个或批量移除)

@@ -123,6 +123,8 @@ export interface SnippetResult {
   addRelations?: Relation[]; // 🆕 新增：支持批量添加/更新关系
   addFlags?: Record<string, any>; // 添加多个标志
   removeFlags?: string[]; // 移除多个标志
+  setNpcStatus?: { id: string; status: 'alive' | 'dead' | 'missing' } | Array<{ id: string; status: 'alive' | 'dead' | 'missing' }>; // 设置单个或多个NPC状态
+  removeFromWorld?: string | string[]; // 从世界中移除NPC
   addArt?: string;
   addKnowledge?: string;
   addToParty?: string | string[]; // 🆕 支持单个或批量加入队伍 (ID)

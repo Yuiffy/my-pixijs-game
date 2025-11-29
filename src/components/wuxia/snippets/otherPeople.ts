@@ -11,7 +11,8 @@ import {
   describeAppearance,
   getBattleOutcomeChoices,
   getCompanionNamesList,
-  getCompanionInviteChoices
+  getCompanionInviteChoices,
+  filterAliveNpcs
 } from "../logic/utils";
 
 export const otherPeopleSnippets: StorySnippet[] = [
@@ -27,7 +28,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
     weight: 15,
     stageMax: StoryStage.CRISIS,
     req: (hero, world) => {
-      const disciples = world.npcs.filter((n: Person) => n.sectId === hero.sectId && n.role === 'disciple' && n.id !== hero.id);
+      const disciples = filterAliveNpcs(world.npcs).filter((n: Person) => n.sectId === hero.sectId && n.role === 'disciple' && n.id !== hero.id);
       return disciples.length > 0;
     },
     run: (hero, world) => {
@@ -59,7 +60,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
     weight: 20,
     stageMax: StoryStage.CRISIS,
     req: (hero, world) => {
-      const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice'));
+      const master = filterAliveNpcs(world.npcs).find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice'));
       return !!master && hero.locationId.startsWith('sect_');
     },
     run: (hero, world) => {
@@ -91,7 +92,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
     req: (hero, world) => {
       if (world.locations.find((l: LocationInfo) => l.id === hero.locationId)?.type !== 'city') return false;
       // 检查是否已经有商人，如果有，检查冷却时间
-      const merchant = world.npcs.find((n: Person) => n.role === 'merchant' && n.locationId === hero.locationId);
+      const merchant = filterAliveNpcs(world.npcs).find((n: Person) => n.role === 'merchant' && n.locationId === hero.locationId);
       if (merchant) {
         const merchantRel = hero.relations.find((r) => r.targetId === merchant.id);
         const meetCount = merchantRel ? Math.floor((merchantRel.value || 0) / 10) : 0;
@@ -923,7 +924,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
     weight: 25,
     stageMax: StoryStage.CRISIS,
     req: (hero, world) => {
-      const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice'));
+      const master = filterAliveNpcs(world.npcs).find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice'));
       if (!master) return false;
       const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
       const arts = getSectArts(sectName);
@@ -995,15 +996,30 @@ export const otherPeopleSnippets: StorySnippet[] = [
     id: 'spar_with_friend',
     tags: ['city_daily', 'wild_daily'],
     weight: 20,
-    req: (hero) => {
-      const friends = hero.relations.filter((r) => r.type === 'friend' && r.value > 30);
-      return friends.length > 0;
+    req: (hero, world) => {
+      const friendRelations = hero.relations.filter((r) => r.type === 'friend' && r.value > 30);
+      // Check if any of these friends are still alive
+      const aliveFriends = friendRelations.some(rel => {
+        const friend = world.npcs.find((n: Person) => n.id === rel.targetId);
+        return friend && friend.status !== 'dead' && !friend.flags?.isDead;
+      });
+      return aliveFriends;
     },
     run: (hero, world) => {
-      const friends = hero.relations.filter((r) => r.type === 'friend' && r.value > 30);
-      const friendRel = rand(friends);
-      const friend = world.npcs.find((n: Person) => n.id === friendRel.targetId);
-      if (!friend) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+      // Filter friends who are still alive and have a high enough relationship value
+      const aliveFriends = hero.relations
+        .filter((r) => r.type === 'friend' && r.value > 30)
+        .map(rel => ({
+          rel,
+          npc: world.npcs.find((n: Person) => n.id === rel.targetId)
+        }))
+        .filter(({ npc }) => npc && npc.status !== 'dead' && !npc.flags?.isDead);
+
+      if (aliveFriends.length === 0) {
+        return { lines: [{ text: '你环顾四周，发现没有可以切磋的朋友。', type: 'narrative' }] };
+      }
+
+      const { rel: friendRel, npc: friend } = rand(aliveFriends);
 
       const artName = hero.arts.length > 0 ? hero.arts[0] : '太祖长拳';
       const art = getArtByName(artName);
