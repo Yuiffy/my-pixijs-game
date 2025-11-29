@@ -33,11 +33,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
           { text: `'看招！'你使出一招'${move}'，${partner.name}连忙招架。`, type: 'action' },
           { text: '几个回合下来，你们都有所收获。', type: 'narrative' },
         ],
-        addRelation: {
+        addRelations: [{
           targetId: partner.id,
           type: 'friend',
           value: (hero.relations.find((r) => r.targetId === partner.id)?.value || 0) + 10,
-        },
+        }],
       };
     },
   },
@@ -64,11 +64,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
           { text: `“徒儿，${randomArt.desc}，你要牢记在心。”`, type: 'dialogue', speaker: master.name },
           { text: '你认真聆听，感觉对武学的理解更深了一层。', type: 'inner' },
         ],
-        addRelation: {
+        addRelations: [{
           targetId: master.id,
           type: 'master',
           value: hero.relations.find((r) => r.targetId === master.id)?.value || 50 + 5,
-        },
+        }],
       };
     },
   },
@@ -129,11 +129,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
             { text: '\'我这里有些江湖上常用的物品，以后有需要可以来找我。\'', type: 'dialogue', speaker: merchantName },
           ],
           addNpc: newMerchant,
-          addRelation: {
+          addRelations: [{
             targetId: actualMerchant.id,
             type: 'acquaintance',
             value: 5,
-          },
+          }],
         };
       }
 
@@ -154,22 +154,22 @@ export const otherPeopleSnippets: StorySnippet[] = [
                   { text: `'这个【${randomItem}】不错，送给你了，交个朋友！'`, type: 'dialogue', speaker: merchantName },
                 ],
                 addItem: randomItem,
-                addRelation: {
+                addRelations: [{
                   targetId: actualMerchant.id,
                   type: 'acquaintance',
                   value: (merchantRel?.value || 5) + 15,
-                },
+                }],
               },
             },
             {
               text: '礼貌地拒绝',
               result: {
                 lines: [{ text: '你礼貌地拒绝了，商人也不强求。', type: 'narrative' }],
-                addRelation: {
+                addRelations: [{
                   targetId: actualMerchant.id,
                   type: 'acquaintance',
                   value: (merchantRel?.value || 5) + 5,
-                },
+                }],
               },
             },
           ],
@@ -200,11 +200,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 { text: `'这个【${randomItem}】送给你了，老朋友了！'`, type: 'dialogue', speaker: merchantName },
               ],
               addItem: randomItem,
-              addRelation: {
+              addRelations: [{
                 targetId: actualMerchant.id,
                 type: 'friend',
                 value: (merchantRel?.value || 20) + 10,
-              },
+              }],
             },
           },
           {
@@ -214,11 +214,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 { text: '你们闲聊了几句江湖上的趣事。', type: 'narrative' },
                 { text: '你感觉心情舒畅了不少。', type: 'inner' },
               ],
-              addRelation: {
+              addRelations: [{
                 targetId: actualMerchant.id,
                 type: merchantRel?.type === 'friend' ? 'friend' : 'acquaintance',
                 value: (merchantRel?.value || 20) + 5,
-              },
+              }],
             },
           },
           {
@@ -352,16 +352,16 @@ export const otherPeopleSnippets: StorySnippet[] = [
               text: `使出【${bestArt.name}】助战`,
               result: {
                 lines: [
-                  ...generateBattle(hero, banditNpc, bestArt, null, 3),
+                  ...generateBattle(hero, banditNpc, bestArt, null, 3).lines,
                   { text: `'多谢少侠相助！'【${wandererName}】感激地说道。`, type: 'dialogue', speaker: wandererName },
                   { text: '\'少侠武功高强，不如我们结伴而行？\'', type: 'dialogue', speaker: wandererName },
                 ],
                 addNpc: [newNpc, banditNpc],
-                addRelation: {
+                addRelations: [{
                   targetId: newNpc.id,
                   type: 'friend',
                   value: 50,
-                },
+                }],
                 choices: [
                   {
                     text: '同意结伴',
@@ -394,11 +394,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
                   { text: `你最终还是出手相助，但【${wandererName}】对你的态度冷淡了许多。`, type: 'narrative' },
                 ],
                 addNpc: [newNpc, banditNpc],
-                addRelation: {
+                addRelations: [{
                   targetId: newNpc.id,
                   type: 'acquaintance',
                   value: 20,
-                },
+                }],
               },
             },
           ],
@@ -430,11 +430,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 { text: `【${wandererName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' },
               ],
               addNpc: newNpc,
-              addRelation: {
+              addRelations: [{
                 targetId: newNpc.id,
                 type: scenario.relation,
                 value: scenario.value,
-              },
+              }],
               setCompanion: newNpc.id,
             },
           },
@@ -446,11 +446,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 { text: `【${wandererName}】也不强求，你们就此别过。`, type: 'narrative' },
               ],
               addNpc: newNpc,
-              addRelation: {
+              addRelations: [{
                 targetId: newNpc.id,
                 type: 'acquaintance',
                 value: 10,
-              },
+              }],
             },
           },
         ],
@@ -462,7 +462,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
     id: 'check_party_status',
     tags: ['city_daily', 'wild_daily'],
     weight: 10,
-    req: (hero, world) => !!world.party,
+    req: (hero, world) => !!world.party && world.party.length > 0,
     run: (hero, world) => {
       // 获取所有队友信息
       const partyMembers = (world.party || [])
@@ -566,7 +566,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
               lines: [
                 { text: `你大喝一声，拔剑助阵【${npc1.name}】！`, type: 'action' },
                 // 战斗逻辑：你打 npc2
-                ...generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world)
+                ...generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world).lines
               ],
               addNpc: [npc1, npc2],
               // 如果战斗胜利，提供战后选择 (Feature 3)
@@ -579,7 +579,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
             result: {
               lines: [
                 { text: `你居然选择了帮助那个看着像恶人的【${npc2.name}】！`, type: 'action' },
-                ...generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world)
+                ...generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world).lines
               ],
               addNpc: [npc1, npc2],
               choices: getBattleOutcomeChoices(npc1, hero, world, -20)
@@ -601,9 +601,8 @@ export const otherPeopleSnippets: StorySnippet[] = [
     id: 'travel_bandits_advanced',
     tags: ['wild_daily'],
     weight: 35,
-    req: (hero) => hero.locationId.startsWith('wild_'),
     run: (hero, world) => {
-      // 随机生成山贼性别和名字
+    // 随机生成山贼性别和名字
       const banditGender = Math.random() > 0.7 ? 'female' : 'male';
       const banditName = genName(banditGender);
 
@@ -615,18 +614,26 @@ export const otherPeopleSnippets: StorySnippet[] = [
       const weapons = ['单刀', '双刀', '长剑', '短剑', '长枪', '长棍', '双钩', '软鞭', '判官笔', '铁扇'];
       const weapon = rand(weapons);
 
-      // 随机外貌特征
-      const appearances = [
-        '脸上有一道狰狞的刀疤',
-        '眼神阴鸷',
-        '满脸横肉',
-        '身形魁梧',
-        '目光如炬',
-        '面带煞气',
-        '身形瘦削',
-        '步履轻盈'
-      ];
-      const appearance = rand(appearances);
+      // 先创建NPC对象
+      const banditNpc: Person = {
+        id: `npc_bandit_${Date.now()}`,
+        name: banditName,
+        sectId,
+        role: 'bandit',
+        gender: banditGender,
+        age: 25 + Math.floor(Math.random() * 20), // 25-45岁
+        status: 'alive',
+        relations: [],
+        locationId: hero.locationId,
+        inventory: [],
+        flags: {},
+        arts: [],
+        knowledge: [],
+        appearance: genAppearance(banditGender, 'bandit')
+      };
+
+      // 使用NPC的外观特征生成描述
+      const appearance = describeAppearance(banditNpc);
 
       // 随机出场方式
       const entrances = [
@@ -657,41 +664,25 @@ export const otherPeopleSnippets: StorySnippet[] = [
           gaibang: '丐帮',
           mingjiao: '明教'
         };
-        sectInfo = `，看其招数似是${sectNames[sectId]}派的路数`;
+        sectInfo = `看其招数似是${sectNames[sectId]}派的路数`;
       }
 
-      const banditNpc: Person = {
-        id: `npc_bandit_${Date.now()}`,
-        name: banditName,
-        sectId,
-        role: 'bandit',
-        gender: banditGender,
-        age: 25 + Math.floor(Math.random() * 20), // 25-45岁
-        status: 'alive',
-        relations: [],
-        locationId: hero.locationId,
-        inventory: [],
-        flags: {},
-        arts: [],
-        knowledge: [],
-        appearance: genAppearance(banditGender, 'bandit')
-      };
-
+      // 生成战斗
       const bestArt = hero.arts.length > 0 ? getArtByName(hero.arts[0]) : getArtByName('太祖长拳');
-      const battleLines = generateBattle(hero, banditNpc, bestArt, null, { rounds: 5, canChooseOutcome: true }, world);
-      const isVictory = !battleLines.some(l => l.text.includes('昏死过去') || l.text.includes('逃离'));
+      const battleResult = generateBattle(hero, banditNpc, bestArt, null, { rounds: 5, canChooseOutcome: true }, world);
+      const isVictory = battleResult.outcome === 'victory';
 
       return {
         lines: [
           { text: `${rand(entrances)}。`, type: 'action' },
-          { text: `【${banditName}】: ${rand(dialogues)}`, type: 'dialogue', speaker: banditName },
-          { text: `对方手持${weapon}，${appearance}${sectInfo}。`, type: 'narrative' },
+          { text: `${rand(dialogues)}`, type: 'dialogue', speaker: banditName },
+          { text: `对方手持${weapon}，${sectInfo}。`, type: 'narrative' },
         ],
         choices: [
           {
             text: '动手！',
             result: {
-              lines: battleLines,
+              lines: [...battleResult.lines],
               addNpc: banditNpc,
               // 只有胜利了才显示处置选项
               choices: isVictory ? getBattleOutcomeChoices(banditNpc, hero, world) : []
@@ -707,52 +698,6 @@ export const otherPeopleSnippets: StorySnippet[] = [
         ]
       };
     }
-  },
-  // 与敌人再次相遇
-  {
-    id: 'meet_enemy_again',
-    tags: ['city_daily', 'wild_daily'],
-    weight: 30,
-    stageMin: StoryStage.RISING,
-    req: (hero) => {
-      const hasEnemy = hero.relations.some((r) => r.type === 'enemy');
-      return hasEnemy;
-    },
-    run: (hero, world) => {
-      const enemyRel = hero.relations.find((r) => r.type === 'enemy');
-      if (!enemyRel) return { lines: [{ text: '无事发生', type: 'narrative' }] };
-      const enemy = world.npcs.find((n: Person) => n.id === enemyRel.targetId);
-      if (!enemy) return { lines: [{ text: '无事发生', type: 'narrative' }] };
-
-      return {
-        lines: [
-          { text: `冤家路窄！你竟然又遇到了【${enemy.name}】！`, type: 'action' },
-          { text: '\'又是你！上次让你跑了，这次可没那么容易！\'', type: 'dialogue', speaker: enemy.name },
-        ],
-        choices: [
-          {
-            text: '拔剑相向',
-            result: {
-              lines: [
-                { text: '你们再次交手，这次你更加谨慎。', type: 'action' },
-                { text: '几个回合后，对方见占不到便宜，冷哼一声离开了。', type: 'narrative' },
-              ],
-              addRelation: {
-                targetId: enemy.id,
-                type: 'enemy',
-                value: enemyRel.value - 10,
-              },
-            },
-          },
-          {
-            text: '暂时退避',
-            result: {
-              lines: [{ text: '你选择暂时退避，君子报仇十年不晚。', type: 'narrative' }],
-            },
-          },
-        ],
-      };
-    },
   },
 
   // ===================================
@@ -869,11 +814,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
               ],
               addArt: randomArt.name,
               addNpc: newNpc,
-              addRelation: {
+              addRelations: [{
                 targetId: newNpc.id,
                 type: 'master',
                 value: 80,
-              },
+              }],
               addFlag: 'met_wandering_master',
             },
           },
@@ -888,11 +833,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
               ],
               addArt: randomArt.name,
               addNpc: newNpc,
-              addRelation: {
+              addRelations: [{
                 targetId: newNpc.id,
                 type: 'master',
                 value: 90,
-              },
+              }],
               addFlag: 'met_wandering_master',
             },
           },
@@ -949,11 +894,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
           { text: '你深深一拜，表示定不负师恩。', type: 'action' },
         ],
         addArt: newArt.name,
-        addRelation: {
+        addRelations: [{
           targetId: master.id,
           type: 'master',
           value: (hero.relations.find((r) => r.targetId === master.id)?.value || 50) + 10,
-        },
+        }],
       };
     },
   },
@@ -1004,11 +949,11 @@ export const otherPeopleSnippets: StorySnippet[] = [
           { text: `'看招！'你使出一招'${move}'，${friend.name}也认真应对。`, type: 'action' },
           { text: '你们互相切磋，都有所收获。', type: 'narrative' },
         ],
-        addRelation: {
+        addRelations: [{
           targetId: friend.id,
           type: 'friend',
           value: friendRel.value + 5,
-        },
+        }],
       };
     },
   },

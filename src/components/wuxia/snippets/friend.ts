@@ -41,13 +41,18 @@ export const friendSnippets: StorySnippet[] = [
       const companion = world.npcs.find((n: Person) => n.id === rand(companionIds));
       if (!companion) return { lines: [{ text: '...', type: 'narrative' }] };
 
+      const addRelations = [];
+      for (const companionId of companionIds) {
+        addRelations.push({ targetId: companionId, type: 'friend', value: 2 });
+      }
+
       return {
         lines: [
           { text: `【${companion.name}】提议："天色已晚，大家在此休息吧。"`, type: 'dialogue', speaker: companion.name },
           { text: '众人在避风处搭起帐篷，围坐在篝火旁。', type: 'action' }
         ],
         // 可以给全队加好感，这里简化为给互动的加
-        addRelation: { targetId: companion.id, type: 'friend', value: 2 }
+        addRelations
       };
     }
   },
@@ -91,11 +96,7 @@ export const friendSnippets: StorySnippet[] = [
           { text: '你们一边享用美食，一边聊着江湖趣事。', type: 'action' }
         ],
         addNpc: updatedNpc,
-        addRelation: {
-          targetId: companion.id,
-          type: currentType,
-          value: currentVal + 3
-        }
+        addRelations: [{ targetId: companion.id, type: currentType, value: currentVal + 3 }]
       };
     }
   },
@@ -130,11 +131,11 @@ export const friendSnippets: StorySnippet[] = [
           { text: `${topic}。`, type: 'narrative' },
           { text: '你们的关系更加亲近了。', type: 'inner' },
         ],
-        addRelation: {
+        addRelations: [{
           targetId: companion.id,
           type: hero.relations.find((r) => r.targetId === companion.id)?.type || 'friend',
-          value: (hero.relations.find((r) => r.targetId === companion.id)?.value || 0) + 3,
-        },
+          value: (hero.relations.find((r) => r.targetId === companion.id)?.value || 0) + 3
+        }],
         addTurn: 1,
       };
     },
@@ -162,11 +163,11 @@ export const friendSnippets: StorySnippet[] = [
                 { text: '你们在街上闲逛，看看各种小摊。', type: 'action' },
                 { text: `【${companion.name}】似乎很开心，${companion.gender === 'female' ? '她' : '他'}的笑容让你心情也好了起来。`, type: 'narrative' },
               ],
-              addRelation: {
+              addRelations: [{
                 targetId: companion.id,
                 type: hero.relations.find((r) => r.targetId === companion.id)?.type || 'friend',
                 value: (hero.relations.find((r) => r.targetId === companion.id)?.value || 0) + 8,
-              },
+              }],
               addTurn: 1,
             },
           },
@@ -216,11 +217,11 @@ export const friendSnippets: StorySnippet[] = [
                 { text: `【${companion.name}】${companion.gender === 'female' ? '她' : '他'}的脸更红了，${companion.gender === 'female' ? '她' : '他'}轻轻点了点头。`, type: 'narrative' },
                 { text: '你们的关系更进一步了。', type: 'inner' },
               ],
-              addRelation: {
+              addRelations: [{
                 targetId: companion.id,
                 type: 'crush',
                 value: (relation?.value || 0) + 15,
-              },
+              }],
             },
           },
           {
@@ -339,7 +340,7 @@ export const friendSnippets: StorySnippet[] = [
                       { text: `【${newName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' },
                     ],
                     addNpc: newNpc,
-                    addRelation: { targetId: newNpc.id, type: 'crush', value: 60 },
+                    addRelations: [{ targetId: newNpc.id, type: 'crush', value: 60 }],
                     addFlag: 'met_crush',
                     addToParty: newNpc.id, // 🆕 使用 addToParty
                   },
@@ -352,7 +353,7 @@ export const friendSnippets: StorySnippet[] = [
                       { text: `【${newName}】眼中闪过一丝失望，但还是礼貌地告别了。`, type: 'narrative' },
                     ],
                     addNpc: newNpc,
-                    addRelation: { targetId: newNpc.id, type: 'crush', value: 50 },
+                    addRelations: [{ targetId: newNpc.id, type: 'crush', value: 50 }],
                     addFlag: 'met_crush',
                   },
                 },

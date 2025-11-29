@@ -112,7 +112,7 @@ const eventMeetHiddenMaster: StorySnippet = {
             ],
             addArt: master.arts.length > 0 ? master.arts[0] : undefined,
             addFlag: `met_${master.id}`,
-            addRelation: { targetId: master.id, type: 'master', value: 30 },
+            addRelations: [{ targetId: master.id, type: 'master', value: 30 }],
             addTurn: 3
           }
         },
@@ -125,7 +125,7 @@ const eventMeetHiddenMaster: StorySnippet = {
               { text: '（切磋过程省略...）你虽然败了，但在实战中获益良多。', type: 'narrative' }
             ],
             addFlag: `met_${master.id}`,
-            addRelation: { targetId: master.id, type: 'acquaintance', value: 20 },
+            addRelations: [{ targetId: master.id, type: 'acquaintance', value: 20 }],
             addTurn: 1
           }
         },

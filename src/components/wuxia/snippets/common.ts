@@ -717,7 +717,7 @@ export const commonSnippets: StorySnippet[] = [
         removeItem: '密信',
         addItem: '回信',
         addNpc: isNewNpc ? targetNpc : undefined,
-        addRelation: { targetId: targetNpc.id, type: 'acquaintance', value: 15 },
+        addRelations: [{ targetId: targetNpc.id, type: 'acquaintance', value: 15 }],
         addTurn: 1,
       };
     },
@@ -795,7 +795,7 @@ export const commonSnippets: StorySnippet[] = [
         ],
         addNpc: newNpc,
         addFlag: 'has_villain',
-        addRelation: { targetId: newNpc.id, type: 'enemy', value: -100 },
+        addRelations: [{ targetId: newNpc.id, type: 'enemy', value: -100 }],
       };
     },
   },

@@ -55,11 +55,11 @@ export const sectAskMasterSnippet: StorySnippet = {
         { text: '师父耐心地为你讲解武学要诀。', type: 'action' }
       ],
       addKnowledge: 'sect_skill_training',
-      addRelation: {
+      addRelations: [{
         targetId: master.id,
         type: 'master' as const,
         value: 5
-      }
+      }]
     };
   }
 };

@@ -19,7 +19,7 @@ export const generateBattle = (
   enemyArt: MartialArt | null,
   options: number | BattleOptions = 5, // 兼容旧调用方式
   world?: any,
-): StoryLine[] => {
+): { lines: StoryLine[]; outcome: 'victory' | 'defeat' | 'escape' } => {
   // 解析参数
   const rounds = typeof options === 'number' ? options : (options.rounds || 5);
   const canChooseOutcome = typeof options === 'number' ? false : (options.canChooseOutcome || false);
@@ -334,7 +334,7 @@ export const generateBattle = (
     });
     lines.push({ text: `趁着【${companion.name}】拼死拖住敌人的瞬间，你被推入草丛，勉强逃离了战场...`, type: 'narrative' });
     // 这里并没有判死，视为一种特殊的"逃跑"
-    return lines;
+    return { lines, outcome: 'escape' as const };
   }
 
   // 胜利
@@ -349,10 +349,10 @@ export const generateBattle = (
       });
     }
 
-    // 🆕 Feature 3: 如果允许选择结果，则不自动生成击杀/逃跑文案，直接返回
+    // Feature 3: 如果允许选择结果，则不自动生成击杀/逃跑文案，直接返回
     if (canChooseOutcome) {
       lines.push({ text: `【${enemy.name}】已无力再战，任由你发落。`, type: 'narrative' });
-      return lines;
+      return { lines, outcome: 'victory' as const };
     }
 
     // 默认的自动结算逻辑 (兼容旧代码)
@@ -402,5 +402,12 @@ export const generateBattle = (
   // 记录敌人招式
   if (enemy) enemy.lastUsedMove = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
 
-  return lines;
+  // 返回战斗结果
+  if (enemyHp <= 0) {
+    return { lines, outcome: 'victory' as const };
+  }
+  if (heroHp <= 0) {
+    return { lines, outcome: 'defeat' as const };
+  }
+  return { lines, outcome: 'escape' as const };
 };
