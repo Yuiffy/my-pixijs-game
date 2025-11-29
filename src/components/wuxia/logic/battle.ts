@@ -11,6 +11,12 @@ interface BattleOptions {
   canChooseOutcome?: boolean; // 是否允许玩家选择战胜后的结果（Feature 3）
 }
 
+interface BattleResult {
+  lines: StoryLine[];
+  outcome: BattleOutcome;
+  endGame?: boolean;
+}
+
 // 战斗系统：多回合战斗（支持同伴参与、挡刀、兜底）
 export const generateBattle = (
   hero: Person,
@@ -19,7 +25,7 @@ export const generateBattle = (
   enemyArt: MartialArt | null,
   options: number | BattleOptions = 5, // 兼容旧调用方式
   world?: any,
-): { lines: StoryLine[]; outcome: BattleOutcome } => {
+): BattleResult => {
   // 解析参数
   const rounds = typeof options === 'number' ? options : (options.rounds || 5);
   const canChooseOutcome = typeof options === 'number' ? false : (options.canChooseOutcome || false);
@@ -388,7 +394,18 @@ export const generateBattle = (
         if (!world.flags) world.flags = {};
         world.flags.gameOver = true;
       }
+
+      // 🆕 修复核心：将濒死剧情的 endGame 和 choices 透传出去
+      // 这样主游戏循环才能接收到"游戏结束"或"复活选择"的指令
+      return {
+        lines,
+        outcome: BattleOutcome.DEFEAT,
+        endGame: result.endGame,
+      };
     }
+
+    // 如果没有找到濒死片段（防御性代码），默认判定失败
+    return { lines, outcome: BattleOutcome.DEFEAT, endGame: true };
   } else {
     // 平局或逃跑
     lines.push({

@@ -180,20 +180,58 @@ export default function WuxiaGame() {
   };
 
   const applySnippetResult = useCallback((result: SnippetResult) => {
+    console.log('applySnippetResult', result);
+
+    // 处理 addNpc 逻辑，确保在任何提前返回前执行
+    if (result.addNpc) {
+      setWorld((w) => {
+        if (!w) return null;
+        const newNpcs = [...w.npcs];
+        const npcsToAdd = Array.isArray(result.addNpc) ? result.addNpc : [result.addNpc];
+
+        npcsToAdd.forEach((npc) => {
+          if (!npc) return;
+          const existingIndex = newNpcs.findIndex(n => n.id === npc.id);
+          if (existingIndex >= 0) {
+            newNpcs[existingIndex] = {
+              ...newNpcs[existingIndex],
+              ...npc,
+              relations: npc.relations || newNpcs[existingIndex].relations,
+              inventory: npc.inventory || newNpcs[existingIndex].inventory,
+              flags: npc.flags || newNpcs[existingIndex].flags,
+              arts: npc.arts || newNpcs[existingIndex].arts,
+              knowledge: npc.knowledge || newNpcs[existingIndex].knowledge,
+            };
+          } else {
+            newNpcs.push(npc);
+          }
+        });
+
+        return { ...w, npcs: newNpcs };
+      });
+    }
+
+    // 渲染文本行
     result.lines.forEach((line) => addStory(line.text, line.type, line.speaker));
 
-    if (result.choices && result.choices.length > 0) {
-      setIsAutoPlaying(false);
-      setChoices(result.choices.map((c, idx) => ({
-        id: `choice-${Date.now()}-${idx}-${c.text.slice(0, 20)}`,
-        text: c.text,
-        desc: c.desc, // Pass description
-        action: () => {
-          setChoices([]);
-          applySnippetResult(c.result);
-          if (!c.result.endGame && !c.result.choices) setIsAutoPlaying(true);
-        },
-      })));
+    if (result.choices) {
+      if (result.choices.length > 0) {
+        setIsAutoPlaying(false);
+        setChoices(result.choices.map((c, idx) => ({
+          id: `choice-${Date.now()}-${idx}-${c.text.slice(0, 20)}`,
+          text: c.text,
+          desc: c.desc,
+          action: () => {
+            setChoices([]);
+            applySnippetResult(c.result);
+            if (!c.result.endGame && !c.result.choices) setIsAutoPlaying(true);
+          },
+        })));
+      } else {
+        // 当 choices 为空数组时，自动继续游戏
+        console.log('No choices available, auto-continuing...');
+        setIsAutoPlaying(true);
+      }
       return;
     }
 
@@ -224,47 +262,39 @@ export default function WuxiaGame() {
         setTimeout(() => addStory(`【 第${newStage + 1}章：${stageNames[newStage]} 】`, 'time-pass'), 100);
       }
 
-      if (result.addNpc) {
-        const npcsToAdd = Array.isArray(result.addNpc) ? result.addNpc : [result.addNpc];
+      // addNpc 逻辑已移动到函数开始处，确保在任何提前返回前执行
 
-        npcsToAdd.forEach((npc) => {
-          // Check if NPC already exists
-          const existingNpcIndex = newNpcs.findIndex((n) => n.id === npc.id);
-
-          if (existingNpcIndex >= 0) {
-            // Update existing NPC
-            newNpcs[existingNpcIndex] = {
-              ...newNpcs[existingNpcIndex],
-              ...npc,
-              // Preserve relations unless explicitly overridden
-              relations: npc.relations || newNpcs[existingNpcIndex].relations,
-              // Preserve inventory unless explicitly overridden
-              inventory: npc.inventory || newNpcs[existingNpcIndex].inventory,
-              // Preserve flags unless explicitly overridden
-              flags: npc.flags || newNpcs[existingNpcIndex].flags,
-              // Preserve arts unless explicitly overridden
-              arts: npc.arts || newNpcs[existingNpcIndex].arts,
-              // Preserve knowledge unless explicitly overridden
-              knowledge: npc.knowledge || newNpcs[existingNpcIndex].knowledge,
-            };
-          } else {
-            newNpcs.push(npc);
-          }
-        });
-      }
-
+      console.log('=== 开始处理主角状态更新 ===');
       newNpcs = newNpcs.map((n) => {
         if (n.id === 'hero') {
+          console.log('当前主角状态:', {
+            位置: n.locationId,
+            物品: n.inventory,
+            武学: n.arts,
+            知识: n.knowledge,
+            关系: n.relations,
+            标记: n.flags
+          });
+
           const newInv = [...n.inventory];
           const newArts = [...n.arts];
           const newKnowledge = [...n.knowledge];
           const newRelations = [...n.relations];
           const newFlags = { ...n.flags };
 
-          if (result.addItem) newInv.push(result.addItem);
+          if (result.addItem) {
+            console.log(`添加物品: ${result.addItem}`);
+            newInv.push(result.addItem);
+          }
           if (result.removeItem) {
+            console.log(`尝试移除物品: ${result.removeItem}`);
             const idx = newInv.indexOf(result.removeItem);
-            if (idx > -1) newInv.splice(idx, 1);
+            if (idx > -1) {
+              newInv.splice(idx, 1);
+              console.log('物品移除成功');
+            } else {
+              console.warn(`物品未找到: ${result.removeItem}`);
+            }
           }
 
           // 🆕 支持批量更新关系
@@ -273,19 +303,48 @@ export default function WuxiaGame() {
               (r) => r.targetId === rel.targetId,
             );
             if (existingIdx > -1) {
+              console.log(`更新与 ${rel.targetId} 的关系:`, rel);
               newRelations[existingIdx] = rel;
             } else {
+              console.log(`添加新关系:`, rel);
               newRelations.push(rel);
             }
           };
 
-          if (result.addRelations) result.addRelations.forEach(updateRelation);
+          if (result.addRelations) {
+            console.log('批量添加关系:', result.addRelations);
+            result.addRelations.forEach(updateRelation);
+          }
 
-          if (result.addFlag) newFlags[result.addFlag] = true;
-          if (result.addArt) newArts.push(result.addArt);
-          if (result.addKnowledge) newKnowledge.push(result.addKnowledge);
+          // 处理添加标记
+          if (result.addFlags) {
+            console.log('添加标记:', result.addFlags);
+            Object.entries(result.addFlags).forEach(([key, value]) => {
+              console.log(`设置标记 ${key} =`, value);
+              newFlags[key] = value !== undefined ? value : true;
+            });
+          }
 
-          return {
+          // 处理移除标记
+          if (result.removeFlags) {
+            console.log('移除标记:', result.removeFlags);
+            result.removeFlags.forEach(flag => {
+              console.log(`移除标记 ${flag}, 存在: ${flag in newFlags ? '是' : '否'}`);
+              delete newFlags[flag];
+            });
+          }
+
+          if (result.addArt) {
+            console.log(`添加武学: ${result.addArt}`);
+            newArts.push(result.addArt);
+          }
+
+          if (result.addKnowledge) {
+            console.log(`添加知识: ${result.addKnowledge}`);
+            newKnowledge.push(result.addKnowledge);
+          }
+
+          const updatedHero = {
             ...n,
             inventory: newInv,
             relations: newRelations,
@@ -294,9 +353,22 @@ export default function WuxiaGame() {
             knowledge: newKnowledge,
             locationId: result.newLocationId || n.locationId,
           };
+
+          console.log('更新后的主角状态:', {
+            位置: updatedHero.locationId,
+            物品: updatedHero.inventory,
+            武学: updatedHero.arts,
+            知识: updatedHero.knowledge,
+            关系: updatedHero.relations,
+            标记: updatedHero.flags
+          });
+
+          return updatedHero;
         }
+        console.log(`处理非主角 NPC: ${n.name} (${n.id})`);
         return n;
       });
+      console.log('=== 主角状态更新完成 ===');
 
       // 🆕 核心修改：处理队伍变更
       let newParty = [...w.party];
@@ -413,7 +485,7 @@ export default function WuxiaGame() {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         nextTurn();
-      }, 50);
+      }, 100);
     }
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);

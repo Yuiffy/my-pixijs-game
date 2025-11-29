@@ -341,7 +341,7 @@ export const friendSnippets: StorySnippet[] = [
                     ],
                     addNpc: newNpc,
                     addRelations: [{ targetId: newNpc.id, type: 'crush', value: 60 }],
-                    addFlag: 'met_crush',
+                    addFlags: { met_crush: true },
                     addToParty: newNpc.id, // 🆕 使用 addToParty
                   },
                 },
@@ -354,7 +354,7 @@ export const friendSnippets: StorySnippet[] = [
                     ],
                     addNpc: newNpc,
                     addRelations: [{ targetId: newNpc.id, type: 'crush', value: 50 }],
-                    addFlag: 'met_crush',
+                    addFlags: { met_crush: true },
                   },
                 },
               ],

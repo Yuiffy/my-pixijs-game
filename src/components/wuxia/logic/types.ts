@@ -121,8 +121,8 @@ export interface SnippetResult {
   newLocationId?: string;
   addNpc?: Person | Person[];
   addRelations?: Relation[]; // 🆕 新增：支持批量添加/更新关系
-  addFlag?: string;
-  addFlags?: Record<string, any>;
+  addFlags?: Record<string, any>; // 添加多个标志
+  removeFlags?: string[]; // 移除多个标志
   addArt?: string;
   addKnowledge?: string;
   addToParty?: string | string[]; // 🆕 支持单个或批量加入队伍 (ID)

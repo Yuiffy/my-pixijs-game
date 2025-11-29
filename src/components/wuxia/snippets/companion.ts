@@ -52,7 +52,7 @@ const eventRumorDuel: StorySnippet = {
               { text: `【${sectA.name}】弟子见有强援，士气大振，一举击溃了对手。`, type: 'narrative' },
               { text: `此役之后，你与【${sectA.name}】的关系更近了一步，但也彻底得罪了【${sectB.name}】。`, type: 'inner' },
             ],
-            addFlag: 'watched_duel',
+            addFlags: { watched_duel: true },
             // 这里可以添加关系变化
           },
         },
@@ -64,14 +64,14 @@ const eventRumorDuel: StorySnippet = {
               { text: `【${sectB.name}】弟子颇感意外，但有了你的帮助，他们成功反杀。`, type: 'narrative' },
               { text: '"少侠好胆识！若不嫌弃，可来我派喝杯血酒！"', type: 'dialogue', speaker: `${sectB.name}弟子` },
             ],
-            addFlag: 'watched_duel',
+            addFlags: { watched_duel: true },
           },
         },
         {
           text: '两不相帮，此时不走更待何时',
           result: {
             lines: [{ text: '江湖仇杀，冤冤相报何时了。你摇了摇头，悄然离去。', type: 'action' }],
-            addFlag: 'watched_duel',
+            addFlags: { watched_duel: true },
           }
         }
       ],
@@ -111,7 +111,7 @@ const eventMeetHiddenMaster: StorySnippet = {
               { text: '你们就在此地盘桓数日，高人悉心指点。', type: 'time-pass' },
             ],
             addArt: master.arts.length > 0 ? master.arts[0] : undefined,
-            addFlag: `met_${master.id}`,
+            addFlags: { [`met_${master.id}`]: true },
             addRelations: [{ targetId: master.id, type: 'master', value: 30 }],
             addTurn: 3
           }
@@ -124,7 +124,7 @@ const eventMeetHiddenMaster: StorySnippet = {
               { text: '"哈哈哈！好！比起那些唯唯诺诺的徒子徒孙，老夫更喜欢你这种狂妄的小子！"', type: 'dialogue', speaker: master.name },
               { text: '（切磋过程省略...）你虽然败了，但在实战中获益良多。', type: 'narrative' }
             ],
-            addFlag: `met_${master.id}`,
+            addFlags: { [`met_${master.id}`]: true },
             addRelations: [{ targetId: master.id, type: 'acquaintance', value: 20 }],
             addTurn: 1
           }
@@ -137,7 +137,7 @@ const eventMeetHiddenMaster: StorySnippet = {
               { text: '"哼，无趣。"', type: 'dialogue', speaker: master.name },
               { text: '你感觉错过了什么...', type: 'inner' }
             ],
-            addFlag: `met_${master.id}`,
+            addFlags: { [`met_${master.id}`]: true },
           }
         }
       ]
@@ -191,8 +191,10 @@ export const compainionSnippets: StorySnippet[] = [
             { text: '你来到传闻中的地点，但似乎什么也没发生。', type: 'narrative' },
             { text: '可能是消息有误，或者你来晚了。', type: 'inner' },
           ],
-          addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-          addFlags: { last_duel_event: world.turn },
+          addFlags: {
+            [`watched_duel_${sect1Id}_${sect2Id}`]: true,
+            last_duel_event: world.turn
+          },
         };
       }
 
@@ -237,8 +239,10 @@ export const compainionSnippets: StorySnippet[] = [
                   { text: `在你的帮助下，${sect2.name}的人马很快不敌撤退。`, type: 'action' },
                   { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: `${sect1.name}弟子` },
                 ],
-                addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-                addFlags: { last_duel_event: world.turn },
+                addFlags: {
+                  [`watched_duel_${sect1Id}_${sect2Id}`]: true,
+                  last_duel_event: world.turn
+                },
                 updateRelations: [
                   { target: `sect:${sect1Id}`, type: 'friendly', value: 20 },
                   { target: `sect:${sect2Id}`, type: 'hostile', value: 10 },
@@ -260,8 +264,10 @@ export const compainionSnippets: StorySnippet[] = [
                   { text: `最终，${sect1.name}的弟子们虽然受伤不轻，但还是击退了${sect2.name}的进攻。`, type: 'narrative' },
                   { text: '“哼！这次算你们走运！”', type: 'dialogue', speaker: `${sect2.name}弟子` },
                 ],
-                addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-                addFlags: { last_duel_event: world.turn },
+                addFlags: {
+                  [`watched_duel_${sect1Id}_${sect2Id}`]: true,
+                  last_duel_event: world.turn
+                },
               },
             },
           ],
@@ -280,8 +286,10 @@ export const compainionSnippets: StorySnippet[] = [
           { text: `“哼，算他们跑得快！”${winner.name}的弟子收起武器。`, type: 'dialogue', speaker: `${winner.name}弟子` },
           { text: '你默默记下这场战斗的结果，悄然离去。', type: 'narrative' },
         ],
-        addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-        addFlags: { last_duel_event: world.turn },
+        addFlags: {
+          [`watched_duel_${sect1Id}_${sect2Id}`]: true,
+          last_duel_event: world.turn
+        },
       };
 
     },

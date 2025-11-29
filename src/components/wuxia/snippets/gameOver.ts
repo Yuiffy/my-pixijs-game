@@ -40,8 +40,8 @@ export const gameOverSnippets: StorySnippet[] = [
           // 恢复部分生命值
           addHp: 30,
           // 标记已触发过救援，避免重复触发
-          addFlag: 'was_rescued',
-          removeFlag: 'gameOver',
+          addFlags: { was_rescued: true },
+          removeFlags: ['gameOver'],
           setStatus: 'alive',
           choices: [{
             text: '太好了，活过来了',
@@ -61,14 +61,14 @@ export const gameOverSnippets: StorySnippet[] = [
         // 设置游戏结束标志
         endGame: true,
         // advanceStage: true,
-        // // 添加重新开始按钮
-        // choices: [{
-        //   text: '重新开始',
-        //   result: {
-        //     lines: [{ text: '正在重新开始游戏...', type: 'narrative' }],
-        //     restartGame: true
-        //   }
-        // }]
+        // 添加重新开始按钮
+        choices: [{
+          text: '重新开始',
+          result: {
+            lines: [{ text: '正在重新开始游戏...', type: 'narrative' }],
+            restartGame: true
+          }
+        }]
       };
 
     }

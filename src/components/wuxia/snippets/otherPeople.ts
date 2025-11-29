@@ -357,6 +357,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
 
         return {
           lines,
+          addNpc: [newNpc, banditNpc],
           choices: [
             {
               text: `使出【${bestArt.name}】助战`,
@@ -561,6 +562,9 @@ export const otherPeopleSnippets: StorySnippet[] = [
       const desc1 = describeAppearance(npc1);
       const desc2 = describeAppearance(npc2);
 
+      const help1Battle = generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+      const help2Battle = generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+
       return {
         lines: [
           { text: '前方传来兵刃相交之声，你悄悄靠近查看。', type: 'action' },
@@ -576,11 +580,9 @@ export const otherPeopleSnippets: StorySnippet[] = [
               lines: [
                 { text: `你大喝一声，拔剑助阵【${npc1.name}】！`, type: 'action' },
                 // 战斗逻辑：你打 npc2
-                ...(() => {
-                  const battleResult = generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
-                  return battleResult.lines;
-                })()
+                ...help1Battle.lines,
               ],
+              endGame: help1Battle.endGame,
               addNpc: [npc1, npc2],
               // 根据战斗结果显示不同选项
               choices: (() => {
@@ -737,14 +739,19 @@ export const otherPeopleSnippets: StorySnippet[] = [
           { text: `${rand(dialogues)}`, type: 'dialogue', speaker: banditName },
           { text: `对方手持${weapon}${sectInfo}。`, type: 'narrative' },
         ],
+        addNpc: banditNpc,
         choices: [
           {
             text: '动手！',
             result: {
               lines: [...battleResult.lines],
               addNpc: banditNpc,
-              // 只有胜利了才显示处置选项
-              choices: isVictory ? getBattleOutcomeChoices(banditNpc, hero, world) : []
+
+              // 🆕 修复：透传 endGame 和 choices
+              // 如果战斗导致 endGame（死了），就用战斗返回的 choices（重开游戏/复活）
+              // 否则如果是胜利，才显示处置选项
+              endGame: battleResult.endGame,
+              choices: (isVictory ? getBattleOutcomeChoices(banditNpc, hero, world) : [])
             }
           },
           {
@@ -786,7 +793,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 { text: '你仔细研读这本秘籍，虽然有些残缺，但仍有不少收获。', type: 'action' },
                 { text: '你感觉自己的武功有所提升。', type: 'inner' },
               ],
-              addFlag: 'found_manual',
+              addFlags: { found_manual: true },
               addArt: manualName,
             },
           },
@@ -795,7 +802,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
             result: {
               lines: [{ text: '你将秘籍收好，准备找个安全的地方再仔细研读。', type: 'action' }],
               addItem: manualName,
-              addFlag: 'found_manual',
+              addFlags: { found_manual: true },
             },
           },
         ],
@@ -878,7 +885,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 type: 'master',
                 value: 80,
               }],
-              addFlag: 'met_wandering_master',
+              addFlags: { met_wandering_master: true },
             },
           },
           {
@@ -897,7 +904,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 type: 'master',
                 value: 90,
               }],
-              addFlag: 'met_wandering_master',
+              addFlags: { met_wandering_master: true },
             },
           },
         ],
@@ -1052,7 +1059,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
                 { text: '虽然这套武功不算高深，但你也算是多了一门技艺。', type: 'inner' },
               ],
               addArt: newArt.name,
-              addFlag: 'visited_martial_school',
+              addFlags: { visited_martial_school: true },
             },
           },
           {

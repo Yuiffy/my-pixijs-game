@@ -401,7 +401,7 @@ export const commonSnippets: StorySnippet[] = [
                 { text: '店小二热情地迎上来：“客官，来点什么茶？”', type: 'dialogue' as const, speaker: '店小二' }
               ],
               addTurn: 1,
-              addFlag: 'lastAction_tavern',
+              addFlags: { lastAction_tavern: true },
               addKnowledge: `city_${hero.locationId}_tavern_visited`,
             }
           },
@@ -414,7 +414,7 @@ export const commonSnippets: StorySnippet[] = [
                 { text: '各种小摊贩在兜售着各式各样的物品。', type: 'narrative' as const },
               ],
               addTurn: 1,
-              addFlag: 'lastAction_market',
+              addFlags: { lastAction_market: true },
             }
           }
         ];
@@ -427,7 +427,7 @@ export const commonSnippets: StorySnippet[] = [
             result: {
               ...activity.result,
               addFlags: {
-                lastAction: activity.text.replace('去', '').trim(),
+                [activity.text.replace('去', '').trim()]: true,
                 actionCount
               }
             }
