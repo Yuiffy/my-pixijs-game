@@ -777,3 +777,27 @@ export const getBattleOutcomeChoices = (
 
   return baseChoices;
 };
+
+/**
+ * 生成同伴邀请的选择项
+ * @param npc 要邀请的NPC
+ * @param hero 主角
+ * @returns 包含邀请选项的StoryChoice数组
+ */
+export const getCompanionInviteChoices = (
+  npc: Person,
+  hero: Person
+): StoryChoice[] => {
+  return [{
+    text: '邀请入伙',
+    desc: '化敌为友',
+    result: {
+      lines: [
+        { text: '"我看你身手不错，不如随我一同闯荡江湖？"', type: 'dialogue' as const, speaker: hero.name },
+        { text: `【${npc.name}】一愣，随即拱手："愿效犬马之劳！"`, type: 'dialogue' as const, speaker: npc.name }
+      ],
+      addRelations: [{ targetId: npc.id, type: 'friend' as const, value: 60 }],
+      addToParty: npc.id
+    }
+  }];
+};

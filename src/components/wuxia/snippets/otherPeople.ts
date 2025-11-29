@@ -2,7 +2,17 @@ import { generateBattle } from "../logic/battle";
 import { MERCHANT_ITEMS } from "../logic/constants";
 import { getArtByName, getSectArts, SECT_ARTS } from "../logic/skills";
 import { StorySnippet, StoryStage, Person, Sect, RelationType, MartialArt, StoryLine, LocationInfo } from "../logic/types";
-import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance, getBattleOutcomeChoices, getCompanionNamesList } from "../logic/utils";
+import {
+  rand,
+  genName,
+  genPersonality,
+  genAppearance,
+  describeAppearanceChange,
+  describeAppearance,
+  getBattleOutcomeChoices,
+  getCompanionNamesList,
+  getCompanionInviteChoices
+} from "../logic/utils";
 
 export const otherPeopleSnippets: StorySnippet[] = [
 
@@ -575,7 +585,26 @@ export const otherPeopleSnippets: StorySnippet[] = [
               // 根据战斗结果显示不同选项
               choices: (() => {
                 const battleResult = generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
-                return battleResult.outcome === 'victory' ? getBattleOutcomeChoices(npc2, hero, world, -20) : [];
+                if (battleResult.outcome === 'victory') {
+                  return getBattleOutcomeChoices(npc2, hero, world, -20);
+                }
+                // 战斗未获胜时，增加与帮助对象的友好度，并提供结伴选项
+                return [{
+                  text: '继续',
+                  result: {
+                    lines: [
+                      { text: `【${npc1.name}】走到你身边："多谢少侠相助，在下感激不尽！"`, type: 'dialogue', speaker: npc1.name },
+                      { text: '"少侠武艺高强，不如我们结伴同行？"', type: 'dialogue', speaker: npc1.name }
+                    ],
+                    addRelations: [{
+                      targetId: npc1.id,
+                      type: 'friend',
+                      value: 30
+                    }],
+                    choices: getCompanionInviteChoices(npc1, hero)
+                  }
+                }];
+
               })()
             }
           },
@@ -592,7 +621,26 @@ export const otherPeopleSnippets: StorySnippet[] = [
               addNpc: [npc1, npc2],
               choices: (() => {
                 const battleResult = generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
-                return battleResult.outcome === 'victory' ? getBattleOutcomeChoices(npc1, hero, world, -20) : [];
+                if (battleResult.outcome === 'victory') {
+                  return getBattleOutcomeChoices(npc1, hero, world, -20);
+                }
+                // 战斗未获胜时，增加与帮助对象的友好度，并提供结伴选项
+                return [{
+                  text: '继续',
+                  result: {
+                    lines: [
+                      { text: `【${npc2.name}】走到你身边："多谢少侠相助，在下感激不尽！"`, type: 'dialogue', speaker: npc2.name },
+                      { text: '"少侠武艺高强，不如我们结伴同行？"', type: 'dialogue', speaker: npc2.name }
+                    ],
+                    addRelations: [{
+                      targetId: npc2.id,
+                      type: 'friend',
+                      value: 30
+                    }],
+                    choices: getCompanionInviteChoices(npc2, hero)
+                  }
+                }];
+
               })()
             }
           },
@@ -675,7 +723,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
           gaibang: '丐帮',
           mingjiao: '明教'
         };
-        sectInfo = `看其招数似是${sectNames[sectId]}派的路数`;
+        sectInfo = `，看其招数似是${sectNames[sectId]}派的路数`;
       }
 
       // 生成战斗
@@ -687,7 +735,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
         lines: [
           { text: `${rand(entrances)}。`, type: 'action' },
           { text: `${rand(dialogues)}`, type: 'dialogue', speaker: banditName },
-          { text: `对方手持${weapon}，${sectInfo}。`, type: 'narrative' },
+          { text: `对方手持${weapon}${sectInfo}。`, type: 'narrative' },
         ],
         choices: [
           {
