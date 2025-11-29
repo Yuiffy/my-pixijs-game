@@ -52,6 +52,7 @@ export const gameOverSnippets: StorySnippet[] = [
         ],
         // 设置游戏结束标志
         endGame: true,
+        advanceStage: true,
         // 添加重新开始按钮
         choices: [{
           text: '重新开始',

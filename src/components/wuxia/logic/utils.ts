@@ -679,51 +679,7 @@ export const getBattleOutcomeChoices = (
                       speaker: ally.name
                     }
                   ],
-                  choices: [
-                    {
-                      text: '同意入伙',
-                      result: {
-                        lines: [
-                          {
-                            text: '"好，从今以后我们就是同伴了。"',
-                            type: 'dialogue' as const,
-                            speaker: '你'
-                          },
-                          {
-                            text: `【${enemy.name}】欣喜若狂："多谢两位！在下定当竭尽所能！"`,
-                            type: 'dialogue' as const,
-                            speaker: enemy.name
-                          }
-                        ],
-                        addToParty: [enemy.id],
-                        addRelations: [
-                          { targetId: enemy.id, type: 'friend' as RelationType, value: 80 },
-                          { targetId: ally.id, type: 'friend' as RelationType, value: 20 }
-                        ]
-                      }
-                    },
-                    {
-                      text: '婉拒',
-                      result: {
-                        lines: [
-                          {
-                            text: '"抱歉，我们还有要事在身，不便同行。"',
-                            type: 'dialogue' as const,
-                            speaker: '你'
-                          },
-                          {
-                            text: `【${enemy.name}】略显失望："是在下唐突了。后会有期！"`,
-                            type: 'dialogue' as const,
-                            speaker: enemy.name
-                          }
-                        ],
-                        addRelations: [
-                          { targetId: enemy.id, type: 'friend' as RelationType, value: 40 },
-                          { targetId: ally.id, type: 'friend' as RelationType, value: 5 }
-                        ]
-                      }
-                    }
-                  ]
+                  choices: getCompanionInviteChoices(enemy, hero, ally)
                 } : {})
               }
             },
@@ -782,22 +738,54 @@ export const getBattleOutcomeChoices = (
  * 生成同伴邀请的选择项
  * @param npc 要邀请的NPC
  * @param hero 主角
+ * @param ally 战斗中的盟友（可选）
  * @returns 包含邀请选项的StoryChoice数组
  */
 export const getCompanionInviteChoices = (
   npc: Person,
-  hero: Person
+  hero: Person,
+  ally?: Person
 ): StoryChoice[] => {
-  return [{
-    text: '邀请入伙',
+  const inviteResult = {
+    text: ally ? '同意入伙' : '邀请入伙',
     desc: '化敌为友',
     result: {
-      lines: [
-        { text: '"我看你身手不错，不如随我一同闯荡江湖？"', type: 'dialogue' as const, speaker: hero.name },
-        { text: `【${npc.name}】一愣，随即拱手："愿效犬马之劳！"`, type: 'dialogue' as const, speaker: npc.name }
+      lines: ally
+        ? [
+          { text: `"好，从今以后我们就是同伴了。"`, type: 'dialogue' as const, speaker: '你' },
+          { text: `【${npc.name}】欣喜若狂："多谢两位！在下定当竭尽所能！"`, type: 'dialogue' as const, speaker: npc.name }
+        ]
+        : [
+          { text: `"我看你身手不错，不如随我一同闯荡江湖？"`, type: 'dialogue' as const, speaker: hero.name },
+          { text: `【${npc.name}】一愣，随即拱手："愿效犬马之劳！"`, type: 'dialogue' as const, speaker: npc.name }
+        ],
+      addRelations: [
+        { targetId: npc.id, type: 'friend' as const, value: ally ? 80 : 60 },
+        ...(ally ? [{ targetId: ally.id, type: 'friend' as const, value: 20 }] : [])
       ],
-      addRelations: [{ targetId: npc.id, type: 'friend' as const, value: 60 }],
-      addToParty: npc.id
+      ...(ally ? { addToParty: [npc.id] } : { addToParty: npc.id })
     }
-  }];
+  };
+
+  const declineResult = {
+    text: '婉拒',
+    desc: '婉拒邀请',
+    result: {
+      lines: ally
+        ? [
+          { text: '"抱歉，我们还有要事在身，不便同行。"', type: 'dialogue' as const, speaker: '你' },
+          { text: `【${npc.name}】略显失望："是在下唐突了。后会有期！"`, type: 'dialogue' as const, speaker: npc.name }
+        ]
+        : [
+          { text: `"多谢你的邀请，但我现在还有要事在身，不便同行。"`, type: 'dialogue' as const, speaker: hero.name },
+          { text: `【${npc.name}】略显失望："是在下唐突了。后会有期！"`, type: 'dialogue' as const, speaker: npc.name }
+        ],
+      addRelations: [
+        { targetId: npc.id, type: 'friend' as const, value: ally ? 40 : 30 },
+        ...(ally ? [{ targetId: ally.id, type: 'friend' as const, value: 5 }] : [])
+      ]
+    }
+  };
+
+  return [inviteResult, declineResult];
 };

@@ -225,11 +225,32 @@ export default function WuxiaGame() {
       }
 
       if (result.addNpc) {
-        if (Array.isArray(result.addNpc)) {
-          newNpcs.push(...result.addNpc);
-        } else {
-          newNpcs.push(result.addNpc);
-        }
+        const npcsToAdd = Array.isArray(result.addNpc) ? result.addNpc : [result.addNpc];
+
+        npcsToAdd.forEach((npc) => {
+          // Check if NPC already exists
+          const existingNpcIndex = newNpcs.findIndex((n) => n.id === npc.id);
+
+          if (existingNpcIndex >= 0) {
+            // Update existing NPC
+            newNpcs[existingNpcIndex] = {
+              ...newNpcs[existingNpcIndex],
+              ...npc,
+              // Preserve relations unless explicitly overridden
+              relations: npc.relations || newNpcs[existingNpcIndex].relations,
+              // Preserve inventory unless explicitly overridden
+              inventory: npc.inventory || newNpcs[existingNpcIndex].inventory,
+              // Preserve flags unless explicitly overridden
+              flags: npc.flags || newNpcs[existingNpcIndex].flags,
+              // Preserve arts unless explicitly overridden
+              arts: npc.arts || newNpcs[existingNpcIndex].arts,
+              // Preserve knowledge unless explicitly overridden
+              knowledge: npc.knowledge || newNpcs[existingNpcIndex].knowledge,
+            };
+          } else {
+            newNpcs.push(npc);
+          }
+        });
       }
 
       newNpcs = newNpcs.map((n) => {
