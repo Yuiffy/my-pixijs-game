@@ -19,6 +19,14 @@ export interface MartialArt {
   moves: string[];
 }
 
+export type Personality = 'gentle' | 'bold' | 'cunning' | 'righteous' | 'mysterious' | 'playful' | 'serious' | 'passionate';
+export type Appearance = {
+  face: string; // 面容描述
+  build: string; // 身材描述
+  clothing: string; // 衣着描述
+  weapon?: string; // 武器描述
+};
+
 export interface Person {
   id: string;
   name: string;
@@ -33,6 +41,11 @@ export interface Person {
   flags: Record<string, boolean>;
   arts: string[];
   knowledge: string[]; // 🆕 新增：江湖情报库
+  personality?: Personality; // 🆕 性格
+  appearance?: Appearance; // 🆕 外表描述
+  lastSeenAppearance?: Appearance; // 🆕 上次见面的外表（用于对比）
+  lastUsedMove?: string; // 🆕 上次使用的招式（用于对比）
+  meetCount?: number; // 🆕 见面次数
 }
 
 export interface Sect {
@@ -127,6 +140,215 @@ export const genName = (gender: 'male' | 'female') => {
 
 export const genCityName = () => `${rand(CITY_PREFIXES)}${rand(CITY_SUFFIXES)}城`;
 export const genWildName = () => `${rand(WILD_PREFIXES)}${rand(WILD_SUFFIXES)}`;
+
+// 🆕 性格描述
+const PERSONALITY_DESCRIPTIONS: Record<Personality, string> = {
+  gentle: '温文尔雅',
+  bold: '豪爽直率',
+  cunning: '机敏狡黠',
+  righteous: '刚正不阿',
+  mysterious: '神秘莫测',
+  playful: '活泼俏皮',
+  serious: '严肃认真',
+  passionate: '热情如火',
+};
+
+// 🆕 生成性格
+export const genPersonality = (): Personality => rand(['gentle', 'bold', 'cunning', 'righteous', 'mysterious', 'playful', 'serious', 'passionate'] as Personality[]);
+
+// 🆕 生成外表
+export const genAppearance = (gender: 'male' | 'female', role: Person['role']): Appearance => {
+  const maleFaces = ['剑眉星目', '浓眉大眼', '面如冠玉', '英气逼人', '棱角分明', '温润如玉'];
+  const femaleFaces = ['眉目如画', '清丽脱俗', '明眸皓齿', '娇美动人', '英姿飒爽', '温婉可人'];
+  const maleBuilds = ['身材魁梧', '身形修长', '体态匀称', '虎背熊腰', '精悍干练'];
+  const femaleBuilds = ['身姿窈窕', '体态轻盈', '身材高挑', '娇小玲珑', '婀娜多姿'];
+  const maleClothing = ['一袭青衫', '黑衣劲装', '白衣胜雪', '粗布麻衣', '锦袍华服'];
+  const femaleClothing = ['素衣如雪', '红衣如火', '青衣淡雅', '紫衣华贵', '布衣朴素'];
+
+  const weapons = ['长剑', '短刀', '长枪', '双刀', '软鞭', '暗器', '拳套', '棍棒'];
+
+  const face = gender === 'male' ? rand(maleFaces) : rand(femaleFaces);
+  const build = gender === 'male' ? rand(maleBuilds) : rand(femaleBuilds);
+  const clothing = gender === 'male' ? rand(maleClothing) : rand(femaleClothing);
+  const weapon = role === 'bandit' || role === 'hero' ? rand(weapons) : undefined;
+
+  return {
+    face, build, clothing, weapon,
+  };
+};
+
+// 🆕 描述角色外表（首次见面）
+export const describeAppearance = (person: Person): string => {
+  if (!person.appearance) return '';
+  const {
+    face, build, clothing, weapon,
+  } = person.appearance;
+  let desc = `【${person.name}】${face}，${build}，${clothing}`;
+  if (weapon) desc += `，腰间${weapon}寒光闪闪`;
+  return desc;
+};
+
+// 🆕 描述角色外表变化（再次见面）
+export const describeAppearanceChange = (person: Person): string => {
+  if (!person.appearance || !person.lastSeenAppearance) return describeAppearance(person);
+
+  const changes: string[] = [];
+  if (person.appearance.face !== person.lastSeenAppearance.face) {
+    changes.push(`面容似乎比上次更加${person.appearance.face}`);
+  }
+  if (person.appearance.clothing !== person.lastSeenAppearance.clothing) {
+    changes.push(`换了一身${person.appearance.clothing}`);
+  }
+  if (person.appearance.weapon !== person.lastSeenAppearance.weapon) {
+    changes.push(`武器也换成了${person.appearance.weapon}`);
+  }
+
+  if (changes.length === 0) {
+    return `【${person.name}】还是那副模样，${person.appearance.face}，${person.appearance.clothing}`;
+  }
+
+  return `【${person.name}】${changes.join('，')}。`;
+};
+
+// 🆕 描述招式对比
+export const describeMoveComparison = (person: Person, currentMove: string, artName: string): string => {
+  if (!person.lastUsedMove) {
+    return `【${person.name}】使出【${artName}】中的"${currentMove}"！`;
+  }
+
+  if (person.lastUsedMove === currentMove) {
+    // 同一招，看是否精进
+    const improved = Math.random() > 0.5;
+    if (improved) {
+      return `【${person.name}】再次使出"${currentMove}"，但这次更加娴熟，威力更胜从前！`;
+    }
+    return `【${person.name}】再次使出"${currentMove}"，招式依然凌厉。`;
+  }
+  return `【${person.name}】上次用的是"${person.lastUsedMove}"，这次却换成了"${currentMove}"，招式变化莫测！`;
+};
+
+// 🆕 战斗系统：多回合战斗
+export const generateBattle = (
+  hero: Person,
+  enemy: Person,
+  heroArt: MartialArt,
+  enemyArt: MartialArt | null,
+  rounds: number = 3,
+): StoryLine[] => {
+  const lines: StoryLine[] = [];
+  const heroMoves = heroArt.moves;
+  const enemyMoves = enemyArt?.moves || ['一刀砍来', '横劈', '直刺', '横扫', '当头一刀'];
+
+  lines.push({ text: '战斗开始！', type: 'action' });
+
+  for (let i = 0; i < rounds; i++) {
+    const heroMove = rand(heroMoves);
+    const enemyMove = rand(enemyMoves);
+
+    // 记录招式
+    if (i === 0) {
+      // 第一回合，记录上次使用的招式（如果有）
+      if (enemy.lastUsedMove) {
+        lines.push({ text: describeMoveComparison(enemy, enemyMove, enemyArt?.name || '基础刀法'), type: 'action' });
+      } else {
+        lines.push({ text: `【${enemy.name}】${enemyMove}！`, type: 'action' });
+      }
+    } else {
+      lines.push({ text: `【${enemy.name}】${enemyMove}！`, type: 'action' });
+    }
+
+    lines.push({ text: `你使出【${heroArt.name}】中的"${heroMove}"！`, type: 'action' });
+
+    // 判断胜负（简化版，可以根据武功强弱调整）
+    const heroWins = Math.random() > 0.3; // 70%概率获胜
+    if (heroWins) {
+      lines.push({ text: `${heroArt.desc}，你占据了上风！`, type: 'narrative' });
+    } else {
+      lines.push({ text: '对方招式凌厉，你稍落下风。', type: 'narrative' });
+    }
+  }
+
+  // 最终结果
+  const finalWin = Math.random() > 0.2; // 80%概率最终获胜
+  if (finalWin) {
+    lines.push({ text: `经过${rounds}个回合的激战，你终于击败了【${enemy.name}】！`, type: 'narrative' });
+  } else {
+    lines.push({ text: `经过${rounds}个回合的激战，【${enemy.name}】见占不到便宜，转身逃走了。`, type: 'narrative' });
+  }
+
+  return lines;
+};
+
+// 🆕 同行事件：露营
+export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
+  const personalityDialogue: Record<Personality, string> = {
+    gentle: '\'今晚月色真美，不如我们在此休息一晚？\'',
+    bold: '\'天色已晚，我们就在这里扎营吧！\'',
+    cunning: '\'前面可能有危险，不如先在这里休息。\'',
+    righteous: '\'行侠仗义也要注意休息，我们在此过夜吧。\'',
+    mysterious: '\'...（默默开始准备露营）',
+    playful: '\'好累啊！我们在这里休息吧，我带了干粮！\'',
+    serious: '\'按照计划，我们应该在这里休息。\'',
+    passionate: '\'今晚我们一起看星星吧！\'',
+  };
+
+  const dialogue = personalityDialogue[companion.personality || 'gentle'];
+
+  return [
+    { text: `天色渐晚，【${companion.name}】提议在此露营。`, type: 'narrative' },
+    { text: dialogue, type: 'dialogue', speaker: companion.name },
+    { text: '你们一起生火做饭，围坐在篝火旁聊天。', type: 'action' },
+    { text: '夜晚的江湖，似乎也没有那么危险了。', type: 'inner' },
+  ];
+};
+
+// 🆕 同行事件：吃饭
+export const generateCompanionMealEvent = (companion: Person): StoryLine[] => {
+  const personalityDialogue: Record<Personality, string> = {
+    gentle: '\'少侠，不如我们找个地方用膳？\'',
+    bold: '\'走，我请客！我们去最好的酒楼！\'',
+    cunning: '\'我知道一家不错的店，物美价廉。\'',
+    righteous: '\'行侠仗义也要填饱肚子，我们去吃饭吧。\'',
+    mysterious: '\'...（指向一家小店）',
+    playful: '\'我饿了！我们去吃好吃的吧！\'',
+    serious: '\'该用膳了，我们去前面的酒楼。\'',
+    passionate: '\'我知道一家店，那里的菜特别好吃！\'',
+  };
+
+  const dialogue = personalityDialogue[companion.personality || 'gentle'];
+
+  return [
+    { text: `【${companion.name}】提议一起去用膳。`, type: 'narrative' },
+    { text: dialogue, type: 'dialogue', speaker: companion.name },
+    { text: '你们在酒楼里点了几道小菜，边吃边聊。', type: 'action' },
+    { text: '江湖路上的这顿饭，格外温馨。', type: 'inner' },
+  ];
+};
+
+// 🆕 同行事件：暧昧对话（好感度高）
+export const generateCompanionRomanticEvent = (companion: Person, relationValue: number): StoryLine[] => {
+  if (relationValue < 80) return [];
+
+  const genderText = companion.gender === 'female' ? '她' : '他';
+  const romanticDialogue: Record<Personality, string> = {
+    gentle: `'少侠，${genderText === '她' ? '我' : '我'}...其实一直想和你说...'`,
+    bold: `'少侠，${genderText === '她' ? '我' : '我'}觉得和你在一起很开心！'`,
+    cunning: `'少侠，你知道吗？${genderText === '她' ? '我' : '我'}其实...'`,
+    righteous: `'少侠，${genderText === '她' ? '我' : '我'}敬佩你的为人。'`,
+    mysterious: `'...（${genderText}深深看了你一眼）'`,
+    playful: `'少侠，${genderText === '她' ? '我' : '我'}喜欢你！'`,
+    serious: `'少侠，${genderText === '她' ? '我' : '我'}想和你一直走下去。'`,
+    passionate: `'少侠，${genderText === '她' ? '我' : '我'}的心意，你明白吗？'`,
+  };
+
+  const dialogue = romanticDialogue[companion.personality || 'gentle'];
+
+  return [
+    { text: `【${companion.name}】似乎有话要对你说。`, type: 'narrative' },
+    { text: dialogue, type: 'dialogue', speaker: companion.name },
+    { text: `${genderText}的脸微微泛红，${genderText === '她' ? '她' : '他'}的眼神中带着某种期待。`, type: 'narrative' },
+  ];
+};
 
 // 商人可售物品列表
 export const MERCHANT_ITEMS = [
@@ -1142,6 +1364,9 @@ export const SNIPPETS: StorySnippet[] = [
         flags: {},
         arts: [],
         knowledge: [],
+        personality: genPersonality(),
+        appearance: genAppearance(gender, 'hero'),
+        meetCount: 0,
       };
 
       const scenarios = [
@@ -1190,6 +1415,9 @@ export const SNIPPETS: StorySnippet[] = [
           flags: {},
           arts: [],
           knowledge: [],
+          personality: genPersonality(),
+          appearance: genAppearance(banditGender, 'bandit'),
+          meetCount: 0,
         };
       }
 
@@ -1210,19 +1438,30 @@ export const SNIPPETS: StorySnippet[] = [
         }
         const move = rand(bestArt.moves);
 
+        // 🆕 添加外表描述
+        const appearanceDesc = newNpc.meetCount && newNpc.meetCount > 1
+          ? describeAppearanceChange(newNpc)
+          : describeAppearance(newNpc);
+
+        const lines: StoryLine[] = [
+          { text: scenario.text, type: 'narrative' },
+        ];
+        if (appearanceDesc) {
+          lines.push({ text: appearanceDesc, type: 'narrative' });
+        }
+        lines.push(
+          { text: `'此路是我开！'为首的【${banditName}】大声喝道。`, type: 'dialogue', speaker: banditName },
+          { text: scenario.dialogue, type: 'dialogue', speaker: wandererName },
+        );
+
         return {
-          lines: [
-            { text: scenario.text, type: 'narrative' },
-            { text: `'此路是我开！'为首的【${banditName}】大声喝道。`, type: 'dialogue', speaker: banditName },
-            { text: scenario.dialogue, type: 'dialogue', speaker: wandererName },
-          ],
+          lines,
           choices: [
             {
               text: `使出【${bestArt.name}】助战`,
               result: {
                 lines: [
-                  { text: `你大喝一声，使出【${bestArt.name}】中的"${move}"！`, type: 'action' },
-                  { text: `${bestArt.desc}，你与【${wandererName}】联手，很快击退了山贼。`, type: 'action' },
+                  ...generateBattle(hero, banditNpc, bestArt, null, 3),
                   { text: `'多谢少侠相助！'【${wandererName}】感激地说道。`, type: 'dialogue', speaker: wandererName },
                   { text: '\'少侠武功高强，不如我们结伴而行？\'', type: 'dialogue', speaker: wandererName },
                 ],
@@ -1276,11 +1515,21 @@ export const SNIPPETS: StorySnippet[] = [
       }
 
       // 没有山贼的普通场景
+      // 🆕 添加外表描述
+      const appearanceDesc = newNpc.meetCount && newNpc.meetCount > 1
+        ? describeAppearanceChange(newNpc)
+        : describeAppearance(newNpc);
+
+      const lines: StoryLine[] = [
+        { text: scenario.text, type: 'narrative' },
+      ];
+      if (appearanceDesc) {
+        lines.push({ text: appearanceDesc, type: 'narrative' });
+      }
+      lines.push({ text: scenario.dialogue, type: 'dialogue', speaker: wandererName });
+
       return {
-        lines: [
-          { text: scenario.text, type: 'narrative' },
-          { text: scenario.dialogue, type: 'dialogue', speaker: wandererName },
-        ],
+        lines,
         choices: [
           {
             text: '同意结伴',
@@ -1419,11 +1668,7 @@ export const SNIPPETS: StorySnippet[] = [
           {
             text: `使出【${bestArt.name}】迎战`,
             result: {
-              lines: [
-                { text: `你二话不说，使出【${bestArt.name}】中的"${move}"！`, type: 'action' },
-                { text: `${bestArt.desc}，山贼们见你武功高强，不敢硬拼，丢下几句狠话就跑了。`, type: 'narrative' },
-                { text: '你在山贼身上搜到了一些银两。', type: 'action' },
-              ],
+              lines: generateBattle(hero, banditNpc, bestArt, null, 3),
               addItem: '银两',
               addNpc: banditNpc,
             },
@@ -1796,6 +2041,226 @@ export const SNIPPETS: StorySnippet[] = [
             },
           },
         ],
+      };
+    },
+  },
+
+  // ===================================
+  // 👥 同行事件系统
+  // ===================================
+
+  // 同行：露营
+  {
+    id: 'companion_camp',
+    tags: ['wild_daily'],
+    weight: 20,
+    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_wild',
+    run: (hero, world) => {
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+
+      const lines = generateCompanionCampEvent(companion);
+      return {
+        lines,
+        addTurn: 1,
+      };
+    },
+  },
+
+  // 同行：吃饭
+  {
+    id: 'companion_meal',
+    tags: ['city_daily'],
+    weight: 20,
+    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_city',
+    run: (hero, world) => {
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+
+      const lines = generateCompanionMealEvent(companion);
+      return {
+        lines,
+        addTurn: 1,
+        addRelation: {
+          targetId: companion.id,
+          type: hero.relations.find((r) => r.targetId === companion.id)?.type || 'friend',
+          value: (hero.relations.find((r) => r.targetId === companion.id)?.value || 0) + 5,
+        },
+      };
+    },
+  },
+
+  // 同行：聊天
+  {
+    id: 'companion_chat',
+    tags: ['sect_daily', 'city_daily', 'wild_daily'],
+    weight: 25,
+    req: (hero, world) => !!world.companionId,
+    run: (hero, world) => {
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+
+      const personality: Personality = companion.personality || 'gentle';
+      const chatTopics: Record<Personality, string[]> = {
+        gentle: ['你们聊起了江湖上的趣事', '你们谈论着各自的经历', '你们分享着对武学的见解'],
+        bold: ['你们豪迈地谈论着江湖', '你们讨论着行侠仗义的故事', '你们畅谈着未来的计划'],
+        cunning: ['你们交换着江湖上的情报', '你们讨论着各种计策', '你们分享着各自的见闻'],
+        righteous: ['你们谈论着正义与邪恶', '你们讨论着如何行侠仗义', '你们分享着各自的原则'],
+        mysterious: [`【${companion.name}】向你透露了一些秘密`, '你们谈论着一些不为人知的事情', `【${companion.name}】的话语中似乎藏着深意`],
+        playful: ['你们开心地聊着天', `【${companion.name}】讲了个有趣的笑话`, '你们互相打趣，气氛轻松'],
+        serious: ['你们认真地讨论着武学', '你们谈论着江湖上的大事', '你们交换着各自的看法'],
+        passionate: ['你们热烈地讨论着', `【${companion.name}】激动地分享着自己的想法`, '你们聊得十分投缘'],
+      };
+
+      const topic = rand(chatTopics[personality]);
+
+      return {
+        lines: [
+          { text: `【${companion.name}】主动找你聊天。`, type: 'narrative' },
+          { text: `${topic}。`, type: 'narrative' },
+          { text: '你们的关系更加亲近了。', type: 'inner' },
+        ],
+        addRelation: {
+          targetId: companion.id,
+          type: hero.relations.find((r) => r.targetId === companion.id)?.type || 'friend',
+          value: (hero.relations.find((r) => r.targetId === companion.id)?.value || 0) + 3,
+        },
+        addTurn: 1,
+      };
+    },
+  },
+
+  // 同行：逛街（城市）
+  {
+    id: 'companion_shopping',
+    tags: ['city_daily'],
+    weight: 15,
+    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_city',
+    run: (hero, world) => {
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+
+      return {
+        lines: [
+          { text: `【${companion.name}】提议一起去街上逛逛。`, type: 'narrative' },
+        ],
+        choices: [
+          {
+            text: '同意一起去',
+            result: {
+              lines: [
+                { text: '你们在街上闲逛，看看各种小摊。', type: 'action' },
+                { text: `【${companion.name}】似乎很开心，${companion.gender === 'female' ? '她' : '他'}的笑容让你心情也好了起来。`, type: 'narrative' },
+              ],
+              addRelation: {
+                targetId: companion.id,
+                type: hero.relations.find((r) => r.targetId === companion.id)?.type || 'friend',
+                value: (hero.relations.find((r) => r.targetId === companion.id)?.value || 0) + 8,
+              },
+              addTurn: 1,
+            },
+          },
+          {
+            text: '婉言拒绝',
+            result: {
+              lines: [
+                { text: '\'抱歉，我还有事。\'你礼貌地拒绝了。', type: 'dialogue', speaker: '你' },
+                { text: `【${companion.name}】虽然有些失望，但还是表示理解。`, type: 'narrative' },
+              ],
+            },
+          },
+        ],
+      };
+    },
+  },
+
+  // 同行：暧昧对话（好感度高）
+  {
+    id: 'companion_romantic',
+    tags: ['sect_daily', 'city_daily', 'wild_daily'],
+    weight: 10,
+    req: (hero, world) => {
+      if (!world.companionId) return false;
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return false;
+      const relation = hero.relations.find((r) => r.targetId === companion.id);
+      return (relation?.value || 0) >= 80;
+    },
+    run: (hero, world) => {
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+
+      const relation = hero.relations.find((r) => r.targetId === companion.id);
+      const lines = generateCompanionRomanticEvent(companion, relation?.value || 0);
+
+      if (lines.length === 0) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+
+      return {
+        lines,
+        choices: [
+          {
+            text: '表达心意',
+            result: {
+              lines: [
+                { text: `'其实，${companion.gender === 'female' ? '我' : '我'}也...'你有些紧张地说道。`, type: 'dialogue', speaker: '你' },
+                { text: `【${companion.name}】${companion.gender === 'female' ? '她' : '他'}的脸更红了，${companion.gender === 'female' ? '她' : '他'}轻轻点了点头。`, type: 'narrative' },
+                { text: '你们的关系更进一步了。', type: 'inner' },
+              ],
+              addRelation: {
+                targetId: companion.id,
+                type: 'crush',
+                value: (relation?.value || 0) + 15,
+              },
+            },
+          },
+          {
+            text: '保持距离',
+            result: {
+              lines: [
+                { text: `'${companion.gender === 'female' ? '我' : '我'}...还需要时间。'你有些犹豫地说道。`, type: 'dialogue', speaker: '你' },
+                { text: `【${companion.name}】虽然有些失落，但还是表示理解。`, type: 'narrative' },
+              ],
+            },
+          },
+        ],
+      };
+    },
+  },
+
+  // 同行：告别（回门派时）
+  {
+    id: 'companion_farewell',
+    tags: ['sect_daily'],
+    weight: 30,
+    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_sect_main',
+    run: (hero, world) => {
+      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
+      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+
+      const relation = hero.relations.find((r) => r.targetId === companion.id);
+      const relationValue = relation?.value || 0;
+
+      const farewellDialogue: Record<Personality, string> = {
+        gentle: `'少侠，既然你已回到师门，${companion.gender === 'female' ? '我' : '我'}也该告辞了。'`,
+        bold: '\'哈哈，少侠，我们后会有期！\'',
+        cunning: `'少侠，${companion.gender === 'female' ? '我' : '我'}还有要事，就此别过。'`,
+        righteous: '\'少侠，保重！我们江湖再见！\'',
+        mysterious: `'...（${companion.gender === 'female' ? '她' : '他'}深深看了你一眼，转身离去）'`,
+        playful: `'少侠，${companion.gender === 'female' ? '我' : '我'}会想你的！'`,
+        serious: '\'少侠，就此别过，保重。\'',
+        passionate: `'少侠，${companion.gender === 'female' ? '我' : '我'}舍不得你，但${companion.gender === 'female' ? '我' : '我'}必须走了。'`,
+      };
+
+      const personality: Personality = companion.personality || 'gentle';
+      const dialogue = farewellDialogue[personality];
+
+      return {
+        lines: [
+          { text: `你回到了师门，【${companion.name}】知道该告别了。`, type: 'narrative' },
+          { text: dialogue, type: 'dialogue', speaker: companion.name },
+          { text: relationValue >= 80 ? `【${companion.name}】${companion.gender === 'female' ? '她' : '他'}的眼神中满是不舍。` : `【${companion.name}】与你告别，离开了。`, type: 'narrative' },
+        ],
+        removeCompanion: true,
       };
     },
   },
