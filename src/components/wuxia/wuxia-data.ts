@@ -78,11 +78,13 @@ export interface SnippetResult {
   addItem?: string;
   removeItem?: string;
   newLocationId?: string;
-  addNpc?: Person;
+  addNpc?: Person | Person[];
   addRelation?: Relation;
   addFlag?: string;
   addArt?: string;
   addKnowledge?: string; // 🆕 新增：获得情报指令
+  setCompanion?: string; // 🆕 设置同行伙伴（NPC ID）
+  removeCompanion?: boolean; // 🆕 移除同行伙伴
   advanceStage?: boolean;
   addTurn?: number;
   endGame?: boolean;
@@ -634,12 +636,37 @@ export const SNIPPETS: StorySnippet[] = [
             result: {
               lines: [
                 { text: '你上前一步，帮对方夺回了财物。', type: 'action' },
-                { text: `“多谢少侠相助，在下【${newName}】。”`, type: 'dialogue', speaker: newName },
+                { text: `"多谢少侠相助，在下【${newName}】。"`, type: 'dialogue', speaker: newName },
                 { text: '你们互换了姓名，一种异样的情愫在心中蔓延。', type: 'inner' },
+                { text: `"少侠若不嫌弃，不如我们结伴而行？"【${newName}】红着脸说道。`, type: 'dialogue', speaker: newName },
               ],
-              addNpc: newNpc,
-              addRelation: { targetId: newNpc.id, type: 'crush', value: 50 },
-              addFlag: 'met_crush',
+              choices: [
+                {
+                  text: '同意结伴',
+                  result: {
+                    lines: [
+                      { text: '\'好，那我们就一起走吧。\'你点了点头。', type: 'dialogue', speaker: '你' },
+                      { text: `【${newName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' },
+                    ],
+                    addNpc: newNpc,
+                    addRelation: { targetId: newNpc.id, type: 'crush', value: 60 },
+                    addFlag: 'met_crush',
+                    setCompanion: newNpc.id,
+                  },
+                },
+                {
+                  text: '婉言拒绝',
+                  result: {
+                    lines: [
+                      { text: '\'抱歉，我还有要事在身。\'你礼貌地拒绝了。', type: 'dialogue', speaker: '你' },
+                      { text: `【${newName}】眼中闪过一丝失望，但还是礼貌地告别了。`, type: 'narrative' },
+                    ],
+                    addNpc: newNpc,
+                    addRelation: { targetId: newNpc.id, type: 'crush', value: 50 },
+                    addFlag: 'met_crush',
+                  },
+                },
+              ],
             },
           },
           {
@@ -747,9 +774,26 @@ export const SNIPPETS: StorySnippet[] = [
       const enemyRel = hero.relations.find((r) => r.type === 'enemy');
       const enemyName = enemyRel ? world.npcs.find((n:Person) => n.id === enemyRel.targetId)?.name : '魔教教主';
 
-      // 🆕 核心修复：使用主角武功 & 动态武器描述
-      const artName = hero.arts.length > 0 ? hero.arts[0] : '太祖长拳';
-      const art = getArtByName(artName);
+      // 🆕 核心修复：选择最厉害的武功（优先门派武功，然后按类型排序）
+      let bestArt: MartialArt | null = null;
+      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
+      const sectArts = getSectArts(sectName);
+
+      // 优先选择已学会的门派武功
+      const learnedSectArts = sectArts.filter((a) => hero.arts.includes(a.name));
+      if (learnedSectArts.length > 0) {
+        // 优先选择外功（攻击力更强）
+        const outerArts = learnedSectArts.filter((a) => a.type === 'outer');
+        bestArt = outerArts.length > 0 ? outerArts[0] : learnedSectArts[0];
+      } else if (hero.arts.length > 0) {
+        // 如果没有门派武功，选择第一个学会的
+        bestArt = getArtByName(hero.arts[0]);
+      } else {
+        // 如果什么都没学会，用默认的
+        bestArt = getArtByName('太祖长拳');
+      }
+
+      const art = bestArt;
       const ultMove = rand(art.moves);
 
       let weaponAction = '收剑入鞘';
@@ -768,7 +812,7 @@ export const SNIPPETS: StorySnippet[] = [
             text: `使出绝学【${art.name}】`,
             result: {
               lines: [
-                { text: `你大喝一声，使出【${art.name}】中的绝杀“${ultMove}”！`, type: 'action' },
+                { text: `你大喝一声，使出【${art.name}】中的绝杀"${ultMove}"！`, type: 'action' },
                 { text: `${art.desc}，凌厉的攻势瞬间贯穿了对手的防御。`, type: 'action' },
                 { text: '三百回合后，你一击命中对方要害。', type: 'action' },
                 { text: '一切都结束了。', type: 'inner' },
@@ -777,6 +821,41 @@ export const SNIPPETS: StorySnippet[] = [
               ],
               endGame: true,
               advanceStage: true,
+            },
+          },
+          {
+            text: '使用其他武功（可能不敌）',
+            result: {
+              lines: [
+                { text: '你使出了其他武功，但威力不足。', type: 'action' },
+                { text: '对手见你招式不够精妙，攻势更加凌厉。', type: 'narrative' },
+                { text: '你渐渐落入下风，只能勉强招架。', type: 'action' },
+              ],
+              choices: [
+                {
+                  text: '拼死一搏',
+                  result: {
+                    lines: [
+                      { text: '你拼尽全力，终于找到机会反击。', type: 'action' },
+                      { text: '虽然受了重伤，但你也重创了对手。', type: 'narrative' },
+                      { text: '你们两败俱伤，各自退去。', type: 'narrative' },
+                    ],
+                    endGame: true,
+                    advanceStage: true,
+                  },
+                },
+                {
+                  text: '逃跑',
+                  result: {
+                    lines: [
+                      { text: '你见势不妙，虚晃一招，转身就逃。', type: 'action' },
+                      { text: '对手紧追不舍，你拼尽全力才逃脱。', type: 'narrative' },
+                      { text: '虽然逃过一劫，但你知道，这场恩怨还没结束。', type: 'inner' },
+                    ],
+                    addFlag: 'escaped_final_battle',
+                  },
+                },
+              ],
             },
           },
           {
@@ -1071,34 +1150,170 @@ export const SNIPPETS: StorySnippet[] = [
           dialogue: '\'少侠也是独行江湖？不如结伴而行？\'',
           relation: 'friend' as RelationType,
           value: 30,
+          hasBandits: false,
         },
         {
           text: `你看到一位${gender === 'female' ? '女子' : '男子'}【${wandererName}】正在与山贼对峙。`,
           dialogue: '\'少侠来得正好，助我一臂之力！\'',
           relation: 'friend' as RelationType,
           value: 40,
+          hasBandits: true, // 标记有山贼需要战斗
         },
         {
           text: `你与一位路过的${gender === 'female' ? '女' : '男'}侠【${wandererName}】在茶摊相遇。`,
           dialogue: '\'江湖路远，能在此相遇也是缘分。\'',
           relation: 'acquaintance' as RelationType,
           value: 20,
+          hasBandits: false,
         },
       ];
 
       const scenario = rand(scenarios);
 
+      // 如果有山贼，生成山贼NPC
+      let banditNpc: Person | undefined;
+      let banditName = '';
+      if (scenario.hasBandits) {
+        const banditGender = Math.random() > 0.7 ? 'female' : 'male'; // 30%概率是女山贼
+        banditName = genName(banditGender);
+        banditNpc = {
+          id: `npc_bandit_${Date.now()}`,
+          name: banditName,
+          sectId: 'none',
+          role: 'bandit',
+          gender: banditGender,
+          age: 25,
+          status: 'alive',
+          relations: [],
+          locationId: 'loc_wild',
+          inventory: [],
+          flags: {},
+          arts: [],
+          knowledge: [],
+        };
+      }
+
+      // 如果有山贼，提供战斗选项
+      if (scenario.hasBandits && banditNpc) {
+        // 选择最厉害的武功
+        const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
+        const sectArts = getSectArts(sectName);
+        const learnedSectArts = sectArts.filter((a) => hero.arts.includes(a.name));
+        let bestArt: MartialArt;
+        if (learnedSectArts.length > 0) {
+          const outerArts = learnedSectArts.filter((a) => a.type === 'outer');
+          bestArt = outerArts.length > 0 ? outerArts[0] : learnedSectArts[0];
+        } else if (hero.arts.length > 0) {
+          bestArt = getArtByName(hero.arts[0]);
+        } else {
+          bestArt = getArtByName('太祖长拳');
+        }
+        const move = rand(bestArt.moves);
+
+        return {
+          lines: [
+            { text: scenario.text, type: 'narrative' },
+            { text: `'此路是我开！'为首的【${banditName}】大声喝道。`, type: 'dialogue', speaker: banditName },
+            { text: scenario.dialogue, type: 'dialogue', speaker: wandererName },
+          ],
+          choices: [
+            {
+              text: `使出【${bestArt.name}】助战`,
+              result: {
+                lines: [
+                  { text: `你大喝一声，使出【${bestArt.name}】中的"${move}"！`, type: 'action' },
+                  { text: `${bestArt.desc}，你与【${wandererName}】联手，很快击退了山贼。`, type: 'action' },
+                  { text: `'多谢少侠相助！'【${wandererName}】感激地说道。`, type: 'dialogue', speaker: wandererName },
+                  { text: '\'少侠武功高强，不如我们结伴而行？\'', type: 'dialogue', speaker: wandererName },
+                ],
+                addNpc: [newNpc, banditNpc],
+                addRelation: {
+                  targetId: newNpc.id,
+                  type: 'friend',
+                  value: 50,
+                },
+                choices: [
+                  {
+                    text: '同意结伴',
+                    result: {
+                      lines: [
+                        { text: '\'好，那我们就一起走吧。\'你点了点头。', type: 'dialogue', speaker: '你' },
+                        { text: `【${wandererName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' },
+                      ],
+                      setCompanion: newNpc.id,
+                    },
+                  },
+                  {
+                    text: '婉言拒绝',
+                    result: {
+                      lines: [
+                        { text: '\'抱歉，我还有要事在身。\'你礼貌地拒绝了。', type: 'dialogue', speaker: '你' },
+                        { text: `【${wandererName}】虽然有些失望，但还是礼貌地告别了。`, type: 'narrative' },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              text: '坐山观虎斗',
+              result: {
+                lines: [
+                  { text: '你选择在一旁观察，看看情况。', type: 'action' },
+                  { text: `【${wandererName}】虽然武功不弱，但面对多个山贼，渐渐落入下风。`, type: 'narrative' },
+                  { text: `你最终还是出手相助，但【${wandererName}】对你的态度冷淡了许多。`, type: 'narrative' },
+                ],
+                addNpc: [newNpc, banditNpc],
+                addRelation: {
+                  targetId: newNpc.id,
+                  type: 'acquaintance',
+                  value: 20,
+                },
+              },
+            },
+          ],
+        };
+      }
+
+      // 没有山贼的普通场景
       return {
         lines: [
           { text: scenario.text, type: 'narrative' },
           { text: scenario.dialogue, type: 'dialogue', speaker: wandererName },
         ],
-        addNpc: newNpc,
-        addRelation: {
-          targetId: newNpc.id,
-          type: scenario.relation,
-          value: scenario.value,
-        },
+        choices: [
+          {
+            text: '同意结伴',
+            result: {
+              lines: [
+                { text: '\'好，那我们就一起走吧。\'你点了点头。', type: 'dialogue', speaker: '你' },
+                { text: `【${wandererName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' },
+              ],
+              addNpc: newNpc,
+              addRelation: {
+                targetId: newNpc.id,
+                type: scenario.relation,
+                value: scenario.value,
+              },
+              setCompanion: newNpc.id,
+            },
+          },
+          {
+            text: '婉言拒绝',
+            result: {
+              lines: [
+                { text: '\'抱歉，我还有要事在身。\'你礼貌地拒绝了。', type: 'dialogue', speaker: '你' },
+                { text: `【${wandererName}】也不强求，你们就此别过。`, type: 'narrative' },
+              ],
+              addNpc: newNpc,
+              addRelation: {
+                targetId: newNpc.id,
+                type: 'acquaintance',
+                value: 10,
+              },
+            },
+          },
+        ],
       };
     },
   },
@@ -1160,8 +1375,41 @@ export const SNIPPETS: StorySnippet[] = [
     tags: ['wild_daily'],
     weight: 30,
     req: (hero) => hero.locationId === 'loc_wild',
-    run: (hero) => {
-      const banditName = genName('male');
+    run: (hero, world) => {
+      // 🆕 山贼有名字和性别
+      const banditGender = Math.random() > 0.7 ? 'female' : 'male'; // 30%概率是女山贼
+      const banditName = genName(banditGender);
+      const banditNpc: Person = {
+        id: `npc_bandit_${Date.now()}`,
+        name: banditName,
+        sectId: 'none',
+        role: 'bandit',
+        gender: banditGender,
+        age: 25,
+        status: 'alive',
+        relations: [],
+        locationId: 'loc_wild',
+        inventory: [],
+        flags: {},
+        arts: [],
+        knowledge: [],
+      };
+
+      // 🆕 选择最厉害的武功用于战斗
+      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
+      const sectArts = getSectArts(sectName);
+      const learnedSectArts = sectArts.filter((a) => hero.arts.includes(a.name));
+      let bestArt: MartialArt;
+      if (learnedSectArts.length > 0) {
+        const outerArts = learnedSectArts.filter((a) => a.type === 'outer');
+        bestArt = outerArts.length > 0 ? outerArts[0] : learnedSectArts[0];
+      } else if (hero.arts.length > 0) {
+        bestArt = getArtByName(hero.arts[0]);
+      } else {
+        bestArt = getArtByName('太祖长拳');
+      }
+      const move = rand(bestArt.moves);
+
       return {
         lines: [
           { text: '你正在赶路，突然从树林中跳出几个山贼！', type: 'action' },
@@ -1169,14 +1417,15 @@ export const SNIPPETS: StorySnippet[] = [
         ],
         choices: [
           {
-            text: '拔剑迎战',
+            text: `使出【${bestArt.name}】迎战`,
             result: {
               lines: [
-                { text: '你二话不说，拔剑就上。', type: 'action' },
-                { text: '山贼们见你武功不弱，不敢硬拼，丢下几句狠话就跑了。', type: 'narrative' },
+                { text: `你二话不说，使出【${bestArt.name}】中的"${move}"！`, type: 'action' },
+                { text: `${bestArt.desc}，山贼们见你武功高强，不敢硬拼，丢下几句狠话就跑了。`, type: 'narrative' },
                 { text: '你在山贼身上搜到了一些银两。', type: 'action' },
               ],
               addItem: '银两',
+              addNpc: banditNpc,
             },
           },
           {
@@ -1184,7 +1433,51 @@ export const SNIPPETS: StorySnippet[] = [
             result: {
               lines: [
                 { text: '你灵机一动，假装是某个大门派的弟子。', type: 'action' },
-                { text: '山贼们被你的气势吓到，不敢动手，让你通过了。', type: 'narrative' },
+              ],
+              choices: [
+                {
+                  text: '继续',
+                  result: (() => {
+                    const success = Math.random() > 0.3; // 70%成功率
+                    if (success) {
+                      return {
+                        lines: [
+                          { text: '山贼们被你的气势吓到，不敢动手，让你通过了。', type: 'narrative' },
+                        ],
+                        addNpc: banditNpc,
+                      };
+                    }
+                    // 失败的情况，需要战斗或逃跑
+                    return {
+                      lines: [
+                        { text: `但山贼头目【${banditName}】见多识广，识破了你的伎俩。`, type: 'narrative' },
+                        { text: `'敢骗我？找死！'【${banditName}】大怒，拔刀就上。`, type: 'dialogue', speaker: banditName },
+                      ],
+                      addNpc: banditNpc,
+                      choices: [
+                        {
+                          text: `使出【${bestArt.name}】迎战`,
+                          result: {
+                            lines: [
+                              { text: `你使出【${bestArt.name}】中的"${move}"，与山贼激战。`, type: 'action' },
+                              { text: '一番激战后，你击退了山贼，但自己也受了些轻伤。', type: 'narrative' },
+                            ],
+                            addItem: '银两',
+                          },
+                        },
+                        {
+                          text: '逃跑',
+                          result: {
+                            lines: [
+                              { text: '你见势不妙，转身就逃。', type: 'action' },
+                              { text: '山贼紧追不舍，你拼尽全力才逃脱。', type: 'narrative' },
+                            ],
+                          },
+                        },
+                      ],
+                    };
+                  })(),
+                },
               ],
             },
           },
@@ -1193,8 +1486,9 @@ export const SNIPPETS: StorySnippet[] = [
             result: {
               lines: [
                 { text: '你不想节外生枝，给了山贼一些银两。', type: 'action' },
-                { text: '山贼们满意地离开了。', type: 'narrative' },
+                { text: `'算你识相！'【${banditName}】满意地离开了。`, type: 'dialogue', speaker: banditName },
               ],
+              addNpc: banditNpc,
             },
           },
         ],
@@ -1267,21 +1561,47 @@ export const SNIPPETS: StorySnippet[] = [
         knowledge: [],
       };
 
-      const arts = SECT_ARTS.default;
-      const randomArt = rand(arts);
+      // 🆕 修复：排除已学会的武功，优先选择门派武功或高级武功
+      const allArts: MartialArt[] = [];
+      Object.values(SECT_ARTS).forEach((sectArts) => {
+        sectArts.forEach((art) => {
+          if (!allArts.find((a) => a.name === art.name)) {
+            allArts.push(art);
+          }
+        });
+      });
+      const unlearnedArts = allArts.filter((a) => !hero.arts.includes(a.name));
+
+      if (unlearnedArts.length === 0) {
+        // 如果所有武功都学会了，就不触发这个事件
+        return {
+          lines: [{ text: '无事发生', type: 'narrative' }],
+        };
+      }
+
+      // 优先选择门派武功，如果没有则随机
+      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
+      const sectArts = getSectArts(sectName);
+      const unlearnedSectArts = sectArts.filter((a) => !hero.arts.includes(a.name));
+      const randomArt = unlearnedSectArts.length > 0
+        ? rand(unlearnedSectArts)
+        : rand(unlearnedArts);
 
       return {
         lines: [
-          { text: '你在山间小路上遇到一位仙风道骨的老者。', type: 'narrative' },
-          { text: `'年轻人，我看你骨骼清奇，是个练武的好苗子。'老者【${masterName}】微笑道。`, type: 'dialogue', speaker: masterName },
-          { text: `'我这里有本【${randomArt.name}】，就传给你吧。'`, type: 'dialogue', speaker: masterName },
+          { text: '你在山间小路上遇到一位仙风道骨的老者，正在演练武功。', type: 'narrative' },
+          { text: '你被他的招式吸引，忍不住驻足观看。', type: 'action' },
+          { text: '老者察觉到你，停下动作，微笑道：\'年轻人，我看你骨骼清奇，是个练武的好苗子。\'', type: 'dialogue', speaker: masterName },
+          { text: `'你刚才看的这招【${randomArt.name}】，想学吗？'`, type: 'dialogue', speaker: masterName },
         ],
         choices: [
           {
             text: '恭敬地接受',
             result: {
               lines: [
-                { text: '你恭敬地接过秘籍，向老者深深一拜。', type: 'action' },
+                { text: '你恭敬地行礼，表示愿意学习。', type: 'action' },
+                { text: `老者点了点头，开始详细讲解【${randomArt.name}】的要诀。`, type: 'narrative' },
+                { text: `${randomArt.desc}，你听得如痴如醉。`, type: 'inner' },
                 { text: '\'好孩子，记住，武功虽重要，但更重要的是武德。\'', type: 'dialogue', speaker: masterName },
                 { text: '老者说完，飘然而去，你连他的身影都看不清。', type: 'narrative' },
               ],
@@ -1301,7 +1621,8 @@ export const SNIPPETS: StorySnippet[] = [
               lines: [
                 { text: '你谦虚地表示自己资质不够，不敢接受。', type: 'action' },
                 { text: '\'好，好，不骄不躁，是个好苗子。\'老者满意地点点头。', type: 'dialogue', speaker: masterName },
-                { text: '老者还是将秘籍留给了你，然后飘然而去。', type: 'narrative' },
+                { text: `'不过，我看你确实有天赋，这本【${randomArt.name}】的秘籍，就留给你吧。'`, type: 'dialogue', speaker: masterName },
+                { text: '老者将秘籍放在你面前，然后飘然而去。', type: 'narrative' },
               ],
               addArt: randomArt.name,
               addNpc: newNpc,
@@ -1333,28 +1654,43 @@ export const SNIPPETS: StorySnippet[] = [
       if (!master) return false;
       const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
       const arts = getSectArts(sectName);
-      const learnedArts = arts.filter((a) => hero.arts.includes(a.name));
-      return learnedArts.length < arts.length && hero.locationId === 'loc_sect_main';
+      const unlearnedArts = arts.filter((a) => !hero.arts.includes(a.name));
+      // 🆕 修复：必须有未学会的武功才触发
+      return unlearnedArts.length > 0 && hero.locationId === 'loc_sect_main';
     },
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
       const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
       const arts = getSectArts(sectName);
       const unlearnedArts = arts.filter((a) => !hero.arts.includes(a.name));
+
+      if (unlearnedArts.length === 0) {
+        return {
+          lines: [
+            { text: `你向${master.name}请求学习新的武功。`, type: 'action' },
+            { text: `'徒儿，本门的武功你已经学得差不多了。'${master.name}欣慰地说道。`, type: 'dialogue', speaker: master.name },
+            { text: '\'剩下的，就要靠你自己在江湖中历练了。\'', type: 'dialogue', speaker: master.name },
+          ],
+        };
+      }
+
       const newArt = rand(unlearnedArts);
+      const artType = newArt.type === 'inner' ? '内功' : '外功';
 
       return {
         lines: [
           { text: `你向${master.name}请求学习新的武功。`, type: 'action' },
-          { text: `'好，今日为师就传你【${newArt.name}】。'`, type: 'dialogue', speaker: master.name },
-          { text: `${master.name}详细讲解了${newArt.desc}的要诀。`, type: 'narrative' },
-          { text: '你认真聆听，感觉受益匪浅。', type: 'inner' },
+          { text: `'好！'${master.name}点了点头，'你最近表现不错，今日为师就传你本门${artType}【${newArt.name}】。'`, type: 'dialogue', speaker: master.name },
+          { text: `${master.name}开始详细讲解${newArt.desc}的要诀。`, type: 'narrative' },
+          { text: '你认真聆听，将每一句话都牢记在心。', type: 'inner' },
+          { text: `'记住，${newArt.desc}，你要勤加练习，不可懈怠。'`, type: 'dialogue', speaker: master.name },
+          { text: '你深深一拜，表示定不负师恩。', type: 'action' },
         ],
         addArt: newArt.name,
         addRelation: {
           targetId: master.id,
           type: 'master',
-          value: hero.relations.find((r) => r.targetId === master.id)?.value || 50 + 10,
+          value: (hero.relations.find((r) => r.targetId === master.id)?.value || 50) + 10,
         },
       };
     },
@@ -1423,13 +1759,22 @@ export const SNIPPETS: StorySnippet[] = [
     req: (hero) => hero.locationId === 'loc_city' && !hero.flags.visited_martial_school,
     run: (hero) => {
       const basicArts = SECT_ARTS.default;
-      const newArt = rand(basicArts);
+      const unlearnedArts = basicArts.filter((a) => !hero.arts.includes(a.name));
+
+      if (unlearnedArts.length === 0) {
+        // 如果基础武功都学会了，就不触发
+        return {
+          lines: [{ text: '无事发生', type: 'narrative' }],
+        };
+      }
+
+      const newArt = rand(unlearnedArts);
 
       return {
         lines: [
-          { text: '你在城中发现了一家武馆。', type: 'narrative' },
-          { text: '武馆师傅见你是个练武之人，主动邀请你进去看看。', type: 'action' },
-          { text: `'少侠，我这里有一套【${newArt.name}】，虽然不算高深，但胜在实用。'`, type: 'dialogue', speaker: '武馆师傅' },
+          { text: '你在城中发现了一家武馆，里面传来练武的呼喝声。', type: 'narrative' },
+          { text: '你好奇地走进去，武馆师傅见你是个练武之人，主动迎了上来。', type: 'action' },
+          { text: `'少侠，我看你步履稳健，应该也是练家子。'武馆师傅打量着你，'我这里有一套【${newArt.name}】，虽然不算高深，但胜在实用，要不要学？'`, type: 'dialogue', speaker: '武馆师傅' },
         ],
         choices: [
           {
@@ -1437,7 +1782,8 @@ export const SNIPPETS: StorySnippet[] = [
             result: {
               lines: [
                 { text: '你交了学费，在武馆学习了一段时间。', type: 'action' },
-                { text: `你学会了【${newArt.name}】，虽然不算高深，但聊胜于无。`, type: 'narrative' },
+                { text: `武馆师傅手把手教你【${newArt.name}】的招式，你学得很认真。`, type: 'narrative' },
+                { text: '虽然这套武功不算高深，但你也算是多了一门技艺。', type: 'inner' },
               ],
               addArt: newArt.name,
               addFlag: 'visited_martial_school',

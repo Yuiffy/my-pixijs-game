@@ -33,6 +33,7 @@ export default function WuxiaGame() {
     heroId: string;
     stage: StoryStage;
     turnInStage: number;
+    companionId?: string; // 🆕 同行伙伴ID
   } | null>(null);
 
   const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
@@ -100,7 +101,7 @@ export default function WuxiaGame() {
           knowledge: [],
         };
         newNpcs.push(leader);
-        for (let i = 0; i < 2; i++) {
+        Array.from({ length: 2 }, () => {
           const gender = Math.random() > 0.5 ? 'male' : 'female';
           const disciple: Person = {
             id: `npc_${newNpcs.length}`,
@@ -118,7 +119,8 @@ export default function WuxiaGame() {
             knowledge: [],
           };
           newNpcs.push(disciple);
-        }
+          return null;
+        });
       });
 
       const mySect = rand(newSects);
@@ -148,6 +150,7 @@ export default function WuxiaGame() {
         heroId: 'hero',
         stage: StoryStage.BEGINNING,
         turnInStage: 0,
+        companionId: undefined,
       });
 
       setIsStarted(true);
@@ -169,7 +172,8 @@ export default function WuxiaGame() {
 
     if (result.choices && result.choices.length > 0) {
       setIsAutoPlaying(false);
-      setChoices(result.choices.map((c) => ({
+      setChoices(result.choices.map((c, idx) => ({
+        id: `choice-${Date.now()}-${idx}-${c.text.slice(0, 20)}`,
         text: c.text,
         action: () => {
           setChoices([]);
@@ -204,7 +208,13 @@ export default function WuxiaGame() {
         setTimeout(() => addStory(`【 第${newStage + 1}章：${stageNames[newStage]} 】`, 'time-pass'), 100);
       }
 
-      if (result.addNpc) newNpcs.push(result.addNpc);
+      if (result.addNpc) {
+        if (Array.isArray(result.addNpc)) {
+          newNpcs.push(...result.addNpc);
+        } else {
+          newNpcs.push(result.addNpc);
+        }
+      }
 
       newNpcs = newNpcs.map((n) => {
         if (n.id === 'hero') {
@@ -220,9 +230,14 @@ export default function WuxiaGame() {
             if (idx > -1) newInv.splice(idx, 1);
           }
           if (result.addRelation) {
-            const existingIdx = newRelations.findIndex((r) => r.targetId === result.addRelation!.targetId);
-            if (existingIdx > -1) newRelations[existingIdx] = result.addRelation;
-            else newRelations.push(result.addRelation);
+            const existingIdx = newRelations.findIndex(
+              (r) => r.targetId === result.addRelation!.targetId,
+            );
+            if (existingIdx > -1) {
+              newRelations[existingIdx] = result.addRelation;
+            } else {
+              newRelations.push(result.addRelation);
+            }
           }
           if (result.addFlag) newFlags[result.addFlag] = true;
           if (result.addArt) newArts.push(result.addArt);
@@ -241,8 +256,19 @@ export default function WuxiaGame() {
         return n;
       });
 
+      let newCompanionId = w.companionId;
+      if (result.setCompanion) {
+        newCompanionId = result.setCompanion;
+      } else if (result.removeCompanion) {
+        newCompanionId = undefined;
+      }
+
       return {
-        ...w, npcs: newNpcs, stage: newStage, turnInStage: newTurnInStage + 1,
+        ...w,
+        npcs: newNpcs,
+        stage: newStage,
+        turnInStage: newTurnInStage + 1,
+        companionId: newCompanionId,
       };
     });
   };
