@@ -370,7 +370,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
                         { text: '\'好，那我们就一起走吧。\'你点了点头。', type: 'dialogue', speaker: '你' },
                         { text: `【${wandererName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' },
                       ],
-                      setCompanion: newNpc.id,
+                      addToParty: newNpc.id,
                     },
                   },
                   {
@@ -457,17 +457,49 @@ export const otherPeopleSnippets: StorySnippet[] = [
       };
     },
   },
-  // 🆕 Feature 1: 查看队伍信息 (新增片段)
+  // 🆕 Feature 1: 查看队伍信息 (支持多人队伍)
   {
     id: 'check_party_status',
     tags: ['city_daily', 'wild_daily'],
     weight: 10,
+    req: (hero, world) => !!world.party,
     run: (hero, world) => {
-      const names = getCompanionNamesList(hero, world);
+      // 获取所有队友信息
+      const partyMembers = (world.party || [])
+        .map((id: string) => world.npcs.find((n: Person) => n.id === id))
+        .filter((n: Person | undefined) => n !== undefined) as Person[];
+
+      // 如果没有队友
+      if (partyMembers.length === 0) {
+        return {
+          lines: [
+            { text: '你环顾四周，发现自己形单影只，只有影子与你为伴。', type: 'narrative' }
+          ]
+        };
+      }
+
+      // 生成队友名字列表（带称号）
+      const memberNames = partyMembers.map(member => {
+        const title = member.role === 'disciple' ? '师弟' :
+          member.role === 'hero' ? '前辈' : '少侠';
+        return `${member.name}${title}`;
+      });
+
+      // 不同的描述方式
+      const variations = [
+        `你环顾四周，${memberNames.join('、')}正与你并肩而行。`,
+        `山风拂面，${memberNames.slice(0, -1).join('、')}${memberNames.length > 1 ? `和${memberNames[memberNames.length - 1]}` : memberNames[0]}的身影在侧，让人心中安定。`,
+        `林间小路上，${memberNames.join('、')}与你同行，脚步声在寂静中格外清晰。`,
+        `回望来路，${memberNames.join('、')}正不紧不慢地跟随着你。`,
+        `阳光透过树叶洒下斑驳光影，${memberNames.join('、')}的身影在光晕中若隐若现。`
+      ];
+
+      const selectedText = variations[Math.floor(Math.random() * variations.length)];
+
       return {
         lines: [
-          { text: '你清点了一下随行的人员。', type: 'action' },
-          { text: `当前队伍：${names}`, type: 'narrative' }
+          { text: '你停下脚步，环顾四周。', type: 'action' },
+          { text: selectedText, type: 'narrative' }
         ]
       };
     }

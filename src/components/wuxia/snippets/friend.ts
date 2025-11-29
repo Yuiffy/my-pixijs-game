@@ -29,51 +29,25 @@ export const friendSnippets: StorySnippet[] = [
     }
   },
 
-  // 同行：露营 (已修复：只允许当前队友触发)
+  // 同行：露营 (遍历所有队友)
   {
     id: 'companion_camping',
     tags: ['wild_daily'],
     weight: 20,
-    req: (hero, world) => {
-    // 🆕 修复：检查是否存在 companionId，而不是查找所有好友
-      return !!world.companionId && hero.locationId.startsWith('wild_');
-    },
+    req: (hero, world) => world.party && world.party.length > 0 && hero.locationId.startsWith('wild_'),
     run: (hero, world) => {
-    // 🆕 修复：直接获取当前队友，而不是列表里的第一个好友
-      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
-      if (!companion) return { lines: [{ text: '一阵风吹过，你独自一人。', type: 'narrative' }] };
-
-      const updatedNpc = updateLastInteraction(companion, world.turn);
-      const relation = hero.relations.find(r => r.targetId === companion.id);
-      const currentVal = relation?.value || 0;
-      const currentType = relation?.type || 'friend';
-
-      const personality = companion.personality || 'gentle';
-      const dialogues = {
-        gentle: '今晚的月色真美，不如我们在此休息一晚？',
-        bold: '天色已晚，我们就在这里扎营吧！',
-        cunning: '前面可能有危险，不如先在这里休息。',
-        righteous: '行侠仗义也要注意休息，我们在此过夜吧。',
-        mysterious: '...（默默开始准备露营）',
-        playful: '好累啊！我们在这里休息吧，我带了干粮！',
-        serious: '天色不早了，我们在这里扎营。',
-        passionate: '能和你一起看星星，真是太好了！'
-      };
-
-      const dialogue = dialogues[personality] || '我们在这里休息一晚吧。';
+      // 随机选一个队友互动，或者全体互动
+      const companionIds = world.party as string[];
+      const companion = world.npcs.find((n: Person) => n.id === rand(companionIds));
+      if (!companion) return { lines: [{ text: '...', type: 'narrative' }] };
 
       return {
         lines: [
-          { text: `【${companion.name}】对你说：`, type: 'narrative' },
-          { text: `"${dialogue}"`, type: 'dialogue', speaker: companion.name },
-          { text: '你们找了一处避风的地方搭起帐篷。', type: 'action' }
+          { text: `【${companion.name}】提议："天色已晚，大家在此休息吧。"`, type: 'dialogue', speaker: companion.name },
+          { text: '众人在避风处搭起帐篷，围坐在篝火旁。', type: 'action' }
         ],
-        addNpc: updatedNpc,
-        addRelation: {
-          targetId: companion.id,
-          type: currentType,
-          value: currentVal + 2
-        }
+        // 可以给全队加好感，这里简化为给互动的加
+        addRelation: { targetId: companion.id, type: 'friend', value: 2 }
       };
     }
   },
@@ -96,7 +70,7 @@ export const friendSnippets: StorySnippet[] = [
       const currentVal = relation?.value || 0;
       const currentType = relation?.type || 'friend';
 
-      const personality = companion.personality || 'gentle';
+      const personality: Personality = companion.personality || 'gentle';
       const meals = {
         gentle: '清蒸鲈鱼',
         bold: '红烧肉',
@@ -268,11 +242,23 @@ export const friendSnippets: StorySnippet[] = [
     id: 'companion_farewell',
     tags: ['sect_daily'],
     weight: 30,
-    req: (hero, world) => !!world.companionId && hero.locationId.startsWith('sect_'),
-    run: (hero, world) => {
-      const companion = world.npcs.find((n: Person) => n.id === world.companionId);
-      if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
+    // 只有当有外门派队友在队里，且回到自己门派时触发
+    req: (hero, world) => {
+      if (!world.party || world.party.length === 0) return false;
+      if (!hero.locationId.startsWith('sect_')) return false;
 
+      // 检查是否有非本门派的队友
+      const outsiders = world.party.map((id: string) => world.npcs.find((n: Person) => n.id === id))
+        .filter((n: Person) => n && n.sectId !== hero.sectId);
+      return outsiders.length > 0;
+    },
+    run: (hero, world) => {
+      // 找到第一个外门派队友
+      const leaver = world.party.map((id: string) => world.npcs.find((n: Person) => n.id === id))
+        .find((n: Person) => n && n.sectId !== hero.sectId);
+      const companion = leaver;
+
+      if (!leaver) return { lines: [] };
       const relation = hero.relations.find((r) => r.targetId === companion.id);
       const relationValue = relation?.value || 0;
 
@@ -296,7 +282,7 @@ export const friendSnippets: StorySnippet[] = [
           { text: dialogue, type: 'dialogue', speaker: companion.name },
           { text: relationValue >= 80 ? `【${companion.name}】${companion.gender === 'female' ? '她' : '他'}的眼神中满是不舍。` : `【${companion.name}】与你告别，离开了。`, type: 'narrative' },
         ],
-        removeCompanion: true,
+        removeFromParty: leaver.id, // 🆕 指定离开的人
       };
     },
   },
@@ -355,7 +341,7 @@ export const friendSnippets: StorySnippet[] = [
                     addNpc: newNpc,
                     addRelation: { targetId: newNpc.id, type: 'crush', value: 60 },
                     addFlag: 'met_crush',
-                    setCompanion: newNpc.id,
+                    addToParty: newNpc.id, // 🆕 使用 addToParty
                   },
                 },
                 {

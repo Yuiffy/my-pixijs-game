@@ -119,8 +119,8 @@ export interface SnippetResult {
   addFlags?: Record<string, any>;
   addArt?: string;
   addKnowledge?: string;
-  setCompanion?: string;
-  removeCompanion?: boolean;
+  addToParty?: string | string[]; // 🆕 支持单个或批量加入队伍 (ID)
+  removeFromParty?: string | string[]; // 🆕 支持单个或批量离开队伍 (ID)
   advanceStage?: boolean;
   addTurn?: number;
   addExp?: number;

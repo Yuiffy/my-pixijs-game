@@ -117,8 +117,14 @@ export const generateBattle = (
   // 🛠️ 战斗准备
   // ==========================================
 
+  // 1. 获取所有队友
+  // 🆕 从 world.party 获取所有队友对象
+  const companions = (world?.party || [])
+    .map((id: string) => world.npcs.find((n: Person) => n.id === id))
+    .filter((n: Person | undefined) => n !== undefined) as Person[];
+  const companionOneMan = companions.length > 0 ? companions[0] : null;
   // 获取同伴（如果有）
-  const companion = world?.companionId ? world.npcs.find((n: Person) => n.id === world.companionId) : null;
+  const companion = companionOneMan;
   let companionArt: MartialArt | null = null;
   if (companion && companion.arts.length > 0) {
     const art = getArtByName(companion.arts[0]);
@@ -362,9 +368,8 @@ export const generateBattle = (
         type: 'narrative'
       });
     }
-  }
-  // 失败 (且无同伴兜底)
-  else if (heroHp <= 0) {
+  } else if (heroHp <= 0) {
+    // 失败 (且无同伴兜底)
     lines.push({
       text: `【${enemy.name}】${rand(['居高临下地看着你', '轻蔑地哼了一声'])}："${rand(battleDescriptions.dialogue.defeat)}"`,
       type: 'dialogue',

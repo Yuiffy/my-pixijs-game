@@ -524,67 +524,60 @@ export const describeMoveComparison = (
   return `【${person.name}】上次用的是"${person.lastUsedMove}"，这次却换成了"${currentMove}"，招式变化莫测！`;
 };
 
-// 🆕 新增：获取当前所有同行伙伴的名字列表
-export const getCompanionNamesList = (hero: Person, world: any): string => {
-  // 1. 获取当前激活的伙伴 (world.companionId)
-  const activeCompanion = world.companionId
-    ? world.npcs.find((n: Person) => n.id === world.companionId)
-    : null;
+// 🆕 Feature 1: 获取所有同行伙伴的名字列表 (适配 party 数组)
+export const getCompanionNamesList = (world: any): string => {
+  if (!world.party || world.party.length === 0) return '无';
 
-  // 2. (可选) 如果你未来扩展了多队友系统，可以在这里遍历 hero.relations 查找状态为 'party' 的人
-  // 目前基于现有架构，主要处理 activeCompanion
+  const names = world.party.map((id: string) => {
+    const p = world.npcs.find((n: Person) => n.id === id);
+    return p ? p.name : '未知';
+  });
 
-  if (!activeCompanion) return '';
-
-  return `【${activeCompanion.name}】`;
+  return names.map((n: string) => `【${n}】`).join('、');
 };
-// 🆕 生成战斗胜利后的通用选择
+
+// 🆕 Feature 3: 生成战斗胜利后的通用选择
 export const getBattleOutcomeChoices = (
   enemy: Person,
   hero: Person,
   world: any,
   baseRelationVal: number = 0
-): StoryChoice[] => {
+) => {
   return [
     {
       text: '斩草除根',
-      desc: '杀死敌人，永绝后患 (名声可能受损)',
+      desc: '杀死敌人，永绝后患',
       result: {
         lines: [
           { text: '你眼神一冷，手起刀落。', type: 'action' as const },
-          { text: `【${enemy.name}】不可置信地看着你，倒在了血泊中。`, type: 'narrative' as const },
-          { text: '江湖上少了一个祸害，但也多了一笔血债。', type: 'inner' as const }
+          { text: `【${enemy.name}】倒在了血泊中。`, type: 'narrative' as const }
         ],
         addFlag: `killed_${enemy.id}`,
-        // 使用 addRelations (复数) 并修正字段名
-        addRelations: [
-          { targetId: enemy.id, type: 'enemy', value: -100 }
-        ],
-        removeItem: enemy.id // 标记移除NPC
+        removeItem: enemy.id,
+        addRelations: [{ targetId: enemy.id, type: 'enemy', value: -100 }]
       }
     },
     {
       text: '放他一马',
-      desc: '得饶人处且饶人 (增加名声)',
+      desc: '增加名声',
       result: {
         lines: [
-          { text: '你收起兵刃，冷冷道："滚吧，别让我再看见你。"', type: 'dialogue' as const, speaker: '你' },
-          { text: `【${enemy.name}】如蒙大赦，连滚带爬地逃走了。`, type: 'narrative' as const }
+          { text: '你收起兵刃："滚吧。"', type: 'dialogue' as const, speaker: '你' },
+          { text: `【${enemy.name}】连滚带爬地逃走了。`, type: 'narrative' as const }
         ],
         addRelation: { targetId: enemy.id, type: 'acquaintance', value: baseRelationVal + 10 }
       }
     },
     {
       text: '邀请入伙',
-      desc: '化敌为友 (需要一定好感或魅力)',
+      desc: '化敌为友',
       result: {
         lines: [
-          { text: '"我看你身手不错，也是条汉子，不如随我一同闯荡江湖？"', type: 'dialogue' as const, speaker: '你' },
-          { text: `【${enemy.name}】愣了一下，似乎没料到你会这么说。`, type: 'narrative' as const },
-          { text: '"败军之将，承蒙不弃！愿效犬马之劳！"', type: 'dialogue' as const, speaker: enemy.name }
+          { text: '"我看你身手不错，不如随我一同闯荡江湖？"', type: 'dialogue' as const, speaker: '你' },
+          { text: `【${enemy.name}】一愣，随即拱手："愿效犬马之劳！"`, type: 'dialogue' as const, speaker: enemy.name }
         ],
         addRelation: { targetId: enemy.id, type: 'friend', value: 60 },
-        setCompanion: enemy.id
+        addToParty: enemy.id // 🆕 修改：使用 addToParty
       }
     }
   ];

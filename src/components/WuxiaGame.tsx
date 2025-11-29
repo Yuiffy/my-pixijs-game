@@ -33,7 +33,7 @@ export default function WuxiaGame() {
     heroId: string;
     stage: StoryStage;
     turnInStage: number;
-    companionId?: string;
+    party: string[];
   } | null>(null);
 
   const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
@@ -162,7 +162,7 @@ export default function WuxiaGame() {
         heroId: 'hero',
         stage: StoryStage.BEGINNING,
         turnInStage: 0,
-        companionId: undefined,
+        party: [],
       });
 
       setIsStarted(true);
@@ -278,11 +278,29 @@ export default function WuxiaGame() {
         return n;
       });
 
-      let newCompanionId = w.companionId;
-      if (result.setCompanion) {
-        newCompanionId = result.setCompanion;
-      } else if (result.removeCompanion) {
-        newCompanionId = undefined;
+      // 🆕 核心修改：处理队伍变更
+      let newParty = [...w.party];
+
+      // 加入队伍 (支持单个或批量添加)
+      if (result.addToParty) {
+        const membersToAdd = Array.isArray(result.addToParty) ? result.addToParty : [result.addToParty];
+        membersToAdd.forEach(memberId => {
+          if (!newParty.includes(memberId)) {
+            newParty.push(memberId);
+          }
+        });
+      }
+
+      // 离开队伍 (支持单个或批量移除)
+      if (result.removeFromParty) {
+        const membersToRemove = Array.isArray(result.removeFromParty) ? result.removeFromParty : [result.removeFromParty];
+        newParty = newParty.filter(id => !membersToRemove.includes(id));
+      }
+
+      // 兼容旧代码 (如果还有 setCompanion 的遗留代码)
+      if ((result as any).setCompanion) {
+        const id = (result as any).setCompanion;
+        if (!newParty.includes(id)) newParty.push(id);
       }
 
       return {
@@ -290,7 +308,7 @@ export default function WuxiaGame() {
         npcs: newNpcs,
         stage: newStage,
         turnInStage: newTurnInStage + 1,
-        companionId: newCompanionId,
+        party: newParty,
       };
     });
   }, [addStory]);
