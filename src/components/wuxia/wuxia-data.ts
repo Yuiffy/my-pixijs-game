@@ -278,10 +278,8 @@ export const SNIPPETS: StorySnippet[] = [
             addTurn: 1,
           },
         });
-      }
-
-      // --- 野外选项：探索 ---
-      else if (hero.locationId === 'loc_wild') {
+      } else if (hero.locationId === 'loc_wild') {
+        // --- 野外选项：探索 ---
         choices.push({
           text: '四处探索 (寻找机缘)',
           result: {
@@ -300,10 +298,8 @@ export const SNIPPETS: StorySnippet[] = [
             addTurn: 3,
           },
         });
-      }
-
-      // --- 门派选项 ---
-      else if (hero.locationId === 'loc_sect_main') {
+      } else if (hero.locationId === 'loc_sect_main') {
+        // --- 门派选项 ---
         choices.push({
           text: '找师兄弟闲聊',
           result: {
@@ -321,17 +317,6 @@ export const SNIPPETS: StorySnippet[] = [
       }
 
       // --- 通用移动选项 ---
-      if (hero.locationId !== 'loc_sect_main') {
-        choices.push({
-          text: '返回师门',
-          result: {
-            lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
-            newLocationId: 'loc_sect_main',
-            addTurn: 2,
-          },
-        });
-      }
-
       if (hero.locationId === 'loc_sect_main') {
         const city = world.locations.find((l: Location) => l.id === 'loc_city');
         choices.push({
@@ -352,6 +337,34 @@ export const SNIPPETS: StorySnippet[] = [
             lines: [{ text: '听说野外有不少机缘，你决定去碰碰运气。', type: 'action' }],
             newLocationId: 'loc_wild',
             addTurn: 2,
+          },
+        });
+        choices.push({
+          text: '返回师门',
+          result: {
+            lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
+            newLocationId: 'loc_sect_main',
+            addTurn: 2,
+          },
+        });
+      }
+
+      if (hero.locationId === 'loc_wild') {
+        const city = world.locations.find((l: Location) => l.id === 'loc_city');
+        choices.push({
+          text: `返回【${city.name}】`,
+          result: {
+            lines: [{ text: '野外虽然有机缘，但也危险重重。你决定先回城中。', type: 'action' }],
+            newLocationId: 'loc_city',
+            addTurn: 2,
+          },
+        });
+        choices.push({
+          text: '返回师门',
+          result: {
+            lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
+            newLocationId: 'loc_sect_main',
+            addTurn: 3,
           },
         });
       }
@@ -430,7 +443,7 @@ export const SNIPPETS: StorySnippet[] = [
             text: '虚心请教',
             result: {
               lines: [
-                { text: '你获益良多，对【${art.name}】有了新的领悟。', type: 'inner' },
+                { text: `你获益良多，对【${art.name}】有了新的领悟。`, type: 'inner' },
                 { text: '再抬头时，老者已不知去向。', type: 'narrative' },
               ],
               addArt: art.name,
@@ -488,7 +501,7 @@ export const SNIPPETS: StorySnippet[] = [
         isNewNpc = true;
         const gender = Math.random() > 0.5 ? 'male' : 'female';
         targetNpc = {
-          id: `npc_hero_${Date.now()}`, name: genName(gender), sectId: 'none', role: 'hero', gender, age: 30, status: 'alive', relations: [], locationId: 'loc_city', inventory: [], flags: {}, arts: [],
+          id: `npc_hero_${Date.now()}`, name: genName(gender), sectId: 'none', role: 'hero', gender, age: 30, status: 'alive', relations: [], locationId: 'loc_city', inventory: [], flags: {}, arts: [], knowledge: [],
         };
       }
       return {
@@ -561,6 +574,7 @@ export const SNIPPETS: StorySnippet[] = [
         inventory: [],
         flags: {},
         arts: [],
+        knowledge: [],
       };
 
       const evilArts = SECT_ARTS['血刀堂'];
@@ -606,6 +620,7 @@ export const SNIPPETS: StorySnippet[] = [
         inventory: [],
         flags: {},
         arts: [],
+        knowledge: [],
       };
 
       return {
@@ -902,6 +917,7 @@ export const SNIPPETS: StorySnippet[] = [
           inventory: [],
           flags: {},
           arts: [],
+          knowledge: [],
         };
       }
       const actualMerchant = merchant || newMerchant;
@@ -1046,6 +1062,7 @@ export const SNIPPETS: StorySnippet[] = [
         inventory: [],
         flags: {},
         arts: [],
+        knowledge: [],
       };
 
       const scenarios = [
@@ -1247,6 +1264,7 @@ export const SNIPPETS: StorySnippet[] = [
         inventory: [],
         flags: {},
         arts: [],
+        knowledge: [],
       };
 
       const arts = SECT_ARTS.default;
