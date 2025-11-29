@@ -31,7 +31,7 @@ export default function WuxiaGame() {
     locations: Location[];
     heroId: string;
     stage: StoryStage;
-    turnInStage: number; // 🆕 追踪当前阶段回合数
+    turnInStage: number;
   } | null>(null);
 
   const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
@@ -94,6 +94,7 @@ export default function WuxiaGame() {
         locationId: sect.locationId,
         inventory: [],
         flags: {},
+        arts: [],
       };
       newNpcs.push(leader);
       for (let i = 0; i < 2; i++) {
@@ -110,6 +111,7 @@ export default function WuxiaGame() {
           locationId: sect.locationId,
           inventory: [],
           flags: {},
+          arts: [],
         };
         newNpcs.push(disciple);
       }
@@ -129,6 +131,7 @@ export default function WuxiaGame() {
       locationId: mySect.locationId,
       inventory: [],
       flags: {},
+      arts: [],
     };
 
     if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice' });
@@ -139,11 +142,12 @@ export default function WuxiaGame() {
       locations: finalLocations,
       heroId: 'hero',
       stage: StoryStage.BEGINNING,
-      turnInStage: 0, // 🆕 初始化回合
+      turnInStage: 0,
     });
 
     setIsStarted(true);
     setIsEnded(false);
+    setIsAutoPlaying(true); // 🌟 修复：重置自动播放状态
     setStoryLog([]);
     setChoices([]);
     snippetCooldowns.current.clear();
@@ -154,7 +158,6 @@ export default function WuxiaGame() {
   const applySnippetResult = (result: SnippetResult) => {
     result.lines.forEach((line) => addStory(line.text, line.type, line.speaker));
 
-    // 🧠 核心：选项处理
     if (result.choices && result.choices.length > 0) {
       setIsAutoPlaying(false);
       setChoices(result.choices.map((c) => ({
@@ -187,7 +190,7 @@ export default function WuxiaGame() {
 
       if (result.advanceStage) {
         newStage = Math.min(newStage + 1, StoryStage.ENDING);
-        newTurnInStage = 0; // 🆕 换章节时重置回合数
+        newTurnInStage = 0;
         const stageNames = ['初出茅庐', '江湖扬名', '阴谋浮现', '决战巅峰', '大结局'];
         setTimeout(() => addStory(`【 第${newStage + 1}章：${stageNames[newStage]} 】`, 'time-pass'), 100);
       }
@@ -197,6 +200,7 @@ export default function WuxiaGame() {
       newNpcs = newNpcs.map((n) => {
         if (n.id === 'hero') {
           const newInv = [...n.inventory];
+          const newArts = [...n.arts];
           const newRelations = [...n.relations];
           const newFlags = { ...n.flags };
 
@@ -211,9 +215,16 @@ export default function WuxiaGame() {
             else newRelations.push(result.addRelation);
           }
           if (result.addFlag) newFlags[result.addFlag] = true;
+          // 🆕 学会新武功
+          if (result.addArt) newArts.push(result.addArt);
 
           return {
-            ...n, inventory: newInv, relations: newRelations, flags: newFlags, locationId: result.newLocationId || n.locationId,
+            ...n,
+            inventory: newInv,
+            relations: newRelations,
+            flags: newFlags,
+            arts: newArts,
+            locationId: result.newLocationId || n.locationId,
           };
         }
         return n;
@@ -248,7 +259,6 @@ export default function WuxiaGame() {
       const maxStage = s.stageMax ?? StoryStage.ENDING;
       const stageMatch = world.stage >= minStage && world.stage <= maxStage;
       const inCooldown = snippetCooldowns.current.has(s.id);
-      // 🆕 传入 turnInStage
       const meetReq = s.req ? s.req(hero, world, world.turnInStage) : true;
       return hasTag && stageMatch && !inCooldown && meetReq;
     });
@@ -273,49 +283,21 @@ export default function WuxiaGame() {
       const result = selectedSnippet.run(hero, world);
       applySnippetResult(result);
     } else {
-      // 🆕 发呆保护：提供强力选项
       setIsAutoPlaying(false);
       addStory('一时无事，你决定做点什么：', 'time-pass');
 
-      const manualChoices: UIChoice[] = [
-        {
-          text: '打听消息 (推进剧情)',
-          action: () => {
-            setChoices([]);
-            snippetCooldowns.current.clear();
-            // 强制增加回合数，以触发保底
-            setWorld((w) => (w ? { ...w, turnInStage: w.turnInStage + 2 } : null));
-            addStory('你在附近四处打听...', 'narrative');
-            setIsAutoPlaying(true);
-          },
-        },
-        {
-          text: '闭关修炼 (跳过时间)',
-          action: () => {
-            setChoices([]);
-            setWorld((w) => (w ? { ...w, turnInStage: w.turnInStage + 3 } : null));
-            addStory('山中无甲子，寒尽不知年。', 'time-pass');
-            setIsAutoPlaying(true);
-          },
-        },
-      ];
-
-      // 回城选项
-      if (location?.type !== 'city') {
-        const city = world.locations.find((l) => l.type === 'city');
-        if (city) {
-          manualChoices.push({
-            text: `前往${city.name}`,
-            action: () => {
-              setChoices([]);
-              applySnippetResult({ lines: [{ text: '你决定换个地方碰碰运气。', type: 'action' }], newLocationId: city.id });
-              setIsAutoPlaying(true);
-            },
-          });
-        }
+      // 这里的逻辑已被 wuxia-data.ts 中的 idle_action_menu 接管，
+      // 但为了保险（万一 data 里的 req 没配好），保留这个兜底逻辑。
+      // 实际上如果 idle_action_menu 配置正确，代码永远走不到这里。
+      // 但为了稳健性，我们手动触发一次 idle_action_menu
+      const idleSnippet = SNIPPETS.find((s) => s.id === 'idle_action_menu');
+      if (idleSnippet) {
+        const result = idleSnippet.run(hero, world);
+        applySnippetResult(result);
+      } else {
+        // 真·兜底
+        setChoices([{ text: '冥想', action: () => { setChoices([]); setIsAutoPlaying(true); } }]);
       }
-
-      setChoices(manualChoices);
     }
   }, [world, addStory, isEnded]);
 

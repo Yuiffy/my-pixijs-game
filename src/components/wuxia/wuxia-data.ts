@@ -10,6 +10,14 @@ export interface Relation {
   value: number;
 }
 
+export interface MartialArt {
+  id: string;
+  name: string;
+  type: 'inner' | 'outer'; // 内功 | 外功
+  desc: string;
+  moves: string[]; // 招式列表
+}
+
 export interface Person {
   id: string;
   name: string;
@@ -22,6 +30,7 @@ export interface Person {
   locationId: string;
   inventory: string[];
   flags: Record<string, boolean>;
+  arts: string[]; // 🆕 已学会的武功ID
 }
 
 export interface Sect {
@@ -70,6 +79,7 @@ export interface SnippetResult {
   addNpc?: Person;
   addRelation?: Relation;
   addFlag?: string;
+  addArt?: string; // 🆕 学会武功
   advanceStage?: boolean;
   endGame?: boolean;
   choices?: StoryChoice[];
@@ -86,7 +96,7 @@ export interface StorySnippet {
 }
 
 // ==========================================
-// 🎲 随机生成库
+// 🎲 随机生成库 & 武功库
 // ==========================================
 
 export const MALE_FIRST_NAMES = ['风', '云', '雪', '冲', '无忌', '不败', '寻欢', '留香', '过', '靖', '康', '松', '竹', '虎', '龙', '天', '峰', '逍', '遥', '破天', '翠山', '平之', '复', '延庆', '不群', '沧海', '伯光', '问天'];
@@ -115,6 +125,76 @@ export const LOCATION_TEMPLATES: Location[] = [
   { id: 'loc_wild', name: '随机险地', type: 'wild' },
 ];
 
+// 🆕 武功数据
+// 简单起见，Key 使用门派名字的一部分，或者 'generic'
+export const SECT_ARTS: Record<string, MartialArt[]> = {
+  青云门: [
+    {
+      id: 'qy_sword', name: '神剑御雷真诀', type: 'outer', desc: '引九天玄雷，剑势刚猛无俦', moves: ['平地惊雷', '雷动九天', '电闪雷鸣'],
+    },
+    {
+      id: 'qy_inner', name: '太极玄清道', type: 'inner', desc: '道法自然，生生不息', moves: ['固本培元', '清心寡欲'],
+    },
+  ],
+  血刀堂: [
+    {
+      id: 'xd_blade', name: '血魔刀法', type: 'outer', desc: '刀刀见血，诡异莫测', moves: ['血流成河', '嗜血如命', '魔刀降世'],
+    },
+    {
+      id: 'xd_inner', name: '修罗阴煞功', type: 'inner', desc: '寒气逼人，阴毒无比', moves: ['阴风怒号', '煞气护体'],
+    },
+  ],
+  丐帮: [
+    {
+      id: 'gb_palm', name: '降龙十八掌', type: 'outer', desc: '天下第一阳刚掌法', moves: ['亢龙有悔', '飞龙在天', '见龙在田', '神龙摆尾'],
+    },
+    {
+      id: 'gb_stick', name: '打狗棒法', type: 'outer', desc: '变化精微，招式奥妙', moves: ['天下无狗', '棒打双犬'],
+    },
+  ],
+  少林: [
+    {
+      id: 'sl_fist', name: '罗汉拳', type: 'outer', desc: '佛门正宗，中正平和', moves: ['黑虎掏心', '双峰贯耳'],
+    },
+    {
+      id: 'sl_inner', name: '易筋经', type: 'inner', desc: '脱胎换骨，内力无穷', moves: ['洗髓伐毛', '金刚不坏'],
+    },
+  ],
+  武当: [
+    {
+      id: 'wd_sword', name: '太极剑', type: 'outer', desc: '以柔克刚，连绵不绝', moves: ['揽雀尾', '单鞭', '白鹤亮翅'],
+    },
+    {
+      id: 'wd_inner', name: '纯阳无极功', type: 'inner', desc: '纯阳紫气，百毒不侵', moves: ['紫气东来', '三花聚顶'],
+    },
+  ],
+  华山: [
+    {
+      id: 'hs_sword', name: '独孤九剑', type: 'outer', desc: '破尽天下招式，只攻不守', moves: ['破剑式', '破刀式', '总决式'],
+    },
+    {
+      id: 'hs_inner', name: '紫霞神功', type: 'inner', desc: '面若紫霞，绵里藏针', moves: ['紫气东来', '霞光万丈'],
+    },
+  ],
+  default: [
+    {
+      id: 'basic_fist', name: '太祖长拳', type: 'outer', desc: '江湖流传最广的拳法', moves: ['冲拳', '劈掌'],
+    },
+    {
+      id: 'basic_inner', name: '吐纳法', type: 'inner', desc: '基础呼吸吐纳之术', moves: ['气沉丹田'],
+    },
+  ],
+};
+
+// 辅助函数：获取某门派的武功
+const getSectArts = (sectName: string) => {
+  // 模糊匹配
+  for (const key in SECT_ARTS) {
+    if (sectName.includes(key)) return SECT_ARTS[key];
+  }
+  return SECT_ARTS.default;
+};
+
 // ==========================================
 // 🎭 预设剧情库
 // ==========================================
@@ -123,15 +203,12 @@ export const SNIPPETS: StorySnippet[] = [
 
   // ===================================
   // 🌟 通用保底逻辑 (Idle Action)
-  // 当没有其他剧情可触发时，这个片段提供行动菜单
   // ===================================
   {
     id: 'idle_action_menu',
-    // 加上所有tag，确保哪里都能触发
     tags: ['sect_daily', 'city_daily', 'wild_daily'],
-    weight: 0.1, // 极低权重，只有其他剧情都CD或条件不符时才轮到它
+    weight: 0.1,
     run: (hero, world) => {
-      // 动态生成选项
       const choices: StoryChoice[] = [
         {
           text: '闭关修炼 (跳过时间)',
@@ -140,7 +217,7 @@ export const SNIPPETS: StorySnippet[] = [
               { text: '山中无甲子，寒尽不知年。你专心修炼，不问世事。', type: 'time-pass' },
               { text: '（时间流逝，这可能触发新的事件）', type: 'inner' },
             ],
-            addTurn: 3, // 增加回合数，有助于触发保底剧情
+            addTurn: 3,
           },
         },
         {
@@ -150,12 +227,11 @@ export const SNIPPETS: StorySnippet[] = [
               { text: '你四处打听最近江湖上有没有什么新鲜事。', type: 'action' },
               { text: '（你试图寻找推进剧情的线索...）', type: 'inner' },
             ],
-            addTurn: 1, // 只是刷新一下CD
+            addTurn: 1,
           },
         },
       ];
 
-      // 如果不在门派，加一个回城选项
       if (hero.locationId !== 'loc_sect_main') {
         choices.push({
           text: '返回师门',
@@ -167,7 +243,6 @@ export const SNIPPETS: StorySnippet[] = [
         });
       }
 
-      // 如果在门派，加一个下山选项
       if (hero.locationId === 'loc_sect_main') {
         const city = world.locations.find((l: Location) => l.id === 'loc_city');
         choices.push({
@@ -219,7 +294,6 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
-  // 送信
   {
     id: 'intro_quest_deliver',
     tags: ['city_daily'],
@@ -233,12 +307,12 @@ export const SNIPPETS: StorySnippet[] = [
         isNewNpc = true;
         const gender = Math.random() > 0.5 ? 'male' : 'female';
         targetNpc = {
-          id: `npc_hero_${Date.now()}`, name: genName(gender), sectId: 'none', role: 'hero', gender, age: 30, status: 'alive', relations: [], locationId: 'loc_city', inventory: [], flags: {},
+          id: `npc_hero_${Date.now()}`, name: genName(gender), sectId: 'none', role: 'hero', gender, age: 30, status: 'alive', relations: [], locationId: 'loc_city', inventory: [], flags: {}, arts: [],
         };
       }
       return {
         lines: [
-          { text: `你几经打听，终于见到了大侠【${targetNpc.name}】。`, type: 'action' },
+          { text: `你几经打听，终于见到了大侠【${targetNpc.name}】，呈上书信。`, type: 'action' },
           { text: '“此事我已知晓，这是给贵派掌门的回信。”', type: 'dialogue', speaker: targetNpc.name },
         ],
         removeItem: '密信',
@@ -250,7 +324,6 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
-  // 回门派
   {
     id: 'intro_quest_complete',
     tags: ['sect_daily'],
@@ -259,14 +332,21 @@ export const SNIPPETS: StorySnippet[] = [
     req: (hero) => hero.inventory.includes('回信') && hero.locationId === 'loc_sect_main',
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
+      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
+      const arts = getSectArts(sectName);
+      // 随机给一个武功
+      const rewardArt = rand(arts) || arts[0];
+
       return {
         lines: [
           { text: `${master.name}看完回信，满意地点了点头。`, type: 'narrative' },
-          { text: '“好！这次历练你做得很好。”', type: 'dialogue', speaker: master.name },
-          { text: '你在江湖上也有了些许名声。', type: 'inner' },
+          { text: '“好！这次历练你做得很好。为师决定传你本门绝学！”', type: 'dialogue', speaker: master.name },
+          { text: `师父将【${rewardArt.name}】的口诀心法悉数传授于你。`, type: 'action' },
+          { text: `（${rewardArt.desc}）`, type: 'inner' },
         ],
         removeItem: '回信',
         addFlag: 'quest_letter_done',
+        addArt: rewardArt.name, // 🆕 记录学会的武功
         advanceStage: true,
         addTurn: 1,
       };
@@ -277,7 +357,6 @@ export const SNIPPETS: StorySnippet[] = [
   // Phase 1: 江湖扬名 (RISING)
   // ===================================
 
-  // 1. 强制结识宿敌 (阈值调低到 2 回合)
   {
     id: 'force_meet_villain',
     tags: ['sect_daily', 'city_daily', 'wild_daily'],
@@ -299,12 +378,19 @@ export const SNIPPETS: StorySnippet[] = [
         locationId: hero.locationId,
         inventory: [],
         flags: {},
+        arts: [],
       };
+
+      // 随机一个反派武功
+      const evilArts = SECT_ARTS['血刀堂'];
+      const villainMove = rand(evilArts[0].moves);
+
       return {
         lines: [
           { text: '你路见不平，出手教训了一个恶霸。', type: 'action' },
-          { text: '没想打了小的来了老的，恶霸背后的靠山现身了。', type: 'narrative' },
+          { text: '没想引来了背后的靠山。', type: 'narrative' },
           { text: `“我是【${villainName}】，小子，你活到头了！”`, type: 'dialogue', speaker: villainName },
+          { text: `只见${villainName}使出一招【${villainMove}】，阴风阵阵，直扑面门！`, type: 'action' },
           { text: '你与其对拼一掌，勉强逃脱，但梁子算是结下了。', type: 'narrative' },
         ],
         addNpc: newNpc,
@@ -314,7 +400,6 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
-  // 2. 邂逅恋人
   {
     id: 'meet_crush',
     tags: ['city_daily', 'wild_daily'],
@@ -337,6 +422,7 @@ export const SNIPPETS: StorySnippet[] = [
         locationId: hero.locationId,
         inventory: [],
         flags: {},
+        arts: [],
       };
 
       return {
@@ -367,7 +453,6 @@ export const SNIPPETS: StorySnippet[] = [
     },
   },
 
-  // 3. 强制推进到 CRISIS (阈值调低到 5 回合)
   {
     id: 'force_advance_to_crisis',
     tags: ['sect_daily', 'city_daily', 'wild_daily'],
@@ -408,7 +493,7 @@ export const SNIPPETS: StorySnippet[] = [
           { text: '你含泪逃入深山，发誓定要报此血海深仇。', type: 'inner' },
         ],
         newLocationId: 'loc_wild',
-        advanceStage: true, // -> 进 CLIMAX
+        advanceStage: true,
       };
     },
   },
@@ -417,7 +502,6 @@ export const SNIPPETS: StorySnippet[] = [
   // Phase 3: 决战巅峰 (CLIMAX)
   // ===================================
 
-  // 1. 苦练 (必须先练一次)
   {
     id: 'climax_training',
     tags: ['wild_daily'],
@@ -425,26 +509,35 @@ export const SNIPPETS: StorySnippet[] = [
     stageMin: StoryStage.CLIMAX,
     stageMax: StoryStage.CLIMAX,
     req: (hero) => !hero.flags.ready_for_final,
-    run: () => ({
-      lines: [
-        { text: '身负血仇，你在深山中日夜苦练。', type: 'narrative' },
-        { text: '寒来暑往，你的剑法终于大成。', type: 'action' },
-        { text: '“是时候了。”你望向仇人所在的方向。', type: 'inner' },
-      ],
-      choices: [
-        {
-          text: '杀回城市，找仇人算账！',
-          result: {
-            lines: [{ text: '你提剑下山，杀气腾腾。', type: 'action' }],
-            addFlag: 'ready_for_final',
-            newLocationId: 'loc_city',
+    run: (hero, world) => {
+      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
+      const arts = getSectArts(sectName);
+      // 找到一个内功和一个外功
+      const innerArt = arts.find((a) => a.type === 'inner') || arts[0];
+      const outerArt = arts.find((a) => a.type === 'outer') || arts[0];
+      const move = rand(outerArt.moves);
+
+      return {
+        lines: [
+          { text: '身负血仇，你在深山中日夜苦练。', type: 'narrative' },
+          { text: `你默念【${innerArt.name}】口诀，${innerArt.desc}。`, type: 'action' },
+          { text: `寒来暑往，你一遍遍演练【${outerArt.name}】中的“${move}”。`, type: 'action' },
+          { text: '终于，你感觉内力充盈，剑意通明，神功大成！', type: 'inner' },
+        ],
+        choices: [
+          {
+            text: '杀回城市，找仇人算账！',
+            result: {
+              lines: [{ text: '你提剑下山，杀气腾腾。', type: 'action' }],
+              addFlag: 'ready_for_final',
+              newLocationId: 'loc_city',
+            },
           },
-        },
-      ],
-    }),
+        ],
+      };
+    },
   },
 
-  // 2. 决战
   {
     id: 'final_battle_start',
     tags: ['city_daily'],
@@ -455,18 +548,25 @@ export const SNIPPETS: StorySnippet[] = [
       const enemyRel = hero.relations.find((r) => r.type === 'enemy');
       const enemyName = enemyRel ? world.npcs.find((n:Person) => n.id === enemyRel.targetId)?.name : '魔教教主';
 
+      const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
+      const arts = getSectArts(sectName);
+      const ultArt = rand(arts) || arts[0];
+      const ultMove = rand(ultArt.moves);
+
       return {
         lines: [
           { text: '月圆之夜，紫禁之巅。', type: 'narrative' },
           { text: `你与仇人【${enemyName}】相对而立，杀气弥漫。`, type: 'narrative' },
-          { text: '“天堂有路你不走！”对手狞笑着扑来。', type: 'dialogue', speaker: enemyName },
+          { text: '“天堂有路你不走！”对手狞笑着扑来，掌风凌厉。', type: 'dialogue', speaker: enemyName },
         ],
         choices: [
           {
-            text: '使出绝学一击必杀',
+            text: `使出绝学【${ultArt.name}】`,
             result: {
               lines: [
-                { text: '三百回合后，你使出了师门绝学，一剑刺穿了对方的咽喉。', type: 'action' },
+                { text: `你大喝一声，使出【${ultArt.name}】中的绝杀“${ultMove}”！`, type: 'action' },
+                { text: `${ultArt.desc}，剑气瞬间贯穿了对手的防御。`, type: 'action' },
+                { text: '三百回合后，你一剑刺穿了对方的咽喉。', type: 'action' },
                 { text: '一切都结束了。', type: 'inner' },
                 { text: '你收剑入鞘，看着天边的朝阳，转身没入人海。', type: 'narrative' },
                 { text: '江湖上从此多了一个传说。', type: 'narrative' },
@@ -493,7 +593,7 @@ export const SNIPPETS: StorySnippet[] = [
   },
 
   // ===================================
-  // 🌲 通用日常 (低权重，作为填充)
+  // 🌲 通用日常
   // ===================================
   {
     id: 'daily_train', tags: ['sect_daily', 'wild_daily'], weight: 5, run: () => ({ lines: [{ text: '今日练功，略有心得。', type: 'narrative' }] }),
@@ -508,9 +608,6 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'sect_chat',
     tags: ['sect_daily'],
     weight: 5,
-    run: (hero, world) =>
-      // 简单对话，不依赖特定同门，防止找不到人报错
-      ({ lines: [{ text: '你与几位师兄弟闲聊了一会江湖趣闻。', type: 'narrative' }] }),
-
+    run: (hero, world) => ({ lines: [{ text: '你与几位师兄弟闲聊了一会江湖趣闻。', type: 'narrative' }] }),
   },
 ];
