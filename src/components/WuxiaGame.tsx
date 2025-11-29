@@ -182,6 +182,14 @@ export default function WuxiaGame() {
   const applySnippetResult = useCallback((result: SnippetResult) => {
     console.log('applySnippetResult', result);
 
+    // 首先检查游戏结束条件
+    if (result.endGame) {
+      console.log('Game over triggered');
+      setIsEnded(true);
+      setIsAutoPlaying(false);
+      return;
+    }
+
     // 处理 addNpc 逻辑，确保在任何提前返回前执行
     if (result.addNpc) {
       setWorld((w) => {
@@ -243,11 +251,7 @@ export default function WuxiaGame() {
       }]);
     }
 
-    if (result.endGame) {
-      setIsEnded(true);
-      setIsAutoPlaying(false);
-      return;
-    }
+    // endGame 检查已移到函数开始处
 
     setWorld((w) => {
       if (!w) return null;
