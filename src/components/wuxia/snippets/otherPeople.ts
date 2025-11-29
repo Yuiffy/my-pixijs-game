@@ -566,12 +566,17 @@ export const otherPeopleSnippets: StorySnippet[] = [
               lines: [
                 { text: `你大喝一声，拔剑助阵【${npc1.name}】！`, type: 'action' },
                 // 战斗逻辑：你打 npc2
-                ...generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world).lines
+                ...(() => {
+                  const battleResult = generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+                  return battleResult.lines;
+                })()
               ],
               addNpc: [npc1, npc2],
-              // 如果战斗胜利，提供战后选择 (Feature 3)
-              // 注意：这里简化处理，假设帮忙就会导致胜利并进入处置阶段
-              choices: getBattleOutcomeChoices(npc2, hero, world, -20)
+              // 根据战斗结果显示不同选项
+              choices: (() => {
+                const battleResult = generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+                return battleResult.outcome === 'victory' ? getBattleOutcomeChoices(npc2, hero, world, -20) : [];
+              })()
             }
           },
           {
@@ -579,10 +584,16 @@ export const otherPeopleSnippets: StorySnippet[] = [
             result: {
               lines: [
                 { text: `你居然选择了帮助那个看着像恶人的【${npc2.name}】！`, type: 'action' },
-                ...generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world).lines
+                ...(() => {
+                  const battleResult = generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+                  return battleResult.lines;
+                })()
               ],
               addNpc: [npc1, npc2],
-              choices: getBattleOutcomeChoices(npc1, hero, world, -20)
+              choices: (() => {
+                const battleResult = generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+                return battleResult.outcome === 'victory' ? getBattleOutcomeChoices(npc1, hero, world, -20) : [];
+              })()
             }
           },
           {
