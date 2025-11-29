@@ -12,6 +12,9 @@
     "import/prefer-default-export": "off",
     "@typescript-eslint/naming-convention": "warn",
     "react/require-default-props": "warn",
-    "jsx-a11y/anchor-is-valid": "warn"
+    "jsx-a11y/anchor-is-valid": "warn",
+    "consistent-return": "off",
+    "array-callback-return": "warn",
+    "no-trailing-spaces": "error"
   }
 }
