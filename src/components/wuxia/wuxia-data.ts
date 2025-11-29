@@ -1559,40 +1559,51 @@ export const SNIPPETS: StorySnippet[] = [
       // --- 城市选项：打听情报 ---
       if (hero.locationId.startsWith('city_')) {
         // 获取有敌对关系的两个门派
-        const getRivalSects = () => {
+        const getRivalSects = (): [Sect, Sect] => {
           const sects = [...SECTS_DATA];
 
           // 先尝试找敌对关系明显的门派
-          for (const sect1 of sects) {
-            if (!sect1.relations) continue;
+          const sectWithRival = sects.find((sect1) => {
+            if (!sect1.relations) return false;
 
             // 找关系最差的门派
-            let worstRelation = 0;
-            let rivalSect: Sect | null = null;
-
-            for (const [sectId, relation] of Object.entries(sect1.relations)) {
-              if (relation < worstRelation) {
-                const sect = sects.find(s => s.id === sectId);
+            const worstRelation = Object.entries(sect1.relations).reduce((worst, [sectId, relation]) => {
+              if (relation < worst.relation) {
+                const sect = sects.find((s) => s.id === sectId);
                 if (sect) {
-                  worstRelation = relation;
-                  rivalSect = sect;
+                  return { relation, sect };
                 }
               }
-            }
+              return worst;
+            }, { relation: 0, sect: null as Sect | null });
 
-            if (rivalSect) {
-              return [sect1, rivalSect];
+            return worstRelation.sect !== null;
+          });
+
+          if (sectWithRival) {
+            const worstRelation = Object.entries(sectWithRival.relations || {}).reduce((worst, [sectId, relation]) => {
+              if (relation < worst.relation) {
+                const sect = sects.find((s) => s.id === sectId);
+                if (sect) {
+                  return { relation, sect };
+                }
+              }
+              return worst;
+            }, { relation: 0, sect: null as Sect | null });
+
+            if (worstRelation.sect) {
+              return [sectWithRival, worstRelation.sect];
             }
           }
 
           // 如果没有明显敌对关系，则随机选择两个不同阵营的门派
-          const goodSects = sects.filter(s => s.type === 'good');
-          const evilSects = sects.filter(s => s.type === 'evil');
+          const goodSects = sects.filter((s) => s.type === 'good');
+          const evilSects = sects.filter((s) => s.type === 'evil');
 
           if (goodSects.length > 0 && evilSects.length > 0) {
             return [
               goodSects[Math.floor(Math.random() * goodSects.length)],
-              evilSects[Math.floor(Math.random() * evilSects.length)]
+              evilSects[Math.floor(Math.random() * evilSects.length)],
             ];
           }
 
@@ -1610,7 +1621,7 @@ export const SNIPPETS: StorySnippet[] = [
           // 最后保底
           return [
             { id: 'sect_qingyun', name: '青云门', type: 'good' },
-            { id: 'sect_xuedao', name: '血刀堂', type: 'evil' }
+            { id: 'sect_xuedao', name: '血刀堂', type: 'evil' },
           ];
         };
 
