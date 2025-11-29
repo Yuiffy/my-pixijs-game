@@ -344,7 +344,7 @@ export default function WuxiaGame() {
 
             statusUpdates.forEach(update => {
               console.log(`设置NPC ${update.id} 状态为: ${update.status}`);
-              const npcIndex = newNpcs.findIndex(n => n.id === update.id);
+              const npcIndex = newNpcs.findIndex(npcId => npcId.id === update.id);
 
               if (npcIndex !== -1) {
                 newNpcs[npcIndex] = {

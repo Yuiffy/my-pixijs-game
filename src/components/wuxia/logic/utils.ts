@@ -596,7 +596,7 @@ export const getBattleOutcomeChoices = (
           { text: `【${enemy.name}】倒在了血泊中。`, type: 'narrative' as const },
           { text: `【${enemy.name}】已气绝身亡。`, type: 'narrative' as const }
         ],
-        addFlag: `killed_${enemy.id}`,
+        addFlags: { [`killed_${enemy.id}`]: true },
         removeItem: enemy.id,
         addRelations: [{ targetId: enemy.id, type: 'enemy' as RelationType, value: -100 }],
         // Mark the NPC as dead and remove them from the world
@@ -736,7 +736,7 @@ export const getBattleOutcomeChoices = (
             type: 'narrative' as const
           }
         ],
-        addFlag: `killed_${enemy.id}`,
+        addFlags: { [`killed_${enemy.id}`]: true },
         removeItem: enemy.id,
         addRelations: [
           { targetId: enemy.id, type: 'enemy' as RelationType, value: -100 },

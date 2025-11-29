@@ -496,7 +496,7 @@ export const commonSnippets: StorySnippet[] = [
               ],
               addTurn: 1,
               addExp: 3,
-              addFlag: 'lastAction_sparring',
+              addFlags: { lastAction_sparring: true },
             }
           },
           {
@@ -509,7 +509,7 @@ export const commonSnippets: StorySnippet[] = [
               ],
               addTurn: 1,
               addExp: 4,
-              addFlag: 'lastAction_study',
+              addFlags: { lastAction_study: true },
             }
           }
         ];
@@ -652,7 +652,7 @@ export const commonSnippets: StorySnippet[] = [
                 { text: '再抬头时，老者已不知去向。', type: 'narrative' },
               ],
               addArt: art.name,
-              addFlag: 'met_hidden_master',
+              addFlags: { met_hidden_master: true },
             },
           },
         ],
@@ -744,7 +744,7 @@ export const commonSnippets: StorySnippet[] = [
           { text: `（${rewardArt.desc}）`, type: 'inner' },
         ],
         removeItem: '回信',
-        addFlag: 'quest_letter_done',
+        addFlags: { quest_letter_done: true },
         addArt: rewardArt.name, // 🆕 学会招式
         advanceStage: true,
         addTurn: 1,
@@ -794,7 +794,7 @@ export const commonSnippets: StorySnippet[] = [
           { text: '你与其对拼一掌，勉强逃脱，但梁子算是结下了。', type: 'narrative' },
         ],
         addNpc: newNpc,
-        addFlag: 'has_villain',
+        addFlags: { has_villain: true },
         addRelations: [{ targetId: newNpc.id, type: 'enemy', value: -100 }],
       };
     },
@@ -876,7 +876,7 @@ export const commonSnippets: StorySnippet[] = [
             text: '杀回城市，找仇人算账！',
             result: {
               lines: [{ text: '你提着兵刃下山，杀气腾腾。', type: 'action' }],
-              addFlag: 'ready_for_final',
+              addFlags: { ready_for_final: true },
               newLocationId: world.locations.find((l: LocationInfo) => l.type === 'city')?.id || hero.locationId,
             },
           },
@@ -893,8 +893,22 @@ export const commonSnippets: StorySnippet[] = [
     stageMin: StoryStage.CLIMAX,
     req: (hero) => !!hero.flags.ready_for_final,
     run: (hero, world) => {
-      const enemyRel = hero.relations.find((r) => r.type === 'enemy');
-      const enemyName = enemyRel ? world.npcs.find((n: Person) => n.id === enemyRel.targetId)?.name : '魔教教主';
+      // Find all enemy relations and map them to their corresponding NPCs
+      const enemyRelations = hero.relations
+        .filter(r => r.type === 'enemy')
+        .map(rel => ({
+          ...rel,
+          npc: world.npcs.find((n: Person) => n.id === rel.targetId)
+        }))
+        // Filter out enemies not in the world or already dead
+        .filter(({ npc }) => npc && npc.status === 'alive')
+        // Sort by most hostile (lowest relation value) first
+        .sort((a, b) => a.value - b.value);
+
+      // Get the most relevant enemy, or use default
+      const mainEnemy = enemyRelations[0]?.npc;
+      const enemyName = mainEnemy?.name || '魔教教主';
+      const enemyId = mainEnemy?.id;
 
       // 🆕 核心修复：选择最厉害的武功（优先门派武功，然后按类型排序）
       let bestArt: MartialArt | null = null;
@@ -941,8 +955,17 @@ export const commonSnippets: StorySnippet[] = [
                 { text: `你${weaponAction}，看着天边的朝阳，转身没入人海。`, type: 'narrative' },
                 { text: '江湖上从此多了一个传说。', type: 'narrative' },
               ],
-              endGame: true,
-              advanceStage: true,
+              choices: [{
+                text: '继续',
+                result: {
+                  lines: [
+                    { text: '你的故事被后人传颂，成为武林中不朽的传奇。', type: 'narrative' },
+                    { text: '《完》', type: 'narrative' },
+                  ],
+                  endGame: true,
+                  advanceStage: true,
+                }
+              }]
             },
           },
           {
@@ -974,7 +997,7 @@ export const commonSnippets: StorySnippet[] = [
                       { text: '对手紧追不舍，你拼尽全力才逃脱。', type: 'narrative' },
                       { text: '虽然逃过一劫，但你知道，这场恩怨还没结束。', type: 'inner' },
                     ],
-                    addFlag: 'escaped_final_battle',
+                    addFlags: { escaped_final_battle: true },
                   },
                 },
               ],
