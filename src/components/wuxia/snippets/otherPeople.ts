@@ -362,40 +362,58 @@ export const otherPeopleSnippets: StorySnippet[] = [
           choices: [
             {
               text: `使出【${bestArt.name}】助战`,
-              result: {
-                lines: [
-                  ...generateBattle(hero, banditNpc, bestArt, null, 3).lines,
-                  { text: `'多谢少侠相助！'【${wandererName}】感激地说道。`, type: 'dialogue', speaker: wandererName },
-                  { text: '\'少侠武功高强，不如我们结伴而行？\'', type: 'dialogue', speaker: wandererName },
-                ],
-                addNpc: [newNpc, banditNpc],
-                addRelations: [{
-                  targetId: newNpc.id,
-                  type: 'friend',
-                  value: 50,
-                }],
-                choices: [
-                  {
-                    text: '同意结伴',
-                    result: {
-                      lines: [
-                        { text: '\'好，那我们就一起走吧。\'你点了点头。', type: 'dialogue', speaker: '你' },
-                        { text: `【${wandererName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' },
-                      ],
-                      addToParty: newNpc.id,
+              result: (() => {
+                const battleResult = generateBattle(hero, banditNpc, bestArt, null, 3);
+
+                // 如果战斗有选择项，直接返回战斗结果
+                if (battleResult.choices) {
+                  return {
+                    ...battleResult,
+                    addNpc: [newNpc, banditNpc],
+                    addRelations: [{
+                      targetId: newNpc.id,
+                      type: 'friend' as RelationType,
+                      value: 50,
+                    }]
+                  };
+                }
+
+                // 否则继续原有逻辑
+                return {
+                  lines: [
+                    ...battleResult.lines,
+                    { text: `'多谢少侠相助！'【${wandererName}】感激地说道。`, type: 'dialogue' as const, speaker: wandererName },
+                    { text: '\'少侠武功高强，不如我们结伴而行？\'', type: 'dialogue' as const, speaker: wandererName },
+                  ],
+                  addNpc: [newNpc, banditNpc],
+                  addRelations: [{
+                    targetId: newNpc.id,
+                    type: 'friend' as RelationType,
+                    value: 50,
+                  }],
+                  choices: [
+                    {
+                      text: '同意结伴',
+                      result: {
+                        lines: [
+                          { text: '\'好，那我们就一起走吧。\'你点了点头。', type: 'dialogue' as const, speaker: '你' },
+                          { text: `【${wandererName}】露出了笑容，你们一起踏上了旅程。`, type: 'narrative' as const },
+                        ],
+                        addToParty: newNpc.id,
+                      },
                     },
-                  },
-                  {
-                    text: '婉言拒绝',
-                    result: {
-                      lines: [
-                        { text: '\'抱歉，我还有要事在身。\'你礼貌地拒绝了。', type: 'dialogue', speaker: '你' },
-                        { text: `【${wandererName}】虽然有些失望，但还是礼貌地告别了。`, type: 'narrative' },
-                      ],
+                    {
+                      text: '婉言拒绝',
+                      result: {
+                        lines: [
+                          { text: '\'抱歉，我还有要事在身。\'你礼貌地拒绝了。', type: 'dialogue' as const, speaker: '你' },
+                          { text: `【${wandererName}】虽然有些失望，但还是礼貌地告别了。`, type: 'narrative' as const },
+                        ],
+                      },
                     },
-                  },
-                ],
-              },
+                  ],
+                };
+              })(),
             },
             {
               text: '坐山观虎斗',

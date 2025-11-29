@@ -1,7 +1,7 @@
 // src/components/wuxia/logic/battle.ts
 
-import { Person, MartialArt, StoryLine, BattleOutcome } from './types';
-import { getSectById, rand } from './utils';
+import { Person, MartialArt, StoryLine, BattleOutcome, StoryChoice } from './types';
+import { rand } from './utils';
 import { gameOverSnippets } from '../snippets/gameOver';
 import { getArtByName } from './skills';
 
@@ -15,6 +15,8 @@ interface BattleResult {
   lines: StoryLine[];
   outcome: BattleOutcome;
   endGame?: boolean;
+  choices?: StoryChoice[];
+  setNpcStatus?: { id: string; status: 'alive' | 'dead' | 'missing' };
 }
 
 // 战斗系统：多回合战斗（支持同伴参与、挡刀、兜底）
@@ -381,31 +383,54 @@ export const generateBattle = (
       speaker: enemy.name
     });
 
-    // 标记玩家为死亡状态
-    hero.status = 'dead';
+    // 添加继续按钮，让玩家确认进入死亡流程
+    return {
+      lines: [
+        ...lines,
+        {
+          text: '你感到生命正在流逝...',
+          type: 'narrative' as const
+        }
+      ],
+      outcome: BattleOutcome.DEFEAT,
+      choices: [
+        {
+          text: '继续',
+          result: {
+            lines: [],
+            // 标记玩家为死亡状态
+            setNpcStatus: { id: hero.id, status: 'dead' },
+            // 触发濒死体验事件
+            ...(() => {
+              const nearDeathSnippet = gameOverSnippets.find((s: { id: string }) => s.id === 'near_death_experience');
+              if (nearDeathSnippet) {
+                const result = nearDeathSnippet.run(hero, world);
+                if (result.endGame && world) {
+                  if (!world.flags) world.flags = {};
+                  world.flags.gameOver = true;
+                }
 
-    // 触发濒死体验事件
-    const nearDeathSnippet = gameOverSnippets.find((s: { id: string }) => s.id === 'near_death_experience');
-    if (nearDeathSnippet) {
-      const result = nearDeathSnippet.run(hero, world);
-      lines.push(...result.lines);
-
-      if (result.endGame && world) {
-        if (!world.flags) world.flags = {};
-        world.flags.gameOver = true;
-      }
-
-      // 🆕 修复核心：将濒死剧情的 endGame 和 choices 透传出去
-      // 这样主游戏循环才能接收到"游戏结束"或"复活选择"的指令
-      return {
-        lines,
-        outcome: BattleOutcome.DEFEAT,
-        endGame: result.endGame,
-      };
-    }
-
-    // 如果没有找到濒死片段（防御性代码），默认判定失败
-    return { lines, outcome: BattleOutcome.DEFEAT, endGame: true };
+                // 确保不重复 lines
+                // 移除未使用的 rest 变量
+                return {
+                  ...(result.lines.length > 0 ? { lines: result.lines } : {}),
+                  endGame: result.endGame,
+                  ...(result.choices ? { choices: result.choices } : {})
+                };
+              }
+              // 默认情况：直接结束游戏
+              return {
+                lines: [{
+                  text: '你的意识逐渐模糊，最终陷入了永恒的黑暗...',
+                  type: 'narrative' as const
+                }],
+                endGame: true
+              };
+            })()
+          }
+        }
+      ]
+    };
   } else {
     // 平局或逃跑
     lines.push({
