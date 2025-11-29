@@ -6,7 +6,7 @@ import React, {
 import {
   Person, Sect, Location, StoryStage,
   SECT_NAMES, LOCATION_TEMPLATES, SNIPPETS,
-  rand, genName, genCityName, genWildName, SnippetResult, StoryChoice,
+  rand, genName, genCityName, genWildName, SnippetResult,
 } from './wuxia/wuxia-data';
 
 type StoryBlock = {
@@ -17,6 +17,7 @@ type StoryBlock = {
 };
 
 type UIChoice = {
+  id: string;
   text: string;
   action: () => void;
 };
@@ -98,7 +99,7 @@ export default function WuxiaGame() {
           arts: [],
         };
         newNpcs.push(leader);
-        for (let i = 0; i < 2; i++) {
+        Array.from({ length: 2 }, () => {
           const gender = Math.random() > 0.5 ? 'male' : 'female';
           const disciple: Person = {
             id: `npc_${newNpcs.length}`,
@@ -115,7 +116,8 @@ export default function WuxiaGame() {
             arts: [],
           };
           newNpcs.push(disciple);
-        }
+          return null;
+        });
       });
 
       const mySect = rand(newSects);
@@ -128,14 +130,14 @@ export default function WuxiaGame() {
         gender: 'male',
         age: 16,
         status: 'alive',
-        relations: myMaster ? [{ targetId: myMaster.id, type: 'master' }] : [],
+        relations: myMaster ? [{ targetId: myMaster.id, type: 'master', value: 50 }] : [],
         locationId: mySect.locationId,
         inventory: [],
         flags: {},
         arts: [],
       };
 
-      if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice' });
+      if (myMaster) myMaster.relations.push({ targetId: 'hero', type: 'apprentice', value: 50 });
 
       setWorld({
         npcs: [...newNpcs, hero],
@@ -155,17 +157,20 @@ export default function WuxiaGame() {
 
       addStory(`【世界生成完毕】 你出生在 ${mySect.name}，师承掌门【${myMaster?.name}】。`, 'action');
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error(e);
+      // eslint-disable-next-line no-alert
       alert('世界生成失败，请检查控制台。');
     }
   };
 
-  const applySnippetResult = (result: SnippetResult) => {
+  const applySnippetResult = useCallback((result: SnippetResult) => {
     result.lines.forEach((line) => addStory(line.text, line.type, line.speaker));
 
     if (result.choices && result.choices.length > 0) {
       setIsAutoPlaying(false);
-      setChoices(result.choices.map((c) => ({
+      setChoices(result.choices.map((c, idx) => ({
+        id: `choice-${Date.now()}-${idx}-${c.text.slice(0, 20)}`,
         text: c.text,
         action: () => {
           setChoices([]);
@@ -215,9 +220,14 @@ export default function WuxiaGame() {
             if (idx > -1) newInv.splice(idx, 1);
           }
           if (result.addRelation) {
-            const existingIdx = newRelations.findIndex((r) => r.targetId === result.addRelation!.targetId);
-            if (existingIdx > -1) newRelations[existingIdx] = result.addRelation;
-            else newRelations.push(result.addRelation);
+            const existingIdx = newRelations.findIndex(
+              (r) => r.targetId === result.addRelation!.targetId,
+            );
+            if (existingIdx > -1) {
+              newRelations[existingIdx] = result.addRelation;
+            } else {
+              newRelations.push(result.addRelation);
+            }
           }
           if (result.addFlag) newFlags[result.addFlag] = true;
           if (result.addArt) newArts.push(result.addArt);
@@ -238,7 +248,7 @@ export default function WuxiaGame() {
         ...w, npcs: newNpcs, stage: newStage, turnInStage: newTurnInStage + 1,
       };
     });
-  };
+  }, [addStory, world]);
 
   const nextTurn = useCallback(() => {
     if (!world || isEnded) return;
@@ -247,10 +257,13 @@ export default function WuxiaGame() {
 
     const location = world.locations.find((l) => l.id === hero.locationId);
 
-    for (const [id, cd] of snippetCooldowns.current) {
-      if (cd > 0) snippetCooldowns.current.set(id, cd - 1);
-      else snippetCooldowns.current.delete(id);
-    }
+    Array.from(snippetCooldowns.current.entries()).forEach(([id, cd]) => {
+      if (cd > 0) {
+        snippetCooldowns.current.set(id, cd - 1);
+      } else {
+        snippetCooldowns.current.delete(id);
+      }
+    });
 
     const possibleTags: string[] = [];
     if (location?.type === 'sect') possibleTags.push('sect_daily');
@@ -269,16 +282,21 @@ export default function WuxiaGame() {
 
     if (candidates.length > 0) {
       let totalWeight = 0;
-      candidates.forEach((s) => totalWeight += (s.weight || 1));
+      candidates.forEach((s) => {
+        totalWeight += (s.weight || 1);
+      });
       let randomVal = Math.random() * totalWeight;
       let selectedSnippet = candidates[0];
-      for (const s of candidates) {
-        randomVal -= (s.weight || 1);
-        if (randomVal <= 0) {
-          selectedSnippet = s;
-          break;
+      let found = false;
+      candidates.forEach((s) => {
+        if (!found) {
+          randomVal -= (s.weight || 1);
+          if (randomVal <= 0) {
+            selectedSnippet = s;
+            found = true;
+          }
         }
-      }
+      });
 
       if ((selectedSnippet.weight || 0) < 100) {
         snippetCooldowns.current.set(selectedSnippet.id, 2);
@@ -295,10 +313,17 @@ export default function WuxiaGame() {
         const result = idleSnippet.run(hero, world);
         applySnippetResult(result);
       } else {
-        setChoices([{ text: '冥想', action: () => { setChoices([]); setIsAutoPlaying(true); } }]);
+        setChoices([{
+          id: `choice-idle-${Date.now()}`,
+          text: '冥想',
+          action: () => {
+            setChoices([]);
+            setIsAutoPlaying(true);
+          },
+        }]);
       }
     }
-  }, [world, addStory, isEnded]);
+  }, [world, addStory, isEnded, applySnippetResult]);
 
   useEffect(() => {
     if (isStarted && isAutoPlaying && !isEnded && choices.length === 0) {
@@ -311,9 +336,17 @@ export default function WuxiaGame() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isStarted, isAutoPlaying, choices, world, isEnded]);
+  }, [isStarted, isAutoPlaying, choices, world, isEnded, nextTurn]);
 
-  if (!isStarted) return <div className="flex flex-col items-center justify-center min-h-screen bg-stone-950 text-amber-600 font-serif"><button onClick={generateWorld} className="text-4xl border p-4 hover:bg-stone-900">开始江湖演义</button></div>;
+  if (!isStarted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-stone-950 text-amber-600 font-serif">
+        <button type="button" onClick={generateWorld} className="text-4xl border p-4 hover:bg-stone-900">
+          开始江湖演义
+        </button>
+      </div>
+    );
+  }
 
   const currentLocName = world?.locations.find((l) => l.id === world?.npcs.find((n) => n.id === 'hero')?.locationId)?.name;
   const hero = world?.npcs.find((n) => n.id === 'hero');
@@ -347,18 +380,28 @@ export default function WuxiaGame() {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-6 md:p-12 space-y-6 scrollbar-hide relative"
         >
-          {storyLog.map((block) => (
-            <div key={block.id} className={`animate-fade-in ${block.type === 'inner' ? 'text-stone-500 italic' : block.type === 'action' ? 'text-amber-100' : 'text-stone-300'}`}>
-              {block.type === 'time-pass' && <div className="text-center text-stone-600 my-8">—— · ——</div>}
-              {block.speaker && (
-              <span className="font-bold text-amber-600 mr-2">
-                {block.speaker}
-                ：
-              </span>
-              )}
-              <span>{block.text}</span>
-            </div>
-          ))}
+          {storyLog.map((block) => {
+            let className = 'animate-fade-in ';
+            if (block.type === 'inner') {
+              className += 'text-stone-500 italic';
+            } else if (block.type === 'action') {
+              className += 'text-amber-100';
+            } else {
+              className += 'text-stone-300';
+            }
+            return (
+              <div key={block.id} className={className}>
+                {block.type === 'time-pass' && <div className="text-center text-stone-600 my-8">—— · ——</div>}
+                {block.speaker && (
+                <span className="font-bold text-amber-600 mr-2">
+                  {block.speaker}
+                  ：
+                </span>
+                )}
+                <span>{block.text}</span>
+              </div>
+            );
+          })}
           {choices.length === 0 && !isEnded && (
             <div className="h-4" />
           )}
@@ -366,7 +409,12 @@ export default function WuxiaGame() {
           {choices.length > 0 && (
             <div className="mt-8 space-y-3 pl-4 border-l-2 border-amber-800/50 animate-slide-up pb-12">
               {choices.map((choice, idx) => (
-                <button key={idx} onClick={choice.action} className="block w-full text-left p-4 bg-stone-900 border border-stone-800 hover:border-amber-600 transition rounded group">
+                <button
+                  key={choice.id}
+                  type="button"
+                  onClick={choice.action}
+                  className="block w-full text-left p-4 bg-stone-900 border border-stone-800 hover:border-amber-600 transition rounded group"
+                >
                   <span className="text-amber-700 font-bold mr-3">
                     {idx + 1}
                     .
@@ -380,7 +428,11 @@ export default function WuxiaGame() {
           {isEnded && (
             <div className="text-center text-amber-500 text-xl font-bold border-t border-stone-700 mt-12 pt-8 mb-12">
               —— 全书完 ——
-              <div className="mt-4"><button onClick={generateWorld} className="text-sm border border-stone-600 px-4 py-2 rounded hover:bg-stone-800">开启下一世</button></div>
+              <div className="mt-4">
+                <button type="button" onClick={generateWorld} className="text-sm border border-stone-600 px-4 py-2 rounded hover:bg-stone-800">
+                  开启下一世
+                </button>
+              </div>
             </div>
           )}
           <div ref={bottomRef} />
@@ -388,6 +440,7 @@ export default function WuxiaGame() {
 
         {!autoScroll && (
           <button
+            type="button"
             onClick={scrollToBottom}
             className="absolute bottom-8 right-8 bg-amber-700 text-white p-3 rounded-full shadow-lg opacity-80 hover:opacity-100 transition animate-bounce z-50"
             title="回到最新剧情"

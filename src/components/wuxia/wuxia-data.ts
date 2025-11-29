@@ -82,6 +82,7 @@ export interface SnippetResult {
   addFlag?: string;
   addArt?: string;
   advanceStage?: boolean;
+  addTurn?: number;
   endGame?: boolean;
   choices?: StoryChoice[];
 }
@@ -101,8 +102,8 @@ export interface StorySnippet {
 // ==========================================
 
 export const MALE_FIRST_NAMES = ['风', '云', '雪', '冲', '无忌', '不败', '寻欢', '留香', '过', '靖', '康', '松', '竹', '虎', '龙', '天', '峰', '逍', '遥', '破天', '翠山', '平之', '复', '延庆', '不群', '沧海', '伯光', '问天'];
-export const FEMALE_FIRST_NAMES = ['灵珊', '盈盈', '语嫣', '素素', '莫愁', '芷若', '敏', '嫣然', '婉清', '弄玉', '铁心', '凤凰', '蓉', '念慈', '如是', '小玩', '双', '弗之', '龙儿', '语花', '木兰'];
-export const LAST_NAMES = ['李', '张', '独孤', '令狐', '东方', '西门', '慕容', '郭', '杨', '陆', '花', '叶', '林', '岳', '萧', '沈', '燕', '楚', '袁', '胡', '苗', '范', '欧阳', '上官', '段', '乔'];
+export const FEMALE_FIRST_NAMES = ['灵珊', '盈盈', '语嫣', '素素', '莫愁', '芷若', '敏', '嫣然', '婉清', '弄玉', '铁心', '凤凰', '蓉', '念慈', '如是', '小玩', '双', '弗之', '龙儿', '语花', '木兰', '岁', '岁己', '小岁'];
+export const LAST_NAMES = ['李', '张', '独孤', '令狐', '东方', '西门', '慕容', '郭', '杨', '陆', '花', '叶', '林', '岳', '萧', '沈', '燕', '楚', '袁', '胡', '苗', '范', '欧阳', '上官', '段', '乔', '李', '张'];
 export const SECT_NAMES = ['青云门', '血刀堂', '听雨阁', '万兽山庄', '丐帮', '少林', '峨眉', '武当', '华山', '昆仑'];
 
 const CITY_PREFIXES = ['襄', '洛', '长', '扬', '苏', '杭', '汴', '京', '成', '渝', '金', '姑'];
@@ -191,7 +192,9 @@ export const SECT_ARTS: Record<string, MartialArt[]> = {
 
 // 辅助函数：获取某门派的武功
 export const getSectArts = (sectName: string) => {
-  for (const key in SECT_ARTS) {
+  const keys = Object.keys(SECT_ARTS);
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
     if (sectName.includes(key)) return SECT_ARTS[key];
   }
   return SECT_ARTS.default;
@@ -199,7 +202,9 @@ export const getSectArts = (sectName: string) => {
 
 // 辅助函数：根据名称获取武功对象
 export const getArtByName = (artName: string) => {
-  for (const key in SECT_ARTS) {
+  const keys = Object.keys(SECT_ARTS);
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
     const found = SECT_ARTS[key].find((a) => a.name === artName);
     if (found) return found;
   }
