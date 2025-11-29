@@ -337,15 +337,16 @@ export const commonSnippets: StorySnippet[] = [
   // ===================================
   // 🕵️‍♀️ 情报触发事件 (Rumor Events)
   // ===================================
-
   // 1. 传闻：野外约战
   {
     id: 'event_rumor_duel',
     tags: ['wild_daily'],
-    weight: 200, // 高权重，有情报必触发
-    // 条件：在野外 + 有对应的rumor_duel情报 + 没看过这个特定门派的战斗
+    weight: 50, // 降低权重，减少触发频率
+    // 条件：在野外 + 有对应的rumor_duel情报 + 没看过这个特定门派的战斗 + 冷却时间
     req: (hero, world) => {
       if (!hero.locationId.startsWith('wild_')) return false;
+      // 添加冷却时间，至少10回合才能再次触发
+      if (hero.flags.last_duel_event && world.turn - hero.flags.last_duel_event < 10) return false;
 
       // 查找所有的rumor_duel情报
       const duelRumors = hero.knowledge.filter(k => k.startsWith('rumor_duel:'));
@@ -367,7 +368,7 @@ export const commonSnippets: StorySnippet[] = [
     run: (hero, world) => {
       // 获取第一个未触发过的rumor
       const duelRumor = hero.knowledge.find(k => k.startsWith('rumor_duel:'));
-      const [_, sectIds] = duelRumor!.split(':');
+      const [, sectIds] = duelRumor!.split(':');
       const [sect1Id, sect2Id] = sectIds.split(',');
 
       // 获取门派信息
@@ -382,6 +383,7 @@ export const commonSnippets: StorySnippet[] = [
             { text: '可能是消息有误，或者你来晚了。', type: 'inner' },
           ],
           addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+          addFlags: { last_duel_event: world.turn },
         };
       }
 
@@ -391,6 +393,7 @@ export const commonSnippets: StorySnippet[] = [
 
       // 随机选择哪一方先说话
       const firstSpeaker = Math.random() > 0.5 ? sect1 : sect2;
+      // 使用firstSpeaker和sect1/sect2的关系来决定第二说话者
       const secondSpeaker = firstSpeaker === sect1 ? sect2 : sect1;
 
       return {
@@ -411,7 +414,18 @@ export const commonSnippets: StorySnippet[] = [
                 { text: '“多谢少侠仗义援手！在下没齿难忘。”', type: 'dialogue', speaker: `${sect1.name}弟子` },
               ],
               addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-              // 可以在这里添加关系变化
+              addFlags: { last_duel_event: world.turn },
+              updateRelations: [
+                { target: `sect:${sect1Id}`, type: 'friendly', value: 20 },
+                { target: `sect:${sect2Id}`, type: 'hostile', value: 10 },
+              ],
+              ...(Math.random() < 0.3 ? {
+                addKnowledge: `met_${sect1Id}_disciple`,
+                lines: [
+                  { text: `“在下${sect1.name}弟子${genName('male')}，不知少侠如何称呼？”`, type: 'dialogue', speaker: `${sect1.name}弟子` },
+                  { text: '你与对方交换了姓名，江湖路远，后会有期。', type: 'narrative' },
+                ]
+              } : {})
             },
           },
           {
@@ -424,7 +438,18 @@ export const commonSnippets: StorySnippet[] = [
                 { text: '“哈哈哈，干得好！我记下你这份情了。”', type: 'dialogue', speaker: `${sect2.name}弟子` },
               ],
               addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
-              // 可以在这里添加关系变化
+              addFlags: { last_duel_event: world.turn },
+              updateRelations: [
+                { target: `sect:${sect2Id}`, type: 'friendly', value: 20 },
+                { target: `sect:${sect1Id}`, type: 'hostile', value: 10 },
+              ],
+              ...(Math.random() < 0.3 ? {
+                addKnowledge: `met_${sect2Id}_disciple`,
+                lines: [
+                  { text: `“好身手！在下${sect2.name}弟子${genName(Math.random() > 0.5 ? 'male' : 'female')}，不知少侠尊姓大名？”`, type: 'dialogue', speaker: `${sect2.name}弟子` },
+                  { text: '你与对方交换了姓名，江湖路远，后会有期。', type: 'narrative' },
+                ]
+              } : {})
             },
           },
           {
@@ -436,6 +461,11 @@ export const commonSnippets: StorySnippet[] = [
                 { text: '虽然有些不厚道，但江湖本就如此残酷。', type: 'inner' },
               ],
               addFlag: `watched_duel_${sect1Id}_${sect2Id}`,
+              addFlags: { last_duel_event: world.turn },
+              updateRelations: [
+                { target: `sect:${sect1Id}`, type: 'hostile', value: 5 },
+                { target: `sect:${sect2Id}`, type: 'hostile', value: 5 },
+              ],
             },
           },
         ],
