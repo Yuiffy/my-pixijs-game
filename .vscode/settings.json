@@ -1,11 +1,40 @@
 {
   // 保存时自动将 CRLF 转换为 LF
   "files.eol": "\n",
-  // 保存时自动格式化
-  "editor.formatOnSave": true,
   // 保存时自动删除尾随空格
   "files.trimTrailingWhitespace": true,
   // 保存时在文件末尾插入新行
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+
+  // ESLint 配置
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  // 保存时自动修复 ESLint 错误
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  // 禁用默认格式化器，使用 ESLint
+  "editor.formatOnSave": false,
+  "[javascript]": {
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": false
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": false
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": false
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": false
+  }
 }
 
