@@ -5,8 +5,9 @@ import React, {
 } from 'react';
 import {
   Person, Sect, Location, StoryStage,
-  SECT_NAMES, LOCATION_TEMPLATES, SNIPPETS,
-  rand, genName, genCityName, genWildName, SnippetResult, StoryChoice,
+  SECT_NAMES, SNIPPETS,
+  rand, genName, generateWorldMap, getReachableLocations, findPath,
+  SnippetResult, StoryChoice,
 } from './wuxia/wuxia-data';
 
 type StoryBlock = {
@@ -73,15 +74,15 @@ export default function WuxiaGame() {
 
   const generateWorld = () => {
     try {
-      const finalLocations = LOCATION_TEMPLATES.map((loc) => {
-        if (loc.type === 'city') return { ...loc, name: genCityName() };
-        if (loc.type === 'wild') return { ...loc, name: genWildName() };
-        return loc;
-      });
+      // 🆕 使用新的地理系统生成地图
+      const finalLocations = generateWorldMap();
 
-      const newSects: Sect[] = SECT_NAMES.map((name, idx) => ({
-        id: `sect_${idx}`, name, type: Math.random() > 0.7 ? 'evil' : 'good', locationId: 'loc_sect_main',
-      }));
+      const newSects: Sect[] = SECT_NAMES.map((name, idx) => {
+        const sectLocation = finalLocations.find((l) => l.id === `sect_${idx}`);
+        return {
+          id: `sect_${idx}`, name, type: Math.random() > 0.7 ? 'evil' : 'good', locationId: sectLocation?.id || finalLocations[0].id,
+        };
+      });
 
       const newNpcs: Person[] = [];
       newSects.forEach((sect) => {
@@ -125,6 +126,8 @@ export default function WuxiaGame() {
 
       const mySect = rand(newSects);
       const myMaster = newNpcs.find((n) => n.sectId === mySect.id && n.role === 'leader');
+      // 🆕 找到玩家门派对应的地点
+      const mySectLocation = finalLocations.find((l) => l.id === `sect_${newSects.indexOf(mySect)}`) || finalLocations.find((l) => l.type === 'sect');
       const hero: Person = {
         id: 'hero',
         name: '你',
@@ -134,7 +137,7 @@ export default function WuxiaGame() {
         age: 16,
         status: 'alive',
         relations: myMaster ? [{ targetId: myMaster.id, type: 'master', value: 50 }] : [],
-        locationId: mySect.locationId,
+        locationId: mySectLocation?.id || finalLocations[0].id,
         inventory: [],
         flags: {},
         arts: [],

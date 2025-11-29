@@ -46,6 +46,18 @@ export interface Person {
   lastSeenAppearance?: Appearance; // 🆕 上次见面的外表（用于对比）
   lastUsedMove?: string; // 🆕 上次使用的招式（用于对比）
   meetCount?: number; // 🆕 见面次数
+  // 🆕 门派状态跟踪
+  expelled?: boolean; // 是否被逐出师门
+  joinSectTime?: number; // 入派时间（回合数）
+  leaveSectTime?: number; // 出派时间（回合数）
+  sectHistory?: SectHistory[]; // 门派历史记录
+}
+
+export interface SectHistory {
+  sectId: string;
+  action: 'join' | 'expel' | 'leave'; // 加入、被逐、出走
+  time: number; // 发生时间（回合数）
+  reason?: string; // 原因描述
 }
 
 export interface Sect {
@@ -53,12 +65,24 @@ export interface Sect {
   name: string;
   type: 'good' | 'evil';
   locationId: string;
+  // 🆕 扩展字段
+  recruitGender?: 'male' | 'female' | 'both'; // 收徒性别限制
+  history?: string; // 历史介绍
+  description?: string; // 门派描述
+  leader?: string; // 掌门人ID（可动态更换）
+  chiefDisciple?: string; // 首席弟子ID（可动态更换）
+  members?: string[]; // 成员ID列表
+  reputation?: number; // 门派声望（0-100）
 }
 
 export interface Location {
   id: string;
   name: string;
-  type: 'sect' | 'city' | 'wild';
+  type: 'sect' | 'city' | 'wild' | 'village' | 'inn' | 'government';
+  x?: number; // 🆕 地图坐标X
+  y?: number; // 🆕 地图坐标Y
+  parentId?: string; // 🆕 父地点（如客栈属于城市）
+  connections?: string[]; // 🆕 连接的地点ID列表
 }
 
 export enum StoryStage {
@@ -121,7 +145,112 @@ export interface StorySnippet {
 export const MALE_FIRST_NAMES = ['风', '云', '雪', '冲', '无忌', '不败', '寻欢', '留香', '过', '靖', '康', '松', '竹', '虎', '龙', '天', '峰', '逍', '遥', '破天', '翠山', '平之', '复', '延庆', '不群', '沧海', '伯光', '问天'];
 export const FEMALE_FIRST_NAMES = ['灵珊', '盈盈', '语嫣', '素素', '莫愁', '芷若', '敏', '嫣然', '婉清', '弄玉', '铁心', '凤凰', '蓉', '念慈', '如是', '小玩', '双', '弗之', '龙儿', '语花', '木兰', '岁', '岁己', '小岁'];
 export const LAST_NAMES = ['李', '张', '独孤', '令狐', '东方', '西门', '慕容', '郭', '杨', '陆', '花', '叶', '林', '岳', '萧', '沈', '燕', '楚', '袁', '胡', '苗', '范', '欧阳', '上官', '段', '乔', '李', '张'];
-export const SECT_NAMES = ['青云门', '血刀堂', '听雨阁', '万兽山庄', '丐帮', '少林', '峨眉', '武当', '华山', '昆仑'];
+// 🆕 完整的门派数据结构
+export const SECTS_DATA: Sect[] = [
+  {
+    id: 'sect_qingyun',
+    name: '青云门',
+    type: 'good',
+    locationId: 'sect_qingyun',
+    recruitGender: 'both',
+    history: '青云门始创于三百年前，由一代奇人青云子所创。门派以道法自然为宗旨，门中弟子多修习雷法剑术，门派曾多次主持武林大会，声名显赫。近年来门派内部出现分歧，掌门一脉坚持传统道法，而部分长老倾向于更激进的修炼方式。',
+    description: '江湖上最古老的门派之一，以雷法剑术闻名天下。门派位于青云山巅，山清水秀，灵气充沛。',
+    reputation: 85,
+  },
+  {
+    id: 'sect_xuedao',
+    name: '血刀堂',
+    type: 'evil',
+    locationId: 'sect_xuedao',
+    recruitGender: 'both',
+    history: '血刀堂起源于北方苦寒之地，由魔道中人血刀老祖创立。门派以血刀秘法著称，修炼者需以自身精血为引，威力极大但极易走火入魔。近年来血刀堂扩张迅速，与各大正派多次冲突，已成江湖一大祸患。',
+    description: '魔道门派，以血刀秘法闻名。修炼者性格多偏激，行事狠辣，但门派内部纪律严明。',
+    reputation: 25,
+  },
+  {
+    id: 'sect_tingyu',
+    name: '听雨阁',
+    type: 'good',
+    locationId: 'sect_tingyu',
+    recruitGender: 'female',
+    history: '听雨阁为江湖上唯一的女侠门派，由一代女侠听雨仙子创立。门派以轻功和暗器闻名，弟子多为江湖侠女。听雨阁从不参与江湖纷争，但门中弟子常在暗中行侠仗义，帮助弱者。',
+    description: '江湖上唯一的女侠门派，以轻功和暗器闻名。门派位于江南水乡，环境优雅宁静。',
+    reputation: 70,
+  },
+  {
+    id: 'sect_wanshou',
+    name: '万兽山庄',
+    type: 'evil',
+    locationId: 'sect_wanshou',
+    recruitGender: 'both',
+    history: '万兽山庄位于深山密林之中，庄主自称能够与百兽沟通。门派以驭兽术闻名，弟子常与各种猛兽为伴。山庄与外界交往不多，但偶尔有弟子下山为非作歹，引起江湖注意。',
+    description: '神秘的驭兽门派，与百兽为伴。门派位于深山之中，鲜有外人踏足。',
+    reputation: 45,
+  },
+  {
+    id: 'sect_gai',
+    name: '丐帮',
+    type: 'good',
+    locationId: 'sect_gai',
+    recruitGender: 'both',
+    history: '丐帮为江湖第一大帮派，起源于宋朝，由江湖乞丐组成。门派以打狗棒法和降龙十八掌闻名天下。丐帮弟子遍布江湖各地，消息灵通，是正道的中坚力量。近年来丐帮内部出现帮主之争，影响了门派的团结。',
+    description: '江湖第一大帮派，以乞丐为主要成员。门派以消息灵通著称，弟子众多。',
+    reputation: 90,
+  },
+  {
+    id: 'sect_shaolin',
+    name: '少林',
+    type: 'good',
+    locationId: 'sect_shaolin',
+    recruitGender: 'male',
+    history: '少林寺为武林圣地，始创于南北朝时期。寺中以禅武合一著称，门派武功博大精深，包括易筋经、罗汉拳等绝学。少林弟子多为僧人，严守清规戒律，从不主动参与江湖争端，但遇不平事必会出手。',
+    description: '武林圣地，以禅武合一著称。门派严守清规戒律，只收男弟子。',
+    reputation: 95,
+  },
+  {
+    id: 'sect_emei',
+    name: '峨眉',
+    type: 'good',
+    locationId: 'sect_emei',
+    recruitGender: 'female',
+    history: '峨眉派为江湖第二大门派，由女侠郭襄创立。门派以峨眉剑法和佛门心法闻名，弟子多为女尼或女侠。峨眉派与武当派交好，共同维护江湖正义。近年来门派人才辈出，成为正道的重要力量。',
+    description: '江湖第二大门派，以剑法闻名天下。只收女弟子，门派位于峨眉山巅。',
+    reputation: 85,
+  },
+  {
+    id: 'sect_wudang',
+    name: '武当',
+    type: 'good',
+    locationId: 'sect_wudang',
+    recruitGender: 'male',
+    history: '武当派由张三丰真人创立，门派以太极拳和太极剑闻名天下。武当讲究以柔克刚，阴阳平衡之道。门派位于武当山，环境清幽，适合修炼。武当弟子多为道士，性格温和，但武功高强。',
+    description: '道家门派，以太极拳和太极剑闻名。讲究以柔克刚，阴阳平衡。',
+    reputation: 88,
+  },
+  {
+    id: 'sect_huashan',
+    name: '华山',
+    type: 'good',
+    locationId: 'sect_huashan',
+    recruitGender: 'both',
+    history: '华山派位于华山之巅，以险峻的地势和独孤九剑闻名。门派由风清扬等前辈创立，讲究剑术的精妙变化。华山派弟子性格多豪爽直率，重视剑术的艺术性。',
+    description: '剑术门派，以独孤九剑闻名。门派位于华山之巅，环境险峻。',
+    reputation: 75,
+  },
+  {
+    id: 'sect_kunlun',
+    name: '昆仑',
+    type: 'good',
+    locationId: 'sect_kunlun',
+    recruitGender: 'both',
+    history: '昆仑派为江湖古老门派之一，位于昆仑山深处。门派以昆仑剑法和玄功闻名，修炼者需耐得住高山严寒。昆仑弟子性格坚韧，武功扎实，但门派较为封闭，与外界交往不多。',
+    description: '古老的剑术门派，位于昆仑山深处。修炼者需耐得住严寒考验。',
+    reputation: 65,
+  },
+];
+
+// 🆕 保留原有数组用于兼容性（只包含名称）
+export const SECT_NAMES = SECTS_DATA.map((sect) => sect.name);
 
 const CITY_PREFIXES = ['襄', '洛', '长', '扬', '苏', '杭', '汴', '京', '成', '渝', '金', '姑'];
 const CITY_SUFFIXES = ['阳', '州', '安', '陵', '京', '都'];
@@ -211,7 +340,11 @@ export const describeAppearanceChange = (person: Person): string => {
 };
 
 // 🆕 描述招式对比
-export const describeMoveComparison = (person: Person, currentMove: string, artName: string): string => {
+export const describeMoveComparison = (
+  person: Person,
+  currentMove: string,
+  artName: string,
+): string => {
   if (!person.lastUsedMove) {
     return `【${person.name}】使出【${artName}】中的"${currentMove}"！`;
   }
@@ -326,7 +459,10 @@ export const generateCompanionMealEvent = (companion: Person): StoryLine[] => {
 };
 
 // 🆕 同行事件：暧昧对话（好感度高）
-export const generateCompanionRomanticEvent = (companion: Person, relationValue: number): StoryLine[] => {
+export const generateCompanionRomanticEvent = (
+  companion: Person,
+  relationValue: number,
+): StoryLine[] => {
   if (relationValue < 80) return [];
 
   const genderText = companion.gender === 'female' ? '她' : '他';
@@ -355,6 +491,186 @@ export const MERCHANT_ITEMS = [
   '匕首', '短剑', '护腕', '玉佩', '银两', '草药', '酒葫芦', '暗器', '绳索', '火折子',
   '地图', '指南针', '解毒丹', '金疮药', '干粮', '水袋', '夜明珠', '丝绸', '香料', '茶叶',
 ];
+
+// 🆕 地理系统：生成复杂的世界地图
+export const generateWorldMap = (): Location[] => {
+  const locations: Location[] = [];
+
+  // 生成多个城市
+  const cities: Location[] = [];
+  for (let i = 0; i < 3; i += 1) {
+    const cityId = `city_${i}`;
+    const city: Location = {
+      id: cityId,
+      name: genCityName(),
+      type: 'city',
+      x: i * 200 + 100,
+      y: 300,
+      connections: [],
+    };
+    cities.push(city);
+    locations.push(city);
+
+    // 每个城市有客栈和官府
+    const inn: Location = {
+      id: `${cityId}_inn`,
+      name: `${city.name}·悦来客栈`,
+      type: 'inn',
+      parentId: cityId,
+      connections: [],
+    };
+    const government: Location = {
+      id: `${cityId}_government`,
+      name: `${city.name}·官府`,
+      type: 'government',
+      parentId: cityId,
+      connections: [],
+    };
+    locations.push(inn, government);
+  }
+
+  // 生成村庄
+  const villages: Location[] = [];
+  for (let i = 0; i < 2; i += 1) {
+    const villageId = `village_${i}`;
+    const village: Location = {
+      id: villageId,
+      name: `${rand(['小', '大', '古', '新'])}${rand(['村', '庄', '镇'])}`,
+      type: 'village',
+      x: i * 250 + 150,
+      y: 200,
+      connections: [],
+    };
+    villages.push(village);
+    locations.push(village);
+  }
+
+  // 生成多个门派
+  const sects: Location[] = [];
+  SECTS_DATA.forEach((sectData, idx) => {
+    const sect: Location = {
+      id: sectData.locationId,
+      name: `${sectData.name}驻地`,
+      type: 'sect',
+      x: (idx % 3) * 200 + 50,
+      y: 50 + Math.floor(idx / 3) * 150,
+      connections: [],
+    };
+    sects.push(sect);
+    locations.push(sect);
+  });
+
+  // 生成野外区域（连接各个地点）
+  const wilds: Location[] = [];
+  for (let i = 0; i < 5; i += 1) {
+    const wildId = `wild_${i}`;
+    const wild: Location = {
+      id: wildId,
+      name: genWildName(),
+      type: 'wild',
+      x: 100 + (i % 3) * 200,
+      y: 100 + Math.floor(i / 3) * 200,
+      connections: [],
+    };
+    wilds.push(wild);
+    locations.push(wild);
+  }
+
+  // 🆕 建立连接关系（图结构）
+  // 城市之间通过野外连接
+  cities.forEach((city, idx) => {
+    if (idx < cities.length - 1) {
+      const nextCity = cities[idx + 1];
+      const wildBetween = wilds[idx % wilds.length];
+      if (city.connections) city.connections.push(wildBetween.id);
+      if (wildBetween.connections) {
+        wildBetween.connections.push(city.id);
+        wildBetween.connections.push(nextCity.id);
+      }
+      if (nextCity.connections) nextCity.connections.push(wildBetween.id);
+    }
+  });
+
+  // 村庄连接到最近的野外
+  villages.forEach((village, idx) => {
+    const nearestWild = wilds[idx % wilds.length];
+    if (village.connections) village.connections.push(nearestWild.id);
+    if (nearestWild.connections) nearestWild.connections.push(village.id);
+  });
+
+  // 门派连接到最近的野外
+  sects.forEach((sect, idx) => {
+    const nearestWild = wilds[idx % wilds.length];
+    if (sect.connections) sect.connections.push(nearestWild.id);
+    if (nearestWild.connections) nearestWild.connections.push(sect.id);
+  });
+
+  // 城市内的地点连接到城市
+  locations.forEach((loc) => {
+    if (loc.parentId) {
+      const parent = locations.find((l) => l.id === loc.parentId);
+      if (parent) {
+        // 创建副本避免修改参数
+        const locIndex = locations.indexOf(loc);
+        const parentIndex = locations.indexOf(parent);
+
+        if (locIndex >= 0) {
+          locations[locIndex] = { ...locations[locIndex], connections: [parent.id] };
+        }
+        if (parentIndex >= 0 && !parent.connections) {
+          locations[parentIndex] = { ...locations[parentIndex], connections: [] };
+        }
+        if (parentIndex >= 0 && !locations[parentIndex].connections?.includes(loc.id)) {
+          locations[parentIndex] = {
+            ...locations[parentIndex],
+            connections: [...(locations[parentIndex].connections || []), loc.id],
+          };
+        }
+      }
+    }
+  });
+
+  return locations;
+};
+
+// 🆕 路径查找：找到从A到B的路径
+export const findPath = (fromId: string, toId: string, locations: Location[]): string[] => {
+  if (fromId === toId) return [];
+
+  const visited = new Set<string>();
+  const queue: { id: string; path: string[] }[] = [{ id: fromId, path: [] }];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current.id === toId) {
+      return current.path;
+    }
+
+    if (visited.has(current.id)) continue;
+    visited.add(current.id);
+
+    const location = locations.find((l) => l.id === current.id);
+    if (!location || !location.connections) continue;
+
+    location.connections.forEach((nextId) => {
+      if (!visited.has(nextId)) {
+        queue.push({ id: nextId, path: [...current.path, nextId] });
+      }
+    });
+  }
+
+  return []; // 无法到达
+};
+
+// 🆕 获取可到达的地点列表
+export const getReachableLocations = (currentId: string, locations: Location[]): Location[] => {
+  const current = locations.find((l) => l.id === currentId);
+  if (!current || !current.connections) return [];
+
+  return current.connections
+    .map((id) => locations.find((l) => l.id === id))
+    .filter((loc): loc is Location => loc !== undefined);
+};
 
 export const LOCATION_TEMPLATES: Location[] = [
   { id: 'loc_sect_main', name: '门派驻地', type: 'sect' },
@@ -443,6 +759,107 @@ export const getArtByName = (artName: string) => {
   return SECT_ARTS.default[0];
 };
 
+// 🆕 辅助函数：根据ID获取门派数据
+export const getSectById = (sectId: string): Sect | undefined => SECTS_DATA.find((sect) => sect.id === sectId);
+
+// 🆕 辅助函数：根据名称获取门派数据
+export const getSectByName = (sectName: string): Sect | undefined => SECTS_DATA.find((sect) => sect.name === sectName);
+
+// 🆕 辅助函数：检查角色是否可以加入门派
+export const canJoinSect = (person: Person, sect: Sect): { canJoin: boolean; reason?: string } => {
+  // 检查性别限制
+  if (sect.recruitGender && sect.recruitGender !== 'both') {
+    if (person.gender !== sect.recruitGender) {
+      const genderText = sect.recruitGender === 'male' ? '男性' : '女性';
+      return { canJoin: false, reason: `${sect.name}只收${genderText}弟子` };
+    }
+  }
+
+  // 检查是否已被逐出该门派
+  if (person.sectHistory) {
+    const expelledRecord = person.sectHistory.find((h) => h.sectId === sect.id && h.action === 'expel');
+    if (expelledRecord) {
+      return { canJoin: false, reason: `你已被${sect.name}逐出师门，无法重新加入` };
+    }
+  }
+
+  // 检查是否已经在其他门派
+  if (person.sectId && person.sectId !== 'none' && person.sectId !== sect.id) {
+    const otherSectName = getSectById(person.sectId)?.name || '其他门派';
+    return { canJoin: false, reason: `你已加入${otherSectName}，不能同时加入多个门派` };
+  }
+
+  return { canJoin: true };
+};
+
+// 🆕 辅助函数：处理角色加入门派
+export const joinSect = (person: Person, sect: Sect, turn: number, reason?: string): { person: Person; sect: Sect } => {
+  const updatedPerson = { ...person };
+  const updatedSect = { ...sect };
+
+  // 更新当前门派
+  updatedPerson.sectId = sect.id;
+
+  // 清除被逐出状态
+  updatedPerson.expelled = false;
+
+  // 记录入派时间
+  updatedPerson.joinSectTime = turn;
+
+  // 添加门派历史记录
+  if (!updatedPerson.sectHistory) {
+    updatedPerson.sectHistory = [];
+  }
+  updatedPerson.sectHistory.push({
+    sectId: sect.id,
+    action: 'join',
+    time: turn,
+    reason: reason || '正式拜师入门',
+  });
+
+  // 更新门派成员列表
+  if (!updatedSect.members) {
+    updatedSect.members = [];
+  }
+  if (!updatedSect.members.includes(person.id)) {
+    updatedSect.members.push(person.id);
+  }
+
+  return { person: updatedPerson, sect: updatedSect };
+};
+
+// 🆕 辅助函数：处理角色离开门派
+export const leaveSect = (person: Person, sect: Sect, turn: number, action: 'leave' | 'expel', reason?: string): { person: Person; sect: Sect } => {
+  const updatedPerson = { ...person };
+  const updatedSect = { ...sect };
+
+  // 如果是被逐出，标记为被逐出状态
+  if (action === 'expel') {
+    updatedPerson.expelled = true;
+  }
+
+  // 记录出派时间
+  updatedPerson.leaveSectTime = turn;
+
+  // 添加门派历史记录
+  if (!updatedPerson.sectHistory) {
+    updatedPerson.sectHistory = [];
+  }
+  updatedPerson.sectHistory.push({
+    sectId: sect.id,
+    action,
+    time: turn,
+    reason: reason || (action === 'expel' ? '被逐出师门' : '主动离开'),
+  });
+
+  // 从门派成员列表中移除
+  if (updatedSect.members) {
+    updatedSect.members = updatedSect.members.filter((id) => id !== person.id);
+  }
+
+  return { person: updatedPerson, sect: updatedSect };
+};
+
 // ==========================================
 // 🎭 预设剧情库
 // ==========================================
@@ -455,22 +872,22 @@ export const SNIPPETS: StorySnippet[] = [
   {
     id: 'idle_action_menu',
     tags: ['sect_daily', 'city_daily', 'wild_daily'],
-    weight: 0.1,
+    weight: 100, // 🆕 提高权重，确保总是能选择移动
     run: (hero, world) => {
       const choices: StoryChoice[] = [];
 
       // --- 城市选项：打听情报 ---
-      if (hero.locationId === 'loc_city') {
+      if (hero.locationId.startsWith('city_')) {
         const gossipEvents = [
           {
             text: '你听到茶馆里有人在谈论最近江湖上的传闻。',
-            detail: '“听说【血刀堂】和【青云门】的弟子最近在城外野林子里约架，怕是要出人命啊。”',
+            detail: '"听说【血刀堂】和【青云门】的弟子最近在城外野林子里约架，怕是要出人命啊。"',
             // 🆕 效果：添加具体的情报字符串
             effect: () => ({ addKnowledge: 'rumor_duel' }),
           },
           {
             text: '你在集市上遇到一个神秘的说书人。',
-            detail: '他压低声音说：“听说某位归隐的前辈高人，最近在城外野地现身了。”',
+            detail: '他压低声音说："听说某位归隐的前辈高人，最近在城外野地现身了。"',
             effect: () => ({ addKnowledge: 'rumor_hidden_master' }),
           },
           {
@@ -502,7 +919,7 @@ export const SNIPPETS: StorySnippet[] = [
             addTurn: 1,
           },
         });
-      } else if (hero.locationId === 'loc_wild') {
+      } else if (hero.locationId.startsWith('wild_')) {
         // --- 野外选项：探索 ---
         choices.push({
           text: '四处探索 (寻找机缘)',
@@ -522,7 +939,7 @@ export const SNIPPETS: StorySnippet[] = [
             addTurn: 3,
           },
         });
-      } else if (hero.locationId === 'loc_sect_main') {
+      } else if (hero.locationId.startsWith('sect_')) {
         // --- 门派选项 ---
         choices.push({
           text: '找师兄弟闲聊',
@@ -541,56 +958,68 @@ export const SNIPPETS: StorySnippet[] = [
       }
 
       // --- 通用移动选项 ---
-      if (hero.locationId === 'loc_sect_main') {
-        const city = world.locations.find((l: Location) => l.id === 'loc_city');
-        choices.push({
-          text: `下山前往【${city.name}】`,
-          result: {
-            lines: [{ text: '静极思动，你决定下山看看。', type: 'action' }],
-            newLocationId: 'loc_city',
-            addTurn: 1,
-          },
-        });
+      if (hero.locationId.startsWith('sect_')) {
+        const city = world.locations.find((l: Location) => l.type === 'city');
+        if (city) {
+          choices.push({
+            text: `下山前往【${city.name}】`,
+            result: {
+              lines: [{ text: '静极思动，你决定下山看看。', type: 'action' }],
+              newLocationId: city.id,
+              addTurn: 1,
+            },
+          });
+        }
       }
 
-      if (hero.locationId === 'loc_city') {
-        const wild = world.locations.find((l: Location) => l.id === 'loc_wild');
-        choices.push({
-          text: `前往【${wild.name}】探险`,
-          result: {
-            lines: [{ text: '听说野外有不少机缘，你决定去碰碰运气。', type: 'action' }],
-            newLocationId: 'loc_wild',
-            addTurn: 2,
-          },
-        });
-        choices.push({
-          text: '返回师门',
-          result: {
-            lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
-            newLocationId: 'loc_sect_main',
-            addTurn: 2,
-          },
-        });
+      if (hero.locationId.startsWith('city_')) {
+        const wild = world.locations.find((l: Location) => l.type === 'wild');
+        if (wild) {
+          choices.push({
+            text: `前往【${wild.name}】探险`,
+            result: {
+              lines: [{ text: '听说野外有不少机缘，你决定去碰碰运气。', type: 'action' }],
+              newLocationId: wild.id,
+              addTurn: 2,
+            },
+          });
+        }
+        const sect = world.locations.find((l: Location) => l.type === 'sect');
+        if (sect) {
+          choices.push({
+            text: '返回师门',
+            result: {
+              lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
+              newLocationId: sect.id,
+              addTurn: 2,
+            },
+          });
+        }
       }
 
-      if (hero.locationId === 'loc_wild') {
-        const city = world.locations.find((l: Location) => l.id === 'loc_city');
-        choices.push({
-          text: `返回【${city.name}】`,
-          result: {
-            lines: [{ text: '野外虽然有机缘，但也危险重重。你决定先回城中。', type: 'action' }],
-            newLocationId: 'loc_city',
-            addTurn: 2,
-          },
-        });
-        choices.push({
-          text: '返回师门',
-          result: {
-            lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
-            newLocationId: 'loc_sect_main',
-            addTurn: 3,
-          },
-        });
+      if (hero.locationId.startsWith('wild_')) {
+        const city = world.locations.find((l: Location) => l.type === 'city');
+        if (city) {
+          choices.push({
+            text: `返回【${city.name}】`,
+            result: {
+              lines: [{ text: '野外虽然有机缘，但也危险重重。你决定先回城中。', type: 'action' }],
+              newLocationId: city.id,
+              addTurn: 2,
+            },
+          });
+        }
+        const sect = world.locations.find((l: Location) => l.type === 'sect');
+        if (sect) {
+          choices.push({
+            text: '返回师门',
+            result: {
+              lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
+              newLocationId: sect.id,
+              addTurn: 3,
+            },
+          });
+        }
       }
 
       return {
@@ -610,7 +1039,7 @@ export const SNIPPETS: StorySnippet[] = [
     tags: ['wild_daily'],
     weight: 200, // 高权重，有情报必触发
     // 🆕 条件：在野外 + 有情报 + 没看过热闹
-    req: (hero) => hero.knowledge.includes('rumor_duel') && hero.locationId === 'loc_wild' && !hero.flags.watched_duel,
+    req: (hero) => hero.knowledge.includes('rumor_duel') && hero.locationId.startsWith('wild_') && !hero.flags.watched_duel,
     run: (hero, world) => ({
       lines: [
         { text: '你按照茶馆听来的消息，悄悄摸进了一片树林。', type: 'action' },
@@ -652,7 +1081,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'event_rumor_master',
     tags: ['wild_daily'],
     weight: 200,
-    req: (hero) => hero.knowledge.includes('rumor_hidden_master') && hero.locationId === 'loc_wild' && !hero.flags.met_hidden_master,
+    req: (hero) => hero.knowledge.includes('rumor_hidden_master') && hero.locationId.startsWith('wild_') && !hero.flags.met_hidden_master,
     run: (hero, world) => {
       const art = rand(SECT_ARTS.default); // 随机给个基础武功
       return {
@@ -691,7 +1120,7 @@ export const SNIPPETS: StorySnippet[] = [
     req: (hero, world, turn) => turn >= 1 && !hero.flags.quest_letter_done && !hero.inventory.includes('密信') && !hero.inventory.includes('回信'),
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
-      const city = world.locations.find((l: Location) => l.id === 'loc_city');
+      const city = world.locations.find((l: Location) => l.type === 'city') || { name: '附近城市' };
       return {
         lines: [
           { text: '忽然有小童来报，掌门唤你去大殿一叙。', type: 'time-pass' },
@@ -704,7 +1133,7 @@ export const SNIPPETS: StorySnippet[] = [
             result: {
               lines: [{ text: '你接过密信，即刻启程。', type: 'action' }],
               addItem: '密信',
-              newLocationId: 'loc_city',
+              newLocationId: city.id,
             },
           },
         ],
@@ -717,15 +1146,15 @@ export const SNIPPETS: StorySnippet[] = [
     tags: ['city_daily'],
     weight: 200,
     stageMax: StoryStage.RISING,
-    req: (hero) => hero.inventory.includes('密信') && hero.locationId === 'loc_city',
+    req: (hero, world) => hero.inventory.includes('密信') && world.locations.find((l: Location) => l.id === hero.locationId)?.type === 'city',
     run: (hero, world) => {
-      let targetNpc = world.npcs.find((n: Person) => n.locationId === 'loc_city' && n.role === 'hero');
+      let targetNpc = world.npcs.find((n: Person) => n.locationId === hero.locationId && n.role === 'hero');
       let isNewNpc = false;
       if (!targetNpc) {
         isNewNpc = true;
         const gender = Math.random() > 0.5 ? 'male' : 'female';
         targetNpc = {
-          id: `npc_hero_${Date.now()}`, name: genName(gender), sectId: 'none', role: 'hero', gender, age: 30, status: 'alive', relations: [], locationId: 'loc_city', inventory: [], flags: {}, arts: [], knowledge: [],
+          id: `npc_hero_${Date.now()}`, name: genName(gender), sectId: 'none', role: 'hero', gender, age: 30, status: 'alive', relations: [], locationId: hero.locationId, inventory: [], flags: {}, arts: [], knowledge: [],
         };
       }
       return {
@@ -747,7 +1176,7 @@ export const SNIPPETS: StorySnippet[] = [
     tags: ['sect_daily'],
     weight: 200,
     stageMax: StoryStage.RISING,
-    req: (hero) => hero.inventory.includes('回信') && hero.locationId === 'loc_sect_main',
+    req: (hero) => hero.inventory.includes('回信') && hero.locationId.startsWith('sect_'),
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
       const sectName = world.sects.find((s: Sect) => s.id === hero.sectId)?.name || 'default';
@@ -940,7 +1369,7 @@ export const SNIPPETS: StorySnippet[] = [
           { text: `“${hero.name}，快走！留得青山在！”${master.name}拼死为你挡下致命一击。`, type: 'dialogue', speaker: master.name },
           { text: '你含泪逃入深山，发誓定要报此血海深仇。', type: 'inner' },
         ],
-        newLocationId: 'loc_wild',
+        newLocationId: world.locations.find((l: Location) => l.type === 'wild')?.id || hero.locationId,
         advanceStage: true,
       };
     },
@@ -977,7 +1406,7 @@ export const SNIPPETS: StorySnippet[] = [
             result: {
               lines: [{ text: '你提着兵刃下山，杀气腾腾。', type: 'action' }],
               addFlag: 'ready_for_final',
-              newLocationId: 'loc_city',
+              newLocationId: world.locations.find((l: Location) => l.type === 'city')?.id || hero.locationId,
             },
           },
         ],
@@ -1160,7 +1589,7 @@ export const SNIPPETS: StorySnippet[] = [
     stageMax: StoryStage.CRISIS,
     req: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice'));
-      return !!master && hero.locationId === 'loc_sect_main';
+      return !!master && hero.locationId.startsWith('sect_');
     },
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
@@ -1189,9 +1618,9 @@ export const SNIPPETS: StorySnippet[] = [
     tags: ['city_daily'],
     weight: 20,
     req: (hero, world) => {
-      if (hero.locationId !== 'loc_city') return false;
+      if (world.locations.find((l: Location) => l.id === hero.locationId)?.type !== 'city') return false;
       // 检查是否已经有商人，如果有，检查冷却时间
-      const merchant = world.npcs.find((n: Person) => n.role === 'merchant' && n.locationId === 'loc_city');
+      const merchant = world.npcs.find((n: Person) => n.role === 'merchant' && n.locationId === hero.locationId);
       if (merchant) {
         const merchantRel = hero.relations.find((r) => r.targetId === merchant.id);
         const meetCount = merchantRel ? Math.floor((merchantRel.value || 0) / 10) : 0;
@@ -1201,7 +1630,8 @@ export const SNIPPETS: StorySnippet[] = [
       return true;
     },
     run: (hero, world) => {
-      const merchant = world.npcs.find((n: Person) => n.role === 'merchant' && n.locationId === 'loc_city');
+      const currentCityId = hero.locationId;
+      const merchant = world.npcs.find((n: Person) => n.role === 'merchant' && n.locationId === hero.locationId);
       let newMerchant: Person | undefined;
       if (!merchant) {
         const gender = Math.random() > 0.5 ? 'male' : 'female';
@@ -1214,7 +1644,7 @@ export const SNIPPETS: StorySnippet[] = [
           age: 40,
           status: 'alive',
           relations: [],
-          locationId: 'loc_city',
+          locationId: currentCityId,
           inventory: [],
           flags: {},
           arts: [],
@@ -1346,7 +1776,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'wild_meet_wanderer',
     tags: ['wild_daily'],
     weight: 25,
-    req: (hero) => hero.locationId === 'loc_wild',
+    req: (hero) => hero.locationId.startsWith('wild_'),
     run: (hero, world) => {
       const gender = Math.random() > 0.5 ? 'male' : 'female';
       const wandererName = genName(gender);
@@ -1359,7 +1789,7 @@ export const SNIPPETS: StorySnippet[] = [
         age: hero.age + Math.floor(Math.random() * 10) - 5,
         status: 'alive',
         relations: [],
-        locationId: 'loc_wild',
+        locationId: hero.locationId,
         inventory: [],
         flags: {},
         arts: [],
@@ -1410,7 +1840,7 @@ export const SNIPPETS: StorySnippet[] = [
           age: 25,
           status: 'alive',
           relations: [],
-          locationId: 'loc_wild',
+          locationId: hero.locationId,
           inventory: [],
           flags: {},
           arts: [],
@@ -1623,7 +2053,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'travel_bandits',
     tags: ['wild_daily'],
     weight: 30,
-    req: (hero) => hero.locationId === 'loc_wild',
+    req: (hero) => hero.locationId.startsWith('wild_'),
     run: (hero, world) => {
       // 🆕 山贼有名字和性别
       const banditGender = Math.random() > 0.7 ? 'female' : 'male'; // 30%概率是女山贼
@@ -1637,7 +2067,7 @@ export const SNIPPETS: StorySnippet[] = [
         age: 25,
         status: 'alive',
         relations: [],
-        locationId: 'loc_wild',
+        locationId: hero.locationId,
         inventory: [],
         flags: {},
         arts: [],
@@ -1746,7 +2176,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'travel_find_manual',
     tags: ['wild_daily'],
     weight: 15,
-    req: (hero) => hero.locationId === 'loc_wild' && !hero.flags.found_manual,
+    req: (hero) => hero.locationId.startsWith('wild_') && !hero.flags.found_manual,
     run: (hero) => {
       const manualNames = ['无名剑谱', '残破心法', '古旧拳经', '内功要诀'];
       const manualName = rand(manualNames);
@@ -1787,7 +2217,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'travel_meet_master',
     tags: ['wild_daily'],
     weight: 10,
-    req: (hero) => hero.locationId === 'loc_wild' && !hero.flags.met_wandering_master,
+    req: (hero) => hero.locationId.startsWith('wild_') && !hero.flags.met_wandering_master,
     run: (hero, world) => {
       const masterName = genName(Math.random() > 0.5 ? 'male' : 'female');
       const newNpc: Person = {
@@ -1799,7 +2229,7 @@ export const SNIPPETS: StorySnippet[] = [
         age: 60,
         status: 'alive',
         relations: [],
-        locationId: 'loc_wild',
+        locationId: hero.locationId,
         inventory: [],
         flags: {},
         arts: [],
@@ -1901,7 +2331,7 @@ export const SNIPPETS: StorySnippet[] = [
       const arts = getSectArts(sectName);
       const unlearnedArts = arts.filter((a) => !hero.arts.includes(a.name));
       // 🆕 修复：必须有未学会的武功才触发
-      return unlearnedArts.length > 0 && hero.locationId === 'loc_sect_main';
+      return unlearnedArts.length > 0 && hero.locationId.startsWith('sect_');
     },
     run: (hero, world) => {
       const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
@@ -1946,7 +2376,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'wild_solo_training',
     tags: ['wild_daily'],
     weight: 20,
-    req: (hero) => hero.locationId === 'loc_wild' && hero.arts.length > 0,
+    req: (hero) => hero.locationId.startsWith('wild_') && hero.arts.length > 0,
     run: (hero) => {
       const artName = hero.arts[0];
       const art = getArtByName(artName);
@@ -2001,7 +2431,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'city_martial_school',
     tags: ['city_daily'],
     weight: 15,
-    req: (hero) => hero.locationId === 'loc_city' && !hero.flags.visited_martial_school,
+    req: (hero) => hero.locationId.startsWith('city_') && !hero.flags.visited_martial_school,
     run: (hero) => {
       const basicArts = SECT_ARTS.default;
       const unlearnedArts = basicArts.filter((a) => !hero.arts.includes(a.name));
@@ -2054,7 +2484,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'companion_camp',
     tags: ['wild_daily'],
     weight: 20,
-    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_wild',
+    req: (hero, world) => !!world.companionId && hero.locationId.startsWith('wild_'),
     run: (hero, world) => {
       const companion = world.npcs.find((n: Person) => n.id === world.companionId);
       if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
@@ -2072,7 +2502,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'companion_meal',
     tags: ['city_daily'],
     weight: 20,
-    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_city',
+    req: (hero, world) => !!world.companionId && hero.locationId.startsWith('city_'),
     run: (hero, world) => {
       const companion = world.npcs.find((n: Person) => n.id === world.companionId);
       if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
@@ -2135,7 +2565,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'companion_shopping',
     tags: ['city_daily'],
     weight: 15,
-    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_city',
+    req: (hero, world) => !!world.companionId && hero.locationId.startsWith('city_'),
     run: (hero, world) => {
       const companion = world.npcs.find((n: Person) => n.id === world.companionId);
       if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
@@ -2232,7 +2662,7 @@ export const SNIPPETS: StorySnippet[] = [
     id: 'companion_farewell',
     tags: ['sect_daily'],
     weight: 30,
-    req: (hero, world) => !!world.companionId && hero.locationId === 'loc_sect_main',
+    req: (hero, world) => !!world.companionId && hero.locationId.startsWith('sect_'),
     run: (hero, world) => {
       const companion = world.npcs.find((n: Person) => n.id === world.companionId);
       if (!companion) return { lines: [{ text: '无事发生', type: 'narrative' }] };
