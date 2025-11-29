@@ -3,12 +3,10 @@
 import React, {
   useState, useEffect, useRef, useCallback,
 } from 'react';
-import {
-  Person, Sect, Location, StoryStage, Relation,
-  SECT_NAMES, SNIPPETS,
-  rand, genName, generateWorldMap, getReachableLocations, findPath,
-  SnippetResult, StoryChoice, initSectRelations, generateHiddenMaster, getSectById,
-} from './wuxia/wuxia-data';
+import { SECT_NAMES } from './wuxia/logic/constants';
+import { Person, Sect, StoryStage, SnippetResult, Location } from './wuxia/logic/types';
+import { generateWorldMap, initSectRelations, genName, generateHiddenMaster, rand } from './wuxia/logic/utils';
+import { SNIPPETS } from './wuxia/snippets';
 
 type StoryBlock = {
   id: string;
