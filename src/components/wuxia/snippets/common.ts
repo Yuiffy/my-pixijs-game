@@ -2,7 +2,7 @@ import { generateBattle } from "../logic/battle";
 import { SECTS_DATA, MERCHANT_ITEMS } from "../logic/constants";
 import { SECT_ARTS, getSectArts, getArtByName } from "../logic/skills";
 import { MartialArt, Person, Personality, RelationType, Sect, StoryChoice, StoryLine, StorySnippet, StoryStage, LocationInfo, Relation } from "../logic/types";
-import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance, getSectMembersList, getAvailableCompanions, updateLastInteraction } from "../logic/utils";
+import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance, getSectMembersList, getAvailableCompanions, updateLastInteraction, calculateTravelCost } from "../logic/utils";
 
 // 同行事件：露营
 export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
@@ -553,67 +553,115 @@ export const commonSnippets: StorySnippet[] = [
         }
       }
 
-      // --- 通用移动选项 ---
-      if (hero.locationId.startsWith('sect_')) {
-        const city = world.locations.find((l: LocationInfo) => l.type === 'city');
-        if (city) {
-          choices.push({
-            text: `下山前往【${city.name}】`,
-            result: {
-              lines: [{ text: '静极思动，你决定下山看看。', type: 'action' }],
-              newLocationId: city.id,
-              addTurn: 1,
-            },
-          });
-        }
-      }
+      // --- 移动选项 ---
+      const currentLoc = world.locations.find((l: LocationInfo) => l.id === hero.locationId);
+      if (currentLoc) {
+        const connections = currentLoc.connections || [];
+        const neighbors = world.locations.filter((l: LocationInfo) => connections.includes(l.id) && l.id !== hero.locationId);
 
-      if (hero.locationId.startsWith('city_')) {
-        const wild = world.locations.find((l: LocationInfo) => l.type === 'wild');
-        if (wild) {
-          choices.push({
-            text: `前往【${wild.name}】探险`,
-            result: {
-              lines: [{ text: '听说野外有不少机缘，你决定去碰碰运气。', type: 'action' }],
-              newLocationId: wild.id,
-              addTurn: 2,
-            },
-          });
-        }
-        const sect = world.locations.find((l: LocationInfo) => l.type === 'sect');
-        if (sect) {
-          choices.push({
-            text: '返回师门',
-            result: {
-              lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
-              newLocationId: sect.id,
-              addTurn: 2,
-            },
-          });
-        }
-      }
+        // 1. 在城市中显示特殊选项
+        if (currentLoc.type === 'city') {
+          // 1.1 回门派选项
+          const playerSect = world.sects.find((s: any) => s.id === hero.sectId);
+          if (playerSect) {
+            const sectLoc = world.locations.find((l: any) => l.id === playerSect.locationId);
+            if (sectLoc) {
+              const { distance } = calculateTravelCost(hero.locationId, sectLoc.id, world.locations);
+              choices.push({
+                text: `返回【${sectLoc.name}】`,
+                desc: `返回门派，预计路程 ${Math.max(3, distance)} 天`,
+                result: {
+                  lines: [{ text: `你决定返回${sectLoc.name}。`, type: 'action' }],
+                  startTravel: {
+                    targetId: sectLoc.id,
+                    days: Math.max(3, distance), // 至少3天
+                    mode: 'road' as const
+                  },
+                  addSupplies: 5
+                }
+              });
+            }
+          }
 
-      if (hero.locationId.startsWith('wild_')) {
-        const city = world.locations.find((l: LocationInfo) => l.type === 'city');
-        if (city) {
-          choices.push({
-            text: `返回【${city.name}】`,
-            result: {
-              lines: [{ text: '野外虽然有机缘，但也危险重重。你决定先回城中。', type: 'action' }],
-              newLocationId: city.id,
-              addTurn: 2,
-            },
-          });
+          // 1.2 城市内地点
+          const cityLocations = neighbors.filter((l: any) => ['inn', 'teahouse', 'market'].includes(l.type));
+
+          if (cityLocations.length > 0) {
+            choices.push({
+              text: '在城中走动',
+              result: {
+                lines: [{ text: '你决定在城中逛逛。', type: 'action' }],
+                choices: cityLocations.map((loc: any) => ({
+                  text: `去${loc.name}`,
+                  result: {
+                    lines: [{ text: `你来到了${loc.name}。`, type: 'narrative' }],
+                    newLocationId: loc.id
+                  }
+                }))
+              }
+            });
+          }
         }
-        const sect = world.locations.find((l: LocationInfo) => l.type === 'sect');
-        if (sect) {
+
+        // 2. 长途旅行选项
+        const travelChoices = neighbors
+          .filter((loc: any) => {
+            // 过滤不合理的旅行目的地
+            if (loc.type === 'sect' && loc.id !== hero.sectId) {
+              // 检查是否与目标门派有关系
+              const hasRelation = hero.relations?.some((r: any) => r.targetId === loc.id && r.type === 'sect_relation' && r.value > 0) || false;
+              return hasRelation;
+            }
+            return true;
+          })
+          .map((loc: any) => {
+            const { distance } = calculateTravelCost(hero.locationId, loc.id, world.locations);
+            const travelDays = Math.max(3, distance * 2); // 增加基础旅行时间
+
+            return {
+              text: `前往：${loc.name}`,
+              desc: `预计路程 ${travelDays} 天`,
+              result: {
+                lines: [{ text: `你决定前往${loc.name}。`, type: 'narrative' }],
+                choices: [
+                  {
+                    text: '走官道 (安全但耗时)',
+                    desc: '安全，花费银两，耗时正常',
+                    result: {
+                      lines: [{ text: '你收拾行囊，准备沿官道出发。', type: 'action' }],
+                      startTravel: {
+                        targetId: loc.id,
+                        days: travelDays,
+                        mode: 'road' as const
+                      },
+                      addSupplies: 5
+                    }
+                  },
+                  {
+                    text: '抄近道 (危险但快速)',
+                    desc: '危险，省钱，可能遭遇野兽，可打猎',
+                    result: {
+                      lines: [{ text: '你决定冒险抄近路。', type: 'action' }],
+                      startTravel: {
+                        targetId: loc.id,
+                        days: Math.max(1, Math.floor(travelDays * 0.7)),
+                        mode: 'wild' as const
+                      },
+                      addSupplies: 2
+                    }
+                  }
+                ]
+              }
+            };
+          });
+
+        if (travelChoices.length > 0) {
           choices.push({
-            text: '返回师门',
+            text: '前往其他地区',
             result: {
-              lines: [{ text: '外面的世界虽然精彩，但师门才是家。', type: 'action' }],
-              newLocationId: sect.id,
-              addTurn: 3,
-            },
+              lines: [{ text: '你决定离开当前地区。', type: 'action' }],
+              choices: travelChoices
+            }
           });
         }
       }

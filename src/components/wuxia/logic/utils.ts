@@ -39,6 +39,55 @@ export const rand = <T>(arr: T[]): T => {
   return arr[Math.floor(Math.random() * arr.length)];
 };
 
+/**
+ * 计算两点间的旅行信息
+ * @param fromId 起点ID
+ * @param toId 终点ID
+ * @param locations 所有地点信息
+ * @returns 包含距离和风险信息的对象
+ */
+export const calculateTravelCost = (
+  fromId: string,
+  toId: string,
+  locations: LocationInfo[]
+): { distance: number, roadRisk: number, wildRisk: number } => {
+  // 简化处理：如果是相邻节点，距离为 1-3 不等
+  // 实际项目中可以用 Dijkstra 算法，这里简化为：只要相连，就有基础距离
+  // 如果不相连（长途），我们假设需要跳跃多个节点（这里暂时只允许移动到相邻节点，模拟真实步行）
+
+  const target = locations.find(l => l.id === toId);
+  const type = target?.type || 'wild';
+
+  let distance = 3; // 默认3天路程
+  if (type === 'city') distance = 5; // 城市间一般较远
+  if (type === 'inn' || type === 'government') distance = 0; // 城内移动瞬间到达
+
+  return {
+    distance,
+    roadRisk: 10, // 官道遇到强盗概率低
+    wildRisk: 40 // 山路遇到野兽/强盗概率高
+  };
+};
+
+/**
+ * 检查队伍中是否有要去该目的地的人
+ * @param partyIds 队伍成员ID数组
+ * @param targetLocId 目标地点ID
+ * @param world 游戏世界状态
+ * @returns 要离开的队伍成员名称数组
+ */
+export const checkCompanionsDestination = (partyIds: string[], targetLocId: string, world: any): string[] => {
+  const leavingNames: string[] = [];
+  partyIds.forEach(id => {
+    const npc = world.npcs.find((n: any) => n.id === id);
+    // 如果NPC有想去的地方，且就是当前目的地，或者随机判定他到站了
+    if (npc && (npc.desiredLocationId === targetLocId || (Math.random() < 0.3 && npc.sectId !== 'hero'))) {
+      leavingNames.push(npc.name);
+    }
+  });
+  return leavingNames;
+};
+
 export const genName = (gender: 'male' | 'female') => {
   const firstNames = gender === 'male' ? MALE_FIRST_NAMES : FEMALE_FIRST_NAMES;
   return `${rand(LAST_NAMES)}${rand(firstNames)}`;
@@ -566,6 +615,41 @@ export const describeMoveComparison = (
 };
 
 // 🆕 Feature 1: 获取所有同行伙伴的名字列表 (适配 party 数组)
+/**
+ * 生成一个NPC角色
+ * @param options 配置选项
+ * @returns 生成的NPC对象
+ */
+export const generateNpc = (options: {
+  gender?: 'male' | 'female';
+  role?: Person['role'];
+  sectId?: string;
+  locationId?: string;
+  age?: number;
+  desiredLocationId?: string;
+} = {}): Person => {
+  const gender = options.gender || (Math.random() > 0.5 ? 'male' : 'female');
+  const age = options.age || (20 + Math.floor(Math.random() * 20));
+
+  return {
+    id: `npc_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    name: genName(gender),
+    sectId: options.sectId || 'none',
+    role: options.role || 'npc',
+    gender,
+    age,
+    status: 'alive',
+    relations: [],
+    locationId: options.locationId || '',
+    inventory: [],
+    flags: {},
+    arts: [],
+    knowledge: [],
+    appearance: genAppearance(gender, options.role || 'npc'),
+    desiredLocationId: options.desiredLocationId
+  };
+};
+
 export const getCompanionNamesList = (world: any): string => {
   if (!world.party || world.party.length === 0) return '无';
 

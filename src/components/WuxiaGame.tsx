@@ -34,6 +34,14 @@ export default function WuxiaGame() {
     stage: StoryStage;
     turnInStage: number;
     party: string[];
+    travelState?: {
+      isTraveling: boolean;
+      destinationId: string;
+      daysTotal: number;
+      daysLeft: number;
+      mode: 'road' | 'wild' | 'water';
+      supplies: number;
+    };
   } | null>(null);
 
   const [storyLog, setStoryLog] = useState<StoryBlock[]>([]);
@@ -216,6 +224,38 @@ export default function WuxiaGame() {
         });
 
         return { ...w, npcs: newNpcs };
+      });
+    }
+
+    // 处理开始旅行
+    if (result.startTravel) {
+      setWorld(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          travelState: {
+            isTraveling: true,
+            destinationId: result.startTravel!.targetId,
+            daysTotal: result.startTravel!.days,
+            daysLeft: result.startTravel!.days,
+            mode: result.startTravel!.mode,
+            supplies: result.addSupplies || 5 // 默认5份干粮
+          }
+        };
+      });
+    }
+
+    // 处理物资变动
+    if (result.addSupplies && world?.travelState) {
+      setWorld(prev => {
+        if (!prev?.travelState) return prev;
+        return {
+          ...prev,
+          travelState: {
+            ...prev.travelState,
+            supplies: Math.max(0, prev.travelState.supplies + result.addSupplies!)
+          }
+        };
       });
     }
 
@@ -444,6 +484,67 @@ export default function WuxiaGame() {
 
   const nextTurn = useCallback(() => {
     if (!world || isEnded) return;
+
+    // 处理旅行状态
+    if (world.travelState?.isTraveling) {
+      // 1. 检查是否到达目的地
+      if (world.travelState.daysLeft <= 0) {
+        // 触发到达剧情
+        const arrivalSnippet = SNIPPETS.find(s => s.id === 'travel_arrival');
+        if (arrivalSnippet) {
+          const hero = world.npcs.find(n => n.id === world.heroId);
+          if (hero) {
+            const result = arrivalSnippet.run(hero, world);
+            applySnippetResult(result);
+
+            // 清除旅行状态
+            setWorld(prev => {
+              if (!prev) return null;
+              const { travelState, ...rest } = prev;
+              return { ...rest };
+            });
+          }
+        }
+        return;
+      }
+
+      // 2. 减少剩余天数
+      setWorld(prev => {
+        if (!prev?.travelState) return prev;
+        return {
+          ...prev,
+          travelState: {
+            ...prev.travelState,
+            daysLeft: prev.travelState.daysLeft - 1
+          }
+        };
+      });
+
+      // 3. 触发旅途事件
+      const hero = world.npcs.find(n => n.id === world.heroId);
+      if (hero) {
+        // 筛选旅行事件
+        const travelEvents = SNIPPETS.filter(s => s.tags.includes('travel_daily') &&
+          (!s.req || s.req(hero, world, 0)));
+
+        if (travelEvents.length > 0) {
+          const event = rand(travelEvents);
+          const result = event.run(hero, world);
+          applySnippetResult(result);
+        } else {
+          // 默认旅行日志
+          addStory(`继续赶路... (剩余 ${world.travelState.daysLeft} 天)`, 'time-pass');
+        }
+      }
+
+      // 4. 检查物资是否耗尽
+      if (world.travelState.supplies <= 0) {
+        addStory('干粮耗尽，你感到饥肠辘辘...', 'narrative');
+        // 可以添加饥饿惩罚逻辑
+      }
+
+      return;
+    }
     const hero = world.npcs.find((n) => n.id === world.heroId);
     if (!hero) return;
 

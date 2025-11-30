@@ -35,7 +35,7 @@ export interface Person {
   id: string;
   name: string;
   sectId: string;
-  role: 'leader' | 'disciple' | 'hero' | 'villager' | 'merchant' | 'bandit' | 'mystery' | 'boss';
+  role: 'leader' | 'disciple' | 'hero' | 'villager' | 'merchant' | 'bandit' | 'mystery' | 'boss' | 'npc';
   gender: 'male' | 'female';
   age: number;
   birthYear?: number;
@@ -46,6 +46,8 @@ export interface Person {
   flags: Record<string, any>;
   arts: string[];
   knowledge: string[];
+  // 🆕 新增：NPC的意向目的地 (用于判定是否顺路)
+  desiredLocationId?: string;
   personality?: Personality;
   appearance?: Appearance;
   identity?: {
@@ -92,6 +94,19 @@ export interface LocationInfo {
   connections?: string[];
 }
 
+// 🆕 Travel Mode Type
+export type TravelMode = 'road' | 'wild' | 'water';
+
+// 🆕 Travel State Interface
+export interface TravelState {
+  isTraveling: boolean;
+  destinationId: string;
+  daysTotal: number;
+  daysLeft: number;
+  mode: TravelMode;
+  supplies: number; // 干粮份数
+}
+
 export enum StoryStage {
   BEGINNING = 0,
   RISING = 1,
@@ -100,7 +115,16 @@ export enum StoryStage {
   ENDING = 4,
 }
 
-export type SnippetTag = 'sect_daily' | 'city_daily' | 'wild_daily' | 'quest' | 'relationship' | 'main_story' | 'game_over';
+export type SnippetTag =
+  | 'sect_daily' | 'city_daily' | 'wild_daily' | 'inn_daily' | 'game_over' | 'battle'
+  | 'sect_join' | 'sect_leave' | 'sect_promote' | 'sect_demote' | 'sect_quest'
+  | 'sect_training' | 'sect_meeting' | 'sect_decision' | 'sect_crisis' | 'sect_attack'
+  | 'sect_defend' | 'sect_ally' | 'sect_enemy' | 'sect_peace' | 'sect_war' | 'sect_tournament'
+  | 'sect_mission' | 'sect_treasure' | 'sect_artifact' | 'sect_technique' | 'sect_elder'
+  | 'sect_disciple' | 'sect_leader' | 'sect_master' | 'sect_apprentice' | 'sect_rival'
+  | 'travel_daily' // 🆕 旅途日常事件
+  | 'travel_arrival' // 🆕 到达目的地事件
+  | 'travel_departure'; // 🆕 出发事件
 
 export interface StoryLine {
   text: string;
@@ -129,6 +153,14 @@ export interface SnippetResult {
   addKnowledge?: string;
   addToParty?: string | string[]; // 🆕 支持单个或批量加入队伍 (ID)
   removeFromParty?: string | string[]; // 🆕 支持单个或批量离开队伍 (ID)
+  // 🆕 新增：开始旅行
+  startTravel?: {
+    targetId: string;
+    days: number;
+    mode: TravelMode;
+  };
+  // 🆕 新增：物资变动
+  addSupplies?: number; // 🆕 支持单个或批量离开队伍 (ID)
   advanceStage?: boolean;
   addTurn?: number;
   addExp?: number;
