@@ -1,5 +1,5 @@
 import { Person, Sect, StorySnippet } from "../logic/types";
-import { getSectMembersList } from "../logic/utils";
+import { getSectMembersList, findRoute, genCityName, genWildName, rand } from "../logic/utils";
 
 // 查看本派弟子
 export const displaySectMembersSnippet: StorySnippet = {
@@ -63,9 +63,68 @@ export const sectAskMasterSnippet: StorySnippet = {
     };
   }
 };
+export const sectMainSnippets: StorySnippet[] = [
+  // ... (保留 join_sect 等)
+
+  // 修改：掌门发布任务 (增加 questTarget 标记)
+  {
+    id: 'sect_mission_deliver',
+    tags: ['sect_daily'],
+    weight: 20,
+    req: (hero, world) => hero.sectId !== 'none' && !hero.flags.hasQuest, // 只有没任务时触发
+    run: (hero, world) => {
+      // 随机找一个城市作为目标
+      const targetCity = world.locations.find((l: any) => l.type === 'city' && l.id !== hero.locationId);
+
+      if (!targetCity) return { lines: [{ text: '掌门今天无事。', type: 'narrative' }] };
+
+      return {
+        lines: [
+          { text: '掌门把你叫到跟前。', type: 'narrative' },
+          { text: `"徒儿，有一封加急信件需要送往【${targetCity.name}】，你即刻启程。"`, type: 'dialogue', speaker: '掌门' }
+        ],
+        addItem: '掌门密信',
+        addFlags: {
+          hasQuest: true,
+          questType: 'deliver',
+          questTarget: targetCity.id, // 关键：记录目标ID
+          questTargetName: targetCity.name
+        },
+        choices: [
+          {
+            text: '弟子领命',
+            result: { lines: [{ text: '你接过书信，准备下山。', type: 'action' }] }
+          }
+        ]
+      };
+    }
+  },
+
+  // 修改：复命 (任何时候回到门派，如果任务完成)
+  {
+    id: 'sect_mission_complete',
+    tags: ['sect_daily'],
+    weight: 1000, // 极高权重，回来优先触发
+    req: (hero) => hero.flags.questCompleted === true && hero.locationId.startsWith('sect_') && hero.sectId !== 'none',
+    run: (hero, world) => {
+      return {
+        lines: [
+          { text: '你风尘仆仆地回到门派复命。', type: 'action' },
+          { text: '"做得好！不愧是我派弟子。"', type: 'dialogue', speaker: '掌门' }
+        ],
+        removeFlag: 'hasQuest', // 清除任务标记
+        addFlags: { questCompleted: false }, // 重置
+        // 奖励逻辑...
+        addRelation: { targetId: 'master', type: 'master', value: 5 }
+      };
+    }
+  }
+  // ...
+];
 
 export const sectSnippets = [
   displaySectMembersSnippet,
   sectAskMasterSnippet,
-  // Add more sect-related snippets here
+  ...sectMainSnippets,
+  // 可以继续添加更多门派相关的事件片段
 ];

@@ -31,6 +31,9 @@ export type Appearance = {
   weapon?: string;
 };
 
+// 熟悉度等级
+export type Familiarity = 'stranger' | 'met_once' | 'acquaintance' | 'friend' | 'close_friend' | 'intimate';
+
 export interface Person {
   id: string;
   name: string;
@@ -42,11 +45,17 @@ export interface Person {
   status: 'alive' | 'dead' | 'missing';
   relations: Relation[];
   locationId: string;
+  // 目标地点ID（用于任务或旅行）
+  targetLocationId?: string;
+  // 人物实力描述（替代数值）
+  powerLevelDesc?: string;
+  // 与玩家的熟悉度
+  familiarity?: Familiarity;
   inventory: string[];
   flags: Record<string, any>;
   arts: string[];
   knowledge: string[];
-  // 🆕 新增：NPC的意向目的地 (用于判定是否顺路)
+  // NPC的意向目的地 (用于判定是否顺路)
   desiredLocationId?: string;
   personality?: Personality;
   appearance?: Appearance;
@@ -97,14 +106,16 @@ export interface LocationInfo {
 // 🆕 Travel Mode Type
 export type TravelMode = 'road' | 'wild' | 'water';
 
-// 🆕 Travel State Interface
+// 旅行状态接口
 export interface TravelState {
   isTraveling: boolean;
-  destinationId: string;
-  daysTotal: number;
-  daysLeft: number;
-  mode: TravelMode;
-  supplies: number; // 干粮份数
+  destinationId: string; // 最终目的地ID
+  destinationName: string; // 最终目的地名称
+  route: string[]; // 规划的路径节点ID列表 [current, next, ..., end]
+  daysPerNode: number; // 两个节点间需要走几天
+  daysToNextNode: number;// 距离下一个节点还剩几天
+  mode: 'road' | 'wild';
+  supplies: number;
 }
 
 export enum StoryStage {

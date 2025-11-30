@@ -1,4 +1,4 @@
-import { Appearance, LocationInfo, Person, Personality, Sect, RelationType, Relation, StoryChoice } from './types';
+import { Appearance, LocationInfo, Person, Personality, Sect, RelationType, Relation, StoryChoice, TravelState } from './types';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, SECTS_DATA, CITY_PREFIXES, CITY_SUFFIXES, WILD_PREFIXES, WILD_SUFFIXES } from './constants';
 import { getSectArts } from './skills';
 
@@ -896,6 +896,120 @@ export const getBattleOutcomeChoices = (
  * @param ally 战斗中的盟友（可选）
  * @returns 包含邀请选项的StoryChoice数组
  */
+/**
+ * 使用BFS算法查找两个地点之间的最短路径
+ * @param startId 起始地点ID
+ * @param endId 目标地点ID
+ * @param locations 所有地点信息
+ * @returns 包含路径和每段距离的对象，如果不可达则返回null
+ */
+export const findRoute = (
+  startId: string,
+  endId: string,
+  locations: LocationInfo[]
+): { path: string[]; distances: number[] } | null => {
+  // 如果起点和终点相同，直接返回
+  if (startId === endId) {
+    return { path: [startId], distances: [] };
+  }
+
+  // 创建访问记录和路径记录
+  const visited = new Set<string>();
+  const queue: { id: string; path: string[]; distances: number[] }[] = [
+    { id: startId, path: [startId], distances: [] }
+  ];
+
+  // 构建邻接表
+  const adjacencyList = new Map<string, { id: string, distance: number }[]>();
+  locations.forEach(location => {
+    if (location.connections) {
+      adjacencyList.set(
+        location.id,
+        location.connections.map(connId => {
+          const connectedLoc = locations.find(l => l.id === connId);
+          return {
+            id: connId,
+            // 简化处理：城市间距离为5，其他为3
+            distance: connectedLoc?.type === 'city' ? 5 : 3
+          };
+        })
+      );
+    } else {
+      adjacencyList.set(location.id, []);
+    }
+  });
+
+  // BFS搜索
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+
+    // 如果已访问过，跳过
+    if (visited.has(current.id)) continue;
+    visited.add(current.id);
+
+    // 获取相邻节点
+    const neighbors = adjacencyList.get(current.id) || [];
+
+    for (const neighbor of neighbors) {
+      // 找到目标节点
+      if (neighbor.id === endId) {
+        return {
+          path: [...current.path, neighbor.id],
+          distances: [...current.distances, neighbor.distance]
+        };
+      }
+
+      // 将未访问的相邻节点加入队列
+      if (!visited.has(neighbor.id)) {
+        queue.push({
+          id: neighbor.id,
+          path: [...current.path, neighbor.id],
+          distances: [...current.distances, neighbor.distance]
+        });
+      }
+    }
+  }
+
+  // 未找到路径
+  return null;
+};
+
+/**
+ * 观察NPC的实力并生成描述
+ * @param npc 要观察的NPC
+ * @param observer 观察者（通常是玩家）
+ * @returns 描述NPC实力的字符串
+ */
+// 🆕 “眼力”系统：对比主角和目标，生成描述
+export const observePerson = (hero: Person, target: Person): string => {
+  // 简单计算战力 (HP + Arts数量 * 20)
+  const getPower = (p: Person) => (p.hp || 100) + (p.arts.length * 20);
+  const heroPower = getPower(hero);
+  const targetPower = getPower(target);
+  const diff = targetPower - heroPower;
+
+  if (target.role === 'villager' || target.role === 'merchant') {
+    return '看着是个不会武功的普通人。';
+  }
+
+  if (diff > 50) return '此人太阳穴高鼓，双目神光内敛，只怕武功深不可测！(极度危险)';
+  if (diff > 10) return '此人呼吸绵长，步伐沉稳，是个劲敌。(强于你)';
+  if (diff > -10) return '此人身形矫健，气息与你在伯仲之间。(旗鼓相当)';
+  if (diff > -50) return '此人脚步略显虚浮，应该不是你的对手。(弱于你)';
+  return '此人破绽百出，你可以轻易拿捏。(不堪一击)';
+};
+
+/**
+ * 获取特定位置的所有NPC
+ * @param locationId 地点ID
+ * @param world 游戏世界状态
+ * @returns 该位置的所有NPC数组
+ */
+export const getPeopleAtLocation = (locationId: string, world: any): Person[] => {
+  if (!world || !world.npcs) return [];
+  return world.npcs.filter((npc: Person) => npc.locationId === locationId && npc.status === 'alive');
+};
+
 export const getCompanionInviteChoices = (
   npc: Person,
   hero: Person,
