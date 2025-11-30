@@ -605,9 +605,12 @@ export const otherPeopleSnippets: StorySnippet[] = [
               addNpc: [npc1, npc2],
               // 根据战斗结果显示不同选项
               choices: (() => {
-                const battleResult = generateBattle(hero, npc2, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+                const battleResult = help1Battle;
                 if (battleResult.outcome === 'victory') {
                   return getBattleOutcomeChoices(npc2, hero, world, -20, npc1);
+                }
+                if (battleResult.choices && battleResult.choices.length > 0) {
+                  return battleResult.choices;
                 }
                 // 战斗未获胜时，增加与帮助对象的友好度，并提供结伴选项
                 return [{
@@ -634,16 +637,16 @@ export const otherPeopleSnippets: StorySnippet[] = [
             result: {
               lines: [
                 { text: `你居然选择了帮助那个看着像恶人的【${npc2.name}】！`, type: 'action' },
-                ...(() => {
-                  const battleResult = generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
-                  return battleResult.lines;
-                })()
+                ...help2Battle.lines,
               ],
               addNpc: [npc1, npc2],
               choices: (() => {
-                const battleResult = generateBattle(hero, npc1, getArtByName(hero.arts[0] || '太祖长拳'), null, { rounds: 3, canChooseOutcome: true }, world);
+                const battleResult = help2Battle;
                 if (battleResult.outcome === BattleOutcome.VICTORY) {
                   return getBattleOutcomeChoices(npc1, hero, world, -20, npc2);
+                }
+                if (battleResult.choices && battleResult.choices.length > 0) {
+                  return battleResult.choices;
                 }
                 // 战斗未获胜时，增加与帮助对象的友好度，并提供结伴选项
                 return [{
@@ -770,7 +773,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
               // 如果战斗导致 endGame（死了），就用战斗返回的 choices（重开游戏/复活）
               // 否则如果是胜利，才显示处置选项
               endGame: battleResult.endGame,
-              choices: (isVictory ? getBattleOutcomeChoices(banditNpc, hero, world) : [])
+              choices: (isVictory ? getBattleOutcomeChoices(banditNpc, hero, world) : battleResult.choices)
             }
           },
           {

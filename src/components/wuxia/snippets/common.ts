@@ -828,20 +828,43 @@ export const commonSnippets: StorySnippet[] = [
     stageMax: StoryStage.CRISIS,
     req: (hero, world, turn) => turn >= 1,
     run: (hero, world) => {
-      const enemyRel = hero.relations.find((r) => r.type === 'enemy');
-      const enemyName = enemyRel ? world.npcs.find((n: Person) => n.id === enemyRel.targetId)?.name : '神秘人';
-      const master = world.npcs.find((n: Person) => n.relations.some((r) => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
+      // Find the most relevant enemy (most hostile and alive)
+      const enemyRelations = hero.relations
+        .filter(r => r.type === 'enemy')
+        .map(rel => ({
+          ...rel,
+          npc: world.npcs.find((n: Person) => n.id === rel.targetId)
+        }))
+        .filter(({ npc }) => npc && npc.status === 'alive')
+        .sort((a, b) => a.value - b.value);
+
+      const mainEnemy = enemyRelations[0]?.npc || { name: '神秘人' };
+
+      // Set enemy relationship to minimum
+      const enemyRel = hero.relations.find(r => r.targetId === mainEnemy.id) ||
+        hero.relations.find(r => r.type === 'enemy');
+      if (enemyRel) {
+        enemyRel.value = -100; // Minimum relationship value
+      }
+
+      // Find master and mark as dead
+      const master = world.npcs.find((n: Person) => n.relations.some(r => r.targetId === hero.id && r.type === 'apprentice')) || { name: '掌门' };
+      if ('id' in master) {
+        master.status = 'dead';
+      }
 
       return {
         lines: [
           { text: '这日，惊天噩耗传来！', type: 'action' },
-          { text: `【${enemyName}】竟然率领大批高手攻打你的师门！`, type: 'narrative' },
+          { text: `【${mainEnemy.name}】竟然率领大批高手攻打你的师门！`, type: 'narrative' },
           { text: '你赶回救援时，只看到漫天火光。', type: 'narrative' },
           { text: `“${hero.name}，快走！留得青山在！”${master.name}拼死为你挡下致命一击。`, type: 'dialogue', speaker: master.name },
           { text: '你含泪逃入深山，发誓定要报此血海深仇。', type: 'inner' },
         ],
         newLocationId: world.locations.find((l: LocationInfo) => l.type === 'wild')?.id || hero.locationId,
         advanceStage: true,
+        addNpcs: [mainEnemy, master],
+        addRelations: [{ targetId: mainEnemy.id, type: 'enemy', value: -100 }],
       };
     },
   },
