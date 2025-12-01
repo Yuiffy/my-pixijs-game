@@ -705,12 +705,13 @@
             restRule: {
                 workDays: 5,
                 restDays: 1,
-                anchorDate: '2025-11-24',
-                anchorIsRest: false
+                anchorDate: '2025-12-01',
+                anchorIsRest: true
             },
             restOverrides: {
                 '2025-11-17': true,
                 '2025-11-23': true,
+                '2025-12-01': true,
             },
             specialActivities: [
                 {
@@ -778,6 +779,14 @@
                     // highlight: 'noodle',
                     activities: [
                         { emoji: '❤️‍🔥', text: '14:45 今天不休息了冲刺唱唱聊聊！' },
+                    ]
+                },
+                {
+                    date: '2025-11-30',
+                    // highlight: 'noodle',
+                    activities: [
+                        { emoji: '❤️‍🔥', text: '15:00 今天不休息了冲刺唱唱聊聊！' },
+                        { emoji: '🎬', text: '23:45 突击电台跨月！' }
                     ]
                 },
             ],
@@ -1095,9 +1104,14 @@
                 const cycle = workDays + restDays;
                 const anchorIsRest = !!rule.anchorIsRest;
                 const diff = Math.floor((stripTime(date) - stripTime(anchor)) / MS_IN_DAY);
-                const offset = anchorIsRest ? workDays : 0;
-                const normalized = mod(diff - offset, cycle);
-                return normalized === workDays;
+                const normalized = mod(diff, cycle);
+                if (anchorIsRest) {
+                    // 如果anchor是休息日，那么休息日出现在normalized < restDays的位置
+                    return normalized < restDays;
+                } else {
+                    // 如果anchor是工作日，那么休息日出现在normalized >= workDays的位置
+                    return normalized >= workDays;
+                }
             }
 
             function mod(value, divisor) {
