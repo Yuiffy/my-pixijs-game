@@ -2,1402 +2,1447 @@
 <html lang="zh-CN">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>岁己SUI的周表 - 2025.11.24~11.30</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap');
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        /* --- 主题变量定义 --- */
-        :root {
-            /* 默认：温暖米色调 (Warm Beige) */
-            --bg-gradient: linear-gradient(135deg, #fdf6e3 0%, #f4f1e8 100%);
-            --container-bg: #faf7f0;
-            --container-border: rgba(160, 82, 45, 0.15);
-            --shadow-color: rgba(139, 69, 19, 0.15);
-
-            --text-primary: #5D4E37;
-            --text-title: #8B4513;
-            --text-accent: #A0522D;
-
-            --item-bg: rgba(255, 255, 255, 0.5);
-            --item-hover-bg: rgba(255, 228, 181, 0.35);
-            --rest-bg: rgba(210, 180, 140, 0.2);
-
-            --right-section-bg: rgba(255, 239, 213, 0.4);
-            --memo-bg: #fffaf0;
-            --note-bg: rgba(255, 255, 255, 0.7);
-            --note-border: #D2691E;
-
-            --date-pill-bg: rgba(210, 180, 140, 0.25);
-            --decoration-opacity: 0.15;
-            --decoration-color: #8B4513;
-        }
-
-        /* 主题：高端深色 (Elegant Dark) */
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
-            --container-bg: rgba(30, 30, 40, 0.95);
-            --container-border: rgba(255, 215, 0, 0.2);
-            --shadow-color: rgba(0, 0, 0, 0.5);
-
-            --text-primary: #e0e0e0;
-            --text-title: #ffd700;
-            /* 金色标题 */
-            --text-accent: #bcaaa4;
-
-            --item-bg: rgba(255, 255, 255, 0.05);
-            --item-hover-bg: rgba(255, 215, 0, 0.1);
-            --rest-bg: rgba(255, 255, 255, 0.03);
-
-            --right-section-bg: rgba(0, 0, 0, 0.2);
-            --memo-bg: rgba(255, 255, 255, 0.08);
-            --note-bg: rgba(255, 255, 255, 0.08);
-            --note-border: #ffd700;
-
-            --date-pill-bg: rgba(255, 215, 0, 0.1);
-            --decoration-opacity: 0.1;
-            --decoration-color: #ffd700;
-        }
-
-        /* 主题：清爽蓝调 (Fresh Blue) */
-        [data-theme="blue"] {
-            --bg-gradient: linear-gradient(135deg, #e0f7fa 0%, #e1bee7 100%);
-            --container-bg: #ffffff;
-            --container-border: rgba(100, 181, 246, 0.3);
-            --shadow-color: rgba(33, 150, 243, 0.15);
-
-            --text-primary: #37474f;
-            --text-title: #1565c0;
-            --text-accent: #5c6bc0;
-
-            --item-bg: rgba(227, 242, 253, 0.4);
-            --item-hover-bg: rgba(187, 222, 251, 0.5);
-            --rest-bg: rgba(207, 216, 220, 0.3);
-
-            --right-section-bg: rgba(225, 245, 254, 0.5);
-            --memo-bg: #f3e5f5;
-            --note-bg: #e3f2fd;
-            --note-border: #42a5f5;
-
-            --date-pill-bg: rgba(66, 165, 245, 0.1);
-            --decoration-opacity: 0.2;
-            --decoration-color: #1565c0;
-        }
-
-        /* 主题：可爱粉 (Cute Pink) */
-        [data-theme="pink"] {
-            --bg-gradient: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
-            --container-bg: #fff5f8;
-            --container-border: rgba(255, 182, 193, 0.4);
-            --shadow-color: rgba(255, 105, 180, 0.2);
-
-            --text-primary: #885566;
-            --text-title: #ff69b4;
-            --text-accent: #db7093;
-
-            --item-bg: rgba(255, 255, 255, 0.6);
-            --item-hover-bg: rgba(255, 192, 203, 0.4);
-            --rest-bg: rgba(255, 228, 225, 0.5);
-
-            --right-section-bg: rgba(255, 240, 245, 0.6);
-            --memo-bg: #fff;
-            --note-bg: rgba(255, 255, 255, 0.8);
-            --note-border: #ff69b4;
-
-            --date-pill-bg: rgba(255, 182, 193, 0.3);
-            --decoration-opacity: 0.3;
-            --decoration-color: #ff69b4;
-        }
-
-
-        body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            color: var(--text-primary);
-            transition: background 0.5s ease;
-        }
-
-        .schedule-container {
-            width: 100%;
-            max-width: 1100px;
-            min-height: 650px;
-            background: var(--container-bg);
-            border-radius: 32px;
-            box-shadow: 0 25px 60px var(--shadow-color);
-            border: 4px solid var(--container-border);
-            display: flex;
-            flex-direction: row;
-            position: relative;
-            /* overflow: hidden;  允许SVG溢出一点点更有层次感，或者根据需要开启 */
-            overflow: hidden;
-            margin-bottom: 40px;
-            transition: all 0.5s ease;
-        }
-
-        /* 移动端适配优化 */
-        @media (max-width: 850px) {
-            .schedule-container {
-                flex-direction: column;
-                width: 100%;
-                max-width: 100%;
-                border-radius: 20px;
-                border-width: 2px;
-                margin-top: 20px;
-                /* 留出顶部空间给颜色按钮 */
-            }
-
-            .left-section {
-                padding: 25px 20px !important;
-            }
-
-            .title {
-                font-size: 32px !important;
-            }
-
-            .right-section {
-                padding: 30px 20px !important;
-            }
-
-            /* 在移动端，如果SVG完全隐藏也可以，
-               这里选择保留并调整位置，避免遮挡
-            */
-            .feather-decoration {
-                /* display: none; */
-                opacity: 0.1 !important;
-                /* 降低透明度 */
-                z-index: 0 !important;
-                /* 确保在底层 */
-            }
-
-            /* 小屏下：日程项改为垂直排列 */
-            .schedule-item {
-                flex-direction: column;
-                align-items: flex-start !important;
-                padding: 15px !important;
-                gap: 10px;
-            }
-
-            .day-label {
-                width: 100% !important;
-                flex-direction: row !important;
-                /* 周几和日期并排 */
-                justify-content: flex-start !important;
-                margin-right: 0 !important;
-                margin-bottom: 5px;
-                padding-bottom: 8px;
-                border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
-            }
-
-            .day-name {
-                font-size: 20px !important;
-                margin-bottom: 0 !important;
-                margin-right: 10px;
-            }
-
-            .date-label {
-                margin-top: 4px;
-                /* 对齐基线 */
-            }
-
-            .schedule-content {
-                width: 100%;
-                padding-left: 5px;
-            }
-
-            /* 小屏下：主题切换器自动收起 */
-            .theme-switcher {
-                top: 15px !important;
-                right: 0 !important;
-                padding: 8px 12px 8px 18px !important;
-                /* 默认缩进 */
-                transform: translateX(calc(100% - 24px));
-                transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-                border-top-right-radius: 0 !important;
-                border-bottom-right-radius: 0 !important;
-                border-top-left-radius: 20px !important;
-                border-bottom-left-radius: 20px !important;
-                background: rgba(255, 255, 255, 0.95) !important;
-                box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.1) !important;
-                cursor: pointer;
-                border: 1px solid rgba(0, 0, 0, 0.05);
-                z-index: 2000;
-                /* 确保层级最高，不被任何东西挡住 */
-            }
-
-            /* 小把手指示器 */
-            .theme-switcher::before {
-                content: "🎨";
-                position: absolute;
-                left: 4px;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: 12px;
-                line-height: 1;
-                opacity: 0.8;
-                transition: opacity 0.2s;
-            }
-
-            /* 展开状态 */
-            .theme-switcher.expanded {
-                transform: translateX(0) !important;
-                padding-left: 12px !important;
-            }
-
-            .theme-switcher.expanded::before {
-                display: none;
-            }
-        }
-
-        .left-section {
-            flex: 3.5;
-            padding: 50px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .title {
-            font-family: 'Noto Serif SC', serif;
-            font-size: 48px;
-            font-weight: 900;
-            color: var(--text-title);
-            margin-bottom: 12px;
-            text-align: center;
-            letter-spacing: -1px;
-        }
-
-        .subtitle {
-            font-size: 16px;
-            color: var(--text-accent);
-            text-align: center;
-            margin-bottom: 40px;
-            font-weight: 500;
-            opacity: 0.9;
-        }
-
-        .date-range {
-            background: var(--date-pill-bg);
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-title);
-            text-align: center;
-            margin-bottom: 40px;
-            display: table;
-            margin-left: auto;
-            margin-right: auto;
-            letter-spacing: 1px;
-        }
-
-        .schedule-table {
-            width: 100%;
-        }
-
-        .schedule-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 16px;
-            padding: 14px 24px;
-            border-radius: 18px;
-            transition: all 0.3s ease;
-            background: var(--item-bg);
-            border: 1px solid transparent;
-        }
-
-        .schedule-item:hover {
-            background: var(--item-hover-bg);
-            transform: scale(1.015);
-            box-shadow: 0 4px 12px var(--shadow-color);
-        }
-
-        .day-label {
-            width: 80px;
-            text-align: center;
-            margin-right: 30px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .day-name {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--text-title);
-            line-height: 1;
-            margin-bottom: 6px;
-        }
-
-        .date-label {
-            font-size: 14px;
-            color: var(--text-accent);
-            font-weight: 700;
-            opacity: 0.8;
-            font-family: 'Courier New', monospace;
-        }
-
-        .day-label.rest .day-name {
-            color: var(--note-border);
-            opacity: 0.8;
-        }
-
-        .schedule-content {
-            flex: 1;
-            font-size: 19px;
-            color: var(--text-primary);
-            line-height: 1.4;
-            font-weight: 500;
-        }
-
-        .schedule-content .emoji {
-            font-size: 24px;
-            margin-right: 12px;
-            vertical-align: -3px;
-            display: inline-block;
-            width: 30px;
-            text-align: center;
-            /* 强制 Emoji 使用系统字体 */
-            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
-        }
-
-        .activity-row {
-            margin-bottom: 6px;
-        }
-
-        .activity-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .rest-day {
-            background: var(--rest-bg);
-            border: 1px dashed var(--text-accent);
-            opacity: 0.8;
-        }
-
-        .right-section {
-            flex: 1.4;
-            padding: 50px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            position: relative;
-            z-index: 1;
-            background: var(--right-section-bg);
-            border-left: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        @media (max-width: 850px) {
-            .right-section {
-                border-left: none;
-                border-top: 1px solid rgba(0, 0, 0, 0.05);
-            }
-        }
-
-        .memo-section {
-            background: var(--memo-bg);
-            border-radius: 24px;
-            padding: 30px;
-            border: 2px dashed var(--container-border);
-            box-shadow: 0 8px 20px var(--shadow-color);
-        }
-
-        .memo-title {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--text-title);
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .memo-content {
-            font-size: 17px;
-            color: var(--text-primary);
-            line-height: 1.7;
-            font-style: italic;
-            text-align: justify;
-        }
-
-        .character-section {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .character {
-            width: 180px;
-            height: 180px;
-            background: linear-gradient(135deg, #FFE4B5 0%, #F4A460 100%);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 80px;
-            box-shadow: 0 15px 35px var(--shadow-color);
-            border: 6px solid var(--container-bg);
-            animation: float 4s ease-in-out infinite;
-            overflow: hidden;
-        }
-
-        .character.character-image,
-        .character.character-svg {
-            padding: 0;
-            background: #fff;
-        }
-
-        .character.character-emoji {
-            font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
-        }
-
-        .character img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .character-name {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--text-title);
-            margin-bottom: 8px;
-        }
-
-        .character-tag {
-            font-size: 15px;
-            color: var(--text-primary);
-            background: var(--date-pill-bg);
-            padding: 6px 16px;
-            border-radius: 20px;
-            display: inline-block;
-            font-weight: 600;
-        }
-
-        .weekly-note {
-            background: var(--note-bg);
-            padding: 25px;
-            border-radius: 20px;
-            border-left: 6px solid var(--note-border);
-            box-shadow: 0 5px 15px var(--shadow-color);
-        }
-
-        .weekly-note-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text-title);
-            margin-bottom: 12px;
-        }
-
-        .weekly-note-content {
-            font-size: 16px;
-            color: var(--text-primary);
-            line-height: 1.7;
-        }
-
-        /* 特殊高亮样式适配主题 */
-        .special-highlight {
-            border: 1px solid var(--note-border);
-            background: var(--item-hover-bg);
-        }
-
-        .feather-decoration {
-            position: absolute;
-            color: var(--decoration-color);
-            opacity: var(--decoration-opacity);
-            width: 60px;
-            height: 60px;
-            animation: featherFloat 6s ease-in-out infinite;
-            z-index: 2;
-            /* 提高层级，避免被内容背景完全遮挡，但要注意透明度 */
-            pointer-events: none;
-        }
-
-        /* SVG 样式 */
-        .feather-decoration svg {
-            width: 100%;
-            height: 100%;
-            fill: currentColor;
-        }
-
-        @keyframes featherFloat {
-
-            0%,
-            100% {
-                transform: translateY(0px) rotate(0deg);
-            }
-
-            50% {
-                transform: translateY(-25px) rotate(10deg);
-            }
-        }
-
-        /* 调整 SVG 位置，避免遮挡关键文字，但又要有装饰感 */
-        .feather-decoration:nth-child(1) {
-            top: 2%;
-            right: 2%;
-            animation-delay: 0s;
-            width: 100px;
-            height: 100px;
-            opacity: 0.1;
-            /* 进一步降低不透明度，作为背景纹理 */
-        }
-
-        .feather-decoration:nth-child(2) {
-            top: 40%;
-            left: 0%;
-            animation-delay: 2s;
-            transform: scaleX(-1);
-            width: 80px;
-            height: 80px;
-            opacity: 0.1;
-        }
-
-        /* 右下角这个容易挡住文字，移到更边缘或更底部 */
-        .feather-decoration:nth-child(3) {
-            bottom: 1%;
-            right: 2%;
-            animation-delay: 4s;
-            width: 120px;
-            height: 120px;
-            opacity: 0.08;
-            /* 很淡 */
-            z-index: 0;
-            /* 这个放到底层去 */
-        }
-
-        /* --- 主题切换控件 --- */
-        .theme-switcher {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 50px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-        }
-
-        .theme-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .theme-btn:hover {
-            transform: scale(1.2);
-        }
-
-        .theme-btn.active {
-            border-color: #333;
-            transform: scale(1.1);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>岁己SUI的周表 - 2025.11.24~11.30</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* --- 主题变量定义 --- */
+    :root {
+      /* 默认：温暖米色调 (Warm Beige) */
+      --bg-gradient: linear-gradient(135deg, #fdf6e3 0%, #f4f1e8 100%);
+      --container-bg: #faf7f0;
+      --container-border: rgba(160, 82, 45, 0.15);
+      --shadow-color: rgba(139, 69, 19, 0.15);
+
+      --text-primary: #5D4E37;
+      --text-title: #8B4513;
+      --text-accent: #A0522D;
+
+      --item-bg: rgba(255, 255, 255, 0.5);
+      --item-hover-bg: rgba(255, 228, 181, 0.35);
+      --rest-bg: rgba(210, 180, 140, 0.2);
+
+      --right-section-bg: rgba(255, 239, 213, 0.4);
+      --memo-bg: #fffaf0;
+      --note-bg: rgba(255, 255, 255, 0.7);
+      --note-border: #D2691E;
+
+      --date-pill-bg: rgba(210, 180, 140, 0.25);
+      --decoration-opacity: 0.15;
+      --decoration-color: #8B4513;
+    }
+
+    /* 主题：高端深色 (Elegant Dark) */
+    [data-theme="dark"] {
+      --bg-gradient: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
+      --container-bg: rgba(30, 30, 40, 0.95);
+      --container-border: rgba(255, 215, 0, 0.2);
+      --shadow-color: rgba(0, 0, 0, 0.5);
+
+      --text-primary: #e0e0e0;
+      --text-title: #ffd700;
+      /* 金色标题 */
+      --text-accent: #bcaaa4;
+
+      --item-bg: rgba(255, 255, 255, 0.05);
+      --item-hover-bg: rgba(255, 215, 0, 0.1);
+      --rest-bg: rgba(255, 255, 255, 0.03);
+
+      --right-section-bg: rgba(0, 0, 0, 0.2);
+      --memo-bg: rgba(255, 255, 255, 0.08);
+      --note-bg: rgba(255, 255, 255, 0.08);
+      --note-border: #ffd700;
+
+      --date-pill-bg: rgba(255, 215, 0, 0.1);
+      --decoration-opacity: 0.1;
+      --decoration-color: #ffd700;
+    }
+
+    /* 主题：清爽蓝调 (Fresh Blue) */
+    [data-theme="blue"] {
+      --bg-gradient: linear-gradient(135deg, #e0f7fa 0%, #e1bee7 100%);
+      --container-bg: #ffffff;
+      --container-border: rgba(100, 181, 246, 0.3);
+      --shadow-color: rgba(33, 150, 243, 0.15);
+
+      --text-primary: #37474f;
+      --text-title: #1565c0;
+      --text-accent: #5c6bc0;
+
+      --item-bg: rgba(227, 242, 253, 0.4);
+      --item-hover-bg: rgba(187, 222, 251, 0.5);
+      --rest-bg: rgba(207, 216, 220, 0.3);
+
+      --right-section-bg: rgba(225, 245, 254, 0.5);
+      --memo-bg: #f3e5f5;
+      --note-bg: #e3f2fd;
+      --note-border: #42a5f5;
+
+      --date-pill-bg: rgba(66, 165, 245, 0.1);
+      --decoration-opacity: 0.2;
+      --decoration-color: #1565c0;
+    }
+
+    /* 主题：可爱粉 (Cute Pink) */
+    [data-theme="pink"] {
+      --bg-gradient: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
+      --container-bg: #fff5f8;
+      --container-border: rgba(255, 182, 193, 0.4);
+      --shadow-color: rgba(255, 105, 180, 0.2);
+
+      --text-primary: #885566;
+      --text-title: #ff69b4;
+      --text-accent: #db7093;
+
+      --item-bg: rgba(255, 255, 255, 0.6);
+      --item-hover-bg: rgba(255, 192, 203, 0.4);
+      --rest-bg: rgba(255, 228, 225, 0.5);
+
+      --right-section-bg: rgba(255, 240, 245, 0.6);
+      --memo-bg: #fff;
+      --note-bg: rgba(255, 255, 255, 0.8);
+      --note-border: #ff69b4;
+
+      --date-pill-bg: rgba(255, 182, 193, 0.3);
+      --decoration-opacity: 0.3;
+      --decoration-color: #ff69b4;
+    }
+
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      color: var(--text-primary);
+      transition: background 0.5s ease;
+    }
+
+    .schedule-container {
+      width: 100%;
+      max-width: 1100px;
+      min-height: 650px;
+      background: var(--container-bg);
+      border-radius: 32px;
+      box-shadow: 0 25px 60px var(--shadow-color);
+      border: 4px solid var(--container-border);
+      display: flex;
+      flex-direction: row;
+      position: relative;
+      /* overflow: hidden;  允许SVG溢出一点点更有层次感，或者根据需要开启 */
+      overflow: hidden;
+      margin-bottom: 40px;
+      transition: all 0.5s ease;
+    }
+
+    /* 移动端适配优化 */
+    @media (max-width: 850px) {
+      .schedule-container {
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px;
+        border-width: 2px;
+        margin-top: 20px;
+        /* 留出顶部空间给颜色按钮 */
+      }
+
+      .left-section {
+        padding: 25px 20px !important;
+      }
+
+      .title {
+        font-size: 32px !important;
+      }
+
+      .right-section {
+        padding: 30px 20px !important;
+      }
+
+      /* 在移动端，如果SVG完全隐藏也可以，
+         这里选择保留并调整位置，避免遮挡
+      */
+      .feather-decoration {
+        /* display: none; */
+        opacity: 0.1 !important;
+        /* 降低透明度 */
+        z-index: 0 !important;
+        /* 确保在底层 */
+      }
+
+      /* 小屏下：日程项改为垂直排列 */
+      .schedule-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        padding: 15px !important;
+        gap: 10px;
+      }
+
+      .day-label {
+        width: 100% !important;
+        flex-direction: row !important;
+        /* 周几和日期并排 */
+        justify-content: flex-start !important;
+        margin-right: 0 !important;
+        margin-bottom: 5px;
+        padding-bottom: 8px;
+        border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+      }
+
+      .day-name {
+        font-size: 20px !important;
+        margin-bottom: 0 !important;
+        margin-right: 10px;
+      }
+
+      .date-label {
+        margin-top: 4px;
+        /* 对齐基线 */
+      }
+
+      .schedule-content {
+        width: 100%;
+        padding-left: 5px;
+      }
+
+      /* 小屏下：主题切换器自动收起 */
+      .theme-switcher {
+        top: 15px !important;
+        right: 0 !important;
+        padding: 8px 12px 8px 18px !important;
+        /* 默认缩进 */
+        transform: translateX(calc(100% - 24px));
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-top-left-radius: 20px !important;
+        border-bottom-left-radius: 20px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.1) !important;
+        cursor: pointer;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        z-index: 2000;
+        /* 确保层级最高，不被任何东西挡住 */
+      }
+
+      /* 小把手指示器 */
+      .theme-switcher::before {
+        content: "🎨";
+        position: absolute;
+        left: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        line-height: 1;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+
+      /* 展开状态 */
+      .theme-switcher.expanded {
+        transform: translateX(0) !important;
+        padding-left: 12px !important;
+      }
+
+      .theme-switcher.expanded::before {
+        display: none;
+      }
+    }
+
+    .left-section {
+      flex: 3.5;
+      padding: 50px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .title {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--text-title);
+      margin-bottom: 12px;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: var(--text-accent);
+      text-align: center;
+      margin-bottom: 40px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+
+    .date-range {
+      background: var(--date-pill-bg);
+      padding: 12px 30px;
+      border-radius: 50px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-title);
+      text-align: center;
+      margin-bottom: 40px;
+      display: table;
+      margin-left: auto;
+      margin-right: auto;
+      letter-spacing: 1px;
+    }
+
+    .schedule-table {
+      width: 100%;
+    }
+
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 14px 24px;
+      border-radius: 18px;
+      transition: all 0.3s ease;
+      background: var(--item-bg);
+      border: 1px solid transparent;
+    }
+
+    .schedule-item:hover {
+      background: var(--item-hover-bg);
+      transform: scale(1.015);
+      box-shadow: 0 4px 12px var(--shadow-color);
+    }
+
+    .day-label {
+      width: 80px;
+      text-align: center;
+      margin-right: 30px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-title);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .date-label {
+      font-size: 14px;
+      color: var(--text-accent);
+      font-weight: 700;
+      opacity: 0.8;
+      font-family: 'Courier New', monospace;
+    }
+
+    .day-label.rest .day-name {
+      color: var(--note-border);
+      opacity: 0.8;
+    }
+
+    .schedule-content {
+      flex: 1;
+      font-size: 19px;
+      color: var(--text-primary);
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    .schedule-content .emoji {
+      font-size: 24px;
+      margin-right: 12px;
+      vertical-align: -3px;
+      display: inline-block;
+      width: 30px;
+      text-align: center;
+      /* 强制 Emoji 使用系统字体 */
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    }
+
+    .activity-row {
+      margin-bottom: 6px;
+    }
+
+    .activity-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .rest-day {
+      background: var(--rest-bg);
+      border: 1px dashed var(--text-accent);
+      opacity: 0.8;
+    }
+
+    .right-section {
+      flex: 1.4;
+      padding: 50px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      position: relative;
+      z-index: 1;
+      background: var(--right-section-bg);
+      border-left: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 850px) {
+      .right-section {
+        border-left: none;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .memo-section {
+      background: var(--memo-bg);
+      border-radius: 24px;
+      padding: 30px;
+      border: 2px dashed var(--container-border);
+      box-shadow: 0 8px 20px var(--shadow-color);
+    }
+
+    .memo-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-title);
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .memo-content {
+      font-size: 17px;
+      color: var(--text-primary);
+      line-height: 1.7;
+      font-style: italic;
+      text-align: justify;
+    }
+
+    .character-section {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .character {
+      width: 180px;
+      height: 180px;
+      background: linear-gradient(135deg, #FFE4B5 0%, #F4A460 100%);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      box-shadow: 0 15px 35px var(--shadow-color);
+      border: 6px solid var(--container-bg);
+      animation: float 4s ease-in-out infinite;
+      overflow: hidden;
+    }
+
+    .character.character-image,
+    .character.character-svg {
+      padding: 0;
+      background: #fff;
+    }
+
+    .character.character-emoji {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    }
+
+    .character img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .character-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-title);
+      margin-bottom: 8px;
+    }
+
+    .character-tag {
+      font-size: 15px;
+      color: var(--text-primary);
+      background: var(--date-pill-bg);
+      padding: 6px 16px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 600;
+    }
+
+    .weekly-note {
+      background: var(--note-bg);
+      padding: 25px;
+      border-radius: 20px;
+      border-left: 6px solid var(--note-border);
+      box-shadow: 0 5px 15px var(--shadow-color);
+    }
+
+    .weekly-note-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-title);
+      margin-bottom: 12px;
+    }
+
+    .weekly-note-content {
+      font-size: 16px;
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+
+    /* 特殊高亮样式适配主题 */
+    .special-highlight {
+      border: 1px solid var(--note-border);
+      background: var(--item-hover-bg);
+    }
+
+    .feather-decoration {
+      position: absolute;
+      color: var(--decoration-color);
+      opacity: var(--decoration-opacity);
+      width: 60px;
+      height: 60px;
+      animation: featherFloat 6s ease-in-out infinite;
+      z-index: 2;
+      /* 提高层级，避免被内容背景完全遮挡，但要注意透明度 */
+      pointer-events: none;
+    }
+
+    /* SVG 样式 */
+    .feather-decoration svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    @keyframes featherFloat {
+
+      0%,
+      100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-25px) rotate(10deg);
+      }
+    }
+
+    /* 调整 SVG 位置，避免遮挡关键文字，但又要有装饰感 */
+    .feather-decoration:nth-child(1) {
+      top: 2%;
+      right: 2%;
+      animation-delay: 0s;
+      width: 100px;
+      height: 100px;
+      opacity: 0.1;
+      /* 进一步降低不透明度，作为背景纹理 */
+    }
+
+    .feather-decoration:nth-child(2) {
+      top: 40%;
+      left: 0%;
+      animation-delay: 2s;
+      transform: scaleX(-1);
+      width: 80px;
+      height: 80px;
+      opacity: 0.1;
+    }
+
+    /* 右下角这个容易挡住文字，移到更边缘或更底部 */
+    .feather-decoration:nth-child(3) {
+      bottom: 1%;
+      right: 2%;
+      animation-delay: 4s;
+      width: 120px;
+      height: 120px;
+      opacity: 0.08;
+      /* 很淡 */
+      z-index: 0;
+      /* 这个放到底层去 */
+    }
+
+    /* --- 主题切换控件 --- */
+    .theme-switcher {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 50px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+    }
+
+    .theme-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .theme-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .theme-btn.active {
+      border-color: #333;
+      transform: scale(1.1);
+    }
+  </style>
 </head>
 
 <body>
     <!-- 主题切换器 -->
-    <div class="theme-switcher" id="themeSwitcher">
-        <div class="theme-btn" style="background: #f4f1e8;" onclick="setTheme('default')" title="温暖米色"></div>
-        <div class="theme-btn" style="background: #1a1c2c;" onclick="setTheme('dark')" title="高端黑金"></div>
-        <div class="theme-btn" style="background: #e1bee7;" onclick="setTheme('blue')" title="清爽蓝调"></div>
-        <div class="theme-btn" style="background: #ffc0cb;" onclick="setTheme('pink')" title="可爱粉粉"></div>
-    </div>
+<div class="theme-switcher" id="themeSwitcher">
+  <div class="theme-btn" style="background: #f4f1e8;" onclick="setTheme('default')" title="温暖米色"></div>
+  <div class="theme-btn" style="background: #1a1c2c;" onclick="setTheme('dark')" title="高端黑金"></div>
+  <div class="theme-btn" style="background: #e1bee7;" onclick="setTheme('blue')" title="清爽蓝调"></div>
+  <div class="theme-btn" style="background: #ffc0cb;" onclick="setTheme('pink')" title="可爱粉粉"></div>
+</div>
 
-    <div class="schedule-container">
+<div class="schedule-container">
         <!-- 装饰性 SVG -->
         <!-- 1. Feather -->
-        <div class="feather-decoration">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" fill="currentColor"></path>
-                <path d="M16 8L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <path d="M17.5 15H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
-        </div>
+  <div class="feather-decoration">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" fill="currentColor"></path>
+      <path d="M16 8L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      <path d="M17.5 15H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+  </div>
         <!-- 2. Sparkles -->
-        <div class="feather-decoration">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path
-                    d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-            </svg>
-        </div>
+  <div class="feather-decoration">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path
+        d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    </svg>
+  </div>
         <!-- 3. Feather (Repeated) -->
-        <div class="feather-decoration">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" fill="currentColor" opacity="0.3"></path>
-                <path d="M16 8L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                <path d="M17.5 15H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
-        </div>
+  <div class="feather-decoration">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" fill="currentColor" opacity="0.3"></path>
+      <path d="M16 8L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      <path d="M17.5 15H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+  </div>
 
-        <div class="left-section">
-            <h1 class="title">岁己SUI的周表</h1>
-            <div class="subtitle">📅 小饼干的投喂时间表 (纯属猜测，具体时间不固定)</div>
+  <div class="left-section">
+    <h1 class="title">岁己SUI的周表</h1>
+    <div class="subtitle">📅 小饼干的投喂时间表 (纯属猜测，具体时间不固定)</div>
 
-            <div class="date-range">
-                2025.11.24 ~ 11.30
-            </div>
-
-            <div class="schedule-table" id="schedule-table">
-                <div class="schedule-item">
-                    <div class="day-label">加载中</div>
-                    <div class="schedule-content">
-                        <span class="emoji">⏳</span>正在根据设定计算本周的活动...
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="right-section">
-            <div class="memo-section">
-                <div class="memo-title">💬 本周亮点 💭</div>
-                <div class="memo-content">
-                    周三煮面，煮面民速来！ <br>
-                    开坑了《马里奥银河》，游戏民速来~<br>
-                    游戏回只能说我有点笨笨！😤
-
-                </div>
-            </div>
-
-            <div class="character-section">
-                <div class="character character-emoji" id="character-visual" role="img" aria-label="岁己SUI">🐦</div>
-                <div class="character-name">岁己SUI</div>
-                <div class="character-tag">✨ 高冷神秘的小鸟公主 ✨</div>
-            </div>
-
-            <div class="weekly-note">
-                <div class="weekly-note-title">📌 新饼须知</div>
-                <div class="weekly-note-content">
-                    • 上五休一，每周不固定<br>
-                    • 没有专门歌回，但每天会唱歌<br>
-                    • 每周三22:00人头麦煮面<br>
-                    • 周日下午播<br>
-                    • 游戏打得很可爱
-                </div>
-            </div>
-        </div>
+    <div class="date-range">
+      2025.11.24 ~ 11.30
     </div>
 
+    <div class="schedule-table" id="schedule-table">
+      <div class="schedule-item">
+        <div class="day-label">加载中</div>
+        <div class="schedule-content">
+          <span class="emoji">⏳</span>正在根据设定计算本周的活动...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-section">
+    <div class="memo-section">
+      <div class="memo-title">💬 本周亮点 💭</div>
+      <div class="memo-content">
+        周三煮面，煮面民速来！ <br>
+        开坑了《马里奥银河》，游戏民速来~<br>
+        游戏回只能说我有点笨笨！😤
+
+      </div>
+    </div>
+
+    <div class="character-section">
+      <div class="character character-emoji" id="character-visual" role="img" aria-label="岁己SUI">🐦</div>
+      <div class="character-name">岁己SUI</div>
+      <div class="character-tag">✨ 高冷神秘的小鸟公主 ✨</div>
+    </div>
+
+    <div class="weekly-note">
+      <div class="weekly-note-title">📌 新饼须知</div>
+      <div class="weekly-note-content">
+        • 上五休一，每周不固定<br>
+        • 没有专门歌回，但每天会唱歌<br>
+        • 每周三22:00人头麦煮面<br>
+        • 周日下午播<br>
+        • 游戏打得很可爱
+      </div>
+    </div>
+  </div>
+</div>
+
     <!-- Config Script -->
-    <script id="schedule-config">
-        window.scheduleConfig = {
-            timezone: 'Asia/Shanghai',
-            weekStart: 1,
-            restCopy: '💤 休息日 - 养精蓄锐，明天见！',
-            fallbackCopy: '🌀 自由调休，灵感待机中～',
-            restRule: {
-                workDays: 5,
-                restDays: 1,
-                anchorDate: '2025-12-01',
-                anchorIsRest: true
-            },
-            restOverrides: {
-                '2025-11-17': true,
-                '2025-11-23': true,
-                '2025-12-01': true,
-                '2025-12-07': true,
-            },
-            specialActivities: [
-                {
-                    date: '2025-11-20',
-                    // highlight: true,
-                    activities: [
-                        { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
-                        { emoji: '🎬', text: '21:40 看《大话西游之月光宝盒》' }
-                    ]
-                },
-                {
-                    date: '2025-11-21',
-                    // highlight: true,
-                    activities: [
-                        { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
-                        { emoji: '🎬', text: '21:40 看《大话西游之大圣娶亲》' }
-                    ]
-                },
-                {
-                    date: '2025-11-22',
-                    highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '14:40 下午播~唱唱聊聊~' },
-                        { emoji: '🎬', text: '16:40 玩《马里奥银河》' }
-                    ]
-                },
-                {
-                    date: '2025-11-23',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '14:40 小播一下~今天居然不休息哦~' },
-                    ]
-                },
-                {
-                    date: '2025-11-24',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '19:50 唱唱聊聊 2小时' },
-                        { emoji: '🎬', text: '21:50 看《剪刀手爱德华》' }
-                    ]
-                },
-                {
-                    date: '2025-11-25',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '19:48 大唱唱聊聊 3小时' },
-                    ]
-                },
-                {
-                    date: '2025-11-27',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '19:48 大唱唱聊聊 3小时' },
-                    ]
-                },
-                {
-                    date: '2025-11-28',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '🎵', text: '19:48 大唱唱聊聊 3小时' },
-                    ]
-                },
-                {
-                    date: '2025-11-29',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '❤️‍🔥', text: '14:45 今天不休息了冲刺唱唱聊聊！' },
-                    ]
-                },
-                {
-                    date: '2025-11-30',
-                    // highlight: 'noodle',
-                    activities: [
-                        { emoji: '❤️‍🔥', text: '15:00 今天不休息了冲刺唱唱聊聊！' },
-                        { emoji: '🎬', text: '23:45 突击电台跨月！' }
-                    ]
-                },
-                {
-                  date: '2025-12-01',
-                  // highlight: 'noodle',
-                  activities: [
-                      { emoji: '😴', text: '今天休息一下~' },
-                  ]
-                },
-                {
-                  date: '2025-12-02',
-                  // highlight: 'noodle',
-                  activities: [
-                    { emoji: '🎵', text: '19:50 大唱唱聊聊 3小时' },
-                  ]
-                },
-                {
-                  date: '2025-12-03',
+<script id="schedule-config">
+  window.scheduleConfig = {
+    timezone: 'Asia/Shanghai',
+    weekStart: 1,
+    restCopy: '💤 休息日 - 养精蓄锐，明天见！',
+    fallbackCopy: '🌀 自由调休，灵感待机中～',
+
+    // --- 新增：轮换规则配置 ---
+    shiftRule: {
+      startDate: '2025-12-03', // 规则生效日期
+      // 0: 早台, 1: 下午台
+      // 根据推算，12月3日(周三)开始如果是早播(0)，那么12月5日(周五)刚好也是早播(0)，符合原来的安排。
+      startIndex: 0,
+      pools: [
+        { emoji: '☀️', text: '09:00 岁己早播~早起鸟儿有虫吃' }, // Index 0
+        { emoji: '☀️', text: '14:30 岁己下午台~暖洋洋午后' }  // Index 1
+      ]
+    },
+
+    restRule: {
+      workDays: 5,
+      restDays: 1,
+      anchorDate: '2025-12-01',
+      anchorIsRest: true
+    },
+    restOverrides: {
+      '2025-11-17': true,
+      '2025-11-23': true,
+      '2025-12-01': true,
+      '2025-12-07': true,
+    },
+    specialActivities: [
+      {
+        date: '2025-11-20',
+        // highlight: true,
+        activities: [
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
+          { emoji: '🎬', text: '21:40 看《大话西游之月光宝盒》' }
+        ]
+      },
+      {
+        date: '2025-11-21',
+        // highlight: true,
+        activities: [
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
+          { emoji: '🎬', text: '21:40 看《大话西游之大圣娶亲》' }
+        ]
+      },
+      {
+        date: '2025-11-22',
+        highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '14:40 下午播~唱唱聊聊~' },
+          { emoji: '🎬', text: '16:40 玩《马里奥银河》' }
+        ]
+      },
+      {
+        date: '2025-11-23',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '14:40 小播一下~今天居然不休息哦~' },
+        ]
+      },
+      {
+        date: '2025-11-24',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '19:50 唱唱聊聊 2小时' },
+          { emoji: '🎬', text: '21:50 看《剪刀手爱德华》' }
+        ]
+      },
+      {
+        date: '2025-11-25',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '19:48 大唱唱聊聊 3小时' },
+        ]
+      },
+      {
+        date: '2025-11-27',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '19:48 大唱唱聊聊 3小时' },
+        ]
+      },
+      {
+        date: '2025-11-28',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '19:48 大唱唱聊聊 3小时' },
+        ]
+      },
+      {
+        date: '2025-11-29',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '❤️‍🔥', text: '14:45 今天不休息了冲刺唱唱聊聊！' },
+        ]
+      },
+      {
+        date: '2025-11-30',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '❤️‍🔥', text: '15:00 今天不休息了冲刺唱唱聊聊！' },
+          { emoji: '🎬', text: '23:45 突击电台跨月！' }
+        ]
+      },
+      {
+        date: '2025-12-01',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '😴', text: '今天休息一下~' },
+        ]
+      },
+      {
+        date: '2025-12-02',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '19:50 大唱唱聊聊 3小时' },
+        ]
+      },
+      {
+        date: '2025-12-03',
                   highlight: 'noodle',
-                  activities: [
+        activities: [
                     { emoji: '☀️', text: '14:30 岁己下午台~' },
                     { emoji: '🍜', text: '22:30 人头麦煮面，煮死你~' },
-                  ]
-                },
-                {
-                  date: '2025-12-04',
+        ]
+      },
+      {
+        date: '2025-12-04',
                   // highlight: 'noodle',
-                  activities: [
+        activities: [
                     { emoji: '☀️', text: '14:45 岁己下午台~' },
-                    { emoji: '🎵', text: '19:40 唱唱聊聊~' },
-                    { emoji: '🎮', text: '21:00 玩《最后生还者》' }
-                  ]
-                },
-                {
-                  date: '2025-12-05',
+          { emoji: '🎵', text: '19:40 唱唱聊聊~' },
+          { emoji: '🎮', text: '21:00 玩《最后生还者》' }
+        ]
+      },
+      {
+        date: '2025-12-05',
                   // highlight: 'noodle',
-                  activities: [
+        activities: [
                     { emoji: '☀️', text: '09:00 岁己久违的早播~' },
-                    { emoji: '🎵', text: '19:40 唱唱聊聊~' },
-                    { emoji: '🎬', text: '21:00 看《犯罪心理》第一季 1~2集' }
-                  ]
-                },
-                {
-                  date: '2025-12-06',
+          { emoji: '🎵', text: '19:40 唱唱聊聊~' },
+          { emoji: '🎬', text: '21:00 看《犯罪心理》第一季 1~2集' }
+        ]
+      },
+      {
+        date: '2025-12-06',
                   // highlight: 'noodle',
-                  activities: [
+        activities: [
                     { emoji: '☀️', text: '14:30 岁己周六下午唱唱聊聊~' },
-                    { emoji: '🎬', text: '16:30 继续聊或者看片或者玩游戏' },
-                  ]
-                },
-                {
-                  date: '2025-12-08',
+          { emoji: '🎬', text: '16:30 继续聊或者看片或者玩游戏' },
+        ]
+      },
+      {
+        date: '2025-12-08',
                   // highlight: 'noodle',
-                  activities: [
+        activities: [
                     { emoji: '☀️', text: '09:00 岁己早播~怕了吧' },
-                    { emoji: '🎵', text: '19:40 唱唱聊聊~' },
-                  ]
-                },
-                {
-                  date: '2025-12-09',
+          { emoji: '🎵', text: '19:40 唱唱聊聊~' },
+        ]
+      },
+      {
+        date: '2025-12-09',
                   // highlight: 'noodle',
-                  activities: [
+        activities: [
                     { emoji: '☀️', text: '09:00 岁己下午台唱唱聊聊' },
-                    { emoji: '🎵', text: '19:40 唱唱聊聊~' },
-                  ]
-                },
-            ],
-            weeklyFixed: {
-                3: {
-                    highlight: 'noodle',
-                    activities: [
-                        { emoji: '🌙', text: '22:00 煮面回 (3D人头麦助眠)' },
-                        { emoji: '🍜', text: '温柔助眠，伴随入眠' }
-                    ]
-                },
-                7: {
-                    activities: [
-                        { emoji: '☀️', text: '14:30 下午播，唱唱聊聊~' }
-                    ]
-                }
-            },
-            defaultTemplates: [
-                {
-                    weekdays: [1, 2, 4, 5, 6],
-                    activities: [
-                        { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' }
-                    ]
-                }
-            ],
-            rotationSlots: [
-                {
-                    weekdays: [1, 2, 4, 5, 6],
-                    pool: [
-                        [
-                            { emoji: '🎮', text: '然后玩《马里奥银河》 2小时' }
-                        ],
-                        [
-                            { emoji: '🎬', text: '然后看TOP250电影 2小时' }
-                        ]
-                    ],
-                    startIndex: 0,
-                    countTowardsRotation: true
-                }
-            ],
-            characterPool: [
-                {
-                    type: 'image',
-                    src: '/images/sui-bird-jump.png',
-                    alt: '岁己SUI跳跳鸟',
-                    name: '岁己SUI',
-                    tag: '波比波比波'
-                },
-                {
-                    type: 'image',
-                    src: '/images/wiki/sui_clothes_stand.png',
-                    alt: '岁己SUI小鸟立绘',
-                    tag: '高冷神秘',
-                    objectPosition: 'center 15%'
-                },
-                {
-                    type: 'image',
-                    src: '/images/wiki/sui_charactor_half_body.png',
-                    alt: '岁己半身像',
-                    tag: '小猫帽~'
-                },
-                {
-                    type: 'emoji',
-                    emoji: '🐦',
-                    name: '岁己SUI',
-                    tag: '小鸟公主'
-                },
-                {
-                    type: 'image',
-                    src: '/images/wiki/killmanybird.jpg',
-                    alt: '岁己击杀多名蝙蝠',
-                    tag: '鬼杀队·鸟之呼吸',
-                    objectPosition: 'center 15%',
-                    transform: 'scale(1.3) translateX(-4%)'
-                }
-            ]
-        };
-    </script>
+          { emoji: '🎵', text: '19:40 唱唱聊聊~' },
+        ]
+      },
+    ],
+    weeklyFixed: {
+      3: {
+        highlight: 'noodle',
+        activities: [
+          { emoji: '🌙', text: '22:00 煮面回 (3D人头麦助眠)' },
+          { emoji: '🍜', text: '温柔助眠，伴随入眠' }
+        ]
+      },
+      7: {
+        activities: [
+          { emoji: '☀️', text: '14:30 下午播，唱唱聊聊~' }
+        ]
+      }
+    },
+    defaultTemplates: [
+      {
+        weekdays: [1, 2, 4, 5, 6],
+        activities: [
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' }
+        ]
+      }
+    ],
+    rotationSlots: [
+      {
+        weekdays: [1, 2, 4, 5, 6],
+        pool: [
+          [
+            { emoji: '🎮', text: '然后玩《马里奥银河》 2小时' }
+          ],
+          [
+            { emoji: '🎬', text: '然后看TOP250电影 2小时' }
+          ]
+        ],
+        startIndex: 0,
+        countTowardsRotation: true
+      }
+    ],
+    characterPool: [
+      {
+        type: 'image',
+        src: '/images/sui-bird-jump.png',
+        alt: '岁己SUI跳跳鸟',
+        name: '岁己SUI',
+        tag: '波比波比波'
+      },
+      {
+        type: 'image',
+        src: '/images/wiki/sui_clothes_stand.png',
+        alt: '岁己SUI小鸟立绘',
+        tag: '高冷神秘',
+        objectPosition: 'center 15%'
+      },
+      {
+        type: 'image',
+        src: '/images/wiki/sui_charactor_half_body.png',
+        alt: '岁己半身像',
+        tag: '小猫帽~'
+      },
+      {
+        type: 'emoji',
+        emoji: '🐦',
+        name: '岁己SUI',
+        tag: '小鸟公主'
+      },
+      {
+        type: 'image',
+        src: '/images/wiki/killmanybird.jpg',
+        alt: '岁己击杀多名蝙蝠',
+        tag: '鬼杀队·鸟之呼吸',
+        objectPosition: 'center 15%',
+        transform: 'scale(1.3) translateX(-4%)'
+      }
+    ]
+  };
+</script>
 
     <!-- Logic Script -->
-    <script>
-        // 主题切换逻辑
-        function setTheme(theme) {
-            document.body.removeAttribute('data-theme');
-            if (theme !== 'default') {
-                document.body.setAttribute('data-theme', theme);
-            }
+<script>
+  // 主题切换逻辑
+  function setTheme(theme) {
+    document.body.removeAttribute('data-theme');
+    if (theme !== 'default') {
+      document.body.setAttribute('data-theme', theme);
+    }
 
-            // 更新按钮状态
-            document.querySelectorAll('.theme-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.getAttribute('onclick').includes(theme)) {
-                    btn.classList.add('active');
-                }
-            });
+    // 更新按钮状态
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.getAttribute('onclick').includes(theme)) {
+        btn.classList.add('active');
+      }
+    });
+  }
+
+  // 移动端主题切换器交互
+  document.addEventListener('DOMContentLoaded', function () {
+    const switcher = document.getElementById('themeSwitcher');
+    if (switcher) {
+      // 仅在移动端生效的点击展开逻辑
+      switcher.addEventListener('click', function (e) {
+        // 检查是否是移动端视图 (使用innerWidth或CSS media query检测)
+        if (window.innerWidth <= 850) {
+          // 如果点击的是按钮本身，不收起，让setTheme执行
+          if (e.target.classList.contains('theme-btn')) {
+            // 延迟收起，让用户看到反馈
+            setTimeout(() => {
+              this.classList.remove('expanded');
+            }, 300);
+          } else {
+            // 点击空白处，切换展开/收起
+            this.classList.toggle('expanded');
+          }
+        }
+      });
+    }
+  });
+
+  (function () {
+    'use strict';
+
+    const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const MS_IN_DAY = 24 * 60 * 60 * 1000;
+
+    const config = window.scheduleConfig || {};
+    const urlParams = new URLSearchParams(window.location.search);
+    const weekParam = urlParams.get('week');
+    const today = getToday(config.timezone);
+    const referenceDate = resolveReferenceDate(weekParam, today);
+    const weekDates = getWeekDates(referenceDate, config.weekStart || 1);
+    const anchorDate = getRestAnchorDate(config) || weekDates[0];
+    const schedule = buildSchedule(weekDates, config, anchorDate);
+
+    updateMeta(weekDates, { previewNote: getPreviewNote(weekParam, referenceDate, today) });
+    renderSchedule(schedule, formatISODate(today));
+    renderCharacterVisual(config);
+
+    // ... (Logic functions kept same as before, just re-rendering HTML structure) ...
+
+    function getToday(timezone) {
+      if (!timezone) {
+        return stripTime(new Date());
+      }
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      return stripTime(new Date(formatter.format(new Date())));
+    }
+
+    function stripTime(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function getWeekDates(reference, weekStart) {
+      const startIndex = Math.min(Math.max(weekStart, 1), 7);
+      const currentWeekday = reference.getDay() === 0 ? 7 : reference.getDay();
+      const diff = currentWeekday - startIndex;
+      const weekStartDate = new Date(reference);
+      weekStartDate.setDate(reference.getDate() - diff);
+      const result = [];
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(weekStartDate);
+        day.setDate(weekStartDate.getDate() + i);
+        result.push(day);
+      }
+      return result;
+    }
+
+    function formatDateDisplay(date) {
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${m}.${d}`;
+    }
+
+    function formatDateFullDisplay(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}.${m}.${d}`;
+    }
+
+    function formatISODate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getRestAnchorDate(cfg) {
+      if (cfg.restRule && cfg.restRule.anchorDate) {
+        return new Date(cfg.restRule.anchorDate);
+      }
+      const specials = (cfg.specialActivities || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      if (specials.length) {
+        return new Date(specials[specials.length - 1].date);
+      }
+      return null;
+    }
+
+    function buildSchedule(dates, cfg, anchor) {
+      const specialMap = new Map((cfg.specialActivities || []).map(item => [item.date, item]));
+      const weeklyFixed = normalizeWeeklyFixed(cfg.weeklyFixed || {});
+      const restOverrides = cfg.restOverrides || {};
+      const defaultTemplates = cfg.defaultTemplates || [];
+      const rotationSlots = (cfg.rotationSlots || []).map((slot, index) => ({
+        ...slot,
+        state: slot.startIndex || 0,
+        index
+      }));
+
+      // 初始化轮换计数器
+      let shiftIndex = (cfg.shiftRule && cfg.shiftRule.startIndex) || 0;
+
+      return dates.map(date => {
+        const iso = formatISODate(date);
+        const weekdayIndex = date.getDay() === 0 ? 7 : date.getDay();
+        const special = specialMap.get(iso);
+        const override = restOverrides.hasOwnProperty(iso) ? restOverrides[iso] : undefined;
+        const isRest = special
+          ? false
+          : typeof override === 'boolean'
+            ? override
+            : shouldRest(date, anchor, cfg.restRule);
+
+        const base = {
+          date,
+          iso,
+          weekdayIndex,
+          dayLabel: DAY_LABELS[weekdayIndex - 1],
+          dateDisplay: formatDateDisplay(date),
+          activities: [],
+          isRest,
+          highlight: false,
+          highlightType: null
+        };
+
+        if (isRest) {
+          base.activities = [{
+            emoji: '😴',
+            text: cfg.restCopy || '休息日'
+          }];
+          return base;
         }
 
-        // 移动端主题切换器交互
-        document.addEventListener('DOMContentLoaded', function () {
-            const switcher = document.getElementById('themeSwitcher');
-            if (switcher) {
-                // 仅在移动端生效的点击展开逻辑
-                switcher.addEventListener('click', function (e) {
-                    // 检查是否是移动端视图 (使用innerWidth或CSS media query检测)
-                    if (window.innerWidth <= 850) {
-                        // 如果点击的是按钮本身，不收起，让setTheme执行
-                        if (e.target.classList.contains('theme-btn')) {
-                            // 延迟收起，让用户看到反馈
-                            setTimeout(() => {
-                                this.classList.remove('expanded');
-                            }, 300);
-                        } else {
-                            // 点击空白处，切换展开/收起
-                            this.classList.toggle('expanded');
-                        }
-                    }
-                });
+        // --- 核心修改：早/午播轮换逻辑 ---
+        let shiftActivity = null;
+        if (cfg.shiftRule && cfg.shiftRule.startDate) {
+          const ruleStart = new Date(cfg.shiftRule.startDate);
+          // 如果日期 >= 开始日期 且 不是休息日
+          // 这里假设只要是不休息的工作日都参与轮换
+          if (date >= stripTime(ruleStart)) {
+            const pools = cfg.shiftRule.pools || [];
+            if (pools.length > 0) {
+              shiftActivity = pools[shiftIndex % pools.length];
+              shiftIndex++; // 只有工作日才推进轮换进度
             }
+          }
+        }
+        // -----------------------------
+
+        if (special) {
+          base.activities = cloneActivities(special.activities || []);
+
+          // 如果有轮换活动，且是特殊日，尝试合并（插入到最前面）
+          // 除非特殊日已经明确写了 "下午播" 或 "早播" (可以通过文字简单判断，或者默认都加)
+          // 这里我们默认把轮换活动加到特殊活动的最前面，因为特殊活动里我们已经删除了手动写的时间
+          if (shiftActivity) {
+            base.activities.unshift({ ...shiftActivity });
+          }
+
+          applyHighlight(base, special.highlight);
+          return base;
+        }
+
+        // 如果不是 Special，但有 Shift Activity，先加进去
+        if (shiftActivity) {
+          base.activities.push({ ...shiftActivity });
+        }
+
+        if (weeklyFixed[weekdayIndex]) {
+          const weeklyConfig = weeklyFixed[weekdayIndex];
+          base.activities.push(...cloneActivities(weeklyConfig.activities || []));
+          applyHighlight(base, weeklyConfig.highlight);
+        }
+
+        defaultTemplates.forEach(template => {
+          if ((template.weekdays || []).includes(weekdayIndex)) {
+            base.activities.push(...cloneActivities(template.activities || []));
+          }
         });
 
-        (function () {
-            'use strict';
-
-            const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-            const MS_IN_DAY = 24 * 60 * 60 * 1000;
-
-            const config = window.scheduleConfig || {};
-            const urlParams = new URLSearchParams(window.location.search);
-            const weekParam = urlParams.get('week');
-            const today = getToday(config.timezone);
-            const referenceDate = resolveReferenceDate(weekParam, today);
-            const weekDates = getWeekDates(referenceDate, config.weekStart || 1);
-            const anchorDate = getRestAnchorDate(config) || weekDates[0];
-            const schedule = buildSchedule(weekDates, config, anchorDate);
-
-            updateMeta(weekDates, { previewNote: getPreviewNote(weekParam, referenceDate, today) });
-            renderSchedule(schedule, formatISODate(today));
-            renderCharacterVisual(config);
-
-            // ... (Logic functions kept same as before, just re-rendering HTML structure) ...
-
-            function getToday(timezone) {
-                if (!timezone) {
-                    return stripTime(new Date());
-                }
-                const formatter = new Intl.DateTimeFormat('en-CA', {
-                    timeZone: timezone,
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-                return stripTime(new Date(formatter.format(new Date())));
+        rotationSlots.forEach(slot => {
+          if ((slot.weekdays || []).includes(weekdayIndex)) {
+            if (slot.prefix) {
+              base.activities.push(...cloneActivities(slot.prefix));
             }
-
-            function stripTime(date) {
-                return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const pool = slot.pool || [];
+            if (pool.length) {
+              const selection = pool[slot.state % pool.length] || [];
+              base.activities.push(...cloneActivities(selection));
+              if (slot.countTowardsRotation !== false) {
+                slot.state++;
+              }
             }
+          }
+        });
 
-            function getWeekDates(reference, weekStart) {
-                const startIndex = Math.min(Math.max(weekStart, 1), 7);
-                const currentWeekday = reference.getDay() === 0 ? 7 : reference.getDay();
-                const diff = currentWeekday - startIndex;
-                const weekStartDate = new Date(reference);
-                weekStartDate.setDate(reference.getDate() - diff);
-                const result = [];
-                for (let i = 0; i < 7; i++) {
-                    const day = new Date(weekStartDate);
-                    day.setDate(weekStartDate.getDate() + i);
-                    result.push(day);
-                }
-                return result;
-            }
+        if (!base.activities.length) {
+          base.activities.push({
+            emoji: '🌀',
+            text: cfg.fallbackCopy || '待机中'
+          });
+        }
 
-            function formatDateDisplay(date) {
-                const m = String(date.getMonth() + 1).padStart(2, '0');
-                const d = String(date.getDate()).padStart(2, '0');
-                return `${m}.${d}`;
-            }
+        return base;
+      });
+    }
 
-            function formatDateFullDisplay(date) {
-                const y = date.getFullYear();
-                const m = String(date.getMonth() + 1).padStart(2, '0');
-                const d = String(date.getDate()).padStart(2, '0');
-                return `${y}.${m}.${d}`;
-            }
+    function normalizeWeeklyFixed(source) {
+      return Object.entries(source).reduce((acc, [key, value]) => {
+        if (Array.isArray(value)) {
+          acc[Number(key)] = { activities: value };
+        } else if (value && typeof value === 'object') {
+          const activities = Array.isArray(value.activities) ? value.activities : [];
+          acc[Number(key)] = {
+            activities,
+            highlight: value.highlight
+          };
+        }
+        return acc;
+      }, {});
+    }
 
-            function formatISODate(date) {
-                const y = date.getFullYear();
-                const m = String(date.getMonth() + 1).padStart(2, '0');
-                const d = String(date.getDate()).padStart(2, '0');
-                return `${y}-${m}-${d}`;
-            }
+    function cloneActivities(list) {
+      return (list || []).map(item => ({ emoji: item.emoji || '•', text: item.text || '' }));
+    }
 
-            function getRestAnchorDate(cfg) {
-                if (cfg.restRule && cfg.restRule.anchorDate) {
-                    return new Date(cfg.restRule.anchorDate);
-                }
-                const specials = (cfg.specialActivities || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-                if (specials.length) {
-                    return new Date(specials[specials.length - 1].date);
-                }
-                return null;
-            }
+    function shouldRest(date, anchor, rule = {}) {
+      if (!anchor || !rule) return false;
+      const workDays = Math.max(1, rule.workDays || 5);
+      const restDays = Math.max(1, rule.restDays || 1);
+      const cycle = workDays + restDays;
+      const anchorIsRest = !!rule.anchorIsRest;
+      const diff = Math.floor((stripTime(date) - stripTime(anchor)) / MS_IN_DAY);
+      const normalized = mod(diff, cycle);
+      if (anchorIsRest) {
+        // 如果anchor是休息日，那么休息日出现在normalized < restDays的位置
+        return normalized < restDays;
+      } else {
+        // 如果anchor是工作日，那么休息日出现在normalized >= workDays的位置
+        return normalized >= workDays;
+      }
+    }
 
-            function buildSchedule(dates, cfg, anchor) {
-                const specialMap = new Map((cfg.specialActivities || []).map(item => [item.date, item]));
-                const weeklyFixed = normalizeWeeklyFixed(cfg.weeklyFixed || {});
-                const restOverrides = cfg.restOverrides || {};
-                const defaultTemplates = cfg.defaultTemplates || [];
-                const rotationSlots = (cfg.rotationSlots || []).map((slot, index) => ({
-                    ...slot,
-                    state: slot.startIndex || 0,
-                    index
-                }));
+    function mod(value, divisor) {
+      const result = value % divisor;
+      return result >= 0 ? result : result + divisor;
+    }
 
-                return dates.map(date => {
-                    const iso = formatISODate(date);
-                    const weekdayIndex = date.getDay() === 0 ? 7 : date.getDay();
-                    const special = specialMap.get(iso);
-                    const override = restOverrides.hasOwnProperty(iso) ? restOverrides[iso] : undefined;
-                    const isRest = special
-                        ? false
-                        : typeof override === 'boolean'
-                            ? override
-                            : shouldRest(date, anchor, cfg.restRule);
+    function updateMeta(dates, options = {}) {
+      const rangeText = `${formatDateFullDisplay(dates[0])} ~ ${formatDateFullDisplay(dates[dates.length - 1])}`;
+      const suffix = options.previewNote ? ` · ${options.previewNote}` : '';
+      const rangeEl = document.querySelector('.date-range');
+      if (rangeEl) {
+        rangeEl.textContent = `${rangeText}${suffix}`;
+      }
+      document.title = `岁己SUI的周表 - ${rangeText}${options.previewNote ? ` (${options.previewNote})` : ''}`;
+    }
 
-                    const base = {
-                        date,
-                        iso,
-                        weekdayIndex,
-                        dayLabel: DAY_LABELS[weekdayIndex - 1],
-                        dateDisplay: formatDateDisplay(date),
-                        activities: [],
-                        isRest,
-                        highlight: false,
-                        highlightType: null
-                    };
+    function applyHighlight(target, value) {
+      if (!value) return;
+      target.highlight = true;
+      target.highlightType = typeof value === 'string' ? value : 'default';
+    }
 
-                    if (isRest) {
-                        base.activities = [{
-                            emoji: '😴',
-                            text: cfg.restCopy || '休息日'
-                        }];
-                        return base;
-                    }
+    function renderSchedule(data, todayIso) {
+      const container = document.getElementById('schedule-table');
+      if (!container) return;
+      container.innerHTML = '';
 
-                    if (special) {
-                        base.activities = cloneActivities(special.activities || []);
-                        applyHighlight(base, special.highlight);
-                        return base;
-                    }
+      data.forEach(day => {
+        const item = document.createElement('div');
+        item.className = 'schedule-item';
+        item.dataset.date = day.iso;
 
-                    if (weeklyFixed[weekdayIndex]) {
-                        const weeklyConfig = weeklyFixed[weekdayIndex];
-                        base.activities.push(...cloneActivities(weeklyConfig.activities || []));
-                        applyHighlight(base, weeklyConfig.highlight);
-                    }
+        if (day.isRest) {
+          item.classList.add('rest-day');
+        }
+        if (day.highlight) {
+          item.classList.add('special-highlight');
+          if (day.highlightType) {
+            item.classList.add(`highlight-${day.highlightType}`);
+          }
+        }
 
-                    defaultTemplates.forEach(template => {
-                        if ((template.weekdays || []).includes(weekdayIndex)) {
-                            base.activities.push(...cloneActivities(template.activities || []));
-                        }
-                    });
-
-                    rotationSlots.forEach(slot => {
-                        if ((slot.weekdays || []).includes(weekdayIndex)) {
-                            if (slot.prefix) {
-                                base.activities.push(...cloneActivities(slot.prefix));
-                            }
-                            const pool = slot.pool || [];
-                            if (pool.length) {
-                                const selection = pool[slot.state % pool.length] || [];
-                                base.activities.push(...cloneActivities(selection));
-                                if (slot.countTowardsRotation !== false) {
-                                    slot.state++;
-                                }
-                            }
-                        }
-                    });
-
-                    if (!base.activities.length) {
-                        base.activities.push({
-                            emoji: '🌀',
-                            text: cfg.fallbackCopy || '待机中'
-                        });
-                    }
-
-                    return base;
-                });
-            }
-
-            function normalizeWeeklyFixed(source) {
-                return Object.entries(source).reduce((acc, [key, value]) => {
-                    if (Array.isArray(value)) {
-                        acc[Number(key)] = { activities: value };
-                    } else if (value && typeof value === 'object') {
-                        const activities = Array.isArray(value.activities) ? value.activities : [];
-                        acc[Number(key)] = {
-                            activities,
-                            highlight: value.highlight
-                        };
-                    }
-                    return acc;
-                }, {});
-            }
-
-            function cloneActivities(list) {
-                return (list || []).map(item => ({ emoji: item.emoji || '•', text: item.text || '' }));
-            }
-
-            function shouldRest(date, anchor, rule = {}) {
-                if (!anchor || !rule) return false;
-                const workDays = Math.max(1, rule.workDays || 5);
-                const restDays = Math.max(1, rule.restDays || 1);
-                const cycle = workDays + restDays;
-                const anchorIsRest = !!rule.anchorIsRest;
-                const diff = Math.floor((stripTime(date) - stripTime(anchor)) / MS_IN_DAY);
-                const normalized = mod(diff, cycle);
-                if (anchorIsRest) {
-                    // 如果anchor是休息日，那么休息日出现在normalized < restDays的位置
-                    return normalized < restDays;
-                } else {
-                    // 如果anchor是工作日，那么休息日出现在normalized >= workDays的位置
-                    return normalized >= workDays;
-                }
-            }
-
-            function mod(value, divisor) {
-                const result = value % divisor;
-                return result >= 0 ? result : result + divisor;
-            }
-
-            function updateMeta(dates, options = {}) {
-                const rangeText = `${formatDateFullDisplay(dates[0])} ~ ${formatDateFullDisplay(dates[dates.length - 1])}`;
-                const suffix = options.previewNote ? ` · ${options.previewNote}` : '';
-                const rangeEl = document.querySelector('.date-range');
-                if (rangeEl) {
-                    rangeEl.textContent = `${rangeText}${suffix}`;
-                }
-                document.title = `岁己SUI的周表 - ${rangeText}${options.previewNote ? ` (${options.previewNote})` : ''}`;
-            }
-
-            function applyHighlight(target, value) {
-                if (!value) return;
-                target.highlight = true;
-                target.highlightType = typeof value === 'string' ? value : 'default';
-            }
-
-            function renderSchedule(data, todayIso) {
-                const container = document.getElementById('schedule-table');
-                if (!container) return;
-                container.innerHTML = '';
-
-                data.forEach(day => {
-                    const item = document.createElement('div');
-                    item.className = 'schedule-item';
-                    item.dataset.date = day.iso;
-
-                    if (day.isRest) {
-                        item.classList.add('rest-day');
-                    }
-                    if (day.highlight) {
-                        item.classList.add('special-highlight');
-                        if (day.highlightType) {
-                            item.classList.add(`highlight-${day.highlightType}`);
-                        }
-                    }
-
-                    const label = document.createElement('div');
-                    label.className = `day-label${day.isRest ? ' rest' : ''}`;
-                    label.innerHTML = `
+        const label = document.createElement('div');
+        label.className = `day-label${day.isRest ? ' rest' : ''}`;
+        label.innerHTML = `
                         <div class="day-name">${day.dayLabel}</div>
                         <div class="date-label">${day.dateDisplay}</div>
                     `;
 
-                    const content = document.createElement('div');
-                    content.className = 'schedule-content';
+        const content = document.createElement('div');
+        content.className = 'schedule-content';
 
-                    day.activities.forEach(activity => {
-                        const row = document.createElement('div');
-                        row.className = 'activity-row';
-                        row.innerHTML = `<span class="emoji">${activity.emoji || '•'}</span>${activity.text || ''}`;
-                        content.appendChild(row);
-                    });
+        day.activities.forEach(activity => {
+          const row = document.createElement('div');
+          row.className = 'activity-row';
+          row.innerHTML = `<span class="emoji">${activity.emoji || '•'}</span>${activity.text || ''}`;
+          content.appendChild(row);
+        });
 
-                    item.appendChild(label);
-                    item.appendChild(content);
-                    container.appendChild(item);
-                });
+        item.appendChild(label);
+        item.appendChild(content);
+        container.appendChild(item);
+      });
+    }
+
+    function renderCharacterVisual(cfg = {}) {
+      const pool = getCharacterPool(cfg);
+      if (!pool.length) return;
+      const target = document.getElementById('character-visual');
+      if (!target) return;
+
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      if (!pick) return;
+
+      const nameEl = document.querySelector('.character-name');
+      const tagEl = document.querySelector('.character-tag');
+
+      target.innerHTML = '';
+      target.classList.remove('character-image', 'character-emoji', 'character-svg');
+
+      if (pick.type === 'image' && pick.src) {
+        const img = document.createElement('img');
+        img.src = pick.src;
+        img.alt = pick.alt || pick.name || '岁己SUI随机形象';
+        if (pick.objectPosition) {
+          img.style.objectPosition = pick.objectPosition;
+        }
+        if (pick.transform) {
+          img.style.transform = pick.transform;
+        }
+        if (pick.styles && typeof pick.styles === 'object') {
+          Object.entries(pick.styles).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+              img.style[key] = value;
             }
+          });
+        }
+        target.appendChild(img);
+        target.classList.add('character-image');
+      } else if (pick.type === 'svg' && pick.content) {
+        target.innerHTML = pick.content;
+        target.classList.add('character-svg');
+      } else {
+        target.textContent = pick.emoji || pick.content || '🐦';
+        target.classList.add('character-emoji');
+      }
 
-            function renderCharacterVisual(cfg = {}) {
-                const pool = getCharacterPool(cfg);
-                if (!pool.length) return;
-                const target = document.getElementById('character-visual');
-                if (!target) return;
+      if (pick.name && nameEl) {
+        nameEl.textContent = pick.name;
+      }
+      if (pick.tag && tagEl) {
+        tagEl.textContent = pick.tag;
+      }
+      target.setAttribute('aria-label', pick.alt || pick.name || '岁己SUI');
+    }
 
-                const pick = pool[Math.floor(Math.random() * pool.length)];
-                if (!pick) return;
+    function getCharacterPool(cfg = {}) {
+      if (cfg.characterPool && cfg.characterPool.length) {
+        return cfg.characterPool;
+      }
+      return [
+        { type: 'emoji', emoji: '🐦', name: '岁己SUI', tag: '小鸟公主' }
+      ];
+    }
 
-                const nameEl = document.querySelector('.character-name');
-                const tagEl = document.querySelector('.character-tag');
+    function resolveReferenceDate(param, today) {
+      if (!param) return today;
+      const trimmed = String(param).trim();
+      if (!trimmed) return today;
+      const normalized = trimmed.toLowerCase();
 
-                target.innerHTML = '';
-                target.classList.remove('character-image', 'character-emoji', 'character-svg');
+      if (normalized === 'next') {
+        return addDays(today, 7);
+      }
+      if (normalized === 'prev' || normalized === 'previous') {
+        return addDays(today, -7);
+      }
 
-                if (pick.type === 'image' && pick.src) {
-                    const img = document.createElement('img');
-                    img.src = pick.src;
-                    img.alt = pick.alt || pick.name || '岁己SUI随机形象';
-                    if (pick.objectPosition) {
-                        img.style.objectPosition = pick.objectPosition;
-                    }
-                    if (pick.transform) {
-                        img.style.transform = pick.transform;
-                    }
-                    if (pick.styles && typeof pick.styles === 'object') {
-                        Object.entries(pick.styles).forEach(([key, value]) => {
-                            if (value !== undefined && value !== null) {
-                                img.style[key] = value;
-                            }
-                        });
-                    }
-                    target.appendChild(img);
-                    target.classList.add('character-image');
-                } else if (pick.type === 'svg' && pick.content) {
-                    target.innerHTML = pick.content;
-                    target.classList.add('character-svg');
-                } else {
-                    target.textContent = pick.emoji || pick.content || '🐦';
-                    target.classList.add('character-emoji');
-                }
+      const weekOffsetMatch = normalized.match(/^([+-]?\d+)w$/);
+      if (weekOffsetMatch) {
+        const offset = Number(weekOffsetMatch[1]);
+        if (!Number.isNaN(offset)) {
+          return addDays(today, offset * 7);
+        }
+      }
 
-                if (pick.name && nameEl) {
-                    nameEl.textContent = pick.name;
-                }
-                if (pick.tag && tagEl) {
-                    tagEl.textContent = pick.tag;
-                }
-                target.setAttribute('aria-label', pick.alt || pick.name || '岁己SUI');
-            }
+      const dayOffsetMatch = normalized.match(/^([+-]?\d+)d$/);
+      if (dayOffsetMatch) {
+        const offset = Number(dayOffsetMatch[1]);
+        if (!Number.isNaN(offset)) {
+          return addDays(today, offset);
+        }
+      }
 
-            function getCharacterPool(cfg = {}) {
-                if (cfg.characterPool && cfg.characterPool.length) {
-                    return cfg.characterPool;
-                }
-                return [
-                    { type: 'emoji', emoji: '🐦', name: '岁己SUI', tag: '小鸟公主' }
-                ];
-            }
+      const parsed = parseDateParam(trimmed);
+      if (parsed) {
+        return parsed;
+      }
 
-            function resolveReferenceDate(param, today) {
-                if (!param) return today;
-                const trimmed = String(param).trim();
-                if (!trimmed) return today;
-                const normalized = trimmed.toLowerCase();
+      return today;
+    }
 
-                if (normalized === 'next') {
-                    return addDays(today, 7);
-                }
-                if (normalized === 'prev' || normalized === 'previous') {
-                    return addDays(today, -7);
-                }
+    function parseDateParam(value) {
+      const normalized = value.replace(/\./g, '-');
+      const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (!match) return null;
+      const [, y, m, d] = match;
+      const year = Number(y);
+      const month = Number(m) - 1;
+      const day = Number(d);
+      const candidate = new Date(year, month, day);
+      if (
+        Number.isNaN(candidate.getTime()) ||
+        candidate.getFullYear() !== year ||
+        candidate.getMonth() !== month ||
+        candidate.getDate() !== day
+      ) {
+        return null;
+      }
+      return stripTime(candidate);
+    }
 
-                const weekOffsetMatch = normalized.match(/^([+-]?\d+)w$/);
-                if (weekOffsetMatch) {
-                    const offset = Number(weekOffsetMatch[1]);
-                    if (!Number.isNaN(offset)) {
-                        return addDays(today, offset * 7);
-                    }
-                }
+    function addDays(date, amount) {
+      const result = new Date(date);
+      result.setDate(result.getDate() + Number(amount || 0));
+      return stripTime(result);
+    }
 
-                const dayOffsetMatch = normalized.match(/^([+-]?\d+)d$/);
-                if (dayOffsetMatch) {
-                    const offset = Number(dayOffsetMatch[1]);
-                    if (!Number.isNaN(offset)) {
-                        return addDays(today, offset);
-                    }
-                }
+    function getPreviewNote(param, referenceDate, today) {
+      if (!param) return '';
+      const trimmed = String(param).trim();
+      if (!trimmed) return '';
+      if (referenceDate.getTime() === today.getTime()) {
+        return '';
+      }
 
-                const parsed = parseDateParam(trimmed);
-                if (parsed) {
-                    return parsed;
-                }
+      const normalized = trimmed.toLowerCase();
+      if (normalized === 'next') return '预览：下周';
+      if (normalized === 'prev' || normalized === 'previous') return '预览：上周';
 
-                return today;
-            }
+      const weekOffsetMatch = normalized.match(/^([+-]?\d+)w$/);
+      if (weekOffsetMatch) {
+        const offset = Number(weekOffsetMatch[1]);
+        if (!Number.isNaN(offset) && offset !== 0) {
+          return offset > 0 ? `预览：+${offset}周` : `预览：${offset}周`;
+        }
+      }
 
-            function parseDateParam(value) {
-                const normalized = value.replace(/\./g, '-');
-                const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-                if (!match) return null;
-                const [, y, m, d] = match;
-                const year = Number(y);
-                const month = Number(m) - 1;
-                const day = Number(d);
-                const candidate = new Date(year, month, day);
-                if (
-                    Number.isNaN(candidate.getTime()) ||
-                    candidate.getFullYear() !== year ||
-                    candidate.getMonth() !== month ||
-                    candidate.getDate() !== day
-                ) {
-                    return null;
-                }
-                return stripTime(candidate);
-            }
+      const dayOffsetMatch = normalized.match(/^([+-]?\d+)d$/);
+      if (dayOffsetMatch) {
+        const offset = Number(dayOffsetMatch[1]);
+        if (!Number.isNaN(offset) && offset !== 0) {
+          return offset > 0 ? `预览：+${offset}天` : `预览：${offset}天`;
+        }
+      }
 
-            function addDays(date, amount) {
-                const result = new Date(date);
-                result.setDate(result.getDate() + Number(amount || 0));
-                return stripTime(result);
-            }
-
-            function getPreviewNote(param, referenceDate, today) {
-                if (!param) return '';
-                const trimmed = String(param).trim();
-                if (!trimmed) return '';
-                if (referenceDate.getTime() === today.getTime()) {
-                    return '';
-                }
-
-                const normalized = trimmed.toLowerCase();
-                if (normalized === 'next') return '预览：下周';
-                if (normalized === 'prev' || normalized === 'previous') return '预览：上周';
-
-                const weekOffsetMatch = normalized.match(/^([+-]?\d+)w$/);
-                if (weekOffsetMatch) {
-                    const offset = Number(weekOffsetMatch[1]);
-                    if (!Number.isNaN(offset) && offset !== 0) {
-                        return offset > 0 ? `预览：+${offset}周` : `预览：${offset}周`;
-                    }
-                }
-
-                const dayOffsetMatch = normalized.match(/^([+-]?\d+)d$/);
-                if (dayOffsetMatch) {
-                    const offset = Number(dayOffsetMatch[1]);
-                    if (!Number.isNaN(offset) && offset !== 0) {
-                        return offset > 0 ? `预览：+${offset}天` : `预览：${offset}天`;
-                    }
-                }
-
-                return `预览：${formatDateFullDisplay(referenceDate)} 所在周`;
-            }
-        })();
-    </script>
+      return `预览：${formatDateFullDisplay(referenceDate)} 所在周`;
+    }
+  })();
+</script>
 </body>
 
 </html>
