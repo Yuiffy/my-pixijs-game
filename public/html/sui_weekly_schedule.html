@@ -669,10 +669,10 @@
     <div class="memo-section">
       <div class="memo-title">💬 本周亮点 💭</div>
       <div class="memo-content">
+        开始进行早午台+晚台，双播<br>
         周三煮面，煮面民速来！ <br>
-        开坑了《马里奥银河》，游戏民速来~<br>
+        复活《最后生还者》，游戏民速来~<br>
         游戏回只能说我有点笨笨！😤
-
       </div>
     </div>
 
@@ -711,7 +711,7 @@
       startIndex: 0,
       pools: [
         { emoji: '☀️', text: '09:00 岁己早播~早起鸟儿有虫吃' }, // Index 0
-        { emoji: '☀️', text: '14:30 岁己下午台~暖洋洋午后' }  // Index 1
+        { emoji: '☀️', text: '14:30 岁己下午台~暖洋洋午后' } // Index 1
       ]
     },
 
@@ -819,51 +819,51 @@
       },
       {
         date: '2025-12-03',
-                  highlight: 'noodle',
+        highlight: 'noodle',
         activities: [
-                    { emoji: '☀️', text: '14:30 岁己下午台~' },
-                    { emoji: '🍜', text: '22:30 人头麦煮面，煮死你~' },
+          { emoji: '☀️', text: '14:30 岁己下午台~' },
+          { emoji: '🍜', text: '22:30 人头麦煮面，煮死你~' },
         ]
       },
       {
         date: '2025-12-04',
-                  // highlight: 'noodle',
+        // highlight: 'noodle',
         activities: [
-                    { emoji: '☀️', text: '14:45 岁己下午台~' },
+          { emoji: '☀️', text: '14:45 岁己下午台~' },
           { emoji: '🎵', text: '19:40 唱唱聊聊~' },
           { emoji: '🎮', text: '21:00 玩《最后生还者》' }
         ]
       },
       {
         date: '2025-12-05',
-                  // highlight: 'noodle',
+        // highlight: 'noodle',
         activities: [
-                    { emoji: '☀️', text: '09:00 岁己久违的早播~' },
+          { emoji: '☀️', text: '09:00 岁己久违的早播~' },
           { emoji: '🎵', text: '19:40 唱唱聊聊~' },
           { emoji: '🎬', text: '21:00 看《犯罪心理》第一季 1~2集' }
         ]
       },
       {
         date: '2025-12-06',
-                  // highlight: 'noodle',
+        // highlight: 'noodle',
         activities: [
-                    { emoji: '☀️', text: '14:30 岁己周六下午唱唱聊聊~' },
+          { emoji: '☀️', text: '14:30 岁己周六下午唱唱聊聊~' },
           { emoji: '🎬', text: '16:30 继续聊或者看片或者玩游戏' },
         ]
       },
       {
         date: '2025-12-08',
-                  // highlight: 'noodle',
+        // highlight: 'noodle',
         activities: [
-                    { emoji: '☀️', text: '09:00 岁己早播~怕了吧' },
+          { emoji: '☀️', text: '09:00 岁己早播~怕了吧' },
           { emoji: '🎵', text: '19:40 唱唱聊聊~' },
         ]
       },
       {
         date: '2025-12-09',
-                  // highlight: 'noodle',
+        // highlight: 'noodle',
         activities: [
-                    { emoji: '☀️', text: '09:00 岁己下午台唱唱聊聊' },
+          { emoji: '☀️', text: '09:00 岁己下午台唱唱聊聊' },
           { emoji: '🎵', text: '19:40 唱唱聊聊~' },
         ]
       },
@@ -963,7 +963,7 @@
   }
 
   // 移动端主题切换器交互
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', () => {
     const switcher = document.getElementById('themeSwitcher');
     if (switcher) {
       // 仅在移动端生效的点击展开逻辑
@@ -986,7 +986,6 @@
   });
 
   (function () {
-    'use strict';
 
     const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     const MS_IN_DAY = 24 * 60 * 60 * 1000;
@@ -1106,6 +1105,7 @@
           highlightType: null
         };
 
+        // 如果是休息日，直接返回，不处理任何活动
         if (isRest) {
           base.activities = [{
             emoji: '😴',
@@ -1114,41 +1114,35 @@
           return base;
         }
 
-        // --- 核心修改：早/午播轮换逻辑 ---
-        let shiftActivity = null;
-        if (cfg.shiftRule && cfg.shiftRule.startDate) {
-          const ruleStart = new Date(cfg.shiftRule.startDate);
-          // 如果日期 >= 开始日期 且 不是休息日
-          // 这里假设只要是不休息的工作日都参与轮换
-          if (date >= stripTime(ruleStart)) {
-            const pools = cfg.shiftRule.pools || [];
-            if (pools.length > 0) {
-              shiftActivity = pools[shiftIndex % pools.length];
-              shiftIndex++; // 只有工作日才推进轮换进度
-            }
-          }
-        }
-        // -----------------------------
-
+        // 2. 判断是否有"特定"安排 (Special Activities)
+        // 修改点：如果找到了特定安排，直接使用，并直接 return。
+        // 这样就不会往下走到"轮换规则"里去了，实现了"只按特定的来"。
         if (special) {
           base.activities = cloneActivities(special.activities || []);
-
-          // 如果有轮换活动，且是特殊日，尝试合并（插入到最前面）
-          // 除非特殊日已经明确写了 "下午播" 或 "早播" (可以通过文字简单判断，或者默认都加)
-          // 这里我们默认把轮换活动加到特殊活动的最前面，因为特殊活动里我们已经删除了手动写的时间
-          if (shiftActivity) {
-            base.activities.unshift({ ...shiftActivity });
-          }
-
           applyHighlight(base, special.highlight);
           return base;
         }
 
-        // 如果不是 Special，但有 Shift Activity，先加进去
-        if (shiftActivity) {
-          base.activities.push({ ...shiftActivity });
+        // 3. 如果没有特定安排，进入"默认轮换"逻辑 (Default Logic)
+
+        // A. 早播/午播 轮换规则
+        if (cfg.shiftRule && cfg.shiftRule.startDate) {
+          const ruleStart = new Date(cfg.shiftRule.startDate);
+          if (date >= stripTime(ruleStart)) {
+            const pools = cfg.shiftRule.pools || [];
+            if (pools.length > 0) {
+              // 取出一个轮换活动
+              const shiftActivity = pools[shiftIndex % pools.length];
+              base.activities.push({ ...shiftActivity });
+
+              // 只有真正使用了轮换，才推进计数器
+              // 这样如果中间有两天是Special，轮换顺序会暂停等待，保证早/午/早/午的均匀分布
+              shiftIndex++;
+            }
+          }
         }
 
+        // B. 每周固定 (Weekly Fixed)
         if (weeklyFixed[weekdayIndex]) {
           const weeklyConfig = weeklyFixed[weekdayIndex];
           base.activities.push(...cloneActivities(weeklyConfig.activities || []));
@@ -1216,13 +1210,13 @@
       const diff = Math.floor((stripTime(date) - stripTime(anchor)) / MS_IN_DAY);
       const normalized = mod(diff, cycle);
       if (anchorIsRest) {
-        // 如果anchor是休息日，那么休息日出现在normalized < restDays的位置
+      // 如果anchor是休息日，那么休息日出现在normalized < restDays的位置
         return normalized < restDays;
-      } else {
-        // 如果anchor是工作日，那么休息日出现在normalized >= workDays的位置
-        return normalized >= workDays;
       }
-    }
+      // 如果anchor是工作日，那么休息日出现在normalized >= workDays的位置
+      return normalized >= workDays;
+
+  }
 
     function mod(value, divisor) {
       const result = value % divisor;
@@ -1441,7 +1435,7 @@
 
       return `预览：${formatDateFullDisplay(referenceDate)} 所在周`;
     }
-  })();
+  }());
 </script>
 </body>
 

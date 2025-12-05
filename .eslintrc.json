@@ -1,11 +1,12 @@
 {
   "extends": ["next/core-web-vitals", "airbnb", "airbnb-typescript"],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["html"],
   "parserOptions": {
     "project": "./tsconfig.json"
   },
+  "plugins": ["html"],
   "rules": {
+    // ... (你原来的全局规则保持不变)
     "max-len": "off",
     "no-plusplus": "off",
     "no-param-reassign": "off",
@@ -50,7 +51,16 @@
         "import/first": "off",
         "import/newline-after-import": "off",
         "import/no-unresolved": "off",
-        "import/extensions": "off"
+        "import/extensions": "off",
+
+        // --- 核心修复 ---
+        // 关掉需要 TypeScript 类型信息的规则
+        "@typescript-eslint/dot-notation": "off",
+        "@typescript-eslint/no-implied-eval": "off",
+        "@typescript-eslint/no-throw-literal": "off",
+        "@typescript-eslint/return-await": "off",
+        // 如果想保留 dot-notation 检查，可以开启普通的 JS 版本（可选）
+        "dot-notation": "warn"
       }
     }
   ]
