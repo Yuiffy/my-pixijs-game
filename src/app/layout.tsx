@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
 // 1. 引入数据库和 headers
@@ -31,7 +32,9 @@ export default function RootLayout({
       <body className={inter.className}>
         {children}
         {/* 2. 插入统计组件，它会自动监听路由变化 */}
-        <Analytics />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
         {/* 2. 添加百度统计代码 */}
         <Script id="baidu-tongji" strategy="afterInteractive">
           {`
