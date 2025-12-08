@@ -1,15 +1,12 @@
 'use client';
 
 import {
-  Stage, Container, Sprite, useTick,
+  Stage, Sprite, useTick,
 } from '@pixi/react';
 import { useEffect, useReducer, useRef } from 'react';
 import Matter, {
   Bodies, Common, Composites, Runner,
 } from 'matter-js';
-
-const MAX_X = 1920;
-const MAX_Y = 1080;
 
 const reducer = (_: any, { data }: any) => data;
 
@@ -77,7 +74,7 @@ function Bunny() {
     Runner.run(runner, engine);
   }, []);
 
-  useTick((delta) => {
+  useTick(() => {
     const box = boxRef?.current;
     const stack = stackRef?.current;
     const stackDataArr = Matter.Composite.allBodies(stack).map((b: Matter.Body) => ({
@@ -108,7 +105,7 @@ function Bunny() {
     <>
       {/* <Sprite image="/images/sui-bird-jump.png" scale={0.5} {...motion[0]} /> */}
       {/* <Sprite image="/images/sui-bird-jump.png" scale={1} {...motion[0]} /> */}
-      {motion.map && motion.map((m: any, i: number) => <Sprite key={m.id} image="/images/sui-bird-jump.png" {...m} />)}
+      {motion.map && motion.map((m: any) => <Sprite key={m.id} image="/images/sui-bird-jump.png" {...m} />)}
     </>
   );
 }

@@ -18,8 +18,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-// 2. 统计逻辑：不阻塞页面渲染 (Fire and Forget)
+  // 2. 统计逻辑：不阻塞页面渲染 (Fire and Forget)
   // 注意：在 Server Component 中，最好不要 await 这个操作太久，
   // 或者将其放入单独的函数中处理错误，以免数据库挂了导致页面打不开。
   try {
