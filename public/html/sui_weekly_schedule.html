@@ -863,8 +863,34 @@
         date: '2025-12-09',
         // highlight: 'noodle',
         activities: [
-          { emoji: '☀️', text: '09:00 岁己下午台唱唱聊聊' },
+          { emoji: '☀️', text: '14:30 岁己午台~暖洋洋午后' },
           { emoji: '🎵', text: '19:40 唱唱聊聊~' },
+          { emoji: '🎮', text: '然后玩《最后生还者》' }
+        ]
+      },
+      {
+        date: '2025-12-10',
+        highlight: 'noodle',
+        activities: [
+          { emoji: '☀️', text: '09:00 岁己早播~早起鸟儿有虫吃' },
+          { emoji: '🍜', text: '22:30 人头麦煮面，煮死你~' },
+        ]
+      },
+      {
+        date: '2025-12-11',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '☀️', text: '14:30 岁己午台~暖洋洋午后' },
+          { emoji: '🎵', text: '19:40 唱唱聊聊~' },
+          { emoji: '🎮', text: '然后玩《最后生还者》' }
+        ]
+      },
+      {
+        date: '2025-12-12',
+        // highlight: 'noodle',
+        activities: [
+          { emoji: '🎵', text: '19:40 唱唱聊聊~' },
+          { emoji: '🎬', text: '然后看TOP250电影' }
         ]
       },
     ],
@@ -895,7 +921,7 @@
         weekdays: [1, 2, 4, 5, 6],
         pool: [
           [
-            { emoji: '🎮', text: '然后玩《马里奥银河》 2小时' }
+            { emoji: '🎮', text: '然后玩《最后生还者》 2小时' }
           ],
           [
             { emoji: '🎬', text: '然后看TOP250电影 2小时' }
@@ -1102,7 +1128,8 @@
           activities: [],
           isRest,
           highlight: false,
-          highlightType: null
+          highlightType: null,
+          hasShiftActivity: false // 标记是否有早播/午播活动
         };
 
         // 如果是休息日，直接返回，不处理任何活动
@@ -1131,13 +1158,18 @@
           if (date >= stripTime(ruleStart)) {
             const pools = cfg.shiftRule.pools || [];
             if (pools.length > 0) {
-              // 取出一个轮换活动
-              const shiftActivity = pools[shiftIndex % pools.length];
+              // 周末（周六周日）不早播，直接使用午播
+              const isWeekend = weekdayIndex === 6 || weekdayIndex === 7;
+              const shiftActivity = isWeekend ? pools[1] : pools[shiftIndex % pools.length];
               base.activities.push({ ...shiftActivity });
+              base.hasShiftActivity = true; // 标记有早播/午播活动
 
               // 只有真正使用了轮换，才推进计数器
               // 这样如果中间有两天是Special，轮换顺序会暂停等待，保证早/午/早/午的均匀分布
-              shiftIndex++;
+              // 周末不推进计数器，因为周末固定午播
+              if (!isWeekend) {
+                shiftIndex++;
+              }
             }
           }
         }
@@ -1145,25 +1177,50 @@
         // B. 每周固定 (Weekly Fixed)
         if (weeklyFixed[weekdayIndex]) {
           const weeklyConfig = weeklyFixed[weekdayIndex];
-          base.activities.push(...cloneActivities(weeklyConfig.activities || []));
+          // 如果这一天已经有轮换活动（早播/午播），并且是周末，则跳过weeklyFixed避免重复
+          const isWeekend = weekdayIndex === 6 || weekdayIndex === 7;
+          if (!(base.hasShiftActivity && isWeekend)) {
+            base.activities.push(...cloneActivities(weeklyConfig.activities || []));
+          }
           applyHighlight(base, weeklyConfig.highlight);
         }
 
         defaultTemplates.forEach(template => {
           if ((template.weekdays || []).includes(weekdayIndex)) {
-            base.activities.push(...cloneActivities(template.activities || []));
+            const activities = cloneActivities(template.activities || []);
+            // 如果有早播/午播活动，去掉晚上活动的时长显示
+            if (base.hasShiftActivity) {
+              activities.forEach(activity => {
+                activity.text = activity.text.replace(/(\d+)小时/g, '').trim();
+              });
+            }
+            base.activities.push(...activities);
           }
         });
 
         rotationSlots.forEach(slot => {
           if ((slot.weekdays || []).includes(weekdayIndex)) {
             if (slot.prefix) {
-              base.activities.push(...cloneActivities(slot.prefix));
+              const prefixActivities = cloneActivities(slot.prefix);
+              // 如果有早播/午播活动，去掉前缀活动的时长显示
+              if (base.hasShiftActivity) {
+                prefixActivities.forEach(activity => {
+                  activity.text = activity.text.replace(/(\d+)小时/g, '').trim();
+                });
+              }
+              base.activities.push(...prefixActivities);
             }
             const pool = slot.pool || [];
             if (pool.length) {
               const selection = pool[slot.state % pool.length] || [];
-              base.activities.push(...cloneActivities(selection));
+              const rotationActivities = cloneActivities(selection);
+              // 如果有早播/午播活动，去掉轮换活动的时长显示
+              if (base.hasShiftActivity) {
+                rotationActivities.forEach(activity => {
+                  activity.text = activity.text.replace(/(\d+)小时/g, '').trim();
+                });
+              }
+              base.activities.push(...rotationActivities);
               if (slot.countTowardsRotation !== false) {
                 slot.state++;
               }
