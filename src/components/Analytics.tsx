@@ -1,4 +1,6 @@
-'use client'; // 必须标记为客户端组件
+'use client';
+
+// 必须标记为客户端组件
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
