@@ -580,50 +580,6 @@ export default function SuiWikiPage() {
             />
           )}
         </AntImage.PreviewGroup>
-
-        {/* CSS Animations embedded for this page */}
-        <style jsx global>
-          {`
-          @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes slowOrbit {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease-out forwards;
-          }
-          .animate-slide-in {
-            animation: slideIn 0.5s ease-out forwards;
-          }
-          .animate-slow-spin {
-            animation: slowOrbit 12s linear infinite;
-          }
-          /* Customize Antd Tabs for Dark Theme */
-          .custom-tabs .ant-tabs-nav::before {
-            border-bottom: 1px solid rgba(147, 51, 234, 0.3);
-          }
-          .custom-tabs .ant-tabs-tab {
-            background: rgba(15, 23, 42, 0.8) !important;
-            border-color: rgba(147, 51, 234, 0.3) !important;
-            color: #cbd5e1 !important;
-          }
-          .custom-tabs .ant-tabs-tab-active {
-            background: rgba(88, 28, 135, 0.5) !important;
-            border-bottom-color: transparent !important;
-          }
-          .custom-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-            color: #d8b4fe !important;
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-          }
-        `}
-        </style>
       </div>
     </ConfigProvider>
   );
