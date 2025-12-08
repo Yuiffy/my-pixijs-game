@@ -21,23 +21,22 @@ export default function RootLayout({
   // 2. 统计逻辑：不阻塞页面渲染 (Fire and Forget)
   // 注意：在 Server Component 中，最好不要 await 这个操作太久，
   // 或者将其放入单独的函数中处理错误，以免数据库挂了导致页面打不开。
-  try {
-    const headersList = headers();
-    const ip = headersList.get('x-forwarded-for') || 'unknown';
-    const userAgent = headersList.get('user-agent') || 'unknown';
-    // Server Component 拿不到完整的 path，通常记录为 'next_app_root' 或者结合 middleware 传参
-    // 这里简单记录一下，如果需要精确 Path，建议用 Middleware 或 Client Component 调 API
-    const path = '/';
+// 1. 获取 Headers (移出 try-catch)
+  // 在构建时这里会抛出异常让 Next.js 切换到动态模式，这是正常的，不要捕获它
+  const headersList = headers();
+  const ip = headersList.get('x-forwarded-for') || 'unknown';
+  const userAgent = headersList.get('user-agent') || 'unknown';
+  const path = '/';
 
-    // 异步执行插入，不 await 它的结果，防止拖慢页面加载
-    pool.query(
-      'INSERT INTO visits (ip, path, user_agent) VALUES ($1, $2, $3)',
-      [ip, path, userAgent]
-    ).catch(err => console.error('DB Error:', err));
-
-  } catch (e) {
-    console.error('Analytics Error:', e);
-  }
+  // 2. 写入数据库 (只捕获这里的错误)
+  // 使用 .catch 处理 Promise 错误，不阻塞渲染
+  pool.query(
+    'INSERT INTO visits (ip, path, user_agent) VALUES ($1, $2, $3)',
+    [ip, path, userAgent]
+  ).catch(err => {
+    // 忽略连接数过多等非致命错误，避免刷屏
+    console.error('DB Analytics Error:', err.message);
+  });
 
   return (
     <html lang="en">
