@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+// 1. 引入数据库和 headers
+import pool from '@/lib/db';
+import { headers } from 'next/headers';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -14,6 +17,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+// 2. 统计逻辑：不阻塞页面渲染 (Fire and Forget)
+  // 注意：在 Server Component 中，最好不要 await 这个操作太久，
+  // 或者将其放入单独的函数中处理错误，以免数据库挂了导致页面打不开。
+  try {
+    const headersList = headers();
+    const ip = headersList.get('x-forwarded-for') || 'unknown';
+    const userAgent = headersList.get('user-agent') || 'unknown';
+    // Server Component 拿不到完整的 path，通常记录为 'next_app_root' 或者结合 middleware 传参
+    // 这里简单记录一下，如果需要精确 Path，建议用 Middleware 或 Client Component 调 API
+    const path = '/';
+
+    // 异步执行插入，不 await 它的结果，防止拖慢页面加载
+    pool.query(
+      'INSERT INTO visits (ip, path, user_agent) VALUES ($1, $2, $3)',
+      [ip, path, userAgent]
+    ).catch(err => console.error('DB Error:', err));
+
+  } catch (e) {
+    console.error('Analytics Error:', e);
+  }
+
   return (
     <html lang="en">
       <head>

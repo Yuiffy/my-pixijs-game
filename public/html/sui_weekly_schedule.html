@@ -1494,6 +1494,26 @@
     }
   }());
 </script>
+<script>
+    (function() {
+      // 你的 Next.js 部署后的域名
+      // 本地测试时可以用 http://localhost:3000/api/record
+      // 上线后改成 https://你的项目.vercel.app/api/record
+      var API_URL = '/api/record';
+
+      try {
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: window.location.pathname + window.location.search // 记录当前页面路径
+          })
+        }).catch(err => console.error('统计失败', err));
+      } catch (e) {
+        // 忽略错误，以免影响页面正常运行
+      }
+    })();
+  </script>
 </body>
 
 </html>
