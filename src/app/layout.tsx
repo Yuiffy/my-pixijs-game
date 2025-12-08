@@ -5,6 +5,7 @@ import Script from 'next/script';
 import pool from '@/lib/db';
 import { headers } from 'next/headers';
 import './globals.css';
+import Analytics from '@/components/Analytics';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,26 +19,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 2. 统计逻辑：不阻塞页面渲染 (Fire and Forget)
-  // 注意：在 Server Component 中，最好不要 await 这个操作太久，
-  // 或者将其放入单独的函数中处理错误，以免数据库挂了导致页面打不开。
-// 1. 获取 Headers (移出 try-catch)
-  // 在构建时这里会抛出异常让 Next.js 切换到动态模式，这是正常的，不要捕获它
-  const headersList = headers();
-  const ip = headersList.get('x-forwarded-for') || 'unknown';
-  const userAgent = headersList.get('user-agent') || 'unknown';
-  const path = '/';
-
-  // 2. 写入数据库 (只捕获这里的错误)
-  // 使用 .catch 处理 Promise 错误，不阻塞渲染
-  pool.query(
-    'INSERT INTO visits (ip, path, user_agent) VALUES ($1, $2, $3)',
-    [ip, path, userAgent]
-  ).catch(err => {
-    // 忽略连接数过多等非致命错误，避免刷屏
-    console.error('DB Analytics Error:', err.message);
-  });
-
   return (
     <html lang="en">
       <head>
@@ -49,6 +30,8 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         {children}
+        {/* 2. 插入统计组件，它会自动监听路由变化 */}
+        <Analytics />
         {/* 2. 添加百度统计代码 */}
         <Script id="baidu-tongji" strategy="afterInteractive">
           {`
