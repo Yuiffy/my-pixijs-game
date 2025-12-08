@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 // 1. 引入数据库和 headers
 import pool from '@/lib/db';
 import { headers } from 'next/headers';
@@ -50,6 +51,18 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         {children}
+        {/* 2. 添加百度统计代码 */}
+        <Script id="baidu-tongji" strategy="afterInteractive">
+          {`
+            var _hmt = _hmt || [];
+            (function() {
+              var hm = document.createElement("script");
+              hm.src = "https://hm.baidu.com/hm.js?2d1e9bb0fa7e740ce41fe56c024bc0fc";
+              var s = document.getElementsByTagName("script")[0];
+              s.parentNode.insertBefore(hm, s);
+            })();
+          `}
+        </Script>
       </body>
     </html>
   );
