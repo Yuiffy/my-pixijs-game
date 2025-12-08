@@ -125,6 +125,31 @@
       --decoration-color: #ff69b4;
     }
 
+    /* 主题：魔法少女小圆 (Puella Magi Madoka) */
+    [data-theme="madoka"] {
+      --bg-gradient: linear-gradient(135deg, #1a0b2e 0%, #16213e 50%, #533483 100%);
+      --container-bg: rgba(255, 255, 255, 0.08);
+      --container-border: rgba(255, 105, 180, 0.3);
+      --shadow-color: rgba(255, 20, 147, 0.15);
+
+      --text-primary: #f0e6ff;
+      --text-title: #ff69b4;
+      --text-accent: #da70d6;
+
+      --item-bg: rgba(255, 255, 255, 0.05);
+      --item-hover-bg: rgba(255, 182, 193, 0.15);
+      --rest-bg: rgba(138, 43, 226, 0.1);
+
+      --right-section-bg: rgba(255, 240, 245, 0.1);
+      --memo-bg: rgba(255, 255, 255, 0.08);
+      --note-bg: rgba(255, 255, 255, 0.06);
+      --note-border: #ff1493;
+
+      --date-pill-bg: rgba(255, 20, 147, 0.1);
+      --decoration-opacity: 0.25;
+      --decoration-color: #ff69b4;
+    }
+
 
     body {
       font-family: 'Noto Sans SC', sans-serif;
@@ -627,6 +652,7 @@
   <div class="theme-btn" style="background: #1a1c2c;" onclick="setTheme('dark')" title="高端黑金"></div>
   <div class="theme-btn" style="background: #e1bee7;" onclick="setTheme('blue')" title="清爽蓝调"></div>
   <div class="theme-btn" style="background: #ffc0cb;" onclick="setTheme('pink')" title="可爱粉粉"></div>
+  <div class="theme-btn" style="background: linear-gradient(135deg, #533483 0%, #ff69b4 100%);" onclick="setTheme('madoka')" title="魔法少女小圆"></div>
 </div>
 
 <div class="schedule-container">
