@@ -1,5 +1,5 @@
 // src/components/autoChessGame/GameUI.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UNIT_TYPES } from './config/UnitsData';
 
 export default function GameUI({ gameInstance }) {
@@ -60,38 +60,61 @@ export default function GameUI({ gameInstance }) {
   };
 
   // 处理地图点击放置单位
-  const handleCanvasClick = (event) => {
+  const handleCanvasClick = useCallback((event) => {
     if (!placingUnit || !gameInstance) return;
 
     // 获取点击位置（相对于canvas）
-    const { canvas } = gameInstance;
+    const canvas = gameInstance.canvas || gameInstance.renderer?.canvas;
+    if (!canvas) return;
+
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    // 确保在有效区域内放置
-    if (x > 100 && x < 900 && y > 100 && y < 500) {
-      gameInstance.events.emit('PLACE_UNIT', {
-        unitKey: placingUnit,
-        x,
-        y
-      });
-      setGold(g => g - UNIT_TYPES[placingUnit].cost);
-      setPlacingUnit(null);
+    console.log('Canvas clicked at:', x, y, 'placingUnit:', placingUnit);
+
+    // 确保在有效区域内放置（避免基地区域）
+    // 基地在 x=50 和 x=950，所以在中间区域放置
+    if (x > 150 && x < 850 && y > 100 && y < 500) {
+      console.log('Valid placement area');
+      const unit = UNIT_TYPES[placingUnit];
+      if (unit) {
+        console.log('Emitting PLACE_UNIT event');
+        gameInstance.events.emit('PLACE_UNIT', {
+          unitKey: placingUnit,
+          x,
+          y
+        });
+        setGold(g => g - unit.cost);
+        setPlacingUnit(null);
+        console.log('Unit placement completed');
+      } else {
+        console.log('Unit not found in UNIT_TYPES');
+      }
+    } else {
+      console.log('Invalid placement area');
     }
-  };
+  }, [placingUnit, gameInstance]);
 
   // 添加canvas点击监听器
   useEffect(() => {
     if (!gameInstance) return;
 
-    const { canvas } = gameInstance;
+    // 获取 canvas 元素
+    const canvas = gameInstance.canvas || gameInstance.renderer?.canvas;
+    if (!canvas) {
+      console.log('Canvas not found');
+      return;
+    }
+
+    console.log('Adding canvas click listener to canvas element');
     canvas.addEventListener('click', handleCanvasClick);
 
     return () => {
+      console.log('Removing canvas click listener');
       canvas.removeEventListener('click', handleCanvasClick);
     };
-  }, [gameInstance, placingUnit]);
+  }, [gameInstance, handleCanvasClick]);
 
   const startGame = () => {
     setGameStarted(true);
@@ -145,6 +168,29 @@ export default function GameUI({ gameInstance }) {
     );
   }
 
+  // 处理绿色区域点击
+  const handleGreenAreaClick = useCallback((event) => {
+    if (!placingUnit || !gameInstance) return;
+
+    // 在绿色区域内随机选择一个位置
+    const x = 150 + Math.random() * 700;
+    const y = 100 + Math.random() * 400;
+
+    console.log('Green area clicked, placing at random position:', x, y);
+
+    const unit = UNIT_TYPES[placingUnit];
+    if (unit) {
+      gameInstance.events.emit('PLACE_UNIT', {
+        unitKey: placingUnit,
+        x,
+        y
+      });
+      setGold(g => g - unit.cost);
+      setPlacingUnit(null);
+      console.log('Unit placed via green area click');
+    }
+  }, [placingUnit, gameInstance]);
+
   return (
     <div style={{
       position: 'absolute',
@@ -170,15 +216,15 @@ export default function GameUI({ gameInstance }) {
         <div style={{ color: 'white', flex: 1 }}>
           <h3 style={{ margin: '0 0 10px 0' }}>羁绊状态</h3>
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            {Object.entries(synergies).map(([name, count]) => (
+            {Object.entries(synergies).map(([name, count]: [string, number]) => (
               <div
                 key={name}
                 style={{
-  background: count >= 4 ? '#ff6b6b' : count >= 2 ? '#ffd93d' : '#6bcf7f',
-  padding: '5px 10px',
-  borderRadius: '15px',
-  fontSize: '14px'
-}}
+                  background: count >= 4 ? '#ff6b6b' : count >= 2 ? '#ffd93d' : '#6bcf7f',
+                  padding: '5px 10px',
+                  borderRadius: '15px',
+                  fontSize: '14px'
+                }}
               >
                 {name}
                 :
@@ -192,17 +238,17 @@ export default function GameUI({ gameInstance }) {
 
         <div style={{ textAlign: 'center', color: 'white' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffd700' }}>
-            💰 
+            💰
             {' '}
             {gold}
           </div>
           <div style={{ fontSize: '14px' }}>
-            商店等级: 
+            商店等级:
             {' '}
             {shopLevel}
           </div>
           <div style={{ fontSize: '14px' }}>
-            兵营: 
+            兵营:
             {' '}
             {barracksCount}
             /8
@@ -228,39 +274,85 @@ export default function GameUI({ gameInstance }) {
           )}
         </div>
       </div>
+      );
+
+      {/* 可放置区域提示 */}
+      {placingUnit && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 100,
+            left: 150,
+            width: 700,
+            height: 400,
+            background: 'rgba(0, 255, 0, 0.3)',
+            border: '4px solid #00ff00',
+            pointerEvents: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
+            zIndex: 15,
+            cursor: 'pointer',
+            borderRadius: '10px',
+            animation: 'pulse 1s infinite',
+            boxShadow: '0 0 20px rgba(0, 255, 0, 0.5)'
+          }}
+          onClick={handleGreenAreaClick}
+        >
+          <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎯</div>
+          <div>
+            🖱️ 点击放置
+            {UNIT_TYPES[placingUnit]?.name || '单位'}
+          </div>
+          <div style={{ fontSize: '16px', marginTop: '10px', opacity: 0.9, background: 'rgba(0,0,0,0.5)', padding: '5px', borderRadius: '5px' }}>
+            💡 或直接点击地图任意位置
+          </div>
+          <div style={{ fontSize: '14px', marginTop: '5px', opacity: 0.7 }}>
+            绿色区域 = 可放置区域
+          </div>
+          🖱️ 点击这里放置
+          {' '}
+          {UNIT_TYPES[placingUnit]?.name || '单位'}
+        </div>
+      )}
 
       {/* 放置提示 */}
       {placingUnit && (
         <div style={{
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+          top: 20,
+          right: 20,
           background: 'rgba(0,0,0,0.8)',
           color: 'white',
-          padding: '20px',
+          padding: '15px',
           borderRadius: '10px',
           textAlign: 'center',
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          maxWidth: '200px'
         }}
         >
           <h3>放置单位</h3>
-          <div style={{ fontSize: '48px', margin: '10px 0' }}>
-            {UNIT_TYPES[placingUnit].emoji}
+          <div style={{ fontSize: '36px', margin: '10px 0' }}>
+            {UNIT_TYPES[placingUnit]?.emoji || '❓'}
           </div>
-          <p>
-            点击地图放置
-            {UNIT_TYPES[placingUnit].name}
+          <p style={{ fontSize: '14px', margin: '10px 0' }}>
+            点击绿色区域放置单位
           </p>
           <button
             onClick={() => setPlacingUnit(null)}
             style={{
-              padding: '10px 20px',
+              padding: '8px 16px',
               background: '#dc3545',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontSize: '14px'
             }}
           >
             取消
@@ -297,7 +389,7 @@ export default function GameUI({ gameInstance }) {
         </button>
 
         {shopUnits.map((key, idx) => {
-          const unit = UNIT_TYPES[key as keyof typeof UNIT_TYPES];
+          const unit = UNIT_TYPES[key];
           if (!unit) return null;
           const canAfford = gold >= unit.cost;
           const isPlacing = placingUnit === key;

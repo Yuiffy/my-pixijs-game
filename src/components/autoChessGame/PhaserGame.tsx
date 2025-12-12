@@ -53,6 +53,12 @@ export default function PhaserGame() {
                         border-radius: 10px;
                         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
                     }
+
+                    @keyframes pulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.02); }
+                        100% { transform: scale(1); }
+                    }
                 `;
         document.head.appendChild(style);
 

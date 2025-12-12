@@ -245,13 +245,21 @@ export default class MainScene extends Phaser.Scene {
   }
 
   // 处理玩家从商店买了兵，拖放到地图上的逻辑
-  handlePlaceUnit({ unitKey, x, y }) {
+  handlePlaceUnit({ unitKey, x, y }: { unitKey: string; x: number; y: number }) {
+    console.log('🎯 MainScene: handlePlaceUnit called with', { unitKey, x, y });
+
     if (this.playerBarracks.length >= 8) {
-      console.log('人口已满！');
+      console.log('❌ 人口已满！');
       return;
     }
 
     const data = UNIT_TYPES[unitKey];
+    if (!data) {
+      console.log('❌ Unit data not found for key:', unitKey);
+      return;
+    }
+
+    console.log('✅ Creating barracks at', x, y, 'for unit', unitKey);
     const barracks = new Barracks(this, x, y, unitKey, data);
     this.playerBarracks.push(barracks);
 
@@ -260,6 +268,7 @@ export default class MainScene extends Phaser.Scene {
 
     // 通知UI更新
     this.game.events.emit('BARRACKS_PLACED', this.playerBarracks.length);
+    console.log('🎉 Barracks placed successfully! Total barracks:', this.playerBarracks.length);
   }
 
   calculateSynergies() {
