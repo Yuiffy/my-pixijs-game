@@ -34,6 +34,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
   healthBarFg: Phaser.GameObjects.Rectangle;
 
   constructor(scene, x, y, config, isEnemy = false) {
+    console.log('Unit constructor: scene =', scene, 'config =', config);
     // 创建纹理（如果不存在）
     if (!scene.textures.exists(config.textureKey)) {
       Unit.createTexture(scene, config);
@@ -75,7 +76,9 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     // 创建血条
     this.createHealthBar();
 
+    this.setDepth(2); // 设置深度确保在 Barracks 之上
     scene.add.existing(this);
+    console.log('Unit created at', x, y, 'texture:', config.textureKey, 'visible:', this.visible, 'alpha:', this.alpha, 'scale:', this.scale);
   }
 
   static createTexture(scene, config) {

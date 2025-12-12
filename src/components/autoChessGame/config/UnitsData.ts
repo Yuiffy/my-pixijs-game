@@ -18,11 +18,25 @@ export const UNIT_TYPES = {
     hp: 100,
     damage: 10,
     spawnInterval: 4000, // 兵营每4秒出一个
-    emoji: '🥘', // 临时素材
+    emoji: '🐤', // 临时素材
     color: '#ffcccc',
     mass: 50, // 物理质量
     skill: 'basic_bump',
     textureKey: 'sui_warrior'
+  },
+  chili_mage: {
+    name: '悠亚Yua',
+    cost: 1,
+    tier: 1,
+    factions: [FACTIONS.MAGIC],
+    hp: 70,
+    damage: 12,
+    spawnInterval: 4200, // 兵营每4.2秒出一个
+    emoji: '🐧',
+    color: '#ffb347',
+    mass: 28,
+    skill: 'basic_bump',
+    textureKey: 'chili_mage'
   },
   cyber_gunner: {
     name: '赛博枪手',

@@ -274,7 +274,6 @@ export default function GameUI({ gameInstance }) {
           )}
         </div>
       </div>
-      );
 
       {/* 可放置区域提示 */}
       {placingUnit && (
