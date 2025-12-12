@@ -2,7 +2,6 @@
 import * as Phaser from 'phaser';
 import Unit from './Unit';
 
-// 🛑 终极修复：把兵营变成 Sprite (精灵)，这和单位是一样的
 export default class Barracks extends Phaser.Physics.Matter.Sprite {
   unitKey: string;
 
@@ -15,62 +14,44 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
   scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any) {
-    // 1. 使用 MainScene 里生成的 'box_texture'
-    super(scene.matter.world, x, y, 'box_texture');
+    // 1. 使用单位的贴图 (Texture)，这样看起来就像“卡牌放在了场上”
+    super(scene.matter.world, x, y, unitData.textureKey);
+
     this.scene = scene;
     this.unitKey = unitKey;
     this.unitData = unitData;
 
-    // 2. 设置物理属性：静止的方块
+    // 2. 物理：静止，传感器 (不会挡路)
     this.setStatic(true);
-    this.setSensor(true); // 传感器模式：虽然有体积，但不会把兵弹飞 (让兵可以直接穿过兵营走出来)
+    this.setSensor(true);
 
-    // 3. 染色：根据单位颜色变色，或者默认黄色
-    const colorInt = parseInt(unitData.color.replace('#', '0x'), 16) || 0xFFFF00;
-    this.setTint(colorInt);
+    // 3. 视觉：放大一点，半透明，像个幻影/建筑
+    this.setDisplaySize(70, 70);
+    this.setAlpha(0.8);
+    this.setTint(0xcccccc); // 稍微变暗，表示是建筑
 
-    // 4. 设置大小
-    this.setDisplaySize(60, 60);
-
-    // 5. 添加到场景
+    // 4. 添加到场景
     scene.add.existing(this);
-    this.setDepth(10); // 在单位下面，但在地板上面
+    this.setDepth(5); // 在地板上，单位下
 
-    console.log(`✅ [Barracks Sprite] Created at (${x}, ${y})`);
+    // 5. 文字提示
+    this.indicator = scene.add.text(x, y + 40, '🏠', { fontSize: '24px' }).setOrigin(0.5);
 
-    // 6. 添加 Emoji 文字 (Text 对象通常是能看见的)
-    this.indicator = scene.add.text(x, y, unitData.emoji, {
-      fontSize: '32px',
-      color: '#000000'
-    }).setOrigin(0.5).setDepth(11);
-
-    // 7. 出兵计时器
+    // 6. 出兵
     this.spawnTimer = scene.time.addEvent({
-      delay: unitData.spawnInterval,
+      delay: unitData.spawnInterval || 4000,
       callback: this.spawnUnit,
       callbackScope: this,
       loop: true
     });
-
-    // 立即出兵
-    this.spawnUnit();
+    this.spawnUnit(); // 立即出一个
   }
 
   spawnUnit() {
-    // 出生点在兵营正下方
-    const spawnX = this.x;
-    const spawnY = this.y + 40;
-
-    console.log(`[Barracks] Spawning unit at (${spawnX}, ${spawnY})`);
-
-    // 生成单位
-    const unit = new Unit(this.scene, spawnX, spawnY, this.unitData, false);
-
-    // 只要 MainScene 有这个组
+    // 兵从兵营位置出来
+    const unit = new Unit(this.scene, this.x, this.y, this.unitData, false);
     const mainScene = this.scene as any;
-    if (mainScene.playerUnits) {
-      mainScene.playerUnits.add(unit);
-    }
+    if (mainScene.playerUnits) mainScene.playerUnits.add(unit);
   }
 
   destroy(fromScene?: boolean) {
