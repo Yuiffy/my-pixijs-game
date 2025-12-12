@@ -56,6 +56,18 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() {
+    // 提前生成所有单位和兵营的纹理
+    Object.values(UNIT_TYPES).forEach((unitData: any) => {
+      // 生成单位纹理
+      if (!this.textures.exists(unitData.textureKey)) {
+        Unit.createTexture(this, unitData);
+      }
+      // 生成兵营纹理
+      if (!this.textures.exists(`${unitData.textureKey}_barracks`)) {
+        Barracks.createBarracksTexture(this, unitData);
+      }
+    });
+
     // --- 1. 物理世界设置 ---
     this.matter.world.setBounds(0, 0, 1000, 600);
     this.playerCategory = this.matter.world.nextCategory();

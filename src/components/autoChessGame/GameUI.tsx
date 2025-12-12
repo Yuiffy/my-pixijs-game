@@ -63,23 +63,30 @@ export default function GameUI({ gameInstance }) {
   const handleCanvasClick = useCallback((event) => {
     if (!placingUnit || !gameInstance) return;
 
+    // 1. 检查人口上限
+    if (barracksCount >= 8) {
+      alert("人口已满 (8/8)！无法放置更多兵营。");
+      setPlacingUnit(null); // 取消放置状态
+      return;
+    }
+
     // 获取点击位置（相对于canvas）
     const canvas = gameInstance.canvas || gameInstance.renderer?.canvas;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    // 计算缩放比例，防止 canvas CSS 尺寸和实际尺寸不一致导致坐标偏移
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
-    console.log('Canvas clicked at:', x, y, 'placingUnit:', placingUnit);
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
 
-    // 确保在有效区域内放置（避免基地区域）
-    // 基地在 x=50 和 x=950，所以在中间区域放置
+    // 2. 检查有效区域
     if (x > 150 && x < 850 && y > 100 && y < 500) {
-      console.log('Valid placement area');
       const unit = UNIT_TYPES[placingUnit];
       if (unit) {
-        console.log('Emitting PLACE_UNIT event');
+        // 3. 只有检查通过才扣钱和发送事件
         gameInstance.events.emit('PLACE_UNIT', {
           unitKey: placingUnit,
           x,
@@ -87,14 +94,11 @@ export default function GameUI({ gameInstance }) {
         });
         setGold(g => g - unit.cost);
         setPlacingUnit(null);
-        console.log('Unit placement completed');
-      } else {
-        console.log('Unit not found in UNIT_TYPES');
       }
     } else {
-      console.log('Invalid placement area');
+      console.log('无效的放置区域');
     }
-  }, [placingUnit, gameInstance]);
+  }, [placingUnit, gameInstance, barracksCount]);
 
   // 添加canvas点击监听器
   useEffect(() => {
@@ -169,27 +173,25 @@ export default function GameUI({ gameInstance }) {
   }
 
   // 处理绿色区域点击
-  const handleGreenAreaClick = useCallback((event) => {
+  const handleGreenAreaClick = useCallback(() => {
     if (!placingUnit || !gameInstance) return;
 
-    // 在绿色区域内随机选择一个位置
+    if (barracksCount >= 8) {
+      alert("人口已满 (8/8)！无法放置更多兵营。");
+      setPlacingUnit(null);
+      return;
+    }
+
     const x = 150 + Math.random() * 700;
     const y = 100 + Math.random() * 400;
 
-    console.log('Green area clicked, placing at random position:', x, y);
-
     const unit = UNIT_TYPES[placingUnit];
     if (unit) {
-      gameInstance.events.emit('PLACE_UNIT', {
-        unitKey: placingUnit,
-        x,
-        y
-      });
+      gameInstance.events.emit('PLACE_UNIT', { unitKey: placingUnit, x, y });
       setGold(g => g - unit.cost);
       setPlacingUnit(null);
-      console.log('Unit placed via green area click');
     }
-  }, [placingUnit, gameInstance]);
+  }, [placingUnit, gameInstance, barracksCount]);
 
   return (
     <div style={{
@@ -247,7 +249,7 @@ export default function GameUI({ gameInstance }) {
             {' '}
             {shopLevel}
           </div>
-          <div style={{ fontSize: '14px' }}>
+          <div style={{ fontSize: '14px', color: barracksCount >= 8 ? '#ff4444' : 'white' }}>
             兵营:
             {' '}
             {barracksCount}
