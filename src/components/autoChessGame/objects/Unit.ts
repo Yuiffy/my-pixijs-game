@@ -2,7 +2,6 @@
 import * as Phaser from 'phaser';
 
 export default class Unit extends Phaser.Physics.Matter.Sprite {
-  // 属性声明
   config: any;
 
   isEnemy: boolean;
@@ -11,157 +10,84 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
 
   maxHp: number;
 
-  damage: number;
-
-  damageMultiplier: number;
-
-  attackSpeedMultiplier: number;
-
-  skillCooldownMultiplier: number;
-
-  shield: number;
-
-  hasExplosion: boolean;
-
   target: any;
 
-  lastAttackTime: number;
-
-  attackCooldown: number;
-
-  healthBarBg: Phaser.GameObjects.Rectangle;
-
-  healthBarFg: Phaser.GameObjects.Rectangle;
-
-  constructor(scene, x, y, config, isEnemy = false) {
-    console.log('Unit constructor: scene =', scene, 'config =', config);
-    // 创建纹理（如果不存在）
-    if (!scene.textures.exists(config.textureKey)) {
-      Unit.createTexture(scene, config);
-    }
-
+  constructor(scene: Phaser.Scene, x: number, y: number, config: any, isEnemy = false) {
     super(scene.matter.world, x, y, config.textureKey);
-
     this.scene = scene;
     this.config = config;
     this.isEnemy = isEnemy;
 
-    // 物理属性
+    // 1. 物理属性
     this.setCircle(20);
     this.setFriction(0.05);
     this.setBounce(0.5);
-    this.setMass(config.mass);
+    this.setMass(config.mass || 20);
 
-    // 游戏属性
+    // 2. 游戏属性
     this.hp = config.hp;
     this.maxHp = config.hp;
-    this.damage = config.damage;
-    this.damageMultiplier = 1;
-    this.attackSpeedMultiplier = 1;
-    this.skillCooldownMultiplier = 1;
-    this.shield = 0;
-    this.hasExplosion = false;
+    this.target = null;
 
-    this.state = 'MOVE'; // MOVE, ATTACK, DEAD
-    this.target = null; // 当前锁定的敌人
-    this.lastAttackTime = 0;
-    this.attackCooldown = 1000; // 基础攻击间隔1秒
+    // 3. 🛡️ 兜底显示：如果纹理挂了，至少画个圈
+    // 我们给它附加一个 graphics，如果看不见 sprite 至少能看见这个圈
+    // (注意：这里直接染红 Sprite，这是最简单的检测方法)
+    if (isEnemy) {
+      this.setTint(0xff0000); // 敌人变红
+    } else {
+      this.setTint(0x00ff00); // 自己人变绿 (确保可见)
+    }
 
-    // 碰撞组：确保自己人尽量不卡自己人，但要撞敌人
-    const collisionCategory = isEnemy ? scene.enemyCategory : scene.playerCategory;
-    const collidesWith = isEnemy ? scene.playerCategory : scene.enemyCategory;
-    this.setCollisionCategory(collisionCategory);
-    this.setCollidesWith([collidesWith, scene.wallCategory]);
+    // 4. 碰撞设置
+    const mainScene = scene as any;
+    const collisionCategory = isEnemy ? mainScene.enemyCategory : mainScene.playerCategory;
+    const collidesWith = isEnemy ? mainScene.playerCategory : mainScene.enemyCategory;
 
-    // 创建血条
-    this.createHealthBar();
+    // 只有当 MainScene 初始化了这些 category 才能设置，否则忽略
+    if (collisionCategory && mainScene.wallCategory) {
+      this.setCollisionCategory(collisionCategory);
+      this.setCollidesWith([collidesWith, mainScene.wallCategory]);
+    }
 
-    this.setDepth(2); // 设置深度确保在 Barracks 之上
     scene.add.existing(this);
-    console.log('Unit created at', x, y, 'texture:', config.textureKey, 'visible:', this.visible, 'alpha:', this.alpha, 'scale:', this.scale);
+    console.log(`Unit created at ${x} ${y} texture: ${config.textureKey}`);
   }
 
-  static createTexture(scene, config) {
-    console.log('Creating unit texture for', config.textureKey);
-    // 创建一个简单的圆形纹理作为占位符
-    const graphics = scene.add.graphics();
-    graphics.fillStyle(Phaser.Display.Color.HexStringToColor(config.color).color);
-    graphics.fillCircle(20, 20, 20);
-    graphics.generateTexture(config.textureKey, 40, 40);
-    graphics.destroy();
-    console.log('Unit texture created:', config.textureKey, 'exists:', scene.textures.exists(config.textureKey));
-  }
-
-  createHealthBar() {
-    // 创建血条背景
-    this.healthBarBg = this.scene.add.rectangle(0, -30, 40, 4, 0x000000);
-    this.healthBarBg.setStrokeStyle(1, 0xffffff);
-
-    // 创建血条前景
-    this.healthBarFg = this.scene.add.rectangle(0, -30, 40, 4, 0x00ff00);
-
-    // 将血条添加到单位容器中
-    this.healthBarBg.setOrigin(0.5);
-    this.healthBarFg.setOrigin(0.5);
-
-    // 设置血条深度
-    this.healthBarBg.setDepth(10);
-    this.healthBarFg.setDepth(11);
-  }
-
-  update(time, delta) {
+  update(time: number, delta: number) {
     if (this.hp <= 0) return;
 
-    // 更新血条位置
-    this.healthBarBg.x = this.x;
-    this.healthBarBg.y = this.y - 30;
-    this.healthBarFg.x = this.x;
-    this.healthBarFg.y = this.y - 30;
+    // 简单的 AI
+    this.findTarget();
+    this.moveToTarget();
 
-    // 更新血条长度
-    const healthPercent = this.hp / this.maxHp;
-    this.healthBarFg.width = 40 * healthPercent;
-
-    // 改变血条颜色
-    if (healthPercent > 0.6) {
-      this.healthBarFg.fillColor = 0x00ff00; // 绿
-    } else if (healthPercent > 0.3) {
-      this.healthBarFg.fillColor = 0xffff00; // 黄
-    } else {
-      this.healthBarFg.fillColor = 0xff0000; // 红
-    }
-
-    // 简单的 AI 逻辑
-    if (this.state === 'MOVE') {
-      this.findTarget();
-      this.moveToTarget();
-      this.tryAttack(time);
-    }
-
-    // 边界检查：掉出地图死亡
-    if (this.y > 800 || this.y < -100 || this.x < -100 || this.x > 1100) {
+    // 边界死亡
+    if (this.y > 650 || this.y < -50 || this.x < -50 || this.x > 1050) {
       this.takeDamage(9999);
     }
   }
 
   findTarget() {
-    // 寻找最近的敌对单位
-    const enemies = this.isEnemy ? this.scene.playerUnits : this.scene.enemyUnits;
-    let closest = null;
+    const mainScene = this.scene as any;
+    // 如果我是敌人，我的目标是玩家单位；反之亦然
+    const enemies = this.isEnemy ? mainScene.playerUnits : mainScene.enemyUnits;
+
+    let closest: any = null;
     let minDist = 99999;
 
-    enemies.children.each(e => {
-      if (!e.active || e.hp <= 0) return;
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
-      if (dist < minDist) {
-        minDist = dist;
-        closest = e;
-      }
-    });
+    if (enemies) {
+      enemies.children.each((e: any) => {
+        if (!e.active || e.hp <= 0) return;
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = e;
+        }
+      });
+    }
 
-    // 如果没有兵，就冲向对方基地
+    // 如果没有兵，就冲基地
     if (!closest) {
-      this.target = this.isEnemy ? this.scene.playerBase : this.scene.enemyBase;
+      this.target = this.isEnemy ? mainScene.playerBase : mainScene.enemyBase;
     } else {
       this.target = closest;
     }
@@ -169,106 +95,57 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
 
   moveToTarget() {
     if (!this.target) return;
-
-    // 施加力向目标移动 (物理方式)
     const angle = Phaser.Math.Angle.Between(this.x, this.y, this.target.x, this.target.y);
-    const speed = 0.002 * (this.config.mass / 10); // 质量越大推力越大
-
-    this.applyForce(new Phaser.Math.Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed));
+    const speed = 0.002 * (this.config.mass / 10);
+    this.applyForce({ x: Math.cos(angle) * speed, y: Math.sin(angle) * speed });
 
     // 限制最大速度
-    if (this.body.speed > 5) {
-      this.setVelocity(this.body.velocity.x * 0.95, this.body.velocity.y * 0.95);
+    // @ts-ignore
+    if (this.body && this.body.speed > 5) {
+      this.setVelocity(this.body.velocity.x * 0.9, this.body.velocity.y * 0.9);
     }
   }
 
-  tryAttack(time) {
-    if (!this.target || time - this.lastAttackTime < this.attackCooldown / this.attackSpeedMultiplier) return;
-
-    const dist = Phaser.Math.Distance.Between(this.x, this.y, this.target.x, this.target.y);
-    if (dist < 60) { // 攻击范围
-      this.lastAttackTime = time;
-      const actualDamage = this.damage * this.damageMultiplier;
-
-      // 对目标造成伤害
-      if (this.target.takeDamage) {
-        this.target.takeDamage(actualDamage);
-      }
-
-      // 如果有护盾，先扣护盾
-      if (this.shield > 0) {
-        const shieldDamage = Math.min(actualDamage, this.shield);
-        this.shield -= shieldDamage;
-      }
-
-      // 爆炸效果（川妹羁绊）
-      if (this.hasExplosion && dist < 40) {
-        this.explodeNearbyEnemies(actualDamage * 0.5);
-      }
-    }
-  }
-
-  explodeNearbyEnemies(damage) {
-    const enemies = this.isEnemy ? this.scene.playerUnits : this.scene.enemyUnits;
-    enemies.children.each(e => {
-      if (!e.active || e.hp <= 0) return;
-      const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
-      if (dist < 80) { // 爆炸范围
-        e.takeDamage(damage);
-      }
-    });
-  }
-
-  takeDamage(amount) {
-    // 先扣护盾
-    if (this.shield > 0) {
-      const shieldDamage = Math.min(amount, this.shield);
-      this.shield -= shieldDamage;
-      amount -= shieldDamage;
-    }
-
-    if (amount <= 0) return;
-
+  takeDamage(amount: number) {
     this.hp -= amount;
-
-    // 飘字效果
-    this.scene.showDamageText(this.x, this.y, Math.round(amount));
-
-    // 受伤闪烁效果
-    this.scene.tweens.add({
-      targets: this,
-      alpha: 0.5,
-      duration: 100,
-      yoyo: true,
-      repeat: 2
-    });
+    // 简单的受击反馈
+    this.setAlpha(0.5);
+    this.scene.time.delayedCall(100, () => this.setAlpha(1));
 
     if (this.hp <= 0) {
-      this.die();
+      this.destroy();
     }
   }
 
-  die() {
-    this.state = 'DEAD';
+  // 静态方法：生成纹理
+  static createTexture(scene: Phaser.Scene, config: any) {
+    const key = config.textureKey;
+    if (scene.textures.exists(key)) return;
 
-    // 销毁血条
-    if (this.healthBarBg) this.healthBarBg.destroy();
-    if (this.healthBarFg) this.healthBarFg.destroy();
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    // 死亡动画
-    this.scene.tweens.add({
-      targets: this,
-      scale: 0,
-      alpha: 0,
-      duration: 300,
-      onComplete: () => {
-        this.setActive(false);
-        this.setVisible(false);
-        if (this.world && this.body) {
-          this.world.remove(this.body);
-        }
-        this.destroy();
-      }
-    });
+    // 画个背景圆
+    ctx.fillStyle = config.color || '#ffffff';
+    ctx.beginPath();
+    ctx.arc(32, 32, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 描边
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // 画 Emoji
+    ctx.font = '40px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000';
+    ctx.fillText(config.emoji || '?', 32, 34);
+
+    scene.textures.addCanvas(key, canvas);
   }
 }
