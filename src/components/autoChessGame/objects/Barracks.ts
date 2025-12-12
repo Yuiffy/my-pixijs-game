@@ -2,6 +2,7 @@
 import * as Phaser from 'phaser';
 import Unit from './Unit';
 
+// 继承 Sprite 而不是 GameObjects.Sprite
 export default class Barracks extends Phaser.Physics.Matter.Sprite {
   unitKey: string;
 
@@ -14,41 +15,39 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
   scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any) {
-    // 1. 使用单位的贴图 (Texture)，这样看起来就像“卡牌放在了场上”
+    // 直接使用 Unit 的纹理，不调用 createBarracksTexture
     super(scene.matter.world, x, y, unitData.textureKey);
 
     this.scene = scene;
     this.unitKey = unitKey;
     this.unitData = unitData;
 
-    // 2. 物理：静止，传感器 (不会挡路)
     this.setStatic(true);
     this.setSensor(true);
 
-    // 3. 视觉：放大一点，半透明，像个幻影/建筑
+    // 视觉调整：看起来像底座
     this.setDisplaySize(70, 70);
-    this.setAlpha(0.8);
-    this.setTint(0xcccccc); // 稍微变暗，表示是建筑
+    this.setAlpha(0.6);
+    this.setTint(0x888888);
 
-    // 4. 添加到场景
     scene.add.existing(this);
-    this.setDepth(5); // 在地板上，单位下
+    this.setDepth(1);
 
-    // 5. 文字提示
-    this.indicator = scene.add.text(x, y + 40, '🏠', { fontSize: '24px' }).setOrigin(0.5);
+    // 标识
+    this.indicator = scene.add.text(x, y + 40, '🏠', { fontSize: '20px' }).setOrigin(0.5);
 
-    // 6. 出兵
+    // 出兵
     this.spawnTimer = scene.time.addEvent({
       delay: unitData.spawnInterval || 4000,
       callback: this.spawnUnit,
       callbackScope: this,
       loop: true
     });
-    this.spawnUnit(); // 立即出一个
+    this.spawnUnit();
   }
 
   spawnUnit() {
-    // 兵从兵营位置出来
+    console.log(`Barracks spawning ${this.unitData.name}`);
     const unit = new Unit(this.scene, this.x, this.y, this.unitData, false);
     const mainScene = this.scene as any;
     if (mainScene.playerUnits) mainScene.playerUnits.add(unit);

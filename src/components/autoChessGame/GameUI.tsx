@@ -3,19 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { UNIT_TYPES } from './config/UnitsData';
 
 export default function GameUI({ gameInstance }: any) {
-  const [gold, setGold] = useState(20); // 初始资金给多点方便测试
-  const [shopUnits, setShopUnits] = useState<(string | null)[]>([]); // 允许 null (表示已售罄)
+  const [gold, setGold] = useState(20); // 初始给20块方便测试
+  const [shopUnits, setShopUnits] = useState<(string | null)[]>([]); // 允许 null 表示售罄
   const [synergies, setSynergies] = useState({});
   const [shopLevel, setShopLevel] = useState(1);
   const [barracksCount, setBarracksCount] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState<boolean | null>(null);
 
+  // 监听 Phaser 传来的数据
   useEffect(() => {
     if (!gameInstance) return;
 
-    // 监听事件
-    const updateShop = (data: string[]) => setShopUnits(data); // 初始数据通常是满的
+    const updateShop = (data: string[]) => setShopUnits(data);
     const updateSynergy = (data: any) => setSynergies(data);
     const updateBarracksCount = (count: number) => setBarracksCount(count);
     const handleShopLevelUp = (level: number) => setShopLevel(level);
@@ -39,7 +39,6 @@ export default function GameUI({ gameInstance }: any) {
     };
   }, [gameInstance]);
 
-  // 刷新商店
   const refreshShop = () => {
     if (gold >= 2) {
       setGold(g => g - 2);
@@ -47,34 +46,35 @@ export default function GameUI({ gameInstance }: any) {
     }
   };
 
-  // 购买逻辑 (修改后：自动放置，格子变空)
+  // ✅ 新的购买逻辑：自动放置 + 商店格置空
   const handleBuyClick = (index: number) => {
     const unitKey = shopUnits[index];
-    if (!unitKey) return; // 已经买过了
+    if (!unitKey) return; // 已售罄
 
     const unit = UNIT_TYPES[unitKey as keyof typeof UNIT_TYPES];
     if (!unit) return;
 
-    // 1. 检查条件
+    // 检查人口
     if (barracksCount >= 8) {
-      alert("兵营位置已满 (8/8)！");
+      alert("⚠️ 兵营位置已满 (8/8)！请先等待合卡或无需操作。");
       return;
     }
+    // 检查金币
     if (gold < unit.cost) {
-      alert("金币不足！");
+      alert("💰 金币不足！");
       return;
     }
 
-    // 2. 执行购买
+    // 1. 扣钱
     setGold(g => g - unit.cost);
 
-    // 3. 标记该格子为“已售罄” (null)
+    // 2. 商店格子变黑 (Sold Out)
     const newShop = [...shopUnits];
     newShop[index] = null;
     setShopUnits(newShop);
 
-    // 4. 通知游戏场景自动放置
-    console.log(`UI: Buying ${unit.name}`);
+    // 3. 通知 Phaser 自动放置
+    console.log(`UI: Buying & Auto-placing ${unit.name}`);
     gameInstance.events.emit('AUTO_BUY_UNIT', { unitKey });
   };
 
@@ -100,11 +100,11 @@ export default function GameUI({ gameInstance }: any) {
     <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
       {/* 顶部面板 */}
       <div style={{ padding: 20, background: 'rgba(0,0,0,0.7)', pointerEvents: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h3 style={{ margin: 0, color: 'white' }}>卫戍协议 (Auto-Chess Mod)</h3>
-          <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+        <div style={{ color: 'white', flex: 1 }}>
+          <h3 style={{ margin: '0 0 5px 0' }}>卫戍协议 (Auto Mode)</h3>
+          <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
             {Object.entries(synergies).map(([name, count]: [string, any]) => (
-              <span key={name} style={{ background: '#444', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
+              <span key={name} style={{ background: '#444', color: count >= 2 ? '#ffd700' : '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', border: count >= 2 ? '1px solid gold' : 'none' }}>
                 {name} 
                 {' '}
                 {count}
@@ -112,37 +112,45 @@ export default function GameUI({ gameInstance }: any) {
             ))}
           </div>
         </div>
+
         <div style={{ textAlign: 'right', color: 'white' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffd700' }}>
             💰
             {gold}
           </div>
           <div style={{ fontSize: '14px' }}>
-            人口:
+            Lv.
+            {shopLevel}
+            {' '}
+            | 人口:
             {barracksCount}
             /8
           </div>
         </div>
-        {!gameStarted && <button onClick={startGame} style={{ pointerEvents: 'auto', padding: '5px 15px', background: 'green', color: 'white', border: 'none' }}>开始战斗</button>}
+
+        <div style={{ marginLeft: 20 }}>
+          {!gameStarted && <button onClick={startGame} style={{ pointerEvents: 'auto', padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
+        </div>
       </div>
 
-      {/* 商店区域 */}
-      <div style={{ position: 'absolute', bottom: 20, width: '100%', display: 'flex', justifyContent: 'center', gap: 10, pointerEvents: 'auto' }}>
-        <button onClick={refreshShop} disabled={gold < 2} style={{ padding: '0 20px', background: gold >= 2 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+      {/* 底部面板：商店 */}
+      <div style={{ position: 'absolute', bottom: 20, width: '100%', display: 'flex', justifyContent: 'center', gap: 15, pointerEvents: 'auto' }}>
+        <button onClick={refreshShop} disabled={gold < 2} style={{ padding: '15px 20px', background: gold >= 2 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
           刷新 ($2)
         </button>
 
         {shopUnits.map((key, idx) => {
-          // 如果是 null，显示“已售罄”
+          // 处理已售罄
           if (!key) {
             return (
-              <div key={idx} style={{ width: 100, height: 120, background: '#333', border: '2px dashed #555', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777', borderRadius: '8px' }}>
-                已售罄
+              <div key={idx} style={{ width: 120, height: 140, background: '#222', border: '2px dashed #444', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', borderRadius: '10px' }}>
+                🚫 已售罄
               </div>
             );
           }
 
           const unit = UNIT_TYPES[key as keyof typeof UNIT_TYPES];
+          if (!unit) return null;
           const canAfford = gold >= unit.cost;
 
           return (
@@ -150,28 +158,29 @@ export default function GameUI({ gameInstance }: any) {
               key={idx}
               onClick={() => canAfford && handleBuyClick(idx)}
               style={{
-                width: 100,
-                height: 120,
+                width: 120,
+                height: 140,
                 background: canAfford ? '#fff' : '#ccc',
-                border: '3px solid #000',
-                borderRadius: '8px',
+                border: `3px solid ${canAfford ? '#ffd700' : '#666'}`,
+                borderRadius: '10px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                padding: '5px',
+                padding: '10px',
                 cursor: canAfford ? 'pointer' : 'not-allowed',
-                opacity: canAfford ? 1 : 0.7
+                opacity: canAfford ? 1 : 0.6,
+                transform: canAfford ? 'scale(1)' : 'scale(0.95)'
               }}
             >
-              <div style={{ fontSize: '30px' }}>{unit.emoji}</div>
-              <div style={{ fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>{unit.name}</div>
-              <div style={{ color: canAfford ? 'green' : 'red', fontWeight: 'bold' }}>
+              <div style={{ fontSize: 32, marginBottom: 5 }}>{unit.emoji}</div>
+              <div style={{ fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 }}>{unit.name}</div>
+              <div style={{ fontSize: 14, color: canAfford ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>
                 $
                 {unit.cost}
               </div>
-              <div style={{ fontSize: '10px', color: '#666' }}>{unit.factions[0]}</div>
+              <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>{unit.factions.join('/')}</div>
             </div>
-          )
+          );
         })}
       </div>
     </div>
