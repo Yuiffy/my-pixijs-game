@@ -2,27 +2,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { UNIT_TYPES } from './config/UnitsData';
 
-export default function GameUI({ gameInstance }) {
+export default function GameUI({ gameInstance }: any) {
   const [gold, setGold] = useState(10);
-  const [shopUnits, setShopUnits] = useState([]);
+  const [shopUnits, setShopUnits] = useState<string[]>([]);
   const [synergies, setSynergies] = useState({});
   const [shopLevel, setShopLevel] = useState(1);
   const [barracksCount, setBarracksCount] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
-  const [gameOver, setGameOver] = useState(null); // null, true (win), false (lose)
-  const [placingUnit, setPlacingUnit] = useState(null); // 当前正在放置的单位
+  const [gameOver, setGameOver] = useState<boolean | null>(null);
+  const [placingUnit, setPlacingUnit] = useState<string | null>(null);
 
-  // 监听 Phaser 传来的数据
+  // 监听事件
   useEffect(() => {
     if (!gameInstance) return;
 
-    const updateShop = (data) => {
-      setShopUnits(data);
-    };
-    const updateSynergy = (data) => setSynergies(data);
-    const updateBarracksCount = (count) => setBarracksCount(count);
-    const handleShopLevelUp = (level) => setShopLevel(level);
-    const handleGameOver = (won) => setGameOver(won);
+    const updateShop = (data: any) => setShopUnits(data);
+    const updateSynergy = (data: any) => setSynergies(data);
+    const updateBarracksCount = (count: number) => setBarracksCount(count);
+    const handleShopLevelUp = (level: number) => setShopLevel(level);
+    const handleGameOver = (won: boolean) => setGameOver(won);
 
     gameInstance.events.on('UPDATE_SHOP', updateShop);
     gameInstance.events.on('UPDATE_SYNERGY', updateSynergy);
@@ -30,7 +28,6 @@ export default function GameUI({ gameInstance }) {
     gameInstance.events.on('SHOP_LEVEL_UP', handleShopLevelUp);
     gameInstance.events.on('GAME_OVER', handleGameOver);
 
-    // 初始化
     gameInstance.events.emit('REFRESH_SHOP');
 
     return () => {
@@ -52,70 +49,65 @@ export default function GameUI({ gameInstance }) {
   const handleBuyClick = (unitKey: string) => {
     const unit = UNIT_TYPES[unitKey as keyof typeof UNIT_TYPES];
     if (!unit) return;
-    const { cost } = unit;
-    if (gold >= cost) {
-      setPlacingUnit(unitKey);
-      // 这里可以添加视觉反馈，比如高亮单位或显示放置提示
-    }
-  };
 
-  // 处理地图点击放置单位
-  const handleCanvasClick = useCallback((event) => {
-    if (!placingUnit || !gameInstance) return;
-
-    // 1. 检查人口上限
+    // 1. 严格检查上限
     if (barracksCount >= 8) {
-      alert("人口已满 (8/8)！无法放置更多兵营。");
-      setPlacingUnit(null); // 取消放置状态
+      alert("兵营已满 (8/8)！无法购买。");
       return;
     }
 
-    // 获取点击位置（相对于canvas）
+    if (gold >= unit.cost) {
+      setPlacingUnit(unitKey);
+    }
+  };
+
+  const handlePlace = useCallback((x: number, y: number) => {
+    if (!placingUnit || !gameInstance) return;
+
+    // 2. 放置时再次检查上限，防止并发问题
+    if (barracksCount >= 8) {
+      setPlacingUnit(null);
+      return;
+    }
+
+    const unit = UNIT_TYPES[placingUnit as keyof typeof UNIT_TYPES];
+    if (unit) {
+      console.log(`UI: Placing unit ${unit.name} at ${x}, ${y}`);
+      gameInstance.events.emit('PLACE_UNIT', { unitKey: placingUnit, x, y });
+      setGold(g => g - unit.cost);
+      setPlacingUnit(null);
+    }
+  }, [placingUnit, gameInstance, barracksCount]);
+
+  const handleCanvasClick = useCallback((event: any) => {
+    if (!placingUnit || !gameInstance) return;
     const canvas = gameInstance.canvas || gameInstance.renderer?.canvas;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    // 计算缩放比例，防止 canvas CSS 尺寸和实际尺寸不一致导致坐标偏移
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-
     const x = (event.clientX - rect.left) * scaleX;
     const y = (event.clientY - rect.top) * scaleY;
 
-    // 2. 检查有效区域
-    if (x > 150 && x < 850 && y > 100 && y < 500) {
-      const unit = UNIT_TYPES[placingUnit];
-      if (unit) {
-        // 3. 只有检查通过才扣钱和发送事件
-        gameInstance.events.emit('PLACE_UNIT', {
-          unitKey: placingUnit,
-          x,
-          y
-        });
-        setGold(g => g - unit.cost);
-        setPlacingUnit(null);
-      }
-    } else {
-      console.log('无效的放置区域');
+    if (x > 100 && x < 900 && y > 50 && y < 550) {
+      handlePlace(x, y);
     }
-  }, [placingUnit, gameInstance, barracksCount]);
+  }, [placingUnit, gameInstance, handlePlace]);
 
-  // 添加canvas点击监听器
+  // 绿色区域点击
+  const handleGreenAreaClick = useCallback(() => {
+    const x = 150 + Math.random() * 600;
+    const y = 150 + Math.random() * 300;
+    handlePlace(x, y);
+  }, [handlePlace]);
+
   useEffect(() => {
     if (!gameInstance) return;
-
-    // 获取 canvas 元素
     const canvas = gameInstance.canvas || gameInstance.renderer?.canvas;
-    if (!canvas) {
-      console.log('Canvas not found');
-      return;
-    }
-
-    console.log('Adding canvas click listener to canvas element');
+    if (!canvas) return;
     canvas.addEventListener('click', handleCanvasClick);
-
     return () => {
-      console.log('Removing canvas click listener');
       canvas.removeEventListener('click', handleCanvasClick);
     };
   }, [gameInstance, handleCanvasClick]);
@@ -126,316 +118,81 @@ export default function GameUI({ gameInstance }) {
   };
 
   const restartGame = () => {
-    window.location.reload(); // 简单重启
+    window.location.reload();
   };
 
   if (gameOver !== null) {
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0,0,0,0.8)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        zIndex: 1000
-      }}
-      >
-        <h1 style={{ fontSize: '48px', color: gameOver ? '#00ff00' : '#ff0000' }}>
-          {gameOver ? '🎉 胜利！' : '💀 失败！'}
-        </h1>
-        <p>
-          最终波数:
-          {gameInstance?.scene?.scenes?.[0]?.currentWave || 0}
-        </p>
-        <button
-          onClick={restartGame}
-          style={{
-            padding: '20px 40px',
-            fontSize: '24px',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            marginTop: '20px'
-          }}
-        >
-          再来一局
-        </button>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', zIndex: 1000 }}>
+        <h1 style={{ fontSize: '48px', color: gameOver ? '#00ff00' : '#ff0000' }}>{gameOver ? '🎉 胜利！' : '💀 失败！'}</h1>
+        <button onClick={restartGame} style={{ padding: '20px 40px', fontSize: '24px', background: '#007bff', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', marginTop: '20px' }}>再来一局</button>
       </div>
     );
   }
 
-  // 处理绿色区域点击
-  const handleGreenAreaClick = useCallback(() => {
-    if (!placingUnit || !gameInstance) return;
-
-    if (barracksCount >= 8) {
-      alert("人口已满 (8/8)！无法放置更多兵营。");
-      setPlacingUnit(null);
-      return;
-    }
-
-    const x = 150 + Math.random() * 700;
-    const y = 100 + Math.random() * 400;
-
-    const unit = UNIT_TYPES[placingUnit];
-    if (unit) {
-      gameInstance.events.emit('PLACE_UNIT', { unitKey: placingUnit, x, y });
-      setGold(g => g - unit.cost);
-      setPlacingUnit(null);
-    }
-  }, [placingUnit, gameInstance, barracksCount]);
-
   return (
-    <div style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      pointerEvents: 'none',
-      zIndex: 10
-    }}
-    >
-      {/* 顶部面板：羁绊 & 金币 & 信息 */}
-      <div style={{
-        padding: 20,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: 'rgba(0,0,0,0.7)',
-        pointerEvents: 'auto',
-        backdropFilter: 'blur(5px)'
-      }}
-      >
+    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
+      {/* 顶部面板 */}
+      <div style={{ padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.7)', pointerEvents: 'auto', backdropFilter: 'blur(5px)' }}>
         <div style={{ color: 'white', flex: 1 }}>
-          <h3 style={{ margin: '0 0 10px 0' }}>羁绊状态</h3>
+          <h3 style={{ margin: '0 0 10px 0' }}>羁绊 (v2.1 Visible Fix)</h3>
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            {Object.entries(synergies).map(([name, count]: [string, number]) => (
-              <div
-                key={name}
-                style={{
-                  background: count >= 4 ? '#ff6b6b' : count >= 2 ? '#ffd93d' : '#6bcf7f',
-                  padding: '5px 10px',
-                  borderRadius: '15px',
-                  fontSize: '14px'
-                }}
-              >
+            {Object.entries(synergies).map(([name, count]: [string, any]) => (
+              <div key={name} style={{ background: count >= 4 ? '#ff6b6b' : count >= 2 ? '#ffd93d' : '#6bcf7f', padding: '5px 10px', borderRadius: '15px', fontSize: '14px' }}>
                 {name}
                 :
                 {count}
-                {' '}
-                层
               </div>
             ))}
           </div>
         </div>
-
         <div style={{ textAlign: 'center', color: 'white' }}>
           <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffd700' }}>
             💰
-            {' '}
             {gold}
           </div>
           <div style={{ fontSize: '14px' }}>
-            商店等级:
-            {' '}
+            Level:
             {shopLevel}
           </div>
           <div style={{ fontSize: '14px', color: barracksCount >= 8 ? '#ff4444' : 'white' }}>
             兵营:
-            {' '}
             {barracksCount}
             /8
           </div>
         </div>
-
         <div style={{ textAlign: 'right' }}>
-          {!gameStarted && (
-            <button
-              onClick={startGame}
-              style={{
-                padding: '10px 20px',
-                background: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '16px'
-              }}
-            >
-              开始游戏
-            </button>
-          )}
+          {!gameStarted && <button onClick={startGame} style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px' }}>开始游戏</button>}
         </div>
       </div>
 
-      {/* 可放置区域提示 */}
+      {/* 放置区域提示 */}
       {placingUnit && (
         <div
-          style={{
-            position: 'absolute',
-            top: 100,
-            left: 150,
-            width: 700,
-            height: 400,
-            background: 'rgba(0, 255, 0, 0.3)',
-            border: '4px solid #00ff00',
-            pointerEvents: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '28px',
-            fontWeight: 'bold',
-            textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
-            zIndex: 15,
-            cursor: 'pointer',
-            borderRadius: '10px',
-            animation: 'pulse 1s infinite',
-            boxShadow: '0 0 20px rgba(0, 255, 0, 0.5)'
-          }}
+          style={{ position: 'absolute', top: 100, left: 150, width: 700, height: 400, background: 'rgba(0, 255, 0, 0.2)', border: '4px dashed #00ff00', pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px', fontWeight: 'bold', zIndex: 15, cursor: 'pointer', borderRadius: '10px' }}
           onClick={handleGreenAreaClick}
         >
-          <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎯</div>
-          <div>
-            🖱️ 点击放置
-            {UNIT_TYPES[placingUnit]?.name || '单位'}
-          </div>
-          <div style={{ fontSize: '16px', marginTop: '10px', opacity: 0.9, background: 'rgba(0,0,0,0.5)', padding: '5px', borderRadius: '5px' }}>
-            💡 或直接点击地图任意位置
-          </div>
-          <div style={{ fontSize: '14px', marginTop: '5px', opacity: 0.7 }}>
-            绿色区域 = 可放置区域
-          </div>
-          🖱️ 点击这里放置
-          {' '}
-          {UNIT_TYPES[placingUnit]?.name || '单位'}
+          <div>👇 点击此处放置</div>
         </div>
       )}
 
-      {/* 放置提示 */}
-      {placingUnit && (
-        <div style={{
-          position: 'absolute',
-          top: 20,
-          right: 20,
-          background: 'rgba(0,0,0,0.8)',
-          color: 'white',
-          padding: '15px',
-          borderRadius: '10px',
-          textAlign: 'center',
-          pointerEvents: 'auto',
-          maxWidth: '200px'
-        }}
-        >
-          <h3>放置单位</h3>
-          <div style={{ fontSize: '36px', margin: '10px 0' }}>
-            {UNIT_TYPES[placingUnit]?.emoji || '❓'}
-          </div>
-          <p style={{ fontSize: '14px', margin: '10px 0' }}>
-            点击绿色区域放置单位
-          </p>
-          <button
-            onClick={() => setPlacingUnit(null)}
-            style={{
-              padding: '8px 16px',
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            取消
-          </button>
-        </div>
-      )}
-
-      {/* 底部面板：商店 */}
-      <div style={{
-        position: 'absolute',
-        bottom: 20,
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        gap: 15,
-        pointerEvents: 'auto'
-      }}
-      >
-        <button
-          onClick={refreshShop}
-          disabled={gold < 2}
-          style={{
-            padding: '15px 20px',
-            background: gold >= 2 ? '#ffc107' : '#6c757d',
-            color: 'black',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: gold >= 2 ? 'pointer' : 'not-allowed',
-            fontSize: '16px',
-            fontWeight: 'bold'
-          }}
-        >
-          🔄 刷新 ($2)
-        </button>
-
+      {/* 商店 */}
+      <div style={{ position: 'absolute', bottom: 20, width: '100%', display: 'flex', justifyContent: 'center', gap: 15, pointerEvents: 'auto' }}>
+        <button onClick={refreshShop} disabled={gold < 2} style={{ padding: '15px 20px', background: gold >= 2 ? '#ffc107' : '#6c757d', color: 'black', border: 'none', borderRadius: '10px', cursor: gold >= 2 ? 'pointer' : 'not-allowed', fontSize: '16px', fontWeight: 'bold' }}>🔄 ($2)</button>
         {shopUnits.map((key, idx) => {
-          const unit = UNIT_TYPES[key];
+          const unit = UNIT_TYPES[key as keyof typeof UNIT_TYPES];
           if (!unit) return null;
           const canAfford = gold >= unit.cost;
           const isPlacing = placingUnit === key;
-
           return (
-            <div
-              key={idx}
-              onClick={() => canAfford && handleBuyClick(key)}
-              style={{
-                width: 120,
-                height: 140,
-                background: isPlacing ? '#ff6b6b' : canAfford ? 'white' : '#6c757d',
-                border: `3px solid ${isPlacing ? '#ff0000' : '#333'}`,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                cursor: canAfford ? 'pointer' : 'not-allowed',
-                borderRadius: '10px',
-                padding: '10px',
-                transition: 'all 0.2s',
-                opacity: canAfford ? 1 : 0.6
-              }}
-            >
+            <div key={idx} onClick={() => canAfford && handleBuyClick(key)} style={{ width: 120, height: 140, background: isPlacing ? '#ff6b6b' : canAfford ? 'white' : '#6c757d', border: `3px solid ${isPlacing ? '#ff0000' : '#333'}`, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: canAfford ? 'pointer' : 'not-allowed', borderRadius: '10px', padding: '10px', transition: 'all 0.2s', opacity: canAfford ? 1 : 0.6 }}>
               <div style={{ fontSize: 32, marginBottom: 5 }}>{unit.emoji}</div>
-              <div style={{ fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 }}>
-                {unit.name}
-              </div>
-              <div style={{
-                fontSize: 14,
-                color: canAfford ? '#28a745' : '#dc3545',
-                fontWeight: 'bold'
-              }}
-              >
+              <div style={{ fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 }}>{unit.name}</div>
+              <div style={{ fontSize: 14, color: canAfford ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>
                 $
                 {unit.cost}
               </div>
-              <div style={{
-                fontSize: 10,
-                color: '#666',
-                textAlign: 'center',
-                marginTop: 5
-              }}
-              >
-                {unit.factions.join('/')}
-              </div>
+              <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>{unit.factions.join('/')}</div>
             </div>
           );
         })}
