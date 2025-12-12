@@ -262,6 +262,7 @@ export default class MainScene extends Phaser.Scene {
     console.log('✅ Creating barracks at', x, y, 'for unit', unitKey);
     const barracks = new Barracks(this, x, y, unitKey, data);
     this.playerBarracks.push(barracks);
+    console.log('Barracks object created:', barracks, 'visible:', barracks.visible, 'alpha:', barracks.alpha);
 
     // 计算羁绊
     this.calculateSynergies();

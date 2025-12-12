@@ -23,7 +23,10 @@ export default class Barracks extends Phaser.GameObjects.Sprite {
     this.unitData = unitData;
 
     this.setTint(0x888888); // 稍微变暗一点表示是建筑
+    this.setDepth(5); // 设置深度确保显示在前面
     scene.add.existing(this);
+
+    console.log('Barracks created at', x, y, 'texture:', `${unitData.textureKey}_barracks`);
 
     // 出兵计时器
     this.spawnTimer = scene.time.addEvent({
@@ -41,6 +44,7 @@ export default class Barracks extends Phaser.GameObjects.Sprite {
   }
 
   static createBarracksTexture(scene, unitData) {
+    console.log('Creating barracks texture for', unitData.textureKey);
     // 创建兵营纹理（建筑样式）
     const graphics = scene.add.graphics();
     graphics.fillStyle(Phaser.Display.Color.HexStringToColor(unitData.color).color);
@@ -50,8 +54,10 @@ export default class Barracks extends Phaser.GameObjects.Sprite {
     graphics.strokeRect(5, 5, 30, 30);
     graphics.fillStyle(0xffffff);
     graphics.fillRect(15, 15, 10, 10);
-    graphics.generateTexture(`${unitData.textureKey}_barracks`, 40, 40);
+    const textureKey = `${unitData.textureKey}_barracks`;
+    graphics.generateTexture(textureKey, 40, 40);
     graphics.destroy();
+    console.log('Barracks texture created:', textureKey, 'exists:', scene.textures.exists(textureKey));
   }
 
   createBarracksIndicator() {
@@ -64,12 +70,14 @@ export default class Barracks extends Phaser.GameObjects.Sprite {
   }
 
   spawnUnit() {
+    console.log('Barracks spawning unit at', this.x, this.y);
     // 在兵营位置生成战斗单位
     const offsetX = (Math.random() - 0.5) * 40; // 随机偏移
     const offsetY = 30 + Math.random() * 20;
 
     const unit = new Unit(this.scene, this.x + offsetX, this.y + offsetY, this.unitData, false);
     this.scene.playerUnits.add(unit);
+    console.log('Unit spawned:', unit, 'total units:', this.scene.playerUnits.children.length);
 
     // 生成特效
     this.createSpawnEffect(this.x + offsetX, this.y + offsetY);

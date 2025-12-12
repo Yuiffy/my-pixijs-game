@@ -79,12 +79,14 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
   }
 
   static createTexture(scene, config) {
+    console.log('Creating unit texture for', config.textureKey);
     // 创建一个简单的圆形纹理作为占位符
     const graphics = scene.add.graphics();
     graphics.fillStyle(Phaser.Display.Color.HexStringToColor(config.color).color);
     graphics.fillCircle(20, 20, 20);
     graphics.generateTexture(config.textureKey, 40, 40);
     graphics.destroy();
+    console.log('Unit texture created:', config.textureKey, 'exists:', scene.textures.exists(config.textureKey));
   }
 
   createHealthBar() {
