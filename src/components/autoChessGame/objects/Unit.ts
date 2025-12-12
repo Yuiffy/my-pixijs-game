@@ -2,10 +2,41 @@
 import * as Phaser from 'phaser';
 
 export default class Unit extends Phaser.Physics.Matter.Sprite {
+  // 属性声明
+  config: any;
+
+  isEnemy: boolean;
+
+  hp: number;
+
+  maxHp: number;
+
+  damage: number;
+
+  damageMultiplier: number;
+
+  attackSpeedMultiplier: number;
+
+  skillCooldownMultiplier: number;
+
+  shield: number;
+
+  hasExplosion: boolean;
+
+  target: any;
+
+  lastAttackTime: number;
+
+  attackCooldown: number;
+
+  healthBarBg: Phaser.GameObjects.Rectangle;
+
+  healthBarFg: Phaser.GameObjects.Rectangle;
+
   constructor(scene, x, y, config, isEnemy = false) {
     // 创建纹理（如果不存在）
     if (!scene.textures.exists(config.textureKey)) {
-      this.createTexture(scene, config);
+      Unit.createTexture(scene, config);
     }
 
     super(scene.matter.world, x, y, config.textureKey);
@@ -47,7 +78,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     scene.add.existing(this);
   }
 
-  createTexture(scene, config) {
+  static createTexture(scene, config) {
     // 创建一个简单的圆形纹理作为占位符
     const graphics = scene.add.graphics();
     graphics.fillStyle(Phaser.Display.Color.HexStringToColor(config.color).color);
