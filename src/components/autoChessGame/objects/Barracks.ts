@@ -2,7 +2,7 @@
 import * as Phaser from 'phaser';
 import Unit from './Unit';
 
-export default class Barracks extends Phaser.GameObjects.Sprite {
+export default class Barracks extends Phaser.GameObjects.Container {
   unitKey: string;
 
   unitData: any;
@@ -11,25 +11,31 @@ export default class Barracks extends Phaser.GameObjects.Sprite {
 
   indicator: Phaser.GameObjects.Text;
 
-  constructor(scene, x, y, unitKey, unitData) {
-    // 创建纹理（如果不存在）
-    if (!scene.textures.exists(`${unitData.textureKey}_barracks`)) {
-      Barracks.createBarracksTexture(scene, unitData);
-    }
+  scene: Phaser.Scene;
 
-    super(scene, x, y, `${unitData.textureKey}_barracks`);
-    this.scene = scene; // 明确设置 scene 属性
+  constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any) {
+    super(scene, x, y);
+    this.scene = scene;
     this.unitKey = unitKey;
     this.unitData = unitData;
-    console.log('Barracks constructor: scene =', scene, 'this.scene =', this.scene);
 
-    this.setTint(0x888888); // 稍微变暗一点表示是建筑
-    this.setDepth(5); // 设置深度确保显示在前面
+    // 1. 绘制兵营外观 (直接画矩形，不使用纹理)
+    const bgColor = Phaser.Display.Color.HexStringToColor(unitData.color).color;
+    const bgRect = scene.add.rectangle(0, 0, 40, 40, bgColor);
+    bgRect.setStrokeStyle(2, 0xffffff); // 白色边框
+    this.add(bgRect); // 添加到容器
+
+    // 2. 添加一个小装饰，表示这是兵营
+    const roof = scene.add.rectangle(0, -20, 50, 10, 0x555555);
+    this.add(roof);
+
+    // 3. 添加到场景
+    this.setDepth(5); // 确保在单位上面
     scene.add.existing(this);
 
-    console.log('Barracks created at', x, y, 'texture:', `${unitData.textureKey}_barracks`, 'visible:', this.visible, 'alpha:', this.alpha, 'scale:', this.scale);
+    console.log('✅ Barracks (Container) created at', x, y);
 
-    // 出兵计时器
+    // 4. 出兵逻辑
     this.spawnTimer = scene.time.addEvent({
       delay: unitData.spawnInterval,
       callback: this.spawnUnit,
@@ -37,77 +43,67 @@ export default class Barracks extends Phaser.GameObjects.Sprite {
       loop: true
     });
 
-    // 创建一个小的兵营标识
+    // 5. 兵营图标
     this.createBarracksIndicator();
 
-    // 出生时立即生成一个
+    // 立即生成一个单位
     this.spawnUnit();
   }
 
-  static createBarracksTexture(scene, unitData) {
-    console.log('Creating barracks texture for', unitData.textureKey);
-    // 创建兵营纹理（建筑样式）
-    const graphics = scene.add.graphics();
-    graphics.fillStyle(Phaser.Display.Color.HexStringToColor(unitData.color).color);
-    graphics.fillRect(0, 0, 40, 40);
-    // 添加建筑风格的装饰
-    graphics.lineStyle(2, 0xffffff);
-    graphics.strokeRect(5, 5, 30, 30);
-    graphics.fillStyle(0xffffff);
-    graphics.fillRect(15, 15, 10, 10);
-    const textureKey = `${unitData.textureKey}_barracks`;
-    graphics.generateTexture(textureKey, 40, 40);
-    graphics.destroy();
-    console.log('Barracks texture created:', textureKey, 'exists:', scene.textures.exists(textureKey));
-  }
-
   createBarracksIndicator() {
-    // 创建一个小图标显示兵营在生产什么
-    this.indicator = this.scene.add.text(this.x, this.y - 30, this.unitData.emoji, {
-      fontSize: '16px',
-      color: '#ffffff'
+    // 这里的文字坐标是相对于容器中心的 (0,0)
+    this.indicator = this.scene.add.text(0, -35, this.unitData.emoji, {
+      fontSize: '20px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 2
     });
     this.indicator.setOrigin(0.5);
+    this.add(this.indicator);
   }
 
   spawnUnit() {
-    console.log('Barracks spawning unit at', this.x, this.y, 'scene =', this.scene);
-    // 在兵营位置生成战斗单位
-    const offsetX = (Math.random() - 0.5) * 40; // 随机偏移
-    const offsetY = 30 + Math.random() * 20;
+    // 随机偏移，让兵不要全叠在一起
+    const offsetX = (Math.random() - 0.5) * 40;
+    const offsetY = 30; // 在兵营下方出生
 
-    console.log('Creating unit with scene =', this.scene, 'unitData =', this.unitData);
-    const unit = new Unit(this.scene, this.x + offsetX, this.y + offsetY, this.unitData, false);
-    this.scene.playerUnits.add(unit);
-    console.log('Unit spawned:', unit, 'total units:', this.scene.playerUnits.getLength());
+    // 注意：Container 的 x,y 是世界坐标，所以这里直接用 this.x
+    const spawnX = this.x + offsetX;
+    const spawnY = this.y + offsetY;
 
-    // 生成特效
-    this.createSpawnEffect(this.x + offsetX, this.y + offsetY);
-  }
+    console.log('Barracks spawning unit at', spawnX, spawnY);
 
-  createSpawnEffect(x, y) {
-    // 创建生成特效
-    const effect = this.scene.add.circle(x, y, 5, this.unitData.color.replace('#', '0x'));
+    // 生成单位
+    const unit = new Unit(this.scene, spawnX, spawnY, this.unitData, false);
+
+    // 只要 MainScene 里有这个组，就加进去
+    const mainScene = this.scene as any;
+    if (mainScene.playerUnits) {
+      mainScene.playerUnits.add(unit);
+    }
+
+    // 播放一个简单的生成动画 (白色圆圈扩散)
+    const effect = this.scene.add.circle(spawnX, spawnY, 5, 0xffffff);
     this.scene.tweens.add({
       targets: effect,
-      scale: 2,
+      scale: 3,
       alpha: 0,
-      duration: 500,
+      duration: 300,
       onComplete: () => effect.destroy()
     });
   }
 
   update() {
-    // 更新指示器位置
-    if (this.indicator) {
-      this.indicator.x = this.x;
-      this.indicator.y = this.y - 30;
-    }
+    // Container 会自动处理子对象的移动，不需要在这里手动 update indicator
   }
 
-  destroy() {
+  destroy(fromScene?: boolean) {
     if (this.spawnTimer) this.spawnTimer.remove();
-    if (this.indicator) this.indicator.destroy();
-    super.destroy();
+    super.destroy(fromScene);
+  }
+
+  // 兼容旧代码的静态方法，防止报错，但不再实际做事
+  static createBarracksTexture(scene: any, unitData: any) {
+    // Pass
   }
 }
