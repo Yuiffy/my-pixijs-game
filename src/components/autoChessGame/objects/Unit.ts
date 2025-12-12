@@ -60,10 +60,8 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.findTarget();
     this.moveToTarget();
 
-    // 边界死亡
-    if (this.y > 650 || this.y < -50 || this.x < -50 || this.x > 1050) {
-      this.takeDamage(9999);
-    }
+    // 战场边界约束 (让单位保持在战场内)
+    this.constrainToBattlefield();
   }
 
   findTarget() {
@@ -97,12 +95,55 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     if (!this.target) return;
     const angle = Phaser.Math.Angle.Between(this.x, this.y, this.target.x, this.target.y);
     const speed = 0.002 * (this.config.mass / 10);
-    this.applyForce({ x: Math.cos(angle) * speed, y: Math.sin(angle) * speed });
+    const force = new Phaser.Math.Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    this.applyForce(force);
 
     // 限制最大速度
     // @ts-ignore
     if (this.body && this.body.speed > 5) {
       this.setVelocity(this.body.velocity.x * 0.9, this.body.velocity.y * 0.9);
+    }
+  }
+
+  constrainToBattlefield() {
+    // 战场边界 (避免撞到基地，留出边距)
+    const minX = 50;
+    const maxX = 950;
+    const minY = 50;
+    const maxY = 550;
+
+    // 边界缓冲区大小
+    const buffer = 20;
+
+    let forceX = 0;
+    let forceY = 0;
+
+    // X轴边界约束
+    if (this.x < minX + buffer) {
+      forceX = (minX + buffer - this.x) * 0.01; // 向右推
+    } else if (this.x > maxX - buffer) {
+      forceX = (maxX - buffer - this.x) * 0.01; // 向左推
+    }
+
+    // Y轴边界约束
+    if (this.y < minY + buffer) {
+      forceY = (minY + buffer - this.y) * 0.01; // 向下推
+    } else if (this.y > maxY - buffer) {
+      forceY = (maxY - buffer - this.y) * 0.01; // 向上推
+    }
+
+    // 应用边界约束力
+    if (forceX !== 0 || forceY !== 0) {
+      this.applyForce(new Phaser.Math.Vector2(forceX, forceY));
+    }
+
+    // 如果完全超出边界，强制拉回来
+    if (this.x < minX - 50 || this.x > maxX + 50 || this.y < minY - 50 || this.y > maxY + 50) {
+      this.setPosition(
+        Phaser.Math.Clamp(this.x, minX, maxX),
+        Phaser.Math.Clamp(this.y, minY, maxY)
+      );
+      this.setVelocity(0, 0);
     }
   }
 
