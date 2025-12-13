@@ -120,97 +120,96 @@ export default function GameUI({ gameInstance }: any) {
   }
 
   return (
-    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
-      {/* 顶部面板 - 只覆盖顶部区域 */}
-      <div style={{ padding: 20, background: 'rgba(0,0,0,0.7)', pointerEvents: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ color: 'white', flex: 1 }}>
-          <h3 style={{ margin: '0 0 5px 0' }}>卫戍协议 (Auto Mode)</h3>
-          <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-            {Object.entries(synergies).map(([name, count]: [string, any]) => (
-              <span key={name} style={{ background: '#444', color: count >= 2 ? '#ffd700' : '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', border: count >= 2 ? '1px solid gold' : 'none' }}>
-                {name}
-                {' '}
-                {count}
-              </span>
-            ))}
+    <>
+      {/* 顶部面板 - 固定在顶部 */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ color: 'white', flex: 1 }}>
+            <h3 style={{ margin: '0 0 5px 0' }}>卫戍协议 (Auto Mode)</h3>
+            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+              {Object.entries(synergies).map(([name, count]: [string, any]) => (
+                <span key={name} style={{ background: '#444', color: count >= 2 ? '#ffd700' : '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', border: count >= 2 ? '1px solid gold' : 'none' }}>
+                  {name}
+                  {' '}
+                  {count}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div style={{ textAlign: 'right', color: 'white' }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffd700' }}>
-            💰
-            {gold}
+          <div style={{ textAlign: 'right', color: 'white' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffd700' }}>
+              💰
+              {gold}
+            </div>
+            <div style={{ fontSize: '14px' }}>
+              Lv.
+              {shopLevel}
+              {' '}
+              | 人口:
+              {barracksCount}
+              /8
+            </div>
           </div>
-          <div style={{ fontSize: '14px' }}>
-            Lv.
-            {shopLevel}
-            {' '}
-            | 人口:
-            {barracksCount}
-            /8
-          </div>
-        </div>
 
-        <div style={{ marginLeft: 20 }}>
-          {!gameStarted && <button onClick={startGame} style={{ pointerEvents: 'auto', padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
+          <div style={{ marginLeft: 20 }}>
+            {!gameStarted && <button onClick={startGame} style={{ pointerEvents: 'auto', padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
+          </div>
         </div>
       </div>
 
-      {/* 游戏区域 - 中间透明区域，让Phaser游戏显示 */}
-      <div style={{ height: 'calc(100% - 200px)', marginTop: '100px', marginBottom: '100px' }}>
-        {/* 这个区域不渲染任何东西，让Phaser游戏透过显示 */}
-      </div>
+      {/* 底部面板：商店 - 固定在底部 */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 15 }}>
+          <button onClick={refreshShop} disabled={gold < 2} style={{ padding: '15px 20px', background: gold >= 2 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+            刷新 ($2)
+          </button>
 
-      {/* 底部面板：商店 */}
-      <div style={{ position: 'absolute', bottom: 20, width: '100%', display: 'flex', justifyContent: 'center', gap: 15, pointerEvents: 'auto' }}>
-        <button onClick={refreshShop} disabled={gold < 2} style={{ padding: '15px 20px', background: gold >= 2 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
-          刷新 ($2)
-        </button>
+          {shopUnits.map((key, idx) => {
+            // 处理已售罄
+            if (!key) {
+              return (
+                <div key={idx} style={{ width: 120, height: 140, background: '#222', border: '2px dashed #444', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', borderRadius: '10px' }}>
+                  🚫 已售罄
+                </div>
+              );
+            }
 
-        {shopUnits.map((key, idx) => {
-          // 处理已售罄
-          if (!key) {
+            const unit = UNIT_TYPES[key as keyof typeof UNIT_TYPES];
+            if (!unit) return null;
+            const canAfford = gold >= unit.cost;
+
             return (
-              <div key={idx} style={{ width: 120, height: 140, background: '#222', border: '2px dashed #444', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', borderRadius: '10px' }}>
-                🚫 已售罄
+              <div
+                key={idx}
+                onClick={() => canAfford && handleBuyClick(idx)}
+                style={{
+                  width: 120,
+                  height: 140,
+                  background: canAfford ? '#fff' : '#ccc',
+                  border: `3px solid ${canAfford ? '#ffd700' : '#666'}`,
+                  borderRadius: '10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '10px',
+                  cursor: canAfford ? 'pointer' : 'not-allowed',
+                  opacity: canAfford ? 1 : 0.6,
+                  transform: canAfford ? 'scale(1)' : 'scale(0.95)'
+                }}
+              >
+                <div style={{ fontSize: 32, marginBottom: 5 }}>{unit.emoji}</div>
+                <div style={{ fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 }}>{unit.name}</div>
+                <div style={{ fontSize: 14, color: canAfford ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>
+                  $
+                  {unit.cost}
+                </div>
+                <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>{unit.factions.join('/')}</div>
               </div>
             );
-          }
-
-          const unit = UNIT_TYPES[key as keyof typeof UNIT_TYPES];
-          if (!unit) return null;
-          const canAfford = gold >= unit.cost;
-
-          return (
-            <div
-              key={idx}
-              onClick={() => canAfford && handleBuyClick(idx)}
-              style={{
-                width: 120,
-                height: 140,
-                background: canAfford ? '#fff' : '#ccc',
-                border: `3px solid ${canAfford ? '#ffd700' : '#666'}`,
-                borderRadius: '10px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                padding: '10px',
-                cursor: canAfford ? 'pointer' : 'not-allowed',
-                opacity: canAfford ? 1 : 0.6,
-                transform: canAfford ? 'scale(1)' : 'scale(0.95)'
-              }}
-            >
-              <div style={{ fontSize: 32, marginBottom: 5 }}>{unit.emoji}</div>
-              <div style={{ fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 }}>{unit.name}</div>
-              <div style={{ fontSize: 14, color: canAfford ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>
-                $
-                {unit.cost}
-              </div>
-              <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>{unit.factions.join('/')}</div>
-            </div>
-          );
-        })}
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

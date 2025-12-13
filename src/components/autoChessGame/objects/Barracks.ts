@@ -59,7 +59,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.setAlpha(0.8); // 提高透明度，让兵营更容易看到
 
     // 注意：Matter Sprite 已自动添加到场景
-    this.setDepth(3); // 设置更高的深度，确保在单位之上显示
+    this.setDepth(10); // 设置更高的深度，确保在所有元素之上显示
 
     // 检查位置是否在可见区域内
     const sceneWidth = scene.sys.game.config.width as number;
@@ -133,8 +133,9 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   update() {
     // Barracks update method - currently empty but called by MainScene
+    console.log(`Barracks ${this.unitKey} at (${this.x}, ${this.y}) visible: ${this.visible}, alpha: ${this.alpha}, depth: ${this.depth}, texture: ${this.texture.key}`);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:update', message: 'Barracks update called', data: { unitKey: this.unitKey, position: { x: this.x, y: this.y }, visible: this.visible }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:update', message: 'Barracks update called', data: { unitKey: this.unitKey, position: { x: this.x, y: this.y }, visible: this.visible, alpha: this.alpha, depth: this.depth, texture: this.texture.key }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
     // #endregion
   }
 

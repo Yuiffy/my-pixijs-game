@@ -94,7 +94,7 @@ export default function PhaserGame() {
       overflow: 'hidden'
     }}
     >
-      {/* 游戏画布容器 - 现在放在UI之上 */}
+      {/* 游戏画布容器 - Phaser游戏层 */}
       <div
         ref={gameContainer}
         style={{
@@ -103,7 +103,7 @@ export default function PhaserGame() {
           position: 'absolute',
           top: 0,
           left: 0,
-          zIndex: 1
+          zIndex: 5
         }}
       />
 

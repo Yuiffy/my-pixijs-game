@@ -56,7 +56,9 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     // 使用正确的纹理
     if (scene.textures.exists(config.textureKey)) {
       this.setTexture(config.textureKey);
+      console.log(`Unit using texture: ${config.textureKey} for ${config.name}`);
     } else {
+      console.warn(`Texture ${config.textureKey} not found for ${config.name}, using fallback`);
       // 兜底：如果纹理不存在，使用临时的圆圈
       const graphics = scene.add.graphics();
       graphics.fillStyle(isEnemy ? 0xff0000 : 0x00ff00);
