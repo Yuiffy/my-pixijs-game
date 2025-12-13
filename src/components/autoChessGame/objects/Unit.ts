@@ -13,7 +13,8 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
   target: any;
 
   constructor(scene: Phaser.Scene, x: number, y: number, config: any, isEnemy = false) {
-    super(scene.matter.world, x, y, config.textureKey);
+    // 先用空字符串创建，稍后设置纹理
+    super(scene.matter.world, x, y, '');
     this.scene = scene;
     this.config = config;
     this.isEnemy = isEnemy;
@@ -49,8 +50,25 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
       this.setCollidesWith([collidesWith, mainScene.wallCategory]);
     }
 
-    scene.add.existing(this);
-    console.log(`Unit created at ${x} ${y} texture: ${config.textureKey}`);
+    // 设置渲染深度，确保单位显示在前面
+    this.setDepth(2);
+
+    // 使用正确的纹理
+    if (scene.textures.exists(config.textureKey)) {
+      this.setTexture(config.textureKey);
+    } else {
+      // 兜底：如果纹理不存在，使用临时的圆圈
+      const graphics = scene.add.graphics();
+      graphics.fillStyle(isEnemy ? 0xff0000 : 0x00ff00);
+      graphics.fillCircle(0, 0, 20);
+      graphics.generateTexture(`temp_${config.textureKey}_${isEnemy ? 'enemy' : 'player'}`, 40, 40);
+      graphics.destroy();
+      this.setTexture(`temp_${config.textureKey}_${isEnemy ? 'enemy' : 'player'}`);
+    }
+
+    // 注意：Matter Sprite 构造函数已经将对象添加到场景中，不需要再次调用 add.existing
+    console.log(`Unit created at ${x} ${y} texture: ${config.textureKey}, isEnemy: ${isEnemy}`);
+    console.log(`Unit sprite visible: ${this.visible}, active: ${this.active}, depth: ${this.depth}`);
   }
 
   update(time: number, delta: number) {
@@ -161,13 +179,20 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
   // 静态方法：生成纹理
   static createTexture(scene: Phaser.Scene, config: any) {
     const key = config.textureKey;
-    if (scene.textures.exists(key)) return;
+    if (scene.textures.exists(key)) {
+      console.log(`Texture ${key} already exists`);
+      return;
+    }
 
+    console.log(`Creating texture for ${key}`);
     const canvas = document.createElement('canvas');
     canvas.width = 64;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error(`Failed to get canvas context for ${key}`);
+      return;
+    }
 
     // 画个背景圆
     ctx.fillStyle = config.color || '#ffffff';
@@ -188,5 +213,6 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     ctx.fillText(config.emoji || '?', 32, 34);
 
     scene.textures.addCanvas(key, canvas);
+    console.log(`✅ Texture created for ${key}`);
   }
 }

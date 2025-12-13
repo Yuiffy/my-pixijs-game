@@ -48,19 +48,39 @@ export default function GameUI({ gameInstance }: any) {
 
   // ✅ 新的购买逻辑：自动放置 + 商店格置空
   const handleBuyClick = (index: number) => {
+    //#region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'handleBuyClick called',data:{index, shopUnits, barracksCount, gold},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
+    //#endregion
+
     const unitKey = shopUnits[index];
-    if (!unitKey) return; // 已售罄
+    if (!unitKey) {
+      //#region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Unit already sold out',data:{index, unitKey},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
+      //#endregion
+      return; // 已售罄
+    }
 
     const unit = UNIT_TYPES[unitKey as keyof typeof UNIT_TYPES];
-    if (!unit) return;
+    if (!unit) {
+      //#region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Unit data not found',data:{unitKey},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
+      //#endregion
+      return;
+    }
 
     // 检查人口
     if (barracksCount >= 8) {
+      //#region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Barracks limit reached',data:{barracksCount},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
+      //#endregion
       alert("⚠️ 兵营位置已满 (8/8)！请先等待合卡或无需操作。");
       return;
     }
     // 检查金币
     if (gold < unit.cost) {
+      //#region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Not enough gold',data:{gold, cost: unit.cost},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
+      //#endregion
       alert("💰 金币不足！");
       return;
     }
@@ -75,6 +95,9 @@ export default function GameUI({ gameInstance }: any) {
 
     // 3. 通知 Phaser 自动放置
     console.log(`UI: Buying & Auto-placing ${unit.name}`);
+    //#region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Emitting AUTO_BUY_UNIT event',data:{unitKey, unitName: unit.name},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A2'})}).catch(()=>{});
+    //#endregion
     gameInstance.events.emit('AUTO_BUY_UNIT', { unitKey });
   };
 
@@ -98,14 +121,14 @@ export default function GameUI({ gameInstance }: any) {
 
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
-      {/* 顶部面板 */}
+      {/* 顶部面板 - 只覆盖顶部区域 */}
       <div style={{ padding: 20, background: 'rgba(0,0,0,0.7)', pointerEvents: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ color: 'white', flex: 1 }}>
           <h3 style={{ margin: '0 0 5px 0' }}>卫戍协议 (Auto Mode)</h3>
           <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
             {Object.entries(synergies).map(([name, count]: [string, any]) => (
               <span key={name} style={{ background: '#444', color: count >= 2 ? '#ffd700' : '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', border: count >= 2 ? '1px solid gold' : 'none' }}>
-                {name} 
+                {name}
                 {' '}
                 {count}
               </span>
@@ -131,6 +154,11 @@ export default function GameUI({ gameInstance }: any) {
         <div style={{ marginLeft: 20 }}>
           {!gameStarted && <button onClick={startGame} style={{ pointerEvents: 'auto', padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
         </div>
+      </div>
+
+      {/* 游戏区域 - 中间透明区域，让Phaser游戏显示 */}
+      <div style={{ height: 'calc(100% - 200px)', marginTop: '100px', marginBottom: '100px' }}>
+        {/* 这个区域不渲染任何东西，让Phaser游戏透过显示 */}
       </div>
 
       {/* 底部面板：商店 */}

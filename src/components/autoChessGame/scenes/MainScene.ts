@@ -89,6 +89,9 @@ export default class MainScene extends Phaser.Scene {
     // --- 5. 事件监听 ---
     this.game.events.off('AUTO_BUY_UNIT');
     this.game.events.on('AUTO_BUY_UNIT', this.handleAutoBuyUnit, this);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:create', message: 'AUTO_BUY_UNIT event listener registered', data: { eventName: 'AUTO_BUY_UNIT', handler: 'handleAutoBuyUnit' }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A9' }) }).catch(() => {});
+    // #endregion
 
     this.game.events.off('GAME_START');
     this.game.events.on('GAME_START', this.startGame, this);
@@ -154,7 +157,16 @@ export default class MainScene extends Phaser.Scene {
 
   // 自动放置逻辑 (对应新版UI)
   handleAutoBuyUnit({ unitKey }: { unitKey: string }) {
-    if (this.playerBarracks.length >= 8) return;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:handleAutoBuyUnit', message: 'handleAutoBuyUnit called', data: { unitKey, currentBarracksCount: this.playerBarracks.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A2' }) }).catch(() => {});
+    // #endregion
+
+    if (this.playerBarracks.length >= 8) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:handleAutoBuyUnit', message: 'Barracks limit reached', data: { currentBarracksCount: this.playerBarracks.length }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A2' }) }).catch(() => {});
+      // #endregion
+      return;
+    }
 
     // 自动寻找下一个空位
     const index = this.playerBarracks.length;
@@ -163,8 +175,24 @@ export default class MainScene extends Phaser.Scene {
     console.log(`🎯 自动放置: ${unitKey} at (${pos.x}, ${pos.y})`);
 
     const data = (UNIT_TYPES as any)[unitKey];
+    if (!data) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:handleAutoBuyUnit', message: 'Unit data not found in UNIT_TYPES', data: { unitKey }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A3' }) }).catch(() => {});
+      // #endregion
+      return;
+    }
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:handleAutoBuyUnit', message: 'Creating barracks', data: { unitKey, position: pos, index }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
+    // #endregion
+
     const barracks = new Barracks(this, pos.x, pos.y, unitKey, data);
     this.playerBarracks.push(barracks);
+    console.log(`✅ Barracks created for ${unitKey} at (${pos.x}, ${pos.y}). Total barracks: ${this.playerBarracks.length}`);
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:handleAutoBuyUnit', message: 'Barracks added to scene', data: { unitKey, totalBarracks: this.playerBarracks.length, barracksVisible: barracks.visible, barracksExists: !!barracks }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
+    // #endregion
 
     this.calculateSynergies();
     this.game.events.emit('BARRACKS_PLACED', this.playerBarracks.length);
@@ -236,12 +264,19 @@ export default class MainScene extends Phaser.Scene {
   update(time: number, delta: number) {
     this.playerUnits.children.each((u: any) => u.update(time, delta));
     this.enemyUnits.children.each((u: any) => u.update(time, delta));
+
+    // #region agent log
+    if (this.playerBarracks.length > 0) {
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:update', message: 'Calling update on barracks', data: { barracksCount: this.playerBarracks.length, time, delta }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
+    }
+    // #endregion
+
     this.playerBarracks.forEach(b => b.update()); // Barracks sprite update
   }
 
   calculateSynergies() {
     const counts: any = {};
-    this.playerBarracks.forEach(b => b.unitData.factions.forEach((f: string) => counts[f] = (counts[f] || 0) + 1));
+    this.playerBarracks.forEach(b => b.unitData.factions.forEach((f: string) => { counts[f] = (counts[f] || 0) + 1; }));
     this.game.events.emit('UPDATE_SYNERGY', counts);
   }
 

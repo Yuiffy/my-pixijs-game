@@ -46,6 +46,11 @@ export default function PhaserGame() {
         game = new Phaser.Game(config);
         setGameInstance(game);
 
+        // 添加调试日志
+        console.log('Phaser game initialized:', game);
+        console.log('Game canvas:', game.canvas);
+        console.log('Canvas style:', game.canvas?.style);
+
         // 添加一些全局样式
         const style = document.createElement('style');
         style.textContent = `
@@ -89,16 +94,20 @@ export default function PhaserGame() {
       overflow: 'hidden'
     }}
     >
-      {/* 游戏画布容器 */}
+      {/* 游戏画布容器 - 现在放在UI之上 */}
       <div
         ref={gameContainer}
         style={{
           width: '100%',
-          height: '100%'
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 1
         }}
       />
 
-      {/* UI 覆盖层 */}
+      {/* UI 覆盖层 - 只覆盖部分区域 */}
       <GameUI gameInstance={gameInstance} />
 
       {/* 加载提示 */}
@@ -110,7 +119,8 @@ export default function PhaserGame() {
           transform: 'translate(-50%, -50%)',
           color: 'white',
           fontSize: '24px',
-          textAlign: 'center'
+          textAlign: 'center',
+          zIndex: 20
         }}
         >
           <div>正在加载自走棋游戏...</div>
