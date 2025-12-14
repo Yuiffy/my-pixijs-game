@@ -48,39 +48,39 @@ export default function GameUI({ gameInstance }: any) {
 
   // ✅ 新的购买逻辑：自动放置 + 商店格置空
   const handleBuyClick = (index: number) => {
-    //#region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'handleBuyClick called',data:{index, shopUnits, barracksCount, gold},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
-    //#endregion
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'handleBuyClick called', data: { index, shopUnits, barracksCount, gold }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A1' }) }).catch(() => {});
+    // #endregion
 
     const unitKey = shopUnits[index];
     if (!unitKey) {
-      //#region agent log
-      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Unit already sold out',data:{index, unitKey},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
-      //#endregion
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Unit already sold out', data: { index, unitKey }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A1' }) }).catch(() => {});
+      // #endregion
       return; // 已售罄
     }
 
     const unit = UNIT_TYPES[unitKey as keyof typeof UNIT_TYPES];
     if (!unit) {
-      //#region agent log
-      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Unit data not found',data:{unitKey},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
-      //#endregion
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Unit data not found', data: { unitKey }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A1' }) }).catch(() => {});
+      // #endregion
       return;
     }
 
     // 检查人口
     if (barracksCount >= 8) {
-      //#region agent log
-      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Barracks limit reached',data:{barracksCount},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
-      //#endregion
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Barracks limit reached', data: { barracksCount }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A1' }) }).catch(() => {});
+      // #endregion
       alert("⚠️ 兵营位置已满 (8/8)！请先等待合卡或无需操作。");
       return;
     }
     // 检查金币
     if (gold < unit.cost) {
-      //#region agent log
-      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Not enough gold',data:{gold, cost: unit.cost},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A1'})}).catch(()=>{});
-      //#endregion
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Not enough gold', data: { gold, cost: unit.cost }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A1' }) }).catch(() => {});
+      // #endregion
       alert("💰 金币不足！");
       return;
     }
@@ -95,9 +95,9 @@ export default function GameUI({ gameInstance }: any) {
 
     // 3. 通知 Phaser 自动放置
     console.log(`UI: Buying & Auto-placing ${unit.name}`);
-    //#region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameUI.tsx:handleBuyClick',message:'Emitting AUTO_BUY_UNIT event',data:{unitKey, unitName: unit.name},timestamp:Date.now(),sessionId:'debug-session',runId:'initial-debug',hypothesisId:'A2'})}).catch(()=>{});
-    //#endregion
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Emitting AUTO_BUY_UNIT event', data: { unitKey, unitName: unit.name }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A2' }) }).catch(() => {});
+    // #endregion
     gameInstance.events.emit('AUTO_BUY_UNIT', { unitKey });
   };
 

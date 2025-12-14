@@ -309,6 +309,27 @@ export default class MainScene extends Phaser.Scene {
     console.log('Game started! UI communication working.');
   }
 
+  showDamageText(x: number, y: number, damage: number) {
+    const text = this.add.text(x, y - 20, `-${damage}`, {
+      fontSize: '16px',
+      color: '#ff0000',
+      fontStyle: 'bold'
+    });
+    text.setOrigin(0.5);
+
+    // 动画效果：向上飘动并淡出
+    this.tweens.add({
+      targets: text,
+      y: y - 60,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        text.destroy();
+      }
+    });
+  }
+
   gameOver(won: boolean) {
     this.gameStarted = false;
     this.waveTimer.remove();

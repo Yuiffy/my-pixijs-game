@@ -2,110 +2,147 @@
 import * as Phaser from 'phaser';
 
 export default class Unit extends Phaser.Physics.Matter.Sprite {
-  config: any;
+  constructor(scene, x, y, config, isEnemy = false) {
+    // 创建纹理（如果不存在）
+    if (!scene.textures.exists(config.textureKey)) {
+      Unit.createTexture(scene, config);
+    }
 
-  isEnemy: boolean;
+    super(scene.matter.world, x, y, config.textureKey);
 
-  hp: number;
-
-  maxHp: number;
-
-  target: any;
-
-  constructor(scene: Phaser.Scene, x: number, y: number, config: any, isEnemy = false) {
-    // 先用空字符串创建，稍后设置纹理
-    super(scene.matter.world, x, y, '');
     this.scene = scene;
     this.config = config;
     this.isEnemy = isEnemy;
 
-    // 1. 物理属性
+    // 物理属性
     this.setCircle(20);
     this.setFriction(0.05);
     this.setBounce(0.5);
-    this.setMass(config.mass || 20);
+    this.setMass(config.mass);
 
-    // 2. 游戏属性
+    // 游戏属性
     this.hp = config.hp;
     this.maxHp = config.hp;
-    this.target = null;
+    this.damage = config.damage;
+    this.damageMultiplier = 1;
+    this.attackSpeedMultiplier = 1;
+    this.skillCooldownMultiplier = 1;
+    this.shield = 0;
+    this.hasExplosion = false;
 
-    // 3. 🛡️ 兜底显示：如果纹理挂了，至少画个圈
-    // 我们给它附加一个 graphics，如果看不见 sprite 至少能看见这个圈
-    // (注意：这里直接染红 Sprite，这是最简单的检测方法)
-    if (isEnemy) {
-      this.setTint(0xff0000); // 敌人变红
-    } else {
-      this.setTint(0x00ff00); // 自己人变绿 (确保可见)
-    }
+    this.state = 'MOVE'; // MOVE, ATTACK, DEAD
+    this.target = null; // 当前锁定的敌人
+    this.lastAttackTime = 0;
+    this.attackCooldown = 1000; // 基础攻击间隔1秒
 
-    // 4. 碰撞设置
-    const mainScene = scene as any;
-    const collisionCategory = isEnemy ? mainScene.enemyCategory : mainScene.playerCategory;
-    const collidesWith = isEnemy ? mainScene.playerCategory : mainScene.enemyCategory;
+    // 碰撞组：确保自己人尽量不卡自己人，但要撞敌人
+    const collisionCategory = isEnemy ? scene.enemyCategory : scene.playerCategory;
+    const collidesWith = isEnemy ? scene.playerCategory : scene.enemyCategory;
+    this.setCollisionCategory(collisionCategory);
+    this.setCollidesWith([collidesWith, scene.wallCategory]);
 
-    // 只有当 MainScene 初始化了这些 category 才能设置，否则忽略
-    if (collisionCategory && mainScene.wallCategory) {
-      this.setCollisionCategory(collisionCategory);
-      this.setCollidesWith([collidesWith, mainScene.wallCategory]);
-    }
+    // 创建血条
+    this.createHealthBar();
 
-    // 设置渲染深度，确保单位显示在前面
-    this.setDepth(2);
-
-    // 使用正确的纹理
-    if (scene.textures.exists(config.textureKey)) {
-      this.setTexture(config.textureKey);
-      console.log(`Unit using texture: ${config.textureKey} for ${config.name}`);
-    } else {
-      console.warn(`Texture ${config.textureKey} not found for ${config.name}, using fallback`);
-      // 兜底：如果纹理不存在，使用临时的圆圈
-      const graphics = scene.add.graphics();
-      graphics.fillStyle(isEnemy ? 0xff0000 : 0x00ff00);
-      graphics.fillCircle(0, 0, 20);
-      graphics.generateTexture(`temp_${config.textureKey}_${isEnemy ? 'enemy' : 'player'}`, 40, 40);
-      graphics.destroy();
-      this.setTexture(`temp_${config.textureKey}_${isEnemy ? 'enemy' : 'player'}`);
-    }
-
-    // 注意：Matter Sprite 构造函数已经将对象添加到场景中，不需要再次调用 add.existing
-    // console.log(`Unit created at ${x} ${y} texture: ${config.textureKey}, isEnemy: ${isEnemy}`);
-    // console.log(`Unit sprite visible: ${this.visible}, active: ${this.active}, depth: ${this.depth}`);
+    scene.add.existing(this);
   }
 
-  update(time: number, delta: number) {
+  static createTexture(scene, config) {
+    console.log(`Creating texture for ${config.name}: ${config.textureKey}, emoji: ${config.emoji}, color: ${config.color}`);
+
+    // 使用Phaser graphics创建纹理
+    const graphics = scene.add.graphics();
+
+    // 背景圆
+    const color = Phaser.Display.Color.HexStringToColor(config.color || '#ffffff');
+    graphics.fillStyle(color.color);
+    graphics.fillCircle(20, 20, 18);
+
+    // 描边
+    graphics.lineStyle(2, 0x000000);
+    graphics.strokeCircle(20, 20, 18);
+
+    // 先用简单的形状代替emoji，测试纹理是否正常工作
+    graphics.fillStyle(0xff00ff); // 粉色
+    graphics.fillCircle(20, 20, 5); // 中心小圆点
+
+    // 生成纹理
+    graphics.generateTexture(config.textureKey, 40, 40);
+    graphics.destroy();
+
+    console.log(`Texture created: ${config.textureKey}`);
+  }
+
+  createHealthBar() {
+    // 创建血条背景
+    this.healthBarBg = this.scene.add.rectangle(0, -30, 40, 4, 0x000000);
+    this.healthBarBg.setStrokeStyle(1, 0xffffff);
+
+    // 创建血条前景
+    this.healthBarFg = this.scene.add.rectangle(0, -30, 40, 4, 0x00ff00);
+
+    // 将血条添加到单位容器中
+    this.healthBarBg.setOrigin(0.5);
+    this.healthBarFg.setOrigin(0.5);
+
+    // 设置血条深度
+    this.healthBarBg.setDepth(10);
+    this.healthBarFg.setDepth(11);
+  }
+
+  update(time, delta) {
     if (this.hp <= 0) return;
 
-    // 简单的 AI
-    this.findTarget();
-    this.moveToTarget();
+    // 更新血条位置
+    this.healthBarBg.x = this.x;
+    this.healthBarBg.y = this.y - 30;
+    this.healthBarFg.x = this.x;
+    this.healthBarFg.y = this.y - 30;
 
-    // 战场边界约束 (让单位保持在战场内)
-    this.constrainToBattlefield();
+    // 更新血条长度
+    const healthPercent = this.hp / this.maxHp;
+    this.healthBarFg.width = 40 * healthPercent;
+
+    // 改变血条颜色
+    if (healthPercent > 0.6) {
+      this.healthBarFg.fillColor = 0x00ff00; // 绿
+    } else if (healthPercent > 0.3) {
+      this.healthBarFg.fillColor = 0xffff00; // 黄
+    } else {
+      this.healthBarFg.fillColor = 0xff0000; // 红
+    }
+
+    // 简单的 AI 逻辑
+    if (this.state === 'MOVE') {
+      this.findTarget();
+      this.moveToTarget();
+      this.tryAttack(time);
+    }
+
+    // 边界检查：掉出地图死亡
+    if (this.y > 800 || this.y < -100 || this.x < -100 || this.x > 1100) {
+      this.takeDamage(9999);
+    }
   }
 
   findTarget() {
-    const mainScene = this.scene as any;
-    // 如果我是敌人，我的目标是玩家单位；反之亦然
-    const enemies = this.isEnemy ? mainScene.playerUnits : mainScene.enemyUnits;
-
-    let closest: any = null;
+    // 寻找最近的敌对单位
+    const enemies = this.isEnemy ? this.scene.playerUnits : this.scene.enemyUnits;
+    let closest = null;
     let minDist = 99999;
 
-    if (enemies) {
-      enemies.children.each((e: any) => {
-        if (!e.active || e.hp <= 0) return;
-        const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
-        if (dist < minDist) {
-          minDist = dist;
-          closest = e;
-        }
-      });
-    }
+    enemies.children.each(e => {
+      if (!e.active || e.hp <= 0) return;
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = e;
+      }
+    });
 
-    // 如果没有兵，就冲基地
+    // 如果没有兵，就冲向对方基地
     if (!closest) {
-      this.target = this.isEnemy ? mainScene.playerBase : mainScene.enemyBase;
+      this.target = this.isEnemy ? this.scene.playerBase : this.scene.enemyBase;
     } else {
       this.target = closest;
     }
@@ -113,108 +150,106 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
 
   moveToTarget() {
     if (!this.target) return;
+
+    // 施加力向目标移动 (物理方式)
     const angle = Phaser.Math.Angle.Between(this.x, this.y, this.target.x, this.target.y);
-    const speed = 0.002 * (this.config.mass / 10);
-    const force = new Phaser.Math.Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed);
-    this.applyForce(force);
+    const speed = 0.002 * (this.config.mass / 10); // 质量越大推力越大
+
+    this.applyForce(new Phaser.Math.Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed));
 
     // 限制最大速度
-    // @ts-ignore
-    if (this.body && this.body.speed > 5) {
-      this.setVelocity(this.body.velocity.x * 0.9, this.body.velocity.y * 0.9);
+    if (this.body.speed > 5) {
+      this.setVelocity(this.body.velocity.x * 0.95, this.body.velocity.y * 0.95);
     }
   }
 
-  constrainToBattlefield() {
-    // 战场边界 (避免撞到基地，留出边距)
-    const minX = 50;
-    const maxX = 950;
-    const minY = 50;
-    const maxY = 550;
+  tryAttack(time) {
+    if (!this.target || time - this.lastAttackTime < this.attackCooldown / this.attackSpeedMultiplier) return;
 
-    // 边界缓冲区大小
-    const buffer = 20;
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, this.target.x, this.target.y);
+    if (dist < 60) { // 攻击范围
+      this.lastAttackTime = time;
+      const actualDamage = this.damage * this.damageMultiplier;
 
-    let forceX = 0;
-    let forceY = 0;
+      // 对目标造成伤害
+      if (this.target.takeDamage) {
+        this.target.takeDamage(actualDamage);
+      }
 
-    // X轴边界约束
-    if (this.x < minX + buffer) {
-      forceX = (minX + buffer - this.x) * 0.01; // 向右推
-    } else if (this.x > maxX - buffer) {
-      forceX = (maxX - buffer - this.x) * 0.01; // 向左推
-    }
+      // 如果有护盾，先扣护盾
+      if (this.shield > 0) {
+        const shieldDamage = Math.min(actualDamage, this.shield);
+        this.shield -= shieldDamage;
+      }
 
-    // Y轴边界约束
-    if (this.y < minY + buffer) {
-      forceY = (minY + buffer - this.y) * 0.01; // 向下推
-    } else if (this.y > maxY - buffer) {
-      forceY = (maxY - buffer - this.y) * 0.01; // 向上推
-    }
-
-    // 应用边界约束力
-    if (forceX !== 0 || forceY !== 0) {
-      this.applyForce(new Phaser.Math.Vector2(forceX, forceY));
-    }
-
-    // 如果完全超出边界，强制拉回来
-    if (this.x < minX - 50 || this.x > maxX + 50 || this.y < minY - 50 || this.y > maxY + 50) {
-      this.setPosition(
-        Phaser.Math.Clamp(this.x, minX, maxX),
-        Phaser.Math.Clamp(this.y, minY, maxY)
-      );
-      this.setVelocity(0, 0);
+      // 爆炸效果（川妹羁绊）
+      if (this.hasExplosion && dist < 40) {
+        this.explodeNearbyEnemies(actualDamage * 0.5);
+      }
     }
   }
 
-  takeDamage(amount: number) {
+  explodeNearbyEnemies(damage) {
+    const enemies = this.isEnemy ? this.scene.playerUnits : this.scene.enemyUnits;
+    enemies.children.each(e => {
+      if (!e.active || e.hp <= 0) return;
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
+      if (dist < 80) { // 爆炸范围
+        e.takeDamage(damage);
+      }
+    });
+  }
+
+  takeDamage(amount) {
+    // 先扣护盾
+    if (this.shield > 0) {
+      const shieldDamage = Math.min(amount, this.shield);
+      this.shield -= shieldDamage;
+      amount -= shieldDamage;
+    }
+
+    if (amount <= 0) return;
+
     this.hp -= amount;
-    // 简单的受击反馈
-    this.setAlpha(0.5);
-    this.scene.time.delayedCall(100, () => this.setAlpha(1));
+
+    // 飘字效果
+    this.scene.showDamageText(this.x, this.y, Math.round(amount));
+
+    // 受伤闪烁效果
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.5,
+      duration: 100,
+      yoyo: true,
+      repeat: 2
+    });
 
     if (this.hp <= 0) {
-      this.destroy();
+      this.die();
     }
   }
 
-  // 静态方法：生成纹理
-  static createTexture(scene: Phaser.Scene, config: any) {
-    const key = config.textureKey;
-    if (scene.textures.exists(key)) {
-      console.log(`Texture ${key} already exists`);
-      return;
-    }
+  die() {
+    this.state = 'DEAD';
 
-    console.log(`Creating texture for ${key}`);
-    const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error(`Failed to get canvas context for ${key}`);
-      return;
-    }
+    // 销毁血条
+    if (this.healthBarBg) this.healthBarBg.destroy();
+    if (this.healthBarFg) this.healthBarFg.destroy();
 
-    // 画个背景圆
-    ctx.fillStyle = config.color || '#ffffff';
-    ctx.beginPath();
-    ctx.arc(32, 32, 30, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 描边
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 4;
-    ctx.stroke();
-
-    // 画 Emoji
-    ctx.font = '40px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#000';
-    ctx.fillText(config.emoji || '?', 32, 34);
-
-    scene.textures.addCanvas(key, canvas);
-    console.log(`✅ Texture created for ${key}`);
+    // 死亡动画
+    this.scene.tweens.add({
+      targets: this,
+      scale: 0,
+      alpha: 0,
+      duration: 300,
+      onComplete: () => {
+        this.setActive(false);
+        this.setVisible(false);
+        if (this.world && this.body) {
+          this.world.remove(this.body);
+        }
+        this.destroy();
+      }
+    });
   }
 }
