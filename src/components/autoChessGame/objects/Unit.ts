@@ -236,6 +236,14 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     if (this.healthBarBg) this.healthBarBg.destroy();
     if (this.healthBarFg) this.healthBarFg.destroy();
 
+    // 检查是否还有有效的body，如果没有则直接销毁
+    if (!this.body) {
+      this.setActive(false);
+      this.setVisible(false);
+      this.destroy();
+      return;
+    }
+
     // 死亡动画
     this.scene.tweens.add({
       targets: this,
@@ -243,11 +251,12 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
       alpha: 0,
       duration: 300,
       onComplete: () => {
-        this.setActive(false);
-        this.setVisible(false);
-        if (this.world && this.body) {
+        // 再次检查body是否存在
+        if (this.body && this.world) {
           this.world.remove(this.body);
         }
+        this.setActive(false);
+        this.setVisible(false);
         this.destroy();
       }
     });

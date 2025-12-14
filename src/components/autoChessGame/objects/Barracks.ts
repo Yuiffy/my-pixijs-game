@@ -48,8 +48,14 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     const textureExists = scene.textures.exists(barracksTextureKey);
     console.log(`Barracks texture '${barracksTextureKey}' exists: ${textureExists}`);
 
-    this.setStatic(true);
-    this.setSensor(true);
+    // 确保body正确初始化
+    if (this.body) {
+      // 先设置sensor，然后设置static
+      this.setSensor(true);
+      this.setStatic(true);
+    } else {
+      console.error(`Barracks body not created properly for ${unitKey}`);
+    }
 
     // 视觉调整：看起来像底座
     this.setDisplaySize(70, 70);
@@ -70,16 +76,8 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Barracks sprite setup complete', data: { visible: this.visible, alpha: this.alpha, depth: this.depth, displaySize: { width: this.displayWidth, height: this.displayHeight } }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion
 
-    // 标识 - 使用更明显的标识
-    this.indicator = scene.add.text(x, y + 40, '🏰', { fontSize: '30px' }).setOrigin(0.5).setDepth(101);
-
-    // 添加一个明显的红色调试方块
-    const debugRect = scene.add.rectangle(x, y, 100, 100, 0xff0000, 1.0).setDepth(1000);
-    debugRect.setStrokeStyle(5, 0x000000);
-    console.log(`Added large red debug rectangle at (${x}, ${y}) for ${unitKey} in scene: ${scene.scene.key}`);
-
-    // 也添加Barracks本身的一些调试
-    console.log(`Barracks sprite added to scene: ${scene.scene.key}, Barracks visible: ${this.visible}`);
+    // 标识 - 使用简单的标识
+    this.indicator = scene.add.text(x, y + 40, '🏠', { fontSize: '20px' }).setOrigin(0.5).setDepth(101);
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Indicator text added', data: { indicatorText: '🏠', indicatorX: x, indicatorY: y + 40 }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion
@@ -138,13 +136,26 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   update() {
     // Barracks update method - currently empty but called by MainScene
-    console.log(`Barracks ${this.unitKey} at (${this.x}, ${this.y}) visible: ${this.visible}, alpha: ${this.alpha}, depth: ${this.depth}, texture: ${this.texture.key}, scale: ${this.scale}, rotation: ${this.rotation}`);
+    const bodyExists = !!this.body;
+    const bodyPosition = this.body ? { x: this.body.position.x, y: this.body.position.y } : null;
+    console.log(`Barracks ${this.unitKey} at (${this.x}, ${this.y}) visible: ${this.visible}, alpha: ${this.alpha}, depth: ${this.depth}, texture: ${this.texture.key}, scale: ${this.scale}, rotation: ${this.rotation}, body exists: ${bodyExists}, body position: ${JSON.stringify(bodyPosition)}`);
+
+    // 如果body不存在但对象还活跃，尝试重新创建或修复
+    if (!bodyExists && this.active) {
+      console.error(`Barracks ${this.unitKey} has no body but is still active!`);
+    }
+
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:update', message: 'Barracks update called', data: { unitKey: this.unitKey, position: { x: this.x, y: this.y }, visible: this.visible, alpha: this.alpha, depth: this.depth, texture: this.texture.key, scale: this.scale, rotation: this.rotation }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:update', message: 'Barracks update called', data: { unitKey: this.unitKey, position: { x: this.x, y: this.y }, visible: this.visible, alpha: this.alpha, depth: this.depth, texture: this.texture.key, scale: this.scale, rotation: this.rotation, bodyExists, bodyPosition }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
     // #endregion
   }
 
   destroy(fromScene?: boolean) {
+    // 停止所有相关的tween动画
+    if (this.scene && this.scene.tweens) {
+      this.scene.tweens.killTweensOf(this);
+    }
+
     if (this.spawnTimer) this.spawnTimer.remove();
     if (this.indicator) this.indicator.destroy();
     super.destroy(fromScene);
