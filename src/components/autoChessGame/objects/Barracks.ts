@@ -44,8 +44,15 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.unitKey = unitKey;
     this.unitData = unitData;
 
-    // 检查纹理是否存在
+    // 检查纹理是否真的存在
     const textureExists = scene.textures.exists(barracksTextureKey);
+    console.log(`Barracks texture '${barracksTextureKey}' exists: ${textureExists}`);
+    if (textureExists) {
+      const texture = scene.textures.get(barracksTextureKey);
+      console.log(`Barracks texture size: ${texture.source[0].width}x${texture.source[0].height}`);
+    }
+
+    // 使用已有的textureExists变量
     const textureFrame = textureExists ? scene.textures.getFrame(barracksTextureKey) : null;
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Texture validation', data: { barracksTextureKey, textureExists, textureFrame: textureFrame ? { width: textureFrame.width, height: textureFrame.height } : null }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A5' }) }).catch(() => {});
@@ -56,10 +63,10 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
     // 视觉调整：看起来像底座
     this.setDisplaySize(70, 70);
-    this.setAlpha(0.8); // 提高透明度，让兵营更容易看到
+    this.setAlpha(1.0); // 设置为完全不透明
 
     // 注意：Matter Sprite 已自动添加到场景
-    this.setDepth(10); // 设置更高的深度，确保在所有元素之上显示
+    this.setDepth(100); // 设置非常高的深度，确保在所有元素之上显示
 
     // 检查位置是否在可见区域内
     const sceneWidth = scene.sys.game.config.width as number;
@@ -73,8 +80,32 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Barracks sprite setup complete', data: { visible: this.visible, alpha: this.alpha, depth: this.depth, displaySize: { width: this.displayWidth, height: this.displayHeight } }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion
 
-    // 标识
-    this.indicator = scene.add.text(x, y + 40, '🏠', { fontSize: '20px' }).setOrigin(0.5);
+    // 标识 - 使用更明显的标识
+    this.indicator = scene.add.text(x, y + 40, '🏰', { fontSize: '30px' }).setOrigin(0.5).setDepth(101);
+
+    // 添加调试边框，让Barracks更容易看到
+    const debugRect = scene.add.rectangle(x, y, 80, 80, 0xff0000, 0.8).setDepth(99);
+    debugRect.setStrokeStyle(5, 0xff0000);
+
+    // 添加一个简单的可见元素直接在Barracks位置
+    const simpleRect = scene.add.rectangle(x, y, 20, 20, 0x00ff00).setDepth(101);
+    console.log(`Added simple green rectangle at (${x}, ${y})`);
+
+    // 添加文本标签
+    const label = scene.add.text(x, y - 30, `BARRACKS\n${unitKey}`, {
+      fontSize: '10px',
+      color: '#ffffff',
+      align: 'center'
+    }).setOrigin(0.5).setDepth(102);
+
+    // 添加闪烁效果
+    scene.tweens.add({
+      targets: [this, debugRect, simpleRect],
+      alpha: { from: 1, to: 0.3 },
+      duration: 500,
+      yoyo: true,
+      repeat: -1
+    });
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Indicator text added', data: { indicatorText: '🏠', indicatorX: x, indicatorY: y + 40 }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion
@@ -133,9 +164,9 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   update() {
     // Barracks update method - currently empty but called by MainScene
-    console.log(`Barracks ${this.unitKey} at (${this.x}, ${this.y}) visible: ${this.visible}, alpha: ${this.alpha}, depth: ${this.depth}, texture: ${this.texture.key}`);
+    console.log(`Barracks ${this.unitKey} at (${this.x}, ${this.y}) visible: ${this.visible}, alpha: ${this.alpha}, depth: ${this.depth}, texture: ${this.texture.key}, scale: ${this.scale}, rotation: ${this.rotation}`);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:update', message: 'Barracks update called', data: { unitKey: this.unitKey, position: { x: this.x, y: this.y }, visible: this.visible, alpha: this.alpha, depth: this.depth, texture: this.texture.key }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:update', message: 'Barracks update called', data: { unitKey: this.unitKey, position: { x: this.x, y: this.y }, visible: this.visible, alpha: this.alpha, depth: this.depth, texture: this.texture.key, scale: this.scale, rotation: this.rotation }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
     // #endregion
   }
 

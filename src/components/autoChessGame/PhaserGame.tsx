@@ -50,6 +50,25 @@ export default function PhaserGame() {
         console.log('Phaser game initialized:', game);
         console.log('Game canvas:', game.canvas);
         console.log('Canvas style:', game.canvas?.style);
+        console.log('Canvas visibility:', window.getComputedStyle(game.canvas).visibility);
+        console.log('Canvas display:', window.getComputedStyle(game.canvas).display);
+        console.log('Canvas opacity:', window.getComputedStyle(game.canvas).opacity);
+
+        // 强制设置canvas可见性
+        if (game.canvas) {
+          game.canvas.style.visibility = 'visible';
+          game.canvas.style.display = 'block';
+          game.canvas.style.opacity = '1';
+          console.log('Forced canvas visibility');
+        }
+
+        // 添加一个简单的Phaser调试图形
+        const mainScene = game.scene.getScene('MainScene');
+        if (mainScene) {
+          const debugRect = mainScene.add.rectangle(100, 100, 50, 50, 0xff0000);
+          debugRect.setDepth(1000);
+          console.log('Added debug rectangle to Phaser scene');
+        }
 
         // 添加一些全局样式
         const style = document.createElement('style');
@@ -103,9 +122,25 @@ export default function PhaserGame() {
           position: 'absolute',
           top: 0,
           left: 0,
-          zIndex: 5
+          zIndex: 5,
+          background: 'transparent' // 确保背景透明
         }}
       />
+
+      {/* 调试元素 - 确认容器可见 */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        right: '10px',
+        background: 'red',
+        color: 'white',
+        padding: '5px',
+        zIndex: 1000,
+        fontSize: '12px'
+      }}
+      >
+        Phaser Container OK
+      </div>
 
       {/* UI 覆盖层 - 只覆盖部分区域 */}
       <GameUI gameInstance={gameInstance} />
