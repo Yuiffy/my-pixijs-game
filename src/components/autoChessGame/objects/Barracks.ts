@@ -19,16 +19,59 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Barracks constructor called', data: { unitKey, x, y, unitData }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion
 
-    // 创建兵营纹理
+    // 创建兵营纹理 - 显示兵种形象加底座
     const barracksTextureKey = `barracks_${unitKey}`;
     if (!scene.textures.exists(barracksTextureKey)) {
-      const graphics = scene.add.graphics();
-      graphics.fillStyle(0xffd700); // 金色填充，更容易看到
-      graphics.fillCircle(0, 0, 35);
-      graphics.lineStyle(3, 0x000000); // 黑色描边
-      graphics.strokeCircle(0, 0, 35);
-      graphics.generateTexture(barracksTextureKey, 70, 70);
-      graphics.destroy();
+      const canvas = document.createElement('canvas');
+      canvas.width = 70;
+      canvas.height = 70;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        // 清空canvas
+        ctx.clearRect(0, 0, 70, 70);
+
+        // 绘制底座（房子形状）
+        ctx.fillStyle = '#8B4513'; // 褐色底座
+        ctx.fillRect(10, 45, 50, 20); // 房子主体
+
+        // 房子屋顶
+        ctx.fillStyle = '#654321'; // 深褐色屋顶
+        ctx.beginPath();
+        ctx.moveTo(5, 45);
+        ctx.lineTo(35, 25);
+        ctx.lineTo(65, 45);
+        ctx.closePath();
+        ctx.fill();
+
+        // 屋顶描边
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 房子主体描边
+        ctx.strokeRect(10, 45, 50, 20);
+
+        // 在房子顶部绘制兵种emoji
+        ctx.font = '24px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#000000';
+        ctx.fillText(unitData.emoji || '🏠', 35, 35);
+
+        // 添加到Phaser纹理
+        scene.textures.addCanvas(barracksTextureKey, canvas);
+      } else {
+        // 降级方案：使用简单的graphics
+        const graphics = scene.add.graphics();
+        graphics.fillStyle(0xffd700);
+        graphics.fillCircle(0, 0, 35);
+        graphics.lineStyle(3, 0x000000);
+        graphics.strokeCircle(0, 0, 35);
+        graphics.generateTexture(barracksTextureKey, 70, 70);
+        graphics.destroy();
+      }
+
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Barracks texture created', data: { barracksTextureKey }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A5' }) }).catch(() => {});
       // #endregion
@@ -63,6 +106,27 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
     // 注意：Matter Sprite 已自动添加到场景
     this.setDepth(100); // 设置非常高的深度，确保在所有元素之上显示
+
+    // 添加拖动功能 - 只有在游戏开始前才能拖动
+    this.setInteractive();
+    this.scene.input.setDraggable(this);
+
+    this.on('drag', (pointer, dragX, dragY) => {
+      // 检查游戏是否已经开始
+      const mainScene = this.scene as any;
+      if (mainScene.gameStarted) return; // 游戏开始后不能拖动
+
+      // 限制拖动范围，避免拖出边界
+      const clampedX = Phaser.Math.Clamp(dragX, 80, 920);
+      const clampedY = Phaser.Math.Clamp(dragY, 80, 480);
+
+      this.setPosition(clampedX, clampedY);
+
+      // 更新标识位置
+      if (this.indicator) {
+        this.indicator.setPosition(clampedX, clampedY + 40);
+      }
+    });
 
     // 检查位置是否在可见区域内
     const sceneWidth = scene.sys.game.config.width as number;

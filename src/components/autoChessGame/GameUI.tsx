@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { UNIT_TYPES } from './config/UnitsData';
 
 export default function GameUI({ gameInstance }: any) {
-  const [gold, setGold] = useState(20); // 初始给20块方便测试
+  const [gold, setGold] = useState(10); // 初始金币
   const [shopUnits, setShopUnits] = useState<(string | null)[]>([]); // 允许 null 表示售罄
   const [synergies, setSynergies] = useState({});
   const [shopLevel, setShopLevel] = useState(1);
@@ -20,12 +20,14 @@ export default function GameUI({ gameInstance }: any) {
     const updateBarracksCount = (count: number) => setBarracksCount(count);
     const handleShopLevelUp = (level: number) => setShopLevel(level);
     const handleGameOver = (won: boolean) => setGameOver(won);
+    const handleGoldChanged = (newGold: number) => setGold(newGold);
 
     gameInstance.events.on('UPDATE_SHOP', updateShop);
     gameInstance.events.on('UPDATE_SYNERGY', updateSynergy);
     gameInstance.events.on('BARRACKS_PLACED', updateBarracksCount);
     gameInstance.events.on('SHOP_LEVEL_UP', handleShopLevelUp);
     gameInstance.events.on('GAME_OVER', handleGameOver);
+    gameInstance.events.on('GOLD_CHANGED', handleGoldChanged);
 
     // 初始化请求商店
     gameInstance.events.emit('REFRESH_SHOP');
@@ -36,13 +38,21 @@ export default function GameUI({ gameInstance }: any) {
       gameInstance.events.off('BARRACKS_PLACED', updateBarracksCount);
       gameInstance.events.off('SHOP_LEVEL_UP', handleShopLevelUp);
       gameInstance.events.off('GAME_OVER', handleGameOver);
+      gameInstance.events.off('GOLD_CHANGED', handleGoldChanged);
     };
   }, [gameInstance]);
 
   const refreshShop = () => {
-    if (gold >= 2) {
-      setGold(g => g - 2);
+    if (gold >= 1) {
+      setGold(g => g - 1);
       gameInstance.events.emit('REFRESH_SHOP');
+    }
+  };
+
+  const levelUpShop = () => {
+    if (gold >= 5 && shopLevel < 5) {
+      setGold(g => g - 5);
+      gameInstance.events.emit('LEVEL_UP_SHOP');
     }
   };
 
@@ -168,8 +178,12 @@ export default function GameUI({ gameInstance }: any) {
       {/* 底部面板：商店 - 固定在底部 */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 15 }}>
-          <button onClick={refreshShop} disabled={gold < 2} style={{ padding: '15px 20px', background: gold >= 2 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
-            刷新 ($2)
+          <button onClick={refreshShop} disabled={gold < 1} style={{ padding: '15px 20px', background: gold >= 1 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+            刷新 ($1)
+          </button>
+
+          <button onClick={levelUpShop} disabled={gold < 5 || shopLevel >= 5} style={{ padding: '15px 20px', background: (gold >= 5 && shopLevel < 5) ? '#28a745' : '#555', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+            升本 ($5)
           </button>
 
           {shopUnits.map((key, idx) => {

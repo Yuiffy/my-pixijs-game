@@ -50,27 +50,42 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
   static createTexture(scene, config) {
     console.log(`Creating texture for ${config.name}: ${config.textureKey}, emoji: ${config.emoji}, color: ${config.color}`);
 
-    // 使用Phaser graphics创建纹理
-    const graphics = scene.add.graphics();
+    // 使用canvas创建纹理以正确显示emoji
+    const canvas = document.createElement('canvas');
+    canvas.width = 40;
+    canvas.height = 40;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      console.error('Failed to get canvas context');
+      return;
+    }
+
+    // 清空canvas
+    ctx.clearRect(0, 0, 40, 40);
 
     // 背景圆
-    const color = Phaser.Display.Color.HexStringToColor(config.color || '#ffffff');
-    graphics.fillStyle(color.color);
-    graphics.fillCircle(20, 20, 18);
+    ctx.fillStyle = config.color || '#ffffff';
+    ctx.beginPath();
+    ctx.arc(20, 20, 18, 0, Math.PI * 2);
+    ctx.fill();
 
     // 描边
-    graphics.lineStyle(2, 0x000000);
-    graphics.strokeCircle(20, 20, 18);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-    // 先用简单的形状代替emoji，测试纹理是否正常工作
-    graphics.fillStyle(0xff00ff); // 粉色
-    graphics.fillCircle(20, 20, 5); // 中心小圆点
+    // 绘制emoji - 使用更好的字体设置
+    ctx.font = '20px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000000';
+    ctx.fillText(config.emoji || '⚪', 20, 20);
 
-    // 生成纹理
-    graphics.generateTexture(config.textureKey, 40, 40);
-    graphics.destroy();
+    // 添加到Phaser纹理
+    scene.textures.addCanvas(config.textureKey, canvas);
 
-    console.log(`Texture created: ${config.textureKey}`);
+    console.log(`Texture created: ${config.textureKey} with emoji: ${config.emoji}`);
   }
 
   createHealthBar() {
@@ -78,8 +93,9 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.healthBarBg = this.scene.add.rectangle(0, -30, 40, 4, 0x000000);
     this.healthBarBg.setStrokeStyle(1, 0xffffff);
 
-    // 创建血条前景
-    this.healthBarFg = this.scene.add.rectangle(0, -30, 40, 4, 0x00ff00);
+    // 创建血条前景 - 根据敌我区分颜色
+    const healthColor = this.isEnemy ? 0xff0000 : 0x00ff00; // 敌方红色，我方绿色
+    this.healthBarFg = this.scene.add.rectangle(0, -30, 40, 4, healthColor);
 
     // 将血条添加到单位容器中
     this.healthBarBg.setOrigin(0.5);
@@ -286,13 +302,21 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
       this.scene.tweens.killTweensOf(this);
     }
 
-    // 从group中移除
+    // 从group中移除并奖励金币
     const mainScene = this.scene as any;
     if (mainScene.playerUnits && mainScene.playerUnits.children) {
       mainScene.playerUnits.remove(this);
     }
     if (mainScene.enemyUnits && mainScene.enemyUnits.children) {
       mainScene.enemyUnits.remove(this);
+    }
+
+    // 如果是敌方单位死亡，给玩家奖励金币
+    if (this.isEnemy && mainScene.playerGold !== undefined) {
+      const goldReward = 1; // 每个敌方单位奖励1金币
+      mainScene.playerGold += goldReward;
+      mainScene.game.events.emit('GOLD_CHANGED', mainScene.playerGold);
+      console.log(`Enemy defeated! +${goldReward} gold, total: ${mainScene.playerGold}`);
     }
 
     // 移除body

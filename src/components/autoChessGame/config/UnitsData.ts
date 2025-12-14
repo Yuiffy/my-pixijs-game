@@ -93,8 +93,116 @@ export const UNIT_TYPES = {
     mass: 100,
     skill: 'charge',
     textureKey: 'mecha_tank'
+  },
+
+  // 新增兵种
+  archer: {
+    name: '精灵弓箭手',
+    cost: 2,
+    tier: 1,
+    factions: [FACTIONS.ANCIENT],
+    hp: 65,
+    damage: 18,
+    spawnInterval: 3500,
+    emoji: '🏹',
+    color: '#90EE90',
+    mass: 25,
+    skill: 'ranged_attack',
+    attackRange: 120, // 远程攻击范围
+    textureKey: 'archer'
+  },
+
+  knight: {
+    name: '圣骑士',
+    cost: 3,
+    tier: 2,
+    factions: [FACTIONS.ANCIENT],
+    hp: 150,
+    damage: 35,
+    spawnInterval: 5500,
+    emoji: '⚔️',
+    color: '#FFD700',
+    mass: 80,
+    skill: 'shield_bash',
+    textureKey: 'knight'
+  },
+
+  assassin: {
+    name: '影刺客',
+    cost: 3,
+    tier: 2,
+    factions: [FACTIONS.CYBER],
+    hp: 70,
+    damage: 50,
+    spawnInterval: 4000,
+    emoji: '🗡️',
+    color: '#8A2BE2',
+    mass: 30,
+    skill: 'backstab',
+    textureKey: 'assassin'
+  },
+
+  dragon: {
+    name: '小火龙',
+    cost: 4,
+    tier: 3,
+    factions: [FACTIONS.MAGIC],
+    hp: 120,
+    damage: 45,
+    spawnInterval: 6500,
+    emoji: '🐉',
+    color: '#FF4500',
+    mass: 60,
+    skill: 'fire_breath',
+    attackRange: 100, // 远程攻击
+    textureKey: 'dragon'
+  },
+
+  golem: {
+    name: '石头傀儡',
+    cost: 4,
+    tier: 3,
+    factions: [FACTIONS.ANCIENT],
+    hp: 300,
+    damage: 25,
+    spawnInterval: 7500,
+    emoji: '🪨',
+    color: '#696969',
+    mass: 150,
+    skill: 'earthquake',
+    textureKey: 'golem'
+  },
+
+  sniper: {
+    name: '狙击手',
+    cost: 5,
+    tier: 4,
+    factions: [FACTIONS.CYBER],
+    hp: 80,
+    damage: 80,
+    spawnInterval: 9000,
+    emoji: '🎯',
+    color: '#FF1493',
+    mass: 35,
+    skill: 'snipe',
+    attackRange: 200, // 超远距离攻击
+    textureKey: 'sniper'
+  },
+
+  paladin: {
+    name: '大天使',
+    cost: 5,
+    tier: 4,
+    factions: [FACTIONS.ANCIENT, FACTIONS.MAGIC],
+    hp: 250,
+    damage: 40,
+    spawnInterval: 8500,
+    emoji: '👼',
+    color: '#FFFF00',
+    mass: 70,
+    skill: 'divine_shield',
+    textureKey: 'paladin'
   }
-  // ... 后续可以在这里加几十个角色
 };
 
 export const SYNERGIES = {

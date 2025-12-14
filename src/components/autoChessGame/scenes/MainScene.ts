@@ -31,6 +31,8 @@ export default class MainScene extends Phaser.Scene {
 
   enemyHp!: number;
 
+  playerGold!: number;
+
   playerBaseBarBg!: Phaser.GameObjects.Rectangle;
 
   playerBaseBarFg!: Phaser.GameObjects.Rectangle;
@@ -95,6 +97,7 @@ export default class MainScene extends Phaser.Scene {
 
     this.playerHp = 100;
     this.enemyHp = 100;
+    this.playerGold = 10; // 初始金币
 
     // --- 5. 事件监听 ---
     this.game.events.off('AUTO_BUY_UNIT');
@@ -109,6 +112,9 @@ export default class MainScene extends Phaser.Scene {
 
     this.game.events.off('REFRESH_SHOP');
     this.game.events.on('REFRESH_SHOP', this.handleRefreshShop, this);
+
+    this.game.events.off('LEVEL_UP_SHOP');
+    this.game.events.on('LEVEL_UP_SHOP', this.handleLevelUpShop, this);
 
     // 碰撞伤害逻辑
     this.matter.world.on('collisionstart', (event: any) => {
@@ -128,14 +134,6 @@ export default class MainScene extends Phaser.Scene {
       });
     });
 
-    // 启动敌军波次
-    this.waveTimer = this.time.addEvent({
-      delay: 8000,
-      callback: this.spawnEnemyWave,
-      callbackScope: this,
-      loop: true
-    });
-
     this.gameStarted = false;
     this.currentWave = 0;
     this.initializeShop();
@@ -147,9 +145,6 @@ export default class MainScene extends Phaser.Scene {
       backgroundColor: '#000000',
       padding: { x: 10, y: 5 }
     }).setOrigin(0.5).setDepth(2000);
-
-    // 立即开始第一波
-    this.spawnEnemyWave();
   }
 
   createBase(x: number, y: number, label: string, color: number, collidesWith: number) {
@@ -162,14 +157,27 @@ export default class MainScene extends Phaser.Scene {
 
   checkBaseCollision(baseBody: any, unitObj: any) {
     if (unitObj instanceof Unit) {
+      const { now } = this.time;
+
+      // 检查单位是否可以攻击基地（避免连续攻击）
+      if (!unitObj.lastBaseAttackTime) {
+        unitObj.lastBaseAttackTime = 0;
+      }
+
+      if (now - unitObj.lastBaseAttackTime < 1000) { // 1秒冷却
+        return;
+      }
+
       if (baseBody.label === 'BASE_PLAYER' && unitObj.isEnemy) {
-        this.playerHp -= 2;
-        unitObj.takeDamage(9999);
+        this.playerHp -= 1; // 改为每次1点伤害
+        unitObj.lastBaseAttackTime = now;
         this.updateBaseHealthBars();
+        // 不让单位自爆，继续攻击
       } else if (baseBody.label === 'BASE_ENEMY' && !unitObj.isEnemy) {
-        this.enemyHp -= 2;
-        unitObj.takeDamage(9999);
+        this.enemyHp -= 1; // 改为每次1点伤害
+        unitObj.lastBaseAttackTime = now;
         this.updateBaseHealthBars();
+        // 不让单位自爆，继续攻击
       }
     }
   }
@@ -270,17 +278,34 @@ export default class MainScene extends Phaser.Scene {
   initializeShop() { this.shopLevel = 1; this.refreshShop(); }
 
   refreshShop() {
-    const keys = Object.keys(UNIT_TYPES);
-    const shop = [
-      keys[Math.floor(Math.random() * keys.length)],
-      keys[Math.floor(Math.random() * keys.length)],
-      keys[Math.floor(Math.random() * keys.length)]
-    ];
+    // 根据商店等级限制可用单位
+    const availableUnits = Object.keys(UNIT_TYPES).filter(key => {
+      const unit = (UNIT_TYPES as any)[key];
+      return unit.tier <= this.shopLevel; // 只能购买当前等级及以下的单位
+    });
+
+    // 随机选择3个单位
+    const shop = [];
+    const shuffled = [...availableUnits].sort(() => Math.random() - 0.5);
+
+    for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+      shop.push(shuffled[i]);
+    }
+
     this.currentShop = shop;
     this.game.events.emit('UPDATE_SHOP', shop);
   }
 
   handleRefreshShop() { this.refreshShop(); }
+
+  handleLevelUpShop() {
+    if (this.shopLevel < 5) {
+      this.shopLevel++;
+      this.game.events.emit('SHOP_LEVEL_UP', this.shopLevel);
+      this.refreshShop(); // 升级后刷新商店
+      console.log(`Shop level up to ${this.shopLevel}`);
+    }
+  }
 
   update(time: number, delta: number) {
     this.playerUnits.children.each((u: any) => u.update(time, delta));
@@ -306,6 +331,19 @@ export default class MainScene extends Phaser.Scene {
     if (this.notStartedText) {
       this.notStartedText.destroy();
     }
+
+    // 同步当前金币到UI
+    this.game.events.emit('GOLD_CHANGED', this.playerGold);
+
+    // 启动敌军波次
+    this.spawnEnemyWave(); // 立即开始第一波
+    this.waveTimer = this.time.addEvent({
+      delay: 8000,
+      callback: this.spawnEnemyWave,
+      callbackScope: this,
+      loop: true
+    });
+
     console.log('Game started! UI communication working.');
   }
 
