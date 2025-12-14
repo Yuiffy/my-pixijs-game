@@ -119,8 +119,11 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
       this.tryAttack(time);
     }
 
-    // 边界检查：掉出地图死亡
-    if (this.y > 800 || this.y < -100 || this.x < -100 || this.x > 1100) {
+    // 边界约束：防止单位离开地图
+    this.constrainToBattlefield();
+
+    // 边界检查：掉出地图死亡（作为最后手段）
+    if (this.y > 500 || this.y < 50 || this.x < 50 || this.x > 950) {
       this.takeDamage(9999);
     }
   }
@@ -226,6 +229,48 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
 
     if (this.hp <= 0) {
       this.die();
+    }
+  }
+
+  constrainToBattlefield() {
+    // 战场边界 (避免撞到基地，留出边距，也留出空间给商店)
+    const minX = 60; // 左边界，留出空间
+    const maxX = 940; // 右边界，留出空间
+    const minY = 60; // 上边界，留出空间给UI
+    const maxY = 420; // 下边界，留出空间给商店
+
+    // 边界缓冲区大小
+    const buffer = 25;
+
+    let forceX = 0;
+    let forceY = 0;
+
+    // X轴边界约束
+    if (this.x < minX + buffer) {
+      forceX = (minX + buffer - this.x) * 0.005; // 向右推
+    } else if (this.x > maxX - buffer) {
+      forceX = (maxX - buffer - this.x) * 0.005; // 向左推
+    }
+
+    // Y轴边界约束
+    if (this.y < minY + buffer) {
+      forceY = (minY + buffer - this.y) * 0.005; // 向下推
+    } else if (this.y > maxY - buffer) {
+      forceY = (maxY - buffer - this.y) * 0.005; // 向上推
+    }
+
+    // 应用边界约束力
+    if (forceX !== 0 || forceY !== 0) {
+      this.applyForce(new Phaser.Math.Vector2(forceX, forceY));
+    }
+
+    // 如果完全超出边界，强制拉回来
+    if (this.x < minX - 50 || this.x > maxX + 50 || this.y < minY - 50 || this.y > maxY + 50) {
+      this.setPosition(
+        Phaser.Math.Clamp(this.x, minX, maxX),
+        Phaser.Math.Clamp(this.y, minY, maxY)
+      );
+      this.setVelocity(0, 0);
     }
   }
 
