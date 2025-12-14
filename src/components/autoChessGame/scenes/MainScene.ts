@@ -105,6 +105,7 @@ export default class MainScene extends Phaser.Scene {
 
     this.game.events.off('GAME_START');
     this.game.events.on('GAME_START', this.startGame, this);
+    console.log('MainScene: GAME_START event listener registered');
 
     this.game.events.off('REFRESH_SHOP');
     this.game.events.on('REFRESH_SHOP', this.handleRefreshShop, this);

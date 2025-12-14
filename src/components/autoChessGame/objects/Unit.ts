@@ -69,8 +69,8 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     }
 
     // 注意：Matter Sprite 构造函数已经将对象添加到场景中，不需要再次调用 add.existing
-    console.log(`Unit created at ${x} ${y} texture: ${config.textureKey}, isEnemy: ${isEnemy}`);
-    console.log(`Unit sprite visible: ${this.visible}, active: ${this.active}, depth: ${this.depth}`);
+    // console.log(`Unit created at ${x} ${y} texture: ${config.textureKey}, isEnemy: ${isEnemy}`);
+    // console.log(`Unit sprite visible: ${this.visible}, active: ${this.active}, depth: ${this.depth}`);
   }
 
   update(time: number, delta: number) {

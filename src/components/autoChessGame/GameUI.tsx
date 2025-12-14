@@ -102,8 +102,15 @@ export default function GameUI({ gameInstance }: any) {
   };
 
   const startGame = () => {
-    setGameStarted(true);
-    gameInstance.events.emit('GAME_START');
+    console.log('UI: Start game button clicked');
+    console.log('UI: gameInstance exists:', !!gameInstance);
+    if (gameInstance) {
+      console.log('UI: Emitting GAME_START event');
+      gameInstance.events.emit('GAME_START');
+      setGameStarted(true);
+    } else {
+      console.error('UI: gameInstance is null!');
+    }
   };
 
   const restartGame = () => {

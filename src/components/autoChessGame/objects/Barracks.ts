@@ -73,31 +73,13 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     // 标识 - 使用更明显的标识
     this.indicator = scene.add.text(x, y + 40, '🏰', { fontSize: '30px' }).setOrigin(0.5).setDepth(101);
 
-    // 添加调试边框，让Barracks更容易看到
-    const debugRect = scene.add.rectangle(x, y, 80, 80, 0xff0000, 0.8).setDepth(99);
-    debugRect.setStrokeStyle(5, 0xff0000);
+    // 添加一个明显的红色调试方块
+    const debugRect = scene.add.rectangle(x, y, 100, 100, 0xff0000, 1.0).setDepth(1000);
+    debugRect.setStrokeStyle(5, 0x000000);
+    console.log(`Added large red debug rectangle at (${x}, ${y}) for ${unitKey} in scene: ${scene.scene.key}`);
 
-    // 添加一个简单的可见元素直接在Barracks位置
-    const simpleRect = scene.add.rectangle(x, y, 20, 20, 0x00ff00).setDepth(101);
-    console.log(`Added simple green rectangle at (${x}, ${y}) for ${unitKey}`);
-    console.log(`Scene reference valid: ${!!scene}, scene.add exists: ${!!scene.add}`);
-
-    // 添加文本标签
-    const label = scene.add.text(x, y - 30, `BARRACKS\n${unitKey}`, {
-      fontSize: '10px',
-      color: '#ffffff',
-      align: 'center'
-    }).setOrigin(0.5).setDepth(102);
-    console.log(`Added text label for ${unitKey}`);
-
-    // 添加闪烁效果
-    scene.tweens.add({
-      targets: [this, debugRect, simpleRect],
-      alpha: { from: 1, to: 0.3 },
-      duration: 500,
-      yoyo: true,
-      repeat: -1
-    });
+    // 也添加Barracks本身的一些调试
+    console.log(`Barracks sprite added to scene: ${scene.scene.key}, Barracks visible: ${this.visible}`);
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Indicator text added', data: { indicatorText: '🏠', indicatorX: x, indicatorY: y + 40 }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion

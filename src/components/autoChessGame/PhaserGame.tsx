@@ -6,20 +6,30 @@ import { useEffect, useRef, useState } from 'react';
 import GameUI from './GameUI';
 
 let globalGameInstance = null;
+let instanceCount = 0;
 
 export default function PhaserGame() {
   const gameContainer = useRef(null);
   const [gameInstance, setGameInstance] = useState(null);
+  const hasInitialized = useRef(false);
+  instanceCount++;
+  console.log(`PhaserGame component rendered, instance count: ${instanceCount}, has global instance: ${!!globalGameInstance}`);
 
   useEffect(() => {
-    let game = null;
-
+    // 防止多次初始化
+    if (hasInitialized.current) {
+      console.log('Component already initialized, skipping');
+      return () => {};
+    }
+    hasInitialized.current = true;
     // 如果已经有一个全局游戏实例，直接使用它
     if (globalGameInstance) {
       console.log('Using existing global Phaser game instance');
       setGameInstance(globalGameInstance);
       return () => {}; // 早期返回时的清理函数
     }
+
+    let game = null;
 
     async function initGame() {
       if (typeof window === 'undefined') return;
