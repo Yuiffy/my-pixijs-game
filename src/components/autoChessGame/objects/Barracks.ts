@@ -135,19 +135,10 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
   }
 
   update() {
-    // Barracks update method - currently empty but called by MainScene
-    const bodyExists = !!this.body;
-    const bodyPosition = this.body ? { x: this.body.position.x, y: this.body.position.y } : null;
-    console.log(`Barracks ${this.unitKey} at (${this.x}, ${this.y}) visible: ${this.visible}, alpha: ${this.alpha}, depth: ${this.depth}, texture: ${this.texture.key}, scale: ${this.scale}, rotation: ${this.rotation}, body exists: ${bodyExists}, body position: ${JSON.stringify(bodyPosition)}`);
-
-    // 如果body不存在但对象还活跃，尝试重新创建或修复
-    if (!bodyExists && this.active) {
+    // Barracks update method - 检查body状态
+    if (!this.body && this.active) {
       console.error(`Barracks ${this.unitKey} has no body but is still active!`);
     }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:update', message: 'Barracks update called', data: { unitKey: this.unitKey, position: { x: this.x, y: this.y }, visible: this.visible, alpha: this.alpha, depth: this.depth, texture: this.texture.key, scale: this.scale, rotation: this.rotation, bodyExists, bodyPosition }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A7' }) }).catch(() => {});
-    // #endregion
   }
 
   destroy(fromScene?: boolean) {

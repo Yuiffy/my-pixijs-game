@@ -236,29 +236,28 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     if (this.healthBarBg) this.healthBarBg.destroy();
     if (this.healthBarFg) this.healthBarFg.destroy();
 
-    // 检查是否还有有效的body，如果没有则直接销毁
-    if (!this.body) {
-      this.setActive(false);
-      this.setVisible(false);
-      this.destroy();
-      return;
+    // 立即停止所有tween动画
+    if (this.scene && this.scene.tweens) {
+      this.scene.tweens.killTweensOf(this);
     }
 
-    // 死亡动画
-    this.scene.tweens.add({
-      targets: this,
-      scale: 0,
-      alpha: 0,
-      duration: 300,
-      onComplete: () => {
-        // 再次检查body是否存在
-        if (this.body && this.world) {
-          this.world.remove(this.body);
-        }
-        this.setActive(false);
-        this.setVisible(false);
-        this.destroy();
-      }
-    });
+    // 从group中移除
+    const mainScene = this.scene as any;
+    if (mainScene.playerUnits && mainScene.playerUnits.children) {
+      mainScene.playerUnits.remove(this);
+    }
+    if (mainScene.enemyUnits && mainScene.enemyUnits.children) {
+      mainScene.enemyUnits.remove(this);
+    }
+
+    // 移除body
+    if (this.body && this.world) {
+      this.world.remove(this.body);
+    }
+
+    // 立即销毁，不使用动画
+    this.setActive(false);
+    this.setVisible(false);
+    this.destroy();
   }
 }
