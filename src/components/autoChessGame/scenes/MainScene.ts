@@ -47,6 +47,8 @@ export default class MainScene extends Phaser.Scene {
 
   currentWave!: number;
 
+  notStartedText!: Phaser.GameObjects.Text;
+
   shopLevel!: number;
 
   currentShop!: string[];
@@ -137,6 +139,14 @@ export default class MainScene extends Phaser.Scene {
     this.currentWave = 0;
     this.initializeShop();
 
+    // 添加游戏未开始的提示
+    this.notStartedText = this.add.text(500, 300, '点击"开始战斗"开始游戏', {
+      fontSize: '24px',
+      color: '#ffffff',
+      backgroundColor: '#000000',
+      padding: { x: 10, y: 5 }
+    }).setOrigin(0.5).setDepth(2000);
+
     // 立即开始第一波
     this.spawnEnemyWave();
   }
@@ -197,6 +207,8 @@ export default class MainScene extends Phaser.Scene {
     const barracks = new Barracks(this, pos.x, pos.y, unitKey, data);
     this.playerBarracks.push(barracks);
     console.log(`✅ Barracks created for ${unitKey} at (${pos.x}, ${pos.y}). Total barracks: ${this.playerBarracks.length}`);
+    console.log(`Barracks object:`, barracks);
+    console.log(`Barracks position after creation: (${barracks.x}, ${barracks.y})`);
 
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainScene.ts:handleAutoBuyUnit', message: 'Barracks added to scene', data: { unitKey, totalBarracks: this.playerBarracks.length, barracksVisible: barracks.visible, barracksExists: !!barracks }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
@@ -288,7 +300,13 @@ export default class MainScene extends Phaser.Scene {
     this.game.events.emit('UPDATE_SYNERGY', counts);
   }
 
-  startGame() { this.gameStarted = true; }
+  startGame() {
+    this.gameStarted = true;
+    if (this.notStartedText) {
+      this.notStartedText.destroy();
+    }
+    console.log('Game started! UI communication working.');
+  }
 
   gameOver(won: boolean) {
     this.gameStarted = false;

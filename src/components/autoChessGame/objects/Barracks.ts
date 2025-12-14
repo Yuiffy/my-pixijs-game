@@ -44,19 +44,9 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.unitKey = unitKey;
     this.unitData = unitData;
 
-    // 检查纹理是否真的存在
+    // 简化的纹理检查
     const textureExists = scene.textures.exists(barracksTextureKey);
     console.log(`Barracks texture '${barracksTextureKey}' exists: ${textureExists}`);
-    if (textureExists) {
-      const texture = scene.textures.get(barracksTextureKey);
-      console.log(`Barracks texture size: ${texture.source[0].width}x${texture.source[0].height}`);
-    }
-
-    // 使用已有的textureExists变量
-    const textureFrame = textureExists ? scene.textures.getFrame(barracksTextureKey) : null;
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Texture validation', data: { barracksTextureKey, textureExists, textureFrame: textureFrame ? { width: textureFrame.width, height: textureFrame.height } : null }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A5' }) }).catch(() => {});
-    // #endregion
 
     this.setStatic(true);
     this.setSensor(true);
@@ -89,7 +79,8 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
     // 添加一个简单的可见元素直接在Barracks位置
     const simpleRect = scene.add.rectangle(x, y, 20, 20, 0x00ff00).setDepth(101);
-    console.log(`Added simple green rectangle at (${x}, ${y})`);
+    console.log(`Added simple green rectangle at (${x}, ${y}) for ${unitKey}`);
+    console.log(`Scene reference valid: ${!!scene}, scene.add exists: ${!!scene.add}`);
 
     // 添加文本标签
     const label = scene.add.text(x, y - 30, `BARRACKS\n${unitKey}`, {
@@ -97,6 +88,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       color: '#ffffff',
       align: 'center'
     }).setOrigin(0.5).setDepth(102);
+    console.log(`Added text label for ${unitKey}`);
 
     // 添加闪烁效果
     scene.tweens.add({

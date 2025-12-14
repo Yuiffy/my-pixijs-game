@@ -5,12 +5,21 @@
 import { useEffect, useRef, useState } from 'react';
 import GameUI from './GameUI';
 
+let globalGameInstance = null;
+
 export default function PhaserGame() {
   const gameContainer = useRef(null);
   const [gameInstance, setGameInstance] = useState(null);
 
   useEffect(() => {
     let game = null;
+
+    // 如果已经有一个全局游戏实例，直接使用它
+    if (globalGameInstance) {
+      console.log('Using existing global Phaser game instance');
+      setGameInstance(globalGameInstance);
+      return () => {}; // 早期返回时的清理函数
+    }
 
     async function initGame() {
       if (typeof window === 'undefined') return;
@@ -44,6 +53,7 @@ export default function PhaserGame() {
         };
 
         game = new Phaser.Game(config);
+        globalGameInstance = game; // 设置全局实例
         setGameInstance(game);
 
         // 添加调试日志
@@ -97,6 +107,7 @@ export default function PhaserGame() {
     return () => {
       if (game) {
         game.destroy(true);
+        globalGameInstance = null; // 清理全局实例
         setGameInstance(null);
       }
     };
