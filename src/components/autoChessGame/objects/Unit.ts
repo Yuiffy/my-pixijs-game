@@ -186,25 +186,112 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     if (!this.target || time - this.lastAttackTime < this.attackCooldown / this.attackSpeedMultiplier) return;
 
     const dist = Phaser.Math.Distance.Between(this.x, this.y, this.target.x, this.target.y);
-    if (dist < 60) { // 攻击范围
+    const attackRange = this.config.attackRange || 60; // 默认近战范围60
+
+    if (dist < attackRange) {
       this.lastAttackTime = time;
       const actualDamage = this.damage * this.damageMultiplier;
 
-      // 对目标造成伤害
-      if (this.target.takeDamage) {
-        this.target.takeDamage(actualDamage);
-      }
+      // 检查是否是远程攻击
+      if (this.config.attackRange && this.config.attackRange > 60) {
+        // 远程攻击：创建弹道
+        this.createProjectile(this.target, actualDamage);
+      } else {
+        // 近战攻击：直接造成伤害
+        if (this.target.takeDamage) {
+          this.target.takeDamage(actualDamage);
+        }
 
-      // 如果有护盾，先扣护盾
-      if (this.shield > 0) {
-        const shieldDamage = Math.min(actualDamage, this.shield);
-        this.shield -= shieldDamage;
-      }
+        // 如果有护盾，先扣护盾
+        if (this.shield > 0) {
+          const shieldDamage = Math.min(actualDamage, this.shield);
+          this.shield -= shieldDamage;
+        }
 
-      // 爆炸效果（川妹羁绊）
-      if (this.hasExplosion && dist < 40) {
-        this.explodeNearbyEnemies(actualDamage * 0.5);
+        // 爆炸效果（川妹羁绊）
+        if (this.hasExplosion && dist < 40) {
+          this.explodeNearbyEnemies(actualDamage * 0.5);
+        }
       }
+    }
+  }
+
+  createProjectile(target, damage) {
+    // 创建弹道效果
+    const projectile = this.scene.add.circle(this.x, this.y, 3, this.isEnemy ? 0xff0000 : 0x00ff00);
+    projectile.setDepth(15);
+
+    // 计算飞行方向
+    const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
+    const distance = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
+    const speed = 8; // 弹道飞行速度
+    const duration = (distance / speed) * 1000; // 飞行时间（毫秒）
+
+    // 弹道动画
+    this.scene.tweens.add({
+      targets: projectile,
+      x: target.x,
+      y: target.y,
+      duration,
+      ease: 'Linear',
+      onComplete: () => {
+        // 弹道命中
+        if (target.takeDamage) {
+          target.takeDamage(damage);
+
+          // 创建命中特效
+          const hitEffect = this.scene.add.circle(target.x, target.y, 10, 0xffffff, 0.5);
+          hitEffect.setDepth(20);
+          this.scene.tweens.add({
+            targets: hitEffect,
+            scale: 2,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => hitEffect.destroy()
+          });
+        }
+
+        // 销毁弹道
+        projectile.destroy();
+      }
+    });
+
+    // 弹道轨迹效果（可选）
+    if (this.config.skill === 'ranged_attack') {
+      // 弓箭手：添加箭羽效果
+      const arrow = this.scene.add.text(this.x, this.y, '🏹', { fontSize: '12px' });
+      arrow.setDepth(15);
+      this.scene.tweens.add({
+        targets: arrow,
+        x: target.x,
+        y: target.y,
+        duration,
+        ease: 'Linear',
+        onComplete: () => arrow.destroy()
+      });
+    } else if (this.config.skill === 'fire_breath') {
+      // 火龙：添加火焰效果
+      const fire = this.scene.add.text(this.x, this.y, '🔥', { fontSize: '16px' });
+      fire.setDepth(15);
+      this.scene.tweens.add({
+        targets: fire,
+        x: target.x,
+        y: target.y,
+        duration,
+        ease: 'Linear',
+        onComplete: () => fire.destroy()
+      });
+    } else if (this.config.skill === 'snipe') {
+      // 狙击手：添加狙击线效果
+      const laser = this.scene.add.rectangle(this.x, this.y, distance, 2, 0xff0000);
+      laser.setRotation(angle);
+      laser.setDepth(15);
+      this.scene.tweens.add({
+        targets: laser,
+        alpha: 0,
+        duration: 100,
+        onComplete: () => laser.destroy()
+      });
     }
   }
 

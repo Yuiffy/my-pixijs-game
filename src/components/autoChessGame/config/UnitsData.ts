@@ -209,7 +209,7 @@ export const SYNERGIES = {
   [FACTIONS.SICHUAN]: {
     2: {
       description: "川妹单位攻击力 +10%",
-      effect: (game) => {
+      effect: (game: Phaser.Scene) => {
         // 增加所有川妹单位的攻击力
         game.playerUnits.children.each(unit => {
           if (unit.config.factions.includes(FACTIONS.SICHUAN)) {
@@ -220,7 +220,7 @@ export const SYNERGIES = {
     },
     4: {
       description: "激活红油锅底，碰撞造成范围爆炸",
-      effect: (game) => {
+      effect: (game: Phaser.Scene) => {
         // 为川妹单位添加爆炸效果
         game.playerUnits.children.each(unit => {
           if (unit.config.factions.includes(FACTIONS.SICHUAN)) {
@@ -233,7 +233,7 @@ export const SYNERGIES = {
   [FACTIONS.CYBER]: {
     2: {
       description: "赛博单位攻速 +20%",
-      effect: (game) => {
+      effect: (game: Phaser.Scene) => {
         game.playerUnits.children.each(unit => {
           if (unit.config.factions.includes(FACTIONS.CYBER)) {
             unit.attackSpeedMultiplier = (unit.attackSpeedMultiplier || 1) * 1.2;
@@ -243,7 +243,7 @@ export const SYNERGIES = {
     },
     4: {
       description: "激活赛博矩阵，获得护盾",
-      effect: (game) => {
+      effect: (game: Phaser.Scene) => {
         game.playerUnits.children.each(unit => {
           if (unit.config.factions.includes(FACTIONS.CYBER)) {
             unit.shield = 50;
@@ -255,7 +255,7 @@ export const SYNERGIES = {
   [FACTIONS.ANCIENT]: {
     2: {
       description: "古风单位生命值 +15%",
-      effect: (game) => {
+      effect: (game: Phaser.Scene) => {
         game.playerUnits.children.each(unit => {
           if (unit.config.factions.includes(FACTIONS.ANCIENT)) {
             unit.hp *= 1.15;
@@ -268,7 +268,7 @@ export const SYNERGIES = {
   [FACTIONS.MAGIC]: {
     3: {
       description: "魔法单位技能冷却 -25%",
-      effect: (game) => {
+      effect: (game: Phaser.Scene) => {
         game.playerUnits.children.each(unit => {
           if (unit.config.factions.includes(FACTIONS.MAGIC)) {
             unit.skillCooldownMultiplier = 0.75;
@@ -280,7 +280,7 @@ export const SYNERGIES = {
   [FACTIONS.MECHA]: {
     2: {
       description: "机甲单位质量 +50%，更难被推开",
-      effect: (game) => {
+      effect: (game: Phaser.Scene) => {
         game.playerUnits.children.each(unit => {
           if (unit.config.factions.includes(FACTIONS.MECHA)) {
             unit.setMass(unit.config.mass * 1.5);
