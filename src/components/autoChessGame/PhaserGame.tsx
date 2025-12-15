@@ -5,12 +5,12 @@
 import { useEffect, useRef, useState } from 'react';
 import GameUI from './GameUI';
 
-let globalGameInstance = null;
+let globalGameInstance: any = null;
 let instanceCount = 0;
 
 export default function PhaserGame() {
   const gameContainer = useRef(null);
-  const [gameInstance, setGameInstance] = useState(null);
+  const [gameInstance, setGameInstance] = useState<any>(null);
   const hasInitialized = useRef(false);
   instanceCount++;
   console.log(`PhaserGame component rendered, instance count: ${instanceCount}, has global instance: ${!!globalGameInstance}`);
@@ -29,7 +29,7 @@ export default function PhaserGame() {
       return () => {}; // 早期返回时的清理函数
     }
 
-    let game = null;
+    let game: any = null;
 
     async function initGame() {
       if (typeof window === 'undefined') return;

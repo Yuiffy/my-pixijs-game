@@ -111,7 +111,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.setInteractive();
     this.scene.input.setDraggable(this);
 
-    this.on('drag', (pointer, dragX, dragY) => {
+    this.on('drag', (pointer: any, dragX: number, dragY: number) => {
       // 检查游戏是否已经开始
       const mainScene = this.scene as any;
       if (mainScene.gameStarted) return; // 游戏开始后不能拖动

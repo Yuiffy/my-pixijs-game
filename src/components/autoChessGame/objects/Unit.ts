@@ -2,7 +2,41 @@
 import * as Phaser from 'phaser';
 
 export default class Unit extends Phaser.Physics.Matter.Sprite {
-  constructor(scene, x, y, config, isEnemy = false) {
+  config: any;
+
+  isEnemy: boolean;
+
+  hp: number;
+
+  maxHp: number;
+
+  damage: number;
+
+  damageMultiplier: number;
+
+  attackSpeedMultiplier: number;
+
+  skillCooldownMultiplier: number;
+
+  shield: number;
+
+  hasExplosion: boolean;
+
+  state: string;
+
+  target: Unit | null;
+
+  lastAttackTime: number;
+
+  lastBaseAttackTime: number;
+
+  attackCooldown: number;
+
+  healthBarBg!: Phaser.GameObjects.Rectangle;
+
+  healthBarFg!: Phaser.GameObjects.Rectangle;
+
+  constructor(scene: Phaser.Scene, x: number, y: number, config: any, isEnemy = false) {
     // 创建纹理（如果不存在）
     if (!scene.textures.exists(config.textureKey)) {
       Unit.createTexture(scene, config);
@@ -33,13 +67,15 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.state = 'MOVE'; // MOVE, ATTACK, DEAD
     this.target = null; // 当前锁定的敌人
     this.lastAttackTime = 0;
+    this.lastBaseAttackTime = 0;
     this.attackCooldown = 1000; // 基础攻击间隔1秒
 
     // 碰撞组：确保自己人尽量不卡自己人，但要撞敌人
-    const collisionCategory = isEnemy ? scene.enemyCategory : scene.playerCategory;
-    const collidesWith = isEnemy ? scene.playerCategory : scene.enemyCategory;
+    const mainScene = scene as any;
+    const collisionCategory = isEnemy ? mainScene.enemyCategory : mainScene.playerCategory;
+    const collidesWith = isEnemy ? mainScene.playerCategory : mainScene.enemyCategory;
     this.setCollisionCategory(collisionCategory);
-    this.setCollidesWith([collidesWith, scene.wallCategory]);
+    this.setCollidesWith([collidesWith, mainScene.wallCategory]);
 
     // 创建血条
     this.createHealthBar();
@@ -47,7 +83,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     scene.add.existing(this);
   }
 
-  static createTexture(scene, config) {
+  static createTexture(scene: Phaser.Scene, config: any) {
     console.log(`Creating texture for ${config.name}: ${config.textureKey}, emoji: ${config.emoji}, color: ${config.color}`);
 
     // 使用canvas创建纹理以正确显示emoji
@@ -106,7 +142,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.healthBarFg.setDepth(11);
   }
 
-  update(time, delta) {
+  update(time: number, delta: number) {
     if (this.hp <= 0) return;
 
     // 更新血条位置
@@ -146,22 +182,24 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
 
   findTarget() {
     // 寻找最近的敌对单位
-    const enemies = this.isEnemy ? this.scene.playerUnits : this.scene.enemyUnits;
+    const mainScene = this.scene as any;
+    const enemies = this.isEnemy ? mainScene.playerUnits : mainScene.enemyUnits;
     let closest = null;
     let minDist = 99999;
 
-    enemies.children.each(e => {
-      if (!e.active || e.hp <= 0) return;
+    enemies.children.each((e: any) => {
+      if (!e.active || e.hp <= 0) return null;
       const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
       if (dist < minDist) {
         minDist = dist;
         closest = e;
       }
+      return null;
     });
 
     // 如果没有兵，就冲向对方基地
     if (!closest) {
-      this.target = this.isEnemy ? this.scene.playerBase : this.scene.enemyBase;
+      this.target = this.isEnemy ? mainScene.playerBase : mainScene.enemyBase;
     } else {
       this.target = closest;
     }
@@ -177,12 +215,12 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.applyForce(new Phaser.Math.Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed));
 
     // 限制最大速度
-    if (this.body.speed > 5) {
+    if (this.body && (this.body as any).speed > 5) {
       this.setVelocity(this.body.velocity.x * 0.95, this.body.velocity.y * 0.95);
     }
   }
 
-  tryAttack(time) {
+  tryAttack(time: number) {
     if (!this.target || time - this.lastAttackTime < this.attackCooldown / this.attackSpeedMultiplier) return;
 
     const dist = Phaser.Math.Distance.Between(this.x, this.y, this.target.x, this.target.y);
@@ -216,7 +254,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     }
   }
 
-  createProjectile(target, damage) {
+  createProjectile(target: Unit, damage: number) {
     // 创建弹道效果
     const projectile = this.scene.add.circle(this.x, this.y, 3, this.isEnemy ? 0xff0000 : 0x00ff00);
     projectile.setDepth(15);
@@ -295,18 +333,20 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     }
   }
 
-  explodeNearbyEnemies(damage) {
-    const enemies = this.isEnemy ? this.scene.playerUnits : this.scene.enemyUnits;
-    enemies.children.each(e => {
-      if (!e.active || e.hp <= 0) return;
+  explodeNearbyEnemies(damage: number) {
+    const mainScene = this.scene as any;
+    const enemies = this.isEnemy ? mainScene.playerUnits : mainScene.enemyUnits;
+    enemies.children.each((e: any) => {
+      if (!e.active || e.hp <= 0) return null;
       const dist = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
       if (dist < 80) { // 爆炸范围
         e.takeDamage(damage);
       }
+      return null;
     });
   }
 
-  takeDamage(amount) {
+  takeDamage(amount: number) {
     // 先扣护盾
     if (this.shield > 0) {
       const shieldDamage = Math.min(amount, this.shield);
@@ -319,7 +359,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.hp -= amount;
 
     // 飘字效果
-    this.scene.showDamageText(this.x, this.y, Math.round(amount));
+    (this.scene as any).showDamageText(this.x, this.y, Math.round(amount));
 
     // 受伤闪烁效果
     this.scene.tweens.add({

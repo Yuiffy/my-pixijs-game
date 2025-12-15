@@ -37,7 +37,8 @@
     "consistent-return": "off",
     "array-callback-return": "off",
     "no-trailing-spaces": "off",
-    "no-useless-escape": "off"
+    "no-useless-escape": "off",
+    "class-methods-use-this": "off"
   },
   "overrides": [
     {

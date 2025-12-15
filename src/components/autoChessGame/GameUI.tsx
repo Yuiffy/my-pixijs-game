@@ -131,7 +131,7 @@ export default function GameUI({ gameInstance }: any) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', zIndex: 1000 }}>
         <h1 style={{ fontSize: '48px', color: gameOver ? '#00ff00' : '#ff0000' }}>{gameOver ? '🎉 胜利！' : '💀 失败！'}</h1>
-        <button onClick={restartGame} style={{ padding: '20px 40px', fontSize: '24px', background: '#007bff', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', marginTop: '20px' }}>再来一局</button>
+        <button type="button" onClick={restartGame} style={{ padding: '20px 40px', fontSize: '24px', background: '#007bff', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', marginTop: '20px' }}>再来一局</button>
       </div>
     );
   }
@@ -170,7 +170,7 @@ export default function GameUI({ gameInstance }: any) {
           </div>
 
           <div style={{ marginLeft: 20 }}>
-            {!gameStarted && <button onClick={startGame} style={{ pointerEvents: 'auto', padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
+            {!gameStarted && <button type="button" onClick={startGame} style={{ pointerEvents: 'auto', padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
           </div>
         </div>
       </div>
@@ -178,11 +178,11 @@ export default function GameUI({ gameInstance }: any) {
       {/* 底部面板：商店 - 固定在底部 */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 15 }}>
-          <button onClick={refreshShop} disabled={gold < 1} style={{ padding: '15px 20px', background: gold >= 1 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+          <button type="button" onClick={refreshShop} disabled={gold < 1} style={{ padding: '15px 20px', background: gold >= 1 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
             刷新 ($1)
           </button>
 
-          <button onClick={levelUpShop} disabled={gold < 5 || shopLevel >= 5} style={{ padding: '15px 20px', background: (gold >= 5 && shopLevel < 5) ? '#28a745' : '#555', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+          <button type="button" onClick={levelUpShop} disabled={gold < 5 || shopLevel >= 5} style={{ padding: '15px 20px', background: (gold >= 5 && shopLevel < 5) ? '#28a745' : '#555', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
             升本 ($5)
           </button>
 
@@ -190,7 +190,7 @@ export default function GameUI({ gameInstance }: any) {
             // 处理已售罄
             if (!key) {
               return (
-                <div key={idx} style={{ width: 120, height: 140, background: '#222', border: '2px dashed #444', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', borderRadius: '10px' }}>
+                <div key={`sold-out-${Math.random()}`} style={{ width: 120, height: 140, background: '#222', border: '2px dashed #444', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', borderRadius: '10px' }}>
                   🚫 已售罄
                 </div>
               );
@@ -201,9 +201,11 @@ export default function GameUI({ gameInstance }: any) {
             const canAfford = gold >= unit.cost;
 
             return (
-              <div
-                key={idx}
+              <button
+                type="button"
+                key={key}
                 onClick={() => canAfford && handleBuyClick(idx)}
+                disabled={!canAfford}
                 style={{
                   width: 120,
                   height: 140,
@@ -216,7 +218,10 @@ export default function GameUI({ gameInstance }: any) {
                   padding: '10px',
                   cursor: canAfford ? 'pointer' : 'not-allowed',
                   opacity: canAfford ? 1 : 0.6,
-                  transform: canAfford ? 'scale(1)' : 'scale(0.95)'
+                  transform: canAfford ? 'scale(1)' : 'scale(0.95)',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  outline: 'none'
                 }}
               >
                 <div style={{ fontSize: 32, marginBottom: 5 }}>{unit.emoji}</div>
@@ -226,7 +231,7 @@ export default function GameUI({ gameInstance }: any) {
                   {unit.cost}
                 </div>
                 <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>{unit.factions.join('/')}</div>
-              </div>
+              </button>
             );
           })}
         </div>
