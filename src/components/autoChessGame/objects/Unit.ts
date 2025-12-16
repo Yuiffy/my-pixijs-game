@@ -125,6 +125,9 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
   }
 
   createHealthBar() {
+    // 检查 scene 是否存在
+    if (!this.scene) return;
+
     // 创建血条背景
     this.healthBarBg = this.scene.add.rectangle(0, -30, 40, 4, 0x000000);
     this.healthBarBg.setStrokeStyle(1, 0xffffff);
@@ -255,85 +258,103 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
   }
 
   createProjectile(target: Unit, damage: number) {
+    // 检查 scene 是否存在
+    if (!this.scene) return;
+
     // 创建弹道效果
     const projectile = this.scene.add.circle(this.x, this.y, 3, this.isEnemy ? 0xff0000 : 0x00ff00);
     projectile.setDepth(15);
 
-    // 计算飞行方向
+    // 计算飞行方向并保存目标位置（避免目标被销毁后访问undefined）
     const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
     const distance = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
     const speed = 20; // 弹道飞行速度 (从8增加到20，加快飞行速度)
     const duration = (distance / speed) * 1000; // 飞行时间（毫秒）
 
+    // 保存目标命中位置，避免目标对象被销毁后访问undefined
+    const hitX = target.x;
+    const hitY = target.y;
+
     // 弹道动画
-    this.scene.tweens.add({
-      targets: projectile,
-      x: target.x,
-      y: target.y,
-      duration,
-      ease: 'Linear',
-      onComplete: () => {
-        // 弹道命中
-        if (target.takeDamage) {
-          target.takeDamage(damage);
+    if (this.scene && this.scene.tweens) {
+      this.scene.tweens.add({
+        targets: projectile,
+        x: hitX,
+        y: hitY,
+        duration,
+        ease: 'Linear',
+        onComplete: () => {
+          // 弹道命中
+          if (target.takeDamage) {
+            target.takeDamage(damage);
 
-          // 创建命中特效
-          const hitEffect = this.scene.add.circle(target.x, target.y, 10, 0xffffff, 0.5);
-          hitEffect.setDepth(20);
-          this.scene.tweens.add({
-            targets: hitEffect,
-            scale: 2,
-            alpha: 0,
-            duration: 200,
-            onComplete: () => hitEffect.destroy()
-          });
+            // 创建命中特效 - 使用保存的位置而不是target.x/target.y
+            if (this.scene) {
+              const hitEffect = this.scene.add.circle(hitX, hitY, 10, 0xffffff, 0.5);
+              hitEffect.setDepth(20);
+              if (this.scene.tweens) {
+                this.scene.tweens.add({
+                  targets: hitEffect,
+                  scale: 2,
+                  alpha: 0,
+                  duration: 200,
+                  onComplete: () => hitEffect.destroy()
+                });
+              }
+            }
+          }
+
+          // 销毁弹道
+          projectile.destroy();
         }
-
-        // 销毁弹道
-        projectile.destroy();
-      }
-    });
+      });
+    }
 
     // 弹道轨迹效果（可选）
-    if (this.config.skill === 'ranged_attack') {
-      // 弓箭手：添加箭羽效果
-      const arrow = this.scene.add.text(this.x, this.y, '🏹', { fontSize: '12px' });
-      arrow.setDepth(15);
-      this.scene.tweens.add({
-        targets: arrow,
-        x: target.x,
-        y: target.y,
-        duration,
-        ease: 'Linear',
-        onComplete: () => arrow.destroy()
-      });
-    } else if (this.config.skill === 'fire_breath') {
-      // 火龙：添加火焰效果
-      const fire = this.scene.add.text(this.x, this.y, '🔥', { fontSize: '16px' });
-      fire.setDepth(15);
-      this.scene.tweens.add({
-        targets: fire,
-        x: target.x,
-        y: target.y,
-        duration,
-        ease: 'Linear',
-        onComplete: () => fire.destroy()
-      });
-    } else if (this.config.skill === 'snipe') {
-      // 狙击手：添加狙击线效果
-      const laser = this.scene.add.rectangle(this.x, this.y, distance, 2, 0xff0000);
-      laser.setRotation(angle);
-      laser.setDepth(15);
-      this.scene.tweens.add({
-        targets: laser,
-        alpha: 0,
-        duration: 100,
-        onComplete: () => laser.destroy()
-      });
+    if (this.scene && this.scene.tweens) {
+      if (this.config.skill === 'ranged_attack') {
+        // 弓箭手：添加箭羽效果
+        const arrow = this.scene.add.text(this.x, this.y, '🏹', { fontSize: '12px' });
+        arrow.setDepth(15);
+        this.scene.tweens.add({
+          targets: arrow,
+          x: hitX,
+          y: hitY,
+          duration,
+          ease: 'Linear',
+          onComplete: () => arrow.destroy()
+        });
+      } else if (this.config.skill === 'fire_breath') {
+        // 火龙：添加火焰效果
+        const fire = this.scene.add.text(this.x, this.y, '🔥', { fontSize: '16px' });
+        fire.setDepth(15);
+        this.scene.tweens.add({
+          targets: fire,
+          x: hitX,
+          y: hitY,
+          duration,
+          ease: 'Linear',
+          onComplete: () => fire.destroy()
+        });
+      } else if (this.config.skill === 'snipe') {
+        // 狙击手：添加狙击线效果
+        const laser = this.scene.add.rectangle(this.x, this.y, distance, 2, 0xff0000);
+        laser.setRotation(angle);
+        laser.setDepth(15);
+        this.scene.tweens.add({
+          targets: laser,
+          alpha: 0,
+          duration: 100,
+          onComplete: () => laser.destroy()
+        });
+      }
     }
   }
 
   explodeNearbyEnemies(damage: number) {
+    // 检查 scene 是否存在
+    if (!this.scene) return;
+
     const mainScene = this.scene as any;
     const enemies = this.isEnemy ? mainScene.playerUnits : mainScene.enemyUnits;
     enemies.children.each((e: any) => {
@@ -364,13 +385,15 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     }
 
     // 受伤闪烁效果
-    this.scene.tweens.add({
-      targets: this,
-      alpha: 0.5,
-      duration: 100,
-      yoyo: true,
-      repeat: 2
-    });
+    if (this.scene && this.scene.tweens) {
+      this.scene.tweens.add({
+        targets: this,
+        alpha: 0.5,
+        duration: 100,
+        yoyo: true,
+        repeat: 2
+      });
+    }
 
     if (this.hp <= 0) {
       this.die();
@@ -433,19 +456,21 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
 
     // 从group中移除并奖励金币
     const mainScene = this.scene as any;
-    if (mainScene.playerUnits && mainScene.playerUnits.children) {
-      mainScene.playerUnits.remove(this);
-    }
-    if (mainScene.enemyUnits && mainScene.enemyUnits.children) {
-      mainScene.enemyUnits.remove(this);
-    }
+    if (mainScene) {
+      if (mainScene.playerUnits && mainScene.playerUnits.children) {
+        mainScene.playerUnits.remove(this);
+      }
+      if (mainScene.enemyUnits && mainScene.enemyUnits.children) {
+        mainScene.enemyUnits.remove(this);
+      }
 
-    // 如果是敌方单位死亡，给玩家奖励金币
-    if (this.isEnemy && mainScene.playerGold !== undefined) {
-      const goldReward = 1; // 每个敌方单位奖励1金币
-      mainScene.playerGold += goldReward;
-      mainScene.game.events.emit('GOLD_CHANGED', mainScene.playerGold);
-      console.log(`Enemy defeated! +${goldReward} gold, total: ${mainScene.playerGold}`);
+      // 如果是敌方单位死亡，给玩家奖励金币
+      if (this.isEnemy && mainScene.playerGold !== undefined) {
+        const goldReward = 1; // 每个敌方单位奖励1金币
+        mainScene.playerGold += goldReward;
+        mainScene.game.events.emit('GOLD_CHANGED', mainScene.playerGold);
+        console.log(`Enemy defeated! +${goldReward} gold, total: ${mainScene.playerGold}`);
+      }
     }
 
     // 移除body
