@@ -10,6 +10,7 @@ export default function GameUI({ gameInstance }: any) {
   const [barracksCount, setBarracksCount] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState<boolean | null>(null);
+  const [tooltip, setTooltip] = useState<{ visible: boolean; content: string; x: number; y: number }>({ visible: false, content: '', x: 0, y: 0 });
 
   // 监听 Phaser 传来的数据
   useEffect(() => {
@@ -127,6 +128,20 @@ export default function GameUI({ gameInstance }: any) {
     window.location.reload();
   };
 
+  const showTooltip = (content: string, event: React.MouseEvent) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltip({
+      visible: true,
+      content,
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10
+    });
+  };
+
+  const hideTooltip = () => {
+    setTooltip({ visible: false, content: '', x: 0, y: 0 });
+  };
+
   if (gameOver !== null) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', zIndex: 1000 }}>
@@ -159,13 +174,11 @@ export default function GameUI({ gameInstance }: any) {
               💰
               {gold}
             </div>
-            <div style={{ fontSize: '14px' }}>
-              Lv.
-              {shopLevel}
-              {' '}
-              | 人口:
-              {barracksCount}
-              /8
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffd700' }}>
+              第{shopLevel}本
+            </div>
+            <div style={{ fontSize: '12px', color: '#cccccc' }}>
+              人口: {barracksCount}/8
             </div>
           </div>
 
@@ -174,6 +187,29 @@ export default function GameUI({ gameInstance }: any) {
           </div>
         </div>
       </div>
+
+      {/* Tooltip */}
+      {tooltip.visible && (
+        <div style={{
+          position: 'fixed',
+          left: tooltip.x,
+          top: tooltip.y,
+          transform: 'translate(-50%, -100%)',
+          background: 'rgba(0,0,0,0.9)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          whiteSpace: 'pre-line',
+          zIndex: 1001,
+          pointerEvents: 'none',
+          border: '1px solid #ffd700',
+          maxWidth: '200px',
+          textAlign: 'center'
+        }}>
+          {tooltip.content}
+        </div>
+      )}
 
       {/* 底部面板：商店 - 固定在底部 */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
@@ -200,12 +236,16 @@ export default function GameUI({ gameInstance }: any) {
             if (!unit) return null;
             const canAfford = gold >= unit.cost;
 
+            const tooltipContent = `${unit.name}\n生命值: ${unit.hp}\n攻击力: ${unit.damage}\n阵营: ${unit.factions.join('/')}\n出兵间隔: ${Math.round((unit.spawnInterval || 4000) / 1000)}秒`;
+
             return (
               <button
                 type="button"
                 key={key}
                 onClick={() => canAfford && handleBuyClick(idx)}
                 disabled={!canAfford}
+                onMouseEnter={(e) => showTooltip(tooltipContent, e)}
+                onMouseLeave={hideTooltip}
                 style={{
                   width: 120,
                   height: 140,

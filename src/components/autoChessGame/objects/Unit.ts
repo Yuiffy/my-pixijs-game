@@ -262,7 +262,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     // 计算飞行方向
     const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
     const distance = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
-    const speed = 8; // 弹道飞行速度
+    const speed = 20; // 弹道飞行速度 (从8增加到20，加快飞行速度)
     const duration = (distance / speed) * 1000; // 飞行时间（毫秒）
 
     // 弹道动画
@@ -359,7 +359,9 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.hp -= amount;
 
     // 飘字效果
-    (this.scene as any).showDamageText(this.x, this.y, Math.round(amount));
+    if (this.scene && (this.scene as any).showDamageText) {
+      (this.scene as any).showDamageText(this.x, this.y, Math.round(amount));
+    }
 
     // 受伤闪烁效果
     this.scene.tweens.add({

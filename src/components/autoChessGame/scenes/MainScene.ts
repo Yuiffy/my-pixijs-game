@@ -77,13 +77,6 @@ export default class MainScene extends Phaser.Scene {
     this.enemyCategory = this.matter.world.nextCategory();
     this.wallCategory = this.matter.world.nextCategory();
 
-    // 添加静态调试元素
-    const debugMarker = this.add.rectangle(150, 150, 30, 30, 0x0000ff).setDepth(1000);
-    debugMarker.setStrokeStyle(2, 0xffffff);
-    console.log('Added blue debug marker at (150, 150)');
-
-    const debugText = this.add.text(150, 130, 'BARRACKS POS', { fontSize: '12px', color: '#ffffff' }).setOrigin(0.5);
-    debugText.setDepth(1000);
 
     // --- 3. 组管理 ---
     this.playerUnits = this.add.group();
@@ -334,6 +327,11 @@ export default class MainScene extends Phaser.Scene {
 
     // 同步当前金币到UI
     this.game.events.emit('GOLD_CHANGED', this.playerGold);
+
+    // 启动所有兵营的出兵
+    this.playerBarracks.forEach(barracks => {
+      barracks.startSpawning();
+    });
 
     // 启动敌军波次
     this.spawnEnemyWave(); // 立即开始第一波

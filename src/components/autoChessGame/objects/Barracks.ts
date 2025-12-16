@@ -12,6 +12,8 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   indicator: Phaser.GameObjects.Text;
 
+  tooltip: Phaser.GameObjects.Text | null = null;
+
   scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any) {
@@ -53,11 +55,11 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
         ctx.strokeRect(10, 45, 50, 20);
 
         // 在房子顶部绘制兵种emoji
-        ctx.font = '24px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", sans-serif';
+        ctx.font = '32px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#000000';
-        ctx.fillText(unitData.emoji || '🏠', 35, 35);
+        ctx.fillText(unitData.emoji || '🏠', 35, 25);
 
         // 添加到Phaser纹理
         scene.textures.addCanvas(barracksTextureKey, canvas);
@@ -111,6 +113,15 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.setInteractive();
     this.scene.input.setDraggable(this);
 
+    // 添加悬浮提示
+    this.on('pointerover', () => {
+      this.showTooltip();
+    });
+
+    this.on('pointerout', () => {
+      this.hideTooltip();
+    });
+
     this.on('drag', (pointer: any, dragX: number, dragY: number) => {
       // 检查游戏是否已经开始
       const mainScene = this.scene as any;
@@ -146,13 +157,19 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Indicator text added', data: { indicatorText: '🏠', indicatorX: x, indicatorY: y + 40 }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion
 
-    // 出兵 - 延迟初始生成，避免立即碰撞
-    scene.time.delayedCall(500, () => {
+    // 出兵逻辑将在游戏开始后启动
+    // 暂时不启动spawnTimer
+  }
+
+  startSpawning() {
+    // 游戏开始后启动出兵
+    // 延迟初始生成，避免立即碰撞
+    this.scene.time.delayedCall(500, () => {
       this.spawnUnit();
     });
 
-    this.spawnTimer = scene.time.addEvent({
-      delay: unitData.spawnInterval || 4000,
+    this.spawnTimer = this.scene.time.addEvent({
+      delay: this.unitData.spawnInterval || 4000,
       callback: this.spawnUnit,
       callbackScope: this,
       loop: true
@@ -205,6 +222,29 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     }
   }
 
+  showTooltip() {
+    // 创建悬浮提示文本
+    const tooltipText = `${this.unitData.name}\n生命值: ${this.unitData.hp}\n攻击力: ${this.unitData.damage}\n阵营: ${this.unitData.factions.join('/')}\n出兵间隔: ${Math.round((this.unitData.spawnInterval || 4000) / 1000)}秒`;
+
+    if (!this.tooltip) {
+      this.tooltip = this.scene.add.text(this.x, this.y - 80, tooltipText, {
+        fontSize: '12px',
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        padding: { x: 8, y: 6 },
+        align: 'center'
+      }).setOrigin(0.5).setDepth(1001);
+    } else {
+      this.tooltip.setText(tooltipText).setVisible(true);
+    }
+  }
+
+  hideTooltip() {
+    if (this.tooltip) {
+      this.tooltip.setVisible(false);
+    }
+  }
+
   destroy(fromScene?: boolean) {
     // 停止所有相关的tween动画
     if (this.scene && this.scene.tweens) {
@@ -213,6 +253,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
     if (this.spawnTimer) this.spawnTimer.remove();
     if (this.indicator) this.indicator.destroy();
+    if (this.tooltip) this.tooltip.destroy();
     super.destroy(fromScene);
   }
 }

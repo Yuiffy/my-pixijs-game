@@ -148,20 +148,6 @@ export default function PhaserGame() {
         }}
       />
 
-      {/* 调试元素 - 确认容器可见 */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        background: 'red',
-        color: 'white',
-        padding: '5px',
-        zIndex: 1000,
-        fontSize: '12px'
-      }}
-      >
-        Phaser Container OK
-      </div>
 
       {/* UI 覆盖层 - 只覆盖部分区域 */}
       <GameUI gameInstance={gameInstance} />
