@@ -89,14 +89,6 @@ export default function PhaserGame() {
           console.log('Forced canvas visibility');
         }
 
-        // 添加一个简单的Phaser调试图形
-        const mainScene = game.scene.getScene('MainScene');
-        if (mainScene) {
-          const debugRect = mainScene.add.rectangle(100, 100, 50, 50, 0xff0000);
-          debugRect.setDepth(1000);
-          console.log('Added debug rectangle to Phaser scene');
-        }
-
         // 添加一些全局样式
         const style = document.createElement('style');
         style.textContent = `
