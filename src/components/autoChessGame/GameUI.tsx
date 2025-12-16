@@ -46,6 +46,7 @@ export default function GameUI({ gameInstance }: any) {
   const refreshShop = () => {
     if (gold >= 1) {
       setGold(g => g - 1);
+      hideTooltip(); // 隐藏悬浮提示
       gameInstance.events.emit('REFRESH_SHOP');
     }
   };
@@ -53,6 +54,7 @@ export default function GameUI({ gameInstance }: any) {
   const levelUpShop = () => {
     if (gold >= 5 && shopLevel < 5) {
       setGold(g => g - 5);
+      hideTooltip(); // 隐藏悬浮提示
       gameInstance.events.emit('LEVEL_UP_SHOP');
     }
   };
@@ -104,7 +106,10 @@ export default function GameUI({ gameInstance }: any) {
     newShop[index] = null;
     setShopUnits(newShop);
 
-    // 3. 通知 Phaser 自动放置
+    // 3. 隐藏悬浮提示
+    hideTooltip();
+
+    // 4. 通知 Phaser 自动放置
     console.log(`UI: Buying & Auto-placing ${unit.name}`);
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Emitting AUTO_BUY_UNIT event', data: { unitKey, unitName: unit.name }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A2' }) }).catch(() => {});
