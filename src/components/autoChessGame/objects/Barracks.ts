@@ -123,10 +123,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     });
 
     this.on('drag', (pointer: any, dragX: number, dragY: number) => {
-      // 检查游戏是否已经开始
-      const mainScene = this.scene as any;
-      if (mainScene.gameStarted) return; // 游戏开始后不能拖动
-
+      // 游戏开始后也可以拖动
       // 限制拖动范围，避免拖出边界
       const clampedX = Phaser.Math.Clamp(dragX, 80, 920);
       const clampedY = Phaser.Math.Clamp(dragY, 80, 480);
@@ -136,6 +133,11 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       // 更新标识位置
       if (this.indicator) {
         this.indicator.setPosition(clampedX, clampedY + 40);
+      }
+
+      // 更新tooltip位置
+      if (this.tooltip && this.tooltip.visible) {
+        this.tooltip.setPosition(clampedX, clampedY - 80);
       }
     });
 
@@ -176,8 +178,19 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     });
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:constructor', message: 'Barracks initialization complete', data: { spawnInterval: unitData.spawnInterval || 4000, inScene: !!this.scene, visible: this.visible, active: this.active }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A4' }) }).catch(() => {});
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Barracks.ts:startSpawning', message: 'Barracks spawning started (dragging remains enabled)', data: { spawnInterval: this.unitData.spawnInterval || 4000 }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'extended-debug', hypothesisId: 'A4' }) }).catch(() => {});
     // #endregion
+  }
+
+  disableDragging() {
+    // 移除拖动功能
+    if (this.scene.input) {
+      this.scene.input.setDraggable(this, false);
+    }
+    // 移除拖动事件监听器
+    this.off('drag');
+    this.off('dragstart');
+    this.off('dragend');
   }
 
   spawnUnit() {
