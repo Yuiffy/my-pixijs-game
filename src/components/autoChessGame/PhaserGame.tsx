@@ -147,7 +147,6 @@ export default function PhaserGame() {
         }}
       />
 
-
       {/* UI 覆盖层 - 只覆盖部分区域 */}
       <GameUI gameInstance={gameInstance} gameReady={gameReady} />
 

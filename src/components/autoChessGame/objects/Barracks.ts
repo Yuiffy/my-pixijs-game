@@ -382,5 +382,3 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     super.destroy(fromScene);
   }
 }
-
-
