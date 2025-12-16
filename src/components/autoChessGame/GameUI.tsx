@@ -1,8 +1,8 @@
 // src/components/autoChessGame/GameUI.tsx
 import React, { useState, useEffect } from 'react';
-import { UNIT_TYPES } from './config/UnitsData';
+import { UNIT_TYPES, FACTION_DESCRIPTIONS } from './config/UnitsData';
 
-export default function GameUI({ gameInstance }: any) {
+export default function GameUI({ gameInstance, gameReady = false }: any) {
   const [gold, setGold] = useState(10); // 初始金币
   const [shopUnits, setShopUnits] = useState<(string | null)[]>([]); // 允许 null 表示售罄
   const [synergies, setSynergies] = useState({});
@@ -48,6 +48,8 @@ export default function GameUI({ gameInstance }: any) {
       setGold(g => g - 1);
       hideTooltip(); // 隐藏悬浮提示
       gameInstance.events.emit('REFRESH_SHOP');
+      // 同步金币到Phaser游戏
+      gameInstance.events.emit('SPEND_GOLD', 1);
     }
   };
 
@@ -56,6 +58,8 @@ export default function GameUI({ gameInstance }: any) {
       setGold(g => g - 5);
       hideTooltip(); // 隐藏悬浮提示
       gameInstance.events.emit('LEVEL_UP_SHOP');
+      // 同步金币到Phaser游戏
+      gameInstance.events.emit('SPEND_GOLD', 5);
     }
   };
 
@@ -164,13 +168,19 @@ export default function GameUI({ gameInstance }: any) {
           <div style={{ color: 'white', flex: 1 }}>
             <h3 style={{ margin: '0 0 5px 0' }}>卫戍协议 (Auto Mode)</h3>
             <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-              {Object.entries(synergies).map(([name, count]: [string, any]) => (
-                <span key={name} style={{ background: '#444', color: count >= 2 ? '#ffd700' : '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', border: count >= 2 ? '1px solid gold' : 'none' }}>
-                  {name}
-                  {' '}
-                  {count}
-                </span>
-              ))}
+              {Object.entries(synergies).map(([name, count]: [string, any]) => {
+                const factionDesc = (FACTION_DESCRIPTIONS as any)[name] || `${name}阵营说明暂未添加`;
+                return (
+                  <span
+                    key={name}
+                    style={{ background: '#444', color: count >= 2 ? '#ffd700' : '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', border: count >= 2 ? '1px solid gold' : 'none', cursor: 'pointer' }}
+                    onMouseEnter={(e) => showTooltip(factionDesc, e)}
+                    onMouseLeave={hideTooltip}
+                  >
+                    {name} {count}
+                  </span>
+                );
+              })}
             </div>
           </div>
 
@@ -188,7 +198,7 @@ export default function GameUI({ gameInstance }: any) {
           </div>
 
           <div style={{ marginLeft: 20 }}>
-            {!gameStarted && <button type="button" onClick={startGame} style={{ pointerEvents: 'auto', padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
+            {!gameStarted && <button type="button" onClick={startGame} disabled={!gameReady} style={{ pointerEvents: gameReady ? 'auto' : 'none', padding: '10px 20px', background: gameReady ? '#28a745' : '#555', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
           </div>
         </div>
       </div>
@@ -219,11 +229,11 @@ export default function GameUI({ gameInstance }: any) {
       {/* 底部面板：商店 - 固定在底部 */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 15 }}>
-          <button type="button" onClick={refreshShop} disabled={gold < 1} style={{ padding: '15px 20px', background: gold >= 1 ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+          <button type="button" onClick={refreshShop} disabled={!gameReady || gold < 1} style={{ padding: '15px 20px', background: (gameReady && gold >= 1) ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
             刷新 ($1)
           </button>
 
-          <button type="button" onClick={levelUpShop} disabled={gold < 5 || shopLevel >= 5} style={{ padding: '15px 20px', background: (gold >= 5 && shopLevel < 5) ? '#28a745' : '#555', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+          <button type="button" onClick={levelUpShop} disabled={!gameReady || gold < 5 || shopLevel >= 5} style={{ padding: '15px 20px', background: (gameReady && gold >= 5 && shopLevel < 5) ? '#28a745' : '#555', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
             升本 ($5)
           </button>
 
@@ -248,7 +258,7 @@ export default function GameUI({ gameInstance }: any) {
                 type="button"
                 key={key}
                 onClick={() => canAfford && handleBuyClick(idx)}
-                disabled={!canAfford}
+                disabled={!gameReady || !canAfford}
                 onMouseEnter={(e) => showTooltip(tooltipContent, e)}
                 onMouseLeave={hideTooltip}
                 style={{
@@ -270,12 +280,23 @@ export default function GameUI({ gameInstance }: any) {
                 }}
               >
                 <div style={{ fontSize: 32, marginBottom: 5 }}>{unit.emoji}</div>
-                <div style={{ fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 }}>{unit.name}</div>
+                <div style={{ fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 5, color: '#000' }}>{unit.name}</div>
                 <div style={{ fontSize: 14, color: canAfford ? '#28a745' : '#dc3545', fontWeight: 'bold' }}>
                   $
                   {unit.cost}
                 </div>
-                <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>{unit.factions.join('/')}</div>
+                <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>
+                  {unit.factions.map((faction, idx) => (
+                    <span
+                      key={faction}
+                      style={{ cursor: 'pointer', marginRight: idx < unit.factions.length - 1 ? '4px' : '0' }}
+                      onMouseEnter={(e) => showTooltip((FACTION_DESCRIPTIONS as any)[faction] || `${faction}阵营说明暂未添加`, e)}
+                      onMouseLeave={hideTooltip}
+                    >
+                      {faction}
+                    </span>
+                  )).reduce((prev, curr, idx) => idx === 0 ? [curr] : [...prev, <span key={`sep-${idx}`}>/</span>, curr], [])}
+                </div>
               </button>
             );
           })}

@@ -109,6 +109,9 @@ export default class MainScene extends Phaser.Scene {
     this.game.events.off('LEVEL_UP_SHOP');
     this.game.events.on('LEVEL_UP_SHOP', this.handleLevelUpShop, this);
 
+    this.game.events.off('SPEND_GOLD');
+    this.game.events.on('SPEND_GOLD', this.handleSpendGold, this);
+
     // 碰撞伤害逻辑
     this.matter.world.on('collisionstart', (event: any) => {
       event.pairs.forEach((pair: any) => {
@@ -138,6 +141,9 @@ export default class MainScene extends Phaser.Scene {
       backgroundColor: '#000000',
       padding: { x: 10, y: 5 }
     }).setOrigin(0.5).setDepth(2000);
+
+    // 游戏初始化完成，发出ready事件
+    this.game.events.emit('ready');
   }
 
   createBase(x: number, y: number, label: string, color: number, collidesWith: number) {
@@ -300,6 +306,13 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
+  handleSpendGold(amount: number) {
+    this.playerGold -= amount;
+    if (this.playerGold < 0) this.playerGold = 0; // 防止负数
+    this.game.events.emit('GOLD_CHANGED', this.playerGold);
+    console.log(`Spent ${amount} gold, remaining: ${this.playerGold}`);
+  }
+
   update(time: number, delta: number) {
     this.playerUnits.children.each((u: any) => u.update(time, delta));
     this.enemyUnits.children.each((u: any) => u.update(time, delta));
@@ -315,7 +328,18 @@ export default class MainScene extends Phaser.Scene {
 
   calculateSynergies() {
     const counts: any = {};
-    this.playerBarracks.forEach(b => b.unitData.factions.forEach((f: string) => { counts[f] = (counts[f] || 0) + 1; }));
+    const countedUnits = new Set(); // 记录已计数的兵种类型
+
+    this.playerBarracks.forEach(b => {
+      // 只有在该兵种类型还未计数时才计数
+      if (!countedUnits.has(b.unitKey)) {
+        countedUnits.add(b.unitKey);
+        b.unitData.factions.forEach((f: string) => {
+          counts[f] = (counts[f] || 0) + 1;
+        });
+      }
+    });
+
     this.game.events.emit('UPDATE_SYNERGY', counts);
   }
 

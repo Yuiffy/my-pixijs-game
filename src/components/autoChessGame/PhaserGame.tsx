@@ -11,6 +11,7 @@ let instanceCount = 0;
 export default function PhaserGame() {
   const gameContainer = useRef(null);
   const [gameInstance, setGameInstance] = useState<any>(null);
+  const [gameReady, setGameReady] = useState(false);
   const hasInitialized = useRef(false);
   instanceCount++;
   console.log(`PhaserGame component rendered, instance count: ${instanceCount}, has global instance: ${!!globalGameInstance}`);
@@ -65,6 +66,12 @@ export default function PhaserGame() {
         game = new Phaser.Game(config);
         globalGameInstance = game; // 设置全局实例
         setGameInstance(game);
+
+        // 监听MainScene准备完成事件
+        game.events.on('ready', () => {
+          console.log('Phaser game is ready!');
+          setGameReady(true);
+        });
 
         // 添加调试日志
         console.log('Phaser game initialized:', game);
@@ -150,7 +157,7 @@ export default function PhaserGame() {
 
 
       {/* UI 覆盖层 - 只覆盖部分区域 */}
-      <GameUI gameInstance={gameInstance} />
+      <GameUI gameInstance={gameInstance} gameReady={gameReady} />
 
       {/* 加载提示 */}
       {!gameInstance && (

@@ -36,10 +36,10 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
 
   healthBarFg!: Phaser.GameObjects.Rectangle;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, config: any, isEnemy = false) {
+  constructor(scene: Phaser.Scene, x: number, y: number, config: any, isEnemy = false, showHealthBar = true) {
     // 创建纹理（如果不存在）
     if (!scene.textures.exists(config.textureKey)) {
-      Unit.createTexture(scene, config);
+      Unit.createTexture(scene, config, isEnemy);
     }
 
     super(scene.matter.world, x, y, config.textureKey);
@@ -70,20 +70,22 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.lastBaseAttackTime = 0;
     this.attackCooldown = 1000; // 基础攻击间隔1秒
 
-    // 碰撞组：确保自己人尽量不卡自己人，但要撞敌人
+    // 碰撞组：所有单位都互相碰撞，但只有敌对时造成伤害
     const mainScene = scene as any;
     const collisionCategory = isEnemy ? mainScene.enemyCategory : mainScene.playerCategory;
-    const collidesWith = isEnemy ? mainScene.playerCategory : mainScene.enemyCategory;
+    // 所有单位都与所有其他单位和墙壁碰撞
     this.setCollisionCategory(collisionCategory);
-    this.setCollidesWith([collidesWith, mainScene.wallCategory]);
+    this.setCollidesWith([mainScene.playerCategory, mainScene.enemyCategory, mainScene.wallCategory]);
 
-    // 创建血条
-    this.createHealthBar();
+    // 创建血条（如果需要）
+    if (showHealthBar) {
+      this.createHealthBar();
+    }
 
     scene.add.existing(this);
   }
 
-  static createTexture(scene: Phaser.Scene, config: any) {
+  static createTexture(scene: Phaser.Scene, config: any, isEnemy = false) {
     console.log(`Creating texture for ${config.name}: ${config.textureKey}, emoji: ${config.emoji}, color: ${config.color}`);
 
     // 使用canvas创建纹理以正确显示emoji
@@ -100,8 +102,9 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     // 清空canvas
     ctx.clearRect(0, 0, 40, 40);
 
-    // 背景圆
-    ctx.fillStyle = config.color || '#ffffff';
+    // 背景圆 - 敌方单位使用红色背景
+    const bgColor = isEnemy ? '#ff4444' : (config.color || '#ffffff');
+    ctx.fillStyle = bgColor;
     ctx.beginPath();
     ctx.arc(20, 20, 18, 0, Math.PI * 2);
     ctx.fill();
@@ -268,7 +271,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     // 计算飞行方向并保存目标位置（避免目标被销毁后访问undefined）
     const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
     const distance = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
-    const speed = 20; // 弹道飞行速度 (从8增加到20，加快飞行速度)
+    const speed = 50; // 弹道飞行速度 (从20增加到50，进一步加快飞行速度)
     const duration = (distance / speed) * 1000; // 飞行时间（毫秒）
 
     // 保存目标命中位置，避免目标对象被销毁后访问undefined
