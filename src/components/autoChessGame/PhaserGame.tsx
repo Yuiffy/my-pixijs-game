@@ -37,8 +37,6 @@ export default function PhaserGame() {
 
       try {
         const Phaser = (await import('phaser')).default;
-        const BootScene = (await import('./scenes/BootScene')).default;
-        const TitleScene = (await import('./scenes/TitleScene')).default;
         const MainScene = (await import('./scenes/MainScene')).default;
 
         // Phaser 游戏配置
@@ -51,7 +49,7 @@ export default function PhaserGame() {
             default: 'matter',
             matter: {
               gravity: { x: 0, y: 0.3 }, // 轻微重力
-              debug: process.env.NODE_ENV === 'development', // 只在开发模式显示调试信息
+              debug: false, // 禁用debug模式，避免显示蓝色边框
               enableSleeping: false
             }
           },

@@ -4,15 +4,15 @@ import Unit from './Unit';
 
 // 继承 Sprite 而不是 GameObjects.Sprite
 export default class Barracks extends Phaser.Physics.Matter.Sprite {
-  unitKey: string;
+  unitKey!: string;
 
-  unitData: any;
+  unitData!: any;
 
   spawnTimer!: Phaser.Time.TimerEvent | null;
 
   indicator!: Phaser.GameObjects.Text;
 
-  scene: Phaser.Scene;
+  scene!: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any) {
     // #region agent log
@@ -32,58 +32,59 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     // #endregion
 
     // 创建兵营纹理 - 房子底座 + 兵种 emoji
+    // 完全按照Unit的方式创建纹理
     const barracksTextureKey = `barracks_${unitKey}`;
     if (!scene.textures.exists(barracksTextureKey)) {
+      console.log(`Creating barracks texture for ${unitKey}: ${barracksTextureKey}`);
+
+      // 使用canvas创建纹理以正确显示emoji（和Unit完全一样的写法）
       const canvas = document.createElement('canvas');
       canvas.width = 70;
       canvas.height = 70;
       const ctx = canvas.getContext('2d');
 
-      if (ctx) {
-        // 清空canvas
-        ctx.clearRect(0, 0, 70, 70);
-
-        // 绘制底座（房子主体）
-        ctx.fillStyle = '#8B4513'; // 褐色底座
-        ctx.fillRect(10, 35, 50, 25); // 房子主体
-
-        // 房子屋顶
-        ctx.fillStyle = '#654321'; // 深褐色屋顶
-        ctx.beginPath();
-        ctx.moveTo(5, 35);
-        ctx.lineTo(35, 15);
-        ctx.lineTo(65, 35);
-        ctx.closePath();
-        ctx.fill();
-
-        // 屋顶描边
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // 房子主体描边
-        ctx.strokeRect(10, 35, 50, 25);
-
-        // 在房子顶部绘制兵种emoji
-        ctx.font =
-          '32px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#000000';
-        ctx.fillText(unitData.emoji || '🏠', 35, 22);
-
-        // 添加到Phaser纹理
-        scene.textures.addCanvas(barracksTextureKey, canvas);
-      } else {
-        // 降级方案：使用简单的graphics
-        const graphics = scene.add.graphics();
-        graphics.fillStyle(0xffd700);
-        graphics.fillCircle(0, 0, 35);
-        graphics.lineStyle(3, 0x000000);
-        graphics.strokeCircle(0, 0, 35);
-        graphics.generateTexture(barracksTextureKey, 70, 70);
-        graphics.destroy();
+      if (!ctx) {
+        console.error('Failed to get canvas context');
+        return;
       }
+
+      // 清空canvas（和Unit一样）
+      ctx.clearRect(0, 0, 70, 70);
+
+      // 绘制底座（房子主体）- 褐色
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(10, 35, 50, 25);
+
+      // 房子主体描边
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(10, 35, 50, 25);
+
+      // 房子屋顶 - 深褐色三角形
+      ctx.fillStyle = '#654321';
+      ctx.beginPath();
+      ctx.moveTo(5, 35);
+      ctx.lineTo(35, 15);
+      ctx.lineTo(65, 35);
+      ctx.closePath();
+      ctx.fill();
+
+      // 屋顶描边
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 在房子顶部绘制兵种emoji（和Unit一样的字体设置方式）
+      ctx.font = '32px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#000000';
+      ctx.fillText(unitData.emoji || '🏠', 35, 22);
+
+      // 添加到Phaser纹理（和Unit完全一样）
+      scene.textures.addCanvas(barracksTextureKey, canvas);
+
+      console.log(`Barracks texture created: ${barracksTextureKey} with emoji: ${unitData.emoji}`);
 
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', {
@@ -101,6 +102,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       }).catch(() => {});
       // #endregion
     } else {
+      console.log(`ℹ️ Barracks texture '${barracksTextureKey}' already exists`);
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', {
         method: 'POST',
@@ -118,16 +120,13 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       // #endregion
     }
 
+    // 创建sprite（和Unit完全一样的顺序）
     super(scene.matter.world, x, y, barracksTextureKey);
 
     this.scene = scene;
     this.unitKey = unitKey;
     this.unitData = unitData;
     this.spawnTimer = null;
-
-    // 简化的纹理检查
-    const textureExists = scene.textures.exists(barracksTextureKey);
-    console.log(`Barracks texture '${barracksTextureKey}' exists: ${textureExists}`);
 
     // 确保body正确初始化
     if (this.body) {
@@ -138,12 +137,11 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       console.error(`Barracks body not created properly for ${unitKey}`);
     }
 
-    // 视觉调整：看起来像底座
-    this.setDisplaySize(70, 70);
-    this.setAlpha(1.0); // 设置为完全不透明
+    // 设置深度（在单位之上）
+    this.setDepth(100);
 
-    // Matter Sprite 已自动添加到场景
-    this.setDepth(100); // 在单位之上
+    // 显式添加到场景（和Unit一样）
+    scene.add.existing(this);
 
     // 添加拖动功能 - 只有在游戏开始前才能拖动
     this.setInteractive();
