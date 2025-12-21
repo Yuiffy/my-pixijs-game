@@ -249,6 +249,11 @@ export default class MainScene extends Phaser.Scene {
       this.playerUnits.add(friend);
     }
 
+    // 3. 同步触发所有兵营出兵（和敌友一起出兵）
+    this.playerBarracks.forEach(barracks => {
+      barracks.spawnUnit();
+    });
+
     if (!this.waveText) {
       this.waveText = this.add.text(500, 50, `Wave ${this.currentWave}`, { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
     } else {
@@ -352,12 +357,7 @@ export default class MainScene extends Phaser.Scene {
     // 同步当前金币到UI
     this.game.events.emit('GOLD_CHANGED', this.playerGold);
 
-    // 启动所有兵营的出兵
-    this.playerBarracks.forEach(barracks => {
-      barracks.startSpawning();
-    });
-
-    // 启动敌军波次
+    // 启动敌军波次（兵营会在波次中同步出兵）
     this.spawnEnemyWave(); // 立即开始第一波
     this.waveTimer = this.time.addEvent({
       delay: 8000,

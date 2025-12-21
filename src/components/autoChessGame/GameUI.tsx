@@ -251,7 +251,7 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
             if (!unit) return null;
             const canAfford = gold >= unit.cost;
 
-            const tooltipContent = `${unit.name}\n生命值: ${unit.hp}\n攻击力: ${unit.damage}\n阵营: ${unit.factions.join('/')}\n出兵间隔: ${Math.round((unit.spawnInterval || 4000) / 1000)}秒`;
+            const tooltipContent = `${unit.name}\n生命值: ${unit.hp}\n攻击力: ${unit.damage}\n阵营: ${unit.factions.join('/')}`;
 
             return (
               <button

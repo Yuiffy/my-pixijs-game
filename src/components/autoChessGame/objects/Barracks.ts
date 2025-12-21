@@ -222,40 +222,11 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     }).catch(() => {});
     // #endregion
 
-    // 出兵逻辑将在游戏开始后启动（由 MainScene.startGame 调用 startSpawning）
-    // 暂时不启动 spawnTimer
+    // 出兵逻辑将在波次开始时统一触发（由 MainScene.spawnEnemyWave 调用 spawnUnit）
   }
 
-  startSpawning() {
-    // 游戏开始后启动出兵
-    // 延迟初始生成，避免立即碰撞
-    this.scene.time.delayedCall(500, () => {
-      this.spawnUnit();
-    });
-
-    this.spawnTimer = this.scene.time.addEvent({
-      delay: this.unitData.spawnInterval || 4000,
-      callback: this.spawnUnit,
-      callbackScope: this,
-      loop: true
-    });
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'Barracks.ts:startSpawning',
-        message: 'Barracks startSpawning called',
-        data: { spawnInterval: this.unitData.spawnInterval || 4000 },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'extended-debug',
-        hypothesisId: 'A4'
-      })
-    }).catch(() => {});
-    // #endregion
-  }
+  // 不再使用定时器，改为被动出兵（由波次触发）
+  // startSpawning 方法已移除，改为在波次开始时统一调用 spawnUnit
 
   spawnUnit() {
     console.log(`Barracks spawning ${this.unitData.name} at (${this.x}, ${this.y})`);
