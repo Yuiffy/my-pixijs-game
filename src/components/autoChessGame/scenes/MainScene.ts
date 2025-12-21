@@ -55,6 +55,12 @@ export default class MainScene extends Phaser.Scene {
 
   currentShop!: string[];
 
+  sellZone!: Phaser.GameObjects.Zone;
+
+  sellZoneText!: Phaser.GameObjects.Text;
+
+  sellZoneBg!: Phaser.GameObjects.Rectangle;
+
   constructor() {
     super('MainScene');
   }
@@ -134,6 +140,9 @@ export default class MainScene extends Phaser.Scene {
     this.currentWave = 0;
     this.initializeShop();
 
+    // 创建卖掉区域（右上角）
+    this.createSellZone();
+
     // 添加游戏未开始的提示
     this.notStartedText = this.add.text(500, 300, '点击"开始战斗"开始游戏', {
       fontSize: '24px',
@@ -152,6 +161,68 @@ export default class MainScene extends Phaser.Scene {
     base.setCollisionCategory(this.wallCategory);
     base.setCollidesWith([collidesWith]);
     if (label === 'BASE_PLAYER') this.playerBase = base; else this.enemyBase = base;
+  }
+
+  createSellZone() {
+    // 卖掉区域位置：右上角（往下挪一点避免被UI遮挡）
+    const sellZoneX = 900;
+    const sellZoneY = 150;
+    const sellZoneWidth = 100;
+    const sellZoneHeight = 100;
+
+    // 创建Zone用于检测
+    this.sellZone = this.add.zone(sellZoneX, sellZoneY, sellZoneWidth, sellZoneHeight);
+    this.sellZone.setDepth(1000);
+
+    // 创建背景矩形
+    this.sellZoneBg = this.add.rectangle(sellZoneX, sellZoneY, sellZoneWidth, sellZoneHeight, 0xff0000, 0.3);
+    this.sellZoneBg.setStrokeStyle(3, 0xff0000);
+    this.sellZoneBg.setDepth(999);
+
+    // 创建文字提示
+    this.sellZoneText = this.add.text(sellZoneX, sellZoneY, '卖掉\n兵营', {
+      fontSize: '20px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      align: 'center'
+    }).setOrigin(0.5).setDepth(1001);
+
+    // 初始隐藏（只在拖动时显示）
+    this.sellZoneBg.setVisible(false);
+    this.sellZoneText.setVisible(false);
+  }
+
+  isInSellZone(x: number, y: number): boolean {
+    if (!this.sellZone) return false;
+    const bounds = this.sellZone.getBounds();
+    return x >= bounds.x - bounds.width / 2 && x <= bounds.x + bounds.width / 2 &&
+           y >= bounds.y - bounds.height / 2 && y <= bounds.y + bounds.height / 2;
+  }
+
+  sellBarracks(barracks: Barracks) {
+    // 获取兵营的单位数据以计算返还金币
+    const unitData = barracks.unitData;
+    const refundGold = unitData.cost || 1; // 返还购买时的金币
+
+    // 从数组中移除
+    const index = this.playerBarracks.indexOf(barracks);
+    if (index > -1) {
+      this.playerBarracks.splice(index, 1);
+    }
+
+    // 返还金币
+    this.playerGold += refundGold;
+    this.game.events.emit('GOLD_CHANGED', this.playerGold);
+    console.log(`💰 Sold barracks, refunded ${refundGold} gold. Total: ${this.playerGold}`);
+
+    // 销毁兵营
+    barracks.destroy();
+
+    // 重新计算羁绊
+    this.calculateSynergies();
+
+    // 更新兵营数量
+    this.game.events.emit('BARRACKS_PLACED', this.playerBarracks.length);
   }
 
   checkBaseCollision(baseBody: any, unitObj: any) {
@@ -352,6 +423,17 @@ export default class MainScene extends Phaser.Scene {
     this.gameStarted = true;
     if (this.notStartedText) {
       this.notStartedText.destroy();
+    }
+
+    // 禁用所有兵营的拖动功能
+    this.playerBarracks.forEach(barracks => {
+      barracks.disableDragging();
+    });
+
+    // 隐藏卖掉区域
+    if (this.sellZoneBg && this.sellZoneText) {
+      this.sellZoneBg.setVisible(false);
+      this.sellZoneText.setVisible(false);
     }
 
     // 同步当前金币到UI

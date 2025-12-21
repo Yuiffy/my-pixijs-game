@@ -14,6 +14,10 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   scene!: Phaser.Scene;
 
+  isDragging!: boolean;
+
+  isOverSellZone!: boolean;
+
   constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any) {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', {
@@ -127,6 +131,8 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.unitKey = unitKey;
     this.unitData = unitData;
     this.spawnTimer = null;
+    this.isDragging = false;
+    this.isOverSellZone = false;
 
     // 确保body正确初始化
     if (this.body) {
@@ -147,10 +153,61 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.setInteractive();
     this.scene.input.setDraggable(this);
 
+    // 拖动开始：显示卖掉区域（只在游戏未开始时）
+    this.on('dragstart', () => {
+      const mainScene = this.scene as any;
+      // 如果游戏已开始，不允许拖动
+      if (mainScene.gameStarted) {
+        return;
+      }
+      this.isDragging = true;
+      if (mainScene.sellZoneBg && mainScene.sellZoneText) {
+        mainScene.sellZoneBg.setVisible(true);
+        mainScene.sellZoneText.setVisible(true);
+      }
+    });
+
+    // 拖动中：检测是否在卖掉区域内
     this.on('drag', (pointer: any, dragX: number, dragY: number) => {
-      // 限制拖动范围，避免拖出边界
-      const clampedX = Phaser.Math.Clamp(dragX, 80, 920);
-      const clampedY = Phaser.Math.Clamp(dragY, 80, 480);
+      const mainScene = this.scene as any;
+
+      // 如果游戏已开始，不允许拖动
+      if (mainScene.gameStarted) {
+        return;
+      }
+
+      // 检测是否在卖掉区域内
+      const inSellZone = mainScene.isInSellZone ? mainScene.isInSellZone(dragX, dragY) : false;
+
+      if (inSellZone !== this.isOverSellZone) {
+        this.isOverSellZone = inSellZone;
+
+        // 更新卖掉区域的视觉效果
+        if (mainScene.sellZoneBg) {
+          if (inSellZone) {
+            // 在卖掉区域内：高亮显示
+            mainScene.sellZoneBg.setFillStyle(0xff0000, 0.6);
+            mainScene.sellZoneBg.setStrokeStyle(4, 0xffffff);
+            // 兵营变红表示可以卖掉
+            this.setTint(0xff0000);
+          } else {
+            // 不在卖掉区域内：恢复正常
+            mainScene.sellZoneBg.setFillStyle(0xff0000, 0.3);
+            mainScene.sellZoneBg.setStrokeStyle(3, 0xff0000);
+            this.clearTint();
+          }
+        }
+      }
+
+      // 限制拖动范围，避免拖出边界（但允许拖到卖掉区域）
+      let clampedX = dragX;
+      let clampedY = dragY;
+
+      // 如果不在卖掉区域内，限制拖动范围
+      if (!inSellZone) {
+        clampedX = Phaser.Math.Clamp(dragX, 80, 920);
+        clampedY = Phaser.Math.Clamp(dragY, 80, 480);
+      }
 
       this.setPosition(clampedX, clampedY);
 
@@ -158,6 +215,36 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       if (this.indicator) {
         this.indicator.setPosition(clampedX, clampedY + 40);
       }
+    });
+
+    // 拖动结束：如果拖到卖掉区域则卖掉，否则隐藏卖掉区域
+    this.on('dragend', () => {
+      const mainScene = this.scene as any;
+
+      // 如果游戏已开始，不允许拖动
+      if (mainScene.gameStarted) {
+        return;
+      }
+
+      if (this.isOverSellZone && mainScene.sellBarracks) {
+        // 卖掉兵营
+        mainScene.sellBarracks(this);
+      } else {
+        // 恢复正常状态
+        this.clearTint();
+      }
+
+      // 隐藏卖掉区域
+      if (mainScene.sellZoneBg && mainScene.sellZoneText) {
+        mainScene.sellZoneBg.setVisible(false);
+        mainScene.sellZoneText.setVisible(false);
+        // 恢复默认样式
+        mainScene.sellZoneBg.setFillStyle(0xff0000, 0.3);
+        mainScene.sellZoneBg.setStrokeStyle(3, 0xff0000);
+      }
+
+      this.isDragging = false;
+      this.isOverSellZone = false;
     });
 
     // 位置可见性检查
