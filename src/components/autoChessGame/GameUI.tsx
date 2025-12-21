@@ -177,7 +177,9 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
                     onMouseEnter={(e) => showTooltip(factionDesc, e)}
                     onMouseLeave={hideTooltip}
                   >
-                    {name} {count}
+                    {name}
+                    {' '}
+                    {count}
                   </span>
                 );
               })}
@@ -190,10 +192,15 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
               {gold}
             </div>
             <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffd700' }}>
-              第{shopLevel}本
+              第
+              {shopLevel}
+              本
             </div>
             <div style={{ fontSize: '12px', color: '#cccccc' }}>
-              人口: {barracksCount}/8
+              人口:
+              {' '}
+              {barracksCount}
+              /8
             </div>
           </div>
 
@@ -221,7 +228,8 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
           border: '1px solid #ffd700',
           maxWidth: '200px',
           textAlign: 'center'
-        }}>
+        }}
+        >
           {tooltip.content}
         </div>
       )}
@@ -286,16 +294,22 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
                   {unit.cost}
                 </div>
                 <div style={{ fontSize: 10, color: '#666', textAlign: 'center', marginTop: 5 }}>
-                  {unit.factions.map((faction, idx) => (
+                  {unit.factions.map((faction, factionIdx) => (
                     <span
                       key={faction}
-                      style={{ cursor: 'pointer', marginRight: idx < unit.factions.length - 1 ? '4px' : '0' }}
+                      style={{ cursor: 'pointer', marginRight: factionIdx < unit.factions.length - 1 ? '4px' : '0' }}
                       onMouseEnter={(e) => showTooltip((FACTION_DESCRIPTIONS as any)[faction] || `${faction}阵营说明暂未添加`, e)}
                       onMouseLeave={hideTooltip}
                     >
                       {faction}
                     </span>
-                  )).reduce((prev, curr, idx) => idx === 0 ? [curr] : [...prev, <span key={`sep-${idx}`}>/</span>, curr], [])}
+                  )).reduce((prev, curr, reduceIdx) => {
+                    if (reduceIdx === 0) {
+                      return [curr];
+                    }
+                    const separatorKey = `sep-${(curr.key as string) || reduceIdx}`;
+                    return [...prev, <span key={separatorKey}>/</span>, curr];
+                  }, [] as React.ReactElement[])}
                 </div>
               </button>
             );

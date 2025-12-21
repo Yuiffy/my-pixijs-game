@@ -83,7 +83,6 @@ export default class MainScene extends Phaser.Scene {
     this.enemyCategory = this.matter.world.nextCategory();
     this.wallCategory = this.matter.world.nextCategory();
 
-
     // --- 3. 组管理 ---
     this.playerUnits = this.add.group();
     this.enemyUnits = this.add.group();
@@ -201,7 +200,7 @@ export default class MainScene extends Phaser.Scene {
 
   sellBarracks(barracks: Barracks) {
     // 获取兵营的单位数据以计算返还金币
-    const unitData = barracks.unitData;
+    const { unitData } = barracks;
     const refundGold = unitData.cost || 1; // 返还购买时的金币
 
     // 从数组中移除
