@@ -5,12 +5,14 @@
 import { useEffect, useRef, useState } from 'react';
 import GameUI from './GameUI';
 
-let globalGameInstance: any = null;
+import { Game as PhaserGameType } from 'phaser';
+
+let globalGameInstance: PhaserGameType | null = null;
 let instanceCount = 0;
 
 export default function PhaserGame() {
-  const gameContainer = useRef(null);
-  const [gameInstance, setGameInstance] = useState<any>(null);
+  const gameContainer = useRef<HTMLDivElement>(null);
+  const [gameInstance, setGameInstance] = useState<PhaserGameType | null>(null);
   const [gameReady, setGameReady] = useState(false);
   const hasInitialized = useRef(false);
   instanceCount++;

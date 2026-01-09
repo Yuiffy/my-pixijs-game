@@ -20,7 +20,22 @@ export const FACTION_DESCRIPTIONS = {
   机甲: '未来机甲科技，重型装甲与火力输出\n2个：机甲羁绊 - 生命值提升\n3个：机甲羁绊 - 护甲增强\n5个：机甲羁绊 - 终极火力'
 };
 
-export const UNIT_TYPES = {
+export interface UnitData {
+  name: string;
+  cost: number;
+  tier: number;
+  factions: string[];
+  hp: number;
+  damage: number;
+  emoji: string;
+  color: string;
+  mass: number;
+  skill: string;
+  textureKey: string;
+  attackRange?: number;
+}
+
+export const UNIT_TYPES: Record<string, UnitData> = {
   // ID 必须唯一
   sui_warrior: {
     name: '岁己·战士',
