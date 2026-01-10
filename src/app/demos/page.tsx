@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Typography, Card, Button, Breadcrumb } from 'antd';
-import { HomeOutlined, ExperimentOutlined } from '@ant-design/icons';
+import { Typography, Card, Button, Breadcrumb, ConfigProvider, theme } from 'antd';
+import { HomeOutlined, ExperimentOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const { Title, Paragraph } = Typography;
 
@@ -47,65 +48,92 @@ const demoData: DemoItem[] = [
 ];
 
 export default function DemosPage() {
+  const router = useRouter();
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 p-8 md:p-16">
-      <div className="max-w-5xl mx-auto">
-        <Breadcrumb
-          items={[
-            {
-              title: <Link href="/"><HomeOutlined /> 首页</Link>,
-            },
-            {
-              title: (
-                <span className="flex items-center gap-1 text-purple-300">
-                  <ExperimentOutlined /> 实验性功能与归档
-                </span>
-              ),
-            },
-          ]}
-          className="mb-8"
-        />
-
-        <div className="mb-12">
-          <Title level={1} className="text-purple-100 !mb-4">实验性功能与归档</Title>
-          <Paragraph className="text-slate-400 text-lg">
-            这里存放了站点开发过程中的各种技术实验、Demo 以及一些早期的功能板块。
-          </Paragraph>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorPrimary: '#a855f7',
+          borderRadius: 16,
+        },
+      }}
+    >
+      <div className="min-h-screen bg-[#0A0D14] text-slate-200 p-8 md:p-16 relative overflow-x-hidden">
+        {/* Hero Background Elements - Matching Home aesthetics */}
+        <div className="fixed inset-0 pointer-events-none">
+           <div className="absolute top-1/4 left-1/4 w-[40vw] h-[40vw] bg-purple-600/5 blur-[120px] rounded-full" />
+           <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] bg-blue-600/5 blur-[120px] rounded-full" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {demoData.map((demo) => (
-            <Card
-              key={demo.href}
-              className="bg-slate-900/50 border-purple-900/30 hover:border-purple-500/50 transition-all group"
-              title={<span className="text-purple-200 group-hover:text-purple-100 transition-colors">{demo.title}</span>}
-            >
-              <Paragraph className="text-slate-400 h-12 overflow-hidden mb-4">
-                {demo.description}
-              </Paragraph>
-              <Button
-                type="primary"
-                ghost
-                href={demo.href}
-                className="border-purple-500 text-purple-400 hover:!bg-purple-500/10 hover:!border-purple-400 hover:!text-purple-300"
-              >
-                前往体验
-              </Button>
-            </Card>
-          ))}
-        </div>
-
-        <div className="mt-16 text-center">
+        {/* Floating Back Button */}
+        <div className="fixed top-6 left-6 z-[110]">
           <Button
-            icon={<HomeOutlined />}
-            size="large"
-            href="/"
-            className="bg-purple-600 border-none text-white hover:!bg-purple-500 shadow-lg shadow-purple-900/20"
-          >
-            返回首页
-          </Button>
+            icon={<ArrowLeftOutlined />}
+            onClick={() => router.back()}
+            className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 text-white hover:text-purple-300 hover:border-purple-500/50 hover:bg-white/10 transition-all shadow-2xl group"
+          />
+        </div>
+
+        <div className="max-w-5xl mx-auto relative z-10">
+          <Breadcrumb
+            items={[
+              {
+                title: <Link href="/" className="hover:!text-purple-300 transition-colors"><HomeOutlined /> 首页</Link>,
+              },
+              {
+                title: (
+                  <span className="flex items-center gap-1 text-purple-300">
+                    <ExperimentOutlined /> 实验性功能与归档
+                  </span>
+                ),
+              },
+            ]}
+            className="mb-8"
+          />
+
+          <div className="mb-12">
+            <Title level={1} className="!text-purple-100 !mb-4 font-serif">实验性功能与归档</Title>
+            <Paragraph className="text-slate-400 text-lg">
+              这里存放了站点开发过程中的各种技术实验、Demo 以及一些早期的功能板块。
+            </Paragraph>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {demoData.map((demo) => (
+              <Card
+                key={demo.href}
+                className="bg-white/5 border-white/10 backdrop-blur-md rounded-2xl hover:border-purple-500/50 transition-all group"
+                title={<span className="text-purple-200 group-hover:text-purple-100 transition-colors font-bold">{demo.title}</span>}
+              >
+                <Paragraph className="text-slate-400 h-12 overflow-hidden mb-4">
+                  {demo.description}
+                </Paragraph>
+                <Button
+                  type="primary"
+                  ghost
+                  href={demo.href}
+                  className="border-purple-500/50 text-purple-300 hover:!bg-purple-500/20 hover:!border-purple-400 hover:!text-white rounded-xl"
+                >
+                  前往体验
+                </Button>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-24 text-center">
+            <Button
+              icon={<HomeOutlined />}
+              size="large"
+              href="/"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 border-none text-white hover:scale-105 transition-transform rounded-full px-12 h-12 font-bold shadow-xl shadow-purple-900/40"
+            >
+              返回首页
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </ConfigProvider>
   );
 }

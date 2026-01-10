@@ -28,10 +28,10 @@ const { Title, Text, Paragraph } = Typography;
 // --- Real Sui SUI Info ---
 
 const suiInfo = {
-  name: '岁己 (SUI)',
+  name: '岁己SUI应援站',
+  heroName: '岁己SUI',
   group: 'VirtuaReal 第十七期生',
   race: '银喉长尾山雀 (Tit)',
-  origin: '四川成都 (川渝暴龙)',
   birthday: '2月5日',
   tags: ['白发红瞳', '虎牙', '吃辣大户', '地雷系(外表)', 'Needy'],
   description: '原本是一只想要早起叫醒人类的小鸟，结果因为自己也起不来，索性变成了人类。性格坚定可爱，非常喜欢吃辣，三餐无辣不欢。',
@@ -40,12 +40,19 @@ const suiInfo = {
 };
 
 const artworkMaterials = [
-  { src: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png', title: '小猫帽 · 紫色外套' },
-  { src: '/images/materials/岁己SUI小猫帽口罩双马尾.png', title: '小猫帽 · 口罩版' },
-  { src: '/images/materials/岁己SUI小猫帽戴兜帽wink红瞳.PNG', title: '小猫帽 · 兜帽Wink' },
-  { src: '/images/materials/岁己SUI小猫帽无外套长发金瞳.PNG', title: '小猫帽 · 长发金瞳' },
-  { src: '/images/materials/岁己SUI小猫帽短发小揪揪半身金瞳.png', title: '小猫帽 · 短发揪揪' },
-  { src: '/images/materials/QQ20260107-003512.png', title: '岁己 SUI · 表情包' },
+  { src: '/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png', title: '形态 · 小红帽', tag: '小红帽' },
+  { src: '/images/materials/blue/岁己_20231216形象_双马尾有外套.webp', title: '形态 · 小蓝帽 (双马尾)', tag: '小蓝帽' },
+  { src: '/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png', title: '形态 · 小蓝帽 (立绘)', tag: '小蓝帽' },
+  { src: '/images/materials/flower/cee3461dc483b51ac9befd4663c1235e1954091502.png', title: '形态 · 小花帽 (立绘)', tag: '小花帽' },
+  { src: '/images/materials/flower/622764c8178eb3f6411da20a917cc0321954091502.png', title: '形态 · 小花帽 (Q版)', tag: '小花帽' },
+  { src: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png', title: '形态 · 小猫帽 (饼干岁版)', tag: '小猫帽' },
+  { src: '/images/materials/岁己SUI小猫帽口罩双马尾.png', title: '形态 · 小猫帽 (口罩)', tag: '小猫帽' },
+  { src: '/images/materials/biscuit/饼干岁2.png', title: '饼干岁 · 形象', tag: '饼干岁' },
+  { src: '/images/materials/biscuit/饼干岁3.jpeg', title: '饼干岁 · 贴纸', tag: '饼干岁' },
+  { src: '/images/materials/jiajia/嘉嘉立绘张嘴伸手闭眼.png', title: '嘉嘉猫 · 立绘', tag: '嘉嘉猫' },
+  { src: '/images/materials/bird/岁己_小鸟跳静态图.png', title: '本体 · 小鸟跳', tag: '小鸟' },
+  { src: '/images/materials/bird/指人笑.png', title: '表情 · 指人笑', tag: '表情包' },
+  { src: '/images/materials/QQ20260107-003512.png', title: '岁己 SUI · 表情包', tag: '表情包' },
 ];
 
 // Stream summaries are now loaded dynamically from public/data/streams/streams.json
@@ -66,18 +73,20 @@ const HomeModule = () => (
              />
           </div>
           {/* Cute Floating Tags */}
-          <div className="absolute -top-4 -right-8 bg-[#DA5D77] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg rotate-12">川渝暴龙 🦖</div>
-          <div className="absolute bottom-10 -left-10 bg-[#87EAFF] text-slate-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg -rotate-12">银喉长尾山雀 🐦</div>
+          <div className="absolute -top-4 -right-8 bg-[#DA5D77] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg rotate-12">银喉长尾山雀 🐦</div>
+          <div className="absolute bottom-10 -left-10 bg-[#87EAFF] text-slate-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg -rotate-12">小鸟公主 👑</div>
       </div>
 
       <div className="text-center max-w-2xl px-4">
-        <Title className="!text-white !mb-4 !text-4xl md:!text-5xl font-serif">
-          {suiInfo.name}
+        <div className="mb-2">
+          <Tag color="blue" className="bg-blue-500/20 border-blue-500/30 text-blue-300 font-bold px-4 py-0.5 rounded-full">{suiInfo.name}</Tag>
+        </div>
+        <Title className="!text-white !mb-4 !text-5xl md:!text-7xl font-serif tracking-tight">
+          {suiInfo.heroName}
         </Title>
         <Space size="middle" wrap className="mb-6 justify-center">
           <Tag color="cyan" className="border-none">{suiInfo.group}</Tag>
           <Tag color="magenta" className="border-none">{suiInfo.race}</Tag>
-          <Tag color="volcano" className="border-none">成都籍</Tag>
         </Space>
         <Paragraph className="text-slate-300 text-lg leading-relaxed">
           {suiInfo.description}
@@ -96,11 +105,14 @@ const HomeModule = () => (
           </ul>
        </Card>
        <Card className="bg-white/5 border-white/10 backdrop-blur-md rounded-2xl">
-          <Title level={4} className="!text-cyan-300 !mb-4 flex items-center gap-2"><StarOutlined /> 近期目标</Title>
-          <div className="flex flex-col items-center justify-center h-full py-4 text-center">
-             <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-2xl mb-4 shadow-lg">🏆</div>
-             <Text className="text-white text-xl font-bold mb-2">10万粉丝达成！</Text>
-             <Text className="text-slate-400">发行首张实体专辑计划筹备中...</Text>
+          <Title level={4} className="!text-cyan-300 !mb-4 flex items-center gap-2"><StarOutlined /> 新饼须知</Title>
+          <div className="flex flex-col h-full py-2">
+             <ul className="space-y-2 text-slate-300 text-sm">
+                <li className="flex items-center gap-2">📅 上五休一，每晚7:40，左右</li>
+                <li className="flex items-center gap-2">🍜 每周三 22:00 人头麦煮面</li>
+                <li className="flex items-center gap-2">🎮 一三五七下午加播</li>
+                <li className="flex items-center gap-2">🎵 主杂谈，小唱。然后游戏/同步视听</li>
+             </ul>
           </div>
        </Card>
     </div>
@@ -113,7 +125,7 @@ const GalleryModule = () => (
       <Title level={2} className="!text-white !mb-2 flex items-center gap-3">
         <PictureOutlined className="text-pink-400" /> 角色素材库
       </Title>
-      <Text className="text-slate-400">来自“小猫帽”系列的精选材料，供各位羽众二创使用 ✨</Text>
+      <Text className="text-slate-400">来自岁己多形态的精选材料，供各位饼干岁二创使用 ✨</Text>
     </div>
 
     <AntImage.PreviewGroup>
@@ -128,7 +140,10 @@ const GalleryModule = () => (
                 wrapperClassName="w-full h-full"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between">
-                <Text className="text-xs text-white font-medium">{item.title}</Text>
+                <div className="flex flex-col gap-1">
+                  {item.tag && <Tag color="pink" className="w-fit text-[10px] px-1.5 py-0 leading-tight border-none bg-pink-500/50 text-white rounded-sm">{item.tag}</Tag>}
+                  <Text className="text-xs text-white font-medium">{item.title}</Text>
+                </div>
                 <Tooltip title="预览原图"><StarOutlined className="text-yellow-400" /></Tooltip>
               </div>
             </div>
