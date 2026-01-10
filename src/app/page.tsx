@@ -46,28 +46,7 @@ const artworkMaterials = [
   { src: '/images/materials/QQ20260107-003512.png', title: '岁己 SUI · 表情包' },
 ];
 
-const streamSummaries = [
-  {
-    id: 1,
-    title: '【初配信】大家好，我是 VirtuaReal 的岁己！',
-    date: '2022-09-04',
-    startTime: '19:00',
-    endTime: '21:00',
-    srtUrl: '#',
-    description: '正式在 VirtuaReal 出道，向大家展示了成都辣妹的坚定意志（划掉）和小鸟的可爱一面。',
-    imageUrl: '/images/wiki/to_be_zhu.png', // Temporary placeholder until real stream images are added
-  },
-  {
-    id: 2,
-    title: '【杂谈】川渝人的吃辣极限挑战',
-    date: '2022-10-12',
-    startTime: '20:00',
-    endTime: '22:00',
-    srtUrl: '#',
-    description: '分享了成都市民岁某人的日常生活，以及对各种超辣火锅的测评。',
-    imageUrl: '/images/wiki/sui_test_battle.jpg',
-  },
-];
+// Stream summaries are now loaded dynamically from public/data/streams/streams.json
 
 // --- Components ---
 
@@ -172,22 +151,48 @@ const GalleryModule = () => (
   </div>
 );
 
+interface StreamData {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  srt: string | null;
+  xml: string | null;
+  cover: string | null;
+  highlights: string | null;
+  images: string[];
+}
+
 const RecordsModule = () => {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [streams, setStreams] = useState<StreamData[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  useEffect(() => {
+    fetch('/data/streams/streams.json')
+      .then(res => res.json())
+      .then(data => setStreams(data))
+      .catch(err => console.error('Failed to load streams', err));
+  }, []);
 
   const dateCellRender = (value: any) => {
     const dateStr = value.format('YYYY-MM-DD');
-    const streams = streamSummaries.filter(s => s.date === dateStr);
+    const dayStreams = streams.filter(s => s.date === dateStr);
     return (
       <ul className="list-none p-0">
-        {streams.map(item => (
+        {dayStreams.map(item => (
           <li key={item.id}>
-            <Badge status="processing" text={item.title} className="text-[10px] text-pink-300 transform scale-90" />
+            <Tooltip title={`${item.time} ${item.title}`}>
+              <Badge status="processing" text={item.title} className="text-[10px] text-pink-300 transform scale-90 truncate max-w-full block" />
+            </Tooltip>
           </li>
         ))}
       </ul>
     );
   };
+
+  const paginatedStreams = streams.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="animate-fade-in-up">
@@ -196,7 +201,7 @@ const RecordsModule = () => {
           <Title level={2} className="!text-white !mb-2 flex items-center gap-3">
             <HistoryOutlined className="text-cyan-400" /> 直播回顾
           </Title>
-          <Text className="text-slate-400">记录每一场直播的珍贵瞬间 📅</Text>
+          <Text className="text-slate-400">记录每一场直播的珍贵瞬间 📅 共 {streams.length} 场</Text>
         </div>
         <div className="bg-white/5 p-1 rounded-full border border-white/10">
           <Button
@@ -220,29 +225,84 @@ const RecordsModule = () => {
 
       {viewMode === 'list' ? (
         <div className="space-y-6">
-          {streamSummaries.map((stream) => (
+          {paginatedStreams.map((stream) => (
             <Card key={stream.id} className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-2xl group">
-              <Row gutter={[24, 24]} align="middle">
+              <Row gutter={[24, 24]}>
                 <Col xs={24} md={8}>
-                  <div className="relative aspect-video rounded-xl overflow-hidden shadow-lg group-hover:scale-105 transition-transform duration-500">
+                  <div className="relative aspect-video rounded-xl overflow-hidden shadow-lg group-hover:scale-105 transition-transform duration-500 bg-slate-800">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 z-10" />
-                    <NextImage src={stream.imageUrl} alt={stream.title} fill className="object-cover" />
+                    {stream.cover ? (
+                      <NextImage src={stream.cover} alt={stream.title} fill className="object-cover" />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-slate-500 font-bold">MISSING COVER</div>
+                    )}
                     <Tag className="absolute top-2 left-2 z-20 bg-cyan-600 border-none font-bold">{stream.date}</Tag>
                   </div>
                 </Col>
                 <Col xs={24} md={16}>
-                  <Title level={4} className="!text-white group-hover:text-cyan-300 transition-colors mb-2">{stream.title}</Title>
-                  <Paragraph className="text-slate-400 mb-6">{stream.description}</Paragraph>
+                  <div className="flex justify-between items-start">
+                    <Title level={4} className="!text-white group-hover:text-cyan-300 transition-colors mb-2">{stream.title}</Title>
+                    <Text className="text-slate-500 text-xs">{stream.time}</Text>
+                  </div>
+
+                  <div className="bg-black/20 p-4 rounded-xl mb-4 max-h-40 overflow-y-auto custom-scrollbar">
+                    <pre className="text-slate-400 text-xs whitespace-pre-wrap font-sans">
+                      {stream.highlights || '暂无 AI 总结摘要...'}
+                    </pre>
+                  </div>
+
+                  {stream.images && stream.images.length > 0 && (
+                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                       <AntImage.PreviewGroup>
+                         {stream.images.map((img, i) => (
+                           <AntImage
+                            key={i}
+                            src={img}
+                            width={80}
+                            height={60}
+                            className="rounded-lg object-cover"
+                           />
+                         ))}
+                       </AntImage.PreviewGroup>
+                    </div>
+                  )}
+
                   <Space size="middle">
-                    <Button icon={<CloudDownloadOutlined />} className="bg-white/10 border-none text-cyan-300 hover:!bg-white/20">SRT 下載</Button>
-                    <Button type="link" className="text-pink-400">详情回顾 →</Button>
+                    {stream.srt && (
+                      <Button
+                        icon={<CloudDownloadOutlined />}
+                        href={stream.srt}
+                        download
+                        className="bg-white/10 border-none text-cyan-300 hover:!bg-white/20"
+                      >
+                        SRT 下載
+                      </Button>
+                    )}
+                    {stream.xml && (
+                       <Button
+                        icon={<CloudDownloadOutlined />}
+                        href={stream.xml}
+                        download
+                        className="bg-white/10 border-none text-pink-300 hover:!bg-white/20"
+                      >
+                        弹幕 XML
+                      </Button>
+                    )}
+                    <Button type="link" className="text-slate-500">更多回顾 →</Button>
                   </Space>
                 </Col>
               </Row>
             </Card>
           ))}
           <div className="flex justify-center pt-8">
-            <Pagination total={2} pageSize={10} className="custom-pagination" />
+            <Pagination
+              current={currentPage}
+              total={streams.length}
+              pageSize={pageSize}
+              onChange={(page) => setCurrentPage(page)}
+              showSizeChanger={false}
+              className="custom-pagination"
+            />
           </div>
         </div>
       ) : (
