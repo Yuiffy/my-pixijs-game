@@ -190,14 +190,25 @@ const HomeContent = () => {
             height: 110px !important;
             min-height: 110px !important;
             overflow-y: auto !important;
+            overflow-x: hidden !important;
             scrollbar-width: thin;
+            scrollbar-color: rgba(135, 234, 255, 0.3) transparent;
           }
+          /* Webkit browsers (Chrome, Safari, Edge) */
           .ant-picker-calendar-date-content::-webkit-scrollbar {
-             width: 4px;
+             width: 6px;
+          }
+          .ant-picker-calendar-date-content::-webkit-scrollbar-track {
+             background: rgba(0, 0, 0, 0.2);
+             border-radius: 10px;
           }
           .ant-picker-calendar-date-content::-webkit-scrollbar-thumb {
-             background: rgba(255,255,255,0.1);
+             background: rgba(135, 234, 255, 0.3);
              border-radius: 10px;
+             transition: background 0.2s;
+          }
+          .ant-picker-calendar-date-content::-webkit-scrollbar-thumb:hover {
+             background: rgba(135, 234, 255, 0.5);
           }
           /* Additional Calendar Dark Overrides */
           .ant-picker-calendar-header {
@@ -241,6 +252,15 @@ const HomeContent = () => {
           .ant-picker-calendar .ant-picker-cell-selected .ant-picker-calendar-date-value {
              color: rgba(255,255,255,0.9) !important;
              font-weight: normal !important;
+          }
+          /* Enable today highlighting ONLY for cells that are both today AND in current view */
+          .ant-picker-calendar .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date {
+             border-top: 2px solid rgba(135, 234, 255, 0.5) !important;
+             background: rgba(135, 234, 255, 0.05) !important;
+          }
+          .ant-picker-calendar .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date-value {
+             color: #87eaff !important;
+             font-weight: 900 !important;
           }
           .ant-picker-calendar .ant-picker-panel {
             background: transparent !important;
