@@ -35,11 +35,11 @@ const demoData: DemoItem[] = [
     href: '/game/wuxia',
     description: '文字冒险游戏，虽然剧情暂与岁己无关，但正在积极开发中。',
   },
-  {
-    title: '自走棋游戏 Auto Chess',
-    href: '/game/autochess',
-    description: '策略布局游戏 - 指挥你的部队作战！',
-  },
+  // {
+  //   title: '自走棋游戏 Auto Chess 没做好，不放入口',
+  //   href: '/game/autochess',
+  //   description: '策略布局游戏 - 指挥你的部队作战！',
+  // },
   {
     title: '带鱼主页',
     href: 'https://www.daifish.top',
