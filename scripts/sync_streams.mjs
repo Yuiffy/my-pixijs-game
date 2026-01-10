@@ -30,10 +30,14 @@ async function syncStreams() {
       if (match) {
         const dateTimeStr = match[1];
         const titlePart = match[2];
+        const fullPath = path.join(fullSourcePath, file);
+        const stats = fs.statSync(fullPath);
+
         if (!streamGroups[dateTimeStr]) {
           streamGroups[dateTimeStr] = {
             id: dateTimeStr,
             title: titlePart,
+            latestTitleMtime: stats.mtimeMs,
             date: dateFolder.replace(/_/g, '-'),
             time: dateTimeStr.split('_').slice(3).join(':'),
             files: [],
@@ -41,11 +45,18 @@ async function syncStreams() {
             duration: 0
           };
         }
+
         streamGroups[dateTimeStr].files.push(file);
+
+        // Update to the latest title found in any file of this group
+        if (stats.mtimeMs > streamGroups[dateTimeStr].latestTitleMtime) {
+          streamGroups[dateTimeStr].title = titlePart;
+          streamGroups[dateTimeStr].latestTitleMtime = stats.mtimeMs;
+        }
 
         if (file.endsWith('.xml')) {
            try {
-            const content = fs.readFileSync(path.join(fullSourcePath, file), 'utf-8');
+            const content = fs.readFileSync(fullPath, 'utf-8');
             const pMatches = content.match(/p="([^"]+)"/g);
             if (pMatches && pMatches.length > 0) {
               const lastP = pMatches[pMatches.length - 1];
@@ -67,20 +78,26 @@ async function syncStreams() {
     files.forEach(file => {
       if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
         if (file.includes('cover')) return;
-        allSummaryImages.push(file);
+        const fullPath = path.join(fullSourcePath, file);
+        allSummaryImages.push({
+          name: file,
+          mtime: fs.statSync(fullPath).mtimeMs
+        });
       }
     });
+
+    // Sort images by mtime desc (latest first)
+    allSummaryImages.sort((a, b) => b.mtime - a.mtime);
 
     // Distribute images among valid streams
     if (validStreamIds.length > 0) {
       if (validStreamIds.length === 1) {
-        streamGroups[validStreamIds[0]].otherImages.push(...allSummaryImages);
+        streamGroups[validStreamIds[0]].otherImages.push(...allSummaryImages.map(img => img.name));
       } else {
-        // Try to distribute. If images contain timestamps, match them.
-        // Otherwise, split them by order.
-        allSummaryImages.sort().forEach((file, index) => {
+        // Try to distribute. Latest images will be assigned first.
+        allSummaryImages.forEach((img, index) => {
           const streamIndex = index % validStreamIds.length;
-          streamGroups[validStreamIds[streamIndex]].otherImages.push(file);
+          streamGroups[validStreamIds[streamIndex]].otherImages.push(img.name);
         });
       }
     }
