@@ -37,33 +37,55 @@ async function syncStreams() {
             date: dateFolder.replace(/_/g, '-'),
             time: dateTimeStr.split('_').slice(3).join(':'),
             files: [],
-            otherImages: []
+            otherImages: [],
+            duration: 0
           };
         }
         streamGroups[dateTimeStr].files.push(file);
-      } else if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/) && !file.includes('cover')) {
-        // Find the nearest stream or just collect all images in the folder
-        // For simplicity, we'll associate images with the largest/first stream in the same folder if not clearly prefixed
-      }
-    });
 
-    // Second pass for images that might be summary illustrations
-    files.forEach(file => {
-      if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
-        if (file.includes('cover')) return;
-
-        // If it's a specific summary image like Gemini_XXX or 图片文字替换
-        if (file.includes('Gemini') || file.includes('图片文字替换') || !file.match(/^\d{4}/)) {
-           // Assign to the last stream found in this folder (usually there is only one or we pick the first)
-           const streamIds = Object.keys(streamGroups);
-           if (streamIds.length > 0) {
-             streamGroups[streamIds[0]].otherImages.push(file);
-           }
+        if (file.endsWith('.xml')) {
+           try {
+            const content = fs.readFileSync(path.join(fullSourcePath, file), 'utf-8');
+            const pMatches = content.match(/p="([^"]+)"/g);
+            if (pMatches && pMatches.length > 0) {
+              const lastP = pMatches[pMatches.length - 1];
+              const timeMatch = lastP.match(/p="([\d.]+),/);
+              if (timeMatch) {
+                streamGroups[dateTimeStr].duration = Math.floor(parseFloat(timeMatch[1]));
+              }
+            }
+          } catch (e) {}
         }
       }
     });
 
-    for (const streamId in streamGroups) {
+    const validStreamIds = Object.keys(streamGroups)
+      .filter(id => streamGroups[id].duration >= 60)
+      .sort(); // Sort by time
+
+    const allSummaryImages = [];
+    files.forEach(file => {
+      if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
+        if (file.includes('cover')) return;
+        allSummaryImages.push(file);
+      }
+    });
+
+    // Distribute images among valid streams
+    if (validStreamIds.length > 0) {
+      if (validStreamIds.length === 1) {
+        streamGroups[validStreamIds[0]].otherImages.push(...allSummaryImages);
+      } else {
+        // Try to distribute. If images contain timestamps, match them.
+        // Otherwise, split them by order.
+        allSummaryImages.sort().forEach((file, index) => {
+          const streamIndex = index % validStreamIds.length;
+          streamGroups[validStreamIds[streamIndex]].otherImages.push(file);
+        });
+      }
+    }
+
+    for (const streamId of validStreamIds) {
       const stream = streamGroups[streamId];
       const targetDir = path.join(TARGET_BASE_DIR, streamId);
       if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
@@ -75,13 +97,24 @@ async function syncStreams() {
         time: stream.time,
         startTime: stream.time,
         endTime: null,
-        duration: null,
+        duration: stream.duration,
+        durationStr: null,
         srt: null,
         xml: null,
         cover: null,
         highlights: null,
         images: []
       };
+
+      const hours = stream.duration / 3600;
+      streamData.durationStr = hours >= 0.1 ? `${hours.toFixed(1)} 小时` : `${Math.floor(stream.duration / 60)} 分钟`;
+
+      const [h, m] = stream.time.split(':').map(Number);
+      const startDate = new Date(2000, 0, 1, h, m, 0);
+      const endDate = new Date(startDate.getTime() + stream.duration * 1000);
+
+      streamData.startTime = stream.time.split(':').slice(0, 2).join(':');
+      streamData.endTime = endDate.toTimeString().split(' ')[0].split(':').slice(0, 2).join(':');
 
       stream.files.forEach(file => {
         const ext = path.extname(file).toLowerCase();
@@ -93,34 +126,6 @@ async function syncStreams() {
         } else if (ext === '.xml') {
           fs.copyFileSync(path.join(fullSourcePath, file), targetPath);
           streamData.xml = `/data/streams/${streamId}/${file}`;
-
-          // Partial XML parsing for duration
-          try {
-            const content = fs.readFileSync(path.join(fullSourcePath, file), 'utf-8');
-            const pMatches = content.match(/p="([^"]+)"/g);
-            if (pMatches && pMatches.length > 0) {
-              const lastP = pMatches[pMatches.length - 1];
-              const timeMatch = lastP.match(/p="([\d.]+),/);
-              if (timeMatch) {
-                const durationSec = parseFloat(timeMatch[1]);
-                streamData.duration = Math.floor(durationSec);
-
-                // Calculate end time
-                const [h, m, s] = stream.time.split(':').map(Number);
-                const startDate = new Date(2000, 0, 1, h, m, s);
-                const endDate = new Date(startDate.getTime() + durationSec * 1000);
-                streamData.endTime = endDate.toTimeString().split(' ')[0];
-
-                // Format duration
-                const dH = Math.floor(durationSec / 3600);
-                const dM = Math.floor((durationSec % 3600) / 60);
-                const dS = Math.floor(durationSec % 60);
-                streamData.durationStr = dH > 0 ? `${dH}h ${dM}m ${dS}s` : `${dM}m ${dS}s`;
-              }
-            }
-          } catch (err) {
-            console.error(`Failed to parse XML for duration: ${file}`, err);
-          }
         } else if (file.includes('cover')) {
           fs.copyFileSync(path.join(fullSourcePath, file), targetPath);
           streamData.cover = `/data/streams/${streamId}/${file}`;
@@ -132,11 +137,12 @@ async function syncStreams() {
 
       stream.otherImages.forEach(file => {
         const targetPath = path.join(targetDir, file);
-        fs.copyFileSync(path.join(fullSourcePath, file), targetPath);
-        streamData.images.push(`/data/streams/${streamId}/${file}`);
+        if (fs.existsSync(path.join(fullSourcePath, file))) {
+          fs.copyFileSync(path.join(fullSourcePath, file), targetPath);
+          streamData.images.push(`/data/streams/${streamId}/${file}`);
+        }
       });
 
-      // Look for AI Summary text in grouped files if not found by ext
       if (!streamData.highlights) {
         const highlightFile = stream.files.find(f => f.includes('AI_HIGHLIGHT'));
         if (highlightFile) {
@@ -148,7 +154,6 @@ async function syncStreams() {
     }
   }
 
-  // Sort by date/time descending
   allStreams.sort((a, b) => b.id.localeCompare(a.id));
 
   fs.writeFileSync(
@@ -156,7 +161,7 @@ async function syncStreams() {
     JSON.stringify(allStreams, null, 2)
   );
 
-  console.log(`Synced ${allStreams.length} streams to ${TARGET_BASE_DIR}`);
+  console.log(`Synced ${allStreams.length} valid streams with distributed images.`);
 }
 
 syncStreams().catch(console.error);

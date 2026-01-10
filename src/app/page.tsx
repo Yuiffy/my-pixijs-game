@@ -151,6 +151,28 @@ const GalleryModule = () => (
   </div>
 );
 
+const useScrollDirection = () => {
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down' | null>(null);
+
+  useEffect(() => {
+    let lastScrollY = window.pageYOffset;
+
+    const updateScrollDirection = () => {
+      const scrollY = window.pageYOffset;
+      const direction = scrollY > lastScrollY ? 'down' : 'up';
+      if (direction !== scrollDirection && (scrollY - lastScrollY > 10 || scrollY - lastScrollY < -10)) {
+        setScrollDirection(direction);
+      }
+      lastScrollY = scrollY > 0 ? scrollY : 0;
+    };
+
+    window.addEventListener('scroll', updateScrollDirection);
+    return () => window.removeEventListener('scroll', updateScrollDirection);
+  }, [scrollDirection]);
+
+  return scrollDirection;
+};
+
 interface StreamData {
   id: string;
   title: string;
@@ -164,6 +186,7 @@ interface StreamData {
   cover: string | null;
   highlights: string | null;
   images: string[];
+  replayUrl?: string;
 }
 
 const RecordsModule = () => {
@@ -179,17 +202,46 @@ const RecordsModule = () => {
       .catch(err => console.error('Failed to load streams', err));
   }, []);
 
+  const getPeriodInfo = (time: string) => {
+    const hour = parseInt(time.split(':')[0]);
+    if (hour >= 5 && hour < 12) return {
+      label: '早台',
+      color: 'cyan',
+      tagColor: 'cyan',
+      icon: <ThunderboltOutlined />,
+      bg: 'from-cyan-500/20 to-emerald-500/20',
+      border: 'border-cyan-500/30',
+      accent: 'via-cyan-500'
+    };
+    if (hour >= 12 && hour < 18) return {
+      label: '午台',
+      color: 'orange',
+      tagColor: 'orange',
+      icon: <CoffeeOutlined />,
+      bg: 'from-orange-500/20 to-amber-500/20',
+      border: 'border-orange-500/30',
+      accent: 'via-orange-500'
+    };
+    return {
+      label: '晚台',
+      color: 'purple',
+      tagColor: 'purple',
+      icon: <StarOutlined />,
+      bg: 'from-purple-500/20 to-indigo-500/20',
+      border: 'border-purple-500/30',
+      accent: 'via-purple-500'
+    };
+  };
+
   const onCalendarSelect = (value: any) => {
     const dateStr = value.format('YYYY-MM-DD');
     const dayStreams = streams.filter(s => s.date === dateStr);
     if (dayStreams.length > 0) {
-      // Find the page where this stream is located
       const index = streams.findIndex(s => s.id === dayStreams[0].id);
       if (index !== -1) {
         const page = Math.floor(index / pageSize) + 1;
         setCurrentPage(page);
         setViewMode('list');
-        // Scroll to the element after a brief delay to allow rendering
         setTimeout(() => {
           const element = document.getElementById(`stream-${dayStreams[0].id}`);
           if (element) {
@@ -225,9 +277,20 @@ const RecordsModule = () => {
           <Title level={2} className="!text-white !mb-2 flex items-center gap-3">
             <HistoryOutlined className="text-cyan-400" /> 直播回顾
           </Title>
-          <Text className="text-slate-400">记录每一场直播的珍贵瞬间 📅 共 {streams.length} 场</Text>
+          <div className="flex items-center gap-4 flex-wrap">
+            <Text className="text-slate-400">记录每一场直播的珍贵瞬间 📅 共 {streams.length} 场</Text>
+            <Button
+               type="link"
+               href="https://space.bilibili.com/1954091502/lists/2609053?type=series"
+               target="_blank"
+               className="text-cyan-400 p-0 hover:text-cyan-300 font-bold flex items-center gap-1"
+               icon={<ThunderboltOutlined />}
+            >
+              前往 Bilibili 直播录像合集 →
+            </Button>
+          </div>
         </div>
-        <div className="bg-white/5 p-1 rounded-full border border-white/10">
+        <div className="bg-white/5 p-1 rounded-full border border-white/10 shrink-0">
           <Button
             icon={<HistoryOutlined />}
             onClick={() => setViewMode('list')}
@@ -248,100 +311,124 @@ const RecordsModule = () => {
       </div>
 
       {viewMode === 'list' ? (
-        <div className="space-y-6">
-          {paginatedStreams.map((stream) => (
-            <Card
-              key={stream.id}
-              id={`stream-${stream.id}`}
-              className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-2xl group"
-            >
-              <Row gutter={[24, 24]}>
-                <Col xs={24} md={8}>
-                  <div className="relative aspect-video rounded-xl overflow-hidden shadow-lg group-hover:scale-105 transition-transform duration-500 bg-slate-800">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 z-10" />
-                    {stream.images && stream.images.length > 0 ? (
-                      <NextImage src={stream.images[0]} alt={stream.title} fill className="object-cover" />
-                    ) : stream.cover ? (
-                      <NextImage src={stream.cover} alt={stream.title} fill className="object-cover opacity-60" />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-slate-500 font-bold">NO ILLUSTRATION</div>
-                    )}
-                    <Tag className="absolute top-2 left-2 z-20 bg-cyan-600 border-none font-bold">{stream.date}</Tag>
-                  </div>
-                </Col>
-                <Col xs={24} md={16}>
-                  <div className="flex flex-col gap-1 mb-3">
-                    <Title level={4} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0">{stream.title}</Title>
-                    <Space className="text-slate-500 text-xs flex-wrap">
-                      <span className="flex items-center gap-1"><ThunderboltOutlined className="text-yellow-500" /> {stream.startTime} {stream.endTime && `- ${stream.endTime}`}</span>
-                      {stream.durationStr && <Tag color="blue" className="bg-blue-900/40 border-blue-500/30 text-blue-300 text-[10px] m-0">{stream.durationStr}</Tag>}
-                    </Space>
-                  </div>
-
-                  <div className="bg-black/20 p-4 rounded-xl mb-4 max-h-40 overflow-y-auto custom-scrollbar">
-                    <pre className="text-slate-400 text-xs whitespace-pre-wrap font-sans">
-                      {stream.highlights || '暂无 AI 总结摘要...'}
-                    </pre>
-                  </div>
-
-                  {stream.images && stream.images.length > 0 && (
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar">
-                       <AntImage.PreviewGroup>
-                         {stream.images.map((img, i) => (
-                           <AntImage
-                            key={i}
-                            src={img}
-                            width={100}
-                            height={75}
-                            className="rounded-lg object-cover border border-white/10 hover:border-cyan-400/50 transition-colors"
-                           />
-                         ))}
-                       </AntImage.PreviewGroup>
+        <div className="space-y-8">
+          {paginatedStreams.map((stream) => {
+            const period = getPeriodInfo(stream.time);
+            return (
+              <Card
+                key={stream.id}
+                id={`stream-${stream.id}`}
+                className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-3xl group"
+              >
+                <Row gutter={[0, 0]}>
+                  <Col xs={24} md={9} className="relative">
+                    <div className="relative h-full min-h-[220px] overflow-hidden shadow-2xl bg-slate-800">
+                      <AntImage.PreviewGroup>
+                        {stream.images && stream.images.length > 0 ? (
+                          <AntImage
+                            src={stream.images[0]}
+                            alt={stream.title}
+                            className="object-cover h-full w-full"
+                            wrapperClassName="!h-full !w-full"
+                          />
+                        ) : stream.cover ? (
+                          <AntImage
+                            src={stream.cover}
+                            alt={stream.title}
+                            className="object-cover h-full w-full opacity-60"
+                            wrapperClassName="!h-full !w-full"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-slate-500 font-bold">NO VISUAL</div>
+                        )}
+                      </AntImage.PreviewGroup>
+                      {/* Period Overlay */}
+                      <div className={`absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-50 z-20`} />
                     </div>
-                  )}
+                  </Col>
+                  <Col xs={24} md={15}>
+                    <div className={`p-6 md:p-8 h-full flex flex-col bg-gradient-to-br ${period.bg}`}>
+                      <div className="flex flex-col gap-2 mb-4">
+                        <div className="flex items-center gap-2">
+                           <Tag color={period.tagColor as any} className="font-bold border-none px-3 uppercase text-[10px] tracking-widest flex items-center gap-1 shadow-sm">
+                             {period.icon} {period.label}
+                           </Tag>
+                           <Text className="text-slate-500 text-xs font-mono">{stream.date}</Text>
+                        </div>
+                        <Title level={3} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0 !text-xl md:!text-2xl">{stream.title}</Title>
+                        <div className="flex items-center gap-4 text-slate-400 font-mono text-sm bg-white/5 w-fit px-3 py-1 rounded-full border border-white/5">
+                           <span className="flex items-center gap-1.5"><CalendarOutlined className="text-pink-400" /> {stream.startTime} {stream.endTime && `~ ${stream.endTime}`}</span>
+                           {stream.durationStr && <span className="flex items-center gap-1.5 border-l border-white/10 pl-4"><HistoryOutlined className="text-cyan-400" /> {stream.durationStr}</span>}
+                        </div>
+                      </div>
 
-                  <Space size="middle" className="flex-wrap">
-                    {stream.srt && (
-                      <Button
-                        icon={<CloudDownloadOutlined />}
-                        href={stream.srt}
-                        download
-                        size="small"
-                        className="bg-white/10 border-none text-cyan-300 hover:!bg-white/20"
-                      >
-                        SRT 字幕
-                      </Button>
-                    )}
-                    {stream.xml && (
-                       <Button
-                        icon={<CloudDownloadOutlined />}
-                        href={stream.xml}
-                        download
-                        size="small"
-                        className="bg-white/10 border-none text-pink-300 hover:!bg-white/20"
-                      >
-                        弹幕 XML
-                      </Button>
-                    )}
-                    <Button type="link" className="text-slate-500 p-0">查看回放 →</Button>
-                  </Space>
-                </Col>
-              </Row>
-            </Card>
-          ))}
-          <div className="flex justify-center pt-8">
+                      <div className="bg-black/40 backdrop-blur-md p-4 rounded-2xl mb-6 max-h-40 overflow-y-auto custom-scrollbar border border-white/5">
+                        <pre className="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed">
+                          {stream.highlights || '暂无 AI 总结摘要...'}
+                        </pre>
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between gap-4">
+                        <div className="flex gap-2 overflow-x-auto pb-1 max-w-[60%] custom-scrollbar">
+                           {stream.images && stream.images.length > 1 && (
+                             <AntImage.PreviewGroup>
+                               {stream.images.slice(1).map((img, i) => (
+                                 <AntImage
+                                  key={i}
+                                  src={img}
+                                  width={60}
+                                  height={45}
+                                  className="rounded-lg object-cover border border-white/10 hover:border-cyan-400/50 transition-colors"
+                                 />
+                               ))}
+                             </AntImage.PreviewGroup>
+                           )}
+                        </div>
+
+                        <Space size="small" className="flex-wrap justify-end">
+                          {stream.srt && (
+                            <Button
+                              icon={<CloudDownloadOutlined />}
+                              href={stream.srt}
+                              download
+                              size="small"
+                              className="bg-white/10 border-none text-cyan-300 hover:!bg-white/20 rounded-full"
+                            >
+                              SRT 字幕
+                            </Button>
+                          )}
+                          {stream.xml && (
+                             <Button
+                              icon={<CloudDownloadOutlined />}
+                              href={stream.xml}
+                              download
+                              size="small"
+                              className="bg-white/10 border-none text-pink-300 hover:!bg-white/20 rounded-full"
+                            >
+                              弹幕 XML
+                            </Button>
+                          )}
+                        </Space>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </Card>
+            );
+          })}
+          <div className="flex justify-center pt-12">
             <Pagination
               current={currentPage}
               total={streams.length}
               pageSize={pageSize}
               onChange={(page) => setCurrentPage(page)}
               showSizeChanger={false}
-              className="custom-pagination"
+              className="custom-pagination scale-110"
             />
           </div>
         </div>
       ) : (
-        <div className="bg-white/5 p-4 md:p-8 rounded-3xl border border-white/5 shadow-2xl overflow-x-auto">
+        <div className="bg-white/5 p-4 md:p-8 rounded-[40px] border border-white/5 shadow-2xl overflow-x-auto">
           <div className="min-w-[800px]">
              <Calendar
               fullscreen={true}
@@ -358,6 +445,16 @@ const RecordsModule = () => {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('home');
+  const scrollDirection = useScrollDirection();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <ConfigProvider
@@ -365,15 +462,19 @@ export default function Home() {
         algorithm: theme.darkAlgorithm,
         token: {
           colorPrimary: '#87EAFF',
-          borderRadius: 16,
+          borderRadius: 20,
           fontFamily: "'Inter', 'Noto Sans SC', sans-serif",
         },
       }}
     >
       <main className="min-h-screen bg-[#0A0D14] text-slate-200 overflow-x-hidden selection:bg-[#DA5D77]/50">
-        {/* Cute Top Nav */}
-        <nav className="fixed top-0 inset-x-0 z-[100] p-4 flex justify-center">
-           <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-full px-2 py-1 flex items-center shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+        {/* Smart Top Nav */}
+        <nav className={`fixed top-0 inset-x-0 z-[100] p-4 flex justify-center transition-all duration-500 ${
+          scrollDirection === 'down' ? '-translate-y-[120%]' : 'translate-y-0'
+        } ${isScrolled ? 'pt-2' : 'pt-6'}`}>
+           <div className={`transition-all duration-500 bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-full flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${
+             isScrolled ? 'px-2 py-1' : 'px-4 py-2'
+           }`}>
               {[
                 { key: 'home', label: '主页', icon: <HomeOutlined /> },
                 { key: 'gallery', label: '素材图', icon: <PictureOutlined /> },
@@ -382,12 +483,15 @@ export default function Home() {
                 <button
                   key={item.key}
                   onClick={() => setActiveTab(item.key)}
-                  className={`px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${
+                  className={`relative px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${
                     activeTab === item.key
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
+                    ? 'text-white'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
+                  {activeTab === item.key && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/80 to-blue-600/80 rounded-full -z-10 shadow-lg animate-fade-in" />
+                  )}
                   {item.icon} {item.label}
                 </button>
               ))}
