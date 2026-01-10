@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Badge, Tooltip } from 'antd';
 import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CoffeeOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { Image as AntImage } from 'antd';
+import ReactMarkdown from 'react-markdown';
 
 const { Title, Text } = Typography;
 
@@ -218,9 +219,23 @@ const RecordsModule = () => {
                       </div>
 
                       <div className="flex-1 bg-black/40 backdrop-blur-md p-5 rounded-2xl mb-6 overflow-y-auto custom-scrollbar border border-white/10 shadow-inner group/summary">
-                        <pre className="text-slate-300 text-[13px] whitespace-pre-wrap font-sans leading-relaxed opacity-80 group-hover/summary:opacity-100 transition-opacity">
-                          {stream.highlights || '暂无 AI 总结摘要...'}
-                        </pre>
+                        <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed opacity-80 group-hover/summary:opacity-100 transition-opacity">
+                          {stream.highlights ? (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{children}</p>,
+                                ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
+                                li: ({ children }: { children?: React.ReactNode }) => <li className="mb-1">{children}</li>,
+                                h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
+                                h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-lg font-bold mb-2 text-cyan-400">{children}</h2>,
+                                h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-base font-bold mb-2 text-pink-300">{children}</h3>,
+                                strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-cyan-200 font-bold">{children}</strong>
+                              }}
+                            >
+                              {stream.highlights}
+                            </ReactMarkdown>
+                          ) : '暂无 AI 总结摘要...'}
+                        </article>
                       </div>
 
                       <div className="mt-auto flex items-center justify-between gap-6 pt-2 border-t border-white/5">
