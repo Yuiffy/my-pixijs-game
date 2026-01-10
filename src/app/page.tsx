@@ -8,6 +8,7 @@ import {
   PictureOutlined,
   HomeOutlined,
   ThunderboltOutlined,
+  AudioOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
@@ -114,6 +115,15 @@ const HomeContent = () => {
               <Link href="/demos" className="px-4 py-2 hover:text-cyan-400 transition-colors text-slate-400 flex items-center gap-2 text-sm font-bold group">
                  <ExperimentOutlined className="group-hover:rotate-45 transition-transform" /> 实验室
               </Link>
+              <div className="w-[1px] h-4 bg-white/10 mx-1" />
+              <a
+                href="https://button.suiji.site"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 hover:text-pink-400 transition-colors text-slate-400 flex items-center gap-2 text-sm font-bold group"
+              >
+                 <AudioOutlined className="group-hover:scale-110 transition-transform" /> 岁己按钮
+              </a>
            </div>
         </nav>
 
@@ -184,6 +194,29 @@ const HomeContent = () => {
           }
           .ant-picker-calendar-date-content {
             height: 60px !important;
+          }
+          /* Additional Calendar Dark Overrides */
+          .ant-picker-calendar-header {
+            padding-inline: 0 !important;
+            margin-bottom: 20px !important;
+          }
+          .ant-picker-calendar .ant-picker-panel {
+            background: transparent !important;
+            border: none !important;
+          }
+          .ant-select-selector {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+          }
+          .ant-radio-button-wrapper {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #94a3b8 !important;
+          }
+          .ant-radio-button-wrapper-checked {
+            background: #fff !important;
+            color: #0A0D14 !important;
           }
           /* Custom Gallery Tabs */
           .custom-gallery-tabs .ant-tabs-nav::before {
