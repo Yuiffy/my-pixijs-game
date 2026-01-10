@@ -11,7 +11,7 @@ const SOURCE_BASE_DIRS = [
 const TARGET_BASE_DIR = path.join(ROOT_DIR, 'public/data/streams');
 
 const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
-const FILENAME_REGEX_LUZHI = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg)/;
+const FILENAME_REGEX_LUZHI = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg|txt|md)/;
 
 if (!fs.existsSync(TARGET_BASE_DIR)) {
   fs.mkdirSync(TARGET_BASE_DIR, { recursive: true });
@@ -266,6 +266,16 @@ async function syncStreams() {
     allSummaryImages.sort((a, b) => b.mtime - a.mtime);
     // Take a few images as variety
     const imagesToCopy = allSummaryImages.slice(0, 5);
+    imagesToCopy.forEach(img => {
+      const targetPath = path.join(targetDir, img.name);
+      if (!fs.existsSync(targetPath)) {
+        fs.copyFileSync(img.fullPath, targetPath);
+      }
+      streamData.images.push(`/data/streams/${streamId}/${img.name}`);
+    });
+
+    // Initial highlights from any AI_HIGHLIGHT file in the group
+    let groupHighlights = null;
 
     stream.files.forEach(({ file, sourceDir }) => {
       const ext = path.extname(file).toLowerCase();
@@ -286,33 +296,43 @@ async function syncStreams() {
       } else if (file.includes('cover')) {
         if (!fs.existsSync(targetPath)) fs.copyFileSync(fullSourcePath, targetPath);
         streamData.cover = `/data/streams/${streamId}/${file}`;
-      } else if (file.includes('AI_HIGHLIGHT')) {
-        const content = fs.readFileSync(fullSourcePath, 'utf-8');
-        streamData.highlights = content;
-      }
-    });
+      } else if (ext === '.md' || ext === '.txt' || file.includes('AI_HIGHLIGHT')) {
+        // Collect highlights/summaries
+        const isMarkdownOrTxt = ext === '.md' || ext === '.txt';
+        if (isMarkdownOrTxt) {
+           const content = fs.readFileSync(fullSourcePath, 'utf-8');
+           const baseName = path.parse(file).name;
 
-    imagesToCopy.forEach(img => {
-      const targetPath = path.join(targetDir, img.name);
-      if (!fs.existsSync(targetPath)) {
-        if (fs.existsSync(img.fullPath)) {
-          fs.copyFileSync(img.fullPath, targetPath);
-        } else {
-          console.warn(`Image file not found: ${img.fullPath}, skipping.`);
-          return;
+           // Clean up common suffixes for matching
+           const cleanBaseName = baseName.replace(/(_AI_HIGHLIGHT|_SUMMARY|_总结|_晚安)$/i, '');
+
+           const hasMatchingVideo = stream.files.some(f => {
+             if (f.file === file) return false;
+             const fBase = path.parse(f.file).name;
+             const isVideoOrXml = f.file.endsWith('.mp4') || f.file.endsWith('.flv') || f.file.endsWith('.xml');
+             return isVideoOrXml && (fBase === baseName || fBase === cleanBaseName || baseName.startsWith(fBase));
+           });
+
+           if (hasMatchingVideo || file.includes('AI_HIGHLIGHT')) {
+             if (streamData.highlights) {
+                // If current file is .md and existing is likely from .txt (AI_HIGHLIGHT), prepend.
+                if (ext === '.md') {
+                   streamData.highlights = content + '\n\n---\n\n' + streamData.highlights;
+                } else {
+                   streamData.highlights += '\n\n---\n\n' + content;
+                }
+             } else {
+                streamData.highlights = content;
+             }
+           } else if (!groupHighlights) {
+             groupHighlights = content;
+           }
         }
       }
-      streamData.images.push(`/data/streams/${streamId}/${img.name}`);
     });
 
-    // Ensure highlights are picked up if not already
-    if (!streamData.highlights) {
-      const highlightFile = stream.files.find(f => f.file.includes('AI_HIGHLIGHT'));
-      if (highlightFile) {
-         if (fs.existsSync(path.join(highlightFile.sourceDir, highlightFile.file))) {
-            streamData.highlights = fs.readFileSync(path.join(highlightFile.sourceDir, highlightFile.file), 'utf-8');
-         }
-      }
+    if (!streamData.highlights && groupHighlights) {
+      streamData.highlights = groupHighlights;
     }
 
     allStreams.push(streamData);
