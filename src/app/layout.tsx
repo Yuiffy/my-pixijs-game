@@ -3,8 +3,7 @@ import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
 // 1. 引入数据库和 headers
-import pool from '@/lib/db';
-import { headers } from 'next/headers';
+
 import './globals.css';
 import Analytics from '@/components/Analytics';
 
