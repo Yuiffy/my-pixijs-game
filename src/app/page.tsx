@@ -231,6 +231,29 @@ const HomeContent = () => {
           .stream-detail-modal .ant-modal-close:hover {
              background: rgba(255,255,255,0.1) !important;
           }
+          /* Fix: AntD today highlight appearing on all months */
+          .ant-picker-calendar-date {
+             border-top: 1px solid transparent !important;
+          }
+          .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date {
+             border-top: 1px solid rgba(135, 234, 255, 0.4) !important;
+             background: rgba(135, 234, 255, 0.05) !important;
+          }
+          /* Reset highlight for non-in-view cells (future/past months visible in current grid) */
+          .ant-picker-cell:not(.ant-picker-cell-in-view) .ant-picker-calendar-date {
+             border-top-color: transparent !important;
+             background: transparent !important;
+          }
+          .ant-picker-calendar-date-value {
+             color: rgba(255,255,255,0.4) !important;
+          }
+          .ant-picker-cell-in-view .ant-picker-calendar-date-value {
+             color: rgba(255,255,255,0.9) !important;
+          }
+          .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date-value {
+             color: #87eaff !important;
+             font-weight: 900 !important;
+          }
           .ant-picker-calendar .ant-picker-panel {
             background: transparent !important;
             border: none !important;
