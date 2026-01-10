@@ -32,7 +32,40 @@ async function syncStreams() {
       const fullSourcePath = path.join(sourceDir, dateFolder);
       const files = fs.readdirSync(fullSourcePath);
 
-      // Group files by stream prefix (YYYY_MM_DD_HH_mm_ss)
+      // 1. First Pass: Collect all files and potential titles
+      const potentialTitles = []; // { timestamp: Date, title: string }
+
+      files.forEach(file => {
+        const fullPath = path.join(fullSourcePath, file);
+        const stats = fs.statSync(fullPath);
+
+        // Format 1: 2026_01_05_20_03_09_TITLE_DDTV5...
+        const ddtvMatch = file.match(/^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/);
+        // Format 2: 录制-25788785-20260105-200301-648-TITLE.xml
+        const recorderMatch = file.match(/^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg)/);
+
+        let timestamp = null;
+        let title = null;
+
+        if (ddtvMatch) {
+          const [Y, M, D, h, m, s] = ddtvMatch[1].split('_').map(Number);
+          timestamp = new Date(Y, M - 1, D, h, m, s);
+          title = ddtvMatch[2];
+        } else if (recorderMatch) {
+          const [_, Y, M, D, h, m, s, t] = recorderMatch;
+          timestamp = new Date(Number(Y), Number(M) - 1, Number(D), Number(h), Number(m), Number(s));
+          title = t;
+        }
+
+        if (timestamp && title && !title.includes('摸鱼茶水间')) { // Skip default placeholders if possible
+           potentialTitles.push({ timestamp, title, mtime: stats.mtimeMs });
+        }
+      });
+
+      // Sort titles by timestamp
+      potentialTitles.sort((a, b) => a.timestamp - b.timestamp);
+
+      // 2. Second Pass: Group files by stream prefix (YYYY_MM_DD_HH_mm_ss)
       const streamGroups = {};
 
       files.forEach(file => {
@@ -44,7 +77,6 @@ async function syncStreams() {
 
         if (match) {
           if (match[0].startsWith('录制')) {
-             // Format: 录制-25788785-20260105-200301-648-TITLE.xml
              dateTimeStr = `${match[1]}_${match[2]}_${match[3]}_${match[4]}_${match[5]}_${match[6]}`;
              titlePart = match[7];
           } else {
@@ -56,8 +88,10 @@ async function syncStreams() {
           const stats = fs.statSync(fullPath);
 
           if (!streamGroups[dateTimeStr]) {
+            const [Y, M, D, h, m, s] = dateTimeStr.split('_').map(Number);
             streamGroups[dateTimeStr] = {
               id: dateTimeStr,
+              startTime: new Date(Y, M - 1, D, h, m, s),
               title: titlePart,
               latestTitleMtime: stats.mtimeMs,
               date: dateFolder.replace(/_/g, '-'),
@@ -69,11 +103,6 @@ async function syncStreams() {
           }
 
           streamGroups[dateTimeStr].files.push(file);
-
-          if (stats.mtimeMs > streamGroups[dateTimeStr].latestTitleMtime) {
-            streamGroups[dateTimeStr].title = titlePart;
-            streamGroups[dateTimeStr].latestTitleMtime = stats.mtimeMs;
-          }
 
           if (file.endsWith('.xml')) {
             try {
@@ -97,6 +126,26 @@ async function syncStreams() {
       const validStreamIds = Object.keys(streamGroups)
         .filter(id => streamGroups[id].duration >= 60)
         .sort();
+
+      // 3. Third Pass: Refine titles for valid streams
+      validStreamIds.forEach((id, index) => {
+        const stream = streamGroups[id];
+        const nextStreamStart = validStreamIds[index + 1] ? streamGroups[validStreamIds[index + 1]].startTime : new Date(stream.startTime.getTime() + 24 * 3600 * 1000);
+
+        // Find all titles that appeared between this stream and the next
+        // Or titles that are very close to the start (within 5 mins before)
+        const windowTitles = potentialTitles.filter(t => {
+          const tTime = t.timestamp.getTime();
+          const startTime = stream.startTime.getTime();
+          return (tTime >= startTime - 5 * 60 * 1000) && (tTime < nextStreamStart.getTime());
+        });
+
+        if (windowTitles.length > 0) {
+          // Pick the latest title in this window, it's likely the most accurate
+          windowTitles.sort((a, b) => b.timestamp - a.timestamp);
+          stream.title = windowTitles[0].title;
+        }
+      });
 
       const allSummaryImages = [];
       files.forEach(file => {
