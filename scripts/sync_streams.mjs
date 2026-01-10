@@ -183,7 +183,7 @@ async function syncStreams() {
   });
 
   // Process each final stream group
-  for (const streamId of validStreamIds) {
+  validStreamIds.forEach((streamId, index) => {
     const stream = finalStreamGroups[streamId];
     const targetDir = path.join(TARGET_BASE_DIR, streamId);
     if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
@@ -193,7 +193,7 @@ async function syncStreams() {
       title: stream.title,
       date: stream.date,
       time: stream.time,
-      startTime: stream.time, // This will be overwritten below
+      startTime: stream.time,
       endTime: null,
       duration: stream.duration,
       durationStr: null,
@@ -214,7 +214,12 @@ async function syncStreams() {
     streamData.startTime = stream.time.split(':').slice(0, 2).join(':');
     streamData.endTime = endDate.toTimeString().split(' ')[0].split(':').slice(0, 2).join(':');
 
-    // Collect all images from all source dirs related to this merged stream
+    // Determine time window for this stream
+    const nextStreamStart = validStreamIds[index + 1]
+      ? finalStreamGroups[validStreamIds[index + 1]].startTime
+      : new Date(stream.startTime.getTime() + 12 * 3600 * 1000); // Default to 12 hours after if last stream
+
+    // Collect all images from all source dirs related to this merged stream, strictly within time window
     const relatedSourceDirs = [...new Set(stream.files.map(f => f.sourceDir))];
     const allSummaryImages = [];
     relatedSourceDirs.forEach(sourceDir => {
@@ -222,17 +227,38 @@ async function syncStreams() {
       const filesInSourceDir = fs.readdirSync(sourceDir);
       filesInSourceDir.forEach(file => {
         if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
-          if (file.includes('cover')) return;
+            if (file.includes('cover')) return;
           const fullPath = path.join(sourceDir, file);
           try {
-            allSummaryImages.push({
-              name: file,
-              fullPath: fullPath,
-              mtime: fs.statSync(fullPath).mtimeMs
-            });
+            const stats = fs.statSync(fullPath);
+            const mtime = stats.mtimeMs;
+
+            let include = false;
+            // Heuristic for AI generated images with "午" (Afternoon) or "晚" (Evening) in name
+            // These often have late generation timestamps, so we trust the name over the time
+            if (file.includes('午')) {
+               if (h < 18) include = true;
+            } else if (file.includes('晚')) {
+               if (h >= 18) include = true;
+            } else {
+               // Normal: Filter by time window: [StreamStart - 10min, NextStreamStart)
+               // Use 10 min buffer before start to catch pre-stream screenshots/preparations
+               if (mtime >= stream.startTime.getTime() - 10 * 60 * 1000 && mtime < nextStreamStart.getTime()) {
+                  include = true;
+               }
+            }
+
+            if (include) {
+               allSummaryImages.push({
+                name: file,
+                fullPath: fullPath,
+                mtime: mtime
+              });
+            }
           } catch (e) {
             console.warn(`Could not stat file ${fullPath}: ${e.message}`);
           }
+
         }
       });
     });
@@ -290,7 +316,7 @@ async function syncStreams() {
     }
 
     allStreams.push(streamData);
-  }
+  });
 
   allStreams.sort((a, b) => b.id.localeCompare(a.id));
 
