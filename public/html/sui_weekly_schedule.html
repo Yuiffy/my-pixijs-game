@@ -985,6 +985,48 @@
           { emoji: '🎬', text: '19:30 晚上继续~玩游戏/看电影' }
         ]
       },
+      {
+        date: '2025-12-29',
+        activities: [
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
+          { emoji: '🎬', text: '21:40 看赛马娘第二季最后三集' }
+        ]
+      },
+      {
+        date: '2025-12-30',
+        activities: [
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
+          { emoji: '🎬', text: '21:40 看《利刃出鞘3》' }
+        ]
+      },
+      {
+        date: '2025-12-31',
+        highlight: 'noodle',
+        activities: [
+          { emoji: '🎆', text: '20:00 唱唱聊聊，跨年倒计时~' }
+        ]
+      },
+      {
+        date: '2026-01-01',
+        activities: [
+          { emoji: '🕒', text: '12:30 小推车逛萤火虫漫展' },
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' }
+        ]
+      },
+      {
+        date: '2026-01-02',
+        activities: [
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' },
+          { emoji: '🦄', text: '21:40 看动画' }
+        ]
+      },
+      {
+        date: '2026-01-03',
+        activities: [
+          { emoji: '🎤', text: '16:00 萤火虫舞台演出with瑞娅' },
+          { emoji: '🎵', text: '19:40 唱唱聊聊 2小时' }
+        ]
+      },
     ],
     weeklyFixed: {
       3: {
@@ -1252,14 +1294,16 @@
             if (pools.length > 0) {
               // 周末（周六周日）不早播，直接使用午播
               const isWeekend = weekdayIndex === 6 || weekdayIndex === 7;
-              const shiftActivity = isWeekend ? pools[1] : pools[shiftIndex % pools.length];
+              const isMiddayWeekday = [1, 3, 5, 7].includes(weekdayIndex);
+              // 取消早台：周一/周三/周五/周日改为午台；非午日依旧使用轮换
+              const shiftActivity = isMiddayWeekday
+                ? pools[1]
+                : (isWeekend ? pools[1] : pools[shiftIndex % pools.length]);
               base.activities.push({ ...shiftActivity });
               base.hasShiftActivity = true; // 标记有早播/午播活动
 
-              // 只有真正使用了轮换，才推进计数器
-              // 这样如果中间有两天是Special，轮换顺序会暂停等待，保证早/午/早/午的均匀分布
-              // 周末不推进计数器，因为周末固定午播
-              if (!isWeekend) {
+              // 仅在非午日且非周末时推进轮换计数器
+              if (!isWeekend && !isMiddayWeekday) {
                 shiftIndex++;
               }
             }
