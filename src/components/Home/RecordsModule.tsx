@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Badge, Tooltip } from 'antd';
+import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Badge, Tooltip, ConfigProvider, theme } from 'antd';
 import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CoffeeOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { Image as AntImage } from 'antd';
 import ReactMarkdown from 'react-markdown';
@@ -97,7 +97,9 @@ const RecordsModule = () => {
 
   const dateCellRender = (value: any) => {
     const dateStr = value.format('YYYY-MM-DD');
-    const dayStreams = streams.filter(s => s.date === dateStr);
+    const dayStreams = streams
+      .filter(s => s.date === dateStr)
+      .sort((a, b) => a.time.localeCompare(b.time));
     return (
       <ul className="list-none p-0">
         {dayStreams.map(item => (
@@ -307,14 +309,25 @@ const RecordsModule = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white/5 p-4 md:p-8 rounded-[40px] border border-white/5 shadow-2xl overflow-x-auto">
-          <div className="min-w-[800px]">
-             <Calendar
-              fullscreen={true}
-              cellRender={dateCellRender}
-              onSelect={onCalendarSelect}
-              className="bg-transparent"
-             />
+        <div className="bg-white/5 p-4 md:p-8 rounded-[40px] border border-white/5 shadow-2xl overflow-hidden ring-1 ring-white/10">
+          <div className="overflow-x-auto custom-scrollbar">
+            <div className="min-w-[800px]">
+              <ConfigProvider
+                theme={{
+                  algorithm: theme.darkAlgorithm,
+                  token: {
+                    colorBgContainer: 'transparent',
+                  },
+                }}
+              >
+                <Calendar
+                  fullscreen={true}
+                  cellRender={dateCellRender}
+                  onSelect={onCalendarSelect}
+                  className="bg-transparent"
+                />
+              </ConfigProvider>
+            </div>
           </div>
         </div>
       )}
