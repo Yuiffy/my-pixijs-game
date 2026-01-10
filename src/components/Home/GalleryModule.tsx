@@ -57,12 +57,11 @@ const GalleryModule = () => {
                         className="!h-full !w-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500"
                         wrapperClassName="w-full h-full flex items-center justify-center"
                       />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 flex items-end justify-between">
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 flex items-end justify-between pointer-events-none">
                         <div className="flex flex-col gap-1.5">
                           {item.tag && <Tag color="pink" className="w-fit text-[10px] px-2 py-0 border-none bg-pink-500/40 text-white rounded-full backdrop-blur-md">{item.tag}</Tag>}
                           <Text className="text-[11px] text-white font-bold tracking-wide">{item.title}</Text>
                         </div>
-                        <Tooltip title="预览原图"><StarOutlined className="text-yellow-400 text-lg drop-shadow-glow" /></Tooltip>
                       </div>
                     </div>
                   </Col>
