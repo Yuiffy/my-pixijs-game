@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.17.3+Branch.tags-v2.17.3.Sha.96407e2eba9a597dd9997c6fb731725f4294a371
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.17.3" />
+  <BililiveRecorderRecordInfo roomid="25788785" shortid="0" name="岁己SUI" title="咕咕咕！一起看危情三日" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2025-10-18T00:04:44.6081369+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.902,1,25,16777215,1760717086083,0,339001,0" user="神必入">晚安</d>
+  <d p="0.902,1,25,16777215,1760717086104,0,77017540,0" user="古明地梦">[岁己收藏集表情包_好脆弱]</d>
+  <d p="2.195,1,25,16777215,1760717087396,0,8481710,0" user="人活着是为了02">草</d>
+  <d p="2.195,1,25,16777215,1760717088044,0,22389880,0" user="黑铁watcher">晚安晚安</d>
+  <d p="4.794,1,25,16777215,1760717090637,0,8481710,0" user="人活着是为了02">回来吧</d>
+  <d p="7.418,1,25,14893055,1760717092920,0,227618,0" user="Vaserkia">一个个都卡点是吧</d>
+  <d p="7.418,1,25,16777215,1760717093477,0,77017540,0" user="古明地梦">我好脆弱。。</d>
+  <d p="9.143,4,25,14893055,1760717094552,0,288811455,0" user="L1f3n0w0v3R710w_">拜拜～</d>
+  <d p="9.143,1,25,16777215,1760717094960,0,13327599,0" user="岁己家的雨中月">哈哈</d>
+  <d p="9.143,1,25,16772431,1760717095331,0,34531495,0" user="岁己的白日梦蓝">nya！！！！！！！！</d>
+  <d p="10.005,4,25,14893055,1760717095766,0,604035304,0" user="俺们那嘎都是岁己小蛇">啊啊啊啊啊啊好难受啊</d>
+  <d p="10.005,1,25,14893055,1760717095813,0,227618,0" user="Vaserkia">[岁己收藏集表情包_哈哈]</d>
+  <d p="10.425,4,25,14893055,1760717096439,0,9669499,0" user="岁己SUI单推人">谁这么坏</d>
+  <d p="13.050,4,25,14893055,1760717098138,0,288811455,0" user="L1f3n0w0v3R710w_">怎么了主播</d>
+  <d p="13.050,4,25,14893055,1760717098217,0,104492,0" user="随风旅鸟与未知之风">WAWAWAWAWA</d>
+  <d p="13.050,1,25,16772431,1760717098441,0,34531495,0" user="岁己的白日梦蓝">喵呜！！！！！！！</d>
+  <d p="13.050,4,25,16772431,1760717098672,0,6606769,0" user="Akananae">回来吧我的小岁，我最骄傲的迟到</d>
+  <d p="13.904,4,25,14893055,1760717099403,0,87078921,0" user="梦月灬空城">哈哈哈</d>
+  <d p="13.905,1,25,14893055,1760717099451,0,4184347,0" user="misuji">哈哈</d>
+  <d p="13.905,1,25,16772431,1760717100011,0,1604425,0" user="仙布着急唱灭歌">又卡点 岁己要吼了</d>
+  <d p="14.379,1,25,16777215,1760717099616,0,13327599,0" user="岁己家的雨中月">笑嘻了</d>
+  <d p="14.380,4,25,14893055,1760717100186,0,12052692,0" user="岁己家的维斯">？</d>
+  <d p="16.939,4,25,14893055,1760717102602,0,288811455,0" user="L1f3n0w0v3R710w_">谁这么坏！</d>
+  <d p="16.939,4,25,14893055,1760717103052,0,12052692,0" user="岁己家的维斯">尖锐鸟叫</d>
+  <d p="17.791,4,25,16777215,1760717103097,0,1799098886,0" user="星落鸣歌">[岁己收藏集表情包_哈哈]</d>
+  <d p="18.228,1,25,16772431,1760717104299,0,34531495,0" user="岁己的白日梦蓝">可爱捏</d>
+  <d p="20.836,4,25,16772431,1760717106737,0,6606769,0" user="Akananae">哈哈哈哈哈哈哈哈哈</d>
+  <d p="20.836,1,25,16777215,1760717106884,0,22389880,0" user="黑铁watcher">问号</d>
+  <d p="21.694,1,25,16777215,1760717107402,0,77017540,0" user="古明地梦">别走小岁</d>
+  <d p="23.002,1,25,16777215,1760717109090,0,339001,0" user="神必入">可爱捏</d>
+  <d p="23.003,1,25,16777215,1760717109213,0,3546821987141837,0" user="凌晨四点不到">02 你的新片头来了</d>
+  <d p="23.439,4,25,14893055,1760717109241,0,9669499,0" user="岁己SUI单推人">啊啊啊啊啊啊</d>
+  <d p="23.439,1,25,16777215,1760717109683,0,13327599,0" user="岁己家的雨中月">有英雄</d>
+  <d p="24.300,1,25,16777215,1760717110453,0,8481710,0" user="人活着是为了02">好吵</d>
+  <d p="25.597,4,25,16777215,1760717111545,0,2955509,0" user="Iro4s">[岁己收藏集表情包_啊啊啊]</d>
+  <d p="27.317,4,25,14893055,1760717112472,0,288811455,0" user="L1f3n0w0v3R710w_">谁这么坏！</d>
+  <d p="28.210,1,25,14893055,1760717113523,0,227618,0" user="Vaserkia">[岁己收藏集表情包_哈哈]</d>
+  <d p="28.625,4,25,14893055,1760717114499,0,9669499,0" user="岁己SUI单推人">晚安</d>
+  <d p="29.498,1,25,14893055,1760717115437,0,4184347,0" user="misuji">主吧</d>
+  <d p="29.915,1,25,16777215,1760717115072,0,22389880,0" user="黑铁watcher">[岁己收藏集表情包_哈哈]</d>
+  <d p="32.526,4,25,16772431,1760717118305,0,6606769,0" user="Akananae">尖锐的爆鸣声</d>
+  <d p="33.407,1,25,16777215,1760717119132,0,8481710,0" user="人活着是为了02">？？？</d>
+</i>

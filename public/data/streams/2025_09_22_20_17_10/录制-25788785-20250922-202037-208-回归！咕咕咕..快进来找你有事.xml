@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.17.3+Branch.tags-v2.17.3.Sha.96407e2eba9a597dd9997c6fb731725f4294a371
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.17.3" />
+  <BililiveRecorderRecordInfo roomid="25788785" shortid="0" name="岁己SUI" title="回归！咕咕咕..快进来找你有事" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2025-09-22T20:20:37.2091139+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.326,1,25,9920249,1758543637711,0,22389880,0" user="黑铁watcher">小岁拔掉主机电源插座就行了</d>
+  <d p="1.621,4,25,14893055,1758543638476,0,2131794,0" user="小裸_">kale</d>
+  <d p="2.513,1,25,5816798,1758543639497,0,94892628,0" user="济物忘机">电脑——WiFi——</d>
+  <d p="2.925,4,25,14893055,1758543640065,0,34531495,0" user="岁己的白日梦蓝">好了</d>
+  <d p="2.925,1,25,16772431,1758543640509,0,11308264,0" user="岁己家的1702">宝宝你只要拔电脑那个插头就行了</d>
+  <d p="3.791,1,25,5566168,1758543640837,0,8481710,0" user="人活着是为了02">小岁你是神人吗 拔掉电脑电源就行 不用去关总闸</d>
+  <d p="6.389,1,25,16772431,1758543644189,0,27341319,0" user="加库伯">卡了</d>
+  <d p="6.826,4,25,16772431,1758543644116,0,6606769,0" user="Akananae">现在好了</d>
+  <d p="7.705,4,25,14893055,1758543645109,0,604035304,0" user="俺们那嘎都是岁己小蛇">这是拔了啥插头啊</d>
+  <d p="9.439,1,25,5816798,1758543646819,0,19929984,0" user="-昕宝yoake-">你不能把连麦打开 真得指导你了</d>
+  <d p="9.439,1,25,9920249,1758543646873,0,22389880,0" user="黑铁watcher">[岁己收藏集表情包_哈哈]</d>
+  <d p="9.439,1,25,14893055,1758543647068,0,14279,0" user="带鱼">小岁你还是别自己修了</d>
+  <d p="12.023,4,25,14893055,1758543648809,0,34531495,0" user="岁己的白日梦蓝">只用电脑断电就行了</d>
+  <d p="12.916,1,25,5816798,1758543649826,0,2225137,0" user="-かげぼうし-">好卡好卡</d>
+  <d p="12.916,4,25,14893055,1758543650386,0,227618,0" user="Vaserkia">[岁己收藏集表情包_妈呀]</d>
+  <d p="12.916,4,25,14893055,1758543650804,0,1604425,0" user="仙布着急唱灭歌">你把电脑的线拔了就行了</d>
+  <d p="13.322,4,25,16772431,1758543650972,0,6606769,0" user="Akananae">蛋蛋卡住了</d>
+  <d p="15.508,1,25,5816798,1758543652196,0,2225137,0" user="-かげぼうし-">我的问题吗</d>
+  <d p="15.508,4,25,14893055,1758543652362,0,604035304,0" user="俺们那嘎都是岁己小蛇">你不会是把wifi关了吧</d>
+  <d p="15.925,4,25,16772431,1758543653526,0,6606769,0" user="Akananae">你先关机</d>
+  <d p="24.630,4,25,14893055,1758543662100,0,227618,0" user="Vaserkia">[岁己收藏集表情包_妈呀]</d>
+  <d p="25.040,4,25,14893055,1758543662792,0,288811455,0" user="L1f3n0w0v3R710w_">？</d>
+  <d p="25.040,4,25,14893055,1758543662839,0,34531495,0" user="岁己的白日梦蓝">现在你要内存条拔插</d>
+  <d p="27.638,4,25,14893055,1758543664168,0,34531495,0" user="岁己的白日梦蓝">吗</d>
+  <d p="27.639,4,25,14893055,1758543664475,0,16528191,0" user="俺寻思这洋芋也没人要">干嘛</d>
+  <d p="27.639,1,25,16777215,1758543664994,0,631592,0" user="绘星马克罗夫">拆…拆啥</d>
+  <d p="28.942,4,25,14893055,1758543665687,0,13327599,0" user="岁己家的雨中月">听得到</d>
+  <d p="28.942,4,25,14893055,1758543666088,0,34531495,0" user="岁己的白日梦蓝">我听得到</d>
+  <d p="28.942,4,25,14893055,1758543666101,0,9669499,0" user="一个忧郁的表子">先看看主板有没有报错的灯亮</d>
+  <d p="28.942,4,25,14893055,1758543666297,0,288811455,0" user="L1f3n0w0v3R710w_">听得到</d>
+  <d p="29.803,4,25,14893055,1758543666383,0,604035304,0" user="俺们那嘎都是岁己小蛇">喂喂听得到！！</d>
+  <d p="30.232,1,25,16772431,1758543668148,0,11308264,0" user="岁己家的1702">听到了</d>
+  <d p="31.090,4,25,14893055,1758543668546,0,1369426,0" user="新西兰大龙虾">我晕</d>
+  <d p="31.531,4,25,14893055,1758543668800,0,2131794,0" user="小裸_">听得到</d>
+  <d p="31.531,4,25,14893055,1758543669017,0,1673559,0" user="KorokkeSUI-3-">哇！！！！！</d>
+  <d p="32.408,1,25,5816798,1758543670139,0,2225137,0" user="-かげぼうし-">听得到</d>
+  <d p="32.408,1,25,5566168,1758543670261,0,8481710,0" user="人活着是为了02">听得到岁师傅</d>
+  <d p="32.830,1,25,12802438,1758543670224,0,13735158,0" user="奶P之怒">哇！！！</d>
+  <d p="33.701,4,25,14893055,1758543671179,0,604035304,0" user="俺们那嘎都是岁己小蛇">yyyyyy</d>
+  <d p="34.127,4,25,14893055,1758543671313,0,7254,0" user="谜拟饼">收到收到</d>
+  <d p="34.127,1,25,9920249,1758543671666,0,22389880,0" user="黑铁watcher">听得到的说</d>
+  <d p="35.009,4,25,14893055,1758543672840,0,227618,0" user="Vaserkia">关机了吧</d>
+  <d p="35.011,1,25,5816798,1758543672852,0,2225137,0" user="-かげぼうし-">哇哇哇哇哇哇哇</d>
+  <d p="35.011,1,25,16777215,1758543673044,0,20094643,0" user="哈哈那日OvO">我要笑死了</d>
+  <d p="35.432,1,25,12802438,1758543672176,0,1558487,0" user="我的小规模月亮">唔哇</d>
+  <d p="35.432,4,25,12802438,1758543673159,0,1488688,0" user="CraftV">还唱，就是你把电脑唱死了</d>
+  <d p="36.309,4,25,14893055,1758543673091,0,1604425,0" user="仙布着急唱灭歌">他都断电了 还关什么机</d>
+  <d p="36.729,4,25,14893055,1758543673442,0,34531495,0" user="岁己的白日梦蓝">试试也行</d>
+  <d p="36.729,4,25,14893055,1758543674280,0,104492,0" user="随风旅鸟与未知之风">哇！！！！！！！！！</d>
+  <d p="37.596,1,25,5816798,1758543674643,0,112160,0" user="チョコレートめめ">听得到</d>
+  <d p="38.890,1,25,16777215,1758543676520,0,351401768,0" user="-清辉落满-">听得到</d>
+  <d p="39.322,4,25,14893055,1758543675921,0,258865753,0" user="岁己家的陈醋">可爱捏</d>
+  <d p="40.627,4,25,14893055,1758543678388,0,16528191,0" user="俺寻思这洋芋也没人要">怎么从澳大利亚回来像得了甲亢</d>
+</i>

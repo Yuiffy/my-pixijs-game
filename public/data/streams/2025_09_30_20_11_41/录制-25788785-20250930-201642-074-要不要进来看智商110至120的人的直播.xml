@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.17.3+Branch.tags-v2.17.3.Sha.96407e2eba9a597dd9997c6fb731725f4294a371
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.17.3" />
+  <BililiveRecorderRecordInfo roomid="25788785" shortid="0" name="岁己SUI" title="要不要进来看智商110至120的人的直播" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2025-09-30T20:16:42.0750076+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="3.567,4,25,14893055,1759234605555,0,9669499,0" user="一个擅长装无辜的表子">你真相信饼干岁的情报啊？？</d>
+  <d p="3.567,4,25,14893055,1759234605630,0,13327599,0" user="岁己家的雨中月">谁和你说的差一个小时</d>
+  <d p="4.863,4,25,14893055,1759234607682,0,288811455,0" user="L1f3n0w0v3R710w_">ohno。。。</d>
+  <d p="5.758,1,25,5566168,1759234607847,0,2136528229,0" user="Nanana葉">谁啊</d>
+  <d p="5.758,4,25,14893055,1759234608448,0,227618,0" user="Vaserkia">我都特意提醒你后台要看了……</d>
+  <d p="7.064,4,25,14893055,1759234609742,0,604035304,0" user="俺门是那都嘎岁己小蛇">谁发的谎报军情</d>
+  <d p="7.064,1,25,16747553,1759234609971,0,8481710,0" user="人活着是为了02">有统计是差一个多小时</d>
+  <d p="12.666,4,25,14893055,1759234614463,0,34531495,0" user="岁己的白日梦蓝">是把那个也算进去了</d>
+  <d p="13.974,4,25,14893055,1759234616109,0,6027898,0" user="CureNovPrime">草好好笑</d>
+  <d p="15.263,4,25,14893055,1759234617790,0,288811455,0" user="L1f3n0w0v3R710w_">他们的统计方式不一样。。。</d>
+  <d p="18.777,1,25,5566168,1759234620347,0,2136528229,0" user="Nanana葉">你自己看不是更靠谱</d>
+  <d p="19.170,1,25,9920249,1759234621842,0,22389880,0" user="黑铁watcher">小岁小岁</d>
+  <d p="23.980,1,25,5566168,1759234626713,0,2136528229,0" user="Nanana葉">昨天都说早点来了的</d>
+  <d p="24.379,4,25,14893055,1759234626328,0,9669499,0" user="一个擅长装无辜的表子">因为把12号3D的测试直播也统计进去了啊</d>
+  <d p="24.379,4,25,14893055,1759234626490,0,34531495,0" user="岁己的白日梦蓝">彩排那个算进去了吧</d>
+  <d p="24.379,1,25,5566168,1759234626703,0,438603995,0" user="Mit3uri的七樽酒">谁发的虚假军情</d>
+  <d p="25.668,4,25,14893055,1759234627541,0,36103053,0" user="䋞友小c">啾咪啾</d>
+  <d p="25.668,1,25,16772431,1759234628045,0,11308264,0" user="岁己家的1702">难道有哪次电台不是虚拟日常没算进去？</d>
+  <d p="26.568,1,25,5816798,1759234628257,0,339001,0" user="神必入">啾咪啾</d>
+  <d p="27.882,4,25,14893055,1759234630295,0,227618,0" user="Vaserkia">[岁己收藏集表情包_哈哈]</d>
+  <d p="28.265,1,25,9920249,1759234630158,0,14999357,0" user="永夜えいや">饼干碎统计的包含彩排直播吧</d>
+  <d p="29.581,4,25,14893055,1759234631592,0,12052692,0" user="岁己家的维斯">这种肯定看后台时间啊</d>
+  <d p="33.061,1,25,16747553,1759234634685,0,8481710,0" user="人活着是为了02">难道是因为那天测试直播的时长没算上吗</d>
+  <d p="36.956,1,25,5816798,1759234639718,0,94892628,0" user="济物忘机">bgs的数据肯定没你自己来的准</d>
+  <d p="36.956,4,25,14893055,1759234639873,0,604035304,0" user="俺门是那都嘎岁己小蛇">是算多了吗</d>
+  <d p="38.254,4,25,14893055,1759234640987,0,227618,0" user="Vaserkia">彩排也算了？</d>
+  <d p="38.254,1,25,5566168,1759234641146,0,2136528229,0" user="Nanana葉">哈哈嗯</d>
+  <d p="41.278,4,25,14893055,1759234643452,0,9669499,0" user="一个擅长装无辜的表子">3D测试直播是不是没算时长，两个半小时呢</d>
+  <d p="42.572,4,25,14893055,1759234644280,0,288811455,0" user="L1f3n0w0v3R710w_">惨惨的主播；；</d>
+  <d p="43.874,4,25,14893055,1759234645801,0,34531495,0" user="岁己的白日梦蓝">确实得看下自己那边的孩子</d>
+  <d p="47.353,4,25,14893055,1759234649447,0,227618,0" user="Vaserkia">你后台是要看的啊</d>
+</i>
