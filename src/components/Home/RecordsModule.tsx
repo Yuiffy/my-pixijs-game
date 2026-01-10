@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Badge, Tooltip, ConfigProvider, theme, Radio, Modal } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Tooltip, ConfigProvider, theme, Radio, Modal } from 'antd';
 import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CoffeeOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined, LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined, CloseOutlined, PlayCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -15,6 +15,28 @@ dayjs.extend(weekday);
 dayjs.extend(localeData);
 
 const { Title, Text } = Typography;
+
+// Markdown 组件定义 - 移到组件外部以避免 react/no-unstable-nested-components 错误
+const MarkdownComponents = {
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{children}</p>,
+  ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
+  li: ({ children }: { children?: React.ReactNode }) => <li className="mb-1">{children}</li>,
+  h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
+  h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-lg font-bold mb-2 text-cyan-400">{children}</h2>,
+  h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-base font-bold mb-2 text-pink-300">{children}</h3>,
+  strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-cyan-200 font-bold">{children}</strong>
+};
+
+// 模态框中的 Markdown 组件定义
+const ModalMarkdownComponents = {
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{children}</p>,
+  ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
+  li: ({ children }: { children?: React.ReactNode }) => <li className="mb-1">{children}</li>,
+  h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
+  h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-lg font-bold mb-2 text-cyan-400">{children}</h2>,
+  h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-base font-bold mb-2 text-pink-300">{children}</h3>,
+  strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-cyan-200 font-bold">{children}</strong>
+};
 
 export interface StreamData {
   id: string;
@@ -144,6 +166,14 @@ const RecordsModule = () => {
                      e.stopPropagation();
                      showStreamDetail(item);
                    }}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                       e.preventDefault();
+                       showStreamDetail(item);
+                     }
+                   }}
+                   role="button"
+                   tabIndex={0}
                    className={`
                     stream-calendar-item rounded-lg p-1.5 transition-all duration-300 border cursor-pointer hover:scale-[1.02] active:scale-95
                     ${period.label === '早台' ? 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-400/50' : ''}
@@ -189,7 +219,7 @@ const RecordsModule = () => {
       <div className="flex items-center justify-between p-4 mb-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
         <div className="flex items-center gap-6">
           <Space size="large">
-             <div className={`flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner`}>
+             <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
                 <Button
                    size="small"
                    type="text"
@@ -379,15 +409,7 @@ const RecordsModule = () => {
                         <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed opacity-80 group-hover/summary:opacity-100 transition-opacity">
                           {stream.highlights ? (
                             <ReactMarkdown
-                              components={{
-                                p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{children}</p>,
-                                ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
-                                li: ({ children }: { children?: React.ReactNode }) => <li className="mb-1">{children}</li>,
-                                h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
-                                h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-lg font-bold mb-2 text-cyan-400">{children}</h2>,
-                                h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-base font-bold mb-2 text-pink-300">{children}</h3>,
-                                strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-cyan-200 font-bold">{children}</strong>
-                              }}
+                              components={MarkdownComponents}
                             >
                               {stream.highlights}
                             </ReactMarkdown>
@@ -587,15 +609,7 @@ const RecordsModule = () => {
                    <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed">
                      {selectedStream.highlights ? (
                        <ReactMarkdown
-                         components={{
-                           p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{children}</p>,
-                           ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
-                           li: ({ children }: { children?: React.ReactNode }) => <li className="mb-1">{children}</li>,
-                           h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
-                           h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-lg font-bold mb-2 text-cyan-400">{children}</h2>,
-                           h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-base font-bold mb-2 text-pink-300">{children}</h3>,
-                           strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-cyan-200 font-bold">{children}</strong>
-                         }}
+                         components={ModalMarkdownComponents}
                        >
                          {selectedStream.highlights}
                        </ReactMarkdown>
@@ -630,7 +644,7 @@ const RecordsModule = () => {
 
                    {selectedStream.xml && (
                       <Button
-                         icon={< ThunderboltOutlined />}
+                         icon={<ThunderboltOutlined />}
                          href={selectedStream.xml}
                          target="_blank"
                          className="text-pink-400 hover:text-pink-300 font-bold"
