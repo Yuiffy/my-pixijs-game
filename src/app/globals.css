@@ -71,3 +71,29 @@ body {
   color: #d8b4fe !important;
   text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
 }
+
+/* Cinema Panning for Stream Covers */
+@keyframes slowPan {
+  0% { object-position: 0% 0%; }
+  25% { object-position: 100% 0%; }
+  50% { object-position: 100% 100%; }
+  75% { object-position: 0% 100%; }
+  100% { object-position: 0% 0%; }
+}
+.animate-slow-pan {
+  animation: slowPan 30s ease-in-out infinite;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
