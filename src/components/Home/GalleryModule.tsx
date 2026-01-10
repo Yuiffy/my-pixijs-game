@@ -19,8 +19,8 @@ const GalleryModule = () => {
 
   return (
     <div className="animate-fade-in-up">
-      <div className="mb-10">
-        <Title level={2} className="!text-white !mb-2 flex items-center gap-3">
+      <div className="mb-6">
+        <Title level={2} className="!text-white !mb-1 flex items-center gap-3">
           <PictureOutlined className="text-pink-400" /> 角色素材库
         </Title>
         <Text className="text-slate-400">来自岁己多形态的精选材料，供各位饼干岁二创使用 ✨</Text>
@@ -28,12 +28,12 @@ const GalleryModule = () => {
 
       <Tabs
         defaultActiveKey="cat"
-        className="custom-gallery-tabs mb-10"
+        className="custom-gallery-tabs mb-6"
         items={categories.map(cat => ({
           key: cat.key,
           label: (
             <div className="flex flex-col items-center gap-2 group/tab py-2">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/10 group-hover/tab:border-pink-500/50 transition-all shadow-lg relative bg-slate-800">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 group-hover/tab:border-pink-500/50 transition-all shadow-lg relative bg-slate-800">
                 <img
                   src={cat.cover}
                   alt={cat.label}
@@ -82,7 +82,7 @@ const GalleryModule = () => {
         }))}
       />
 
-      <div className="mt-12 p-6 bg-blue-900/10 border border-blue-500/20 rounded-2xl flex items-center gap-4">
+      <div className="mt-8 p-6 bg-blue-900/10 border border-blue-500/20 rounded-2xl flex items-center gap-4">
          <div className="text-3xl text-blue-400">💡</div>
          <Text className="text-slate-400 italic">“所有素材均来源于网络及粉丝投稿，二创时请遵守官方相应准则的说！”</Text>
       </div>

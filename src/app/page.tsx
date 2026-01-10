@@ -127,16 +127,16 @@ const HomeContent = () => {
            <div className="absolute top-1/2 left-[5%] text-xl opacity-10 animate-pulse">✨</div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 pt-32 pb-24 relative z-10 min-h-screen">
+        <div className="max-w-5xl mx-auto px-6 pt-24 pb-24 relative z-10 min-h-screen">
 
           {/* Module Content */}
-          <div className="mt-8">
+          <div className="mt-4">
             {activeTab === 'home' && <HomeModule />}
             {activeTab === 'gallery' && <GalleryModule />}
             {activeTab === 'records' && <RecordsModule />}
           </div>
 
-          <footer className="mt-32 pt-12 border-t border-white/5 text-center opacity-40 hover:opacity-100 transition-opacity">
+          <footer className="mt-16 pt-12 border-t border-white/5 text-center opacity-40 hover:opacity-100 transition-opacity">
             <Space className="mb-4">
                <ThunderboltOutlined className="text-yellow-500" />
                <Text className="text-slate-500">POWERED BY SUI FAN CLUB | 2026</Text>
