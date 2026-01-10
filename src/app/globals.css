@@ -71,3 +71,49 @@ body {
   color: #d8b4fe !important;
   text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
 }
+
+/* Cinema Panning for Stream Covers - Triggered on Hover */
+@keyframes slowPan {
+  0% { object-position: 50% 50%; }
+  25% { object-position: 0% 0%; }
+  50% { object-position: 100% 100%; }
+  75% { object-position: 0% 100%; }
+  100% { object-position: 50% 50%; }
+}
+.animate-slow-pan {
+  animation: slowPan 90s ease-in-out infinite;
+  animation-play-state: paused;
+  object-position: 50% 50%;
+  transition: object-position 0.6s ease-in-out;
+}
+.group:hover .animate-slow-pan {
+  animation-play-state: running;
+}
+.glow-text {
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Lighten Ant Design Image Hover Mask */
+.ant-image-mask {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+.ant-image-mask-info {
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
