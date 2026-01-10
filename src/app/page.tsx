@@ -20,6 +20,8 @@ import {
 } from '@ant-design/icons';
 import NextImage from 'next/image';
 import Link from 'next/link';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { Suspense } from 'react';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -318,66 +320,73 @@ const RecordsModule = () => {
               <Card
                 key={stream.id}
                 id={`stream-${stream.id}`}
-                className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-3xl group"
+                className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-3xl group md:h-[500px]"
+                bodyStyle={{ padding: 0, height: '100%' }}
               >
-                <Row gutter={[0, 0]}>
-                  <Col xs={24} md={9} className="relative">
-                    <div className="relative h-full min-h-[220px] overflow-hidden shadow-2xl bg-slate-800">
-                      <AntImage.PreviewGroup>
-                        {stream.images && stream.images.length > 0 ? (
-                          <AntImage
-                            src={stream.images[0]}
-                            alt={stream.title}
-                            className="object-cover h-full w-full"
-                            wrapperClassName="!h-full !w-full"
-                          />
-                        ) : stream.cover ? (
-                          <AntImage
-                            src={stream.cover}
-                            alt={stream.title}
-                            className="object-cover h-full w-full opacity-60"
-                            wrapperClassName="!h-full !w-full"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-slate-500 font-bold">NO VISUAL</div>
-                        )}
-                      </AntImage.PreviewGroup>
-                      {/* Period Overlay */}
-                      <div className={`absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-50 z-20`} />
-                    </div>
-                  </Col>
-                  <Col xs={24} md={15}>
-                    <div className={`p-6 md:p-8 h-full flex flex-col bg-gradient-to-br ${period.bg}`}>
-                      <div className="flex flex-col gap-2 mb-4">
-                        <div className="flex items-center gap-2">
-                           <Tag color={period.tagColor as any} className="font-bold border-none px-3 uppercase text-[10px] tracking-widest flex items-center gap-1 shadow-sm">
+               <div className="flex flex-col md:flex-row h-full">
+                  {/* Left: Standardized Image Container with Cinema Pan */}
+                  <div className="w-full md:w-[45%] shrink-0 h-[300px] md:h-full bg-slate-900/50 relative overflow-hidden border-r border-white/5">
+                     {/* Period Overlay */}
+                     <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20 pointer-events-none`} />
+
+                     <div className="h-full w-full">
+                        <AntImage.PreviewGroup>
+                          {stream.images && stream.images.length > 0 ? (
+                            <AntImage
+                              src={stream.images[0]}
+                              alt={stream.title}
+                              className="!h-full !w-full object-cover animate-slow-pan"
+                              wrapperClassName="h-full w-full block"
+                            />
+                          ) : stream.cover ? (
+                            <AntImage
+                              src={stream.cover}
+                              alt={stream.title}
+                              className="!h-full !w-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700 animate-slow-pan"
+                              wrapperClassName="h-full w-full block"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center p-12 text-slate-500 font-bold w-full h-full">NO VISUAL</div>
+                          )}
+                        </AntImage.PreviewGroup>
+                     </div>
+                     <Tag className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/10 font-bold pointer-events-none text-white/90 rounded-lg px-3 py-1">
+                        {stream.date}
+                     </Tag>
+                  </div>
+
+                  {/* Right: Content Container (Fixed Height with Internal Scroll) */}
+                  <div className={`w-full md:w-[55%] flex flex-col p-6 md:p-8 bg-gradient-to-br ${period.bg} h-full overflow-hidden`}>
+                      <div className="flex flex-col gap-3 mb-6">
+                        <div className="flex items-center gap-3">
+                           <Tag color={period.tagColor as any} className="font-bold border-none px-3 uppercase text-[10px] tracking-widest flex items-center gap-1 shadow-sm m-0">
                              {period.icon} {period.label}
                            </Tag>
-                           <Text className="text-slate-500 text-xs font-mono">{stream.date}</Text>
                         </div>
-                        <Title level={3} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0 !text-xl md:!text-2xl">{stream.title}</Title>
-                        <div className="flex items-center gap-4 text-slate-400 font-mono text-sm bg-white/5 w-fit px-3 py-1 rounded-full border border-white/5">
-                           <span className="flex items-center gap-1.5"><CalendarOutlined className="text-pink-400" /> {stream.startTime} {stream.endTime && `~ ${stream.endTime}`}</span>
-                           {stream.durationStr && <span className="flex items-center gap-1.5 border-l border-white/10 pl-4"><HistoryOutlined className="text-cyan-400" /> {stream.durationStr}</span>}
+                        <Title level={3} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0 !text-xl md:!text-2xl leading-tight">{stream.title}</Title>
+                        <div className="flex items-center gap-3 text-slate-400 font-mono text-xs bg-black/20 w-fit px-4 py-2 rounded-xl border border-white/5 shadow-inner">
+                           <span className="flex items-center gap-2 font-bold"><CalendarOutlined className="text-pink-400 text-sm" /> {stream.startTime} ~ {stream.endTime}</span>
+                           {stream.durationStr && <span className="flex items-center gap-2 border-l border-white/10 pl-3"><HistoryOutlined className="text-cyan-400 text-sm" /> {stream.durationStr}</span>}
                         </div>
                       </div>
 
-                      <div className="bg-black/40 backdrop-blur-md p-4 rounded-2xl mb-6 max-h-40 overflow-y-auto custom-scrollbar border border-white/5">
-                        <pre className="text-slate-300 text-xs whitespace-pre-wrap font-sans leading-relaxed">
+                      {/* Summary Text - Scrolls within the fixed-height column */}
+                      <div className="flex-1 bg-black/40 backdrop-blur-md p-5 rounded-2xl mb-6 overflow-y-auto custom-scrollbar border border-white/10 shadow-inner group/summary">
+                        <pre className="text-slate-300 text-[13px] whitespace-pre-wrap font-sans leading-relaxed opacity-80 group-hover/summary:opacity-100 transition-opacity">
                           {stream.highlights || '暂无 AI 总结摘要...'}
                         </pre>
                       </div>
 
-                      <div className="mt-auto flex items-center justify-between gap-4">
-                        <div className="flex gap-2 overflow-x-auto pb-1 max-w-[60%] custom-scrollbar">
+                      <div className="mt-auto flex items-center justify-between gap-6 pt-2 border-t border-white/5">
+                        <div className="flex gap-2 overflow-x-auto pb-1 max-w-[50%] custom-scrollbar">
                            {stream.images && stream.images.length > 1 && (
                              <AntImage.PreviewGroup>
                                {stream.images.slice(1).map((img, i) => (
                                  <AntImage
                                   key={i}
                                   src={img}
-                                  width={60}
-                                  height={45}
+                                  width={50}
+                                  height={40}
                                   className="rounded-lg object-cover border border-white/10 hover:border-cyan-400/50 transition-colors"
                                  />
                                ))}
@@ -385,14 +394,14 @@ const RecordsModule = () => {
                            )}
                         </div>
 
-                        <Space size="small" className="flex-wrap justify-end">
+                        <Space size="middle" className="flex-wrap justify-end shrink-0">
                           {stream.srt && (
                             <Button
                               icon={<CloudDownloadOutlined />}
                               href={stream.srt}
-                              download
+                              target="_blank"
                               size="small"
-                              className="bg-white/10 border-none text-cyan-300 hover:!bg-white/20 rounded-full"
+                              className="bg-white/10 border-none text-cyan-300 hover:!bg-cyan-500/20 rounded-lg px-4"
                             >
                               SRT 字幕
                             </Button>
@@ -401,18 +410,17 @@ const RecordsModule = () => {
                              <Button
                               icon={<CloudDownloadOutlined />}
                               href={stream.xml}
-                              download
+                              target="_blank"
                               size="small"
-                              className="bg-white/10 border-none text-pink-300 hover:!bg-white/20 rounded-full"
+                              className="bg-white/10 border-none text-pink-300 hover:!bg-pink-500/20 rounded-lg px-4"
                             >
                               弹幕 XML
                             </Button>
                           )}
                         </Space>
                       </div>
-                    </div>
-                  </Col>
-                </Row>
+                  </div>
+               </div>
               </Card>
             );
           })}
@@ -443,10 +451,28 @@ const RecordsModule = () => {
   );
 };
 
-export default function Home() {
+const HomeContent = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [activeTab, setActiveTab] = useState('home');
   const scrollDirection = useScrollDirection();
   const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['home', 'gallery', 'records'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', key);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -475,14 +501,14 @@ export default function Home() {
            <div className={`transition-all duration-500 bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-full flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${
              isScrolled ? 'px-2 py-1' : 'px-4 py-2'
            }`}>
-              {[
+                {[
                 { key: 'home', label: '主页', icon: <HomeOutlined /> },
                 { key: 'gallery', label: '素材图', icon: <PictureOutlined /> },
                 { key: 'records', label: '总结', icon: <HistoryOutlined /> },
               ].map((item) => (
                 <button
                   key={item.key}
-                  onClick={() => setActiveTab(item.key)}
+                  onClick={() => handleTabChange(item.key)}
                   className={`relative px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all ${
                     activeTab === item.key
                     ? 'text-white'
@@ -573,5 +599,13 @@ export default function Home() {
         `}</style>
       </main>
     </ConfigProvider>
+  );
+};
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0A0D14] flex items-center justify-center text-cyan-400 font-bold">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
