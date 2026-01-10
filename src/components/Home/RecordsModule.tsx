@@ -1,10 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Badge, Tooltip, ConfigProvider, theme } from 'antd';
-import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CoffeeOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Badge, Tooltip, ConfigProvider, theme, Radio, Modal } from 'antd';
+import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CoffeeOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined, LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined, CloseOutlined, PlayCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import weekday from 'dayjs/plugin/weekday';
+import localeData from 'dayjs/plugin/localeData';
 import { Image as AntImage } from 'antd';
 import ReactMarkdown from 'react-markdown';
+
+// Extend dayjs with required plugins for Ant Design Calendar
+dayjs.extend(weekday);
+dayjs.extend(localeData);
 
 const { Title, Text } = Typography;
 
@@ -22,13 +30,18 @@ export interface StreamData {
   highlights: string | null;
   images: string[];
   replayUrl?: string;
+  duration?: number;
 }
 
 const RecordsModule = () => {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [calendarMode, setCalendarMode] = useState<'month' | 'year'>('month');
+  const [calendarValue, setCalendarValue] = useState<Dayjs>(dayjs());
   const [streams, setStreams] = useState<StreamData[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStream, setSelectedStream] = useState<StreamData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const pageSize = 5;
 
   useEffect(() => {
@@ -76,40 +89,182 @@ const RecordsModule = () => {
     };
   };
 
-  const onCalendarSelect = (value: any) => {
-    const dateStr = value.format('YYYY-MM-DD');
-    const dayStreams = streams.filter(s => s.date === dateStr);
-    if (dayStreams.length > 0) {
-      const index = streams.findIndex(s => s.id === dayStreams[0].id);
-      if (index !== -1) {
-        const page = Math.floor(index / pageSize) + 1;
-        setCurrentPage(page);
-        setViewMode('list');
-        setTimeout(() => {
-          const element = document.getElementById(`stream-${dayStreams[0].id}`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 100);
-      }
+  const showStreamDetail = (stream: StreamData) => {
+    setSelectedStream(stream);
+    setIsModalOpen(true);
+  };
+
+  const onCalendarSelect = (value: Dayjs, selectInfo?: { source: 'year' | 'month' | 'date' | 'customize' }) => {
+    // If it's a date selection, standard AntD behavior will handle it.
+    // If it's month selection in year mode, we keep displaying the calendar but update the value.
+    setCalendarValue(value);
+
+    if (calendarMode === 'year' && selectInfo?.source === 'month') {
+        setCalendarMode('month');
     }
   };
 
-  const dateCellRender = (value: any) => {
-    const dateStr = value.format('YYYY-MM-DD');
-    const dayStreams = streams
-      .filter(s => s.date === dateStr)
-      .sort((a, b) => a.time.localeCompare(b.time));
+  const cellRender = (value: Dayjs, info: any) => {
+    if (info.type === 'month') {
+      const monthStr = value.format('YYYY-MM');
+      const monthStreams = streams.filter(s => s.date.startsWith(monthStr));
+      const count = monthStreams.length;
+
+      if (count === 0) return null;
+
+      const totalSeconds = monthStreams.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+      const totalHours = (totalSeconds / 3600).toFixed(1);
+
+      return (
+        <div className="flex flex-col items-center justify-center p-2 rounded-xl mt-2 group hover:bg-white/10 transition-colors cursor-pointer h-full border border-white/5 bg-white/5">
+           <div className="text-xl font-black text-white mb-1">{count} <span className="text-xs font-normal text-slate-400">场</span></div>
+           <div className="text-xs text-cyan-300 font-mono font-bold bg-cyan-950/30 px-2 py-0.5 rounded-full border border-cyan-500/20 group-hover:border-cyan-400/50 transition-colors">
+              {totalHours} hrs
+           </div>
+        </div>
+      );
+    }
+
+    if (info.type === 'date') {
+      const dateStr = value.format('YYYY-MM-DD');
+      const dayStreams = streams
+        .filter(s => s.date === dateStr)
+        .sort((a, b) => a.time.localeCompare(b.time));
+
+      return (
+        <ul className="list-none p-0 flex flex-col gap-1.5 overflow-visible">
+          {dayStreams.map(item => {
+            const period = getPeriodInfo(item.time);
+            const hours = item.duration ? (item.duration / 3600).toFixed(1) : null;
+
+            return (
+              <li key={item.id} className="relative group">
+                <div
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     showStreamDetail(item);
+                   }}
+                   className={`
+                    stream-calendar-item rounded-lg p-1.5 transition-all duration-300 border cursor-pointer hover:scale-[1.02] active:scale-95
+                    ${period.label === '早台' ? 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-400/50' : ''}
+                    ${period.label === '午台' ? 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-400/50' : ''}
+                    ${period.label === '晚台' ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-400/50' : ''}
+                  `}
+                >
+                  <Tooltip title={`${item.time} ${item.title}`} placement="top" overlayClassName="z-[9999]">
+                     <div className="flex flex-col gap-1 w-full overflow-hidden">
+                        <div className="flex items-center justify-between gap-1">
+                           <span className={`text-[10px] font-mono font-bold ${
+                             period.label === '早台' ? 'text-cyan-400' :
+                             period.label === '午台' ? 'text-orange-400' : 'text-purple-400'
+                           }`}>
+                              {item.startTime}
+                           </span>
+                           {hours && (
+                             <span className="text-[9px] opacity-40 font-mono text-white">
+                                {hours}h
+                             </span>
+                           )}
+                        </div>
+                        <span className="text-[11px] text-slate-200/90 leading-tight line-clamp-2 break-all">{item.title}</span>
+                     </div>
+                  </Tooltip>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
+    return info.originNode;
+  };
+
+  const calendarHeaderRender = ({ value, type, onChange, onTypeChange }: any) => {
+    const today = dayjs();
+    const isFutureYear = (val: Dayjs) => val.year() >= today.year();
+    const isFutureMonth = (val: Dayjs) => val.year() > today.year() || (val.year() === today.year() && val.month() >= today.month());
+
     return (
-      <ul className="list-none p-0">
-        {dayStreams.map(item => (
-          <li key={item.id}>
-            <Tooltip title={`${item.time} ${item.title}`}>
-              <Badge status="processing" text={item.title} className="text-[10px] text-pink-300 transform scale-90 truncate max-w-full block" />
-            </Tooltip>
-          </li>
-        ))}
-      </ul>
+      <div className="flex items-center justify-between p-4 mb-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
+        <div className="flex items-center gap-6">
+          <Space size="large">
+             <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
+                <Button
+                   size="small"
+                   type="text"
+                   icon={<DoubleLeftOutlined />}
+                   onClick={() => onChange(value.clone().subtract(1, 'year'))}
+                   className="text-slate-400 hover:text-cyan-400 hover:bg-white/10"
+                />
+                <Button
+                   size="small"
+                   type="text"
+                   icon={<LeftOutlined />}
+                   onClick={() => onChange(value.clone().subtract(1, 'month'))}
+                   className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${type === 'year' ? 'hidden' : ''}`}
+                />
+             </div>
+
+             <div className="flex flex-col items-center min-w-[120px]">
+                <span className="text-3xl font-black text-white leading-none font-mono tracking-tighter glow-text">
+                   {value.format('YYYY')}
+                </span>
+                {type === 'month' && (
+                   <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] mt-1.5 opacity-80">
+                      {value.format('MMMM')}
+                   </span>
+                )}
+             </div>
+
+             <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
+                <Button
+                   size="small"
+                   type="text"
+                   icon={<RightOutlined />}
+                   disabled={type === 'year' || isFutureMonth(value.clone())}
+                   onClick={() => {
+                       const next = value.clone().add(1, 'month');
+                       onChange(next.isAfter(today, 'month') ? today : next);
+                   }}
+                   className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 disabled:opacity-0 disabled:pointer-events-none`}
+                />
+                <Button
+                   size="small"
+                   type="text"
+                   icon={<DoubleRightOutlined />}
+                   disabled={isFutureYear(value.clone())}
+                   onClick={() => {
+                       const next = value.clone().add(1, 'year');
+                       onChange(next.isAfter(today, 'year') ? today : next);
+                   }}
+                   className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 disabled:opacity-0 disabled:pointer-events-none`}
+                />
+             </div>
+          </Space>
+        </div>
+
+        <div className="flex items-center gap-4">
+           <Button
+              type="text"
+              size="large"
+              icon={<HistoryOutlined />}
+              className="text-cyan-400/60 hover:text-cyan-400 font-black tracking-widest text-xs flex items-center gap-2 bg-white/5 px-6 rounded-xl border border-white/5 hover:border-cyan-500/30 transition-all hover:scale-105 active:scale-95"
+              onClick={() => onChange(today)}
+           >
+             RETURN TO TODAY
+           </Button>
+        </div>
+
+        <Radio.Group
+           value={type}
+           onChange={e => onTypeChange(e.target.value)}
+           className="custom-calendar-radio"
+        >
+          <Radio.Button value="month" className="rounded-l-xl">MONTH</Radio.Button>
+          <Radio.Button value="year" className="rounded-r-xl">YEAR</Radio.Button>
+        </Radio.Group>
+      </div>
     );
   };
 
@@ -321,9 +476,21 @@ const RecordsModule = () => {
                 }}
               >
                 <Calendar
+                  headerRender={calendarHeaderRender}
                   fullscreen={true}
-                  cellRender={dateCellRender}
-                  onSelect={onCalendarSelect}
+                  cellRender={cellRender}
+                  value={calendarValue as any}
+                  onChange={(val: any) => setCalendarValue(val)}
+                  onSelect={(val: any, info: any) => {
+                    setCalendarValue(val);
+                    if (info.source === 'date' || (calendarMode === 'year' && info.source === 'month')) {
+                      onCalendarSelect(val, info);
+                    }
+                  }}
+                  onPanelChange={(value: any, mode: any) => {
+                    setCalendarMode(mode);
+                    setCalendarValue(value);
+                  }}
                   className="bg-transparent"
                 />
               </ConfigProvider>
@@ -331,6 +498,160 @@ const RecordsModule = () => {
           </div>
         </div>
       )}
+
+      {/* Stream Detail Modal */}
+      <Modal
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        width={850}
+        closeIcon={<CloseOutlined className="text-white hover:rotate-90 transition-transform" />}
+        centered
+        className="stream-detail-modal"
+        styles={{
+            mask: { backdropFilter: 'blur(10px)' },
+            content: {
+                background: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(135, 234, 255, 0.1)',
+                padding: 0,
+                borderRadius: '32px',
+                overflow: 'hidden'
+            }
+        }}
+      >
+        {selectedStream && (() => {
+          const period = getPeriodInfo(selectedStream.time);
+          return (
+            <div className="flex flex-col md:flex-row h-full min-h-[500px]">
+              {/* Left Column: Visuals */}
+              <div className="w-full md:w-[45%] bg-slate-900/50 relative overflow-hidden border-r border-white/5 group">
+                <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20`} />
+                <div className="h-full w-full">
+                  <AntImage.PreviewGroup>
+                    {selectedStream.images && selectedStream.images.length > 0 ? (
+                      <AntImage
+                        src={selectedStream.images[0]}
+                        alt={selectedStream.title}
+                        className="!h-full !w-full object-cover animate-slow-pan"
+                        wrapperClassName="h-full w-full block h-full"
+                      />
+                    ) : selectedStream.cover ? (
+                      <AntImage
+                        src={selectedStream.cover}
+                        alt={selectedStream.title}
+                        className="!h-full !w-full object-cover opacity-80 animate-slow-pan"
+                        wrapperClassName="h-full w-full block h-full"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center p-12 text-slate-500 font-bold h-full">NO VISUAL</div>
+                    )}
+                  </AntImage.PreviewGroup>
+                </div>
+                {/* Image Thumbnails Overlay */}
+                {selectedStream.images && selectedStream.images.length > 1 && (
+                  <div className="absolute bottom-4 left-4 right-4 flex gap-2 overflow-x-auto pb-2 custom-scrollbar z-30">
+                     <AntImage.PreviewGroup>
+                        {selectedStream.images.slice(1).map((img, i) => (
+                           <AntImage
+                              key={i}
+                              src={img}
+                              width={60}
+                              height={45}
+                              className="rounded-lg object-cover border border-white/20 hover:border-cyan-400 transition-colors shadow-xl"
+                           />
+                        ))}
+                     </AntImage.PreviewGroup>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Info */}
+              <div className={`w-full md:w-[55%] flex flex-col p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}>
+                <div className="flex flex-col gap-4 mb-6">
+                   <div className="flex flex-wrap items-center gap-3">
+                      <Tag color={period.tagColor as any} className="font-bold border-none px-4 py-1 uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-lg m-0 rounded-full">
+                         {period.icon} {period.label}
+                      </Tag>
+                      <Text className="text-white text-xl font-black font-mono tracking-tight glow-text">{selectedStream.date}</Text>
+                   </div>
+                   <Title level={3} className="!text-white !mb-0 !text-2xl md:!text-3xl leading-tight font-black">{selectedStream.title}</Title>
+
+                   <div className="flex items-center gap-4 text-slate-200 font-mono text-sm bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 shadow-inner w-fit">
+                      <span className="flex items-center gap-2"><CalendarOutlined className="text-pink-400" /> <b>{selectedStream.startTime} ~ {selectedStream.endTime}</b></span>
+                      {selectedStream.durationStr && (
+                         <span className="flex items-center gap-2 border-l border-white/10 pl-4">
+                            <HistoryOutlined className="text-cyan-400" /> <b>{selectedStream.durationStr}</b>
+                         </span>
+                      )}
+                   </div>
+                </div>
+
+                <div className="flex-1 bg-black/50 backdrop-blur-xl p-6 rounded-[24px] mb-6 overflow-y-auto custom-scrollbar border border-white/5 shadow-inner">
+                   <div className="flex items-center gap-2 mb-4 opacity-60">
+                      <InfoCircleOutlined className="text-cyan-400" />
+                      <span className="text-[11px] font-black uppercase tracking-widest">AI Highlights</span>
+                   </div>
+                   <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed">
+                     {selectedStream.highlights ? (
+                       <ReactMarkdown
+                         components={{
+                           p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{children}</p>,
+                           ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
+                           li: ({ children }: { children?: React.ReactNode }) => <li className="mb-1">{children}</li>,
+                           h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-xl font-bold mb-3 text-cyan-300">{children}</h1>,
+                           h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-lg font-bold mb-2 text-cyan-400">{children}</h2>,
+                           h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-base font-bold mb-2 text-pink-300">{children}</h3>,
+                           strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-cyan-200 font-bold">{children}</strong>
+                         }}
+                       >
+                         {selectedStream.highlights}
+                       </ReactMarkdown>
+                     ) : '暂无 AI 总结摘要...'}
+                   </article>
+                </div>
+
+                <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                   <Space size="middle">
+                      {selectedStream.replayUrl && (
+                         <Button
+                            type="primary"
+                            icon={<PlayCircleOutlined />}
+                            href={selectedStream.replayUrl}
+                            target="_blank"
+                            className="bg-cyan-500 hover:bg-cyan-400 border-none rounded-xl font-bold px-6"
+                         >
+                            看回放
+                         </Button>
+                      )}
+                      {selectedStream.srt && (
+                         <Button
+                            icon={<EyeOutlined />}
+                            href={`/wiki/sui/srt?url=${encodeURIComponent(selectedStream.srt)}`}
+                            target="_blank"
+                            className="bg-white/5 border-white/10 text-slate-300 hover:!text-cyan-400 hover:!bg-white/10 rounded-xl"
+                         >
+                            语音字幕
+                         </Button>
+                      )}
+                   </Space>
+
+                   {selectedStream.xml && (
+                      <Button
+                         icon={< ThunderboltOutlined />}
+                         href={selectedStream.xml}
+                         target="_blank"
+                         className="text-pink-400 hover:text-pink-300 font-bold"
+                         type="link"
+                      >
+                         弹幕存档
+                      </Button>
+                   )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
     </div>
   );
 };
