@@ -9,12 +9,12 @@ const { Title, Text } = Typography;
 
 const GalleryModule = () => {
   const categories = [
-    { key: 'cat', label: '小猫帽', cover: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png' },
-    { key: 'red', label: '小红帽', cover: '/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png' },
-    { key: 'blue', label: '小蓝帽', cover: '/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png' },
-    { key: 'flower', label: '小花帽', cover: '/images/materials/flower/cee3461dc483b51ac9befd4663c1235e1954091502.png' },
-    { key: 'extra', label: '饼干岁/嘉嘉', cover: '/images/materials/biscuit/饼干岁2.png' },
-    { key: 'bird', label: '本体/表情', cover: '/images/materials/bird/岁己_小鸟跳静态图.png' },
+    { key: 'cat', label: '小猫帽', cover: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png', objectPosition: 'top center' },
+    { key: 'red', label: '小红帽', cover: '/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png', objectPosition: 'top center' },
+    { key: 'blue', label: '小蓝帽', cover: '/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png', objectPosition: 'center 35%' },
+    { key: 'flower', label: '小花帽', cover: '/images/materials/flower/6c6e83dad538cf0ba8434a417f6f343b1954091502.png', objectPosition: 'center center' },
+    { key: 'extra', label: '饼干岁/嘉嘉', cover: '/images/materials/biscuit/饼干岁2.png', objectPosition: 'top center' },
+    { key: 'bird', label: '本体/表情', cover: '/images/materials/bird/岁己_小鸟跳静态图.png', objectPosition: 'center center' },
   ];
 
   return (
@@ -34,7 +34,12 @@ const GalleryModule = () => {
           label: (
             <div className="flex flex-col items-center gap-2 group/tab py-2">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/10 group-hover/tab:border-pink-500/50 transition-all shadow-lg relative bg-slate-800">
-                <AntImage src={cat.cover} preview={false} className="w-full h-full object-cover object-top" />
+                <img
+                  src={cat.cover}
+                  alt={cat.label}
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: cat.objectPosition || 'top center' }}
+                />
               </div>
               <span className="text-[10px] md:text-xs font-bold tracking-tight opacity-60 group-hover:opacity-100 transition-opacity whitespace-nowrap">{cat.label}</span>
             </div>
