@@ -1,0 +1,49 @@
+export const suiInfo = {
+  name: '岁己SUI应援站',
+  heroName: '岁己SUI',
+  group: 'VirtuaReal 第十七期生',
+  race: '银喉长尾山雀 (Tit)',
+  birthday: '2月5日',
+  tags: ['白发红瞳', '虎牙', '吃辣大户', '地雷系(外表)', 'Needy'],
+  description: '原本是一只想要早起叫醒人类的小鸟，结果因为自己也起不来，索性变成了人类。性格坚定可爱，非常喜欢吃辣，三餐无辣不欢。',
+  colorMain: '#87EAFF',
+  colorSub: '#DA5D77',
+};
+
+export const artworkMaterials = {
+  cat: [
+    { src: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png', title: '小猫帽 · 紫色外套', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽口罩双马尾.png', title: '小猫帽 · 口罩版', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽戴兜帽wink红瞳.PNG', title: '小猫帽 · 兜帽Wink', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽无外套长发金瞳.PNG', title: '小猫帽 · 长发金瞳', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽短发小揪揪半身金瞳.png', title: '小猫帽 · 短发揪揪', tag: '小猫帽' },
+    { src: '/images/materials/QQ20260107-003512.png', title: '小猫帽 · 表情包版', tag: '小猫帽' },
+  ],
+  red: [
+    { src: '/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png', title: '形态 · 小红帽', tag: '小红帽' },
+  ],
+  blue: [
+    { src: '/images/materials/blue/岁己_20231216形象_双马尾有外套.webp', title: '形态 · 小蓝帽 (双马尾)', tag: '小蓝帽' },
+    { src: '/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png', title: '形态 · 小蓝帽 (立绘)', tag: '小蓝帽' },
+    { src: '/images/materials/blue/岁己_20231216形象_短发无外套.webp', title: '形态 · 小蓝帽 (短发)', tag: '小蓝帽' },
+    { src: '/images/materials/blue/12038c997389adefd7c097b20311b83c.png', title: '形态 · 小蓝帽 (概念)', tag: '小蓝帽' },
+  ],
+  flower: [
+    { src: '/images/materials/flower/cee3461dc483b51ac9befd4663c1235e1954091502.png', title: '形态 · 小花帽 (立绘)', tag: '小花帽' },
+    { src: '/images/materials/flower/622764c8178eb3f6411da20a917cc0321954091502.png', title: '形态 · 小花帽 (Q版)', tag: '小花帽' },
+    { src: '/images/materials/flower/21d72930b566f878ff8cdbff9b468ca11954091502.png', title: '形态 · 小花帽 (待机)', tag: '小花帽' },
+    { src: '/images/materials/flower/6c6e83dad538cf0ba8434a417f6f343b1954091502.png', title: '形态 · 小花帽 (特写)', tag: '小花帽' },
+    { src: '/images/materials/flower/73913dc4ed291e630f765bd14bcd15cc1954091502.png', title: '形态 · 小花帽 (全身)', tag: '小花帽' },
+  ],
+  extra: [
+    { src: '/images/materials/biscuit/饼干岁2.png', title: '饼干岁 · 形象', tag: '饼干岁' },
+    { src: '/images/materials/biscuit/饼干岁3.jpeg', title: '饼干岁 · 贴纸', tag: '饼干岁' },
+    { src: '/images/materials/biscuit/饼干岁4.jpeg', title: '饼干岁 · 头像', tag: '饼干岁' },
+    { src: '/images/materials/biscuit/饼干岁5.jpeg', title: '饼干岁 · 氛围', tag: '饼干岁' },
+    { src: '/images/materials/jiajia/嘉嘉立绘张嘴伸手闭眼.png', title: '嘉嘉猫 · 立绘', tag: '嘉嘉猫' },
+  ],
+  bird: [
+    { src: '/images/materials/bird/岁己_小鸟跳静态图.png', title: '本体 · 小鸟跳', tag: '小鸟' },
+    { src: '/images/materials/bird/指人笑.png', title: '表情 · 指人笑', tag: '表情包' },
+  ]
+};
