@@ -2,6 +2,7 @@
 import * as Phaser from 'phaser';
 import { UNIT_TYPES, UnitData } from '../config/UnitsData';
 import { GameConfig } from '../config/GameConfig';
+import { GamePhase } from '../types/GamePhase';
 import Unit from '../objects/Unit';
 import Barracks from '../objects/Barracks';
 import WaveManager from '../systems/WaveManager';
@@ -21,11 +22,17 @@ export default class MainScene extends Phaser.Scene {
   // 游戏状态
   playerHp!: number;
   enemyHp!: number;
-  gameStarted!: boolean;
+  currentPhase!: GamePhase;
+  currentRound!: number;
+  battleTimer!: Phaser.Time.TimerEvent | null;
 
   // UI 组件
   playerBaseBarFg!: Phaser.GameObjects.Rectangle;
   enemyBaseBarFg!: Phaser.GameObjects.Rectangle;
+  playerHpText!: Phaser.GameObjects.Text;
+  enemyHpText!: Phaser.GameObjects.Text;
+  phaseText!: Phaser.GameObjects.Text;
+  roundText!: Phaser.GameObjects.Text;
   notStartedText!: Phaser.GameObjects.Text;
   sellZone!: Phaser.GameObjects.Zone;
   sellZoneText!: Phaser.GameObjects.Text;
@@ -67,8 +74,8 @@ export default class MainScene extends Phaser.Scene {
     this.createBase(enemy.x, enemy.y, enemy.label, enemy.color, this.playerCategory);
     this.createBaseHealthBars();
 
-    this.playerHp = GameConfig.initialHp;
-    this.enemyHp = GameConfig.initialHp;
+    this.playerHp = GameConfig.playerInitialHp;
+    this.enemyHp = GameConfig.enemyInitialHp;
 
     // --- 5. 初始化管理器 ---
     this.waveManager = new WaveManager(this);
@@ -79,26 +86,27 @@ export default class MainScene extends Phaser.Scene {
     this.game.events.off('AUTO_BUY_UNIT');
     this.game.events.on('AUTO_BUY_UNIT', this.handleAutoBuyUnit, this);
 
-    this.game.events.on('GAME_START', this.startGame, this);
+    this.game.events.on('START_BATTLE', this.switchToBattlePhase, this);
 
     // 监听碰撞
     this.matter.world.on('collisionstart', this.handleCollision, this);
 
-    this.gameStarted = false;
+    // 初始化阶段和回合
+    this.currentPhase = GamePhase.PREPARATION;
+    this.currentRound = 1;
+    this.battleTimer = null;
 
     // 创建卖掉区域
     this.createSellZone();
 
-    // 未开始提示
-    this.notStartedText = this.add.text(500, 300, '点击"开始战斗"开始游戏', {
-      fontSize: '24px',
-      color: '#ffffff',
-      backgroundColor: '#000000',
-      padding: { x: 10, y: 5 }
-    }).setOrigin(0.5).setDepth(2000);
+    // 创建阶段和回合显示
+    this.createPhaseUI();
 
     // 发出 ready 事件
     this.game.events.emit('ready');
+
+    // 进入第一回合购买阶段
+    this.switchToPreparationPhase();
   }
 
   createBase(x: number, y: number, label: string, color: number, collidesWith: number) {
@@ -208,14 +216,88 @@ export default class MainScene extends Phaser.Scene {
   }
 
   createBaseHealthBars() {
-    this.playerBaseBarFg = this.add.rectangle(25, 550, 40, 8, 0x00ff00);
-    this.enemyBaseBarFg = this.add.rectangle(975, 550, 40, 8, 0xff0000);
+    // 玩家血条（绿色），在左边
+    const playerBarWidth = 200;
+    const playerBarHeight = 20;
+    const playerBarX = 100;
+    const playerBarY = 550;
+
+    // 血条背景
+    this.add.rectangle(playerBarX, playerBarY, playerBarWidth, playerBarHeight, 0x333333);
+    // 血条前景
+    this.playerBaseBarFg = this.add.rectangle(
+      playerBarX,
+      playerBarY,
+      playerBarWidth,
+      playerBarHeight,
+      0x00ff00
+    ).setOrigin(0, 0.5);
+
+    // 玩家血条标签
+    this.add.text(playerBarX - playerBarWidth / 2 - 40, playerBarY, '玩家', {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    // 敌人血条（红色），在右边
+    const enemyBarWidth = 200;
+    const enemyBarHeight = 20;
+    const enemyBarX = 900;
+    const enemyBarY = 550;
+
+    // 血条背景
+    this.add.rectangle(enemyBarX, enemyBarY, enemyBarWidth, enemyBarHeight, 0x333333);
+    // 血条前景
+    this.enemyBaseBarFg = this.add.rectangle(
+      enemyBarX,
+      enemyBarY,
+      enemyBarWidth,
+      enemyBarHeight,
+      0xff0000
+    ).setOrigin(0, 0.5);
+
+    // 敌人血条标签
+    this.add.text(enemyBarX + enemyBarWidth / 2 + 40, enemyBarY, '敌人', {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
     this.updateBaseHealthBars();
   }
 
   updateBaseHealthBars() {
-    this.playerBaseBarFg.width = 40 * (Math.max(0, this.playerHp) / 100);
-    this.enemyBaseBarFg.width = 40 * (Math.max(0, this.enemyHp) / 100);
+    const playerBarWidth = 200;
+    const enemyBarWidth = 200;
+
+    // 更新玩家血条宽度（基于40血量）
+    const playerHpPercent = Math.max(0, this.playerHp) / 40;
+    this.playerBaseBarFg.width = playerBarWidth * playerHpPercent;
+
+    // 更新敌人血条宽度（基于999血量）
+    const enemyHpPercent = Math.max(0, this.enemyHp) / 999;
+    this.enemyBaseBarFg.width = enemyBarWidth * enemyHpPercent;
+
+    // 添加血量数值显示
+    if (!this.playerHpText) {
+      this.playerHpText = this.add.text(100, 575, `HP: ${this.playerHp}/40`, {
+        fontSize: '14px',
+        color: '#ffffff'
+      }).setOrigin(0.5);
+    } else {
+      this.playerHpText.setText(`HP: ${this.playerHp}/40`);
+    }
+
+    if (!this.enemyHpText) {
+      this.enemyHpText = this.add.text(900, 575, `HP: ${this.enemyHp}/999`, {
+        fontSize: '14px',
+        color: '#ffffff'
+      }).setOrigin(0.5);
+    } else {
+      this.enemyHpText.setText(`HP: ${this.enemyHp}/999`);
+    }
+
     if (this.playerHp <= 0) this.gameOver(false);
     if (this.enemyHp <= 0) this.gameOver(true);
   }
@@ -224,27 +306,270 @@ export default class MainScene extends Phaser.Scene {
     this.playerUnits.children.each((u: any) => u.update(time, delta));
     this.enemyUnits.children.each((u: any) => u.update(time, delta));
     this.playerBarracks.forEach(b => b.update());
+
+    // 在战斗阶段检查是否应该提前结束战斗
+    if (this.currentPhase === GamePhase.BATTLE) {
+      this.checkBattleEnd();
+    }
   }
 
-  startGame() {
-    this.gameStarted = true;
-    if (this.notStartedText) this.notStartedText.destroy();
+  // 创建阶段UI显示
+  createPhaseUI() {
+    // 阶段显示
+    this.phaseText = this.add.text(500, 30, `阶段: 购买阶段`, {
+      fontSize: '24px',
+      color: '#ffffff',
+      backgroundColor: '#000000',
+      padding: { x: 10, y: 5 }
+    }).setOrigin(0.5).setDepth(2000);
 
-    this.playerBarracks.forEach(barracks => barracks.disableDragging());
+    // 回合显示
+    this.roundText = this.add.text(500, 70, `回合: 1`, {
+      fontSize: '20px',
+      color: '#ffd700',
+      backgroundColor: '#000000',
+      padding: { x: 10, y: 5 }
+    }).setOrigin(0.5).setDepth(2000);
+  }
+
+  // 更新阶段显示
+  updatePhaseUI() {
+    const phaseNames = {
+      [GamePhase.PREPARATION]: '购买阶段',
+      [GamePhase.BATTLE]: '战斗阶段',
+      [GamePhase.RESOLUTION]: '结算阶段',
+      [GamePhase.GAME_OVER]: '游戏结束'
+    };
+
+    if (this.phaseText) {
+      this.phaseText.setText(`阶段: ${phaseNames[this.currentPhase]}`);
+    }
+
+    if (this.roundText) {
+      this.roundText.setText(`回合: ${this.currentRound}`);
+    }
+  }
+
+  // 切换到购买阶段
+  switchToPreparationPhase() {
+    this.currentPhase = GamePhase.PREPARATION;
+
+    // 允许拖动兵营 - 通过重新设置可拖动状态
+    this.playerBarracks.forEach(barrack => {
+      barrack.setInteractive();
+      this.input.setDraggable(barrack);
+    });
+
+    // 显示卖掉区域
+    this.sellZoneBg.setVisible(true);
+    this.sellZoneText.setVisible(true);
+
+    // 更新UI
+    this.updatePhaseUI();
+
+    // 发工资
+    this.giveSalary();
+
+    // 通知UI
+    this.game.events.emit('PHASE_CHANGED', GamePhase.PREPARATION);
+    console.log(`🔄 进入购买阶段 (回合 ${this.currentRound})`);
+  }
+
+  // 切换到战斗阶段
+  switchToBattlePhase() {
+    this.currentPhase = GamePhase.BATTLE;
+
+    // 禁止拖动兵营
+    this.playerBarracks.forEach(barrack => barrack.disableDragging());
+
+    // 隐藏卖掉区域
     this.sellZoneBg.setVisible(false);
     this.sellZoneText.setVisible(false);
 
-    // 强制同步一次金币
-    this.economyManager.addGold(0);
+    // 更新UI
+    this.updatePhaseUI();
 
-    this.waveManager.start();
-    console.log('Game started!');
+    // 开始战斗
+    this.startBattle();
+
+    // 通知UI
+    this.game.events.emit('PHASE_CHANGED', GamePhase.BATTLE);
+    console.log(`⚔️ 进入战斗阶段`);
   }
 
+  // 切换到结算阶段
+  switchToResolutionPhase() {
+    this.currentPhase = GamePhase.RESOLUTION;
+
+    // 更新UI
+    this.updatePhaseUI();
+
+    // 计算战斗结果
+    this.calculateBattleResult();
+
+    // 通知UI
+    this.game.events.emit('PHASE_CHANGED', GamePhase.RESOLUTION);
+    console.log(`📊 进入结算阶段`);
+
+    // 延迟后进入下一回合购买阶段
+    this.time.delayedCall(GameConfig.resolutionDuration, () => {
+      this.currentRound++;
+      this.switchToPreparationPhase();
+    });
+  }
+
+  // 开始战斗（替换原来的startGame）
+  startBattle() {
+    // 清理之前的战斗单位
+    this.cleanupBattleUnits();
+
+    // 生成一波敌人
+    this.waveManager.startBattle();
+
+    // 设置战斗计时器
+    this.battleTimer = this.time.delayedCall(GameConfig.battleDuration, () => {
+      this.endBattle();
+    });
+
+    console.log('战斗开始！');
+  }
+
+  // 结束战斗
+  endBattle() {
+    if (this.battleTimer) {
+      this.battleTimer.remove();
+      this.battleTimer = null;
+    }
+
+    // 停止波次生成
+    this.waveManager.stop();
+
+    // 进入结算阶段
+    this.switchToResolutionPhase();
+  }
+
+  // 清理战斗单位
+  cleanupBattleUnits() {
+    // 清理玩家单位（除了兵营生成的）
+    this.playerUnits.clear(true, true);
+
+    // 清理敌人单位
+    this.enemyUnits.clear(true, true);
+  }
+
+  // 计算战斗结果
+  calculateBattleResult() {
+    // 统计存活单位
+    const playerSurvivors = this.countSurvivors(this.playerUnits, false);
+    const enemySurvivors = this.countSurvivors(this.enemyUnits, true);
+
+    console.log(`战斗结果: 玩家存活 ${playerSurvivors} 单位, 敌方存活 ${enemySurvivors} 单位`);
+
+    // 判断胜负
+    if (playerSurvivors > enemySurvivors) {
+      // 玩家获胜，敌方受到伤害
+      const damage = playerSurvivors;
+      this.enemyHp -= damage;
+      console.log(`🎉 玩家获胜！敌方受到 ${damage} 点伤害 (敌方血量 ${this.enemyHp})`);
+    } else if (enemySurvivors > playerSurvivors) {
+      // 敌方获胜，玩家受到伤害
+      const damage = enemySurvivors;
+      this.playerHp -= damage;
+      console.log(`💀 敌方获胜！玩家受到 ${damage} 点伤害 (玩家血量 ${this.playerHp})`);
+    } else {
+      // 平局，双方都受到伤害
+      const damage = playerSurvivors;
+      this.playerHp -= damage;
+      this.enemyHp -= damage;
+      console.log(`🤝 平局！双方各受到 ${damage} 点伤害`);
+    }
+
+    // 更新血量显示
+    this.updateBaseHealthBars();
+
+    // 检查游戏结束
+    if (this.playerHp <= 0 || this.enemyHp <= 0) {
+      this.gameOver(this.playerHp > 0);
+    }
+  }
+
+  // 统计存活单位
+  countSurvivors(units: Phaser.GameObjects.Group, isEnemy: boolean): number {
+    let count = 0;
+    units.children.each((unit: any) => {
+      if (unit.isEnemy === isEnemy && unit.active && unit.visible && unit.hp > 0) {
+        count++;
+      }
+      return null; // 继续迭代
+    });
+    return count;
+  }
+
+  // 发工资
+  giveSalary() {
+    // 通过经济管理器发工资
+    const currentGold = this.economyManager.getGold();
+    const baseSalary = GameConfig.baseGoldPerRound;
+
+    // 计算利息
+    const interestGold = Math.min(currentGold, GameConfig.maxInterestGold);
+    const interest = Math.floor(interestGold * GameConfig.interestRate);
+
+    const totalSalary = baseSalary + interest;
+
+    this.economyManager.addGold(totalSalary);
+    console.log(`💰 发工资: 基础 ${baseSalary} + 利息 ${interest} = ${totalSalary} 金币`);
+  }
+
+  // 检查战斗是否应该提前结束
+  checkBattleEnd() {
+    // 检查是否还有敌人存活
+    let hasEnemies = false;
+    this.enemyUnits.children.each((unit: any) => {
+      if (unit.active && unit.visible && unit.hp > 0) {
+        hasEnemies = true;
+        return false; // 停止迭代
+      }
+      return null;
+    });
+
+    // 如果所有敌人都死亡了，提前结束战斗
+    if (!hasEnemies) {
+      console.log('🎯 所有敌人都被消灭了，提前结束战斗！');
+      this.endBattle();
+      return;
+    }
+
+    // 检查是否还有玩家单位存活
+    let hasPlayerUnits = false;
+    this.playerUnits.children.each((unit: any) => {
+      if (unit.active && unit.visible && unit.hp > 0) {
+        hasPlayerUnits = true;
+        return false; // 停止迭代
+      }
+      return null;
+    });
+
+    // 如果所有玩家单位都死亡了，提前结束战斗
+    if (!hasPlayerUnits) {
+      console.log('💀 所有玩家单位都死亡了，提前结束战斗！');
+      this.endBattle();
+    }
+  }
+
+  // 游戏结束（修改原来的gameOver）
   gameOver(won: boolean) {
-    this.gameStarted = false;
+    this.currentPhase = GamePhase.GAME_OVER;
+    this.updatePhaseUI();
+
+    if (this.battleTimer) {
+      this.battleTimer.remove();
+      this.battleTimer = null;
+    }
+
     this.waveManager.stop();
     this.game.events.emit('GAME_OVER', won);
+    console.log(won ? '🎉 游戏胜利！' : '💀 游戏失败！');
   }
 
   // 辅助方法

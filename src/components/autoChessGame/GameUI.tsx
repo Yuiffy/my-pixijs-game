@@ -1,6 +1,7 @@
 // src/components/autoChessGame/GameUI.tsx
 import React, { useState, useEffect } from 'react';
 import { UNIT_TYPES, FACTION_DESCRIPTIONS } from './config/UnitsData';
+import { GamePhase, GamePhaseDescriptions } from './types/GamePhase';
 
 export default function GameUI({ gameInstance, gameReady = false }: any) {
   const [gold, setGold] = useState(10); // 初始金币
@@ -8,7 +9,8 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
   const [synergies, setSynergies] = useState({});
   const [shopLevel, setShopLevel] = useState(1);
   const [barracksCount, setBarracksCount] = useState(0);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState<GamePhase>(GamePhase.PREPARATION);
+  const [currentRound, setCurrentRound] = useState(1);
   const [gameOver, setGameOver] = useState<boolean | null>(null);
   const [tooltip, setTooltip] = useState<{ visible: boolean; content: string; x: number; y: number }>({ visible: false, content: '', x: 0, y: 0 });
 
@@ -22,6 +24,8 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
     const handleShopLevelUp = (level: number) => setShopLevel(level);
     const handleGameOver = (won: boolean) => setGameOver(won);
     const handleGoldChanged = (newGold: number) => setGold(newGold);
+    const handlePhaseChanged = (phase: GamePhase) => setCurrentPhase(phase);
+    const handleRoundChanged = (round: number) => setCurrentRound(round);
 
     gameInstance.events.on('UPDATE_SHOP', updateShop);
     gameInstance.events.on('UPDATE_SYNERGY', updateSynergy);
@@ -29,6 +33,8 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
     gameInstance.events.on('SHOP_LEVEL_UP', handleShopLevelUp);
     gameInstance.events.on('GAME_OVER', handleGameOver);
     gameInstance.events.on('GOLD_CHANGED', handleGoldChanged);
+    gameInstance.events.on('PHASE_CHANGED', handlePhaseChanged);
+    gameInstance.events.on('ROUND_CHANGED', handleRoundChanged);
 
     // 初始化请求商店
     gameInstance.events.emit('REFRESH_SHOP');
@@ -40,6 +46,8 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       gameInstance.events.off('SHOP_LEVEL_UP', handleShopLevelUp);
       gameInstance.events.off('GAME_OVER', handleGameOver);
       gameInstance.events.off('GOLD_CHANGED', handleGoldChanged);
+      gameInstance.events.off('PHASE_CHANGED', handlePhaseChanged);
+      gameInstance.events.off('ROUND_CHANGED', handleRoundChanged);
     };
   }, [gameInstance]);
 
@@ -121,13 +129,12 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
     gameInstance.events.emit('AUTO_BUY_UNIT', { unitKey });
   };
 
-  const startGame = () => {
-    console.log('UI: Start game button clicked');
+  const startBattle = () => {
+    console.log('UI: Start battle button clicked');
     console.log('UI: gameInstance exists:', !!gameInstance);
     if (gameInstance) {
-      console.log('UI: Emitting GAME_START event');
-      gameInstance.events.emit('GAME_START');
-      setGameStarted(true);
+      console.log('UI: Emitting START_BATTLE event');
+      gameInstance.events.emit('START_BATTLE');
     } else {
       console.error('UI: gameInstance is null!');
     }
@@ -166,7 +173,33 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ color: 'white', flex: 1 }}>
-            <h3 style={{ margin: '0 0 5px 0' }}>卫戍协议 (Auto Mode)</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '5px' }}>
+              <h3 style={{ margin: 0 }}>卫戍协议 (Auto Mode)</h3>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{
+                  padding: '4px 12px',
+                  background: currentPhase === GamePhase.PREPARATION ? '#28a745' :
+                            currentPhase === GamePhase.BATTLE ? '#dc3545' :
+                            currentPhase === GamePhase.RESOLUTION ? '#ffc107' : '#6c757d',
+                  color: currentPhase === GamePhase.RESOLUTION ? '#000' : '#fff',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  fontSize: '14px'
+                }}>
+                  {GamePhaseDescriptions[currentPhase]}
+                </div>
+                <div style={{
+                  padding: '4px 12px',
+                  background: '#007bff',
+                  color: '#fff',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  fontSize: '14px'
+                }}>
+                  回合: {currentRound}
+                </div>
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
               {Object.entries(synergies).map(([name, count]: [string, any]) => {
                 const factionDesc = (FACTION_DESCRIPTIONS as any)[name] || `${name}阵营说明暂未添加`;
@@ -205,7 +238,48 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
           </div>
 
           <div style={{ marginLeft: 20 }}>
-            {!gameStarted && <button type="button" onClick={startGame} disabled={!gameReady} style={{ pointerEvents: gameReady ? 'auto' : 'none', padding: '10px 20px', background: gameReady ? '#28a745' : '#555', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>开始战斗</button>}
+            {currentPhase === GamePhase.PREPARATION && (
+              <button
+                type="button"
+                onClick={startBattle}
+                disabled={!gameReady}
+                style={{
+                  pointerEvents: gameReady ? 'auto' : 'none',
+                  padding: '10px 20px',
+                  background: gameReady ? '#28a745' : '#555',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  fontWeight: 'bold'
+                }}
+              >
+                开始战斗
+              </button>
+            )}
+            {currentPhase === GamePhase.BATTLE && (
+              <div style={{
+                padding: '10px 20px',
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                fontWeight: 'bold'
+              }}>
+                战斗中...
+              </div>
+            )}
+            {currentPhase === GamePhase.RESOLUTION && (
+              <div style={{
+                padding: '10px 20px',
+                background: '#ffc107',
+                color: 'black',
+                border: 'none',
+                borderRadius: '5px',
+                fontWeight: 'bold'
+              }}>
+                结算中...
+              </div>
+            )}
           </div>
         </div>
       </div>
