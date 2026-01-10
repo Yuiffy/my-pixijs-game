@@ -478,7 +478,7 @@ const RecordsModule = () => {
                 <Calendar
                   headerRender={calendarHeaderRender}
                   fullscreen={true}
-                  cellRender={cellRender}
+                  cellRender={cellRender as any}
                   onPanelChange={(value: any, mode: any) => {
                     setCalendarMode(mode);
                     setCalendarValue(value);
