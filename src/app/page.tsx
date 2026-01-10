@@ -17,6 +17,7 @@ import {
   StarOutlined,
   CoffeeOutlined,
   ThunderboltOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import NextImage from 'next/image';
 import Link from 'next/link';
@@ -342,7 +343,7 @@ const RecordsModule = () => {
                             <AntImage
                               src={stream.cover}
                               alt={stream.title}
-                              className="!h-full !w-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700 animate-slow-pan"
+                              className="!h-full !w-full object-cover opacity-80 grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700 animate-slow-pan"
                               wrapperClassName="h-full w-full block"
                             />
                           ) : (
@@ -350,24 +351,31 @@ const RecordsModule = () => {
                           )}
                         </AntImage.PreviewGroup>
                      </div>
-                     <Tag className="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md border border-white/10 font-bold pointer-events-none text-white/90 rounded-lg px-3 py-1">
-                        {stream.date}
-                     </Tag>
                   </div>
 
                   {/* Right: Content Container (Fixed Height with Internal Scroll) */}
                   <div className={`w-full md:w-[55%] flex flex-col p-6 md:p-8 bg-gradient-to-br ${period.bg} h-full overflow-hidden`}>
-                      <div className="flex flex-col gap-3 mb-6">
-                        <div className="flex items-center gap-3">
-                           <Tag color={period.tagColor as any} className="font-bold border-none px-3 uppercase text-[10px] tracking-widest flex items-center gap-1 shadow-sm m-0">
-                             {period.icon} {period.label}
-                           </Tag>
+                      <div className="flex flex-col gap-4 mb-6">
+                        {/* Unified Metadata Bar */}
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                           <div className="flex items-center gap-3">
+                              <Tag color={period.tagColor as any} className="font-bold border-none px-4 py-1 uppercase text-xs tracking-widest flex items-center gap-2 shadow-lg m-0 rounded-full">
+                                {period.icon} {period.label}
+                              </Tag>
+                              <Text className="text-white text-2xl font-black font-mono tracking-tight glow-text">{stream.date}</Text>
+                           </div>
+
+                           <div className="flex items-center gap-4 text-slate-200 font-mono text-sm bg-white/10 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/10 shadow-xl">
+                              <span className="flex items-center gap-2.5 whitespace-nowrap"><CalendarOutlined className="text-pink-400 text-base" /> <span className="font-bold">{stream.startTime} ~ {stream.endTime}</span></span>
+                              {stream.durationStr && (
+                                 <span className="flex items-center gap-2.5 border-l border-white/20 pl-4 whitespace-nowrap">
+                                    <HistoryOutlined className="text-cyan-400 text-base" /> <span className="font-bold">{stream.durationStr}</span>
+                                 </span>
+                              )}
+                           </div>
                         </div>
-                        <Title level={3} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0 !text-xl md:!text-2xl leading-tight">{stream.title}</Title>
-                        <div className="flex items-center gap-3 text-slate-400 font-mono text-xs bg-black/20 w-fit px-4 py-2 rounded-xl border border-white/5 shadow-inner">
-                           <span className="flex items-center gap-2 font-bold"><CalendarOutlined className="text-pink-400 text-sm" /> {stream.startTime} ~ {stream.endTime}</span>
-                           {stream.durationStr && <span className="flex items-center gap-2 border-l border-white/10 pl-3"><HistoryOutlined className="text-cyan-400 text-sm" /> {stream.durationStr}</span>}
-                        </div>
+
+                        <Title level={2} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0 !text-2xl md:!text-3xl leading-tight font-black">{stream.title}</Title>
                       </div>
 
                       {/* Summary Text - Scrolls within the fixed-height column */}
@@ -397,24 +405,26 @@ const RecordsModule = () => {
                         <Space size="middle" className="flex-wrap justify-end shrink-0">
                           {stream.srt && (
                             <Button
-                              icon={<CloudDownloadOutlined />}
+                              icon={<EyeOutlined />}
                               href={stream.srt}
                               target="_blank"
+                              rel="noopener noreferrer"
                               size="small"
-                              className="bg-white/10 border-none text-cyan-300 hover:!bg-cyan-500/20 rounded-lg px-4"
+                              className="bg-white/10 border-none text-cyan-300 hover:!bg-cyan-500/20 rounded-lg px-4 font-bold"
                             >
-                              SRT 字幕
+                              预览 SRT
                             </Button>
                           )}
                           {stream.xml && (
                              <Button
-                              icon={<CloudDownloadOutlined />}
+                              icon={<EyeOutlined />}
                               href={stream.xml}
                               target="_blank"
+                              rel="noopener noreferrer"
                               size="small"
-                              className="bg-white/10 border-none text-pink-300 hover:!bg-pink-500/20 rounded-lg px-4"
+                              className="bg-white/10 border-none text-pink-300 hover:!bg-pink-500/20 rounded-lg px-4 font-bold"
                             >
-                              弹幕 XML
+                              预览 XML
                             </Button>
                           )}
                         </Space>
