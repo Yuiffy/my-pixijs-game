@@ -189,7 +189,7 @@ const RecordsModule = () => {
       <div className="flex items-center justify-between p-4 mb-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
         <div className="flex items-center gap-6">
           <Space size="large">
-             <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
+             <div className={`flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner`}>
                 <Button
                    size="small"
                    type="text"
@@ -217,30 +217,30 @@ const RecordsModule = () => {
                 )}
              </div>
 
-             <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
-                <Button
-                   size="small"
-                   type="text"
-                   icon={<RightOutlined />}
-                   disabled={type === 'year' || isFutureMonth(value.clone())}
-                   onClick={() => {
-                       const next = value.clone().add(1, 'month');
-                       onChange(next.isAfter(today, 'month') ? today : next);
-                   }}
-                   className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 disabled:opacity-0 disabled:pointer-events-none`}
-                />
-                <Button
-                   size="small"
-                   type="text"
-                   icon={<DoubleRightOutlined />}
-                   disabled={isFutureYear(value.clone())}
-                   onClick={() => {
-                       const next = value.clone().add(1, 'year');
-                       onChange(next.isAfter(today, 'year') ? today : next);
-                   }}
-                   className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 disabled:opacity-0 disabled:pointer-events-none`}
-                />
-             </div>
+             {!(isFutureYear(value.clone()) || (type === 'year' && value.year() === today.year()) || (type === 'month' && isFutureMonth(value.clone()))) && (
+               <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
+                  <Button
+                     size="small"
+                     type="text"
+                     icon={<RightOutlined />}
+                     onClick={() => {
+                         const next = value.clone().add(1, 'month');
+                         onChange(next.isAfter(today) ? today : next);
+                     }}
+                     className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${type === 'year' || isFutureMonth(value.clone()) ? 'hidden' : ''}`}
+                  />
+                  <Button
+                     size="small"
+                     type="text"
+                     icon={<DoubleRightOutlined />}
+                     onClick={() => {
+                         const next = value.clone().add(1, 'year');
+                         onChange(next.isAfter(today) ? today : next);
+                     }}
+                     className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${isFutureYear(value.clone()) ? 'hidden' : ''}`}
+                  />
+               </div>
+             )}
           </Space>
         </div>
 
@@ -515,16 +515,17 @@ const RecordsModule = () => {
                 border: '1px solid rgba(135, 234, 255, 0.1)',
                 padding: 0,
                 borderRadius: '32px',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                maxHeight: '90vh'
             }
         }}
       >
         {selectedStream && (() => {
           const period = getPeriodInfo(selectedStream.time);
           return (
-            <div className="flex flex-col md:flex-row h-full min-h-[500px]">
+            <div className="flex flex-col md:flex-row h-full max-h-[90vh] overflow-hidden">
               {/* Left Column: Visuals */}
-              <div className="w-full md:w-[45%] bg-slate-900/50 relative overflow-hidden border-r border-white/5 group">
+              <div className="w-full md:w-[45%] bg-slate-900/50 relative overflow-hidden border-r border-white/5 group shrink-0">
                 <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20`} />
                 <div className="h-full w-full">
                   <AntImage.PreviewGroup>
@@ -567,7 +568,7 @@ const RecordsModule = () => {
 
               {/* Right Column: Info */}
               <div className={`w-full md:w-[55%] flex flex-col p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}>
-                <div className="flex flex-col gap-4 mb-6">
+                <div className="flex flex-col gap-4 mb-6 shrink-0">
                    <div className="flex flex-wrap items-center gap-3">
                       <Tag color={period.tagColor as any} className="font-bold border-none px-4 py-1 uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-lg m-0 rounded-full">
                          {period.icon} {period.label}
@@ -586,7 +587,7 @@ const RecordsModule = () => {
                    </div>
                 </div>
 
-                <div className="flex-1 bg-black/50 backdrop-blur-xl p-6 rounded-[24px] mb-6 overflow-y-auto custom-scrollbar border border-white/5 shadow-inner">
+                <div className="flex-1 bg-black/50 backdrop-blur-xl p-6 rounded-[24px] mb-6 overflow-y-auto custom-scrollbar border border-white/5 shadow-inner min-h-0">
                    <div className="flex items-center gap-2 mb-4 opacity-60">
                       <InfoCircleOutlined className="text-cyan-400" />
                       <span className="text-[11px] font-black uppercase tracking-widest">AI Highlights</span>
@@ -610,7 +611,7 @@ const RecordsModule = () => {
                    </article>
                 </div>
 
-                <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5 shrink-0">
                    <Space size="middle">
                       {selectedStream.replayUrl && (
                          <Button
