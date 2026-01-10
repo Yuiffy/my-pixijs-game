@@ -9,7 +9,8 @@
     "gh-pages": "npx gh-pages -d out --dotfiles true",
     "build-export-gh-pages": "npm run export && npm run gh-pages",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "run-sync-scripts": "node scripts/sync_streams.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

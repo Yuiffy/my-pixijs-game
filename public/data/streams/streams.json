@@ -1,18 +1,20 @@
 [
   {
     "id": "2026_01_10_19_41_06",
-    "title": "找你有事！速来",
+    "title": "初见！命运石之门！",
     "date": "2026-01-10",
     "time": "19:41:06",
     "startTime": "19:41",
-    "endTime": "22:00",
-    "duration": 8371,
-    "durationStr": "2.3 小时",
-    "srt": null,
+    "endTime": "00:08",
+    "duration": 16076,
+    "durationStr": "4.5 小时",
+    "srt": "/data/streams/2026_01_10_19_41_06/2026_01_10_19_41_06_找你有事！速来_DDTV5_fix.srt",
     "xml": "/data/streams/2026_01_10_19_41_06/录制-25788785-20260110-194117-299-找你有事！速来.xml",
     "cover": "/data/streams/2026_01_10_19_41_06/录制-25788785-20260110-194117-299-找你有事！速来.cover.jpg",
     "highlights": null,
-    "images": []
+    "images": [
+      "/data/streams/2026_01_10_19_41_06/Gemini_Generated_Image_os4cf1os4cf1os4c.png"
+    ]
   },
   {
     "id": "2026_01_09_20_10_35",
