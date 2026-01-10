@@ -30,6 +30,17 @@ export default class WaveManager {
     });
   }
 
+  // 开始单波战斗（用于新的阶段系统）
+  public startBattle() {
+    this.currentWave++;
+    console.log(`⚔️ 战斗开始！波次 ${this.currentWave}`);
+
+    // 生成一波敌人
+    this.spawnEnemyWave();
+
+    // 不设置定时器，战斗由MainScene的计时器控制
+  }
+
   public stop() {
     if (this.waveTimer) {
       this.waveTimer.remove();
@@ -42,8 +53,7 @@ export default class WaveManager {
   }
 
   private spawnEnemyWave() {
-    this.currentWave++;
-    console.log(`🌊 Wave ${this.currentWave} starting!`);
+    console.log(`🌊 生成波次 ${this.currentWave} 的敌人`);
 
     // 1. 生成敌军
     const enemyCount = 3 + Math.floor(this.currentWave / 2);
@@ -73,12 +83,12 @@ export default class WaveManager {
 
     // 更新 UI 文本
     if (!this.waveText) {
-       this.waveText = this.scene.add.text(500, 50, `Wave ${this.currentWave}`, { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
+       this.waveText = this.scene.add.text(500, 50, `战斗波次 ${this.currentWave}`, { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
     } else {
-       this.waveText.setText(`Wave ${this.currentWave}`);
+       this.waveText.setText(`战斗波次 ${this.currentWave}`);
     }
 
-    // 发出波次开始事件，供 MainScene 或 EconomyManager 处理升级逻辑
+    // 发出波次开始事件，让MainScene和EconomyManager处理升级逻辑
     this.scene.game.events.emit('WAVE_START', this.currentWave);
   }
 }
