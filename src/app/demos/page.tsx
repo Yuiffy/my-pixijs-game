@@ -41,6 +41,11 @@ const demoData: DemoItem[] = [
   //   description: '策略布局游戏 - 指挥你的部队作战！',
   // },
   {
+    title: '岁己周表（伪）',
+    href: '/html/sui_weekly_schedule.html',
+    description: '岁己周表模版，但内容不一定准确。',
+  },
+  {
     title: '带鱼主页',
     href: 'https://www.daifish.top',
     description: '带鱼的个人主页入口。',
