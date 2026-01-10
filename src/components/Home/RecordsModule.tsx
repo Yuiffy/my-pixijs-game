@@ -479,14 +479,6 @@ const RecordsModule = () => {
                   headerRender={calendarHeaderRender}
                   fullscreen={true}
                   cellRender={cellRender}
-                  value={calendarValue as any}
-                  onChange={(val: any) => setCalendarValue(val)}
-                  onSelect={(val: any, info: any) => {
-                    setCalendarValue(val);
-                    if (info.source === 'date' || (calendarMode === 'year' && info.source === 'month')) {
-                      onCalendarSelect(val, info);
-                    }
-                  }}
                   onPanelChange={(value: any, mode: any) => {
                     setCalendarMode(mode);
                     setCalendarValue(value);
