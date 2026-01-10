@@ -404,16 +404,25 @@ const RecordsModule = () => {
 
                         <Space size="middle" className="flex-wrap justify-end shrink-0">
                           {stream.srt && (
-                            <Button
-                              icon={<EyeOutlined />}
-                              href={stream.srt}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              size="small"
-                              className="bg-white/10 border-none text-cyan-300 hover:!bg-cyan-500/20 rounded-lg px-4 font-bold"
-                            >
-                              预览 SRT
-                            </Button>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                icon={<EyeOutlined />}
+                                href={`/wiki/sui/srt?url=${encodeURIComponent(stream.srt)}`}
+                                target="_blank"
+                                size="small"
+                                className="bg-white/10 border-none text-cyan-300 hover:!bg-cyan-500/20 rounded-l-lg pr-3 font-bold"
+                              >
+                                语音转文字
+                              </Button>
+                              <Button
+                                icon={<CloudDownloadOutlined />}
+                                href={stream.srt}
+                                download
+                                size="small"
+                                className="bg-white/10 border-none text-cyan-500 hover:!bg-cyan-500/20 rounded-r-lg border-l border-white/10 px-2"
+                                title="直接下载 SRT"
+                              />
+                            </div>
                           )}
                           {stream.xml && (
                              <Button
@@ -424,7 +433,7 @@ const RecordsModule = () => {
                               size="small"
                               className="bg-white/10 border-none text-pink-300 hover:!bg-pink-500/20 rounded-lg px-4 font-bold"
                             >
-                              预览 XML
+                              弹幕
                             </Button>
                           )}
                         </Space>

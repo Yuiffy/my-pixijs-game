@@ -81,7 +81,7 @@ body {
   100% { object-position: 50% 50%; }
 }
 .animate-slow-pan {
-  animation: slowPan 20s ease-in-out infinite;
+  animation: slowPan 90s ease-in-out infinite;
   animation-play-state: paused;
   object-position: 50% 50%;
   transition: object-position 0.6s ease-in-out;
