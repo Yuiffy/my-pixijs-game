@@ -178,27 +178,58 @@ const HomeContent = () => {
           }
           .ant-picker-cell-inner {
             border-radius: 12px !important;
-            border: 1px solid transparent !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
             transition: all 0.3s !important;
           }
           .ant-picker-cell-inner:hover {
             background: rgba(255,255,255,0.05) !important;
-            border-color: rgba(255,255,255,0.1) !important;
+            border-color: rgba(255,255,255,0.2) !important;
           }
           .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
              border-color: #87EAFF !important;
           }
           .ant-picker-cell-selected .ant-picker-cell-inner {
-            background: #87EAFF !important;
-            color: #0A0D14 !important;
+            background: rgba(135, 234, 255, 0.1) !important;
+            border: 1px solid #87EAFF !important;
+            color: #87EAFF !important;
           }
           .ant-picker-calendar-date-content {
-            height: 60px !important;
+            height: 110px !important;
+            min-height: 110px !important;
+            overflow-y: auto !important;
+            scrollbar-width: thin;
+          }
+          .ant-picker-calendar-date-content::-webkit-scrollbar {
+             width: 4px;
+          }
+          .ant-picker-calendar-date-content::-webkit-scrollbar-thumb {
+             background: rgba(255,255,255,0.1);
+             border-radius: 10px;
           }
           /* Additional Calendar Dark Overrides */
           .ant-picker-calendar-header {
             padding-inline: 0 !important;
             margin-bottom: 20px !important;
+          }
+          .glow-text {
+            text-shadow: 0 0 20px rgba(135, 234, 255, 0.4);
+          }
+          .stream-detail-modal .ant-modal-close {
+            top: 24px !important;
+            right: 24px !important;
+            color: #fff !important;
+            background: rgba(0,0,0,0.5) !important;
+            backdrop-filter: blur(10px) !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+           align-items: center !important;
+            justify-content: center !important;
+           z-index: 100 !important;
+          }
+          .stream-detail-modal .ant-modal-close:hover {
+             background: rgba(255,255,255,0.1) !important;
           }
           .ant-picker-calendar .ant-picker-panel {
             background: transparent !important;
@@ -217,6 +248,26 @@ const HomeContent = () => {
           .ant-radio-button-wrapper-checked {
             background: #fff !important;
             color: #0A0D14 !important;
+          }
+          .custom-calendar-radio .ant-radio-button-wrapper {
+            border: none !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #94a3b8 !important;
+            padding-inline: 20px !important;
+            height: 40px !important;
+            line-height: 40px !important;
+            font-weight: bold !important;
+          }
+          .custom-calendar-radio .ant-radio-button-wrapper-checked {
+            background: #87EAFF !important;
+            color: #0A0D14 !important;
+            box-shadow: 0 0 20px rgba(135, 234, 255, 0.3) !important;
+          }
+          .custom-calendar-radio .ant-radio-button-wrapper::before {
+             display: none !important;
+          }
+          .ant-badge-status-dot {
+             top: 6px !important;
           }
           /* Custom Gallery Tabs */
           .custom-gallery-tabs .ant-tabs-nav::before {
