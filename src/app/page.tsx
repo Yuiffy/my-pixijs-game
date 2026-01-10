@@ -39,21 +39,43 @@ const suiInfo = {
   colorSub: '#DA5D77',
 };
 
-const artworkMaterials = [
-  { src: '/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png', title: '形态 · 小红帽', tag: '小红帽' },
-  { src: '/images/materials/blue/岁己_20231216形象_双马尾有外套.webp', title: '形态 · 小蓝帽 (双马尾)', tag: '小蓝帽' },
-  { src: '/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png', title: '形态 · 小蓝帽 (立绘)', tag: '小蓝帽' },
-  { src: '/images/materials/flower/cee3461dc483b51ac9befd4663c1235e1954091502.png', title: '形态 · 小花帽 (立绘)', tag: '小花帽' },
-  { src: '/images/materials/flower/622764c8178eb3f6411da20a917cc0321954091502.png', title: '形态 · 小花帽 (Q版)', tag: '小花帽' },
-  { src: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png', title: '形态 · 小猫帽 (饼干岁版)', tag: '小猫帽' },
-  { src: '/images/materials/岁己SUI小猫帽口罩双马尾.png', title: '形态 · 小猫帽 (口罩)', tag: '小猫帽' },
-  { src: '/images/materials/biscuit/饼干岁2.png', title: '饼干岁 · 形象', tag: '饼干岁' },
-  { src: '/images/materials/biscuit/饼干岁3.jpeg', title: '饼干岁 · 贴纸', tag: '饼干岁' },
-  { src: '/images/materials/jiajia/嘉嘉立绘张嘴伸手闭眼.png', title: '嘉嘉猫 · 立绘', tag: '嘉嘉猫' },
-  { src: '/images/materials/bird/岁己_小鸟跳静态图.png', title: '本体 · 小鸟跳', tag: '小鸟' },
-  { src: '/images/materials/bird/指人笑.png', title: '表情 · 指人笑', tag: '表情包' },
-  { src: '/images/materials/QQ20260107-003512.png', title: '岁己 SUI · 表情包', tag: '表情包' },
-];
+const artworkMaterials = {
+  cat: [
+    { src: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png', title: '小猫帽 · 紫色外套', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽口罩双马尾.png', title: '小猫帽 · 口罩版', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽戴兜帽wink红瞳.PNG', title: '小猫帽 · 兜帽Wink', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽无外套长发金瞳.PNG', title: '小猫帽 · 长发金瞳', tag: '小猫帽' },
+    { src: '/images/materials/岁己SUI小猫帽短发小揪揪半身金瞳.png', title: '小猫帽 · 短发揪揪', tag: '小猫帽' },
+    { src: '/images/materials/QQ20260107-003512.png', title: '小猫帽 · 表情包版', tag: '小猫帽' },
+  ],
+  red: [
+    { src: '/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png', title: '形态 · 小红帽', tag: '小红帽' },
+  ],
+  blue: [
+    { src: '/images/materials/blue/岁己_20231216形象_双马尾有外套.webp', title: '形态 · 小蓝帽 (双马尾)', tag: '小蓝帽' },
+    { src: '/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png', title: '形态 · 小蓝帽 (立绘)', tag: '小蓝帽' },
+    { src: '/images/materials/blue/岁己_20231216形象_短发无外套.webp', title: '形态 · 小蓝帽 (短发)', tag: '小蓝帽' },
+    { src: '/images/materials/blue/12038c997389adefd7c097b20311b83c.png', title: '形态 · 小蓝帽 (概念)', tag: '小蓝帽' },
+  ],
+  flower: [
+    { src: '/images/materials/flower/cee3461dc483b51ac9befd4663c1235e1954091502.png', title: '形态 · 小花帽 (立绘)', tag: '小花帽' },
+    { src: '/images/materials/flower/622764c8178eb3f6411da20a917cc0321954091502.png', title: '形态 · 小花帽 (Q版)', tag: '小花帽' },
+    { src: '/images/materials/flower/21d72930b566f878ff8cdbff9b468ca11954091502.png', title: '形态 · 小花帽 (待机)', tag: '小花帽' },
+    { src: '/images/materials/flower/6c6e83dad538cf0ba8434a417f6f343b1954091502.png', title: '形态 · 小花帽 (特写)', tag: '小花帽' },
+    { src: '/images/materials/flower/73913dc4ed291e630f765bd14bcd15cc1954091502.png', title: '形态 · 小花帽 (全身)', tag: '小花帽' },
+  ],
+  extra: [
+    { src: '/images/materials/biscuit/饼干岁2.png', title: '饼干岁 · 形象', tag: '饼干岁' },
+    { src: '/images/materials/biscuit/饼干岁3.jpeg', title: '饼干岁 · 贴纸', tag: '饼干岁' },
+    { src: '/images/materials/biscuit/饼干岁4.jpeg', title: '饼干岁 · 头像', tag: '饼干岁' },
+    { src: '/images/materials/biscuit/饼干岁5.jpeg', title: '饼干岁 · 氛围', tag: '饼干岁' },
+    { src: '/images/materials/jiajia/嘉嘉立绘张嘴伸手闭眼.png', title: '嘉嘉猫 · 立绘', tag: '嘉嘉猫' },
+  ],
+  bird: [
+    { src: '/images/materials/bird/岁己_小鸟跳静态图.png', title: '本体 · 小鸟跳', tag: '小鸟' },
+    { src: '/images/materials/bird/指人笑.png', title: '表情 · 指人笑', tag: '表情包' },
+  ]
+};
 
 // Stream summaries are now loaded dynamically from public/data/streams/streams.json
 
@@ -119,54 +141,83 @@ const HomeModule = () => (
   </div>
 );
 
-const GalleryModule = () => (
-  <div className="animate-fade-in-up">
-    <div className="mb-10">
-      <Title level={2} className="!text-white !mb-2 flex items-center gap-3">
-        <PictureOutlined className="text-pink-400" /> 角色素材库
-      </Title>
-      <Text className="text-slate-400">来自岁己多形态的精选材料，供各位饼干岁二创使用 ✨</Text>
-    </div>
+const GalleryModule = () => {
+  const categories = [
+    { key: 'cat', label: '小猫帽', cover: '/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png' },
+    { key: 'red', label: '小红帽', cover: '/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png' },
+    { key: 'blue', label: '小蓝帽', cover: '/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png' },
+    { key: 'flower', label: '小花帽', cover: '/images/materials/flower/cee3461dc483b51ac9befd4663c1235e1954091502.png' },
+    { key: 'extra', label: '饼干岁/嘉嘉', cover: '/images/materials/biscuit/饼干岁2.png' },
+    { key: 'bird', label: '本体/表情', cover: '/images/materials/bird/岁己_小鸟跳静态图.png' },
+  ];
 
-    <AntImage.PreviewGroup>
-      <Row gutter={[20, 20]}>
-        {artworkMaterials.map((item, index) => (
-          <Col xs={12} md={8} lg={6} key={index}>
-            <div className="group relative rounded-2xl overflow-hidden border-2 border-white/5 bg-white/5 aspect-[3/4] hover:border-pink-500/50 transition-all cursor-pointer shadow-xl">
-              <AntImage
-                src={item.src}
-                alt={item.title}
-                className="object-contain w-full h-full p-2 group-hover:scale-110 transition-transform duration-500"
-                wrapperClassName="w-full h-full"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between">
-                <div className="flex flex-col gap-1">
-                  {item.tag && <Tag color="pink" className="w-fit text-[10px] px-1.5 py-0 leading-tight border-none bg-pink-500/50 text-white rounded-sm">{item.tag}</Tag>}
-                  <Text className="text-xs text-white font-medium">{item.title}</Text>
-                </div>
-                <Tooltip title="预览原图"><StarOutlined className="text-yellow-400" /></Tooltip>
+  return (
+    <div className="animate-fade-in-up">
+      <div className="mb-10">
+        <Title level={2} className="!text-white !mb-2 flex items-center gap-3">
+          <PictureOutlined className="text-pink-400" /> 角色素材库
+        </Title>
+        <Text className="text-slate-400">来自岁己多形态的精选材料，供各位饼干岁二创使用 ✨</Text>
+      </div>
+
+      <Tabs
+        defaultActiveKey="cat"
+        className="custom-gallery-tabs mb-10"
+        items={categories.map(cat => ({
+          key: cat.key,
+          label: (
+            <div className="flex flex-col items-center gap-2 group/tab py-2">
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/10 group-hover/tab:border-pink-500/50 transition-all shadow-lg relative bg-slate-800">
+                <AntImage src={cat.cover} preview={false} className="w-full h-full object-cover object-top" />
               </div>
+              <span className="text-[10px] md:text-xs font-bold tracking-tight opacity-60 group-hover:opacity-100 transition-opacity whitespace-nowrap">{cat.label}</span>
             </div>
-          </Col>
-        ))}
-        {/* Placeholder for "Moar" */}
-        <Col xs={12} md={8} lg={6}>
-           <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl aspect-[3/4] hover:border-cyan-500/50 transition-all cursor-pointer group">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-colors">
-                <CoffeeOutlined className="text-2xl text-slate-500 group-hover:text-cyan-300" />
-              </div>
-              <Text className="text-slate-500 group-hover:text-cyan-300">更多素材录入中...</Text>
-           </div>
-        </Col>
-      </Row>
-    </AntImage.PreviewGroup>
+          ),
+          children: (
+            <AntImage.PreviewGroup>
+              <Row gutter={[20, 20]}>
+                {(artworkMaterials[cat.key as keyof typeof artworkMaterials] || []).map((item, index) => (
+                  <Col xs={12} md={8} lg={6} key={index}>
+                    <div className="group relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/[0.03] to-white/[0.08] aspect-[3/4] hover:border-pink-500/50 transition-all cursor-pointer shadow-2xl flex items-center justify-center p-4">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(135,234,255,0.05)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <AntImage
+                        src={item.src}
+                        alt={item.title}
+                        className="!h-full !w-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500"
+                        wrapperClassName="w-full h-full flex items-center justify-center"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 flex items-end justify-between">
+                        <div className="flex flex-col gap-1.5">
+                          {item.tag && <Tag color="pink" className="w-fit text-[10px] px-2 py-0 border-none bg-pink-500/40 text-white rounded-full backdrop-blur-md">{item.tag}</Tag>}
+                          <Text className="text-[11px] text-white font-bold tracking-wide">{item.title}</Text>
+                        </div>
+                        <Tooltip title="预览原图"><StarOutlined className="text-yellow-400 text-lg drop-shadow-glow" /></Tooltip>
+                      </div>
+                    </div>
+                  </Col>
+                ))}
+                {/* Placeholder for "Moar" */}
+                <Col xs={12} md={8} lg={6}>
+                   <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-3xl aspect-[3/4] hover:border-cyan-500/50 transition-all cursor-pointer group bg-black/20">
+                      <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-all group-hover:rotate-12">
+                        <CoffeeOutlined className="text-3xl text-slate-500 group-hover:text-cyan-300" />
+                      </div>
+                      <Text className="text-slate-500 group-hover:text-cyan-300 text-[10px] font-bold tracking-widest uppercase">Coming Soon</Text>
+                   </div>
+                </Col>
+              </Row>
+            </AntImage.PreviewGroup>
+          )
+        }))}
+      />
 
-    <div className="mt-12 p-6 bg-blue-900/10 border border-blue-500/20 rounded-2xl flex items-center gap-4">
-       <div className="text-3xl text-blue-400">💡</div>
-       <Text className="text-slate-400 italic">“所有素材均来源于网络及粉丝投稿，二创时请遵守官方相应准则的说！”</Text>
+      <div className="mt-12 p-6 bg-blue-900/10 border border-blue-500/20 rounded-2xl flex items-center gap-4">
+         <div className="text-3xl text-blue-400">💡</div>
+         <Text className="text-slate-400 italic">“所有素材均来源于网络及粉丝投稿，二创时请遵守官方相应准则的说！”</Text>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const useScrollDirection = () => {
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down' | null>(null);
@@ -628,6 +679,33 @@ const HomeContent = () => {
           }
           .ant-picker-calendar-date-content {
             height: 60px !important;
+          }
+          /* Custom Gallery Tabs */
+          .custom-gallery-tabs .ant-tabs-nav::before {
+            border-bottom: 2px solid rgba(255,255,255,0.05);
+          }
+          .custom-gallery-tabs .ant-tabs-ink-bar {
+            background: linear-gradient(to right, #87EAFF, #DA5D77) !important;
+            height: 4px !important;
+            border-radius: 2px;
+            bottom: 0 !important;
+          }
+          .custom-gallery-tabs .ant-tabs-tab {
+            margin-right: 24px !important;
+            padding: 8px 0 20px 0 !important;
+            transition: all 0.3s ease;
+          }
+          .custom-gallery-tabs .ant-tabs-tab-btn {
+            color: #94a3b8 !important;
+          }
+          .custom-gallery-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+            color: #fff !important;
+            text-shadow: 0 0 15px rgba(135, 234, 255, 0.4);
+          }
+          .custom-gallery-tabs .ant-tabs-tab-active img {
+            border-color: #DA5D77 !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(218, 93, 119, 0.4);
           }
         `}</style>
       </main>
