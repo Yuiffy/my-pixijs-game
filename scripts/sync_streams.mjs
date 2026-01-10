@@ -73,6 +73,9 @@ async function syncStreams() {
         title: stream.title,
         date: stream.date,
         time: stream.time,
+        startTime: stream.time,
+        endTime: null,
+        duration: null,
         srt: null,
         xml: null,
         cover: null,
@@ -90,6 +93,34 @@ async function syncStreams() {
         } else if (ext === '.xml') {
           fs.copyFileSync(path.join(fullSourcePath, file), targetPath);
           streamData.xml = `/data/streams/${streamId}/${file}`;
+
+          // Partial XML parsing for duration
+          try {
+            const content = fs.readFileSync(path.join(fullSourcePath, file), 'utf-8');
+            const pMatches = content.match(/p="([^"]+)"/g);
+            if (pMatches && pMatches.length > 0) {
+              const lastP = pMatches[pMatches.length - 1];
+              const timeMatch = lastP.match(/p="([\d.]+),/);
+              if (timeMatch) {
+                const durationSec = parseFloat(timeMatch[1]);
+                streamData.duration = Math.floor(durationSec);
+
+                // Calculate end time
+                const [h, m, s] = stream.time.split(':').map(Number);
+                const startDate = new Date(2000, 0, 1, h, m, s);
+                const endDate = new Date(startDate.getTime() + durationSec * 1000);
+                streamData.endTime = endDate.toTimeString().split(' ')[0];
+
+                // Format duration
+                const dH = Math.floor(durationSec / 3600);
+                const dM = Math.floor((durationSec % 3600) / 60);
+                const dS = Math.floor(durationSec % 60);
+                streamData.durationStr = dH > 0 ? `${dH}h ${dM}m ${dS}s` : `${dM}m ${dS}s`;
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to parse XML for duration: ${file}`, err);
+          }
         } else if (file.includes('cover')) {
           fs.copyFileSync(path.join(fullSourcePath, file), targetPath);
           streamData.cover = `/data/streams/${streamId}/${file}`;

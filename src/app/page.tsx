@@ -156,6 +156,9 @@ interface StreamData {
   title: string;
   date: string;
   time: string;
+  startTime: string;
+  endTime: string | null;
+  durationStr: string | null;
   srt: string | null;
   xml: string | null;
   cover: string | null;
@@ -175,6 +178,27 @@ const RecordsModule = () => {
       .then(data => setStreams(data))
       .catch(err => console.error('Failed to load streams', err));
   }, []);
+
+  const onCalendarSelect = (value: any) => {
+    const dateStr = value.format('YYYY-MM-DD');
+    const dayStreams = streams.filter(s => s.date === dateStr);
+    if (dayStreams.length > 0) {
+      // Find the page where this stream is located
+      const index = streams.findIndex(s => s.id === dayStreams[0].id);
+      if (index !== -1) {
+        const page = Math.floor(index / pageSize) + 1;
+        setCurrentPage(page);
+        setViewMode('list');
+        // Scroll to the element after a brief delay to allow rendering
+        setTimeout(() => {
+          const element = document.getElementById(`stream-${dayStreams[0].id}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  };
 
   const dateCellRender = (value: any) => {
     const dateStr = value.format('YYYY-MM-DD');
@@ -226,23 +250,32 @@ const RecordsModule = () => {
       {viewMode === 'list' ? (
         <div className="space-y-6">
           {paginatedStreams.map((stream) => (
-            <Card key={stream.id} className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-2xl group">
+            <Card
+              key={stream.id}
+              id={`stream-${stream.id}`}
+              className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-2xl group"
+            >
               <Row gutter={[24, 24]}>
                 <Col xs={24} md={8}>
                   <div className="relative aspect-video rounded-xl overflow-hidden shadow-lg group-hover:scale-105 transition-transform duration-500 bg-slate-800">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 z-10" />
-                    {stream.cover ? (
-                      <NextImage src={stream.cover} alt={stream.title} fill className="object-cover" />
+                    {stream.images && stream.images.length > 0 ? (
+                      <NextImage src={stream.images[0]} alt={stream.title} fill className="object-cover" />
+                    ) : stream.cover ? (
+                      <NextImage src={stream.cover} alt={stream.title} fill className="object-cover opacity-60" />
                     ) : (
-                      <div className="flex items-center justify-center h-full text-slate-500 font-bold">MISSING COVER</div>
+                      <div className="flex items-center justify-center h-full text-slate-500 font-bold">NO ILLUSTRATION</div>
                     )}
                     <Tag className="absolute top-2 left-2 z-20 bg-cyan-600 border-none font-bold">{stream.date}</Tag>
                   </div>
                 </Col>
                 <Col xs={24} md={16}>
-                  <div className="flex justify-between items-start">
-                    <Title level={4} className="!text-white group-hover:text-cyan-300 transition-colors mb-2">{stream.title}</Title>
-                    <Text className="text-slate-500 text-xs">{stream.time}</Text>
+                  <div className="flex flex-col gap-1 mb-3">
+                    <Title level={4} className="!text-white group-hover:text-cyan-300 transition-colors !mb-0">{stream.title}</Title>
+                    <Space className="text-slate-500 text-xs flex-wrap">
+                      <span className="flex items-center gap-1"><ThunderboltOutlined className="text-yellow-500" /> {stream.startTime} {stream.endTime && `- ${stream.endTime}`}</span>
+                      {stream.durationStr && <Tag color="blue" className="bg-blue-900/40 border-blue-500/30 text-blue-300 text-[10px] m-0">{stream.durationStr}</Tag>}
+                    </Space>
                   </div>
 
                   <div className="bg-black/20 p-4 rounded-xl mb-4 max-h-40 overflow-y-auto custom-scrollbar">
@@ -252,30 +285,31 @@ const RecordsModule = () => {
                   </div>
 
                   {stream.images && stream.images.length > 0 && (
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar">
                        <AntImage.PreviewGroup>
                          {stream.images.map((img, i) => (
                            <AntImage
                             key={i}
                             src={img}
-                            width={80}
-                            height={60}
-                            className="rounded-lg object-cover"
+                            width={100}
+                            height={75}
+                            className="rounded-lg object-cover border border-white/10 hover:border-cyan-400/50 transition-colors"
                            />
                          ))}
                        </AntImage.PreviewGroup>
                     </div>
                   )}
 
-                  <Space size="middle">
+                  <Space size="middle" className="flex-wrap">
                     {stream.srt && (
                       <Button
                         icon={<CloudDownloadOutlined />}
                         href={stream.srt}
                         download
+                        size="small"
                         className="bg-white/10 border-none text-cyan-300 hover:!bg-white/20"
                       >
-                        SRT 下載
+                        SRT 字幕
                       </Button>
                     )}
                     {stream.xml && (
@@ -283,12 +317,13 @@ const RecordsModule = () => {
                         icon={<CloudDownloadOutlined />}
                         href={stream.xml}
                         download
+                        size="small"
                         className="bg-white/10 border-none text-pink-300 hover:!bg-white/20"
                       >
                         弹幕 XML
                       </Button>
                     )}
-                    <Button type="link" className="text-slate-500">更多回顾 →</Button>
+                    <Button type="link" className="text-slate-500 p-0">查看回放 →</Button>
                   </Space>
                 </Col>
               </Row>
@@ -308,7 +343,12 @@ const RecordsModule = () => {
       ) : (
         <div className="bg-white/5 p-4 md:p-8 rounded-3xl border border-white/5 shadow-2xl overflow-x-auto">
           <div className="min-w-[800px]">
-             <Calendar fullscreen={true} cellRender={dateCellRender} className="bg-transparent" />
+             <Calendar
+              fullscreen={true}
+              cellRender={dateCellRender}
+              onSelect={onCalendarSelect}
+              className="bg-transparent"
+             />
           </div>
         </div>
       )}
