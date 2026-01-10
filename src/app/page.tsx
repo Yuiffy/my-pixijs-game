@@ -93,7 +93,7 @@ const HomeContent = () => {
                 {[
                 { key: 'home', label: '主页', icon: <HomeOutlined /> },
                 { key: 'gallery', label: '素材图', icon: <PictureOutlined /> },
-                { key: 'records', label: '总结', icon: <HistoryOutlined /> },
+                { key: 'records', label: '直播记录', icon: <HistoryOutlined /> },
               ].map((item) => (
                 <button
                   key={item.key}

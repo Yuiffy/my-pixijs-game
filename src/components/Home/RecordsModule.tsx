@@ -121,7 +121,7 @@ const RecordsModule = () => {
           </Title>
           <div className="flex items-center gap-4 flex-wrap">
             <Text className="text-slate-400">
-              记录每一场直播的珍贵瞬间 📅 {loading ? '加载中...' : `共 ${streams.length} 场`}
+              记录每一场（其实没有每一场）直播的珍贵瞬间 📅 {loading ? '加载中...' : `共 ${streams.length} 场`}
             </Text>
             <Button
                type="link"
