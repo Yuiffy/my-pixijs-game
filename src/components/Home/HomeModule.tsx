@@ -10,8 +10,8 @@ const { Title, Text, Paragraph } = Typography;
 
 const HomeModule = () => (
   <div className="animate-fade-in-up">
-    <div className="relative mb-16 flex flex-col items-center">
-      <div className="w-64 h-64 md:w-80 md:h-80 relative mb-8 group">
+    <div className="relative mb-10 flex flex-col items-center">
+      <div className="w-64 h-64 md:w-80 md:h-80 relative mb-6 group">
           <div className="absolute inset-0 bg-gradient-to-tr from-[#87EAFF]/30 to-[#DA5D77]/30 blur-3xl rounded-full group-hover:scale-110 transition-transform duration-1000" />
           <div className="relative w-full h-full rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl">
              <NextImage
