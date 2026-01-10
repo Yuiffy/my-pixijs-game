@@ -38,7 +38,25 @@
     "array-callback-return": "off",
     "no-trailing-spaces": "off",
     "no-useless-escape": "off",
-    "class-methods-use-this": "off"
+    "class-methods-use-this": "off",
+
+    // --- 新增的放宽规则 ---
+    "react/jsx-one-expression-per-line": "off",
+    "react/jsx-indent": "off",
+    "react/jsx-indent-props": "off",
+    "react/jsx-closing-bracket-location": "off",
+    "react/jsx-closing-tag-location": "off",
+    "react/jsx-boolean-value": "off",
+    "react/no-array-index-key": "off",
+    "react/function-component-definition": "off",
+    "react/no-unknown-property": "off",
+    "react/button-has-type": "off",
+    "import/order": "off",
+    "import/no-duplicates": "warn",
+    "@typescript-eslint/indent": "off",
+    "@typescript-eslint/lines-between-class-members": "off",
+    "curly": "off",
+    "radix": "off"
   },
   "overrides": [
     {

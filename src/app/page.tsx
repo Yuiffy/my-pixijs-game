@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   Typography, Button, Space, Card, Tag,
   Row, Col, Image as AntImage, ConfigProvider,
@@ -22,7 +22,6 @@ import {
 import NextImage from 'next/image';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Suspense } from 'react';
 
 const { Title, Text, Paragraph } = Typography;
 
