@@ -48,9 +48,6 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
     gameInstance.events.on('ROUND_CHANGED', handleRoundChanged);
     gameInstance.events.on('BUY_FAILED', handleBuyFailed);
 
-    // 初始化请求商店
-    gameInstance.events.emit('REFRESH_SHOP');
-
     return () => {
       gameInstance.events.off('UPDATE_SHOP', updateShop);
       gameInstance.events.off('UPDATE_SYNERGY', updateSynergy);
@@ -63,6 +60,14 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       gameInstance.events.off('BUY_FAILED', handleBuyFailed);
     };
   }, [gameInstance, shopUnits]);
+
+  // 初始化商店，只在 gameInstance 改变时执行一次
+  useEffect(() => {
+    if (!gameInstance) return;
+
+    // 初始化请求商店
+    gameInstance.events.emit('REFRESH_SHOP');
+  }, [gameInstance]);
 
   const refreshShop = () => {
     // 检查金币是否足够
