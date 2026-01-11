@@ -51,7 +51,7 @@ const useScrollDirection = () => {
 
     window.addEventListener('scroll', updateScrollDirection, { passive: true });
     return () => window.removeEventListener('scroll', updateScrollDirection);
-  }, []); // 移除 scrollDirection 依赖，避免不必要的重新绑定
+  }, [scrollDirection]); // 移除 scrollDirection 依赖，避免不必要的重新绑定
 
   return scrollDirection;
 };

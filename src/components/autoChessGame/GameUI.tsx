@@ -62,7 +62,7 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       gameInstance.events.off('ROUND_CHANGED', handleRoundChanged);
       gameInstance.events.off('BUY_FAILED', handleBuyFailed);
     };
-  }, [gameInstance]);
+  }, [gameInstance, shopUnits]);
 
   const refreshShop = () => {
     // 检查金币是否足够

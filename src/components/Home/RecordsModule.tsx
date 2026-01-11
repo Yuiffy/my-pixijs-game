@@ -115,16 +115,6 @@ const RecordsModule = () => {
     setIsModalOpen(true);
   };
 
-  const onCalendarSelect = (value: Dayjs, selectInfo?: { source: 'year' | 'month' | 'date' | 'customize' }) => {
-    // If it's a date selection, standard AntD behavior will handle it.
-    // If it's month selection in year mode, we keep displaying the calendar but update the value.
-    setCalendarValue(value);
-
-    if (calendarMode === 'year' && selectInfo?.source === 'month') {
-        setCalendarMode('month');
-    }
-  };
-
   const cellRender = (value: Dayjs, info: any) => {
     if (info.type === 'month') {
       const monthStr = value.format('YYYY-MM');

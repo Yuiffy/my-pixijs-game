@@ -8,7 +8,7 @@ export default function Analytics() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   // 使用 useRef 避免开发环境下 React Strict Mode 导致的重复统计（可选）
-  const isFirstRender = useRef(true);
+  // const isFirstRender = useRef(true);
 
   useEffect(() => {
     // 拼接完整路径，例如 /game/wuxia?id=123

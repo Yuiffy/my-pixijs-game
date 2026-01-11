@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Typography, Row, Col, Image as AntImage, Tabs, Tooltip, Tag } from 'antd';
-import { PictureOutlined, StarOutlined, CoffeeOutlined } from '@ant-design/icons';
+import { Typography, Row, Col, Image as AntImage, Tabs, Tag } from 'antd';
+import { PictureOutlined, CoffeeOutlined } from '@ant-design/icons';
+import Image from 'next/image';
 import { artworkMaterials } from './SuiData';
 
 const { Title, Text } = Typography;
@@ -34,10 +35,11 @@ const GalleryModule = () => {
           label: (
             <div className="flex flex-col items-center gap-2 group/tab py-2">
               <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 group-hover/tab:border-pink-500/50 transition-all shadow-lg relative bg-slate-800">
-                <img
+                <Image
+                  fill
                   src={cat.cover}
                   alt={cat.label}
-                  className="w-full h-full object-cover"
+                  className="object-cover"
                   style={{ objectPosition: cat.objectPosition || 'top center' }}
                 />
               </div>

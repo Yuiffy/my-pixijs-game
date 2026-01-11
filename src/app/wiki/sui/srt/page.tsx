@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Typography, Button, Spin, Layout, Empty } from 'antd';
 import { ArrowLeftOutlined, DownloadOutlined, NumberOutlined } from '@ant-design/icons';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Content, Header } = Layout;
 
 const SRTViewerContent = () => {
