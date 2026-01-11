@@ -27,8 +27,6 @@ export default class MainScene extends Phaser.Scene {
   battleTimer!: Phaser.Time.TimerEvent | null;
 
   // UI 组件
-  playerBaseBarFg!: Phaser.GameObjects.Rectangle;
-  enemyBaseBarFg!: Phaser.GameObjects.Rectangle;
   playerHpText!: Phaser.GameObjects.Text;
   enemyHpText!: Phaser.GameObjects.Text;
   phaseText!: Phaser.GameObjects.Text;
@@ -75,10 +73,11 @@ export default class MainScene extends Phaser.Scene {
     const { player, enemy } = GameConfig.baseStats;
     this.createBase(player.x, player.y, player.label, player.color, this.enemyCategory);
     this.createBase(enemy.x, enemy.y, enemy.label, enemy.color, this.playerCategory);
-    this.createBaseHealthBars();
 
     this.playerHp = GameConfig.playerInitialHp;
     this.enemyHp = GameConfig.enemyInitialHp;
+
+    this.createBaseHealthBars();
 
     // --- 5. 初始化管理器 ---
     this.waveManager = new WaveManager(this);
@@ -102,8 +101,8 @@ export default class MainScene extends Phaser.Scene {
     // 创建卖掉区域
     this.createSellZone();
 
-    // 创建阶段和回合显示
-    this.createPhaseUI();
+    // 创建阶段和回合显示（注释掉，因为顶部已经有其他UI显示）
+    // this.createPhaseUI();
 
     // 发出 ready 事件
     this.game.events.emit('ready');
@@ -299,20 +298,43 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
-  handleAutoBuyUnit({ unitKey }: { unitKey: string }) {
-    if (this.playerBarracks.length >= 8) return;
-
-    const index = this.playerBarracks.length;
-    const pos = GameConfig.barracksPositions[index];
+  handleAutoBuyUnit({ unitKey, cost }: { unitKey: string; cost?: number }) {
+    // 检查人口限制
+    if (this.playerBarracks.length >= 8) {
+      console.log('⚠️ 兵营位置已满，无法购买');
+      return;
+    }
 
     const data = UNIT_TYPES[unitKey];
     if (!data) return;
 
-    const barracks = new Barracks(this, pos.x, pos.y, unitKey, data);
+    // 检查金币是否足够（使用传入的cost或单位数据中的cost）
+    const unitCost = cost || data.cost;
+    const currentGold = this.economyManager.getGold();
+
+    if (currentGold < unitCost) {
+      console.log(`⚠️ 金币不足：需要 ${unitCost}，当前只有 ${currentGold}`);
+      // 可以发送事件通知UI恢复商店格子
+      this.game.events.emit('BUY_FAILED', { unitKey });
+      return;
+    }
+
+    // 扣钱
+    this.economyManager.addGold(-unitCost);
+
+    const index = this.playerBarracks.length;
+    const pos = GameConfig.barracksPositions[index];
+
+    const barracks = new Barracks(this, pos.x, pos.y, unitKey, data, 1);
     this.playerBarracks.push(barracks);
 
     this.updateSynergies();
     this.game.events.emit('BARRACKS_PLACED', this.playerBarracks.length);
+
+    console.log(`✅ 购买成功：${data.name}，花费 ${unitCost} 金币`);
+
+    // 检查是否可以合成
+    this.checkAndCombineBarracks();
   }
 
   private updateSynergies() {
@@ -321,86 +343,52 @@ export default class MainScene extends Phaser.Scene {
   }
 
   createBaseHealthBars() {
-    // 玩家血条（绿色），在左边
-    const playerBarWidth = 200;
-    const playerBarHeight = 20;
-    const playerBarX = 100;
-    const playerBarY = 550;
+    // 玩家基地血量数字显示（在基地下方）
+    const playerBaseX = 50; // 玩家基地X坐标
+    const playerBaseY = 300; // 玩家基地Y坐标
 
-    // 血条背景
-    this.add.rectangle(playerBarX, playerBarY, playerBarWidth, playerBarHeight, 0x333333);
-    // 血条前景
-    this.playerBaseBarFg = this.add.rectangle(
-      playerBarX,
-      playerBarY,
-      playerBarWidth,
-      playerBarHeight,
-      0x00ff00
-    ).setOrigin(0, 0.5);
-
-    // 玩家血条标签
-    this.add.text(playerBarX - playerBarWidth / 2 - 40, playerBarY, '玩家', {
-      fontSize: '16px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-
-    // 敌人血条（红色），在右边
-    const enemyBarWidth = 200;
-    const enemyBarHeight = 20;
-    const enemyBarX = 900;
-    const enemyBarY = 550;
-
-    // 血条背景
-    this.add.rectangle(enemyBarX, enemyBarY, enemyBarWidth, enemyBarHeight, 0x333333);
-    // 血条前景
-    this.enemyBaseBarFg = this.add.rectangle(
-      enemyBarX,
-      enemyBarY,
-      enemyBarWidth,
-      enemyBarHeight,
-      0xff0000
-    ).setOrigin(0, 0.5);
-
-    // 敌人血条标签
-    this.add.text(enemyBarX + enemyBarWidth / 2 + 40, enemyBarY, '敌人', {
-      fontSize: '16px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    // 敌人基地血量数字显示（在基地下方）
+    const enemyBaseX = 950; // 敌人基地X坐标
+    const enemyBaseY = 300; // 敌人基地Y坐标
 
     this.updateBaseHealthBars();
   }
 
   updateBaseHealthBars() {
-    const playerBarWidth = 200;
-    const enemyBarWidth = 200;
+    // 玩家基地血量数字显示（在基地下方）
+    const playerBaseX = 50; // 玩家基地X坐标
+    const playerBaseY = 300; // 玩家基地Y坐标
 
-    // 更新玩家血条宽度（基于40血量）
-    const playerHpPercent = Math.max(0, this.playerHp) / 40;
-    this.playerBaseBarFg.width = playerBarWidth * playerHpPercent;
+    // 敌人基地血量数字显示（在基地下方）
+    const enemyBaseX = 950; // 敌人基地X坐标
+    const enemyBaseY = 300; // 敌人基地Y坐标
 
-    // 更新敌人血条宽度（基于999血量）
-    const enemyHpPercent = Math.max(0, this.enemyHp) / 999;
-    this.enemyBaseBarFg.width = enemyBarWidth * enemyHpPercent;
-
-    // 添加血量数值显示
+    // 更新玩家血量数值显示
     if (!this.playerHpText) {
-      this.playerHpText = this.add.text(100, 575, `HP: ${this.playerHp}/40`, {
-        fontSize: '14px',
-        color: '#ffffff'
+      this.playerHpText = this.add.text(playerBaseX, playerBaseY + 70, `${this.playerHp}`, {
+        fontSize: '24px',
+        color: '#00ff00',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3
       }).setOrigin(0.5);
     } else {
-      this.playerHpText.setText(`HP: ${this.playerHp}/40`);
+      this.playerHpText.setText(`${this.playerHp}`);
+      this.playerHpText.setColor(this.playerHp > 20 ? '#00ff00' : (this.playerHp > 10 ? '#ffff00' : '#ff0000'));
     }
 
+    // 更新敌人士气数值显示
     if (!this.enemyHpText) {
-      this.enemyHpText = this.add.text(900, 575, `HP: ${this.enemyHp}/999`, {
-        fontSize: '14px',
-        color: '#ffffff'
+      this.enemyHpText = this.add.text(enemyBaseX, enemyBaseY + 70, `${this.enemyHp}`, {
+        fontSize: '24px',
+        color: '#ff0000',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3
       }).setOrigin(0.5);
     } else {
-      this.enemyHpText.setText(`HP: ${this.enemyHp}/999`);
+      this.enemyHpText.setText(`${this.enemyHp}`);
+      this.enemyHpText.setColor(this.enemyHp > 500 ? '#ff0000' : (this.enemyHp > 200 ? '#ff6600' : '#ff9999'));
     }
 
     if (this.playerHp <= 0) this.gameOver(false);
@@ -735,5 +723,68 @@ export default class MainScene extends Phaser.Scene {
     const bounds = this.sellZone.getBounds();
     return x >= bounds.x - bounds.width / 2 && x <= bounds.x + bounds.width / 2 &&
            y >= bounds.y - bounds.height / 2 && y <= bounds.y + bounds.height / 2;
+  }
+
+  // 检查并合并三个相同的一星兵营
+  private checkAndCombineBarracks(): void {
+    // 按兵营类型分组
+    const barracksByType: Record<string, Barracks[]> = {};
+
+    // 只考虑一星兵营
+    const oneStarBarracks = this.playerBarracks.filter(b => b.starLevel === 1);
+
+    // 按单位类型分组
+    oneStarBarracks.forEach(barracks => {
+      if (!barracksByType[barracks.unitKey]) {
+        barracksByType[barracks.unitKey] = [];
+      }
+      barracksByType[barracks.unitKey].push(barracks);
+    });
+
+    // 检查每个类型是否有3个或更多
+    for (const unitKey in barracksByType) {
+      if (Object.prototype.hasOwnProperty.call(barracksByType, unitKey)) {
+        const barracksList = barracksByType[unitKey];
+        if (barracksList.length >= 3) {
+          console.log(`✨ 发现3个相同的${unitKey}兵营，可以合成二星！`);
+          this.combineBarracks(unitKey, barracksList.slice(0, 3));
+          return; // 一次只合成一组
+        }
+      }
+    }
+  }
+
+  // 合并三个一星兵营为一个二星兵营
+  private combineBarracks(unitKey: string, barracksList: Barracks[]): void {
+    if (barracksList.length !== 3) return;
+
+    // 获取第一个兵营的位置（作为新兵营的位置）
+    const firstBarracks = barracksList[0];
+    const pos = { x: firstBarracks.x, y: firstBarracks.y };
+    const { unitData } = firstBarracks;
+
+    // 销毁三个一星兵营
+    barracksList.forEach(barracks => {
+      const index = this.playerBarracks.indexOf(barracks);
+      if (index > -1) {
+        this.playerBarracks.splice(index, 1);
+      }
+      barracks.destroy();
+    });
+
+    // 创建二星兵营
+    const upgradedBarracks = new Barracks(this, pos.x, pos.y, unitKey, unitData, 2);
+    this.playerBarracks.push(upgradedBarracks);
+
+    // 更新羁绊
+    this.updateSynergies();
+
+    // 通知UI
+    this.game.events.emit('BARRACKS_PLACED', this.playerBarracks.length);
+
+    console.log(`🌟 合成成功！${unitData.name} 升级为二星兵营！`);
+
+    // 递归检查是否还能继续合成
+    this.checkAndCombineBarracks();
   }
 }

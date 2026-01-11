@@ -42,8 +42,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 1, // 价格
     tier: 1, // 商店等级要求
     factions: [FACTIONS.SICHUAN],
-    hp: 100,
-    damage: 10,
+    hp: 150, // 增加血量，让战斗更持久
+    damage: 8, // 降低伤害，让战斗更慢
     emoji: '🐤', // 临时素材
     color: '#ffcccc',
     mass: 50, // 物理质量
@@ -55,8 +55,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 1,
     tier: 1,
     factions: [FACTIONS.MAGIC],
-    hp: 70,
-    damage: 12,
+    hp: 100, // 增加血量
+    damage: 10, // 微调伤害
     emoji: '🐧',
     color: '#ffb347',
     mass: 28,
@@ -68,8 +68,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 2,
     tier: 2,
     factions: [FACTIONS.CYBER],
-    hp: 60,
-    damage: 25,
+    hp: 90, // 增加血量
+    damage: 18, // 降低伤害
     emoji: '🔫',
     color: '#ccffff',
     mass: 30,
@@ -81,8 +81,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 3,
     tier: 2,
     factions: [FACTIONS.ANCIENT],
-    hp: 80,
-    damage: 15,
+    hp: 120, // 增加血量
+    damage: 12, // 降低伤害
     emoji: '🎋',
     color: '#ccffcc',
     mass: 40,
@@ -94,8 +94,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 4,
     tier: 3,
     factions: [FACTIONS.MAGIC],
-    hp: 50,
-    damage: 40,
+    hp: 80, // 增加血量
+    damage: 25, // 降低伤害
     emoji: '🔮',
     color: '#ccccff',
     mass: 25,
@@ -107,8 +107,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 5,
     tier: 3,
     factions: [FACTIONS.MECHA],
-    hp: 200,
-    damage: 20,
+    hp: 300, // 增加血量
+    damage: 15, // 降低伤害
     emoji: '🚁',
     color: '#ffccff',
     mass: 100,
@@ -122,8 +122,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 2,
     tier: 1,
     factions: [FACTIONS.ANCIENT],
-    hp: 65,
-    damage: 18,
+    hp: 85, // 增加血量
+    damage: 14, // 降低伤害
     emoji: '🏹',
     color: '#90EE90',
     mass: 25,
@@ -137,8 +137,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 3,
     tier: 2,
     factions: [FACTIONS.ANCIENT],
-    hp: 150,
-    damage: 35,
+    hp: 200, // 增加血量
+    damage: 25, // 降低伤害
     emoji: '⚔️',
     color: '#FFD700',
     mass: 80,
@@ -151,8 +151,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 3,
     tier: 2,
     factions: [FACTIONS.CYBER],
-    hp: 70,
-    damage: 50,
+    hp: 100, // 增加血量
+    damage: 35, // 降低伤害
     emoji: '🗡️',
     color: '#8A2BE2',
     mass: 30,
@@ -165,8 +165,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 4,
     tier: 3,
     factions: [FACTIONS.MAGIC],
-    hp: 120,
-    damage: 45,
+    hp: 160, // 增加血量
+    damage: 30, // 降低伤害
     emoji: '🐉',
     color: '#FF4500',
     mass: 60,
@@ -180,8 +180,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 4,
     tier: 3,
     factions: [FACTIONS.ANCIENT],
-    hp: 300,
-    damage: 25,
+    hp: 400, // 增加血量
+    damage: 20, // 降低伤害
     emoji: '🪨',
     color: '#696969',
     mass: 150,
@@ -194,8 +194,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 5,
     tier: 4,
     factions: [FACTIONS.CYBER],
-    hp: 80,
-    damage: 80,
+    hp: 110, // 增加血量
+    damage: 50, // 降低伤害
     emoji: '🎯',
     color: '#FF1493',
     mass: 35,
@@ -209,8 +209,8 @@ export const UNIT_TYPES: Record<string, UnitData> = {
     cost: 5,
     tier: 4,
     factions: [FACTIONS.ANCIENT, FACTIONS.MAGIC],
-    hp: 250,
-    damage: 40,
+    hp: 300, // 增加血量
+    damage: 30, // 降低伤害
     emoji: '👼',
     color: '#FFFF00',
     mass: 70,
