@@ -26,6 +26,17 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
     const handleGoldChanged = (newGold: number) => setGold(newGold);
     const handlePhaseChanged = (phase: GamePhase) => setCurrentPhase(phase);
     const handleRoundChanged = (round: number) => setCurrentRound(round);
+    const handleBuyFailed = (data: { unitKey: string }) => {
+      console.log(`🔄 UI: 收到购买失败事件，恢复单位 ${data.unitKey}`);
+      // 找到这个单位在商店中的位置并恢复
+      const index = shopUnits.findIndex(key => key === null);
+      if (index !== -1) {
+        const newShop = [...shopUnits];
+        newShop[index] = data.unitKey;
+        setShopUnits(newShop);
+        console.log(`✅ UI: 已恢复商店格子 ${index} 的单位 ${data.unitKey}`);
+      }
+    };
 
     gameInstance.events.on('UPDATE_SHOP', updateShop);
     gameInstance.events.on('UPDATE_SYNERGY', updateSynergy);
@@ -35,6 +46,7 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
     gameInstance.events.on('GOLD_CHANGED', handleGoldChanged);
     gameInstance.events.on('PHASE_CHANGED', handlePhaseChanged);
     gameInstance.events.on('ROUND_CHANGED', handleRoundChanged);
+    gameInstance.events.on('BUY_FAILED', handleBuyFailed);
 
     // 初始化请求商店
     gameInstance.events.emit('REFRESH_SHOP');
@@ -48,22 +60,43 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       gameInstance.events.off('GOLD_CHANGED', handleGoldChanged);
       gameInstance.events.off('PHASE_CHANGED', handlePhaseChanged);
       gameInstance.events.off('ROUND_CHANGED', handleRoundChanged);
+      gameInstance.events.off('BUY_FAILED', handleBuyFailed);
     };
   }, [gameInstance]);
 
   const refreshShop = () => {
-    // 不再在UI端检查金币，完全由游戏后端控制
+    // 检查金币是否足够
+    if (gold < 1) {
+      console.log(`❌ UI: 金币不足，无法刷新商店 (需要1金币，当前只有${gold})`);
+      return;
+    }
+
     hideTooltip(); // 隐藏悬浮提示
+    console.log(`🔄 UI: 请求刷新商店，当前金币: ${gold}`);
     gameInstance.events.emit('REFRESH_SHOP');
     // 同步金币到Phaser游戏，后端会检查金币是否足够
+    console.log(`💰 UI: 发送扣款1金币事件`);
     gameInstance.events.emit('SPEND_GOLD', 1);
   };
 
   const levelUpShop = () => {
-    // 不再在UI端检查金币，完全由游戏后端控制
+    // 检查金币是否足够
+    if (gold < 5) {
+      console.log(`❌ UI: 金币不足，无法升级商店 (需要5金币，当前只有${gold})`);
+      return;
+    }
+
+    // 检查商店等级是否已达上限
+    if (shopLevel >= 5) {
+      console.log(`ℹ️ UI: 商店已达到最高等级5`);
+      return;
+    }
+
     hideTooltip(); // 隐藏悬浮提示
+    console.log(`⬆️ UI: 请求升级商店，当前金币: ${gold}, 商店等级: ${shopLevel}`);
     gameInstance.events.emit('LEVEL_UP_SHOP');
     // 同步金币到Phaser游戏，后端会检查金币是否足够
+    console.log(`💰 UI: 发送扣款5金币事件`);
     gameInstance.events.emit('SPEND_GOLD', 5);
   };
 
@@ -98,8 +131,14 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       return;
     }
 
-    // 不再在UI端检查金币，完全由游戏后端控制
-    // 但为了更好的用户体验，我们仍然显示购买反馈
+    // 检查金币是否足够
+    if (gold < unit.cost) {
+      console.log(`❌ UI: 金币不足，无法购买 ${unit.name} (需要${unit.cost}金币，当前只有${gold})`);
+      alert(`金币不足！需要 ${unit.cost} 金币，你只有 ${gold} 金币。`);
+      return;
+    }
+
+    // 为了更好的用户体验，我们仍然显示购买反馈
 
     // 1. 商店格子变黑 (Sold Out) - 临时反馈，如果购买失败游戏后端会恢复
     const newShop = [...shopUnits];
