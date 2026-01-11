@@ -9,18 +9,6 @@ export const CITY_SUFFIXES = ['阳', '州', '安', '陵', '京', '都'];
 export const WILD_PREFIXES = ['迷雾', '断肠', '绝情', '黑风', '落日', '万劫', '无量', '缥缈', '恶人', '神农'];
 export const WILD_SUFFIXES = ['林', '谷', '崖', '山', '窟', '岭', '沼', '漠'];
 
-// 性格描述
-const PERSONALITY_DESCRIPTIONS: Record<Personality, string> = {
-  gentle: '温文尔雅',
-  bold: '豪爽直率',
-  cunning: '机敏狡黠',
-  righteous: '刚正不阿',
-  mysterious: '神秘莫测',
-  playful: '活泼俏皮',
-  serious: '严肃认真',
-  passionate: '热情如火',
-};
-
 export const MERCHANT_ITEMS = [
   '匕首', '短剑', '护腕', '玉佩', '银两', '草药', '酒葫芦', '暗器', '绳索', '火折子',
   '地图', '指南针', '解毒丹', '金疮药', '干粮', '水袋', '夜明珠', '丝绸', '香料', '茶叶',

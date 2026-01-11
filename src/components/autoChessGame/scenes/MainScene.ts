@@ -344,12 +344,8 @@ export default class MainScene extends Phaser.Scene {
 
   createBaseHealthBars() {
     // 玩家基地血量数字显示（在基地下方）
-    const playerBaseX = 50; // 玩家基地X坐标
-    const playerBaseY = 300; // 玩家基地Y坐标
 
     // 敌人基地血量数字显示（在基地下方）
-    const enemyBaseX = 950; // 敌人基地X坐标
-    const enemyBaseY = 300; // 敌人基地Y坐标
 
     this.updateBaseHealthBars();
   }

@@ -148,7 +148,7 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.healthBarFg.setDepth(11);
   }
 
-  update(time: number, delta: number) {
+  update(time: number, _delta: number) {
     if (this.hp <= 0) return;
 
     // 更新血条位置
@@ -603,4 +603,3 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.destroy();
   }
 }
-

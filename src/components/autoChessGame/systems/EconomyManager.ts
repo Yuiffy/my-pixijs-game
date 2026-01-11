@@ -63,8 +63,6 @@ export class EconomyManager {
       return; // 金币不足，不刷新商店
     }
 
-    const probabilities = (SHOP_PROBABILITIES as any)[this.shopLevel] || SHOP_PROBABILITIES[1];
-
     // 随机选择3个单位 (这里简化逻辑，暂不完全照搬 ShopSystem 的复杂部分，或者直接拿来用)
     // 复用 ShopSystem 的逻辑：
     const availableUnits = Object.keys(UNIT_TYPES).filter(key => {
