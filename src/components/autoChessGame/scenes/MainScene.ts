@@ -48,7 +48,10 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() {
+    console.warn('🚨 === MainScene Refactored Loaded ===');
+    console.warn('🚨 🔧 调试：MainScene create() 被调用');
     console.log('=== MainScene Refactored Loaded ===');
+    console.log('🔧 调试：MainScene create() 被调用');
 
     // --- 1. 资源准备 ---
     Object.values(UNIT_TYPES).forEach((unitData: UnitData) => {
@@ -110,8 +113,110 @@ export default class MainScene extends Phaser.Scene {
   }
 
   createBase(x: number, y: number, label: string, color: number, collidesWith: number) {
-    const rect = this.add.rectangle(x, y, 50, 500, color);
-    const base = this.matter.add.gameObject(rect, { isStatic: true, label }) as Phaser.Physics.Matter.Sprite;
+    // 创建基地纹理 - 使用canvas绘制简单的emoji基地
+    const baseTextureKey = `base_${label}`;
+    if (!this.textures.exists(baseTextureKey)) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 60; // 缩小宽度
+      canvas.height = 60; // 缩小高度
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        // 清空canvas
+        ctx.clearRect(0, 0, 60, 60);
+
+        // 根据基地类型绘制不同的emoji外观
+        if (label === 'BASE_PLAYER') {
+          // 玩家基地 - 笑脸emoji
+          // 黄色圆形背景
+          ctx.fillStyle = '#FFD700'; // 金色
+          ctx.beginPath();
+          ctx.arc(30, 30, 25, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 黑色边框
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // 眼睛
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(20, 20, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(40, 20, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 微笑嘴巴
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(30, 30, 12, 0.2 * Math.PI, 0.8 * Math.PI);
+          ctx.stroke();
+
+          // 添加"P"字母表示玩家
+          ctx.fillStyle = '#228B22'; // 绿色
+          ctx.font = 'bold 16px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('P', 30, 30);
+        } else {
+          // 敌人基地 - 愤怒脸emoji
+          // 红色圆形背景
+          ctx.fillStyle = '#FF4500'; // 橙红色
+          ctx.beginPath();
+          ctx.arc(30, 30, 25, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 黑色边框
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // 愤怒的眼睛
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(18, 18, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(42, 18, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 愤怒的眉毛
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(12, 15);
+          ctx.lineTo(24, 12);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(48, 12);
+          ctx.lineTo(36, 15);
+          ctx.stroke();
+
+          // 愤怒的嘴巴
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(30, 40, 10, 0.1 * Math.PI, 0.9 * Math.PI);
+          ctx.stroke();
+
+          // 添加"E"字母表示敌人
+          ctx.fillStyle = '#8B0000'; // 深红色
+          ctx.font = 'bold 16px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('E', 30, 30);
+        }
+
+        this.textures.addCanvas(baseTextureKey, canvas);
+      }
+    }
+
+    // 创建精灵
+    const baseSprite = this.add.sprite(x, y, baseTextureKey);
+    const base = this.matter.add.gameObject(baseSprite, { isStatic: true, label }) as Phaser.Physics.Matter.Sprite;
     base.setCollisionCategory(this.wallCategory);
     base.setCollidesWith([collidesWith]);
     if (label === 'BASE_PLAYER') this.playerBase = base; else this.enemyBase = base;
@@ -341,11 +446,27 @@ export default class MainScene extends Phaser.Scene {
       [GamePhase.GAME_OVER]: '游戏结束'
     };
 
-    if (this.phaseText) {
+    // 确保phaseText对象存在
+    if (!this.phaseText) {
+      this.phaseText = this.add.text(500, 30, `阶段: ${phaseNames[this.currentPhase]}`, {
+        fontSize: '24px',
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        padding: { x: 10, y: 5 }
+      }).setOrigin(0.5).setDepth(2000);
+    } else {
       this.phaseText.setText(`阶段: ${phaseNames[this.currentPhase]}`);
     }
 
-    if (this.roundText) {
+    // 确保roundText对象存在并更新回合数
+    if (!this.roundText) {
+      this.roundText = this.add.text(500, 70, `回合: ${this.currentRound}`, {
+        fontSize: '20px',
+        color: '#ffd700',
+        backgroundColor: '#000000',
+        padding: { x: 10, y: 5 }
+      }).setOrigin(0.5).setDepth(2000);
+    } else {
       this.roundText.setText(`回合: ${this.currentRound}`);
     }
   }
@@ -354,10 +475,9 @@ export default class MainScene extends Phaser.Scene {
   switchToPreparationPhase() {
     this.currentPhase = GamePhase.PREPARATION;
 
-    // 允许拖动兵营 - 通过重新设置可拖动状态
+    // 允许拖动兵营 - 使用enableDragging方法重新绑定事件监听器
     this.playerBarracks.forEach(barrack => {
-      barrack.setInteractive();
-      this.input.setDraggable(barrack);
+      barrack.enableDragging();
     });
 
     // 显示卖掉区域
@@ -365,6 +485,9 @@ export default class MainScene extends Phaser.Scene {
     this.sellZoneText.setVisible(true);
 
     // 更新UI
+    console.warn(`🚨 switchToPreparationPhase: 调用updatePhaseUI前，当前回合 = ${this.currentRound}`);
+    console.warn(`🚨 roundText对象存在吗？ ${!!this.roundText}`);
+    console.warn(`🚨 phaseText对象存在吗？ ${!!this.phaseText}`);
     this.updatePhaseUI();
 
     // 发工资
@@ -372,7 +495,7 @@ export default class MainScene extends Phaser.Scene {
 
     // 通知UI
     this.game.events.emit('PHASE_CHANGED', GamePhase.PREPARATION);
-    console.log(`🔄 进入购买阶段 (回合 ${this.currentRound})`);
+    console.warn(`🚨 进入购买阶段 (回合 ${this.currentRound})`);
   }
 
   // 切换到战斗阶段
@@ -399,21 +522,43 @@ export default class MainScene extends Phaser.Scene {
 
   // 切换到结算阶段
   switchToResolutionPhase() {
+    console.warn(`🚨 switchToResolutionPhase被调用，当前回合: ${this.currentRound}`);
     this.currentPhase = GamePhase.RESOLUTION;
 
     // 更新UI
+    console.warn(`🚨 调用updatePhaseUI前`);
     this.updatePhaseUI();
 
     // 计算战斗结果
     this.calculateBattleResult();
 
+    // 清理所有存活的战斗单位（问题1修复）
+    this.cleanupBattleUnits();
+
     // 通知UI
     this.game.events.emit('PHASE_CHANGED', GamePhase.RESOLUTION);
-    console.log(`📊 进入结算阶段`);
+    console.warn(`🚨 进入结算阶段，清理存活单位，当前回合: ${this.currentRound}`);
 
     // 延迟后进入下一回合购买阶段
     this.time.delayedCall(GameConfig.resolutionDuration, () => {
+      console.warn(`🚨 结算阶段结束，增加回合数: ${this.currentRound} -> ${this.currentRound + 1}`);
       this.currentRound++;
+      console.warn(`🚨 增加回合数后，直接更新roundText对象`);
+      // 直接更新roundText对象，确保它存在
+      if (this.roundText && this.roundText.setText) {
+        this.roundText.setText(`回合: ${this.currentRound}`);
+        console.warn(`🚨 roundText已直接更新为: 回合: ${this.currentRound}`);
+      } else {
+        console.warn(`🚨 roundText对象不存在或没有setText方法，尝试重新创建`);
+        // 如果roundText不存在，重新创建
+        this.roundText = this.add.text(500, 70, `回合: ${this.currentRound}`, {
+          fontSize: '20px',
+          color: '#ffd700',
+          backgroundColor: '#000000',
+          padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setDepth(2000);
+      }
+      console.warn(`🚨 调用switchToPreparationPhase，新回合: ${this.currentRound}`);
       this.switchToPreparationPhase();
     });
   }
@@ -451,9 +596,21 @@ export default class MainScene extends Phaser.Scene {
   // 清理战斗单位
   cleanupBattleUnits() {
     // 清理玩家单位（除了兵营生成的）
+    this.playerUnits.children.each((unit: any) => {
+      if (unit && unit.die) {
+        unit.die(); // 调用die方法确保血条被销毁
+      }
+      return null; // 继续迭代
+    });
     this.playerUnits.clear(true, true);
 
     // 清理敌人单位
+    this.enemyUnits.children.each((unit: any) => {
+      if (unit && unit.die) {
+        unit.die(); // 调用die方法确保血条被销毁
+      }
+      return null; // 继续迭代
+    });
     this.enemyUnits.clear(true, true);
   }
 

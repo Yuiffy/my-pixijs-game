@@ -10,7 +10,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   spawnTimer!: Phaser.Time.TimerEvent | null;
 
-  indicator!: Phaser.GameObjects.Text;
+  indicator!: Phaser.GameObjects.Text | null;
 
   scene!: Phaser.Scene;
 
@@ -211,10 +211,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
       this.setPosition(clampedX, clampedY);
 
-      // 更新标识位置
-      if (this.indicator) {
-        this.indicator.setPosition(clampedX, clampedY + 40);
-      }
+      // 不再有标识需要更新
     });
 
     // 拖动结束：如果拖到卖掉区域则卖掉，否则隐藏卖掉区域
@@ -288,26 +285,8 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     }).catch(() => {});
     // #endregion
 
-    // 标识 - 在兵营下方显示一个小房子或兵种 emoji
-    this.indicator = scene
-      .add.text(x, y + 40, unitData.emoji || '🏠', { fontSize: '20px' })
-      .setOrigin(0.5)
-      .setDepth(101);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'Barracks.ts:constructor',
-        message: 'Indicator text added',
-        data: { indicatorText: unitData.emoji || '🏠', indicatorX: x, indicatorY: y + 40 },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'initial-debug',
-        hypothesisId: 'A4'
-      })
-    }).catch(() => {});
-    // #endregion
+    // 不再需要额外的文本指示器，emoji已经在纹理中绘制在房子顶部
+    this.indicator = null;
 
     // 出兵逻辑将在波次开始时统一触发（由 MainScene.spawnEnemyWave 调用 spawnUnit）
   }
@@ -422,6 +401,101 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.off('drag');
     this.off('dragstart');
     this.off('dragend');
+  }
+
+  enableDragging() {
+    // 重新设置可交互状态
+    this.setInteractive();
+    if (this.scene.input) {
+      this.scene.input.setDraggable(this);
+    }
+
+    // 重新绑定拖动事件监听器
+    this.on('dragstart', () => {
+      const mainScene = this.scene as any;
+      // 如果游戏已开始，不允许拖动
+      if (mainScene.gameStarted) {
+        return;
+      }
+      this.isDragging = true;
+      if (mainScene.sellZoneBg && mainScene.sellZoneText) {
+        mainScene.sellZoneBg.setVisible(true);
+        mainScene.sellZoneText.setVisible(true);
+      }
+    });
+
+    this.on('drag', (pointer: any, dragX: number, dragY: number) => {
+      const mainScene = this.scene as any;
+
+      // 如果游戏已开始，不允许拖动
+      if (mainScene.gameStarted) {
+        return;
+      }
+
+      // 检测是否在卖掉区域内
+      const inSellZone = mainScene.isInSellZone ? mainScene.isInSellZone(dragX, dragY) : false;
+
+      if (inSellZone !== this.isOverSellZone) {
+        this.isOverSellZone = inSellZone;
+
+        // 更新卖掉区域的视觉效果
+        if (mainScene.sellZoneBg) {
+          if (inSellZone) {
+            // 在卖掉区域内：高亮显示
+            mainScene.sellZoneBg.setFillStyle(0xff0000, 0.6);
+            mainScene.sellZoneBg.setStrokeStyle(4, 0xffffff);
+            // 兵营变红表示可以卖掉
+            this.setTint(0xff0000);
+          } else {
+            // 不在卖掉区域内：恢复正常
+            mainScene.sellZoneBg.setFillStyle(0xff0000, 0.3);
+            mainScene.sellZoneBg.setStrokeStyle(3, 0xff0000);
+            this.clearTint();
+          }
+        }
+      }
+
+      // 限制拖动范围，避免拖出边界（但允许拖到卖掉区域）
+      let clampedX = dragX;
+      let clampedY = dragY;
+
+      // 如果不在卖掉区域内，限制拖动范围
+      if (!inSellZone) {
+        clampedX = Phaser.Math.Clamp(dragX, 80, 920);
+        clampedY = Phaser.Math.Clamp(dragY, 80, 480);
+      }
+
+      this.setPosition(clampedX, clampedY);
+    });
+
+    this.on('dragend', () => {
+      const mainScene = this.scene as any;
+
+      // 如果游戏已开始，不允许拖动
+      if (mainScene.gameStarted) {
+        return;
+      }
+
+      if (this.isOverSellZone && mainScene.sellBarracks) {
+        // 卖掉兵营
+        mainScene.sellBarracks(this);
+      } else {
+        // 恢复正常状态
+        this.clearTint();
+      }
+
+      // 隐藏卖掉区域
+      if (mainScene.sellZoneBg && mainScene.sellZoneText) {
+        mainScene.sellZoneBg.setVisible(false);
+        mainScene.sellZoneText.setVisible(false);
+        // 恢复默认样式
+        mainScene.sellZoneBg.setFillStyle(0xff0000, 0.3);
+        mainScene.sellZoneBg.setStrokeStyle(3, 0xff0000);
+      }
+
+      this.isDragging = false;
+      this.isOverSellZone = false;
+    });
   }
 
   destroy(fromScene?: boolean) {
