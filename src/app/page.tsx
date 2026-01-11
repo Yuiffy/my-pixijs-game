@@ -24,19 +24,34 @@ const useScrollDirection = () => {
 
   useEffect(() => {
     let lastScrollY = window.pageYOffset;
+    let ticking = false;
 
     const updateScrollDirection = () => {
-      const scrollY = window.pageYOffset;
-      const direction = scrollY > lastScrollY ? 'down' : 'up';
-      if (direction !== scrollDirection && (scrollY - lastScrollY > 10 || scrollY - lastScrollY < -10)) {
-        setScrollDirection(direction);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.pageYOffset;
+          const direction = scrollY > lastScrollY ? 'down' : 'up';
+
+          // 只有当滚动距离足够大时才更新方向，并且避免页面加载时的误判
+          if (direction !== scrollDirection && Math.abs(scrollY - lastScrollY) > 15) {
+            // 如果是页面刚加载且滚动位置很小，不隐藏导航栏
+            if (scrollY < 50 && direction === 'down') {
+              setScrollDirection(null);
+            } else {
+              setScrollDirection(direction);
+            }
+          }
+
+          lastScrollY = scrollY > 0 ? scrollY : 0;
+          ticking = false;
+        });
+        ticking = true;
       }
-      lastScrollY = scrollY > 0 ? scrollY : 0;
     };
 
-    window.addEventListener('scroll', updateScrollDirection);
+    window.addEventListener('scroll', updateScrollDirection, { passive: true });
     return () => window.removeEventListener('scroll', updateScrollDirection);
-  }, [scrollDirection]);
+  }, []); // 移除 scrollDirection 依赖，避免不必要的重新绑定
 
   return scrollDirection;
 };
@@ -49,6 +64,7 @@ const HomeContent = () => {
   const [activeTab, setActiveTab] = useState('home');
   const scrollDirection = useScrollDirection();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -66,9 +82,11 @@ const HomeContent = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 50);
+      setScrollY(currentScrollY);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -86,7 +104,7 @@ const HomeContent = () => {
       <main className="min-h-screen bg-[#0A0D14] text-slate-200 overflow-x-hidden selection:bg-[#DA5D77]/50">
         {/* Smart Top Nav */}
         <nav className={`fixed top-0 inset-x-0 z-[100] p-4 flex justify-center transition-all duration-500 ${
-          scrollDirection === 'down' ? '-translate-y-[120%]' : 'translate-y-0'
+          scrollDirection === 'down' && scrollY > 100 ? '-translate-y-[120%]' : 'translate-y-0'
         } ${isScrolled ? 'pt-2' : 'pt-6'}`}>
            <div className={`transition-all duration-500 bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-full flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${
              isScrolled ? 'px-2 py-1' : 'px-4 py-2'

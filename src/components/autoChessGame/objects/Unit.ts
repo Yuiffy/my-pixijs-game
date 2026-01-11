@@ -175,6 +175,9 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
       this.findTarget();
       this.moveToTarget();
       this.tryAttack(time);
+
+      // 播放行走动画（一跳一跳的效果）
+      this.playWalkAnimation(time);
     }
 
     // 边界约束：防止单位离开地图
@@ -184,6 +187,37 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     if (this.y > 500 || this.y < 50 || this.x < 50 || this.x > 950) {
       this.takeDamage(9999);
     }
+  }
+
+  // 播放行走动画（一跳一跳的效果）
+  playWalkAnimation(time: number) {
+    // 只有在移动时才播放动画
+    if (!this.body || (this.body as any).speed < 0.5) {
+      // 停止动画，恢复原状
+      if (this.scaleY !== 1) {
+        this.scaleY = 1;
+      }
+      return;
+    }
+
+    // 使用时间戳创建周期性动画
+    const animationSpeed = 0.005; // 动画速度
+    const bounceHeight = 0.1; // 弹跳高度
+
+    // 计算弹跳值（使用正弦波）
+    const bounce = Math.sin(time * animationSpeed) * bounceHeight;
+
+    // 应用弹跳效果：向上移动时压缩，向下移动时拉伸
+    if (bounce > 0) {
+      // 向上弹跳：压缩
+      this.scaleY = 1 - bounce * 0.3;
+    } else {
+      // 向下弹跳：拉伸
+      this.scaleY = 1 + Math.abs(bounce) * 0.2;
+    }
+
+    // 轻微的水平缩放，创造弹跳感
+    this.scaleX = 1 + Math.abs(bounce) * 0.1;
   }
 
   findTarget() {
@@ -241,23 +275,105 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
         // 远程攻击：创建弹道
         this.createProjectile(this.target, actualDamage);
       } else {
-        // 近战攻击：直接造成伤害
-        if (this.target.takeDamage) {
-          this.target.takeDamage(actualDamage);
-        }
+        // 近战攻击：播放攻击动画
+        this.playMeleeAttackAnimation(() => {
+          // 动画完成后造成伤害
+          if (this.target && this.target.takeDamage) {
+            this.target.takeDamage(actualDamage);
+          }
 
-        // 如果有护盾，先扣护盾
-        if (this.shield > 0) {
-          const shieldDamage = Math.min(actualDamage, this.shield);
-          this.shield -= shieldDamage;
-        }
+          // 如果有护盾，先扣护盾
+          if (this.shield > 0) {
+            const shieldDamage = Math.min(actualDamage, this.shield);
+            this.shield -= shieldDamage;
+          }
 
-        // 爆炸效果（川妹羁绊）
-        if (this.hasExplosion && dist < 40) {
-          this.explodeNearbyEnemies(actualDamage * 0.5);
-        }
+          // 爆炸效果（川妹羁绊）
+          if (this.hasExplosion && dist < 40) {
+            this.explodeNearbyEnemies(actualDamage * 0.5);
+          }
+        });
       }
     }
+  }
+
+  // 播放近战攻击动画
+  playMeleeAttackAnimation(onComplete: () => void) {
+    if (!this.scene || !this.scene.tweens) {
+      onComplete();
+      return;
+    }
+
+    // 计算攻击方向
+    let directionX = 0;
+    let directionY = 0;
+    if (this.target) {
+      directionX = this.target.x - this.x;
+      directionY = this.target.y - this.y;
+      const length = Math.sqrt(directionX * directionX + directionY * directionY);
+      if (length > 0) {
+        directionX /= length;
+        directionY /= length;
+      }
+    }
+
+    // 前摇：向后摆头（向后移动并旋转）
+    const backDistance = 5;
+    const backX = this.x - directionX * backDistance;
+    const backY = this.y - directionY * backDistance;
+
+    // 攻击：向前伸头撞（向前移动并扭曲）
+    const forwardDistance = 15;
+    const forwardX = this.x + directionX * forwardDistance;
+    const forwardY = this.y + directionY * forwardDistance;
+
+    // 保存原始位置和缩放
+    const originalX = this.x;
+    const originalY = this.y;
+    const originalScaleX = this.scaleX;
+    const originalScaleY = this.scaleY;
+    const originalRotation = this.rotation;
+
+    // 使用链式tween实现动画序列
+    this.scene.tweens.add({
+      targets: this,
+      x: backX,
+      y: backY,
+      scaleX: 0.9, // 横向压缩
+      scaleY: 1.1, // 纵向拉伸
+      rotation: -0.1, // 轻微旋转
+      duration: 100,
+      ease: 'Power2',
+      onComplete: () => {
+        // 第二步：攻击（向前伸头撞）
+        this.scene.tweens.add({
+          targets: this,
+          x: forwardX,
+          y: forwardY,
+          scaleX: 1.2, // 横向拉伸（平行四边形效果）
+          scaleY: 0.8, // 纵向压缩
+          rotation: 0.1, // 反向旋转
+          duration: 80,
+          ease: 'Power3',
+          onComplete: () => {
+            // 执行伤害逻辑
+            onComplete();
+
+            // 第三步：恢复原状
+            this.scene.tweens.add({
+              targets: this,
+              x: originalX,
+              y: originalY,
+              scaleX: originalScaleX,
+              scaleY: originalScaleY,
+              rotation: originalRotation,
+              duration: 100,
+              ease: 'Back'
+            });
+          }
+        });
+      }
+    });
   }
 
   createProjectile(target: Unit, damage: number) {
@@ -487,3 +603,4 @@ export default class Unit extends Phaser.Physics.Matter.Sprite {
     this.destroy();
   }
 }
+

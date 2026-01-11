@@ -52,23 +52,19 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
   }, [gameInstance]);
 
   const refreshShop = () => {
-    if (gold >= 1) {
-      setGold(g => g - 1);
-      hideTooltip(); // 隐藏悬浮提示
-      gameInstance.events.emit('REFRESH_SHOP');
-      // 同步金币到Phaser游戏
-      gameInstance.events.emit('SPEND_GOLD', 1);
-    }
+    // 不再在UI端检查金币，完全由游戏后端控制
+    hideTooltip(); // 隐藏悬浮提示
+    gameInstance.events.emit('REFRESH_SHOP');
+    // 同步金币到Phaser游戏，后端会检查金币是否足够
+    gameInstance.events.emit('SPEND_GOLD', 1);
   };
 
   const levelUpShop = () => {
-    if (gold >= 5 && shopLevel < 5) {
-      setGold(g => g - 5);
-      hideTooltip(); // 隐藏悬浮提示
-      gameInstance.events.emit('LEVEL_UP_SHOP');
-      // 同步金币到Phaser游戏
-      gameInstance.events.emit('SPEND_GOLD', 5);
-    }
+    // 不再在UI端检查金币，完全由游戏后端控制
+    hideTooltip(); // 隐藏悬浮提示
+    gameInstance.events.emit('LEVEL_UP_SHOP');
+    // 同步金币到Phaser游戏，后端会检查金币是否足够
+    gameInstance.events.emit('SPEND_GOLD', 5);
   };
 
   // ✅ 新的购买逻辑：自动放置 + 商店格置空
@@ -93,7 +89,7 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       return;
     }
 
-    // 检查人口
+    // 检查人口（仍然需要，因为这是UI逻辑）
     if (barracksCount >= 8) {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Barracks limit reached', data: { barracksCount }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A1' }) }).catch(() => {});
@@ -101,32 +97,26 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       alert("⚠️ 兵营位置已满 (8/8)！请先等待合卡或无需操作。");
       return;
     }
-    // 检查金币
-    if (gold < unit.cost) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Not enough gold', data: { gold, cost: unit.cost }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A1' }) }).catch(() => {});
-      // #endregion
-      alert("💰 金币不足！");
-      return;
-    }
 
-    // 1. 扣钱
-    setGold(g => g - unit.cost);
+    // 不再在UI端检查金币，完全由游戏后端控制
+    // 但为了更好的用户体验，我们仍然显示购买反馈
 
-    // 2. 商店格子变黑 (Sold Out)
+    // 1. 商店格子变黑 (Sold Out) - 临时反馈，如果购买失败游戏后端会恢复
     const newShop = [...shopUnits];
     newShop[index] = null;
     setShopUnits(newShop);
 
-    // 3. 隐藏悬浮提示
+    // 2. 隐藏悬浮提示
     hideTooltip();
 
-    // 4. 通知 Phaser 自动放置
+    // 3. 通知 Phaser 自动放置和扣钱
     console.log(`UI: Buying & Auto-placing ${unit.name}`);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Emitting AUTO_BUY_UNIT event', data: { unitKey, unitName: unit.name }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A2' }) }).catch(() => {});
+    fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'GameUI.tsx:handleBuyClick', message: 'Emitting AUTO_BUY_UNIT event', data: { unitKey, unitName: unit.name, cost: unit.cost }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'initial-debug', hypothesisId: 'A2' }) }).catch(() => {});
     // #endregion
-    gameInstance.events.emit('AUTO_BUY_UNIT', { unitKey });
+
+    // 发送购买事件，包含价格信息，让游戏后端处理扣钱
+    gameInstance.events.emit('AUTO_BUY_UNIT', { unitKey, cost: unit.cost });
   };
 
   const startBattle = () => {
@@ -311,11 +301,11 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
       {/* 底部面板：商店 - 固定在底部 */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, background: 'rgba(0,0,0,0.7)', zIndex: 10, pointerEvents: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 15 }}>
-          <button type="button" onClick={refreshShop} disabled={!gameReady || gold < 1} style={{ padding: '15px 20px', background: (gameReady && gold >= 1) ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+          <button type="button" onClick={refreshShop} disabled={!gameReady} style={{ padding: '15px 20px', background: gameReady ? '#ffc107' : '#555', color: '#000', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
             刷新 ($1)
           </button>
 
-          <button type="button" onClick={levelUpShop} disabled={!gameReady || gold < 5 || shopLevel >= 5} style={{ padding: '15px 20px', background: (gameReady && gold >= 5 && shopLevel < 5) ? '#28a745' : '#555', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
+          <button type="button" onClick={levelUpShop} disabled={!gameReady || shopLevel >= 5} style={{ padding: '15px 20px', background: (gameReady && shopLevel < 5) ? '#28a745' : '#555', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
             升本 ($5)
           </button>
 
@@ -339,23 +329,23 @@ export default function GameUI({ gameInstance, gameReady = false }: any) {
               <button
                 type="button"
                 key={key}
-                onClick={() => canAfford && handleBuyClick(idx)}
-                disabled={!gameReady || !canAfford}
+                onClick={() => handleBuyClick(idx)}
+                disabled={!gameReady}
                 onMouseEnter={(e) => showTooltip(tooltipContent, e)}
                 onMouseLeave={hideTooltip}
                 style={{
                   width: 120,
                   height: 140,
-                  background: canAfford ? '#fff' : '#ccc',
-                  border: `3px solid ${canAfford ? '#ffd700' : '#666'}`,
+                  background: '#fff',
+                  border: `3px solid #ffd700`,
                   borderRadius: '10px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   padding: '10px',
-                  cursor: canAfford ? 'pointer' : 'not-allowed',
-                  opacity: canAfford ? 1 : 0.6,
-                  transform: canAfford ? 'scale(1)' : 'scale(0.95)',
+                  cursor: 'pointer',
+                  opacity: 1,
+                  transform: 'scale(1)',
                   fontFamily: 'inherit',
                   fontSize: 'inherit',
                   outline: 'none'

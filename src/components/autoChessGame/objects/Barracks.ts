@@ -8,6 +8,8 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   unitData!: any;
 
+  starLevel!: number; // 星级：1表示一星，2表示二星
+
   spawnTimer!: Phaser.Time.TimerEvent | null;
 
   indicator!: Phaser.GameObjects.Text | null;
@@ -18,7 +20,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
 
   isOverSellZone!: boolean;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any) {
+  constructor(scene: Phaser.Scene, x: number, y: number, unitKey: string, unitData: any, starLevel: number = 1) {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', {
       method: 'POST',
@@ -26,7 +28,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       body: JSON.stringify({
         location: 'Barracks.ts:constructor',
         message: 'Barracks constructor called',
-        data: { unitKey, x, y, unitData },
+        data: { unitKey, x, y, unitData, starLevel },
         timestamp: Date.now(),
         sessionId: 'debug-session',
         runId: 'initial-debug',
@@ -35,11 +37,11 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     }).catch(() => {});
     // #endregion
 
-    // 创建兵营纹理 - 房子底座 + 兵种 emoji
+    // 创建兵营纹理 - 房子底座 + 兵种 emoji + 星级
     // 完全按照Unit的方式创建纹理
-    const barracksTextureKey = `barracks_${unitKey}`;
+    const barracksTextureKey = `barracks_${unitKey}_${starLevel}`;
     if (!scene.textures.exists(barracksTextureKey)) {
-      console.log(`Creating barracks texture for ${unitKey}: ${barracksTextureKey}`);
+      console.log(`Creating barracks texture for ${unitKey} (${starLevel}星): ${barracksTextureKey}`);
 
       // 使用canvas创建纹理以正确显示emoji（和Unit完全一样的写法）
       const canvas = document.createElement('canvas');
@@ -85,10 +87,17 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
       ctx.fillStyle = '#000000';
       ctx.fillText(unitData.emoji || '🏠', 35, 22);
 
+      // 绘制星级（在房子底部）
+      if (starLevel > 1) {
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = starLevel === 2 ? '#FFD700' : '#C0C0C0'; // 金色表示二星，银色表示更高星
+        ctx.fillText('★'.repeat(starLevel), 35, 60);
+      }
+
       // 添加到Phaser纹理（和Unit完全一样）
       scene.textures.addCanvas(barracksTextureKey, canvas);
 
-      console.log(`Barracks texture created: ${barracksTextureKey} with emoji: ${unitData.emoji}`);
+      console.log(`Barracks texture created: ${barracksTextureKey} with emoji: ${unitData.emoji}, star level: ${starLevel}`);
 
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/e0c29ed0-d46a-4623-8c34-0a2630dfe77f', {
@@ -130,6 +139,7 @@ export default class Barracks extends Phaser.Physics.Matter.Sprite {
     this.scene = scene;
     this.unitKey = unitKey;
     this.unitData = unitData;
+    this.starLevel = starLevel;
     this.spawnTimer = null;
     this.isDragging = false;
     this.isOverSellZone = false;
