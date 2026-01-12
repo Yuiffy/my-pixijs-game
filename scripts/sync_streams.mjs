@@ -248,6 +248,30 @@ async function syncStreams() {
       });
     });
 
+    // 2. Time window fallback
+    const nextStreamStart = validStreamIds[index + 1]
+      ? finalStreamGroups[validStreamIds[index + 1]].startTime
+      : new Date(stream.startTime.getTime() + 12 * 3600 * 1000); // Default to 12 hours after if last stream
+
+    const timeWindowImages = allImages.filter(img =>
+      !img.assigned &&
+      ((img.name.includes('午') && h < 18) ||
+       (img.name.includes('晚') && h >= 18) ||
+       (img.mtime >= stream.startTime.getTime() - 10 * 60 * 1000 && img.mtime < nextStreamStart.getTime()))
+    );
+
+    timeWindowImages.sort((a, b) => b.mtime - a.mtime);
+    // Take up to 5 images total
+    const imagesToAdd = timeWindowImages.slice(0, 5 - streamData.images.length);
+    imagesToAdd.forEach(img => {
+      img.assigned = true;
+      const targetPath = path.join(targetDir, img.name);
+      if (!fs.existsSync(targetPath)) {
+        fs.copyFileSync(img.fullPath, targetPath);
+      }
+      streamData.images.push(`/data/streams/${streamId}/${img.name}`);
+    });
+
     // Initial highlights from any AI_HIGHLIGHT file in the group
     let groupHighlights = null;
 
