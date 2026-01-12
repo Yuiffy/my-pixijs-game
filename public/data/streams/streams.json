@@ -5,14 +5,15 @@
     "date": "2026-01-12",
     "time": "20:02:40",
     "startTime": "20:02",
-    "endTime": "23:20",
-    "duration": 11935,
-    "durationStr": "3.3 小时",
-    "srt": null,
-    "xml": "/data/streams/2026_01_12_20_02_40/录制-25788785-20260112-200309-610-找你有事！速来.xml",
+    "endTime": "00:03",
+    "duration": 14517,
+    "durationStr": "4.0 小时",
+    "srt": "/data/streams/2026_01_12_20_02_40/2026_01_12_20_03_10_找你有事！速来_DDTV5_fix.srt",
+    "xml": "/data/streams/2026_01_12_20_02_40/2026_01_12_20_03_10_找你有事！速来_DDTV5_1.xml",
     "cover": "/data/streams/2026_01_12_20_02_40/录制-25788785-20260112-200309-610-找你有事！速来.cover.jpg",
-    "highlights": null,
+    "highlights": "/data/streams/2026_01_12_20_02_40/highlights.md",
     "images": [
+      "/data/streams/2026_01_12_20_02_40/2026_01_12_20_03_10_找你有事！速来_DDTV5_fix.png",
       "/data/streams/2026_01_12_20_02_40/Gemini_Generated_Image_xbj9adxbj9adxbj9.png"
     ]
   },
@@ -79,7 +80,9 @@
     "cover": "/data/streams/2026_01_09_20_10_35/录制-25788785-20260109-201046-712-摸鱼茶水间！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_09_20_10_35/highlights.md",
     "images": [
-      "/data/streams/2026_01_09_20_10_35/Gemini_Generated_Image_kdxlsokdxlsokdxl_晚台.png"
+      "/data/streams/2026_01_09_20_10_35/Gemini_Generated_Image_3c6npw3c6npw3c6n_午台AI偷懒版.png",
+      "/data/streams/2026_01_09_20_10_35/Gemini_Generated_Image_kdxlsokdxlsokdxl_晚台.png",
+      "/data/streams/2026_01_09_20_10_35/Gemini_Generated_Image_pe23dwpe23dwpe23_午台重制版.png"
     ]
   },
   {
@@ -95,10 +98,7 @@
     "xml": "/data/streams/2026_01_09_15_01_25/2026_01_09_15_01_55_摸鱼茶水间！速来_DDTV5_1.xml",
     "cover": "/data/streams/2026_01_09_15_01_25/录制-25788785-20260109-150134-364-摸鱼茶水间！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_09_15_01_25/highlights.md",
-    "images": [
-      "/data/streams/2026_01_09_15_01_25/Gemini_Generated_Image_pe23dwpe23dwpe23_午台重制版.png",
-      "/data/streams/2026_01_09_15_01_25/Gemini_Generated_Image_3c6npw3c6npw3c6n_午台AI偷懒版.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_07_22_35_43",
@@ -197,8 +197,8 @@
     "cover": "/data/streams/2026_01_04_19_49_14/录制-25788785-20260104-194942-913-快进来！找你有事.cover.jpg",
     "highlights": "/data/streams/2026_01_04_19_49_14/highlights.md",
     "images": [
-      "/data/streams/2026_01_04_19_49_14/Gemini_Generated_Image_2ao47h2ao47h2ao4.png",
-      "/data/streams/2026_01_04_19_49_14/Gemini_Generated_Image_20rzw420rzw420rz (1).png"
+      "/data/streams/2026_01_04_19_49_14/Gemini_Generated_Image_20rzw420rzw420rz (1).png",
+      "/data/streams/2026_01_04_19_49_14/Gemini_Generated_Image_2ao47h2ao47h2ao4.png"
     ]
   },
   {
@@ -215,8 +215,8 @@
     "cover": "/data/streams/2026_01_03_20_12_43/录制-25788785-20260103-201254-549-快进来！找你有事.cover.jpg",
     "highlights": "/data/streams/2026_01_03_20_12_43/highlights.md",
     "images": [
-      "/data/streams/2026_01_03_20_12_43/Gemini_Generated_Image_qk1rl2qk1rl2qk1r.png",
-      "/data/streams/2026_01_03_20_12_43/Gemini_Generated_Image_5ckae05ckae05cka.png"
+      "/data/streams/2026_01_03_20_12_43/Gemini_Generated_Image_5ckae05ckae05cka.png",
+      "/data/streams/2026_01_03_20_12_43/Gemini_Generated_Image_qk1rl2qk1rl2qk1r.png"
     ]
   },
   {
@@ -248,8 +248,8 @@
     "cover": "/data/streams/2026_01_01_20_58_15/2026_01_01_20_58_42_晚上好！咕咕咕_DDTV5_cover.jpg",
     "highlights": "/data/streams/2026_01_01_20_58_15/highlights.md",
     "images": [
-      "/data/streams/2026_01_01_20_58_15/Gemini_Generated_Image_m9m7q0m9m7q0m9m7.png",
-      "/data/streams/2026_01_01_20_58_15/Gemini_Generated_Image_16eeny16eeny16ee.png"
+      "/data/streams/2026_01_01_20_58_15/Gemini_Generated_Image_16eeny16eeny16ee.png",
+      "/data/streams/2026_01_01_20_58_15/Gemini_Generated_Image_m9m7q0m9m7q0m9m7.png"
     ]
   },
   {
@@ -298,8 +298,8 @@
     "cover": "/data/streams/2025_12_30_19_54_20/录制-25788785-20251230-195428-290-咕咕咕晚上好.cover.jpg",
     "highlights": "/data/streams/2025_12_30_19_54_20/highlights.md",
     "images": [
-      "/data/streams/2025_12_30_19_54_20/图片文字替换.png",
-      "/data/streams/2025_12_30_19_54_20/Gemini_Generated_Image_qv90cqv90cqv90cq.png"
+      "/data/streams/2025_12_30_19_54_20/Gemini_Generated_Image_qv90cqv90cqv90cq.png",
+      "/data/streams/2025_12_30_19_54_20/图片文字替换.png"
     ]
   },
   {
@@ -316,8 +316,8 @@
     "cover": "/data/streams/2025_12_29_20_04_39/录制-25788785-20251229-200446-260-看赛马娘2最后三集~！.cover.jpg",
     "highlights": "/data/streams/2025_12_29_20_04_39/highlights.md",
     "images": [
-      "/data/streams/2025_12_29_20_04_39/Gemini_Generated_Image_tl3ohytl3ohytl3o (1).png",
-      "/data/streams/2025_12_29_20_04_39/Gemini_Generated_Image_1bpx501bpx501bpx.png"
+      "/data/streams/2025_12_29_20_04_39/Gemini_Generated_Image_1bpx501bpx501bpx.png",
+      "/data/streams/2025_12_29_20_04_39/Gemini_Generated_Image_tl3ohytl3ohytl3o (1).png"
     ]
   },
   {
@@ -380,7 +380,11 @@
     "xml": "/data/streams/2025_12_28_00_13_36/录制-25788785-20251228-001343-006-小小一播播.xml",
     "cover": "/data/streams/2025_12_28_00_13_36/2025_12_28_00_13_36_小小一播播_DDTV5_cover.jpg",
     "highlights": "/data/streams/2025_12_28_00_13_36/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_4orjyr4orjyr4orj (1).png",
+      "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_h4m93wh4m93wh4m9.png",
+      "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_vld2eqvld2eqvld2.png"
+    ]
   },
   {
     "id": "2025_12_27_14_46_46",
@@ -458,8 +462,8 @@
     "cover": "/data/streams/2025_12_24_20_01_32/录制-25788785-20251224-200209-153-快来！找你有事.cover.jpg",
     "highlights": "/data/streams/2025_12_24_20_01_32/highlights.md",
     "images": [
-      "/data/streams/2025_12_24_20_01_32/Gemini_Generated_Image_hr9s66hr9s66hr9s (1).png",
-      "/data/streams/2025_12_24_20_01_32/317A60CAD4CE210E154E0DDE21907BE6.png"
+      "/data/streams/2025_12_24_20_01_32/317A60CAD4CE210E154E0DDE21907BE6.png",
+      "/data/streams/2025_12_24_20_01_32/Gemini_Generated_Image_hr9s66hr9s66hr9s (1).png"
     ]
   },
   {
@@ -494,8 +498,8 @@
     "cover": "/data/streams/2025_12_22_20_06_00/录制-25788785-20251222-200610-723-咕咕咕 唱歌看电影.cover.jpg",
     "highlights": "/data/streams/2025_12_22_20_06_00/highlights.md",
     "images": [
-      "/data/streams/2025_12_22_20_06_00/Gemini_Generated_Image_x52agox52agox52a (1).png",
-      "/data/streams/2025_12_22_20_06_00/Gemini_Generated_Image_6vdgjq6vdgjq6vdg (2).png"
+      "/data/streams/2025_12_22_20_06_00/Gemini_Generated_Image_6vdgjq6vdgjq6vdg (2).png",
+      "/data/streams/2025_12_22_20_06_00/Gemini_Generated_Image_x52agox52agox52a (1).png"
     ]
   },
   {
@@ -574,8 +578,8 @@
     "cover": "/data/streams/2025_12_18_21_07_43/录制-25788785-20251218-210939-870-有事找你！速来.cover.jpg",
     "highlights": "/data/streams/2025_12_18_21_07_43/highlights.md",
     "images": [
-      "/data/streams/2025_12_18_21_07_43/Gemini_Generated_Image_lqnmpzlqnmpzlqnm.png",
-      "/data/streams/2025_12_18_21_07_43/Gemini_Generated_Image_2wodcl2wodcl2wod.png"
+      "/data/streams/2025_12_18_21_07_43/Gemini_Generated_Image_2wodcl2wodcl2wod.png",
+      "/data/streams/2025_12_18_21_07_43/Gemini_Generated_Image_lqnmpzlqnmpzlqnm.png"
     ]
   },
   {
@@ -654,8 +658,8 @@
     "cover": "/data/streams/2025_12_15_23_29_37/录制-25788785-20251215-233327-277-看小圆剧场版！速来.cover.jpg",
     "highlights": null,
     "images": [
-      "/data/streams/2025_12_15_23_29_37/Gemini_Generated_Image_x9966px9966px996.png",
-      "/data/streams/2025_12_15_23_29_37/Gemini_Generated_Image_b0qm2kb0qm2kb0qm.png"
+      "/data/streams/2025_12_15_23_29_37/Gemini_Generated_Image_b0qm2kb0qm2kb0qm.png",
+      "/data/streams/2025_12_15_23_29_37/Gemini_Generated_Image_x9966px9966px996.png"
     ]
   },
   {
@@ -717,8 +721,8 @@
     "cover": "/data/streams/2025_12_14_22_55_26/录制-25788785-20251214-225526-096-咕咕咕！一起看小圆.cover.jpg",
     "highlights": null,
     "images": [
-      "/data/streams/2025_12_14_22_55_26/Gemini_Generated_Image_moxm47moxm47moxm.png",
-      "/data/streams/2025_12_14_22_55_26/Gemini_Generated_Image_j6jbjfj6jbjfj6jb.png"
+      "/data/streams/2025_12_14_22_55_26/Gemini_Generated_Image_j6jbjfj6jbjfj6jb.png",
+      "/data/streams/2025_12_14_22_55_26/Gemini_Generated_Image_moxm47moxm47moxm.png"
     ]
   },
   {
@@ -781,7 +785,9 @@
     "xml": "/data/streams/2025_12_11_19_49_50/录制-25788785-20251211-195010-512-啊！.xml",
     "cover": "/data/streams/2025_12_11_19_49_50/录制-25788785-20251211-195010-512-啊！.cover.jpg",
     "highlights": "/data/streams/2025_12_11_19_49_50/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_12_11_19_49_50/Gemini_Generated_Image_6whzx26whzx26whz_第二章.png"
+    ]
   },
   {
     "id": "2025_12_10_22_33_39",
@@ -861,8 +867,8 @@
     "cover": "/data/streams/2025_12_08_20_07_36/录制-25788785-20251208-200737-059-晚上好！唱唱聊聊.cover.jpg",
     "highlights": "/data/streams/2025_12_08_20_07_36/highlights.md",
     "images": [
-      "/data/streams/2025_12_08_20_07_36/20251208晚安总结插画.png",
-      "/data/streams/2025_12_08_20_07_36/20251208早安总结插画.png"
+      "/data/streams/2025_12_08_20_07_36/20251208早安总结插画.png",
+      "/data/streams/2025_12_08_20_07_36/20251208晚安总结插画.png"
     ]
   },
   {
@@ -909,6 +915,7 @@
     "cover": "/data/streams/2025_12_06_20_10_54/录制-25788785-20251206-201100-057-电影院门口了 你在哪！.cover.jpg",
     "highlights": "/data/streams/2025_12_06_20_10_54/highlights.md",
     "images": [
+      "/data/streams/2025_12_06_20_10_54/12月6日午台总结.png",
       "/data/streams/2025_12_06_20_10_54/12月6日晚台总结.png"
     ]
   },
@@ -925,9 +932,7 @@
     "xml": "/data/streams/2025_12_06_14_57_21/录制-25788785-20251206-145722-569-忧郁元气神秘小鸟的 午台唱唱聊聊.xml",
     "cover": "/data/streams/2025_12_06_14_57_21/录制-25788785-20251206-145722-569-忧郁元气神秘小鸟的 午台唱唱聊聊.cover.jpg",
     "highlights": "/data/streams/2025_12_06_14_57_21/highlights.md",
-    "images": [
-      "/data/streams/2025_12_06_14_57_21/12月6日午台总结.png"
-    ]
+    "images": []
   },
   {
     "id": "2025_12_06_14_41_54",
@@ -942,9 +947,7 @@
     "xml": "/data/streams/2025_12_06_14_41_54/2025_12_06_14_42_24_忧郁元气神秘小鸟的午台唱唱聊聊_DDTV5_1.xml",
     "cover": "/data/streams/2025_12_06_14_41_54/录制-25788785-20251206-144213-008-忧郁元气神秘小鸟的 午台唱唱聊聊.cover.jpg",
     "highlights": null,
-    "images": [
-      "/data/streams/2025_12_06_14_41_54/12月6日午台总结.png"
-    ]
+    "images": []
   },
   {
     "id": "2025_12_05_19_41_53",
@@ -960,8 +963,8 @@
     "cover": "/data/streams/2025_12_05_19_41_53/录制-25788785-20251205-194204-187-晚上好！我要进入你的生活.cover.jpg",
     "highlights": "/data/streams/2025_12_05_19_41_53/highlights.md",
     "images": [
-      "/data/streams/2025_12_05_19_41_53/晚播总结插画.png",
-      "/data/streams/2025_12_05_19_41_53/早台总结插画.png"
+      "/data/streams/2025_12_05_19_41_53/早台总结插画.png",
+      "/data/streams/2025_12_05_19_41_53/晚播总结插画.png"
     ]
   },
   {
@@ -977,7 +980,12 @@
     "xml": "/data/streams/2025_12_05_09_00_33/录制-25788785-20251205-090107-649-早安！早起的鸟儿有饼吃.xml",
     "cover": "/data/streams/2025_12_05_09_00_33/录制-25788785-20251205-090107-649-早安！早起的鸟儿有饼吃.cover.jpg",
     "highlights": "/data/streams/2025_12_05_09_00_33/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_12_05_09_00_33/Gemini_Generated_Image_rvkhhkrvkhhkrvkh_下午播总结.png",
+      "/data/streams/2025_12_05_09_00_33/下午播总结2.png",
+      "/data/streams/2025_12_05_09_00_33/下午播总结3.png",
+      "/data/streams/2025_12_05_09_00_33/晚播总结.png"
+    ]
   },
   {
     "id": "2025_12_03_22_31_06",
@@ -994,6 +1002,7 @@
     "highlights": "/data/streams/2025_12_03_22_31_06/highlights.md",
     "images": [
       "/data/streams/2025_12_03_22_31_06/Gemini_Generated_Image_tsyyw9tsyyw9tsyy.png",
+      "/data/streams/2025_12_03_22_31_06/下午播总结.png",
       "/data/streams/2025_12_03_22_31_06/完播总结加上傻事环节.jpg",
       "/data/streams/2025_12_03_22_31_06/晚播总结.png"
     ]
@@ -1011,9 +1020,7 @@
     "xml": "/data/streams/2025_12_03_14_30_26/录制-25788785-20251203-143138-100-元气小鸟陪你上班.xml",
     "cover": "/data/streams/2025_12_03_14_30_26/录制-25788785-20251203-143138-100-元气小鸟陪你上班.cover.jpg",
     "highlights": "/data/streams/2025_12_03_14_30_26/highlights.md",
-    "images": [
-      "/data/streams/2025_12_03_14_30_26/下午播总结.png"
-    ]
+    "images": []
   },
   {
     "id": "2025_12_02_19_51_05",
@@ -1127,8 +1134,10 @@
     "cover": "/data/streams/2025_11_27_19_55_40/录制-25788785-20251127-195600-328-进来聊聊.cover.jpg",
     "highlights": "/data/streams/2025_11_27_19_55_40/highlights.md",
     "images": [
-      "/data/streams/2025_11_27_19_55_40/Gemini_Generated_Image_e7ec68e7ec68e7ec_新.png",
+      "/data/streams/2025_11_27_19_55_40/Gemini_Generated_Image_fh8ke2fh8ke2fh8k.png",
+      "/data/streams/2025_11_27_19_55_40/Gemini_Generated_Image_k34sdk34sdk34sdk.png",
       "/data/streams/2025_11_27_19_55_40/Gemini_Generated_Image_2vureb2vureb2vur_感觉有点问题，教了它画很多帽子，但是不太对，而且标题不对.png",
+      "/data/streams/2025_11_27_19_55_40/Gemini_Generated_Image_e7ec68e7ec68e7ec_新.png",
       "/data/streams/2025_11_27_19_55_40/Gemini_Generated_Image_fh8ke2fh8ke2fh8k (2).png",
       "/data/streams/2025_11_27_19_55_40/Gemini_Generated_Image_kqvz6ekqvz6ekqvz_听说是假的.png"
     ]
@@ -1147,7 +1156,6 @@
     "cover": "/data/streams/2025_11_26_22_00_19/录制-25788785-20251126-220022-521-【3D麦】 嘘 来入眠.cover.jpg",
     "highlights": "/data/streams/2025_11_26_22_00_19/highlights.md",
     "images": [
-      "/data/streams/2025_11_26_22_00_19/Gemini_Generated_Image_k34sdk34sdk34sdk.png",
       "/data/streams/2025_11_26_22_00_19/Gemini_Generated_Image_33j5rs33j5rs33j5.png"
     ]
   },
@@ -1196,7 +1204,10 @@
     "xml": "/data/streams/2025_11_22_14_40_53/2025_11_22_14_41_23_忧郁元气神秘小鸟的午台唱唱聊聊~_DDTV5_1.xml",
     "cover": "/data/streams/2025_11_22_14_40_53/录制-25788785-20251122-144103-913-忧郁元气神秘小鸟的 午台唱唱聊聊~.cover.jpg",
     "highlights": "/data/streams/2025_11_22_14_40_53/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_11_22_14_40_53/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场(1).jpg",
+      "/data/streams/2025_11_22_14_40_53/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场.jpg"
+    ]
   },
   {
     "id": "2025_11_21_19_45_52",
@@ -4033,9 +4044,7 @@
     "xml": "/data/streams/2025_06_03_00_09_10/2025_06_03_00_09_46_快接电话_DDTV5_18.xml",
     "cover": "/data/streams/2025_06_03_00_09_10/录制-25788785-20250603-000910-531-快接电话.cover.jpg",
     "highlights": "/data/streams/2025_06_03_00_09_10/highlights.md",
-    "images": [
-      "/data/streams/2025_06_03_00_09_10/2025_06_03_22_57_16_快接电话_DDTV5_fix.jpg"
-    ]
+    "images": []
   },
   {
     "id": "2025_06_02_23_38_40",

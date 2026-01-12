@@ -21,6 +21,7 @@ async function syncStreams() {
   const allStreams = [];
   const allStreamGroups = {};
   const allPotentialTitles = [];
+  const allImages = [];
 
   for (const sourceDir of SOURCE_BASE_DIRS) {
     if (!fs.existsSync(sourceDir)) {
@@ -64,6 +65,23 @@ async function syncStreams() {
       });
 
       // Done collecting titles for this folder
+
+      // Collect all images in this folder
+      files.forEach(file => {
+        if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
+          if (!file.includes('cover')) {
+            const fullPath = path.join(fullSourcePath, file);
+            const stats = fs.statSync(fullPath);
+            allImages.push({
+              name: file,
+              fullPath: fullPath,
+              mtime: stats.mtimeMs,
+              sourceDir: fullSourcePath,
+              assigned: false
+            });
+          }
+        }
+      });
 
       // 2. Second Pass: Group files by stream prefix (YYYY_MM_DD_HH_mm_ss)
       files.forEach(file => {
@@ -214,64 +232,20 @@ async function syncStreams() {
     streamData.startTime = stream.time.split(':').slice(0, 2).join(':');
     streamData.endTime = endDate.toTimeString().split(' ')[0].split(':').slice(0, 2).join(':');
 
-    // Determine time window for this stream
-    const nextStreamStart = validStreamIds[index + 1]
-      ? finalStreamGroups[validStreamIds[index + 1]].startTime
-      : new Date(stream.startTime.getTime() + 12 * 3600 * 1000); // Default to 12 hours after if last stream
-
-    // Collect all images from all source dirs related to this merged stream, strictly within time window
-    const relatedSourceDirs = [...new Set(stream.files.map(f => f.sourceDir))];
-    const allSummaryImages = [];
-    relatedSourceDirs.forEach(sourceDir => {
-      if (!fs.existsSync(sourceDir)) return; // Ensure sourceDir still exists
-      const filesInSourceDir = fs.readdirSync(sourceDir);
-      filesInSourceDir.forEach(file => {
-        if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
-            if (file.includes('cover')) return;
-          const fullPath = path.join(sourceDir, file);
-          try {
-            const stats = fs.statSync(fullPath);
-            const mtime = stats.mtimeMs;
-
-            let include = false;
-            // Heuristic for AI generated images with "午" (Afternoon) or "晚" (Evening) in name
-            // These often have late generation timestamps, so we trust the name over the time
-            if (file.includes('午')) {
-               if (h < 18) include = true;
-            } else if (file.includes('晚')) {
-               if (h >= 18) include = true;
-            } else {
-               // Normal: Filter by time window: [StreamStart - 10min, NextStreamStart)
-               // Use 10 min buffer before start to catch pre-stream screenshots/preparations
-               if (mtime >= stream.startTime.getTime() - 10 * 60 * 1000 && mtime < nextStreamStart.getTime()) {
-                  include = true;
-               }
-            }
-
-            if (include) {
-               allSummaryImages.push({
-                name: file,
-                fullPath: fullPath,
-                mtime: mtime
-              });
-            }
-          } catch (e) {
-            console.warn(`Could not stat file ${fullPath}: ${e.message}`);
+    // Assign images to this stream
+    // 1. Filename matching
+    stream.files.forEach(({ file }) => {
+      const videoBase = path.parse(file).name;
+      allImages.forEach(img => {
+        if (!img.assigned && (img.name.startsWith(streamId) || img.name.startsWith(videoBase))) {
+          img.assigned = true;
+          const targetPath = path.join(targetDir, img.name);
+          if (!fs.existsSync(targetPath)) {
+            fs.copyFileSync(img.fullPath, targetPath);
           }
-
+          streamData.images.push(`/data/streams/${streamId}/${img.name}`);
         }
       });
-    });
-
-    allSummaryImages.sort((a, b) => b.mtime - a.mtime);
-    // Take a few images as variety
-    const imagesToCopy = allSummaryImages.slice(0, 5);
-    imagesToCopy.forEach(img => {
-      const targetPath = path.join(targetDir, img.name);
-      if (!fs.existsSync(targetPath)) {
-        fs.copyFileSync(img.fullPath, targetPath);
-      }
-      streamData.images.push(`/data/streams/${streamId}/${img.name}`);
     });
 
     // Initial highlights from any AI_HIGHLIGHT file in the group
@@ -342,6 +316,32 @@ async function syncStreams() {
     }
 
     allStreams.push(streamData);
+  });
+
+  // Assign remaining images to closest streams
+  const remainingImages = allImages.filter(img => !img.assigned);
+  remainingImages.forEach(img => {
+    let closestStreamId = null;
+    let minDiff = Infinity;
+    validStreamIds.forEach(id => {
+      const stream = finalStreamGroups[id];
+      const diff = Math.abs(img.mtime - stream.startTime.getTime());
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestStreamId = id;
+      }
+    });
+    if (closestStreamId) {
+      const targetDir = path.join(TARGET_BASE_DIR, closestStreamId);
+      const targetPath = path.join(targetDir, img.name);
+      if (!fs.existsSync(targetPath)) {
+        fs.copyFileSync(img.fullPath, targetPath);
+      }
+      const streamData = allStreams.find(s => s.id === closestStreamId);
+      if (streamData) {
+        streamData.images.push(`/data/streams/${closestStreamId}/${img.name}`);
+      }
+    }
   });
 
   allStreams.sort((a, b) => b.id.localeCompare(a.id));
