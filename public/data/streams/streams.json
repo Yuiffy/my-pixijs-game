@@ -12,9 +12,7 @@
     "xml": "/data/streams/2026_01_12_20_02_40/2026_01_12_20_03_10_找你有事！速来_DDTV5_1.xml",
     "cover": "/data/streams/2026_01_12_20_02_40/录制-25788785-20260112-200309-610-找你有事！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_12_20_02_40/highlights.md",
-    "images": [
-      "/data/streams/2026_01_12_20_02_40/2026_01_12_20_03_10_找你有事！速来_DDTV5_fix.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_12_14_56_50",
@@ -30,7 +28,8 @@
     "cover": "/data/streams/2026_01_12_14_56_50/录制-25788785-20260112-145706-368-摸鱼时间到！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_12_14_56_50/highlights.md",
     "images": [
-      "/data/streams/2026_01_12_14_56_50/2026_01_12_14_56_50_摸鱼时间到！速来_DDTV5_fix.png"
+      "/data/streams/2026_01_12_14_56_50/2026_01_12_14_56_50_摸鱼时间到！速来_DDTV5_fix.png",
+      "/data/streams/2026_01_12_14_56_50/2026_01_12_20_03_10_找你有事！速来_DDTV5_fix.png"
     ]
   },
   {
@@ -81,7 +80,9 @@
     "xml": "/data/streams/2026_01_09_20_10_35/2026_01_09_20_11_05_摸鱼茶水间！速来_DDTV5_1.xml",
     "cover": "/data/streams/2026_01_09_20_10_35/录制-25788785-20260109-201046-712-摸鱼茶水间！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_09_20_10_35/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2026_01_09_20_10_35/Gemini_Generated_Image_kdxlsokdxlsokdxl_晚台.png"
+    ]
   },
   {
     "id": "2026_01_09_15_01_25",
@@ -96,7 +97,10 @@
     "xml": "/data/streams/2026_01_09_15_01_25/2026_01_09_15_01_55_摸鱼茶水间！速来_DDTV5_1.xml",
     "cover": "/data/streams/2026_01_09_15_01_25/录制-25788785-20260109-150134-364-摸鱼茶水间！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_09_15_01_25/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2026_01_09_15_01_25/Gemini_Generated_Image_3c6npw3c6npw3c6n_午台AI偷懒版.png",
+      "/data/streams/2026_01_09_15_01_25/Gemini_Generated_Image_pe23dwpe23dwpe23_午台重制版.png"
+    ]
   },
   {
     "id": "2026_01_07_22_35_43",
@@ -912,7 +916,9 @@
     "xml": "/data/streams/2025_12_06_20_10_54/录制-25788785-20251206-201100-057-电影院门口了 你在哪！.xml",
     "cover": "/data/streams/2025_12_06_20_10_54/录制-25788785-20251206-201100-057-电影院门口了 你在哪！.cover.jpg",
     "highlights": "/data/streams/2025_12_06_20_10_54/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_12_06_20_10_54/12月6日晚台总结.png"
+    ]
   },
   {
     "id": "2025_12_06_14_57_21",
@@ -927,7 +933,9 @@
     "xml": "/data/streams/2025_12_06_14_57_21/录制-25788785-20251206-145722-569-忧郁元气神秘小鸟的 午台唱唱聊聊.xml",
     "cover": "/data/streams/2025_12_06_14_57_21/录制-25788785-20251206-145722-569-忧郁元气神秘小鸟的 午台唱唱聊聊.cover.jpg",
     "highlights": "/data/streams/2025_12_06_14_57_21/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_12_06_14_57_21/12月6日午台总结.png"
+    ]
   },
   {
     "id": "2025_12_06_14_41_54",
@@ -942,7 +950,9 @@
     "xml": "/data/streams/2025_12_06_14_41_54/2025_12_06_14_42_24_忧郁元气神秘小鸟的午台唱唱聊聊_DDTV5_1.xml",
     "cover": "/data/streams/2025_12_06_14_41_54/录制-25788785-20251206-144213-008-忧郁元气神秘小鸟的 午台唱唱聊聊.cover.jpg",
     "highlights": null,
-    "images": []
+    "images": [
+      "/data/streams/2025_12_06_14_41_54/12月6日午台总结.png"
+    ]
   },
   {
     "id": "2025_12_05_19_41_53",
@@ -996,8 +1006,7 @@
       "/data/streams/2025_12_03_22_31_06/下午播总结2.png",
       "/data/streams/2025_12_03_22_31_06/Gemini_Generated_Image_rvkhhkrvkhhkrvkh_下午播总结.png",
       "/data/streams/2025_12_03_22_31_06/Gemini_Generated_Image_tsyyw9tsyyw9tsyy.png",
-      "/data/streams/2025_12_03_22_31_06/完播总结加上傻事环节.jpg",
-      "/data/streams/2025_12_03_22_31_06/晚播总结.png"
+      "/data/streams/2025_12_03_22_31_06/完播总结加上傻事环节.jpg"
     ]
   },
   {
@@ -4438,7 +4447,9 @@
     "xml": "/data/streams/2025_03_30_14_42_42/2025_03_30_14_42_42_敲锣打鼓午播之！岁己来袭——_DDTV5_2.xml",
     "cover": null,
     "highlights": null,
-    "images": []
+    "images": [
+      "/data/streams/2025_03_30_14_42_42/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场(1).jpg"
+    ]
   },
   {
     "id": "2025_03_29_21_13_01",
@@ -4453,7 +4464,9 @@
     "xml": "/data/streams/2025_03_29_21_13_01/2025_03_29_21_13_01_晚之播！岁己来袭——_DDTV5_5.xml",
     "cover": null,
     "highlights": null,
-    "images": []
+    "images": [
+      "/data/streams/2025_03_29_21_13_01/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场.jpg"
+    ]
   },
   {
     "id": "2025_03_29_21_01_36",
@@ -4468,7 +4481,9 @@
     "xml": "/data/streams/2025_03_29_21_01_36/2025_03_29_21_05_22_晚之播！岁己来袭——_DDTV5_4.xml",
     "cover": null,
     "highlights": null,
-    "images": []
+    "images": [
+      "/data/streams/2025_03_29_21_01_36/12月6日午台总结.png"
+    ]
   },
   {
     "id": "2025_03_29_19_32_52",
@@ -4483,7 +4498,9 @@
     "xml": "/data/streams/2025_03_29_19_32_52/2025_03_29_19_32_52_晚之播！岁己来袭——_DDTV5_2.xml",
     "cover": null,
     "highlights": null,
-    "images": []
+    "images": [
+      "/data/streams/2025_03_29_19_32_52/12月6日晚台总结.png"
+    ]
   },
   {
     "id": "2025_03_29_14_32_26",
@@ -4498,7 +4515,9 @@
     "xml": "/data/streams/2025_03_29_14_32_26/2025_03_29_14_32_26_午之播！岁己袭来——_DDTV5_1.xml",
     "cover": null,
     "highlights": null,
-    "images": []
+    "images": [
+      "/data/streams/2025_03_29_14_32_26/Gemini_Generated_Image_3c6npw3c6npw3c6n_午台AI偷懒版.png"
+    ]
   },
   {
     "id": "2025_03_28_00_03_33",
@@ -4514,10 +4533,6 @@
     "cover": null,
     "highlights": null,
     "images": [
-      "/data/streams/2025_03_28_00_03_33/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场(1).jpg",
-      "/data/streams/2025_03_28_00_03_33/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场.jpg",
-      "/data/streams/2025_03_28_00_03_33/12月6日午台总结.png",
-      "/data/streams/2025_03_28_00_03_33/Gemini_Generated_Image_3c6npw3c6npw3c6n_午台AI偷懒版.png",
       "/data/streams/2025_03_28_00_03_33/Gemini_Generated_Image_pe23dwpe23dwpe23_午台重制版.png"
     ]
   },
@@ -4535,7 +4550,6 @@
     "cover": null,
     "highlights": "/data/streams/2025_03_21_19_30_54/highlights.md",
     "images": [
-      "/data/streams/2025_03_21_19_30_54/12月6日晚台总结.png",
       "/data/streams/2025_03_21_19_30_54/Gemini_Generated_Image_kdxlsokdxlsokdxl_晚台.png"
     ]
   }
