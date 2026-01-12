@@ -47,7 +47,8 @@
     "cover": "/data/streams/2026_01_11_19_01_58/录制-25788785-20260111-190211-526-初见！命运石之门！.cover.jpg",
     "highlights": "/data/streams/2026_01_11_19_01_58/highlights.md",
     "images": [
-      "/data/streams/2026_01_11_19_01_58/Gemini_Generated_Image_sqlo82sqlo82sqlo.png"
+      "/data/streams/2026_01_11_19_01_58/Gemini_Generated_Image_sqlo82sqlo82sqlo.png",
+      "/data/streams/2026_01_11_19_01_58/Gemini_Generated_Image_tqbxu3tqbxu3tqbx.png"
     ]
   },
   {
@@ -864,6 +865,7 @@
     "cover": "/data/streams/2025_12_08_20_07_36/录制-25788785-20251208-200737-059-晚上好！唱唱聊聊.cover.jpg",
     "highlights": "/data/streams/2025_12_08_20_07_36/highlights.md",
     "images": [
+      "/data/streams/2025_12_08_20_07_36/20251208晚安总结插画.png",
       "/data/streams/2025_12_08_20_07_36/20251208早安总结插画.png"
     ]
   },
@@ -956,6 +958,7 @@
     "cover": "/data/streams/2025_12_05_19_41_53/录制-25788785-20251205-194204-187-晚上好！我要进入你的生活.cover.jpg",
     "highlights": "/data/streams/2025_12_05_19_41_53/highlights.md",
     "images": [
+      "/data/streams/2025_12_05_19_41_53/晚播总结插画.png",
       "/data/streams/2025_12_05_19_41_53/早台总结插画.png"
     ]
   },
@@ -988,8 +991,13 @@
     "cover": "/data/streams/2025_12_03_22_31_06/2025_12_03_22_31_06_3D麦温柔小鸟伴你入眠_DDTV5_cover.jpg",
     "highlights": "/data/streams/2025_12_03_22_31_06/highlights.md",
     "images": [
+      "/data/streams/2025_12_03_22_31_06/晚播总结.png",
+      "/data/streams/2025_12_03_22_31_06/下午播总结3.png",
+      "/data/streams/2025_12_03_22_31_06/下午播总结2.png",
+      "/data/streams/2025_12_03_22_31_06/Gemini_Generated_Image_rvkhhkrvkhhkrvkh_下午播总结.png",
       "/data/streams/2025_12_03_22_31_06/Gemini_Generated_Image_tsyyw9tsyyw9tsyy.png",
-      "/data/streams/2025_12_03_22_31_06/完播总结加上傻事环节.jpg"
+      "/data/streams/2025_12_03_22_31_06/完播总结加上傻事环节.jpg",
+      "/data/streams/2025_12_03_22_31_06/晚播总结.png"
     ]
   },
   {
@@ -1005,7 +1013,9 @@
     "xml": "/data/streams/2025_12_03_14_30_26/录制-25788785-20251203-143138-100-元气小鸟陪你上班.xml",
     "cover": "/data/streams/2025_12_03_14_30_26/录制-25788785-20251203-143138-100-元气小鸟陪你上班.cover.jpg",
     "highlights": "/data/streams/2025_12_03_14_30_26/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_12_03_14_30_26/下午播总结.png"
+    ]
   },
   {
     "id": "2025_12_02_19_51_05",
@@ -2494,7 +2504,19 @@
     "xml": "/data/streams/2025_09_13_01_08_53/2025_09_13_01_09_23_岁己三周年3D演出回后日谈_DDTV5_1.xml",
     "cover": "/data/streams/2025_09_13_01_08_53/录制-25788785-20250913-010907-539-岁己三周年3D演出回后日谈.cover.jpg",
     "highlights": "/data/streams/2025_09_13_01_08_53/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2025_09_13_01_08_53/2FA1AE77A076D816C6760A851A6079F8.jpg",
+      "/data/streams/2025_09_13_01_08_53/C678DCF869CEFEE0E91A2AECB398DE81.png",
+      "/data/streams/2025_09_13_01_08_53/078FE015410D0ECAD7BD72E8B46EC284.png",
+      "/data/streams/2025_09_13_01_08_53/038B7228EA15409C8AB4A1C7E2A130DB.png",
+      "/data/streams/2025_09_13_01_08_53/{AA5584B0-48C6-3DA0-9EBC-4318A452CCE9}.png",
+      "/data/streams/2025_09_13_01_08_53/【直播回放】岁己三周年3D演出回！ 2025年09月12日16点场.jpg",
+      "/data/streams/2025_09_13_01_08_53/1CE31457C36CBA9FA4B2513FABEA5206.jpg",
+      "/data/streams/2025_09_13_01_08_53/9DC0C36CAD191131C2E0B12E990E1F58.jpg",
+      "/data/streams/2025_09_13_01_08_53/{1CF14DB3-4CE1-D55B-FA98-F44E266C942C}.jpg",
+      "/data/streams/2025_09_13_01_08_53/{5EA2669F-3E69-9864-C2F1-F32CF0657FFB}.png",
+      "/data/streams/2025_09_13_01_08_53/{E0C51656-0C8F-1577-571F-7DE943C720EA}.jpg"
+    ]
   },
   {
     "id": "2025_09_12_19_55_33",
@@ -4461,9 +4483,7 @@
     "xml": "/data/streams/2025_03_29_19_32_52/2025_03_29_19_32_52_晚之播！岁己来袭——_DDTV5_2.xml",
     "cover": null,
     "highlights": null,
-    "images": [
-      "/data/streams/2025_03_29_19_32_52/晚播总结.png"
-    ]
+    "images": []
   },
   {
     "id": "2025_03_29_14_32_26",
@@ -4478,12 +4498,7 @@
     "xml": "/data/streams/2025_03_29_14_32_26/2025_03_29_14_32_26_午之播！岁己袭来——_DDTV5_1.xml",
     "cover": null,
     "highlights": null,
-    "images": [
-      "/data/streams/2025_03_29_14_32_26/Gemini_Generated_Image_rvkhhkrvkhhkrvkh_下午播总结.png",
-      "/data/streams/2025_03_29_14_32_26/下午播总结.png",
-      "/data/streams/2025_03_29_14_32_26/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场.jpg",
-      "/data/streams/2025_03_29_14_32_26/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场(1).jpg"
-    ]
+    "images": []
   },
   {
     "id": "2025_03_28_00_03_33",
@@ -4499,11 +4514,11 @@
     "cover": null,
     "highlights": null,
     "images": [
-      "/data/streams/2025_03_28_00_03_33/Gemini_Generated_Image_pe23dwpe23dwpe23_午台重制版.png",
-      "/data/streams/2025_03_28_00_03_33/Gemini_Generated_Image_3c6npw3c6npw3c6n_午台AI偷懒版.png",
+      "/data/streams/2025_03_28_00_03_33/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场(1).jpg",
+      "/data/streams/2025_03_28_00_03_33/【直播回放】忧郁元气神秘小鸟的 午台唱唱聊聊~ 2025年11月23日14点场.jpg",
       "/data/streams/2025_03_28_00_03_33/12月6日午台总结.png",
-      "/data/streams/2025_03_28_00_03_33/下午播总结3.png",
-      "/data/streams/2025_03_28_00_03_33/下午播总结2.png"
+      "/data/streams/2025_03_28_00_03_33/Gemini_Generated_Image_3c6npw3c6npw3c6n_午台AI偷懒版.png",
+      "/data/streams/2025_03_28_00_03_33/Gemini_Generated_Image_pe23dwpe23dwpe23_午台重制版.png"
     ]
   },
   {
@@ -4520,11 +4535,8 @@
     "cover": null,
     "highlights": "/data/streams/2025_03_21_19_30_54/highlights.md",
     "images": [
-      "/data/streams/2025_03_21_19_30_54/Gemini_Generated_Image_kdxlsokdxlsokdxl_晚台.png",
-      "/data/streams/2025_03_21_19_30_54/20251208晚安总结插画.png",
       "/data/streams/2025_03_21_19_30_54/12月6日晚台总结.png",
-      "/data/streams/2025_03_21_19_30_54/晚播总结插画.png",
-      "/data/streams/2025_03_21_19_30_54/晚播总结.png"
+      "/data/streams/2025_03_21_19_30_54/Gemini_Generated_Image_kdxlsokdxlsokdxl_晚台.png"
     ]
   }
 ]
