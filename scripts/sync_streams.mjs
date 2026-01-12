@@ -67,21 +67,31 @@ async function syncStreams() {
       // Done collecting titles for this folder
 
       // Collect all images in this folder
-      files.forEach(file => {
-        if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
-          if (!file.includes('cover')) {
-            const fullPath = path.join(fullSourcePath, file);
+      const collectImages = (dir) => {
+        const files = fs.readdirSync(dir);
+        files.forEach(file => {
+          const fullPath = path.join(dir, file);
+          try {
             const stats = fs.statSync(fullPath);
-            allImages.push({
-              name: file,
-              fullPath: fullPath,
-              mtime: stats.mtimeMs,
-              sourceDir: fullSourcePath,
-              assigned: false
-            });
+            if (stats.isDirectory()) {
+              collectImages(fullPath);
+            } else if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
+              if (!file.includes('cover')) {
+                allImages.push({
+                  name: file,
+                  fullPath: fullPath,
+                  mtime: stats.mtimeMs,
+                  sourceDir: dir,
+                  assigned: false
+                });
+              }
+            }
+          } catch (e) {
+            console.warn(`Could not stat file ${fullPath}: ${e.message}`);
           }
-        }
-      });
+        });
+      };
+      collectImages(fullSourcePath);
 
       // 2. Second Pass: Group files by stream prefix (YYYY_MM_DD_HH_mm_ss)
       files.forEach(file => {
@@ -253,11 +263,26 @@ async function syncStreams() {
       ? finalStreamGroups[validStreamIds[index + 1]].startTime
       : new Date(stream.startTime.getTime() + 12 * 3600 * 1000); // Default to 12 hours after if last stream
 
+    // First, assign keyword images
+    const keywordImages = allImages.filter(img =>
+      !img.assigned &&
+      (img.name.includes('午台') || img.name.includes('晚台'))
+    );
+    keywordImages.forEach(img => {
+      if ((img.name.includes('午台') && h < 18) || (img.name.includes('晚台') && h >= 18)) {
+        img.assigned = true;
+        const targetPath = path.join(targetDir, img.name);
+        if (!fs.existsSync(targetPath)) {
+          fs.copyFileSync(img.fullPath, targetPath);
+        }
+        streamData.images.push(`/data/streams/${streamId}/${img.name}`);
+      }
+    });
+
+    // Then, time window for remaining
     const timeWindowImages = allImages.filter(img =>
       !img.assigned &&
-      ((img.name.includes('午') && h < 18) ||
-       (img.name.includes('晚') && h >= 18) ||
-       (img.mtime >= stream.startTime.getTime() - 10 * 60 * 1000 && img.mtime < nextStreamStart.getTime()))
+      (img.mtime >= stream.startTime.getTime() - 10 * 60 * 1000 && img.mtime < nextStreamStart.getTime())
     );
 
     timeWindowImages.sort((a, b) => b.mtime - a.mtime);
