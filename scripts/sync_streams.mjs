@@ -335,6 +335,12 @@ async function syncStreams() {
       streamData.highlights = groupHighlights;
     }
 
+    if (streamData.highlights) {
+      const highlightsPath = path.join(targetDir, 'highlights.md');
+      fs.writeFileSync(highlightsPath, streamData.highlights);
+      streamData.highlights = `/data/streams/${streamId}/highlights.md`;
+    }
+
     allStreams.push(streamData);
   });
 

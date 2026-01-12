@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Button, Space, Card, Tag, Pagination, Calendar, Tooltip, ConfigProvider, theme, Radio, Modal, Image as AntImage } from 'antd';
-import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CoffeeOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined, LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined, CloseOutlined, PlayCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Typography, Button, Space, Card, Tag, Pagination, Calendar, ConfigProvider, theme, Modal, Image as AntImage } from 'antd';
+import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined, CloseOutlined, PlayCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
@@ -37,6 +37,38 @@ const ModalMarkdownComponents = {
   strong: ({ children }: { children?: React.ReactNode }) => <strong className="text-cyan-200 font-bold">{children}</strong>
 };
 
+const HighlightsDisplay = ({ highlights, components = MarkdownComponents }: { highlights: string | null, components?: any }) => {
+  const [content, setContent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!highlights) {
+      setContent(null);
+      return;
+    }
+    if (highlights.startsWith('/data/streams/')) {
+      setLoading(true);
+      fetch(highlights)
+        .then(res => res.text())
+        .then(text => setContent(text))
+        .catch(() => setContent('加载失败'))
+        .finally(() => setLoading(false));
+    } else {
+      setContent(highlights);
+    }
+  }, [highlights]);
+
+  if (loading) {
+    return <Text className="text-slate-400 font-bold tracking-widest uppercase text-xs">Loading Highlights...</Text>;
+  }
+
+  return content ? (
+    <ReactMarkdown components={components}>
+      {content}
+    </ReactMarkdown>
+  ) : '暂无 AI 总结摘要...';
+};
+
 export interface StreamData {
   id: string;
   title: string;
@@ -48,7 +80,7 @@ export interface StreamData {
   srt: string | null;
   xml: string | null;
   cover: string | null;
-  highlights: string | null;
+  highlights: string | null; // Now can be a path or content
   images: string[];
   replayUrl?: string;
   duration?: number;
@@ -80,25 +112,6 @@ const RecordsModule = () => {
   }, []);
 
   const getPeriodInfo = (time: string) => {
-    const hour = parseInt(time.split(':')[0]);
-    if (hour >= 5 && hour < 12) return {
-      label: '早台',
-      color: 'cyan',
-      tagColor: 'cyan',
-      icon: <ThunderboltOutlined />,
-      bg: 'from-cyan-500/20 to-emerald-500/20',
-      border: 'border-cyan-500/30',
-      accent: 'via-cyan-500'
-    };
-    if (hour >= 12 && hour < 18) return {
-      label: '午台',
-      color: 'orange',
-      tagColor: 'orange',
-      icon: <CoffeeOutlined />,
-      bg: 'from-orange-500/20 to-amber-500/20',
-      border: 'border-orange-500/30',
-      accent: 'via-orange-500'
-    };
     return {
       label: '晚台',
       color: 'purple',
@@ -110,181 +123,12 @@ const RecordsModule = () => {
     };
   };
 
-  const showStreamDetail = (stream: StreamData) => {
-    setSelectedStream(stream);
-    setIsModalOpen(true);
-  };
-
   const cellRender = (value: Dayjs, info: any) => {
-    if (info.type === 'month') {
-      const monthStr = value.format('YYYY-MM');
-      const monthStreams = streams.filter(s => s.date.startsWith(monthStr));
-      const count = monthStreams.length;
-
-      if (count === 0) return null;
-
-      const totalSeconds = monthStreams.reduce((acc, curr) => acc + (curr.duration || 0), 0);
-      const totalHours = (totalSeconds / 3600).toFixed(1);
-
-      return (
-        <div className="flex flex-col items-center justify-center p-2 rounded-xl mt-2 group hover:bg-white/10 transition-colors cursor-pointer h-full border border-white/5 bg-white/5">
-           <div className="text-xl font-black text-white mb-1">{count} <span className="text-xs font-normal text-slate-400">场</span></div>
-           <div className="text-xs text-cyan-300 font-mono font-bold bg-cyan-950/30 px-2 py-0.5 rounded-full border border-cyan-500/20 group-hover:border-cyan-400/50 transition-colors">
-              {totalHours} hrs
-           </div>
-        </div>
-      );
-    }
-
-    if (info.type === 'date') {
-      const dateStr = value.format('YYYY-MM-DD');
-      const dayStreams = streams
-        .filter(s => s.date === dateStr)
-        .sort((a, b) => a.time.localeCompare(b.time));
-
-      return (
-        <ul className="list-none p-0 flex flex-col gap-1.5 overflow-visible">
-          {dayStreams.map(item => {
-            const period = getPeriodInfo(item.time);
-            const hours = item.duration ? (item.duration / 3600).toFixed(1) : null;
-
-            return (
-              <li key={item.id} className="relative group">
-                <div
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     showStreamDetail(item);
-                   }}
-                   onKeyDown={(e) => {
-                     if (e.key === 'Enter' || e.key === ' ') {
-                       e.preventDefault();
-                       showStreamDetail(item);
-                     }
-                   }}
-                   role="button"
-                   tabIndex={0}
-                   className={`
-                    stream-calendar-item rounded-lg p-1.5 transition-all duration-300 border cursor-pointer hover:scale-[1.02] active:scale-95
-                    ${period.label === '早台' ? 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-400/50' : ''}
-                    ${period.label === '午台' ? 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-400/50' : ''}
-                    ${period.label === '晚台' ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-400/50' : ''}
-                  `}
-                >
-                  <Tooltip title={`${item.time} ${item.title}`} placement="top" overlayClassName="z-[9999]">
-                     <div className="flex flex-col gap-1 w-full overflow-hidden">
-                        <div className="flex items-center justify-between gap-1">
-                           <span className={`text-[10px] font-mono font-bold ${
-                             period.label === '早台' ? 'text-cyan-400' :
-                             period.label === '午台' ? 'text-orange-400' : 'text-purple-400'
-                           }`}>
-                              {item.startTime}
-                           </span>
-                           {hours && (
-                             <span className="text-[9px] opacity-40 font-mono text-white">
-                                {hours}h
-                             </span>
-                           )}
-                        </div>
-                        <span className="text-[11px] text-slate-200/90 leading-tight line-clamp-2 break-all">{item.title}</span>
-                     </div>
-                  </Tooltip>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      );
-    }
-
     return info.originNode;
   };
 
   const calendarHeaderRender = ({ value, type, onChange, onTypeChange }: any) => {
-    const today = dayjs();
-    const isFutureYear = (val: Dayjs) => val.year() >= today.year();
-    const isFutureMonth = (val: Dayjs) => val.year() > today.year() || (val.year() === today.year() && val.month() >= today.month());
-
-    return (
-      <div className="flex items-center justify-between p-4 mb-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
-        <div className="flex items-center gap-6">
-          <Space size="large">
-             <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
-                <Button
-                   size="small"
-                   type="text"
-                   icon={<DoubleLeftOutlined />}
-                   onClick={() => onChange(value.clone().subtract(1, 'year'))}
-                   className="text-slate-400 hover:text-cyan-400 hover:bg-white/10"
-                />
-                <Button
-                   size="small"
-                   type="text"
-                   icon={<LeftOutlined />}
-                   onClick={() => onChange(value.clone().subtract(1, 'month'))}
-                   className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${type === 'year' ? 'hidden' : ''}`}
-                />
-             </div>
-
-             <div className="flex flex-col items-center min-w-[120px]">
-                <span className="text-3xl font-black text-white leading-none font-mono tracking-tighter glow-text">
-                   {value.format('YYYY')}
-                </span>
-                {type === 'month' && (
-                   <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] mt-1.5 opacity-80">
-                      {value.format('MMMM')}
-                   </span>
-                )}
-             </div>
-
-             {!(isFutureYear(value.clone()) || (type === 'year' && value.year() === today.year()) || (type === 'month' && isFutureMonth(value.clone()))) && (
-               <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
-                  <Button
-                     size="small"
-                     type="text"
-                     icon={<RightOutlined />}
-                     onClick={() => {
-                         const next = value.clone().add(1, 'month');
-                         onChange(next.isAfter(today) ? today : next);
-                     }}
-                     className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${type === 'year' || isFutureMonth(value.clone()) ? 'hidden' : ''}`}
-                  />
-                  <Button
-                     size="small"
-                     type="text"
-                     icon={<DoubleRightOutlined />}
-                     onClick={() => {
-                         const next = value.clone().add(1, 'year');
-                         onChange(next.isAfter(today) ? today : next);
-                     }}
-                     className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${isFutureYear(value.clone()) ? 'hidden' : ''}`}
-                  />
-               </div>
-             )}
-          </Space>
-        </div>
-
-        <div className="flex items-center gap-4">
-           <Button
-              type="text"
-              size="large"
-              icon={<HistoryOutlined />}
-              className="text-cyan-400/60 hover:text-cyan-400 font-black tracking-widest text-xs flex items-center gap-2 bg-white/5 px-6 rounded-xl border border-white/5 hover:border-cyan-500/30 transition-all hover:scale-105 active:scale-95"
-              onClick={() => onChange(today)}
-           >
-             RETURN TO TODAY
-           </Button>
-        </div>
-
-        <Radio.Group
-           value={type}
-           onChange={e => onTypeChange(e.target.value)}
-           className="custom-calendar-radio"
-        >
-          <Radio.Button value="month" className="rounded-l-xl">MONTH</Radio.Button>
-          <Radio.Button value="year" className="rounded-r-xl">YEAR</Radio.Button>
-        </Radio.Group>
-      </div>
-    );
+    return <div />;
   };
 
   const paginatedStreams = streams.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -396,13 +240,7 @@ const RecordsModule = () => {
 
                       <div className="flex-1 bg-black/40 backdrop-blur-md p-5 rounded-2xl mb-6 overflow-y-auto custom-scrollbar border border-white/10 shadow-inner group/summary">
                         <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed opacity-80 group-hover/summary:opacity-100 transition-opacity">
-                          {stream.highlights ? (
-                            <ReactMarkdown
-                              components={MarkdownComponents}
-                            >
-                              {stream.highlights}
-                            </ReactMarkdown>
-                          ) : '暂无 AI 总结摘要...'}
+                          <HighlightsDisplay highlights={stream.highlights} />
                         </article>
                       </div>
 
@@ -487,13 +325,15 @@ const RecordsModule = () => {
                 }}
               >
                 <Calendar
-                  headerRender={calendarHeaderRender}
-                  fullscreen={true}
-                  cellRender={cellRender as any}
-                  onPanelChange={(value: any, mode: any) => {
+                  value={calendarValue}
+                  onChange={setCalendarValue}
+                  mode={calendarMode}
+                  onPanelChange={(value, mode) => {
                     setCalendarMode(mode);
                     setCalendarValue(value);
                   }}
+                  cellRender={cellRender}
+                  headerRender={calendarHeaderRender}
                   className="bg-transparent"
                 />
               </ConfigProvider>
@@ -523,13 +363,14 @@ const RecordsModule = () => {
             }
         }}
       >
-        {selectedStream && (() => {
+        {(() => {
+          if (!selectedStream) return null;
           const period = getPeriodInfo(selectedStream.time);
           return (
-            <div className="flex flex-col md:flex-row h-full max-h-[90vh] overflow-hidden">
-              {/* Left Column: Visuals */}
-              <div className="w-full md:w-[45%] bg-slate-900/50 relative overflow-hidden border-r border-white/5 group shrink-0">
-                <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20`} />
+            <div className="flex flex-col md:flex-row h-full max-h-[80vh] overflow-hidden">
+              {/* Left Column: Image */}
+              <div className="w-full md:w-[45%] shrink-0 h-[300px] md:h-full bg-slate-900/50 relative overflow-hidden border-r border-white/5">
+                <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20 pointer-events-none`} />
                 <div className="h-full w-full">
                   <AntImage.PreviewGroup>
                     {selectedStream.images && selectedStream.images.length > 0 ? (
@@ -537,14 +378,14 @@ const RecordsModule = () => {
                         src={selectedStream.images[0]}
                         alt={selectedStream.title}
                         className="!h-full !w-full object-cover animate-slow-pan"
-                        wrapperClassName="h-full w-full block h-full"
+                        wrapperClassName="h-full w-full block"
                       />
                     ) : selectedStream.cover ? (
                       <AntImage
                         src={selectedStream.cover}
                         alt={selectedStream.title}
                         className="!h-full !w-full object-cover opacity-80 animate-slow-pan"
-                        wrapperClassName="h-full w-full block h-full"
+                        wrapperClassName="h-full w-full block"
                       />
                     ) : (
                       <div className="flex items-center justify-center p-12 text-slate-500 font-bold h-full">NO VISUAL</div>
@@ -596,13 +437,7 @@ const RecordsModule = () => {
                       <span className="text-[11px] font-black uppercase tracking-widest">AI Highlights</span>
                    </div>
                    <article className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans leading-relaxed">
-                     {selectedStream.highlights ? (
-                       <ReactMarkdown
-                         components={ModalMarkdownComponents}
-                       >
-                         {selectedStream.highlights}
-                       </ReactMarkdown>
-                     ) : '暂无 AI 总结摘要...'}
+                     <HighlightsDisplay highlights={selectedStream.highlights} components={ModalMarkdownComponents} />
                    </article>
                 </div>
 
