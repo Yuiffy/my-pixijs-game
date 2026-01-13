@@ -67,12 +67,12 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
         .sort((a, b) => a.time.localeCompare(b.time));
 
       if (dayStreams.length === 0) {
-        return info.originNode;
+        return null;
       }
 
       return (
         <div className="relative">
-          {info.originNode}
+          {/* {info.originNode} */}
           <ul className="list-none p-0 flex flex-col gap-1.5 overflow-visible mt-1">
             {dayStreams.slice(0, 2).map((stream, index) => {
               const period = getPeriodInfo(stream.time);
