@@ -2,6 +2,25 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+/**
+ * 直播同步脚本
+ *
+ * 功能：从源目录同步直播文件到目标目录，生成streams.json供前端使用
+ *
+ * 支持两种模式：
+ * 1. 增量处理（默认）：只处理从最新已同步直播之后的数据，提高日常更新效率
+ * 2. 全量处理（--full）：处理所有历史数据，适用于首次运行或需要重新处理的情况
+ *
+ * 可选参数：
+ * --full: 启用全量处理模式
+ * --force: 强制重新处理所有数据（在全量模式下有效）
+ *
+ * 使用示例：
+ * node sync_streams.mjs                    # 增量处理（默认）
+ * node sync_streams.mjs --full             # 全量处理
+ * node sync_streams.mjs --full --force     # 强制全量重新处理
+ */
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.join(__dirname, '..');
 const SOURCE_BASE_DIRS = [
@@ -13,11 +32,74 @@ const TARGET_BASE_DIR = path.join(ROOT_DIR, 'public/data/streams');
 const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
 const FILENAME_REGEX_LUZHI = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg|txt|md)/;
 
+// 解析命令行参数
+function parseArgs() {
+  const args = process.argv.slice(2);
+  // 默认改为增量处理，除非显式指定 --full
+  const mode = args.includes('--full') ? 'full' : 'incremental';
+  const force = args.includes('--force');
+  return { mode, force };
+}
+
+// 获取最新已同步直播的时间戳
+function getLatestSyncedTimestamp() {
+  const streamsJsonPath = path.join(TARGET_BASE_DIR, 'streams.json');
+  if (!fs.existsSync(streamsJsonPath)) {
+    return null; // 如果还没有同步过任何数据，返回null表示全量处理
+  }
+
+  try {
+    const content = fs.readFileSync(streamsJsonPath, 'utf-8');
+    const streams = JSON.parse(content);
+    if (streams.length === 0) {
+      return null;
+    }
+
+    // 找到最新的直播（按id排序，id是时间戳格式）
+    const latestStream = streams.reduce((latest, current) => {
+      return current.id > latest.id ? current : latest;
+    });
+
+    // 将id转换为Date对象
+    const [Y, M, D, h, m, s] = latestStream.id.split('_').map(Number);
+    return new Date(Y, M - 1, D, h, m, s);
+  } catch (error) {
+    console.warn(`无法读取streams.json: ${error.message}`);
+    return null;
+  }
+}
+
 if (!fs.existsSync(TARGET_BASE_DIR)) {
   fs.mkdirSync(TARGET_BASE_DIR, { recursive: true });
 }
 
 async function syncStreams() {
+  const { mode, force } = parseArgs();
+  console.log(`=== 同步模式: ${mode === 'incremental' ? '增量处理' : '全量处理'} ===`);
+  if (force) {
+    console.log('=== 强制模式: 将重新处理所有数据 ===');
+  }
+
+  const latestSyncedTime = mode === 'incremental' ? getLatestSyncedTimestamp() : null;
+  if (mode === 'incremental' && latestSyncedTime) {
+    console.log(`增量处理: 从 ${latestSyncedTime.toISOString()} 之后的数据开始处理`);
+  } else if (mode === 'incremental' && !latestSyncedTime) {
+    console.log('增量处理: 未找到已同步数据，将执行全量处理');
+  }
+
+  // 加载现有的streams数据（用于增量模式合并）
+  let existingStreams = [];
+  const streamsJsonPath = path.join(TARGET_BASE_DIR, 'streams.json');
+  if (fs.existsSync(streamsJsonPath)) {
+    try {
+      const content = fs.readFileSync(streamsJsonPath, 'utf-8');
+      existingStreams = JSON.parse(content);
+      console.log(`已加载 ${existingStreams.length} 个现有直播数据`);
+    } catch (error) {
+      console.warn(`无法读取现有streams.json: ${error.message}`);
+    }
+  }
+
   const allStreams = [];
   const allStreamGroups = {};
   const allPotentialTitles = [];
@@ -59,6 +141,13 @@ async function syncStreams() {
           title = t;
         }
 
+        // 增量模式过滤：只处理晚于最新同步时间的文件
+        if (mode === 'incremental' && latestSyncedTime && timestamp) {
+          if (timestamp.getTime() <= latestSyncedTime.getTime()) {
+            return; // 跳过旧文件
+          }
+        }
+
         if (timestamp && title && !title.includes('摸鱼茶水间') && !title.includes('无题')) { // Skip default placeholders if possible
            allPotentialTitles.push({ timestamp, title, mtime: stats.mtimeMs });
         }
@@ -77,6 +166,13 @@ async function syncStreams() {
               collectImages(fullPath);
             } else if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
               if (!file.includes('cover')) {
+                // 增量模式过滤：只收集修改时间晚于最新同步时间的图片
+                if (mode === 'incremental' && latestSyncedTime) {
+                  if (stats.mtimeMs <= latestSyncedTime.getTime()) {
+                    return; // 跳过旧图片
+                  }
+                }
+
                 // Debug logging for 2026_01_09 images
                 if (file.includes('Gemini_Generated_Image') && dir.includes('2026_01_09')) {
                   console.log(`Collecting image: ${file} from ${dir}`);
@@ -127,6 +223,13 @@ async function syncStreams() {
           dateTimeStr = `${Y}_${M}_${D}_${h}_${m}_${s}`;
           titlePart = t;
           startTime = new Date(Number(Y), Number(M) - 1, Number(D), Number(h), Number(m), Number(s));
+        }
+
+        // 增量模式过滤：只处理晚于最新同步时间的直播
+        if (mode === 'incremental' && latestSyncedTime && startTime) {
+          if (startTime.getTime() <= latestSyncedTime.getTime()) {
+            return; // 跳过旧直播
+          }
         }
 
         if (dateTimeStr) {
@@ -709,14 +812,35 @@ async function syncStreams() {
     }
   });
 
-  allStreams.sort((a, b) => b.id.localeCompare(a.id));
+  // 在增量模式下，合并现有数据和新数据
+  let finalStreams = allStreams;
+  if (mode === 'incremental' && existingStreams.length > 0) {
+    console.log(`\n=== 合并现有数据和新数据 ===`);
+
+    // 创建现有streams的映射，便于查找和更新
+    const existingStreamsMap = new Map();
+    existingStreams.forEach(stream => {
+      existingStreamsMap.set(stream.id, stream);
+    });
+
+    // 更新或添加新streams
+    allStreams.forEach(newStream => {
+      existingStreamsMap.set(newStream.id, newStream);
+    });
+
+    // 转换回数组并排序
+    finalStreams = Array.from(existingStreamsMap.values());
+    console.log(`合并后总计: ${finalStreams.length} 个直播数据 (原有: ${existingStreams.length}, 新增: ${allStreams.length})`);
+  }
+
+  finalStreams.sort((a, b) => b.id.localeCompare(a.id));
 
   fs.writeFileSync(
     path.join(TARGET_BASE_DIR, 'streams.json'),
-    JSON.stringify(allStreams, null, 2)
+    JSON.stringify(finalStreams, null, 2)
   );
 
-  console.log(`Synced ${allStreams.length} valid streams with distributed images.`);
+  console.log(`同步完成: ${finalStreams.length} 个直播数据 (${allStreams.length} 个新处理)`);
 }
 
 syncStreams().catch(console.error);
