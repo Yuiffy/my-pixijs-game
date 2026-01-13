@@ -273,13 +273,19 @@ async function syncStreams() {
   const sortedKeys = Object.keys(allStreamGroups).sort((a, b) => allStreamGroups[a].startTime - allStreamGroups[b].startTime);
   const mergedStreamGroups = {};
 
+  // Debug logging for duplicate detection
+  console.log(`\n=== 去重检测 ===`);
+  console.log(`检测到 ${sortedKeys.length} 个原始直播组`);
+
   sortedKeys.forEach(key => {
     const current = allStreamGroups[key];
     let merged = false;
     for (const mKey in mergedStreamGroups) {
       const existing = mergedStreamGroups[mKey];
+      const timeDiff = Math.abs(current.startTime.getTime() - existing.startTime.getTime());
       // If within 10 minutes, merge
-      if (Math.abs(current.startTime.getTime() - existing.startTime.getTime()) < 10 * 60 * 1000) {
+      if (timeDiff < 10 * 60 * 1000) {
+        console.log(`合并直播组: ${key} (${current.startTime.toISOString()}) -> ${mKey} (${existing.startTime.toISOString()}), 时间差: ${timeDiff/1000}秒`);
         existing.files.push(...current.files);
         if (current.duration > existing.duration) existing.duration = current.duration;
         // Keep the earliest startTime/ID as the anchor
@@ -297,6 +303,8 @@ async function syncStreams() {
       mergedStreamGroups[key] = current;
     }
   });
+
+  console.log(`去重后剩余 ${Object.keys(mergedStreamGroups).length} 个直播组`);
 
   const finalStreamGroups = mergedStreamGroups;
   const validStreamIds = Object.keys(finalStreamGroups)
