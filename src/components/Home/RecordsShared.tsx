@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
-import { StarOutlined } from '@ant-design/icons';
+import { StarOutlined, ThunderboltOutlined, CoffeeOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -85,23 +85,29 @@ export const HighlightsDisplay = ({ highlights, components = MarkdownComponents 
 
 // 获取时间段信息的函数
 export const getPeriodInfo = (time?: string) => {
-  // 根据时间判断是早台还是晚台
-  const hour = time ? parseInt(time.split(':')[0]) : 20; // 默认晚台
+  // 根据时间判断是早播、午播还是晚播
+  const hour = time ? parseInt(time.split(':')[0]) : 20; // 默认晚播
 
-  if (hour < 12) {
-    return {
-      label: '早台',
-      color: 'cyan',
-      tagColor: 'cyan',
-      icon: <StarOutlined />,
-      bg: 'from-cyan-500/20 to-blue-500/20',
-      border: 'border-cyan-500/30',
-      accent: 'via-cyan-500'
-    };
-  }
-
+  if (hour >= 5 && hour < 12) return {
+    label: '早播',
+    color: 'cyan',
+    tagColor: 'cyan',
+    icon: <ThunderboltOutlined />,
+    bg: 'from-cyan-500/20 to-emerald-500/20',
+    border: 'border-cyan-500/30',
+    accent: 'via-cyan-500'
+  };
+  if (hour >= 12 && hour < 18) return {
+    label: '午播',
+    color: 'orange',
+    tagColor: 'orange',
+    icon: <CoffeeOutlined />,
+    bg: 'from-orange-500/20 to-amber-500/20',
+    border: 'border-orange-500/30',
+    accent: 'via-orange-500'
+  };
   return {
-    label: '晚台',
+    label: '晚播',
     color: 'purple',
     tagColor: 'purple',
     icon: <StarOutlined />,

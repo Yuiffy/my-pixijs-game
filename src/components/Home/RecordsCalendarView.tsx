@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Button, Select, Calendar, ConfigProvider, theme } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { Button, Select, Calendar, ConfigProvider, theme, Radio, Tooltip, Space } from 'antd';
+import { LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined, HistoryOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localeData from 'dayjs/plugin/localeData';
-import { StreamData } from './RecordsShared';
+import { StreamData, getPeriodInfo } from './RecordsShared';
 
 // Extend dayjs with required plugins for Ant Design Calendar
 dayjs.extend(weekday);
@@ -40,147 +40,187 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
   };
 
   const cellRender = (value: Dayjs, info: any) => {
-    const dateStr = value.format('YYYY-MM-DD');
-    const dayStreams = streams.filter(stream => stream.date === dateStr);
+    if (info.type === 'month') {
+      const monthStr = value.format('YYYY-MM');
+      const monthStreams = streams.filter(s => s.date.startsWith(monthStr));
+      const count = monthStreams.length;
 
-    if (dayStreams.length === 0) {
-      return info.originNode;
+      if (count === 0) return null;
+
+      const totalSeconds = monthStreams.reduce((acc, curr) => acc + (curr.duration || 0), 0);
+      const totalHours = (totalSeconds / 3600).toFixed(1);
+
+      return (
+        <div className="flex flex-col items-center justify-center p-2 rounded-xl mt-2 group hover:bg-white/10 transition-colors cursor-pointer h-full border border-white/5 bg-white/5">
+          <div className="text-xl font-black text-white mb-1">{count} <span className="text-xs font-normal text-slate-400">场</span></div>
+          <div className="text-xs text-cyan-300 font-mono font-bold bg-cyan-950/30 px-2 py-0.5 rounded-full border border-cyan-500/20 group-hover:border-cyan-400/50 transition-colors">
+            {totalHours} hrs
+          </div>
+        </div>
+      );
     }
 
-    const isToday = value.isSame(dayjs(), 'day');
+    if (info.type === 'date') {
+      const dateStr = value.format('YYYY-MM-DD');
+      const dayStreams = streams
+        .filter(s => s.date === dateStr)
+        .sort((a, b) => a.time.localeCompare(b.time));
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleDateSelect(value);
+      if (dayStreams.length === 0) {
+        return info.originNode;
       }
-    };
 
-    return (
-      <div
-        className="relative cursor-pointer hover:bg-white/5 transition-colors rounded"
-        onClick={() => handleDateSelect(value)}
-        onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={0}
-        aria-label={`查看${dateStr}的直播`}
-      >
-        {info.originNode}
-        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-0.5 p-1">
-          {dayStreams.slice(0, 2).map((stream, index) => (
-            <div
-              key={stream.id}
-              className={`w-full h-1.5 rounded-full ${index === 0 ? 'bg-cyan-500' : 'bg-pink-500'} ${isToday ? 'opacity-100' : 'opacity-80'}`}
-              title={`${stream.title} (${stream.startTime})`}
-            />
-          ))}
-          {dayStreams.length > 2 && (
-            <div className="text-[8px] text-slate-400 font-bold">+{dayStreams.length - 2}</div>
-          )}
+      return (
+        <div className="relative">
+          {info.originNode}
+          <ul className="list-none p-0 flex flex-col gap-1.5 overflow-visible mt-1">
+            {dayStreams.slice(0, 2).map((stream, index) => {
+              const period = getPeriodInfo(stream.time);
+              const hours = stream.duration ? (stream.duration / 3600).toFixed(1) : null;
+
+              return (
+                <li key={stream.id} className="relative group">
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStreamSelect(stream);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onStreamSelect(stream);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className={`
+                      stream-calendar-item rounded-lg p-1.5 transition-all duration-300 border cursor-pointer hover:scale-[1.02] active:scale-95
+                      ${period.label === '早播' ? 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-400/50' : ''}
+                      ${period.label === '午播' ? 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-400/50' : ''}
+                      ${period.label === '晚播' ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-400/50' : ''}
+                    `}
+                  >
+                    <Tooltip title={`${stream.time} ${stream.title}`} placement="top" overlayClassName="z-[9999]">
+                      <div className="flex flex-col gap-1 w-full overflow-hidden">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className={`text-[10px] font-mono font-bold ${
+                            period.label === '早播' ? 'text-cyan-400' :
+                            period.label === '午播' ? 'text-orange-400' : 'text-purple-400'
+                          }`}>
+                            {stream.startTime}
+                          </span>
+                          {hours && (
+                            <span className="text-[9px] opacity-40 font-mono text-white">
+                              {hours}h
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-200/90 leading-tight line-clamp-2 break-all">{stream.title}</span>
+                      </div>
+                    </Tooltip>
+                  </div>
+                </li>
+              );
+            })}
+            {dayStreams.length > 2 && (
+              <div className="text-[8px] text-slate-400 font-bold text-center">+{dayStreams.length - 2}</div>
+            )}
+          </ul>
         </div>
-      </div>
-    );
+      );
+    }
+
+    return info.originNode;
+  };
+
+  const isFutureYear = (value: Dayjs) => {
+    const today = dayjs();
+    return value.year() > today.year() || (value.year() === today.year() && value.month() > today.month());
   };
 
   const calendarHeaderRender = ({ value, type, onChange, onTypeChange }: any) => {
-    const start = 0;
-    const end = 12;
-    const monthOptions: React.ReactNode[] = [];
-    const current = value.clone();
-    const localeDataInstance = value.localeData();
-    const months: string[] = [];
-    for (let i = 0; i < 12; i++) {
-      current.month(i);
-      months.push(localeDataInstance.monthsShort(current));
-    }
-
-    for (let index = start; index < end; index++) {
-      monthOptions.push(
-        <Select.Option key={index} value={index} className="month-item">
-          {months[index]}
-        </Select.Option>,
-      );
-    }
-
-    const month = value.month();
-    const year = value.year();
-    const options: React.ReactNode[] = [];
-    for (let i = year - 10; i < year + 10; i += 1) {
-      options.push(
-        <Select.Option key={i} value={i} className="year-item">
-          {i}
-        </Select.Option>,
-      );
-    }
+    const today = dayjs();
+    const isFutureYear = (val: Dayjs) => val.year() >= today.year();
+    const isFutureMonth = (val: Dayjs) => val.year() > today.year() || (val.year() === today.year() && val.month() >= today.month());
 
     return (
-      <div className="flex items-center justify-between mb-6 p-4 bg-white/5 rounded-2xl border border-white/10">
+      <div className="flex items-center justify-between p-4 mb-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
+        <div className="flex items-center gap-6">
+          <Space size="large">
+            <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
+              <Button
+                size="small"
+                type="text"
+                icon={<DoubleLeftOutlined />}
+                onClick={() => onChange(value.clone().subtract(1, 'year'))}
+                className="text-slate-400 hover:text-cyan-400 hover:bg-white/10"
+              />
+              <Button
+                size="small"
+                type="text"
+                icon={<LeftOutlined />}
+                onClick={() => onChange(value.clone().subtract(1, 'month'))}
+                className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${type === 'year' ? 'hidden' : ''}`}
+              />
+            </div>
+
+            <div className="flex flex-col items-center min-w-[120px]">
+              <span className="text-3xl font-black text-white leading-none font-mono tracking-tighter glow-text">
+                {value.format('YYYY')}
+              </span>
+              {type === 'month' && (
+                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] mt-1.5 opacity-80">
+                  {value.format('MMMM')}
+                </span>
+              )}
+            </div>
+
+            {!(isFutureYear(value.clone()) || (type === 'year' && value.year() === today.year()) || (type === 'month' && isFutureMonth(value.clone()))) && (
+              <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<RightOutlined />}
+                  onClick={() => {
+                    const next = value.clone().add(1, 'month');
+                    onChange(next.isAfter(today) ? today : next);
+                  }}
+                  className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${type === 'year' || isFutureMonth(value.clone()) ? 'hidden' : ''}`}
+                />
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<DoubleRightOutlined />}
+                  onClick={() => {
+                    const next = value.clone().add(1, 'year');
+                    onChange(next.isAfter(today) ? today : next);
+                  }}
+                  className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${isFutureYear(value.clone()) ? 'hidden' : ''}`}
+                />
+              </div>
+            )}
+          </Space>
+        </div>
+
         <div className="flex items-center gap-4">
           <Button
             type="text"
-            icon={<LeftOutlined />}
-            onClick={() => {
-              const now = value.clone();
-              now.month(month - 1);
-              onChange(now);
-            }}
-            className="text-slate-300 hover:text-cyan-400"
-          />
-          <div className="flex items-center gap-2">
-            <Select
-              size="small"
-              dropdownMatchSelectWidth={false}
-              className="my-year-select bg-white/10 border-white/20 text-white"
-              value={year}
-              onChange={(newYear: number) => {
-                const now = value.clone().year(newYear);
-                onChange(now);
-              }}
-            >
-              {options}
-            </Select>
-            <Select
-              size="small"
-              dropdownMatchSelectWidth={false}
-              value={month}
-              onChange={(selectedMonth: number) => {
-                const newValue = value.clone();
-                newValue.month(selectedMonth);
-                onChange(newValue);
-              }}
-              className="my-month-select bg-white/10 border-white/20 text-white"
-            >
-              {monthOptions}
-            </Select>
-          </div>
-          <Button
-            type="text"
-            icon={<RightOutlined />}
-            onClick={() => {
-              const now = value.clone();
-              now.month(month + 1);
-              onChange(now);
-            }}
-            className="text-slate-300 hover:text-cyan-400"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            type={type === 'month' ? 'primary' : 'default'}
-            size="small"
-            onClick={() => onTypeChange('month')}
-            className={type === 'month' ? 'bg-cyan-600' : 'bg-white/10 text-slate-300'}
+            size="large"
+            icon={<HistoryOutlined />}
+            className="text-cyan-400/60 hover:text-cyan-400 font-black tracking-widest text-xs flex items-center gap-2 bg-white/5 px-6 rounded-xl border border-white/5 hover:border-cyan-500/30 transition-all hover:scale-105 active:scale-95"
+            onClick={() => onChange(today)}
           >
-            月视图
+            返回今天
           </Button>
-          <Button
-            type={type === 'year' ? 'primary' : 'default'}
-            size="small"
-            onClick={() => onTypeChange('year')}
-            className={type === 'year' ? 'bg-pink-600' : 'bg-white/10 text-slate-300'}
+
+          <Radio.Group
+            value={type}
+            onChange={e => onTypeChange(e.target.value)}
+            className="custom-calendar-radio"
           >
-            年视图
-          </Button>
+            <Radio.Button value="month" className="rounded-l-xl">月视图</Radio.Button>
+            <Radio.Button value="year" className="rounded-r-xl">年视图</Radio.Button>
+          </Radio.Group>
         </div>
       </div>
     );
@@ -209,6 +249,7 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
               cellRender={cellRender}
               headerRender={calendarHeaderRender}
               className="bg-transparent"
+              fullscreen={true}
             />
           </ConfigProvider>
         </div>
