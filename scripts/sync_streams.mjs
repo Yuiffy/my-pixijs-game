@@ -235,6 +235,36 @@ async function syncStreams() {
     }
   });
 
+  // First, group streams by date for balanced image distribution
+  const streamsByDate = {};
+  validStreamIds.forEach(streamId => {
+    const stream = finalStreamGroups[streamId];
+    if (!streamsByDate[stream.date]) {
+      streamsByDate[stream.date] = [];
+    }
+    streamsByDate[stream.date].push(streamId);
+  });
+
+  // Count available images for each date to enable better balanced distribution
+  const availableImagesByDate = {};
+  allImages.forEach(img => {
+    const datePartMatch = img.name.match(/(\d{4}_\d{2}_\d{2})/);
+    let dateStr = null;
+    if (datePartMatch) {
+      dateStr = datePartMatch[1].replace(/_/g, '-');
+    } else {
+      // Fallback to sourceDir
+      const dirMatch = img.sourceDir.match(/(\d{4}_\d{2}_\d{2})/);
+      if (dirMatch) {
+        dateStr = dirMatch[1].replace(/_/g, '-');
+      }
+    }
+
+    if (dateStr) {
+      availableImagesByDate[dateStr] = (availableImagesByDate[dateStr] || 0) + 1;
+    }
+  });
+
   // Process each final stream group
   validStreamIds.forEach((streamId, index) => {
     const stream = finalStreamGroups[streamId];
@@ -275,136 +305,94 @@ async function syncStreams() {
     streamData.startTime = stream.time.split(':').slice(0, 2).join(':');
     streamData.endTime = endDate.toTimeString().split(' ')[0].split(':').slice(0, 2).join(':');
 
+    // Calculate balanced image distribution for streams on the same date
+    const streamsOnSameDate = streamsByDate[stream.date] || [];
+    const totalStreamsOnDate = streamsOnSameDate.length;
+
+    // Calculate fair distribution for this stream
+    const maxImagesPerStream = 5;
+    let maxImagesForThisStream = maxImagesPerStream;
+
+    if (totalStreamsOnDate > 1) {
+      // For multiple streams on the same date, ensure fair distribution
+      // First, ensure each stream gets at least one image
+      const minImagesPerStream = 1;
+
+      // Get actual available images for this date
+      const actualAvailableImages = availableImagesByDate[stream.date] || 0;
+
+      // Calculate fair distribution: total images / total streams
+      // If we have 2 images and 2 streams, fair limit is 1.
+      const fairImagesPerStream = Math.max(minImagesPerStream, Math.ceil(actualAvailableImages / totalStreamsOnDate));
+
+      // Limit this stream to fair distribution
+      maxImagesForThisStream = Math.min(maxImagesPerStream, fairImagesPerStream);
+
+      if (streamId.includes('2026_01_12') || streamId.includes('2026_01_09')) {
+        console.log(`Dynamic balanced distribution for ${streamId}:`);
+        console.log(`  Actual images on ${stream.date}: ${actualAvailableImages}`);
+        console.log(`  Fair limit: ${maxImagesForThisStream}`);
+      }
+    }
+
+    // Debug logging for balanced distribution in filename matching
+    if (streamId.includes('2026_01_09') || streamId.includes('2026_01_12') || streamId.includes('2026_01_05')) {
+      console.log(`\nFilename matching balanced distribution for ${streamId}:`);
+      console.log(`  Total streams on ${stream.date}: ${totalStreamsOnDate}`);
+      console.log(`  Max images for this stream: ${maxImagesForThisStream}`);
+    }
+
     // Assign images to this stream
     // 1. Filename matching - more flexible matching
     stream.files.forEach(({ file }) => {
       const videoBase = path.parse(file).name;
-      // Try multiple matching strategies
+      const datePart = streamId.substring(0, 10); // YYYY_MM_DD
+
       allImages.forEach(img => {
-        // Debug logging for 2026_01_09 keyword images
-        if (streamId.includes('2026_01_09') && img.name.includes('Gemini_Generated_Image')) {
-          console.log(`\nChecking image ${img.name} for stream ${streamId}`);
-          console.log(`  img.assigned: ${img.assigned}`);
-          console.log(`  img.sourceDir: ${img.sourceDir}`);
+        // Skip if this stream already has enough images
+        if (streamData.images.length >= maxImagesForThisStream) {
+          return;
         }
 
-        // Check if this image should be reassigned (if it was previously assigned to wrong stream)
-        // For keyword images (午台/晚台), always allow reassignment if they match better
         const hasKeyword = img.name.includes('午台') || img.name.includes('晚台');
         const isMorningStream = h < 18;
         const hasMorningKeyword = img.name.includes('午台');
         const hasEveningKeyword = img.name.includes('晚台');
         const keywordMatchesThisStream = (isMorningStream && hasMorningKeyword) || (!isMorningStream && hasEveningKeyword);
-
-        // Check if image is from the same date as this stream
-        const datePart = streamId.substring(0, 10); // YYYY_MM_DD
-        // Check if sourceDir contains the date in either format (with or without underscores)
         const imageDateMatch = img.sourceDir.includes(datePart) || img.sourceDir.includes(datePart.replace(/_/g, ''));
 
-        // Determine if we should reassign this image
         let shouldReassign = false;
         if (img.assigned && hasKeyword) {
-          // For keyword images, always allow reassignment if they match this stream better
-          // This ensures keyword images are assigned to the correct date and time slot
-          const previouslyAssignedStreamDate = img.sourceDir.match(/\d{4}_\d{2}_\d{2}/);
-          const currentStreamDate = streamId.substring(0, 10);
-          const wasAssignedToDifferentDate = previouslyAssignedStreamDate &&
-            previouslyAssignedStreamDate[0] !== currentStreamDate.replace(/_/g, '');
-
-          // Reassign if:
-          // 1. Image matches this stream's keyword (午台/晚台)
-          // 2. Image is from the same date as this stream
-          // 3. Either: image was assigned to a different date, OR we want to ensure correct assignment
           shouldReassign = keywordMatchesThisStream && imageDateMatch;
-
-          if (shouldReassign && streamId.includes('2026_01_09')) {
-            console.log(`Should reassign ${img.name} to ${streamId} (keyword match: ${keywordMatchesThisStream}, date match: ${imageDateMatch})`);
-          }
         }
 
         if (!img.assigned || shouldReassign) {
-          // Strategy 1: Exact prefix match
           const exactMatch = img.name.startsWith(streamId) || img.name.startsWith(videoBase);
-
-          // Strategy 2: Contains stream date (YYYY_MM_DD)
           const containsDate = img.name.includes(datePart);
-
-          // Strategy 3: Contains video base name (without extensions/suffixes)
           const cleanVideoBase = videoBase.replace(/_DDTV5.*$/, '').replace(/_\d+$/, '');
           const containsVideoBase = img.name.includes(cleanVideoBase);
 
-          // Strategy 4: Keyword-based matching for 午台/晚台 images
-          let keywordMatch = false;
+          let matched = false;
           if (hasKeyword) {
-            keywordMatch = keywordMatchesThisStream;
-
-            // Also check if the image is from the same date
-            if (keywordMatch && imageDateMatch) {
-              // This is a strong match - assign it
-              img.assigned = true;
-              const targetPath = path.join(targetDir, img.name);
-              if (!fs.existsSync(targetPath)) {
-                fs.copyFileSync(img.fullPath, targetPath);
-              }
-              const imagePath = `/data/streams/${streamId}/${img.name}`;
-              // Check if image is already in the array before adding
-              if (!streamData.images.includes(imagePath)) {
-                streamData.images.push(imagePath);
-                if (streamId.includes('2026_01_09')) {
-                  console.log(`Keyword filename match assigned: ${img.name} to ${streamId} (keyword: ${hasMorningKeyword ? '午台' : '晚台'})`);
-                  console.log(`  Added to images array: ${imagePath}`);
-                }
-              } else if (streamId.includes('2026_01_09')) {
-                console.log(`Image ${img.name} already in array for ${streamId}, skipping duplicate`);
-              }
-              return; // Skip further processing for this image
-            }
-          }
-
-          // For keyword images, be extra careful - only assign if they match both keyword AND date
-          if (hasKeyword) {
-            // Don't assign keyword images through regular filename matching unless they also match the date
-            if (imageDateMatch && keywordMatchesThisStream) {
-              // This is a good match - assign it
-              img.assigned = true;
-              const targetPath = path.join(targetDir, img.name);
-              if (!fs.existsSync(targetPath)) {
-                fs.copyFileSync(img.fullPath, targetPath);
-              }
-              const imagePath = `/data/streams/${streamId}/${img.name}`;
-              // Check if image is already in the array before adding
-              if (!streamData.images.includes(imagePath)) {
-                streamData.images.push(imagePath);
-                if (streamId.includes('2026_01_09') || img.name.includes('Gemini_Generated_Image')) {
-                  console.log(`Keyword image assigned (date+keyword match): ${img.name} to ${streamId}`);
-                  console.log(`  exactMatch: ${exactMatch}, containsDate: ${containsDate}, containsVideoBase: ${containsVideoBase}`);
-                }
-              } else if (streamId.includes('2026_01_09') || img.name.includes('Gemini_Generated_Image')) {
-                console.log(`Image ${img.name} already in array for ${streamId}, skipping duplicate`);
-              }
-            } else {
-              // Skip keyword images that don't match date or time slot
-              if (streamId.includes('2026_01_09') || img.name.includes('Gemini_Generated_Image')) {
-                console.log(`Skipping keyword image ${img.name} for ${streamId} (date match: ${imageDateMatch}, keyword match: ${keywordMatchesThisStream})`);
-              }
+            if (keywordMatchesThisStream && imageDateMatch) {
+              matched = true;
             }
           } else if (exactMatch || containsDate || containsVideoBase) {
-            // Non-keyword images - assign normally
+            matched = true;
+          }
+
+          if (matched) {
             img.assigned = true;
             const targetPath = path.join(targetDir, img.name);
             if (!fs.existsSync(targetPath)) {
               fs.copyFileSync(img.fullPath, targetPath);
             }
             const imagePath = `/data/streams/${streamId}/${img.name}`;
-            // Check if image is already in the array before adding
             if (!streamData.images.includes(imagePath)) {
               streamData.images.push(imagePath);
-              if (streamId.includes('2026_01_09') || img.name.includes('Gemini_Generated_Image')) {
+              if (streamId.includes('2026_01_09') || streamId.includes('2026_01_12')) {
                 console.log(`Filename match assigned: ${img.name} to ${streamId}`);
-                console.log(`  exactMatch: ${exactMatch}, containsDate: ${containsDate}, containsVideoBase: ${containsVideoBase}`);
               }
-            } else if (streamId.includes('2026_01_09') || img.name.includes('Gemini_Generated_Image')) {
-              console.log(`Image ${img.name} already in array for ${streamId}, skipping duplicate`);
             }
           }
         }
@@ -510,9 +498,58 @@ async function syncStreams() {
     );
 
     timeWindowImages.sort((a, b) => b.mtime - a.mtime);
-    // Take up to 5 images total, but ensure at least one image per stream
-    const maxImages = 5;
-    const neededImages = Math.max(1, maxImages - streamData.images.length);
+
+    // For balanced distribution, we need to estimate how many images are available for this date
+    // Count images that are already assigned to streams on this date
+    let totalAssignedImagesOnDate = streamData.images.length;
+
+    // Also count images that will be available in time windows for all streams on this date
+    // We need to estimate this by looking at all streams on this date
+    let estimatedTotalImagesForDate = timeWindowImages.length;
+
+    // Add images from other streams on the same date (already processed)
+    for (const otherStreamId of streamsOnSameDate) {
+      if (otherStreamId === streamId) continue;
+
+      // Check if this stream has already been processed
+      const otherStreamData = allStreams.find(s => s.id === otherStreamId);
+      if (otherStreamData) {
+        totalAssignedImagesOnDate += otherStreamData.images.length;
+      }
+
+      // Estimate time window images for other streams
+      // This is complex, so we'll use a simpler approach:
+      // Just ensure each stream gets at least one image if possible
+    }
+
+    // Recalculate fair distribution based on actual time window images
+    if (totalStreamsOnDate > 1) {
+      // For multiple streams on the same date, ensure fair distribution
+      // First, ensure each stream gets at least one image
+      const minImagesPerStream = 1;
+
+      // Calculate how many images this stream should get based on fair distribution
+      // We want to distribute available images evenly among all streams on this date
+      const estimatedAvailableImages = timeWindowImages.length + totalAssignedImagesOnDate;
+      const fairImagesPerStream = Math.max(minImagesPerStream, Math.floor(estimatedAvailableImages / totalStreamsOnDate));
+
+      // Limit this stream to fair distribution
+      maxImagesForThisStream = Math.min(maxImagesPerStream, fairImagesPerStream);
+
+      // Debug logging
+      if (streamId.includes('2026_01_09') || streamId.includes('2026_01_12') || streamId.includes('2026_01_05')) {
+        console.log(`\nBalanced distribution for ${streamId}:`);
+        console.log(`  Total streams on ${stream.date}: ${totalStreamsOnDate}`);
+        console.log(`  Already assigned images on date: ${totalAssignedImagesOnDate}`);
+        console.log(`  Time window images available: ${timeWindowImages.length}`);
+        console.log(`  Estimated available images: ${estimatedAvailableImages}`);
+        console.log(`  Fair images per stream: ${fairImagesPerStream}`);
+        console.log(`  Max images for this stream: ${maxImagesForThisStream}`);
+      }
+    }
+
+    // Take images from time window, respecting the limit
+    const neededImages = Math.max(1, Math.min(maxImagesForThisStream, maxImagesPerStream - streamData.images.length));
     const imagesToAdd = timeWindowImages.slice(0, neededImages);
     imagesToAdd.forEach(img => {
       img.assigned = true;
@@ -524,7 +561,10 @@ async function syncStreams() {
       // Check if image is already in the array before adding
       if (!streamData.images.includes(imagePath)) {
         streamData.images.push(imagePath);
-      } else if (streamId.includes('2026_01_09')) {
+        if (streamId.includes('2026_01_09') || streamId.includes('2026_01_12') || streamId.includes('2026_01_05')) {
+          console.log(`Assigned time window image ${img.name} to ${streamId}`);
+        }
+      } else if (streamId.includes('2026_01_09') || streamId.includes('2026_01_12') || streamId.includes('2026_01_05')) {
         console.log(`Time window image ${img.name} already in array for ${streamId}, skipping duplicate`);
       }
     });

@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026_01_13_20_05_20",
+    "title": "找你有事！速来",
+    "date": "2026-01-13",
+    "time": "20:05:20",
+    "startTime": "20:05",
+    "endTime": "22:44",
+    "duration": 9555,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/2026_01_13_20_05_20/录制-25788785-20260113-200527-033-找你有事！速来.xml",
+    "cover": "/data/streams/2026_01_13_20_05_20/录制-25788785-20260113-200527-033-找你有事！速来.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_01_12_20_02_40",
     "title": "找你有事！速来",
     "date": "2026-01-12",
@@ -12,7 +27,9 @@
     "xml": "/data/streams/2026_01_12_20_02_40/2026_01_12_20_03_10_找你有事！速来_DDTV5_1.xml",
     "cover": "/data/streams/2026_01_12_20_02_40/录制-25788785-20260112-200309-610-找你有事！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_12_20_02_40/highlights.md",
-    "images": []
+    "images": [
+      "/data/streams/2026_01_12_20_02_40/2026_01_12_20_03_10_找你有事！速来_DDTV5_fix.png"
+    ]
   },
   {
     "id": "2026_01_12_14_56_50",
@@ -28,8 +45,7 @@
     "cover": "/data/streams/2026_01_12_14_56_50/录制-25788785-20260112-145706-368-摸鱼时间到！速来.cover.jpg",
     "highlights": "/data/streams/2026_01_12_14_56_50/highlights.md",
     "images": [
-      "/data/streams/2026_01_12_14_56_50/2026_01_12_14_56_50_摸鱼时间到！速来_DDTV5_fix.png",
-      "/data/streams/2026_01_12_14_56_50/2026_01_12_20_03_10_找你有事！速来_DDTV5_fix.png"
+      "/data/streams/2026_01_12_14_56_50/2026_01_12_14_56_50_摸鱼时间到！速来_DDTV5_fix.png"
     ]
   },
   {
@@ -384,8 +400,8 @@
     "highlights": "/data/streams/2025_12_28_00_13_36/highlights.md",
     "images": [
       "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_4orjyr4orjyr4orj (1).png",
-      "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_vld2eqvld2eqvld2.png",
-      "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_h4m93wh4m93wh4m9.png"
+      "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_h4m93wh4m93wh4m9.png",
+      "/data/streams/2025_12_28_00_13_36/Gemini_Generated_Image_vld2eqvld2eqvld2.png"
     ]
   },
   {
