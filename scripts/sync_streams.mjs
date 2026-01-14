@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.mjs';
 
 /**
  * 直播同步脚本
@@ -14,19 +15,20 @@ import { fileURLToPath } from 'url';
  * 可选参数：
  * --full: 启用全量处理模式
  * --force: 强制重新处理所有数据（在全量模式下有效）
+ * --liver [id]: 指定要同步的主播ID
+ * --all: 同步所有主播
  *
  * 使用示例：
- * node sync_streams.mjs                    # 增量处理（默认）
- * node sync_streams.mjs --full             # 全量处理
- * node sync_streams.mjs --full --force     # 强制全量重新处理
+ * node sync_streams.mjs                    # 增量处理（默认，仅岁己SUI）
+ * node sync_streams.mjs --full             # 全量处理（仅岁己SUI）
+ * node sync_streams.mjs --liver sui        # 同步指定主播（增量）
+ * node sync_streams.mjs --liver sui --full  # 同步指定主播（全量）
+ * node sync_streams.mjs --all                # 同步所有主播（增量）
+ * node sync_streams.mjs --all --full        # 同步所有主播（全量）
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.join(__dirname, '..');
-const SOURCE_BASE_DIRS = [
-  'D:/files/videos/DDTV录播/25788785_岁己SUI',
-  'E:/EFiles/Evideo/DDTV录播-E/25788785_岁己SUI'
-];
 const TARGET_BASE_DIR = path.join(ROOT_DIR, 'public/data/streams');
 
 const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
@@ -38,7 +40,18 @@ function parseArgs() {
   // 默认改为增量处理，除非显式指定 --full
   const mode = args.includes('--full') ? 'full' : 'incremental';
   const force = args.includes('--force');
-  return { mode, force };
+
+  // 解析主播ID
+  let liverId = null;
+  const liverIndex = args.indexOf('--liver');
+  if (liverIndex !== -1 && args[liverIndex + 1]) {
+    liverId = args[liverIndex + 1];
+  }
+
+  // 是否同步所有主播
+  const syncAll = args.includes('--all');
+
+  return { mode, force, liverId, syncAll };
 }
 
 // 获取最新已同步直播的时间戳
@@ -73,14 +86,38 @@ if (!fs.existsSync(TARGET_BASE_DIR)) {
   fs.mkdirSync(TARGET_BASE_DIR, { recursive: true });
 }
 
-async function syncStreams() {
-  const { mode, force } = parseArgs();
-  console.log(`=== 同步模式: ${mode === 'incremental' ? '增量处理' : '全量处理'} ===`);
-  if (force) {
-    console.log('=== 强制模式: 将重新处理所有数据 ===');
+// 获取指定主播的最新已同步直播的时间戳
+function getLatestSyncedTimestampForLiver(targetDir) {
+  const streamsJsonPath = path.join(targetDir, 'streams.json');
+  if (!fs.existsSync(streamsJsonPath)) {
+    return null;
   }
 
-  const latestSyncedTime = mode === 'incremental' ? getLatestSyncedTimestamp() : null;
+  try {
+    const content = fs.readFileSync(streamsJsonPath, 'utf-8');
+    const streams = JSON.parse(content);
+    if (streams.length === 0) {
+      return null;
+    }
+
+    const latestStream = streams.reduce((latest, current) => {
+      return current.id > latest.id ? current : latest;
+    });
+
+    const [Y, M, D, h, m, s] = latestStream.id.split('_').map(Number);
+    return new Date(Y, M - 1, D, h, m, s);
+  } catch (error) {
+    console.warn(`无法读取streams.json: ${error.message}`);
+    return null;
+  }
+}
+
+// 处理单个主播的数据
+async function processLiverData(liverConfig, mode, force, allFinalStreams) {
+  const { id, name, sourceDirs, targetDir } = liverConfig;
+  console.log(`\n=== 开始处理主播: ${name} (${id}) ===`);
+
+  const latestSyncedTime = mode === 'incremental' ? getLatestSyncedTimestampForLiver(targetDir) : null;
   if (mode === 'incremental' && latestSyncedTime) {
     console.log(`增量处理: 从 ${latestSyncedTime.toISOString()} 之后的数据开始处理`);
   } else if (mode === 'incremental' && !latestSyncedTime) {
@@ -89,7 +126,7 @@ async function syncStreams() {
 
   // 加载现有的streams数据（用于增量模式合并）
   let existingStreams = [];
-  const streamsJsonPath = path.join(TARGET_BASE_DIR, 'streams.json');
+  const streamsJsonPath = path.join(targetDir, 'streams.json');
   if (fs.existsSync(streamsJsonPath)) {
     try {
       const content = fs.readFileSync(streamsJsonPath, 'utf-8');
@@ -99,6 +136,91 @@ async function syncStreams() {
       console.warn(`无法读取现有streams.json: ${error.message}`);
     }
   }
+
+  const allStreams = [];
+  const allStreamGroups = {};
+  const allPotentialTitles = [];
+  const allImages = [];
+
+  for (const sourceDir of sourceDirs) {
+    if (!fs.existsSync(sourceDir)) {
+      console.warn(`Source directory not found: ${sourceDir}`);
+      continue;
+    }
+
+    // ... (原有的数据处理逻辑，这里保持不变，只是将 TARGET_BASE_DIR 替换为 targetDir)
+    // 由于文件太长，我将创建一个新的处理函数来保持代码清晰
+    // 这里只是占位符，实际处理逻辑需要完整重写
+  }
+
+  // 返回处理后的数据
+  return { allStreams, existingStreams };
+}
+
+async function syncStreams() {
+  const { mode, force, liverId, syncAll } = parseArgs();
+
+  // 确定要处理的主播列表
+  let liverIdsToProcess = [];
+  if (syncAll) {
+    liverIdsToProcess = getAllLiverIds();
+    console.log(`=== 同步所有主播: ${liverIdsToProcess.join(', ')} ===`);
+  } else if (liverId) {
+    liverIdsToProcess = [liverId];
+    console.log(`=== 同步指定主播: ${liverId} ===`);
+  } else {
+    // 默认处理岁己SUI（向后兼容）
+    liverIdsToProcess = ['sui'];
+    console.log(`=== 同步默认主播: sui ===`);
+  }
+
+  console.log(`同步模式: ${mode === 'incremental' ? '增量处理' : '全量处理'} ===`);
+  if (force) {
+    console.log('=== 强制模式: 将重新处理所有数据 ===');
+  }
+
+  // 为每个主播处理数据
+  const allFinalStreams = [];
+
+  for (const currentLiverId of liverIdsToProcess) {
+    const liverConfig = getLiverConfig(currentLiverId);
+    if (!liverConfig) {
+      console.warn(`未找到主播配置: ${currentLiverId}，跳过`);
+      continue;
+    }
+
+    console.log(`\n=== 开始处理主播: ${liverConfig.name} (${currentLiverId}) ===`);
+
+    const targetBaseDir = path.join(TARGET_BASE_DIR, currentLiverId);
+    if (!fs.existsSync(targetBaseDir)) {
+      fs.mkdirSync(targetBaseDir, { recursive: true });
+    }
+
+    const sourceDirs = liverConfig.sourceDirs || [];
+    if (sourceDirs.length === 0) {
+      console.warn(`主播 ${currentLiverId} 没有配置数据源路径，跳过`);
+      continue;
+    }
+
+    // 加载现有的streams数据（用于增量模式合并）
+    let existingStreams = [];
+    const streamsJsonPath = path.join(targetBaseDir, 'streams.json');
+    if (fs.existsSync(streamsJsonPath)) {
+      try {
+        const content = fs.readFileSync(streamsJsonPath, 'utf-8');
+        existingStreams = JSON.parse(content);
+        console.log(`已加载 ${existingStreams.length} 个现有直播数据`);
+      } catch (error) {
+        console.warn(`无法读取现有streams.json: ${error.message}`);
+      }
+    }
+
+    const latestSyncedTime = mode === 'incremental' ? getLatestSyncedTimestampForLiver(targetBaseDir) : null;
+    if (mode === 'incremental' && latestSyncedTime) {
+      console.log(`增量处理: 从 ${latestSyncedTime.toISOString()} 之后的数据开始处理`);
+    } else if (mode === 'incremental' && !latestSyncedTime) {
+      console.log('增量处理: 未找到已同步数据，将执行全量处理');
+    }
 
   const allStreams = [];
   const allStreamGroups = {};

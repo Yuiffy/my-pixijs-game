@@ -11,6 +11,7 @@ import RecordsListView from './RecordsListView';
 import RecordsCalendarView from './RecordsCalendarView';
 import { StreamData, HighlightsDisplay, ModalMarkdownComponents, getPeriodInfo } from './RecordsShared';
 import { Image as AntImage, Tag } from 'antd';
+import { getLiverConfig, type LiverInfo } from '@/data/livers';
 
 // Extend dayjs with required plugins for Ant Design Calendar
 dayjs.extend(weekday);
@@ -18,30 +19,57 @@ dayjs.extend(localeData);
 
 const { Title, Text } = Typography;
 
-const RecordsModule = () => {
+interface RecordsModuleProps {
+  streams?: StreamData[];
+  liverId?: string;
+}
+
+const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsModuleProps) => {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarMode, setCalendarMode] = useState<'month' | 'year'>('month');
   const [calendarValue, setCalendarValue] = useState<Dayjs>(dayjs());
-  const [streams, setStreams] = useState<StreamData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [streams, setStreams] = useState<StreamData[]>(externalStreams || []);
+  const [loading, setLoading] = useState(!externalStreams);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStream, setSelectedStream] = useState<StreamData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [liverConfig, setLiverConfig] = useState<LiverInfo | null>(null);
   const pageSize = 5;
 
+  // 加载主播配置
   useEffect(() => {
+    const config = getLiverConfig(liverId);
+    setLiverConfig(config);
+  }, [liverId]);
+
+  // 加载直播数据（如果没有外部传入）
+  useEffect(() => {
+    if (externalStreams) {
+      setStreams(externalStreams);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    fetch('/data/streams/streams.json')
+    const config = getLiverConfig(liverId);
+
+    // 如果是默认的岁己SUI（liverId='sui'），使用旧的默认路径以保持向后兼容
+    // 否则使用主播配置的数据路径
+    const dataPath = (liverId === 'sui')
+      ? '/data/streams/'
+      : config?.dataPath || '/data/streams/';
+
+    fetch(`${dataPath}streams.json`)
       .then(res => res.json())
       .then(data => {
-        setStreams(data);
+        setStreams(data || []);
         setLoading(false);
       })
       .catch(err => {
         console.error('Failed to load streams', err);
         setLoading(false);
       });
-  }, []);
+  }, [liverId, externalStreams]);
 
   const handleStreamSelect = (stream: StreamData) => {
     setSelectedStream(stream);
@@ -71,15 +99,17 @@ const RecordsModule = () => {
             <Text className="text-slate-400">
               记录每一场（其实没有每一场）直播的珍贵瞬间 📅 {loading ? '加载中...' : `共 ${streams.length} 场`}
             </Text>
-            <Button
-               type="link"
-               href="https://space.bilibili.com/1954091502/lists/2609053?type=series"
-               target="_blank"
-               className="text-cyan-400 p-0 hover:text-cyan-300 font-bold flex items-center gap-1"
-               icon={<ThunderboltOutlined />}
-            >
-              前往 Bilibili 直播录像合集 →
-            </Button>
+            {liverConfig?.bilibiliReplayUrl && (
+              <Button
+                 type="link"
+                 href={liverConfig.bilibiliReplayUrl}
+                 target="_blank"
+                 className="text-cyan-400 p-0 hover:text-cyan-300 font-bold flex items-center gap-1"
+                 icon={<ThunderboltOutlined />}
+              >
+                 前往 Bilibili 直播录像合集 →
+              </Button>
+            )}
           </div>
         </div>
         <div className="bg-white/5 p-1 rounded-full border border-white/10 shrink-0">
@@ -88,6 +118,9 @@ const RecordsModule = () => {
             onClick={() => setViewMode('list')}
             type={viewMode === 'list' ? 'primary' : 'text'}
             className={viewMode === 'list' ? 'bg-cyan-600 rounded-full' : 'text-slate-400 hover:!text-cyan-300'}
+            style={liverConfig ? {
+              backgroundColor: viewMode === 'list' ? liverConfig.colorMain : undefined
+            } : {}}
           >
             列表视图
           </Button>
@@ -96,6 +129,9 @@ const RecordsModule = () => {
             onClick={() => setViewMode('calendar')}
             type={viewMode === 'calendar' ? 'primary' : 'text'}
             className={viewMode === 'calendar' ? 'bg-pink-600 rounded-full ml-1' : 'text-slate-400 hover:!text-pink-300 ml-1'}
+            style={liverConfig ? {
+              backgroundColor: viewMode === 'calendar' ? liverConfig.colorSub : undefined
+            } : {}}
           >
             日历视图
           </Button>
@@ -150,7 +186,11 @@ const RecordsModule = () => {
             <div className="flex flex-col md:flex-row h-full max-h-[80vh] overflow-hidden">
               {/* Left Column: Image */}
               <div className="w-full md:w-[45%] shrink-0 h-[300px] md:h-full bg-slate-900/50 relative overflow-hidden border-r border-white/5">
-                <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20 pointer-events-none`} />
+                <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20 pointer-events-none`}
+                  style={{
+                    '--tw-gradient-to': `from transparent to ${liverConfig?.colorMain || '#87EAFF'}`
+                  } as React.CSSProperties}
+                />
                 <div className="h-full w-full">
                   <AntImage.PreviewGroup>
                     {selectedStream.images && selectedStream.images.length > 0 ? (
@@ -191,7 +231,13 @@ const RecordsModule = () => {
               </div>
 
               {/* Right Column: Info */}
-              <div className={`w-full md:w-[55%] flex flex-col p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}>
+               <div className={`w-full md:w-[55%] flex flex-col p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}
+                 style={{
+                   background: liverConfig ?
+                     `linear-gradient(to bottom right, ${liverConfig.colorMain}20, ${liverConfig.colorSub}20)` :
+                     undefined
+                 }}
+               >
                 <div className="flex flex-col gap-4 mb-6 shrink-0">
                    <div className="flex flex-wrap items-center gap-3">
                       <Tag color={period.tagColor as any} className="font-bold border-none px-4 py-1 uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-lg m-0 rounded-full">
@@ -237,7 +283,7 @@ const RecordsModule = () => {
                       {selectedStream.srt && (
                          <Button
                             icon={<EyeOutlined />}
-                            href={`/wiki/sui/srt?url=${encodeURIComponent(selectedStream.srt)}`}
+                            href={`/wiki/${liverId}/srt?url=${encodeURIComponent(selectedStream.srt)}`}
                             target="_blank"
                             className="bg-white/5 border-white/10 text-slate-300 hover:!text-cyan-400 hover:!bg-white/10 rounded-xl"
                          >
