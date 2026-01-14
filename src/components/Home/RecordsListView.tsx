@@ -43,9 +43,9 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
           <Card
             key={stream.id}
             id={`stream-${stream.id}`}
-            className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-3xl group md:h-[500px] cursor-pointer"
+            className="bg-white/5 border-white/5 overflow-hidden hover:border-cyan-500/30 transition-all rounded-3xl group md:h-[500px]"
             bodyStyle={{ padding: 0, height: '100%' }}
-            onClick={() => onStreamSelect(stream)}
+            // onClick={() => onStreamSelect(stream)}
           >
             <div className="flex flex-col md:flex-row h-full">
               <div className="w-full md:w-[45%] shrink-0 h-[300px] md:h-full bg-slate-900/50 relative overflow-hidden border-r border-white/5">
@@ -58,6 +58,7 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
                         alt={stream.title}
                         className="!h-full !w-full object-cover animate-slow-pan"
                         wrapperClassName="h-full w-full block"
+                        onClick={(e) => e.stopPropagation()}
                       />
                     ) : stream.cover ? (
                       <AntImage
@@ -65,6 +66,7 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
                         alt={stream.title}
                         className="!h-full !w-full object-cover opacity-80 grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700 animate-slow-pan"
                         wrapperClassName="h-full w-full block"
+                        onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
                       <div className="flex items-center justify-center p-12 text-slate-500 font-bold w-full h-full">NO VISUAL</div>
@@ -111,6 +113,7 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
                             width={50}
                             height={40}
                             className="rounded-lg object-cover border border-white/10 hover:border-cyan-400/50 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
                           />
                         ))}
                       </AntImage.PreviewGroup>
