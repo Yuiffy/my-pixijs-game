@@ -34,7 +34,13 @@ function LiverPageContent({ liverId }: { liverId: string }) {
     fetch(`${dataPath}streams.json`)
       .then(res => {
         if (!res.ok) {
-          throw new Error('Failed to load streams data');
+          // 如果状态码是404，表示数据文件不存在（新主播没有数据）
+          // 这不应该视为错误，而是空数据
+          if (res.status === 404) {
+            console.log('Streams file not found, using empty array');
+            return [];
+          }
+          throw new Error('Failed to load streams data: ' + res.status);
         }
         return res.json();
       })
@@ -44,12 +50,20 @@ function LiverPageContent({ liverId }: { liverId: string }) {
       })
       .catch(err => {
         console.error('Failed to load streams:', err);
-        setError('加载直播数据失败');
-        setLoading(false);
+        // 对于新主播，如果没有数据文件，也视为空数据而不是错误
+        if (err.message.includes('Failed to fetch') || err.message.includes('404')) {
+          console.log('Treating missing data as empty array');
+          setStreams([]);
+          setLoading(false);
+        } else {
+          setError('加载直播数据失败');
+          setLoading(false);
+        }
       });
   }, [liverId]);
 
   if (error) {
+    console.error('Rendering error state:', error);
     return (
       <div className="min-h-screen bg-[#0A0D14] flex items-center justify-center">
         <div className="text-center">
