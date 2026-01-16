@@ -109,7 +109,10 @@ function getAllLiverIds() {
   return Object.keys(liverConfigs);
 }
 
-// CommonJS 导出
+// ES 模块导出
+export { liverConfigs, getLiverConfig, getAllLiverIds };
+
+// CommonJS 导出（向后兼容）
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     liverConfigs,
