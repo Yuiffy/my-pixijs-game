@@ -4,10 +4,9 @@
  */
 
 import { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials } from './types';
-// @ts-ignore
-import liverConfigRawData from '../../../scripts/liver-config.js';
+import liverConfigsData from './liverConfigs.json';
 
-const liverConfigsRaw = liverConfigRawData;
+const liverConfigsRaw = liverConfigsData;
 
 // 导出类型
 export type { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials };
@@ -15,7 +14,7 @@ export type { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials };
 // 将 liver-config.js 中的配置转换为 LiverConfig 格式
 function parseLiverConfigs(): LiverConfig {
   const result: LiverConfig = {};
-  const liverConfigs = liverConfigsRaw.liverConfigs || liverConfigsRaw;
+  const liverConfigs = liverConfigsData as any;
 
   for (const key in liverConfigs) {
     const config = liverConfigs[key];
