@@ -16,7 +16,7 @@ export const sui: LiverInfo = {
   description: '原本是一只想要早起叫醒人类的小鸟，结果因为自己也起不来，索性变成了人类。性格坚定可爱，非常喜欢吃辣，三餐无辣不欢。',
   colorMain: '#87EAFF',
   colorSub: '#DA5D77',
-  dataPath: '/data/streams/',
+  dataPath: '/data/streams/sui/',
   bilibiliUid: '25788785',
   bilibiliSpace: 'https://space.bilibili.com/1954091502',
   bilibiliReplayUrl: 'https://space.bilibili.com/1954091502/lists/2609053?type=series',
