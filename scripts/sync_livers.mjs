@@ -573,7 +573,7 @@ async function syncStreams() {
     // 默认处理岁己SUI（向后兼容）
     liverIdsToProcess = ['sui'];
   }
-
+  console.log(`要处理的主播列表: ${liverIdsToProcess.join(', ')}`);
   // 为每个主播处理数据
   const allFinalStreams = [];
   for (const currentLiverId of liverIdsToProcess) {

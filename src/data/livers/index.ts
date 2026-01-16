@@ -4,11 +4,10 @@
  */
 
 import { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials } from './types';
-import { createRequire } from 'module';
+// @ts-ignore
+import liverConfigRawData from '../../../scripts/liver-config.js';
 
-// 动态导入 CommonJS 模块
-const require = createRequire(import.meta.url);
-const liverConfigsRaw = require('../../../scripts/liver-config.js');
+const liverConfigsRaw = liverConfigRawData;
 
 // 导出类型
 export type { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials };

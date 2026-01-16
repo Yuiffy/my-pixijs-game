@@ -19,8 +19,8 @@ import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js'
  * --all: 同步所有主播
  *
  * 使用示例：
- * node sync_streams.mjs                    # 增量处理（默认，仅岁己SUI）
- * node sync_streams.mjs --full             # 全量处理（仅岁己SUI）
+ * node sync_streams.mjs                    # 增量处理（默认，所有主播）
+ * node sync_streams.mjs --full             # 全量处理（所有主播）
  * node sync_streams.mjs --liver sui        # 同步指定主播（增量）
  * node sync_streams.mjs --liver sui --full  # 同步指定主播（全量）
  * node sync_streams.mjs --all                # 同步所有主播（增量）
@@ -169,9 +169,9 @@ async function syncStreams() {
     liverIdsToProcess = [liverId];
     console.log(`=== 同步指定主播: ${liverId} ===`);
   } else {
-    // 默认处理岁己SUI（向后兼容）
-    liverIdsToProcess = ['sui'];
-    console.log(`=== 同步默认主播: sui ===`);
+    // 默认处理所有主播
+    liverIdsToProcess = getAllLiverIds();
+    console.log(`=== 同步所有主播: ${liverIdsToProcess.join(', ')} ===`);
   }
 
   console.log(`同步模式: ${mode === 'incremental' ? '增量处理' : '全量处理'} ===`);
@@ -973,4 +973,5 @@ async function syncStreams() {
   console.log(`同步完成: ${finalStreams.length} 个直播数据 (${allStreams.length} 个新处理)`);
 }
 
+}
 syncStreams().catch(console.error);
