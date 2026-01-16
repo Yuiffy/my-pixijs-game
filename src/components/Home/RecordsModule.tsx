@@ -56,7 +56,7 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
     // 使用主播配置的数据路径
     const dataPath = config?.dataPath || '/data/streams/';
 
-    fetch(`${dataPath}streams.json`)
+    fetch(`${dataPath}/streams.json`)
       .then(res => res.json())
       .then(data => {
         setStreams(data || []);

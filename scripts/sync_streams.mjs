@@ -620,7 +620,7 @@ async function syncStreams() {
             if (!fs.existsSync(targetPath)) {
               fs.copyFileSync(img.fullPath, targetPath);
             }
-            const imagePath = `/data/streams/${streamId}/${img.name}`;
+            const imagePath = `/data/streams/${currentLiverId}/${streamId}/${img.name}`;
             if (!streamData.images.includes(imagePath)) {
               streamData.images.push(imagePath);
               if (streamId.includes('2026_01_09') || streamId.includes('2026_01_12')) {
@@ -694,7 +694,7 @@ async function syncStreams() {
       // Check if sourceDir contains the date in either format (with or without underscores)
       const imageDateMatch = img.sourceDir.includes(datePart) || img.sourceDir.includes(datePart.replace(/_/g, ''));
 
-      const imagePath = `/data/streams/${streamId}/${img.name}`;
+      const imagePath = `/data/streams/${currentLiverId}/${streamId}/${img.name}`;
       const alreadyInArray = streamData.images.includes(imagePath);
 
       if (isExactMatch && imageDateMatch && !alreadyInArray) {
@@ -790,7 +790,7 @@ async function syncStreams() {
       if (!fs.existsSync(targetPath)) {
         fs.copyFileSync(img.fullPath, targetPath);
       }
-      const imagePath = `/data/streams/${streamId}/${img.name}`;
+      const imagePath = `/data/streams/${currentLiverId}/${streamId}/${img.name}`;
       // Check if image is already in the array before adding
       if (!streamData.images.includes(imagePath)) {
         streamData.images.push(imagePath);
@@ -817,13 +817,13 @@ async function syncStreams() {
 
       if (ext === '.srt') {
         if (!fs.existsSync(targetPath)) fs.copyFileSync(fullSourcePath, targetPath);
-        streamData.srt = `/data/streams/${streamId}/${file}`;
+        streamData.srt = `/data/streams/${currentLiverId}/${streamId}/${file}`;
       } else if (ext === '.xml') {
         if (!fs.existsSync(targetPath)) fs.copyFileSync(fullSourcePath, targetPath);
-        streamData.xml = `/data/streams/${streamId}/${file}`;
+        streamData.xml = `/data/streams/${currentLiverId}/${streamId}/${file}`;
       } else if (file.includes('cover')) {
         if (!fs.existsSync(targetPath)) fs.copyFileSync(fullSourcePath, targetPath);
-        streamData.cover = `/data/streams/${streamId}/${file}`;
+        streamData.cover = `/data/streams/${currentLiverId}/${streamId}/${file}`;
       } else if (ext === '.md' || ext === '.txt' || file.includes('AI_HIGHLIGHT')) {
         // Collect highlights/summaries
         const isMarkdownOrTxt = ext === '.md' || ext === '.txt';
@@ -866,7 +866,7 @@ async function syncStreams() {
     if (streamData.highlights) {
       const highlightsPath = path.join(targetDir, 'highlights.md');
       fs.writeFileSync(highlightsPath, streamData.highlights);
-      streamData.highlights = `/data/streams/${streamId}/highlights.md`;
+      streamData.highlights = `/data/streams/${currentLiverId}/${streamId}/highlights.md`;
     }
 
     allStreams.push(streamData);
@@ -930,7 +930,7 @@ async function syncStreams() {
       const streamData = allStreams.find(s => s.id === closestStreamId);
       if (streamData) {
         // Check if image is already in the images array (avoid duplicates)
-        const imagePath = `/data/streams/${closestStreamId}/${img.name}`;
+        const imagePath = `/data/streams/${currentLiverId}/${closestStreamId}/${img.name}`;
         if (!streamData.images.includes(imagePath)) {
           streamData.images.push(imagePath);
         }
