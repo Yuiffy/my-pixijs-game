@@ -31,7 +31,7 @@ function LiverPageContent({ liverId }: { liverId: string }) {
 
     // 加载直播数据
     const dataPath = config.dataPath;
-    fetch(`${dataPath}streams.json`)
+    fetch(`${dataPath}/streams.json`)
       .then(res => {
         if (!res.ok) {
           // 如果状态码是404，表示数据文件不存在（新主播没有数据）
