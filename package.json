@@ -11,7 +11,8 @@
     "build-export-gh-pages": "npm run export && npm run gh-pages",
     "start": "next start",
     "lint": "next lint",
-    "run-sync-scripts": "node scripts/sync_streams.mjs"
+    "run-sync-scripts": "node scripts/sync_streams.mjs",
+    "run-sync-livers": "node scripts/sync_livers.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
