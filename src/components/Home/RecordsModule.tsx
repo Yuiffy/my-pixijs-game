@@ -53,11 +53,8 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
     setLoading(true);
     const config = getLiverConfig(liverId);
 
-    // 如果是默认的岁己SUI（liverId='sui'），使用旧的默认路径以保持向后兼容
-    // 否则使用主播配置的数据路径
-    const dataPath = (liverId === 'sui')
-      ? '/data/streams/'
-      : config?.dataPath || '/data/streams/';
+    // 使用主播配置的数据路径
+    const dataPath = config?.dataPath || '/data/streams/';
 
     fetch(`${dataPath}streams.json`)
       .then(res => res.json())
