@@ -17,6 +17,7 @@ function parseLiverConfigs(): LiverConfig {
   const liverConfigs = liverConfigsData as any;
 
   for (const key in liverConfigs) {
+    if (!Object.hasOwn(liverConfigs, key)) continue;
     const config = liverConfigs[key];
     result[key] = {
       id: config.id,

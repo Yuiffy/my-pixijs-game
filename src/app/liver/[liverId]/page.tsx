@@ -30,7 +30,7 @@ function LiverPageContent({ liverId }: { liverId: string }) {
     setLiverConfig(config);
 
     // 加载直播数据
-    const dataPath = config.dataPath;
+    const { dataPath } = config;
     fetch(`${dataPath}/streams.json`)
       .then(res => {
         if (!res.ok) {
@@ -40,7 +40,7 @@ function LiverPageContent({ liverId }: { liverId: string }) {
             console.log('Streams file not found, using empty array');
             return [];
           }
-          throw new Error('Failed to load streams data: ' + res.status);
+          throw new Error(`Failed to load streams data: ${res.status}`);
         }
         return res.json();
       })
@@ -167,7 +167,7 @@ function LiverPageContent({ liverId }: { liverId: string }) {
 
           <footer className="mt-16 pt-12 border-t border-white/5 text-center opacity-40 hover:opacity-100 transition-opacity">
             <Text className="text-slate-500 text-xs italic">
-              "{liverConfig.shortName}的直播记录"
+              &ldquo;{liverConfig.shortName}的直播记录&rdquo;
             </Text>
           </footer>
         </div>

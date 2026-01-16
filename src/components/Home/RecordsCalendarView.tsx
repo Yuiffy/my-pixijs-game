@@ -140,7 +140,7 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
 
   const calendarHeaderRender = ({ value, type, onChange, onTypeChange }: any) => {
     const today = dayjs();
-    const isFutureYear = (val: Dayjs) => val.year() >= today.year();
+    const isFutureYearCheck = (val: Dayjs) => val.year() >= today.year();
     const isFutureMonth = (val: Dayjs) => val.year() > today.year() || (val.year() === today.year() && val.month() >= today.month());
 
     return (
@@ -175,7 +175,7 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
               )}
             </div>
 
-            {!(isFutureYear(value.clone()) || (type === 'year' && value.year() === today.year()) || (type === 'month' && isFutureMonth(value.clone()))) && (
+            {!(isFutureYearCheck(value.clone()) || (type === 'year' && value.year() === today.year()) || (type === 'month' && isFutureMonth(value.clone()))) && (
               <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/10 shadow-inner">
                 <Button
                   size="small"
@@ -195,7 +195,7 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
                     const next = value.clone().add(1, 'year');
                     onChange(next.isAfter(today) ? today : next);
                   }}
-                  className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${isFutureYear(value.clone()) ? 'hidden' : ''}`}
+                  className={`text-slate-400 hover:text-cyan-400 hover:bg-white/10 ${isFutureYearCheck(value.clone()) ? 'hidden' : ''}`}
                 />
               </div>
             )}

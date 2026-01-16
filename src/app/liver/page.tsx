@@ -94,7 +94,7 @@ export default function LiverIndexPage() {
 
           <footer className="mt-16 pt-12 border-t border-white/5 text-center opacity-40 hover:opacity-100 transition-opacity">
             <Text className="text-slate-500 text-xs italic">
-              "每一个主播都有属于自己的故事"
+              &ldquo;每一个主播都有属于自己的故事&rdquo;
             </Text>
           </footer>
         </div>

@@ -183,7 +183,8 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
             <div className="flex flex-col md:flex-row h-full max-h-[80vh] overflow-hidden">
               {/* Left Column: Image */}
               <div className="w-full md:w-[45%] shrink-0 h-[300px] md:h-full bg-slate-900/50 relative overflow-hidden border-r border-white/5">
-                <div className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20 pointer-events-none`}
+                <div
+                  className={`absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-transparent ${period.accent} to-transparent opacity-80 z-20 pointer-events-none`}
                   style={{
                     '--tw-gradient-to': `from transparent to ${liverConfig?.colorMain || '#87EAFF'}`
                   } as React.CSSProperties}
@@ -228,8 +229,9 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
               </div>
 
               {/* Right Column: Info */}
-               <div className={`w-full md:w-[55%] flex flex-col p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}
-                 style={{
+               <div
+                  className={`w-full md:w-[55%] flex flex-col p-8 bg-gradient-to-br ${period.bg} overflow-hidden`}
+                  style={{
                    background: liverConfig ?
                      `linear-gradient(to bottom right, ${liverConfig.colorMain}20, ${liverConfig.colorSub}20)` :
                      undefined
