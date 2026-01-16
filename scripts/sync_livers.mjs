@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.mjs';
+import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js';
 
 /**
  * 多主播同步脚本
@@ -24,7 +24,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.join(__dirname, '..');
 const TARGET_BASE_DIR = path.join(ROOT_DIR, 'public/data/streams');
 
-const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
+const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
 const FILENAME_REGEX_LUZHI = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg|txt|md)/;
 
 // 解析命令行参数
@@ -330,8 +330,8 @@ async function processLiver(liverConfig, mode, force, allFinalStreams) {
   // Process each final stream group
   validStreamIds.forEach((streamId, index) => {
     const stream = finalStreamGroups[streamId];
-    const targetDir = path.join(targetDir, streamId);
-    if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+    const streamTargetDir = path.join(targetDir, streamId);
+    if (!fs.existsSync(streamTargetDir)) fs.mkdirSync(streamTargetDir, { recursive: true });
 
     const streamData = {
       id: stream.id,
@@ -385,7 +385,7 @@ async function processLiver(liverConfig, mode, force, allFinalStreams) {
 
         if (matched) {
           img.assigned = true;
-          const targetPath = path.join(targetDir, img.name);
+          const targetPath = path.join(streamTargetDir, img.name);
           if (!fs.existsSync(targetPath)) {
             fs.copyFileSync(img.fullPath, targetPath);
           }
@@ -413,7 +413,7 @@ async function processLiver(liverConfig, mode, force, allFinalStreams) {
     const imagesToAdd = timeWindowImages.slice(0, neededImages);
     imagesToAdd.forEach(img => {
       img.assigned = true;
-      const targetPath = path.join(targetDir, img.name);
+      const targetPath = path.join(streamTargetDir, img.name);
       if (!fs.existsSync(targetPath)) {
         fs.copyFileSync(img.fullPath, targetPath);
       }
@@ -428,7 +428,7 @@ async function processLiver(liverConfig, mode, force, allFinalStreams) {
 
     stream.files.forEach(({ file, sourceDir }) => {
       const ext = path.extname(file).toLowerCase();
-      const targetPath = path.join(targetDir, file);
+      const targetPath = path.join(streamTargetDir, file);
       const fullSourcePath = path.join(sourceDir, file);
 
       if (!fs.existsSync(fullSourcePath)) {
@@ -481,7 +481,7 @@ async function processLiver(liverConfig, mode, force, allFinalStreams) {
     }
 
     if (streamData.highlights) {
-      const highlightsPath = path.join(targetDir, 'highlights.md');
+      const highlightsPath = path.join(streamTargetDir, 'highlights.md');
       fs.writeFileSync(highlightsPath, streamData.highlights);
       streamData.highlights = `/data/streams/${id}/${streamId}/highlights.md`;
     }
@@ -509,8 +509,8 @@ async function processLiver(liverConfig, mode, force, allFinalStreams) {
     });
 
     if (closestStreamId) {
-      const targetDir = path.join(targetDir, closestStreamId);
-      const targetPath = path.join(targetDir, img.name);
+      const streamTargetDir = path.join(targetDir, closestStreamId);
+      const targetPath = path.join(streamTargetDir, img.name);
 
       if (!fs.existsSync(targetPath)) {
         fs.copyFileSync(img.fullPath, targetPath);

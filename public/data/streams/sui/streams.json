@@ -1,5 +1,110 @@
 [
   {
+    "id": "2026_01_16_20_12_07",
+    "title": "命运石之门0！初见",
+    "date": "2026-01-16",
+    "time": "20:12:07",
+    "startTime": "20:12",
+    "endTime": "23:46",
+    "duration": 12870,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_16_20_12_07/录制-25788785-20260116-201306-416-找你有事！速来.xml",
+    "cover": "/data/streams/sui/2026_01_16_20_12_07/录制-25788785-20260116-201306-416-找你有事！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_16_20_12_07/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_16_20_12_07/录制-25788785-20260116-201306-416-找你有事！速来.png",
+      "/data/streams/sui/2026_01_16_20_12_07/录制-25788785-20260116-150057-025-摸鱼茶水间！速来.png"
+    ]
+  },
+  {
+    "id": "2026_01_16_20_11_37",
+    "title": "命运石之门0！初见",
+    "date": "2026-01-16",
+    "time": "20:11:37",
+    "startTime": "20:11",
+    "endTime": "23:45",
+    "duration": 12870,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_16_20_11_37/录制-25788785-20260116-201306-416-找你有事！速来.xml",
+    "cover": "/data/streams/sui/2026_01_16_20_11_37/录制-25788785-20260116-201306-416-找你有事！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_16_20_11_37/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_16_20_11_37/录制-25788785-20260116-201306-416-找你有事！速来.png"
+    ]
+  },
+  {
+    "id": "2026_01_16_15_00_37",
+    "title": "命运石之门剧场版！初见",
+    "date": "2026-01-16",
+    "time": "15:00:37",
+    "startTime": "15:00",
+    "endTime": "16:46",
+    "duration": 6407,
+    "durationStr": "1.8 小时",
+    "srt": "/data/streams/sui/2026_01_16_15_00_37/2026_01_16_15_01_07_摸鱼茶水间！速来_DDTV5_fix.srt",
+    "xml": "/data/streams/sui/2026_01_16_15_00_37/2026_01_16_15_01_07_摸鱼茶水间！速来_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_16_15_00_37/录制-25788785-20260116-150057-025-摸鱼茶水间！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_16_15_00_37/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_16_15_00_37/录制-25788785-20260116-150057-025-摸鱼茶水间！速来.png"
+    ]
+  },
+  {
+    "id": "2026_01_15_20_13_36",
+    "title": "命运石之门剧场版！初见",
+    "date": "2026-01-15",
+    "time": "20:13:36",
+    "startTime": "20:13",
+    "endTime": "23:49",
+    "duration": 13012,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_15_20_13_36/2026_01_15_20_14_06_找你有事！速来_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_15_20_13_36/录制-25788785-20260115-201352-648-找你有事！速来.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_01_15_20_13_36/2026_01_15_19_42_56_找你有事！速来_DDTV5_1_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_15_19_42_56",
+    "title": "找你有事！速来",
+    "date": "2026-01-15",
+    "time": "19:42:56",
+    "startTime": "19:42",
+    "endTime": "19:49",
+    "duration": 467,
+    "durationStr": "0.1 小时",
+    "srt": "/data/streams/sui/2026_01_15_19_42_56/2026_01_15_19_42_56_找你有事！速来_DDTV5_fix_1.srt",
+    "xml": "/data/streams/sui/2026_01_15_19_42_56/录制-25788785-20260115-195030-274-找你有事！速来.xml",
+    "cover": "/data/streams/sui/2026_01_15_19_42_56/录制-25788785-20260115-195030-274-找你有事！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_15_19_42_56/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_15_19_42_56/2026_01_15_19_42_56_找你有事！速来_DDTV5_1_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_15_19_42_56/录制-25788785-20260115-194314-692-找你有事！速来_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_15_19_42_56/录制-25788785-20260115-195030-274-找你有事！速来_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_13_20_05_27",
+    "title": "找你有事！速来",
+    "date": "2026-01-13",
+    "time": "20:05:27",
+    "startTime": "20:05",
+    "endTime": "22:53",
+    "duration": 10109,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_13_20_05_27/录制-25788785-20260113-200527-033-找你有事！速来.xml",
+    "cover": "/data/streams/sui/2026_01_13_20_05_27/录制-25788785-20260113-200527-033-找你有事！速来.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_01_13_20_05_27/Gemini_Generated_Image_6qaxoq6qaxoq6qax.png"
+    ]
+  },
+  {
     "id": "2026_01_13_20_05_20",
     "title": "找你有事！速来",
     "date": "2026-01-13",

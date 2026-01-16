@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.mjs';
+import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js';
 
 /**
  * 直播同步脚本
@@ -227,7 +227,7 @@ async function syncStreams() {
   const allPotentialTitles = [];
   const allImages = [];
 
-  for (const sourceDir of SOURCE_BASE_DIRS) {
+  for (const sourceDir of sourceDirs) {
     if (!fs.existsSync(sourceDir)) {
       console.warn(`Source directory not found: ${sourceDir}`);
       continue;
@@ -501,7 +501,7 @@ async function syncStreams() {
   // Process each final stream group
   validStreamIds.forEach((streamId, index) => {
     const stream = finalStreamGroups[streamId];
-    const targetDir = path.join(TARGET_BASE_DIR, streamId);
+    const targetDir = path.join(targetBaseDir, streamId);
     if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
     const streamData = {
@@ -919,7 +919,7 @@ async function syncStreams() {
     });
 
     if (closestStreamId) {
-      const targetDir = path.join(TARGET_BASE_DIR, closestStreamId);
+      const targetDir = path.join(targetBaseDir, closestStreamId);
       const targetPath = path.join(targetDir, img.name);
 
       // Check if image already exists in target directory (may have been copied earlier)
@@ -966,7 +966,7 @@ async function syncStreams() {
   finalStreams.sort((a, b) => b.id.localeCompare(a.id));
 
   fs.writeFileSync(
-    path.join(TARGET_BASE_DIR, 'streams.json'),
+    path.join(targetBaseDir, 'streams.json'),
     JSON.stringify(finalStreams, null, 2)
   );
 

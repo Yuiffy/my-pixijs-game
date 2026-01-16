@@ -4,25 +4,45 @@
  */
 
 import { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials } from './types';
-import { sui } from './sui';
-import { shiori } from './shiori';
-import { vrNew1, vrNew2, vrNew3, vrNew4 } from './virtuareal-new';
+import { createRequire } from 'module';
+
+// 动态导入 CommonJS 模块
+const require = createRequire(import.meta.url);
+const liverConfigsRaw = require('../../../scripts/liver-config.js');
 
 // 导出类型
 export type { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials };
 
+// 将 liver-config.js 中的配置转换为 LiverConfig 格式
+function parseLiverConfigs(): LiverConfig {
+  const result: LiverConfig = {};
+  const liverConfigs = liverConfigsRaw.liverConfigs || liverConfigsRaw;
+
+  for (const key in liverConfigs) {
+    const config = liverConfigs[key];
+    result[key] = {
+      id: config.id,
+      name: config.name,
+      shortName: config.id,
+      group: 'personal',
+      tags: [],
+      description: config.name,
+      colorMain: '#888888',
+      colorSub: '#666666',
+      dataPath: `/${config.targetDir}`,
+      bilibiliUid: config.bilibiliUid,
+      bilibiliSpace: `https://space.bilibili.com/${config.bilibiliUid}`,
+    };
+  }
+
+  return result;
+}
+
 /**
  * 所有主播配置的集合
- * 使用 as const 确保类型安全
+ * 从 scripts/liver-config.js 动态读取
  */
-export const livers: LiverConfig = {
-  sui,
-  shiori,
-  'vr-new-1': vrNew1,
-  'vr-new-2': vrNew2,
-  'vr-new-3': vrNew3,
-  'vr-new-4': vrNew4,
-};
+export const livers: LiverConfig = parseLiverConfigs();
 
 /**
  * 主播ID类型
