@@ -6,8 +6,13 @@
  * 此文件现在作为中间层，读取该 JSON 并提供给脚本使用。
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 读取 JSON 配置
 // path.join(__dirname, '..') 指向项目根目录
@@ -32,6 +37,12 @@ function getLiverConfig(liverId) {
 function getAllLiverIds() {
   return Object.keys(liverConfigs);
 }
+
+export {
+  liverConfigs,
+  getLiverConfig,
+  getAllLiverIds
+};
 
 // CommonJS 导出
 if (typeof module !== 'undefined' && module.exports) {
