@@ -12,7 +12,7 @@ export const shiori: LiverInfo = {
   group: 'VirtuaReal',
   description: 'VirtuaReal 栞栞的主页，记录每一场直播的珍贵瞬间。',
   colorMain: '#FF6B9D', // 粉色系
-  colorSub: '#4ECDC4',  // 青色系
+  colorSub: '#4ECDC4', // 青色系
   dataPath: '/data/streams/shiori/',
   tags: ['虚拟主播', 'VirtuaReal', '栞栞'],
   bilibiliReplayUrl: 'https://space.bilibili.com/[UID]/lists/[series-id]?type=series',
