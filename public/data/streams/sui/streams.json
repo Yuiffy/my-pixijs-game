@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_01_18_20_15_59",
+    "title": "快来！找你有事",
+    "date": "2026-01-18",
+    "time": "20:15:59",
+    "startTime": "20:15",
+    "endTime": "00:19",
+    "duration": 14644,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_18_20_15_59/录制-25788785-20260118-201559-982-快来！找你有事.xml",
+    "cover": "/data/streams/sui/2026_01_18_20_15_59/录制-25788785-20260118-201559-982-快来！找你有事.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_18_20_15_59/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_18_20_15_59/Gemini_Generated_Image_iv5n2div5n2div5n.png"
+    ]
+  },
+  {
     "id": "2026_01_18_20_15_54",
     "title": "快来！找你有事",
     "date": "2026-01-18",
