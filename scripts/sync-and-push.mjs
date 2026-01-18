@@ -32,15 +32,21 @@ try {
   console.log('Running git add .');
   execSilent('git add .');
 
-  // Git commit
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const commitMessage = `chore: auto sync livers ${timestamp}`;
-  console.log(`Running git commit -m "${commitMessage}"`);
-  execSilent(`git commit -m "${commitMessage}"`);
+  // Check if there are changes to commit
+  try {
+    execSilent('git diff --cached --quiet');
+    console.log('No changes detected, skipping commit and push');
+  } catch {
+    // Git commit
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const commitMessage = `chore: auto sync livers ${timestamp}`;
+    console.log(`Running git commit -m "${commitMessage}"`);
+    execSilent(`git commit -m "${commitMessage}"`);
 
-  // Git push
-  console.log('Running git push');
-  execSilent('git push');
+    // Git push
+    console.log('Running git push');
+    execSilent('git push');
+  }
 
   console.log(`[${new Date().toISOString()}] Sync and push completed successfully!`);
 } catch (error) {
