@@ -1,5 +1,77 @@
 [
   {
+    "id": "2026_01_18_20_00_33",
+    "title": "人，在干嘛？",
+    "date": "2026-01-18",
+    "time": "20:00:33",
+    "startTime": "20:00",
+    "endTime": "23:34",
+    "duration": 12876,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？.xml",
+    "cover": "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_18_20_00_33/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_18_08_58_31",
+    "title": "早茶第二天。",
+    "date": "2026-01-18",
+    "time": "08:58:31",
+    "startTime": "08:58",
+    "endTime": "12:38",
+    "duration": 13253,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。.xml",
+    "cover": "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_18_08_58_31/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。_COMIC_FACTORY_1.png"
+    ]
+  },
+  {
+    "id": "2026_01_17_20_01_11",
+    "title": "人，来吃棉花糖。",
+    "date": "2026-01-17",
+    "time": "20:01:11",
+    "startTime": "20:01",
+    "endTime": "23:26",
+    "duration": 12322,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_17_20_01_11/录制-1741667419-20260117-200111-363-人，来吃棉花糖。.xml",
+    "cover": "/data/streams/izayoi/2026_01_17_20_01_11/录制-1741667419-20260117-200111-363-人，来吃棉花糖。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_17_20_01_11/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_17_20_01_11/录制-1741667419-20260117-200111-363-人，来吃棉花糖。_COMIC_FACTORY_1.png"
+    ]
+  },
+  {
+    "id": "2026_01_17_09_02_15",
+    "title": "早茶第一天。",
+    "date": "2026-01-17",
+    "time": "09:02:15",
+    "startTime": "09:02",
+    "endTime": "12:14",
+    "duration": 11522,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260117-090215-584-早茶第一天。.xml",
+    "cover": "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260117-090215-584-早茶第一天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_17_09_02_15/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_10.png",
+      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_11.png",
+      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_8.png",
+      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_9.png"
+    ]
+  },
+  {
     "id": "2026_01_16_19_28_14",
     "title": "浣熊咖啡厅正式营业！",
     "date": "2026-01-16",

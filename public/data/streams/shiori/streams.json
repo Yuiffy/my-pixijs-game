@@ -1,5 +1,87 @@
 [
   {
+    "id": "2026_01_18_23_49_17",
+    "title": "虚弱的生化危机！！",
+    "date": "2026-01-18",
+    "time": "23:49:17",
+    "startTime": "23:49",
+    "endTime": "00:15",
+    "duration": 1618,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_18_23_49_17/录制-26966466-20260118-234917-781-虚弱的生化危机！！.xml",
+    "cover": "/data/streams/shiori/2026_01_18_23_49_17/录制-26966466-20260118-234917-781-虚弱的生化危机！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_18_23_49_17/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_18_23_49_17/录制-26966466-20260118-234917-781-虚弱的生化危机！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_17_23_50_50",
+    "title": "小栞来咯！！",
+    "date": "2026-01-17",
+    "time": "23:50:50",
+    "startTime": "23:50",
+    "endTime": "00:18",
+    "duration": 1729,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-235050-607-小栞来咯！！.xml",
+    "cover": "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-235050-607-小栞来咯！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_17_23_50_50/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-235050-607-小栞来咯！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-232644-749-小栞来咯！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_17_23_24_22",
+    "title": "小栞来咯！！",
+    "date": "2026-01-17",
+    "time": "23:24:22",
+    "startTime": "23:24",
+    "endTime": "23:47",
+    "duration": 1438,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232644-749-小栞来咯！！.xml",
+    "cover": "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232644-749-小栞来咯！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_17_23_24_22/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232422-814-小栞来咯！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_17_22_38_44",
+    "title": "小栞来咯！！",
+    "date": "2026-01-17",
+    "time": "22:38:44",
+    "startTime": "22:38",
+    "endTime": "23:06",
+    "duration": 1738,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_17_22_38_44/录制-26966466-20260117-223902-476-小栞来咯！！.xml",
+    "cover": "/data/streams/shiori/2026_01_17_22_38_44/录制-26966466-20260117-223902-476-小栞来咯！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_17_22_38_44/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_01_16_21_37_07",
+    "title": "小栞来也！！！！！",
+    "date": "2026-01-16",
+    "time": "21:37:07",
+    "startTime": "21:37",
+    "endTime": "00:06",
+    "duration": 8984,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_16_21_37_07/2026_01_16_21_37_07_小栞来也！！！！！_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_01_16_21_36_37",
     "title": "小栞来也！！！！！",
     "date": "2026-01-16",
