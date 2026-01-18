@@ -394,6 +394,30 @@ async function syncStreams() {
   // Merge close groups (deduplication across all collected groups)
   const sortedKeys = Object.keys(allStreamGroups).sort((a, b) => allStreamGroups[a].startTime - allStreamGroups[b].startTime);
   const mergedStreamGroups = {};
+  const mergedKeys = new Set(); // Track which keys have been merged
+
+  // Helper function to calculate time overlap ratio
+  function calculateOverlapRatio(stream1, stream2) {
+    const start1 = stream1.startTime.getTime();
+    const end1 = start1 + stream1.duration * 1000;
+    const start2 = stream2.startTime.getTime();
+    const end2 = start2 + stream2.duration * 1000;
+    
+    // Calculate overlap
+    const overlapStart = Math.max(start1, start2);
+    const overlapEnd = Math.min(end1, end2);
+    const overlapDuration = Math.max(0, overlapEnd - overlapStart);
+    
+    // Calculate total duration (union of both time ranges)
+    const totalStart = Math.min(start1, start2);
+    const totalEnd = Math.max(end1, end2);
+    const totalDuration = totalEnd - totalStart;
+    
+    // Avoid division by zero
+    if (totalDuration === 0) return 0;
+    
+    return overlapDuration / totalDuration;
+  }
 
   // Debug logging for duplicate detection
   console.log(`\n=== 去重检测 ===`);
@@ -402,14 +426,29 @@ async function syncStreams() {
   sortedKeys.forEach(key => {
     const current = allStreamGroups[key];
     let merged = false;
+    
+    // Check if this key has already been merged into another group
+    if (mergedKeys.has(key)) {
+      console.log(`跳过已合并的键: ${key}`);
+      return;
+    }
+    
     for (const mKey in mergedStreamGroups) {
       const existing = mergedStreamGroups[mKey];
-      const timeDiff = Math.abs(current.startTime.getTime() - existing.startTime.getTime());
-      // If within 10 minutes, merge
-      if (timeDiff < 10 * 60 * 1000) {
-        console.log(`合并直播组: ${key} (${current.startTime.toISOString()}) -> ${mKey} (${existing.startTime.toISOString()}), 时间差: ${timeDiff/1000}秒`);
+      
+      // Calculate overlap ratio
+      const overlapRatio = calculateOverlapRatio(current, existing);
+      
+      // If overlap >= 90%, merge
+      if (overlapRatio >= 0.9) {
+        console.log(`合并直播组: ${key} (${current.startTime.toISOString()}) -> ${mKey} (${existing.startTime.toISOString()}), 重叠度: ${(overlapRatio * 100).toFixed(1)}%`);
+        
+        // Merge files
         existing.files.push(...current.files);
+        
+        // Keep the longer duration
         if (current.duration > existing.duration) existing.duration = current.duration;
+        
         // Keep the earliest startTime/ID as the anchor
         if (current.startTime.getTime() < existing.startTime.getTime()) {
           existing.startTime = current.startTime;
@@ -417,6 +456,9 @@ async function syncStreams() {
           existing.date = current.date;
           existing.time = current.time;
         }
+        
+        // Mark this key as merged
+        mergedKeys.add(key);
         merged = true;
         break;
       }
