@@ -6,26 +6,41 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..');
 
+const execOptions = {
+  cwd: projectRoot,
+  stdio: 'pipe',
+  windowsHide: true,
+  shell: process.platform === 'win32' ? 'cmd.exe' : true,
+  env: { ...process.env, NO_COLOR: '1' },
+};
+
+function execSilent(command) {
+  if (process.platform === 'win32') {
+    return execSync(`cmd /c "${command}"`, execOptions);
+  }
+  return execSync(command, execOptions);
+}
+
 console.log(`[${new Date().toISOString()}] Starting sync and push process...`);
 
 try {
-  // Run sync-livers
-  console.log('Running npm run run-sync...');
-  execSync('npm run run-sync-scripts', { cwd: projectRoot, stdio: 'inherit' });
+  // Run sync-livers directly with node
+  console.log('Running sync_livers.mjs...');
+  execSilent('node scripts/sync_livers.mjs');
 
   // Git add all
   console.log('Running git add .');
-  execSync('git add .', { cwd: projectRoot, stdio: 'inherit' });
+  execSilent('git add .');
 
   // Git commit
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const commitMessage = `chore: auto sync livers ${timestamp}`;
   console.log(`Running git commit -m "${commitMessage}"`);
-  execSync(`git commit -m "${commitMessage}"`, { cwd: projectRoot, stdio: 'inherit' });
+  execSilent(`git commit -m "${commitMessage}"`);
 
   // Git push
   console.log('Running git push');
-  execSync('git push', { cwd: projectRoot, stdio: 'inherit' });
+  execSilent('git push');
 
   console.log(`[${new Date().toISOString()}] Sync and push completed successfully!`);
 } catch (error) {
