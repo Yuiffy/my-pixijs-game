@@ -1005,6 +1005,85 @@ async function syncStreams() {
     console.log(`合并后总计: ${finalStreams.length} 个直播数据 (原有: ${existingStreams.length}, 新增: ${allStreams.length})`);
   }
 
+  // 对最终结果进行去重（处理现有数据中可能存在的重复）
+  console.log(`\n=== 最终去重 ===`);
+  const deduplicatedStreams = [];
+  const processedIds = new Set();
+
+  // Helper function to calculate time overlap ratio for stream objects
+  function calculateOverlapRatioForStream(stream1, stream2) {
+    const [Y1, M1, D1, h1, m1, s1] = stream1.id.split('_').map(Number);
+    const [Y2, M2, D2, h2, m2, s2] = stream2.id.split('_').map(Number);
+    
+    const start1 = new Date(Y1, M1 - 1, D1, h1, m1, s1).getTime();
+    const end1 = start1 + stream1.duration * 1000;
+    const start2 = new Date(Y2, M2 - 1, D2, h2, m2, s2).getTime();
+    const end2 = start2 + stream2.duration * 1000;
+    
+    // Calculate overlap
+    const overlapStart = Math.max(start1, start2);
+    const overlapEnd = Math.min(end1, end2);
+    const overlapDuration = Math.max(0, overlapEnd - overlapStart);
+    
+    // Calculate total duration (union of both time ranges)
+    const totalStart = Math.min(start1, start2);
+    const totalEnd = Math.max(end1, end2);
+    const totalDuration = totalEnd - totalStart;
+    
+    // Avoid division by zero
+    if (totalDuration === 0) return 0;
+    
+    return overlapDuration / totalDuration;
+  }
+
+  // Sort streams by id (time) for consistent deduplication
+  finalStreams.sort((a, b) => a.id.localeCompare(b.id));
+
+  finalStreams.forEach(stream => {
+    if (processedIds.has(stream.id)) {
+      return;
+    }
+
+    let merged = false;
+    for (const existing of deduplicatedStreams) {
+      const overlapRatio = calculateOverlapRatioForStream(stream, existing);
+      
+      if (overlapRatio >= 0.9) {
+        console.log(`最终去重: ${stream.id} -> ${existing.id}, 重叠度: ${(overlapRatio * 100).toFixed(1)}%`);
+        
+        // Merge images from stream into existing
+        stream.images.forEach(img => {
+          if (!existing.images.includes(img)) {
+            existing.images.push(img);
+          }
+        });
+        
+        // Keep longer duration
+        if (stream.duration > existing.duration) {
+          existing.duration = stream.duration;
+          existing.durationStr = stream.durationStr;
+        }
+        
+        // Keep better data (prefer non-null values)
+        if (!existing.srt && stream.srt) existing.srt = stream.srt;
+        if (!existing.xml && stream.xml) existing.xml = stream.xml;
+        if (!existing.cover && stream.cover) existing.cover = stream.cover;
+        if (!existing.highlights && stream.highlights) existing.highlights = stream.highlights;
+        
+        merged = true;
+        break;
+      }
+    }
+    
+    if (!merged) {
+      deduplicatedStreams.push(stream);
+      processedIds.add(stream.id);
+    }
+  });
+
+  finalStreams = deduplicatedStreams;
+  console.log(`最终去重后: ${finalStreams.length} 个直播数据`);
+
   finalStreams.sort((a, b) => b.id.localeCompare(a.id));
 
   fs.writeFileSync(
