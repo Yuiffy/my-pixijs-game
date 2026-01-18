@@ -26,7 +26,7 @@ console.log(`[${new Date().toISOString()}] Starting sync and push process...`);
 try {
   // Run sync-livers directly with node
   console.log('Running sync_livers.mjs...');
-  execSilent('node scripts/sync_livers.mjs');
+  execSilent('node scripts/sync_streams.mjs');
 
   // Git add all
   console.log('Running git add .');

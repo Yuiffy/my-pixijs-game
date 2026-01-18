@@ -12,7 +12,6 @@
     "start": "next start",
     "lint": "next lint",
     "run-sync-scripts": "node scripts/sync_streams.mjs",
-    "run-sync-livers": "node scripts/sync_livers.mjs",
     "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:stop": "pm2 stop ecosystem.config.cjs",
     "pm2:restart": "pm2 restart ecosystem.config.cjs",
