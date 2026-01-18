@@ -8,6 +8,7 @@ module.exports = {
       autorestart: false,
       watch: false,
       max_memory_restart: '1G',
+      windowsHide: true,
       env: {
         NODE_ENV: 'production',
       },
