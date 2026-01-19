@@ -1,5 +1,73 @@
 [
   {
+    "id": "2026_01_19_20_41_34",
+    "title": "来唱歌！",
+    "date": "2026-01-19",
+    "time": "20:41:34",
+    "startTime": "20:41",
+    "endTime": "22:10",
+    "duration": 5342,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_19_20_41_34/录制-1986461465-20260119-204134-707-来唱歌！.xml",
+    "cover": "/data/streams/kloa/2026_01_19_20_41_34/录制-1986461465-20260119-204134-707-来唱歌！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_19_20_41_34/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_01_19_20_41_34/录制-1986461465-20260119-204134-707-来唱歌！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_19_19_03_23",
+    "title": "来唱歌！",
+    "date": "2026-01-19",
+    "time": "19:03:23",
+    "startTime": "19:03",
+    "endTime": "20:39",
+    "duration": 5763,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_19_19_03_23/录制-1986461465-20260119-190323-579-来唱歌！.xml",
+    "cover": "/data/streams/kloa/2026_01_19_19_03_23/录制-1986461465-20260119-190323-579-来唱歌！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_19_19_03_23/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_01_19_19_03_23/录制-1986461465-20260119-190323-579-来唱歌！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_19_09_15_05",
+    "title": "早安！好困0-0",
+    "date": "2026-01-19",
+    "time": "09:15:05",
+    "startTime": "09:15",
+    "endTime": "11:34",
+    "duration": 8373,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_19_09_15_05/录制-1986461465-20260119-091505-890-早安！好困0-0.xml",
+    "cover": "/data/streams/kloa/2026_01_19_09_15_05/录制-1986461465-20260119-091505-890-早安！好困0-0.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_19_09_15_05/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_01_19_09_15_05/录制-1986461465-20260119-091505-890-早安！好困0-0_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_19_08_04_35",
+    "title": "早安！好困0-0",
+    "date": "2026-01-19",
+    "time": "08:04:35",
+    "startTime": "08:04",
+    "endTime": "09:11",
+    "duration": 4022,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_19_08_04_35/录制-1986461465-20260119-080435-794-早安！好困0-0.xml",
+    "cover": "/data/streams/kloa/2026_01_19_08_04_35/录制-1986461465-20260119-080435-794-早安！好困0-0.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_19_08_04_35/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_01_19_08_04_35/录制-1986461465-20260118-205509-917-看Mujica！_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_18_20_55_09",
     "title": "看Mujica！",
     "date": "2026-01-18",

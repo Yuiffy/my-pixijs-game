@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1741667419" shortid="0" name="十六萤Izayoi" title="聊半小时." areanameparent="电台" areanamechild="聊天电台" start_time="2026-01-19T22:45:13.6123272+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="2.337,1,25,16777215,1768833914674,0,747469,0" user="晓雷予迟">薛定谔的有品</d>
+  <d p="2.643,1,25,16777215,1768833915333,0,237667622,0" user="琹琹Shiori">[笑哭][笑哭][笑哭]</d>
+  <d p="8.839,1,25,16777215,1768833921011,0,133819258,0" user="鱼鱼蒸饭了QAQ">什么都不穿</d>
+  <d p="8.839,1,25,16777215,1768833922217,0,133819258,0" user="鱼鱼蒸饭了QAQ">懂了</d>
+  <d p="9.111,1,25,16777215,1768833922410,0,1597391444,0" user="填空的宇">天才浣</d>
+  <d p="11.722,1,25,65532,1768833925088,0,1454911,0" user="阳炎aqua">？</d>
+  <d p="14.051,1,25,16777215,1768833926344,0,747469,0" user="晓雷予迟">裙下有宇宙</d>
+  <d p="14.051,1,25,65532,1768833926774,0,38028857,0" user="卿家ん">难道没穿</d>
+  <d p="14.051,1,25,16772431,1768833926892,0,23090364,0" user="画舸亭亭浮淡渌">[dog]</d>
+  <d p="14.321,1,25,65532,1768833926558,0,266790905,0" user="榴莲味的暗恋">尊嘟假嘟</d>
+  <d p="14.321,1,25,14893055,1768833927011,0,2648843,0" user="小寂语">随时换</d>
+  <d p="15.614,4,25,16772431,1768833928879,0,242684436,0" user="时间线里的時間點-">光脚</d>
+  <d p="16.637,1,25,16777215,1768833929582,0,38150669,0" user="陷入紫色爱情海">其实穿的是秋裤</d>
+  <d p="19.516,1,25,16777215,1768833932667,0,2724509,0" user="村头王王王师傅">懂了 没穿</d>
+  <d p="20.815,1,25,16777215,1768833933191,0,3690990787364900,0" user="我从出生就单推花臼了">那就是没穿</d>
+  <d p="20.815,1,25,65532,1768833933261,0,266790905,0" user="榴莲味的暗恋">那就是没穿</d>
+  <d p="21.829,1,25,16777215,1768833934841,0,332705761,0" user="Hakimce1">大裤衩</d>
+  <d p="23.135,1,25,16777215,1768833936146,0,297926662,0" user="我是纯纯纯良">尊嘟假嘟</d>
+  <d p="24.712,1,25,16777215,1768833937597,0,237667622,0" user="琹琹Shiori">一半一半</d>
+  <d p="25.737,1,25,16777215,1768833938091,0,4182867,0" user="塔可V">女仆长裙标配吊带袜</d>
+  <d p="25.737,1,25,65532,1768833938883,0,554789,0" user="远见。">尊嘟假嘟</d>
+  <d p="26.010,1,25,16777215,1768833939126,0,178696544,0" user="桃礼Susu">没穿</d>
+  <d p="28.612,1,25,14893055,1768833941746,0,3546682545408719,0" user="冰菓ツ">尊嘟假嘟</d>
+  <d p="29.913,1,25,14893055,1768833942886,0,387236933,0" user="歩好看">懂了</d>
+  <d p="30.941,1,25,16777215,1768833943429,0,22267989,0" user="元气波的雪兔">那就是没穿</d>
+  <d p="30.941,1,25,16777215,1768833943879,0,38150669,0" user="陷入紫色爱情海">其实穿的是大花裤</d>
+  <d p="34.840,4,25,14893055,1768833948076,0,14982454,0" user="冰糖蛋挞seki">尊嘟假嘟</d>
+  <d p="37.431,1,25,16777215,1768833949681,0,23148452,0" user="phxsg">薛定谔的袜子</d>
+  <d p="41.332,1,25,16777215,1768833954015,0,747469,0" user="晓雷予迟">变成薛定谔品状态了说是</d>
+  <d p="45.237,1,25,16777215,1768833957358,0,297926662,0" user="我是纯纯纯良">什么有助于你挖矿开凿，那就是穿的什么</d>
+  <d p="47.829,1,25,16777215,1768833959948,0,297926662,0" user="我是纯纯纯良">尊嘟假嘟</d>
+  <d p="57.222,4,25,14893055,1768833969662,0,11498436,0" user="坠天的崩螺旋长梦">肯定是东百指定红绿连裤袜</d>
+  <d p="57.222,1,25,16777215,1768833969724,0,237667622,0" user="琹琹Shiori">开空挡了</d>
+  <d p="62.412,4,25,14893055,1768833975820,0,12455041,0" user="星狸Hoshili丶">尊嘟假嘟</d>
+  <d p="66.321,1,25,16777215,1768833978906,0,52849014,0" user="幻云v小友">尊嘟假嘟</d>
+  <d p="66.321,1,25,16777215,1768833979061,0,317314934,0" user="聆听黑暗浪潮">感谢豆包，“术曲”大致写好了。</d>
+  <d p="66.322,1,25,16777215,1768833979750,0,237667622,0" user="琹琹Shiori">fuwa</d>
+  <d p="67.616,1,25,16777215,1768833980057,0,3690996497910111,0" user="bili_55609510301">尊嘟假嘟</d>
+  <d p="74.117,1,25,16777215,1768833986974,0,3690996497910111,0" user="bili_55609510301">fuwa</d>
+  <d p="75.135,1,25,14893055,1768833988386,0,12873278,0" user="Eumzz">挖出舍利子了</d>
+  <d p="75.428,1,25,16777215,1768833987714,0,317314934,0" user="聆听黑暗浪潮">出租屋的冬夜，冷气钻被窝。我冻得打摆子，扒拉猫爪抢阵地，谁都不肯挪。</d>
+  <d p="76.433,1,25,16777215,1768833989728,0,22267989,0" user="元气波的雪兔">早早早</d>
+  <d p="76.711,4,25,14893055,1768833989890,0,487332423,0" user="御坂13887号">想到16穿着东百花袄的样子就有个bgm响</d>
+</i>

@@ -1,5 +1,68 @@
 [
   {
+    "id": "2026_01_19_22_01_58",
+    "title": "找你有事！速来",
+    "date": "2026-01-19",
+    "time": "22:01:58",
+    "startTime": "22:01",
+    "endTime": "00:36",
+    "duration": 9335,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_19_22_01_58/录制-25788785-20260119-220158-900-找你有事！速来.xml",
+    "cover": "/data/streams/sui/2026_01_19_22_01_58/录制-25788785-20260119-220158-900-找你有事！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_19_22_01_58/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_19_22_01_58/Gemini_Generated_Image_c60lbxc60lbxc60l.png",
+      "/data/streams/sui/2026_01_19_22_01_58/Gemini_Generated_Image_j06cl6j06cl6j06c.png"
+    ]
+  },
+  {
+    "id": "2026_01_19_20_11_14",
+    "title": "摸鱼茶水间！速来",
+    "date": "2026-01-19",
+    "time": "20:11:14",
+    "startTime": "20:11",
+    "endTime": "22:01",
+    "duration": 6637,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_19_20_11_14/录制-25788785-20260119-201114-210-摸鱼茶水间！速来.xml",
+    "cover": "/data/streams/sui/2026_01_19_20_11_14/录制-25788785-20260119-201114-210-摸鱼茶水间！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_19_20_11_14/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_01_19_20_10_54",
+    "title": "摸鱼茶水间！速来",
+    "date": "2026-01-19",
+    "time": "20:10:54",
+    "startTime": "20:10",
+    "endTime": "00:36",
+    "duration": 16003,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_19_20_10_54/2026_01_19_20_10_54_摸鱼茶水间！速来_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_19_20_10_54/2026_01_19_20_10_54_摸鱼茶水间！速来_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_19_14_56_14",
+    "title": "命运石之门0！初见！",
+    "date": "2026-01-19",
+    "time": "14:56:14",
+    "startTime": "14:56",
+    "endTime": "16:30",
+    "duration": 5661,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_19_14_56_14/2026_01_19_14_56_34_摸鱼茶水间！速来_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_19_14_56_14/录制-25788785-20260119-145614-560-摸鱼茶水间！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_19_14_56_14/highlights.md",
+    "images": []
+  },
+  {
     "id": "2026_01_18_20_15_54",
     "title": "快来！找你有事",
     "date": "2026-01-18",
