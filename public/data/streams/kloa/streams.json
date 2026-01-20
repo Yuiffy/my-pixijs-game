@@ -1,5 +1,53 @@
 [
   {
+    "id": "2026_01_20_19_04_39",
+    "title": "棉花糖还有简单歌歌",
+    "date": "2026-01-20",
+    "time": "19:04:39",
+    "startTime": "19:04",
+    "endTime": "21:26",
+    "duration": 8565,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_20_19_04_39/录制-1986461465-20260120-190439-566-棉花糖还有简单歌歌.xml",
+    "cover": "/data/streams/kloa/2026_01_20_19_04_39/录制-1986461465-20260120-190439-566-棉花糖还有简单歌歌.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_20_19_04_39/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_01_20_09_42_07",
+    "title": "整理歌单！",
+    "date": "2026-01-20",
+    "time": "09:42:07",
+    "startTime": "09:42",
+    "endTime": "12:41",
+    "duration": 10751,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_20_09_42_07/录制-1986461465-20260120-094207-018-整理歌单！.xml",
+    "cover": "/data/streams/kloa/2026_01_20_09_42_07/录制-1986461465-20260120-094207-018-整理歌单！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_20_08_50_48",
+    "title": "整理歌单！",
+    "date": "2026-01-20",
+    "time": "08:50:48",
+    "startTime": "08:50",
+    "endTime": "09:39",
+    "duration": 2968,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_20_08_50_48/录制-1986461465-20260120-085048-249-昏过去了.xml",
+    "cover": "/data/streams/kloa/2026_01_20_08_50_48/录制-1986461465-20260120-085048-249-昏过去了.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_01_20_08_50_48/录制-1986461465-20260119-190323-579-来唱歌！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_01_20_08_50_48/录制-1986461465-20260119-204134-707-来唱歌！_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_19_20_41_34",
     "title": "来唱歌！",
     "date": "2026-01-19",

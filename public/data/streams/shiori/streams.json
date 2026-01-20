@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_01_20_21_19_12",
+    "title": "小栞啵啵！！",
+    "date": "2026-01-20",
+    "time": "21:19:12",
+    "startTime": "21:19",
+    "endTime": "00:40",
+    "duration": 12076,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_20_21_19_12/录制-26966466-20260120-211912-265-小栞啵啵！！.xml",
+    "cover": "/data/streams/shiori/2026_01_20_21_19_12/录制-26966466-20260120-211912-265-小栞啵啵！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_20_21_19_12/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_20_21_19_12/录制-26966466-20260120-211912-265-小栞啵啵！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_20_10_34_35",
+    "title": "早安獭獭栞！",
+    "date": "2026-01-20",
+    "time": "10:34:35",
+    "startTime": "10:34",
+    "endTime": "12:42",
+    "duration": 7700,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_20_10_34_35/录制-26966466-20260120-103435-872-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_01_20_10_34_35/录制-26966466-20260120-103435-872-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_01_20_10_34_35/录制-26966466-20260118-234917-781-虚弱的生化危机！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_18_23_49_17",
     "title": "虚弱的生化危机！！",
     "date": "2026-01-18",
