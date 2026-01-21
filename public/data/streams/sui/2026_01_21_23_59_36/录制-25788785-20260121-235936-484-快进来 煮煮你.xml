@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="25788785" shortid="0" name="岁己SUI" title="快进来 煮煮你" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-01-21T23:59:36.4863432+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.709,4,25,14893055,1769011178133,0,13327599,0" user="岁己家的雨中月">精神分析</d>
+  <d p="0.709,4,25,14893055,1769011178336,0,288811455,0" user="L1f3n0w0v3R710w_">我看中国这样的人很多，什么得到父亲的一根烟</d>
+  <d p="3.854,4,25,14893055,1769011181541,0,227618,0" user="Vaserkia">[岁己收藏集表情包_流汗了]</d>
+  <d p="7.205,4,25,14893055,1769011185779,0,9669499,0" user="俺智力有問題">有个经典的梗，所有事情都会回归到弗洛伊德的恋母</d>
+  <d p="9.062,4,25,14893055,1769011187304,0,1604425,0" user="仙布着急唱灭歌">不是一般说女生喜欢大叔型的就是恋父表现</d>
+  <d p="11.661,1,25,16777215,1769011189190,0,11253330,0" user="相隔森林与深海">弗洛伊德说一切心理问题都源于恋母哈哈</d>
+  <d p="11.661,4,25,14893055,1769011189515,0,13429933,0" user="请让我好好入睡">弗洛伊德说法不是普遍存在么</d>
+  <d p="12.411,4,25,16772431,1769011190935,0,6606769,0" user="Akananae">是的</d>
+  <d p="16.301,1,25,16777215,1769011193636,0,4601260,0" user="水桥帕露西_w">有恋岁情节</d>
+  <d p="17.607,4,25,14893055,1769011195195,0,288811455,0" user="L1f3n0w0v3R710w_">每天都能在李小鹿看到</d>
+  <d p="19.459,4,25,14893055,1769011197115,0,227618,0" user="Vaserkia">[岁己收藏集表情包_哈哈]</d>
+  <d p="22.060,4,25,14893055,1769011200262,0,13429933,0" user="请让我好好入睡">[岁己收藏集表情包_啵啵]</d>
+  <d p="28.010,4,25,14893055,1769011205662,0,9669499,0" user="俺智力有問題">[岁己收藏集表情包_哈哈]</d>
+  <d p="29.860,4,25,14893055,1769011208373,0,227618,0" user="Vaserkia">所以不要用弗洛伊德解释一切啊</d>
+  <d p="30.626,4,25,16772431,1769011208548,0,6606769,0" user="Akananae">哈哈哈哈哈哈哈哈</d>
+  <d p="32.456,1,25,16777215,1769011210953,0,8481710,0" user="人活着是为了02">那你叫饼干岁爸爸试试</d>
+  <d p="37.101,4,25,16772431,1769011214527,0,6606769,0" user="Akananae">是的</d>
+  <d p="37.681,4,25,14893055,1769011215039,0,227618,0" user="Vaserkia">跨日快乐</d>
+  <d p="42.865,1,25,16777215,1769011221113,0,11253330,0" user="相隔森林与深海">所以弗洛伊德像峰哥一样公式</d>
+  <d p="44.916,4,25,14893055,1769011222300,0,34531495,0" user="忧郁的岁己的白日梦蓝">心理问题最后都会回到童年</d>
+  <d p="44.917,4,25,14893055,1769011222589,0,13327599,0" user="岁己家的雨中月">哇哇哇</d>
+  <d p="44.918,4,25,16772431,1769011222898,0,6606769,0" user="Akananae">快日快乐噢宝宝</d>
+  <d p="45.465,1,25,16777215,1769011223431,0,2343332,0" user="五海Itsu5mi">那小岁童年很幸福了</d>
+  <d p="46.201,4,25,14893055,1769011224141,0,34531495,0" user="忧郁的岁己的白日梦蓝">跨日快乐</d>
+  <d p="47.498,4,25,16772431,1769011225408,0,6606769,0" user="Akananae">[岁己收藏集表情包_啵啵]</d>
+  <d p="50.111,1,25,14893055,1769011227931,0,14279,0" user="带鱼">晚安</d>
+  <d p="51.960,4,25,14893055,1769011229775,0,227618,0" user="Vaserkia">[岁己收藏集表情包_啵啵]</d>
+  <d p="53.256,1,25,16777215,1769011230998,0,2225137,0" user="-かげぼうし-">[岁己收藏集表情包_啵啵]</d>
+  <d p="54.000,1,25,16777215,1769011231240,0,437619659,0" user="真-玄胤">啾咪啾</d>
+  <d p="55.871,4,25,14893055,1769011233183,0,1604425,0" user="仙布着急唱灭歌">跨日了</d>
+  <d p="56.611,4,25,16772431,1769011233983,0,6606769,0" user="Akananae">其实到现在就变成了一种公式</d>
+  <d p="57.172,1,25,16777215,1769011235089,0,2343332,0" user="五海Itsu5mi">[岁己收藏集表情包_啵啵]</d>
+  <d p="57.173,1,25,16777215,1769011235359,0,2225137,0" user="-かげぼうし-">哇哇哇跨日快乐的说</d>
+  <d p="57.173,4,25,14893055,1769011235349,0,13429933,0" user="请让我好好入睡">哇哇哇</d>
+  <d p="57.905,1,25,16772431,1769011235389,0,11308264,0" user="岁己家的1702">哇哇跨日快乐</d>
+  <d p="57.905,4,25,16772431,1769011236514,0,6606769,0" user="Akananae">[岁己收藏集表情包_啵啵]</d>
+  <d p="60.499,1,25,14893055,1769011238798,0,22389880,0" user="黑铁watcher">[岁己收藏集表情包_凝视]</d>
+  <d p="61.067,4,25,14893055,1769011238418,0,1604425,0" user="仙布着急唱灭歌">还有别的项目吗</d>
+  <d p="61.068,4,25,14893055,1769011239324,0,13429933,0" user="请让我好好入睡">[岁己收藏集表情包_啵啵]</d>
+  <d p="61.799,4,25,14893055,1769011239417,0,6027898,0" user="CureNovPrime">哇哇哇新的一天开始了！</d>
+</i>
