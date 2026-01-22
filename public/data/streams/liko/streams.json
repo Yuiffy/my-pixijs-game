@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_01_22_20_58_48",
+    "title": "晚间探索",
+    "date": "2026-01-22",
+    "time": "20:58:48",
+    "startTime": "20:58",
+    "endTime": "00:45",
+    "duration": 13623,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_01_22_20_58_48/录制-1713548468-20260122-205848-895-晚间探索.xml",
+    "cover": "/data/streams/liko/2026_01_22_20_58_48/录制-1713548468-20260122-205848-895-晚间探索.cover.jpg",
+    "highlights": "/data/streams/liko/2026_01_22_20_58_48/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_01_22_20_58_48/录制-1713548468-20260122-205848-895-晚间探索_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_22_10_01_20",
+    "title": "兔子虚弱中……",
+    "date": "2026-01-22",
+    "time": "10:01:20",
+    "startTime": "10:01",
+    "endTime": "13:59",
+    "duration": 14281,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260122-100120-632-兔子虚弱中…….xml",
+    "cover": "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260122-100120-632-兔子虚弱中…….cover.jpg",
+    "highlights": "/data/streams/liko/2026_01_22_10_01_20/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260122-100120-632-兔子虚弱中……_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260121-214353-787-兔子虚弱中……_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_21_21_43_53",
     "title": "兔子虚弱中……",
     "date": "2026-01-21",

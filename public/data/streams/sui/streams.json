@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_01_23_00_27_20",
+    "title": "晚上好~岁来",
+    "date": "2026-01-22",
+    "time": "00:27:20",
+    "startTime": "00:27",
+    "endTime": "01:15",
+    "duration": 2889,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_23_00_27_20/录制-25788785-20260123-002720-165-晚上好~岁来.xml",
+    "cover": "/data/streams/sui/2026_01_23_00_27_20/录制-25788785-20260123-002720-165-晚上好~岁来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_23_00_27_20/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_23_00_27_20/录制-25788785-20260123-002720-165-晚上好~岁来_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_23_00_17_02",
+    "title": "晚上好~岁来",
+    "date": "2026-01-22",
+    "time": "00:17:02",
+    "startTime": "00:17",
+    "endTime": "00:27",
+    "duration": 614,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_23_00_17_02/录制-25788785-20260123-001702-550-晚上好~岁来.xml",
+    "cover": "/data/streams/sui/2026_01_23_00_17_02/录制-25788785-20260123-001702-550-晚上好~岁来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_23_00_17_02/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_23_00_17_02/录制-25788785-20260123-001702-550-晚上好~岁来_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_22_19_53_04",
+    "title": "晚上好~岁来",
+    "date": "2026-01-22",
+    "time": "19:53:04",
+    "startTime": "19:53",
+    "endTime": "00:16",
+    "duration": 15837,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_22_19_53_04/录制-25788785-20260122-195304-126-晚上好~岁来.xml",
+    "cover": "/data/streams/sui/2026_01_22_19_53_04/录制-25788785-20260122-195304-126-晚上好~岁来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_22_19_53_04/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_22_19_53_04/录制-25788785-20260122-195304-126-晚上好~岁来_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_22_19_52_48",
+    "title": "晚上好~岁来",
+    "date": "2026-01-22",
+    "time": "19:52:48",
+    "startTime": "19:52",
+    "endTime": "01:14",
+    "duration": 19361,
+    "durationStr": "5.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_22_19_52_48/2026_01_22_19_52_48_晚上好~岁来_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_22_19_52_48/2026_01_22_19_52_48_晚上好~岁来_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_01_22_00_00_49",
     "title": "快进来 煮煮你",
     "date": "2026-01-21",
