@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_01_24_00_07_40",
+    "title": "啵啵！！！",
+    "date": "2026-01-23",
+    "time": "00:07:40",
+    "startTime": "00:07",
+    "endTime": "00:12",
+    "duration": 317,
+    "durationStr": "5 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_24_00_07_40/录制-26966466-20260124-000740-706-啵啵！！！.xml",
+    "cover": "/data/streams/shiori/2026_01_24_00_07_40/录制-26966466-20260124-000740-706-啵啵！！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_24_00_07_40/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_24_00_07_40/录制-26966466-20260124-000740-706-啵啵！！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_24_00_07_40/录制-26966466-20260124-000740-706-啵啵！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_23_22_42_59",
+    "title": "啵啵！！！",
+    "date": "2026-01-23",
+    "time": "22:42:59",
+    "startTime": "22:42",
+    "endTime": "00:03",
+    "duration": 4885,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_23_22_42_59/录制-26966466-20260123-224259-021-啵啵！！！.xml",
+    "cover": "/data/streams/shiori/2026_01_23_22_42_59/录制-26966466-20260123-224259-021-啵啵！！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_23_22_42_59/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_23_22_42_59/录制-26966466-20260123-224259-021-啵啵！！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_23_22_42_59/录制-26966466-20260123-224259-021-啵啵！！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_01_23_22_42_59/录制-26966466-20260123-214900-762-啵啵！！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_23_21_49_00",
     "title": "啵啵！！！",
     "date": "2026-01-23",
