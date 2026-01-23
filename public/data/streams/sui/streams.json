@@ -1,7 +1,39 @@
 [
   {
+    "id": "2026_01_23_20_25_56",
+    "title": "从零开始的初见【鸣潮】！",
+    "date": "2026-01-23",
+    "time": "20:25:56",
+    "startTime": "20:25",
+    "endTime": "22:24",
+    "duration": 7161,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_23_20_25_56/录制-25788785-20260123-202556-376-从零开始的初见【鸣潮】！.xml",
+    "cover": "/data/streams/sui/2026_01_23_20_25_56/录制-25788785-20260123-202556-376-从零开始的初见【鸣潮】！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_23_15_01_09",
+    "title": "从零开始的初见【鸣潮】！",
+    "date": "2026-01-23",
+    "time": "15:01:09",
+    "startTime": "15:01",
+    "endTime": "18:47",
+    "duration": 13615,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_23_15_01_09/录制-25788785-20260123-150121-971-从零开始的初见【鸣潮】！.xml",
+    "cover": "/data/streams/sui/2026_01_23_15_01_09/录制-25788785-20260123-150121-971-从零开始的初见【鸣潮】！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_23_15_01_09/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_23_15_01_09/录制-25788785-20260123-150121-971-从零开始的初见【鸣潮】！_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_23_00_27_20",
-    "title": "晚上好~岁来",
+    "title": "从零开始的初见【鸣潮】！",
     "date": "2026-01-22",
     "time": "00:27:20",
     "startTime": "00:27",
@@ -138,10 +170,7 @@
     "xml": "/data/streams/sui/2026_01_21_15_18_26/2026_01_21_15_18_26_找你有事！速来_DDTV5_1.xml",
     "cover": "/data/streams/sui/2026_01_21_15_18_26/2026_01_21_15_18_26_找你有事！速来_DDTV5_cover.jpg",
     "highlights": null,
-    "images": [
-      "/data/streams/sui/2026_01_21_15_18_26/Gemini_Generated_Image_c60lbxc60lbxc60l.png",
-      "/data/streams/sui/2026_01_21_15_18_26/Gemini_Generated_Image_j06cl6j06cl6j06c.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_19_22_01_58",
@@ -208,7 +237,7 @@
   },
   {
     "id": "2026_01_18_20_15_54",
-    "title": "快来！找你有事",
+    "title": "命运石之门0！初见！",
     "date": "2026-01-18",
     "time": "20:15:54",
     "startTime": "20:15",
@@ -220,8 +249,7 @@
     "cover": "/data/streams/sui/2026_01_18_20_15_54/录制-25788785-20260118-201559-982-快来！找你有事.cover.jpg",
     "highlights": "/data/streams/sui/2026_01_18_20_15_54/highlights.md",
     "images": [
-      "/data/streams/sui/2026_01_18_20_15_54/Gemini_Generated_Image_iv5n2div5n2div5n.png",
-      "/data/streams/sui/2026_01_18_20_15_59/Gemini_Generated_Image_iv5n2div5n2div5n.png"
+      "/data/streams/sui/2026_01_18_20_15_54/Gemini_Generated_Image_iv5n2div5n2div5n.png"
     ]
   },
   {

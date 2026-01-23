@@ -1,5 +1,37 @@
 [
   {
+    "id": "2026_01_23_21_49_00",
+    "title": "啵啵！！！",
+    "date": "2026-01-23",
+    "time": "21:49:00",
+    "startTime": "21:49",
+    "endTime": "22:26",
+    "duration": 2260,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_23_21_49_00/录制-26966466-20260123-214900-762-啵啵！！！.xml",
+    "cover": "/data/streams/shiori/2026_01_23_21_49_00/录制-26966466-20260123-214900-762-啵啵！！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_23_10_08_17",
+    "title": "早安獭獭栞！",
+    "date": "2026-01-23",
+    "time": "10:08:17",
+    "startTime": "10:08",
+    "endTime": "12:08",
+    "duration": 7250,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_23_10_08_17/录制-26966466-20260123-100817-361-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_01_23_10_08_17/录制-26966466-20260123-100817-361-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_23_10_08_17/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_23_10_08_17/录制-26966466-20260123-100817-361-早安獭獭栞！_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_22_21_44_39",
     "title": "小栞来也！",
     "date": "2026-01-22",
@@ -30,9 +62,7 @@
     "cover": "/data/streams/shiori/2026_01_22_10_06_42/录制-26966466-20260122-100642-185-早安獭獭栞！.cover.jpg",
     "highlights": "/data/streams/shiori/2026_01_22_10_06_42/highlights.md",
     "images": [
-      "/data/streams/shiori/2026_01_22_10_06_42/录制-26966466-20260122-100642-185-早安獭獭栞！_merged_COMIC_FACTORY.png",
-      "/data/streams/shiori/2026_01_22_10_06_42/录制-26966466-20260121-101427-235-早安獭獭栞！_COMIC_FACTORY_1.png",
-      "/data/streams/shiori/2026_01_22_10_06_42/录制-26966466-20260121-231503-292-小栞啵播！_COMIC_FACTORY.png"
+      "/data/streams/shiori/2026_01_22_10_06_42/录制-26966466-20260122-100642-185-早安獭獭栞！_merged_COMIC_FACTORY.png"
     ]
   },
   {
@@ -127,8 +157,7 @@
     "cover": "/data/streams/shiori/2026_01_21_10_14_27/录制-26966466-20260121-101427-235-早安獭獭栞！.cover.jpg",
     "highlights": "/data/streams/shiori/2026_01_21_10_14_27/highlights.md",
     "images": [
-      "/data/streams/shiori/2026_01_21_10_14_27/录制-26966466-20260121-101427-235-早安獭獭栞！_COMIC_FACTORY.png",
-      "/data/streams/shiori/2026_01_21_10_14_27/录制-26966466-20260120-211912-265-小栞啵啵！！_COMIC_FACTORY.png"
+      "/data/streams/shiori/2026_01_21_10_14_27/录制-26966466-20260121-101427-235-早安獭獭栞！_COMIC_FACTORY.png"
     ]
   },
   {
@@ -161,9 +190,7 @@
     "xml": "/data/streams/shiori/2026_01_20_10_34_35/录制-26966466-20260120-103435-872-早安獭獭栞！.xml",
     "cover": "/data/streams/shiori/2026_01_20_10_34_35/录制-26966466-20260120-103435-872-早安獭獭栞！.cover.jpg",
     "highlights": null,
-    "images": [
-      "/data/streams/shiori/2026_01_20_10_34_35/录制-26966466-20260118-234917-781-虚弱的生化危机！！_COMIC_FACTORY.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_18_23_49_17",
@@ -196,8 +223,24 @@
     "cover": "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-235050-607-小栞来咯！！.cover.jpg",
     "highlights": "/data/streams/shiori/2026_01_17_23_50_50/highlights.md",
     "images": [
-      "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-235050-607-小栞来咯！！_COMIC_FACTORY.png",
-      "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-232644-749-小栞来咯！！_COMIC_FACTORY.png"
+      "/data/streams/shiori/2026_01_17_23_50_50/录制-26966466-20260117-235050-607-小栞来咯！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_17_23_26_44",
+    "title": "小栞来咯！！",
+    "date": "2026-01-17",
+    "time": "23:26:44",
+    "startTime": "23:26",
+    "endTime": "23:49",
+    "duration": 1438,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_17_23_26_44/录制-26966466-20260117-232644-749-小栞来咯！！.xml",
+    "cover": "/data/streams/shiori/2026_01_17_23_26_44/录制-26966466-20260117-232644-749-小栞来咯！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_17_23_26_44/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_17_23_26_44/录制-26966466-20260117-232644-749-小栞来咯！！_COMIC_FACTORY.png"
     ]
   },
   {
@@ -206,50 +249,50 @@
     "date": "2026-01-17",
     "time": "23:24:22",
     "startTime": "23:24",
-    "endTime": "23:47",
-    "duration": 1438,
-    "durationStr": "0.4 小时",
+    "endTime": "23:26",
+    "duration": 129,
+    "durationStr": "2 分钟",
     "srt": null,
-    "xml": "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232644-749-小栞来咯！！.xml",
-    "cover": "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232644-749-小栞来咯！！.cover.jpg",
+    "xml": "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232422-814-小栞来咯！！.xml",
+    "cover": "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232422-814-小栞来咯！！.cover.jpg",
     "highlights": "/data/streams/shiori/2026_01_17_23_24_22/highlights.md",
     "images": [
       "/data/streams/shiori/2026_01_17_23_24_22/录制-26966466-20260117-232422-814-小栞来咯！！_COMIC_FACTORY.png"
     ]
   },
   {
-    "id": "2026_01_17_22_38_44",
+    "id": "2026_01_17_22_39_02",
     "title": "小栞来咯！！",
     "date": "2026-01-17",
-    "time": "22:38:44",
-    "startTime": "22:38",
-    "endTime": "23:06",
+    "time": "22:39:02",
+    "startTime": "22:39",
+    "endTime": "23:07",
     "duration": 1738,
     "durationStr": "0.5 小时",
     "srt": null,
-    "xml": "/data/streams/shiori/2026_01_17_22_38_44/录制-26966466-20260117-223902-476-小栞来咯！！.xml",
-    "cover": "/data/streams/shiori/2026_01_17_22_38_44/录制-26966466-20260117-223902-476-小栞来咯！！.cover.jpg",
-    "highlights": "/data/streams/shiori/2026_01_17_22_38_44/highlights.md",
+    "xml": "/data/streams/shiori/2026_01_17_22_39_02/录制-26966466-20260117-223902-476-小栞来咯！！.xml",
+    "cover": "/data/streams/shiori/2026_01_17_22_39_02/录制-26966466-20260117-223902-476-小栞来咯！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_17_22_39_02/highlights.md",
     "images": []
   },
   {
-    "id": "2026_01_16_21_36_37",
-    "title": "小栞来也！！！！！",
+    "id": "2026_01_16_21_37_07",
+    "title": "小栞来咯！！",
     "date": "2026-01-16",
-    "time": "21:36:37",
-    "startTime": "21:36",
-    "endTime": "00:05",
+    "time": "21:37:07",
+    "startTime": "21:37",
+    "endTime": "00:06",
     "duration": 8984,
     "durationStr": "2.5 小时",
     "srt": null,
-    "xml": "/data/streams/shiori/2026_01_16_21_36_37/2026_01_16_21_37_07_小栞来也！！！！！_DDTV5_1.xml",
-    "cover": "/data/streams/shiori/2026_01_16_21_36_37/2026_01_16_21_36_37_小栞来也！！！！！_DDTV5_cover.jpg",
+    "xml": "/data/streams/shiori/2026_01_16_21_37_07/2026_01_16_21_37_07_小栞来也！！！！！_DDTV5_1.xml",
+    "cover": null,
     "highlights": null,
     "images": []
   },
   {
     "id": "2026_01_14_22_03_44",
-    "title": "一小时突击！",
+    "title": "小栞来也！！！！！",
     "date": "2026-01-14",
     "time": "22:03:44",
     "startTime": "22:03",
@@ -257,24 +300,69 @@
     "duration": 259,
     "durationStr": "4 分钟",
     "srt": null,
-    "xml": "/data/streams/shiori/2026_01_14_22_03_44/录制-26966466-20260114-220807-159-一小时突击！.xml",
-    "cover": "/data/streams/shiori/2026_01_14_22_03_44/录制-26966466-20260114-220807-159-一小时突击！.cover.jpg",
+    "xml": "/data/streams/shiori/2026_01_14_22_03_44/录制-26966466-20260114-220344-949-一小时突击！.xml",
+    "cover": "/data/streams/shiori/2026_01_14_22_03_44/录制-26966466-20260114-220344-949-一小时突击！.cover.jpg",
     "highlights": null,
     "images": []
   },
   {
-    "id": "2026_01_14_21_37_40",
+    "id": "2026_01_14_21_37_52",
     "title": "一小时突击！",
     "date": "2026-01-14",
-    "time": "21:37:40",
+    "time": "21:37:52",
     "startTime": "21:37",
     "endTime": "22:02",
     "duration": 1540,
     "durationStr": "0.4 小时",
     "srt": null,
-    "xml": "/data/streams/shiori/2026_01_14_21_37_40/录制-26966466-20260114-213752-747-一小时突击！.xml",
-    "cover": "/data/streams/shiori/2026_01_14_21_37_40/录制-26966466-20260114-213752-747-一小时突击！.cover.jpg",
+    "xml": "/data/streams/shiori/2026_01_14_21_37_52/录制-26966466-20260114-213752-747-一小时突击！.xml",
+    "cover": "/data/streams/shiori/2026_01_14_21_37_52/录制-26966466-20260114-213752-747-一小时突击！.cover.jpg",
     "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_14_21_07_40",
+    "title": "一小时突击！",
+    "date": "2026-01-14",
+    "time": "21:07:40",
+    "startTime": "21:07",
+    "endTime": "21:34",
+    "duration": 1648,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_14_21_07_40/录制-26966466-20260114-210740-559-一小时突击！.xml",
+    "cover": "/data/streams/shiori/2026_01_14_21_07_40/录制-26966466-20260114-210740-559-一小时突击！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_14_21_03_17",
+    "title": "一小时突击！",
+    "date": "2026-01-14",
+    "time": "21:03:17",
+    "startTime": "21:03",
+    "endTime": "21:06",
+    "duration": 233,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_14_21_03_17/录制-26966466-20260114-210317-000-一小时突击！.xml",
+    "cover": "/data/streams/shiori/2026_01_14_21_03_17/录制-26966466-20260114-210317-000-一小时突击！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_14_21_03_10",
+    "title": "一小时突击！",
+    "date": "2026-01-14",
+    "time": "21:03:10",
+    "startTime": "21:03",
+    "endTime": "22:07",
+    "duration": 3891,
+    "durationStr": "1.1 小时",
+    "srt": "/data/streams/shiori/2026_01_14_21_03_10/2026_01_14_21_03_10_一小时突击！_DDTV5_fix.srt",
+    "xml": "/data/streams/shiori/2026_01_14_21_03_10/2026_01_14_21_03_10_一小时突击！_DDTV5_2.xml",
+    "cover": null,
+    "highlights": "/data/streams/shiori/2026_01_14_21_03_10/highlights.md",
     "images": []
   },
   {
@@ -283,12 +371,12 @@
     "date": "2026-01-14",
     "time": "21:00:09",
     "startTime": "21:00",
-    "endTime": "22:04",
-    "duration": 3891,
-    "durationStr": "1.1 小时",
-    "srt": "/data/streams/shiori/2026_01_14_21_00_09/2026_01_14_21_03_10_一小时突击！_DDTV5_fix.srt",
-    "xml": "/data/streams/shiori/2026_01_14_21_00_09/录制-26966466-20260114-210740-559-一小时突击！.xml",
-    "cover": "/data/streams/shiori/2026_01_14_21_00_09/录制-26966466-20260114-210740-559-一小时突击！.cover.jpg",
+    "endTime": "21:02",
+    "duration": 171,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_14_21_00_09/录制-26966466-20260114-210009-083-一小时突击！.xml",
+    "cover": "/data/streams/shiori/2026_01_14_21_00_09/录制-26966466-20260114-210009-083-一小时突击！.cover.jpg",
     "highlights": "/data/streams/shiori/2026_01_14_21_00_09/highlights.md",
     "images": []
   },

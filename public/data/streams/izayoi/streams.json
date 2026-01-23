@@ -1,5 +1,50 @@
 [
   {
+    "id": "2026_01_23_21_35_01",
+    "title": "浣来唱歌，尊嘟假嘟？",
+    "date": "2026-01-23",
+    "time": "21:35:01",
+    "startTime": "21:35",
+    "endTime": "22:26",
+    "duration": 3077,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_23_21_35_01/录制-1741667419-20260123-213501-042-浣来唱歌，尊嘟假嘟？.xml",
+    "cover": "/data/streams/izayoi/2026_01_23_21_35_01/录制-1741667419-20260123-213501-042-浣来唱歌，尊嘟假嘟？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_23_20_35_25",
+    "title": "浣来唱歌，尊嘟假嘟？",
+    "date": "2026-01-23",
+    "time": "20:35:25",
+    "startTime": "20:35",
+    "endTime": "21:34",
+    "duration": 3570,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_23_20_35_25/录制-1741667419-20260123-203525-221-浣来唱歌，尊嘟假嘟？.xml",
+    "cover": "/data/streams/izayoi/2026_01_23_20_35_25/录制-1741667419-20260123-203525-221-浣来唱歌，尊嘟假嘟？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_23_20_01_50",
+    "title": "浣来唱歌，尊嘟假嘟？",
+    "date": "2026-01-23",
+    "time": "20:01:50",
+    "startTime": "20:01",
+    "endTime": "20:34",
+    "duration": 2013,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_23_20_01_50/录制-1741667419-20260123-200150-368-浣来唱歌，尊嘟假嘟？.xml",
+    "cover": "/data/streams/izayoi/2026_01_23_20_01_50/录制-1741667419-20260123-200150-368-浣来唱歌，尊嘟假嘟？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_01_22_20_03_23",
     "title": "人，在干什么呢！",
     "date": "2026-01-22",
@@ -76,9 +121,7 @@
     "xml": "/data/streams/izayoi/2026_01_21_09_00_46/录制-1741667419-20260121-090046-179-早茶第五天。.xml",
     "cover": "/data/streams/izayoi/2026_01_21_09_00_46/录制-1741667419-20260121-090046-179-早茶第五天。.cover.jpg",
     "highlights": null,
-    "images": [
-      "/data/streams/izayoi/2026_01_21_09_00_46/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY_2.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_20_20_01_23",
@@ -93,9 +136,7 @@
     "xml": "/data/streams/izayoi/2026_01_20_20_01_23/录制-1741667419-20260120-200123-119-人，在做什么_.xml",
     "cover": "/data/streams/izayoi/2026_01_20_20_01_23/录制-1741667419-20260120-200123-119-人，在做什么_.cover.jpg",
     "highlights": "/data/streams/izayoi/2026_01_20_20_01_23/highlights.md",
-    "images": [
-      "/data/streams/izayoi/2026_01_20_20_01_23/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY_2.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_20_08_58_39",
@@ -110,14 +151,7 @@
     "xml": "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260120-085839-110-早茶第四天。.xml",
     "cover": "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260120-085839-110-早茶第四天。.cover.jpg",
     "highlights": null,
-    "images": [
-      "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260119-224343-585-聊半小时._COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260119-224513-609-聊半小时._COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260119-224631-960-聊半小时._COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260119-225216-578-聊半小时._COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260119-225310-580-聊半小时._COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_20_08_58_39/录制-1741667419-20260119-225352-578-聊半小时._COMIC_FACTORY.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_19_22_53_52",
@@ -307,10 +341,7 @@
     "cover": "/data/streams/izayoi/2026_01_19_08_58_32/录制-1741667419-20260119-085832-699-早茶第三天。.cover.jpg",
     "highlights": "/data/streams/izayoi/2026_01_19_08_58_32/highlights.md",
     "images": [
-      "/data/streams/izayoi/2026_01_19_08_58_32/录制-1741667419-20260119-085832-699-早茶第三天。_COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_19_08_58_32/录制-1741667419-20260118-085831-012-早茶第二天。_COMIC_FACTORY_2.png",
-      "/data/streams/izayoi/2026_01_19_08_58_32/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_19_08_58_32/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY_1.png"
+      "/data/streams/izayoi/2026_01_19_08_58_32/录制-1741667419-20260119-085832-699-早茶第三天。_COMIC_FACTORY.png"
     ]
   },
   {
@@ -327,7 +358,9 @@
     "cover": "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？.cover.jpg",
     "highlights": "/data/streams/izayoi/2026_01_18_20_00_33/highlights.md",
     "images": [
-      "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY.png"
+      "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY_1.png",
+      "/data/streams/izayoi/2026_01_18_20_00_33/录制-1741667419-20260118-200033-435-人，在干嘛？_COMIC_FACTORY_2.png"
     ]
   },
   {
@@ -345,7 +378,8 @@
     "highlights": "/data/streams/izayoi/2026_01_18_08_58_31/highlights.md",
     "images": [
       "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。_COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。_COMIC_FACTORY_1.png"
+      "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。_COMIC_FACTORY_1.png",
+      "/data/streams/izayoi/2026_01_18_08_58_31/录制-1741667419-20260118-085831-012-早茶第二天。_COMIC_FACTORY_2.png"
     ]
   },
   {
@@ -378,12 +412,7 @@
     "xml": "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260117-090215-584-早茶第一天。.xml",
     "cover": "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260117-090215-584-早茶第一天。.cover.jpg",
     "highlights": "/data/streams/izayoi/2026_01_17_09_02_15/highlights.md",
-    "images": [
-      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_10.png",
-      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_11.png",
-      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_8.png",
-      "/data/streams/izayoi/2026_01_17_09_02_15/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_9.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_16_19_28_14",
@@ -399,18 +428,10 @@
     "cover": "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！.cover.jpg",
     "highlights": "/data/streams/izayoi/2026_01_16_19_28_14/highlights.md",
     "images": [
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_1.png",
       "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_10.png",
       "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_11.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_2.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_9.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_3.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_4.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_5.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_6.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_7.png",
-      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_8.png"
+      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_8.png",
+      "/data/streams/izayoi/2026_01_16_19_28_14/录制-1741667419-20260116-192814-176-浣熊咖啡厅正式营业！_COMIC_FACTORY_9.png"
     ]
   }
 ]

@@ -1,5 +1,69 @@
 [
   {
+    "id": "2026_01_23_21_01_23",
+    "title": "终于修好啦",
+    "date": "2026-01-23",
+    "time": "21:01:23",
+    "startTime": "21:01",
+    "endTime": "22:25",
+    "duration": 5048,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_01_23_21_01_23/录制-1713548468-20260123-210123-279-终于修好啦.xml",
+    "cover": "/data/streams/liko/2026_01_23_21_01_23/录制-1713548468-20260123-210123-279-终于修好啦.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_23_10_37_17",
+    "title": "早呀好困呀",
+    "date": "2026-01-23",
+    "time": "10:37:17",
+    "startTime": "10:37",
+    "endTime": "13:31",
+    "duration": 10461,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_01_23_10_37_17/录制-1713548468-20260123-103717-291-早呀好困呀.xml",
+    "cover": "/data/streams/liko/2026_01_23_10_37_17/录制-1713548468-20260123-103717-291-早呀好困呀.cover.jpg",
+    "highlights": "/data/streams/liko/2026_01_23_10_37_17/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_01_23_10_37_17/录制-1713548468-20260123-103717-291-早呀好困呀_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_23_10_16_48",
+    "title": "早呀好困呀",
+    "date": "2026-01-23",
+    "time": "10:16:48",
+    "startTime": "10:16",
+    "endTime": "10:36",
+    "duration": 1216,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_01_23_10_16_48/录制-1713548468-20260123-101648-375-早呀好困呀.xml",
+    "cover": "/data/streams/liko/2026_01_23_10_16_48/录制-1713548468-20260123-101648-375-早呀好困呀.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_23_10_02_28",
+    "title": "早呀好困呀",
+    "date": "2026-01-23",
+    "time": "10:02:28",
+    "startTime": "10:02",
+    "endTime": "10:06",
+    "duration": 255,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_01_23_10_02_28/录制-1713548468-20260123-100228-068-早呀好困呀.xml",
+    "cover": "/data/streams/liko/2026_01_23_10_02_28/录制-1713548468-20260123-100228-068-早呀好困呀.cover.jpg",
+    "highlights": "/data/streams/liko/2026_01_23_10_02_28/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_01_23_10_02_28/录制-1713548468-20260123-100228-068-早呀好困呀_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_01_22_20_58_48",
     "title": "晚间探索",
     "date": "2026-01-22",
@@ -30,8 +94,7 @@
     "cover": "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260122-100120-632-兔子虚弱中…….cover.jpg",
     "highlights": "/data/streams/liko/2026_01_22_10_01_20/highlights.md",
     "images": [
-      "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260122-100120-632-兔子虚弱中……_COMIC_FACTORY.png",
-      "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260121-214353-787-兔子虚弱中……_COMIC_FACTORY.png"
+      "/data/streams/liko/2026_01_22_10_01_20/录制-1713548468-20260122-100120-632-兔子虚弱中……_COMIC_FACTORY.png"
     ]
   },
   {
@@ -64,9 +127,7 @@
     "xml": "/data/streams/liko/2026_01_21_21_37_41/录制-1713548468-20260121-213741-253-兔子虚弱中…….xml",
     "cover": "/data/streams/liko/2026_01_21_21_37_41/录制-1713548468-20260121-213741-253-兔子虚弱中…….cover.jpg",
     "highlights": null,
-    "images": [
-      "/data/streams/liko/2026_01_21_21_37_41/录制-1713548468-20260120-205840-935-晚间悄咪咪探索一下_COMIC_FACTORY.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_20_20_58_40",
@@ -98,9 +159,7 @@
     "xml": "/data/streams/liko/2026_01_20_09_52_36/录制-1713548468-20260120-095236-429-早呀想睡个回笼觉.xml",
     "cover": "/data/streams/liko/2026_01_20_09_52_36/录制-1713548468-20260120-095236-429-早呀想睡个回笼觉.cover.jpg",
     "highlights": null,
-    "images": [
-      "/data/streams/liko/2026_01_20_09_52_36/录制-1713548468-20260119-210228-301-晚上好来探索一下~_COMIC_FACTORY.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_19_21_02_28",
@@ -133,8 +192,7 @@
     "cover": "/data/streams/liko/2026_01_19_10_01_16/录制-1713548468-20260119-100116-241-起床收集信息咯.cover.jpg",
     "highlights": "/data/streams/liko/2026_01_19_10_01_16/highlights.md",
     "images": [
-      "/data/streams/liko/2026_01_19_10_01_16/录制-1713548468-20260119-100116-241-起床收集信息咯_COMIC_FACTORY.png",
-      "/data/streams/liko/2026_01_19_10_01_16/录制-1713548468-20260118-210318-650-晚上好！兔子脑壳有点痛_COMIC_FACTORY.png"
+      "/data/streams/liko/2026_01_19_10_01_16/录制-1713548468-20260119-100116-241-起床收集信息咯_COMIC_FACTORY.png"
     ]
   },
   {
@@ -155,20 +213,20 @@
     ]
   },
   {
-    "id": "2026_01_18_13_05_23",
+    "id": "2026_01_18_13_06_54",
     "title": "早上好呀！",
     "date": "2026-01-18",
-    "time": "13:05:23",
-    "startTime": "13:05",
-    "endTime": "13:50",
+    "time": "13:06:54",
+    "startTime": "13:06",
+    "endTime": "13:51",
     "duration": 2734,
     "durationStr": "0.8 小时",
     "srt": null,
-    "xml": "/data/streams/liko/2026_01_18_13_05_23/录制-1713548468-20260118-130654-586-早上好呀！.xml",
-    "cover": "/data/streams/liko/2026_01_18_13_05_23/录制-1713548468-20260118-130654-586-早上好呀！.cover.jpg",
-    "highlights": "/data/streams/liko/2026_01_18_13_05_23/highlights.md",
+    "xml": "/data/streams/liko/2026_01_18_13_06_54/录制-1713548468-20260118-130654-586-早上好呀！.xml",
+    "cover": "/data/streams/liko/2026_01_18_13_06_54/录制-1713548468-20260118-130654-586-早上好呀！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_01_18_13_06_54/highlights.md",
     "images": [
-      "/data/streams/liko/2026_01_18_13_05_23/录制-1713548468-20260118-130654-586-早上好呀！_COMIC_FACTORY.png"
+      "/data/streams/liko/2026_01_18_13_06_54/录制-1713548468-20260118-130654-586-早上好呀！_COMIC_FACTORY.png"
     ]
   },
   {
@@ -216,9 +274,7 @@
     "xml": "/data/streams/liko/2026_01_17_10_00_46/录制-1713548468-20260117-100046-390-早上好！.xml",
     "cover": "/data/streams/liko/2026_01_17_10_00_46/录制-1713548468-20260117-100046-390-早上好！.cover.jpg",
     "highlights": "/data/streams/liko/2026_01_17_10_00_46/highlights.md",
-    "images": [
-      "/data/streams/liko/2026_01_17_10_00_46/录制-1713548468-20260116-195937-155-第一次任务开始啦~_COMIC_FACTORY_2.png"
-    ]
+    "images": []
   },
   {
     "id": "2026_01_16_19_59_37",
@@ -234,8 +290,6 @@
     "cover": "/data/streams/liko/2026_01_16_19_59_37/录制-1713548468-20260116-195937-155-第一次任务开始啦~.cover.jpg",
     "highlights": "/data/streams/liko/2026_01_16_19_59_37/highlights.md",
     "images": [
-      "/data/streams/liko/2026_01_16_19_59_37/录制-1713548468-20260116-195937-155-第一次任务开始啦~_COMIC_FACTORY.png",
-      "/data/streams/liko/2026_01_16_19_59_37/录制-1713548468-20260116-195937-155-第一次任务开始啦~_COMIC_FACTORY_1.png",
       "/data/streams/liko/2026_01_16_19_59_37/录制-1713548468-20260116-195937-155-第一次任务开始啦~_COMIC_FACTORY_2.png"
     ]
   }
