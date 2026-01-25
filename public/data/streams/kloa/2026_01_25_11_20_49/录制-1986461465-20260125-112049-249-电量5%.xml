@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1986461465" shortid="0" name="克罗雅Kloa" title="电量5%" areanameparent="电台" areanamechild="聊天电台" start_time="2026-01-25T11:20:49.2507553+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="1.399,1,25,16777215,1769311249674,0,11235912,0" user="这就是ccccc">主播你还记得你没关播吗</d>
+  <d p="5.300,4,25,14893055,1769311253316,0,29147008,0" user="摸摸摸mona">在撤硕里吻吗</d>
+  <d p="5.300,1,25,16777215,1769311253992,0,52628736,0" user="芝士狂信徒">雅雅看看我们</d>
+  <d p="6.600,1,25,16777215,1769311255775,0,3546894913506104,0" user="落笔难书-">人生黑暗</d>
+  <d p="7.905,1,25,65532,1769311256757,0,6553414,0" user="侍風">不赖</d>
+  <d p="10.320,1,25,16777215,1769311258956,0,1613564254,0" user="-人有所操-">你爱我有多深？</d>
+  <d p="10.500,4,25,14893055,1769311259631,0,21742347,0" user="超次元宅男">你好，直播呢，能看看我们吗</d>
+  <d p="11.800,1,25,16772431,1769311260111,0,67841,0" user="豹秃拳">呆呆兽的瞬间失忆又发动了</d>
+  <d p="16.817,1,25,14893055,1769311264971,0,210653,0" user="晴色">别听主播在唱高雅音乐，已经在抠脚了</d>
+  <d p="17.002,1,25,16777215,1769311265083,0,11235912,0" user="这就是ccccc">梦回昨晚下播时候的版聊了</d>
+  <d p="20.896,1,25,16777215,1769311269739,0,1681705,0" user="Wyman618">吃点润喉糖好吗清嗓太频繁了</d>
+  <d p="25.925,1,25,16777215,1769311273960,0,6511598,0" user="春秋分丶EquinoX">早上坏</d>
+  <d p="25.926,1,25,65532,1769311275067,0,13936795,0" user="终星DaZE">趣味生煎</d>
+  <d p="26.103,1,25,16777215,1769311274222,0,52628736,0" user="芝士狂信徒">原来还记得在直播吗</d>
+  <d p="27.399,1,25,16777215,1769311276563,0,477229415,0" user="Ayzlarse-">发电日常</d>
+  <d p="28.537,1,25,16777215,1769311277122,0,434375251,0" user="_灼灼桃夭_">标题叫厕所开嗓[虎年]</d>
+  <d p="28.537,1,25,16777215,1769311277788,0,3546671799601286,0" user="催眠的金钟">茶水间自助哦</d>
+  <d p="28.537,1,25,16777215,1769311277780,0,105047659,0" user="煎饼狗子993">早上不好</d>
+  <d p="28.702,4,25,14893055,1769311277576,0,36819334,0" user="贾文和OvO">你好</d>
+  <d p="29.828,1,25,16777215,1769311278956,0,6251873,0" user="Maple丶衤">电量100%</d>
+  <d p="29.828,1,25,16777215,1769311279074,0,1613564254,0" user="-人有所操-">我不道啊，这都中午了</d>
+  <d p="30.004,1,25,16772431,1769311278683,0,12060644,0" user="秋皓歌">太有生活感了宝宝</d>
+  <d p="32.417,1,25,16777215,1769311280955,0,1476126770,0" user="冬天的梅雨季">中午好</d>
+  <d p="32.599,1,25,16777215,1769311280691,0,3546894913506104,0" user="落笔难书-">原来还是知道自己在播的</d>
+  <d p="33.904,1,25,16777215,1769311282915,0,1531572442,0" user="碎的很清晰">叫晚上好</d>
+  <d p="33.904,4,25,14893055,1769311283262,0,11707739,0" user="みお_澪">中午好</d>
+  <d p="35.216,1,25,16777215,1769311283403,0,35830124,0" user="东海麒麟Kirin">不要说早上好 要说我爱你</d>
+  <d p="35.218,1,25,16777215,1769311284269,0,32582230,0" user="沉迷原神的狂热玩家">搞笑女</d>
+  <d p="35.218,1,25,16772431,1769311284442,0,67841,0" user="豹秃拳">啊对的对的</d>
+  <d p="36.323,1,25,65532,1769311284758,0,2925478,0" user="夜寒秋痕">困困早台[dog]</d>
+  <d p="37.815,4,25,14893055,1769311286269,0,11180104,0" user="ATRSz">stf你欠我的kpi要用什么还</d>
+  <d p="37.815,4,25,14893055,1769311286692,0,6184649,0" user="一为梦_">好喜欢主包</d>
+  <d p="37.815,1,25,16777215,1769311286707,0,11235912,0" user="这就是ccccc">主播，天使也要刷牙吗</d>
+  <d p="37.815,1,25,16777215,1769311286832,0,42526322,0" user="伽雷利安・马隆">叫我撤锁女王</d>
+  <d p="40.409,1,25,16772431,1769311288613,0,22786748,0" user="帕可家的alienation">标题:大大方方往里进</d>
+  <d p="43.002,4,25,14893055,1769311292160,0,216807,0" user="莲稲">可爱粉毛生活音大放送</d>
+  <d p="48.019,1,25,16777215,1769311296426,0,3494363332086695,0" user="雪菲好口耐">主包吃的什么牌子的润喉糖[dog]</d>
+  <d p="48.201,4,25,14893055,1769311296635,0,6184649,0" user="一为梦_">中午好</d>
+  <d p="49.321,1,25,16777215,1769311297782,0,383801085,0" user="染_缘乐">脑白金自主中</d>
+  <d p="51.922,1,25,14893055,1769311300678,0,210653,0" user="晴色">润喉糖胡嗓吧</d>
+  <d p="54.521,4,25,14893055,1769311302564,0,3546719197333852,0" user="雅雅我们来唱歌吧">标题就写“叭叭”</d>
+  <d p="54.702,1,25,16777215,1769311303097,0,395463748,0" user="心風藍">哎？</d>
+  <d p="61.024,1,25,14893055,1769311309705,0,210653,0" user="晴色">龙角散还有点用</d>
+  <d p="67.523,1,25,16777215,1769311316431,0,1613564254,0" user="-人有所操-">上舰送脑白金</d>
+  <d p="69.004,1,25,16777215,1769311317473,0,11235912,0" user="这就是ccccc">stuff：你先给劳资填表吧，每次都没填</d>
+  <d p="70.302,4,25,14893055,1769311318817,0,11180104,0" user="ATRSz">互相扣</d>
+  <d p="74.023,1,25,16777215,1769311322124,0,3494363332086695,0" user="雪菲好口耐">龙角散感觉很舒服[dog]</d>
+  <d p="74.201,1,25,16777215,1769311323455,0,29196413,0" user="懿凡丶">AAA脑白金销售大王</d>
+  <d p="75.322,1,25,16777215,1769311324269,0,505158198,0" user="小雅唱歌真好听">取，该点外卖了</d>
+  <d p="75.501,4,25,14893055,1769311323654,0,36819334,0" user="贾文和OvO">对啊</d>
+  <d p="83.150,4,25,16772431,1769311332315,0,139875,0" user="上升气流君0_o">你那个是薄荷糖吧</d>
+  <d p="85.900,1,25,16777215,1769311335133,0,42526322,0" user="伽雷利安・马隆">羞死了</d>
+  <d p="87.204,4,25,14893055,1769311336344,0,11180104,0" user="ATRSz">川贝枇杷露我感觉确实有用</d>
+  <d p="89.619,1,25,16777215,1769311337900,0,3494363332086695,0" user="雪菲好口耐">龙角散也有粉状的不太甜</d>
+  <d p="93.703,1,25,16772431,1769311342615,0,67841,0" user="豹秃拳">其实就是麻痹嗓子让你觉得没那么难受了，药效过了又开始了</d>
+  <d p="101.510,4,25,14893055,1769311350047,0,11180104,0" user="ATRSz">新冠的时候嗓子寄了全靠川贝枇杷露</d>
+  <d p="101.511,4,25,14893055,1769311350806,0,36819334,0" user="贾文和OvO">枇杷膏不吃好</d>
+  <d p="102.802,1,25,16777215,1769311351221,0,477229415,0" user="Ayzlarse-">就是这样的</d>
+  <d p="105.225,1,25,16777215,1769311353847,0,3494363332086695,0" user="雪菲好口耐">金嗓子[吃瓜]</d>
+  <d p="106.523,4,25,16772431,1769311354783,0,139875,0" user="上升气流君0_o">有无糖的啊</d>
+  <d p="108.000,1,25,16777215,1769311357167,0,477229415,0" user="Ayzlarse-">金嗓子</d>
+  <d p="111.738,1,25,65532,1769311360940,0,13936795,0" user="终星DaZE">西瓜霜</d>
+  <d p="111.739,4,25,16772431,1769311360945,0,139875,0" user="上升气流君0_o">龙角散什么的</d>
+  <d p="111.901,4,25,14893055,1769311360493,0,36819334,0" user="贾文和OvO">西关霜</d>
+  <d p="113.026,1,25,14893055,1769311362021,0,210653,0" user="晴色">不是清嗓的，让人舒服</d>
+  <d p="113.027,1,25,16777215,1769311362068,0,1476126770,0" user="冬天的梅雨季">王老吉还是金嗓子</d>
+</i>
