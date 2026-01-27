@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_01_27_20_03_15",
+    "title": "明日方舟辉夜姬",
+    "date": "2026-01-27",
+    "time": "20:03:15",
+    "startTime": "20:03",
+    "endTime": "22:51",
+    "duration": 10123,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_27_20_03_15/录制-1741667419-20260127-200315-732-明日方舟辉夜姬.xml",
+    "cover": "/data/streams/izayoi/2026_01_27_20_03_15/录制-1741667419-20260127-200315-732-明日方舟辉夜姬.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_01_27_20_03_15/录制-1741667419-20260127-200315-732-明日方舟辉夜姬_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_27_09_00_17",
+    "title": "早茶第九天。",
+    "date": "2026-01-27",
+    "time": "09:00:17",
+    "startTime": "09:00",
+    "endTime": "11:42",
+    "duration": 9726,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_27_09_00_17/录制-1741667419-20260127-090017-503-早茶第九天。.xml",
+    "cover": "/data/streams/izayoi/2026_01_27_09_00_17/录制-1741667419-20260127-090017-503-早茶第九天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_27_09_00_17/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_27_09_00_17/录制-1741667419-20260127-090017-503-早茶第九天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_27_09_00_17/录制-1741667419-20260127-090017-503-早茶第九天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_25_19_58_12",
     "title": "浣来聊聊！",
     "date": "2026-01-25",

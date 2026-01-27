@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_01_27_22_32_51",
+    "title": "小猪爱睡觉QAQ",
+    "date": "2026-01-27",
+    "time": "22:32:51",
+    "startTime": "22:32",
+    "endTime": "00:12",
+    "duration": 6012,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_27_22_32_51/录制-26966466-20260127-223251-613-小猪爱睡觉QAQ.xml",
+    "cover": "/data/streams/shiori/2026_01_27_22_32_51/录制-26966466-20260127-223251-613-小猪爱睡觉QAQ.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_01_27_22_32_51/录制-26966466-20260127-223251-613-小猪爱睡觉QAQ_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_27_10_22_30",
+    "title": "早安獭獭栞！！！",
+    "date": "2026-01-27",
+    "time": "10:22:30",
+    "startTime": "10:22",
+    "endTime": "12:13",
+    "duration": 6673,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_27_10_22_30/录制-26966466-20260127-102230-067-早安獭獭栞！！！.xml",
+    "cover": "/data/streams/shiori/2026_01_27_10_22_30/录制-26966466-20260127-102230-067-早安獭獭栞！！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_27_10_22_30/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_27_10_22_30/录制-26966466-20260127-102230-067-早安獭獭栞！！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_27_10_22_30/录制-26966466-20260127-102230-067-早安獭獭栞！！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_01_27_10_22_30/录制-26966466-20260125-215509-213-安静斗地主！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_25_21_55_09",
     "title": "安静斗地主！！",
     "date": "2026-01-25",

@@ -1,5 +1,67 @@
 [
   {
+    "id": "2026_01_27_21_25_53",
+    "title": "喂喂喂 晚好鸟",
+    "date": "2026-01-27",
+    "time": "21:25:53",
+    "startTime": "21:25",
+    "endTime": "00:58",
+    "duration": 12790,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_27_21_25_53/2026_01_27_21_25_53_喂喂喂晚好鸟_DDTV5_5.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_27_20_00_37",
+    "title": "喂喂喂 晚好鸟",
+    "date": "2026-01-27",
+    "time": "20:00:37",
+    "startTime": "20:00",
+    "endTime": "21:24",
+    "duration": 5089,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_27_20_00_37/2026_01_27_20_00_37_喂喂喂晚好鸟_DDTV5_3.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_27_19_56_07",
+    "title": "喂喂喂 晚好鸟",
+    "date": "2026-01-27",
+    "time": "19:56:07",
+    "startTime": "19:56",
+    "endTime": "20:00",
+    "duration": 277,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_27_19_56_07/2026_01_27_19_56_07_喂喂喂晚好鸟_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_27_19_55_47",
+    "title": "喂喂喂 晚好鸟",
+    "date": "2026-01-27",
+    "time": "19:55:47",
+    "startTime": "19:55",
+    "endTime": "00:58",
+    "duration": 18196,
+    "durationStr": "5.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_27_19_55_47/录制-25788785-20260127-195547-102-喂喂喂 晚好鸟_merged.xml",
+    "cover": "/data/streams/sui/2026_01_27_19_55_47/录制-25788785-20260127-195547-102-喂喂喂 晚好鸟.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_01_27_19_55_47/录制-25788785-20260127-195547-102-喂喂喂 晚好鸟_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_25_20_07_53",
     "title": "喂喂喂",
     "date": "2026-01-25",

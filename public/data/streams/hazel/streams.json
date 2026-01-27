@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_01_27_15_02_41",
+    "title": "下午好",
+    "date": "2026-01-27",
+    "time": "15:02:41",
+    "startTime": "15:02",
+    "endTime": "17:00",
+    "duration": 7105,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_01_27_15_02_41/录制-1713546334-20260127-150241-461-下午好.xml",
+    "cover": "/data/streams/hazel/2026_01_27_15_02_41/录制-1713546334-20260127-150241-461-下午好.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_01_27_15_02_41/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_01_27_15_02_41/录制-1713546334-20260127-150241-461-下午好_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_01_27_15_02_41/录制-1713546334-20260127-150241-461-下午好_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_01_27_15_02_41/录制-1713546334-20260125-204540-565-晚上好_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_01_27_15_02_41/录制-1713546334-20260125-204540-565-晚上好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_25_20_45_40",
     "title": "晚上好",
     "date": "2026-01-25",
