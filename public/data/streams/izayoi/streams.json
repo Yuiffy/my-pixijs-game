@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_01_28_19_58_54",
+    "title": "浣来聊天。",
+    "date": "2026-01-28",
+    "time": "19:58:54",
+    "startTime": "19:58",
+    "endTime": "23:30",
+    "duration": 12724,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_28_19_58_54/录制-1741667419-20260128-195854-125-浣来聊天。.xml",
+    "cover": "/data/streams/izayoi/2026_01_28_19_58_54/录制-1741667419-20260128-195854-125-浣来聊天。.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_01_28_19_58_54/录制-1741667419-20260128-195854-125-浣来聊天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_28_11_02_14",
+    "title": "早茶第十天。",
+    "date": "2026-01-28",
+    "time": "11:02:14",
+    "startTime": "11:02",
+    "endTime": "11:39",
+    "duration": 2263,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_28_11_02_14/录制-1741667419-20260128-110214-758-早茶第十天。.xml",
+    "cover": "/data/streams/izayoi/2026_01_28_11_02_14/录制-1741667419-20260128-110214-758-早茶第十天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_28_11_02_14/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_28_11_02_14/录制-1741667419-20260128-110214-758-早茶第十天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_28_11_02_14/录制-1741667419-20260128-110214-758-早茶第十天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_01_28_11_02_14/录制-1741667419-20260127-200315-732-明日方舟辉夜姬_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_27_20_03_15",
     "title": "明日方舟辉夜姬",
     "date": "2026-01-27",

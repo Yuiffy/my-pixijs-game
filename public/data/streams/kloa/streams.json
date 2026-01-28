@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_01_28_21_13_25",
+    "title": "来听歌吧~",
+    "date": "2026-01-28",
+    "time": "21:13:25",
+    "startTime": "21:13",
+    "endTime": "00:35",
+    "duration": 12174,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_28_21_13_25/录制-1986461465-20260128-211325-573-来听歌吧~.xml",
+    "cover": "/data/streams/kloa/2026_01_28_21_13_25/录制-1986461465-20260128-211325-573-来听歌吧~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_28_21_13_25/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_01_28_21_13_25/录制-1986461465-20260128-211325-573-来听歌吧~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_01_28_21_13_25/录制-1986461465-20260128-211325-573-来听歌吧~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_28_20_04_56",
+    "title": "来听歌吧~",
+    "date": "2026-01-28",
+    "time": "20:04:56",
+    "startTime": "20:04",
+    "endTime": "21:11",
+    "duration": 4027,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_28_20_04_56/录制-1986461465-20260128-200456-882-来听歌吧~_merged.xml",
+    "cover": "/data/streams/kloa/2026_01_28_20_04_56/录制-1986461465-20260128-200456-882-来听歌吧~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_28_20_04_56/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_01_28_20_04_56/录制-1986461465-20260128-200456-882-来听歌吧~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_01_28_20_04_56/录制-1986461465-20260128-200456-882-来听歌吧~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_01_28_20_04_56/录制-1986461465-20260127-200436-588-歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_27_20_04_36",
     "title": "歌~",
     "date": "2026-01-27",

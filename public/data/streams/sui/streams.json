@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_01_28_22_30_54",
+    "title": "温柔小鸟 煮煮你",
+    "date": "2026-01-28",
+    "time": "22:30:54",
+    "startTime": "22:30",
+    "endTime": "00:37",
+    "duration": 7657,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_28_22_30_54/2026_01_28_22_30_57_温柔小鸟煮煮你_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_28_22_30_54/录制-25788785-20260128-223054-935-温柔小鸟 煮煮你.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_28_22_30_54/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_28_22_30_54/录制-25788785-20260128-223054-935-温柔小鸟 煮煮你_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_28_22_30_54/录制-25788785-20260128-143039-051-萌新小鸟鸣潮day3！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_28_14_30_57",
+    "title": "温柔小鸟煮煮你",
+    "date": "2026-01-28",
+    "time": "14:30:57",
+    "startTime": "14:30",
+    "endTime": "19:04",
+    "duration": 16479,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_28_14_30_57/2026_01_28_14_30_57_萌新小鸟鸣潮day3！_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_01_28_14_30_57/录制-25788785-20260128-143039-051-萌新小鸟鸣潮day3！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_28_14_30_39",
+    "title": "萌新小鸟鸣潮day3！",
+    "date": "2026-01-28",
+    "time": "14:30:39",
+    "startTime": "14:30",
+    "endTime": "21:11",
+    "duration": 24109,
+    "durationStr": "6.7 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_28_14_30_39/录制-25788785-20260128-143039-051-萌新小鸟鸣潮day3！_merged.xml",
+    "cover": "/data/streams/sui/2026_01_28_14_30_39/录制-25788785-20260128-143039-051-萌新小鸟鸣潮day3！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_28_14_30_39/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_28_14_30_39/录制-25788785-20260128-143039-051-萌新小鸟鸣潮day3！_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_01_28_14_30_39/录制-25788785-20260127-195547-102-喂喂喂 晚好鸟_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_28_14_30_39/录制-25788785-20260127-195547-102-喂喂喂 晚好鸟_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_27_21_25_53",
     "title": "喂喂喂 晚好鸟",
     "date": "2026-01-27",
