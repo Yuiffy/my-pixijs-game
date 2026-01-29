@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_01_29_22_37_42",
+    "title": "大概就是浣的台词回....",
+    "date": "2026-01-29",
+    "time": "22:37:42",
+    "startTime": "22:37",
+    "endTime": "23:36",
+    "duration": 3567,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_29_22_37_42/录制-1741667419-20260129-223742-536-大概就是浣的台词回.....xml",
+    "cover": "/data/streams/izayoi/2026_01_29_22_37_42/录制-1741667419-20260129-223742-536-大概就是浣的台词回.....cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_29_22_37_42/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_29_22_37_42/录制-1741667419-20260129-223742-536-大概就是浣的台词回...._COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_29_22_37_42/录制-1741667419-20260129-223742-536-大概就是浣的台词回...._SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_29_20_07_14",
+    "title": "大概就是浣的台词回....",
+    "date": "2026-01-29",
+    "time": "20:07:14",
+    "startTime": "20:07",
+    "endTime": "22:34",
+    "duration": 8831,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_29_20_07_14/录制-1741667419-20260129-200714-138-大概就是浣的台词回.....xml",
+    "cover": "/data/streams/izayoi/2026_01_29_20_07_14/录制-1741667419-20260129-200714-138-大概就是浣的台词回.....cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_29_08_57_19",
+    "title": "早茶第十一天。",
+    "date": "2026-01-29",
+    "time": "08:57:19",
+    "startTime": "08:57",
+    "endTime": "11:25",
+    "duration": 8925,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_29_08_57_19/录制-1741667419-20260129-085719-186-早茶第十一天。.xml",
+    "cover": "/data/streams/izayoi/2026_01_29_08_57_19/录制-1741667419-20260129-085719-186-早茶第十一天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_29_08_57_19/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_29_08_57_19/录制-1741667419-20260129-085719-186-早茶第十一天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_29_08_57_19/录制-1741667419-20260129-085719-186-早茶第十一天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_01_29_08_57_19/录制-1741667419-20260128-195854-125-浣来聊天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_28_19_58_54",
     "title": "浣来聊天。",
     "date": "2026-01-28",
