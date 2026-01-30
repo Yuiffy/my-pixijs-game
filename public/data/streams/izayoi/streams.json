@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_01_30_22_52_47",
+    "title": "浣来了哦！",
+    "date": "2026-01-30",
+    "time": "22:52:47",
+    "startTime": "22:52",
+    "endTime": "00:15",
+    "duration": 5026,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_30_22_52_47/录制-1741667419-20260130-225247-986-浣来了哦！.xml",
+    "cover": "/data/streams/izayoi/2026_01_30_22_52_47/录制-1741667419-20260130-225247-986-浣来了哦！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_01_30_22_52_47/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_01_30_22_52_47/录制-1741667419-20260130-225247-986-浣来了哦！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_30_22_52_47/录制-1741667419-20260130-225247-986-浣来了哦！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_30_19_58_44",
+    "title": "浣来了哦！",
+    "date": "2026-01-30",
+    "time": "19:58:44",
+    "startTime": "19:58",
+    "endTime": "22:48",
+    "duration": 10220,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_01_30_19_58_44/录制-1741667419-20260130-195844-465-浣来了哦！.xml",
+    "cover": "/data/streams/izayoi/2026_01_30_19_58_44/录制-1741667419-20260130-195844-465-浣来了哦！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_01_30_19_58_44/录制-1741667419-20260129-223742-536-大概就是浣的台词回...._COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_01_30_19_58_44/录制-1741667419-20260129-223742-536-大概就是浣的台词回...._SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_29_22_37_42",
     "title": "大概就是浣的台词回....",
     "date": "2026-01-29",

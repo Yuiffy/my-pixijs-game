@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_01_30_22_52_49",
+    "title": "让我们摁唱！",
+    "date": "2026-01-30",
+    "time": "22:52:49",
+    "startTime": "22:52",
+    "endTime": "01:34",
+    "duration": 9732,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_30_22_52_49/录制-1986461465-20260130-225249-805-让我们摁唱！.xml",
+    "cover": "/data/streams/kloa/2026_01_30_22_52_49/录制-1986461465-20260130-225249-805-让我们摁唱！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_01_30_22_52_49/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_01_30_22_52_49/录制-1986461465-20260130-225249-805-让我们摁唱！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_01_30_22_52_49/录制-1986461465-20260130-225249-805-让我们摁唱！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_30_20_07_47",
+    "title": "让我们摁唱！",
+    "date": "2026-01-30",
+    "time": "20:07:47",
+    "startTime": "20:07",
+    "endTime": "22:48",
+    "duration": 9696,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_01_30_20_07_47/录制-1986461465-20260130-200747-282-让我们摁唱！.xml",
+    "cover": "/data/streams/kloa/2026_01_30_20_07_47/录制-1986461465-20260130-200747-282-让我们摁唱！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_01_30_20_07_47/录制-1986461465-20260129-223740-989-唱歌歌！！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_01_30_20_07_47/录制-1986461465-20260129-223740-989-唱歌歌！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_29_22_37_40",
     "title": "唱歌歌！！",
     "date": "2026-01-29",

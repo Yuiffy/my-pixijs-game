@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_01_30_22_52_43",
+    "title": "游戏高手小鸟玩只狼",
+    "date": "2026-01-30",
+    "time": "22:52:43",
+    "startTime": "22:52",
+    "endTime": "23:37",
+    "duration": 2702,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_30_22_52_43/2026_01_30_22_52_56_游戏高手小鸟玩只狼_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_30_22_52_43/2026_01_30_22_52_56_游戏高手小鸟玩只狼_DDTV5_cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_30_22_52_43/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_30_22_52_43/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_30_22_52_43/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_30_19_59_59",
+    "title": "咕咕咕！晚上好~",
+    "date": "2026-01-30",
+    "time": "19:59:59",
+    "startTime": "19:59",
+    "endTime": "22:48",
+    "duration": 10158,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_30_19_59_59/录制-25788785-20260130-195959-434-咕咕咕！晚上好~.xml",
+    "cover": "/data/streams/sui/2026_01_30_19_59_59/录制-25788785-20260130-195959-434-咕咕咕！晚上好~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_30_14_38_20",
+    "title": "咕咕咕！晚上好~",
+    "date": "2026-01-30",
+    "time": "14:38:20",
+    "startTime": "14:38",
+    "endTime": "17:25",
+    "duration": 10032,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_30_14_38_20/2026_01_30_14_38_41_萌新小鸟鸣潮day4！_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_30_14_38_20/录制-25788785-20260130-143820-228-萌新小鸟鸣潮day4！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_30_14_38_20/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_30_14_38_20/录制-25788785-20260130-143820-228-萌新小鸟鸣潮day4！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_30_14_38_20/录制-25788785-20260130-143820-228-萌新小鸟鸣潮day4！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_29_22_37_39",
     "title": "喂喂喂晚上好",
     "date": "2026-01-29",
@@ -14,7 +65,9 @@
     "highlights": "/data/streams/sui/2026_01_29_22_37_39/highlights.md",
     "images": [
       "/data/streams/sui/2026_01_29_22_37_39/录制-25788785-20260129-223739-572-喂喂喂晚上好_merged_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_01_29_22_37_39/录制-25788785-20260129-223739-572-喂喂喂晚上好_merged_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_01_29_22_37_39/录制-25788785-20260129-223739-572-喂喂喂晚上好_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_01_29_22_37_41/录制-25788785-20260129-223739-572-喂喂喂晚上好_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_29_22_37_41/录制-25788785-20260129-223739-572-喂喂喂晚上好_merged_SCREENSHOTS.jpg"
     ]
   },
   {

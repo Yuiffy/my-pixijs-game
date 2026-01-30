@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_01_30_16_40_40",
+    "title": "WORK！",
+    "date": "2026-01-30",
+    "time": "16:40:40",
+    "startTime": "16:40",
+    "endTime": "19:02",
+    "duration": 8531,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_30_16_40_40/录制-26966466-20260130-164040-640-WORK！.xml",
+    "cover": "/data/streams/shiori/2026_01_30_16_40_40/录制-26966466-20260130-164040-640-WORK！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_30_16_40_40/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_30_16_40_40/录制-26966466-20260130-164040-640-WORK！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_30_16_40_40/录制-26966466-20260130-164040-640-WORK！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_30_10_34_25",
+    "title": "和芋头搬玻璃！",
+    "date": "2026-01-30",
+    "time": "10:34:25",
+    "startTime": "10:34",
+    "endTime": "15:50",
+    "duration": 18960,
+    "durationStr": "5.3 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_30_10_34_25/录制-26966466-20260130-103425-414-和芋头搬玻璃！.xml",
+    "cover": "/data/streams/shiori/2026_01_30_10_34_25/录制-26966466-20260130-103425-414-和芋头搬玻璃！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_30_10_34_25/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_30_10_34_25/录制-26966466-20260130-103425-414-和芋头搬玻璃！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_30_10_34_25/录制-26966466-20260130-103425-414-和芋头搬玻璃！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_01_30_10_34_25/录制-26966466-20260129-223739-669-小栞来也！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_30_10_34_25/录制-26966466-20260129-223739-669-小栞来也！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_29_22_37_39",
     "title": "小栞来也！",
     "date": "2026-01-29",
