@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_01_31_22_10_56",
+    "title": "咕咕咕！晚好",
+    "date": "2026-01-31",
+    "time": "22:10:56",
+    "startTime": "22:10",
+    "endTime": "01:08",
+    "duration": 10712,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_31_22_10_56/2026_01_31_22_11_06_咕咕咕！晚好_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_31_22_10_56/录制-25788785-20260131-221056-341-咕咕咕！晚好.cover.jpg",
+    "highlights": "/data/streams/sui/2026_01_31_22_10_56/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_01_31_22_10_56/录制-25788785-20260131-221056-341-咕咕咕！晚好_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_31_22_10_56/录制-25788785-20260131-221056-341-咕咕咕！晚好_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_01_31_22_10_56/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_31_20_01_36",
+    "title": "咕咕咕！晚好",
+    "date": "2026-01-31",
+    "time": "20:01:36",
+    "startTime": "20:01",
+    "endTime": "22:08",
+    "duration": 7665,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_01_31_20_01_36/2026_01_31_20_01_36_咕咕咕！晚好_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_01_31_20_01_36/2026_01_31_20_01_36_咕咕咕！晚好_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_01_30_22_52_43",
     "title": "游戏高手小鸟玩只狼",
     "date": "2026-01-30",
@@ -14,7 +48,9 @@
     "highlights": "/data/streams/sui/2026_01_30_22_52_43/highlights.md",
     "images": [
       "/data/streams/sui/2026_01_30_22_52_43/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_01_30_22_52_43/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_01_30_22_52_43/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_01_30_22_52_56/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_01_30_22_52_56/录制-25788785-20260130-225243-832-游戏高手小鸟玩只狼_SCREENSHOTS.jpg"
     ]
   },
   {

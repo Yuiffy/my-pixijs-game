@@ -1,5 +1,154 @@
 [
   {
+    "id": "2026_02_01_00_00_28",
+    "title": "新衣活动最后一天！！",
+    "date": "2026-01-31",
+    "time": "00:00:28",
+    "startTime": "00:00",
+    "endTime": "00:22",
+    "duration": 1345,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_01_00_00_28/录制-26966466-20260201-000028-705-新衣活动最后一天！！.xml",
+    "cover": "/data/streams/shiori/2026_02_01_00_00_28/录制-26966466-20260201-000028-705-新衣活动最后一天！！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_02_01_00_00_28/录制-26966466-20260131-223002-144-水友回！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_31_22_30_02",
+    "title": "水友回！！",
+    "date": "2026-01-31",
+    "time": "22:30:02",
+    "startTime": "22:30",
+    "endTime": "00:00",
+    "duration": 5425,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_22_30_02/录制-26966466-20260131-223002-144-水友回！！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_22_30_02/录制-26966466-20260131-223002-144-水友回！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_31_22_30_02/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_31_22_30_02/录制-26966466-20260131-223002-144-水友回！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_01_31_21_21_45",
+    "title": "糖豆人水友回！！不准扒拉我！",
+    "date": "2026-01-31",
+    "time": "21:21:45",
+    "startTime": "21:21",
+    "endTime": "22:28",
+    "duration": 4062,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_21_21_45/录制-26966466-20260131-212145-484-糖豆人水友回！！不准扒拉我！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_21_21_45/录制-26966466-20260131-212145-484-糖豆人水友回！！不准扒拉我！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_31_21_19_36",
+    "title": "糖豆人水友回！！不准扒拉我！",
+    "date": "2026-01-31",
+    "time": "21:19:36",
+    "startTime": "21:19",
+    "endTime": "21:21",
+    "duration": 127,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_21_19_36/录制-26966466-20260131-211936-332-糖豆人水友回！！不准扒拉我！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_21_19_36/录制-26966466-20260131-211936-332-糖豆人水友回！！不准扒拉我！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_31_21_12_26",
+    "title": "糖豆人水友回！！不准扒拉我！",
+    "date": "2026-01-31",
+    "time": "21:12:26",
+    "startTime": "21:12",
+    "endTime": "21:17",
+    "duration": 328,
+    "durationStr": "5 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_21_12_26/录制-26966466-20260131-211226-440-糖豆人水友回！！不准扒拉我！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_21_12_26/录制-26966466-20260131-211226-440-糖豆人水友回！！不准扒拉我！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_31_21_12_26/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_31_21_12_26/录制-26966466-20260131-211226-440-糖豆人水友回！！不准扒拉我！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_31_21_10_28",
+    "title": "糖豆人水友回！！不准扒拉我！",
+    "date": "2026-01-31",
+    "time": "21:10:28",
+    "startTime": "21:10",
+    "endTime": "21:11",
+    "duration": 112,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_21_10_28/录制-26966466-20260131-211028-737-糖豆人水友回！！不准扒拉我！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_21_10_28/录制-26966466-20260131-211028-737-糖豆人水友回！！不准扒拉我！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_31_21_03_33",
+    "title": "糖豆人水友回！！不准扒拉我！",
+    "date": "2026-01-31",
+    "time": "21:03:33",
+    "startTime": "21:03",
+    "endTime": "21:09",
+    "duration": 411,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_21_03_33/录制-26966466-20260131-210333-041-糖豆人水友回！！不准扒拉我！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_21_03_33/录制-26966466-20260131-210333-041-糖豆人水友回！！不准扒拉我！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_01_31_14_01_31",
+    "title": "新衣活动最后一天！小栞工作中！",
+    "date": "2026-01-31",
+    "time": "14:01:31",
+    "startTime": "14:01",
+    "endTime": "15:59",
+    "duration": 7113,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_14_01_31/录制-26966466-20260131-140131-218-新衣活动最后一天！小栞工作中！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_14_01_31/录制-26966466-20260131-140131-218-新衣活动最后一天！小栞工作中！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_31_14_01_31/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_31_14_01_31/录制-26966466-20260131-140131-218-新衣活动最后一天！小栞工作中！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_31_14_01_31/录制-26966466-20260131-140131-218-新衣活动最后一天！小栞工作中！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_01_31_10_14_03",
+    "title": "新衣活动最后一天！！",
+    "date": "2026-01-31",
+    "time": "10:14:03",
+    "startTime": "10:14",
+    "endTime": "12:12",
+    "duration": 7102,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_01_31_10_14_03/录制-26966466-20260131-101403-253-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_01_31_10_14_03/录制-26966466-20260131-101403-253-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_01_31_10_14_03/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_01_31_10_14_03/录制-26966466-20260131-101403-253-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_31_10_14_03/录制-26966466-20260131-101209-317-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_01_31_10_14_03/录制-26966466-20260130-164040-640-WORK！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_01_31_10_14_03/录制-26966466-20260130-164040-640-WORK！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_30_16_40_40",
     "title": "WORK！",
     "date": "2026-01-30",
