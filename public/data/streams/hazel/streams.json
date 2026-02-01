@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_01_22_29_24",
+    "title": "晚上好  电台 聊天唱歌",
+    "date": "2026-02-01",
+    "time": "22:29:24",
+    "startTime": "22:29",
+    "endTime": "22:44",
+    "duration": 928,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_01_22_29_24/录制-1713546334-20260201-222924-219-晚上好  电台 聊天唱歌.xml",
+    "cover": "/data/streams/hazel/2026_02_01_22_29_24/录制-1713546334-20260201-222924-219-晚上好  电台 聊天唱歌.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_01_22_29_24/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_01_22_29_24/录制-1713546334-20260201-222924-219-晚上好  电台 聊天唱歌_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_02_01_19_06_34",
+    "title": "晚上好  电台 聊天唱歌",
+    "date": "2026-02-01",
+    "time": "19:06:34",
+    "startTime": "19:06",
+    "endTime": "22:29",
+    "duration": 12188,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_01_19_06_34/录制-1713546334-20260201-190634-969-晚上好  电台 聊天唱歌_merged.xml",
+    "cover": "/data/streams/hazel/2026_02_01_19_06_34/录制-1713546334-20260201-190634-969-晚上好  电台 聊天唱歌.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_01_19_06_34/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_01_19_06_34/录制-1713546334-20260201-190634-969-晚上好  电台 聊天唱歌_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_01_19_06_34/录制-1713546334-20260201-190246-783-晚上好  电台 聊天唱歌_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_02_01_19_06_34/录制-1713546334-20260131-180138-427-晚上好  277骗子酒馆联动_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_01_19_06_34/录制-1713546334-20260131-180138-427-晚上好  277骗子酒馆联动_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_01_31_18_01_38",
     "title": "晚上好  277骗子酒馆联动",
     "date": "2026-01-31",

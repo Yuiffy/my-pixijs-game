@@ -1,5 +1,45 @@
 [
   {
+    "id": "2026_02_01_21_13_06",
+    "title": "小栞来咯！！",
+    "date": "2026-02-01",
+    "time": "21:13:06",
+    "startTime": "21:13",
+    "endTime": "00:18",
+    "duration": 11116,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_01_21_13_06/录制-26966466-20260201-211306-520-小栞来咯！！.xml",
+    "cover": "/data/streams/shiori/2026_02_01_21_13_06/录制-26966466-20260201-211306-520-小栞来咯！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_01_21_13_06/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_01_21_13_06/录制-26966466-20260201-211306-520-小栞来咯！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_01_21_13_06/录制-26966466-20260201-211306-520-小栞来咯！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_01_10_14_49",
+    "title": "早安獭獭栞！！",
+    "date": "2026-02-01",
+    "time": "10:14:49",
+    "startTime": "10:14",
+    "endTime": "12:09",
+    "duration": 6903,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260201-101449-939-早安獭獭栞！！.xml",
+    "cover": "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260201-101449-939-早安獭獭栞！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_01_10_14_49/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260201-101449-939-早安獭獭栞！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260201-101449-939-早安獭獭栞！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260131-212145-484-糖豆人水友回！！不准扒拉我！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260131-212145-484-糖豆人水友回！！不准扒拉我！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260131-223002-144-水友回！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_01_10_14_49/录制-26966466-20260131-223002-144-水友回！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_01_00_00_28",
     "title": "新衣活动最后一天！！",
     "date": "2026-01-31",
