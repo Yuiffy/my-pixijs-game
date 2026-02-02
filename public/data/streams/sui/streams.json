@@ -1,5 +1,52 @@
 [
   {
+    "id": "2026_02_02_19_54_08",
+    "title": "咕咕咕！晚好",
+    "date": "2026-02-02",
+    "time": "19:54:08",
+    "startTime": "19:54",
+    "endTime": "20:14",
+    "duration": 1257,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_02_19_54_08/2026_02_02_19_54_08_咕咕咕！晚好_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_02_19_42_41",
+    "title": "咕咕咕！晚好",
+    "date": "2026-02-02",
+    "time": "19:42:41",
+    "startTime": "19:42",
+    "endTime": "00:40",
+    "duration": 17937,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_02_19_42_41/录制-25788785-20260202-194241-160-咕咕咕！晚好_merged.xml",
+    "cover": "/data/streams/sui/2026_02_02_19_42_41/录制-25788785-20260202-194241-160-咕咕咕！晚好.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_02_02_19_42_41/录制-25788785-20260202-194241-160-咕咕咕！晚好_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_02_19_42_30",
+    "title": "咕咕咕！晚好",
+    "date": "2026-02-02",
+    "time": "19:42:30",
+    "startTime": "19:42",
+    "endTime": "19:53",
+    "duration": 696,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_02_19_42_30/2026_02_02_19_42_30_咕咕咕！晚好_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_02_02_19_42_30/2026_02_02_19_42_30_咕咕咕！晚好_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_01_31_22_10_56",
     "title": "咕咕咕！晚好",
     "date": "2026-01-31",
