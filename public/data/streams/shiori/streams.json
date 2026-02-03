@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_03_22_13_24",
+    "title": "录音动物园！！",
+    "date": "2026-02-03",
+    "time": "22:13:24",
+    "startTime": "22:13",
+    "endTime": "00:19",
+    "duration": 7596,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_03_22_13_24/录制-26966466-20260203-221324-949-录音动物园！！.xml",
+    "cover": "/data/streams/shiori/2026_02_03_22_13_24/录制-26966466-20260203-221324-949-录音动物园！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_03_22_13_24/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_03_22_13_24/录制-26966466-20260203-221324-949-录音动物园！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_03_10_08_33",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-03",
+    "time": "10:08:33",
+    "startTime": "10:08",
+    "endTime": "12:15",
+    "duration": 7659,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_03_10_08_33/录制-26966466-20260203-100833-093-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_03_10_08_33/录制-26966466-20260203-100833-093-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_03_10_08_33/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_03_10_08_33/录制-26966466-20260203-100833-093-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_03_10_08_33/录制-26966466-20260203-100833-093-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_03_10_08_33/录制-26966466-20260202-230452-070-一起三周年!!_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_02_23_04_52",
     "title": "一起三周年!!",
     "date": "2026-02-02",

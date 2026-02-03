@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_02_03_21_14_43",
+    "title": "绿绿的联动ing",
+    "date": "2026-02-03",
+    "time": "21:14:43",
+    "startTime": "21:14",
+    "endTime": "23:48",
+    "duration": 9277,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_03_21_14_43/录制-1741667419-20260203-211443-180-绿绿的联动ing.xml",
+    "cover": "/data/streams/izayoi/2026_02_03_21_14_43/录制-1741667419-20260203-211443-180-绿绿的联动ing.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_02_03_21_14_43/录制-1741667419-20260203-211443-180-绿绿的联动ing_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_03_20_04_50",
+    "title": "绿绿的联动ing",
+    "date": "2026-02-03",
+    "time": "20:04:50",
+    "startTime": "20:04",
+    "endTime": "21:13",
+    "duration": 4178,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_03_20_04_50/录制-1741667419-20260203-200450-637-绿绿的联动ing.xml",
+    "cover": "/data/streams/izayoi/2026_02_03_20_04_50/录制-1741667419-20260203-200450-637-绿绿的联动ing.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_03_09_04_56",
+    "title": "早茶第十二天。",
+    "date": "2026-02-03",
+    "time": "09:04:56",
+    "startTime": "09:04",
+    "endTime": "11:33",
+    "duration": 8993,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_03_09_04_56/录制-1741667419-20260203-090456-794-早茶第十二天。.xml",
+    "cover": "/data/streams/izayoi/2026_02_03_09_04_56/录制-1741667419-20260203-090456-794-早茶第十二天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_03_09_04_56/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_03_09_04_56/录制-1741667419-20260203-090456-794-早茶第十二天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_03_09_04_56/录制-1741667419-20260203-090456-794-早茶第十二天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_03_09_04_56/录制-1741667419-20260201-195901-385-晚上好哦！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_01_19_59_01",
     "title": "晚上好哦！",
     "date": "2026-02-01",

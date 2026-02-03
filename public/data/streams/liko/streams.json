@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_02_03_22_02_57",
+    "title": "被窝悄悄话",
+    "date": "2026-02-03",
+    "time": "22:02:57",
+    "startTime": "22:02",
+    "endTime": "01:00",
+    "duration": 10735,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_03_22_02_57/录制-1713548468-20260203-220257-109-被窝悄悄话_merged.xml",
+    "cover": "/data/streams/liko/2026_02_03_22_02_57/录制-1713548468-20260203-220257-109-被窝悄悄话.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_03_22_02_57/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_02_03_11_00_33",
+    "title": "早呀！！起床咯！",
+    "date": "2026-02-03",
+    "time": "11:00:33",
+    "startTime": "11:00",
+    "endTime": "14:37",
+    "duration": 13043,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_03_11_00_33/录制-1713548468-20260203-110033-578-早呀！！起床咯！.xml",
+    "cover": "/data/streams/liko/2026_02_03_11_00_33/录制-1713548468-20260203-110033-578-早呀！！起床咯！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_03_11_00_33/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_03_11_00_33/录制-1713548468-20260203-110033-578-早呀！！起床咯！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_03_11_00_33/录制-1713548468-20260203-110033-578-早呀！！起床咯！_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_02_03_11_00_33/录制-1713548468-20260202-205635-003-接着视频鉴赏_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_02_20_56_35",
     "title": "接着视频鉴赏",
     "date": "2026-02-02",

@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1986461465" shortid="0" name="克罗雅Kloa" title="蓝瘦" areanameparent="电台" areanamechild="聊天电台" start_time="2026-02-03T20:52:32.7730922+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.073,1,25,14893055,1770123153327,0,210653,0" user="晴色">雅雅今天的颜色是</d>
+  <d p="0.073,1,25,16777215,1770123153788,0,16183271,0" user="沼跃蛤">哎？</d>
+  <d p="6.558,1,25,14893055,1770123159852,0,210653,0" user="晴色">你好</d>
+  <d p="11.909,4,25,14893055,1770123165071,0,36819334,0" user="贾文和OvO">今天不会是默认红色吧</d>
+  <d p="18.269,1,25,14893055,1770123171104,0,1613564254,0" user="-人有所操-">那肯定是红色</d>
+  <d p="18.269,1,25,14893055,1770123171378,0,210653,0" user="晴色">棕色啦~~</d>
+  <d p="23.614,1,25,16777215,1770123176332,0,777317,0" user="物述有栖_Official">人生黑暗</d>
+  <d p="35.173,4,25,14893055,1770123188644,0,3546719197333852,0" user="雅雅我们来唱歌吧">想在雅雅的血池中游泳</d>
+  <d p="45.715,1,25,16777215,1770123198255,0,5820136,0" user="该摸了_">？</d>
+  <d p="45.715,4,25,14893055,1770123198605,0,21742347,0" user="超次元宅男">?</d>
+  <d p="48.161,1,25,65532,1770123201470,0,38028857,0" user="卿家ん">羞死了</d>
+  <d p="49.460,4,25,14893055,1770123202659,0,178398894,0" user="不太会读书">？？？</d>
+  <d p="50.914,4,25,14893055,1770123203520,0,42526322,0" user="伽雷利安・马隆">白→红</d>
+  <d p="54.810,1,25,16777215,1770123207544,0,10103436,0" user="䳘䳗鵝鵞">羞死了</d>
+  <d p="55.961,1,25,14893055,1770123208718,0,1613564254,0" user="-人有所操-">羞死了</d>
+  <d p="56.116,4,25,14893055,1770123208905,0,42526322,0" user="伽雷利安・马隆">开动了</d>
+  <d p="57.425,4,25,14893055,1770123211222,0,477229415,0" user="Ayzlarse-">黑话</d>
+  <d p="58.714,1,25,16777215,1770123211435,0,10103436,0" user="䳘䳗鵝鵞">红白</d>
+  <d p="67.661,1,25,65532,1770123220271,0,38028857,0" user="卿家ん">红白歌回</d>
+  <d p="86.013,4,25,14893055,1770123239701,0,3546894913506104,0" user="落笔难书-">红白歌会神了</d>
+  <d p="119.661,1,25,14893055,1770123273024,0,210653,0" user="晴色">没差</d>
+  <d p="123.563,1,25,14893055,1770123277049,0,210653,0" user="晴色">精度是15min</d>
+  <d p="130.220,4,25,14893055,1770123283573,0,36819334,0" user="贾文和OvO">bydvr</d>
+  <d p="141.764,1,25,16777215,1770123294933,0,189973193,0" user="阿垃垃圾君在真宵地狱">没关系，电台本来就不算KPI</d>
+  <d p="143.065,4,25,14893055,1770123295876,0,32075254,0" user="鼠鼠数鼠">这维阿怎么这么坏啊</d>
+  <d p="149.586,1,25,14893055,1770123302626,0,210653,0" user="晴色">红白歌会不赖</d>
+  <d p="149.586,4,25,16772431,1770123303148,0,139875,0" user="上升气流君KiRyu_Kun">没关系 电台不算</d>
+  <sc ts="161.103" user="雅雅我们来唱歌吧" uid="3546719197333852" price="1000" time="3600">太没米线了，撤回刚刚的弹幕</sc>
+</i>
