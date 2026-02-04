@@ -1,5 +1,89 @@
 [
   {
+    "id": "2026_02_04_22_33_42",
+    "title": "唱歌！！",
+    "date": "2026-02-04",
+    "time": "22:33:42",
+    "startTime": "22:33",
+    "endTime": "23:23",
+    "duration": 3011,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_04_22_33_42/录制-1986461465-20260204-223342-657-唱歌！！.xml",
+    "cover": "/data/streams/kloa/2026_02_04_22_33_42/录制-1986461465-20260204-223342-657-唱歌！！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_04_22_33_42/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_04_22_33_42/录制-1986461465-20260204-223342-657-唱歌！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_04_21_51_47",
+    "title": "唱歌！！",
+    "date": "2026-02-04",
+    "time": "21:51:47",
+    "startTime": "21:51",
+    "endTime": "22:29",
+    "duration": 2310,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_04_21_51_47/录制-1986461465-20260204-215147-228-唱歌！！.xml",
+    "cover": "/data/streams/kloa/2026_02_04_21_51_47/录制-1986461465-20260204-215147-228-唱歌！！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_04_21_51_47/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_04_21_51_47/录制-1986461465-20260204-215147-228-唱歌！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_04_20_04_59",
+    "title": "唱歌！！",
+    "date": "2026-02-04",
+    "time": "20:04:59",
+    "startTime": "20:04",
+    "endTime": "21:48",
+    "duration": 6246,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_04_20_04_59/录制-1986461465-20260204-200459-008-唱歌！！.xml",
+    "cover": "/data/streams/kloa/2026_02_04_20_04_59/录制-1986461465-20260204-200459-008-唱歌！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_04_08_30_05",
+    "title": "早上好=w=",
+    "date": "2026-02-04",
+    "time": "08:30:05",
+    "startTime": "08:30",
+    "endTime": "12:09",
+    "duration": 13186,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_04_08_30_05/录制-1986461465-20260204-083005-114-早上好=w=.xml",
+    "cover": "/data/streams/kloa/2026_02_04_08_30_05/录制-1986461465-20260204-083005-114-早上好=w=.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_04_08_30_05/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_04_08_30_05/录制-1986461465-20260204-083005-114-早上好=w=_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_04_08_30_05/录制-1986461465-20260204-083005-114-早上好=w=_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_04_08_22_15",
+    "title": "早上好=w=",
+    "date": "2026-02-04",
+    "time": "08:22:15",
+    "startTime": "08:22",
+    "endTime": "08:29",
+    "duration": 459,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_04_08_22_15/录制-1986461465-20260204-082215-905-早上好=w=.xml",
+    "cover": "/data/streams/kloa/2026_02_04_08_22_15/录制-1986461465-20260204-082215-905-早上好=w=.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_02_04_08_22_15/录制-1986461465-20260203-220535-603-蓝瘦_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_03_22_05_35",
     "title": "晚间聊聊~小女友模式",
     "date": "2026-02-03",
