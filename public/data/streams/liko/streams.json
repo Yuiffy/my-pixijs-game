@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_02_05_22_02_47",
+    "title": "初次玩只狼",
+    "date": "2026-02-05",
+    "time": "22:02:47",
+    "startTime": "22:02",
+    "endTime": "01:28",
+    "duration": 12399,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_05_22_02_47/录制-1713548468-20260205-220247-483-真的很闲所以来突击了.xml",
+    "cover": "/data/streams/liko/2026_02_05_22_02_47/录制-1713548468-20260205-220247-483-真的很闲所以来突击了.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_05_22_02_47/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_05_22_02_47/录制-1713548468-20260205-220247-483-真的很闲所以来突击了_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_05_22_02_47/录制-1713548468-20260205-220247-483-真的很闲所以来突击了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_05_21_20_09",
+    "title": "真的很闲所以来突击了",
+    "date": "2026-02-05",
+    "time": "21:20:09",
+    "startTime": "21:20",
+    "endTime": "22:02",
+    "duration": 2532,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_05_21_20_09/录制-1713548468-20260205-212009-677-真的很闲所以来突击了.xml",
+    "cover": "/data/streams/liko/2026_02_05_21_20_09/录制-1713548468-20260205-212009-677-真的很闲所以来突击了.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_05_19_15_50",
+    "title": "真的很闲所以来突击了",
+    "date": "2026-02-05",
+    "time": "19:15:50",
+    "startTime": "19:15",
+    "endTime": "21:19",
+    "duration": 7457,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_05_19_15_50/录制-1713548468-20260205-191550-943-真的很闲所以来突击了.xml",
+    "cover": "/data/streams/liko/2026_02_05_19_15_50/录制-1713548468-20260205-191550-943-真的很闲所以来突击了.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_05_11_04_13",
+    "title": "早哟早哟",
+    "date": "2026-02-05",
+    "time": "11:04:13",
+    "startTime": "11:04",
+    "endTime": "14:44",
+    "duration": 13209,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_05_11_04_13/录制-1713548468-20260205-110413-224-早哟早哟.xml",
+    "cover": "/data/streams/liko/2026_02_05_11_04_13/录制-1713548468-20260205-110413-224-早哟早哟.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_05_11_04_13/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_05_11_04_13/录制-1713548468-20260205-110413-224-早哟早哟_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_05_11_04_13/录制-1713548468-20260205-110413-224-早哟早哟_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_03_22_02_57",
     "title": "被窝悄悄话",
     "date": "2026-02-03",

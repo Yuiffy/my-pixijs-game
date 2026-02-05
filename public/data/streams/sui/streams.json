@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_02_05_20_02_13",
+    "title": "岁岁岁2026的生日会！",
+    "date": "2026-02-05",
+    "time": "20:02:13",
+    "startTime": "20:02",
+    "endTime": "20:22",
+    "duration": 1240,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_05_20_02_13/2026_02_05_20_02_13_岁岁岁2026的生日会！_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_02_05_20_02_13/录制-25788785-20260205-200204-259-岁岁岁2026的生日会！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_05_20_02_04",
+    "title": "岁岁岁2026的生日会！",
+    "date": "2026-02-05",
+    "time": "20:02:04",
+    "startTime": "20:02",
+    "endTime": "01:52",
+    "duration": 21015,
+    "durationStr": "5.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_05_20_02_04/录制-25788785-20260205-200204-259-岁岁岁2026的生日会！_merged.xml",
+    "cover": "/data/streams/sui/2026_02_05_20_02_04/录制-25788785-20260205-200204-259-岁岁岁2026的生日会！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_05_20_02_04/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_05_20_02_04/录制-25788785-20260205-200204-259-岁岁岁2026的生日会！_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_05_20_02_04/录制-25788785-20260203-203422-390-咕咕咕！晚好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_03_20_34_22",
     "title": "咕咕咕！晚好",
     "date": "2026-02-03",

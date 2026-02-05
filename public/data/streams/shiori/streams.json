@@ -1,5 +1,73 @@
 [
   {
+    "id": "2026_02_05_22_02_48",
+    "title": "斗地主大赛！！",
+    "date": "2026-02-05",
+    "time": "22:02:48",
+    "startTime": "22:02",
+    "endTime": "00:09",
+    "duration": 7662,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_05_22_02_48/录制-26966466-20260205-220248-591-斗地主大赛！！.xml",
+    "cover": null,
+    "highlights": "/data/streams/shiori/2026_02_05_22_02_48/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_05_22_02_48/录制-26966466-20260205-220248-591-斗地主大赛！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_05_22_02_48/录制-26966466-20260205-220248-591-斗地主大赛！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_05_20_33_07",
+    "title": "斗地主大赛！！",
+    "date": "2026-02-05",
+    "time": "20:33:07",
+    "startTime": "20:33",
+    "endTime": "22:02",
+    "duration": 5354,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_05_20_33_07/录制-26966466-20260205-203307-050-斗地主大赛！！.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_05_18_31_00",
+    "title": "斗地主大赛！！",
+    "date": "2026-02-05",
+    "time": "18:31:00",
+    "startTime": "18:31",
+    "endTime": "20:33",
+    "duration": 7325,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_05_18_31_00/录制-26966466-20260205-183100-773-斗地主大赛！！.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_05_10_09_16",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-05",
+    "time": "10:09:16",
+    "startTime": "10:09",
+    "endTime": "12:15",
+    "duration": 7563,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_05_10_09_16/录制-26966466-20260205-100916-758-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_05_10_09_16/录制-26966466-20260205-100916-758-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_05_10_09_16/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_05_10_09_16/录制-26966466-20260205-100916-758-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_05_10_09_16/录制-26966466-20260205-100916-758-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_05_10_09_16/录制-26966466-20260204-215144-984-杂谈杂谈！！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_05_10_09_16/录制-26966466-20260204-215144-984-杂谈杂谈！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_04_21_51_44",
     "title": "杂谈杂谈！！！",
     "date": "2026-02-04",

@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_02_05_22_02_47",
+    "title": "浣来了！",
+    "date": "2026-02-05",
+    "time": "22:02:47",
+    "startTime": "22:02",
+    "endTime": "23:27",
+    "duration": 5106,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_05_22_02_47/录制-1741667419-20260205-220247-361-浣来了！.xml",
+    "cover": "/data/streams/izayoi/2026_02_05_22_02_47/录制-1741667419-20260205-220247-361-浣来了！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_05_22_02_47/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_05_22_02_47/录制-1741667419-20260205-220247-361-浣来了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_05_20_36_55",
+    "title": "浣来了！",
+    "date": "2026-02-05",
+    "time": "20:36:55",
+    "startTime": "20:36",
+    "endTime": "22:01",
+    "duration": 5118,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_05_20_36_55/录制-1741667419-20260205-203655-482-浣来了！.xml",
+    "cover": "/data/streams/izayoi/2026_02_05_20_36_55/录制-1741667419-20260205-203655-482-浣来了！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_05_09_00_42",
+    "title": "早茶第十四天。",
+    "date": "2026-02-05",
+    "time": "09:00:42",
+    "startTime": "09:00",
+    "endTime": "11:37",
+    "duration": 9440,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_05_09_00_42/录制-1741667419-20260205-090042-022-早茶第十四天。.xml",
+    "cover": "/data/streams/izayoi/2026_02_05_09_00_42/录制-1741667419-20260205-090042-022-早茶第十四天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_05_09_00_42/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_05_09_00_42/录制-1741667419-20260205-090042-022-早茶第十四天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_05_09_00_42/录制-1741667419-20260205-090042-022-早茶第十四天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_05_09_00_42/录制-1741667419-20260204-215147-462-浣来聊聊！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_04_21_51_47",
     "title": "浣来聊聊！",
     "date": "2026-02-04",
