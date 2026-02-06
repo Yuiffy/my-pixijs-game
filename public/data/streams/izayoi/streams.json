@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_06_20_03_02",
+    "title": "浣的怀旧歌回！",
+    "date": "2026-02-06",
+    "time": "20:03:02",
+    "startTime": "20:03",
+    "endTime": "00:18",
+    "duration": 15346,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_06_20_03_02/录制-1741667419-20260206-200302-890-浣的怀旧歌回！.xml",
+    "cover": "/data/streams/izayoi/2026_02_06_20_03_02/录制-1741667419-20260206-200302-890-浣的怀旧歌回！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_06_20_03_02/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_06_20_03_02/录制-1741667419-20260206-200302-890-浣的怀旧歌回！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_06_20_03_02/录制-1741667419-20260206-200302-890-浣的怀旧歌回！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_06_09_34_49",
+    "title": "今天是工作音诶！",
+    "date": "2026-02-06",
+    "time": "09:34:49",
+    "startTime": "09:34",
+    "endTime": "11:36",
+    "duration": 7324,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_06_09_34_49/录制-1741667419-20260206-093449-262-今天是工作音诶！_merged.xml",
+    "cover": "/data/streams/izayoi/2026_02_06_09_34_49/录制-1741667419-20260206-093449-262-今天是工作音诶！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_06_09_34_49/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_06_09_34_49/录制-1741667419-20260206-093449-262-今天是工作音诶！_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_06_09_34_49/录制-1741667419-20260205-220247-361-浣来了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_05_22_02_47",
     "title": "浣来了！",
     "date": "2026-02-05",

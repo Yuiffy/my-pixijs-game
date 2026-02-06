@@ -1,5 +1,90 @@
 [
   {
+    "id": "2026_02_07_00_23_00",
+    "title": "zzzzzzzz被窝回",
+    "date": "2026-02-06",
+    "time": "00:23:00",
+    "startTime": "00:23",
+    "endTime": "01:32",
+    "duration": 4170,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_07_00_23_00/录制-1986461465-20260207-002300-458-zzzzzzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_02_07_00_23_00/录制-1986461465-20260207-002300-458-zzzzzzzz被窝回.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_07_00_23_00/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_07_00_23_00/录制-1986461465-20260207-002300-458-zzzzzzzz被窝回_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_07_00_23_00/录制-1986461465-20260206-211109-676-zzzzzzzz_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_07_00_23_00/录制-1986461465-20260207-002300-458-zzzzzzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_06_23_52_22",
+    "title": "zzzzzzzz被窝回",
+    "date": "2026-02-06",
+    "time": "23:52:22",
+    "startTime": "23:52",
+    "endTime": "00:22",
+    "duration": 1822,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_06_23_52_22/录制-1986461465-20260206-235222-756-zzzzzzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_02_06_23_52_22/录制-1986461465-20260206-235222-756-zzzzzzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_06_23_48_51",
+    "title": "zzzzzzzz被窝回",
+    "date": "2026-02-06",
+    "time": "23:48:51",
+    "startTime": "23:48",
+    "endTime": "23:51",
+    "duration": 208,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_06_23_48_51/录制-1986461465-20260206-234851-795-zzzzzzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_02_06_23_48_51/录制-1986461465-20260206-234851-795-zzzzzzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_06_21_11_09",
+    "title": "zzzzzzzz",
+    "date": "2026-02-06",
+    "time": "21:11:09",
+    "startTime": "21:11",
+    "endTime": "23:48",
+    "duration": 9460,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_06_21_11_09/录制-1986461465-20260206-211109-676-zzzzzzzz.xml",
+    "cover": "/data/streams/kloa/2026_02_06_21_11_09/录制-1986461465-20260206-211109-676-zzzzzzzz.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_06_21_11_09/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_06_21_11_09/录制-1986461465-20260206-211109-676-zzzzzzzz_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_02_06_08_09_19",
+    "title": "早上好！",
+    "date": "2026-02-06",
+    "time": "08:09:19",
+    "startTime": "08:09",
+    "endTime": "10:06",
+    "duration": 7042,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_06_08_09_19/录制-1986461465-20260206-080919-293-早上好！.xml",
+    "cover": "/data/streams/kloa/2026_02_06_08_09_19/录制-1986461465-20260206-080919-293-早上好！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_06_08_09_19/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_06_08_09_19/录制-1986461465-20260206-080919-293-早上好！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_06_08_09_19/录制-1986461465-20260206-080919-293-早上好！_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_06_08_09_19/录制-1986461465-20260205-204404-528-困困困困困歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_05_22_02_46",
     "title": "困困困困困歌杂",
     "date": "2026-02-05",
