@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_02_07_10_11_12",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-07",
+    "time": "10:11:12",
+    "startTime": "10:11",
+    "endTime": "12:09",
+    "duration": 7111,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_07_10_11_12/录制-26966466-20260207-101112-389-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_07_10_11_12/录制-26966466-20260207-101112-389-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_07_10_11_12/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_07_10_11_12/录制-26966466-20260207-101112-389-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_07_10_11_12/录制-26966466-20260206-220334-611-斗地主大赛！！_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_07_10_11_12/录制-26966466-20260206-220334-611-斗地主大赛！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_06_22_03_34",
     "title": "小栞来啦！",
     "date": "2026-02-06",

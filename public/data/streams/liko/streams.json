@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_07_20_57_17",
+    "title": "谁是真正的钓鱼佬",
+    "date": "2026-02-07",
+    "time": "20:57:17",
+    "startTime": "20:57",
+    "endTime": "02:22",
+    "duration": 19515,
+    "durationStr": "5.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_07_20_57_17/录制-1713548468-20260207-205717-648-谁是真正的钓鱼佬.xml",
+    "cover": "/data/streams/liko/2026_02_07_20_57_17/录制-1713548468-20260207-205717-648-谁是真正的钓鱼佬.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_07_20_57_17/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_07_20_57_17/录制-1713548468-20260207-205717-648-谁是真正的钓鱼佬_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_07_10_59_02",
+    "title": "早上好！！",
+    "date": "2026-02-07",
+    "time": "10:59:02",
+    "startTime": "10:59",
+    "endTime": "14:36",
+    "duration": 13026,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_07_10_59_02/录制-1713548468-20260207-105902-287-早上好！！.xml",
+    "cover": "/data/streams/liko/2026_02_07_10_59_02/录制-1713548468-20260207-105902-287-早上好！！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_07_10_59_02/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_07_10_59_02/录制-1713548468-20260207-105902-287-早上好！！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_07_10_59_02/录制-1713548468-20260207-105902-287-早上好！！_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_02_07_10_59_02/录制-1713548468-20260206-210625-300-小兔子台词回_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_07_10_59_02/录制-1713548468-20260206-210625-300-小兔子台词回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_06_21_06_25",
     "title": "小兔子台词回",
     "date": "2026-02-06",
