@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_02_09_00_29_02",
+    "title": "晚上好呀！！",
+    "date": "2026-02-08",
+    "time": "00:29:02",
+    "startTime": "00:29",
+    "endTime": "01:02",
+    "duration": 1982,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_09_00_29_02/录制-1713548468-20260209-002902-528-晚上好呀！！.xml",
+    "cover": "/data/streams/liko/2026_02_09_00_29_02/录制-1713548468-20260209-002902-528-晚上好呀！！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_09_00_29_02/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_09_00_29_02/录制-1713548468-20260209-002902-528-晚上好呀！！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_09_00_29_02/录制-1713548468-20260209-002902-528-晚上好呀！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_08_21_07_06",
+    "title": "晚上好呀！！",
+    "date": "2026-02-08",
+    "time": "21:07:06",
+    "startTime": "21:07",
+    "endTime": "22:13",
+    "duration": 3962,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_08_21_07_06/录制-1713548468-20260208-210706-391-晚上好呀！！.xml",
+    "cover": "/data/streams/liko/2026_02_08_21_07_06/录制-1713548468-20260208-210706-391-晚上好呀！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_08_11_06_26",
+    "title": "中午吃了吗！",
+    "date": "2026-02-08",
+    "time": "11:06:26",
+    "startTime": "11:06",
+    "endTime": "14:37",
+    "duration": 12686,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_08_11_06_26/录制-1713548468-20260208-110626-171-谁是真正的钓鱼佬.xml",
+    "cover": "/data/streams/liko/2026_02_08_11_06_26/录制-1713548468-20260208-110626-171-谁是真正的钓鱼佬.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_08_11_06_26/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_08_11_06_26/录制-1713548468-20260208-110626-171-谁是真正的钓鱼佬_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_08_11_06_26/录制-1713548468-20260208-110626-171-谁是真正的钓鱼佬_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_02_08_11_06_26/录制-1713548468-20260207-205717-648-谁是真正的钓鱼佬_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_07_20_57_17",
     "title": "谁是真正的钓鱼佬",
     "date": "2026-02-07",

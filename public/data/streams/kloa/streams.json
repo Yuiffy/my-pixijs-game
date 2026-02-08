@@ -1,5 +1,61 @@
 [
   {
+    "id": "2026_02_08_19_32_43",
+    "title": "来看冰火！",
+    "date": "2026-02-08",
+    "time": "19:32:43",
+    "startTime": "19:32",
+    "endTime": "22:10",
+    "duration": 9513,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_08_19_32_43/录制-1986461465-20260208-193243-411-来看冰火！.xml",
+    "cover": "/data/streams/kloa/2026_02_08_19_32_43/录制-1986461465-20260208-193243-411-来看冰火！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_02_08_19_32_43/录制-1986461465-20260208-193107-082-来看冰火！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_08_19_02_42",
+    "title": "来看冰火！",
+    "date": "2026-02-08",
+    "time": "19:02:42",
+    "startTime": "19:02",
+    "endTime": "19:28",
+    "duration": 1609,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_08_19_02_42/录制-1986461465-20260208-190242-979-来看冰火！.xml",
+    "cover": "/data/streams/kloa/2026_02_08_19_02_42/录制-1986461465-20260208-190242-979-来看冰火！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_08_19_02_42/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_08_19_02_42/录制-1986461465-20260208-190242-979-来看冰火！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_08_11_31_03",
+    "title": "哦哈哟学长",
+    "date": "2026-02-08",
+    "time": "11:31:03",
+    "startTime": "11:31",
+    "endTime": "15:19",
+    "duration": 13732,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260208-113103-250-哦哈哟学长.xml",
+    "cover": "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260208-113103-250-哦哈哟学长.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_08_11_31_03/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260208-113103-250-哦哈哟学长_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260208-113103-250-哦哈哟学长_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260207-195843-019-头痛！歌歌歌歌歌歌_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260207-200219-627-头痛！歌歌歌歌歌歌_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260207-214730-669-摁唱！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_08_11_31_03/录制-1986461465-20260207-214730-669-摁唱！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_07_21_47_30",
     "title": "摁唱！",
     "date": "2026-02-07",

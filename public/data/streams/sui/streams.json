@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_08_20_03_19",
+    "title": "高手小鸟 在线只狼",
+    "date": "2026-02-08",
+    "time": "20:03:19",
+    "startTime": "20:03",
+    "endTime": "22:11",
+    "duration": 7737,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_08_20_03_19/录制-25788785-20260208-200319-939-高手小鸟 在线只狼.xml",
+    "cover": "/data/streams/sui/2026_02_08_20_03_19/录制-25788785-20260208-200319-939-高手小鸟 在线只狼.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_08_20_03_19/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_08_20_03_19/录制-25788785-20260208-200319-939-高手小鸟 在线只狼_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_02_08_14_52_53",
+    "title": "高手小鸟 在线只狼",
+    "date": "2026-02-08",
+    "time": "14:52:53",
+    "startTime": "14:52",
+    "endTime": "18:04",
+    "duration": 11559,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_08_14_52_53/录制-25788785-20260208-145253-218-高手小鸟 在线只狼.xml",
+    "cover": "/data/streams/sui/2026_02_08_14_52_53/录制-25788785-20260208-145253-218-高手小鸟 在线只狼.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_08_14_52_53/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_08_14_52_53/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_08_14_52_53/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_08_14_52_53/录制-25788785-20260206-195814-380-晚上好 咕咕咕_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_08_14_52_53/录制-25788785-20260206-195814-380-晚上好 咕咕咕_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_06_19_58_14",
     "title": "同步试听 辛逝纪芙音战士",
     "date": "2026-02-06",
