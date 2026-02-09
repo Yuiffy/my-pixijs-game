@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_02_09_22_54_08",
+    "title": "一起看 辛逝纪芙音战士",
+    "date": "2026-02-09",
+    "time": "22:54:08",
+    "startTime": "22:54",
+    "endTime": "00:22",
+    "duration": 5304,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_09_22_54_08/录制-25788785-20260209-225408-285-一起看 辛逝纪芙音战士.xml",
+    "cover": "/data/streams/sui/2026_02_09_22_54_08/录制-25788785-20260209-225408-285-一起看 辛逝纪芙音战士.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_09_22_54_08/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_09_22_54_08/录制-25788785-20260209-225408-285-一起看 辛逝纪芙音战士_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_09_22_54_08/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_09_22_54_08/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_COMIC_FACTORY_1.png"
+    ]
+  },
+  {
+    "id": "2026_02_09_20_49_56",
+    "title": "岁之播",
+    "date": "2026-02-09",
+    "time": "20:49:56",
+    "startTime": "20:49",
+    "endTime": "22:52",
+    "duration": 7391,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_09_20_49_56/录制-25788785-20260209-204956-057-岁之播.xml",
+    "cover": "/data/streams/sui/2026_02_09_20_49_56/录制-25788785-20260209-204956-057-岁之播.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_09_20_49_56/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_09_20_49_56/录制-25788785-20260209-204956-057-岁之播_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_02_09_20_01_27",
+    "title": "岁之播",
+    "date": "2026-02-09",
+    "time": "20:01:27",
+    "startTime": "20:01",
+    "endTime": "20:49",
+    "duration": 2905,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_09_20_01_27/录制-25788785-20260209-200127-759-岁之播.xml",
+    "cover": "/data/streams/sui/2026_02_09_20_01_27/录制-25788785-20260209-200127-759-岁之播.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_09_20_01_27/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_09_20_01_27/录制-25788785-20260209-200127-759-岁之播_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_09_20_01_27/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_09_20_01_27/录制-25788785-20260208-200319-939-高手小鸟 在线只狼_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_02_08_20_03_19",
     "title": "高手小鸟 在线只狼",
     "date": "2026-02-08",

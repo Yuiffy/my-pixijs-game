@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1986461465" shortid="0" name="克罗雅Kloa" title="我不直播我干嘛！" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-02-09T10:48:39.4958097+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <gift ts="1.841" user="石化桥" uid="27949628" giftname="牛哇牛哇" giftcount="1" />
+  <d p="4.437,1,25,16772431,1770605323560,0,67841,0" user="豹秃拳">下雪，哈欠，睡觉，唱歌</d>
+  <d p="4.765,1,25,16777215,1770605324509,0,162145969,0" user="TA是一只普通公鸡">这些背景都是哪里找到的呀雅雅</d>
+  <d p="10.933,4,25,14893055,1770605330590,0,477229415,0" user="Ayzlarse-">主播怎么还是按耐不住要播了</d>
+  <d p="18.734,4,25,14893055,1770605338815,0,11180104,0" user="ATRSz">今天猪播有些模糊是我的错觉吗</d>
+  <d p="24.265,4,25,14893055,1770605344059,0,277460158,0" user="陈千茗">OBS不是经常出问题的么</d>
+  <d p="30.435,1,25,16772431,1770605350235,0,67841,0" user="豹秃拳">是开生鲜灯了</d>
+  <d p="35.969,1,25,16777215,1770605356355,0,289082664,0" user="麦恩栗豆">码率有问题吧</d>
+  <d p="39.541,4,25,14893055,1770605358636,0,11180104,0" user="ATRSz">主播这图多大啊</d>
+  <d p="44.739,4,25,14893055,1770605364385,0,477229415,0" user="Ayzlarse-">开生鲜灯了</d>
+  <d p="45.065,4,25,14893055,1770605364548,0,178398894,0" user="不太会读书">有点</d>
+  <d p="48.964,4,25,14893055,1770605368772,0,277460158,0" user="陈千茗">可能是背景</d>
+  <d p="60.337,4,25,14893055,1770605379337,0,11180104,0" user="ATRSz">整个都有一点</d>
+  <d p="61.638,4,25,14893055,1770605381849,0,11180104,0" user="ATRSz">不只是人</d>
+  <d p="63.264,1,25,16772431,1770605382394,0,3835876,0" user="East_Eden">码率太低了</d>
+  <d p="64.236,1,25,16772431,1770605384377,0,67841,0" user="豹秃拳">嘿嘿</d>
+  <d p="70.738,4,25,14893055,1770605389948,0,477229415,0" user="Ayzlarse-">很有点糊</d>
+  <d p="75.942,4,25,14893055,1770605395798,0,11180104,0" user="ATRSz">是不是obs fallback回低码率了</d>
+  <d p="85.367,1,25,16777215,1770605404739,0,287946199,0" user="不会起这个名字">你好</d>
+  <d p="101.938,1,25,16772431,1770605421332,0,67841,0" user="豹秃拳">哎哟</d>
+  <d p="108.767,1,25,16777215,1770605428494,0,289082664,0" user="麦恩栗豆">obs高手</d>
+  <d p="132.170,1,25,16777215,1770605451569,0,10772055,0" user="不是康康s">想你了宝宝</d>
+  <d p="142.250,1,25,16772431,1770605461700,0,3963900,0" user="摸虾事务所">这就是“周一早：无”吗</d>
+  <d p="155.568,1,25,16777215,1770605474737,0,289082664,0" user="麦恩栗豆">感觉就是糊糊的，昨天貌似也是</d>
+  <d p="156.556,4,25,14893055,1770605476745,0,477229415,0" user="Ayzlarse-">真的糊</d>
+  <d p="164.342,4,25,14893055,1770605483584,0,477229415,0" user="Ayzlarse-">你看底下的字</d>
+  <d p="179.944,4,25,14893055,1770605500154,0,11180104,0" user="ATRSz">哎</d>
+  <d p="182.872,1,25,16772431,1770605503174,0,3835876,0" user="East_Eden">特效多码率就要开高</d>
+  <d p="191.968,4,25,14893055,1770605511738,0,277460158,0" user="陈千茗">我是1080原画（高帧率）</d>
+  <d p="195.866,1,25,16777215,1770605515281,0,10772055,0" user="不是康康s">不要说煮波糊了这种话()</d>
+  <d p="196.845,4,25,14893055,1770605516661,0,11180104,0" user="ATRSz">现在码率多少来着</d>
+  <d p="200.750,4,25,14893055,1770605520005,0,2003924,0" user="超浓零糖热可可">6k杂谈够了</d>
+  <gift ts="203.361" user="雅雅我们睡觉吧" uid="25662757" giftname="人气票" giftcount="1" />
+  <d p="208.550,4,25,14893055,1770605527570,0,11180104,0" user="ATRSz">也雀食不低</d>
+  <d p="208.551,1,25,16777215,1770605527737,0,327102428,0" user="新知酷">宝宝你好糊</d>
+  <d p="213.749,4,25,14893055,1770605532908,0,11180104,0" user="ATRSz">你没事吧</d>
+  <d p="215.366,4,25,14893055,1770605535046,0,178398894,0" user="不太会读书">够用</d>
+  <d p="226.748,1,25,16772431,1770605546607,0,67841,0" user="豹秃拳">嘿嘿</d>
+  <d p="227.072,1,25,16772431,1770605547182,0,3835876,0" user="East_Eden">比例比例会压缩的</d>
+</i>
