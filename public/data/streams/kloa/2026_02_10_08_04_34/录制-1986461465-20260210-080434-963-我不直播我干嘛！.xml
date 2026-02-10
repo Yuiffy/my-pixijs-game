@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1986461465" shortid="0" name="克罗雅Kloa" title="我不直播我干嘛！" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-02-10T08:04:34.9632959+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="26.928,4,25,14893055,1770681900447,0,11707739,0" user="みお_澪">人生黑暗</d>
+  <d p="30.833,1,25,16777215,1770681904223,0,13473043,0" user="桃氏叁叁">你好</d>
+  <d p="30.833,4,25,14893055,1770681904829,0,11707739,0" user="みお_澪">原来是能动的</d>
+  <d p="35.028,4,25,14893055,1770681908816,0,3546568999307683,0" user="薯片二三四">唉 呆呆兽被床拿下了</d>
+  <d p="37.322,4,25,14893055,1770681910407,0,11707739,0" user="みお_澪">我还以为是纸片呢</d>
+  <d p="45.118,1,25,16777215,1770681919276,0,386110100,0" user="超级斗丁">嘿嘿</d>
+  <d p="50.318,1,25,65532,1770681924293,0,1346944,0" user="竹达小爱Akiayana_zZ">弹弹弹 弹走鱼尾纹</d>
+  <d p="51.619,4,25,14893055,1770681925850,0,268613700,0" user="幸运观众杰尼">你好</d>
+  <d p="51.936,4,25,14893055,1770681925037,0,228064,0" user="阎冥命">好早哦</d>
+  <d p="51.937,4,25,16772431,1770681925268,0,139875,0" user="上升气流君KiRyu_Kun">主包的重力效果很一般</d>
+  <d p="58.112,4,25,14893055,1770681932309,0,2003924,0" user="超浓零糖热可可">什么，开了</d>
+  <d p="82.802,1,25,16777215,1770681956879,0,5820136,0" user="该摸了_">你好</d>
+  <d p="84.427,4,25,14893055,1770681958350,0,3546568999307683,0" user="薯片二三四">没事，咱们就在床上聊天吧</d>
+  <d p="90.926,4,25,14893055,1770681964953,0,228064,0" user="阎冥命">用PC顶号？</d>
+  <d p="100.030,1,25,65532,1770681974082,0,38028857,0" user="卿家ん">哎？</d>
+  <d p="107.497,1,25,16772431,1770681981740,0,205614,0" user="Ryuushi">开动了</d>
+  <d p="108.790,4,25,14893055,1770681982179,0,3546894913506104,0" user="落笔难书-">还有这种东西</d>
+  <d p="113.029,4,25,14893055,1770681987117,0,24816063,0" user="-縶給闦蘉鸀鱍鞝繝礃-">你去找前辈的百万个吻就行了（）</d>
+  <d p="113.988,4,25,14893055,1770681987104,0,21742347,0" user="超次元宅男">哎</d>
+  <d p="115.627,1,25,16777215,1770681989224,0,175445896,0" user="御坂9982________">早安雅 播好早</d>
+  <d p="117.889,1,25,16777215,1770681991078,0,244946915,0" user="一天兰有点">ᜊ(˶ᐢ. .ᐢ˵)ᜊ🤍</d>
+  <d p="117.896,4,25,14893055,1770681991256,0,2003924,0" user="超浓零糖热可可">？</d>
+  <d p="119.191,4,25,14893055,1770681993148,0,42526322,0" user="伽雷利安・马隆">？</d>
+  <d p="119.191,4,25,14893055,1770681993485,0,21742347,0" user="超次元宅男">?</d>
+  <d p="119.535,1,25,16772431,1770681992730,0,12861050,0" user="219772219">omg</d>
+  <d p="119.535,4,25,14893055,1770681992732,0,414398266,0" user="升沌风行">？</d>
+  <d p="122.138,4,25,14893055,1770681995860,0,228064,0" user="阎冥命">。。。你猜</d>
+  <d p="122.138,4,25,14893055,1770681996655,0,1837673,0" user="南风_鹅鹅">这么早，宝宝你也在上班吗</d>
+  <d p="123.086,1,25,16777215,1770681996577,0,244946915,0" user="一天兰有点">你好</d>
+  <d p="123.086,1,25,16772431,1770681997187,0,205614,0" user="Ryuushi">少听点</d>
+  <d p="123.427,1,25,16772431,1770681996941,0,12861050,0" user="219772219">只听免费的</d>
+  <d p="125.687,4,25,14893055,1770681998666,0,42526322,0" user="伽雷利安・马隆">那可没有</d>
+  <d p="125.687,1,25,16777215,1770681999061,0,12730715,0" user="碳水化合物重度依赖">哎？</d>
+  <d p="126.986,1,25,65532,1770682000591,0,1346944,0" user="竹达小爱Akiayana_zZ">？</d>
+  <d p="126.986,4,25,14893055,1770682001312,0,11180104,0" user="ATRSz">你买过？</d>
+  <d p="128.281,4,25,14893055,1770682001952,0,268613700,0" user="幸运观众杰尼">无语</d>
+  <d p="129.581,1,25,16777215,1770682003424,0,5820136,0" user="该摸了_">主播怎么一直闭眼啊</d>
+  <d p="132.182,4,25,14893055,1770682005818,0,42526322,0" user="伽雷利安・马隆">羞死了</d>
+  <d p="132.182,1,25,16777215,1770682006412,0,244946915,0" user="一天兰有点">听过？</d>
+  <d p="135.127,1,25,16772431,1770682008531,0,12861050,0" user="219772219">你前辈有做18的音声</d>
+  <d p="136.081,4,25,14893055,1770682009215,0,2003924,0" user="超浓零糖热可可">主播没少买啊</d>
+  <d p="137.376,1,25,16777215,1770682010577,0,244946915,0" user="一天兰有点">哎？</d>
+  <d p="138.682,4,25,14893055,1770682012044,0,268613700,0" user="幸运观众杰尼">羞死了</d>
+  <d p="138.682,4,25,14893055,1770682012610,0,3546894913506104,0" user="落笔难书-">人生黑暗</d>
+  <d p="141.629,4,25,14893055,1770682016010,0,32075254,0" user="鼠鼠数鼠">羞死了</d>
+  <d p="144.228,4,25,16772431,1770682017231,0,139875,0" user="上升气流君KiRyu_Kun">说是亲亲 其实更像那个是吧</d>
+  <d p="146.828,4,25,14893055,1770682020405,0,228064,0" user="阎冥命">又用力又黏糊</d>
+  <d p="147.774,4,25,14893055,1770682021602,0,42526322,0" user="伽雷利安・马隆">我十六岁纯情男高不能买这种东西的</d>
+  <d p="152.970,4,25,14893055,1770682026333,0,216807,0" user="莲稲">手臂吧</d>
+  <d p="158.530,4,25,14893055,1770682032372,0,295657,0" user="活到甲戌年">开动了</d>
+  <d p="159.466,1,25,16772431,1770682032747,0,205614,0" user="Ryuushi">加点鼻音</d>
+  <d p="159.827,1,25,16772431,1770682033474,0,12861050,0" user="219772219">有的人可以不嘬手背也能发出这个声音</d>
+  <d p="165.972,4,25,14893055,1770682039164,0,11180104,0" user="ATRSz">吮吸感</d>
+  <d p="165.972,1,25,16777215,1770682040037,0,2355140,0" user="升温啦注意散热哦">唔哎</d>
+  <d p="167.267,4,25,14893055,1770682041065,0,216807,0" user="莲稲">主播也没睡醒嘛</d>
+  <d p="172.462,4,25,14893055,1770682046294,0,21742347,0" user="超次元宅男">羞死了</d>
+  <d p="172.830,1,25,65532,1770682047188,0,367187,0" user="一之黑鸭梨子EX">这个vr有前辈也教过，亲手背和亲手臂</d>
+  <d p="178.963,4,25,14893055,1770682052319,0,2003924,0" user="超浓零糖热可可">你试试</d>
+  <d p="189.730,1,25,16772431,1770682062854,0,12861050,0" user="219772219">羞死了</d>
+  <d p="190.673,1,25,16777215,1770682064523,0,275671232,0" user="元智子">主包的音声预定</d>
+  <d p="193.254,4,25,14893055,1770682066860,0,42526322,0" user="伽雷利安・马隆">别急，等我带个耳机</d>
+  <d p="193.628,4,25,14893055,1770682067665,0,3546568999307683,0" user="薯片二三四">mark，8:07亲亲</d>
+  <d p="195.852,4,25,14893055,1770682070176,0,3546894913506104,0" user="落笔难书-">吮shun3吸</d>
+  <gift ts="197.153" user="让我下车阿玉单推人" uid="220368544" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="199.749,4,25,14893055,1770682073165,0,14216021,0" user="南国的风清">开动了</d>
+  <d p="205.331,4,25,14893055,1770682079069,0,3546568999307683,0" user="薯片二三四">已标记</d>
+  <d p="206.246,4,25,14893055,1770682079602,0,11707739,0" user="みお_澪">人生黑暗</d>
+  <d p="214.043,1,25,16777215,1770682087423,0,5820136,0" user="该摸了_">允吸说是</d>
+  <d p="215.344,4,25,14893055,1770682089291,0,11707739,0" user="みお_澪">我开的外放</d>
+  <d p="218.329,4,25,14893055,1770682092040,0,1613564254,0" user="-人有所操-">早上好，吃了吗</d>
+  <d p="230.031,4,25,14893055,1770682104180,0,3546568999307683,0" user="薯片二三四">小薯想吃煎饼！！！</d>
+  <gift ts="230.935" user="十九岁的花崎姬雏" uid="437877374" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="234.832,1,25,16777215,1770682109114,0,275671232,0" user="元智子">脑髓吸食</d>
+  <d p="236.133,1,25,16777215,1770682109819,0,12730715,0" user="碳水化合物重度依赖">人生黑暗</d>
+  <d p="237.434,4,25,14893055,1770682110863,0,21742347,0" user="超次元宅男">再无悲喜</d>
+  <d p="240.032,1,25,16777215,1770682114179,0,10738025,0" user="erm猫">你好你好</d>
+  <d p="243.930,1,25,65532,1770682117142,0,1346944,0" user="竹达小爱Akiayana_zZ">家里没人</d>
+  <d p="252.130,4,25,16772431,1770682125630,0,139875,0" user="上升气流君KiRyu_Kun">朋友听到之后叫我分享一下链接</d>
+  <d p="256.031,4,25,14893055,1770682129664,0,3546568999307683,0" user="薯片二三四">小薯小女友还没醒呢</d>
+  <d p="262.532,4,25,14893055,1770682135860,0,1837673,0" user="南风_鹅鹅">你让我活不下去，那你就准备背负一条年老的生命吧</d>
+  <d p="269.928,4,25,14893055,1770682143871,0,21742347,0" user="超次元宅男">我们一会见</d>
+  <d p="271.230,4,25,14893055,1770682144968,0,11707739,0" user="みお_澪">人生黑暗</d>
+  <d p="286.831,4,25,14893055,1770682160528,0,21742347,0" user="超次元宅男">再无悲喜</d>
+  <d p="287.233,1,25,16777215,1770682160810,0,16183271,0" user="沼跃蛤">人生黑暗</d>
+  <d p="289.428,1,25,16777215,1770682163513,0,2724509,0" user="村头王王王师傅">哎？</d>
+  <d p="289.831,4,25,14893055,1770682163395,0,22267989,0" user="元气波的雪兔">再无悲喜</d>
+</i>

@@ -1,5 +1,61 @@
 [
   {
+    "id": "2026_02_10_20_17_08",
+    "title": "我已急哭",
+    "date": "2026-02-10",
+    "time": "20:17:08",
+    "startTime": "20:17",
+    "endTime": "23:47",
+    "duration": 12652,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_10_20_17_08/录制-1986461465-20260210-201708-363-我已急哭.xml",
+    "cover": "/data/streams/kloa/2026_02_10_20_17_08/录制-1986461465-20260210-201708-363-我已急哭.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_10_20_17_08/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_10_20_17_08/录制-1986461465-20260210-201708-363-我已急哭_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_10_20_17_08/录制-1986461465-20260210-201708-363-我已急哭_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_10_08_12_52",
+    "title": "我不直播我干嘛！",
+    "date": "2026-02-10",
+    "time": "08:12:52",
+    "startTime": "08:12",
+    "endTime": "10:15",
+    "duration": 7380,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_10_08_12_52/录制-1986461465-20260210-081252-474-我不直播我干嘛！.xml",
+    "cover": "/data/streams/kloa/2026_02_10_08_12_52/录制-1986461465-20260210-081252-474-我不直播我干嘛！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_10_08_12_52/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_10_08_12_52/录制-1986461465-20260210-081252-474-我不直播我干嘛！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_10_08_12_52/录制-1986461465-20260210-081252-474-我不直播我干嘛！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_10_08_04_34",
+    "title": "我不直播我干嘛！",
+    "date": "2026-02-10",
+    "time": "08:04:34",
+    "startTime": "08:04",
+    "endTime": "08:08",
+    "duration": 289,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_10_08_04_34/录制-1986461465-20260210-080434-963-我不直播我干嘛！.xml",
+    "cover": "/data/streams/kloa/2026_02_10_08_04_34/录制-1986461465-20260210-080434-963-我不直播我干嘛！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_10_08_04_34/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_10_08_04_34/录制-1986461465-20260210-080434-963-我不直播我干嘛！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_10_08_04_34/录制-1986461465-20260210-080434-963-我不直播我干嘛！_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_10_08_04_34/录制-1986461465-20260210-003436-564-我不直播我干嘛！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_10_08_04_34/录制-1986461465-20260210-003436-564-我不直播我干嘛！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_10_00_34_36",
     "title": "我不直播我干嘛！",
     "date": "2026-02-09",

@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026_02_10_20_18_37",
+    "title": "咕咕咕晚上好",
+    "date": "2026-02-10",
+    "time": "20:18:37",
+    "startTime": "20:18",
+    "endTime": "00:36",
+    "duration": 15528,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260210-201856-405-咕咕咕晚上好_merged.xml",
+    "cover": "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260210-201856-405-咕咕咕晚上好.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_10_20_18_37/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260210-201856-405-咕咕咕晚上好_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260210-201856-405-咕咕咕晚上好_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_COMIC_FACTORY_1.png",
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260209-200127-759-岁之播_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260209-204956-057-岁之播_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260209-225408-285-一起看 辛逝纪芙音战士_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_02_09_22_54_08",
     "title": "一起看 辛逝纪芙音战士",
     "date": "2026-02-09",

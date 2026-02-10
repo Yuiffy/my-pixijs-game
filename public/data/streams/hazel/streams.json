@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_02_10_13_02_09",
+    "title": "中午好 电台聊天",
+    "date": "2026-02-10",
+    "time": "13:02:09",
+    "startTime": "13:02",
+    "endTime": "14:31",
+    "duration": 5378,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_10_13_02_09/录制-1713546334-20260210-130209-894-中午好 电台聊天_merged.xml",
+    "cover": "/data/streams/hazel/2026_02_10_13_02_09/录制-1713546334-20260210-130209-894-中午好 电台聊天.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_10_13_02_09/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_10_13_02_09/录制-1713546334-20260210-130209-894-中午好 电台聊天_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_10_13_02_09/录制-1713546334-20260207-150259-806-中午好 读书聊天_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_10_13_02_09/录制-1713546334-20260207-150259-806-中午好 读书聊天_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_07_15_02_59",
     "title": "中午好 读书聊天",
     "date": "2026-02-07",
