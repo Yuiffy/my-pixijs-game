@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_11_20_04_39",
+    "title": "浣到家了！",
+    "date": "2026-02-11",
+    "time": "20:04:39",
+    "startTime": "20:04",
+    "endTime": "23:27",
+    "duration": 12224,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_11_20_04_39/录制-1741667419-20260211-200439-000-浣到家了！.xml",
+    "cover": "/data/streams/izayoi/2026_02_11_20_04_39/录制-1741667419-20260211-200439-000-浣到家了！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_11_20_04_39/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_11_20_04_39/录制-1741667419-20260211-200439-000-浣到家了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_09_04_36",
+    "title": "浣来学歌",
+    "date": "2026-02-11",
+    "time": "09:04:36",
+    "startTime": "09:04",
+    "endTime": "11:10",
+    "duration": 7579,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_11_09_04_36/录制-1741667419-20260211-090436-298-浣来学歌.xml",
+    "cover": "/data/streams/izayoi/2026_02_11_09_04_36/录制-1741667419-20260211-090436-298-浣来学歌.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_11_09_04_36/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_11_09_04_36/录制-1741667419-20260211-090436-298-浣来学歌_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_11_09_04_36/录制-1741667419-20260209-200641-287-先来工作一下！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_11_09_04_36/录制-1741667419-20260209-200641-287-先来工作一下！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_09_20_06_41",
     "title": "先来工作一下！",
     "date": "2026-02-09",

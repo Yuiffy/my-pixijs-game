@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026_02_11_22_14_47",
+    "title": "3D麦恐怖流煮面",
+    "date": "2026-02-11",
+    "time": "22:14:47",
+    "startTime": "22:14",
+    "endTime": "23:59",
+    "duration": 6312,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_11_22_14_47/2026_02_11_22_14_47_3D麦恐怖流煮面_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_11_14_47_59",
+    "title": "咕咕咕晚上好",
+    "date": "2026-02-11",
+    "time": "14:47:59",
+    "startTime": "14:47",
+    "endTime": "19:22",
+    "duration": 16515,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_11_14_47_59/录制-25788785-20260211-144759-410-咕咕咕晚上好_merged.xml",
+    "cover": "/data/streams/sui/2026_02_11_14_47_59/录制-25788785-20260211-144759-410-咕咕咕晚上好.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_11_14_47_59/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_11_14_47_59/录制-25788785-20260211-144759-410-咕咕咕晚上好_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_11_14_47_59/录制-25788785-20260211-144759-410-咕咕咕晚上好_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_11_14_47_59/录制-25788785-20260211-144759-410-咕咕咕晚上好_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_11_14_47_59/录制-25788785-20260211-144759-410-咕咕咕晚上好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_14_47_57",
+    "title": "咕咕咕晚上好",
+    "date": "2026-02-11",
+    "time": "14:47:57",
+    "startTime": "14:47",
+    "endTime": "16:45",
+    "duration": 7082,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_11_14_47_57/2026_02_11_14_47_57_咕咕咕晚上好_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_02_11_14_47_57/2026_02_11_14_47_57_咕咕咕晚上好_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_02_10_20_18_37",
     "title": "咕咕咕晚上好",
     "date": "2026-02-10",
@@ -19,7 +69,9 @@
       "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260208-145253-218-高手小鸟 在线只狼_SCREENSHOTS.jpg",
       "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260209-200127-759-岁之播_COMIC_FACTORY.png",
       "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260209-204956-057-岁之播_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260209-225408-285-一起看 辛逝纪芙音战士_COMIC_FACTORY.png"
+      "/data/streams/sui/2026_02_10_20_18_37/录制-25788785-20260209-225408-285-一起看 辛逝纪芙音战士_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_10_20_18_56/录制-25788785-20260210-201856-405-咕咕咕晚上好_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_10_20_18_56/录制-25788785-20260210-201856-405-咕咕咕晚上好_merged_SCREENSHOTS.jpg"
     ]
   },
   {

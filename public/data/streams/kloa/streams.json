@@ -1,5 +1,130 @@
 [
   {
+    "id": "2026_02_11_23_39_25",
+    "title": "歌回！狠狠的唱",
+    "date": "2026-02-11",
+    "time": "23:39:25",
+    "startTime": "23:39",
+    "endTime": "01:20",
+    "duration": 6065,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_11_23_39_25/录制-1986461465-20260211-233925-740-歌回！狠狠的唱.xml",
+    "cover": "/data/streams/kloa/2026_02_11_23_39_25/录制-1986461465-20260211-233925-740-歌回！狠狠的唱.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_11_23_39_25/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_11_23_39_25/录制-1986461465-20260211-233925-740-歌回！狠狠的唱_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_11_23_39_25/录制-1986461465-20260211-233925-740-歌回！狠狠的唱_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_21_09_00",
+    "title": "歌回！狠狠的唱",
+    "date": "2026-02-11",
+    "time": "21:09:00",
+    "startTime": "21:09",
+    "endTime": "23:36",
+    "duration": 8820,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_11_21_09_00/录制-1986461465-20260211-210900-832-歌回！狠狠的唱.xml",
+    "cover": "/data/streams/kloa/2026_02_11_21_09_00/录制-1986461465-20260211-210900-832-歌回！狠狠的唱.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_11_21_09_00/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_11_21_09_00/录制-1986461465-20260211-210900-832-歌回！狠狠的唱_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_20_04_15",
+    "title": "床上清唱回",
+    "date": "2026-02-11",
+    "time": "20:04:15",
+    "startTime": "20:04",
+    "endTime": "20:58",
+    "duration": 3247,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_11_20_04_15/录制-1986461465-20260211-200415-141-好困好困qwq.xml",
+    "cover": "/data/streams/kloa/2026_02_11_20_04_15/录制-1986461465-20260211-200415-141-好困好困qwq.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_11_20_04_15/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_11_20_04_15/录制-1986461465-20260211-200415-141-好困好困qwq_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_10_49_13",
+    "title": "好困好困qwq",
+    "date": "2026-02-11",
+    "time": "10:49:13",
+    "startTime": "10:49",
+    "endTime": "12:17",
+    "duration": 5313,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_11_10_49_13/录制-1986461465-20260211-104913-189-好困好困qwq.xml",
+    "cover": "/data/streams/kloa/2026_02_11_10_49_13/录制-1986461465-20260211-104913-189-好困好困qwq.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_11_10_49_13/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_11_10_49_13/录制-1986461465-20260211-104913-189-好困好困qwq_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_11_10_49_13/录制-1986461465-20260211-104913-189-好困好困qwq_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_11_10_49_13/录制-1986461465-20260211-095743-210-好困好困qwq_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_10_00_51",
+    "title": "好困好困qwq",
+    "date": "2026-02-11",
+    "time": "10:00:51",
+    "startTime": "10:00",
+    "endTime": "10:45",
+    "duration": 2716,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_11_10_00_51/录制-1986461465-20260211-100051-306-好困好困qwq.xml",
+    "cover": "/data/streams/kloa/2026_02_11_10_00_51/录制-1986461465-20260211-100051-306-好困好困qwq.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_11_10_00_51/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_11_10_00_51/录制-1986461465-20260211-100051-306-好困好困qwq_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_11_10_00_51/录制-1986461465-20260211-100051-306-好困好困qwq_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_08_27_16",
+    "title": "好困好困qwq",
+    "date": "2026-02-11",
+    "time": "08:27:16",
+    "startTime": "08:27",
+    "endTime": "09:57",
+    "duration": 5417,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_11_08_27_16/录制-1986461465-20260211-082716-603-好困好困qwq.xml",
+    "cover": "/data/streams/kloa/2026_02_11_08_27_16/录制-1986461465-20260211-082716-603-好困好困qwq.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_11_08_27_16/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_11_08_27_16/录制-1986461465-20260211-082716-603-好困好困qwq_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_11_08_02_19",
+    "title": "好困好困qwq",
+    "date": "2026-02-11",
+    "time": "08:02:19",
+    "startTime": "08:02",
+    "endTime": "08:23",
+    "duration": 1302,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_11_08_02_19/录制-1986461465-20260211-080219-079-好困好困qwq_merged.xml",
+    "cover": "/data/streams/kloa/2026_02_11_08_02_19/录制-1986461465-20260211-080219-079-好困好困qwq.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_11_08_02_19/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_11_08_02_19/录制-1986461465-20260211-080219-079-好困好困qwq_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_11_08_02_19/录制-1986461465-20260210-201708-363-我已急哭_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_11_08_02_19/录制-1986461465-20260210-201708-363-我已急哭_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_10_20_17_08",
     "title": "我已急哭",
     "date": "2026-02-10",
