@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_02_12_23_08_31",
+    "title": "晚好！新年快乐！歌杂",
+    "date": "2026-02-12",
+    "time": "23:08:31",
+    "startTime": "23:08",
+    "endTime": "23:52",
+    "duration": 2671,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_12_23_08_31/录制-1986461465-20260212-230831-387-晚好！新年快乐！歌杂.xml",
+    "cover": "/data/streams/kloa/2026_02_12_23_08_31/录制-1986461465-20260212-230831-387-晚好！新年快乐！歌杂.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_12_20_04_42",
+    "title": "晚好！新年快乐！歌杂",
+    "date": "2026-02-12",
+    "time": "20:04:42",
+    "startTime": "20:04",
+    "endTime": "23:07",
+    "duration": 11015,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_12_20_04_42/录制-1986461465-20260212-200442-800-晚好！新年快乐！歌杂.xml",
+    "cover": "/data/streams/kloa/2026_02_12_20_04_42/录制-1986461465-20260212-200442-800-晚好！新年快乐！歌杂.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_12_20_04_42/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_12_20_04_42/录制-1986461465-20260212-200442-800-晚好！新年快乐！歌杂_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_12_20_04_42/录制-1986461465-20260212-200442-800-晚好！新年快乐！歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_12_09_06_50",
+    "title": "早上好！",
+    "date": "2026-02-12",
+    "time": "09:06:50",
+    "startTime": "09:06",
+    "endTime": "12:44",
+    "duration": 13086,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_12_09_06_50/录制-1986461465-20260212-090650-424-早上好！.xml",
+    "cover": "/data/streams/kloa/2026_02_12_09_06_50/录制-1986461465-20260212-090650-424-早上好！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_12_09_06_50/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_12_09_06_50/录制-1986461465-20260212-090650-424-早上好！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_12_09_06_50/录制-1986461465-20260212-090650-424-早上好！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_12_08_04_40",
+    "title": "早上好！",
+    "date": "2026-02-12",
+    "time": "08:04:40",
+    "startTime": "08:04",
+    "endTime": "08:58",
+    "duration": 3249,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_12_08_04_40/录制-1986461465-20260212-080440-549-早上好！.xml",
+    "cover": "/data/streams/kloa/2026_02_12_08_04_40/录制-1986461465-20260212-080440-549-早上好！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_12_08_04_40/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_12_08_04_40/录制-1986461465-20260212-080440-549-早上好！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_12_08_04_40/录制-1986461465-20260212-080440-549-早上好！_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_12_08_04_40/录制-1986461465-20260211-233925-740-歌回！狠狠的唱_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_12_08_04_40/录制-1986461465-20260211-233925-740-歌回！狠狠的唱_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_11_23_39_25",
     "title": "歌回！狠狠的唱",
     "date": "2026-02-11",

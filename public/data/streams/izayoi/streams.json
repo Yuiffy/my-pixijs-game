@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_12_20_02_23",
+    "title": "浣来观影《电锯人 蕾塞》",
+    "date": "2026-02-12",
+    "time": "20:02:23",
+    "startTime": "20:02",
+    "endTime": "22:27",
+    "duration": 8723,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_12_20_02_23/录制-1741667419-20260212-200223-552-浣来观影《电锯人 蕾塞》.xml",
+    "cover": "/data/streams/izayoi/2026_02_12_20_02_23/录制-1741667419-20260212-200223-552-浣来观影《电锯人 蕾塞》.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_12_20_02_23/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_12_20_02_23/录制-1741667419-20260212-200223-552-浣来观影《电锯人 蕾塞》_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_12_20_02_23/录制-1741667419-20260212-200223-552-浣来观影《电锯人 蕾塞》_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_12_16_01_04",
+    "title": "浣来陪你过大年！",
+    "date": "2026-02-12",
+    "time": "16:01:04",
+    "startTime": "16:01",
+    "endTime": "17:26",
+    "duration": 5125,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_12_16_01_04/录制-1741667419-20260212-160104-136-浣来陪你过大年！.xml",
+    "cover": "/data/streams/izayoi/2026_02_12_16_01_04/录制-1741667419-20260212-160104-136-浣来陪你过大年！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_12_16_01_04/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_12_16_01_04/录制-1741667419-20260212-160104-136-浣来陪你过大年！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_12_16_01_04/录制-1741667419-20260212-160104-136-浣来陪你过大年！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_12_16_01_04/录制-1741667419-20260211-200439-000-浣到家了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_11_20_04_39",
     "title": "浣到家了！",
     "date": "2026-02-11",

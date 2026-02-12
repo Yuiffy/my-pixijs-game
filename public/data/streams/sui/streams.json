@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_12_20_36_35",
+    "title": "晚上好咕咕咕！",
+    "date": "2026-02-12",
+    "time": "20:36:35",
+    "startTime": "20:36",
+    "endTime": "20:53",
+    "duration": 1049,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_12_20_36_35/2026_02_12_20_36_35_晚上好咕咕咕！_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_02_12_20_36_35/录制-25788785-20260212-203539-023-晚上好 咕咕咕！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_12_20_35_39",
+    "title": "晚上好 咕咕咕！",
+    "date": "2026-02-12",
+    "time": "20:35:39",
+    "startTime": "20:35",
+    "endTime": "23:25",
+    "duration": 10204,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_12_20_35_39/录制-25788785-20260212-203539-023-晚上好 咕咕咕！_merged.xml",
+    "cover": "/data/streams/sui/2026_02_12_20_35_39/录制-25788785-20260212-203539-023-晚上好 咕咕咕！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_12_20_35_39/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_12_20_35_39/录制-25788785-20260212-203539-023-晚上好 咕咕咕！_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_12_20_35_39/录制-25788785-20260211-144759-410-咕咕咕晚上好_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_12_20_35_39/录制-25788785-20260211-144759-410-咕咕咕晚上好_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_11_22_14_47",
     "title": "3D麦恐怖流煮面",
     "date": "2026-02-11",
