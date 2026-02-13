@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_02_13_21_01_30",
+    "title": "同意用户协议",
+    "date": "2026-02-13",
+    "time": "21:01:30",
+    "startTime": "21:01",
+    "endTime": "01:44",
+    "duration": 17001,
+    "durationStr": "4.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_13_21_01_30/录制-1713548468-20260213-210130-628-同意用户协议.xml",
+    "cover": "/data/streams/liko/2026_02_13_21_01_30/录制-1713548468-20260213-210130-628-同意用户协议.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_13_21_01_30/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_13_21_01_30/录制-1713548468-20260213-210130-628-同意用户协议_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_13_21_01_30/录制-1713548468-20260213-210130-628-同意用户协议_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_13_11_45_19",
+    "title": "被窝里真舒服",
+    "date": "2026-02-13",
+    "time": "11:45:19",
+    "startTime": "11:45",
+    "endTime": "11:57",
+    "duration": 774,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_13_11_45_19/录制-1713548468-20260213-114519-664-被窝里真舒服.xml",
+    "cover": "/data/streams/liko/2026_02_13_11_45_19/录制-1713548468-20260213-114519-664-被窝里真舒服.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_13_10_04_42",
+    "title": "被窝里真舒服",
+    "date": "2026-02-13",
+    "time": "10:04:42",
+    "startTime": "10:04",
+    "endTime": "11:44",
+    "duration": 6019,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_13_10_04_42/录制-1713548468-20260213-100442-978-被窝里真舒服.xml",
+    "cover": "/data/streams/liko/2026_02_13_10_04_42/录制-1713548468-20260213-100442-978-被窝里真舒服.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_13_10_04_42/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_13_10_04_42/录制-1713548468-20260213-100442-978-被窝里真舒服_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_13_10_04_42/录制-1713548468-20260213-100442-978-被窝里真舒服_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_02_13_10_04_42/录制-1713548468-20260212-210442-895-晚上好~_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_13_10_04_42/录制-1713548468-20260212-210442-895-晚上好~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_12_21_04_42",
     "title": "晚上好~",
     "date": "2026-02-12",

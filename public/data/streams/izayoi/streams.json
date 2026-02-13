@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_02_13_20_01_01",
+    "title": "早茶第十七天。",
+    "date": "2026-02-13",
+    "time": "20:01:01",
+    "startTime": "20:01",
+    "endTime": "23:30",
+    "duration": 12548,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_13_20_01_01/录制-1741667419-20260213-200101-431-早茶第十七天。.xml",
+    "cover": "/data/streams/izayoi/2026_02_13_20_01_01/录制-1741667419-20260213-200101-431-早茶第十七天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_13_20_01_01/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_13_20_01_01/录制-1741667419-20260213-200101-431-早茶第十七天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_13_20_01_01/录制-1741667419-20260213-200101-431-早茶第十七天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_13_09_00_08",
+    "title": "早茶第十七天。",
+    "date": "2026-02-13",
+    "time": "09:00:08",
+    "startTime": "09:00",
+    "endTime": "11:21",
+    "duration": 8503,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_13_09_00_08/录制-1741667419-20260213-090008-037-早茶第十七天。.xml",
+    "cover": "/data/streams/izayoi/2026_02_13_09_00_08/录制-1741667419-20260213-090008-037-早茶第十七天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_13_09_00_08/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_13_09_00_08/录制-1741667419-20260213-090008-037-早茶第十七天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_13_09_00_08/录制-1741667419-20260213-090008-037-早茶第十七天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_13_09_00_08/录制-1741667419-20260212-200223-552-浣来观影《电锯人 蕾塞》_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_13_09_00_08/录制-1741667419-20260212-200223-552-浣来观影《电锯人 蕾塞》_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_12_20_02_23",
     "title": "浣来观影《电锯人 蕾塞》",
     "date": "2026-02-12",

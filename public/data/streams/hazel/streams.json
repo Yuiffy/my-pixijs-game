@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_02_13_22_56_54",
+    "title": "春意满满 电台",
+    "date": "2026-02-13",
+    "time": "22:56:54",
+    "startTime": "22:56",
+    "endTime": "00:43",
+    "duration": 6453,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_13_22_56_54/录制-1713546334-20260213-225654-100-春意满满 电台_merged.xml",
+    "cover": "/data/streams/hazel/2026_02_13_22_56_54/录制-1713546334-20260213-225654-100-春意满满 电台.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_13_22_56_54/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_13_22_56_54/录制-1713546334-20260213-225654-100-春意满满 电台_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_13_22_56_54/录制-1713546334-20260211-230318-286-晚上好 被窝电台_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_02_11_23_03_18",
     "title": "晚上好 被窝电台",
     "date": "2026-02-11",
