@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_02_14_19_44_21",
+    "title": "大家情人节快乐！唱歌",
+    "date": "2026-02-14",
+    "time": "19:44:21",
+    "startTime": "19:44",
+    "endTime": "01:07",
+    "duration": 19387,
+    "durationStr": "5.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_14_19_44_21/录制-1986461465-20260214-194421-733-大家情人节快乐！.xml",
+    "cover": "/data/streams/kloa/2026_02_14_19_44_21/录制-1986461465-20260214-194421-733-大家情人节快乐！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_14_19_44_21/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_14_19_44_21/录制-1986461465-20260214-194421-733-大家情人节快乐！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_14_19_44_21/录制-1986461465-20260214-194421-733-大家情人节快乐！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_14_11_37_39",
+    "title": "大家情人节快乐！",
+    "date": "2026-02-14",
+    "time": "11:37:39",
+    "startTime": "11:37",
+    "endTime": "15:56",
+    "duration": 15556,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_14_11_37_39/录制-1986461465-20260214-113739-346-大家情人节快乐！.xml",
+    "cover": "/data/streams/kloa/2026_02_14_11_37_39/录制-1986461465-20260214-113739-346-大家情人节快乐！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_14_11_37_39/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_14_11_37_39/录制-1986461465-20260214-113739-346-大家情人节快乐！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_14_11_37_39/录制-1986461465-20260214-113739-346-大家情人节快乐！_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_14_11_37_39/录制-1986461465-20260213-200703-578-被窝回_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_14_11_37_39/录制-1986461465-20260213-200703-578-被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_13_20_07_03",
     "title": "被窝回",
     "date": "2026-02-13",

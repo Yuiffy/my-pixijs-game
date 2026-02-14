@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_02_14_19_02_58",
+    "title": "晚上好",
+    "date": "2026-02-14",
+    "time": "19:02:58",
+    "startTime": "19:02",
+    "endTime": "21:03",
+    "duration": 7277,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_14_19_02_58/录制-1713546334-20260214-190258-575-晚上好.xml",
+    "cover": "/data/streams/hazel/2026_02_14_19_02_58/录制-1713546334-20260214-190258-575-晚上好.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_14_19_02_58/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_14_19_02_58/录制-1713546334-20260214-190258-575-晚上好_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_14_19_02_58/录制-1713546334-20260214-190258-575-晚上好_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_02_14_19_02_58/录制-1713546334-20260213-225654-100-春意满满 电台_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_02_13_22_56_54",
     "title": "春意满满 电台",
     "date": "2026-02-13",

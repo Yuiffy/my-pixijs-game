@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_02_14_20_01_21",
+    "title": "浣来给你唱情歌。",
+    "date": "2026-02-14",
+    "time": "20:01:21",
+    "startTime": "20:01",
+    "endTime": "00:43",
+    "duration": 16971,
+    "durationStr": "4.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_14_20_01_21/录制-1741667419-20260214-200121-561-浣来给你唱情歌。.xml",
+    "cover": "/data/streams/izayoi/2026_02_14_20_01_21/录制-1741667419-20260214-200121-561-浣来给你唱情歌。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_14_20_01_21/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_14_20_01_21/录制-1741667419-20260214-200121-561-浣来给你唱情歌。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_14_20_01_21/录制-1741667419-20260214-200121-561-浣来给你唱情歌。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_14_14_04_49",
+    "title": "情人节甜蜜联动",
+    "date": "2026-02-14",
+    "time": "14:04:49",
+    "startTime": "14:04",
+    "endTime": "16:48",
+    "duration": 9886,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_14_14_04_49/录制-1741667419-20260214-140449-331-情人节甜蜜联动.xml",
+    "cover": "/data/streams/izayoi/2026_02_14_14_04_49/录制-1741667419-20260214-140449-331-情人节甜蜜联动.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_14_14_04_49/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_14_14_04_49/录制-1741667419-20260214-140449-331-情人节甜蜜联动_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_14_14_04_49/录制-1741667419-20260214-140449-331-情人节甜蜜联动_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_14_14_04_49/录制-1741667419-20260213-200101-431-早茶第十七天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_14_14_04_49/录制-1741667419-20260213-200101-431-早茶第十七天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_13_20_01_01",
     "title": "早茶第十七天。",
     "date": "2026-02-13",

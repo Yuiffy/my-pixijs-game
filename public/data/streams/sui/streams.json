@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_02_14_20_21_38",
+    "title": "要一起度过今天吗",
+    "date": "2026-02-14",
+    "time": "20:21:38",
+    "startTime": "20:21",
+    "endTime": "01:10",
+    "duration": 17392,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_14_20_21_38/2026_02_14_20_21_41_要一起度过今天吗_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_02_14_20_21_38/2026_02_14_20_21_41_要一起度过今天吗_DDTV5_cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_14_20_21_38/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_14_20_21_38/录制-25788785-20260214-202138-639-要一起度过今天吗_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_14_20_21_38/录制-25788785-20260214-202138-639-要一起度过今天吗_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_14_20_21_38/录制-25788785-20260212-203539-023-晚上好 咕咕咕！_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_14_20_21_38/录制-25788785-20260212-203539-023-晚上好 咕咕咕！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_12_20_36_35",
     "title": "晚上好咕咕咕！",
     "date": "2026-02-12",
