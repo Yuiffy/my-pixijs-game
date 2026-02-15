@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_15_22_00_38",
+    "title": "来爬山咯！！",
+    "date": "2026-02-15",
+    "time": "22:00:38",
+    "startTime": "22:00",
+    "endTime": "00:37",
+    "duration": 9458,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_15_22_00_38/录制-26966466-20260215-220038-923-来爬山咯！！.xml",
+    "cover": "/data/streams/shiori/2026_02_15_22_00_38/录制-26966466-20260215-220038-923-来爬山咯！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_15_22_00_38/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_15_22_00_38/录制-26966466-20260215-220038-923-来爬山咯！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_15_22_00_38/录制-26966466-20260215-220038-923-来爬山咯！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_15_10_15_31",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-15",
+    "time": "10:15:31",
+    "startTime": "10:15",
+    "endTime": "12:17",
+    "duration": 7336,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_15_10_15_31/录制-26966466-20260215-101531-707-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_15_10_15_31/录制-26966466-20260215-101531-707-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_15_10_15_31/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_15_10_15_31/录制-26966466-20260215-101531-707-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_15_10_15_31/录制-26966466-20260215-101531-707-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_14_22_36_42",
     "title": "情人节快乐！！",
     "date": "2026-02-14",
