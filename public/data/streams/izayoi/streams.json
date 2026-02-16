@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_02_16_20_01_45",
+    "title": "浣来陪你过除夕！",
+    "date": "2026-02-16",
+    "time": "20:01:45",
+    "startTime": "20:01",
+    "endTime": "00:26",
+    "duration": 15940,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_16_20_01_45/录制-1741667419-20260216-200145-932-浣来陪你过除夕！.xml",
+    "cover": "/data/streams/izayoi/2026_02_16_20_01_45/录制-1741667419-20260216-200145-932-浣来陪你过除夕！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_16_20_01_45/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_16_20_01_45/录制-1741667419-20260216-200145-932-浣来陪你过除夕！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_16_20_01_45/录制-1741667419-20260216-200145-932-浣来陪你过除夕！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_16_20_01_45/录制-1741667419-20260215-224445-288-聊40分钟。_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_02_15_22_44_45",
     "title": "聊40分钟。",
     "date": "2026-02-15",
