@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_02_17_20_07_11",
+    "title": "来唱唱唱歌歌~",
+    "date": "2026-02-17",
+    "time": "20:07:11",
+    "startTime": "20:07",
+    "endTime": "01:09",
+    "duration": 18173,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_17_20_07_11/录制-1986461465-20260217-200711-354-来唱唱唱歌歌~.xml",
+    "cover": "/data/streams/kloa/2026_02_17_20_07_11/录制-1986461465-20260217-200711-354-来唱唱唱歌歌~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_17_20_07_11/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_17_20_07_11/录制-1986461465-20260217-200711-354-来唱唱唱歌歌~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_17_20_07_11/录制-1986461465-20260217-200711-354-来唱唱唱歌歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_17_11_06_39",
+    "title": "新年快乐！",
+    "date": "2026-02-17",
+    "time": "11:06:39",
+    "startTime": "11:06",
+    "endTime": "13:50",
+    "duration": 9883,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_17_11_06_39/录制-1986461465-20260217-110639-625-新年快乐！.xml",
+    "cover": "/data/streams/kloa/2026_02_17_11_06_39/录制-1986461465-20260217-110639-625-新年快乐！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_17_11_06_39/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_17_11_06_39/录制-1986461465-20260217-110639-625-新年快乐！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_17_11_06_39/录制-1986461465-20260217-110639-625-新年快乐！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_17_11_02_29",
+    "title": "新年快乐！",
+    "date": "2026-02-17",
+    "time": "11:02:29",
+    "startTime": "11:02",
+    "endTime": "11:05",
+    "duration": 227,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_17_11_02_29/录制-1986461465-20260217-110229-111-新年快乐！.xml",
+    "cover": "/data/streams/kloa/2026_02_17_11_02_29/录制-1986461465-20260217-110229-111-新年快乐！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_17_10_10_11",
+    "title": "新年快乐！",
+    "date": "2026-02-17",
+    "time": "10:10:11",
+    "startTime": "10:10",
+    "endTime": "10:58",
+    "duration": 2923,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_17_10_10_11/录制-1986461465-20260217-101011-180-新年快乐！.xml",
+    "cover": "/data/streams/kloa/2026_02_17_10_10_11/录制-1986461465-20260217-101011-180-新年快乐！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_17_10_10_11/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_17_10_10_11/录制-1986461465-20260217-101011-180-新年快乐！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_17_10_10_11/录制-1986461465-20260217-101011-180-新年快乐！_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_17_10_10_11/录制-1986461465-20260216-220626-734-新年快乐！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_17_10_10_11/录制-1986461465-20260216-220626-734-新年快乐！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_16_22_06_26",
     "title": "新年快乐！",
     "date": "2026-02-16",
