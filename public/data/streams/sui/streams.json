@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_02_18_21_02_15",
+    "title": "小岁伴你迎初二~",
+    "date": "2026-02-18",
+    "time": "21:02:15",
+    "startTime": "21:02",
+    "endTime": "00:29",
+    "duration": 12452,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_18_21_02_15/2026_02_18_21_02_36_小岁伴你迎初二~_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_02_18_21_02_15/录制-25788785-20260218-210215-582-小岁伴你迎初二~.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_18_21_02_15/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_18_21_02_15/录制-25788785-20260218-210215-582-小岁伴你迎初二~_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_18_21_02_15/录制-25788785-20260218-210215-582-小岁伴你迎初二~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_17_20_23_15",
     "title": "小岁伴你过初一~",
     "date": "2026-02-17",
@@ -14,7 +32,9 @@
     "highlights": "/data/streams/sui/2026_02_17_20_23_15/highlights.md",
     "images": [
       "/data/streams/sui/2026_02_17_20_23_15/录制-25788785-20260217-202318-599-小岁伴你过初一~_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_02_17_20_23_15/录制-25788785-20260217-202318-599-小岁伴你过初一~_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_02_17_20_23_15/录制-25788785-20260217-202318-599-小岁伴你过初一~_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_17_20_23_18/录制-25788785-20260217-202318-599-小岁伴你过初一~_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_17_20_23_18/录制-25788785-20260217-202318-599-小岁伴你过初一~_SCREENSHOTS.jpg"
     ]
   },
   {

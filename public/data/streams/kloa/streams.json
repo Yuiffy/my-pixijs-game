@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_02_18_20_03_12",
+    "title": "粉色呆呆兽在唱歌",
+    "date": "2026-02-18",
+    "time": "20:03:12",
+    "startTime": "20:03",
+    "endTime": "00:58",
+    "duration": 17751,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_18_20_03_12/录制-1986461465-20260218-200312-589-喵喵喵喵！夜晚出击！.xml",
+    "cover": "/data/streams/kloa/2026_02_18_20_03_12/录制-1986461465-20260218-200312-589-喵喵喵喵！夜晚出击！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_18_20_03_12/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_18_20_03_12/录制-1986461465-20260218-200312-589-喵喵喵喵！夜晚出击！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_18_20_03_12/录制-1986461465-20260218-200312-589-喵喵喵喵！夜晚出击！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_18_10_13_18",
+    "title": "早上好，吃早餐=w=",
+    "date": "2026-02-18",
+    "time": "10:13:18",
+    "startTime": "10:13",
+    "endTime": "12:43",
+    "duration": 9006,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_18_10_13_18/录制-1986461465-20260218-101318-919-早上好，吃早餐=w=_merged.xml",
+    "cover": "/data/streams/kloa/2026_02_18_10_13_18/录制-1986461465-20260218-101318-919-早上好，吃早餐=w=.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_18_10_13_18/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_18_10_13_18/录制-1986461465-20260218-101318-919-早上好，吃早餐=w=_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_18_10_13_18/录制-1986461465-20260218-101318-919-早上好，吃早餐=w=_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_18_10_13_18/录制-1986461465-20260217-200711-354-来唱唱唱歌歌~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_18_10_13_18/录制-1986461465-20260217-200711-354-来唱唱唱歌歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_17_20_07_11",
     "title": "来唱唱唱歌歌~",
     "date": "2026-02-17",

@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_18_21_07_28",
+    "title": "外面噼里啪啦",
+    "date": "2026-02-18",
+    "time": "21:07:28",
+    "startTime": "21:07",
+    "endTime": "00:15",
+    "duration": 11318,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_18_21_07_28/录制-1713548468-20260218-210728-707-外面噼里啪啦.xml",
+    "cover": "/data/streams/liko/2026_02_18_21_07_28/录制-1713548468-20260218-210728-707-外面噼里啪啦.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_18_21_07_28/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_18_21_07_28/录制-1713548468-20260218-210728-707-外面噼里啪啦_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_18_21_07_28/录制-1713548468-20260218-210728-707-外面噼里啪啦_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_18_12_54_47",
+    "title": "完蛋睡过头了",
+    "date": "2026-02-18",
+    "time": "12:54:47",
+    "startTime": "12:54",
+    "endTime": "16:03",
+    "duration": 11359,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_18_12_54_47/录制-1713548468-20260218-125447-519-完蛋睡过头了_merged.xml",
+    "cover": "/data/streams/liko/2026_02_18_12_54_47/录制-1713548468-20260218-125447-519-完蛋睡过头了.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_18_12_54_47/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_18_12_54_47/录制-1713548468-20260218-125447-519-完蛋睡过头了_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_18_12_54_47/录制-1713548468-20260217-195505-164-新年新气象！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_18_12_54_47/录制-1713548468-20260217-195505-164-新年新气象！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_17_19_55_05",
     "title": "新年新气象！",
     "date": "2026-02-17",
