@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1713548468" shortid="0" name="莉蔻Liko" title="在被窝里说悄悄话" areanameparent="电台" areanamechild="聊天电台" start_time="2026-02-19T23:00:00.7653685+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="6.563,4,25,14893055,1771513207496,0,1593311,0" user="异画游学者">有的，北方的高个儿发育早</d>
+  <d p="10.458,1,25,16777215,1771513211062,0,391658696,0" user="STARA_Official">营养上去了很正常</d>
+  <d p="18.255,1,25,16777215,1771513219260,0,391658696,0" user="STARA_Official">回归与均值？</d>
+  <d p="27.350,1,25,16777215,1771513227752,0,293726409,0" user="aaa凉乞钞Ciallo版">不会吧，太高了不好看</d>
+  <d p="31.256,4,25,14893055,1771513231685,0,66934192,0" user="无尽夏的七月">你的肚子还有</d>
+  <d p="44.253,4,25,14893055,1771513245830,0,1593311,0" user="异画游学者">早睡早起都做不到的，还指望二次发育吗，别逗胡萝卜笑了</d>
+  <d p="50.761,1,25,16777215,1771513251578,0,1491349199,0" user="JlSoYEoN">兔小妹我不退款了，能帮我解一道数理方程嘛？</d>
+  <d p="58.564,1,25,16777215,1771513259557,0,391658696,0" user="STARA_Official">一米吧</d>
+  <d p="66.351,1,25,16777215,1771513267186,0,293726409,0" user="aaa凉乞钞Ciallo版">坏兔子</d>
+  <d p="67.656,1,25,16777215,1771513268687,0,1491349199,0" user="JlSoYEoN">或者统计物理也行[花]</d>
+  <d p="71.557,4,25,14893055,1771513272867,0,3494377284438387,0" user="Mama-生块叉烧吧">多喝牛奶</d>
+  <d p="87.158,4,25,14893055,1771513287779,0,66934192,0" user="无尽夏的七月">早睡早起和健康饮食都做不到，你怎么发育，会发育的只有你的肚子</d>
+  <d p="87.159,4,25,14893055,1771513287858,0,1593311,0" user="异画游学者">看来是真没上过学了力扣力扣</d>
+  <d p="96.257,1,25,16777215,1771513297277,0,293726409,0" user="aaa凉乞钞Ciallo版">？？？</d>
+  <d p="104.057,4,25,14893055,1771513305083,0,66934192,0" user="无尽夏的七月">流光了是吧</d>
+  <d p="107.952,1,25,14893055,1771513308804,0,402394794,0" user="三momo三">？</d>
+  <d p="110.560,4,25,14893055,1771513310946,0,1593311,0" user="异画游学者">力扣力扣的腰围有无限发育的超能力</d>
+  <gift ts="120.964" user="异画游学者" uid="1593311" giftname="鼓鼓掌" giftcount="1" />
+  <gift ts="122.268" user="异画游学者" uid="1593311" giftname="鼓鼓掌" giftcount="1" />
+  <d p="128.747,4,25,14893055,1771513329421,0,66934192,0" user="无尽夏的七月">无限的可能（指肚子）</d>
+  <d p="130.054,1,25,16777215,1771513330914,0,391658696,0" user="STARA_Official">？？？</d>
+  <d p="137.871,1,25,16777215,1771513338680,0,293726409,0" user="aaa凉乞钞Ciallo版">liko这样早晚拥有三块腹肌</d>
+  <d p="150.834,1,25,16777215,1771513351652,0,22411071,0" user="寒林空见">三折叠</d>
+  <d p="204.187,4,25,14893055,1771513405503,0,1593311,0" user="异画游学者">三折叠哈哈哈哈哈哈</d>
+  <d p="208.082,1,25,16777215,1771513408893,0,293726409,0" user="aaa凉乞钞Ciallo版">liko别学猫猫叫了，家里的猫猫在应和你了</d>
+  <d p="239.197,1,25,16777215,1771513440481,0,391658696,0" user="STARA_Official">思考</d>
+  <d p="241.787,4,25,14893055,1771513442961,0,32759578,0" user="明若轻兮彡">？</d>
+  <d p="246.986,4,25,14893055,1771513448385,0,32759578,0" user="明若轻兮彡">我卡了？</d>
+  <d p="248.388,4,25,14893055,1771513448838,0,1593311,0" user="异画游学者">睡着了吗</d>
+  <d p="253.486,4,25,14893055,1771513454652,0,66934192,0" user="无尽夏的七月">你学猪叫很像</d>
+  <d p="266.483,4,25,14893055,1771513467044,0,39391087,0" user="常州的弦杀师">被击中</d>
+  <d p="270.485,1,25,16777215,1771513471803,0,57902538,0" user="原芽b">成年人学猫叫就很</d>
+  <d p="271.785,1,25,16777215,1771513473112,0,293726409,0" user="aaa凉乞钞Ciallo版">那就是刚刚卡了</d>
+  <d p="275.688,4,25,14893055,1771513477032,0,254518011,0" user="作死san">成年人学猫叫.jpg</d>
+  <d p="278.298,4,25,14893055,1771513479738,0,1593311,0" user="异画游学者">那能睡着吗，277需要第二个睡觉势</d>
+  <d p="280.782,1,25,16777215,1771513481479,0,1541945097,0" user="辣椒阿萨排">喵喵喵</d>
+  <d p="295.188,4,25,14893055,1771513495754,0,1593311,0" user="异画游学者">拯救一下粉色呆呆兽吧</d>
+  <d p="298.983,4,25,14893055,1771513500459,0,66934192,0" user="无尽夏的七月">思考</d>
+  <d p="302.883,1,25,16777215,1771513503893,0,391658696,0" user="STARA_Official">太像了</d>
+  <d p="305.482,4,25,14893055,1771513506604,0,3494377284438387,0" user="Mama-生块叉烧吧">兔子怎么叫</d>
+  <d p="308.186,1,25,16777215,1771513509502,0,57902538,0" user="原芽b">被击中</d>
+  <d p="309.483,1,25,16777215,1771513510671,0,479203,0" user="为啥酱油总被打">莉蔻都睡两次了</d>
+  <d p="312.090,1,25,16777215,1771513512851,0,57902538,0" user="原芽b">对了</d>
+  <d p="314.583,1,25,14893055,1771513515165,0,402394794,0" user="三momo三">怎么兔子变成猫了</d>
+  <d p="315.986,1,25,16777215,1771513516398,0,293726409,0" user="aaa凉乞钞Ciallo版">睡着过了</d>
+  <d p="340.683,1,25,16777215,1771513542222,0,777317,0" user="物述有栖_Official">被击中</d>
+</i>

@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_19_20_01_25",
+    "title": "浣来陪你观影 fsf篇",
+    "date": "2026-02-19",
+    "time": "20:01:25",
+    "startTime": "20:01",
+    "endTime": "00:23",
+    "duration": 15727,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_19_20_01_25/录制-1741667419-20260219-200125-129-浣来陪你观影 fsf篇.xml",
+    "cover": "/data/streams/izayoi/2026_02_19_20_01_25/录制-1741667419-20260219-200125-129-浣来陪你观影 fsf篇.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_19_20_01_25/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_19_20_01_25/录制-1741667419-20260219-200125-129-浣来陪你观影 fsf篇_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_19_20_01_25/录制-1741667419-20260219-200125-129-浣来陪你观影 fsf篇_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_19_09_04_49",
+    "title": "早茶第十九天",
+    "date": "2026-02-19",
+    "time": "09:04:49",
+    "startTime": "09:04",
+    "endTime": "11:04",
+    "duration": 7206,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_19_09_04_49/录制-1741667419-20260219-090449-523-早茶第十九天_merged.xml",
+    "cover": "/data/streams/izayoi/2026_02_19_09_04_49/录制-1741667419-20260219-090449-523-早茶第十九天.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_19_09_04_49/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_19_09_04_49/录制-1741667419-20260218-200504-950-开年第二杂！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_19_09_04_49/录制-1741667419-20260218-200504-950-开年第二杂！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_18_20_05_04",
     "title": "开年第二杂！",
     "date": "2026-02-18",

@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1713548468" shortid="0" name="莉蔻Liko" title="在被窝里说悄悄话" areanameparent="电台" areanamechild="聊天电台" start_time="2026-02-19T22:25:42.6663581+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="2.853,1,25,16777215,1771511146097,0,22909590,0" user="Reee_天天">因为就没法内个内个了[dog]</d>
+  <d p="14.545,1,25,14893055,1771511157653,0,402394794,0" user="三momo三">苹果树下</d>
+  <d p="26.252,4,25,14893055,1771511168509,0,66934192,0" user="无尽夏的七月">芒果的话，不如去喝杨枝甘露吧</d>
+  <d p="39.293,4,25,14893055,1771511181695,0,12730715,0" user="碳水化合物重度依赖">芒果汁好喝！原来名创优品还卖一种芒果汁，现在好像没了</d>
+  <d p="44.449,1,25,16777215,1771511186924,0,22411071,0" user="寒林空见">不一直是汇源和椰风吗</d>
+  <d p="49.698,1,25,16777215,1771511192635,0,293726409,0" user="aaa凉乞钞Ciallo版">在山东这么火啊</d>
+  <d p="52.248,4,25,14893055,1771511194458,0,1676577,0" user="爱小师妹的神探">我们这边是椰子汁</d>
+  <d p="57.507,1,25,16777215,1771511200304,0,433301426,0" user="复仇大喵">太爽了，说是</d>
+  <d p="61.399,4,25,14893055,1771511204160,0,1593311,0" user="异画游学者">已经回来了，山楂树下王者归来了</d>
+  <d p="64.010,1,25,16777215,1771511206328,0,57902538,0" user="原芽b">其实还有更难喝的</d>
+  <d p="67.870,1,25,16777215,1771511210271,0,1653185995,0" user="见人拉屎沟子痒">天龙寺外，菩提树下</d>
+  <d p="67.896,4,25,14893055,1771511211085,0,10248108,0" user="不会再上船的K宝">望山楂好喝</d>
+  <d p="69.196,4,25,14893055,1771511211906,0,2003924,0" user="超浓零糖热可可">何意味</d>
+  <d p="73.097,1,25,16777215,1771511215282,0,293726409,0" user="aaa凉乞钞Ciallo版">我们这边是椰树椰子汁</d>
+  <d p="75.697,1,25,16777215,1771511219088,0,1404353913,0" user="bili_334fhoapuha">可以吃菠萝吗</d>
+  <d p="79.591,1,25,16777215,1771511222877,0,293726409,0" user="aaa凉乞钞Ciallo版">？？？</d>
+  <d p="83.513,1,25,16777215,1771511226431,0,433301426,0" user="复仇大喵">我去，不早说。</d>
+  <d p="84.747,1,25,16777215,1771511227506,0,43756396,0" user="凝羽_刃">离家出走这是好事吗🤔</d>
+  <d p="87.353,4,25,14893055,1771511229897,0,66934192,0" user="无尽夏的七月">果汁好胖人的</d>
+  <d p="88.652,4,25,14893055,1771511231898,0,94520374,0" user="_你去祭典了吧">不要走</d>
+  <d p="91.299,1,25,16777215,1771511233604,0,29489005,0" user="Unknow無名">nfc是一种工艺</d>
+  <d p="92.608,4,25,14893055,1771511235644,0,10248108,0" user="不会再上船的K宝">那就是得喝，走了就可以嘿嘿嘿了</d>
+  <d p="97.753,1,25,14893055,1771511240817,0,402394794,0" user="三momo三">好贵那个</d>
+  <d p="100.398,4,25,14893055,1771511243258,0,12730715,0" user="碳水化合物重度依赖">反正把山楂树下拉黑了（</d>
+  <d p="114.703,4,25,14893055,1771511257605,0,2003924,0" user="超浓零糖热可可">被击中</d>
+  <d p="117.248,4,25,14893055,1771511260456,0,39391087,0" user="常州的弦杀师">什么声音</d>
+  <d p="121.148,1,25,16777215,1771511264519,0,391658696,0" user="STARA_Official">肯定自然正常的魔法期更好</d>
+  <d p="121.212,1,25,16777215,1771511263397,0,293726409,0" user="aaa凉乞钞Ciallo版">被击中</d>
+  <d p="122.450,1,25,16777215,1771511264983,0,391999,0" user="JJ杰然不同">嗯嗯嗯嗯</d>
+  <d p="123.750,1,25,16777215,1771511266707,0,10071860,0" user="梅鼬潜">什么原理？</d>
+  <d p="123.750,1,25,14893055,1771511266883,0,402394794,0" user="三momo三">亲亲</d>
+  <d p="131.548,4,25,14893055,1771511273652,0,66934192,0" user="无尽夏的七月">知识盲区了</d>
+  <d p="132.905,4,25,14893055,1771511276330,0,1593311,0" user="异画游学者">又学到了用不上的知识</d>
+  <d p="135.445,1,25,16777215,1771511278760,0,22909590,0" user="Reee_天天">嗯～嗯～嗯～嗯～</d>
+  <d p="138.048,1,25,14893055,1771511280377,0,402394794,0" user="三momo三">我去</d>
+  <d p="139.397,1,25,16777215,1771511282108,0,293726409,0" user="aaa凉乞钞Ciallo版">不知道欸</d>
+  <d p="141.994,1,25,14893055,1771511284899,0,3546629047061248,0" user="卡里古拉_">我好了</d>
+  <d p="143.294,4,25,14893055,1771511286729,0,1593311,0" user="异画游学者">小猪轻哼</d>
+  <d p="145.853,4,25,14893055,1771511289092,0,1676577,0" user="爱小师妹的神探">可以让她一直叠加吗</d>
+  <d p="148.449,4,25,14893055,1771511291489,0,66934192,0" user="无尽夏的七月">还能积攒奖池的吗</d>
+  <d p="157.601,1,25,16777215,1771511300656,0,433301426,0" user="复仇大喵">我去，那么猛吗</d>
+  <d p="160.146,1,25,16777215,1771511303616,0,22411071,0" user="寒林空见">如果一直吃呢</d>
+  <d p="165.397,4,25,14893055,1771511308264,0,12730715,0" user="碳水化合物重度依赖">长知识了</d>
+  <d p="167.995,1,25,14893055,1771511311416,0,3546629047061248,0" user="卡里古拉_">懂了，这就给仇人喂芒果</d>
+  <d p="169.289,1,25,16777215,1771511312590,0,293726409,0" user="aaa凉乞钞Ciallo版">不一定吧，我看有的女生生理期也吃杨枝甘露的</d>
+  <d p="175.792,1,25,14893055,1771511319093,0,36269533,0" user="君鱼子期">因为锻炼了</d>
+  <d p="180.947,1,25,16777215,1771511323706,0,10071860,0" user="梅鼬潜">debuff能一直叠么？</d>
+  <gift ts="193.997" user="_你去祭典了吧" uid="94520374" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="195.258,4,25,14893055,1771511338042,0,66934192,0" user="无尽夏的七月">那不好吗</d>
+  <d p="199.204,4,25,14893055,1771511341434,0,10248108,0" user="不会再上船的K宝">都是胡萝卜的功劳</d>
+  <d p="200.497,1,25,16777215,1771511343356,0,293726409,0" user="aaa凉乞钞Ciallo版">不是好事吗</d>
+  <d p="206.946,4,25,14893055,1771511349280,0,66934192,0" user="无尽夏的七月">要那么痛干嘛</d>
+  <d p="206.999,1,25,16777215,1771511349381,0,237590102,0" user="唐珀玲">开门</d>
+  <d p="210.894,1,25,16777215,1771511353930,0,57902538,0" user="原芽b">可能提前痛过了健身环</d>
+  <d p="222.548,4,25,14893055,1771511365909,0,66934192,0" user="无尽夏的七月">可能是你这段时间锻炼了吧</d>
+  <d p="223.849,4,25,14893055,1771511366524,0,1676577,0" user="爱小师妹的神探">确实分人，有的人魔法期直接摊了，有的人魔法期还跟我打羽毛球[捂脸]</d>
+  <d p="223.893,1,25,16777215,1771511367129,0,479203,0" user="为啥酱油总被打">说明锻炼真有效果</d>
+  <d p="230.348,1,25,14893055,1771511373685,0,402394794,0" user="三momo三">健身环</d>
+  <d p="232.947,1,25,16777215,1771511376191,0,22909590,0" user="Reee_天天">健身环真有用</d>
+  <d p="234.248,1,25,16777215,1771511376830,0,391658696,0" user="STARA_Official">锻炼抑制了性激素？</d>
+  <d p="235.557,1,25,16777215,1771511378079,0,22411071,0" user="寒林空见">路径依赖说是</d>
+  <d p="239.504,4,25,14893055,1771511382768,0,2003924,0" user="超浓零糖热可可">我说健身环是对的</d>
+  <d p="240.798,1,25,14893055,1771511383796,0,36269533,0" user="君鱼子期">下次也健身环</d>
+  <d p="243.396,1,25,16777215,1771511386460,0,293726409,0" user="aaa凉乞钞Ciallo版">运动真有用吧</d>
+  <d p="245.951,4,25,14893055,1771511388392,0,66934192,0" user="无尽夏的七月">？</d>
+  <d p="251.194,4,25,14893055,1771511393784,0,2003924,0" user="超浓零糖热可可">？</d>
+  <d p="251.194,1,25,16777215,1771511394356,0,804224,0" user="那咋了っと">？</d>
+  <d p="253.790,1,25,14893055,1771511396335,0,36269533,0" user="君鱼子期">那很吓人了</d>
+  <d p="255.052,1,25,14893055,1771511398071,0,402394794,0" user="三momo三">？</d>
+  <d p="256.350,1,25,16777215,1771511399015,0,391658696,0" user="STARA_Official">这还有正不正式的</d>
+  <d p="261.554,4,25,14893055,1771511403726,0,1676577,0" user="爱小师妹的神探">如来</d>
+  <d p="261.554,4,25,14893055,1771511404162,0,66934192,0" user="无尽夏的七月">还能这样的吗？</d>
+  <d p="261.588,1,25,16777215,1771511405034,0,804224,0" user="那咋了っと">？</d>
+  <d p="262.846,4,25,14893055,1771511405829,0,66934192,0" user="无尽夏的七月">？？、</d>
+  <d p="262.898,1,25,16777215,1771511405347,0,293726409,0" user="aaa凉乞钞Ciallo版">？？？</d>
+  <d p="264.205,4,25,14893055,1771511407143,0,12730715,0" user="碳水化合物重度依赖">应该就是剧烈运动刺激的提前来了吧</d>
+  <d p="269.399,1,25,16777215,1771511412444,0,57902538,0" user="原芽b">下次也健身环，控制变量</d>
+  <d p="279.750,1,25,14893055,1771511422051,0,402394794,0" user="三momo三">控制变量这块的</d>
+  <d p="279.750,4,25,14893055,1771511422680,0,1676577,0" user="爱小师妹的神探">魔法期也有试用期是吧</d>
+  <gift ts="290.191" user="三倍速赤い彗星" uid="75054204" giftname="牛哇牛哇" giftcount="1" />
+  <d p="294.049,4,25,14893055,1771511437391,0,66934192,0" user="无尽夏的七月">那明天很痛咋办，不是还有跟雪烛的联动吗</d>
+  <d p="301.894,1,25,14893055,1771511444687,0,3546629047061248,0" user="卡里古拉_">其实是你今天运动扯到了，腿撕裂出血了（我瞎说的）</d>
+  <d p="304.449,4,25,14893055,1771511447832,0,32759578,0" user="明若轻兮彡">晚上好啊 宝贝</d>
+  <d p="307.089,1,25,16777215,1771511449782,0,293726409,0" user="aaa凉乞钞Ciallo版">liko说什么胡话，这些是激素调控的</d>
+</i>

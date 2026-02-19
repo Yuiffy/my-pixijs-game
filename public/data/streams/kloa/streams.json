@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026_02_19_22_05_10",
+    "title": "美丽的水怪在唱歌",
+    "date": "2026-02-19",
+    "time": "22:05:10",
+    "startTime": "22:05",
+    "endTime": "01:44",
+    "duration": 13160,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_19_22_05_10/录制-1986461465-20260219-220510-364-人类饿 显现.xml",
+    "cover": null,
+    "highlights": "/data/streams/kloa/2026_02_19_22_05_10/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_19_22_05_10/录制-1986461465-20260219-220510-364-人类饿 显现_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_19_22_05_10/录制-1986461465-20260219-220510-364-人类饿 显现_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_19_10_04_53",
+    "title": "早上好~要入春啦",
+    "date": "2026-02-19",
+    "time": "10:04:53",
+    "startTime": "10:04",
+    "endTime": "13:50",
+    "duration": 13591,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_19_10_04_53/录制-1986461465-20260219-100453-969-早上好~要入春啦.xml",
+    "cover": "/data/streams/kloa/2026_02_19_10_04_53/录制-1986461465-20260219-100453-969-早上好~要入春啦.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_19_10_04_53/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_19_10_04_53/录制-1986461465-20260219-100453-969-早上好~要入春啦_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_19_10_04_53/录制-1986461465-20260219-100453-969-早上好~要入春啦_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_19_10_04_53/录制-1986461465-20260219-135126-561-早上好~要入春啦_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_19_10_04_53/录制-1986461465-20260218-200312-589-喵喵喵喵！夜晚出击！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_19_10_04_53/录制-1986461465-20260218-200312-589-喵喵喵喵！夜晚出击！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_18_20_03_12",
     "title": "粉色呆呆兽在唱歌",
     "date": "2026-02-18",
