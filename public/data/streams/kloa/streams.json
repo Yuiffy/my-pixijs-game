@@ -1,5 +1,79 @@
 [
   {
+    "id": "2026_02_20_23_37_43",
+    "title": "被窝回",
+    "date": "2026-02-20",
+    "time": "23:37:43",
+    "startTime": "23:37",
+    "endTime": "01:12",
+    "duration": 5711,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_20_23_37_43/录制-1986461465-20260220-233743-978-被窝回.xml",
+    "cover": "/data/streams/kloa/2026_02_20_23_37_43/录制-1986461465-20260220-233743-978-被窝回.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_20_23_37_43/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_20_23_37_43/录制-1986461465-20260220-233743-978-被窝回_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_20_23_37_43/录制-1986461465-20260220-233743-978-被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_20_21_07_05",
+    "title": "还在录歌！！！",
+    "date": "2026-02-20",
+    "time": "21:07:05",
+    "startTime": "21:07",
+    "endTime": "23:33",
+    "duration": 8780,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_20_21_07_05/录制-1986461465-20260220-210705-635-还在录歌！！！.xml",
+    "cover": "/data/streams/kloa/2026_02_20_21_07_05/录制-1986461465-20260220-210705-635-还在录歌！！！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_20_21_07_05/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_20_21_07_05/录制-1986461465-20260220-210705-635-还在录歌！！！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_20_21_07_05/录制-1986461465-20260220-210705-635-还在录歌！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_20_11_59_12",
+    "title": "早安呜啊啊",
+    "date": "2026-02-20",
+    "time": "11:59:12",
+    "startTime": "11:59",
+    "endTime": "12:37",
+    "duration": 2291,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_20_11_59_12/录制-1986461465-20260220-115912-929-早安呜啊啊.xml",
+    "cover": "/data/streams/kloa/2026_02_20_11_59_12/录制-1986461465-20260220-115912-929-早安呜啊啊.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_20_11_59_12/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_20_11_59_12/录制-1986461465-20260220-115912-929-早安呜啊啊_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_20_11_59_12/录制-1986461465-20260220-115912-929-早安呜啊啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_20_10_07_00",
+    "title": "早安呜啊啊",
+    "date": "2026-02-20",
+    "time": "10:07:00",
+    "startTime": "10:07",
+    "endTime": "11:56",
+    "duration": 6542,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_20_10_07_00/录制-1986461465-20260220-100700-745-早安呜啊啊啊.xml",
+    "cover": "/data/streams/kloa/2026_02_20_10_07_00/录制-1986461465-20260220-100700-745-早安呜啊啊啊.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_20_10_07_00/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_20_10_07_00/录制-1986461465-20260220-100700-745-早安呜啊啊啊_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_20_10_07_00/录制-1986461465-20260220-100700-745-早安呜啊啊啊_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_20_10_07_00/录制-1986461465-20260219-220510-364-人类饿 显现_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_20_10_07_00/录制-1986461465-20260219-220510-364-人类饿 显现_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_19_22_05_10",
     "title": "美丽的水怪在唱歌",
     "date": "2026-02-19",

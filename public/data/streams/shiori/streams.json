@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_02_20_10_48_46",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-20",
+    "time": "10:48:46",
+    "startTime": "10:48",
+    "endTime": "11:38",
+    "duration": 3040,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_20_10_48_46/录制-26966466-20260220-104846-575-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_20_10_48_46/录制-26966466-20260220-104846-575-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_20_10_48_46/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_20_10_48_46/录制-26966466-20260220-104846-575-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_20_10_48_46/录制-26966466-20260220-104846-575-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_20_10_45_09",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-20",
+    "time": "10:45:09",
+    "startTime": "10:45",
+    "endTime": "10:48",
+    "duration": 215,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_20_10_45_09/录制-26966466-20260220-104509-915-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_20_10_45_09/录制-26966466-20260220-104509-915-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_20_09_36_56",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-20",
+    "time": "09:36:56",
+    "startTime": "09:36",
+    "endTime": "10:41",
+    "duration": 3902,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_20_09_36_56/录制-26966466-20260220-093656-901-早安獭獭栞！_merged.xml",
+    "cover": "/data/streams/shiori/2026_02_20_09_36_56/录制-26966466-20260220-093656-901-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_20_09_36_56/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_20_09_36_56/录制-26966466-20260220-093656-901-早安獭獭栞！_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_20_09_36_56/录制-26966466-20260220-093656-901-早安獭獭栞！_merged_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_20_09_36_56/录制-26966466-20260219-102028-241-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_20_09_36_56/录制-26966466-20260219-102028-241-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_19_10_20_28",
     "title": "早安獭獭栞！",
     "date": "2026-02-19",
