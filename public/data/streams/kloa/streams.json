@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026_02_21_20_05_13",
+    "title": "阿巴阿巴=w=",
+    "date": "2026-02-21",
+    "time": "20:05:13",
+    "startTime": "20:05",
+    "endTime": "01:26",
+    "duration": 19302,
+    "durationStr": "5.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_21_20_05_13/录制-1986461465-20260221-200513-505-晚上好=w=.xml",
+    "cover": "/data/streams/kloa/2026_02_21_20_05_13/录制-1986461465-20260221-200513-505-晚上好=w=.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_21_20_05_13/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_21_20_05_13/录制-1986461465-20260221-200513-505-晚上好=w=_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_21_20_05_13/录制-1986461465-20260221-200513-505-晚上好=w=_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_21_10_04_59",
+    "title": "早上好zzzz",
+    "date": "2026-02-21",
+    "time": "10:04:59",
+    "startTime": "10:04",
+    "endTime": "12:12",
+    "duration": 7683,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_21_10_04_59/录制-1986461465-20260221-100459-260-早上好zzzz.xml",
+    "cover": "/data/streams/kloa/2026_02_21_10_04_59/录制-1986461465-20260221-100459-260-早上好zzzz.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_21_10_04_59/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_21_10_04_59/录制-1986461465-20260221-100459-260-早上好zzzz_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_21_10_04_59/录制-1986461465-20260221-100459-260-早上好zzzz_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_21_10_04_59/录制-1986461465-20260220-210705-635-还在录歌！！！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_21_10_04_59/录制-1986461465-20260220-233743-978-被窝回_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_21_10_04_59/录制-1986461465-20260220-233743-978-被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_20_23_37_43",
     "title": "被窝回",
     "date": "2026-02-20",

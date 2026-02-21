@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_02_21_18_20_14",
+    "title": "晚上好 “读书回”",
+    "date": "2026-02-21",
+    "time": "18:20:14",
+    "startTime": "18:20",
+    "endTime": "21:11",
+    "duration": 10268,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_21_18_20_14/录制-1713546334-20260221-182014-280-晚上好 “读书回”_merged.xml",
+    "cover": "/data/streams/hazel/2026_02_21_18_20_14/录制-1713546334-20260221-182014-280-晚上好 “读书回”.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_21_18_20_14/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_21_18_20_14/录制-1713546334-20260221-182014-280-晚上好 “读书回”_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_21_18_20_14/录制-1713546334-20260220-190510-395-晚上好 聊天 试试switch_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_21_18_20_14/录制-1713546334-20260220-190510-395-晚上好 聊天 试试switch_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_20_19_05_10",
     "title": "晚上好 聊天 试试switch",
     "date": "2026-02-20",
