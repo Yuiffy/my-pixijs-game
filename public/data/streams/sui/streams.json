@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_02_22_19_50_37",
+    "title": "咕咕咕！快来！",
+    "date": "2026-02-22",
+    "time": "19:50:37",
+    "startTime": "19:50",
+    "endTime": "00:26",
+    "duration": 16586,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_22_19_50_37/2026_02_22_19_51_01_咕咕咕！快来！_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_02_22_19_50_37/录制-25788785-20260222-195037-594-咕咕咕！快来！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_22_19_50_37/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_22_19_50_37/录制-25788785-20260222-195037-594-咕咕咕！快来！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_22_19_50_37/录制-25788785-20260222-195037-594-咕咕咕！快来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_21_20_18_33",
     "title": "咕咕咕！快来！",
     "date": "2026-02-21",
@@ -14,7 +32,9 @@
     "highlights": "/data/streams/sui/2026_02_21_20_18_33/highlights.md",
     "images": [
       "/data/streams/sui/2026_02_21_20_18_33/录制-25788785-20260221-201833-438-咕咕咕！快来！_merged_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_02_21_20_18_33/录制-25788785-20260221-201833-438-咕咕咕！快来！_merged_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_02_21_20_18_33/录制-25788785-20260221-201833-438-咕咕咕！快来！_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_21_20_18_35/录制-25788785-20260221-201833-438-咕咕咕！快来！_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_21_20_18_35/录制-25788785-20260221-201833-438-咕咕咕！快来！_merged_SCREENSHOTS.jpg"
     ]
   },
   {

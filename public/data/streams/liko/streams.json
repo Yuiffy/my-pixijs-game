@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_22_21_25_42",
+    "title": "晚上好！！",
+    "date": "2026-02-22",
+    "time": "21:25:42",
+    "startTime": "21:25",
+    "endTime": "02:24",
+    "duration": 17960,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_22_21_25_42/录制-1713548468-20260222-212542-155-晚上好！！.xml",
+    "cover": "/data/streams/liko/2026_02_22_21_25_42/录制-1713548468-20260222-212542-155-晚上好！！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_22_21_25_42/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_22_21_25_42/录制-1713548468-20260222-212542-155-晚上好！！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_22_21_25_42/录制-1713548468-20260222-212542-155-晚上好！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_22_12_56_17",
+    "title": "睡醒了",
+    "date": "2026-02-22",
+    "time": "12:56:17",
+    "startTime": "12:56",
+    "endTime": "15:30",
+    "duration": 9258,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_22_12_56_17/录制-1713548468-20260222-125617-757-睡醒了_merged.xml",
+    "cover": "/data/streams/liko/2026_02_22_12_56_17/录制-1713548468-20260222-125617-757-睡醒了.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_22_12_56_17/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_22_12_56_17/录制-1713548468-20260222-125617-757-睡醒了_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_22_12_56_17/录制-1713548468-20260221-205838-987-久违的晚间杂谈_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_22_12_56_17/录制-1713548468-20260221-205838-987-久违的晚间杂谈_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_21_20_58_38",
     "title": "久违的晚间杂谈",
     "date": "2026-02-21",

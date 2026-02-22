@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_02_22_12_58_44",
+    "title": "灰色短发小厨娘",
+    "date": "2026-02-22",
+    "time": "12:58:44",
+    "startTime": "12:58",
+    "endTime": "13:22",
+    "duration": 1464,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_22_12_58_44/录制-1713546334-20260222-125844-110-灰色短发小厨娘.xml",
+    "cover": "/data/streams/hazel/2026_02_22_12_58_44/录制-1713546334-20260222-125844-110-灰色短发小厨娘.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_22_12_58_44/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_22_12_58_44/录制-1713546334-20260222-125844-110-灰色短发小厨娘_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_22_12_58_44/录制-1713546334-20260222-125844-110-灰色短发小厨娘_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_22_12_52_46",
+    "title": "灰色短发小厨娘",
+    "date": "2026-02-22",
+    "time": "12:52:46",
+    "startTime": "12:52",
+    "endTime": "12:53",
+    "duration": 72,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_22_12_52_46/录制-1713546334-20260222-125246-766-灰色短发小厨娘.xml",
+    "cover": "/data/streams/hazel/2026_02_22_12_52_46/录制-1713546334-20260222-125246-766-灰色短发小厨娘.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_22_12_52_46/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_22_12_52_46/录制-1713546334-20260222-125246-766-灰色短发小厨娘_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_22_12_52_46/录制-1713546334-20260222-125246-766-灰色短发小厨娘_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_22_12_02_11",
+    "title": "灰色短发小厨娘",
+    "date": "2026-02-22",
+    "time": "12:02:11",
+    "startTime": "12:02",
+    "endTime": "12:52",
+    "duration": 3031,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_22_12_02_11/录制-1713546334-20260222-120211-376-灰色短发小厨娘.xml",
+    "cover": "/data/streams/hazel/2026_02_22_12_02_11/录制-1713546334-20260222-120211-376-灰色短发小厨娘.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_22_12_02_11/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_22_12_02_11/录制-1713546334-20260222-120211-376-灰色短发小厨娘_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_22_12_02_11/录制-1713546334-20260222-120211-376-灰色短发小厨娘_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_02_22_12_02_11/录制-1713546334-20260221-182014-280-晚上好 “读书回”_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_02_21_18_20_14",
     "title": "晚上好 “读书回”",
     "date": "2026-02-21",
