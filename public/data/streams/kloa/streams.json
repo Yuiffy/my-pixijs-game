@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_23_20_13_01",
+    "title": "晚安=w=",
+    "date": "2026-02-23",
+    "time": "20:13:01",
+    "startTime": "20:13",
+    "endTime": "23:32",
+    "duration": 11961,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_23_20_13_01/录制-1986461465-20260223-201301-072-歌杂一下.xml",
+    "cover": "/data/streams/kloa/2026_02_23_20_13_01/录制-1986461465-20260223-201301-072-歌杂一下.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_23_20_13_01/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_23_20_13_01/录制-1986461465-20260223-201301-072-歌杂一下_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_23_20_13_01/录制-1986461465-20260223-201301-072-歌杂一下_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_23_20_08_17",
+    "title": "歌杂一下",
+    "date": "2026-02-23",
+    "time": "20:08:17",
+    "startTime": "20:08",
+    "endTime": "20:09",
+    "duration": 84,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_23_20_08_17/录制-1986461465-20260223-200817-399-歌杂一下.xml",
+    "cover": "/data/streams/kloa/2026_02_23_20_08_17/录制-1986461465-20260223-200817-399-歌杂一下.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_23_20_08_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_23_20_08_17/录制-1986461465-20260223-200817-399-歌杂一下_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_23_20_08_17/录制-1986461465-20260222-215823-338-=w=啊呜啊呜_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_23_20_08_17/录制-1986461465-20260222-215823-338-=w=啊呜啊呜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_22_21_58_23",
     "title": "第一次玩雀魂",
     "date": "2026-02-22",

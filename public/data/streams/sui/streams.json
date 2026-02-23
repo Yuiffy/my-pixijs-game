@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_23_20_03_52",
+    "title": "晚上好 咕咕咕 快来！",
+    "date": "2026-02-23",
+    "time": "20:03:52",
+    "startTime": "20:03",
+    "endTime": "23:02",
+    "duration": 10748,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_23_20_03_52/2026_02_23_20_04_12_晚上好咕咕咕快来！_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_02_23_20_03_52/录制-25788785-20260223-200352-171-晚上好 咕咕咕 快来！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_23_20_03_52/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_23_20_03_52/录制-25788785-20260223-200352-171-晚上好 咕咕咕 快来！_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_23_20_03_52/录制-25788785-20260223-200352-171-晚上好 咕咕咕 快来！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_23_14_02_31",
+    "title": "晚上好咕咕咕快来！",
+    "date": "2026-02-23",
+    "time": "14:02:31",
+    "startTime": "14:02",
+    "endTime": "18:08",
+    "duration": 14805,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_23_14_02_31/录制-25788785-20260223-140239-809-和悠悠悠的生灵重塑~.xml",
+    "cover": "/data/streams/sui/2026_02_23_14_02_31/录制-25788785-20260223-140239-809-和悠悠悠的生灵重塑~.cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_23_14_02_31/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_23_14_02_31/录制-25788785-20260223-140239-809-和悠悠悠的生灵重塑~_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_23_14_02_31/录制-25788785-20260223-140239-809-和悠悠悠的生灵重塑~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_22_19_50_37",
     "title": "咕咕咕！快来！",
     "date": "2026-02-22",
@@ -14,7 +50,9 @@
     "highlights": "/data/streams/sui/2026_02_22_19_50_37/highlights.md",
     "images": [
       "/data/streams/sui/2026_02_22_19_50_37/录制-25788785-20260222-195037-594-咕咕咕！快来！_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_02_22_19_50_37/录制-25788785-20260222-195037-594-咕咕咕！快来！_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_02_22_19_50_37/录制-25788785-20260222-195037-594-咕咕咕！快来！_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_22_19_51_01/录制-25788785-20260222-195037-594-咕咕咕！快来！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_22_19_51_01/录制-25788785-20260222-195037-594-咕咕咕！快来！_SCREENSHOTS.jpg"
     ]
   },
   {
