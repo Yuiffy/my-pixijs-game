@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_02_24_17_23_00",
+    "title": "随便玩一玩（mrfz",
+    "date": "2026-02-24",
+    "time": "17:23:00",
+    "startTime": "17:23",
+    "endTime": "21:31",
+    "duration": 14934,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_24_17_23_00/录制-1741667419-20260224-172300-505-随便玩一玩（mrfz_merged.xml",
+    "cover": "/data/streams/izayoi/2026_02_24_17_23_00/录制-1741667419-20260224-172300-505-随便玩一玩（mrfz.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_02_24_17_23_00/录制-1741667419-20260224-172300-505-随便玩一玩（mrfz_merged_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_24_17_23_00/录制-1741667419-20260223-200127-069-老乡...老乡..._COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_24_17_23_00/录制-1741667419-20260223-200127-069-老乡...老乡..._SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_23_23_40_01",
     "title": "老乡...老乡...",
     "date": "2026-02-23",

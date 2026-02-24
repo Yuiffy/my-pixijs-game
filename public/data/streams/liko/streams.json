@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_02_24_20_58_34",
+    "title": "今晚一定会早睡！",
+    "date": "2026-02-24",
+    "time": "20:58:34",
+    "startTime": "20:58",
+    "endTime": "00:08",
+    "duration": 11415,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_24_20_58_34/录制-1713548468-20260224-205834-241-今晚一定会早睡！.xml",
+    "cover": "/data/streams/liko/2026_02_24_20_58_34/录制-1713548468-20260224-205834-241-今晚一定会早睡！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_24_20_58_34/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_24_20_58_34/录制-1713548468-20260224-205834-241-今晚一定会早睡！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_24_20_58_34/录制-1713548468-20260224-205834-241-今晚一定会早睡！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_24_05_59_03",
+    "title": "不该睡觉前喝奶茶的",
+    "date": "2026-02-23",
+    "time": "05:59:03",
+    "startTime": "05:59",
+    "endTime": "09:41",
+    "duration": 13329,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_24_05_59_03/录制-1713548468-20260224-055903-161-不该睡觉前喝奶茶的_merged.xml",
+    "cover": "/data/streams/liko/2026_02_24_05_59_03/录制-1713548468-20260224-055903-161-不该睡觉前喝奶茶的.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_24_05_59_03/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_24_05_59_03/录制-1713548468-20260224-055903-161-不该睡觉前喝奶茶的_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_24_05_59_03/录制-1713548468-20260223-210522-709-晚上好！！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_24_05_59_03/录制-1713548468-20260223-210522-709-晚上好！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_23_21_05_22",
     "title": "晚上好！！",
     "date": "2026-02-23",

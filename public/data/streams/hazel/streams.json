@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_02_24_23_02_35",
+    "title": "困困电台",
+    "date": "2026-02-24",
+    "time": "23:02:35",
+    "startTime": "23:02",
+    "endTime": "23:03",
+    "duration": 76,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_24_23_02_35/录制-1713546334-20260224-230235-151-困困电台.xml",
+    "cover": "/data/streams/hazel/2026_02_24_23_02_35/录制-1713546334-20260224-230235-151-困困电台.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_24_22_54_58",
+    "title": "困困电台",
+    "date": "2026-02-24",
+    "time": "22:54:58",
+    "startTime": "22:54",
+    "endTime": "23:01",
+    "duration": 456,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_24_22_54_58/录制-1713546334-20260224-225458-933-困困电台.xml",
+    "cover": "/data/streams/hazel/2026_02_24_22_54_58/录制-1713546334-20260224-225458-933-困困电台.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_24_22_54_58/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_24_22_54_58/录制-1713546334-20260224-225458-933-困困电台_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_02_24_21_08_26",
+    "title": "困困电台",
+    "date": "2026-02-24",
+    "time": "21:08:26",
+    "startTime": "21:08",
+    "endTime": "22:54",
+    "duration": 6398,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_24_21_08_26/录制-1713546334-20260224-210826-780-困困电台_merged.xml",
+    "cover": "/data/streams/hazel/2026_02_24_21_08_26/录制-1713546334-20260224-210826-780-困困电台.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_24_21_08_26/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_24_21_08_26/录制-1713546334-20260224-210826-780-困困电台_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_24_21_08_26/录制-1713546334-20260223-165537-284-下午好 聊天 读书_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_24_21_08_26/录制-1713546334-20260223-165537-284-下午好 聊天 读书_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_23_16_55_37",
     "title": "下午好 聊天 读书",
     "date": "2026-02-23",

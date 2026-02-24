@@ -1,5 +1,45 @@
 [
   {
+    "id": "2026_02_24_21_36_48",
+    "title": "栞来！",
+    "date": "2026-02-24",
+    "time": "21:36:48",
+    "startTime": "21:36",
+    "endTime": "00:20",
+    "duration": 9852,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_24_21_36_48/录制-26966466-20260224-213648-130-栞来！.xml",
+    "cover": "/data/streams/shiori/2026_02_24_21_36_48/录制-26966466-20260224-213648-130-栞来！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_24_21_36_48/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_24_21_36_48/录制-26966466-20260224-213648-130-栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_24_21_36_48/录制-26966466-20260224-213648-130-栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_24_10_14_27",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-24",
+    "time": "10:14:27",
+    "startTime": "10:14",
+    "endTime": "12:11",
+    "duration": 7055,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260224-101427-892-早安獭獭栞！_merged.xml",
+    "cover": "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260224-101427-892-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_24_10_14_27/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260224-101427-892-早安獭獭栞！_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260224-101427-892-早安獭獭栞！_merged_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260222-100817-362-早安獭獭栞！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260222-100817-362-早安獭獭栞！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260222-222116-593-栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_24_10_14_27/录制-26966466-20260222-222116-593-栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_22_22_21_16",
     "title": "栞来！",
     "date": "2026-02-22",
