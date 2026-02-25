@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_02_25_20_03_52",
+    "title": "kirakira",
+    "date": "2026-02-25",
+    "time": "20:03:52",
+    "startTime": "20:03",
+    "endTime": "00:04",
+    "duration": 14511,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_25_20_03_52/录制-1986461465-20260225-200352-199-kirakira.xml",
+    "cover": "/data/streams/kloa/2026_02_25_20_03_52/录制-1986461465-20260225-200352-199-kirakira.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_25_20_03_52/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_25_20_03_52/录制-1986461465-20260225-200352-199-kirakira_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_25_11_17_22",
+    "title": "土下座",
+    "date": "2026-02-25",
+    "time": "11:17:22",
+    "startTime": "11:17",
+    "endTime": "14:13",
+    "duration": 10614,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_25_11_17_22/录制-1986461465-20260225-111722-113-土下座.xml",
+    "cover": "/data/streams/kloa/2026_02_25_11_17_22/录制-1986461465-20260225-111722-113-土下座.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_02_25_11_17_22/录制-1986461465-20260224-210003-216-人鱼在唱歌_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_02_25_10_10_15",
+    "title": "土下座",
+    "date": "2026-02-25",
+    "time": "10:10:15",
+    "startTime": "10:10",
+    "endTime": "11:13",
+    "duration": 3808,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_25_10_10_15/录制-1986461465-20260225-101015-515-土下座.xml",
+    "cover": "/data/streams/kloa/2026_02_25_10_10_15/录制-1986461465-20260225-101015-515-土下座.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_02_25_10_10_15/录制-1986461465-20260224-210003-216-人鱼在唱歌_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_25_10_10_15/录制-1986461465-20260224-220625-217-人鱼在唱歌_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_02_25_10_10_15/录制-1986461465-20260224-220625-217-人鱼在唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_24_22_06_25",
     "title": "人鱼在唱歌",
     "date": "2026-02-24",

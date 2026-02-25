@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_02_25_22_07_22",
+    "title": "REPO启动！",
+    "date": "2026-02-25",
+    "time": "22:07:22",
+    "startTime": "22:07",
+    "endTime": "01:54",
+    "duration": 13653,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_25_22_07_22/录制-1713548468-20260225-220722-814-REPO启动！_merged.xml",
+    "cover": "/data/streams/liko/2026_02_25_22_07_22/录制-1713548468-20260225-220722-814-REPO启动！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_25_22_07_22/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_25_22_07_22/录制-1713548468-20260225-220722-814-REPO启动！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_25_21_17_31",
+    "title": "REPO启动！",
+    "date": "2026-02-25",
+    "time": "21:17:31",
+    "startTime": "21:17",
+    "endTime": "22:05",
+    "duration": 2887,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_25_21_17_31/录制-1713548468-20260225-211731-629-REPO启动！.xml",
+    "cover": "/data/streams/liko/2026_02_25_21_17_31/录制-1713548468-20260225-211731-629-REPO启动！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_02_25_21_17_31/录制-1713548468-20260224-205834-241-今晚一定会早睡！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_25_21_17_31/录制-1713548468-20260224-205834-241-今晚一定会早睡！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_24_20_58_34",
     "title": "今晚一定会早睡！",
     "date": "2026-02-24",
