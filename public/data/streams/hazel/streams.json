@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_02_26_15_08_39",
+    "title": "中午好 随便播一下",
+    "date": "2026-02-26",
+    "time": "15:08:39",
+    "startTime": "15:08",
+    "endTime": "17:11",
+    "duration": 7381,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_02_26_15_08_39/录制-1713546334-20260226-150839-188-中午好 随便播一下_merged.xml",
+    "cover": "/data/streams/hazel/2026_02_26_15_08_39/录制-1713546334-20260226-150839-188-中午好 随便播一下.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_02_26_15_08_39/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_02_26_15_08_39/录制-1713546334-20260226-150839-188-中午好 随便播一下_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_02_26_15_08_39/录制-1713546334-20260224-210826-780-困困电台_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_02_26_15_08_39/录制-1713546334-20260224-225458-933-困困电台_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_02_24_23_02_35",
     "title": "困困电台",
     "date": "2026-02-24",
