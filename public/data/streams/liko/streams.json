@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_02_27_22_06_27",
+    "title": "晚间杂谈",
+    "date": "2026-02-27",
+    "time": "22:06:27",
+    "startTime": "22:06",
+    "endTime": "00:29",
+    "duration": 8582,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_27_22_06_27/录制-1713548468-20260227-220627-281-晚间杂谈.xml",
+    "cover": "/data/streams/liko/2026_02_27_22_06_27/录制-1713548468-20260227-220627-281-晚间杂谈.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_27_22_06_27/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_27_22_06_27/录制-1713548468-20260227-220627-281-晚间杂谈_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_27_13_03_13",
+    "title": "晚间杂谈",
+    "date": "2026-02-27",
+    "time": "13:03:13",
+    "startTime": "13:03",
+    "endTime": "19:53",
+    "duration": 24638,
+    "durationStr": "6.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_02_27_13_03_13/录制-1713548468-20260227-130313-193-生化危机9启动！_merged.xml",
+    "cover": "/data/streams/liko/2026_02_27_13_03_13/录制-1713548468-20260227-130313-193-生化危机9启动！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_02_27_13_03_13/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_02_27_13_03_13/录制-1713548468-20260227-130313-193-生化危机9启动！_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_02_27_13_03_13/录制-1713548468-20260226-220507-247-被窝悄悄话_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_02_27_13_03_13/录制-1713548468-20260226-220507-247-被窝悄悄话_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_26_22_05_07",
     "title": "被窝悄悄话",
     "date": "2026-02-26",

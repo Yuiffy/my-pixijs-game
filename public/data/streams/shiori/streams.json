@@ -1,5 +1,120 @@
 [
   {
+    "id": "2026_02_27_14_30_24",
+    "title": "生化9！首发！",
+    "date": "2026-02-27",
+    "time": "14:30:24",
+    "startTime": "14:30",
+    "endTime": "15:35",
+    "duration": 3959,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_27_14_30_24/录制-26966466-20260227-143024-378-生化9！首发！.xml",
+    "cover": "/data/streams/shiori/2026_02_27_14_30_24/录制-26966466-20260227-143024-378-生化9！首发！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_27_13_04_24",
+    "title": "生化9！首发！",
+    "date": "2026-02-27",
+    "time": "13:04:24",
+    "startTime": "13:04",
+    "endTime": "14:29",
+    "duration": 5156,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_27_13_04_24/录制-26966466-20260227-130424-909-生化9！首发！.xml",
+    "cover": "/data/streams/shiori/2026_02_27_13_04_24/录制-26966466-20260227-130424-909-生化9！首发！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_27_13_04_24/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_27_13_04_24/录制-26966466-20260227-130424-909-生化9！首发！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_27_13_00_18",
+    "title": "生化9！首发！",
+    "date": "2026-02-27",
+    "time": "13:00:18",
+    "startTime": "13:00",
+    "endTime": "13:04",
+    "duration": 242,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_27_13_00_18/录制-26966466-20260227-130018-972-生化9！首发！.xml",
+    "cover": "/data/streams/shiori/2026_02_27_13_00_18/录制-26966466-20260227-130018-972-生化9！首发！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_27_11_35_51",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-27",
+    "time": "11:35:51",
+    "startTime": "11:35",
+    "endTime": "12:06",
+    "duration": 1871,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_27_11_35_51/录制-26966466-20260227-113551-763-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_27_11_35_51/录制-26966466-20260227-113551-763-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_27_11_35_51/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_27_11_35_51/录制-26966466-20260227-113551-763-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_27_11_12_27",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-27",
+    "time": "11:12:27",
+    "startTime": "11:12",
+    "endTime": "11:35",
+    "duration": 1401,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_27_11_12_27/录制-26966466-20260227-111227-972-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_27_11_12_27/录制-26966466-20260227-111227-972-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_27_10_35_18",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-27",
+    "time": "10:35:18",
+    "startTime": "10:35",
+    "endTime": "11:09",
+    "duration": 2096,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_27_10_35_18/录制-26966466-20260227-103518-157-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_27_10_35_18/录制-26966466-20260227-103518-157-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_02_27_10_35_18/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_02_27_10_35_18/录制-26966466-20260227-103518-157-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_27_10_18_55",
+    "title": "早安獭獭栞！",
+    "date": "2026-02-27",
+    "time": "10:18:55",
+    "startTime": "10:18",
+    "endTime": "10:31",
+    "duration": 785,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_02_27_10_18_55/录制-26966466-20260227-101855-264-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_02_27_10_18_55/录制-26966466-20260227-101855-264-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_02_27_10_18_55/录制-26966466-20260226-205933-292-小栞来！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_02_27_10_18_55/录制-26966466-20260226-223100-697-小栞来！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_02_27_10_18_55/录制-26966466-20260226-223100-697-小栞来！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_26_22_31_00",
     "title": "小栞来！！",
     "date": "2026-02-26",

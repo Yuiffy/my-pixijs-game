@@ -1,5 +1,37 @@
 [
   {
+    "id": "2026_02_27_21_03_24",
+    "title": "晚上好 咕咕咕 快来！",
+    "date": "2026-02-27",
+    "time": "21:03:24",
+    "startTime": "21:03",
+    "endTime": "00:33",
+    "duration": 12610,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_27_21_03_24/2026_02_27_21_03_33_晚上好咕咕咕快来！_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_02_27_21_03_24/2026_02_27_21_03_33_晚上好咕咕咕快来！_DDTV5_cover.jpg",
+    "highlights": "/data/streams/sui/2026_02_27_21_03_24/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_02_27_21_03_24/录制-25788785-20260227-210324-187-晚上好 咕咕咕 快来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_27_19_45_54",
+    "title": "晚上好 咕咕咕 快来！",
+    "date": "2026-02-27",
+    "time": "19:45:54",
+    "startTime": "19:45",
+    "endTime": "20:48",
+    "duration": 3799,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_02_27_19_45_54/录制-25788785-20260227-194554-995-晚上好 咕咕咕 快来！.xml",
+    "cover": "/data/streams/sui/2026_02_27_19_45_54/录制-25788785-20260227-194554-995-晚上好 咕咕咕 快来！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_02_26_20_02_34",
     "title": "晚上好咕咕咕快来！",
     "date": "2026-02-26",
@@ -14,7 +46,9 @@
     "highlights": "/data/streams/sui/2026_02_26_20_02_34/highlights.md",
     "images": [
       "/data/streams/sui/2026_02_26_20_02_34/录制-25788785-20260226-200234-778-晚上好 咕咕咕 快来！_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_02_26_20_02_34/录制-25788785-20260226-200234-778-晚上好 咕咕咕 快来！_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_02_26_20_02_34/录制-25788785-20260226-200234-778-晚上好 咕咕咕 快来！_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_02_26_20_02_55/录制-25788785-20260226-200234-778-晚上好 咕咕咕 快来！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_02_26_20_02_55/录制-25788785-20260226-200234-778-晚上好 咕咕咕 快来！_SCREENSHOTS.jpg"
     ]
   },
   {

@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_02_27_21_03_28",
+    "title": "屋里说话！",
+    "date": "2026-02-27",
+    "time": "21:03:28",
+    "startTime": "21:03",
+    "endTime": "00:03",
+    "duration": 10837,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_27_21_03_28/录制-1741667419-20260227-210328-587-屋里说话！.xml",
+    "cover": "/data/streams/izayoi/2026_02_27_21_03_28/录制-1741667419-20260227-210328-587-屋里说话！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_27_21_03_28/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_27_21_03_28/录制-1741667419-20260227-210328-587-屋里说话！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_27_20_08_42",
+    "title": "屋里说话！",
+    "date": "2026-02-27",
+    "time": "20:08:42",
+    "startTime": "20:08",
+    "endTime": "20:48",
+    "duration": 2425,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_27_20_08_42/录制-1741667419-20260227-200842-140-屋里说话！.xml",
+    "cover": "/data/streams/izayoi/2026_02_27_20_08_42/录制-1741667419-20260227-200842-140-屋里说话！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_27_09_02_34",
+    "title": "早茶第二十三天。",
+    "date": "2026-02-27",
+    "time": "09:02:34",
+    "startTime": "09:02",
+    "endTime": "11:07",
+    "duration": 7519,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_27_09_02_34/录制-1741667419-20260227-090234-230-早茶第二十三天。.xml",
+    "cover": "/data/streams/izayoi/2026_02_27_09_02_34/录制-1741667419-20260227-090234-230-早茶第二十三天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_27_09_02_34/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_27_09_02_34/录制-1741667419-20260227-090234-230-早茶第二十三天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_02_27_09_02_34/录制-1741667419-20260226-200237-878-聊聊天！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_27_09_02_34/录制-1741667419-20260226-200237-878-聊聊天！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_26_20_02_37",
     "title": "聊聊天！",
     "date": "2026-02-26",
