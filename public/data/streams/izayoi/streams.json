@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_02_28_22_41_29",
+    "title": "浣熊市，你的王回来了",
+    "date": "2026-02-28",
+    "time": "22:41:29",
+    "startTime": "22:41",
+    "endTime": "00:31",
+    "duration": 6618,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_28_22_41_29/录制-1741667419-20260228-224129-387-浣熊市，你的王回来了.xml",
+    "cover": "/data/streams/izayoi/2026_02_28_22_41_29/录制-1741667419-20260228-224129-387-浣熊市，你的王回来了.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_28_22_41_29/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_28_22_41_29/录制-1741667419-20260228-224129-387-浣熊市，你的王回来了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_28_20_02_26",
+    "title": "浣熊市，你的王回来了",
+    "date": "2026-02-28",
+    "time": "20:02:26",
+    "startTime": "20:02",
+    "endTime": "22:36",
+    "duration": 9242,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_28_20_02_26/录制-1741667419-20260228-200226-309-浣熊市，你的王回来了.xml",
+    "cover": "/data/streams/izayoi/2026_02_28_20_02_26/录制-1741667419-20260228-200226-309-浣熊市，你的王回来了.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_28_20_02_26/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_28_20_02_26/录制-1741667419-20260228-200226-309-浣熊市，你的王回来了_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_02_28_20_02_26/录制-1741667419-20260228-200226-309-浣熊市，你的王回来了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_28_14_44_31",
+    "title": "浣熊市，你的王回来了",
+    "date": "2026-02-28",
+    "time": "14:44:31",
+    "startTime": "14:44",
+    "endTime": "17:00",
+    "duration": 8164,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_28_14_44_31/录制-1741667419-20260228-144431-829-浣熊市，你的王回来了.xml",
+    "cover": "/data/streams/izayoi/2026_02_28_14_44_31/录制-1741667419-20260228-144431-829-浣熊市，你的王回来了.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_02_28_14_44_31/录制-1741667419-20260228-144431-829-浣熊市，你的王回来了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_28_14_20_35",
+    "title": "浣熊市，你的王回来了",
+    "date": "2026-02-28",
+    "time": "14:20:35",
+    "startTime": "14:20",
+    "endTime": "14:40",
+    "duration": 1239,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_02_28_14_20_35/录制-1741667419-20260228-142035-015-正在下游戏ing_merged.xml",
+    "cover": "/data/streams/izayoi/2026_02_28_14_20_35/录制-1741667419-20260228-142035-015-正在下游戏ing.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_02_28_14_20_35/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_02_28_14_20_35/录制-1741667419-20260227-210328-587-屋里说话！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_27_21_03_28",
     "title": "屋里说话！",
     "date": "2026-02-27",

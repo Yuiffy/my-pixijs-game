@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_03_01_00_38_30",
+    "title": "唱完了聊聊、",
+    "date": "2026-02-28",
+    "time": "00:38:30",
+    "startTime": "00:38",
+    "endTime": "02:16",
+    "duration": 5936,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_01_00_38_30/录制-1986461465-20260301-003830-767-歌杂一下吧！.xml",
+    "cover": "/data/streams/kloa/2026_03_01_00_38_30/录制-1986461465-20260301-003830-767-歌杂一下吧！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_01_00_38_30/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_01_00_38_30/录制-1986461465-20260301-003830-767-歌杂一下吧！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_03_01_00_38_30/录制-1986461465-20260301-003830-767-歌杂一下吧！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_02_28_23_09_01",
+    "title": "歌杂一下吧！",
+    "date": "2026-02-28",
+    "time": "23:09:01",
+    "startTime": "23:09",
+    "endTime": "00:36",
+    "duration": 5237,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_28_23_09_01/录制-1986461465-20260228-230901-660-歌杂一下吧！.xml",
+    "cover": "/data/streams/kloa/2026_02_28_23_09_01/录制-1986461465-20260228-230901-660-歌杂一下吧！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_28_22_05_39",
+    "title": "歌杂一下吧！",
+    "date": "2026-02-28",
+    "time": "22:05:39",
+    "startTime": "22:05",
+    "endTime": "23:06",
+    "duration": 3686,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_28_22_05_39/录制-1986461465-20260228-220539-360-歌杂一下吧！.xml",
+    "cover": "/data/streams/kloa/2026_02_28_22_05_39/录制-1986461465-20260228-220539-360-歌杂一下吧！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_02_28_10_08_11",
+    "title": "早安",
+    "date": "2026-02-28",
+    "time": "10:08:11",
+    "startTime": "10:08",
+    "endTime": "12:55",
+    "duration": 10035,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_02_28_10_08_11/录制-1986461465-20260228-100811-341-早安.xml",
+    "cover": "/data/streams/kloa/2026_02_28_10_08_11/录制-1986461465-20260228-100811-341-早安.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_02_28_10_08_11/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_02_28_10_08_11/录制-1986461465-20260228-100811-341-早安_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_02_28_10_08_11/录制-1986461465-20260227-224514-914-被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_28_00_20_10",
     "title": "被窝回",
     "date": "2026-02-27",
