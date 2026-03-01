@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_03_01_23_05_15",
+    "title": "今天是久违的聊天时间！",
+    "date": "2026-03-01",
+    "time": "23:05:15",
+    "startTime": "23:05",
+    "endTime": "23:14",
+    "duration": 594,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_01_23_05_15/录制-1741667419-20260301-230515-355-今天是久违的聊天时间！.xml",
+    "cover": "/data/streams/izayoi/2026_03_01_23_05_15/录制-1741667419-20260301-230515-355-今天是久违的聊天时间！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_01_20_02_50",
+    "title": "今天是久违的聊天时间！",
+    "date": "2026-03-01",
+    "time": "20:02:50",
+    "startTime": "20:02",
+    "endTime": "23:04",
+    "duration": 10941,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_01_20_02_50/录制-1741667419-20260301-200250-770-今天是久违的聊天时间！.xml",
+    "cover": "/data/streams/izayoi/2026_03_01_20_02_50/录制-1741667419-20260301-200250-770-今天是久违的聊天时间！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_01_20_02_50/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_01_20_02_50/录制-1741667419-20260301-200250-770-今天是久违的聊天时间！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_01_14_01_17",
+    "title": "浣熊市，你的王回来了",
+    "date": "2026-03-01",
+    "time": "14:01:17",
+    "startTime": "14:01",
+    "endTime": "17:53",
+    "duration": 13944,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_01_14_01_17/录制-1741667419-20260301-140117-225-浣熊市，你的王回来了.xml",
+    "cover": "/data/streams/izayoi/2026_03_01_14_01_17/录制-1741667419-20260301-140117-225-浣熊市，你的王回来了.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_01_14_01_17/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_01_14_01_17/录制-1741667419-20260301-140117-225-浣熊市，你的王回来了_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_03_01_14_01_17/录制-1741667419-20260228-200226-309-浣熊市，你的王回来了_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_03_01_14_01_17/录制-1741667419-20260228-224129-387-浣熊市，你的王回来了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_28_22_41_29",
     "title": "浣熊市，你的王回来了",
     "date": "2026-02-28",

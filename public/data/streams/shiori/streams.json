@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_03_01_21_59_47",
+    "title": "小栞来咯！",
+    "date": "2026-03-01",
+    "time": "21:59:47",
+    "startTime": "21:59",
+    "endTime": "00:09",
+    "duration": 7829,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_01_21_59_47/录制-26966466-20260301-215947-699-小栞来咯！.xml",
+    "cover": "/data/streams/shiori/2026_03_01_21_59_47/录制-26966466-20260301-215947-699-小栞来咯！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_01_21_59_47/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_01_21_59_47/录制-26966466-20260301-215947-699-小栞来咯！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_01_10_09_25",
+    "title": "3月第一天！",
+    "date": "2026-03-01",
+    "time": "10:09:25",
+    "startTime": "10:09",
+    "endTime": "12:09",
+    "duration": 7215,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_01_10_09_25/录制-26966466-20260301-100925-924-3月第一天！.xml",
+    "cover": "/data/streams/shiori/2026_03_01_10_09_25/录制-26966466-20260301-100925-924-3月第一天！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_01_10_09_25/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_01_10_09_25/录制-26966466-20260301-100925-924-3月第一天！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_01_10_09_25/录制-26966466-20260228-205727-980-栞栞三周年纪念回！！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_03_01_10_09_25/录制-26966466-20260228-205727-980-栞栞三周年纪念回！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_02_28_20_57_27",
     "title": "栞栞三周年纪念回！！！",
     "date": "2026-02-28",
