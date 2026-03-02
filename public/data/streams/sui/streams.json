@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_03_02_20_08_58",
+    "title": "晚上好 刚刚睡着了...",
+    "date": "2026-03-02",
+    "time": "20:08:58",
+    "startTime": "20:08",
+    "endTime": "01:07",
+    "duration": 17984,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_02_20_08_58/录制-25788785-20260302-200858-953-晚上好 刚刚睡着了..._merged.xml",
+    "cover": "/data/streams/sui/2026_03_02_20_08_58/录制-25788785-20260302-200858-953-晚上好 刚刚睡着了....cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_02_20_08_58/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_02_20_08_58/录制-25788785-20260302-200858-953-晚上好 刚刚睡着了..._merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_02_20_08_58/录制-25788785-20260302-200858-953-晚上好 刚刚睡着了..._merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_02_14_43_54",
+    "title": "摸鱼茶水间！",
+    "date": "2026-03-02",
+    "time": "14:43:54",
+    "startTime": "14:43",
+    "endTime": "16:26",
+    "duration": 6210,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_02_14_43_54/录制-25788785-20260302-144354-381-摸鱼茶水间！.xml",
+    "cover": "/data/streams/sui/2026_03_02_14_43_54/录制-25788785-20260302-144354-381-摸鱼茶水间！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_02_14_43_54/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_02_14_43_54/录制-25788785-20260302-144354-381-摸鱼茶水间！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_02_14_43_54/录制-25788785-20260302-144354-381-摸鱼茶水间！_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_02_14_43_54/录制-25788785-20260301-195052-463-晚上好！上3月啦_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_02_14_43_54/录制-25788785-20260301-195052-463-晚上好！上3月啦_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_01_19_50_52",
     "title": "晚上好！上3月啦",
     "date": "2026-03-01",
