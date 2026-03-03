@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_03_03_20_01_33",
+    "title": "一起来看元宵晚会！",
+    "date": "2026-03-03",
+    "time": "20:01:33",
+    "startTime": "20:01",
+    "endTime": "23:40",
+    "duration": 13141,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_03_20_01_33/录制-1741667419-20260303-200133-731-一起来看元宵晚会！.xml",
+    "cover": "/data/streams/izayoi/2026_03_03_20_01_33/录制-1741667419-20260303-200133-731-一起来看元宵晚会！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_03_20_01_33/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_03_20_01_33/录制-1741667419-20260303-200133-731-一起来看元宵晚会！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_03_03_20_01_33/录制-1741667419-20260303-200133-731-一起来看元宵晚会！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_03_09_05_35",
+    "title": "早茶第二十四天！",
+    "date": "2026-03-03",
+    "time": "09:05:35",
+    "startTime": "09:05",
+    "endTime": "11:40",
+    "duration": 9302,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_03_09_05_35/录制-1741667419-20260303-090535-300-早茶第二十四天！.xml",
+    "cover": "/data/streams/izayoi/2026_03_03_09_05_35/录制-1741667419-20260303-090535-300-早茶第二十四天！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_03_09_05_35/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_03_09_05_35/录制-1741667419-20260303-090535-300-早茶第二十四天！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_03_03_09_05_35/录制-1741667419-20260303-090535-300-早茶第二十四天！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_01_23_05_15",
     "title": "今天是久违的聊天时间！",
     "date": "2026-03-01",
