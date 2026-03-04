@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_03_04_11_51_19",
+    "title": "中午好",
+    "date": "2026-03-04",
+    "time": "11:51:19",
+    "startTime": "11:51",
+    "endTime": "13:44",
+    "duration": 6819,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_04_11_51_19/录制-1713546334-20260304-115119-360-中午好.xml",
+    "cover": "/data/streams/hazel/2026_03_04_11_51_19/录制-1713546334-20260304-115119-360-中午好.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_04_11_51_19/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_04_11_51_19/录制-1713546334-20260304-115119-360-中午好_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_03_04_11_51_19/录制-1713546334-20260304-115119-360-中午好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_04_11_41_28",
+    "title": "中午好",
+    "date": "2026-03-04",
+    "time": "11:41:28",
+    "startTime": "11:41",
+    "endTime": "11:50",
+    "duration": 585,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_04_11_41_28/录制-1713546334-20260304-114128-459-中午好.xml",
+    "cover": "/data/streams/hazel/2026_03_04_11_41_28/录制-1713546334-20260304-114128-459-中午好.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_04_11_20_53",
+    "title": "中午好",
+    "date": "2026-03-04",
+    "time": "11:20:53",
+    "startTime": "11:20",
+    "endTime": "11:37",
+    "duration": 1059,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_04_11_20_53/录制-1713546334-20260304-112053-468-中午好_merged.xml",
+    "cover": "/data/streams/hazel/2026_03_04_11_20_53/录制-1713546334-20260304-112053-468-中午好.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_04_11_20_53/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_04_11_20_53/录制-1713546334-20260304-112053-468-中午好_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_03_04_11_20_53/录制-1713546334-20260304-112053-468-中午好_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_04_11_00_45",
+    "title": "准备时间",
+    "date": "2026-03-04",
+    "time": "11:00:45",
+    "startTime": "11:00",
+    "endTime": "11:07",
+    "duration": 446,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_04_11_00_45/录制-1713546334-20260304-110045-217-准备时间.xml",
+    "cover": "/data/streams/hazel/2026_03_04_11_00_45/录制-1713546334-20260304-110045-217-准备时间.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_04_11_00_45/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_04_11_00_45/录制-1713546334-20260304-110045-217-准备时间_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_03_04_11_00_45/录制-1713546334-20260304-110045-217-准备时间_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_01_11_04_56",
     "title": "上午好 播一下",
     "date": "2026-03-01",
