@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_03_05_21_47_12",
+    "title": "生化9！！",
+    "date": "2026-03-05",
+    "time": "21:47:12",
+    "startTime": "21:47",
+    "endTime": "00:11",
+    "duration": 8689,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_05_21_47_12/录制-26966466-20260305-214712-112-生化9！！.xml",
+    "cover": "/data/streams/shiori/2026_03_05_21_47_12/录制-26966466-20260305-214712-112-生化9！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_05_21_47_12/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_05_21_47_12/录制-26966466-20260305-214712-112-生化9！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_03_05_21_47_12/录制-26966466-20260305-214712-112-生化9！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_05_21_34_25",
+    "title": "生化9！！",
+    "date": "2026-03-05",
+    "time": "21:34:25",
+    "startTime": "21:34",
+    "endTime": "21:44",
+    "duration": 600,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_05_21_34_25/录制-26966466-20260305-213425-145-生化9！！.xml",
+    "cover": "/data/streams/shiori/2026_03_05_21_34_25/录制-26966466-20260305-213425-145-生化9！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_05_10_13_27",
+    "title": "早安獭獭栞！",
+    "date": "2026-03-05",
+    "time": "10:13:27",
+    "startTime": "10:13",
+    "endTime": "12:18",
+    "duration": 7521,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_05_10_13_27/录制-26966466-20260305-101327-742-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_03_05_10_13_27/录制-26966466-20260305-101327-742-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_05_10_13_27/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_05_10_13_27/录制-26966466-20260305-101327-742-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_05_10_13_27/录制-26966466-20260304-213119-690-生化9！！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_03_05_10_13_27/录制-26966466-20260304-213119-690-生化9！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_04_21_31_19",
     "title": "生化9！！！",
     "date": "2026-03-04",

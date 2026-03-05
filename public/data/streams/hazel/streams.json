@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_03_05_21_47_09",
+    "title": "睡前电台",
+    "date": "2026-03-05",
+    "time": "21:47:09",
+    "startTime": "21:47",
+    "endTime": "21:59",
+    "duration": 731,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_05_21_47_09/录制-1713546334-20260305-214709-584-睡前电台.xml",
+    "cover": "/data/streams/hazel/2026_03_05_21_47_09/录制-1713546334-20260305-214709-584-睡前电台.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_05_21_47_09/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_05_21_47_09/录制-1713546334-20260305-214709-584-睡前电台_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_05_20_31_38",
+    "title": "睡前电台",
+    "date": "2026-03-05",
+    "time": "20:31:38",
+    "startTime": "20:31",
+    "endTime": "21:44",
+    "duration": 4389,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_05_20_31_38/录制-1713546334-20260305-203138-872-睡前电台.xml",
+    "cover": "/data/streams/hazel/2026_03_05_20_31_38/录制-1713546334-20260305-203138-872-睡前电台.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_03_05_20_31_38/录制-1713546334-20260304-115119-360-中午好_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_03_05_20_31_38/录制-1713546334-20260304-115119-360-中午好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_04_11_51_19",
     "title": "中午好",
     "date": "2026-03-04",
