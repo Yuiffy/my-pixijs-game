@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_03_06_20_01_25",
+    "title": "VR鹅鸭杀",
+    "date": "2026-03-06",
+    "time": "20:01:25",
+    "startTime": "20:01",
+    "endTime": "23:31",
+    "duration": 12607,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_06_20_01_25/录制-1741667419-20260306-200125-362-VR鹅鸭杀.xml",
+    "cover": "/data/streams/izayoi/2026_03_06_20_01_25/录制-1741667419-20260306-200125-362-VR鹅鸭杀.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_06_20_01_25/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_06_20_01_25/录制-1741667419-20260306-200125-362-VR鹅鸭杀_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_03_06_20_01_25/录制-1741667419-20260306-200125-362-VR鹅鸭杀_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_06_13_59_09",
+    "title": "早茶第二十六天。",
+    "date": "2026-03-06",
+    "time": "13:59:09",
+    "startTime": "13:59",
+    "endTime": "16:30",
+    "duration": 9091,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_06_13_59_09/录制-1741667419-20260306-135909-938-早茶第二十六天。.xml",
+    "cover": "/data/streams/izayoi/2026_03_06_13_59_09/录制-1741667419-20260306-135909-938-早茶第二十六天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_06_13_59_09/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_06_13_59_09/录制-1741667419-20260306-135909-938-早茶第二十六天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_03_06_13_59_09/录制-1741667419-20260305-214710-852-来唱唱歌！_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_03_06_13_59_09/录制-1741667419-20260305-214710-852-来唱唱歌！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_05_21_47_10",
     "title": "来唱唱歌！",
     "date": "2026-03-05",

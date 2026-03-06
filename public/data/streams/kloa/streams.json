@@ -1,5 +1,107 @@
 [
   {
+    "id": "2026_03_06_23_30_46",
+    "title": "看看视频休息",
+    "date": "2026-03-06",
+    "time": "23:30:46",
+    "startTime": "23:30",
+    "endTime": "00:20",
+    "duration": 3037,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_06_23_30_46/录制-1986461465-20260306-233046-908-看看视频休息.xml",
+    "cover": "/data/streams/kloa/2026_03_06_23_30_46/录制-1986461465-20260306-233046-908-看看视频休息.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_06_23_30_46/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_06_23_30_46/录制-1986461465-20260306-233046-908-看看视频休息_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_06_23_07_42",
+    "title": "晚上好~唱唱歌",
+    "date": "2026-03-06",
+    "time": "23:07:42",
+    "startTime": "23:07",
+    "endTime": "23:29",
+    "duration": 1366,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_06_23_07_42/录制-1986461465-20260306-230742-791-晚上好~唱唱歌.xml",
+    "cover": "/data/streams/kloa/2026_03_06_23_07_42/录制-1986461465-20260306-230742-791-晚上好~唱唱歌.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_06_21_09_11",
+    "title": "晚上好~唱唱歌",
+    "date": "2026-03-06",
+    "time": "21:09:11",
+    "startTime": "21:09",
+    "endTime": "23:03",
+    "duration": 6844,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_06_21_09_11/录制-1986461465-20260306-210911-393-晚上好~唱唱歌聊聊天_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_06_21_09_11/录制-1986461465-20260306-210911-393-晚上好~唱唱歌聊聊天.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_06_21_09_11/录制-1986461465-20260306-210911-393-晚上好~唱唱歌聊聊天_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_06_11_14_13",
+    "title": "早上好宝们",
+    "date": "2026-03-06",
+    "time": "11:14:13",
+    "startTime": "11:14",
+    "endTime": "11:17",
+    "duration": 238,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_06_11_14_13/录制-1986461465-20260306-111413-098-早上好宝们.xml",
+    "cover": "/data/streams/kloa/2026_03_06_11_14_13/录制-1986461465-20260306-111413-098-早上好宝们.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_06_11_14_13/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_06_11_14_13/录制-1986461465-20260306-111413-098-早上好宝们_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_06_11_07_29",
+    "title": "早上好宝们",
+    "date": "2026-03-06",
+    "time": "11:07:29",
+    "startTime": "11:07",
+    "endTime": "11:09",
+    "duration": 131,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_06_11_07_29/录制-1986461465-20260306-110729-125-早上好宝们.xml",
+    "cover": "/data/streams/kloa/2026_03_06_11_07_29/录制-1986461465-20260306-110729-125-早上好宝们.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_06_11_07_29/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_06_11_07_29/录制-1986461465-20260306-110729-125-早上好宝们_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_06_08_05_11",
+    "title": "早上好宝们",
+    "date": "2026-03-06",
+    "time": "08:05:11",
+    "startTime": "08:05",
+    "endTime": "11:02",
+    "duration": 10635,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_06_08_05_11/录制-1986461465-20260306-080511-545-早上好宝们_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_06_08_05_11/录制-1986461465-20260306-080511-545-早上好宝们.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_06_08_05_11/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_06_08_05_11/录制-1986461465-20260306-080511-545-早上好宝们_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_06_08_05_11/录制-1986461465-20260304-200251-572-唱歌！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_03_06_08_05_11/录制-1986461465-20260304-201743-613-唱歌！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_04_20_17_43",
     "title": "唱歌！",
     "date": "2026-03-04",

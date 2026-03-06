@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_03_06_20_02_12",
+    "title": "晚上好",
+    "date": "2026-03-06",
+    "time": "20:02:12",
+    "startTime": "20:02",
+    "endTime": "22:51",
+    "duration": 10162,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_06_20_02_12/录制-1713546334-20260306-200212-520-晚上好.xml",
+    "cover": "/data/streams/hazel/2026_03_06_20_02_12/录制-1713546334-20260306-200212-520-晚上好.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_06_20_02_12/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_06_20_02_12/录制-1713546334-20260306-200212-520-晚上好_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_03_06_20_02_12/录制-1713546334-20260305-214709-584-睡前电台_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_05_21_47_09",
     "title": "睡前电台",
     "date": "2026-03-05",
