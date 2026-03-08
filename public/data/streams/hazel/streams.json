@@ -1,5 +1,52 @@
 [
   {
+    "id": "2026_03_08_21_02_30",
+    "title": "不听老人言 吃亏在眼前",
+    "date": "2026-03-08",
+    "time": "21:02:30",
+    "startTime": "21:02",
+    "endTime": "21:26",
+    "duration": 1491,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_08_21_02_30/录制-1713546334-20260308-210230-994-不听老人言 吃亏在眼前.xml",
+    "cover": "/data/streams/hazel/2026_03_08_21_02_30/录制-1713546334-20260308-210230-994-不听老人言 吃亏在眼前.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_08_21_02_30/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_03_08_15_45_11",
+    "title": "不听老人言 吃亏在眼前",
+    "date": "2026-03-08",
+    "time": "15:45:11",
+    "startTime": "15:45",
+    "endTime": "16:38",
+    "duration": 3208,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_08_15_45_11/录制-1713546334-20260308-154511-568-下午好 电台聊聊.xml",
+    "cover": "/data/streams/hazel/2026_03_08_15_45_11/录制-1713546334-20260308-154511-568-下午好 电台聊聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_08_15_45_11/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_08_15_45_11/录制-1713546334-20260308-154511-568-下午好 电台聊聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_08_14_23_01",
+    "title": "下午好 电台聊聊",
+    "date": "2026-03-08",
+    "time": "14:23:01",
+    "startTime": "14:23",
+    "endTime": "15:41",
+    "duration": 4699,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_08_14_23_01/录制-1713546334-20260308-142301-278-下午好 电台聊聊.xml",
+    "cover": "/data/streams/hazel/2026_03_08_14_23_01/录制-1713546334-20260308-142301-278-下午好 电台聊聊.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_03_06_20_02_12",
     "title": "晚上好",
     "date": "2026-03-06",

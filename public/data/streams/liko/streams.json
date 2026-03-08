@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_03_08_21_02_39",
+    "title": "视频鉴赏来咯",
+    "date": "2026-03-08",
+    "time": "21:02:39",
+    "startTime": "21:02",
+    "endTime": "00:40",
+    "duration": 13097,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_08_21_02_39/录制-1713548468-20260308-210239-182-视频鉴赏来咯_merged.xml",
+    "cover": "/data/streams/liko/2026_03_08_21_02_39/录制-1713548468-20260308-210239-182-视频鉴赏来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_08_21_02_39/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_08_21_02_39/录制-1713548468-20260308-210239-182-视频鉴赏来咯_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_08_11_19_03",
+    "title": "明天就要搬家咯",
+    "date": "2026-03-08",
+    "time": "11:19:03",
+    "startTime": "11:19",
+    "endTime": "14:59",
+    "duration": 13219,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_08_11_19_03/录制-1713548468-20260308-111903-999-明天就要搬家咯.xml",
+    "cover": "/data/streams/liko/2026_03_08_11_19_03/录制-1713548468-20260308-111903-999-明天就要搬家咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_08_11_19_03/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_08_11_19_03/录制-1713548468-20260308-111903-999-明天就要搬家咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_06_20_02_14",
     "title": "vr激情鹅鸭杀！！",
     "date": "2026-03-06",

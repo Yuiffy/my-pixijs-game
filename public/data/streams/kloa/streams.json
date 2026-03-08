@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026_03_08_20_10_51",
+    "title": "晚歌~新v歌势",
+    "date": "2026-03-08",
+    "time": "20:10:51",
+    "startTime": "20:10",
+    "endTime": "00:27",
+    "duration": 15428,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_08_20_10_51/录制-1986461465-20260308-201051-620-晚歌~_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_08_20_10_51/录制-1986461465-20260308-201051-620-晚歌~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_08_20_10_51/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_03_08_10_05_24",
+    "title": "要迟到了（叼面包飞奔",
+    "date": "2026-03-08",
+    "time": "10:05:24",
+    "startTime": "10:05",
+    "endTime": "12:24",
+    "duration": 8350,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_08_10_05_24/录制-1986461465-20260308-100524-921-要迟到了（叼面包飞奔.xml",
+    "cover": "/data/streams/kloa/2026_03_08_10_05_24/录制-1986461465-20260308-100524-921-要迟到了（叼面包飞奔.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_08_10_05_24/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_08_10_05_24/录制-1986461465-20260308-100524-921-要迟到了（叼面包飞奔_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_03_08_10_05_24/录制-1986461465-20260308-100524-921-要迟到了（叼面包飞奔_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_06_23_30_46",
     "title": "看看视频休息",
     "date": "2026-03-06",

@@ -1,5 +1,37 @@
 [
   {
+    "id": "2026_03_08_20_32_55",
+    "title": "1616我们喜欢你。",
+    "date": "2026-03-08",
+    "time": "20:32:55",
+    "startTime": "20:32",
+    "endTime": "00:13",
+    "duration": 13309,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_08_20_32_55/录制-1741667419-20260308-203255-109-1616我们喜欢你。_merged.xml",
+    "cover": "/data/streams/izayoi/2026_03_08_20_32_55/录制-1741667419-20260308-203255-109-1616我们喜欢你。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_08_20_32_55/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_08_20_32_55/录制-1741667419-20260308-203255-109-1616我们喜欢你。_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_08_11_04_35",
+    "title": "16家今天中午的饭3",
+    "date": "2026-03-08",
+    "time": "11:04:35",
+    "startTime": "11:04",
+    "endTime": "13:03",
+    "duration": 7197,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_08_11_04_35/录制-1741667419-20260308-110435-125-16家今天中午的饭3.xml",
+    "cover": "/data/streams/izayoi/2026_03_08_11_04_35/录制-1741667419-20260308-110435-125-16家今天中午的饭3.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_08_11_04_35/highlights.md",
+    "images": []
+  },
+  {
     "id": "2026_03_06_20_01_25",
     "title": "VR鹅鸭杀",
     "date": "2026-03-06",
