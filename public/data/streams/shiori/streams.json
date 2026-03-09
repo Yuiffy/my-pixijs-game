@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026_03_09_21_39_53",
+    "title": "鹅鸭杀！！",
+    "date": "2026-03-09",
+    "time": "21:39:53",
+    "startTime": "21:39",
+    "endTime": "23:03",
+    "duration": 5094,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_09_21_39_53/录制-26966466-20260309-213953-096-鹅鸭杀！！.xml",
+    "cover": "/data/streams/shiori/2026_03_09_21_39_53/录制-26966466-20260309-213953-096-鹅鸭杀！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_09_21_39_53/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_09_21_39_53/录制-26966466-20260309-213953-096-鹅鸭杀！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_09_20_01_17",
+    "title": "鹅鸭杀！！",
+    "date": "2026-03-09",
+    "time": "20:01:17",
+    "startTime": "20:01",
+    "endTime": "21:36",
+    "duration": 5732,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_09_20_01_17/录制-26966466-20260309-200117-828-鹅鸭杀！！.xml",
+    "cover": "/data/streams/shiori/2026_03_09_20_01_17/录制-26966466-20260309-200117-828-鹅鸭杀！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_09_10_12_35",
+    "title": "早安獭獭栞！",
+    "date": "2026-03-09",
+    "time": "10:12:35",
+    "startTime": "10:12",
+    "endTime": "12:10",
+    "duration": 7090,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_09_10_12_35/录制-26966466-20260309-101235-373-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_03_09_10_12_35/录制-26966466-20260309-101235-373-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_09_10_12_35/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_09_10_12_35/录制-26966466-20260309-101235-373-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_09_10_12_35/录制-26966466-20260308-215051-132-小栞来！！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_08_21_50_51",
     "title": "小栞来杂谈！！！",
     "date": "2026-03-08",

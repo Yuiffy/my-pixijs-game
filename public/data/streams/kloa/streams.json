@@ -1,5 +1,84 @@
 [
   {
+    "id": "2026_03_09_21_39_55",
+    "title": "晚歌~新v歌势",
+    "date": "2026-03-09",
+    "time": "21:39:55",
+    "startTime": "21:39",
+    "endTime": "00:28",
+    "duration": 10144,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_09_21_39_55/录制-1986461465-20260309-213955-726-同步试听-人狼游戏_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_09_21_39_55/录制-1986461465-20260309-213955-726-同步试听-人狼游戏.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_09_21_39_55/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_09_21_39_55/录制-1986461465-20260309-213955-726-同步试听-人狼游戏_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_09_20_04_31",
+    "title": "同步试听-人狼游戏",
+    "date": "2026-03-09",
+    "time": "20:04:31",
+    "startTime": "20:04",
+    "endTime": "21:35",
+    "duration": 5518,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_09_20_04_31/录制-1986461465-20260309-200431-251-同步试听-人狼游戏.xml",
+    "cover": "/data/streams/kloa/2026_03_09_20_04_31/录制-1986461465-20260309-200431-251-同步试听-人狼游戏.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_09_08_43_16",
+    "title": "早安~一直在等你",
+    "date": "2026-03-09",
+    "time": "08:43:16",
+    "startTime": "08:43",
+    "endTime": "12:37",
+    "duration": 14049,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_09_08_43_16/录制-1986461465-20260309-084316-874-早安~一直在等你.xml",
+    "cover": "/data/streams/kloa/2026_03_09_08_43_16/录制-1986461465-20260309-084316-874-早安~一直在等你.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_09_08_43_16/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_09_08_43_16/录制-1986461465-20260309-084316-874-早安~一直在等你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_09_08_10_07",
+    "title": "早安~一直在等你",
+    "date": "2026-03-09",
+    "time": "08:10:07",
+    "startTime": "08:10",
+    "endTime": "08:40",
+    "duration": 1852,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_09_08_10_07/录制-1986461465-20260309-081007-648-早安~一直在等你.xml",
+    "cover": "/data/streams/kloa/2026_03_09_08_10_07/录制-1986461465-20260309-081007-648-早安~一直在等你.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_09_08_06_39",
+    "title": "早安~一直在等你",
+    "date": "2026-03-09",
+    "time": "08:06:39",
+    "startTime": "08:06",
+    "endTime": "08:07",
+    "duration": 86,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_09_08_06_39/录制-1986461465-20260309-080639-357-早安~一直在等你.xml",
+    "cover": "/data/streams/kloa/2026_03_09_08_06_39/录制-1986461465-20260309-080639-357-早安~一直在等你.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_03_08_20_10_51",
     "title": "晚歌~新v歌势",
     "date": "2026-03-08",
