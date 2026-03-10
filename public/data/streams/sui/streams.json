@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_03_10_19_57_21",
+    "title": "找你有事！速来",
+    "date": "2026-03-10",
+    "time": "19:57:21",
+    "startTime": "19:57",
+    "endTime": "00:51",
+    "duration": 17660,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260310-195726-131-找你有事！速来_merged.xml",
+    "cover": "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260310-195726-131-找你有事！速来.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_10_19_57_21/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260310-195726-131-找你有事！速来_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260310-195726-131-找你有事！速来_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260308-200755-510-找你有事！速来_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260308-200755-510-找你有事！速来_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_08_20_07_55",
     "title": "找你有事！速来",
     "date": "2026-03-08",

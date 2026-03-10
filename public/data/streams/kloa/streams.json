@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026_03_11_00_21_25",
+    "title": "晚歌~",
+    "date": "2026-03-10",
+    "time": "00:21:25",
+    "startTime": "00:21",
+    "endTime": "01:33",
+    "duration": 4350,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_11_00_21_25/录制-1986461465-20260311-002125-148-晚歌~.xml",
+    "cover": "/data/streams/kloa/2026_03_11_00_21_25/录制-1986461465-20260311-002125-148-晚歌~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_10_20_23_17",
+    "title": "飞奔（",
+    "date": "2026-03-10",
+    "time": "20:23:17",
+    "startTime": "20:23",
+    "endTime": "00:19",
+    "duration": 14196,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_10_20_23_17/录制-1986461465-20260310-202317-935-飞奔（.xml",
+    "cover": "/data/streams/kloa/2026_03_10_20_23_17/录制-1986461465-20260310-202317-935-飞奔（.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_10_20_23_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_10_20_23_17/录制-1986461465-20260310-202317-935-飞奔（_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_10_08_06_35",
+    "title": "早安宝宝",
+    "date": "2026-03-10",
+    "time": "08:06:35",
+    "startTime": "08:06",
+    "endTime": "11:34",
+    "duration": 12495,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_10_08_06_35/录制-1986461465-20260310-080635-664-早安宝宝.xml",
+    "cover": "/data/streams/kloa/2026_03_10_08_06_35/录制-1986461465-20260310-080635-664-早安宝宝.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_10_08_06_35/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_10_08_06_35/录制-1986461465-20260310-080635-664-早安宝宝_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_10_08_06_35/录制-1986461465-20260309-213955-726-同步试听-人狼游戏_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_09_21_39_55",
     "title": "晚歌~新v歌势",
     "date": "2026-03-09",

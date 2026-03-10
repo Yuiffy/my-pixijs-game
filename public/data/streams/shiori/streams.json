@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_03_10_21_33_33",
+    "title": "小栞杂谈！",
+    "date": "2026-03-10",
+    "time": "21:33:33",
+    "startTime": "21:33",
+    "endTime": "23:54",
+    "duration": 8508,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_10_21_33_33/录制-26966466-20260310-213333-766-小栞杂谈！.xml",
+    "cover": "/data/streams/shiori/2026_03_10_21_33_33/录制-26966466-20260310-213333-766-小栞杂谈！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_10_21_33_33/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_10_21_33_33/录制-26966466-20260310-213333-766-小栞杂谈！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_10_16_18_58",
+    "title": "和ttt小瓦一会！！",
+    "date": "2026-03-10",
+    "time": "16:18:58",
+    "startTime": "16:18",
+    "endTime": "21:29",
+    "duration": 18686,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_10_16_18_58/录制-26966466-20260310-161858-182-和ttt小瓦一会！！_merged.xml",
+    "cover": "/data/streams/shiori/2026_03_10_16_18_58/录制-26966466-20260310-161858-182-和ttt小瓦一会！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_10_16_18_58/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_10_16_18_58/录制-26966466-20260310-161858-182-和ttt小瓦一会！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_10_10_12_50",
+    "title": "早安獭獭栞！",
+    "date": "2026-03-10",
+    "time": "10:12:50",
+    "startTime": "10:12",
+    "endTime": "12:12",
+    "duration": 7255,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_10_10_12_50/录制-26966466-20260310-101250-518-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_03_10_10_12_50/录制-26966466-20260310-101250-518-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_10_10_12_50/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_10_10_12_50/录制-26966466-20260310-101250-518-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_10_10_12_50/录制-26966466-20260309-213953-096-鹅鸭杀！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_09_21_39_53",
     "title": "鹅鸭杀！！",
     "date": "2026-03-09",
