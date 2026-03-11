@@ -1,5 +1,72 @@
 [
   {
+    "id": "2026_03_11_23_25_03",
+    "title": "来唱会歌",
+    "date": "2026-03-11",
+    "time": "23:25:03",
+    "startTime": "23:25",
+    "endTime": "23:35",
+    "duration": 640,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_11_23_25_03/录制-1986461465-20260311-232503-436-来唱会歌.xml",
+    "cover": "/data/streams/kloa/2026_03_11_23_25_03/录制-1986461465-20260311-232503-436-来唱会歌.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_11_20_43_02",
+    "title": "看电影！【人狼游戏2】",
+    "date": "2026-03-11",
+    "time": "20:43:02",
+    "startTime": "20:43",
+    "endTime": "23:22",
+    "duration": 9578,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_11_20_43_02/录制-1986461465-20260311-204302-496-看电影！【人狼游戏2】.xml",
+    "cover": "/data/streams/kloa/2026_03_11_20_43_02/录制-1986461465-20260311-204302-496-看电影！【人狼游戏2】.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_11_20_43_02/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_11_20_43_02/录制-1986461465-20260311-204302-496-看电影！【人狼游戏2】_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_11_20_03_25",
+    "title": "看电影！【人狼游戏2】",
+    "date": "2026-03-11",
+    "time": "20:03:25",
+    "startTime": "20:03",
+    "endTime": "20:41",
+    "duration": 2332,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_11_20_03_25/录制-1986461465-20260311-200325-089-看电影！【人狼游戏2】.xml",
+    "cover": "/data/streams/kloa/2026_03_11_20_03_25/录制-1986461465-20260311-200325-089-看电影！【人狼游戏2】.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_11_20_03_25/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_11_20_03_25/录制-1986461465-20260311-200325-089-看电影！【人狼游戏2】_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_11_08_07_02",
+    "title": "早安（昏迷",
+    "date": "2026-03-11",
+    "time": "08:07:02",
+    "startTime": "08:07",
+    "endTime": "11:06",
+    "duration": 10742,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_11_08_07_02/录制-1986461465-20260311-080702-260-早安（昏迷.xml",
+    "cover": "/data/streams/kloa/2026_03_11_08_07_02/录制-1986461465-20260311-080702-260-早安（昏迷.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_11_08_07_02/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_11_08_07_02/录制-1986461465-20260311-080702-260-早安（昏迷_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_11_08_07_02/录制-1986461465-20260310-202317-935-飞奔（_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_11_00_21_25",
     "title": "晚歌~",
     "date": "2026-03-10",

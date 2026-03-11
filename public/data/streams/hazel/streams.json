@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_03_11_12_05_21",
+    "title": "中午好 聊天 读书",
+    "date": "2026-03-11",
+    "time": "12:05:21",
+    "startTime": "12:05",
+    "endTime": "15:50",
+    "duration": 13535,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_11_12_05_21/录制-1713546334-20260311-120521-950-中午好 聊天 读书_merged.xml",
+    "cover": "/data/streams/hazel/2026_03_11_12_05_21/录制-1713546334-20260311-120521-950-中午好 聊天 读书.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_11_12_05_21/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_11_12_05_21/录制-1713546334-20260311-120521-950-中午好 聊天 读书_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_08_21_02_30",
     "title": "不听老人言 吃亏在眼前",
     "date": "2026-03-08",

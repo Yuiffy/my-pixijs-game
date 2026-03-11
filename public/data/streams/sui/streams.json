@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_03_11_22_02_03",
+    "title": "3D麦恐怖电影",
+    "date": "2026-03-11",
+    "time": "22:02:03",
+    "startTime": "22:02",
+    "endTime": "00:24",
+    "duration": 8542,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_11_22_02_03/2026_03_11_22_02_03_3D麦恐怖电影_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_03_11_22_02_03/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_11_15_38_13",
+    "title": "3D麦 恐怖电影",
+    "date": "2026-03-11",
+    "time": "15:38:13",
+    "startTime": "15:38",
+    "endTime": "17:29",
+    "duration": 6668,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_11_15_38_13/2026_03_11_15_38_13_游戏中手小鸟玩只狼！暴打义父篇_DDTV5_12.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_03_11_15_38_13/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_11_15_38_08",
+    "title": "游戏中手小鸟玩只狼！暴打义父篇",
+    "date": "2026-03-11",
+    "time": "15:38:08",
+    "startTime": "15:38",
+    "endTime": "19:51",
+    "duration": 15201,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_11_15_38_08/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇_merged.xml",
+    "cover": "/data/streams/sui/2026_03_11_15_38_08/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_11_15_38_08/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_11_15_38_08/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_03_10_19_57_21",
     "title": "找你有事！速来",
     "date": "2026-03-10",
@@ -16,7 +67,9 @@
       "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260310-195726-131-找你有事！速来_merged_COMIC_FACTORY.png",
       "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260310-195726-131-找你有事！速来_merged_SCREENSHOTS.jpg",
       "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260308-200755-510-找你有事！速来_merged_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260308-200755-510-找你有事！速来_merged_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_03_10_19_57_21/录制-25788785-20260308-200755-510-找你有事！速来_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_10_19_57_26/录制-25788785-20260310-195726-131-找你有事！速来_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_10_19_57_26/录制-25788785-20260310-195726-131-找你有事！速来_merged_SCREENSHOTS.jpg"
     ]
   },
   {
