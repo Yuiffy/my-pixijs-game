@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_03_13_00_40_09",
+    "title": "录录歌",
+    "date": "2026-03-12",
+    "time": "00:40:09",
+    "startTime": "00:40",
+    "endTime": "00:59",
+    "duration": 1180,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_13_00_40_09/录制-1986461465-20260313-004009-119-录录歌.xml",
+    "cover": "/data/streams/kloa/2026_03_13_00_40_09/录制-1986461465-20260313-004009-119-录录歌.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_13_00_40_09/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_13_00_40_09/录制-1986461465-20260313-004009-119-录录歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_11_23_25_03",
     "title": "来唱会歌",
     "date": "2026-03-11",

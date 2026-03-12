@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_03_12_20_42_49",
+    "title": "一起来看，少女歌剧！",
+    "date": "2026-03-12",
+    "time": "20:42:49",
+    "startTime": "20:42",
+    "endTime": "23:53",
+    "duration": 11502,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_12_20_42_49/录制-1741667419-20260312-204249-039-一起来看，少女歌剧！.xml",
+    "cover": null,
+    "highlights": "/data/streams/izayoi/2026_03_12_20_42_49/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_12_20_42_49/录制-1741667419-20260312-204249-039-一起来看，少女歌剧！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_11_19_58_24",
     "title": "九点来玩音声动物园",
     "date": "2026-03-11",

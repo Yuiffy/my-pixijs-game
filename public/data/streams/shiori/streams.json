@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_03_12_21_49_03",
+    "title": "小栞来咯！！",
+    "date": "2026-03-12",
+    "time": "21:49:03",
+    "startTime": "21:49",
+    "endTime": "00:12",
+    "duration": 8604,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_12_21_49_03/录制-26966466-20260312-214903-099-小栞来咯！！.xml",
+    "cover": null,
+    "highlights": "/data/streams/shiori/2026_03_12_21_49_03/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_12_21_49_03/录制-26966466-20260312-214903-099-小栞来咯！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_11_10_48_10",
     "title": "虚弱御姐音",
     "date": "2026-03-11",
