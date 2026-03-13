@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_03_13_20_04_34",
+    "title": "晚上好！赶紧来",
+    "date": "2026-03-13",
+    "time": "20:04:34",
+    "startTime": "20:04",
+    "endTime": "23:41",
+    "duration": 13075,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_13_20_04_34/2026_03_13_20_04_35_晚上好！赶紧来_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_03_13_20_04_34/2026_03_13_20_04_35_晚上好！赶紧来_DDTV5_cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_13_20_04_34/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_13_20_04_34/录制-25788785-20260313-200434-655-晚上好！赶紧来_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_13_20_04_34/录制-25788785-20260313-200434-655-晚上好！赶紧来_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_13_14_48_18",
+    "title": "小小一只狼陪你摸鱼的说！",
+    "date": "2026-03-13",
+    "time": "14:48:18",
+    "startTime": "14:48",
+    "endTime": "17:54",
+    "duration": 11214,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_13_14_48_18/2026_03_13_14_48_35_小小一只狼陪你摸鱼的说！_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_03_13_14_48_18/录制-25788785-20260313-144818-957-小小一只狼 陪你摸鱼的说！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_13_14_48_18/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_13_14_48_18/录制-25788785-20260313-144818-957-小小一只狼 陪你摸鱼的说！_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_13_14_48_18/录制-25788785-20260313-144818-957-小小一只狼 陪你摸鱼的说！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_12_20_02_05",
     "title": "快来！找你有事",
     "date": "2026-03-12",
@@ -16,7 +52,9 @@
       "/data/streams/sui/2026_03_12_20_02_05/录制-25788785-20260312-200212-763-快来！找你有事_COMIC_FACTORY.png",
       "/data/streams/sui/2026_03_12_20_02_05/录制-25788785-20260312-200212-763-快来！找你有事_SCREENSHOTS.jpg",
       "/data/streams/sui/2026_03_12_20_02_05/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇_merged_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_03_12_20_02_05/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇_merged_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_03_12_20_02_05/录制-25788785-20260311-153808-543-游戏中手小鸟玩只狼！暴打义父篇_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_12_20_02_12/录制-25788785-20260312-200212-763-快来！找你有事_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_12_20_02_12/录制-25788785-20260312-200212-763-快来！找你有事_SCREENSHOTS.jpg"
     ]
   },
   {

@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1741667419" shortid="0" name="十六萤Izayoi" title="跟277一起爬塔" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-03-13T15:51:00.9544725+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.329,4,25,14893055,1773388262347,0,7668382,0" user="霜艾IcyarguI">现在抓不了</d>
+  <d p="10.808,1,25,65532,1773388273058,0,6613542,0" user="瞳じ夜">？</d>
+  <d p="15.931,1,25,14893055,1773388277490,0,808763,0" user="Rodyy_">？</d>
+  <d p="17.248,4,25,14893055,1773388279120,0,7668382,0" user="霜艾IcyarguI">？？？</d>
+  <d p="17.248,1,25,16777215,1773388279505,0,32238585,0" user="消灾xoazya">扩容先拿再说</d>
+  <d p="26.340,4,25,14893055,1773388288293,0,7668382,0" user="霜艾IcyarguI">看我们弹幕好吗宝宝 别听兔子的</d>
+  <gift ts="43.316" user="PIAPIA_tv" uid="290848" giftname="粉丝团灯牌" giftcount="1" />
+  <gift ts="47.219" user="PIAPIA_tv" uid="290848" giftname="粉丝手幅" giftcount="1" />
+  <gift ts="49.813" user="PIAPIA_tv" uid="290848" giftname="粉丝手幅" giftcount="1" />
+  <d p="74.433,1,25,16777215,1773388336949,0,291396681,0" user="NPC乌鸦">1</d>
+  <d p="74.516,1,25,16777215,1773388337042,0,650762635,0" user="得鱼者">111</d>
+  <d p="77.138,4,25,14893055,1773388339916,0,1274846407,0" user="梅林Hermes">弹幕已经被放弃了</d>
+  <d p="81.017,1,25,14893055,1773388343581,0,14378626,0" user="昼星轨">1</d>
+  <d p="84.840,4,25,14893055,1773388346430,0,37571268,0" user="千叶Eikawa">？</d>
+  <d p="86.140,1,25,14893055,1773388347750,0,808763,0" user="Rodyy_">？</d>
+  <d p="86.140,1,25,16777215,1773388348373,0,312719959,0" user="十六家的拾灰继火">？</d>
+  <gift ts="86.216" user="夜光Noche" uid="3724461" giftname="小花花" giftcount="1" />
+  <d p="87.433,4,25,14893055,1773388349394,0,37571268,0" user="千叶Eikawa">什么？</d>
+  <d p="87.518,1,25,65532,1773388349267,0,6613542,0" user="瞳じ夜">？</d>
+  <d p="88.818,1,25,16777215,1773388350821,0,36308020,0" user="__Artemis">？</d>
+  <d p="90.034,1,25,14893055,1773388352892,0,808763,0" user="Rodyy_">有点刻晴了</d>
+  <d p="91.338,1,25,16777215,1773388354175,0,5812062,0" user="勺子玩泥巴">羞死了</d>
+  <d p="91.406,1,25,16777215,1773388353564,0,358280022,0" user="惹髯">？？</d>
+  <d p="92.648,1,25,14893055,1773388355036,0,345704065,0" user="月批Official">？</d>
+  <d p="92.648,4,25,14893055,1773388355262,0,483584367,0" user="悠远の苍穹゚">？</d>
+  <d p="92.648,4,25,14893055,1773388355176,0,37571268,0" user="千叶Eikawa">嘻</d>
+  <d p="94.025,4,25,14893055,1773388356634,0,383796544,0" user="绘江南慕雪">？</d>
+  <d p="95.236,1,25,16777215,1773388357860,0,32238585,0" user="消灾xoazya">无色牌远远强于普通随机</d>
+  <d p="95.351,1,25,16777215,1773388357436,0,36308020,0" user="__Artemis">多人可以sl啊</d>
+  <d p="95.351,1,25,16777215,1773388357632,0,650762635,0" user="得鱼者">难度几啊</d>
+  <d p="96.541,1,25,65532,1773388359179,0,15255054,0" user="AltairForm">玩挺大</d>
+  <d p="96.610,1,25,16777215,1773388358623,0,5366426,0" user="選ばれた奏者">？</d>
+  <d p="96.610,1,25,16777215,1773388359348,0,141525808,0" user="Actinide">玩很大</d>
+  <d p="99.139,1,25,14893055,1773388361395,0,808763,0" user="Rodyy_">联机也可以sl啊</d>
+  <d p="99.140,4,25,14893055,1773388361627,0,37571268,0" user="千叶Eikawa">羞发财了</d>
+  <d p="99.219,1,25,16777215,1773388360821,0,26869922,0" user="DD__头子">说怪话是吧</d>
+  <d p="101.739,1,25,16777215,1773388363522,0,291396681,0" user="NPC乌鸦">5</d>
+  <d p="103.115,1,25,65532,1773388365087,0,6613542,0" user="瞳じ夜">可以sl</d>
+  <d p="103.115,1,25,16777215,1773388365336,0,300007115,0" user="残雪寂然">冷头</d>
+  <d p="104.426,1,25,16777215,1773388367091,0,650762635,0" user="得鱼者">怎么没办法啊</d>
+  <d p="105.724,1,25,14893055,1773388367441,0,14378626,0" user="昼星轨">冷头</d>
+  <d p="106.940,1,25,16777215,1773388369375,0,321955763,0" user="罪名悲风">冷头吧</d>
+  <d p="109.612,4,25,14893055,1773388371959,0,1274846407,0" user="梅林Hermes">玩挺大</d>
+  <d p="112.212,1,25,16777215,1773388373899,0,650762635,0" user="得鱼者">5555</d>
+  <d p="113.437,1,25,16777215,1773388375903,0,32238585,0" user="消灾xoazya">冷静头脑啊</d>
+  <d p="117.416,1,25,16777215,1773388379672,0,650762635,0" user="得鱼者">好牌多拿</d>
+  <d p="118.716,1,25,16777215,1773388380773,0,5366426,0" user="選ばれた奏者">超频</d>
+  <d p="133.012,1,25,16777215,1773388395749,0,36308020,0" user="__Artemis">多人sl房主退了重开房就行</d>
+  <d p="134.238,1,25,16777215,1773388396351,0,32238585,0" user="消灾xoazya">冷静头脑就是机宝的爹</d>
+  <d p="151.222,4,25,14893055,1773388413135,0,1274846407,0" user="梅林Hermes">？</d>
+  <d p="152.446,1,25,14893055,1773388414592,0,808763,0" user="Rodyy_">好爽！再来！好爽！再来！好爽！再来！好爽！再来！好爽！再来！</d>
+  <d p="159.016,1,25,16777215,1773388421615,0,650762635,0" user="得鱼者">感觉寄了</d>
+  <d p="161.539,4,25,14893055,1773388423423,0,7668382,0" user="霜艾IcyarguI">死了好像</d>
+  <d p="170.640,1,25,16772431,1773388433290,0,6101597,0" user="biIi_9970100377">才爬11层就要死了嘛</d>
+  <d p="177.224,1,25,16777215,1773388439947,0,36308020,0" user="__Artemis">我的天啊，鸡煲大人</d>
+  <d p="178.447,1,25,14893055,1773388440564,0,808763,0" user="Rodyy_">ai</d>
+  <gift ts="178.513" user="炫光谱尼" uid="13404705" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="179.740,1,25,16777215,1773388442218,0,321955763,0" user="罪名悲风">AI</d>
+  <d p="182.345,4,25,14893055,1773388444064,0,7668382,0" user="霜艾IcyarguI">扩容真没用啊，一层推不动球</d>
+  <d p="183.643,1,25,16777215,1773388445497,0,32238585,0" user="消灾xoazya">ai</d>
+  <gift ts="183.726" user="炫光谱尼" uid="13404705" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="183.726,4,25,14893055,1773388446598,0,1274846407,0" user="梅林Hermes">要寄了喵</d>
+  <d p="185.018,1,25,65532,1773388447462,0,1454911,0" user="阳炎aqua">AI</d>
+  <gift ts="185.019" user="炫光谱尼" uid="13404705" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="186.244,4,25,14893055,1773388447845,0,7668382,0" user="霜艾IcyarguI">ai</d>
+  <gift ts="191.513" user="炫光谱尼" uid="13404705" giftname="粉丝团灯牌" giftcount="1" />
+  <gift ts="192.824" user="炫光谱尼" uid="13404705" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="198.011,1,25,16777215,1773388460323,0,45454235,0" user="三废四弃">嘻</d>
+  <d p="200.621,1,25,16777215,1773388463276,0,3546620375337427,0" user="左钧定">ai</d>
+  <d p="225.243,1,25,16777215,1773388487224,0,291396681,0" user="NPC乌鸦">1</d>
+  <d p="229.147,4,25,14893055,1773388491838,0,7668382,0" user="霜艾IcyarguI">冰川吧</d>
+  <d p="231.847,1,25,16777215,1773388494149,0,650762635,0" user="得鱼者">看看输出</d>
+  <d p="234.347,1,25,14893055,1773388496965,0,808763,0" user="Rodyy_">1</d>
+  <d p="243.444,4,25,14893055,1773388504967,0,7668382,0" user="霜艾IcyarguI">现在要推球起防</d>
+  <d p="250.015,1,25,14893055,1773388512408,0,14378626,0" user="昼星轨">双人难度还是双鸡煲太享受了</d>
+  <d p="252.618,1,25,16777215,1773388514810,0,300007115,0" user="残雪寂然">防哈是对的</d>
+  <d p="255.210,1,25,16777215,1773388517536,0,650762635,0" user="得鱼者">冰鸡赖着不死</d>
+  <d p="255.210,1,25,14893055,1773388517694,0,14378626,0" user="昼星轨">冰川不错</d>
+  <d p="260.344,1,25,16777215,1773388522579,0,32238585,0" user="消灾xoazya">冰川不赖，相当于6+2x2</d>
+  <d p="269.514,1,25,16777215,1773388531830,0,478095828,0" user="森先化步OvO">区了</d>
+  <d p="312.351,4,25,14893055,1773388574649,0,7913791,0" user="空腹的小花">我说我启动了</d>
+  <d p="321.523,1,25,65532,1773388583336,0,6613542,0" user="瞳じ夜">雅雅耍猪排了</d>
+  <d p="322.748,4,25,14893055,1773388585180,0,7913791,0" user="空腹的小花">我说启动了，我说我启</d>
+  <d p="331.849,1,25,16777215,1773388594279,0,32238585,0" user="消灾xoazya">不过说实在的，有机会的话，拿无色格挡牌更好</d>
+  <d p="333.213,4,25,14893055,1773388595673,0,1274846407,0" user="梅林Hermes">启动在哪</d>
+  <d p="341.014,1,25,16777215,1773388603431,0,350358048,0" user="寒风Vvv">雅雅在哪</d>
+  <d p="344.854,4,25,14893055,1773388606720,0,7913791,0" user="空腹的小花">耍猪排吗，那很大牌了</d>
+</i>
