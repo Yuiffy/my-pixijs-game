@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_03_17_20_01_21",
+    "title": "晚上好岁己驾到",
+    "date": "2026-03-17",
+    "time": "20:01:21",
+    "startTime": "20:01",
+    "endTime": "00:12",
+    "duration": 15088,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_17_20_01_21/录制-25788785-20260317-200132-535-晚上好 岁己驾到_merged.xml",
+    "cover": "/data/streams/sui/2026_03_17_20_01_21/录制-25788785-20260317-200132-535-晚上好 岁己驾到.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_17_20_01_21/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_17_20_01_21/录制-25788785-20260317-200132-535-晚上好 岁己驾到_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_16_20_15_56",
     "title": "晚上好 岁己驾到",
     "date": "2026-03-16",
@@ -16,7 +33,11 @@
       "/data/streams/sui/2026_03_16_20_15_56/录制-25788785-20260316-201556-918-晚上好 岁己驾到_merged_COMIC_FACTORY.png",
       "/data/streams/sui/2026_03_16_20_15_56/录制-25788785-20260316-201556-918-晚上好 岁己驾到_merged_SCREENSHOTS.jpg",
       "/data/streams/sui/2026_03_16_20_15_56/【直播回放】牛羊才成群 猛狼只独行！ 2026年03月16日14点场_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_03_16_20_15_56/【直播回放】牛羊才成群 猛狼只独行！ 2026年03月16日14点场_screenshot.jpg"
+      "/data/streams/sui/2026_03_16_20_15_56/【直播回放】牛羊才成群 猛狼只独行！ 2026年03月16日14点场_screenshot.jpg",
+      "/data/streams/sui/2026_03_16_20_16_00/录制-25788785-20260316-201556-918-晚上好 岁己驾到_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_16_20_16_00/录制-25788785-20260316-201556-918-晚上好 岁己驾到_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_16_20_16_00/【直播回放】牛羊才成群 猛狼只独行！ 2026年03月16日14点场_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_16_20_16_00/【直播回放】牛羊才成群 猛狼只独行！ 2026年03月16日14点场_screenshot.jpg"
     ]
   },
   {
