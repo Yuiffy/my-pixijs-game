@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_03_18_22_06_10",
+    "title": "晚好上呀",
+    "date": "2026-03-18",
+    "time": "22:06:10",
+    "startTime": "22:06",
+    "endTime": "01:13",
+    "duration": 11267,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_18_22_06_10/2026_03_18_22_06_23_晚好上呀_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_03_18_22_06_10/录制-25788785-20260318-220610-515-晚好上呀.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_18_22_06_10/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_18_22_06_10/录制-25788785-20260318-220610-515-晚好上呀_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_18_22_06_10/录制-25788785-20260318-220610-515-晚好上呀_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_18_14_39_43",
+    "title": "晚好上呀",
+    "date": "2026-03-18",
+    "time": "14:39:43",
+    "startTime": "14:39",
+    "endTime": "14:53",
+    "duration": 864,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_18_14_39_43/2026_03_18_14_39_43_牛羊才成群猛狼只独行！_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_18_14_39_26",
+    "title": "牛羊才成群 猛狼只独行！",
+    "date": "2026-03-18",
+    "time": "14:39:26",
+    "startTime": "14:39",
+    "endTime": "17:31",
+    "duration": 10338,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_18_14_39_26/2026_03_18_14_53_45_牛羊才成群猛狼只独行！_DDTV5_2.xml",
+    "cover": "/data/streams/sui/2026_03_18_14_39_26/录制-25788785-20260318-143926-489-牛羊才成群 猛狼只独行！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_18_14_39_26/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_18_14_39_26/录制-25788785-20260318-143926-489-牛羊才成群 猛狼只独行！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_18_14_39_26/录制-25788785-20260318-143926-489-牛羊才成群 猛狼只独行！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_17_20_01_21",
     "title": "晚上好岁己驾到",
     "date": "2026-03-17",
@@ -13,7 +64,8 @@
     "cover": "/data/streams/sui/2026_03_17_20_01_21/录制-25788785-20260317-200132-535-晚上好 岁己驾到.cover.jpg",
     "highlights": "/data/streams/sui/2026_03_17_20_01_21/highlights.md",
     "images": [
-      "/data/streams/sui/2026_03_17_20_01_21/录制-25788785-20260317-200132-535-晚上好 岁己驾到_merged_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_03_17_20_01_21/录制-25788785-20260317-200132-535-晚上好 岁己驾到_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_17_20_01_32/录制-25788785-20260317-200132-535-晚上好 岁己驾到_merged_SCREENSHOTS.jpg"
     ]
   },
   {

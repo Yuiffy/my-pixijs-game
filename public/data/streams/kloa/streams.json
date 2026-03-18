@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_03_18_20_36_56",
+    "title": "呜呜呜",
+    "date": "2026-03-18",
+    "time": "20:36:56",
+    "startTime": "20:36",
+    "endTime": "00:22",
+    "duration": 13578,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_18_20_36_56/录制-1986461465-20260318-203656-578-呜呜呜.xml",
+    "cover": "/data/streams/kloa/2026_03_18_20_36_56/录制-1986461465-20260318-203656-578-呜呜呜.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_18_20_36_56/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_18_20_36_56/录制-1986461465-20260318-203656-578-呜呜呜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_18_16_43_01",
+    "title": "联动爬塔！",
+    "date": "2026-03-18",
+    "time": "16:43:01",
+    "startTime": "16:43",
+    "endTime": "18:04",
+    "duration": 4903,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_18_16_43_01/录制-1986461465-20260318-164301-563-联动爬塔！.xml",
+    "cover": "/data/streams/kloa/2026_03_18_16_43_01/录制-1986461465-20260318-164301-563-联动爬塔！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_18_16_43_01/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_18_16_43_01/录制-1986461465-20260318-164301-563-联动爬塔！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_18_13_49_07",
+    "title": "联动爬塔！",
+    "date": "2026-03-18",
+    "time": "13:49:07",
+    "startTime": "13:49",
+    "endTime": "16:36",
+    "duration": 10024,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_18_13_49_07/录制-1986461465-20260318-134907-116-等午饭~_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_18_13_49_07/录制-1986461465-20260318-134907-116-等午饭~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_18_13_49_07/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_18_13_49_07/录制-1986461465-20260318-134907-116-等午饭~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_03_18_13_49_07/录制-1986461465-20260318-134907-116-等午饭~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_18_09_04_34",
+    "title": "早安~",
+    "date": "2026-03-18",
+    "time": "09:04:34",
+    "startTime": "09:04",
+    "endTime": "11:06",
+    "duration": 7350,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_18_09_04_34/录制-1986461465-20260318-090434-804-早安~.xml",
+    "cover": "/data/streams/kloa/2026_03_18_09_04_34/录制-1986461465-20260318-090434-804-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_18_09_04_34/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_18_09_04_34/录制-1986461465-20260318-090434-804-早安~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_03_18_09_04_34/录制-1986461465-20260318-090434-804-早安~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_18_09_04_34/录制-1986461465-20260317-200524-612-唱歌歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_17_20_05_24",
     "title": "唱歌歌~",
     "date": "2026-03-17",

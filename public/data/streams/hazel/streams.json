@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_03_18_16_18_14",
+    "title": "中午好 随便聊聊",
+    "date": "2026-03-18",
+    "time": "16:18:14",
+    "startTime": "16:18",
+    "endTime": "16:30",
+    "duration": 766,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_18_16_18_14/录制-1713546334-20260318-161814-608-中午好 随便聊聊.xml",
+    "cover": "/data/streams/hazel/2026_03_18_16_18_14/录制-1713546334-20260318-161814-608-中午好 随便聊聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_18_16_18_14/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_18_16_18_14/录制-1713546334-20260318-161814-608-中午好 随便聊聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_18_13_37_12",
+    "title": "中午好 随便聊聊",
+    "date": "2026-03-18",
+    "time": "13:37:12",
+    "startTime": "13:37",
+    "endTime": "16:16",
+    "duration": 9581,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_18_13_37_12/录制-1713546334-20260318-133712-638-中午好 随便聊聊_merged.xml",
+    "cover": "/data/streams/hazel/2026_03_18_13_37_12/录制-1713546334-20260318-133712-638-中午好 随便聊聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_18_13_37_12/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_18_13_37_12/录制-1713546334-20260318-133712-638-中午好 随便聊聊_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_03_18_13_37_12/录制-1713546334-20260315-201449-084-晚上好_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_15_20_14_49",
     "title": "晚上好",
     "date": "2026-03-15",

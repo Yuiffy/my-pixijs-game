@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_03_18_23_26_23",
+    "title": "好晚的来QAQ",
+    "date": "2026-03-18",
+    "time": "23:26:23",
+    "startTime": "23:26",
+    "endTime": "00:46",
+    "duration": 4806,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_18_23_26_23/录制-26966466-20260318-232623-050-好晚的来QAQ.xml",
+    "cover": "/data/streams/shiori/2026_03_18_23_26_23/录制-26966466-20260318-232623-050-好晚的来QAQ.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_18_23_26_23/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_18_23_26_23/录制-26966466-20260318-232623-050-好晚的来QAQ_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_18_10_09_34",
+    "title": "早安獭獭栞！",
+    "date": "2026-03-18",
+    "time": "10:09:34",
+    "startTime": "10:09",
+    "endTime": "12:14",
+    "duration": 7503,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_18_10_09_34/录制-26966466-20260318-100934-044-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_03_18_10_09_34/录制-26966466-20260318-100934-044-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_18_10_09_34/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_18_10_09_34/录制-26966466-20260318-100934-044-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_03_18_10_09_34/录制-26966466-20260318-100934-044-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_18_10_09_34/录制-26966466-20260317-101522-176-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_17_10_15_22",
     "title": "早安獭獭栞！",
     "date": "2026-03-17",
