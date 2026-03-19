@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_03_19_20_01_11",
+    "title": "浣的春天棉花糖！",
+    "date": "2026-03-19",
+    "time": "20:01:11",
+    "startTime": "20:01",
+    "endTime": "23:03",
+    "duration": 10924,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_19_20_01_11/录制-1741667419-20260319-200111-541-浣的春天棉花糖！.xml",
+    "cover": "/data/streams/izayoi/2026_03_19_20_01_11/录制-1741667419-20260319-200111-541-浣的春天棉花糖！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_03_19_20_01_11/录制-1741667419-20260319-200111-541-浣的春天棉花糖！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_19_11_01_10",
+    "title": "早茶？午茶！",
+    "date": "2026-03-19",
+    "time": "11:01:10",
+    "startTime": "11:01",
+    "endTime": "13:06",
+    "duration": 7538,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_19_11_01_10/录制-1741667419-20260319-110110-628-早茶？午茶！.xml",
+    "cover": "/data/streams/izayoi/2026_03_19_11_01_10/录制-1741667419-20260319-110110-628-早茶？午茶！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_19_11_01_10/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_19_11_01_10/录制-1741667419-20260319-110110-628-早茶？午茶！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_03_19_11_01_10/录制-1741667419-20260318-210338-143-浣，苏醒！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_18_21_03_38",
     "title": "浣，苏醒！",
     "date": "2026-03-18",

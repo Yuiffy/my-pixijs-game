@@ -1,5 +1,37 @@
 [
   {
+    "id": "2026_03_19_23_18_38",
+    "title": "快进来！找你有事",
+    "date": "2026-03-19",
+    "time": "23:18:38",
+    "startTime": "23:18",
+    "endTime": "00:01",
+    "duration": 2602,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_19_23_18_38/2026_03_19_23_18_59_快进来！找你有事_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_03_19_23_18_38/2026_03_19_23_18_59_快进来！找你有事_DDTV5_cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_19_23_18_38/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_19_23_18_38/录制-25788785-20260319-231838-291-快进来！找你有事_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_19_19_56_24",
+    "title": "快进来！找你有事",
+    "date": "2026-03-19",
+    "time": "19:56:24",
+    "startTime": "19:56",
+    "endTime": "23:13",
+    "duration": 11822,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_19_19_56_24/录制-25788785-20260319-195624-656-快进来！找你有事.xml",
+    "cover": "/data/streams/sui/2026_03_19_19_56_24/录制-25788785-20260319-195624-656-快进来！找你有事.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_03_18_22_06_10",
     "title": "晚好上呀",
     "date": "2026-03-18",
@@ -14,7 +46,9 @@
     "highlights": "/data/streams/sui/2026_03_18_22_06_10/highlights.md",
     "images": [
       "/data/streams/sui/2026_03_18_22_06_10/录制-25788785-20260318-220610-515-晚好上呀_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_03_18_22_06_10/录制-25788785-20260318-220610-515-晚好上呀_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_03_18_22_06_10/录制-25788785-20260318-220610-515-晚好上呀_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_18_22_06_23/录制-25788785-20260318-220610-515-晚好上呀_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_18_22_06_23/录制-25788785-20260318-220610-515-晚好上呀_SCREENSHOTS.jpg"
     ]
   },
   {

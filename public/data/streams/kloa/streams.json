@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_03_20_00_54_34",
+    "title": "在栞栞前辈家里睡觉",
+    "date": "2026-03-19",
+    "time": "00:54:34",
+    "startTime": "00:54",
+    "endTime": "01:35",
+    "duration": 2474,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_20_00_54_34/录制-1986461465-20260320-005434-599-在栞栞前辈家里睡觉_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_20_00_54_34/录制-1986461465-20260320-005434-599-在栞栞前辈家里睡觉.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_20_00_54_34/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_20_00_54_34/录制-1986461465-20260318-203656-578-呜呜呜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_18_20_36_56",
     "title": "呜呜呜",
     "date": "2026-03-18",

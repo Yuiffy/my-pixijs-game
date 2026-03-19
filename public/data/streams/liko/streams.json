@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_03_19_23_18_40",
+    "title": "兔子来咯",
+    "date": "2026-03-19",
+    "time": "23:18:40",
+    "startTime": "23:18",
+    "endTime": "01:14",
+    "duration": 7000,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_19_23_18_40/录制-1713548468-20260319-231840-021-声音动物园.xml",
+    "cover": "/data/streams/liko/2026_03_19_23_18_40/录制-1713548468-20260319-231840-021-声音动物园.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_19_23_18_40/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_19_23_18_40/录制-1713548468-20260319-231840-021-声音动物园_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_19_21_09_51",
+    "title": "兔子来咯！",
+    "date": "2026-03-19",
+    "time": "21:09:51",
+    "startTime": "21:09",
+    "endTime": "23:12",
+    "duration": 7416,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_19_21_09_51/录制-1713548468-20260319-210951-339-兔子来咯！.xml",
+    "cover": "/data/streams/liko/2026_03_19_21_09_51/录制-1713548468-20260319-210951-339-兔子来咯！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_19_14_15_04",
+    "title": "唠嗑唠嗑",
+    "date": "2026-03-19",
+    "time": "14:15:04",
+    "startTime": "14:15",
+    "endTime": "17:23",
+    "duration": 11322,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_19_14_15_04/录制-1713548468-20260319-141504-919-唠嗑后健身环.xml",
+    "cover": "/data/streams/liko/2026_03_19_14_15_04/录制-1713548468-20260319-141504-919-唠嗑后健身环.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_19_14_15_04/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_19_14_15_04/录制-1713548468-20260319-141504-919-唠嗑后健身环_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_03_19_14_15_04/录制-1713548468-20260318-220106-333-被窝悄悄话_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_03_19_14_15_04/录制-1713548468-20260318-220106-333-被窝悄悄话_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_18_22_01_06",
     "title": "被窝悄悄话",
     "date": "2026-03-18",
