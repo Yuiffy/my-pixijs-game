@@ -1,5 +1,72 @@
 [
   {
+    "id": "2026_03_20_20_02_29",
+    "title": "快来！找你有事",
+    "date": "2026-03-20",
+    "time": "20:02:29",
+    "startTime": "20:02",
+    "endTime": "22:49",
+    "duration": 10063,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_20_20_02_29/2026_03_20_20_02_29_快来！找你有事_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_03_20_20_02_29/2026_03_20_20_02_29_快来！找你有事_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_03_20_20_02_29/录制-25788785-20260320-144937-676-牛羊才成群 猛狼只独行！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_20_17_52_54",
+    "title": "牛羊才成群 猛狼只独行！",
+    "date": "2026-03-20",
+    "time": "17:52:54",
+    "startTime": "17:52",
+    "endTime": "17:53",
+    "duration": 89,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_20_17_52_54/2026_03_20_17_52_54_牛羊才成群猛狼只独行！_DDTV5_7.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_03_20_17_52_54/录制-25788785-20260320-144937-676-牛羊才成群 猛狼只独行！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_20_17_52_54/录制-25788785-20260320-144937-676-牛羊才成群 猛狼只独行！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_20_14_49_38",
+    "title": "牛羊才成群猛狼只独行！",
+    "date": "2026-03-20",
+    "time": "14:49:38",
+    "startTime": "14:49",
+    "endTime": "17:52",
+    "duration": 10993,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_20_14_49_38/2026_03_20_14_49_38_牛羊才成群猛狼只独行！_DDTV5_6.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_20_14_49_37",
+    "title": "牛羊才成群 猛狼只独行！",
+    "date": "2026-03-20",
+    "time": "14:49:37",
+    "startTime": "14:49",
+    "endTime": "23:10",
+    "duration": 30063,
+    "durationStr": "8.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_20_14_49_37/录制-25788785-20260320-144937-676-牛羊才成群 猛狼只独行！_merged.xml",
+    "cover": "/data/streams/sui/2026_03_20_14_49_37/录制-25788785-20260320-144937-676-牛羊才成群 猛狼只独行！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_03_20_14_49_37/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_03_20_14_49_37/录制-25788785-20260320-144937-676-牛羊才成群 猛狼只独行！_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_03_19_23_18_38",
     "title": "快进来！找你有事",
     "date": "2026-03-19",
@@ -13,7 +80,8 @@
     "cover": "/data/streams/sui/2026_03_19_23_18_38/2026_03_19_23_18_59_快进来！找你有事_DDTV5_cover.jpg",
     "highlights": "/data/streams/sui/2026_03_19_23_18_38/highlights.md",
     "images": [
-      "/data/streams/sui/2026_03_19_23_18_38/录制-25788785-20260319-231838-291-快进来！找你有事_merged_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_03_19_23_18_38/录制-25788785-20260319-231838-291-快进来！找你有事_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_19_23_18_59/录制-25788785-20260319-231838-291-快进来！找你有事_merged_SCREENSHOTS.jpg"
     ]
   },
   {

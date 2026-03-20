@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_03_20_20_02_48",
+    "title": "晚上好 随便聊聊",
+    "date": "2026-03-20",
+    "time": "20:02:48",
+    "startTime": "20:02",
+    "endTime": "22:09",
+    "duration": 7622,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_20_20_02_48/录制-1713546334-20260320-200248-421-晚上好 随便聊聊.xml",
+    "cover": "/data/streams/hazel/2026_03_20_20_02_48/录制-1713546334-20260320-200248-421-晚上好 随便聊聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_20_20_02_48/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_20_20_02_48/录制-1713546334-20260320-200248-421-晚上好 随便聊聊_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_03_20_20_02_48/录制-1713546334-20260318-133712-638-中午好 随便聊聊_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_03_20_20_02_48/录制-1713546334-20260318-161814-608-中午好 随便聊聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_18_16_18_14",
     "title": "中午好 随便聊聊",
     "date": "2026-03-18",

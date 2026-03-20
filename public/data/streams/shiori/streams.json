@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_03_20_21_09_05",
+    "title": "小栞来！！",
+    "date": "2026-03-20",
+    "time": "21:09:05",
+    "startTime": "21:09",
+    "endTime": "23:37",
+    "duration": 8939,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_20_21_09_05/录制-26966466-20260320-210905-524-小栞来！！_merged.xml",
+    "cover": "/data/streams/shiori/2026_03_20_21_09_05/录制-26966466-20260320-210905-524-小栞来！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_20_21_09_05/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_20_21_09_05/录制-26966466-20260320-210905-524-小栞来！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_20_10_04_16",
+    "title": "早安獭獭栞！",
+    "date": "2026-03-20",
+    "time": "10:04:16",
+    "startTime": "10:04",
+    "endTime": "12:09",
+    "duration": 7542,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_20_10_04_16/录制-26966466-20260320-100416-216-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_03_20_10_04_16/录制-26966466-20260320-100416-216-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_20_10_04_16/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_20_10_04_16/录制-26966466-20260320-100416-216-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_20_10_04_16/录制-26966466-20260319-232137-918-教雅小妹煮！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_03_20_10_04_16/录制-26966466-20260319-232137-918-教雅小妹煮！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_19_23_21_37",
     "title": "教雅小妹煮！",
     "date": "2026-03-19",
