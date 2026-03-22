@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026_03_22_21_07_48",
+    "title": "虚弱被窝",
+    "date": "2026-03-22",
+    "time": "21:07:48",
+    "startTime": "21:07",
+    "endTime": "01:05",
+    "duration": 14291,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_22_21_07_48/录制-1713548468-20260322-210748-559-虚弱被窝_merged.xml",
+    "cover": "/data/streams/liko/2026_03_22_21_07_48/录制-1713548468-20260322-210748-559-虚弱被窝.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_22_21_07_48/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_03_22_11_08_19",
+    "title": "脑袋晕晕的",
+    "date": "2026-03-22",
+    "time": "11:08:19",
+    "startTime": "11:08",
+    "endTime": "15:02",
+    "duration": 14043,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_22_11_08_19/录制-1713548468-20260322-110819-833-脑袋晕晕的.xml",
+    "cover": "/data/streams/liko/2026_03_22_11_08_19/录制-1713548468-20260322-110819-833-脑袋晕晕的.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_22_11_08_19/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_22_11_08_19/录制-1713548468-20260322-110819-833-脑袋晕晕的_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_03_22_11_08_19/录制-1713548468-20260321-205848-220-一起休闲一下吧_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_21_20_58_48",
     "title": "一起休闲一下吧",
     "date": "2026-03-21",

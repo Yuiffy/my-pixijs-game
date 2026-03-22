@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_03_22_20_06_23",
+    "title": "吃饭看新三国吐槽",
+    "date": "2026-03-22",
+    "time": "20:06:23",
+    "startTime": "20:06",
+    "endTime": "00:05",
+    "duration": 14373,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_22_20_06_23/录制-1986461465-20260322-200623-253-温柔歌势day1.xml",
+    "cover": "/data/streams/kloa/2026_03_22_20_06_23/录制-1986461465-20260322-200623-253-温柔歌势day1.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_22_20_06_23/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_22_20_06_23/录制-1986461465-20260322-200623-253-温柔歌势day1_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_22_10_39_26",
+    "title": "温柔歌势day1",
+    "date": "2026-03-22",
+    "time": "10:39:26",
+    "startTime": "10:39",
+    "endTime": "13:52",
+    "duration": 11615,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_22_10_39_26/录制-1986461465-20260322-103926-716-温柔歌势day1_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_22_10_39_26/录制-1986461465-20260322-103926-716-温柔歌势day1.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_22_10_39_26/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_22_10_39_26/录制-1986461465-20260321-200741-223-温柔歌势day0_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_21_20_07_41",
     "title": "温柔歌势day0",
     "date": "2026-03-21",

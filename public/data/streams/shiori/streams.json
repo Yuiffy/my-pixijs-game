@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_03_22_21_19_46",
+    "title": "小栞来也！",
+    "date": "2026-03-22",
+    "time": "21:19:46",
+    "startTime": "21:19",
+    "endTime": "01:15",
+    "duration": 14164,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_22_21_19_46/录制-26966466-20260322-211946-693-小栞来也！.xml",
+    "cover": "/data/streams/shiori/2026_03_22_21_19_46/录制-26966466-20260322-211946-693-小栞来也！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_22_21_19_46/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_22_21_19_46/录制-26966466-20260322-211946-693-小栞来也！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_22_10_27_32",
+    "title": "早安獭獭栞！",
+    "date": "2026-03-22",
+    "time": "10:27:32",
+    "startTime": "10:27",
+    "endTime": "12:10",
+    "duration": 6215,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_22_10_27_32/录制-26966466-20260322-102732-078-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_03_22_10_27_32/录制-26966466-20260322-102732-078-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_22_10_27_32/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_22_10_27_32/录制-26966466-20260322-102732-078-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_22_10_27_32/录制-26966466-20260321-200424-758-乱剪一通！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_21_20_04_24",
     "title": "乱剪一通！！",
     "date": "2026-03-21",
