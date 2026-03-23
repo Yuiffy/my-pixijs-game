@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_03_23_19_28_55",
+    "title": "在画了，在画了",
+    "date": "2026-03-23",
+    "time": "19:28:55",
+    "startTime": "19:28",
+    "endTime": "22:43",
+    "duration": 11711,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_23_19_28_55/录制-1741667419-20260323-192855-557-在画了，在画了.xml",
+    "cover": "/data/streams/izayoi/2026_03_23_19_28_55/录制-1741667419-20260323-192855-557-在画了，在画了.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_23_19_28_55/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_23_19_28_55/录制-1741667419-20260323-192855-557-在画了，在画了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_23_13_37_42",
+    "title": "下午茶第三十三天。",
+    "date": "2026-03-23",
+    "time": "13:37:42",
+    "startTime": "13:37",
+    "endTime": "16:17",
+    "duration": 9606,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_23_13_37_42/录制-1741667419-20260323-133742-105-下午茶第三十三天。.xml",
+    "cover": "/data/streams/izayoi/2026_03_23_13_37_42/录制-1741667419-20260323-133742-105-下午茶第三十三天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_23_13_37_42/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_23_13_37_42/录制-1741667419-20260323-133742-105-下午茶第三十三天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_03_23_13_37_42/录制-1741667419-20260322-191252-243-来唱唱歌！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_22_19_12_52",
     "title": "来唱唱歌！",
     "date": "2026-03-22",

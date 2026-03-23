@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_03_23_21_04_41",
+    "title": "晚上好！",
+    "date": "2026-03-23",
+    "time": "21:04:41",
+    "startTime": "21:04",
+    "endTime": "02:16",
+    "duration": 18759,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_23_21_04_41/录制-1713548468-20260323-210441-855-宝宝晚上好！_merged.xml",
+    "cover": "/data/streams/liko/2026_03_23_21_04_41/录制-1713548468-20260323-210441-855-宝宝晚上好！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_23_21_04_41/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_23_21_04_41/录制-1713548468-20260323-210441-855-宝宝晚上好！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_22_21_07_48",
     "title": "虚弱被窝",
     "date": "2026-03-22",
