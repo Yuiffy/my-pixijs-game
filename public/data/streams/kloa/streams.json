@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_03_24_20_05_03",
+    "title": "温柔歌势day2",
+    "date": "2026-03-24",
+    "time": "20:05:03",
+    "startTime": "20:05",
+    "endTime": "00:33",
+    "duration": 16130,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_24_20_05_03/录制-1986461465-20260324-200503-570-温柔歌势day2.xml",
+    "cover": "/data/streams/kloa/2026_03_24_20_05_03/录制-1986461465-20260324-200503-570-温柔歌势day2.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_24_20_05_03/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_24_20_05_03/录制-1986461465-20260324-200503-570-温柔歌势day2_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_24_11_07_38",
+    "title": "温柔歌势day2",
+    "date": "2026-03-24",
+    "time": "11:07:38",
+    "startTime": "11:07",
+    "endTime": "12:09",
+    "duration": 3776,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_24_11_07_38/录制-1986461465-20260324-110738-235-温柔歌势day2.xml",
+    "cover": "/data/streams/kloa/2026_03_24_11_07_38/录制-1986461465-20260324-110738-235-温柔歌势day2.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_24_11_07_38/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_24_11_07_38/录制-1986461465-20260324-110738-235-温柔歌势day2_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_24_11_07_38/录制-1986461465-20260323-200257-646-kira_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_24_09_52_53",
+    "title": "呜呜困阿",
+    "date": "2026-03-24",
+    "time": "09:52:53",
+    "startTime": "09:52",
+    "endTime": "11:03",
+    "duration": 4276,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_24_09_52_53/录制-1986461465-20260324-095253-946-呜呜困阿.xml",
+    "cover": "/data/streams/kloa/2026_03_24_09_52_53/录制-1986461465-20260324-095253-946-呜呜困阿.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_24_09_52_53/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_24_09_52_53/录制-1986461465-20260324-095253-946-呜呜困阿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_24_09_07_23",
+    "title": "呜呜困阿",
+    "date": "2026-03-24",
+    "time": "09:07:23",
+    "startTime": "09:07",
+    "endTime": "09:52",
+    "duration": 2725,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_24_09_07_23/录制-1986461465-20260324-090723-187-呜呜困阿.xml",
+    "cover": "/data/streams/kloa/2026_03_24_09_07_23/录制-1986461465-20260324-090723-187-呜呜困阿.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_24_09_07_23/录制-1986461465-20260323-213938-778-kira_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_23_21_39_38",
     "title": "kira",
     "date": "2026-03-23",
