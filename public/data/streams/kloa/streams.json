@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_03_26_17_38_07",
+    "title": "洛克王国出击！",
+    "date": "2026-03-26",
+    "time": "17:38:07",
+    "startTime": "17:38",
+    "endTime": "18:10",
+    "duration": 1951,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_26_17_38_07/录制-1986461465-20260326-173807-168-洛克王国出击！.xml",
+    "cover": "/data/streams/kloa/2026_03_26_17_38_07/录制-1986461465-20260326-173807-168-洛克王国出击！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_25_09_09_03",
+    "title": "温柔歌势day4",
+    "date": "2026-03-25",
+    "time": "09:09:03",
+    "startTime": "09:09",
+    "endTime": "11:04",
+    "duration": 6930,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_25_09_09_03/录制-1986461465-20260325-090903-895-温柔歌势day4.xml",
+    "cover": "/data/streams/kloa/2026_03_25_09_09_03/录制-1986461465-20260325-090903-895-温柔歌势day4.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_25_09_09_03/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_25_09_09_03/录制-1986461465-20260325-090903-895-温柔歌势day4_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_25_09_09_03/录制-1986461465-20260325-200503-106-温柔歌势day4_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_25_09_09_03/录制-1986461465-20260324-200503-570-温柔歌势day2_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_24_20_05_03",
     "title": "温柔歌势day2",
     "date": "2026-03-24",

@@ -1,5 +1,37 @@
 [
   {
+    "id": "2026_03_26_20_23_13",
+    "title": "微醺的1300天~",
+    "date": "2026-03-26",
+    "time": "20:23:13",
+    "startTime": "20:23",
+    "endTime": "20:25",
+    "duration": 158,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_26_20_23_13/录制-25788785-20260326-202313-821-微醺的1300天~.xml",
+    "cover": "/data/streams/sui/2026_03_26_20_23_13/录制-25788785-20260326-202313-821-微醺的1300天~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_25_14_48_21",
+    "title": "微醺的1300天~",
+    "date": "2026-03-25",
+    "time": "14:48:21",
+    "startTime": "14:48",
+    "endTime": "16:31",
+    "duration": 6229,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_03_25_14_48_21/2026_03_25_14_48_34_生化危机9！抱歉，不爱叫_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_03_25_14_48_21/录制-25788785-20260325-144821-489-生化危机9！抱歉，不爱叫.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_03_25_14_48_21/2026_03_25_22_31_44_又是一个安静的晚上_DDTV5_fix_1_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_03_24_20_01_04",
     "title": "咕咕咕晚上好_(^o^)_~",
     "date": "2026-03-24",
@@ -14,7 +46,9 @@
     "highlights": "/data/streams/sui/2026_03_24_20_01_04/highlights.md",
     "images": [
       "/data/streams/sui/2026_03_24_20_01_04/录制-25788785-20260324-200123-313-咕咕咕晚上好_(^o^)_~_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_03_24_20_01_04/录制-25788785-20260324-200123-313-咕咕咕晚上好_(^o^)_~_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_03_24_20_01_04/录制-25788785-20260324-200123-313-咕咕咕晚上好_(^o^)_~_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_24_20_01_23/录制-25788785-20260324-200123-313-咕咕咕晚上好_(^o^)_~_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_03_24_20_01_23/录制-25788785-20260324-200123-313-咕咕咕晚上好_(^o^)_~_SCREENSHOTS.jpg"
     ]
   },
   {

@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_03_25_10_15_34",
+    "title": "早安!",
+    "date": "2026-03-25",
+    "time": "10:15:34",
+    "startTime": "10:15",
+    "endTime": "12:07",
+    "duration": 6749,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_25_10_15_34/录制-26966466-20260325-101534-035-早安!.xml",
+    "cover": "/data/streams/shiori/2026_03_25_10_15_34/录制-26966466-20260325-101534-035-早安!.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_25_10_15_34/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_25_10_15_34/录制-26966466-20260325-101534-035-早安!_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_25_10_15_34/录制-26966466-20260323-203247-533-鹅鸭杀！！杀杀杀！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_23_20_32_47",
     "title": "鹅鸭杀！！杀杀杀！",
     "date": "2026-03-23",

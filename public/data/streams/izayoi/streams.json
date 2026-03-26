@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_03_25_09_00_18",
+    "title": "好冷——",
+    "date": "2026-03-25",
+    "time": "09:00:18",
+    "startTime": "09:00",
+    "endTime": "12:03",
+    "duration": 11002,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_25_09_00_18/录制-1741667419-20260325-090018-105-早茶第三十四天。.xml",
+    "cover": "/data/streams/izayoi/2026_03_25_09_00_18/录制-1741667419-20260325-090018-105-早茶第三十四天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_25_09_00_18/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_25_09_00_18/录制-1741667419-20260325-090018-105-早茶第三十四天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_03_25_09_00_18/录制-1741667419-20260323-192855-557-在画了，在画了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_23_19_28_55",
     "title": "在画了，在画了",
     "date": "2026-03-23",

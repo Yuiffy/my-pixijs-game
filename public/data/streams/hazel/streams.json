@@ -1,5 +1,54 @@
 [
   {
+    "id": "2026_03_26_18_32_51",
+    "title": "晚上好",
+    "date": "2026-03-26",
+    "time": "18:32:51",
+    "startTime": "18:32",
+    "endTime": "20:25",
+    "duration": 6838,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_26_18_32_51/录制-1713546334-20260326-183251-732-晚上好.xml",
+    "cover": "/data/streams/hazel/2026_03_26_18_32_51/录制-1713546334-20260326-183251-732-晚上好.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_26_18_06_32",
+    "title": "晚上好",
+    "date": "2026-03-26",
+    "time": "18:06:32",
+    "startTime": "18:06",
+    "endTime": "18:30",
+    "duration": 1487,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_26_18_06_32/录制-1713546334-20260326-180632-272-晚上好.xml",
+    "cover": "/data/streams/hazel/2026_03_26_18_06_32/录制-1713546334-20260326-180632-272-晚上好.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_25_07_32_56",
+    "title": "晚上好 电台",
+    "date": "2026-03-24",
+    "time": "07:32:56",
+    "startTime": "07:32",
+    "endTime": "09:40",
+    "duration": 7700,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_03_25_07_32_56/录制-1713546334-20260325-073256-841-早上好 随便聊聊_merged.xml",
+    "cover": "/data/streams/hazel/2026_03_25_07_32_56/录制-1713546334-20260325-073256-841-早上好 随便聊聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_03_25_07_32_56/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_03_25_07_32_56/录制-1713546334-20260325-073256-841-早上好 随便聊聊_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_03_25_07_32_56/录制-1713546334-20260325-210742-935-晚上好 电台_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_03_25_07_32_56/录制-1713546334-20260323-181237-558-聊一会 和 玩一会【本所七大不可思议】_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_23_18_12_37",
     "title": "聊一会 和 玩一会【本所七大不可思议】",
     "date": "2026-03-23",
