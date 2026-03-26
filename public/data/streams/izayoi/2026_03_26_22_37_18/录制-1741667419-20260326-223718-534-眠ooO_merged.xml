@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="0" shortid="0" name="Merged" title="Merged" areanameparent="" areanamechild="" start_time="" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`<a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}">${p[6]}</a>`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="1.061,1,25,16777215,1774535839554,0,150485677,0" user="走犬衔花">晚上好</d>
+  <d p="1.061,4,25,14893055,1774535840167,0,37571268,0" user="千叶Eikawa">挠挠</d>
+  <d p="3.664,1,25,16777215,1774535842562,0,150485677,0" user="走犬衔花">可爱捏</d>
+  <d p="6.257,1,25,16777215,1774535844320,0,23494064,0" user="BZY_LoveBeyondGR">fuwa</d>
+  <d p="10.174,1,25,16777215,1774535848225,0,23494064,0" user="BZY_LoveBeyondGR">想了</d>
+  <d p="14.059,4,25,14893055,1774535853193,0,37571268,0" user="千叶Eikawa">fuwa</d>
+  <d p="25.631,4,25,14893055,1774535857600,0,37571268,0" user="千叶Eikawa">那么长啊</d>
+  <d p="38.454,1,25,16772431,1774535871382,0,498927031,0" user="抽井">挠挠</d>
+  <d p="39.922,1,25,65532,1774535871913,0,554789,0" user="远见。">尊嘟假嘟</d>
+  <d p="43.651,4,25,14893055,1774535875728,0,5399509,0" user="奥德兰超级鼹鼠">唉 月</d>
+  <d p="46.296,4,25,14893055,1774535878316,0,5399509,0" user="奥德兰超级鼹鼠">眠</d>
+  <d p="50.323,1,25,16772431,1774535882058,0,5776177,0" user="正邪的神喰">[UPOWER_1149064559_月美]</d>
+  <d p="51.624,1,25,16777215,1774535883418,0,23494064,0" user="BZY_LoveBeyondGR">盯</d>
+  <d p="52.922,4,25,14893055,1774535885009,0,37571268,0" user="千叶Eikawa">蛤</d>
+  <d p="55.349,1,25,16777215,1774535887054,0,8264244,0" user="Sloudy">fuwa</d>
+  <d p="86.783,1,25,16777215,1774535914349,0,137153411,0" user="溟滓cool">800电池</d>
+  <d p="90.865,1,25,16777215,1774535918163,0,23494064,0" user="BZY_LoveBeyondGR">盯</d>
+  <d p="96.074,4,25,14893055,1774535922642,0,37571268,0" user="千叶Eikawa">尊嘟假嘟</d>
+  <d p="97.382,1,25,16772431,1774535924196,0,5776177,0" user="正邪的神喰">姨姨用心录制的音声我都不敢想有多好听</d>
+  <d p="107.250,1,25,16777215,1774535934752,0,23494064,0" user="BZY_LoveBeyondGR">没有</d>
+  <d p="125.451,4,25,14893055,1774535953071,0,37571268,0" user="千叶Eikawa">挠挠</d>
+  <d p="133.277,1,25,16777215,1774535960049,0,23494064,0" user="BZY_LoveBeyondGR">fuwa</d>
+  <d p="146.082,4,25,14893055,1774535973288,0,5399509,0" user="奥德兰超级鼹鼠">尊嘟假嘟</d>
+  <d p="155.171,4,25,14893055,1774535982513,0,5399509,0" user="奥德兰超级鼹鼠">好邪恶</d>
+  <d p="159.768,1,25,16777215,1774535986279,0,23494064,0" user="BZY_LoveBeyondGR">尊嘟假嘟</d>
+  <d p="163.678,1,25,16772431,1774535989835,0,5776177,0" user="正邪的神喰">尊嘟假嘟</d>
+  <d p="163.678,1,25,16777215,1774535990366,0,23494064,0" user="BZY_LoveBeyondGR">哪个？</d>
+  <d p="166.268,1,25,16777215,1774535993548,0,11556764,0" user="璐璐璐璐璐77">尊嘟假嘟</d>
+  <d p="168.686,1,25,16777215,1774535995618,0,1404353913,0" user="bili_317fshuioew">aftercare</d>
+  <d p="174.063,4,25,14893055,1774536000632,0,37571268,0" user="千叶Eikawa">尊嘟假嘟</d>
+  <d p="176.664,1,25,16777215,1774536003759,0,23494064,0" user="BZY_LoveBeyondGR">u serious？</d>
+  <d p="177.970,1,25,16777215,1774536005492,0,590870,0" user="摄影师小z">尊嘟假嘟</d>
+  <d p="181.863,1,25,16777215,1774536009076,0,23494064,0" user="BZY_LoveBeyondGR">尊嘟假嘟</d>
+  <d p="216.590,4,25,14893055,1774536041290,0,37571268,0" user="千叶Eikawa">尊嘟假嘟</d>
+  <d p="220.499,1,25,16777215,1774536044537,0,23494064,0" user="BZY_LoveBeyondGR">听得出确实是刚睡醒</d>
+  <d p="222.906,1,25,16777215,1774536047374,0,8264244,0" user="Sloudy">挠挠</d>
+  <d p="223.092,1,25,16777215,1774536047624,0,23494064,0" user="BZY_LoveBeyondGR">fuwa</d>
+  <d p="242.583,1,25,65532,1774536067672,0,1839683,0" user="天合联盟河城航空">S属性大爆发</d>
+  <d p="247.804,1,25,16772431,1774536071868,0,5776177,0" user="正邪的神喰">挠挠…但是眼睛还是少挠点（</d>
+  <d p="256.888,4,25,14893055,1774536082098,0,37571268,0" user="千叶Eikawa">玩了一会，没玩太多</d>
+  <d p="263.202,4,25,14893055,1774536088399,0,5399509,0" user="奥德兰超级鼹鼠">在狂野上班</d>
+  <d p="265.987,1,25,65532,1774536090002,0,1839683,0" user="天合联盟河城航空">眠</d>
+  <d p="267.103,4,25,14893055,1774536092351,0,5399509,0" user="奥德兰超级鼹鼠">眠</d>
+  <d p="268.440,1,25,16772431,1774536092858,0,498927031,0" user="抽井">晚上才玩</d>
+  <d p="269.881,4,25,14893055,1774536094552,0,37571268,0" user="千叶Eikawa">眠</d>
+</i>
