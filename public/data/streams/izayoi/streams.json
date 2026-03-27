@@ -1,5 +1,69 @@
 [
   {
+    "id": "2026_03_27_23_01_16",
+    "title": "1616我们喜浣你！",
+    "date": "2026-03-27",
+    "time": "23:01:16",
+    "startTime": "23:01",
+    "endTime": "23:02",
+    "duration": 89,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_27_23_01_16/录制-1741667419-20260327-230116-752-1616我们喜浣你！.xml",
+    "cover": "/data/streams/izayoi/2026_03_27_23_01_16/录制-1741667419-20260327-230116-752-1616我们喜浣你！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_03_27_23_01_16/录制-1741667419-20260327-230651-578-1616我们喜浣你！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_27_21_57_48",
+    "title": "1616我们喜浣你！",
+    "date": "2026-03-27",
+    "time": "21:57:48",
+    "startTime": "21:57",
+    "endTime": "23:00",
+    "duration": 3805,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_27_21_57_48/录制-1741667419-20260327-215748-073-1616我们喜浣你！.xml",
+    "cover": "/data/streams/izayoi/2026_03_27_21_57_48/录制-1741667419-20260327-215748-073-1616我们喜浣你！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_27_19_59_12",
+    "title": "1616我们喜浣你！",
+    "date": "2026-03-27",
+    "time": "19:59:12",
+    "startTime": "19:59",
+    "endTime": "21:57",
+    "duration": 7113,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_27_19_59_12/录制-1741667419-20260327-195912-324-1616我们喜浣你！.xml",
+    "cover": "/data/streams/izayoi/2026_03_27_19_59_12/录制-1741667419-20260327-195912-324-1616我们喜浣你！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_27_09_04_43",
+    "title": "早茶第三十五天。",
+    "date": "2026-03-27",
+    "time": "09:04:43",
+    "startTime": "09:04",
+    "endTime": "13:32",
+    "duration": 16126,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_27_09_04_43/录制-1741667419-20260327-090443-835-早茶第三十五天。.xml",
+    "cover": "/data/streams/izayoi/2026_03_27_09_04_43/录制-1741667419-20260327-090443-835-早茶第三十五天。.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_03_27_09_04_43/录制-1741667419-20260327-090443-835-早茶第三十五天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_27_00_25_55",
     "title": "眠ooO",
     "date": "2026-03-26",

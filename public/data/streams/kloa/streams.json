@@ -1,5 +1,84 @@
 [
   {
+    "id": "2026_03_27_23_01_17",
+    "title": "温柔歌势day5",
+    "date": "2026-03-27",
+    "time": "23:01:17",
+    "startTime": "23:01",
+    "endTime": "23:02",
+    "duration": 88,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_27_23_01_17/录制-1986461465-20260327-230117-633-温柔歌势day5.xml",
+    "cover": "/data/streams/kloa/2026_03_27_23_01_17/录制-1986461465-20260327-230117-633-温柔歌势day5.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_27_23_01_17/录制-1986461465-20260327-230651-225-温柔歌势day5_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_27_21_57_50",
+    "title": "温柔歌势day5",
+    "date": "2026-03-27",
+    "time": "21:57:50",
+    "startTime": "21:57",
+    "endTime": "23:00",
+    "duration": 3801,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_27_21_57_50/录制-1986461465-20260327-215750-740-温柔歌势day5.xml",
+    "cover": "/data/streams/kloa/2026_03_27_21_57_50/录制-1986461465-20260327-215750-740-温柔歌势day5.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_27_21_20_16",
+    "title": "温柔歌势day5",
+    "date": "2026-03-27",
+    "time": "21:20:16",
+    "startTime": "21:20",
+    "endTime": "21:57",
+    "duration": 2249,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_27_21_20_16/录制-1986461465-20260327-212016-691-温柔歌势day5.xml",
+    "cover": "/data/streams/kloa/2026_03_27_21_20_16/录制-1986461465-20260327-212016-691-温柔歌势day5.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_27_20_06_10",
+    "title": "温柔歌势day5",
+    "date": "2026-03-27",
+    "time": "20:06:10",
+    "startTime": "20:06",
+    "endTime": "21:19",
+    "duration": 4438,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_27_20_06_10/录制-1986461465-20260327-200610-624-温柔歌势day5.xml",
+    "cover": "/data/streams/kloa/2026_03_27_20_06_10/录制-1986461465-20260327-200610-624-温柔歌势day5.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_27_09_05_10",
+    "title": "温柔歌势day5",
+    "date": "2026-03-27",
+    "time": "09:05:10",
+    "startTime": "09:05",
+    "endTime": "11:12",
+    "duration": 7647,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_27_09_05_10/录制-1986461465-20260327-090510-513-早安~.xml",
+    "cover": "/data/streams/kloa/2026_03_27_09_05_10/录制-1986461465-20260327-090510-513-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_27_09_05_10/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_27_09_05_10/录制-1986461465-20260327-090510-513-早安~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_26_17_38_07",
     "title": "洛克王国出击！",
     "date": "2026-03-26",

@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026_03_27_22_23_43",
+    "title": "被窝悄悄话",
+    "date": "2026-03-27",
+    "time": "22:23:43",
+    "startTime": "22:23",
+    "endTime": "23:01",
+    "duration": 2327,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_27_22_23_43/录制-1713548468-20260327-222343-255-被窝悄悄话.xml",
+    "cover": "/data/streams/liko/2026_03_27_22_23_43/录制-1713548468-20260327-222343-255-被窝悄悄话.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_03_27_22_23_43/录制-1713548468-20260327-230650-506-被窝悄悄话_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_27_22_04_49",
+    "title": "被窝悄悄话",
+    "date": "2026-03-27",
+    "time": "22:04:49",
+    "startTime": "22:04",
+    "endTime": "22:22",
+    "duration": 1093,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_27_22_04_49/录制-1713548468-20260327-220449-323-被窝悄悄话.xml",
+    "cover": "/data/streams/liko/2026_03_27_22_04_49/录制-1713548468-20260327-220449-323-被窝悄悄话.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_27_14_06_16",
+    "title": "唠一会儿然后健身环",
+    "date": "2026-03-27",
+    "time": "14:06:16",
+    "startTime": "14:06",
+    "endTime": "17:57",
+    "duration": 13881,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_27_14_06_16/录制-1713548468-20260327-140616-169-唠一会儿然后健身环.xml",
+    "cover": "/data/streams/liko/2026_03_27_14_06_16/录制-1713548468-20260327-140616-169-唠一会儿然后健身环.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_27_14_06_16/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_27_14_06_16/录制-1713548468-20260327-140616-169-唠一会儿然后健身环_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_03_27_14_06_16/录制-1713548468-20260326-211109-466-就聊一会儿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_26_21_11_09",
     "title": "就聊一会儿",
     "date": "2026-03-26",

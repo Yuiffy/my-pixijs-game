@@ -1,5 +1,54 @@
 [
   {
+    "id": "2026_03_27_23_01_40",
+    "title": "小栞到！",
+    "date": "2026-03-27",
+    "time": "23:01:40",
+    "startTime": "23:01",
+    "endTime": "23:02",
+    "duration": 67,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_27_23_01_40/录制-26966466-20260327-230140-024-小栞到！.xml",
+    "cover": "/data/streams/shiori/2026_03_27_23_01_40/录制-26966466-20260327-230140-024-小栞到！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_03_27_23_01_40/录制-26966466-20260327-230651-844-小栞到！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_27_21_57_46",
+    "title": "小栞到！",
+    "date": "2026-03-27",
+    "time": "21:57:46",
+    "startTime": "21:57",
+    "endTime": "23:00",
+    "duration": 3805,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_27_21_57_46/录制-26966466-20260327-215746-719-小栞到！.xml",
+    "cover": "/data/streams/shiori/2026_03_27_21_57_46/录制-26966466-20260327-215746-719-小栞到！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_27_21_53_09",
+    "title": "小栞到！",
+    "date": "2026-03-27",
+    "time": "21:53:09",
+    "startTime": "21:53",
+    "endTime": "21:57",
+    "duration": 250,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_27_21_53_09/录制-26966466-20260327-215309-167-小栞到！.xml",
+    "cover": "/data/streams/shiori/2026_03_27_21_53_09/录制-26966466-20260327-215309-167-小栞到！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_03_27_21_53_09/录制-26966466-20260326-214705-175-小栞到！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_26_21_47_05",
     "title": "小栞到！",
     "date": "2026-03-26",
