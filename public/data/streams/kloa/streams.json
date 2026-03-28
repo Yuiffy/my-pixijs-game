@@ -1,5 +1,187 @@
 [
   {
+    "id": "2026_03_29_01_00_03",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "01:00:03",
+    "startTime": "01:00",
+    "endTime": "01:20",
+    "duration": 1256,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_29_01_00_03/录制-1986461465-20260329-010003-208-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_29_01_00_03/录制-1986461465-20260329-010003-208-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_29_01_00_03/录制-1986461465-20260329-010003-208-zzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_29_00_39_39",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "00:39:39",
+    "startTime": "00:39",
+    "endTime": "00:59",
+    "duration": 1213,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_29_00_39_39/录制-1986461465-20260329-003939-115-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_29_00_39_39/录制-1986461465-20260329-003939-115-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_29_00_39_39/录制-1986461465-20260329-003939-115-zzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_29_00_18_45",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "00:18:45",
+    "startTime": "00:18",
+    "endTime": "00:38",
+    "duration": 1232,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_29_00_18_45/录制-1986461465-20260329-001845-175-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_29_00_18_45/录制-1986461465-20260329-001845-175-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_29_00_18_45/录制-1986461465-20260329-001845-175-zzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_29_00_10_33",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "00:10:33",
+    "startTime": "00:10",
+    "endTime": "00:17",
+    "duration": 477,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_29_00_10_33/录制-1986461465-20260329-001033-642-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_29_00_10_33/录制-1986461465-20260329-001033-642-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_29_00_10_33/录制-1986461465-20260329-001033-642-zzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_29_00_08_38",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "00:08:38",
+    "startTime": "00:08",
+    "endTime": "00:09",
+    "duration": 113,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_29_00_08_38/录制-1986461465-20260329-000838-940-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_29_00_08_38/录制-1986461465-20260329-000838-940-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_29_00_08_38/录制-1986461465-20260329-000838-940-zzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_28_22_58_44",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "22:58:44",
+    "startTime": "22:58",
+    "endTime": "00:07",
+    "duration": 4181,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_28_22_58_44/录制-1986461465-20260328-225844-641-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_28_22_58_44/录制-1986461465-20260328-225844-641-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_03_28_22_58_44/录制-1986461465-20260328-225844-641-zzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_28_22_50_50",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "22:50:50",
+    "startTime": "22:50",
+    "endTime": "22:57",
+    "duration": 429,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_28_22_50_50/录制-1986461465-20260328-225050-441-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_28_22_50_50/录制-1986461465-20260328-225050-441-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_28_22_48_59",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "22:48:59",
+    "startTime": "22:48",
+    "endTime": "22:49",
+    "duration": 108,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_28_22_48_59/录制-1986461465-20260328-224859-884-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_28_22_48_59/录制-1986461465-20260328-224859-884-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_28_22_37_48",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "22:37:48",
+    "startTime": "22:37",
+    "endTime": "22:47",
+    "duration": 652,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_28_22_37_48/录制-1986461465-20260328-223748-784-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_28_22_37_48/录制-1986461465-20260328-223748-784-zzzz被窝回.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_28_22_37_48/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_28_22_37_48/录制-1986461465-20260328-223748-784-zzzz被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_28_22_27_02",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "22:27:02",
+    "startTime": "22:27",
+    "endTime": "22:35",
+    "duration": 524,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_28_22_27_02/录制-1986461465-20260328-222702-993-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_28_22_27_02/录制-1986461465-20260328-222702-993-zzzz被窝回.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_03_28_22_24_54",
+    "title": "zzzz被窝回",
+    "date": "2026-03-28",
+    "time": "22:24:54",
+    "startTime": "22:24",
+    "endTime": "22:26",
+    "duration": 126,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_28_22_24_54/录制-1986461465-20260328-222454-723-zzzz被窝回.xml",
+    "cover": "/data/streams/kloa/2026_03_28_22_24_54/录制-1986461465-20260328-222454-723-zzzz被窝回.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_28_22_24_54/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_28_22_24_54/录制-1986461465-20260328-222454-723-zzzz被窝回_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_28_22_24_54/录制-1986461465-20260327-230651-225-温柔歌势day5_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_27_23_01_17",
     "title": "温柔歌势day5",
     "date": "2026-03-27",
