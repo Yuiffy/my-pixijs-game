@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1741667419" shortid="0" name="十六萤Izayoi" title="16家今天中午的饭" areanameparent="电台" areanamechild="聊天电台" start_time="2026-03-29T11:39:58.8780508+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="8.806,1,25,16777215,1774755606524,0,483800421,0" user="艾斯鸡膜人">弥月专属食物是寿司郎</d>
+  <d p="8.806,4,25,14893055,1774755607146,0,487332423,0" user="御坂13887号">我也没吃过</d>
+  <d p="12.882,1,25,16777215,1774755611900,0,442039853,0" user="Syan米夏">椰子鸡得蘸酱油</d>
+  <d p="23.100,4,25,14893055,1774755622157,0,487332423,0" user="御坂13887号">你也是粤帮的吗</d>
+  <d p="24.582,1,25,16777215,1774755623449,0,442039853,0" user="Syan米夏">挺香的</d>
+  <d p="26.999,1,25,16777215,1774755625236,0,312663416,0" user="星尘坦克two">记得不要当栞栞前辈的面说椰子鸡坏话</d>
+  <d p="28.481,1,25,16777215,1774755626383,0,590870,0" user="摄影师小z">yeah</d>
+  <d p="29.779,1,25,16777215,1774755628888,0,7472598,0" user="西雅图海鹰">妈妈喂我[抓狂]</d>
+  <d p="34.799,1,25,65532,1774755633025,0,1601536,0" user="茶眼">你要引起战争吗16</d>
+  <d p="42.602,1,25,16777215,1774755641236,0,159046,0" user="不和谐音">尊嘟假嘟</d>
+  <d p="46.683,1,25,16777215,1774755645605,0,7472598,0" user="西雅图海鹰">妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈妈[抓狂]</d>
+  <d p="49.102,1,25,16777215,1774755647332,0,4588306,0" user="星空虚幻">？</d>
+  <d p="49.282,1,25,16772431,1774755647076,0,520564974,0" user="自定义呆毛">[手机]</d>
+  <d p="50.586,1,25,16777215,1774755649480,0,442039853,0" user="Syan米夏">？</d>
+  <d p="51.719,1,25,16772431,1774755649345,0,20521612,0" user="你霸吃瓜时">尊嘟假嘟</d>
+  <d p="51.719,1,25,16777215,1774755650006,0,8264244,0" user="Sloudy">尊嘟假嘟</d>
+  <d p="51.719,4,25,14893055,1774755650768,0,11992016,0" user="霧雨言葉">？</d>
+  <d p="54.302,1,25,16777215,1774755652867,0,444278711,0" user="杜牧_Office">战争开始了</d>
+  <d p="54.302,1,25,16777215,1774755653359,0,3546654284188548,0" user="ChaserBlue">[捂脸]</d>
+  <d p="57.144,1,25,16772431,1774755654906,0,5776177,0" user="正邪的神喰">尊嘟假嘟</d>
+  <d p="57.144,1,25,16777215,1774755655029,0,7472598,0" user="西雅图海鹰">妈妈喂我[抓狂]</d>
+  <d p="57.152,1,25,16777215,1774755655061,0,292017965,0" user="Auuuuuya">尊嘟假嘟</d>
+  <d p="57.152,4,25,14893055,1774755655087,0,6036960,0" user="莲子君W">？</d>
+  <d p="58.206,1,25,14893055,1774755656373,0,387236933,0" user="歩好看">嘻</d>
+  <d p="59.501,1,25,16777215,1774755658009,0,35901629,0" user="seaSideTp">原来是你</d>
+  <d p="59.680,4,25,14893055,1774755658377,0,37571268,0" user="千叶Eikawa">尊嘟假嘟</d>
+  <d p="62.101,4,25,14893055,1774755660021,0,487332423,0" user="御坂13887号">她真会开吗</d>
+  <d p="62.282,1,25,14893055,1774755661115,0,808763,0" user="Rodyy_">嘻</d>
+  <d p="63.580,4,25,14893055,1774755661626,0,37571268,0" user="千叶Eikawa">？</d>
+  <d p="68.784,1,25,16777215,1774755667199,0,13323678,0" user="Shadow形影不璃">嘻</d>
+  <d p="72.502,4,25,14893055,1774755671055,0,487332423,0" user="御坂13887号">尊嘟假嘟</d>
+  <d p="73.804,1,25,16777215,1774755672859,0,444278711,0" user="杜牧_Office">记仇</d>
+  <d p="90.700,4,25,14893055,1774755688627,0,487332423,0" user="御坂13887号">剪辑姐凑过来一起吃呗</d>
+  <d p="115.587,1,25,16772431,1774755713792,0,520564974,0" user="自定义呆毛">剪辑姐来讲点16黑历史</d>
+  <d p="116.879,1,25,16777215,1774755715734,0,216179994,0" user="月正风清梦微凉">嘻</d>
+  <d p="128.419,4,25,14893055,1774755727353,0,487332423,0" user="御坂13887号">剪辑姐大大方方过来一起吃</d>
+  <d p="137.682,1,25,16777215,1774755736579,0,590870,0" user="摄影师小z">爆</d>
+  <d p="158.479,1,25,16772431,1774755756455,0,5776177,0" user="正邪的神喰">尊嘟假嘟</d>
+  <d p="164.802,1,25,16772431,1774755762688,0,20521612,0" user="你霸吃瓜时">尊嘟假嘟</d>
+  <d p="166.281,1,25,16772431,1774755764928,0,5776177,0" user="正邪的神喰">？</d>
+  <d p="167.580,4,25,14893055,1774755765833,0,37571268,0" user="千叶Eikawa">尊嘟假嘟</d>
+  <d p="168.879,4,25,14893055,1774755766962,0,37571268,0" user="千叶Eikawa">？</d>
+  <d p="170.184,1,25,16772431,1774755768308,0,520564974,0" user="自定义呆毛">还有人类吗</d>
+  <d p="171.303,4,25,14893055,1774755770310,0,11992016,0" user="霧雨言葉">尊嘟假嘟</d>
+  <d p="173.900,1,25,16777215,1774755772730,0,35901629,0" user="seaSideTp">？</d>
+  <d p="174.079,4,25,14893055,1774755772936,0,37571268,0" user="千叶Eikawa">拆下来了？</d>
+  <d p="175.197,1,25,14893055,1774755773854,0,14378626,0" user="昼星轨">天生神力呐</d>
+  <d p="176.499,1,25,16772431,1774755775081,0,20521612,0" user="你霸吃瓜时">让我们说中文</d>
+  <d p="177.978,1,25,16777215,1774755776667,0,442039853,0" user="Syan米夏">？</d>
+  <d p="179.114,1,25,16777215,1774755777553,0,3546654284188548,0" user="ChaserBlue">？</d>
+  <d p="183.001,4,25,14893055,1774755780730,0,11992016,0" user="霧雨言葉">这孩子有力气！</d>
+  <d p="183.183,1,25,14893055,1774755781031,0,808763,0" user="Rodyy_">？？</d>
+  <d p="184.299,1,25,16777215,1774755783305,0,312663416,0" user="星尘坦克two">好大的力气</d>
+  <d p="186.903,4,25,14893055,1774755784831,0,487332423,0" user="御坂13887号">剪辑姐也是个神人我看</d>
+  <d p="190.813,1,25,16777215,1774755789466,0,159046,0" user="不和谐音">？</d>
+  <d p="192.105,1,25,16777215,1774755790686,0,499351449,0" user="蕾米莉亚-斯卡镭特">中午好161</d>
+  <d p="192.105,1,25,14893055,1774755791141,0,14378626,0" user="昼星轨">剪辑姐走的时候记得带上门</d>
+</i>

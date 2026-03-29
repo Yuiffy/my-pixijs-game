@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_03_29_22_38_10",
+    "title": "小栞来！",
+    "date": "2026-03-29",
+    "time": "22:38:10",
+    "startTime": "22:38",
+    "endTime": "00:12",
+    "duration": 5653,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_29_22_38_10/录制-26966466-20260329-223810-375-小栞来！.xml",
+    "cover": "/data/streams/shiori/2026_03_29_22_38_10/录制-26966466-20260329-223810-375-小栞来！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_29_22_38_10/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_29_22_38_10/录制-26966466-20260329-223810-375-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_29_10_16_40",
+    "title": "早安",
+    "date": "2026-03-29",
+    "time": "10:16:40",
+    "startTime": "10:16",
+    "endTime": "12:11",
+    "duration": 6929,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_29_10_16_40/录制-26966466-20260329-101640-515-早安.xml",
+    "cover": "/data/streams/shiori/2026_03_29_10_16_40/录制-26966466-20260329-101640-515-早安.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_03_29_10_16_40/录制-26966466-20260329-101640-515-早安_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_28_22_24_53",
     "title": "只狼！",
     "date": "2026-03-28",
