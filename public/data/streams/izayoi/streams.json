@@ -1,5 +1,89 @@
 [
   {
+    "id": "2026_03_30_21_09_06",
+    "title": "先来观影fsf，晚点画头像！",
+    "date": "2026-03-30",
+    "time": "21:09:06",
+    "startTime": "21:09",
+    "endTime": "00:40",
+    "duration": 12670,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_30_21_09_06/录制-1741667419-20260330-210906-282-先来观影fsf，晚点画头像！.xml",
+    "cover": "/data/streams/izayoi/2026_03_30_21_09_06/录制-1741667419-20260330-210906-282-先来观影fsf，晚点画头像！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_30_21_09_06/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_30_21_09_06/录制-1741667419-20260330-210906-282-先来观影fsf，晚点画头像！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_30_21_02_19",
+    "title": "先来观影fsf，晚点画头像！",
+    "date": "2026-03-30",
+    "time": "21:02:19",
+    "startTime": "21:02",
+    "endTime": "21:05",
+    "duration": 189,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_30_21_02_19/录制-1741667419-20260330-210219-731-先来观影fsf，晚点画头像！_merged.xml",
+    "cover": "/data/streams/izayoi/2026_03_30_21_02_19/录制-1741667419-20260330-210219-731-先来观影fsf，晚点画头像！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_30_21_02_19/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_03_30_20_55_05",
+    "title": "先来观影fsf，晚点画头像！",
+    "date": "2026-03-30",
+    "time": "20:55:05",
+    "startTime": "20:55",
+    "endTime": "20:57",
+    "duration": 164,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_30_20_55_05/录制-1741667419-20260330-205505-930-先来观影fsf，晚点画头像！.xml",
+    "cover": "/data/streams/izayoi/2026_03_30_20_55_05/录制-1741667419-20260330-205505-930-先来观影fsf，晚点画头像！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_30_20_55_05/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_30_20_55_05/录制-1741667419-20260330-205505-930-先来观影fsf，晚点画头像！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_30_20_02_46",
+    "title": "先来观影fsf，晚点画头像！",
+    "date": "2026-03-30",
+    "time": "20:02:46",
+    "startTime": "20:02",
+    "endTime": "20:49",
+    "duration": 2844,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_30_20_02_46/录制-1741667419-20260330-200246-717-先来观影fsf，晚点画头像！_merged.xml",
+    "cover": "/data/streams/izayoi/2026_03_30_20_02_46/录制-1741667419-20260330-200246-717-先来观影fsf，晚点画头像！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_30_20_02_46/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_30_20_02_46/录制-1741667419-20260330-200246-717-先来观影fsf，晚点画头像！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_30_09_06_04",
+    "title": "早茶第三十六天。",
+    "date": "2026-03-30",
+    "time": "09:06:04",
+    "startTime": "09:06",
+    "endTime": "13:23",
+    "duration": 15446,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_30_09_06_04/录制-1741667419-20260330-090604-572-早茶第三十六天。.xml",
+    "cover": "/data/streams/izayoi/2026_03_30_09_06_04/录制-1741667419-20260330-090604-572-早茶第三十六天。.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_03_30_09_06_04/录制-1741667419-20260330-090604-572-早茶第三十六天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_03_30_09_06_04/录制-1741667419-20260329-200029-186-继续昨天的桌面，然后再来唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_29_20_00_29",
     "title": "继续昨天的桌面，然后再来唱歌",
     "date": "2026-03-29",
