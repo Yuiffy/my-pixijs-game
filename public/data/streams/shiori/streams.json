@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_03_31_21_42_17",
+    "title": "去月球！",
+    "date": "2026-03-31",
+    "time": "21:42:17",
+    "startTime": "21:42",
+    "endTime": "00:18",
+    "duration": 9381,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_31_21_42_17/录制-26966466-20260331-214217-387-去月球！.xml",
+    "cover": "/data/streams/shiori/2026_03_31_21_42_17/录制-26966466-20260331-214217-387-去月球！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_31_21_42_17/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_31_21_42_17/录制-26966466-20260331-214217-387-去月球！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_31_10_25_11",
+    "title": "早安獭獭栞！！",
+    "date": "2026-03-31",
+    "time": "10:25:11",
+    "startTime": "10:25",
+    "endTime": "12:14",
+    "duration": 6586,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_03_31_10_25_11/录制-26966466-20260331-102511-459-早安獭獭栞！！.xml",
+    "cover": "/data/streams/shiori/2026_03_31_10_25_11/录制-26966466-20260331-102511-459-早安獭獭栞！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_03_31_10_25_11/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_03_31_10_25_11/录制-26966466-20260331-102511-459-早安獭獭栞！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_03_31_10_25_11/录制-26966466-20260329-223810-375-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_29_22_38_10",
     "title": "小栞来！",
     "date": "2026-03-29",

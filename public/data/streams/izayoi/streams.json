@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_03_31_20_05_40",
+    "title": "战，只狼！",
+    "date": "2026-03-31",
+    "time": "20:05:40",
+    "startTime": "20:05",
+    "endTime": "02:14",
+    "duration": 22180,
+    "durationStr": "6.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_31_20_05_40/录制-1741667419-20260331-200540-390-战，只狼！.xml",
+    "cover": "/data/streams/izayoi/2026_03_31_20_05_40/录制-1741667419-20260331-200540-390-战，只狼！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_31_20_05_40/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_31_20_05_40/录制-1741667419-20260331-200540-390-战，只狼！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_31_15_36_13",
+    "title": "喝点下午茶ww",
+    "date": "2026-03-31",
+    "time": "15:36:13",
+    "startTime": "15:36",
+    "endTime": "18:07",
+    "duration": 9096,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_03_31_15_36_13/录制-1741667419-20260331-153613-529-喝点下午茶ww.xml",
+    "cover": "/data/streams/izayoi/2026_03_31_15_36_13/录制-1741667419-20260331-153613-529-喝点下午茶ww.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_03_31_15_36_13/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_03_31_15_36_13/录制-1741667419-20260331-153613-529-喝点下午茶ww_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_03_31_15_36_13/录制-1741667419-20260330-210906-282-先来观影fsf，晚点画头像！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_30_21_09_06",
     "title": "先来观影fsf，晚点画头像！",
     "date": "2026-03-30",

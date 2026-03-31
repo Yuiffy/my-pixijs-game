@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_03_31_23_56_23",
+    "title": "洛克王国启动",
+    "date": "2026-03-31",
+    "time": "23:56:23",
+    "startTime": "23:56",
+    "endTime": "02:14",
+    "duration": 8295,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_31_23_56_23/录制-1986461465-20260331-235623-277-聊个五毛的天.xml",
+    "cover": "/data/streams/kloa/2026_03_31_23_56_23/录制-1986461465-20260331-235623-277-聊个五毛的天.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_31_23_56_23/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_31_23_56_23/录制-1986461465-20260331-235623-277-聊个五毛的天_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_31_21_23_16",
+    "title": "聊个五毛的天",
+    "date": "2026-03-31",
+    "time": "21:23:16",
+    "startTime": "21:23",
+    "endTime": "23:54",
+    "duration": 9076,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_31_21_23_16/录制-1986461465-20260331-212316-752-睡到九点_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_31_21_23_16/录制-1986461465-20260331-212316-752-睡到九点.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_31_21_23_16/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_31_21_23_16/录制-1986461465-20260331-212316-752-睡到九点_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_31_20_06_32",
+    "title": "温柔歌势 DAY8 歌杂",
+    "date": "2026-03-31",
+    "time": "20:06:32",
+    "startTime": "20:06",
+    "endTime": "21:18",
+    "duration": 4361,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_31_20_06_32/录制-1986461465-20260331-200632-557-温柔歌势 DAY8 歌杂.xml",
+    "cover": "/data/streams/kloa/2026_03_31_20_06_32/录制-1986461465-20260331-200632-557-温柔歌势 DAY8 歌杂.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_31_20_06_32/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_31_20_06_32/录制-1986461465-20260331-200632-557-温柔歌势 DAY8 歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_31_09_06_10",
+    "title": "温柔歌势 DAY8 歌杂",
+    "date": "2026-03-31",
+    "time": "09:06:10",
+    "startTime": "09:06",
+    "endTime": "11:04",
+    "duration": 7101,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_03_31_09_06_10/录制-1986461465-20260331-090610-353-温柔歌势 DAY8 歌杂_merged.xml",
+    "cover": "/data/streams/kloa/2026_03_31_09_06_10/录制-1986461465-20260331-090610-353-温柔歌势 DAY8 歌杂.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_03_31_09_06_10/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_03_31_09_06_10/录制-1986461465-20260331-090610-353-温柔歌势 DAY8 歌杂_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_31_09_06_10/录制-1986461465-20260330-200907-715-困困困_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_03_31_09_06_10/录制-1986461465-20260330-203722-099-温柔歌势 dAY7_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_03_31_09_06_10/录制-1986461465-20260330-203722-099-温柔歌势 dAY7_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_30_20_37_22",
     "title": "温柔歌势 DAY7",
     "date": "2026-03-30",

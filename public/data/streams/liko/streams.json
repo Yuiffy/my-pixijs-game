@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_03_31_21_05_32",
+    "title": "醒了就播",
+    "date": "2026-03-31",
+    "time": "21:05:32",
+    "startTime": "21:05",
+    "endTime": "01:37",
+    "duration": 16357,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_31_21_05_32/录制-1713548468-20260331-210532-045-醒了就播.xml",
+    "cover": "/data/streams/liko/2026_03_31_21_05_32/录制-1713548468-20260331-210532-045-醒了就播.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_31_21_05_32/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_31_21_05_32/录制-1713548468-20260331-210532-045-醒了就播_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_03_31_11_18_51",
+    "title": "生化危机4第三弹",
+    "date": "2026-03-31",
+    "time": "11:18:51",
+    "startTime": "11:18",
+    "endTime": "16:12",
+    "duration": 17652,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_03_31_11_18_51/录制-1713548468-20260331-111851-953-睡醒就播.xml",
+    "cover": "/data/streams/liko/2026_03_31_11_18_51/录制-1713548468-20260331-111851-953-睡醒就播.cover.jpg",
+    "highlights": "/data/streams/liko/2026_03_31_11_18_51/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_03_31_11_18_51/录制-1713548468-20260331-111851-953-睡醒就播_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_30_21_07_13",
     "title": "睡醒就播",
     "date": "2026-03-30",
