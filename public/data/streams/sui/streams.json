@@ -1,5 +1,35 @@
 [
   {
+    "id": "2026_04_01_20_34_35",
+    "title": "愚人节真假猜猜猜！",
+    "date": "2026-04-01",
+    "time": "20:34:35",
+    "startTime": "20:34",
+    "endTime": "23:54",
+    "duration": 12054,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_01_20_34_35/2026_04_01_20_34_35_愚人节真假猜猜猜！_DDTV5_3.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_01_15_27_03",
+    "title": "愚人节真假猜猜猜！",
+    "date": "2026-04-01",
+    "time": "15:27:03",
+    "startTime": "15:27",
+    "endTime": "16:51",
+    "duration": 5047,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_01_15_27_03/2026_04_01_15_27_03_下午不好这里没有歌杂_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_01_15_27_03/2026_04_01_15_27_03_下午不好这里没有歌杂_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_03_31_20_07_02",
     "title": "晚上好晚上好~",
     "date": "2026-03-31",
@@ -15,7 +45,8 @@
     "images": [
       "/data/streams/sui/2026_03_31_20_07_02/录制-25788785-20260331-200711-799-晚上好晚上好~_SCREENSHOTS.jpg",
       "/data/streams/sui/2026_03_31_20_07_02/录制-25788785-20260330-195918-661-晚上好晚上好~_merged_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_03_31_20_07_02/录制-25788785-20260330-195918-661-晚上好晚上好~_merged_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_03_31_20_07_02/录制-25788785-20260330-195918-661-晚上好晚上好~_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_03_31_20_07_11/录制-25788785-20260331-200711-799-晚上好晚上好~_SCREENSHOTS.jpg"
     ]
   },
   {
