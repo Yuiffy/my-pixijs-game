@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_04_02_21_53_41",
+    "title": "玩玩超阈限空间！",
+    "date": "2026-04-02",
+    "time": "21:53:41",
+    "startTime": "21:53",
+    "endTime": "00:41",
+    "duration": 10093,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_02_21_53_41/录制-26966466-20260402-215341-363-玩玩超阈限空间！.xml",
+    "cover": "/data/streams/shiori/2026_04_02_21_53_41/录制-26966466-20260402-215341-363-玩玩超阈限空间！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_02_21_53_41/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_02_21_53_41/录制-26966466-20260402-215341-363-玩玩超阈限空间！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_02_10_00_15",
+    "title": "早安獭獭栞！！",
+    "date": "2026-04-02",
+    "time": "10:00:15",
+    "startTime": "10:00",
+    "endTime": "12:14",
+    "duration": 8042,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_02_10_00_15/录制-26966466-20260402-100015-788-早安獭獭栞！！.xml",
+    "cover": "/data/streams/shiori/2026_04_02_10_00_15/录制-26966466-20260402-100015-788-早安獭獭栞！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_02_10_00_15/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_02_10_00_15/录制-26966466-20260402-100015-788-早安獭獭栞！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_31_21_42_17",
     "title": "去月球！",
     "date": "2026-03-31",

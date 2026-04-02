@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_04_02_21_46_31",
+    "title": "偷袭",
+    "date": "2026-04-02",
+    "time": "21:46:31",
+    "startTime": "21:46",
+    "endTime": "00:07",
+    "duration": 8460,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_02_21_46_31/录制-1986461465-20260402-214631-828-偷袭_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_02_21_46_31/录制-1986461465-20260402-214631-828-偷袭.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_02_21_46_31/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_02_21_46_31/录制-1986461465-20260402-214631-828-偷袭_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_31_23_56_23",
     "title": "洛克王国启动",
     "date": "2026-03-31",

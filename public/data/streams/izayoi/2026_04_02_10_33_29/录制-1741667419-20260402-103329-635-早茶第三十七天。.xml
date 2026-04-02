@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1741667419" shortid="0" name="十六萤Izayoi" title="早茶第三十七天。" areanameparent="电台" areanamechild="聊天电台" start_time="2026-04-02T10:33:29.6364562+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="9.821,1,25,16772431,1775097220506,0,5776177,0" user="正邪的神喰">盯</d>
+  <d p="26.710,1,25,14893055,1775097236866,0,2777263,0" user="小黑瓜">盯</d>
+  <d p="41.483,4,25,14893055,1775097251445,0,14378626,0" user="昼星轨">小堂那个小朋友声线一转桑丘太帅了</d>
+  <d p="52.710,1,25,16772431,1775097263325,0,5776177,0" user="正邪的神喰">好像是塔菲（</d>
+  <d p="57.090,4,25,14893055,1775097268054,0,14378626,0" user="昼星轨">感觉唐和恶心萌有点重叠</d>
+  <d p="62.287,1,25,16777215,1775097272994,0,13439545,0" user="困困累累死死喵">唐氏综合征的引申义</d>
+  <d p="77.884,4,25,14893055,1775097288039,0,14378626,0" user="昼星轨">通常来说还是贬义吧</d>
+  <d p="84.383,4,25,14893055,1775097294738,0,14378626,0" user="昼星轨">对的对的</d>
+  <d p="89.124,1,25,16777215,1775097299016,0,83149598,0" user="超香脆的鸡排饭">唐氏综合征被网络解构以后的产物</d>
+  <d p="111.683,4,25,14893055,1775097322188,0,14378626,0" user="昼星轨">近两年被解构得攻击性没那么高了，本来是很恶意的用词</d>
+  <d p="112.510,1,25,16772431,1775097322311,0,5776177,0" user="正邪的神喰">奶龙是后来者</d>
+  <d p="114.283,1,25,65532,1775097324002,0,17789123,0" user="失眠打击">从国王排名那时候就有不少刷的了</d>
+  <d p="117.717,4,25,14893055,1775097327942,0,37571268,0" user="千叶Eikawa">挠挠</d>
+  <d p="151.988,4,25,14893055,1775097362362,0,14378626,0" user="昼星轨">以旧浣新</d>
+  <d p="154.582,1,25,14893055,1775097364635,0,387236933,0" user="歩好看">嘻</d>
+  <d p="160.610,1,25,16772431,1775097370695,0,5776177,0" user="正邪的神喰">尊嘟假嘟</d>
+  <d p="182.709,1,25,14893055,1775097392493,0,808763,0" user="Rodyy_">嘻</d>
+  <d p="194.881,4,25,14893055,1775097404823,0,14378626,0" user="昼星轨">六点四十到校，小孩还长不长身体了</d>
+  <d p="202.206,1,25,16772431,1775097412438,0,5776177,0" user="正邪的神喰">小学就开始卷…</d>
+  <d p="219.583,4,25,14893055,1775097429956,0,14378626,0" user="昼星轨">我那会儿小学八点吧好像是</d>
+  <d p="219.583,1,25,16772431,1775097430169,0,20521612,0" user="你霸吃瓜时">小学时7点半到8点吧 以前好像。</d>
+  <d p="220.409,1,25,14893055,1775097430618,0,2777263,0" user="小黑瓜">小学最多也就7点吧</d>
+  <d p="224.311,4,25,14893055,1775097434871,0,37571268,0" user="千叶Eikawa">小学六点四十会不会有点早</d>
+  <d p="228.687,1,25,16777215,1775097438807,0,42925406,0" user="fa玲世界第一可爱i">我小学七点二十左右我记得</d>
+  <d p="232.108,1,25,16777215,1775097443033,0,66744681,0" user="雨诺Ruby130">我高中都睡到七点半才起床</d>
+  <d p="236.006,1,25,16772431,1775097446776,0,11372295,0" user="草薙龙辉">我高中是5点50开始早读的</d>
+  <d p="239.084,4,25,14893055,1775097449785,0,14378626,0" user="昼星轨">这样搞 小孩还怎么长个子啊</d>
+  <d p="241.212,4,25,14893055,1775097451705,0,37571268,0" user="千叶Eikawa">小学七点多左右</d>
+  <d p="257.286,4,25,14893055,1775097467926,0,14378626,0" user="昼星轨">去早了没人开门</d>
+  <d p="258.582,1,25,16772431,1775097468562,0,20521612,0" user="你霸吃瓜时">只能说现在的小学 畸形的很 全都在卷 不知道在卷什么</d>
+  <d p="262.009,1,25,16772431,1775097472096,0,5776177,0" user="正邪的神喰">挠挠</d>
+  <d p="269.807,1,25,16772431,1775097480423,0,11372295,0" user="草薙龙辉">但其实高三大部分五点半都在班里了</d>
+</i>

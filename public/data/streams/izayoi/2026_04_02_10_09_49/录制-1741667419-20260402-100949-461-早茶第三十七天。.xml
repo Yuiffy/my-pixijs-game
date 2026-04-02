@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1741667419" shortid="0" name="十六萤Izayoi" title="早茶第三十七天。" areanameparent="电台" areanamechild="聊天电台" start_time="2026-04-02T10:09:49.4617538+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="1.312,1,25,16777215,1775095791345,0,65162999,0" user="入夜不殺生">你油呢</d>
+  <d p="5.214,1,25,16772431,1775095795637,0,5776177,0" user="正邪的神喰">番茄酱吗…不用新鲜番茄注定是失败的（</d>
+  <d p="5.214,4,25,14893055,1775095795681,0,442039853,0" user="Syan米夏">番茄鸡蛋面也能失败吗</d>
+  <d p="10.889,1,25,16777215,1775095801574,0,518154220,0" user="Tomyilk">层次分明这一块</d>
+  <d p="13.499,4,25,14893055,1775095803913,0,14378626,0" user="昼星轨">番茄要炒出汁再加水煮</d>
+  <d p="16.909,4,25,14893055,1775095806900,0,442039853,0" user="Syan米夏">[UPOWER_1149064559_得劲魔法]</d>
+  <d p="27.310,1,25,16777215,1775095817171,0,65162999,0" user="入夜不殺生">你点火了吗</d>
+  <d p="31.689,4,25,14893055,1775095821413,0,14378626,0" user="昼星轨">你不会随便切切就扔进去了吧</d>
+  <d p="40.792,4,25,14893055,1775095830822,0,14378626,0" user="昼星轨">番茄酱不行，要番茄罐头</d>
+  <d p="45.512,1,25,14893055,1775095835539,0,808763,0" user="Rodyy_">尊嘟假嘟</d>
+  <d p="48.590,4,25,14893055,1775095838715,0,11992016,0" user="霧雨言葉">把所有东西丢进锅里加热这一块</d>
+  <d p="52.009,1,25,16772431,1775095842827,0,5776177,0" user="正邪的神喰">挠挠</d>
+  <d p="55.910,1,25,16777215,1775095846004,0,65162999,0" user="入夜不殺生">买个刻度杯子</d>
+  <d p="60.295,4,25,14893055,1775095850022,0,14378626,0" user="昼星轨">真就纯水煮菜</d>
+  <d p="62.892,4,25,14893055,1775095852430,0,487332423,0" user="御坂13887号">完能什么时候直播做饭</d>
+  <d p="63.709,4,25,14893055,1775095854425,0,442039853,0" user="Syan米夏">[UPOWER_1149064559_已取餐]</d>
+  <d p="67.610,4,25,14893055,1775095857842,0,28054673,0" user="-菠萝豆包-">这玩意咋能失败的</d>
+  <d p="68.908,4,25,14893055,1775095859243,0,1720160,0" user="卡里尔OvO">？</d>
+  <d p="69.386,1,25,16777215,1775095859570,0,35901629,0" user="seaSideTp">说啥呢水太多了</d>
+  <d p="71.987,4,25,14893055,1775095861897,0,11992016,0" user="霧雨言葉">那这种炉子火力也不行</d>
+  <d p="76.722,4,25,14893055,1775095866628,0,1720160,0" user="卡里尔OvO">先加水是什么操作</d>
+  <d p="76.723,1,25,16777215,1775095867103,0,65162999,0" user="入夜不殺生">宝宝你那不叫煮面 叫大杂烩</d>
+  <d p="82.393,4,25,14893055,1775095872883,0,14378626,0" user="昼星轨">番茄要先炒出沙风味才浓郁</d>
+  <d p="83.211,4,25,14893055,1775095872845,0,442039853,0" user="Syan米夏">下次看看拍照做的咋样</d>
+  <d p="93.612,4,25,14893055,1775095883526,0,442039853,0" user="Syan米夏">拍照看看做的咋样</d>
+  <d p="94.090,4,25,14893055,1775095884711,0,14378626,0" user="昼星轨">宝宝你这是水煮菜加面条</d>
+  <d p="104.013,1,25,16777215,1775095894331,0,65162999,0" user="入夜不殺生">你西红柿面是红的还是黑的</d>
+  <d p="105.311,4,25,14893055,1775095895715,0,442039853,0" user="Syan米夏">[UPOWER_1149064559_汗]</d>
+  <d p="115.713,1,25,14893055,1775095905645,0,808763,0" user="Rodyy_">尊嘟假嘟</d>
+  <d p="115.713,1,25,16772431,1775095906360,0,5776177,0" user="正邪的神喰">尊嘟假嘟</d>
+  <d p="118.796,4,25,14893055,1775095908827,0,14378626,0" user="昼星轨">汤只加了番茄酱没加其他调味品吗(绝望)</d>
+  <d p="128.708,1,25,16777215,1775095918708,0,65162999,0" user="入夜不殺生">要不失败呢 黑色才对</d>
+  <d p="131.309,4,25,14893055,1775095921974,0,28054673,0" user="-菠萝豆包-">不如先做西红柿鸡蛋汤，然后收汁煮面</d>
+  <d p="148.212,1,25,65532,1775095938030,0,322294,0" user="熊猫馆长">煮面条，打番茄鸡蛋卤，香</d>
+  <d p="150.808,1,25,16777215,1775095940866,0,65162999,0" user="入夜不殺生">得加墨鱼汁啊</d>
+  <d p="152.590,4,25,14893055,1775095942772,0,14378626,0" user="昼星轨">那味道很可怕了</d>
+  <d p="157.306,1,25,16777215,1775095946961,0,496612477,0" user="小猫皇帝">老大我打派一早上掉俩段我要哭了</d>
+  <d p="162.518,4,25,14893055,1775095953057,0,1720160,0" user="卡里尔OvO">先加油 油热下番茄炒出沙加糖盐味精</d>
+  <d p="171.608,4,25,14893055,1775095961338,0,28054673,0" user="-菠萝豆包-">你不行就多加点盐，总能吃的</d>
+  <d p="172.907,4,25,14893055,1775095963167,0,442039853,0" user="Syan米夏">一般都是先炒再加水的，不然不出味</d>
+  <d p="175.985,4,25,14893055,1775095966636,0,11992016,0" user="霧雨言葉">记仇</d>
+  <d p="178.587,4,25,14893055,1775095968186,0,14378626,0" user="昼星轨">先炒蛋，盛出来炒番茄到出汁，加水煮开下面下鸡蛋</d>
+  <d p="179.414,1,25,16777215,1775095969787,0,65162999,0" user="入夜不殺生">你不行买个方便面的西红柿鸡蛋味吧</d>
+  <d p="183.307,4,25,14893055,1775095973570,0,442039853,0" user="Syan米夏">哇，姨好聪明呀</d>
+  <d p="191.110,4,25,14893055,1775095980789,0,1720160,0" user="卡里尔OvO">然后捞出来 加油下鸡蛋 熟了以后加番茄</d>
+  <d p="191.590,4,25,14893055,1775095981615,0,14378626,0" user="昼星轨">我去，不早说</d>
+  <d p="194.184,4,25,14893055,1775095984499,0,487332423,0" user="御坂13887号">聪明在哪</d>
+  <d p="198.907,4,25,14893055,1775095989559,0,1720160,0" user="卡里尔OvO">然后加点番茄酱</d>
+  <d p="204.106,4,25,14893055,1775095993895,0,1720160,0" user="卡里尔OvO">尊嘟假嘟</d>
+  <d p="206.714,4,25,14893055,1775095997545,0,28054673,0" user="-菠萝豆包-">水开后，关火用温水煮鸡蛋</d>
+  <d p="213.208,1,25,16772431,1775096003457,0,5776177,0" user="正邪的神喰">大大方方吃</d>
+  <d p="214.510,4,25,14893055,1775096004538,0,28054673,0" user="-菠萝豆包-">鸡蛋就不会散开</d>
+  <d p="216.287,4,25,14893055,1775096006271,0,14378626,0" user="昼星轨">可以先看看厨房新手教学视频</d>
+  <d p="218.424,4,25,14893055,1775096008454,0,442039853,0" user="Syan米夏">你敢做我敢吃</d>
+  <d p="218.424,1,25,16777215,1775096008669,0,65162999,0" user="入夜不殺生">听着你做的饭没啥可怕</d>
+  <d p="218.882,1,25,16777215,1775096009299,0,11235912,0" user="这就是ccccc">愿意尝试就很好了</d>
+  <d p="221.486,4,25,14893055,1775096011368,0,11992016,0" user="霧雨言葉">把饭菜做熟了就行，我爹做饭3个菜鱼和肉是生的</d>
+  <d p="221.486,4,25,14893055,1775096011636,0,14378626,0" user="昼星轨">有何不敢</d>
+  <d p="231.885,4,25,14893055,1775096022661,0,14378626,0" user="昼星轨">听起来顶多就是不好吃，熟了就行</d>
+  <d p="240.512,4,25,14893055,1775096030575,0,1720160,0" user="卡里尔OvO">怎么姨姨不会做饭的 原来是小笨蛋！哈哈哈哈</d>
+  <d p="244.407,4,25,14893055,1775096035044,0,442039853,0" user="Syan米夏">我一般习惯先煎蛋然后再加水</d>
+  <d p="248.314,1,25,16777215,1775096038785,0,65162999,0" user="入夜不殺生">你们Vr有做饭好的 你可以问黎安前辈 她做饭好吃</d>
+  <d p="248.782,4,25,14893055,1775096038955,0,14378626,0" user="昼星轨">你开着视频照着做都行</d>
+  <d p="260.008,4,25,14893055,1775096050861,0,442039853,0" user="Syan米夏">姨姨大笨蛋 亲亲小脸蛋</d>
+</i>
