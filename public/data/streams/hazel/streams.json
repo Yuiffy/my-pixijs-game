@@ -1,5 +1,101 @@
 [
   {
+    "id": "2026_04_03_18_54_26",
+    "title": "晚上好 玩一下【本所七大不可思议】",
+    "date": "2026-04-03",
+    "time": "18:54:26",
+    "startTime": "18:54",
+    "endTime": "21:17",
+    "duration": 8588,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_03_18_54_26/录制-1713546334-20260403-185426-419-晚上好 玩一下【本所七大不可思议】.xml",
+    "cover": "/data/streams/hazel/2026_04_03_18_54_26/录制-1713546334-20260403-185426-419-晚上好 玩一下【本所七大不可思议】.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_04_03_18_54_26/录制-1713546334-20260403-185426-419-晚上好 玩一下【本所七大不可思议】_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_03_18_52_03",
+    "title": "晚上好 玩一下【本所七大不可思议】",
+    "date": "2026-04-03",
+    "time": "18:52:03",
+    "startTime": "18:52",
+    "endTime": "18:53",
+    "duration": 64,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_03_18_52_03/录制-1713546334-20260403-185203-992-晚上好 玩一下【本所七大不可思议】.xml",
+    "cover": "/data/streams/hazel/2026_04_03_18_52_03/录制-1713546334-20260403-185203-992-晚上好 玩一下【本所七大不可思议】.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_03_18_49_11",
+    "title": "晚上好 玩一下【本所七大不可思议】",
+    "date": "2026-04-03",
+    "time": "18:49:11",
+    "startTime": "18:49",
+    "endTime": "18:51",
+    "duration": 164,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_03_18_49_11/录制-1713546334-20260403-184911-432-晚上好 玩一下【本所七大不可思议】.xml",
+    "cover": "/data/streams/hazel/2026_04_03_18_49_11/录制-1713546334-20260403-184911-432-晚上好 玩一下【本所七大不可思议】.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_03_18_12_23",
+    "title": "晚上好 玩一下【本所七大不可思议】",
+    "date": "2026-04-03",
+    "time": "18:12:23",
+    "startTime": "18:12",
+    "endTime": "18:46",
+    "duration": 2088,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_03_18_12_23/录制-1713546334-20260403-181223-440-晚上好 玩一下【本所七大不可思议】.xml",
+    "cover": "/data/streams/hazel/2026_04_03_18_12_23/录制-1713546334-20260403-181223-440-晚上好 玩一下【本所七大不可思议】.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_03_09_09_04",
+    "title": "早上好; ;",
+    "date": "2026-04-03",
+    "time": "09:09:04",
+    "startTime": "09:09",
+    "endTime": "09:26",
+    "duration": 1077,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_03_09_09_04/录制-1713546334-20260403-090904-040-早上好; ;_merged.xml",
+    "cover": "/data/streams/hazel/2026_04_03_09_09_04/录制-1713546334-20260403-090904-040-早上好; ;.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_03_09_09_04/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_03_09_09_04/录制-1713546334-20260403-090904-040-早上好; ;_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_03_08_00_26",
+    "title": "早上好; ;",
+    "date": "2026-04-03",
+    "time": "08:00:26",
+    "startTime": "08:00",
+    "endTime": "09:02",
+    "duration": 3737,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_03_08_00_26/录制-1713546334-20260403-080026-565-早上好; ;.xml",
+    "cover": "/data/streams/hazel/2026_04_03_08_00_26/录制-1713546334-20260403-080026-565-早上好; ;.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_03_08_00_26/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_03_08_00_26/录制-1713546334-20260403-080026-565-早上好; ;_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_03_31_12_03_15",
     "title": "中午好 电台",
     "date": "2026-03-31",

@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_03_20_06_27",
+    "title": "唠嗑然后《灾殃》",
+    "date": "2026-04-03",
+    "time": "20:06:27",
+    "startTime": "20:06",
+    "endTime": "02:36",
+    "duration": 23454,
+    "durationStr": "6.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_03_20_06_27/录制-1713548468-20260403-200627-608-唠嗑然后《灾殃》.xml",
+    "cover": "/data/streams/liko/2026_04_03_20_06_27/录制-1713548468-20260403-200627-608-唠嗑然后《灾殃》.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_04_03_20_06_27/录制-1713548468-20260403-200627-608-唠嗑然后《灾殃》_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_03_11_10_28",
+    "title": "身上好痛",
+    "date": "2026-04-03",
+    "time": "11:10:28",
+    "startTime": "11:10",
+    "endTime": "17:25",
+    "duration": 22556,
+    "durationStr": "6.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_03_11_10_28/录制-1713548468-20260403-111028-098-身上好痛_merged.xml",
+    "cover": "/data/streams/liko/2026_04_03_11_10_28/录制-1713548468-20260403-111028-098-身上好痛.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_03_11_10_28/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_03_11_10_28/录制-1713548468-20260403-111028-098-身上好痛_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_04_03_11_10_28/录制-1713548468-20260402-220618-985-被窝悄悄话_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_02_22_06_18",
     "title": "被窝悄悄话",
     "date": "2026-04-02",

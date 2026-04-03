@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_03_20_05_53",
+    "title": "听说浣开了一家推币机。",
+    "date": "2026-04-03",
+    "time": "20:05:53",
+    "startTime": "20:05",
+    "endTime": "00:42",
+    "duration": 16654,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_03_20_05_53/录制-1741667419-20260403-200553-863-听说浣开了一家推币机。_merged.xml",
+    "cover": "/data/streams/izayoi/2026_04_03_20_05_53/录制-1741667419-20260403-200553-863-听说浣开了一家推币机。.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_04_03_20_05_53/录制-1741667419-20260403-200553-863-听说浣开了一家推币机。_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_03_09_04_51",
+    "title": "早茶第三十八天",
+    "date": "2026-04-03",
+    "time": "09:04:51",
+    "startTime": "09:04",
+    "endTime": "12:15",
+    "duration": 11499,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_03_09_04_51/录制-1741667419-20260403-090451-738-早茶第三十八天.xml",
+    "cover": "/data/streams/izayoi/2026_04_03_09_04_51/录制-1741667419-20260403-090451-738-早茶第三十八天.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_03_09_04_51/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_03_09_04_51/录制-1741667419-20260403-090451-738-早茶第三十八天_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_04_03_09_04_51/录制-1741667419-20260402-220516-819-一起来看永生之酒_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_02_22_05_16",
     "title": "一起来看永生之酒",
     "date": "2026-04-02",
