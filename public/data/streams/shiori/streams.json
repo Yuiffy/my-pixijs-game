@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_04_22_07_49",
+    "title": "来也！",
+    "date": "2026-04-04",
+    "time": "22:07:49",
+    "startTime": "22:07",
+    "endTime": "00:11",
+    "duration": 7488,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_04_22_07_49/录制-26966466-20260404-220749-312-来也！_merged.xml",
+    "cover": "/data/streams/shiori/2026_04_04_22_07_49/录制-26966466-20260404-220749-312-来也！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_04_22_07_49/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_04_22_07_49/录制-26966466-20260404-220749-312-来也！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_04_10_14_14",
+    "title": "早安獭獭栞！",
+    "date": "2026-04-04",
+    "time": "10:14:14",
+    "startTime": "10:14",
+    "endTime": "12:11",
+    "duration": 7067,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_04_10_14_14/录制-26966466-20260404-101414-016-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_04_04_10_14_14/录制-26966466-20260404-101414-016-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_04_04_10_14_14/录制-26966466-20260404-101414-016-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_04_04_10_14_14/录制-26966466-20260403-210623-250-玩封锁协议！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_03_21_06_23",
     "title": "玩封锁协议！！！",
     "date": "2026-04-03",

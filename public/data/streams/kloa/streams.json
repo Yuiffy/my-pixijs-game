@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_04_04_20_10_56",
+    "title": "不知道为什么就是想战斗",
+    "date": "2026-04-04",
+    "time": "20:10:56",
+    "startTime": "20:10",
+    "endTime": "23:34",
+    "duration": 12260,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_04_20_10_56/录制-1986461465-20260404-201056-408-不知道为什么就是想战斗.xml",
+    "cover": "/data/streams/kloa/2026_04_04_20_10_56/录制-1986461465-20260404-201056-408-不知道为什么就是想战斗.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_04_04_20_10_56/录制-1986461465-20260404-201056-408-不知道为什么就是想战斗_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_04_11_30_26",
+    "title": "早安~温柔歌势day10",
+    "date": "2026-04-04",
+    "time": "11:30:26",
+    "startTime": "11:30",
+    "endTime": "15:35",
+    "duration": 14743,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_04_11_30_26/录制-1986461465-20260404-113026-571-早安~温柔歌势day10_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_04_11_30_26/录制-1986461465-20260404-113026-571-早安~温柔歌势day10.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_04_11_30_26/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_04_11_30_26/录制-1986461465-20260404-113026-571-早安~温柔歌势day10_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_04_10_02_51",
+    "title": "早安~温柔歌势day10",
+    "date": "2026-04-04",
+    "time": "10:02:51",
+    "startTime": "10:02",
+    "endTime": "10:16",
+    "duration": 849,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_04_10_02_51/录制-1986461465-20260404-100251-771-早安~温柔歌势day10.xml",
+    "cover": "/data/streams/kloa/2026_04_04_10_02_51/录制-1986461465-20260404-100251-771-早安~温柔歌势day10.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_04_04_10_02_51/录制-1986461465-20260404-100251-771-早安~温柔歌势day10_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_04_10_02_51/录制-1986461465-20260403-200420-301-歌杂歌杂~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_03_20_04_20",
     "title": "歌杂歌杂~",
     "date": "2026-04-03",
