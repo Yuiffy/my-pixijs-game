@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026_04_05_20_04_53",
+    "title": "晚上好 电台 收拾 聊天 唱会",
+    "date": "2026-04-05",
+    "time": "20:04:53",
+    "startTime": "20:04",
+    "endTime": "22:42",
+    "duration": 9493,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_05_20_04_53/录制-1713546334-20260405-200453-832-晚上好 电台 收拾 聊天 唱会_merged.xml",
+    "cover": "/data/streams/hazel/2026_04_05_20_04_53/录制-1713546334-20260405-200453-832-晚上好 电台 收拾 聊天 唱会.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_05_20_04_53/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_04_05_15_20_34",
+    "title": "下午好 读一会",
+    "date": "2026-04-05",
+    "time": "15:20:34",
+    "startTime": "15:20",
+    "endTime": "17:40",
+    "duration": 8404,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_05_15_20_34/录制-1713546334-20260405-152034-649-下午好 读一会.xml",
+    "cover": "/data/streams/hazel/2026_04_05_15_20_34/录制-1713546334-20260405-152034-649-下午好 读一会.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_05_15_20_34/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_05_15_20_34/录制-1713546334-20260405-152034-649-下午好 读一会_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_04_05_15_20_34/录制-1713546334-20260404-160025-613-下午好 玩一下【本所七大不可思议】_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_04_16_00_25",
     "title": "下午好 玩一下【本所七大不可思议】",
     "date": "2026-04-04",

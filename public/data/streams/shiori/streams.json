@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_04_05_22_14_59",
+    "title": "喵喵喵！",
+    "date": "2026-04-05",
+    "time": "22:14:59",
+    "startTime": "22:14",
+    "endTime": "00:14",
+    "duration": 7256,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_05_22_14_59/录制-26966466-20260405-221459-381-喵喵喵！.xml",
+    "cover": "/data/streams/shiori/2026_04_05_22_14_59/录制-26966466-20260405-221459-381-喵喵喵！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_05_22_14_59/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_05_22_14_59/录制-26966466-20260405-221459-381-喵喵喵！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_05_10_13_41",
+    "title": "早安獭獭栞！",
+    "date": "2026-04-05",
+    "time": "10:13:41",
+    "startTime": "10:13",
+    "endTime": "12:15",
+    "duration": 7337,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_05_10_13_41/录制-26966466-20260405-101341-414-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_04_05_10_13_41/录制-26966466-20260405-101341-414-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_05_10_13_41/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_05_10_13_41/录制-26966466-20260405-101341-414-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_04_05_10_13_41/录制-26966466-20260405-101341-414-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_04_05_10_13_41/录制-26966466-20260404-220749-312-来也！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_04_22_07_49",
     "title": "来也！",
     "date": "2026-04-04",

@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_04_05_21_38_25",
+    "title": "晚上好！",
+    "date": "2026-04-05",
+    "time": "21:38:25",
+    "startTime": "21:38",
+    "endTime": "01:47",
+    "duration": 14950,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_05_21_38_25/录制-1713548468-20260405-213825-755-晚上好！.xml",
+    "cover": "/data/streams/liko/2026_04_05_21_38_25/录制-1713548468-20260405-213825-755-晚上好！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_05_21_38_25/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_05_21_38_25/录制-1713548468-20260405-213825-755-晚上好！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_05_14_22_12",
+    "title": "好困啊",
+    "date": "2026-04-05",
+    "time": "14:22:12",
+    "startTime": "14:22",
+    "endTime": "17:39",
+    "duration": 11845,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_05_14_22_12/录制-1713548468-20260405-142212-101-好困啊.xml",
+    "cover": "/data/streams/liko/2026_04_05_14_22_12/录制-1713548468-20260405-142212-101-好困啊.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_05_14_22_12/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_05_14_22_12/录制-1713548468-20260405-142212-101-好困啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_05_11_13_00",
+    "title": "好困啊",
+    "date": "2026-04-05",
+    "time": "11:13:00",
+    "startTime": "11:13",
+    "endTime": "14:20",
+    "duration": 11247,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_05_11_13_00/录制-1713548468-20260405-111300-720-好困啊.xml",
+    "cover": "/data/streams/liko/2026_04_05_11_13_00/录制-1713548468-20260405-111300-720-好困啊.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_05_11_13_00/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_05_11_13_00/录制-1713548468-20260405-111300-720-好困啊_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_04_05_11_13_00/录制-1713548468-20260404-201527-237-唠嗑以后看《灾殃》_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_04_20_15_27",
     "title": "唠嗑以后看《灾殃》",
     "date": "2026-04-04",
