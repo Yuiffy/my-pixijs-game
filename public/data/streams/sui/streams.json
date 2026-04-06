@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_04_06_20_03_50",
+    "title": "晚上好 悠闲夜晚~",
+    "date": "2026-04-06",
+    "time": "20:03:50",
+    "startTime": "20:03",
+    "endTime": "23:40",
+    "duration": 13043,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_06_20_03_50/2026_04_06_20_04_03_晚上好悠闲夜晚~_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_06_20_03_50/录制-25788785-20260406-200350-555-晚上好 悠闲夜晚~.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_06_20_03_50/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_06_20_03_50/录制-25788785-20260406-200350-555-晚上好 悠闲夜晚~_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_06_20_03_50/录制-25788785-20260406-200350-555-晚上好 悠闲夜晚~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_06_14_42_23",
+    "title": "晚上好悠闲夜晚~",
+    "date": "2026-04-06",
+    "time": "14:42:23",
+    "startTime": "14:42",
+    "endTime": "17:13",
+    "duration": 9076,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_06_14_42_23/录制-25788785-20260406-144232-163-备好裤子！生化危机来袭.xml",
+    "cover": "/data/streams/sui/2026_04_06_14_42_23/录制-25788785-20260406-144232-163-备好裤子！生化危机来袭.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_04_06_14_42_23/录制-25788785-20260406-144232-163-备好裤子！生化危机来袭_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_04_06_14_42_23/录制-25788785-20260405-200127-440-晚上好 悠哉夜晚_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_06_14_42_23/录制-25788785-20260405-200127-440-晚上好 悠哉夜晚_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_06_00_22_05",
     "title": "晚上好 悠哉夜晚",
     "date": "2026-04-05",

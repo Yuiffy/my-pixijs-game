@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_06_20_17_29",
+    "title": "洛克王国启动！",
+    "date": "2026-04-06",
+    "time": "20:17:29",
+    "startTime": "20:17",
+    "endTime": "00:36",
+    "duration": 15564,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_06_20_17_29/录制-1986461465-20260406-201729-769-魔法期虚弱中~温柔歌势day11_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_06_20_17_29/录制-1986461465-20260406-201729-769-魔法期虚弱中~温柔歌势day11.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_06_20_17_29/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_06_20_17_29/录制-1986461465-20260406-201729-769-魔法期虚弱中~温柔歌势day11_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_06_09_07_14",
+    "title": "魔法期虚弱中~温柔歌势day11",
+    "date": "2026-04-06",
+    "time": "09:07:14",
+    "startTime": "09:07",
+    "endTime": "12:41",
+    "duration": 12842,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_06_09_07_14/录制-1986461465-20260406-090714-745-魔法期虚弱中~_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_06_09_07_14/录制-1986461465-20260406-090714-745-魔法期虚弱中~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_06_09_07_14/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_06_09_07_14/录制-1986461465-20260406-090714-745-魔法期虚弱中~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_06_09_07_14/录制-1986461465-20260405-200543-777-魔法期虚弱中~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_05_20_05_43",
     "title": "魔法期虚弱中~温柔歌势day10",
     "date": "2026-04-05",
