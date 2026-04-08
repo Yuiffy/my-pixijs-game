@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026_04_08_21_41_47",
+    "title": "唱歌唱歌！",
+    "date": "2026-04-08",
+    "time": "21:41:47",
+    "startTime": "21:41",
+    "endTime": "23:09",
+    "duration": 5307,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_08_21_41_47/录制-1986461465-20260408-214147-983-唱歌唱歌！.xml",
+    "cover": "/data/streams/kloa/2026_04_08_21_41_47/录制-1986461465-20260408-214147-983-唱歌唱歌！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_08_20_04_29",
+    "title": "唱歌唱歌！",
+    "date": "2026-04-08",
+    "time": "20:04:29",
+    "startTime": "20:04",
+    "endTime": "21:40",
+    "duration": 5788,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_08_20_04_29/录制-1986461465-20260408-200429-053-唱歌唱歌！.xml",
+    "cover": "/data/streams/kloa/2026_04_08_20_04_29/录制-1986461465-20260408-200429-053-唱歌唱歌！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_08_20_04_29/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_08_20_04_29/录制-1986461465-20260408-200429-053-唱歌唱歌！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_08_09_05_02",
+    "title": "洛克王国启动！",
+    "date": "2026-04-08",
+    "time": "09:05:02",
+    "startTime": "09:05",
+    "endTime": "15:02",
+    "duration": 21467,
+    "durationStr": "6.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_08_09_05_02/录制-1986461465-20260408-090502-010-阿巴阿巴阿巴！_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_08_09_05_02/录制-1986461465-20260408-090502-010-阿巴阿巴阿巴！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_08_09_05_02/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_08_09_05_02/录制-1986461465-20260408-090502-010-阿巴阿巴阿巴！_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_08_09_05_02/录制-1986461465-20260407-163929-654-温柔歌势day12_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_07_16_39_29",
     "title": "温柔歌势day12",
     "date": "2026-04-07",

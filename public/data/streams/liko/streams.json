@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_04_08_19_20_36",
+    "title": "偷偷播一下",
+    "date": "2026-04-08",
+    "time": "19:20:36",
+    "startTime": "19:20",
+    "endTime": "21:17",
+    "duration": 7065,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_08_19_20_36/录制-1713548468-20260408-192036-945-偷偷播一下_merged.xml",
+    "cover": "/data/streams/liko/2026_04_08_19_20_36/录制-1713548468-20260408-192036-945-偷偷播一下.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_08_19_20_36/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_08_19_20_36/录制-1713548468-20260407-201023-541-脑袋晕晕的_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_07_20_10_23",
     "title": "脑袋晕晕的",
     "date": "2026-04-07",

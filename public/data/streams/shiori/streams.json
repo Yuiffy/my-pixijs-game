@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_04_08_21_26_33",
+    "title": "我看看怎么个事儿！",
+    "date": "2026-04-08",
+    "time": "21:26:33",
+    "startTime": "21:26",
+    "endTime": "00:10",
+    "duration": 9895,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_08_21_26_33/录制-26966466-20260408-212633-436-我看看怎么个事儿！.xml",
+    "cover": "/data/streams/shiori/2026_04_08_21_26_33/录制-26966466-20260408-212633-436-我看看怎么个事儿！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_08_21_26_33/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_08_21_26_33/录制-26966466-20260408-212633-436-我看看怎么个事儿！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_08_10_17_23",
+    "title": "早安獭獭栞QAQ",
+    "date": "2026-04-08",
+    "time": "10:17:23",
+    "startTime": "10:17",
+    "endTime": "12:16",
+    "duration": 7199,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_08_10_17_23/录制-26966466-20260408-101723-959-早安獭獭栞QAQ_merged.xml",
+    "cover": "/data/streams/shiori/2026_04_08_10_17_23/录制-26966466-20260408-101723-959-早安獭獭栞QAQ.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_08_10_17_23/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_08_10_17_23/录制-26966466-20260408-101723-959-早安獭獭栞QAQ_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_04_08_10_17_23/录制-26966466-20260408-101723-959-早安獭獭栞QAQ_merged_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_04_08_10_17_23/录制-26966466-20260407-101337-257-早安獭獭栞QAQ_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_07_10_13_37",
     "title": "早安獭獭栞QAQ",
     "date": "2026-04-07",
