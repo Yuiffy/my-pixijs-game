@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_04_09_16_02_10",
+    "title": "摸鱼十分钟",
+    "date": "2026-04-09",
+    "time": "16:02:10",
+    "startTime": "16:02",
+    "endTime": "17:07",
+    "duration": 3936,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_09_16_02_10/录制-1713546334-20260409-160210-458-摸鱼十分钟.xml",
+    "cover": "/data/streams/hazel/2026_04_09_16_02_10/录制-1713546334-20260409-160210-458-摸鱼十分钟.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_09_16_02_10/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_09_16_02_10/录制-1713546334-20260409-160210-458-摸鱼十分钟_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_04_09_16_02_10/录制-1713546334-20260409-160210-458-摸鱼十分钟_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_04_09_16_02_10/录制-1713546334-20260407-230451-024-晚上好 电台的小声聊天_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_07_23_04_51",
     "title": "晚上好 电台的小声聊天",
     "date": "2026-04-07",

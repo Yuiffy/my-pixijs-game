@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_09_21_38_43",
+    "title": "我看看怎么个事儿！",
+    "date": "2026-04-09",
+    "time": "21:38:43",
+    "startTime": "21:38",
+    "endTime": "23:26",
+    "duration": 6522,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_09_21_38_43/录制-26966466-20260409-213843-912-我看看怎么个事儿！_merged.xml",
+    "cover": "/data/streams/shiori/2026_04_09_21_38_43/录制-26966466-20260409-213843-912-我看看怎么个事儿！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_09_21_38_43/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_09_21_38_43/录制-26966466-20260409-213843-912-我看看怎么个事儿！_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_04_09_10_12_50",
+    "title": "我看看怎么个事儿！",
+    "date": "2026-04-09",
+    "time": "10:12:50",
+    "startTime": "10:12",
+    "endTime": "12:10",
+    "duration": 7110,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_09_10_12_50/录制-26966466-20260409-101250-033-我看看怎么个事儿！.xml",
+    "cover": "/data/streams/shiori/2026_04_09_10_12_50/录制-26966466-20260409-101250-033-我看看怎么个事儿！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_09_10_12_50/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_09_10_12_50/录制-26966466-20260409-101250-033-我看看怎么个事儿！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_04_09_10_12_50/录制-26966466-20260408-212633-436-我看看怎么个事儿！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_08_21_26_33",
     "title": "我看看怎么个事儿！",
     "date": "2026-04-08",
