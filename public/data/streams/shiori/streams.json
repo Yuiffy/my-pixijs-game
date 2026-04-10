@@ -1,5 +1,103 @@
 [
   {
+    "id": "2026_04_10_21_08_20",
+    "title": "小栞来咯！！！",
+    "date": "2026-04-10",
+    "time": "21:08:20",
+    "startTime": "21:08",
+    "endTime": "00:25",
+    "duration": 11867,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_10_21_08_20/录制-26966466-20260410-210820-511-小栞来咯！！！_merged.xml",
+    "cover": "/data/streams/shiori/2026_04_10_21_08_20/录制-26966466-20260410-210820-511-小栞来咯！！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_10_21_08_20/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_10_21_08_20/录制-26966466-20260410-210820-511-小栞来咯！！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_10_10_46_19",
+    "title": "早安獭獭栞！",
+    "date": "2026-04-10",
+    "time": "10:46:19",
+    "startTime": "10:46",
+    "endTime": "12:12",
+    "duration": 5172,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_10_10_46_19/录制-26966466-20260410-104619-662-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_04_10_10_46_19/录制-26966466-20260410-104619-662-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_10_10_46_19/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_10_10_46_19/录制-26966466-20260410-104619-662-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_10_10_42_33",
+    "title": "早安獭獭栞！",
+    "date": "2026-04-10",
+    "time": "10:42:33",
+    "startTime": "10:42",
+    "endTime": "10:45",
+    "duration": 222,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_10_10_42_33/录制-26966466-20260410-104233-467-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_04_10_10_42_33/录制-26966466-20260410-104233-467-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_10_10_38_55",
+    "title": "早安獭獭栞！",
+    "date": "2026-04-10",
+    "time": "10:38:55",
+    "startTime": "10:38",
+    "endTime": "10:41",
+    "duration": 197,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_10_10_38_55/录制-26966466-20260410-103855-136-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_04_10_10_38_55/录制-26966466-20260410-103855-136-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_10_10_24_51",
+    "title": "早安獭獭栞！",
+    "date": "2026-04-10",
+    "time": "10:24:51",
+    "startTime": "10:24",
+    "endTime": "10:37",
+    "duration": 834,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_10_10_24_51/录制-26966466-20260410-102451-354-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_04_10_10_24_51/录制-26966466-20260410-102451-354-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_10_10_24_51/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_10_10_24_51/录制-26966466-20260410-102451-354-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_10_10_20_25",
+    "title": "早安獭獭栞！",
+    "date": "2026-04-10",
+    "time": "10:20:25",
+    "startTime": "10:20",
+    "endTime": "10:24",
+    "duration": 252,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_10_10_20_25/录制-26966466-20260410-102025-361-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_04_10_10_20_25/录制-26966466-20260410-102025-361-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_04_10_10_20_25/录制-26966466-20260409-213843-912-我看看怎么个事儿！_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_04_09_21_38_43",
     "title": "我看看怎么个事儿！",
     "date": "2026-04-09",

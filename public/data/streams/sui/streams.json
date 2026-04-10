@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_04_10_22_26_14",
+    "title": "元气小鸟陪你聊天！",
+    "date": "2026-04-10",
+    "time": "22:26:14",
+    "startTime": "22:26",
+    "endTime": "00:48",
+    "duration": 8523,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_10_22_26_14/2026_04_10_22_26_14_元气小鸟陪你聊天！_DDTV5_2.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_04_10_22_26_14/录制-25788785-20260410-202138-784-植物大战僵尸！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_10_20_21_59",
+    "title": "植物大战僵尸！",
+    "date": "2026-04-10",
+    "time": "20:21:59",
+    "startTime": "20:21",
+    "endTime": "22:25",
+    "duration": 7481,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_10_20_21_59/2026_04_10_20_21_59_植物大战僵尸！_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_10_20_21_38",
+    "title": "植物大战僵尸！",
+    "date": "2026-04-10",
+    "time": "20:21:38",
+    "startTime": "20:21",
+    "endTime": "00:47",
+    "duration": 15997,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_10_20_21_38/录制-25788785-20260410-202138-784-植物大战僵尸！.xml",
+    "cover": "/data/streams/sui/2026_04_10_20_21_38/录制-25788785-20260410-202138-784-植物大战僵尸！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_10_20_21_38/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_10_20_21_38/录制-25788785-20260410-202138-784-植物大战僵尸！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_04_10_14_24_52",
+    "title": "植物大战僵尸！",
+    "date": "2026-04-10",
+    "time": "14:24:52",
+    "startTime": "14:24",
+    "endTime": "17:21",
+    "duration": 10652,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_10_14_24_52/2026_04_10_14_25_00_植物大战僵尸！_DDTV5_3.xml",
+    "cover": "/data/streams/sui/2026_04_10_14_24_52/录制-25788785-20260410-142452-097-植物大战僵尸！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_10_14_24_52/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_10_14_24_52/录制-25788785-20260410-142452-097-植物大战僵尸！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_08_20_11_56",
     "title": "植物大战僵尸！",
     "date": "2026-04-08",
