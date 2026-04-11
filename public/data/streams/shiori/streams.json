@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_04_11_23_22_09",
+    "title": "小栞来咯！！！",
+    "date": "2026-04-11",
+    "time": "23:22:09",
+    "startTime": "23:22",
+    "endTime": "00:35",
+    "duration": 4413,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_11_23_22_09/录制-26966466-20260411-232209-590-小栞来咯！！！.xml",
+    "cover": "/data/streams/shiori/2026_04_11_23_22_09/录制-26966466-20260411-232209-590-小栞来咯！！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_04_11_23_22_09/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_04_11_23_22_09/录制-26966466-20260411-232209-590-小栞来咯！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_11_23_19_15",
+    "title": "小栞来咯！！！",
+    "date": "2026-04-11",
+    "time": "23:19:15",
+    "startTime": "23:19",
+    "endTime": "23:21",
+    "duration": 170,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_04_11_23_19_15/录制-26966466-20260411-231915-652-小栞来咯！！！.xml",
+    "cover": "/data/streams/shiori/2026_04_11_23_19_15/录制-26966466-20260411-231915-652-小栞来咯！！！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_04_11_23_19_15/录制-26966466-20260410-210820-511-小栞来咯！！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_10_21_08_20",
     "title": "小栞来咯！！！",
     "date": "2026-04-10",
