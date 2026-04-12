@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_12_20_03_05",
+    "title": "万粉感谢回！",
+    "date": "2026-04-12",
+    "time": "20:03:05",
+    "startTime": "20:03",
+    "endTime": "00:28",
+    "duration": 15953,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_12_20_03_05/录制-1986461465-20260412-200305-098-万粉感谢祭！_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_12_20_03_05/录制-1986461465-20260412-200305-098-万粉感谢祭！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_04_12_20_03_05/录制-1986461465-20260412-200305-098-万粉感谢祭！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_12_10_07_09",
+    "title": "早安困困困",
+    "date": "2026-04-12",
+    "time": "10:07:09",
+    "startTime": "10:07",
+    "endTime": "15:16",
+    "duration": 18546,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_12_10_07_09/录制-1986461465-20260412-100709-485-早安困困困.xml",
+    "cover": "/data/streams/kloa/2026_04_12_10_07_09/录制-1986461465-20260412-100709-485-早安困困困.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_04_12_10_07_09/录制-1986461465-20260412-100709-485-早安困困困_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_12_10_07_09/录制-1986461465-20260410-090418-715-早安~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_10_09_04_18",
     "title": "早安~",
     "date": "2026-04-10",

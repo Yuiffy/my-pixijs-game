@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_04_12_19_08_21",
+    "title": "小唱一下",
+    "date": "2026-04-12",
+    "time": "19:08:21",
+    "startTime": "19:08",
+    "endTime": "23:42",
+    "duration": 16486,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_12_19_08_21/录制-1741667419-20260412-190821-788-小唱一下.xml",
+    "cover": "/data/streams/izayoi/2026_04_12_19_08_21/录制-1741667419-20260412-190821-788-小唱一下.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_12_19_08_21/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_12_19_08_21/录制-1741667419-20260412-190821-788-小唱一下_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_12_14_03_28",
+    "title": "下午茶亚米亚米",
+    "date": "2026-04-12",
+    "time": "14:03:28",
+    "startTime": "14:03",
+    "endTime": "16:10",
+    "duration": 7640,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_12_14_03_28/录制-1741667419-20260412-140328-229-下午茶亚米亚米.xml",
+    "cover": "/data/streams/izayoi/2026_04_12_14_03_28/录制-1741667419-20260412-140328-229-下午茶亚米亚米.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_12_14_03_28/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_12_14_03_28/录制-1741667419-20260412-140328-229-下午茶亚米亚米_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_09_20_44_34",
     "title": "悄悄地进村",
     "date": "2026-04-09",

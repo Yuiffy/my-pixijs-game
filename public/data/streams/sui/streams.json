@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_04_13_00_16_15",
+    "title": "快来！找你有事",
+    "date": "2026-04-12",
+    "time": "00:16:15",
+    "startTime": "00:16",
+    "endTime": "00:20",
+    "duration": 273,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_13_00_16_15/2026_04_13_00_16_30_快来！找你有事_DDTV5_3.xml",
+    "cover": "/data/streams/sui/2026_04_13_00_16_15/录制-25788785-20260413-001615-861-快来！找你有事.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_13_00_16_15/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_13_00_16_15/录制-25788785-20260413-001615-861-快来！找你有事_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_13_00_16_15/录制-25788785-20260413-001615-861-快来！找你有事_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_04_13_00_16_15/25788785_post_outage_full_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_04_12_22_20_35",
+    "title": "快来！找你有事",
+    "date": "2026-04-12",
+    "time": "22:20:35",
+    "startTime": "22:20",
+    "endTime": "00:15",
+    "duration": 6930,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_12_22_20_35/2026_04_12_22_20_39_快来！找你有事_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_12_22_20_35/2026_04_12_22_20_39_快来！找你有事_DDTV5_cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_04_12_22_20_35/录制-25788785-20260412-221940-799-快来！找你有事_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_12_20_03_02",
+    "title": "快来！找你有事",
+    "date": "2026-04-12",
+    "time": "20:03:02",
+    "startTime": "20:03",
+    "endTime": "22:13",
+    "duration": 7805,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_12_20_03_02/2026_04_12_20_03_19_快来！找你有事_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_12_20_03_02/录制-25788785-20260412-200302-264-快来！找你有事.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_12_20_03_02/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_12_20_03_02/录制-25788785-20260412-200302-264-快来！找你有事_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_12_20_03_02/录制-25788785-20260412-200302-264-快来！找你有事_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_11_20_23_51",
     "title": "看看万能钥匙！",
     "date": "2026-04-11",
@@ -16,7 +70,9 @@
       "/data/streams/sui/2026_04_11_20_23_51/录制-25788785-20260411-202351-734-元气小鸟 陪你聊天！_COMIC_FACTORY.png",
       "/data/streams/sui/2026_04_11_20_23_51/录制-25788785-20260411-202351-734-元气小鸟 陪你聊天！_SCREENSHOTS.jpg",
       "/data/streams/sui/2026_04_11_20_23_51/录制-25788785-20260410-202138-784-植物大战僵尸！_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_04_11_20_23_51/录制-25788785-20260410-202138-784-植物大战僵尸！_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_04_11_20_23_51/录制-25788785-20260410-202138-784-植物大战僵尸！_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_04_11_20_24_09/录制-25788785-20260411-202351-734-元气小鸟 陪你聊天！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_11_20_24_09/录制-25788785-20260411-202351-734-元气小鸟 陪你聊天！_SCREENSHOTS.jpg"
     ]
   },
   {
