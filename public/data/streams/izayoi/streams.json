@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_13_20_05_13",
+    "title": "1616我们喜浣你（（",
+    "date": "2026-04-13",
+    "time": "20:05:13",
+    "startTime": "20:05",
+    "endTime": "01:40",
+    "duration": 20146,
+    "durationStr": "5.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_13_20_05_13/录制-1741667419-20260413-200513-621-1616我们喜浣你（（.xml",
+    "cover": "/data/streams/izayoi/2026_04_13_20_05_13/录制-1741667419-20260413-200513-621-1616我们喜浣你（（.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_13_20_05_13/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_13_20_05_13/录制-1741667419-20260413-200513-621-1616我们喜浣你（（_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_13_09_05_11",
+    "title": "早茶第三十九天。",
+    "date": "2026-04-13",
+    "time": "09:05:11",
+    "startTime": "09:05",
+    "endTime": "12:17",
+    "duration": 11547,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_13_09_05_11/录制-1741667419-20260413-090511-186-早茶第三十九天。.xml",
+    "cover": "/data/streams/izayoi/2026_04_13_09_05_11/录制-1741667419-20260413-090511-186-早茶第三十九天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_13_09_05_11/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_13_09_05_11/录制-1741667419-20260413-090511-186-早茶第三十九天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_04_13_09_05_11/录制-1741667419-20260412-190821-788-小唱一下_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_12_19_08_21",
     "title": "小唱一下",
     "date": "2026-04-12",

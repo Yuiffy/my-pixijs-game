@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_13_17_02_11",
+    "title": "温柔歌势day13~",
+    "date": "2026-04-13",
+    "time": "17:02:11",
+    "startTime": "17:02",
+    "endTime": "23:06",
+    "duration": 21864,
+    "durationStr": "6.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_13_17_02_11/录制-1986461465-20260413-170211-785-温柔歌势day13~_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_13_17_02_11/录制-1986461465-20260413-170211-785-温柔歌势day13~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_13_17_02_11/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_13_17_02_11/录制-1986461465-20260413-170211-785-温柔歌势day13~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_13_09_07_00",
+    "title": "早安~",
+    "date": "2026-04-13",
+    "time": "09:07:00",
+    "startTime": "09:07",
+    "endTime": "14:10",
+    "duration": 18182,
+    "durationStr": "5.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_13_09_07_00/录制-1986461465-20260413-090700-181-早安~.xml",
+    "cover": "/data/streams/kloa/2026_04_13_09_07_00/录制-1986461465-20260413-090700-181-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_13_09_07_00/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_13_09_07_00/录制-1986461465-20260413-090700-181-早安~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_13_09_07_00/录制-1986461465-20260412-200305-098-万粉感谢祭！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_12_20_03_05",
     "title": "万粉感谢回！",
     "date": "2026-04-12",

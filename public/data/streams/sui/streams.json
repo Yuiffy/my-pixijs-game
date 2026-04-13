@@ -1,5 +1,52 @@
 [
   {
+    "id": "2026_04_13_23_38_53",
+    "title": "快来！找你有事",
+    "date": "2026-04-13",
+    "time": "23:38:53",
+    "startTime": "23:38",
+    "endTime": "00:33",
+    "duration": 3331,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_13_23_38_53/2026_04_13_23_38_53_快来！找你有事_DDTV5_2.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_13_20_13_57",
+    "title": "快来！找你有事",
+    "date": "2026-04-13",
+    "time": "20:13:57",
+    "startTime": "20:13",
+    "endTime": "23:38",
+    "duration": 12320,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_13_20_13_57/2026_04_13_20_13_57_快来！找你有事_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_13_20_13_55",
+    "title": "快来！找你有事",
+    "date": "2026-04-13",
+    "time": "20:13:55",
+    "startTime": "20:13",
+    "endTime": "00:33",
+    "duration": 15626,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_13_20_13_55/录制-25788785-20260413-201355-519-快来！找你有事.xml",
+    "cover": "/data/streams/sui/2026_04_13_20_13_55/录制-25788785-20260413-201355-519-快来！找你有事.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_13_20_13_55/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_13_20_13_55/录制-25788785-20260413-201355-519-快来！找你有事_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_13_00_16_15",
     "title": "快来！找你有事",
     "date": "2026-04-12",
@@ -15,7 +62,10 @@
     "images": [
       "/data/streams/sui/2026_04_13_00_16_15/录制-25788785-20260413-001615-861-快来！找你有事_merged_COMIC_FACTORY.png",
       "/data/streams/sui/2026_04_13_00_16_15/录制-25788785-20260413-001615-861-快来！找你有事_merged_SCREENSHOTS.jpg",
-      "/data/streams/sui/2026_04_13_00_16_15/25788785_post_outage_full_merged_COMIC_FACTORY.png"
+      "/data/streams/sui/2026_04_13_00_16_15/25788785_post_outage_full_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_13_00_16_30/25788785_post_outage_full_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_13_00_16_30/录制-25788785-20260413-001615-861-快来！找你有事_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_13_00_16_30/录制-25788785-20260413-001615-861-快来！找你有事_merged_SCREENSHOTS.jpg"
     ]
   },
   {

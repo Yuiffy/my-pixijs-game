@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_04_13_21_21_10",
+    "title": "晚上的“电台”",
+    "date": "2026-04-13",
+    "time": "21:21:10",
+    "startTime": "21:21",
+    "endTime": "23:30",
+    "duration": 7761,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_13_21_21_10/录制-1713546334-20260413-212110-523-晚上的“电台”_merged.xml",
+    "cover": "/data/streams/hazel/2026_04_13_21_21_10/录制-1713546334-20260413-212110-523-晚上的“电台”.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_13_21_21_10/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_13_21_21_10/录制-1713546334-20260413-212110-523-晚上的“电台”_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_04_13_21_21_10/录制-1713546334-20260409-160210-458-摸鱼十分钟_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_04_13_21_21_10/录制-1713546334-20260409-160210-458-摸鱼十分钟_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_09_16_02_10",
     "title": "摸鱼十分钟",
     "date": "2026-04-09",
