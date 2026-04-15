@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_15_22_30_22",
+    "title": "温柔入眠",
+    "date": "2026-04-15",
+    "time": "22:30:22",
+    "startTime": "22:30",
+    "endTime": "00:20",
+    "duration": 6652,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_15_22_30_22/2026_04_15_22_30_39_bilibili主播的直播间_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_15_22_30_22/录制-25788785-20260415-223022-744-bilibili主播的直播间.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_15_22_30_22/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_15_22_30_22/录制-25788785-20260415-223022-744-bilibili主播的直播间_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_15_22_30_22/录制-25788785-20260415-223022-744-bilibili主播的直播间_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_15_15_07_58",
+    "title": "bilibili主播的直播间",
+    "date": "2026-04-15",
+    "time": "15:07:58",
+    "startTime": "15:07",
+    "endTime": "18:05",
+    "duration": 10731,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_15_15_07_58/2026_04_15_15_08_09_和栞栞联机植物大战僵尸！_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_15_15_07_58/录制-25788785-20260415-150758-887-和栞栞联机植物大战僵尸！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_15_15_07_58/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_15_15_07_58/录制-25788785-20260415-150758-887-和栞栞联机植物大战僵尸！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_14_20_18_17",
     "title": "快来！找你有事",
     "date": "2026-04-14",

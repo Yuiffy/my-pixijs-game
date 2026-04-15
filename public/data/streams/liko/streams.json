@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_15_21_05_03",
+    "title": "兔兔出击！",
+    "date": "2026-04-15",
+    "time": "21:05:03",
+    "startTime": "21:05",
+    "endTime": "00:33",
+    "duration": 12523,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_15_21_05_03/录制-1713548468-20260415-210503-284-兔兔出击！.xml",
+    "cover": "/data/streams/liko/2026_04_15_21_05_03/录制-1713548468-20260415-210503-284-兔兔出击！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_15_21_05_03/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_15_21_05_03/录制-1713548468-20260415-210503-284-兔兔出击！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_15_13_47_04",
+    "title": "兔兔出击！",
+    "date": "2026-04-15",
+    "time": "13:47:04",
+    "startTime": "13:47",
+    "endTime": "16:02",
+    "duration": 8136,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_15_13_47_04/录制-1713548468-20260415-134704-765-兔兔出击！.xml",
+    "cover": "/data/streams/liko/2026_04_15_13_47_04/录制-1713548468-20260415-134704-765-兔兔出击！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_15_13_47_04/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_15_13_47_04/录制-1713548468-20260415-134704-765-兔兔出击！_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_04_15_13_47_04/录制-1713548468-20260414-105518-280-兔兔出击！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_14_10_55_18",
     "title": "兔兔出击！",
     "date": "2026-04-14",

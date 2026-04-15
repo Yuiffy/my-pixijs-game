@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="26966466" shortid="0" name="栞栞Shiori" title="杀戮尖塔！" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-04-15T21:37:04.9288272+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="5.089,1,25,16777215,1776260230571,0,207604045,0" user="苏幕星">这个加星星，星星可以永久保留的</d>
+  <d p="10.284,1,25,16777215,1776260235183,0,1311011,0" user="bad/apple">灭</d>
+  <d p="24.583,1,25,16777215,1776260250213,0,32995839,0" user="d41d8cd9">星灭是很强的防御卡，减攻</d>
+  <d p="29.388,1,25,16777215,1776260254452,0,3107350,0" user="鲨鱼反抗军副团长">蓝色的星星可以保留，橙色每回合重算</d>
+  <d p="29.782,1,25,16777215,1776260254741,0,854813,0" user="Vesper">牌序全错</d>
+  <d p="61.886,4,25,14893055,1776260287484,0,171991477,0" user="栞栞月亮圆不圆">2或者过吧</d>
+  <d p="62.298,4,25,14893055,1776260287601,0,8045705,0" user="栞栞家的乜乜咩">要</d>
+  <d p="63.188,1,25,16772431,1776260288184,0,12796481,0" user="绯色丶花">2能控牌</d>
+  <d p="63.582,4,25,14893055,1776260289075,0,3211235,0" user="触发内联建议">不要</d>
+  <d p="64.500,1,25,16777215,1776260289913,0,2366,0" user="lzh">可以</d>
+  <d p="65.791,4,25,14893055,1776260290644,0,62845567,0" user="reeeeef">不要</d>
+  <d p="67.096,1,25,16772431,1776260292189,0,12796481,0" user="绯色丶花">3不要</d>
+  <d p="69.689,4,25,14893055,1776260294318,0,362574190,0" user="AA鸭鸭OuO">自己想[比心]</d>
+  <d p="72.306,4,25,14893055,1776260297140,0,362574190,0" user="AA鸭鸭OuO">ciallo</d>
+  <d p="73.592,1,25,16777215,1776260298281,0,2366,0" user="lzh">和遗物有配合</d>
+  <d p="75.288,1,25,16777215,1776260300422,0,854813,0" user="Vesper">睡</d>
+  <d p="77.489,1,25,16777215,1776260302259,0,229858197,0" user="爱上你的瘾">睡一下吧</d>
+  <d p="77.896,4,25,14893055,1776260302495,0,8045705,0" user="栞栞家的乜乜咩">回血 你没血了</d>
+  <d p="81.405,4,25,14893055,1776260306846,0,171991477,0" user="栞栞月亮圆不圆">你缺星星和抽牌</d>
+  <d p="84.005,1,25,16772431,1776260308449,0,12796481,0" user="绯色丶花">你现在不缺蓝星星了</d>
+  <d p="84.005,1,25,16777215,1776260309327,0,2366,0" user="lzh">睡</d>
+  <d p="84.389,1,25,16777215,1776260309675,0,1633090042,0" user="心累了---">不回血吗</d>
+  <d p="89.191,1,25,16777215,1776260314501,0,2366,0" user="lzh">不睡死了</d>
+  <d p="90.886,4,25,14893055,1776260315418,0,3211235,0" user="触发内联建议">回血</d>
+  <d p="90.886,1,25,16777215,1776260315608,0,1311011,0" user="bad/apple">你没血</d>
+  <d p="92.177,1,25,16777215,1776260317153,0,207604045,0" user="苏幕星">敲宝石</d>
+  <d p="93.089,1,25,16777215,1776260318251,0,24562288,0" user="白日梦-__-">22血还不睡</d>
+  <d p="98.693,4,25,14893055,1776260323726,0,357368030,0" user="栞栞家的棉花糖">没血了没血了睡觉睡觉</d>
+  <d p="98.693,4,25,14893055,1776260323935,0,228847,0" user="手偶鸟">咳咳咳</d>
+  <d p="101.283,1,25,16777215,1776260325803,0,518555227,0" user="牛头人酋长牛魔王">栞栞支气管炎了吗？</d>
+  <gift ts="107.785" user="滑雪Yukino" uid="31099889" giftname="鼓鼓掌" giftcount="1" />
+  <d p="107.785,1,25,16777215,1776260333047,0,854813,0" user="Vesper">理论上能过，但是保险起见还是睡吧</d>
+  <d p="110.384,1,25,16777215,1776260334877,0,207604045,0" user="苏幕星">咳咳咳咳咳</d>
+  <d p="110.384,1,25,16777215,1776260335461,0,518555227,0" user="牛头人酋长牛魔王">吃草</d>
+  <d p="114.284,4,25,14893055,1776260338762,0,8045705,0" user="栞栞家的乜乜咩">游戏要回血  现实也要回血</d>
+  <d p="121.698,4,25,14893055,1776260347163,0,14927363,0" user="Vacuum_033">上手了</d>
+  <d p="123.390,1,25,16777215,1776260348046,0,1311011,0" user="bad/apple">开灭</d>
+  <d p="132.493,1,25,16777215,1776260357090,0,32995839,0" user="d41d8cd9">星灭出一出</d>
+  <d p="136.386,1,25,16777215,1776260361574,0,207604045,0" user="苏幕星">逐渐熟练了小栞</d>
+  <d p="141.194,1,25,16777215,1776260366450,0,24562288,0" user="白日梦-__-">确实比前天三小时一把快啊[dog]</d>
+  <d p="141.579,4,25,14893055,1776260366351,0,357368030,0" user="栞栞家的棉花糖">熟练了熟练了，熟小猪了</d>
+  <d p="146.395,1,25,16777215,1776260371390,0,229858197,0" user="爱上你的瘾">星灭打有小怪的很好用</d>
+  <d p="149.381,1,25,16777215,1776260374301,0,1311011,0" user="bad/apple">灭-9攻击</d>
+  <d p="166.284,1,25,16777215,1776260391284,0,32995839,0" user="d41d8cd9">好了可以不用防御了</d>
+  <d p="176.303,4,25,14893055,1776260400726,0,7043959,0" user="栞栞爱吃麦麦">咋肥四</d>
+  <d p="178.892,4,25,14893055,1776260404247,0,7043959,0" user="栞栞爱吃麦麦">喝水</d>
+  <d p="182.791,1,25,16777215,1776260407694,0,353596986,0" user="潮湿的绝热近似">快开门</d>
+  <d p="190.982,4,25,14893055,1776260416380,0,3211235,0" user="触发内联建议">交药了</d>
+  <d p="203.977,4,25,14893055,1776260428501,0,8045705,0" user="栞栞家的乜乜咩">咳的我心疼</d>
+  <d p="206.191,1,25,16777215,1776260431065,0,31099889,0" user="滑雪Yukino">快谢你獭叠礼物[跪了]</d>
+  <d p="210.488,1,25,16777215,1776260435293,0,618938,0" user="于召">要不要吃药</d>
+  <d p="211.782,1,25,16777215,1776260437051,0,1311011,0" user="bad/apple">药水喝一喝</d>
+</i>
