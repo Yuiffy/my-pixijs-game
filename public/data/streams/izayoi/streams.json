@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_04_17_20_04_43",
+    "title": "听听你们的小故事。",
+    "date": "2026-04-17",
+    "time": "20:04:43",
+    "startTime": "20:04",
+    "endTime": "00:49",
+    "duration": 17144,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_17_20_04_43/录制-1741667419-20260417-200443-538-听听你们的小故事。.xml",
+    "cover": "/data/streams/izayoi/2026_04_17_20_04_43/录制-1741667419-20260417-200443-538-听听你们的小故事。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_17_20_04_43/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_17_20_04_43/录制-1741667419-20260417-200443-538-听听你们的小故事。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_17_09_03_14",
+    "title": "早茶第四十二天。",
+    "date": "2026-04-17",
+    "time": "09:03:14",
+    "startTime": "09:03",
+    "endTime": "12:19",
+    "duration": 11780,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_17_09_03_14/录制-1741667419-20260417-090314-807-早茶第四十二天。.xml",
+    "cover": "/data/streams/izayoi/2026_04_17_09_03_14/录制-1741667419-20260417-090314-807-早茶第四十二天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_17_09_03_14/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_17_09_03_14/录制-1741667419-20260417-090314-807-早茶第四十二天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_04_17_09_03_14/录制-1741667419-20260416-200614-699-半点来看永生之酒_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_16_20_06_14",
     "title": "半点来看永生之酒",
     "date": "2026-04-16",

@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="26966466" shortid="0" name="栞栞Shiori" title="早安獭獭栞！" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-04-17T11:59:18.4610979+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.438,1,25,16777215,1776398358308,0,12026196,0" user="直播间全是串子">流汗</d>
+  <d p="2.655,1,25,16777215,1776398360631,0,652231,0" user="枯树独鸣伤">笑嘻</d>
+  <d p="3.040,1,25,16777215,1776398360952,0,8030188,0" user="汉斯的绿色魔鬼">吃草</d>
+  <d p="3.932,1,25,16777215,1776398362887,0,3493095540787435,0" user="播敷">看看有多棒</d>
+  <d p="6.537,1,25,14893055,1776398364737,0,102750932,0" user="Koorizz9">宋娜</d>
+  <d p="6.537,4,25,14893055,1776398364972,0,19494546,0" user="种族天赋">不说给看吗</d>
+  <d p="7.830,4,25,14893055,1776398366866,0,19494546,0" user="种族天赋">不早说</d>
+  <d p="8.281,1,25,16772431,1776398366050,0,24324372,0" user="SaikiClaudius">我不信 你穿一下给大伙看看是不是显胖</d>
+  <d p="8.281,1,25,14893055,1776398366343,0,180865397,0" user="战略忽悠局对外宣传一处处长">会显得人特别不高</d>
+  <d p="11.740,1,25,65532,1776398369359,0,1346944,0" user="竹达小爱Akiayana_zZ">竖的显瘦</d>
+  <d p="12.140,1,25,16777215,1776398371121,0,26199599,0" user="windy水泽梦">一黑一白不是更显得一条瘦一条胖</d>
+  <d p="13.438,4,25,14893055,1776398371569,0,7043959,0" user="栞栞爱吃麦麦">你怎么知道他没说过</d>
+  <d p="14.737,1,25,16777215,1776398372882,0,12768173,0" user="一口一个小春卷">想想良子穿个条纹杉</d>
+  <d p="15.646,1,25,16777215,1776398373367,0,10233411,0" user="柳亖">鲁迅怎么啥都说</d>
+  <d p="15.646,1,25,16777215,1776398373502,0,5398447,0" user="-220mm-L65莫斯科-">这个真是鲁迅说的</d>
+  <d p="16.041,4,25,14893055,1776398374262,0,296721299,0" user="热风孝">波点</d>
+  <d p="19.938,1,25,16777215,1776398377730,0,23715470,0" user="黑犬兽_loco">来点小腿袜</d>
+  <d p="22.093,4,25,14893055,1776398380405,0,293726409,0" user="aaa凉乞钞Ciallo版">喝水</d>
+  <d p="32.942,1,25,16772431,1776398390778,0,59955258,0" user="这个昵称已经有鬼用过了">get不到丝袜的美，还是喜欢络腿</d>
+  <d p="35.570,4,25,14893055,1776398393275,0,33544574,0" user="栞栞家的艾伦Lily">[栞栞收藏集表情包_盯]</d>
+  <d p="35.570,1,25,16772431,1776398394676,0,79902177,0" user="硬果水糖">栞栞，二师兄在上是天蓬元帅，在下是什么？[dog]</d>
+  <d p="36.844,1,25,14893055,1776398394746,0,180865397,0" user="战略忽悠局对外宣传一处处长">条纹是横条纹还是竖条纹</d>
+  <d p="37.717,1,25,16777215,1776398396197,0,18246309,0" user="无名のDD">还会看到半黑丝半白丝吗</d>
+  <d p="42.055,4,25,8322816,1776398400919,0,15468083,0" user="咪宝Miori">鲁迅姓什么？</d>
+  <d p="42.951,1,25,16777215,1776398401933,0,2355140,0" user="升温啦注意散热哦">虾头</d>
+  <d p="44.259,1,25,14893055,1776398403009,0,21899946,0" user="雨缘Yuri">岛风</d>
+  <d p="45.511,4,25,14893055,1776398404421,0,4271544,0" user="ノ绯夜">岛风</d>
+  <d p="48.148,1,25,16777215,1776398407028,0,479050518,0" user="虚虚又">岛风</d>
+  <d p="49.444,1,25,16777215,1776398407350,0,488498731,0" user="Melusine梅露莘">岛风</d>
+  <d p="51.189,4,25,14893055,1776398409668,0,33544574,0" user="栞栞家的艾伦Lily">舰c黄毛</d>
+  <d p="51.189,4,25,14893055,1776398409792,0,62845567,0" user="reeeeef">岛风</d>
+  <d p="51.189,1,25,16777215,1776398410023,0,23715470,0" user="黑犬兽_loco">岛风</d>
+  <d p="52.087,1,25,16777215,1776398410489,0,6943131,0" user="白毛token">岛风</d>
+  <d p="53.346,1,25,65532,1776398411545,0,1346944,0" user="竹达小爱Akiayana_zZ">鲁迅原话 你是我带过最差的一届学生</d>
+  <d p="55.966,1,25,16777215,1776398414045,0,314194444,0" user="冰绒の香菓">岛风</d>
+  <d p="55.966,1,25,16777215,1776398414426,0,500573649,0" user="助手Amadeus">你还记得这个[花]</d>
+  <d p="56.342,4,25,14893055,1776398414236,0,12422769,0" user="Beartooth90">岛风</d>
+  <gift ts="57.247" user="杜鲁尼克爱冒险" uid="349770012" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="60.241,4,25,14893055,1776398419025,0,33544574,0" user="栞栞家的艾伦Lily">岛风啊，确实是</d>
+  <d p="61.215,1,25,14893055,1776398419667,0,102750932,0" user="Koorizz9">[栞栞收藏集表情包_盯]</d>
+  <d p="61.216,4,25,14893055,1776398420025,0,4271544,0" user="ノ绯夜">确实</d>
+  <d p="62.844,1,25,16777215,1776398420783,0,154231277,0" user="Reisen_risen院">你还知道舰c</d>
+  <d p="71.503,1,25,65532,1776398430081,0,1346944,0" user="竹达小爱Akiayana_zZ">以前好多岛风的本子 好涩</d>
+  <d p="71.943,1,25,16777215,1776398430838,0,26199599,0" user="windy水泽梦">岛风发色不是和你一样吗</d>
+  <gift ts="72.841" user="小只芋家の2号能救吗" uid="543097292" giftname="打call" giftcount="1" />
+  <d p="79.744,1,25,16777215,1776398437808,0,9063962,0" user="河底幽草">好听好听</d>
+  <d p="80.639,4,25,14893055,1776398439471,0,3211235,0" user="触发内联建议">岛风啊，以前看过她很多__</d>
+  <d p="81.936,1,25,14893055,1776398439930,0,21899946,0" user="雨缘Yuri">穿的还少</d>
+  <d p="84.547,4,25,14893055,1776398443197,0,4271544,0" user="ノ绯夜">确实啊</d>
+  <d p="85.814,1,25,14893055,1776398443847,0,102750932,0" user="Koorizz9">过气页游</d>
+  <d p="88.445,4,25,14893055,1776398447172,0,291329140,0" user="鸣风琳">以前确实火</d>
+  <d p="90.143,4,25,14893055,1776398447957,0,33544574,0" user="栞栞家的艾伦Lily">火爆了</d>
+  <d p="92.328,1,25,16777215,1776398450453,0,227541505,0" user="士多啤梨运输机">那今天晚上就重温一下岛风的本子吧😍</d>
+  <d p="93.659,1,25,14893055,1776398452228,0,102750932,0" user="Koorizz9">流口水</d>
+  <d p="94.894,1,25,16777215,1776398453513,0,5398447,0" user="-220mm-L65莫斯科-">小栞出过岛风吗</d>
+  <d p="95.342,1,25,16777215,1776398453343,0,442039853,0" user="Syan米夏">羞死了</d>
+  <d p="96.264,1,25,16777215,1776398454588,0,2724509,0" user="村头王王王师傅">岛风主要是因为那两根带子火吧</d>
+  <d p="96.264,1,25,16777215,1776398455121,0,10233411,0" user="柳亖">羞死了</d>
+  <d p="97.495,1,25,16772431,1776398455674,0,2872817,0" user="日帰りガチ恋">提到岛风只能想到凿</d>
+  <d p="100.546,1,25,16777215,1776398458367,0,3298270,0" user="白空的结纠">借一部说话）</d>
+  <d p="106.635,1,25,14893055,1776398464527,0,21899946,0" user="雨缘Yuri">还有天津风</d>
+  <d p="110.541,4,25,14893055,1776398468894,0,8045705,0" user="栞栞家的乜乜咩">大小也一样</d>
+  <d p="113.145,4,25,14893055,1776398472024,0,293726409,0" user="aaa凉乞钞Ciallo版">黄毛</d>
+  <d p="116.181,4,25,14893055,1776398474174,0,7043959,0" user="栞栞爱吃麦麦">黄毛</d>
+  <d p="116.181,1,25,16777215,1776398475283,0,3298270,0" user="白空的结纠">这就打开舰C对比一下</d>
+  <d p="117.031,4,25,14893055,1776398475470,0,291329140,0" user="鸣风琳">白毛</d>
+  <d p="123.544,1,25,65532,1776398481873,0,1346944,0" user="竹达小爱Akiayana_zZ">遮不住的北半球 ，小裤裤还漏出来</d>
+  <d p="123.544,4,25,14893055,1776398481995,0,4271544,0" user="ノ绯夜">你承认岛风是黄毛那你就是黄毛</d>
+  <d p="126.097,1,25,14893055,1776398484156,0,102750932,0" user="Koorizz9">笑嘻</d>
+  <d p="126.572,1,25,16777215,1776398484271,0,243828162,0" user="贪吃的皮卡邱">吃什么吃什么吃什么</d>
+  <d p="126.572,4,25,14893055,1776398484712,0,33544574,0" user="栞栞家的艾伦Lily">我有设定图鉴，等我回家看看</d>
+  <d p="127.835,1,25,16777215,1776398485734,0,9063962,0" user="河底幽草">记不清了</d>
+  <d p="128.734,1,25,16777215,1776398486559,0,479050518,0" user="虚虚又">白毛</d>
+  <d p="128.735,1,25,14893055,1776398487018,0,102750932,0" user="Koorizz9">[UPOWER_1609526545_大聪明]</d>
+  <d p="132.664,1,25,16777215,1776398490590,0,252214,0" user="在险价值VaR">是玫瑰金</d>
+  <d p="141.721,1,25,16777215,1776398500316,0,285622516,0" user="里双子">下班来看小栞</d>
+  <d p="150.782,1,25,16772431,1776398509260,0,2872817,0" user="日帰りガチ恋">是啊，吃什么</d>
+  <d p="152.199,1,25,16777215,1776398510364,0,288536418,0" user="NOOBKING233">黑白本里黄白差别不大</d>
+  <d p="152.199,1,25,16777215,1776398510428,0,23113440,0" user="六齿道长">喝粥营养够吗</d>
+  <d p="153.417,1,25,14893055,1776398511437,0,102750932,0" user="Koorizz9">[UPOWER_1609526545_啊]</d>
+  <d p="154.726,4,25,14893055,1776398513707,0,4271544,0" user="ノ绯夜">流汗</d>
+  <d p="159.025,4,25,14893055,1776398518004,0,33544574,0" user="栞栞家的艾伦Lily">会显示的</d>
+  <d p="164.219,1,25,16777215,1776398522680,0,12026196,0" user="直播间全是串子">流口水</d>
+  <gift ts="170.322" user="啊这你我他" uid="39539851" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="180.782,1,25,16777215,1776398538778,0,300007115,0" user="残雪寂然">先给别的妹妹送了</d>
+  <d p="180.783,4,25,14893055,1776398539096,0,293726409,0" user="aaa凉乞钞Ciallo版">“岛风的头发颜色是明亮的金色”</d>
+  <d p="180.783,4,25,14893055,1776398539585,0,357368030,0" user="栞栞家的棉花糖">ttk陪一粥</d>
+  <d p="183.297,1,25,14893055,1776398541663,0,102750932,0" user="Koorizz9">[UPOWER_1609526545_OAO]</d>
+  <d p="190.248,1,25,16777215,1776398548033,0,10123562,0" user="叮铃铃-Neptune">ciallo</d>
+  <d p="190.248,1,25,16777215,1776398548697,0,34038882,0" user="Mill_Helesta">喝点蛋白粉吧</d>
+  <d p="191.071,1,25,16777215,1776398549335,0,33458847,0" user="瑞树汉化组官方">准时来听歌</d>
+  <d p="197.612,1,25,14893055,1776398555998,0,21899946,0" user="雨缘Yuri">老吃家了</d>
+  <d p="198.903,1,25,65532,1776398556784,0,1454911,0" user="阳炎aqua">虾头</d>
+  <d p="198.903,4,25,14893055,1776398557499,0,202329,0" user="若雪">虾头</d>
+</i>

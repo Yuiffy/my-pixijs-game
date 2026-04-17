@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_04_17_22_38_14",
+    "title": "被窝回",
+    "date": "2026-04-17",
+    "time": "22:38:14",
+    "startTime": "22:38",
+    "endTime": "00:18",
+    "duration": 6055,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_17_22_38_14/录制-1986461465-20260417-223814-941-被窝回_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_17_22_38_14/录制-1986461465-20260417-223814-941-被窝回.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_17_22_38_14/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_17_22_38_14/录制-1986461465-20260417-223814-941-被窝回_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_17_21_04_44",
+    "title": "被窝回",
+    "date": "2026-04-17",
+    "time": "21:04:44",
+    "startTime": "21:04",
+    "endTime": "22:32",
+    "duration": 5331,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_17_21_04_44/录制-1986461465-20260417-210444-516-被窝回.xml",
+    "cover": "/data/streams/kloa/2026_04_17_21_04_44/录制-1986461465-20260417-210444-516-被窝回.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_17_21_04_44/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_17_21_04_44/录制-1986461465-20260417-210444-516-被窝回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_17_09_07_40",
+    "title": "早安~",
+    "date": "2026-04-17",
+    "time": "09:07:40",
+    "startTime": "09:07",
+    "endTime": "13:31",
+    "duration": 15859,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_17_09_07_40/录制-1986461465-20260417-090740-776-早安~.xml",
+    "cover": "/data/streams/kloa/2026_04_17_09_07_40/录制-1986461465-20260417-090740-776-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_17_09_07_40/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_17_09_07_40/录制-1986461465-20260417-090740-776-早安~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_17_09_07_40/录制-1986461465-20260415-200246-333-唱歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_15_20_02_46",
     "title": "唱歌~",
     "date": "2026-04-15",

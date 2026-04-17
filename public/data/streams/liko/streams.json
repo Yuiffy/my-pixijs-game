@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_04_17_21_28_45",
+    "title": "兔兔出击！",
+    "date": "2026-04-17",
+    "time": "21:28:45",
+    "startTime": "21:28",
+    "endTime": "00:16",
+    "duration": 10134,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_17_21_28_45/录制-1713548468-20260417-212845-391-兔兔出击！_merged.xml",
+    "cover": "/data/streams/liko/2026_04_17_21_28_45/录制-1713548468-20260417-212845-391-兔兔出击！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_17_21_28_45/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_17_21_28_45/录制-1713548468-20260417-212845-391-兔兔出击！_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_04_17_21_28_45/录制-1713548468-20260416-200439-699-今天是病弱小兔_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_16_20_04_39",
     "title": "今天是病弱小兔",
     "date": "2026-04-16",

@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="26966466" shortid="0" name="栞栞Shiori" title="早安獭獭栞！" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-04-17T10:40:13.0100478+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.080,1,25,16777215,1776393613315,0,8104955,0" user="石激流">对素过敏，那就多吃肉（</d>
+  <d p="1.388,1,25,16777215,1776393614822,0,590870,0" user="摄影师小z">吃草</d>
+  <d p="1.388,1,25,16777215,1776393613943,0,263699,0" user="Thepigcanfly">你瘦腿了我的饼饼大腿谁给我补啊</d>
+  <d p="1.897,1,25,16777215,1776393614127,0,2900100,0" user="ACGX兔子X姆Q">免疫力强</d>
+  <d p="1.897,1,25,16777215,1776393614312,0,383754620,0" user="寒山独見君">你还瘦腿干啥</d>
+  <d p="1.897,4,25,14893055,1776393614685,0,13817027,0" user="DDBLYX">骷髅兵还瘦腿啊</d>
+  <d p="5.284,1,25,16777215,1776393617990,0,548598279,0" user="天问一号改二甲">何意味？</d>
+  <d p="9.190,1,25,16777215,1776393621924,0,436378687,0" user="Shiningの银之匙">不许打</d>
+  <d p="9.190,1,25,16772431,1776393622669,0,528673,0" user="四片镜子">？</d>
+  <d p="10.912,1,25,16777215,1776393623232,0,227541505,0" user="士多啤梨运输机">谁家骷髅兵？</d>
+  <d p="13.493,1,25,16772431,1776393626677,0,1609635,0" user="Lily小奏">流口水</d>
+  <d p="18.285,1,25,16777215,1776393630982,0,263699,0" user="Thepigcanfly">青霉素过敏是不是有点太惨了</d>
+  <d p="20.005,1,25,16777215,1776393632448,0,8153029,0" user="ShioriGolden">[栞栞收藏集表情包_抱抱]</d>
+  <d p="20.005,4,25,14893055,1776393633280,0,518555227,0" user="牛头人酋长牛魔王">栞栞你要去兼职地偶吗？</d>
+  <d p="20.882,1,25,16777215,1776393633755,0,289592475,0" user="小马驹好歌剧">瘦腿了，我们过年吃什么</d>
+  <d p="22.631,1,25,16777215,1776393634757,0,241307,0" user="海豹村送豹员">流口水</d>
+  <d p="22.631,4,25,14893055,1776393634951,0,4211233,0" user="一杯口三色同顺dora桑">你都跟竹竿是的 还打瘦腿吗？</d>
+  <d p="22.631,4,25,14893055,1776393635564,0,518555227,0" user="牛头人酋长牛魔王">何意味？</d>
+  <d p="25.214,4,25,14893055,1776393638041,0,16547,0" user="しぐれそら">过敏是免疫反应太严重了，自己攻击自己</d>
+  <d p="25.214,1,25,16772431,1776393638264,0,1609635,0" user="Lily小奏">青霉素都过敏嘛</d>
+  <d p="26.535,1,25,16777215,1776393639405,0,194238315,0" user="壹瞌左颂星">打完瘦腿针都成竹竿了</d>
+  <d p="33.002,1,25,16777215,1776393645635,0,2900100,0" user="ACGX兔子X姆Q">都是骷髅兵还要瘦腿啊</d>
+  <d p="34.296,1,25,16772431,1776393646795,0,1609635,0" user="Lily小奏">流口水</d>
+  <d p="35.185,1,25,16777215,1776393647712,0,1536477294,0" user="荒雪zmm">天天吃椰子鸡就好了</d>
+  <d p="38.215,1,25,16777215,1776393650670,0,2900100,0" user="ACGX兔子X姆Q">流汗</d>
+  <d p="48.183,4,25,14893055,1776393661451,0,33544574,0" user="栞栞家的艾伦Lily">你听肉毒素是什么好东西吗，你还想打</d>
+  <d p="53.816,1,25,16777215,1776393666584,0,488618317,0" user="_skyhill">流汗</d>
+  <d p="54.684,1,25,16772431,1776393667994,0,14868174,0" user="栞栞欺负我">瘦腿针可以打那里吗</d>
+  <d p="57.761,4,25,14893055,1776393670743,0,4271544,0" user="ノ绯夜">现在就是竹竿骷髅兵</d>
+  <d p="57.761,1,25,16777215,1776393670775,0,2900100,0" user="ACGX兔子X姆Q">青梅素，很多针都不能打了</d>
+  <d p="58.582,1,25,16777215,1776393671485,0,330220864,0" user="无产阶级钢铁战士">多吃点饭 少吃外卖</d>
+  <gift ts="61.607" user="屑狐狸不会呼吸" uid="237807054" giftname="小花花" giftcount="10" />
+  <d p="62.902,1,25,16777215,1776393676230,0,5340147,0" user="Amadeus079">是这样的</d>
+  <d p="69.408,1,25,16777215,1776393681622,0,8153029,0" user="ShioriGolden">你瘦腿了獭獭栞过年时就天塌了</d>
+  <d p="69.408,4,25,14893055,1776393681894,0,4211233,0" user="一杯口三色同顺dora桑">。。。</d>
+  <d p="71.967,1,25,16777215,1776393685376,0,27307600,0" user="柯瓦特罗_闪电">生病了吗，好好休息啊</d>
+  <d p="73.304,4,25,14893055,1776393686573,0,3211235,0" user="触发内联建议">死得快快的</d>
+  <d p="76.784,1,25,16777215,1776393689050,0,263699,0" user="Thepigcanfly">你们美女真的是</d>
+  <d p="77.217,1,25,16772431,1776393689480,0,1609635,0" user="Lily小奏">流汗</d>
+  <d p="77.219,1,25,14893055,1776393690122,0,21899946,0" user="雨缘Yuri">咱们不用科技好吗</d>
+  <d p="78.080,4,25,14893055,1776393690411,0,33544574,0" user="栞栞家的艾伦Lily">这个我确实不懂了</d>
+  <d p="81.123,1,25,16777215,1776393693479,0,8153029,0" user="ShioriGolden">你也不准懂</d>
+  <d p="81.125,1,25,16777215,1776393693534,0,8155007,0" user="酒留゙">排骨精一病就倒</d>
+  <d p="81.125,1,25,16777215,1776393694063,0,194238315,0" user="壹瞌左颂星">不是葫芦身材吗</d>
+  <d p="82.409,4,25,14893055,1776393694713,0,13817027,0" user="DDBLYX">就喜欢有点肉肉的，竹竿不行，猪肝好吃</d>
+  <d p="83.283,1,25,65532,1776393696318,0,39539851,0" user="啊这你我他">骷髅身材</d>
+  <d p="83.761,1,25,16777215,1776393696292,0,36344044,0" user="优之清">你别看到她们打就去打</d>
+  <d p="83.761,1,25,16777215,1776393697056,0,15298321,0" user="正直少年李浩宇">畸形审美</d>
+  <d p="85.006,1,25,16777215,1776393697329,0,488618317,0" user="_skyhill">太瘦了塞牙</d>
+  <d p="86.321,1,25,16777215,1776393699486,0,8153029,0" user="ShioriGolden">[栞栞收藏集表情包_憋说了]</d>
+  <d p="87.599,1,25,16777215,1776393700951,0,2900100,0" user="ACGX兔子X姆Q">你已经是竹竿了</d>
+  <d p="88.485,4,25,14893055,1776393701585,0,33544574,0" user="栞栞家的艾伦Lily">因为见过不少肉毒素过量的案例</d>
+  <d p="89.784,1,25,16777215,1776393703272,0,436378687,0" user="Shiningの银之匙">不懂也不许打</d>
+  <d p="92.821,1,25,16772431,1776393705581,0,1609635,0" user="Lily小奏">太竹竿不好看的</d>
+  <d p="94.107,1,25,65532,1776393706358,0,15741605,0" user="丶镜不能鉴">笑嘻</d>
+  <d p="94.107,1,25,16777215,1776393707249,0,162732,0" user="蓝琊雪">小栞还不是竹竿吗</d>
+  <d p="95.411,1,25,16772431,1776393708813,0,1609635,0" user="Lily小奏">流口水</d>
+  <d p="101.484,1,25,65532,1776393714495,0,39539851,0" user="啊这你我他">现在都流行肉肉的</d>
+  <d p="103.217,1,25,14893055,1776393715549,0,110901444,0" user="灰者如烬">骷髅兵在游戏里都是炮灰</d>
+  <d p="104.472,1,25,16777215,1776393717828,0,8155007,0" user="酒留゙">别学枣子姐当骷髅怪好吗？</d>
+  <d p="105.822,1,25,16777215,1776393718512,0,241307,0" user="海豹村送豹员">别打别打</d>
+  <d p="109.285,1,25,16777215,1776393721984,0,1988157,0" user="沙豆QAQ">真别吧…你这个声音一听就不胖，再瘦真成竹竿了…</d>
+  <d p="110.578,1,25,16777215,1776393723403,0,548598279,0" user="天问一号改二甲">再瘦，哪天有人开个亡灵法术把小栞召唤走了</d>
+  <d p="114.870,1,25,16777215,1776393727777,0,8155007,0" user="酒留゙">别学枣子姐当骷髅精好吗？</d>
+  <d p="116.224,1,25,16777215,1776393728625,0,488618317,0" user="_skyhill">流汗</d>
+  <d p="116.224,1,25,16777215,1776393729050,0,2900100,0" user="ACGX兔子X姆Q">那个素打了不好的</d>
+  <d p="118.808,1,25,16777215,1776393732373,0,2900100,0" user="ACGX兔子X姆Q">流汗</d>
+  <d p="120.106,1,25,16777215,1776393733266,0,15298321,0" user="正直少年李浩宇">对牌子过敏是吧</d>
+  <gift ts="127.918" user="jkdis" uid="34935785" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="133.983,1,25,65532,1776393747347,0,39539851,0" user="啊这你我他">脂肪压迫声带是吧</d>
+  <d p="134.426,4,25,14893055,1776393747713,0,12396639,0" user="Kagarixx">听听大肉音</d>
+  <d p="136.584,1,25,16777215,1776393749601,0,548598279,0" user="天问一号改二甲">流汗</d>
+  <d p="137.039,1,25,14893055,1776393749340,0,21899946,0" user="雨缘Yuri">一听就不大的声音</d>
+  <d p="137.883,1,25,14893055,1776393750847,0,180865397,0" user="战略忽悠局对外宣传一处处长">通过声音不是只能判断大雷吗</d>
+  <d p="139.566,1,25,16777215,1776393752555,0,8153029,0" user="ShioriGolden">我能判断出来主播现在嗓子生病了</d>
+  <d p="141.785,1,25,14893055,1776393754319,0,29488161,0" user="黑暗罗辑森林">声学领域高手这块</d>
+  <d p="141.785,1,25,16777215,1776393754693,0,330220864,0" user="无产阶级钢铁战士">没事看看雨姐视频  看看那体格</d>
+  <d p="143.500,1,25,16777215,1776393756558,0,762639,0" user="组织上的领导">不是不胖，是平板</d>
+  <d p="144.811,1,25,16777215,1776393758042,0,8153029,0" user="ShioriGolden">厉害吧</d>
+  <d p="145.680,4,25,14893055,1776393758620,0,11139484,0" user="走远y1">脂肪压迫声带这一块</d>
+  <d p="146.120,4,25,14893055,1776393758654,0,3211235,0" user="触发内联建议">我们肥肥的腔体共鸣你不懂</d>
+  <d p="146.120,1,25,16777215,1776393759680,0,194238315,0" user="壹瞌左颂星">幸好是过敏，要不小栞脑袋也有尖尖的了</d>
+  <d p="147.406,1,25,16777215,1776393759728,0,8153029,0" user="ShioriGolden">[栞栞收藏集表情包_不愧是我]</d>
+  <d p="150.014,1,25,16777215,1776393762825,0,383754620,0" user="寒山独見君">打不了是好事，不然太瘦容易生病</d>
+  <d p="150.877,1,25,16777215,1776393763310,0,263699,0" user="Thepigcanfly">debu是吧</d>
+  <d p="152.616,4,25,14893055,1776393765490,0,4271544,0" user="ノ绯夜">声音确实判断不了胖瘦 只能判断一下大小</d>
+  <d p="153.906,1,25,16777215,1776393766985,0,109061100,0" user="这种人_">太胖了脂肪压迫神声带</d>
+  <d p="157.822,1,25,16772431,1776393770674,0,1609635,0" user="Lily小奏">流口水</d>
+  <d p="159.988,4,25,14893055,1776393772394,0,7043959,0" user="栞栞爱吃麦麦">吃草</d>
+  <d p="160.411,4,25,14893055,1776393773785,0,293726409,0" user="aaa凉乞钞Ciallo版">喝水</d>
+  <d p="162.579,1,25,16777215,1776393776116,0,34419598,0" user="ikaLove">时代的审美也在变，打了可能后悔但是不打不会</d>
+  <d p="162.997,1,25,16777215,1776393776561,0,12419203,0" user="心有海兮何忆吾宁">圣代？哪儿有圣代？</d>
+  <d p="166.918,1,25,16777215,1776393779202,0,342927910,0" user="酷冰幽刃">小栞不是钢板</d>
+  <d p="171.683,1,25,65532,1776393784741,0,39539851,0" user="啊这你我他">暗示你自己吗</d>
+  <d p="173.370,4,25,14893055,1776393786183,0,291329140,0" user="鸣风琳">流口水</d>
+  <d p="176.882,1,25,16777215,1776393789531,0,349281,0" user="为了脸萌">唱美声得胖吧</d>
+  <d p="179.476,1,25,65532,1776393792335,0,4978669,0" user="ErrorJJ">可能体重大 中气足</d>
+  <d p="179.911,1,25,16777215,1776393793420,0,488618317,0" user="_skyhill">流汗</d>
+  <d p="181.200,1,25,16777215,1776393793685,0,241307,0" user="海豹村送豹员">笑嘻</d>
+</i>
