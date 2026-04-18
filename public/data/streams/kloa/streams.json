@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026_04_18_20_02_47",
+    "title": "恶魔在歌唱",
+    "date": "2026-04-18",
+    "time": "20:02:47",
+    "startTime": "20:02",
+    "endTime": "00:33",
+    "duration": 16294,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_18_20_02_47/录制-1986461465-20260418-200247-343-恶魔在歌唱_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_18_20_02_47/录制-1986461465-20260418-200247-343-恶魔在歌唱.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_18_20_02_47/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_18_20_02_47/录制-1986461465-20260418-200247-343-恶魔在歌唱_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_18_10_52_45",
+    "title": "早安~等早餐",
+    "date": "2026-04-18",
+    "time": "10:52:45",
+    "startTime": "10:52",
+    "endTime": "11:04",
+    "duration": 760,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_18_10_52_45/录制-1986461465-20260418-105245-481-早安~等早餐.xml",
+    "cover": "/data/streams/kloa/2026_04_18_10_52_45/录制-1986461465-20260418-105245-481-早安~等早餐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_18_09_07_05",
+    "title": "早安~等早餐",
+    "date": "2026-04-18",
+    "time": "09:07:05",
+    "startTime": "09:07",
+    "endTime": "10:50",
+    "duration": 6186,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_18_09_07_05/录制-1986461465-20260418-090705-438-早安~等早餐.xml",
+    "cover": "/data/streams/kloa/2026_04_18_09_07_05/录制-1986461465-20260418-090705-438-早安~等早餐.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_18_09_07_05/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_18_09_07_05/录制-1986461465-20260418-090705-438-早安~等早餐_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_18_09_07_05/录制-1986461465-20260417-223814-941-被窝回_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_17_22_38_14",
     "title": "被窝回",
     "date": "2026-04-17",

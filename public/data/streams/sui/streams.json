@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_04_19_00_01_54",
+    "title": "岁己——来袭",
+    "date": "2026-04-18",
+    "time": "00:01:54",
+    "startTime": "00:01",
+    "endTime": "00:03",
+    "duration": 122,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_19_00_01_54/2026_04_19_00_01_54_岁己——来袭_DDTV5_3.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_04_19_00_01_54/录制-25788785-20260418-195105-463-岁己——生化危机来袭_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_18_19_51_05",
+    "title": "岁己——来袭",
+    "date": "2026-04-18",
+    "time": "19:51:05",
+    "startTime": "19:51",
+    "endTime": "00:03",
+    "duration": 15155,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_18_19_51_05/2026_04_18_19_51_24_岁己——生化危机来袭_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_18_19_51_05/录制-25788785-20260418-195105-463-岁己——生化危机来袭.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_18_19_51_05/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_18_19_51_05/录制-25788785-20260418-195105-463-岁己——生化危机来袭_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_04_17_14_44_22",
     "title": "岁己——生化危机来袭",
     "date": "2026-04-17",
@@ -13,7 +47,8 @@
     "cover": "/data/streams/sui/2026_04_17_14_44_22/录制-25788785-20260417-144432-618-岁己——生化危机来袭.cover.jpg",
     "highlights": "/data/streams/sui/2026_04_17_14_44_22/highlights.md",
     "images": [
-      "/data/streams/sui/2026_04_17_14_44_22/录制-25788785-20260417-144432-618-岁己——生化危机来袭_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_04_17_14_44_22/录制-25788785-20260417-144432-618-岁己——生化危机来袭_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_04_17_14_44_32/录制-25788785-20260417-144432-618-岁己——生化危机来袭_SCREENSHOTS.jpg"
     ]
   },
   {

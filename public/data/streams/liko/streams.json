@@ -1,5 +1,92 @@
 [
   {
+    "id": "2026_04_18_21_07_49",
+    "title": "唠嗑康康桌面",
+    "date": "2026-04-18",
+    "time": "21:07:49",
+    "startTime": "21:07",
+    "endTime": "01:22",
+    "duration": 15329,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_18_21_07_49/录制-1713548468-20260418-210749-392-唠嗑康康桌面_merged.xml",
+    "cover": "/data/streams/liko/2026_04_18_21_07_49/录制-1713548468-20260418-210749-392-唠嗑康康桌面.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_18_21_07_49/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_18_21_07_49/录制-1713548468-20260418-210749-392-唠嗑康康桌面_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_18_11_38_46",
+    "title": "虚弱兔兔",
+    "date": "2026-04-18",
+    "time": "11:38:46",
+    "startTime": "11:38",
+    "endTime": "13:12",
+    "duration": 5662,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_18_11_38_46/录制-1713548468-20260418-113846-378-虚弱兔兔.xml",
+    "cover": "/data/streams/liko/2026_04_18_11_38_46/录制-1713548468-20260418-113846-378-虚弱兔兔.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_18_11_38_46/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_18_11_38_46/录制-1713548468-20260418-113846-378-虚弱兔兔_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_04_18_11_38_46/录制-1713548468-20260418-113846-378-虚弱兔兔_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_18_10_50_39",
+    "title": "虚弱兔兔",
+    "date": "2026-04-18",
+    "time": "10:50:39",
+    "startTime": "10:50",
+    "endTime": "11:33",
+    "duration": 2582,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_18_10_50_39/录制-1713548468-20260418-105039-221-虚弱兔兔_merged.xml",
+    "cover": "/data/streams/liko/2026_04_18_10_50_39/录制-1713548468-20260418-105039-221-虚弱兔兔.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_18_10_50_39/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_18_10_50_39/录制-1713548468-20260418-105039-221-虚弱兔兔_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_18_10_29_18",
+    "title": "虚弱兔兔",
+    "date": "2026-04-18",
+    "time": "10:29:18",
+    "startTime": "10:29",
+    "endTime": "10:43",
+    "duration": 891,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_18_10_29_18/录制-1713548468-20260418-102918-360-虚弱兔兔.xml",
+    "cover": "/data/streams/liko/2026_04_18_10_29_18/录制-1713548468-20260418-102918-360-虚弱兔兔.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_18_10_29_18/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_18_10_29_18/录制-1713548468-20260418-102918-360-虚弱兔兔_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_04_18_10_29_18/录制-1713548468-20260418-104645-404-虚弱兔兔_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_18_10_06_55",
+    "title": "虚弱兔兔",
+    "date": "2026-04-18",
+    "time": "10:06:55",
+    "startTime": "10:06",
+    "endTime": "10:23",
+    "duration": 1056,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_18_10_06_55/录制-1713548468-20260418-100655-705-虚弱兔兔.xml",
+    "cover": "/data/streams/liko/2026_04_18_10_06_55/录制-1713548468-20260418-100655-705-虚弱兔兔.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_04_18_10_06_55/录制-1713548468-20260417-212845-391-兔兔出击！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_17_21_28_45",
     "title": "兔兔出击！",
     "date": "2026-04-17",

@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_04_18_14_02_45",
+    "title": "下午好 随便聊聊",
+    "date": "2026-04-18",
+    "time": "14:02:45",
+    "startTime": "14:02",
+    "endTime": "16:22",
+    "duration": 8459,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_18_14_02_45/录制-1713546334-20260418-140245-497-下午好 随便聊聊.xml",
+    "cover": "/data/streams/hazel/2026_04_18_14_02_45/录制-1713546334-20260418-140245-497-下午好 随便聊聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_18_14_02_45/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_18_14_02_45/录制-1713546334-20260418-140245-497-下午好 随便聊聊_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_04_18_14_02_45/录制-1713546334-20260415-214453-409-测试_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_15_21_44_53",
     "title": "测试",
     "date": "2026-04-15",
