@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_04_19_20_07_21",
+    "title": "随意聊聊~",
+    "date": "2026-04-19",
+    "time": "20:07:21",
+    "startTime": "20:07",
+    "endTime": "23:41",
+    "duration": 12894,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_19_20_07_21/录制-1986461465-20260419-200721-255-观影回-经典名作【布达佩斯大饭店】_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_19_20_07_21/录制-1986461465-20260419-200721-255-观影回-经典名作【布达佩斯大饭店】.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_19_20_07_21/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_19_20_07_21/录制-1986461465-20260419-200721-255-观影回-经典名作【布达佩斯大饭店】_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_19_10_08_12",
+    "title": "等外卖唱唱歌！",
+    "date": "2026-04-19",
+    "time": "10:08:12",
+    "startTime": "10:08",
+    "endTime": "13:32",
+    "duration": 12254,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_19_10_08_12/录制-1986461465-20260419-100812-284-克罗雅的早安日常.xml",
+    "cover": "/data/streams/kloa/2026_04_19_10_08_12/录制-1986461465-20260419-100812-284-克罗雅的早安日常.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_19_10_08_12/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_19_10_08_12/录制-1986461465-20260419-100812-284-克罗雅的早安日常_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_04_19_10_08_12/录制-1986461465-20260419-100812-284-克罗雅的早安日常_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_19_10_08_12/录制-1986461465-20260418-200247-343-恶魔在歌唱_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_18_20_02_47",
     "title": "恶魔在歌唱",
     "date": "2026-04-18",

@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="26966466" shortid="0" name="栞栞Shiori" title="小栞来也！" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-04-19T21:13:05.3050035+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.100,4,25,14893055,1776604384405,0,293726409,0" user="aaa凉乞钞Ciallo版">小孩子别说这种话</d>
+  <d p="0.100,1,25,16777215,1776604384986,0,4256337,0" user="邪恶耿鬼">真能玩吗</d>
+  <d p="1.376,1,25,16777215,1776604386039,0,888034,0" user="sunafternoon">玩玩栞子</d>
+  <d p="1.376,4,25,14893055,1776604386349,0,8045705,0" user="栞栞家的乜乜咩">栞子吗</d>
+  <d p="1.380,1,25,65532,1776604386363,0,19646119,0" user="LSW711">包饺子</d>
+  <d p="1.735,1,25,16777215,1776604386362,0,323778881,0" user="放任きずな">让我玩玩</d>
+  <d p="3.073,1,25,16777215,1776604387615,0,3546586296617761,0" user="你看我的眼鸭">？</d>
+  <d p="3.073,1,25,16777215,1776604387799,0,50616856,0" user="就爱摆烂-_-">？</d>
+  <d p="3.073,1,25,16772431,1776604387997,0,528673,0" user="四片镜子">？</d>
+  <d p="3.990,1,25,65532,1776604388842,0,1346944,0" user="竹达小爱Akiayana_zZ">让我玩玩</d>
+  <d p="5.669,1,25,16777215,1776604389767,0,276975960,0" user="_SyTeriri">我承认确实好玩</d>
+  <d p="5.669,1,25,16777215,1776604390210,0,8030188,0" user="汉斯的绿色魔鬼">玩玩栞子</d>
+  <d p="6.934,1,25,16777215,1776604391198,0,24562288,0" user="白日梦-__-">玩玩栞子</d>
+  <d p="7.897,1,25,14893055,1776604392945,0,11521248,0" user="一只路过的红豆派">？</d>
+  <d p="7.897,4,25,14893055,1776604393134,0,202329,0" user="若雪">？</d>
+  <d p="8.265,4,25,14893055,1776604393028,0,176780553,0" user="魔焰布布王">玩玩栞字</d>
+  <d p="8.265,1,25,16777215,1776604393756,0,50616856,0" user="就爱摆烂-_-">给我玩玩</d>
+  <d p="9.174,1,25,16777215,1776604393937,0,1665309743,0" user="我只是在记录">在说啥呢</d>
+  <d p="9.174,1,25,16777215,1776604394725,0,248629123,0" user="kunkun的水军">什么意思</d>
+  <d p="9.533,1,25,16777215,1776604394376,0,175445896,0" user="御坂9982________">[悠亚收藏集表情包_抱抱]</d>
+  <d p="10.892,1,25,16777215,1776604396114,0,100467388,0" user="海蜇皮皮伊">玩玩栞子</d>
+  <d p="10.893,1,25,16772431,1776604396244,0,24324372,0" user="SaikiClaudius">玩玩栞子[妙]</d>
+  <d p="13.121,4,25,14893055,1776604397386,0,139165517,0" user="便宜嗓子就嗯造">好吃不过饺子，好玩不过。。</d>
+  <d p="14.435,4,25,14893055,1776604399157,0,50736903,0" user="青空嵐">玩玩栞</d>
+  <d p="18.256,1,25,16777215,1776604403191,0,13854521,0" user="AltdouF">你好</d>
+  <d p="19.562,4,25,14893055,1776604404339,0,3211235,0" user="触发内联建议">不是怎么就直播30分钟了</d>
+  <d p="20.937,1,25,16777215,1776604405189,0,4256337,0" user="邪恶耿鬼">东百民谣</d>
+  <d p="22.218,1,25,16777215,1776604406806,0,106219247,0" user="爱池繁的猫">这是yygq</d>
+  <d p="25.142,1,25,16772431,1776604409987,0,528673,0" user="四片镜子">好在好玩</d>
+  <d p="27.746,1,25,16777215,1776604412001,0,1064574859,0" user="知名网络评论员">好就好在</d>
+  <d p="28.707,1,25,16777215,1776604413752,0,85444707,0" user="穆尼卡">玩玩你的</d>
+  <d p="33.860,1,25,16777215,1776604418158,0,13854521,0" user="AltdouF">栞神51什么安排</d>
+  <d p="35.194,4,25,14893055,1776604419906,0,518555227,0" user="牛头人酋长牛魔王">好玩不过鸟子，栞鸟驿站里面有鸟子</d>
+  <d p="36.458,1,25,14893055,1776604421476,0,102750932,0" user="Koorizz9">[栞栞收藏集表情包_盯]</d>
+  <d p="37.782,4,25,14893055,1776604422571,0,518555227,0" user="牛头人酋长牛魔王">笑嘻</d>
+  <d p="40.776,4,25,14893055,1776604425679,0,33544574,0" user="栞栞家的艾伦Lily">我进来就发现直播好久了</d>
+  <d p="40.776,1,25,16777215,1776604425991,0,15301794,0" user="凛冬LinDow">云吞是馄饨吧</d>
+  <d p="44.268,1,25,16777215,1776604429117,0,2629426,0" user="YHX520">TTK</d>
+  <d p="45.592,4,25,14893055,1776604430886,0,139165517,0" user="便宜嗓子就嗯造">坏死了喵</d>
+  <d p="50.801,1,25,16777215,1776604435449,0,194238315,0" user="壹瞌左颂星">换麦了吗，感觉声音清晰了好多</d>
+  <d p="52.440,1,25,16777215,1776604437901,0,263699,0" user="Thepigcanfly">我们mixup也是越来越好了，都请上栞神了</d>
+  <d p="60.237,1,25,16777215,1776604444845,0,323778881,0" user="放任きずな">都不关电脑的吗宝宝</d>
+  <d p="61.219,4,25,14893055,1776604446212,0,8045705,0" user="栞栞家的乜乜咩">那你为啥不关电脑</d>
+  <d p="84.938,1,25,14893055,1776604469036,0,180865397,0" user="战略忽悠局对外宣传一处处长">什么，电脑还要关吗</d>
+  <d p="86.241,1,25,16777215,1776604471633,0,323778881,0" user="放任きずな">要是没有数据处理最好关上</d>
+  <d p="87.541,4,25,14893055,1776604471968,0,33544574,0" user="栞栞家的艾伦Lily">怪不得回来打游戏看到了</d>
+  <d p="89.821,4,25,14893055,1776604474885,0,228847,0" user="手偶鸟">我从来都不关电脑</d>
+  <d p="95.006,1,25,16777215,1776604479555,0,4256337,0" user="邪恶耿鬼">你现在最紧要的是重启一下电脑</d>
+  <d p="96.310,1,25,65532,1776604481449,0,1346944,0" user="竹达小爱Akiayana_zZ">渐渐的忘记忘记了时间</d>
+  <d p="97.938,1,25,16777215,1776604482999,0,1064574859,0" user="知名网络评论员">别给我脑哥累死了</d>
+  <d p="104.112,4,25,14893055,1776604488403,0,8045705,0" user="栞栞家的乜乜咩">我今天出门还忘记关空调给我妈妈骂了</d>
+  <d p="108.384,1,25,16777215,1776604492527,0,19929984,0" user="-昕宝yoake-">我冰箱都没关过 为什么要关电脑</d>
+  <d p="108.384,1,25,14893055,1776604493633,0,180865397,0" user="战略忽悠局对外宣传一处处长">24小时监控直播间，真不关</d>
+  <d p="112.238,1,25,16777215,1776604497331,0,263699,0" user="Thepigcanfly">那栞神栞神我 你冰箱为什么一年24小时都不关啊（</d>
+  <d p="113.213,4,25,14893055,1776604498172,0,518555227,0" user="牛头人酋长牛魔王">电脑也会猪脑过载吗？</d>
+  <d p="114.514,1,25,16777215,1776604499245,0,412624429,0" user="wtkl没灵魂">还是水冷</d>
+  <d p="118.407,4,25,14893055,1776604502892,0,139165517,0" user="便宜嗓子就嗯造">感觉好高的延迟，有一二十秒</d>
+  <d p="119.706,1,25,16777215,1776604504889,0,13854521,0" user="AltdouF">已消失</d>
+  <d p="120.043,1,25,16772431,1776604505214,0,528673,0" user="四片镜子">电脑那么烧？</d>
+  <d p="120.984,4,25,14893055,1776604505420,0,291329140,0" user="鸣风琳">TTK</d>
+  <d p="126.196,1,25,16777215,1776604510777,0,358737122,0" user="天高三尺三_">再见了栞栞</d>
+  <d p="126.196,1,25,16777215,1776604510875,0,500573649,0" user="助手Amadeus">今晚干啥[花]</d>
+  <d p="129.172,4,25,14893055,1776604513573,0,33544574,0" user="栞栞家的艾伦Lily">怎么可能不见了</d>
+  <d p="129.173,1,25,16777215,1776604513783,0,323778881,0" user="放任きずな">我也充去了</d>
+  <d p="131.399,1,25,16777215,1776604516337,0,106219247,0" user="爱池繁的猫">不见了说是[大笑]</d>
+  <d p="135.299,4,25,14893055,1776604519655,0,518555227,0" user="牛头人酋长牛魔王">ciallo</d>
+  <d p="135.299,4,25,14893055,1776604519818,0,228847,0" user="手偶鸟">重启是要消耗 ttk 吗</d>
+  <d p="136.565,4,25,14893055,1776604521477,0,293726409,0" user="aaa凉乞钞Ciallo版">好的好的</d>
+  <d p="137.916,1,25,16777215,1776604522163,0,4256337,0" user="邪恶耿鬼">再见了栞小妹</d>
+  <d p="137.916,1,25,65532,1776604522521,0,1346944,0" user="竹达小爱Akiayana_zZ">好</d>
+  <d p="138.245,1,25,16777215,1776604523541,0,15301794,0" user="凛冬LinDow">不可以</d>
+  <d p="139.168,1,25,16777215,1776604524216,0,412624429,0" user="wtkl没灵魂">不好</d>
+  <d p="139.554,4,25,14893055,1776604523828,0,444189382,0" user="香辣土逗">好</d>
+  <d p="140.504,4,25,14893055,1776604525839,0,8045705,0" user="栞栞家的乜乜咩">行</d>
+  <d p="141.776,1,25,16777215,1776604526445,0,358737122,0" user="天高三尺三_">再见了</d>
+  <d p="142.153,1,25,16777215,1776604527324,0,12884474,0" user="知识的彼岸">好的去看别的妹妹喽！</d>
+  <d p="143.078,4,25,14893055,1776604528444,0,13817027,0" user="DDBLYX">收到</d>
+  <d p="145.711,1,25,16777215,1776604530481,0,500573649,0" user="助手Amadeus">[栞栞收藏集表情包_收到]</d>
+  <d p="145.711,1,25,16777215,1776604530970,0,248629123,0" user="kunkun的水军">都什么年代，电脑一年不关都没事</d>
+  <d p="149.610,4,25,14893055,1776604533767,0,8045705,0" user="栞栞家的乜乜咩">拜拜拜拜</d>
+  <d p="149.610,4,25,14893055,1776604533810,0,20825047,0" user="baby_mon_ster">好的，等你</d>
+  <d p="149.610,1,25,16777215,1776604534154,0,13854521,0" user="AltdouF">晚安晚安</d>
+  <d p="149.976,1,25,16777215,1776604534133,0,100467388,0" user="海蜇皮皮伊">收到</d>
+  <d p="149.976,1,25,16777215,1776604534417,0,323778881,0" user="放任きずな">把电源线吗</d>
+  <d p="150.871,1,25,16777215,1776604536167,0,412624429,0" user="wtkl没灵魂">看别的妹妹去了</d>
+</i>
