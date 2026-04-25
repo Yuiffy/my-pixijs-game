@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_04_25_15_10_32",
+    "title": "下午好 聊聊天和同期打电话",
+    "date": "2026-04-25",
+    "time": "15:10:32",
+    "startTime": "15:10",
+    "endTime": "19:40",
+    "duration": 16200,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_25_15_10_32/录制-1713546334-20260425-151032-050-下午好 聊聊天和同期打电话_merged.xml",
+    "cover": "/data/streams/hazel/2026_04_25_15_10_32/录制-1713546334-20260425-151032-050-下午好 聊聊天和同期打电话.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_25_15_10_32/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_25_15_10_32/录制-1713546334-20260425-151032-050-下午好 聊聊天和同期打电话_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_04_25_15_10_32/录制-1713546334-20260425-151032-050-下午好 聊聊天和同期打电话_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_24_15_20_28",
+    "title": "下午好 JK变HR：“感谢你的投递”",
+    "date": "2026-04-24",
+    "time": "15:20:28",
+    "startTime": "15:20",
+    "endTime": "17:26",
+    "duration": 7578,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_24_15_20_28/录制-1713546334-20260424-152028-018-下午好 JK变HR：“感谢你的投递”.xml",
+    "cover": "/data/streams/hazel/2026_04_24_15_20_28/录制-1713546334-20260424-152028-018-下午好 JK变HR：“感谢你的投递”.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_24_15_20_28/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_24_15_20_28/录制-1713546334-20260424-152028-018-下午好 JK变HR：“感谢你的投递”_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_04_24_15_20_28/录制-1713546334-20260424-152028-018-下午好 JK变HR：“感谢你的投递”_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_20_00_20_26",
     "title": "夜宵回",
     "date": "2026-04-19",
