@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_04_26_20_00_10",
+    "title": "晚上好 百日果汁回",
+    "date": "2026-04-26",
+    "time": "20:00:10",
+    "startTime": "20:00",
+    "endTime": "22:21",
+    "duration": 8502,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_04_26_20_00_10/录制-1713546334-20260426-200010-267-晚上好 百日果汁回_merged.xml",
+    "cover": "/data/streams/hazel/2026_04_26_20_00_10/录制-1713546334-20260426-200010-267-晚上好 百日果汁回.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_04_26_20_00_10/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_04_26_20_00_10/录制-1713546334-20260426-200010-267-晚上好 百日果汁回_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_04_26_20_00_10/录制-1713546334-20260425-151032-050-下午好 聊聊天和同期打电话_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_04_26_20_00_10/录制-1713546334-20260425-151032-050-下午好 聊聊天和同期打电话_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_25_15_10_32",
     "title": "下午好 聊聊天和同期打电话",
     "date": "2026-04-25",
