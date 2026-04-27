@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_04_27_20_02_57",
+    "title": "晚上好！赶紧进来找你有事",
+    "date": "2026-04-27",
+    "time": "20:02:57",
+    "startTime": "20:02",
+    "endTime": "00:11",
+    "duration": 14986,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_27_20_02_57/2026_04_27_20_03_17_来摸鱼！摸鱼茶水间_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_27_20_02_57/录制-25788785-20260427-200257-621-来摸鱼！摸鱼茶水间.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_27_20_02_57/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_27_20_02_57/录制-25788785-20260427-200257-621-来摸鱼！摸鱼茶水间_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_27_15_08_47",
+    "title": "来摸鱼！摸鱼茶水间",
+    "date": "2026-04-27",
+    "time": "15:08:47",
+    "startTime": "15:08",
+    "endTime": "17:16",
+    "duration": 7680,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_27_15_08_47/录制-25788785-20260427-150858-603-来摸鱼！摸鱼茶水间.xml",
+    "cover": "/data/streams/sui/2026_04_27_15_08_47/录制-25788785-20260427-150858-603-来摸鱼！摸鱼茶水间.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_27_15_08_47/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_27_15_08_47/录制-25788785-20260427-150858-603-来摸鱼！摸鱼茶水间_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_26_20_00_53",
     "title": "第四届饼amp;岁合唱歌回",
     "date": "2026-04-26",
@@ -61,7 +95,8 @@
       "/data/streams/sui/2026_04_26_20_00_53/录制-25788785-20260425-235105-098-异环一下！day2_COMIC_FACTORY_7.png",
       "/data/streams/sui/2026_04_26_20_00_53/录制-25788785-20260425-235105-098-异环一下！day2_COMIC_FACTORY_8.png",
       "/data/streams/sui/2026_04_26_20_00_53/录制-25788785-20260425-235105-098-异环一下！day2_COMIC_FACTORY_9.png",
-      "/data/streams/sui/2026_04_26_20_00_53/录制-25788785-20260425-235105-098-异环一下！day2_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_04_26_20_00_53/录制-25788785-20260425-235105-098-异环一下！day2_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_04_26_20_01_12/录制-25788785-20260426-200053-158-第四届饼&amp;岁合唱歌回_SCREENSHOTS.jpg"
     ]
   },
   {
