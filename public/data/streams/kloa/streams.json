@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_04_28_20_09_25",
+    "title": "竞拍之王",
+    "date": "2026-04-28",
+    "time": "20:09:25",
+    "startTime": "20:09",
+    "endTime": "00:12",
+    "duration": 14623,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_28_20_09_25/录制-1986461465-20260428-200925-432-冲刺冲刺dash.xml",
+    "cover": "/data/streams/kloa/2026_04_28_20_09_25/录制-1986461465-20260428-200925-432-冲刺冲刺dash.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_28_20_09_25/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_28_20_09_25/录制-1986461465-20260428-200925-432-冲刺冲刺dash_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_28_16_04_20",
+    "title": "竞拍之王",
+    "date": "2026-04-28",
+    "time": "16:04:20",
+    "startTime": "16:04",
+    "endTime": "18:41",
+    "duration": 9457,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_28_16_04_20/录制-1986461465-20260428-160420-352-唱唱小曲~_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_28_16_04_20/录制-1986461465-20260428-160420-352-唱唱小曲~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_28_16_04_20/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_28_16_04_20/录制-1986461465-20260428-160420-352-唱唱小曲~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_28_10_24_24",
+    "title": "初入大师段！",
+    "date": "2026-04-28",
+    "time": "10:24:24",
+    "startTime": "10:24",
+    "endTime": "11:34",
+    "duration": 4256,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_28_10_24_24/录制-1986461465-20260428-102424-264-初入大师段！.xml",
+    "cover": "/data/streams/kloa/2026_04_28_10_24_24/录制-1986461465-20260428-102424-264-初入大师段！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_04_28_10_24_24/录制-1986461465-20260428-113525-651-初入大师段！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_28_09_05_32",
+    "title": "宝宝早上好",
+    "date": "2026-04-28",
+    "time": "09:05:32",
+    "startTime": "09:05",
+    "endTime": "10:23",
+    "duration": 4726,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_28_09_05_32/录制-1986461465-20260428-090532-630-宝宝早上好.xml",
+    "cover": "/data/streams/kloa/2026_04_28_09_05_32/录制-1986461465-20260428-090532-630-宝宝早上好.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
     "id": "2026_04_26_20_05_51",
     "title": "晚上好！玩玩竞拍之王",
     "date": "2026-04-26",

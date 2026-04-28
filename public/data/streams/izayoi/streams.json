@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_04_28_14_02_20",
+    "title": "战！只狼！",
+    "date": "2026-04-28",
+    "time": "14:02:20",
+    "startTime": "14:02",
+    "endTime": "17:32",
+    "duration": 12630,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_28_14_02_20/录制-1741667419-20260428-140220-330-战！只狼！.xml",
+    "cover": "/data/streams/izayoi/2026_04_28_14_02_20/录制-1741667419-20260428-140220-330-战！只狼！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_28_14_02_20/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_28_14_02_20/录制-1741667419-20260428-140220-330-战！只狼！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_26_19_00_12",
     "title": "干点什么好呢",
     "date": "2026-04-26",

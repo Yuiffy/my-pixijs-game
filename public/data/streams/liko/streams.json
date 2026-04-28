@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_04_28_20_42_26",
+    "title": "和雪猪猪玩女吊！",
+    "date": "2026-04-28",
+    "time": "20:42:26",
+    "startTime": "20:42",
+    "endTime": "01:28",
+    "duration": 17180,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_28_20_42_26/录制-1713548468-20260428-204226-306-和雪猪猪玩女吊！.xml",
+    "cover": "/data/streams/liko/2026_04_28_20_42_26/录制-1713548468-20260428-204226-306-和雪猪猪玩女吊！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_28_20_42_26/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_28_20_42_26/录制-1713548468-20260428-204226-306-和雪猪猪玩女吊！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_28_11_05_22",
+    "title": "兔兔贴贴！",
+    "date": "2026-04-28",
+    "time": "11:05:22",
+    "startTime": "11:05",
+    "endTime": "15:48",
+    "duration": 17035,
+    "durationStr": "4.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_04_28_11_05_22/录制-1713548468-20260428-110522-828-兔兔贴贴！.xml",
+    "cover": "/data/streams/liko/2026_04_28_11_05_22/录制-1713548468-20260428-110522-828-兔兔贴贴！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_04_28_11_05_22/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_04_28_11_05_22/录制-1713548468-20260428-110522-828-兔兔贴贴！_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_04_28_11_05_22/录制-1713548468-20260427-210318-657-兔兔贴贴！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_04_28_11_05_22/录制-1713548468-20260427-210318-657-兔兔贴贴！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_27_21_03_18",
     "title": "兔兔贴贴！",
     "date": "2026-04-27",
