@@ -1,5 +1,70 @@
 [
   {
+    "id": "2026_04_29_23_05_51",
+    "title": "呼噜呼噜呼呼呼",
+    "date": "2026-04-29",
+    "time": "23:05:51",
+    "startTime": "23:05",
+    "endTime": "00:56",
+    "duration": 6685,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_29_23_05_51/2026_04_29_23_05_51_呼噜呼噜呼呼呼_DDTV5_2.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_29_22_34_50",
+    "title": "所有人开始摸鱼！",
+    "date": "2026-04-29",
+    "time": "22:34:50",
+    "startTime": "22:34",
+    "endTime": "23:05",
+    "duration": 1888,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_29_22_34_50/2026_04_29_22_34_50_所有人开始摸鱼！_DDTV5_1.xml",
+    "cover": null,
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_04_29_22_34_33",
+    "title": "所有人开始摸鱼！",
+    "date": "2026-04-29",
+    "time": "22:34:33",
+    "startTime": "22:34",
+    "endTime": "00:57",
+    "duration": 8593,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_29_22_34_33/录制-25788785-20260429-223433-155-所有人开始摸鱼！_merged.xml",
+    "cover": "/data/streams/sui/2026_04_29_22_34_33/录制-25788785-20260429-223433-155-所有人开始摸鱼！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_29_22_34_33/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_29_22_34_33/录制-25788785-20260429-223433-155-所有人开始摸鱼！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_29_15_25_49",
+    "title": "所有人开始摸鱼！",
+    "date": "2026-04-29",
+    "time": "15:25:49",
+    "startTime": "15:25",
+    "endTime": "17:04",
+    "duration": 5995,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_04_29_15_25_49/2026_04_29_15_26_00_所有人开始摸鱼！_DDTV5_1.xml",
+    "cover": "/data/streams/sui/2026_04_29_15_25_49/录制-25788785-20260429-152549-905-所有人开始摸鱼！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_04_29_15_25_49/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_04_29_15_25_49/录制-25788785-20260429-152549-905-所有人开始摸鱼！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_04_29_15_25_49/录制-25788785-20260429-152549-905-所有人开始摸鱼！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_27_20_02_57",
     "title": "晚上好！赶紧进来找你有事",
     "date": "2026-04-27",

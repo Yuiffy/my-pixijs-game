@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_04_29_22_03_04",
+    "title": "大家我有点死了",
+    "date": "2026-04-29",
+    "time": "22:03:04",
+    "startTime": "22:03",
+    "endTime": "22:04",
+    "duration": 111,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_29_22_03_04/录制-1986461465-20260429-220304-851-大家我有点死了.xml",
+    "cover": "/data/streams/kloa/2026_04_29_22_03_04/录制-1986461465-20260429-220304-851-大家我有点死了.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_29_22_03_04/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_29_22_03_04/录制-1986461465-20260429-220304-851-大家我有点死了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_29_21_30_29",
+    "title": "大家我有点死了",
+    "date": "2026-04-29",
+    "time": "21:30:29",
+    "startTime": "21:30",
+    "endTime": "21:56",
+    "duration": 1605,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_29_21_30_29/录制-1986461465-20260429-213029-903-大家我有点死了_merged.xml",
+    "cover": "/data/streams/kloa/2026_04_29_21_30_29/录制-1986461465-20260429-213029-903-大家我有点死了.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_29_21_30_29/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_29_21_30_29/录制-1986461465-20260429-213029-903-大家我有点死了_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_29_20_08_55",
+    "title": "说小话时间到",
+    "date": "2026-04-29",
+    "time": "20:08:55",
+    "startTime": "20:08",
+    "endTime": "21:10",
+    "duration": 3751,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_29_20_08_55/录制-1986461465-20260429-200855-700-说小话时间到.xml",
+    "cover": "/data/streams/kloa/2026_04_29_20_08_55/录制-1986461465-20260429-200855-700-说小话时间到.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_29_20_08_55/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_29_20_08_55/录制-1986461465-20260429-200855-700-说小话时间到_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_29_09_12_28",
+    "title": "早安~",
+    "date": "2026-04-29",
+    "time": "09:12:28",
+    "startTime": "09:12",
+    "endTime": "11:02",
+    "duration": 6601,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_04_29_09_12_28/录制-1986461465-20260429-091228-860-早安~.xml",
+    "cover": "/data/streams/kloa/2026_04_29_09_12_28/录制-1986461465-20260429-091228-860-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_04_29_09_12_28/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_04_29_09_12_28/录制-1986461465-20260429-091228-860-早安~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_04_29_09_12_28/录制-1986461465-20260428-200925-432-冲刺冲刺dash_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_28_20_09_25",
     "title": "竞拍之王",
     "date": "2026-04-28",

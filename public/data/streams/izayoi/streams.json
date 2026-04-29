@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_04_29_20_00_33",
+    "title": "1616我们喜浣你",
+    "date": "2026-04-29",
+    "time": "20:00:33",
+    "startTime": "20:00",
+    "endTime": "23:37",
+    "duration": 13061,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_29_20_00_33/录制-1741667419-20260429-200033-537-1616我们喜浣你.xml",
+    "cover": "/data/streams/izayoi/2026_04_29_20_00_33/录制-1741667419-20260429-200033-537-1616我们喜浣你.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_29_20_00_33/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_29_20_00_33/录制-1741667419-20260429-200033-537-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_04_29_09_00_13",
+    "title": "早茶第四十五天",
+    "date": "2026-04-29",
+    "time": "09:00:13",
+    "startTime": "09:00",
+    "endTime": "11:58",
+    "duration": 10685,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_04_29_09_00_13/录制-1741667419-20260429-090013-879-早茶第四十五天.xml",
+    "cover": "/data/streams/izayoi/2026_04_29_09_00_13/录制-1741667419-20260429-090013-879-早茶第四十五天.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_04_29_09_00_13/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_04_29_09_00_13/录制-1741667419-20260429-090013-879-早茶第四十五天_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_04_29_09_00_13/录制-1741667419-20260429-090013-879-早茶第四十五天_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_04_29_09_00_13/录制-1741667419-20260428-140220-330-战！只狼！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_28_14_02_20",
     "title": "战！只狼！",
     "date": "2026-04-28",
