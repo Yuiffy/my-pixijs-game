@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_01_20_10_44",
+    "title": "提前来贴贴",
+    "date": "2026-05-01",
+    "time": "20:10:44",
+    "startTime": "20:10",
+    "endTime": "01:24",
+    "duration": 18841,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_01_20_10_44/录制-1713548468-20260501-201044-963-提前来贴贴.xml",
+    "cover": "/data/streams/liko/2026_05_01_20_10_44/录制-1713548468-20260501-201044-963-提前来贴贴.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_01_20_10_44/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_01_20_10_44/录制-1713548468-20260501-201044-963-提前来贴贴_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_01_11_11_28",
+    "title": "兔兔贴贴",
+    "date": "2026-05-01",
+    "time": "11:11:28",
+    "startTime": "11:11",
+    "endTime": "15:13",
+    "duration": 14534,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_01_11_11_28/录制-1713548468-20260501-111128-260-兔兔贴贴.xml",
+    "cover": "/data/streams/liko/2026_05_01_11_11_28/录制-1713548468-20260501-111128-260-兔兔贴贴.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_01_11_11_28/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_01_11_11_28/录制-1713548468-20260501-111128-260-兔兔贴贴_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_01_11_11_28/录制-1713548468-20260501-111128-260-兔兔贴贴_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_01_11_11_28/录制-1713548468-20260501-010054-664-四只地精_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_01_01_00_54",
     "title": "四只地精",
     "date": "2026-04-30",

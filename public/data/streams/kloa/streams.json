@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_05_01_20_07_44",
+    "title": "洛神杯~同乘精灵竞赛！！",
+    "date": "2026-05-01",
+    "time": "20:07:44",
+    "startTime": "20:07",
+    "endTime": "03:30",
+    "duration": 26635,
+    "durationStr": "7.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_01_20_07_44/录制-1986461465-20260501-200744-534-洛神杯~同乘精灵竞赛！！.xml",
+    "cover": "/data/streams/kloa/2026_05_01_20_07_44/录制-1986461465-20260501-200744-534-洛神杯~同乘精灵竞赛！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_01_09_06_27",
+    "title": "早安歌杂~",
+    "date": "2026-05-01",
+    "time": "09:06:27",
+    "startTime": "09:06",
+    "endTime": "10:59",
+    "duration": 6826,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_01_09_06_27/录制-1986461465-20260501-090627-149-早安歌杂~_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_01_09_06_27/录制-1986461465-20260501-090627-149-早安歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_01_09_06_27/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_01_09_06_27/录制-1986461465-20260501-090627-149-早安歌杂~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_01_09_06_27/录制-1986461465-20260501-090627-149-早安歌杂~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_01_09_06_27/录制-1986461465-20260429-220304-851-大家我有点死了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_29_22_03_04",
     "title": "大家我有点死了",
     "date": "2026-04-29",

@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_05_01_19_36_58",
+    "title": "晚上好 聊一聊 和 玩一玩逆转裁判",
+    "date": "2026-05-01",
+    "time": "19:36:58",
+    "startTime": "19:36",
+    "endTime": "00:13",
+    "duration": 16644,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_01_19_36_58/录制-1713546334-20260501-193658-170-晚上好 聊一聊 和 玩一玩逆转裁判_merged.xml",
+    "cover": "/data/streams/hazel/2026_05_01_19_36_58/录制-1713546334-20260501-193658-170-晚上好 聊一聊 和 玩一玩逆转裁判.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_01_19_36_58/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_01_19_36_58/录制-1713546334-20260501-193658-170-晚上好 聊一聊 和 玩一玩逆转裁判_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_01_19_36_58/录制-1713546334-20260501-193658-170-晚上好 聊一聊 和 玩一玩逆转裁判_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_05_01_19_36_58/录制-1713546334-20260429-211744-040-突击晚间电台_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_04_29_21_17_44",
     "title": "突击晚间电台",
     "date": "2026-04-29",
