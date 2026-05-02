@@ -1,5 +1,90 @@
 [
   {
+    "id": "2026_05_02_23_06_34",
+    "title": "兔兔出击！",
+    "date": "2026-05-02",
+    "time": "23:06:34",
+    "startTime": "23:06",
+    "endTime": "01:04",
+    "duration": 7114,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_02_23_06_34/录制-1713548468-20260502-230634-686-兔兔出击！.xml",
+    "cover": "/data/streams/liko/2026_05_02_23_06_34/录制-1713548468-20260502-230634-686-兔兔出击！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_05_02_23_06_34/录制-1713548468-20260502-211054-224-兔兔出击！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_02_21_10_54",
+    "title": "兔兔出击！",
+    "date": "2026-05-02",
+    "time": "21:10:54",
+    "startTime": "21:10",
+    "endTime": "23:04",
+    "duration": 6840,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_02_21_10_54/录制-1713548468-20260502-211054-224-兔兔出击！.xml",
+    "cover": "/data/streams/liko/2026_05_02_21_10_54/录制-1713548468-20260502-211054-224-兔兔出击！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_02_21_10_54/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_02_21_10_54/录制-1713548468-20260502-211054-224-兔兔出击！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_05_02_12_06_21",
+    "title": "在被窝赖床",
+    "date": "2026-05-02",
+    "time": "12:06:21",
+    "startTime": "12:06",
+    "endTime": "13:54",
+    "duration": 6484,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_02_12_06_21/录制-1713548468-20260502-120621-019-在被窝赖床.xml",
+    "cover": "/data/streams/liko/2026_05_02_12_06_21/录制-1713548468-20260502-120621-019-在被窝赖床.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_02_12_06_21/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_02_12_06_21/录制-1713548468-20260502-120621-019-在被窝赖床_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_02_12_06_21/录制-1713548468-20260502-120621-019-在被窝赖床_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_02_11_53_30",
+    "title": "在被窝赖床",
+    "date": "2026-05-02",
+    "time": "11:53:30",
+    "startTime": "11:53",
+    "endTime": "12:05",
+    "duration": 753,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_02_11_53_30/录制-1713548468-20260502-115330-664-在被窝赖床.xml",
+    "cover": "/data/streams/liko/2026_05_02_11_53_30/录制-1713548468-20260502-115330-664-在被窝赖床.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_02_11_06_38",
+    "title": "在被窝赖床",
+    "date": "2026-05-02",
+    "time": "11:06:38",
+    "startTime": "11:06",
+    "endTime": "11:47",
+    "duration": 2510,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_02_11_06_38/录制-1713548468-20260502-110638-343-在被窝赖床_merged.xml",
+    "cover": "/data/streams/liko/2026_05_02_11_06_38/录制-1713548468-20260502-110638-343-在被窝赖床.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_02_11_06_38/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_02_11_06_38/录制-1713548468-20260502-110638-343-在被窝赖床_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_02_11_06_38/录制-1713548468-20260501-201044-963-提前来贴贴_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_01_20_10_44",
     "title": "提前来贴贴",
     "date": "2026-05-01",

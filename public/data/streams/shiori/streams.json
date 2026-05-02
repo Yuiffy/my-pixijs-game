@@ -1,5 +1,61 @@
 [
   {
+    "id": "2026_05_02_22_02_50",
+    "title": "小栞来！",
+    "date": "2026-05-02",
+    "time": "22:02:50",
+    "startTime": "22:02",
+    "endTime": "00:05",
+    "duration": 7381,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_02_22_02_50/录制-26966466-20260502-220250-291-小栞来！.xml",
+    "cover": "/data/streams/shiori/2026_05_02_22_02_50/录制-26966466-20260502-220250-291-小栞来！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_02_22_02_50/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_02_22_02_50/录制-26966466-20260502-220250-291-小栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_02_22_02_50/录制-26966466-20260502-220250-291-小栞来！_COMIC_FACTORY_1.png",
+      "/data/streams/shiori/2026_05_02_22_02_50/录制-26966466-20260502-220250-291-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_02_14_36_31",
+    "title": "萤火虫小推车！",
+    "date": "2026-05-02",
+    "time": "14:36:31",
+    "startTime": "14:36",
+    "endTime": "16:00",
+    "duration": 5095,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_02_14_36_31/录制-26966466-20260502-143631-137-萤火虫小推车！.xml",
+    "cover": "/data/streams/shiori/2026_05_02_14_36_31/录制-26966466-20260502-143631-137-萤火虫小推车！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_02_14_36_31/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_02_14_36_31/录制-26966466-20260502-143631-137-萤火虫小推车！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_02_14_36_31/录制-26966466-20260502-143631-137-萤火虫小推车！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_02_11_02_53",
+    "title": "萤火虫小推车！",
+    "date": "2026-05-02",
+    "time": "11:02:53",
+    "startTime": "11:02",
+    "endTime": "12:30",
+    "duration": 5337,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_02_11_02_53/录制-26966466-20260502-110253-702-萤火虫小推车！.xml",
+    "cover": "/data/streams/shiori/2026_05_02_11_02_53/录制-26966466-20260502-110253-702-萤火虫小推车！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_02_11_02_53/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_02_11_02_53/录制-26966466-20260502-110253-702-萤火虫小推车！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_02_11_02_53/录制-26966466-20260502-110253-702-萤火虫小推车！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_05_02_11_02_53/录制-26966466-20260501-212430-304-小栞来也！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_01_21_24_30",
     "title": "小栞来也！",
     "date": "2026-05-01",

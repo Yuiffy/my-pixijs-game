@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_05_02_20_32_36",
+    "title": "悠哉悠哉日常夜晚",
+    "date": "2026-05-02",
+    "time": "20:32:36",
+    "startTime": "20:32",
+    "endTime": "00:26",
+    "duration": 14064,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_02_20_32_36/2026_05_02_20_32_39_悠哉悠哉日常夜晚_DDTV5_2.xml",
+    "cover": "/data/streams/sui/2026_05_02_20_32_36/录制-25788785-20260502-203236-817-悠哉悠哉日常夜晚.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_02_20_32_36/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_02_20_32_36/录制-25788785-20260502-203236-817-悠哉悠哉日常夜晚_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_02_20_32_36/录制-25788785-20260502-203236-817-悠哉悠哉日常夜晚_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_01_22_31_32",
     "title": "悠哉悠哉日常夜晚",
     "date": "2026-05-01",
@@ -14,7 +32,9 @@
     "highlights": "/data/streams/sui/2026_05_01_22_31_32/highlights.md",
     "images": [
       "/data/streams/sui/2026_05_01_22_31_32/录制-25788785-20260501-223139-444-悠哉悠哉日常夜晚_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_05_01_22_31_32/录制-25788785-20260501-223139-444-悠哉悠哉日常夜晚_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_05_01_22_31_32/录制-25788785-20260501-223139-444-悠哉悠哉日常夜晚_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_05_01_22_31_39/录制-25788785-20260501-223139-444-悠哉悠哉日常夜晚_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_01_22_31_39/录制-25788785-20260501-223139-444-悠哉悠哉日常夜晚_SCREENSHOTS.jpg"
     ]
   },
   {

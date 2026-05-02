@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_05_02_17_07_00",
+    "title": "唱歌歌~",
+    "date": "2026-05-02",
+    "time": "17:07:00",
+    "startTime": "17:07",
+    "endTime": "22:46",
+    "duration": 20364,
+    "durationStr": "5.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_02_17_07_00/录制-1986461465-20260502-170700-103-还得是音乐_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_02_17_07_00/录制-1986461465-20260502-170700-103-还得是音乐.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_02_17_07_00/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_02_17_07_00/录制-1986461465-20260502-170700-103-还得是音乐_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_02_17_07_00/录制-1986461465-20260502-170700-103-还得是音乐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_02_10_05_09",
+    "title": "早上好～",
+    "date": "2026-05-02",
+    "time": "10:05:09",
+    "startTime": "10:05",
+    "endTime": "10:49",
+    "duration": 2651,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_02_10_05_09/录制-1986461465-20260502-100509-613-早上好～.xml",
+    "cover": "/data/streams/kloa/2026_05_02_10_05_09/录制-1986461465-20260502-100509-613-早上好～.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_02_10_05_09/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_02_10_05_09/录制-1986461465-20260502-100509-613-早上好～_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_01_20_07_44",
     "title": "洛神杯~同乘精灵竞赛！！",
     "date": "2026-05-01",
