@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_05_03_17_19_01",
+    "title": "呵呵呵呵",
+    "date": "2026-05-03",
+    "time": "17:19:01",
+    "startTime": "17:19",
+    "endTime": "20:32",
+    "duration": 11634,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_03_17_19_01/录制-1713546334-20260503-171901-794-呵呵呵呵_merged.xml",
+    "cover": "/data/streams/hazel/2026_05_03_17_19_01/录制-1713546334-20260503-171901-794-呵呵呵呵.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_03_17_19_01/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_05_03_17_07_23",
+    "title": "呵呵呵呵",
+    "date": "2026-05-03",
+    "time": "17:07:23",
+    "startTime": "17:07",
+    "endTime": "17:14",
+    "duration": 466,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_03_17_07_23/录制-1713546334-20260503-170723-919-夺冠就在今天.xml",
+    "cover": "/data/streams/hazel/2026_05_03_17_07_23/录制-1713546334-20260503-170723-919-夺冠就在今天.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_03_17_07_23/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_03_17_07_23/录制-1713546334-20260503-170723-919-夺冠就在今天_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_03_17_03_00",
+    "title": "夺冠就在今天",
+    "date": "2026-05-03",
+    "time": "17:03:00",
+    "startTime": "17:03",
+    "endTime": "17:04",
+    "duration": 89,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_03_17_03_00/录制-1713546334-20260503-170300-567-夺冠就在今天_merged.xml",
+    "cover": "/data/streams/hazel/2026_05_03_17_03_00/录制-1713546334-20260503-170300-567-夺冠就在今天.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_03_17_03_00/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_05_03_12_32_14",
+    "title": "中午好 第一次线下活动repo",
+    "date": "2026-05-03",
+    "time": "12:32:14",
+    "startTime": "12:32",
+    "endTime": "14:58",
+    "duration": 8809,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_03_12_32_14/录制-1713546334-20260503-123214-363-中午好 第一次线下活动repo.xml",
+    "cover": "/data/streams/hazel/2026_05_03_12_32_14/录制-1713546334-20260503-123214-363-中午好 第一次线下活动repo.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_03_12_32_14/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_03_12_32_14/录制-1713546334-20260503-123214-363-中午好 第一次线下活动repo_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_03_12_32_14/录制-1713546334-20260503-123214-363-中午好 第一次线下活动repo_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_05_03_12_32_14/录制-1713546334-20260502-132747-358-睡午觉_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_02_15_02_23",
     "title": "睡午觉",
     "date": "2026-05-02",

@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_05_03_20_10_21",
+    "title": "狂亏一百万到心破碎中唱歌歌",
+    "date": "2026-05-03",
+    "time": "20:10:21",
+    "startTime": "20:10",
+    "endTime": "00:38",
+    "duration": 16094,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_03_20_10_21/录制-1986461465-20260503-201021-012-晚间杂谈！.xml",
+    "cover": "/data/streams/kloa/2026_05_03_20_10_21/录制-1986461465-20260503-201021-012-晚间杂谈！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_03_20_10_21/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_03_20_10_21/录制-1986461465-20260503-201021-012-晚间杂谈！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_03_20_10_21/录制-1986461465-20260503-201021-012-晚间杂谈！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_03_11_19_17",
+    "title": "萤火虫舞台中~",
+    "date": "2026-05-03",
+    "time": "11:19:17",
+    "startTime": "11:19",
+    "endTime": "14:53",
+    "duration": 12854,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_03_11_19_17/录制-1986461465-20260503-111917-125-萤火虫舞台中~.xml",
+    "cover": "/data/streams/kloa/2026_05_03_11_19_17/录制-1986461465-20260503-111917-125-萤火虫舞台中~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_03_11_19_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_03_11_19_17/录制-1986461465-20260503-111917-125-萤火虫舞台中~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_03_10_06_43",
+    "title": "早安=3=",
+    "date": "2026-05-03",
+    "time": "10:06:43",
+    "startTime": "10:06",
+    "endTime": "10:33",
+    "duration": 1650,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_03_10_06_43/录制-1986461465-20260503-100643-789-早安=3=.xml",
+    "cover": "/data/streams/kloa/2026_05_03_10_06_43/录制-1986461465-20260503-100643-789-早安=3=.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_03_10_06_43/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_03_10_06_43/录制-1986461465-20260503-100643-789-早安=3=_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_03_10_06_43/录制-1986461465-20260502-170700-103-还得是音乐_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_03_10_06_43/录制-1986461465-20260502-170700-103-还得是音乐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_02_17_07_00",
     "title": "唱歌歌~",
     "date": "2026-05-02",

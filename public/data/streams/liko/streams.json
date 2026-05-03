@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_03_21_12_30",
+    "title": "人森来咯",
+    "date": "2026-05-03",
+    "time": "21:12:30",
+    "startTime": "21:12",
+    "endTime": "00:25",
+    "duration": 11599,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_03_21_12_30/录制-1713548468-20260503-211230-490-晚上好！！！.xml",
+    "cover": "/data/streams/liko/2026_05_03_21_12_30/录制-1713548468-20260503-211230-490-晚上好！！！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_03_21_12_30/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_03_21_12_30/录制-1713548468-20260503-211230-490-晚上好！！！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_03_21_12_30/录制-1713548468-20260503-211230-490-晚上好！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_03_11_20_57",
+    "title": "萤火虫大屏幕",
+    "date": "2026-05-03",
+    "time": "11:20:57",
+    "startTime": "11:20",
+    "endTime": "18:57",
+    "duration": 27478,
+    "durationStr": "7.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_03_11_20_57/录制-1713548468-20260503-112057-533-萤火虫大屏幕.xml",
+    "cover": "/data/streams/liko/2026_05_03_11_20_57/录制-1713548468-20260503-112057-533-萤火虫大屏幕.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_03_11_20_57/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_03_11_20_57/录制-1713548468-20260503-112057-533-萤火虫大屏幕_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_03_11_20_57/录制-1713548468-20260503-112057-533-萤火虫大屏幕_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_03_11_20_57/录制-1713548468-20260502-211054-224-兔兔出击！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_03_11_20_57/录制-1713548468-20260502-211054-224-兔兔出击！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_02_23_06_34",
     "title": "兔兔出击！",
     "date": "2026-05-02",

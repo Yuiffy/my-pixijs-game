@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026_05_03_21_39_00",
+    "title": "全网最安静直播间",
+    "date": "2026-05-03",
+    "time": "21:39:00",
+    "startTime": "21:39",
+    "endTime": "00:13",
+    "duration": 9276,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_03_21_39_00/录制-26966466-20260503-213900-470-全网最安静直播间.xml",
+    "cover": "/data/streams/shiori/2026_05_03_21_39_00/录制-26966466-20260503-213900-470-全网最安静直播间.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_03_21_39_00/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_03_21_39_00/录制-26966466-20260503-213900-470-全网最安静直播间_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_03_21_39_00/录制-26966466-20260503-213900-470-全网最安静直播间_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_03_10_14_14",
+    "title": "小声海獭",
+    "date": "2026-05-03",
+    "time": "10:14:14",
+    "startTime": "10:14",
+    "endTime": "12:12",
+    "duration": 7117,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_03_10_14_14/录制-26966466-20260503-101414-553-小声海獭.xml",
+    "cover": "/data/streams/shiori/2026_05_03_10_14_14/录制-26966466-20260503-101414-553-小声海獭.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_03_10_14_14/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_03_10_14_14/录制-26966466-20260503-101414-553-小声海獭_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_03_10_14_14/录制-26966466-20260503-101414-553-小声海獭_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_05_03_10_14_14/录制-26966466-20260502-220250-291-小栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_03_10_14_14/录制-26966466-20260502-220250-291-小栞来！_COMIC_FACTORY_1.png",
+      "/data/streams/shiori/2026_05_03_10_14_14/录制-26966466-20260502-220250-291-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_02_22_02_50",
     "title": "小栞来！",
     "date": "2026-05-02",
