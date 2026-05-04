@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_05_04_14_16_50",
+    "title": "学歌&amp;工作音",
+    "date": "2026-05-04",
+    "time": "14:16:50",
+    "startTime": "14:16",
+    "endTime": "22:47",
+    "duration": 30672,
+    "durationStr": "8.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_04_14_16_50/录制-1986461465-20260504-141650-201-学歌&amp;工作音.xml",
+    "cover": "/data/streams/kloa/2026_05_04_14_16_50/录制-1986461465-20260504-141650-201-学歌&amp;工作音.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_04_14_16_50/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_04_14_16_50/录制-1986461465-20260504-141650-201-学歌&amp;工作音_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_04_14_16_50/录制-1986461465-20260504-141650-201-学歌&amp;工作音_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_04_13_10_30",
+    "title": "呜啊啊啊",
+    "date": "2026-05-04",
+    "time": "13:10:30",
+    "startTime": "13:10",
+    "endTime": "14:09",
+    "duration": 3585,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_04_13_10_30/录制-1986461465-20260504-131030-236-呜啊啊啊.xml",
+    "cover": "/data/streams/kloa/2026_05_04_13_10_30/录制-1986461465-20260504-131030-236-呜啊啊啊.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_04_13_10_30/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_04_13_10_30/录制-1986461465-20260504-131030-236-呜啊啊啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_04_10_39_27",
+    "title": "呜啊啊啊",
+    "date": "2026-05-04",
+    "time": "10:39:27",
+    "startTime": "10:39",
+    "endTime": "13:10",
+    "duration": 9066,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_04_10_39_27/录制-1986461465-20260504-103927-524-呜啊啊啊_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_04_10_39_27/录制-1986461465-20260504-103927-524-呜啊啊啊.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_04_10_39_27/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_04_10_39_27/录制-1986461465-20260504-103927-524-呜啊啊啊_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_04_10_39_27/录制-1986461465-20260504-103927-524-呜啊啊啊_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_04_10_39_27/录制-1986461465-20260503-201021-012-晚间杂谈！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_04_10_39_27/录制-1986461465-20260503-201021-012-晚间杂谈！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_03_20_10_21",
     "title": "狂亏一百万到心破碎中唱歌歌",
     "date": "2026-05-03",

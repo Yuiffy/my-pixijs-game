@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_04_21_04_46",
+    "title": "小画一下",
+    "date": "2026-05-04",
+    "time": "21:04:46",
+    "startTime": "21:04",
+    "endTime": "01:07",
+    "duration": 14605,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_04_21_04_46/录制-1741667419-20260504-210446-976-小画一下.xml",
+    "cover": "/data/streams/izayoi/2026_05_04_21_04_46/录制-1741667419-20260504-210446-976-小画一下.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_04_21_04_46/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_04_21_04_46/录制-1741667419-20260504-210446-976-小画一下_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_04_21_04_46/录制-1741667419-20260504-210446-976-小画一下_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_04_09_07_06",
+    "title": "早茶第四十八天",
+    "date": "2026-05-04",
+    "time": "09:07:06",
+    "startTime": "09:07",
+    "endTime": "12:15",
+    "duration": 11297,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_04_09_07_06/录制-1741667419-20260504-090706-754-早茶第四十八天.xml",
+    "cover": "/data/streams/izayoi/2026_05_04_09_07_06/录制-1741667419-20260504-090706-754-早茶第四十八天.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_04_09_07_06/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_04_09_07_06/录制-1741667419-20260504-090706-754-早茶第四十八天_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_04_09_07_06/录制-1741667419-20260504-011741-630-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_04_01_17_41",
     "title": "1616我们喜浣你",
     "date": "2026-05-03",
