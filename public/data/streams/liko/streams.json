@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_05_20_32_56",
+    "title": "和雪烛妹妹玩女吊",
+    "date": "2026-05-05",
+    "time": "20:32:56",
+    "startTime": "20:32",
+    "endTime": "02:51",
+    "duration": 22741,
+    "durationStr": "6.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_05_20_32_56/录制-1713548468-20260505-203256-996-和雪烛妹妹玩女吊.xml",
+    "cover": "/data/streams/liko/2026_05_05_20_32_56/录制-1713548468-20260505-203256-996-和雪烛妹妹玩女吊.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_05_20_32_56/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_05_20_32_56/录制-1713548468-20260505-203256-996-和雪烛妹妹玩女吊_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_05_20_32_56/录制-1713548468-20260505-203256-996-和雪烛妹妹玩女吊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_05_11_09_04",
+    "title": "兔兔突击",
+    "date": "2026-05-05",
+    "time": "11:09:04",
+    "startTime": "11:09",
+    "endTime": "16:02",
+    "duration": 17619,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_05_11_09_04/录制-1713548468-20260505-110904-264-兔兔突击.xml",
+    "cover": "/data/streams/liko/2026_05_05_11_09_04/录制-1713548468-20260505-110904-264-兔兔突击.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_05_11_09_04/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_05_11_09_04/录制-1713548468-20260505-110904-264-兔兔突击_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_05_11_09_04/录制-1713548468-20260505-110904-264-兔兔突击_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_05_11_09_04/录制-1713548468-20260504-201937-055-兔兔突击_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_05_11_09_04/录制-1713548468-20260504-201937-055-兔兔突击_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_04_20_19_37",
     "title": "兔兔突击",
     "date": "2026-05-04",

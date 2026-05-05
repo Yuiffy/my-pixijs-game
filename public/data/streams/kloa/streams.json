@@ -1,5 +1,54 @@
 [
   {
+    "id": "2026_05_05_23_24_07",
+    "title": "没活了，究竟要播什么？",
+    "date": "2026-05-05",
+    "time": "23:24:07",
+    "startTime": "23:24",
+    "endTime": "00:59",
+    "duration": 5704,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_05_23_24_07/录制-1986461465-20260505-232407-190-没活了，究竟要播什么？.xml",
+    "cover": "/data/streams/kloa/2026_05_05_23_24_07/录制-1986461465-20260505-232407-190-没活了，究竟要播什么？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_05_20_23_32",
+    "title": "没活了，究竟要播什么？",
+    "date": "2026-05-05",
+    "time": "20:23:32",
+    "startTime": "20:23",
+    "endTime": "23:22",
+    "duration": 10753,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_05_20_23_32/录制-1986461465-20260505-202332-902-没活了，究竟要播什么？.xml",
+    "cover": "/data/streams/kloa/2026_05_05_20_23_32/录制-1986461465-20260505-202332-902-没活了，究竟要播什么？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_05_10_43_01",
+    "title": "又…",
+    "date": "2026-05-05",
+    "time": "10:43:01",
+    "startTime": "10:43",
+    "endTime": "12:25",
+    "duration": 6176,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_05_10_43_01/录制-1986461465-20260505-104301-579-又…_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_05_10_43_01/录制-1986461465-20260505-104301-579-又….cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_05_10_43_01/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_05_10_43_01/录制-1986461465-20260505-104301-579-又…_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_05_10_43_01/录制-1986461465-20260504-141650-201-学歌&amp;工作音_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_05_10_43_01/录制-1986461465-20260504-141650-201-学歌&amp;工作音_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_04_14_16_50",
     "title": "学歌&amp;工作音",
     "date": "2026-05-04",
