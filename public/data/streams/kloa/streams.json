@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_06_20_09_12",
+    "title": "晚间歌回",
+    "date": "2026-05-06",
+    "time": "20:09:12",
+    "startTime": "20:09",
+    "endTime": "00:25",
+    "duration": 15381,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_06_20_09_12/录制-1986461465-20260506-200912-749-晚间歌回.xml",
+    "cover": "/data/streams/kloa/2026_05_06_20_09_12/录制-1986461465-20260506-200912-749-晚间歌回.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_06_20_09_12/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_06_20_09_12/录制-1986461465-20260506-200912-749-晚间歌回_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_06_20_09_12/录制-1986461465-20260506-200912-749-晚间歌回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_06_09_04_43",
+    "title": "早安歌",
+    "date": "2026-05-06",
+    "time": "09:04:43",
+    "startTime": "09:04",
+    "endTime": "12:50",
+    "duration": 13567,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_06_09_04_43/录制-1986461465-20260506-090443-213-早安歌.xml",
+    "cover": "/data/streams/kloa/2026_05_06_09_04_43/录制-1986461465-20260506-090443-213-早安歌.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_06_09_04_43/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_06_09_04_43/录制-1986461465-20260506-090443-213-早安歌_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_06_09_04_43/录制-1986461465-20260506-090443-213-早安歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_05_23_24_07",
     "title": "没活了，究竟要播什么？",
     "date": "2026-05-05",

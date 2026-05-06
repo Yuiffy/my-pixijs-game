@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026_05_06_20_41_12",
+    "title": "全网最安静直播间！",
+    "date": "2026-05-06",
+    "time": "20:41:12",
+    "startTime": "20:41",
+    "endTime": "01:11",
+    "duration": 16243,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_06_20_41_12/录制-26966466-20260506-204112-740-全网最安静直播间！.xml",
+    "cover": "/data/streams/shiori/2026_05_06_20_41_12/录制-26966466-20260506-204112-740-全网最安静直播间！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_06_20_41_12/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_06_20_41_12/录制-26966466-20260506-204112-740-全网最安静直播间！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_06_20_41_12/录制-26966466-20260506-204112-740-全网最安静直播间！_COMIC_FACTORY_1.png",
+      "/data/streams/shiori/2026_05_06_20_41_12/录制-26966466-20260506-204112-740-全网最安静直播间！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_06_10_23_39",
+    "title": "全网最安静直播间",
+    "date": "2026-05-06",
+    "time": "10:23:39",
+    "startTime": "10:23",
+    "endTime": "12:17",
+    "duration": 6884,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_06_10_23_39/录制-26966466-20260506-102339-319-全网最安静直播间.xml",
+    "cover": "/data/streams/shiori/2026_05_06_10_23_39/录制-26966466-20260506-102339-319-全网最安静直播间.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_06_10_23_39/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_06_10_23_39/录制-26966466-20260506-102339-319-全网最安静直播间_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_06_10_23_39/录制-26966466-20260506-102339-319-全网最安静直播间_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_05_06_10_23_39/录制-26966466-20260505-212108-062-全网最安静直播间_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_06_10_23_39/录制-26966466-20260505-212108-062-全网最安静直播间_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_05_21_21_08",
     "title": "全网最安静直播间",
     "date": "2026-05-05",

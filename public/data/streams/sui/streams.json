@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_06_20_30_59",
+    "title": "悠哉悠哉夜晚！唱聊",
+    "date": "2026-05-06",
+    "time": "20:30:59",
+    "startTime": "20:30",
+    "endTime": "01:18",
+    "duration": 17309,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_06_20_30_59/录制-25788785-20260506-203105-428-悠哉悠哉夜晚！唱聊.xml",
+    "cover": "/data/streams/sui/2026_05_06_20_30_59/录制-25788785-20260506-203105-428-悠哉悠哉夜晚！唱聊.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_06_20_30_59/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_06_20_30_59/录制-25788785-20260506-203105-428-悠哉悠哉夜晚！唱聊_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_06_20_30_59/录制-25788785-20260506-203105-428-悠哉悠哉夜晚！唱聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_06_14_46_29",
+    "title": "天才小鸟 试玩竞拍之神",
+    "date": "2026-05-06",
+    "time": "14:46:29",
+    "startTime": "14:46",
+    "endTime": "17:59",
+    "duration": 11633,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_06_14_46_29/录制-25788785-20260506-144632-129-天才小鸟 试玩竞拍之神.xml",
+    "cover": "/data/streams/sui/2026_05_06_14_46_29/录制-25788785-20260506-144632-129-天才小鸟 试玩竞拍之神.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_06_14_46_29/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_06_14_46_29/录制-25788785-20260506-144632-129-天才小鸟 试玩竞拍之神_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_06_14_46_29/录制-25788785-20260506-144632-129-天才小鸟 试玩竞拍之神_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_05_20_13_51",
     "title": "悠哉悠哉日常夜晚",
     "date": "2026-05-05",
@@ -14,7 +50,9 @@
     "highlights": "/data/streams/sui/2026_05_05_20_13_51/highlights.md",
     "images": [
       "/data/streams/sui/2026_05_05_20_13_51/录制-25788785-20260505-201351-243-悠哉悠哉日常夜晚_COMIC_FACTORY.png",
-      "/data/streams/sui/2026_05_05_20_13_51/录制-25788785-20260505-201351-243-悠哉悠哉日常夜晚_SCREENSHOTS.jpg"
+      "/data/streams/sui/2026_05_05_20_13_51/录制-25788785-20260505-201351-243-悠哉悠哉日常夜晚_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_05_05_20_13_53/录制-25788785-20260505-201351-243-悠哉悠哉日常夜晚_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_05_20_13_53/录制-25788785-20260505-201351-243-悠哉悠哉日常夜晚_SCREENSHOTS.jpg"
     ]
   },
   {

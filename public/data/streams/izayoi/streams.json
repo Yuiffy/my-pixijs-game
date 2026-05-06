@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_05_06_21_20_38",
+    "title": "最难忍的一集。",
+    "date": "2026-05-06",
+    "time": "21:20:38",
+    "startTime": "21:20",
+    "endTime": "00:14",
+    "duration": 10464,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_06_21_20_38/录制-1741667419-20260506-212038-525-最难忍的一集。.xml",
+    "cover": "/data/streams/izayoi/2026_05_06_21_20_38/录制-1741667419-20260506-212038-525-最难忍的一集。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_06_21_20_38/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_06_21_20_38/录制-1741667419-20260506-212038-525-最难忍的一集。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_06_21_20_38/录制-1741667419-20260506-212038-525-最难忍的一集。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_06_20_45_08",
+    "title": "最难忍的一集。",
+    "date": "2026-05-06",
+    "time": "20:45:08",
+    "startTime": "20:45",
+    "endTime": "21:18",
+    "duration": 2009,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_06_20_45_08/录制-1741667419-20260506-204508-499-浣杂的说.xml",
+    "cover": "/data/streams/izayoi/2026_05_06_20_45_08/录制-1741667419-20260506-204508-499-浣杂的说.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_06_09_06_10",
+    "title": "早茶第四十九天。",
+    "date": "2026-05-06",
+    "time": "09:06:10",
+    "startTime": "09:06",
+    "endTime": "15:55",
+    "duration": 24543,
+    "durationStr": "6.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_06_09_06_10/录制-1741667419-20260506-090610-561-早茶第四十九天。.xml",
+    "cover": "/data/streams/izayoi/2026_05_06_09_06_10/录制-1741667419-20260506-090610-561-早茶第四十九天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_06_09_06_10/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_06_09_06_10/录制-1741667419-20260506-090610-561-早茶第四十九天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_06_09_06_10/录制-1741667419-20260506-090610-561-早茶第四十九天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_06_09_06_10/录制-1741667419-20260504-210446-976-小画一下_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_06_09_06_10/录制-1741667419-20260504-210446-976-小画一下_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_04_21_04_46",
     "title": "小画一下",
     "date": "2026-05-04",
