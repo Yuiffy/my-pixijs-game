@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_05_07_21_27_15",
+    "title": "电台工作音",
+    "date": "2026-05-07",
+    "time": "21:27:15",
+    "startTime": "21:27",
+    "endTime": "23:54",
+    "duration": 8823,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_07_21_27_15/录制-1986461465-20260507-212715-224-电台工作音.xml",
+    "cover": "/data/streams/kloa/2026_05_07_21_27_15/录制-1986461465-20260507-212715-224-电台工作音.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_07_21_27_15/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_07_21_27_15/录制-1986461465-20260507-212715-224-电台工作音_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_07_21_27_15/录制-1986461465-20260507-212715-224-电台工作音_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_07_20_16_23",
+    "title": "电台工作音",
+    "date": "2026-05-07",
+    "time": "20:16:23",
+    "startTime": "20:16",
+    "endTime": "21:23",
+    "duration": 4076,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_07_20_16_23/录制-1986461465-20260507-201623-687-电台工作音_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_07_20_16_23/录制-1986461465-20260507-201623-687-电台工作音.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_07_20_16_23/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_07_20_16_23/录制-1986461465-20260507-201623-687-电台工作音_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_07_20_16_23/录制-1986461465-20260506-200912-749-晚间歌回_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_07_20_16_23/录制-1986461465-20260506-200912-749-晚间歌回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_06_20_09_12",
     "title": "晚间歌回",
     "date": "2026-05-06",

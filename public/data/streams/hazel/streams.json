@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_05_07_19_04_28",
+    "title": "聊一聊 读一读",
+    "date": "2026-05-07",
+    "time": "19:04:28",
+    "startTime": "19:04",
+    "endTime": "22:24",
+    "duration": 12033,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_07_19_04_28/录制-1713546334-20260507-190428-518-聊一聊 读一读.xml",
+    "cover": "/data/streams/hazel/2026_05_07_19_04_28/录制-1713546334-20260507-190428-518-聊一聊 读一读.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_07_19_04_28/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_07_19_04_28/录制-1713546334-20260507-190428-518-聊一聊 读一读_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_07_19_04_28/录制-1713546334-20260507-190428-518-聊一聊 读一读_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_05_07_19_04_28/录制-1713546334-20260505-175057-275-正在观看..._merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_07_19_04_28/录制-1713546334-20260505-175057-275-正在观看..._merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_05_17_50_57",
     "title": "正在观看...",
     "date": "2026-05-05",

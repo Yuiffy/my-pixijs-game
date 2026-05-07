@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_05_07_20_04_25",
+    "title": "1616我们喜浣你",
+    "date": "2026-05-07",
+    "time": "20:04:25",
+    "startTime": "20:04",
+    "endTime": "23:54",
+    "duration": 13848,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_07_20_04_25/录制-1741667419-20260507-200425-754-1616我们喜浣你.xml",
+    "cover": "/data/streams/izayoi/2026_05_07_20_04_25/录制-1741667419-20260507-200425-754-1616我们喜浣你.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_07_20_04_25/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_07_20_04_25/录制-1741667419-20260507-200425-754-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_07_20_04_25/录制-1741667419-20260507-200425-754-1616我们喜浣你_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_07_20_04_25/录制-1741667419-20260506-212038-525-最难忍的一集。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_07_20_04_25/录制-1741667419-20260506-212038-525-最难忍的一集。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_06_21_20_38",
     "title": "最难忍的一集。",
     "date": "2026-05-06",
