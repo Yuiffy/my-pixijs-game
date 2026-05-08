@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026_05_08_21_11_13",
+    "title": "兔兔唱歌",
+    "date": "2026-05-08",
+    "time": "21:11:13",
+    "startTime": "21:11",
+    "endTime": "02:02",
+    "duration": 17518,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_08_21_11_13/录制-1713548468-20260508-211113-945-兔兔唱歌.xml",
+    "cover": "/data/streams/liko/2026_05_08_21_11_13/录制-1713548468-20260508-211113-945-兔兔唱歌.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_08_21_11_13/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_08_21_11_13/录制-1713548468-20260508-211113-945-兔兔唱歌_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_08_21_11_13/录制-1713548468-20260508-211113-945-兔兔唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_08_11_14_41",
+    "title": "兔兔来咯",
+    "date": "2026-05-08",
+    "time": "11:14:41",
+    "startTime": "11:14",
+    "endTime": "16:51",
+    "duration": 20263,
+    "durationStr": "5.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_08_11_14_41/录制-1713548468-20260508-111441-273-兔兔来咯_merged.xml",
+    "cover": "/data/streams/liko/2026_05_08_11_14_41/录制-1713548468-20260508-111441-273-兔兔来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_08_11_14_41/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_08_11_14_41/录制-1713548468-20260508-111441-273-兔兔来咯_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_08_11_14_41/录制-1713548468-20260508-111441-273-兔兔来咯_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_08_11_14_41/录制-1713548468-20260507-211801-336-被窝悄悄话_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_08_11_14_41/录制-1713548468-20260507-230915-229-被窝悄悄话_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_08_11_14_41/录制-1713548468-20260507-230915-229-被窝悄悄话_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_07_23_09_15",
     "title": "被窝悄悄话",
     "date": "2026-05-07",

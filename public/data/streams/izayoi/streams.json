@@ -1,5 +1,75 @@
 [
   {
+    "id": "2026_05_08_19_20_28",
+    "title": "拍！",
+    "date": "2026-05-08",
+    "time": "19:20:28",
+    "startTime": "19:20",
+    "endTime": "01:24",
+    "duration": 21841,
+    "durationStr": "6.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_08_19_20_28/录制-1741667419-20260508-192028-866-拍！.xml",
+    "cover": "/data/streams/izayoi/2026_05_08_19_20_28/录制-1741667419-20260508-192028-866-拍！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_08_19_20_28/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_08_19_20_28/录制-1741667419-20260508-192028-866-拍！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_08_19_20_28/录制-1741667419-20260508-192028-866-拍！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_08_15_20_20",
+    "title": "拍！",
+    "date": "2026-05-08",
+    "time": "15:20:20",
+    "startTime": "15:20",
+    "endTime": "19:20",
+    "duration": 14404,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_08_15_20_20/录制-1741667419-20260508-152020-063-拍！.xml",
+    "cover": "/data/streams/izayoi/2026_05_08_15_20_20/录制-1741667419-20260508-152020-063-拍！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_08_11_05_21",
+    "title": "早茶第五十天。",
+    "date": "2026-05-08",
+    "time": "11:05:21",
+    "startTime": "11:05",
+    "endTime": "11:29",
+    "duration": 1484,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_08_11_05_21/录制-1741667419-20260508-110521-334-早茶第五十天。.xml",
+    "cover": "/data/streams/izayoi/2026_05_08_11_05_21/录制-1741667419-20260508-110521-334-早茶第五十天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_08_11_05_21/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_08_11_05_21/录制-1741667419-20260508-110521-334-早茶第五十天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_08_09_06_19",
+    "title": "早茶第五十天。",
+    "date": "2026-05-08",
+    "time": "09:06:19",
+    "startTime": "09:06",
+    "endTime": "11:01",
+    "duration": 6958,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_08_09_06_19/录制-1741667419-20260508-090619-534-早茶第五十天。.xml",
+    "cover": "/data/streams/izayoi/2026_05_08_09_06_19/录制-1741667419-20260508-090619-534-早茶第五十天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_08_09_06_19/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_08_09_06_19/录制-1741667419-20260508-090619-534-早茶第五十天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_08_09_06_19/录制-1741667419-20260508-090619-534-早茶第五十天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_08_09_06_19/录制-1741667419-20260507-200425-754-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_08_09_06_19/录制-1741667419-20260507-200425-754-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_07_20_04_25",
     "title": "1616我们喜浣你",
     "date": "2026-05-07",
