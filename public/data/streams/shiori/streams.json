@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_05_09_20_15_04",
+    "title": "鹅鸭杀！！",
+    "date": "2026-05-09",
+    "time": "20:15:04",
+    "startTime": "20:15",
+    "endTime": "23:34",
+    "duration": 11945,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_09_20_15_04/录制-26966466-20260509-201504-716-鹅鸭杀！！.xml",
+    "cover": "/data/streams/shiori/2026_05_09_20_15_04/录制-26966466-20260509-201504-716-鹅鸭杀！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_09_20_15_04/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_09_20_15_04/录制-26966466-20260509-201504-716-鹅鸭杀！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_09_10_09_12",
+    "title": "全网最聪明直播间",
+    "date": "2026-05-09",
+    "time": "10:09:12",
+    "startTime": "10:09",
+    "endTime": "12:10",
+    "duration": 7304,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_09_10_09_12/录制-26966466-20260509-100912-760-全网最聪明直播间_merged.xml",
+    "cover": "/data/streams/shiori/2026_05_09_10_09_12/录制-26966466-20260509-100912-760-全网最聪明直播间.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_09_10_09_12/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_09_10_09_12/录制-26966466-20260509-100912-760-全网最聪明直播间_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_09_10_09_12/录制-26966466-20260509-100912-760-全网最聪明直播间_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_07_22_05_18",
     "title": "全网最纯洁直播间",
     "date": "2026-05-07",

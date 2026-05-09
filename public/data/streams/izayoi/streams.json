@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_09_20_02_50",
+    "title": "一起来看超电磁炮！",
+    "date": "2026-05-09",
+    "time": "20:02:50",
+    "startTime": "20:02",
+    "endTime": "23:27",
+    "duration": 12352,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_09_20_02_50/录制-1741667419-20260509-200250-775-一起来看超电磁炮！.xml",
+    "cover": "/data/streams/izayoi/2026_05_09_20_02_50/录制-1741667419-20260509-200250-775-一起来看超电磁炮！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_09_20_02_50/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_09_20_02_50/录制-1741667419-20260509-200250-775-一起来看超电磁炮！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_09_20_02_50/录制-1741667419-20260509-200250-775-一起来看超电磁炮！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_09_14_06_26",
+    "title": "健身浣？ 尊嘟假嘟？？",
+    "date": "2026-05-09",
+    "time": "14:06:26",
+    "startTime": "14:06",
+    "endTime": "18:36",
+    "duration": 16235,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_09_14_06_26/录制-1741667419-20260509-140626-590-健身浣？ 尊嘟假嘟？？.xml",
+    "cover": "/data/streams/izayoi/2026_05_09_14_06_26/录制-1741667419-20260509-140626-590-健身浣？ 尊嘟假嘟？？.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_09_14_06_26/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_09_14_06_26/录制-1741667419-20260509-140626-590-健身浣？ 尊嘟假嘟？？_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_09_14_06_26/录制-1741667419-20260509-140626-590-健身浣？ 尊嘟假嘟？？_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_09_14_06_26/录制-1741667419-20260508-192028-866-拍！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_09_14_06_26/录制-1741667419-20260508-192028-866-拍！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_08_19_20_28",
     "title": "拍！",
     "date": "2026-05-08",

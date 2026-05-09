@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026_05_09_22_53_21",
+    "title": "从医院归来",
+    "date": "2026-05-09",
+    "time": "22:53:21",
+    "startTime": "22:53",
+    "endTime": "00:43",
+    "duration": 6605,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_09_22_53_21/录制-1986461465-20260509-225321-546-从医院归来_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_09_22_53_21/录制-1986461465-20260509-225321-546-从医院归来.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_09_22_53_21/highlights.md",
+    "images": []
+  },
+  {
     "id": "2026_05_07_21_27_15",
     "title": "电台工作音",
     "date": "2026-05-07",

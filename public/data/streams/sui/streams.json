@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_05_09_19_54_29",
+    "title": "悠哉悠哉日常夜晚",
+    "date": "2026-05-09",
+    "time": "19:54:29",
+    "startTime": "19:54",
+    "endTime": "01:00",
+    "duration": 18397,
+    "durationStr": "5.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_09_19_54_29/录制-25788785-20260509-195429-324-悠哉悠哉日常夜晚_merged.xml",
+    "cover": "/data/streams/sui/2026_05_09_19_54_29/录制-25788785-20260509-195429-324-悠哉悠哉日常夜晚.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_09_19_54_29/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_09_19_54_29/录制-25788785-20260509-195429-324-悠哉悠哉日常夜晚_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_09_19_54_29/录制-25788785-20260509-195429-324-悠哉悠哉日常夜晚_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_05_09_19_54_29/录制-25788785-20260508-205229-536-虚弱悠哉夜晚_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_09_19_54_29/录制-25788785-20260508-205229-536-虚弱悠哉夜晚_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_08_20_52_29",
     "title": "同步试听 尖帽子工坊",
     "date": "2026-05-08",

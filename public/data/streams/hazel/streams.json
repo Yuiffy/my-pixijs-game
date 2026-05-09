@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_05_09_15_24_29",
+    "title": "聊一聊 玩一玩",
+    "date": "2026-05-09",
+    "time": "15:24:29",
+    "startTime": "15:24",
+    "endTime": "16:50",
+    "duration": 5196,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_09_15_24_29/录制-1713546334-20260509-152429-731-聊一聊 玩一玩.xml",
+    "cover": "/data/streams/hazel/2026_05_09_15_24_29/录制-1713546334-20260509-152429-731-聊一聊 玩一玩.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_09_15_24_29/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_09_15_24_29/录制-1713546334-20260509-152429-731-聊一聊 玩一玩_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_09_15_24_29/录制-1713546334-20260509-152429-731-聊一聊 玩一玩_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_09_12_35_05",
+    "title": "聊一聊 玩一玩",
+    "date": "2026-05-09",
+    "time": "12:35:05",
+    "startTime": "12:35",
+    "endTime": "15:20",
+    "duration": 9951,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_09_12_35_05/录制-1713546334-20260509-123505-188-聊一聊 玩一玩.xml",
+    "cover": "/data/streams/hazel/2026_05_09_12_35_05/录制-1713546334-20260509-123505-188-聊一聊 玩一玩.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_09_12_35_05/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_09_12_35_05/录制-1713546334-20260509-123505-188-聊一聊 玩一玩_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_07_19_04_28",
     "title": "聊一聊 读一读",
     "date": "2026-05-07",

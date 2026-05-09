@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_05_10_00_27_51",
+    "title": "兔兔好困啊",
+    "date": "2026-05-09",
+    "time": "00:27:51",
+    "startTime": "00:27",
+    "endTime": "02:48",
+    "duration": 8464,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_10_00_27_51/录制-1713548468-20260510-002751-122-兔兔好困啊.xml",
+    "cover": "/data/streams/liko/2026_05_10_00_27_51/录制-1713548468-20260510-002751-122-兔兔好困啊.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_05_10_00_27_51/录制-1713548468-20260510-025149-128-兔兔好困啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_09_20_23_45",
+    "title": "兔兔好困啊",
+    "date": "2026-05-09",
+    "time": "20:23:45",
+    "startTime": "20:23",
+    "endTime": "00:26",
+    "duration": 14616,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_09_20_23_45/录制-1713548468-20260509-202345-664-兔兔好困啊.xml",
+    "cover": "/data/streams/liko/2026_05_09_20_23_45/录制-1713548468-20260509-202345-664-兔兔好困啊.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_09_11_18_21",
+    "title": "兔兔好困啊",
+    "date": "2026-05-09",
+    "time": "11:18:21",
+    "startTime": "11:18",
+    "endTime": "13:50",
+    "duration": 9161,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_09_11_18_21/录制-1713548468-20260509-111821-619-兔兔好困啊.xml",
+    "cover": "/data/streams/liko/2026_05_09_11_18_21/录制-1713548468-20260509-111821-619-兔兔好困啊.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_09_11_18_21/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_09_11_18_21/录制-1713548468-20260509-111821-619-兔兔好困啊_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_09_11_18_21/录制-1713548468-20260509-111821-619-兔兔好困啊_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_09_11_18_21/录制-1713548468-20260508-211113-945-兔兔唱歌_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_09_11_18_21/录制-1713548468-20260508-211113-945-兔兔唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_08_21_11_13",
     "title": "兔兔唱歌",
     "date": "2026-05-08",
