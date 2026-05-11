@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_11_20_31_25",
+    "title": "叭啦叭啦叭叭 又是一个安静的晚上",
+    "date": "2026-05-11",
+    "time": "20:31:25",
+    "startTime": "20:31",
+    "endTime": "00:19",
+    "duration": 13737,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_11_20_31_25/录制-25788785-20260511-203125-152-叭啦叭啦叭叭 又是一个安静的晚上.xml",
+    "cover": "/data/streams/sui/2026_05_11_20_31_25/录制-25788785-20260511-203125-152-叭啦叭啦叭叭 又是一个安静的晚上.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_11_20_31_25/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_11_20_31_25/录制-25788785-20260511-203125-152-叭啦叭啦叭叭 又是一个安静的晚上_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_11_20_31_25/录制-25788785-20260511-203125-152-叭啦叭啦叭叭 又是一个安静的晚上_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_11_14_52_46",
+    "title": "竞拍之王 一千万我来了",
+    "date": "2026-05-11",
+    "time": "14:52:46",
+    "startTime": "14:52",
+    "endTime": "17:54",
+    "duration": 10955,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_11_14_52_46/录制-25788785-20260511-145246-672-竞拍之王 一千万我来了_merged.xml",
+    "cover": "/data/streams/sui/2026_05_11_14_52_46/录制-25788785-20260511-145246-672-竞拍之王 一千万我来了.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_11_14_52_46/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_11_14_52_46/录制-25788785-20260511-145246-672-竞拍之王 一千万我来了_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_11_14_52_46/录制-25788785-20260511-145246-672-竞拍之王 一千万我来了_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_05_11_14_52_46/录制-25788785-20260509-195429-324-悠哉悠哉日常夜晚_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_11_14_52_46/录制-25788785-20260509-195429-324-悠哉悠哉日常夜晚_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_09_19_54_29",
     "title": "悠哉悠哉日常夜晚",
     "date": "2026-05-09",

@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_11_22_36_54",
+    "title": "兔兔贴贴",
+    "date": "2026-05-11",
+    "time": "22:36:54",
+    "startTime": "22:36",
+    "endTime": "01:12",
+    "duration": 9408,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_11_22_36_54/录制-1713548468-20260511-223654-572-兔兔贴贴.xml",
+    "cover": "/data/streams/liko/2026_05_11_22_36_54/录制-1713548468-20260511-223654-572-兔兔贴贴.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_11_22_36_54/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_11_22_36_54/录制-1713548468-20260511-223654-572-兔兔贴贴_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_11_20_12_37",
+    "title": "兔兔贴贴",
+    "date": "2026-05-11",
+    "time": "20:12:37",
+    "startTime": "20:12",
+    "endTime": "22:34",
+    "duration": 8577,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_11_20_12_37/录制-1713548468-20260511-201237-534-新人mc开荒_merged.xml",
+    "cover": "/data/streams/liko/2026_05_11_20_12_37/录制-1713548468-20260511-201237-534-新人mc开荒.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_11_20_12_37/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_11_20_12_37/录制-1713548468-20260511-201237-534-新人mc开荒_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_11_20_12_37/录制-1713548468-20260510-025149-128-兔兔好困啊_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_11_20_12_37/录制-1713548468-20260511-031248-771-兔兔想上船_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_10_00_27_51",
     "title": "兔兔好困啊",
     "date": "2026-05-09",

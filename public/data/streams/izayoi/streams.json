@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_11_20_06_54",
+    "title": "在画了，在画了！",
+    "date": "2026-05-11",
+    "time": "20:06:54",
+    "startTime": "20:06",
+    "endTime": "23:34",
+    "duration": 12532,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_11_20_06_54/录制-1741667419-20260511-200654-763-在画了，在画了！.xml",
+    "cover": "/data/streams/izayoi/2026_05_11_20_06_54/录制-1741667419-20260511-200654-763-在画了，在画了！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_11_20_06_54/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_11_20_06_54/录制-1741667419-20260511-200654-763-在画了，在画了！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_11_20_06_54/录制-1741667419-20260511-200654-763-在画了，在画了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_11_09_06_50",
+    "title": "早茶第五十一天。",
+    "date": "2026-05-11",
+    "time": "09:06:50",
+    "startTime": "09:06",
+    "endTime": "11:32",
+    "duration": 8771,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_11_09_06_50/录制-1741667419-20260511-090650-570-早茶第五十一天。.xml",
+    "cover": "/data/streams/izayoi/2026_05_11_09_06_50/录制-1741667419-20260511-090650-570-早茶第五十一天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_11_09_06_50/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_11_09_06_50/录制-1741667419-20260511-090650-570-早茶第五十一天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_11_09_06_50/录制-1741667419-20260511-090650-570-早茶第五十一天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_11_09_06_50/录制-1741667419-20260509-200250-775-一起来看超电磁炮！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_11_09_06_50/录制-1741667419-20260509-200250-775-一起来看超电磁炮！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_09_20_02_50",
     "title": "一起来看超电磁炮！",
     "date": "2026-05-09",
