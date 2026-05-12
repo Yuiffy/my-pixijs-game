@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_12_20_57_46",
+    "title": "学术讨论是否能上船",
+    "date": "2026-05-12",
+    "time": "20:57:46",
+    "startTime": "20:57",
+    "endTime": "01:05",
+    "duration": 14880,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_12_20_57_46/录制-1713548468-20260512-205746-126-兔兔画画.xml",
+    "cover": "/data/streams/liko/2026_05_12_20_57_46/录制-1713548468-20260512-205746-126-兔兔画画.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_12_20_57_46/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_12_20_57_46/录制-1713548468-20260512-205746-126-兔兔画画_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_12_20_57_46/录制-1713548468-20260512-205746-126-兔兔画画_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_12_11_05_42",
+    "title": "兔兔想上船",
+    "date": "2026-05-12",
+    "time": "11:05:42",
+    "startTime": "11:05",
+    "endTime": "17:38",
+    "duration": 23604,
+    "durationStr": "6.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_12_11_05_42/录制-1713548468-20260512-110542-103-兔兔贴贴.xml",
+    "cover": "/data/streams/liko/2026_05_12_11_05_42/录制-1713548468-20260512-110542-103-兔兔贴贴.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_12_11_05_42/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_12_11_05_42/录制-1713548468-20260512-110542-103-兔兔贴贴_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_12_11_05_42/录制-1713548468-20260512-110542-103-兔兔贴贴_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_12_11_05_42/录制-1713548468-20260511-201237-534-新人mc开荒_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_12_11_05_42/录制-1713548468-20260511-223654-572-兔兔贴贴_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_11_22_36_54",
     "title": "兔兔贴贴",
     "date": "2026-05-11",

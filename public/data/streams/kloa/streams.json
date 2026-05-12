@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_12_20_02_47",
+    "title": "学术直播间 竞拍之王",
+    "date": "2026-05-12",
+    "time": "20:02:47",
+    "startTime": "20:02",
+    "endTime": "00:38",
+    "duration": 16595,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_12_20_02_47/录制-1986461465-20260512-200247-679-学术直播间 竞拍之王_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_12_20_02_47/录制-1986461465-20260512-200247-679-学术直播间 竞拍之王.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_12_20_02_47/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_12_20_02_47/录制-1986461465-20260512-200247-679-学术直播间 竞拍之王_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_12_20_02_47/录制-1986461465-20260512-200247-679-学术直播间 竞拍之王_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_12_09_12_56",
+    "title": "早安~",
+    "date": "2026-05-12",
+    "time": "09:12:56",
+    "startTime": "09:12",
+    "endTime": "12:01",
+    "duration": 10195,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_12_09_12_56/录制-1986461465-20260512-091256-931-早安~_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_12_09_12_56/录制-1986461465-20260512-091256-931-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_12_09_12_56/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_12_09_12_56/录制-1986461465-20260512-091256-931-早安~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_12_09_12_56/录制-1986461465-20260512-091256-931-早安~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_12_09_12_56/录制-1986461465-20260511-210315-554-吃饱喝足大困特困_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_12_09_12_56/录制-1986461465-20260511-210315-554-吃饱喝足大困特困_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_11_21_03_15",
     "title": "吃饱喝足大困特困",
     "date": "2026-05-11",
