@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_13_22_04_17",
+    "title": "被窝悄悄话",
+    "date": "2026-05-13",
+    "time": "22:04:17",
+    "startTime": "22:04",
+    "endTime": "00:32",
+    "duration": 8908,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_13_22_04_17/录制-1713548468-20260513-220417-617-被窝悄悄话_merged.xml",
+    "cover": "/data/streams/liko/2026_05_13_22_04_17/录制-1713548468-20260513-220417-617-被窝悄悄话.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_13_22_04_17/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_13_22_04_17/录制-1713548468-20260513-220417-617-被窝悄悄话_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_13_22_04_17/录制-1713548468-20260513-220417-617-被窝悄悄话_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_13_12_11_11",
+    "title": "学术研究在船上当藤壶",
+    "date": "2026-05-13",
+    "time": "12:11:11",
+    "startTime": "12:11",
+    "endTime": "18:08",
+    "duration": 21432,
+    "durationStr": "6.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_13_12_11_11/录制-1713548468-20260513-121111-243-唠嗑然后激情健身环.xml",
+    "cover": "/data/streams/liko/2026_05_13_12_11_11/录制-1713548468-20260513-121111-243-唠嗑然后激情健身环.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_13_12_11_11/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_13_12_11_11/录制-1713548468-20260513-121111-243-唠嗑然后激情健身环_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_13_12_11_11/录制-1713548468-20260513-121111-243-唠嗑然后激情健身环_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_13_12_11_11/录制-1713548468-20260512-205746-126-兔兔画画_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_13_12_11_11/录制-1713548468-20260512-205746-126-兔兔画画_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_12_20_57_46",
     "title": "学术讨论是否能上船",
     "date": "2026-05-12",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_13_22_31_31",
+    "title": "极致温柔！呼呼大睡",
+    "date": "2026-05-13",
+    "time": "22:31:31",
+    "startTime": "22:31",
+    "endTime": "00:44",
+    "duration": 8015,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_13_22_31_31/录制-25788785-20260513-223131-318-极致温柔！呼呼大睡_merged.xml",
+    "cover": "/data/streams/sui/2026_05_13_22_31_31/录制-25788785-20260513-223131-318-极致温柔！呼呼大睡.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_13_22_31_31/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_13_22_31_31/录制-25788785-20260513-223131-318-极致温柔！呼呼大睡_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_13_22_31_31/录制-25788785-20260513-223131-318-极致温柔！呼呼大睡_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_13_15_13_07",
+    "title": "学术直播间",
+    "date": "2026-05-13",
+    "time": "15:13:07",
+    "startTime": "15:13",
+    "endTime": "17:50",
+    "duration": 9444,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_13_15_13_07/录制-25788785-20260513-151307-281-学术直播间.xml",
+    "cover": "/data/streams/sui/2026_05_13_15_13_07/录制-25788785-20260513-151307-281-学术直播间.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_13_15_13_07/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_13_15_13_07/录制-25788785-20260513-151307-281-学术直播间_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_13_15_13_07/录制-25788785-20260513-151307-281-学术直播间_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_05_13_15_13_07/录制-25788785-20260512-203336-575-哈喽哈喽哈喽哈喽哈喽_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_13_15_13_07/录制-25788785-20260512-203336-575-哈喽哈喽哈喽哈喽哈喽_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_12_20_33_36",
     "title": "哈喽哈喽哈喽哈喽哈喽",
     "date": "2026-05-12",
