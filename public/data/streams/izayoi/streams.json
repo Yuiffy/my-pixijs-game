@@ -1,5 +1,70 @@
 [
   {
+    "id": "2026_05_16_22_28_19",
+    "title": "乱剪一通！",
+    "date": "2026-05-16",
+    "time": "22:28:19",
+    "startTime": "22:28",
+    "endTime": "22:58",
+    "duration": 1800,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_16_22_28_19/录制-1741667419-20260516-222819-847-乱剪一通！.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_05_16_22_28_19/录制-1741667419-20260516-230304-932-乱剪一通！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_16_20_05_57",
+    "title": "乱剪一通！",
+    "date": "2026-05-16",
+    "time": "20:05:57",
+    "startTime": "20:05",
+    "endTime": "22:25",
+    "duration": 8425,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_16_20_05_57/录制-1741667419-20260516-200557-708-乱剪一通！.xml",
+    "cover": "/data/streams/izayoi/2026_05_16_20_05_57/录制-1741667419-20260516-200557-708-乱剪一通！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_16_15_47_01",
+    "title": "277（伪）拍！",
+    "date": "2026-05-16",
+    "time": "15:47:01",
+    "startTime": "15:47",
+    "endTime": "17:22",
+    "duration": 5702,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_16_15_47_01/录制-1741667419-20260516-154701-518-277（伪）拍！.xml",
+    "cover": "/data/streams/izayoi/2026_05_16_15_47_01/录制-1741667419-20260516-154701-518-277（伪）拍！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_16_14_53_56",
+    "title": "277（伪）拍！",
+    "date": "2026-05-16",
+    "time": "14:53:56",
+    "startTime": "14:53",
+    "endTime": "15:36",
+    "duration": 2612,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_16_14_53_56/录制-1741667419-20260516-145356-226-277（伪）拍！.xml",
+    "cover": "/data/streams/izayoi/2026_05_16_14_53_56/录制-1741667419-20260516-145356-226-277（伪）拍！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_16_14_53_56/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_16_14_53_56/录制-1741667419-20260516-145356-226-277（伪）拍！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_16_14_53_56/录制-1741667419-20260515-200030-432-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_15_20_00_30",
     "title": "1616我们喜浣你",
     "date": "2026-05-15",
