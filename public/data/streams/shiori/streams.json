@@ -1,5 +1,51 @@
 [
   {
+    "id": "2026_05_17_22_15_25",
+    "title": "小栞来！",
+    "date": "2026-05-17",
+    "time": "22:15:25",
+    "startTime": "22:15",
+    "endTime": "00:24",
+    "duration": 7786,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_17_22_15_25/录制-26966466-20260517-221525-638-小栞来！.xml",
+    "cover": "/data/streams/shiori/2026_05_17_22_15_25/录制-26966466-20260517-221525-638-小栞来！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_05_17_22_15_25/录制-26966466-20260517-221525-638-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_17_10_28_37",
+    "title": "小栞来！",
+    "date": "2026-05-17",
+    "time": "10:28:37",
+    "startTime": "10:28",
+    "endTime": "12:19",
+    "duration": 6680,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260517-102837-531-小栞来！.xml",
+    "cover": "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260517-102837-531-小栞来！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_17_10_28_37/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260517-102837-531-小栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260517-102837-531-小栞来！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_1.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_2.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_3.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_4.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_5.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_6.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_7.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_8.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_COMIC_FACTORY_9.png",
+      "/data/streams/shiori/2026_05_17_10_28_37/录制-26966466-20260516-230302-368-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_16_22_28_21",
     "title": "小栞来！",
     "date": "2026-05-16",

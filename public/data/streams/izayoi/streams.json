@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_17_21_03_05",
+    "title": "1616我们喜浣你",
+    "date": "2026-05-17",
+    "time": "21:03:05",
+    "startTime": "21:03",
+    "endTime": "00:40",
+    "duration": 13068,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_17_21_03_05/录制-1741667419-20260517-210305-786-1616我们喜浣你.xml",
+    "cover": "/data/streams/izayoi/2026_05_17_21_03_05/录制-1741667419-20260517-210305-786-1616我们喜浣你.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_05_17_21_03_05/录制-1741667419-20260517-210305-786-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_17_14_01_49",
+    "title": "狼 ， 战只！",
+    "date": "2026-05-17",
+    "time": "14:01:49",
+    "startTime": "14:01",
+    "endTime": "17:31",
+    "duration": 12625,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_17_14_01_49/录制-1741667419-20260517-140149-607-狼 ， 战只！.xml",
+    "cover": "/data/streams/izayoi/2026_05_17_14_01_49/录制-1741667419-20260517-140149-607-狼 ， 战只！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_17_14_01_49/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_17_14_01_49/录制-1741667419-20260517-140149-607-狼 ， 战只！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_17_14_01_49/录制-1741667419-20260517-140149-607-狼 ， 战只！_COMIC_FACTORY_1.png",
+      "/data/streams/izayoi/2026_05_17_14_01_49/录制-1741667419-20260517-140149-607-狼 ， 战只！_COMIC_FACTORY_2.png",
+      "/data/streams/izayoi/2026_05_17_14_01_49/录制-1741667419-20260517-140149-607-狼 ， 战只！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_17_14_01_49/录制-1741667419-20260516-230304-932-乱剪一通！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_16_22_28_19",
     "title": "乱剪一通！",
     "date": "2026-05-16",
