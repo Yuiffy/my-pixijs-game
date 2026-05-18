@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_18_20_38_24",
+    "title": "晚上好咕啊啊",
+    "date": "2026-05-18",
+    "time": "20:38:24",
+    "startTime": "20:38",
+    "endTime": "23:53",
+    "duration": 11747,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_18_20_38_24/录制-25788785-20260518-203824-298-晚上好咕啊啊_merged.xml",
+    "cover": "/data/streams/sui/2026_05_18_20_38_24/录制-25788785-20260518-203824-298-晚上好咕啊啊.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_18_20_38_24/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_18_20_38_24/录制-25788785-20260518-203824-298-晚上好咕啊啊_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_18_20_38_24/录制-25788785-20260518-203824-298-晚上好咕啊啊_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_18_15_05_33",
+    "title": "摸鱼吗！空洞骑士",
+    "date": "2026-05-18",
+    "time": "15:05:33",
+    "startTime": "15:05",
+    "endTime": "18:05",
+    "duration": 10853,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_18_15_05_33/录制-25788785-20260518-150533-843-摸鱼吗！空洞骑士_merged.xml",
+    "cover": "/data/streams/sui/2026_05_18_15_05_33/录制-25788785-20260518-150533-843-摸鱼吗！空洞骑士.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_18_15_05_33/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_18_15_05_33/录制-25788785-20260518-150533-843-摸鱼吗！空洞骑士_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_05_18_15_05_33/录制-25788785-20260517-200622-318-晚上好啊啊啊咕咕咕_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_17_20_06_22",
     "title": "晚上好啊啊啊咕咕咕",
     "date": "2026-05-17",

@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026_05_18_20_06_16",
+    "title": "晚间歌杂~唱唱聊聊",
+    "date": "2026-05-18",
+    "time": "20:06:16",
+    "startTime": "20:06",
+    "endTime": "00:19",
+    "duration": 15184,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_18_20_06_16/录制-1986461465-20260518-200616-136-晚间歌杂~唱唱聊聊.xml",
+    "cover": "/data/streams/kloa/2026_05_18_20_06_16/录制-1986461465-20260518-200616-136-晚间歌杂~唱唱聊聊.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_18_20_06_16/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_18_20_06_16/录制-1986461465-20260518-200616-136-晚间歌杂~唱唱聊聊_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_18_20_06_16/录制-1986461465-20260518-200616-136-晚间歌杂~唱唱聊聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_18_09_13_26",
+    "title": "早台学歌~",
+    "date": "2026-05-18",
+    "time": "09:13:26",
+    "startTime": "09:13",
+    "endTime": "11:53",
+    "duration": 9654,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_18_09_13_26/录制-1986461465-20260518-091326-678-早台歌杂~.xml",
+    "cover": "/data/streams/kloa/2026_05_18_09_13_26/录制-1986461465-20260518-091326-678-早台歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_18_09_13_26/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_18_09_13_26/录制-1986461465-20260518-091326-678-早台歌杂~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_18_09_13_26/录制-1986461465-20260518-091326-678-早台歌杂~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_18_09_13_26/录制-1986461465-20260517-100855-372-早安歌~先吃早餐_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_18_09_13_26/录制-1986461465-20260517-100855-372-早安歌~先吃早餐_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_18_09_13_26/录制-1986461465-20260517-164239-372-街命运的交叉点~神作戏剧性文字游戏_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_17_16_42_39",
     "title": "纯歌~",
     "date": "2026-05-17",

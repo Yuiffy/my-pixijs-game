@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_05_18_20_04_44",
+    "title": "兔兔来咯",
+    "date": "2026-05-18",
+    "time": "20:04:44",
+    "startTime": "20:04",
+    "endTime": "00:22",
+    "duration": 15520,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_18_20_04_44/录制-1713548468-20260518-200444-822-兔兔来咯.xml",
+    "cover": "/data/streams/liko/2026_05_18_20_04_44/录制-1713548468-20260518-200444-822-兔兔来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_18_20_04_44/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_18_20_04_44/录制-1713548468-20260518-200444-822-兔兔来咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_18_20_04_44/录制-1713548468-20260518-200444-822-兔兔来咯_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_18_20_04_44/录制-1713548468-20260517-210603-562-虚弱小兔_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_17_21_06_03",
     "title": "虚弱小兔",
     "date": "2026-05-17",
