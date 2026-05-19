@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_05_19_21_41_29",
+    "title": "小栞来！",
+    "date": "2026-05-19",
+    "time": "21:41:29",
+    "startTime": "21:41",
+    "endTime": "00:20",
+    "duration": 9581,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_19_21_41_29/录制-26966466-20260519-214129-334-小栞来！.xml",
+    "cover": "/data/streams/shiori/2026_05_19_21_41_29/录制-26966466-20260519-214129-334-小栞来！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_19_21_41_29/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_19_21_41_29/录制-26966466-20260519-214129-334-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_19_11_12_15",
+    "title": "早安！！",
+    "date": "2026-05-19",
+    "time": "11:12:15",
+    "startTime": "11:12",
+    "endTime": "12:12",
+    "duration": 3617,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_19_11_12_15/录制-26966466-20260519-111215-830-早安！！.xml",
+    "cover": "/data/streams/shiori/2026_05_19_11_12_15/录制-26966466-20260519-111215-830-早安！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_19_11_12_15/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_19_11_12_15/录制-26966466-20260519-111215-830-早安！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_19_10_02_34",
+    "title": "早安！！",
+    "date": "2026-05-19",
+    "time": "10:02:34",
+    "startTime": "10:02",
+    "endTime": "11:08",
+    "duration": 3986,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_19_10_02_34/录制-26966466-20260519-100234-729-早安！！_merged.xml",
+    "cover": "/data/streams/shiori/2026_05_19_10_02_34/录制-26966466-20260519-100234-729-早安！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_19_10_02_34/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_19_10_02_34/录制-26966466-20260519-100234-729-早安！！_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_19_10_02_34/录制-26966466-20260519-100234-729-早安！！_merged_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_05_19_10_02_34/录制-26966466-20260518-102229-057-早安！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_19_10_02_34/录制-26966466-20260518-102229-057-早安！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_18_10_22_29",
     "title": "早安！！",
     "date": "2026-05-18",

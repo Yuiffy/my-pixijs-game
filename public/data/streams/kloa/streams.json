@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_05_19_20_06_20",
+    "title": "唱歌唱歌唱歌",
+    "date": "2026-05-19",
+    "time": "20:06:20",
+    "startTime": "20:06",
+    "endTime": "00:43",
+    "duration": 16677,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_19_20_06_20/录制-1986461465-20260519-200620-552-唱歌唱歌唱歌.xml",
+    "cover": "/data/streams/kloa/2026_05_19_20_06_20/录制-1986461465-20260519-200620-552-唱歌唱歌唱歌.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_19_20_06_20/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_19_20_06_20/录制-1986461465-20260519-200620-552-唱歌唱歌唱歌_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_19_20_06_20/录制-1986461465-20260519-200620-552-唱歌唱歌唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_19_09_27_17",
+    "title": "街命运的交叉点-单机经典影游（自配音）",
+    "date": "2026-05-19",
+    "time": "09:27:17",
+    "startTime": "09:27",
+    "endTime": "14:44",
+    "duration": 19068,
+    "durationStr": "5.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_19_09_27_17/录制-1986461465-20260519-092717-697-早上好！.xml",
+    "cover": "/data/streams/kloa/2026_05_19_09_27_17/录制-1986461465-20260519-092717-697-早上好！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_19_09_27_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_19_09_27_17/录制-1986461465-20260519-092717-697-早上好！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_19_09_27_17/录制-1986461465-20260519-092717-697-早上好！_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_19_09_27_17/录制-1986461465-20260518-200616-136-晚间歌杂~唱唱聊聊_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_19_09_27_17/录制-1986461465-20260518-200616-136-晚间歌杂~唱唱聊聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_18_20_06_16",
     "title": "晚间歌杂~唱唱聊聊",
     "date": "2026-05-18",
