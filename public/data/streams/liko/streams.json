@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_20_20_05_40",
+    "title": "梦话棉花糖",
+    "date": "2026-05-20",
+    "time": "20:05:40",
+    "startTime": "20:05",
+    "endTime": "00:55",
+    "duration": 17424,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_20_20_05_40/录制-1713548468-20260520-200540-571-bilibili主播的直播间_merged.xml",
+    "cover": "/data/streams/liko/2026_05_20_20_05_40/录制-1713548468-20260520-200540-571-bilibili主播的直播间.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_05_20_20_05_40/录制-1713548468-20260520-200540-571-bilibili主播的直播间_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_20_11_08_29",
+    "title": "兔兔唠嗑！",
+    "date": "2026-05-20",
+    "time": "11:08:29",
+    "startTime": "11:08",
+    "endTime": "14:31",
+    "duration": 12228,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_20_11_08_29/录制-1713548468-20260520-110829-338-兔兔唠嗑！.xml",
+    "cover": "/data/streams/liko/2026_05_20_11_08_29/录制-1713548468-20260520-110829-338-兔兔唠嗑！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_20_11_08_29/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_20_11_08_29/录制-1713548468-20260520-110829-338-兔兔唠嗑！_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_20_11_08_29/录制-1713548468-20260519-200017-601-大家我好困啊_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_20_11_08_29/录制-1713548468-20260519-200017-601-大家我好困啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_19_20_00_17",
     "title": "大家我好困啊",
     "date": "2026-05-19",

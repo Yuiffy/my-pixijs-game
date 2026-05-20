@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_05_20_23_36_22",
+    "title": "睡前电台",
+    "date": "2026-05-20",
+    "time": "23:36:22",
+    "startTime": "23:36",
+    "endTime": "00:36",
+    "duration": 3641,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_20_23_36_22/录制-1713546334-20260520-233622-844-睡前电台.xml",
+    "cover": "/data/streams/hazel/2026_05_20_23_36_22/录制-1713546334-20260520-233622-844-睡前电台.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_20_23_36_22/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_20_23_36_22/录制-1713546334-20260520-233622-844-睡前电台_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_15_19_04_07",
     "title": "晚上好 随便聊聊",
     "date": "2026-05-15",
