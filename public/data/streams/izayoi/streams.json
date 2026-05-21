@@ -1,5 +1,118 @@
 [
   {
+    "id": "2026_05_21_21_00_35",
+    "title": "一起来看超电磁炮！",
+    "date": "2026-05-21",
+    "time": "21:00:35",
+    "startTime": "21:00",
+    "endTime": "22:10",
+    "duration": 4244,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_21_21_00_35/录制-1741667419-20260521-210035-778-一起来看超电磁炮！.xml",
+    "cover": "/data/streams/izayoi/2026_05_21_21_00_35/录制-1741667419-20260521-210035-778-一起来看超电磁炮！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_21_21_00_35/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_21_21_00_35/录制-1741667419-20260521-210035-778-一起来看超电磁炮！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_21_20_04_17",
+    "title": "一起来看超电磁炮！",
+    "date": "2026-05-21",
+    "time": "20:04:17",
+    "startTime": "20:04",
+    "endTime": "20:54",
+    "duration": 3058,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_21_20_04_17/录制-1741667419-20260521-200417-049-一起来看超电磁炮！.xml",
+    "cover": "/data/streams/izayoi/2026_05_21_20_04_17/录制-1741667419-20260521-200417-049-一起来看超电磁炮！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_21_20_04_17/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_21_20_04_17/录制-1741667419-20260521-200417-049-一起来看超电磁炮！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_21_15_39_09",
+    "title": "早茶？下午茶？？",
+    "date": "2026-05-21",
+    "time": "15:39:09",
+    "startTime": "15:39",
+    "endTime": "16:05",
+    "duration": 1566,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_21_15_39_09/录制-1741667419-20260521-153909-071-早茶？下午茶？？.xml",
+    "cover": "/data/streams/izayoi/2026_05_21_15_39_09/录制-1741667419-20260521-153909-071-早茶？下午茶？？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_21_15_27_06",
+    "title": "早茶？下午茶？？",
+    "date": "2026-05-21",
+    "time": "15:27:06",
+    "startTime": "15:27",
+    "endTime": "15:38",
+    "duration": 716,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_21_15_27_06/录制-1741667419-20260521-152706-326-早茶？下午茶？？.xml",
+    "cover": "/data/streams/izayoi/2026_05_21_15_27_06/录制-1741667419-20260521-152706-326-早茶？下午茶？？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_21_14_38_53",
+    "title": "早茶？下午茶？？",
+    "date": "2026-05-21",
+    "time": "14:38:53",
+    "startTime": "14:38",
+    "endTime": "15:26",
+    "duration": 2891,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_21_14_38_53/录制-1741667419-20260521-143853-320-早茶？下午茶？？.xml",
+    "cover": "/data/streams/izayoi/2026_05_21_14_38_53/录制-1741667419-20260521-143853-320-早茶？下午茶？？.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_21_14_38_53/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_21_14_38_53/录制-1741667419-20260521-143853-320-早茶？下午茶？？_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_21_14_17_14",
+    "title": "早茶？下午茶？？",
+    "date": "2026-05-21",
+    "time": "14:17:14",
+    "startTime": "14:17",
+    "endTime": "14:38",
+    "duration": 1280,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_21_14_17_14/录制-1741667419-20260521-141714-279-早茶？下午茶？？.xml",
+    "cover": "/data/streams/izayoi/2026_05_21_14_17_14/录制-1741667419-20260521-141714-279-早茶？下午茶？？.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_21_14_02_35",
+    "title": "早茶？下午茶？？",
+    "date": "2026-05-21",
+    "time": "14:02:35",
+    "startTime": "14:02",
+    "endTime": "14:16",
+    "duration": 863,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_21_14_02_35/录制-1741667419-20260521-140235-766-早茶？下午茶？？.xml",
+    "cover": "/data/streams/izayoi/2026_05_21_14_02_35/录制-1741667419-20260521-140235-766-早茶？下午茶？？.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_05_21_14_02_35/录制-1741667419-20260520-200313-007-小喝一点！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_20_20_03_13",
     "title": "小喝一点！",
     "date": "2026-05-20",
