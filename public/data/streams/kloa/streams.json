@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_22_21_06_16",
+    "title": "晚安被窝",
+    "date": "2026-05-22",
+    "time": "21:06:16",
+    "startTime": "21:06",
+    "endTime": "01:11",
+    "duration": 14732,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_22_21_06_16/录制-1986461465-20260522-210616-616-晚安被窝_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_22_21_06_16/录制-1986461465-20260522-210616-616-晚安被窝.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_22_21_06_16/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_22_21_06_16/录制-1986461465-20260522-210616-616-晚安被窝_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_22_21_06_16/录制-1986461465-20260522-210616-616-晚安被窝_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_22_09_11_42",
+    "title": "早安~",
+    "date": "2026-05-22",
+    "time": "09:11:42",
+    "startTime": "09:11",
+    "endTime": "11:15",
+    "duration": 7499,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_22_09_11_42/录制-1986461465-20260522-091142-566-早安~.xml",
+    "cover": "/data/streams/kloa/2026_05_22_09_11_42/录制-1986461465-20260522-091142-566-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_22_09_11_42/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_22_09_11_42/录制-1986461465-20260522-091142-566-早安~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_22_09_11_42/录制-1986461465-20260521-200926-457-街命运的交叉点-单机剧情游戏_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_21_20_09_26",
     "title": "街命运的交叉点-单机剧情游戏",
     "date": "2026-05-21",
