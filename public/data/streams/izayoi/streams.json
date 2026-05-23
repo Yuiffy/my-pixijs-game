@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_05_23_20_00_37",
+    "title": "浣迎回来",
+    "date": "2026-05-23",
+    "time": "20:00:37",
+    "startTime": "20:00",
+    "endTime": "23:42",
+    "duration": 13322,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_23_20_00_37/录制-1741667419-20260523-200037-824-浣迎回来.xml",
+    "cover": "/data/streams/izayoi/2026_05_23_20_00_37/录制-1741667419-20260523-200037-824-浣迎回来.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_23_20_00_37/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_23_20_00_37/录制-1741667419-20260523-200037-824-浣迎回来_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_23_13_00_35",
+    "title": "浣回来了！",
+    "date": "2026-05-23",
+    "time": "13:00:35",
+    "startTime": "13:00",
+    "endTime": "16:57",
+    "duration": 14244,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_23_13_00_35/录制-1741667419-20260523-130035-019-浣回来了！.xml",
+    "cover": "/data/streams/izayoi/2026_05_23_13_00_35/录制-1741667419-20260523-130035-019-浣回来了！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_23_13_00_35/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_23_13_00_35/录制-1741667419-20260523-130035-019-浣回来了！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_23_13_00_35/录制-1741667419-20260522-224705-203-已出狱_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_22_22_47_05",
     "title": "已出狱",
     "date": "2026-05-22",

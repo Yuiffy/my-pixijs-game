@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_05_23_22_45_05",
+    "title": "困困栞！",
+    "date": "2026-05-23",
+    "time": "22:45:05",
+    "startTime": "22:45",
+    "endTime": "00:15",
+    "duration": 5409,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_23_22_45_05/录制-26966466-20260523-224505-323-困困栞！.xml",
+    "cover": "/data/streams/shiori/2026_05_23_22_45_05/录制-26966466-20260523-224505-323-困困栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_23_22_45_05/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_23_22_45_05/录制-26966466-20260523-224505-323-困困栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_23_15_12_24",
+    "title": "不说话！工作音！",
+    "date": "2026-05-23",
+    "time": "15:12:24",
+    "startTime": "15:12",
+    "endTime": "17:19",
+    "duration": 7636,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_23_15_12_24/录制-26966466-20260523-151224-442-不说话！工作音！.xml",
+    "cover": "/data/streams/shiori/2026_05_23_15_12_24/录制-26966466-20260523-151224-442-不说话！工作音！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_23_15_12_24/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_23_15_12_24/录制-26966466-20260523-151224-442-不说话！工作音！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_23_10_23_57",
+    "title": "早安QAQ",
+    "date": "2026-05-23",
+    "time": "10:23:57",
+    "startTime": "10:23",
+    "endTime": "12:08",
+    "duration": 6358,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_23_10_23_57/录制-26966466-20260523-102357-448-早安QAQ.xml",
+    "cover": "/data/streams/shiori/2026_05_23_10_23_57/录制-26966466-20260523-102357-448-早安QAQ.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_23_10_23_57/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_23_10_23_57/录制-26966466-20260523-102357-448-早安QAQ_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_22_23_05_07",
     "title": "小播一会！",
     "date": "2026-05-22",

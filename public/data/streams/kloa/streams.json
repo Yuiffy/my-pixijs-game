@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_23_20_09_30",
+    "title": "唱歌歌~",
+    "date": "2026-05-23",
+    "time": "20:09:30",
+    "startTime": "20:09",
+    "endTime": "00:16",
+    "duration": 14878,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_23_20_09_30/录制-1986461465-20260523-200930-759-唱歌歌~_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_23_20_09_30/录制-1986461465-20260523-200930-759-唱歌歌~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_23_20_09_30/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_23_20_09_30/录制-1986461465-20260523-200930-759-唱歌歌~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_23_10_46_32",
+    "title": "早上好（心虚）",
+    "date": "2026-05-23",
+    "time": "10:46:32",
+    "startTime": "10:46",
+    "endTime": "13:15",
+    "duration": 8952,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_23_10_46_32/录制-1986461465-20260523-104632-054-早上好（心虚）_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_23_10_46_32/录制-1986461465-20260523-104632-054-早上好（心虚）.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_23_10_46_32/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_23_10_46_32/录制-1986461465-20260523-104632-054-早上好（心虚）_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_23_10_46_32/录制-1986461465-20260522-210616-616-晚安被窝_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_23_10_46_32/录制-1986461465-20260522-210616-616-晚安被窝_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_22_21_06_16",
     "title": "晚安被窝",
     "date": "2026-05-22",
