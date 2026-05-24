@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_05_24_20_12_37",
+    "title": "周末咯",
+    "date": "2026-05-24",
+    "time": "20:12:37",
+    "startTime": "20:12",
+    "endTime": "00:17",
+    "duration": 14746,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_24_20_12_37/录制-1713548468-20260524-201237-747-周末咯.xml",
+    "cover": "/data/streams/liko/2026_05_24_20_12_37/录制-1713548468-20260524-201237-747-周末咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_24_20_12_37/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_24_20_12_37/录制-1713548468-20260524-201237-747-周末咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_24_20_12_37/录制-1713548468-20260524-201237-747-周末咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_24_11_26_59",
+    "title": "困困被窝",
+    "date": "2026-05-24",
+    "time": "11:26:59",
+    "startTime": "11:26",
+    "endTime": "14:07",
+    "duration": 9660,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_24_11_26_59/录制-1713548468-20260524-112659-334-困困被窝_merged.xml",
+    "cover": "/data/streams/liko/2026_05_24_11_26_59/录制-1713548468-20260524-112659-334-困困被窝.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_24_11_26_59/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_24_11_26_59/录制-1713548468-20260524-112659-334-困困被窝_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_05_24_11_26_59/录制-1713548468-20260524-112659-334-困困被窝_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_24_11_02_48",
+    "title": "困困被窝",
+    "date": "2026-05-24",
+    "time": "11:02:48",
+    "startTime": "11:02",
+    "endTime": "11:22",
+    "duration": 1242,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_05_24_11_02_48/录制-1713548468-20260524-110248-328-困困被窝.xml",
+    "cover": "/data/streams/liko/2026_05_24_11_02_48/录制-1713548468-20260524-110248-328-困困被窝.cover.jpg",
+    "highlights": "/data/streams/liko/2026_05_24_11_02_48/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_05_24_11_02_48/录制-1713548468-20260524-110248-328-困困被窝_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_05_24_11_02_48/录制-1713548468-20260523-201225-615-港诡初体验_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_23_20_12_25",
     "title": "港诡初体验",
     "date": "2026-05-23",
