@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_25_20_34_50",
+    "title": "杂谈~今天真高兴~",
+    "date": "2026-05-25",
+    "time": "20:34:50",
+    "startTime": "20:34",
+    "endTime": "01:04",
+    "duration": 16222,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_25_20_34_50/录制-1986461465-20260525-203450-529-杂谈~_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_25_20_34_50/录制-1986461465-20260525-203450-529-杂谈~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_25_20_34_50/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_25_20_34_50/录制-1986461465-20260525-203450-529-杂谈~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_25_20_34_50/录制-1986461465-20260525-203450-529-杂谈~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_25_20_24_46",
+    "title": "杂谈~",
+    "date": "2026-05-25",
+    "time": "20:24:46",
+    "startTime": "20:24",
+    "endTime": "20:31",
+    "duration": 479,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_25_20_24_46/录制-1986461465-20260525-202446-367-杂谈~.xml",
+    "cover": "/data/streams/kloa/2026_05_25_20_24_46/录制-1986461465-20260525-202446-367-杂谈~.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_05_25_20_24_46/录制-1986461465-20260524-200440-897-竞拍之王_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_25_20_24_46/录制-1986461465-20260524-200440-897-竞拍之王_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_24_20_04_40",
     "title": "竞拍之王",
     "date": "2026-05-24",

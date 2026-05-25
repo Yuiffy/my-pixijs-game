@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_05_25_20_34_51",
+    "title": "吉星派对！",
+    "date": "2026-05-25",
+    "time": "20:34:51",
+    "startTime": "20:34",
+    "endTime": "21:32",
+    "duration": 3490,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_25_20_34_51/录制-26966466-20260525-203451-822-吉星派对！_merged.xml",
+    "cover": "/data/streams/shiori/2026_05_25_20_34_51/录制-26966466-20260525-203451-822-吉星派对！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_25_20_34_51/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_25_20_34_51/录制-26966466-20260525-203451-822-吉星派对！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_25_19_36_41",
+    "title": "吉星派对！",
+    "date": "2026-05-25",
+    "time": "19:36:41",
+    "startTime": "19:36",
+    "endTime": "20:29",
+    "duration": 3211,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_25_19_36_41/录制-26966466-20260525-193641-309-吉星派对！.xml",
+    "cover": "/data/streams/shiori/2026_05_25_19_36_41/录制-26966466-20260525-193641-309-吉星派对！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_05_25_19_36_41/录制-26966466-20260524-221233-104-小栞来咯！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_24_22_12_33",
     "title": "小栞来咯！！",
     "date": "2026-05-24",

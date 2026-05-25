@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_05_25_20_34_52",
+    "title": "在画了，在画了！",
+    "date": "2026-05-25",
+    "time": "20:34:52",
+    "startTime": "20:34",
+    "endTime": "00:04",
+    "duration": 12616,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_25_20_34_52/录制-1741667419-20260525-203452-532-在画了，在画了！_merged.xml",
+    "cover": "/data/streams/izayoi/2026_05_25_20_34_52/录制-1741667419-20260525-203452-532-在画了，在画了！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_25_20_34_52/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_25_20_34_52/录制-1741667419-20260525-203452-532-在画了，在画了！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_25_20_05_05",
+    "title": "在画了，在画了！",
+    "date": "2026-05-25",
+    "time": "20:05:05",
+    "startTime": "20:05",
+    "endTime": "20:31",
+    "duration": 1566,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_25_20_05_05/录制-1741667419-20260525-200505-360-在画了，在画了！.xml",
+    "cover": "/data/streams/izayoi/2026_05_25_20_05_05/录制-1741667419-20260525-200505-360-在画了，在画了！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_25_09_05_27",
+    "title": "早茶第五十八天。",
+    "date": "2026-05-25",
+    "time": "09:05:27",
+    "startTime": "09:05",
+    "endTime": "11:38",
+    "duration": 9187,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_25_09_05_27/录制-1741667419-20260525-090527-499-早茶第五十八天。.xml",
+    "cover": "/data/streams/izayoi/2026_05_25_09_05_27/录制-1741667419-20260525-090527-499-早茶第五十八天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_25_09_05_27/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_25_09_05_27/录制-1741667419-20260525-090527-499-早茶第五十八天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_25_09_05_27/录制-1741667419-20260524-201842-693-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_05_25_09_05_27/录制-1741667419-20260524-201842-693-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_24_20_18_42",
     "title": "1616我们喜浣你",
     "date": "2026-05-24",
