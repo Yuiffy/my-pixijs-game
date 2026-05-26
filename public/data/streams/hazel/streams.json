@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_05_26_20_58_26",
+    "title": "神秘的晚间直播",
+    "date": "2026-05-26",
+    "time": "20:58:26",
+    "startTime": "20:58",
+    "endTime": "22:59",
+    "duration": 7265,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_26_20_58_26/录制-1713546334-20260526-205826-657-神秘的晚间直播.xml",
+    "cover": "/data/streams/hazel/2026_05_26_20_58_26/录制-1713546334-20260526-205826-657-神秘的晚间直播.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_26_20_58_26/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_26_20_58_26/录制-1713546334-20260526-205826-657-神秘的晚间直播_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_26_10_58_57",
+    "title": "午间电台",
+    "date": "2026-05-26",
+    "time": "10:58:57",
+    "startTime": "10:58",
+    "endTime": "12:04",
+    "duration": 3968,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_26_10_58_57/录制-1713546334-20260526-105857-718-午间电台.xml",
+    "cover": "/data/streams/hazel/2026_05_26_10_58_57/录制-1713546334-20260526-105857-718-午间电台.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_26_10_58_57/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_26_10_58_57/录制-1713546334-20260526-105857-718-午间电台_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_26_10_58_57/录制-1713546334-20260526-105857-718-午间电台_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_05_26_10_58_57/录制-1713546334-20260524-185820-448-飞跃13号房 反击_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_26_10_58_57/录制-1713546334-20260524-185820-448-飞跃13号房 反击_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_24_18_58_20",
     "title": "飞跃13号房 反击",
     "date": "2026-05-24",

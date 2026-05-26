@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_26_20_06_29",
+    "title": "中文歌回~",
+    "date": "2026-05-26",
+    "time": "20:06:29",
+    "startTime": "20:06",
+    "endTime": "23:27",
+    "duration": 12101,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_26_20_06_29/录制-1986461465-20260526-200629-764-中文歌回~.xml",
+    "cover": null,
+    "highlights": "/data/streams/kloa/2026_05_26_20_06_29/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_26_20_06_29/录制-1986461465-20260526-200629-764-中文歌回~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_26_09_05_28",
+    "title": "晨间歌杂~",
+    "date": "2026-05-26",
+    "time": "09:05:28",
+    "startTime": "09:05",
+    "endTime": "11:11",
+    "duration": 7568,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_26_09_05_28/录制-1986461465-20260526-090528-013-晨间歌杂~.xml",
+    "cover": "/data/streams/kloa/2026_05_26_09_05_28/录制-1986461465-20260526-090528-013-晨间歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_26_09_05_28/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_26_09_05_28/录制-1986461465-20260526-090528-013-晨间歌杂~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_26_09_05_28/录制-1986461465-20260525-203450-529-杂谈~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_26_09_05_28/录制-1986461465-20260525-203450-529-杂谈~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_25_20_34_50",
     "title": "杂谈~今天真高兴~",
     "date": "2026-05-25",

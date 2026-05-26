@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_05_26_21_48_33",
+    "title": "栞来！",
+    "date": "2026-05-26",
+    "time": "21:48:33",
+    "startTime": "21:48",
+    "endTime": "00:13",
+    "duration": 8758,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_26_21_48_33/录制-26966466-20260526-214833-809-栞来！.xml",
+    "cover": "/data/streams/shiori/2026_05_26_21_48_33/录制-26966466-20260526-214833-809-栞来！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_26_21_48_33/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_26_21_48_33/录制-26966466-20260526-214833-809-栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_26_10_06_34",
+    "title": "早安獭獭栞！",
+    "date": "2026-05-26",
+    "time": "10:06:34",
+    "startTime": "10:06",
+    "endTime": "12:16",
+    "duration": 7808,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_26_10_06_34/录制-26966466-20260526-100634-093-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_05_26_10_06_34/录制-26966466-20260526-100634-093-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_26_10_06_34/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_26_10_06_34/录制-26966466-20260526-100634-093-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_05_26_10_06_34/录制-26966466-20260525-203451-822-吉星派对！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_25_20_34_51",
     "title": "吉星派对！",
     "date": "2026-05-25",
