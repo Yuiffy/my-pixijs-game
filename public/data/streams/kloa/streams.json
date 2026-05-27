@@ -1,5 +1,55 @@
 [
   {
+    "id": "2026_05_27_21_40_07",
+    "title": "观众参与型游戏~",
+    "date": "2026-05-27",
+    "time": "21:40:07",
+    "startTime": "21:40",
+    "endTime": "22:55",
+    "duration": 4534,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_27_21_40_07/录制-1986461465-20260527-214007-434-观众参与型游戏~.xml",
+    "cover": "/data/streams/kloa/2026_05_27_21_40_07/录制-1986461465-20260527-214007-434-观众参与型游戏~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_27_21_40_07/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_27_21_40_07/录制-1986461465-20260527-214007-434-观众参与型游戏~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_27_20_08_14",
+    "title": "观众参与型游戏~",
+    "date": "2026-05-27",
+    "time": "20:08:14",
+    "startTime": "20:08",
+    "endTime": "21:38",
+    "duration": 5403,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_27_20_08_14/录制-1986461465-20260527-200814-501-观众参与型游戏~.xml",
+    "cover": "/data/streams/kloa/2026_05_27_20_08_14/录制-1986461465-20260527-200814-501-观众参与型游戏~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_27_10_10_19",
+    "title": "健身环结束开始锻炼大脑",
+    "date": "2026-05-27",
+    "time": "10:10:19",
+    "startTime": "10:10",
+    "endTime": "12:38",
+    "duration": 8918,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_27_10_10_19/录制-1986461465-20260527-101019-066-健身环~先吃点早餐_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_27_10_10_19/录制-1986461465-20260527-101019-066-健身环~先吃点早餐.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_27_10_10_19/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_27_10_10_19/录制-1986461465-20260527-101019-066-健身环~先吃点早餐_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_27_10_10_19/录制-1986461465-20260526-200629-764-中文歌回~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_26_20_06_29",
     "title": "中文歌回~",
     "date": "2026-05-26",

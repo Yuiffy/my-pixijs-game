@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_05_27_22_01_10",
+    "title": "悠哉悠哉夜晚",
+    "date": "2026-05-27",
+    "time": "22:01:10",
+    "startTime": "22:01",
+    "endTime": "00:44",
+    "duration": 9819,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_27_22_01_10/录制-25788785-20260527-220110-245-悠哉悠哉夜晚_merged.xml",
+    "cover": "/data/streams/sui/2026_05_27_22_01_10/录制-25788785-20260527-220110-245-悠哉悠哉夜晚.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_27_22_01_10/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_27_22_01_10/录制-25788785-20260527-220110-245-悠哉悠哉夜晚_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_05_27_22_01_10/录制-25788785-20260526-222433-252-悠哉悠哉夜晚_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_05_26_22_24_33",
     "title": "悠哉悠哉夜晚",
     "date": "2026-05-26",

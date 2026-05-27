@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_05_27_21_40_05",
+    "title": "小栞来！播到11点！",
+    "date": "2026-05-27",
+    "time": "21:40:05",
+    "startTime": "21:40",
+    "endTime": "23:11",
+    "duration": 5484,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_27_21_40_05/录制-26966466-20260527-214005-400-小栞来！播到11点！.xml",
+    "cover": "/data/streams/shiori/2026_05_27_21_40_05/录制-26966466-20260527-214005-400-小栞来！播到11点！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_27_21_40_05/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_27_21_40_05/录制-26966466-20260527-214005-400-小栞来！播到11点！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_27_21_31_35",
+    "title": "小栞来！播到11点！",
+    "date": "2026-05-27",
+    "time": "21:31:35",
+    "startTime": "21:31",
+    "endTime": "21:37",
+    "duration": 400,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_27_21_31_35/录制-26966466-20260527-213135-331-小栞来！播到11点！.xml",
+    "cover": "/data/streams/shiori/2026_05_27_21_31_35/录制-26966466-20260527-213135-331-小栞来！播到11点！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_27_10_23_33",
+    "title": "迟到QAQ",
+    "date": "2026-05-27",
+    "time": "10:23:33",
+    "startTime": "10:23",
+    "endTime": "12:16",
+    "duration": 6784,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_27_10_23_33/录制-26966466-20260527-102333-481-迟到QAQ.xml",
+    "cover": "/data/streams/shiori/2026_05_27_10_23_33/录制-26966466-20260527-102333-481-迟到QAQ.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_27_10_23_33/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_27_10_23_33/录制-26966466-20260527-102333-481-迟到QAQ_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_05_27_10_23_33/录制-26966466-20260527-102333-481-迟到QAQ_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_05_27_10_23_33/录制-26966466-20260526-214833-809-栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_26_21_48_33",
     "title": "栞来！",
     "date": "2026-05-26",

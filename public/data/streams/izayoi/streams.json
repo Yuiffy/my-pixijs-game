@@ -1,5 +1,72 @@
 [
   {
+    "id": "2026_05_27_21_40_08",
+    "title": "猛兽苏醒。",
+    "date": "2026-05-27",
+    "time": "21:40:08",
+    "startTime": "21:40",
+    "endTime": "00:17",
+    "duration": 9448,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_27_21_40_08/录制-1741667419-20260527-214008-376-猛兽苏醒。.xml",
+    "cover": "/data/streams/izayoi/2026_05_27_21_40_08/录制-1741667419-20260527-214008-376-猛兽苏醒。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_27_21_40_08/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_27_21_40_08/录制-1741667419-20260527-214008-376-猛兽苏醒。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_27_21_03_39",
+    "title": "猛兽苏醒。",
+    "date": "2026-05-27",
+    "time": "21:03:39",
+    "startTime": "21:03",
+    "endTime": "21:37",
+    "duration": 2078,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_27_21_03_39/录制-1741667419-20260527-210339-790-猛兽苏醒。.xml",
+    "cover": "/data/streams/izayoi/2026_05_27_21_03_39/录制-1741667419-20260527-210339-790-猛兽苏醒。.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_27_14_00_35",
+    "title": "浣来健身浣！",
+    "date": "2026-05-27",
+    "time": "14:00:35",
+    "startTime": "14:00",
+    "endTime": "16:28",
+    "duration": 8898,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_27_14_00_35/录制-1741667419-20260527-140035-788-浣来健身浣！.xml",
+    "cover": "/data/streams/izayoi/2026_05_27_14_00_35/录制-1741667419-20260527-140035-788-浣来健身浣！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_27_14_00_35/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_27_14_00_35/录制-1741667419-20260527-140035-788-浣来健身浣！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_27_11_46_44",
+    "title": "在干嘛….",
+    "date": "2026-05-27",
+    "time": "11:46:44",
+    "startTime": "11:46",
+    "endTime": "13:11",
+    "duration": 5159,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_27_11_46_44/录制-1741667419-20260527-114644-415-在干嘛…._merged.xml",
+    "cover": "/data/streams/izayoi/2026_05_27_11_46_44/录制-1741667419-20260527-114644-415-在干嘛…..cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_27_11_46_44/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_27_11_46_44/录制-1741667419-20260527-114644-415-在干嘛…._merged_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_27_11_46_44/录制-1741667419-20260525-203452-532-在画了，在画了！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_25_20_34_52",
     "title": "在画了，在画了！",
     "date": "2026-05-25",
