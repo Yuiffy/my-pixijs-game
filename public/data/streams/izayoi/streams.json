@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_05_28_20_03_30",
+    "title": "继续来看超炮！",
+    "date": "2026-05-28",
+    "time": "20:03:30",
+    "startTime": "20:03",
+    "endTime": "00:03",
+    "duration": 14413,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_28_20_03_30/录制-1741667419-20260528-200330-771-继续来看超炮！.xml",
+    "cover": "/data/streams/izayoi/2026_05_28_20_03_30/录制-1741667419-20260528-200330-771-继续来看超炮！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_28_20_03_30/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_28_20_03_30/录制-1741667419-20260528-200330-771-继续来看超炮！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_28_09_08_47",
+    "title": "早茶第五十九天。",
+    "date": "2026-05-28",
+    "time": "09:08:47",
+    "startTime": "09:08",
+    "endTime": "11:27",
+    "duration": 8384,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_28_09_08_47/录制-1741667419-20260528-090847-100-早茶第多少天来着？_merged.xml",
+    "cover": "/data/streams/izayoi/2026_05_28_09_08_47/录制-1741667419-20260528-090847-100-早茶第多少天来着？.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_28_09_08_47/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_28_09_08_47/录制-1741667419-20260528-090847-100-早茶第多少天来着？_merged_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_28_09_08_47/录制-1741667419-20260527-214008-376-猛兽苏醒。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_27_21_40_08",
     "title": "猛兽苏醒。",
     "date": "2026-05-27",

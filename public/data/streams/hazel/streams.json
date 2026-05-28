@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_05_28_21_26_49",
+    "title": "合成大西瓜",
+    "date": "2026-05-28",
+    "time": "21:26:49",
+    "startTime": "21:26",
+    "endTime": "23:29",
+    "duration": 7396,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_28_21_26_49/录制-1713546334-20260528-212649-565-合成大西瓜.xml",
+    "cover": "/data/streams/hazel/2026_05_28_21_26_49/录制-1713546334-20260528-212649-565-合成大西瓜.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_28_21_26_49/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_28_21_26_49/录制-1713546334-20260528-212649-565-合成大西瓜_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_28_21_26_49/录制-1713546334-20260528-212649-565-合成大西瓜_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_05_28_21_26_49/录制-1713546334-20260526-205826-657-神秘的晚间直播_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_26_20_58_26",
     "title": "神秘的晚间直播",
     "date": "2026-05-26",

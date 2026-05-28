@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_05_28_22_58_05",
+    "title": "很卡的网络",
+    "date": "2026-05-28",
+    "time": "22:58:05",
+    "startTime": "22:58",
+    "endTime": "00:20",
+    "duration": 4954,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_28_22_58_05/录制-26966466-20260528-225805-019-很卡的网络_merged.xml",
+    "cover": "/data/streams/shiori/2026_05_28_22_58_05/录制-26966466-20260528-225805-019-很卡的网络.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_28_22_58_05/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_28_22_58_05/录制-26966466-20260527-214005-400-小栞来！播到11点！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_27_21_40_05",
     "title": "小栞来！播到11点！",
     "date": "2026-05-27",

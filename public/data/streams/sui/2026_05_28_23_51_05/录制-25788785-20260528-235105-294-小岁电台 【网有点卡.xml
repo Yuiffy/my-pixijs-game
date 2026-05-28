@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="25788785" shortid="0" name="岁己SUI" title="小岁电台 【网有点卡" areanameparent="电台" areanamechild="聊天电台" start_time="2026-05-28T23:51:05.2953196+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.577,4,25,14893055,1779983468518,0,9669499,0" user="无响应失败小熊">[捂脸]</d>
+  <d p="0.578,4,25,14893055,1779983468869,0,34531495,0" user="在白日梦蓝">这个岁己聊爽了不管直播间了是吧</d>
+  <d p="0.578,4,25,14893055,1779983469249,0,288811455,0" user="L1f3n0w0v3R710w_">卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！</d>
+  <d p="0.861,4,25,14893055,1779983469116,0,378855235,0" user="想说别走但转身">无限重复了</d>
+  <d p="3.116,1,25,16777215,1779983470897,0,68022172,0" user="邮差总按两次铃z">卡了不算，卡了不算</d>
+  <d p="3.484,4,25,14893055,1779983470882,0,13429933,0" user="请让我好好入睡">卡飞了卡飞了</d>
+  <d p="7.019,4,25,14893055,1779983475042,0,288811455,0" user="L1f3n0w0v3R710w_">卡了不算！卡了不算！卡了不算！</d>
+  <d p="8.694,4,25,14893055,1779983476540,0,604035304,0" user="俺们那噶是岁蛇_句号">离开房间就没网了吧</d>
+  <d p="9.967,4,25,14893055,1779983477563,0,227618,0" user="Vaserkia">[岁己收藏集表情包_哈哈]</d>
+  <d p="10.907,4,25,16772431,1779983478739,0,6606769,0" user="Akananae">麻绳专挑细处断</d>
+  <d p="11.280,4,25,14893055,1779983479976,0,4184347,0" user="misuji">现在去哪里看</d>
+  <d p="13.510,1,25,16777215,1779983482020,0,7254,0" user="谜拟饼">顶不住了 我要打开栞栞直播间</d>
+  <d p="13.838,4,25,14893055,1779983481781,0,161771027,0" user="余韻yoi">卡了不算</d>
+  <d p="16.112,4,25,16772431,1779983484393,0,6606769,0" user="Akananae">妈呀，3人pk</d>
+  <gift ts="16.535" user="faqmama" uid="14120265" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="17.798,1,25,16772431,1779983486063,0,2111701323,0" user="EVLOT丨DARKNESSS">我去，還有栞栞禮己己</d>
+  <d p="18.707,4,25,14893055,1779983486813,0,9669499,0" user="无响应失败小熊">卡比卡比卡比卡比卡比卡比</d>
+  <d p="20.008,4,25,14893055,1779983487812,0,288811455,0" user="L1f3n0w0v3R710w_">卡了不算！卡了不算！卡了不算！</d>
+  <d p="20.390,1,25,16777215,1779983488731,0,8481710,0" user="人活着是为了02">花礼在哪</d>
+  <d p="20.390,4,25,14893055,1779983489013,0,227618,0" user="Vaserkia">[岁己收藏集表情包_妈呀]</d>
+  <d p="22.608,4,25,16772431,1779983490290,0,6606769,0" user="Akananae">卡了</d>
+  <d p="23.962,4,25,14893055,1779983491635,0,34531495,0" user="在白日梦蓝">卡了不算卡了不算卡了不算卡了不算卡了不算卡了不算卡了不算卡了不算卡了不算卡了不算</d>
+  <d p="23.962,4,25,16772431,1779983492336,0,6606769,0" user="Akananae">小岁小岁？</d>
+  <d p="23.962,4,25,14893055,1779983492409,0,266375,0" user="咕咕-咕咕咕咕咕-咕">太卡了</d>
+  <d p="25.544,4,25,14893055,1779983494203,0,13429933,0" user="请让我好好入睡">三国大战了</d>
+  <d p="25.544,4,25,14893055,1779983494183,0,227618,0" user="Vaserkia">完了 要卡死了</d>
+  <d p="30.406,4,25,16772431,1779983498160,0,6606769,0" user="Akananae">卡死了</d>
+  <d p="30.756,4,25,14893055,1779983498773,0,4184347,0" user="misuji">这什么酒店，走廊网络就没有了</d>
+  <d p="32.096,1,25,16777215,1779983500347,0,26580137,0" user="夜袭魅影">卡了不算！卡了不算！卡了不算！</d>
+  <d p="32.096,4,25,14893055,1779983500616,0,13429933,0" user="请让我好好入睡">好了现在</d>
+  <d p="32.096,4,25,14893055,1779983500707,0,604035304,0" user="俺们那噶是岁蛇_句号">惩罚环节什么都没听到啊</d>
+  <d p="33.019,4,25,14893055,1779983501577,0,288811455,0" user="L1f3n0w0v3R710w_">卡了不算！卡了不算！卡了不算！</d>
+  <d p="34.311,4,25,14893055,1779983502677,0,34531495,0" user="在白日梦蓝">卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡卡</d>
+  <d p="35.652,4,25,16772431,1779983503992,0,6606769,0" user="Akananae">卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！</d>
+  <d p="35.652,1,25,16777215,1779983504048,0,393237576,0" user="粉红色的桃儿">好热闹啊</d>
+  <d p="37.312,4,25,14893055,1779983505684,0,4184347,0" user="misuji">太垃圾了吧这个酒店</d>
+  <d p="38.220,4,25,14893055,1779983506888,0,22389880,0" user="黑铁watcher">这是在干嘛，上海往事</d>
+  <d p="43.443,4,25,16772431,1779983511719,0,6606769,0" user="Akananae">小岁要不买个5g吧</d>
+  <d p="43.443,4,25,14893055,1779983512180,0,9669499,0" user="无响应失败小熊">卡比卡比卡比卡比卡比卡比卡比卡比卡比卡比卡比卡比卡比</d>
+  <d p="45.058,4,25,14893055,1779983513229,0,227618,0" user="Vaserkia">[岁己收藏集表情包_哈哈]</d>
+  <d p="47.322,4,25,14893055,1779983515647,0,288811455,0" user="L1f3n0w0v3R710w_">卡了不算！卡了不算！卡了不算！</d>
+  <d p="47.651,4,25,14893055,1779983515298,0,604035304,0" user="俺们那噶是岁蛇_句号">什么都没听到！！！！！</d>
+  <d p="48.989,4,25,14893055,1779983516657,0,13429933,0" user="请让我好好入睡">三国大战吗</d>
+  <d p="51.209,4,25,16772431,1779983519227,0,6606769,0" user="Akananae">卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！卡了不算！</d>
+  <d p="51.611,1,25,16777215,1779983519135,0,1229596630,0" user="灯里漱石">好卡</d>
+  <d p="55.107,4,25,14893055,1779983522658,0,34531495,0" user="在白日梦蓝">怎么变成三人了</d>
+  <d p="57.708,1,25,14893055,1779983525721,0,14279,0" user="带鱼">团播</d>
+  <d p="59.007,4,25,14893055,1779983527043,0,9669499,0" user="无响应失败小熊">卧槽 盘丝洞啊</d>
+  <d p="60.641,4,25,14893055,1779983528607,0,227618,0" user="Vaserkia">卡没了刚才</d>
+  <d p="64.208,4,25,16772431,1779983532906,0,6606769,0" user="Akananae">米米怎么没来</d>
+  <d p="64.606,1,25,16772431,1779983533203,0,11253330,0" user="相隔森林与深海">哈哈哈哈</d>
+  <d p="65.846,1,25,16772431,1779983533646,0,2111701323,0" user="EVLOT丨DARKNESSS">右扭</d>
+  <d p="69.405,1,25,16777215,1779983537536,0,455955778,0" user="须泽彩">啾咪啾</d>
+  <d p="69.791,4,25,14893055,1779983538122,0,227618,0" user="Vaserkia">[岁己收藏集表情包_哈哈]</d>
+  <d p="69.791,4,25,14893055,1779983538002,0,1604425,0" user="仙布着急唱灭歌">卡死了卡死了</d>
+  <d p="71.082,1,25,16772431,1779983539821,0,11253330,0" user="相隔森林与深海">逗引直播来了</d>
+  <d p="71.082,1,25,16777215,1779983539854,0,8481710,0" user="人活着是为了02">打起来！</d>
+  <d p="74.647,4,25,14893055,1779983542295,0,288811455,0" user="L1f3n0w0v3R710w_">主播</d>
+  <d p="74.647,4,25,16772431,1779983542705,0,6606769,0" user="Akananae">卡了</d>
+  <d p="75.906,4,25,16772431,1779983544476,0,6606769,0" user="Akananae">又卡了</d>
+  <d p="80.196,1,25,16772431,1779983548586,0,3572246,0" user="阿肾阿肾">太卡了</d>
+  <d p="82.420,4,25,14893055,1779983550102,0,34531495,0" user="在白日梦蓝">还在卡</d>
+  <d p="84.070,4,25,14893055,1779983552426,0,227618,0" user="Vaserkia">？</d>
+  <d p="85.006,4,25,16772431,1779983552758,0,6606769,0" user="Akananae">小岁小岁，好卡；；</d>
+  <d p="88.022,4,25,14893055,1779983556732,0,604035304,0" user="俺们那噶是岁蛇_句号">好难受啊</d>
+  <d p="90.207,4,25,14893055,1779983558206,0,288811455,0" user="L1f3n0w0v3R710w_">卡爆了！卡爆了！卡爆了！</d>
+  <d p="90.587,1,25,16777215,1779983558319,0,8481710,0" user="人活着是为了02">又卡了</d>
+  <d p="94.107,4,25,16772431,1779983562775,0,6606769,0" user="Akananae">小岁，还在卡，好难受；；</d>
+  <d p="94.498,4,25,14893055,1779983562922,0,87078921,0" user="梦月灬空城">卡卡卡</d>
+  <d p="96.706,4,25,14893055,1779983564691,0,34531495,0" user="在白日梦蓝">卡晕了给我</d>
+  <d p="98.410,4,25,14893055,1779983566128,0,1604425,0" user="仙布着急唱灭歌">卡死了 卡死了</d>
+  <d p="98.410,4,25,14893055,1779983566330,0,227618,0" user="Vaserkia">不行了 卡爆了</d>
+  <d p="98.410,4,25,14893055,1779983567166,0,4184347,0" user="misuji">到底在卡什么</d>
+  <d p="101.915,4,25,14893055,1779983569570,0,9669499,0" user="无响应失败小熊">大伙 花礼的直播间很流畅👍大伙 花礼的直播间很流畅👍</d>
+  <d p="103.209,4,25,14893055,1779983570945,0,288811455,0" user="L1f3n0w0v3R710w_">卡爆了！卡爆了！卡爆了！</d>
+  <d p="103.568,4,25,14893055,1779983572219,0,4184347,0" user="misuji">主播你能不能用流量</d>
+  <d p="105.807,4,25,14893055,1779983574399,0,442039853,0" user="Syan米夏">这是栞礼己吧</d>
+</i>
