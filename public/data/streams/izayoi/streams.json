@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_05_29_20_02_58",
+    "title": "1616我们喜浣你！",
+    "date": "2026-05-29",
+    "time": "20:02:58",
+    "startTime": "20:02",
+    "endTime": "23:39",
+    "duration": 13045,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_29_20_02_58/录制-1741667419-20260529-200258-273-1616我们喜浣你！.xml",
+    "cover": "/data/streams/izayoi/2026_05_29_20_02_58/录制-1741667419-20260529-200258-273-1616我们喜浣你！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_29_20_02_58/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_29_20_02_58/录制-1741667419-20260529-200258-273-1616我们喜浣你！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_29_14_00_16",
+    "title": "1616我们喜浣你！",
+    "date": "2026-05-29",
+    "time": "14:00:16",
+    "startTime": "14:00",
+    "endTime": "17:07",
+    "duration": 11249,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_29_14_00_16/录制-1741667419-20260529-140016-114-1616我们喜浣你！_merged.xml",
+    "cover": "/data/streams/izayoi/2026_05_29_14_00_16/录制-1741667419-20260529-140016-114-1616我们喜浣你！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_29_14_00_16/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_29_14_00_16/录制-1741667419-20260529-140016-114-1616我们喜浣你！_merged_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_05_29_14_00_16/录制-1741667419-20260528-200330-771-继续来看超炮！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_28_20_03_30",
     "title": "继续来看超炮！",
     "date": "2026-05-28",

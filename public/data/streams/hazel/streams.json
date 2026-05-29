@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_29_23_45_04",
+    "title": "脑子冻僵了",
+    "date": "2026-05-29",
+    "time": "23:45:04",
+    "startTime": "23:45",
+    "endTime": "23:48",
+    "duration": 193,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_29_23_45_04/录制-1713546334-20260529-234504-325-脑子冻僵了.xml",
+    "cover": "/data/streams/hazel/2026_05_29_23_45_04/录制-1713546334-20260529-234504-325-脑子冻僵了.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_29_23_45_04/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_29_23_45_04/录制-1713546334-20260529-234504-325-脑子冻僵了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_29_21_32_38",
+    "title": "脑子冻僵了",
+    "date": "2026-05-29",
+    "time": "21:32:38",
+    "startTime": "21:32",
+    "endTime": "23:40",
+    "duration": 7709,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_05_29_21_32_38/录制-1713546334-20260529-213238-201-脑子冻僵了_merged.xml",
+    "cover": "/data/streams/hazel/2026_05_29_21_32_38/录制-1713546334-20260529-213238-201-脑子冻僵了.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_05_29_21_32_38/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_05_29_21_32_38/录制-1713546334-20260529-213238-201-脑子冻僵了_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_05_29_21_32_38/录制-1713546334-20260528-212649-565-合成大西瓜_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_05_29_21_32_38/录制-1713546334-20260528-212649-565-合成大西瓜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_28_21_26_49",
     "title": "合成大西瓜",
     "date": "2026-05-28",

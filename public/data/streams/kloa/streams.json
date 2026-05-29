@@ -1,5 +1,72 @@
 [
   {
+    "id": "2026_05_29_21_17_04",
+    "title": "被窝电台",
+    "date": "2026-05-29",
+    "time": "21:17:04",
+    "startTime": "21:17",
+    "endTime": "23:41",
+    "duration": 8666,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_29_21_17_04/录制-1986461465-20260529-211704-985-被窝电台.xml",
+    "cover": "/data/streams/kloa/2026_05_29_21_17_04/录制-1986461465-20260529-211704-985-被窝电台.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_29_21_17_04/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_29_21_17_04/录制-1986461465-20260529-211704-985-被窝电台_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_29_21_05_40",
+    "title": "被窝电台",
+    "date": "2026-05-29",
+    "time": "21:05:40",
+    "startTime": "21:05",
+    "endTime": "21:16",
+    "duration": 682,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_29_21_05_40/录制-1986461465-20260529-210540-264-被窝电台.xml",
+    "cover": "/data/streams/kloa/2026_05_29_21_05_40/录制-1986461465-20260529-210540-264-被窝电台.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_29_16_37_16",
+    "title": "健身环~",
+    "date": "2026-05-29",
+    "time": "16:37:16",
+    "startTime": "16:37",
+    "endTime": "18:12",
+    "duration": 5756,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_29_16_37_16/录制-1986461465-20260529-163716-773-健身环~.xml",
+    "cover": "/data/streams/kloa/2026_05_29_16_37_16/录制-1986461465-20260529-163716-773-健身环~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_29_16_37_16/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_29_16_37_16/录制-1986461465-20260529-163716-773-健身环~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_29_09_02_30",
+    "title": "早安歌杂~",
+    "date": "2026-05-29",
+    "time": "09:02:30",
+    "startTime": "09:02",
+    "endTime": "12:22",
+    "duration": 12024,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_29_09_02_30/录制-1986461465-20260529-090230-813-早安歌杂~.xml",
+    "cover": "/data/streams/kloa/2026_05_29_09_02_30/录制-1986461465-20260529-090230-813-早安歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_29_09_02_30/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_29_09_02_30/录制-1986461465-20260529-090230-813-早安歌杂~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_05_29_09_02_30/录制-1986461465-20260528-213931-380-健身环！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_28_21_39_31",
     "title": "健身环！",
     "date": "2026-05-28",

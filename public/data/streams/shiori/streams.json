@@ -1,5 +1,67 @@
 [
   {
+    "id": "2026_05_30_00_40_25",
+    "title": "很卡的网络",
+    "date": "2026-05-29",
+    "time": "00:40:25",
+    "startTime": "00:40",
+    "endTime": "00:59",
+    "duration": 1174,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_30_00_40_25/录制-26966466-20260530-004025-171-很卡的网络.xml",
+    "cover": "/data/streams/shiori/2026_05_30_00_40_25/录制-26966466-20260530-004025-171-很卡的网络.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_30_00_40_25/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_05_30_00_40_25/录制-26966466-20260530-004025-171-很卡的网络_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_30_00_36_25",
+    "title": "很卡的网络",
+    "date": "2026-05-29",
+    "time": "00:36:25",
+    "startTime": "00:36",
+    "endTime": "00:37",
+    "duration": 95,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_30_00_36_25/录制-26966466-20260530-003625-197-很卡的网络.xml",
+    "cover": "/data/streams/shiori/2026_05_30_00_36_25/录制-26966466-20260530-003625-197-很卡的网络.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_30_00_25_17",
+    "title": "很卡的网络",
+    "date": "2026-05-29",
+    "time": "00:25:17",
+    "startTime": "00:25",
+    "endTime": "00:32",
+    "duration": 452,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_30_00_25_17/录制-26966466-20260530-002517-402-很卡的网络.xml",
+    "cover": "/data/streams/shiori/2026_05_30_00_25_17/录制-26966466-20260530-002517-402-很卡的网络.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_05_30_00_20_42",
+    "title": "很卡的网络",
+    "date": "2026-05-29",
+    "time": "00:20:42",
+    "startTime": "00:20",
+    "endTime": "00:21",
+    "duration": 100,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_05_30_00_20_42/录制-26966466-20260530-002042-258-很卡的网络_merged.xml",
+    "cover": "/data/streams/shiori/2026_05_30_00_20_42/录制-26966466-20260530-002042-258-很卡的网络.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_05_30_00_20_42/highlights.md",
+    "images": []
+  },
+  {
     "id": "2026_05_28_22_58_05",
     "title": "很卡的网络",
     "date": "2026-05-28",
