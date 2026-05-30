@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_05_30_23_48_18",
+    "title": "mixup结束啦 呜呜",
+    "date": "2026-05-30",
+    "time": "23:48:18",
+    "startTime": "23:48",
+    "endTime": "01:35",
+    "duration": 6443,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_05_30_23_48_18/录制-25788785-20260530-234818-507-mixup结束啦 呜呜_merged.xml",
+    "cover": "/data/streams/sui/2026_05_30_23_48_18/录制-25788785-20260530-234818-507-mixup结束啦 呜呜.cover.jpg",
+    "highlights": "/data/streams/sui/2026_05_30_23_48_18/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_05_30_23_48_18/录制-25788785-20260530-234818-507-mixup结束啦 呜呜_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_05_30_23_48_18/录制-25788785-20260528-230637-317-小岁电台 【网有点卡_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_05_29_00_01_59",
     "title": "小岁电台 【网有点卡",
     "date": "2026-05-28",

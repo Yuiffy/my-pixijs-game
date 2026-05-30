@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_05_30_20_00_19",
+    "title": "猜！",
+    "date": "2026-05-30",
+    "time": "20:00:19",
+    "startTime": "20:00",
+    "endTime": "23:37",
+    "duration": 13049,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_05_30_20_00_19/录制-1741667419-20260530-200019-448-猜！.xml",
+    "cover": "/data/streams/izayoi/2026_05_30_20_00_19/录制-1741667419-20260530-200019-448-猜！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_05_30_20_00_19/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_05_30_20_00_19/录制-1741667419-20260530-200019-448-猜！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_29_20_02_58",
     "title": "1616我们喜浣你！",
     "date": "2026-05-29",

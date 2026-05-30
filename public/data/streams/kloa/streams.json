@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_05_30_21_25_01",
+    "title": "外语歌回~",
+    "date": "2026-05-30",
+    "time": "21:25:01",
+    "startTime": "21:25",
+    "endTime": "00:42",
+    "duration": 11849,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_30_21_25_01/录制-1986461465-20260530-212501-311-外语歌回~.xml",
+    "cover": "/data/streams/kloa/2026_05_30_21_25_01/录制-1986461465-20260530-212501-311-外语歌回~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_30_21_25_01/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_30_21_25_01/录制-1986461465-20260530-212501-311-外语歌回~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_30_21_25_01/录制-1986461465-20260530-212501-311-外语歌回~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_30_20_04_19",
+    "title": "先吃个晚饭再唱歌（",
+    "date": "2026-05-30",
+    "time": "20:04:19",
+    "startTime": "20:04",
+    "endTime": "21:21",
+    "duration": 4637,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_30_20_04_19/录制-1986461465-20260530-200419-753-先吃个晚饭再唱歌（.xml",
+    "cover": "/data/streams/kloa/2026_05_30_20_04_19/录制-1986461465-20260530-200419-753-先吃个晚饭再唱歌（.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_30_20_04_19/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_30_20_04_19/录制-1986461465-20260530-200419-753-先吃个晚饭再唱歌（_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_30_20_04_19/录制-1986461465-20260530-200419-753-先吃个晚饭再唱歌（_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_29_21_17_04",
     "title": "被窝电台",
     "date": "2026-05-29",
