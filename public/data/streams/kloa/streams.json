@@ -1,5 +1,77 @@
 [
   {
+    "id": "2026_05_31_20_07_24",
+    "title": "月末唱唱歌~",
+    "date": "2026-05-31",
+    "time": "20:07:24",
+    "startTime": "20:07",
+    "endTime": "00:40",
+    "duration": 16427,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_31_20_07_24/录制-1986461465-20260531-200724-375-月末唱唱歌~.xml",
+    "cover": "/data/streams/kloa/2026_05_31_20_07_24/录制-1986461465-20260531-200724-375-月末唱唱歌~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_31_20_07_24/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_31_20_07_24/录制-1986461465-20260531-200724-375-月末唱唱歌~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_31_20_07_24/录制-1986461465-20260531-200724-375-月末唱唱歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_31_13_20_21",
+    "title": "做饭电台～糖醋排骨",
+    "date": "2026-05-31",
+    "time": "13:20:21",
+    "startTime": "13:20",
+    "endTime": "13:23",
+    "duration": 234,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_31_13_20_21/录制-1986461465-20260531-132021-699-做饭电台～糖醋排骨.xml",
+    "cover": "/data/streams/kloa/2026_05_31_13_20_21/录制-1986461465-20260531-132021-699-做饭电台～糖醋排骨.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_31_13_20_21/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_31_13_20_21/录制-1986461465-20260531-132021-699-做饭电台～糖醋排骨_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_31_11_45_39",
+    "title": "做饭电台～糖醋排骨",
+    "date": "2026-05-31",
+    "time": "11:45:39",
+    "startTime": "11:45",
+    "endTime": "13:14",
+    "duration": 5398,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_31_11_45_39/录制-1986461465-20260531-114539-362-做饭电台～糖醋排骨_merged.xml",
+    "cover": "/data/streams/kloa/2026_05_31_11_45_39/录制-1986461465-20260531-114539-362-做饭电台～糖醋排骨.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_05_31_11_45_39/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_05_31_11_45_39/录制-1986461465-20260531-114539-362-做饭电台～糖醋排骨_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_31_11_45_39/录制-1986461465-20260531-114539-362-做饭电台～糖醋排骨_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_31_11_05_39",
+    "title": "做饭电台～糖醋排骨",
+    "date": "2026-05-31",
+    "time": "11:05:39",
+    "startTime": "11:05",
+    "endTime": "11:44",
+    "duration": 2349,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_05_31_11_05_39/录制-1986461465-20260531-110539-339-做饭电台～糖醋排骨.xml",
+    "cover": "/data/streams/kloa/2026_05_31_11_05_39/录制-1986461465-20260531-110539-339-做饭电台～糖醋排骨.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_05_31_11_05_39/录制-1986461465-20260530-200419-753-先吃个晚饭再唱歌（_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_31_11_05_39/录制-1986461465-20260530-212501-311-外语歌回~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_05_31_11_05_39/录制-1986461465-20260530-212501-311-外语歌回~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_30_21_25_01",
     "title": "外语歌回~",
     "date": "2026-05-30",
