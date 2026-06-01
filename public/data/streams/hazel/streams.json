@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_01_20_16_36",
+    "title": "儿童节喵喵喵",
+    "date": "2026-06-01",
+    "time": "20:16:36",
+    "startTime": "20:16",
+    "endTime": "21:45",
+    "duration": 5349,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_01_20_16_36/录制-1713546334-20260601-201636-578-儿童节喵喵喵_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_01_20_16_36/录制-1713546334-20260601-201636-578-儿童节喵喵喵.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_01_20_16_36/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_01_20_16_36/录制-1713546334-20260601-201636-578-儿童节喵喵喵_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_01_20_16_36/录制-1713546334-20260601-201636-578-儿童节喵喵喵_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_01_19_04_26",
+    "title": "儿童节喵喵喵",
+    "date": "2026-06-01",
+    "time": "19:04:26",
+    "startTime": "19:04",
+    "endTime": "20:14",
+    "duration": 4221,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_01_19_04_26/录制-1713546334-20260601-190426-738-儿童节喵喵喵.xml",
+    "cover": "/data/streams/hazel/2026_06_01_19_04_26/录制-1713546334-20260601-190426-738-儿童节喵喵喵.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_06_01_19_04_26/录制-1713546334-20260531-143320-490-中午好 随便聊聊_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_01_19_04_26/录制-1713546334-20260531-143320-490-中午好 随便聊聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_31_14_33_20",
     "title": "中午好 随便聊聊",
     "date": "2026-05-31",

@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_01_20_22_31",
+    "title": "倦鸟归巢！好久不见的说",
+    "date": "2026-06-01",
+    "time": "20:22:31",
+    "startTime": "20:22",
+    "endTime": "00:11",
+    "duration": 13741,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_01_20_22_31/录制-25788785-20260601-202231-344-倦鸟归巢！好久不见的说_merged.xml",
+    "cover": "/data/streams/sui/2026_06_01_20_22_31/录制-25788785-20260601-202231-344-倦鸟归巢！好久不见的说.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_01_20_22_31/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_01_20_22_31/录制-25788785-20260601-202231-344-倦鸟归巢！好久不见的说_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_01_20_22_31/录制-25788785-20260601-202231-344-倦鸟归巢！好久不见的说_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_06_01_20_22_31/录制-25788785-20260530-234818-507-mixup结束啦 呜呜_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_05_30_23_48_18",
     "title": "mixup结束啦 呜呜",
     "date": "2026-05-30",

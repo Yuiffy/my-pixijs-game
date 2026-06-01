@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_01_20_16_40",
+    "title": "儿童节快乐！！",
+    "date": "2026-06-01",
+    "time": "20:16:40",
+    "startTime": "20:16",
+    "endTime": "01:50",
+    "duration": 20063,
+    "durationStr": "5.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_01_20_16_40/录制-1713548468-20260601-201640-507-儿童节快乐！！_merged.xml",
+    "cover": "/data/streams/liko/2026_06_01_20_16_40/录制-1713548468-20260601-201640-507-儿童节快乐！！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_01_20_16_40/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_01_20_16_40/录制-1713548468-20260601-201640-507-儿童节快乐！！_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_01_20_16_40/录制-1713548468-20260601-201640-507-儿童节快乐！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_01_20_07_27",
+    "title": "儿童节快乐！！",
+    "date": "2026-06-01",
+    "time": "20:07:27",
+    "startTime": "20:07",
+    "endTime": "20:13",
+    "duration": 396,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_01_20_07_27/录制-1713548468-20260601-200727-577-儿童节快乐！！.xml",
+    "cover": "/data/streams/liko/2026_06_01_20_07_27/录制-1713548468-20260601-200727-577-儿童节快乐！！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_06_01_20_07_27/录制-1713548468-20260531-201306-141-又到周末咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_01_20_07_27/录制-1713548468-20260531-201306-141-又到周末咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_31_20_13_06",
     "title": "又到周末咯",
     "date": "2026-05-31",

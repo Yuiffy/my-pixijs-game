@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_06_01_20_16_40",
+    "title": "在画了，在画了！",
+    "date": "2026-06-01",
+    "time": "20:16:40",
+    "startTime": "20:16",
+    "endTime": "00:24",
+    "duration": 14903,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_01_20_16_40/录制-1741667419-20260601-201640-413-在画了，在画了！.xml",
+    "cover": "/data/streams/izayoi/2026_06_01_20_16_40/录制-1741667419-20260601-201640-413-在画了，在画了！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_01_20_16_40/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_01_20_16_40/录制-1741667419-20260601-201640-413-在画了，在画了！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_01_20_16_40/录制-1741667419-20260601-201640-413-在画了，在画了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_01_20_04_17",
+    "title": "在画了，在画了！",
+    "date": "2026-06-01",
+    "time": "20:04:17",
+    "startTime": "20:04",
+    "endTime": "20:14",
+    "duration": 620,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_01_20_04_17/录制-1741667419-20260601-200417-374-在画了，在画了！.xml",
+    "cover": "/data/streams/izayoi/2026_06_01_20_04_17/录制-1741667419-20260601-200417-374-在画了，在画了！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_01_11_58_24",
+    "title": "明日方舟开抽！！",
+    "date": "2026-06-01",
+    "time": "11:58:24",
+    "startTime": "11:58",
+    "endTime": "15:31",
+    "duration": 12824,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_01_11_58_24/录制-1741667419-20260601-115824-303-明日方舟开抽！！.xml",
+    "cover": "/data/streams/izayoi/2026_06_01_11_58_24/录制-1741667419-20260601-115824-303-明日方舟开抽！！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_06_01_11_58_24/录制-1741667419-20260601-090420-250-早茶第六十天。_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_01_09_04_20",
+    "title": "早茶第六十天。",
+    "date": "2026-06-01",
+    "time": "09:04:20",
+    "startTime": "09:04",
+    "endTime": "11:55",
+    "duration": 10312,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_01_09_04_20/录制-1741667419-20260601-090420-250-早茶第六十天。.xml",
+    "cover": "/data/streams/izayoi/2026_06_01_09_04_20/录制-1741667419-20260601-090420-250-早茶第六十天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_01_09_04_20/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_01_09_04_20/录制-1741667419-20260601-090420-250-早茶第六十天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_01_09_04_20/录制-1741667419-20260531-200441-606-来还债了！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_01_09_04_20/录制-1741667419-20260531-200441-606-来还债了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_05_31_20_04_41",
     "title": "来还债了！",
     "date": "2026-05-31",
