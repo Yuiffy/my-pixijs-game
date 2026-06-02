@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_02_20_39_12",
+    "title": "和雅雅生化危机6",
+    "date": "2026-06-02",
+    "time": "20:39:12",
+    "startTime": "20:39",
+    "endTime": "01:41",
+    "duration": 18136,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_02_20_39_12/录制-1713548468-20260602-203912-417-和雅雅生化危机6_merged.xml",
+    "cover": "/data/streams/liko/2026_06_02_20_39_12/录制-1713548468-20260602-203912-417-和雅雅生化危机6.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_02_20_39_12/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_02_20_39_12/录制-1713548468-20260602-203912-417-和雅雅生化危机6_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_02_20_39_12/录制-1713548468-20260602-203912-417-和雅雅生化危机6_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_02_11_10_37",
+    "title": "好困呀",
+    "date": "2026-06-02",
+    "time": "11:10:37",
+    "startTime": "11:10",
+    "endTime": "14:36",
+    "duration": 12395,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_02_11_10_37/录制-1713548468-20260602-111037-914-好困呀.xml",
+    "cover": "/data/streams/liko/2026_06_02_11_10_37/录制-1713548468-20260602-111037-914-好困呀.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_02_11_10_37/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_02_11_10_37/录制-1713548468-20260602-111037-914-好困呀_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_02_11_10_37/录制-1713548468-20260602-111037-914-好困呀_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_02_11_10_37/录制-1713548468-20260601-201640-507-儿童节快乐！！_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_02_11_10_37/录制-1713548468-20260601-201640-507-儿童节快乐！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_01_20_16_40",
     "title": "儿童节快乐！！",
     "date": "2026-06-01",
