@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_06_03_19_34_48",
+    "title": "联动竞拍之王~",
+    "date": "2026-06-03",
+    "time": "19:34:48",
+    "startTime": "19:34",
+    "endTime": "21:47",
+    "duration": 8022,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_03_19_34_48/录制-1986461465-20260603-193448-261-联动竞拍之王~_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_03_19_34_48/录制-1986461465-20260603-193448-261-联动竞拍之王~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_03_19_34_48/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_03_19_34_48/录制-1986461465-20260603-193448-261-联动竞拍之王~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_03_19_34_48/录制-1986461465-20260603-193448-261-联动竞拍之王~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_03_18_46_43",
+    "title": "联动竞拍之王~",
+    "date": "2026-06-03",
+    "time": "18:46:43",
+    "startTime": "18:46",
+    "endTime": "19:33",
+    "duration": 2834,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_03_18_46_43/录制-1986461465-20260603-184643-825-联动竞拍之王~.xml",
+    "cover": "/data/streams/kloa/2026_06_03_18_46_43/录制-1986461465-20260603-184643-825-联动竞拍之王~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_03_09_06_06",
+    "title": "早安歌~",
+    "date": "2026-06-03",
+    "time": "09:06:06",
+    "startTime": "09:06",
+    "endTime": "11:15",
+    "duration": 7787,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_03_09_06_06/录制-1986461465-20260603-090606-597-早安歌~_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_03_09_06_06/录制-1986461465-20260603-090606-597-早安歌~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_03_09_06_06/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_03_09_06_06/录制-1986461465-20260603-090606-597-早安歌~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_03_09_06_06/录制-1986461465-20260603-090606-597-早安歌~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_03_09_06_06/录制-1986461465-20260602-203441-546-生化危机6！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_03_09_06_06/录制-1986461465-20260602-203441-546-生化危机6！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_02_20_34_41",
     "title": "生化危机6！",
     "date": "2026-06-02",

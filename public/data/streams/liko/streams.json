@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_06_03_22_28_06",
+    "title": "277团建学术中",
+    "date": "2026-06-03",
+    "time": "22:28:06",
+    "startTime": "22:28",
+    "endTime": "23:19",
+    "duration": 3085,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_03_22_28_06/录制-1713548468-20260603-222806-929-277团建学术中.xml",
+    "cover": "/data/streams/liko/2026_06_03_22_28_06/录制-1713548468-20260603-222806-929-277团建学术中.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_03_22_28_06/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_03_22_28_06/录制-1713548468-20260603-222806-929-277团建学术中_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_03_18_45_29",
+    "title": "277团建学术中",
+    "date": "2026-06-03",
+    "time": "18:45:29",
+    "startTime": "18:45",
+    "endTime": "22:22",
+    "duration": 13039,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_03_18_45_29/录制-1713548468-20260603-184529-529-277团建学术中.xml",
+    "cover": "/data/streams/liko/2026_06_03_18_45_29/录制-1713548468-20260603-184529-529-277团建学术中.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_03_11_12_44",
+    "title": "早呀！",
+    "date": "2026-06-03",
+    "time": "11:12:44",
+    "startTime": "11:12",
+    "endTime": "15:15",
+    "duration": 14623,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_03_11_12_44/录制-1713548468-20260603-111244-031-早呀！.xml",
+    "cover": "/data/streams/liko/2026_06_03_11_12_44/录制-1713548468-20260603-111244-031-早呀！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_03_11_12_44/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_03_11_12_44/录制-1713548468-20260603-111244-031-早呀！_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_03_11_12_44/录制-1713548468-20260602-203912-417-和雅雅生化危机6_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_03_11_12_44/录制-1713548468-20260602-203912-417-和雅雅生化危机6_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_02_20_39_12",
     "title": "和雅雅生化危机6",
     "date": "2026-06-02",

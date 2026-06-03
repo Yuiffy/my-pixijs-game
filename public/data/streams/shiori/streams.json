@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_06_03_22_28_05",
+    "title": "地平线6？怎么开车啊！",
+    "date": "2026-06-03",
+    "time": "22:28:05",
+    "startTime": "22:28",
+    "endTime": "00:14",
+    "duration": 6372,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_03_22_28_05/录制-26966466-20260603-222805-466-地平线6？怎么开车啊！.xml",
+    "cover": "/data/streams/shiori/2026_06_03_22_28_05/录制-26966466-20260603-222805-466-地平线6？怎么开车啊！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_03_22_28_05/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_03_22_28_05/录制-26966466-20260603-222805-466-地平线6？怎么开车啊！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_03_22_28_05/录制-26966466-20260603-222805-466-地平线6？怎么开车啊！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_03_22_28_05/录制-26966466-20260530-235213-999-mixup大家看了吗！了吗_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_06_03_21_10_31",
+    "title": "地平线6？怎么开车啊！",
+    "date": "2026-06-03",
+    "time": "21:10:31",
+    "startTime": "21:10",
+    "endTime": "22:22",
+    "duration": 4348,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_03_21_10_31/录制-26966466-20260603-211031-112-地平线6？怎么开车啊！.xml",
+    "cover": "/data/streams/shiori/2026_06_03_21_10_31/录制-26966466-20260603-211031-112-地平线6？怎么开车啊！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_03_10_18_10",
+    "title": "久违的早台！！",
+    "date": "2026-06-03",
+    "time": "10:18:10",
+    "startTime": "10:18",
+    "endTime": "12:19",
+    "duration": 7312,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_03_10_18_10/录制-26966466-20260603-101810-881-久违的早台！！.xml",
+    "cover": "/data/streams/shiori/2026_06_03_10_18_10/录制-26966466-20260603-101810-881-久违的早台！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_03_10_18_10/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_03_10_18_10/录制-26966466-20260603-101810-881-久违的早台！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_03_10_18_10/录制-26966466-20260603-101810-881-久违的早台！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_03_10_18_10/录制-26966466-20260602-203927-878-小栞来！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_03_10_18_10/录制-26966466-20260602-203927-878-小栞来！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_02_20_39_27",
     "title": "小栞来！！",
     "date": "2026-06-02",

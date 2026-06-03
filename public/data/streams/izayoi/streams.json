@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_06_03_22_28_10",
+    "title": "真心换真心",
+    "date": "2026-06-03",
+    "time": "22:28:10",
+    "startTime": "22:28",
+    "endTime": "22:59",
+    "duration": 1912,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_03_22_28_10/录制-1741667419-20260603-222810-945-真心换真心.xml",
+    "cover": "/data/streams/izayoi/2026_06_03_22_28_10/录制-1741667419-20260603-222810-945-真心换真心.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_03_22_28_10/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_03_22_28_10/录制-1741667419-20260603-222810-945-真心换真心_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_03_18_42_26",
+    "title": "真心换真心",
+    "date": "2026-06-03",
+    "time": "18:42:26",
+    "startTime": "18:42",
+    "endTime": "22:22",
+    "duration": 13231,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_03_18_42_26/录制-1741667419-20260603-184226-302-真心换真心.xml",
+    "cover": "/data/streams/izayoi/2026_06_03_18_42_26/录制-1741667419-20260603-184226-302-真心换真心.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_03_14_04_17",
+    "title": "健身浣来啦！",
+    "date": "2026-06-03",
+    "time": "14:04:17",
+    "startTime": "14:04",
+    "endTime": "17:07",
+    "duration": 11037,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_03_14_04_17/录制-1741667419-20260603-140417-255-健身浣来啦！.xml",
+    "cover": "/data/streams/izayoi/2026_06_03_14_04_17/录制-1741667419-20260603-140417-255-健身浣来啦！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_03_14_04_17/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_03_14_04_17/录制-1741667419-20260603-140417-255-健身浣来啦！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_03_14_04_17/录制-1741667419-20260603-140417-255-健身浣来啦！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_03_14_04_17/录制-1741667419-20260601-201640-413-在画了，在画了！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_03_14_04_17/录制-1741667419-20260601-201640-413-在画了，在画了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_01_20_16_40",
     "title": "在画了，在画了！",
     "date": "2026-06-01",
