@@ -24,6 +24,17 @@ export interface StreamData {
   duration?: number;
 }
 
+export const getPublicFileUrl = (filePath: string) => (
+  filePath
+    .split('/')
+    .map((segment, index) => (index === 0 ? segment : encodeURIComponent(segment)))
+    .join('/')
+);
+
+export const getDownloadFilename = (filePath: string) => (
+  filePath.split('/').pop() || undefined
+);
+
 // Markdown 组件定义
 export const MarkdownComponents = {
   p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{children}</p>,

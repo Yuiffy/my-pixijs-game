@@ -3,7 +3,7 @@
 import React from 'react';
 import { Typography, Button, Space, Card, Tag, Pagination, Image as AntImage } from 'antd';
 import { CalendarOutlined, HistoryOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined } from '@ant-design/icons';
-import { StreamData, HighlightsDisplay, getPeriodInfo } from './RecordsShared';
+import { StreamData, HighlightsDisplay, getDownloadFilename, getPeriodInfo, getPublicFileUrl } from './RecordsShared';
 
 const { Title, Text } = Typography;
 
@@ -134,8 +134,8 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
                         </Button>
                         <Button
                           icon={<CloudDownloadOutlined />}
-                          href={stream.srt}
-                          download
+                          href={getPublicFileUrl(stream.srt)}
+                          download={getDownloadFilename(stream.srt)}
                           size="small"
                           className="bg-white/10 border-none text-cyan-500 hover:!bg-cyan-500/20 rounded-r-lg border-l border-white/10 px-2"
                           title="直接下载 SRT"
@@ -145,10 +145,9 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
                     )}
                     {stream.xml && (
                       <Button
-                        icon={<EyeOutlined />}
-                        href={stream.xml}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        icon={<CloudDownloadOutlined />}
+                        href={getPublicFileUrl(stream.xml)}
+                        download={getDownloadFilename(stream.xml)}
                         size="small"
                         className="bg-white/10 border-none text-pink-300 hover:!bg-pink-500/20 rounded-lg px-4 font-bold"
                         onClick={(e) => e.stopPropagation()}

@@ -9,7 +9,7 @@ import weekday from 'dayjs/plugin/weekday';
 import localeData from 'dayjs/plugin/localeData';
 import RecordsListView from './RecordsListView';
 import RecordsCalendarView from './RecordsCalendarView';
-import { StreamData, HighlightsDisplay, ModalMarkdownComponents, getPeriodInfo } from './RecordsShared';
+import { StreamData, HighlightsDisplay, ModalMarkdownComponents, getDownloadFilename, getPeriodInfo, getPublicFileUrl } from './RecordsShared';
 import { Image as AntImage, Tag } from 'antd';
 import { getLiverConfig, type LiverInfo } from '@/data/livers';
 
@@ -294,8 +294,8 @@ const RecordsModule = ({ streams: externalStreams, liverId = 'sui' }: RecordsMod
                    {selectedStream.xml && (
                       <Button
                          icon={<ThunderboltOutlined />}
-                         href={selectedStream.xml}
-                         target="_blank"
+                         href={getPublicFileUrl(selectedStream.xml)}
+                         download={getDownloadFilename(selectedStream.xml)}
                          className="text-pink-400 hover:text-pink-300 font-bold"
                          type="link"
                       >
