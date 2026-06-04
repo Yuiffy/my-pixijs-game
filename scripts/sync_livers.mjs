@@ -27,6 +27,24 @@ const TARGET_BASE_DIR = path.join(ROOT_DIR, 'public/data/streams');
 const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
 const FILENAME_REGEX_LUZHI = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg|txt|md)/;
 
+function resolveTargetDir(configuredTargetDir, liverId) {
+  if (configuredTargetDir) {
+    if (path.isAbsolute(configuredTargetDir)) {
+      return configuredTargetDir;
+    }
+
+    const normalized = configuredTargetDir.replace(/^[/\\]+/, '').replace(/\\/g, '/');
+    if (normalized.startsWith('public/')) {
+      return path.join(ROOT_DIR, normalized);
+    }
+    if (normalized.startsWith('data/streams/')) {
+      return path.join(ROOT_DIR, 'public', normalized);
+    }
+  }
+
+  return path.join(TARGET_BASE_DIR, liverId);
+}
+
 // 解析命令行参数
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -69,7 +87,8 @@ function getLatestSyncedTimestamp(targetDir) {
 
 // 处理单个主播的数据
 async function processLiver(liverConfig, mode, force, allFinalStreams) {
-  const { id, name, sourceDirs, targetDir } = liverConfig;
+  const { id, name, sourceDirs } = liverConfig;
+  const targetDir = resolveTargetDir(liverConfig.targetDir, id);
   console.log(`\n=== 开始处理主播: ${name} (${id}) ===`);
 
   if (!fs.existsSync(targetDir)) {
