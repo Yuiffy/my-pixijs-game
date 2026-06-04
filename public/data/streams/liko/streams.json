@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_04_20_20_16",
+    "title": "突击播一会儿",
+    "date": "2026-06-04",
+    "time": "20:20:16",
+    "startTime": "20:20",
+    "endTime": "21:24",
+    "duration": 3846,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_04_20_20_16/录制-1713548468-20260604-202016-335-突击播一会儿_merged.xml",
+    "cover": "/data/streams/liko/2026_06_04_20_20_16/录制-1713548468-20260604-202016-335-突击播一会儿.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_04_20_20_16/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_04_20_20_16/录制-1713548468-20260604-202016-335-突击播一会儿_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_04_20_20_16/录制-1713548468-20260604-202016-335-突击播一会儿_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_04_20_20_16/录制-1713548468-20260603-222806-929-277团建学术中_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_03_22_28_06",
     "title": "277团建学术中",
     "date": "2026-06-03",
