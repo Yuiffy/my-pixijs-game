@@ -1,5 +1,87 @@
 [
   {
+    "id": "2026_06_06_01_05_19",
+    "title": "唱歌歌",
+    "date": "2026-06-05",
+    "time": "01:05:19",
+    "startTime": "01:05",
+    "endTime": "01:40",
+    "duration": 2126,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_06_01_05_19/录制-1986461465-20260606-010519-479-唱歌歌.xml",
+    "cover": "/data/streams/kloa/2026_06_06_01_05_19/录制-1986461465-20260606-010519-479-唱歌歌.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_06_01_05_19/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_06_01_05_19/录制-1986461465-20260606-010519-479-唱歌歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_06_00_04_07",
+    "title": "晚间休闲时光~玩玩小丑牌",
+    "date": "2026-06-05",
+    "time": "00:04:07",
+    "startTime": "00:04",
+    "endTime": "01:05",
+    "duration": 3665,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_06_00_04_07/录制-1986461465-20260606-000407-609-晚间休闲时光~玩玩小丑牌.xml",
+    "cover": "/data/streams/kloa/2026_06_06_00_04_07/录制-1986461465-20260606-000407-609-晚间休闲时光~玩玩小丑牌.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_06_00_02_06",
+    "title": "晚间休闲时光~玩玩小丑牌",
+    "date": "2026-06-05",
+    "time": "00:02:06",
+    "startTime": "00:02",
+    "endTime": "00:04",
+    "duration": 121,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_06_00_02_06/录制-1986461465-20260606-000206-175-晚间休闲时光~玩玩小丑牌.xml",
+    "cover": "/data/streams/kloa/2026_06_06_00_02_06/录制-1986461465-20260606-000206-175-晚间休闲时光~玩玩小丑牌.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_05_21_22_48",
+    "title": "晚间休闲时光~玩玩小丑牌",
+    "date": "2026-06-05",
+    "time": "21:22:48",
+    "startTime": "21:22",
+    "endTime": "00:01",
+    "duration": 9540,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_05_21_22_48/录制-1986461465-20260605-212248-705-晚间休闲时光~玩玩小丑牌.xml",
+    "cover": "/data/streams/kloa/2026_06_05_21_22_48/录制-1986461465-20260605-212248-705-晚间休闲时光~玩玩小丑牌.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_05_10_10_49",
+    "title": "早餐后健身环~",
+    "date": "2026-06-05",
+    "time": "10:10:49",
+    "startTime": "10:10",
+    "endTime": "12:10",
+    "duration": 7227,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_05_10_10_49/录制-1986461465-20260605-101049-571-早餐后健身环~.xml",
+    "cover": "/data/streams/kloa/2026_06_05_10_10_49/录制-1986461465-20260605-101049-571-早餐后健身环~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_05_10_10_49/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_05_10_10_49/录制-1986461465-20260605-101049-571-早餐后健身环~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_05_10_10_49/录制-1986461465-20260605-101049-571-早餐后健身环~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_05_10_10_49/录制-1986461465-20260604-220707-447-睡前电台_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_05_10_10_49/录制-1986461465-20260604-220707-447-睡前电台_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_04_22_07_07",
     "title": "睡前电台",
     "date": "2026-06-04",

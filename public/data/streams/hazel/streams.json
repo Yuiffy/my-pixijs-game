@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_06_05_15_03_40",
+    "title": "纯路人",
+    "date": "2026-06-05",
+    "time": "15:03:40",
+    "startTime": "15:03",
+    "endTime": "18:19",
+    "duration": 11762,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_05_15_03_40/录制-1713546334-20260605-150340-299-纯路人_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_05_15_03_40/录制-1713546334-20260605-150340-299-纯路人.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_05_15_03_40/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_05_15_03_40/录制-1713546334-20260605-150340-299-纯路人_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_05_15_03_40/录制-1713546334-20260605-150340-299-纯路人_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_05_14_32_22",
+    "title": "纯路人",
+    "date": "2026-06-05",
+    "time": "14:32:22",
+    "startTime": "14:32",
+    "endTime": "15:00",
+    "duration": 1698,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_05_14_32_22/录制-1713546334-20260605-143222-895-纯路人_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_05_14_32_22/录制-1713546334-20260605-143222-895-纯路人.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_05_14_32_22/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_05_14_32_22/录制-1713546334-20260603-222824-190-晚安电台_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_03_22_28_24",
     "title": "晚安电台",
     "date": "2026-06-03",

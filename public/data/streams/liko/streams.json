@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_05_20_41_09",
+    "title": "健身环来咯",
+    "date": "2026-06-05",
+    "time": "20:41:09",
+    "startTime": "20:41",
+    "endTime": "01:51",
+    "duration": 18606,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_05_20_41_09/录制-1713548468-20260605-204109-251-健身环来咯.xml",
+    "cover": "/data/streams/liko/2026_06_05_20_41_09/录制-1713548468-20260605-204109-251-健身环来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_05_20_41_09/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_05_20_41_09/录制-1713548468-20260605-204109-251-健身环来咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_05_20_41_09/录制-1713548468-20260605-204109-251-健身环来咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_05_14_02_16",
+    "title": "睡醒咯",
+    "date": "2026-06-05",
+    "time": "14:02:16",
+    "startTime": "14:02",
+    "endTime": "17:20",
+    "duration": 11903,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_05_14_02_16/录制-1713548468-20260605-140216-742-睡醒咯.xml",
+    "cover": "/data/streams/liko/2026_06_05_14_02_16/录制-1713548468-20260605-140216-742-睡醒咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_05_14_02_16/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_05_14_02_16/录制-1713548468-20260605-140216-742-睡醒咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_05_14_02_16/录制-1713548468-20260605-140216-742-睡醒咯_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_05_14_02_16/录制-1713548468-20260604-202016-335-突击播一会儿_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_05_14_02_16/录制-1713548468-20260604-202016-335-突击播一会儿_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_04_20_20_16",
     "title": "突击播一会儿",
     "date": "2026-06-04",

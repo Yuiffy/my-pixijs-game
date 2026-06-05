@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026_06_05_15_34_08",
+    "title": "小栞来！",
+    "date": "2026-06-05",
+    "time": "15:34:08",
+    "startTime": "15:34",
+    "endTime": "17:39",
+    "duration": 7548,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260605-153408-803-小栞来！.xml",
+    "cover": "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260605-153408-803-小栞来！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_05_15_34_08/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260605-153408-803-小栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260605-153408-803-小栞来！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260604-201307-648-海獭大战小鸟！_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260604-201307-648-海獭大战小鸟！_merged_COMIC_FACTORY_1.png",
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260604-201307-648-海獭大战小鸟！_merged_COMIC_FACTORY_2.png",
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260604-201307-648-海獭大战小鸟！_merged_COMIC_FACTORY_3.png",
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260604-201307-648-海獭大战小鸟！_merged_COMIC_FACTORY_4.png",
+      "/data/streams/shiori/2026_06_05_15_34_08/录制-26966466-20260604-201307-648-海獭大战小鸟！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_04_20_13_07",
     "title": "海獭大战小鸟！",
     "date": "2026-06-04",
