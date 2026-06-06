@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_06_20_11_26",
+    "title": "唱唱歌",
+    "date": "2026-06-06",
+    "time": "20:11:26",
+    "startTime": "20:11",
+    "endTime": "01:02",
+    "duration": 17510,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_06_20_11_26/录制-1713548468-20260606-201126-828-唱唱歌.xml",
+    "cover": "/data/streams/liko/2026_06_06_20_11_26/录制-1713548468-20260606-201126-828-唱唱歌.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_06_20_11_26/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_06_20_11_26/录制-1713548468-20260606-201126-828-唱唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_06_11_11_12",
+    "title": "周六睡懒觉了吗",
+    "date": "2026-06-06",
+    "time": "11:11:12",
+    "startTime": "11:11",
+    "endTime": "15:06",
+    "duration": 14112,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_06_11_11_12/录制-1713548468-20260606-111112-880-周六睡懒觉了吗.xml",
+    "cover": "/data/streams/liko/2026_06_06_11_11_12/录制-1713548468-20260606-111112-880-周六睡懒觉了吗.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_06_11_11_12/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_06_11_11_12/录制-1713548468-20260606-111112-880-周六睡懒觉了吗_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_06_11_11_12/录制-1713548468-20260606-111112-880-周六睡懒觉了吗_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_06_11_11_12/录制-1713548468-20260605-204109-251-健身环来咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_06_11_11_12/录制-1713548468-20260605-204109-251-健身环来咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_05_20_41_09",
     "title": "健身环来咯",
     "date": "2026-06-05",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_06_20_04_54",
+    "title": "困困嘟......",
+    "date": "2026-06-06",
+    "time": "20:04:54",
+    "startTime": "20:04",
+    "endTime": "00:18",
+    "duration": 15243,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_06_20_04_54/录制-1741667419-20260606-200454-817-困困嘟.......xml",
+    "cover": "/data/streams/izayoi/2026_06_06_20_04_54/录制-1741667419-20260606-200454-817-困困嘟.......cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_06_20_04_54/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_06_20_04_54/录制-1741667419-20260606-200454-817-困困嘟......_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_06_20_04_54/录制-1741667419-20260606-200454-817-困困嘟......_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_06_14_01_04",
+    "title": "久违的人森一下！",
+    "date": "2026-06-06",
+    "time": "14:01:04",
+    "startTime": "14:01",
+    "endTime": "16:40",
+    "duration": 9557,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_06_14_01_04/录制-1741667419-20260606-140104-420-久违的人森一下！.xml",
+    "cover": "/data/streams/izayoi/2026_06_06_14_01_04/录制-1741667419-20260606-140104-420-久违的人森一下！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_06_14_01_04/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_06_14_01_04/录制-1741667419-20260606-140104-420-久违的人森一下！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_06_14_01_04/录制-1741667419-20260606-140104-420-久违的人森一下！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_06_14_01_04/录制-1741667419-20260605-213429-730-在干嘛…_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_06_14_01_04/录制-1741667419-20260605-213429-730-在干嘛…_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_05_21_34_29",
     "title": "在干嘛…",
     "date": "2026-06-05",

@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_06_20_08_45",
+    "title": "唱歌唱歌！",
+    "date": "2026-06-06",
+    "time": "20:08:45",
+    "startTime": "20:08",
+    "endTime": "00:58",
+    "duration": 17404,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_06_20_08_45/录制-1986461465-20260606-200845-898-唱歌唱歌！.xml",
+    "cover": "/data/streams/kloa/2026_06_06_20_08_45/录制-1986461465-20260606-200845-898-唱歌唱歌！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_06_20_08_45/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_06_20_08_45/录制-1986461465-20260606-200845-898-唱歌唱歌！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_06_20_08_45/录制-1986461465-20260606-200845-898-唱歌唱歌！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_06_11_08_49",
+    "title": "呜呜呜做饭电台",
+    "date": "2026-06-06",
+    "time": "11:08:49",
+    "startTime": "11:08",
+    "endTime": "16:11",
+    "duration": 18230,
+    "durationStr": "5.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_06_11_08_49/录制-1986461465-20260606-110849-882-呜呜呜做饭电台_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_06_11_08_49/录制-1986461465-20260606-110849-882-呜呜呜做饭电台.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_06_11_08_49/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_06_11_08_49/录制-1986461465-20260606-110849-882-呜呜呜做饭电台_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_06_11_08_49/录制-1986461465-20260606-110849-882-呜呜呜做饭电台_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_06_11_08_49/录制-1986461465-20260606-010519-479-唱歌歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_06_01_05_19",
     "title": "唱歌歌",
     "date": "2026-06-05",
