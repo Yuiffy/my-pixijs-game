@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_07_18_49_12",
+    "title": "路人女主播",
+    "date": "2026-06-07",
+    "time": "18:49:12",
+    "startTime": "18:49",
+    "endTime": "21:07",
+    "duration": 8301,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_07_18_49_12/录制-1713546334-20260607-184912-388-路人女主播_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_07_18_49_12/录制-1713546334-20260607-184912-388-路人女主播.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_07_18_49_12/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_07_18_49_12/录制-1713546334-20260607-184912-388-路人女主播_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_07_18_49_12/录制-1713546334-20260607-184912-388-路人女主播_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_07_18_49_12/录制-1713546334-20260606-223410-641-睡前读物_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_07_18_49_12/录制-1713546334-20260606-223410-641-睡前读物_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_06_22_34_10",
     "title": "睡前读物",
     "date": "2026-06-06",

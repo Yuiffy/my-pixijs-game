@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_07_20_26_48",
+    "title": "困困嘟",
+    "date": "2026-06-07",
+    "time": "20:26:48",
+    "startTime": "20:26",
+    "endTime": "00:25",
+    "duration": 14373,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_07_20_26_48/录制-1741667419-20260607-202648-993-困困嘟.xml",
+    "cover": "/data/streams/izayoi/2026_06_07_20_26_48/录制-1741667419-20260607-202648-993-困困嘟.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_06_07_20_26_48/录制-1741667419-20260607-202648-993-困困嘟_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_07_12_04_15",
+    "title": "16家今天中午的饭",
+    "date": "2026-06-07",
+    "time": "12:04:15",
+    "startTime": "12:04",
+    "endTime": "14:06",
+    "duration": 7360,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_07_12_04_15/录制-1741667419-20260607-120415-290-16家今天中午的饭_merged.xml",
+    "cover": "/data/streams/izayoi/2026_06_07_12_04_15/录制-1741667419-20260607-120415-290-16家今天中午的饭.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_07_12_04_15/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_07_12_04_15/录制-1741667419-20260607-120415-290-16家今天中午的饭_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_07_12_04_15/录制-1741667419-20260607-120415-290-16家今天中午的饭_merged_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_07_12_04_15/录制-1741667419-20260606-200454-817-困困嘟......_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_07_12_04_15/录制-1741667419-20260606-200454-817-困困嘟......_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_06_20_04_54",
     "title": "困困嘟......",
     "date": "2026-06-06",

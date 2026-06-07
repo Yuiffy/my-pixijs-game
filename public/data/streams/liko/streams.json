@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_07_20_02_50",
+    "title": "兔来了！",
+    "date": "2026-06-07",
+    "time": "20:02:50",
+    "startTime": "20:02",
+    "endTime": "00:32",
+    "duration": 16252,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_07_20_02_50/录制-1713548468-20260607-200250-046-兔来了！_merged.xml",
+    "cover": "/data/streams/liko/2026_06_07_20_02_50/录制-1713548468-20260607-200250-046-兔来了！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_07_20_02_50/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_07_20_02_50/录制-1713548468-20260607-200250-046-兔来了！_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_07_20_02_50/录制-1713548468-20260607-200250-046-兔来了！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_07_10_09_23",
+    "title": "悄悄话",
+    "date": "2026-06-07",
+    "time": "10:09:23",
+    "startTime": "10:09",
+    "endTime": "13:23",
+    "duration": 11674,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_07_10_09_23/录制-1713548468-20260607-100923-812-悄悄话.xml",
+    "cover": "/data/streams/liko/2026_06_07_10_09_23/录制-1713548468-20260607-100923-812-悄悄话.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_07_10_09_23/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_07_10_09_23/录制-1713548468-20260607-100923-812-悄悄话_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_07_10_09_23/录制-1713548468-20260607-100923-812-悄悄话_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_07_10_09_23/录制-1713548468-20260606-201126-828-唱唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_06_20_11_26",
     "title": "唱唱歌",
     "date": "2026-06-06",

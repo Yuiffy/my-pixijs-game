@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_07_21_06_52",
+    "title": "补一个六一儿歌回！",
+    "date": "2026-06-07",
+    "time": "21:06:52",
+    "startTime": "21:06",
+    "endTime": "00:17",
+    "duration": 11478,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_07_21_06_52/录制-26966466-20260607-210652-492-补一个六一儿歌回！_merged.xml",
+    "cover": "/data/streams/shiori/2026_06_07_21_06_52/录制-26966466-20260607-210652-492-补一个六一儿歌回！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_07_21_06_52/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_07_21_06_52/录制-26966466-20260607-210652-492-补一个六一儿歌回！_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_07_21_06_52/录制-26966466-20260607-210652-492-补一个六一儿歌回！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_07_10_18_19",
+    "title": "困困QAQ",
+    "date": "2026-06-07",
+    "time": "10:18:19",
+    "startTime": "10:18",
+    "endTime": "12:13",
+    "duration": 6901,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_07_10_18_19/录制-26966466-20260607-101819-923-困困QAQ.xml",
+    "cover": "/data/streams/shiori/2026_06_07_10_18_19/录制-26966466-20260607-101819-923-困困QAQ.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_07_10_18_19/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_07_10_18_19/录制-26966466-20260607-101819-923-困困QAQ_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_07_10_18_19/录制-26966466-20260607-101819-923-困困QAQ_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_07_10_18_19/录制-26966466-20260606-213307-400-小栞来！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_07_10_18_19/录制-26966466-20260606-213307-400-小栞来！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_06_21_33_07",
     "title": "小栞来！",
     "date": "2026-06-06",

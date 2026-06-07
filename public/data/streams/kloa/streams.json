@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_06_07_23_24_31",
+    "title": "视频鉴赏回~",
+    "date": "2026-06-07",
+    "time": "23:24:31",
+    "startTime": "23:24",
+    "endTime": "01:00",
+    "duration": 5787,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_07_23_24_31/录制-1986461465-20260607-232431-016-视频鉴赏回~.xml",
+    "cover": "/data/streams/kloa/2026_06_07_23_24_31/录制-1986461465-20260607-232431-016-视频鉴赏回~.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_06_07_23_24_31/褰曞埗-1986461465-20260608-010153-771-视频鉴赏回~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_07_20_06_29",
+    "title": "视频鉴赏回~",
+    "date": "2026-06-07",
+    "time": "20:06:29",
+    "startTime": "20:06",
+    "endTime": "23:22",
+    "duration": 11787,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_07_20_06_29/录制-1986461465-20260607-200629-246-视频鉴赏回~.xml",
+    "cover": "/data/streams/kloa/2026_06_07_20_06_29/录制-1986461465-20260607-200629-246-视频鉴赏回~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_07_12_31_27",
+    "title": "主播刚考完语文",
+    "date": "2026-06-07",
+    "time": "12:31:27",
+    "startTime": "12:31",
+    "endTime": "16:01",
+    "duration": 12634,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_07_12_31_27/录制-1986461465-20260607-123127-611-主播刚考完语文_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_07_12_31_27/录制-1986461465-20260607-123127-611-主播刚考完语文.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_07_12_31_27/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_07_12_31_27/录制-1986461465-20260607-123127-611-主播刚考完语文_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_07_12_31_27/录制-1986461465-20260607-123127-611-主播刚考完语文_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_07_12_31_27/录制-1986461465-20260606-200845-898-唱歌唱歌！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_07_12_31_27/录制-1986461465-20260606-200845-898-唱歌唱歌！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_06_20_08_45",
     "title": "唱歌唱歌！",
     "date": "2026-06-06",
