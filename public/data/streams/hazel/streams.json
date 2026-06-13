@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026_06_13_11_58_18",
+    "title": "玩三谋",
+    "date": "2026-06-13",
+    "time": "11:58:18",
+    "startTime": "11:58",
+    "endTime": "14:20",
+    "duration": 8531,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_13_11_58_18/录制-1713546334-20260613-115818-209-玩三谋.xml",
+    "cover": "/data/streams/hazel/2026_06_13_11_58_18/录制-1713546334-20260613-115818-209-玩三谋.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_13_11_58_18/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_13_11_58_18/录制-1713546334-20260613-115818-209-玩三谋_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_13_11_58_18/录制-1713546334-20260613-115818-209-玩三谋_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_13_11_58_18/录制-1713546334-20260607-184912-388-路人女主播_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_13_11_58_18/录制-1713546334-20260607-184912-388-路人女主播_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_13_11_58_18/褰曞埗-1713546334-20260608-231852-892-睡前电台_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_13_11_58_18/褰曞埗-1713546334-20260609-195239-033-一个关于香肠的奇怪游戏_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_13_11_58_18/褰曞埗-1713546334-20260609-195239-033-一个关于香肠的奇怪游戏_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_13_11_58_18/褰曞埗-1713546334-20260609-234332-557-你好_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_13_11_58_18/褰曞埗-1713546334-20260610-230637-417-悠闲度过_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_13_11_58_18/褰曞埗-1713546334-20260610-230637-417-悠闲度过_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_07_18_49_12",
     "title": "路人女主播",
     "date": "2026-06-07",

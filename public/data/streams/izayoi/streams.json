@@ -1,5 +1,50 @@
 [
   {
+    "id": "2026_06_13_20_03_07",
+    "title": "1616我们喜浣你",
+    "date": "2026-06-13",
+    "time": "20:03:07",
+    "startTime": "20:03",
+    "endTime": "23:53",
+    "duration": 13828,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_13_20_03_07/录制-1741667419-20260613-200307-959-1616我们喜浣你.xml",
+    "cover": "/data/streams/izayoi/2026_06_13_20_03_07/录制-1741667419-20260613-200307-959-1616我们喜浣你.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_13_20_03_07/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_13_20_03_07/录制-1741667419-20260613-200307-959-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_13_20_03_07/录制-1741667419-20260613-200307-959-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_13_11_36_32",
+    "title": "三国—浣定天下！",
+    "date": "2026-06-13",
+    "time": "11:36:32",
+    "startTime": "11:36",
+    "endTime": "14:48",
+    "duration": 11550,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_13_11_36_32/录制-1741667419-20260613-113632-161-三国—浣定天下！.xml",
+    "cover": "/data/streams/izayoi/2026_06_13_11_36_32/录制-1741667419-20260613-113632-161-三国—浣定天下！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_13_11_36_32/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_13_11_36_32/录制-1741667419-20260613-113632-161-三国—浣定天下！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_13_11_36_32/录制-1741667419-20260613-113632-161-三国—浣定天下！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_13_11_36_32/录制-1741667419-20260607-202648-993-困困嘟_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260608-195857-371-先来聊聊天！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260608-195857-371-先来聊聊天！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260609-092108-587-困晕了_merged_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260609-101515-747-困晕了_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260609-233833-415-突击半小时！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260610-195831-840-健身浣！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260610-195831-840-健身浣！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_13_11_36_32/褰曞埗-1741667419-20260610-225926-196-健身浣！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_07_20_26_48",
     "title": "困困嘟",
     "date": "2026-06-07",

@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026_06_13_11_21_08",
+    "title": "三国：谋定天下",
+    "date": "2026-06-13",
+    "time": "11:21:08",
+    "startTime": "11:21",
+    "endTime": "15:04",
+    "duration": 13435,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_13_11_21_08/录制-1713548468-20260613-112108-598-三谋谋定天下.xml",
+    "cover": "/data/streams/liko/2026_06_13_11_21_08/录制-1713548468-20260613-112108-598-三谋谋定天下.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_13_11_21_08/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_13_11_21_08/录制-1713548468-20260613-112108-598-三谋谋定天下_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_13_11_21_08/录制-1713548468-20260613-112108-598-三谋谋定天下_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/录制-1713548468-20260607-200250-046-兔来了！_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_13_11_21_08/录制-1713548468-20260607-200250-046-兔来了！_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260608-195834-782-兔来了！_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260609-110710-818-兔来了！_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260609-110710-818-兔来了！_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260609-200447-538-盛世天下女帝篇_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260610-195447-495-盛世天下女帝篇_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260610-195447-495-盛世天下女帝篇_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260611-131609-270-唠嗑后激情健身环_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260611-131609-270-唠嗑后激情健身环_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260611-200616-203-和雅雅一起生化危机6_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260612-110429-726-早睡早起身体好_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_13_11_21_08/褰曞埗-1713548468-20260612-200514-461-虚弱被窝_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_07_20_02_50",
     "title": "兔来了！",
     "date": "2026-06-07",
