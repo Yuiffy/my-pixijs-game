@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_06_14_22_57_44",
+    "title": "杂谈~",
+    "date": "2026-06-14",
+    "time": "22:57:44",
+    "startTime": "22:57",
+    "endTime": "00:49",
+    "duration": 6752,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_14_22_57_44/录制-1986461465-20260614-225744-086-杂谈~.xml",
+    "cover": "/data/streams/kloa/2026_06_14_22_57_44/录制-1986461465-20260614-225744-086-杂谈~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_14_20_03_07",
+    "title": "和菜菜子老师一起开叉车",
+    "date": "2026-06-14",
+    "time": "20:03:07",
+    "startTime": "20:03",
+    "endTime": "23:19",
+    "duration": 11819,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_14_20_03_07/录制-1986461465-20260614-200307-913-和菜菜子老师一起开叉车_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_14_20_03_07/录制-1986461465-20260614-200307-913-和菜菜子老师一起开叉车.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_06_14_20_03_07/录制-1986461465-20260614-200307-913-和菜菜子老师一起开叉车_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_14_14_44_49",
+    "title": "三国：谋定天下 打城！",
+    "date": "2026-06-14",
+    "time": "14:44:49",
+    "startTime": "14:44",
+    "endTime": "16:08",
+    "duration": 5075,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_14_14_44_49/录制-1986461465-20260614-144449-525-三国：谋定天下 打城！.xml",
+    "cover": "/data/streams/kloa/2026_06_14_14_44_49/录制-1986461465-20260614-144449-525-三国：谋定天下 打城！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_14_14_44_49/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_14_14_44_49/录制-1986461465-20260614-144449-525-三国：谋定天下 打城！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_14_14_44_49/录制-1986461465-20260614-144449-525-三国：谋定天下 打城！_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_14_14_44_49/录制-1986461465-20260613-200632-449-唱歌歌（虚弱版）_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_14_14_44_49/录制-1986461465-20260613-200632-449-唱歌歌（虚弱版）_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_13_20_06_32",
     "title": "唱歌歌（虚弱版）",
     "date": "2026-06-13",

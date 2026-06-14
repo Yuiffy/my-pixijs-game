@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_15_00_20_48",
+    "title": "悠哉悠哉夜晚",
+    "date": "2026-06-14",
+    "time": "00:20:48",
+    "startTime": "00:20",
+    "endTime": "00:49",
+    "duration": 1777,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_15_00_20_48/录制-25788785-20260615-002048-793-悠哉悠哉夜晚.xml",
+    "cover": "/data/streams/sui/2026_06_15_00_20_48/录制-25788785-20260615-002048-793-悠哉悠哉夜晚.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_06_15_00_20_48/录制-25788785-20260614-195127-019-悠哉悠哉夜晚_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_14_19_51_27",
+    "title": "悠哉悠哉夜晚",
+    "date": "2026-06-14",
+    "time": "19:51:27",
+    "startTime": "19:51",
+    "endTime": "01:02",
+    "duration": 18703,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_14_19_51_27/录制-25788785-20260614-195127-019-悠哉悠哉夜晚_merged.xml",
+    "cover": "/data/streams/sui/2026_06_14_19_51_27/录制-25788785-20260614-195127-019-悠哉悠哉夜晚.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_14_19_51_27/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_14_19_51_27/录制-25788785-20260614-195127-019-悠哉悠哉夜晚_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_14_19_51_27/录制-25788785-20260613-195153-583-愚蠢行为坦白回！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_14_19_51_27/录制-25788785-20260613-195153-583-愚蠢行为坦白回！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_13_19_51_53",
     "title": "愚蠢行为坦白回！",
     "date": "2026-06-13",
