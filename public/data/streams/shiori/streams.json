@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_16_21_27_50",
+    "title": "盛世天下！",
+    "date": "2026-06-16",
+    "time": "21:27:50",
+    "startTime": "21:27",
+    "endTime": "00:30",
+    "duration": 10995,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_16_21_27_50/录制-26966466-20260616-212750-020-盛世天下！.xml",
+    "cover": "/data/streams/shiori/2026_06_16_21_27_50/录制-26966466-20260616-212750-020-盛世天下！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_16_21_27_50/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_16_21_27_50/录制-26966466-20260616-212750-020-盛世天下！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_16_21_27_50/录制-26966466-20260616-212750-020-盛世天下！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_16_10_18_29",
+    "title": "早安獭獭栞！",
+    "date": "2026-06-16",
+    "time": "10:18:29",
+    "startTime": "10:18",
+    "endTime": "12:18",
+    "duration": 7221,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_16_10_18_29/录制-26966466-20260616-101829-533-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_06_16_10_18_29/录制-26966466-20260616-101829-533-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_16_10_18_29/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_16_10_18_29/录制-26966466-20260616-101829-533-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_16_10_18_29/录制-26966466-20260616-101829-533-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_16_10_18_29/录制-26966466-20260614-224637-281-盛世天下！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_16_10_18_29/录制-26966466-20260614-224637-281-盛世天下！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_14_22_46_37",
     "title": "盛世天下！",
     "date": "2026-06-14",
