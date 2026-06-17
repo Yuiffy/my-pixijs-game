@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_17_22_35_56",
+    "title": "温柔煮死你",
+    "date": "2026-06-17",
+    "time": "22:35:56",
+    "startTime": "22:35",
+    "endTime": "00:53",
+    "duration": 8281,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_17_22_35_56/录制-25788785-20260617-223556-486-温柔煮死你.xml",
+    "cover": "/data/streams/sui/2026_06_17_22_35_56/录制-25788785-20260617-223556-486-温柔煮死你.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_17_22_35_56/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_17_22_35_56/录制-25788785-20260617-223556-486-温柔煮死你_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_17_22_35_56/录制-25788785-20260617-223556-486-温柔煮死你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_17_15_03_05",
+    "title": "摸鱼！空洞骑士~",
+    "date": "2026-06-17",
+    "time": "15:03:05",
+    "startTime": "15:03",
+    "endTime": "18:05",
+    "duration": 10920,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_17_15_03_05/录制-25788785-20260617-150305-330-摸鱼！空洞骑士~_merged.xml",
+    "cover": "/data/streams/sui/2026_06_17_15_03_05/录制-25788785-20260617-150305-330-摸鱼！空洞骑士~.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_17_15_03_05/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_17_15_03_05/录制-25788785-20260617-150305-330-摸鱼！空洞骑士~_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_17_15_03_05/录制-25788785-20260617-150305-330-摸鱼！空洞骑士~_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_06_17_15_03_05/录制-25788785-20260616-195518-941-悠哉悠哉夜晚_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_17_15_03_05/录制-25788785-20260616-195518-941-悠哉悠哉夜晚_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_16_19_55_18",
     "title": "一起看 挽救计划！",
     "date": "2026-06-16",

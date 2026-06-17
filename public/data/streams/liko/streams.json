@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_17_20_03_17",
+    "title": "啵啵一会儿",
+    "date": "2026-06-17",
+    "time": "20:03:17",
+    "startTime": "20:03",
+    "endTime": "00:18",
+    "duration": 15330,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_17_20_03_17/录制-1713548468-20260617-200317-126-啵啵一会儿.xml",
+    "cover": "/data/streams/liko/2026_06_17_20_03_17/录制-1713548468-20260617-200317-126-啵啵一会儿.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_17_20_03_17/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_17_20_03_17/录制-1713548468-20260617-200317-126-啵啵一会儿_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_17_20_03_17/录制-1713548468-20260617-200317-126-啵啵一会儿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_17_11_02_42",
+    "title": "啵啵一会儿",
+    "date": "2026-06-17",
+    "time": "11:02:42",
+    "startTime": "11:02",
+    "endTime": "15:17",
+    "duration": 15341,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_17_11_02_42/录制-1713548468-20260617-110242-609-啵啵一会儿_merged.xml",
+    "cover": "/data/streams/liko/2026_06_17_11_02_42/录制-1713548468-20260617-110242-609-啵啵一会儿.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_17_11_02_42/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_17_11_02_42/录制-1713548468-20260617-110242-609-啵啵一会儿_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_17_11_02_42/录制-1713548468-20260617-110242-609-啵啵一会儿_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_17_11_02_42/录制-1713548468-20260616-210527-357-这里四个有一个是笨蛋，我不是_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_17_11_02_42/录制-1713548468-20260616-210527-357-这里四个有一个是笨蛋，我不是_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_16_21_05_27",
     "title": "这里四个有一个是笨蛋，我不是",
     "date": "2026-06-16",

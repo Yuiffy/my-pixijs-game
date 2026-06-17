@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_17_21_12_05",
+    "title": "唱歌歌",
+    "date": "2026-06-17",
+    "time": "21:12:05",
+    "startTime": "21:12",
+    "endTime": "01:42",
+    "duration": 16222,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_17_21_12_05/录制-1986461465-20260617-211205-260-唱歌歌.xml",
+    "cover": "/data/streams/kloa/2026_06_17_21_12_05/录制-1986461465-20260617-211205-260-唱歌歌.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_17_21_12_05/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_17_21_12_05/录制-1986461465-20260617-211205-260-唱歌歌_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_17_21_12_05/录制-1986461465-20260617-211205-260-唱歌歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_17_10_06_49",
+    "title": "健身环~",
+    "date": "2026-06-17",
+    "time": "10:06:49",
+    "startTime": "10:06",
+    "endTime": "12:24",
+    "duration": 8319,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_17_10_06_49/录制-1986461465-20260617-100649-843-健身环~.xml",
+    "cover": "/data/streams/kloa/2026_06_17_10_06_49/录制-1986461465-20260617-100649-843-健身环~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_17_10_06_49/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_17_10_06_49/录制-1986461465-20260617-100649-843-健身环~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_17_10_06_49/录制-1986461465-20260617-100649-843-健身环~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_17_10_06_49/录制-1986461465-20260616-133423-444-三国：谋定天下 打打城！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_17_10_06_49/录制-1986461465-20260616-133423-444-三国：谋定天下 打打城！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_16_13_34_23",
     "title": "三国：谋定天下 打打城！",
     "date": "2026-06-16",
