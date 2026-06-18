@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_18_19_52_02",
+    "title": "悠哉悠哉夜晚",
+    "date": "2026-06-18",
+    "time": "19:52:02",
+    "startTime": "19:52",
+    "endTime": "01:53",
+    "duration": 21712,
+    "durationStr": "6.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_18_19_52_02/录制-25788785-20260618-195202-513-悠哉悠哉夜晚_merged.xml",
+    "cover": "/data/streams/sui/2026_06_18_19_52_02/录制-25788785-20260618-195202-513-悠哉悠哉夜晚.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_18_19_52_02/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_18_19_52_02/录制-25788785-20260618-195202-513-悠哉悠哉夜晚_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_18_19_52_02/录制-25788785-20260618-195202-513-悠哉悠哉夜晚_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_06_18_19_52_02/录制-25788785-20260617-223556-486-温柔煮死你_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_18_19_52_02/录制-25788785-20260617-223556-486-温柔煮死你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_17_22_35_56",
     "title": "温柔煮死你",
     "date": "2026-06-17",

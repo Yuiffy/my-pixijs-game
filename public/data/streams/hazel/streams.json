@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_18_13_00_56",
+    "title": "玩会三谋",
+    "date": "2026-06-18",
+    "time": "13:00:56",
+    "startTime": "13:00",
+    "endTime": "15:07",
+    "duration": 7654,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_18_13_00_56/录制-1713546334-20260618-130056-131-玩会三谋.xml",
+    "cover": "/data/streams/hazel/2026_06_18_13_00_56/录制-1713546334-20260618-130056-131-玩会三谋.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_18_13_00_56/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_18_13_00_56/录制-1713546334-20260618-130056-131-玩会三谋_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_18_13_00_56/录制-1713546334-20260618-130056-131-玩会三谋_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_18_13_00_56/录制-1713546334-20260616-190914-321-运动一会儿_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_18_13_00_56/录制-1713546334-20260616-190914-321-运动一会儿_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_16_19_09_14",
     "title": "运动一会儿",
     "date": "2026-06-16",

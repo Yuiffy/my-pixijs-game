@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_18_20_09_48",
+    "title": "视听：浪客剑心追忆篇",
+    "date": "2026-06-18",
+    "time": "20:09:48",
+    "startTime": "20:09",
+    "endTime": "01:20",
+    "duration": 18677,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_18_20_09_48/录制-1986461465-20260618-200948-464-视听：浪客剑心追忆篇_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_18_20_09_48/录制-1986461465-20260618-200948-464-视听：浪客剑心追忆篇.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_18_20_09_48/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_18_20_09_48/录制-1986461465-20260618-200948-464-视听：浪客剑心追忆篇_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_18_20_09_48/录制-1986461465-20260618-200948-464-视听：浪客剑心追忆篇_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_18_13_04_17",
+    "title": "三国：谋定天下",
+    "date": "2026-06-18",
+    "time": "13:04:17",
+    "startTime": "13:04",
+    "endTime": "14:48",
+    "duration": 6271,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_18_13_04_17/录制-1986461465-20260618-130417-536-三国：谋定天下.xml",
+    "cover": "/data/streams/kloa/2026_06_18_13_04_17/录制-1986461465-20260618-130417-536-三国：谋定天下.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_18_13_04_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_18_13_04_17/录制-1986461465-20260618-130417-536-三国：谋定天下_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_18_13_04_17/录制-1986461465-20260618-130417-536-三国：谋定天下_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_18_13_04_17/录制-1986461465-20260617-211205-260-唱歌歌_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_18_13_04_17/录制-1986461465-20260617-211205-260-唱歌歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_17_21_12_05",
     "title": "唱歌歌",
     "date": "2026-06-17",
