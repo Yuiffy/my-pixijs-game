@@ -1,5 +1,47 @@
 [
   {
+    "id": "2026_06_19_20_33_02",
+    "title": "和栞弥理瑞一起好物分享~！",
+    "date": "2026-06-19",
+    "time": "20:33:02",
+    "startTime": "20:33",
+    "endTime": "00:28",
+    "duration": 14105,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_19_20_33_02/录制-25788785-20260619-203302-795-和栞弥理瑞一起好物分享~！.xml",
+    "cover": "/data/streams/sui/2026_06_19_20_33_02/录制-25788785-20260619-203302-795-和栞弥理瑞一起好物分享~！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_19_20_33_02/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_19_20_33_02/录制-25788785-20260619-203302-795-和栞弥理瑞一起好物分享~！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_19_20_33_02/录制-25788785-20260619-203302-795-和栞弥理瑞一起好物分享~！_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_06_19_20_33_02/preview_03.jpg",
+      "/data/streams/sui/2026_06_19_20_33_02/preview_02.jpg",
+      "/data/streams/sui/2026_06_19_20_33_02/preview_01.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_19_14_47_01",
+    "title": "悠哉悠哉摸鱼—戴夫DLC",
+    "date": "2026-06-19",
+    "time": "14:47:01",
+    "startTime": "14:47",
+    "endTime": "17:47",
+    "duration": 10848,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_19_14_47_01/录制-25788785-20260619-144701-395-悠哉悠哉摸鱼—戴夫_merged.xml",
+    "cover": "/data/streams/sui/2026_06_19_14_47_01/录制-25788785-20260619-144701-395-悠哉悠哉摸鱼—戴夫.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_19_14_47_01/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_19_14_47_01/录制-25788785-20260619-144701-395-悠哉悠哉摸鱼—戴夫_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_19_14_47_01/录制-25788785-20260619-144701-395-悠哉悠哉摸鱼—戴夫_merged_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_06_19_14_47_01/_reframe_19.jpg",
+      "/data/streams/sui/2026_06_19_14_47_01/录制-25788785-20260618-195202-513-悠哉悠哉夜晚_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_19_14_47_01/录制-25788785-20260618-195202-513-悠哉悠哉夜晚_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_18_19_52_02",
     "title": "悠哉悠哉夜晚",
     "date": "2026-06-18",

@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_06_19_21_39_48",
+    "title": "晚间电台～汤浴～",
+    "date": "2026-06-19",
+    "time": "21:39:48",
+    "startTime": "21:39",
+    "endTime": "23:37",
+    "duration": 7110,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_19_21_39_48/录制-1986461465-20260619-213948-138-晚间电台～汤浴～_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_19_21_39_48/录制-1986461465-20260619-213948-138-晚间电台～汤浴～.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_19_21_39_48/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_19_21_39_48/录制-1986461465-20260619-213948-138-晚间电台～汤浴～_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_19_21_39_48/录制-1986461465-20260619-213948-138-晚间电台～汤浴～_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_19_21_26_37",
+    "title": "晚间电台～汤浴～",
+    "date": "2026-06-19",
+    "time": "21:26:37",
+    "startTime": "21:26",
+    "endTime": "21:35",
+    "duration": 595,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_19_21_26_37/录制-1986461465-20260619-212637-637-晚间电台～汤浴～.xml",
+    "cover": "/data/streams/kloa/2026_06_19_21_26_37/录制-1986461465-20260619-212637-637-晚间电台～汤浴～.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_19_21_26_37/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_19_21_26_37/录制-1986461465-20260619-212637-637-晚间电台～汤浴～_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_19_21_06_59",
+    "title": "晚间电台～汤浴～",
+    "date": "2026-06-19",
+    "time": "21:06:59",
+    "startTime": "21:06",
+    "endTime": "21:20",
+    "duration": 887,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_19_21_06_59/录制-1986461465-20260619-210659-160-晚间电台～汤浴～_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_19_21_06_59/录制-1986461465-20260619-210659-160-晚间电台～汤浴～.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_19_21_06_59/highlights.md",
+    "images": []
+  },
+  {
+    "id": "2026_06_19_10_54_56",
+    "title": "闲聊~",
+    "date": "2026-06-19",
+    "time": "10:54:56",
+    "startTime": "10:54",
+    "endTime": "13:16",
+    "duration": 8559,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_19_10_54_56/录制-1986461465-20260619-105456-247-闲聊~_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_19_10_54_56/录制-1986461465-20260619-105456-247-闲聊~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_19_10_54_56/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_19_10_54_56/录制-1986461465-20260619-105456-247-闲聊~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_19_10_54_56/录制-1986461465-20260618-200948-464-视听：浪客剑心追忆篇_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_19_10_54_56/录制-1986461465-20260618-200948-464-视听：浪客剑心追忆篇_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_18_20_09_48",
     "title": "视听：浪客剑心追忆篇",
     "date": "2026-06-18",

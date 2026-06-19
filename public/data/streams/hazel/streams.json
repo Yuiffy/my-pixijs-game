@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_19_21_08_45",
+    "title": "晚间闲谈",
+    "date": "2026-06-19",
+    "time": "21:08:45",
+    "startTime": "21:08",
+    "endTime": "23:12",
+    "duration": 7444,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_19_21_08_45/录制-1713546334-20260619-210845-030-晚间闲谈.xml",
+    "cover": "/data/streams/hazel/2026_06_19_21_08_45/录制-1713546334-20260619-210845-030-晚间闲谈.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_19_21_08_45/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_19_21_08_45/录制-1713546334-20260619-210845-030-晚间闲谈_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_19_21_08_45/录制-1713546334-20260619-210845-030-晚间闲谈_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_19_21_08_45/录制-1713546334-20260618-130056-131-玩会三谋_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_19_21_08_45/录制-1713546334-20260618-130056-131-玩会三谋_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_18_13_00_56",
     "title": "玩会三谋",
     "date": "2026-06-18",

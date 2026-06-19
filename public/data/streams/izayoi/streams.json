@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_19_21_07_00",
+    "title": "浣来包粽子吗.....",
+    "date": "2026-06-19",
+    "time": "21:07:00",
+    "startTime": "21:07",
+    "endTime": "00:01",
+    "duration": 10450,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_19_21_07_00/录制-1741667419-20260619-210700-694-浣来包粽子吗......xml",
+    "cover": "/data/streams/izayoi/2026_06_19_21_07_00/录制-1741667419-20260619-210700-694-浣来包粽子吗......cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_19_21_07_00/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_19_21_07_00/录制-1741667419-20260619-210700-694-浣来包粽子吗....._COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_19_21_07_00/录制-1741667419-20260619-210700-694-浣来包粽子吗....._SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_19_09_05_12",
+    "title": "早茶第六十七天。",
+    "date": "2026-06-19",
+    "time": "09:05:12",
+    "startTime": "09:05",
+    "endTime": "11:02",
+    "duration": 7061,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_19_09_05_12/录制-1741667419-20260619-090512-090-早茶第六十七天。.xml",
+    "cover": "/data/streams/izayoi/2026_06_19_09_05_12/录制-1741667419-20260619-090512-090-早茶第六十七天。.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_06_19_09_05_12/录制-1741667419-20260618-200349-614-好困....._merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_19_09_05_12/录制-1741667419-20260618-200349-614-好困....._merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_18_20_03_49",
     "title": "好困.....",
     "date": "2026-06-18",
