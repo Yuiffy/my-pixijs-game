@@ -1,0 +1,3 @@
+{
+  "buildCommand": "node scripts/prepare-vercel-public-data.mjs && pnpm run build"
+}
