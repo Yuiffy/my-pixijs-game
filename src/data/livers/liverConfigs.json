@@ -88,5 +88,169 @@
     "fanName": "萤火虫",
     "enableTextGeneration": true,
     "enableComicGeneration": true
+  },
+  "azi": {
+    "id": "azi",
+    "name": "阿梓从小就很可爱",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/80397_阿梓从小就很可爱",
+      "E:/EFiles/Evideo/DDTV录播-E/80397_阿梓从小就很可爱"
+    ],
+    "targetDir": "data/streams/azi",
+    "bilibiliUid": "80397",
+    "anchorName": "阿梓从小就很可爱",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "nana7mi": {
+    "id": "nana7mi",
+    "name": "七海Nana7mi",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/21452505_七海Nana7mi",
+      "E:/EFiles/Evideo/DDTV录播-E/21452505_七海Nana7mi"
+    ],
+    "targetDir": "data/streams/nana7mi",
+    "bilibiliUid": "21452505",
+    "anchorName": "七海Nana7mi",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "joi": {
+    "id": "joi",
+    "name": "轴伊Joi_Channel",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/21484828_轴伊Joi_Channel"
+    ],
+    "targetDir": "data/streams/joi",
+    "bilibiliUid": "21484828",
+    "anchorName": "轴伊Joi_Channel",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "yua": {
+    "id": "yua",
+    "name": "悠亚Yua",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/22470216_悠亚Yua",
+      "E:/EFiles/Evideo/DDTV录播-E/22470216_悠亚Yua"
+    ],
+    "targetDir": "data/streams/yua",
+    "bilibiliUid": "22470216",
+    "anchorName": "悠亚Yua",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "rhea": {
+    "id": "rhea",
+    "name": "瑞娅_Rhea",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/23260993_瑞娅_Rhea",
+      "E:/EFiles/Evideo/DDTV录播-E/23260993_瑞娅_Rhea"
+    ],
+    "targetDir": "data/streams/rhea",
+    "bilibiliUid": "23260993",
+    "anchorName": "瑞娅_Rhea",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "nightin": {
+    "id": "nightin",
+    "name": "南町Nightin",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/24872476_南町Nightin"
+    ],
+    "targetDir": "data/streams/nightin",
+    "bilibiliUid": "24872476",
+    "anchorName": "南町Nightin",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "mingqian-nailv": {
+    "id": "mingqian-nailv",
+    "name": "明前奶绿",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/25034104_明前奶绿"
+    ],
+    "targetDir": "data/streams/mingqian-nailv",
+    "bilibiliUid": "25034104",
+    "anchorName": "明前奶绿",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "michiya": {
+    "id": "michiya",
+    "name": "未知夜Michiya",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/27628030_未知夜Michiya"
+    ],
+    "targetDir": "data/streams/michiya",
+    "bilibiliUid": "27628030",
+    "anchorName": "未知夜Michiya",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "mizuki": {
+    "id": "mizuki",
+    "name": "弥月Mizuki",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/30655190_弥月Mizuki",
+      "E:/EFiles/Evideo/DDTV录播-E/30655190_弥月Mizuki"
+    ],
+    "targetDir": "data/streams/mizuki",
+    "bilibiliUid": "30655190",
+    "anchorName": "弥月Mizuki",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "nagisa": {
+    "id": "nagisa",
+    "name": "米汀Nagisa",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/31368705_米汀Nagisa",
+      "E:/EFiles/Evideo/DDTV录播-E/31368705_米汀Nagisa"
+    ],
+    "targetDir": "data/streams/nagisa",
+    "bilibiliUid": "31368705",
+    "anchorName": "米汀Nagisa",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "mofu": {
+    "id": "mofu",
+    "name": "犬绒Mofu",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/1791260716_犬绒Mofu"
+    ],
+    "targetDir": "data/streams/mofu",
+    "bilibiliUid": "1791260716",
+    "anchorName": "犬绒Mofu",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "harei": {
+    "id": "harei",
+    "name": "花礼Harei",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/1820703922_花礼Harei",
+      "E:/EFiles/Evideo/DDTV录播-E/1820703922_花礼Harei"
+    ],
+    "targetDir": "data/streams/harei",
+    "bilibiliUid": "1820703922",
+    "anchorName": "花礼Harei",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
+  },
+  "mitsuri": {
+    "id": "mitsuri",
+    "name": "三理Mit3uri",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/1967216004_三理Mit3uri",
+      "E:/EFiles/Evideo/DDTV录播-E/1967216004_三理Mitsuri"
+    ],
+    "targetDir": "data/streams/mitsuri",
+    "bilibiliUid": "1967216004",
+    "anchorName": "三理Mit3uri",
+    "enableTextGeneration": true,
+    "enableComicGeneration": true
   }
 }
