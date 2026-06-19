@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="31368705" shortid="0" name="米汀Nagisa" title="突击一下" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-05-30T00:12:14.5868489+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="0.506,1,25,16777215,1780071135182,0,12136308,0" user="淦师兄">打call</d>
+  <d p="0.506,4,25,14893055,1780071135682,0,25942909,0" user="鸦天狗狗文">Sad</d>
+  <d p="2.934,1,25,16772431,1780071138112,0,141404364,0" user="中二病じゃない">打call</d>
+  <d p="4.438,4,25,14893055,1780071139170,0,349880406,0" user="夜夢YuMe_ちゃん">Sad</d>
+  <d p="6.865,4,25,14893055,1780071141176,0,6969680,0" user="周新宇">打call</d>
+  <d p="6.865,4,25,14893055,1780071141689,0,360569,0" user="米汀家的夜阑梦雪">又卡了？</d>
+  <d p="9.476,4,25,14893055,1780071143552,0,10788384,0" user="soulのtouch">怎么一唱歌就卡，什么原理</d>
+  <d p="9.476,4,25,16772431,1780071144299,0,66621878,0" user="霊音はなこ">米米米米</d>
+  <d p="9.638,1,25,16777215,1780071144509,0,12136308,0" user="淦师兄">打call</d>
+  <d p="9.638,1,25,16777215,1780071144917,0,3546706056579918,0" user="凡苍Vencent">呜</d>
+  <d p="10.733,1,25,16777215,1780071145643,0,4656551,0" user="喵月阿秋夜">刚才确实卡了</d>
+  <d p="10.904,1,25,16777215,1780071145125,0,2724509,0" user="村头王王王师傅">打call</d>
+  <d p="14.674,1,25,16777215,1780071149443,0,507645990,0" user="elecRui">这下切不出来了</d>
+  <d p="14.674,4,25,14893055,1780071149833,0,360569,0" user="米汀家的夜阑梦雪">\米米/\米米/\米米/\米米/\米米/</d>
+  <d p="14.674,4,25,14893055,1780071149943,0,351531386,0" user="invins-">打call</d>
+  <d p="16.082,1,25,16777215,1780071150798,0,72985325,0" user="灰色魔女-初银子">\\米米//\\米米//\\米米//</d>
+  <d p="16.082,1,25,16777215,1780071151647,0,3546706056579918,0" user="凡苍Vencent">打call</d>
+  <d p="17.290,4,25,14893055,1780071151446,0,360569,0" user="米汀家的夜阑梦雪">打call</d>
+  <d p="17.290,4,25,14893055,1780071151609,0,2961097,0" user="Saserian">怎么一到米汀的部分就卡……</d>
+  <d p="17.388,1,25,16777215,1780071152055,0,12136308,0" user="淦师兄">打call</d>
+  <d p="20.026,1,25,16777215,1780071154288,0,2724509,0" user="村头王王王师傅">打call</d>
+  <d p="25.065,4,25,14893055,1780071159635,0,366450460,0" user="自然立法者">打call</d>
+  <d p="25.065,1,25,14893055,1780071160066,0,1977481159,0" user="落烨了吗">打call</d>
+  <d p="25.205,1,25,16777215,1780071159478,0,3546706056579918,0" user="凡苍Vencent">卡米；；</d>
+  <d p="25.205,1,25,16777215,1780071159546,0,675026404,0" user="洛水闲鱼">打call</d>
+  <d p="26.368,4,25,14893055,1780071161246,0,309425785,0" user="虚构喵">打call</d>
+  <d p="26.368,4,25,14893055,1780071161581,0,26531557,0" user="安娜斯塔斯婭">米米米米米米米米米米米米米米米米米米</d>
+  <d p="27.761,1,25,16777215,1780071163067,0,12136308,0" user="淦师兄">打call</d>
+  <d p="28.936,4,25,14893055,1780071163497,0,351531386,0" user="invins-">打call</d>
+  <d p="29.117,1,25,16777215,1780071164535,0,72985325,0" user="灰色魔女-初银子">打call</d>
+  <d p="30.240,1,25,16777215,1780071164588,0,13323678,0" user="Shadow形影不璃">打call</d>
+  <d p="30.433,4,25,14893055,1780071165524,0,229087540,0" user="櫻花閃閃">打call</d>
+  <gift ts="30.433" user="虚构喵" uid="309425785" giftname="打call" giftcount="1" />
+  <d p="32.845,4,25,14893055,1780071167329,0,2961097,0" user="Saserian">打call</d>
+  <d p="32.995,1,25,16777215,1780071168484,0,72985325,0" user="灰色魔女-初银子">\\米米//\\米米//\\米米//</d>
+  <d p="34.293,1,25,16777215,1780071168631,0,440316829,0" user="Xenonanchor">打call</d>
+  <gift ts="34.294" user="虚构喵" uid="309425785" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="34.294,1,25,16777215,1780071169277,0,2724509,0" user="村头王王王师傅">打call</d>
+  <d p="35.473,1,25,16777215,1780071170203,0,635930299,0" user="月伶枫晓">打call</d>
+  <d p="35.473,4,25,14893055,1780071170560,0,4897,0" user="宫古芳香">打call</d>
+  <d p="36.747,1,25,14893055,1780071171860,0,1977481159,0" user="落烨了吗">打call</d>
+  <d p="38.035,4,25,14893055,1780071172718,0,351531386,0" user="invins-">打call</d>
+  <d p="39.486,1,25,16777215,1780071173977,0,102391025,0" user="好姐妹樱小路露娜">打call</d>
+  <d p="41.945,4,25,14893055,1780071177286,0,309425785,0" user="虚构喵">打call</d>
+  <d p="43.430,1,25,16777215,1780071177783,0,2724509,0" user="村头王王王师傅">打call</d>
+  <d p="44.705,4,25,14893055,1780071179250,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="46.001,1,25,16777215,1780071181436,0,12136308,0" user="淦师兄">打call</d>
+  <d p="47.140,1,25,16777215,1780071181545,0,635930299,0" user="月伶枫晓">打call</d>
+  <d p="49.735,1,25,14893055,1780071184659,0,1977481159,0" user="落烨了吗">打call</d>
+  <d p="53.668,1,25,16777215,1780071187994,0,1594494864,0" user="zipperの未来">打call</d>
+  <d p="53.668,4,25,14893055,1780071188605,0,6969680,0" user="周新宇">打call</d>
+  <d p="53.789,1,25,16777215,1780071188216,0,2724509,0" user="村头王王王师傅">喜欢</d>
+  <d p="54.934,4,25,14893055,1780071189886,0,351531386,0" user="invins-">打call</d>
+  <d p="55.101,1,25,16777215,1780071190606,0,72985325,0" user="灰色魔女-初银子">\\米米//\\米米//\\米米//</d>
+  <d p="56.394,1,25,16777215,1780071191624,0,12136308,0" user="淦师兄">打call</d>
+  <d p="56.394,4,25,14893055,1780071191807,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="57.543,4,25,14893055,1780071192228,0,360569,0" user="米汀家的夜阑梦雪">\米米/\米米/\米米/\米米/\米米/</d>
+  <d p="60.163,4,25,14893055,1780071194838,0,26531557,0" user="安娜斯塔斯婭">米米米米米米米米米米米米米米米米米米</d>
+  <d p="60.164,4,25,14893055,1780071194984,0,360569,0" user="米汀家的夜阑梦雪">打call</d>
+  <d p="62.963,1,25,16777215,1780071197756,0,12136308,0" user="淦师兄">打call</d>
+  <d p="62.963,1,25,16777215,1780071197992,0,2724509,0" user="村头王王王师傅">喜欢</d>
+  <d p="64.204,4,25,14893055,1780071199081,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="65.333,4,25,14893055,1780071199506,0,351531386,0" user="invins-">打call</d>
+  <d p="66.632,4,25,14893055,1780071201576,0,2961097,0" user="Saserian">打call</d>
+  <d p="75.851,1,25,16777215,1780071210860,0,72985325,0" user="灰色魔女-初银子">\\米米//\\米米//\\米米//</d>
+  <d p="77.039,4,25,14893055,1780071211264,0,351531386,0" user="invins-">打call</d>
+  <d p="77.187,1,25,16777215,1780071212264,0,2724509,0" user="村头王王王师傅">哇哦！！</d>
+  <d p="79.632,4,25,14893055,1780071214946,0,366450460,0" user="自然立法者">喜欢</d>
+  <d p="80.966,1,25,14893055,1780071215164,0,1977481159,0" user="落烨了吗">打call</d>
+  <d p="80.967,1,25,16777215,1780071215741,0,2119994685,0" user="迟枫落忆">打call</d>
+  <d p="83.704,1,25,16777215,1780071219093,0,3546706056579918,0" user="凡苍Vencent">打call</d>
+  <d p="84.876,4,25,14893055,1780071219028,0,351531386,0" user="invins-">打call</d>
+  <d p="84.876,4,25,14893055,1780071219888,0,366450460,0" user="自然立法者">和声不赖</d>
+  <d p="85.009,4,25,14893055,1780071220267,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="86.135,1,25,16777215,1780071221417,0,2119994685,0" user="迟枫落忆">打call</d>
+  <d p="87.438,1,25,16777215,1780071222105,0,635930299,0" user="月伶枫晓">打call</d>
+  <d p="88.922,1,25,16777215,1780071224040,0,2724509,0" user="村头王王王师傅">打call</d>
+  <d p="90.035,4,25,14893055,1780071224544,0,360569,0" user="米汀家的夜阑梦雪">\米米/\米米/\米米/\米米/\米米/</d>
+  <d p="91.331,4,25,14893055,1780071226113,0,360569,0" user="米汀家的夜阑梦雪">打call</d>
+  <d p="92.795,4,25,14893055,1780071228210,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="96.536,4,25,14893055,1780071231020,0,351531386,0" user="invins-">打call</d>
+  <d p="100.476,1,25,16772431,1780071234957,0,79902177,0" user="硬果水糖">打call</d>
+  <d p="100.476,4,25,14893055,1780071235291,0,6969680,0" user="周新宇">打call</d>
+  <d p="100.578,1,25,16777215,1780071235844,0,72985325,0" user="灰色魔女-初银子">\\米米//\\米米//\\米米//</d>
+  <d p="103.033,4,25,14893055,1780071238152,0,290515671,0" user="是命定之死的盒子呀">打call</d>
+  <d p="103.191,1,25,16777215,1780071238493,0,2724509,0" user="村头王王王师傅">打call</d>
+  <d p="106.968,4,25,14893055,1780071241220,0,6969680,0" user="周新宇">打call</d>
+  <d p="106.969,4,25,14893055,1780071241804,0,351531386,0" user="invins-">打call</d>
+  <d p="110.834,4,25,16772431,1780071246093,0,66621878,0" user="霊音はなこ">米米米米米</d>
+  <d p="112.170,1,25,16777215,1780071247042,0,1547656,0" user="tsukasaaa丶">[喝彩]</d>
+  <d p="112.170,1,25,16777215,1780071247123,0,288254178,0" user="YQ1ang">打call</d>
+  <d p="114.736,1,25,14893055,1780071250164,0,1977481159,0" user="落烨了吗">打call</d>
+  <d p="114.874,1,25,16777215,1780071249914,0,339001,0" user="神必入">打call</d>
+  <d p="116.155,4,25,14893055,1780071250755,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="117.505,1,25,16777215,1780071252634,0,642499149,0" user="-烤毛怪-">打call</d>
+  <d p="118.632,4,25,14893055,1780071253895,0,351531386,0" user="invins-">打call</d>
+  <d p="119.934,4,25,14893055,1780071254503,0,360569,0" user="米汀家的夜阑梦雪">打call</d>
+  <d p="121.268,4,25,14893055,1780071255836,0,360569,0" user="米汀家的夜阑梦雪">\米米/\米米/\米米/\米米/\米米/</d>
+  <d p="121.268,1,25,16777215,1780071256124,0,635930299,0" user="月伶枫晓">打call</d>
+  <d p="123.993,1,25,16777215,1780071258685,0,2724509,0" user="村头王王王师傅">打call</d>
+  <d p="123.993,1,25,16777215,1780071259156,0,72985325,0" user="灰色魔女-初银子">\\米米//\\米米//\\米米//</d>
+  <d p="127.892,4,25,14893055,1780071262793,0,3546983578994744,0" user="KOU_KEI">打call</d>
+  <d p="130.500,4,25,14893055,1780071264890,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="131.634,1,25,14893055,1780071266867,0,1977481159,0" user="落烨了吗">打call</d>
+  <d p="131.789,1,25,16777215,1780071266129,0,3546706056579918,0" user="凡苍Vencent">打call</d>
+  <d p="132.935,1,25,16777215,1780071267614,0,1594494864,0" user="zipperの未来">打call</d>
+  <d p="135.533,1,25,16777215,1780071270045,0,316379373,0" user="_鲈鱼_">打call</d>
+  <d p="139.467,4,25,14893055,1780071274230,0,2890750,0" user="muegleis">打call</d>
+  <d p="139.467,1,25,14893055,1780071274344,0,1977481159,0" user="落烨了吗">打call</d>
+  <d p="140.888,4,25,14893055,1780071275812,0,25942909,0" user="鸦天狗狗文">打call</d>
+  <d p="142.195,1,25,16777215,1780071276501,0,72985325,0" user="灰色魔女-初银子">\\米米//\\米米//\\米米//</d>
+</i>

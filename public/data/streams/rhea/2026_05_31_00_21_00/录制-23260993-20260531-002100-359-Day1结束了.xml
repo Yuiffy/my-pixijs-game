@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="23260993" shortid="0" name="瑞娅_Rhea" title="Day1结束了" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-05-31T00:21:00.3601508+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="1.310,1,25,16777215,1780158061614,0,0,0" user="L***">两眼一黑</d>
+  <d p="2.565,1,25,16772431,1780158062630,0,0,0" user="K***">两眼一黑</d>
+  <d p="2.565,4,25,14893055,1780158063244,0,0,0" user="电***">哈哈哈哈哈</d>
+  <d p="2.566,4,25,14893055,1780158063267,0,0,0" user="墨***">草</d>
+  <d p="2.566,4,25,14893055,1780158063516,0,0,0" user="s***">确实</d>
+  <d p="3.812,4,25,14893055,1780158063929,0,0,0" user="银***">wwwwwwwwwww</d>
+  <d p="3.946,4,25,14893055,1780158064852,0,0,0" user="晗***">会有的</d>
+  <d p="6.447,4,25,14893055,1780158066340,0,0,0" user="無***">两眼一黑</d>
+  <d p="6.447,1,25,16777215,1780158066452,0,0,0" user="d***">两眼一黑</d>
+  <d p="10.311,4,25,14893055,1780158070665,0,0,0" user="银***">bydvr</d>
+  <d p="10.465,4,25,16777215,1780158070731,0,0,0" user="无***">懂你意思</d>
+  <d p="10.465,4,25,14893055,1780158070947,0,0,0" user="N***">草</d>
+  <d p="11.648,1,25,16777215,1780158072168,0,0,0" user="影***">懂你意思</d>
+  <d p="11.648,1,25,16777215,1780158072290,0,0,0" user="无***">两眼一黑</d>
+  <d p="12.999,4,25,14893055,1780158073017,0,0,0" user="z***">大大方方byd</d>
+  <d p="15.550,1,25,14893055,1780158075447,0,0,0" user="愉***">byd VR！</d>
+  <d p="15.550,4,25,14893055,1780158076557,0,0,0" user="q***">别BYD好吗？PTSD了</d>
+  <d p="15.550,1,25,16777215,1780158076751,0,0,0" user="F***">bydvr</d>
+  <d p="15.609,1,25,65532,1780158076170,0,0,0" user="圣***">草</d>
+  <d p="16.807,1,25,16777215,1780158077463,0,0,0" user="风***">瑞和米汀的合唱旋律好听来着，戳中心巴了</d>
+  <d p="18.254,1,25,16777215,1780158078206,0,0,0" user="芝***">bydvr</d>
+  <d p="18.255,1,25,16777215,1780158078393,0,0,0" user="哭***">bydvr</d>
+  <d p="19.408,4,25,14893055,1780158080175,0,0,0" user="电***">比亚迪vr</d>
+  <d p="19.502,1,25,14893055,1780158079571,0,0,0" user="G***">byd</d>
+  <d p="20.804,1,25,16777215,1780158082040,0,0,0" user="超***">bydvr</d>
+  <d p="22.028,4,25,14893055,1780158082439,0,0,0" user="电***">可爱捏</d>
+  <d p="23.311,4,25,14893055,1780158084262,0,0,0" user="赛***">原来不是故意的</d>
+  <d p="25.906,4,25,14893055,1780158086149,0,0,0" user="银***">笑死</d>
+  <sc ts="26.954" user="小瑞的美味鸟笼" uid="292143768" price="2" time="5">大大方方beyond The Vr</sc>
+  <d p="27.209,4,25,14893055,1780158088155,0,0,0" user="無***">不懂捏</d>
+  <d p="28.556,4,25,14893055,1780158088500,0,0,0" user="卡***">bydvr</d>
+  <d p="28.556,1,25,16777215,1780158088547,0,0,0" user="无***">爆了</d>
+  <d p="31.157,1,25,16777215,1780158091140,0,0,0" user="元***">byd什么[汤圆]</d>
+  <d p="31.157,4,25,14893055,1780158091448,0,0,0" user="s***">我附近没听到那五个字</d>
+  <d p="31.158,1,25,16777215,1780158092339,0,0,0" user="无***">可爱捏</d>
+  <d p="31.254,4,25,16777215,1780158091657,0,0,0" user="G***">byd time</d>
+  <d p="35.008,1,25,16777215,1780158095411,0,0,0" user="风***">两眼一黑</d>
+  <d p="48.009,4,25,14893055,1780158108966,0,0,0" user="無***">懂你意思</d>
+  <d p="54.508,4,25,14893055,1780158115642,0,0,0" user="银***">哈哈哈哈哈哈</d>
+  <gift ts="55.970" user="天***" uid="0" giftname="比心" giftcount="1" />
+  <d p="58.408,4,25,14893055,1780158119092,0,0,0" user="不***">说实话一开始听成bydtime了</d>
+  <d p="58.520,4,25,14893055,1780158119290,0,0,0" user="漓***">意思是明天结束了就可以说了</d>
+  <d p="61.009,1,25,16777215,1780158121551,0,0,0" user="d***">两眼一黑</d>
+  <d p="62.352,1,25,16777215,1780158122833,0,0,0" user="风***">可爱捏</d>
+  <d p="62.352,4,25,14893055,1780158123404,0,0,0" user="q***">瑞娅：明天再BYD</d>
+  <d p="62.406,1,25,16777215,1780158123118,0,0,0" user="L***">还有强人锁男</d>
+  <d p="67.510,1,25,16772431,1780158128612,0,0,0" user="嵐***">管人痴平均体型</d>
+  <d p="72.708,4,25,14893055,1780158133491,0,0,0" user="無***">1280 都那么挤，真不行</d>
+  <d p="75.349,1,25,16777215,1780158135362,0,0,0" user="小***">懂了，明天再byd</d>
+  <d p="75.349,4,25,14893055,1780158135463,0,0,0" user="墨***">可爱捏</d>
+  <d p="81.813,4,25,14893055,1780158142913,0,0,0" user="無***">回到家慢慢说</d>
+  <d p="81.945,4,25,16777215,1780158142470,0,0,0" user="无***">后天私下说</d>
+  <d p="84.405,1,25,16772431,1780158144761,0,0,0" user="嵐***">不过瑞世糖身材管理很好</d>
+  <d p="90.907,4,25,14893055,1780158151296,0,0,0" user="电***">两眼一黑</d>
+  <d p="91.039,4,25,14893055,1780158151670,0,0,0" user="N***">两眼一黑</d>
+  <d p="93.508,4,25,14893055,1780158154653,0,0,0" user="高***">帮你在ssxs的特斯拉上刻一行瑞娅rhea</d>
+  <d p="96.105,4,25,14893055,1780158157227,0,0,0" user="無***">好的哦</d>
+  <d p="100.115,4,25,14893055,1780158161176,0,0,0" user="N***">懂你意思</d>
+  <d p="102.607,4,25,14893055,1780158162702,0,0,0" user="墨***">[瑞娅收藏集表情包_MUA]</d>
+  <d p="106.551,1,25,16777215,1780158166531,0,0,0" user="小***">懂你意思</d>
+  <d p="106.551,4,25,14893055,1780158167015,0,0,0" user="q***">1280座位也不摆宽一点，真不行儿</d>
+  <d p="126.142,1,25,16777215,1780158186673,0,0,0" user="哭***">谁去把ssxs轮胎扎了</d>
+  <d p="130.101,1,25,16777215,1780158190196,0,0,0" user="超***">两眼一黑</d>
+  <d p="133.952,1,25,16777215,1780158194886,0,0,0" user="L***">草</d>
+  <d p="133.952,1,25,14893055,1780158195090,0,0,0" user="E***">那正好让修车店给他改一个瑞娅痛车</d>
+  <d p="136.444,1,25,16777215,1780158196770,0,0,0" user="小***">原来是你刮花的👀</d>
+  <d p="136.444,4,25,14893055,1780158197498,0,0,0" user="银***">哈哈哈哈</d>
+  <d p="139.011,4,25,14893055,1780158198898,0,0,0" user="q***">但是不是这么挤的话，我周一就买不到票了</d>
+  <d p="139.158,1,25,16777215,1780158199658,0,0,0" user="月***">到</d>
+  <d p="140.350,1,25,16777215,1780158200921,0,0,0" user="无***">两眼一黑</d>
+  <d p="140.350,4,25,14893055,1780158201534,0,0,0" user="s***">可爱捏</d>
+  <d p="141.709,4,25,14893055,1780158202816,0,0,0" user="N***">1280都是人挤人的</d>
+  <d p="144.347,1,25,16777215,1780158205441,0,0,0" user="L***">现在开至少也是疲劳驾驶</d>
+  <d p="148.109,4,25,16772431,1780158208503,0,0,0" user="达***">还是特斯拉M3吗</d>
+  <d p="163.750,4,25,14893055,1780158224330,0,0,0" user="电***">两眼一黑</d>
+  <d p="163.750,1,25,16772431,1780158224902,0,0,0" user="嵐***">加入vrg后越来越理解ssxs了该怎么办（）</d>
+  <d p="170.251,4,25,14893055,1780158230418,0,0,0" user="無***">可爱捏</d>
+  <d p="170.251,1,25,16777215,1780158230826,0,0,0" user="影***">瓜咪居然会开车</d>
+  <d p="175.407,4,25,14893055,1780158235474,0,0,0" user="电***">可爱捏</d>
+</i>

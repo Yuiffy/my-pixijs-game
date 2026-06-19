@@ -1,0 +1,73 @@
+[
+  {
+    "id": "2026_06_14_11_36_31",
+    "title": "周7之日悠",
+    "date": "2026-06-14",
+    "time": "11:36:31",
+    "startTime": "11:36",
+    "endTime": "13:48",
+    "duration": 7960,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/yua/2026_06_14_11_36_31/录制-22470216-20260614-113631-229-周7之日悠.xml",
+    "cover": "/data/streams/yua/2026_06_14_11_36_31/录制-22470216-20260614-113631-229-周7之日悠.cover.jpg",
+    "highlights": "/data/streams/yua/2026_06_14_11_36_31/highlights.md",
+    "images": [
+      "/data/streams/yua/2026_06_14_11_36_31/录制-22470216-20260614-113631-229-周7之日悠_COMIC_FACTORY.png",
+      "/data/streams/yua/2026_06_14_11_36_31/录制-22470216-20260614-113631-229-周7之日悠_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_13_21_08_23",
+    "title": "周日之夜悠",
+    "date": "2026-06-13",
+    "time": "21:08:23",
+    "startTime": "21:08",
+    "endTime": "00:44",
+    "duration": 12999,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/yua/2026_06_13_21_08_23/录制-22470216-20260613-210823-554-周日之夜悠.xml",
+    "cover": "/data/streams/yua/2026_06_13_21_08_23/录制-22470216-20260613-210823-554-周日之夜悠.cover.jpg",
+    "highlights": "/data/streams/yua/2026_06_13_21_08_23/highlights.md",
+    "images": [
+      "/data/streams/yua/2026_06_13_21_08_23/录制-22470216-20260613-210823-554-周日之夜悠_COMIC_FACTORY.png",
+      "/data/streams/yua/2026_06_13_21_08_23/录制-22470216-20260613-210823-554-周日之夜悠_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_07_22_07_47",
+    "title": "周日之夜悠",
+    "date": "2026-06-07",
+    "time": "22:07:47",
+    "startTime": "22:07",
+    "endTime": "00:22",
+    "duration": 8123,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/yua/2026_06_07_22_07_47/录制-22470216-20260607-220747-858-周日之夜悠.xml",
+    "cover": "/data/streams/yua/2026_06_07_22_07_47/录制-22470216-20260607-220747-858-周日之夜悠.cover.jpg",
+    "highlights": "/data/streams/yua/2026_06_07_22_07_47/highlights.md",
+    "images": [
+      "/data/streams/yua/2026_06_07_22_07_47/录制-22470216-20260607-220747-858-周日之夜悠_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_05_31_20_21_08",
+    "title": "周日之夜悠",
+    "date": "2026-05-31",
+    "time": "20:21:08",
+    "startTime": "20:21",
+    "endTime": "23:55",
+    "duration": 12847,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/yua/2026_05_31_20_21_08/录制-22470216-20260531-202108-413-周日之夜悠_merged.xml",
+    "cover": "/data/streams/yua/2026_05_31_20_21_08/录制-22470216-20260531-202108-413-周日之夜悠.cover.jpg",
+    "highlights": "/data/streams/yua/2026_05_31_20_21_08/highlights.md",
+    "images": [
+      "/data/streams/yua/2026_05_31_20_21_08/录制-22470216-20260531-202108-413-周日之夜悠_merged_COMIC_FACTORY.png",
+      "/data/streams/yua/2026_05_31_20_21_08/录制-22470216-20260531-202108-413-周日之夜悠_merged_SCREENSHOTS.jpg"
+    ]
+  }
+]
