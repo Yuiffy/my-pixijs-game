@@ -15,6 +15,7 @@ const streamAssetBaseUrl = (
   process.env.NEXT_PUBLIC_STREAM_ASSET_BASE_URL ||
   `https://raw.githubusercontent.com/Yuiffy/my-pixijs-game/${gitRef}`
 ).replace(/\/$/, '');
+const localAssetLiverIds = new Set(['sui']);
 
 if (!isVercel && !force && !dryRun) {
   console.log('Skipping Vercel public data pruning outside Vercel. Use --force to run locally.');
@@ -26,6 +27,19 @@ let removedFiles = 0;
 let removedBytes = 0;
 let updatedStreamJsonFiles = 0;
 let updatedStreamEntries = 0;
+let skippedLocalAssetFiles = 0;
+let skippedLocalAssetBytes = 0;
+
+function getLiverId(filePath) {
+  const relativePath = path.relative(streamsDir, filePath);
+  if (relativePath.startsWith('..')) return null;
+  return relativePath.split(path.sep)[0] || null;
+}
+
+function isLocalAssetLiverFile(filePath) {
+  const liverId = getLiverId(filePath);
+  return liverId ? localAssetLiverIds.has(liverId) : false;
+}
 
 function toRemoteAssetUrl(publicPath) {
   if (!publicPath || /^https?:\/\//i.test(publicPath)) return publicPath;
@@ -44,6 +58,12 @@ function pruneFile(filePath) {
   if (!removeExtensions.has(ext)) return;
 
   const size = fs.statSync(filePath).size;
+  if (isLocalAssetLiverFile(filePath)) {
+    skippedLocalAssetFiles += 1;
+    skippedLocalAssetBytes += size;
+    return;
+  }
+
   removedFiles += 1;
   removedBytes += size;
 
@@ -53,6 +73,10 @@ function pruneFile(filePath) {
 }
 
 function pruneStreamJson(filePath) {
+  if (isLocalAssetLiverFile(filePath)) {
+    return;
+  }
+
   const streams = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   if (!Array.isArray(streams)) return;
 
@@ -115,6 +139,9 @@ console.log(
     `Removed size: ${(removedBytes / 1024 / 1024).toFixed(2)} MB`,
     `Updated streams.json files: ${updatedStreamJsonFiles}`,
     `Updated stream entries: ${updatedStreamEntries}`,
+    `Local asset liver IDs: ${Array.from(localAssetLiverIds).join(', ')}`,
+    `Local asset files kept: ${skippedLocalAssetFiles}`,
+    `Local asset size kept: ${(skippedLocalAssetBytes / 1024 / 1024).toFixed(2)} MB`,
     `Remote asset base URL: ${streamAssetBaseUrl}`,
   ].join('\n')
 );
