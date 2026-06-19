@@ -24,12 +24,16 @@ export interface StreamData {
   duration?: number;
 }
 
-export const getPublicFileUrl = (filePath: string) => (
-  filePath
+export const getPublicFileUrl = (filePath: string) => {
+  if (/^https?:\/\//i.test(filePath)) {
+    return filePath;
+  }
+
+  return filePath
     .split('/')
     .map((segment, index) => (index === 0 ? segment : encodeURIComponent(segment)))
-    .join('/')
-);
+    .join('/');
+};
 
 export const getDownloadFilename = (filePath: string) => (
   filePath.split('/').pop() || undefined

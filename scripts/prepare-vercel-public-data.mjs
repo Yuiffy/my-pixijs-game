@@ -10,6 +10,11 @@ const streamsDir = path.join(rootDir, 'public', 'data', 'streams');
 const isVercel = process.env.VERCEL === '1';
 const dryRun = process.argv.includes('--dry-run');
 const force = process.argv.includes('--force');
+const gitRef = process.env.VERCEL_GIT_COMMIT_SHA || 'master';
+const streamAssetBaseUrl = (
+  process.env.NEXT_PUBLIC_STREAM_ASSET_BASE_URL ||
+  `https://raw.githubusercontent.com/Yuiffy/my-pixijs-game/${gitRef}`
+).replace(/\/$/, '');
 
 if (!isVercel && !force && !dryRun) {
   console.log('Skipping Vercel public data pruning outside Vercel. Use --force to run locally.');
@@ -21,6 +26,18 @@ let removedFiles = 0;
 let removedBytes = 0;
 let updatedStreamJsonFiles = 0;
 let updatedStreamEntries = 0;
+
+function toRemoteAssetUrl(publicPath) {
+  if (!publicPath || /^https?:\/\//i.test(publicPath)) return publicPath;
+
+  const normalizedPath = publicPath.startsWith('/') ? publicPath : `/${publicPath}`;
+  const encodedPath = normalizedPath
+    .split('/')
+    .map((segment, index) => (index === 0 ? segment : encodeURIComponent(segment)))
+    .join('/');
+
+  return `${streamAssetBaseUrl}/public${encodedPath}`;
+}
 
 function pruneFile(filePath) {
   const ext = path.extname(filePath).toLowerCase();
@@ -42,17 +59,20 @@ function pruneStreamJson(filePath) {
   let changed = false;
   for (const stream of streams) {
     let entryChanged = false;
-    if (stream.cover !== null) {
-      stream.cover = null;
+    if (stream.cover && !/^https?:\/\//i.test(stream.cover)) {
+      stream.cover = toRemoteAssetUrl(stream.cover);
       entryChanged = true;
     }
-    if (stream.xml !== null) {
-      stream.xml = null;
+    if (stream.xml && !/^https?:\/\//i.test(stream.xml)) {
+      stream.xml = toRemoteAssetUrl(stream.xml);
       entryChanged = true;
     }
     if (Array.isArray(stream.images) && stream.images.length > 0) {
-      stream.images = [];
-      entryChanged = true;
+      const remoteImages = stream.images.map(toRemoteAssetUrl);
+      if (remoteImages.some((image, index) => image !== stream.images[index])) {
+        stream.images = remoteImages;
+        entryChanged = true;
+      }
     }
     if (entryChanged) {
       changed = true;
@@ -95,5 +115,6 @@ console.log(
     `Removed size: ${(removedBytes / 1024 / 1024).toFixed(2)} MB`,
     `Updated streams.json files: ${updatedStreamJsonFiles}`,
     `Updated stream entries: ${updatedStreamEntries}`,
+    `Remote asset base URL: ${streamAssetBaseUrl}`,
   ].join('\n')
 );
