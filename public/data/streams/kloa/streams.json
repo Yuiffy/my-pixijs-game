@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_06_20_20_17_31",
+    "title": "唱歌歌~",
+    "date": "2026-06-20",
+    "time": "20:17:31",
+    "startTime": "20:17",
+    "endTime": "01:07",
+    "duration": 17411,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_20_20_17_31/录制-1986461465-20260620-201731-679-唱歌歌~.xml",
+    "cover": "/data/streams/kloa/2026_06_20_20_17_31/录制-1986461465-20260620-201731-679-唱歌歌~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_20_20_17_31/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_20_20_17_31/录制-1986461465-20260620-201731-679-唱歌歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_20_13_20_47",
+    "title": "我再也不喝牛奶了",
+    "date": "2026-06-20",
+    "time": "13:20:47",
+    "startTime": "13:20",
+    "endTime": "15:17",
+    "duration": 7055,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_20_13_20_47/录制-1986461465-20260620-132047-912-我再也不喝牛奶了_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_20_13_20_47/录制-1986461465-20260620-132047-912-我再也不喝牛奶了.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_20_13_20_47/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_20_13_20_47/录制-1986461465-20260620-132047-912-我再也不喝牛奶了_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_20_13_20_47/录制-1986461465-20260620-132047-912-我再也不喝牛奶了_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_20_11_08_47",
+    "title": "甜品大师来咯！厨房电台",
+    "date": "2026-06-20",
+    "time": "11:08:47",
+    "startTime": "11:08",
+    "endTime": "12:51",
+    "duration": 6232,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_20_11_08_47/录制-1986461465-20260620-110847-772-甜品大师来咯！厨房电台_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_20_11_08_47/录制-1986461465-20260620-110847-772-甜品大师来咯！厨房电台.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_20_11_08_47/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_20_11_08_47/录制-1986461465-20260619-213948-138-晚间电台～汤浴～_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_20_11_08_47/录制-1986461465-20260619-213948-138-晚间电台～汤浴～_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_19_21_39_48",
     "title": "晚间电台～汤浴～",
     "date": "2026-06-19",

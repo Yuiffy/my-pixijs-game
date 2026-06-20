@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_20_21_14_17",
+    "title": "小栞撑地！【盛世天下】",
+    "date": "2026-06-20",
+    "time": "21:14:17",
+    "startTime": "21:14",
+    "endTime": "00:30",
+    "duration": 11794,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_20_21_14_17/录制-26966466-20260620-211417-923-小栞撑地！【盛世天下】.xml",
+    "cover": "/data/streams/shiori/2026_06_20_21_14_17/录制-26966466-20260620-211417-923-小栞撑地！【盛世天下】.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_20_21_14_17/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_20_21_14_17/录制-26966466-20260620-211417-923-小栞撑地！【盛世天下】_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_20_21_14_17/录制-26966466-20260620-211417-923-小栞撑地！【盛世天下】_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_20_11_31_35",
+    "title": "萤火虫快闪活动的说！",
+    "date": "2026-06-20",
+    "time": "11:31:35",
+    "startTime": "11:31",
+    "endTime": "13:47",
+    "duration": 8173,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_20_11_31_35/录制-26966466-20260620-113135-708-萤火虫快闪活动的说！.xml",
+    "cover": "/data/streams/shiori/2026_06_20_11_31_35/录制-26966466-20260620-113135-708-萤火虫快闪活动的说！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_20_11_31_35/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_20_11_31_35/录制-26966466-20260620-113135-708-萤火虫快闪活动的说！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_20_11_31_35/录制-26966466-20260620-113135-708-萤火虫快闪活动的说！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_20_11_31_35/录制-26966466-20260619-203558-625-美食推荐回！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_20_11_31_35/录制-26966466-20260619-203558-625-美食推荐回！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_19_20_35_58",
     "title": "美食推荐回！",
     "date": "2026-06-19",

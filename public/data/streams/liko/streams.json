@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_06_20_20_08_29",
+    "title": "唱唱歌",
+    "date": "2026-06-20",
+    "time": "20:08:29",
+    "startTime": "20:08",
+    "endTime": "01:57",
+    "duration": 20968,
+    "durationStr": "5.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_20_20_08_29/录制-1713548468-20260620-200829-268-唱唱歌.xml",
+    "cover": "/data/streams/liko/2026_06_20_20_08_29/录制-1713548468-20260620-200829-268-唱唱歌.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_06_20_20_08_29/录制-1713548468-20260620-200829-268-唱唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_20_11_13_26",
+    "title": "困困啵啵",
+    "date": "2026-06-20",
+    "time": "11:13:26",
+    "startTime": "11:13",
+    "endTime": "14:19",
+    "duration": 11191,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_20_11_13_26/录制-1713548468-20260620-111326-267-困困啵啵.xml",
+    "cover": "/data/streams/liko/2026_06_20_11_13_26/录制-1713548468-20260620-111326-267-困困啵啵.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_20_11_13_26/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_20_11_13_26/录制-1713548468-20260620-111326-267-困困啵啵_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_20_11_13_26/录制-1713548468-20260620-111326-267-困困啵啵_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_19_20_10_46",
     "title": "端午节品鉴粽子咯",
     "date": "2026-06-19",
