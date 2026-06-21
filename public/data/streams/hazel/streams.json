@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_21_16_34_54",
+    "title": "纯路人看比赛",
+    "date": "2026-06-21",
+    "time": "16:34:54",
+    "startTime": "16:34",
+    "endTime": "19:14",
+    "duration": 9629,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_21_16_34_54/录制-1713546334-20260621-163454-544-纯路人看比赛_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_21_16_34_54/录制-1713546334-20260621-163454-544-纯路人看比赛.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_21_16_34_54/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_21_16_34_54/录制-1713546334-20260621-163454-544-纯路人看比赛_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_21_16_34_54/录制-1713546334-20260621-163454-544-纯路人看比赛_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_21_16_05_09",
+    "title": "纯路人看比赛",
+    "date": "2026-06-21",
+    "time": "16:05:09",
+    "startTime": "16:05",
+    "endTime": "16:32",
+    "duration": 1620,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_21_16_05_09/录制-1713546334-20260621-160509-953-纯路人看比赛.xml",
+    "cover": "/data/streams/hazel/2026_06_21_16_05_09/录制-1713546334-20260621-160509-953-纯路人看比赛.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_06_21_16_05_09/录制-1713546334-20260619-210845-030-晚间闲谈_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_21_16_05_09/录制-1713546334-20260619-210845-030-晚间闲谈_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_19_21_08_45",
     "title": "晚间闲谈",
     "date": "2026-06-19",

@@ -1,5 +1,104 @@
 [
   {
+    "id": "2026_06_21_20_17_02",
+    "title": "写周标~",
+    "date": "2026-06-21",
+    "time": "20:17:02",
+    "startTime": "20:17",
+    "endTime": "23:46",
+    "duration": 12557,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_21_20_17_02/录制-1986461465-20260621-201702-130-来斗地主~_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_21_20_17_02/录制-1986461465-20260621-201702-130-来斗地主~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_21_20_17_02/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_21_20_17_02/录制-1986461465-20260621-201702-130-来斗地主~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_21_20_17_02/录制-1986461465-20260621-201702-130-来斗地主~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_21_20_07_27",
+    "title": "来斗地主~",
+    "date": "2026-06-21",
+    "time": "20:07:27",
+    "startTime": "20:07",
+    "endTime": "20:10",
+    "duration": 207,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_21_20_07_27/录制-1986461465-20260621-200727-498-来斗地主~.xml",
+    "cover": "/data/streams/kloa/2026_06_21_20_07_27/录制-1986461465-20260621-200727-498-来斗地主~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_21_20_07_27/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_21_20_07_27/录制-1986461465-20260621-200727-498-来斗地主~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_21_13_32_31",
+    "title": "早上好~呜呜好困",
+    "date": "2026-06-21",
+    "time": "13:32:31",
+    "startTime": "13:32",
+    "endTime": "14:20",
+    "duration": 2907,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_21_13_32_31/录制-1986461465-20260621-133231-070-早上好~呜呜好困.xml",
+    "cover": "/data/streams/kloa/2026_06_21_13_32_31/录制-1986461465-20260621-133231-070-早上好~呜呜好困.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_21_13_32_31/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_21_13_32_31/录制-1986461465-20260621-133231-070-早上好~呜呜好困_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_21_13_05_39",
+    "title": "早上好~呜呜好困",
+    "date": "2026-06-21",
+    "time": "13:05:39",
+    "startTime": "13:05",
+    "endTime": "13:29",
+    "duration": 1489,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_21_13_05_39/录制-1986461465-20260621-130539-560-早上好~呜呜好困.xml",
+    "cover": "/data/streams/kloa/2026_06_21_13_05_39/录制-1986461465-20260621-130539-560-早上好~呜呜好困.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_21_12_08_26",
+    "title": "早上好~呜呜好困",
+    "date": "2026-06-21",
+    "time": "12:08:26",
+    "startTime": "12:08",
+    "endTime": "13:03",
+    "duration": 3303,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_21_12_08_26/录制-1986461465-20260621-120826-229-早上好~呜呜好困.xml",
+    "cover": "/data/streams/kloa/2026_06_21_12_08_26/录制-1986461465-20260621-120826-229-早上好~呜呜好困.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_21_11_11_44",
+    "title": "早上好~呜呜好困",
+    "date": "2026-06-21",
+    "time": "11:11:44",
+    "startTime": "11:11",
+    "endTime": "12:05",
+    "duration": 3286,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_21_11_11_44/录制-1986461465-20260621-111144-047-早上好~呜呜好困.xml",
+    "cover": "/data/streams/kloa/2026_06_21_11_11_44/录制-1986461465-20260621-111144-047-早上好~呜呜好困.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_06_21_11_11_44/录制-1986461465-20260620-201731-679-唱歌歌~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_20_20_17_31",
     "title": "唱歌歌~",
     "date": "2026-06-20",

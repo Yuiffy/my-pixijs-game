@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_21_22_03_14",
+    "title": "陪我打会儿游戏吧",
+    "date": "2026-06-21",
+    "time": "22:03:14",
+    "startTime": "22:03",
+    "endTime": "00:27",
+    "duration": 8664,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_21_22_03_14/录制-1967216004-20260621-220314-252-陪我打会儿游戏吧.xml",
+    "cover": "/data/streams/mitsuri/2026_06_21_22_03_14/录制-1967216004-20260621-220314-252-陪我打会儿游戏吧.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_21_22_03_14/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_21_22_03_14/录制-1967216004-20260621-220314-252-陪我打会儿游戏吧_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_21_22_03_14/录制-1967216004-20260621-220314-252-陪我打会儿游戏吧_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_06_21_22_03_14/录制-1967216004-20260620-203242-674-嘟嘟登场！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_20_20_32_42",
     "title": "嘟嘟登场！",
     "date": "2026-06-20",

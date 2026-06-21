@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_21_22_04_40",
+    "title": "电之台",
+    "date": "2026-06-21",
+    "time": "22:04:40",
+    "startTime": "22:04",
+    "endTime": "23:56",
+    "duration": 6750,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_06_21_22_04_40/录制-21452505-20260621-220440-823-电之台.xml",
+    "cover": "/data/streams/nana7mi/2026_06_21_22_04_40/录制-21452505-20260621-220440-823-电之台.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_06_21_22_04_40/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_06_21_22_04_40/录制-21452505-20260621-220440-823-电之台_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_06_21_22_04_40/录制-21452505-20260621-220440-823-电之台_SCREENSHOTS.jpg",
+      "/data/streams/nana7mi/2026_06_21_22_04_40/录制-21452505-20260621-005052-578-偷_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_06_21_22_04_40/录制-21452505-20260621-005052-578-偷_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_21_00_50_52",
     "title": "偷",
     "date": "2026-06-20",

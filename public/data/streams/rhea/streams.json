@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_21_21_44_50",
+    "title": "在耳边轻轻说：今天周日",
+    "date": "2026-06-21",
+    "time": "21:44:50",
+    "startTime": "21:44",
+    "endTime": "00:43",
+    "duration": 10765,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_21_21_44_50/录制-23260993-20260621-214450-436-在耳边轻轻说：今天周日_merged.xml",
+    "cover": "/data/streams/rhea/2026_06_21_21_44_50/录制-23260993-20260621-214450-436-在耳边轻轻说：今天周日.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_21_21_44_50/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_21_21_44_50/录制-23260993-20260621-214450-436-在耳边轻轻说：今天周日_merged_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_21_21_44_50/录制-23260993-20260621-214450-436-在耳边轻轻说：今天周日_merged_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_06_21_21_44_50/录制-23260993-20260620-203727-108-摸底测试监考时间_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_21_21_44_50/录制-23260993-20260620-203727-108-摸底测试监考时间_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_20_20_37_27",
     "title": "摸底测试监考时间",
     "date": "2026-06-20",

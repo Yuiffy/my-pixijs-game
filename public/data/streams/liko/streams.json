@@ -1,5 +1,73 @@
 [
   {
+    "id": "2026_06_21_20_10_55",
+    "title": "棉花糖小故事",
+    "date": "2026-06-21",
+    "time": "20:10:55",
+    "startTime": "20:10",
+    "endTime": "00:33",
+    "duration": 15837,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_21_20_10_55/录制-1713548468-20260621-201055-456-棉花糖小故事.xml",
+    "cover": "/data/streams/liko/2026_06_21_20_10_55/录制-1713548468-20260621-201055-456-棉花糖小故事.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_21_20_10_55/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_21_20_10_55/录制-1713548468-20260621-201055-456-棉花糖小故事_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_21_20_10_55/录制-1713548468-20260621-201055-456-棉花糖小故事_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_21_13_32_30",
+    "title": "家人们好困啊",
+    "date": "2026-06-21",
+    "time": "13:32:30",
+    "startTime": "13:32",
+    "endTime": "15:47",
+    "duration": 8154,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_21_13_32_30/录制-1713548468-20260621-133230-540-家人们好困啊.xml",
+    "cover": "/data/streams/liko/2026_06_21_13_32_30/录制-1713548468-20260621-133230-540-家人们好困啊.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_21_13_32_30/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_21_13_32_30/录制-1713548468-20260621-133230-540-家人们好困啊_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_21_13_32_30/录制-1713548468-20260621-133230-540-家人们好困啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_21_13_05_37",
+    "title": "家人们好困啊",
+    "date": "2026-06-21",
+    "time": "13:05:37",
+    "startTime": "13:05",
+    "endTime": "13:29",
+    "duration": 1492,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_21_13_05_37/录制-1713548468-20260621-130537-680-家人们好困啊.xml",
+    "cover": "/data/streams/liko/2026_06_21_13_05_37/录制-1713548468-20260621-130537-680-家人们好困啊.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_21_11_12_21",
+    "title": "家人们好困啊",
+    "date": "2026-06-21",
+    "time": "11:12:21",
+    "startTime": "11:12",
+    "endTime": "13:03",
+    "duration": 6666,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_21_11_12_21/录制-1713548468-20260621-111221-742-家人们好困啊.xml",
+    "cover": "/data/streams/liko/2026_06_21_11_12_21/录制-1713548468-20260621-111221-742-家人们好困啊.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_06_21_11_12_21/录制-1713548468-20260620-200829-268-唱唱歌_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_20_20_08_29",
     "title": "唱唱歌",
     "date": "2026-06-20",
