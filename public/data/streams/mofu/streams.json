@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_22_22_35_12",
+    "title": "【3D麦】宝宝你的煮面好舒服",
+    "date": "2026-06-22",
+    "time": "22:35:12",
+    "startTime": "22:35",
+    "endTime": "00:14",
+    "duration": 5941,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_22_22_35_12/录制-1791260716-20260622-223512-480-【3D麦】宝宝你的煮面好舒服.xml",
+    "cover": "/data/streams/mofu/2026_06_22_22_35_12/录制-1791260716-20260622-223512-480-【3D麦】宝宝你的煮面好舒服.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_22_22_35_12/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_22_22_35_12/录制-1791260716-20260622-223512-480-【3D麦】宝宝你的煮面好舒服_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_22_15_38_08",
+    "title": "呜呜呜呜呜呜呜呜",
+    "date": "2026-06-22",
+    "time": "15:38:08",
+    "startTime": "15:38",
+    "endTime": "19:28",
+    "duration": 13816,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_22_15_38_08/录制-1791260716-20260622-153808-495-呜呜呜呜呜呜呜呜.xml",
+    "cover": "/data/streams/mofu/2026_06_22_15_38_08/录制-1791260716-20260622-153808-495-呜呜呜呜呜呜呜呜.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_22_15_38_08/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_22_15_38_08/录制-1791260716-20260622-153808-495-呜呜呜呜呜呜呜呜_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_22_15_38_08/录制-1791260716-20260622-153808-495-呜呜呜呜呜呜呜呜_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_06_22_15_38_08/录制-1791260716-20260621-210759-456-【水友回】海克斯大乱斗5v5！_merged_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_22_15_38_08/录制-1791260716-20260621-210759-456-【水友回】海克斯大乱斗5v5！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_21_21_07_59",
     "title": "【水友回】海克斯大乱斗5v5！",
     "date": "2026-06-21",

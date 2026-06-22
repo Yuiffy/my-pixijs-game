@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_22_20_11_02",
+    "title": "晚安歌歌",
+    "date": "2026-06-22",
+    "time": "20:11:02",
+    "startTime": "20:11",
+    "endTime": "23:43",
+    "duration": 12773,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_22_20_11_02/录制-1986461465-20260622-201102-237-晚安歌歌_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_22_20_11_02/录制-1986461465-20260622-201102-237-晚安歌歌.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_22_20_11_02/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_22_20_11_02/录制-1986461465-20260622-201102-237-晚安歌歌_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_22_09_05_00",
+    "title": "早安歌杂~",
+    "date": "2026-06-22",
+    "time": "09:05:00",
+    "startTime": "09:05",
+    "endTime": "12:34",
+    "duration": 12581,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_22_09_05_00/录制-1986461465-20260622-090500-068-早安歌杂~_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_22_09_05_00/录制-1986461465-20260622-090500-068-早安歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_22_09_05_00/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_22_09_05_00/录制-1986461465-20260622-090500-068-早安歌杂~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_22_09_05_00/录制-1986461465-20260622-090500-068-早安歌杂~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_22_09_05_00/录制-1986461465-20260621-201702-130-来斗地主~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_22_09_05_00/录制-1986461465-20260621-201702-130-来斗地主~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_21_20_17_02",
     "title": "写周标~",
     "date": "2026-06-21",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_22_20_01_15",
+    "title": "1616我们喜浣你",
+    "date": "2026-06-22",
+    "time": "20:01:15",
+    "startTime": "20:01",
+    "endTime": "23:59",
+    "duration": 14306,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_22_20_01_15/录制-1741667419-20260622-200115-205-在画了，在画了11_merged.xml",
+    "cover": "/data/streams/izayoi/2026_06_22_20_01_15/录制-1741667419-20260622-200115-205-在画了，在画了11.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_22_20_01_15/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_22_20_01_15/录制-1741667419-20260622-200115-205-在画了，在画了11_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_22_20_01_15/录制-1741667419-20260622-200115-205-在画了，在画了11_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_22_09_32_31",
+    "title": "早茶第六十八天。",
+    "date": "2026-06-22",
+    "time": "09:32:31",
+    "startTime": "09:32",
+    "endTime": "12:08",
+    "duration": 9401,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_22_09_32_31/录制-1741667419-20260622-093231-776-早茶第六十八天。.xml",
+    "cover": "/data/streams/izayoi/2026_06_22_09_32_31/录制-1741667419-20260622-093231-776-早茶第六十八天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_22_09_32_31/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_22_09_32_31/录制-1741667419-20260622-093231-776-早茶第六十八天。_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_22_09_32_31/录制-1741667419-20260622-093231-776-早茶第六十八天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_22_09_32_31/录制-1741667419-20260621-195528-411-小唱一下_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_22_09_32_31/录制-1741667419-20260621-195528-411-小唱一下_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_21_19_55_28",
     "title": "小唱一下",
     "date": "2026-06-21",

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="0" shortid="0" name="Merged" title="Merged" areanameparent="" areanamechild="" start_time="" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`<a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}">${p[6]}</a>`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="3.723,4,25,14893055,1782150215537,0,1740704,0" user="MWの皮卡">笑死了</d>
+  <d p="4.652,4,25,14893055,1782150216212,0,2808796,0" user="無名的luk">懂了，阿根廷看小瑞直播！？</d>
+  <d p="9.856,4,25,14893055,1782150221031,0,26284784,0" user="晨曦在海上">没办法</d>
+  <d p="12.450,4,25,14893055,1782150224086,0,2054496,0" user="slacKnight">陪你</d>
+  <d p="14.129,4,25,14893055,1782150225976,0,1740704,0" user="MWの皮卡">你看我就不睡了</d>
+  <d p="17.667,4,25,14893055,1782150228676,0,2808796,0" user="無名的luk">看完太晚了</d>
+  <d p="17.667,4,25,14893055,1782150229808,0,26284784,0" user="晨曦在海上">梅西针对我们家小瑞</d>
+  <d p="19.321,4,25,14893055,1782150230914,0,21137730,0" user="晗_MkHan">哇塞</d>
+  <d p="21.934,1,25,65532,1782150233506,0,258827,0" user="Cygnus">6</d>
+  <d p="22.848,1,25,16777215,1782150234671,0,362574190,0" user="AA鸭鸭OuO">看完半场就睡</d>
+  <d p="23.221,1,25,14893055,1782150234929,0,2486123,0" user="Eternal17岁">马上中场了</d>
+  <d p="24.524,4,25,14893055,1782150235930,0,21137730,0" user="晗_MkHan">耶✌️</d>
+  <d p="25.448,4,25,14893055,1782150236572,0,2808796,0" user="無名的luk">最多到半场吧</d>
+  <d p="27.158,1,25,65532,1782150238100,0,1454911,0" user="阳炎aqua">听听</d>
+  <d p="28.047,4,25,14893055,1782150239114,0,424235753,0" user="真昼之夜R">那非常好了</d>
+  <d p="29.349,4,25,14893055,1782150240269,0,292143768,0" user="cAge_Rhea_ver">听听</d>
+  <d p="29.741,1,25,65532,1782150241160,0,258827,0" user="Cygnus">7</d>
+  <d p="33.253,1,25,14893055,1782150244241,0,6863896,0" user="嵐神劍">瑞瑞不睡我不睡</d>
+  <d p="34.552,1,25,16777215,1782150245450,0,1896828089,0" user="Freezennnn">草，怎么真电台了</d>
+  <d p="37.539,1,25,65532,1782150249189,0,258827,0" user="Cygnus">8</d>
+  <d p="38.821,4,25,14893055,1782150250142,0,21137730,0" user="晗_MkHan">小气</d>
+  <d p="45.332,1,25,65532,1782150256513,0,258827,0" user="Cygnus">9</d>
+  <d p="51.821,1,25,65532,1782150262822,0,258827,0" user="Cygnus">10</d>
+  <d p="54.049,4,25,14893055,1782150265698,0,169647851,0" user="墨雲14">瑞瑞 答應我 以後阿根廷比賽就休息好嗎</d>
+  <d p="54.419,4,25,14893055,1782150266158,0,72976926,0" user="岚月LAN">两眼一黑</d>
+  <d p="59.249,4,25,14893055,1782150271150,0,2808796,0" user="無名的luk">上身体强度了</d>
+  <d p="59.634,1,25,65532,1782150271143,0,258827,0" user="Cygnus">1</d>
+  <d p="71.694,4,25,14893055,1782150276936,0,441776977,0" user="Chitose彰良">两眼一黑</d>
+  <d p="73.390,1,25,65532,1782150278739,0,258827,0" user="Cygnus">2</d>
+  <d p="79.488,1,25,16777215,1782150284811,0,362574190,0" user="AA鸭鸭OuO">抽水！</d>
+  <d p="79.876,4,25,14893055,1782150285600,0,21137730,0" user="晗_MkHan">欺负中年人了</d>
+  <d p="81.173,1,25,65532,1782150286693,0,258827,0" user="Cygnus">3</d>
+  <d p="83.768,1,25,16777215,1782150289492,0,251745,0" user="LZ0741">正常对抗吧</d>
+  <d p="84.709,4,25,14893055,1782150290795,0,169647851,0" user="墨雲14">把人掛起來了 互相一下</d>
+  <d p="84.709,1,25,14893055,1782150290819,0,6863896,0" user="嵐神劍">就要看这个啊</d>
+  <d p="88.591,4,25,14893055,1782150294190,0,2808796,0" user="無名的luk">这就是足球</d>
+  <d p="88.987,1,25,65532,1782150294529,0,258827,0" user="Cygnus">4</d>
+  <d p="96.753,1,25,65532,1782150302518,0,258827,0" user="Cygnus">5</d>
+  <d p="117.185,4,25,14893055,1782150323147,0,2808796,0" user="無名的luk">！？</d>
+  <d p="122.798,4,25,14893055,1782150328030,0,12769903,0" user="漓梦い清玥">笑死了</d>
+  <d p="123.696,1,25,16777215,1782150328628,0,362574190,0" user="AA鸭鸭OuO">啵</d>
+  <d p="124.985,4,25,14893055,1782150331009,0,169647851,0" user="墨雲14">節目效果滿分了</d>
+  <d p="127.605,4,25,14893055,1782150332732,0,2808796,0" user="無名的luk">留嘛留嘛</d>
+  <d p="127.605,1,25,16777215,1782150332966,0,3149292,0" user="不明生命体">啊啾</d>
+  <d p="130.203,1,25,16777215,1782150336135,0,362574190,0" user="AA鸭鸭OuO">嘟嘟嘟</d>
+  <d p="130.203,4,25,14893055,1782150336312,0,2054496,0" user="slacKnight">www</d>
+  <d p="130.553,1,25,65532,1782150336381,0,1454911,0" user="阳炎aqua">两眼一黑</d>
+  <d p="136.684,4,25,14893055,1782150342352,0,2808796,0" user="無名的luk">小瑞好可爱</d>
+  <d p="149.684,4,25,14893055,1782150355830,0,424235753,0" user="真昼之夜R">标题都没改www</d>
+  <d p="152.285,4,25,14893055,1782150357351,0,2808796,0" user="無名的luk">笑</d>
+  <d p="152.679,1,25,16777215,1782150357602,0,251745,0" user="LZ0741">上半场就这样了吧</d>
+  <d p="153.585,1,25,14893055,1782150359037,0,6863896,0" user="嵐神劍">两眼一黑</d>
+  <d p="157.511,4,25,14893055,1782150363427,0,26284784,0" user="晨曦在海上">是的，阿根廷全程在监控0993</d>
+  <d p="157.511,4,25,14893055,1782150363760,0,169647851,0" user="墨雲14">剛下就進確實太神了</d>
+  <d p="163.073,1,25,14893055,1782150368261,0,2486123,0" user="Eternal17岁">那就等中场</d>
+  <d p="163.986,4,25,14893055,1782150369851,0,2808796,0" user="無名的luk">阿根廷标记了小瑞的直播间</d>
+  <d p="165.284,1,25,16777215,1782150370499,0,362574190,0" user="AA鸭鸭OuO">两眼一黑</d>
+  <d p="168.286,4,25,14893055,1782150374053,0,6762346,0" user="shiro_42">什么因果律武器</d>
+  <d p="173.082,1,25,16777215,1782150378259,0,3149292,0" user="不明生命体">三过球门而不入</d>
+</i>

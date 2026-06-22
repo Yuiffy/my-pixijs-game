@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_23_00_36_44",
+    "title": "悠闲夜晚【动物迷城】",
+    "date": "2026-06-22",
+    "time": "00:36:44",
+    "startTime": "00:36",
+    "endTime": "02:12",
+    "duration": 5773,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_23_00_36_44/录制-1713546334-20260623-003644-345-悠闲夜晚【动物迷城】_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_23_00_36_44/录制-1713546334-20260623-003644-345-悠闲夜晚【动物迷城】.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_23_00_36_44/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_23_00_36_44/录制-1713546334-20260623-003644-345-悠闲夜晚【动物迷城】_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_23_00_36_44/录制-1713546334-20260623-003644-345-悠闲夜晚【动物迷城】_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_22_22_23_00",
+    "title": "悠闲夜晚【动物迷城】",
+    "date": "2026-06-22",
+    "time": "22:23:00",
+    "startTime": "22:23",
+    "endTime": "00:36",
+    "duration": 8023,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_22_22_23_00/录制-1713546334-20260622-222300-161-悠闲夜晚【动物迷城】.xml",
+    "cover": "/data/streams/hazel/2026_06_22_22_23_00/录制-1713546334-20260622-222300-161-悠闲夜晚【动物迷城】.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_06_22_22_23_00/录制-1713546334-20260621-163454-544-纯路人看比赛_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_22_22_23_00/录制-1713546334-20260621-163454-544-纯路人看比赛_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_21_16_34_54",
     "title": "纯路人看比赛",
     "date": "2026-06-21",

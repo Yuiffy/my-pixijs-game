@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_23_01_43_31",
+    "title": "周一就要看动画",
+    "date": "2026-06-22",
+    "time": "01:43:31",
+    "startTime": "01:43",
+    "endTime": "01:45",
+    "duration": 173,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_23_01_43_31/录制-23260993-20260623-014331-706-周一就要看动画_merged.xml",
+    "cover": "/data/streams/rhea/2026_06_23_01_43_31/录制-23260993-20260623-014331-706-周一就要看动画.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_23_01_43_31/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_23_01_43_31/录制-23260993-20260623-014331-706-周一就要看动画_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_22_21_12_26",
+    "title": "周一就要看动画",
+    "date": "2026-06-22",
+    "time": "21:12:26",
+    "startTime": "21:12",
+    "endTime": "01:33",
+    "duration": 15660,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_22_21_12_26/录制-23260993-20260622-211226-207-周一就要看动画.xml",
+    "cover": "/data/streams/rhea/2026_06_22_21_12_26/录制-23260993-20260622-211226-207-周一就要看动画.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_22_21_12_26/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_22_21_12_26/录制-23260993-20260622-211226-207-周一就要看动画_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_22_21_12_26/录制-23260993-20260622-211226-207-周一就要看动画_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_06_22_21_12_26/录制-23260993-20260621-214450-436-在耳边轻轻说：今天周日_merged_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_22_21_12_26/录制-23260993-20260621-214450-436-在耳边轻轻说：今天周日_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_21_21_44_50",
     "title": "在耳边轻轻说：今天周日",
     "date": "2026-06-21",
