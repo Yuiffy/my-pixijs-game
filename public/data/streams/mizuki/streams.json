@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_23_21_04_30",
+    "title": "辛苦一天来休息吧⭐",
+    "date": "2026-06-23",
+    "time": "21:04:30",
+    "startTime": "21:04",
+    "endTime": "00:50",
+    "duration": 13585,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_23_21_04_30/录制-30655190-20260623-210430-593-辛苦一天来休息吧⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_06_23_21_04_30/录制-30655190-20260623-210430-593-辛苦一天来休息吧⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_23_21_04_30/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_23_21_04_30/录制-30655190-20260623-210430-593-辛苦一天来休息吧⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_15_02_10",
+    "title": "休闲下午歌~⭐",
+    "date": "2026-06-23",
+    "time": "15:02:10",
+    "startTime": "15:02",
+    "endTime": "18:09",
+    "duration": 11249,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_23_15_02_10/录制-30655190-20260623-150210-851-休闲下午歌~⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_06_23_15_02_10/录制-30655190-20260623-150210-851-休闲下午歌~⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_23_15_02_10/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_23_15_02_10/录制-30655190-20260623-150210-851-休闲下午歌~⭐_merged_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_23_15_02_10/录制-30655190-20260623-150210-851-休闲下午歌~⭐_merged_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_06_23_15_02_10/录制-30655190-20260622-210448-400-轻松一下虚度！⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_22_21_04_48",
     "title": "轻松一下虚度！⭐",
     "date": "2026-06-22",

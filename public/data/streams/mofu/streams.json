@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_06_23_21_09_47",
+    "title": "晚象好汪汪u",
+    "date": "2026-06-23",
+    "time": "21:09:47",
+    "startTime": "21:09",
+    "endTime": "00:25",
+    "duration": 11771,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_23_21_09_47/录制-1791260716-20260623-210947-151-晚象好汪汪u.xml",
+    "cover": "/data/streams/mofu/2026_06_23_21_09_47/录制-1791260716-20260623-210947-151-晚象好汪汪u.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_23_21_09_47/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_23_21_09_47/录制-1791260716-20260623-210947-151-晚象好汪汪u_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_23_21_09_47/录制-1791260716-20260623-210947-151-晚象好汪汪u_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_12_32_10",
+    "title": "？！强强？！",
+    "date": "2026-06-23",
+    "time": "12:32:10",
+    "startTime": "12:32",
+    "endTime": "16:16",
+    "duration": 13455,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_23_12_32_10/录制-1791260716-20260623-123210-359-？！强强？！.xml",
+    "cover": "/data/streams/mofu/2026_06_23_12_32_10/录制-1791260716-20260623-123210-359-？！强强？！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_23_12_11_09",
+    "title": "？！强强？！",
+    "date": "2026-06-23",
+    "time": "12:11:09",
+    "startTime": "12:11",
+    "endTime": "12:30",
+    "duration": 1184,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_23_12_11_09/录制-1791260716-20260623-121109-903-？！强强？！.xml",
+    "cover": "/data/streams/mofu/2026_06_23_12_11_09/录制-1791260716-20260623-121109-903-？！强强？！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_23_12_11_09/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_23_12_11_09/录制-1791260716-20260623-121109-903-？！强强？！_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_06_23_12_11_09/录制-1791260716-20260622-223512-480-【3D麦】宝宝你的煮面好舒服_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_22_22_35_12",
     "title": "【3D麦】宝宝你的煮面好舒服",
     "date": "2026-06-22",

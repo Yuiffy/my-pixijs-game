@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026_06_23_23_32_34",
+    "title": "大家我好饱又好困",
+    "date": "2026-06-23",
+    "time": "23:32:34",
+    "startTime": "23:32",
+    "endTime": "00:36",
+    "duration": 3895,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_23_23_32_34/录制-1986461465-20260623-233234-586-大家我好饱又好困.xml",
+    "cover": "/data/streams/kloa/2026_06_23_23_32_34/录制-1986461465-20260623-233234-586-大家我好饱又好困.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_23_23_32_34/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_23_23_32_34/录制-1986461465-20260623-233234-586-大家我好饱又好困_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_20_04_57",
+    "title": "大家我好饱又好困",
+    "date": "2026-06-23",
+    "time": "20:04:57",
+    "startTime": "20:04",
+    "endTime": "23:31",
+    "duration": 12456,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_23_20_04_57/录制-1986461465-20260623-200457-159-大家我好饱又好困.xml",
+    "cover": "/data/streams/kloa/2026_06_23_20_04_57/录制-1986461465-20260623-200457-159-大家我好饱又好困.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_06_23_20_04_57/录制-1986461465-20260622-201102-237-晚安歌歌_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_22_20_11_02",
     "title": "晚安歌歌",
     "date": "2026-06-22",

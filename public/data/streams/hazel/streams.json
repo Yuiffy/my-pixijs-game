@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_06_23_20_47_18",
+    "title": "悠闲夜晚【动物迷城】",
+    "date": "2026-06-23",
+    "time": "20:47:18",
+    "startTime": "20:47",
+    "endTime": "00:32",
+    "duration": 13539,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_23_20_47_18/录制-1713546334-20260623-204718-462-悠闲夜晚【动物迷城】.xml",
+    "cover": "/data/streams/hazel/2026_06_23_20_47_18/录制-1713546334-20260623-204718-462-悠闲夜晚【动物迷城】.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_23_20_47_18/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_23_20_47_18/录制-1713546334-20260623-204718-462-悠闲夜晚【动物迷城】_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_23_20_47_18/录制-1713546334-20260623-204718-462-悠闲夜晚【动物迷城】_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_20_45_14",
+    "title": "悠闲夜晚【动物迷城】",
+    "date": "2026-06-23",
+    "time": "20:45:14",
+    "startTime": "20:45",
+    "endTime": "20:46",
+    "duration": 119,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_23_20_45_14/录制-1713546334-20260623-204514-605-悠闲夜晚【动物迷城】.xml",
+    "cover": "/data/streams/hazel/2026_06_23_20_45_14/录制-1713546334-20260623-204514-605-悠闲夜晚【动物迷城】.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_23_20_38_45",
+    "title": "悠闲夜晚【动物迷城】",
+    "date": "2026-06-23",
+    "time": "20:38:45",
+    "startTime": "20:38",
+    "endTime": "20:44",
+    "duration": 387,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_23_20_38_45/录制-1713546334-20260623-203845-688-悠闲夜晚【动物迷城】.xml",
+    "cover": "/data/streams/hazel/2026_06_23_20_38_45/录制-1713546334-20260623-203845-688-悠闲夜晚【动物迷城】.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_06_23_20_38_45/录制-1713546334-20260623-003644-345-悠闲夜晚【动物迷城】_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_23_20_38_45/录制-1713546334-20260623-003644-345-悠闲夜晚【动物迷城】_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_00_36_44",
     "title": "悠闲夜晚【动物迷城】",
     "date": "2026-06-22",

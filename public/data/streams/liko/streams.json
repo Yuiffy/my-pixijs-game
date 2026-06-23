@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_23_20_16_48",
+    "title": "兔兔唱歌",
+    "date": "2026-06-23",
+    "time": "20:16:48",
+    "startTime": "20:16",
+    "endTime": "00:18",
+    "duration": 14526,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_23_20_16_48/录制-1713548468-20260623-201648-800-兔兔唱歌_merged.xml",
+    "cover": "/data/streams/liko/2026_06_23_20_16_48/录制-1713548468-20260623-201648-800-兔兔唱歌.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_06_23_20_16_48/录制-1713548468-20260623-201648-800-兔兔唱歌_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_11_10_58",
+    "title": "兔兔起床",
+    "date": "2026-06-23",
+    "time": "11:10:58",
+    "startTime": "11:10",
+    "endTime": "15:38",
+    "duration": 16103,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_23_11_10_58/录制-1713548468-20260623-111058-692-兔兔起床.xml",
+    "cover": "/data/streams/liko/2026_06_23_11_10_58/录制-1713548468-20260623-111058-692-兔兔起床.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_23_11_10_58/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_23_11_10_58/录制-1713548468-20260623-111058-692-兔兔起床_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_23_11_10_58/录制-1713548468-20260622-201528-290-忙的飞起来的兔子_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_23_11_10_58/录制-1713548468-20260622-201528-290-忙的飞起来的兔子_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_22_20_15_28",
     "title": "忙的飞起来的兔子",
     "date": "2026-06-22",

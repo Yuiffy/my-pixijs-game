@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026_06_23_21_09_31",
+    "title": "「Invokyr Demo」with轴帕",
+    "date": "2026-06-23",
+    "time": "21:09:31",
+    "startTime": "21:09",
+    "endTime": "00:28",
+    "duration": 11963,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_23_21_09_31/录制-31368705-20260623-210931-336-「Invokyr Demo」with轴帕.xml",
+    "cover": "/data/streams/nagisa/2026_06_23_21_09_31/录制-31368705-20260623-210931-336-「Invokyr Demo」with轴帕.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_23_08_08_53",
+    "title": "早安一会儿",
+    "date": "2026-06-23",
+    "time": "08:08:53",
+    "startTime": "08:08",
+    "endTime": "10:24",
+    "duration": 8183,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_23_08_08_53/录制-31368705-20260623-080853-396-早安一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_06_23_08_08_53/录制-31368705-20260623-080853-396-早安一会儿.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_23_08_08_53/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_23_08_08_53/录制-31368705-20260623-080853-396-早安一会儿_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_06_23_08_08_53/录制-31368705-20260622-210927-932-周一的歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_22_21_09_27",
     "title": "周一的歌杂",
     "date": "2026-06-22",

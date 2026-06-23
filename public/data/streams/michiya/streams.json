@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_23_20_01_37",
+    "title": "太吾 _ 老大你玩的明白吗",
+    "date": "2026-06-23",
+    "time": "20:01:37",
+    "startTime": "20:01",
+    "endTime": "21:59",
+    "duration": 7110,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/michiya/2026_06_23_20_01_37/录制-27628030-20260623-200137-241-太吾 _ 老大你玩的明白吗.xml",
+    "cover": "/data/streams/michiya/2026_06_23_20_01_37/录制-27628030-20260623-200137-241-太吾 _ 老大你玩的明白吗.cover.jpg",
+    "highlights": "/data/streams/michiya/2026_06_23_20_01_37/highlights.md",
+    "images": [
+      "/data/streams/michiya/2026_06_23_20_01_37/录制-27628030-20260623-200137-241-太吾 _ 老大你玩的明白吗_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_18_03_15",
+    "title": "太吾 _ 老大你玩的明白吗",
+    "date": "2026-06-23",
+    "time": "18:03:15",
+    "startTime": "18:03",
+    "endTime": "19:57",
+    "duration": 6896,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/michiya/2026_06_23_18_03_15/录制-27628030-20260623-180315-861-太吾 _ 老大你玩的明白吗.xml",
+    "cover": "/data/streams/michiya/2026_06_23_18_03_15/录制-27628030-20260623-180315-861-太吾 _ 老大你玩的明白吗.cover.jpg",
+    "highlights": "/data/streams/michiya/2026_06_23_18_03_15/highlights.md",
+    "images": [
+      "/data/streams/michiya/2026_06_23_18_03_15/录制-27628030-20260623-180315-861-太吾 _ 老大你玩的明白吗_COMIC_FACTORY.png",
+      "/data/streams/michiya/2026_06_23_18_03_15/录制-27628030-20260623-180315-861-太吾 _ 老大你玩的明白吗_SCREENSHOTS.jpg",
+      "/data/streams/michiya/2026_06_23_18_03_15/录制-27628030-20260620-174651-589-老大我们真的要直播到57岁吗_merged_COMIC_FACTORY.png",
+      "/data/streams/michiya/2026_06_23_18_03_15/录制-27628030-20260620-174651-589-老大我们真的要直播到57岁吗_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_20_17_46_51",
     "title": "老大我们真的要直播到57岁吗",
     "date": "2026-06-20",

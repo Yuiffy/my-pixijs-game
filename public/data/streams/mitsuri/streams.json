@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_06_23_15_03_11",
+    "title": "【师徒杯请给我投票吧】和lulu开瓦！！",
+    "date": "2026-06-23",
+    "time": "15:03:11",
+    "startTime": "15:03",
+    "endTime": "01:00",
+    "duration": 35841,
+    "durationStr": "10.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_23_15_03_11/录制-1967216004-20260623-150311-516-【师徒杯请给我投票吧】和lulu开瓦！！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_23_15_03_11/录制-1967216004-20260623-150311-516-【师徒杯请给我投票吧】和lulu开瓦！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_23_15_03_11/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_23_15_03_11/录制-1967216004-20260623-150311-516-【师徒杯请给我投票吧】和lulu开瓦！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_23_15_03_11/录制-1967216004-20260623-150311-516-【师徒杯请给我投票吧】和lulu开瓦！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_11_02_50",
+    "title": "我好想进师徒杯！！",
+    "date": "2026-06-23",
+    "time": "11:02:50",
+    "startTime": "11:02",
+    "endTime": "11:16",
+    "duration": 854,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_23_11_02_50/录制-1967216004-20260623-110250-386-我好想进师徒杯！！_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_06_23_11_02_50/录制-1967216004-20260623-110250-386-我好想进师徒杯！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_23_11_02_50/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_23_11_02_50/录制-1967216004-20260623-110250-386-我好想进师徒杯！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_23_10_03_29",
+    "title": "我好想进师徒杯！！",
+    "date": "2026-06-23",
+    "time": "10:03:29",
+    "startTime": "10:03",
+    "endTime": "10:59",
+    "duration": 3363,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_23_10_03_29/录制-1967216004-20260623-100329-788-好想睡觉…_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_06_23_10_03_29/录制-1967216004-20260623-100329-788-好想睡觉….cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_23_10_03_29/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_23_10_03_29/录制-1967216004-20260623-100329-788-好想睡觉…_merged_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_06_23_10_03_29/录制-1967216004-20260621-220314-252-陪我打会儿游戏吧_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_23_10_03_29/录制-1967216004-20260621-220314-252-陪我打会儿游戏吧_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_21_22_03_14",
     "title": "陪我打会儿游戏吧",
     "date": "2026-06-21",
