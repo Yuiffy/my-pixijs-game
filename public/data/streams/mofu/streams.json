@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_24_21_07_05",
+    "title": "好多人一起玩超级变色龙",
+    "date": "2026-06-24",
+    "time": "21:07:05",
+    "startTime": "21:07",
+    "endTime": "01:28",
+    "duration": 15676,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_24_21_07_05/录制-1791260716-20260624-210705-463-好多人一起玩超级变色龙_merged.xml",
+    "cover": "/data/streams/mofu/2026_06_24_21_07_05/录制-1791260716-20260624-210705-463-好多人一起玩超级变色龙.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_24_21_07_05/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_24_21_07_05/录制-1791260716-20260624-210705-463-好多人一起玩超级变色龙_merged_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_24_21_07_05/录制-1791260716-20260624-210705-463-好多人一起玩超级变色龙_merged_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_06_24_21_07_05/录制-1791260716-20260623-210947-151-晚象好汪汪u_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_24_21_07_05/录制-1791260716-20260623-210947-151-晚象好汪汪u_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_21_09_47",
     "title": "晚象好汪汪u",
     "date": "2026-06-23",

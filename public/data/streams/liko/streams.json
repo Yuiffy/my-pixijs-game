@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_06_24_21_03_48",
+    "title": "谁是真正的变色龙",
+    "date": "2026-06-24",
+    "time": "21:03:48",
+    "startTime": "21:03",
+    "endTime": "01:08",
+    "duration": 14747,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_24_21_03_48/录制-1713548468-20260624-210348-769-谁是真正的变色龙.xml",
+    "cover": "/data/streams/liko/2026_06_24_21_03_48/录制-1713548468-20260624-210348-769-谁是真正的变色龙.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_24_21_03_48/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_24_21_03_48/录制-1713548468-20260624-210348-769-谁是真正的变色龙_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_24_21_03_48/录制-1713548468-20260624-210348-769-谁是真正的变色龙_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_11_38_42",
+    "title": "好困啊",
+    "date": "2026-06-24",
+    "time": "11:38:42",
+    "startTime": "11:38",
+    "endTime": "14:24",
+    "duration": 9991,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_24_11_38_42/录制-1713548468-20260624-113842-931-好困啊.xml",
+    "cover": "/data/streams/liko/2026_06_24_11_38_42/录制-1713548468-20260624-113842-931-好困啊.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_24_11_38_42/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_24_11_38_42/录制-1713548468-20260624-113842-931-好困啊_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_24_11_38_42/录制-1713548468-20260624-113842-931-好困啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_11_09_38",
+    "title": "好困啊",
+    "date": "2026-06-24",
+    "time": "11:09:38",
+    "startTime": "11:09",
+    "endTime": "11:33",
+    "duration": 1446,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_24_11_09_38/录制-1713548468-20260624-110938-100-好困啊_merged.xml",
+    "cover": "/data/streams/liko/2026_06_24_11_09_38/录制-1713548468-20260624-110938-100-好困啊.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_24_11_09_38/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_24_11_09_38/录制-1713548468-20260624-110938-100-好困啊_merged_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_24_11_09_38/录制-1713548468-20260623-201648-800-兔兔唱歌_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_20_16_48",
     "title": "兔兔唱歌",
     "date": "2026-06-23",

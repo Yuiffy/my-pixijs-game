@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_24_21_04_21",
+    "title": "唱歌歌~",
+    "date": "2026-06-24",
+    "time": "21:04:21",
+    "startTime": "21:04",
+    "endTime": "01:11",
+    "duration": 14842,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_24_21_04_21/录制-1986461465-20260624-210421-593-联动躲猫猫~.xml",
+    "cover": "/data/streams/kloa/2026_06_24_21_04_21/录制-1986461465-20260624-210421-593-联动躲猫猫~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_24_21_04_21/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_24_21_04_21/录制-1986461465-20260624-210421-593-联动躲猫猫~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_24_21_04_21/录制-1986461465-20260624-210421-593-联动躲猫猫~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_10_11_06",
+    "title": "健身环~",
+    "date": "2026-06-24",
+    "time": "10:11:06",
+    "startTime": "10:11",
+    "endTime": "12:08",
+    "duration": 7022,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_24_10_11_06/录制-1986461465-20260624-101106-564-健身环~.xml",
+    "cover": "/data/streams/kloa/2026_06_24_10_11_06/录制-1986461465-20260624-101106-564-健身环~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_24_10_11_06/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_24_10_11_06/录制-1986461465-20260624-101106-564-健身环~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_24_10_11_06/录制-1986461465-20260624-101106-564-健身环~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_24_10_11_06/录制-1986461465-20260623-233234-586-大家我好饱又好困_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_23_32_34",
     "title": "大家我好饱又好困",
     "date": "2026-06-23",

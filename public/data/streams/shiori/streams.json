@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_24_20_12_41",
+    "title": "涂鸦躲猫猫！",
+    "date": "2026-06-24",
+    "time": "20:12:41",
+    "startTime": "20:12",
+    "endTime": "00:20",
+    "duration": 14894,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_24_20_12_41/录制-26966466-20260624-201241-540-涂鸦躲猫猫！.xml",
+    "cover": "/data/streams/shiori/2026_06_24_20_12_41/录制-26966466-20260624-201241-540-涂鸦躲猫猫！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_24_20_12_41/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_24_20_12_41/录制-26966466-20260624-201241-540-涂鸦躲猫猫！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_24_20_12_41/录制-26966466-20260624-201241-540-涂鸦躲猫猫！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_10_02_51",
+    "title": "虚弱早台",
+    "date": "2026-06-24",
+    "time": "10:02:51",
+    "startTime": "10:02",
+    "endTime": "12:11",
+    "duration": 7752,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_24_10_02_51/录制-26966466-20260624-100251-604-虚弱早台.xml",
+    "cover": "/data/streams/shiori/2026_06_24_10_02_51/录制-26966466-20260624-100251-604-虚弱早台.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_24_10_02_51/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_24_10_02_51/录制-26966466-20260624-100251-604-虚弱早台_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_24_10_02_51/录制-26966466-20260624-100251-604-虚弱早台_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_24_10_02_51/录制-26966466-20260623-211745-258-虚弱小栞!_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_21_17_45",
     "title": "虚弱小栞!",
     "date": "2026-06-23",

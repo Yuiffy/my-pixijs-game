@@ -1,5 +1,56 @@
 [
   {
+    "id": "2026_06_24_22_21_28",
+    "title": "「黎明」当人",
+    "date": "2026-06-24",
+    "time": "22:21:28",
+    "startTime": "22:21",
+    "endTime": "00:48",
+    "duration": 8868,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_24_22_21_28/录制-31368705-20260624-222128-730-「黎明」当人.xml",
+    "cover": "/data/streams/nagisa/2026_06_24_22_21_28/录制-31368705-20260624-222128-730-「黎明」当人.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_24_22_21_28/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_24_22_21_28/录制-31368705-20260624-222128-730-「黎明」当人_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_20_22_23",
+    "title": "变色龙躲猫猫",
+    "date": "2026-06-24",
+    "time": "20:22:23",
+    "startTime": "20:22",
+    "endTime": "22:17",
+    "duration": 6947,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_24_20_22_23/录制-31368705-20260624-202223-347-变色龙躲猫猫.xml",
+    "cover": "/data/streams/nagisa/2026_06_24_20_22_23/录制-31368705-20260624-202223-347-变色龙躲猫猫.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nagisa/2026_06_24_20_22_23/录制-31368705-20260624-202223-347-变色龙躲猫猫_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_08_07_25",
+    "title": "早歌一会儿",
+    "date": "2026-06-24",
+    "time": "08:07:25",
+    "startTime": "08:07",
+    "endTime": "10:58",
+    "duration": 10319,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_24_08_07_25/录制-31368705-20260624-080725-752-早歌一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_06_24_08_07_25/录制-31368705-20260624-080725-752-早歌一会儿.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_24_08_07_25/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_24_08_07_25/录制-31368705-20260624-080725-752-早歌一会儿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_21_09_31",
     "title": "「Invokyr Demo」with轴帕",
     "date": "2026-06-23",

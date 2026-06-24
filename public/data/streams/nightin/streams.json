@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_24_20_13_23",
+    "title": "【联动】涂色躲猫猫来啦！",
+    "date": "2026-06-24",
+    "time": "20:13:23",
+    "startTime": "20:13",
+    "endTime": "22:10",
+    "duration": 7051,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_24_20_13_23/录制-24872476-20260624-201323-418-【联动】涂色躲猫猫来啦！.xml",
+    "cover": "/data/streams/nightin/2026_06_24_20_13_23/录制-24872476-20260624-201323-418-【联动】涂色躲猫猫来啦！.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_24_20_13_23/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_24_20_13_23/录制-24872476-20260624-201323-418-【联动】涂色躲猫猫来啦！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_13_06_55",
+    "title": "【新衣】新衣活动最后一周~",
+    "date": "2026-06-24",
+    "time": "13:06:55",
+    "startTime": "13:06",
+    "endTime": "16:06",
+    "duration": 10833,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_24_13_06_55/录制-24872476-20260624-130655-878-【新衣】新衣活动最后一周~.xml",
+    "cover": "/data/streams/nightin/2026_06_24_13_06_55/录制-24872476-20260624-130655-878-【新衣】新衣活动最后一周~.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_24_13_06_55/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_24_13_06_55/录制-24872476-20260624-130655-878-【新衣】新衣活动最后一周~_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_24_13_06_55/录制-24872476-20260624-130655-878-【新衣】新衣活动最后一周~_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_06_24_13_06_55/录制-24872476-20260623-150654-365-【新衣】新衣活动最后一周~_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_24_13_06_55/录制-24872476-20260623-170924-730-【新衣】新衣活动最后一周~_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_24_13_06_55/录制-24872476-20260623-170924-730-【新衣】新衣活动最后一周~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_17_09_24",
     "title": "【新衣】新衣活动最后一周~",
     "date": "2026-06-23",

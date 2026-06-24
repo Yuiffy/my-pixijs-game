@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_24_20_05_06",
+    "title": "联动~涂鸦躲猫猫",
+    "date": "2026-06-24",
+    "time": "20:05:06",
+    "startTime": "20:05",
+    "endTime": "00:22",
+    "duration": 15448,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_24_20_05_06/录制-25788785-20260624-200506-760-联动~涂鸦躲猫猫_merged.xml",
+    "cover": "/data/streams/sui/2026_06_24_20_05_06/录制-25788785-20260624-200506-760-联动~涂鸦躲猫猫.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_24_20_05_06/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_24_20_05_06/录制-25788785-20260624-200506-760-联动~涂鸦躲猫猫_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_24_20_05_06/录制-25788785-20260624-200506-760-联动~涂鸦躲猫猫_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_14_49_16",
+    "title": "中高手小鸟玩空洞骑士！",
+    "date": "2026-06-24",
+    "time": "14:49:16",
+    "startTime": "14:49",
+    "endTime": "16:53",
+    "duration": 7491,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_24_14_49_16/录制-25788785-20260624-144916-851-中高手小鸟玩空洞骑士！.xml",
+    "cover": "/data/streams/sui/2026_06_24_14_49_16/录制-25788785-20260624-144916-851-中高手小鸟玩空洞骑士！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_24_14_49_16/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_24_14_49_16/录制-25788785-20260624-144916-851-中高手小鸟玩空洞骑士！_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_24_14_49_16/录制-25788785-20260624-144916-851-中高手小鸟玩空洞骑士！_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_06_24_14_49_16/录制-25788785-20260623-200245-499-优哉游哉唱聊夜晚_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_24_14_49_16/录制-25788785-20260623-200245-499-优哉游哉唱聊夜晚_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_20_02_45",
     "title": "优哉游哉唱聊夜晚",
     "date": "2026-06-23",

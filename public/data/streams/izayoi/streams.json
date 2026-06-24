@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_24_21_03_33",
+    "title": "躲猫猫!",
+    "date": "2026-06-24",
+    "time": "21:03:33",
+    "startTime": "21:03",
+    "endTime": "01:00",
+    "duration": 14257,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_24_21_03_33/录制-1741667419-20260624-210333-948-躲猫猫!.xml",
+    "cover": "/data/streams/izayoi/2026_06_24_21_03_33/录制-1741667419-20260624-210333-948-躲猫猫!.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_24_21_03_33/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_24_21_03_33/录制-1741667419-20260624-210333-948-躲猫猫!_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_24_21_03_33/录制-1741667419-20260624-210333-948-躲猫猫!_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_09_02_07",
+    "title": "早茶第六十九天。",
+    "date": "2026-06-24",
+    "time": "09:02:07",
+    "startTime": "09:02",
+    "endTime": "11:52",
+    "duration": 10249,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_24_09_02_07/录制-1741667419-20260624-090207-608-早茶第六十九天。.xml",
+    "cover": "/data/streams/izayoi/2026_06_24_09_02_07/录制-1741667419-20260624-090207-608-早茶第六十九天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_24_09_02_07/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_24_09_02_07/录制-1741667419-20260624-090207-608-早茶第六十九天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_24_09_02_07/录制-1741667419-20260623-200039-247-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_24_09_02_07/录制-1741667419-20260623-200039-247-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_20_00_39",
     "title": "1616我们喜浣你",
     "date": "2026-06-23",

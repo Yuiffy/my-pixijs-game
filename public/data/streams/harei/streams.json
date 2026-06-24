@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_06_25_01_04_59",
+    "title": "大家一起躲猫猫^^",
+    "date": "2026-06-24",
+    "time": "01:04:59",
+    "startTime": "01:04",
+    "endTime": "01:05",
+    "duration": 68,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_25_01_04_59/录制-1820703922-20260625-010459-118-大家一起躲猫猫^^.xml",
+    "cover": "/data/streams/harei/2026_06_25_01_04_59/录制-1820703922-20260625-010459-118-大家一起躲猫猫^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_25_01_04_59/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_25_01_04_59/录制-1820703922-20260625-010459-118-大家一起躲猫猫^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_20_01_06",
+    "title": "大家一起躲猫猫^^",
+    "date": "2026-06-24",
+    "time": "20:01:06",
+    "startTime": "20:01",
+    "endTime": "01:04",
+    "duration": 18225,
+    "durationStr": "5.1 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_24_20_01_06/录制-1820703922-20260624-200106-932-大家一起躲猫猫^^.xml",
+    "cover": "/data/streams/harei/2026_06_24_20_01_06/录制-1820703922-20260624-200106-932-大家一起躲猫猫^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_24_20_01_06/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_24_20_01_06/录制-1820703922-20260624-200106-932-大家一起躲猫猫^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_24_20_01_06/录制-1820703922-20260624-200106-932-大家一起躲猫猫^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_14_12_46",
+    "title": "今天能播12小时吗^",
+    "date": "2026-06-24",
+    "time": "14:12:46",
+    "startTime": "14:12",
+    "endTime": "17:36",
+    "duration": 12241,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_24_14_12_46/录制-1820703922-20260624-141246-363-今天能播12小时吗^.xml",
+    "cover": "/data/streams/harei/2026_06_24_14_12_46/录制-1820703922-20260624-141246-363-今天能播12小时吗^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_24_14_12_46/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_24_14_12_46/录制-1820703922-20260624-141246-363-今天能播12小时吗^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_24_14_12_46/录制-1820703922-20260624-141246-363-今天能播12小时吗^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_06_24_14_12_46/录制-1820703922-20260623-210922-052-小鼠剪线头了^^_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_21_09_22",
     "title": "小鼠剪线头了^^",
     "date": "2026-06-23",

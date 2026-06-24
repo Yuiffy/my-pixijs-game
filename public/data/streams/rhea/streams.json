@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_25_01_14_45",
+    "title": "不是下播了吗？",
+    "date": "2026-06-24",
+    "time": "01:14:45",
+    "startTime": "01:14",
+    "endTime": "01:22",
+    "duration": 532,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_25_01_14_45/录制-23260993-20260625-011445-591-不是下播了吗？.xml",
+    "cover": "/data/streams/rhea/2026_06_25_01_14_45/录制-23260993-20260625-011445-591-不是下播了吗？.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_25_01_14_45/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_25_01_14_45/录制-23260993-20260625-011445-591-不是下播了吗？_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_24_21_02_23",
+    "title": "躲猫猫战术已经成功了一半",
+    "date": "2026-06-24",
+    "time": "21:02:23",
+    "startTime": "21:02",
+    "endTime": "01:08",
+    "duration": 14818,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_24_21_02_23/录制-23260993-20260624-210223-707-躲猫猫战术已经成功了一半.xml",
+    "cover": "/data/streams/rhea/2026_06_24_21_02_23/录制-23260993-20260624-210223-707-躲猫猫战术已经成功了一半.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_24_21_02_23/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_24_21_02_23/录制-23260993-20260624-210223-707-躲猫猫战术已经成功了一半_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_24_21_02_23/录制-23260993-20260624-210223-707-躲猫猫战术已经成功了一半_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_06_24_21_02_23/录制-23260993-20260623-232447-317-咋这样…_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_24_21_02_23/录制-23260993-20260623-232447-317-咋这样…_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_23_24_47",
     "title": "咋这样…",
     "date": "2026-06-23",
