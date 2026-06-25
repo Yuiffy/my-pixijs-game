@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_25_23_10_10",
+    "title": "来了来了！！",
+    "date": "2026-06-25",
+    "time": "23:10:10",
+    "startTime": "23:10",
+    "endTime": "00:53",
+    "duration": 6233,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_25_23_10_10/录制-26966466-20260625-231010-075-来了来了！！.xml",
+    "cover": "/data/streams/shiori/2026_06_25_23_10_10/录制-26966466-20260625-231010-075-来了来了！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_25_23_10_10/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_25_23_10_10/录制-26966466-20260625-231010-075-来了来了！！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_25_23_10_10/录制-26966466-20260625-231010-075-来了来了！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_10_10_12",
+    "title": "小栞来也！",
+    "date": "2026-06-25",
+    "time": "10:10:12",
+    "startTime": "10:10",
+    "endTime": "12:11",
+    "duration": 7279,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_06_25_10_10_12/录制-26966466-20260625-101012-949-小栞来也！.xml",
+    "cover": "/data/streams/shiori/2026_06_25_10_10_12/录制-26966466-20260625-101012-949-小栞来也！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_06_25_10_10_12/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_06_25_10_10_12/录制-26966466-20260625-101012-949-小栞来也！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_25_10_10_12/录制-26966466-20260625-101012-949-小栞来也！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_06_25_10_10_12/录制-26966466-20260624-201241-540-涂鸦躲猫猫！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_06_25_10_10_12/录制-26966466-20260624-201241-540-涂鸦躲猫猫！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_24_20_12_41",
     "title": "涂鸦躲猫猫！",
     "date": "2026-06-24",

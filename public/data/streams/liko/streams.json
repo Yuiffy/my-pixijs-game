@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_25_21_58_40",
+    "title": "小播一会儿",
+    "date": "2026-06-25",
+    "time": "21:58:40",
+    "startTime": "21:58",
+    "endTime": "00:31",
+    "duration": 9183,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_25_21_58_40/录制-1713548468-20260625-215840-584-小播一会儿.xml",
+    "cover": "/data/streams/liko/2026_06_25_21_58_40/录制-1713548468-20260625-215840-584-小播一会儿.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_25_21_58_40/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_25_21_58_40/录制-1713548468-20260625-215840-584-小播一会儿_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_25_21_58_40/录制-1713548468-20260625-215840-584-小播一会儿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_21_12_29",
+    "title": "小播一会儿",
+    "date": "2026-06-25",
+    "time": "21:12:29",
+    "startTime": "21:12",
+    "endTime": "21:55",
+    "duration": 2583,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_25_21_12_29/录制-1713548468-20260625-211229-981-小播一会儿.xml",
+    "cover": "/data/streams/liko/2026_06_25_21_12_29/录制-1713548468-20260625-211229-981-小播一会儿.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_06_25_21_12_29/录制-1713548468-20260624-210348-769-谁是真正的变色龙_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_25_21_12_29/录制-1713548468-20260624-210348-769-谁是真正的变色龙_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_24_21_03_48",
     "title": "谁是真正的变色龙",
     "date": "2026-06-24",

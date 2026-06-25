@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_06_25_21_58_48",
+    "title": "轻轻滴虚度⭐",
+    "date": "2026-06-25",
+    "time": "21:58:48",
+    "startTime": "21:58",
+    "endTime": "00:16",
+    "duration": 8282,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_25_21_58_48/录制-30655190-20260625-215848-385-轻轻滴虚度⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_25_21_58_48/录制-30655190-20260625-215848-385-轻轻滴虚度⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_25_21_58_48/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_25_21_58_48/录制-30655190-20260625-215848-385-轻轻滴虚度⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_25_21_58_48/录制-30655190-20260625-215848-385-轻轻滴虚度⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_21_02_20",
+    "title": "轻轻滴虚度⭐",
+    "date": "2026-06-25",
+    "time": "21:02:20",
+    "startTime": "21:02",
+    "endTime": "21:55",
+    "duration": 3184,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_25_21_02_20/录制-30655190-20260625-210220-274-轻轻滴虚度⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_25_21_02_20/录制-30655190-20260625-210220-274-轻轻滴虚度⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_25_15_04_32",
+    "title": "【工作音】学歌21-25⭐",
+    "date": "2026-06-25",
+    "time": "15:04:32",
+    "startTime": "15:04",
+    "endTime": "18:11",
+    "duration": 11279,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_25_15_04_32/录制-30655190-20260625-150432-551-【工作音】学歌21-25⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_25_15_04_32/录制-30655190-20260625-150432-551-【工作音】学歌21-25⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_25_15_04_32/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_25_15_04_32/录制-30655190-20260625-150432-551-【工作音】学歌21-25⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_25_15_04_32/录制-30655190-20260625-150432-551-【工作音】学歌21-25⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_11_00_39",
+    "title": "早安呀弥小妹⭐",
+    "date": "2026-06-25",
+    "time": "11:00:39",
+    "startTime": "11:00",
+    "endTime": "12:42",
+    "duration": 6136,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_25_11_00_39/录制-30655190-20260625-110039-124-早安呀弥小妹⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_25_11_00_39/录制-30655190-20260625-110039-124-早安呀弥小妹⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_25_11_00_39/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_25_11_00_39/录制-30655190-20260625-110039-124-早安呀弥小妹⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_25_11_00_39/录制-30655190-20260625-110039-124-早安呀弥小妹⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_06_25_11_00_39/录制-30655190-20260624-210514-063-！涂鸦躲猫猫！⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_25_11_00_39/录制-30655190-20260624-210514-063-！涂鸦躲猫猫！⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_24_21_05_14",
     "title": "！涂鸦躲猫猫！⭐",
     "date": "2026-06-24",

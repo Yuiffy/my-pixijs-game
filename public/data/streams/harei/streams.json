@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_06_25_21_58_36",
+    "title": "唱唱歌聊聊天^^",
+    "date": "2026-06-25",
+    "time": "21:58:36",
+    "startTime": "21:58",
+    "endTime": "00:09",
+    "duration": 7879,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_25_21_58_36/录制-1820703922-20260625-215836-024-唱唱歌聊聊天^^.xml",
+    "cover": "/data/streams/harei/2026_06_25_21_58_36/录制-1820703922-20260625-215836-024-唱唱歌聊聊天^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_25_21_58_36/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_25_21_58_36/录制-1820703922-20260625-215836-024-唱唱歌聊聊天^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_25_21_58_36/录制-1820703922-20260625-215836-024-唱唱歌聊聊天^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_21_29_41",
+    "title": "唱唱歌聊聊天^^",
+    "date": "2026-06-25",
+    "time": "21:29:41",
+    "startTime": "21:29",
+    "endTime": "21:54",
+    "duration": 1550,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_25_21_29_41/录制-1820703922-20260625-212941-815-唱唱歌聊聊天^^.xml",
+    "cover": "/data/streams/harei/2026_06_25_21_29_41/录制-1820703922-20260625-212941-815-唱唱歌聊聊天^^.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_25_20_35_13",
+    "title": "唱唱歌聊聊天^^",
+    "date": "2026-06-25",
+    "time": "20:35:13",
+    "startTime": "20:35",
+    "endTime": "21:29",
+    "duration": 3247,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_25_20_35_13/录制-1820703922-20260625-203513-498-唱唱歌聊聊天^^.xml",
+    "cover": "/data/streams/harei/2026_06_25_20_35_13/录制-1820703922-20260625-203513-498-唱唱歌聊聊天^^.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_25_15_04_59",
+    "title": "今天也挑战10小时^^",
+    "date": "2026-06-25",
+    "time": "15:04:59",
+    "startTime": "15:04",
+    "endTime": "18:05",
+    "duration": 10892,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_25_15_04_59/录制-1820703922-20260625-150459-356-今天也挑战10小时^^.xml",
+    "cover": "/data/streams/harei/2026_06_25_15_04_59/录制-1820703922-20260625-150459-356-今天也挑战10小时^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_25_15_04_59/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_25_15_04_59/录制-1820703922-20260625-150459-356-今天也挑战10小时^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_25_15_04_59/录制-1820703922-20260625-150459-356-今天也挑战10小时^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_06_25_15_04_59/录制-1820703922-20260624-200106-932-大家一起躲猫猫^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_25_15_04_59/录制-1820703922-20260624-200106-932-大家一起躲猫猫^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_06_25_15_04_59/录制-1820703922-20260625-010459-118-大家一起躲猫猫^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_25_01_04_59",
     "title": "大家一起躲猫猫^^",
     "date": "2026-06-24",

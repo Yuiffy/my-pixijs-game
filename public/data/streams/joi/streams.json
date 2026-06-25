@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_25_21_58_49",
+    "title": "感谢你的投递！我是好hr吗",
+    "date": "2026-06-25",
+    "time": "21:58:49",
+    "startTime": "21:58",
+    "endTime": "00:01",
+    "duration": 7388,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_06_25_21_58_49/录制-21484828-20260625-215849-145-感谢你的投递！我是好hr吗.xml",
+    "cover": "/data/streams/joi/2026_06_25_21_58_49/录制-21484828-20260625-215849-145-感谢你的投递！我是好hr吗.cover.jpg",
+    "highlights": "/data/streams/joi/2026_06_25_21_58_49/highlights.md",
+    "images": [
+      "/data/streams/joi/2026_06_25_21_58_49/录制-21484828-20260625-215849-145-感谢你的投递！我是好hr吗_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_06_25_21_58_49/录制-21484828-20260625-215849-145-感谢你的投递！我是好hr吗_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_21_02_17",
+    "title": "感谢你的投递！我是好hr吗",
+    "date": "2026-06-25",
+    "time": "21:02:17",
+    "startTime": "21:02",
+    "endTime": "21:55",
+    "duration": 3190,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_06_25_21_02_17/录制-21484828-20260625-210217-165-感谢你的投递！我是好hr吗.xml",
+    "cover": "/data/streams/joi/2026_06_25_21_02_17/录制-21484828-20260625-210217-165-感谢你的投递！我是好hr吗.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/joi/2026_06_25_21_02_17/录制-21484828-20260623-210713-264-Invokyr 米帕轴的恐怖游戏time_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_06_25_21_02_17/录制-21484828-20260623-210713-264-Invokyr 米帕轴的恐怖游戏time_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_21_07_13",
     "title": "Invokyr 米帕轴的恐怖游戏time",
     "date": "2026-06-23",

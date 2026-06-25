@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_06_25_23_13_49",
+    "title": "悠哉悠哉一起看秒速五厘米",
+    "date": "2026-06-25",
+    "time": "23:13:49",
+    "startTime": "23:13",
+    "endTime": "23:37",
+    "duration": 1464,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_25_23_13_49/录制-25788785-20260625-231349-652-悠哉悠哉一起看秒速五厘米.xml",
+    "cover": "/data/streams/sui/2026_06_25_23_13_49/录制-25788785-20260625-231349-652-悠哉悠哉一起看秒速五厘米.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_06_25_23_13_49/录制-25788785-20260625-215843-042-悠哉悠哉一起看秒速五厘米_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_21_58_43",
+    "title": "悠哉悠哉一起看秒速五厘米",
+    "date": "2026-06-25",
+    "time": "21:58:43",
+    "startTime": "21:58",
+    "endTime": "23:13",
+    "duration": 4504,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_25_21_58_43/录制-25788785-20260625-215843-042-悠哉悠哉一起看秒速五厘米_merged.xml",
+    "cover": "/data/streams/sui/2026_06_25_21_58_43/录制-25788785-20260625-215843-042-悠哉悠哉一起看秒速五厘米.cover.jpg",
+    "highlights": "/data/streams/sui/2026_06_25_21_58_43/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_06_25_21_58_43/录制-25788785-20260625-215843-042-悠哉悠哉一起看秒速五厘米_merged_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_06_25_20_02_56",
+    "title": "悠哉悠哉夜晚~！",
+    "date": "2026-06-25",
+    "time": "20:02:56",
+    "startTime": "20:02",
+    "endTime": "23:37",
+    "duration": 12924,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_06_25_20_02_56/录制-25788785-20260625-200256-086-悠哉悠哉夜晚~！_merged.xml",
+    "cover": "/data/streams/sui/2026_06_25_20_02_56/录制-25788785-20260625-200256-086-悠哉悠哉夜晚~！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_06_25_20_02_56/录制-25788785-20260624-200506-760-联动~涂鸦躲猫猫_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_06_25_20_02_56/录制-25788785-20260624-200506-760-联动~涂鸦躲猫猫_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_24_20_05_06",
     "title": "联动~涂鸦躲猫猫",
     "date": "2026-06-24",

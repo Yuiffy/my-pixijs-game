@@ -1,5 +1,75 @@
 [
   {
+    "id": "2026_06_25_21_58_37",
+    "title": "看看师徒杯试训！",
+    "date": "2026-06-25",
+    "time": "21:58:37",
+    "startTime": "21:58",
+    "endTime": "01:47",
+    "duration": 13791,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_25_21_58_37/录制-1967216004-20260625-215837-387-看看师徒杯试训！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_25_21_58_37/录制-1967216004-20260625-215837-387-看看师徒杯试训！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_25_21_58_37/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_25_21_58_37/录制-1967216004-20260625-215837-387-看看师徒杯试训！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_25_21_58_37/录制-1967216004-20260625-215837-387-看看师徒杯试训！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_17_51_24",
+    "title": "看看师徒杯试训！",
+    "date": "2026-06-25",
+    "time": "17:51:24",
+    "startTime": "17:51",
+    "endTime": "21:55",
+    "duration": 14650,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_25_17_51_24/录制-1967216004-20260625-175124-820-看看师徒杯试训！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_25_17_51_24/录制-1967216004-20260625-175124-820-看看师徒杯试训！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_25_14_12_12",
+    "title": "看看师徒杯试训！",
+    "date": "2026-06-25",
+    "time": "14:12:12",
+    "startTime": "14:12",
+    "endTime": "17:28",
+    "duration": 11760,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_25_14_12_12/录制-1967216004-20260625-141212-594-摸鱼歌台！_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_06_25_14_12_12/录制-1967216004-20260625-141212-594-摸鱼歌台！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_25_14_12_12/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_25_14_12_12/录制-1967216004-20260625-141212-594-摸鱼歌台！_merged_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_25_14_12_12/录制-1967216004-20260625-141212-594-摸鱼歌台！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_25_14_03_16",
+    "title": "摸鱼歌台！",
+    "date": "2026-06-25",
+    "time": "14:03:16",
+    "startTime": "14:03",
+    "endTime": "14:08",
+    "duration": 319,
+    "durationStr": "5 分钟",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_25_14_03_16/录制-1967216004-20260625-140316-073-摸鱼歌台！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_25_14_03_16/录制-1967216004-20260625-140316-073-摸鱼歌台！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_25_14_03_16/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_25_14_03_16/录制-1967216004-20260625-140316-073-摸鱼歌台！_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_06_25_14_03_16/录制-1967216004-20260623-150311-516-【师徒杯请给我投票吧】和lulu开瓦！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_25_14_03_16/录制-1967216004-20260623-150311-516-【师徒杯请给我投票吧】和lulu开瓦！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_23_15_03_11",
     "title": "【师徒杯请给我投票吧】和lulu开瓦！！",
     "date": "2026-06-23",
