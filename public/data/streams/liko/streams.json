@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_06_26_23_03_30",
+    "title": "收拾行李",
+    "date": "2026-06-26",
+    "time": "23:03:30",
+    "startTime": "23:03",
+    "endTime": "23:17",
+    "duration": 873,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_26_23_03_30/录制-1713548468-20260626-230330-787-收拾行李_merged.xml",
+    "cover": "/data/streams/liko/2026_06_26_23_03_30/录制-1713548468-20260626-230330-787-收拾行李.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_26_23_03_30/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_26_23_03_30/录制-1713548468-20260626-230330-787-收拾行李_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_21_15_21",
+    "title": "收拾行李",
+    "date": "2026-06-26",
+    "time": "21:15:21",
+    "startTime": "21:15",
+    "endTime": "22:59",
+    "duration": 6287,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_26_21_15_21/录制-1713548468-20260626-211521-220-收拾行李.xml",
+    "cover": "/data/streams/liko/2026_06_26_21_15_21/录制-1713548468-20260626-211521-220-收拾行李.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_26_21_15_21/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_26_21_15_21/录制-1713548468-20260626-211521-220-收拾行李_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_26_21_15_21/录制-1713548468-20260626-211521-220-收拾行李_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_11_13_29",
+    "title": "小播一会儿",
+    "date": "2026-06-26",
+    "time": "11:13:29",
+    "startTime": "11:13",
+    "endTime": "15:22",
+    "duration": 14992,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_06_26_11_13_29/录制-1713548468-20260626-111329-303-小播一会儿.xml",
+    "cover": "/data/streams/liko/2026_06_26_11_13_29/录制-1713548468-20260626-111329-303-小播一会儿.cover.jpg",
+    "highlights": "/data/streams/liko/2026_06_26_11_13_29/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_06_26_11_13_29/录制-1713548468-20260626-111329-303-小播一会儿_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_26_11_13_29/录制-1713548468-20260626-111329-303-小播一会儿_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_06_26_11_13_29/录制-1713548468-20260625-215840-584-小播一会儿_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_06_26_11_13_29/录制-1713548468-20260625-215840-584-小播一会儿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_25_21_58_40",
     "title": "小播一会儿",
     "date": "2026-06-25",

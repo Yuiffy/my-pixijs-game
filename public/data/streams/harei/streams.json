@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_27_00_04_35",
+    "title": "今天要八个小时吗^^",
+    "date": "2026-06-26",
+    "time": "00:04:35",
+    "startTime": "00:04",
+    "endTime": "02:05",
+    "duration": 7305,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_27_00_04_35/录制-1820703922-20260627-000435-880-今天要八个小时吗^^.xml",
+    "cover": "/data/streams/harei/2026_06_27_00_04_35/录制-1820703922-20260627-000435-880-今天要八个小时吗^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_27_00_04_35/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_27_00_04_35/录制-1820703922-20260627-000435-880-今天要八个小时吗^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_27_00_04_35/录制-1820703922-20260627-000435-880-今天要八个小时吗^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_18_30_56",
+    "title": "今天要八个小时吗^^",
+    "date": "2026-06-26",
+    "time": "18:30:56",
+    "startTime": "18:30",
+    "endTime": "00:00",
+    "duration": 19834,
+    "durationStr": "5.5 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_26_18_30_56/录制-1820703922-20260626-183056-115-今天要八个小时吗^^.xml",
+    "cover": "/data/streams/harei/2026_06_26_18_30_56/录制-1820703922-20260626-183056-115-今天要八个小时吗^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_26_18_30_56/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_26_18_30_56/录制-1820703922-20260626-183056-115-今天要八个小时吗^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_26_18_30_56/录制-1820703922-20260626-183056-115-今天要八个小时吗^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_06_26_18_30_56/录制-1820703922-20260625-215836-024-唱唱歌聊聊天^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_26_18_30_56/录制-1820703922-20260625-215836-024-唱唱歌聊聊天^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_25_21_58_36",
     "title": "唱唱歌聊聊天^^",
     "date": "2026-06-25",

@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_06_26_23_16_37",
+    "title": "晚上好喵",
+    "date": "2026-06-26",
+    "time": "23:16:37",
+    "startTime": "23:16",
+    "endTime": "00:02",
+    "duration": 2784,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_26_23_16_37/录制-24872476-20260626-231637-045-晚上好喵_merged.xml",
+    "cover": "/data/streams/nightin/2026_06_26_23_16_37/录制-24872476-20260626-231637-045-晚上好喵.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_26_23_16_37/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_26_23_16_37/录制-24872476-20260626-231637-045-晚上好喵_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_21_46_54",
+    "title": "晚上好喵",
+    "date": "2026-06-26",
+    "time": "21:46:54",
+    "startTime": "21:46",
+    "endTime": "23:09",
+    "duration": 5035,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_26_21_46_54/录制-24872476-20260626-214654-367-晚上好喵_merged.xml",
+    "cover": "/data/streams/nightin/2026_06_26_21_46_54/录制-24872476-20260626-214654-367-晚上好喵.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_26_21_46_54/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_26_21_46_54/录制-24872476-20260626-214654-367-晚上好喵_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_26_21_46_54/录制-24872476-20260626-214654-367-晚上好喵_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_21_04_55",
+    "title": "晚上好喵",
+    "date": "2026-06-26",
+    "time": "21:04:55",
+    "startTime": "21:04",
+    "endTime": "21:41",
+    "duration": 2278,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_26_21_04_55/录制-24872476-20260626-210455-614-晚上好喵_merged.xml",
+    "cover": "/data/streams/nightin/2026_06_26_21_04_55/录制-24872476-20260626-210455-614-晚上好喵.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_26_21_04_55/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_26_21_04_55/录制-24872476-20260626-210455-614-晚上好喵_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_14_10_17",
+    "title": "【新衣】6月最后一个周五！",
+    "date": "2026-06-26",
+    "time": "14:10:17",
+    "startTime": "14:10",
+    "endTime": "17:05",
+    "duration": 10536,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_26_14_10_17/录制-24872476-20260626-141017-155-【新衣】6月最后一个周五！.xml",
+    "cover": "/data/streams/nightin/2026_06_26_14_10_17/录制-24872476-20260626-141017-155-【新衣】6月最后一个周五！.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_26_14_10_17/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_26_14_10_17/录制-24872476-20260626-141017-155-【新衣】6月最后一个周五！_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_26_14_10_17/录制-24872476-20260626-141017-155-【新衣】6月最后一个周五！_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_06_26_14_10_17/录制-24872476-20260625-215853-741-【新衣】小唱_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_25_21_58_53",
     "title": "【新衣】小唱",
     "date": "2026-06-25",

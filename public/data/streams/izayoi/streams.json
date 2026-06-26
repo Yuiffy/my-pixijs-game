@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_26_21_34_43",
+    "title": "在干嘛….",
+    "date": "2026-06-26",
+    "time": "21:34:43",
+    "startTime": "21:34",
+    "endTime": "23:39",
+    "duration": 7522,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_26_21_34_43/录制-1741667419-20260626-213443-063-在干嘛…..xml",
+    "cover": "/data/streams/izayoi/2026_06_26_21_34_43/录制-1741667419-20260626-213443-063-在干嘛…..cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_26_21_34_43/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_26_21_34_43/录制-1741667419-20260626-213443-063-在干嘛…._COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_26_21_34_43/录制-1741667419-20260626-213443-063-在干嘛…._SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_08_58_40",
+    "title": "早茶第七十天。",
+    "date": "2026-06-26",
+    "time": "08:58:40",
+    "startTime": "08:58",
+    "endTime": "11:36",
+    "duration": 9494,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_06_26_08_58_40/录制-1741667419-20260626-085840-936-早茶第七十天。.xml",
+    "cover": "/data/streams/izayoi/2026_06_26_08_58_40/录制-1741667419-20260626-085840-936-早茶第七十天。.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_06_26_08_58_40/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_06_26_08_58_40/录制-1741667419-20260626-085840-936-早茶第七十天。_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_06_26_08_58_40/录制-1741667419-20260625-215841-004-浣熊耕地!_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_06_26_08_58_40/录制-1741667419-20260625-215841-004-浣熊耕地!_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_25_21_58_41",
     "title": "浣熊耕地!",
     "date": "2026-06-25",

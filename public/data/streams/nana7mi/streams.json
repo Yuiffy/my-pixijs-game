@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_06_26_22_02_17",
+    "title": "啊哇",
+    "date": "2026-06-26",
+    "time": "22:02:17",
+    "startTime": "22:02",
+    "endTime": "00:38",
+    "duration": 9393,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_06_26_22_02_17/录制-21452505-20260626-220217-035-啊哇.xml",
+    "cover": "/data/streams/nana7mi/2026_06_26_22_02_17/录制-21452505-20260626-220217-035-啊哇.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_06_26_22_02_17/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_06_26_22_02_17/录制-21452505-20260626-220217-035-啊哇_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_06_26_22_02_17/录制-21452505-20260626-220217-035-啊哇_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_22_21_56_47",
     "title": "偷一晚上呀哟",
     "date": "2026-06-22",

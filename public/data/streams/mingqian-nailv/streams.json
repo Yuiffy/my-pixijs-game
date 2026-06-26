@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_26_19_56_47",
+    "title": "尝尝咸淡0.0",
+    "date": "2026-06-26",
+    "time": "19:56:47",
+    "startTime": "19:56",
+    "endTime": "01:05",
+    "duration": 18589,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_06_26_19_56_47/录制-25034104-20260626-195647-770-尝尝咸淡0.0.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_06_26_19_56_47/录制-25034104-20260626-195647-770-尝尝咸淡0.0.cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_06_26_19_56_47/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_06_26_19_56_47/录制-25034104-20260626-195647-770-尝尝咸淡0.0_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_06_26_19_56_47/录制-25034104-20260626-195647-770-尝尝咸淡0.0_SCREENSHOTS.jpg",
+      "/data/streams/mingqian-nailv/2026_06_26_19_56_47/录制-25034104-20260625-215851-506-活！_merged_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_06_26_19_56_47/录制-25034104-20260625-215851-506-活！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_25_21_58_51",
     "title": "活！",
     "date": "2026-06-25",

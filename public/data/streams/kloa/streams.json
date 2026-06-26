@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_06_26_21_26_27",
+    "title": "汤沐日～",
+    "date": "2026-06-26",
+    "time": "21:26:27",
+    "startTime": "21:26",
+    "endTime": "00:04",
+    "duration": 9510,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_26_21_26_27/录制-1986461465-20260626-212627-560-汤沐日～_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_26_21_26_27/录制-1986461465-20260626-212627-560-汤沐日～.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_26_21_26_27/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_26_21_26_27/录制-1986461465-20260626-212627-560-汤沐日～_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_26_21_26_27/录制-1986461465-20260626-212627-560-汤沐日～_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_21_06_15",
+    "title": "汤沐日～",
+    "date": "2026-06-26",
+    "time": "21:06:15",
+    "startTime": "21:06",
+    "endTime": "21:12",
+    "duration": 375,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_26_21_06_15/录制-1986461465-20260626-210615-495-汤沐日～.xml",
+    "cover": "/data/streams/kloa/2026_06_26_21_06_15/录制-1986461465-20260626-210615-495-汤沐日～.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_26_21_06_15/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_26_21_06_15/录制-1986461465-20260626-210615-495-汤沐日～_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_10_04_43",
+    "title": "汤沐日～",
+    "date": "2026-06-26",
+    "time": "10:04:43",
+    "startTime": "10:04",
+    "endTime": "13:11",
+    "duration": 11229,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_26_10_04_43/录制-1986461465-20260626-100443-943-早安杂谈~.xml",
+    "cover": "/data/streams/kloa/2026_06_26_10_04_43/录制-1986461465-20260626-100443-943-早安杂谈~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_26_10_04_43/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_26_10_04_43/录制-1986461465-20260626-100443-943-早安杂谈~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_26_10_04_43/录制-1986461465-20260626-100443-943-早安杂谈~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_26_10_04_43/录制-1986461465-20260626-002239-076-唱歌歌~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_26_10_04_43/录制-1986461465-20260626-002239-076-唱歌歌~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_26_00_22_39",
     "title": "唱歌歌~",
     "date": "2026-06-25",

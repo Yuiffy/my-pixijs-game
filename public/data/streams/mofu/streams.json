@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_26_22_37_49",
+    "title": "【3D麦】宝宝你的煮面好舒服",
+    "date": "2026-06-26",
+    "time": "22:37:49",
+    "startTime": "22:37",
+    "endTime": "00:15",
+    "duration": 5920,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_26_22_37_49/录制-1791260716-20260626-223749-983-【3D麦】宝宝你的煮面好舒服.xml",
+    "cover": "/data/streams/mofu/2026_06_26_22_37_49/录制-1791260716-20260626-223749-983-【3D麦】宝宝你的煮面好舒服.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_26_22_37_49/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_26_22_37_49/录制-1791260716-20260626-223749-983-【3D麦】宝宝你的煮面好舒服_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_26_22_37_49/录制-1791260716-20260626-223749-983-【3D麦】宝宝你的煮面好舒服_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_12_10_48",
+    "title": "中午好汪！",
+    "date": "2026-06-26",
+    "time": "12:10:48",
+    "startTime": "12:10",
+    "endTime": "15:24",
+    "duration": 11649,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_26_12_10_48/录制-1791260716-20260626-121048-614-中午好汪！.xml",
+    "cover": "/data/streams/mofu/2026_06_26_12_10_48/录制-1791260716-20260626-121048-614-中午好汪！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_26_12_10_48/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_26_12_10_48/录制-1791260716-20260626-121048-614-中午好汪！_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_06_26_12_10_48/录制-1791260716-20260624-210705-463-好多人一起玩超级变色龙_merged_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_26_12_10_48/录制-1791260716-20260624-210705-463-好多人一起玩超级变色龙_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_24_21_07_05",
     "title": "好多人一起玩超级变色龙",
     "date": "2026-06-24",

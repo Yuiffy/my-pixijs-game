@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_26_20_16_41",
+    "title": "随便聊聊",
+    "date": "2026-06-26",
+    "time": "20:16:41",
+    "startTime": "20:16",
+    "endTime": "22:15",
+    "duration": 7154,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_26_20_16_41/录制-1713546334-20260626-201641-557-随便聊聊.xml",
+    "cover": "/data/streams/hazel/2026_06_26_20_16_41/录制-1713546334-20260626-201641-557-随便聊聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_26_20_16_41/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_26_20_16_41/录制-1713546334-20260626-201641-557-随便聊聊_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_26_20_16_41/录制-1713546334-20260625-215839-063-悠闲夜晚【动物迷城】_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_26_20_16_41/录制-1713546334-20260625-215839-063-悠闲夜晚【动物迷城】_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_25_21_58_39",
     "title": "悠闲夜晚【动物迷城】",
     "date": "2026-06-25",

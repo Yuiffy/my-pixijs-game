@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_26_21_07_38",
+    "title": "周五的歌杂",
+    "date": "2026-06-26",
+    "time": "21:07:38",
+    "startTime": "21:07",
+    "endTime": "02:24",
+    "duration": 19033,
+    "durationStr": "5.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_26_21_07_38/录制-31368705-20260626-210738-805-周五的歌杂_merged.xml",
+    "cover": "/data/streams/nagisa/2026_06_26_21_07_38/录制-31368705-20260626-210738-805-周五的歌杂.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_26_21_07_38/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_26_21_07_38/录制-31368705-20260626-210738-805-周五的歌杂_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_26_21_07_38/录制-31368705-20260626-210738-805-周五的歌杂_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_26_08_10_35",
+    "title": "早安司机",
+    "date": "2026-06-26",
+    "time": "08:10:35",
+    "startTime": "08:10",
+    "endTime": "11:36",
+    "duration": 12384,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_26_08_10_35/录制-31368705-20260626-081035-873-早安司机.xml",
+    "cover": "/data/streams/nagisa/2026_06_26_08_10_35/录制-31368705-20260626-081035-873-早安司机.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_26_08_10_35/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_26_08_10_35/录制-31368705-20260626-081035-873-早安司机_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_26_08_10_35/录制-31368705-20260626-081035-873-早安司机_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_06_26_08_10_35/录制-31368705-20260624-222128-730-「黎明」当人_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_24_22_21_28",
     "title": "「黎明」当人",
     "date": "2026-06-24",
