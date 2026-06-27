@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_27_21_39_15",
+    "title": "定好行程「黎明」当人",
+    "date": "2026-06-27",
+    "time": "21:39:15",
+    "startTime": "21:39",
+    "endTime": "02:19",
+    "duration": 16801,
+    "durationStr": "4.7 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_27_21_39_15/录制-31368705-20260627-213915-169-定好行程「黎明」当人_merged.xml",
+    "cover": "/data/streams/nagisa/2026_06_27_21_39_15/录制-31368705-20260627-213915-169-定好行程「黎明」当人.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_27_21_39_15/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_27_21_39_15/录制-31368705-20260627-213915-169-定好行程「黎明」当人_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_27_21_39_15/录制-31368705-20260627-213915-169-定好行程「黎明」当人_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_27_15_04_40",
+    "title": "周六练练歌",
+    "date": "2026-06-27",
+    "time": "15:04:40",
+    "startTime": "15:04",
+    "endTime": "20:06",
+    "duration": 18167,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_27_15_04_40/录制-31368705-20260627-150440-665-周六练练歌.xml",
+    "cover": "/data/streams/nagisa/2026_06_27_15_04_40/录制-31368705-20260627-150440-665-周六练练歌.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_27_15_04_40/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_27_15_04_40/录制-31368705-20260627-150440-665-周六练练歌_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_06_27_15_04_40/录制-31368705-20260626-210738-805-周五的歌杂_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_27_15_04_40/录制-31368705-20260626-210738-805-周五的歌杂_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_26_21_07_38",
     "title": "周五的歌杂",
     "date": "2026-06-26",

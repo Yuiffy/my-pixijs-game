@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_06_28_00_39_48",
+    "title": "晚香好！",
+    "date": "2026-06-27",
+    "time": "00:39:48",
+    "startTime": "00:39",
+    "endTime": "01:07",
+    "duration": 1715,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_28_00_39_48/录制-1791260716-20260628-003948-926-晚香好！.xml",
+    "cover": "/data/streams/mofu/2026_06_28_00_39_48/录制-1791260716-20260628-003948-926-晚香好！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_28_00_39_48/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_28_00_39_48/录制-1791260716-20260628-003948-926-晚香好！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_27_21_04_55",
+    "title": "晚香好！",
+    "date": "2026-06-27",
+    "time": "21:04:55",
+    "startTime": "21:04",
+    "endTime": "00:35",
+    "duration": 12707,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_27_21_04_55/录制-1791260716-20260627-210455-262-晚香好！.xml",
+    "cover": "/data/streams/mofu/2026_06_27_21_04_55/录制-1791260716-20260627-210455-262-晚香好！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_27_21_04_55/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_27_21_04_55/录制-1791260716-20260627-210455-262-晚香好！_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_27_21_04_55/录制-1791260716-20260627-210455-262-晚香好！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_27_12_19_22",
+    "title": "额啊！",
+    "date": "2026-06-27",
+    "time": "12:19:22",
+    "startTime": "12:19",
+    "endTime": "14:58",
+    "duration": 9577,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_06_27_12_19_22/录制-1791260716-20260627-121922-799-额啊！.xml",
+    "cover": "/data/streams/mofu/2026_06_27_12_19_22/录制-1791260716-20260627-121922-799-额啊！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_06_27_12_19_22/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_06_27_12_19_22/录制-1791260716-20260627-121922-799-额啊！_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_27_12_19_22/录制-1791260716-20260627-121922-799-额啊！_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_06_27_12_19_22/录制-1791260716-20260626-223749-983-【3D麦】宝宝你的煮面好舒服_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_06_27_12_19_22/录制-1791260716-20260626-223749-983-【3D麦】宝宝你的煮面好舒服_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_26_22_37_49",
     "title": "【3D麦】宝宝你的煮面好舒服",
     "date": "2026-06-26",

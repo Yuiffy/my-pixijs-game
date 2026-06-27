@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_27_17_12_21",
+    "title": "老大你怎么开播了",
+    "date": "2026-06-27",
+    "time": "17:12:21",
+    "startTime": "17:12",
+    "endTime": "20:27",
+    "duration": 11757,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/michiya/2026_06_27_17_12_21/录制-27628030-20260627-171221-109-老大你怎么开播了_merged.xml",
+    "cover": "/data/streams/michiya/2026_06_27_17_12_21/录制-27628030-20260627-171221-109-老大你怎么开播了.cover.jpg",
+    "highlights": "/data/streams/michiya/2026_06_27_17_12_21/highlights.md",
+    "images": [
+      "/data/streams/michiya/2026_06_27_17_12_21/录制-27628030-20260627-171221-109-老大你怎么开播了_merged_SCREENSHOTS.jpg",
+      "/data/streams/michiya/2026_06_27_17_12_21/录制-27628030-20260624-212314-250-躲猫猫-我怎么已经成为前辈了_COMIC_FACTORY.png",
+      "/data/streams/michiya/2026_06_27_17_12_21/录制-27628030-20260624-212314-250-躲猫猫-我怎么已经成为前辈了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_24_21_23_14",
     "title": "躲猫猫-我怎么已经成为前辈了",
     "date": "2026-06-24",

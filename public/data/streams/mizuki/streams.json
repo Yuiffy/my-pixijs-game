@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_27_21_04_52",
+    "title": "休闲一下休闲一下⭐",
+    "date": "2026-06-27",
+    "time": "21:04:52",
+    "startTime": "21:04",
+    "endTime": "00:54",
+    "duration": 13858,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_27_21_04_52/录制-30655190-20260627-210452-093-休闲一下休闲一下⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_27_21_04_52/录制-30655190-20260627-210452-093-休闲一下休闲一下⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_27_21_04_52/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_27_21_04_52/录制-30655190-20260627-210452-093-休闲一下休闲一下⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_27_21_04_52/录制-30655190-20260627-210452-093-休闲一下休闲一下⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_27_15_02_19",
+    "title": "听我唱歌放松一下⭐",
+    "date": "2026-06-27",
+    "time": "15:02:19",
+    "startTime": "15:02",
+    "endTime": "18:06",
+    "duration": 11042,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_27_15_02_19/录制-30655190-20260627-150219-055-听我唱歌放松一下⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_27_15_02_19/录制-30655190-20260627-150219-055-听我唱歌放松一下⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_27_15_02_19/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_27_15_02_19/录制-30655190-20260627-150219-055-听我唱歌放松一下⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_27_15_02_19/录制-30655190-20260627-150219-055-听我唱歌放松一下⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_06_27_15_02_19/录制-30655190-20260626-210231-651-雀魂水友回！⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_27_15_02_19/录制-30655190-20260626-210231-651-雀魂水友回！⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_26_21_02_31",
     "title": "雀魂水友回！⭐",
     "date": "2026-06-26",

@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_27_23_54_57",
+    "title": "你先不要着急",
+    "date": "2026-06-27",
+    "time": "23:54:57",
+    "startTime": "23:54",
+    "endTime": "00:28",
+    "duration": 2087,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_27_23_54_57/录制-23260993-20260627-235457-897-你先不要着急_merged.xml",
+    "cover": "/data/streams/rhea/2026_06_27_23_54_57/录制-23260993-20260627-235457-897-你先不要着急.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_27_23_54_57/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_27_23_54_57/录制-23260993-20260627-235457-897-你先不要着急_merged_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_06_27_23_54_57/录制-23260993-20260626-213942-426-歌杂不是不唱歌吗？_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_27_23_54_57/录制-23260993-20260626-213942-426-歌杂不是不唱歌吗？_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_26_21_39_42",
     "title": "歌杂不是不唱歌吗？",
     "date": "2026-06-26",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_27_20_16_58",
+    "title": "【新衣】线上签名会",
+    "date": "2026-06-27",
+    "time": "20:16:58",
+    "startTime": "20:16",
+    "endTime": "21:42",
+    "duration": 5166,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_27_20_16_58/录制-24872476-20260627-201658-845-【新衣】线上签名会.xml",
+    "cover": "/data/streams/nightin/2026_06_27_20_16_58/录制-24872476-20260627-201658-845-【新衣】线上签名会.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_27_20_16_58/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_27_20_16_58/录制-24872476-20260627-201658-845-【新衣】线上签名会_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_27_20_16_58/录制-24872476-20260627-201658-845-【新衣】线上签名会_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_27_14_03_31",
+    "title": "【新衣】推歌回",
+    "date": "2026-06-27",
+    "time": "14:03:31",
+    "startTime": "14:03",
+    "endTime": "16:59",
+    "duration": 10613,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_27_14_03_31/录制-24872476-20260627-140331-268-【新衣】推歌回.xml",
+    "cover": "/data/streams/nightin/2026_06_27_14_03_31/录制-24872476-20260627-140331-268-【新衣】推歌回.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_27_14_03_31/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_27_14_03_31/录制-24872476-20260627-140331-268-【新衣】推歌回_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_27_14_03_31/录制-24872476-20260627-140331-268-【新衣】推歌回_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_06_27_14_03_31/录制-24872476-20260626-214654-367-晚上好喵_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_27_14_03_31/录制-24872476-20260626-231637-045-晚上好喵_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_26_23_16_37",
     "title": "晚上好喵",
     "date": "2026-06-26",

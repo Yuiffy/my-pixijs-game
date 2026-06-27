@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_27_20_02_46",
+    "title": "纯路人看会比赛",
+    "date": "2026-06-27",
+    "time": "20:02:46",
+    "startTime": "20:02",
+    "endTime": "23:05",
+    "duration": 11009,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_27_20_02_46/录制-1713546334-20260627-200246-356-纯路人看会比赛.xml",
+    "cover": "/data/streams/hazel/2026_06_27_20_02_46/录制-1713546334-20260627-200246-356-纯路人看会比赛.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_27_20_02_46/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_27_20_02_46/录制-1713546334-20260627-200246-356-纯路人看会比赛_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_27_20_02_46/录制-1713546334-20260627-200246-356-纯路人看会比赛_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_27_20_02_46/录制-1713546334-20260626-201641-557-随便聊聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_26_20_16_41",
     "title": "随便聊聊",
     "date": "2026-06-26",

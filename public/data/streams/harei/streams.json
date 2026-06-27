@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_06_28_00_01_43",
+    "title": "小鼠来咯^^",
+    "date": "2026-06-27",
+    "time": "00:01:43",
+    "startTime": "00:01",
+    "endTime": "02:00",
+    "duration": 7184,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_28_00_01_43/录制-1820703922-20260628-000143-028-小鼠来咯^^.xml",
+    "cover": "/data/streams/harei/2026_06_28_00_01_43/录制-1820703922-20260628-000143-028-小鼠来咯^^.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_27_20_18_38",
+    "title": "小鼠来咯^^",
+    "date": "2026-06-27",
+    "time": "20:18:38",
+    "startTime": "20:18",
+    "endTime": "00:00",
+    "duration": 13330,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_27_20_18_38/录制-1820703922-20260627-201838-828-小鼠来咯^^_merged.xml",
+    "cover": "/data/streams/harei/2026_06_27_20_18_38/录制-1820703922-20260627-201838-828-小鼠来咯^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_27_20_18_38/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_27_20_18_38/录制-1820703922-20260627-201838-828-小鼠来咯^^_merged_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_27_20_18_38/录制-1820703922-20260627-201838-828-小鼠来咯^^_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_27_19_32_41",
+    "title": "洗一下薯角2^^",
+    "date": "2026-06-27",
+    "time": "19:32:41",
+    "startTime": "19:32",
+    "endTime": "19:33",
+    "duration": 102,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_27_19_32_41/录制-1820703922-20260627-193241-052-洗一下薯角2^^.xml",
+    "cover": "/data/streams/harei/2026_06_27_19_32_41/录制-1820703922-20260627-193241-052-洗一下薯角2^^.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_27_17_51_08",
+    "title": "洗一下薯角^^",
+    "date": "2026-06-27",
+    "time": "17:51:08",
+    "startTime": "17:51",
+    "endTime": "19:30",
+    "duration": 5980,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_27_17_51_08/录制-1820703922-20260627-175108-117-洗一下薯角^^_merged.xml",
+    "cover": "/data/streams/harei/2026_06_27_17_51_08/录制-1820703922-20260627-175108-117-洗一下薯角^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_27_17_51_08/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_27_17_51_08/录制-1820703922-20260627-175108-117-洗一下薯角^^_merged_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_27_17_51_08/录制-1820703922-20260627-175108-117-洗一下薯角^^_merged_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_06_27_17_51_08/录制-1820703922-20260626-183056-115-今天要八个小时吗^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_27_17_51_08/录制-1820703922-20260627-000435-880-今天要八个小时吗^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_27_17_51_08/录制-1820703922-20260627-000435-880-今天要八个小时吗^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_27_00_04_35",
     "title": "今天要八个小时吗^^",
     "date": "2026-06-26",
