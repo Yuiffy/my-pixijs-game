@@ -1,5 +1,73 @@
 [
   {
+    "id": "2026_06_28_20_06_03",
+    "title": "师徒杯训练赛！",
+    "date": "2026-06-28",
+    "time": "20:06:03",
+    "startTime": "20:06",
+    "endTime": "01:50",
+    "duration": 20677,
+    "durationStr": "5.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_28_20_06_03/录制-1967216004-20260628-200603-604-师徒杯训练赛！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_28_20_06_03/录制-1967216004-20260628-200603-604-师徒杯训练赛！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_28_20_06_03/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_28_20_06_03/录制-1967216004-20260628-200603-604-师徒杯训练赛！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_28_20_06_03/录制-1967216004-20260628-200603-604-师徒杯训练赛！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_28_19_04_58",
+    "title": "师徒杯训练赛！",
+    "date": "2026-06-28",
+    "time": "19:04:58",
+    "startTime": "19:04",
+    "endTime": "20:02",
+    "duration": 3525,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_28_19_04_58/录制-1967216004-20260628-190458-366-师徒杯训练赛！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_28_19_04_58/录制-1967216004-20260628-190458-366-师徒杯训练赛！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_28_18_54_36",
+    "title": "师徒杯训练赛！",
+    "date": "2026-06-28",
+    "time": "18:54:36",
+    "startTime": "18:54",
+    "endTime": "19:04",
+    "duration": 604,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_28_18_54_36/录制-1967216004-20260628-185436-041-师徒杯训练赛！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_28_18_54_36/录制-1967216004-20260628-185436-041-师徒杯训练赛！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_06_28_15_04_51",
+    "title": "嘟嘟下午台！",
+    "date": "2026-06-28",
+    "time": "15:04:51",
+    "startTime": "15:04",
+    "endTime": "17:10",
+    "duration": 7572,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_28_15_04_51/录制-1967216004-20260628-150451-717-嘟嘟下午台！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_28_15_04_51/录制-1967216004-20260628-150451-717-嘟嘟下午台！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_28_15_04_51/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_28_15_04_51/录制-1967216004-20260628-150451-717-嘟嘟下午台！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_28_15_04_51/录制-1967216004-20260628-150451-717-嘟嘟下午台！_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_06_28_15_04_51/录制-1967216004-20260627-185813-220-师徒杯选人大会！！！_merged_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_28_15_04_51/录制-1967216004-20260627-185813-220-师徒杯选人大会！！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_27_18_58_13",
     "title": "师徒杯选人大会！！！",
     "date": "2026-06-27",

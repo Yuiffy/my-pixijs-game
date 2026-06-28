@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_28_20_06_03",
+    "title": "鸣潮一下2.7^^",
+    "date": "2026-06-28",
+    "time": "20:06:03",
+    "startTime": "20:06",
+    "endTime": "23:31",
+    "duration": 12321,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_28_20_06_03/录制-1820703922-20260628-200603-313-鸣潮一下2.7^^.xml",
+    "cover": "/data/streams/harei/2026_06_28_20_06_03/录制-1820703922-20260628-200603-313-鸣潮一下2.7^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_28_20_06_03/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_28_20_06_03/录制-1820703922-20260628-200603-313-鸣潮一下2.7^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_28_20_06_03/录制-1820703922-20260628-200603-313-鸣潮一下2.7^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_28_14_04_46",
+    "title": "潮一下2.7^^",
+    "date": "2026-06-28",
+    "time": "14:04:46",
+    "startTime": "14:04",
+    "endTime": "20:03",
+    "duration": 21558,
+    "durationStr": "6.0 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_28_14_04_46/录制-1820703922-20260628-140446-603-潮一下2.7^^.xml",
+    "cover": "/data/streams/harei/2026_06_28_14_04_46/录制-1820703922-20260628-140446-603-潮一下2.7^^.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/harei/2026_06_28_14_04_46/录制-1820703922-20260627-201838-828-小鼠来咯^^_merged_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_28_14_04_46/录制-1820703922-20260627-201838-828-小鼠来咯^^_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_28_00_01_43",
     "title": "小鼠来咯^^",
     "date": "2026-06-27",

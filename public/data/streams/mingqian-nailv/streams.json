@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_28_20_06_17",
+    "title": "来了0.0",
+    "date": "2026-06-28",
+    "time": "20:06:17",
+    "startTime": "20:06",
+    "endTime": "00:18",
+    "duration": 15135,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_06_28_20_06_17/录制-25034104-20260628-200617-594-来了0.0.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_06_28_20_06_17/录制-25034104-20260628-200617-594-来了0.0.cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_06_28_20_06_17/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_06_28_20_06_17/录制-25034104-20260628-200617-594-来了0.0_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_06_28_20_06_17/录制-25034104-20260628-200617-594-来了0.0_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_28_18_59_04",
+    "title": "来了0.0",
+    "date": "2026-06-28",
+    "time": "18:59:04",
+    "startTime": "18:59",
+    "endTime": "20:03",
+    "duration": 3897,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_06_28_18_59_04/录制-25034104-20260628-185904-414-来了0.0.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_06_28_18_59_04/录制-25034104-20260628-185904-414-来了0.0.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mingqian-nailv/2026_06_28_18_59_04/录制-25034104-20260627-185858-523-看看你的与众不同0.0_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_06_28_18_59_04/录制-25034104-20260627-185858-523-看看你的与众不同0.0_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_27_18_58_58",
     "title": "看看你的与众不同0.0",
     "date": "2026-06-27",

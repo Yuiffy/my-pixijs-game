@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_28_21_19_11",
+    "title": "「薛定谔的电话」第一回",
+    "date": "2026-06-28",
+    "time": "21:19:11",
+    "startTime": "21:19",
+    "endTime": "00:35",
+    "duration": 11792,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_28_21_19_11/录制-31368705-20260628-211911-163-「薛定谔的电话」第一回.xml",
+    "cover": "/data/streams/nagisa/2026_06_28_21_19_11/录制-31368705-20260628-211911-163-「薛定谔的电话」第一回.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_28_21_19_11/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_28_21_19_11/录制-31368705-20260628-211911-163-「薛定谔的电话」第一回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_28_15_07_47",
+    "title": "「地平线6」训练车技",
+    "date": "2026-06-28",
+    "time": "15:07:47",
+    "startTime": "15:07",
+    "endTime": "18:15",
+    "duration": 11333,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_28_15_07_47/录制-31368705-20260628-150747-009-「地平线6」训练车技.xml",
+    "cover": "/data/streams/nagisa/2026_06_28_15_07_47/录制-31368705-20260628-150747-009-「地平线6」训练车技.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_28_15_07_47/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_28_15_07_47/录制-31368705-20260628-150747-009-「地平线6」训练车技_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_28_15_07_47/录制-31368705-20260628-150747-009-「地平线6」训练车技_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_06_28_15_07_47/录制-31368705-20260627-213915-169-定好行程「黎明」当人_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_28_15_07_47/录制-31368705-20260627-213915-169-定好行程「黎明」当人_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_27_21_39_15",
     "title": "定好行程「黎明」当人",
     "date": "2026-06-27",

@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_28_20_06_01",
+    "title": "晚上好",
+    "date": "2026-06-28",
+    "time": "20:06:01",
+    "startTime": "20:06",
+    "endTime": "00:28",
+    "duration": 15729,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_28_20_06_01/录制-1713546334-20260628-200601-593-晚上好_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_28_20_06_01/录制-1713546334-20260628-200601-593-晚上好.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_28_20_06_01/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_28_20_06_01/录制-1713546334-20260628-200601-593-晚上好_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_28_20_06_01/录制-1713546334-20260628-200601-593-晚上好_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_28_19_38_47",
+    "title": "晚上好",
+    "date": "2026-06-28",
+    "time": "19:38:47",
+    "startTime": "19:38",
+    "endTime": "20:03",
+    "duration": 1519,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_28_19_38_47/录制-1713546334-20260628-193847-347-晚上好.xml",
+    "cover": "/data/streams/hazel/2026_06_28_19_38_47/录制-1713546334-20260628-193847-347-晚上好.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_06_28_19_38_47/录制-1713546334-20260627-200246-356-纯路人看会比赛_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_28_19_38_47/录制-1713546334-20260627-200246-356-纯路人看会比赛_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_27_20_02_46",
     "title": "纯路人看会比赛",
     "date": "2026-06-27",
