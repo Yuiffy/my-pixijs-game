@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_29_23_49_01",
+    "title": "栞栞家中女子夜话！",
+    "date": "2026-06-29",
+    "time": "23:49:01",
+    "startTime": "23:49",
+    "endTime": "01:37",
+    "duration": 6511,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_29_23_49_01/录制-1986461465-20260629-234901-365-栞栞家中女子夜话！.xml",
+    "cover": "/data/streams/kloa/2026_06_29_23_49_01/录制-1986461465-20260629-234901-365-栞栞家中女子夜话！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_29_23_49_01/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_29_23_49_01/录制-1986461465-20260629-234901-365-栞栞家中女子夜话！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_29_11_04_20",
+    "title": "早安～早餐+化妆中",
+    "date": "2026-06-29",
+    "time": "11:04:20",
+    "startTime": "11:04",
+    "endTime": "12:09",
+    "duration": 3940,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_06_29_11_04_20/录制-1986461465-20260629-110420-947-早安～早餐+化妆中_merged.xml",
+    "cover": "/data/streams/kloa/2026_06_29_11_04_20/录制-1986461465-20260629-110420-947-早安～早餐+化妆中.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_06_29_11_04_20/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_06_29_11_04_20/录制-1986461465-20260629-110420-947-早安～早餐+化妆中_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_29_11_04_20/录制-1986461465-20260629-110420-947-早安～早餐+化妆中_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_06_29_11_04_20/录制-1986461465-20260628-090851-208-早安歌杂~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_06_29_11_04_20/录制-1986461465-20260628-090851-208-早安歌杂~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_28_09_08_51",
     "title": "早安歌杂~",
     "date": "2026-06-28",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_29_22_34_34",
+    "title": "【新衣】突如其来的联动躲猫猫",
+    "date": "2026-06-29",
+    "time": "22:34:34",
+    "startTime": "22:34",
+    "endTime": "23:50",
+    "duration": 4560,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_29_22_34_34/录制-24872476-20260629-223434-229-【新衣】突如其来的联动躲猫猫.xml",
+    "cover": "/data/streams/nightin/2026_06_29_22_34_34/录制-24872476-20260629-223434-229-【新衣】突如其来的联动躲猫猫.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_29_22_34_34/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_29_22_34_34/录制-24872476-20260629-223434-229-【新衣】突如其来的联动躲猫猫_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_29_22_34_34/录制-24872476-20260629-223434-229-【新衣】突如其来的联动躲猫猫_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_29_14_02_12",
+    "title": "【新衣】高雅的视频鉴赏",
+    "date": "2026-06-29",
+    "time": "14:02:12",
+    "startTime": "14:02",
+    "endTime": "17:39",
+    "duration": 13068,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_06_29_14_02_12/录制-24872476-20260629-140212-760-【新衣】高雅的视频鉴赏.xml",
+    "cover": "/data/streams/nightin/2026_06_29_14_02_12/录制-24872476-20260629-140212-760-【新衣】高雅的视频鉴赏.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_06_29_14_02_12/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_06_29_14_02_12/录制-24872476-20260629-140212-760-【新衣】高雅的视频鉴赏_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_29_14_02_12/录制-24872476-20260629-140212-760-【新衣】高雅的视频鉴赏_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_06_29_14_02_12/录制-24872476-20260628-140500-000-【新衣】新衣活动最后3天~_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_06_29_14_02_12/录制-24872476-20260628-140500-000-【新衣】新衣活动最后3天~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_28_14_05_00",
     "title": "【新衣】新衣活动最后3天~",
     "date": "2026-06-28",

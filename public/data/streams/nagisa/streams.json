@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_06_29_21_13_15",
+    "title": "周一的歌杂",
+    "date": "2026-06-29",
+    "time": "21:13:15",
+    "startTime": "21:13",
+    "endTime": "01:19",
+    "duration": 14811,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_29_21_13_15/录制-31368705-20260629-211315-658-周一的歌杂.xml",
+    "cover": "/data/streams/nagisa/2026_06_29_21_13_15/录制-31368705-20260629-211315-658-周一的歌杂.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_29_21_13_15/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_29_21_13_15/录制-31368705-20260629-211315-658-周一的歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_29_08_06_36",
+    "title": "早安一会儿",
+    "date": "2026-06-29",
+    "time": "08:06:36",
+    "startTime": "08:06",
+    "endTime": "10:13",
+    "duration": 7626,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_29_08_06_36/录制-31368705-20260629-080636-840-早安一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_06_29_08_06_36/录制-31368705-20260629-080636-840-早安一会儿.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_29_08_06_36/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_29_08_06_36/录制-31368705-20260629-080636-840-早安一会儿_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_29_08_06_36/录制-31368705-20260629-080636-840-早安一会儿_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_06_29_08_06_36/录制-31368705-20260628-211911-163-「薛定谔的电话」第一回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_28_21_19_11",
     "title": "「薛定谔的电话」第一回",
     "date": "2026-06-28",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_29_21_02_32",
+    "title": "小鼠来小鼠来^^",
+    "date": "2026-06-29",
+    "time": "21:02:32",
+    "startTime": "21:02",
+    "endTime": "00:27",
+    "duration": 12343,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_29_21_02_32/录制-1820703922-20260629-210232-972-小鼠来小鼠来^^.xml",
+    "cover": "/data/streams/harei/2026_06_29_21_02_32/录制-1820703922-20260629-210232-972-小鼠来小鼠来^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_29_21_02_32/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_29_21_02_32/录制-1820703922-20260629-210232-972-小鼠来小鼠来^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_29_21_02_32/录制-1820703922-20260629-210232-972-小鼠来小鼠来^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_29_14_05_51",
+    "title": "小鼠KPI倒数第二天^^",
+    "date": "2026-06-29",
+    "time": "14:05:51",
+    "startTime": "14:05",
+    "endTime": "17:46",
+    "duration": 13300,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_29_14_05_51/录制-1820703922-20260629-140551-010-小鼠KPI倒数第二天^^.xml",
+    "cover": "/data/streams/harei/2026_06_29_14_05_51/录制-1820703922-20260629-140551-010-小鼠KPI倒数第二天^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_29_14_05_51/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_29_14_05_51/录制-1820703922-20260629-140551-010-小鼠KPI倒数第二天^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_29_14_05_51/录制-1820703922-20260629-140551-010-小鼠KPI倒数第二天^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_06_29_14_05_51/录制-1820703922-20260628-200603-313-鸣潮一下2.7^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_29_14_05_51/录制-1820703922-20260628-200603-313-鸣潮一下2.7^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_28_20_06_03",
     "title": "鸣潮一下2.7^^",
     "date": "2026-06-28",

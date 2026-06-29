@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_29_22_11_20",
+    "title": "备战师徒杯！！",
+    "date": "2026-06-29",
+    "time": "22:11:20",
+    "startTime": "22:11",
+    "endTime": "01:10",
+    "duration": 10780,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_29_22_11_20/录制-1967216004-20260629-221120-688-备战师徒杯！！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_29_22_11_20/录制-1967216004-20260629-221120-688-备战师徒杯！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_29_22_11_20/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_29_22_11_20/录制-1967216004-20260629-221120-688-备战师徒杯！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_29_22_11_20/录制-1967216004-20260629-221120-688-备战师徒杯！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_29_16_05_00",
+    "title": "备战师徒杯！！",
+    "date": "2026-06-29",
+    "time": "16:05:00",
+    "startTime": "16:05",
+    "endTime": "22:08",
+    "duration": 21789,
+    "durationStr": "6.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_06_29_16_05_00/录制-1967216004-20260629-160500-350-备战师徒杯！！.xml",
+    "cover": "/data/streams/mitsuri/2026_06_29_16_05_00/录制-1967216004-20260629-160500-350-备战师徒杯！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_06_29_16_05_00/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_06_29_16_05_00/录制-1967216004-20260629-160500-350-备战师徒杯！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_29_16_05_00/录制-1967216004-20260629-160500-350-备战师徒杯！！_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_06_29_16_05_00/录制-1967216004-20260628-200603-604-师徒杯训练赛！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_06_29_16_05_00/录制-1967216004-20260628-200603-604-师徒杯训练赛！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_28_20_06_03",
     "title": "师徒杯训练赛！",
     "date": "2026-06-28",
