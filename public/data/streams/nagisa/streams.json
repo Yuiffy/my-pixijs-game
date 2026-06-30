@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_06_30_21_48_44",
+    "title": "六月再见",
+    "date": "2026-06-30",
+    "time": "21:48:44",
+    "startTime": "21:48",
+    "endTime": "02:28",
+    "duration": 16837,
+    "durationStr": "4.7 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_30_21_48_44/录制-31368705-20260630-214844-485-六月再见_merged.xml",
+    "cover": "/data/streams/nagisa/2026_06_30_21_48_44/录制-31368705-20260630-214844-485-六月再见.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_30_21_48_44/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_30_21_48_44/录制-31368705-20260630-214844-485-六月再见_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_30_21_48_44/录制-31368705-20260630-214844-485-六月再见_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_30_20_36_36",
+    "title": "「BOMBANANA」with 岁栞",
+    "date": "2026-06-30",
+    "time": "20:36:36",
+    "startTime": "20:36",
+    "endTime": "21:43",
+    "duration": 4063,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_30_20_36_36/录制-31368705-20260630-203636-012-「BOMBANANA」with 岁栞.xml",
+    "cover": "/data/streams/nagisa/2026_06_30_20_36_36/录制-31368705-20260630-203636-012-「BOMBANANA」with 岁栞.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_30_20_36_36/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_30_20_36_36/录制-31368705-20260630-203636-012-「BOMBANANA」with 岁栞_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_30_20_36_36/录制-31368705-20260630-203636-012-「BOMBANANA」with 岁栞_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_30_08_06_07",
+    "title": "早安一会儿",
+    "date": "2026-06-30",
+    "time": "08:06:07",
+    "startTime": "08:06",
+    "endTime": "10:22",
+    "duration": 8191,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_06_30_08_06_07/录制-31368705-20260630-080607-561-早安一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_06_30_08_06_07/录制-31368705-20260630-080607-561-早安一会儿.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_06_30_08_06_07/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_06_30_08_06_07/录制-31368705-20260630-080607-561-早安一会儿_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_06_30_08_06_07/录制-31368705-20260630-080607-561-早安一会儿_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_06_30_08_06_07/录制-31368705-20260629-211315-658-周一的歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_29_21_13_15",
     "title": "周一的歌杂",
     "date": "2026-06-29",

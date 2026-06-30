@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_06_30_19_59_25",
+    "title": "来了0.0",
+    "date": "2026-06-30",
+    "time": "19:59:25",
+    "startTime": "19:59",
+    "endTime": "01:11",
+    "duration": 18738,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_06_30_19_59_25/录制-25034104-20260630-195925-214-来了0.0.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_06_30_19_59_25/录制-25034104-20260630-195925-214-来了0.0.cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_06_30_19_59_25/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_06_30_19_59_25/录制-25034104-20260630-195925-214-来了0.0_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_06_30_19_59_25/录制-25034104-20260630-195925-214-来了0.0_SCREENSHOTS.jpg",
+      "/data/streams/mingqian-nailv/2026_06_30_19_59_25/录制-25034104-20260628-200617-594-来了0.0_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_06_30_19_59_25/录制-25034104-20260628-200617-594-来了0.0_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_28_20_06_17",
     "title": "来了0.0",
     "date": "2026-06-28",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_06_30_21_05_10",
+    "title": "小鼠Kpi达成^^",
+    "date": "2026-06-30",
+    "time": "21:05:10",
+    "startTime": "21:05",
+    "endTime": "01:38",
+    "duration": 16433,
+    "durationStr": "4.6 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_30_21_05_10/录制-1820703922-20260630-210510-935-小鼠Kpi达成^^_merged.xml",
+    "cover": "/data/streams/harei/2026_06_30_21_05_10/录制-1820703922-20260630-210510-935-小鼠Kpi达成^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_30_21_05_10/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_30_21_05_10/录制-1820703922-20260630-210510-935-小鼠Kpi达成^^_merged_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_30_21_05_10/录制-1820703922-20260630-210510-935-小鼠Kpi达成^^_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_30_15_06_53",
+    "title": "小鼠Kpi最后一天^^",
+    "date": "2026-06-30",
+    "time": "15:06:53",
+    "startTime": "15:06",
+    "endTime": "17:38",
+    "duration": 9169,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_06_30_15_06_53/录制-1820703922-20260630-150653-534-小鼠Kpi最后一天^^.xml",
+    "cover": "/data/streams/harei/2026_06_30_15_06_53/录制-1820703922-20260630-150653-534-小鼠Kpi最后一天^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_06_30_15_06_53/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_06_30_15_06_53/录制-1820703922-20260630-150653-534-小鼠Kpi最后一天^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_30_15_06_53/录制-1820703922-20260630-150653-534-小鼠Kpi最后一天^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_06_30_15_06_53/录制-1820703922-20260629-210232-972-小鼠来小鼠来^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_06_30_15_06_53/录制-1820703922-20260629-210232-972-小鼠来小鼠来^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_29_21_02_32",
     "title": "小鼠来小鼠来^^",
     "date": "2026-06-29",

@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_30_21_09_01",
+    "title": "夏天又要来了",
+    "date": "2026-06-30",
+    "time": "21:09:01",
+    "startTime": "21:09",
+    "endTime": "02:02",
+    "duration": 17588,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_30_21_09_01/录制-23260993-20260630-210901-430-夏天又要来了.xml",
+    "cover": "/data/streams/rhea/2026_06_30_21_09_01/录制-23260993-20260630-210901-430-夏天又要来了.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_30_21_09_01/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_30_21_09_01/录制-23260993-20260630-210901-430-夏天又要来了_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_30_21_09_01/录制-23260993-20260630-210901-430-夏天又要来了_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_30_20_37_08",
+    "title": "夏天要来了",
+    "date": "2026-06-30",
+    "time": "20:37:08",
+    "startTime": "20:37",
+    "endTime": "20:51",
+    "duration": 891,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_06_30_20_37_08/录制-23260993-20260630-203708-172-夏天要来了.xml",
+    "cover": "/data/streams/rhea/2026_06_30_20_37_08/录制-23260993-20260630-203708-172-夏天要来了.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_06_30_20_37_08/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_06_30_20_37_08/录制-23260993-20260630-203708-172-夏天要来了_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_06_30_20_37_08/录制-23260993-20260629-205325-947-恍如隔世_merged_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_06_30_20_37_08/录制-23260993-20260630-013308-101-？_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_01_33_08",
     "title": "？",
     "date": "2026-06-29",

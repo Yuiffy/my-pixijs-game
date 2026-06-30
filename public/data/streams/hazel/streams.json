@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_06_30_23_05_21",
+    "title": "夜间电台",
+    "date": "2026-06-30",
+    "time": "23:05:21",
+    "startTime": "23:05",
+    "endTime": "00:03",
+    "duration": 3536,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_06_30_23_05_21/录制-1713546334-20260630-230521-324-夜间电台_merged.xml",
+    "cover": "/data/streams/hazel/2026_06_30_23_05_21/录制-1713546334-20260630-230521-324-夜间电台.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_06_30_23_05_21/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_06_30_23_05_21/录制-1713546334-20260630-230521-324-夜间电台_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_06_30_23_05_21/录制-1713546334-20260629-221053-288-晚上好_merged_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_06_30_23_05_21/录制-1713546334-20260629-221053-288-晚上好_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_29_22_10_53",
     "title": "晚上好",
     "date": "2026-06-29",

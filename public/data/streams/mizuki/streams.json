@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_06_30_21_03_18",
+    "title": "温馨小家虚度⭐",
+    "date": "2026-06-30",
+    "time": "21:03:18",
+    "startTime": "21:03",
+    "endTime": "00:37",
+    "duration": 12851,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_30_21_03_18/录制-30655190-20260630-210318-241-温馨小家虚度⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_30_21_03_18/录制-30655190-20260630-210318-241-温馨小家虚度⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_30_21_03_18/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_30_21_03_18/录制-30655190-20260630-210318-241-温馨小家虚度⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_30_21_03_18/录制-30655190-20260630-210318-241-温馨小家虚度⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_06_30_15_03_20",
+    "title": "来可爱唱歌吧！⭐",
+    "date": "2026-06-30",
+    "time": "15:03:20",
+    "startTime": "15:03",
+    "endTime": "18:09",
+    "duration": 11214,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_06_30_15_03_20/录制-30655190-20260630-150320-401-来可爱唱歌吧！⭐.xml",
+    "cover": "/data/streams/mizuki/2026_06_30_15_03_20/录制-30655190-20260630-150320-401-来可爱唱歌吧！⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_06_30_15_03_20/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_06_30_15_03_20/录制-30655190-20260630-150320-401-来可爱唱歌吧！⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_06_30_15_03_20/录制-30655190-20260630-150320-401-来可爱唱歌吧！⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_06_30_15_03_20/录制-30655190-20260629-222111-399-晕乎乎地来了..⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_29_22_21_11",
     "title": "晕乎乎地来了..⭐",
     "date": "2026-06-29",
