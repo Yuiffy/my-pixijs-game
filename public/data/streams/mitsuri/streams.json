@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_01_20_34_45",
+    "title": "师徒杯！凝聚！",
+    "date": "2026-07-01",
+    "time": "20:34:45",
+    "startTime": "20:34",
+    "endTime": "21:45",
+    "duration": 4293,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_01_20_34_45/录制-1967216004-20260701-203445-675-师徒杯！凝聚！_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_07_01_20_34_45/录制-1967216004-20260701-203445-675-师徒杯！凝聚！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_01_20_34_45/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_01_20_34_45/录制-1967216004-20260701-203445-675-师徒杯！凝聚！_merged_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_01_20_34_45/录制-1967216004-20260701-203445-675-师徒杯！凝聚！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_01_14_35_53",
+    "title": "师徒杯！凝聚！",
+    "date": "2026-07-01",
+    "time": "14:35:53",
+    "startTime": "14:35",
+    "endTime": "20:33",
+    "duration": 21529,
+    "durationStr": "6.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_01_14_35_53/录制-1967216004-20260701-143553-845-师徒杯！凝聚！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_01_14_35_53/录制-1967216004-20260701-143553-845-师徒杯！凝聚！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_01_14_35_53/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_01_14_35_53/录制-1967216004-20260701-143553-845-师徒杯！凝聚！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_01_14_35_53/录制-1967216004-20260701-143553-845-师徒杯！凝聚！_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_07_01_14_35_53/录制-1967216004-20260630-160314-130-备战师徒杯！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_16_03_14",
     "title": "备战师徒杯！！",
     "date": "2026-06-30",

@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_01_22_36_24",
+    "title": "【3D麦】睡觉觉",
+    "date": "2026-07-01",
+    "time": "22:36:24",
+    "startTime": "22:36",
+    "endTime": "00:31",
+    "duration": 6947,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_01_22_36_24/录制-1791260716-20260701-223624-418-【3D麦】睡觉觉.xml",
+    "cover": "/data/streams/mofu/2026_07_01_22_36_24/录制-1791260716-20260701-223624-418-【3D麦】睡觉觉.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_01_22_36_24/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_01_22_36_24/录制-1791260716-20260701-223624-418-【3D麦】睡觉觉_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_01_22_36_24/录制-1791260716-20260701-223624-418-【3D麦】睡觉觉_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_01_12_06_24",
+    "title": "中午是小狗的早上呀",
+    "date": "2026-07-01",
+    "time": "12:06:24",
+    "startTime": "12:06",
+    "endTime": "15:18",
+    "duration": 11551,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_01_12_06_24/录制-1791260716-20260701-120624-108-中午是小狗的早上呀.xml",
+    "cover": "/data/streams/mofu/2026_07_01_12_06_24/录制-1791260716-20260701-120624-108-中午是小狗的早上呀.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_01_12_06_24/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_01_12_06_24/录制-1791260716-20260701-120624-108-中午是小狗的早上呀_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_07_01_12_06_24/录制-1791260716-20260630-210827-677-267纳凉特辑_merged_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_01_12_06_24/录制-1791260716-20260630-210827-677-267纳凉特辑_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_21_08_27",
     "title": "267纳凉特辑",
     "date": "2026-06-30",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_02_00_27_18",
+    "title": "277惊天内斗！一决雌雌！",
+    "date": "2026-07-01",
+    "time": "00:27:18",
+    "startTime": "00:27",
+    "endTime": "01:35",
+    "duration": 4114,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_02_00_27_18/录制-1986461465-20260702-002718-363-277惊天内斗！一决雌雌！.xml",
+    "cover": "/data/streams/kloa/2026_07_02_00_27_18/录制-1986461465-20260702-002718-363-277惊天内斗！一决雌雌！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_02_00_27_18/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_02_00_27_18/录制-1986461465-20260702-002718-363-277惊天内斗！一决雌雌！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_02_00_27_18/录制-1986461465-20260702-002718-363-277惊天内斗！一决雌雌！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_01_10_17_17",
+    "title": "早安歌杂~",
+    "date": "2026-07-01",
+    "time": "10:17:17",
+    "startTime": "10:17",
+    "endTime": "12:43",
+    "duration": 8815,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_01_10_17_17/录制-1986461465-20260701-101717-031-早安歌杂~_merged.xml",
+    "cover": "/data/streams/kloa/2026_07_01_10_17_17/录制-1986461465-20260701-101717-031-早安歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_01_10_17_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_01_10_17_17/录制-1986461465-20260701-101717-031-早安歌杂~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_01_10_17_17/录制-1986461465-20260701-101717-031-早安歌杂~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_01_10_17_17/录制-1986461465-20260630-105223-256-栞栞家中女子早台！_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_01_10_17_17/录制-1986461465-20260630-105223-256-栞栞家中女子早台！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_10_52_23",
     "title": "栞栞家中女子早台！",
     "date": "2026-06-30",

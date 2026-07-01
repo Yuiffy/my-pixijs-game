@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_01_11_47_42",
+    "title": "困困困困",
+    "date": "2026-07-01",
+    "time": "11:47:42",
+    "startTime": "11:47",
+    "endTime": "12:43",
+    "duration": 3400,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_01_11_47_42/录制-1741667419-20260701-114742-469-困困困困_merged.xml",
+    "cover": "/data/streams/izayoi/2026_07_01_11_47_42/录制-1741667419-20260701-114742-469-困困困困.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_01_11_47_42/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_01_11_47_42/录制-1741667419-20260701-114742-469-困困困困_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_01_10_05_13",
+    "title": "困困困困",
+    "date": "2026-07-01",
+    "time": "10:05:13",
+    "startTime": "10:05",
+    "endTime": "11:45",
+    "duration": 6026,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_01_10_05_13/录制-1741667419-20260701-100513-867-困困困困.xml",
+    "cover": "/data/streams/izayoi/2026_07_01_10_05_13/录制-1741667419-20260701-100513-867-困困困困.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_01_10_05_13/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_01_10_05_13/录制-1741667419-20260701-100513-867-困困困困_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_01_10_05_13/录制-1741667419-20260701-100513-867-困困困困_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_01_10_05_13/录制-1741667419-20260630-103529-330-早哦_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_10_35_29",
     "title": "早哦",
     "date": "2026-06-30",

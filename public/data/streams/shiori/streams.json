@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026_07_01_23_22_34",
+    "title": "小播一会QAQ",
+    "date": "2026-07-01",
+    "time": "23:22:34",
+    "startTime": "23:22",
+    "endTime": "00:36",
+    "duration": 4493,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_01_23_22_34/录制-26966466-20260701-232234-208-小播一会QAQ.xml",
+    "cover": "/data/streams/shiori/2026_07_01_23_22_34/录制-26966466-20260701-232234-208-小播一会QAQ.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_01_23_22_34/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_01_23_22_34/录制-26966466-20260701-232234-208-小播一会QAQ_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_01_23_22_34/录制-26966466-20260701-232234-208-小播一会QAQ_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_01_10_04_20",
+    "title": "早安獭獭栞！",
+    "date": "2026-07-01",
+    "time": "10:04:20",
+    "startTime": "10:04",
+    "endTime": "12:13",
+    "duration": 7759,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_01_10_04_20/录制-26966466-20260701-100420-877-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_07_01_10_04_20/录制-26966466-20260701-100420-877-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_01_10_04_20/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_01_10_04_20/录制-26966466-20260701-100420-877-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_01_10_04_20/录制-26966466-20260701-100420-877-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_07_01_10_04_20/录制-26966466-20260630-200000-000-米栞岁banana！_bilibili_replay_merged_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_01_10_04_20/录制-26966466-20260630-200000-000-米栞岁banana！_bilibili_replay_merged_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_07_01_10_04_20/录制-26966466-20260630-100554-315-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_10_05_54",
     "title": "早安獭獭栞！",
     "date": "2026-06-30",
