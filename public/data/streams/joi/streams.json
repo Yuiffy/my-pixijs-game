@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_02_21_07_11",
+    "title": "喇叭之城！",
+    "date": "2026-07-02",
+    "time": "21:07:11",
+    "startTime": "21:07",
+    "endTime": "01:27",
+    "duration": 15619,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_07_02_21_07_11/录制-21484828-20260702-210711-360-喇叭之城！.xml",
+    "cover": "/data/streams/joi/2026_07_02_21_07_11/录制-21484828-20260702-210711-360-喇叭之城！.cover.jpg",
+    "highlights": "/data/streams/joi/2026_07_02_21_07_11/highlights.md",
+    "images": [
+      "/data/streams/joi/2026_07_02_21_07_11/录制-21484828-20260702-210711-360-喇叭之城！_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_02_21_07_11/录制-21484828-20260702-210711-360-喇叭之城！_SCREENSHOTS.jpg",
+      "/data/streams/joi/2026_07_02_21_07_11/录制-21484828-20260630-210021-057-节奏天国试玩版~_merged_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_02_21_07_11/录制-21484828-20260630-210021-057-节奏天国试玩版~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_21_00_21",
     "title": "节奏天国试玩版~",
     "date": "2026-06-30",

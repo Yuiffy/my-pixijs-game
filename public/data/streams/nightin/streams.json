@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_02_21_58_45",
+    "title": "粥一会",
+    "date": "2026-07-02",
+    "time": "21:58:45",
+    "startTime": "21:58",
+    "endTime": "00:36",
+    "duration": 9494,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_02_21_58_45/录制-24872476-20260702-215845-851-粥一会.xml",
+    "cover": "/data/streams/nightin/2026_07_02_21_58_45/录制-24872476-20260702-215845-851-粥一会.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_02_19_59_10",
+    "title": "【联动拆弹】露塔N来也！",
+    "date": "2026-07-02",
+    "time": "19:59:10",
+    "startTime": "19:59",
+    "endTime": "21:57",
+    "duration": 7136,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_02_19_59_10/录制-24872476-20260702-195910-100-【联动拆弹】露塔N来也！.xml",
+    "cover": "/data/streams/nightin/2026_07_02_19_59_10/录制-24872476-20260702-195910-100-【联动拆弹】露塔N来也！.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_02_19_59_10/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_02_19_59_10/录制-24872476-20260702-195910-100-【联动拆弹】露塔N来也！_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_02_19_59_10/录制-24872476-20260702-195910-100-【联动拆弹】露塔N来也！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_02_14_03_11",
+    "title": "【新衣】7月的N2",
+    "date": "2026-07-02",
+    "time": "14:03:11",
+    "startTime": "14:03",
+    "endTime": "16:24",
+    "duration": 8485,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_02_14_03_11/录制-24872476-20260702-140311-496-【新衣】7月的N2.xml",
+    "cover": "/data/streams/nightin/2026_07_02_14_03_11/录制-24872476-20260702-140311-496-【新衣】7月的N2.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_02_14_03_11/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_02_14_03_11/录制-24872476-20260702-140311-496-【新衣】7月的N2_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_02_14_03_11/录制-24872476-20260702-140311-496-【新衣】7月的N2_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_02_14_03_11/录制-24872476-20260630-202044-518-【新衣活动】最后的4小时_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_02_14_03_11/录制-24872476-20260630-202044-518-【新衣活动】最后的4小时_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_20_20_44",
     "title": "【新衣活动】最后的4小时",
     "date": "2026-06-30",

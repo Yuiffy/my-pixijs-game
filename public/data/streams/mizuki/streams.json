@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_02_21_04_50",
+    "title": "歌杂咕噜咕噜⭐",
+    "date": "2026-07-02",
+    "time": "21:04:50",
+    "startTime": "21:04",
+    "endTime": "00:44",
+    "duration": 13217,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_02_21_04_50/录制-30655190-20260702-210450-548-晚上咕噜咕噜⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_02_21_04_50/录制-30655190-20260702-210450-548-晚上咕噜咕噜⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_02_21_04_50/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_02_21_04_50/录制-30655190-20260702-210450-548-晚上咕噜咕噜⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_02_21_04_50/录制-30655190-20260702-210450-548-晚上咕噜咕噜⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_02_16_33_18",
+    "title": "咕噜咕噜咕噜⭐",
+    "date": "2026-07-02",
+    "time": "16:33:18",
+    "startTime": "16:33",
+    "endTime": "18:21",
+    "duration": 6515,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_02_16_33_18/录制-30655190-20260702-163318-423-咕噜咕噜咕噜⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_02_16_33_18/录制-30655190-20260702-163318-423-咕噜咕噜咕噜⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_02_16_33_18/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_02_16_33_18/录制-30655190-20260702-163318-423-咕噜咕噜咕噜⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_02_16_33_18/录制-30655190-20260702-163318-423-咕噜咕噜咕噜⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_02_16_33_18/录制-30655190-20260701-211627-733-昏昏沉沉来了虚度⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_02_16_33_18/录制-30655190-20260701-211627-733-昏昏沉沉来了虚度⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_01_21_16_27",
     "title": "昏昏沉沉来了虚度⭐",
     "date": "2026-07-01",

@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_07_03_00_46_53",
+    "title": "「节奏天国 奇迹之星」初见",
+    "date": "2026-07-02",
+    "time": "00:46:53",
+    "startTime": "00:46",
+    "endTime": "01:10",
+    "duration": 1443,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_03_00_46_53/录制-31368705-20260703-004653-823-「节奏天国 奇迹之星」初见.xml",
+    "cover": "/data/streams/nagisa/2026_07_03_00_46_53/录制-31368705-20260703-004653-823-「节奏天国 奇迹之星」初见.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_02_21_12_52",
+    "title": "「节奏天国 奇迹之星」初见",
+    "date": "2026-07-02",
+    "time": "21:12:52",
+    "startTime": "21:12",
+    "endTime": "00:44",
+    "duration": 12721,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_02_21_12_52/录制-31368705-20260702-211252-861-「节奏天国 奇迹之星」初见.xml",
+    "cover": "/data/streams/nagisa/2026_07_02_21_12_52/录制-31368705-20260702-211252-861-「节奏天国 奇迹之星」初见.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_02_21_12_52/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_02_21_12_52/录制-31368705-20260702-211252-861-「节奏天国 奇迹之星」初见_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_02_21_12_52/录制-31368705-20260702-211252-861-「节奏天国 奇迹之星」初见_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_02_08_06_14",
+    "title": "早歌一会儿",
+    "date": "2026-07-02",
+    "time": "08:06:14",
+    "startTime": "08:06",
+    "endTime": "11:48",
+    "duration": 13359,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_02_08_06_14/录制-31368705-20260702-080614-619-早歌一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_07_02_08_06_14/录制-31368705-20260702-080614-619-早歌一会儿.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_02_08_06_14/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_02_08_06_14/录制-31368705-20260702-080614-619-早歌一会儿_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_02_08_06_14/录制-31368705-20260702-080614-619-早歌一会儿_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_02_08_06_14/录制-31368705-20260630-203636-012-「BOMBANANA」with 岁栞_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_02_08_06_14/录制-31368705-20260630-214844-485-六月再见_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_02_08_06_14/录制-31368705-20260630-214844-485-六月再见_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_21_48_44",
     "title": "六月再见",
     "date": "2026-06-30",

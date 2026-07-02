@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_07_03_01_05_44",
+    "title": "边聊边玩",
+    "date": "2026-07-02",
+    "time": "01:05:44",
+    "startTime": "01:05",
+    "endTime": "01:30",
+    "duration": 1511,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_03_01_05_44/录制-1713546334-20260703-010544-798-边聊边玩.xml",
+    "cover": "/data/streams/hazel/2026_07_03_01_05_44/录制-1713546334-20260703-010544-798-边聊边玩.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_03_01_05_44/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_03_01_05_44/录制-1713546334-20260703-010544-798-边聊边玩_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_00_59_33",
+    "title": "边聊边玩",
+    "date": "2026-07-02",
+    "time": "00:59:33",
+    "startTime": "00:59",
+    "endTime": "01:03",
+    "duration": 277,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_03_00_59_33/录制-1713546334-20260703-005933-549-边聊边玩.xml",
+    "cover": "/data/streams/hazel/2026_07_03_00_59_33/录制-1713546334-20260703-005933-549-边聊边玩.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_07_03_00_59_33/录制-1713546334-20260702-200919-315-边聊边玩_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_02_20_09_19",
+    "title": "边聊边玩",
+    "date": "2026-07-02",
+    "time": "20:09:19",
+    "startTime": "20:09",
+    "endTime": "00:59",
+    "duration": 17410,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_02_20_09_19/录制-1713546334-20260702-200919-315-边聊边玩.xml",
+    "cover": "/data/streams/hazel/2026_07_02_20_09_19/录制-1713546334-20260702-200919-315-边聊边玩.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_02_20_09_19/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_02_20_09_19/录制-1713546334-20260702-200919-315-边聊边玩_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_07_02_20_09_19/录制-1713546334-20260630-230521-324-夜间电台_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_23_05_21",
     "title": "夜间电台",
     "date": "2026-06-30",

@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_07_03_01_52_55",
+    "title": "陪陪你这个猪",
+    "date": "2026-07-02",
+    "time": "01:52:55",
+    "startTime": "01:52",
+    "endTime": "01:58",
+    "duration": 379,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_07_03_01_52_55/录制-25788785-20260703-015255-840-陪陪你这个猪.xml",
+    "cover": "/data/streams/sui/2026_07_03_01_52_55/录制-25788785-20260703-015255-840-陪陪你这个猪.cover.jpg",
+    "highlights": "/data/streams/sui/2026_07_03_01_52_55/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_07_03_01_52_55/录制-25788785-20260703-015255-674-陪陪你这个猪_SCREENSHOTS.jpg",
+      "/data/streams/sui/2026_07_03_01_52_55/录制-25788785-20260703-015917-043-陪陪你这个猪_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_01_12_48",
+    "title": "陪陪你这个猪",
+    "date": "2026-07-02",
+    "time": "01:12:48",
+    "startTime": "01:12",
+    "endTime": "01:52",
+    "duration": 2402,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_07_03_01_12_48/录制-25788785-20260703-011248-481-陪陪你这个猪.xml",
+    "cover": "/data/streams/sui/2026_07_03_01_12_48/录制-25788785-20260703-011248-481-陪陪你这个猪.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/sui/2026_07_03_01_12_48/录制-25788785-20260702-201648-560-陪陪你这个猪_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_02_20_16_48",
+    "title": "陪陪你这个猪",
+    "date": "2026-07-02",
+    "time": "20:16:48",
+    "startTime": "20:16",
+    "endTime": "01:11",
+    "duration": 17754,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_07_02_20_16_48/录制-25788785-20260702-201648-560-陪陪你这个猪_merged.xml",
+    "cover": "/data/streams/sui/2026_07_02_20_16_48/录制-25788785-20260702-201648-560-陪陪你这个猪.cover.jpg",
+    "highlights": "/data/streams/sui/2026_07_02_20_16_48/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_07_02_20_16_48/录制-25788785-20260702-201648-560-陪陪你这个猪_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_07_02_20_16_48/录制-25788785-20260701-224809-073-煮煮你这个猪_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_07_02_20_16_48/录制-25788785-20260701-224809-073-煮煮你这个猪_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_01_22_48_09",
     "title": "煮煮你这个猪",
     "date": "2026-07-01",

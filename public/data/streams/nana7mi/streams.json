@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_07_03_03_34_05",
+    "title": "最喜欢的节奏天国",
+    "date": "2026-07-02",
+    "time": "03:34:05",
+    "startTime": "03:34",
+    "endTime": "03:59",
+    "duration": 1529,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_03_03_34_05/录制-21452505-20260703-033405-091-最喜欢的节奏天国.xml",
+    "cover": "/data/streams/nana7mi/2026_07_03_03_34_05/录制-21452505-20260703-033405-091-最喜欢的节奏天国.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nana7mi/2026_07_03_03_34_05/录制-21452505-20260703-004731-612-最喜欢的节奏天国_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_00_47_31",
+    "title": "最喜欢的节奏天国",
+    "date": "2026-07-02",
+    "time": "00:47:31",
+    "startTime": "00:47",
+    "endTime": "03:33",
+    "duration": 9967,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_03_00_47_31/录制-21452505-20260703-004731-612-最喜欢的节奏天国.xml",
+    "cover": "/data/streams/nana7mi/2026_07_03_00_47_31/录制-21452505-20260703-004731-612-最喜欢的节奏天国.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_03_00_47_31/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_03_00_47_31/录制-21452505-20260703-004731-612-最喜欢的节奏天国_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_07_02_19_33_26",
+    "title": "最喜欢的节奏天国",
+    "date": "2026-07-02",
+    "time": "19:33:26",
+    "startTime": "19:33",
+    "endTime": "00:44",
+    "duration": 18676,
+    "durationStr": "5.2 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_02_19_33_26/录制-21452505-20260702-193326-799-最喜欢的节奏天国_merged.xml",
+    "cover": "/data/streams/nana7mi/2026_07_02_19_33_26/录制-21452505-20260702-193326-799-最喜欢的节奏天国.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_02_19_33_26/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_02_19_33_26/录制-21452505-20260702-193326-799-最喜欢的节奏天国_merged_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_02_19_33_26/录制-21452505-20260702-193326-799-最喜欢的节奏天国_merged_SCREENSHOTS.jpg",
+      "/data/streams/nana7mi/2026_07_02_19_33_26/录制-21452505-20260701-223323-688-最喜欢的节奏天国_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_02_19_33_26/录制-21452505-20260701-223323-688-最喜欢的节奏天国_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_01_22_33_23",
     "title": "最喜欢的节奏天国",
     "date": "2026-07-01",
