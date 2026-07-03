@@ -1,5 +1,106 @@
 [
   {
+    "id": "2026_07_03_22_03_32",
+    "title": "师徒杯备赛！！",
+    "date": "2026-07-03",
+    "time": "22:03:32",
+    "startTime": "22:03",
+    "endTime": "00:00",
+    "duration": 7055,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_03_22_03_32/录制-1967216004-20260703-220332-743-师徒杯备赛！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_03_22_03_32/录制-1967216004-20260703-220332-743-师徒杯备赛！！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mitsuri/2026_07_03_22_03_32/录制-1967216004-20260703-201503-408-师徒杯备赛！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_20_15_03",
+    "title": "师徒杯备赛！！",
+    "date": "2026-07-03",
+    "time": "20:15:03",
+    "startTime": "20:15",
+    "endTime": "22:03",
+    "duration": 6503,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_03_20_15_03/录制-1967216004-20260703-201503-408-师徒杯备赛！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_03_20_15_03/录制-1967216004-20260703-201503-408-师徒杯备赛！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_03_20_15_03/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_03_20_15_03/录制-1967216004-20260703-201503-408-师徒杯备赛！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_07_03_16_50_17",
+    "title": "师徒杯开打！",
+    "date": "2026-07-03",
+    "time": "16:50:17",
+    "startTime": "16:50",
+    "endTime": "18:57",
+    "duration": 7674,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_03_16_50_17/录制-1967216004-20260703-165017-350-师徒杯开打！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_03_16_50_17/录制-1967216004-20260703-165017-350-师徒杯开打！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mitsuri/2026_07_03_16_50_17/录制-1967216004-20260703-135845-985-师徒杯开打！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_13_58_45",
+    "title": "师徒杯开打！",
+    "date": "2026-07-03",
+    "time": "13:58:45",
+    "startTime": "13:58",
+    "endTime": "16:49",
+    "duration": 10270,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_03_13_58_45/录制-1967216004-20260703-135845-985-师徒杯开打！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_03_13_58_45/录制-1967216004-20260703-135845-985-师徒杯开打！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_03_13_58_45/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_03_13_58_45/录制-1967216004-20260703-135845-985-师徒杯开打！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_07_03_12_47_38",
+    "title": "师徒杯开打！",
+    "date": "2026-07-03",
+    "time": "12:47:38",
+    "startTime": "12:47",
+    "endTime": "13:54",
+    "duration": 4062,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_03_12_47_38/录制-1967216004-20260703-124738-848-师徒杯开打！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_03_12_47_38/录制-1967216004-20260703-124738-848-师徒杯开打！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_03_12_11_16",
+    "title": "师徒杯开打！",
+    "date": "2026-07-03",
+    "time": "12:11:16",
+    "startTime": "12:11",
+    "endTime": "12:47",
+    "duration": 2180,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_03_12_11_16/录制-1967216004-20260703-121116-767-师徒杯开打！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_03_12_11_16/录制-1967216004-20260703-121116-767-师徒杯开打！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_03_12_11_16/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_03_12_11_16/录制-1967216004-20260703-121116-767-师徒杯开打！_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_07_03_12_11_16/录制-1967216004-20260702-234221-971-师徒杯！凝聚！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_00_14_58",
     "title": "师徒杯！凝聚！",
     "date": "2026-07-02",

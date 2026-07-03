@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_07_04_02_55_44",
+    "title": "晚间歌杂~",
+    "date": "2026-07-03",
+    "time": "02:55:44",
+    "startTime": "02:55",
+    "endTime": "03:16",
+    "duration": 1301,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_04_02_55_44/录制-1986461465-20260704-025544-931-晚间歌杂~.xml",
+    "cover": "/data/streams/kloa/2026_07_04_02_55_44/录制-1986461465-20260704-025544-931-晚间歌杂~.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_07_04_02_55_44/录制-1986461465-20260704-031729-186-晚间歌杂~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_04_02_55_44/录制-1986461465-20260704-025352-936-晚间歌杂~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_01_44_20",
+    "title": "晚间歌杂~",
+    "date": "2026-07-03",
+    "time": "01:44:20",
+    "startTime": "01:44",
+    "endTime": "02:53",
+    "duration": 4170,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_04_01_44_20/录制-1986461465-20260704-014420-959-晚间歌杂~.xml",
+    "cover": "/data/streams/kloa/2026_07_04_01_44_20/录制-1986461465-20260704-014420-959-晚间歌杂~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_03_23_34_17",
+    "title": "晚间歌杂~",
+    "date": "2026-07-03",
+    "time": "23:34:17",
+    "startTime": "23:34",
+    "endTime": "01:42",
+    "duration": 7693,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_03_23_34_17/录制-1986461465-20260703-233417-371-晚间歌杂~_merged.xml",
+    "cover": "/data/streams/kloa/2026_07_03_23_34_17/录制-1986461465-20260703-233417-371-晚间歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_03_23_34_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_03_23_34_17/录制-1986461465-20260703-233417-371-晚间歌杂~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_03_23_34_17/录制-1986461465-20260703-233417-371-晚间歌杂~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_10_08_32",
+    "title": "早安~",
+    "date": "2026-07-03",
+    "time": "10:08:32",
+    "startTime": "10:08",
+    "endTime": "13:18",
+    "duration": 11404,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_03_10_08_32/录制-1986461465-20260703-100832-775-早安~.xml",
+    "cover": "/data/streams/kloa/2026_07_03_10_08_32/录制-1986461465-20260703-100832-775-早安~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_03_10_08_32/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_03_10_08_32/录制-1986461465-20260703-100832-775-早安~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_03_10_08_32/录制-1986461465-20260703-100832-775-早安~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_03_10_08_32/录制-1986461465-20260703-000442-061-歌杂~277海洋馆日谈_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_03_10_08_32/录制-1986461465-20260703-000442-061-歌杂~277海洋馆日谈_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_02_11_06",
     "title": "歌杂~277海洋馆日谈",
     "date": "2026-07-02",

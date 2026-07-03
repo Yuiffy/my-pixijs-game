@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_03_21_11_32",
+    "title": "粥一会",
+    "date": "2026-07-03",
+    "time": "21:11:32",
+    "startTime": "21:11",
+    "endTime": "23:13",
+    "duration": 7320,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_03_21_11_32/录制-24872476-20260703-211132-811-粥一会.xml",
+    "cover": "/data/streams/nightin/2026_07_03_21_11_32/录制-24872476-20260703-211132-811-粥一会.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_03_21_11_32/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_03_21_11_32/录制-24872476-20260703-211132-811-粥一会_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_03_21_11_32/录制-24872476-20260703-211132-811-粥一会_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_15_02_32",
+    "title": "【歌杂】午后兜风",
+    "date": "2026-07-03",
+    "time": "15:02:32",
+    "startTime": "15:02",
+    "endTime": "18:02",
+    "duration": 10822,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_03_15_02_32/录制-24872476-20260703-150232-052-【歌杂】午后兜风.xml",
+    "cover": "/data/streams/nightin/2026_07_03_15_02_32/录制-24872476-20260703-150232-052-【歌杂】午后兜风.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_03_15_02_32/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_03_15_02_32/录制-24872476-20260703-150232-052-【歌杂】午后兜风_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_03_15_02_32/录制-24872476-20260703-150232-052-【歌杂】午后兜风_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_03_15_02_32/录制-24872476-20260702-195910-100-【联动拆弹】露塔N来也！_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_03_15_02_32/录制-24872476-20260702-195910-100-【联动拆弹】露塔N来也！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_02_21_58_45",
     "title": "粥一会",
     "date": "2026-07-02",

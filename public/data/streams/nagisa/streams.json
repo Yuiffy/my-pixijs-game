@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_03_21_10_50",
+    "title": "周五的歌杂",
+    "date": "2026-07-03",
+    "time": "21:10:50",
+    "startTime": "21:10",
+    "endTime": "02:01",
+    "duration": 17490,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_03_21_10_50/录制-31368705-20260703-211050-847-周五的歌杂.xml",
+    "cover": "/data/streams/nagisa/2026_07_03_21_10_50/录制-31368705-20260703-211050-847-周五的歌杂.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nagisa/2026_07_03_21_10_50/录制-31368705-20260703-211050-847-周五的歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_08_06_19",
+    "title": "早安司机",
+    "date": "2026-07-03",
+    "time": "08:06:19",
+    "startTime": "08:06",
+    "endTime": "11:11",
+    "duration": 11125,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_03_08_06_19/录制-31368705-20260703-080619-854-早安司机.xml",
+    "cover": "/data/streams/nagisa/2026_07_03_08_06_19/录制-31368705-20260703-080619-854-早安司机.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_03_08_06_19/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_03_08_06_19/录制-31368705-20260703-080619-854-早安司机_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_03_08_06_19/录制-31368705-20260703-080619-854-早安司机_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_03_08_06_19/录制-31368705-20260702-211252-861-「节奏天国 奇迹之星」初见_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_03_08_06_19/录制-31368705-20260702-211252-861-「节奏天国 奇迹之星」初见_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_00_46_53",
     "title": "「节奏天国 奇迹之星」初见",
     "date": "2026-07-02",

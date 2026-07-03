@@ -1,5 +1,92 @@
 [
   {
+    "id": "2026_07_03_20_30_19",
+    "title": "虚度的说(_╹▽╹_)⭐",
+    "date": "2026-07-03",
+    "time": "20:30:19",
+    "startTime": "20:30",
+    "endTime": "00:38",
+    "duration": 14895,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_03_20_30_19/录制-30655190-20260703-203019-669-虚度的说(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_03_20_30_19/录制-30655190-20260703-203019-669-虚度的说(_╹▽╹_)⭐.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mizuki/2026_07_03_20_30_19/录制-30655190-20260703-203002-883-崩铁前瞻！(_╹▽╹_)⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_20_16_42",
+    "title": "崩铁前瞻！(_╹▽╹_)⭐",
+    "date": "2026-07-03",
+    "time": "20:16:42",
+    "startTime": "20:16",
+    "endTime": "20:29",
+    "duration": 796,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_03_20_16_42/录制-30655190-20260703-201642-924-崩铁前瞻！(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_03_20_16_42/录制-30655190-20260703-201642-924-崩铁前瞻！(_╹▽╹_)⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_03_19_26_28",
+    "title": "崩铁前瞻！(_╹▽╹_)⭐",
+    "date": "2026-07-03",
+    "time": "19:26:28",
+    "startTime": "19:26",
+    "endTime": "20:16",
+    "duration": 3011,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_03_19_26_28/录制-30655190-20260703-192628-705-崩铁前瞻！(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_03_19_26_28/录制-30655190-20260703-192628-705-崩铁前瞻！(_╹▽╹_)⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_03_19_26_28/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_03_19_26_28/录制-30655190-20260703-192628-705-崩铁前瞻！(_╹▽╹_)⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_14_41_17",
+    "title": "我是一颗土豆(_╹▽╹_)⭐",
+    "date": "2026-07-03",
+    "time": "14:41:17",
+    "startTime": "14:41",
+    "endTime": "17:11",
+    "duration": 9001,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_03_14_41_17/录制-30655190-20260703-144117-575-我是一颗土豆(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_03_14_41_17/录制-30655190-20260703-144117-575-我是一颗土豆(_╹▽╹_)⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_03_14_41_17/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_03_14_41_17/录制-30655190-20260703-144117-575-我是一颗土豆(_╹▽╹_)⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_03_14_41_17/录制-30655190-20260703-144117-575-我是一颗土豆(_╹▽╹_)⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_10_04_44",
+    "title": "早上好(_╹▽╹_)⭐",
+    "date": "2026-07-03",
+    "time": "10:04:44",
+    "startTime": "10:04",
+    "endTime": "12:05",
+    "duration": 7314,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_03_10_04_44/录制-30655190-20260703-100444-479-早上好(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_03_10_04_44/录制-30655190-20260703-100444-479-早上好(_╹▽╹_)⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_03_10_04_44/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_03_10_04_44/录制-30655190-20260703-100444-479-早上好(_╹▽╹_)⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_03_10_04_44/录制-30655190-20260703-100444-479-早上好(_╹▽╹_)⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_03_10_04_44/录制-30655190-20260702-210450-548-晚上咕噜咕噜⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_03_10_04_44/录制-30655190-20260702-210450-548-晚上咕噜咕噜⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_02_21_04_50",
     "title": "歌杂咕噜咕噜⭐",
     "date": "2026-07-02",

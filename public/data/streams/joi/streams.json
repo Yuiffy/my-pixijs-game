@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_03_21_00_30",
+    "title": "深海迷航之不能玩了因为我晕3d",
+    "date": "2026-07-03",
+    "time": "21:00:30",
+    "startTime": "21:00",
+    "endTime": "23:38",
+    "duration": 9510,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_07_03_21_00_30/录制-21484828-20260703-210030-011-深海迷航之我又有车了_merged.xml",
+    "cover": "/data/streams/joi/2026_07_03_21_00_30/录制-21484828-20260703-210030-011-深海迷航之我又有车了.cover.jpg",
+    "highlights": "/data/streams/joi/2026_07_03_21_00_30/highlights.md",
+    "images": [
+      "/data/streams/joi/2026_07_03_21_00_30/录制-21484828-20260703-210030-011-深海迷航之我又有车了_merged_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_03_21_00_30/录制-21484828-20260703-210030-011-深海迷航之我又有车了_merged_SCREENSHOTS.jpg",
+      "/data/streams/joi/2026_07_03_21_00_30/录制-21484828-20260702-210711-360-喇叭之城！_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_03_21_00_30/录制-21484828-20260702-210711-360-喇叭之城！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_02_21_07_11",
     "title": "喇叭之城！",
     "date": "2026-07-02",

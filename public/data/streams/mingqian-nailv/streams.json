@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_03_20_50_11",
+    "title": "睡……睡过头了……",
+    "date": "2026-07-03",
+    "time": "20:50:11",
+    "startTime": "20:50",
+    "endTime": "22:26",
+    "duration": 5777,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_03_20_50_11/录制-25034104-20260703-205011-182-睡……睡过头了…….xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_03_20_50_11/录制-25034104-20260703-205011-182-睡……睡过头了…….cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_03_20_50_11/录制-25034104-20260703-170446-130-睡……睡过头了……_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_17_04_46",
+    "title": "睡……睡过头了……",
+    "date": "2026-07-03",
+    "time": "17:04:46",
+    "startTime": "17:04",
+    "endTime": "20:49",
+    "duration": 13524,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_03_17_04_46/录制-25034104-20260703-170446-130-睡……睡过头了…….xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_03_17_04_46/录制-25034104-20260703-170446-130-睡……睡过头了…….cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_07_03_17_04_46/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_03_17_04_46/录制-25034104-20260703-170446-130-睡……睡过头了……_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_03_17_04_46/录制-25034104-20260630-195925-214-来了0.0_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_03_17_04_46/录制-25034104-20260630-195925-214-来了0.0_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_06_30_19_59_25",
     "title": "来了0.0",
     "date": "2026-06-30",

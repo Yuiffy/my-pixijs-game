@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_04_01_44_21",
+    "title": "好困好困好困哦",
+    "date": "2026-07-03",
+    "time": "01:44:21",
+    "startTime": "01:44",
+    "endTime": "01:48",
+    "duration": 269,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_04_01_44_21/录制-1741667419-20260704-014421-774-好困好困好困哦.xml",
+    "cover": "/data/streams/izayoi/2026_07_04_01_44_21/录制-1741667419-20260704-014421-774-好困好困好困哦.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_03_23_33_22",
+    "title": "好困好困好困哦",
+    "date": "2026-07-03",
+    "time": "23:33:22",
+    "startTime": "23:33",
+    "endTime": "01:42",
+    "duration": 7766,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_03_23_33_22/录制-1741667419-20260703-233322-752-好困好困好困哦.xml",
+    "cover": "/data/streams/izayoi/2026_07_03_23_33_22/录制-1741667419-20260703-233322-752-好困好困好困哦.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_03_23_33_22/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_03_23_33_22/录制-1741667419-20260703-233322-752-好困好困好困哦_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_03_23_33_22/录制-1741667419-20260703-233322-752-好困好困好困哦_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_15_14_42",
+    "title": "1616我们喜浣你",
+    "date": "2026-07-03",
+    "time": "15:14:42",
+    "startTime": "15:14",
+    "endTime": "16:14",
+    "duration": 3656,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_03_15_14_42/录制-1741667419-20260703-151442-804-1616我们喜浣你.xml",
+    "cover": "/data/streams/izayoi/2026_07_03_15_14_42/录制-1741667419-20260703-151442-804-1616我们喜浣你.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_03_15_14_42/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_03_15_14_42/录制-1741667419-20260703-151442-804-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_03_15_14_42/录制-1741667419-20260703-151442-804-1616我们喜浣你_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_03_15_14_42/录制-1741667419-20260703-000536-359-浣先喝一口_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_03_15_14_42/录制-1741667419-20260703-000536-359-浣先喝一口_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_00_05_36",
     "title": "浣先喝一口",
     "date": "2026-07-02",

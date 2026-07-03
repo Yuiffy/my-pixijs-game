@@ -1,5 +1,73 @@
 [
   {
+    "id": "2026_07_03_21_52_32",
+    "title": "悠闲夜晚",
+    "date": "2026-07-03",
+    "time": "21:52:32",
+    "startTime": "21:52",
+    "endTime": "00:27",
+    "duration": 9349,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_03_21_52_32/录制-1713546334-20260703-215232-026-悠闲夜晚.xml",
+    "cover": "/data/streams/hazel/2026_07_03_21_52_32/录制-1713546334-20260703-215232-026-悠闲夜晚.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_07_03_21_52_32/录制-1713546334-20260703-215215-497-悠闲夜晚_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_21_49_05",
+    "title": "悠闲夜晚",
+    "date": "2026-07-03",
+    "time": "21:49:05",
+    "startTime": "21:49",
+    "endTime": "21:52",
+    "duration": 189,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_03_21_49_05/录制-1713546334-20260703-214905-059-悠闲夜晚.xml",
+    "cover": "/data/streams/hazel/2026_07_03_21_49_05/录制-1713546334-20260703-214905-059-悠闲夜晚.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_07_03_21_49_05/录制-1713546334-20260703-214856-309-悠闲夜晚_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_21_28_09",
+    "title": "悠闲夜晚",
+    "date": "2026-07-03",
+    "time": "21:28:09",
+    "startTime": "21:28",
+    "endTime": "21:48",
+    "duration": 1245,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_03_21_28_09/录制-1713546334-20260703-212809-989-悠闲夜晚.xml",
+    "cover": "/data/streams/hazel/2026_07_03_21_28_09/录制-1713546334-20260703-212809-989-悠闲夜晚.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_03_21_17_41",
+    "title": "悠闲夜晚",
+    "date": "2026-07-03",
+    "time": "21:17:41",
+    "startTime": "21:17",
+    "endTime": "21:27",
+    "duration": 627,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_03_21_17_41/录制-1713546334-20260703-211741-785-悠闲夜晚.xml",
+    "cover": "/data/streams/hazel/2026_07_03_21_17_41/录制-1713546334-20260703-211741-785-悠闲夜晚.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_03_21_17_41/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_03_21_17_41/录制-1713546334-20260703-211741-785-悠闲夜晚_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_07_03_21_17_41/录制-1713546334-20260702-200919-315-边聊边玩_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_07_03_21_17_41/录制-1713546334-20260703-010544-798-边聊边玩_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_01_05_44",
     "title": "边聊边玩",
     "date": "2026-07-02",

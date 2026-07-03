@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_03_21_02_38",
+    "title": "小鼠降临^^",
+    "date": "2026-07-03",
+    "time": "21:02:38",
+    "startTime": "21:02",
+    "endTime": "01:21",
+    "duration": 15588,
+    "durationStr": "4.3 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_03_21_02_38/录制-1820703922-20260703-210238-255-小鼠降临^^.xml",
+    "cover": "/data/streams/harei/2026_07_03_21_02_38/录制-1820703922-20260703-210238-255-小鼠降临^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_03_21_02_38/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_03_21_02_38/录制-1820703922-20260703-210238-255-小鼠降临^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_03_21_02_38/录制-1820703922-20260703-210238-255-小鼠降临^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_15_39_03",
+    "title": "小鼠要干啥^^",
+    "date": "2026-07-03",
+    "time": "15:39:03",
+    "startTime": "15:39",
+    "endTime": "18:10",
+    "duration": 9111,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_03_15_39_03/录制-1820703922-20260703-153903-755-小鼠要干啥^^.xml",
+    "cover": "/data/streams/harei/2026_07_03_15_39_03/录制-1820703922-20260703-153903-755-小鼠要干啥^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_03_15_39_03/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_03_15_39_03/录制-1820703922-20260703-153903-755-小鼠要干啥^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_03_15_39_03/录制-1820703922-20260703-153903-755-小鼠要干啥^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_07_03_15_39_03/录制-1820703922-20260702-200257-474-七月第一只鼠^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_03_15_39_03/录制-1820703922-20260702-200257-474-七月第一只鼠^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_02_20_02_57",
     "title": "七月第一只鼠^^",
     "date": "2026-07-02",

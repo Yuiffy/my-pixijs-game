@@ -1,5 +1,88 @@
 [
   {
+    "id": "2026_07_04_03_57_22",
+    "title": "下棋",
+    "date": "2026-07-03",
+    "time": "03:57:22",
+    "startTime": "03:57",
+    "endTime": "03:59",
+    "duration": 138,
+    "durationStr": "2 分钟",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_04_03_57_22/录制-21452505-20260704-035722-871-下棋.xml",
+    "cover": "/data/streams/nana7mi/2026_07_04_03_57_22/录制-21452505-20260704-035722-871-下棋.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_04_03_06_29",
+    "title": "看新番",
+    "date": "2026-07-03",
+    "time": "03:06:29",
+    "startTime": "03:06",
+    "endTime": "03:53",
+    "duration": 2864,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_04_03_06_29/录制-21452505-20260704-030629-639-看新番.xml",
+    "cover": "/data/streams/nana7mi/2026_07_04_03_06_29/录制-21452505-20260704-030629-639-看新番.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nana7mi/2026_07_04_03_06_29/录制-21452505-20260704-013328-906-我去梦限大_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_01_33_28",
+    "title": "我去梦限大",
+    "date": "2026-07-03",
+    "time": "01:33:28",
+    "startTime": "01:33",
+    "endTime": "03:04",
+    "duration": 5514,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_04_01_33_28/录制-21452505-20260704-013328-906-我去梦限大.xml",
+    "cover": "/data/streams/nana7mi/2026_07_04_01_33_28/录制-21452505-20260704-013328-906-我去梦限大.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_04_01_33_28/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_04_01_33_28/录制-21452505-20260704-013328-906-我去梦限大_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_07_03_23_53_21",
+    "title": "胡闹厨房",
+    "date": "2026-07-03",
+    "time": "23:53:21",
+    "startTime": "23:53",
+    "endTime": "01:30",
+    "duration": 5823,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_03_23_53_21/录制-21452505-20260703-235321-053-胡闹厨房.xml",
+    "cover": "/data/streams/nana7mi/2026_07_03_23_53_21/录制-21452505-20260703-235321-053-胡闹厨房.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_03_23_02_59",
+    "title": "星露谷！",
+    "date": "2026-07-03",
+    "time": "23:02:59",
+    "startTime": "23:02",
+    "endTime": "23:50",
+    "duration": 2911,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_03_23_02_59/录制-21452505-20260703-230259-033-小三群拆弹！.xml",
+    "cover": "/data/streams/nana7mi/2026_07_03_23_02_59/录制-21452505-20260703-230259-033-小三群拆弹！.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_03_23_02_59/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_03_23_02_59/录制-21452505-20260703-230259-033-小三群拆弹！_SCREENSHOTS.jpg",
+      "/data/streams/nana7mi/2026_07_03_23_02_59/录制-21452505-20260703-004731-612-最喜欢的节奏天国_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_03_23_02_59/录制-21452505-20260703-004731-612-最喜欢的节奏天国_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_03_34_05",
     "title": "最喜欢的节奏天国",
     "date": "2026-07-02",

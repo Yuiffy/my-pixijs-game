@@ -1,5 +1,77 @@
 [
   {
+    "id": "2026_07_04_02_03_27",
+    "title": "兔子来咯",
+    "date": "2026-07-03",
+    "time": "02:03:27",
+    "startTime": "02:03",
+    "endTime": "02:31",
+    "duration": 1731,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_04_02_03_27/录制-1713548468-20260704-020327-392-兔子来咯.xml",
+    "cover": "/data/streams/liko/2026_07_04_02_03_27/录制-1713548468-20260704-020327-392-兔子来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_04_02_03_27/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_04_02_03_27/录制-1713548468-20260704-020327-392-兔子来咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_01_46_09",
+    "title": "兔子来咯",
+    "date": "2026-07-03",
+    "time": "01:46:09",
+    "startTime": "01:46",
+    "endTime": "01:58",
+    "duration": 771,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_04_01_46_09/录制-1713548468-20260704-014609-566-兔子来咯.xml",
+    "cover": "/data/streams/liko/2026_07_04_01_46_09/录制-1713548468-20260704-014609-566-兔子来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_04_01_46_09/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_04_01_46_09/录制-1713548468-20260704-014609-566-兔子来咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_23_34_54",
+    "title": "兔子来咯",
+    "date": "2026-07-03",
+    "time": "23:34:54",
+    "startTime": "23:34",
+    "endTime": "01:41",
+    "duration": 7669,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_03_23_34_54/录制-1713548468-20260703-233454-230-兔子来咯_merged.xml",
+    "cover": "/data/streams/liko/2026_07_03_23_34_54/录制-1713548468-20260703-233454-230-兔子来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_03_23_34_54/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_03_23_34_54/录制-1713548468-20260703-233454-230-兔子来咯_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_03_23_34_54/录制-1713548468-20260703-233454-230-兔子来咯_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_03_14_56_21",
+    "title": "兔子来咯",
+    "date": "2026-07-03",
+    "time": "14:56:21",
+    "startTime": "14:56",
+    "endTime": "16:28",
+    "duration": 5565,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_03_14_56_21/录制-1713548468-20260703-145621-306-兔子来咯.xml",
+    "cover": "/data/streams/liko/2026_07_03_14_56_21/录制-1713548468-20260703-145621-306-兔子来咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_03_14_56_21/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_03_14_56_21/录制-1713548468-20260703-145621-306-兔子来咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_03_14_56_21/录制-1713548468-20260703-145621-306-兔子来咯_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_07_03_14_56_21/录制-1713548468-20260703-003144-566-兔子来咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_03_14_56_21/录制-1713548468-20260703-003144-566-兔子来咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_02_04_28",
     "title": "兔子来咯",
     "date": "2026-07-02",
