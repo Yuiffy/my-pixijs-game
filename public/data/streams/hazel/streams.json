@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_07_05_02_00_25",
+    "title": "晚上好",
+    "date": "2026-07-04",
+    "time": "02:00:25",
+    "startTime": "02:00",
+    "endTime": "02:44",
+    "duration": 2699,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_05_02_00_25/录制-1713546334-20260705-020025-287-晚上好.xml",
+    "cover": "/data/streams/hazel/2026_07_05_02_00_25/录制-1713546334-20260705-020025-287-晚上好.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/hazel/2026_07_05_02_00_25/录制-1713546334-20260704-220520-954-晚上好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_22_05_20",
+    "title": "晚上好",
+    "date": "2026-07-04",
+    "time": "22:05:20",
+    "startTime": "22:05",
+    "endTime": "02:00",
+    "duration": 14102,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_04_22_05_20/录制-1713546334-20260704-220520-954-晚上好.xml",
+    "cover": "/data/streams/hazel/2026_07_04_22_05_20/录制-1713546334-20260704-220520-954-晚上好.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_04_22_05_20/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_04_22_05_20/录制-1713546334-20260704-220520-954-晚上好_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_07_04_22_05_20/录制-1713546334-20260703-215215-497-悠闲夜晚_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_21_52_32",
     "title": "悠闲夜晚",
     "date": "2026-07-03",

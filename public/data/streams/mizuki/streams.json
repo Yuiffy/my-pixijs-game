@@ -1,5 +1,74 @@
 [
   {
+    "id": "2026_07_04_23_47_44",
+    "title": "生存确认⭐",
+    "date": "2026-07-04",
+    "time": "23:47:44",
+    "startTime": "23:47",
+    "endTime": "01:24",
+    "duration": 5876,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_04_23_47_44/录制-30655190-20260704-234744-021-生存确认⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_04_23_47_44/录制-30655190-20260704-234744-021-生存确认⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_04_23_47_44/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_04_23_47_44/录制-30655190-20260704-234744-021-生存确认⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_04_23_47_44/录制-30655190-20260704-234744-021-生存确认⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_14_02_23",
+    "title": "唱歌哇(_╹▽╹_)⭐",
+    "date": "2026-07-04",
+    "time": "14:02:23",
+    "startTime": "14:02",
+    "endTime": "16:05",
+    "duration": 7388,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_04_14_02_23/录制-30655190-20260704-140223-726-唱歌哇(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_04_14_02_23/录制-30655190-20260704-140223-726-唱歌哇(_╹▽╹_)⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_04_14_02_23/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_04_14_02_23/录制-30655190-20260704-140223-726-唱歌哇(_╹▽╹_)⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_04_14_02_23/录制-30655190-20260704-140223-726-唱歌哇(_╹▽╹_)⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_10_34_13",
+    "title": "uu们早安(_╹▽╹_)⭐",
+    "date": "2026-07-04",
+    "time": "10:34:13",
+    "startTime": "10:34",
+    "endTime": "12:01",
+    "duration": 5226,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_04_10_34_13/录制-30655190-20260704-103413-608-uu们早安(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_04_10_34_13/录制-30655190-20260704-103413-608-uu们早安(_╹▽╹_)⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_04_10_03_33",
+    "title": "uu们早安(_╹▽╹_)⭐",
+    "date": "2026-07-04",
+    "time": "10:03:33",
+    "startTime": "10:03",
+    "endTime": "10:33",
+    "duration": 1829,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_04_10_03_33/录制-30655190-20260704-100333-025-uu们早安(_╹▽╹_)⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_04_10_03_33/录制-30655190-20260704-100333-025-uu们早安(_╹▽╹_)⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_04_10_03_33/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_04_10_03_33/录制-30655190-20260704-100333-025-uu们早安(_╹▽╹_)⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_04_10_03_33/录制-30655190-20260703-203002-883-崩铁前瞻！(_╹▽╹_)⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_20_30_19",
     "title": "虚度的说(_╹▽╹_)⭐",
     "date": "2026-07-03",

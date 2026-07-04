@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_07_04_20_54_53",
+    "title": "小鼠代抽收藏集^^",
+    "date": "2026-07-04",
+    "time": "20:54:53",
+    "startTime": "20:54",
+    "endTime": "00:39",
+    "duration": 13506,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_04_20_54_53/录制-1820703922-20260704-205453-947-小鼠代抽收藏集^^.xml",
+    "cover": "/data/streams/harei/2026_07_04_20_54_53/录制-1820703922-20260704-205453-947-小鼠代抽收藏集^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_04_20_54_53/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_04_20_54_53/录制-1820703922-20260704-205453-947-小鼠代抽收藏集^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_04_20_54_53/录制-1820703922-20260704-205453-947-小鼠代抽收藏集^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_19_52_01",
+    "title": "小鼠代抽收藏集^^",
+    "date": "2026-07-04",
+    "time": "19:52:01",
+    "startTime": "19:52",
+    "endTime": "20:54",
+    "duration": 3765,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_04_19_52_01/录制-1820703922-20260704-195201-505-小鼠代抽收藏集^^.xml",
+    "cover": "/data/streams/harei/2026_07_04_19_52_01/录制-1820703922-20260704-195201-505-小鼠代抽收藏集^^.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_04_18_59_44",
+    "title": "小鼠代抽收藏集^^",
+    "date": "2026-07-04",
+    "time": "18:59:44",
+    "startTime": "18:59",
+    "endTime": "19:51",
+    "duration": 3135,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_04_18_59_44/录制-1820703922-20260704-185944-631-小鼠代抽收藏集^^.xml",
+    "cover": "/data/streams/harei/2026_07_04_18_59_44/录制-1820703922-20260704-185944-631-小鼠代抽收藏集^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_04_18_59_44/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_04_18_59_44/录制-1820703922-20260704-185944-631-小鼠代抽收藏集^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_07_04_18_59_44/录制-1820703922-20260703-210238-255-小鼠降临^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_04_18_59_44/录制-1820703922-20260703-210238-255-小鼠降临^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_21_02_38",
     "title": "小鼠降临^^",
     "date": "2026-07-03",

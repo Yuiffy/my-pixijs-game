@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_04_19_17_21",
+    "title": "练会-3-",
+    "date": "2026-07-04",
+    "time": "19:17:21",
+    "startTime": "19:17",
+    "endTime": "21:24",
+    "duration": 7645,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/michiya/2026_07_04_19_17_21/录制-27628030-20260704-191721-605-练会-3-.xml",
+    "cover": "/data/streams/michiya/2026_07_04_19_17_21/录制-27628030-20260704-191721-605-练会-3-.cover.jpg",
+    "highlights": "/data/streams/michiya/2026_07_04_19_17_21/highlights.md",
+    "images": [
+      "/data/streams/michiya/2026_07_04_19_17_21/录制-27628030-20260704-191721-605-练会-3-_COMIC_FACTORY.png",
+      "/data/streams/michiya/2026_07_04_19_17_21/录制-27628030-20260704-191721-605-练会-3-_SCREENSHOTS.jpg",
+      "/data/streams/michiya/2026_07_04_19_17_21/录制-27628030-20260702-193705-519-招募萤火虫小推车中_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_02_19_37_05",
     "title": "招募萤火虫小推车中",
     "date": "2026-07-02",

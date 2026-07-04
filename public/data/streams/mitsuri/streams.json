@@ -1,5 +1,91 @@
 [
   {
+    "id": "2026_07_04_21_15_10",
+    "title": "师徒杯团建！！！",
+    "date": "2026-07-04",
+    "time": "21:15:10",
+    "startTime": "21:15",
+    "endTime": "02:32",
+    "duration": 19037,
+    "durationStr": "5.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_04_21_15_10/录制-1967216004-20260704-211510-762-师徒杯团建！！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_04_21_15_10/录制-1967216004-20260704-211510-762-师徒杯团建！！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_04_21_15_10/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_04_21_15_10/录制-1967216004-20260704-211510-762-师徒杯团建！！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_04_21_15_10/录制-1967216004-20260704-211510-762-师徒杯团建！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_19_05_24",
+    "title": "师徒杯冲！！！",
+    "date": "2026-07-04",
+    "time": "19:05:24",
+    "startTime": "19:05",
+    "endTime": "19:13",
+    "duration": 537,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_04_19_05_24/录制-1967216004-20260704-190524-562-师徒杯冲！！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_04_19_05_24/录制-1967216004-20260704-190524-562-师徒杯冲！！！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mitsuri/2026_07_04_19_05_24/录制-1967216004-20260704-161450-266-师徒杯冲！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_16_14_50",
+    "title": "师徒杯冲！！！",
+    "date": "2026-07-04",
+    "time": "16:14:50",
+    "startTime": "16:14",
+    "endTime": "19:02",
+    "duration": 10128,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_04_16_14_50/录制-1967216004-20260704-161450-266-师徒杯冲！！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_04_16_14_50/录制-1967216004-20260704-161450-266-师徒杯冲！！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_04_16_14_50/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_04_16_14_50/录制-1967216004-20260704-161450-266-师徒杯冲！！！_COMIC_FACTORY.png"
+    ]
+  },
+  {
+    "id": "2026_07_04_14_42_02",
+    "title": "师徒杯冲！！！",
+    "date": "2026-07-04",
+    "time": "14:42:02",
+    "startTime": "14:42",
+    "endTime": "16:12",
+    "duration": 5453,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_04_14_42_02/录制-1967216004-20260704-144202-838-师徒杯冲！！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_04_14_42_02/录制-1967216004-20260704-144202-838-师徒杯冲！！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_04_14_36_30",
+    "title": "师徒杯冲！！！",
+    "date": "2026-07-04",
+    "time": "14:36:30",
+    "startTime": "14:36",
+    "endTime": "14:41",
+    "duration": 331,
+    "durationStr": "5 分钟",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_04_14_36_30/录制-1967216004-20260704-143630-337-师徒杯冲！！！_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_07_04_14_36_30/录制-1967216004-20260704-143630-337-师徒杯冲！！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_04_14_36_30/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_04_14_36_30/录制-1967216004-20260704-143630-337-师徒杯冲！！！_merged_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_07_04_14_36_30/录制-1967216004-20260703-201503-408-师徒杯备赛！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_04_14_36_30/录制-1967216004-20260703-201503-408-师徒杯备赛！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_22_03_32",
     "title": "师徒杯备赛！！",
     "date": "2026-07-03",

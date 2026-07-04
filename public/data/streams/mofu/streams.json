@@ -1,5 +1,75 @@
 [
   {
+    "id": "2026_07_04_21_17_14",
+    "title": "晚上好哦晚上好",
+    "date": "2026-07-04",
+    "time": "21:17:14",
+    "startTime": "21:17",
+    "endTime": "23:56",
+    "duration": 9553,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_04_21_17_14/录制-1791260716-20260704-211714-163-晚上好哦晚上好.xml",
+    "cover": "/data/streams/mofu/2026_07_04_21_17_14/录制-1791260716-20260704-211714-163-晚上好哦晚上好.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_04_21_17_14/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_04_21_17_14/录制-1791260716-20260704-211714-163-晚上好哦晚上好_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_04_21_17_14/录制-1791260716-20260704-211714-163-晚上好哦晚上好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_21_10_25",
+    "title": "晚上好哦晚上好",
+    "date": "2026-07-04",
+    "time": "21:10:25",
+    "startTime": "21:10",
+    "endTime": "21:13",
+    "duration": 208,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_04_21_10_25/录制-1791260716-20260704-211025-268-晚上好哦晚上好.xml",
+    "cover": "/data/streams/mofu/2026_07_04_21_10_25/录制-1791260716-20260704-211025-268-晚上好哦晚上好.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_04_21_10_25/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_04_21_10_25/录制-1791260716-20260704-211025-268-晚上好哦晚上好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_17_59_57",
+    "title": "突击突突突",
+    "date": "2026-07-04",
+    "time": "17:59:57",
+    "startTime": "17:59",
+    "endTime": "19:31",
+    "duration": 5567,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_04_17_59_57/录制-1791260716-20260704-175957-291-突击突突突.xml",
+    "cover": "/data/streams/mofu/2026_07_04_17_59_57/录制-1791260716-20260704-175957-291-突击突突突.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_04_16_36_36",
+    "title": "突击突突突",
+    "date": "2026-07-04",
+    "time": "16:36:36",
+    "startTime": "16:36",
+    "endTime": "17:59",
+    "duration": 4994,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_04_16_36_36/录制-1791260716-20260704-163636-416-突击突突突.xml",
+    "cover": "/data/streams/mofu/2026_07_04_16_36_36/录制-1791260716-20260704-163636-416-突击突突突.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_04_16_36_36/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_04_16_36_36/录制-1791260716-20260704-163636-416-突击突突突_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_04_16_36_36/录制-1791260716-20260704-163636-416-突击突突突_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_07_04_16_36_36/录制-1791260716-20260703-223932-223-【3D麦】睡觉觉_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_04_16_36_36/录制-1791260716-20260703-223932-223-【3D麦】睡觉觉_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_22_39_32",
     "title": "【3D麦】睡觉觉",
     "date": "2026-07-03",

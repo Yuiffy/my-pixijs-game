@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_04_20_54_23",
+    "title": "工作一会",
+    "date": "2026-07-04",
+    "time": "20:54:23",
+    "startTime": "20:54",
+    "endTime": "00:50",
+    "duration": 14199,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_04_20_54_23/录制-24872476-20260704-205423-498-超级大联动躲猫猫.xml",
+    "cover": "/data/streams/nightin/2026_07_04_20_54_23/录制-24872476-20260704-205423-498-超级大联动躲猫猫.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_04_20_54_23/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_04_20_54_23/录制-24872476-20260704-205423-498-超级大联动躲猫猫_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_04_20_54_23/录制-24872476-20260704-205423-498-超级大联动躲猫猫_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_10_06_34",
+    "title": "【早台】 真善美早播",
+    "date": "2026-07-04",
+    "time": "10:06:34",
+    "startTime": "10:06",
+    "endTime": "12:15",
+    "duration": 7780,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_04_10_06_34/录制-24872476-20260704-100634-258-【早台】 真善美早播.xml",
+    "cover": "/data/streams/nightin/2026_07_04_10_06_34/录制-24872476-20260704-100634-258-【早台】 真善美早播.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_04_10_06_34/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_04_10_06_34/录制-24872476-20260704-100634-258-【早台】 真善美早播_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_04_10_06_34/录制-24872476-20260704-100634-258-【早台】 真善美早播_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_04_10_06_34/录制-24872476-20260703-211132-811-粥一会_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_04_10_06_34/录制-24872476-20260703-211132-811-粥一会_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_21_11_32",
     "title": "粥一会",
     "date": "2026-07-03",

@@ -1,5 +1,89 @@
 [
   {
+    "id": "2026_07_04_21_18_21",
+    "title": "舌头长溃疡o(╥﹏╥)o",
+    "date": "2026-07-04",
+    "time": "21:18:21",
+    "startTime": "21:18",
+    "endTime": "00:10",
+    "duration": 10363,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_04_21_18_21/录制-26966466-20260704-211821-488-舌头长溃疡o(╥﹏╥)o.xml",
+    "cover": "/data/streams/shiori/2026_07_04_21_18_21/录制-26966466-20260704-211821-488-舌头长溃疡o(╥﹏╥)o.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_04_21_18_21/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_04_21_18_21/录制-26966466-20260704-211821-488-舌头长溃疡o(╥﹏╥)o_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_04_21_18_21/录制-26966466-20260704-211821-488-舌头长溃疡o(╥﹏╥)o_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_11_36_15",
+    "title": "早安獭獭栞！",
+    "date": "2026-07-04",
+    "time": "11:36:15",
+    "startTime": "11:36",
+    "endTime": "12:20",
+    "duration": 2658,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_04_11_36_15/录制-26966466-20260704-113615-339-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_07_04_11_36_15/录制-26966466-20260704-113615-339-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_04_11_34_45",
+    "title": "早安獭獭栞！",
+    "date": "2026-07-04",
+    "time": "11:34:45",
+    "startTime": "11:34",
+    "endTime": "11:35",
+    "duration": 88,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_04_11_34_45/录制-26966466-20260704-113445-699-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_07_04_11_34_45/录制-26966466-20260704-113445-699-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_04_11_34_45/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_04_11_34_45/录制-26966466-20260704-113445-699-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_04_10_34_26",
+    "title": "早安獭獭栞！",
+    "date": "2026-07-04",
+    "time": "10:34:26",
+    "startTime": "10:34",
+    "endTime": "11:34",
+    "duration": 3617,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_04_10_34_26/录制-26966466-20260704-103426-021-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_07_04_10_34_26/录制-26966466-20260704-103426-021-早安獭獭栞！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_04_10_06_30",
+    "title": "早安獭獭栞！",
+    "date": "2026-07-04",
+    "time": "10:06:30",
+    "startTime": "10:06",
+    "endTime": "10:33",
+    "duration": 1676,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_04_10_06_30/录制-26966466-20260704-100630-195-早安獭獭栞！_merged.xml",
+    "cover": "/data/streams/shiori/2026_07_04_10_06_30/录制-26966466-20260704-100630-195-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_04_10_06_30/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_04_10_06_30/录制-26966466-20260704-100630-195-早安獭獭栞！_merged_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_07_04_10_06_30/录制-26966466-20260703-100919-603-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_04_10_06_30/录制-26966466-20260703-100919-603-早安獭獭栞！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_03_10_09_19",
     "title": "早安獭獭栞！",
     "date": "2026-07-03",

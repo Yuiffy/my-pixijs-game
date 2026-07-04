@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026_07_05_00_29_17",
+    "title": "晚间杂谈~",
+    "date": "2026-07-04",
+    "time": "00:29:17",
+    "startTime": "00:29",
+    "endTime": "01:40",
+    "duration": 4275,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_05_00_29_17/录制-1986461465-20260705-002917-404-晚间杂谈~.xml",
+    "cover": "/data/streams/kloa/2026_07_05_00_29_17/录制-1986461465-20260705-002917-404-晚间杂谈~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_05_00_29_17/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_05_00_29_17/录制-1986461465-20260705-002917-404-晚间杂谈~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_05_00_29_17/录制-1986461465-20260705-002917-404-晚间杂谈~_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_05_00_29_17/录制-1986461465-20260703-233417-371-晚间歌杂~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_05_00_29_17/录制-1986461465-20260704-025352-936-晚间歌杂~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_05_00_29_17/录制-1986461465-20260704-031729-186-晚间歌杂~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_02_55_44",
     "title": "晚间歌杂~",
     "date": "2026-07-03",
