@@ -1,5 +1,123 @@
 [
   {
+    "id": "2026_07_05_21_35_54",
+    "title": "小小的歌一下！⭐",
+    "date": "2026-07-05",
+    "time": "21:35:54",
+    "startTime": "21:35",
+    "endTime": "00:49",
+    "duration": 11653,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_05_21_35_54/录制-30655190-20260705-213554-214-小小的歌一下！⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_05_21_35_54/录制-30655190-20260705-213554-214-小小的歌一下！⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_21_12_35",
+    "title": "小小的歌一下！⭐",
+    "date": "2026-07-05",
+    "time": "21:12:35",
+    "startTime": "21:12",
+    "endTime": "21:35",
+    "duration": 1394,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_05_21_12_35/录制-30655190-20260705-211235-008-小小的歌一下！⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_05_21_12_35/录制-30655190-20260705-211235-008-小小的歌一下！⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_05_21_12_35/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_05_21_12_35/录制-30655190-20260705-211235-008-小小的歌一下！⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_21_07_37",
+    "title": "小小的歌一下！⭐",
+    "date": "2026-07-05",
+    "time": "21:07:37",
+    "startTime": "21:07",
+    "endTime": "21:08",
+    "duration": 77,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_05_21_07_37/录制-30655190-20260705-210737-165-小小的歌一下！⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_05_21_07_37/录制-30655190-20260705-210737-165-小小的歌一下！⭐.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mizuki/2026_07_05_21_07_37/录制-30655190-20260705-210903-497-小小的歌一下！⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_21_02_24",
+    "title": "小小的歌一下！⭐",
+    "date": "2026-07-05",
+    "time": "21:02:24",
+    "startTime": "21:02",
+    "endTime": "21:05",
+    "duration": 220,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_05_21_02_24/录制-30655190-20260705-210224-235-小小的歌一下！⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_07_05_21_02_24/录制-30655190-20260705-210224-235-小小的歌一下！⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_05_21_02_24/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_05_21_02_24/录制-30655190-20260705-210224-235-小小的歌一下！⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_15_49_57",
+    "title": "咳咳，来了⭐",
+    "date": "2026-07-05",
+    "time": "15:49:57",
+    "startTime": "15:49",
+    "endTime": "18:08",
+    "duration": 8352,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_05_15_49_57/录制-30655190-20260705-154957-139-咳咳，来了⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_05_15_49_57/录制-30655190-20260705-154957-139-咳咳，来了⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_15_20_28",
+    "title": "咳咳，来了⭐",
+    "date": "2026-07-05",
+    "time": "15:20:28",
+    "startTime": "15:20",
+    "endTime": "15:48",
+    "duration": 1715,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_05_15_20_28/录制-30655190-20260705-152028-899-咳咳，来了⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_07_05_15_20_28/录制-30655190-20260705-152028-899-咳咳，来了⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_05_15_20_28/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_05_15_20_28/录制-30655190-20260705-152028-899-咳咳，来了⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_10_22_39",
+    "title": "有点晕呼哈___⭐",
+    "date": "2026-07-05",
+    "time": "10:22:39",
+    "startTime": "10:22",
+    "endTime": "11:56",
+    "duration": 5653,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_05_10_22_39/录制-30655190-20260705-102239-825-有点晕呼哈___⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_05_10_22_39/录制-30655190-20260705-102239-825-有点晕呼哈___⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_05_10_22_39/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_05_10_22_39/录制-30655190-20260705-102239-825-有点晕呼哈___⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_05_10_22_39/录制-30655190-20260705-102239-825-有点晕呼哈___⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_05_10_22_39/录制-30655190-20260704-234744-021-生存确认⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_05_10_22_39/录制-30655190-20260704-234744-021-生存确认⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_23_47_44",
     "title": "生存确认⭐",
     "date": "2026-07-04",

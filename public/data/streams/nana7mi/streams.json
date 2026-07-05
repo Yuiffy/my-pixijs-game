@@ -1,5 +1,76 @@
 [
   {
+    "id": "2026_07_06_02_23_44",
+    "title": "偷偷滴偷",
+    "date": "2026-07-05",
+    "time": "02:23:44",
+    "startTime": "02:23",
+    "endTime": "03:59",
+    "duration": 5790,
+    "durationStr": "1.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_06_02_23_44/录制-21452505-20260706-022344-546-偷偷滴偷.xml",
+    "cover": "/data/streams/nana7mi/2026_07_06_02_23_44/录制-21452505-20260706-022344-546-偷偷滴偷.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nana7mi/2026_07_06_02_23_44/录制-21452505-20260706-011838-485-偷偷滴偷_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_06_01_18_38",
+    "title": "偷偷滴偷",
+    "date": "2026-07-05",
+    "time": "01:18:38",
+    "startTime": "01:18",
+    "endTime": "02:21",
+    "duration": 3791,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_06_01_18_38/录制-21452505-20260706-011838-485-偷偷滴偷.xml",
+    "cover": "/data/streams/nana7mi/2026_07_06_01_18_38/录制-21452505-20260706-011838-485-偷偷滴偷.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_06_01_18_38/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_06_01_18_38/录制-21452505-20260706-011838-485-偷偷滴偷_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_06_01_18_38/录制-21452505-20260705-220213-599-偷偷滴偷_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_06_01_10_24",
+    "title": "偷偷滴偷",
+    "date": "2026-07-05",
+    "time": "01:10:24",
+    "startTime": "01:10",
+    "endTime": "01:11",
+    "duration": 108,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_06_01_10_24/录制-21452505-20260706-011024-493-偷偷滴偷.xml",
+    "cover": "/data/streams/nana7mi/2026_07_06_01_10_24/录制-21452505-20260706-011024-493-偷偷滴偷.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nana7mi/2026_07_06_01_10_24/录制-21452505-20260706-011224-390-偷偷滴偷_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_22_02_13",
+    "title": "偷偷滴偷",
+    "date": "2026-07-05",
+    "time": "22:02:13",
+    "startTime": "22:02",
+    "endTime": "01:08",
+    "duration": 11169,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_05_22_02_13/录制-21452505-20260705-220213-599-偷偷滴偷.xml",
+    "cover": "/data/streams/nana7mi/2026_07_05_22_02_13/录制-21452505-20260705-220213-599-偷偷滴偷.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_05_22_02_13/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_05_22_02_13/录制-21452505-20260705-220213-599-偷偷滴偷_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_05_22_02_13/录制-21452505-20260704-220218-602-节奏天国随缘完美挑战！_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_05_22_02_13/录制-21452505-20260704-220218-602-节奏天国随缘完美挑战！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_22_02_18",
     "title": "节奏天国随缘完美挑战完了下会儿棋",
     "date": "2026-07-04",

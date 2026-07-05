@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_05_18_40_45",
+    "title": "美少女玩游戏中",
+    "date": "2026-07-05",
+    "time": "18:40:45",
+    "startTime": "18:40",
+    "endTime": "23:48",
+    "duration": 18539,
+    "durationStr": "5.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_05_18_40_45/录制-25034104-20260705-184045-238-美少女玩游戏中.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_05_18_40_45/录制-25034104-20260705-184045-238-美少女玩游戏中.cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_07_05_18_40_45/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_05_18_40_45/录制-25034104-20260705-184045-238-美少女玩游戏中_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_05_18_40_45/录制-25034104-20260705-184045-238-美少女玩游戏中_SCREENSHOTS.jpg",
+      "/data/streams/mingqian-nailv/2026_07_05_18_40_45/录制-25034104-20260704-192358-015-叛逆了我看大火是_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_05_18_40_45/录制-25034104-20260704-192358-015-叛逆了我看大火是_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_19_23_58",
     "title": "叛逆了我看大火是",
     "date": "2026-07-04",

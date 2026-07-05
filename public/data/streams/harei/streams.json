@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_05_20_03_22",
+    "title": "小鼠唱歌^^",
+    "date": "2026-07-05",
+    "time": "20:03:22",
+    "startTime": "20:03",
+    "endTime": "01:01",
+    "duration": 17923,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_05_20_03_22/录制-1820703922-20260705-200322-711-小鼠唱歌^^.xml",
+    "cover": "/data/streams/harei/2026_07_05_20_03_22/录制-1820703922-20260705-200322-711-小鼠唱歌^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_05_20_03_22/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_05_20_03_22/录制-1820703922-20260705-200322-711-小鼠唱歌^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_05_20_03_22/录制-1820703922-20260705-200322-711-小鼠唱歌^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_10_01_29",
+    "title": "早安小鼠^^",
+    "date": "2026-07-05",
+    "time": "10:01:29",
+    "startTime": "10:01",
+    "endTime": "12:33",
+    "duration": 9140,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_05_10_01_29/录制-1820703922-20260705-100129-053-早安小鼠^^.xml",
+    "cover": "/data/streams/harei/2026_07_05_10_01_29/录制-1820703922-20260705-100129-053-早安小鼠^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_05_10_01_29/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_05_10_01_29/录制-1820703922-20260705-100129-053-早安小鼠^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_07_05_10_01_29/录制-1820703922-20260704-205453-947-小鼠代抽收藏集^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_05_10_01_29/录制-1820703922-20260704-205453-947-小鼠代抽收藏集^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_20_54_53",
     "title": "小鼠代抽收藏集^^",
     "date": "2026-07-04",

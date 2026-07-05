@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="27628030" shortid="0" name="未知夜Michiya" title="今天过后就开启下一个三周年倒数-3-" areanameparent="虚拟主播" areanamechild="虚拟Gamer" start_time="2026-07-05T23:10:13.4522739+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="10.525,1,25,16777215,1783264226943,0,15113070,0" user="咆哮的二哈">mcy你一个人抓吗，你一个人我就整活了（</d>
+  <d p="20.945,1,25,16777215,1783264236753,0,15113070,0" user="咆哮的二哈">警告了！</d>
+  <d p="20.945,4,25,14893055,1783264237647,0,12070570,0" user="自由猫儿">红色！</d>
+  <d p="24.822,1,25,16772431,1783264241209,0,67841,0" user="豹秃拳">他们在当椅子，等你坐hhh</d>
+  <d p="26.136,1,25,16777215,1783264242505,0,43551753,0" user="虚拟蛇201Created">警告了</d>
+  <d p="32.597,4,25,14893055,1783264248473,0,361095729,0" user="dakurua_">感染的话两个猎人就好了</d>
+  <d p="36.537,1,25,16777215,1783264252762,0,2091602090,0" user="夕雾的好大儿">换分区应该还好[汤圆]</d>
+  <d p="44.362,1,25,16777215,1783264260397,0,15113070,0" user="咆哮的二哈">要你去变色龙分区</d>
+  <d p="44.362,4,25,14893055,1783264261198,0,33544574,0" user="栞栞家的艾伦Lily">女王疑惑</d>
+  <d p="48.253,1,25,16777215,1783264264065,0,6164849,0" user="一般通过阿福君">咋这样</d>
+  <d p="52.086,1,25,16777215,1783264268118,0,1740704,0" user="NFの皮卡">啊？</d>
+  <d p="53.423,1,25,16777215,1783264269425,0,1740704,0" user="NFの皮卡">咋这样</d>
+  <d p="54.701,1,25,16777215,1783264271378,0,274398907,0" user="悠悠カード">咋这样</d>
+  <d p="54.744,4,25,14893055,1783264270927,0,352998177,0" user="不加里">hhhh</d>
+  <d p="54.745,1,25,16777215,1783264271254,0,475718495,0" user="_奶黄包包_">咋这样</d>
+  <d p="56.042,4,25,14893055,1783264272825,0,1528592785,0" user="御赐小银烛凉枣枣">要你去变色龙分区</d>
+  <d p="63.814,1,25,16772431,1783264279560,0,1268300,0" user="kumo_墨">咋这样</d>
+  <d p="66.425,1,25,16777215,1783264283190,0,43551753,0" user="虚拟蛇201Created">要你移步变色龙分区</d>
+  <d p="76.830,1,25,16777215,1783264293658,0,6164849,0" user="一般通过阿福君">哔哩哔哩...</d>
+  <d p="79.425,1,25,16777215,1783264295390,0,89457460,0" user="终梦Yume">请喝茶</d>
+  <d p="113.242,4,25,14893055,1783264328934,0,90283,0" user="威严の蹲防">你这mod里有抖的商标也不合适吧</d>
+  <d p="127.534,1,25,16777215,1783264344418,0,2091602090,0" user="夕雾的好大儿">单机游戏里可以选</d>
+  <d p="153.500,1,25,16772431,1783264369558,0,6184649,0" user="一为梦_">单机-超级变色龙</d>
+  <d p="153.500,1,25,16777215,1783264370070,0,72985325,0" user="灰色魔女-初银子">超级变色龙好像</d>
+  <d p="157.425,1,25,16777215,1783264374263,0,443055,0" user="？">请喝茶</d>
+  <d p="161.325,1,25,16777215,1783264377363,0,2091602090,0" user="夕雾的好大儿">就是超级变色龙吧</d>
+  <d p="166.479,1,25,16777215,1783264383268,0,72985325,0" user="灰色魔女-初银子">请喝茶</d>
+  <d p="175.589,1,25,16777215,1783264392402,0,6164849,0" user="一般通过阿福君">何意味</d>
+  <d p="179.525,1,25,16777215,1783264395743,0,72985325,0" user="灰色魔女-初银子">断流一下吧</d>
+  <d p="180.824,1,25,16777215,1783264396739,0,15113070,0" user="咆哮的二哈">要下播一下吧</d>
+  <d p="182.155,4,25,14893055,1783264398289,0,352998177,0" user="不加里">明天还要出去玩，先睡了bb晚安晚安（三周年快乐捏）</d>
+  <d p="182.155,1,25,16777215,1783264398687,0,475718495,0" user="_奶黄包包_">byd阿b</d>
+  <d p="182.156,1,25,16777215,1783264398866,0,89457460,0" user="终梦Yume">请喝茶</d>
+  <d p="187.302,1,25,16777215,1783264404249,0,6164849,0" user="一般通过阿福君">byd阿b</d>
+  <d p="189.922,1,25,16777215,1783264406242,0,2091602090,0" user="夕雾的好大儿">可能要下一下</d>
+  <d p="191.178,1,25,16772431,1783264408018,0,1268300,0" user="kumo_墨">幽默阿B</d>
+  <d p="192.524,1,25,16777215,1783264408623,0,89457460,0" user="终梦Yume">这下不得不下播了</d>
+</i>

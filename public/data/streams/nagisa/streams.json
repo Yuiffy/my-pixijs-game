@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_07_05_21_12_43",
+    "title": "「节奏天国 奇迹之星」第三回",
+    "date": "2026-07-05",
+    "time": "21:12:43",
+    "startTime": "21:12",
+    "endTime": "00:59",
+    "duration": 13626,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_05_21_12_43/录制-31368705-20260705-211243-070-「节奏天国 奇迹之星」第三回.xml",
+    "cover": "/data/streams/nagisa/2026_07_05_21_12_43/录制-31368705-20260705-211243-070-「节奏天国 奇迹之星」第三回.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_21_07_29",
+    "title": "「节奏天国 奇迹之星」第三回",
+    "date": "2026-07-05",
+    "time": "21:07:29",
+    "startTime": "21:07",
+    "endTime": "21:12",
+    "duration": 307,
+    "durationStr": "5 分钟",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_05_21_07_29/录制-31368705-20260705-210729-770-「节奏天国 奇迹之星」第三回.xml",
+    "cover": "/data/streams/nagisa/2026_07_05_21_07_29/录制-31368705-20260705-210729-770-「节奏天国 奇迹之星」第三回.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_05_21_07_29/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_05_21_07_29/录制-31368705-20260705-210729-770-「节奏天国 奇迹之星」第三回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_15_04_28",
+    "title": "「黎明」with帕七N",
+    "date": "2026-07-05",
+    "time": "15:04:28",
+    "startTime": "15:04",
+    "endTime": "18:47",
+    "duration": 13418,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_05_15_04_28/录制-31368705-20260705-150428-602-「黎明」with帕七N_merged.xml",
+    "cover": "/data/streams/nagisa/2026_07_05_15_04_28/录制-31368705-20260705-150428-602-「黎明」with帕七N.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_05_15_04_28/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_05_15_04_28/录制-31368705-20260705-150428-602-「黎明」with帕七N_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_05_15_04_28/录制-31368705-20260705-150428-602-「黎明」with帕七N_merged_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_05_15_04_28/录制-31368705-20260704-210828-449-「节奏天国 奇迹之星」第二回_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_05_15_04_28/录制-31368705-20260704-210828-449-「节奏天国 奇迹之星」第二回_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_21_08_28",
     "title": "「节奏天国 奇迹之星」第二回",
     "date": "2026-07-04",

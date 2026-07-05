@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_07_05_22_55_10",
+    "title": "今晚吃烤串！",
+    "date": "2026-07-05",
+    "time": "22:55:10",
+    "startTime": "22:55",
+    "endTime": "00:58",
+    "duration": 7385,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_05_22_55_10/录制-1741667419-20260705-225510-262-今晚吃烤串！.xml",
+    "cover": "/data/streams/izayoi/2026_07_05_22_55_10/录制-1741667419-20260705-225510-262-今晚吃烤串！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_22_38_53",
+    "title": "今晚吃烤串！",
+    "date": "2026-07-05",
+    "time": "22:38:53",
+    "startTime": "22:38",
+    "endTime": "22:52",
+    "duration": 870,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_05_22_38_53/录制-1741667419-20260705-223853-113-今晚吃烤串！_merged.xml",
+    "cover": "/data/streams/izayoi/2026_07_05_22_38_53/录制-1741667419-20260705-223853-113-今晚吃烤串！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_05_22_38_53/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_05_22_38_53/录制-1741667419-20260705-223853-113-今晚吃烤串！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_15_24_02",
+    "title": "悄悄地",
+    "date": "2026-07-05",
+    "time": "15:24:02",
+    "startTime": "15:24",
+    "endTime": "16:02",
+    "duration": 2289,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_05_15_24_02/录制-1741667419-20260705-152402-667-悄悄地.xml",
+    "cover": "/data/streams/izayoi/2026_07_05_15_24_02/录制-1741667419-20260705-152402-667-悄悄地.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_15_20_22",
+    "title": "悄悄地",
+    "date": "2026-07-05",
+    "time": "15:20:22",
+    "startTime": "15:20",
+    "endTime": "15:23",
+    "duration": 220,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_05_15_20_22/录制-1741667419-20260705-152022-034-悄悄地.xml",
+    "cover": "/data/streams/izayoi/2026_07_05_15_20_22/录制-1741667419-20260705-152022-034-悄悄地.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_05_15_20_22/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_05_15_20_22/录制-1741667419-20260705-152022-034-悄悄地_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_05_15_20_22/录制-1741667419-20260703-233322-752-好困好困好困哦_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_05_15_20_22/录制-1741667419-20260703-233322-752-好困好困好困哦_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_01_44_21",
     "title": "好困好困好困哦",
     "date": "2026-07-03",

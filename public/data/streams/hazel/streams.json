@@ -1,5 +1,89 @@
 [
   {
+    "id": "2026_07_05_23_07_57",
+    "title": "夜聊",
+    "date": "2026-07-05",
+    "time": "23:07:57",
+    "startTime": "23:07",
+    "endTime": "01:27",
+    "duration": 8404,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_05_23_07_57/录制-1713546334-20260705-230757-192-夜聊.xml",
+    "cover": "/data/streams/hazel/2026_07_05_23_07_57/录制-1713546334-20260705-230757-192-夜聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_05_23_07_57/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_05_23_07_57/录制-1713546334-20260705-230757-192-夜聊_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_07_05_23_07_57/录制-1713546334-20260705-230757-192-夜聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_23_00_45",
+    "title": "夜聊",
+    "date": "2026-07-05",
+    "time": "23:00:45",
+    "startTime": "23:00",
+    "endTime": "23:07",
+    "duration": 430,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_05_23_00_45/录制-1713546334-20260705-230045-510-夜聊.xml",
+    "cover": "/data/streams/hazel/2026_07_05_23_00_45/录制-1713546334-20260705-230045-510-夜聊.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_22_09_41",
+    "title": "夜聊",
+    "date": "2026-07-05",
+    "time": "22:09:41",
+    "startTime": "22:09",
+    "endTime": "22:59",
+    "duration": 3019,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_05_22_09_41/录制-1713546334-20260705-220941-159-夜聊.xml",
+    "cover": "/data/streams/hazel/2026_07_05_22_09_41/录制-1713546334-20260705-220941-159-夜聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_05_22_09_41/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_05_22_09_41/录制-1713546334-20260705-220941-159-夜聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_22_06_38",
+    "title": "夜聊",
+    "date": "2026-07-05",
+    "time": "22:06:38",
+    "startTime": "22:06",
+    "endTime": "22:09",
+    "duration": 181,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_05_22_06_38/录制-1713546334-20260705-220638-848-夜聊.xml",
+    "cover": "/data/streams/hazel/2026_07_05_22_06_38/录制-1713546334-20260705-220638-848-夜聊.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_22_02_35",
+    "title": "夜聊",
+    "date": "2026-07-05",
+    "time": "22:02:35",
+    "startTime": "22:02",
+    "endTime": "22:06",
+    "duration": 241,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_05_22_02_35/录制-1713546334-20260705-220235-381-夜聊.xml",
+    "cover": "/data/streams/hazel/2026_07_05_22_02_35/录制-1713546334-20260705-220235-381-夜聊.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_05_22_02_35/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_05_22_02_35/录制-1713546334-20260705-220235-381-夜聊_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_07_05_22_02_35/录制-1713546334-20260704-220520-954-晚上好_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_07_05_22_02_35/录制-1713546334-20260704-220520-954-晚上好_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_02_00_25",
     "title": "晚上好",
     "date": "2026-07-04",

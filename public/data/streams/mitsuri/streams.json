@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_06_01_18_07",
+    "title": "all in五排！！",
+    "date": "2026-07-05",
+    "time": "01:18:07",
+    "startTime": "01:18",
+    "endTime": "02:09",
+    "duration": 3093,
+    "durationStr": "0.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_06_01_18_07/录制-1967216004-20260706-011807-139-all in五排！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_06_01_18_07/录制-1967216004-20260706-011807-139-all in五排！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_05_18_22_31",
+    "title": "all in五排！！",
+    "date": "2026-07-05",
+    "time": "18:22:31",
+    "startTime": "18:22",
+    "endTime": "01:17",
+    "duration": 24914,
+    "durationStr": "6.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_05_18_22_31/录制-1967216004-20260705-182231-546-all in五排！！_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_07_05_18_22_31/录制-1967216004-20260705-182231-546-all in五排！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_05_18_22_31/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_05_18_22_31/录制-1967216004-20260705-182231-546-all in五排！！_merged_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_05_18_22_31/录制-1967216004-20260705-182231-546-all in五排！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_05_14_04_23",
+    "title": "嘟嘟歌台！",
+    "date": "2026-07-05",
+    "time": "14:04:23",
+    "startTime": "14:04",
+    "endTime": "16:45",
+    "duration": 9675,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_05_14_04_23/录制-1967216004-20260705-140423-136-嘟嘟歌台！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_05_14_04_23/录制-1967216004-20260705-140423-136-嘟嘟歌台！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_05_14_04_23/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_05_14_04_23/录制-1967216004-20260705-140423-136-嘟嘟歌台！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_05_14_04_23/录制-1967216004-20260705-140423-136-嘟嘟歌台！_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_07_05_14_04_23/录制-1967216004-20260704-211510-762-师徒杯团建！！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_05_14_04_23/录制-1967216004-20260704-211510-762-师徒杯团建！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_04_21_15_10",
     "title": "师徒杯团建！！！",
     "date": "2026-07-04",
