@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_06_10_39_18",
+    "title": "早上好————",
+    "date": "2026-07-06",
+    "time": "10:39:18",
+    "startTime": "10:39",
+    "endTime": "12:38",
+    "duration": 7149,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_06_10_39_18/录制-1741667419-20260706-103918-735-早上好————.xml",
+    "cover": "/data/streams/izayoi/2026_07_06_10_39_18/录制-1741667419-20260706-103918-735-早上好————.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_06_10_39_18/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_06_10_39_18/录制-1741667419-20260706-103918-735-早上好————_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_06_10_39_18/录制-1741667419-20260706-103918-735-早上好————_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_06_10_39_18/录制-1741667419-20260705-223853-113-今晚吃烤串！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_22_55_10",
     "title": "今晚吃烤串！",
     "date": "2026-07-05",

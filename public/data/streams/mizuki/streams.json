@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_07_07_00_31_25",
+    "title": "晚间的虚度慢慢来⭐",
+    "date": "2026-07-06",
+    "time": "00:31:25",
+    "startTime": "00:31",
+    "endTime": "00:42",
+    "duration": 700,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_07_00_31_25/录制-30655190-20260707-003125-853-晚间的虚度慢慢来⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_07_00_31_25/录制-30655190-20260707-003125-853-晚间的虚度慢慢来⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_06_21_04_47",
+    "title": "晚间的虚度慢慢来⭐",
+    "date": "2026-07-06",
+    "time": "21:04:47",
+    "startTime": "21:04",
+    "endTime": "00:30",
+    "duration": 12365,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_06_21_04_47/录制-30655190-20260706-210447-464-晚间的虚度慢慢来⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_07_06_21_04_47/录制-30655190-20260706-210447-464-晚间的虚度慢慢来⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_06_21_04_47/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_06_21_04_47/录制-30655190-20260706-210447-464-晚间的虚度慢慢来⭐_merged_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_06_21_04_47/录制-30655190-20260706-210447-464-晚间的虚度慢慢来⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_06_15_04_27",
+    "title": "深渊时间到⭐",
+    "date": "2026-07-06",
+    "time": "15:04:27",
+    "startTime": "15:04",
+    "endTime": "18:29",
+    "duration": 12341,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_06_15_04_27/录制-30655190-20260706-150427-806-深渊时间到⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_06_15_04_27/录制-30655190-20260706-150427-806-深渊时间到⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_06_15_04_27/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_06_15_04_27/录制-30655190-20260706-150427-806-深渊时间到⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_06_15_04_27/录制-30655190-20260706-150427-806-深渊时间到⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_06_15_04_27/录制-30655190-20260705-211235-008-小小的歌一下！⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_21_35_54",
     "title": "小小的歌一下！⭐",
     "date": "2026-07-05",

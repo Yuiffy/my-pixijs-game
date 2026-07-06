@@ -1,5 +1,85 @@
 [
   {
+    "id": "2026_07_06_12_00_00",
+    "title": "早上好！（大声）",
+    "date": "2026-07-06",
+    "time": "12:00:00",
+    "startTime": "12:00",
+    "endTime": "12:39",
+    "duration": 2359,
+    "durationStr": "0.7 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_06_12_00_00/录制-1986461465-20260706-120000-637-早上好！（大声）.xml",
+    "cover": "/data/streams/kloa/2026_07_06_12_00_00/录制-1986461465-20260706-120000-637-早上好！（大声）.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_06_11_26_20",
+    "title": "早上好！（大声）",
+    "date": "2026-07-06",
+    "time": "11:26:20",
+    "startTime": "11:26",
+    "endTime": "11:59",
+    "duration": 2017,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_06_11_26_20/录制-1986461465-20260706-112620-478-早上好！（大声）.xml",
+    "cover": "/data/streams/kloa/2026_07_06_11_26_20/录制-1986461465-20260706-112620-478-早上好！（大声）.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_06_10_46_34",
+    "title": "早上好！（大声）",
+    "date": "2026-07-06",
+    "time": "10:46:34",
+    "startTime": "10:46",
+    "endTime": "11:24",
+    "duration": 2309,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_06_10_46_34/录制-1986461465-20260706-104634-914-早上好！（大声）.xml",
+    "cover": "/data/streams/kloa/2026_07_06_10_46_34/录制-1986461465-20260706-104634-914-早上好！（大声）.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_06_10_46_34/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_06_10_46_34/录制-1986461465-20260706-104634-914-早上好！（大声）_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_06_10_24_57",
+    "title": "早上好！（大声）",
+    "date": "2026-07-06",
+    "time": "10:24:57",
+    "startTime": "10:24",
+    "endTime": "10:43",
+    "duration": 1195,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_06_10_24_57/录制-1986461465-20260706-102457-115-早上好！（大声）.xml",
+    "cover": "/data/streams/kloa/2026_07_06_10_24_57/录制-1986461465-20260706-102457-115-早上好！（大声）.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_06_10_04_36",
+    "title": "早上好！（大声）",
+    "date": "2026-07-06",
+    "time": "10:04:36",
+    "startTime": "10:04",
+    "endTime": "10:24",
+    "duration": 1218,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_06_10_04_36/录制-1986461465-20260706-100436-747-早上好！（大声）.xml",
+    "cover": "/data/streams/kloa/2026_07_06_10_04_36/录制-1986461465-20260706-100436-747-早上好！（大声）.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_06_10_04_36/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_06_10_04_36/录制-1986461465-20260706-100436-747-早上好！（大声）_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_06_10_04_36/录制-1986461465-20260705-202425-939-好困呜啊啊啊啊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_21_45_44",
     "title": "好困呜啊啊啊啊",
     "date": "2026-07-05",

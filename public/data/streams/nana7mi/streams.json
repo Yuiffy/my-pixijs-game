@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_07_06_07_31_21",
+    "title": "下棋看球",
+    "date": "2026-07-05",
+    "time": "07:31:21",
+    "startTime": "07:31",
+    "endTime": "08:03",
+    "duration": 1967,
+    "durationStr": "0.5 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_06_07_31_21/录制-21452505-20260706-073121-800-下棋看球.xml",
+    "cover": "/data/streams/nana7mi/2026_07_06_07_31_21/录制-21452505-20260706-073121-800-下棋看球.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_06_07_31_21/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_06_07_31_21/录制-21452505-20260706-073121-800-下棋看球_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_06_04_20_44",
+    "title": "下棋看球",
+    "date": "2026-07-05",
+    "time": "04:20:44",
+    "startTime": "04:20",
+    "endTime": "07:27",
+    "duration": 11222,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_06_04_20_44/录制-21452505-20260706-042044-257-下棋看球.xml",
+    "cover": "/data/streams/nana7mi/2026_07_06_04_20_44/录制-21452505-20260706-042044-257-下棋看球.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nana7mi/2026_07_06_04_20_44/录制-21452505-20260706-011838-485-偷偷滴偷_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_06_04_20_44/录制-21452505-20260706-011838-485-偷偷滴偷_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_02_23_44",
     "title": "偷偷滴偷",
     "date": "2026-07-05",

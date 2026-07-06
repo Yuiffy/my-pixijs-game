@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_07_06_23_58_46",
+    "title": "嘟嘟登场！！",
+    "date": "2026-07-06",
+    "time": "23:58:46",
+    "startTime": "23:58",
+    "endTime": "00:17",
+    "duration": 1142,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_06_23_58_46/录制-1967216004-20260706-235846-866-嘟嘟登场！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_06_23_58_46/录制-1967216004-20260706-235846-866-嘟嘟登场！！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mitsuri/2026_07_06_23_58_46/录制-1967216004-20260707-001751-205-嘟嘟登场！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_06_19_02_49",
+    "title": "嘟嘟登场！！",
+    "date": "2026-07-06",
+    "time": "19:02:49",
+    "startTime": "19:02",
+    "endTime": "23:57",
+    "duration": 17756,
+    "durationStr": "4.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_06_19_02_49/录制-1967216004-20260706-190249-158-嘟嘟登场！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_06_19_02_49/录制-1967216004-20260706-190249-158-嘟嘟登场！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_06_19_02_49/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_06_19_02_49/录制-1967216004-20260706-190249-158-嘟嘟登场！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_06_14_08_46",
+    "title": "师徒杯训练赛！",
+    "date": "2026-07-06",
+    "time": "14:08:46",
+    "startTime": "14:08",
+    "endTime": "17:09",
+    "duration": 10878,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_06_14_08_46/录制-1967216004-20260706-140846-437-师徒杯训练赛！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_06_14_08_46/录制-1967216004-20260706-140846-437-师徒杯训练赛！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_06_14_08_46/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_06_14_08_46/录制-1967216004-20260706-140846-437-师徒杯训练赛！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_06_14_08_46/录制-1967216004-20260706-140846-437-师徒杯训练赛！_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_07_06_14_08_46/录制-1967216004-20260705-182231-546-all in五排！！_merged_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_06_14_08_46/录制-1967216004-20260705-182231-546-all in五排！！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_01_18_07",
     "title": "all in五排！！",
     "date": "2026-07-05",

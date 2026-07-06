@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_06_21_34_38",
+    "title": "啵啵！！",
+    "date": "2026-07-06",
+    "time": "21:34:38",
+    "startTime": "21:34",
+    "endTime": "00:10",
+    "duration": 9369,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_06_21_34_38/录制-26966466-20260706-213438-803-啵啵！！.xml",
+    "cover": "/data/streams/shiori/2026_07_06_21_34_38/录制-26966466-20260706-213438-803-啵啵！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_06_21_34_38/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_06_21_34_38/录制-26966466-20260706-213438-803-啵啵！！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_07_06_21_34_38/录制-26966466-20260705-231527-218-节奏天国！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_06_21_34_38/录制-26966466-20260705-231527-218-节奏天国！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_23_15_27",
     "title": "节奏天国！",
     "date": "2026-07-05",

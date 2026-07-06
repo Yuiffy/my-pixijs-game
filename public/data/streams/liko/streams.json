@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_06_10_39_15",
+    "title": "起床咯",
+    "date": "2026-07-06",
+    "time": "10:39:15",
+    "startTime": "10:39",
+    "endTime": "12:38",
+    "duration": 7191,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_06_10_39_15/录制-1713548468-20260706-103915-992-起床咯.xml",
+    "cover": "/data/streams/liko/2026_07_06_10_39_15/录制-1713548468-20260706-103915-992-起床咯.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_06_10_39_15/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_06_10_39_15/录制-1713548468-20260706-103915-992-起床咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_06_10_39_15/录制-1713548468-20260706-103915-992-起床咯_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_07_06_10_39_15/录制-1713548468-20260705-215012-556-到上海啦_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_21_50_12",
     "title": "到上海啦",
     "date": "2026-07-05",
