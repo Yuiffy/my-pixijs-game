@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_07_07_21_57_47",
+    "title": "【晚杂】真善美又来噜",
+    "date": "2026-07-07",
+    "time": "21:57:47",
+    "startTime": "21:57",
+    "endTime": "23:54",
+    "duration": 7025,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_07_21_57_47/录制-24872476-20260707-215747-529-【晚杂】真善美又来噜.xml",
+    "cover": "/data/streams/nightin/2026_07_07_21_57_47/录制-24872476-20260707-215747-529-【晚杂】真善美又来噜.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_21_33_55",
+    "title": "【晚杂】真善美又来噜",
+    "date": "2026-07-07",
+    "time": "21:33:55",
+    "startTime": "21:33",
+    "endTime": "21:55",
+    "duration": 1320,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_07_21_33_55/录制-24872476-20260707-213355-728-【晚杂】真善美又来噜.xml",
+    "cover": "/data/streams/nightin/2026_07_07_21_33_55/录制-24872476-20260707-213355-728-【晚杂】真善美又来噜.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_07_21_33_55/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_07_21_33_55/录制-24872476-20260707-213355-728-【晚杂】真善美又来噜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_07_14_04_53",
+    "title": "【歌杂】真善美来噜",
+    "date": "2026-07-07",
+    "time": "14:04:53",
+    "startTime": "14:04",
+    "endTime": "17:36",
+    "duration": 12746,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_07_14_04_53/录制-24872476-20260707-140453-355-【歌杂】真善美来噜.xml",
+    "cover": "/data/streams/nightin/2026_07_07_14_04_53/录制-24872476-20260707-140453-355-【歌杂】真善美来噜.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_07_14_04_53/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_07_14_04_53/录制-24872476-20260707-140453-355-【歌杂】真善美来噜_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_07_14_04_53/录制-24872476-20260707-140453-355-【歌杂】真善美来噜_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_07_14_04_53/录制-24872476-20260705-140348-466-先杂谈_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_07_14_04_53/录制-24872476-20260705-140348-466-先杂谈_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_14_03_48",
     "title": "先杂谈",
     "date": "2026-07-05",

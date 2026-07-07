@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_07_11_58_11",
+    "title": "伪装电话",
+    "date": "2026-07-07",
+    "time": "11:58:11",
+    "startTime": "11:58",
+    "endTime": "12:01",
+    "duration": 198,
+    "durationStr": "3 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_07_11_58_11/录制-1713546334-20260707-115811-813-伪装电话_merged.xml",
+    "cover": "/data/streams/hazel/2026_07_07_11_58_11/录制-1713546334-20260707-115811-813-伪装电话.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_07_11_58_11/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_07_11_58_11/录制-1713546334-20260707-115811-813-伪装电话_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_07_11_10_42",
+    "title": "伪装电话",
+    "date": "2026-07-07",
+    "time": "11:10:42",
+    "startTime": "11:10",
+    "endTime": "11:11",
+    "duration": 105,
+    "durationStr": "1 分钟",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_07_11_10_42/录制-1713546334-20260707-111042-563-伪装电话.xml",
+    "cover": "/data/streams/hazel/2026_07_07_11_10_42/录制-1713546334-20260707-111042-563-伪装电话.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_07_11_10_42/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_07_11_10_42/录制-1713546334-20260707-111042-563-伪装电话_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_07_07_11_10_42/录制-1713546334-20260705-230757-192-夜聊_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_07_07_11_10_42/录制-1713546334-20260705-230757-192-夜聊_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_23_07_57",
     "title": "夜聊",
     "date": "2026-07-05",

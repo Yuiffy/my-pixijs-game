@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_07_07_23_12_45",
+    "title": "旅游后的感叹",
+    "date": "2026-07-07",
+    "time": "23:12:45",
+    "startTime": "23:12",
+    "endTime": "01:12",
+    "duration": 7208,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_07_23_12_45/录制-1713548468-20260707-231245-443-旅游后的感叹.xml",
+    "cover": "/data/streams/liko/2026_07_07_23_12_45/录制-1713548468-20260707-231245-443-旅游后的感叹.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_10_24_19",
+    "title": "准备回家",
+    "date": "2026-07-07",
+    "time": "10:24:19",
+    "startTime": "10:24",
+    "endTime": "11:35",
+    "duration": 4303,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_07_10_24_19/录制-1713548468-20260707-102419-358-准备回家.xml",
+    "cover": "/data/streams/liko/2026_07_07_10_24_19/录制-1713548468-20260707-102419-358-准备回家.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_07_10_24_19/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_07_10_24_19/录制-1713548468-20260707-102419-358-准备回家_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_07_10_24_19/录制-1713548468-20260707-102419-358-准备回家_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_07_07_10_24_19/录制-1713548468-20260706-103915-992-起床咯_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_07_10_24_19/录制-1713548468-20260706-103915-992-起床咯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_10_39_15",
     "title": "起床咯",
     "date": "2026-07-06",

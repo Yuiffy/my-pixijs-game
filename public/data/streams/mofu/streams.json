@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_07_12_04_37",
+    "title": "哈喽小狗",
+    "date": "2026-07-07",
+    "time": "12:04:37",
+    "startTime": "12:04",
+    "endTime": "14:01",
+    "duration": 7058,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_07_12_04_37/录制-1791260716-20260707-120437-371-哈喽小狗.xml",
+    "cover": "/data/streams/mofu/2026_07_07_12_04_37/录制-1791260716-20260707-120437-371-哈喽小狗.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_07_12_04_37/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_07_12_04_37/录制-1791260716-20260707-120437-371-哈喽小狗_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_07_12_04_37/录制-1791260716-20260707-120437-371-哈喽小狗_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_07_07_12_04_37/录制-1791260716-20260706-223249-976-【3D麦】来睡觉觉_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_22_32_49",
     "title": "【3D麦】来睡觉觉",
     "date": "2026-07-06",

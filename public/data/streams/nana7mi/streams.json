@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026_07_08_00_03_03",
+    "title": "你看球我下棋",
+    "date": "2026-07-07",
+    "time": "00:03:03",
+    "startTime": "00:03",
+    "endTime": "04:00",
+    "duration": 14220,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_08_00_03_03/录制-21452505-20260708-000303-598-你看球我下棋.xml",
+    "cover": null,
+    "highlights": null,
+    "images": [
+      "/data/streams/nana7mi/2026_07_08_00_03_03/录制-21452505-20260706-073121-800-下棋看球_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_07_31_21",
     "title": "下棋看球",
     "date": "2026-07-05",

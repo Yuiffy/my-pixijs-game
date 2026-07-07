@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_07_21_57_34",
+    "title": "直播中",
+    "date": "2026-07-07",
+    "time": "21:57:34",
+    "startTime": "21:57",
+    "endTime": "01:14",
+    "duration": 11844,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_07_21_57_34/录制-25034104-20260707-215734-428-直播中.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_07_21_57_34/录制-25034104-20260707-215734-428-直播中.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_07_21_57_34/录制-25034104-20260707-215734-428-直播中_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_07_21_17_42",
+    "title": "直播中",
+    "date": "2026-07-07",
+    "time": "21:17:42",
+    "startTime": "21:17",
+    "endTime": "21:55",
+    "duration": 2303,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_07_21_17_42/录制-25034104-20260707-211742-807-直播中.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_07_21_17_42/录制-25034104-20260707-211742-807-直播中.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_07_21_17_42/录制-25034104-20260707-200238-373-直播中_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_07_20_02_38",
+    "title": "直播中",
+    "date": "2026-07-07",
+    "time": "20:02:38",
+    "startTime": "20:02",
+    "endTime": "21:16",
+    "duration": 4486,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_07_20_02_38/录制-25034104-20260707-200238-373-直播中.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_07_20_02_38/录制-25034104-20260707-200238-373-直播中.cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_07_07_20_02_38/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_07_20_02_38/录制-25034104-20260707-200238-373-直播中_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_07_20_02_38/录制-25034104-20260705-184045-238-美少女玩游戏中_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_07_20_02_38/录制-25034104-20260705-184045-238-美少女玩游戏中_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_18_40_45",
     "title": "美少女玩游戏中",
     "date": "2026-07-05",

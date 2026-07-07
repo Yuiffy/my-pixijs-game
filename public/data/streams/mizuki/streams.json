@@ -1,5 +1,72 @@
 [
   {
+    "id": "2026_07_07_21_57_27",
+    "title": "虚度-------------⭐",
+    "date": "2026-07-07",
+    "time": "21:57:27",
+    "startTime": "21:57",
+    "endTime": "00:31",
+    "duration": 9290,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_07_21_57_27/录制-30655190-20260707-215727-683-虚度-------------⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_07_21_57_27/录制-30655190-20260707-215727-683-虚度-------------⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_21_17_44",
+    "title": "虚度-------------⭐",
+    "date": "2026-07-07",
+    "time": "21:17:44",
+    "startTime": "21:17",
+    "endTime": "21:55",
+    "duration": 2299,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_07_21_17_44/录制-30655190-20260707-211744-327-虚度-------------⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_07_21_17_44/录制-30655190-20260707-211744-327-虚度-------------⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_21_03_22",
+    "title": "虚度-------------⭐",
+    "date": "2026-07-07",
+    "time": "21:03:22",
+    "startTime": "21:03",
+    "endTime": "21:17",
+    "duration": 857,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_07_21_03_22/录制-30655190-20260707-210322-986-虚度-------------⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_07_21_03_22/录制-30655190-20260707-210322-986-虚度-------------⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_07_21_03_22/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_07_21_03_22/录制-30655190-20260707-210322-986-虚度-------------⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_07_15_52_36",
+    "title": "来唱歌喔嘻嘻⭐",
+    "date": "2026-07-07",
+    "time": "15:52:36",
+    "startTime": "15:52",
+    "endTime": "19:02",
+    "duration": 11406,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_07_15_52_36/录制-30655190-20260707-155236-894-来唱歌喔嘻嘻⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_07_15_52_36/录制-30655190-20260707-155236-894-来唱歌喔嘻嘻⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_07_15_52_36/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_07_15_52_36/录制-30655190-20260707-155236-894-来唱歌喔嘻嘻⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_07_15_52_36/录制-30655190-20260707-155236-894-来唱歌喔嘻嘻⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_07_15_52_36/录制-30655190-20260706-210447-464-晚间的虚度慢慢来⭐_merged_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_07_15_52_36/录制-30655190-20260706-210447-464-晚间的虚度慢慢来⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_00_31_25",
     "title": "晚间的虚度慢慢来⭐",
     "date": "2026-07-06",

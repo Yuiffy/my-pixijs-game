@@ -1,5 +1,72 @@
 [
   {
+    "id": "2026_07_07_21_57_22",
+    "title": "睡饱了！",
+    "date": "2026-07-07",
+    "time": "21:57:22",
+    "startTime": "21:57",
+    "endTime": "23:26",
+    "duration": 5369,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_07_21_57_22/录制-1741667419-20260707-215722-432-睡饱了！.xml",
+    "cover": "/data/streams/izayoi/2026_07_07_21_57_22/录制-1741667419-20260707-215722-432-睡饱了！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_21_17_43",
+    "title": "睡饱了！",
+    "date": "2026-07-07",
+    "time": "21:17:43",
+    "startTime": "21:17",
+    "endTime": "21:55",
+    "duration": 2302,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_07_21_17_43/录制-1741667419-20260707-211743-397-睡饱了！.xml",
+    "cover": "/data/streams/izayoi/2026_07_07_21_17_43/录制-1741667419-20260707-211743-397-睡饱了！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_20_56_41",
+    "title": "睡饱了！",
+    "date": "2026-07-07",
+    "time": "20:56:41",
+    "startTime": "20:56",
+    "endTime": "21:16",
+    "duration": 1259,
+    "durationStr": "0.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_07_20_56_41/录制-1741667419-20260707-205641-768-睡饱了！.xml",
+    "cover": "/data/streams/izayoi/2026_07_07_20_56_41/录制-1741667419-20260707-205641-768-睡饱了！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_07_20_56_41/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_07_20_56_41/录制-1741667419-20260707-205641-768-睡饱了！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_07_15_28_25",
+    "title": "浣熊回到了她忠诚的咖啡馆！",
+    "date": "2026-07-07",
+    "time": "15:28:25",
+    "startTime": "15:28",
+    "endTime": "17:30",
+    "duration": 7355,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_07_15_28_25/录制-1741667419-20260707-152825-458-浣熊回到了她忠诚的咖啡馆！.xml",
+    "cover": "/data/streams/izayoi/2026_07_07_15_28_25/录制-1741667419-20260707-152825-458-浣熊回到了她忠诚的咖啡馆！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_07_15_28_25/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_07_15_28_25/录制-1741667419-20260707-152825-458-浣熊回到了她忠诚的咖啡馆！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_07_15_28_25/录制-1741667419-20260707-152825-458-浣熊回到了她忠诚的咖啡馆！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_07_15_28_25/录制-1741667419-20260706-103918-735-早上好————_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_07_15_28_25/录制-1741667419-20260706-103918-735-早上好————_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_10_39_18",
     "title": "早上好————",
     "date": "2026-07-06",

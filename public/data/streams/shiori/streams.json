@@ -1,5 +1,71 @@
 [
   {
+    "id": "2026_07_07_21_57_10",
+    "title": "节奏天国！！",
+    "date": "2026-07-07",
+    "time": "21:57:10",
+    "startTime": "21:57",
+    "endTime": "00:10",
+    "duration": 8039,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_07_21_57_10/录制-26966466-20260707-215710-290-节奏天国！！.xml",
+    "cover": "/data/streams/shiori/2026_07_07_21_57_10/录制-26966466-20260707-215710-290-节奏天国！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_21_17_43",
+    "title": "节奏天国！！",
+    "date": "2026-07-07",
+    "time": "21:17:43",
+    "startTime": "21:17",
+    "endTime": "21:55",
+    "duration": 2301,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_07_21_17_43/录制-26966466-20260707-211743-332-节奏天国！！.xml",
+    "cover": "/data/streams/shiori/2026_07_07_21_17_43/录制-26966466-20260707-211743-332-节奏天国！！.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_07_21_13_40",
+    "title": "节奏天国！！",
+    "date": "2026-07-07",
+    "time": "21:13:40",
+    "startTime": "21:13",
+    "endTime": "21:17",
+    "duration": 240,
+    "durationStr": "4 分钟",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_07_21_13_40/录制-26966466-20260707-211340-476-节奏天国！！.xml",
+    "cover": "/data/streams/shiori/2026_07_07_21_13_40/录制-26966466-20260707-211340-476-节奏天国！！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_07_21_13_40/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_07_21_13_40/录制-26966466-20260707-211340-476-节奏天国！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_07_10_18_25",
+    "title": "早安獭獭栞！",
+    "date": "2026-07-07",
+    "time": "10:18:25",
+    "startTime": "10:18",
+    "endTime": "12:12",
+    "duration": 6888,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_07_10_18_25/录制-26966466-20260707-101825-173-早安獭獭栞！.xml",
+    "cover": "/data/streams/shiori/2026_07_07_10_18_25/录制-26966466-20260707-101825-173-早安獭獭栞！.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_07_10_18_25/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_07_10_18_25/录制-26966466-20260707-101825-173-早安獭獭栞！_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_07_10_18_25/录制-26966466-20260707-101825-173-早安獭獭栞！_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_07_07_10_18_25/录制-26966466-20260706-213438-803-啵啵！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_21_34_38",
     "title": "啵啵！！",
     "date": "2026-07-06",
