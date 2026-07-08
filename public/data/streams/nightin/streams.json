@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_08_20_00_28",
+    "title": "【联动】我是魔法师",
+    "date": "2026-07-08",
+    "time": "20:00:28",
+    "startTime": "20:00",
+    "endTime": "23:46",
+    "duration": 13607,
+    "durationStr": "3.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_08_20_00_28/录制-24872476-20260708-200028-470-【联动】我是魔法师.xml",
+    "cover": "/data/streams/nightin/2026_07_08_20_00_28/录制-24872476-20260708-200028-470-【联动】我是魔法师.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_08_20_00_28/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_08_20_00_28/录制-24872476-20260708-200028-470-【联动】我是魔法师_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_08_20_00_28/录制-24872476-20260708-200028-470-【联动】我是魔法师_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_08_10_02_30",
+    "title": "【早杂】早上好",
+    "date": "2026-07-08",
+    "time": "10:02:30",
+    "startTime": "10:02",
+    "endTime": "13:00",
+    "duration": 10684,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_08_10_02_30/录制-24872476-20260708-100230-574-【早杂】早上好.xml",
+    "cover": "/data/streams/nightin/2026_07_08_10_02_30/录制-24872476-20260708-100230-574-【早杂】早上好.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_08_10_02_30/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_08_10_02_30/录制-24872476-20260708-100230-574-【早杂】早上好_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_08_10_02_30/录制-24872476-20260708-100230-574-【早杂】早上好_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_08_10_02_30/录制-24872476-20260707-213355-728-【晚杂】真善美又来噜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_21_57_47",
     "title": "【晚杂】真善美又来噜",
     "date": "2026-07-07",

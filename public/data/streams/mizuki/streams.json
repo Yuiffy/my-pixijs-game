@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_08_22_06_17",
+    "title": "⭐我的节奏天国到了⭐",
+    "date": "2026-07-08",
+    "time": "22:06:17",
+    "startTime": "22:06",
+    "endTime": "01:03",
+    "duration": 10659,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_08_22_06_17/录制-30655190-20260708-220617-969-⭐我的节奏天国到了⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_08_22_06_17/录制-30655190-20260708-220617-969-⭐我的节奏天国到了⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_08_22_06_17/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_08_22_06_17/录制-30655190-20260708-220617-969-⭐我的节奏天国到了⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_08_15_03_25",
+    "title": "⭐仁仁仁⭐",
+    "date": "2026-07-08",
+    "time": "15:03:25",
+    "startTime": "15:03",
+    "endTime": "18:07",
+    "duration": 11098,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_08_15_03_25/录制-30655190-20260708-150325-363-⭐仁仁仁⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_08_15_03_25/录制-30655190-20260708-150325-363-⭐仁仁仁⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_08_15_03_25/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_08_15_03_25/录制-30655190-20260708-150325-363-⭐仁仁仁⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_08_15_03_25/录制-30655190-20260708-150325-363-⭐仁仁仁⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_08_09_02_16",
+    "title": "⭐-灶台-⭐",
+    "date": "2026-07-08",
+    "time": "09:02:16",
+    "startTime": "09:02",
+    "endTime": "10:50",
+    "duration": 6521,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_08_09_02_16/录制-30655190-20260708-090216-444-⭐-灶台-⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_08_09_02_16/录制-30655190-20260708-090216-444-⭐-灶台-⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_08_09_02_16/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_08_09_02_16/录制-30655190-20260708-090216-444-⭐-灶台-⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_08_09_02_16/录制-30655190-20260708-090216-444-⭐-灶台-⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_21_57_27",
     "title": "虚度-------------⭐",
     "date": "2026-07-07",

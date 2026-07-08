@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_08_20_02_31",
+    "title": "测测鼠的记忆力^^",
+    "date": "2026-07-08",
+    "time": "20:02:31",
+    "startTime": "20:02",
+    "endTime": "01:26",
+    "duration": 19488,
+    "durationStr": "5.4 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_08_20_02_31/录制-1820703922-20260708-200231-219-测测鼠的记忆力^^_merged.xml",
+    "cover": "/data/streams/harei/2026_07_08_20_02_31/录制-1820703922-20260708-200231-219-测测鼠的记忆力^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_08_20_02_31/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_08_20_02_31/录制-1820703922-20260708-200231-219-测测鼠的记忆力^^_merged_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_08_20_02_31/录制-1820703922-20260708-200231-219-测测鼠的记忆力^^_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_08_10_05_21",
+    "title": "早安一只鼠^^",
+    "date": "2026-07-08",
+    "time": "10:05:21",
+    "startTime": "10:05",
+    "endTime": "12:31",
+    "duration": 8771,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_08_10_05_21/录制-1820703922-20260708-100521-868-早安一只鼠^^.xml",
+    "cover": "/data/streams/harei/2026_07_08_10_05_21/录制-1820703922-20260708-100521-868-早安一只鼠^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_08_10_05_21/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_08_10_05_21/录制-1820703922-20260708-100521-868-早安一只鼠^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_08_10_05_21/录制-1820703922-20260708-100521-868-早安一只鼠^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_07_08_10_05_21/录制-1820703922-20260706-151525-074-挑战不到10w粉不下播^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_08_10_05_21/录制-1820703922-20260706-151525-074-挑战不到10w粉不下播^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_06_15_15_25",
     "title": "挑战不到10w粉不下播^^",
     "date": "2026-07-06",

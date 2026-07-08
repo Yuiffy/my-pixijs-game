@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_08_20_47_49",
+    "title": "巴威BW",
+    "date": "2026-07-08",
+    "time": "20:47:49",
+    "startTime": "20:47",
+    "endTime": "02:47",
+    "duration": 21629,
+    "durationStr": "6.0 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_07_08_20_47_49/录制-23260993-20260708-204749-538-巴威BW.xml",
+    "cover": "/data/streams/rhea/2026_07_08_20_47_49/录制-23260993-20260708-204749-538-巴威BW.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_07_08_20_47_49/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_07_08_20_47_49/录制-23260993-20260708-204749-538-巴威BW_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_07_08_20_47_49/录制-23260993-20260708-204749-538-巴威BW_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_07_08_20_47_49/录制-23260993-20260707-215709-788-检测到空间不稳定_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_07_08_20_47_49/录制-23260993-20260707-215709-788-检测到空间不稳定_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_21_57_09",
     "title": "检测到空间不稳定",
     "date": "2026-07-07",

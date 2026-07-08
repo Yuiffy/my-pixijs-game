@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_08_20_02_36",
+    "title": "「YAPYAP」with N璃七礼",
+    "date": "2026-07-08",
+    "time": "20:02:36",
+    "startTime": "20:02",
+    "endTime": "00:25",
+    "duration": 15795,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_08_20_02_36/录制-31368705-20260708-200236-474-「YAPYAP」with N璃七礼.xml",
+    "cover": "/data/streams/nagisa/2026_07_08_20_02_36/录制-31368705-20260708-200236-474-「YAPYAP」with N璃七礼.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_08_20_02_36/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_08_20_02_36/录制-31368705-20260708-200236-474-「YAPYAP」with N璃七礼_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_08_20_02_36/录制-31368705-20260708-200236-474-「YAPYAP」with N璃七礼_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_08_08_06_11",
+    "title": "早歌一会儿",
+    "date": "2026-07-08",
+    "time": "08:06:11",
+    "startTime": "08:06",
+    "endTime": "11:27",
+    "duration": 12078,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_08_08_06_11/录制-31368705-20260708-080611-535-早歌一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_07_08_08_06_11/录制-31368705-20260708-080611-535-早歌一会儿.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_08_08_06_11/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_08_08_06_11/录制-31368705-20260708-080611-535-早歌一会儿_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_08_08_06_11/录制-31368705-20260708-080611-535-早歌一会儿_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_08_08_06_11/录制-31368705-20260707-215707-350-周二的歌杂_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_08_08_06_11/录制-31368705-20260707-215707-350-周二的歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_21_57_07",
     "title": "周二的歌杂",
     "date": "2026-07-07",

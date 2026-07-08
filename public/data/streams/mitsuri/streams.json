@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_07_08_14_38_27",
+    "title": "新的一天冲！！",
+    "date": "2026-07-08",
+    "time": "14:38:27",
+    "startTime": "14:38",
+    "endTime": "00:47",
+    "duration": 36551,
+    "durationStr": "10.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_08_14_38_27/录制-1967216004-20260708-143827-120-新的一天冲！！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_08_14_38_27/录制-1967216004-20260708-143827-120-新的一天冲！！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_08_14_38_27/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_08_14_38_27/录制-1967216004-20260708-143827-120-新的一天冲！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_08_14_38_27/录制-1967216004-20260708-143827-120-新的一天冲！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_21_57_17",
     "title": "嘟嘟登场！！",
     "date": "2026-07-07",

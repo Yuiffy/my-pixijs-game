@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_07_08_22_00_50",
+    "title": "1616我们喜浣你",
+    "date": "2026-07-08",
+    "time": "22:00:50",
+    "startTime": "22:00",
+    "endTime": "00:28",
+    "duration": 8893,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_08_22_00_50/录制-1741667419-20260708-220050-397-1616我们喜浣你_merged.xml",
+    "cover": "/data/streams/izayoi/2026_07_08_22_00_50/录制-1741667419-20260708-220050-397-1616我们喜浣你.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_08_22_00_50/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_08_22_00_50/录制-1741667419-20260708-220050-397-1616我们喜浣你_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_08_22_00_50/录制-1741667419-20260708-220050-397-1616我们喜浣你_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_08_11_18_17",
+    "title": "闹钟完全没响....",
+    "date": "2026-07-08",
+    "time": "11:18:17",
+    "startTime": "11:18",
+    "endTime": "15:24",
+    "duration": 14800,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_08_11_18_17/录制-1741667419-20260708-111817-544-闹钟完全没响...._merged.xml",
+    "cover": "/data/streams/izayoi/2026_07_08_11_18_17/录制-1741667419-20260708-111817-544-闹钟完全没响.....cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_08_11_18_17/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_08_11_18_17/录制-1741667419-20260708-111817-544-闹钟完全没响...._merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_21_57_22",
     "title": "睡饱了！",
     "date": "2026-07-07",

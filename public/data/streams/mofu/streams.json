@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_08_21_56_42",
+    "title": "；；呜呜",
+    "date": "2026-07-08",
+    "time": "21:56:42",
+    "startTime": "21:56",
+    "endTime": "00:26",
+    "duration": 9053,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_08_21_56_42/录制-1791260716-20260708-215642-780-；；呜呜.xml",
+    "cover": "/data/streams/mofu/2026_07_08_21_56_42/录制-1791260716-20260708-215642-780-；；呜呜.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_08_21_56_42/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_08_21_56_42/录制-1791260716-20260708-215642-780-；；呜呜_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_08_21_56_42/录制-1791260716-20260708-215642-780-；；呜呜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_08_12_15_24",
+    "title": "；；呜呜",
+    "date": "2026-07-08",
+    "time": "12:15:24",
+    "startTime": "12:15",
+    "endTime": "13:59",
+    "duration": 6260,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_08_12_15_24/录制-1791260716-20260708-121524-413-；；呜呜.xml",
+    "cover": "/data/streams/mofu/2026_07_08_12_15_24/录制-1791260716-20260708-121524-413-；；呜呜.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_08_12_15_24/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_08_12_15_24/录制-1791260716-20260708-121524-413-；；呜呜_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_08_12_15_24/录制-1791260716-20260708-121524-413-；；呜呜_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_07_08_12_15_24/录制-1791260716-20260707-120437-371-哈喽小狗_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_08_12_15_24/录制-1791260716-20260707-120437-371-哈喽小狗_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_12_04_37",
     "title": "哈喽小狗",
     "date": "2026-07-07",
