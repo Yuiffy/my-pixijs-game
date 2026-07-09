@@ -1,5 +1,75 @@
 [
   {
+    "id": "2026_07_09_21_22_36",
+    "title": "⭐说的什么话弥月⭐",
+    "date": "2026-07-09",
+    "time": "21:22:36",
+    "startTime": "21:22",
+    "endTime": "00:39",
+    "duration": 11840,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_09_21_22_36/录制-30655190-20260709-212236-172-⭐说的什么话弥月⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_07_09_21_22_36/录制-30655190-20260709-212236-172-⭐说的什么话弥月⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_09_21_22_36/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_09_21_22_36/录制-30655190-20260709-212236-172-⭐说的什么话弥月⭐_merged_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_09_21_22_36/录制-30655190-20260709-212236-172-⭐说的什么话弥月⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_21_02_29",
+    "title": "⭐说的什么话弥月⭐",
+    "date": "2026-07-09",
+    "time": "21:02:29",
+    "startTime": "21:02",
+    "endTime": "21:15",
+    "duration": 832,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_09_21_02_29/录制-30655190-20260709-210229-287-⭐说的什么话弥月⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_09_21_02_29/录制-30655190-20260709-210229-287-⭐说的什么话弥月⭐.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_09_15_05_39",
+    "title": "⭐工作音 学歌回Part？⭐",
+    "date": "2026-07-09",
+    "time": "15:05:39",
+    "startTime": "15:05",
+    "endTime": "18:27",
+    "duration": 12165,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_09_15_05_39/录制-30655190-20260709-150539-231-⭐工作音 学歌回Part？⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_09_15_05_39/录制-30655190-20260709-150539-231-⭐工作音 学歌回Part？⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_09_15_05_39/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_09_15_05_39/录制-30655190-20260709-150539-231-⭐工作音 学歌回Part？⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_09_15_05_39/录制-30655190-20260709-150539-231-⭐工作音 学歌回Part？⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_10_06_27",
+    "title": "⭐崩坏因缘精灵二测⭐",
+    "date": "2026-07-09",
+    "time": "10:06:27",
+    "startTime": "10:06",
+    "endTime": "12:34",
+    "duration": 8905,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_09_10_06_27/录制-30655190-20260709-100627-734-⭐崩坏因缘精灵二测⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_09_10_06_27/录制-30655190-20260709-100627-734-⭐崩坏因缘精灵二测⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_09_10_06_27/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_09_10_06_27/录制-30655190-20260709-100627-734-⭐崩坏因缘精灵二测⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_09_10_06_27/录制-30655190-20260709-100627-734-⭐崩坏因缘精灵二测⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_09_10_06_27/录制-30655190-20260708-220617-969-⭐我的节奏天国到了⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_22_06_17",
     "title": "⭐我的节奏天国到了⭐",
     "date": "2026-07-08",

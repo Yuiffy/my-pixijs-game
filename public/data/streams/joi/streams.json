@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_09_21_22_36",
+    "title": "节奏天国！奇迹之星",
+    "date": "2026-07-09",
+    "time": "21:22:36",
+    "startTime": "21:22",
+    "endTime": "23:48",
+    "duration": 8761,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_07_09_21_22_36/录制-21484828-20260709-212236-467-节奏天国！奇迹之星_merged.xml",
+    "cover": "/data/streams/joi/2026_07_09_21_22_36/录制-21484828-20260709-212236-467-节奏天国！奇迹之星.cover.jpg",
+    "highlights": "/data/streams/joi/2026_07_09_21_22_36/highlights.md",
+    "images": [
+      "/data/streams/joi/2026_07_09_21_22_36/录制-21484828-20260709-212236-467-节奏天国！奇迹之星_merged_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_09_21_22_36/录制-21484828-20260709-212236-467-节奏天国！奇迹之星_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_21_03_27",
+    "title": "节奏天国！奇迹之星",
+    "date": "2026-07-09",
+    "time": "21:03:27",
+    "startTime": "21:03",
+    "endTime": "21:14",
+    "duration": 687,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_07_09_21_03_27/录制-21484828-20260709-210327-352-节奏天国！奇迹之星.xml",
+    "cover": "/data/streams/joi/2026_07_09_21_03_27/录制-21484828-20260709-210327-352-节奏天国！奇迹之星.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/joi/2026_07_09_21_03_27/录制-21484828-20260707-215723-380-137拆弹！keeptalking_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_09_21_03_27/录制-21484828-20260707-215723-380-137拆弹！keeptalking_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_07_21_57_23",
     "title": "137拆弹！keeptalking",
     "date": "2026-07-07",

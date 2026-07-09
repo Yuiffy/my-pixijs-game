@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_09_21_22_33",
+    "title": "又聋又瞎又哑",
+    "date": "2026-07-09",
+    "time": "21:22:33",
+    "startTime": "21:22",
+    "endTime": "00:56",
+    "duration": 12885,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_09_21_22_33/录制-1791260716-20260709-212233-245-又聋又瞎又哑.xml",
+    "cover": "/data/streams/mofu/2026_07_09_21_22_33/录制-1791260716-20260709-212233-245-又聋又瞎又哑.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_09_21_22_33/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_09_21_22_33/录制-1791260716-20260709-212233-245-又聋又瞎又哑_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_09_21_22_33/录制-1791260716-20260709-212233-245-又聋又瞎又哑_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_21_06_28",
+    "title": "又聋又瞎又哑",
+    "date": "2026-07-09",
+    "time": "21:06:28",
+    "startTime": "21:06",
+    "endTime": "21:14",
+    "duration": 493,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_09_21_06_28/录制-1791260716-20260709-210628-473-又聋又瞎又哑.xml",
+    "cover": "/data/streams/mofu/2026_07_09_21_06_28/录制-1791260716-20260709-210628-473-又聋又瞎又哑.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_09_12_05_00",
+    "title": "中午好狗来！",
+    "date": "2026-07-09",
+    "time": "12:05:00",
+    "startTime": "12:05",
+    "endTime": "14:24",
+    "duration": 8373,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_09_12_05_00/录制-1791260716-20260709-120500-698-中午好狗来！_merged.xml",
+    "cover": "/data/streams/mofu/2026_07_09_12_05_00/录制-1791260716-20260709-120500-698-中午好狗来！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_09_12_05_00/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_09_12_05_00/录制-1791260716-20260709-120500-698-中午好狗来！_merged_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_09_12_05_00/录制-1791260716-20260709-120500-698-中午好狗来！_merged_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_07_09_12_05_00/录制-1791260716-20260708-215642-780-；；呜呜_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_09_12_05_00/录制-1791260716-20260708-215642-780-；；呜呜_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_21_56_42",
     "title": "；；呜呜",
     "date": "2026-07-08",

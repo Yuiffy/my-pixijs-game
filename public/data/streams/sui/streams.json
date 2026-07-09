@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_09_23_06_45",
+    "title": "来陪你这个猪过周四！",
+    "date": "2026-07-09",
+    "time": "23:06:45",
+    "startTime": "23:06",
+    "endTime": "00:10",
+    "duration": 3896,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/sui/2026_07_09_23_06_45/录制-25788785-20260709-230645-993-来陪你这个猪过周四！_merged.xml",
+    "cover": "/data/streams/sui/2026_07_09_23_06_45/录制-25788785-20260709-230645-993-来陪你这个猪过周四！.cover.jpg",
+    "highlights": "/data/streams/sui/2026_07_09_23_06_45/highlights.md",
+    "images": [
+      "/data/streams/sui/2026_07_09_23_06_45/录制-25788785-20260709-230645-993-来陪你这个猪过周四！_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_07_09_23_06_45/录制-25788785-20260708-221708-772-煮死你这个猪_merged_COMIC_FACTORY.png",
+      "/data/streams/sui/2026_07_09_23_06_45/录制-25788785-20260708-221708-772-煮死你这个猪_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_22_17_08",
     "title": "不煮死你这个猪周三",
     "date": "2026-07-08",

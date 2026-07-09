@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_09_08_02_31",
+    "title": "刺客信条",
+    "date": "2026-07-09",
+    "time": "08:02:31",
+    "startTime": "08:02",
+    "endTime": "10:01",
+    "duration": 7179,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_09_08_02_31/录制-21452505-20260709-080231-534-刺客信条.xml",
+    "cover": "/data/streams/nana7mi/2026_07_09_08_02_31/录制-21452505-20260709-080231-534-刺客信条.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_09_08_02_31/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_09_08_02_31/录制-21452505-20260709-080231-534-刺客信条_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_09_08_02_31/录制-21452505-20260709-080231-534-刺客信条_SCREENSHOTS.jpg",
+      "/data/streams/nana7mi/2026_07_09_08_02_31/录制-21452505-20260708-000303-598-你看球我下棋_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_09_08_02_31/录制-21452505-20260708-000303-598-你看球我下棋_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_00_03_03",
     "title": "你看球我下棋",
     "date": "2026-07-07",

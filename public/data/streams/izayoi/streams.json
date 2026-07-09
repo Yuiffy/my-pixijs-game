@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_09_21_22_35",
+    "title": "1616我们喜浣你",
+    "date": "2026-07-09",
+    "time": "21:22:35",
+    "startTime": "21:22",
+    "endTime": "00:04",
+    "duration": 9743,
+    "durationStr": "2.7 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_09_21_22_35/录制-1741667419-20260709-212235-949-1616我们喜浣你.xml",
+    "cover": "/data/streams/izayoi/2026_07_09_21_22_35/录制-1741667419-20260709-212235-949-1616我们喜浣你.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_09_21_22_35/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_09_21_22_35/录制-1741667419-20260709-212235-949-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_09_21_22_35/录制-1741667419-20260709-212235-949-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_20_02_26",
+    "title": "1616我们喜浣你",
+    "date": "2026-07-09",
+    "time": "20:02:26",
+    "startTime": "20:02",
+    "endTime": "21:15",
+    "duration": 4433,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_09_20_02_26/录制-1741667419-20260709-200226-961-1616我们喜浣你.xml",
+    "cover": "/data/streams/izayoi/2026_07_09_20_02_26/录制-1741667419-20260709-200226-961-1616我们喜浣你.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_09_09_04_21",
+    "title": "成功复活早茶",
+    "date": "2026-07-09",
+    "time": "09:04:21",
+    "startTime": "09:04",
+    "endTime": "11:22",
+    "duration": 8301,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_09_09_04_21/录制-1741667419-20260709-090421-693-成功复活早茶.xml",
+    "cover": "/data/streams/izayoi/2026_07_09_09_04_21/录制-1741667419-20260709-090421-693-成功复活早茶.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_09_09_04_21/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_09_09_04_21/录制-1741667419-20260709-090421-693-成功复活早茶_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_09_09_04_21/录制-1741667419-20260709-090421-693-成功复活早茶_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_09_09_04_21/录制-1741667419-20260708-220050-397-1616我们喜浣你_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_09_09_04_21/录制-1741667419-20260708-220050-397-1616我们喜浣你_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_22_00_50",
     "title": "1616我们喜浣你",
     "date": "2026-07-08",

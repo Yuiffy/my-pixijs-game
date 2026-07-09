@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_09_21_22_32",
+    "title": "夜间杂谈~",
+    "date": "2026-07-09",
+    "time": "21:22:32",
+    "startTime": "21:22",
+    "endTime": "23:27",
+    "duration": 7538,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_09_21_22_32/录制-1986461465-20260709-212232-071-夜间杂谈~.xml",
+    "cover": "/data/streams/kloa/2026_07_09_21_22_32/录制-1986461465-20260709-212232-071-夜间杂谈~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_09_21_22_32/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_09_21_22_32/录制-1986461465-20260709-212232-071-夜间杂谈~_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_09_21_22_32/录制-1986461465-20260709-212232-071-夜间杂谈~_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_20_05_12",
+    "title": "夜间杂谈~",
+    "date": "2026-07-09",
+    "time": "20:05:12",
+    "startTime": "20:05",
+    "endTime": "21:14",
+    "duration": 4142,
+    "durationStr": "1.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_09_20_05_12/录制-1986461465-20260709-200512-112-夜间杂谈~.xml",
+    "cover": "/data/streams/kloa/2026_07_09_20_05_12/录制-1986461465-20260709-200512-112-夜间杂谈~.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_09_09_21_20",
+    "title": "早安歌杂~",
+    "date": "2026-07-09",
+    "time": "09:21:20",
+    "startTime": "09:21",
+    "endTime": "12:35",
+    "duration": 11668,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_09_09_21_20/录制-1986461465-20260709-092120-368-早安歌杂~_merged.xml",
+    "cover": "/data/streams/kloa/2026_07_09_09_21_20/录制-1986461465-20260709-092120-368-早安歌杂~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_09_09_21_20/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_09_09_21_20/录制-1986461465-20260709-092120-368-早安歌杂~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_09_09_21_20/录制-1986461465-20260709-092120-368-早安歌杂~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_09_09_21_20/录制-1986461465-20260708-220317-262-唱歌！！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_09_09_21_20/录制-1986461465-20260708-220317-262-唱歌！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_22_03_17",
     "title": "唱歌！！",
     "date": "2026-07-08",

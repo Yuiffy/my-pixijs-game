@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_09_23_56_39",
+    "title": "问候一下",
+    "date": "2026-07-09",
+    "time": "23:56:39",
+    "startTime": "23:56",
+    "endTime": "00:22",
+    "duration": 1619,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_09_23_56_39/录制-31368705-20260709-235639-551-问候一下.xml",
+    "cover": "/data/streams/nagisa/2026_07_09_23_56_39/录制-31368705-20260709-235639-551-问候一下.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_09_23_56_39/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_09_23_56_39/录制-31368705-20260709-235639-551-问候一下_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_09_23_56_39/录制-31368705-20260708-200236-474-「YAPYAP」with N璃七礼_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_09_23_56_39/录制-31368705-20260708-200236-474-「YAPYAP」with N璃七礼_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_20_02_36",
     "title": "「YAPYAP」with N璃七礼",
     "date": "2026-07-08",

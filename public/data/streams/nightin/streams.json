@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_09_23_28_35",
+    "title": "突击半小时！",
+    "date": "2026-07-09",
+    "time": "23:28:35",
+    "startTime": "23:28",
+    "endTime": "00:13",
+    "duration": 2745,
+    "durationStr": "0.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_09_23_28_35/录制-24872476-20260709-232835-248-突击半小时！.xml",
+    "cover": "/data/streams/nightin/2026_07_09_23_28_35/录制-24872476-20260709-232835-248-突击半小时！.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_09_23_28_35/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_09_23_28_35/录制-24872476-20260709-232835-248-突击半小时！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_14_06_31",
+    "title": "【午杂】周四下午好",
+    "date": "2026-07-09",
+    "time": "14:06:31",
+    "startTime": "14:06",
+    "endTime": "18:32",
+    "duration": 15992,
+    "durationStr": "4.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_09_14_06_31/录制-24872476-20260709-140631-339-【午杂】周四下午好.xml",
+    "cover": "/data/streams/nightin/2026_07_09_14_06_31/录制-24872476-20260709-140631-339-【午杂】周四下午好.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_09_14_06_31/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_09_14_06_31/录制-24872476-20260709-140631-339-【午杂】周四下午好_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_09_14_06_31/录制-24872476-20260708-200028-470-【联动】我是魔法师_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_09_14_06_31/录制-24872476-20260708-200028-470-【联动】我是魔法师_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_20_00_28",
     "title": "【联动】我是魔法师",
     "date": "2026-07-08",

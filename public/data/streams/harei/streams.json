@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_09_21_22_40",
+    "title": "晚上一只小鼠^^",
+    "date": "2026-07-09",
+    "time": "21:22:40",
+    "startTime": "21:22",
+    "endTime": "00:53",
+    "duration": 12710,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_09_21_22_40/录制-1820703922-20260709-212240-239-晚上一只小鼠^^.xml",
+    "cover": "/data/streams/harei/2026_07_09_21_22_40/录制-1820703922-20260709-212240-239-晚上一只小鼠^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_09_21_22_40/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_09_21_22_40/录制-1820703922-20260709-212240-239-晚上一只小鼠^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_09_21_22_40/录制-1820703922-20260709-212240-239-晚上一只小鼠^^_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_09_21_03_19",
+    "title": "晚上一只小鼠^^",
+    "date": "2026-07-09",
+    "time": "21:03:19",
+    "startTime": "21:03",
+    "endTime": "21:15",
+    "duration": 759,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_09_21_03_19/录制-1820703922-20260709-210319-171-晚上一只小鼠^^.xml",
+    "cover": "/data/streams/harei/2026_07_09_21_03_19/录制-1820703922-20260709-210319-171-晚上一只小鼠^^.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_09_14_02_30",
+    "title": "鼠唱会儿歌吧^^",
+    "date": "2026-07-09",
+    "time": "14:02:30",
+    "startTime": "14:02",
+    "endTime": "16:25",
+    "duration": 8596,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/harei/2026_07_09_14_02_30/录制-1820703922-20260709-140230-539-鼠唱会儿歌吧^^.xml",
+    "cover": "/data/streams/harei/2026_07_09_14_02_30/录制-1820703922-20260709-140230-539-鼠唱会儿歌吧^^.cover.jpg",
+    "highlights": "/data/streams/harei/2026_07_09_14_02_30/highlights.md",
+    "images": [
+      "/data/streams/harei/2026_07_09_14_02_30/录制-1820703922-20260709-140230-539-鼠唱会儿歌吧^^_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_09_14_02_30/录制-1820703922-20260709-140230-539-鼠唱会儿歌吧^^_SCREENSHOTS.jpg",
+      "/data/streams/harei/2026_07_09_14_02_30/录制-1820703922-20260708-200231-219-测测鼠的记忆力^^_merged_COMIC_FACTORY.png",
+      "/data/streams/harei/2026_07_09_14_02_30/录制-1820703922-20260708-200231-219-测测鼠的记忆力^^_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_20_02_31",
     "title": "测测鼠的记忆力^^",
     "date": "2026-07-08",

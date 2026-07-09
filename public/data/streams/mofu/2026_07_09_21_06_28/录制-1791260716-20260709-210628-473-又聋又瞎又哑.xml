@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="#s"?>
+<i>
+  <!--
+mikufans录播姬 2.18.0+Branch.tags-v2.18.0.Sha.fbb85583d8ca570d77b88637f105c4984e8231dd
+https://rec.danmuji.org/user/danmaku/
+本文件的弹幕信息兼容mikufans主站视频弹幕XML格式
+本XML自带样式可以在浏览器里打开（推荐使用Chrome）
+
+sc 为SuperChat
+gift为礼物
+guard为上船
+
+attribute "raw" 为原始数据
+-->
+  <chatserver>chat.bilibili.com</chatserver>
+  <chatid>0</chatid>
+  <mission>0</mission>
+  <maxlimit>1000</maxlimit>
+  <state>0</state>
+  <real_name>0</real_name>
+  <source>0</source>
+  <BililiveRecorder version="2.18.0" />
+  <BililiveRecorderRecordInfo roomid="1791260716" shortid="0" name="犬绒Mofu" title="又聋又瞎又哑" areanameparent="虚拟主播" areanamechild="虚拟日常" start_time="2026-07-09T21:06:28.4781587+08:00" />
+  <BililiveRecorderXmlStyle><z:stylesheet version="1.0" id="s" xml:id="s" xmlns:z="http://www.w3.org/1999/XSL/Transform"><z:output method="html"/><z:template match="/"><html><meta name="viewport" content="width=device-width"/><title>mikufans录播姬弹幕文件 - <z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></title><style>body{margin:0}h1,h2,p,table{margin-left:5px}table{border-spacing:0}td,th{border:1px solid grey;padding:1px}th{position:sticky;top:0;background:#4098de}tr:hover{background:#d9f4ff}div{overflow:auto;max-height:80vh;max-width:100vw;width:fit-content}</style><h1><a href="https://rec.danmuji.org">mikufans录播姬</a>弹幕XML文件</h1><p>本文件不支持在 IE 浏览器里预览，请使用 Chrome Firefox Edge 等浏览器。</p><p>文件用法参考文档 <a href="https://rec.danmuji.org/user/danmaku/">https://rec.danmuji.org/user/danmaku/</a></p><table><tr><td>录播姬版本</td><td><z:value-of select="/i/BililiveRecorder/@version"/></td></tr><tr><td>房间号</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@roomid"/></td></tr><tr><td>主播名</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@name"/></td></tr><tr><td>录制开始时间</td><td><z:value-of select="/i/BililiveRecorderRecordInfo/@start_time"/></td></tr><tr><td><a href="#d">弹幕</a></td><td>共<z:value-of select="count(/i/d)"/>条记录</td></tr><tr><td><a href="#guard">上船</a></td><td>共<z:value-of select="count(/i/guard)"/>条记录</td></tr><tr><td><a href="#sc">SC</a></td><td>共<z:value-of select="count(/i/sc)"/>条记录</td></tr><tr><td><a href="#gift">礼物</a></td><td>共<z:value-of select="count(/i/gift)"/>条记录</td></tr></table><h2 id="d">弹幕</h2><div id="dm"><table><tr><th>用户名</th><th>出现时间</th><th>用户ID</th><th>弹幕</th><th>参数</th></tr><z:for-each select="/i/d"><tr><td><z:value-of select="@user"/></td><td></td><td></td><td><z:value-of select="."/></td><td><z:value-of select="@p"/></td></tr></z:for-each></table></div><script>Array.from(document.querySelectorAll('#dm tr')).slice(1).map(t=>t.querySelectorAll('td')).forEach(t=>{let p=t[4].textContent.split(','),a=p[0];t[1].textContent=`${(Math.floor(a/60/60)+'').padStart(2,0)}:${(Math.floor(a/60%60)+'').padStart(2,0)}:${(a%60).toFixed(3).padStart(6,0)}`;t[2].innerHTML=`&lt;a target=_blank rel="nofollow noreferrer" href="https://space.bilibili.com/${p[6]}"&gt;${p[6]}&lt;/a&gt;`})</script><h2 id="guard">舰长购买</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>舰长等级</th><th>购买数量</th><th>出现时间</th></tr><z:for-each select="/i/guard"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@level"/></td><td><z:value-of select="@count"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="sc">SuperChat 醒目留言</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>内容</th><th>显示时长</th><th>价格</th><th>出现时间</th></tr><z:for-each select="/i/sc"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="."/></td><td><z:value-of select="@time"/></td><td><z:value-of select="@price"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div><h2 id="gift">礼物</h2><div><table><tr><th>用户名</th><th>用户ID</th><th>礼物名</th><th>礼物数量</th><th>出现时间</th></tr><z:for-each select="/i/gift"><tr><td><z:value-of select="@user"/></td><td><a rel="nofollow noreferrer"><z:attribute name="href"><z:text>https://space.bilibili.com/</z:text><z:value-of select="@uid" /></z:attribute><z:value-of select="@uid"/></a></td><td><z:value-of select="@giftname"/></td><td><z:value-of select="@giftcount"/></td><td><z:value-of select="@ts"/></td></tr></z:for-each></table></div></html></z:template></z:stylesheet></BililiveRecorderXmlStyle>
+  <d p="7.091,4,25,14893055,1783602396275,0,9797629,0" user="晓夜伴歌">呆呆</d>
+  <d p="8.390,4,25,14893055,1783602397167,0,1691677545,0" user="绒宝家的小月月">弹幕姬哦</d>
+  <d p="9.667,1,25,16777215,1783602398234,0,63016515,0" user="人工智能Cortana">？</d>
+  <d p="14.775,4,25,14893055,1783602403550,0,490746686,0" user="Corazon-_-">？</d>
+  <d p="17.319,4,25,14893055,1783602405444,0,18106669,0" user="默洛音">？</d>
+  <d p="17.547,4,25,14893055,1783602406571,0,9797629,0" user="晓夜伴歌">绒绒你是盲人不是傻子</d>
+  <d p="19.932,1,25,16777215,1783602408367,0,38911279,0" user="回音君a呐">？</d>
+  <d p="27.883,4,25,14893055,1783602416030,0,518187236,0" user="-星野游鱼-">？</d>
+  <d p="27.883,1,25,14893055,1783602416201,0,1120075744,0" user="水星旅游">？</d>
+  <d p="35.521,1,25,16777215,1783602424546,0,32390065,0" user="石砂秋水R1pple">？</d>
+  <d p="35.683,4,25,14893055,1783602423828,0,1691677545,0" user="绒宝家的小月月">犬绒liko</d>
+  <d p="35.683,4,25,14893055,1783602423834,0,3706977402227526,0" user="虚无马铃薯">完了双倍残疾怎么玩</d>
+  <d p="44.620,1,25,16777215,1783602432899,0,12307594,0" user="迟到office">不是犬绒liko嘛</d>
+  <d p="65.564,4,25,14893055,1783602453892,0,1691677545,0" user="绒宝家的小月月">盲</d>
+  <d p="74.678,4,25,14893055,1783602462593,0,9797629,0" user="晓夜伴歌">能能听不到</d>
+  <d p="81.191,4,25,14893055,1783602469583,0,1691677545,0" user="绒宝家的小月月">看不见颜色</d>
+  <d p="103.306,1,25,16777215,1783602492575,0,63016515,0" user="人工智能Cortana">草</d>
+  <d p="105.905,4,25,14893055,1783602494431,0,9797629,0" user="晓夜伴歌">鱿鱼是哑巴</d>
+  <d p="107.200,4,25,14893055,1783602495946,0,3706977402227526,0" user="虚无马铃薯">6</d>
+  <d p="131.862,4,25,14893055,1783602520661,0,1691677545,0" user="绒宝家的小月月">爆</d>
+  <d p="134.461,4,25,14893055,1783602522758,0,518187236,0" user="-星野游鱼-">？</d>
+  <d p="135.789,4,25,14893055,1783602524416,0,9797629,0" user="晓夜伴歌">第一关很简单</d>
+  <d p="137.081,1,25,14893055,1783602525578,0,9013545,0" user="桐岩巨汝">呆呆</d>
+  <d p="143.416,4,25,14893055,1783602531575,0,490746686,0" user="Corazon-_-">呆呆</d>
+  <d p="150.061,1,25,16777215,1783602538256,0,63016515,0" user="人工智能Cortana">？</d>
+  <d p="172.185,4,25,14893055,1783602560181,0,1691677545,0" user="绒宝家的小月月">跳过新手教程</d>
+  <d p="189.081,4,25,14893055,1783602578051,0,9797629,0" user="晓夜伴歌">关卡往后模块会变多</d>
+  <d p="199.484,4,25,14893055,1783602587443,0,9797629,0" user="晓夜伴歌">鱿鱼能说话</d>
+  <d p="207.279,4,25,14893055,1783602595964,0,9797629,0" user="晓夜伴歌">鱿鱼能听到</d>
+  <d p="254.166,4,25,14893055,1783602642484,0,9797629,0" user="晓夜伴歌">🐉人给哑巴和盲人传信息</d>
+  <d p="326.916,1,25,16777215,1783602715888,0,63016515,0" user="人工智能Cortana">？</d>
+  <d p="330.769,4,25,14893055,1783602719476,0,9797629,0" user="晓夜伴歌">龙人要给哑巴传递炸弹信息，然后再根据手势告诉盲人干什么</d>
+  <d p="348.821,1,25,16777215,1783602737004,0,11114877,0" user="CLOUDeee_">犬绒电脑是不是坏了</d>
+  <d p="358.056,1,25,16777215,1783602746780,0,39664711,0" user="Lephantis">手指说话~</d>
+  <d p="359.384,1,25,16777215,1783602748171,0,39664711,0" user="Lephantis">哈哈哈</d>
+  <d p="359.384,1,25,16777215,1783602748427,0,11307613,0" user="山泥不加若">要死一车猴子了有感觉吗</d>
+  <d p="364.586,4,25,14893055,1783602753795,0,3706977402227526,0" user="虚无马铃薯">绝望的qrmf</d>
+  <d p="368.332,1,25,16777215,1783602756802,0,23261173,0" user="-伊岁岁-">你已急哭</d>
+  <d p="369.783,4,25,14893055,1783602758957,0,518187236,0" user="-星野游鱼-">能能听不见hhh</d>
+  <d p="374.965,4,25,14893055,1783602764034,0,9797629,0" user="晓夜伴歌">无力的绒绒</d>
+  <d p="380.192,1,25,16777215,1783602769174,0,36122643,0" user="纸色肥鸭">？</d>
+  <d p="382.767,1,25,16777215,1783602771585,0,63016515,0" user="人工智能Cortana">？</d>
+  <d p="382.768,4,25,14893055,1783602771840,0,9797629,0" user="晓夜伴歌">呆呆</d>
+  <d p="387.816,1,25,16777215,1783602775824,0,11114877,0" user="CLOUDeee_">左手第二个？</d>
+  <d p="388.041,1,25,16777215,1783602776084,0,12806130,0" user="大有人在">？</d>
+  <d p="389.286,1,25,16777215,1783602777431,0,104336207,0" user="聆蛉">哈哈哈哈哈哈</d>
+  <d p="389.286,4,25,14893055,1783602778548,0,9797629,0" user="晓夜伴歌">你这不是右手边吗</d>
+  <d p="393.173,1,25,16777215,1783602782399,0,36122643,0" user="纸色肥鸭">吐魂</d>
+  <d p="402.273,4,25,14893055,1783602790386,0,9797629,0" user="晓夜伴歌">左右不分还对了</d>
+  <d p="407.481,1,25,16777215,1783602795886,0,39664711,0" user="Lephantis">哇，三个啥人~</d>
+  <d p="411.365,1,25,16777215,1783602800228,0,36122643,0" user="纸色肥鸭">负负负得正</d>
+  <gift ts="420.458" user="纸色肥鸭" uid="36122643" giftname="粉丝团灯牌" giftcount="1" />
+  <gift ts="443.857" user="此世之月" uid="421672734" giftname="粉丝团灯牌" giftcount="1" />
+  <gift ts="445.157" user="此世之月" uid="421672734" giftname="粉丝团灯牌" giftcount="1" />
+  <d p="451.683,4,25,14893055,1783602839859,0,9797629,0" user="晓夜伴歌">有灯</d>
+  <d p="456.892,1,25,16777215,1783602845536,0,63016515,0" user="人工智能Cortana">？</d>
+  <d p="459.496,4,25,14893055,1783602848795,0,9797629,0" user="晓夜伴歌">你要说灯什么颜色</d>
+  <d p="481.593,4,25,14893055,1783602870264,0,9797629,0" user="晓夜伴歌">再报一下线</d>
+  <d p="482.871,1,25,16777215,1783602870966,0,63016515,0" user="人工智能Cortana">草</d>
+  <d p="485.476,4,25,14893055,1783602874123,0,1691677545,0" user="绒宝家的小月月">骂你</d>
+  <d p="489.368,4,25,14893055,1783602878333,0,3706977402227526,0" user="虚无马铃薯">草</d>
+  <d p="491.992,4,25,14893055,1783602880584,0,518187236,0" user="-星野游鱼-">凸</d>
+  <d p="493.254,4,25,14893055,1783602882004,0,1691677545,0" user="绒宝家的小月月">爆了</d>

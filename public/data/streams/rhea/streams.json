@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_09_23_05_43",
+    "title": "出差日",
+    "date": "2026-07-09",
+    "time": "23:05:43",
+    "startTime": "23:05",
+    "endTime": "00:20",
+    "duration": 4516,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_07_09_23_05_43/录制-23260993-20260709-230543-892-出差日_merged.xml",
+    "cover": "/data/streams/rhea/2026_07_09_23_05_43/录制-23260993-20260709-230543-892-出差日.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_07_09_23_05_43/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_07_09_23_05_43/录制-23260993-20260709-230543-892-出差日_merged_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_07_09_23_05_43/录制-23260993-20260709-230543-892-出差日_merged_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_07_09_23_05_43/录制-23260993-20260708-204749-538-巴威BW_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_07_09_23_05_43/录制-23260993-20260708-204749-538-巴威BW_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_08_20_47_49",
     "title": "巴威BW",
     "date": "2026-07-08",
