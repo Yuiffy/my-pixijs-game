@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_10_20_02_31",
+    "title": "难吃的钥匙___",
+    "date": "2026-07-10",
+    "time": "20:02:31",
+    "startTime": "20:02",
+    "endTime": "23:36",
+    "duration": 12893,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_10_20_02_31/录制-1741667419-20260710-200231-332-难吃的钥匙___.xml",
+    "cover": "/data/streams/izayoi/2026_07_10_20_02_31/录制-1741667419-20260710-200231-332-难吃的钥匙___.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_10_20_02_31/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_10_20_02_31/录制-1741667419-20260710-200231-332-难吃的钥匙____COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_10_20_02_31/录制-1741667419-20260710-200231-332-难吃的钥匙____SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_10_09_04_28",
+    "title": "早茶第七十二天",
+    "date": "2026-07-10",
+    "time": "09:04:28",
+    "startTime": "09:04",
+    "endTime": "11:52",
+    "duration": 10129,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_10_09_04_28/录制-1741667419-20260710-090428-656-早茶第七十二天.xml",
+    "cover": "/data/streams/izayoi/2026_07_10_09_04_28/录制-1741667419-20260710-090428-656-早茶第七十二天.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_10_09_04_28/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_10_09_04_28/录制-1741667419-20260710-090428-656-早茶第七十二天_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_10_09_04_28/录制-1741667419-20260710-090428-656-早茶第七十二天_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_10_09_04_28/录制-1741667419-20260709-212235-949-1616我们喜浣你_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_10_09_04_28/录制-1741667419-20260709-212235-949-1616我们喜浣你_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_09_21_22_35",
     "title": "1616我们喜浣你",
     "date": "2026-07-09",

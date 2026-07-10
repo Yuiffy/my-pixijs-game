@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_10_22_03_17",
+    "title": "【晚杂】绿绿的就会顺顺的",
+    "date": "2026-07-10",
+    "time": "22:03:17",
+    "startTime": "22:03",
+    "endTime": "23:43",
+    "duration": 6044,
+    "durationStr": "1.7 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_10_22_03_17/录制-24872476-20260710-220317-972-【晚杂】绿绿的就会顺顺的_merged.xml",
+    "cover": "/data/streams/nightin/2026_07_10_22_03_17/录制-24872476-20260710-220317-972-【晚杂】绿绿的就会顺顺的.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_10_22_03_17/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_10_22_03_17/录制-24872476-20260710-220317-972-【晚杂】绿绿的就会顺顺的_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_10_22_03_17/录制-24872476-20260710-220317-972-【晚杂】绿绿的就会顺顺的_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_10_14_00_37",
+    "title": "【午杂】绿绿的就会顺顺的",
+    "date": "2026-07-10",
+    "time": "14:00:37",
+    "startTime": "14:00",
+    "endTime": "18:01",
+    "duration": 14478,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_10_14_00_37/录制-24872476-20260710-140037-787-【午杂】绿绿的就会顺顺的.xml",
+    "cover": "/data/streams/nightin/2026_07_10_14_00_37/录制-24872476-20260710-140037-787-【午杂】绿绿的就会顺顺的.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_10_14_00_37/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_10_14_00_37/录制-24872476-20260710-140037-787-【午杂】绿绿的就会顺顺的_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_10_14_00_37/录制-24872476-20260710-140037-787-【午杂】绿绿的就会顺顺的_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_10_14_00_37/录制-24872476-20260709-232835-248-突击半小时！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_09_23_28_35",
     "title": "突击半小时！",
     "date": "2026-07-09",

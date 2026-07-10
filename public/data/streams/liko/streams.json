@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_10_20_27_31",
+    "title": "兔兔贴贴",
+    "date": "2026-07-10",
+    "time": "20:27:31",
+    "startTime": "20:27",
+    "endTime": "00:29",
+    "duration": 14575,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_10_20_27_31/录制-1713548468-20260710-202731-921-兔兔贴贴.xml",
+    "cover": "/data/streams/liko/2026_07_10_20_27_31/录制-1713548468-20260710-202731-921-兔兔贴贴.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_10_20_27_31/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_10_20_27_31/录制-1713548468-20260710-202731-921-兔兔贴贴_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_10_20_27_31/录制-1713548468-20260710-202731-921-兔兔贴贴_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_10_12_06_48",
+    "title": "兔兔贴贴",
+    "date": "2026-07-10",
+    "time": "12:06:48",
+    "startTime": "12:06",
+    "endTime": "16:02",
+    "duration": 14207,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_10_12_06_48/录制-1713548468-20260710-120648-559-兔兔贴贴.xml",
+    "cover": "/data/streams/liko/2026_07_10_12_06_48/录制-1713548468-20260710-120648-559-兔兔贴贴.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_10_12_06_48/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_10_12_06_48/录制-1713548468-20260710-120648-559-兔兔贴贴_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_10_12_06_48/录制-1713548468-20260710-120648-559-兔兔贴贴_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_07_10_12_06_48/录制-1713548468-20260709-212235-511-兔兔贴贴_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_10_12_06_48/录制-1713548468-20260709-212235-511-兔兔贴贴_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_09_21_22_35",
     "title": "兔兔贴贴",
     "date": "2026-07-09",

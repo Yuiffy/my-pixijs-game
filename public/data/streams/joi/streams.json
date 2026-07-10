@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_10_21_01_32",
+    "title": "节奏天国！奇迹之星",
+    "date": "2026-07-10",
+    "time": "21:01:32",
+    "startTime": "21:01",
+    "endTime": "00:16",
+    "duration": 11715,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_07_10_21_01_32/录制-21484828-20260710-210132-680-节奏天国！奇迹之星_merged.xml",
+    "cover": "/data/streams/joi/2026_07_10_21_01_32/录制-21484828-20260710-210132-680-节奏天国！奇迹之星.cover.jpg",
+    "highlights": "/data/streams/joi/2026_07_10_21_01_32/highlights.md",
+    "images": [
+      "/data/streams/joi/2026_07_10_21_01_32/录制-21484828-20260710-210132-680-节奏天国！奇迹之星_merged_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_10_21_01_32/录制-21484828-20260710-210132-680-节奏天国！奇迹之星_merged_SCREENSHOTS.jpg",
+      "/data/streams/joi/2026_07_10_21_01_32/录制-21484828-20260709-212236-467-节奏天国！奇迹之星_merged_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_10_21_01_32/录制-21484828-20260709-212236-467-节奏天国！奇迹之星_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_09_21_22_36",
     "title": "节奏天国！奇迹之星",
     "date": "2026-07-09",
