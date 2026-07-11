@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_11_16_35_04",
+    "title": "看看奶糖花0.0",
+    "date": "2026-07-11",
+    "time": "16:35:04",
+    "startTime": "16:35",
+    "endTime": "17:51",
+    "duration": 4568,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_11_16_35_04/录制-25034104-20260711-163504-932-看看奶糖花0.0.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_11_16_35_04/录制-25034104-20260711-163504-932-看看奶糖花0.0.cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_07_11_16_35_04/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_11_16_35_04/录制-25034104-20260711-163504-932-看看奶糖花0.0_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_11_16_35_04/录制-25034104-20260711-163504-932-看看奶糖花0.0_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_15_08_33",
+    "title": "看看奶糖花0.0",
+    "date": "2026-07-11",
+    "time": "15:08:33",
+    "startTime": "15:08",
+    "endTime": "16:26",
+    "duration": 4729,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_11_15_08_33/录制-25034104-20260711-150833-196-看看奶糖花0.0.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_11_15_08_33/录制-25034104-20260711-150833-196-看看奶糖花0.0.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_11_15_08_33/录制-25034104-20260710-200109-804-假面骑士ZZZ_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_11_15_08_33/录制-25034104-20260710-200109-804-假面骑士ZZZ_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_10_20_01_09",
     "title": "假面骑士ZZZ",
     "date": "2026-07-10",

@@ -1,5 +1,73 @@
 [
   {
+    "id": "2026_07_11_20_26_28",
+    "title": "一起来躲猫猫！",
+    "date": "2026-07-11",
+    "time": "20:26:28",
+    "startTime": "20:26",
+    "endTime": "23:46",
+    "duration": 12038,
+    "durationStr": "3.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_11_20_26_28/录制-1741667419-20260711-202628-199-一起来躲猫猫！_merged.xml",
+    "cover": "/data/streams/izayoi/2026_07_11_20_26_28/录制-1741667419-20260711-202628-199-一起来躲猫猫！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_11_20_26_28/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_11_20_26_28/录制-1741667419-20260711-202628-199-一起来躲猫猫！_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_11_20_26_28/录制-1741667419-20260711-202628-199-一起来躲猫猫！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_16_34_54",
+    "title": "浅尝港鬼",
+    "date": "2026-07-11",
+    "time": "16:34:54",
+    "startTime": "16:34",
+    "endTime": "17:09",
+    "duration": 2147,
+    "durationStr": "0.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_11_16_34_54/录制-1741667419-20260711-163454-198-浅尝港鬼.xml",
+    "cover": "/data/streams/izayoi/2026_07_11_16_34_54/录制-1741667419-20260711-163454-198-浅尝港鬼.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_11_16_34_54/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_11_16_34_54/录制-1741667419-20260711-163454-198-浅尝港鬼_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_16_20_53",
+    "title": "浅尝港鬼",
+    "date": "2026-07-11",
+    "time": "16:20:53",
+    "startTime": "16:20",
+    "endTime": "16:26",
+    "duration": 385,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_11_16_20_53/录制-1741667419-20260711-162053-671-浅尝港鬼.xml",
+    "cover": "/data/streams/izayoi/2026_07_11_16_20_53/录制-1741667419-20260711-162053-671-浅尝港鬼.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_11_14_00_42",
+    "title": "重启健身浣",
+    "date": "2026-07-11",
+    "time": "14:00:42",
+    "startTime": "14:00",
+    "endTime": "16:20",
+    "duration": 8401,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_11_14_00_42/录制-1741667419-20260711-140042-540-重启健身浣.xml",
+    "cover": "/data/streams/izayoi/2026_07_11_14_00_42/录制-1741667419-20260711-140042-540-重启健身浣.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/izayoi/2026_07_11_14_00_42/录制-1741667419-20260710-200231-332-难吃的钥匙____COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_11_14_00_42/录制-1741667419-20260710-200231-332-难吃的钥匙____SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_10_20_02_31",
     "title": "难吃的钥匙___",
     "date": "2026-07-10",

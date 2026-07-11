@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_11_20_06_43",
+    "title": "晚间杂谈~qwq",
+    "date": "2026-07-11",
+    "time": "20:06:43",
+    "startTime": "20:06",
+    "endTime": "00:37",
+    "duration": 16264,
+    "durationStr": "4.5 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_11_20_06_43/录制-1986461465-20260711-200643-447-晚间杂谈~qwq_merged.xml",
+    "cover": "/data/streams/kloa/2026_07_11_20_06_43/录制-1986461465-20260711-200643-447-晚间杂谈~qwq.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_11_20_06_43/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_11_20_06_43/录制-1986461465-20260711-200643-447-晚间杂谈~qwq_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_11_20_06_43/录制-1986461465-20260711-200643-447-晚间杂谈~qwq_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_11_31_24",
+    "title": "试图玩一下港诡",
+    "date": "2026-07-11",
+    "time": "11:31:24",
+    "startTime": "11:31",
+    "endTime": "13:55",
+    "duration": 8644,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_11_11_31_24/录制-1986461465-20260711-113124-787-试图玩一下港诡.xml",
+    "cover": "/data/streams/kloa/2026_07_11_11_31_24/录制-1986461465-20260711-113124-787-试图玩一下港诡.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_11_11_31_24/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_11_11_31_24/录制-1986461465-20260711-113124-787-试图玩一下港诡_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_11_11_31_24/录制-1986461465-20260710-210428-124-浴汤电台_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_11_11_31_24/录制-1986461465-20260710-210428-124-浴汤电台_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_10_21_04_28",
     "title": "浴汤电台",
     "date": "2026-07-10",

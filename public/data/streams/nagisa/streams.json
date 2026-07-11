@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_07_11_21_07_37",
+    "title": "周六的歌杂",
+    "date": "2026-07-11",
+    "time": "21:07:37",
+    "startTime": "21:07",
+    "endTime": "01:55",
+    "duration": 17280,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_11_21_07_37/录制-31368705-20260711-210737-719-周六的歌杂_merged.xml",
+    "cover": "/data/streams/nagisa/2026_07_11_21_07_37/录制-31368705-20260711-210737-719-周六的歌杂.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nagisa/2026_07_11_21_07_37/录制-31368705-20260711-210737-719-周六的歌杂_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_16_33_59",
+    "title": "回家+「黎明」一下",
+    "date": "2026-07-11",
+    "time": "16:33:59",
+    "startTime": "16:33",
+    "endTime": "17:40",
+    "duration": 4046,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_11_16_33_59/录制-31368705-20260711-163359-163-回家+「黎明」一下.xml",
+    "cover": "/data/streams/nagisa/2026_07_11_16_33_59/录制-31368705-20260711-163359-163-回家+「黎明」一下.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_11_16_33_59/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_11_16_33_59/录制-31368705-20260711-163359-163-回家+「黎明」一下_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_11_16_33_59/录制-31368705-20260711-163359-163-回家+「黎明」一下_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_15_09_34",
+    "title": "回家回家",
+    "date": "2026-07-11",
+    "time": "15:09:34",
+    "startTime": "15:09",
+    "endTime": "16:26",
+    "duration": 4666,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_11_15_09_34/录制-31368705-20260711-150934-081-回家回家.xml",
+    "cover": "/data/streams/nagisa/2026_07_11_15_09_34/录制-31368705-20260711-150934-081-回家回家.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nagisa/2026_07_11_15_09_34/录制-31368705-20260709-235639-551-问候一下_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_09_23_56_39",
     "title": "问候一下",
     "date": "2026-07-09",

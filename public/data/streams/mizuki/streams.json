@@ -1,5 +1,59 @@
 [
   {
+    "id": "2026_07_11_21_02_58",
+    "title": "棉花糖我吃我吃⭐",
+    "date": "2026-07-11",
+    "time": "21:02:58",
+    "startTime": "21:02",
+    "endTime": "00:55",
+    "duration": 13995,
+    "durationStr": "3.9 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_11_21_02_58/录制-30655190-20260711-210258-798-棉花糖我吃我吃⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_07_11_21_02_58/录制-30655190-20260711-210258-798-棉花糖我吃我吃⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_11_21_02_58/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_11_21_02_58/录制-30655190-20260711-210258-798-棉花糖我吃我吃⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_16_35_01",
+    "title": "唱点歌给你听⭐",
+    "date": "2026-07-11",
+    "time": "16:35:01",
+    "startTime": "16:35",
+    "endTime": "18:04",
+    "duration": 5374,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_11_16_35_01/录制-30655190-20260711-163501-159-唱点歌给你听⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_11_16_35_01/录制-30655190-20260711-163501-159-唱点歌给你听⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_11_16_35_01/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_11_16_35_01/录制-30655190-20260711-163501-159-唱点歌给你听⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_11_16_35_01/录制-30655190-20260711-163501-159-唱点歌给你听⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_15_04_40",
+    "title": "唱点歌给你听⭐",
+    "date": "2026-07-11",
+    "time": "15:04:40",
+    "startTime": "15:04",
+    "endTime": "16:26",
+    "duration": 4958,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_11_15_04_40/录制-30655190-20260711-150440-700-唱点歌给你听⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_11_15_04_40/录制-30655190-20260711-150440-700-唱点歌给你听⭐.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mizuki/2026_07_11_15_04_40/录制-30655190-20260710-150242-447-⭐咚咚咚节奏天国⭐_merged_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_11_15_04_40/录制-30655190-20260710-210312-103-⭐心里暖暖的虚度⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_11_15_04_40/录制-30655190-20260710-210312-103-⭐心里暖暖的虚度⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_10_21_03_12",
     "title": "⭐心里暖暖的虚度⭐",
     "date": "2026-07-10",

@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026_07_11_16_35_03",
+    "title": "bw主舞台互动！",
+    "date": "2026-07-11",
+    "time": "16:35:03",
+    "startTime": "16:35",
+    "endTime": "17:00",
+    "duration": 1517,
+    "durationStr": "0.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_11_16_35_03/录制-24872476-20260711-163503-610-bw主舞台互动！.xml",
+    "cover": "/data/streams/nightin/2026_07_11_16_35_03/录制-24872476-20260711-163503-610-bw主舞台互动！.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_11_16_35_03/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_11_16_35_03/录制-24872476-20260711-163503-610-bw主舞台互动！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_11_15_03_23",
+    "title": "bw主舞台互动！",
+    "date": "2026-07-11",
+    "time": "15:03:23",
+    "startTime": "15:03",
+    "endTime": "16:26",
+    "duration": 5034,
+    "durationStr": "1.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_11_15_03_23/录制-24872476-20260711-150323-541-bw主舞台互动！.xml",
+    "cover": "/data/streams/nightin/2026_07_11_15_03_23/录制-24872476-20260711-150323-541-bw主舞台互动！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nightin/2026_07_11_15_03_23/录制-24872476-20260710-220317-972-【晚杂】绿绿的就会顺顺的_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_11_15_03_23/录制-24872476-20260710-220317-972-【晚杂】绿绿的就会顺顺的_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_10_22_03_17",
     "title": "【晚杂】绿绿的就会顺顺的",
     "date": "2026-07-10",

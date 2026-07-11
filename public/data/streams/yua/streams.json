@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_11_08_43_20",
+    "title": "早早悠",
+    "date": "2026-07-11",
+    "time": "08:43:20",
+    "startTime": "08:43",
+    "endTime": "11:37",
+    "duration": 10471,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/yua/2026_07_11_08_43_20/录制-22470216-20260711-084320-644-早早悠_merged.xml",
+    "cover": "/data/streams/yua/2026_07_11_08_43_20/录制-22470216-20260711-084320-644-早早悠.cover.jpg",
+    "highlights": "/data/streams/yua/2026_07_11_08_43_20/highlights.md",
+    "images": [
+      "/data/streams/yua/2026_07_11_08_43_20/录制-22470216-20260711-084320-644-早早悠_merged_SCREENSHOTS.jpg",
+      "/data/streams/yua/2026_07_11_08_43_20/录制-22470216-20260705-065830-090-和光一哥一起看世界杯_COMIC_FACTORY.png",
+      "/data/streams/yua/2026_07_11_08_43_20/录制-22470216-20260705-065830-090-和光一哥一起看世界杯_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_05_06_58_30",
     "title": "和光一哥一起看世界杯",
     "date": "2026-07-04",

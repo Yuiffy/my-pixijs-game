@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_11_23_52_52",
+    "title": "bilibili主播的直播间",
+    "date": "2026-07-11",
+    "time": "23:52:52",
+    "startTime": "23:52",
+    "endTime": "01:38",
+    "duration": 6365,
+    "durationStr": "1.8 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_11_23_52_52/录制-1967216004-20260711-235252-052-bilibili主播的直播间_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_07_11_23_52_52/录制-1967216004-20260711-235252-052-bilibili主播的直播间.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_11_23_52_52/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_11_23_52_52/录制-1967216004-20260711-235252-052-bilibili主播的直播间_merged_SCREENSHOTS.jpg",
+      "/data/streams/mitsuri/2026_07_11_23_52_52/录制-1967216004-20260710-210320-314-嘟嘟登场！！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_11_23_52_52/录制-1967216004-20260710-210320-314-嘟嘟登场！！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_10_21_03_20",
     "title": "嘟嘟登场！！！",
     "date": "2026-07-10",
