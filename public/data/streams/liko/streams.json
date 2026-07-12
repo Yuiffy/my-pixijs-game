@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_12_20_06_17",
+    "title": "虚弱播一会儿",
+    "date": "2026-07-12",
+    "time": "20:06:17",
+    "startTime": "20:06",
+    "endTime": "00:52",
+    "duration": 17179,
+    "durationStr": "4.8 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_12_20_06_17/录制-1713548468-20260712-200617-428-虚弱播一会儿.xml",
+    "cover": "/data/streams/liko/2026_07_12_20_06_17/录制-1713548468-20260712-200617-428-虚弱播一会儿.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_12_20_06_17/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_12_20_06_17/录制-1713548468-20260712-200617-428-虚弱播一会儿_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_12_20_06_17/录制-1713548468-20260712-200617-428-虚弱播一会儿_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_07_12_20_06_17/录制-1713548468-20260711-201653-470-虚弱播一会儿_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_12_20_06_17/录制-1713548468-20260711-201653-470-虚弱播一会儿_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_11_20_16_53",
     "title": "虚弱播一会儿",
     "date": "2026-07-11",

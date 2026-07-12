@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_12_21_09_54",
+    "title": "定好行程「节奏天国 奇迹之星」",
+    "date": "2026-07-12",
+    "time": "21:09:54",
+    "startTime": "21:09",
+    "endTime": "00:45",
+    "duration": 12976,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_12_21_09_54/录制-31368705-20260712-210954-473-定好行程「节奏天国 奇迹之星」.xml",
+    "cover": "/data/streams/nagisa/2026_07_12_21_09_54/录制-31368705-20260712-210954-473-定好行程「节奏天国 奇迹之星」.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_12_21_09_54/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_12_21_09_54/录制-31368705-20260712-210954-473-定好行程「节奏天国 奇迹之星」_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_12_21_09_54/录制-31368705-20260712-210954-473-定好行程「节奏天国 奇迹之星」_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_12_15_07_13",
+    "title": "周日练练歌",
+    "date": "2026-07-12",
+    "time": "15:07:13",
+    "startTime": "15:07",
+    "endTime": "18:44",
+    "duration": 13063,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_12_15_07_13/录制-31368705-20260712-150713-177-周日练练歌.xml",
+    "cover": "/data/streams/nagisa/2026_07_12_15_07_13/录制-31368705-20260712-150713-177-周日练练歌.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nagisa/2026_07_12_15_07_13/录制-31368705-20260712-150713-177-周日练练歌_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_12_15_07_13/录制-31368705-20260711-210737-719-周六的歌杂_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_11_21_07_37",
     "title": "周六的歌杂",
     "date": "2026-07-11",

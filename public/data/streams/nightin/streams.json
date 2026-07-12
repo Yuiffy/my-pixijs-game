@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_12_16_05_09",
+    "title": "【鸣潮2,5】二游留级生来也",
+    "date": "2026-07-12",
+    "time": "16:05:09",
+    "startTime": "16:05",
+    "endTime": "19:31",
+    "duration": 12390,
+    "durationStr": "3.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_12_16_05_09/录制-24872476-20260712-160509-220-【鸣潮2,5】二游留级生来也.xml",
+    "cover": "/data/streams/nightin/2026_07_12_16_05_09/录制-24872476-20260712-160509-220-【鸣潮2,5】二游留级生来也.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_12_16_05_09/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_12_16_05_09/录制-24872476-20260712-160509-220-【鸣潮2,5】二游留级生来也_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_12_16_05_09/录制-24872476-20260712-160509-220-【鸣潮2,5】二游留级生来也_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_12_10_05_05",
+    "title": "早！",
+    "date": "2026-07-12",
+    "time": "10:05:05",
+    "startTime": "10:05",
+    "endTime": "11:25",
+    "duration": 4805,
+    "durationStr": "1.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_12_10_05_05/录制-24872476-20260712-100505-192-早！.xml",
+    "cover": "/data/streams/nightin/2026_07_12_10_05_05/录制-24872476-20260712-100505-192-早！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nightin/2026_07_12_10_05_05/录制-24872476-20260712-100505-192-早！_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_12_10_05_05/录制-24872476-20260711-163503-610-bw主舞台互动！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_11_16_35_03",
     "title": "bw主舞台互动！",
     "date": "2026-07-11",

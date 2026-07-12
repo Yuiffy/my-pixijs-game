@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_12_21_02_36",
+    "title": "歌小杂⭐",
+    "date": "2026-07-12",
+    "time": "21:02:36",
+    "startTime": "21:02",
+    "endTime": "01:12",
+    "duration": 15002,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_12_21_02_36/录制-30655190-20260712-210236-667-歌小杂⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_12_21_02_36/录制-30655190-20260712-210236-667-歌小杂⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_12_21_02_36/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_12_21_02_36/录制-30655190-20260712-210236-667-歌小杂⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_12_21_02_36/录制-30655190-20260712-210236-667-歌小杂⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_12_15_02_30",
+    "title": "杂杂杂杂杂谈⭐",
+    "date": "2026-07-12",
+    "time": "15:02:30",
+    "startTime": "15:02",
+    "endTime": "18:11",
+    "duration": 11370,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_12_15_02_30/录制-30655190-20260712-150230-311-杂杂杂杂杂谈⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_12_15_02_30/录制-30655190-20260712-150230-311-杂杂杂杂杂谈⭐.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mizuki/2026_07_12_15_02_30/录制-30655190-20260712-150230-311-杂杂杂杂杂谈⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_12_15_02_30/录制-30655190-20260711-210258-798-棉花糖我吃我吃⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_11_21_02_58",
     "title": "棉花糖我吃我吃⭐",
     "date": "2026-07-11",

@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_12_20_02_27",
+    "title": "小唱一下！",
+    "date": "2026-07-12",
+    "time": "20:02:27",
+    "startTime": "20:02",
+    "endTime": "01:01",
+    "duration": 17989,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_12_20_02_27/录制-1741667419-20260712-200227-243-小唱一下！.xml",
+    "cover": "/data/streams/izayoi/2026_07_12_20_02_27/录制-1741667419-20260712-200227-243-小唱一下！.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_12_20_02_27/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_12_20_02_27/录制-1741667419-20260712-200227-243-小唱一下！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_12_20_02_27/录制-1741667419-20260712-200227-243-小唱一下！_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_12_20_02_27/录制-1741667419-20260711-202628-199-一起来躲猫猫！_merged_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_12_20_02_27/录制-1741667419-20260711-202628-199-一起来躲猫猫！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_11_20_26_28",
     "title": "一起来躲猫猫！",
     "date": "2026-07-11",

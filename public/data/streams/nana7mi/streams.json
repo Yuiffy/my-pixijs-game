@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_12_22_33_41",
+    "title": "边下棋边聊天",
+    "date": "2026-07-12",
+    "time": "22:33:41",
+    "startTime": "22:33",
+    "endTime": "03:54",
+    "duration": 19283,
+    "durationStr": "5.4 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_12_22_33_41/录制-21452505-20260712-223341-172-边下棋边聊天.xml",
+    "cover": "/data/streams/nana7mi/2026_07_12_22_33_41/录制-21452505-20260712-223341-172-边下棋边聊天.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nana7mi/2026_07_12_22_33_41/录制-21452505-20260712-223341-172-边下棋边聊天_SCREENSHOTS.jpg",
+      "/data/streams/nana7mi/2026_07_12_22_33_41/录制-21452505-20260710-230219-566-bw好玩吗_merged_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_12_22_33_41/录制-21452505-20260710-230219-566-bw好玩吗_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_10_23_02_19",
     "title": "bw好玩吗",
     "date": "2026-07-10",

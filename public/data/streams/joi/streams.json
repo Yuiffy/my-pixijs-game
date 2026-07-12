@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_12_21_01_06",
+    "title": "涂鸦躲猫猫 轴芯参与回",
+    "date": "2026-07-12",
+    "time": "21:01:06",
+    "startTime": "21:01",
+    "endTime": "23:17",
+    "duration": 8168,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/joi/2026_07_12_21_01_06/录制-21484828-20260712-210106-574-涂鸦躲猫猫 轴芯参与回_merged.xml",
+    "cover": "/data/streams/joi/2026_07_12_21_01_06/录制-21484828-20260712-210106-574-涂鸦躲猫猫 轴芯参与回.cover.jpg",
+    "highlights": "/data/streams/joi/2026_07_12_21_01_06/highlights.md",
+    "images": [
+      "/data/streams/joi/2026_07_12_21_01_06/录制-21484828-20260712-210106-574-涂鸦躲猫猫 轴芯参与回_merged_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_12_21_01_06/录制-21484828-20260712-210106-574-涂鸦躲猫猫 轴芯参与回_merged_SCREENSHOTS.jpg",
+      "/data/streams/joi/2026_07_12_21_01_06/录制-21484828-20260711-210158-800-HER TREES 解谜来了_merged_COMIC_FACTORY.png",
+      "/data/streams/joi/2026_07_12_21_01_06/录制-21484828-20260711-210158-800-HER TREES 解谜来了_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_11_21_01_58",
     "title": "HER TREES 解谜来了",
     "date": "2026-07-11",

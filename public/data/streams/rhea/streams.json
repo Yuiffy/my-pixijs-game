@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_12_21_40_16",
+    "title": "有气无力轻声细语",
+    "date": "2026-07-12",
+    "time": "21:40:16",
+    "startTime": "21:40",
+    "endTime": "02:40",
+    "duration": 18052,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_07_12_21_40_16/录制-23260993-20260712-214016-373-有气无力轻声细语.xml",
+    "cover": "/data/streams/rhea/2026_07_12_21_40_16/录制-23260993-20260712-214016-373-有气无力轻声细语.cover.jpg",
+    "highlights": "/data/streams/rhea/2026_07_12_21_40_16/highlights.md",
+    "images": [
+      "/data/streams/rhea/2026_07_12_21_40_16/录制-23260993-20260712-214016-373-有气无力轻声细语_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_07_12_21_40_16/录制-23260993-20260712-214016-373-有气无力轻声细语_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_12_04_54_52",
+    "title": "成功通宵，和白毛大前辈看挪威VS英格兰",
+    "date": "2026-07-11",
+    "time": "04:54:52",
+    "startTime": "04:54",
+    "endTime": "08:07",
+    "duration": 11606,
+    "durationStr": "3.2 小时",
+    "srt": null,
+    "xml": "/data/streams/rhea/2026_07_12_04_54_52/录制-23260993-20260712-045452-557-成功通宵，和白毛大前辈看挪威VS英格兰_merged.xml",
+    "cover": "/data/streams/rhea/2026_07_12_04_54_52/录制-23260993-20260712-045452-557-成功通宵，和白毛大前辈看挪威VS英格兰.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/rhea/2026_07_12_04_54_52/录制-23260993-20260712-045452-557-成功通宵，和白毛大前辈看挪威VS英格兰_merged_SCREENSHOTS.jpg",
+      "/data/streams/rhea/2026_07_12_04_54_52/录制-23260993-20260711-214033-560-不眠之夜  5点能看到挪威VS英格兰吗_merged_COMIC_FACTORY.png",
+      "/data/streams/rhea/2026_07_12_04_54_52/录制-23260993-20260711-214033-560-不眠之夜  5点能看到挪威VS英格兰吗_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_12_03_35_46",
     "title": "不眠之夜  5点能看到挪威VS英格兰吗",
     "date": "2026-07-11",
