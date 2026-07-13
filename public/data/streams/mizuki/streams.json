@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_13_21_01_37",
+    "title": "虚度~~~~一下⭐",
+    "date": "2026-07-13",
+    "time": "21:01:37",
+    "startTime": "21:01",
+    "endTime": "01:03",
+    "duration": 14535,
+    "durationStr": "4.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_13_21_01_37/录制-30655190-20260713-210137-712-虚度~~~~一下⭐_merged.xml",
+    "cover": "/data/streams/mizuki/2026_07_13_21_01_37/录制-30655190-20260713-210137-712-虚度~~~~一下⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_13_21_01_37/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_13_21_01_37/录制-30655190-20260713-210137-712-虚度~~~~一下⭐_merged_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_13_21_01_37/录制-30655190-20260713-210137-712-虚度~~~~一下⭐_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_13_15_01_49",
+    "title": "节奏天国动次打次⭐",
+    "date": "2026-07-13",
+    "time": "15:01:49",
+    "startTime": "15:01",
+    "endTime": "18:03",
+    "duration": 10962,
+    "durationStr": "3.0 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_13_15_01_49/录制-30655190-20260713-150149-748-节奏天国动次打次⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_13_15_01_49/录制-30655190-20260713-150149-748-节奏天国动次打次⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_13_15_01_49/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_13_15_01_49/录制-30655190-20260713-150149-748-节奏天国动次打次⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_13_15_01_49/录制-30655190-20260713-150149-748-节奏天国动次打次⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_13_15_01_49/录制-30655190-20260712-210236-667-歌小杂⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_13_15_01_49/录制-30655190-20260712-210236-667-歌小杂⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_12_21_02_36",
     "title": "歌小杂⭐",
     "date": "2026-07-12",

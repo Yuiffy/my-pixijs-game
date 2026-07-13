@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_13_19_59_04",
+    "title": "久违的来画画头像",
+    "date": "2026-07-13",
+    "time": "19:59:04",
+    "startTime": "19:59",
+    "endTime": "01:54",
+    "duration": 21341,
+    "durationStr": "5.9 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_13_19_59_04/录制-1741667419-20260713-195904-370-久违的来画画头像.xml",
+    "cover": "/data/streams/izayoi/2026_07_13_19_59_04/录制-1741667419-20260713-195904-370-久违的来画画头像.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_13_19_59_04/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_13_19_59_04/录制-1741667419-20260713-195904-370-久违的来画画头像_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_13_19_59_04/录制-1741667419-20260713-195904-370-久违的来画画头像_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_13_09_00_52",
+    "title": "早茶第七十三天",
+    "date": "2026-07-13",
+    "time": "09:00:52",
+    "startTime": "09:00",
+    "endTime": "11:35",
+    "duration": 9358,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/izayoi/2026_07_13_09_00_52/录制-1741667419-20260713-090052-904-早茶第七十三天.xml",
+    "cover": "/data/streams/izayoi/2026_07_13_09_00_52/录制-1741667419-20260713-090052-904-早茶第七十三天.cover.jpg",
+    "highlights": "/data/streams/izayoi/2026_07_13_09_00_52/highlights.md",
+    "images": [
+      "/data/streams/izayoi/2026_07_13_09_00_52/录制-1741667419-20260713-090052-904-早茶第七十三天_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_13_09_00_52/录制-1741667419-20260713-090052-904-早茶第七十三天_SCREENSHOTS.jpg",
+      "/data/streams/izayoi/2026_07_13_09_00_52/录制-1741667419-20260712-200227-243-小唱一下！_COMIC_FACTORY.png",
+      "/data/streams/izayoi/2026_07_13_09_00_52/录制-1741667419-20260712-200227-243-小唱一下！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_12_20_02_27",
     "title": "小唱一下！",
     "date": "2026-07-12",

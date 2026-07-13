@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_13_21_07_02",
+    "title": "周一的歌杂",
+    "date": "2026-07-13",
+    "time": "21:07:02",
+    "startTime": "21:07",
+    "endTime": "01:19",
+    "duration": 15158,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_13_21_07_02/录制-31368705-20260713-210702-645-周一的歌杂.xml",
+    "cover": "/data/streams/nagisa/2026_07_13_21_07_02/录制-31368705-20260713-210702-645-周一的歌杂.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_13_21_07_02/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_13_21_07_02/录制-31368705-20260713-210702-645-周一的歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_13_08_04_43",
+    "title": "早安一会儿",
+    "date": "2026-07-13",
+    "time": "08:04:43",
+    "startTime": "08:04",
+    "endTime": "10:20",
+    "duration": 8219,
+    "durationStr": "2.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_13_08_04_43/录制-31368705-20260713-080443-136-早安一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_07_13_08_04_43/录制-31368705-20260713-080443-136-早安一会儿.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_13_08_04_43/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_13_08_04_43/录制-31368705-20260713-080443-136-早安一会儿_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_13_08_04_43/录制-31368705-20260713-080443-136-早安一会儿_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_13_08_04_43/录制-31368705-20260712-210954-473-定好行程「节奏天国 奇迹之星」_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_13_08_04_43/录制-31368705-20260712-210954-473-定好行程「节奏天国 奇迹之星」_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_12_21_09_54",
     "title": "定好行程「节奏天国 奇迹之星」",
     "date": "2026-07-12",

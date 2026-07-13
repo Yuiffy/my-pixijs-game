@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_13_22_00_16",
+    "title": "帕鲁VR服！",
+    "date": "2026-07-13",
+    "time": "22:00:16",
+    "startTime": "22:00",
+    "endTime": "00:47",
+    "duration": 10032,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_13_22_00_16/录制-1986461465-20260713-220016-299-帕鲁VR服！.xml",
+    "cover": "/data/streams/kloa/2026_07_13_22_00_16/录制-1986461465-20260713-220016-299-帕鲁VR服！.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_13_22_00_16/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_13_22_00_16/录制-1986461465-20260713-220016-299-帕鲁VR服！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_13_22_00_16/录制-1986461465-20260713-220016-299-帕鲁VR服！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_13_20_08_49",
+    "title": "帕鲁VR服！",
+    "date": "2026-07-13",
+    "time": "20:08:49",
+    "startTime": "20:08",
+    "endTime": "21:59",
+    "duration": 6685,
+    "durationStr": "1.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_13_20_08_49/录制-1986461465-20260713-200849-737-帕鲁VR服！.xml",
+    "cover": "/data/streams/kloa/2026_07_13_20_08_49/录制-1986461465-20260713-200849-737-帕鲁VR服！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/kloa/2026_07_13_20_08_49/录制-1986461465-20260712-200455-863-狠狠的歌！_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_13_20_08_49/录制-1986461465-20260712-200455-863-狠狠的歌！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_12_20_04_55",
     "title": "狠狠的歌！",
     "date": "2026-07-12",
