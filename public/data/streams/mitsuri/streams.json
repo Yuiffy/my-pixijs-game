@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026_07_14_21_04_46",
+    "title": "师徒杯！我可以！",
+    "date": "2026-07-14",
+    "time": "21:04:46",
+    "startTime": "21:04",
+    "endTime": "21:12",
+    "duration": 511,
+    "durationStr": "0.1 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_14_21_04_46/录制-1967216004-20260714-210446-785-师徒杯！我可以！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_14_21_04_46/录制-1967216004-20260714-210446-785-师徒杯！我可以！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_14_21_04_46/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_14_21_04_46/录制-1967216004-20260714-210446-785-师徒杯！我可以！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_14_16_22_55",
+    "title": "师徒杯！我可以！",
+    "date": "2026-07-14",
+    "time": "16:22:55",
+    "startTime": "16:22",
+    "endTime": "19:55",
+    "duration": 12801,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_14_16_22_55/录制-1967216004-20260714-162255-408-师徒杯！我可以！_merged.xml",
+    "cover": "/data/streams/mitsuri/2026_07_14_16_22_55/录制-1967216004-20260714-162255-408-师徒杯！我可以！.cover.jpg",
+    "highlights": "/data/streams/mitsuri/2026_07_14_16_22_55/highlights.md",
+    "images": [
+      "/data/streams/mitsuri/2026_07_14_16_22_55/录制-1967216004-20260714-162255-408-师徒杯！我可以！_merged_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_14_16_22_55/录制-1967216004-20260714-162255-408-师徒杯！我可以！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_14_13_57_19",
+    "title": "师徒杯！我可以！",
+    "date": "2026-07-14",
+    "time": "13:57:19",
+    "startTime": "13:57",
+    "endTime": "16:20",
+    "duration": 8635,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mitsuri/2026_07_14_13_57_19/录制-1967216004-20260714-135719-486-师徒杯！我可以！.xml",
+    "cover": "/data/streams/mitsuri/2026_07_14_13_57_19/录制-1967216004-20260714-135719-486-师徒杯！我可以！.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/mitsuri/2026_07_14_13_57_19/录制-1967216004-20260713-213201-255-来！！_COMIC_FACTORY.png",
+      "/data/streams/mitsuri/2026_07_14_13_57_19/录制-1967216004-20260713-213201-255-来！！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_13_21_32_01",
     "title": "来！！",
     "date": "2026-07-13",

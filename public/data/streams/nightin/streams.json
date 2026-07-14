@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_14_15_04_53",
+    "title": "化个妆！",
+    "date": "2026-07-14",
+    "time": "15:04:53",
+    "startTime": "15:04",
+    "endTime": "17:04",
+    "duration": 7215,
+    "durationStr": "2.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_14_15_04_53/录制-24872476-20260714-150453-150-化个妆！_merged.xml",
+    "cover": "/data/streams/nightin/2026_07_14_15_04_53/录制-24872476-20260714-150453-150-化个妆！.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_14_15_04_53/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_14_15_04_53/录制-24872476-20260714-150453-150-化个妆！_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_14_15_04_53/录制-24872476-20260714-150453-150-化个妆！_merged_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_14_15_04_53/录制-24872476-20260712-160509-220-【鸣潮2,5】二游留级生来也_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_14_15_04_53/录制-24872476-20260712-160509-220-【鸣潮2,5】二游留级生来也_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_12_16_05_09",
     "title": "【鸣潮2,5】二游留级生来也",
     "date": "2026-07-12",

@@ -1,5 +1,42 @@
 [
   {
+    "id": "2026_07_14_22_20_25",
+    "title": "不知道玩啥",
+    "date": "2026-07-14",
+    "time": "22:20:25",
+    "startTime": "22:20",
+    "endTime": "00:52",
+    "duration": 9164,
+    "durationStr": "2.5 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_14_22_20_25/录制-26966466-20260714-222025-385-不知道玩啥.xml",
+    "cover": "/data/streams/shiori/2026_07_14_22_20_25/录制-26966466-20260714-222025-385-不知道玩啥.cover.jpg",
+    "highlights": "/data/streams/shiori/2026_07_14_22_20_25/highlights.md",
+    "images": [
+      "/data/streams/shiori/2026_07_14_22_20_25/录制-26966466-20260714-222025-385-不知道玩啥_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_14_10_14_22",
+    "title": "早安獭獭栞",
+    "date": "2026-07-14",
+    "time": "10:14:22",
+    "startTime": "10:14",
+    "endTime": "12:21",
+    "duration": 7671,
+    "durationStr": "2.1 小时",
+    "srt": null,
+    "xml": "/data/streams/shiori/2026_07_14_10_14_22/录制-26966466-20260714-101422-722-早安獭獭栞.xml",
+    "cover": "/data/streams/shiori/2026_07_14_10_14_22/录制-26966466-20260714-101422-722-早安獭獭栞.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/shiori/2026_07_14_10_14_22/录制-26966466-20260714-101422-722-早安獭獭栞_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_07_14_10_14_22/录制-26966466-20260712-202117-248-小栞来_COMIC_FACTORY.png",
+      "/data/streams/shiori/2026_07_14_10_14_22/录制-26966466-20260712-202117-248-小栞来_SCREENSHOTS.jpg",
+      "/data/streams/shiori/2026_07_14_10_14_22/录制-26966466-20260712-202117-248-小栞来_timestamp_avg10_COMIC_FACTORY.png"
+    ]
+  },
+  {
     "id": "2026_07_12_20_21_17",
     "title": "小栞来",
     "date": "2026-07-12",

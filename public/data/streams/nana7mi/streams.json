@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026_07_15_03_50_41",
+    "title": "黑屏看球中",
+    "date": "2026-07-14",
+    "time": "03:50:41",
+    "startTime": "03:50",
+    "endTime": "03:59",
+    "duration": 542,
+    "durationStr": "0.2 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_15_03_50_41/录制-21452505-20260715-035041-622-黑屏看球中.xml",
+    "cover": "/data/streams/nana7mi/2026_07_15_03_50_41/录制-21452505-20260715-035041-622-黑屏看球中.cover.jpg",
+    "highlights": null,
+    "images": []
+  },
+  {
+    "id": "2026_07_15_00_54_16",
+    "title": "生日了哦耶",
+    "date": "2026-07-14",
+    "time": "00:54:16",
+    "startTime": "00:54",
+    "endTime": "02:00",
+    "duration": 3981,
+    "durationStr": "1.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_15_00_54_16/录制-21452505-20260715-005416-903-生日了哦耶.xml",
+    "cover": "/data/streams/nana7mi/2026_07_15_00_54_16/录制-21452505-20260715-005416-903-生日了哦耶.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_15_00_54_16/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_15_00_54_16/录制-21452505-20260715-005416-903-生日了哦耶_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_15_00_54_16/录制-21452505-20260715-005416-903-生日了哦耶_SCREENSHOTS.jpg",
+      "/data/streams/nana7mi/2026_07_15_00_54_16/录制-21452505-20260714-193511-380-【峰雨舞组】足小子唱歌_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_14_19_35_11",
+    "title": "生日了哦耶",
+    "date": "2026-07-14",
+    "time": "19:35:11",
+    "startTime": "19:35",
+    "endTime": "00:53",
+    "duration": 19123,
+    "durationStr": "5.3 小时",
+    "srt": null,
+    "xml": "/data/streams/nana7mi/2026_07_14_19_35_11/录制-21452505-20260714-193511-380-【峰雨舞组】足小子唱歌_merged.xml",
+    "cover": "/data/streams/nana7mi/2026_07_14_19_35_11/录制-21452505-20260714-193511-380-【峰雨舞组】足小子唱歌.cover.jpg",
+    "highlights": "/data/streams/nana7mi/2026_07_14_19_35_11/highlights.md",
+    "images": [
+      "/data/streams/nana7mi/2026_07_14_19_35_11/录制-21452505-20260714-193511-380-【峰雨舞组】足小子唱歌_merged_COMIC_FACTORY.png",
+      "/data/streams/nana7mi/2026_07_14_19_35_11/录制-21452505-20260714-034517-546-小婴儿逃出_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_14_03_45_17",
     "title": "小婴儿逃出",
     "date": "2026-07-13",

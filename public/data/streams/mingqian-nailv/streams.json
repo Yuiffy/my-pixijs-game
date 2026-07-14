@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_14_19_56_35",
+    "title": "有大汉速来",
+    "date": "2026-07-14",
+    "time": "19:56:35",
+    "startTime": "19:56",
+    "endTime": "00:40",
+    "duration": 17078,
+    "durationStr": "4.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mingqian-nailv/2026_07_14_19_56_35/录制-25034104-20260714-195635-686-bilibili主播的直播间_merged.xml",
+    "cover": "/data/streams/mingqian-nailv/2026_07_14_19_56_35/录制-25034104-20260714-195635-686-bilibili主播的直播间.cover.jpg",
+    "highlights": "/data/streams/mingqian-nailv/2026_07_14_19_56_35/highlights.md",
+    "images": [
+      "/data/streams/mingqian-nailv/2026_07_14_19_56_35/录制-25034104-20260714-195635-686-bilibili主播的直播间_merged_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_14_19_56_35/录制-25034104-20260714-195635-686-bilibili主播的直播间_merged_SCREENSHOTS.jpg",
+      "/data/streams/mingqian-nailv/2026_07_14_19_56_35/录制-25034104-20260712-165140-543-不吃压力啊我看这个奶绿_COMIC_FACTORY.png",
+      "/data/streams/mingqian-nailv/2026_07_14_19_56_35/录制-25034104-20260712-165140-543-不吃压力啊我看这个奶绿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_12_16_51_40",
     "title": "不吃压力啊我看这个奶绿",
     "date": "2026-07-12",

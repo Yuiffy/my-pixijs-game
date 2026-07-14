@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026_07_14_21_10_42",
+    "title": "「黎明」当人",
+    "date": "2026-07-14",
+    "time": "21:10:42",
+    "startTime": "21:10",
+    "endTime": "01:22",
+    "duration": 15123,
+    "durationStr": "4.2 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_14_21_10_42/录制-31368705-20260714-211042-028-选选玩什么_merged.xml",
+    "cover": "/data/streams/nagisa/2026_07_14_21_10_42/录制-31368705-20260714-211042-028-选选玩什么.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_14_21_10_42/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_14_21_10_42/录制-31368705-20260714-211042-028-选选玩什么_merged_COMIC_FACTORY.png",
+      "/data/streams/nagisa/2026_07_14_21_10_42/录制-31368705-20260714-211042-028-选选玩什么_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_14_08_06_09",
+    "title": "早安一会儿",
+    "date": "2026-07-14",
+    "time": "08:06:09",
+    "startTime": "08:06",
+    "endTime": "10:20",
+    "duration": 8067,
+    "durationStr": "2.2 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_14_08_06_09/录制-31368705-20260714-080609-034-早安一会儿.xml",
+    "cover": "/data/streams/nagisa/2026_07_14_08_06_09/录制-31368705-20260714-080609-034-早安一会儿.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/nagisa/2026_07_14_08_06_09/录制-31368705-20260714-080609-034-早安一会儿_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_14_08_06_09/录制-31368705-20260713-210702-645-周一的歌杂_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_13_21_07_02",
     "title": "周一的歌杂",
     "date": "2026-07-13",

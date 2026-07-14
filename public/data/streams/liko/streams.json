@@ -1,5 +1,60 @@
 [
   {
+    "id": "2026_07_14_21_13_23",
+    "title": "兔兔出击！",
+    "date": "2026-07-14",
+    "time": "21:13:23",
+    "startTime": "21:13",
+    "endTime": "01:16",
+    "duration": 14591,
+    "durationStr": "4.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_14_21_13_23/录制-1713548468-20260714-211323-361-兔兔出击！.xml",
+    "cover": "/data/streams/liko/2026_07_14_21_13_23/录制-1713548468-20260714-211323-361-兔兔出击！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_14_21_13_23/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_14_21_13_23/录制-1713548468-20260714-211323-361-兔兔出击！_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_14_21_13_23/录制-1713548468-20260714-211323-361-兔兔出击！_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_14_20_09_05",
+    "title": "兔兔出击！",
+    "date": "2026-07-14",
+    "time": "20:09:05",
+    "startTime": "20:09",
+    "endTime": "21:09",
+    "duration": 3645,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_14_20_09_05/录制-1713548468-20260714-200905-088-兔兔出击！_merged.xml",
+    "cover": "/data/streams/liko/2026_07_14_20_09_05/录制-1713548468-20260714-200905-088-兔兔出击！.cover.jpg",
+    "highlights": "/data/streams/liko/2026_07_14_20_09_05/highlights.md",
+    "images": [
+      "/data/streams/liko/2026_07_14_20_09_05/录制-1713548468-20260714-200905-088-兔兔出击！_merged_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_14_20_09_05/录制-1713548468-20260714-200905-088-兔兔出击！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_14_11_12_13",
+    "title": "唠嗑然后生化危机4",
+    "date": "2026-07-14",
+    "time": "11:12:13",
+    "startTime": "11:12",
+    "endTime": "16:19",
+    "duration": 18463,
+    "durationStr": "5.1 小时",
+    "srt": null,
+    "xml": "/data/streams/liko/2026_07_14_11_12_13/录制-1713548468-20260714-111213-865-唠嗑然后生化危机4.xml",
+    "cover": "/data/streams/liko/2026_07_14_11_12_13/录制-1713548468-20260714-111213-865-唠嗑然后生化危机4.cover.jpg",
+    "highlights": null,
+    "images": [
+      "/data/streams/liko/2026_07_14_11_12_13/录制-1713548468-20260714-111213-865-唠嗑然后生化危机4_SCREENSHOTS.jpg",
+      "/data/streams/liko/2026_07_14_11_12_13/录制-1713548468-20260713-202101-032-当一下帕鲁_COMIC_FACTORY.png",
+      "/data/streams/liko/2026_07_14_11_12_13/录制-1713548468-20260713-202101-032-当一下帕鲁_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_13_20_21_01",
     "title": "当一下帕鲁",
     "date": "2026-07-13",
