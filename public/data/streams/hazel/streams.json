@@ -1,5 +1,24 @@
 [
   {
+    "id": "2026_07_15_22_16_05",
+    "title": "打电话",
+    "date": "2026-07-15",
+    "time": "22:16:05",
+    "startTime": "22:16",
+    "endTime": "23:15",
+    "duration": 3555,
+    "durationStr": "1.0 小时",
+    "srt": null,
+    "xml": "/data/streams/hazel/2026_07_15_22_16_05/录制-1713546334-20260715-221605-940-打电话_merged.xml",
+    "cover": "/data/streams/hazel/2026_07_15_22_16_05/录制-1713546334-20260715-221605-940-打电话.cover.jpg",
+    "highlights": "/data/streams/hazel/2026_07_15_22_16_05/highlights.md",
+    "images": [
+      "/data/streams/hazel/2026_07_15_22_16_05/录制-1713546334-20260715-221605-940-打电话_merged_SCREENSHOTS.jpg",
+      "/data/streams/hazel/2026_07_15_22_16_05/录制-1713546334-20260713-223724-983-病弱电台_COMIC_FACTORY.png",
+      "/data/streams/hazel/2026_07_15_22_16_05/录制-1713546334-20260713-223724-983-病弱电台_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_13_22_37_24",
     "title": "病弱电台",
     "date": "2026-07-13",

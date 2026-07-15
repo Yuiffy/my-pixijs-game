@@ -1,5 +1,45 @@
 [
   {
+    "id": "2026_07_15_20_58_37",
+    "title": "香底边来喽",
+    "date": "2026-07-15",
+    "time": "20:58:37",
+    "startTime": "20:58",
+    "endTime": "00:05",
+    "duration": 11238,
+    "durationStr": "3.1 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_15_20_58_37/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_merged.xml",
+    "cover": "/data/streams/nightin/2026_07_15_20_58_37/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_15_20_58_37/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_15_20_58_37/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_15_20_58_37/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_merged_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_15_20_58_37/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_15_20_58_37/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_15_14_06_29",
+    "title": "【午杂】N来！",
+    "date": "2026-07-15",
+    "time": "14:06:29",
+    "startTime": "14:06",
+    "endTime": "17:36",
+    "duration": 12605,
+    "durationStr": "3.5 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_15_14_06_29/录制-24872476-20260715-140629-500-【午杂】N来！.xml",
+    "cover": "/data/streams/nightin/2026_07_15_14_06_29/录制-24872476-20260715-140629-500-【午杂】N来！.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_15_14_06_29/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_15_14_06_29/录制-24872476-20260715-140629-500-【午杂】N来！_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_15_14_06_29/录制-24872476-20260715-140629-500-【午杂】N来！_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_15_14_06_29/录制-24872476-20260714-150453-150-化个妆！_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_15_14_06_29/录制-24872476-20260714-150453-150-化个妆！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_14_15_04_53",
     "title": "化个妆！",
     "date": "2026-07-14",

@@ -1,5 +1,62 @@
 [
   {
+    "id": "2026_07_15_21_02_04",
+    "title": "虚度虚度虚度⭐",
+    "date": "2026-07-15",
+    "time": "21:02:04",
+    "startTime": "21:02",
+    "endTime": "00:42",
+    "duration": 13225,
+    "durationStr": "3.7 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_15_21_02_04/录制-30655190-20260715-210204-747-虚度虚度虚度⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_15_21_02_04/录制-30655190-20260715-210204-747-虚度虚度虚度⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_15_21_02_04/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_15_21_02_04/录制-30655190-20260715-210204-747-虚度虚度虚度⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_15_21_02_04/录制-30655190-20260715-210204-747-虚度虚度虚度⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_15_15_02_49",
+    "title": "健身环喔⭐",
+    "date": "2026-07-15",
+    "time": "15:02:49",
+    "startTime": "15:02",
+    "endTime": "17:37",
+    "duration": 9343,
+    "durationStr": "2.6 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_15_15_02_49/录制-30655190-20260715-150249-713-健身环喔⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_15_15_02_49/录制-30655190-20260715-150249-713-健身环喔⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_15_15_02_49/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_15_15_02_49/录制-30655190-20260715-150249-713-健身环喔⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_15_15_02_49/录制-30655190-20260715-150249-713-健身环喔⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_15_10_33_17",
+    "title": "抽一下崩铁⭐",
+    "date": "2026-07-15",
+    "time": "10:33:17",
+    "startTime": "10:33",
+    "endTime": "12:01",
+    "duration": 5334,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mizuki/2026_07_15_10_33_17/录制-30655190-20260715-103317-098-抽一下崩铁⭐.xml",
+    "cover": "/data/streams/mizuki/2026_07_15_10_33_17/录制-30655190-20260715-103317-098-抽一下崩铁⭐.cover.jpg",
+    "highlights": "/data/streams/mizuki/2026_07_15_10_33_17/highlights.md",
+    "images": [
+      "/data/streams/mizuki/2026_07_15_10_33_17/录制-30655190-20260715-103317-098-抽一下崩铁⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_15_10_33_17/录制-30655190-20260715-103317-098-抽一下崩铁⭐_SCREENSHOTS.jpg",
+      "/data/streams/mizuki/2026_07_15_10_33_17/录制-30655190-20260714-150235-356-有首歌想唱给你听⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_15_10_33_17/录制-30655190-20260714-210258-709-今天想怎么度过⭐_COMIC_FACTORY.png",
+      "/data/streams/mizuki/2026_07_15_10_33_17/录制-30655190-20260714-210258-709-今天想怎么度过⭐_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_14_21_02_58",
     "title": "今天想怎么度过⭐",
     "date": "2026-07-14",

@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026_07_15_22_33_19",
+    "title": "【3D麦】久违的煮煮面！",
+    "date": "2026-07-15",
+    "time": "22:33:19",
+    "startTime": "22:33",
+    "endTime": "00:01",
+    "duration": 5283,
+    "durationStr": "1.5 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_15_22_33_19/录制-1791260716-20260715-223319-539-【3D麦】久违的煮煮面！_merged.xml",
+    "cover": "/data/streams/mofu/2026_07_15_22_33_19/录制-1791260716-20260715-223319-539-【3D麦】久违的煮煮面！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_15_22_33_19/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_15_22_33_19/录制-1791260716-20260715-223319-539-【3D麦】久违的煮煮面！_merged_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_15_22_33_19/录制-1791260716-20260715-223319-539-【3D麦】久违的煮煮面！_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_15_12_06_26",
+    "title": "我去！有狗！",
+    "date": "2026-07-15",
+    "time": "12:06:26",
+    "startTime": "12:06",
+    "endTime": "14:29",
+    "duration": 8599,
+    "durationStr": "2.4 小时",
+    "srt": null,
+    "xml": "/data/streams/mofu/2026_07_15_12_06_26/录制-1791260716-20260715-120626-194-我去！有狗！.xml",
+    "cover": "/data/streams/mofu/2026_07_15_12_06_26/录制-1791260716-20260715-120626-194-我去！有狗！.cover.jpg",
+    "highlights": "/data/streams/mofu/2026_07_15_12_06_26/highlights.md",
+    "images": [
+      "/data/streams/mofu/2026_07_15_12_06_26/录制-1791260716-20260715-120626-194-我去！有狗！_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_15_12_06_26/录制-1791260716-20260715-120626-194-我去！有狗！_SCREENSHOTS.jpg",
+      "/data/streams/mofu/2026_07_15_12_06_26/录制-1791260716-20260714-210720-522-晚上好！-u-_merged_COMIC_FACTORY.png",
+      "/data/streams/mofu/2026_07_15_12_06_26/录制-1791260716-20260714-210720-522-晚上好！-u-_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_14_21_07_20",
     "title": "晚上好！-u-",
     "date": "2026-07-14",
