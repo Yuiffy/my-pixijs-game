@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "index": {
+    "repo": "VirtualBeing-Hub/liver-streams-index",
+    "branch": "main"
+  },
+  "allocation": {
+    "defaultReservationBytes": 536870912,
+    "targetBytesPerShard": 4294967296
+  },
+  "shards": {
+    "2025": {
+      "repo": "VirtualBeing-Hub/liver-streams-2025",
+      "branch": "main",
+      "year": 2025,
+      "softLimitBytes": 6442450944,
+      "hardLimitBytes": 8589934592
+    },
+    "2026-a": {
+      "repo": "VirtualBeing-Hub/liver-streams-2026-a",
+      "branch": "main",
+      "year": 2026,
+      "softLimitBytes": 6442450944,
+      "hardLimitBytes": 8589934592
+    },
+    "2026-b": {
+      "repo": "VirtualBeing-Hub/liver-streams-2026-b",
+      "branch": "main",
+      "year": 2026,
+      "softLimitBytes": 6442450944,
+      "hardLimitBytes": 8589934592
+    },
+    "2026-c": {
+      "repo": "VirtualBeing-Hub/liver-streams-2026-c",
+      "branch": "main",
+      "year": 2026,
+      "softLimitBytes": 6442450944,
+      "hardLimitBytes": 8589934592
+    }
+  },
+  "assignments": {
+    "2025:sui": "2025",
+    "2026:azi": "2026-a",
+    "2026:harei": "2026-c",
+    "2026:hazel": "2026-b",
+    "2026:izayoi": "2026-c",
+    "2026:joi": "2026-a",
+    "2026:kloa": "2026-c",
+    "2026:liko": "2026-b",
+    "2026:michiya": "2026-a",
+    "2026:mingqian-nailv": "2026-a",
+    "2026:mitsuri": "2026-c",
+    "2026:mizuki": "2026-a",
+    "2026:mofu": "2026-c",
+    "2026:nagisa": "2026-c",
+    "2026:nana7mi": "2026-a",
+    "2026:nightin": "2026-c",
+    "2026:rhea": "2026-c",
+    "2026:shiori": "2026-b",
+    "2026:sui": "2026-a",
+    "2026:yua": "2026-a"
+  }
+}
