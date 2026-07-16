@@ -18,6 +18,8 @@ const integrityPath = valueAfter('--integrity-report');
 const rawPath = valueAfter('--raw-report');
 const outputPath = valueAfter('--output');
 const previewUrl = valueAfter('--preview-url');
+const previewVerified = args.includes('--preview-verified');
+const syncVerified = args.includes('--sync-verified');
 if (!manifestPath || !integrityPath || !rawPath || !outputPath) {
   throw new Error(
     'Usage: node scripts/generate-stream-migration-report.mjs '
@@ -63,14 +65,14 @@ const report = {
   raw,
   preview: {
     url: previewUrl || null,
-    verified: false,
+    verified: previewVerified,
   },
   syncCycle: {
-    verified: false,
+    verified: syncVerified,
   },
   failureCount: failures,
   gateMessage: failures === 0
-    ? 'Automated data checks passed; Preview, full sync cycle, and manual approval are still required.'
+    ? 'Automated data checks passed; any unverified Preview/full sync checks and manual approval are still required.'
     : 'Automated data checks failed. Do not remove source data or rewrite history.',
 };
 fs.mkdirSync(path.dirname(path.resolve(outputPath)), { recursive: true });
