@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026_07_16_21_07_42",
+    "title": "周四的歌杂",
+    "date": "2026-07-16",
+    "time": "21:07:42",
+    "startTime": "21:07",
+    "endTime": "02:08",
+    "duration": 18104,
+    "durationStr": "5.0 小时",
+    "srt": null,
+    "xml": "/data/streams/nagisa/2026_07_16_21_07_42/录制-31368705-20260716-210742-619-周四的歌杂.xml",
+    "cover": "/data/streams/nagisa/2026_07_16_21_07_42/录制-31368705-20260716-210742-619-周四的歌杂.cover.jpg",
+    "highlights": "/data/streams/nagisa/2026_07_16_21_07_42/highlights.md",
+    "images": [
+      "/data/streams/nagisa/2026_07_16_21_07_42/录制-31368705-20260716-210742-619-周四的歌杂_SCREENSHOTS.jpg",
+      "/data/streams/nagisa/2026_07_16_21_07_42/录制-31368705-20260715-080614-967-早歌一会儿_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_15_08_06_14",
     "title": "早歌一会儿",
     "date": "2026-07-15",

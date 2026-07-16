@@ -1,5 +1,45 @@
 [
   {
+    "id": "2026_07_16_21_00_34",
+    "title": "晚上干嘛呢",
+    "date": "2026-07-16",
+    "time": "21:00:34",
+    "startTime": "21:00",
+    "endTime": "23:46",
+    "duration": 9972,
+    "durationStr": "2.8 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_16_21_00_34/录制-24872476-20260716-210034-776-晚上干嘛呢.xml",
+    "cover": "/data/streams/nightin/2026_07_16_21_00_34/录制-24872476-20260716-210034-776-晚上干嘛呢.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_16_21_00_34/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_16_21_00_34/录制-24872476-20260716-210034-776-晚上干嘛呢_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_16_21_00_34/录制-24872476-20260716-210034-776-晚上干嘛呢_SCREENSHOTS.jpg"
+    ]
+  },
+  {
+    "id": "2026_07_16_14_41_22",
+    "title": "【午杂】疯狂的周四",
+    "date": "2026-07-16",
+    "time": "14:41:22",
+    "startTime": "14:41",
+    "endTime": "18:14",
+    "duration": 12802,
+    "durationStr": "3.6 小时",
+    "srt": null,
+    "xml": "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260716-144122-493-【午杂】疯狂的周四_merged.xml",
+    "cover": "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260716-144122-493-【午杂】疯狂的周四.cover.jpg",
+    "highlights": "/data/streams/nightin/2026_07_16_14_41_22/highlights.md",
+    "images": [
+      "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260716-144122-493-【午杂】疯狂的周四_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260716-144122-493-【午杂】疯狂的周四_merged_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_merged_COMIC_FACTORY.png",
+      "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_merged_SCREENSHOTS.jpg",
+      "/data/streams/nightin/2026_07_16_14_41_22/录制-24872476-20260715-205837-182-【幻兽帕鲁】psp服务器_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_15_20_58_37",
     "title": "香底边来喽",
     "date": "2026-07-15",

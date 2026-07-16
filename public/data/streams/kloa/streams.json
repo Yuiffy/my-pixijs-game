@@ -1,5 +1,25 @@
 [
   {
+    "id": "2026_07_16_21_33_25",
+    "title": "唱歌歌~对不起睡过头了！",
+    "date": "2026-07-16",
+    "time": "21:33:25",
+    "startTime": "21:33",
+    "endTime": "00:29",
+    "duration": 10582,
+    "durationStr": "2.9 小时",
+    "srt": null,
+    "xml": "/data/streams/kloa/2026_07_16_21_33_25/录制-1986461465-20260716-213325-194-唱歌歌~_merged.xml",
+    "cover": "/data/streams/kloa/2026_07_16_21_33_25/录制-1986461465-20260716-213325-194-唱歌歌~.cover.jpg",
+    "highlights": "/data/streams/kloa/2026_07_16_21_33_25/highlights.md",
+    "images": [
+      "/data/streams/kloa/2026_07_16_21_33_25/录制-1986461465-20260716-213325-194-唱歌歌~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_16_21_33_25/录制-1986461465-20260716-213325-194-唱歌歌~_merged_SCREENSHOTS.jpg",
+      "/data/streams/kloa/2026_07_16_21_33_25/录制-1986461465-20260715-202413-466-聊聊天~_merged_COMIC_FACTORY.png",
+      "/data/streams/kloa/2026_07_16_21_33_25/录制-1986461465-20260715-202413-466-聊聊天~_merged_SCREENSHOTS.jpg"
+    ]
+  },
+  {
     "id": "2026_07_15_20_24_13",
     "title": "聊聊天~",
     "date": "2026-07-15",
