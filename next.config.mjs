@@ -16,8 +16,8 @@ function streamRewrites() {
     const shard = shardConfig.shards[shardId];
     const assetBase = rawGitHubBase(shard.repo, shard.branch);
     routes.push({
-      source: `/data/streams/${liverId}/${year}_:path*`,
-      destination: `${assetBase}/public/data/streams/${liverId}/${year}_:path*`,
+      source: `/data/streams/${liverId}/:streamId(${year}_[^/]+)/:path*`,
+      destination: `${assetBase}/public/data/streams/${liverId}/:streamId/:path*`,
     });
   }
 
