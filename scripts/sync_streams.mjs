@@ -2,6 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js';
+import {
+  getAssignedShard,
+  getIndexStreamsRoot,
+  getRepoPath,
+  getReposRoot,
+  loadShardConfig,
+  resolveStreamTargetDir,
+} from './stream-shards.mjs';
 
 /**
  * 直播同步脚本
@@ -29,7 +37,10 @@ import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.join(__dirname, '..');
-const TARGET_BASE_DIR = path.join(ROOT_DIR, 'public/data/streams');
+const SHARD_CONFIG = loadShardConfig();
+const REPOS_ROOT = getReposRoot();
+const INDEX_REPO_DIR = getRepoPath(SHARD_CONFIG.index.repo, REPOS_ROOT);
+const TARGET_BASE_DIR = getIndexStreamsRoot(SHARD_CONFIG, REPOS_ROOT);
 
 const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
 const FILENAME_REGEX_LUZHI = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg|txt|md)/;
@@ -82,8 +93,27 @@ function getLatestSyncedTimestamp() {
   }
 }
 
+if (!fs.existsSync(path.join(INDEX_REPO_DIR, '.git'))) {
+  throw new Error(
+    `Index repository is missing or is not a Git checkout: ${INDEX_REPO_DIR}. `
+    + 'Set STREAM_REPOS_ROOT to the parent directory containing all stream repositories.',
+  );
+}
+
 if (!fs.existsSync(TARGET_BASE_DIR)) {
   fs.mkdirSync(TARGET_BASE_DIR, { recursive: true });
+}
+
+function preflightLiverAssignments(liverId, sourceDirs) {
+  const years = new Set();
+  for (const sourceDir of sourceDirs) {
+    if (!fs.existsSync(sourceDir)) continue;
+    for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+      const match = entry.isDirectory() ? /^(\d{4})_/.exec(entry.name) : null;
+      if (match) years.add(Number(match[1]));
+    }
+  }
+  for (const year of years) getAssignedShard(liverId, year, SHARD_CONFIG);
 }
 
 // 获取指定主播的最新已同步直播的时间戳
@@ -201,6 +231,7 @@ async function syncStreams() {
       console.warn(`主播 ${currentLiverId} 没有配置数据源路径，跳过`);
       continue;
     }
+    preflightLiverAssignments(currentLiverId, sourceDirs);
 
     // 加载现有的streams数据（用于增量模式合并）
     let existingStreams = [];
@@ -543,7 +574,12 @@ async function syncStreams() {
   // Process each final stream group
   validStreamIds.forEach((streamId, index) => {
     const stream = finalStreamGroups[streamId];
-    const targetDir = path.join(targetBaseDir, streamId);
+    const targetDir = resolveStreamTargetDir(
+      currentLiverId,
+      streamId,
+      SHARD_CONFIG,
+      REPOS_ROOT,
+    );
     if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
     const streamData = {
@@ -961,7 +997,12 @@ async function syncStreams() {
     });
 
     if (closestStreamId) {
-      const targetDir = path.join(targetBaseDir, closestStreamId);
+      const targetDir = resolveStreamTargetDir(
+        currentLiverId,
+        closestStreamId,
+        SHARD_CONFIG,
+        REPOS_ROOT,
+      );
       const targetPath = path.join(targetDir, img.name);
 
       // Check if image already exists in target directory (may have been copied earlier)
