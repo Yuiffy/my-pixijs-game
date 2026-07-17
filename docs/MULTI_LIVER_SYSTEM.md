@@ -1,4 +1,10 @@
-# 多主播系统使用指南
+# 多主播系统使用指南（旧说明）
+
+> 本文保留用于理解旧的数据处理逻辑，不再作为部署或同步操作手册。直播资源已经迁移到
+> `VirtualBeing-Hub` 的五个分片仓库，主仓库不再保存 `public/data/streams` 实体文件。
+> 当前目录结构、分片分配和 Windows PM2 操作请分别参阅
+> [STREAM_DATA_SHARDING.md](./STREAM_DATA_SHARDING.md) 与
+> [scripts/README.md](../scripts/README.md)。
 
 ## 概述
 
