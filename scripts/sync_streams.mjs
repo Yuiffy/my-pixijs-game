@@ -215,8 +215,7 @@ async function syncStreams() {
   for (const currentLiverId of liverIdsToProcess) {
     const liverConfig = getLiverConfig(currentLiverId);
     if (!liverConfig) {
-      console.warn(`未找到主播配置: ${currentLiverId}，跳过`);
-      continue;
+      throw new Error(`Unknown liver configuration: ${currentLiverId}`);
     }
 
     console.log(`\n=== 开始处理主播: ${liverConfig.name} (${currentLiverId}) ===`);
@@ -226,10 +225,19 @@ async function syncStreams() {
       fs.mkdirSync(targetBaseDir, { recursive: true });
     }
 
-    const sourceDirs = liverConfig.sourceDirs || [];
+    const configuredSourceDirs = liverConfig.sourceDirs || [];
+    if (configuredSourceDirs.length === 0) {
+      throw new Error(`Liver ${currentLiverId} has no configured source directories`);
+    }
+    const sourceDirs = configuredSourceDirs.filter((sourceDir) => {
+      if (fs.existsSync(sourceDir)) return true;
+      console.warn(`Source directory not found: ${sourceDir}`);
+      return false;
+    });
     if (sourceDirs.length === 0) {
-      console.warn(`主播 ${currentLiverId} 没有配置数据源路径，跳过`);
-      continue;
+      throw new Error(
+        `None of the configured source directories are available for liver ${currentLiverId}`,
+      );
     }
     preflightLiverAssignments(currentLiverId, sourceDirs);
 
@@ -259,11 +267,6 @@ async function syncStreams() {
   const allImages = [];
 
   for (const sourceDir of sourceDirs) {
-    if (!fs.existsSync(sourceDir)) {
-      console.warn(`Source directory not found: ${sourceDir}`);
-      continue;
-    }
-
     const dateFolders = fs.readdirSync(sourceDir).filter(f => {
       const fullPath = path.join(sourceDir, f);
       return fs.statSync(fullPath).isDirectory() && f.match(/^\d{4}_\d{2}_\d{2}$/);
@@ -1136,4 +1139,7 @@ async function syncStreams() {
 }
 
 }
-syncStreams().catch(console.error);
+syncStreams().catch((error) => {
+  console.error(`[${new Date().toISOString()}] Stream collection failed:`, error);
+  process.exitCode = 1;
+});

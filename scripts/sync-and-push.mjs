@@ -20,6 +20,33 @@ const transactionPath = path.join(stateDir, 'stream-sync-transaction.json');
 const lastRunPath = path.join(stateDir, 'stream-sync-last-run.json');
 const lockPath = path.join(stateDir, 'stream-sync.lock');
 const syncArgs = process.argv.slice(2);
+const gitRetryAttempts = positiveInteger(process.env.STREAM_GIT_RETRY_ATTEMPTS, 4);
+const gitRetryDelayMs = positiveInteger(process.env.STREAM_GIT_RETRY_DELAY_MS, 5000);
+
+function positiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value || '', 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function sleepSync(milliseconds) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
+function withRetry(label, operation) {
+  let lastError;
+  for (let attempt = 1; attempt <= gitRetryAttempts; attempt += 1) {
+    try {
+      return operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt === gitRetryAttempts) break;
+      const delay = gitRetryDelayMs * (2 ** (attempt - 1));
+      console.warn(`${label} failed (attempt ${attempt}/${gitRetryAttempts}); retrying in ${delay} ms`);
+      sleepSync(delay);
+    }
+  }
+  throw lastError;
+}
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -27,7 +54,7 @@ function run(command, args, options = {}) {
     encoding: 'utf8',
     windowsHide: true,
     stdio: options.inherit ? 'inherit' : 'pipe',
-    env: { ...process.env, NO_COLOR: '1' },
+    env: { ...process.env, NO_COLOR: '1', GIT_TERMINAL_PROMPT: '0' },
   });
   const allowed = options.allowedExitCodes || [0];
   if (!allowed.includes(result.status)) {
@@ -130,7 +157,10 @@ function head(record) {
 }
 
 function remoteHead(record) {
-  const output = git(record.path, ['ls-remote', '--heads', 'origin', record.branch]).stdout.trim();
+  const output = withRetry(
+    `Reading remote head for ${record.repo}`,
+    () => git(record.path, ['ls-remote', '--heads', 'origin', record.branch]).stdout.trim(),
+  );
   return output ? output.split(/\s+/)[0] : null;
 }
 
@@ -149,7 +179,10 @@ function verifyRemote(record, expectedSha) {
 }
 
 function pushAndVerify(record, expectedSha) {
-  git(record.path, ['push', 'origin', `${record.branch}:${record.branch}`], { inherit: true });
+  withRetry(
+    `Pushing ${record.repo}`,
+    () => git(record.path, ['push', 'origin', `${record.branch}:${record.branch}`], { inherit: true }),
+  );
   verifyRemote(record, expectedSha);
 }
 
@@ -168,6 +201,14 @@ function loadOrCreateTransaction(records) {
   for (const record of records) {
     assertRepo(record);
     if (status(record)) throw new Error(`Repository is dirty before sync: ${record.repo}`);
+    const localSha = head(record);
+    const remoteSha = remoteHead(record);
+    if (remoteSha !== localSha) {
+      throw new Error(
+        `${record.repo} is not synchronized with origin/${record.branch}: `
+        + `local ${localSha}, remote ${remoteSha || '(missing)'}. Run git pull --ff-only first.`,
+      );
+    }
   }
   const transaction = {
     id: new Date().toISOString().replace(/[:.]/g, '-'),
