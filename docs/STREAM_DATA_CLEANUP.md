@@ -30,12 +30,26 @@ A fresh-clone verification recalculated SHA-256 for all 15,384 files and 13,727,
 zero failures. `git fsck --full --strict` passed in all five clones. All 15,036 index references also
 resolved against the shard checkouts with zero failures.
 
+## Post-cleanup validation
+
+- `npm run streams:test`: 5/5 passed.
+- `npm run streams:verify`: 3,337 streams and 15,036 references, with zero failures.
+- `npm run lint` and `npm run build`: passed (existing lint warnings remain).
+- The built production server returned HTTP 200 for `/`, `/liver`, and all 19 configured
+  `/liver/{id}` pages with `public/data/streams` absent from the worktree.
+- The production server's rewrites returned the accepted byte length and SHA-256 for both
+  `/data/streams/azi/streams.json` and
+  `/data/streams/azi/2026_06_01_21_43_33/highlights.md`.
+- The active Vercel project produced a Ready protected Preview for this branch. A second stale
+  Vercel project integration still reports a failed commit status and its deployment URL returns
+  404 in the Vercel dashboard; this is an integration configuration issue, not the active build.
+
 ## Remaining gates
 
 Before merging this cleanup to production, run a real incremental publication cycle on the actual
-Windows sync host and verify the cleanup Preview. Historical rewriting remains a separate operation
-that requires another explicit approval, a coordinated force-push, and notification to users of old
-clones.
+Windows sync host, manually verify the login-protected cleanup Preview, and remove or disconnect the
+stale duplicate Vercel project check. Historical rewriting remains a separate operation that requires
+another explicit approval, a coordinated force-push, and notification to users of old clones.
 
 The source files remain recoverable from the five data repositories and from the unmodified
 `codex/stream-data-sharding`/`main` history until historical cleanup is separately performed.
