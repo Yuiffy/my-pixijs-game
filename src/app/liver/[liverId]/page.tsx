@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { ConfigProvider, theme, Typography, Spin } from 'antd';
 import { notFound } from 'next/navigation';
 import { getLiverConfig, LiverInfo } from '@/data/livers';
+import LiverAvatar from '@/components/LiverAvatar';
 import RecordsModule from '@/components/Home/RecordsModule';
 import { StreamData } from '@/components/Home/RecordsShared';
 import Link from 'next/link';
@@ -126,12 +127,14 @@ function LiverPageContent({ liverId }: { liverId: string }) {
         <div className="max-w-5xl mx-auto px-6 pt-24 pb-24 relative z-10">
           {/* Header */}
           <div className="text-center mb-12">
-            <div
-              className="inline-block w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4"
-              style={{ background: liverConfig.colorMain }}
-            >
-              {liverConfig.shortName[0]}
-            </div>
+            <LiverAvatar
+              avatarSrc={liverConfig.avatarSrc}
+              name={liverConfig.name}
+              color={liverConfig.colorMain}
+              size={80}
+              priority
+              className="mx-auto mb-4 text-3xl"
+            />
             <Title level={1} className="!text-white !mb-2 text-4xl">
               {liverConfig.name}
             </Title>

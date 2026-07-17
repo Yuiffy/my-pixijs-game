@@ -8,7 +8,8 @@
       "E:/EFiles/Evideo/DDTV录播-E/25788785_岁己SUI"
     ],
     "targetDir": "data/streams/sui",
-    "bilibiliUid": "25788785"
+    "bilibiliUid": "25788785",
+    "avatarPath": "/images/livers/sui.png"
   },
   "shiori": {
     "id": "shiori",
@@ -20,6 +21,7 @@
     ],
     "targetDir": "data/streams/shiori",
     "bilibiliUid": "26966466",
+    "avatarPath": "/images/livers/shiori.png",
     "referenceImage": "public/reference_images/獭獭栞_舰长礼物长图里截图.png",
     "characterDescription": "栞栞Shiori（有兽耳的女生，浅黄色头发小孩），獭獭栞（长得像滑板的海獭）",
     "anchorName": "栞栞Shiori",
@@ -37,6 +39,7 @@
     ],
     "targetDir": "data/streams/hazel",
     "bilibiliUid": "1713546334",
+    "avatarPath": "/images/livers/hazel.png",
     "referenceImage": "public/reference_images/Hazel_灰泽满_立绘.png",
     "characterDescription": "灰泽满Hazel（永远16岁的女高中生，浅色短发，风纪委员，身上挂着很多果冻形状的饰品，随身带着果冻应急储备箱，性格有些偏执和元气）",
     "anchorName": "灰泽满Hazel",
@@ -54,6 +57,7 @@
     ],
     "targetDir": "data/streams/liko",
     "bilibiliUid": "1713548468",
+    "avatarPath": "/images/livers/liko.png",
     "referenceImage": "public/reference_images/Liko_莉蔻_立绘.png",
     "characterDescription": "莉蔻Liko（长着兔耳的少女，戴着大帽子，性格胆小没见过世面，手里常拿着胡萝卜棒冰，虽然是秘密组织的特工但看起来很弱气）",
     "anchorName": "莉蔻Liko",
@@ -71,6 +75,7 @@
     ],
     "targetDir": "data/streams/kloa",
     "bilibiliUid": "1986461465",
+    "avatarPath": "/images/livers/kloa.jpg",
     "referenceImage": "public/reference_images/Kloa_克罗雅_立绘.png",
     "characterDescription": "克罗雅Kloa（混沌属性的少女，头顶天使光环但背后是黑色的恶魔翅膀，戴着黑色头纱，表情慵懒，喜欢睡觉和发呆，废柴神造物）",
     "anchorName": "克罗雅Kloa",
@@ -88,6 +93,7 @@
     ],
     "targetDir": "data/streams/izayoi",
     "bilibiliUid": "1741667419",
+    "avatarPath": "/images/livers/izayoi.png",
     "referenceImage": "public/reference_images/十六萤Izayoi.png",
     "characterDescription": "十六萤Izayoi（拥有浣熊耳朵和毛茸茸大尾巴的少女，面无表情的三无特工，穿着女仆装或异域服饰，气质清冷，经常用尾巴把自己裹住）",
     "anchorName": "十六萤Izayoi",
@@ -105,6 +111,7 @@
     ],
     "targetDir": "data/streams/azi",
     "bilibiliUid": "80397",
+    "avatarPath": "/images/livers/azi.webp",
     "anchorName": "阿梓从小就很可爱",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -119,6 +126,7 @@
     ],
     "targetDir": "data/streams/nana7mi",
     "bilibiliUid": "21452505",
+    "avatarPath": "/images/livers/nana7mi.png",
     "anchorName": "七海Nana7mi",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -132,6 +140,7 @@
     ],
     "targetDir": "data/streams/joi",
     "bilibiliUid": "21484828",
+    "avatarPath": "/images/livers/joi.png",
     "anchorName": "轴伊Joi_Channel",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -146,6 +155,7 @@
     ],
     "targetDir": "data/streams/yua",
     "bilibiliUid": "22470216",
+    "avatarPath": "/images/livers/yua.png",
     "anchorName": "悠亚Yua",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -160,6 +170,7 @@
     ],
     "targetDir": "data/streams/rhea",
     "bilibiliUid": "23260993",
+    "avatarPath": "/images/livers/rhea.png",
     "anchorName": "瑞娅_Rhea",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -173,6 +184,7 @@
     ],
     "targetDir": "data/streams/nightin",
     "bilibiliUid": "24872476",
+    "avatarPath": "/images/livers/nightin.jpg",
     "anchorName": "南町Nightin",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -186,6 +198,7 @@
     ],
     "targetDir": "data/streams/mingqian-nailv",
     "bilibiliUid": "25034104",
+    "avatarPath": "/images/livers/mingqian-nailv.png",
     "anchorName": "明前奶绿",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -199,6 +212,7 @@
     ],
     "targetDir": "data/streams/michiya",
     "bilibiliUid": "27628030",
+    "avatarPath": "/images/livers/michiya.webp",
     "anchorName": "未知夜Michiya",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -213,6 +227,7 @@
     ],
     "targetDir": "data/streams/mizuki",
     "bilibiliUid": "30655190",
+    "avatarPath": "/images/livers/mizuki.png",
     "anchorName": "弥月Mizuki",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -227,6 +242,7 @@
     ],
     "targetDir": "data/streams/nagisa",
     "bilibiliUid": "31368705",
+    "avatarPath": "/images/livers/nagisa.png",
     "anchorName": "米汀Nagisa",
     "enableTextGeneration": true,
     "enableComicGeneration": true
@@ -254,6 +270,7 @@
     ],
     "targetDir": "data/streams/harei",
     "bilibiliUid": "1820703922",
+    "avatarPath": "/images/livers/harei.png",
     "anchorName": "花礼Harei",
     "enableTextGeneration": true,
     "enableComicGeneration": true

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(file public/images/livers/*)",
+      "PowerShell(npx eslint src/components/LiverAvatar.tsx src/data/livers/index.ts src/data/livers/types.ts src/app/liver/page.tsx 'src/app/liver/[liverId]/page.tsx')"
+    ]
+  }
+}

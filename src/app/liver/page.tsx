@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { getAllLiverConfigs } from '@/data/livers';
+import LiverAvatar from '@/components/LiverAvatar';
 import { ConfigProvider, Typography, Card } from 'antd';
 import { theme } from 'antd';
 
@@ -56,12 +57,12 @@ export default function LiverIndexPage() {
                         <h3 className="text-white text-2xl font-bold mb-2">{liver.name}</h3>
                         <p className="text-slate-400 text-sm mb-3">{liver.group}</p>
                       </div>
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                        style={{ background: liver.colorMain }}
-                      >
-                        {liver.shortName[0]}
-                      </div>
+                      <LiverAvatar
+                        avatarSrc={liver.avatarSrc}
+                        name={liver.name}
+                        color={liver.colorMain}
+                        size={48}
+                      />
                     </div>
 
                     <div className="flex flex-wrap gap-2">

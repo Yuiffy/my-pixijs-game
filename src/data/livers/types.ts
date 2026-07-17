@@ -28,6 +28,8 @@ export interface LiverInfo {
   colorSub: string;
   /** 数据路径，如 "/data/streams/sui/" */
   dataPath: string;
+  /** 本地头像路径（可选） */
+  avatarSrc?: string;
   /** B站UID（可选） */
   bilibiliUid?: string;
   /** B站空间链接（可选） */

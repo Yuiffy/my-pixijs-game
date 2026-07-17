@@ -6,8 +6,6 @@
 import { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials } from './types';
 import liverConfigsData from './liverConfigs.json';
 
-const liverConfigsRaw = liverConfigsData;
-
 // 导出类型
 export type { LiverInfo, LiverConfig, ArtworkItem, ArtworkMaterials };
 
@@ -29,6 +27,9 @@ function parseLiverConfigs(): LiverConfig {
       colorMain: '#888888',
       colorSub: '#666666',
       dataPath: `/${config.targetDir}`,
+      avatarSrc: typeof config.avatarPath === 'string' && config.avatarPath.startsWith('/images/livers/')
+        ? config.avatarPath
+        : undefined,
       bilibiliUid: config.bilibiliUid,
       bilibiliSpace: `https://space.bilibili.com/${config.bilibiliUid}`,
     };
