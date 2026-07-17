@@ -8,6 +8,7 @@ import {
   Fighter,
   GameState,
   OwnedUnit,
+  fighterVisualRadius,
 } from "./core/gameEngine";
 import {
   AUGMENTS,
@@ -17,7 +18,9 @@ import {
   TraitId,
   UNIT_DEFS,
   UnitId,
-  tierOddsForRound,
+  XP_PURCHASE_AMOUNT,
+  XP_PURCHASE_COST,
+  tierOddsForLevel,
   traitLevelForCount,
 } from "./core/gameData";
 
@@ -30,6 +33,8 @@ declare global {
 
 const WIDTH = 1120;
 const HEIGHT = 720;
+const TOOLBAR_HEIGHT = 38;
+const MAX_CANVAS_PIXELS = 8_000_000;
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif';
 
 interface Rect {
@@ -44,7 +49,7 @@ type HitTarget =
   | { kind: "shop"; index: number; unitId: UnitId | null }
   | { kind: "board"; index: number; unitId: UnitId | null; star?: number }
   | { kind: "bench"; index: number; unitId: UnitId | null; star?: number }
-  | { kind: "reroll" | "battle" | "sell" | "restart" }
+  | { kind: "reroll" | "buyXp" | "battle" | "sell" | "restart" }
   | { kind: "augment"; index: number }
   | { kind: "fighter"; unitId: UnitId; star: number }
   | { kind: "trait"; traitId: TraitId }
@@ -94,8 +99,9 @@ const augmentRect = (index: number): Rect => ({
   w: 320,
   h: 300,
 });
-const rerollRect: Rect = { x: 810, y: 530, w: 126, h: 48 };
-const battleRect: Rect = { x: 946, y: 530, w: 134, h: 48 };
+const buyXpRect: Rect = { x: 810, y: 530, w: 82, h: 48 };
+const rerollRect: Rect = { x: 900, y: 530, w: 82, h: 48 };
+const battleRect: Rect = { x: 990, y: 530, w: 90, h: 48 };
 const sellRect: Rect = { x: 636, y: 553, w: 112, h: 34 };
 const restartRect: Rect = { x: 420, y: 548, w: 280, h: 62 };
 
@@ -577,7 +583,7 @@ const drawTitle = (
   );
   text(
     ctx,
-    "操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏",
+    "操作：购买与布阵 · 升本提升商店和人口 · R 刷新 · Space 开战 · F 全屏",
     WIDTH / 2,
     670,
     11,
@@ -676,9 +682,29 @@ const drawPreparation = (
   const shopPanel: Rect = { x: 794, y: 98, w: 300, h: 500 };
   fillRounded(ctx, shopPanel, 18, "rgba(8, 18, 28, 0.96)");
   strokeRounded(ctx, shopPanel, 18, "rgba(111, 191, 235, 0.2)");
-  text(ctx, "战术商店", 812, 119, 17, "#edf7ff", "left", 800);
-  text(ctx, `五张选一 · 刷新 1`, 1078, 120, 10, "#678195", "right", 500);
-  const odds = tierOddsForRound(state.round);
+  text(
+    ctx,
+    `战术商店 · Lv.${state.playerLevel}`,
+    812,
+    119,
+    16,
+    "#edf7ff",
+    "left",
+    800,
+  );
+  text(
+    ctx,
+    engine.isMaxPlayerLevel
+      ? "已满级"
+      : `XP ${state.experience}/${engine.experienceToNext}`,
+    1078,
+    120,
+    10,
+    engine.isMaxPlayerLevel ? "#ffd166" : "#7bdcff",
+    "right",
+    700,
+  );
+  const odds = tierOddsForLevel(state.playerLevel);
   text(
     ctx,
     odds
@@ -770,11 +796,43 @@ const drawPreparation = (
     );
   });
 
+  const hoveredBuyXp = hover.target?.kind === "buyXp";
+  const canBuyXp = !engine.isMaxPlayerLevel && state.gold >= XP_PURCHASE_COST;
+  fillRounded(
+    ctx,
+    buyXpRect,
+    12,
+    hoveredBuyXp && canBuyXp
+      ? "#4a9fd0"
+      : canBuyXp
+        ? "#286d94"
+        : "#253746",
+  );
+  text(
+    ctx,
+    engine.isMaxPlayerLevel ? "已满级" : `升本 · ${XP_PURCHASE_COST}`,
+    buyXpRect.x + buyXpRect.w / 2,
+    buyXpRect.y + 18,
+    10,
+    canBuyXp ? "#eef9ff" : "#607787",
+    "center",
+    800,
+  );
+  text(
+    ctx,
+    engine.isMaxPlayerLevel ? "MAX" : `+${XP_PURCHASE_AMOUNT} XP`,
+    buyXpRect.x + buyXpRect.w / 2,
+    buyXpRect.y + 35,
+    8,
+    canBuyXp ? "#bdeaff" : "#4b6374",
+    "center",
+    800,
+  );
   const hoveredReroll = hover.target?.kind === "reroll";
   fillRounded(ctx, rerollRect, 12, hoveredReroll ? "#d7a93d" : "#293e4d");
   text(
     ctx,
-    "R  刷新 · 1",
+    "R · 1",
     rerollRect.x + rerollRect.w / 2,
     rerollRect.y + 24,
     11,
@@ -792,7 +850,7 @@ const drawPreparation = (
   );
   text(
     ctx,
-    "开始战斗",
+    "开战",
     battleRect.x + battleRect.w / 2,
     battleRect.y + 19,
     12,
@@ -835,7 +893,7 @@ const drawPreparation = (
   );
   text(
     ctx,
-    `上阵 ${engine.boardCount}/${engine.boardCap}`,
+    `Lv.${state.playerLevel} · 上阵 ${engine.boardCount}/${engine.boardCap}`,
     612,
     570,
     11,
@@ -983,17 +1041,8 @@ const drawBattlefield = (ctx: CanvasRenderingContext2D) => {
   text(ctx, "裂隙军团", 1072, 118, 10, "#ff6d9a", "right", 800);
 };
 
-const fighterRadius = (fighter: Fighter) => {
-  if (fighter.unitId === "rift_tyrant") return 43;
-  const largeUnit = [
-    "brass_colossus",
-    "rift_warden",
-    "siege_walker",
-    "solar_champion",
-    "chrono_titan",
-  ].includes(fighter.unitId);
-  return (largeUnit ? 31 : 26) + (fighter.star - 1) * 3;
-};
+const fighterRadius = (fighter: Fighter) =>
+  fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
 
 const drawFighter = (
   ctx: CanvasRenderingContext2D,
@@ -1003,13 +1052,45 @@ const drawFighter = (
   if (!fighter.alive) return;
   const def = UNIT_DEFS[fighter.unitId];
   const radius = fighterRadius(fighter);
+  const jumping = fighter.jumpTime > 0 && fighter.jumpDuration > 0;
+  const jumpProgress = jumping
+    ? 1 - fighter.jumpTime / fighter.jumpDuration
+    : 0;
+  const jumpEase = 0.5 - Math.cos(jumpProgress * Math.PI) / 2;
+  const renderX = jumping
+    ? fighter.jumpFromX + (fighter.jumpToX - fighter.jumpFromX) * jumpEase
+    : fighter.x;
+  const renderY = jumping
+    ? fighter.jumpFromY +
+      (fighter.jumpToY - fighter.jumpFromY) * jumpEase -
+      Math.sin(jumpProgress * Math.PI) * 92
+    : fighter.y;
+  const attackProgress = fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
+  const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
+  const attackDistance = Math.hypot(
+    fighter.attackTargetX - renderX,
+    fighter.attackTargetY - renderY,
+  );
+  const attackOffsetX =
+    attackDistance > 0 ? ((fighter.attackTargetX - renderX) / attackDistance) * lunge : 0;
+  const attackOffsetY =
+    attackDistance > 0 ? ((fighter.attackTargetY - renderY) / attackDistance) * lunge : 0;
+  const drawX = renderX + attackOffsetX;
+  const drawY = renderY + attackOffsetY;
+  const hitProgress = fighter.hitPulse > 0 ? fighter.hitPulse / 0.2 : 0;
   ctx.save();
+  ctx.translate(drawX, drawY);
+  if (fighter.attackPulse > 0)
+    ctx.scale(1 + lunge / 70, 1 - lunge / 130);
+  if (fighter.hitPulse > 0)
+    ctx.scale(1 - 0.08 * hitProgress, 1 + 0.08 * hitProgress);
+  ctx.translate(-drawX, -drawY);
   ctx.globalAlpha = fighter.stun > 0 ? 0.72 : 1;
   ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
   ctx.beginPath();
   ctx.ellipse(
-    fighter.x,
-    fighter.y + radius * 0.8,
+    renderX,
+    jumping ? fighter.jumpFromY + radius * 0.8 : drawY + radius * 0.8,
     radius * 0.95,
     radius * 0.33,
     0,
@@ -1021,8 +1102,8 @@ const drawFighter = (
   if (fighter.shield > 0) {
     ctx.beginPath();
     ctx.arc(
-      fighter.x,
-      fighter.y,
+      drawX,
+      drawY,
       radius + 7 + Math.sin(visualTime * 6) * 2,
       0,
       Math.PI * 2,
@@ -1034,19 +1115,29 @@ const drawFighter = (
   drawUnitPortrait(
     ctx,
     fighter.unitId,
-    fighter.x,
-    fighter.y,
+    drawX,
+    drawY,
     radius,
     fighter.team,
   );
-  drawStars(ctx, fighter.star, fighter.x, fighter.y - radius - 13);
+  if (fighter.hitPulse > 0) {
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = 0.75 * hitProgress;
+    ctx.fillStyle = "#ff526f";
+    ctx.beginPath();
+    ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = fighter.stun > 0 ? 0.72 : 1;
+  }
+  drawStars(ctx, fighter.star, drawX, drawY - radius - 13);
 
   const barWidth = radius * 2.25;
   fillRounded(
     ctx,
     {
-      x: fighter.x - barWidth / 2,
-      y: fighter.y + radius + 9,
+      x: drawX - barWidth / 2,
+      y: drawY + radius + 9,
       w: barWidth,
       h: 7,
     },
@@ -1058,8 +1149,8 @@ const drawFighter = (
   fillRounded(
     ctx,
     {
-      x: fighter.x - barWidth / 2,
-      y: fighter.y + radius + 9,
+      x: drawX - barWidth / 2,
+      y: drawY + radius + 9,
       w: barWidth * hpRatio,
       h: 7,
     },
@@ -1069,8 +1160,8 @@ const drawFighter = (
   fillRounded(
     ctx,
     {
-      x: fighter.x - barWidth / 2,
-      y: fighter.y + radius + 19,
+      x: drawX - barWidth / 2,
+      y: drawY + radius + 19,
       w: barWidth,
       h: 4,
     },
@@ -1080,8 +1171,8 @@ const drawFighter = (
   fillRounded(
     ctx,
     {
-      x: fighter.x - barWidth / 2,
-      y: fighter.y + radius + 19,
+      x: drawX - barWidth / 2,
+      y: drawY + radius + 19,
       w: barWidth * (fighter.energy / 100),
       h: 4,
     },
@@ -1093,8 +1184,8 @@ const drawFighter = (
     text(
       ctx,
       "✦",
-      fighter.x,
-      fighter.y - radius - 27,
+      drawX,
+      drawY - radius - 27,
       15,
       "#ffd95e",
       "center",
@@ -1103,8 +1194,8 @@ const drawFighter = (
   if (fighter.burnTime > 0) {
     ctx.beginPath();
     ctx.arc(
-      fighter.x + radius * 0.7,
-      fighter.y - radius * 0.55,
+      drawX + radius * 0.7,
+      drawY - radius * 0.55,
       5 + Math.sin(visualTime * 10) * 2,
       0,
       Math.PI * 2,
@@ -1114,7 +1205,7 @@ const drawFighter = (
   }
   if (fighter.enraged) {
     ctx.beginPath();
-    ctx.arc(fighter.x, fighter.y, radius + 12, 0, Math.PI * 2);
+    ctx.arc(drawX, drawY, radius + 12, 0, Math.PI * 2);
     ctx.strokeStyle = "#ff4f9a";
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -1122,8 +1213,8 @@ const drawFighter = (
   text(
     ctx,
     def.name,
-    fighter.x,
-    fighter.y + radius + 35,
+    drawX,
+    drawY + radius + 35,
     9,
     fighter.team === "player" ? "#a9c8dc" : "#d9a0b5",
     "center",
@@ -1285,10 +1376,13 @@ const drawResult = (ctx: CanvasRenderingContext2D, state: GameState) => {
   );
   text(ctx, state.result.headline, 560, 318, 30, "#f2f8ff", "center", 900);
   text(ctx, state.result.detail, 560, 359, 11, "#91a9b9", "center", 500);
+  const experienceText = state.result.experience
+    ? ` · +${state.result.experience} 经验`
+    : "";
   if (state.result.won) {
     text(
       ctx,
-      `+ ${state.result.income} 金币`,
+      `+ ${state.result.income} 金币${experienceText}`,
       560,
       407,
       20,
@@ -1299,7 +1393,7 @@ const drawResult = (ctx: CanvasRenderingContext2D, state: GameState) => {
   } else {
     text(
       ctx,
-      `核心 -${state.result.damage}   ·   整备 +${state.result.income} 金币`,
+      `核心 -${state.result.damage} · +${state.result.income} 金币${experienceText}`,
       560,
       407,
       17,
@@ -1702,7 +1796,6 @@ const renderGame = (
   hover: HoverState,
 ) => {
   const state = engine.state;
-  ctx.clearRect(0, 0, WIDTH, HEIGHT);
   drawBackdrop(ctx, state);
   drawHeader(ctx, engine);
 
@@ -1795,6 +1888,7 @@ const hitTest = (engine: AutoChessEngine, x: number, y: number): HitTarget => {
       if (inRect(x, y, shopRect(index)))
         return { kind: "shop", index, unitId: state.shop[index] };
     }
+    if (inRect(x, y, buyXpRect)) return { kind: "buyXp" };
     if (inRect(x, y, rerollRect)) return { kind: "reroll" };
     if (inRect(x, y, battleRect)) return { kind: "battle" };
     if (inRect(x, y, sellRect)) return { kind: "sell" };
@@ -1828,8 +1922,11 @@ export default function AutoChessGame() {
   const suppressClickRef = useRef(false);
   const frameRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const testTimeScaleRef = useRef(1);
   const [fullscreen, setFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(true);
+  const [fullscreenMessage, setFullscreenMessage] = useState("");
 
   if (!engineRef.current) {
     const query =
@@ -1848,19 +1945,55 @@ export default function AutoChessGame() {
     );
   }
 
+  const syncCanvasResolution = useCallback(
+    (canvas: HTMLCanvasElement) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const requestedScale = Math.min(window.devicePixelRatio || 1, 2);
+      const cssPixels = rect.width * rect.height;
+      const budgetScale = Math.sqrt(MAX_CANVAS_PIXELS / cssPixels);
+      const scale = Math.max(1, Math.min(requestedScale, budgetScale));
+      const pixelWidth = Math.max(1, Math.round(rect.width * scale));
+      const pixelHeight = Math.max(1, Math.round(rect.height * scale));
+      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
+      }
+    },
+    [],
+  );
+
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const engine = engineRef.current;
     if (!canvas || !engine) return;
+    syncCanvasResolution(canvas);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(canvas.width / WIDTH, 0, 0, canvas.height / HEIGHT, 0, 0);
     renderGame(ctx, engine, hoverRef.current);
-  }, []);
+  }, [syncCanvasResolution]);
 
   const toggleFullscreen = useCallback(async () => {
-    if (!containerRef.current) return;
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else await containerRef.current.requestFullscreen();
+    const container = containerRef.current;
+    if (!container) return;
+    setFullscreenMessage("");
+    try {
+      if (document.fullscreenElement === container) {
+        await document.exitFullscreen();
+      } else if (document.fullscreenElement) {
+        setFullscreenMessage("其他内容正在全屏，请先退出后再试。");
+      } else if (!document.fullscreenEnabled || !container.requestFullscreen) {
+        setFullscreenSupported(false);
+        setFullscreenMessage("当前浏览器不支持全屏。");
+      } else {
+        await container.requestFullscreen();
+      }
+    } catch {
+      setFullscreenMessage("无法进入全屏，请检查浏览器权限后重试。");
+    }
   }, []);
 
   useEffect(() => {
@@ -1888,13 +2021,31 @@ export default function AutoChessGame() {
       draw();
     };
 
-    const handleFullscreen = () =>
-      setFullscreen(Boolean(document.fullscreenElement));
+    const handleFullscreen = () => {
+      setFullscreen(document.fullscreenElement === containerRef.current);
+      window.requestAnimationFrame(draw);
+    };
+    const handleFullscreenError = () =>
+      setFullscreenMessage("全屏请求被浏览器拒绝。");
+    setFullscreenSupported(
+      Boolean(document.fullscreenEnabled && containerRef.current?.requestFullscreen),
+    );
     document.addEventListener("fullscreenchange", handleFullscreen);
+    document.addEventListener("fullscreenerror", handleFullscreenError);
+    const canvas = canvasRef.current;
+    if (canvas && typeof ResizeObserver !== "undefined") {
+      resizeObserverRef.current = new ResizeObserver(() => draw());
+      resizeObserverRef.current.observe(canvas);
+    }
+    const handleResize = () => draw();
+    window.addEventListener("resize", handleResize);
     return () => {
       if (frameRef.current !== null)
         window.cancelAnimationFrame(frameRef.current);
+      resizeObserverRef.current?.disconnect();
       document.removeEventListener("fullscreenchange", handleFullscreen);
+      document.removeEventListener("fullscreenerror", handleFullscreenError);
+      window.removeEventListener("resize", handleResize);
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
@@ -1906,7 +2057,7 @@ export default function AutoChessGame() {
       if (!engine) return;
       if (event.key.toLowerCase() === "f") {
         event.preventDefault();
-        toggleFullscreen().catch(() => {});
+        toggleFullscreen();
       } else if (event.key.toLowerCase() === "r") {
         event.preventDefault();
         engine.rerollShop();
@@ -1914,8 +2065,7 @@ export default function AutoChessGame() {
         event.preventDefault();
         engine.startBattle();
       } else if (event.key === "Escape") {
-        if (document.fullscreenElement)
-          document.exitFullscreen().catch(() => {});
+        if (document.fullscreenElement === containerRef.current) toggleFullscreen();
         else engine.state.selected = null;
       }
       draw();
@@ -1924,7 +2074,9 @@ export default function AutoChessGame() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [draw, toggleFullscreen]);
 
-  const canvasPoint = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const canvasPoint = (
+    event: React.MouseEvent<HTMLCanvasElement> | React.PointerEvent<HTMLCanvasElement>,
+  ) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return {
       x: ((event.clientX - rect.left) / rect.width) * WIDTH,
@@ -1932,7 +2084,7 @@ export default function AutoChessGame() {
     };
   };
 
-  const onMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const onPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const engine = engineRef.current;
     if (!engine) return;
     const point = canvasPoint(event);
@@ -1955,7 +2107,8 @@ export default function AutoChessGame() {
     draw();
   };
 
-  const onMouseLeave = () => {
+  const onPointerLeave = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) return;
     hoverRef.current = { target: null, x: 0, y: 0 };
     draw();
   };
@@ -1974,6 +2127,7 @@ export default function AutoChessGame() {
     else if (target.kind === "shop") engine.buyShopUnit(target.index);
     else if (target.kind === "board") engine.selectSlot("board", target.index);
     else if (target.kind === "bench") engine.selectSlot("bench", target.index);
+    else if (target.kind === "buyXp") engine.buyExperience();
     else if (target.kind === "reroll") engine.rerollShop();
     else if (target.kind === "battle") engine.startBattle();
     else if (target.kind === "sell") engine.sellSelected();
@@ -1983,8 +2137,9 @@ export default function AutoChessGame() {
     draw();
   };
 
-  const onMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
     const engine = engineRef.current;
     if (!engine || engine.state.phase !== "preparation") return;
     const point = canvasPoint(event);
@@ -2002,7 +2157,9 @@ export default function AutoChessGame() {
     }
   };
 
-  const onMouseUp = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
     const drag = dragRef.current;
     const engine = engineRef.current;
     dragRef.current = null;
@@ -2037,9 +2194,12 @@ export default function AutoChessGame() {
     <div
       ref={containerRef}
       style={{
-        width: fullscreen ? "100vw" : "min(1120px, 100%)",
-        height: fullscreen ? "100vh" : "auto",
+        width: fullscreen
+          ? "100vw"
+          : `min(1120px, 100vw, calc((100dvh - ${TOOLBAR_HEIGHT}px) * ${WIDTH / HEIGHT}))`,
+        height: fullscreen ? "100dvh" : "auto",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         background: "#050b12",
@@ -2047,6 +2207,58 @@ export default function AutoChessGame() {
         overflow: "hidden",
       }}
     >
+      <div
+        style={{
+          width: "100%",
+          minHeight: TOOLBAR_HEIGHT,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 10,
+          padding: "4px 10px",
+          boxSizing: "border-box",
+          color: "#7892a5",
+          background: "#08131e",
+          borderBottom: "1px solid rgba(117, 205, 255, 0.16)",
+          font: `600 12px ${FONT}`,
+        }}
+      >
+        <span
+          aria-live="polite"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            color: fullscreenMessage ? "#ff9cac" : "#607d91",
+          }}
+        >
+          {fullscreenMessage || "全屏会自动提升画布清晰度"}
+        </span>
+        <span>快捷键 F</span>
+        <button
+          type="button"
+          aria-pressed={fullscreen}
+          disabled={!fullscreenSupported}
+          onClick={() => toggleFullscreen()}
+          style={{
+            minWidth: 94,
+            height: 28,
+            padding: "0 14px",
+            border: "1px solid rgba(123, 220, 255, 0.5)",
+            borderRadius: 8,
+            color: fullscreenSupported ? "#dff7ff" : "#526775",
+            background: fullscreenSupported
+              ? "rgba(34, 105, 142, 0.72)"
+              : "rgba(35, 50, 60, 0.72)",
+            cursor: fullscreenSupported ? "pointer" : "not-allowed",
+            font: `700 12px ${FONT}`,
+          }}
+        >
+          {fullscreen ? "退出全屏" : "全屏游玩"}
+        </button>
+      </div>
       <canvas
         ref={canvasRef}
         width={WIDTH}
@@ -2054,16 +2266,21 @@ export default function AutoChessGame() {
         tabIndex={0}
         aria-label="裂隙阵线自走棋游戏画布"
         data-game-canvas="rift-line"
-        onMouseMove={onMouseMove}
-        onMouseLeave={onMouseLeave}
-        onMouseDown={onMouseDown}
-        onMouseUp={onMouseUp}
+        onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
         onClick={onClick}
         onContextMenu={onContextMenu}
         style={{
           display: "block",
-          width: fullscreen ? "min(100vw, calc(100vh * 1.55556))" : "100%",
+          width: fullscreen
+            ? `min(100vw, calc((100dvh - ${TOOLBAR_HEIGHT}px) * ${WIDTH / HEIGHT}))`
+            : "100%",
           height: "auto",
+          maxHeight: fullscreen
+            ? `calc(100dvh - ${TOOLBAR_HEIGHT}px)`
+            : "none",
           aspectRatio: `${WIDTH} / ${HEIGHT}`,
           outline: "none",
           touchAction: "manipulation",

@@ -4,7 +4,18 @@ const AutoChessGame = dynamic(() => import('@/components/autoChessGame/PhaserGam
 
 export default function AutoChessPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#050b12', display: 'grid', placeItems: 'center' }}>
+    <main
+      style={{
+        width: '100vw',
+        height: '100dvh',
+        position: 'fixed',
+        inset: 0,
+        background: '#050b12',
+        display: 'grid',
+        placeItems: 'center',
+        overflow: 'hidden',
+      }}
+    >
       <AutoChessGame />
     </main>
   );

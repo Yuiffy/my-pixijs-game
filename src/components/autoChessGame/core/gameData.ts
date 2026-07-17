@@ -1069,19 +1069,51 @@ export const WAVES: WaveDefinition[] = [
   },
 ];
 
-export const BOARD_CAP_BY_ROUND = [3, 3, 4, 4, 5, 5, 6, 6];
+export const PLAYER_LEVELS = [3, 4, 5, 6] as const;
+export type PlayerLevel = (typeof PLAYER_LEVELS)[number];
+export type ShopTierOdds = readonly [number, number, number, number, number];
 
-export const tierOddsForRound = (
-  round: number,
-): [number, number, number, number, number] => {
-  if (round <= 1) return [75, 25, 0, 0, 0];
-  if (round === 2) return [60, 35, 5, 0, 0];
-  if (round === 3) return [48, 38, 13, 1, 0];
-  if (round === 4) return [38, 36, 21, 5, 0];
-  if (round === 5) return [30, 33, 26, 10, 1];
-  if (round === 6) return [22, 30, 30, 15, 3];
-  if (round === 7) return [15, 25, 31, 23, 6];
-  return [10, 20, 30, 29, 11];
+interface PlayerLevelConfig {
+  boardCap: number;
+  xpToNext: number | null;
+  tierOdds: ShopTierOdds;
+}
+
+export const STARTING_PLAYER_LEVEL: PlayerLevel = 3;
+export const MAX_PLAYER_LEVEL: PlayerLevel = 6;
+export const XP_PURCHASE_COST = 4;
+export const XP_PURCHASE_AMOUNT = 4;
+export const PASSIVE_XP_PER_ROUND = 2;
+
+export const PLAYER_LEVEL_CONFIG: Record<PlayerLevel, PlayerLevelConfig> = {
+  3: { boardCap: 3, xpToNext: 4, tierOdds: [75, 25, 0, 0, 0] },
+  4: { boardCap: 4, xpToNext: 4, tierOdds: [48, 38, 13, 1, 0] },
+  5: { boardCap: 5, xpToNext: 4, tierOdds: [30, 33, 26, 10, 1] },
+  6: { boardCap: 6, xpToNext: null, tierOdds: [10, 20, 30, 29, 11] },
+};
+
+export const tierOddsForLevel = (level: PlayerLevel) =>
+  PLAYER_LEVEL_CONFIG[level].tierOdds;
+
+export const applyPlayerExperience = (
+  playerLevel: PlayerLevel,
+  experience: number,
+  gainedExperience: number,
+) => {
+  let level = playerLevel;
+  let xp = Math.max(0, experience + gainedExperience);
+  let levelsGained = 0;
+
+  while (level < MAX_PLAYER_LEVEL) {
+    const { xpToNext } = PLAYER_LEVEL_CONFIG[level];
+    if (xpToNext === null || xp < xpToNext) break;
+    xp -= xpToNext;
+    level = (level + 1) as PlayerLevel;
+    levelsGained += 1;
+  }
+
+  if (level === MAX_PLAYER_LEVEL) xp = 0;
+  return { playerLevel: level, experience: xp, levelsGained };
 };
 
 export const SHOP_TIER_COUNTS = [1, 2, 3, 4, 5].map(

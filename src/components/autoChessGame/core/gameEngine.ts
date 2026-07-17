@@ -3,18 +3,25 @@
 import {
   AUGMENTS,
   AugmentId,
-  BOARD_CAP_BY_ROUND,
+  MAX_PLAYER_LEVEL,
+  PASSIVE_XP_PER_ROUND,
+  PLAYER_LEVEL_CONFIG,
+  PlayerLevel,
   SHOP_TIER_COUNTS,
   SHOP_UNITS,
   STARTERS,
+  STARTING_PLAYER_LEVEL,
   StarterId,
   TRAITS,
   TraitId,
   UNIT_DEFS,
   UnitId,
   WAVES,
+  XP_PURCHASE_AMOUNT,
+  XP_PURCHASE_COST,
+  applyPlayerExperience,
+  tierOddsForLevel,
   traitLevelForCount,
-  tierOddsForRound,
 } from "./gameData";
 
 export type GamePhase =
@@ -57,6 +64,7 @@ export interface Fighter {
   star: 1 | 2 | 3;
   x: number;
   y: number;
+  radius: number;
   hp: number;
   maxHp: number;
   shield: number;
@@ -79,6 +87,18 @@ export interface Fighter {
   castRefund: number;
   secondWindUsed: boolean;
   enraged: boolean;
+  attackPulse: number;
+  attackTargetX: number;
+  attackTargetY: number;
+  hitPulse: number;
+  jumpPending: boolean;
+  jumpDelay: number;
+  jumpTime: number;
+  jumpDuration: number;
+  jumpFromX: number;
+  jumpFromY: number;
+  jumpToX: number;
+  jumpToY: number;
   alive: boolean;
 }
 
@@ -98,6 +118,7 @@ export interface RoundResult {
   headline: string;
   detail: string;
   income: number;
+  experience: number;
   damage: number;
 }
 
@@ -116,6 +137,8 @@ export interface GameState {
   hp: number;
   maxHp: number;
   gold: number;
+  playerLevel: PlayerLevel;
+  experience: number;
   score: number;
   bestScore: number;
   streak: number;
@@ -139,6 +162,19 @@ const BOARD_SIZE = 24;
 const BENCH_SIZE = 8;
 const SHOP_SIZE = 5;
 const STAR_SCALE = [0, 1, 1.68, 2.82];
+const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
+
+export const fighterVisualRadius = (unitId: UnitId, star: 1 | 2 | 3) => {
+  if (unitId === "rift_tyrant") return 43;
+  const largeUnit = [
+    "brass_colossus",
+    "rift_warden",
+    "siege_walker",
+    "solar_champion",
+    "chrono_titan",
+  ].includes(unitId);
+  return (largeUnit ? 31 : 26) + (star - 1) * 3;
+};
 
 interface RandomSource {
   next: () => number;
@@ -193,6 +229,8 @@ export class AutoChessEngine {
       hp: 20,
       maxHp: 20,
       gold: 8,
+      playerLevel: STARTING_PLAYER_LEVEL,
+      experience: 0,
       score: 0,
       bestScore,
       streak: 0,
@@ -252,9 +290,15 @@ export class AutoChessEngine {
   }
 
   public get boardCap() {
-    return BOARD_CAP_BY_ROUND[
-      Math.min(this.state.round - 1, BOARD_CAP_BY_ROUND.length - 1)
-    ];
+    return PLAYER_LEVEL_CONFIG[this.state.playerLevel].boardCap;
+  }
+
+  public get experienceToNext() {
+    return PLAYER_LEVEL_CONFIG[this.state.playerLevel].xpToNext;
+  }
+
+  public get isMaxPlayerLevel() {
+    return this.state.playerLevel === MAX_PLAYER_LEVEL;
   }
 
   public get boardCount() {
@@ -308,7 +352,7 @@ export class AutoChessEngine {
   }
 
   private rollTier() {
-    const odds = tierOddsForRound(this.state.round);
+    const odds = tierOddsForLevel(this.state.playerLevel);
     const roll = this.rng.next() * 100;
     let total = 0;
     for (let index = 0; index < odds.length; index += 1) {
@@ -327,6 +371,49 @@ export class AutoChessEngine {
       );
       return this.rng.pick(candidates.length ? candidates : fallback);
     });
+  }
+
+  private grantExperience(amount: number) {
+    if (amount <= 0 || this.isMaxPlayerLevel) return 0;
+    const previousLevel = this.state.playerLevel;
+    const next = applyPlayerExperience(
+      previousLevel,
+      this.state.experience,
+      amount,
+    );
+    this.state.playerLevel = next.playerLevel;
+    this.state.experience = next.experience;
+    if (next.levelsGained > 0) {
+      this.setToast(
+        `等级提升至 Lv.${next.playerLevel}，现在可上阵 ${this.boardCap} 名单位！`,
+        "good",
+      );
+    }
+    return next.playerLevel - previousLevel;
+  }
+
+  public buyExperience() {
+    if (this.state.phase !== "preparation") return;
+    if (this.isMaxPlayerLevel) {
+      this.setToast("已达到最高等级。", "info");
+      return;
+    }
+    if (this.state.gold < XP_PURCHASE_COST) {
+      this.setToast(
+        `还差 ${XP_PURCHASE_COST - this.state.gold} 金币，无法升本。`,
+        "bad",
+      );
+      return;
+    }
+
+    this.state.gold -= XP_PURCHASE_COST;
+    const levelsGained = this.grantExperience(XP_PURCHASE_AMOUNT);
+    if (levelsGained === 0) {
+      this.setToast(
+        `获得 ${XP_PURCHASE_AMOUNT} 经验（${this.state.experience}/${this.experienceToNext}）。`,
+        "info",
+      );
+    }
   }
 
   public rerollShop() {
@@ -494,6 +581,13 @@ export class AutoChessEngine {
       this.setToast("至少部署一个单位才能开始战斗。", "bad");
       return;
     }
+    if (this.boardCount > this.boardCap) {
+      this.setToast(
+        `当前上阵 ${this.boardCount}/${this.boardCap}，请移回备战席、出售或升本。`,
+        "bad",
+      );
+      return;
+    }
     this.state.selected = null;
     this.state.battle = this.createBattle();
     this.state.phase = "battle";
@@ -560,9 +654,9 @@ export class AutoChessEngine {
         unitId: owned.id,
         team: "player",
         star: owned.star,
-        // 备战网格坐标直接映射到战场左半区，站位不是开战后重新排队。
-        x: assassinLevel ? 755 + col * 5 : 72 + col * 88 + (row % 2) * 18,
+        x: 72 + col * 88 + (row % 2) * 18,
         y: 175 + row * 135,
+        radius: fighterVisualRadius(owned.id, owned.star),
         hp: maxHp,
         maxHp,
         shield: 0,
@@ -588,6 +682,18 @@ export class AutoChessEngine {
         castRefund: [0, 0, 8, 15][mysticLevel],
         secondWindUsed: false,
         enraged: false,
+        jumpPending: assassinLevel > 0,
+        jumpDelay: assassinLevel ? 3.4 + row * 0.12 : 0,
+        jumpTime: 0,
+        jumpDuration: assassinLevel ? 0.68 : 0,
+        attackPulse: 0,
+        attackTargetX: 72 + col * 88 + (row % 2) * 18,
+        attackTargetY: 175 + row * 135,
+        hitPulse: 0,
+        jumpFromX: 72 + col * 88 + (row % 2) * 18,
+        jumpFromY: 175 + row * 135,
+        jumpToX: 72 + col * 88 + (row % 2) * 18,
+        jumpToY: 175 + row * 135,
         alive: true,
       };
       return [fighter];
@@ -608,6 +714,7 @@ export class AutoChessEngine {
         star,
         x: 990 - rank * 96,
         y: 180 + row * 165,
+        radius: fighterVisualRadius(waveUnit.id, star),
         hp: maxHp,
         maxHp,
         shield: 0,
@@ -630,11 +737,23 @@ export class AutoChessEngine {
         castRefund: 0,
         secondWindUsed: false,
         enraged: false,
+        attackPulse: 0,
+        attackTargetX: 990 - rank * 96,
+        attackTargetY: 180 + row * 165,
+        hitPulse: 0,
+        jumpPending: false,
+        jumpDelay: 0,
+        jumpTime: 0,
+        jumpDuration: 0,
+        jumpFromX: 990 - rank * 96,
+        jumpFromY: 180 + row * 165,
+        jumpToX: 990 - rank * 96,
+        jumpToY: 180 + row * 165,
         alive: true,
       } satisfies Fighter;
     });
 
-    return {
+    const battle: BattleState = {
       elapsed: 0,
       limit: 24,
       player,
@@ -649,6 +768,117 @@ export class AutoChessEngine {
             : `第 ${wave.round} 战`,
       bannerTimer: 2.2,
     };
+    return battle;
+  }
+
+  private frontlinesEngaged(battle: BattleState) {
+    return battle.player.some(
+      (player) =>
+        player.alive &&
+        !player.jumpPending &&
+        battle.enemy.some(
+          (enemy) =>
+            enemy.alive &&
+            Math.hypot(enemy.x - player.x, enemy.y - player.y) <=
+              player.radius + enemy.radius + 78,
+        ),
+    );
+  }
+
+  private prepareAssassinJump(fighter: Fighter, battle: BattleState) {
+    const backlineTargets = battle.enemy
+      .filter((enemy) => enemy.alive)
+      .sort((a, b) => b.x - a.x);
+    const target = backlineTargets[0];
+    if (!target) return false;
+
+    const occupied = [...battle.player, ...battle.enemy]
+      .filter((other) => other.alive && other !== fighter)
+      .map((other) => ({
+        x: other.jumpTime > 0 ? other.jumpToX : other.x,
+        y: other.jumpTime > 0 ? other.jumpToY : other.y,
+        radius: other.radius,
+      }));
+    const behindDirection = target.team === "enemy" ? 1 : -1;
+    const baseDistance = target.radius + fighter.radius + 12;
+    const candidates = [
+      { x: target.x + behindDirection * baseDistance, y: target.y },
+      { x: target.x + behindDirection * baseDistance, y: target.y - 62 },
+      { x: target.x + behindDirection * baseDistance, y: target.y + 62 },
+      { x: target.x, y: target.y - baseDistance },
+      { x: target.x, y: target.y + baseDistance },
+    ].map((candidate) => ({
+      x: Math.max(
+        BATTLE_BOUNDS.left + fighter.radius,
+        Math.min(BATTLE_BOUNDS.right - fighter.radius, candidate.x),
+      ),
+      y: Math.max(
+        BATTLE_BOUNDS.top + fighter.radius,
+        Math.min(BATTLE_BOUNDS.bottom - fighter.radius, candidate.y),
+      ),
+    }));
+    const landing =
+      candidates.find((candidate) =>
+        occupied.every(
+          (other) =>
+            Math.hypot(candidate.x - other.x, candidate.y - other.y) >=
+            fighter.radius + other.radius + 8,
+        ),
+      ) || candidates[0];
+
+    fighter.jumpFromX = fighter.x;
+    fighter.jumpFromY = fighter.y;
+    fighter.jumpToX = landing.x;
+    fighter.jumpToY = landing.y;
+    fighter.jumpPending = false;
+    fighter.jumpTime = fighter.jumpDuration;
+    this.addEffect({
+      kind: "ring",
+      x: fighter.jumpFromX,
+      y: fighter.jumpFromY,
+      color: UNIT_DEFS[fighter.unitId].accent,
+      life: 0.42,
+      size: fighter.radius * 1.8,
+    });
+    return true;
+  }
+
+  private resolveFighterSeparation(fighters: Fighter[]) {
+    for (let pass = 0; pass < 2; pass += 1) {
+      for (let leftIndex = 0; leftIndex < fighters.length; leftIndex += 1) {
+        const left = fighters[leftIndex];
+        if (!left.alive || left.jumpTime > 0) continue;
+        for (let rightIndex = leftIndex + 1; rightIndex < fighters.length; rightIndex += 1) {
+          const right = fighters[rightIndex];
+          if (!right.alive || right.jumpTime > 0) continue;
+          let dx = right.x - left.x;
+          let dy = right.y - left.y;
+          let distance = Math.hypot(dx, dy);
+          const minimum = left.radius + right.radius + 5;
+          if (distance >= minimum) continue;
+          if (distance < 0.01) {
+            dx = left.fid < right.fid ? 1 : -1;
+            dy = 0;
+            distance = 1;
+          }
+          const push = (minimum - distance) / 2;
+          left.x -= (dx / distance) * push;
+          left.y -= (dy / distance) * push;
+          right.x += (dx / distance) * push;
+          right.y += (dy / distance) * push;
+        }
+      }
+      fighters.forEach((fighter) => {
+        fighter.x = Math.max(
+          BATTLE_BOUNDS.left + fighter.radius,
+          Math.min(BATTLE_BOUNDS.right - fighter.radius, fighter.x),
+        );
+        fighter.y = Math.max(
+          BATTLE_BOUNDS.top + fighter.radius,
+          Math.min(BATTLE_BOUNDS.bottom - fighter.radius, fighter.y),
+        );
+      });
+    }
   }
 
   public update(deltaSeconds: number) {
@@ -674,7 +904,10 @@ export class AutoChessEngine {
   }
 
   private nearestTarget(source: Fighter, targets: Fighter[]) {
-    return targets.reduce<Fighter | null>((best, target) => {
+    const availableTargets = targets.filter(
+      (target) => !target.jumpPending && target.jumpTime <= 0,
+    );
+    return availableTargets.reduce<Fighter | null>((best, target) => {
       if (!best) return target;
       const bestDistance = Math.hypot(best.x - source.x, best.y - source.y);
       const distance = Math.hypot(target.x - source.x, target.y - source.y);
@@ -711,6 +944,30 @@ export class AutoChessEngine {
       if (!fighter.alive) return;
       fighter.cooldown -= dt;
       fighter.stun = Math.max(0, fighter.stun - dt);
+      fighter.attackPulse = Math.max(0, fighter.attackPulse - dt);
+      fighter.hitPulse = Math.max(0, fighter.hitPulse - dt);
+      if (fighter.jumpPending) {
+        fighter.jumpDelay = Math.max(0, fighter.jumpDelay - dt);
+        if (!this.frontlinesEngaged(battle) && fighter.jumpDelay > 0) return;
+        if (this.prepareAssassinJump(fighter, battle)) return;
+        fighter.jumpPending = false;
+      }
+      if (fighter.jumpTime > 0) {
+        fighter.jumpTime = Math.max(0, fighter.jumpTime - dt);
+        if (fighter.jumpTime <= 0) {
+          fighter.x = fighter.jumpToX;
+          fighter.y = fighter.jumpToY;
+          this.addEffect({
+            kind: "burst",
+            x: fighter.x,
+            y: fighter.y,
+            color: UNIT_DEFS[fighter.unitId].accent,
+            life: 0.45,
+            size: fighter.radius * 1.8,
+          });
+        }
+        return;
+      }
       if (fighter.burnTime > 0) {
         fighter.burnTime -= dt;
         fighter.hp -= fighter.burnDps * dt;
@@ -761,9 +1018,13 @@ export class AutoChessEngine {
       const target = this.nearestTarget(fighter, targets);
       if (!target) return;
       const distance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
-      if (distance > fighter.range) {
+      const preferredRange = Math.max(
+        fighter.range,
+        fighter.radius + target.radius + 7,
+      );
+      if (distance > preferredRange) {
         const travel = Math.min(
-          distance - fighter.range,
+          distance - preferredRange,
           fighter.moveSpeed * dt,
         );
         fighter.x += ((target.x - fighter.x) / distance) * travel;
@@ -772,6 +1033,8 @@ export class AutoChessEngine {
         this.basicAttack(fighter, target);
       }
     });
+
+    this.resolveFighterSeparation([...battle.player, ...battle.enemy]);
 
     const playersAlive = this.living("player");
     const enemiesAlive = this.living("enemy");
@@ -793,6 +1056,9 @@ export class AutoChessEngine {
 
   private basicAttack(source: Fighter, target: Fighter) {
     source.cooldown = source.attackInterval;
+    source.attackPulse = 0.22;
+    source.attackTargetX = target.x;
+    source.attackTargetY = target.y;
     source.energy = Math.min(100, source.energy + 24 + source.energyPerHit);
     target.energy = Math.min(100, target.energy + 5);
     const dealt = this.damage(source, target, source.attack);
@@ -843,7 +1109,7 @@ export class AutoChessEngine {
         target,
         source.attack * multiplier + bonus,
       );
-      this.addDamageText(target, dealt);
+      if (dealt > 0) this.addDamageText(target, dealt);
       return dealt;
     };
     const addShield = (target: Fighter, amount: number, capRatio = 0.55) => {
@@ -869,7 +1135,7 @@ export class AutoChessEngine {
         if (target) {
           const dealt = this.damage(source, target, source.attack * 0.75);
           target.stun = Math.max(target.stun, 0.45);
-          this.addDamageText(target, dealt);
+          if (dealt > 0) this.addDamageText(target, dealt);
         }
         this.addEffect({
           kind: "ring",
@@ -912,7 +1178,7 @@ export class AutoChessEngine {
           const target = ordered[shot % ordered.length];
           if (!target?.alive) continue;
           const dealt = this.damage(source, target, source.attack * 0.72);
-          this.addDamageText(target, dealt);
+          if (dealt > 0) this.addDamageText(target, dealt);
           this.addEffect({
             kind: "line",
             x: source.x,
@@ -992,7 +1258,7 @@ export class AutoChessEngine {
         source.y = target.y;
         const multiplier = target.hp / target.maxHp < 0.4 ? 2.6 : 1.75;
         const dealt = this.damage(source, target, source.attack * multiplier);
-        this.addDamageText(target, dealt);
+        if (dealt > 0) this.addDamageText(target, dealt);
         this.addEffect({
           kind: "burst",
           x: target.x,
@@ -1022,7 +1288,7 @@ export class AutoChessEngine {
           .forEach((target) => {
             const dealt = this.damage(source, target, source.attack * 1.65);
             this.applyBurn(source, target, source.attack * 0.65);
-            this.addDamageText(target, dealt);
+            if (dealt > 0) this.addDamageText(target, dealt);
           });
         this.addEffect({
           kind: "ring",
@@ -1127,7 +1393,7 @@ export class AutoChessEngine {
           .forEach((target) => {
             const dealt = this.damage(source, target, source.attack * 0.92);
             target.stun = Math.max(target.stun, 1.2);
-            this.addDamageText(target, dealt);
+            if (dealt > 0) this.addDamageText(target, dealt);
           });
         source.shield = Math.min(
           source.maxHp * 0.42,
@@ -1232,7 +1498,7 @@ export class AutoChessEngine {
         targets.forEach((target) => {
           const dealt = this.damage(source, target, source.attack * 1.16);
           this.applyBurn(source, target, source.attack * 0.9);
-          this.addDamageText(target, dealt);
+          if (dealt > 0) this.addDamageText(target, dealt);
         });
         this.heal(source, source.maxHp * 0.18);
         this.addEffect({
@@ -1475,7 +1741,7 @@ export class AutoChessEngine {
         targets.forEach((target) => {
           const dealt = this.damage(source, target, source.attack * 1.05);
           target.stun = Math.max(target.stun, 0.55);
-          this.addDamageText(target, dealt);
+          if (dealt > 0) this.addDamageText(target, dealt);
         });
         this.addEffect({
           kind: "ring",
@@ -1544,8 +1810,9 @@ export class AutoChessEngine {
       remaining -= absorbed;
     }
     target.hp -= remaining;
+    if (remaining > 0) target.hitPulse = 0.2;
     if (source.lifesteal > 0)
-      this.heal(source, amount * source.lifesteal, false);
+      this.heal(source, remaining * source.lifesteal, false);
 
     if (
       target.team === "player" &&
@@ -1562,7 +1829,7 @@ export class AutoChessEngine {
       this.killFighter(target);
       if (source.team === "player") this.state.score += 12;
     }
-    return amount;
+    return remaining;
   }
 
   private applyBurn(source: Fighter, target: Fighter, totalDamage: number) {
@@ -1654,6 +1921,8 @@ export class AutoChessEngine {
         headline: wave.tag === "boss" ? "裂隙封闭" : "战线守住了",
         detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? " + 余烬首胜 2" : ""}`,
         income,
+        experience:
+          this.state.round < this.state.maxRounds ? PASSIVE_XP_PER_ROUND : 0,
         damage: 0,
       };
     } else {
@@ -1678,6 +1947,10 @@ export class AutoChessEngine {
             ? "获得 1 金币整备补偿。调整前后排仍有机会。"
             : "本次阵容止步于此。",
         income,
+        experience:
+          this.state.hp > 0 && this.state.round < this.state.maxRounds
+            ? PASSIVE_XP_PER_ROUND
+            : 0,
         damage,
       };
     }
@@ -1693,6 +1966,7 @@ export class AutoChessEngine {
       this.endGame(this.state.round === this.state.maxRounds && result.won);
       return;
     }
+    this.grantExperience(result.experience);
     if (this.state.round === 2 || this.state.round === 5) {
       this.state.augmentChoices = this.rollAugmentChoices();
       this.state.phase = "augment";
@@ -1793,14 +2067,23 @@ export class AutoChessEngine {
         hp: this.state.hp,
         maxHp: this.state.maxHp,
         gold: this.state.gold,
+        level: this.state.playerLevel,
+        experience: this.state.experience,
+        experienceToNext: this.experienceToNext,
+        maxLevel: this.isMaxPlayerLevel,
+        buyExperience: {
+          cost: XP_PURCHASE_COST,
+          amount: XP_PURCHASE_AMOUNT,
+        },
         score: this.state.score,
         streak: this.state.streak,
+        boardCount: this.boardCount,
         boardCap: this.boardCap,
       },
       roster: {
         purchasableUnits: SHOP_UNITS.length,
         tierCounts: SHOP_TIER_COUNTS,
-        currentTierOdds: tierOddsForRound(this.state.round),
+        currentTierOdds: tierOddsForLevel(this.state.playerLevel),
       },
       board: this.state.board.map(unitSummary).filter(Boolean),
       bench: this.state.bench.map(unitSummary).filter(Boolean),
@@ -1845,6 +2128,13 @@ export class AutoChessEngine {
             energy: Math.round(unit.energy),
             x: Math.round(unit.x),
             y: Math.round(unit.y),
+            radius: unit.radius,
+            attacking: unit.attackPulse > 0,
+            hit: unit.hitPulse > 0,
+            jumpPending: unit.jumpPending,
+            jumping: unit.jumpTime > 0,
+            jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
+            jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
           })),
         enemyUnits: battle.enemy
           .filter((unit) => unit.alive)
@@ -1856,6 +2146,13 @@ export class AutoChessEngine {
             energy: Math.round(unit.energy),
             x: Math.round(unit.x),
             y: Math.round(unit.y),
+            radius: unit.radius,
+            attacking: unit.attackPulse > 0,
+            hit: unit.hitPulse > 0,
+            jumpPending: unit.jumpPending,
+            jumping: unit.jumpTime > 0,
+            jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
+            jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
           })),
       },
       result: this.state.result,
@@ -1863,6 +2160,7 @@ export class AutoChessEngine {
         this.state.phase === "preparation"
           ? [
               "点击商店购买",
+              `点击升本：${XP_PURCHASE_COST} 金币购买 ${XP_PURCHASE_AMOUNT} 经验`,
               "点击单位再点击格子移动/交换",
               "点击回收出售选中单位",
               "R 刷新商店",

@@ -9,6 +9,7 @@
 # testing
 /coverage
 /artifacts/
+/.tmp/
 
 # next.js
 /.next/
