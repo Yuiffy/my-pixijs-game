@@ -9,6 +9,13 @@
     "targetBytesPerShard": 4294967296
   },
   "shards": {
+    "2024": {
+      "repo": "VirtualBeing-Hub/liver-streams-2024",
+      "branch": "main",
+      "year": 2024,
+      "softLimitBytes": 6442450944,
+      "hardLimitBytes": 8589934592
+    },
     "2025": {
       "repo": "VirtualBeing-Hub/liver-streams-2025",
       "branch": "main",
@@ -39,7 +46,13 @@
     }
   },
   "assignments": {
+    "2024:harei": "2024",
+    "2024:sui": "2024",
     "2025:sui": "2025",
+    "2025:mitsuri": "2025",
+    "2025:nagisa": "2025",
+    "2025:rhea": "2025",
+    "2025:yua": "2025",
     "2026:azi": "2026-a",
     "2026:harei": "2026-c",
     "2026:hazel": "2026-b",

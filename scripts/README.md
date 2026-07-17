@@ -1,7 +1,7 @@
 # Windows 直播数据每日同步部署说明
 
 本文说明如何在负责收集录播文件的 Windows 机器上部署直播数据同步程序。同步程序会扫描
-`src/data/livers/liverConfigs.json` 中配置的 D/E 盘源目录，把资源写入四个资源仓库，校验后
+`src/data/livers/liverConfigs.json` 中配置的 D/E 盘源目录，把资源写入五个资源仓库，校验后
 先推送资源仓库，最后推送 index 仓库。
 
 不要把 `scripts/sync_streams.mjs` 作为日常发布入口直接运行。正式入口是
@@ -21,7 +21,7 @@ git config --global user.name '你的 GitHub 用户名'
 git config --global user.email '你的 GitHub 邮箱'
 ```
 
-用于日常同步的 Fine-grained PAT 只需要授权下面五个仓库的 `Contents: Read and write`，
+用于日常同步的 Fine-grained PAT 只需要授权下面六个仓库的 `Contents: Read and write`，
 不应拥有删除仓库或修改组织规则的权限。登录并让 Git 使用 GitHub CLI 凭据：
 
 ```powershell
@@ -39,6 +39,7 @@ H:\Hworkspace\github\
 ├─ my-pixijs-game\
 └─ VirtualBeing-Hub\
    ├─ liver-streams-index\
+   ├─ liver-streams-2024\
    ├─ liver-streams-2025\
    ├─ liver-streams-2026-a\
    ├─ liver-streams-2026-b\
@@ -48,7 +49,7 @@ H:\Hworkspace\github\
 按此结构放置时，程序会自动使用
 `H:\Hworkspace\github\VirtualBeing-Hub`，不需要设置 `STREAM_REPOS_ROOT`。
 
-创建并克隆五个数据仓库：
+创建并克隆六个数据仓库：
 
 ```powershell
 $root = 'H:\Hworkspace\github\VirtualBeing-Hub'
@@ -56,6 +57,7 @@ New-Item -ItemType Directory -Path $root -Force
 Set-Location $root
 
 git clone --branch main --single-branch https://github.com/VirtualBeing-Hub/liver-streams-index.git
+git clone --branch main --single-branch https://github.com/VirtualBeing-Hub/liver-streams-2024.git
 git clone --branch main --single-branch https://github.com/VirtualBeing-Hub/liver-streams-2025.git
 git clone --branch main --single-branch https://github.com/VirtualBeing-Hub/liver-streams-2026-a.git
 git clone --branch main --single-branch https://github.com/VirtualBeing-Hub/liver-streams-2026-b.git

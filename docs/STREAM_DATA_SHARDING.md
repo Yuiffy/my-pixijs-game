@@ -9,6 +9,7 @@ repositories under `VirtualBeing-Hub` and exposed through the existing
 Set `STREAM_REPOS_ROOT` to a directory containing these Git checkouts:
 
 - `liver-streams-index`
+- `liver-streams-2024`
 - `liver-streams-2025`
 - `liver-streams-2026-a`
 - `liver-streams-2026-b`

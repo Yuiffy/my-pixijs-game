@@ -62,7 +62,9 @@ function checkGit() {
   if (gh.ok) record('pass', 'github-auth', { message: 'GitHub CLI is authenticated' });
   else record('fail', 'github-auth', { message: 'Run gh auth login and gh auth setup-git' });
 
-  const pm2 = run('pm2', ['--version']);
+  const pm2 = process.platform === 'win32'
+    ? run(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'pm2 --version'])
+    : run('pm2', ['--version']);
   if (pm2.ok) record('pass', 'pm2', { message: `PM2 ${pm2.stdout.split(/\r?\n/).at(-1)}` });
   else record('fail', 'pm2', { message: 'Install PM2 with npm install -g pm2' });
 }
