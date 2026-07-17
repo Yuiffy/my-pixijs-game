@@ -23,7 +23,7 @@ function parseLiverConfigs(): LiverConfig {
       id: config.id,
       name: config.name,
       shortName: config.id,
-      group: 'personal',
+      group: config.group ?? 'personal',
       tags: [],
       description: config.name,
       colorMain: '#888888',

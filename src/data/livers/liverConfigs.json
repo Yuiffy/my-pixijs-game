@@ -2,6 +2,7 @@
   "sui": {
     "id": "sui",
     "name": "岁己SUI",
+    "group": "VirtuaReal 第十七期生",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/25788785_岁己SUI",
       "E:/EFiles/Evideo/DDTV录播-E/25788785_岁己SUI"
@@ -12,6 +13,7 @@
   "shiori": {
     "id": "shiori",
     "name": "栞栞Shiori",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/26966466_栞栞Shiori",
       "E:/EFiles/Evideo/DDTV录播-E/26966466_栞栞Shiori"
@@ -28,6 +30,7 @@
   "hazel": {
     "id": "hazel",
     "name": "灰泽满Hazel",
+    "group": "VirtuaReal 第二十七期生",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/1713546334_灰泽满Hazel",
       "E:/EFiles/Evideo/DDTV录播-E/1713546334_灰泽满Hazel"
@@ -44,6 +47,7 @@
   "liko": {
     "id": "liko",
     "name": "莉蔻Liko",
+    "group": "VirtuaReal 第二十七期生",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/1713548468_莉蔻Liko",
       "E:/EFiles/Evideo/DDTV录播-E/1713548468_莉蔻Liko"
@@ -60,6 +64,7 @@
   "kloa": {
     "id": "kloa",
     "name": "克罗雅Kloa",
+    "group": "VirtuaReal 第二十七期生",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/1986461465_克罗雅Kloa",
       "E:/EFiles/Evideo/DDTV录播-E/1986461465_克罗雅Kloa"
@@ -76,6 +81,7 @@
   "izayoi": {
     "id": "izayoi",
     "name": "十六萤Izayoi",
+    "group": "VirtuaReal 第二十七期生",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/1741667419_十六萤Izayoi",
       "E:/EFiles/Evideo/DDTV录播-E/1741667419_十六萤Izayoi"
@@ -92,6 +98,7 @@
   "azi": {
     "id": "azi",
     "name": "阿梓从小就很可爱",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/80397_阿梓从小就很可爱",
       "E:/EFiles/Evideo/DDTV录播-E/80397_阿梓从小就很可爱"
@@ -105,6 +112,7 @@
   "nana7mi": {
     "id": "nana7mi",
     "name": "七海Nana7mi",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/21452505_七海Nana7mi",
       "E:/EFiles/Evideo/DDTV录播-E/21452505_七海Nana7mi"
@@ -118,6 +126,7 @@
   "joi": {
     "id": "joi",
     "name": "轴伊Joi_Channel",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/21484828_轴伊Joi_Channel"
     ],
@@ -130,6 +139,7 @@
   "yua": {
     "id": "yua",
     "name": "悠亚Yua",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/22470216_悠亚Yua",
       "E:/EFiles/Evideo/DDTV录播-E/22470216_悠亚Yua"
@@ -143,6 +153,7 @@
   "rhea": {
     "id": "rhea",
     "name": "瑞娅_Rhea",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/23260993_瑞娅_Rhea",
       "E:/EFiles/Evideo/DDTV录播-E/23260993_瑞娅_Rhea"
@@ -156,6 +167,7 @@
   "nightin": {
     "id": "nightin",
     "name": "南町Nightin",
+    "group": "PSPLive",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/24872476_南町Nightin"
     ],
@@ -168,6 +180,7 @@
   "mingqian-nailv": {
     "id": "mingqian-nailv",
     "name": "明前奶绿",
+    "group": "personal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/25034104_明前奶绿"
     ],
@@ -180,6 +193,7 @@
   "michiya": {
     "id": "michiya",
     "name": "未知夜Michiya",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/27628030_未知夜Michiya"
     ],
@@ -192,6 +206,7 @@
   "mizuki": {
     "id": "mizuki",
     "name": "弥月Mizuki",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/30655190_弥月Mizuki",
       "E:/EFiles/Evideo/DDTV录播-E/30655190_弥月Mizuki"
@@ -205,6 +220,7 @@
   "nagisa": {
     "id": "nagisa",
     "name": "米汀Nagisa",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/31368705_米汀Nagisa",
       "E:/EFiles/Evideo/DDTV录播-E/31368705_米汀Nagisa"
@@ -218,6 +234,7 @@
   "mofu": {
     "id": "mofu",
     "name": "犬绒Mofu",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/1791260716_犬绒Mofu"
     ],
@@ -230,6 +247,7 @@
   "harei": {
     "id": "harei",
     "name": "花礼Harei",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/1820703922_花礼Harei",
       "E:/EFiles/Evideo/DDTV录播-E/1820703922_花礼Harei"
@@ -243,6 +261,7 @@
   "mitsuri": {
     "id": "mitsuri",
     "name": "三理Mit3uri",
+    "group": "VirtuaReal",
     "sourceDirs": [
       "D:/files/videos/DDTV录播/1967216004_三理Mit3uri",
       "E:/EFiles/Evideo/DDTV录播-E/1967216004_三理Mitsuri"
