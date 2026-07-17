@@ -1,11 +1,13 @@
 # Stream data current-tree cleanup record
 
-This record covers removal of `public/data/streams` from the current Git tree only. It does not
-rewrite historical commits, modify `main`, or authorize a production merge.
+This record covers removal of `public/data/streams` from the current Git tree and the subsequent
+authorized history rewrite. It records the recovery points required before replacing remote refs.
 
 ## Authorization and scope
 
 - Cleanup authorized by the repository owner on 2026-07-17.
+- Production merge and `git-filter-repo` history rewriting were explicitly authorized later on the
+  same date.
 - Cleanup branch: `codex/remove-stream-data`.
 - Base commit: `aec40b52c5165502e05449524baeae1d401c57c0`.
 - Removed from the current tree: 15,384 files, 13,727,370,031 bytes.
@@ -30,6 +32,24 @@ A fresh-clone verification recalculated SHA-256 for all 15,384 files and 13,727,
 zero failures. `git fsck --full --strict` passed in all five clones. All 15,036 index references also
 resolved against the shard checkouts with zero failures.
 
+## Post-freeze delta recovery
+
+Merging the sharding branch exposed a later `master` sync commit that was not part of the frozen
+snapshot. Cleanup stopped until all 133 changed paths (107,222,089 bytes, including 14 updated index
+files) were migrated. Assets were pushed and remotely confirmed before the index was published.
+
+| Repository | Post-delta commit |
+|---|---|
+| `VirtualBeing-Hub/liver-streams-index` | `40bcede5bda0add150c5ad540ae54bee588a034b` |
+| `VirtualBeing-Hub/liver-streams-2025` | `dc5995e59243033d92836f736c86cb501f741da7` |
+| `VirtualBeing-Hub/liver-streams-2026-a` | `7bd6ad9d64f869b3146b2d1ecd60266f0c32b742` |
+| `VirtualBeing-Hub/liver-streams-2026-b` | `1f4b53dd56516978d828d9b4725295f54797611c` |
+| `VirtualBeing-Hub/liver-streams-2026-c` | `ec3a1fa2347212e7788f612f6eb770d65b20e2b7` |
+
+The resulting repositories contain 15,503 stream files and 13,832,432,094 bytes. All 133 delta Raw
+URLs succeeded; 102 content checks matched SHA-256, with three transient retries and zero failures.
+The updated indexes contain 3,356 streams and 15,155 references with zero missing targets.
+
 ## Post-cleanup validation
 
 - `npm run streams:test`: 5/5 passed.
@@ -44,12 +64,9 @@ resolved against the shard checkouts with zero failures.
   Vercel project integration still reports a failed commit status and its deployment URL returns
   404 in the Vercel dashboard; this is an integration configuration issue, not the active build.
 
-## Remaining gates
+## Operational follow-up
 
-Before merging this cleanup to production, run a real incremental publication cycle on the actual
-Windows sync host, manually verify the login-protected cleanup Preview, and remove or disconnect the
-stale duplicate Vercel project check. Historical rewriting remains a separate operation that requires
-another explicit approval, a coordinated force-push, and notification to users of old clones.
-
-The source files remain recoverable from the five data repositories and from the unmodified
-`codex/stream-data-sharding`/`main` history until historical cleanup is separately performed.
+The actual Windows collection host still needs to pull the merged scripts and start the documented
+PM2 runner. That machine-only operation was not simulated on this workstation. Before rewriting
+remote history, preserve a complete pre-filter mirror; after rewriting, old clones must be replaced
+rather than merged back into the new history.
