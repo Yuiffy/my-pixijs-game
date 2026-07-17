@@ -38,3 +38,6 @@ next-env.d.ts
 
 # pm2 logs
 /logs
+
+# Stream data lives in the VirtualBeing-Hub shard repositories.
+/public/data/streams/

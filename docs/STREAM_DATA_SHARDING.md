@@ -47,13 +47,18 @@ recommendation. Existing assignments are never recalculated automatically.
 
 ## Migration safety gate
 
-Do not remove `public/data/streams`, change the production build command, or rewrite Git
-history until all of the following are complete:
+The current-tree data removal must stay on its dedicated cleanup branch until the following
+checks are complete. Do not merge it to production or rewrite Git history before then:
 
 1. The frozen source commit, complete SHA-256 manifest, and partitioned snapshot exist
    outside this checkout. This migration intentionally preserves the latest data snapshot,
    not the main repository's old binary Git history.
 2. The source manifest matches fresh clones of all five remote repositories.
 3. Every index reference and anonymous GitHub Raw URL passes verification.
-4. A Vercel Preview uses the remote rewrites successfully for a full sync cycle.
-5. The migration report has zero failures and has been approved manually.
+4. A Vercel Preview uses the remote rewrites successfully.
+5. The actual Windows sync host completes a full incremental publication cycle.
+6. The migration report has zero failures and has been approved manually.
+
+Removing the current tree and rewriting historical commits are separate operations. The cleanup
+branch removes deploy-time files and can be discarded safely; historical rewriting requires a
+later explicit approval and coordinated force-push after production observation.
