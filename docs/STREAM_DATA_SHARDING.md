@@ -20,13 +20,18 @@ the default is `logs/state`.
 
 ## Daily publication
 
+The complete Windows host setup and operations runbook is in
+[`scripts/README.md`](../scripts/README.md).
+
 `node scripts/sync-and-push.mjs` performs one publication. It validates clean checkouts,
 copies new source files into their configured shard, pushes all changed asset repositories,
 verifies their remote branch SHAs, and only then publishes `streams.json` in the index
 repository. An interrupted transaction resumes from `logs/state/stream-sync-transaction.json`.
 
 PM2 runs `scripts/sync-cron-runner.mjs` as a long-lived process and restarts it daily at
-04:00 through `cron_restart`. Manual and scheduled runs share a cross-process lock.
+04:00 through `cron_restart`. Manual and scheduled runs share a cross-process lock. Failed
+Git operations are retried inside the transaction, and a failed transaction is retried by the
+runner with configurable minute-level backoff until it succeeds.
 
 ## Adding a liver or year
 

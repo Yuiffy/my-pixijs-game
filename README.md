@@ -1,5 +1,11 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## 直播数据同步
+
+负责收集录播文件的 Windows 机器请按照
+[Windows 直播数据每日同步部署说明](./scripts/README.md) 准备五个数据仓库、运行部署预检并启动
+PM2 每日 cron。不要直接使用 `sync_streams.mjs` 作为生产发布入口。
+
 ## Getting Started
 
 First, run the development server:
