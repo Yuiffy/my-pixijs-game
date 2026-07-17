@@ -24,11 +24,26 @@ function streamRewrites() {
   return routes;
 }
 
+function knightGameRewrites() {
+  const gameOrigin = 'https://sui-echoes-below.vercel.app';
+
+  return [
+    {
+      source: '/knight',
+      destination: `${gameOrigin}/`,
+    },
+    {
+      source: '/knight/:path*',
+      destination: `${gameOrigin}/:path*`,
+    },
+  ];
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async rewrites() {
     return {
-      beforeFiles: streamRewrites(),
+      beforeFiles: [...knightGameRewrites(), ...streamRewrites()],
       afterFiles: [],
       fallback: [],
     };
