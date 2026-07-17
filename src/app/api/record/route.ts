@@ -1,6 +1,6 @@
 // src/app/api/record/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { getPool } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   // 1. 处理 CORS（允许跨域调用）
@@ -15,6 +15,12 @@ export async function POST(request: NextRequest) {
     return new NextResponse(null, { headers });
   }
 
+  // 本地开发和自动化试玩通常没有配置 Neon。统计不应因此制造 500，
+  // 更不应干扰实际页面的控制台错误检查。
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ success: true, skipped: true }, { headers });
+  }
+
   try {
     const body = await request.json().catch(() => ({})); // 防止解析错误
 
@@ -26,7 +32,7 @@ export async function POST(request: NextRequest) {
     const path = body.path || 'unknown_html_page';
 
     // 3. 写入 Neon 数据库
-    await pool.query(
+    await getPool().query(
       'INSERT INTO visits (ip, path, user_agent) VALUES ($1, $2, $3)',
       [ip, path, userAgent]
     );

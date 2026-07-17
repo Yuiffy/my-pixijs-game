@@ -19,14 +19,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7443445828476112"
-          crossOrigin="anonymous"
-        />
+        {isProduction && (
+          <script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7443445828476112"
+            crossOrigin="anonymous"
+          />
+        )}
       </head>
       <body className={inter.className}>
         {children}
@@ -35,17 +39,19 @@ export default function RootLayout({
           <Analytics />
         </Suspense>
         {/* 2. 添加百度统计代码 */}
-        <Script id="baidu-tongji" strategy="afterInteractive">
-          {`
-            var _hmt = _hmt || [];
-            (function() {
-              var hm = document.createElement("script");
-              hm.src = "https://hm.baidu.com/hm.js?2d1e9bb0fa7e740ce41fe56c024bc0fc";
-              var s = document.getElementsByTagName("script")[0];
-              s.parentNode.insertBefore(hm, s);
-            })();
-          `}
-        </Script>
+        {isProduction && (
+          <Script id="baidu-tongji" strategy="afterInteractive">
+            {`
+              var _hmt = _hmt || [];
+              (function() {
+                var hm = document.createElement("script");
+                hm.src = "https://hm.baidu.com/hm.js?2d1e9bb0fa7e740ce41fe56c024bc0fc";
+                var s = document.getElementsByTagName("script")[0];
+                s.parentNode.insertBefore(hm, s);
+              })();
+            `}
+          </Script>
+        )}
       </body>
     </html>
   );
