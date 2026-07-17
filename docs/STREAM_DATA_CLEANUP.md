@@ -70,3 +70,31 @@ The actual Windows collection host still needs to pull the merged scripts and st
 PM2 runner. That machine-only operation was not simulated on this workstation. Before rewriting
 remote history, preserve a complete pre-filter mirror; after rewriting, old clones must be replaced
 rather than merged back into the new history.
+
+## Completed history rewrite
+
+The owner authorized the rewrite on 2026-07-17. A complete, non-partial pre-filter mirror was cloned
+from GitHub to `H:\Hworkspace\backups\my-pixijs-game-pre-filter-20260717.git`; it passed
+`git fsck --full --strict` and remains the recovery source. Filtering was performed only in a
+`--no-hardlinks` copy with:
+
+```text
+python -m git_filter_repo --path public/data/streams --invert-paths
+```
+
+- Pre-filter `master`: `fb1e51dd475742db0d6a5714d0a2924e7a1b1e53`.
+- Filtered `master`: `dc5e2d54924033b60166e7879fb6d0f78708a175`.
+- Eight heads were checked; there were no tags. Four heads required forced updates and four heads
+  were unchanged because their histories never contained the removed path.
+- Every head's non-stream tree matched its pre-filter tree byte-for-byte by Git mode, blob ID, and
+  path.
+- `git rev-list --objects --all` found zero `public/data/streams` paths after filtering.
+- The filtered object database passed `git fsck --full --strict` and shrank from 6.05 GiB to
+  95.19 MiB.
+- A fresh single-branch clone from GitHub had a 95.24 MiB `.git` directory, zero stream history
+  objects, and passed `git fsck --full --strict`.
+- The fresh clone passed dependency installation, stream tests, reference validation, lint, build,
+  production startup, page smoke tests, and old/new rewrite content hash checks.
+
+All clones made before this rewrite must be discarded or retained only as read-only recovery
+copies. Do not merge or push their old history. Clone the repository again before development.
