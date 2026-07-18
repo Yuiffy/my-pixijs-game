@@ -80,6 +80,21 @@ interface DragState {
   moved: boolean;
 }
 
+interface TraitDragState {
+  startX: number;
+  startScrollX: number;
+  moved: boolean;
+}
+
+interface TraitPillLayout {
+  items: Array<{ id: TraitId; rect: Rect; label: string }>;
+  maxScrollX: number;
+}
+
+const TRAIT_STRIP: Rect = { x: 48, y: 194, w: 700, h: 25 };
+const TRAIT_PILL_GAP = 6;
+const TRAIT_DRAG_THRESHOLD = 8;
+
 const boardRect = (index: number): Rect => ({
   x: 44 + (index % 6) * 116 + (Math.floor(index / 6) % 2) * 20,
   y: 232 + Math.floor(index / 6) * 68,
@@ -498,37 +513,57 @@ const drawOwnedUnit = (
     drawTraitDots(ctx, unit.id, rect.x + rect.w / 2 - 6, rect.y + rect.h - 36);
 };
 
-const traitPillRects = (engine: AutoChessEngine, y: number) => {
+const traitPillLayout = (
+  ctx: CanvasRenderingContext2D,
+  engine: AutoChessEngine,
+  scrollX: number,
+): TraitPillLayout => {
   const counts = engine.getTraitCounts();
-  let x = 48;
-  const visibleTraits = (Object.keys(TRAITS) as TraitId[]).filter(
-    (id) => counts[id] > 0,
-  );
-  const gap = 6;
-  const width = Math.min(
-    72,
-    (700 - gap * Math.max(0, visibleTraits.length - 1)) /
-      Math.max(1, visibleTraits.length),
-  );
-  return visibleTraits.map((id) => {
-    const entry = { id, rect: { x, y, w: width, h: 25 } };
-    x += width + gap;
-    return entry;
-  });
+  let contentX = 0;
+  ctx.font = `700 10px ${FONT}`;
+  const items = (Object.keys(TRAITS) as TraitId[])
+    .filter((id) => counts[id] > 0)
+    .map((id) => {
+      const trait = TRAITS[id];
+      const level = traitLevelForCount(trait, counts[id]);
+      const nextThreshold =
+        trait.thresholds[Math.min(level, trait.thresholds.length - 1)];
+      const label = `${trait.name} ${counts[id]}/${nextThreshold}`;
+      const width = Math.max(72, Math.ceil(ctx.measureText(label).width) + 34);
+      const entry = {
+        id,
+        label,
+        rect: {
+          x: TRAIT_STRIP.x + contentX - scrollX,
+          y: TRAIT_STRIP.y,
+          w: width,
+          h: TRAIT_STRIP.h,
+        },
+      };
+      contentX += width + TRAIT_PILL_GAP;
+      return entry;
+    });
+  const contentWidth = Math.max(0, contentX - TRAIT_PILL_GAP);
+  return { items, maxScrollX: Math.max(0, contentWidth - TRAIT_STRIP.w) };
 };
 
 const drawTraitPills = (
   ctx: CanvasRenderingContext2D,
   engine: AutoChessEngine,
-  y: number,
+  scrollX: number,
 ) => {
   const counts = engine.getTraitCounts();
-  traitPillRects(engine, y).forEach(({ id, rect }) => {
+  const layout = traitPillLayout(ctx, engine, scrollX);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(TRAIT_STRIP.x, TRAIT_STRIP.y, TRAIT_STRIP.w, TRAIT_STRIP.h);
+  ctx.clip();
+  layout.items.forEach(({ id, rect, label }) => {
+    if (rect.x + rect.w < TRAIT_STRIP.x || rect.x > TRAIT_STRIP.x + TRAIT_STRIP.w)
+      return;
     const trait = TRAITS[id];
     const level = traitLevelForCount(trait, counts[id]);
     const active = level > 0;
-    const nextThreshold =
-      trait.thresholds[Math.min(level, trait.thresholds.length - 1)];
     fillRounded(
       ctx,
       rect,
@@ -537,20 +572,56 @@ const drawTraitPills = (
     );
     strokeRounded(ctx, rect, 12, active ? trait.color : "#2e4658", 1);
     ctx.beginPath();
-    ctx.arc(rect.x + 13, y + 12.5, 4, 0, Math.PI * 2);
+    ctx.arc(rect.x + 13, rect.y + rect.h / 2, 4, 0, Math.PI * 2);
     ctx.fillStyle = trait.color;
     ctx.fill();
     text(
       ctx,
-      `${trait.name} ${counts[id]}/${nextThreshold}`,
+      label,
       rect.x + 23,
-      y + 13,
-      rect.w < 66 ? 9 : 10,
+      rect.y + rect.h / 2,
+      10,
       active ? "#ecf8ff" : "#6f8799",
       "left",
       700,
     );
   });
+  ctx.restore();
+
+  if (layout.maxScrollX > 0) {
+    const fadeWidth = 18;
+    if (scrollX > 0) {
+      const leftFade = ctx.createLinearGradient(
+        TRAIT_STRIP.x,
+        0,
+        TRAIT_STRIP.x + fadeWidth,
+        0,
+      );
+      leftFade.addColorStop(0, "rgba(16, 29, 43, 0.94)");
+      leftFade.addColorStop(1, "rgba(16, 29, 43, 0)");
+      ctx.fillStyle = leftFade;
+      ctx.fillRect(TRAIT_STRIP.x, TRAIT_STRIP.y, fadeWidth, TRAIT_STRIP.h);
+    }
+    if (scrollX < layout.maxScrollX) {
+      const rightFade = ctx.createLinearGradient(
+        TRAIT_STRIP.x + TRAIT_STRIP.w - fadeWidth,
+        0,
+        TRAIT_STRIP.x + TRAIT_STRIP.w,
+        0,
+      );
+      rightFade.addColorStop(0, "rgba(16, 29, 43, 0)");
+      rightFade.addColorStop(1, "rgba(16, 29, 43, 0.94)");
+      ctx.fillStyle = rightFade;
+      ctx.fillRect(
+        TRAIT_STRIP.x + TRAIT_STRIP.w - fadeWidth,
+        TRAIT_STRIP.y,
+        fadeWidth,
+        TRAIT_STRIP.h,
+      );
+    }
+  }
+
+  return layout.maxScrollX;
 };
 
 const drawTitle = (
@@ -692,6 +763,7 @@ const drawPreparation = (
   ctx: CanvasRenderingContext2D,
   engine: AutoChessEngine,
   hover: HoverState,
+  traitScrollX: number,
 ) => {
   const state = engine.state;
   const wave = engine.currentWave;
@@ -724,10 +796,27 @@ const drawPreparation = (
   );
   text(ctx, wave.name, 48, 149, 21, "#f1f7ff", "left", 800);
   text(ctx, wave.description, 48, 174, 11, "#8ba4b6", "left", 500);
+  const augmentHistory = state.augmentHistory
+    .map(({ round, id }) => {
+      const augment = AUGMENTS.find((item) => item.id === id);
+      return augment ? `${round}战·${augment.name}` : null;
+    })
+    .filter(Boolean)
+    .join("  ·  ");
+  text(
+    ctx,
+    augmentHistory ? `已选天赋：${augmentHistory}` : "第 2 战后可选择首个天赋",
+    48,
+    190,
+    8,
+    augmentHistory ? "#d4b5ff" : "#627d90",
+    "left",
+    700,
+  );
 
   text(ctx, "敌情预览", 742, 120, 10, "#70899b", "right", 700);
-  wave.units.slice(0, 7).forEach((enemy, index) => {
-    const x = 735 - index * 38;
+  wave.units.slice(0, 8).forEach((enemy, index) => {
+    const x = 735 - index * 35;
     const hovered =
       hover.target?.kind === "enemyPreview" &&
       hover.target.unitId === enemy.id &&
@@ -751,7 +840,7 @@ const drawPreparation = (
   });
   text(ctx, "悬浮查看技能", 742, 183, 8, "#536f82", "right", 600);
 
-  drawTraitPills(ctx, engine, 194);
+  drawTraitPills(ctx, engine, traitScrollX);
   text(ctx, "后方 · 远程与辅助", 48, 221, 9, "#5f798c", "left", 700);
   text(ctx, "6 × 4 自由部署区 · 满级 8 人口", 390, 221, 9, "#67869b", "center", 700);
   text(ctx, "前线 · 优先接敌 →", 756, 221, 9, "#86a5ba", "right", 700);
@@ -1131,6 +1220,20 @@ const drawPreparation = (
     "left",
     500,
   );
+  if (state.augmentHistory.length) {
+    const latest = state.augmentHistory[state.augmentHistory.length - 1];
+    const augment = AUGMENTS.find((item) => item.id === latest.id);
+    text(
+      ctx,
+      `天赋记录（${state.augmentHistory.length}）：第 ${latest.round} 战 · ${augment?.name || ""}`,
+      807,
+      692,
+      9,
+      "#c9b1ee",
+      "left",
+      700,
+    );
+  }
 };
 
 const drawBattlefield = (ctx: CanvasRenderingContext2D) => {
@@ -1612,7 +1715,7 @@ const drawAugments = (
   text(ctx, "战术契印", WIDTH / 2, 148, 36, "#f3f8ff", "center", 900);
   text(
     ctx,
-    "选择一项永久强化。它会持续影响后续远征与无限挑战。",
+    "选择一项永久天赋；历次选择会记录在备战、结算与文本状态中。",
     WIDTH / 2,
     188,
     13,
@@ -1711,13 +1814,20 @@ const drawAugments = (
       900,
     );
   });
+  const selectionHistory = state.augmentHistory
+    .map(({ round, id }) => {
+      const augment = AUGMENTS.find((item) => item.id === id);
+      return augment ? `第 ${round} 战：${augment.name}（${augment.description}）` : null;
+    })
+    .filter(Boolean)
+    .join("  ·  ");
   text(
     ctx,
-    `已持有：${state.augments.length ? state.augments.map((id) => AUGMENTS.find((item) => item.id === id)?.name).join(" · ") : "无"}`,
+    selectionHistory ? `历次选择：${selectionHistory}` : "已持有：无",
     WIDTH / 2,
     625,
-    11,
-    "#6c8799",
+    10,
+    "#b8a6d8",
     "center",
     600,
   );
@@ -1810,6 +1920,24 @@ const drawGameOver = (
     900,
   );
 
+  const history = state.augmentHistory
+    .map(({ round, id }) => {
+      const augment = AUGMENTS.find((item) => item.id === id);
+      return augment ? `第${round}战 ${augment.name}` : null;
+    })
+    .filter(Boolean)
+    .join(" · ");
+  text(
+    ctx,
+    history ? `本局天赋记录：${history}` : "本局未获得天赋",
+    WIDTH / 2,
+    510,
+    10,
+    "#c8b3e2",
+    "center",
+    600,
+  );
+
   const hovered = hover.target?.kind === "restart";
   fillRounded(ctx, restartRect, 18, hovered ? "#78dcff" : "#2a5770");
   text(
@@ -1824,7 +1952,7 @@ const drawGameOver = (
   );
   text(
     ctx,
-    "每局商店与契印组合都会变化",
+    "每局商店与天赋组合都会变化",
     WIDTH / 2,
     635,
     10,
@@ -1861,7 +1989,7 @@ const drawTooltip = (
 ) => {
   const def = UNIT_DEFS[unitId];
   const w = 310;
-  const h = 194;
+  const h = 212;
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
   const y = Math.max(88, Math.min(HEIGHT - h - 12, pointerY + 18));
   ctx.save();
@@ -1921,7 +2049,8 @@ const drawTooltip = (
       text(ctx, line, x + 20, y + 145 + index * 17, 10, "#a6bac7", "left", 500);
     });
   const traitNames = def.traits.map((trait) => TRAITS[trait].name).join(" · ");
-  text(ctx, traitNames, x + w - 20, y + h - 16, 10, "#718da0", "right", 700);
+  text(ctx, traitNames, x + w - 20, y + h - 34, 10, "#718da0", "right", 700);
+  text(ctx, def.title, x + 20, y + h - 16, 10, "#d4e6f2", "left", 700);
 };
 
 const drawTraitTooltip = (
@@ -2004,13 +2133,15 @@ const renderGame = (
   ctx: CanvasRenderingContext2D,
   engine: AutoChessEngine,
   hover: HoverState,
+  traitScrollX: number,
 ) => {
   const state = engine.state;
   drawBackdrop(ctx, state);
   drawHeader(ctx, engine);
 
   if (state.phase === "title") drawTitle(ctx, engine, hover);
-  else if (state.phase === "preparation") drawPreparation(ctx, engine, hover);
+  else if (state.phase === "preparation")
+    drawPreparation(ctx, engine, hover, traitScrollX);
   else if (state.phase === "battle" || state.phase === "result") {
     drawBattle(ctx, engine, hover);
     if (state.phase === "result") drawResult(ctx, state);
@@ -2059,7 +2190,13 @@ const renderGame = (
   }
 };
 
-const hitTest = (engine: AutoChessEngine, x: number, y: number): HitTarget => {
+const hitTest = (
+  ctx: CanvasRenderingContext2D,
+  engine: AutoChessEngine,
+  x: number,
+  y: number,
+  traitScrollX: number,
+): HitTarget => {
   const state = engine.state;
   if (state.phase === "title") {
     const index = STARTERS.findIndex((_, itemIndex) =>
@@ -2068,8 +2205,8 @@ const hitTest = (engine: AutoChessEngine, x: number, y: number): HitTarget => {
     return index >= 0 ? { kind: "starter", index } : null;
   }
   if (state.phase === "preparation") {
-    const enemyIndex = engine.currentWave.units.slice(0, 7).findIndex((_, index) =>
-      Math.hypot(735 - index * 38 - x, 153 - y) <= 22,
+    const enemyIndex = engine.currentWave.units.slice(0, 8).findIndex((_, index) =>
+      Math.hypot(735 - index * 35 - x, 153 - y) <= 22,
     );
     if (enemyIndex >= 0) {
       const enemy = engine.currentWave.units[enemyIndex];
@@ -2079,9 +2216,11 @@ const hitTest = (engine: AutoChessEngine, x: number, y: number): HitTarget => {
         star: enemy.star || 1,
       };
     }
-    const traitTarget = traitPillRects(engine, 194).find(({ rect }) =>
-      inRect(x, y, rect),
-    );
+    const traitTarget =
+      inRect(x, y, TRAIT_STRIP) &&
+      traitPillLayout(ctx, engine, traitScrollX).items.find(({ rect }) =>
+        inRect(x, y, rect),
+      );
     if (traitTarget) return { kind: "trait", traitId: traitTarget.id };
     for (let index = 0; index < state.board.length; index += 1) {
       if (inRect(x, y, boardRect(index))) {
@@ -2147,6 +2286,8 @@ export default function AutoChessGame() {
   const engineRef = useRef<AutoChessEngine | null>(null);
   const hoverRef = useRef<HoverState>({ target: null, x: 0, y: 0 });
   const dragRef = useRef<DragState | null>(null);
+  const traitDragRef = useRef<TraitDragState | null>(null);
+  const traitScrollXRef = useRef(0);
   const suppressClickRef = useRef(false);
   const frameRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number | null>(null);
@@ -2155,6 +2296,7 @@ export default function AutoChessGame() {
   const audioRef = useRef<AutoChessAudio | null>(null);
   const lastPhaseRef = useRef<GameState["phase"]>("title");
   const lastToastRef = useRef("");
+  const codexOpenRef = useRef(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [codexOpen, setCodexOpen] = useState(false);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(
@@ -2228,8 +2370,27 @@ export default function AutoChessGame() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(canvas.width / WIDTH, 0, 0, canvas.height / HEIGHT, 0, 0);
-    renderGame(ctx, engine, hoverRef.current);
+    const layout = traitPillLayout(ctx, engine, traitScrollXRef.current);
+    traitScrollXRef.current = Math.min(
+      traitScrollXRef.current,
+      layout.maxScrollX,
+    );
+    renderGame(ctx, engine, hoverRef.current, traitScrollXRef.current);
   }, [syncCanvasResolution]);
+
+  const getHitTarget = (engine: AutoChessEngine, x: number, y: number) => {
+    const ctx = canvasRef.current?.getContext("2d");
+    return ctx ? hitTest(ctx, engine, x, y, traitScrollXRef.current) : null;
+  };
+
+  const getTraitMaxScrollX = (engine: AutoChessEngine) => {
+    const ctx = canvasRef.current?.getContext("2d");
+    return ctx ? traitPillLayout(ctx, engine, traitScrollXRef.current).maxScrollX : 0;
+  };
+
+  useEffect(() => {
+    codexOpenRef.current = codexOpen;
+  }, [codexOpen]);
 
   const toggleFullscreen = useCallback(async () => {
     const container = containerRef.current;
@@ -2259,7 +2420,7 @@ export default function AutoChessGame() {
       const engine = engineRef.current;
       if (engine) {
         const previous = lastFrameRef.current ?? timestamp;
-        engine.update((timestamp - previous) / 1000);
+        if (!codexOpenRef.current) engine.update((timestamp - previous) / 1000);
         lastFrameRef.current = timestamp;
         const phase = engine.state.phase;
         if (phase !== lastPhaseRef.current) {
@@ -2381,22 +2542,39 @@ export default function AutoChessGame() {
     const engine = engineRef.current;
     if (!engine) return;
     const point = canvasPoint(event);
+    const traitDrag = traitDragRef.current;
+    if (traitDrag) {
+      const deltaX = point.x - traitDrag.startX;
+      if (Math.abs(deltaX) > TRAIT_DRAG_THRESHOLD) traitDrag.moved = true;
+      const maxScrollX = getTraitMaxScrollX(engine);
+      traitScrollXRef.current = Math.max(
+        0,
+        Math.min(maxScrollX, traitDrag.startScrollX - deltaX),
+      );
+      hoverRef.current = { target: null, ...point };
+      event.currentTarget.style.cursor = "grabbing";
+      draw();
+      return;
+    }
     if (
       dragRef.current &&
       Math.hypot(
         point.x - dragRef.current.startX,
         point.y - dragRef.current.startY,
-      ) > 8
+      ) > TRAIT_DRAG_THRESHOLD
     ) {
       dragRef.current.moved = true;
     }
-    const target = hitTest(engine, point.x, point.y);
+    const target = getHitTarget(engine, point.x, point.y);
     hoverRef.current = { target, ...point };
+    const overTraitStrip = inRect(point.x, point.y, TRAIT_STRIP);
     event.currentTarget.style.cursor = dragRef.current?.moved
       ? "grabbing"
       : target
         ? "pointer"
-        : "default";
+        : overTraitStrip && getTraitMaxScrollX(engine) > 0
+          ? "grab"
+          : "default";
     draw();
   };
 
@@ -2414,10 +2592,12 @@ export default function AutoChessGame() {
     const engine = engineRef.current;
     if (!engine) return;
     const point = canvasPoint(event);
-    const target = hitTest(engine, point.x, point.y);
+    const target = getHitTarget(engine, point.x, point.y);
     if (!target) return;
     audioRef.current?.unlock();
     if (target.kind === "starter") {
+      traitScrollXRef.current = 0;
+      traitDragRef.current = null;
       engine.startRun(STARTERS[target.index].id);
       playSound("click");
     } else if (target.kind === "shop") {
@@ -2444,19 +2624,32 @@ export default function AutoChessGame() {
     else if (target.kind === "augment") {
       engine.chooseAugment(target.index);
       playSound("augment");
-    } else if (target.kind === "restart") engine.resetToTitle();
-    hoverRef.current = { target: hitTest(engine, point.x, point.y), ...point };
+    } else if (target.kind === "restart") {
+      traitScrollXRef.current = 0;
+      traitDragRef.current = null;
+      engine.resetToTitle();
+    }
+    hoverRef.current = { target: getHitTarget(engine, point.x, point.y), ...point };
     draw();
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     audioRef.current?.unlock();
     if (event.button !== 0) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
     const engine = engineRef.current;
     if (!engine || engine.state.phase !== "preparation") return;
     const point = canvasPoint(event);
-    const target = hitTest(engine, point.x, point.y);
+    if (inRect(point.x, point.y, TRAIT_STRIP) && getTraitMaxScrollX(engine) > 0) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      traitDragRef.current = {
+        startX: point.x,
+        startScrollX: traitScrollXRef.current,
+        moved: false,
+      };
+      return;
+    }
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const target = getHitTarget(engine, point.x, point.y);
     if (
       (target?.kind === "board" || target?.kind === "bench") &&
       target.unitId
@@ -2473,12 +2666,26 @@ export default function AutoChessGame() {
   const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
-    const drag = dragRef.current;
     const engine = engineRef.current;
+    const point = canvasPoint(event);
+    const traitDrag = traitDragRef.current;
+    traitDragRef.current = null;
+    if (traitDrag) {
+      if (traitDrag.moved) suppressClickRef.current = true;
+      const target = engine ? getHitTarget(engine, point.x, point.y) : null;
+      hoverRef.current = { target, ...point };
+      event.currentTarget.style.cursor = target
+        ? "pointer"
+        : engine && getTraitMaxScrollX(engine) > 0
+          ? "grab"
+          : "default";
+      draw();
+      return;
+    }
+    const drag = dragRef.current;
     dragRef.current = null;
     if (!drag?.moved || !engine || engine.state.phase !== "preparation") return;
-    const point = canvasPoint(event);
-    const target = hitTest(engine, point.x, point.y);
+    const target = getHitTarget(engine, point.x, point.y);
     if (target?.kind === "board" || target?.kind === "bench") {
       engine.state.selected = drag.origin;
       engine.selectSlot(target.kind, target.index);
@@ -2493,7 +2700,7 @@ export default function AutoChessGame() {
     const engine = engineRef.current;
     if (!engine || engine.state.phase !== "preparation") return;
     const point = canvasPoint(event);
-    const target = hitTest(engine, point.x, point.y);
+    const target = getHitTarget(engine, point.x, point.y);
     if (target?.kind === "board" || target?.kind === "bench") {
       if (target.unitId) {
         engine.state.selected = { zone: target.kind, index: target.index };

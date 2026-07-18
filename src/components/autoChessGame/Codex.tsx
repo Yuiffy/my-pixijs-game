@@ -3,9 +3,11 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
+  AUGMENTS,
   PLAYER_LEVELS,
   PLAYER_LEVEL_CONFIG,
   SHOP_UNITS,
+  STARTERS,
   TRAIT_IDS,
   TRAITS,
   UNIT_DEFS,
@@ -14,7 +16,7 @@ import {
   tierOddsForLevel,
 } from "./core/gameData";
 
-type Tab = "units" | "traits" | "odds" | "rules";
+type Tab = "units" | "traits" | "talents" | "odds" | "rules";
 
 interface CodexProps {
   open: boolean;
@@ -24,6 +26,7 @@ interface CodexProps {
 const tabNames: Record<Tab, string> = {
   units: "棋子",
   traits: "羁绊",
+  talents: "开局 / 天赋",
   odds: "商店概率",
   rules: "玩法说明",
 };
@@ -208,6 +211,36 @@ export default function Codex({ open, onClose }: CodexProps) {
               );
             })}
           </div>
+        )}
+        {tab === "talents" && (
+          <section style={{ display: "grid", gap: 20 }}>
+            <div>
+              <h2 style={{ margin: "0 0 8px" }}>开局选择</h2>
+              <p style={{ color: "#8da7b8" }}>开局协议决定初始棋子和整局的专属加成。</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                {STARTERS.map((starter) => (
+                  <article key={starter.id} style={{ padding: 14, border: `1px solid ${starter.color}88`, borderRadius: 12, background: `${starter.color}0d` }}>
+                    <strong style={{ color: starter.color }}>{starter.name}</strong>
+                    <div style={{ marginTop: 6, color: "#e4f2fb", fontWeight: 700 }}>{starter.subtitle}</div>
+                    <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{starter.description}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h2 style={{ margin: "0 0 8px" }}>永久天赋</h2>
+              <p style={{ color: "#8da7b8" }}>第 2、5 战后及无限挑战中会出现三选一；选择记录会显示在备战、结算和本局文本状态里。</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                {AUGMENTS.map((augment) => (
+                  <article key={augment.id} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
+                    <strong style={{ color: augment.color }}>{augment.name}</strong>
+                    <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>
+                    <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{augment.description}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
         {tab === "odds" && (
           <section>

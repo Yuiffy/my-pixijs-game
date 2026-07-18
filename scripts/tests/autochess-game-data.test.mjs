@@ -47,6 +47,19 @@ test("八关后生成持续成长的无限关", () => {
   assert.ok(late.units.some((unit) => (unit.star || 1) >= 2));
 });
 
+test("主播化棋子保留易读定位与 VirtuaReal 署名", () => {
+  assert.equal(data.UNIT_DEFS.sun_guard.name, "果冻风纪");
+  assert.match(data.UNIT_DEFS.sun_guard.title, /灰泽满Hazel/);
+  assert.equal(data.UNIT_DEFS.ember_blade.name, "胡萝卜特工");
+  assert.match(data.UNIT_DEFS.ember_blade.title, /莉蔻Liko/);
+  assert.equal(data.UNIT_DEFS.inferno_witch.name, "弥月博士");
+  assert.match(data.UNIT_DEFS.inferno_witch.title, /弥月Mizuki/);
+  assert.equal(data.UNIT_DEFS.sui_cat.name, "小猫拳");
+  assert.match(data.UNIT_DEFS.sui_cat.title, /岁己SUI/);
+  assert.equal(data.TRAITS.aegis.name, "VR学园");
+  assert.equal(data.AUGMENTS.find((augment) => augment.id === "triage")?.name, "七海急救");
+});
+
 test("岁己主题棋子组成早鸟有饼构筑", () => {
   const forms = ["sui", "sui_blue", "sui_bird", "sui_flower", "sui_cat", "biscuit_sui"];
   assert.equal(data.TRAITS.sui_forms.name, "早鸟有饼");
@@ -60,12 +73,12 @@ test("岁己主题棋子组成早鸟有饼构筑", () => {
     assert.ok(data.UNIT_DEFS[id].traits.includes("sui_forms"));
     assert.ok(data.UNIT_DEFS[id].portrait);
   });
-  assert.equal(data.UNIT_DEFS.sui.name, "小红帽岁己");
+  assert.equal(data.UNIT_DEFS.sui.name, "大家在吗");
   assert.equal(
     data.UNIT_DEFS.sui.portrait,
     "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png",
   );
-  assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
+  assert.equal(data.UNIT_DEFS.sui_bird.name, "小鸟归巢");
   assert.equal(
     data.UNIT_DEFS.sui_bird.portrait,
     "/images/materials/bird/岁己_小鸟跳静态图.png",

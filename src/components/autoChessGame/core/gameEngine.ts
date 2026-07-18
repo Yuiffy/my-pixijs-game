@@ -137,6 +137,11 @@ export interface ToastState {
   time: number;
 }
 
+export interface AugmentSelection {
+  round: number;
+  id: AugmentId;
+}
+
 export interface GameState {
   phase: GamePhase;
   seed: number;
@@ -160,6 +165,7 @@ export interface GameState {
   shopLocked: boolean;
   selected: UnitLocation | null;
   augments: AugmentId[];
+  augmentHistory: AugmentSelection[];
   augmentChoices: AugmentId[];
   incomeBonus: number;
   battle: BattleState | null;
@@ -254,6 +260,7 @@ export class AutoChessEngine {
       shopLocked: false,
       selected: null,
       augments: [],
+      augmentHistory: [],
       augmentChoices: [],
       incomeBonus: 0,
       battle: null,
@@ -2275,6 +2282,7 @@ export class AutoChessEngine {
     const id = this.state.augmentChoices[index];
     if (!id) return;
     this.state.augments.push(id);
+    this.state.augmentHistory.push({ round: this.state.round, id });
     if (id === "payday") {
       this.state.gold += 6;
       this.state.incomeBonus += 1;
@@ -2391,6 +2399,11 @@ export class AutoChessEngine {
       augments: this.state.augments.map(
         (id) => AUGMENTS.find((augment) => augment.id === id)?.name,
       ),
+      augmentHistory: this.state.augmentHistory.map(({ round, id }) => ({
+        round,
+        name: AUGMENTS.find((augment) => augment.id === id)?.name,
+        description: AUGMENTS.find((augment) => augment.id === id)?.description,
+      })),
       augmentChoices: this.state.augmentChoices.map((id, index) => ({
         index,
         name: AUGMENTS.find((augment) => augment.id === id)?.name,

@@ -31,6 +31,25 @@ const { AutoChessEngine } = await compileModule(
 const BOARD_SLOTS = [0, 4, 5, 6, 11, 12, 23];
 const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
 
+test("已选择的天赋会按回合记入历史", () => {
+  const engine = new AutoChessEngine(9);
+  engine.startRun("bastion");
+  engine.state.phase = "augment";
+  engine.state.round = 2;
+  engine.state.augmentChoices = ["tempered", "overclock", "sharp_edge"];
+
+  engine.chooseAugment(1);
+
+  assert.deepEqual(engine.state.augments, ["overclock"]);
+  assert.deepEqual(engine.state.augmentHistory, [{ round: 2, id: "overclock" }]);
+  const textState = JSON.parse(engine.renderTextState());
+  assert.deepEqual(textState.augmentHistory, [{
+    round: 2,
+    name: "栞栞书签",
+    description: "所有友军开战时额外获得 35 能量。",
+  }]);
+});
+
 test("6x4 deployment slots preserve their formation positions at battle start", () => {
   const engine = new AutoChessEngine(1);
   engine.startRun("bastion");
