@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
+
+export const metadata: Metadata = {
+  title: '裂隙阵线 | RIFT LINE',
+};
 
 const AutoChessGame = dynamic(() => import('@/components/autoChessGame/PhaserGame'), { ssr: false });
 

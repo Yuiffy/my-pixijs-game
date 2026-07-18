@@ -39,6 +39,17 @@ const priorityDemos: DemoItem[] = [
 // 主要作品：小游戏
 const mainDemos: DemoItem[] = [
   {
+    title: 'Knight：空洞搜打撤',
+    href: '/knight',
+    description: '深入空洞探索、搜集资源，并在危机中成功撤离。',
+  },
+  {
+    title: '裂隙阵线',
+    href: '/game/autochess',
+    description: '招募队员、排兵布阵，在八战远征中自动作战。',
+    image: '/images/materials/bird/岁己_小鸟跳静态图.png',
+  },
+  {
     title: '是小鸟就上一百层 Sui Bird jump',
     href: '/game/jumpone',
     description: 'Sui 的无尽跳跃小游戏，挑战高空极限。',
@@ -175,11 +186,11 @@ export default function DemosPage() {
                     className="bg-white/5 border-white/10 backdrop-blur-md rounded-2xl hover:border-blue-500/50 transition-all overflow-hidden"
                     styles={{ body: { display: 'flex', gap: '20px', padding: '20px' } }}
                   >
-                    <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
-                      {demo.image && (
+                    {demo.image && (
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
                         <Image src={demo.image} alt={demo.title} fill className="object-cover group-hover:scale-110 transition-transform" />
-                      )}
-                    </div>
+                      </div>
+                    )}
                     <div className="flex-1 flex flex-col justify-center">
                       <Title level={5} className="!text-blue-100 !mb-1 group-hover:text-blue-300 transition-colors">{demo.title}</Title>
                       <Paragraph className="text-slate-400 !mb-0 size-small opacity-80">{demo.description}</Paragraph>
