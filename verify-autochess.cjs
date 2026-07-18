@@ -31,10 +31,12 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   await clickLogical(240, 440);
   let prep = await state();
-  const initial = { level: prep.player.level, xp: prep.player.experience, cap: prep.player.boardCap, gold: prep.player.gold };
+  const initial = { level: prep.player.level, bookLevel: prep.player.bookLevel, upgradeRemaining: prep.player.upgradeRemaining, cap: prep.player.boardCap, gold: prep.player.gold, shopLocked: prep.shopLocked };
+  await clickLogical(941, 541);
+  const locked = await state();
   await clickLogical(851, 554);
   prep = await state();
-  const afterXp = { level: prep.player.level, xp: prep.player.experience, cap: prep.player.boardCap, gold: prep.player.gold, odds: prep.roster.currentTierOdds, toast: prep.toast };
+  const afterUpgrade = { level: prep.player.level, bookLevel: prep.player.bookLevel, upgradeRemaining: prep.player.upgradeRemaining, cap: prep.player.boardCap, gold: prep.player.gold, odds: prep.roster.currentTierOdds, toast: prep.toast, shopLocked: prep.shopLocked };
   await page.screenshot({ path: `${artifactDirectory}/autochess-prep.png` });
 
   await clickLogical(945, 175 + 3 * 74);
@@ -89,6 +91,6 @@ mkdirSync(artifactDirectory, { recursive: true });
   const canvasResolution = await canvas.evaluate((element) => ({ width: element.width, height: element.height }));
   await page.screenshot({ path: `${artifactDirectory}/autochess-mobile.png` });
 
-  console.log(JSON.stringify({ initial, afterXp, purchased: { board: prep.board.length, bench: prep.bench.length }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, mobileBox, canvasResolution }, errors }, null, 2));
+  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, mobileBox, canvasResolution }, errors }, null, 2));
   await browser.close();
 })().catch((error) => { console.error(error); process.exit(1); });
