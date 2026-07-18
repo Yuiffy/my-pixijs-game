@@ -3,6 +3,19 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js';
 import {
+  calculateOverlapRatio,
+  choosePreferredArtifact,
+  choosePreferredSrt,
+  copyFileIfChanged,
+  getIncrementalRefreshStart,
+  imageBelongsToStream,
+  isImageFallbackCandidate,
+  mergeRefreshedStream,
+  parseStreamArtifact,
+  readXmlDuration,
+  shouldScanDateFolder,
+} from './stream-sync-helpers.mjs';
+import {
   getAssignedShard,
   getIndexStreamsRoot,
   getRepoPath,
@@ -17,7 +30,7 @@ import {
  * 功能：从源目录同步直播文件到目标目录，生成streams.json供前端使用
  *
  * 支持两种模式：
- * 1. 增量处理（默认）：只处理从最新已同步直播之后的数据，提高日常更新效率
+ * 1. 增量处理（默认）：回看最近直播及尚未补齐的后处理产物，同时收集更新数据
  * 2. 全量处理（--full）：处理所有历史数据，适用于首次运行或需要重新处理的情况
  *
  * 可选参数：
@@ -42,9 +55,6 @@ const REPOS_ROOT = getReposRoot();
 const INDEX_REPO_DIR = getRepoPath(SHARD_CONFIG.index.repo, REPOS_ROOT);
 const TARGET_BASE_DIR = getIndexStreamsRoot(SHARD_CONFIG, REPOS_ROOT);
 
-const FILENAME_REGEX_DDTV5 = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*)_DDTV5/;
-const FILENAME_REGEX_LUZHI = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.*)\.(xml|flv|mp4|cover\.jpg|txt|md)/;
-
 // 解析命令行参数
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -63,34 +73,6 @@ function parseArgs() {
   const syncAll = args.includes('--all');
 
   return { mode, force, liverId, syncAll };
-}
-
-// 获取最新已同步直播的时间戳
-function getLatestSyncedTimestamp() {
-  const streamsJsonPath = path.join(TARGET_BASE_DIR, 'streams.json');
-  if (!fs.existsSync(streamsJsonPath)) {
-    return null; // 如果还没有同步过任何数据，返回null表示全量处理
-  }
-
-  try {
-    const content = fs.readFileSync(streamsJsonPath, 'utf-8');
-    const streams = JSON.parse(content);
-    if (streams.length === 0) {
-      return null;
-    }
-
-    // 找到最新的直播（按id排序，id是时间戳格式）
-    const latestStream = streams.reduce((latest, current) => {
-      return current.id > latest.id ? current : latest;
-    });
-
-    // 将id转换为Date对象
-    const [Y, M, D, h, m, s] = latestStream.id.split('_').map(Number);
-    return new Date(Y, M - 1, D, h, m, s);
-  } catch (error) {
-    console.warn(`无法读取streams.json: ${error.message}`);
-    return null;
-  }
 }
 
 if (!fs.existsSync(path.join(INDEX_REPO_DIR, '.git'))) {
@@ -140,51 +122,6 @@ function getLatestSyncedTimestampForLiver(targetDir) {
     console.warn(`无法读取streams.json: ${error.message}`);
     return null;
   }
-}
-
-// 处理单个主播的数据
-async function processLiverData(liverConfig, mode, force, allFinalStreams) {
-  const { id, name, sourceDirs, targetDir } = liverConfig;
-  console.log(`\n=== 开始处理主播: ${name} (${id}) ===`);
-
-  const latestSyncedTime = mode === 'incremental' ? getLatestSyncedTimestampForLiver(targetDir) : null;
-  if (mode === 'incremental' && latestSyncedTime) {
-    console.log(`增量处理: 从 ${latestSyncedTime.toISOString()} 之后的数据开始处理`);
-  } else if (mode === 'incremental' && !latestSyncedTime) {
-    console.log('增量处理: 未找到已同步数据，将执行全量处理');
-  }
-
-  // 加载现有的streams数据（用于增量模式合并）
-  let existingStreams = [];
-  const streamsJsonPath = path.join(targetDir, 'streams.json');
-  if (fs.existsSync(streamsJsonPath)) {
-    try {
-      const content = fs.readFileSync(streamsJsonPath, 'utf-8');
-      existingStreams = JSON.parse(content);
-      console.log(`已加载 ${existingStreams.length} 个现有直播数据`);
-    } catch (error) {
-      console.warn(`无法读取现有streams.json: ${error.message}`);
-    }
-  }
-
-  const allStreams = [];
-  const allStreamGroups = {};
-  const allPotentialTitles = [];
-  const allImages = [];
-
-  for (const sourceDir of sourceDirs) {
-    if (!fs.existsSync(sourceDir)) {
-      console.warn(`Source directory not found: ${sourceDir}`);
-      continue;
-    }
-
-    // ... (原有的数据处理逻辑，这里保持不变，只是将 TARGET_BASE_DIR 替换为 targetDir)
-    // 由于文件太长，我将创建一个新的处理函数来保持代码清晰
-    // 这里只是占位符，实际处理逻辑需要完整重写
-  }
-
-  // 返回处理后的数据
-  return { allStreams, existingStreams };
 }
 
 async function syncStreams() {
@@ -255,8 +192,14 @@ async function syncStreams() {
     }
 
     const latestSyncedTime = mode === 'incremental' ? getLatestSyncedTimestampForLiver(targetBaseDir) : null;
+    const refreshStart = mode === 'incremental' && latestSyncedTime
+      ? getIncrementalRefreshStart(existingStreams)
+      : null;
     if (mode === 'incremental' && latestSyncedTime) {
-      console.log(`增量处理: 从 ${latestSyncedTime.toISOString()} 之后的数据开始处理`);
+      console.log(
+        `增量处理: 收集 ${latestSyncedTime.toISOString()} 之后的新直播，`
+        + `并回看 ${refreshStart.toISOString()} 之后的已有直播`,
+      );
     } else if (mode === 'incremental' && !latestSyncedTime) {
       console.log('增量处理: 未找到已同步数据，将执行全量处理');
     }
@@ -269,7 +212,9 @@ async function syncStreams() {
   for (const sourceDir of sourceDirs) {
     const dateFolders = fs.readdirSync(sourceDir).filter(f => {
       const fullPath = path.join(sourceDir, f);
-      return fs.statSync(fullPath).isDirectory() && f.match(/^\d{4}_\d{2}_\d{2}$/);
+      return fs.statSync(fullPath).isDirectory()
+        && /^\d{4}_\d{2}_\d{2}$/.test(f)
+        && shouldScanDateFolder(f, { mode, refreshStart, latestSyncedTime });
     });
 
     for (const dateFolder of dateFolders) {
@@ -281,31 +226,12 @@ async function syncStreams() {
         const fullPath = path.join(fullSourcePath, file);
         const stats = fs.statSync(fullPath);
 
-        const ddtvMatch = file.match(FILENAME_REGEX_DDTV5);
-        const recorderMatch = file.match(FILENAME_REGEX_LUZHI);
-
-        let timestamp = null;
-        let title = null;
-
-        if (ddtvMatch) {
-          const [Y, M, D, h, m, s] = ddtvMatch[1].split('_').map(Number);
-          timestamp = new Date(Y, M - 1, D, h, m, s);
-          title = ddtvMatch[2];
-        } else if (recorderMatch) {
-          const [_, Y, M, D, h, m, s, t] = recorderMatch;
-          timestamp = new Date(Number(Y), Number(M) - 1, Number(D), Number(h), Number(m), Number(s));
-          title = t;
-        }
-
-        // 增量模式过滤：只处理晚于最新同步时间的文件
-        if (mode === 'incremental' && latestSyncedTime && timestamp) {
-          if (timestamp.getTime() <= latestSyncedTime.getTime()) {
-            return; // 跳过旧文件
-          }
-        }
+        const artifact = parseStreamArtifact(file);
+        const timestamp = artifact?.startTime || null;
+        const title = ['video', 'xml', 'cover'].includes(artifact?.kind) ? artifact.title : null;
 
         if (timestamp && title && !title.includes('摸鱼茶水间') && !title.includes('无题')) { // Skip default placeholders if possible
-           allPotentialTitles.push({ timestamp, title, mtime: stats.mtimeMs });
+          allPotentialTitles.push({ timestamp, title, mtime: stats.mtimeMs });
         }
       });
 
@@ -322,22 +248,17 @@ async function syncStreams() {
               collectImages(fullPath);
             } else if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
               if (!file.includes('cover')) {
-                // 增量模式过滤：只收集修改时间晚于最新同步时间的图片
-                if (mode === 'incremental' && latestSyncedTime) {
-                  if (stats.mtimeMs <= latestSyncedTime.getTime()) {
-                    return; // 跳过旧图片
-                  }
-                }
-
-                // Debug logging for 2026_01_09 images
-                if (file.includes('Gemini_Generated_Image') && dir.includes('2026_01_09')) {
-                  console.log(`Collecting image: ${file} from ${dir}`);
-                }
+                const artifact = parseStreamArtifact(file);
+                const imageDateMatch = fullSourcePath.match(/(\d{4}_\d{2}_\d{2})/);
+                const imageDate = imageDateMatch ? imageDateMatch[1].replace(/_/g, '-') : null;
                 // Check if this image is already in the allImages array (from previous source dir)
                 const existingIndex = allImages.findIndex(img => img.name === file && img.sourceDir === dir);
                 if (existingIndex >= 0) {
                   // Update existing entry
                   allImages[existingIndex].mtime = stats.mtimeMs;
+                  allImages[existingIndex].streamId = artifact?.streamId || null;
+                  allImages[existingIndex].date = imageDate;
+                  allImages[existingIndex].topLevel = dir === fullSourcePath;
                   allImages[existingIndex].assigned = false; // Reset assignment status
                 } else {
                   allImages.push({
@@ -345,6 +266,9 @@ async function syncStreams() {
                     fullPath: fullPath,
                     mtime: stats.mtimeMs,
                     sourceDir: dir,
+                    streamId: artifact?.streamId || null,
+                    date: imageDate,
+                    topLevel: dir === fullSourcePath,
                     assigned: false
                   });
                 }
@@ -362,31 +286,10 @@ async function syncStreams() {
         const fullPath = path.join(fullSourcePath, file);
         const stats = fs.statSync(fullPath);
 
-        const ddtvMatch = file.match(FILENAME_REGEX_DDTV5);
-        const recorderMatch = file.match(FILENAME_REGEX_LUZHI);
-
-        let dateTimeStr = null;
-        let titlePart = null;
-        let startTime = null;
-
-        if (ddtvMatch) {
-          dateTimeStr = ddtvMatch[1];
-          titlePart = ddtvMatch[2];
-          const [Y, M, D, h, m, s] = dateTimeStr.split('_').map(Number);
-          startTime = new Date(Y, M - 1, D, h, m, s);
-        } else if (recorderMatch) {
-          const [_, Y, M, D, h, m, s, t] = recorderMatch;
-          dateTimeStr = `${Y}_${M}_${D}_${h}_${m}_${s}`;
-          titlePart = t;
-          startTime = new Date(Number(Y), Number(M) - 1, Number(D), Number(h), Number(m), Number(s));
-        }
-
-        // 增量模式过滤：只处理晚于最新同步时间的直播
-        if (mode === 'incremental' && latestSyncedTime && startTime) {
-          if (startTime.getTime() <= latestSyncedTime.getTime()) {
-            return; // 跳过旧直播
-          }
-        }
+        const artifact = parseStreamArtifact(file);
+        const dateTimeStr = artifact?.streamId || null;
+        const titlePart = artifact?.title || null;
+        const startTime = artifact?.startTime || null;
 
         if (dateTimeStr) {
           if (!allStreamGroups[dateTimeStr]) {
@@ -402,23 +305,15 @@ async function syncStreams() {
             };
           }
 
-          allStreamGroups[dateTimeStr].files.push({ file: file, sourceDir: fullSourcePath });
-
-          if (file.endsWith('.xml')) {
-            try {
-              const content = fs.readFileSync(fullPath, 'utf-8');
-              const pMatches = content.match(/p="([^"]+)"/g);
-              if (pMatches && pMatches.length > 0) {
-                const lastP = pMatches[pMatches.length - 1];
-                const timeMatch = lastP.match(/p="([\d.]+),/);
-                if (timeMatch) {
-                  const duration = Math.floor(parseFloat(timeMatch[1]));
-                  if (duration > allStreamGroups[dateTimeStr].duration) {
-                    allStreamGroups[dateTimeStr].duration = duration;
-                  }
-                }
-              }
-            } catch (e) { /* ignore errors reading xml */ }
+          const fileEntry = {
+            file,
+            sourceDir: fullSourcePath,
+            artifact,
+            duration: artifact.kind === 'xml' ? readXmlDuration(fullPath) : 0,
+          };
+          allStreamGroups[dateTimeStr].files.push(fileEntry);
+          if (fileEntry.duration > allStreamGroups[dateTimeStr].duration) {
+            allStreamGroups[dateTimeStr].duration = fileEntry.duration;
           }
         }
       });
@@ -429,29 +324,6 @@ async function syncStreams() {
   const sortedKeys = Object.keys(allStreamGroups).sort((a, b) => allStreamGroups[a].startTime - allStreamGroups[b].startTime);
   const mergedStreamGroups = {};
   const mergedKeys = new Set(); // Track which keys have been merged
-
-  // Helper function to calculate time overlap ratio
-  function calculateOverlapRatio(stream1, stream2) {
-    const start1 = stream1.startTime.getTime();
-    const end1 = start1 + stream1.duration * 1000;
-    const start2 = stream2.startTime.getTime();
-    const end2 = start2 + stream2.duration * 1000;
-    
-    // Calculate overlap
-    const overlapStart = Math.max(start1, start2);
-    const overlapEnd = Math.min(end1, end2);
-    const overlapDuration = Math.max(0, overlapEnd - overlapStart);
-    
-    // Calculate total duration (union of both time ranges)
-    const totalStart = Math.min(start1, start2);
-    const totalEnd = Math.max(end1, end2);
-    const totalDuration = totalEnd - totalStart;
-    
-    // Avoid division by zero
-    if (totalDuration === 0) return 0;
-    
-    return overlapDuration / totalDuration;
-  }
 
   // Debug logging for duplicate detection
   console.log(`\n=== 去重检测 ===`);
@@ -657,12 +529,24 @@ async function syncStreams() {
     }
 
     // Assign images to this stream
+    // 0. Recorder-derived images belong to the stream encoded in their filename.
+    allImages
+      .filter((img) => img.topLevel && !img.assigned && imageBelongsToStream(img, streamId))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, maxImagesForThisStream)
+      .forEach((img) => {
+        img.assigned = true;
+        copyFileIfChanged(img.fullPath, path.join(targetDir, img.name));
+        streamData.images.push(`/data/streams/${currentLiverId}/${streamId}/${img.name}`);
+      });
+
     // 1. Filename matching - more flexible matching
     stream.files.forEach(({ file }) => {
       const videoBase = path.parse(file).name;
       const datePart = streamId.substring(0, 10); // YYYY_MM_DD
 
       allImages.forEach(img => {
+        if (img.streamId && (!img.topLevel || img.streamId !== streamId)) return;
         // Skip if this stream already has enough images
         if (streamData.images.length >= maxImagesForThisStream) {
           return;
@@ -698,9 +582,7 @@ async function syncStreams() {
           if (matched) {
             img.assigned = true;
             const targetPath = path.join(targetDir, img.name);
-            if (!fs.existsSync(targetPath)) {
-              fs.copyFileSync(img.fullPath, targetPath);
-            }
+            copyFileIfChanged(img.fullPath, targetPath);
             const imagePath = `/data/streams/${currentLiverId}/${streamId}/${img.name}`;
             if (!streamData.images.includes(imagePath)) {
               streamData.images.push(imagePath);
@@ -765,7 +647,6 @@ async function syncStreams() {
     keywordImages.forEach(img => {
       // Check if this image is already in the target directory (may have been copied earlier)
       const targetPath = path.join(targetDir, img.name);
-      const alreadyExists = fs.existsSync(targetPath);
 
       // Assign if it's an exact match for this time slot
       const isExactMatch = (img.name.includes('午台') && h < 18) || (img.name.includes('晚台') && h >= 18);
@@ -778,24 +659,20 @@ async function syncStreams() {
       const imagePath = `/data/streams/${currentLiverId}/${streamId}/${img.name}`;
       const alreadyInArray = streamData.images.includes(imagePath);
 
-      if (isExactMatch && imageDateMatch && !alreadyInArray) {
+      if (isExactMatch && imageDateMatch && !alreadyInArray && !img.streamId) {
         // This is a strong match - assign it
         img.assigned = true;
-        if (!alreadyExists) {
-          fs.copyFileSync(img.fullPath, targetPath);
-        }
+        copyFileIfChanged(img.fullPath, targetPath);
         streamData.images.push(imagePath);
         if (streamId.includes('2026_01_09')) {
           console.log(`Assigned keyword image ${img.name} to ${streamId} (exact match + same date)`);
         }
       }
       // Also assign if no exact match found and we need at least one image
-      else if (streamData.images.length === 0 && !alreadyInArray) {
-        // If this stream has no images yet, assign any keyword image as fallback
+      else if (streamData.images.length === 0 && !alreadyInArray && !img.streamId && imageDateMatch) {
+        // If this stream has no images yet, assign a same-day keyword image as fallback
         img.assigned = true;
-        if (!alreadyExists) {
-          fs.copyFileSync(img.fullPath, targetPath);
-        }
+        copyFileIfChanged(img.fullPath, targetPath);
         streamData.images.push(imagePath);
         if (streamId.includes('2026_01_09')) {
           console.log(`Assigned keyword image ${img.name} to ${streamId} (fallback)`);
@@ -807,8 +684,11 @@ async function syncStreams() {
 
     // Then, time window for remaining images
     const timeWindowImages = allImages.filter(img =>
-      !img.assigned &&
-      (img.mtime >= stream.startTime.getTime() - 10 * 60 * 1000 && img.mtime < nextStreamStart.getTime())
+      !img.assigned
+      && !img.streamId
+      && isImageFallbackCandidate(img, stream)
+      && img.mtime >= stream.startTime.getTime() - 10 * 60 * 1000
+      && img.mtime < nextStreamStart.getTime()
     );
 
     timeWindowImages.sort((a, b) => b.mtime - a.mtime);
@@ -816,10 +696,6 @@ async function syncStreams() {
     // For balanced distribution, we need to estimate how many images are available for this date
     // Count images that are already assigned to streams on this date
     let totalAssignedImagesOnDate = streamData.images.length;
-
-    // Also count images that will be available in time windows for all streams on this date
-    // We need to estimate this by looking at all streams on this date
-    let estimatedTotalImagesForDate = timeWindowImages.length;
 
     // Add images from other streams on the same date (already processed)
     for (const otherStreamId of streamsOnSameDate) {
@@ -868,9 +744,7 @@ async function syncStreams() {
     imagesToAdd.forEach(img => {
       img.assigned = true;
       const targetPath = path.join(targetDir, img.name);
-      if (!fs.existsSync(targetPath)) {
-        fs.copyFileSync(img.fullPath, targetPath);
-      }
+      copyFileIfChanged(img.fullPath, targetPath);
       const imagePath = `/data/streams/${currentLiverId}/${streamId}/${img.name}`;
       // Check if image is already in the array before adding
       if (!streamData.images.includes(imagePath)) {
@@ -886,7 +760,17 @@ async function syncStreams() {
     // Initial highlights from any AI_HIGHLIGHT file in the group
     let groupHighlights = null;
 
-    stream.files.forEach(({ file, sourceDir }) => {
+    const preferredSrt = choosePreferredSrt(stream.files);
+    const preferredXml = choosePreferredArtifact(stream.files, 'xml');
+    const preferredCover = choosePreferredArtifact(stream.files, 'cover');
+    const preferredFiles = new Set(
+      [preferredSrt, preferredXml, preferredCover].filter(Boolean).map((entry) => entry.file),
+    );
+
+    stream.files
+      .slice()
+      .sort((a, b) => a.file.localeCompare(b.file))
+      .forEach(({ file, sourceDir, artifact }) => {
       const ext = path.extname(file).toLowerCase();
       const targetPath = path.join(targetDir, file);
       const fullSourcePath = path.join(sourceDir, file);
@@ -896,15 +780,21 @@ async function syncStreams() {
         return;
       }
 
-      if (ext === '.srt') {
-        if (!fs.existsSync(targetPath)) fs.copyFileSync(fullSourcePath, targetPath);
-        streamData.srt = `/data/streams/${currentLiverId}/${streamId}/${file}`;
-      } else if (ext === '.xml') {
-        if (!fs.existsSync(targetPath)) fs.copyFileSync(fullSourcePath, targetPath);
-        streamData.xml = `/data/streams/${currentLiverId}/${streamId}/${file}`;
-      } else if (file.includes('cover')) {
-        if (!fs.existsSync(targetPath)) fs.copyFileSync(fullSourcePath, targetPath);
-        streamData.cover = `/data/streams/${currentLiverId}/${streamId}/${file}`;
+      if (artifact?.kind === 'srt' || artifact?.kind === 'speaker-srt') {
+        if (preferredFiles.has(file) && preferredSrt?.file === file) {
+          copyFileIfChanged(fullSourcePath, targetPath);
+          streamData.srt = `/data/streams/${currentLiverId}/${streamId}/${file}`;
+        }
+      } else if (artifact?.kind === 'xml') {
+        if (preferredFiles.has(file) && preferredXml?.file === file) {
+          copyFileIfChanged(fullSourcePath, targetPath);
+          streamData.xml = `/data/streams/${currentLiverId}/${streamId}/${file}`;
+        }
+      } else if (artifact?.kind === 'cover') {
+        if (preferredFiles.has(file) && preferredCover?.file === file) {
+          copyFileIfChanged(fullSourcePath, targetPath);
+          streamData.cover = `/data/streams/${currentLiverId}/${streamId}/${file}`;
+        }
       } else if (ext === '.md' || ext === '.txt' || file.includes('AI_HIGHLIGHT')) {
         // Collect highlights/summaries
         const isMarkdownOrTxt = ext === '.md' || ext === '.txt';
@@ -946,7 +836,7 @@ async function syncStreams() {
 
     if (streamData.highlights) {
       const highlightsPath = path.join(targetDir, 'highlights.md');
-      fs.writeFileSync(highlightsPath, streamData.highlights);
+      copyFileIfChanged(Buffer.from(streamData.highlights), highlightsPath);
       streamData.highlights = `/data/streams/${currentLiverId}/${streamId}/highlights.md`;
     }
 
@@ -954,7 +844,7 @@ async function syncStreams() {
   });
 
   // Assign remaining images to closest streams
-  const remainingImages = allImages.filter(img => !img.assigned);
+  const remainingImages = allImages.filter(img => !img.assigned && !img.streamId);
 
   // Debug logging for remaining images
   console.log(`\n=== Remaining images assignment ===`);
@@ -973,6 +863,7 @@ async function syncStreams() {
 
     validStreamIds.forEach(id => {
       const stream = finalStreamGroups[id];
+      if (!isImageFallbackCandidate(img, stream)) return;
       const streamHour = parseInt(stream.time.split(':')[0]);
 
       // Calculate time difference
@@ -1009,9 +900,7 @@ async function syncStreams() {
       const targetPath = path.join(targetDir, img.name);
 
       // Check if image already exists in target directory (may have been copied earlier)
-      if (!fs.existsSync(targetPath)) {
-        fs.copyFileSync(img.fullPath, targetPath);
-      }
+      copyFileIfChanged(img.fullPath, targetPath);
 
       const streamData = allStreams.find(s => s.id === closestStreamId);
       if (streamData) {
@@ -1039,9 +928,10 @@ async function syncStreams() {
       existingStreamsMap.set(stream.id, stream);
     });
 
-    // 更新或添加新streams
+    // 更新或添加新streams；本轮图片列表为权威结果，标量资源缺失时保留旧值。
     allStreams.forEach(newStream => {
-      existingStreamsMap.set(newStream.id, newStream);
+      const existing = existingStreamsMap.get(newStream.id);
+      existingStreamsMap.set(newStream.id, mergeRefreshedStream(existing, newStream));
     });
 
     // 转换回数组并排序
@@ -1049,36 +939,12 @@ async function syncStreams() {
     console.log(`合并后总计: ${finalStreams.length} 个直播数据 (原有: ${existingStreams.length}, 新增: ${allStreams.length})`);
   }
 
+  const refreshedIds = new Set(allStreams.map((stream) => stream.id));
+
   // 对最终结果进行去重（处理现有数据中可能存在的重复）
   console.log(`\n=== 最终去重 ===`);
   const deduplicatedStreams = [];
   const processedIds = new Set();
-
-  // Helper function to calculate time overlap ratio for stream objects
-  function calculateOverlapRatioForStream(stream1, stream2) {
-    const [Y1, M1, D1, h1, m1, s1] = stream1.id.split('_').map(Number);
-    const [Y2, M2, D2, h2, m2, s2] = stream2.id.split('_').map(Number);
-    
-    const start1 = new Date(Y1, M1 - 1, D1, h1, m1, s1).getTime();
-    const end1 = start1 + stream1.duration * 1000;
-    const start2 = new Date(Y2, M2 - 1, D2, h2, m2, s2).getTime();
-    const end2 = start2 + stream2.duration * 1000;
-    
-    // Calculate overlap
-    const overlapStart = Math.max(start1, start2);
-    const overlapEnd = Math.min(end1, end2);
-    const overlapDuration = Math.max(0, overlapEnd - overlapStart);
-    
-    // Calculate total duration (union of both time ranges)
-    const totalStart = Math.min(start1, start2);
-    const totalEnd = Math.max(end1, end2);
-    const totalDuration = totalEnd - totalStart;
-    
-    // Avoid division by zero
-    if (totalDuration === 0) return 0;
-    
-    return overlapDuration / totalDuration;
-  }
 
   // Sort streams by id (time) for consistent deduplication
   finalStreams.sort((a, b) => a.id.localeCompare(b.id));
@@ -1090,17 +956,21 @@ async function syncStreams() {
 
     let merged = false;
     for (const existing of deduplicatedStreams) {
-      const overlapRatio = calculateOverlapRatioForStream(stream, existing);
+      const overlapRatio = calculateOverlapRatio(stream, existing);
       
       if (overlapRatio >= 0.9) {
         console.log(`最终去重: ${stream.id} -> ${existing.id}, 重叠度: ${(overlapRatio * 100).toFixed(1)}%`);
         
-        // Merge images from stream into existing
-        stream.images.forEach(img => {
-          if (!existing.images.includes(img)) {
-            existing.images.push(img);
-          }
-        });
+        // A stream reconstructed in this run owns its freshly calculated image list.
+        const streamWasRefreshed = refreshedIds.has(stream.id);
+        const existingWasRefreshed = refreshedIds.has(existing.id);
+        if (streamWasRefreshed && !existingWasRefreshed) {
+          existing.images = [...stream.images];
+        } else if (!existingWasRefreshed) {
+          stream.images.forEach(img => {
+            if (!existing.images.includes(img)) existing.images.push(img);
+          });
+        }
         
         // Keep longer duration
         if (stream.duration > existing.duration) {
