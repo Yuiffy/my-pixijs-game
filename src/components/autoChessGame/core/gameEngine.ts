@@ -653,11 +653,11 @@ export class AutoChessEngine {
     const hasAugment = (id: AugmentId) => this.state.augments.includes(id);
     const globalTraitLevel = (trait: TraitId) => traitLevel(trait);
     const playerSpawn = (index: number) => {
-      const col = index % 4;
-      const row = Math.floor(index / 4);
+      const col = index % 6;
+      const row = Math.floor(index / 6);
       return {
-        x: 88 + col * 108 + (row ? 20 : 0),
-        y: 205 + row * 210,
+        x: 72 + col * 88 + (row % 2) * 18,
+        y: 175 + row * 135,
         row,
       };
     };
