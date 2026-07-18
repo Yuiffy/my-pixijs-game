@@ -166,7 +166,7 @@ export default function Codex({ open, onClose }: CodexProps) {
             </section>
             <aside style={{ padding: 18, border: `1px solid ${unit.accent}`, borderRadius: 14, background: "#091824" }}>
               {unit.portrait && (
-                <Image src={unit.portrait} alt={unit.name} width={120} height={86} style={{ width: 120, height: 86, objectFit: "cover", borderRadius: 12, float: "right", marginLeft: 12 }} />
+                <Image src={unit.portrait} alt={unit.name} width={120} height={86} style={{ width: 120, height: 86, objectFit: "cover", objectPosition: unit.portraitFocus === "top" ? "center 16%" : "center", borderRadius: 12, float: "right", marginLeft: 12 }} />
               )}
               <div style={{ color: unit.accent, fontSize: 12 }}>{unit.tier} 费 · {unit.title}</div>
               <h2 style={{ margin: "6px 0 12px", fontSize: 25 }}>{unit.name}</h2>

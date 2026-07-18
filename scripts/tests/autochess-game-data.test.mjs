@@ -18,12 +18,19 @@ const loadModule = async (relativePath) => {
 
 const data = await loadModule("src/components/autoChessGame/core/gameData.ts");
 
-test("升本成本和本数显示符合短局节奏", () => {
+test("六本八人口的升本成本与商店概率符合短局节奏", () => {
   assert.deepEqual(
     data.PLAYER_LEVELS.map((level) => data.PLAYER_LEVEL_CONFIG[level].upgradeCost),
-    [5, 9, 14, null],
+    [5, 9, 14, 20, 27, null],
   );
-  assert.deepEqual(data.PLAYER_LEVELS.map(data.bookLevelForPlayerLevel), [1, 2, 3, 4]);
+  assert.deepEqual(data.PLAYER_LEVELS.map(data.bookLevelForPlayerLevel), [1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(
+    data.PLAYER_LEVELS.map((level) => data.PLAYER_LEVEL_CONFIG[level].boardCap),
+    [3, 4, 5, 6, 7, 8],
+  );
+  data.PLAYER_LEVELS.forEach((level) =>
+    assert.equal(data.PLAYER_LEVEL_CONFIG[level].tierOdds.reduce((sum, chance) => sum + chance, 0), 100),
+  );
 });
 
 test("八关后生成持续成长的无限关", () => {
@@ -40,11 +47,37 @@ test("八关后生成持续成长的无限关", () => {
   assert.ok(late.units.some((unit) => (unit.star || 1) >= 2));
 });
 
-test("岁鸟进入商店并绑定现有角色素材", () => {
-  assert.ok(data.SHOP_UNITS.includes("sui_bird"));
-  assert.equal(data.UNIT_DEFS.sui_bird.name, "岁鸟");
+test("岁己主题棋子组成完整的多重帽檐构筑", () => {
+  const forms = ["sui", "sui_blue", "sui_bird", "sui_flower", "sui_cat", "biscuit_sui"];
+  assert.deepEqual(data.TRAITS.sui_forms.thresholds, [2, 4, 6]);
+  assert.deepEqual(
+    forms.map((id) => data.UNIT_DEFS[id].tier),
+    [1, 2, 3, 3, 4, 5],
+  );
+  forms.forEach((id) => {
+    assert.ok(data.SHOP_UNITS.includes(id));
+    assert.ok(data.UNIT_DEFS[id].traits.includes("sui_forms"));
+    assert.ok(data.UNIT_DEFS[id].portrait);
+  });
+  assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
   assert.equal(
     data.UNIT_DEFS.sui_bird.portrait,
     "/images/materials/bird/岁己_小鸟跳静态图.png",
   );
+  ["shiori", "yua", "nagisa"].forEach((id) => {
+    assert.ok(data.SHOP_UNITS.includes(id));
+    assert.match(data.UNIT_DEFS[id].portrait, /^\/images\/livers\//);
+  });
+});
+
+test("商店棋子定义和羁绊引用保持完整", () => {
+  assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
+  data.SHOP_UNITS.forEach((id) => {
+    const unit = data.UNIT_DEFS[id];
+    assert.equal(unit.id, id);
+    assert.equal(unit.shop, true);
+    assert.equal(unit.cost, unit.tier);
+    assert.equal(unit.traits.length, 2);
+    unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
+  });
 });

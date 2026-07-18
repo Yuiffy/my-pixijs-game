@@ -11,6 +11,7 @@ export const TRAIT_IDS = [
   "mystic",
   "brawler",
   "assassin",
+  "sui_forms",
 ] as const;
 
 export type TraitId = (typeof TRAIT_IDS)[number];
@@ -23,8 +24,11 @@ export const SHOP_UNIT_IDS = [
   "rift_stalker",
   "cog_scribe",
   "mossback",
+  "sui",
   // 2 费
   "rift_brawler",
+  "sui_blue",
+  "shiori",
   "spark_mage",
   "clock_gunner",
   "dawn_duelist",
@@ -38,8 +42,12 @@ export const SHOP_UNIT_IDS = [
   "gear_sniper",
   "shade_reaver",
   "sui_bird",
+  "sui_flower",
+  "yua",
   // 4 费
   "sun_phoenix",
+  "sui_cat",
+  "nagisa",
   "prism_sage",
   "moonfang",
   "rift_warden",
@@ -52,6 +60,7 @@ export const SHOP_UNIT_IDS = [
   "sky_drake",
   "void_reaper",
   "chrono_titan",
+  "biscuit_sui",
 ] as const;
 
 export type ShopUnitId = (typeof SHOP_UNIT_IDS)[number];
@@ -88,6 +97,7 @@ export interface UnitDefinition {
   abilityName: string;
   abilityDescription: string;
   portrait?: string;
+  portraitFocus?: "top" | "center";
   shop: boolean;
 }
 
@@ -139,11 +149,11 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "阵营",
     color: "#66d7ff",
     thresholds: [2, 4, 6],
-    description: "曜甲单位获得护甲与最大生命。",
+    description: "曜甲成员坚固，并在高阶时为全队提供开战护盾。",
     bonuses: [
-      "+12 护甲、+7% 最大生命",
-      "+25 护甲、+14% 最大生命",
-      "+42 护甲、+23% 最大生命",
+      "曜甲单位 +12 护甲、+7% 最大生命",
+      "曜甲单位 +25/+14%；全体友军开战获 8% 最大生命护盾",
+      "曜甲单位 +42/+23%；全体友军开战获 16% 最大生命护盾",
     ],
   },
   ember: {
@@ -152,11 +162,11 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "阵营",
     color: "#ff7657",
     thresholds: [2, 4, 6],
-    description: "余烬单位的普攻施加三秒灼烧。",
+    description: "余烬成员擅长灼烧，高阶会让远程友军也携带火力。",
     bonuses: [
-      "灼烧造成 35% 攻击力伤害",
-      "灼烧造成 65% 攻击力伤害",
-      "灼烧造成 105% 攻击力伤害",
+      "余烬单位普攻灼烧 35% 攻击力",
+      "余烬 65%；所有远程友军普攻灼烧 25% 攻击力",
+      "余烬 105%；所有远程友军普攻灼烧 50% 攻击力",
     ],
   },
   wild: {
@@ -165,8 +175,12 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "阵营",
     color: "#70e1a0",
     thresholds: [2, 4, 6],
-    description: "荒灵单位造成伤害时恢复生命。",
-    bonuses: ["获得 8% 吸血", "获得 15% 吸血", "获得 24% 吸血"],
+    description: "荒灵成员吸血，高阶将生机赋予所有近战友军。",
+    bonuses: [
+      "荒灵单位获得 8% 吸血",
+      "荒灵 15%；所有近战友军获得 6% 吸血",
+      "荒灵 24%；所有近战友军获得 12% 吸血",
+    ],
   },
   rift: {
     id: "rift",
@@ -174,11 +188,11 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "阵营",
     color: "#c08bff",
     thresholds: [2, 4, 6],
-    description: "裂隙单位擅长终结受伤目标。",
+    description: "裂隙成员终结受伤目标，高阶会让全队协同收割。",
     bonuses: [
-      "对半血目标 +15% 伤害",
-      "对半血目标 +32% 伤害",
-      "对半血目标 +55% 伤害",
+      "裂隙单位对半血目标 +15% 伤害",
+      "裂隙 +32%；全体友军对半血目标 +10% 伤害",
+      "裂隙 +55%；全体友军对半血目标 +20% 伤害",
     ],
   },
   clockwork: {
@@ -187,11 +201,11 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "阵营",
     color: "#e5bf68",
     thresholds: [2, 4, 6],
-    description: "机巧单位获得攻速，普攻额外回复能量。",
+    description: "机巧成员高速蓄能，高阶为远程友军提供火力支援。",
     bonuses: [
-      "+10% 攻速、每击 +4 能量",
-      "+22% 攻速、每击 +8 能量",
-      "+38% 攻速、每击 +14 能量",
+      "机巧单位 +10% 攻速、每击 +4 能量",
+      "机巧 +22%/+8；所有远程友军 +10% 攻速",
+      "机巧 +38%/+14；所有远程友军 +22% 攻速、每击 +4 能量",
     ],
   },
   vanguard: {
@@ -200,11 +214,11 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "职业",
     color: "#819eff",
     thresholds: [2, 4, 6],
-    description: "先锋单位获得最大生命与护甲。",
+    description: "先锋成员守住前线，高阶为所有近战友军提供防护。",
     bonuses: [
-      "+12% 生命、+8 护甲",
-      "+25% 生命、+18 护甲",
-      "+42% 生命、+32 护甲",
+      "先锋单位 +12% 生命、+8 护甲",
+      "先锋 +25%/+18；所有近战友军 +8% 生命、+6 护甲",
+      "先锋 +42%/+32；所有近战友军 +16% 生命、+12 护甲",
     ],
   },
   ranger: {
@@ -213,8 +227,12 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "职业",
     color: "#f2d15e",
     thresholds: [2, 4, 6],
-    description: "游击单位获得攻击速度。",
-    bonuses: ["+12% 攻速", "+26% 攻速", "+45% 攻速"],
+    description: "游击成员擅长速射，高阶会加速所有远程友军。",
+    bonuses: [
+      "游击单位 +12% 攻速",
+      "游击 +26%；所有远程友军 +15% 攻速",
+      "游击 +45%；所有远程友军 +30% 攻速",
+    ],
   },
   mystic: {
     id: "mystic",
@@ -222,11 +240,11 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "职业",
     color: "#de87ff",
     thresholds: [2, 4, 6],
-    description: "秘术单位更早、更频繁地释放技能。",
+    description: "秘术成员先手施法，高阶会为全队注入能量。",
     bonuses: [
-      "开战 +20 能量",
-      "开战 +45、施法返还 8 能量",
-      "开战 +70、施法返还 15 能量",
+      "秘术单位开战 +20 能量",
+      "秘术开战 +45、施法返还 8；全体友军开战 +10 能量",
+      "秘术开战 +70、施法返还 15；全体友军开战 +22 能量",
     ],
   },
   brawler: {
@@ -235,8 +253,12 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "职业",
     color: "#ffae57",
     thresholds: [2, 4, 6],
-    description: "斗阵单位获得攻击力。",
-    bonuses: ["+12% 攻击力", "+26% 攻击力", "+45% 攻击力"],
+    description: "斗阵成员重击前线，高阶会强化所有近战友军。",
+    bonuses: [
+      "斗阵单位 +12% 攻击力",
+      "斗阵 +26%；所有近战友军 +10% 攻击力",
+      "斗阵 +45%；所有近战友军 +20% 攻击力",
+    ],
   },
   assassin: {
     id: "assassin",
@@ -244,8 +266,25 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "职业",
     color: "#ff6fae",
     thresholds: [2, 4, 6],
-    description: "夜袭单位开战跃向后排，并有概率暴击。",
-    bonuses: ["15% 暴击率", "30% 暴击率", "50% 暴击率"],
+    description: "夜袭成员切入后排，高阶会提高远程友军的暴击。",
+    bonuses: [
+      "夜袭单位跃向后排、获得 15% 暴击率",
+      "夜袭 30% 暴击；所有远程友军 +12% 暴击率",
+      "夜袭 50% 暴击；所有远程友军 +25% 暴击率",
+    ],
+  },
+  sui_forms: {
+    id: "sui_forms",
+    name: "多重帽檐",
+    family: "阵营",
+    color: "#f2a7d4",
+    thresholds: [2, 4, 6],
+    description: "岁己的不同形态彼此呼应，高阶会为全队加速施法。",
+    bonuses: [
+      "多重帽檐单位获得 8% 吸血、开战 +10 能量",
+      "多重帽檐单位 15% 吸血、+22 能量；全体友军 +8 能量",
+      "多重帽檐单位 24% 吸血、+35 能量；全体友军 +18 能量",
+    ],
   },
 };
 
@@ -376,6 +415,28 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     abilityDescription: "治疗自己，并为最虚弱的友军提供护盾。",
     shop: true,
   }),
+  sui: unit({
+    id: "sui",
+    name: "岁己",
+    title: "帽檐格挡",
+    glyph: "岁",
+    color: "#66527d",
+    accent: "#f3aed6",
+    tier: 1,
+    cost: 1,
+    traits: ["sui_forms", "vanguard"],
+    hp: 244,
+    attack: 17,
+    armor: 24,
+    range: 48,
+    attackInterval: 1.12,
+    moveSpeed: 52,
+    abilityName: "帽檐格挡",
+    abilityDescription: "获得护盾，震击并短暂眩晕当前目标。",
+    portrait: "/images/livers/sui.png",
+    portraitFocus: "top",
+    shop: true,
+  }),
 
   // 2 费：开始提供反后排、控制和续航等战术答案。
   rift_brawler: unit({
@@ -496,6 +557,50 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 68,
     abilityName: "赤角冲锋",
     abilityDescription: "冲进敌群，震晕并灼烧落点附近的敌人。",
+    shop: true,
+  }),
+  sui_blue: unit({
+    id: "sui_blue",
+    name: "小蓝帽岁己",
+    title: "后排连拍",
+    glyph: "蓝",
+    color: "#3a5d94",
+    accent: "#92c8ff",
+    tier: 2,
+    cost: 2,
+    traits: ["sui_forms", "ranger"],
+    hp: 148,
+    attack: 25,
+    armor: 8,
+    range: 235,
+    attackInterval: 0.82,
+    moveSpeed: 58,
+    abilityName: "蓝帽连拍",
+    abilityDescription: "连续射出三发帽檐光束，优先追击残血敌人。",
+    portrait: "/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png",
+    portraitFocus: "top",
+    shop: true,
+  }),
+  shiori: unit({
+    id: "shiori",
+    name: "栞栞",
+    title: "折页护符",
+    glyph: "栞",
+    color: "#6c7599",
+    accent: "#c3cfff",
+    tier: 2,
+    cost: 2,
+    traits: ["aegis", "mystic"],
+    hp: 164,
+    attack: 20,
+    armor: 11,
+    range: 205,
+    attackInterval: 1.08,
+    moveSpeed: 50,
+    abilityName: "折页护符",
+    abilityDescription: "为两名最低生命比例的友军提供护盾。",
+    portrait: "/images/livers/shiori.png",
+    portraitFocus: "top",
     shop: true,
   }),
 
@@ -622,14 +727,14 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   sui_bird: unit({
     id: "sui_bird",
-    name: "岁鸟",
+    name: "小岁鸟",
     title: "灵羽援护",
     glyph: "岁",
     color: "#4d7494",
     accent: "#f7d77c",
     tier: 3,
     cost: 3,
-    traits: ["wild", "mystic"],
+    traits: ["sui_forms", "mystic"],
     hp: 188,
     attack: 27,
     armor: 11,
@@ -637,8 +742,52 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.02,
     moveSpeed: 68,
     abilityName: "岁羽回旋",
-    abilityDescription: "飞向最虚弱的友军，为其治疗并以羽流伤害附近敌人。",
+    abilityDescription: "飞向最虚弱的友军，为其治疗、护盾并以羽流伤害附近敌人。",
     portrait: "/images/materials/bird/岁己_小鸟跳静态图.png",
+    shop: true,
+  }),
+  sui_flower: unit({
+    id: "sui_flower",
+    name: "小花帽岁己",
+    title: "群体控场",
+    glyph: "花",
+    color: "#a15282",
+    accent: "#f6a8d4",
+    tier: 3,
+    cost: 3,
+    traits: ["sui_forms", "mystic"],
+    hp: 184,
+    attack: 27,
+    armor: 12,
+    range: 205,
+    attackInterval: 1.1,
+    moveSpeed: 52,
+    abilityName: "花帽回响",
+    abilityDescription: "轰击敌人最密集的区域，造成范围伤害与眩晕。",
+    portrait: "/images/materials/flower/622764c8178eb3f6411da20a917cc0321954091502.png",
+    portraitFocus: "top",
+    shop: true,
+  }),
+  yua: unit({
+    id: "yua",
+    name: "悠亚",
+    title: "炽光点射",
+    glyph: "悠",
+    color: "#9b6345",
+    accent: "#ffc28a",
+    tier: 3,
+    cost: 3,
+    traits: ["ember", "ranger"],
+    hp: 172,
+    attack: 32,
+    armor: 10,
+    range: 250,
+    attackInterval: 0.78,
+    moveSpeed: 56,
+    abilityName: "炽光点射",
+    abilityDescription: "向低生命敌人三连点射，并施加灼烧。",
+    portrait: "/images/livers/yua.png",
+    portraitFocus: "top",
     shop: true,
   }),
 
@@ -763,6 +912,50 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     abilityDescription: "炮击敌人最密集处，造成范围伤害与眩晕。",
     shop: true,
   }),
+  sui_cat: unit({
+    id: "sui_cat",
+    name: "小猫帽岁己",
+    title: "夜袭主C",
+    glyph: "猫",
+    color: "#625070",
+    accent: "#e8a8f4",
+    tier: 4,
+    cost: 4,
+    traits: ["sui_forms", "assassin"],
+    hp: 226,
+    attack: 39,
+    armor: 15,
+    range: 50,
+    attackInterval: 0.74,
+    moveSpeed: 94,
+    abilityName: "猫帽突袭",
+    abilityDescription: "切入最远敌人，连续攻击三次并恢复造成伤害的生命。",
+    portrait: "/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png",
+    portraitFocus: "top",
+    shop: true,
+  }),
+  nagisa: unit({
+    id: "nagisa",
+    name: "米汀",
+    title: "潮汐屏障",
+    glyph: "汀",
+    color: "#487b81",
+    accent: "#91e4dc",
+    tier: 4,
+    cost: 4,
+    traits: ["clockwork", "vanguard"],
+    hp: 360,
+    attack: 29,
+    armor: 32,
+    range: 55,
+    attackInterval: 1.16,
+    moveSpeed: 44,
+    abilityName: "潮汐屏障",
+    abilityDescription: "为全队提供护盾，并震晕身边的敌人。",
+    portrait: "/images/livers/nagisa.png",
+    portraitFocus: "top",
+    shop: true,
+  }),
 
   // 5 费：低概率出现的终局棋子，每一个都有改变战局的技能。
   dawn_sovereign: unit({
@@ -883,6 +1076,28 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 50,
     abilityName: "时序归零",
     abilityDescription: "伤害并长时间冻结全部敌人。",
+    shop: true,
+  }),
+  biscuit_sui: unit({
+    id: "biscuit_sui",
+    name: "饼干岁",
+    title: "冲阵终结",
+    glyph: "饼",
+    color: "#9a6a4c",
+    accent: "#ffd28d",
+    tier: 5,
+    cost: 5,
+    traits: ["sui_forms", "brawler"],
+    hp: 420,
+    attack: 44,
+    armor: 34,
+    range: 58,
+    attackInterval: 0.92,
+    moveSpeed: 58,
+    abilityName: "饼干冲阵",
+    abilityDescription: "冲进敌人最密集处，造成范围伤害、眩晕并获得护盾。",
+    portrait: "/images/materials/biscuit/饼干岁2.png",
+    portraitFocus: "top",
     shop: true,
   }),
 
@@ -1142,7 +1357,7 @@ export const waveForRound = (round: number): WaveDefinition => {
   };
 };
 
-export const PLAYER_LEVELS = [3, 4, 5, 6] as const;
+export const PLAYER_LEVELS = [3, 4, 5, 6, 7, 8] as const;
 export type PlayerLevel = (typeof PLAYER_LEVELS)[number];
 export type ShopTierOdds = readonly [number, number, number, number, number];
 
@@ -1153,7 +1368,7 @@ interface PlayerLevelConfig {
 }
 
 export const STARTING_PLAYER_LEVEL: PlayerLevel = 3;
-export const MAX_PLAYER_LEVEL: PlayerLevel = 6;
+export const MAX_PLAYER_LEVEL: PlayerLevel = 8;
 export const bookLevelForPlayerLevel = (level: PlayerLevel) => level - 2;
 export const PASSIVE_UPGRADE_DISCOUNT = 1;
 
@@ -1161,7 +1376,9 @@ export const PLAYER_LEVEL_CONFIG: Record<PlayerLevel, PlayerLevelConfig> = {
   3: { boardCap: 3, upgradeCost: 5, tierOdds: [75, 25, 0, 0, 0] },
   4: { boardCap: 4, upgradeCost: 9, tierOdds: [48, 38, 13, 1, 0] },
   5: { boardCap: 5, upgradeCost: 14, tierOdds: [30, 33, 26, 10, 1] },
-  6: { boardCap: 6, upgradeCost: null, tierOdds: [10, 20, 30, 29, 11] },
+  6: { boardCap: 6, upgradeCost: 20, tierOdds: [10, 20, 30, 29, 11] },
+  7: { boardCap: 7, upgradeCost: 27, tierOdds: [5, 15, 29, 34, 17] },
+  8: { boardCap: 8, upgradeCost: null, tierOdds: [2, 10, 23, 36, 29] },
 };
 
 export const tierOddsForLevel = (level: PlayerLevel) =>
