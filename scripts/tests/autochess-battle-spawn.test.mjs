@@ -50,6 +50,32 @@ test("已选择的天赋会按回合记入历史", () => {
   }]);
 });
 
+test("关系羁绊按不同单位计数，岁栞必须同时有岁己与栞栞", () => {
+  const engine = new AutoChessEngine(23);
+  engine.startRun("bastion");
+  engine.state.playerLevel = 8;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui_blue", star: 1 };
+
+  assert.equal(engine.getActiveTraits().some((trait) => trait.id === "sui_shiori"), false);
+  engine.state.board[2] = { uid: 3, id: "shiori", star: 1 };
+  assert.equal(engine.getActiveTraits().find((trait) => trait.id === "sui_shiori")?.level, 1);
+
+  engine.state.board[2] = { uid: 3, id: "void_oracle", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "spark_mage", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "cinder_ram", star: 1 };
+  engine.state.board[5] = { uid: 6, id: "shiori", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const beforeRadius = battle.player.find((fighter) => fighter.unitId === "sui")?.radius;
+  for (let tick = 0; tick < 61; tick += 1) engine.update(0.05);
+  const hungry = battle.player.find((fighter) => fighter.unitId === "sui");
+  assert.equal(hungry?.growthStacks, 1);
+  assert.equal(hungry?.radius, beforeRadius);
+});
+
 test("6x4 deployment slots preserve their formation positions at battle start", () => {
   const engine = new AutoChessEngine(1);
   engine.startRun("bastion");

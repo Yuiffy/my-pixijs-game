@@ -17,6 +17,7 @@ import {
 } from "./core/gameData";
 
 type Tab = "units" | "traits" | "talents" | "odds" | "rules";
+type TraitFamilyFilter = "all" | "阵营" | "职业" | "关系";
 
 interface CodexProps {
   open: boolean;
@@ -40,6 +41,7 @@ const cellStyle = {
 export default function Codex({ open, onClose }: CodexProps) {
   const [tab, setTab] = useState<Tab>("units");
   const [tier, setTier] = useState<number | "all">("all");
+  const [traitFamily, setTraitFamily] = useState<TraitFamilyFilter>("all");
   const [selectedUnit, setSelectedUnit] = useState<UnitId>(SHOP_UNITS[0]);
   const units = useMemo(
     () => SHOP_UNITS.filter(
@@ -192,8 +194,16 @@ export default function Codex({ open, onClose }: CodexProps) {
           </div>
         )}
         {tab === "traits" && (
+          <section>
+            <div style={{ display: "flex", gap: 7, marginBottom: 12, flexWrap: "wrap" }}>
+              {(["all", "阵营", "职业", "关系"] as const).map((family) => (
+                <button key={family} type="button" onClick={() => setTraitFamily(family)} style={{ padding: "6px 11px", border: "1px solid #345269", borderRadius: 12, color: traitFamily === family ? "#07131d" : "#9fb7c8", background: traitFamily === family ? "#79d8ff" : "#102231", cursor: "pointer" }}>
+                  {family === "all" ? "全部" : family}
+                </button>
+              ))}
+            </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(310px, 1fr))", gap: 12 }}>
-            {TRAIT_IDS.map((id) => {
+            {TRAIT_IDS.filter((id) => traitFamily === "all" || TRAITS[id].family === traitFamily).map((id) => {
               const trait = TRAITS[id];
               return (
                 <article key={id} style={{ padding: 16, border: `1px solid ${trait.color}88`, borderRadius: 12, background: `${trait.color}0d` }}>
@@ -211,6 +221,7 @@ export default function Codex({ open, onClose }: CodexProps) {
               );
             })}
           </div>
+          </section>
         )}
         {tab === "talents" && (
           <section style={{ display: "grid", gap: 20 }}>

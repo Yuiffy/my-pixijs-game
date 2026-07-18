@@ -81,6 +81,15 @@ export interface Fighter {
   burnSourceFid: string | null;
   lifesteal: number;
   burnOnHitPower: number;
+  spiceBurnOnHitPower: number;
+  dodgeChance: number;
+  gluttonyHolder: boolean;
+  growthStacks: number;
+  gen27Member: boolean;
+  gen27Buffed: boolean;
+  baseAttack: number;
+  baseMoveSpeed: number;
+  yueGangMember: boolean;
   energyPerHit: number;
   lowHealthBonus: number;
   critChance: number;
@@ -116,6 +125,10 @@ export interface BattleState {
   enemy: Fighter[];
   effects: BattleEffect[];
   fieldMedicTimer: number;
+  gluttonyTimer: number;
+  yueGangTimer: number;
+  suiShioriCooldown: number;
+  suiShioriLevel: number;
   banner: string;
   bannerTimer: number;
   rankingOpen: boolean;
@@ -385,10 +398,17 @@ export class AutoChessEngine {
 
   public getActiveTraits() {
     const counts = this.getTraitCounts();
+    const hasSuiShioriPair = this.state.board.some(
+      (owned) => owned && UNIT_DEFS[owned.id].traits.includes("sui_forms"),
+    ) && this.state.board.some(
+      (owned) => owned && ["shiori", "prism_sage"].includes(owned.id),
+    );
     return (Object.keys(TRAITS) as TraitId[])
       .map((trait) => {
         const definition = TRAITS[trait];
-        const level = traitLevelForCount(definition, counts[trait]);
+        const level = trait === "sui_shiori" && !hasSuiShioriPair
+          ? 0
+          : traitLevelForCount(definition, counts[trait]);
         return {
           ...definition,
           count: counts[trait],
@@ -655,8 +675,16 @@ export class AutoChessEngine {
 
   private createBattle(): BattleState {
     const traitCounts = this.getTraitCounts();
-    const traitLevel = (trait: TraitId) =>
-      traitLevelForCount(TRAITS[trait], traitCounts[trait]);
+    const hasSuiShioriPair = this.state.board.some(
+      (owned) => owned && UNIT_DEFS[owned.id].traits.includes("sui_forms"),
+    ) && this.state.board.some(
+      (owned) => owned && ["shiori", "prism_sage"].includes(owned.id),
+    );
+    const traitLevel = (trait: TraitId) => (
+      trait === "sui_shiori" && !hasSuiShioriPair
+        ? 0
+        : traitLevelForCount(TRAITS[trait], traitCounts[trait])
+    );
     const hasAugment = (id: AugmentId) => this.state.augments.includes(id);
     const globalTraitLevel = (trait: TraitId) => traitLevel(trait);
     const playerSpawn = (index: number) => {
@@ -703,6 +731,15 @@ export class AutoChessEngine {
       const suiFormsLevel = def.traits.includes("sui_forms")
         ? traitLevel("sui_forms")
         : 0;
+      const chuanmeiLevel = def.traits.includes("chuanmei")
+        ? traitLevel("chuanmei")
+        : 0;
+      const skeletonLevel = def.traits.includes("skeleton_soldier")
+        ? traitLevel("skeleton_soldier")
+        : 0;
+      const gluttonyHolder = def.traits.includes("gluttony") && traitLevel("gluttony") > 0;
+      const gen27Member = def.traits.includes("gen27") && traitLevel("gen27") > 0;
+      const yueGangMember = def.traits.includes("yue_gang") && traitLevel("yue_gang") > 0;
       const isRanged = def.range >= 160;
       const globalEmberLevel = globalTraitLevel("ember");
       const globalWildLevel = globalTraitLevel("wild");
@@ -714,6 +751,7 @@ export class AutoChessEngine {
       const globalBrawlerLevel = globalTraitLevel("brawler");
       const globalAssassinLevel = globalTraitLevel("assassin");
       const globalSuiFormsLevel = globalTraitLevel("sui_forms");
+      const globalChuanmeiLevel = globalTraitLevel("chuanmei");
 
       if (aegisLevel) {
         maxHp *= [1, 1.07, 1.14, 1.23][aegisLevel];
@@ -763,6 +801,8 @@ export class AutoChessEngine {
         range: def.range,
         attackInterval,
         moveSpeed: def.moveSpeed,
+        baseAttack: attack,
+        baseMoveSpeed: def.moveSpeed,
         cooldown: this.rng.next() * 0.25,
         energy:
           [0, 20, 45, 70][mysticLevel] +
@@ -783,6 +823,16 @@ export class AutoChessEngine {
           [0, 0.35, 0.65, 1.05][emberLevel],
           isRanged ? [0, 0, 0.25, 0.5][globalEmberLevel] : 0,
         ),
+        spiceBurnOnHitPower: Math.max(
+          [0, 0.45, 0.8][chuanmeiLevel],
+          isRanged ? [0, 0, 0.22][globalChuanmeiLevel] : 0,
+        ),
+        dodgeChance: skeletonLevel ? 0.22 : 0,
+        gluttonyHolder,
+        growthStacks: 0,
+        gen27Member,
+        gen27Buffed: false,
+        yueGangMember,
         energyPerHit:
           [0, 4, 8, 14][clockworkLevel] +
           (isRanged && globalClockworkLevel === 3 ? 4 : 0),
@@ -842,6 +892,8 @@ export class AutoChessEngine {
         range: def.range,
         attackInterval: def.attackInterval,
         moveSpeed: def.moveSpeed,
+        baseAttack: def.attack * scale * 1.15,
+        baseMoveSpeed: def.moveSpeed,
         cooldown: this.rng.next() * 0.4,
         energy: wave.tag === "boss" ? 28 : 0,
         stun: 0,
@@ -850,6 +902,13 @@ export class AutoChessEngine {
         burnSourceFid: null,
         lifesteal: 0,
         burnOnHitPower: 0,
+        spiceBurnOnHitPower: 0,
+        dodgeChance: 0,
+        gluttonyHolder: false,
+        growthStacks: 0,
+        gen27Member: false,
+        gen27Buffed: false,
+        yueGangMember: false,
         energyPerHit: 0,
         lowHealthBonus: 0,
         critChance: 0,
@@ -884,6 +943,10 @@ export class AutoChessEngine {
       enemy,
       effects: [],
       fieldMedicTimer: 2.5,
+      gluttonyTimer: 3,
+      yueGangTimer: 0.45,
+      suiShioriCooldown: 0,
+      suiShioriLevel: traitLevel("sui_shiori"),
       banner:
         wave.tag === "boss"
           ? "首领战 · 暴君降临"
@@ -1051,16 +1114,51 @@ export class AutoChessEngine {
     this.state.battle?.effects.push({ ...effect, maxLife: effect.life });
   }
 
+  private refresh27Buffs(battle: BattleState) {
+    const level = this.getActiveTraits().find((trait) => trait.id === "gen27")?.level || 0;
+    const multiplier = [1, 1.12, 1.2, 1.3][level];
+    battle.player.forEach((fighter) => {
+      if (!fighter.gen27Member || !fighter.alive) return;
+      const hasNearbyPartner = battle.player.some(
+        (other) => other !== fighter && other.alive && other.gen27Member &&
+          Math.hypot(other.x - fighter.x, other.y - fighter.y) <= 165,
+      );
+      fighter.gen27Buffed = hasNearbyPartner;
+      fighter.attack = fighter.baseAttack * (hasNearbyPartner ? multiplier : 1);
+      fighter.moveSpeed = fighter.baseMoveSpeed * (hasNearbyPartner ? multiplier : 1);
+    });
+  }
+
   private updateBattle(dt: number) {
     const battle = this.state.battle;
     if (!battle) return;
     battle.elapsed += dt;
+    battle.suiShioriCooldown = Math.max(0, battle.suiShioriCooldown - dt);
+    battle.yueGangTimer = Math.max(0, battle.yueGangTimer - dt);
+    this.refresh27Buffs(battle);
     battle.bannerTimer = Math.max(0, battle.bannerTimer - dt);
 
     battle.effects.forEach((effect) => {
       effect.life -= dt;
     });
     battle.effects = battle.effects.filter((effect) => effect.life > 0);
+
+    const gluttonyLevel = this.getActiveTraits().find((trait) => trait.id === "gluttony")?.level || 0;
+    if (gluttonyLevel) {
+      battle.gluttonyTimer -= dt;
+      if (battle.gluttonyTimer <= 0) {
+        battle.gluttonyTimer += 3;
+        const allHealRatio = gluttonyLevel >= 2 ? 0.015 : 0;
+        this.living("player").forEach((fighter) => {
+          const holderHealRatio = fighter.gluttonyHolder ? (gluttonyLevel >= 2 ? 0.04 : 0.03) : allHealRatio;
+          if (holderHealRatio > 0) this.heal(null, fighter, fighter.maxHp * holderHealRatio);
+          if (fighter.gluttonyHolder) {
+            fighter.growthStacks = Math.min(5, fighter.growthStacks + 1);
+            this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#93d86b", text: `饱 ${fighter.growthStacks}/5`, life: 0.65, size: 10 });
+          }
+        });
+      }
+    }
 
     if (this.state.augments.includes("triage")) {
       battle.fieldMedicTimer -= dt;
@@ -1194,6 +1292,45 @@ export class AutoChessEngine {
     }
   }
 
+  private triggerYueGangSupport(source: Fighter, target: Fighter) {
+    const battle = this.state.battle;
+    const level = this.getActiveTraits().find((trait) => trait.id === "yue_gang")?.level || 0;
+    if (!battle || !level || battle.yueGangTimer > 0 || source.team !== "player" || !source.yueGangMember) return;
+    battle.yueGangTimer = level >= 2 ? 3.5 : 5;
+    const supporters = battle.player
+      .filter((fighter) => fighter !== source && fighter.alive && fighter.yueGangMember && fighter.jumpTime <= 0 && !fighter.jumpPending && fighter.stun <= 0)
+      .filter((fighter) => Math.hypot(fighter.x - target.x, fighter.y - target.y) > fighter.range + target.radius + 12)
+      .slice(0, level >= 2 ? 2 : 1);
+    supporters.forEach((fighter, index) => {
+      const distance = fighter.radius + target.radius + 14 + index * 12;
+      fighter.jumpFromX = fighter.x;
+      fighter.jumpFromY = fighter.y;
+      fighter.jumpToX = Math.max(BATTLE_BOUNDS.left + fighter.radius, Math.min(BATTLE_BOUNDS.right - fighter.radius, target.x - distance));
+      fighter.jumpToY = Math.max(BATTLE_BOUNDS.top + fighter.radius, Math.min(BATTLE_BOUNDS.bottom - fighter.radius, target.y + (index ? 52 : -52)));
+      fighter.jumpDuration = 0.38;
+      fighter.jumpTime = fighter.jumpDuration;
+      this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: TRAITS.yue_gang.color, life: 0.35, size: fighter.radius * 1.5 });
+    });
+  }
+
+  private triggerSuiShioriBarrage(source: Fighter, targets: Fighter[]) {
+    const battle = this.state.battle;
+    if (!battle || source.team !== "player" || battle.suiShioriLevel <= 0 || battle.suiShioriCooldown > 0) return;
+    const sourceIsSui = UNIT_DEFS[source.unitId].traits.includes("sui_forms");
+    const sourceIsShiori = ["shiori", "prism_sage"].includes(source.unitId);
+    if (!sourceIsSui && !sourceIsShiori) return;
+    const partner = battle.player.find((fighter) => fighter.alive && fighter !== source && (sourceIsSui ? ["shiori", "prism_sage"].includes(fighter.unitId) : UNIT_DEFS[fighter.unitId].traits.includes("sui_forms")));
+    const target = targets.find((fighter) => fighter.alive) || this.nearestTarget(source, targets);
+    if (!partner || !target) return;
+    const multiplier = [0, 0.65, 0.85, 1.1][battle.suiShioriLevel];
+    const dealt = this.damage(partner, target, partner.attack * multiplier);
+    if (dealt > 0) this.addDamageText(target, dealt);
+    this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: TRAITS.sui_shiori.color, life: 0.28, size: 3 });
+    this.addEffect({ kind: "line", x: partner.x, y: partner.y, x2: target.x, y2: target.y, color: TRAITS.sui_shiori.color, life: 0.36, size: 4 });
+    this.addEffect({ kind: "text", x: target.x, y: target.y - 50, color: TRAITS.sui_shiori.color, text: "岁栞协战", life: 0.7, size: 11 });
+    battle.suiShioriCooldown = battle.suiShioriLevel >= 3 ? 1.25 : battle.suiShioriLevel === 2 ? 1.8 : 2.5;
+  }
+
   private basicAttack(source: Fighter, target: Fighter) {
     source.cooldown = source.attackInterval;
     source.attackPulse = 0.22;
@@ -1205,6 +1342,10 @@ export class AutoChessEngine {
     if (source.burnOnHitPower > 0 && target.alive) {
       this.applyBurn(source, target, source.attack * source.burnOnHitPower);
     }
+    if (source.spiceBurnOnHitPower > 0 && target.alive) {
+      this.applyBurn(source, target, source.attack * source.spiceBurnOnHitPower);
+    }
+    this.triggerYueGangSupport(source, target);
     const def = UNIT_DEFS[source.unitId];
     this.addEffect({
       kind: def.range > 100 ? "line" : "burst",
@@ -1693,6 +1834,16 @@ export class AutoChessEngine {
         }
         break;
       }
+      case "mitsuri": {
+        const target = this.nearestTarget(source, targets);
+        if (target) {
+          deal(target, 1.05);
+          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.36, size: 3 });
+        }
+        const recipient = [...allies].sort((left, right) => left.energy - right.energy)[0];
+        if (recipient) recipient.energy = Math.min(100, recipient.energy + 18);
+        break;
+      }
       case "sun_phoenix": {
         targets.forEach((target) => {
           const dealt = this.damage(source, target, source.attack * 1.16);
@@ -1996,6 +2147,7 @@ export class AutoChessEngine {
       }
     }
 
+    this.triggerSuiShioriBarrage(source, targets);
     this.addEffect({
       kind: "text",
       x: source.x,
@@ -2009,6 +2161,10 @@ export class AutoChessEngine {
 
   private damage(source: Fighter, target: Fighter, rawAmount: number) {
     if (!source.alive || !target.alive) return 0;
+    if (target.dodgeChance > 0 && this.rng.next() < target.dodgeChance) {
+      this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: "#d9e6f4", text: "闪避", life: 0.55, size: 12 });
+      return 0;
+    }
     let amount = rawAmount;
     if (
       source.team === "player" &&

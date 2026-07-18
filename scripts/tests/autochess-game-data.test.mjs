@@ -73,19 +73,19 @@ test("岁己主题棋子组成早鸟有饼构筑", () => {
     assert.ok(data.UNIT_DEFS[id].traits.includes("sui_forms"));
     assert.ok(data.UNIT_DEFS[id].portrait);
   });
-  assert.equal(data.UNIT_DEFS.sui.name, "大家在吗");
+  assert.equal(data.UNIT_DEFS.sui.name, "贪吃岁");
   assert.equal(
     data.UNIT_DEFS.sui.portrait,
     "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png",
   );
-  assert.equal(data.UNIT_DEFS.sui_bird.name, "小鸟归巢");
+  assert.equal(data.UNIT_DEFS.sui_bird.name, "早鸟援护");
   assert.equal(
     data.UNIT_DEFS.sui_bird.portrait,
     "/images/materials/bird/岁己_小鸟跳静态图.png",
   );
   assert.deepEqual(
     forms.map((id) => data.UNIT_DEFS[id].abilityName),
-    ["大家在吗？", "闪购闪购", "小鸟归巢", "火烧云", "小猫拳", "饼干拳法"],
+    ["开饭点名", "闪购闪购", "小鸟归巢", "火烧云", "小猫拳", "饼干拳法"],
   );
   ["shiori", "yua", "nagisa"].forEach((id) => {
     assert.ok(data.SHOP_UNITS.includes(id));
@@ -93,14 +93,23 @@ test("岁己主题棋子组成早鸟有饼构筑", () => {
   });
 });
 
-test("商店棋子定义和羁绊引用保持完整", () => {
+test("关系羁绊覆盖预期主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
+  assert.ok(data.SHOP_UNITS.includes("mitsuri"));
+  ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "sui_shiori"].forEach((id) => {
+    assert.equal(data.TRAITS[id].family, "关系");
+    assert.equal(data.TRAITS[id].thresholds.length, data.TRAITS[id].bonuses.length);
+  });
+  ["sui_flower", "biscuit_sui", "nagisa", "sun_phoenix"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
+  ["sui", "void_oracle", "spark_mage", "grove_mender", "cinder_ram", "sun_phoenix"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
+  ["sui", "sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
+  ["rift_stalker", "rift_brawler", "void_oracle", "shiori", "prism_sage", "mitsuri"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
   data.SHOP_UNITS.forEach((id) => {
     const unit = data.UNIT_DEFS[id];
     assert.equal(unit.id, id);
     assert.equal(unit.shop, true);
     assert.equal(unit.cost, unit.tier);
-    assert.equal(unit.traits.length, 2);
+    assert.ok(unit.traits.length >= 2 && unit.traits.length <= 5);
     unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
   });
 });

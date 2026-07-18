@@ -368,9 +368,11 @@ const drawTraitDots = (
   x: number,
   y: number,
 ) => {
-  UNIT_DEFS[unitId].traits.forEach((trait, index) => {
+  const traits = UNIT_DEFS[unitId].traits;
+  const startX = x - ((traits.length - 1) * 12) / 2;
+  traits.forEach((trait, index) => {
     ctx.beginPath();
-    ctx.arc(x + index * 12, y, 4, 0, Math.PI * 2);
+    ctx.arc(startX + index * 12, y, 4, 0, Math.PI * 2);
     ctx.fillStyle = TRAITS[trait].color;
     ctx.fill();
   });
@@ -1202,7 +1204,7 @@ const drawPreparation = (
     .join(" · ");
   text(
     ctx,
-    activeNames ? `已激活：${activeNames}` : "羁绊均在 2/4/6 名时升级",
+    activeNames ? `已激活：${activeNames}` : "常规羁绊按 2/4/6；关系羁绊按图标说明",
     807,
     647,
     10,
@@ -1320,6 +1322,10 @@ const drawFighter = (
   const hitProgress = fighter.hitPulse > 0 ? fighter.hitPulse / 0.2 : 0;
   ctx.save();
   ctx.translate(drawX, drawY);
+  if (fighter.growthStacks > 0) {
+    const growth = 1 + fighter.growthStacks * 0.015 + Math.sin(visualTime * 8) * 0.008;
+    ctx.scale(growth, growth);
+  }
   if (fighter.attackPulse > 0)
     ctx.scale(1 + lunge / 70, 1 - lunge / 130);
   if (fighter.hitPulse > 0)
@@ -1443,6 +1449,14 @@ const drawFighter = (
     ctx.fillStyle = "#ff7a50";
     ctx.fill();
   }
+  if (fighter.gen27Buffed) {
+    ctx.beginPath();
+    ctx.arc(drawX, drawY, radius + 9, 0, Math.PI * 2);
+    ctx.strokeStyle = "#bd9bff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    text(ctx, "27", drawX, drawY - radius - 27, 9, "#dfccff", "center", 800);
+  }
   if (fighter.enraged) {
     ctx.beginPath();
     ctx.arc(drawX, drawY, radius + 12, 0, Math.PI * 2);
@@ -1452,7 +1466,7 @@ const drawFighter = (
   }
   text(
     ctx,
-    def.name,
+    `${def.name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}`,
     drawX,
     drawY + radius + 35,
     9,
@@ -2063,6 +2077,7 @@ const drawTraitTooltip = (
   const trait = TRAITS[traitId];
   const count = engine.getTraitCounts()[traitId];
   const level = traitLevelForCount(trait, count);
+  const maxThreshold = trait.thresholds[trait.thresholds.length - 1];
   const w = 340;
   const h = 174;
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
@@ -2082,7 +2097,7 @@ const drawTraitTooltip = (
   text(ctx, trait.name, x + 56, y + 25, 17, "#f0f7ff", "left", 800);
   text(
     ctx,
-    `${trait.family} · 当前 ${count}/6 · ${level ? `${level} 阶已激活` : "尚未激活"}`,
+    `${trait.family} · 当前 ${count}/${maxThreshold} · ${level ? `${level} 阶已激活` : "尚未激活"}`,
     x + 56,
     y + 46,
     10,
