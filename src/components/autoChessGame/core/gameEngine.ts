@@ -3,8 +3,9 @@
 import {
   AUGMENTS,
   AugmentId,
+  CAMPAIGN_ROUNDS,
   MAX_PLAYER_LEVEL,
-  PASSIVE_XP_PER_ROUND,
+  PASSIVE_UPGRADE_DISCOUNT,
   PLAYER_LEVEL_CONFIG,
   PlayerLevel,
   SHOP_TIER_COUNTS,
@@ -16,10 +17,9 @@ import {
   TraitId,
   UNIT_DEFS,
   UnitId,
-  WAVES,
-  XP_PURCHASE_AMOUNT,
-  XP_PURCHASE_COST,
-  applyPlayerExperience,
+  bookLevelForPlayerLevel,
+  upgradeCostForLevel,
+  waveForRound,
   tierOddsForLevel,
   traitLevelForCount,
 } from "./gameData";
@@ -118,7 +118,7 @@ export interface RoundResult {
   headline: string;
   detail: string;
   income: number;
-  experience: number;
+  upgradeDiscount: number;
   damage: number;
 }
 
@@ -134,11 +134,12 @@ export interface GameState {
   visualTime: number;
   round: number;
   maxRounds: number;
+  endlessUnlocked: boolean;
   hp: number;
   maxHp: number;
   gold: number;
   playerLevel: PlayerLevel;
-  experience: number;
+  upgradeRemaining: number;
   score: number;
   bestScore: number;
   streak: number;
@@ -147,6 +148,7 @@ export interface GameState {
   board: Array<OwnedUnit | null>;
   bench: Array<OwnedUnit | null>;
   shop: Array<UnitId | null>;
+  shopLocked: boolean;
   selected: UnitLocation | null;
   augments: AugmentId[];
   augmentChoices: AugmentId[];
@@ -225,12 +227,13 @@ export class AutoChessEngine {
       seed,
       visualTime: 0,
       round: 1,
-      maxRounds: WAVES.length,
+      maxRounds: CAMPAIGN_ROUNDS,
+      endlessUnlocked: false,
       hp: 20,
       maxHp: 20,
       gold: 8,
       playerLevel: STARTING_PLAYER_LEVEL,
-      experience: 0,
+      upgradeRemaining: upgradeCostForLevel(STARTING_PLAYER_LEVEL) || 0,
       score: 0,
       bestScore,
       streak: 0,
@@ -239,6 +242,7 @@ export class AutoChessEngine {
       board: emptySlots<OwnedUnit>(BOARD_SIZE),
       bench: emptySlots<OwnedUnit>(BENCH_SIZE),
       shop: emptySlots<UnitId>(SHOP_SIZE),
+      shopLocked: false,
       selected: null,
       augments: [],
       augmentChoices: [],
@@ -293,8 +297,8 @@ export class AutoChessEngine {
     return PLAYER_LEVEL_CONFIG[this.state.playerLevel].boardCap;
   }
 
-  public get experienceToNext() {
-    return PLAYER_LEVEL_CONFIG[this.state.playerLevel].xpToNext;
+  public get upgradeCost() {
+    return this.isMaxPlayerLevel ? null : this.state.upgradeRemaining;
   }
 
   public get isMaxPlayerLevel() {
@@ -306,7 +310,7 @@ export class AutoChessEngine {
   }
 
   public get currentWave() {
-    return WAVES[Math.min(this.state.round - 1, WAVES.length - 1)];
+    return waveForRound(this.state.round);
   }
 
   public getTraitCounts(): Record<TraitId, number> {
@@ -373,23 +377,15 @@ export class AutoChessEngine {
     });
   }
 
-  private grantExperience(amount: number) {
-    if (amount <= 0 || this.isMaxPlayerLevel) return 0;
-    const previousLevel = this.state.playerLevel;
-    const next = applyPlayerExperience(
-      previousLevel,
-      this.state.experience,
-      amount,
+  private levelUp() {
+    if (this.isMaxPlayerLevel) return false;
+    this.state.playerLevel = (this.state.playerLevel + 1) as PlayerLevel;
+    this.state.upgradeRemaining = upgradeCostForLevel(this.state.playerLevel) || 0;
+    this.setToast(
+      `升至 ${bookLevelForPlayerLevel(this.state.playerLevel)} 本，现在可上阵 ${this.boardCap} 名单位！`,
+      "good",
     );
-    this.state.playerLevel = next.playerLevel;
-    this.state.experience = next.experience;
-    if (next.levelsGained > 0) {
-      this.setToast(
-        `等级提升至 Lv.${next.playerLevel}，现在可上阵 ${this.boardCap} 名单位！`,
-        "good",
-      );
-    }
-    return next.playerLevel - previousLevel;
+    return true;
   }
 
   public buyExperience() {
@@ -398,22 +394,25 @@ export class AutoChessEngine {
       this.setToast("已达到最高等级。", "info");
       return;
     }
-    if (this.state.gold < XP_PURCHASE_COST) {
-      this.setToast(
-        `还差 ${XP_PURCHASE_COST - this.state.gold} 金币，无法升本。`,
-        "bad",
-      );
+    const cost = this.state.upgradeRemaining;
+    if (this.state.gold < cost) {
+      this.setToast(`还差 ${cost - this.state.gold} 金币，无法升本。`, "bad");
       return;
     }
 
-    this.state.gold -= XP_PURCHASE_COST;
-    const levelsGained = this.grantExperience(XP_PURCHASE_AMOUNT);
-    if (levelsGained === 0) {
-      this.setToast(
-        `获得 ${XP_PURCHASE_AMOUNT} 经验（${this.state.experience}/${this.experienceToNext}）。`,
-        "info",
-      );
-    }
+    this.state.gold -= cost;
+    this.levelUp();
+  }
+
+  public toggleShopLock() {
+    if (this.state.phase !== "preparation") return;
+    this.state.shopLocked = !this.state.shopLocked;
+    this.setToast(
+      this.state.shopLocked
+        ? "商店已锁定，下回合保留当前货架。"
+        : "商店已解锁，下回合将自动刷新。",
+      "info",
+    );
   }
 
   public rerollShop() {
@@ -424,8 +423,9 @@ export class AutoChessEngine {
     }
     this.state.gold -= 1;
     this.state.shop = this.generateShop();
+    this.state.shopLocked = false;
     this.state.selected = null;
-    this.setToast("商店已刷新。", "info");
+    this.setToast("商店已刷新并自动解锁。", "info");
   }
 
   public buyShopUnit(index: number) {
@@ -542,6 +542,7 @@ export class AutoChessEngine {
 
   private checkMerges() {
     let didMerge = false;
+    let preferred: UnitLocation | undefined;
     let found = true;
     while (found) {
       found = false;
@@ -553,16 +554,25 @@ export class AutoChessEngine {
           });
           if (matches.length < 3) continue;
 
-          const [keep, removeA, removeB] = matches;
+          const currentPreferred = preferred;
+          const preferredMatch = currentPreferred
+            ? matches.find((location) =>
+              this.sameLocation(location, currentPreferred))
+            : null;
+          const boardMatch = matches.find((location) => location.zone === "board");
+          const keep = preferredMatch || boardMatch || matches[0];
+          const removals = matches
+            .filter((location) => !this.sameLocation(location, keep))
+            .slice(0, 2);
           const keptUnit = this.getAt(keep);
-          if (!keptUnit) continue;
+          if (!keptUnit || removals.length < 2) continue;
           keptUnit.star = (star + 1) as 2 | 3;
-          this.setAt(removeA, null);
-          this.setAt(removeB, null);
+          removals.forEach((location) => this.setAt(location, null));
+          preferred = keep;
           this.state.selected = null;
           this.state.score += 80 * star;
           this.setToast(
-            `聚合完成：${UNIT_DEFS[id].name}升至 ${star + 1} 星！`,
+            `聚合完成：${UNIT_DEFS[id].name}升至 ${star + 1} 星，并保留原站位！`,
             "good",
           );
           didMerge = true;
@@ -1494,6 +1504,28 @@ export class AutoChessEngine {
         });
         break;
       }
+      case "sui_bird": {
+        const target = weakest(allies);
+        if (!target) break;
+        this.heal(target, target.maxHp * 0.18 + source.attack * 1.15);
+        addShield(target, target.maxHp * 0.08, 0.32);
+        targets
+          .filter(
+            (enemy) => Math.hypot(enemy.x - target.x, enemy.y - target.y) < 135,
+          )
+          .forEach((enemy) => deal(enemy, 0.9));
+        source.x = target.x + (source.team === "player" ? -52 : 52);
+        source.y = target.y - 20;
+        this.addEffect({
+          kind: "ring",
+          x: target.x,
+          y: target.y,
+          color: def.accent,
+          life: 0.8,
+          size: 140,
+        });
+        break;
+      }
       case "sun_phoenix": {
         targets.forEach((target) => {
           const dealt = this.damage(source, target, source.attack * 1.16);
@@ -1921,8 +1953,10 @@ export class AutoChessEngine {
         headline: wave.tag === "boss" ? "裂隙封闭" : "战线守住了",
         detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? " + 余烬首胜 2" : ""}`,
         income,
-        experience:
-          this.state.round < this.state.maxRounds ? PASSIVE_XP_PER_ROUND : 0,
+        upgradeDiscount:
+          this.state.round < Number.MAX_SAFE_INTEGER && !this.isMaxPlayerLevel
+            ? PASSIVE_UPGRADE_DISCOUNT
+            : 0,
         damage: 0,
       };
     } else {
@@ -1947,9 +1981,9 @@ export class AutoChessEngine {
             ? "获得 1 金币整备补偿。调整前后排仍有机会。"
             : "本次阵容止步于此。",
         income,
-        experience:
-          this.state.hp > 0 && this.state.round < this.state.maxRounds
-            ? PASSIVE_XP_PER_ROUND
+        upgradeDiscount:
+          this.state.hp > 0 && !this.isMaxPlayerLevel
+            ? PASSIVE_UPGRADE_DISCOUNT
             : 0,
         damage,
       };
@@ -1962,12 +1996,28 @@ export class AutoChessEngine {
   private advanceAfterResult() {
     const result = this.state.result;
     if (!result) return;
-    if (this.state.hp <= 0 || this.state.round >= this.state.maxRounds) {
-      this.endGame(this.state.round === this.state.maxRounds && result.won);
+    if (this.state.hp <= 0) {
+      this.endGame(false);
       return;
     }
-    this.grantExperience(result.experience);
-    if (this.state.round === 2 || this.state.round === 5) {
+    if (result.upgradeDiscount > 0 && !this.isMaxPlayerLevel) {
+      this.state.upgradeRemaining = Math.max(
+        1,
+        this.state.upgradeRemaining - result.upgradeDiscount,
+      );
+    }
+    if (this.state.round === CAMPAIGN_ROUNDS && result.won) {
+      this.state.endlessUnlocked = true;
+      this.state.score += this.state.hp * 45 + 500;
+      this.setToast("八战通关！无限裂隙已开启，挑战将持续升级。", "good");
+    }
+    if (
+      this.state.round === 2 ||
+      this.state.round === 5 ||
+      (this.state.round > CAMPAIGN_ROUNDS &&
+        (this.state.round - CAMPAIGN_ROUNDS) % 6 === 0 &&
+        this.state.augments.length < AUGMENTS.length)
+    ) {
       this.state.augmentChoices = this.rollAugmentChoices();
       this.state.phase = "augment";
       this.state.battle = null;
@@ -2013,12 +2063,12 @@ export class AutoChessEngine {
     this.state.result = null;
     this.state.selected = null;
     this.state.augmentChoices = [];
-    this.state.shop = this.generateShop();
+    if (!this.state.shopLocked) this.state.shop = this.generateShop();
   }
 
   private endGame(won: boolean) {
     this.state.finalWon = won;
-    if (won)
+    if (won && !this.state.endlessUnlocked)
       this.state.score += this.state.hp * 45 + this.state.gold * 10 + 500;
     this.state.bestScore = Math.max(this.state.bestScore, this.state.score);
     if (typeof window !== "undefined") {
@@ -2056,6 +2106,8 @@ export class AutoChessEngine {
       phaseLabel: phaseLabels[this.state.phase],
       round: this.state.round,
       maxRounds: this.state.maxRounds,
+      campaignCleared: this.state.endlessUnlocked,
+      endlessRound: Math.max(0, this.state.round - CAMPAIGN_ROUNDS),
       wave: this.currentWave
         ? {
             name: this.currentWave.name,
@@ -2068,13 +2120,12 @@ export class AutoChessEngine {
         maxHp: this.state.maxHp,
         gold: this.state.gold,
         level: this.state.playerLevel,
-        experience: this.state.experience,
-        experienceToNext: this.experienceToNext,
+        bookLevel: bookLevelForPlayerLevel(this.state.playerLevel),
+        upgradeRemaining: this.upgradeCost,
+        nextLevelInitialCost: this.isMaxPlayerLevel
+          ? null
+          : upgradeCostForLevel(this.state.playerLevel),
         maxLevel: this.isMaxPlayerLevel,
-        buyExperience: {
-          cost: XP_PURCHASE_COST,
-          amount: XP_PURCHASE_AMOUNT,
-        },
         score: this.state.score,
         streak: this.state.streak,
         boardCount: this.boardCount,
@@ -2098,6 +2149,7 @@ export class AutoChessEngine {
             },
         )
         .filter(Boolean),
+      shopLocked: this.state.shopLocked,
       activeTraits: this.getActiveTraits().map((trait) => ({
         name: trait.name,
         family: trait.family,
@@ -2160,7 +2212,8 @@ export class AutoChessEngine {
         this.state.phase === "preparation"
           ? [
               "点击商店购买",
-              `点击升本：${XP_PURCHASE_COST} 金币购买 ${XP_PURCHASE_AMOUNT} 经验`,
+              `点击升本：一次支付 ${this.upgradeCost ?? 0} 金币升至下一本`,
+              "点击锁定/解锁保留下回合商店",
               "点击单位再点击格子移动/交换",
               "点击回收出售选中单位",
               "R 刷新商店",

@@ -37,6 +37,7 @@ export const SHOP_UNIT_IDS = [
   "void_oracle",
   "gear_sniper",
   "shade_reaver",
+  "sui_bird",
   // 4 费
   "sun_phoenix",
   "prism_sage",
@@ -86,6 +87,7 @@ export interface UnitDefinition {
   moveSpeed: number;
   abilityName: string;
   abilityDescription: string;
+  portrait?: string;
   shop: boolean;
 }
 
@@ -618,6 +620,27 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     abilityDescription: "重创最虚弱的敌人；击杀后立即回复大量能量。",
     shop: true,
   }),
+  sui_bird: unit({
+    id: "sui_bird",
+    name: "岁鸟",
+    title: "灵羽援护",
+    glyph: "岁",
+    color: "#4d7494",
+    accent: "#f7d77c",
+    tier: 3,
+    cost: 3,
+    traits: ["wild", "mystic"],
+    hp: 188,
+    attack: 27,
+    armor: 11,
+    range: 220,
+    attackInterval: 1.02,
+    moveSpeed: 68,
+    abilityName: "岁羽回旋",
+    abilityDescription: "飞向最虚弱的友军，为其治疗并以羽流伤害附近敌人。",
+    portrait: "/images/materials/bird/岁己_小鸟跳静态图.png",
+    shop: true,
+  }),
 
   // 4 费：可以围绕其单独建立阵容的核心单位。
   sun_phoenix: unit({
@@ -1069,52 +1092,83 @@ export const WAVES: WaveDefinition[] = [
   },
 ];
 
+export const CAMPAIGN_ROUNDS = WAVES.length;
+
+const ENDLESS_NAMES = [
+  "回响突击群",
+  "裂隙混编队",
+  "失序远征军",
+  "深层守望者",
+] as const;
+
+export const waveForRound = (round: number): WaveDefinition => {
+  if (round <= WAVES.length) return WAVES[Math.max(0, round - 1)];
+
+  const endlessRound = round - WAVES.length;
+  const cycle = Math.floor((endlessRound - 1) / 5);
+  const boss = endlessRound % 5 === 0;
+  const elite = !boss && endlessRound % 3 === 0;
+  const tag: WaveDefinition["tag"] = boss ? "boss" : elite ? "elite" : "normal";
+  const unitCount = Math.min(8, 5 + Math.floor((endlessRound + 1) / 3));
+  const minimumTier = Math.min(4, 2 + Math.floor(endlessRound / 5));
+  const candidates = SHOP_UNITS.filter(
+    (id) => UNIT_DEFS[id].tier >= minimumTier,
+  );
+  const units: WaveUnit[] = Array.from({ length: unitCount }, (_, index) => {
+    const id = candidates[(round * 7 + index * 11 + cycle * 3) % candidates.length];
+    const star: 1 | 2 | 3 =
+      endlessRound >= 18 && index < 2
+        ? 3
+        : endlessRound >= 6 && index < 2 + Math.floor(endlessRound / 8)
+          ? 2
+          : 1;
+    return { id, star };
+  });
+  if (boss) units[0] = { id: "rift_tyrant", star: cycle >= 3 ? 2 : 1 };
+
+  return {
+    round,
+    name: boss
+      ? `暴君回响 · ${cycle + 1}`
+      : `${ENDLESS_NAMES[(endlessRound - 1) % ENDLESS_NAMES.length]} · ${endlessRound}`,
+    tag,
+    description: boss
+      ? "无限首领战：暴君会随循环强化，保存阵型的同时准备爆发。"
+      : elite
+        ? "无限精英战：高费混编与升星单位同时出现。"
+        : "无限挑战：敌军编成与强度将持续成长。",
+    modifier: 1.06 + endlessRound * 0.035 + cycle * 0.035,
+    units,
+  };
+};
+
 export const PLAYER_LEVELS = [3, 4, 5, 6] as const;
 export type PlayerLevel = (typeof PLAYER_LEVELS)[number];
 export type ShopTierOdds = readonly [number, number, number, number, number];
 
 interface PlayerLevelConfig {
   boardCap: number;
-  xpToNext: number | null;
+  upgradeCost: number | null;
   tierOdds: ShopTierOdds;
 }
 
 export const STARTING_PLAYER_LEVEL: PlayerLevel = 3;
 export const MAX_PLAYER_LEVEL: PlayerLevel = 6;
-export const XP_PURCHASE_COST = 4;
-export const XP_PURCHASE_AMOUNT = 4;
-export const PASSIVE_XP_PER_ROUND = 2;
+export const bookLevelForPlayerLevel = (level: PlayerLevel) => level - 2;
+export const PASSIVE_UPGRADE_DISCOUNT = 1;
 
 export const PLAYER_LEVEL_CONFIG: Record<PlayerLevel, PlayerLevelConfig> = {
-  3: { boardCap: 3, xpToNext: 4, tierOdds: [75, 25, 0, 0, 0] },
-  4: { boardCap: 4, xpToNext: 4, tierOdds: [48, 38, 13, 1, 0] },
-  5: { boardCap: 5, xpToNext: 4, tierOdds: [30, 33, 26, 10, 1] },
-  6: { boardCap: 6, xpToNext: null, tierOdds: [10, 20, 30, 29, 11] },
+  3: { boardCap: 3, upgradeCost: 5, tierOdds: [75, 25, 0, 0, 0] },
+  4: { boardCap: 4, upgradeCost: 9, tierOdds: [48, 38, 13, 1, 0] },
+  5: { boardCap: 5, upgradeCost: 14, tierOdds: [30, 33, 26, 10, 1] },
+  6: { boardCap: 6, upgradeCost: null, tierOdds: [10, 20, 30, 29, 11] },
 };
 
 export const tierOddsForLevel = (level: PlayerLevel) =>
   PLAYER_LEVEL_CONFIG[level].tierOdds;
 
-export const applyPlayerExperience = (
-  playerLevel: PlayerLevel,
-  experience: number,
-  gainedExperience: number,
-) => {
-  let level = playerLevel;
-  let xp = Math.max(0, experience + gainedExperience);
-  let levelsGained = 0;
-
-  while (level < MAX_PLAYER_LEVEL) {
-    const { xpToNext } = PLAYER_LEVEL_CONFIG[level];
-    if (xpToNext === null || xp < xpToNext) break;
-    xp -= xpToNext;
-    level = (level + 1) as PlayerLevel;
-    levelsGained += 1;
-  }
-
-  if (level === MAX_PLAYER_LEVEL) xp = 0;
-  return { playerLevel: level, experience: xp, levelsGained };
-};
+export const upgradeCostForLevel = (level: PlayerLevel) =>
+  PLAYER_LEVEL_CONFIG[level].upgradeCost;
 
 export const SHOP_TIER_COUNTS = [1, 2, 3, 4, 5].map(
   (tier) => SHOP_UNITS.filter((id) => UNIT_DEFS[id].tier === tier).length,

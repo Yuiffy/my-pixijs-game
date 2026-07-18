@@ -4,6 +4,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AudioPreferences,
+  AutoChessAudio,
+  DEFAULT_AUDIO_PREFERENCES,
+  GameAudioEvent,
+  loadAudioPreferences,
+} from "./audio";
+import Codex from "./Codex";
+import {
   AutoChessEngine,
   Fighter,
   GameState,
@@ -12,14 +20,14 @@ import {
 } from "./core/gameEngine";
 import {
   AUGMENTS,
+  CAMPAIGN_ROUNDS,
   SHOP_UNITS,
   STARTERS,
   TRAITS,
   TraitId,
   UNIT_DEFS,
   UnitId,
-  XP_PURCHASE_AMOUNT,
-  XP_PURCHASE_COST,
+  bookLevelForPlayerLevel,
   tierOddsForLevel,
   traitLevelForCount,
 } from "./core/gameData";
@@ -49,7 +57,8 @@ type HitTarget =
   | { kind: "shop"; index: number; unitId: UnitId | null }
   | { kind: "board"; index: number; unitId: UnitId | null; star?: number }
   | { kind: "bench"; index: number; unitId: UnitId | null; star?: number }
-  | { kind: "reroll" | "buyXp" | "battle" | "sell" | "restart" }
+  | { kind: "reroll" | "buyXp" | "lock" | "battle" | "sell" | "restart" }
+  | { kind: "enemyPreview"; unitId: UnitId; star: number }
   | { kind: "augment"; index: number }
   | { kind: "fighter"; unitId: UnitId; star: number }
   | { kind: "trait"; traitId: TraitId }
@@ -100,7 +109,8 @@ const augmentRect = (index: number): Rect => ({
   h: 300,
 });
 const buyXpRect: Rect = { x: 810, y: 530, w: 82, h: 48 };
-const rerollRect: Rect = { x: 900, y: 530, w: 82, h: 48 };
+const lockRect: Rect = { x: 900, y: 530, w: 82, h: 22 };
+const rerollRect: Rect = { x: 900, y: 556, w: 82, h: 22 };
 const battleRect: Rect = { x: 990, y: 530, w: 90, h: 48 };
 const sellRect: Rect = { x: 636, y: 553, w: 112, h: 34 };
 const restartRect: Rect = { x: 420, y: 548, w: 280, h: 62 };
@@ -201,11 +211,21 @@ const drawHeader = (ctx: CanvasRenderingContext2D, engine: AutoChessEngine) => {
   ctx.stroke();
 
   text(ctx, "裂隙阵线", 30, 28, 23, "#f1f8ff", "left", 800);
-  text(ctx, "RIFT LINE · 8 战短局", 30, 53, 10, "#6f92ab", "left", 700);
+  text(
+    ctx,
+    state.endlessUnlocked ? "RIFT LINE · 无限裂隙" : "RIFT LINE · 八战远征",
+    30,
+    53,
+    10,
+    state.endlessUnlocked ? "#d3a2ff" : "#6f92ab",
+    "left",
+    700,
+  );
 
   if (state.phase !== "title") {
     const nodeStart = 300;
-    for (let index = 0; index < state.maxRounds; index += 1) {
+    if (state.round <= CAMPAIGN_ROUNDS) {
+      for (let index = 0; index < CAMPAIGN_ROUNDS; index += 1) {
       const x = nodeStart + index * 48;
       const complete = index + 1 < state.round;
       const current = index + 1 === state.round;
@@ -228,14 +248,32 @@ const drawHeader = (ctx: CanvasRenderingContext2D, engine: AutoChessEngine) => {
         "center",
         800,
       );
-      if (index < state.maxRounds - 1) {
-        ctx.fillStyle = complete ? "#3f9c78" : "#203647";
-        ctx.fillRect(x + 11, 31, 25, 3);
+        if (index < CAMPAIGN_ROUNDS - 1) {
+          ctx.fillStyle = complete ? "#3f9c78" : "#203647";
+          ctx.fillRect(x + 11, 31, 25, 3);
+        }
       }
+    } else {
+      fillRounded(ctx, { x: 300, y: 20, w: 360, h: 30 }, 15, "rgba(111, 77, 163, 0.28)");
+      strokeRounded(ctx, { x: 300, y: 20, w: 360, h: 30 }, 15, "#a77be8");
+      text(
+        ctx,
+        `∞ 无限裂隙 · 第 ${state.round - CAMPAIGN_ROUNDS} 层`,
+        480,
+        35,
+        13,
+        "#e6d3ff",
+        "center",
+        900,
+      );
     }
     text(
       ctx,
-      state.round === 8 ? "首领战" : `第 ${state.round} 战`,
+      state.round > CAMPAIGN_ROUNDS
+        ? `总第 ${state.round} 战`
+        : state.round === CAMPAIGN_ROUNDS
+          ? "首领战"
+          : `第 ${state.round} 战`,
       468,
       60,
       11,
@@ -313,6 +351,47 @@ const drawTraitDots = (
   });
 };
 
+const unitImages = new Map<string, HTMLImageElement>();
+const loadUnitImages = (redraw: () => void) => {
+  Object.values(UNIT_DEFS).forEach((definition) => {
+    if (!definition.portrait || unitImages.has(definition.portrait)) return;
+    const image = new Image();
+    image.onload = redraw;
+    image.src = definition.portrait;
+    unitImages.set(definition.portrait, image);
+  });
+};
+
+const drawImagePortrait = (
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  radius: number,
+) => {
+  const sourceRatio = image.naturalWidth / image.naturalHeight;
+  const sourceWidth = sourceRatio > 1 ? image.naturalHeight : image.naturalWidth;
+  const sourceHeight = sourceRatio > 1 ? image.naturalHeight : image.naturalWidth;
+  const sourceX = Math.max(0, (image.naturalWidth - sourceWidth) / 2);
+  const sourceY = Math.max(0, (image.naturalHeight - sourceHeight) / 2);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, radius - 2, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    x - radius,
+    y - radius,
+    radius * 2,
+    radius * 2,
+  );
+  ctx.restore();
+};
+
 const drawUnitPortrait = (
   ctx: CanvasRenderingContext2D,
   unitId: UnitId,
@@ -342,13 +421,16 @@ const drawUnitPortrait = (
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = gradient;
   ctx.fill();
+  const portrait = def.portrait ? unitImages.get(def.portrait) : null;
+  if (portrait?.complete && portrait.naturalWidth > 0)
+    drawImagePortrait(ctx, portrait, x, y, radius);
   ctx.shadowBlur = 0;
   ctx.strokeStyle = team === "player" ? def.accent : "#ff688e";
   ctx.lineWidth = Math.max(2, radius * 0.08);
   ctx.stroke();
   text(
     ctx,
-    def.glyph,
+    def.portrait && portrait?.complete ? "" : def.glyph,
     x,
     y + 1,
     Math.max(13, radius * 0.72),
@@ -466,7 +548,7 @@ const drawTitle = (
   const state = engine.state;
   text(
     ctx,
-    "守住八次冲击。每一次购买，都该改变你的答案。",
+    "守住八次远征冲击，然后向无限裂隙挑战极限。",
     WIDTH / 2,
     142,
     16,
@@ -477,7 +559,7 @@ const drawTitle = (
   text(ctx, "裂 隙 阵 线", WIDTH / 2, 205, 48, "#f4f9ff", "center", 900);
   text(
     ctx,
-    `${SHOP_UNITS.length} 兵种 · 10 羁绊 · 五档费用 · 一局约 8 分钟`,
+    `${SHOP_UNITS.length} 兵种 · 10 羁绊 · 八战远征 + 无限挑战`,
     WIDTH / 2,
     250,
     14,
@@ -633,6 +715,17 @@ const drawPreparation = (
   text(ctx, "敌情预览", 742, 120, 10, "#70899b", "right", 700);
   wave.units.slice(0, 7).forEach((enemy, index) => {
     const x = 735 - index * 38;
+    const hovered =
+      hover.target?.kind === "enemyPreview" &&
+      hover.target.unitId === enemy.id &&
+      hover.x >= x - 18 &&
+      hover.x <= x + 18;
+    if (hovered) {
+      ctx.beginPath();
+      ctx.arc(x, 153, 22, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 104, 142, 0.2)";
+      ctx.fill();
+    }
     drawUnitPortrait(
       ctx,
       enemy.id,
@@ -643,6 +736,7 @@ const drawPreparation = (
       0.9,
     );
   });
+  text(ctx, "悬浮查看技能", 742, 183, 8, "#536f82", "right", 600);
 
   drawTraitPills(ctx, engine, 194);
   text(ctx, "后方 · 远程与辅助", 48, 221, 9, "#5f798c", "left", 700);
@@ -684,7 +778,7 @@ const drawPreparation = (
   strokeRounded(ctx, shopPanel, 18, "rgba(111, 191, 235, 0.2)");
   text(
     ctx,
-    `战术商店 · Lv.${state.playerLevel}`,
+    `战术商店 · ${bookLevelForPlayerLevel(state.playerLevel)} 本`,
     812,
     119,
     16,
@@ -696,7 +790,7 @@ const drawPreparation = (
     ctx,
     engine.isMaxPlayerLevel
       ? "已满级"
-      : `XP ${state.experience}/${engine.experienceToNext}`,
+      : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${engine.upgradeCost} 金币`,
     1078,
     120,
     10,
@@ -797,7 +891,8 @@ const drawPreparation = (
   });
 
   const hoveredBuyXp = hover.target?.kind === "buyXp";
-  const canBuyXp = !engine.isMaxPlayerLevel && state.gold >= XP_PURCHASE_COST;
+  const upgradeCost = engine.upgradeCost || 0;
+  const canBuyXp = !engine.isMaxPlayerLevel && state.gold >= upgradeCost;
   fillRounded(
     ctx,
     buyXpRect,
@@ -810,7 +905,7 @@ const drawPreparation = (
   );
   text(
     ctx,
-    engine.isMaxPlayerLevel ? "已满级" : `升本 · ${XP_PURCHASE_COST}`,
+    engine.isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`,
     buyXpRect.x + buyXpRect.w / 2,
     buyXpRect.y + 18,
     10,
@@ -820,7 +915,7 @@ const drawPreparation = (
   );
   text(
     ctx,
-    engine.isMaxPlayerLevel ? "MAX" : `+${XP_PURCHASE_AMOUNT} XP`,
+    engine.isMaxPlayerLevel ? "MAX" : "一次付清",
     buyXpRect.x + buyXpRect.w / 2,
     buyXpRect.y + 35,
     8,
@@ -828,15 +923,44 @@ const drawPreparation = (
     "center",
     800,
   );
-  const hoveredReroll = hover.target?.kind === "reroll";
-  fillRounded(ctx, rerollRect, 12, hoveredReroll ? "#d7a93d" : "#293e4d");
+  const hoveredLock = hover.target?.kind === "lock";
+  fillRounded(
+    ctx,
+    lockRect,
+    9,
+    state.shopLocked
+      ? hoveredLock
+        ? "#b78cff"
+        : "#6d4f96"
+      : hoveredLock
+        ? "#46677d"
+        : "#293e4d",
+  );
   text(
     ctx,
-    "R · 1",
+    state.shopLocked ? "🔒 已锁定" : "锁定商店",
+    lockRect.x + lockRect.w / 2,
+    lockRect.y + lockRect.h / 2,
+    9,
+    state.shopLocked ? "#f4eaff" : "#d6e6f0",
+    "center",
+    800,
+  );
+  const hoveredReroll = hover.target?.kind === "reroll";
+  const canReroll = state.gold >= 1;
+  fillRounded(
+    ctx,
+    rerollRect,
+    9,
+    hoveredReroll && canReroll ? "#d7a93d" : canReroll ? "#4c4030" : "#253746",
+  );
+  text(
+    ctx,
+    "刷新 · 1（R）",
     rerollRect.x + rerollRect.w / 2,
-    rerollRect.y + 24,
-    11,
-    hoveredReroll ? "#101820" : "#d6e6f0",
+    rerollRect.y + rerollRect.h / 2,
+    9,
+    canReroll ? "#f4e4b6" : "#607787",
     "center",
     800,
   );
@@ -893,7 +1017,7 @@ const drawPreparation = (
   );
   text(
     ctx,
-    `Lv.${state.playerLevel} · 上阵 ${engine.boardCount}/${engine.boardCap}`,
+    `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`,
     612,
     570,
     11,
@@ -1376,8 +1500,8 @@ const drawResult = (ctx: CanvasRenderingContext2D, state: GameState) => {
   );
   text(ctx, state.result.headline, 560, 318, 30, "#f2f8ff", "center", 900);
   text(ctx, state.result.detail, 560, 359, 11, "#91a9b9", "center", 500);
-  const experienceText = state.result.experience
-    ? ` · +${state.result.experience} 经验`
+  const experienceText = state.result.upgradeDiscount
+    ? ` · 升本费用 -${state.result.upgradeDiscount}`
     : "";
   if (state.result.won) {
     text(
@@ -1414,7 +1538,7 @@ const drawAugments = (
   text(ctx, "战术契印", WIDTH / 2, 148, 36, "#f3f8ff", "center", 900);
   text(
     ctx,
-    "选择一项永久强化。它将决定接下来三战的构筑方向。",
+    "选择一项永久强化。它会持续影响后续远征与无限挑战。",
     WIDTH / 2,
     188,
     13,
@@ -1663,7 +1787,7 @@ const drawTooltip = (
 ) => {
   const def = UNIT_DEFS[unitId];
   const w = 310;
-  const h = 180;
+  const h = 194;
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
   const y = Math.max(88, Math.min(HEIGHT - h - 12, pointerY + 18));
   ctx.save();
@@ -1705,12 +1829,22 @@ const drawTooltip = (
     600,
   );
   text(ctx, `护甲 ${def.armor}`, x + 205, y + 83, 10, "#8da7b9", "left", 600);
-  text(ctx, def.abilityName, x + 20, y + 112, 12, def.accent, "left", 800);
+  text(
+    ctx,
+    `射程 ${def.range} · 攻击间隔 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`,
+    x + 20,
+    y + 101,
+    9,
+    "#68869a",
+    "left",
+    600,
+  );
+  text(ctx, def.abilityName, x + 20, y + 124, 12, def.accent, "left", 800);
   ctx.font = `500 10px ${FONT}`;
   wrapText(ctx, def.abilityDescription, w - 40)
     .slice(0, 2)
     .forEach((line, index) => {
-      text(ctx, line, x + 20, y + 133 + index * 17, 10, "#a6bac7", "left", 500);
+      text(ctx, line, x + 20, y + 145 + index * 17, 10, "#a6bac7", "left", 500);
     });
   const traitNames = def.traits.map((trait) => TRAITS[trait].name).join(" · ");
   text(ctx, traitNames, x + w - 20, y + h - 16, 10, "#718da0", "right", 700);
@@ -1785,6 +1919,8 @@ const getTooltipUnit = (engine: AutoChessEngine, target: HitTarget) => {
     return { id: target.unitId, star: 1 };
   if ((target.kind === "board" || target.kind === "bench") && target.unitId)
     return { id: target.unitId, star: target.star || 1 };
+  if (target.kind === "enemyPreview")
+    return { id: target.unitId, star: target.star };
   if (target.kind === "fighter")
     return { id: target.unitId, star: target.star };
   return null;
@@ -1858,6 +1994,17 @@ const hitTest = (engine: AutoChessEngine, x: number, y: number): HitTarget => {
     return index >= 0 ? { kind: "starter", index } : null;
   }
   if (state.phase === "preparation") {
+    const enemyIndex = engine.currentWave.units.slice(0, 7).findIndex((_, index) =>
+      Math.hypot(735 - index * 38 - x, 153 - y) <= 22,
+    );
+    if (enemyIndex >= 0) {
+      const enemy = engine.currentWave.units[enemyIndex];
+      return {
+        kind: "enemyPreview",
+        unitId: enemy.id,
+        star: enemy.star || 1,
+      };
+    }
     const traitTarget = traitPillRects(engine, 194).find(({ rect }) =>
       inRect(x, y, rect),
     );
@@ -1889,6 +2036,7 @@ const hitTest = (engine: AutoChessEngine, x: number, y: number): HitTarget => {
         return { kind: "shop", index, unitId: state.shop[index] };
     }
     if (inRect(x, y, buyXpRect)) return { kind: "buyXp" };
+    if (inRect(x, y, lockRect)) return { kind: "lock" };
     if (inRect(x, y, rerollRect)) return { kind: "reroll" };
     if (inRect(x, y, battleRect)) return { kind: "battle" };
     if (inRect(x, y, sellRect)) return { kind: "sell" };
@@ -1924,7 +2072,14 @@ export default function AutoChessGame() {
   const lastFrameRef = useRef<number | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const testTimeScaleRef = useRef(1);
+  const audioRef = useRef<AutoChessAudio | null>(null);
+  const lastPhaseRef = useRef<GameState["phase"]>("title");
+  const lastToastRef = useRef("");
   const [fullscreen, setFullscreen] = useState(false);
+  const [codexOpen, setCodexOpen] = useState(false);
+  const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(
+    DEFAULT_AUDIO_PREFERENCES,
+  );
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
   const [fullscreenMessage, setFullscreenMessage] = useState("");
 
@@ -1944,6 +2099,26 @@ export default function AutoChessGame() {
         : undefined,
     );
   }
+
+  if (!audioRef.current && typeof window !== "undefined")
+    audioRef.current = new AutoChessAudio(audioPreferences);
+
+  const playSound = useCallback((event: GameAudioEvent) => {
+    audioRef.current?.unlock();
+    audioRef.current?.play(event);
+  }, []);
+
+  const updateAudioPreferences = useCallback(
+    (patch: Partial<AudioPreferences>) => {
+      setAudioPreferences((current) => {
+        const next = { ...current, ...patch };
+        audioRef.current?.setPreferences(next);
+        if (!next.muted) audioRef.current?.unlock();
+        return next;
+      });
+    },
+    [],
+  );
 
   const syncCanvasResolution = useCallback(
     (canvas: HTMLCanvasElement) => {
@@ -1997,12 +2172,32 @@ export default function AutoChessGame() {
   }, []);
 
   useEffect(() => {
+    const storedAudioPreferences = loadAudioPreferences();
+    setAudioPreferences(storedAudioPreferences);
+    audioRef.current?.setPreferences(storedAudioPreferences);
+    loadUnitImages(draw);
     const loop = (timestamp: number) => {
       const engine = engineRef.current;
       if (engine) {
         const previous = lastFrameRef.current ?? timestamp;
         engine.update((timestamp - previous) / 1000);
         lastFrameRef.current = timestamp;
+        const phase = engine.state.phase;
+        if (phase !== lastPhaseRef.current) {
+          if (phase === "battle") audioRef.current?.play("battle");
+          if (phase === "augment") audioRef.current?.play("augment");
+          if (phase === "result")
+            audioRef.current?.play(engine.state.result?.won ? "win" : "loss");
+          lastPhaseRef.current = phase;
+        }
+        if (
+          engine.state.toast?.text &&
+          engine.state.toast.text !== lastToastRef.current
+        ) {
+          if (engine.state.toast.text.includes("聚合完成"))
+            audioRef.current?.play("merge");
+          lastToastRef.current = engine.state.toast.text;
+        }
         draw();
       }
       frameRef.current = window.requestAnimationFrame(loop);
@@ -2048,6 +2243,8 @@ export default function AutoChessGame() {
       window.removeEventListener("resize", handleResize);
       delete window.render_game_to_text;
       delete window.advanceTime;
+      audioRef.current?.destroy();
+      audioRef.current = null;
     };
   }, [draw]);
 
@@ -2055,6 +2252,19 @@ export default function AutoChessGame() {
     const onKeyDown = (event: KeyboardEvent) => {
       const engine = engineRef.current;
       if (!engine) return;
+      if (event.key === "Escape" && codexOpen) {
+        event.preventDefault();
+        setCodexOpen(false);
+        return;
+      }
+      if (codexOpen) return;
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLButtonElement ||
+        active instanceof HTMLSelectElement
+      )
+        return;
       if (event.key.toLowerCase() === "f") {
         event.preventDefault();
         toggleFullscreen();
@@ -2072,7 +2282,7 @@ export default function AutoChessGame() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [draw, toggleFullscreen]);
+  }, [codexOpen, draw, toggleFullscreen]);
 
   const canvasPoint = (
     event: React.MouseEvent<HTMLCanvasElement> | React.PointerEvent<HTMLCanvasElement>,
@@ -2123,21 +2333,39 @@ export default function AutoChessGame() {
     const point = canvasPoint(event);
     const target = hitTest(engine, point.x, point.y);
     if (!target) return;
-    if (target.kind === "starter") engine.startRun(STARTERS[target.index].id);
-    else if (target.kind === "shop") engine.buyShopUnit(target.index);
-    else if (target.kind === "board") engine.selectSlot("board", target.index);
+    audioRef.current?.unlock();
+    if (target.kind === "starter") {
+      engine.startRun(STARTERS[target.index].id);
+      playSound("click");
+    } else if (target.kind === "shop") {
+      const before = engine.state.gold;
+      engine.buyShopUnit(target.index);
+      if (engine.state.gold < before) playSound("buy");
+    } else if (target.kind === "board") engine.selectSlot("board", target.index);
     else if (target.kind === "bench") engine.selectSlot("bench", target.index);
-    else if (target.kind === "buyXp") engine.buyExperience();
-    else if (target.kind === "reroll") engine.rerollShop();
-    else if (target.kind === "battle") engine.startBattle();
+    else if (target.kind === "buyXp") {
+      const before = engine.state.playerLevel;
+      engine.buyExperience();
+      if (engine.state.playerLevel > before) playSound("upgrade");
+    } else if (target.kind === "lock") {
+      engine.toggleShopLock();
+      playSound("lock");
+    } else if (target.kind === "reroll") {
+      const before = engine.state.gold;
+      engine.rerollShop();
+      if (engine.state.gold < before) playSound("reroll");
+    } else if (target.kind === "battle") engine.startBattle();
     else if (target.kind === "sell") engine.sellSelected();
-    else if (target.kind === "augment") engine.chooseAugment(target.index);
-    else if (target.kind === "restart") engine.resetToTitle();
+    else if (target.kind === "augment") {
+      engine.chooseAugment(target.index);
+      playSound("augment");
+    } else if (target.kind === "restart") engine.resetToTitle();
     hoverRef.current = { target: hitTest(engine, point.x, point.y), ...point };
     draw();
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    audioRef.current?.unlock();
     if (event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     const engine = engineRef.current;
@@ -2205,38 +2433,115 @@ export default function AutoChessGame() {
         background: "#050b12",
         margin: "0 auto",
         overflow: "hidden",
+        position: "relative",
       }}
     >
+      <style>{`
+        @media (max-width: 600px) {
+          .rift-toolbar-status, .rift-audio-range, .rift-shortcut { display: none !important; }
+          .rift-toolbar { justify-content: center !important; overflow: hidden !important; }
+          .rift-toolbar button { min-width: 0 !important; padding-inline: 10px !important; }
+        }
+      `}</style>
       <div
+        className="rift-toolbar"
         style={{
           width: "100%",
           minHeight: TOOLBAR_HEIGHT,
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          gap: 10,
+          gap: 8,
           padding: "4px 10px",
           boxSizing: "border-box",
           color: "#7892a5",
+          overflowX: "auto",
+          scrollbarWidth: "thin",
           background: "#08131e",
           borderBottom: "1px solid rgba(117, 205, 255, 0.16)",
           font: `600 12px ${FONT}`,
         }}
       >
         <span
+          className="rift-toolbar-status"
           aria-live="polite"
           style={{
             flex: 1,
-            minWidth: 0,
+            minWidth: 140,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
             color: fullscreenMessage ? "#ff9cac" : "#607d91",
           }}
         >
-          {fullscreenMessage || "全屏会自动提升画布清晰度"}
+          {fullscreenMessage || engineRef.current?.state.toast?.text || "图鉴可查看全部棋子、羁绊与商店概率"}
         </span>
-        <span>快捷键 F</span>
+        <button
+          type="button"
+          onClick={() => setCodexOpen(true)}
+          style={{
+            height: 28,
+            padding: "0 12px",
+            border: "1px solid #586d9b",
+            borderRadius: 8,
+            color: "#e3e9ff",
+            background: "#273254",
+            cursor: "pointer",
+            font: `700 12px ${FONT}`,
+          }}
+        >
+          图鉴 / 帮助
+        </button>
+        <button
+          type="button"
+          aria-pressed={audioPreferences.muted}
+          onClick={() => updateAudioPreferences({
+            muted: !audioPreferences.muted,
+          })}
+          style={{
+            height: 28,
+            minWidth: 64,
+            border: "1px solid #3d6077",
+            borderRadius: 8,
+            color: "#d7e9f4",
+            background: "#162b3a",
+            cursor: "pointer",
+            font: `700 12px ${FONT}`,
+          }}
+        >
+          {audioPreferences.muted ? "静音" : "声音"}
+        </button>
+        <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span>乐</span>
+          <input
+            aria-label="音乐音量"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={audioPreferences.musicVolume}
+            onChange={(event) => updateAudioPreferences({
+              musicVolume: Number(event.target.value),
+            })}
+            style={{ width: 58 }}
+          />
+        </span>
+        <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span>效</span>
+          <input
+            aria-label="音效音量"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={audioPreferences.effectsVolume}
+            onChange={(event) => updateAudioPreferences({
+              effectsVolume: Number(event.target.value),
+            })}
+            style={{ width: 58 }}
+          />
+        </span>
+        <span className="rift-shortcut">快捷键 F</span>
         <button
           type="button"
           aria-pressed={fullscreen}
@@ -2259,6 +2564,7 @@ export default function AutoChessGame() {
           {fullscreen ? "退出全屏" : "全屏游玩"}
         </button>
       </div>
+      <Codex open={codexOpen} onClose={() => setCodexOpen(false)} />
       <canvas
         ref={canvasRef}
         width={WIDTH}
@@ -2282,7 +2588,8 @@ export default function AutoChessGame() {
             ? `calc(100dvh - ${TOOLBAR_HEIGHT}px)`
             : "none",
           aspectRatio: `${WIDTH} / ${HEIGHT}`,
-          outline: "none",
+          outline: "2px solid transparent",
+          outlineOffset: -2,
           touchAction: "manipulation",
         }}
       />
