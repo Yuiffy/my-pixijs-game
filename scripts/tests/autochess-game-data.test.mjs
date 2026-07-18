@@ -47,9 +47,9 @@ test("八关后生成持续成长的无限关", () => {
   assert.ok(late.units.some((unit) => (unit.star || 1) >= 2));
 });
 
-test("岁己主题棋子组成早起的鸟儿有饼吃构筑", () => {
+test("岁己主题棋子组成早鸟有饼构筑", () => {
   const forms = ["sui", "sui_blue", "sui_bird", "sui_flower", "sui_cat", "biscuit_sui"];
-  assert.equal(data.TRAITS.sui_forms.name, "早起的鸟儿有饼吃");
+  assert.equal(data.TRAITS.sui_forms.name, "早鸟有饼");
   assert.deepEqual(data.TRAITS.sui_forms.thresholds, [2, 4, 6]);
   assert.deepEqual(
     forms.map((id) => data.UNIT_DEFS[id].tier),

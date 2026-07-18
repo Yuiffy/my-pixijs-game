@@ -275,7 +275,7 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
   },
   sui_forms: {
     id: "sui_forms",
-    name: "早起的鸟儿有饼吃",
+    name: "早鸟有饼",
     family: "阵营",
     color: "#f2a7d4",
     thresholds: [2, 4, 6],
