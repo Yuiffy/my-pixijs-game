@@ -348,7 +348,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#7ef0bb",
     tier: 1,
     cost: 1,
-    traits: ["wild", "vanguard", "mature"],
+    traits: ["wild", "mature", "gen27"],
     hp: 232,
     attack: 16,
     armor: 20,
