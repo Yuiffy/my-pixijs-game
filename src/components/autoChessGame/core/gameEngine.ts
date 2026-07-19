@@ -74,6 +74,32 @@ export interface BattleEffect {
   size?: number;
 }
 
+export interface Projectile {
+  sourceFid: string;
+  team: Team;
+  x: number;
+  y: number;
+  velocityX: number;
+  velocityY: number;
+  radius: number;
+  remainingRange: number;
+  damage: number;
+  burnPower: number;
+  color: string;
+  size: number;
+}
+
+interface ProjectileVolleyShot {
+  sourceFid: string;
+  targetFid: string;
+  delay: number;
+  damage: number;
+  burnPower: number;
+  speed: number;
+  color: string;
+  size: number;
+}
+
 export interface Fighter {
   fid: string;
   unitId: UnitId;
@@ -88,6 +114,7 @@ export interface Fighter {
   attack: number;
   armor: number;
   range: number;
+  baseRange: number;
   attackInterval: number;
   moveSpeed: number;
   cooldown: number;
@@ -113,6 +140,8 @@ export interface Fighter {
   emberAttackPerStack: number;
   emberAttackStacks: number;
   emberAttackStackCap: number;
+  syncAvMember: boolean;
+  syncAvDirection: -1 | 0 | 1;
   gen27Member: boolean;
   gen27Buffed: boolean;
   matureMember: boolean;
@@ -169,6 +198,8 @@ export interface BattleState {
   player: Fighter[];
   enemy: Fighter[];
   effects: BattleEffect[];
+  projectiles: Projectile[];
+  projectileVolley: ProjectileVolleyShot[];
   fieldMedicTimer: number;
   gluttonyTimer: number;
   emberTimer: number;
@@ -247,6 +278,11 @@ const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
 const NORI_APPLE_PIE_SHOTS = 12;
 const NORI_APPLE_PIE_INTERVAL = 0.1;
 const NORI_APPLE_PIE_DAMAGE_MULTIPLIER = 0.38;
+const XUEHUI_VOLLEY_SHOTS = 3;
+const XUEHUI_VOLLEY_INTERVAL = 0.12;
+const XUEHUI_PROJECTILE_SPEED = 780;
+const XUEHUI_PROJECTILE_DAMAGE_MULTIPLIER = 0.84;
+const XUEHUI_PROJECTILE_BURN_MULTIPLIER = 0.62;
 
 export const fighterVisualRadius = (unitId: UnitId, star: 1 | 2 | 3) => {
   if (unitId === "rift_tyrant") return 43;
@@ -876,8 +912,11 @@ export class AutoChessEngine {
       const hostLevel = def.traits.includes("host") ? traitLevel("host") : 0;
       const globalHostLevel = globalTraitLevel("host");
       const dwarfLevel = def.traits.includes("dwarf") ? traitLevel("dwarf") : 0;
+      const aggressionLevel = globalTraitLevel("aggression");
+      const aggressionMember = def.traits.includes("aggression") && aggressionLevel > 0;
       const moveSpeed = def.moveSpeed + [0, 10, 22, 36][globalHostLevel] + (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
 
+      if (aggressionLevel) attack *= 1 + [0, 0.05, 0.1, 0.2][aggressionLevel] + (aggressionMember ? [0, 0.15, 0.3, 0.55][aggressionLevel] : 0);
       if (vanguardLevel) {
         maxHp *= [1, 1.12, 1.25, 1.42][vanguardLevel];
         armor += [0, 8, 18, 32][vanguardLevel];
@@ -937,6 +976,7 @@ export class AutoChessEngine {
         attack,
         armor,
         range: def.range,
+        baseRange: def.range,
         attackInterval,
         moveSpeed: moveSpeed + danceMoveSpeed,
         baseAttack: attack,
@@ -976,9 +1016,15 @@ export class AutoChessEngine {
         gluttonyHolder,
         growthStacks: 0,
         emberMember: emberLevel > 0,
-        emberAttackPerStack: [0, 0.05, 0.08, 0.12][emberLevel],
+        emberAttackPerStack: emberLevel
+          ? (emberLevel && def.traits.includes("ember")
+            ? [0, 0.05, 0.08, 0.12][emberLevel]
+            : (isRanged ? [0, 0, 0.12 / 5, 0.25 / 5][emberLevel] : 0))
+          : 0,
         emberAttackStacks: 0,
         emberAttackStackCap: [0, 5, 5, 5][emberLevel],
+        syncAvMember: owned.id === "xuehui",
+        syncAvDirection: 0,
         gen27Member,
         gen27Buffed: false,
         matureMember: matureLevel > 0,
@@ -1050,6 +1096,7 @@ export class AutoChessEngine {
         attack: def.attack * scale * 1.15,
         armor: def.armor + Math.max(0, this.state.round - 4) * 2,
         range: def.range,
+        baseRange: def.range,
         attackInterval: def.attackInterval,
         moveSpeed: def.moveSpeed,
         baseAttack: def.attack * scale * 1.15,
@@ -1078,6 +1125,8 @@ export class AutoChessEngine {
         emberAttackPerStack: 0,
         emberAttackStacks: 0,
         emberAttackStackCap: 0,
+        syncAvMember: waveUnit.id === "xuehui",
+        syncAvDirection: 0,
         gen27Member: false,
         gen27Buffed: false,
         matureMember: false,
@@ -1130,6 +1179,8 @@ export class AutoChessEngine {
       player,
       enemy,
       effects: [],
+      projectiles: [],
+      projectileVolley: [],
       fieldMedicTimer: 2.5,
       gluttonyTimer: 3,
       emberTimer: 3,
@@ -1268,7 +1319,7 @@ export class AutoChessEngine {
     const side = fighter.avoidSide;
     const candidates = [preferred, ...preferredCandidates];
     [42, 78, 118].forEach((radius) => {
-      [0, side * Math.PI / 2, -side * Math.PI / 2, Math.PI].forEach((angle) => {
+      [0, (side * Math.PI) / 2, (-side * Math.PI) / 2, Math.PI].forEach((angle) => {
         candidates.push({ x: preferred.x + Math.cos(angle) * radius, y: preferred.y + Math.sin(angle) * radius });
       });
     });
@@ -1304,10 +1355,10 @@ export class AutoChessEngine {
     const current = available.find((target) => target.fid === source.targetFid) || null;
     const nearest = this.nearestTarget(source, available);
     source.targetLock = Math.max(0, source.targetLock - dt);
-    const shouldSwitch = !current || !nearest || source.targetLock <= 0 && (
+    const shouldSwitch = !current || !nearest || (source.targetLock <= 0 && (
       source.stuckTime >= STUCK_RECOVERY_DELAY ||
       Math.hypot(nearest.x - source.x, nearest.y - source.y) + TARGET_SWITCH_DISTANCE < Math.hypot(current.x - source.x, current.y - source.y)
-    );
+    ));
     const target = shouldSwitch ? nearest : current;
     if (target && target.fid !== source.targetFid) {
       source.targetFid = target.fid;
@@ -1510,6 +1561,76 @@ export class AutoChessEngine {
     this.state.battle?.effects.push({ ...effect, maxLife: effect.life });
   }
 
+  private fireFixedProjectile(source: Fighter, target: Fighter, shot: ProjectileVolleyShot) {
+    const deltaX = target.x - source.x;
+    const deltaY = target.y - source.y;
+    const distance = Math.hypot(deltaX, deltaY) || 1;
+    source.attackPulse = 0.22;
+    source.attackTargetX = target.x;
+    source.attackTargetY = target.y;
+    this.faceTowardX(source, target.x);
+    this.state.battle?.projectiles.push({
+      sourceFid: source.fid,
+      team: source.team,
+      x: source.x,
+      y: source.y,
+      velocityX: (deltaX / distance) * shot.speed,
+      velocityY: (deltaY / distance) * shot.speed,
+      radius: 7,
+      remainingRange: 880,
+      damage: shot.damage,
+      burnPower: shot.burnPower,
+      color: shot.color,
+      size: shot.size,
+    });
+  }
+
+  private updateProjectileVolley(battle: BattleState, dt: number) {
+    battle.projectileVolley = battle.projectileVolley.filter((shot) => {
+      shot.delay -= dt;
+      if (shot.delay > 0) return true;
+      const source = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === shot.sourceFid);
+      const target = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === shot.targetFid);
+      if (source && target?.alive) this.fireFixedProjectile(source, target, shot);
+      return false;
+    });
+  }
+
+  private updateProjectiles(battle: BattleState, dt: number) {
+    battle.projectiles = battle.projectiles.filter((projectile) => {
+      const source = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === projectile.sourceFid);
+      const targetTeam: Team = projectile.team === "player" ? "enemy" : "player";
+      const targets = this.living(targetTeam).sort((left, right) => left.fid.localeCompare(right.fid));
+      const startX = projectile.x;
+      const startY = projectile.y;
+      const endX = startX + projectile.velocityX * dt;
+      const endY = startY + projectile.velocityY * dt;
+      const stepX = endX - startX;
+      const stepY = endY - startY;
+      const stepLengthSquared = stepX * stepX + stepY * stepY || 1;
+      const hit = targets.reduce<{ target: Fighter; progress: number } | null>((best, target) => {
+        const projection = Math.max(0, Math.min(1, ((target.x - startX) * stepX + (target.y - startY) * stepY) / stepLengthSquared));
+        const closestX = startX + stepX * projection;
+        const closestY = startY + stepY * projection;
+        const intersects = Math.hypot(target.x - closestX, target.y - closestY) <= target.radius + projectile.radius;
+        return intersects && (!best || projection < best.progress) ? { target, progress: projection } : best;
+      }, null);
+      if (hit && source) {
+        projectile.x = startX + stepX * hit.progress;
+        projectile.y = startY + stepY * hit.progress;
+        const dealt = this.damage(source, hit.target, projectile.damage, true);
+        if (dealt > 0) this.addDamageText(hit.target, dealt);
+        if (hit.target.alive && projectile.burnPower > 0) this.applyBurn(source, hit.target, projectile.burnPower);
+        this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
+        return false;
+      }
+      projectile.x = endX;
+      projectile.y = endY;
+      projectile.remainingRange -= Math.hypot(stepX, stepY);
+      return projectile.remainingRange > 0 && projectile.x >= BATTLE_BOUNDS.left - 36 && projectile.x <= BATTLE_BOUNDS.right + 36 && projectile.y >= BATTLE_BOUNDS.top - 36 && projectile.y <= BATTLE_BOUNDS.bottom + 36;
+    });
+  }
+
   private updateNoriApplePie(source: Fighter, dt: number) {
     if (source.applePieShotsRemaining <= 0) return false;
 
@@ -1556,35 +1677,44 @@ export class AutoChessEngine {
     return true;
   }
 
-  private refresh27Buffs(battle: BattleState) {
+  private refreshDynamicCombatModifiers(battle: BattleState) {
     const level = this.getActiveTraits().find((trait) => trait.id === "gen27")?.level || 0;
-    const multiplier = [1, 1.12, 1.2, 1.3][level];
+    const gen27Multiplier = [1, 1.12, 1.2, 1.3][level];
+    const healthRatio = (team: Team) => this.living(team).reduce((sum, fighter) => sum + fighter.hp / fighter.maxHp, 0);
     battle.player.forEach((fighter) => {
       if (!fighter.alive) return;
       const matureSteps = Math.min(6, Math.floor(battle.elapsed / 4));
-      const maturePenalty = fighter.matureMember
+      const matureMoveMultiplier = fighter.matureMember
         ? Math.max(fighter.matureMoveFloor, 1 - matureSteps * 0.05)
         : 1;
       const matureAttackSpeed = fighter.matureMember
         ? Math.max(0, fighter.matureAttackSpeed - matureSteps * 0.01)
         : 0;
-      if (matureAttackSpeed !== fighter.matureAttackSpeedCurrent) {
-        fighter.attackInterval *= (1 + fighter.matureAttackSpeedCurrent) / (1 + matureAttackSpeed);
-        fighter.matureAttackSpeedCurrent = matureAttackSpeed;
-      }
-      if (!fighter.gen27Member) {
-        fighter.moveSpeed = fighter.baseMoveSpeed * maturePenalty;
-        return;
-      }
-      const hasNearbyPartner = battle.player.some(
+      const hasNearbyPartner = fighter.gen27Member && battle.player.some(
         (other) => other !== fighter && other.alive && other.gen27Member &&
           Math.hypot(other.x - fighter.x, other.y - fighter.y) <= 165,
       );
+      const nearbyMultiplier = hasNearbyPartner ? gen27Multiplier : 1;
       fighter.gen27Buffed = hasNearbyPartner;
-      fighter.attack = fighter.baseAttack;
+      let syncMultiplier = 1;
+      if (fighter.syncAvMember) {
+        const opposingTeam: Team = fighter.team === "player" ? "enemy" : "player";
+        const advantage = healthRatio(fighter.team) - healthRatio(opposingTeam);
+        const strength = Math.min(1, Math.abs(advantage) / 0.5);
+        const direction: -1 | 0 | 1 = advantage > 0.0001 ? 1 : advantage < -0.0001 ? -1 : 0;
+        syncMultiplier = 1 - direction * strength * 0.5;
+        if (fighter.syncAvDirection !== direction) {
+          fighter.syncAvDirection = direction;
+          const text = direction > 0 ? "同步领先" : direction < 0 ? "同步落后" : "同步持平";
+          this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: UNIT_DEFS[fighter.unitId].accent, text, life: 0.55, size: 10 });
+        }
+      }
+      fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
       fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
-        ((hasNearbyPartner ? multiplier : 1) * (1 + fighter.matureAttackSpeedCurrent));
-      fighter.moveSpeed = fighter.baseMoveSpeed * (hasNearbyPartner ? multiplier : 1) * maturePenalty;
+        (nearbyMultiplier * (1 + matureAttackSpeed) * syncMultiplier);
+      fighter.moveSpeed = fighter.baseMoveSpeed * matureMoveMultiplier * nearbyMultiplier * syncMultiplier;
+      fighter.range = fighter.baseRange * syncMultiplier;
+      fighter.matureAttackSpeedCurrent = matureAttackSpeed;
     });
   }
 
@@ -1600,13 +1730,15 @@ export class AutoChessEngine {
         this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#b9a274", text: "慢一点", life: 0.65, size: 10 }),
       );
     }
-    this.refresh27Buffs(battle);
+    this.refreshDynamicCombatModifiers(battle);
     battle.bannerTimer = Math.max(0, battle.bannerTimer - dt);
 
     battle.effects.forEach((effect) => {
       effect.life -= dt;
     });
     battle.effects = battle.effects.filter((effect) => effect.life > 0);
+    this.updateProjectileVolley(battle, dt);
+    this.updateProjectiles(battle, dt);
 
     const emberLevel = this.getActiveTraits().find((trait) => trait.id === "ember")?.level || 0;
     if (emberLevel) {
@@ -2331,6 +2463,25 @@ export class AutoChessEngine {
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: 136 });
         break;
       }
+      case "xuehui": {
+        [...targets]
+          .sort((left, right) => Math.hypot(left.x - source.x, left.y - source.y) - Math.hypot(right.x - source.x, right.y - source.y) || left.fid.localeCompare(right.fid))
+          .slice(0, XUEHUI_VOLLEY_SHOTS)
+          .forEach((target, index) => {
+            this.state.battle?.projectileVolley.push({
+              sourceFid: source.fid,
+              targetFid: target.fid,
+              delay: index * XUEHUI_VOLLEY_INTERVAL,
+              damage: source.attack * XUEHUI_PROJECTILE_DAMAGE_MULTIPLIER,
+              burnPower: source.attack * XUEHUI_PROJECTILE_BURN_MULTIPLIER,
+              speed: XUEHUI_PROJECTILE_SPEED,
+              color: def.accent,
+              size: 5,
+            });
+          });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.42, size: 76 });
+        break;
+      }
       case "rei": {
         const center = densest(targets);
         if (!center) break;
@@ -2386,13 +2537,13 @@ export class AutoChessEngine {
     });
   }
 
-  private damage(source: Fighter, target: Fighter, rawAmount: number) {
+  private damage(source: Fighter, target: Fighter, rawAmount: number, allowInactiveSource = false) {
     const dodged = target.dodgeChance > 0 && this.rng.next() < target.dodgeChance;
     if (dodged) {
       this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: "#d9e6f4", text: "闪避", life: 0.55, size: 12 });
       return -1;
     }
-    if (!source.alive || !target.alive) return 0;
+    if ((!source.alive && !allowInactiveSource) || !target.alive) return 0;
     let amount = rawAmount * (source.weakenTime > 0 ? 0.72 : 1);
     if (
       source.team === "player" &&

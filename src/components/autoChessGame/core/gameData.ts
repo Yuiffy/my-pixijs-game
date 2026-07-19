@@ -17,6 +17,7 @@ export const TRAIT_IDS = [
   "traffic",
   "mature",
   "dance",
+  "aggression",
 ] as const;
 
 export type TraitId = (typeof TRAIT_IDS)[number];
@@ -58,6 +59,7 @@ export const SHOP_UNIT_IDS = [
   "akirinco",
   "lovely",
   "mumu",
+  "xuehui",
   // 5 费
   "biscuit_sui",
   "cinder_ram",
@@ -255,6 +257,7 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
   traffic: { id: "traffic", name: "流量", family: "关系", color: "#ff7197", thresholds: [2, 4, 6], description: "被更多人看见，才有继续输出的底气。", bonuses: ["流量成员获得 8% 吸血", "流量成员获得 15% 吸血；所有远程友军获得 5% 吸血", "流量成员获得 24% 吸血；所有远程友军获得 10% 吸血"] },
   mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速每 4 秒降低 1 个百分点直至正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
   dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏就能把舞台气氛带进战场。", bonuses: ["跳舞成员 +12% 攻速、+10 移速", "跳舞成员 +26% 攻速、+20 移速；所有远程友军 +8% 攻速、+6 移速", "跳舞成员 +45% 攻速、+32 移速；所有远程友军 +16% 攻速、+12 移速"] },
+  aggression: { id: "aggression", name: "攻击性", family: "关系", color: "#ff596f", thresholds: [2, 4, 6], description: "发言要有攻击性：成员直接提高攻击力，也会带动全队火力。", bonuses: ["攻击性成员 +15% 攻击力；全体友军 +5% 攻击力", "攻击性成员 +30% 攻击力；全体友军 +10% 攻击力", "攻击性成员 +55% 攻击力；全体友军 +20% 攻击力"] },
 };
 
 export const traitLevelForCount = (trait: TraitDefinition, count: number) =>
@@ -294,6 +297,7 @@ const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energ
   akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96 },
   lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68 },
   mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54 },
+  xuehui: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 270, moveSpeed: 58 },
   rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54 },
   rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 42 },
   lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56 },
@@ -444,7 +448,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ffabb5",
     tier: 1,
     cost: 1,
-    traits: ["vanguard", "dance"],
+    traits: ["vanguard", "dance", "aggression"],
     hp: 244,
     attack: 17,
     armor: 24,
@@ -578,7 +582,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ff9a64",
     tier: 5,
     cost: 5,
-    traits: ["ember", "mystic", "mature"],
+    traits: ["ember", "mystic", "mature", "aggression"],
     hp: 320,
     attack: 34,
     armor: 20,
@@ -600,7 +604,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#92c8ff",
     tier: 2,
     cost: 2,
-    traits: ["ranger", "skeleton_soldier"],
+    traits: ["ranger", "skeleton_soldier", "aggression"],
     hp: 148,
     attack: 25,
     armor: 8,
@@ -667,7 +671,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#f6a8d4",
     tier: 3,
     cost: 3,
-    traits: ["mystic", "chuanmei"],
+    traits: ["mystic", "chuanmei", "aggression"],
     hp: 184,
     attack: 27,
     armor: 12,
@@ -822,7 +826,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   meme: unit({
     id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 3, cost: 3,
-    traits: ["wild", "vanguard"], hp: 260, attack: 16, armor: 25, range: 60, attackInterval: 1.18, moveSpeed: 48,
+    traits: ["wild", "vanguard", "aggression"], hp: 260, attack: 16, armor: 25, range: 60, attackInterval: 1.18, moveSpeed: 48,
     abilityName: "夺回人生", abilityDescription: "震晕附近敌人并造成伤害，随后按造成伤害回复自身生命。", shop: true,
   }),
   zeyin: unit({
@@ -864,6 +868,11 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     id: "mumu", name: "沐霂·领舞开场", title: "四禧丸子 · 领舞前排", glyph: "沐", color: "#5b7992", accent: "#a9e5ff", tier: 4, cost: 4,
     traits: ["vanguard", "dance"], hp: 330, attack: 34, armor: 29, range: 52, attackInterval: 0.96, moveSpeed: 68,
     abilityName: "领舞开场", abilityDescription: "冲至敌人最密集处，造成范围伤害并为附近友军提供护盾。", shop: true,
+  }),
+  xuehui: unit({
+    id: "xuehui", name: "雪绘", title: "雪绘 · 同步视听", glyph: "绘", color: "#445a8e", accent: "#8dc8ff", tier: 4, cost: 4,
+    traits: ["dwarf", "ember", "aggression"], hp: 205, attack: 37, armor: 13, range: 270, attackInterval: 0.88, moveSpeed: 58,
+    abilityName: "同步视听", abilityDescription: "己方越优势，自身攻速移速越低、射程越近；越劣势则反之。快速向三个不同敌人方向射出子弹，命中造成伤害和灼烧。", shop: true,
   }),
   rei: unit({
     id: "rei", name: "病院坂灵", title: "病院坂灵Rei · 群体法师", glyph: "灵", color: "#735779", accent: "#e8b5ff", tier: 5, cost: 5,

@@ -1692,6 +1692,33 @@ const drawFighter = (
   ctx.restore();
 };
 
+const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState) => {
+  const battle = state.battle;
+  if (!battle) return;
+  battle.projectiles.forEach((projectile) => {
+    const speed = Math.hypot(projectile.velocityX, projectile.velocityY) || 1;
+    const trailLength = 22;
+    const trailX = projectile.x - ((projectile.velocityX / speed) * trailLength);
+    const trailY = projectile.y - ((projectile.velocityY / speed) * trailLength);
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.strokeStyle = projectile.color;
+    ctx.lineWidth = projectile.size + 3;
+    ctx.lineCap = "round";
+    ctx.shadowColor = projectile.color;
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.moveTo(trailX, trailY);
+    ctx.lineTo(projectile.x, projectile.y);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(248, 252, 255, 0.98)";
+    ctx.beginPath();
+    ctx.arc(projectile.x, projectile.y, projectile.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+};
+
 const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => {
   const battle = state.battle;
   if (!battle) return;
@@ -1865,6 +1892,7 @@ const drawBattle = (
     .filter((fighter) => fighter.alive)
     .sort((a, b) => a.y - b.y)
     .forEach((fighter) => drawFighter(ctx, fighter, state.visualTime));
+  drawProjectiles(ctx, state);
   drawEffects(ctx, state);
 
   if (battle.bannerTimer > 0) {

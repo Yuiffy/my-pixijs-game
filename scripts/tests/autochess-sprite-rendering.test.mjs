@@ -42,6 +42,15 @@ test("弹道特效同时绘制柔光外层与明亮核心", () => {
   assert.match(drawEffects[0], /ctx\.shadowBlur = 18/);
 });
 
+test("实体子弹按实时位置和速度绘制尾迹", () => {
+  const drawProjectiles = renderer.match(/const drawProjectiles = \([\s\S]*?\n};/);
+  assert.ok(drawProjectiles);
+  assert.match(drawProjectiles[0], /battle\.projectiles\.forEach/);
+  assert.match(drawProjectiles[0], /projectile\.velocityX/);
+  assert.match(drawProjectiles[0], /trailLength/);
+  assert.match(renderer, /drawProjectiles\(ctx, state\)/);
+});
+
 test("结算页使用显式继续按钮推进阶段", () => {
   assert.match(renderer, /resultContinueRect/);
   assert.match(renderer, /resultContinueLabel/);

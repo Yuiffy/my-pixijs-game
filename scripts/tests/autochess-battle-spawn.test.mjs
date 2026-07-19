@@ -200,6 +200,73 @@ test("深夜档会随战斗时间逐步提高攻击力", () => {
   assert.ok(fighter.attack > initialAttack);
 });
 
+test("攻击性为成员与全队分别提供攻击力", () => {
+  const engine = createEngine(56);
+  engine.state.playerLevel = 8;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "xuehui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "meme", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "sui", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sui_blue", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "sui_flower", star: 1 };
+  engine.state.board[5] = { uid: 6, id: "cinder_ram", star: 1 };
+  engine.state.board[6] = { uid: 7, id: "mossback", star: 1 };
+  engine.startBattle();
+  const xuehui = engine.state.battle?.player.find((fighter) => fighter.unitId === "xuehui");
+  const control = engine.state.battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(xuehui && control);
+  assert.equal(xuehui.baseAttack, 37 * 1.15 * 1.75);
+  assert.equal(control.baseAttack, 15 * 1.15 * 1.2);
+});
+
+test("同步视听按战力差线性调整属性且不重复叠加", () => {
+  const engine = createEngine(57);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "xuehui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "meme", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const xuehui = battle?.player.find((fighter) => fighter.unitId === "xuehui");
+  assert.ok(battle && xuehui);
+  battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
+  engine.update(0.05);
+  assert.equal(xuehui.range, xuehui.baseRange * 0.5);
+  assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed * 0.5);
+  engine.update(0.05);
+  assert.equal(xuehui.range, xuehui.baseRange * 0.5);
+  battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
+  battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp; });
+  engine.update(0.05);
+  assert.equal(xuehui.range, xuehui.baseRange * 1.5);
+  assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed * 1.5);
+});
+
+test("雪绘固定方向子弹可被路径上的首个敌人拦截并施加灼烧", () => {
+  const engine = createEngine(58);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "xuehui", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  assert.ok(battle && source);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.hp = fighter.maxHp = 9999;
+    fighter.armor = 0;
+    fighter.attack = 0;
+    fighter.x = index === 0 ? 460 : 800;
+    fighter.y = source.y;
+  });
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.ok(battle.projectileVolley.length > 0 || battle.projectiles.length > 0);
+  for (let tick = 0; tick < 25; tick += 1) engine.update(0.05);
+  const interceptor = battle.enemy[0];
+  assert.ok(interceptor.hp < interceptor.maxHp);
+  assert.ok(interceptor.burnTime > 0);
+});
+
 test("能量 profile 会落地为个体上限、持续回能与攻击分类", () => {
   const engine = createEngine(44);
   engine.state.playerLevel = 4;
