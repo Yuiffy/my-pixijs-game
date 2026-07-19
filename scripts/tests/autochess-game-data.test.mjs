@@ -103,11 +103,13 @@ test("八关后生成持续成长的无限关", () => {
   assert.ok(late.units.some((unit) => (unit.star || 1) >= 2));
 });
 
-test("浣熊射手试点使用原创展示文案与独立精灵头像", async () => {
+test("浣熊店员使用原创展示文案与独立精灵头像", async () => {
   const unit = data.UNIT_DEFS.gale_archer;
-  assert.equal(unit.name, "浣熊射手");
-  assert.equal(unit.title, "风痕巡林者 · 远程输出");
+  assert.equal(unit.name, "浣熊店员");
+  assert.equal(unit.title, "浣熊店员 · 前排照料");
   assert.equal(unit.glyph, "浣");
+  assert.equal(unit.abilityName, "端茶倒水");
+  assert.deepEqual(unit.traits, ["wild", "vanguard", "gen27"]);
   assert.equal(unit.portraitStyle, "sprite");
   assert.equal(unit.portrait, "/images/autochess/portraits/raccoon-archer.png");
   assert.doesNotMatch(`${unit.name} ${unit.title}`, /十六萤|Izayoi/);
@@ -121,10 +123,11 @@ test("浣熊射手试点使用原创展示文案与独立精灵头像", async ()
 
 test("莉蔻使用独立精灵头像并加入矮人联盟", async () => {
   const unit = data.UNIT_DEFS.ember_blade;
-  assert.equal(unit.name, "橙色兔子");
-  assert.equal(unit.title, "莉蔻Liko · 近战灼烧");
+  assert.equal(unit.name, "兔子射手");
+  assert.equal(unit.title, "莉蔻Liko · 远程灼烧");
   assert.equal(unit.glyph, "蔻");
-  assert.equal(unit.abilityName, "胡萝卜突击");
+  assert.equal(unit.abilityName, "胡萝卜射击");
+  assert.equal(unit.range, 225);
   assert.ok(unit.traits.includes("dwarf"));
   assert.equal(data.UNIT_DEFS.nori.name, "能能弄你");
   assert.equal(data.UNIT_DEFS.nori.abilityName, "苹果派");

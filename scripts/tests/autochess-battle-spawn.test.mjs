@@ -40,6 +40,7 @@ test("已选择的天赋会按回合记入历史", () => {
 
   engine.chooseAugment(1);
 
+  assert.deepEqual(engine.state.starterHistory, [{ id: "bastion" }]);
   assert.deepEqual(engine.state.augments, ["overclock"]);
   assert.deepEqual(engine.state.augmentHistory, [{ round: 2, id: "overclock" }]);
   engine.state.phase = "augment";
@@ -53,6 +54,10 @@ test("已选择的天赋会按回合记入历史", () => {
     { round: 5, id: "sharp_edge" },
   ]);
   const textState = JSON.parse(engine.renderTextState());
+  assert.deepEqual(textState.starterHistory, [{
+    name: "果冻风纪",
+    description: "携带果冻风纪开局；基地生命 +4，所有护盾效果 +30%。",
+  }]);
   assert.deepEqual(textState.augmentHistory, [
     {
       round: 2,

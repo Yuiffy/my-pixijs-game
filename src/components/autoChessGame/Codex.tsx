@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import type { AugmentSelection } from "./core/gameEngine";
+import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
   AUGMENTS,
   PLAYER_LEVELS,
@@ -23,6 +23,7 @@ type TraitFamilyFilter = "all" | "阵营" | "职业" | "关系";
 interface CodexProps {
   open: boolean;
   augmentHistory: AugmentSelection[];
+  starterHistory: StarterSelection[];
   onClose: () => void;
 }
 
@@ -41,7 +42,7 @@ const cellStyle = {
   textAlign: "center" as const,
 };
 
-export default function Codex({ open, augmentHistory, onClose }: CodexProps) {
+export default function Codex({ open, augmentHistory, starterHistory, onClose }: CodexProps) {
   const [tab, setTab] = useState<Tab>("units");
   const [tier, setTier] = useState<number | "all">("all");
   const [traitFamily, setTraitFamily] = useState<TraitFamilyFilter>("all");
@@ -281,13 +282,25 @@ export default function Codex({ open, augmentHistory, onClose }: CodexProps) {
         )}
         {tab === "runTalents" && (
           <section>
-            <h2 style={{ margin: "0 0 8px" }}>本局已选天赋</h2>
-            <p style={{ color: "#8da7b8" }}>按选择顺序记录本局获得的天赋及其完整效果。</p>
-            {augmentHistory.length === 0 ? (
+            <h2 style={{ margin: "0 0 8px" }}>本局选择记录</h2>
+            <p style={{ color: "#8da7b8" }}>开局选择与后续天赋会按获得顺序记录在这里。</p>
+            {starterHistory.map(({ id }) => {
+              const starter = STARTERS.find((item) => item.id === id);
+              if (!starter) return null;
+              return (
+                <article key={`starter-${id}`} style={{ marginBottom: 12, padding: 14, border: `1px solid ${starter.color}88`, borderRadius: 12, background: `${starter.color}0d` }}>
+                  <div style={{ color: "#8da7b8", fontSize: 12, fontWeight: 700 }}>开局选择</div>
+                  <strong style={{ display: "block", marginTop: 6, color: starter.color, fontSize: 18 }}>{starter.name}</strong>
+                  <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{starter.description}</p>
+                </article>
+              );
+            })}
+            {starterHistory.length === 0 && augmentHistory.length === 0 && (
               <div style={{ padding: 20, border: "1px dashed #345269", borderRadius: 12, color: "#8da7b8", background: "#0d1d2a" }}>
-                本局尚未选择天赋；第 2 战后可进行首次选择。
+                本局尚未开始；选择开局后，后续天赋也会记录在这里。
               </div>
-            ) : (
+            )}
+            {augmentHistory.length > 0 && (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 12 }}>
                 {augmentHistory.map(({ round, id }) => {
                   const augment = AUGMENTS.find((item) => item.id === id);

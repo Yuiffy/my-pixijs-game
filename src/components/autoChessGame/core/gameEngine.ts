@@ -161,6 +161,10 @@ export interface AugmentSelection {
   id: AugmentId;
 }
 
+export interface StarterSelection {
+  id: StarterId;
+}
+
 export interface GameState {
   phase: GamePhase;
   seed: number;
@@ -178,6 +182,7 @@ export interface GameState {
   streak: number;
   victories: number;
   starter: StarterId | null;
+  starterHistory: StarterSelection[];
   board: Array<OwnedUnit | null>;
   bench: Array<OwnedUnit | null>;
   shop: Array<UnitId | null>;
@@ -267,6 +272,7 @@ export class AutoChessEngine {
       streak: 0,
       victories: 0,
       starter: null,
+      starterHistory: [],
       board: emptySlots<OwnedUnit>(BOARD_SIZE),
       bench: emptySlots<OwnedUnit>(BENCH_SIZE),
       shop: emptySlots<UnitId>(SHOP_SIZE),
@@ -304,6 +310,7 @@ export class AutoChessEngine {
     this.state = this.createInitialState(seed, best);
     this.state.phase = "preparation";
     this.state.starter = starterId;
+    this.state.starterHistory.push({ id: starterId });
     this.state.hp = starterId === "bastion" ? 24 : 20;
     this.state.maxHp = this.state.hp;
     this.state.gold = starterId === "echo" ? 9 : 8;
@@ -1464,25 +1471,19 @@ export class AutoChessEngine {
         break;
       }
       case "gale_archer": {
-        const ordered = [...targets].sort(
-          (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
-        );
-        for (let shot = 0; shot < 3; shot += 1) {
-          const target = ordered[shot % ordered.length];
-          if (!target?.alive) continue;
-          const dealt = this.damage(source, target, source.attack * 0.72);
-          if (dealt > 0) this.addDamageText(target, dealt);
-          this.addEffect({
-            kind: "line",
-            x: source.x,
-            y: source.y,
-            x2: target.x,
-            y2: target.y,
-            color: def.accent,
-            life: 0.28 + shot * 0.06,
-            size: 3,
-          });
-        }
+        const target = weakest(allies);
+        if (!target) break;
+        this.heal(source, target, target.maxHp * 0.2 + source.attack);
+        this.addEffect({
+          kind: "line",
+          x: source.x,
+          y: source.y,
+          x2: target.x,
+          y2: target.y,
+          color: def.accent,
+          life: 0.5,
+          size: 4,
+        });
         break;
       }
       case "rift_stalker": {
@@ -2335,6 +2336,10 @@ export class AutoChessEngine {
       augments: this.state.augments.map(
         (id) => AUGMENTS.find((augment) => augment.id === id)?.name,
       ),
+      starterHistory: this.state.starterHistory.map(({ id }) => {
+        const starter = STARTERS.find((item) => item.id === id);
+        return { name: starter?.name, description: starter?.description };
+      }),
       augmentHistory: this.state.augmentHistory.map(({ round, id }) => ({
         round,
         name: AUGMENTS.find((augment) => augment.id === id)?.name,

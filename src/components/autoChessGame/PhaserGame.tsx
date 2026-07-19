@@ -2897,6 +2897,7 @@ export default function AutoChessGame() {
       <Codex
         open={codexOpen}
         augmentHistory={engineRef.current?.state.augmentHistory || []}
+        starterHistory={engineRef.current?.state.starterHistory || []}
         onClose={() => setCodexOpen(false)}
       />
       <canvas
