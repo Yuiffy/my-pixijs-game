@@ -35,6 +35,14 @@ export type GamePhase =
 export type Team = "player" | "enemy";
 
 const CONTACT_ATTACK_BUFFER = 12;
+const PLACEMENT_MARGIN = 8;
+const TARGET_LOCK_DURATION = 0.45;
+const TARGET_SWITCH_DISTANCE = 28;
+const AVOID_LOOK_AHEAD = 78;
+const AVOIDANCE_RADIUS = 118;
+const STUCK_RECOVERY_DELAY = 0.65;
+const STUCK_RECOVERY_DURATION = 0.42;
+const SEPARATION_PASSES = 5;
 
 export interface OwnedUnit {
   uid: number;
@@ -133,6 +141,14 @@ export interface Fighter {
   jumpFromY: number;
   jumpToX: number;
   jumpToY: number;
+  targetFid: string | null;
+  targetLock: number;
+  lastNavX: number;
+  lastNavY: number;
+  lastTargetDistance: number;
+  stuckTime: number;
+  avoidSide: -1 | 1;
+  avoidTime: number;
   damageDealt: number;
   healingDone: number;
   shieldingDone: number;
@@ -991,6 +1007,14 @@ export class AutoChessEngine {
         jumpFromY: spawn.y,
         jumpToX: spawn.x,
         jumpToY: spawn.y,
+        targetFid: null,
+        targetLock: 0,
+        lastNavX: spawn.x,
+        lastNavY: spawn.y,
+        lastTargetDistance: Infinity,
+        stuckTime: 0,
+        avoidSide: owned.uid % 2 === 0 ? 1 : -1,
+        avoidTime: 0,
         damageDealt: 0,
         healingDone: 0,
         shieldingDone: 0,
@@ -1081,6 +1105,14 @@ export class AutoChessEngine {
         jumpFromY: 180 + row * 165,
         jumpToX: 990 - rank * 96,
         jumpToY: 180 + row * 165,
+        targetFid: null,
+        targetLock: 0,
+        lastNavX: 990 - rank * 96,
+        lastNavY: 180 + row * 165,
+        lastTargetDistance: Infinity,
+        stuckTime: 0,
+        avoidSide: index % 2 === 0 ? -1 : 1,
+        avoidTime: 0,
         damageDealt: 0,
         healingDone: 0,
         shieldingDone: 0,
@@ -1141,6 +1173,145 @@ export class AutoChessEngine {
     if (Math.abs(deltaX) > 0.5) fighter.facingX = deltaX < 0 ? -1 : 1;
   }
 
+  private clampFighterPosition(fighter: Fighter, point: { x: number; y: number }) {
+    return {
+      x: Math.max(BATTLE_BOUNDS.left + fighter.radius, Math.min(BATTLE_BOUNDS.right - fighter.radius, point.x)),
+      y: Math.max(BATTLE_BOUNDS.top + fighter.radius, Math.min(BATTLE_BOUNDS.bottom - fighter.radius, point.y)),
+    };
+  }
+
+  private occupiedPosition(fighter: Fighter) {
+    return fighter.jumpTime > 0
+      ? { x: fighter.jumpToX, y: fighter.jumpToY }
+      : { x: fighter.x, y: fighter.y };
+  }
+
+  private findOpenPlacement(
+    fighter: Fighter,
+    preferred: { x: number; y: number },
+    occupants: Fighter[],
+    margin = PLACEMENT_MARGIN,
+    preferredCandidates: Array<{ x: number; y: number }> = [],
+  ) {
+    const side = fighter.avoidSide;
+    const candidates = [preferred, ...preferredCandidates];
+    [42, 78, 118].forEach((radius) => {
+      [0, side * Math.PI / 2, -side * Math.PI / 2, Math.PI].forEach((angle) => {
+        candidates.push({ x: preferred.x + Math.cos(angle) * radius, y: preferred.y + Math.sin(angle) * radius });
+      });
+    });
+    let best = this.clampFighterPosition(fighter, candidates[0]);
+    let bestClearance = -Infinity;
+    for (const candidate of candidates) {
+      const clamped = this.clampFighterPosition(fighter, candidate);
+      const clearance = occupants.reduce((minimum, other) => {
+        if (!other.alive || other === fighter) return minimum;
+        const position = this.occupiedPosition(other);
+        return Math.min(minimum, Math.hypot(clamped.x - position.x, clamped.y - position.y) - fighter.radius - other.radius - margin);
+      }, Infinity);
+      if (clearance >= 0) return clamped;
+      if (clearance > bestClearance) {
+        best = clamped;
+        bestClearance = clearance;
+      }
+    }
+    return best;
+  }
+
+  private relocateFighter(source: Fighter, preferred: { x: number; y: number }) {
+    const battle = this.state.battle;
+    if (!battle) return;
+    const occupants = [...battle.player, ...battle.enemy].filter((fighter) => fighter !== source);
+    const landing = this.findOpenPlacement(source, preferred, occupants);
+    source.x = landing.x;
+    source.y = landing.y;
+  }
+
+  private resolveCombatTarget(source: Fighter, targets: Fighter[], dt: number) {
+    const available = targets.filter((target) => target.alive && !target.jumpPending && target.jumpTime <= 0);
+    const current = available.find((target) => target.fid === source.targetFid) || null;
+    const nearest = this.nearestTarget(source, available);
+    source.targetLock = Math.max(0, source.targetLock - dt);
+    const shouldSwitch = !current || !nearest || source.targetLock <= 0 && (
+      source.stuckTime >= STUCK_RECOVERY_DELAY ||
+      Math.hypot(nearest.x - source.x, nearest.y - source.y) + TARGET_SWITCH_DISTANCE < Math.hypot(current.x - source.x, current.y - source.y)
+    );
+    const target = shouldSwitch ? nearest : current;
+    if (target && target.fid !== source.targetFid) {
+      source.targetFid = target.fid;
+      source.targetLock = TARGET_LOCK_DURATION;
+      source.stuckTime = 0;
+      source.lastTargetDistance = Infinity;
+    }
+    return target;
+  }
+
+  private moveTowardCombatTarget(fighter: Fighter, target: Fighter, fighters: Fighter[], dt: number) {
+    const targetDistance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
+    const preferredRange = Math.max(fighter.range, fighter.radius + target.radius + CONTACT_ATTACK_BUFFER);
+    if (targetDistance <= preferredRange) {
+      fighter.stuckTime = 0;
+      fighter.lastTargetDistance = targetDistance;
+      fighter.lastNavX = fighter.x;
+      fighter.lastNavY = fighter.y;
+      return false;
+    }
+
+    fighter.avoidTime = Math.max(0, fighter.avoidTime - dt);
+    const towardX = (target.x - fighter.x) / targetDistance;
+    const towardY = (target.y - fighter.y) / targetDistance;
+    const directPoint = {
+      x: target.x - towardX * preferredRange,
+      y: target.y - towardY * preferredRange,
+    };
+    const blockedAhead = fighters.some((other) => {
+      if (!other.alive || other === fighter || other === target || other.jumpTime > 0) return false;
+      const relativeX = other.x - fighter.x;
+      const relativeY = other.y - fighter.y;
+      const forward = relativeX * towardX + relativeY * towardY;
+      const lateral = Math.abs(relativeX * -towardY + relativeY * towardX);
+      return forward > 0 && forward < AVOID_LOOK_AHEAD && lateral < fighter.radius + other.radius + 12;
+    });
+    const lateralOffset = fighter.avoidTime > 0 || blockedAhead ? fighter.avoidSide * 56 : 0;
+    const desired = this.findOpenPlacement(
+      fighter,
+      { x: directPoint.x - towardY * lateralOffset, y: directPoint.y + towardX * lateralOffset },
+      fighters.filter((other) => other !== target),
+      2,
+    );
+    let moveX = desired.x - fighter.x;
+    let moveY = desired.y - fighter.y;
+    let moveDistance = Math.hypot(moveX, moveY);
+    if (moveDistance < 0.01) {
+      moveX = towardX;
+      moveY = towardY;
+      moveDistance = 1;
+    }
+    const travel = Math.min(moveDistance, fighter.moveSpeed * (fighter.slowTime > 0 ? 0.55 : 1) * dt);
+    const previousX = fighter.x;
+    const previousY = fighter.y;
+    fighter.x += (moveX / moveDistance) * travel;
+    fighter.y += (moveY / moveDistance) * travel;
+    const clamped = this.clampFighterPosition(fighter, fighter);
+    fighter.x = clamped.x;
+    fighter.y = clamped.y;
+    this.faceTowardX(fighter, target.x);
+
+    const moved = Math.hypot(fighter.x - previousX, fighter.y - previousY);
+    const newDistance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
+    if (moved < 0.5 && newDistance >= fighter.lastTargetDistance - 0.5) fighter.stuckTime += dt;
+    else fighter.stuckTime = 0;
+    if (fighter.stuckTime >= STUCK_RECOVERY_DELAY) {
+      fighter.avoidSide = fighter.avoidSide === 1 ? -1 : 1;
+      fighter.avoidTime = STUCK_RECOVERY_DURATION;
+      fighter.stuckTime = 0;
+    }
+    fighter.lastNavX = fighter.x;
+    fighter.lastNavY = fighter.y;
+    fighter.lastTargetDistance = newDistance;
+    return true;
+  }
+
   private prepareAssassinJump(fighter: Fighter, battle: BattleState) {
     const backlineTargets = battle.enemy
       .filter((enemy) => enemy.alive)
@@ -1149,12 +1320,7 @@ export class AutoChessEngine {
     if (!target) return false;
 
     const occupied = [...battle.player, ...battle.enemy]
-      .filter((other) => other.alive && other !== fighter)
-      .map((other) => ({
-        x: other.jumpTime > 0 ? other.jumpToX : other.x,
-        y: other.jumpTime > 0 ? other.jumpToY : other.y,
-        radius: other.radius,
-      }));
+      .filter((other) => other.alive && other !== fighter);
     const behindDirection = target.team === "enemy" ? 1 : -1;
     const baseDistance = target.radius + fighter.radius + 12;
     const candidates = [
@@ -1163,24 +1329,8 @@ export class AutoChessEngine {
       { x: target.x + behindDirection * baseDistance, y: target.y + 62 },
       { x: target.x, y: target.y - baseDistance },
       { x: target.x, y: target.y + baseDistance },
-    ].map((candidate) => ({
-      x: Math.max(
-        BATTLE_BOUNDS.left + fighter.radius,
-        Math.min(BATTLE_BOUNDS.right - fighter.radius, candidate.x),
-      ),
-      y: Math.max(
-        BATTLE_BOUNDS.top + fighter.radius,
-        Math.min(BATTLE_BOUNDS.bottom - fighter.radius, candidate.y),
-      ),
-    }));
-    const landing =
-      candidates.find((candidate) =>
-        occupied.every(
-          (other) =>
-            Math.hypot(candidate.x - other.x, candidate.y - other.y) >=
-            fighter.radius + other.radius + 8,
-        ),
-      ) || candidates[0];
+    ];
+    const landing = this.findOpenPlacement(fighter, candidates[0], occupied, PLACEMENT_MARGIN, candidates.slice(1));
 
     fighter.jumpFromX = fighter.x;
     fighter.jumpFromY = fighter.y;
@@ -1201,7 +1351,8 @@ export class AutoChessEngine {
   }
 
   private resolveFighterSeparation(fighters: Fighter[]) {
-    for (let pass = 0; pass < 2; pass += 1) {
+    for (let pass = 0; pass < SEPARATION_PASSES; pass += 1) {
+      let resolvedOverlap = false;
       for (let leftIndex = 0; leftIndex < fighters.length; leftIndex += 1) {
         const left = fighters[leftIndex];
         if (!left.alive || left.jumpTime > 0) continue;
@@ -1213,28 +1364,36 @@ export class AutoChessEngine {
           let distance = Math.hypot(dx, dy);
           const minimum = left.radius + right.radius + 5;
           if (distance >= minimum) continue;
+          resolvedOverlap = true;
           if (distance < 0.01) {
             dx = left.fid < right.fid ? 1 : -1;
             dy = 0;
             distance = 1;
           }
           const push = (minimum - distance) / 2;
-          left.x -= (dx / distance) * push;
-          left.y -= (dy / distance) * push;
-          right.x += (dx / distance) * push;
-          right.y += (dy / distance) * push;
+          const unitX = dx / distance;
+          const unitY = dy / distance;
+          const leftPoint = this.clampFighterPosition(left, { x: left.x - unitX * push, y: left.y - unitY * push });
+          const rightPoint = this.clampFighterPosition(right, { x: right.x + unitX * push, y: right.y + unitY * push });
+          const leftMoved = Math.hypot(leftPoint.x - left.x, leftPoint.y - left.y);
+          const rightMoved = Math.hypot(rightPoint.x - right.x, rightPoint.y - right.y);
+          left.x = leftPoint.x;
+          left.y = leftPoint.y;
+          right.x = rightPoint.x;
+          right.y = rightPoint.y;
+          const remainder = Math.max(0, minimum - Math.hypot(right.x - left.x, right.y - left.y));
+          if (remainder > 0.1 && leftMoved < push && rightMoved >= push - 0.1) {
+            const point = this.clampFighterPosition(right, { x: right.x + unitX * remainder, y: right.y + unitY * remainder });
+            right.x = point.x;
+            right.y = point.y;
+          } else if (remainder > 0.1 && rightMoved < push && leftMoved >= push - 0.1) {
+            const point = this.clampFighterPosition(left, { x: left.x - unitX * remainder, y: left.y - unitY * remainder });
+            left.x = point.x;
+            left.y = point.y;
+          }
         }
       }
-      fighters.forEach((fighter) => {
-        fighter.x = Math.max(
-          BATTLE_BOUNDS.left + fighter.radius,
-          Math.min(BATTLE_BOUNDS.right - fighter.radius, fighter.x),
-        );
-        fighter.y = Math.max(
-          BATTLE_BOUNDS.top + fighter.radius,
-          Math.min(BATTLE_BOUNDS.bottom - fighter.radius, fighter.y),
-        );
-      });
+      if (!resolvedOverlap) break;
     }
   }
 
@@ -1508,7 +1667,7 @@ export class AutoChessEngine {
         return;
       }
 
-      const target = this.nearestTarget(fighter, targets);
+      const target = this.resolveCombatTarget(fighter, targets, dt);
       if (!target) return;
       const distance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
       const preferredRange = Math.max(
@@ -1516,14 +1675,9 @@ export class AutoChessEngine {
         fighter.radius + target.radius + CONTACT_ATTACK_BUFFER,
       );
       if (distance > preferredRange) {
-        this.faceTowardX(fighter, target.x);
-        const travel = Math.min(
-          distance - preferredRange,
-          fighter.moveSpeed * (fighter.slowTime > 0 ? 0.55 : 1) * dt,
-        );
-        fighter.x += ((target.x - fighter.x) / distance) * travel;
-        fighter.y += ((target.y - fighter.y) / distance) * travel;
+        this.moveTowardCombatTarget(fighter, target, [...battle.player, ...battle.enemy], dt);
       } else if (fighter.cooldown <= 0) {
+        fighter.stuckTime = 0;
         this.basicAttack(fighter, target);
       }
     });
@@ -1565,8 +1719,13 @@ export class AutoChessEngine {
       const distance = Math.max(fighter.radius + liveTarget.radius + 14, fighter.range * 0.7) + index * 12;
       fighter.jumpFromX = fighter.x;
       fighter.jumpFromY = fighter.y;
-      fighter.jumpToX = Math.max(BATTLE_BOUNDS.left + fighter.radius, Math.min(BATTLE_BOUNDS.right - fighter.radius, liveTarget.x - distance));
-      fighter.jumpToY = Math.max(BATTLE_BOUNDS.top + fighter.radius, Math.min(BATTLE_BOUNDS.bottom - fighter.radius, liveTarget.y + (index ? 52 : -52)));
+      const landing = this.findOpenPlacement(
+        fighter,
+        { x: liveTarget.x - distance, y: liveTarget.y + (index ? 52 : -52) },
+        [...battle.player, ...battle.enemy].filter((other) => other !== fighter),
+      );
+      fighter.jumpToX = landing.x;
+      fighter.jumpToY = landing.y;
       this.faceTowardX(fighter, liveTarget.x);
       fighter.jumpDuration = 0.38;
       fighter.jumpTime = fighter.jumpDuration;
@@ -1709,8 +1868,7 @@ export class AutoChessEngine {
       case "rift_stalker": {
         const target = farthest(targets);
         if (!target) break;
-        source.x = target.x + (source.team === "player" ? -36 : 36);
-        source.y = target.y;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -36 : 36), y: target.y });
         deal(target, 1.4);
         addShield(source, source.maxHp * 0.12, 0.32);
         this.addEffect({
@@ -1795,8 +1953,7 @@ export class AutoChessEngine {
       case "rift_brawler": {
         const target = this.nearestTarget(source, targets);
         if (!target) break;
-        source.x = target.x + (source.team === "player" ? -42 : 42);
-        source.y = target.y;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -42 : 42), y: target.y });
         const dealt = this.damage(source, target, source.attack * 1.7);
         this.applyBurn(source, target, source.attack * 1.1);
         if (dealt > 0) this.addDamageText(target, dealt);
@@ -1865,8 +2022,7 @@ export class AutoChessEngine {
       case "dawn_duelist": {
         const target = farthest(targets);
         if (!target) break;
-        source.x = target.x + (source.team === "player" ? -38 : 38);
-        source.y = target.y;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -38 : 38), y: target.y });
         deal(target, 1.6);
         target.stun = Math.max(target.stun, 0.75);
         this.addEffect({
@@ -1912,8 +2068,7 @@ export class AutoChessEngine {
             (enemy) => Math.hypot(enemy.x - target.x, enemy.y - target.y) < 135,
           )
           .forEach((enemy) => deal(enemy, 0.9));
-        source.x = target.x + (source.team === "player" ? -52 : 52);
-        source.y = target.y - 20;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -52 : 52), y: target.y - 20 });
         this.addEffect({
           kind: "ring",
           x: target.x,
@@ -1961,8 +2116,7 @@ export class AutoChessEngine {
         if (!target) break;
         const startX = source.x;
         const startY = source.y;
-        source.x = target.x + (source.team === "player" ? -46 : 46);
-        source.y = target.y;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -46 : 46), y: target.y });
         targets
           .filter((candidate) => {
             const distance = Math.hypot(candidate.x - startX, candidate.y - startY);
@@ -1980,8 +2134,7 @@ export class AutoChessEngine {
       case "sui_cat": {
         const target = farthest(targets);
         if (!target) break;
-        source.x = target.x + (source.team === "player" ? -34 : 34);
-        source.y = target.y;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -34 : 34), y: target.y });
         let total = 0;
         for (let strike = 0; strike < 3 && target.alive; strike += 1)
           total += deal(target, 0.8);
@@ -2003,8 +2156,7 @@ export class AutoChessEngine {
       case "biscuit_sui": {
         const center = densest(targets);
         if (!center) break;
-        source.x = center.x + (source.team === "player" ? -42 : 42);
-        source.y = center.y;
+        this.relocateFighter(source, { x: center.x + (source.team === "player" ? -42 : 42), y: center.y });
         targets
           .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 145)
           .forEach((target) => {
@@ -2063,8 +2215,7 @@ export class AutoChessEngine {
       case "youyi": {
         const target = farthest(targets);
         if (!target) break;
-        source.x = target.x + (source.team === "player" ? -36 : 36);
-        source.y = target.y;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -36 : 36), y: target.y });
         deal(target, 0.78);
         deal(target, 0.78);
         target.stun = Math.max(target.stun, 0.45);
@@ -2074,8 +2225,7 @@ export class AutoChessEngine {
       case "akirinco": {
         const target = weakest(targets);
         if (!target) break;
-        source.x = target.x + (source.team === "player" ? -34 : 34);
-        source.y = target.y;
+        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -34 : 34), y: target.y });
         let total = 0;
         for (let strike = 0; strike < 3 && target.alive; strike += 1) total += deal(target, 0.82);
         if (!target.alive) this.heal(source, source, total * 0.3);
@@ -2085,8 +2235,7 @@ export class AutoChessEngine {
       case "lovely": {
         const center = densest(targets);
         if (!center) break;
-        source.x = center.x + (source.team === "player" ? -42 : 42);
-        source.y = center.y;
+        this.relocateFighter(source, { x: center.x + (source.team === "player" ? -42 : 42), y: center.y });
         let hits = 0;
         targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 135).forEach((target) => { deal(target, 1.22); hits += 1; });
         source.attackInterval /= 1 + Math.min(0.3, hits * 0.06);
@@ -2097,8 +2246,7 @@ export class AutoChessEngine {
       case "mumu": {
         const center = densest(targets);
         if (!center) break;
-        source.x = center.x + (source.team === "player" ? -44 : 44);
-        source.y = center.y;
+        this.relocateFighter(source, { x: center.x + (source.team === "player" ? -44 : 44), y: center.y });
         targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125).forEach((target) => deal(target, 1.15));
         allies.filter((ally) => Math.hypot(ally.x - source.x, ally.y - source.y) < 150).forEach((ally) => addShield(ally, ally.maxHp * 0.12, 0.38));
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: 136 });

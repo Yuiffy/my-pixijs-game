@@ -38,6 +38,20 @@ const createEngine = (seed = 1) => {
   return engine;
 };
 
+const stepBattle = (engine, ticks, dt = 0.05) => {
+  for (let tick = 0; tick < ticks; tick += 1) engine.update(dt);
+};
+
+const clearance = (left, right) =>
+  Math.hypot(left.x - right.x, left.y - right.y) - left.radius - right.radius;
+
+const assertInsideBattleBounds = (fighter) => {
+  assert.ok(fighter.x >= BATTLE_BOUNDS.left + fighter.radius);
+  assert.ok(fighter.x <= BATTLE_BOUNDS.right - fighter.radius);
+  assert.ok(fighter.y >= BATTLE_BOUNDS.top + fighter.radius);
+  assert.ok(fighter.y <= BATTLE_BOUNDS.bottom - fighter.radius);
+};
+
 test("已选择的天赋会按回合记入历史", () => {
   const engine = createEngine(9);
   engine.state.phase = "augment";
@@ -210,6 +224,125 @@ test("紧贴碰撞体积的近战单位也能稳定攻击", () => {
   target.x = 363; target.y = 300; target.attack = 0; target.armor = 99_999; target.dodgeChance = 0;
   engine.update(0.05);
   assert.equal(source.energy, source.energyOnAttack);
+});
+
+test("拥挤近战会侧移接敌并在时限前造成伤害", () => {
+  const engine = createEngine(94);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const [source, blockerA, blockerB] = battle.player;
+  const target = battle.enemy[0];
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.dodgeChance = 0;
+    fighter.x = 770;
+    fighter.y = 360;
+  });
+  source.x = 100;
+  source.y = 360;
+  blockerA.x = 180;
+  blockerA.y = 330;
+  blockerB.x = 180;
+  blockerB.y = 390;
+  const initialDistance = Math.hypot(target.x - source.x, target.y - source.y);
+  stepBattle(engine, 160);
+  assert.ok(source.damageDealt > 0 || Math.hypot(target.x - source.x, target.y - source.y) < initialDistance - 120);
+  battle.player.concat(battle.enemy).filter((fighter) => fighter.alive).forEach(assertInsideBattleBounds);
+});
+
+test("近似等距目标不会每帧反复切换，失效后会重选", () => {
+  const engine = createEngine(95);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const source = battle.player[0];
+  const [first, second] = battle.enemy;
+  source.x = 400;
+  source.y = 360;
+  [first, second].forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.armor = 99_999;
+  });
+  first.x = 650;
+  first.y = 330;
+  second.x = 650;
+  second.y = 390;
+  stepBattle(engine, 1);
+  const lockedTarget = source.targetFid;
+  for (let tick = 0; tick < 6; tick += 1) {
+    first.y = tick % 2 ? 331 : 329;
+    second.y = tick % 2 ? 389 : 391;
+    stepBattle(engine, 1);
+    assert.equal(source.targetFid, lockedTarget);
+  }
+  const selected = battle.enemy.find((fighter) => fighter.fid === lockedTarget);
+  assert.ok(selected);
+  selected.alive = false;
+  selected.hp = 0;
+  stepBattle(engine, 1);
+  assert.notEqual(source.targetFid, lockedTarget);
+});
+
+test("拥堵边界会触发侧移恢复且始终留在战场内", () => {
+  const engine = createEngine(96);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const [source, blocker] = battle.player;
+  const target = battle.enemy[0];
+  battle.enemy.forEach((fighter) => { fighter.attack = 0; fighter.hp = 99_999; fighter.maxHp = 99_999; fighter.armor = 99_999; });
+  source.x = BATTLE_BOUNDS.left + source.radius;
+  source.y = 360;
+  blocker.x = source.x + source.radius + blocker.radius + 3;
+  blocker.y = 360;
+  target.x = 650;
+  target.y = 360;
+  const initialY = source.y;
+  stepBattle(engine, 30);
+  assert.ok(Math.abs(source.y - initialY) > 5 || source.damageDealt > 0);
+  battle.player.concat(battle.enemy).filter((fighter) => fighter.alive).forEach(assertInsideBattleBounds);
+});
+
+test("刺客在拥挤后排选择有界的最高空隙落点", () => {
+  const engine = createEngine(97);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rift_stalker", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "akirinco", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const assassin = battle.player[0];
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = 970;
+    fighter.y = 260 + index * 55;
+    fighter.attack = 0;
+  });
+  stepBattle(engine, 70);
+  assert.equal(assassin.jumpPending, false);
+  assertInsideBattleBounds({ ...assassin, x: assassin.jumpToX, y: assassin.jumpToY });
+  const plannedClearance = Math.min(...battle.enemy.map((enemy) =>
+    Math.hypot(assassin.jumpToX - enemy.x, assassin.jumpToY - enemy.y) - assassin.radius - enemy.radius,
+  ));
+  assert.ok(plannedClearance > -assassin.radius);
 });
 
 test("能量按未闪避命中回收，护盾吸收仍会回能", () => {

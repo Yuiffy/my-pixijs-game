@@ -10,7 +10,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const errors = [];
   page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('http://127.0.0.1:3100/game/autochess?seed=1');
+  await page.goto(`${process.env.AUTOCHESS_BASE_URL || 'http://127.0.0.1:3100'}/game/autochess?seed=1`);
   const canvas = page.locator('[data-game-canvas="rift-line"]');
   await canvas.waitFor();
 
