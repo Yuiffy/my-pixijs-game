@@ -992,8 +992,7 @@ const drawPreparation = (
       "left",
       800,
     );
-    text(ctx, def.title, rect.x + 64, rect.y + 37, 9, "#7490a4", "left", 500);
-    drawTraitDots(ctx, unitId, rect.x + 68, rect.y + 54);
+    drawTraitDots(ctx, unitId, rect.x + 68, rect.y + 43);
     text(
       ctx,
       `${def.cost}`,
@@ -2040,7 +2039,7 @@ const drawTooltip = (
   text(ctx, def.name, x + 78, y + 28, 16, "#f0f7ff", "left", 800);
   text(
     ctx,
-    `${"★".repeat(star)} · ${def.cost} 费 · ${def.title}`,
+    `${"★".repeat(star)} · ${def.cost} 费`,
     x + 78,
     y + 52,
     10,
@@ -2088,7 +2087,6 @@ const drawTooltip = (
     });
   const traitNames = def.traits.map((trait) => TRAITS[trait].name).join(" · ");
   text(ctx, traitNames, x + w - 20, y + h - 34, 10, "#718da0", "right", 700);
-  text(ctx, def.title, x + 20, y + h - 16, 10, "#d4e6f2", "left", 700);
 };
 
 const drawTraitTooltip = (

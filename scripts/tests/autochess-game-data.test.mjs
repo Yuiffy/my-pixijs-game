@@ -121,11 +121,13 @@ test("浣熊射手试点使用原创展示文案与独立精灵头像", async ()
 
 test("莉蔻使用独立精灵头像并加入矮人联盟", async () => {
   const unit = data.UNIT_DEFS.ember_blade;
-  assert.equal(unit.name, "莉蔻·萝卜突击");
+  assert.equal(unit.name, "橙色兔子");
   assert.equal(unit.title, "莉蔻Liko · 近战灼烧");
   assert.equal(unit.glyph, "蔻");
   assert.equal(unit.abilityName, "胡萝卜突击");
   assert.ok(unit.traits.includes("dwarf"));
+  assert.equal(data.UNIT_DEFS.nori.name, "能能弄你");
+  assert.equal(data.UNIT_DEFS.nori.abilityName, "苹果派");
   assert.equal(unit.portraitStyle, "sprite");
   assert.equal(unit.portrait, "/images/autochess/portraits/ember-blade.png");
   assert.equal(unit.portraitFocus, undefined);
@@ -184,8 +186,8 @@ test("岁己形态拆分到不同关系构筑", () => {
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 34);
-  ["nori", "meme", "kioi", "nightin", "aza", "ayana", "yy", "haruka", "akirinco", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
+  assert.equal(data.SHOP_UNITS.length, 35);
+  ["nori", "meme", "kioi", "nightin", "aza", "ayana", "yy", "haruka", "guangyi", "akirinco", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
   ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "host", "dwarf"].forEach((id) => {
     assert.equal(data.TRAITS[id].family, "关系");
     assert.equal(data.TRAITS[id].thresholds.length, data.TRAITS[id].bonuses.length);
@@ -193,7 +195,9 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.rift, undefined);
   assert.equal(data.TRAITS.clockwork, undefined);
   assert.equal(data.TRAITS.host.name, "主持");
-  assert.equal(data.TRAITS.dwarf.name, "矮人联盟");
+  assert.equal(data.TRAITS.dwarf.name, "矮人");
+  assert.equal(data.TRAITS.skeleton_soldier.name, "骷髅兵");
+  assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
   ["sui_flower", "biscuit_sui", "nagisa"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
   ["sui", "grove_mender", "cinder_ram"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
   ["sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
@@ -201,6 +205,8 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   ["sun_guard", "gale_archer", "rift_brawler", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gen27")));
   assert.deepEqual(data.UNIT_DEFS.rift_brawler.traits, ["brawler", "gen27", "yue_gang"]);
   ["dawn_duelist", "ember_blade", "nightin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dwarf")));
+  assert.equal(data.UNIT_DEFS.guangyi.abilityName, "滑跪");
+  assert.deepEqual(data.UNIT_DEFS.guangyi.traits, ["brawler", "host"]);
   data.WAVES.forEach((wave) => wave.units.forEach(({ id }) => assert.ok(data.UNIT_DEFS[id], `${id} should remain defined for wave ${wave.round}`)));
   data.SHOP_UNITS.forEach((id) => {
     const unit = data.UNIT_DEFS[id];

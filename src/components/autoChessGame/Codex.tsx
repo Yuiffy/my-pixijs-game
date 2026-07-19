@@ -199,7 +199,7 @@ export default function Codex({ open, augmentHistory, onClose }: CodexProps) {
                     }}
                 />
               )}
-              <div style={{ color: unit.accent, fontSize: 12 }}>{unit.tier} 费 · {unit.title}</div>
+              <div style={{ color: unit.accent, fontSize: 12 }}>{unit.tier} 费</div>
               <h2 style={{ margin: "6px 0 12px", fontSize: 25 }}>{unit.name}</h2>
               <div style={{ color: "#99b1c1", lineHeight: 1.8 }}>
                 生命 {unit.hp} · 攻击 {unit.attack} · 护甲 {unit.armor}<br />

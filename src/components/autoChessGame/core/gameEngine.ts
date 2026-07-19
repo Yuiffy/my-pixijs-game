@@ -757,6 +757,10 @@ export class AutoChessEngine {
         armor += [0, 8, 18, 32][vanguardLevel];
       }
       if (rangerLevel) attackInterval /= [1, 1.12, 1.26, 1.45][rangerLevel];
+      if (skeletonLevel) {
+        attack *= 1.35;
+        armor -= 12;
+      }
       if (brawlerLevel) attack *= [1, 1.12, 1.26, 1.45][brawlerLevel];
       if (!isRanged) {
         if (globalVanguardLevel >= 2) {
@@ -817,7 +821,7 @@ export class AutoChessEngine {
           [0, 0.45, 0.8][chuanmeiLevel],
           isRanged ? [0, 0, 0.22][globalChuanmeiLevel] : 0,
         ),
-        dodgeChance: Math.max(skeletonLevel ? 0.15 : 0, dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0),
+        dodgeChance: dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0,
         dwarfMember: dwarfLevel > 0,
         gluttonyHolder,
         growthStacks: 0,
@@ -1482,7 +1486,7 @@ export class AutoChessEngine {
         break;
       }
       case "rift_stalker": {
-        const target = weakest(targets);
+        const target = farthest(targets);
         if (!target) break;
         source.x = target.x + (source.team === "player" ? -36 : 36);
         source.y = target.y;
@@ -1499,12 +1503,11 @@ export class AutoChessEngine {
         break;
       }
       case "cog_scribe": {
-        [...targets]
-          .sort((a, b) => b.energy - a.energy)
+        [...allies]
+          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
           .slice(0, 2)
           .forEach((target) => {
-            deal(target, 0.9);
-            target.energy = Math.max(0, target.energy - 24);
+            this.heal(source, target, target.maxHp * 0.14 + source.attack * 0.8);
             this.addEffect({
               kind: "line",
               x: source.x,
@@ -1559,14 +1562,13 @@ export class AutoChessEngine {
         break;
       }
       case "rift_brawler": {
-        const target = [...targets].sort(
-          (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
-        )[0];
+        const target = this.nearestTarget(source, targets);
         if (!target) break;
         source.x = target.x + (source.team === "player" ? -42 : 42);
         source.y = target.y;
-        const multiplier = target.hp / target.maxHp < 0.4 ? 2.6 : 1.75;
-        const dealt = this.damage(source, target, source.attack * multiplier);
+        const dealt = this.damage(source, target, source.attack * 1.7);
+        const hungerBonus = source.hp / source.maxHp < 0.45 ? 0.45 : 0.25;
+        this.heal(source, source, dealt * hungerBonus);
         if (dealt > 0) this.addDamageText(target, dealt);
         this.addEffect({
           kind: "burst",
@@ -1596,7 +1598,7 @@ export class AutoChessEngine {
           )
           .forEach((target) => {
             const dealt = this.damage(source, target, source.attack * 1.65);
-            this.applyBurn(source, target, source.attack * 0.65);
+            target.stun = Math.max(target.stun, 0.45);
             if (dealt > 0) this.addDamageText(target, dealt);
           });
         this.addEffect({
@@ -1650,22 +1652,15 @@ export class AutoChessEngine {
         break;
       }
       case "grove_mender": {
-        [...allies]
-          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
-          .slice(0, 2)
+        const center = densest(targets);
+        if (!center) break;
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
           .forEach((target) => {
-            this.heal(source, target, target.maxHp * 0.18 + source.attack);
-            this.addEffect({
-              kind: "line",
-              x: source.x,
-              y: source.y,
-              x2: target.x,
-              y2: target.y,
-              color: def.accent,
-              life: 0.7,
-              size: 5,
-            });
+            deal(target, 1.3);
+            target.stun = Math.max(target.stun, 0.65);
           });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: 132 });
         break;
       }
       case "cinder_ram": {
@@ -1733,7 +1728,6 @@ export class AutoChessEngine {
           const target = ordered[shot % ordered.length];
           if (!target?.alive) continue;
           deal(target, 0.92);
-          this.applyBurn(source, target, source.attack * 0.6);
           this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.28 + shot * 0.06, size: 3 });
         }
         break;
@@ -1746,6 +1740,27 @@ export class AutoChessEngine {
         }
         const recipient = [...allies].sort((left, right) => left.energy - right.energy)[0];
         if (recipient) recipient.energy = Math.min(100, recipient.energy + 18);
+        break;
+      }
+      case "guangyi": {
+        const target = farthest(targets);
+        if (!target) break;
+        const startX = source.x;
+        const startY = source.y;
+        source.x = target.x + (source.team === "player" ? -46 : 46);
+        source.y = target.y;
+        targets
+          .filter((candidate) => {
+            const distance = Math.hypot(candidate.x - startX, candidate.y - startY);
+            const endpointDistance = Math.hypot(candidate.x - source.x, candidate.y - source.y);
+            return distance + endpointDistance <= Math.hypot(source.x - startX, source.y - startY) + 42;
+          })
+          .forEach((candidate) => {
+            deal(candidate, 1.1);
+            candidate.stun = Math.max(candidate.stun, 0.6);
+          });
+        addShield(source, source.maxHp * 0.2, 0.45);
+        this.addEffect({ kind: "line", x: startX, y: startY, x2: source.x, y2: source.y, color: def.accent, life: 0.5, size: 8 });
         break;
       }
       case "sui_cat": {
@@ -1787,11 +1802,11 @@ export class AutoChessEngine {
         break;
       }
       case "nori": {
-        const target = this.nearestTarget(source, targets);
-        if (!target) break;
-        for (let shot = 0; shot < 3 && target.alive; shot += 1) {
-          deal(target, shot === 2 ? 1.25 : 0.7);
-          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.2 + shot * 0.05, size: 3 });
+        for (let shot = 0; shot < 12; shot += 1) {
+          const target = this.nearestTarget(source, targets);
+          if (!target) break;
+          deal(target, 0.38);
+          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.14 + shot * 0.025, size: 2 });
         }
         break;
       }

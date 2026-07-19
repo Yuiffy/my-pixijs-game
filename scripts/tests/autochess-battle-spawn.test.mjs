@@ -109,6 +109,22 @@ test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   assert.equal(hungry?.radius, beforeRadius);
 });
 
+test("骷髅兵以高攻击和低护甲体现脆弱", () => {
+  const engine = new AutoChessEngine(26);
+  engine.startRun("bastion");
+  engine.state.playerLevel = 8;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui_blue", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "shiori", star: 1 };
+  engine.startBattle();
+
+  const skeleton = engine.state.battle?.player.find((entry) => entry.unitId === "sui_blue");
+  assert.ok(skeleton);
+  assert.equal(skeleton.attack, 25 * 1.15 * 1.35);
+  assert.equal(skeleton.armor, -4);
+  assert.equal(skeleton.dodgeChance, 0);
+});
+
 test("深夜档会随战斗时间逐步提高攻击力", () => {
   const engine = new AutoChessEngine(25);
   engine.startRun("bastion");
