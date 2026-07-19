@@ -15,6 +15,22 @@ test("精灵头像在战斗中支持朝向镜像且不再绘制方框", () => {
   assert.doesNotMatch(renderer, /strokeRect\(x - radius, y - radius, radius \* 2, radius \* 2\)/);
 });
 
+test("战斗技能条使用棋子上限并展示能量身份", () => {
+  assert.match(renderer, /fighter\.energy \/ fighter\.maxEnergy/);
+  assert.match(renderer, /ENERGY_PROFILES\[fighter\.energyStyle\]\.color/);
+  assert.match(renderer, /每秒 \+\$\{fighter\?\.energyPerSecond/);
+  assert.match(renderer, /attackType === "ranged" \? "远程" : "近战"/);
+});
+
+test("弹道特效同时绘制柔光外层与明亮核心", () => {
+  const drawEffects = renderer.match(/const drawEffects = \([\s\S]*?\n};/);
+  assert.ok(drawEffects);
+  assert.match(drawEffects[0], /ctx\.globalCompositeOperation = "screen"/);
+  assert.match(drawEffects[0], /ctx\.lineWidth = width \+ 4/);
+  assert.match(drawEffects[0], /rgba\(244, 251, 255, 0\.96\)/);
+  assert.match(drawEffects[0], /ctx\.shadowBlur = 18/);
+});
+
 test("结算页使用显式继续按钮推进阶段", () => {
   assert.match(renderer, /resultContinueRect/);
   assert.match(renderer, /resultContinueLabel/);

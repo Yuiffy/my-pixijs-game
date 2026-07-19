@@ -143,7 +143,7 @@ test("莉蔻使用独立精灵头像并加入矮人联盟", async () => {
   assert.equal(unit.title, "莉蔻Liko · 远程连射");
   assert.equal(unit.glyph, "蔻");
   assert.equal(unit.abilityName, "胡萝卜射击");
-  assert.equal(unit.range, 225);
+  assert.equal(unit.range, 230);
   assert.ok(unit.traits.includes("dwarf"));
   assert.equal(unit.traits.includes("ember"), false);
   assert.equal(data.UNIT_DEFS.nori.name, "能能弄你");
@@ -179,7 +179,8 @@ test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   assert.match(data.UNIT_DEFS.sun_guard.title, /灰泽满Hazel/);
   assert.equal(data.UNIT_DEFS.sui_cat.name, "小猫拳");
   assert.match(data.UNIT_DEFS.sui_cat.title, /岁己SUI/);
-  assert.equal(data.TRAITS.aegis.name, "VR学园");
+  assert.equal(data.TRAITS.aegis, undefined);
+  assert.equal(data.TRAIT_IDS.includes("aegis"), false);
   assert.equal(data.AUGMENTS.find((augment) => augment.id === "triage")?.name, "全员续航");
 });
 
@@ -194,13 +195,33 @@ test("岁己形态拆分到不同关系构筑", () => {
     assert.ok(data.SHOP_UNITS.includes(id));
     assert.ok(data.UNIT_DEFS[id].portrait);
   });
-  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["vanguard", "gluttony", "dance"]);
+  assert.equal(data.UNIT_DEFS.sui.name, "小红帽");
+  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["vanguard", "dance"]);
   assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["ranger", "skeleton_soldier"]);
   assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "host"]);
   assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["mystic", "chuanmei"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "host"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "gluttony"]);
   assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["chuanmei", "dance"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
+});
+
+test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
+  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "reservoir"]);
+  Object.values(data.UNIT_DEFS).forEach((unit) => {
+    assert.ok(["melee", "ranged"].includes(unit.attackType), `${unit.id} must declare an attack type`);
+    assert.ok(profiles.has(unit.energyProfile.id), `${unit.id} must use a known energy profile`);
+    assert.ok(unit.energyProfile.max > 0);
+    ["start", "perSecond", "onAttack", "onHit", "castRefund"].forEach((field) => assert.ok(unit.energyProfile[field] >= 0));
+  });
+  assert.equal(data.UNIT_DEFS.nagisa.energyProfile.id, "bulwark");
+  assert.equal(data.UNIT_DEFS.cog_scribe.energyProfile.id, "flow");
+  assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.id, "tempo");
+  assert.equal(data.UNIT_DEFS.rift_tyrant.energyProfile.id, "reservoir");
+  assert.equal(data.UNIT_DEFS.clock_gunner.attackType, "ranged");
+  assert.equal(data.UNIT_DEFS.rift_tyrant.attackType, "melee");
+  assert.ok(data.UNIT_DEFS.clock_gunner.range >= 260);
+  assert.ok(data.UNIT_DEFS.nagisa.moveSpeed <= 40);
+  assert.ok(data.UNIT_DEFS.sui_cat.moveSpeed >= 90);
 });
 
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
@@ -224,7 +245,18 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.skeleton_soldier.name, "骷髅兵");
   assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
   ["sui_flower", "biscuit_sui", "nagisa"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
-  ["sui", "grove_mender"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
+  ["grove_mender", "sui_cat"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
+  assert.equal(data.UNIT_DEFS.biscuit_sui.traits.includes("gluttony"), false);
+  assert.equal(data.UNIT_DEFS.sui.traits.includes("gluttony"), false);
+  assert.equal(data.TRAITS.assassin.name, "偷袭");
+  assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
+  assert.ok(data.UNIT_DEFS.lovely.traits.includes("assassin"));
+  assert.deepEqual(data.UNIT_DEFS.nightin.traits, ["mystic", "dwarf"]);
+  assert.match(data.TRAITS.mature.bonuses[0], /正常移速的 70%/);
+  const danceStarter = data.STARTERS.find((starter) => starter.id === "dance_start");
+  assert.equal(danceStarter?.name, "舞台梦");
+  assert.equal(danceStarter?.unit, "sui");
+  assert.match(danceStarter?.description || "", /携带小红帽开局；所有友军开战 \+10 能量.*跳舞成员攻击速度 \+8%/);
   assert.equal(data.UNIT_DEFS.cinder_ram.name, "蛙梓");
   assert.equal(data.UNIT_DEFS.cinder_ram.tier, 5);
   assert.equal(data.UNIT_DEFS.kioi.name, "美·鱿鱼");

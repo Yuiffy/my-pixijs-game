@@ -1593,13 +1593,24 @@ const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => {
     ctx.save();
     ctx.globalAlpha = alpha;
     if (effect.kind === "line") {
+      const targetX = effect.x2 || effect.x;
+      const targetY = effect.y2 || effect.y;
+      const width = effect.size || 3;
+      ctx.globalCompositeOperation = "screen";
       ctx.beginPath();
       ctx.moveTo(effect.x, effect.y);
-      ctx.lineTo(effect.x2 || effect.x, effect.y2 || effect.y);
+      ctx.lineTo(targetX, targetY);
       ctx.strokeStyle = effect.color;
-      ctx.lineWidth = effect.size || 3;
+      ctx.lineWidth = width + 4;
       ctx.shadowColor = effect.color;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 18;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(effect.x, effect.y);
+      ctx.lineTo(targetX, targetY);
+      ctx.strokeStyle = "rgba(244, 251, 255, 0.96)";
+      ctx.lineWidth = Math.max(1, width * 0.48);
+      ctx.shadowBlur = 4;
       ctx.stroke();
     } else if (effect.kind === "ring") {
       ctx.beginPath();

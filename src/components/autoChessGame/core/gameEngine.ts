@@ -101,6 +101,8 @@ export interface Fighter {
   gen27Buffed: boolean;
   matureMember: boolean;
   matureMoveFloor: number;
+  matureAttackSpeed: number;
+  matureAttackSpeedCurrent: number;
   slowTime: number;
   weakenTime: number;
   weakenArmorPenalty: number;
@@ -119,6 +121,8 @@ export interface Fighter {
   attackTargetX: number;
   attackTargetY: number;
   hitPulse: number;
+  applePieShotsRemaining: number;
+  applePieShotTimer: number;
   jumpPending: boolean;
   jumpDelay: number;
   jumpTime: number;
@@ -217,6 +221,9 @@ const BENCH_SIZE = 8;
 const SHOP_SIZE = 5;
 const STAR_SCALE = [0, 1, 1.68, 2.82];
 const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
+const NORI_APPLE_PIE_SHOTS = 12;
+const NORI_APPLE_PIE_INTERVAL = 0.1;
+const NORI_APPLE_PIE_DAMAGE_MULTIPLIER = 0.38;
 
 export const fighterVisualRadius = (unitId: UnitId, star: 1 | 2 | 3) => {
   if (unitId === "rift_tyrant") return 43;
@@ -262,7 +269,7 @@ const starterEffects: Record<StarterId, {
   firstWinGold?: number;
   trafficLifesteal?: number;
   matureShieldBonus?: number;
-  danceEnergy?: number;
+  startingEnergy?: number;
   danceAttackSpeed?: number;
   rangedAttackSpeed?: number;
   freeFirstReroll?: boolean;
@@ -271,7 +278,7 @@ const starterEffects: Record<StarterId, {
   blaze: { burnMultiplier: 1.4, firstWinGold: 2 },
   traffic_start: { goldBonus: 1, trafficLifesteal: 0.06 },
   bastion: { hpBonus: 4, shieldMultiplier: 1.3 },
-  dance_start: { danceEnergy: 20, danceAttackSpeed: 0.15 },
+  dance_start: { startingEnergy: 10, danceAttackSpeed: 0.08 },
   ranger_start: { rangedAttackSpeed: 0.1, freeFirstReroll: true },
 };
 
@@ -807,7 +814,7 @@ export class AutoChessEngine {
       let attack = def.attack * scale * 1.15;
       let armor = def.armor;
       let attackInterval = def.attackInterval;
-      const aegisLevel = def.traits.includes("aegis") ? traitLevel("aegis") : 0;
+      const starterEffect = this.state.starter ? starterEffects[this.state.starter] : {};
       const emberLevel = def.traits.includes("ember") ? traitLevel("ember") : 0;
       const wildLevel = def.traits.includes("wild") ? traitLevel("wild") : 0;
       const vanguardLevel = def.traits.includes("vanguard")
@@ -848,10 +855,6 @@ export class AutoChessEngine {
       const dwarfLevel = def.traits.includes("dwarf") ? traitLevel("dwarf") : 0;
       const moveSpeed = def.moveSpeed + [0, 10, 22, 36][globalHostLevel] + (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
 
-      if (aegisLevel) {
-        maxHp *= [1, 1.07, 1.14, 1.23][aegisLevel];
-        armor += [0, 12, 25, 42][aegisLevel];
-      }
       if (vanguardLevel) {
         maxHp *= [1, 1.12, 1.25, 1.42][vanguardLevel];
         armor += [0, 8, 18, 32][vanguardLevel];
@@ -891,6 +894,11 @@ export class AutoChessEngine {
       }
       if (hasAugment("sharp_edge")) attack *= 1.15;
       if (hasAugment("momentum")) attackInterval /= 1.18;
+      if (this.state.starter === "dance_start" && danceLevel) {
+        attackInterval /= 1 + (starterEffect.danceAttackSpeed || 0);
+      }
+      const matureAttackSpeed = [0, 0.08, 0.16, 0.24][matureLevel];
+      if (matureAttackSpeed) attackInterval /= 1 + matureAttackSpeed;
 
       const fighter: Fighter = {
         fid: `p-${owned.uid}`,
@@ -924,7 +932,7 @@ export class AutoChessEngine {
             [0, 20, 45, 70][mysticLevel] +
             [0, 0, 10, 22][globalMysticLevel] +
             [0, 0, 10, 22][globalTraitLevel("gen27")] * (gen27Member ? 1 : 0) +
-            (this.state.starter === "dance_start" && danceLevel ? 20 : 0) +
+            (starterEffect.startingEnergy || 0) +
             (hasAugment("overclock") ? 35 : 0),
         ),
         stun: 0,
@@ -951,7 +959,9 @@ export class AutoChessEngine {
         gen27Member,
         gen27Buffed: false,
         matureMember: matureLevel > 0,
-        matureMoveFloor: [0, 0.7, 0.75, 0.8][matureLevel],
+        matureMoveFloor: matureLevel ? 0.7 : 1,
+        matureAttackSpeed,
+        matureAttackSpeedCurrent: matureAttackSpeed,
         slowTime: 0,
         weakenTime: 0,
         weakenArmorPenalty: 0,
@@ -973,6 +983,8 @@ export class AutoChessEngine {
         attackTargetX: spawn.x,
         attackTargetY: spawn.y,
         hitPulse: 0,
+        applePieShotsRemaining: 0,
+        applePieShotTimer: 0,
         jumpFromX: spawn.x,
         jumpFromY: spawn.y,
         jumpToX: spawn.x,
@@ -1040,6 +1052,8 @@ export class AutoChessEngine {
         gen27Buffed: false,
         matureMember: false,
         matureMoveFloor: 1,
+        matureAttackSpeed: 0,
+        matureAttackSpeedCurrent: 0,
         slowTime: 0,
         weakenTime: 0,
         weakenArmorPenalty: 0,
@@ -1055,6 +1069,8 @@ export class AutoChessEngine {
         attackTargetX: 990 - rank * 96,
         attackTargetY: 180 + row * 165,
         hitPulse: 0,
+        applePieShotsRemaining: 0,
+        applePieShotTimer: 0,
         jumpPending: false,
         jumpDelay: 0,
         jumpTime: 0,
@@ -1100,12 +1116,6 @@ export class AutoChessEngine {
         const ratio = (fighter.matureMember ? memberShield : 0) + allShield;
         if (ratio) this.grantShield(null, fighter, fighter.maxHp * ratio, 0.6, battle);
       });
-    }
-    const aegisLevel = globalTraitLevel("aegis");
-    if (aegisLevel >= 2) {
-      battle.player.forEach((fighter) =>
-        this.grantShield(null, fighter, fighter.maxHp * (aegisLevel === 3 ? 0.16 : 0.08), 0.55, battle),
-      );
     }
     return battle;
   }
@@ -1260,14 +1270,68 @@ export class AutoChessEngine {
     this.state.battle?.effects.push({ ...effect, maxLife: effect.life });
   }
 
+  private updateNoriApplePie(source: Fighter, dt: number) {
+    if (source.applePieShotsRemaining <= 0) return false;
+
+    source.applePieShotTimer = Math.max(0, source.applePieShotTimer - dt);
+    if (source.applePieShotTimer > 0) return true;
+
+    const targetTeam: Team = source.team === "player" ? "enemy" : "player";
+    const target = this.nearestTarget(source, this.living(targetTeam));
+    if (!target) {
+      source.applePieShotsRemaining = 0;
+      source.applePieShotTimer = 0;
+      return false;
+    }
+
+    const finalShot = source.applePieShotsRemaining === 1;
+    this.faceTowardX(source, target.x);
+    source.attackPulse = 0.22;
+    source.attackTargetX = target.x;
+    source.attackTargetY = target.y;
+    const dealt = this.damage(source, target, source.attack * NORI_APPLE_PIE_DAMAGE_MULTIPLIER);
+    if (dealt > 0) this.addDamageText(target, dealt);
+
+    const def = UNIT_DEFS[source.unitId];
+    this.addEffect({
+      kind: "line",
+      x: source.x,
+      y: source.y,
+      x2: target.x,
+      y2: target.y,
+      color: def.accent,
+      life: finalShot ? 0.2 : 0.14,
+      size: finalShot ? 5 : 3,
+    });
+    this.addEffect({
+      kind: "burst",
+      x: target.x,
+      y: target.y,
+      color: def.accent,
+      life: finalShot ? 0.34 : 0.2,
+      size: finalShot ? 44 : 24,
+    });
+    source.applePieShotsRemaining -= 1;
+    source.applePieShotTimer = NORI_APPLE_PIE_INTERVAL;
+    return true;
+  }
+
   private refresh27Buffs(battle: BattleState) {
     const level = this.getActiveTraits().find((trait) => trait.id === "gen27")?.level || 0;
     const multiplier = [1, 1.12, 1.2, 1.3][level];
     battle.player.forEach((fighter) => {
       if (!fighter.alive) return;
+      const matureSteps = Math.min(6, Math.floor(battle.elapsed / 4));
       const maturePenalty = fighter.matureMember
-        ? Math.max(fighter.matureMoveFloor, 1 - Math.floor(battle.elapsed / 4) * 0.06)
+        ? Math.max(fighter.matureMoveFloor, 1 - matureSteps * 0.05)
         : 1;
+      const matureAttackSpeed = fighter.matureMember
+        ? Math.max(0, fighter.matureAttackSpeed * (1 - Math.min(4, matureSteps) / 4))
+        : 0;
+      if (matureAttackSpeed !== fighter.matureAttackSpeedCurrent) {
+        fighter.attackInterval *= (1 + fighter.matureAttackSpeedCurrent) / (1 + matureAttackSpeed);
+        fighter.matureAttackSpeedCurrent = matureAttackSpeed;
+      }
       if (!fighter.gen27Member) {
         fighter.moveSpeed = fighter.baseMoveSpeed * maturePenalty;
         return;
@@ -1278,7 +1342,8 @@ export class AutoChessEngine {
       );
       fighter.gen27Buffed = hasNearbyPartner;
       fighter.attack = fighter.baseAttack;
-      fighter.attackInterval = fighter.baseAttackInterval / (hasNearbyPartner ? multiplier : 1);
+      fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
+        ((hasNearbyPartner ? multiplier : 1) * (1 + fighter.matureAttackSpeedCurrent));
       fighter.moveSpeed = fighter.baseMoveSpeed * (hasNearbyPartner ? multiplier : 1) * maturePenalty;
     });
   }
@@ -1410,6 +1475,7 @@ export class AutoChessEngine {
       }
       if (!fighter.alive || fighter.stun > 0) return;
       if (fighter.energyPerSecond > 0) this.addEnergy(fighter, fighter.energyPerSecond * dt);
+      if (this.updateNoriApplePie(fighter, dt)) return;
 
       if (
         fighter.unitId === "rift_tyrant" &&
@@ -1948,12 +2014,10 @@ export class AutoChessEngine {
         break;
       }
       case "nori": {
-        for (let shot = 0; shot < 12; shot += 1) {
-          const target = this.nearestTarget(source, targets);
-          if (!target) break;
-          deal(target, 0.38);
-          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.14 + shot * 0.025, size: 2 });
-        }
+        source.applePieShotsRemaining = NORI_APPLE_PIE_SHOTS;
+        source.applePieShotTimer = 0;
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.44, size: 74 });
+        this.addEffect({ kind: "burst", x: source.x, y: source.y, color: def.accent, life: 0.22, size: 30 });
         break;
       }
       case "meme": {

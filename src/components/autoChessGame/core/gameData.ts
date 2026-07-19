@@ -1,7 +1,6 @@
 /* eslint-disable implicit-arrow-linebreak, object-property-newline */
 
 export const TRAIT_IDS = [
-  "aegis",
   "ember",
   "wild",
   "vanguard",
@@ -174,13 +173,12 @@ export interface WaveDefinition {
 }
 
 export const TRAITS: Record<TraitId, TraitDefinition> = {
-  aegis: { id: "aegis", name: "VR学园", family: "阵营", color: "#66d7ff", thresholds: [2, 4, 6], description: "学园组负责把直播间秩序和队伍前排一起守住。", bonuses: ["学园成员 +12 护甲、+7% 最大生命", "学园成员 +25/+14%；全队开战获 8% 最大生命护盾", "学园成员 +42/+23%；全队开战获 16% 最大生命护盾"] },
   ember: { id: "ember", name: "深夜档", family: "阵营", color: "#ff7657", thresholds: [2, 4, 6], description: "熬得越久，状态越稳；战斗中攻击力会逐步叠加。", bonuses: ["深夜档成员每 3 秒 +5% 攻击力，最多 +25%", "深夜档成员每 3 秒 +8% 攻击力，最多 +40%；所有远程友军最多 +12% 攻击力", "深夜档成员每 3 秒 +12% 攻击力，最多 +60%；所有远程友军最多 +25% 攻击力"] },
   wild: { id: "wild", name: "毛茸茸", family: "阵营", color: "#70e1a0", thresholds: [2, 4, 6], description: "耳朵、尾巴与毛茸茸的气势会让前排更能扛住直播事故。", bonuses: ["毛茸茸成员 +12% 最大生命、+8 护甲", "毛茸茸成员 +25% 最大生命、+18 护甲；所有近战友军 +8% 最大生命、+6 护甲", "毛茸茸成员 +42% 最大生命、+32 护甲；所有近战友军 +16% 最大生命、+12 护甲"] },
   vanguard: { id: "vanguard", name: "怕死", family: "职业", color: "#819eff", thresholds: [2, 4, 6], description: "怕死位最懂得保全自己，生命和护甲越高越能熬过直播事故。", bonuses: ["怕死单位 +12% 最大生命、+8 护甲", "怕死单位 +25% 最大生命、+18 护甲；所有近战友军 +8% 最大生命、+6 护甲", "怕死单位 +42% 最大生命、+32 护甲；所有近战友军 +16% 最大生命、+12 护甲"] },
   ranger: { id: "ranger", name: "射手", family: "职业", color: "#f2d15e", thresholds: [2, 4, 6], description: "射手擅长持续远程输出，高阶会带动全队后排火力。", bonuses: ["射手单位 +12% 攻速", "射手单位 +26% 攻速；所有远程友军 +15% 攻速", "射手单位 +45% 攻速；所有远程友军 +30% 攻速"] },
   mystic: { id: "mystic", name: "杂谈", family: "职业", color: "#de87ff", thresholds: [2, 4, 6], description: "杂谈位开麦快、话题多，总能把全队情绪带起来。", bonuses: ["杂谈单位开战 +20 能量", "杂谈开战 +45、施法返还 8；全体友军开战 +10 能量", "杂谈开战 +70、施法返还 15；全体友军开战 +22 能量"] },
-  assassin: { id: "assassin", name: "潜伏", family: "职业", color: "#ff6fae", thresholds: [2, 4, 6], description: "潜伏位绕开前排，专门抓住后排的直播事故。", bonuses: ["潜伏单位跃向后排、获得 15% 暴击率", "潜伏 30% 暴击；所有远程友军 +12% 暴击率", "潜伏 50% 暴击；所有远程友军 +25% 暴击率"] },
+  assassin: { id: "assassin", name: "偷袭", family: "职业", color: "#ff6fae", thresholds: [2, 4, 6], description: "偷袭成员会悄悄贴近同事，在后排制造猝不及防的贴贴事故。", bonuses: ["偷袭成员跃向后排、获得 15% 暴击率", "偷袭成员 30% 暴击；所有远程友军 +12% 暴击率", "偷袭成员 50% 暴击；所有远程友军 +25% 暴击率"] },
   chuanmei: {
     id: "chuanmei",
     name: "川妹",
@@ -245,7 +243,7 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     bonuses: ["矮人成员 +12% 闪避率", "矮人成员 +22% 闪避率"],
   },
   traffic: { id: "traffic", name: "流量", family: "关系", color: "#ff7197", thresholds: [2, 4, 6], description: "被更多人看见，才有继续输出的底气。", bonuses: ["流量成员获得 8% 吸血", "流量成员获得 15% 吸血；所有远程友军获得 5% 吸血", "流量成员获得 24% 吸血；所有远程友军获得 10% 吸血"] },
-  mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局沉稳，但战线拖久后步子会慢下来。", bonuses: ["成熟成员开战获得 10% 最大生命护盾；每 4 秒移速 -6%，最低 70%", "成熟成员开战获得 18% 最大生命护盾；每 4 秒移速 -5%，最低 75%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾；每 4 秒移速 -4%，最低 80%；全队获得 8% 最大生命护盾"] },
+  mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速会逐步回到正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒衰减至正常，移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒衰减至正常，移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒衰减至正常，移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
   dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏就能把舞台气氛带进战场。", bonuses: ["跳舞成员 +12% 攻速、+10 移速", "跳舞成员 +26% 攻速、+20 移速；所有远程友军 +8% 攻速、+6 移速", "跳舞成员 +45% 攻速、+32 移速；所有远程友军 +16% 攻速、+12 移速"] },
 };
 
@@ -308,7 +306,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#7de2ff",
     tier: 1,
     cost: 1,
-    traits: ["aegis", "vanguard", "gen27", "traffic"],
+    traits: ["vanguard", "gen27", "traffic"],
     hp: 245,
     attack: 16,
     armor: 30,
@@ -429,14 +427,14 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   sui: unit({
     id: "sui",
-    name: "贪吃岁",
+    name: "小红帽",
     title: "岁己SUI · 前排防守",
     glyph: "红",
     color: "#8f3f4e",
     accent: "#ffabb5",
     tier: 1,
     cost: 1,
-    traits: ["vanguard", "gluttony", "dance"],
+    traits: ["vanguard", "dance"],
     hp: 244,
     attack: 17,
     armor: 24,
@@ -526,7 +524,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#9ee8ff",
     tier: 2,
     cost: 2,
-    traits: ["assassin", "dwarf", "traffic"],
+    traits: ["dwarf", "traffic"],
     hp: 176,
     attack: 27,
     armor: 16,
@@ -614,7 +612,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#c3cfff",
     tier: 2,
     cost: 2,
-    traits: ["aegis", "skeleton_soldier"],
+    traits: ["wild", "skeleton_soldier"],
     hp: 164,
     attack: 20,
     armor: 11,
@@ -746,7 +744,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#e8a8f4",
     tier: 4,
     cost: 4,
-    traits: ["assassin", "host"],
+    traits: ["assassin", "gluttony"],
     hp: 226,
     attack: 39,
     armor: 15,
@@ -829,7 +827,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   nightin: unit({
     id: "nightin", name: "南町", title: "绿色辣妹 · 深夜控场", glyph: "南", color: "#3b426f", accent: "#a9a7ff", tier: 2, cost: 2,
-    traits: ["ember", "mystic", "dwarf"], hp: 150, attack: 22, armor: 8, range: 210, attackInterval: 1.05, moveSpeed: 55,
+    traits: ["mystic", "dwarf"], hp: 150, attack: 22, armor: 8, range: 210, attackInterval: 1.05, moveSpeed: 55,
     abilityName: "烟头烫屁股", abilityDescription: "向敌人最密集处甩出烟头，造成范围伤害、灼烧并短暂眩晕。", portrait: "/images/livers/nightin.jpg", portraitFocus: "top", shop: true,
   }),
   tiandou: unit({
@@ -849,7 +847,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   lovely: unit({
     id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
-    traits: ["ember", "vanguard", "host"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
+    traits: ["ember", "assassin", "host"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
     abilityName: "元气冲场", abilityDescription: "跃入敌人最密集处横扫；每命中一名敌人，都会提升自身攻击速度。", shop: true,
   }),
   mumu: unit({
@@ -864,7 +862,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   rutice: unit({
     id: "rutice", name: "露蒂丝·诊所护航", title: "露蒂丝Rutice · 决战守卫", glyph: "医", color: "#4b7280", accent: "#90e7df", tier: 5, cost: 5,
-    traits: ["aegis", "vanguard", "host"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
+    traits: ["vanguard", "host"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
     abilityName: "终幕护航", abilityDescription: "为全体友军提供厚重护盾，随后震晕周围敌人并回复自身生命。", shop: true,
   }),
   lian: unit({
@@ -902,7 +900,7 @@ export const STARTERS: StarterDefinition[] = [
   { id: "blaze", name: "火热整活", subtitle: "辣福灼烧", description: "携带雅吨开局；灼烧伤害 +40%，首次胜利额外获得 2 金币。", unit: "rift_brawler", color: "#ff8058" },
   { id: "traffic_start", name: "蹭热点", subtitle: "流量续航", description: "携带大黑鼠开局；流量成员吸血额外 +6%，初始金币 +1。", unit: "dawn_duelist", color: "#ff7197" },
   { id: "bastion", name: "持久抗压", subtitle: "稳扎稳打", description: "携带果冻风纪开局；基地生命 +4，所有护盾效果 +30%。", unit: "sun_guard", color: "#69d8ff" },
-  { id: "dance_start", name: "舞台预热", subtitle: "先踩拍子", description: "携带泽音开局；跳舞成员开战 +20 能量，首战攻击速度 +15%。", unit: "zeyin", color: "#f39ade" },
+  { id: "dance_start", name: "舞台梦", subtitle: "红帽开场", description: "携带小红帽开局；所有友军开战 +10 能量，跳舞成员攻击速度 +8%。", unit: "sui", color: "#f39ade" },
   { id: "ranger_start", name: "稳定输出", subtitle: "远程热身", description: "携带兔子射手开局；所有远程友军攻击速度 +10%，首次刷新商店免费。", unit: "ember_blade", color: "#f2d15e" },
 ];
 

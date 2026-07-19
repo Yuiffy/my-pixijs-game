@@ -65,7 +65,7 @@ test("未达阈值的羁绊状态不会标记为已激活", () => {
   const engine = createEngine(18);
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
-  const status = engine.getTraitStatus("aegis");
+  const status = engine.getTraitStatus("vanguard");
   assert.equal(status.count, 1);
   assert.equal(status.level, 0);
   assert.equal(status.active, false);
@@ -75,8 +75,8 @@ test("达到阈值的羁绊状态会标记为已激活", () => {
   const engine = createEngine(19);
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "shiori", star: 1 };
-  const status = engine.getTraitStatus("aegis");
+  engine.state.board[1] = { uid: 2, id: "gale_archer", star: 1 };
+  const status = engine.getTraitStatus("vanguard");
   assert.equal(status.count, 2);
   assert.equal(status.level, 1);
   assert.equal(status.active, true);
@@ -88,21 +88,60 @@ test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sui_bird", star: 1 };
   engine.state.board[1] = { uid: 2, id: "sui_cat", star: 1 };
-  engine.state.board[2] = { uid: 3, id: "sui", star: 1 };
-  engine.state.board[3] = { uid: 4, id: "spark_mage", star: 1 };
-  engine.state.board[4] = { uid: 5, id: "cinder_ram", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "grove_mender", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sui_cat", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "spark_mage", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);
   battle.enemy.forEach((fighter) => { fighter.hp = 99_999; fighter.maxHp = 99_999; fighter.attack = 0; fighter.armor = 99_999; });
-  const hungry = battle.player.find((fighter) => fighter.unitId === "sui");
+  const hungry = battle.player.find((fighter) => fighter.unitId === "sui_cat");
   const beforeRadius = hungry?.radius;
   for (let tick = 0; tick < 61; tick += 1) {
     battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp; });
     engine.update(0.05);
   }
-  assert.ok((hungry?.growthStacks || 0) >= 0);
+  assert.ok((hungry?.growthStacks || 0) > 0);
   assert.equal(hungry?.radius, beforeRadius);
+});
+
+test("舞台梦携带小红帽，并为全队提供少量能量和跳舞攻速", () => {
+  const engine = new AutoChessEngine(34);
+  engine.state.starterChoices = ["dance_start", "bastion", "blaze"];
+  engine.startRun("dance_start");
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "zeyin", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const dancer = battle?.player.find((fighter) => fighter.unitId === "sui");
+  const nonDancer = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(dancer && nonDancer);
+  assert.equal(dancer.energy, 10);
+  assert.equal(nonDancer.energy, 10);
+  assert.equal(dancer.attackInterval, 1.12 / 1.12 / 1.08);
+  assert.equal(nonDancer.attackInterval, 1.2);
+});
+
+test("成熟开战护盾和攻速会在战斗中逐步回落", () => {
+  const engine = createEngine(35);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "gale_archer", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "zeyin", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const mature = battle?.player.find((fighter) => fighter.unitId === "gale_archer");
+  assert.ok(battle && mature);
+  assert.ok(Math.abs(mature.shield - mature.maxHp * 0.13) < 1e-9);
+  assert.equal(mature.attackInterval, 1.05 / 1.08);
+  battle.enemy.forEach((enemy) => { enemy.hp = 99_999; enemy.maxHp = 99_999; enemy.attack = 0; enemy.armor = 99_999; });
+  for (let tick = 0; tick < 481; tick += 1) engine.update(0.05);
+  assert.equal(mature.matureAttackSpeedCurrent, 0);
+  assert.ok(Math.abs(mature.attackInterval - 1.05) < 1e-9);
+  assert.ok(Math.abs(mature.moveSpeed - mature.baseMoveSpeed * 0.7) < 1e-9);
 });
 
 test("骷髅兵以高攻击和低护甲体现脆弱", () => {
@@ -122,11 +161,11 @@ test("深夜档会随战斗时间逐步提高攻击力", () => {
   const engine = createEngine(25);
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
-  engine.state.board[0] = { uid: 1, id: "ember_blade", star: 1 };
+  engine.state.board[0] = { uid: 1, id: "rift_brawler", star: 1 };
   engine.state.board[1] = { uid: 2, id: "spark_mage", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
-  const fighter = battle?.player.find((entry) => entry.unitId === "ember_blade");
+  const fighter = battle?.player.find((entry) => entry.unitId === "rift_brawler");
   assert.ok(battle && fighter);
   battle.enemy.forEach((enemy) => { enemy.hp = 99_999; enemy.maxHp = 99_999; enemy.attack = 0; enemy.armor = 99_999; });
   const initialAttack = fighter.attack;
@@ -134,8 +173,130 @@ test("深夜档会随战斗时间逐步提高攻击力", () => {
     battle.player.forEach((entry) => { entry.hp = entry.maxHp; });
     engine.update(0.05);
   }
-  assert.ok(fighter.emberAttackStacks >= 0);
-  assert.ok(fighter.attack >= initialAttack);
+  assert.equal(fighter.emberAttackStacks, 1);
+  assert.ok(fighter.attack > initialAttack);
+});
+
+test("能量 profile 会落地为个体上限、持续回能与攻击分类", () => {
+  const engine = createEngine(44);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "cog_scribe", star: 1 };
+  engine.startBattle();
+  const fighter = engine.state.battle?.player.find((entry) => entry.unitId === "cog_scribe");
+  assert.ok(fighter);
+  assert.equal(fighter.maxEnergy, 100);
+  assert.equal(fighter.energyPerSecond, 7);
+  assert.equal(fighter.attackType, "ranged");
+  const before = fighter.energy;
+  fighter.x = 72; fighter.y = 175;
+  engine.state.battle.enemy.forEach((enemy) => { enemy.x = 1000; enemy.y = 600; enemy.attack = 0; enemy.armor = 99_999; });
+  for (let tick = 0; tick < 20; tick += 1) engine.update(0.05);
+  assert.ok(fighter.energy >= before + 6.9);
+  assert.ok(fighter.energy <= fighter.maxEnergy);
+});
+
+test("能量按未闪避命中回收，护盾吸收仍会回能", () => {
+  const engine = createEngine(45);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const source = battle.player[0];
+  const target = battle.enemy[0];
+  source.x = 300; source.y = 300; source.cooldown = 0; source.energy = 0;
+  target.x = 345; target.y = 300; target.energy = 0; target.shield = 99_999; target.dodgeChance = 0;
+  engine.update(0.05);
+  assert.equal(source.energy, source.energyOnAttack);
+  assert.equal(target.energy, target.energyOnHit);
+});
+
+test("能能弄你的苹果派会以节奏分离的 12 发连射重定向目标", () => {
+  const engine = createEngine(57);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "nori", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const nori = battle?.player.find((fighter) => fighter.unitId === "nori");
+  assert.ok(battle && nori);
+  const [firstTarget, secondTarget] = battle.enemy;
+  assert.ok(firstTarget && secondTarget);
+  battle.player.forEach((fighter) => { fighter.cooldown = 99; });
+  battle.enemy.forEach((fighter, index) => {
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.shield = 0;
+    fighter.dodgeChance = 0;
+    fighter.x = 900 + index * 20;
+    fighter.y = 300;
+  });
+  nori.x = 300;
+  nori.y = 300;
+  nori.energy = nori.maxEnergy;
+  firstTarget.x = 500;
+  firstTarget.hp = 1;
+  firstTarget.maxHp = 1;
+  secondTarget.x = 700;
+  secondTarget.hp = 9_999;
+  secondTarget.maxHp = 9_999;
+
+  engine.update(0.05);
+  assert.equal(nori.applePieShotsRemaining, 12);
+  assert.ok(battle.effects.some((effect) => effect.kind === "ring"));
+  assert.equal(secondTarget.hp, 9_999);
+
+  engine.update(0.05);
+  assert.equal(nori.applePieShotsRemaining, 11);
+  assert.equal(firstTarget.alive, false);
+  assert.ok(battle.effects.some((effect) => effect.kind === "line"));
+
+  for (let tick = 0; tick < 22; tick += 1) engine.update(0.05);
+  assert.equal(nori.applePieShotsRemaining, 0);
+  assert.ok(Math.abs(secondTarget.hp - (9_999 - nori.attack * 0.38 * 11)) < 0.0001);
+  assert.ok(Math.abs(nori.damageDealt - (1 + nori.attack * 0.38 * 11)) < 0.0001);
+});
+
+test("苹果派在眩晕期间暂停且施法者死亡后不再发射", () => {
+  const engine = createEngine(58);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "nori", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const nori = battle?.player.find((fighter) => fighter.unitId === "nori");
+  assert.ok(battle && nori);
+  const target = battle.enemy[0];
+  battle.player.forEach((fighter) => { fighter.cooldown = 99; });
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.shield = 0;
+    fighter.dodgeChance = 0;
+    fighter.hp = 9_999;
+    fighter.maxHp = 9_999;
+    fighter.x = 650;
+    fighter.y = 300;
+  });
+  nori.x = 300;
+  nori.y = 300;
+  nori.energy = nori.maxEnergy;
+
+  engine.update(0.05);
+  engine.update(0.05);
+  assert.equal(nori.applePieShotsRemaining, 11);
+  nori.stun = 0.3;
+  const hpBeforeStun = target.hp;
+  for (let tick = 0; tick < 5; tick += 1) engine.update(0.05);
+  assert.equal(target.hp, hpBeforeStun);
+  assert.equal(nori.applePieShotsRemaining, 11);
+
+  nori.alive = false;
+  nori.hp = 0;
+  for (let tick = 0; tick < 5; tick += 1) engine.update(0.05);
+  assert.equal(target.hp, hpBeforeStun);
 });
 
 test("6x4 deployment slots preserve their formation positions at battle start", () => {
