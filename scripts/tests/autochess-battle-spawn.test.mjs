@@ -742,3 +742,70 @@ test("双方战斗排行按当前指标独立排序", () => {
   engine.setRankingMetric("support");
   assert.equal(engine.getBattleRanking("enemy")[0].fighter.fid, battle.enemy[1].fid);
 });
+
+test("老弥召唤的机械兔耳移动射击且伤害归属老弥", () => {
+  const engine = createEngine(95);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "clock_gunner", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const owner = battle?.player[0];
+  assert.ok(battle && owner);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.hp = fighter.maxHp = 9_999;
+    fighter.armor = 0;
+    fighter.attack = 0;
+    fighter.dodgeChance = 0;
+    fighter.x = 300 + index * 100;
+    fighter.y = owner.y;
+  });
+  const playerCount = battle.player.length;
+  owner.energy = owner.maxEnergy;
+  engine.update(0.05);
+  assert.equal(battle.pets.length, 2);
+  assert.equal(battle.player.length, playerCount);
+  assert.ok(battle.pets.every((pet) => pet.ownerFid === owner.fid));
+  const firstPair = battle.pets.map((pet) => pet.id);
+  owner.energy = owner.maxEnergy;
+  engine.update(0.05);
+  assert.equal(battle.pets.length, 2);
+  assert.notDeepEqual(battle.pets.map((pet) => pet.id), firstPair);
+  stepBattle(engine, 12);
+  assert.ok(battle.projectiles.some((projectile) => projectile.sourceFid === owner.fid));
+  stepBattle(engine, 28);
+  assert.ok(owner.damageDealt > 0);
+  assert.equal(engine.getBattleRanking()[0].fighter.fid, owner.fid);
+  owner.hp = 0;
+  owner.alive = false;
+  engine.update(0.05);
+  assert.equal(battle.pets.length, 0);
+});
+
+test("邪恶外星人的贯穿光线命中同横排敌人", () => {
+  const engine = createEngine(96);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "yua", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  assert.ok(battle && source);
+  const target = battle.enemy[0];
+  const aligned = { ...target, fid: "test-aligned", x: 760, y: 330 };
+  const outside = { ...target, fid: "test-outside", x: 720, y: 353 };
+  battle.enemy.push(aligned, outside);
+  [target, aligned, outside].forEach((fighter) => {
+    fighter.hp = fighter.maxHp = 9_999;
+    fighter.armor = 0;
+    fighter.attack = 0;
+    fighter.dodgeChance = 0;
+  });
+  target.x = 500; target.y = 280;
+  source.x = 200; source.y = 280;
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.ok(target.hp < target.maxHp);
+  assert.ok(aligned.hp < aligned.maxHp);
+  assert.equal(outside.hp, outside.maxHp);
+});
