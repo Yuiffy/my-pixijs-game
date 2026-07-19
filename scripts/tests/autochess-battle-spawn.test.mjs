@@ -139,7 +139,7 @@ test("舞台梦携带小红帽，并为全队提供少量能量和跳舞攻速",
   assert.equal(nonDancer.attackInterval, 1.2);
 });
 
-test("成熟开战护盾和攻速会在战斗中逐步回落", () => {
+test("成熟开战护盾和攻速每 4 秒降低 1 个百分点", () => {
   const engine = createEngine(35);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -152,9 +152,18 @@ test("成熟开战护盾和攻速会在战斗中逐步回落", () => {
   assert.ok(Math.abs(mature.shield - mature.maxHp * 0.13) < 1e-9);
   assert.equal(mature.attackInterval, 1.05 / 1.08);
   battle.enemy.forEach((enemy) => { enemy.hp = 99_999; enemy.maxHp = 99_999; enemy.attack = 0; enemy.armor = 99_999; });
-  for (let tick = 0; tick < 481; tick += 1) engine.update(0.05);
-  assert.equal(mature.matureAttackSpeedCurrent, 0);
-  assert.ok(Math.abs(mature.attackInterval - 1.05) < 1e-9);
+
+  stepBattle(engine, 81);
+  assert.ok(Math.abs(mature.matureAttackSpeedCurrent - 0.07) < 1e-9);
+  assert.ok(Math.abs(mature.attackInterval - 1.05 / 1.07) < 1e-9);
+
+  stepBattle(engine, 160);
+  assert.ok(Math.abs(mature.matureAttackSpeedCurrent - 0.05) < 1e-9);
+  assert.ok(Math.abs(mature.attackInterval - 1.05 / 1.05) < 1e-9);
+
+  stepBattle(engine, 240);
+  assert.ok(Math.abs(mature.matureAttackSpeedCurrent - 0.02) < 1e-9);
+  assert.ok(Math.abs(mature.attackInterval - 1.05 / 1.02) < 1e-9);
   assert.ok(Math.abs(mature.moveSpeed - mature.baseMoveSpeed * 0.7) < 1e-9);
 });
 

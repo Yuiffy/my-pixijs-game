@@ -98,11 +98,21 @@ export interface EnergyProfile {
 }
 
 export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
-  assault: { id: "assault", name: "强攻", max: 100, start: 0, perSecond: 0, onAttack: 24, onHit: 5, castRefund: 0, color: "#b585ff" },
-  bulwark: { id: "bulwark", name: "受压", max: 90, start: 0, perSecond: 0, onAttack: 12, onHit: 11, castRefund: 0, color: "#f2b45e" },
-  flow: { id: "flow", name: "流转", max: 100, start: 0, perSecond: 7, onAttack: 10, onHit: 4, castRefund: 0, color: "#65d8ca" },
-  tempo: { id: "tempo", name: "疾奏", max: 80, start: 0, perSecond: 3, onAttack: 18, onHit: 4, castRefund: 0, color: "#ee8fc4" },
-  reservoir: { id: "reservoir", name: "蓄势", max: 120, start: 0, perSecond: 3, onAttack: 16, onHit: 6, castRefund: 0, color: "#7e9bff" },
+  assault: { id: "assault", name: "攻击回能", max: 100, start: 0, perSecond: 0, onAttack: 24, onHit: 5, castRefund: 0, color: "#b585ff" },
+  bulwark: { id: "bulwark", name: "受击回能", max: 90, start: 15, perSecond: 0, onAttack: 6, onHit: 20, castRefund: 0, color: "#f2b45e" },
+  flow: { id: "flow", name: "流转回能", max: 100, start: 0, perSecond: 7, onAttack: 10, onHit: 4, castRefund: 0, color: "#65d8ca" },
+  tempo: { id: "tempo", name: "疾奏回能", max: 80, start: 0, perSecond: 3, onAttack: 18, onHit: 4, castRefund: 0, color: "#ee8fc4" },
+  reservoir: { id: "reservoir", name: "蓄势回能", max: 120, start: 0, perSecond: 3, onAttack: 16, onHit: 6, castRefund: 0, color: "#7e9bff" },
+  automatic: { id: "automatic", name: "自动回能", max: 100, start: 20, perSecond: 20, onAttack: 0, onHit: 0, castRefund: 0, color: "#9bb8ff" },
+};
+
+export const describeEnergyRecovery = (profile: EnergyProfile) => {
+  const sources = [
+    profile.perSecond > 0 && `自动回能（${(profile.max / profile.perSecond).toFixed(1).replace(/\.0$/, "")} 秒回满，每秒 +${profile.perSecond}）`,
+    profile.onAttack > 0 && `攻击回能（每下 +${profile.onAttack}）`,
+    profile.onHit > 0 && `受击回能（每下 +${profile.onHit}）`,
+  ].filter(Boolean);
+  return `初始 ${profile.start}/${profile.max}；${sources.join("；") || "不回复"}`;
 };
 
 export interface UnitDefinition {
@@ -243,7 +253,7 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     bonuses: ["矮人成员 +12% 闪避率", "矮人成员 +22% 闪避率"],
   },
   traffic: { id: "traffic", name: "流量", family: "关系", color: "#ff7197", thresholds: [2, 4, 6], description: "被更多人看见，才有继续输出的底气。", bonuses: ["流量成员获得 8% 吸血", "流量成员获得 15% 吸血；所有远程友军获得 5% 吸血", "流量成员获得 24% 吸血；所有远程友军获得 10% 吸血"] },
-  mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速会逐步回到正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒衰减至正常，移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒衰减至正常，移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒衰减至正常，移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
+  mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速每 4 秒降低 1 个百分点直至正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
   dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏就能把舞台气氛带进战场。", bonuses: ["跳舞成员 +12% 攻速、+10 移速", "跳舞成员 +26% 攻速、+20 移速；所有远程友军 +8% 攻速、+6 移速", "跳舞成员 +45% 攻速、+32 移速；所有远程友军 +16% 攻速、+12 移速"] },
 };
 
@@ -254,14 +264,14 @@ const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energ
   sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 46 },
   ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58 },
   gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44 },
-  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 52, moveSpeed: 82 },
+  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82 },
   cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46 },
   mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40 },
   sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48 },
-  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 58, moveSpeed: 72 },
+  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 72 },
   spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50 },
   clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48 },
-  dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 52, moveSpeed: 86 },
+  dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86 },
   grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44 },
   cinder_ram: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 52 },
   sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 240, moveSpeed: 58 },
@@ -270,19 +280,19 @@ const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energ
   sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
   yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 295, moveSpeed: 54 },
   mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50 },
-  guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 56, moveSpeed: 80 },
-  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 54, moveSpeed: 98 },
+  guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80 },
+  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 98 },
   nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38 },
-  biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 70, moveSpeed: 64 },
-  nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 220, moveSpeed: 60 },
+  biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64 },
+  nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60 },
   meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42 },
   zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60 },
   kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56 },
   nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
   tiandou: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 52 },
-  youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 54, moveSpeed: 88 },
-  akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 52, moveSpeed: 96 },
-  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 58, moveSpeed: 68 },
+  youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88 },
+  akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96 },
+  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68 },
   mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54 },
   rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54 },
   rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 42 },

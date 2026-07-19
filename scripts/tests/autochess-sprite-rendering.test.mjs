@@ -18,7 +18,7 @@ test("精灵头像在战斗中支持朝向镜像且不再绘制方框", () => {
 test("战斗技能条使用棋子上限并展示能量身份", () => {
   assert.match(renderer, /fighter\.energy \/ fighter\.maxEnergy/);
   assert.match(renderer, /ENERGY_PROFILES\[fighter\.energyStyle\]\.color/);
-  assert.match(renderer, /每秒 \+\$\{fighter\?\.energyPerSecond/);
+  assert.match(renderer, /describeEnergyRecovery\(profile\)/);
   assert.match(renderer, /attackType === "ranged" \? "远程" : "近战"/);
 });
 

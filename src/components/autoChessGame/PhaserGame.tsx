@@ -28,6 +28,7 @@ import {
   TraitId,
   StarterId,
   ENERGY_PROFILES,
+  describeEnergyRecovery,
   UNIT_DEFS,
   UnitId,
   bookLevelForPlayerLevel,
@@ -2405,7 +2406,7 @@ const drawTooltip = (
     ctx,
     truncateText(
       ctx,
-      `能量 ${energy} · ${profile.name} · 每秒 +${fighter?.energyPerSecond ?? profile.perSecond} · 普攻 +${fighter?.energyOnAttack ?? profile.onAttack} · 命中 +${fighter?.energyOnHit ?? profile.onHit}`,
+      `能量 ${energy} · ${profile.name} · ${describeEnergyRecovery(profile)}`,
       w - 40,
     ),
     x + 20,

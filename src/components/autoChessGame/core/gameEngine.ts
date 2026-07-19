@@ -1487,7 +1487,7 @@ export class AutoChessEngine {
         ? Math.max(fighter.matureMoveFloor, 1 - matureSteps * 0.05)
         : 1;
       const matureAttackSpeed = fighter.matureMember
-        ? Math.max(0, fighter.matureAttackSpeed * (1 - Math.min(4, matureSteps) / 4))
+        ? Math.max(0, fighter.matureAttackSpeed - matureSteps * 0.01)
         : 0;
       if (matureAttackSpeed !== fighter.matureAttackSpeedCurrent) {
         fighter.attackInterval *= (1 + fighter.matureAttackSpeedCurrent) / (1 + matureAttackSpeed);

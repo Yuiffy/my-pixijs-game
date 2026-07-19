@@ -206,7 +206,7 @@ test("岁己形态拆分到不同关系构筑", () => {
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
-  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "reservoir"]);
+  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "reservoir", "automatic"]);
   Object.values(data.UNIT_DEFS).forEach((unit) => {
     assert.ok(["melee", "ranged"].includes(unit.attackType), `${unit.id} must declare an attack type`);
     assert.ok(profiles.has(unit.energyProfile.id), `${unit.id} must use a known energy profile`);
@@ -214,6 +214,16 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     ["start", "perSecond", "onAttack", "onHit", "castRefund"].forEach((field) => assert.ok(unit.energyProfile[field] >= 0));
   });
   assert.equal(data.UNIT_DEFS.nagisa.energyProfile.id, "bulwark");
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 15);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 20);
+  ["rift_stalker", "rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "biscuit_sui", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
+    const profile = data.UNIT_DEFS[id].energyProfile;
+    assert.equal(profile.id, "automatic", `${id} should use automatic energy recovery`);
+    assert.equal(profile.start, 20);
+    assert.equal(profile.perSecond, 20);
+    assert.equal(profile.onAttack, 0);
+  });
+  assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.automatic), /自动回能（5 秒回满，每秒 \+20）/);
   assert.equal(data.UNIT_DEFS.cog_scribe.energyProfile.id, "flow");
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.id, "tempo");
   assert.equal(data.UNIT_DEFS.rift_tyrant.energyProfile.id, "reservoir");
@@ -256,6 +266,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
   assert.ok(data.UNIT_DEFS.lovely.traits.includes("assassin"));
   assert.deepEqual(data.UNIT_DEFS.nightin.traits, ["mystic", "dwarf"]);
+  assert.match(data.TRAITS.mature.bonuses[0], /每 4 秒降低 1 个百分点/);
   assert.match(data.TRAITS.mature.bonuses[0], /正常移速的 70%/);
   const danceStarter = data.STARTERS.find((starter) => starter.id === "dance_start");
   assert.equal(danceStarter?.name, "舞台梦");

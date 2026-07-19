@@ -6,6 +6,7 @@ import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
   AUGMENTS,
   ENERGY_PROFILES,
+  describeEnergyRecovery,
   PLAYER_LEVELS,
   PLAYER_LEVEL_CONFIG,
   SHOP_UNITS,
@@ -207,7 +208,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                 生命 {unit.hp} · 攻击 {unit.attack} · 护甲 {unit.armor}<br />
                 {unit.attackType === "ranged" ? "远程" : "近战"} · 射程 {unit.range} · 攻击间隔 {unit.attackInterval.toFixed(2)} 秒 · 移速 {unit.moveSpeed}<br />
                 <span style={{ color: ENERGY_PROFILES[unit.energyProfile.id].color }}>
-                  能量 · {unit.energyProfile.name}：{unit.energyProfile.start}/{unit.energyProfile.max}，每秒 +{unit.energyProfile.perSecond}，普攻 +{unit.energyProfile.onAttack}，命中 +{unit.energyProfile.onHit}
+                  能量 · {unit.energyProfile.name}：{describeEnergyRecovery(unit.energyProfile)}
                 </span>
               </div>
               <p style={{ color: "#708a9d", margin: "8px 0 12px", fontSize: 12 }}>以上为基础属性；羁绊、天赋和契印会在战斗中进一步修改数值。</p>
@@ -345,6 +346,8 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
             <p>守住前 8 战即完成远征，随后无缝进入无限裂隙。无限敌军会增加数量、升星和属性，每 5 层迎来强化首领，每 6 层还有机会获取新契印。</p>
             <h2>操作</h2>
             <ul><li>点击商店购买；点击或拖拽棋子调整站位；右键棋子可快速回收。</li><li>R 刷新商店，Space 开战，F 全屏，Esc 关闭面板/取消选中。</li><li>敌情预览、棋子、羁绊均可悬浮查看详情。</li></ul>
+            <h2>能量</h2>
+            <p>棋子满能会自动施放技能。每张棋子卡和悬浮详情都会写明初始能量与回能来源：自动回能按秒累积；攻击回能在普攻命中后获得；受击回能在被普攻命中后获得。能量数值会受到羁绊、开局与天赋影响。</p>
             <h2>经济</h2>
             <p>每 10 金提供 1 利息，最多 2；连胜和精英战提供额外收入。升本是“支付当前剩余费用直接升级”，不再购买抽象 XP。</p>
           </section>
