@@ -34,6 +34,8 @@ export type GamePhase =
   | "gameover";
 export type Team = "player" | "enemy";
 
+const CONTACT_ATTACK_BUFFER = 12;
+
 export interface OwnedUnit {
   uid: number;
   id: UnitId;
@@ -1511,7 +1513,7 @@ export class AutoChessEngine {
       const distance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
       const preferredRange = Math.max(
         fighter.range,
-        fighter.radius + target.radius + 7,
+        fighter.radius + target.radius + CONTACT_ATTACK_BUFFER,
       );
       if (distance > preferredRange) {
         this.faceTowardX(fighter, target.x);

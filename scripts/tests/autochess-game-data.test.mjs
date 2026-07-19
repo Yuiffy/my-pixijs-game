@@ -220,6 +220,10 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.clock_gunner.attackType, "ranged");
   assert.equal(data.UNIT_DEFS.rift_tyrant.attackType, "melee");
   assert.ok(data.UNIT_DEFS.clock_gunner.range >= 260);
+  assert.equal(data.UNIT_DEFS.gale_archer.range, 60);
+  assert.equal(data.UNIT_DEFS.meme.range, 60);
+  assert.equal(data.UNIT_DEFS.meme.tier, 3);
+  assert.equal(data.UNIT_DEFS.meme.cost, 3);
   assert.ok(data.UNIT_DEFS.nagisa.moveSpeed <= 40);
   assert.ok(data.UNIT_DEFS.sui_cat.moveSpeed >= 90);
 });

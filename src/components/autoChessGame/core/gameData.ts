@@ -253,7 +253,7 @@ export const traitLevelForCount = (trait: TraitDefinition, count: number) =>
 const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">> = {
   sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 46 },
   ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58 },
-  gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 44 },
+  gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44 },
   rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 52, moveSpeed: 82 },
   cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46 },
   mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40 },
@@ -275,7 +275,7 @@ const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energ
   nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38 },
   biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 70, moveSpeed: 64 },
   nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 220, moveSpeed: 60 },
-  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 42 },
+  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42 },
   zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60 },
   kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56 },
   nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
@@ -352,7 +352,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     hp: 232,
     attack: 16,
     armor: 20,
-    range: 48,
+    range: 60,
     attackInterval: 1.05,
     moveSpeed: 50,
     abilityName: "端茶倒水",
@@ -811,8 +811,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     abilityName: "苹果派", abilityDescription: "以较低单发伤害快速连射 12 次。", shop: true,
   }),
   meme: unit({
-    id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 1, cost: 1,
-    traits: ["wild", "vanguard", "host"], hp: 260, attack: 16, armor: 25, range: 48, attackInterval: 1.18, moveSpeed: 48,
+    id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 3, cost: 3,
+    traits: ["wild", "vanguard", "host"], hp: 260, attack: 16, armor: 25, range: 60, attackInterval: 1.18, moveSpeed: 48,
     abilityName: "夺回人生", abilityDescription: "震晕附近敌人并造成伤害，随后按造成伤害回复自身生命。", shop: true,
   }),
   zeyin: unit({

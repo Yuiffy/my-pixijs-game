@@ -196,6 +196,22 @@ test("能量 profile 会落地为个体上限、持续回能与攻击分类", ()
   assert.ok(fighter.energy <= fighter.maxEnergy);
 });
 
+test("紧贴碰撞体积的近战单位也能稳定攻击", () => {
+  const engine = createEngine(46);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const source = battle.player[0];
+  const target = battle.enemy[0];
+  source.x = 300; source.y = 300; source.cooldown = 0; source.energy = 0;
+  target.x = 363; target.y = 300; target.attack = 0; target.armor = 99_999; target.dodgeChance = 0;
+  engine.update(0.05);
+  assert.equal(source.energy, source.energyOnAttack);
+});
+
 test("能量按未闪避命中回收，护盾吸收仍会回能", () => {
   const engine = createEngine(45);
   engine.state.playerLevel = 4;
