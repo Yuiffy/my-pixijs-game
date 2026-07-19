@@ -84,7 +84,7 @@ test("克罗雅同时触发 27期与粤帮关系", () => {
   assert.equal(kloa?.yueGangMember, true);
 });
 
-test("疾行直播间为全队提供移速，贪吃成长不改变碰撞体积", () => {
+test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   const engine = new AutoChessEngine(23);
   engine.startRun("bastion");
   engine.state.playerLevel = 8;
@@ -95,18 +95,35 @@ test("疾行直播间为全队提供移速，贪吃成长不改变碰撞体积",
   engine.state.board[3] = { uid: 4, id: "spark_mage", star: 1 };
   engine.state.board[4] = { uid: 5, id: "cinder_ram", star: 1 };
 
-  assert.equal(engine.getActiveTraits().find((trait) => trait.id === "swiftstage")?.level, 1);
+  assert.equal(engine.getActiveTraits().find((trait) => trait.id === "host")?.level, 1);
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);
   const hungry = battle.player.find((fighter) => fighter.unitId === "sui");
-  const swift = battle.player.find((fighter) => fighter.unitId === "sui_bird");
+  const host = battle.player.find((fighter) => fighter.unitId === "sui_bird");
   const beforeRadius = hungry?.radius;
   assert.equal(hungry?.moveSpeed, 62);
-  assert.equal(swift?.moveSpeed, 96);
+  assert.equal(host?.moveSpeed, 96);
   for (let tick = 0; tick < 61; tick += 1) engine.update(0.05);
   assert.equal(hungry?.growthStacks, 1);
   assert.equal(hungry?.radius, beforeRadius);
+});
+
+test("深夜档会随战斗时间逐步提高攻击力", () => {
+  const engine = new AutoChessEngine(25);
+  engine.startRun("bastion");
+  engine.state.playerLevel = 8;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "ember_blade", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "spark_mage", star: 1 };
+  engine.startBattle();
+
+  const fighter = engine.state.battle?.player.find((entry) => entry.unitId === "ember_blade");
+  assert.ok(fighter);
+  const initialAttack = fighter.attack;
+  for (let tick = 0; tick < 61; tick += 1) engine.update(0.05);
+  assert.equal(fighter.emberAttackStacks, 1);
+  assert.equal(fighter.attack, initialAttack * 1.05);
 });
 
 test("6x4 deployment slots preserve their formation positions at battle start", () => {

@@ -83,8 +83,13 @@ export interface Fighter {
   burnOnHitPower: number;
   spiceBurnOnHitPower: number;
   dodgeChance: number;
+  dwarfMember: boolean;
   gluttonyHolder: boolean;
   growthStacks: number;
+  emberMember: boolean;
+  emberAttackPerStack: number;
+  emberAttackStacks: number;
+  emberAttackStackCap: number;
   gen27Member: boolean;
   gen27Buffed: boolean;
   baseAttack: number;
@@ -128,6 +133,7 @@ export interface BattleState {
   effects: BattleEffect[];
   fieldMedicTimer: number;
   gluttonyTimer: number;
+  emberTimer: number;
   yueGangTimer: number;
   banner: string;
   bannerTimer: number;
@@ -705,10 +711,6 @@ export class AutoChessEngine {
       const aegisLevel = def.traits.includes("aegis") ? traitLevel("aegis") : 0;
       const emberLevel = def.traits.includes("ember") ? traitLevel("ember") : 0;
       const wildLevel = def.traits.includes("wild") ? traitLevel("wild") : 0;
-      const riftLevel = def.traits.includes("rift") ? traitLevel("rift") : 0;
-      const clockworkLevel = def.traits.includes("clockwork")
-        ? traitLevel("clockwork")
-        : 0;
       const vanguardLevel = def.traits.includes("vanguard")
         ? traitLevel("vanguard")
         : 0;
@@ -734,21 +736,17 @@ export class AutoChessEngine {
       const gen27Member = def.traits.includes("gen27") && traitLevel("gen27") > 0;
       const yueGangMember = def.traits.includes("yue_gang") && traitLevel("yue_gang") > 0;
       const isRanged = def.range >= 160;
-      const globalEmberLevel = globalTraitLevel("ember");
       const globalWildLevel = globalTraitLevel("wild");
-      const globalRiftLevel = globalTraitLevel("rift");
-      const globalClockworkLevel = globalTraitLevel("clockwork");
       const globalVanguardLevel = globalTraitLevel("vanguard");
       const globalRangerLevel = globalTraitLevel("ranger");
       const globalMysticLevel = globalTraitLevel("mystic");
       const globalBrawlerLevel = globalTraitLevel("brawler");
       const globalAssassinLevel = globalTraitLevel("assassin");
       const globalChuanmeiLevel = globalTraitLevel("chuanmei");
-      const swiftstageLevel = def.traits.includes("swiftstage")
-        ? traitLevel("swiftstage")
-        : 0;
-      const globalSwiftstageLevel = globalTraitLevel("swiftstage");
-      const moveSpeed = def.moveSpeed + [0, 10, 22, 36][globalSwiftstageLevel] + (swiftstageLevel ? [0, 18, 32, 50][swiftstageLevel] : 0);
+      const hostLevel = def.traits.includes("host") ? traitLevel("host") : 0;
+      const globalHostLevel = globalTraitLevel("host");
+      const dwarfLevel = def.traits.includes("dwarf") ? traitLevel("dwarf") : 0;
+      const moveSpeed = def.moveSpeed + [0, 10, 22, 36][globalHostLevel] + (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
 
       if (aegisLevel) {
         maxHp *= [1, 1.07, 1.14, 1.23][aegisLevel];
@@ -759,8 +757,6 @@ export class AutoChessEngine {
         armor += [0, 8, 18, 32][vanguardLevel];
       }
       if (rangerLevel) attackInterval /= [1, 1.12, 1.26, 1.45][rangerLevel];
-      if (clockworkLevel)
-        attackInterval /= [1, 1.1, 1.22, 1.38][clockworkLevel];
       if (brawlerLevel) attack *= [1, 1.12, 1.26, 1.45][brawlerLevel];
       if (!isRanged) {
         if (globalVanguardLevel >= 2) {
@@ -772,11 +768,8 @@ export class AutoChessEngine {
         }
         if (globalBrawlerLevel >= 2)
           attack *= globalBrawlerLevel === 3 ? 1.2 : 1.1;
-      } else {
-        if (globalRangerLevel >= 2)
-          attackInterval /= globalRangerLevel === 3 ? 1.3 : 1.15;
-        if (globalClockworkLevel >= 2)
-          attackInterval /= globalClockworkLevel === 3 ? 1.22 : 1.1;
+      } else if (globalRangerLevel >= 2) {
+        attackInterval /= globalRangerLevel === 3 ? 1.3 : 1.15;
       }
       if (hasAugment("tempered")) armor += 16;
       if (hasAugment("second_wind")) {
@@ -819,27 +812,24 @@ export class AutoChessEngine {
           [0, 0.08, 0.15, 0.24][wildLevel] +
           [0, 0, 0.06, 0.12][globalWildLevel] * (isRanged ? 0 : 1) +
           (wildLevel && this.state.starter === "echo" ? 0.06 : 0),
-        burnOnHitPower: Math.max(
-          [0, 0.35, 0.65, 1.05][emberLevel],
-          isRanged ? [0, 0, 0.25, 0.5][globalEmberLevel] : 0,
-        ),
+        burnOnHitPower: 0,
         spiceBurnOnHitPower: Math.max(
           [0, 0.45, 0.8][chuanmeiLevel],
           isRanged ? [0, 0, 0.22][globalChuanmeiLevel] : 0,
         ),
-        dodgeChance: skeletonLevel ? 0.15 : 0,
+        dodgeChance: Math.max(skeletonLevel ? 0.15 : 0, dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0),
+        dwarfMember: dwarfLevel > 0,
         gluttonyHolder,
         growthStacks: 0,
+        emberMember: emberLevel > 0,
+        emberAttackPerStack: [0, 0.05, 0.08, 0.12][emberLevel],
+        emberAttackStacks: 0,
+        emberAttackStackCap: [0, 5, 5, 5][emberLevel],
         gen27Member,
         gen27Buffed: false,
         yueGangMember,
-        energyPerHit:
-          [0, 4, 8, 14][clockworkLevel] +
-          (isRanged && globalClockworkLevel === 3 ? 4 : 0),
-        lowHealthBonus: Math.max(
-          [0, 0.15, 0.32, 0.55][riftLevel],
-          [0, 0, 0.1, 0.2][globalRiftLevel],
-        ),
+        energyPerHit: 0,
+        lowHealthBonus: 0,
         critChance:
           [0, 0.15, 0.3, 0.5][assassinLevel] +
           (isRanged ? [0, 0, 0.12, 0.25][globalAssassinLevel] : 0),
@@ -906,8 +896,13 @@ export class AutoChessEngine {
         burnOnHitPower: 0,
         spiceBurnOnHitPower: 0,
         dodgeChance: 0,
+        dwarfMember: false,
         gluttonyHolder: false,
         growthStacks: 0,
+        emberMember: false,
+        emberAttackPerStack: 0,
+        emberAttackStacks: 0,
+        emberAttackStackCap: 0,
         gen27Member: false,
         gen27Buffed: false,
         yueGangMember: false,
@@ -947,6 +942,7 @@ export class AutoChessEngine {
       effects: [],
       fieldMedicTimer: 2.5,
       gluttonyTimer: 3,
+      emberTimer: 3,
       yueGangTimer: 0.45,
       banner:
         wave.tag === "boss"
@@ -1149,6 +1145,25 @@ export class AutoChessEngine {
       effect.life -= dt;
     });
     battle.effects = battle.effects.filter((effect) => effect.life > 0);
+
+    const emberLevel = this.getActiveTraits().find((trait) => trait.id === "ember")?.level || 0;
+    if (emberLevel) {
+      battle.emberTimer -= dt;
+      if (battle.emberTimer <= 0) {
+        battle.emberTimer += 3;
+        const rangedCapRatio = [0, 0, 0.12, 0.25][emberLevel];
+        this.living("player").forEach((fighter) => {
+          if (fighter.emberMember && fighter.emberAttackStacks < fighter.emberAttackStackCap) {
+            fighter.emberAttackStacks += 1;
+            fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
+            this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#ff7657", text: `夜 ${fighter.emberAttackStacks}/5`, life: 0.65, size: 10 });
+          } else if (!fighter.emberMember && fighter.range >= 160 && rangedCapRatio > 0 && fighter.emberAttackStacks < 5) {
+            fighter.emberAttackStacks += 1;
+            fighter.attack = fighter.baseAttack * (1 + (rangedCapRatio / 5) * fighter.emberAttackStacks);
+          }
+        });
+      }
+    }
 
     const gluttonyLevel = this.getActiveTraits().find((trait) => trait.id === "gluttony")?.level || 0;
     if (gluttonyLevel) {
