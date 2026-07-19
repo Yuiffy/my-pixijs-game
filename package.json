@@ -18,6 +18,8 @@
     "streams:verify": "node scripts/verify-stream-data.mjs --local --references-only",
     "streams:test": "node --test scripts/tests/stream-shards.test.mjs scripts/tests/sync-failures.test.mjs",
     "autochess:test": "node --test scripts/tests/autochess-*.test.mjs",
+    "autochess:portrait:generate": "node scripts/autochess-portrait-generate.mjs",
+    "autochess:portrait:process": "node scripts/autochess-portrait-process.mjs",
     "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:stop": "pm2 stop ecosystem.config.cjs",
     "pm2:restart": "pm2 restart ecosystem.config.cjs --update-env",

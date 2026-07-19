@@ -394,6 +394,7 @@ const drawImagePortrait = (
   y: number,
   radius: number,
   focus: "top" | "center" = "center",
+  style: "round" | "sprite" = "round",
 ) => {
   const sourceRatio = image.naturalWidth / image.naturalHeight;
   const sourceWidth = sourceRatio > 1 ? image.naturalHeight : image.naturalWidth;
@@ -404,9 +405,13 @@ const drawImagePortrait = (
     focus === "top" ? (image.naturalHeight - sourceHeight) * 0.16 : (image.naturalHeight - sourceHeight) / 2,
   );
   ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, radius - 2, 0, Math.PI * 2);
-  ctx.clip();
+  if (style === "round") {
+    ctx.beginPath();
+    ctx.arc(x, y, radius - 2, 0, Math.PI * 2);
+    ctx.clip();
+  } else {
+    ctx.imageSmoothingEnabled = false;
+  }
   ctx.drawImage(
     image,
     sourceX,
@@ -421,6 +426,31 @@ const drawImagePortrait = (
   ctx.restore();
 };
 
+const drawSpriteCornerMarks = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+) => {
+  const inset = Math.max(1, radius * 0.08);
+  const edge = radius - inset;
+  const length = Math.max(4, radius * 0.3);
+  ctx.beginPath();
+  ctx.moveTo(x - edge, y - edge + length);
+  ctx.lineTo(x - edge, y - edge);
+  ctx.lineTo(x - edge + length, y - edge);
+  ctx.moveTo(x + edge - length, y - edge);
+  ctx.lineTo(x + edge, y - edge);
+  ctx.lineTo(x + edge, y - edge + length);
+  ctx.moveTo(x - edge, y + edge - length);
+  ctx.lineTo(x - edge, y + edge);
+  ctx.lineTo(x - edge + length, y + edge);
+  ctx.moveTo(x + edge - length, y + edge);
+  ctx.lineTo(x + edge, y + edge);
+  ctx.lineTo(x + edge, y + edge - length);
+  ctx.stroke();
+};
+
 const drawUnitPortrait = (
   ctx: CanvasRenderingContext2D,
   unitId: UnitId,
@@ -431,35 +461,57 @@ const drawUnitPortrait = (
   alpha = 1,
 ) => {
   const def = UNIT_DEFS[unitId];
+  const portraitStyle = def.portraitStyle || "round";
+  const portrait = def.portrait ? requestUnitImage(def.portrait) : null;
+  const hasPortrait = Boolean(portrait?.complete && portrait.naturalWidth > 0);
+  const borderColor = team === "player" ? def.accent : "#ff688e";
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.shadowColor = def.accent;
-  ctx.shadowBlur = radius * 0.5;
-  const gradient = ctx.createRadialGradient(
-    x - radius * 0.25,
-    y - radius * 0.3,
-    2,
-    x,
-    y,
-    radius,
-  );
-  gradient.addColorStop(0, def.accent);
-  gradient.addColorStop(0.4, def.color);
-  gradient.addColorStop(1, "#09131d");
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
-  ctx.fillStyle = gradient;
-  ctx.fill();
-  const portrait = def.portrait ? requestUnitImage(def.portrait) : null;
-  if (portrait?.complete && portrait.naturalWidth > 0)
-    drawImagePortrait(ctx, portrait, x, y, radius, def.portraitFocus);
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = team === "player" ? def.accent : "#ff688e";
-  ctx.lineWidth = Math.max(2, radius * 0.08);
-  ctx.stroke();
+
+  if (portraitStyle === "sprite") {
+    if (hasPortrait) {
+      ctx.shadowColor = borderColor;
+      ctx.shadowBlur = radius * 0.28;
+      drawImagePortrait(ctx, portrait!, x, y, radius, def.portraitFocus, "sprite");
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = Math.max(1.5, radius * 0.06);
+      drawSpriteCornerMarks(ctx, x, y, radius);
+    } else {
+      ctx.fillStyle = def.color;
+      ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = Math.max(2, radius * 0.08);
+      ctx.strokeRect(x - radius, y - radius, radius * 2, radius * 2);
+    }
+  } else {
+    ctx.shadowColor = def.accent;
+    ctx.shadowBlur = radius * 0.5;
+    const gradient = ctx.createRadialGradient(
+      x - radius * 0.25,
+      y - radius * 0.3,
+      2,
+      x,
+      y,
+      radius,
+    );
+    gradient.addColorStop(0, def.accent);
+    gradient.addColorStop(0.4, def.color);
+    gradient.addColorStop(1, "#09131d");
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    if (hasPortrait) drawImagePortrait(ctx, portrait!, x, y, radius, def.portraitFocus);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = Math.max(2, radius * 0.08);
+    ctx.stroke();
+  }
+
   text(
     ctx,
-    def.portrait && portrait?.complete ? "" : def.glyph,
+    hasPortrait ? "" : def.glyph,
     x,
     y + 1,
     Math.max(13, radius * 0.72),

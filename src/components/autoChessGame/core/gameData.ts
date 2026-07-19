@@ -104,6 +104,7 @@ export interface UnitDefinition {
   abilityDescription: string;
   portrait?: string;
   portraitFocus?: "top" | "center";
+  portraitStyle?: "round" | "sprite";
   shop: boolean;
 }
 
@@ -266,9 +267,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   gale_archer: unit({
     id: "gale_archer",
-    name: "十六萤·浣熊射手",
-    title: "十六萤Izayoi · 远程输出",
-    glyph: "萤",
+    name: "浣熊射手",
+    title: "风痕巡林者 · 远程输出",
+    glyph: "浣",
     color: "#245e4e",
     accent: "#7ef0bb",
     tier: 1,
@@ -282,8 +283,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 58,
     abilityName: "尾巴三连拍",
     abilityDescription: "用毛茸茸的大尾巴连续射出三道尾影，优先追击残血敌人。",
-    portrait: "/images/livers/izayoi.png",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/raccoon-archer.png",
+    portraitStyle: "sprite",
     shop: true,
   }),
   rift_stalker: unit({

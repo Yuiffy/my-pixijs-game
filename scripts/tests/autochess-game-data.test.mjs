@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
+import path from "node:path";
+import { inflateSync } from "node:zlib";
 import test from "node:test";
 import ts from "typescript";
 
@@ -17,6 +19,60 @@ const loadModule = async (relativePath) => {
 };
 
 const data = await loadModule("src/components/autoChessGame/core/gameData.ts");
+
+const inspectPng = (buffer) => {
+  const signature = "89504e470d0a1a0a";
+  assert.equal(buffer.subarray(0, 8).toString("hex"), signature, "portrait must be a PNG");
+  let offset = 8;
+  let width;
+  let height;
+  let colorType;
+  const idat = [];
+  while (offset < buffer.length) {
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.subarray(offset + 4, offset + 8).toString("ascii");
+    const chunk = buffer.subarray(offset + 8, offset + 8 + length);
+    if (type === "IHDR") {
+      width = chunk.readUInt32BE(0);
+      height = chunk.readUInt32BE(4);
+      assert.equal(chunk[8], 8, "portrait must use 8-bit channels");
+      colorType = chunk[9];
+      assert.equal(chunk[12], 0, "portrait must not use interlacing");
+    }
+    if (type === "IDAT") idat.push(chunk);
+    if (type === "IEND") break;
+    offset += length + 12;
+  }
+  assert.equal(colorType, 6, "portrait must be RGBA so its background can be transparent");
+  const rows = inflateSync(Buffer.concat(idat));
+  const stride = width * 4;
+  let rowOffset = 0;
+  let previous = Buffer.alloc(stride);
+  let hasTransparentPixel = false;
+  for (let y = 0; y < height; y += 1) {
+    const filter = rows[rowOffset];
+    const row = Buffer.from(rows.subarray(rowOffset + 1, rowOffset + 1 + stride));
+    for (let x = 0; x < stride; x += 1) {
+      const left = x >= 4 ? row[x - 4] : 0;
+      const up = previous[x];
+      const upperLeft = x >= 4 ? previous[x - 4] : 0;
+      if (filter === 1) row[x] = (row[x] + left) & 255;
+      if (filter === 2) row[x] = (row[x] + up) & 255;
+      if (filter === 3) row[x] = (row[x] + Math.floor((left + up) / 2)) & 255;
+      if (filter === 4) {
+        const prediction = left + up - upperLeft;
+        const distances = [Math.abs(prediction - left), Math.abs(prediction - up), Math.abs(prediction - upperLeft)];
+        const nearest = distances[0] <= distances[1] && distances[0] <= distances[2] ? left : distances[1] <= distances[2] ? up : upperLeft;
+        row[x] = (row[x] + nearest) & 255;
+      }
+    }
+    assert.ok(filter <= 4, "portrait PNG uses an unsupported scanline filter");
+    for (let alpha = 3; alpha < row.length; alpha += 4) hasTransparentPixel ||= row[alpha] < 255;
+    previous = row;
+    rowOffset += stride + 1;
+  }
+  return { width, height, hasTransparentPixel };
+};
 
 test("六本八人口的升本成本与商店概率符合短局节奏", () => {
   assert.deepEqual(
@@ -47,7 +103,23 @@ test("八关后生成持续成长的无限关", () => {
   assert.ok(late.units.some((unit) => (unit.star || 1) >= 2));
 });
 
-test("主播化棋子保留易读定位与 VirtuaReal 署名", () => {
+test("浣熊射手试点使用原创展示文案与独立精灵头像", async () => {
+  const unit = data.UNIT_DEFS.gale_archer;
+  assert.equal(unit.name, "浣熊射手");
+  assert.equal(unit.title, "风痕巡林者 · 远程输出");
+  assert.equal(unit.glyph, "浣");
+  assert.equal(unit.portraitStyle, "sprite");
+  assert.equal(unit.portrait, "/images/autochess/portraits/raccoon-archer.png");
+  assert.doesNotMatch(`${unit.name} ${unit.title}`, /十六萤|Izayoi/);
+  const assetPath = path.resolve("public", unit.portrait.slice(1));
+  await access(assetPath);
+  const portrait = inspectPng(await readFile(assetPath));
+  assert.equal(portrait.width, portrait.height);
+  assert.equal(portrait.width, 512);
+  assert.equal(portrait.hasTransparentPixel, true);
+});
+
+test("其他主播化棋子保持现有内容，迁移范围限于试点", () => {
   assert.equal(data.UNIT_DEFS.sun_guard.name, "果冻风纪");
   assert.match(data.UNIT_DEFS.sun_guard.title, /灰泽满Hazel/);
   assert.equal(data.UNIT_DEFS.ember_blade.name, "胡萝卜特工");
