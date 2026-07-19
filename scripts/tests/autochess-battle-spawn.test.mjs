@@ -48,13 +48,13 @@ test("已选择的天赋会按回合记入历史", () => {
   assert.deepEqual(engine.state.augmentHistory, [{ round: 2, id: "overclock" }]);
 });
 
-test("克罗雅同时触发 27期与粤帮关系", () => {
+test("克罗雅可同时触发 27期与粤帮关系", () => {
   const engine = createEngine(24);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "rift_brawler", star: 1 };
   engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
-  engine.state.board[2] = { uid: 3, id: "rift_stalker", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "mitsuri", star: 1 };
   engine.startBattle();
   const kloa = engine.state.battle?.player.find((fighter) => fighter.unitId === "rift_brawler");
   assert.equal(kloa?.gen27Member, true);
@@ -161,11 +161,11 @@ test("深夜档会随战斗时间逐步提高攻击力", () => {
   const engine = createEngine(25);
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
-  engine.state.board[0] = { uid: 1, id: "rift_brawler", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "spark_mage", star: 1 };
+  engine.state.board[0] = { uid: 1, id: "spark_mage", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "yua", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
-  const fighter = battle?.player.find((entry) => entry.unitId === "rift_brawler");
+  const fighter = battle?.player.find((entry) => entry.unitId === "spark_mage");
   assert.ok(battle && fighter);
   battle.enemy.forEach((enemy) => { enemy.hp = 99_999; enemy.maxHp = 99_999; enemy.attack = 0; enemy.armor = 99_999; });
   const initialAttack = fighter.attack;

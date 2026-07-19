@@ -269,9 +269,10 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.nightin.name, "南町");
   assert.equal(data.UNIT_DEFS.lovely.name, "狍子偶像");
   ["sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
-  ["rift_stalker", "rift_brawler", "mitsuri"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
+  ["rift_brawler", "mitsuri"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
   ["sun_guard", "rift_brawler", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gen27")));
-  assert.deepEqual(data.UNIT_DEFS.rift_brawler.traits, ["ember", "gen27", "yue_gang"]);
+  assert.deepEqual(data.UNIT_DEFS.rift_brawler.traits, ["gen27", "yue_gang"]);
+  assert.deepEqual(data.UNIT_DEFS.rift_stalker.traits, ["assassin"]);
   ["dawn_duelist", "ember_blade", "nightin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dwarf")));
   ["sun_guard", "dawn_duelist"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("traffic")));
   ["gale_archer", "clock_gunner", "cinder_ram", "zeyin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("mature")));
@@ -284,7 +285,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
     assert.equal(unit.id, id);
     assert.equal(unit.shop, true);
     assert.equal(unit.cost, unit.tier);
-    assert.ok(unit.traits.length >= 2 && unit.traits.length <= 4);
+    assert.ok(unit.traits.length >= 1 && unit.traits.length <= 4);
     unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
   });
 });

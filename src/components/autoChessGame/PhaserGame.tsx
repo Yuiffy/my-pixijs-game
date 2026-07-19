@@ -189,6 +189,10 @@ const strokeRounded = (
   ctx.stroke();
 };
 
+const setTextFont = (ctx: CanvasRenderingContext2D, size: number, weight = 500) => {
+  ctx.font = `${weight} ${size}px ${FONT}`;
+};
+
 const text = (
   ctx: CanvasRenderingContext2D,
   value: string,
@@ -199,11 +203,83 @@ const text = (
   align: CanvasTextAlign = "left",
   weight = 500,
 ) => {
-  ctx.font = `${weight} ${size}px ${FONT}`;
+  setTextFont(ctx, size, weight);
   ctx.fillStyle = color;
   ctx.textAlign = align;
   ctx.textBaseline = "middle";
   ctx.fillText(value, x, y);
+};
+
+const truncateText = (
+  ctx: CanvasRenderingContext2D,
+  value: string,
+  maxWidth: number,
+) => {
+  if (ctx.measureText(value).width <= maxWidth) return value;
+  const ellipsis = "…";
+  let truncated = "";
+  for (const character of value) {
+    if (ctx.measureText(`${truncated}${character}${ellipsis}`).width > maxWidth)
+      break;
+    truncated += character;
+  }
+  return truncated ? `${truncated}${ellipsis}` : ellipsis;
+};
+
+const wrapText = (
+  ctx: CanvasRenderingContext2D,
+  value: string,
+  maxWidth: number,
+) => {
+  const lines: string[] = [];
+  value.split(/\r?\n/).forEach((paragraph) => {
+    let current = "";
+    for (const character of paragraph) {
+      const next = current + character;
+      if (current && ctx.measureText(next).width > maxWidth) {
+        lines.push(current.trimEnd());
+        current = character.trimStart();
+      } else current = next;
+    }
+    if (current) lines.push(current.trimEnd());
+  });
+  return lines.length ? lines : [""];
+};
+
+const boundedTextLines = (
+  ctx: CanvasRenderingContext2D,
+  value: string,
+  maxWidth: number,
+  maxLines: number,
+) => {
+  const lines = wrapText(ctx, value, maxWidth);
+  if (lines.length <= maxLines) return lines;
+  return [
+    ...lines.slice(0, maxLines - 1),
+    truncateText(ctx, lines.slice(maxLines - 1).join(""), maxWidth),
+  ];
+};
+
+const drawBoundedText = (
+  ctx: CanvasRenderingContext2D,
+  value: string,
+  x: number,
+  centerY: number,
+  size: number,
+  color: string,
+  align: CanvasTextAlign,
+  weight: number,
+  maxWidth: number,
+  maxLines: number,
+  lineHeight: number,
+) => {
+  setTextFont(ctx, size, weight);
+  const lines = boundedTextLines(ctx, value, maxWidth, maxLines);
+  const startY = centerY - ((lines.length - 1) * lineHeight) / 2;
+  lines.forEach((line, index) =>
+    text(ctx, line, x, startY + index * lineHeight, size, color, align, weight),
+  );
+  return lines;
 };
 
 const drawBackdrop = (ctx: CanvasRenderingContext2D, state: GameState) => {
@@ -809,19 +885,19 @@ const drawTitle = (
       800,
     );
 
-    const lines = starter.description.split("；");
-    lines.forEach((line, lineIndex) => {
-      text(
-        ctx,
-        `${line}${lineIndex === 0 ? "；" : ""}`,
-        lifted.x + lifted.w / 2,
-        lifted.y + 181 + lineIndex * 23,
-        12,
-        "#9cb1c0",
-        "center",
-        500,
-      );
-    });
+    drawBoundedText(
+      ctx,
+      starter.description,
+      lifted.x + lifted.w / 2,
+      lifted.y + 192,
+      12,
+      "#9cb1c0",
+      "center",
+      500,
+      lifted.w - 40,
+      2,
+      20,
+    );
     fillRounded(
       ctx,
       { x: lifted.x + 62, y: lifted.y + 222, w: 176, h: 28 },
@@ -897,8 +973,21 @@ const drawPreparation = (
     "left",
     900,
   );
-  text(ctx, wave.name, 48, 149, 21, "#f1f7ff", "left", 800);
-  text(ctx, wave.description, 48, 174, 11, "#8ba4b6", "left", 500);
+  setTextFont(ctx, 21, 800);
+  text(ctx, truncateText(ctx, wave.name, 470), 48, 149, 21, "#f1f7ff", "left", 800);
+  drawBoundedText(
+    ctx,
+    wave.description,
+    48,
+    174,
+    11,
+    "#8ba4b6",
+    "left",
+    500,
+    470,
+    2,
+    15,
+  );
   const augmentHistory = state.augmentHistory
     .map(({ round, id }) => {
       const augment = AUGMENTS.find((item) => item.id === id);
@@ -906,9 +995,14 @@ const drawPreparation = (
     })
     .filter(Boolean)
     .join("  ·  ");
+  setTextFont(ctx, 8, 700);
   text(
     ctx,
-    augmentHistory ? `已选天赋：${augmentHistory}` : "第 2 战后可选择首个天赋",
+    truncateText(
+      ctx,
+      augmentHistory ? `已选天赋：${augmentHistory}` : "第 2 战后可选择首个天赋",
+      700,
+    ),
     48,
     190,
     8,
@@ -1061,9 +1155,10 @@ const drawPreparation = (
       "player",
       affordable ? 1 : 0.55,
     );
+    setTextFont(ctx, 13, 800);
     text(
       ctx,
-      def.name,
+      truncateText(ctx, def.name, 136),
       rect.x + 64,
       rect.y + 15,
       13,
@@ -1071,9 +1166,10 @@ const drawPreparation = (
       "left",
       800,
     );
+    setTextFont(ctx, 8, 700);
     text(
       ctx,
-      shopRole(unitId),
+      truncateText(ctx, shopRole(unitId), 136),
       rect.x + 64,
       rect.y + 29,
       8,
@@ -1302,9 +1398,14 @@ const drawPreparation = (
     .getActiveTraits()
     .map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level]}`)
     .join(" · ");
+  setTextFont(ctx, 10, 700);
   text(
     ctx,
-    activeNames ? `已激活：${activeNames}` : "常规羁绊按 2/4/6；关系羁绊按图标说明",
+    truncateText(
+      ctx,
+      activeNames ? `已激活：${activeNames}` : "常规羁绊按 2/4/6；关系羁绊按图标说明",
+      270,
+    ),
     807,
     647,
     10,
@@ -1312,9 +1413,10 @@ const drawPreparation = (
     "left",
     700,
   );
+  setTextFont(ctx, 10, 500);
   text(
     ctx,
-    `连胜 ${state.streak} · 10 金币提供 1 利息（最多 2）`,
+    truncateText(ctx, `连胜 ${state.streak} · 10 金币提供 1 利息（最多 2）`, 270),
     807,
     672,
     10,
@@ -1325,9 +1427,14 @@ const drawPreparation = (
   if (state.augmentHistory.length) {
     const latest = state.augmentHistory[state.augmentHistory.length - 1];
     const augment = AUGMENTS.find((item) => item.id === latest.id);
+    setTextFont(ctx, 9, 700);
     text(
       ctx,
-      `最新天赋（共 ${state.augmentHistory.length} 项）：第 ${latest.round} 战 · ${augment?.name || ""}`,
+      truncateText(
+        ctx,
+        `最新天赋（共 ${state.augmentHistory.length} 项）：第 ${latest.round} 战 · ${augment?.name || ""}`,
+        270,
+      ),
       807,
       692,
       9,
@@ -1707,7 +1814,17 @@ const drawBattleRanking = (
     ctx.fillRect(848, y - 8, 142 * (value / maxValue), 16);
     text(ctx, `${index + 1}`, 822, y, 10, "#8ba4b6", "center", 700);
     drawUnitPortrait(ctx, fighter.unitId, 842, y, 11, "player");
-    text(ctx, `${definition.name}${"★".repeat(fighter.star)}`, 859, y, 10, definition.accent, "left", 700);
+    setTextFont(ctx, 10, 700);
+    text(
+      ctx,
+      truncateText(ctx, `${definition.name}${"★".repeat(fighter.star)}`, 118),
+      859,
+      y,
+      10,
+      definition.accent,
+      "left",
+      700,
+    );
     const detail = battle.rankingMetric === "support"
       ? `治 ${formatCombatValue(fighter.healingDone)} · 盾 ${formatCombatValue(fighter.shieldingDone)}`
       : formatCombatValue(value);
@@ -1751,24 +1868,50 @@ const drawBattle = (
 
   if (battle.bannerTimer > 0) {
     const alpha = Math.min(1, battle.bannerTimer * 1.4);
+    setTextFont(ctx, 15, 800);
+    const bannerLines = boundedTextLines(ctx, battle.banner, 310, 2);
+    const bannerHeight = bannerLines.length === 2 ? 66 : 48;
+    const bannerY = 154;
     ctx.save();
     ctx.globalAlpha = alpha;
     fillRounded(
       ctx,
-      { x: 385, y: 154, w: 350, h: 48 },
+      { x: 385, y: bannerY, w: 350, h: bannerHeight },
       24,
       "rgba(5, 12, 20, 0.82)",
     );
-    strokeRounded(ctx, { x: 385, y: 154, w: 350, h: 48 }, 24, "#6b85a8");
-    text(ctx, battle.banner, 560, 178, 15, "#f0f7ff", "center", 800);
+    strokeRounded(
+      ctx,
+      { x: 385, y: bannerY, w: 350, h: bannerHeight },
+      24,
+      "#6b85a8",
+    );
+    drawBoundedText(
+      ctx,
+      battle.banner,
+      560,
+      bannerY + bannerHeight / 2,
+      15,
+      "#f0f7ff",
+      "center",
+      800,
+      310,
+      2,
+      18,
+    );
     ctx.restore();
   }
 
   const active = engine.getActiveTraits();
   if (active.length) {
+    setTextFont(ctx, 10, 700);
     text(
       ctx,
-      `羁绊：${active.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level]}`).join(" · ")}`,
+      truncateText(
+        ctx,
+        `羁绊：${active.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level]}`).join(" · ")}`,
+        440,
+      ),
       48,
       665,
       10,
@@ -1782,7 +1925,17 @@ const drawBattle = (
       .map((id) => AUGMENTS.find((item) => item.id === id)?.name)
       .filter(Boolean)
       .join(" · ");
-    text(ctx, `契印：${augmentNames}`, 1072, 665, 10, "#cba0ff", "right", 700);
+    setTextFont(ctx, 10, 700);
+    text(
+      ctx,
+      truncateText(ctx, `契印：${augmentNames}`, 440),
+      1072,
+      665,
+      10,
+      "#cba0ff",
+      "right",
+      700,
+    );
   }
 
   drawBattleRanking(ctx, engine, hover);
@@ -1820,7 +1973,17 @@ const drawResultRow = (
   ctx.globalAlpha = fighter.alive ? 1 : 0.45;
   fillRounded(ctx, { x, y, w, h: 49 }, 9, "rgba(13, 30, 42, 0.9)");
   drawUnitPortrait(ctx, fighter.unitId, x + 21, y + 24, 14, fighter.team);
-  text(ctx, `${index + 1}. ${def.name}${"★".repeat(fighter.star)}`, x + 42, y + 15, 10, def.accent, "left", 800);
+  setTextFont(ctx, 10, 800);
+  text(
+    ctx,
+    truncateText(ctx, `${index + 1}. ${def.name}${"★".repeat(fighter.star)}`, w - 132),
+    x + 42,
+    y + 15,
+    10,
+    def.accent,
+    "left",
+    800,
+  );
   text(ctx, fighter.alive ? "存活" : "已击败", x + w - 10, y + 15, 9, fighter.alive ? "#71e1aa" : "#8397a5", "right", 700);
   text(ctx, `血 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}${fighter.shield > 0 ? ` · 盾 ${Math.round(fighter.shield)}` : ""}`, x + 42, y + 32, 9, "#9ab2c1", "left", 600);
   text(ctx, `攻 ${Math.round(fighter.attack)} · 甲 ${Math.round(fighter.armor)}`, x + 42, y + 44, 9, accent, "left", 700);
@@ -1847,8 +2010,30 @@ const drawResult = (
   strokeRounded(ctx, rect, 20, result.won ? "#5ee0a3" : "#ff6a85", 2);
   const resultColor = result.won ? "#62e3a6" : "#ff718a";
   text(ctx, result.won ? "战斗结算 · 胜利" : "战斗结算 · 失利", 560, 134, 13, resultColor, "center", 900);
-  text(ctx, result.headline, 560, 164, 24, "#f2f8ff", "center", 900);
-  text(ctx, result.detail, 560, 185, 10, "#91a9b9", "center", 500);
+  setTextFont(ctx, 24, 900);
+  text(
+    ctx,
+    truncateText(ctx, result.headline, 920),
+    560,
+    164,
+    24,
+    "#f2f8ff",
+    "center",
+    900,
+  );
+  drawBoundedText(
+    ctx,
+    result.detail,
+    560,
+    185,
+    10,
+    "#91a9b9",
+    "center",
+    500,
+    920,
+    2,
+    14,
+  );
   const experienceText = result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : "";
   const reward = result.won
     ? `+ ${result.income} 金币${experienceText}`
@@ -1969,7 +2154,7 @@ const drawAugments = (
       "center",
       800,
     );
-    text(
+    drawBoundedText(
       ctx,
       augment.description,
       lifted.x + lifted.w / 2,
@@ -1978,6 +2163,9 @@ const drawAugments = (
       "#9db2c1",
       "center",
       500,
+      lifted.w - 40,
+      2,
+      19,
     );
     fillRounded(
       ctx,
@@ -2003,7 +2191,7 @@ const drawAugments = (
     })
     .filter(Boolean)
     .join("  ·  ");
-  text(
+  drawBoundedText(
     ctx,
     selectionHistory ? `历次选择：${selectionHistory}` : "已持有：无",
     WIDTH / 2,
@@ -2012,6 +2200,9 @@ const drawAugments = (
     "#b8a6d8",
     "center",
     600,
+    860,
+    2,
+    15,
   );
 };
 
@@ -2049,7 +2240,7 @@ const drawGameOver = (
     "center",
     900,
   );
-  text(
+  drawBoundedText(
     ctx,
     won
       ? "这套阵容活着穿过了整条裂隙。"
@@ -2060,6 +2251,9 @@ const drawGameOver = (
     "#8ea7b9",
     "center",
     500,
+    620,
+    2,
+    19,
   );
 
   fillRounded(
@@ -2109,7 +2303,7 @@ const drawGameOver = (
     })
     .filter(Boolean)
     .join(" · ");
-  text(
+  drawBoundedText(
     ctx,
     history ? `本局天赋记录：${history}` : "本局未获得天赋",
     WIDTH / 2,
@@ -2118,6 +2312,9 @@ const drawGameOver = (
     "#c8b3e2",
     "center",
     600,
+    620,
+    2,
+    15,
   );
 
   const hovered = hover.target?.kind === "restart";
@@ -2144,24 +2341,6 @@ const drawGameOver = (
   );
 };
 
-const wrapText = (
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  maxWidth: number,
-) => {
-  const lines: string[] = [];
-  let current = "";
-  value.split("").forEach((character) => {
-    const next = current + character;
-    if (ctx.measureText(next).width > maxWidth && current) {
-      lines.push(current);
-      current = character;
-    } else current = next;
-  });
-  if (current) lines.push(current);
-  return lines;
-};
-
 const drawTooltip = (
   ctx: CanvasRenderingContext2D,
   unitId: UnitId,
@@ -2182,7 +2361,8 @@ const drawTooltip = (
   ctx.restore();
   strokeRounded(ctx, { x, y, w, h }, 15, def.accent, 1.5);
   drawUnitPortrait(ctx, unitId, x + 42, y + 43, 25);
-  text(ctx, def.name, x + 78, y + 28, 16, "#f0f7ff", "left", 800);
+  setTextFont(ctx, 16, 800);
+  text(ctx, truncateText(ctx, def.name, w - 108), x + 78, y + 28, 16, "#f0f7ff", "left", 800);
   text(
     ctx,
     `${"★".repeat(star)} · ${def.cost} 费`,
@@ -2204,11 +2384,53 @@ const drawTooltip = (
   text(ctx, `护甲 ${armor}`, x + 225, y + 83, 10, "#8da7b9", "left", 600);
   const attackType = fighter?.attackType || def.attackType;
   const profile = fighter ? ENERGY_PROFILES[fighter.energyStyle] : def.energyProfile;
-  text(ctx, `${attackType === "ranged" ? "远程" : "近战"} · 射程 ${range} · 攻击间隔 ${attackInterval.toFixed(2)}s · 移速 ${Math.round(moveSpeed)}`, x + 20, y + 101, 9, "#68869a", "left", 600);
+  setTextFont(ctx, 9, 600);
+  text(
+    ctx,
+    truncateText(
+      ctx,
+      `${attackType === "ranged" ? "远程" : "近战"} · 射程 ${range} · 攻击间隔 ${attackInterval.toFixed(2)}s · 移速 ${Math.round(moveSpeed)}`,
+      w - 40,
+    ),
+    x + 20,
+    y + 101,
+    9,
+    "#68869a",
+    "left",
+    600,
+  );
   const energy = fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${profile.start}/${profile.max}`;
-  text(ctx, `能量 ${energy} · ${profile.name} · 每秒 +${fighter?.energyPerSecond ?? profile.perSecond} · 普攻 +${fighter?.energyOnAttack ?? profile.onAttack} · 命中 +${fighter?.energyOnHit ?? profile.onHit}`, x + 20, y + 120, 8.5, profile.color, "left", 600);
+  setTextFont(ctx, 8.5, 600);
+  text(
+    ctx,
+    truncateText(
+      ctx,
+      `能量 ${energy} · ${profile.name} · 每秒 +${fighter?.energyPerSecond ?? profile.perSecond} · 普攻 +${fighter?.energyOnAttack ?? profile.onAttack} · 命中 +${fighter?.energyOnHit ?? profile.onHit}`,
+      w - 40,
+    ),
+    x + 20,
+    y + 120,
+    8.5,
+    profile.color,
+    "left",
+    600,
+  );
   if (fighter) {
-    text(ctx, `输出 ${formatCombatValue(fighter.damageDealt)} · 治疗 ${formatCombatValue(fighter.healingDone)} · 护盾 ${formatCombatValue(fighter.shieldingDone)} · 承伤 ${formatCombatValue(fighter.damageTaken)}`, x + 20, y + 138, 9, "#9cc5d8", "left", 600);
+    setTextFont(ctx, 9, 600);
+    text(
+      ctx,
+      truncateText(
+        ctx,
+        `输出 ${formatCombatValue(fighter.damageDealt)} · 治疗 ${formatCombatValue(fighter.healingDone)} · 护盾 ${formatCombatValue(fighter.shieldingDone)} · 承伤 ${formatCombatValue(fighter.damageTaken)}`,
+        w - 40,
+      ),
+      x + 20,
+      y + 138,
+      9,
+      "#9cc5d8",
+      "left",
+      600,
+    );
   }
   text(ctx, def.abilityName, x + 20, y + (fighter ? 161 : 143), 12, def.accent, "left", 800);
   ctx.font = `500 10px ${FONT}`;
@@ -2218,7 +2440,17 @@ const drawTooltip = (
       text(ctx, line, x + 20, y + (fighter ? 182 : 164) + index * 17, 10, "#a6bac7", "left", 500);
     });
   const traitNames = def.traits.map((trait) => TRAITS[trait].name).join(" · ");
-  text(ctx, traitNames, x + w - 20, y + h - 34, 10, "#718da0", "right", 700);
+  setTextFont(ctx, 10, 700);
+  text(
+    ctx,
+    truncateText(ctx, traitNames, w - 40),
+    x + w - 20,
+    y + h - 34,
+    10,
+    "#718da0",
+    "right",
+    700,
+  );
 };
 
 const drawTraitTooltip = (
@@ -2351,25 +2583,27 @@ const renderGame = (
           : "#79d8ff";
     ctx.save();
     ctx.globalAlpha = Math.min(1, state.toast.time * 2);
-    ctx.font = `700 12px ${FONT}`;
-    const width = Math.min(
-      650,
-      Math.max(220, ctx.measureText(state.toast.text).width + 50),
-    );
-    fillRounded(
+    setTextFont(ctx, 12, 700);
+    const toastLines = boundedTextLines(ctx, state.toast.text, 600, 2);
+    const widestLine = Math.max(...toastLines.map((line) => ctx.measureText(line).width));
+    const width = Math.min(650, Math.max(220, widestLine + 50));
+    const height = toastLines.length === 2 ? 56 : 38;
+    const toastRect = { x: WIDTH / 2 - width / 2, y: 91, w: width, h: height };
+    fillRounded(ctx, toastRect, 19, "rgba(5, 13, 21, 0.94)");
+    strokeRounded(ctx, toastRect, 19, color, 1);
+    drawBoundedText(
       ctx,
-      { x: WIDTH / 2 - width / 2, y: 91, w: width, h: 38 },
-      19,
-      "rgba(5, 13, 21, 0.94)",
-    );
-    strokeRounded(
-      ctx,
-      { x: WIDTH / 2 - width / 2, y: 91, w: width, h: 38 },
-      19,
+      state.toast.text,
+      WIDTH / 2,
+      toastRect.y + toastRect.h / 2,
+      12,
       color,
-      1,
+      "center",
+      700,
+      width - 50,
+      2,
+      16,
     );
-    text(ctx, state.toast.text, WIDTH / 2, 110, 12, color, "center", 700);
     ctx.restore();
   }
 };

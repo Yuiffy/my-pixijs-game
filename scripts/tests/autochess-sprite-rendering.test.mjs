@@ -68,3 +68,29 @@ test("备战阶段可用滚轮横向浏览溢出的羁绊栏", () => {
   assert.match(wheelHandler[0], /traitScrollXRef\.current/);
   assert.match(renderer, /onWheel=\{onWheel\}/);
 });
+
+test("受限 Canvas 文本会按宽度换行或省略", () => {
+  assert.match(renderer, /const truncateText = \(/);
+  assert.match(renderer, /const boundedTextLines = \(/);
+  assert.match(renderer, /const drawBoundedText = \(/);
+  assert.match(renderer, /truncateText\(ctx, lines\.slice\(maxLines - 1\)\.join\(""\), maxWidth\)/);
+});
+
+test("开局与契印卡说明限制在按钮上方的两行区域", () => {
+  const drawTitle = renderer.match(/const drawTitle = \([\s\S]*?\n};/);
+  const drawAugments = renderer.match(/const drawAugments = \([\s\S]*?\n};/);
+  assert.ok(drawTitle);
+  assert.ok(drawAugments);
+  assert.match(drawTitle[0], /drawBoundedText\([\s\S]*?starter\.description[\s\S]*?2,/);
+  assert.doesNotMatch(drawTitle[0], /starter\.description\.split\("；"\)/);
+  assert.match(drawAugments[0], /drawBoundedText\([\s\S]*?augment\.description[\s\S]*?2,/);
+  assert.match(drawAugments[0], /selectionHistory[\s\S]*?drawBoundedText/);
+});
+
+test("运行时提示和固定宽度行不会越界", () => {
+  assert.match(renderer, /const toastLines = boundedTextLines\(ctx, state\.toast\.text, 600, 2\)/);
+  assert.match(renderer, /const height = toastLines\.length === 2 \? 56 : 38/);
+  assert.match(renderer, /truncateText\(ctx, def\.name, 136\)/);
+  assert.match(renderer, /truncateText\(ctx, `\$\{definition\.name\}\$\{"★"\.repeat\(fighter\.star\)\}`, 118\)/);
+  assert.match(renderer, /truncateText\(ctx, traitNames, w - 40\)/);
+});
