@@ -8,16 +8,11 @@ PM2 每日 cron。不要直接使用 `sync_streams.mjs` 作为生产发布入口
 
 ## Getting Started
 
-First, run the development server:
+本项目使用 Node.js `>=20.17.0 <25` 和 pnpm `10.33.0`。安装依赖并启动开发服务器：
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install --frozen-lockfile
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

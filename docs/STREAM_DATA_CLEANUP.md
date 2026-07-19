@@ -12,8 +12,8 @@ authorized history rewrite. It records the recovery points required before repla
 - Base commit: `aec40b52c5165502e05449524baeae1d401c57c0`.
 - Removed from the current tree: 15,384 files, 13,727,370,031 bytes.
 - `/public/data/streams/` is ignored so the generated data cannot be recommitted accidentally.
-- The Vercel build now runs the normal `pnpm run build`; the former deploy-time pruning script was
-  removed.
+- The active Vercel build uses the repository-standard pnpm toolchain and runs `pnpm run build`; the
+  former deploy-time pruning script was removed.
 
 ## Pre-cleanup verification
 

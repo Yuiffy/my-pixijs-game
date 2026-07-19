@@ -10,7 +10,8 @@
 ## 1. 运行要求
 
 - Windows 10/11 或 Windows Server。
-- Node.js 20 LTS 或更新版本。
+- Node.js `>=20.17.0 <25`。
+- pnpm 10.33.0（项目锁定的包管理器）。
 - Git for Windows，并启用 Git Credential Manager。
 - GitHub CLI `gh`。
 - PM2：`npm install -g pm2`。
@@ -89,7 +90,7 @@ git status --short --branch
 git fetch origin
 git switch codex/stream-data-sharding
 git pull --ff-only origin codex/stream-data-sharding
-npm ci
+pnpm install --frozen-lockfile
 ```
 
 PR 合并后，改为切换并拉取默认分支，不再需要长期使用功能分支。
@@ -246,7 +247,7 @@ npm run pm2:logs
 ```powershell
 pm2 stop sync-livers-cron
 git pull --ff-only
-npm ci
+pnpm install --frozen-lockfile
 npm run streams:check
 npm run pm2:start
 npm run pm2:save

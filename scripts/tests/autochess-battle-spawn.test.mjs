@@ -771,23 +771,19 @@ test("老弥召唤的机械兔耳移动射击且伤害归属老弥", () => {
   engine.update(0.05);
   assert.equal(battle.pets.length, 2);
   assert.notDeepEqual(battle.pets.map((pet) => pet.id), firstPair);
+  battle.projectiles = [];
   const petBeforeShot = battle.pets[0];
   const expectedMuzzle = mechanicalRabbitMuzzle(petBeforeShot);
-  let projectile;
-  for (let tick = 0; tick < 12 && !projectile; tick += 1) {
-    engine.update(0.05);
-    projectile = battle.projectiles.find((entry) =>
-      entry.sourceFid === owner.fid &&
-      Math.abs(entry.x - expectedMuzzle.x) < 0.001 &&
-      Math.abs(entry.y - expectedMuzzle.y) < 0.001,
-    );
-  }
+  engine.update(0.05);
+  const projectile = battle.projectiles.find((entry) => entry.sourceFid === owner.fid);
   assert.ok(projectile);
-  assert.notEqual(projectile.x, petBeforeShot.x);
-  assert.notEqual(projectile.y, petBeforeShot.y);
+  assert.ok(Math.abs(projectile.x - (expectedMuzzle.x + projectile.velocityX * 0.05)) < 0.001);
+  assert.ok(Math.abs(projectile.y - (expectedMuzzle.y + projectile.velocityY * 0.05)) < 0.001);
+  assert.notEqual(expectedMuzzle.x, petBeforeShot.x);
+  assert.notEqual(expectedMuzzle.y, petBeforeShot.y);
   const rightMuzzle = mechanicalRabbitMuzzle({ ...petBeforeShot, facingX: 1 });
   const leftMuzzle = mechanicalRabbitMuzzle({ ...petBeforeShot, facingX: -1 });
-  assert.equal(rightMuzzle.x - matchingPet.x, -(leftMuzzle.x - matchingPet.x));
+  assert.equal(rightMuzzle.x - petBeforeShot.x, -(leftMuzzle.x - petBeforeShot.x));
   stepBattle(engine, 28);
   assert.ok(owner.damageDealt > 0);
   assert.equal(engine.getBattleRanking()[0].fighter.fid, owner.fid);
