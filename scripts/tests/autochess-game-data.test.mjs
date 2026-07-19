@@ -226,6 +226,13 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.automatic), /自动回能（5 秒回满，每秒 \+20）/);
   assert.equal(data.UNIT_DEFS.cog_scribe.energyProfile.id, "flow");
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.id, "tempo");
+  assert.equal(data.UNIT_DEFS.clock_gunner.traits.includes("ranger"), false);
+  assert.equal(data.UNIT_DEFS.clock_gunner.traits.includes("yue_gang"), true);
+  assert.equal(data.UNIT_DEFS.clock_gunner.abilityName, "机械兔耳浮游炮");
+  assert.match(data.UNIT_DEFS.clock_gunner.abilityDescription, /两只机械兔耳/);
+  assert.equal(data.UNIT_DEFS.yua.traits.includes("ranger"), true);
+  assert.equal(data.UNIT_DEFS.yua.abilityName, "外星贯穿光线");
+  assert.match(data.UNIT_DEFS.yua.abilityDescription, /横排/);
   assert.equal(data.UNIT_DEFS.rift_tyrant.energyProfile.id, "reservoir");
   assert.equal(data.UNIT_DEFS.clock_gunner.attackType, "ranged");
   assert.equal(data.UNIT_DEFS.rift_tyrant.attackType, "melee");
@@ -288,7 +295,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.nightin.name, "南町");
   assert.equal(data.UNIT_DEFS.lovely.name, "狍子偶像");
   ["sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
-  ["rift_brawler", "mitsuri"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
+  ["rift_brawler", "mitsuri", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
   ["sun_guard", "rift_brawler", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gen27")));
   assert.deepEqual(data.UNIT_DEFS.rift_brawler.traits, ["gen27", "yue_gang"]);
   assert.deepEqual(data.UNIT_DEFS.rift_stalker.traits, ["assassin", "mystic"]);

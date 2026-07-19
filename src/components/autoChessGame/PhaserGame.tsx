@@ -15,6 +15,7 @@ import {
   AutoChessEngine,
   Fighter,
   GameState,
+  MechanicalRabbitPet,
   OwnedUnit,
   fighterVisualRadius,
 } from "./core/gameEngine";
@@ -1692,6 +1693,48 @@ const drawFighter = (
   ctx.restore();
 };
 
+const drawMechanicalRabbitPet = (
+  ctx: CanvasRenderingContext2D,
+  pet: MechanicalRabbitPet,
+  visualTime: number,
+) => {
+  const fade = Math.max(0.25, Math.min(1, pet.life / 0.7));
+  const bob = Math.sin(visualTime * 8 + pet.x * 0.03) * 3;
+  const eyeGlow = pet.attackPulse > 0 ? 1 : 0.65;
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.translate(pet.x, pet.y + bob);
+  ctx.scale(pet.facingX, 1);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.26)";
+  ctx.beginPath();
+  ctx.ellipse(0, pet.radius * 0.9 - bob, pet.radius, pet.radius * 0.28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#263848";
+  ctx.strokeStyle = "#a8e8ff";
+  ctx.lineWidth = 2;
+  [-7, 7].forEach((earX) => {
+    fillRounded(ctx, { x: earX - 4, y: -pet.radius - 11, w: 8, h: 18 }, 4, "#334c5d");
+    strokeRounded(ctx, { x: earX - 4, y: -pet.radius - 11, w: 8, h: 18 }, 4, "#a8e8ff", 1.5);
+  });
+  ctx.shadowColor = "#92d7ff";
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(0, 0, pet.radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = `rgba(222, 250, 255, ${eyeGlow})`;
+  ctx.beginPath();
+  ctx.arc(pet.radius * 0.55, -2, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+};
+
+const drawMechanicalRabbitPets = (ctx: CanvasRenderingContext2D, state: GameState) => {
+  const battle = state.battle;
+  if (!battle) return;
+  battle.pets.forEach((pet) => drawMechanicalRabbitPet(ctx, pet, state.visualTime));
+};
+
 const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState) => {
   const battle = state.battle;
   if (!battle) return;
@@ -1892,6 +1935,7 @@ const drawBattle = (
     .filter((fighter) => fighter.alive)
     .sort((a, b) => a.y - b.y)
     .forEach((fighter) => drawFighter(ctx, fighter, state.visualTime));
+  drawMechanicalRabbitPets(ctx, state);
   drawProjectiles(ctx, state);
   drawEffects(ctx, state);
 
@@ -3028,7 +3072,6 @@ export default function AutoChessGame() {
       );
       hoverRef.current = { target: null, ...point };
       event.currentTarget.style.cursor = "grabbing";
-      draw();
       return;
     }
     if (
@@ -3050,7 +3093,6 @@ export default function AutoChessGame() {
         : overTraitStrip && getTraitMaxScrollX(engine) > 0
           ? "grab"
           : "default";
-    draw();
   };
 
   const onPointerLeave = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -3075,7 +3117,6 @@ export default function AutoChessGame() {
       Math.min(maxScrollX, traitScrollXRef.current + delta),
     );
     hoverRef.current = { target: getHitTarget(engine, point.x, point.y), ...point };
-    draw();
   };
 
   const onClick = (event: React.MouseEvent<HTMLCanvasElement>) => {

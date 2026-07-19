@@ -51,6 +51,13 @@ test("实体子弹按实时位置和速度绘制尾迹", () => {
   assert.match(renderer, /drawProjectiles\(ctx, state\)/);
 });
 
+test("机械兔耳宠物在子弹和特效前使用独立绘制路径", () => {
+  const drawPets = renderer.match(/const drawMechanicalRabbitPets = \([\s\S]*?\n};/);
+  assert.ok(drawPets);
+  assert.match(drawPets[0], /battle\.pets\.forEach/);
+  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\n  drawProjectiles\(ctx, state\);/);
+});
+
 test("结算页使用显式继续按钮推进阶段", () => {
   assert.match(renderer, /resultContinueRect/);
   assert.match(renderer, /resultContinueLabel/);
@@ -87,6 +94,23 @@ test("备战阶段可用滚轮横向浏览溢出的羁绊栏", () => {
   assert.match(wheelHandler[0], /event\.preventDefault\(\)/);
   assert.match(wheelHandler[0], /traitScrollXRef\.current/);
   assert.match(renderer, /onWheel=\{onWheel\}/);
+});
+
+test("连续输入只更新状态并由主渲染循环统一绘制", () => {
+  const pointerMoveHandler = renderer.match(
+    /const onPointerMove = \([\s\S]*?\n  };\n\n  const onPointerLeave/,
+  );
+  const wheelHandler = renderer.match(/const onWheel = \([\s\S]*?\n  };/);
+  const renderLoop = renderer.match(/const loop = \(timestamp: number\) => \{[\s\S]*?\n    };/);
+  const advanceTime = renderer.match(/window\.advanceTime = \(milliseconds: number\) => \{[\s\S]*?\n    };/);
+  assert.ok(pointerMoveHandler);
+  assert.ok(wheelHandler);
+  assert.ok(renderLoop);
+  assert.ok(advanceTime);
+  assert.doesNotMatch(pointerMoveHandler[0], /draw\(\)/);
+  assert.doesNotMatch(wheelHandler[0], /draw\(\)/);
+  assert.match(renderLoop[0], /draw\(\)/);
+  assert.match(advanceTime[0], /draw\(\)/);
 });
 
 test("受限 Canvas 文本会按宽度换行或省略", () => {
