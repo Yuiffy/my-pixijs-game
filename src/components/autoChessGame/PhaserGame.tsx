@@ -2122,7 +2122,7 @@ const drawTraitTooltip = (
   text(ctx, trait.name, x + 56, y + 25, 17, "#f0f7ff", "left", 800);
   text(
     ctx,
-    `${trait.family} · 当前 ${count}/${maxThreshold} · ${level ? `${level} 阶已激活` : status.active ? "尚未激活" : "缺少岁己或栞栞搭档"}`,
+    `${trait.family} · 当前 ${count}/${maxThreshold} · ${level ? `${level} 阶已激活` : "尚未激活"}`,
     x + 56,
     y + 46,
     10,

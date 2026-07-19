@@ -177,9 +177,9 @@ test("岁己形态拆分到不同关系构筑", () => {
   });
   assert.deepEqual(data.UNIT_DEFS.sui.traits, ["vanguard", "gluttony"]);
   assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["ranger", "skeleton_soldier"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "sui_shiori"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "swiftstage"]);
   assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["mystic", "chuanmei"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "sui_shiori"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "swiftstage"]);
   assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["brawler", "chuanmei"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "岁己·小鸟援护");
 });
@@ -187,7 +187,9 @@ test("岁己形态拆分到不同关系构筑", () => {
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "sui_shiori"].forEach((id) => {
+  assert.equal(data.SHOP_UNITS.length, 34);
+  ["nori", "meme", "kioi", "nightin", "aza", "ayana", "yy", "haruka", "akirinco", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
+  ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "swiftstage"].forEach((id) => {
     assert.equal(data.TRAITS[id].family, "关系");
     assert.equal(data.TRAITS[id].thresholds.length, data.TRAITS[id].bonuses.length);
   });

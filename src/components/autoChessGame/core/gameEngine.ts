@@ -129,8 +129,6 @@ export interface BattleState {
   fieldMedicTimer: number;
   gluttonyTimer: number;
   yueGangTimer: number;
-  suiShioriCooldown: number;
-  suiShioriLevel: number;
   banner: string;
   bannerTimer: number;
   rankingOpen: boolean;
@@ -524,21 +522,11 @@ export class AutoChessEngine {
       );
   }
 
-  private isSuiShioriActive() {
-    const hasSui = this.state.board.some(
-      (owned) => owned && ["sui_bird", "sui_cat"].includes(owned.id),
-    );
-    const hasShiori = this.state.board.some(
-      (owned) => owned?.id === "shiori",
-    );
-    return hasSui && hasShiori;
-  }
-
   public getTraitStatus(trait: TraitId) {
     const count = this.getTraitCounts()[trait];
     const definition = TRAITS[trait];
-    const active = trait !== "sui_shiori" || this.isSuiShioriActive();
-    const level = active ? traitLevelForCount(definition, count) : 0;
+    const active = true;
+    const level = traitLevelForCount(definition, count);
     return {
       count,
       level,
@@ -691,18 +679,8 @@ export class AutoChessEngine {
 
   private createBattle(): BattleState {
     const traitCounts = this.getTraitCounts();
-    const isSuiShioriHolder = (id: UnitId) =>
-      UNIT_DEFS[id].traits.includes("sui_shiori");
-    const hasSuiShioriPair = this.state.board.some(
-      (owned) => owned && isSuiShioriHolder(owned.id) && ["sui_bird", "sui_cat"].includes(owned.id),
-    ) && this.state.board.some(
-      (owned) => owned?.id === "shiori",
-    );
-    const traitLevel = (trait: TraitId) => (
-      trait === "sui_shiori" && !hasSuiShioriPair
-        ? 0
-        : traitLevelForCount(TRAITS[trait], traitCounts[trait])
-    );
+    const traitLevel = (trait: TraitId) =>
+      traitLevelForCount(TRAITS[trait], traitCounts[trait]);
     const hasAugment = (id: AugmentId) => this.state.augments.includes(id);
     const globalTraitLevel = (trait: TraitId) => traitLevel(trait);
     const playerSpawn = (index: number) => {
@@ -766,6 +744,11 @@ export class AutoChessEngine {
       const globalBrawlerLevel = globalTraitLevel("brawler");
       const globalAssassinLevel = globalTraitLevel("assassin");
       const globalChuanmeiLevel = globalTraitLevel("chuanmei");
+      const swiftstageLevel = def.traits.includes("swiftstage")
+        ? traitLevel("swiftstage")
+        : 0;
+      const globalSwiftstageLevel = globalTraitLevel("swiftstage");
+      const moveSpeed = def.moveSpeed + [0, 10, 22, 36][globalSwiftstageLevel] + (swiftstageLevel ? [0, 18, 32, 50][swiftstageLevel] : 0);
 
       if (aegisLevel) {
         maxHp *= [1, 1.07, 1.14, 1.23][aegisLevel];
@@ -818,10 +801,10 @@ export class AutoChessEngine {
         armor,
         range: def.range,
         attackInterval,
-        moveSpeed: def.moveSpeed,
+        moveSpeed,
         baseAttack: attack,
         baseAttackInterval: attackInterval,
-        baseMoveSpeed: def.moveSpeed,
+        baseMoveSpeed: moveSpeed,
         cooldown: this.rng.next() * 0.25,
         energy:
           [0, 20, 45, 70][mysticLevel] +
@@ -965,8 +948,6 @@ export class AutoChessEngine {
       fieldMedicTimer: 2.5,
       gluttonyTimer: 3,
       yueGangTimer: 0.45,
-      suiShioriCooldown: 0,
-      suiShioriLevel: traitLevel("sui_shiori"),
       banner:
         wave.tag === "boss"
           ? "首领战 · 暴君降临"
@@ -1160,7 +1141,6 @@ export class AutoChessEngine {
     const battle = this.state.battle;
     if (!battle) return;
     battle.elapsed += dt;
-    battle.suiShioriCooldown = Math.max(0, battle.suiShioriCooldown - dt);
     battle.yueGangTimer = Math.max(0, battle.yueGangTimer - dt);
     this.refresh27Buffs(battle);
     battle.bannerTimer = Math.max(0, battle.bannerTimer - dt);
@@ -1344,24 +1324,6 @@ export class AutoChessEngine {
       fighter.jumpTime = fighter.jumpDuration;
       this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: TRAITS.yue_gang.color, life: 0.35, size: fighter.radius * 1.5 });
     });
-  }
-
-  private triggerSuiShioriBarrage(source: Fighter, targets: Fighter[]) {
-    const battle = this.state.battle;
-    if (!battle || source.team !== "player" || battle.suiShioriLevel <= 0 || battle.suiShioriCooldown > 0) return;
-    const sourceIsSui = ["sui_bird", "sui_cat"].includes(source.unitId) && UNIT_DEFS[source.unitId].traits.includes("sui_shiori");
-    const sourceIsShiori = source.unitId === "shiori" && UNIT_DEFS[source.unitId].traits.includes("sui_shiori");
-    if (!sourceIsSui && !sourceIsShiori) return;
-    const partner = battle.player.find((fighter) => fighter.alive && fighter !== source && UNIT_DEFS[fighter.unitId].traits.includes("sui_shiori") && (sourceIsSui ? fighter.unitId === "shiori" : ["sui_bird", "sui_cat"].includes(fighter.unitId)));
-    const target = targets.find((fighter) => fighter.alive) || this.nearestTarget(source, targets);
-    if (!partner || !target) return;
-    const multiplier = [0, 0.65, 0.85, 1.1][battle.suiShioriLevel];
-    const dealt = this.damage(partner, target, partner.attack * multiplier);
-    if (dealt > 0) this.addDamageText(target, dealt);
-    this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: TRAITS.sui_shiori.color, life: 0.28, size: 3 });
-    this.addEffect({ kind: "line", x: partner.x, y: partner.y, x2: target.x, y2: target.y, color: TRAITS.sui_shiori.color, life: 0.36, size: 4 });
-    this.addEffect({ kind: "text", x: target.x, y: target.y - 50, color: TRAITS.sui_shiori.color, text: "岁栞协战", life: 0.7, size: 11 });
-    battle.suiShioriCooldown = battle.suiShioriLevel >= 3 ? 1.25 : battle.suiShioriLevel === 2 ? 1.8 : 2.5;
   }
 
   private basicAttack(source: Fighter, target: Fighter) {
@@ -1809,6 +1771,108 @@ export class AutoChessEngine {
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.95, size: 155 });
         break;
       }
+      case "nori": {
+        const target = this.nearestTarget(source, targets);
+        if (!target) break;
+        for (let shot = 0; shot < 3 && target.alive; shot += 1) {
+          deal(target, shot === 2 ? 1.25 : 0.7);
+          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.2 + shot * 0.05, size: 3 });
+        }
+        break;
+      }
+      case "meme": {
+        const alliesToShield = [source, ...allies.filter((fighter) => fighter !== source).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, 1)];
+        alliesToShield.forEach((target) => addShield(target, target.maxHp * 0.16, 0.4));
+        targets.filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 115).forEach((target) => { target.stun = Math.max(target.stun, 0.55); deal(target, 0.8); });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.65, size: 118 });
+        break;
+      }
+      case "kioi": {
+        const target = this.nearestTarget(source, targets);
+        if (!target) break;
+        targets.filter((candidate) => Math.hypot(candidate.x - target.x, candidate.y - target.y) < 95).forEach((candidate) => deal(candidate, candidate === target ? 1.45 : 0.78));
+        this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 102 });
+        break;
+      }
+      case "nightin": {
+        const center = densest(targets);
+        if (!center) break;
+        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125).forEach((target) => { deal(target, 1.3); this.applyBurn(source, target, source.attack * 0.6); target.stun = Math.max(target.stun, 0.5); });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
+        break;
+      }
+      case "aza": {
+        const center = densest(targets);
+        if (!center) break;
+        source.x = center.x + (source.team === "player" ? -44 : 44);
+        source.y = center.y;
+        let hits = 0;
+        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125).forEach((target) => { deal(target, 1.25); hits += 1; });
+        addShield(source, source.maxHp * Math.min(0.3, hits * 0.07), 0.45);
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.65, size: 132 });
+        break;
+      }
+      case "ayana": {
+        [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, 2).forEach((target) => { this.heal(source, target, target.maxHp * 0.18 + source.attack); target.energy = Math.min(100, target.energy + 18); });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 150 });
+        break;
+      }
+      case "yy": {
+        const target = [...targets].sort((a, b) => b.energy - a.energy)[0];
+        if (!target) break;
+        targets.filter((candidate) => Math.abs(candidate.y - target.y) < 62).forEach((candidate) => deal(candidate, 1.18));
+        target.energy = Math.max(0, target.energy - 28);
+        this.addEffect({ kind: "line", x: source.x, y: source.y, x2: source.team === "player" ? 1100 : 20, y2: target.y, color: def.accent, life: 0.45, size: 7 });
+        break;
+      }
+      case "haruka": {
+        const target = this.nearestTarget(source, targets);
+        if (!target) break;
+        source.x = target.x + (source.team === "player" ? -46 : 46);
+        source.y = target.y;
+        deal(target, 1.35);
+        target.stun = Math.max(target.stun, 0.65);
+        addShield(source, source.maxHp * 0.22, 0.45);
+        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 66 });
+        break;
+      }
+      case "akirinco": {
+        const target = weakest(targets);
+        if (!target) break;
+        source.x = target.x + (source.team === "player" ? -34 : 34);
+        source.y = target.y;
+        let total = 0;
+        for (let strike = 0; strike < 3 && target.alive; strike += 1) total += deal(target, 0.82);
+        if (!target.alive) this.heal(source, source, total * 0.3);
+        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.68, size: 68 });
+        break;
+      }
+      case "lovely": {
+        const center = densest(targets);
+        if (!center) break;
+        source.x = center.x + (source.team === "player" ? -42 : 42);
+        source.y = center.y;
+        let hits = 0;
+        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 135).forEach((target) => { deal(target, 1.22); hits += 1; });
+        source.attackInterval /= 1 + Math.min(0.3, hits * 0.06);
+        source.baseAttackInterval = source.attackInterval;
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.72, size: 142 });
+        break;
+      }
+      case "rei": {
+        const center = densest(targets);
+        if (!center) break;
+        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 145).forEach((target) => { deal(target, 1.85); this.applyBurn(source, target, source.attack * 0.8); target.stun = Math.max(target.stun, 0.72); });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: 152 });
+        break;
+      }
+      case "rutice": {
+        allies.forEach((target) => addShield(target, target.maxHp * 0.16, 0.5));
+        this.heal(source, source, source.maxHp * 0.2);
+        targets.filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 160).forEach((target) => { deal(target, 0.9); target.stun = Math.max(target.stun, 0.8); });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.9, size: 172 });
+        break;
+      }
       case "rift_tyrant": {
         targets.forEach((target) => {
           const dealt = this.damage(source, target, source.attack * 1.05);
@@ -1831,7 +1895,6 @@ export class AutoChessEngine {
       }
     }
 
-    this.triggerSuiShioriBarrage(source, targets);
     this.addEffect({
       kind: "text",
       x: source.x,

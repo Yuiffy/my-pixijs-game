@@ -1,4 +1,4 @@
-/* eslint-disable implicit-arrow-linebreak */
+/* eslint-disable implicit-arrow-linebreak, object-property-newline */
 
 export const TRAIT_IDS = [
   "aegis",
@@ -16,7 +16,7 @@ export const TRAIT_IDS = [
   "skeleton_soldier",
   "gen27",
   "yue_gang",
-  "sui_shiori",
+  "swiftstage",
 ] as const;
 
 export type TraitId = (typeof TRAIT_IDS)[number];
@@ -31,6 +31,8 @@ export const SHOP_UNIT_IDS = [
   "cog_scribe",
   "mossback",
   "sui",
+  "nori",
+  "meme",
   // 2 费
   "rift_brawler",
   "sui_blue",
@@ -40,16 +42,26 @@ export const SHOP_UNIT_IDS = [
   "dawn_duelist",
   "grove_mender",
   "cinder_ram",
+  "kioi",
+  "nightin",
   // 3 费
   "sui_bird",
   "sui_flower",
   "yua",
   "mitsuri",
+  "aza",
+  "ayana",
+  "yy",
+  "haruka",
   // 4 费
   "sui_cat",
   "nagisa",
+  "akirinco",
+  "lovely",
   // 5 费
   "biscuit_sui",
+  "rei",
+  "rutice",
 ] as const;
 
 export type ShopUnitId = (typeof SHOP_UNIT_IDS)[number];
@@ -188,14 +200,14 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     description: "粤帮看到同伴开打，会直接闪现过去帮一手。",
     bonuses: ["粤帮成员每 5 秒可闪现至同伴目标旁协战", "最多两名粤帮成员同时协战，闪现冷却缩短"],
   },
-  sui_shiori: {
-    id: "sui_shiori",
-    name: "岁栞搭档",
+  swiftstage: {
+    id: "swiftstage",
+    name: "疾行直播间",
     family: "关系",
-    color: "#f0aee7",
-    thresholds: [2, 4],
-    description: "必须同时有带岁栞标签的岁己与栞栞在场；任一人施法都会呼叫另一人补一发弹幕。",
-    bonuses: ["岁己与栞栞施法后触发 65% 攻击力协战弹幕，冷却 2.5 秒", "协战弹幕提升至 85%，共享冷却缩短至 1.8 秒"],
+    color: "#7de6dc",
+    thresholds: [2, 4, 6],
+    description: "赶场、救场与突入后排的成员会把整支队伍的接敌节奏拉满。",
+    bonuses: ["疾行成员 +18 移速；全体友军 +10 移速", "疾行成员 +32 移速；全体友军 +22 移速", "疾行成员 +50 移速；全体友军 +36 移速"],
   },
 };
 
@@ -521,7 +533,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#c3cfff",
     tier: 2,
     cost: 2,
-    traits: ["aegis", "skeleton_soldier", "sui_shiori"],
+    traits: ["aegis", "skeleton_soldier"],
     hp: 164,
     attack: 20,
     armor: 11,
@@ -545,7 +557,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#f7d77c",
     tier: 3,
     cost: 3,
-    traits: ["mystic", "sui_shiori"],
+    traits: ["mystic", "swiftstage"],
     hp: 188,
     attack: 27,
     armor: 11,
@@ -633,7 +645,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#e8a8f4",
     tier: 4,
     cost: 4,
-    traits: ["assassin", "sui_shiori"],
+    traits: ["assassin", "swiftstage"],
     hp: 226,
     attack: 39,
     armor: 15,
@@ -691,6 +703,68 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     portrait: "/images/materials/biscuit/饼干岁2.png",
     portraitFocus: "top",
     shop: true,
+  }),
+
+  // 公开成员的角色化战斗设计；无可核验梗时采用公开人设或名字意象。
+  nori: unit({
+    id: "nori", name: "能能·蓄能炮", title: "能能Nori · 远程爆发", glyph: "能", color: "#526a9e", accent: "#9bb8ff", tier: 1, cost: 1,
+    traits: ["clockwork", "ranger", "swiftstage"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 0.9, moveSpeed: 56,
+    abilityName: "能量过载", abilityDescription: "锁定当前目标蓄能点射三次；最后一击造成更高伤害。", shop: true,
+  }),
+  meme: unit({
+    id: "meme", name: "沐毛·绒团卫士", title: "沐毛Meme · 前排守护", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 1, cost: 1,
+    traits: ["wild", "vanguard", "swiftstage"], hp: 260, attack: 16, armor: 25, range: 48, attackInterval: 1.18, moveSpeed: 48,
+    abilityName: "绒团集结", abilityDescription: "嘲讽附近敌人，为自己和生命最低的友军提供护盾。", shop: true,
+  }),
+  kioi: unit({
+    id: "kioi", name: "柚雨·果香弹幕", title: "柚雨Kioi · 范围射手", glyph: "柚", color: "#7b6942", accent: "#f5d56f", tier: 2, cost: 2,
+    traits: ["wild", "ranger", "swiftstage"], hp: 162, attack: 27, armor: 9, range: 235, attackInterval: 0.84, moveSpeed: 60,
+    abilityName: "柚雨连珠", abilityDescription: "向当前目标发射连珠弹幕，溅射其附近的敌人。", shop: true,
+  }),
+  nightin: unit({
+    id: "nightin", name: "南町·夜航电台", title: "南町Nightin · 深夜控场", glyph: "南", color: "#3b426f", accent: "#a9a7ff", tier: 2, cost: 2,
+    traits: ["ember", "mystic", "swiftstage"], hp: 150, attack: 22, armor: 8, range: 210, attackInterval: 1.05, moveSpeed: 55,
+    abilityName: "夜航电波", abilityDescription: "向敌人最密集处广播，造成范围伤害、灼烧并短暂眩晕。", portrait: "/images/livers/nightin.jpg", portraitFocus: "top", shop: true,
+  }),
+  aza: unit({
+    id: "aza", name: "阿萨·剑风点名", title: "阿萨Aza · 突入斗士", glyph: "萨", color: "#6d4d64", accent: "#f1a7d0", tier: 3, cost: 3,
+    traits: ["rift", "brawler", "swiftstage"], hp: 236, attack: 33, armor: 16, range: 52, attackInterval: 0.9, moveSpeed: 74,
+    abilityName: "剑风点名", abilityDescription: "冲入最密集敌群，横扫附近目标；命中越多，自己获得越多护盾。", shop: true,
+  }),
+  ayana: unit({
+    id: "ayana", name: "绫奈奈奈·兔跃应援", title: "绫奈奈奈Ayana Nana · 团队主唱", glyph: "绫", color: "#9b6689", accent: "#ffb5d8", tier: 3, cost: 3,
+    traits: ["clockwork", "mystic", "swiftstage"], hp: 184, attack: 27, armor: 12, range: 220, attackInterval: 0.96, moveSpeed: 60,
+    abilityName: "兔跃应援", abilityDescription: "治疗两名最低生命比例友军，并为其补充能量。", shop: true,
+  }),
+  yy: unit({
+    id: "yy", name: "亦枝·法棍研判", title: "这是亦枝YY · 战术射手", glyph: "枝", color: "#6b5846", accent: "#e5be8b", tier: 3, cost: 3,
+    traits: ["clockwork", "ranger", "swiftstage"], hp: 178, attack: 32, armor: 10, range: 245, attackInterval: 0.8, moveSpeed: 58,
+    abilityName: "法棍研判", abilityDescription: "贯穿同一横排的敌人，并优先锁定能量最高的目标。", shop: true,
+  }),
+  haruka: unit({
+    id: "haruka", name: "白神遥·海豹冲浪", title: "白神遥Haruka · 护盾先锋", glyph: "遥", color: "#63849b", accent: "#a9e7ff", tier: 3, cost: 3,
+    traits: ["wild", "vanguard", "swiftstage"], hp: 290, attack: 24, armor: 28, range: 50, attackInterval: 1.08, moveSpeed: 66,
+    abilityName: "海豹冲浪", abilityDescription: "冲撞当前目标并获得护盾，沿途敌人受到伤害与短暂眩晕。", shop: true,
+  }),
+  akirinco: unit({
+    id: "akirinco", name: "秋凛子·神社夜巡", title: "秋凛子Aki Rinco · 后排收割", glyph: "秋", color: "#65445f", accent: "#eca5d3", tier: 4, cost: 4,
+    traits: ["rift", "assassin", "swiftstage"], hp: 222, attack: 39, armor: 14, range: 50, attackInterval: 0.76, moveSpeed: 92,
+    abilityName: "神社夜巡", abilityDescription: "跃至生命最低的敌人身边连续斩击；击杀后恢复生命并再次隐入暗影。", shop: true,
+  }),
+  lovely: unit({
+    id: "lovely", name: "东爱璃·元气开演", title: "东爱璃Lovely · 范围斗士", glyph: "璃", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
+    traits: ["ember", "brawler", "swiftstage"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
+    abilityName: "元气开演", abilityDescription: "跃入敌人最密集处连击，命中每名敌人都会提升自身攻击速度。", shop: true,
+  }),
+  rei: unit({
+    id: "rei", name: "病院坂灵·幽灵终演", title: "病院坂灵Rei · 群体法师", glyph: "灵", color: "#735779", accent: "#e8b5ff", tier: 5, cost: 5,
+    traits: ["ember", "mystic", "swiftstage"], hp: 270, attack: 43, armor: 18, range: 230, attackInterval: 0.82, moveSpeed: 66,
+    abilityName: "幽灵终演", abilityDescription: "召唤幽灵轰击敌人最密集区域，造成高额范围伤害、灼烧与眩晕。", shop: true,
+  }),
+  rutice: unit({
+    id: "rutice", name: "露蒂丝·诊所护航", title: "露蒂丝Rutice · 决战守卫", glyph: "医", color: "#4b7280", accent: "#90e7df", tier: 5, cost: 5,
+    traits: ["aegis", "vanguard", "swiftstage"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
+    abilityName: "终幕护航", abilityDescription: "为全体友军提供厚重护盾，随后震晕周围敌人并回复自身生命。", shop: true,
   }),
 
   rift_tyrant: unit({
