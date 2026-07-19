@@ -395,6 +395,7 @@ const drawImagePortrait = (
   radius: number,
   focus: "top" | "center" = "center",
   style: "round" | "sprite" = "round",
+  mirrorSpriteX = false,
 ) => {
   const sourceRatio = image.naturalWidth / image.naturalHeight;
   const sourceWidth = sourceRatio > 1 ? image.naturalHeight : image.naturalWidth;
@@ -412,6 +413,10 @@ const drawImagePortrait = (
   } else {
     ctx.imageSmoothingEnabled = false;
   }
+  if (style === "sprite" && mirrorSpriteX) {
+    ctx.translate(x * 2, 0);
+    ctx.scale(-1, 1);
+  }
   ctx.drawImage(
     image,
     sourceX,
@@ -426,31 +431,6 @@ const drawImagePortrait = (
   ctx.restore();
 };
 
-const drawSpriteCornerMarks = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  radius: number,
-) => {
-  const inset = Math.max(1, radius * 0.08);
-  const edge = radius - inset;
-  const length = Math.max(4, radius * 0.3);
-  ctx.beginPath();
-  ctx.moveTo(x - edge, y - edge + length);
-  ctx.lineTo(x - edge, y - edge);
-  ctx.lineTo(x - edge + length, y - edge);
-  ctx.moveTo(x + edge - length, y - edge);
-  ctx.lineTo(x + edge, y - edge);
-  ctx.lineTo(x + edge, y - edge + length);
-  ctx.moveTo(x - edge, y + edge - length);
-  ctx.lineTo(x - edge, y + edge);
-  ctx.lineTo(x - edge + length, y + edge);
-  ctx.moveTo(x + edge - length, y + edge);
-  ctx.lineTo(x + edge, y + edge);
-  ctx.lineTo(x + edge, y + edge - length);
-  ctx.stroke();
-};
-
 const drawUnitPortrait = (
   ctx: CanvasRenderingContext2D,
   unitId: UnitId,
@@ -459,6 +439,7 @@ const drawUnitPortrait = (
   radius: number,
   team: "player" | "enemy" = "player",
   alpha = 1,
+  mirrorSpriteX = false,
 ) => {
   const def = UNIT_DEFS[unitId];
   const portraitStyle = def.portraitStyle || "round";
@@ -470,19 +451,10 @@ const drawUnitPortrait = (
 
   if (portraitStyle === "sprite") {
     if (hasPortrait) {
-      ctx.shadowColor = borderColor;
-      ctx.shadowBlur = radius * 0.28;
-      drawImagePortrait(ctx, portrait!, x, y, radius, def.portraitFocus, "sprite");
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = Math.max(1.5, radius * 0.06);
-      drawSpriteCornerMarks(ctx, x, y, radius);
+      drawImagePortrait(ctx, portrait!, x, y, radius, def.portraitFocus, "sprite", mirrorSpriteX);
     } else {
       ctx.fillStyle = def.color;
       ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = Math.max(2, radius * 0.08);
-      ctx.strokeRect(x - radius, y - radius, radius * 2, radius * 2);
     }
   } else {
     ctx.shadowColor = def.accent;
@@ -1277,7 +1249,7 @@ const drawPreparation = (
     const augment = AUGMENTS.find((item) => item.id === latest.id);
     text(
       ctx,
-      `天赋记录（${state.augmentHistory.length}）：第 ${latest.round} 战 · ${augment?.name || ""}`,
+      `最新天赋（共 ${state.augmentHistory.length} 项）：第 ${latest.round} 战 · ${augment?.name || ""}`,
       807,
       692,
       9,
@@ -1415,6 +1387,8 @@ const drawFighter = (
     drawY,
     radius,
     fighter.team,
+    1,
+    fighter.facingX < 0,
   );
   if (fighter.hitPulse > 0) {
     ctx.globalCompositeOperation = "screen";
@@ -2832,7 +2806,7 @@ export default function AutoChessGame() {
             color: fullscreenMessage ? "#ff9cac" : "#607d91",
           }}
         >
-          {fullscreenMessage || engineRef.current?.state.toast?.text || "图鉴可查看全部棋子、羁绊与商店概率"}
+          {fullscreenMessage || engineRef.current?.state.toast?.text || "图鉴可查看棋子、羁绊与本局天赋"}
         </span>
         <button
           type="button"
@@ -2848,7 +2822,7 @@ export default function AutoChessGame() {
             font: `700 12px ${FONT}`,
           }}
         >
-          图鉴 / 帮助
+          图鉴 / 本局天赋
         </button>
         <button
           type="button"
@@ -2922,7 +2896,11 @@ export default function AutoChessGame() {
           {fullscreen ? "退出全屏" : "全屏游玩"}
         </button>
       </div>
-      <Codex open={codexOpen} onClose={() => setCodexOpen(false)} />
+      <Codex
+        open={codexOpen}
+        augmentHistory={engineRef.current?.state.augmentHistory || []}
+        onClose={() => setCodexOpen(false)}
+      />
       <canvas
         ref={canvasRef}
         width={WIDTH}

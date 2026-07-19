@@ -99,6 +99,7 @@ export interface Fighter {
   secondWindUsed: boolean;
   enraged: boolean;
   attackPulse: number;
+  facingX: -1 | 1;
   attackTargetX: number;
   attackTargetY: number;
   hitPulse: number;
@@ -198,14 +199,7 @@ const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
 
 export const fighterVisualRadius = (unitId: UnitId, star: 1 | 2 | 3) => {
   if (unitId === "rift_tyrant") return 43;
-  const largeUnit = [
-    "brass_colossus",
-    "rift_warden",
-    "siege_walker",
-    "solar_champion",
-    "chrono_titan",
-  ].includes(unitId);
-  return (largeUnit ? 31 : 26) + (star - 1) * 3;
+  return 26 + (star - 1) * 3;
 };
 
 interface RandomSource {
@@ -535,7 +529,7 @@ export class AutoChessEngine {
       (owned) => owned && ["sui_bird", "sui_cat"].includes(owned.id),
     );
     const hasShiori = this.state.board.some(
-      (owned) => owned && ["shiori", "prism_sage"].includes(owned.id),
+      (owned) => owned?.id === "shiori",
     );
     return hasSui && hasShiori;
   }
@@ -702,7 +696,7 @@ export class AutoChessEngine {
     const hasSuiShioriPair = this.state.board.some(
       (owned) => owned && isSuiShioriHolder(owned.id) && ["sui_bird", "sui_cat"].includes(owned.id),
     ) && this.state.board.some(
-      (owned) => owned && isSuiShioriHolder(owned.id) && ["shiori", "prism_sage"].includes(owned.id),
+      (owned) => owned?.id === "shiori",
     );
     const traitLevel = (trait: TraitId) => (
       trait === "sui_shiori" && !hasSuiShioriPair
@@ -875,6 +869,7 @@ export class AutoChessEngine {
         jumpTime: 0,
         jumpDuration: assassinLevel ? 0.68 : 0,
         attackPulse: 0,
+        facingX: 1,
         attackTargetX: spawn.x,
         attackTargetY: spawn.y,
         hitPulse: 0,
@@ -941,6 +936,7 @@ export class AutoChessEngine {
         secondWindUsed: false,
         enraged: false,
         attackPulse: 0,
+        facingX: -1,
         attackTargetX: 990 - rank * 96,
         attackTargetY: 180 + row * 165,
         hitPulse: 0,
@@ -1004,6 +1000,11 @@ export class AutoChessEngine {
     );
   }
 
+  private faceTowardX(fighter: Fighter, targetX: number) {
+    const deltaX = targetX - fighter.x;
+    if (Math.abs(deltaX) > 0.5) fighter.facingX = deltaX < 0 ? -1 : 1;
+  }
+
   private prepareAssassinJump(fighter: Fighter, battle: BattleState) {
     const backlineTargets = battle.enemy
       .filter((enemy) => enemy.alive)
@@ -1049,6 +1050,7 @@ export class AutoChessEngine {
     fighter.jumpFromY = fighter.y;
     fighter.jumpToX = landing.x;
     fighter.jumpToY = landing.y;
+    this.faceTowardX(fighter, target.x);
     fighter.jumpPending = false;
     fighter.jumpTime = fighter.jumpDuration;
     this.addEffect({
@@ -1286,6 +1288,7 @@ export class AutoChessEngine {
         fighter.radius + target.radius + 7,
       );
       if (distance > preferredRange) {
+        this.faceTowardX(fighter, target.x);
         const travel = Math.min(
           distance - preferredRange,
           fighter.moveSpeed * dt,
@@ -1336,6 +1339,7 @@ export class AutoChessEngine {
       fighter.jumpFromY = fighter.y;
       fighter.jumpToX = Math.max(BATTLE_BOUNDS.left + fighter.radius, Math.min(BATTLE_BOUNDS.right - fighter.radius, liveTarget.x - distance));
       fighter.jumpToY = Math.max(BATTLE_BOUNDS.top + fighter.radius, Math.min(BATTLE_BOUNDS.bottom - fighter.radius, liveTarget.y + (index ? 52 : -52)));
+      this.faceTowardX(fighter, liveTarget.x);
       fighter.jumpDuration = 0.38;
       fighter.jumpTime = fighter.jumpDuration;
       this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: TRAITS.yue_gang.color, life: 0.35, size: fighter.radius * 1.5 });
@@ -1346,9 +1350,9 @@ export class AutoChessEngine {
     const battle = this.state.battle;
     if (!battle || source.team !== "player" || battle.suiShioriLevel <= 0 || battle.suiShioriCooldown > 0) return;
     const sourceIsSui = ["sui_bird", "sui_cat"].includes(source.unitId) && UNIT_DEFS[source.unitId].traits.includes("sui_shiori");
-    const sourceIsShiori = ["shiori", "prism_sage"].includes(source.unitId) && UNIT_DEFS[source.unitId].traits.includes("sui_shiori");
+    const sourceIsShiori = source.unitId === "shiori" && UNIT_DEFS[source.unitId].traits.includes("sui_shiori");
     if (!sourceIsSui && !sourceIsShiori) return;
-    const partner = battle.player.find((fighter) => fighter.alive && fighter !== source && UNIT_DEFS[fighter.unitId].traits.includes("sui_shiori") && (sourceIsSui ? ["shiori", "prism_sage"].includes(fighter.unitId) : ["sui_bird", "sui_cat"].includes(fighter.unitId)));
+    const partner = battle.player.find((fighter) => fighter.alive && fighter !== source && UNIT_DEFS[fighter.unitId].traits.includes("sui_shiori") && (sourceIsSui ? fighter.unitId === "shiori" : ["sui_bird", "sui_cat"].includes(fighter.unitId)));
     const target = targets.find((fighter) => fighter.alive) || this.nearestTarget(source, targets);
     if (!partner || !target) return;
     const multiplier = [0, 0.65, 0.85, 1.1][battle.suiShioriLevel];
@@ -1361,6 +1365,7 @@ export class AutoChessEngine {
   }
 
   private basicAttack(source: Fighter, target: Fighter) {
+    this.faceTowardX(source, target.x);
     source.cooldown = source.attackInterval;
     source.attackPulse = 0.22;
     source.attackTargetX = target.x;
@@ -1711,113 +1716,6 @@ export class AutoChessEngine {
         });
         break;
       }
-      case "brass_colossus": {
-        targets
-          .filter(
-            (target) =>
-              Math.hypot(target.x - source.x, target.y - source.y) < 145,
-          )
-          .forEach((target) => {
-            const dealt = this.damage(source, target, source.attack * 0.92);
-            target.stun = Math.max(target.stun, 1.2);
-            if (dealt > 0) this.addDamageText(target, dealt);
-          });
-        this.grantShield(source, source, source.maxHp * 0.22, 0.42);
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.9,
-          size: 150,
-        });
-        break;
-      }
-      case "ash_dancer": {
-        const ordered = [...targets]
-          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
-          .slice(0, 3);
-        ordered.forEach((target, index) => {
-          source.x = target.x + (source.team === "player" ? -34 : 34);
-          source.y = target.y;
-          deal(target, 0.92);
-          this.applyBurn(source, target, source.attack * 0.75);
-          this.addEffect({
-            kind: "burst",
-            x: target.x,
-            y: target.y,
-            color: def.accent,
-            life: 0.38 + index * 0.07,
-            size: 36,
-          });
-        });
-        break;
-      }
-      case "thorn_brute": {
-        const nearby = targets.filter(
-          (target) =>
-            Math.hypot(target.x - source.x, target.y - source.y) < 145,
-        );
-        nearby.forEach((target) => deal(target, 1.22));
-        this.heal(source, source, source.maxHp * 0.065 * Math.max(1, nearby.length));
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.7,
-          size: 150,
-        });
-        break;
-      }
-      case "void_oracle": {
-        const target = [...targets].sort((a, b) => b.maxHp - a.maxHp)[0];
-        if (!target) break;
-        deal(target, 1.35, Math.min(target.maxHp * 0.09, source.attack * 2.2));
-        target.stun = Math.max(target.stun, 0.5);
-        this.addEffect({
-          kind: "ring",
-          x: target.x,
-          y: target.y,
-          color: def.accent,
-          life: 0.7,
-          size: 78,
-        });
-        break;
-      }
-      case "gear_sniper": {
-        const target = farthest(targets);
-        if (!target) break;
-        deal(target, 2.5);
-        this.addEffect({
-          kind: "line",
-          x: source.x,
-          y: source.y,
-          x2: target.x,
-          y2: target.y,
-          color: def.accent,
-          life: 0.58,
-          size: 7,
-        });
-        break;
-      }
-      case "shade_reaver": {
-        const target = weakest(targets);
-        if (!target) break;
-        source.x = target.x + (source.team === "player" ? -32 : 32);
-        source.y = target.y;
-        deal(target, 2.15);
-        if (!target.alive) source.energy = Math.max(source.energy, 72);
-        this.addEffect({
-          kind: "burst",
-          x: target.x,
-          y: target.y,
-          color: def.accent,
-          life: 0.6,
-          size: 48,
-        });
-        break;
-      }
       case "sui_bird": {
         const target = weakest(allies);
         if (!target) break;
@@ -1873,121 +1771,6 @@ export class AutoChessEngine {
         if (recipient) recipient.energy = Math.min(100, recipient.energy + 18);
         break;
       }
-      case "sun_phoenix": {
-        targets.forEach((target) => {
-          const dealt = this.damage(source, target, source.attack * 1.16);
-          this.applyBurn(source, target, source.attack * 0.9);
-          if (dealt > 0) this.addDamageText(target, dealt);
-        });
-        this.heal(source, source, source.maxHp * 0.18);
-        this.addEffect({
-          kind: "ring",
-          x: 560,
-          y: 360,
-          color: def.accent,
-          life: 1,
-          size: 520,
-        });
-        break;
-      }
-      case "prism_sage": {
-        allies.forEach((target) => {
-          this.heal(source, target, target.maxHp * 0.09 + source.attack * 0.7);
-          addShield(target, target.maxHp * 0.12, 0.42);
-          target.energy = Math.min(100, target.energy + 15);
-        });
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.95,
-          size: 320,
-        });
-        break;
-      }
-      case "moonfang": {
-        const target = farthest(targets);
-        if (!target) break;
-        source.x = target.x + (source.team === "player" ? -34 : 34);
-        source.y = target.y;
-        let total = 0;
-        for (let strike = 0; strike < 4 && target.alive; strike += 1)
-          total += deal(target, 0.68);
-        this.heal(source, source, total * 0.28);
-        this.addEffect({
-          kind: "burst",
-          x: target.x,
-          y: target.y,
-          color: def.accent,
-          life: 0.72,
-          size: 66,
-        });
-        break;
-      }
-      case "rift_warden": {
-        allies.forEach((target) =>
-          addShield(target, target.maxHp * 0.11, 0.42),
-        );
-        targets
-          .filter(
-            (target) =>
-              Math.hypot(target.x - source.x, target.y - source.y) < 155,
-          )
-          .forEach((target) => {
-            deal(target, 0.82);
-            target.stun = Math.max(target.stun, 1.05);
-          });
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.9,
-          size: 170,
-        });
-        break;
-      }
-      case "iron_dervish": {
-        targets
-          .filter(
-            (target) =>
-              Math.hypot(target.x - source.x, target.y - source.y) < 155,
-          )
-          .forEach((target) => deal(target, 1.58));
-        source.cooldown = 0;
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.78,
-          size: 165,
-        });
-        break;
-      }
-      case "siege_walker": {
-        const center = densest(targets);
-        if (!center) break;
-        targets
-          .filter(
-            (target) =>
-              Math.hypot(target.x - center.x, target.y - center.y) < 135,
-          )
-          .forEach((target) => {
-            deal(target, 1.82);
-            target.stun = Math.max(target.stun, 1.05);
-          });
-        this.addEffect({
-          kind: "ring",
-          x: center.x,
-          y: center.y,
-          color: def.accent,
-          life: 0.95,
-          size: 145,
-        });
-        break;
-      }
       case "sui_cat": {
         const target = farthest(targets);
         if (!target) break;
@@ -2009,134 +1792,6 @@ export class AutoChessEngine {
             target.stun = Math.max(target.stun, 0.85);
           });
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.9, size: 165 });
-        break;
-      }
-      case "dawn_sovereign": {
-        [...targets]
-          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
-          .forEach((target, index) => {
-            deal(target, Math.max(0.72, 1.55 - index * 0.14));
-            this.addEffect({
-              kind: "line",
-              x: source.x,
-              y: source.y,
-              x2: target.x,
-              y2: target.y,
-              color: def.accent,
-              life: 0.48 + index * 0.04,
-              size: 5,
-            });
-          });
-        allies.forEach((target) => addShield(target, target.maxHp * 0.07, 0.3));
-        break;
-      }
-      case "solar_champion": {
-        const center = densest(targets);
-        if (!center) break;
-        source.x = center.x + (source.team === "player" ? -42 : 42);
-        source.y = center.y;
-        targets
-          .filter(
-            (target) =>
-              Math.hypot(target.x - center.x, target.y - center.y) < 145,
-          )
-          .forEach((target) => {
-            deal(target, 2.05);
-            target.stun = Math.max(target.stun, 0.85);
-          });
-        addShield(source, source.maxHp * 0.24, 0.6);
-        this.addEffect({
-          kind: "ring",
-          x: center.x,
-          y: center.y,
-          color: def.accent,
-          life: 0.95,
-          size: 155,
-        });
-        break;
-      }
-      case "inferno_witch": {
-        targets.forEach((target) => {
-          deal(target, 1.28);
-          this.applyBurn(source, target, source.attack * 1.45);
-          this.addEffect({
-            kind: "burst",
-            x: target.x,
-            y: target.y,
-            color: def.accent,
-            life: 0.7,
-            size: 58,
-          });
-        });
-        this.addEffect({
-          kind: "ring",
-          x: 560,
-          y: 360,
-          color: def.accent,
-          life: 1.05,
-          size: 540,
-        });
-        break;
-      }
-      case "sky_drake": {
-        const ordered = [...targets].sort(
-          (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
-        );
-        for (let shot = 0; shot < 6; shot += 1) {
-          const target =
-            ordered.find((candidate) => candidate.alive) ||
-            weakest(targets.filter((candidate) => candidate.alive));
-          if (!target) break;
-          deal(target, target.hp / target.maxHp < 0.3 ? 1.12 : 0.82);
-          this.addEffect({
-            kind: "line",
-            x: source.x,
-            y: source.y,
-            x2: target.x,
-            y2: target.y,
-            color: def.accent,
-            life: 0.24 + shot * 0.04,
-            size: 3,
-          });
-        }
-        break;
-      }
-      case "void_reaper": {
-        let kills = 0;
-        const ordered = [...targets]
-          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
-          .slice(0, 3);
-        ordered.forEach((target, index) => {
-          if (!target.alive) return;
-          source.x = target.x + (source.team === "player" ? -30 : 30);
-          source.y = target.y;
-          deal(target, 1.38);
-          if (!target.alive) kills += 1;
-          this.addEffect({
-            kind: "burst",
-            x: target.x,
-            y: target.y,
-            color: def.accent,
-            life: 0.45 + index * 0.08,
-            size: 46,
-          });
-        });
-        source.energy = Math.min(100, source.energy + kills * 34);
-        break;
-      }
-      case "chrono_titan": {
-        targets.forEach((target) => {
-          deal(target, 1.16);
-          target.stun = Math.max(target.stun, 1.55);
-        });
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 1.1,
-          size: 470,
-        });
         break;
       }
       case "biscuit_sui": {
@@ -2613,6 +2268,7 @@ export class AutoChessEngine {
             x: Math.round(unit.x),
             y: Math.round(unit.y),
             radius: unit.radius,
+            facingX: unit.facingX,
             attacking: unit.attackPulse > 0,
             hit: unit.hitPulse > 0,
             jumpPending: unit.jumpPending,
@@ -2647,6 +2303,7 @@ export class AutoChessEngine {
             x: Math.round(unit.x),
             y: Math.round(unit.y),
             radius: unit.radius,
+            facingX: unit.facingX,
             attacking: unit.attackPulse > 0,
             hit: unit.hitPulse > 0,
             jumpPending: unit.jumpPending,

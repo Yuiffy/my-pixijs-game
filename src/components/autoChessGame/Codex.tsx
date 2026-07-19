@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import type { AugmentSelection } from "./core/gameEngine";
 import {
   AUGMENTS,
   PLAYER_LEVELS,
@@ -16,11 +17,12 @@ import {
   tierOddsForLevel,
 } from "./core/gameData";
 
-type Tab = "units" | "traits" | "talents" | "odds" | "rules";
+type Tab = "units" | "traits" | "talents" | "runTalents" | "odds" | "rules";
 type TraitFamilyFilter = "all" | "阵营" | "职业" | "关系";
 
 interface CodexProps {
   open: boolean;
+  augmentHistory: AugmentSelection[];
   onClose: () => void;
 }
 
@@ -28,6 +30,7 @@ const tabNames: Record<Tab, string> = {
   units: "棋子",
   traits: "羁绊",
   talents: "开局 / 天赋",
+  runTalents: "本局天赋",
   odds: "商店概率",
   rules: "玩法说明",
 };
@@ -38,7 +41,7 @@ const cellStyle = {
   textAlign: "center" as const,
 };
 
-export default function Codex({ open, onClose }: CodexProps) {
+export default function Codex({ open, augmentHistory, onClose }: CodexProps) {
   const [tab, setTab] = useState<Tab>("units");
   const [tier, setTier] = useState<number | "all">("all");
   const [traitFamily, setTraitFamily] = useState<TraitFamilyFilter>("all");
@@ -274,6 +277,32 @@ export default function Codex({ open, onClose }: CodexProps) {
                 ))}
               </div>
             </div>
+          </section>
+        )}
+        {tab === "runTalents" && (
+          <section>
+            <h2 style={{ margin: "0 0 8px" }}>本局已选天赋</h2>
+            <p style={{ color: "#8da7b8" }}>按选择顺序记录本局获得的天赋及其完整效果。</p>
+            {augmentHistory.length === 0 ? (
+              <div style={{ padding: 20, border: "1px dashed #345269", borderRadius: 12, color: "#8da7b8", background: "#0d1d2a" }}>
+                本局尚未选择天赋；第 2 战后可进行首次选择。
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 12 }}>
+                {augmentHistory.map(({ round, id }) => {
+                  const augment = AUGMENTS.find((item) => item.id === id);
+                  if (!augment) return null;
+                  return (
+                    <article key={`${round}-${id}`} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
+                      <div style={{ color: "#8da7b8", fontSize: 12, fontWeight: 700 }}>第 {round} 战</div>
+                      <strong style={{ display: "block", marginTop: 6, color: augment.color, fontSize: 18 }}>{augment.name}</strong>
+                      <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>
+                      <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{augment.description}</p>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
         {tab === "odds" && (

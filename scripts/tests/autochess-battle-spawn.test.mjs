@@ -42,12 +42,46 @@ test("已选择的天赋会按回合记入历史", () => {
 
   assert.deepEqual(engine.state.augments, ["overclock"]);
   assert.deepEqual(engine.state.augmentHistory, [{ round: 2, id: "overclock" }]);
+  engine.state.phase = "augment";
+  engine.state.round = 5;
+  engine.state.augmentChoices = ["tempered", "sharp_edge", "momentum"];
+  engine.chooseAugment(1);
+
+  assert.deepEqual(engine.state.augments, ["overclock", "sharp_edge"]);
+  assert.deepEqual(engine.state.augmentHistory, [
+    { round: 2, id: "overclock" },
+    { round: 5, id: "sharp_edge" },
+  ]);
   const textState = JSON.parse(engine.renderTextState());
-  assert.deepEqual(textState.augmentHistory, [{
-    round: 2,
-    name: "栞栞书签",
-    description: "所有友军开战时额外获得 35 能量。",
-  }]);
+  assert.deepEqual(textState.augmentHistory, [
+    {
+      round: 2,
+      name: "栞栞书签",
+      description: "所有友军开战时额外获得 35 能量。",
+    },
+    {
+      round: 5,
+      name: "炽焰磨刃",
+      description: "所有友军攻击力提高 15%。",
+    },
+  ]);
+});
+
+test("克罗雅同时触发 27期与粤帮关系", () => {
+  const engine = new AutoChessEngine(24);
+  engine.startRun("bastion");
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rift_brawler", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "rift_stalker", star: 1 };
+
+  assert.equal(engine.getActiveTraits().find((trait) => trait.id === "gen27")?.level, 1);
+  assert.equal(engine.getActiveTraits().find((trait) => trait.id === "yue_gang")?.level, 1);
+  engine.startBattle();
+  const kloa = engine.state.battle?.player.find((fighter) => fighter.unitId === "rift_brawler");
+  assert.equal(kloa?.gen27Member, true);
+  assert.equal(kloa?.yueGangMember, true);
 });
 
 test("关系羁绊按不同单位计数，岁栞必须同时有岁己与栞栞", () => {
@@ -93,6 +127,8 @@ test("6x4 deployment slots preserve their formation positions at battle start", 
 
   assert.equal(engine.state.phase, "battle");
   assert.ok(engine.state.battle);
+  assert.ok(engine.state.battle.player.every((fighter) => fighter.facingX === 1));
+  assert.ok(engine.state.battle.enemy.every((fighter) => fighter.facingX === -1));
 
   const fightersById = new Map(
     engine.state.battle.player.map((fighter) => [fighter.fid, fighter]),
