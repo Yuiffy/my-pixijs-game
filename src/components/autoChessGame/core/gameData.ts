@@ -103,7 +103,7 @@ export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
   assault: { id: "assault", name: "攻击回能", max: 100, start: 0, perSecond: 0, onAttack: 24, onHit: 5, castRefund: 0, color: "#b585ff" },
   bulwark: { id: "bulwark", name: "受击回能", max: 90, start: 15, perSecond: 0, onAttack: 6, onHit: 20, castRefund: 0, color: "#f2b45e" },
   flow: { id: "flow", name: "流转回能", max: 100, start: 0, perSecond: 7, onAttack: 10, onHit: 4, castRefund: 0, color: "#65d8ca" },
-  tempo: { id: "tempo", name: "疾奏回能", max: 80, start: 0, perSecond: 3, onAttack: 18, onHit: 4, castRefund: 0, color: "#ee8fc4" },
+  tempo: { id: "tempo", name: "疾奏回能", max: 80, start: 0, perSecond: 3, onAttack: 15, onHit: 4, castRefund: 0, color: "#ee8fc4" },
   reservoir: { id: "reservoir", name: "蓄势回能", max: 120, start: 0, perSecond: 3, onAttack: 16, onHit: 6, castRefund: 0, color: "#7e9bff" },
   automatic: { id: "automatic", name: "自动回能", max: 100, start: 20, perSecond: 20, onAttack: 0, onHit: 0, castRefund: 0, color: "#9bb8ff" },
 };
@@ -521,10 +521,10 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attack: 22,
     armor: 12,
     range: 245,
-    attackInterval: 0.72,
+    attackInterval: 0.84,
     moveSpeed: 48,
     abilityName: "机械兔耳浮游炮",
-    abilityDescription: "放出两只机械兔耳浮游宠物，持续快速移动并发射子弹攻击敌人。",
+    abilityDescription: "从头顶放出两只机械兔耳浮游炮；它们定点开火后快速转移，3 秒后回到弥月身上。",
     portrait: "/images/livers/mizuki.png",
     portraitFocus: "top",
     shop: true,
@@ -820,9 +820,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
 
   // 公开成员的角色化战斗设计；无可核验梗时采用公开人设或名字意象。
   nori: unit({
-    id: "nori", name: "能能弄你", title: "能能Nori · 高速射手", glyph: "能", color: "#526a9e", accent: "#9bb8ff", tier: 1, cost: 1,
-    traits: ["ranger", "host"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 0.9, moveSpeed: 56,
-    abilityName: "苹果派", abilityDescription: "以较低单发伤害快速连射 12 次。", shop: true,
+    id: "nori", name: "能能弄你", title: "能能Nori · 弹幕射手", glyph: "能", color: "#526a9e", accent: "#9bb8ff", tier: 1, cost: 1,
+    traits: ["ranger", "host"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
+    abilityName: "苹果派", abilityDescription: "发射 8 枚低伤害苹果派子弹。", shop: true,
   }),
   meme: unit({
     id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 3, cost: 3,

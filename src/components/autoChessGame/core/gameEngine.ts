@@ -113,14 +113,20 @@ export interface MechanicalRabbitPet {
   range: number;
   fireTimer: number;
   targetFid: string | null;
-  facingX: -1 | 1;
+  aimX: number;
+  aimY: number;
   attackPulse: number;
 }
 
-export const mechanicalRabbitMuzzle = (pet: Pick<MechanicalRabbitPet, "x" | "y" | "radius" | "facingX">) => ({
-  x: pet.x + pet.facingX * pet.radius * 1.16,
-  y: pet.y - pet.radius * 0.82,
-});
+const CLOCK_GUNNER_RABBIT_MUZZLE_DISTANCE = 1.55;
+
+export const mechanicalRabbitMuzzle = (pet: Pick<MechanicalRabbitPet, "x" | "y" | "radius" | "aimX" | "aimY">) => {
+  const length = Math.hypot(pet.aimX, pet.aimY) || 1;
+  return {
+    x: pet.x + (pet.aimX / length) * pet.radius * CLOCK_GUNNER_RABBIT_MUZZLE_DISTANCE,
+    y: pet.y + (pet.aimY / length) * pet.radius * CLOCK_GUNNER_RABBIT_MUZZLE_DISTANCE,
+  };
+};
 
 interface ProjectileVolleyShot {
   sourceFid: string;
@@ -1649,7 +1655,8 @@ export class AutoChessEngine {
         range: CLOCK_GUNNER_RABBIT_RANGE,
         fireTimer: slot * 0.12,
         targetFid: null,
-        facingX: source.facingX,
+        aimX: source.facingX,
+        aimY: 0,
         attackPulse: 0,
       });
     }
@@ -1680,8 +1687,12 @@ export class AutoChessEngine {
 
       const deltaX = target.x - pet.x;
       const deltaY = target.y - pet.y;
-      const distance = Math.hypot(deltaX, deltaY) || 1;
-      if (Math.abs(deltaX) > 0.5) pet.facingX = deltaX < 0 ? -1 : 1;
+      const rawDistance = Math.hypot(deltaX, deltaY);
+      const distance = rawDistance || 1;
+      if (rawDistance > 0.001) {
+        pet.aimX = deltaX / rawDistance;
+        pet.aimY = deltaY / rawDistance;
+      }
       if (distance > pet.range) {
         const step = Math.min(distance - pet.range, pet.moveSpeed * dt);
         pet.x += (deltaX / distance) * step;

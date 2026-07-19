@@ -1701,9 +1701,11 @@ const drawMechanicalRabbitPet = (
 ) => {
   const fade = Math.max(0.25, Math.min(1, pet.life / 0.7));
   const bob = Math.sin(visualTime * 8 + pet.x * 0.03) * 3;
-  const muzzle = mechanicalRabbitMuzzle(pet);
-  const localMuzzleX = (muzzle.x - pet.x) * pet.facingX;
-  const localMuzzleY = muzzle.y - pet.y;
+  const aimAngle = Math.atan2(pet.aimY, pet.aimX);
+  const muzzleDistance = Math.hypot(
+    mechanicalRabbitMuzzle(pet).x - pet.x,
+    mechanicalRabbitMuzzle(pet).y - pet.y,
+  );
   ctx.save();
   ctx.globalAlpha = fade;
   ctx.fillStyle = "rgba(0, 0, 0, 0.26)";
@@ -1711,66 +1713,68 @@ const drawMechanicalRabbitPet = (
   ctx.ellipse(pet.x, pet.y + pet.radius * 0.88, pet.radius * 1.2, pet.radius * 0.3, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.translate(pet.x, pet.y + bob);
-  ctx.scale(pet.facingX, 1);
+  ctx.rotate(aimAngle);
 
-  const baseGradient = ctx.createLinearGradient(-pet.radius, -pet.radius, pet.radius, pet.radius);
-  baseGradient.addColorStop(0, "#607384");
-  baseGradient.addColorStop(0.48, "#263845");
-  baseGradient.addColorStop(1, "#111b27");
-  ctx.fillStyle = baseGradient;
-  ctx.strokeStyle = "#afc6d5";
-  ctx.lineWidth = 1.5;
+  const podGradient = ctx.createLinearGradient(-pet.radius * 0.65, 0, pet.radius * 0.45, 0);
+  podGradient.addColorStop(0, "#111a27");
+  podGradient.addColorStop(0.55, "#3b4f60");
+  podGradient.addColorStop(1, "#728998");
+  ctx.fillStyle = podGradient;
+  ctx.strokeStyle = "#b8ccd8";
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(-pet.radius, -4);
-  ctx.lineTo(-pet.radius * 0.55, -pet.radius * 0.8);
-  ctx.lineTo(pet.radius * 0.66, -pet.radius * 0.7);
-  ctx.lineTo(pet.radius * 1.03, 0);
-  ctx.lineTo(pet.radius * 0.46, pet.radius * 0.72);
-  ctx.lineTo(-pet.radius * 0.65, pet.radius * 0.56);
+  ctx.moveTo(-pet.radius * 0.62, 0);
+  ctx.lineTo(-pet.radius * 0.22, -pet.radius * 0.31);
+  ctx.lineTo(pet.radius * 0.38, -pet.radius * 0.2);
+  ctx.lineTo(pet.radius * 0.5, 0);
+  ctx.lineTo(pet.radius * 0.38, pet.radius * 0.2);
+  ctx.lineTo(-pet.radius * 0.22, pet.radius * 0.31);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  [-1, 1].forEach((side) => {
-    const rearX = side * pet.radius * 0.43;
-    const tipX = pet.radius * 1.14;
-    const rootY = side * pet.radius * 0.28 - pet.radius * 0.48;
-    const tipY = side * pet.radius * 0.18 - pet.radius * 1.16;
-    ctx.fillStyle = "#1c2937";
-    ctx.strokeStyle = "#dbe4eb";
-    ctx.lineWidth = 1.3;
-    ctx.beginPath();
-    ctx.moveTo(rearX - pet.radius * 0.23, rootY + pet.radius * 0.35);
-    ctx.lineTo(rearX + pet.radius * 0.18, rootY - pet.radius * 0.24);
-    ctx.lineTo(tipX, tipY);
-    ctx.lineTo(rearX + pet.radius * 0.48, rootY + pet.radius * 0.43);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#f6f2f3";
-    ctx.beginPath();
-    ctx.moveTo(rearX + pet.radius * 0.02, rootY + pet.radius * 0.22);
-    ctx.lineTo(rearX + pet.radius * 0.22, rootY - pet.radius * 0.04);
-    ctx.lineTo(tipX - pet.radius * 0.22, tipY + pet.radius * 0.18);
-    ctx.lineTo(rearX + pet.radius * 0.31, rootY + pet.radius * 0.33);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = "#f2c9d0";
-    ctx.fillRect(rearX + pet.radius * 0.17, rootY + pet.radius * 0.27, pet.radius * 0.32, 3);
-  });
-
+  const cannonTipX = muzzleDistance;
+  ctx.fillStyle = "#1b2938";
+  ctx.strokeStyle = "#dce6ec";
+  ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  ctx.moveTo(-pet.radius * 0.08, -pet.radius * 0.23);
+  ctx.lineTo(cannonTipX - pet.radius * 0.08, -pet.radius * 0.1);
+  ctx.lineTo(cannonTipX, 0);
+  ctx.lineTo(cannonTipX - pet.radius * 0.08, pet.radius * 0.1);
+  ctx.lineTo(-pet.radius * 0.08, pet.radius * 0.23);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f4f0f2";
+  ctx.beginPath();
+  ctx.moveTo(pet.radius * 0.04, -pet.radius * 0.11);
+  ctx.lineTo(cannonTipX - pet.radius * 0.22, -pet.radius * 0.045);
+  ctx.lineTo(cannonTipX - pet.radius * 0.08, 0);
+  ctx.lineTo(cannonTipX - pet.radius * 0.22, pet.radius * 0.045);
+  ctx.lineTo(pet.radius * 0.04, pet.radius * 0.11);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#efc8d1";
+  ctx.fillRect(pet.radius * 0.16, -pet.radius * 0.17, pet.radius * 0.24, pet.radius * 0.34);
+  ctx.strokeStyle = "#92d7ff";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(pet.radius * 0.4, 0);
+  ctx.lineTo(cannonTipX - pet.radius * 0.25, 0);
+  ctx.stroke();
   ctx.fillStyle = "#92d7ff";
   ctx.shadowColor = "#92d7ff";
-  ctx.shadowBlur = 10;
+  ctx.shadowBlur = 8;
   ctx.beginPath();
-  ctx.arc(pet.radius * 0.32, -2, 3, 0, Math.PI * 2);
+  ctx.arc(-pet.radius * 0.2, 0, 2.4, 0, Math.PI * 2);
   ctx.fill();
   if (pet.attackPulse > 0) {
     const flash = 1 + (pet.attackPulse / 0.16) * 0.75;
     ctx.globalCompositeOperation = "screen";
     ctx.fillStyle = "rgba(218, 250, 255, 0.96)";
     ctx.beginPath();
-    ctx.arc(localMuzzleX, localMuzzleY, 4.5 * flash, 0, Math.PI * 2);
+    ctx.arc(cannonTipX, 0, 4.5 * flash, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
@@ -2856,6 +2860,7 @@ export default function AutoChessGame() {
   const traitScrollXRef = useRef(0);
   const suppressClickRef = useRef(false);
   const frameRef = useRef<number | null>(null);
+  const requestDrawRef = useRef<() => void>(() => {});
   const lastFrameRef = useRef<number | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const testTimeScaleRef = useRef(1);
@@ -2982,11 +2987,19 @@ export default function AutoChessGame() {
     const storedAudioPreferences = loadAudioPreferences();
     setAudioPreferences(storedAudioPreferences);
     audioRef.current?.setPreferences(storedAudioPreferences);
+    let drawRequested = false;
+    const requestDraw = () => {
+      drawRequested = true;
+    };
+    requestDrawRef.current = requestDraw;
     const loop = (timestamp: number) => {
       const engine = engineRef.current;
       if (engine) {
         const previous = lastFrameRef.current ?? timestamp;
-        if (!codexOpenRef.current) engine.update((timestamp - previous) / 1000);
+        const shouldUpdate =
+          !codexOpenRef.current &&
+          (engine.state.phase === "battle" || Boolean(engine.state.toast));
+        if (shouldUpdate) engine.update((timestamp - previous) / 1000);
         lastFrameRef.current = timestamp;
         const phase = engine.state.phase;
         if (phase !== lastPhaseRef.current) {
@@ -2995,6 +3008,7 @@ export default function AutoChessGame() {
           if (phase === "result")
             audioRef.current?.play(engine.state.result?.won ? "win" : "loss");
           lastPhaseRef.current = phase;
+          drawRequested = true;
         }
         if (
           engine.state.toast?.text &&
@@ -3004,10 +3018,14 @@ export default function AutoChessGame() {
             audioRef.current?.play("merge");
           lastToastRef.current = engine.state.toast.text;
         }
-        draw();
+        if (shouldUpdate || drawRequested) {
+          draw();
+          drawRequested = false;
+        }
       }
       frameRef.current = window.requestAnimationFrame(loop);
     };
+    requestDraw();
     frameRef.current = window.requestAnimationFrame(loop);
 
     window.render_game_to_text = () =>
@@ -3024,7 +3042,7 @@ export default function AutoChessGame() {
 
     const handleFullscreen = () => {
       setFullscreen(document.fullscreenElement === containerRef.current);
-      window.requestAnimationFrame(draw);
+      requestDraw();
     };
     const handleFullscreenError = () =>
       setFullscreenMessage("全屏请求被浏览器拒绝。");
@@ -3035,10 +3053,10 @@ export default function AutoChessGame() {
     document.addEventListener("fullscreenerror", handleFullscreenError);
     const canvas = canvasRef.current;
     if (canvas && typeof ResizeObserver !== "undefined") {
-      resizeObserverRef.current = new ResizeObserver(() => draw());
+      resizeObserverRef.current = new ResizeObserver(requestDraw);
       resizeObserverRef.current.observe(canvas);
     }
-    const handleResize = () => draw();
+    const handleResize = requestDraw;
     window.addEventListener("resize", handleResize);
     return () => {
       if (frameRef.current !== null)
