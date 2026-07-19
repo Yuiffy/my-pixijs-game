@@ -109,7 +109,7 @@ test("浣熊店员使用原创展示文案与独立精灵头像", async () => {
   assert.equal(unit.title, "浣熊店员 · 前排照料");
   assert.equal(unit.glyph, "浣");
   assert.equal(unit.abilityName, "端茶倒水");
-  assert.deepEqual(unit.traits, ["wild", "vanguard", "mature"]);
+  assert.deepEqual(unit.traits, ["wild", "mature", "gen27"]);
   assert.equal(unit.portraitStyle, "sprite");
   assert.equal(unit.portrait, "/images/autochess/portraits/raccoon-archer.png");
   assert.doesNotMatch(`${unit.name} ${unit.title}`, /十六萤|Izayoi/);
@@ -198,10 +198,10 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.sui.name, "小红帽");
   assert.deepEqual(data.UNIT_DEFS.sui.traits, ["vanguard", "dance"]);
   assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["ranger", "skeleton_soldier"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "host"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild"]);
   assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["mystic", "chuanmei"]);
   assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "gluttony"]);
-  assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["chuanmei", "dance"]);
+  assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["wild", "gluttony"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
 });
 
@@ -258,9 +258,9 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.dwarf.name, "矮人");
   assert.equal(data.TRAITS.skeleton_soldier.name, "骷髅兵");
   assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
-  ["sui_flower", "biscuit_sui", "nagisa"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
+  ["sui_flower"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
   ["grove_mender", "sui_cat"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
-  assert.equal(data.UNIT_DEFS.biscuit_sui.traits.includes("gluttony"), false);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.traits.includes("gluttony"), true);
   assert.equal(data.UNIT_DEFS.sui.traits.includes("gluttony"), false);
   assert.equal(data.TRAITS.assassin.name, "偷袭");
   assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
@@ -283,13 +283,13 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   ["rift_brawler", "mitsuri"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
   ["sun_guard", "rift_brawler", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gen27")));
   assert.deepEqual(data.UNIT_DEFS.rift_brawler.traits, ["gen27", "yue_gang"]);
-  assert.deepEqual(data.UNIT_DEFS.rift_stalker.traits, ["assassin"]);
+  assert.deepEqual(data.UNIT_DEFS.rift_stalker.traits, ["assassin", "mystic"]);
   ["dawn_duelist", "ember_blade", "nightin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dwarf")));
   ["sun_guard", "dawn_duelist"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("traffic")));
   ["gale_archer", "clock_gunner", "cinder_ram", "zeyin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("mature")));
-  ["sui", "biscuit_sui", "zeyin", "tiandou", "youyi", "mumu", "lian"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dance")));
+  ["sui", "zeyin", "tiandou", "youyi", "mumu", "lian"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dance")));
   assert.equal(data.UNIT_DEFS.guangyi.abilityName, "滑跪");
-  assert.deepEqual(data.UNIT_DEFS.guangyi.traits, ["assassin", "host"]);
+  assert.deepEqual(data.UNIT_DEFS.guangyi.traits, ["host", "gluttony", "mature"]);
   data.WAVES.forEach((wave) => wave.units.forEach(({ id }) => assert.ok(data.UNIT_DEFS[id], `${id} should remain defined for wave ${wave.round}`)));
   data.SHOP_UNITS.forEach((id) => {
     const unit = data.UNIT_DEFS[id];

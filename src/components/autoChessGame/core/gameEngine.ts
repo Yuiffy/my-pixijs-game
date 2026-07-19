@@ -40,6 +40,12 @@ const TARGET_LOCK_DURATION = 0.45;
 const TARGET_SWITCH_DISTANCE = 28;
 const AVOID_LOOK_AHEAD = 78;
 const AVOIDANCE_RADIUS = 118;
+const YIELD_PATH_PADDING = 3;
+const YIELD_MIN_FORWARD = 1;
+const YIELD_LATERAL_SHIFT = 42;
+const YIELD_CLEARANCE = 3;
+const YIELD_PROGRESS_WINDOW = 0.3;
+const YIELD_MIN_TARGET_PROGRESS = 5;
 const STUCK_RECOVERY_DELAY = 0.65;
 const STUCK_RECOVERY_DURATION = 0.42;
 const SEPARATION_PASSES = 5;
@@ -143,9 +149,8 @@ export interface Fighter {
   jumpToY: number;
   targetFid: string | null;
   targetLock: number;
-  lastNavX: number;
-  lastNavY: number;
-  lastTargetDistance: number;
+  progressAnchorDistance: number;
+  progressWindowTime: number;
   stuckTime: number;
   avoidSide: -1 | 1;
   avoidTime: number;
@@ -1009,9 +1014,8 @@ export class AutoChessEngine {
         jumpToY: spawn.y,
         targetFid: null,
         targetLock: 0,
-        lastNavX: spawn.x,
-        lastNavY: spawn.y,
-        lastTargetDistance: Infinity,
+        progressAnchorDistance: Infinity,
+        progressWindowTime: 0,
         stuckTime: 0,
         avoidSide: owned.uid % 2 === 0 ? 1 : -1,
         avoidTime: 0,
@@ -1107,9 +1111,8 @@ export class AutoChessEngine {
         jumpToY: 180 + row * 165,
         targetFid: null,
         targetLock: 0,
-        lastNavX: 990 - rank * 96,
-        lastNavY: 180 + row * 165,
-        lastTargetDistance: Infinity,
+        progressAnchorDistance: Infinity,
+        progressWindowTime: 0,
         stuckTime: 0,
         avoidSide: index % 2 === 0 ? -1 : 1,
         avoidTime: 0,
@@ -1186,6 +1189,75 @@ export class AutoChessEngine {
       : { x: fighter.x, y: fighter.y };
   }
 
+  private findYieldableAlly(
+    mover: Fighter,
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    fighters: Fighter[],
+  ) {
+    const pathX = to.x - from.x;
+    const pathY = to.y - from.y;
+    const pathLength = Math.hypot(pathX, pathY);
+    if (pathLength < 0.01) return null;
+    const unitX = pathX / pathLength;
+    const unitY = pathY / pathLength;
+    return fighters
+      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.jumpPending && other.jumpTime <= 0)
+      .map((other) => {
+        const relativeX = other.x - from.x;
+        const relativeY = other.y - from.y;
+        const forward = relativeX * unitX + relativeY * unitY;
+        const lateral = Math.abs(relativeX * -unitY + relativeY * unitX);
+        return { other, forward, lateral };
+      })
+      .filter(({ other, forward, lateral }) =>
+        forward > YIELD_MIN_FORWARD &&
+        forward <= pathLength + mover.radius + other.radius + YIELD_PATH_PADDING &&
+        lateral < mover.radius + other.radius + YIELD_PATH_PADDING,
+      )
+      .sort((left, right) => left.forward - right.forward || left.other.fid.localeCompare(right.other.fid))[0]?.other || null;
+  }
+
+  private tryYieldAlly(
+    mover: Fighter,
+    blocker: Fighter,
+    proposedMoverPoint: { x: number; y: number },
+    motionX: number,
+    motionY: number,
+    travel: number,
+    fighters: Fighter[],
+  ) {
+    const shift = YIELD_LATERAL_SHIFT;
+    if (travel < 0.1) return false;
+    const sideX = -motionY;
+    const sideY = motionX;
+    let best: { x: number; y: number; clearance: number } | null = null;
+    const sides: Array<-1 | 1> = [mover.avoidSide, mover.avoidSide === 1 ? -1 : 1];
+    for (const side of sides) {
+      const raw = { x: blocker.x + sideX * shift * side, y: blocker.y + sideY * shift * side };
+      const candidate = this.clampFighterPosition(blocker, raw);
+      if (Math.hypot(candidate.x - blocker.x, candidate.y - blocker.y) < shift * 0.65) continue;
+      let clearance = Infinity;
+      let blocked = false;
+      for (const other of fighters) {
+        if (!other.alive || other === blocker) continue;
+        const position = other === mover ? proposedMoverPoint : this.occupiedPosition(other);
+        const distance = Math.hypot(candidate.x - position.x, candidate.y - position.y) - blocker.radius - other.radius - YIELD_CLEARANCE;
+        if (distance < 0) {
+          blocked = true;
+          break;
+        }
+        clearance = Math.min(clearance, distance);
+      }
+      if (!blocked && (!best || clearance > best.clearance)) best = { ...candidate, clearance };
+    }
+    const landing = best;
+    if (!landing) return false;
+    blocker.x = landing.x;
+    blocker.y = landing.y;
+    return true;
+  }
+
   private findOpenPlacement(
     fighter: Fighter,
     preferred: { x: number; y: number },
@@ -1241,7 +1313,8 @@ export class AutoChessEngine {
       source.targetFid = target.fid;
       source.targetLock = TARGET_LOCK_DURATION;
       source.stuckTime = 0;
-      source.lastTargetDistance = Infinity;
+      source.progressAnchorDistance = Infinity;
+      source.progressWindowTime = 0;
     }
     return target;
   }
@@ -1251,9 +1324,8 @@ export class AutoChessEngine {
     const preferredRange = Math.max(fighter.range, fighter.radius + target.radius + CONTACT_ATTACK_BUFFER);
     if (targetDistance <= preferredRange) {
       fighter.stuckTime = 0;
-      fighter.lastTargetDistance = targetDistance;
-      fighter.lastNavX = fighter.x;
-      fighter.lastNavY = fighter.y;
+      fighter.progressAnchorDistance = targetDistance;
+      fighter.progressWindowTime = 0;
       return false;
     }
 
@@ -1288,27 +1360,34 @@ export class AutoChessEngine {
       moveDistance = 1;
     }
     const travel = Math.min(moveDistance, fighter.moveSpeed * (fighter.slowTime > 0 ? 0.55 : 1) * dt);
-    const previousX = fighter.x;
-    const previousY = fighter.y;
-    fighter.x += (moveX / moveDistance) * travel;
-    fighter.y += (moveY / moveDistance) * travel;
-    const clamped = this.clampFighterPosition(fighter, fighter);
-    fighter.x = clamped.x;
-    fighter.y = clamped.y;
+    const motionX = moveX / moveDistance;
+    const motionY = moveY / moveDistance;
+    const proposed = this.clampFighterPosition(fighter, {
+      x: fighter.x + motionX * travel,
+      y: fighter.y + motionY * travel,
+    });
+    const blocker = this.findYieldableAlly(fighter, fighter, proposed, fighters);
+    if (blocker) this.tryYieldAlly(fighter, blocker, proposed, motionX, motionY, travel, fighters);
+    fighter.x = proposed.x;
+    fighter.y = proposed.y;
     this.faceTowardX(fighter, target.x);
 
-    const moved = Math.hypot(fighter.x - previousX, fighter.y - previousY);
     const newDistance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
-    if (moved < 0.5 && newDistance >= fighter.lastTargetDistance - 0.5) fighter.stuckTime += dt;
-    else fighter.stuckTime = 0;
+    if (!Number.isFinite(fighter.progressAnchorDistance)) fighter.progressAnchorDistance = targetDistance;
+    fighter.progressWindowTime += dt;
+    if (fighter.progressWindowTime >= YIELD_PROGRESS_WINDOW) {
+      if (fighter.progressAnchorDistance - newDistance >= YIELD_MIN_TARGET_PROGRESS) fighter.stuckTime = 0;
+      else fighter.stuckTime += fighter.progressWindowTime;
+      fighter.progressAnchorDistance = newDistance;
+      fighter.progressWindowTime = 0;
+    }
     if (fighter.stuckTime >= STUCK_RECOVERY_DELAY) {
       fighter.avoidSide = fighter.avoidSide === 1 ? -1 : 1;
       fighter.avoidTime = STUCK_RECOVERY_DURATION;
       fighter.stuckTime = 0;
+      fighter.progressAnchorDistance = newDistance;
+      fighter.progressWindowTime = 0;
     }
-    fighter.lastNavX = fighter.x;
-    fighter.lastNavY = fighter.y;
-    fighter.lastTargetDistance = newDistance;
     return true;
   }
 

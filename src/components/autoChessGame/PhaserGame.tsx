@@ -2352,7 +2352,29 @@ const drawTooltip = (
 ) => {
   const def = UNIT_DEFS[unitId];
   const w = 330;
-  const h = fighter ? 252 : 222;
+  const textWidth = w - 40;
+  const energyLineHeight = 14;
+  const abilityLineHeight = 17;
+  const hp = fighter ? `${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}` : `${Math.round(def.hp * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82))}`;
+  const attack = fighter ? Math.round(fighter.attack) : Math.round(def.attack * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82));
+  const armor = fighter ? Math.round(fighter.armor) : def.armor;
+  const range = fighter ? fighter.range : def.range;
+  const attackInterval = fighter ? fighter.attackInterval : def.attackInterval;
+  const moveSpeed = fighter ? fighter.moveSpeed : def.moveSpeed;
+  const attackType = fighter?.attackType || def.attackType;
+  const profile = fighter ? ENERGY_PROFILES[fighter.energyStyle] : def.energyProfile;
+  const energy = fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${profile.start}/${profile.max}`;
+  const energyText = `能量 ${energy} · ${profile.name} · ${describeEnergyRecovery(profile)}`;
+  setTextFont(ctx, 8.5, 600);
+  const energyLines = wrapText(ctx, energyText, textWidth);
+  setTextFont(ctx, 10, 500);
+  const abilityLines = wrapText(ctx, def.abilityDescription, textWidth).slice(0, 2);
+  const energyY = 120;
+  const combatY = energyY + energyLines.length * energyLineHeight + 4;
+  const abilityTitleY = fighter ? combatY + 23 : combatY + 5;
+  const abilityDescriptionY = abilityTitleY + 21;
+  const traitY = abilityDescriptionY + abilityLines.length * abilityLineHeight + 19;
+  const h = Math.max(fighter ? 252 : 222, traitY + 34);
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
   const y = Math.max(88, Math.min(HEIGHT - h - 12, pointerY + 18));
   ctx.save();
@@ -2374,24 +2396,16 @@ const drawTooltip = (
     "left",
     800,
   );
-  const hp = fighter ? `${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}` : `${Math.round(def.hp * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82))}`;
-  const attack = fighter ? Math.round(fighter.attack) : Math.round(def.attack * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82));
-  const armor = fighter ? Math.round(fighter.armor) : def.armor;
-  const range = fighter ? fighter.range : def.range;
-  const attackInterval = fighter ? fighter.attackInterval : def.attackInterval;
-  const moveSpeed = fighter ? fighter.moveSpeed : def.moveSpeed;
   text(ctx, `生命 ${hp}${fighter?.shield ? ` · 盾 ${Math.round(fighter.shield)}` : ""}`, x + 20, y + 83, 10, "#8da7b9", "left", 600);
   text(ctx, `攻击 ${attack}`, x + 145, y + 83, 10, "#8da7b9", "left", 600);
   text(ctx, `护甲 ${armor}`, x + 225, y + 83, 10, "#8da7b9", "left", 600);
-  const attackType = fighter?.attackType || def.attackType;
-  const profile = fighter ? ENERGY_PROFILES[fighter.energyStyle] : def.energyProfile;
   setTextFont(ctx, 9, 600);
   text(
     ctx,
     truncateText(
       ctx,
       `${attackType === "ranged" ? "远程" : "近战"} · 射程 ${range} · 攻击间隔 ${attackInterval.toFixed(2)}s · 移速 ${Math.round(moveSpeed)}`,
-      w - 40,
+      textWidth,
     ),
     x + 20,
     y + 101,
@@ -2400,22 +2414,18 @@ const drawTooltip = (
     "left",
     600,
   );
-  const energy = fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${profile.start}/${profile.max}`;
-  setTextFont(ctx, 8.5, 600);
-  text(
-    ctx,
-    truncateText(
+  energyLines.forEach((line, index) => {
+    text(
       ctx,
-      `能量 ${energy} · ${profile.name} · ${describeEnergyRecovery(profile)}`,
-      w - 40,
-    ),
-    x + 20,
-    y + 120,
-    8.5,
-    profile.color,
-    "left",
-    600,
-  );
+      line,
+      x + 20,
+      y + energyY + index * energyLineHeight,
+      8.5,
+      profile.color,
+      "left",
+      600,
+    );
+  });
   if (fighter) {
     setTextFont(ctx, 9, 600);
     text(
@@ -2423,30 +2433,36 @@ const drawTooltip = (
       truncateText(
         ctx,
         `输出 ${formatCombatValue(fighter.damageDealt)} · 治疗 ${formatCombatValue(fighter.healingDone)} · 护盾 ${formatCombatValue(fighter.shieldingDone)} · 承伤 ${formatCombatValue(fighter.damageTaken)}`,
-        w - 40,
+        textWidth,
       ),
       x + 20,
-      y + 138,
+      y + combatY,
       9,
       "#9cc5d8",
       "left",
       600,
     );
   }
-  text(ctx, def.abilityName, x + 20, y + (fighter ? 161 : 143), 12, def.accent, "left", 800);
-  ctx.font = `500 10px ${FONT}`;
-  wrapText(ctx, def.abilityDescription, w - 40)
-    .slice(0, 2)
-    .forEach((line, index) => {
-      text(ctx, line, x + 20, y + (fighter ? 182 : 164) + index * 17, 10, "#a6bac7", "left", 500);
-    });
+  text(ctx, def.abilityName, x + 20, y + abilityTitleY, 12, def.accent, "left", 800);
+  abilityLines.forEach((line, index) => {
+    text(
+      ctx,
+      line,
+      x + 20,
+      y + abilityDescriptionY + index * abilityLineHeight,
+      10,
+      "#a6bac7",
+      "left",
+      500,
+    );
+  });
   const traitNames = def.traits.map((trait) => TRAITS[trait].name).join(" · ");
   setTextFont(ctx, 10, 700);
   text(
     ctx,
-    truncateText(ctx, traitNames, w - 40),
+    truncateText(ctx, traitNames, textWidth),
     x + w - 20,
-    y + h - 34,
+    y + traitY,
     10,
     "#718da0",
     "right",

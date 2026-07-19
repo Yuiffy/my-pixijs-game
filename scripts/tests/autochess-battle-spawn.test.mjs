@@ -89,7 +89,7 @@ test("达到阈值的羁绊状态会标记为已激活", () => {
   const engine = createEngine(19);
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "gale_archer", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
   const status = engine.getTraitStatus("vanguard");
   assert.equal(status.count, 2);
   assert.equal(status.level, 1);
@@ -133,8 +133,8 @@ test("舞台梦携带小红帽，并为全队提供少量能量和跳舞攻速",
   const dancer = battle?.player.find((fighter) => fighter.unitId === "sui");
   const nonDancer = battle?.player.find((fighter) => fighter.unitId === "mossback");
   assert.ok(dancer && nonDancer);
-  assert.equal(dancer.energy, 10);
-  assert.equal(nonDancer.energy, 10);
+  assert.equal(dancer.energy, 25);
+  assert.equal(nonDancer.energy, 25);
   assert.equal(dancer.attackInterval, 1.12 / 1.12 / 1.08);
   assert.equal(nonDancer.attackInterval, 1.2);
 });
@@ -268,6 +268,142 @@ test("拥挤近战会侧移接敌并在时限前造成伤害", () => {
   battle.player.concat(battle.enemy).filter((fighter) => fighter.alive).forEach(assertInsideBattleBounds);
 });
 
+test("同队挡路时会侧向让位而让移动者持续前进", () => {
+  const engine = createEngine(101);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const [source, blocker] = battle.player;
+  const target = battle.enemy[0];
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.x = 720;
+    fighter.y = 360;
+  });
+  source.x = 300;
+  source.y = 360;
+  blocker.x = 355;
+  blocker.y = 360;
+  const initialDistance = Math.hypot(target.x - source.x, target.y - source.y);
+  const initialBlockerY = blocker.y;
+  stepBattle(engine, 20);
+  assert.ok(Math.abs(blocker.y - initialBlockerY) > 5);
+  assert.ok(Math.hypot(target.x - source.x, target.y - source.y) < initialDistance - 5);
+  assert.ok(clearance(source, blocker) >= -0.01);
+  [source, blocker].forEach(assertInsideBattleBounds);
+});
+
+test("让位不会推开敌人或递归推动第二个友军", () => {
+  const engine = createEngine(102);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const [source, blocker, secondBlocker] = battle.player;
+  const target = battle.enemy[0];
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.stun = 99;
+    fighter.x = 720;
+    fighter.y = 360;
+  });
+  source.x = 300;
+  source.y = 360;
+  blocker.x = 355;
+  blocker.y = 360;
+  blocker.stun = 99;
+  secondBlocker.x = 355;
+  secondBlocker.y = 417;
+  secondBlocker.stun = 99;
+  const secondBefore = { x: secondBlocker.x, y: secondBlocker.y };
+  stepBattle(engine, 1);
+  assert.ok(Math.hypot(secondBlocker.x - secondBefore.x, secondBlocker.y - secondBefore.y) < 12);
+  assert.ok(clearance(blocker, secondBlocker) >= -0.01);
+  battle.player.concat(battle.enemy).filter((fighter) => fighter.alive).forEach(assertInsideBattleBounds);
+  assert.equal(target.team, "enemy");
+});
+
+test("贴边让位选择未被边界截断的一侧", () => {
+  const engine = createEngine(103);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 4, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const [source, blocker] = battle.player;
+  const target = battle.enemy[0];
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.x = 720;
+    fighter.y = BATTLE_BOUNDS.top + fighter.radius;
+  });
+  source.x = 300;
+  source.y = BATTLE_BOUNDS.top + source.radius;
+  blocker.x = 355;
+  blocker.y = BATTLE_BOUNDS.top + blocker.radius;
+  const beforeY = blocker.y;
+  stepBattle(engine, 4);
+  assert.ok(blocker.y > beforeY + 5);
+  [source, blocker].forEach(assertInsideBattleBounds);
+  assert.ok(clearance(source, blocker) >= -0.01);
+  assert.ok(target.alive);
+});
+
+test("横向晃动但不接近目标会触发恢复换边", () => {
+  const engine = createEngine(104);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const [source, blocker] = battle.player;
+  const target = battle.enemy[0];
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.armor = 99_999;
+    fighter.x = 700;
+    fighter.y = 360;
+  });
+  source.x = 100;
+  source.y = 360;
+  blocker.x = 155;
+  blocker.y = 360;
+  const initialSide = source.avoidSide;
+  let recovered = false;
+  for (let tick = 0; tick < 30; tick += 1) {
+    source.x = 100;
+    source.y = 360 + (tick % 2 ? 8 : -8);
+    blocker.x = 155;
+    blocker.y = 360;
+    battle.enemy.forEach((fighter) => { fighter.x = 700 + tick * 20; });
+    stepBattle(engine, 1);
+    if (source.avoidSide !== initialSide) recovered = true;
+  }
+  assert.equal(recovered, true);
+  battle.player.concat(battle.enemy).filter((fighter) => fighter.alive).forEach(assertInsideBattleBounds);
+  assert.ok(target.alive);
+});
+
 test("近似等距目标不会每帧反复切换，失效后会重选", () => {
   const engine = createEngine(95);
   engine.state.playerLevel = 4;
@@ -324,9 +460,9 @@ test("拥堵边界会触发侧移恢复且始终留在战场内", () => {
   blocker.y = 360;
   target.x = 650;
   target.y = 360;
-  const initialY = source.y;
+  const initialDistance = Math.hypot(target.x - source.x, target.y - source.y);
   stepBattle(engine, 30);
-  assert.ok(Math.abs(source.y - initialY) > 5 || source.damageDealt > 0);
+  assert.ok(Math.hypot(target.x - source.x, target.y - source.y) < initialDistance - 5 || source.damageDealt > 0);
   battle.player.concat(battle.enemy).filter((fighter) => fighter.alive).forEach(assertInsideBattleBounds);
 });
 

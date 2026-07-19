@@ -22,6 +22,17 @@ test("战斗技能条使用棋子上限并展示能量身份", () => {
   assert.match(renderer, /attackType === "ranged" \? "远程" : "近战"/);
 });
 
+test("单位提示会完整换行能量说明并动态扩展高度", () => {
+  const tooltip = renderer.match(/const drawTooltip = \([\s\S]*?\n};/);
+  assert.ok(tooltip);
+  assert.match(tooltip[0], /const energyLines = wrapText\(ctx, energyText, textWidth\)/);
+  assert.match(tooltip[0], /energyLines\.forEach/);
+  assert.doesNotMatch(tooltip[0], /truncateText\(\s*ctx,\s*energyText/);
+  assert.match(tooltip[0], /const traitY = abilityDescriptionY \+ abilityLines\.length \* abilityLineHeight \+ 19/);
+  assert.match(tooltip[0], /const h = Math\.max\(fighter \? 252 : 222, traitY \+ 34\)/);
+  assert.match(tooltip[0], /HEIGHT - h - 12/);
+});
+
 test("弹道特效同时绘制柔光外层与明亮核心", () => {
   const drawEffects = renderer.match(/const drawEffects = \([\s\S]*?\n};/);
   assert.ok(drawEffects);
@@ -92,5 +103,5 @@ test("运行时提示和固定宽度行不会越界", () => {
   assert.match(renderer, /const height = toastLines\.length === 2 \? 56 : 38/);
   assert.match(renderer, /truncateText\(ctx, def\.name, 136\)/);
   assert.match(renderer, /truncateText\(ctx, `\$\{definition\.name\}\$\{"★"\.repeat\(fighter\.star\)\}`, 118\)/);
-  assert.match(renderer, /truncateText\(ctx, traitNames, w - 40\)/);
+  assert.match(renderer, /truncateText\(ctx, traitNames, textWidth\)/);
 });
