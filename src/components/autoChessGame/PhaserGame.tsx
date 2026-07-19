@@ -30,7 +30,6 @@ import {
   UnitId,
   bookLevelForPlayerLevel,
   tierOddsForLevel,
-  traitLevelForCount,
 } from "./core/gameData";
 
 declare global {
@@ -527,10 +526,10 @@ const traitPillLayout = (
     .filter((id) => counts[id] > 0)
     .map((id) => {
       const trait = TRAITS[id];
-      const level = traitLevelForCount(trait, counts[id]);
+      const status = engine.getTraitStatus(id);
       const nextThreshold =
-        trait.thresholds[Math.min(level, trait.thresholds.length - 1)];
-      const label = `${trait.name} ${counts[id]}/${nextThreshold}`;
+        trait.thresholds[Math.min(status.level, trait.thresholds.length - 1)];
+      const label = `${trait.name} ${counts[id]}/${nextThreshold}${status.active ? "" : " !"}`;
       const width = Math.max(72, Math.ceil(ctx.measureText(label).width) + 34);
       const entry = {
         id,
@@ -554,7 +553,6 @@ const drawTraitPills = (
   engine: AutoChessEngine,
   scrollX: number,
 ) => {
-  const counts = engine.getTraitCounts();
   const layout = traitPillLayout(ctx, engine, scrollX);
   ctx.save();
   ctx.beginPath();
@@ -564,8 +562,8 @@ const drawTraitPills = (
     if (rect.x + rect.w < TRAIT_STRIP.x || rect.x > TRAIT_STRIP.x + TRAIT_STRIP.w)
       return;
     const trait = TRAITS[id];
-    const level = traitLevelForCount(trait, counts[id]);
-    const active = level > 0;
+    const status = engine.getTraitStatus(id);
+    const active = status.level > 0;
     fillRounded(
       ctx,
       rect,
@@ -2075,9 +2073,10 @@ const drawTraitTooltip = (
   pointerY: number,
 ) => {
   const trait = TRAITS[traitId];
-  const count = engine.getTraitCounts()[traitId];
-  const level = traitLevelForCount(trait, count);
-  const maxThreshold = trait.thresholds[trait.thresholds.length - 1];
+  const status = engine.getTraitStatus(traitId);
+  const count = status.count;
+  const level = status.level;
+  const maxThreshold = status.maxThreshold;
   const w = 340;
   const h = 174;
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
@@ -2097,7 +2096,7 @@ const drawTraitTooltip = (
   text(ctx, trait.name, x + 56, y + 25, 17, "#f0f7ff", "left", 800);
   text(
     ctx,
-    `${trait.family} · 当前 ${count}/${maxThreshold} · ${level ? `${level} 阶已激活` : "尚未激活"}`,
+    `${trait.family} · 当前 ${count}/${maxThreshold} · ${level ? `${level} 阶已激活` : status.active ? "尚未激活" : "缺少岁己或栞栞搭档"}`,
     x + 56,
     y + 46,
     10,

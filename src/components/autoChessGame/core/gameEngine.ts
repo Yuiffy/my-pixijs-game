@@ -88,6 +88,7 @@ export interface Fighter {
   gen27Member: boolean;
   gen27Buffed: boolean;
   baseAttack: number;
+  baseAttackInterval: number;
   baseMoveSpeed: number;
   yueGangMember: boolean;
   energyPerHit: number;
@@ -181,6 +182,7 @@ export interface GameState {
   augmentHistory: AugmentSelection[];
   augmentChoices: AugmentId[];
   incomeBonus: number;
+  paydayDebtRounds: number;
   battle: BattleState | null;
   result: RoundResult | null;
   resultTimer: number;
@@ -276,6 +278,7 @@ export class AutoChessEngine {
       augmentHistory: [],
       augmentChoices: [],
       incomeBonus: 0,
+      paydayDebtRounds: 0,
       battle: null,
       result: null,
       resultTimer: 0,
@@ -397,24 +400,20 @@ export class AutoChessEngine {
   }
 
   public getActiveTraits() {
-    const counts = this.getTraitCounts();
-    const hasSuiShioriPair = this.state.board.some(
-      (owned) => owned && UNIT_DEFS[owned.id].traits.includes("sui_forms"),
-    ) && this.state.board.some(
-      (owned) => owned && ["shiori", "prism_sage"].includes(owned.id),
-    );
     return (Object.keys(TRAITS) as TraitId[])
       .map((trait) => {
         const definition = TRAITS[trait];
-        const level = trait === "sui_shiori" && !hasSuiShioriPair
-          ? 0
-          : traitLevelForCount(definition, counts[trait]);
+        const status = this.getTraitStatus(trait);
         return {
           ...definition,
-          count: counts[trait],
-          level,
+          count: status.count,
+          level: status.level,
           description:
-            level > 0 ? definition.bonuses[level - 1] : definition.description,
+            status.level > 0
+              ? definition.bonuses[status.level - 1]
+              : status.active
+                ? definition.description
+                : `${definition.description}（缺少搭档）`,
         };
       })
       .filter((trait) => trait.level > 0);
@@ -529,6 +528,29 @@ export class AutoChessEngine {
         `${def.name}已加入${boardSlot >= 0 ? "阵地" : "备战席"}。`,
         "good",
       );
+  }
+
+  private isSuiShioriActive() {
+    const hasSui = this.state.board.some(
+      (owned) => owned && ["sui_bird", "sui_cat"].includes(owned.id),
+    );
+    const hasShiori = this.state.board.some(
+      (owned) => owned && ["shiori", "prism_sage"].includes(owned.id),
+    );
+    return hasSui && hasShiori;
+  }
+
+  public getTraitStatus(trait: TraitId) {
+    const count = this.getTraitCounts()[trait];
+    const definition = TRAITS[trait];
+    const active = trait !== "sui_shiori" || this.isSuiShioriActive();
+    const level = active ? traitLevelForCount(definition, count) : 0;
+    return {
+      count,
+      level,
+      active,
+      maxThreshold: definition.thresholds[definition.thresholds.length - 1],
+    };
   }
 
   private getAt(location: UnitLocation) {
@@ -675,10 +697,12 @@ export class AutoChessEngine {
 
   private createBattle(): BattleState {
     const traitCounts = this.getTraitCounts();
+    const isSuiShioriHolder = (id: UnitId) =>
+      UNIT_DEFS[id].traits.includes("sui_shiori");
     const hasSuiShioriPair = this.state.board.some(
-      (owned) => owned && UNIT_DEFS[owned.id].traits.includes("sui_forms"),
+      (owned) => owned && isSuiShioriHolder(owned.id) && ["sui_bird", "sui_cat"].includes(owned.id),
     ) && this.state.board.some(
-      (owned) => owned && ["shiori", "prism_sage"].includes(owned.id),
+      (owned) => owned && isSuiShioriHolder(owned.id) && ["shiori", "prism_sage"].includes(owned.id),
     );
     const traitLevel = (trait: TraitId) => (
       trait === "sui_shiori" && !hasSuiShioriPair
@@ -728,9 +752,6 @@ export class AutoChessEngine {
       const assassinLevel = def.traits.includes("assassin")
         ? traitLevel("assassin")
         : 0;
-      const suiFormsLevel = def.traits.includes("sui_forms")
-        ? traitLevel("sui_forms")
-        : 0;
       const chuanmeiLevel = def.traits.includes("chuanmei")
         ? traitLevel("chuanmei")
         : 0;
@@ -750,7 +771,6 @@ export class AutoChessEngine {
       const globalMysticLevel = globalTraitLevel("mystic");
       const globalBrawlerLevel = globalTraitLevel("brawler");
       const globalAssassinLevel = globalTraitLevel("assassin");
-      const globalSuiFormsLevel = globalTraitLevel("sui_forms");
       const globalChuanmeiLevel = globalTraitLevel("chuanmei");
 
       if (aegisLevel) {
@@ -782,6 +802,10 @@ export class AutoChessEngine {
           attackInterval /= globalClockworkLevel === 3 ? 1.22 : 1.1;
       }
       if (hasAugment("tempered")) armor += 16;
+      if (hasAugment("second_wind")) {
+        maxHp *= 1.12;
+        armor += 10;
+      }
       if (hasAugment("sharp_edge")) attack *= 1.15;
       if (hasAugment("momentum")) attackInterval /= 1.18;
 
@@ -802,13 +826,13 @@ export class AutoChessEngine {
         attackInterval,
         moveSpeed: def.moveSpeed,
         baseAttack: attack,
+        baseAttackInterval: attackInterval,
         baseMoveSpeed: def.moveSpeed,
         cooldown: this.rng.next() * 0.25,
         energy:
           [0, 20, 45, 70][mysticLevel] +
           [0, 0, 10, 22][globalMysticLevel] +
-          [0, 10, 22, 35][suiFormsLevel] +
-          [0, 0, 8, 18][globalSuiFormsLevel] +
+          [0, 0, 10, 22][globalTraitLevel("gen27")] * (gen27Member ? 1 : 0) +
           (hasAugment("overclock") ? 35 : 0),
         stun: 0,
         burnTime: 0,
@@ -817,7 +841,6 @@ export class AutoChessEngine {
         lifesteal:
           [0, 0.08, 0.15, 0.24][wildLevel] +
           [0, 0, 0.06, 0.12][globalWildLevel] * (isRanged ? 0 : 1) +
-          [0, 0.08, 0.15, 0.24][suiFormsLevel] +
           (wildLevel && this.state.starter === "echo" ? 0.06 : 0),
         burnOnHitPower: Math.max(
           [0, 0.35, 0.65, 1.05][emberLevel],
@@ -827,7 +850,7 @@ export class AutoChessEngine {
           [0, 0.45, 0.8][chuanmeiLevel],
           isRanged ? [0, 0, 0.22][globalChuanmeiLevel] : 0,
         ),
-        dodgeChance: skeletonLevel ? 0.22 : 0,
+        dodgeChance: skeletonLevel ? 0.15 : 0,
         gluttonyHolder,
         growthStacks: 0,
         gen27Member,
@@ -893,6 +916,7 @@ export class AutoChessEngine {
         attackInterval: def.attackInterval,
         moveSpeed: def.moveSpeed,
         baseAttack: def.attack * scale * 1.15,
+        baseAttackInterval: def.attackInterval,
         baseMoveSpeed: def.moveSpeed,
         cooldown: this.rng.next() * 0.4,
         energy: wave.tag === "boss" ? 28 : 0,
@@ -1124,7 +1148,8 @@ export class AutoChessEngine {
           Math.hypot(other.x - fighter.x, other.y - fighter.y) <= 165,
       );
       fighter.gen27Buffed = hasNearbyPartner;
-      fighter.attack = fighter.baseAttack * (hasNearbyPartner ? multiplier : 1);
+      fighter.attack = fighter.baseAttack;
+      fighter.attackInterval = fighter.baseAttackInterval / (hasNearbyPartner ? multiplier : 1);
       fighter.moveSpeed = fighter.baseMoveSpeed * (hasNearbyPartner ? multiplier : 1);
     });
   }
@@ -1296,17 +1321,21 @@ export class AutoChessEngine {
     const battle = this.state.battle;
     const level = this.getActiveTraits().find((trait) => trait.id === "yue_gang")?.level || 0;
     if (!battle || !level || battle.yueGangTimer > 0 || source.team !== "player" || !source.yueGangMember) return;
-    battle.yueGangTimer = level >= 2 ? 3.5 : 5;
+    const liveTarget = target.alive ? target : this.nearestTarget(source, battle.enemy);
+    if (!liveTarget) return;
     const supporters = battle.player
       .filter((fighter) => fighter !== source && fighter.alive && fighter.yueGangMember && fighter.jumpTime <= 0 && !fighter.jumpPending && fighter.stun <= 0)
-      .filter((fighter) => Math.hypot(fighter.x - target.x, fighter.y - target.y) > fighter.range + target.radius + 12)
+      .filter((fighter) => Math.hypot(fighter.x - liveTarget.x, fighter.y - liveTarget.y) > fighter.range + liveTarget.radius + 12)
+      .sort((left, right) => Math.hypot(left.x - liveTarget.x, left.y - liveTarget.y) - Math.hypot(right.x - liveTarget.x, right.y - liveTarget.y))
       .slice(0, level >= 2 ? 2 : 1);
+    if (!supporters.length) return;
+    battle.yueGangTimer = level >= 2 ? 3.5 : 5;
     supporters.forEach((fighter, index) => {
-      const distance = fighter.radius + target.radius + 14 + index * 12;
+      const distance = Math.max(fighter.radius + liveTarget.radius + 14, fighter.range * 0.7) + index * 12;
       fighter.jumpFromX = fighter.x;
       fighter.jumpFromY = fighter.y;
-      fighter.jumpToX = Math.max(BATTLE_BOUNDS.left + fighter.radius, Math.min(BATTLE_BOUNDS.right - fighter.radius, target.x - distance));
-      fighter.jumpToY = Math.max(BATTLE_BOUNDS.top + fighter.radius, Math.min(BATTLE_BOUNDS.bottom - fighter.radius, target.y + (index ? 52 : -52)));
+      fighter.jumpToX = Math.max(BATTLE_BOUNDS.left + fighter.radius, Math.min(BATTLE_BOUNDS.right - fighter.radius, liveTarget.x - distance));
+      fighter.jumpToY = Math.max(BATTLE_BOUNDS.top + fighter.radius, Math.min(BATTLE_BOUNDS.bottom - fighter.radius, liveTarget.y + (index ? 52 : -52)));
       fighter.jumpDuration = 0.38;
       fighter.jumpTime = fighter.jumpDuration;
       this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: TRAITS.yue_gang.color, life: 0.35, size: fighter.radius * 1.5 });
@@ -1316,10 +1345,10 @@ export class AutoChessEngine {
   private triggerSuiShioriBarrage(source: Fighter, targets: Fighter[]) {
     const battle = this.state.battle;
     if (!battle || source.team !== "player" || battle.suiShioriLevel <= 0 || battle.suiShioriCooldown > 0) return;
-    const sourceIsSui = UNIT_DEFS[source.unitId].traits.includes("sui_forms");
-    const sourceIsShiori = ["shiori", "prism_sage"].includes(source.unitId);
+    const sourceIsSui = ["sui_bird", "sui_cat"].includes(source.unitId) && UNIT_DEFS[source.unitId].traits.includes("sui_shiori");
+    const sourceIsShiori = ["shiori", "prism_sage"].includes(source.unitId) && UNIT_DEFS[source.unitId].traits.includes("sui_shiori");
     if (!sourceIsSui && !sourceIsShiori) return;
-    const partner = battle.player.find((fighter) => fighter.alive && fighter !== source && (sourceIsSui ? ["shiori", "prism_sage"].includes(fighter.unitId) : UNIT_DEFS[fighter.unitId].traits.includes("sui_forms")));
+    const partner = battle.player.find((fighter) => fighter.alive && fighter !== source && UNIT_DEFS[fighter.unitId].traits.includes("sui_shiori") && (sourceIsSui ? ["shiori", "prism_sage"].includes(fighter.unitId) : ["sui_bird", "sui_cat"].includes(fighter.unitId)));
     const target = targets.find((fighter) => fighter.alive) || this.nearestTarget(source, targets);
     if (!partner || !target) return;
     const multiplier = [0, 0.65, 0.85, 1.1][battle.suiShioriLevel];
@@ -2220,7 +2249,7 @@ export class AutoChessEngine {
       target.hp / target.maxHp < 0.3
     ) {
       target.secondWindUsed = true;
-      this.heal(target, target, target.maxHp * 0.24);
+      this.heal(target, target, target.maxHp * 0.18);
     }
 
     if (target.hp <= 0) {
@@ -2319,6 +2348,8 @@ export class AutoChessEngine {
     const interest = Math.min(2, Math.floor(this.state.gold / 10));
     let income = 0;
     let damage = 0;
+    const debtPayment = this.state.paydayDebtRounds > 0 ? 1 : 0;
+    if (debtPayment) this.state.paydayDebtRounds -= 1;
 
     if (won) {
       this.state.streak += 1;
@@ -2333,7 +2364,8 @@ export class AutoChessEngine {
         streakBonus +
         eliteBonus +
         blazeBonus +
-        this.state.incomeBonus;
+        this.state.incomeBonus -
+        debtPayment;
       this.state.gold += income;
       const healthRatio = this.living("player").reduce(
         (sum, fighter) => sum + fighter.hp / fighter.maxHp,
@@ -2345,7 +2377,7 @@ export class AutoChessEngine {
       this.state.result = {
         won: true,
         headline: wave.tag === "boss" ? "裂隙封闭" : "战线守住了",
-        detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? " + 余烬首胜 2" : ""}`,
+        detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? " + 余烬首胜 2" : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
         income,
         upgradeDiscount:
           this.state.round < Number.MAX_SAFE_INTEGER && !this.isMaxPlayerLevel
@@ -2364,7 +2396,7 @@ export class AutoChessEngine {
       );
       this.state.hp = Math.max(0, this.state.hp - damage);
       income =
-        4 + interest + this.state.incomeBonus + (this.state.hp > 0 ? 1 : 0);
+        4 + interest + this.state.incomeBonus + (this.state.hp > 0 ? 1 : 0) - debtPayment;
       this.state.gold += income;
       this.state.score += this.state.round * 35;
       this.state.result = {
@@ -2440,8 +2472,8 @@ export class AutoChessEngine {
     this.state.augments.push(id);
     this.state.augmentHistory.push({ round: this.state.round, id });
     if (id === "payday") {
-      this.state.gold += 6;
-      this.state.incomeBonus += 1;
+      this.state.gold += 10;
+      this.state.paydayDebtRounds = 4;
     }
     this.state.score += 75;
     this.setToast(

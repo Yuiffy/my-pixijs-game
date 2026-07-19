@@ -55,17 +55,16 @@ test("关系羁绊按不同单位计数，岁栞必须同时有岁己与栞栞",
   engine.startRun("bastion");
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
-  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "sui_blue", star: 1 };
+  engine.state.board[0] = { uid: 1, id: "sui_bird", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui_cat", star: 1 };
 
   assert.equal(engine.getActiveTraits().some((trait) => trait.id === "sui_shiori"), false);
   engine.state.board[2] = { uid: 3, id: "shiori", star: 1 };
   assert.equal(engine.getActiveTraits().find((trait) => trait.id === "sui_shiori")?.level, 1);
 
-  engine.state.board[2] = { uid: 3, id: "void_oracle", star: 1 };
-  engine.state.board[3] = { uid: 4, id: "spark_mage", star: 1 };
-  engine.state.board[4] = { uid: 5, id: "cinder_ram", star: 1 };
-  engine.state.board[5] = { uid: 6, id: "shiori", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sui", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "spark_mage", star: 1 };
+  engine.state.board[5] = { uid: 6, id: "cinder_ram", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);

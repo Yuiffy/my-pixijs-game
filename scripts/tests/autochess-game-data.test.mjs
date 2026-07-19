@@ -60,37 +60,24 @@ test("主播化棋子保留易读定位与 VirtuaReal 署名", () => {
   assert.equal(data.AUGMENTS.find((augment) => augment.id === "triage")?.name, "七海急救");
 });
 
-test("岁己主题棋子组成早鸟有饼构筑", () => {
+test("岁己形态拆分到不同关系构筑", () => {
   const forms = ["sui", "sui_blue", "sui_bird", "sui_flower", "sui_cat", "biscuit_sui"];
-  assert.equal(data.TRAITS.sui_forms.name, "早鸟有饼");
-  assert.deepEqual(data.TRAITS.sui_forms.thresholds, [2, 4, 6]);
+  assert.equal(data.TRAITS.sui_forms, undefined);
   assert.deepEqual(
     forms.map((id) => data.UNIT_DEFS[id].tier),
     [1, 2, 3, 3, 4, 5],
   );
   forms.forEach((id) => {
     assert.ok(data.SHOP_UNITS.includes(id));
-    assert.ok(data.UNIT_DEFS[id].traits.includes("sui_forms"));
     assert.ok(data.UNIT_DEFS[id].portrait);
   });
-  assert.equal(data.UNIT_DEFS.sui.name, "贪吃岁");
-  assert.equal(
-    data.UNIT_DEFS.sui.portrait,
-    "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png",
-  );
-  assert.equal(data.UNIT_DEFS.sui_bird.name, "早鸟援护");
-  assert.equal(
-    data.UNIT_DEFS.sui_bird.portrait,
-    "/images/materials/bird/岁己_小鸟跳静态图.png",
-  );
-  assert.deepEqual(
-    forms.map((id) => data.UNIT_DEFS[id].abilityName),
-    ["开饭点名", "闪购闪购", "小鸟归巢", "火烧云", "小猫拳", "饼干拳法"],
-  );
-  ["shiori", "yua", "nagisa"].forEach((id) => {
-    assert.ok(data.SHOP_UNITS.includes(id));
-    assert.match(data.UNIT_DEFS[id].portrait, /^\/images\/livers\//);
-  });
+  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["vanguard", "gluttony"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["ranger", "skeleton_soldier"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "sui_shiori"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["mystic", "chuanmei"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "sui_shiori"]);
+  assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["brawler", "chuanmei"]);
+  assert.equal(data.UNIT_DEFS.sui_bird.name, "岁己·小鸟援护");
 });
 
 test("关系羁绊覆盖预期主播组合且商店定义完整", () => {
@@ -101,15 +88,15 @@ test("关系羁绊覆盖预期主播组合且商店定义完整", () => {
     assert.equal(data.TRAITS[id].thresholds.length, data.TRAITS[id].bonuses.length);
   });
   ["sui_flower", "biscuit_sui", "nagisa", "sun_phoenix"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
-  ["sui", "void_oracle", "spark_mage", "grove_mender", "cinder_ram", "sun_phoenix"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
-  ["sui", "sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
-  ["rift_stalker", "rift_brawler", "void_oracle", "shiori", "prism_sage", "mitsuri"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
+  ["sui", "spark_mage", "grove_mender", "cinder_ram"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
+  ["sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
+  ["rift_stalker", "rift_brawler", "void_oracle", "mitsuri"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));
   data.SHOP_UNITS.forEach((id) => {
     const unit = data.UNIT_DEFS[id];
     assert.equal(unit.id, id);
     assert.equal(unit.shop, true);
     assert.equal(unit.cost, unit.tier);
-    assert.ok(unit.traits.length >= 2 && unit.traits.length <= 5);
+    assert.ok(unit.traits.length >= 2 && unit.traits.length <= 3);
     unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
   });
 });
