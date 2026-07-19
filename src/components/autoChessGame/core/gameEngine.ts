@@ -55,12 +55,12 @@ const CLOCK_GUNNER_RABBIT_LIFETIME = 3;
 const CLOCK_GUNNER_RABBIT_RADIUS = 14;
 const CLOCK_GUNNER_RABBIT_DASH_SPEED = 560;
 const CLOCK_GUNNER_RABBIT_RANGE = 235;
-const CLOCK_GUNNER_RABBIT_FIRE_INTERVAL = 0.85;
+const CLOCK_GUNNER_RABBIT_FIRE_INTERVAL = 0.58;
 const CLOCK_GUNNER_RABBIT_DAMAGE_MULTIPLIER = 0.36;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_SPEED = 620;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RANGE = 560;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RADIUS = 5;
-const CLOCK_GUNNER_RABBIT_REPOSITION_DISTANCE = 150;
+const CLOCK_GUNNER_RABBIT_FLANK_ANGLE = Math.PI * 0.62;
 
 export interface OwnedUnit {
   uid: number;
@@ -1754,8 +1754,12 @@ export class AutoChessEngine {
       });
       pet.attackPulse = 0.16;
       pet.fireTimer = CLOCK_GUNNER_RABBIT_FIRE_INTERVAL;
-      pet.repositionX = Math.max(BATTLE_BOUNDS.left + pet.radius, Math.min(BATTLE_BOUNDS.right - pet.radius, pet.x - pet.aimX * CLOCK_GUNNER_RABBIT_REPOSITION_DISTANCE));
-      pet.repositionY = Math.max(BATTLE_BOUNDS.top + pet.radius, Math.min(BATTLE_BOUNDS.bottom - pet.radius, pet.y - pet.aimY * CLOCK_GUNNER_RABBIT_REPOSITION_DISTANCE));
+      const targetDirectionX = target.x - owner.x;
+      const targetDirectionY = target.y - owner.y;
+      const orbitDirection = Number(pet.id.split("-").at(-1)) % 2 ? 1 : -1;
+      const flankAngle = Math.atan2(targetDirectionY, targetDirectionX) + orbitDirection * CLOCK_GUNNER_RABBIT_FLANK_ANGLE;
+      pet.repositionX = Math.max(BATTLE_BOUNDS.left + pet.radius, Math.min(BATTLE_BOUNDS.right - pet.radius, target.x + Math.cos(flankAngle) * pet.range));
+      pet.repositionY = Math.max(BATTLE_BOUNDS.top + pet.radius, Math.min(BATTLE_BOUNDS.bottom - pet.radius, target.y + Math.sin(flankAngle) * pet.range));
       return true;
     });
   }
