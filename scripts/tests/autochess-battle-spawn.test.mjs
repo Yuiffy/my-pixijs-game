@@ -23,7 +23,7 @@ const compileModule = async (relativePath, dependencies = {}) => {
 };
 
 const gameData = await compileModule("src/components/autoChessGame/core/gameData.ts");
-const { AutoChessEngine } = await compileModule(
+const { AutoChessEngine, mechanicalRabbitMuzzle } = await compileModule(
   "src/components/autoChessGame/core/gameEngine.ts",
   { "./gameData": gameData },
 );
@@ -771,8 +771,23 @@ test("老弥召唤的机械兔耳移动射击且伤害归属老弥", () => {
   engine.update(0.05);
   assert.equal(battle.pets.length, 2);
   assert.notDeepEqual(battle.pets.map((pet) => pet.id), firstPair);
-  stepBattle(engine, 12);
-  assert.ok(battle.projectiles.some((projectile) => projectile.sourceFid === owner.fid));
+  const petBeforeShot = battle.pets[0];
+  const expectedMuzzle = mechanicalRabbitMuzzle(petBeforeShot);
+  let projectile;
+  for (let tick = 0; tick < 12 && !projectile; tick += 1) {
+    engine.update(0.05);
+    projectile = battle.projectiles.find((entry) =>
+      entry.sourceFid === owner.fid &&
+      Math.abs(entry.x - expectedMuzzle.x) < 0.001 &&
+      Math.abs(entry.y - expectedMuzzle.y) < 0.001,
+    );
+  }
+  assert.ok(projectile);
+  assert.notEqual(projectile.x, petBeforeShot.x);
+  assert.notEqual(projectile.y, petBeforeShot.y);
+  const rightMuzzle = mechanicalRabbitMuzzle({ ...petBeforeShot, facingX: 1 });
+  const leftMuzzle = mechanicalRabbitMuzzle({ ...petBeforeShot, facingX: -1 });
+  assert.equal(rightMuzzle.x - matchingPet.x, -(leftMuzzle.x - matchingPet.x));
   stepBattle(engine, 28);
   assert.ok(owner.damageDealt > 0);
   assert.equal(engine.getBattleRanking()[0].fighter.fid, owner.fid);

@@ -55,6 +55,12 @@ test("机械兔耳宠物在子弹和特效前使用独立绘制路径", () => {
   const drawPets = renderer.match(/const drawMechanicalRabbitPets = \([\s\S]*?\n};/);
   assert.ok(drawPets);
   assert.match(drawPets[0], /battle\.pets\.forEach/);
+  const drawPet = renderer.match(/const drawMechanicalRabbitPet = \([\s\S]*?\n};/);
+  assert.ok(drawPet);
+  assert.match(drawPet[0], /mechanicalRabbitMuzzle\(pet\)/);
+  assert.match(drawPet[0], /pet\.facingX/);
+  assert.match(drawPet[0], /pet\.attackPulse/);
+  assert.match(drawPet[0], /tipX/);
   assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\n  drawProjectiles\(ctx, state\);/);
 });
 

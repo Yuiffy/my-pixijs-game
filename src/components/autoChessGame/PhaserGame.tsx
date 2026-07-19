@@ -16,6 +16,7 @@ import {
   Fighter,
   GameState,
   MechanicalRabbitPet,
+  mechanicalRabbitMuzzle,
   OwnedUnit,
   fighterVisualRadius,
 } from "./core/gameEngine";
@@ -1700,32 +1701,78 @@ const drawMechanicalRabbitPet = (
 ) => {
   const fade = Math.max(0.25, Math.min(1, pet.life / 0.7));
   const bob = Math.sin(visualTime * 8 + pet.x * 0.03) * 3;
-  const eyeGlow = pet.attackPulse > 0 ? 1 : 0.65;
+  const muzzle = mechanicalRabbitMuzzle(pet);
+  const localMuzzleX = (muzzle.x - pet.x) * pet.facingX;
+  const localMuzzleY = muzzle.y - pet.y;
   ctx.save();
   ctx.globalAlpha = fade;
-  ctx.translate(pet.x, pet.y + bob);
-  ctx.scale(pet.facingX, 1);
   ctx.fillStyle = "rgba(0, 0, 0, 0.26)";
   ctx.beginPath();
-  ctx.ellipse(0, pet.radius * 0.9 - bob, pet.radius, pet.radius * 0.28, 0, 0, Math.PI * 2);
+  ctx.ellipse(pet.x, pet.y + pet.radius * 0.88, pet.radius * 1.2, pet.radius * 0.3, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#263848";
-  ctx.strokeStyle = "#a8e8ff";
-  ctx.lineWidth = 2;
-  [-7, 7].forEach((earX) => {
-    fillRounded(ctx, { x: earX - 4, y: -pet.radius - 11, w: 8, h: 18 }, 4, "#334c5d");
-    strokeRounded(ctx, { x: earX - 4, y: -pet.radius - 11, w: 8, h: 18 }, 4, "#a8e8ff", 1.5);
-  });
-  ctx.shadowColor = "#92d7ff";
-  ctx.shadowBlur = 12;
+  ctx.translate(pet.x, pet.y + bob);
+  ctx.scale(pet.facingX, 1);
+
+  const baseGradient = ctx.createLinearGradient(-pet.radius, -pet.radius, pet.radius, pet.radius);
+  baseGradient.addColorStop(0, "#607384");
+  baseGradient.addColorStop(0.48, "#263845");
+  baseGradient.addColorStop(1, "#111b27");
+  ctx.fillStyle = baseGradient;
+  ctx.strokeStyle = "#afc6d5";
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(0, 0, pet.radius, 0, Math.PI * 2);
+  ctx.moveTo(-pet.radius, -4);
+  ctx.lineTo(-pet.radius * 0.55, -pet.radius * 0.8);
+  ctx.lineTo(pet.radius * 0.66, -pet.radius * 0.7);
+  ctx.lineTo(pet.radius * 1.03, 0);
+  ctx.lineTo(pet.radius * 0.46, pet.radius * 0.72);
+  ctx.lineTo(-pet.radius * 0.65, pet.radius * 0.56);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = `rgba(222, 250, 255, ${eyeGlow})`;
+
+  [-1, 1].forEach((side) => {
+    const rearX = side * pet.radius * 0.43;
+    const tipX = pet.radius * 1.14;
+    const rootY = side * pet.radius * 0.28 - pet.radius * 0.48;
+    const tipY = side * pet.radius * 0.18 - pet.radius * 1.16;
+    ctx.fillStyle = "#1c2937";
+    ctx.strokeStyle = "#dbe4eb";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(rearX - pet.radius * 0.23, rootY + pet.radius * 0.35);
+    ctx.lineTo(rearX + pet.radius * 0.18, rootY - pet.radius * 0.24);
+    ctx.lineTo(tipX, tipY);
+    ctx.lineTo(rearX + pet.radius * 0.48, rootY + pet.radius * 0.43);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#f6f2f3";
+    ctx.beginPath();
+    ctx.moveTo(rearX + pet.radius * 0.02, rootY + pet.radius * 0.22);
+    ctx.lineTo(rearX + pet.radius * 0.22, rootY - pet.radius * 0.04);
+    ctx.lineTo(tipX - pet.radius * 0.22, tipY + pet.radius * 0.18);
+    ctx.lineTo(rearX + pet.radius * 0.31, rootY + pet.radius * 0.33);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#f2c9d0";
+    ctx.fillRect(rearX + pet.radius * 0.17, rootY + pet.radius * 0.27, pet.radius * 0.32, 3);
+  });
+
+  ctx.fillStyle = "#92d7ff";
+  ctx.shadowColor = "#92d7ff";
+  ctx.shadowBlur = 10;
   ctx.beginPath();
-  ctx.arc(pet.radius * 0.55, -2, 3.5, 0, Math.PI * 2);
+  ctx.arc(pet.radius * 0.32, -2, 3, 0, Math.PI * 2);
   ctx.fill();
+  if (pet.attackPulse > 0) {
+    const flash = 1 + (pet.attackPulse / 0.16) * 0.75;
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = "rgba(218, 250, 255, 0.96)";
+    ctx.beginPath();
+    ctx.arc(localMuzzleX, localMuzzleY, 4.5 * flash, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 };
 

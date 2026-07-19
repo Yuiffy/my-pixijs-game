@@ -117,6 +117,11 @@ export interface MechanicalRabbitPet {
   attackPulse: number;
 }
 
+export const mechanicalRabbitMuzzle = (pet: Pick<MechanicalRabbitPet, "x" | "y" | "radius" | "facingX">) => ({
+  x: pet.x + pet.facingX * pet.radius * 1.16,
+  y: pet.y - pet.radius * 0.82,
+});
+
 interface ProjectileVolleyShot {
   sourceFid: string;
   targetFid: string;
@@ -1687,14 +1692,15 @@ export class AutoChessEngine {
 
       pet.fireTimer -= dt;
       if (pet.fireTimer > 0 || distance > pet.range) return true;
-      const shotDeltaX = target.x - pet.x;
-      const shotDeltaY = target.y - pet.y;
+      const muzzle = mechanicalRabbitMuzzle(pet);
+      const shotDeltaX = target.x - muzzle.x;
+      const shotDeltaY = target.y - muzzle.y;
       const shotDistance = Math.hypot(shotDeltaX, shotDeltaY) || 1;
       battle.projectiles.push({
         sourceFid: owner.fid,
         team: pet.team,
-        x: pet.x,
-        y: pet.y,
+        x: muzzle.x,
+        y: muzzle.y,
         velocityX: (shotDeltaX / shotDistance) * CLOCK_GUNNER_RABBIT_PROJECTILE_SPEED,
         velocityY: (shotDeltaY / shotDistance) * CLOCK_GUNNER_RABBIT_PROJECTILE_SPEED,
         radius: CLOCK_GUNNER_RABBIT_PROJECTILE_RADIUS,
