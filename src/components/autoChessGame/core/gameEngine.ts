@@ -51,15 +51,16 @@ const STUCK_RECOVERY_DELAY = 0.65;
 const STUCK_RECOVERY_DURATION = 0.42;
 const SEPARATION_PASSES = 2;
 const CLOCK_GUNNER_RABBIT_COUNT = 2;
-const CLOCK_GUNNER_RABBIT_LIFETIME = 6;
+const CLOCK_GUNNER_RABBIT_LIFETIME = 3;
 const CLOCK_GUNNER_RABBIT_RADIUS = 14;
-const CLOCK_GUNNER_RABBIT_MOVE_SPEED = 170;
+const CLOCK_GUNNER_RABBIT_DASH_SPEED = 560;
 const CLOCK_GUNNER_RABBIT_RANGE = 235;
-const CLOCK_GUNNER_RABBIT_FIRE_INTERVAL = 0.38;
-const CLOCK_GUNNER_RABBIT_DAMAGE_MULTIPLIER = 0.42;
+const CLOCK_GUNNER_RABBIT_FIRE_INTERVAL = 0.85;
+const CLOCK_GUNNER_RABBIT_DAMAGE_MULTIPLIER = 0.36;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_SPEED = 620;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RANGE = 560;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RADIUS = 5;
+const CLOCK_GUNNER_RABBIT_REPOSITION_DISTANCE = 150;
 
 export interface OwnedUnit {
   uid: number;
@@ -113,6 +114,9 @@ export interface MechanicalRabbitPet {
   range: number;
   fireTimer: number;
   targetFid: string | null;
+  repositionX: number | null;
+  repositionY: number | null;
+  returning: boolean;
   aimX: number;
   aimY: number;
   attackPulse: number;
@@ -321,9 +325,11 @@ const BENCH_SIZE = 8;
 const SHOP_SIZE = 5;
 const STAR_SCALE = [0, 1, 1.68, 2.82];
 const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
-const NORI_APPLE_PIE_SHOTS = 12;
-const NORI_APPLE_PIE_INTERVAL = 0.1;
-const NORI_APPLE_PIE_DAMAGE_MULTIPLIER = 0.38;
+const NORI_APPLE_PIE_SHOTS = 8;
+const NORI_APPLE_PIE_INTERVAL = 0.14;
+const NORI_APPLE_PIE_DAMAGE_MULTIPLIER = 0.32;
+const NORI_PROJECTILE_SPEED = 700;
+const NORI_PROJECTILE_RANGE = 560;
 const XUEHUI_VOLLEY_SHOTS = 3;
 const XUEHUI_VOLLEY_INTERVAL = 0.12;
 const XUEHUI_PROJECTILE_SPEED = 780;
@@ -1651,10 +1657,13 @@ export class AutoChessEngine {
         radius: CLOCK_GUNNER_RABBIT_RADIUS,
         life: CLOCK_GUNNER_RABBIT_LIFETIME,
         maxLife: CLOCK_GUNNER_RABBIT_LIFETIME,
-        moveSpeed: CLOCK_GUNNER_RABBIT_MOVE_SPEED,
+        moveSpeed: CLOCK_GUNNER_RABBIT_DASH_SPEED,
         range: CLOCK_GUNNER_RABBIT_RANGE,
-        fireTimer: slot * 0.12,
+        fireTimer: slot * 0.16,
         targetFid: null,
+        repositionX: null,
+        repositionY: null,
+        returning: false,
         aimX: source.facingX,
         aimY: 0,
         attackPulse: 0,
@@ -1669,7 +1678,12 @@ export class AutoChessEngine {
       const owner = fighters.find((fighter) => fighter.fid === pet.ownerFid);
       pet.life -= dt;
       pet.attackPulse = Math.max(0, pet.attackPulse - dt);
-      if (!owner?.alive || pet.life <= 0) return false;
+      if (!owner?.alive) return false;
+      if (pet.life <= 0) {
+        pet.returning = true;
+        pet.repositionX = owner.x;
+        pet.repositionY = owner.y - owner.radius - pet.radius;
+      }
 
       const targetTeam: Team = pet.team === "player" ? "enemy" : "player";
       const targets = this.living(targetTeam);
@@ -1685,6 +1699,25 @@ export class AutoChessEngine {
       }
       if (!target) return true;
 
+      if (pet.repositionX !== null && pet.repositionY !== null) {
+        const moveDeltaX = pet.repositionX - pet.x;
+        const moveDeltaY = pet.repositionY - pet.y;
+        const moveDistance = Math.hypot(moveDeltaX, moveDeltaY);
+        const step = Math.min(moveDistance, pet.moveSpeed * dt);
+        if (moveDistance > 0.001) {
+          pet.x += (moveDeltaX / moveDistance) * step;
+          pet.y += (moveDeltaY / moveDistance) * step;
+        }
+        if (moveDistance <= step + 0.001) {
+          pet.x = pet.repositionX;
+          pet.y = pet.repositionY;
+          pet.repositionX = null;
+          pet.repositionY = null;
+          if (pet.returning) return false;
+        }
+        return true;
+      }
+
       const deltaX = target.x - pet.x;
       const deltaY = target.y - pet.y;
       const rawDistance = Math.hypot(deltaX, deltaY);
@@ -1694,15 +1727,13 @@ export class AutoChessEngine {
         pet.aimY = deltaY / rawDistance;
       }
       if (distance > pet.range) {
-        const step = Math.min(distance - pet.range, pet.moveSpeed * dt);
-        pet.x += (deltaX / distance) * step;
-        pet.y += (deltaY / distance) * step;
-        pet.x = Math.max(BATTLE_BOUNDS.left + pet.radius, Math.min(BATTLE_BOUNDS.right - pet.radius, pet.x));
-        pet.y = Math.max(BATTLE_BOUNDS.top + pet.radius, Math.min(BATTLE_BOUNDS.bottom - pet.radius, pet.y));
+        pet.repositionX = Math.max(BATTLE_BOUNDS.left + pet.radius, Math.min(BATTLE_BOUNDS.right - pet.radius, target.x - pet.aimX * pet.range));
+        pet.repositionY = Math.max(BATTLE_BOUNDS.top + pet.radius, Math.min(BATTLE_BOUNDS.bottom - pet.radius, target.y - pet.aimY * pet.range));
+        return true;
       }
 
       pet.fireTimer -= dt;
-      if (pet.fireTimer > 0 || distance > pet.range) return true;
+      if (pet.fireTimer > 0) return true;
       const muzzle = mechanicalRabbitMuzzle(pet);
       const shotDeltaX = target.x - muzzle.x;
       const shotDeltaY = target.y - muzzle.y;
@@ -1722,7 +1753,9 @@ export class AutoChessEngine {
         size: 3,
       });
       pet.attackPulse = 0.16;
-      pet.fireTimer += CLOCK_GUNNER_RABBIT_FIRE_INTERVAL;
+      pet.fireTimer = CLOCK_GUNNER_RABBIT_FIRE_INTERVAL;
+      pet.repositionX = Math.max(BATTLE_BOUNDS.left + pet.radius, Math.min(BATTLE_BOUNDS.right - pet.radius, pet.x - pet.aimX * CLOCK_GUNNER_RABBIT_REPOSITION_DISTANCE));
+      pet.repositionY = Math.max(BATTLE_BOUNDS.top + pet.radius, Math.min(BATTLE_BOUNDS.bottom - pet.radius, pet.y - pet.aimY * CLOCK_GUNNER_RABBIT_REPOSITION_DISTANCE));
       return true;
     });
   }
@@ -1788,31 +1821,16 @@ export class AutoChessEngine {
     }
 
     const finalShot = source.applePieShotsRemaining === 1;
-    this.faceTowardX(source, target.x);
-    source.attackPulse = 0.22;
-    source.attackTargetX = target.x;
-    source.attackTargetY = target.y;
-    const dealt = this.damage(source, target, source.attack * NORI_APPLE_PIE_DAMAGE_MULTIPLIER);
-    if (dealt > 0) this.addDamageText(target, dealt);
-
     const def = UNIT_DEFS[source.unitId];
-    this.addEffect({
-      kind: "line",
-      x: source.x,
-      y: source.y,
-      x2: target.x,
-      y2: target.y,
+    this.fireFixedProjectile(source, target, {
+      sourceFid: source.fid,
+      targetFid: target.fid,
+      delay: 0,
+      damage: source.attack * NORI_APPLE_PIE_DAMAGE_MULTIPLIER,
+      burnPower: 0,
+      speed: NORI_PROJECTILE_SPEED,
       color: def.accent,
-      life: finalShot ? 0.2 : 0.14,
       size: finalShot ? 5 : 3,
-    });
-    this.addEffect({
-      kind: "burst",
-      x: target.x,
-      y: target.y,
-      color: def.accent,
-      life: finalShot ? 0.34 : 0.2,
-      size: finalShot ? 44 : 24,
     });
     source.applePieShotsRemaining -= 1;
     source.applePieShotTimer = NORI_APPLE_PIE_INTERVAL;
@@ -2091,6 +2109,21 @@ export class AutoChessEngine {
   private basicAttack(source: Fighter, target: Fighter) {
     this.faceTowardX(source, target.x);
     source.cooldown = source.attackInterval;
+    if (source.unitId === "nori") {
+      this.fireFixedProjectile(source, target, {
+        sourceFid: source.fid,
+        targetFid: target.fid,
+        delay: 0,
+        damage: source.attack,
+        burnPower: 0,
+        speed: NORI_PROJECTILE_SPEED,
+        color: UNIT_DEFS.nori.accent,
+        size: 3,
+      });
+      this.addEnergy(source, source.energyOnAttack);
+      this.addEnergy(target, target.energyOnHit);
+      return;
+    }
     source.attackPulse = 0.22;
     source.attackTargetX = target.x;
     source.attackTargetY = target.y;

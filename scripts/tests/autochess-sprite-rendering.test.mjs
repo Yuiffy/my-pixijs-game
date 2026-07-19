@@ -104,7 +104,7 @@ test("备战阶段可用滚轮横向浏览溢出的羁绊栏", () => {
   assert.match(renderer, /onWheel=\{onWheel\}/);
 });
 
-test("连续输入只更新状态并由主渲染循环统一绘制", () => {
+test("连续输入请求下一帧绘制而静态阶段不持续重绘", () => {
   const pointerMoveHandler = renderer.match(
     /const onPointerMove = \([\s\S]*?\n  };\n\n  const onPointerLeave/,
   );
@@ -117,6 +117,10 @@ test("连续输入只更新状态并由主渲染循环统一绘制", () => {
   assert.ok(advanceTime);
   assert.doesNotMatch(pointerMoveHandler[0], /draw\(\)/);
   assert.doesNotMatch(wheelHandler[0], /draw\(\)/);
+  assert.match(pointerMoveHandler[0], /requestDrawRef\.current\(\)/);
+  assert.match(wheelHandler[0], /requestDrawRef\.current\(\)/);
+  assert.match(renderLoop[0], /engine\.state\.phase === "battle"/);
+  assert.match(renderLoop[0], /shouldUpdate \|\| drawRequested/);
   assert.match(renderLoop[0], /draw\(\)/);
   assert.match(advanceTime[0], /draw\(\)/);
 });

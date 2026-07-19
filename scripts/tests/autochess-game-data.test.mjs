@@ -148,6 +148,8 @@ test("莉蔻使用独立精灵头像并加入矮人联盟", async () => {
   assert.equal(unit.traits.includes("ember"), false);
   assert.equal(data.UNIT_DEFS.nori.name, "能能弄你");
   assert.equal(data.UNIT_DEFS.nori.abilityName, "苹果派");
+  assert.equal(data.UNIT_DEFS.nori.attackInterval, 1.02);
+  assert.match(data.UNIT_DEFS.nori.abilityDescription, /8 枚.*子弹/);
   assert.equal(unit.portraitStyle, "sprite");
   assert.equal(unit.portrait, "/images/autochess/portraits/ember-blade.png");
   assert.equal(unit.portraitFocus, undefined);
@@ -230,6 +232,8 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.clock_gunner.traits.includes("yue_gang"), true);
   assert.equal(data.UNIT_DEFS.clock_gunner.abilityName, "机械兔耳浮游炮");
   assert.match(data.UNIT_DEFS.clock_gunner.abilityDescription, /两只机械兔耳/);
+  assert.equal(data.UNIT_DEFS.clock_gunner.attackInterval, 0.84);
+  assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.onAttack, 15);
   assert.equal(data.UNIT_DEFS.yua.traits.includes("ranger"), true);
   assert.equal(data.UNIT_DEFS.yua.abilityName, "外星贯穿光线");
   assert.match(data.UNIT_DEFS.yua.abilityDescription, /横排/);

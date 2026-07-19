@@ -574,7 +574,7 @@ test("能量按未闪避命中回收，护盾吸收仍会回能", () => {
   assert.equal(target.energy, target.energyOnHit);
 });
 
-test("能能弄你的苹果派会以节奏分离的 12 发连射重定向目标", () => {
+test("能能弄你的苹果派会以节奏分离的 8 发子弹重定向目标", () => {
   const engine = createEngine(57);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -605,19 +605,19 @@ test("能能弄你的苹果派会以节奏分离的 12 发连射重定向目标"
   secondTarget.maxHp = 9_999;
 
   engine.update(0.05);
-  assert.equal(nori.applePieShotsRemaining, 12);
+  assert.equal(nori.applePieShotsRemaining, 8);
   assert.ok(battle.effects.some((effect) => effect.kind === "ring"));
   assert.equal(secondTarget.hp, 9_999);
 
   engine.update(0.05);
-  assert.equal(nori.applePieShotsRemaining, 11);
-  assert.equal(firstTarget.alive, false);
-  assert.ok(battle.effects.some((effect) => effect.kind === "line"));
+  assert.equal(nori.applePieShotsRemaining, 7);
+  assert.ok(battle.projectiles.some((projectile) => projectile.sourceFid === nori.fid));
 
-  for (let tick = 0; tick < 22; tick += 1) engine.update(0.05);
+  for (let tick = 0; tick < 42; tick += 1) engine.update(0.05);
   assert.equal(nori.applePieShotsRemaining, 0);
-  assert.ok(Math.abs(secondTarget.hp - (9_999 - nori.attack * 0.38 * 11)) < 0.0001);
-  assert.ok(Math.abs(nori.damageDealt - (1 + nori.attack * 0.38 * 11)) < 0.0001);
+  assert.equal(firstTarget.alive, false);
+  assert.ok(secondTarget.hp < 9_999);
+  assert.ok(nori.damageDealt > 1);
 });
 
 test("苹果派在眩晕期间暂停且施法者死亡后不再发射", () => {
@@ -647,12 +647,12 @@ test("苹果派在眩晕期间暂停且施法者死亡后不再发射", () => {
 
   engine.update(0.05);
   engine.update(0.05);
-  assert.equal(nori.applePieShotsRemaining, 11);
+  assert.equal(nori.applePieShotsRemaining, 7);
   nori.stun = 0.3;
   const hpBeforeStun = target.hp;
   for (let tick = 0; tick < 5; tick += 1) engine.update(0.05);
   assert.equal(target.hp, hpBeforeStun);
-  assert.equal(nori.applePieShotsRemaining, 11);
+  assert.equal(nori.applePieShotsRemaining, 7);
 
   nori.alive = false;
   nori.hp = 0;
@@ -766,6 +766,7 @@ test("老弥召唤的机械兔耳移动射击且伤害归属老弥", () => {
   assert.equal(battle.pets.length, 2);
   assert.equal(battle.player.length, playerCount);
   assert.ok(battle.pets.every((pet) => pet.ownerFid === owner.fid));
+  assert.ok(battle.pets.every((pet) => pet.life <= 3));
   const firstPair = battle.pets.map((pet) => pet.id);
   owner.energy = owner.maxEnergy;
   engine.update(0.05);
@@ -779,16 +780,17 @@ test("老弥召唤的机械兔耳移动射击且伤害归属老弥", () => {
   const currentMuzzle = mechanicalRabbitMuzzle(petBeforeShot);
   assert.ok(Math.hypot(currentMuzzle.x - petBeforeShot.x, currentMuzzle.y - petBeforeShot.y) > petBeforeShot.radius);
   assert.ok(Math.hypot(projectile.x - petBeforeShot.x, projectile.y - petBeforeShot.y) > petBeforeShot.radius);
+  assert.notEqual(petBeforeShot.repositionX, null);
   const diagonalPet = { ...petBeforeShot, x: 100, y: 200, radius: 10, aimX: 0.6, aimY: -0.8 };
   const diagonalMuzzle = mechanicalRabbitMuzzle(diagonalPet);
   const muzzleOffset = Math.hypot(diagonalMuzzle.x - diagonalPet.x, diagonalMuzzle.y - diagonalPet.y);
   assert.ok(Math.abs((diagonalMuzzle.x - diagonalPet.x) / muzzleOffset - 0.6) < 0.001);
   assert.ok(Math.abs((diagonalMuzzle.y - diagonalPet.y) / muzzleOffset + 0.8) < 0.001);
+  const positionBeforeDash = { x: petBeforeShot.x, y: petBeforeShot.y };
   battle.enemy[0].x = petBeforeShot.x + 120;
   battle.enemy[0].y = petBeforeShot.y - 160;
   engine.update(0.05);
-  assert.ok(Math.abs(petBeforeShot.aimX - 0.6) < 0.01);
-  assert.ok(Math.abs(petBeforeShot.aimY + 0.8) < 0.01);
+  assert.ok(Math.hypot(petBeforeShot.x - positionBeforeDash.x, petBeforeShot.y - positionBeforeDash.y) > 0);
   stepBattle(engine, 28);
   assert.ok(owner.damageDealt > 0);
   assert.equal(engine.getBattleRanking()[0].fighter.fid, owner.fid);

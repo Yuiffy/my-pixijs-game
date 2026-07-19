@@ -2961,6 +2961,7 @@ export default function AutoChessGame() {
 
   useEffect(() => {
     codexOpenRef.current = codexOpen;
+    if (!codexOpen) requestDrawRef.current();
   }, [codexOpen]);
 
   const toggleFullscreen = useCallback(async () => {
@@ -3059,6 +3060,7 @@ export default function AutoChessGame() {
     const handleResize = requestDraw;
     window.addEventListener("resize", handleResize);
     return () => {
+      requestDrawRef.current = () => {};
       if (frameRef.current !== null)
         window.cancelAnimationFrame(frameRef.current);
       resizeObserverRef.current?.disconnect();
@@ -3106,7 +3108,7 @@ export default function AutoChessGame() {
         else if (document.fullscreenElement === containerRef.current) toggleFullscreen();
         else engine.state.selected = null;
       }
-      draw();
+      requestDrawRef.current();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -3137,6 +3139,7 @@ export default function AutoChessGame() {
       );
       hoverRef.current = { target: null, ...point };
       event.currentTarget.style.cursor = "grabbing";
+      requestDrawRef.current();
       return;
     }
     if (
@@ -3158,12 +3161,13 @@ export default function AutoChessGame() {
         : overTraitStrip && getTraitMaxScrollX(engine) > 0
           ? "grab"
           : "default";
+    requestDrawRef.current();
   };
 
   const onPointerLeave = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) return;
     hoverRef.current = { target: null, x: 0, y: 0 };
-    draw();
+    requestDrawRef.current();
   };
 
   const onWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
@@ -3182,6 +3186,7 @@ export default function AutoChessGame() {
       Math.min(maxScrollX, traitScrollXRef.current + delta),
     );
     hoverRef.current = { target: getHitTarget(engine, point.x, point.y), ...point };
+    requestDrawRef.current();
   };
 
   const onClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -3231,7 +3236,7 @@ export default function AutoChessGame() {
       engine.resetToTitle();
     }
     hoverRef.current = { target: getHitTarget(engine, point.x, point.y), ...point };
-    draw();
+    requestDrawRef.current();
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -3280,7 +3285,7 @@ export default function AutoChessGame() {
         : engine && getTraitMaxScrollX(engine) > 0
           ? "grab"
           : "default";
-      draw();
+      requestDrawRef.current();
       return;
     }
     const drag = dragRef.current;
@@ -3293,7 +3298,7 @@ export default function AutoChessGame() {
     }
     suppressClickRef.current = true;
     event.currentTarget.style.cursor = target ? "pointer" : "default";
-    draw();
+    requestDrawRef.current();
   };
 
   const onContextMenu = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -3306,7 +3311,7 @@ export default function AutoChessGame() {
       if (target.unitId) {
         engine.state.selected = { zone: target.kind, index: target.index };
         engine.sellSelected();
-        draw();
+        requestDrawRef.current();
       }
     }
   };
