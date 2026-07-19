@@ -83,7 +83,7 @@ export type AugmentId =
   | "second_wind";
 
 export type AttackType = "melee" | "ranged";
-export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "reservoir";
+export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "reservoir" | "automatic";
 
 export interface EnergyProfile {
   id: EnergyProfileId;
