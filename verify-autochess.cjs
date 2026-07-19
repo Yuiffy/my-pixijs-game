@@ -14,9 +14,17 @@ mkdirSync(artifactDirectory, { recursive: true });
   const canvas = page.locator('[data-game-canvas="rift-line"]');
   await canvas.waitFor();
 
-  const clickLogical = async (x, y) => {
+  const pointForLogical = async (x, y) => {
     const box = await canvas.boundingBox();
-    await page.mouse.click(box.x + (x / 1120) * box.width, box.y + (y / 720) * box.height);
+    return { x: box.x + (x / 1120) * box.width, y: box.y + (y / 720) * box.height };
+  };
+  const clickLogical = async (x, y) => {
+    const point = await pointForLogical(x, y);
+    await page.mouse.click(point.x, point.y);
+  };
+  const moveLogical = async (x, y) => {
+    const point = await pointForLogical(x, y);
+    await page.mouse.move(point.x, point.y);
   };
   const state = async () => JSON.parse(await page.evaluate(() => window.render_game_to_text()));
   const advance = async (ms) => page.evaluate((value) => window.advanceTime(value), ms);
@@ -38,6 +46,8 @@ mkdirSync(artifactDirectory, { recursive: true });
   prep = await state();
   const afterUpgrade = { level: prep.player.level, bookLevel: prep.player.bookLevel, upgradeRemaining: prep.player.upgradeRemaining, cap: prep.player.boardCap, gold: prep.player.gold, odds: prep.roster.currentTierOdds, toast: prep.toast, shopLocked: prep.shopLocked };
   await page.screenshot({ path: `${artifactDirectory}/autochess-prep.png` });
+  await moveLogical(80, 206);
+  await page.screenshot({ path: `${artifactDirectory}/autochess-trait-tooltip.png` });
 
   await clickLogical(945, 175 + 3 * 74);
   await clickLogical(945, 175 + 4 * 74);

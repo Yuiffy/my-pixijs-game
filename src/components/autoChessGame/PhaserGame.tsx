@@ -26,6 +26,8 @@ import {
   TRAIT_IDS,
   TRAITS,
   TraitId,
+  StarterId,
+  ENERGY_PROFILES,
   UNIT_DEFS,
   UnitId,
   bookLevelForPlayerLevel,
@@ -53,17 +55,17 @@ interface Rect {
 }
 
 type HitTarget =
-  | { kind: "starter"; index: number }
+  | { kind: "starter"; id: StarterId }
   | { kind: "shop"; index: number; unitId: UnitId | null }
   | { kind: "board"; index: number; unitId: UnitId | null; star?: number }
   | { kind: "bench"; index: number; unitId: UnitId | null; star?: number }
   | { kind: "reroll" | "buyXp" | "lock" | "battle" | "sell" | "restart" }
   | { kind: "enemyPreview"; unitId: UnitId; star: number }
   | { kind: "augment"; index: number }
-  | { kind: "fighter"; unitId: UnitId; star: number }
+  | { kind: "fighter"; fid: string; unitId: UnitId; star: number }
   | { kind: "trait"; traitId: TraitId }
-  | { kind: "rankingToggle" | "rankingPanel" }
-  | { kind: "rankingMetric"; metric: "damage" | "support" | "taken" }
+  | { kind: "rankingToggle" | "rankingPanel" | "resultContinue" }
+  | { kind: "rankingMetric" | "resultMetric"; metric: "damage" | "support" | "taken" }
   | null;
 
 interface HoverState {
@@ -111,7 +113,7 @@ const shopRect = (index: number): Rect => ({
   x: 810,
   y: 143 + index * 74,
   w: 270,
-  h: 64,
+  h: 70,
 });
 const starterRect = (index: number): Rect => ({
   x: 90 + index * 320,
@@ -137,6 +139,12 @@ const rankingMetricRects: Array<{ metric: "damage" | "support" | "taken"; rect: 
   { metric: "damage", rect: { x: 814, y: 178, w: 76, h: 24 } },
   { metric: "support", rect: { x: 896, y: 178, w: 88, h: 24 } },
   { metric: "taken", rect: { x: 990, y: 178, w: 70, h: 24 } },
+];
+const resultContinueRect: Rect = { x: 410, y: 638, w: 300, h: 42 };
+const resultMetricRects: Array<{ metric: "damage" | "support" | "taken"; rect: Rect }> = [
+  { metric: "damage", rect: { x: 434, y: 214, w: 78, h: 24 } },
+  { metric: "support", rect: { x: 521, y: 214, w: 96, h: 24 } },
+  { metric: "taken", rect: { x: 626, y: 214, w: 76, h: 24 } },
 ];
 
 const inRect = (x: number, y: number, rect: Rect) =>
@@ -359,6 +367,75 @@ const drawStars = (
     align,
     800,
   );
+};
+
+const shopRole = (unitId: UnitId) => {
+  const title = UNIT_DEFS[unitId].title;
+  return title.includes(" · ") ? title.split(" · ").at(-1)! : title;
+};
+
+const traitActivationAfterPurchase = (
+  engine: AutoChessEngine,
+  unitId: UnitId,
+  trait: TraitId,
+) => {
+  const status = engine.getTraitStatus(trait);
+  if (status.level > 0 || engine.boardCount >= engine.boardCap) return false;
+  const threshold = TRAITS[trait].thresholds[status.level];
+  return status.count + 1 >= threshold && !engine.state.board.some((unit) => unit?.id === unitId);
+};
+
+const drawShopTraitTags = (
+  ctx: CanvasRenderingContext2D,
+  engine: AutoChessEngine,
+  unitId: UnitId,
+  rect: Rect,
+  affordable: boolean,
+) => {
+  const traits = UNIT_DEFS[unitId].traits;
+  let x = rect.x + 64;
+  const y = rect.y + 46;
+  ctx.font = `700 8px ${FONT}`;
+  traits.forEach((traitId) => {
+    const trait = TRAITS[traitId];
+    const status = engine.getTraitStatus(traitId);
+    const active = status.level > 0;
+    const completes = traitActivationAfterPurchase(engine, unitId, traitId);
+    const width = Math.ceil(ctx.measureText(trait.name).width) + 14;
+    if (x + width > rect.x + rect.w - 42) return;
+    if (completes && affordable) {
+      ctx.save();
+      ctx.shadowColor = trait.color;
+      ctx.shadowBlur = 10;
+      fillRounded(ctx, { x, y: y - 9, w: width, h: 17 }, 8, `${trait.color}5c`);
+      ctx.restore();
+    } else {
+      fillRounded(
+        ctx,
+        { x, y: y - 9, w: width, h: 17 },
+        8,
+        active ? `${trait.color}30` : "rgba(20, 37, 50, 0.8)",
+      );
+    }
+    strokeRounded(
+      ctx,
+      { x, y: y - 9, w: width, h: 17 },
+      8,
+      completes && affordable ? trait.color : active ? `${trait.color}b8` : "#395467",
+      completes && affordable ? 1.5 : 1,
+    );
+    text(
+      ctx,
+      trait.name,
+      x + width / 2,
+      y,
+      8,
+      completes && affordable ? "#ffffff" : active ? "#e9f8ff" : "#71899a",
+      "center",
+      700,
+    );
+    x += width + 4;
+  });
 };
 
 const drawTraitDots = (
@@ -675,12 +752,14 @@ const drawTitle = (
     "center",
     700,
   );
-  text(ctx, "选择一项开局协议", WIDTH / 2, 292, 12, "#7994a8", "center", 700);
+  text(ctx, "本局随机三选一开局协议", WIDTH / 2, 292, 12, "#7994a8", "center", 700);
 
-  STARTERS.forEach((starter, index) => {
+  state.starterChoices.forEach((id, index) => {
+    const starter = STARTERS.find((item) => item.id === id);
+    if (!starter) return;
     const rect = starterRect(index);
     const hovered =
-      hover.target?.kind === "starter" && hover.target.index === index;
+      hover.target?.kind === "starter" && hover.target.id === starter.id;
     const lift = hovered ? -5 : 0;
     const lifted = { ...rect, y: rect.y + lift };
     const gradient = ctx.createLinearGradient(
@@ -977,7 +1056,7 @@ const drawPreparation = (
       ctx,
       unitId,
       rect.x + 33,
-      rect.y + 32,
+      rect.y + 35,
       20,
       "player",
       affordable ? 1 : 0.55,
@@ -986,32 +1065,32 @@ const drawPreparation = (
       ctx,
       def.name,
       rect.x + 64,
-      rect.y + 17,
+      rect.y + 15,
       13,
       affordable ? "#ecf7ff" : "#617888",
       "left",
       800,
     );
-    drawTraitDots(ctx, unitId, rect.x + 68, rect.y + 43);
+    text(
+      ctx,
+      shopRole(unitId),
+      rect.x + 64,
+      rect.y + 29,
+      8,
+      affordable ? "#8daabd" : "#526b7b",
+      "left",
+      700,
+    );
+    drawShopTraitTags(ctx, engine, unitId, rect, affordable);
     text(
       ctx,
       `${def.cost}`,
       rect.x + rect.w - 23,
-      rect.y + 25,
-      19,
+      rect.y + 32,
+      22,
       affordable ? "#ffd166" : "#5e5260",
       "center",
       900,
-    );
-    text(
-      ctx,
-      `${def.tier}费`,
-      rect.x + rect.w - 23,
-      rect.y + 48,
-      9,
-      "#667f91",
-      "center",
-      800,
     );
   });
 
@@ -1437,17 +1516,22 @@ const drawFighter = (
     2,
     "#14222d",
   );
+  const energyRatio = Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
+  const energyColor = ENERGY_PROFILES[fighter.energyStyle].color;
   fillRounded(
     ctx,
     {
       x: drawX - barWidth / 2,
       y: drawY + radius + 19,
-      w: barWidth * (fighter.energy / 100),
+      w: barWidth * energyRatio,
       h: 4,
     },
     2,
-    "#b585ff",
+    energyColor,
   );
+  if (energyRatio >= 1) {
+    strokeRounded(ctx, { x: drawX - barWidth / 2, y: drawY + radius + 19, w: barWidth, h: 4 }, 2, "#f4fbff", 1);
+  }
 
   if (fighter.stun > 0)
     text(
@@ -1691,56 +1775,106 @@ const drawBattle = (
   }
 
   drawBattleRanking(ctx, engine, hover);
-  if (hover.target?.kind === "fighter")
-    drawTooltip(ctx, hover.target.unitId, hover.target.star, hover.x, hover.y);
+  if (hover.target?.kind === "fighter") {
+    const fighter = engine.getBattleFighter(hover.target.fid);
+    drawTooltip(ctx, hover.target.unitId, hover.target.star, hover.x, hover.y, fighter || undefined);
+  }
 };
 
-const drawResult = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  if (!state.result) return;
-  ctx.fillStyle = "rgba(3, 8, 14, 0.64)";
+const resultContinueLabel = (engine: AutoChessEngine) => {
+  const { state } = engine;
+  if (state.hp <= 0) return "继续 · 查看结局";
+  const isAugmentRound =
+    state.round === 2 ||
+    state.round === 5 ||
+    (state.round > CAMPAIGN_ROUNDS &&
+      (state.round - CAMPAIGN_ROUNDS) % 6 === 0 &&
+      state.augments.length < AUGMENTS.length);
+  return isAugmentRound ? "继续 · 选择契印" : "继续 · 进入整备";
+};
+
+const drawResultRow = (
+  ctx: CanvasRenderingContext2D,
+  fighter: Fighter,
+  value: number,
+  index: number,
+  x: number,
+  y: number,
+  w: number,
+  metric: "damage" | "support" | "taken",
+) => {
+  const def = UNIT_DEFS[fighter.unitId];
+  const accent = fighter.team === "player" ? "#66d7ff" : "#ff7894";
+  ctx.save();
+  ctx.globalAlpha = fighter.alive ? 1 : 0.45;
+  fillRounded(ctx, { x, y, w, h: 49 }, 9, "rgba(13, 30, 42, 0.9)");
+  drawUnitPortrait(ctx, fighter.unitId, x + 21, y + 24, 14, fighter.team);
+  text(ctx, `${index + 1}. ${def.name}${"★".repeat(fighter.star)}`, x + 42, y + 15, 10, def.accent, "left", 800);
+  text(ctx, fighter.alive ? "存活" : "已击败", x + w - 10, y + 15, 9, fighter.alive ? "#71e1aa" : "#8397a5", "right", 700);
+  text(ctx, `血 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}${fighter.shield > 0 ? ` · 盾 ${Math.round(fighter.shield)}` : ""}`, x + 42, y + 32, 9, "#9ab2c1", "left", 600);
+  text(ctx, `攻 ${Math.round(fighter.attack)} · 甲 ${Math.round(fighter.armor)}`, x + 42, y + 44, 9, accent, "left", 700);
+  const detail = metric === "support"
+    ? `治 ${formatCombatValue(fighter.healingDone)} · 盾 ${formatCombatValue(fighter.shieldingDone)}`
+    : formatCombatValue(value);
+  text(ctx, detail, x + w - 10, y + 39, 10, "#edf8ff", "right", 800);
+  ctx.restore();
+};
+
+const drawResult = (
+  ctx: CanvasRenderingContext2D,
+  engine: AutoChessEngine,
+  hover: HoverState,
+) => {
+  const { state } = engine;
+  const battle = state.battle;
+  const result = state.result;
+  if (!battle || !result) return;
+  ctx.fillStyle = "rgba(3, 8, 14, 0.72)";
   ctx.fillRect(0, 78, WIDTH, HEIGHT - 78);
-  const rect: Rect = { x: 370, y: 235, w: 380, h: 250 };
-  fillRounded(ctx, rect, 22, "rgba(9, 21, 32, 0.98)");
-  strokeRounded(ctx, rect, 22, state.result.won ? "#5ee0a3" : "#ff6a85", 2);
-  text(
-    ctx,
-    state.result.won ? "胜 利" : "失 利",
-    560,
-    274,
-    11,
-    state.result.won ? "#62e3a6" : "#ff718a",
-    "center",
-    900,
-  );
-  text(ctx, state.result.headline, 560, 318, 30, "#f2f8ff", "center", 900);
-  text(ctx, state.result.detail, 560, 359, 11, "#91a9b9", "center", 500);
-  const experienceText = state.result.upgradeDiscount
-    ? ` · 升本费用 -${state.result.upgradeDiscount}`
-    : "";
-  if (state.result.won) {
-    text(
-      ctx,
-      `+ ${state.result.income} 金币${experienceText}`,
-      560,
-      407,
-      20,
-      "#ffd166",
-      "center",
-      800,
-    );
-  } else {
-    text(
-      ctx,
-      `核心 -${state.result.damage} · +${state.result.income} 金币${experienceText}`,
-      560,
-      407,
-      17,
-      "#ff9ba9",
-      "center",
-      800,
-    );
+  const rect: Rect = { x: 42, y: 103, w: 1036, h: 595 };
+  fillRounded(ctx, rect, 20, "rgba(7, 19, 30, 0.98)");
+  strokeRounded(ctx, rect, 20, result.won ? "#5ee0a3" : "#ff6a85", 2);
+  const resultColor = result.won ? "#62e3a6" : "#ff718a";
+  text(ctx, result.won ? "战斗结算 · 胜利" : "战斗结算 · 失利", 560, 134, 13, resultColor, "center", 900);
+  text(ctx, result.headline, 560, 164, 24, "#f2f8ff", "center", 900);
+  text(ctx, result.detail, 560, 185, 10, "#91a9b9", "center", 500);
+  const experienceText = result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : "";
+  const reward = result.won
+    ? `+ ${result.income} 金币${experienceText}`
+    : `核心 -${result.damage} · +${result.income} 金币${experienceText}`;
+  text(ctx, reward, 560, 205, 13, result.won ? "#ffd166" : "#ff9ba9", "center", 800);
+
+  const labels: Array<{ metric: "damage" | "support" | "taken"; label: string; color: string }> = [
+    { metric: "damage", label: "输出", color: "#ff9b79" },
+    { metric: "support", label: "治疗/护盾", color: "#75e6b0" },
+    { metric: "taken", label: "承伤", color: "#c69bff" },
+  ];
+  labels.forEach(({ metric, label, color }) => {
+    const rectForMetric = resultMetricRects.find((item) => item.metric === metric)?.rect;
+    if (!rectForMetric) return;
+    const selected = battle.rankingMetric === metric;
+    fillRounded(ctx, rectForMetric, 9, selected ? `${color}33` : "rgba(32, 53, 68, 0.72)");
+    strokeRounded(ctx, rectForMetric, 9, selected ? color : "#304f63");
+    text(ctx, label, rectForMetric.x + rectForMetric.w / 2, rectForMetric.y + 15, 9, selected ? color : "#a7bdca", "center", 700);
+  });
+
+  text(ctx, "我方阵容", 76, 258, 13, "#7fdcff", "left", 800);
+  text(ctx, "敌方阵容", 576, 258, 13, "#ff91a9", "left", 800);
+  const playerRows = engine.getBattleRanking("player");
+  const enemyRows = engine.getBattleRanking("enemy");
+  const rows = Math.max(playerRows.length, enemyRows.length);
+  for (let index = 0; index < rows; index += 1) {
+    const y = 270 + index * 55;
+    const player = playerRows[index];
+    const enemy = enemyRows[index];
+    if (player) drawResultRow(ctx, player.fighter, player.value, index, 64, y, 476, battle.rankingMetric);
+    if (enemy) drawResultRow(ctx, enemy.fighter, enemy.value, index, 564, y, 476, battle.rankingMetric);
   }
-  text(ctx, "正在进入下一阶段…", 560, 455, 10, "#526f83", "center", 500);
+
+  const hovered = hover.target?.kind === "resultContinue";
+  fillRounded(ctx, resultContinueRect, 18, hovered ? "#244c62" : "#17384b");
+  strokeRounded(ctx, resultContinueRect, 18, resultColor, 1.5);
+  text(ctx, resultContinueLabel(engine), 560, 664, 13, "#f3fbff", "center", 800);
 };
 
 const drawAugments = (
@@ -2023,10 +2157,11 @@ const drawTooltip = (
   star: number,
   pointerX: number,
   pointerY: number,
+  fighter?: Fighter,
 ) => {
   const def = UNIT_DEFS[unitId];
-  const w = 310;
-  const h = 212;
+  const w = 330;
+  const h = fighter ? 252 : 222;
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
   const y = Math.max(88, Math.min(HEIGHT - h - 12, pointerY + 18));
   ctx.save();
@@ -2047,43 +2182,29 @@ const drawTooltip = (
     "left",
     800,
   );
-  text(
-    ctx,
-    `生命 ${Math.round(def.hp * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82))}`,
-    x + 20,
-    y + 83,
-    10,
-    "#8da7b9",
-    "left",
-    600,
-  );
-  text(
-    ctx,
-    `攻击 ${Math.round(def.attack * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82))}`,
-    x + 115,
-    y + 83,
-    10,
-    "#8da7b9",
-    "left",
-    600,
-  );
-  text(ctx, `护甲 ${def.armor}`, x + 205, y + 83, 10, "#8da7b9", "left", 600);
-  text(
-    ctx,
-    `射程 ${def.range} · 攻击间隔 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`,
-    x + 20,
-    y + 101,
-    9,
-    "#68869a",
-    "left",
-    600,
-  );
-  text(ctx, def.abilityName, x + 20, y + 124, 12, def.accent, "left", 800);
+  const hp = fighter ? `${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}` : `${Math.round(def.hp * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82))}`;
+  const attack = fighter ? Math.round(fighter.attack) : Math.round(def.attack * (star === 1 ? 1 : star === 2 ? 1.68 : 2.82));
+  const armor = fighter ? Math.round(fighter.armor) : def.armor;
+  const range = fighter ? fighter.range : def.range;
+  const attackInterval = fighter ? fighter.attackInterval : def.attackInterval;
+  const moveSpeed = fighter ? fighter.moveSpeed : def.moveSpeed;
+  text(ctx, `生命 ${hp}${fighter?.shield ? ` · 盾 ${Math.round(fighter.shield)}` : ""}`, x + 20, y + 83, 10, "#8da7b9", "left", 600);
+  text(ctx, `攻击 ${attack}`, x + 145, y + 83, 10, "#8da7b9", "left", 600);
+  text(ctx, `护甲 ${armor}`, x + 225, y + 83, 10, "#8da7b9", "left", 600);
+  const attackType = fighter?.attackType || def.attackType;
+  const profile = fighter ? ENERGY_PROFILES[fighter.energyStyle] : def.energyProfile;
+  text(ctx, `${attackType === "ranged" ? "远程" : "近战"} · 射程 ${range} · 攻击间隔 ${attackInterval.toFixed(2)}s · 移速 ${Math.round(moveSpeed)}`, x + 20, y + 101, 9, "#68869a", "left", 600);
+  const energy = fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${profile.start}/${profile.max}`;
+  text(ctx, `能量 ${energy} · ${profile.name} · 每秒 +${fighter?.energyPerSecond ?? profile.perSecond} · 普攻 +${fighter?.energyOnAttack ?? profile.onAttack} · 命中 +${fighter?.energyOnHit ?? profile.onHit}`, x + 20, y + 120, 8.5, profile.color, "left", 600);
+  if (fighter) {
+    text(ctx, `输出 ${formatCombatValue(fighter.damageDealt)} · 治疗 ${formatCombatValue(fighter.healingDone)} · 护盾 ${formatCombatValue(fighter.shieldingDone)} · 承伤 ${formatCombatValue(fighter.damageTaken)}`, x + 20, y + 138, 9, "#9cc5d8", "left", 600);
+  }
+  text(ctx, def.abilityName, x + 20, y + (fighter ? 161 : 143), 12, def.accent, "left", 800);
   ctx.font = `500 10px ${FONT}`;
   wrapText(ctx, def.abilityDescription, w - 40)
     .slice(0, 2)
     .forEach((line, index) => {
-      text(ctx, line, x + 20, y + 145 + index * 17, 10, "#a6bac7", "left", 500);
+      text(ctx, line, x + 20, y + (fighter ? 182 : 164) + index * 17, 10, "#a6bac7", "left", 500);
     });
   const traitNames = def.traits.map((trait) => TRAITS[trait].name).join(" · ");
   text(ctx, traitNames, x + w - 20, y + h - 34, 10, "#718da0", "right", 700);
@@ -2102,7 +2223,20 @@ const drawTraitTooltip = (
   const level = status.level;
   const maxThreshold = status.maxThreshold;
   const w = 340;
-  const h = 174;
+  const lineHeight = 15;
+  ctx.font = `500 10px ${FONT}`;
+  const descriptionLines = wrapText(ctx, trait.description, w - 40);
+  let contentY = 72 + descriptionLines.length * lineHeight + 11;
+  const bonusRows = trait.thresholds.map((threshold, index) => {
+    const reached = count >= threshold;
+    const weight = reached ? 700 : 500;
+    ctx.font = `${weight} 10px ${FONT}`;
+    const lines = wrapText(ctx, `${threshold} 名：${trait.bonuses[index]}`, w - 62);
+    const row = { reached, lines, y: contentY };
+    contentY += lines.length * lineHeight + 7;
+    return row;
+  });
+  const h = Math.max(174, contentY + 10);
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
   const y = Math.max(88, Math.min(HEIGHT - h - 12, pointerY + 18));
   ctx.save();
@@ -2128,29 +2262,32 @@ const drawTraitTooltip = (
     "left",
     700,
   );
-  text(ctx, trait.description, x + 20, y + 72, 10, "#9bb2c2", "left", 500);
-  trait.thresholds.forEach((threshold, index) => {
-    const reached = count >= threshold;
+  descriptionLines.forEach((line, index) => {
+    text(ctx, line, x + 20, y + 72 + index * lineHeight, 10, "#9bb2c2", "left", 500);
+  });
+  bonusRows.forEach((row) => {
     text(
       ctx,
-      reached ? "◆" : "◇",
+      row.reached ? "◆" : "◇",
       x + 22,
-      y + 98 + index * 22,
+      y + row.y,
       11,
-      reached ? trait.color : "#455d70",
+      row.reached ? trait.color : "#455d70",
       "left",
       800,
     );
-    text(
-      ctx,
-      `${threshold} 名：${trait.bonuses[index]}`,
-      x + 42,
-      y + 98 + index * 22,
-      10,
-      reached ? "#e7f5ff" : "#71899a",
-      "left",
-      reached ? 700 : 500,
-    );
+    row.lines.forEach((line, index) => {
+      text(
+        ctx,
+        line,
+        x + 42,
+        y + row.y + index * lineHeight,
+        10,
+        row.reached ? "#e7f5ff" : "#71899a",
+        "left",
+        row.reached ? 700 : 500,
+      );
+    });
   });
 };
 
@@ -2161,8 +2298,6 @@ const getTooltipUnit = (engine: AutoChessEngine, target: HitTarget) => {
   if ((target.kind === "board" || target.kind === "bench") && target.unitId)
     return { id: target.unitId, star: target.star || 1 };
   if (target.kind === "enemyPreview")
-    return { id: target.unitId, star: target.star };
-  if (target.kind === "fighter")
     return { id: target.unitId, star: target.star };
   return null;
 };
@@ -2182,7 +2317,7 @@ const renderGame = (
     drawPreparation(ctx, engine, hover, traitScrollX);
   else if (state.phase === "battle" || state.phase === "result") {
     drawBattle(ctx, engine, hover);
-    if (state.phase === "result") drawResult(ctx, state);
+    if (state.phase === "result") drawResult(ctx, engine, hover);
   } else if (state.phase === "augment") drawAugments(ctx, engine, hover);
   else if (state.phase === "gameover") drawGameOver(ctx, state, hover);
 
@@ -2237,10 +2372,11 @@ const hitTest = (
 ): HitTarget => {
   const state = engine.state;
   if (state.phase === "title") {
-    const index = STARTERS.findIndex((_, itemIndex) =>
+    const index = state.starterChoices.findIndex((_, itemIndex) =>
       inRect(x, y, starterRect(itemIndex)),
     );
-    return index >= 0 ? { kind: "starter", index } : null;
+    const id = state.starterChoices[index];
+    return id ? { kind: "starter", id } : null;
   }
   if (state.phase === "preparation") {
     const enemyIndex = engine.currentWave.units.slice(0, 8).findIndex((_, index) =>
@@ -2298,6 +2434,17 @@ const hitTest = (
     );
     return index >= 0 ? { kind: "augment", index } : null;
   }
+  if (state.phase === "result" && state.battle) {
+    if (inRect(x, y, resultContinueRect)) return { kind: "resultContinue" };
+    const metric = resultMetricRects.find((item) => inRect(x, y, item.rect));
+    if (metric) return { kind: "resultMetric", metric: metric.metric };
+    const fighter = [...state.battle.player, ...state.battle.enemy].find(
+      (item) => Math.hypot(item.x - x, item.y - y) <= fighterRadius(item) + 8,
+    );
+    if (fighter)
+      return { kind: "fighter", fid: fighter.fid, unitId: fighter.unitId, star: fighter.star };
+    return null;
+  }
   if (state.phase === "battle" && state.battle) {
     if (inRect(x, y, rankingToggleRect)) return { kind: "rankingToggle" };
     if (state.battle.rankingOpen) {
@@ -2311,7 +2458,7 @@ const hitTest = (
         Math.hypot(item.x - x, item.y - y) <= fighterRadius(item) + 8,
     );
     if (fighter)
-      return { kind: "fighter", unitId: fighter.unitId, star: fighter.star };
+      return { kind: "fighter", fid: fighter.fid, unitId: fighter.unitId, star: fighter.star };
   }
   if (state.phase === "gameover" && inRect(x, y, restartRect))
     return { kind: "restart" };
@@ -2622,6 +2769,25 @@ export default function AutoChessGame() {
     draw();
   };
 
+  const onWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
+    const engine = engineRef.current;
+    if (!engine || engine.state.phase !== "preparation") return;
+    const point = canvasPoint(event);
+    if (!inRect(point.x, point.y, TRAIT_STRIP)) return;
+    const maxScrollX = getTraitMaxScrollX(engine);
+    if (maxScrollX <= 0) return;
+    event.preventDefault();
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+      ? event.deltaX
+      : event.deltaY;
+    traitScrollXRef.current = Math.max(
+      0,
+      Math.min(maxScrollX, traitScrollXRef.current + delta),
+    );
+    hoverRef.current = { target: getHitTarget(engine, point.x, point.y), ...point };
+    draw();
+  };
+
   const onClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (suppressClickRef.current) {
       suppressClickRef.current = false;
@@ -2636,7 +2802,7 @@ export default function AutoChessGame() {
     if (target.kind === "starter") {
       traitScrollXRef.current = 0;
       traitDragRef.current = null;
-      engine.startRun(STARTERS[target.index].id);
+      engine.startRun(target.id);
       playSound("click");
     } else if (target.kind === "shop") {
       const before = engine.state.gold;
@@ -2657,7 +2823,8 @@ export default function AutoChessGame() {
       if (engine.state.gold < before) playSound("reroll");
     } else if (target.kind === "battle") engine.startBattle();
     else if (target.kind === "rankingToggle") engine.toggleRanking();
-    else if (target.kind === "rankingMetric") engine.setRankingMetric(target.metric);
+    else if (target.kind === "rankingMetric" || target.kind === "resultMetric") engine.setRankingMetric(target.metric);
+    else if (target.kind === "resultContinue") engine.continueAfterResult();
     else if (target.kind === "sell") engine.sellSelected();
     else if (target.kind === "augment") {
       engine.chooseAugment(target.index);
@@ -2909,6 +3076,7 @@ export default function AutoChessGame() {
         data-game-canvas="rift-line"
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
+        onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onClick={onClick}
@@ -2919,13 +3087,13 @@ export default function AutoChessGame() {
             ? `min(100vw, calc((100dvh - ${TOOLBAR_HEIGHT}px) * ${WIDTH / HEIGHT}))`
             : "100%",
           height: "auto",
+          touchAction: "none",
           maxHeight: fullscreen
             ? `calc(100dvh - ${TOOLBAR_HEIGHT}px)`
             : "none",
           aspectRatio: `${WIDTH} / ${HEIGHT}`,
           outline: "2px solid transparent",
           outlineOffset: -2,
-          touchAction: "manipulation",
         }}
       />
     </div>

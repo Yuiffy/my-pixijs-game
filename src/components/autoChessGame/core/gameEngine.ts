@@ -11,6 +11,7 @@ import {
   SHOP_TIER_COUNTS,
   SHOP_UNITS,
   STARTERS,
+  STARTER_OFFER_SIZE,
   STARTING_PLAYER_LEVEL,
   StarterId,
   TRAITS,
@@ -75,6 +76,12 @@ export interface Fighter {
   moveSpeed: number;
   cooldown: number;
   energy: number;
+  maxEnergy: number;
+  energyPerSecond: number;
+  energyOnAttack: number;
+  energyOnHit: number;
+  energyStyle: import("./gameData").EnergyProfileId;
+  attackType: import("./gameData").AttackType;
   stun: number;
   burnTime: number;
   burnDps: number;
@@ -92,11 +99,15 @@ export interface Fighter {
   emberAttackStackCap: number;
   gen27Member: boolean;
   gen27Buffed: boolean;
+  matureMember: boolean;
+  matureMoveFloor: number;
+  slowTime: number;
+  weakenTime: number;
+  weakenArmorPenalty: number;
   baseAttack: number;
   baseAttackInterval: number;
   baseMoveSpeed: number;
   yueGangMember: boolean;
-  energyPerHit: number;
   lowHealthBonus: number;
   critChance: number;
   critMultiplier: number;
@@ -135,6 +146,7 @@ export interface BattleState {
   gluttonyTimer: number;
   emberTimer: number;
   yueGangTimer: number;
+  matureTimer: number;
   banner: string;
   bannerTimer: number;
   rankingOpen: boolean;
@@ -182,6 +194,7 @@ export interface GameState {
   streak: number;
   victories: number;
   starter: StarterId | null;
+  starterChoices: StarterId[];
   starterHistory: StarterSelection[];
   board: Array<OwnedUnit | null>;
   bench: Array<OwnedUnit | null>;
@@ -195,7 +208,6 @@ export interface GameState {
   paydayDebtRounds: number;
   battle: BattleState | null;
   result: RoundResult | null;
-  resultTimer: number;
   finalWon: boolean;
   toast: ToastState | null;
 }
@@ -242,6 +254,27 @@ const freshSeed = () =>
 const emptySlots = <T>(size: number): Array<T | null> =>
   Array.from({ length: size }, () => null);
 
+const starterEffects: Record<StarterId, {
+  hpBonus?: number;
+  goldBonus?: number;
+  shieldMultiplier?: number;
+  burnMultiplier?: number;
+  firstWinGold?: number;
+  trafficLifesteal?: number;
+  matureShieldBonus?: number;
+  danceEnergy?: number;
+  danceAttackSpeed?: number;
+  rangedAttackSpeed?: number;
+  freeFirstReroll?: boolean;
+}> = {
+  mature_start: { goldBonus: 1, matureShieldBonus: 0.06 },
+  blaze: { burnMultiplier: 1.4, firstWinGold: 2 },
+  traffic_start: { goldBonus: 1, trafficLifesteal: 0.06 },
+  bastion: { hpBonus: 4, shieldMultiplier: 1.3 },
+  dance_start: { danceEnergy: 20, danceAttackSpeed: 0.15 },
+  ranger_start: { rangedAttackSpeed: 0.1, freeFirstReroll: true },
+};
+
 export class AutoChessEngine {
   public state: GameState;
 
@@ -252,6 +285,7 @@ export class AutoChessEngine {
   constructor(seed = freshSeed()) {
     this.rng = createSeededRandom(seed);
     this.state = this.createInitialState(seed, loadBestScore());
+    this.state.starterChoices = this.rollStarterChoices();
   }
 
   private createInitialState(seed: number, bestScore: number): GameState {
@@ -272,6 +306,7 @@ export class AutoChessEngine {
       streak: 0,
       victories: 0,
       starter: null,
+      starterChoices: [],
       starterHistory: [],
       board: emptySlots<OwnedUnit>(BOARD_SIZE),
       bench: emptySlots<OwnedUnit>(BENCH_SIZE),
@@ -285,7 +320,6 @@ export class AutoChessEngine {
       paydayDebtRounds: 0,
       battle: null,
       result: null,
-      resultTimer: 0,
       finalWon: false,
       toast: null,
     };
@@ -297,11 +331,29 @@ export class AutoChessEngine {
     this.rng = createSeededRandom(seed);
     this.uid = 1;
     this.state = this.createInitialState(seed, best);
+    this.state.starterChoices = this.rollStarterChoices();
+  }
+
+  private isRanged(unitId: UnitId) {
+    return UNIT_DEFS[unitId].attackType === "ranged";
+  }
+
+  private addEnergy(fighter: Fighter, amount: number) {
+    fighter.energy = Math.max(0, Math.min(fighter.maxEnergy, fighter.energy + amount));
+  }
+
+  private rollStarterChoices() {
+    const pool = STARTERS.map((starter) => starter.id);
+    const choices: StarterId[] = [];
+    while (choices.length < STARTER_OFFER_SIZE && pool.length) {
+      choices.push(pool.splice(Math.floor(this.rng.next() * pool.length), 1)[0]);
+    }
+    return choices;
   }
 
   public startRun(starterId: StarterId) {
     const starter = STARTERS.find((item) => item.id === starterId);
-    if (!starter) return;
+    if (!starter || !this.state.starterChoices.includes(starterId)) return;
 
     const seed = this.state.seed;
     const best = this.state.bestScore;
@@ -311,9 +363,11 @@ export class AutoChessEngine {
     this.state.phase = "preparation";
     this.state.starter = starterId;
     this.state.starterHistory.push({ id: starterId });
-    this.state.hp = starterId === "bastion" ? 24 : 20;
+    this.state.starterChoices = [];
+    const effects = starterEffects[starterId];
+    this.state.hp = 20 + (effects.hpBonus || 0);
     this.state.maxHp = this.state.hp;
-    this.state.gold = starterId === "echo" ? 9 : 8;
+    this.state.gold = 8 + (effects.goldBonus || 0);
 
     const starterUnit: OwnedUnit = {
       uid: this.uid++,
@@ -321,7 +375,7 @@ export class AutoChessEngine {
       star: 1,
     };
     // 6x4 部署网格：远程默认站在第二行最后方，近战默认站在第二行最前方。
-    const preferredSlot = UNIT_DEFS[starter.unit].range > 100 ? 6 : 11;
+    const preferredSlot = this.isRanged(starter.unit) ? 6 : 11;
     this.state.board[preferredSlot] = starterUnit;
     this.state.shop = this.generateShop();
     this.setToast(
@@ -367,7 +421,7 @@ export class AutoChessEngine {
     if (this.state.battle) this.state.battle.rankingOpen = false;
   }
 
-  public getBattleRanking() {
+  public getBattleRanking(team: Team = "player") {
     const battle = this.state.battle;
     if (!battle) return [];
     const metric = battle.rankingMetric;
@@ -376,11 +430,48 @@ export class AutoChessEngine {
       if (metric === "support") return fighter.healingDone + fighter.shieldingDone;
       return fighter.damageTaken;
     };
-    return [...battle.player]
+    const fighters = team === "player" ? battle.player : battle.enemy;
+    return [...fighters]
       .sort((left, right) =>
         valueFor(right) - valueFor(left) || left.fid.localeCompare(right.fid),
       )
       .map((fighter) => ({ fighter, value: valueFor(fighter) }));
+  }
+
+  public getBattleFighter(fid: string) {
+    const battle = this.state.battle;
+    return battle && [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === fid);
+  }
+
+  private summarizeBattleFighter(fighter: Fighter, value?: number) {
+    return {
+      fid: fighter.fid,
+      team: fighter.team,
+      unitId: fighter.unitId,
+      name: UNIT_DEFS[fighter.unitId].name,
+      star: fighter.star,
+      alive: fighter.alive,
+      hp: Math.round(fighter.hp),
+      maxHp: Math.round(fighter.maxHp),
+      shield: Math.round(fighter.shield),
+      attack: Math.round(fighter.attack),
+      armor: Math.round(fighter.armor),
+      range: Math.round(fighter.range),
+      attackInterval: Number(fighter.attackInterval.toFixed(2)),
+      moveSpeed: Math.round(fighter.moveSpeed),
+      attackType: fighter.attackType,
+      energy: Math.round(fighter.energy),
+      maxEnergy: fighter.maxEnergy,
+      energyPerSecond: fighter.energyPerSecond,
+      energyOnAttack: fighter.energyOnAttack,
+      energyOnHit: fighter.energyOnHit,
+      energyStyle: fighter.energyStyle,
+      damageDealt: Math.round(fighter.damageDealt),
+      healingDone: Math.round(fighter.healingDone),
+      shieldingDone: Math.round(fighter.shieldingDone),
+      damageTaken: Math.round(fighter.damageTaken),
+      ...(value === undefined ? {} : { value: Math.round(value) }),
+    };
   }
 
   public getTraitCounts(): Record<TraitId, number> {
@@ -490,11 +581,12 @@ export class AutoChessEngine {
 
   public rerollShop() {
     if (this.state.phase !== "preparation") return;
-    if (this.state.gold < 1) {
+    const freeReroll = this.state.starter === "ranger_start" && this.state.round === 1;
+    if (!freeReroll && this.state.gold < 1) {
       this.setToast("金币不足，无法刷新商店。", "bad");
       return;
     }
-    this.state.gold -= 1;
+    if (!freeReroll) this.state.gold -= 1;
     this.state.shop = this.generateShop();
     this.state.shopLocked = false;
     this.state.selected = null;
@@ -538,8 +630,8 @@ export class AutoChessEngine {
   public getTraitStatus(trait: TraitId) {
     const count = this.getTraitCounts()[trait];
     const definition = TRAITS[trait];
-    const active = true;
     const level = traitLevelForCount(definition, count);
+    const active = level > 0;
     return {
       count,
       level,
@@ -727,9 +819,6 @@ export class AutoChessEngine {
       const mysticLevel = def.traits.includes("mystic")
         ? traitLevel("mystic")
         : 0;
-      const brawlerLevel = def.traits.includes("brawler")
-        ? traitLevel("brawler")
-        : 0;
       const assassinLevel = def.traits.includes("assassin")
         ? traitLevel("assassin")
         : 0;
@@ -742,12 +831,16 @@ export class AutoChessEngine {
       const gluttonyHolder = def.traits.includes("gluttony") && traitLevel("gluttony") > 0;
       const gen27Member = def.traits.includes("gen27") && traitLevel("gen27") > 0;
       const yueGangMember = def.traits.includes("yue_gang") && traitLevel("yue_gang") > 0;
-      const isRanged = def.range >= 160;
+      const isRanged = def.attackType === "ranged";
       const globalWildLevel = globalTraitLevel("wild");
       const globalVanguardLevel = globalTraitLevel("vanguard");
       const globalRangerLevel = globalTraitLevel("ranger");
       const globalMysticLevel = globalTraitLevel("mystic");
-      const globalBrawlerLevel = globalTraitLevel("brawler");
+      const trafficLevel = def.traits.includes("traffic") ? traitLevel("traffic") : 0;
+      const globalTrafficLevel = globalTraitLevel("traffic");
+      const matureLevel = def.traits.includes("mature") ? traitLevel("mature") : 0;
+      const danceLevel = def.traits.includes("dance") ? traitLevel("dance") : 0;
+      const globalDanceLevel = globalTraitLevel("dance");
       const globalAssassinLevel = globalTraitLevel("assassin");
       const globalChuanmeiLevel = globalTraitLevel("chuanmei");
       const hostLevel = def.traits.includes("host") ? traitLevel("host") : 0;
@@ -768,20 +861,29 @@ export class AutoChessEngine {
         attack *= 1.35;
         armor -= 12;
       }
-      if (brawlerLevel) attack *= [1, 1.12, 1.26, 1.45][brawlerLevel];
+      if (wildLevel) {
+        maxHp *= [1, 1.12, 1.25, 1.42][wildLevel];
+        armor += [0, 8, 18, 32][wildLevel];
+      }
+      if (danceLevel) {
+        attackInterval /= [1, 1.12, 1.26, 1.45][danceLevel];
+      }
       if (!isRanged) {
         if (globalVanguardLevel >= 2) {
           maxHp *= globalVanguardLevel === 3 ? 1.16 : 1.08;
           armor += globalVanguardLevel === 3 ? 12 : 6;
         }
         if (globalWildLevel >= 2) {
-          // Applied below through the fighter lifesteal field.
+          maxHp *= globalWildLevel === 3 ? 1.16 : 1.08;
+          armor += globalWildLevel === 3 ? 12 : 6;
         }
-        if (globalBrawlerLevel >= 2)
-          attack *= globalBrawlerLevel === 3 ? 1.2 : 1.1;
       } else if (globalRangerLevel >= 2) {
         attackInterval /= globalRangerLevel === 3 ? 1.3 : 1.15;
       }
+      if (isRanged && globalDanceLevel >= 2) {
+        attackInterval /= globalDanceLevel === 3 ? 1.16 : 1.08;
+      }
+      const danceMoveSpeed = (danceLevel ? [0, 10, 20, 32][danceLevel] : 0) + (isRanged && globalDanceLevel >= 2 ? (globalDanceLevel === 3 ? 12 : 6) : 0);
       if (hasAugment("tempered")) armor += 16;
       if (hasAugment("second_wind")) {
         maxHp *= 1.12;
@@ -805,24 +907,34 @@ export class AutoChessEngine {
         armor,
         range: def.range,
         attackInterval,
-        moveSpeed,
+        moveSpeed: moveSpeed + danceMoveSpeed,
         baseAttack: attack,
         baseAttackInterval: attackInterval,
-        baseMoveSpeed: moveSpeed,
+        baseMoveSpeed: moveSpeed + danceMoveSpeed,
         cooldown: this.rng.next() * 0.25,
-        energy:
-          [0, 20, 45, 70][mysticLevel] +
-          [0, 0, 10, 22][globalMysticLevel] +
-          [0, 0, 10, 22][globalTraitLevel("gen27")] * (gen27Member ? 1 : 0) +
-          (hasAugment("overclock") ? 35 : 0),
+        maxEnergy: def.energyProfile.max,
+        energyPerSecond: def.energyProfile.perSecond,
+        energyOnAttack: def.energyProfile.onAttack,
+        energyOnHit: def.energyProfile.onHit,
+        energyStyle: def.energyProfile.id,
+        attackType: def.attackType,
+        energy: Math.min(
+          def.energyProfile.max,
+          def.energyProfile.start +
+            [0, 20, 45, 70][mysticLevel] +
+            [0, 0, 10, 22][globalMysticLevel] +
+            [0, 0, 10, 22][globalTraitLevel("gen27")] * (gen27Member ? 1 : 0) +
+            (this.state.starter === "dance_start" && danceLevel ? 20 : 0) +
+            (hasAugment("overclock") ? 35 : 0),
+        ),
         stun: 0,
         burnTime: 0,
         burnDps: 0,
         burnSourceFid: null,
         lifesteal:
-          [0, 0.08, 0.15, 0.24][wildLevel] +
-          [0, 0, 0.06, 0.12][globalWildLevel] * (isRanged ? 0 : 1) +
-          (wildLevel && this.state.starter === "echo" ? 0.06 : 0),
+          [0, 0.08, 0.15, 0.24][trafficLevel] +
+          [0, 0, 0.05, 0.1][globalTrafficLevel] * (isRanged ? 1 : 0) +
+          (trafficLevel && this.state.starter === "traffic_start" ? 0.06 : 0),
         burnOnHitPower: 0,
         spiceBurnOnHitPower: Math.max(
           [0, 0.45, 0.8][chuanmeiLevel],
@@ -838,14 +950,18 @@ export class AutoChessEngine {
         emberAttackStackCap: [0, 5, 5, 5][emberLevel],
         gen27Member,
         gen27Buffed: false,
+        matureMember: matureLevel > 0,
+        matureMoveFloor: [0, 0.7, 0.75, 0.8][matureLevel],
+        slowTime: 0,
+        weakenTime: 0,
+        weakenArmorPenalty: 0,
         yueGangMember,
-        energyPerHit: 0,
         lowHealthBonus: 0,
         critChance:
           [0, 0.15, 0.3, 0.5][assassinLevel] +
           (isRanged ? [0, 0, 0.12, 0.25][globalAssassinLevel] : 0),
         critMultiplier: 1.65,
-        castRefund: [0, 0, 8, 15][mysticLevel],
+        castRefund: Math.min(def.energyProfile.max, def.energyProfile.castRefund + [0, 0, 8, 15][mysticLevel]),
         secondWindUsed: false,
         enraged: false,
         jumpPending: assassinLevel > 0,
@@ -898,7 +1014,13 @@ export class AutoChessEngine {
         baseAttackInterval: def.attackInterval,
         baseMoveSpeed: def.moveSpeed,
         cooldown: this.rng.next() * 0.4,
-        energy: wave.tag === "boss" ? 28 : 0,
+        maxEnergy: def.energyProfile.max,
+        energyPerSecond: def.energyProfile.perSecond,
+        energyOnAttack: def.energyProfile.onAttack,
+        energyOnHit: def.energyProfile.onHit,
+        energyStyle: def.energyProfile.id,
+        attackType: def.attackType,
+        energy: Math.min(def.energyProfile.max, def.energyProfile.start + (wave.tag === "boss" ? 28 : 0)),
         stun: 0,
         burnTime: 0,
         burnDps: 0,
@@ -916,8 +1038,12 @@ export class AutoChessEngine {
         emberAttackStackCap: 0,
         gen27Member: false,
         gen27Buffed: false,
+        matureMember: false,
+        matureMoveFloor: 1,
+        slowTime: 0,
+        weakenTime: 0,
+        weakenArmorPenalty: 0,
         yueGangMember: false,
-        energyPerHit: 0,
         lowHealthBonus: 0,
         critChance: 0,
         critMultiplier: 1.65,
@@ -955,6 +1081,7 @@ export class AutoChessEngine {
       gluttonyTimer: 3,
       emberTimer: 3,
       yueGangTimer: 0.45,
+      matureTimer: 4,
       banner:
         wave.tag === "boss"
           ? "首领战 · 暴君降临"
@@ -965,6 +1092,15 @@ export class AutoChessEngine {
       rankingOpen: false,
       rankingMetric: "damage",
     };
+    const matureLevel = globalTraitLevel("mature");
+    if (matureLevel) {
+      const memberShield = [0, 0.1, 0.18, 0.28][matureLevel] + (this.state.starter === "mature_start" ? 0.06 : 0);
+      const allShield = [0, 0, 0.04, 0.08][matureLevel];
+      battle.player.forEach((fighter) => {
+        const ratio = (fighter.matureMember ? memberShield : 0) + allShield;
+        if (ratio) this.grantShield(null, fighter, fighter.maxHp * ratio, 0.6, battle);
+      });
+    }
     const aegisLevel = globalTraitLevel("aegis");
     if (aegisLevel >= 2) {
       battle.player.forEach((fighter) =>
@@ -1098,10 +1234,6 @@ export class AutoChessEngine {
       if (this.state.toast.time <= 0) this.state.toast = null;
     }
     if (this.state.phase === "battle") this.updateBattle(dt);
-    if (this.state.phase === "result") {
-      this.state.resultTimer -= dt;
-      if (this.state.resultTimer <= 0) this.advanceAfterResult();
-    }
   }
 
   private living(team: Team) {
@@ -1132,7 +1264,14 @@ export class AutoChessEngine {
     const level = this.getActiveTraits().find((trait) => trait.id === "gen27")?.level || 0;
     const multiplier = [1, 1.12, 1.2, 1.3][level];
     battle.player.forEach((fighter) => {
-      if (!fighter.gen27Member || !fighter.alive) return;
+      if (!fighter.alive) return;
+      const maturePenalty = fighter.matureMember
+        ? Math.max(fighter.matureMoveFloor, 1 - Math.floor(battle.elapsed / 4) * 0.06)
+        : 1;
+      if (!fighter.gen27Member) {
+        fighter.moveSpeed = fighter.baseMoveSpeed * maturePenalty;
+        return;
+      }
       const hasNearbyPartner = battle.player.some(
         (other) => other !== fighter && other.alive && other.gen27Member &&
           Math.hypot(other.x - fighter.x, other.y - fighter.y) <= 165,
@@ -1140,7 +1279,7 @@ export class AutoChessEngine {
       fighter.gen27Buffed = hasNearbyPartner;
       fighter.attack = fighter.baseAttack;
       fighter.attackInterval = fighter.baseAttackInterval / (hasNearbyPartner ? multiplier : 1);
-      fighter.moveSpeed = fighter.baseMoveSpeed * (hasNearbyPartner ? multiplier : 1);
+      fighter.moveSpeed = fighter.baseMoveSpeed * (hasNearbyPartner ? multiplier : 1) * maturePenalty;
     });
   }
 
@@ -1149,6 +1288,13 @@ export class AutoChessEngine {
     if (!battle) return;
     battle.elapsed += dt;
     battle.yueGangTimer = Math.max(0, battle.yueGangTimer - dt);
+    battle.matureTimer -= dt;
+    if (battle.matureTimer <= 0) {
+      battle.matureTimer += 4;
+      this.living("player").filter((fighter) => fighter.matureMember).forEach((fighter) =>
+        this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#b9a274", text: "慢一点", life: 0.65, size: 10 }),
+      );
+    }
     this.refresh27Buffs(battle);
     battle.bannerTimer = Math.max(0, battle.bannerTimer - dt);
 
@@ -1168,7 +1314,7 @@ export class AutoChessEngine {
             fighter.emberAttackStacks += 1;
             fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
             this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#ff7657", text: `夜 ${fighter.emberAttackStacks}/5`, life: 0.65, size: 10 });
-          } else if (!fighter.emberMember && fighter.range >= 160 && rangedCapRatio > 0 && fighter.emberAttackStacks < 5) {
+          } else if (!fighter.emberMember && fighter.attackType === "ranged" && rangedCapRatio > 0 && fighter.emberAttackStacks < 5) {
             fighter.emberAttackStacks += 1;
             fighter.attack = fighter.baseAttack * (1 + (rangedCapRatio / 5) * fighter.emberAttackStacks);
           }
@@ -1207,6 +1353,13 @@ export class AutoChessEngine {
       if (!fighter.alive) return;
       fighter.cooldown -= dt;
       fighter.stun = Math.max(0, fighter.stun - dt);
+      fighter.slowTime = Math.max(0, fighter.slowTime - dt);
+      const wasWeakened = fighter.weakenTime > 0;
+      fighter.weakenTime = Math.max(0, fighter.weakenTime - dt);
+      if (wasWeakened && fighter.weakenTime === 0 && fighter.weakenArmorPenalty > 0) {
+        fighter.armor += fighter.weakenArmorPenalty;
+        fighter.weakenArmorPenalty = 0;
+      }
       fighter.attackPulse = Math.max(0, fighter.attackPulse - dt);
       fighter.hitPulse = Math.max(0, fighter.hitPulse - dt);
       if (fighter.jumpPending) {
@@ -1256,6 +1409,7 @@ export class AutoChessEngine {
         if (fighter.hp <= 0) this.killFighter(fighter);
       }
       if (!fighter.alive || fighter.stun > 0) return;
+      if (fighter.energyPerSecond > 0) this.addEnergy(fighter, fighter.energyPerSecond * dt);
 
       if (
         fighter.unitId === "rift_tyrant" &&
@@ -1281,7 +1435,7 @@ export class AutoChessEngine {
       const targets = this.living(targetTeam);
       if (!targets.length) return;
 
-      if (fighter.energy >= 100) {
+      if (fighter.energy >= fighter.maxEnergy) {
         this.castAbility(fighter, targets);
         return;
       }
@@ -1297,7 +1451,7 @@ export class AutoChessEngine {
         this.faceTowardX(fighter, target.x);
         const travel = Math.min(
           distance - preferredRange,
-          fighter.moveSpeed * dt,
+          fighter.moveSpeed * (fighter.slowTime > 0 ? 0.55 : 1) * dt,
         );
         fighter.x += ((target.x - fighter.x) / distance) * travel;
         fighter.y += ((target.y - fighter.y) / distance) * travel;
@@ -1358,9 +1512,11 @@ export class AutoChessEngine {
     source.attackPulse = 0.22;
     source.attackTargetX = target.x;
     source.attackTargetY = target.y;
-    source.energy = Math.min(100, source.energy + 24 + source.energyPerHit);
-    target.energy = Math.min(100, target.energy + 5);
     const dealt = this.damage(source, target, source.attack);
+    if (dealt >= 0) {
+      this.addEnergy(source, source.energyOnAttack);
+      this.addEnergy(target, target.energyOnHit);
+    }
     if (source.burnOnHitPower > 0 && target.alive) {
       this.applyBurn(source, target, source.attack * source.burnOnHitPower);
     }
@@ -1370,20 +1526,20 @@ export class AutoChessEngine {
     this.triggerYueGangSupport(source, target);
     const def = UNIT_DEFS[source.unitId];
     this.addEffect({
-      kind: def.range > 100 ? "line" : "burst",
+      kind: source.attackType === "ranged" ? "line" : "burst",
       x: source.x,
       y: source.y,
       x2: target.x,
       y2: target.y,
       color: def.accent,
-      life: def.range > 100 ? 0.16 : 0.24,
-      size: def.range > 100 ? 3 : 22,
+      life: source.attackType === "ranged" ? 0.16 : 0.24,
+      size: source.attackType === "ranged" ? 3 : 22,
     });
     if (dealt > 0) this.addDamageText(target, dealt);
   }
 
   private castAbility(source: Fighter, targets: Fighter[]) {
-    source.energy = source.castRefund;
+    source.energy = Math.min(source.maxEnergy, source.castRefund);
     source.cooldown = Math.max(source.cooldown, 0.35);
     const def = UNIT_DEFS[source.unitId];
     const allies = this.living(source.team);
@@ -1450,24 +1606,20 @@ export class AutoChessEngine {
       case "ember_blade": {
         const target = this.nearestTarget(source, targets);
         if (!target) break;
-        targets
-          .filter(
-            (candidate) =>
-              Math.hypot(candidate.x - target.x, candidate.y - target.y) < 95,
-          )
-          .forEach((candidate) => {
-            const dealt = this.damage(source, candidate, source.attack * 1.35);
-            this.applyBurn(source, candidate, source.attack * 0.8);
-            this.addDamageText(candidate, dealt);
-          });
-        this.addEffect({
-          kind: "ring",
-          x: target.x,
-          y: target.y,
-          color: def.accent,
-          life: 0.5,
-          size: 100,
-        });
+        for (let shot = 0; shot < 3; shot += 1) {
+          const shotTarget = this.nearestTarget(source, targets);
+          if (!shotTarget) break;
+          if (shot === 2) {
+            targets.filter((candidate) => Math.hypot(candidate.x - shotTarget.x, candidate.y - shotTarget.y) < 72).forEach((candidate) => {
+              const dealt = this.damage(source, candidate, source.attack * (candidate === shotTarget ? 0.72 : 0.42));
+              this.addDamageText(candidate, dealt);
+            });
+          } else {
+            const dealt = this.damage(source, shotTarget, source.attack * 0.72);
+            this.addDamageText(shotTarget, dealt);
+          }
+          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: shotTarget.x, y2: shotTarget.y, color: def.accent, life: 0.2 + shot * 0.05, size: 3 });
+        }
         break;
       }
       case "gale_archer": {
@@ -1542,6 +1694,16 @@ export class AutoChessEngine {
           });
         break;
       }
+      case "zeyin": {
+        for (let shot = 0; shot < 2; shot += 1) {
+          const target = this.nearestTarget(source, targets);
+          if (!target) break;
+          deal(target, 0.75);
+          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.28, size: 3 });
+        }
+        source.attackInterval = Math.max(source.baseAttackInterval * 0.7, source.attackInterval * 0.85);
+        break;
+      }
       case "sui_blue": {
         const ordered = [...targets].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
         for (let shot = 0; shot < 3; shot += 1) {
@@ -1568,8 +1730,7 @@ export class AutoChessEngine {
         source.x = target.x + (source.team === "player" ? -42 : 42);
         source.y = target.y;
         const dealt = this.damage(source, target, source.attack * 1.7);
-        const hungerBonus = source.hp / source.maxHp < 0.45 ? 0.45 : 0.25;
-        this.heal(source, source, dealt * hungerBonus);
+        this.applyBurn(source, target, source.attack * 1.1);
         if (dealt > 0) this.addDamageText(target, dealt);
         this.addEffect({
           kind: "burst",
@@ -1665,28 +1826,12 @@ export class AutoChessEngine {
         break;
       }
       case "cinder_ram": {
-        const center = densest(targets);
-        if (!center) break;
-        source.x = center.x + (source.team === "player" ? -45 : 45);
-        source.y = center.y;
-        targets
-          .filter(
-            (target) =>
-              Math.hypot(target.x - center.x, target.y - center.y) < 115,
-          )
-          .forEach((target) => {
-            deal(target, 1.12);
-            target.stun = Math.max(target.stun, 0.72);
-            this.applyBurn(source, target, source.attack * 0.6);
-          });
-        this.addEffect({
-          kind: "ring",
-          x: center.x,
-          y: center.y,
-          color: def.accent,
-          life: 0.65,
-          size: 120,
+        allies.forEach((ally) => this.heal(source, ally, ally.maxHp * 0.16 + source.attack * 0.65));
+        targets.forEach((target) => {
+          target.slowTime = Math.max(target.slowTime, 2.6);
+          this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: def.accent, text: "减速", life: 0.6, size: 11 });
         });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 190 });
         break;
       }
       case "sui_bird": {
@@ -1740,7 +1885,7 @@ export class AutoChessEngine {
           this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.36, size: 3 });
         }
         const recipient = [...allies].sort((left, right) => left.energy - right.energy)[0];
-        if (recipient) recipient.energy = Math.min(100, recipient.energy + 18);
+        if (recipient) this.addEnergy(recipient, 18);
         break;
       }
       case "guangyi": {
@@ -1812,17 +1957,26 @@ export class AutoChessEngine {
         break;
       }
       case "meme": {
-        const alliesToShield = [source, ...allies.filter((fighter) => fighter !== source).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, 1)];
-        alliesToShield.forEach((target) => addShield(target, target.maxHp * 0.16, 0.4));
-        targets.filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 115).forEach((target) => { target.stun = Math.max(target.stun, 0.55); deal(target, 0.8); });
+        let total = 0;
+        targets.filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 115).forEach((target) => {
+          target.stun = Math.max(target.stun, 0.55);
+          total += deal(target, 0.9);
+        });
+        this.heal(source, source, total * 0.35);
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.65, size: 118 });
         break;
       }
       case "kioi": {
         const target = this.nearestTarget(source, targets);
         if (!target) break;
-        targets.filter((candidate) => Math.hypot(candidate.x - target.x, candidate.y - target.y) < 95).forEach((candidate) => deal(candidate, candidate === target ? 1.45 : 0.78));
-        this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 102 });
+        deal(target, 1.25);
+        target.weakenTime = Math.max(target.weakenTime, 3);
+        if (target.weakenArmorPenalty === 0) {
+          target.weakenArmorPenalty = 10;
+          target.armor -= target.weakenArmorPenalty;
+        }
+        this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: def.accent, text: "讨厌你", life: 0.65, size: 12 });
+        this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.5, size: 5 });
         break;
       }
       case "nightin": {
@@ -1832,39 +1986,23 @@ export class AutoChessEngine {
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
         break;
       }
-      case "aza": {
-        const center = densest(targets);
-        if (!center) break;
-        source.x = center.x + (source.team === "player" ? -44 : 44);
-        source.y = center.y;
-        let hits = 0;
-        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125).forEach((target) => { deal(target, 1.25); hits += 1; });
-        addShield(source, source.maxHp * Math.min(0.3, hits * 0.07), 0.45);
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.65, size: 132 });
+      case "tiandou": {
+        [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, 2).forEach((target) => {
+          this.heal(source, target, target.maxHp * 0.14 + source.attack * 0.7);
+          target.moveSpeed += 10;
+        });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.65, size: 110 });
         break;
       }
-      case "ayana": {
-        [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, 2).forEach((target) => { this.heal(source, target, target.maxHp * 0.18 + source.attack); target.energy = Math.min(100, target.energy + 18); });
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 150 });
-        break;
-      }
-      case "yy": {
-        const target = [...targets].sort((a, b) => b.energy - a.energy)[0];
+      case "youyi": {
+        const target = farthest(targets);
         if (!target) break;
-        targets.filter((candidate) => Math.abs(candidate.y - target.y) < 62).forEach((candidate) => deal(candidate, 1.18));
-        target.energy = Math.max(0, target.energy - 28);
-        this.addEffect({ kind: "line", x: source.x, y: source.y, x2: source.team === "player" ? 1100 : 20, y2: target.y, color: def.accent, life: 0.45, size: 7 });
-        break;
-      }
-      case "haruka": {
-        const target = this.nearestTarget(source, targets);
-        if (!target) break;
-        source.x = target.x + (source.team === "player" ? -46 : 46);
+        source.x = target.x + (source.team === "player" ? -36 : 36);
         source.y = target.y;
-        deal(target, 1.35);
-        target.stun = Math.max(target.stun, 0.65);
-        addShield(source, source.maxHp * 0.22, 0.45);
-        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 66 });
+        deal(target, 0.78);
+        deal(target, 0.78);
+        target.stun = Math.max(target.stun, 0.45);
+        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 56 });
         break;
       }
       case "akirinco": {
@@ -1890,11 +2028,29 @@ export class AutoChessEngine {
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.72, size: 142 });
         break;
       }
+      case "mumu": {
+        const center = densest(targets);
+        if (!center) break;
+        source.x = center.x + (source.team === "player" ? -44 : 44);
+        source.y = center.y;
+        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125).forEach((target) => deal(target, 1.15));
+        allies.filter((ally) => Math.hypot(ally.x - source.x, ally.y - source.y) < 150).forEach((ally) => addShield(ally, ally.maxHp * 0.12, 0.38));
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: 136 });
+        break;
+      }
       case "rei": {
         const center = densest(targets);
         if (!center) break;
         targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 145).forEach((target) => { deal(target, 1.85); this.applyBurn(source, target, source.attack * 0.8); target.stun = Math.max(target.stun, 0.72); });
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: 152 });
+        break;
+      }
+      case "lian": {
+        const center = densest(targets);
+        if (!center) break;
+        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 140).forEach((target) => deal(target, 1.55));
+        allies.forEach((ally) => { this.addEnergy(ally, 15); });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.85, size: 150 });
         break;
       }
       case "rutice": {
@@ -1938,12 +2094,13 @@ export class AutoChessEngine {
   }
 
   private damage(source: Fighter, target: Fighter, rawAmount: number) {
-    if (!source.alive || !target.alive) return 0;
-    if (target.dodgeChance > 0 && this.rng.next() < target.dodgeChance) {
+    const dodged = target.dodgeChance > 0 && this.rng.next() < target.dodgeChance;
+    if (dodged) {
       this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: "#d9e6f4", text: "闪避", life: 0.55, size: 12 });
-      return 0;
+      return -1;
     }
-    let amount = rawAmount;
+    if (!source.alive || !target.alive) return 0;
+    let amount = rawAmount * (source.weakenTime > 0 ? 0.72 : 1);
     if (
       source.team === "player" &&
       source.lowHealthBonus > 0 &&
@@ -2011,7 +2168,7 @@ export class AutoChessEngine {
   private applyBurn(source: Fighter, target: Fighter, totalDamage: number) {
     if (!target.alive) return;
     const starterMultiplier =
-      source.team === "player" && this.state.starter === "blaze" ? 1.4 : 1;
+      source.team === "player" ? starterEffects[this.state.starter || "bastion"].burnMultiplier || 1 : 1;
     const dps = (totalDamage * starterMultiplier) / 3;
     if (dps >= target.burnDps) {
       target.burnDps = dps;
@@ -2029,7 +2186,7 @@ export class AutoChessEngine {
   ) {
     if (!target.alive || amount <= 0) return 0;
     const starterMultiplier =
-      target.team === "player" && this.state.starter === "bastion" ? 1.3 : 1;
+      target.team === "player" ? starterEffects[this.state.starter || "bastion"].shieldMultiplier || 1 : 1;
     const before = target.shield;
     target.shield = Math.min(
       target.maxHp * capRatio * starterMultiplier,
@@ -2106,7 +2263,7 @@ export class AutoChessEngine {
       const streakBonus = Math.min(2, Math.max(0, this.state.streak - 1));
       const eliteBonus = wave.tag === "elite" ? 2 : 0;
       const blazeBonus =
-        this.state.starter === "blaze" && this.state.victories === 1 ? 2 : 0;
+        this.state.victories === 1 ? starterEffects[this.state.starter || "bastion"].firstWinGold || 0 : 0;
       income =
         5 +
         interest +
@@ -2126,7 +2283,7 @@ export class AutoChessEngine {
       this.state.result = {
         won: true,
         headline: wave.tag === "boss" ? "裂隙封闭" : "战线守住了",
-        detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? " + 余烬首胜 2" : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
+        detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? ` + 首胜 ${blazeBonus}` : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
         income,
         upgradeDiscount:
           this.state.round < Number.MAX_SAFE_INTEGER && !this.isMaxPlayerLevel
@@ -2165,12 +2322,11 @@ export class AutoChessEngine {
     }
 
     this.state.phase = "result";
-    this.state.resultTimer = 2.4;
   }
 
-  private advanceAfterResult() {
+  public continueAfterResult() {
     const result = this.state.result;
-    if (!result) return;
+    if (this.state.phase !== "result" || !result) return;
     if (this.state.hp <= 0) {
       this.endGame(false);
       return;
@@ -2345,6 +2501,10 @@ export class AutoChessEngine {
         name: AUGMENTS.find((augment) => augment.id === id)?.name,
         description: AUGMENTS.find((augment) => augment.id === id)?.description,
       })),
+      starterChoices: this.state.starterChoices.map((id, index) => {
+        const starter = STARTERS.find((item) => item.id === id);
+        return { index, id, name: starter?.name, description: starter?.description };
+      }),
       augmentChoices: this.state.augmentChoices.map((id, index) => ({
         index,
         name: AUGMENTS.find((augment) => augment.id === id)?.name,
@@ -2358,10 +2518,7 @@ export class AutoChessEngine {
         playerUnits: battle.player
           .filter((unit) => unit.alive)
           .map((unit) => ({
-            name: UNIT_DEFS[unit.unitId].name,
-            hp: Math.round(unit.hp),
-            maxHp: Math.round(unit.maxHp),
-            shield: Math.round(unit.shield),
+            ...this.summarizeBattleFighter(unit),
             energy: Math.round(unit.energy),
             x: Math.round(unit.x),
             y: Math.round(unit.y),
@@ -2377,26 +2534,17 @@ export class AutoChessEngine {
         ranking: {
           open: battle.rankingOpen,
           metric: battle.rankingMetric,
-          playerRows: this.getBattleRanking().map(({ fighter, value }) => ({
-            fid: fighter.fid,
-            unitId: fighter.unitId,
-            name: UNIT_DEFS[fighter.unitId].name,
-            star: fighter.star,
-            alive: fighter.alive,
-            damageDealt: Math.round(fighter.damageDealt),
-            healingDone: Math.round(fighter.healingDone),
-            shieldingDone: Math.round(fighter.shieldingDone),
-            damageTaken: Math.round(fighter.damageTaken),
-            value: Math.round(value),
-          })),
+          playerRows: this.getBattleRanking("player").map(({ fighter, value }) =>
+            this.summarizeBattleFighter(fighter, value),
+          ),
+          enemyRows: this.getBattleRanking("enemy").map(({ fighter, value }) =>
+            this.summarizeBattleFighter(fighter, value),
+          ),
         },
         enemyUnits: battle.enemy
           .filter((unit) => unit.alive)
           .map((unit) => ({
-            name: UNIT_DEFS[unit.unitId].name,
-            hp: Math.round(unit.hp),
-            maxHp: Math.round(unit.maxHp),
-            shield: Math.round(unit.shield),
+            ...this.summarizeBattleFighter(unit),
             energy: Math.round(unit.energy),
             x: Math.round(unit.x),
             y: Math.round(unit.y),
@@ -2409,6 +2557,8 @@ export class AutoChessEngine {
             jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
             jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
           })),
+        allPlayerUnits: battle.player.map((unit) => this.summarizeBattleFighter(unit)),
+        allEnemyUnits: battle.enemy.map((unit) => this.summarizeBattleFighter(unit)),
       },
       result: this.state.result,
       availableActions:
@@ -2431,7 +2581,7 @@ export class AutoChessEngine {
                 ? ["点击再来一局"]
                 : this.state.phase === "battle"
                   ? ["自动战斗中", "点击战斗统计或按 D 展开/收起", "F 全屏"]
-                  : ["自动结算中", "F 全屏"],
+                  : ["查看双方战斗统计", "点击继续进入下一阶段", "F 全屏"],
       toast: this.state.toast?.text || null,
     });
   }

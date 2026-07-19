@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
   AUGMENTS,
+  ENERGY_PROFILES,
   PLAYER_LEVELS,
   PLAYER_LEVEL_CONFIG,
   SHOP_UNITS,
@@ -204,8 +205,12 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
               <h2 style={{ margin: "6px 0 12px", fontSize: 25 }}>{unit.name}</h2>
               <div style={{ color: "#99b1c1", lineHeight: 1.8 }}>
                 生命 {unit.hp} · 攻击 {unit.attack} · 护甲 {unit.armor}<br />
-                射程 {unit.range} · 攻击间隔 {unit.attackInterval.toFixed(2)} 秒 · 移速 {unit.moveSpeed}
+                {unit.attackType === "ranged" ? "远程" : "近战"} · 射程 {unit.range} · 攻击间隔 {unit.attackInterval.toFixed(2)} 秒 · 移速 {unit.moveSpeed}<br />
+                <span style={{ color: ENERGY_PROFILES[unit.energyProfile.id].color }}>
+                  能量 · {unit.energyProfile.name}：{unit.energyProfile.start}/{unit.energyProfile.max}，每秒 +{unit.energyProfile.perSecond}，普攻 +{unit.energyProfile.onAttack}，命中 +{unit.energyProfile.onHit}
+                </span>
               </div>
+              <p style={{ color: "#708a9d", margin: "8px 0 12px", fontSize: 12 }}>以上为基础属性；羁绊、天赋和契印会在战斗中进一步修改数值。</p>
               <h3 style={{ color: unit.accent, marginBottom: 6 }}>{unit.abilityName}</h3>
               <p style={{ color: "#b6c8d4", lineHeight: 1.7 }}>{unit.abilityDescription}</p>
               <h3 style={{ marginBottom: 6 }}>所属羁绊</h3>
@@ -254,7 +259,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
           <section style={{ display: "grid", gap: 20 }}>
             <div>
               <h2 style={{ margin: "0 0 8px" }}>开局选择</h2>
-              <p style={{ color: "#8da7b8" }}>开局协议决定初始棋子和整局的专属加成。</p>
+              <p style={{ color: "#8da7b8" }}>开局协议决定初始棋子和整局的专属加成；每局会按战术种子从完整卡池随机提供 3 个不重复选项。</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
                 {STARTERS.map((starter) => (
                   <article key={starter.id} style={{ padding: 14, border: `1px solid ${starter.color}88`, borderRadius: 12, background: `${starter.color}0d` }}>

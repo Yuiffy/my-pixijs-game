@@ -7,7 +7,6 @@ export const TRAIT_IDS = [
   "vanguard",
   "ranger",
   "mystic",
-  "brawler",
   "assassin",
   "chuanmei",
   "gluttony",
@@ -16,6 +15,9 @@ export const TRAIT_IDS = [
   "yue_gang",
   "host",
   "dwarf",
+  "traffic",
+  "mature",
+  "dance",
 ] as const;
 
 export type TraitId = (typeof TRAIT_IDS)[number];
@@ -32,6 +34,7 @@ export const SHOP_UNIT_IDS = [
   "sui",
   "nori",
   "meme",
+  "zeyin",
   // 2 费
   "rift_brawler",
   "sui_blue",
@@ -40,34 +43,35 @@ export const SHOP_UNIT_IDS = [
   "clock_gunner",
   "dawn_duelist",
   "grove_mender",
-  "cinder_ram",
   "kioi",
   "nightin",
+  "tiandou",
   // 3 费
   "sui_bird",
   "sui_flower",
   "yua",
   "mitsuri",
-  "aza",
-  "ayana",
-  "yy",
-  "haruka",
   "guangyi",
+  "youyi",
   // 4 费
   "sui_cat",
   "nagisa",
   "akirinco",
   "lovely",
+  "mumu",
   // 5 费
   "biscuit_sui",
+  "cinder_ram",
   "rei",
   "rutice",
+  "lian",
 ] as const;
 
 export type ShopUnitId = (typeof SHOP_UNIT_IDS)[number];
 export type UnitId = ShopUnitId | "rift_tyrant";
 
-export type StarterId = "bastion" | "blaze" | "echo";
+export type StarterId = "mature_start" | "blaze" | "traffic_start" | "bastion" | "dance_start" | "ranger_start";
+export const STARTER_OFFER_SIZE = 3;
 
 export type AugmentId =
   | "tempered"
@@ -78,6 +82,29 @@ export type AugmentId =
   | "payday"
   | "execution"
   | "second_wind";
+
+export type AttackType = "melee" | "ranged";
+export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "reservoir";
+
+export interface EnergyProfile {
+  id: EnergyProfileId;
+  name: string;
+  max: number;
+  start: number;
+  perSecond: number;
+  onAttack: number;
+  onHit: number;
+  castRefund: number;
+  color: string;
+}
+
+export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
+  assault: { id: "assault", name: "强攻", max: 100, start: 0, perSecond: 0, onAttack: 24, onHit: 5, castRefund: 0, color: "#b585ff" },
+  bulwark: { id: "bulwark", name: "受压", max: 90, start: 0, perSecond: 0, onAttack: 12, onHit: 11, castRefund: 0, color: "#f2b45e" },
+  flow: { id: "flow", name: "流转", max: 100, start: 0, perSecond: 7, onAttack: 10, onHit: 4, castRefund: 0, color: "#65d8ca" },
+  tempo: { id: "tempo", name: "疾奏", max: 80, start: 0, perSecond: 3, onAttack: 18, onHit: 4, castRefund: 0, color: "#ee8fc4" },
+  reservoir: { id: "reservoir", name: "蓄势", max: 120, start: 0, perSecond: 3, onAttack: 16, onHit: 6, castRefund: 0, color: "#7e9bff" },
+};
 
 export interface UnitDefinition {
   id: UnitId;
@@ -95,6 +122,8 @@ export interface UnitDefinition {
   range: number;
   attackInterval: number;
   moveSpeed: number;
+  attackType: AttackType;
+  energyProfile: EnergyProfile;
   abilityName: string;
   abilityDescription: string;
   portrait?: string;
@@ -147,11 +176,10 @@ export interface WaveDefinition {
 export const TRAITS: Record<TraitId, TraitDefinition> = {
   aegis: { id: "aegis", name: "VR学园", family: "阵营", color: "#66d7ff", thresholds: [2, 4, 6], description: "学园组负责把直播间秩序和队伍前排一起守住。", bonuses: ["学园成员 +12 护甲、+7% 最大生命", "学园成员 +25/+14%；全队开战获 8% 最大生命护盾", "学园成员 +42/+23%；全队开战获 16% 最大生命护盾"] },
   ember: { id: "ember", name: "深夜档", family: "阵营", color: "#ff7657", thresholds: [2, 4, 6], description: "熬得越久，状态越稳；战斗中攻击力会逐步叠加。", bonuses: ["深夜档成员每 3 秒 +5% 攻击力，最多 +25%", "深夜档成员每 3 秒 +8% 攻击力，最多 +40%；所有远程友军最多 +12% 攻击力", "深夜档成员每 3 秒 +12% 攻击力，最多 +60%；所有远程友军最多 +25% 攻击力"] },
-  wild: { id: "wild", name: "毛茸茸", family: "阵营", color: "#70e1a0", thresholds: [2, 4, 6], description: "耳朵、尾巴与毛茸茸的气势会让队友越打越有精神。", bonuses: ["毛茸茸成员获得 8% 吸血", "毛茸茸 15%；所有近战友军获得 6% 吸血", "毛茸茸 24%；所有近战友军获得 12% 吸血"] },
+  wild: { id: "wild", name: "毛茸茸", family: "阵营", color: "#70e1a0", thresholds: [2, 4, 6], description: "耳朵、尾巴与毛茸茸的气势会让前排更能扛住直播事故。", bonuses: ["毛茸茸成员 +12% 最大生命、+8 护甲", "毛茸茸成员 +25% 最大生命、+18 护甲；所有近战友军 +8% 最大生命、+6 护甲", "毛茸茸成员 +42% 最大生命、+32 护甲；所有近战友军 +16% 最大生命、+12 护甲"] },
   vanguard: { id: "vanguard", name: "怕死", family: "职业", color: "#819eff", thresholds: [2, 4, 6], description: "怕死位最懂得保全自己，生命和护甲越高越能熬过直播事故。", bonuses: ["怕死单位 +12% 最大生命、+8 护甲", "怕死单位 +25% 最大生命、+18 护甲；所有近战友军 +8% 最大生命、+6 护甲", "怕死单位 +42% 最大生命、+32 护甲；所有近战友军 +16% 最大生命、+12 护甲"] },
   ranger: { id: "ranger", name: "射手", family: "职业", color: "#f2d15e", thresholds: [2, 4, 6], description: "射手擅长持续远程输出，高阶会带动全队后排火力。", bonuses: ["射手单位 +12% 攻速", "射手单位 +26% 攻速；所有远程友军 +15% 攻速", "射手单位 +45% 攻速；所有远程友军 +30% 攻速"] },
   mystic: { id: "mystic", name: "杂谈", family: "职业", color: "#de87ff", thresholds: [2, 4, 6], description: "杂谈位开麦快、话题多，总能把全队情绪带起来。", bonuses: ["杂谈单位开战 +20 能量", "杂谈开战 +45、施法返还 8；全体友军开战 +10 能量", "杂谈开战 +70、施法返还 15；全体友军开战 +22 能量"] },
-  brawler: { id: "brawler", name: "整活", family: "职业", color: "#ffae57", thresholds: [2, 4, 6], description: "整活位靠气势正面开团，越多人围观越有劲。", bonuses: ["整活单位 +12% 攻击力", "整活 +26%；所有近战友军 +10% 攻击力", "整活 +45%；所有近战友军 +20% 攻击力"] },
   assassin: { id: "assassin", name: "潜伏", family: "职业", color: "#ff6fae", thresholds: [2, 4, 6], description: "潜伏位绕开前排，专门抓住后排的直播事故。", bonuses: ["潜伏单位跃向后排、获得 15% 暴击率", "潜伏 30% 暴击；所有远程友军 +12% 暴击率", "潜伏 50% 暴击；所有远程友军 +25% 暴击率"] },
   chuanmei: {
     id: "chuanmei",
@@ -213,15 +241,61 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "关系",
     color: "#dca85f",
     thresholds: [2, 3],
-    description: "花礼创建的矮人联盟：个头不占地方，存在感可一点不少。",
+    description: "大黑鼠创建的矮人联盟：个头不占地方，存在感可一点不少。",
     bonuses: ["矮人成员 +12% 闪避率", "矮人成员 +22% 闪避率"],
   },
+  traffic: { id: "traffic", name: "流量", family: "关系", color: "#ff7197", thresholds: [2, 4, 6], description: "被更多人看见，才有继续输出的底气。", bonuses: ["流量成员获得 8% 吸血", "流量成员获得 15% 吸血；所有远程友军获得 5% 吸血", "流量成员获得 24% 吸血；所有远程友军获得 10% 吸血"] },
+  mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局沉稳，但战线拖久后步子会慢下来。", bonuses: ["成熟成员开战获得 10% 最大生命护盾；每 4 秒移速 -6%，最低 70%", "成熟成员开战获得 18% 最大生命护盾；每 4 秒移速 -5%，最低 75%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾；每 4 秒移速 -4%，最低 80%；全队获得 8% 最大生命护盾"] },
+  dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏就能把舞台气氛带进战场。", bonuses: ["跳舞成员 +12% 攻速、+10 移速", "跳舞成员 +26% 攻速、+20 移速；所有远程友军 +8% 攻速、+6 移速", "跳舞成员 +45% 攻速、+32 移速；所有远程友军 +16% 攻速、+12 移速"] },
 };
 
 export const traitLevelForCount = (trait: TraitDefinition, count: number) =>
   trait.thresholds.filter((threshold) => count >= threshold).length;
 
-const unit = (definition: UnitDefinition) => definition;
+const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">> = {
+  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 46 },
+  ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58 },
+  gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 44 },
+  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 52, moveSpeed: 82 },
+  cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46 },
+  mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40 },
+  sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48 },
+  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 58, moveSpeed: 72 },
+  spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50 },
+  clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48 },
+  dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 52, moveSpeed: 86 },
+  grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44 },
+  cinder_ram: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 52 },
+  sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 240, moveSpeed: 58 },
+  shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 48 },
+  sui_bird: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 62 },
+  sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
+  yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 295, moveSpeed: 54 },
+  mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50 },
+  guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 56, moveSpeed: 80 },
+  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 54, moveSpeed: 98 },
+  nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38 },
+  biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 70, moveSpeed: 64 },
+  nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 220, moveSpeed: 60 },
+  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 42 },
+  zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60 },
+  kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56 },
+  nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
+  tiandou: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 52 },
+  youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 54, moveSpeed: 88 },
+  akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 52, moveSpeed: 96 },
+  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.assault, range: 58, moveSpeed: 68 },
+  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54 },
+  rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54 },
+  rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 42 },
+  lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56 },
+  rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56 },
+};
+
+const unit = (definition: Omit<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed"> & Partial<Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">>): UnitDefinition => ({
+  ...definition,
+  ...COMBAT_PROFILES[definition.id],
+});
 
 export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   // 1 费：可靠的构筑零件，每个都能明确指向一条阵容路线。
@@ -234,7 +308,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#7de2ff",
     tier: 1,
     cost: 1,
-    traits: ["aegis", "vanguard", "gen27"],
+    traits: ["aegis", "vanguard", "gen27", "traffic"],
     hp: 245,
     attack: 16,
     armor: 30,
@@ -248,13 +322,13 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   ember_blade: unit({
     id: "ember_blade",
     name: "兔子射手",
-    title: "莉蔻Liko · 远程灼烧",
+    title: "莉蔻Liko · 远程连射",
     glyph: "蔻",
     color: "#7b2f2b",
     accent: "#ff8a5c",
     tier: 1,
     cost: 1,
-    traits: ["ember", "ranger", "dwarf"],
+    traits: ["ranger", "dwarf", "traffic"],
     hp: 150,
     attack: 23,
     armor: 7,
@@ -262,7 +336,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.86,
     moveSpeed: 58,
     abilityName: "胡萝卜射击",
-    abilityDescription: "向当前目标连续射出三发胡萝卜箭，并施加灼烧。",
+    abilityDescription: "向当前目标连续射出三发胡萝卜箭，第三发小范围溅射。",
     portrait: "/images/autochess/portraits/ember-blade.png",
     portraitStyle: "sprite",
     shop: true,
@@ -276,7 +350,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#7ef0bb",
     tier: 1,
     cost: 1,
-    traits: ["wild", "vanguard", "gen27"],
+    traits: ["wild", "vanguard", "mature"],
     hp: 232,
     attack: 16,
     armor: 20,
@@ -329,8 +403,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 48,
     abilityName: "扔橘子",
     abilityDescription: "把橘子扔给最虚弱的两名队友，为她们回复生命。",
-    portrait: "/images/livers/joi.png",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/cog-scribe.png",
+    portraitStyle: "sprite",
     shop: true,
   }),
   mossback: unit({
@@ -362,7 +436,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ffabb5",
     tier: 1,
     cost: 1,
-    traits: ["vanguard", "gluttony"],
+    traits: ["vanguard", "gluttony", "dance"],
     hp: 244,
     attack: 17,
     armor: 24,
@@ -380,21 +454,21 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   rift_brawler: unit({
     id: "rift_brawler",
     name: "雅吨",
-    title: "克罗雅Kloa · 困饿斗士",
+    title: "克罗雅Kloa · 辣福灼烧",
     glyph: "雅",
     color: "#4c3c72",
     accent: "#c4a1ff",
     tier: 2,
     cost: 2,
-    traits: ["brawler", "gen27", "yue_gang"],
+    traits: ["ember", "gen27", "yue_gang"],
     hp: 205,
     attack: 29,
     armor: 14,
     range: 52,
     attackInterval: 1.02,
     moveSpeed: 76,
-    abilityName: "我好困我好饿",
-    abilityDescription: "扑向最近敌人咬一口，造成伤害并按伤害回复生命；生命越低，回复越多。",
+    abilityName: "辣福一口",
+    abilityDescription: "扑向最近敌人咬一口，造成伤害并施加辣味灼烧。",
     portrait: "/images/livers/kloa.jpg",
     portraitFocus: "top",
     shop: true,
@@ -423,14 +497,14 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   clock_gunner: unit({
     id: "clock_gunner",
-    name: "弥月·浮游炮",
+    name: "老弥",
     title: "弥月Mizuki · 远程贯射",
-    glyph: "月",
+    glyph: "老",
     color: "#36566f",
     accent: "#92d7ff",
     tier: 2,
     cost: 2,
-    traits: ["ranger", "gen27"],
+    traits: ["ranger", "gen27", "mature"],
     hp: 158,
     attack: 22,
     armor: 12,
@@ -445,21 +519,21 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   dawn_duelist: unit({
     id: "dawn_duelist",
-    name: "花礼·矮人队长",
-    title: "花礼Harei · 后排控制",
-    glyph: "礼",
+    name: "大黑鼠",
+    title: "大黑鼠 · 后排控制",
+    glyph: "鼠",
     color: "#315b78",
     accent: "#9ee8ff",
     tier: 2,
     cost: 2,
-    traits: ["aegis", "assassin", "dwarf"],
+    traits: ["assassin", "dwarf", "traffic"],
     hp: 176,
     attack: 27,
     armor: 16,
     range: 50,
     attackInterval: 0.82,
     moveSpeed: 82,
-    abilityName: "联盟突进",
+    abilityName: "热点突进",
     abilityDescription: "冲向最远敌人，重击并短暂眩晕。",
     portrait: "/images/livers/harei.png",
     portraitFocus: "top",
@@ -489,22 +563,22 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   cinder_ram: unit({
     id: "cinder_ram",
-    name: "可爱冲阵",
-    title: "阿梓 · 前排控制",
-    glyph: "梓",
+    name: "蛙梓",
+    title: "蛙梓 · 终场歌者",
+    glyph: "蛙",
     color: "#71382f",
     accent: "#ff9a64",
-    tier: 2,
-    cost: 2,
-    traits: ["ember", "vanguard", "gluttony"],
-    hp: 278,
-    attack: 20,
-    armor: 25,
-    range: 50,
-    attackInterval: 1.16,
-    moveSpeed: 68,
-    abilityName: "从小就很可爱",
-    abilityDescription: "可爱地冲进敌群，震晕并灼烧落点附近的敌人。",
+    tier: 5,
+    cost: 5,
+    traits: ["ember", "mystic", "mature"],
+    hp: 320,
+    attack: 34,
+    armor: 20,
+    range: 195,
+    attackInterval: 1.04,
+    moveSpeed: 58,
+    abilityName: "蛙梓歌唱",
+    abilityDescription: "歌唱治疗全体友军，并让所有敌人短暂减速。",
     portrait: "/images/livers/azi.webp",
     portraitFocus: "top",
     shop: true,
@@ -548,7 +622,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.08,
     moveSpeed: 50,
     abilityName: "椰子鸡大嗓门",
-    abilityDescription: "用超大嗓门招呼椰子鸡，为两名最低生命比例的友军提供书签护盾。",
+    abilityDescription: "用超大嗓门招呼椰子鸡，为两名最低生命比例的友军提供护盾。",
     portrait: "/images/livers/shiori.png",
     portraitFocus: "top",
     shop: true,
@@ -557,7 +631,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   // 3 费：岁己保留不同形态；其他角色暂以低费代表参与构筑。
   sui_bird: unit({
     id: "sui_bird",
-    name: "岁己·小鸟援护",
+    name: "小岁鸟",
     title: "岁己SUI · 鸟本体援护",
     glyph: "鸟",
     color: "#4d7494",
@@ -623,7 +697,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
 
   mitsuri: unit({
     id: "mitsuri",
-    name: "三理·粤语电台",
+    name: "三理理",
     title: "三理Mit3uri · 远程支援",
     glyph: "理",
     color: "#587d8e",
@@ -637,7 +711,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 225,
     attackInterval: 1.02,
     moveSpeed: 52,
-    abilityName: "粤语电波",
+    abilityName: "hello酷狗",
     abilityDescription: "向当前目标发射音波，并为能量最低的友军补充能量。",
     shop: true,
   }),
@@ -652,7 +726,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#9edbff",
     tier: 3,
     cost: 3,
-    traits: ["brawler", "host"],
+    traits: ["assassin", "host"],
     hp: 244,
     attack: 31,
     armor: 17,
@@ -687,7 +761,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   nagisa: unit({
     id: "nagisa",
-    name: "米汀·温柔守护",
+    name: "米米",
     title: "米汀Nagisa · 团队护盾",
     glyph: "汀",
     color: "#487b81",
@@ -701,7 +775,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 55,
     attackInterval: 1.16,
     moveSpeed: 44,
-    abilityName: "妈妈的守护",
+    abilityName: "脑控",
     abilityDescription: "为全队提供护盾，并震晕身边的敌人。",
     portrait: "/images/livers/nagisa.png",
     portraitFocus: "top",
@@ -718,7 +792,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ffd28d",
     tier: 5,
     cost: 5,
-    traits: ["brawler", "chuanmei"],
+    traits: ["chuanmei", "dance"],
     hp: 420,
     attack: 44,
     armor: 34,
@@ -739,52 +813,52 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     abilityName: "苹果派", abilityDescription: "以较低单发伤害快速连射 12 次。", shop: true,
   }),
   meme: unit({
-    id: "meme", name: "沐毛·绒团护阵", title: "沐毛Meme · 前排守护", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 1, cost: 1,
+    id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 1, cost: 1,
     traits: ["wild", "vanguard", "host"], hp: 260, attack: 16, armor: 25, range: 48, attackInterval: 1.18, moveSpeed: 48,
-    abilityName: "绒团护阵", abilityDescription: "震晕附近敌人并造成伤害，为自己和生命比例最低的另一名友军提供护盾。", shop: true,
+    abilityName: "夺回人生", abilityDescription: "震晕附近敌人并造成伤害，随后按造成伤害回复自身生命。", shop: true,
+  }),
+  zeyin: unit({
+    id: "zeyin", name: "泽音美乐蒂", title: "泽音Melody · 舞台射手", glyph: "泽", color: "#6c4c86", accent: "#e2a9ff", tier: 1, cost: 1,
+    traits: ["ranger", "mature", "dance"], hp: 142, attack: 21, armor: 7, range: 220, attackInterval: 0.9, moveSpeed: 60,
+    abilityName: "虹光起舞", abilityDescription: "向当前目标连射两次，并为自己获得短暂攻速。", shop: true,
   }),
   kioi: unit({
-    id: "kioi", name: "柚雨·果香弹幕", title: "柚雨Kioi · 范围射手", glyph: "柚", color: "#7b6942", accent: "#f5d56f", tier: 2, cost: 2,
+    id: "kioi", name: "美·鱿鱼", title: "美·鱿鱼 · 远程削弱", glyph: "鱿", color: "#7b6942", accent: "#f5d56f", tier: 2, cost: 2,
     traits: ["wild", "ranger", "host"], hp: 162, attack: 27, armor: 9, range: 235, attackInterval: 0.84, moveSpeed: 60,
-    abilityName: "柚雨连珠", abilityDescription: "向当前目标发射连珠弹幕，溅射其附近的敌人。", shop: true,
+    abilityName: "讨厌你", abilityDescription: "点名一名敌人，造成伤害并降低其攻击力与护甲。", shop: true,
   }),
   nightin: unit({
-    id: "nightin", name: "南町·深夜电台", title: "南町Nightin · 深夜控场", glyph: "南", color: "#3b426f", accent: "#a9a7ff", tier: 2, cost: 2,
+    id: "nightin", name: "南町", title: "绿色辣妹 · 深夜控场", glyph: "南", color: "#3b426f", accent: "#a9a7ff", tier: 2, cost: 2,
     traits: ["ember", "mystic", "dwarf"], hp: 150, attack: 22, armor: 8, range: 210, attackInterval: 1.05, moveSpeed: 55,
-    abilityName: "深夜电波", abilityDescription: "向敌人最密集处广播，造成范围伤害、灼烧并短暂眩晕。", portrait: "/images/livers/nightin.jpg", portraitFocus: "top", shop: true,
+    abilityName: "烟头烫屁股", abilityDescription: "向敌人最密集处甩出烟头，造成范围伤害、灼烧并短暂眩晕。", portrait: "/images/livers/nightin.jpg", portraitFocus: "top", shop: true,
   }),
-  aza: unit({
-    id: "aza", name: "阿萨·剑风点名", title: "阿萨Aza · 突入斗士", glyph: "萨", color: "#6d4d64", accent: "#f1a7d0", tier: 3, cost: 3,
-    traits: ["brawler", "host"], hp: 236, attack: 33, armor: 16, range: 52, attackInterval: 0.9, moveSpeed: 74,
-    abilityName: "剑风点名", abilityDescription: "冲入最密集敌群，横扫附近目标；命中越多，自己获得越多护盾。", shop: true,
+  tiandou: unit({
+    id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 舞台支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
+    traits: ["mystic", "dance"], hp: 164, attack: 20, armor: 10, range: 200, attackInterval: 1.02, moveSpeed: 56,
+    abilityName: "甜点转圈", abilityDescription: "为生命最低的两名友军回复生命，并提升她们短暂移速。", shop: true,
   }),
-  ayana: unit({
-    id: "ayana", name: "凛奈奈奈·双人应援", title: "凛奈奈奈Ayana Nana · 双人治疗", glyph: "凛", color: "#9b6689", accent: "#ffb5d8", tier: 3, cost: 3,
-    traits: ["mystic", "host"], hp: 184, attack: 27, armor: 12, range: 220, attackInterval: 0.96, moveSpeed: 60,
-    abilityName: "双人应援", abilityDescription: "治疗生命比例最低的两名友军，并为她们补充能量。", shop: true,
-  }),
-  yy: unit({
-    id: "yy", name: "亦枝·法棍断能", title: "这是亦枝YY · 横排断能", glyph: "枝", color: "#6b5846", accent: "#e5be8b", tier: 3, cost: 3,
-    traits: ["ranger", "host"], hp: 178, attack: 32, armor: 10, range: 245, attackInterval: 0.8, moveSpeed: 58,
-    abilityName: "法棍断能", abilityDescription: "锁定能量最高的敌人，贯穿其所在横排，并削减该目标的能量。", shop: true,
-  }),
-  haruka: unit({
-    id: "haruka", name: "白神遥·海豹冲浪", title: "白神遥Haruka · 单点突进", glyph: "遥", color: "#63849b", accent: "#a9e7ff", tier: 3, cost: 3,
-    traits: ["wild", "vanguard", "host"], hp: 290, attack: 24, armor: 28, range: 50, attackInterval: 1.08, moveSpeed: 66,
-    abilityName: "海豹冲浪", abilityDescription: "扑向当前目标，造成伤害与短暂眩晕，并获得护盾。", shop: true,
+  youyi: unit({
+    id: "youyi", name: "又一·叛逆舞步", title: "四禧丸子 · 突进舞者", glyph: "又", color: "#84536f", accent: "#f0add2", tier: 3, cost: 3,
+    traits: ["assassin", "dance"], hp: 212, attack: 31, armor: 14, range: 50, attackInterval: 0.86, moveSpeed: 82,
+    abilityName: "叛逆转场", abilityDescription: "跃向最远敌人，连续踢击两次并短暂眩晕。", shop: true,
   }),
   akirinco: unit({
-    id: "akirinco", name: "秋凛子·神社夜巡", title: "秋凛子Aki Rinco · 残血收割", glyph: "秋", color: "#65445f", accent: "#eca5d3", tier: 4, cost: 4,
+    id: "akirinco", name: "秋凛子", title: "秋凛子Aki Rinco · 残血收割", glyph: "秋", color: "#65445f", accent: "#eca5d3", tier: 4, cost: 4,
     traits: ["assassin", "host"], hp: 222, attack: 39, armor: 14, range: 50, attackInterval: 0.76, moveSpeed: 92,
     abilityName: "神社夜巡", abilityDescription: "跃至生命最低的敌人身边连续斩击；完成击杀后恢复生命。", shop: true,
   }),
   lovely: unit({
-    id: "lovely", name: "东爱璃·元气冲场", title: "东爱璃Lovely · 范围斗士", glyph: "璃", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
-    traits: ["ember", "brawler", "host"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
+    id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
+    traits: ["ember", "vanguard", "host"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
     abilityName: "元气冲场", abilityDescription: "跃入敌人最密集处横扫；每命中一名敌人，都会提升自身攻击速度。", shop: true,
   }),
+  mumu: unit({
+    id: "mumu", name: "沐霂·领舞开场", title: "四禧丸子 · 领舞前排", glyph: "沐", color: "#5b7992", accent: "#a9e5ff", tier: 4, cost: 4,
+    traits: ["vanguard", "dance"], hp: 330, attack: 34, armor: 29, range: 52, attackInterval: 0.96, moveSpeed: 68,
+    abilityName: "领舞开场", abilityDescription: "冲至敌人最密集处，造成范围伤害并为附近友军提供护盾。", shop: true,
+  }),
   rei: unit({
-    id: "rei", name: "病院坂灵·幽灵终演", title: "病院坂灵Rei · 群体法师", glyph: "灵", color: "#735779", accent: "#e8b5ff", tier: 5, cost: 5,
+    id: "rei", name: "病院坂灵", title: "病院坂灵Rei · 群体法师", glyph: "灵", color: "#735779", accent: "#e8b5ff", tier: 5, cost: 5,
     traits: ["ember", "mystic", "host"], hp: 270, attack: 43, armor: 18, range: 230, attackInterval: 0.82, moveSpeed: 66,
     abilityName: "幽灵终演", abilityDescription: "召唤幽灵轰击敌人最密集区域，造成高额范围伤害、灼烧与眩晕。", shop: true,
   }),
@@ -792,6 +866,11 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     id: "rutice", name: "露蒂丝·诊所护航", title: "露蒂丝Rutice · 决战守卫", glyph: "医", color: "#4b7280", accent: "#90e7df", tier: 5, cost: 5,
     traits: ["aegis", "vanguard", "host"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
     abilityName: "终幕护航", abilityDescription: "为全体友军提供厚重护盾，随后震晕周围敌人并回复自身生命。", shop: true,
+  }),
+  lian: unit({
+    id: "lian", name: "梨安·终场谢幕", title: "四禧丸子 · 终场舞者", glyph: "梨", color: "#8b5b9b", accent: "#e3b2ff", tier: 5, cost: 5,
+    traits: ["mystic", "dance"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
+    abilityName: "终场谢幕", abilityDescription: "轰击敌人最密集处，造成范围伤害并为全体友军补充能量。", shop: true,
   }),
 
   rift_tyrant: unit({
@@ -819,30 +898,12 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
 export const SHOP_UNITS: ShopUnitId[] = [...SHOP_UNIT_IDS];
 
 export const STARTERS: StarterDefinition[] = [
-  {
-    id: "bastion",
-    name: "果冻风纪",
-    subtitle: "稳扎稳打",
-    description: "携带果冻风纪开局；基地生命 +4，所有护盾效果 +30%。",
-    unit: "sun_guard",
-    color: "#69d8ff",
-  },
-  {
-    id: "blaze",
-    name: "兔子射手",
-    subtitle: "远程灼烧",
-    description: "携带兔子射手开局；灼烧伤害 +40%，首次胜利额外获得 2 金币。",
-    unit: "ember_blade",
-    color: "#ff8058",
-  },
-  {
-    id: "echo",
-    name: "浣熊店员",
-    subtitle: "毛茸茸续航",
-    description: "携带浣熊店员开局；毛茸茸吸血额外 +6%，初始金币 +1。",
-    unit: "gale_archer",
-    color: "#76e7ae",
-  },
+  { id: "mature_start", name: "成熟稳重", subtitle: "老派开场", description: "携带浣熊店员开局；成熟成员开战护盾 +6%，初始金币 +1。", unit: "gale_archer", color: "#b9a274" },
+  { id: "blaze", name: "火热整活", subtitle: "辣福灼烧", description: "携带雅吨开局；灼烧伤害 +40%，首次胜利额外获得 2 金币。", unit: "rift_brawler", color: "#ff8058" },
+  { id: "traffic_start", name: "蹭热点", subtitle: "流量续航", description: "携带大黑鼠开局；流量成员吸血额外 +6%，初始金币 +1。", unit: "dawn_duelist", color: "#ff7197" },
+  { id: "bastion", name: "持久抗压", subtitle: "稳扎稳打", description: "携带果冻风纪开局；基地生命 +4，所有护盾效果 +30%。", unit: "sun_guard", color: "#69d8ff" },
+  { id: "dance_start", name: "舞台预热", subtitle: "先踩拍子", description: "携带泽音开局；跳舞成员开战 +20 能量，首战攻击速度 +15%。", unit: "zeyin", color: "#f39ade" },
+  { id: "ranger_start", name: "稳定输出", subtitle: "远程热身", description: "携带兔子射手开局；所有远程友军攻击速度 +10%，首次刷新商店免费。", unit: "ember_blade", color: "#f2d15e" },
 ];
 
 export const AUGMENTS: AugmentDefinition[] = [
@@ -855,8 +916,8 @@ export const AUGMENTS: AugmentDefinition[] = [
   },
   {
     id: "overclock",
-    name: "栞栞书签",
-    kicker: "Shiori · 技能",
+    name: "出道推流",
+    kicker: "技能 · 提前释放",
     description: "所有友军开战时额外获得 35 能量。",
     color: "#c58cff",
   },
@@ -876,8 +937,8 @@ export const AUGMENTS: AugmentDefinition[] = [
   },
   {
     id: "triage",
-    name: "七海急救",
-    kicker: "Nana7mi · 续航",
+    name: "全员续航",
+    kicker: "团队 · 续航",
     description: "每 2.5 秒治疗全部友军 3% 最大生命。",
     color: "#72e7a5",
   },
@@ -909,7 +970,7 @@ export const WAVES: WaveDefinition[] = [
     round: 1,
     name: "直播间暖场",
     tag: "normal",
-    description: "果冻风纪与炽焰萝卜在前排，适合熟悉站位。",
+    description: "果冻风纪与兔子射手在前排，适合熟悉站位。",
     modifier: 0.64,
     units: [{ id: "sun_guard" }, { id: "ember_blade" }],
   },
