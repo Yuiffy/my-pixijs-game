@@ -330,6 +330,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 52,
     abilityName: "折光壁垒",
     abilityDescription: "获得护盾，震击并短暂眩晕当前目标。",
+    portrait: "/images/livers/hazel.png",
+    portraitFocus: "top",
     shop: true,
   }),
   ember_blade: unit({
@@ -438,6 +440,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 45,
     abilityName: "绒绒互助",
     abilityDescription: "回复自身生命，并为生命比例最低的两名友军提供护盾。",
+    portrait: "/images/livers/mofu.jpg",
+    portraitFocus: "top",
     shop: true,
   }),
   sui: unit({
@@ -726,6 +730,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 52,
     abilityName: "hello酷狗",
     abilityDescription: "向当前目标发射强化音波，并为能量最低的友军补充大量能量。",
+    portrait: "/images/livers/mitsuri.jpg",
+    portraitFocus: "top",
     shop: true,
   }),
 
@@ -748,6 +754,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 72,
     abilityName: "滑跪",
     abilityDescription: "向最远敌人滑跪突进，击退沿途敌人并为自己获得护盾。",
+    portrait: "/images/livers/guangyi.jpg",
+    portraitFocus: "top",
     shop: true,
   }),
   sui_cat: unit({
@@ -823,22 +831,26 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   nori: unit({
     id: "nori", name: "能能弄你", title: "能能Nori · 弹幕射手", glyph: "能", color: "#526a9e", accent: "#9bb8ff", tier: 1, cost: 1,
     traits: ["ranger", "host"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
-    abilityName: "苹果派", abilityDescription: "发射 8 枚低伤害苹果派子弹。", shop: true,
+    abilityName: "苹果派", abilityDescription: "发射 8 枚低伤害苹果派子弹。",
+    portrait: "/images/livers/nori.jpg", portraitFocus: "top", shop: true,
   }),
   meme: unit({
     id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 3, cost: 3,
     traits: ["wild", "vanguard", "aggression"], hp: 290, attack: 23, armor: 28, range: 60, attackInterval: 1.06, moveSpeed: 48,
-    abilityName: "夺回人生", abilityDescription: "震晕附近敌人并造成伤害，随后按造成伤害回复自身生命。", shop: true,
+    abilityName: "夺回人生", abilityDescription: "震晕附近敌人并造成伤害，随后按造成伤害回复自身生命。",
+    portrait: "/images/livers/meme.jpg", portraitFocus: "top", shop: true,
   }),
   zeyin: unit({
     id: "zeyin", name: "泽音美乐蒂", title: "泽音Melody · 舞台射手", glyph: "泽", color: "#6c4c86", accent: "#e2a9ff", tier: 4, cost: 4,
     traits: ["ranger", "mature", "dance"], hp: 210, attack: 32, armor: 12, range: 220, attackInterval: 0.82, moveSpeed: 60,
-    abilityName: "虹光起舞", abilityDescription: "向当前目标连射两次，并为自己获得短暂攻速。", shop: true,
+    abilityName: "虹光起舞", abilityDescription: "向当前目标连射两次，并为自己获得短暂攻速。",
+    portrait: "/images/livers/zeyin.jpg", portraitFocus: "top", shop: true,
   }),
   kioi: unit({
     id: "kioi", name: "美·鱿鱼", title: "美·鱿鱼 · 远程削弱", glyph: "鱿", color: "#7b6942", accent: "#f5d56f", tier: 2, cost: 2,
     traits: ["wild", "ranger", "host"], hp: 162, attack: 27, armor: 9, range: 235, attackInterval: 0.84, moveSpeed: 60,
-    abilityName: "讨厌你", abilityDescription: "点名一名敌人，造成伤害并降低其攻击力与护甲。", shop: true,
+    abilityName: "讨厌你", abilityDescription: "点名一名敌人，造成伤害并降低其攻击力与护甲。",
+    portrait: "/images/livers/kioi.jpg", portraitFocus: "top", shop: true,
   }),
   nightin: unit({
     id: "nightin", name: "南町", title: "绿色辣妹 · 深夜控场", glyph: "南", color: "#3b426f", accent: "#a9a7ff", tier: 2, cost: 2,
@@ -848,47 +860,56 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   tiandou: unit({
     id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 舞台支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
     traits: ["mystic", "dance"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
-    abilityName: "甜点转圈", abilityDescription: "为生命最低的两名友军回复生命，并提升她们短暂移速。", shop: true,
+    abilityName: "甜点转圈", abilityDescription: "为生命最低的两名友军回复生命，并提升她们短暂移速。",
+    portrait: "/images/livers/tiandou.jpg", portraitFocus: "top", shop: true,
   }),
   youyi: unit({
     id: "youyi", name: "又一·叛逆舞步", title: "四禧丸子 · 突进舞者", glyph: "又", color: "#84536f", accent: "#f0add2", tier: 3, cost: 3,
     traits: ["assassin", "dance"], hp: 212, attack: 31, armor: 14, range: 50, attackInterval: 0.86, moveSpeed: 82,
-    abilityName: "叛逆转场", abilityDescription: "跃向最远敌人，连续踢击两次并短暂眩晕。", shop: true,
+    abilityName: "叛逆转场", abilityDescription: "跃向最远敌人，连续踢击两次并短暂眩晕。",
+    portrait: "/images/livers/youyi.jpg", portraitFocus: "top", shop: true,
   }),
   akirinco: unit({
     id: "akirinco", name: "秋凛子", title: "秋凛子Aki Rinco · 残血收割", glyph: "秋", color: "#65445f", accent: "#eca5d3", tier: 4, cost: 4,
     traits: ["assassin", "host"], hp: 222, attack: 39, armor: 14, range: 50, attackInterval: 0.76, moveSpeed: 92,
-    abilityName: "神社夜巡", abilityDescription: "跃至生命最低的敌人身边连续斩击；完成击杀后恢复生命。", shop: true,
+    abilityName: "神社夜巡", abilityDescription: "跃至生命最低的敌人身边连续斩击；完成击杀后恢复生命。",
+    portrait: "/images/livers/akirinco.jpg", portraitFocus: "top", shop: true,
   }),
   lovely: unit({
     id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
     traits: ["assassin", "host", "dance"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
-    abilityName: "元气冲场", abilityDescription: "跃入敌人最密集处横扫；每命中一名敌人，都会提升自身攻击速度。", shop: true,
+    abilityName: "元气冲场", abilityDescription: "跃入敌人最密集处横扫；每命中一名敌人，都会提升自身攻击速度。",
+    portrait: "/images/livers/lovely.webp", portraitFocus: "top", shop: true,
   }),
   mumu: unit({
     id: "mumu", name: "沐霂·领舞开场", title: "四禧丸子 · 领舞前排", glyph: "沐", color: "#5b7992", accent: "#a9e5ff", tier: 4, cost: 4,
     traits: ["vanguard", "dance"], hp: 330, attack: 34, armor: 29, range: 52, attackInterval: 0.96, moveSpeed: 68,
-    abilityName: "领舞开场", abilityDescription: "冲至敌人最密集处，造成范围伤害并为附近友军提供护盾。", shop: true,
+    abilityName: "领舞开场", abilityDescription: "冲至敌人最密集处，造成范围伤害并为附近友军提供护盾。",
+    portrait: "/images/livers/mumu.webp", portraitFocus: "top", shop: true,
   }),
   xuehui: unit({
     id: "xuehui", name: "雪绘", title: "雪绘 · 同步视听", glyph: "绘", color: "#445a8e", accent: "#8dc8ff", tier: 4, cost: 4,
     traits: ["dwarf", "ember", "aggression"], hp: 205, attack: 37, armor: 13, range: 270, attackInterval: 0.88, moveSpeed: 58,
-    abilityName: "同步视听", abilityDescription: "己方越优势，自身攻速移速越低、射程越近；越劣势则反之。快速向三个不同敌人方向射出子弹，命中造成伤害和灼烧。", shop: true,
+    abilityName: "同步视听", abilityDescription: "己方越优势，自身攻速移速越低、射程越近；越劣势则反之。快速向三个不同敌人方向射出子弹，命中造成伤害和灼烧。",
+    portrait: "/images/livers/xuehui.jpg", portraitFocus: "top", shop: true,
   }),
   rei: unit({
     id: "rei", name: "病院坂灵", title: "病院坂灵Rei · 群体法师", glyph: "灵", color: "#735779", accent: "#e8b5ff", tier: 5, cost: 5,
     traits: ["mystic", "ranger"], hp: 270, attack: 43, armor: 18, range: 230, attackInterval: 0.82, moveSpeed: 66,
-    abilityName: "幽灵终演", abilityDescription: "召唤幽灵轰击敌人最密集区域，造成高额范围伤害、灼烧与眩晕。", shop: true,
+    abilityName: "幽灵终演", abilityDescription: "召唤幽灵轰击敌人最密集区域，造成高额范围伤害、灼烧与眩晕。",
+    portrait: "/images/livers/rei.jpg", portraitFocus: "top", shop: true,
   }),
   rutice: unit({
     id: "rutice", name: "露蒂丝·诊所护航", title: "露蒂丝Rutice · 决战守卫", glyph: "医", color: "#4b7280", accent: "#90e7df", tier: 5, cost: 5,
     traits: ["vanguard", "host"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
-    abilityName: "终幕护航", abilityDescription: "为全体友军提供厚重护盾，随后震晕周围敌人并回复自身生命。", shop: true,
+    abilityName: "终幕护航", abilityDescription: "为全体友军提供厚重护盾，随后震晕周围敌人并回复自身生命。",
+    portrait: "/images/livers/rutice.jpg", portraitFocus: "top", shop: true,
   }),
   lian: unit({
     id: "lian", name: "梨安·终场谢幕", title: "四禧丸子 · 终场舞者", glyph: "梨", color: "#8b5b9b", accent: "#e3b2ff", tier: 5, cost: 5,
     traits: ["mystic", "dance"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
-    abilityName: "终场谢幕", abilityDescription: "轰击敌人最密集处，造成范围伤害并为全体友军补充能量。", shop: true,
+    abilityName: "终场谢幕", abilityDescription: "轰击敌人最密集处，造成范围伤害并为全体友军补充能量。",
+    portrait: "/images/livers/lian.jpg", portraitFocus: "top", shop: true,
   }),
 
   rift_tyrant: unit({
@@ -909,6 +930,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 46,
     abilityName: "裂界冲击",
     abilityDescription: "冲击全场并眩晕所有敌人，半血后进入狂暴。",
+    portrait: "/images/autochess/portraits/rift-tyrant.png",
+    portraitFocus: "center",
     shop: false,
   }),
 };
