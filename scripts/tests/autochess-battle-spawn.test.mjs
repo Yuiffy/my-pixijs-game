@@ -170,15 +170,15 @@ test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sui_bird", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "sui_cat", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui_blue", star: 1 };
   engine.state.board[2] = { uid: 3, id: "grove_mender", star: 1 };
-  engine.state.board[3] = { uid: 4, id: "sui_cat", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sui_blue", star: 1 };
   engine.state.board[4] = { uid: 5, id: "spark_mage", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);
   battle.enemy.forEach((fighter) => { fighter.hp = 99_999; fighter.maxHp = 99_999; fighter.attack = 0; fighter.armor = 99_999; });
-  const hungry = battle.player.find((fighter) => fighter.unitId === "sui_cat");
+  const hungry = battle.player.find((fighter) => fighter.unitId === "sui_blue");
   const beforeRadius = hungry?.radius;
   for (let tick = 0; tick < 61; tick += 1) {
     battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp; });
@@ -276,16 +276,16 @@ test("攻击性为成员与全队分别提供攻击力", () => {
   engine.state.board[0] = { uid: 1, id: "xuehui", star: 1 };
   engine.state.board[1] = { uid: 2, id: "meme", star: 1 };
   engine.state.board[2] = { uid: 3, id: "sui", star: 1 };
-  engine.state.board[3] = { uid: 4, id: "sui_blue", star: 1 };
-  engine.state.board[4] = { uid: 5, id: "sui_flower", star: 1 };
-  engine.state.board[5] = { uid: 6, id: "cinder_ram", star: 1 };
-  engine.state.board[6] = { uid: 7, id: "mossback", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sui_cat", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "cinder_ram", star: 1 };
+  engine.state.board[5] = { uid: 6, id: "mossback", star: 1 };
   engine.startBattle();
   const xuehui = engine.state.battle?.player.find((fighter) => fighter.unitId === "xuehui");
   const control = engine.state.battle?.player.find((fighter) => fighter.unitId === "mossback");
   assert.ok(xuehui && control);
-  assert.equal(xuehui.baseAttack, 37 * 1.15 * 1.75);
-  assert.equal(control.baseAttack, 15 * 1.15 * 1.2);
+  // 5 名攻击性成员 → 2 阶：成员 +30% / 全队 +10%
+  assert.equal(xuehui.baseAttack, 37 * 1.15 * (1 + 0.1 + 0.3));
+  assert.equal(control.baseAttack, 15 * 1.15 * (1 + 0.1));
 });
 
 test("同步视听按战力差线性调整属性且不重复叠加", () => {
