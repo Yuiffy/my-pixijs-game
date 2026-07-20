@@ -907,7 +907,7 @@ export class AutoChessEngine {
         matureAttackSpeed,
         matureAttackSpeedCurrent: matureAttackSpeed,
         vanguardMember: vanguardLevel > 0,
-        vanguardKnockback: vanguardLevel ? [0, 28, 38, 50][vanguardLevel] : 0,
+        vanguardKnockback: vanguardLevel ? [0, 16, 38, 50][vanguardLevel] : 0,
         vanguardJumpCooldown: 0,
         danceMember: danceLevel > 0,
         danceDashCooldown: 0,

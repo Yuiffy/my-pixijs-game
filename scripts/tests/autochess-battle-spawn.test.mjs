@@ -150,7 +150,8 @@ test("怕死后跳会留在自身攻击距离内，越界时改为侧跳", () =>
   const attacker = battle.enemy[0];
   battle.player.forEach((fighter) => { fighter.cooldown = 99; });
   battle.enemy.forEach((fighter) => { fighter.cooldown = 99; fighter.attack = 0; fighter.hp = 99_999; fighter.maxHp = 99_999; });
-  target.x = 430; target.y = 320; target.cooldown = 99;
+  // 站位故意拉远，使一级后跳（16）仍会越出攻击距离，从而触发侧跳兜底
+  target.x = 418; target.y = 320; target.cooldown = 99;
   attacker.x = 490; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 280; attacker.cooldown = 0;
 
   engine.update(0.05);
