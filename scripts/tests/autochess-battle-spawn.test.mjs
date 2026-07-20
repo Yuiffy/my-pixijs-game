@@ -599,6 +599,58 @@ test("拥堵边界会触发侧移恢复且始终留在战场内", () => {
   battle.player.concat(battle.enemy).filter((fighter) => fighter.alive).forEach(assertInsideBattleBounds);
 });
 
+test("被友军贴脸挡住时会物理推开队友并接敌", () => {
+  const engine = createEngine(105);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "mossback", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const source = battle.player.find((fighter) => fighter.unitId === "mossback");
+  const blocker = battle.player.find((fighter) => fighter.unitId === "sui");
+  const target = battle.enemy[0];
+  assert.ok(source);
+  assert.ok(blocker);
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.armor = 0;
+    fighter.x = 640;
+    fighter.y = 360;
+  });
+  // 友军已贴脸占住正面，后方近战被挡住无法直线进攻击距离
+  blocker.x = 640 - (blocker.radius + target.radius + 10);
+  blocker.y = 360;
+  blocker.stun = 99;
+  source.x = blocker.x - (source.radius + blocker.radius + 4);
+  source.y = 360;
+  source.cooldown = 0;
+  const preferredRange = Math.max(source.range, source.radius + target.radius + 12);
+  const blockerStart = { x: blocker.x, y: blocker.y };
+  assert.ok(Math.hypot(target.x - source.x, target.y - source.y) > preferredRange);
+  let maxSourceStep = 0;
+  let prev = { x: source.x, y: source.y };
+  for (let tick = 0; tick < 90; tick += 1) {
+    stepBattle(engine, 1);
+    maxSourceStep = Math.max(maxSourceStep, Math.hypot(source.x - prev.x, source.y - prev.y));
+    prev = { x: source.x, y: source.y };
+  }
+  assert.ok(maxSourceStep < 18, "接敌应靠逐步移动，不应闪现");
+  assert.ok(
+    Math.abs(blocker.y - blockerStart.y) > 8 || Math.abs(blocker.x - blockerStart.x) > 8,
+    "挡路友军应被物理推开",
+  );
+  assert.ok(
+    source.damageDealt > 0 || Math.hypot(target.x - source.x, target.y - source.y) <= preferredRange + 1,
+    "推开队友后应进入攻击距离或完成输出",
+  );
+  assert.ok(clearance(source, blocker) >= -0.01);
+  [source, blocker].forEach(assertInsideBattleBounds);
+});
+
 test("刺客在拥挤后排选择有界的最高空隙落点", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;

@@ -76,12 +76,16 @@ const YIELD_PATH_PADDING = 3;
 const YIELD_MIN_FORWARD = 1;
 const CONTACT_SKIN = 2;
 const CONTACT_PRESSURE_SPEED = 70;
+const CONTACT_PRESSURE_SPEED_FORCE = 160;
 const MAX_CONTACT_SHIFT_PER_TICK = 4;
+const MAX_CONTACT_SHIFT_PER_TICK_FORCE = 10;
 const MAX_SEPARATION_PER_TICK = 3;
 const YIELD_PROGRESS_WINDOW = 0.3;
 const YIELD_MIN_TARGET_PROGRESS = 5;
 const STUCK_RECOVERY_DELAY = 0.65;
 const STUCK_RECOVERY_DURATION = 0.42;
+/** 卡住一段时间后加大推挤，仍靠物理位移而非瞬移 */
+const STUCK_PUSH_FORCE_DELAY = 0.28;
 const SEPARATION_PASSES = 2;
 const VANGUARD_JUMP_DURATION = 0.46;
 const VANGUARD_JUMP_COOLDOWN = 0.72;
@@ -1175,6 +1179,11 @@ export class AutoChessEngine {
       .sort((left, right) => left.forward - right.forward || left.other.fid.localeCompare(right.other.fid))[0]?.other || null;
   }
 
+  private allyPushForceActive(mover: Fighter) {
+    return mover.avoidTime > 0 || mover.stuckTime >= STUCK_PUSH_FORCE_DELAY;
+  }
+
+  /** 用碰撞把挡路友军推开；贴敌时沿敌人圆周滑动，不开闪现 */
   private applyAllyContactPressure(
     mover: Fighter,
     blocker: Fighter,
@@ -1185,20 +1194,63 @@ export class AutoChessEngine {
   ) {
     const distance = Math.hypot(blocker.x - mover.x, blocker.y - mover.y);
     const minimum = mover.radius + blocker.radius + CONTACT_SKIN;
-    if (distance >= minimum) return false;
+    const force = this.allyPushForceActive(mover);
+    const reach = force ? minimum + 6 : minimum;
+    if (distance >= reach) return false;
     const sideX = -motionY;
     const sideY = motionX;
-    const required = minimum - distance;
-    const shift = Math.min(required, CONTACT_PRESSURE_SPEED * dt, MAX_CONTACT_SHIFT_PER_TICK);
+    const required = Math.max(minimum - distance, force ? 2.5 : 0);
+    const shift = Math.min(
+      required,
+      (force ? CONTACT_PRESSURE_SPEED_FORCE : CONTACT_PRESSURE_SPEED) * dt,
+      force ? MAX_CONTACT_SHIFT_PER_TICK_FORCE : MAX_CONTACT_SHIFT_PER_TICK,
+    );
     if (shift < 0.01) return false;
     const sides: Array<-1 | 1> = [mover.avoidSide, mover.avoidSide === 1 ? -1 : 1];
-    let best: { x: number; y: number; clearance: number } | null = null;
+    const offsets: Array<{ x: number; y: number }> = [];
     for (const side of sides) {
+      offsets.push({ x: sideX * shift * side, y: sideY * shift * side });
+    }
+    if (force) {
+      const awayX = distance > 0.01 ? (blocker.x - mover.x) / distance : motionX;
+      const awayY = distance > 0.01 ? (blocker.y - mover.y) / distance : motionY;
+      for (const side of sides) {
+        offsets.push({
+          x: awayX * shift * 0.55 + sideX * shift * side * 0.85,
+          y: awayY * shift * 0.55 + sideY * shift * side * 0.85,
+        });
+      }
+    }
+    // 友军已贴敌人时，纯横向会被挡住；改为沿敌人外缘滑动腾出通道
+    for (const other of fighters) {
+      if (!other.alive || other === blocker || other === mover || other.team === mover.team) continue;
+      const relativeX = blocker.x - other.x;
+      const relativeY = blocker.y - other.y;
+      const relative = Math.hypot(relativeX, relativeY);
+      const touchGap = relative - blocker.radius - other.radius;
+      if (touchGap > 18) continue;
+      const orbitRadius = Math.max(relative, other.radius + blocker.radius + CONTACT_SKIN);
+      const baseAngle = Math.atan2(relativeY || 0.01, relativeX || 0.01);
+      const tangentX = relative > 0.01 ? -relativeY / relative : -1;
+      const tangentY = relative > 0.01 ? relativeX / relative : 0;
+      for (const side of sides) {
+        offsets.push({ x: tangentX * shift * side, y: tangentY * shift * side });
+        const orbitAngle = baseAngle + side * (shift / Math.max(orbitRadius, 1));
+        offsets.push({
+          x: other.x + Math.cos(orbitAngle) * orbitRadius - blocker.x,
+          y: other.y + Math.sin(orbitAngle) * orbitRadius - blocker.y,
+        });
+      }
+    }
+    let best: { x: number; y: number; clearance: number } | null = null;
+    for (const offset of offsets) {
+      const offsetLength = Math.hypot(offset.x, offset.y);
+      if (offsetLength < shift * 0.35) continue;
       const candidate = this.clampFighterPosition(blocker, {
-        x: blocker.x + sideX * shift * side,
-        y: blocker.y + sideY * shift * side,
+        x: blocker.x + offset.x,
+        y: blocker.y + offset.y,
       });
-      if (Math.hypot(candidate.x - blocker.x, candidate.y - blocker.y) < shift * 0.5) continue;
+      if (Math.hypot(candidate.x - blocker.x, candidate.y - blocker.y) < shift * 0.35) continue;
       let clearance = Infinity;
       let blocked = false;
       for (const other of fighters) {
@@ -1249,6 +1301,37 @@ export class AutoChessEngine {
       }
     }
     return best;
+  }
+
+  /** 挡路时优先朝目标攻击环侧翼走，仍是逐步移动而非瞬移 */
+  private combatApproachCandidates(fighter: Fighter, target: Fighter, preferredRange: number) {
+    const baseAngle = Math.atan2(fighter.y - target.y, fighter.x - target.x);
+    const side = fighter.avoidSide;
+    const offsets = [0, side * 0.55, -side * 0.55, side * 1.15, -side * 1.15, side * 1.75, -side * 1.75, Math.PI];
+    return offsets.map((offset) => ({
+      x: target.x + Math.cos(baseAngle + offset) * preferredRange,
+      y: target.y + Math.sin(baseAngle + offset) * preferredRange,
+    }));
+  }
+
+  private findFrontAllyBlocker(mover: Fighter, towardX: number, towardY: number, fighters: Fighter[]) {
+    return fighters
+      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.jumpPending && other.jumpTime <= 0)
+      .map((other) => {
+        const relativeX = other.x - mover.x;
+        const relativeY = other.y - mover.y;
+        const forward = relativeX * towardX + relativeY * towardY;
+        const lateral = Math.abs(relativeX * -towardY + relativeY * towardX);
+        const distance = Math.hypot(relativeX, relativeY);
+        return { other, forward, lateral, distance };
+      })
+      .filter(({ other, forward, lateral, distance }) =>
+        forward > YIELD_MIN_FORWARD &&
+        forward < AVOID_LOOK_AHEAD &&
+        lateral < mover.radius + other.radius + 10 &&
+        distance < mover.radius + other.radius + (this.allyPushForceActive(mover) ? 14 : 4),
+      )
+      .sort((left, right) => left.forward - right.forward || left.other.fid.localeCompare(right.other.fid))[0]?.other || null;
   }
 
   private relocateFighter(source: Fighter, preferred: { x: number; y: number }) {
@@ -1306,11 +1389,15 @@ export class AutoChessEngine {
       return forward > 0 && forward < AVOID_LOOK_AHEAD && lateral < fighter.radius + other.radius + 12;
     });
     const lateralOffset = fighter.avoidTime > 0 || blockedAhead ? fighter.avoidSide * 56 : 0;
+    const ringCandidates = blockedAhead || fighter.avoidTime > 0
+      ? this.combatApproachCandidates(fighter, target, preferredRange)
+      : [];
     const desired = this.findOpenPlacement(
       fighter,
       { x: directPoint.x - towardY * lateralOffset, y: directPoint.y + towardX * lateralOffset },
       fighters.filter((other) => other !== target),
       2,
+      ringCandidates,
     );
     let moveX = desired.x - fighter.x;
     let moveY = desired.y - fighter.y;
@@ -1332,7 +1419,9 @@ export class AutoChessEngine {
     const start = { x: fighter.x, y: fighter.y };
     fighter.x = proposed.x;
     fighter.y = proposed.y;
-    const blocker = this.findYieldableAlly(fighter, start, proposed, fighters);
+    const pathBlocker = this.findYieldableAlly(fighter, start, proposed, fighters);
+    const frontBlocker = this.findFrontAllyBlocker(fighter, towardX, towardY, fighters);
+    const blocker = pathBlocker || frontBlocker;
     if (blocker) this.applyAllyContactPressure(fighter, blocker, motionX, motionY, dt, fighters);
     this.faceTowardX(fighter, target.x);
 
@@ -1346,9 +1435,10 @@ export class AutoChessEngine {
       fighter.progressWindowTime = 0;
     }
     if (fighter.stuckTime >= STUCK_RECOVERY_DELAY) {
+      // 只换绕行侧并加大推挤，不瞬移
       fighter.avoidSide = fighter.avoidSide === 1 ? -1 : 1;
       fighter.avoidTime = STUCK_RECOVERY_DURATION;
-      fighter.stuckTime = 0;
+      fighter.stuckTime = STUCK_PUSH_FORCE_DELAY;
       fighter.progressAnchorDistance = newDistance;
       fighter.progressWindowTime = 0;
     }
