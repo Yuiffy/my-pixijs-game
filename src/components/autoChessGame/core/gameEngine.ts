@@ -599,6 +599,25 @@ export class AutoChessEngine {
     return a.zone === b.zone && a.index === b.index;
   }
 
+  public clearSelection() {
+    this.state.selected = null;
+  }
+
+  public moveUnit(from: UnitLocation, zone: UnitLocation["zone"], index: number) {
+    if (this.state.phase !== "preparation") return;
+    const sourceUnit = this.getAt(from);
+    if (!sourceUnit) return;
+    this.state.selected = from;
+    this.selectSlot(zone, index);
+  }
+
+  public sellUnit(zone: UnitLocation["zone"], index: number) {
+    if (this.state.phase !== "preparation") return;
+    if (!this.getAt({ zone, index })) return;
+    this.state.selected = { zone, index };
+    this.sellSelected();
+  }
+
   public selectSlot(zone: UnitLocation["zone"], index: number) {
     if (this.state.phase !== "preparation") return;
     const targetLocation = { zone, index } as UnitLocation;
