@@ -71,8 +71,7 @@ export const truncateText = (
   const ellipsis = "…";
   let truncated = "";
   for (const character of value) {
-    if (ctx.measureText(`${truncated}${character}${ellipsis}`).width > maxWidth)
-      break;
+    if (ctx.measureText(`${truncated}${character}${ellipsis}`).width > maxWidth) break;
     truncated += character;
   }
   return truncated ? `${truncated}${ellipsis}` : ellipsis;
@@ -128,8 +127,8 @@ export const drawBoundedText = (
   setTextFont(ctx, size, weight);
   const lines = boundedTextLines(ctx, value, maxWidth, maxLines);
   const startY = centerY - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((line, index) =>
-    text(ctx, line, x, startY + index * lineHeight, size, color, align, weight),
-  );
+  lines.forEach((line, index) => {
+    text(ctx, line, x, startY + index * lineHeight, size, color, align, weight);
+  });
   return lines;
 };

@@ -54,5 +54,6 @@ export const resultMetricRects: Array<{ metric: "damage" | "support" | "taken"; 
   { metric: "taken", rect: { x: 626, y: 214, w: 76, h: 24 } },
 ];
 
-export const inRect = (x: number, y: number, rect: Rect) =>
-  x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+export const inRect = (x: number, y: number, rect: Rect) => (
+  x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h
+);

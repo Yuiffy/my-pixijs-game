@@ -104,7 +104,7 @@ const drawMechanicalRabbitPet = (
 };
 
 export const drawMechanicalRabbitPets = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  const battle = state.battle;
+  const { battle } = state;
   if (!battle) return;
   battle.pets.forEach((pet) => drawMechanicalRabbitPet(ctx, pet, state.visualTime));
 };
@@ -139,7 +139,7 @@ const drawPineTreeTurret = (
 };
 
 export const drawPineTreeTurrets = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  const battle = state.battle;
+  const { battle } = state;
   if (!battle) return;
   battle.pineTrees.forEach((tree) => drawPineTreeTurret(ctx, tree, state.visualTime));
 };
@@ -152,7 +152,7 @@ const projectileEmoji = (projectile: Projectile) => {
 };
 
 export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  const battle = state.battle;
+  const { battle } = state;
   if (!battle) return;
   battle.projectiles.forEach((projectile) => {
     const speed = Math.hypot(projectile.velocityX, projectile.velocityY) || 1;
@@ -213,7 +213,7 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState)
 };
 
 export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  const battle = state.battle;
+  const { battle } = state;
   if (!battle) return;
 
   // 持续绘制时停球（独立于瞬时特效列表）
