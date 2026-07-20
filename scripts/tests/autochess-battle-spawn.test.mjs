@@ -23,9 +23,19 @@ const compileModule = async (relativePath, dependencies = {}) => {
 };
 
 const gameData = await compileModule("src/components/autoChessGame/core/gameData.ts");
+const gameTypes = await compileModule("src/components/autoChessGame/core/gameTypes.ts", {
+  "./gameData": gameData,
+});
+const battleGeometry = await compileModule(
+  "src/components/autoChessGame/core/battleGeometry.ts",
+  { "./gameTypes": gameTypes },
+);
 const { AutoChessEngine, mechanicalRabbitMuzzle } = await compileModule(
   "src/components/autoChessGame/core/gameEngine.ts",
-  { "./gameData": gameData },
+  {
+    "./battleGeometry": battleGeometry,
+    "./gameData": gameData,
+  },
 );
 
 const BOARD_SLOTS = [0, 4, 5, 6, 11, 12, 23];
@@ -766,7 +776,7 @@ test("老弥召唤的机械兔耳移动射击且伤害归属老弥", () => {
   assert.equal(battle.pets.length, 2);
   assert.equal(battle.player.length, playerCount);
   assert.ok(battle.pets.every((pet) => pet.ownerFid === owner.fid));
-  assert.ok(battle.pets.every((pet) => pet.life <= 3));
+  assert.ok(battle.pets.every((pet) => pet.life <= 4));
   const firstPair = battle.pets.map((pet) => pet.id);
   owner.energy = owner.maxEnergy;
   engine.update(0.05);
@@ -816,7 +826,7 @@ test("邪恶外星人的贯穿光线命中同横排敌人", () => {
   assert.ok(battle && source);
   const target = battle.enemy[0];
   const aligned = { ...target, fid: "test-aligned", x: 760, y: 330 };
-  const outside = { ...target, fid: "test-outside", x: 720, y: 353 };
+  const outside = { ...target, fid: "test-outside", x: 720, y: 361 };
   battle.enemy.push(aligned, outside);
   [target, aligned, outside].forEach((fighter) => {
     fighter.hp = fighter.maxHp = 9_999;
@@ -826,9 +836,42 @@ test("邪恶外星人的贯穿光线命中同横排敌人", () => {
   });
   target.x = 500; target.y = 280;
   source.x = 200; source.y = 280;
+  assert.equal(source.energyStyle, "alien");
+  assert.equal(source.maxEnergy, 75);
+  assert.equal(source.energy, 10);
   source.energy = source.maxEnergy;
   engine.update(0.05);
   assert.ok(target.hp < target.maxHp);
   assert.ok(aligned.hp < aligned.maxHp);
   assert.equal(outside.hp, outside.maxHp);
+});
+
+test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满", () => {
+  const engine = createEngine(97);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "zeyin", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "tiandou", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const zeyin = battle?.player.find((fighter) => fighter.unitId === "zeyin");
+  const tiandou = battle?.player.find((fighter) => fighter.unitId === "tiandou");
+  assert.ok(battle && zeyin && tiandou);
+  battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp = 99_999; fighter.attack = 0; fighter.armor = 99_999; });
+  const zeyinBaseInterval = zeyin.attackInterval;
+  zeyin.energy = zeyin.maxEnergy;
+  engine.update(0.05);
+  assert.equal(zeyin.abilityAttackSpeed, 0.25);
+  assert.ok(zeyin.abilityAttackSpeedTime > 3.9);
+  engine.update(0.05);
+  assert.ok(zeyin.attackInterval < zeyinBaseInterval / 1.2);
+
+  const tiandouBaseSpeed = tiandou.moveSpeed;
+  battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
+  tiandou.energy = tiandou.maxEnergy;
+  engine.update(0.05);
+  assert.equal(tiandou.abilityMoveSpeed, 16);
+  assert.ok(tiandou.abilityMoveSpeedTime > 2.9);
+  engine.update(0.05);
+  assert.ok(tiandou.moveSpeed >= tiandouBaseSpeed + 15);
 });

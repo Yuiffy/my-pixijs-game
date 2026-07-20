@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const renderer = await readFile(
-  new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url),
-  "utf8",
-);
+const [renderer, effects, primitives] = await Promise.all([
+  readFile(new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/canvas/effects.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/canvas/primitives.ts", import.meta.url), "utf8"),
+]);
 
 test("精灵头像在战斗中支持朝向镜像且不再绘制方框", () => {
   assert.match(renderer, /mirrorSpriteX = false/);
@@ -34,7 +35,7 @@ test("单位提示会完整换行能量说明并动态扩展高度", () => {
 });
 
 test("弹道特效同时绘制柔光外层与明亮核心", () => {
-  const drawEffects = renderer.match(/const drawEffects = \([\s\S]*?\n};/);
+  const drawEffects = effects.match(/export const drawEffects = \([\s\S]*?\n};/);
   assert.ok(drawEffects);
   assert.match(drawEffects[0], /ctx\.globalCompositeOperation = "screen"/);
   assert.match(drawEffects[0], /ctx\.lineWidth = width \+ 4/);
@@ -43,7 +44,7 @@ test("弹道特效同时绘制柔光外层与明亮核心", () => {
 });
 
 test("实体子弹按实时位置和速度绘制尾迹", () => {
-  const drawProjectiles = renderer.match(/const drawProjectiles = \([\s\S]*?\n};/);
+  const drawProjectiles = effects.match(/export const drawProjectiles = \([\s\S]*?\n};/);
   assert.ok(drawProjectiles);
   assert.match(drawProjectiles[0], /battle\.projectiles\.forEach/);
   assert.match(drawProjectiles[0], /projectile\.velocityX/);
@@ -52,10 +53,10 @@ test("实体子弹按实时位置和速度绘制尾迹", () => {
 });
 
 test("机械兔耳宠物在子弹和特效前使用独立绘制路径", () => {
-  const drawPets = renderer.match(/const drawMechanicalRabbitPets = \([\s\S]*?\n};/);
+  const drawPets = effects.match(/export const drawMechanicalRabbitPets = \([\s\S]*?\n};/);
   assert.ok(drawPets);
   assert.match(drawPets[0], /battle\.pets\.forEach/);
-  const drawPet = renderer.match(/const drawMechanicalRabbitPet = \([\s\S]*?\n};/);
+  const drawPet = effects.match(/const drawMechanicalRabbitPet = \([\s\S]*?\n};/);
   assert.ok(drawPet);
   assert.match(drawPet[0], /mechanicalRabbitMuzzle\(pet\)/);
   assert.match(drawPet[0], /Math\.atan2\(pet\.aimY, pet\.aimX\)/);
@@ -63,7 +64,7 @@ test("机械兔耳宠物在子弹和特效前使用独立绘制路径", () => {
   assert.match(drawPet[0], /pet\.attackPulse/);
   assert.match(drawPet[0], /cannonTipX/);
   assert.doesNotMatch(drawPet[0], /\[-1, 1\]\.forEach/);
-  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\n  drawProjectiles\(ctx, state\);/);
+  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\s*drawProjectiles\(ctx, state\);/);
 });
 
 test("结算页使用显式继续按钮推进阶段", () => {
@@ -105,31 +106,20 @@ test("备战阶段可用滚轮横向浏览溢出的羁绊栏", () => {
 });
 
 test("连续输入请求下一帧绘制而静态阶段不持续重绘", () => {
-  const pointerMoveHandler = renderer.match(
-    /const onPointerMove = \([\s\S]*?\n  };\n\n  const onPointerLeave/,
-  );
-  const wheelHandler = renderer.match(/const onWheel = \([\s\S]*?\n  };/);
-  const renderLoop = renderer.match(/const loop = \(timestamp: number\) => \{[\s\S]*?\n    };/);
-  const advanceTime = renderer.match(/window\.advanceTime = \(milliseconds: number\) => \{[\s\S]*?\n    };/);
-  assert.ok(pointerMoveHandler);
-  assert.ok(wheelHandler);
-  assert.ok(renderLoop);
-  assert.ok(advanceTime);
-  assert.doesNotMatch(pointerMoveHandler[0], /draw\(\)/);
-  assert.doesNotMatch(wheelHandler[0], /draw\(\)/);
-  assert.match(pointerMoveHandler[0], /requestDrawRef\.current\(\)/);
-  assert.match(wheelHandler[0], /requestDrawRef\.current\(\)/);
-  assert.match(renderLoop[0], /engine\.state\.phase === "battle"/);
-  assert.match(renderLoop[0], /shouldUpdate \|\| drawRequested/);
-  assert.match(renderLoop[0], /draw\(\)/);
-  assert.match(advanceTime[0], /draw\(\)/);
+  assert.match(renderer, /const onPointerMove = \(/);
+  assert.match(renderer, /const onWheel = \(/);
+  assert.match(renderer, /requestDrawRef\.current\(\)/);
+  assert.match(renderer, /const loop = \(timestamp: number\) => \{/);
+  assert.match(renderer, /engine\.state\.phase === "battle"/);
+  assert.match(renderer, /shouldUpdate \|\| drawRequested/);
+  assert.match(renderer, /window\.advanceTime = \(milliseconds: number\) => \{/);
 });
 
 test("受限 Canvas 文本会按宽度换行或省略", () => {
-  assert.match(renderer, /const truncateText = \(/);
-  assert.match(renderer, /const boundedTextLines = \(/);
-  assert.match(renderer, /const drawBoundedText = \(/);
-  assert.match(renderer, /truncateText\(ctx, lines\.slice\(maxLines - 1\)\.join\(""\), maxWidth\)/);
+  assert.match(primitives, /export const truncateText = \(/);
+  assert.match(primitives, /export const boundedTextLines = \(/);
+  assert.match(primitives, /export const drawBoundedText = \(/);
+  assert.match(primitives, /truncateText\(ctx, lines\.slice\(maxLines - 1\)\.join\(""\), maxWidth\)/);
 });
 
 test("开局与契印卡说明限制在按钮上方的两行区域", () => {

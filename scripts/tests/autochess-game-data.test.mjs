@@ -208,7 +208,7 @@ test("岁己形态拆分到不同关系构筑", () => {
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
-  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "reservoir", "automatic"]);
+  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "alien", "reservoir", "automatic"]);
   Object.values(data.UNIT_DEFS).forEach((unit) => {
     assert.ok(["melee", "ranged"].includes(unit.attackType), `${unit.id} must declare an attack type`);
     assert.ok(profiles.has(unit.energyProfile.id), `${unit.id} must use a known energy profile`);
@@ -228,10 +228,17 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.automatic), /自动回能（5 秒回满，每秒 \+20）/);
   assert.equal(data.UNIT_DEFS.cog_scribe.energyProfile.id, "flow");
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.id, "tempo");
+  assert.equal(data.UNIT_DEFS.yua.energyProfile.id, "alien");
+  assert.deepEqual(data.UNIT_DEFS.yua.energyProfile, data.ENERGY_PROFILES.alien);
+  assert.equal(data.UNIT_DEFS.yua.energyProfile.max, 75);
+  assert.equal(data.UNIT_DEFS.yua.energyProfile.start, 10);
+  assert.equal(data.UNIT_DEFS.yua.energyProfile.perSecond, 5);
+  assert.equal(data.UNIT_DEFS.yua.energyProfile.onAttack, 18);
   assert.equal(data.UNIT_DEFS.clock_gunner.traits.includes("ranger"), false);
   assert.equal(data.UNIT_DEFS.clock_gunner.traits.includes("yue_gang"), true);
   assert.equal(data.UNIT_DEFS.clock_gunner.abilityName, "机械兔耳浮游炮");
   assert.match(data.UNIT_DEFS.clock_gunner.abilityDescription, /两只机械兔耳/);
+  assert.match(data.UNIT_DEFS.clock_gunner.abilityDescription, /4 秒/);
   assert.equal(data.UNIT_DEFS.clock_gunner.attackInterval, 0.84);
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.onAttack, 15);
   assert.equal(data.UNIT_DEFS.yua.traits.includes("ranger"), true);

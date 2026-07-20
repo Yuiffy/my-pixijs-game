@@ -85,7 +85,7 @@ export type AugmentId =
   | "second_wind";
 
 export type AttackType = "melee" | "ranged";
-export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "reservoir" | "automatic";
+export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "alien" | "reservoir" | "automatic";
 
 export interface EnergyProfile {
   id: EnergyProfileId;
@@ -104,6 +104,7 @@ export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
   bulwark: { id: "bulwark", name: "受击回能", max: 90, start: 15, perSecond: 0, onAttack: 6, onHit: 20, castRefund: 0, color: "#f2b45e" },
   flow: { id: "flow", name: "流转回能", max: 100, start: 0, perSecond: 7, onAttack: 10, onHit: 4, castRefund: 0, color: "#65d8ca" },
   tempo: { id: "tempo", name: "疾奏回能", max: 80, start: 0, perSecond: 3, onAttack: 15, onHit: 4, castRefund: 0, color: "#ee8fc4" },
+  alien: { id: "alien", name: "外星回能", max: 75, start: 10, perSecond: 5, onAttack: 18, onHit: 5, castRefund: 0, color: "#ffc28a" },
   reservoir: { id: "reservoir", name: "蓄势回能", max: 120, start: 0, perSecond: 3, onAttack: 16, onHit: 6, castRefund: 0, color: "#7e9bff" },
   automatic: { id: "automatic", name: "自动回能", max: 100, start: 20, perSecond: 20, onAttack: 0, onHit: 0, castRefund: 0, color: "#9bb8ff" },
 };
@@ -281,7 +282,7 @@ const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energ
   shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 48 },
   sui_bird: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 62 },
   sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
-  yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 295, moveSpeed: 54 },
+  yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54 },
   mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50 },
   guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80 },
   sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 98 },
@@ -524,7 +525,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.84,
     moveSpeed: 48,
     abilityName: "机械兔耳浮游炮",
-    abilityDescription: "从头顶放出两只机械兔耳浮游炮；它们定点开火后快速转移，3 秒后回到弥月身上。",
+    abilityDescription: "从头顶放出两只机械兔耳浮游炮；它们高速连射并快速转移，4 秒后回到弥月身上。",
     portrait: "/images/livers/mizuki.png",
     portraitFocus: "top",
     shop: true,
@@ -583,11 +584,11 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     tier: 5,
     cost: 5,
     traits: ["ember", "mystic", "mature", "aggression"],
-    hp: 320,
-    attack: 34,
-    armor: 20,
+    hp: 340,
+    attack: 38,
+    armor: 22,
     range: 195,
-    attackInterval: 1.04,
+    attackInterval: 0.96,
     moveSpeed: 58,
     abilityName: "蛙梓歌唱",
     abilityDescription: "歌唱治疗全体友军，并让所有敌人短暂减速。",
@@ -694,14 +695,14 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     tier: 3,
     cost: 3,
     traits: ["ember", "ranger"],
-    hp: 172,
-    attack: 32,
-    armor: 10,
+    hp: 182,
+    attack: 34,
+    armor: 11,
     range: 250,
-    attackInterval: 0.78,
+    attackInterval: 0.76,
     moveSpeed: 56,
     abilityName: "外星贯穿光线",
-    abilityDescription: "发射外星贯穿光线，穿透当前目标所在横排的所有敌人。",
+    abilityDescription: "发射强化外星贯穿光线，穿透当前目标所在横排的所有敌人。",
     portrait: "/images/livers/yua.png",
     portraitFocus: "top",
     shop: true,
@@ -717,14 +718,14 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     tier: 3,
     cost: 3,
     traits: ["yue_gang", "mystic"],
-    hp: 176,
-    attack: 24,
-    armor: 10,
+    hp: 188,
+    attack: 27,
+    armor: 11,
     range: 225,
-    attackInterval: 1.02,
+    attackInterval: 0.96,
     moveSpeed: 52,
     abilityName: "hello酷狗",
-    abilityDescription: "向当前目标发射音波，并为能量最低的友军补充能量。",
+    abilityDescription: "向当前目标发射强化音波，并为能量最低的友军补充大量能量。",
     shop: true,
   }),
 
@@ -826,12 +827,12 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   meme: unit({
     id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 3, cost: 3,
-    traits: ["wild", "vanguard", "aggression"], hp: 260, attack: 16, armor: 25, range: 60, attackInterval: 1.18, moveSpeed: 48,
+    traits: ["wild", "vanguard", "aggression"], hp: 290, attack: 23, armor: 28, range: 60, attackInterval: 1.06, moveSpeed: 48,
     abilityName: "夺回人生", abilityDescription: "震晕附近敌人并造成伤害，随后按造成伤害回复自身生命。", shop: true,
   }),
   zeyin: unit({
     id: "zeyin", name: "泽音美乐蒂", title: "泽音Melody · 舞台射手", glyph: "泽", color: "#6c4c86", accent: "#e2a9ff", tier: 4, cost: 4,
-    traits: ["ranger", "mature", "dance"], hp: 142, attack: 21, armor: 7, range: 220, attackInterval: 0.9, moveSpeed: 60,
+    traits: ["ranger", "mature", "dance"], hp: 210, attack: 32, armor: 12, range: 220, attackInterval: 0.82, moveSpeed: 60,
     abilityName: "虹光起舞", abilityDescription: "向当前目标连射两次，并为自己获得短暂攻速。", shop: true,
   }),
   kioi: unit({
@@ -846,7 +847,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   tiandou: unit({
     id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 舞台支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
-    traits: ["mystic", "dance"], hp: 164, attack: 20, armor: 10, range: 200, attackInterval: 1.02, moveSpeed: 56,
+    traits: ["mystic", "dance"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
     abilityName: "甜点转圈", abilityDescription: "为生命最低的两名友军回复生命，并提升她们短暂移速。", shop: true,
   }),
   youyi: unit({

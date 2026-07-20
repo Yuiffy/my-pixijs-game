@@ -24,15 +24,44 @@ import {
   tierOddsForLevel,
   traitLevelForCount,
 } from "./gameData";
+import { BATTLE_BOUNDS, fighterVisualRadius, mechanicalRabbitMuzzle } from "./battleGeometry";
+import type {
+  AugmentSelection,
+  BattleEffect,
+  BattleState,
+  Fighter,
+  GamePhase,
+  GameState,
+  MechanicalRabbitPet,
+  OwnedUnit,
+  Projectile,
+  ProjectileVolleyShot,
+  RankingMetric,
+  RoundResult,
+  StarterSelection,
+  Team,
+  ToastState,
+  UnitLocation,
+} from "./gameTypes";
 
-export type GamePhase =
-  | "title"
-  | "preparation"
-  | "battle"
-  | "result"
-  | "augment"
-  | "gameover";
-export type Team = "player" | "enemy";
+export type {
+  AugmentSelection,
+  BattleEffect,
+  BattleState,
+  Fighter,
+  GamePhase,
+  GameState,
+  MechanicalRabbitPet,
+  OwnedUnit,
+  Projectile,
+  RankingMetric,
+  RoundResult,
+  StarterSelection,
+  Team,
+  ToastState,
+  UnitLocation,
+} from "./gameTypes";
+export { fighterVisualRadius, mechanicalRabbitMuzzle } from "./battleGeometry";
 
 const CONTACT_ATTACK_BUFFER = 12;
 const PLACEMENT_MARGIN = 8;
@@ -51,280 +80,26 @@ const STUCK_RECOVERY_DELAY = 0.65;
 const STUCK_RECOVERY_DURATION = 0.42;
 const SEPARATION_PASSES = 2;
 const CLOCK_GUNNER_RABBIT_COUNT = 2;
-const CLOCK_GUNNER_RABBIT_LIFETIME = 3;
+const CLOCK_GUNNER_RABBIT_LIFETIME = 4;
 const CLOCK_GUNNER_RABBIT_RADIUS = 14;
 const CLOCK_GUNNER_RABBIT_DASH_SPEED = 560;
 const CLOCK_GUNNER_RABBIT_RANGE = 235;
-const CLOCK_GUNNER_RABBIT_FIRE_INTERVAL = 0.58;
-const CLOCK_GUNNER_RABBIT_DAMAGE_MULTIPLIER = 0.36;
+const CLOCK_GUNNER_RABBIT_FIRE_INTERVAL = 0.46;
+const CLOCK_GUNNER_RABBIT_DAMAGE_MULTIPLIER = 0.46;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_SPEED = 620;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RANGE = 560;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RADIUS = 5;
 const CLOCK_GUNNER_RABBIT_FLANK_ANGLE = Math.PI * 0.62;
-
-export interface OwnedUnit {
-  uid: number;
-  id: UnitId;
-  star: 1 | 2 | 3;
-}
-
-export interface UnitLocation {
-  zone: "board" | "bench";
-  index: number;
-}
-
-export interface BattleEffect {
-  kind: "line" | "ring" | "burst" | "text" | "heal";
-  x: number;
-  y: number;
-  x2?: number;
-  y2?: number;
-  color: string;
-  text?: string;
-  life: number;
-  maxLife: number;
-  size?: number;
-}
-
-export interface Projectile {
-  sourceFid: string;
-  team: Team;
-  x: number;
-  y: number;
-  velocityX: number;
-  velocityY: number;
-  radius: number;
-  remainingRange: number;
-  damage: number;
-  burnPower: number;
-  color: string;
-  size: number;
-}
-
-export interface MechanicalRabbitPet {
-  id: string;
-  ownerFid: string;
-  team: Team;
-  x: number;
-  y: number;
-  radius: number;
-  life: number;
-  maxLife: number;
-  moveSpeed: number;
-  range: number;
-  fireTimer: number;
-  targetFid: string | null;
-  repositionX: number | null;
-  repositionY: number | null;
-  returning: boolean;
-  aimX: number;
-  aimY: number;
-  attackPulse: number;
-}
-
-const CLOCK_GUNNER_RABBIT_MUZZLE_DISTANCE = 1.55;
-
-export const mechanicalRabbitMuzzle = (pet: Pick<MechanicalRabbitPet, "x" | "y" | "radius" | "aimX" | "aimY">) => {
-  const length = Math.hypot(pet.aimX, pet.aimY) || 1;
-  return {
-    x: pet.x + (pet.aimX / length) * pet.radius * CLOCK_GUNNER_RABBIT_MUZZLE_DISTANCE,
-    y: pet.y + (pet.aimY / length) * pet.radius * CLOCK_GUNNER_RABBIT_MUZZLE_DISTANCE,
-  };
-};
-
-interface ProjectileVolleyShot {
-  sourceFid: string;
-  targetFid: string;
-  delay: number;
-  damage: number;
-  burnPower: number;
-  speed: number;
-  color: string;
-  size: number;
-}
 
 interface MovementIntent {
   x: number;
   y: number;
 }
 
-export interface Fighter {
-  fid: string;
-  unitId: UnitId;
-  team: Team;
-  star: 1 | 2 | 3;
-  x: number;
-  y: number;
-  radius: number;
-  hp: number;
-  maxHp: number;
-  shield: number;
-  attack: number;
-  armor: number;
-  range: number;
-  baseRange: number;
-  attackInterval: number;
-  moveSpeed: number;
-  cooldown: number;
-  energy: number;
-  maxEnergy: number;
-  energyPerSecond: number;
-  energyOnAttack: number;
-  energyOnHit: number;
-  energyStyle: import("./gameData").EnergyProfileId;
-  attackType: import("./gameData").AttackType;
-  stun: number;
-  burnTime: number;
-  burnDps: number;
-  burnSourceFid: string | null;
-  lifesteal: number;
-  burnOnHitPower: number;
-  spiceBurnOnHitPower: number;
-  dodgeChance: number;
-  dwarfMember: boolean;
-  gluttonyHolder: boolean;
-  growthStacks: number;
-  emberMember: boolean;
-  emberAttackPerStack: number;
-  emberAttackStacks: number;
-  emberAttackStackCap: number;
-  syncAvMember: boolean;
-  syncAvDirection: -1 | 0 | 1;
-  gen27Member: boolean;
-  gen27Buffed: boolean;
-  matureMember: boolean;
-  matureMoveFloor: number;
-  matureAttackSpeed: number;
-  matureAttackSpeedCurrent: number;
-  slowTime: number;
-  weakenTime: number;
-  weakenArmorPenalty: number;
-  baseAttack: number;
-  baseAttackInterval: number;
-  baseMoveSpeed: number;
-  yueGangMember: boolean;
-  lowHealthBonus: number;
-  critChance: number;
-  critMultiplier: number;
-  castRefund: number;
-  secondWindUsed: boolean;
-  enraged: boolean;
-  attackPulse: number;
-  facingX: -1 | 1;
-  attackTargetX: number;
-  attackTargetY: number;
-  hitPulse: number;
-  applePieShotsRemaining: number;
-  applePieShotTimer: number;
-  jumpPending: boolean;
-  jumpDelay: number;
-  jumpTime: number;
-  jumpDuration: number;
-  jumpFromX: number;
-  jumpFromY: number;
-  jumpToX: number;
-  jumpToY: number;
-  targetFid: string | null;
-  targetLock: number;
-  progressAnchorDistance: number;
-  progressWindowTime: number;
-  stuckTime: number;
-  avoidSide: -1 | 1;
-  avoidTime: number;
-  damageDealt: number;
-  healingDone: number;
-  shieldingDone: number;
-  damageTaken: number;
-  alive: boolean;
-}
-
-export type RankingMetric = "damage" | "support" | "taken";
-
-export interface BattleState {
-  elapsed: number;
-  limit: number;
-  player: Fighter[];
-  enemy: Fighter[];
-  effects: BattleEffect[];
-  projectiles: Projectile[];
-  projectileVolley: ProjectileVolleyShot[];
-  pets: MechanicalRabbitPet[];
-  petSerial: number;
-  fieldMedicTimer: number;
-  gluttonyTimer: number;
-  emberTimer: number;
-  yueGangTimer: number;
-  matureTimer: number;
-  banner: string;
-  bannerTimer: number;
-  rankingOpen: boolean;
-  rankingMetric: RankingMetric;
-}
-
-export interface RoundResult {
-  won: boolean;
-  headline: string;
-  detail: string;
-  income: number;
-  upgradeDiscount: number;
-  damage: number;
-}
-
-export interface ToastState {
-  text: string;
-  tone: "info" | "good" | "bad";
-  time: number;
-}
-
-export interface AugmentSelection {
-  round: number;
-  id: AugmentId;
-}
-
-export interface StarterSelection {
-  id: StarterId;
-}
-
-export interface GameState {
-  phase: GamePhase;
-  seed: number;
-  visualTime: number;
-  round: number;
-  maxRounds: number;
-  endlessUnlocked: boolean;
-  hp: number;
-  maxHp: number;
-  gold: number;
-  playerLevel: PlayerLevel;
-  upgradeRemaining: number;
-  score: number;
-  bestScore: number;
-  streak: number;
-  victories: number;
-  starter: StarterId | null;
-  starterChoices: StarterId[];
-  starterHistory: StarterSelection[];
-  board: Array<OwnedUnit | null>;
-  bench: Array<OwnedUnit | null>;
-  shop: Array<UnitId | null>;
-  shopLocked: boolean;
-  selected: UnitLocation | null;
-  augments: AugmentId[];
-  augmentHistory: AugmentSelection[];
-  augmentChoices: AugmentId[];
-  incomeBonus: number;
-  paydayDebtRounds: number;
-  battle: BattleState | null;
-  result: RoundResult | null;
-  finalWon: boolean;
-  toast: ToastState | null;
-}
-
 const BOARD_SIZE = 24;
 const BENCH_SIZE = 8;
 const SHOP_SIZE = 5;
 const STAR_SCALE = [0, 1, 1.68, 2.82];
-const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
 const NORI_APPLE_PIE_SHOTS = 8;
 const NORI_APPLE_PIE_INTERVAL = 0.14;
 const NORI_APPLE_PIE_DAMAGE_MULTIPLIER = 0.32;
@@ -335,11 +110,6 @@ const XUEHUI_VOLLEY_INTERVAL = 0.12;
 const XUEHUI_PROJECTILE_SPEED = 780;
 const XUEHUI_PROJECTILE_DAMAGE_MULTIPLIER = 0.84;
 const XUEHUI_PROJECTILE_BURN_MULTIPLIER = 0.62;
-
-export const fighterVisualRadius = (unitId: UnitId, star: 1 | 2 | 3) => {
-  if (unitId === "rift_tyrant") return 43;
-  return 26 + (star - 1) * 3;
-};
 
 interface RandomSource {
   next: () => number;
@@ -1083,6 +853,10 @@ export class AutoChessEngine {
         matureMoveFloor: matureLevel ? 0.7 : 1,
         matureAttackSpeed,
         matureAttackSpeedCurrent: matureAttackSpeed,
+        abilityAttackSpeed: 0,
+        abilityAttackSpeedTime: 0,
+        abilityMoveSpeed: 0,
+        abilityMoveSpeedTime: 0,
         slowTime: 0,
         weakenTime: 0,
         weakenArmorPenalty: 0,
@@ -1185,6 +959,10 @@ export class AutoChessEngine {
         matureMoveFloor: 1,
         matureAttackSpeed: 0,
         matureAttackSpeedCurrent: 0,
+        abilityAttackSpeed: 0,
+        abilityAttackSpeedTime: 0,
+        abilityMoveSpeed: 0,
+        abilityMoveSpeedTime: 0,
         slowTime: 0,
         weakenTime: 0,
         weakenArmorPenalty: 0,
@@ -1874,9 +1652,11 @@ export class AutoChessEngine {
         }
       }
       fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
+      const abilityAttackSpeed = fighter.abilityAttackSpeedTime > 0 ? fighter.abilityAttackSpeed : 0;
+      const abilityMoveSpeed = fighter.abilityMoveSpeedTime > 0 ? fighter.abilityMoveSpeed : 0;
       fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
-        (nearbyMultiplier * (1 + matureAttackSpeed) * syncMultiplier);
-      fighter.moveSpeed = fighter.baseMoveSpeed * matureMoveMultiplier * nearbyMultiplier * syncMultiplier;
+        (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
+      fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier * syncMultiplier;
       fighter.range = fighter.baseRange * syncMultiplier;
       fighter.matureAttackSpeedCurrent = matureAttackSpeed;
     });
@@ -1956,6 +1736,8 @@ export class AutoChessEngine {
       if (!fighter.alive) return;
       fighter.cooldown -= dt;
       fighter.stun = Math.max(0, fighter.stun - dt);
+      fighter.abilityAttackSpeedTime = Math.max(0, fighter.abilityAttackSpeedTime - dt);
+      fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.slowTime = Math.max(0, fighter.slowTime - dt);
       const wasWeakened = fighter.weakenTime > 0;
       fighter.weakenTime = Math.max(0, fighter.weakenTime - dt);
@@ -2316,10 +2098,11 @@ export class AutoChessEngine {
         for (let shot = 0; shot < 2; shot += 1) {
           const target = this.nearestTarget(source, targets);
           if (!target) break;
-          deal(target, 0.75);
+          deal(target, 0.95);
           this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.28, size: 3 });
         }
-        source.attackInterval = Math.max(source.baseAttackInterval * 0.7, source.attackInterval * 0.85);
+        source.abilityAttackSpeed = Math.max(source.abilityAttackSpeed, 0.25);
+        source.abilityAttackSpeedTime = Math.max(source.abilityAttackSpeedTime, 4);
         break;
       }
       case "sui_blue": {
@@ -2470,9 +2253,9 @@ export class AutoChessEngine {
         const target = this.nearestTarget(source, targets);
         if (!target) break;
         targets
-          .filter((candidate) => Math.abs(candidate.y - target.y) < 72)
+          .filter((candidate) => Math.abs(candidate.y - target.y) < 80)
           .forEach((candidate) => {
-            const dealt = this.damage(source, candidate, source.attack * 1.08);
+            const dealt = this.damage(source, candidate, source.attack * 1.35);
             this.addDamageText(candidate, dealt);
           });
         this.addEffect({
@@ -2490,11 +2273,11 @@ export class AutoChessEngine {
       case "mitsuri": {
         const target = this.nearestTarget(source, targets);
         if (target) {
-          deal(target, 1.05);
+          deal(target, 1.28);
           this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.36, size: 3 });
         }
         const recipient = [...allies].sort((left, right) => left.energy - right.energy)[0];
-        if (recipient) this.addEnergy(recipient, 18);
+        if (recipient) this.addEnergy(recipient, 28);
         break;
       }
       case "guangyi": {
@@ -2562,11 +2345,11 @@ export class AutoChessEngine {
       }
       case "meme": {
         let total = 0;
-        targets.filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 115).forEach((target) => {
-          target.stun = Math.max(target.stun, 0.55);
-          total += deal(target, 0.9);
+        targets.filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 130).forEach((target) => {
+          target.stun = Math.max(target.stun, 0.7);
+          total += deal(target, 1.15);
         });
-        this.heal(source, source, total * 0.35);
+        this.heal(source, source, total * 0.5);
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.65, size: 118 });
         break;
       }
@@ -2592,8 +2375,9 @@ export class AutoChessEngine {
       }
       case "tiandou": {
         [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, 2).forEach((target) => {
-          this.heal(source, target, target.maxHp * 0.14 + source.attack * 0.7);
-          target.moveSpeed += 10;
+          this.heal(source, target, target.maxHp * 0.17 + source.attack * 0.9);
+          target.abilityMoveSpeed = Math.max(target.abilityMoveSpeed, 16);
+          target.abilityMoveSpeedTime = Math.max(target.abilityMoveSpeedTime, 3);
         });
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.65, size: 110 });
         break;

@@ -12,11 +12,60 @@ import {
 } from "./audio";
 import Codex from "./Codex";
 import {
+  drawEffects,
+  drawMechanicalRabbitPets,
+  drawProjectiles,
+} from "./canvas/effects";
+import {
+  HEIGHT,
+  MAX_CANVAS_PIXELS,
+  TOOLBAR_HEIGHT,
+  TRAIT_DRAG_THRESHOLD,
+  TRAIT_PILL_GAP,
+  TRAIT_STRIP,
+  WIDTH,
+  augmentRect,
+  battleRect,
+  benchRect,
+  boardRect,
+  buyXpRect,
+  inRect,
+  lockRect,
+  rankingMetricRects,
+  rankingPanelRect,
+  rankingToggleRect,
+  rerollRect,
+  restartRect,
+  resultContinueRect,
+  resultMetricRects,
+  sellRect,
+  shopRect,
+  starterRect,
+} from "./canvas/layout";
+import {
+  FONT,
+  boundedTextLines,
+  drawBoundedText,
+  fillRounded,
+  roundedPath,
+  setTextFont,
+  strokeRounded,
+  text,
+  truncateText,
+  wrapText,
+} from "./canvas/primitives";
+import type {
+  DragState,
+  HitTarget,
+  HoverState,
+  Rect,
+  TraitDragState,
+  TraitPillLayout,
+} from "./canvas/types";
+import {
   AutoChessEngine,
   Fighter,
   GameState,
-  MechanicalRabbitPet,
-  mechanicalRabbitMuzzle,
   OwnedUnit,
   fighterVisualRadius,
 } from "./core/gameEngine";
@@ -43,247 +92,6 @@ declare global {
     advanceTime?: (milliseconds: number) => void;
   }
 }
-
-const WIDTH = 1120;
-const HEIGHT = 720;
-const TOOLBAR_HEIGHT = 38;
-const MAX_CANVAS_PIXELS = 8_000_000;
-const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif';
-
-interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-type HitTarget =
-  | { kind: "starter"; id: StarterId }
-  | { kind: "shop"; index: number; unitId: UnitId | null }
-  | { kind: "board"; index: number; unitId: UnitId | null; star?: number }
-  | { kind: "bench"; index: number; unitId: UnitId | null; star?: number }
-  | { kind: "reroll" | "buyXp" | "lock" | "battle" | "sell" | "restart" }
-  | { kind: "enemyPreview"; unitId: UnitId; star: number }
-  | { kind: "augment"; index: number }
-  | { kind: "fighter"; fid: string; unitId: UnitId; star: number }
-  | { kind: "trait"; traitId: TraitId }
-  | { kind: "rankingToggle" | "rankingPanel" | "resultContinue" }
-  | { kind: "rankingMetric" | "resultMetric"; metric: "damage" | "support" | "taken" }
-  | null;
-
-interface HoverState {
-  target: HitTarget;
-  x: number;
-  y: number;
-}
-
-interface DragState {
-  origin: { zone: "board" | "bench"; index: number };
-  startX: number;
-  startY: number;
-  moved: boolean;
-}
-
-interface TraitDragState {
-  startX: number;
-  startScrollX: number;
-  moved: boolean;
-}
-
-interface TraitPillLayout {
-  items: Array<{ id: TraitId; rect: Rect; label: string }>;
-  maxScrollX: number;
-}
-
-const TRAIT_STRIP: Rect = { x: 48, y: 194, w: 700, h: 25 };
-const TRAIT_PILL_GAP = 6;
-const TRAIT_DRAG_THRESHOLD = 8;
-
-const boardRect = (index: number): Rect => ({
-  x: 44 + (index % 6) * 116 + (Math.floor(index / 6) % 2) * 20,
-  y: 232 + Math.floor(index / 6) * 68,
-  w: 104,
-  h: 58,
-});
-
-const benchRect = (index: number): Rect => ({
-  x: 48 + index * 88,
-  y: 600,
-  w: 80,
-  h: 76,
-});
-const shopRect = (index: number): Rect => ({
-  x: 810,
-  y: 143 + index * 74,
-  w: 270,
-  h: 70,
-});
-const starterRect = (index: number): Rect => ({
-  x: 90 + index * 320,
-  y: 318,
-  w: 300,
-  h: 260,
-});
-const augmentRect = (index: number): Rect => ({
-  x: 75 + index * 350,
-  y: 255,
-  w: 320,
-  h: 300,
-});
-const buyXpRect: Rect = { x: 810, y: 530, w: 82, h: 48 };
-const lockRect: Rect = { x: 900, y: 530, w: 82, h: 22 };
-const rerollRect: Rect = { x: 900, y: 556, w: 82, h: 22 };
-const battleRect: Rect = { x: 990, y: 530, w: 90, h: 48 };
-const sellRect: Rect = { x: 636, y: 553, w: 112, h: 34 };
-const restartRect: Rect = { x: 420, y: 548, w: 280, h: 62 };
-const rankingToggleRect: Rect = { x: 892, y: 100, w: 180, h: 34 };
-const rankingPanelRect: Rect = { x: 802, y: 142, w: 270, h: 344 };
-const rankingMetricRects: Array<{ metric: "damage" | "support" | "taken"; rect: Rect }> = [
-  { metric: "damage", rect: { x: 814, y: 178, w: 76, h: 24 } },
-  { metric: "support", rect: { x: 896, y: 178, w: 88, h: 24 } },
-  { metric: "taken", rect: { x: 990, y: 178, w: 70, h: 24 } },
-];
-const resultContinueRect: Rect = { x: 410, y: 638, w: 300, h: 42 };
-const resultMetricRects: Array<{ metric: "damage" | "support" | "taken"; rect: Rect }> = [
-  { metric: "damage", rect: { x: 434, y: 214, w: 78, h: 24 } },
-  { metric: "support", rect: { x: 521, y: 214, w: 96, h: 24 } },
-  { metric: "taken", rect: { x: 626, y: 214, w: 76, h: 24 } },
-];
-
-const inRect = (x: number, y: number, rect: Rect) =>
-  x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
-
-const roundedPath = (
-  ctx: CanvasRenderingContext2D,
-  rect: Rect,
-  radius: number,
-) => {
-  const r = Math.min(radius, rect.w / 2, rect.h / 2);
-  ctx.beginPath();
-  ctx.moveTo(rect.x + r, rect.y);
-  ctx.arcTo(rect.x + rect.w, rect.y, rect.x + rect.w, rect.y + rect.h, r);
-  ctx.arcTo(rect.x + rect.w, rect.y + rect.h, rect.x, rect.y + rect.h, r);
-  ctx.arcTo(rect.x, rect.y + rect.h, rect.x, rect.y, r);
-  ctx.arcTo(rect.x, rect.y, rect.x + rect.w, rect.y, r);
-  ctx.closePath();
-};
-
-const fillRounded = (
-  ctx: CanvasRenderingContext2D,
-  rect: Rect,
-  radius: number,
-  fill: string | CanvasGradient | CanvasPattern,
-) => {
-  roundedPath(ctx, rect, radius);
-  ctx.fillStyle = fill;
-  ctx.fill();
-};
-
-const strokeRounded = (
-  ctx: CanvasRenderingContext2D,
-  rect: Rect,
-  radius: number,
-  stroke: string,
-  width = 1,
-) => {
-  roundedPath(ctx, rect, radius);
-  ctx.strokeStyle = stroke;
-  ctx.lineWidth = width;
-  ctx.stroke();
-};
-
-const setTextFont = (ctx: CanvasRenderingContext2D, size: number, weight = 500) => {
-  ctx.font = `${weight} ${size}px ${FONT}`;
-};
-
-const text = (
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  x: number,
-  y: number,
-  size: number,
-  color = "#eef6ff",
-  align: CanvasTextAlign = "left",
-  weight = 500,
-) => {
-  setTextFont(ctx, size, weight);
-  ctx.fillStyle = color;
-  ctx.textAlign = align;
-  ctx.textBaseline = "middle";
-  ctx.fillText(value, x, y);
-};
-
-const truncateText = (
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  maxWidth: number,
-) => {
-  if (ctx.measureText(value).width <= maxWidth) return value;
-  const ellipsis = "…";
-  let truncated = "";
-  for (const character of value) {
-    if (ctx.measureText(`${truncated}${character}${ellipsis}`).width > maxWidth)
-      break;
-    truncated += character;
-  }
-  return truncated ? `${truncated}${ellipsis}` : ellipsis;
-};
-
-const wrapText = (
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  maxWidth: number,
-) => {
-  const lines: string[] = [];
-  value.split(/\r?\n/).forEach((paragraph) => {
-    let current = "";
-    for (const character of paragraph) {
-      const next = current + character;
-      if (current && ctx.measureText(next).width > maxWidth) {
-        lines.push(current.trimEnd());
-        current = character.trimStart();
-      } else current = next;
-    }
-    if (current) lines.push(current.trimEnd());
-  });
-  return lines.length ? lines : [""];
-};
-
-const boundedTextLines = (
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  maxWidth: number,
-  maxLines: number,
-) => {
-  const lines = wrapText(ctx, value, maxWidth);
-  if (lines.length <= maxLines) return lines;
-  return [
-    ...lines.slice(0, maxLines - 1),
-    truncateText(ctx, lines.slice(maxLines - 1).join(""), maxWidth),
-  ];
-};
-
-const drawBoundedText = (
-  ctx: CanvasRenderingContext2D,
-  value: string,
-  x: number,
-  centerY: number,
-  size: number,
-  color: string,
-  align: CanvasTextAlign,
-  weight: number,
-  maxWidth: number,
-  maxLines: number,
-  lineHeight: number,
-) => {
-  setTextFont(ctx, size, weight);
-  const lines = boundedTextLines(ctx, value, maxWidth, maxLines);
-  const startY = centerY - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((line, index) =>
-    text(ctx, line, x, startY + index * lineHeight, size, color, align, weight),
-  );
-  return lines;
-};
 
 const drawBackdrop = (ctx: CanvasRenderingContext2D, state: GameState) => {
   const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
@@ -1692,197 +1500,6 @@ const drawFighter = (
     600,
   );
   ctx.restore();
-};
-
-const drawMechanicalRabbitPet = (
-  ctx: CanvasRenderingContext2D,
-  pet: MechanicalRabbitPet,
-  visualTime: number,
-) => {
-  const fade = Math.max(0.25, Math.min(1, pet.life / 0.7));
-  const bob = Math.sin(visualTime * 8 + pet.x * 0.03) * 3;
-  const aimAngle = Math.atan2(pet.aimY, pet.aimX);
-  const muzzleDistance = Math.hypot(
-    mechanicalRabbitMuzzle(pet).x - pet.x,
-    mechanicalRabbitMuzzle(pet).y - pet.y,
-  );
-  ctx.save();
-  ctx.globalAlpha = fade;
-  ctx.fillStyle = "rgba(0, 0, 0, 0.26)";
-  ctx.beginPath();
-  ctx.ellipse(pet.x, pet.y + pet.radius * 0.88, pet.radius * 1.2, pet.radius * 0.3, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.translate(pet.x, pet.y + bob);
-  ctx.rotate(aimAngle);
-
-  const podGradient = ctx.createLinearGradient(-pet.radius * 0.65, 0, pet.radius * 0.45, 0);
-  podGradient.addColorStop(0, "#111a27");
-  podGradient.addColorStop(0.55, "#3b4f60");
-  podGradient.addColorStop(1, "#728998");
-  ctx.fillStyle = podGradient;
-  ctx.strokeStyle = "#b8ccd8";
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(-pet.radius * 0.62, 0);
-  ctx.lineTo(-pet.radius * 0.22, -pet.radius * 0.31);
-  ctx.lineTo(pet.radius * 0.38, -pet.radius * 0.2);
-  ctx.lineTo(pet.radius * 0.5, 0);
-  ctx.lineTo(pet.radius * 0.38, pet.radius * 0.2);
-  ctx.lineTo(-pet.radius * 0.22, pet.radius * 0.31);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  const cannonTipX = muzzleDistance;
-  ctx.fillStyle = "#1b2938";
-  ctx.strokeStyle = "#dce6ec";
-  ctx.lineWidth = 1.25;
-  ctx.beginPath();
-  ctx.moveTo(-pet.radius * 0.08, -pet.radius * 0.23);
-  ctx.lineTo(cannonTipX - pet.radius * 0.08, -pet.radius * 0.1);
-  ctx.lineTo(cannonTipX, 0);
-  ctx.lineTo(cannonTipX - pet.radius * 0.08, pet.radius * 0.1);
-  ctx.lineTo(-pet.radius * 0.08, pet.radius * 0.23);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#f4f0f2";
-  ctx.beginPath();
-  ctx.moveTo(pet.radius * 0.04, -pet.radius * 0.11);
-  ctx.lineTo(cannonTipX - pet.radius * 0.22, -pet.radius * 0.045);
-  ctx.lineTo(cannonTipX - pet.radius * 0.08, 0);
-  ctx.lineTo(cannonTipX - pet.radius * 0.22, pet.radius * 0.045);
-  ctx.lineTo(pet.radius * 0.04, pet.radius * 0.11);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#efc8d1";
-  ctx.fillRect(pet.radius * 0.16, -pet.radius * 0.17, pet.radius * 0.24, pet.radius * 0.34);
-  ctx.strokeStyle = "#92d7ff";
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(pet.radius * 0.4, 0);
-  ctx.lineTo(cannonTipX - pet.radius * 0.25, 0);
-  ctx.stroke();
-  ctx.fillStyle = "#92d7ff";
-  ctx.shadowColor = "#92d7ff";
-  ctx.shadowBlur = 8;
-  ctx.beginPath();
-  ctx.arc(-pet.radius * 0.2, 0, 2.4, 0, Math.PI * 2);
-  ctx.fill();
-  if (pet.attackPulse > 0) {
-    const flash = 1 + (pet.attackPulse / 0.16) * 0.75;
-    ctx.globalCompositeOperation = "screen";
-    ctx.fillStyle = "rgba(218, 250, 255, 0.96)";
-    ctx.beginPath();
-    ctx.arc(cannonTipX, 0, 4.5 * flash, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-};
-
-const drawMechanicalRabbitPets = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  const battle = state.battle;
-  if (!battle) return;
-  battle.pets.forEach((pet) => drawMechanicalRabbitPet(ctx, pet, state.visualTime));
-};
-
-const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  const battle = state.battle;
-  if (!battle) return;
-  battle.projectiles.forEach((projectile) => {
-    const speed = Math.hypot(projectile.velocityX, projectile.velocityY) || 1;
-    const trailLength = 22;
-    const trailX = projectile.x - ((projectile.velocityX / speed) * trailLength);
-    const trailY = projectile.y - ((projectile.velocityY / speed) * trailLength);
-    ctx.save();
-    ctx.globalCompositeOperation = "screen";
-    ctx.strokeStyle = projectile.color;
-    ctx.lineWidth = projectile.size + 3;
-    ctx.lineCap = "round";
-    ctx.shadowColor = projectile.color;
-    ctx.shadowBlur = 16;
-    ctx.beginPath();
-    ctx.moveTo(trailX, trailY);
-    ctx.lineTo(projectile.x, projectile.y);
-    ctx.stroke();
-    ctx.fillStyle = "rgba(248, 252, 255, 0.98)";
-    ctx.beginPath();
-    ctx.arc(projectile.x, projectile.y, projectile.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  });
-};
-
-const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => {
-  const battle = state.battle;
-  if (!battle) return;
-  battle.effects.forEach((effect) => {
-    const progress = 1 - effect.life / effect.maxLife;
-    const alpha = Math.max(0, effect.life / effect.maxLife);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    if (effect.kind === "line") {
-      const targetX = effect.x2 || effect.x;
-      const targetY = effect.y2 || effect.y;
-      const width = effect.size || 3;
-      ctx.globalCompositeOperation = "screen";
-      ctx.beginPath();
-      ctx.moveTo(effect.x, effect.y);
-      ctx.lineTo(targetX, targetY);
-      ctx.strokeStyle = effect.color;
-      ctx.lineWidth = width + 4;
-      ctx.shadowColor = effect.color;
-      ctx.shadowBlur = 18;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(effect.x, effect.y);
-      ctx.lineTo(targetX, targetY);
-      ctx.strokeStyle = "rgba(244, 251, 255, 0.96)";
-      ctx.lineWidth = Math.max(1, width * 0.48);
-      ctx.shadowBlur = 4;
-      ctx.stroke();
-    } else if (effect.kind === "ring") {
-      ctx.beginPath();
-      ctx.arc(
-        effect.x,
-        effect.y,
-        Math.max(6, (effect.size || 80) * progress),
-        0,
-        Math.PI * 2,
-      );
-      ctx.strokeStyle = effect.color;
-      ctx.lineWidth = Math.max(2, 8 * (1 - progress));
-      ctx.stroke();
-    } else if (effect.kind === "burst") {
-      const radius = (effect.size || 40) * (0.35 + progress * 0.65);
-      const gradient = ctx.createRadialGradient(
-        effect.x,
-        effect.y,
-        0,
-        effect.x,
-        effect.y,
-        radius,
-      );
-      gradient.addColorStop(0, effect.color);
-      gradient.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      text(
-        ctx,
-        effect.text || "",
-        effect.x,
-        effect.y - progress * 26,
-        effect.size || 14,
-        effect.color,
-        "center",
-        800,
-      );
-    }
-    ctx.restore();
-  });
 };
 
 const formatCombatValue = (value: number) => {
