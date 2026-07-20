@@ -125,6 +125,9 @@ export interface Fighter {
   matureMoveFloor: number;
   matureAttackSpeed: number;
   matureAttackSpeedCurrent: number;
+  vanguardMember: boolean;
+  vanguardKnockback: number;
+  vanguardJumpCooldown: number;
   abilityAttackSpeed: number;
   abilityAttackSpeedTime: number;
   abilityMoveSpeed: number;

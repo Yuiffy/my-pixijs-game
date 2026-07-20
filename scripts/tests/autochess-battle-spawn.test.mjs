@@ -106,6 +106,62 @@ test("达到阈值的羁绊状态会标记为已激活", () => {
   assert.equal(status.active, true);
 });
 
+test("怕死受击会在跳跃过程中移动，而不是瞬移", () => {
+  const engine = createEngine(112);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const target = battle.player[0];
+  const attacker = battle.enemy[0];
+  battle.player.forEach((fighter) => { fighter.cooldown = 99; });
+  battle.enemy.forEach((fighter) => { fighter.cooldown = 99; fighter.attack = 0; fighter.hp = 99_999; fighter.maxHp = 99_999; });
+  target.x = 430; target.y = 320; target.cooldown = 99;
+  attacker.x = 490; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 280; attacker.cooldown = 0;
+  const start = { x: target.x, y: target.y };
+
+  engine.update(0.05);
+  assert.ok(target.jumpTime > 0);
+  assert.deepEqual({ x: target.x, y: target.y }, start);
+  assert.notDeepEqual({ x: target.jumpToX, y: target.jumpToY }, start);
+
+  const jumpTimeAfterHit = target.jumpTime;
+  engine.update(0.2);
+  assert.ok(target.jumpTime < jumpTimeAfterHit);
+  assert.deepEqual({ x: target.x, y: target.y }, start);
+  for (let tick = 0; tick < 9; tick += 1) engine.update(0.05);
+  assert.equal(target.jumpTime, 0);
+  assert.ok(Math.hypot(target.x - target.jumpToX, target.y - target.jumpToY) < 3);
+});
+
+test("怕死后跳会留在自身攻击距离内，越界时改为侧跳", () => {
+  const engine = createEngine(113);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const target = battle.player[0];
+  const attacker = battle.enemy[0];
+  battle.player.forEach((fighter) => { fighter.cooldown = 99; });
+  battle.enemy.forEach((fighter) => { fighter.cooldown = 99; fighter.attack = 0; fighter.hp = 99_999; fighter.maxHp = 99_999; });
+  target.x = 430; target.y = 320; target.cooldown = 99;
+  attacker.x = 490; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 280; attacker.cooldown = 0;
+
+  engine.update(0.05);
+  assert.ok(target.jumpTime > 0);
+  const attackDistance = Math.max(target.range, target.radius + attacker.radius + 12);
+  const landingDistance = Math.hypot(target.jumpToX - attacker.x, target.jumpToY - attacker.y);
+  assert.ok(landingDistance <= attackDistance + 2);
+  assert.ok(Math.abs(target.jumpToY - target.y) > 1, "越界后应选择侧向落点");
+  assertInsideBattleBounds({ ...target, x: target.jumpToX, y: target.jumpToY });
+});
+
 test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   const engine = createEngine(23);
   engine.state.playerLevel = 8;

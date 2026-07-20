@@ -79,6 +79,8 @@ const YIELD_MIN_TARGET_PROGRESS = 5;
 const STUCK_RECOVERY_DELAY = 0.65;
 const STUCK_RECOVERY_DURATION = 0.42;
 const SEPARATION_PASSES = 2;
+const VANGUARD_JUMP_DURATION = 0.46;
+const VANGUARD_JUMP_COOLDOWN = 0.72;
 const CLOCK_GUNNER_RABBIT_COUNT = 2;
 const CLOCK_GUNNER_RABBIT_LIFETIME = 4;
 const CLOCK_GUNNER_RABBIT_RADIUS = 14;
@@ -853,6 +855,9 @@ export class AutoChessEngine {
         matureMoveFloor: matureLevel ? 0.7 : 1,
         matureAttackSpeed,
         matureAttackSpeedCurrent: matureAttackSpeed,
+        vanguardMember: vanguardLevel > 0,
+        vanguardKnockback: vanguardLevel ? [0, 28, 38, 50][vanguardLevel] : 0,
+        vanguardJumpCooldown: 0,
         abilityAttackSpeed: 0,
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
@@ -959,6 +964,9 @@ export class AutoChessEngine {
         matureMoveFloor: 1,
         matureAttackSpeed: 0,
         matureAttackSpeedCurrent: 0,
+        vanguardMember: false,
+        vanguardKnockback: 0,
+        vanguardJumpCooldown: 0,
         abilityAttackSpeed: 0,
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
@@ -1314,6 +1322,78 @@ export class AutoChessEngine {
       color: UNIT_DEFS[fighter.unitId].accent,
       life: 0.42,
       size: fighter.radius * 1.8,
+    });
+    return true;
+  }
+
+  private prepareVanguardJump(fighter: Fighter, source: Fighter, battle: BattleState) {
+    if (!fighter.vanguardMember || fighter.vanguardKnockback <= 0 || fighter.jumpTime > 0) return false;
+    const deltaX = fighter.x - source.x;
+    const deltaY = fighter.y - source.y;
+    const distance = Math.hypot(deltaX, deltaY) || 1;
+    const awayX = deltaX / distance;
+    const awayY = deltaY / distance;
+    const jumpDistance = fighter.vanguardKnockback;
+    const attackDistance = Math.max(
+      fighter.range,
+      fighter.radius + source.radius + CONTACT_ATTACK_BUFFER,
+    );
+    const occupied = [...battle.player, ...battle.enemy]
+      .filter((other) => other.alive && other !== fighter);
+    const clamp = (point: { x: number; y: number }) => this.clampFighterPosition(fighter, point);
+    const isOpen = (point: { x: number; y: number }) => occupied.every((other) =>
+      Math.hypot(point.x - other.x, point.y - other.y) >= fighter.radius + other.radius + PLACEMENT_MARGIN,
+    );
+    const staysInAttackDistance = (point: { x: number; y: number }) =>
+      Math.hypot(point.x - source.x, point.y - source.y) <= attackDistance + CONTACT_SKIN;
+    const backward = clamp({
+      x: fighter.x + awayX * jumpDistance,
+      y: fighter.y + awayY * jumpDistance,
+    });
+
+    // Rotate around the attacker for the fallback. This makes a side jump preserve
+    // roughly the current distance instead of repeatedly pushing a melee unit away.
+    const sideAngle = Math.min(Math.PI * 0.42, jumpDistance / Math.max(distance, 1));
+    const sideCandidates = [-1, 1].map((direction) => {
+      const cos = Math.cos(sideAngle * direction);
+      const sin = Math.sin(sideAngle * direction);
+      return clamp({
+        x: source.x + (deltaX * cos - deltaY * sin),
+        y: source.y + (deltaX * sin + deltaY * cos),
+      });
+    });
+    const candidates = staysInAttackDistance(backward)
+      ? [backward, ...sideCandidates]
+      : sideCandidates;
+    const landing = candidates.find((candidate) => isOpen(candidate) && (
+      staysInAttackDistance(candidate) || !staysInAttackDistance(backward)
+    ));
+    if (!landing) return false;
+
+    fighter.jumpFromX = fighter.x;
+    fighter.jumpFromY = fighter.y;
+    fighter.jumpToX = landing.x;
+    fighter.jumpToY = landing.y;
+    fighter.jumpDuration = VANGUARD_JUMP_DURATION;
+    fighter.jumpTime = fighter.jumpDuration;
+    fighter.vanguardJumpCooldown = VANGUARD_JUMP_COOLDOWN;
+    this.faceTowardX(fighter, source.x);
+    this.addEffect({
+      kind: "ring",
+      x: fighter.jumpFromX,
+      y: fighter.jumpFromY,
+      color: TRAITS.vanguard.color,
+      life: 0.38,
+      size: fighter.radius * 1.55,
+    });
+    this.addEffect({
+      kind: "text",
+      x: fighter.jumpFromX,
+      y: fighter.jumpFromY - 36,
+      color: TRAITS.vanguard.color,
+      text: "躲开",
+      life: 0.42,
+      size: 10,
     });
     return true;
   }
@@ -1738,6 +1818,7 @@ export class AutoChessEngine {
       fighter.stun = Math.max(0, fighter.stun - dt);
       fighter.abilityAttackSpeedTime = Math.max(0, fighter.abilityAttackSpeedTime - dt);
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
+      fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.slowTime = Math.max(0, fighter.slowTime - dt);
       const wasWeakened = fighter.weakenTime > 0;
       fighter.weakenTime = Math.max(0, fighter.weakenTime - dt);
@@ -2547,6 +2628,18 @@ export class AutoChessEngine {
     source.damageDealt += effectiveApplied;
     target.damageTaken += effectiveApplied;
     if (hpLoss > 0) target.hitPulse = 0.2;
+
+    if (
+      target.vanguardMember &&
+      target.vanguardKnockback > 0 &&
+      target.vanguardJumpCooldown <= 0 &&
+      target.jumpTime <= 0 &&
+      target.alive &&
+      effectiveApplied > 0
+    ) {
+      const battle = this.state.battle;
+      if (battle) this.prepareVanguardJump(target, source, battle);
+    }
     if (source.lifesteal > 0)
       this.heal(source, source, hpLoss * source.lifesteal, false);
 
