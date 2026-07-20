@@ -10,7 +10,7 @@ import {
 import Codex from "./Codex";
 import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
-import { TOOLBAR_HEIGHT, WORLD_HEIGHT, WORLD_WIDTH } from "./phaser/layout";
+import { RENDER_SCALE, TOOLBAR_HEIGHT, WORLD_HEIGHT, WORLD_WIDTH } from "./phaser/layout";
 
 declare global {
   interface Window {
@@ -88,6 +88,9 @@ export default function AutoChessGame() {
       const game = new Phaser.Game(createGameConfig(gameHostRef.current, bridge));
       gameRef.current = game;
       game.canvas.setAttribute("data-game-canvas", "rift-line");
+      game.canvas.dataset.logicalWidth = String(WORLD_WIDTH);
+      game.canvas.dataset.logicalHeight = String(WORLD_HEIGHT);
+      game.canvas.dataset.renderScale = String(RENDER_SCALE);
       game.canvas.setAttribute("aria-label", "裂隙阵线自走棋游戏画布");
       game.canvas.tabIndex = 0;
     };

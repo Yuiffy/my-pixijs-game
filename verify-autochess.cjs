@@ -95,6 +95,41 @@ mkdirSync(artifactDirectory, { recursive: true });
   }
   await page.screenshot({ path: `${artifactDirectory}/autochess-battle-active.png` });
 
+  const advanceUntilPhase = async (phase, maxMilliseconds = 30000) => {
+    for (let elapsed = 0; elapsed < maxMilliseconds; elapsed += 500) {
+      if ((await state()).phase === phase) return elapsed;
+      await advance(500);
+    }
+    throw new Error(`Timed out waiting for phase ${phase}`);
+  };
+  const resultRound1Elapsed = await advanceUntilPhase('result');
+  const resultRound1 = await state();
+  await advance(150);
+  await page.screenshot({ path: `${artifactDirectory}/autochess-result-round1.png` });
+  await clickLogical(560, 659);
+  const preparationRound2 = await state();
+  if (preparationRound2.phase !== 'preparation' || preparationRound2.round !== 2) {
+    throw new Error(`Result continue did not reach round-2 preparation: ${JSON.stringify(preparationRound2)}`);
+  }
+  await page.screenshot({ path: `${artifactDirectory}/autochess-preparation-round2.png` });
+  await clickLogical(1035, 554);
+  const resultRound2Elapsed = await advanceUntilPhase('result');
+  const resultRound2 = await state();
+  await advance(150);
+  await page.screenshot({ path: `${artifactDirectory}/autochess-result-round2.png` });
+  await clickLogical(560, 659);
+  const augmentRound2 = await state();
+  if (augmentRound2.phase !== 'augment' || augmentRound2.round !== 2) {
+    throw new Error(`Round-2 continue did not reach augment selection: ${JSON.stringify(augmentRound2)}`);
+  }
+  await page.screenshot({ path: `${artifactDirectory}/autochess-augment-round2.png` });
+  await clickLogical(235, 516);
+  const preparationRound3 = await state();
+  if (preparationRound3.phase !== 'preparation' || preparationRound3.round !== 3) {
+    throw new Error(`Augment choice did not reach round-3 preparation: ${JSON.stringify(preparationRound3)}`);
+  }
+  await page.screenshot({ path: `${artifactDirectory}/autochess-preparation-round3.png` });
+
   const battleFrames = [battleStart, battleEarly, battleContact, battleActive, ...feedbackSamples].filter((entry) => entry.battle);
   const allUnits = battleFrames.flatMap((entry) => [...entry.battle.playerUnits, ...entry.battle.enemyUnits]);
   const feedbackSeen = {
@@ -128,6 +163,6 @@ mkdirSync(artifactDirectory, { recursive: true });
   const displayAspect = mobileBox.width / mobileBox.height;
   await page.screenshot({ path: `${artifactDirectory}/autochess-mobile.png` });
 
-  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));
+  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));
   await browser.close();
 })().catch((error) => { console.error(error); process.exit(1); });

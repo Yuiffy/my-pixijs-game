@@ -166,7 +166,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private sync() {
-    if (this.phase === "battle" || this.phase === "result") {
+    if (this.phase === "battle") {
       this.syncBattleEntities();
       this.syncCombatEffects();
       this.syncBattleOverlay();
@@ -366,6 +366,41 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add([portrait, name]);
   }
 
+  private traitActivatesAfterPurchase(unitId: UnitId, traitId: keyof typeof TRAITS) {
+    const { engine } = this.bridge;
+    const status = engine.getTraitStatus(traitId);
+    if (status.active || engine.boardCount >= engine.boardCap) return false;
+    const threshold = TRAITS[traitId].thresholds[status.level];
+    return status.count + 1 >= threshold && !engine.state.board.some((unit) => unit?.id === unitId);
+  }
+
+  private createShopTraitTags(unitId: UnitId, x: number, y: number, maxX: number, affordable: boolean, compact = false) {
+    const container = this.add.container(x, y);
+    const fontSize = compact ? 7 : 8;
+    let cursor = 0;
+    UNIT_DEFS[unitId].traits.forEach((traitId) => {
+      const { [traitId]: trait } = TRAITS;
+      const status = this.bridge.engine.getTraitStatus(traitId);
+      const completes = this.traitActivatesAfterPurchase(unitId, traitId);
+      const label = trait.name;
+      const labelText = this.text(0, 0, label, fontSize, "#ffffff", { fontStyle: "bold" });
+      const width = Math.ceil(labelText.width) + (compact ? 10 : 14);
+      labelText.destroy();
+      if (x + cursor + width > maxX) return;
+      const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
+      const { active } = status;
+      const graphic = this.add.graphics();
+      graphic.fillStyle(active || (completes && affordable) ? color : 0x142735, active ? 0.22 : completes && affordable ? 0.38 : 0.9);
+      graphic.fillRoundedRect(cursor, 0, width, compact ? 15 : 17, 8);
+      graphic.lineStyle(completes && affordable ? 1.5 : 1, active || (completes && affordable) ? color : 0x395467, 1);
+      graphic.strokeRoundedRect(cursor, 0, width, compact ? 15 : 17, 8);
+      const text = this.text(cursor + width / 2, (compact ? 15 : 17) / 2, label, fontSize, active || (completes && affordable) ? "#f4fbff" : "#7890a1", { fontStyle: "bold" }).setOrigin(0.5);
+      container.add([graphic, text]);
+      cursor += width + 4;
+    });
+    return container;
+  }
+
   private drawWideShop() {
     const { state, isMaxPlayerLevel, upgradeCost } = this.bridge.engine;
     this.phaseLayer.add(this.panel(794, 98, 300, 500, 0x08131f));
@@ -380,8 +415,7 @@ export class RiftLineScene extends Phaser.Scene {
         item.add(this.text(62, 11, def.name, 13, "#edf7ff", { fontStyle: "bold" }));
         item.add(this.text(62, 29, def.title, 9, "#94acbc"));
         item.add(this.text(245, 22, `${def.cost}`, 22, COLORS.gold, { fontStyle: "bold" }).setOrigin(0.5));
-        const traits = def.traits.map((trait) => TRAITS[trait].name).join(" · ");
-        item.add(this.text(62, 48, traits, 8, "#8edfff"));
+        item.add(this.createShopTraitTags(unitId, 62, 46, 224, state.gold >= def.cost));
         const zone = this.add.zone(135, 34, 270, 68).setInteractive({ useHandCursor: true });
         const action = { type: "shop", index } satisfies GameAction;
         zone.setData("action", action);
@@ -413,6 +447,7 @@ export class RiftLineScene extends Phaser.Scene {
         item.add(this.text(54, 10, def.name, 12, "#edf7ff", { fontStyle: "bold" }));
         item.add(this.text(54, 29, def.traits.map((trait) => TRAITS[trait].name).join(" · "), 8, "#91cee8"));
         item.add(this.text(174, 21, `${def.cost}`, 21, COLORS.gold, { fontStyle: "bold" }).setOrigin(0.5));
+        item.add(this.createShopTraitTags(unitId, 54, 45, 154, state.gold >= def.cost, true));
         const zone = this.add.zone(98, 33, 196, 66).setInteractive({ useHandCursor: true });
         const action = { type: "shop", index } satisfies GameAction;
         zone.setData("action", action);
@@ -748,6 +783,17 @@ export class RiftLineScene extends Phaser.Scene {
     });
   }
 
+  private resultContinueLabel() {
+    const { state } = this.bridge.engine;
+    if (state.hp <= 0) return "继续 · 查看结局";
+    const augmentRound = state.round === 2 || state.round === 5 || (
+      state.round > CAMPAIGN_ROUNDS
+      && (state.round - CAMPAIGN_ROUNDS) % 6 === 0
+      && state.augments.length < AUGMENTS.length
+    );
+    return augmentRound ? "继续 · 选择契印" : "继续 · 进入整备";
+  }
+
   private drawResult() {
     const { result, battle } = this.bridge.engine.state;
     if (!result || !battle) return;
@@ -757,7 +803,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.overlayLayer.add(this.text(560, 126, result.won ? "战斗结算 · 胜利" : "战斗结算 · 失利", 13, result.won ? "#62e3a6" : "#ff718a", { fontStyle: "bold" }).setOrigin(0.5));
     this.overlayLayer.add(this.text(560, 155, result.headline, 24, "#f2f8ff", { fontStyle: "bold" }).setOrigin(0.5));
     this.overlayLayer.add(this.text(560, 181, result.detail, 10, "#9cb4c3", { wordWrap: { width: 860 }, align: "center" }).setOrigin(0.5, 0));
-    (["damage", "support", "taken"] as RankingMetric[]).forEach((metric, index) => this.button(434 + index * 95, 214, index === 1 ? 90 : 78, 24, resultMetricLabel[metric], { type: "metric", metric }, battle.rankingMetric === metric ? 0x704f99 : 0x294554));
+    (["damage", "support", "taken"] as RankingMetric[]).forEach((metric, index) => this.button(434 + index * 95, 214, index === 1 ? 90 : 78, 24, resultMetricLabel[metric], { type: "metric", metric }, battle.rankingMetric === metric ? 0x704f99 : 0x294554, DEPTH.overlay + 3));
     this.overlayLayer.add(this.text(76, 258, "我方阵容", 13, "#7fdcff", { fontStyle: "bold" }));
     this.overlayLayer.add(this.text(576, 258, "敌方阵容", 13, "#ff91a9", { fontStyle: "bold" }));
     ["player", "enemy"].forEach((team, teamIndex) => {
@@ -768,7 +814,7 @@ export class RiftLineScene extends Phaser.Scene {
         this.overlayLayer.add(this.text(x, y + 18, `血 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · ${resultMetricLabel[battle.rankingMetric]} ${short(value)}`, 9, "#a9bfcc"));
       });
     });
-    this.button(410, 638, 300, 42, "继续", { type: "resultContinue" }, result.won ? 0x30765a : 0x783949);
+    this.button(410, 638, 300, 42, this.resultContinueLabel(), { type: "resultContinue" }, result.won ? 0x30765a : 0x783949, DEPTH.overlay + 3);
   }
 
   private drawAugments() {
@@ -833,11 +879,9 @@ export class RiftLineScene extends Phaser.Scene {
       const cropY = def.portraitFocus === "top" ? remainingY * 0.16 : remainingY / 2;
       portrait.setCrop(cropX, cropY, cropSize, cropSize);
       portrait.setDisplaySize(targetSize, targetSize);
-      Phaser.Actions.AddMaskShape(portrait, {
-        shape: "circle",
-        useInternal: true,
-        region: new Phaser.Geom.Rectangle(-targetSize / 2, -targetSize / 2, targetSize, targetSize),
-      });
+      // Phaser 4 Mask filters can blank a cropped WebGL image when the source
+      // frame is narrower than its display quad. Keep the square cover crop
+      // visible; the circular border still provides the portrait treatment.
     }
 
     const glyph = this.text(0, 0, hasTexture ? "" : def.glyph, Math.max(12, radius), "#ffffff", { fontStyle: "bold" }).setOrigin(0.5);

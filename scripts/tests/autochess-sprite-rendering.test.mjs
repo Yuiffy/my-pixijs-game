@@ -47,6 +47,8 @@ test("Phaser 场景覆盖标题、备战、战斗、结算、强化和结束阶�
 });
 
 test("备战和手机布局使用相同引擎动作并提供紧凑 profile", () => {
+  assert.match(scene, /createShopTraitTags/);
+  assert.match(scene, /traitActivatesAfterPurchase/);
   assert.match(scene, /type: "shop"/);
   assert.match(scene, /type: "buyXp"/);
   assert.match(scene, /type: "lock"/);
@@ -77,7 +79,7 @@ test("战斗视图由引擎 fighter 状态同步，并支持完整动作、状�
 test("头像保持焦点裁切并使用 Phaser 4 WebGL mask", () => {
   assert.match(scene, /portraitFocus === "top"/);
   assert.match(scene, /portrait\.setCrop/);
-  assert.match(scene, /Phaser\.Actions\.AddMaskShape/);
+  assert.doesNotMatch(scene, /createGeometryMask/);
   assert.match(scene, /portraitStyle === "sprite"/);
   assert.match(scene, /portraitImage\.setFlipX/);
 });
@@ -103,6 +105,13 @@ test("文字通过统一高 DPI resolution 策略绘制", () => {
   assert.match(scene, /textResolution = 2/);
   assert.match(scene, /resolution: this\.textResolution/);
   assert.match(scene, /window\.devicePixelRatio/);
+});
+
+test("结果页面不会在后续 battle HUD 同步中销毁继续按钮", () => {
+  assert.match(scene, /if \(this\.phase === "battle"\)/);
+  assert.match(scene, /resultContinueLabel/);
+  assert.match(scene, /继续 · 进入整备/);
+  assert.match(scene, /DEPTH\.overlay \+ 3/);
 });
 
 test("场景预加载单位头像并保留缺图降级纹理", () => {

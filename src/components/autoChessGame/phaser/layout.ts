@@ -1,6 +1,8 @@
 export const WORLD_WIDTH = 1120;
 export const WORLD_HEIGHT = 720;
 export const TOOLBAR_HEIGHT = 42;
+/** Backing pixels per logical world pixel; keeps CJK UI crisp on 2K displays. */
+export const RENDER_SCALE = 2;
 
 export type LayoutProfile = "wide" | "compact";
 
