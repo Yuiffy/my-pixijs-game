@@ -9,8 +9,16 @@ import {
   UNIT_DEFS,
   bookLevelForPlayerLevel,
 } from "../core/gameData";
-import type { Fighter, RankingMetric, UnitLocation } from "../core/gameTypes";
-import { fighterVisualRadius } from "../core/battleGeometry";
+import type {
+  BattleEffect,
+  Fighter,
+  MechanicalRabbitPet,
+  PineTreeTurret,
+  Projectile,
+  RankingMetric,
+  UnitLocation,
+} from "../core/gameTypes";
+import { fighterVisualRadius, mechanicalRabbitMuzzle } from "../core/battleGeometry";
 import { EngineBridge, type GameAction } from "./EngineBridge";
 import { createFallbackTextures, preloadUnitPortraits, textureKeyForUnit } from "./assets";
 import {
@@ -40,6 +48,8 @@ export class RiftLineScene extends Phaser.Scene {
 
   private entityLayer!: Phaser.GameObjects.Container;
 
+  private effectsLayer!: Phaser.GameObjects.Container;
+
   private overlayLayer!: Phaser.GameObjects.Container;
 
   private tooltipLayer!: Phaser.GameObjects.Container;
@@ -56,6 +66,18 @@ export class RiftLineScene extends Phaser.Scene {
 
   private pinnedTooltip: UnitId | null = null;
 
+  private textResolution = 2;
+
+  private projectileViews = new Map<Projectile, Phaser.GameObjects.Container>();
+
+  private effectViews = new Map<BattleEffect, Phaser.GameObjects.Container>();
+
+  private petViews = new Map<string, Phaser.GameObjects.Container>();
+
+  private treeViews = new Map<string, Phaser.GameObjects.Container>();
+
+  private buttonViews: Phaser.GameObjects.Container[] = [];
+
   constructor(bridge: EngineBridge) {
     super({ key: "RiftLineScene" });
     this.bridge = bridge;
@@ -66,12 +88,14 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   create() {
+    this.updateQuality();
     createFallbackTextures(this);
     this.input.setTopOnly(true);
     this.drawBackdrop();
     this.headerLayer = this.add.container(0, 0).setDepth(DEPTH.ui);
     this.phaseLayer = this.add.container(0, 0).setDepth(DEPTH.board);
     this.entityLayer = this.add.container(0, 0).setDepth(DEPTH.entities);
+    this.effectsLayer = this.add.container(0, 0).setDepth(DEPTH.effects);
     this.overlayLayer = this.add.container(0, 0).setDepth(DEPTH.overlay);
     this.tooltipLayer = this.add.container(0, 0).setDepth(DEPTH.tooltip);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
@@ -101,6 +125,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handleResize() {
+    this.updateQuality();
     this.profile = profileFor(this.scale.displaySize.width, this.scale.displaySize.height);
     this.rebuild();
   }
@@ -112,10 +137,17 @@ export class RiftLineScene extends Phaser.Scene {
   private resetLayers() {
     this.phaseLayer.removeAll(true);
     this.entityLayer.removeAll(true);
+    this.effectsLayer.removeAll(true);
     this.overlayLayer.removeAll(true);
     this.tooltipLayer.removeAll(true);
     this.headerLayer.removeAll(true);
     this.fighterViews.clear();
+    this.projectileViews.clear();
+    this.effectViews.clear();
+    this.petViews.clear();
+    this.treeViews.clear();
+    this.buttonViews.forEach((button) => button.destroy());
+    this.buttonViews = [];
     this.pinnedTooltip = null;
   }
 
@@ -134,9 +166,9 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private sync() {
-    this.drawHeader();
     if (this.phase === "battle" || this.phase === "result") {
       this.syncBattleEntities();
+      this.syncCombatEffects();
       this.syncBattleOverlay();
     }
     this.syncToast();
@@ -154,11 +186,17 @@ export class RiftLineScene extends Phaser.Scene {
     }
   }
 
+  private updateQuality() {
+    const deviceResolution = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
+    this.textResolution = Math.max(1, Math.min(2, deviceResolution));
+  }
+
   private text(x: number, y: number, value: string, size = 14, color = COLORS.text, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
     return this.add.text(x, y, value, {
       fontFamily: FONT_FAMILY,
       fontSize: `${size}px`,
       color,
+      resolution: this.textResolution,
       ...style,
     });
   }
@@ -172,8 +210,8 @@ export class RiftLineScene extends Phaser.Scene {
     return graphics;
   }
 
-  private button(x: number, y: number, width: number, height: number, label: string, action: GameAction, color = 0x285f78) {
-    const container = this.add.container(x, y).setDepth(DEPTH.ui);
+  private button(x: number, y: number, width: number, height: number, label: string, action: GameAction, color = 0x285f78, depth = DEPTH.ui) {
+    const container = this.add.container(x, y).setDepth(depth);
     const graphics = this.add.graphics();
     graphics.fillStyle(color, 1);
     graphics.fillRoundedRect(0, 0, width, height, 12);
@@ -185,6 +223,7 @@ export class RiftLineScene extends Phaser.Scene {
     zone.on(Phaser.Input.Events.POINTER_OVER, () => graphics.setAlpha(0.78));
     zone.on(Phaser.Input.Events.POINTER_OUT, () => graphics.setAlpha(1));
     container.add([graphics, labelText, zone]);
+    this.buttonViews.push(container);
     return container;
   }
 
@@ -236,7 +275,7 @@ export class RiftLineScene extends Phaser.Scene {
       container.add(this.text(cardWidth / 2, 138, starter.name, 21, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5));
       container.add(this.text(20, 162, starter.description, 12, "#aebfcb", { wordWrap: { width: cardWidth - 40 }, lineSpacing: 4 }).setOrigin(0));
       const zone = this.add.zone(cardWidth / 2, compact ? 221 : 236, cardWidth - 48, 32).setInteractive({ useHandCursor: true });
-      const action = this.button(62, compact ? 204 : 218, cardWidth - 124, 32, "接入协议", { type: "starter", id }, Phaser.Display.Color.HexStringToColor(starter.color).color);
+      const action = this.button(62, compact ? 204 : 218, cardWidth - 124, 32, "接入协议", { type: "starter", id }, Phaser.Display.Color.HexStringToColor(starter.color).color, DEPTH.board);
       container.add([action, zone]);
       zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch({ type: "starter", id }));
       zone.on(Phaser.Input.Events.POINTER_OVER, () => container.setY(y - 5));
@@ -355,9 +394,9 @@ export class RiftLineScene extends Phaser.Scene {
       } else item.add(this.text(135, 34, "已征募", 12, "#547188").setOrigin(0.5));
       this.phaseLayer.add(item);
     });
-    this.button(810, 530, 82, 48, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" });
-    this.button(900, 530, 82, 22, state.shopLocked ? "已锁定" : "锁定商店", { type: "lock" }, state.shopLocked ? 0x704f99 : 0x344d5d);
-    this.button(900, 556, 82, 22, "刷新 · 1", { type: "reroll" }, 0x55472f);
+    this.button(810, 530, 82, 48, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, 0x285f78, DEPTH.board);
+    this.button(900, 530, 82, 22, state.shopLocked ? "已锁定" : "锁定商店", { type: "lock" }, state.shopLocked ? 0x704f99 : 0x344d5d, DEPTH.board);
+    this.button(900, 556, 82, 22, "刷新 · 1", { type: "reroll" }, 0x55472f, DEPTH.board);
   }
 
   private drawCompactShop() {
@@ -411,6 +450,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add(this.text(1072, 108, "裂隙军团", 10, "#ff6d9a", { fontStyle: "bold" }).setOrigin(1, 0));
     this.phaseLayer.add(this.text(560, 108, "战斗中", 14, "#ecf7ff", { fontStyle: "bold" }).setOrigin(0.5));
     this.syncBattleEntities();
+    this.syncCombatEffects();
     this.syncBattleOverlay();
   }
 
@@ -439,7 +479,11 @@ export class RiftLineScene extends Phaser.Scene {
   private createFighter(fighter: Fighter) {
     const container = this.add.container(fighter.x, fighter.y);
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
-    const shadow = this.add.ellipse(0, radius * 0.8, radius * 1.8, radius * 0.6, 0x000000, 0.3);
+    const shadow = this.add.ellipse(0, radius * 0.8, radius * 1.8, radius * 0.6, 0x000000, 0.3).setName("shadow");
+    const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0).setName("shield");
+    const hitFlash = this.add.circle(0, 0, radius, 0xff526f, 0).setName("hitFlash");
+    const burn = this.add.circle(radius * 0.7, -radius * 0.55, 5, 0xff7a50, 0).setName("burn");
+    const status = this.text(0, -radius - 29, "", 14, "#ffd95e", { fontStyle: "bold" }).setOrigin(0.5).setName("status");
     const portrait = this.createPortrait(fighter.unitId, 0, 0, radius, fighter.team === "enemy");
     portrait.setName("portrait");
     const hpBack = this.add.rectangle(0, radius + 10, radius * 2.25, 7, 0x152430).setName("hpBack");
@@ -450,7 +494,7 @@ export class RiftLineScene extends Phaser.Scene {
     const star = this.text(0, -radius - 18, "★".repeat(fighter.star), 11, "#ffdc68").setOrigin(0.5).setName("star");
     const zone = this.add.zone(0, 0, radius * 2.4, radius * 2.4).setInteractive({ useHandCursor: true });
     zone.setData("fighter", fighter.fid);
-    container.add([shadow, portrait, hpBack, hp, energyBack, energy, label, star, zone]);
+    container.add([shadow, shield, portrait, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
     return container;
   }
 
@@ -458,29 +502,230 @@ export class RiftLineScene extends Phaser.Scene {
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
     const jumping = fighter.jumpTime > 0 && fighter.jumpDuration > 0;
     const jumpProgress = jumping ? 1 - fighter.jumpTime / fighter.jumpDuration : 0;
-    const visualY = fighter.y - (jumping ? Math.sin(jumpProgress * Math.PI) * (fighter.jumpArcHeight || 92) : 0);
-    view.setPosition(fighter.x, visualY).setDepth(DEPTH.entities + fighter.y);
+    const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * (fighter.jumpArcHeight || 92) : 0;
+    const attackProgress = fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
+    const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
+    const targetDistance = Math.hypot(fighter.attackTargetX - fighter.x, fighter.attackTargetY - fighter.y) || 1;
+    const attackOffsetX = ((fighter.attackTargetX - fighter.x) / targetDistance) * lunge;
+    const attackOffsetY = ((fighter.attackTargetY - fighter.y) / targetDistance) * lunge;
+    const visualY = fighter.y - jumpArc + attackOffsetY;
+    view.setPosition(fighter.x + attackOffsetX, visualY).setDepth(DEPTH.entities + visualY);
+
     const hp = view.getByName("hp") as Phaser.GameObjects.Rectangle;
     const energy = view.getByName("energy") as Phaser.GameObjects.Rectangle;
+    const portrait = view.getByName("portrait") as Phaser.GameObjects.Container;
+    const hitFlash = view.getByName("hitFlash") as Phaser.GameObjects.Arc;
+    const shield = view.getByName("shield") as Phaser.GameObjects.Arc;
+    const burn = view.getByName("burn") as Phaser.GameObjects.Arc;
+    const status = view.getByName("status") as Phaser.GameObjects.Text;
+    const shadow = view.getByName("shadow") as Phaser.GameObjects.Ellipse;
+    const label = view.getByName("label") as Phaser.GameObjects.Text;
+    const hitProgress = fighter.hitPulse > 0 ? fighter.hitPulse / 0.2 : 0;
+    const growth = fighter.growthStacks > 0
+      ? 1 + fighter.growthStacks * 0.015 + Math.sin(this.bridge.engine.state.visualTime * 8) * 0.008
+      : 1;
+    const attackScaleX = 1 + lunge / 70;
+    const attackScaleY = 1 - lunge / 130;
+    const hitScaleX = 1 - 0.08 * hitProgress;
+    const hitScaleY = 1 + 0.08 * hitProgress;
+    portrait.setScale(growth * attackScaleX * hitScaleX, growth * attackScaleY * hitScaleY).setAlpha(fighter.stun > 0 ? 0.72 : 1);
+    const portraitImage = portrait.getByName("portraitImage") as Phaser.GameObjects.Image;
+    portraitImage.setFlipX(fighter.facingX < 0);
+    shadow.setPosition(-attackOffsetX, radius * 0.8 + jumpArc - attackOffsetY).setScale(growth, growth);
     hp.width = radius * 2.25 * Math.max(0, fighter.hp / fighter.maxHp);
     energy.width = radius * 2.25 * Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
     energy.fillColor = Phaser.Display.Color.HexStringToColor(ENERGY_PROFILES[fighter.energyStyle].color).color;
-    const portrait = view.getByName("portrait") as Phaser.GameObjects.Container;
-    portrait.setScale(fighter.hitPulse > 0 ? 0.93 : 1);
-    if (fighter.facingX < 0) portrait.setScale(-Math.abs(portrait.scaleX), portrait.scaleY);
-    else portrait.setScale(Math.abs(portrait.scaleX), portrait.scaleY);
+    hitFlash.setAlpha(0.72 * hitProgress).setRadius(radius * growth);
+    shield.setRadius(radius + 7 + Math.sin(this.bridge.engine.state.visualTime * 6) * 2).setAlpha(fighter.shield > 0 ? 0.28 : 0);
+    burn.setAlpha(fighter.burnTime > 0 ? 0.9 : 0).setScale(1 + Math.sin(this.bridge.engine.state.visualTime * 10) * 0.35);
+    status.setText(fighter.stun > 0 ? "✦" : fighter.jumpPending ? "⌁" : fighter.gen27Buffed ? "27" : fighter.enraged ? "!" : "");
+    status.setColor(fighter.enraged ? "#ff4f9a" : fighter.gen27Buffed ? "#dfccff" : "#ffd95e");
+    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}`);
+  }
+
+  private syncCombatEffects() {
+    const { battle, visualTime } = this.bridge.engine.state;
+    if (!battle) return;
+    this.syncObjectMap(this.projectileViews, battle.projectiles, (projectile) => this.createProjectile(projectile), (view, projectile) => this.updateProjectile(view, projectile));
+    this.syncObjectMap(this.effectViews, battle.effects, (effect) => this.createEffect(effect), (view, effect) => this.updateEffect(view, effect));
+    this.syncObjectMap(this.petViews, battle.pets, (pet) => this.createRabbit(pet), (view, pet) => this.updateRabbit(view, pet, visualTime), (pet) => pet.id);
+    this.syncObjectMap(this.treeViews, battle.pineTrees, (tree) => this.createPineTree(tree), (view, tree) => this.updatePineTree(view, tree, visualTime), (tree) => tree.id);
+    this.syncChronospheres(battle.chronospheres, visualTime);
+  }
+
+  private syncObjectMap<T, K>(
+    views: Map<K, Phaser.GameObjects.Container>,
+    items: T[],
+    create: (item: T) => Phaser.GameObjects.Container,
+    update: (view: Phaser.GameObjects.Container, item: T) => void,
+    keyFor: (item: T) => K = (item) => item as unknown as K,
+  ) {
+    const active = new Set<K>();
+    items.forEach((item) => {
+      const key = keyFor(item);
+      active.add(key);
+      let view = views.get(key);
+      if (!view) {
+        view = create(item);
+        views.set(key, view);
+        this.effectsLayer.add(view);
+      }
+      update(view, item);
+    });
+    views.forEach((view, key) => {
+      if (!active.has(key)) {
+        view.destroy();
+        views.delete(key);
+      }
+    });
+  }
+
+  private createProjectile(projectile: Projectile) {
+    const container = this.add.container(projectile.x, projectile.y);
+    const trail = this.add.graphics().setName("trail");
+    const core = this.add.circle(0, 0, Math.max(2, projectile.size), 0xf8fcff).setName("core");
+    const icon = this.text(0, 0, projectile.style === "shark" ? "🦈" : projectile.style === "carrot" ? "🥕" : "", Math.max(12, projectile.size), "#ffffff").setOrigin(0.5).setName("icon");
+    container.add([trail, core, icon]);
+    return container;
+  }
+
+  private updateProjectile(view: Phaser.GameObjects.Container, projectile: Projectile) {
+    const speed = Math.hypot(projectile.velocityX, projectile.velocityY) || 1;
+    const angle = Math.atan2(projectile.velocityY, projectile.velocityX);
+    const trail = view.getByName("trail") as Phaser.GameObjects.Graphics;
+    const core = view.getByName("core") as Phaser.GameObjects.Arc;
+    const icon = view.getByName("icon") as Phaser.GameObjects.Text;
+    view.setPosition(projectile.x, projectile.y).setDepth(DEPTH.effects + projectile.y);
+    trail.clear();
+    const trailLength = projectile.style === "pine_needle" ? 16 : 22;
+    const tailX = -(projectile.velocityX / speed) * trailLength;
+    const tailY = -(projectile.velocityY / speed) * trailLength;
+    const { color: projectileColor } = Phaser.Display.Color.HexStringToColor(projectile.color);
+    trail.lineStyle(projectile.style === "pine_needle" ? 2.2 : projectile.size + 3, projectileColor, projectile.style === "pine_needle" ? 0.94 : 0.65);
+    trail.lineBetween(tailX, tailY, 0, 0);
+    core.setRadius(Math.max(2, projectile.size)).setFillStyle(0xf8fcff, projectile.style === "pine_needle" ? 0 : 0.98);
+    icon.setText(projectile.emoji || (projectile.style === "shark" ? "🦈" : projectile.style === "carrot" ? "🥕" : ""));
+    icon.setRotation(angle).setVisible(icon.text.length > 0);
+  }
+
+  private createEffect(effect: BattleEffect) {
+    const container = this.add.container(effect.x, effect.y);
+    const graphics = this.add.graphics().setName("shape");
+    const label = this.text(0, 0, "", 14, "#ffffff", { fontStyle: "bold" }).setOrigin(0.5).setName("label");
+    container.add([graphics, label]);
+    return container;
+  }
+
+  private updateEffect(view: Phaser.GameObjects.Container, effect: BattleEffect) {
+    const progress = 1 - effect.life / effect.maxLife;
+    const alpha = Math.max(0, effect.life / effect.maxLife);
+    const graphics = view.getByName("shape") as Phaser.GameObjects.Graphics;
     const label = view.getByName("label") as Phaser.GameObjects.Text;
-    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.shield > 0 ? " ◇" : ""}`);
+    const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
+    view.setPosition(effect.x, effect.y).setAlpha(alpha).setDepth(DEPTH.effects + effect.y + 1);
+    graphics.clear();
+    label.setVisible(false);
+    if (effect.kind === "line") {
+      const targetX = (effect.x2 ?? effect.x) - effect.x;
+      const targetY = (effect.y2 ?? effect.y) - effect.y;
+      const width = effect.size || 3;
+      graphics.lineStyle(width + 4, color, 0.45).lineBetween(0, 0, targetX, targetY);
+      graphics.lineStyle(Math.max(1, width * 0.5), 0xf4fbff, 0.96).lineBetween(0, 0, targetX, targetY);
+    } else if (effect.kind === "ring") {
+      graphics.lineStyle(Math.max(2, 8 * (1 - progress)), color, 1).strokeCircle(0, 0, Math.max(6, (effect.size || 80) * progress));
+    } else if (effect.kind === "burst" || effect.kind === "chronosphere" || effect.kind === "hotpot") {
+      const radius = (effect.size || (effect.kind === "hotpot" ? 130 : 50)) * (effect.kind === "hotpot" ? 0.45 + progress * 0.7 : 0.35 + progress * 0.65);
+      const fill = effect.kind === "hotpot" ? 0xff6b2d : color;
+      graphics.fillStyle(fill, effect.kind === "hotpot" ? 0.3 : 0.24).fillCircle(0, 0, radius);
+      graphics.lineStyle(effect.kind === "hotpot" ? 4 : 3, color, 0.9).strokeCircle(0, 0, radius * (effect.kind === "hotpot" ? 0.72 : 0.92));
+      if (effect.kind === "hotpot") graphics.lineStyle(2, 0xffd27a, 0.9).strokeCircle(0, 0, radius * 0.48);
+    } else {
+      label
+        .setText(effect.text || "")
+        .setColor(effect.color)
+        .setFontSize(effect.size || 14)
+        .setY(-progress * 26)
+        .setVisible(true);
+    }
+  }
+
+  private createRabbit(_pet: MechanicalRabbitPet) {
+    const container = this.add.container(0, 0);
+    const shadow = this.add.ellipse(0, 0, 30, 9, 0x000000, 0.28).setName("shadow");
+    const body = this.add.polygon(0, 0, [-16, 0, -6, -8, 12, -6, 17, 0, 12, 6, -6, 8], 0x506979).setName("body");
+    const cannon = this.add.rectangle(17, 0, 28, 7, 0xbed0db).setOrigin(0, 0.5).setName("cannon");
+    const eye = this.add.circle(-5, 0, 2.5, 0x92d7ff).setName("eye");
+    const flash = this.add.circle(45, 0, 5, 0xe8fbff, 0).setName("flash");
+    container.add([shadow, body, cannon, eye, flash]);
+    return container;
+  }
+
+  private updateRabbit(view: Phaser.GameObjects.Container, pet: MechanicalRabbitPet, visualTime: number) {
+    const fade = Math.max(0.25, Math.min(1, pet.life / 0.7));
+    const bob = Math.sin(visualTime * 8 + pet.x * 0.03) * 3;
+    const angle = Math.atan2(pet.aimY, pet.aimX);
+    const flash = view.getByName("flash") as Phaser.GameObjects.Arc;
+    const muzzle = mechanicalRabbitMuzzle(pet);
+    const muzzleDistance = Math.hypot(muzzle.x - pet.x, muzzle.y - pet.y);
+    view.setPosition(pet.x, pet.y + bob).setRotation(angle).setAlpha(fade).setDepth(DEPTH.entities + pet.y + 0.5);
+    (view.getByName("shadow") as Phaser.GameObjects.Ellipse).setRotation(-angle).setY(pet.radius * 0.88 - bob);
+    flash.setX(muzzleDistance).setAlpha(pet.attackPulse > 0 ? Math.min(1, pet.attackPulse / 0.16) : 0).setScale(1 + pet.attackPulse * 4);
+  }
+
+  private createPineTree(_tree: PineTreeTurret) {
+    const container = this.add.container(0, 0);
+    const shadow = this.add.ellipse(0, 0, 30, 9, 0x000000, 0.3).setName("shadow");
+    const tree = this.text(0, -4, "🌲", 42, "#ffffff").setOrigin(0.5).setName("tree");
+    const flash = this.add.circle(0, -8, 7, 0xa0e696, 0).setName("flash");
+    container.add([shadow, tree, flash]);
+    return container;
+  }
+
+  private updatePineTree(view: Phaser.GameObjects.Container, tree: PineTreeTurret, visualTime: number) {
+    const fade = Math.max(0.35, Math.min(1, tree.life / 0.9));
+    const sway = Math.sin(visualTime * 2.4 + tree.x * 0.02) * 1.5;
+    const flash = view.getByName("flash") as Phaser.GameObjects.Arc;
+    view.setPosition(tree.x + sway, tree.y).setAlpha(fade).setDepth(DEPTH.entities + tree.y + 0.4);
+    (view.getByName("shadow") as Phaser.GameObjects.Ellipse).setY(tree.radius * 0.7);
+    flash.setAlpha(tree.attackPulse > 0 ? Math.min(0.85, tree.attackPulse / 0.18) : 0).setScale(1 + tree.attackPulse * 5);
+  }
+
+  private syncChronospheres(zones: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; color: string }>, visualTime: number) {
+    const key = "rift-chronosphere";
+    const existing = this.effectViews.get(key as unknown as BattleEffect);
+    if (!zones.length) {
+      if (existing) {
+        existing.destroy();
+        this.effectViews.delete(key as unknown as BattleEffect);
+      }
+      return;
+    }
+    let view = existing;
+    if (!view) {
+      view = this.add.container(0, 0);
+      view.add(this.add.graphics().setName("shape"));
+      this.effectViews.set(key as unknown as BattleEffect, view);
+      this.effectsLayer.add(view);
+    }
+    const zone = zones[0];
+    const pulse = 0.92 + Math.sin(visualTime * 6) * 0.04;
+    const graphics = view.getByName("shape") as Phaser.GameObjects.Graphics;
+    graphics.clear();
+    graphics.fillStyle(0x783cb4, 0.2 + Math.max(0, zone.life / zone.maxLife) * 0.22).fillCircle(0, 0, zone.radius * pulse);
+    graphics.lineStyle(3, Phaser.Display.Color.HexStringToColor(zone.color).color, 0.92).strokeCircle(0, 0, zone.radius * pulse);
+    view.setPosition(zone.x, zone.y).setDepth(DEPTH.effects - 2);
   }
 
   private syncBattleOverlay() {
     const { battle } = this.bridge.engine.state;
     if (!battle) return;
+    this.buttonViews.forEach((button) => button.destroy());
+    this.buttonViews = [];
     this.overlayLayer.removeAll(true);
     const remaining = Math.max(0, battle.limit - battle.elapsed);
     this.overlayLayer.add(this.text(560, 118, `⏱ ${remaining.toFixed(1)}s`, 14, remaining < 6 ? "#ff718e" : "#dcefff", { fontStyle: "bold" }).setOrigin(0.5));
     if (battle.bannerTimer > 0) this.overlayLayer.add(this.text(560, 155, battle.banner, 14, "#f5fbff", { backgroundColor: "#09131ddd", padding: { x: 18, y: 10 }, wordWrap: { width: 310 }, align: "center" }).setOrigin(0.5));
-    this.button(892, 98, 180, 34, `战斗统计 · ${battle.rankingOpen ? "收起" : "展开"}`, { type: "rankingToggle" }, 0x1d4053).setDepth(DEPTH.overlay + 1);
+    this.button(892, 98, 180, 34, `战斗统计 · ${battle.rankingOpen ? "收起" : "展开"}`, { type: "rankingToggle" }, 0x1d4053, DEPTH.overlay + 1);
     if (battle.rankingOpen) this.drawRanking();
     this.drawToast();
   }
@@ -492,7 +737,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.overlayLayer.add(panel);
     this.overlayLayer.add(this.text(816, 154, "本场战斗", 12, "#eff8ff", { fontStyle: "bold" }));
     (["damage", "support", "taken"] as RankingMetric[]).forEach((metric, index) => {
-      this.button(814 + index * 84, 178, metric === "support" ? 88 : 76, 24, resultMetricLabel[metric], { type: "metric", metric }, battle.rankingMetric === metric ? 0x6b4f91 : 0x294554).setDepth(DEPTH.overlay + 2);
+      this.button(814 + index * 84, 178, metric === "support" ? 88 : 76, 24, resultMetricLabel[metric], { type: "metric", metric }, battle.rankingMetric === metric ? 0x6b4f91 : 0x294554, DEPTH.overlay + 2);
     });
     const ranking = this.bridge.engine.getBattleRanking();
     ranking.slice(0, 8).forEach(({ fighter, value }, index) => {
@@ -572,13 +817,30 @@ export class RiftLineScene extends Phaser.Scene {
     const container = this.add.container(x, y);
     const border = this.add.circle(0, 0, radius + 2, enemy ? 0xff688e : Phaser.Display.Color.HexStringToColor(def.accent).color, 0.95);
     const key = textureKeyForUnit(unitId);
-    const portrait = this.add.image(0, 0, this.textures.exists(key) ? key : "rift-fallback-unit");
-    portrait.setDisplaySize(radius * 1.75, radius * 1.75);
-    if (def.portraitStyle === "sprite") portrait.setTexture(key).setDisplaySize(radius * 2, radius * 2);
-    const maskShape = this.add.graphics();
-    maskShape.fillStyle(0xffffff).fillCircle(x, y, radius - 1);
-    portrait.setMask(maskShape.createGeometryMask());
-    const glyph = this.text(0, 0, this.textures.exists(key) ? "" : def.glyph, Math.max(12, radius), "#ffffff", { fontStyle: "bold" }).setOrigin(0.5);
+    const hasTexture = this.textures.exists(key);
+    const portrait = this.add.image(0, 0, hasTexture ? key : "rift-fallback-unit").setName("portraitImage");
+    const targetSize = radius * 1.75;
+
+    if (def.portraitStyle === "sprite") {
+      const { frame } = portrait;
+      const scale = Math.min((radius * 2) / frame.width, (radius * 2) / frame.height);
+      portrait.setScale(scale);
+    } else {
+      const { frame } = portrait;
+      const cropSize = Math.min(frame.width, frame.height);
+      const cropX = Math.max(0, (frame.width - cropSize) / 2);
+      const remainingY = Math.max(0, frame.height - cropSize);
+      const cropY = def.portraitFocus === "top" ? remainingY * 0.16 : remainingY / 2;
+      portrait.setCrop(cropX, cropY, cropSize, cropSize);
+      portrait.setDisplaySize(targetSize, targetSize);
+      Phaser.Actions.AddMaskShape(portrait, {
+        shape: "circle",
+        useInternal: true,
+        region: new Phaser.Geom.Rectangle(-targetSize / 2, -targetSize / 2, targetSize, targetSize),
+      });
+    }
+
+    const glyph = this.text(0, 0, hasTexture ? "" : def.glyph, Math.max(12, radius), "#ffffff", { fontStyle: "bold" }).setOrigin(0.5);
     container.add([border, portrait, glyph]);
     return container;
   }

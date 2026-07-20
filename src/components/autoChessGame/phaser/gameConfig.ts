@@ -14,7 +14,9 @@ export const createGameConfig = (
   backgroundColor: "#07121d",
   render: {
     antialias: true,
+    antialiasGL: true,
     pixelArt: false,
+    roundPixels: false,
   },
   scale: {
     mode: Phaser.Scale.FIT,

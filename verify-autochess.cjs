@@ -125,8 +125,9 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.waitForTimeout(300);
   const mobileBox = await canvas.boundingBox();
   const canvasResolution = await canvas.evaluate((element) => ({ width: element.width, height: element.height }));
+  const displayAspect = mobileBox.width / mobileBox.height;
   await page.screenshot({ path: `${artifactDirectory}/autochess-mobile.png` });
 
-  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, mobileBox, canvasResolution }, errors }, null, 2));
+  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));
   await browser.close();
 })().catch((error) => { console.error(error); process.exit(1); });
