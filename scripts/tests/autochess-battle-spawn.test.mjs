@@ -106,7 +106,7 @@ test("达到阈值的羁绊状态会标记为已激活", () => {
   assert.equal(status.active, true);
 });
 
-test("怕死受击会在跳跃过程中移动，而不是瞬移", () => {
+test("怕死受击会在跳跃过程中真实位移，而不是落地瞬移", () => {
   const engine = createEngine(112);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -125,13 +125,15 @@ test("怕死受击会在跳跃过程中移动，而不是瞬移", () => {
 
   engine.update(0.05);
   assert.ok(target.jumpTime > 0);
-  assert.deepEqual({ x: target.x, y: target.y }, start);
   assert.notDeepEqual({ x: target.jumpToX, y: target.jumpToY }, start);
 
   const jumpTimeAfterHit = target.jumpTime;
+  const mid = { x: target.x, y: target.y };
   engine.update(0.2);
   assert.ok(target.jumpTime < jumpTimeAfterHit);
-  assert.deepEqual({ x: target.x, y: target.y }, start);
+  // 跳跃过程中逻辑坐标应持续靠近落点
+  assert.ok(Math.hypot(target.x - start.x, target.y - start.y) > Math.hypot(mid.x - start.x, mid.y - start.y) - 0.01);
+  assert.ok(Math.hypot(target.x - start.x, target.y - start.y) > 0.5);
   for (let tick = 0; tick < 9; tick += 1) engine.update(0.05);
   assert.equal(target.jumpTime, 0);
   assert.ok(Math.hypot(target.x - target.jumpToX, target.y - target.jumpToY) < 3);
@@ -150,8 +152,8 @@ test("怕死后跳会留在自身攻击距离内，越界时改为侧跳", () =>
   const attacker = battle.enemy[0];
   battle.player.forEach((fighter) => { fighter.cooldown = 99; });
   battle.enemy.forEach((fighter) => { fighter.cooldown = 99; fighter.attack = 0; fighter.hp = 99_999; fighter.maxHp = 99_999; });
-  // 站位故意拉远，使一级后跳（6）仍会越出攻击距离，从而触发侧跳兜底
-  target.x = 408; target.y = 320; target.cooldown = 99;
+  // 站位故意拉远，使一级后跳（28）仍会越出攻击距离，从而触发侧跳兜底
+  target.x = 430; target.y = 320; target.cooldown = 99;
   attacker.x = 490; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 280; attacker.cooldown = 0;
 
   engine.update(0.05);

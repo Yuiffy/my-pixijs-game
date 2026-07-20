@@ -461,7 +461,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.12,
     moveSpeed: 52,
     abilityName: "攻击弹幕",
-    abilityDescription: "进入攻击弹幕状态：攻速、攻击力与移速提升；期间能量从满缓慢降到空且无法回能，能量耗尽后结束。",
+    abilityDescription: "进入攻击弹幕状态：大幅提升攻速，并小幅提升攻击力与移速；期间能量从满缓慢降到空且无法回能，能量耗尽后结束。",
     portrait: "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png",
     portraitFocus: "top",
     shop: true,

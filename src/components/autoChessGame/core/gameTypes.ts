@@ -155,6 +155,8 @@ export interface Fighter {
   matureAttackSpeedCurrent: number;
   vanguardMember: boolean;
   vanguardKnockback: number;
+  /** 怕死后跳抛物线弧高（视觉抬升像素） */
+  vanguardJumpArc: number;
   vanguardJumpCooldown: number;
   danceMember: boolean;
   danceDashCooldown: number;
@@ -193,6 +195,8 @@ export interface Fighter {
   jumpDelay: number;
   jumpTime: number;
   jumpDuration: number;
+  /** 当前这次跳跃的抛物线弧高 */
+  jumpArcHeight: number;
   jumpFromX: number;
   jumpFromY: number;
   jumpToX: number;

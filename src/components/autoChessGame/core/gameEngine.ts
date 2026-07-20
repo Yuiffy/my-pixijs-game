@@ -89,6 +89,8 @@ const STUCK_PUSH_FORCE_DELAY = 0.28;
 const SEPARATION_PASSES = 2;
 const VANGUARD_JUMP_DURATION = 0.46;
 const VANGUARD_JUMP_COOLDOWN = 0.72;
+/** 刺客/粤语帮等通用跳跃弧高 */
+const DEFAULT_JUMP_ARC_HEIGHT = 92;
 const CLOCK_GUNNER_RABBIT_COUNT = 2;
 const CLOCK_GUNNER_RABBIT_LIFETIME = 4;
 const CLOCK_GUNNER_RABBIT_RADIUS = 14;
@@ -117,8 +119,9 @@ const EMBER_BLADE_CARROT_SPEED = 640;
 const EMBER_BLADE_CARROT_JITTER = 0.42;
 /** 小红帽攻击弹幕持续约 4 秒，能量从满降到空 */
 const SUI_BARRAGE_DURATION = 4;
-const SUI_BARRAGE_ATTACK_BONUS = 0.35;
-const SUI_BARRAGE_ATTACK_SPEED = 0.4;
+/** 攻击力加成偏低，把体感重心放在攻速上 */
+const SUI_BARRAGE_ATTACK_BONUS = 0.15;
+const SUI_BARRAGE_ATTACK_SPEED = 0.75;
 const SUI_BARRAGE_MOVE_SPEED = 28;
 /** 北欧时停球 */
 const CHRONOSPHERE_RADIUS = 128;
@@ -907,7 +910,8 @@ export class AutoChessEngine {
         matureAttackSpeed,
         matureAttackSpeedCurrent: matureAttackSpeed,
         vanguardMember: vanguardLevel > 0,
-        vanguardKnockback: vanguardLevel ? [0, 6, 12, 18][vanguardLevel] : 0,
+        vanguardKnockback: vanguardLevel ? [0, 28, 38, 50][vanguardLevel] : 0,
+        vanguardJumpArc: vanguardLevel ? [0, 24, 27, 32][vanguardLevel] : 0,
         vanguardJumpCooldown: 0,
         danceMember: danceLevel > 0,
         danceDashCooldown: 0,
@@ -937,6 +941,7 @@ export class AutoChessEngine {
         jumpDelay: assassinLevel ? 3.4 + spawn.row * 0.12 : 0,
         jumpTime: 0,
         jumpDuration: assassinLevel ? 0.68 : 0,
+        jumpArcHeight: DEFAULT_JUMP_ARC_HEIGHT,
         attackPulse: 0,
         facingX: 1,
         attackTargetX: spawn.x,
@@ -1025,6 +1030,7 @@ export class AutoChessEngine {
         matureAttackSpeedCurrent: 0,
         vanguardMember: false,
         vanguardKnockback: 0,
+        vanguardJumpArc: 0,
         vanguardJumpCooldown: 0,
         danceMember: false,
         danceDashCooldown: 0,
@@ -1059,6 +1065,7 @@ export class AutoChessEngine {
         jumpDelay: 0,
         jumpTime: 0,
         jumpDuration: 0,
+        jumpArcHeight: DEFAULT_JUMP_ARC_HEIGHT,
         jumpFromX: 990 - rank * 96,
         jumpFromY: 180 + row * 165,
         jumpToX: 990 - rank * 96,
@@ -1471,6 +1478,7 @@ export class AutoChessEngine {
     fighter.jumpToY = landing.y;
     this.faceTowardX(fighter, target.x);
     fighter.jumpPending = false;
+    fighter.jumpArcHeight = DEFAULT_JUMP_ARC_HEIGHT;
     fighter.jumpTime = fighter.jumpDuration;
     this.addEffect({
       kind: "ring",
@@ -1532,6 +1540,7 @@ export class AutoChessEngine {
     fighter.jumpToX = landing.x;
     fighter.jumpToY = landing.y;
     fighter.jumpDuration = VANGUARD_JUMP_DURATION;
+    fighter.jumpArcHeight = fighter.vanguardJumpArc;
     fighter.jumpTime = fighter.jumpDuration;
     fighter.vanguardJumpCooldown = VANGUARD_JUMP_COOLDOWN;
     this.faceTowardX(fighter, source.x);
@@ -2125,6 +2134,13 @@ export class AutoChessEngine {
         // 时停球也会冻结跳跃过程
         if (this.isInsideChronosphere(fighter, battle)) return;
         fighter.jumpTime = Math.max(0, fighter.jumpTime - dt);
+        // 跳跃过程中真实位移，影子与碰撞位置随地面轨迹前进
+        const progress = fighter.jumpDuration > 0
+          ? 1 - fighter.jumpTime / fighter.jumpDuration
+          : 1;
+        const ease = 0.5 - Math.cos(Math.min(1, Math.max(0, progress)) * Math.PI) / 2;
+        fighter.x = fighter.jumpFromX + (fighter.jumpToX - fighter.jumpFromX) * ease;
+        fighter.y = fighter.jumpFromY + (fighter.jumpToY - fighter.jumpFromY) * ease;
         if (fighter.jumpTime <= 0) {
           fighter.x = fighter.jumpToX;
           fighter.y = fighter.jumpToY;
@@ -2301,6 +2317,7 @@ export class AutoChessEngine {
       fighter.jumpToY = landing.y;
       this.faceTowardX(fighter, liveTarget.x);
       fighter.jumpDuration = 0.38;
+      fighter.jumpArcHeight = DEFAULT_JUMP_ARC_HEIGHT;
       fighter.jumpTime = fighter.jumpDuration;
       this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: TRAITS.yue_gang.color, life: 0.35, size: fighter.radius * 1.5 });
     });

@@ -1372,14 +1372,10 @@ const drawFighter = (
   const jumpProgress = jumping
     ? 1 - fighter.jumpTime / fighter.jumpDuration
     : 0;
-  const jumpEase = 0.5 - Math.cos(jumpProgress * Math.PI) / 2;
-  const renderX = jumping
-    ? fighter.jumpFromX + (fighter.jumpToX - fighter.jumpFromX) * jumpEase
-    : fighter.x;
+  // 逻辑坐标已在跳跃过程中位移，这里只叠加弧高视觉抬升
+  const renderX = fighter.x;
   const renderY = jumping
-    ? fighter.jumpFromY +
-      (fighter.jumpToY - fighter.jumpFromY) * jumpEase -
-      Math.sin(jumpProgress * Math.PI) * 92
+    ? fighter.y - Math.sin(jumpProgress * Math.PI) * (fighter.jumpArcHeight || 92)
     : fighter.y;
   const attackProgress = fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
   const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
@@ -1408,9 +1404,10 @@ const drawFighter = (
   ctx.globalAlpha = fighter.stun > 0 ? 0.72 : 1;
   ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
   ctx.beginPath();
+  // 影子贴着地面逻辑坐标，随跳跃位移一起移动
   ctx.ellipse(
-    renderX,
-    jumping ? fighter.jumpFromY + radius * 0.8 : drawY + radius * 0.8,
+    fighter.x,
+    fighter.y + radius * 0.8,
     radius * 0.95,
     radius * 0.33,
     0,
