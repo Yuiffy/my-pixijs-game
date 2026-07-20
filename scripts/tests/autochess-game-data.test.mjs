@@ -142,7 +142,9 @@ test("莉蔻使用独立精灵头像并加入矮人联盟", async () => {
   assert.equal(unit.name, "兔子射手");
   assert.equal(unit.title, "莉蔻Liko · 远程连射");
   assert.equal(unit.glyph, "蔻");
-  assert.equal(unit.abilityName, "胡萝卜射击");
+  assert.equal(unit.abilityName, "近视射击");
+  assert.match(unit.abilityDescription, /胡萝卜弹幕/);
+  assert.match(unit.abilityDescription, /随机偏移/);
   assert.equal(unit.range, 230);
   assert.ok(unit.traits.includes("dwarf"));
   assert.equal(unit.traits.includes("ember"), false);
@@ -312,6 +314,9 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.deepEqual(data.UNIT_DEFS.rift_stalker.traits, ["assassin", "mystic"]);
   ["dawn_duelist", "ember_blade", "nightin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dwarf")));
   ["sun_guard", "dawn_duelist"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("traffic")));
+  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityName, "迎客松");
+  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /松树/);
+  assert.equal(data.STARTERS.find((starter) => starter.id === "traffic_start")?.name, "热点追踪");
   ["gale_archer", "clock_gunner", "cinder_ram", "zeyin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("mature")));
   ["sui", "zeyin", "tiandou", "youyi", "mumu", "lian"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dance")));
   assert.equal(data.UNIT_DEFS.guangyi.abilityName, "滑跪");

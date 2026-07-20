@@ -1,4 +1,4 @@
-import type { GameState, MechanicalRabbitPet } from "../core/gameEngine";
+import type { GameState, MechanicalRabbitPet, PineTreeTurret, Projectile } from "../core/gameEngine";
 import { mechanicalRabbitMuzzle } from "../core/gameEngine";
 import { text } from "./primitives";
 
@@ -94,11 +94,89 @@ export const drawMechanicalRabbitPets = (ctx: CanvasRenderingContext2D, state: G
   battle.pets.forEach((pet) => drawMechanicalRabbitPet(ctx, pet, state.visualTime));
 };
 
+const drawPineTreeTurret = (
+  ctx: CanvasRenderingContext2D,
+  tree: PineTreeTurret,
+  visualTime: number,
+) => {
+  const fade = Math.max(0.35, Math.min(1, tree.life / 0.9));
+  const sway = Math.sin(visualTime * 2.4 + tree.x * 0.02) * 1.5;
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+  ctx.beginPath();
+  ctx.ellipse(tree.x, tree.y + tree.radius * 0.7, tree.radius * 0.95, tree.radius * 0.28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.translate(tree.x + sway, tree.y);
+  ctx.font = `${Math.round(tree.radius * 2.2)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("🌲", 0, -2);
+  if (tree.attackPulse > 0) {
+    const flash = tree.attackPulse / 0.18;
+    ctx.globalAlpha = fade * flash * 0.85;
+    ctx.fillStyle = "rgba(160, 230, 150, 0.9)";
+    ctx.beginPath();
+    ctx.arc(0, -tree.radius * 0.2, 8 + flash * 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+};
+
+export const drawPineTreeTurrets = (ctx: CanvasRenderingContext2D, state: GameState) => {
+  const battle = state.battle;
+  if (!battle) return;
+  battle.pineTrees.forEach((tree) => drawPineTreeTurret(ctx, tree, state.visualTime));
+};
+
+const projectileEmoji = (projectile: Projectile) => {
+  if (projectile.emoji) return projectile.emoji;
+  if (projectile.style === "shark") return "🦈";
+  if (projectile.style === "carrot") return "🥕";
+  return null;
+};
+
 export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState) => {
   const battle = state.battle;
   if (!battle) return;
   battle.projectiles.forEach((projectile) => {
     const speed = Math.hypot(projectile.velocityX, projectile.velocityY) || 1;
+    const angle = Math.atan2(projectile.velocityY, projectile.velocityX);
+    const emoji = projectileEmoji(projectile);
+
+    if (projectile.style === "pine_needle") {
+      const trailLength = 16;
+      const trailX = projectile.x - ((projectile.velocityX / speed) * trailLength);
+      const trailY = projectile.y - ((projectile.velocityY / speed) * trailLength);
+      ctx.save();
+      ctx.strokeStyle = projectile.color;
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+      ctx.shadowColor = projectile.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(trailX, trailY);
+      ctx.lineTo(projectile.x, projectile.y);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    if (emoji) {
+      const fontSize = projectile.style === "shark"
+        ? Math.max(12, projectile.size)
+        : Math.max(14, projectile.size);
+      ctx.save();
+      ctx.translate(projectile.x, projectile.y);
+      ctx.rotate(angle);
+      ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(emoji, 0, 0);
+      ctx.restore();
+      return;
+    }
+
     const trailLength = 22;
     const trailX = projectile.x - ((projectile.velocityX / speed) * trailLength);
     const trailY = projectile.y - ((projectile.velocityY / speed) * trailLength);
@@ -124,6 +202,31 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState)
 export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => {
   const battle = state.battle;
   if (!battle) return;
+
+  // 持续绘制时停球（独立于瞬时特效列表）
+  battle.chronospheres.forEach((zone) => {
+    const lifeRatio = Math.max(0, zone.life / zone.maxLife);
+    const pulse = 0.92 + Math.sin(state.visualTime * 6) * 0.04;
+    ctx.save();
+    ctx.globalAlpha = 0.22 + lifeRatio * 0.28;
+    const fill = ctx.createRadialGradient(zone.x, zone.y, 8, zone.x, zone.y, zone.radius * pulse);
+    fill.addColorStop(0, "rgba(90, 40, 140, 0.55)");
+    fill.addColorStop(0.55, "rgba(120, 60, 180, 0.28)");
+    fill.addColorStop(1, "rgba(40, 10, 70, 0)");
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(zone.x, zone.y, zone.radius * pulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = zone.color;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = zone.color;
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.arc(zone.x, zone.y, zone.radius * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  });
+
   battle.effects.forEach((effect) => {
     const progress = 1 - effect.life / effect.maxLife;
     const alpha = Math.max(0, effect.life / effect.maxLife);
@@ -164,6 +267,45 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
       ctx.beginPath();
       ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
       ctx.fill();
+    } else if (effect.kind === "chronosphere") {
+      const radius = (effect.size || 120) * (0.7 + progress * 0.35);
+      const gradient = ctx.createRadialGradient(effect.x, effect.y, 0, effect.x, effect.y, radius);
+      gradient.addColorStop(0, "rgba(180, 120, 255, 0.55)");
+      gradient.addColorStop(0.6, "rgba(90, 40, 160, 0.25)");
+      gradient.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius * 0.92, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (effect.kind === "hotpot") {
+      const radius = (effect.size || 130) * (0.45 + progress * 0.7);
+      const pot = ctx.createRadialGradient(effect.x, effect.y, 4, effect.x, effect.y, radius);
+      pot.addColorStop(0, "rgba(255, 220, 120, 0.85)");
+      pot.addColorStop(0.35, "rgba(255, 90, 40, 0.55)");
+      pot.addColorStop(0.7, "rgba(180, 20, 20, 0.28)");
+      pot.addColorStop(1, "rgba(80, 0, 0, 0)");
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = pot;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ff6b2d";
+      ctx.lineWidth = 5 * (1 - progress * 0.5);
+      ctx.shadowColor = "#ff3b1a";
+      ctx.shadowBlur = 22;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius * 0.72, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius * 0.48, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffd27a";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
     } else {
       text(ctx, effect.text || "", effect.x, effect.y - progress * 26, effect.size || 14, effect.color, "center", 800);
     }

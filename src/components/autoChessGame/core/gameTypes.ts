@@ -29,7 +29,7 @@ export interface UnitLocation {
 }
 
 export interface BattleEffect {
-  kind: "line" | "ring" | "burst" | "text" | "heal";
+  kind: "line" | "ring" | "burst" | "text" | "heal" | "chronosphere" | "hotpot";
   x: number;
   y: number;
   x2?: number;
@@ -54,6 +54,19 @@ export interface Projectile {
   burnPower: number;
   color: string;
   size: number;
+  /** 弹幕视觉样式：默认光点，或指定 emoji */
+  style?: "default" | "shark" | "carrot" | "pine_needle";
+  /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
+  emoji?: string;
+}
+
+export interface ChronosphereZone {
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  color: string;
 }
 
 export interface MechanicalRabbitPet {
@@ -74,6 +87,21 @@ export interface MechanicalRabbitPet {
   returning: boolean;
   aimX: number;
   aimY: number;
+  attackPulse: number;
+}
+
+/** 大黑鼠「迎客松」召唤的固定松树炮台 */
+export interface PineTreeTurret {
+  id: string;
+  ownerFid: string;
+  team: Team;
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  range: number;
+  fireTimer: number;
   attackPulse: number;
 }
 
@@ -125,6 +153,17 @@ export interface Fighter {
   matureMoveFloor: number;
   matureAttackSpeed: number;
   matureAttackSpeedCurrent: number;
+  vanguardMember: boolean;
+  vanguardKnockback: number;
+  danceMember: boolean;
+  danceDashCooldown: number;
+  danceDashTime: number;
+  danceDashDodge: number;
+  /** 小红帽攻击弹幕：能量锁定并缓慢消耗 */
+  barrageActive: boolean;
+  barrageDrainPerSecond: number;
+  abilityAttackBonus: number;
+  abilityAttackBonusTime: number;
   abilityAttackSpeed: number;
   abilityAttackSpeedTime: number;
   abilityMoveSpeed: number;
@@ -182,6 +221,10 @@ export interface ProjectileVolleyShot {
   speed: number;
   color: string;
   size: number;
+  /** 相对瞄准方向的固定角度偏移（弧度） */
+  angleOffset?: number;
+  emoji?: string;
+  style?: Projectile["style"];
 }
 
 export interface BattleState {
@@ -192,8 +235,11 @@ export interface BattleState {
   effects: BattleEffect[];
   projectiles: Projectile[];
   projectileVolley: ProjectileVolleyShot[];
+  chronospheres: ChronosphereZone[];
   pets: MechanicalRabbitPet[];
   petSerial: number;
+  pineTrees: PineTreeTurret[];
+  pineTreeSerial: number;
   fieldMedicTimer: number;
   gluttonyTimer: number;
   emberTimer: number;

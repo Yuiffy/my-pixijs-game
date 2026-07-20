@@ -14,6 +14,7 @@ import Codex from "./Codex";
 import {
   drawEffects,
   drawMechanicalRabbitPets,
+  drawPineTreeTurrets,
   drawProjectiles,
 } from "./canvas/effects";
 import {
@@ -1435,7 +1436,9 @@ const drawFighter = (
     "#14222d",
   );
   const energyRatio = Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
-  const energyColor = ENERGY_PROFILES[fighter.energyStyle].color;
+  const energyColor = fighter.barrageActive
+    ? "#ff8aa0"
+    : ENERGY_PROFILES[fighter.energyStyle].color;
   fillRounded(
     ctx,
     {
@@ -1447,8 +1450,11 @@ const drawFighter = (
     2,
     energyColor,
   );
-  if (energyRatio >= 1) {
+  if (energyRatio >= 1 && !fighter.barrageActive) {
     strokeRounded(ctx, { x: drawX - barWidth / 2, y: drawY + radius + 19, w: barWidth, h: 4 }, 2, "#f4fbff", 1);
+  }
+  if (fighter.barrageActive) {
+    strokeRounded(ctx, { x: drawX - barWidth / 2, y: drawY + radius + 19, w: barWidth, h: 4 }, 2, "#ffd0d8", 1);
   }
 
   if (fighter.stun > 0)
@@ -1604,6 +1610,7 @@ const drawBattle = (
     .sort((a, b) => a.y - b.y)
     .forEach((fighter) => drawFighter(ctx, fighter, state.visualTime));
   drawMechanicalRabbitPets(ctx, state);
+  drawPineTreeTurrets(ctx, state);
   drawProjectiles(ctx, state);
   drawEffects(ctx, state);
 

@@ -1,5 +1,31 @@
-const { chromium } = require('C:/Users/yuiffy/AppData/Local/npm-cache/_npx/9833c18b2d85bc59/node_modules/playwright');
+const { createRequire } = require('node:module');
+const { existsSync } = require('node:fs');
 const { mkdirSync } = require('node:fs');
+
+const localRequire = createRequire(__filename);
+const playwrightCandidates = [
+  process.env.PLAYWRIGHT_MODULE,
+  'playwright',
+  'C:/Users/apple/AppData/Local/npm-cache/_npx/9833c18b2d85bc59/node_modules/playwright',
+  'C:/Users/yuiffy/AppData/Local/npm-cache/_npx/9833c18b2d85bc59/node_modules/playwright',
+].filter(Boolean);
+
+const loadPlaywright = () => {
+  for (const candidate of playwrightCandidates) {
+    try {
+      if (candidate.includes('/') || candidate.includes('\\')) {
+        if (!existsSync(candidate)) continue;
+        return localRequire(candidate);
+      }
+      return localRequire(candidate);
+    } catch {
+      // 继续尝试下一个候选路径
+    }
+  }
+  throw new Error('无法加载 playwright，请安装依赖或设置 PLAYWRIGHT_MODULE');
+};
+
+const { chromium } = loadPlaywright();
 
 const artifactDirectory = '.tmp/autochess';
 mkdirSync(artifactDirectory, { recursive: true });

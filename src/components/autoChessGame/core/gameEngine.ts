@@ -29,11 +29,13 @@ import type {
   AugmentSelection,
   BattleEffect,
   BattleState,
+  ChronosphereZone,
   Fighter,
   GamePhase,
   GameState,
   MechanicalRabbitPet,
   OwnedUnit,
+  PineTreeTurret,
   Projectile,
   ProjectileVolleyShot,
   RankingMetric,
@@ -48,11 +50,13 @@ export type {
   AugmentSelection,
   BattleEffect,
   BattleState,
+  ChronosphereZone,
   Fighter,
   GamePhase,
   GameState,
   MechanicalRabbitPet,
   OwnedUnit,
+  PineTreeTurret,
   Projectile,
   RankingMetric,
   RoundResult,
@@ -90,6 +94,41 @@ const CLOCK_GUNNER_RABBIT_PROJECTILE_SPEED = 620;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RANGE = 560;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RADIUS = 5;
 const CLOCK_GUNNER_RABBIT_FLANK_ANGLE = Math.PI * 0.62;
+/** 大黑鼠迎客松 */
+const PINE_TREE_LIFETIME = 7.5;
+const PINE_TREE_RADIUS = 18;
+const PINE_TREE_RANGE = 175;
+const PINE_TREE_FIRE_INTERVAL = 0.52;
+const PINE_TREE_DAMAGE_MULTIPLIER = 0.58;
+const PINE_TREE_NEEDLE_SPEED = 520;
+const PINE_TREE_NEEDLE_RANGE = 420;
+const PINE_TREE_NEEDLE_RADIUS = 5;
+/** 莉蔻近视射击 */
+const EMBER_BLADE_CARROT_SHOTS = 5;
+const EMBER_BLADE_CARROT_INTERVAL = 0.11;
+const EMBER_BLADE_CARROT_DAMAGE = 0.58;
+const EMBER_BLADE_CARROT_SPEED = 640;
+const EMBER_BLADE_CARROT_JITTER = 0.42;
+/** 小红帽攻击弹幕持续约 4 秒，能量从满降到空 */
+const SUI_BARRAGE_DURATION = 4;
+const SUI_BARRAGE_ATTACK_BONUS = 0.35;
+const SUI_BARRAGE_ATTACK_SPEED = 0.4;
+const SUI_BARRAGE_MOVE_SPEED = 28;
+/** 北欧时停球 */
+const CHRONOSPHERE_RADIUS = 128;
+const CHRONOSPHERE_DURATION = 2.8;
+/** 七海鲨鱼扇形弹幕 */
+const SHARK_BARRAGE_COUNT = 11;
+const SHARK_BARRAGE_SPREAD = Math.PI * 0.55;
+const SHARK_BARRAGE_SPEED = 340;
+const SHARK_BARRAGE_RANGE = 520;
+const SHARK_BARRAGE_DAMAGE = 0.42;
+const SHARK_BARRAGE_RADIUS = 10;
+/** 跳舞冲刺 */
+const DANCE_DASH_DURATION = 0.48;
+const DANCE_DASH_SPEED_MULT = 3.4;
+const DANCE_DASH_COOLDOWN = [0, 4.2, 3.4, 2.6];
+const DANCE_DASH_DODGE = [0, 0.28, 0.36, 0.45];
 
 interface MovementIntent {
   x: number;
@@ -227,7 +266,15 @@ export class AutoChessEngine {
   }
 
   private addEnergy(fighter: Fighter, amount: number) {
+    // 攻击弹幕期间能量只减不增
+    if (fighter.barrageActive) return;
     fighter.energy = Math.max(0, Math.min(fighter.maxEnergy, fighter.energy + amount));
+  }
+
+  private isInsideChronosphere(fighter: Fighter, battle: BattleState) {
+    return battle.chronospheres.some(
+      (zone) => Math.hypot(fighter.x - zone.x, fighter.y - zone.y) <= zone.radius,
+    );
   }
 
   private rollStarterChoices() {
@@ -739,38 +786,38 @@ export class AutoChessEngine {
       const moveSpeed = def.moveSpeed + [0, 10, 22, 36][globalHostLevel] + (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
 
       if (aggressionLevel) attack *= 1 + [0, 0.05, 0.1, 0.2][aggressionLevel] + (aggressionMember ? [0, 0.15, 0.3, 0.55][aggressionLevel] : 0);
+      // 怕死：拉远攻击距离，高阶给全队生命
+      let range = def.range;
       if (vanguardLevel) {
-        maxHp *= [1, 1.12, 1.25, 1.42][vanguardLevel];
-        armor += [0, 8, 18, 32][vanguardLevel];
+        range += [0, 36, 56, 80][vanguardLevel];
+      }
+      if (globalVanguardLevel >= 2) {
+        maxHp *= globalVanguardLevel === 3 ? 1.18 : 1.1;
+      }
+      // 毛茸茸：只加护甲
+      if (wildLevel) {
+        armor += [0, 10, 22, 38][wildLevel];
       }
       if (rangerLevel) attackInterval /= [1, 1.12, 1.26, 1.45][rangerLevel];
       if (skeletonLevel) {
         attack *= 1.35;
         armor -= 12;
       }
-      if (wildLevel) {
-        maxHp *= [1, 1.12, 1.25, 1.42][wildLevel];
-        armor += [0, 8, 18, 32][wildLevel];
-      }
       if (danceLevel) {
         attackInterval /= [1, 1.12, 1.26, 1.45][danceLevel];
       }
       if (!isRanged) {
-        if (globalVanguardLevel >= 2) {
-          maxHp *= globalVanguardLevel === 3 ? 1.16 : 1.08;
-          armor += globalVanguardLevel === 3 ? 12 : 6;
-        }
         if (globalWildLevel >= 2) {
-          maxHp *= globalWildLevel === 3 ? 1.16 : 1.08;
-          armor += globalWildLevel === 3 ? 12 : 6;
+          armor += globalWildLevel === 3 ? 16 : 8;
+        }
+        if (globalDanceLevel >= 2) {
+          attackInterval /= globalDanceLevel === 3 ? 1.16 : 1.08;
         }
       } else if (globalRangerLevel >= 2) {
         attackInterval /= globalRangerLevel === 3 ? 1.3 : 1.15;
       }
-      if (isRanged && globalDanceLevel >= 2) {
-        attackInterval /= globalDanceLevel === 3 ? 1.16 : 1.08;
-      }
-      const danceMoveSpeed = (danceLevel ? [0, 10, 20, 32][danceLevel] : 0) + (isRanged && globalDanceLevel >= 2 ? (globalDanceLevel === 3 ? 12 : 6) : 0);
+      // 跳舞高阶给近战移速，成员本身不再加移速
+      const danceMoveSpeed = !isRanged && globalDanceLevel >= 2 ? (globalDanceLevel === 3 ? 16 : 8) : 0;
       if (hasAugment("tempered")) armor += 16;
       if (hasAugment("second_wind")) {
         maxHp *= 1.12;
@@ -797,8 +844,8 @@ export class AutoChessEngine {
         shield: 0,
         attack,
         armor,
-        range: def.range,
-        baseRange: def.range,
+        range,
+        baseRange: range,
         attackInterval,
         moveSpeed: moveSpeed + danceMoveSpeed,
         baseAttack: attack,
@@ -853,6 +900,16 @@ export class AutoChessEngine {
         matureMoveFloor: matureLevel ? 0.7 : 1,
         matureAttackSpeed,
         matureAttackSpeedCurrent: matureAttackSpeed,
+        vanguardMember: vanguardLevel > 0,
+        vanguardKnockback: vanguardLevel ? [0, 28, 38, 50][vanguardLevel] : 0,
+        danceMember: danceLevel > 0,
+        danceDashCooldown: 0,
+        danceDashTime: 0,
+        danceDashDodge: danceLevel ? DANCE_DASH_DODGE[danceLevel] : 0,
+        barrageActive: false,
+        barrageDrainPerSecond: 0,
+        abilityAttackBonus: 0,
+        abilityAttackBonusTime: 0,
         abilityAttackSpeed: 0,
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
@@ -959,6 +1016,16 @@ export class AutoChessEngine {
         matureMoveFloor: 1,
         matureAttackSpeed: 0,
         matureAttackSpeedCurrent: 0,
+        vanguardMember: false,
+        vanguardKnockback: 0,
+        danceMember: false,
+        danceDashCooldown: 0,
+        danceDashTime: 0,
+        danceDashDodge: 0,
+        barrageActive: false,
+        barrageDrainPerSecond: 0,
+        abilityAttackBonus: 0,
+        abilityAttackBonusTime: 0,
         abilityAttackSpeed: 0,
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
@@ -1011,8 +1078,11 @@ export class AutoChessEngine {
       effects: [],
       projectiles: [],
       projectileVolley: [],
+      chronospheres: [],
       pets: [],
       petSerial: 0,
+      pineTrees: [],
+      pineTreeSerial: 0,
       fieldMedicTimer: 2.5,
       gluttonyTimer: 3,
       emberTimer: 3,
@@ -1246,7 +1316,8 @@ export class AutoChessEngine {
       moveY = towardY;
       moveDistance = 1;
     }
-    const travel = Math.min(moveDistance, fighter.moveSpeed * (fighter.slowTime > 0 ? 0.55 : 1) * dt);
+    const dashMult = fighter.danceDashTime > 0 ? DANCE_DASH_SPEED_MULT : 1;
+    const travel = Math.min(moveDistance, fighter.moveSpeed * dashMult * (fighter.slowTime > 0 ? 0.55 : 1) * dt);
     const motionX = moveX / moveDistance;
     const motionY = moveY / moveDistance;
     movementIntents.set(fighter.fid, { x: motionX, y: motionY });
@@ -1396,7 +1467,7 @@ export class AutoChessEngine {
   private fireFixedProjectile(source: Fighter, target: Fighter, shot: ProjectileVolleyShot) {
     const deltaX = target.x - source.x;
     const deltaY = target.y - source.y;
-    const distance = Math.hypot(deltaX, deltaY) || 1;
+    const baseAngle = Math.atan2(deltaY, deltaX) + (shot.angleOffset || 0);
     source.attackPulse = 0.22;
     source.attackTargetX = target.x;
     source.attackTargetY = target.y;
@@ -1406,14 +1477,16 @@ export class AutoChessEngine {
       team: source.team,
       x: source.x,
       y: source.y,
-      velocityX: (deltaX / distance) * shot.speed,
-      velocityY: (deltaY / distance) * shot.speed,
-      radius: 7,
+      velocityX: Math.cos(baseAngle) * shot.speed,
+      velocityY: Math.sin(baseAngle) * shot.speed,
+      radius: shot.emoji || shot.style === "carrot" || shot.style === "shark" ? 9 : 7,
       remainingRange: 880,
       damage: shot.damage,
       burnPower: shot.burnPower,
       color: shot.color,
       size: shot.size,
+      style: shot.style,
+      emoji: shot.emoji,
     });
   }
 
@@ -1448,6 +1521,88 @@ export class AutoChessEngine {
       });
     }
     this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.45, size: 72 });
+  }
+
+  private summonPineTree(source: Fighter, targets: Fighter[]) {
+    const battle = this.state.battle;
+    if (!battle) return;
+    const def = UNIT_DEFS[source.unitId];
+    const densest = targets.reduce(
+      (best, candidate) => {
+        const nearby = targets.filter(
+          (other) => Math.hypot(candidate.x - other.x, candidate.y - other.y) < 125,
+        ).length;
+        return nearby > best.nearby ? { target: candidate, nearby } : best;
+      },
+      { target: targets[0] as Fighter | undefined, nearby: 0 },
+    ).target;
+    const anchor = densest || this.nearestTarget(source, targets);
+    const forward = source.team === "player" ? 1 : -1;
+    const spawnX = anchor
+      ? (source.x + anchor.x) * 0.5 + forward * 18
+      : source.x + forward * 72;
+    const spawnY = anchor ? (source.y + anchor.y) * 0.5 : source.y;
+    const clampedX = Math.max(BATTLE_BOUNDS.left + PINE_TREE_RADIUS, Math.min(BATTLE_BOUNDS.right - PINE_TREE_RADIUS, spawnX));
+    const clampedY = Math.max(BATTLE_BOUNDS.top + PINE_TREE_RADIUS, Math.min(BATTLE_BOUNDS.bottom - PINE_TREE_RADIUS, spawnY));
+    battle.pineTreeSerial += 1;
+    battle.pineTrees.push({
+      id: `${source.fid}-pine-${battle.pineTreeSerial}`,
+      ownerFid: source.fid,
+      team: source.team,
+      x: clampedX,
+      y: clampedY,
+      radius: PINE_TREE_RADIUS,
+      life: PINE_TREE_LIFETIME,
+      maxLife: PINE_TREE_LIFETIME,
+      range: PINE_TREE_RANGE,
+      fireTimer: 0.2,
+      attackPulse: 0,
+    });
+    this.addEffect({ kind: "ring", x: clampedX, y: clampedY, color: def.accent, life: 0.55, size: 88 });
+    this.addEffect({ kind: "text", x: clampedX, y: clampedY - 36, color: def.accent, text: "迎客松", life: 0.7, size: 12 });
+  }
+
+  private updatePineTreeTurrets(battle: BattleState, dt: number) {
+    const fighters = [...battle.player, ...battle.enemy];
+    battle.pineTrees = battle.pineTrees.filter((tree) => {
+      const owner = fighters.find((fighter) => fighter.fid === tree.ownerFid);
+      tree.life -= dt;
+      tree.attackPulse = Math.max(0, tree.attackPulse - dt);
+      if (!owner?.alive || tree.life <= 0) return false;
+
+      const targetTeam: Team = tree.team === "player" ? "enemy" : "player";
+      const target = this.living(targetTeam).reduce<Fighter | null>((best, candidate) => {
+        const distance = Math.hypot(candidate.x - tree.x, candidate.y - tree.y);
+        if (distance > tree.range) return best;
+        if (!best) return candidate;
+        return distance < Math.hypot(best.x - tree.x, best.y - tree.y) ? candidate : best;
+      }, null);
+      if (!target) return true;
+
+      tree.fireTimer -= dt;
+      if (tree.fireTimer > 0) return true;
+      const deltaX = target.x - tree.x;
+      const deltaY = target.y - tree.y;
+      const distance = Math.hypot(deltaX, deltaY) || 1;
+      battle.projectiles.push({
+        sourceFid: owner.fid,
+        team: tree.team,
+        x: tree.x,
+        y: tree.y - tree.radius * 0.35,
+        velocityX: (deltaX / distance) * PINE_TREE_NEEDLE_SPEED,
+        velocityY: (deltaY / distance) * PINE_TREE_NEEDLE_SPEED,
+        radius: PINE_TREE_NEEDLE_RADIUS,
+        remainingRange: PINE_TREE_NEEDLE_RANGE,
+        damage: owner.attack * PINE_TREE_DAMAGE_MULTIPLIER,
+        burnPower: 0,
+        color: "#7ecf8a",
+        size: 3,
+        style: "pine_needle",
+      });
+      tree.attackPulse = 0.18;
+      tree.fireTimer = PINE_TREE_FIRE_INTERVAL;
+      return true;
+    });
   }
 
   private updateMechanicalRabbitPets(battle: BattleState, dt: number) {
@@ -1547,8 +1702,14 @@ export class AutoChessEngine {
       shot.delay -= dt;
       if (shot.delay > 0) return true;
       const source = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === shot.sourceFid);
-      const target = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === shot.targetFid);
-      if (source && target?.alive) this.fireFixedProjectile(source, target, shot);
+      if (!source?.alive) return false;
+      const locked = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === shot.targetFid);
+      const targetTeam: Team = source.team === "player" ? "enemy" : "player";
+      // 带角度偏移的弹幕（近视射击）开火时重新找最近目标，体现瞄不准
+      const target = shot.angleOffset !== undefined
+        ? (this.nearestTarget(source, this.living(targetTeam)) || (locked?.alive ? locked : null))
+        : (locked?.alive ? locked : null);
+      if (target) this.fireFixedProjectile(source, target, shot);
       return false;
     });
   }
@@ -1651,9 +1812,15 @@ export class AutoChessEngine {
           this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: UNIT_DEFS[fighter.unitId].accent, text, life: 0.55, size: 10 });
         }
       }
-      fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
-      const abilityAttackSpeed = fighter.abilityAttackSpeedTime > 0 ? fighter.abilityAttackSpeed : 0;
-      const abilityMoveSpeed = fighter.abilityMoveSpeedTime > 0 ? fighter.abilityMoveSpeed : 0;
+      fighter.attack = fighter.baseAttack
+        * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks)
+        * (1 + (fighter.barrageActive || fighter.abilityAttackBonusTime > 0 ? fighter.abilityAttackBonus : 0));
+      const abilityAttackSpeed = fighter.barrageActive || fighter.abilityAttackSpeedTime > 0
+        ? fighter.abilityAttackSpeed
+        : 0;
+      const abilityMoveSpeed = fighter.barrageActive || fighter.abilityMoveSpeedTime > 0
+        ? fighter.abilityMoveSpeed
+        : 0;
       fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
         (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
       fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier * syncMultiplier;
@@ -1681,7 +1848,12 @@ export class AutoChessEngine {
       effect.life -= dt;
     });
     battle.effects = battle.effects.filter((effect) => effect.life > 0);
+    battle.chronospheres.forEach((zone) => {
+      zone.life -= dt;
+    });
+    battle.chronospheres = battle.chronospheres.filter((zone) => zone.life > 0);
     this.updateMechanicalRabbitPets(battle, dt);
+    this.updatePineTreeTurrets(battle, dt);
     this.updateProjectileVolley(battle, dt);
     this.updateProjectiles(battle, dt);
 
@@ -1732,13 +1904,41 @@ export class AutoChessEngine {
     }
 
     const movementIntents = new Map<string, MovementIntent>();
+    const danceLevel = this.getActiveTraits().find((trait) => trait.id === "dance")?.level || 0;
     [...battle.player, ...battle.enemy].forEach((fighter) => {
       if (!fighter.alive) return;
       fighter.cooldown -= dt;
       fighter.stun = Math.max(0, fighter.stun - dt);
       fighter.abilityAttackSpeedTime = Math.max(0, fighter.abilityAttackSpeedTime - dt);
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
+      fighter.abilityAttackBonusTime = Math.max(0, fighter.abilityAttackBonusTime - dt);
+      fighter.danceDashCooldown = Math.max(0, fighter.danceDashCooldown - dt);
+      fighter.danceDashTime = Math.max(0, fighter.danceDashTime - dt);
       fighter.slowTime = Math.max(0, fighter.slowTime - dt);
+      // 攻击弹幕：能量缓慢清空，期间不回能
+      if (fighter.barrageActive) {
+        fighter.energy = Math.max(0, fighter.energy - fighter.barrageDrainPerSecond * dt);
+        if (fighter.energy <= 0) {
+          fighter.energy = 0;
+          fighter.barrageActive = false;
+          fighter.barrageDrainPerSecond = 0;
+          fighter.abilityAttackBonus = 0;
+          fighter.abilityAttackBonusTime = 0;
+          fighter.abilityAttackSpeed = 0;
+          fighter.abilityAttackSpeedTime = 0;
+          fighter.abilityMoveSpeed = 0;
+          fighter.abilityMoveSpeedTime = 0;
+          this.addEffect({
+            kind: "text",
+            x: fighter.x,
+            y: fighter.y - 42,
+            color: UNIT_DEFS[fighter.unitId].accent,
+            text: "弹幕结束",
+            life: 0.55,
+            size: 11,
+          });
+        }
+      }
       const wasWeakened = fighter.weakenTime > 0;
       fighter.weakenTime = Math.max(0, fighter.weakenTime - dt);
       if (wasWeakened && fighter.weakenTime === 0 && fighter.weakenArmorPenalty > 0) {
@@ -1748,12 +1948,15 @@ export class AutoChessEngine {
       fighter.attackPulse = Math.max(0, fighter.attackPulse - dt);
       fighter.hitPulse = Math.max(0, fighter.hitPulse - dt);
       if (fighter.jumpPending) {
+        if (this.isInsideChronosphere(fighter, battle)) return;
         fighter.jumpDelay = Math.max(0, fighter.jumpDelay - dt);
         if (!this.frontlinesEngaged(battle) && fighter.jumpDelay > 0) return;
         if (this.prepareAssassinJump(fighter, battle)) return;
         fighter.jumpPending = false;
       }
       if (fighter.jumpTime > 0) {
+        // 时停球也会冻结跳跃过程
+        if (this.isInsideChronosphere(fighter, battle)) return;
         fighter.jumpTime = Math.max(0, fighter.jumpTime - dt);
         if (fighter.jumpTime <= 0) {
           fighter.x = fighter.jumpToX;
@@ -1793,8 +1996,23 @@ export class AutoChessEngine {
         }
         if (fighter.hp <= 0) this.killFighter(fighter);
       }
+      // 时停球内敌我单位都不能行动（灼烧等 DoT 仍结算）
+      if (this.isInsideChronosphere(fighter, battle)) {
+        if (this.rng.next() < dt * 2.2) {
+          this.addEffect({
+            kind: "text",
+            x: fighter.x + (this.rng.next() - 0.5) * 18,
+            y: fighter.y - 24,
+            color: "#c9a0ff",
+            text: "时停",
+            life: 0.35,
+            size: 10,
+          });
+        }
+        return;
+      }
       if (!fighter.alive || fighter.stun > 0) return;
-      if (fighter.energyPerSecond > 0) this.addEnergy(fighter, fighter.energyPerSecond * dt);
+      if (!fighter.barrageActive && fighter.energyPerSecond > 0) this.addEnergy(fighter, fighter.energyPerSecond * dt);
       if (this.updateNoriApplePie(fighter, dt)) return;
 
       if (
@@ -1821,7 +2039,7 @@ export class AutoChessEngine {
       const targets = this.living(targetTeam);
       if (!targets.length) return;
 
-      if (fighter.energy >= fighter.maxEnergy) {
+      if (!fighter.barrageActive && fighter.energy >= fighter.maxEnergy) {
         this.castAbility(fighter, targets);
         return;
       }
@@ -1834,6 +2052,35 @@ export class AutoChessEngine {
         fighter.radius + target.radius + CONTACT_ATTACK_BUFFER,
       );
       if (distance > preferredRange) {
+        // 跳舞成员：接近敌人时高移速冲刺，冲刺期间提高闪避
+        if (
+          fighter.danceMember &&
+          fighter.danceDashCooldown <= 0 &&
+          fighter.danceDashTime <= 0 &&
+          danceLevel > 0
+        ) {
+          fighter.danceDashTime = DANCE_DASH_DURATION;
+          fighter.danceDashCooldown = DANCE_DASH_COOLDOWN[danceLevel];
+          this.addEffect({
+            kind: "text",
+            x: fighter.x,
+            y: fighter.y - 40,
+            color: TRAITS.dance.color,
+            text: "冲刺",
+            life: 0.4,
+            size: 11,
+          });
+          this.addEffect({
+            kind: "line",
+            x: fighter.x,
+            y: fighter.y,
+            x2: target.x,
+            y2: target.y,
+            color: TRAITS.dance.color,
+            life: 0.28,
+            size: 4,
+          });
+        }
         this.moveTowardCombatTarget(fighter, target, [...battle.player, ...battle.enemy], dt, movementIntents);
       } else if (fighter.cooldown <= 0) {
         fighter.stuckTime = 0;
@@ -1977,13 +2224,33 @@ export class AutoChessEngine {
 
     switch (source.unitId) {
       case "sui": {
-        addShield(source, source.maxHp * 0.32, 0.48);
-        const target = this.nearestTarget(source, targets);
-        if (target) {
-          deal(target, 0.75);
-          target.stun = Math.max(target.stun, 0.45);
-        }
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.7, size: 62 });
+        // 攻击弹幕：能量保持满并缓慢清空，期间加攻速/攻击/移速且不回能
+        source.energy = source.maxEnergy;
+        source.barrageActive = true;
+        source.barrageDrainPerSecond = source.maxEnergy / SUI_BARRAGE_DURATION;
+        source.abilityAttackBonus = SUI_BARRAGE_ATTACK_BONUS;
+        source.abilityAttackBonusTime = SUI_BARRAGE_DURATION + 0.05;
+        source.abilityAttackSpeed = SUI_BARRAGE_ATTACK_SPEED;
+        source.abilityAttackSpeedTime = SUI_BARRAGE_DURATION + 0.05;
+        source.abilityMoveSpeed = SUI_BARRAGE_MOVE_SPEED;
+        source.abilityMoveSpeedTime = SUI_BARRAGE_DURATION + 0.05;
+        this.addEffect({
+          kind: "ring",
+          x: source.x,
+          y: source.y,
+          color: def.accent,
+          life: 0.7,
+          size: 78,
+        });
+        this.addEffect({
+          kind: "text",
+          x: source.x,
+          y: source.y - 46,
+          color: def.accent,
+          text: "攻击弹幕",
+          life: 0.7,
+          size: 12,
+        });
         break;
       }
       case "sun_guard": {
@@ -2007,20 +2274,22 @@ export class AutoChessEngine {
       case "ember_blade": {
         const target = this.nearestTarget(source, targets);
         if (!target) break;
-        for (let shot = 0; shot < 3; shot += 1) {
-          const shotTarget = this.nearestTarget(source, targets);
-          if (!shotTarget) break;
-          if (shot === 2) {
-            targets.filter((candidate) => Math.hypot(candidate.x - shotTarget.x, candidate.y - shotTarget.y) < 72).forEach((candidate) => {
-              const dealt = this.damage(source, candidate, source.attack * (candidate === shotTarget ? 0.72 : 0.42));
-              this.addDamageText(candidate, dealt);
-            });
-          } else {
-            const dealt = this.damage(source, shotTarget, source.attack * 0.72);
-            this.addDamageText(shotTarget, dealt);
-          }
-          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: shotTarget.x, y2: shotTarget.y, color: def.accent, life: 0.2 + shot * 0.05, size: 3 });
+        for (let shot = 0; shot < EMBER_BLADE_CARROT_SHOTS; shot += 1) {
+          this.state.battle?.projectileVolley.push({
+            sourceFid: source.fid,
+            targetFid: target.fid,
+            delay: shot * EMBER_BLADE_CARROT_INTERVAL,
+            damage: source.attack * EMBER_BLADE_CARROT_DAMAGE,
+            burnPower: 0,
+            speed: EMBER_BLADE_CARROT_SPEED,
+            color: def.accent,
+            size: 14,
+            angleOffset: (this.rng.next() - 0.5) * 2 * EMBER_BLADE_CARROT_JITTER,
+            style: "carrot",
+            emoji: "🥕",
+          });
         }
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.4, size: 64 });
         break;
       }
       case "gale_archer": {
@@ -2143,33 +2412,35 @@ export class AutoChessEngine {
         break;
       }
       case "spark_mage": {
-        const center = targets.reduce(
-          (best, candidate) => {
-            const nearby = targets.filter(
-              (other) =>
-                Math.hypot(candidate.x - other.x, candidate.y - other.y) < 125,
-            ).length;
-            return nearby > best.nearby ? { target: candidate, nearby } : best;
-          },
-          { target: targets[0], nearby: 0 },
-        ).target;
-        targets
-          .filter(
-            (target) =>
-              Math.hypot(target.x - center.x, target.y - center.y) < 125,
-          )
-          .forEach((target) => {
-            const dealt = this.damage(source, target, source.attack * 1.65);
-            target.stun = Math.max(target.stun, 0.45);
-            if (dealt > 0) this.addDamageText(target, dealt);
+        const center = densest(targets);
+        if (!center) break;
+        const battle = this.state.battle;
+        if (battle) {
+          battle.chronospheres.push({
+            x: center.x,
+            y: center.y,
+            radius: CHRONOSPHERE_RADIUS,
+            life: CHRONOSPHERE_DURATION,
+            maxLife: CHRONOSPHERE_DURATION,
+            color: def.accent,
           });
+        }
         this.addEffect({
-          kind: "ring",
+          kind: "chronosphere",
           x: center.x,
           y: center.y,
           color: def.accent,
-          life: 0.8,
-          size: 132,
+          life: 0.85,
+          size: CHRONOSPHERE_RADIUS,
+        });
+        this.addEffect({
+          kind: "text",
+          x: center.x,
+          y: center.y - 18,
+          color: "#e7a3ff",
+          text: "时停",
+          life: 0.85,
+          size: 14,
         });
         break;
       }
@@ -2178,33 +2449,53 @@ export class AutoChessEngine {
         break;
       }
       case "dawn_duelist": {
-        const target = farthest(targets);
-        if (!target) break;
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -38 : 38), y: target.y });
-        deal(target, 1.6);
-        target.stun = Math.max(target.stun, 0.75);
-        this.addEffect({
-          kind: "line",
-          x: source.x,
-          y: source.y,
-          x2: target.x,
-          y2: target.y,
-          color: def.accent,
-          life: 0.42,
-          size: 6,
-        });
+        this.summonPineTree(source, targets);
         break;
       }
       case "grove_mender": {
         const center = densest(targets);
         if (!center) break;
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
-          .forEach((target) => {
-            deal(target, 1.3);
-            target.stun = Math.max(target.stun, 0.65);
+        const aimX = center.x - source.x;
+        const aimY = center.y - source.y;
+        const baseAngle = Math.atan2(aimY, aimX);
+        const battle = this.state.battle;
+        for (let index = 0; index < SHARK_BARRAGE_COUNT; index += 1) {
+          const t = index / (SHARK_BARRAGE_COUNT - 1);
+          const angle = baseAngle - SHARK_BARRAGE_SPREAD / 2 + t * SHARK_BARRAGE_SPREAD;
+          battle?.projectiles.push({
+            sourceFid: source.fid,
+            team: source.team,
+            x: source.x,
+            y: source.y,
+            velocityX: Math.cos(angle) * SHARK_BARRAGE_SPEED,
+            velocityY: Math.sin(angle) * SHARK_BARRAGE_SPEED,
+            radius: SHARK_BARRAGE_RADIUS,
+            remainingRange: SHARK_BARRAGE_RANGE,
+            damage: source.attack * SHARK_BARRAGE_DAMAGE,
+            burnPower: 0,
+            color: def.accent,
+            size: 9,
+            style: "shark",
+            emoji: "🦈",
           });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: 132 });
+        }
+        this.addEffect({
+          kind: "ring",
+          x: source.x,
+          y: source.y,
+          color: def.accent,
+          life: 0.45,
+          size: 70,
+        });
+        this.addEffect({
+          kind: "text",
+          x: source.x,
+          y: source.y - 44,
+          color: def.accent,
+          text: "鲨鱼弹幕",
+          life: 0.55,
+          size: 12,
+        });
         break;
       }
       case "cinder_ram": {
@@ -2244,9 +2535,54 @@ export class AutoChessEngine {
           .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
           .forEach((target) => {
             deal(target, 1.45);
+            this.applyBurn(source, target, source.attack * 0.7);
             target.stun = Math.max(target.stun, 0.7);
           });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.8, size: 132 });
+        // 红色火锅云视觉：多层圆环 + 灼烧爆发
+        this.addEffect({
+          kind: "hotpot",
+          x: center.x,
+          y: center.y,
+          color: "#ff4d3a",
+          life: 1.15,
+          size: 138,
+        });
+        this.addEffect({
+          kind: "ring",
+          x: center.x,
+          y: center.y,
+          color: "#ff6b2d",
+          life: 0.95,
+          size: 132,
+        });
+        this.addEffect({
+          kind: "burst",
+          x: center.x,
+          y: center.y,
+          color: "#ff8a3d",
+          life: 0.85,
+          size: 110,
+        });
+        this.addEffect({
+          kind: "text",
+          x: center.x,
+          y: center.y - 20,
+          color: "#ffd0a8",
+          text: "火锅",
+          life: 0.8,
+          size: 14,
+        });
+        for (let spark = 0; spark < 5; spark += 1) {
+          const angle = (Math.PI * 2 * spark) / 5;
+          this.addEffect({
+            kind: "burst",
+            x: center.x + Math.cos(angle) * 42,
+            y: center.y + Math.sin(angle) * 42,
+            color: spark % 2 === 0 ? "#ff5a2e" : "#ffb347",
+            life: 0.55 + spark * 0.05,
+            size: 28,
+          });
+        }
         break;
       }
       case "yua": {
@@ -2497,7 +2833,9 @@ export class AutoChessEngine {
   }
 
   private damage(source: Fighter, target: Fighter, rawAmount: number, allowInactiveSource = false) {
-    const dodged = target.dodgeChance > 0 && this.rng.next() < target.dodgeChance;
+    const effectiveDodge =
+      target.dodgeChance + (target.danceDashTime > 0 ? target.danceDashDodge : 0);
+    const dodged = effectiveDodge > 0 && this.rng.next() < effectiveDodge;
     if (dodged) {
       this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: "#d9e6f4", text: "闪避", life: 0.55, size: 12 });
       return -1;
@@ -2549,6 +2887,28 @@ export class AutoChessEngine {
     if (hpLoss > 0) target.hitPulse = 0.2;
     if (source.lifesteal > 0)
       this.heal(source, source, hpLoss * source.lifesteal, false);
+
+    // 怕死：被打中后往攻击来源反方向弹开
+    if (target.vanguardMember && target.vanguardKnockback > 0 && target.alive && effectiveApplied > 0) {
+      const deltaX = target.x - source.x;
+      const deltaY = target.y - source.y;
+      const distance = Math.hypot(deltaX, deltaY) || 1;
+      const pushed = this.clampFighterPosition(target, {
+        x: target.x + (deltaX / distance) * target.vanguardKnockback,
+        y: target.y + (deltaY / distance) * target.vanguardKnockback,
+      });
+      target.x = pushed.x;
+      target.y = pushed.y;
+      this.addEffect({
+        kind: "text",
+        x: target.x,
+        y: target.y - 36,
+        color: TRAITS.vanguard.color,
+        text: "躲开",
+        life: 0.4,
+        size: 10,
+      });
+    }
 
     if (
       target.team === "player" &&

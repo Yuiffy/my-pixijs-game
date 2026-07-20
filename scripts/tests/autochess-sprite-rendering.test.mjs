@@ -64,7 +64,7 @@ test("机械兔耳宠物在子弹和特效前使用独立绘制路径", () => {
   assert.match(drawPet[0], /pet\.attackPulse/);
   assert.match(drawPet[0], /cannonTipX/);
   assert.doesNotMatch(drawPet[0], /\[-1, 1\]\.forEach/);
-  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\s*drawProjectiles\(ctx, state\);/);
+  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\s*drawPineTreeTurrets\(ctx, state\);\s*drawProjectiles\(ctx, state\);/);
 });
 
 test("结算页使用显式继续按钮推进阶段", () => {
