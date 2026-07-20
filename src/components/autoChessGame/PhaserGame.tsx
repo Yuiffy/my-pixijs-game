@@ -14,11 +14,14 @@ import Codex from "./Codex";
 import {
   drawEffects,
   drawMechanicalRabbitPets,
+  drawPineTreeTurrets,
   drawProjectiles,
 } from "./canvas/effects";
 import {
+  ENABLE_CANVAS_SHADOWS,
   HEIGHT,
   MAX_CANVAS_PIXELS,
+  MAX_DEVICE_PIXEL_RATIO,
   TOOLBAR_HEIGHT,
   TRAIT_DRAG_THRESHOLD,
   TRAIT_PILL_GAP,
@@ -92,6 +95,62 @@ declare global {
     advanceTime?: (milliseconds: number) => void;
   }
 }
+
+/** 统一设置 Canvas 阴影；关闭时避免昂贵的 shadowBlur */
+const setCanvasShadow = (
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  blur: number,
+) => {
+  if (!ENABLE_CANVAS_SHADOWS) {
+    ctx.shadowBlur = 0;
+    return;
+  }
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+};
+
+/** 将命中目标序列化为可比较的 key，用于跳过无意义重绘 */
+const hitTargetKey = (target: HitTarget) => {
+  if (!target) return "";
+  switch (target.kind) {
+    case "starter":
+      return `starter:${target.id}`;
+    case "shop":
+      return `shop:${target.index}:${target.unitId ?? ""}`;
+    case "board":
+      return `board:${target.index}:${target.unitId ?? ""}:${target.star ?? 0}`;
+    case "bench":
+      return `bench:${target.index}:${target.unitId ?? ""}:${target.star ?? 0}`;
+    case "enemyPreview":
+      return `enemy:${target.unitId}:${target.star}`;
+    case "augment":
+      return `augment:${target.index}`;
+    case "fighter":
+      return `fighter:${target.fid}`;
+    case "trait":
+      return `trait:${target.traitId}`;
+    case "rankingMetric":
+    case "resultMetric":
+      return `${target.kind}:${target.metric}`;
+    default:
+      return target.kind;
+  }
+};
+
+/** 悬停目标是否需要跟随鼠标的 tooltip（位置变化才值得重绘） */
+const hoverNeedsTooltipFollow = (target: HitTarget) => {
+  if (!target) return false;
+  if (target.kind === "trait" || target.kind === "fighter" || target.kind === "enemyPreview")
+    return true;
+  if ((target.kind === "shop" || target.kind === "board" || target.kind === "bench") && target.unitId)
+    return true;
+  return false;
+};
+
+const HOVER_TOOLTIP_MOVE_THRESHOLD = 4;
+/** 非战斗阶段 toast 淡出时的重绘间隔（秒） */
+const TOAST_DRAW_INTERVAL = 0.12;
 
 const drawBackdrop = (ctx: CanvasRenderingContext2D, state: GameState) => {
   const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
@@ -292,8 +351,7 @@ const drawShopTraitTags = (
     if (x + width > rect.x + rect.w - 42) return;
     if (completes && affordable) {
       ctx.save();
-      ctx.shadowColor = trait.color;
-      ctx.shadowBlur = 10;
+      setCanvasShadow(ctx, trait.color, 10);
       fillRounded(ctx, { x, y: y - 9, w: width, h: 17 }, 8, `${trait.color}5c`);
       ctx.restore();
     } else {
@@ -421,8 +479,7 @@ const drawUnitPortrait = (
       ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
     }
   } else {
-    ctx.shadowColor = def.accent;
-    ctx.shadowBlur = radius * 0.5;
+    setCanvasShadow(ctx, def.accent, radius * 0.5);
     const gradient = ctx.createRadialGradient(
       x - radius * 0.25,
       y - radius * 0.3,
@@ -468,8 +525,7 @@ const drawOwnedUnit = (
   const def = UNIT_DEFS[unit.id];
   if (selected) {
     ctx.save();
-    ctx.shadowColor = def.accent;
-    ctx.shadowBlur = 18;
+    setCanvasShadow(ctx, def.accent, 18);
     strokeRounded(
       ctx,
       { x: rect.x + 2, y: rect.y + 2, w: rect.w - 4, h: rect.h - 4 },
@@ -1435,7 +1491,9 @@ const drawFighter = (
     "#14222d",
   );
   const energyRatio = Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
-  const energyColor = ENERGY_PROFILES[fighter.energyStyle].color;
+  const energyColor = fighter.barrageActive
+    ? "#ff8aa0"
+    : ENERGY_PROFILES[fighter.energyStyle].color;
   fillRounded(
     ctx,
     {
@@ -1447,8 +1505,11 @@ const drawFighter = (
     2,
     energyColor,
   );
-  if (energyRatio >= 1) {
+  if (energyRatio >= 1 && !fighter.barrageActive) {
     strokeRounded(ctx, { x: drawX - barWidth / 2, y: drawY + radius + 19, w: barWidth, h: 4 }, 2, "#f4fbff", 1);
+  }
+  if (fighter.barrageActive) {
+    strokeRounded(ctx, { x: drawX - barWidth / 2, y: drawY + radius + 19, w: barWidth, h: 4 }, 2, "#ffd0d8", 1);
   }
 
   if (fighter.stun > 0)
@@ -1604,6 +1665,7 @@ const drawBattle = (
     .sort((a, b) => a.y - b.y)
     .forEach((fighter) => drawFighter(ctx, fighter, state.visualTime));
   drawMechanicalRabbitPets(ctx, state);
+  drawPineTreeTurrets(ctx, state);
   drawProjectiles(ctx, state);
   drawEffects(ctx, state);
 
@@ -2118,8 +2180,7 @@ const drawTooltip = (
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
   const y = Math.max(88, Math.min(HEIGHT - h - 12, pointerY + 18));
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.55)";
-  ctx.shadowBlur = 24;
+  setCanvasShadow(ctx, "rgba(0,0,0,0.55)", 24);
   fillRounded(ctx, { x, y, w, h }, 15, "rgba(5, 14, 23, 0.98)");
   ctx.restore();
   strokeRounded(ctx, { x, y, w, h }, 15, def.accent, 1.5);
@@ -2240,8 +2301,7 @@ const drawTraitTooltip = (
   const x = Math.max(12, Math.min(WIDTH - w - 12, pointerX + 18));
   const y = Math.max(88, Math.min(HEIGHT - h - 12, pointerY + 18));
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.55)";
-  ctx.shadowBlur = 24;
+  setCanvasShadow(ctx, "rgba(0,0,0,0.55)", 24);
   fillRounded(ctx, { x, y, w, h }, 15, "rgba(5, 14, 23, 0.98)");
   ctx.restore();
   strokeRounded(ctx, { x, y, w, h }, 15, trait.color, 1.5);
@@ -2478,7 +2538,16 @@ export default function AutoChessGame() {
   const suppressClickRef = useRef(false);
   const frameRef = useRef<number | null>(null);
   const requestDrawRef = useRef<() => void>(() => {});
+  const wakeLoopRef = useRef<() => void>(() => {});
   const lastFrameRef = useRef<number | null>(null);
+  const pageHiddenRef = useRef(false);
+  const pendingPointerRef = useRef<{
+    x: number;
+    y: number;
+    canvas: HTMLCanvasElement;
+  } | null>(null);
+  const lastHoverDrawRef = useRef({ key: "", x: 0, y: 0 });
+  const toastDrawAccRef = useRef(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const testTimeScaleRef = useRef(1);
   const audioRef = useRef<AutoChessAudio | null>(null);
@@ -2534,7 +2603,10 @@ export default function AutoChessGame() {
     (canvas: HTMLCanvasElement) => {
       const rect = canvas.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return;
-      const requestedScale = Math.min(window.devicePixelRatio || 1, 2);
+      const requestedScale = Math.min(
+        window.devicePixelRatio || 1,
+        MAX_DEVICE_PIXEL_RATIO,
+      );
       const cssPixels = rect.width * rect.height;
       const budgetScale = Math.sqrt(MAX_CANVAS_PIXELS / cssPixels);
       const scale = Math.max(1, Math.min(requestedScale, budgetScale));
@@ -2606,19 +2678,99 @@ export default function AutoChessGame() {
     setAudioPreferences(storedAudioPreferences);
     audioRef.current?.setPreferences(storedAudioPreferences);
     let drawRequested = false;
+    let loopScheduled = false;
+
+    const shouldKeepLooping = () => {
+      if (pageHiddenRef.current) return false;
+      if (pendingPointerRef.current) return true;
+      if (drawRequested) return true;
+      const engine = engineRef.current;
+      if (!engine || codexOpenRef.current) return false;
+      return engine.state.phase === "battle" || Boolean(engine.state.toast);
+    };
+
+    const startLoop = () => {
+      if (loopScheduled || pageHiddenRef.current) return;
+      loopScheduled = true;
+      lastFrameRef.current = null;
+      frameRef.current = window.requestAnimationFrame(loop);
+    };
+
     const requestDraw = () => {
       drawRequested = true;
+      startLoop();
     };
     requestDrawRef.current = requestDraw;
+    wakeLoopRef.current = startLoop;
+
+    const applyPendingPointer = () => {
+      const pending = pendingPointerRef.current;
+      if (!pending) return;
+      pendingPointerRef.current = null;
+      const engine = engineRef.current;
+      if (!engine) return;
+
+      const target = getHitTarget(engine, pending.x, pending.y);
+      hoverRef.current = { target, x: pending.x, y: pending.y };
+
+      const overTraitStrip = inRect(pending.x, pending.y, TRAIT_STRIP);
+      const maxScrollX = overTraitStrip ? getTraitMaxScrollX(engine) : 0;
+      pending.canvas.style.cursor = dragRef.current?.moved
+        ? "grabbing"
+        : target
+          ? "pointer"
+          : overTraitStrip && maxScrollX > 0
+            ? "grab"
+            : "default";
+
+      const key = hitTargetKey(target);
+      const last = lastHoverDrawRef.current;
+      const movedEnough =
+        Math.hypot(pending.x - last.x, pending.y - last.y) >=
+        HOVER_TOOLTIP_MOVE_THRESHOLD;
+      // 目标变化需要刷新高亮；tooltip 跟随仅在位移足够时重绘
+      if (
+        key !== last.key ||
+        (hoverNeedsTooltipFollow(target) && movedEnough)
+      ) {
+        lastHoverDrawRef.current = { key, x: pending.x, y: pending.y };
+        drawRequested = true;
+      }
+    };
+
     const loop = (timestamp: number) => {
+      loopScheduled = false;
+      if (pageHiddenRef.current) {
+        frameRef.current = null;
+        return;
+      }
+
+      applyPendingPointer();
+
       const engine = engineRef.current;
       if (engine) {
         const previous = lastFrameRef.current ?? timestamp;
-        const shouldUpdate =
-          !codexOpenRef.current &&
-          (engine.state.phase === "battle" || Boolean(engine.state.toast));
-        if (shouldUpdate) engine.update((timestamp - previous) / 1000);
+        const dt = (timestamp - previous) / 1000;
         lastFrameRef.current = timestamp;
+        const inBattle = engine.state.phase === "battle";
+        const hadToast = Boolean(engine.state.toast);
+
+        // 战斗：每帧模拟；准备阶段仅 toast 倒计时，避免为淡出跑满 60fps
+        if (!codexOpenRef.current && inBattle) {
+          engine.update(dt);
+          drawRequested = true;
+        } else if (!codexOpenRef.current && hadToast) {
+          engine.update(dt);
+          toastDrawAccRef.current += dt;
+          if (
+            toastDrawAccRef.current >= TOAST_DRAW_INTERVAL ||
+            !engine.state.toast
+          ) {
+            toastDrawAccRef.current = 0;
+            drawRequested = true;
+          }
+        }
+
         const phase = engine.state.phase;
         if (phase !== lastPhaseRef.current) {
           if (phase === "battle") audioRef.current?.play("battle");
@@ -2635,16 +2787,42 @@ export default function AutoChessGame() {
           if (engine.state.toast.text.includes("聚合完成"))
             audioRef.current?.play("merge");
           lastToastRef.current = engine.state.toast.text;
+          toastDrawAccRef.current = TOAST_DRAW_INTERVAL;
+          drawRequested = true;
         }
-        if (shouldUpdate || drawRequested) {
+        if (drawRequested) {
           draw();
           drawRequested = false;
         }
       }
-      frameRef.current = window.requestAnimationFrame(loop);
+
+      if (shouldKeepLooping()) {
+        loopScheduled = true;
+        frameRef.current = window.requestAnimationFrame(loop);
+      } else {
+        frameRef.current = null;
+      }
     };
+
+    const handleVisibility = () => {
+      pageHiddenRef.current = document.hidden;
+      if (document.hidden) {
+        if (frameRef.current !== null) {
+          window.cancelAnimationFrame(frameRef.current);
+          frameRef.current = null;
+        }
+        loopScheduled = false;
+        lastFrameRef.current = null;
+        return;
+      }
+      // 回到前台：重置时间戳，避免一帧巨大 dt；立即拉起循环
+      lastFrameRef.current = null;
+      drawRequested = true;
+      startLoop();
+    };
+
+    pageHiddenRef.current = document.hidden;
     requestDraw();
-    frameRef.current = window.requestAnimationFrame(loop);
 
     window.render_game_to_text = () =>
       engineRef.current?.renderTextState() || "{}";
@@ -2669,6 +2847,7 @@ export default function AutoChessGame() {
     );
     document.addEventListener("fullscreenchange", handleFullscreen);
     document.addEventListener("fullscreenerror", handleFullscreenError);
+    document.addEventListener("visibilitychange", handleVisibility);
     const canvas = canvasRef.current;
     if (canvas && typeof ResizeObserver !== "undefined") {
       resizeObserverRef.current = new ResizeObserver(requestDraw);
@@ -2678,11 +2857,15 @@ export default function AutoChessGame() {
     window.addEventListener("resize", handleResize);
     return () => {
       requestDrawRef.current = () => {};
+      wakeLoopRef.current = () => {};
       if (frameRef.current !== null)
         window.cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+      loopScheduled = false;
       resizeObserverRef.current?.disconnect();
       document.removeEventListener("fullscreenchange", handleFullscreen);
       document.removeEventListener("fullscreenerror", handleFullscreenError);
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("resize", handleResize);
       delete window.render_game_to_text;
       delete window.advanceTime;
@@ -2755,6 +2938,7 @@ export default function AutoChessGame() {
         Math.min(maxScrollX, traitDrag.startScrollX - deltaX),
       );
       hoverRef.current = { target: null, ...point };
+      pendingPointerRef.current = null;
       event.currentTarget.style.cursor = "grabbing";
       requestDrawRef.current();
       return;
@@ -2768,22 +2952,20 @@ export default function AutoChessGame() {
     ) {
       dragRef.current.moved = true;
     }
-    const target = getHitTarget(engine, point.x, point.y);
-    hoverRef.current = { target, ...point };
-    const overTraitStrip = inRect(point.x, point.y, TRAIT_STRIP);
-    event.currentTarget.style.cursor = dragRef.current?.moved
-      ? "grabbing"
-      : target
-        ? "pointer"
-        : overTraitStrip && getTraitMaxScrollX(engine) > 0
-          ? "grab"
-          : "default";
-    requestDrawRef.current();
+    // 高频 pointermove 只缓存坐标，命中检测与重绘合并到 rAF，避免拖垮主线程
+    pendingPointerRef.current = {
+      x: point.x,
+      y: point.y,
+      canvas: event.currentTarget,
+    };
+    wakeLoopRef.current();
   };
 
   const onPointerLeave = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    pendingPointerRef.current = null;
     hoverRef.current = { target: null, x: 0, y: 0 };
+    lastHoverDrawRef.current = { key: "", x: 0, y: 0 };
     requestDrawRef.current();
   };
 

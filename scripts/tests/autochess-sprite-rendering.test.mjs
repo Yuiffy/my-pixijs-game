@@ -40,7 +40,8 @@ test("弹道特效同时绘制柔光外层与明亮核心", () => {
   assert.match(drawEffects[0], /ctx\.globalCompositeOperation = "screen"/);
   assert.match(drawEffects[0], /ctx\.lineWidth = width \+ 4/);
   assert.match(drawEffects[0], /rgba\(244, 251, 255, 0\.96\)/);
-  assert.match(drawEffects[0], /ctx\.shadowBlur = 18/);
+  assert.match(drawEffects[0], /setShadow\(ctx, effect\.color, 18\)/);
+  assert.match(effects, /ctx\.shadowBlur = blur/);
 });
 
 test("实体子弹按实时位置和速度绘制尾迹", () => {
@@ -64,7 +65,7 @@ test("机械兔耳宠物在子弹和特效前使用独立绘制路径", () => {
   assert.match(drawPet[0], /pet\.attackPulse/);
   assert.match(drawPet[0], /cannonTipX/);
   assert.doesNotMatch(drawPet[0], /\[-1, 1\]\.forEach/);
-  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\s*drawProjectiles\(ctx, state\);/);
+  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\s*drawPineTreeTurrets\(ctx, state\);\s*drawProjectiles\(ctx, state\);/);
 });
 
 test("结算页使用显式继续按钮推进阶段", () => {
@@ -89,7 +90,7 @@ test("商店以可读羁绊标签、定位和单一费用呈现棋子", () => {
   const shopTags = renderer.match(/const drawShopTraitTags = \([\s\S]*?\n};/);
   assert.ok(shopTags);
   assert.match(shopTags[0], /traitActivationAfterPurchase/);
-  assert.match(shopTags[0], /ctx\.shadowBlur = 10/);
+  assert.match(shopTags[0], /setCanvasShadow\(ctx, trait\.color, 10\)/);
   assert.match(shopTags[0], /trait\.name/);
   assert.match(renderer, /shopRole\(unitId\)/);
   assert.match(renderer, /drawShopTraitTags\(ctx, engine, unitId, rect, affordable\)/);
@@ -111,7 +112,8 @@ test("连续输入请求下一帧绘制而静态阶段不持续重绘", () => {
   assert.match(renderer, /requestDrawRef\.current\(\)/);
   assert.match(renderer, /const loop = \(timestamp: number\) => \{/);
   assert.match(renderer, /engine\.state\.phase === "battle"/);
-  assert.match(renderer, /shouldUpdate \|\| drawRequested/);
+  assert.match(renderer, /shouldKeepLooping/);
+  assert.match(renderer, /if \(drawRequested\)/);
   assert.match(renderer, /window\.advanceTime = \(milliseconds: number\) => \{/);
 });
 

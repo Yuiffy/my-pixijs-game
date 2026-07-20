@@ -67,3 +67,9 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 验证：`pnpm autochess:test` 57/57 通过。
 - 2026-07-20：TypeScript 校验通过；完整浏览器流程和专门的怕死 + 远程敌人场景均通过，控制台无运行时错误；截图确认跳跃中间态可见，远程场景落点为侧向弧线。
 - 备注：生产构建代码编译通过，但仓库既有 ESLint 的 CRLF/格式错误仍会阻止 `next build` 在 lint 阶段退出成功；本轮未改动这些无关格式问题。
+
+## 2026-07-20 · 合并自走棋图片与羁绊分支
+
+- 已合并 `origin/feature/add-image-auto-chess`，保留裂隙首领头像、主播图片池、弹幕/舞台梦等新内容，并解决核心数据、引擎和类型定义冲突。
+- 合并后移除旧的瞬时坐标推送，保留怕死的 0.46 秒真实跳跃；后撤会越出自身攻击距离时改走攻击者侧向弧线，并使用 0.72 秒冷却。
+- 回归验证：`pnpm autochess:test` 59/59、`pnpm exec tsc --noEmit` 通过；`verify-autochess.cjs` 浏览器流程无错误，专门场景捕获到 `jumping: true` 且 `jumpFrom`/`jumpTo` 不同。
