@@ -1,6 +1,21 @@
 import type { GameState, MechanicalRabbitPet, PineTreeTurret, Projectile } from "../core/gameEngine";
 import { mechanicalRabbitMuzzle } from "../core/gameEngine";
+import { ENABLE_CANVAS_SHADOWS } from "./layout";
 import { text } from "./primitives";
+
+/** 统一设置阴影；关闭时清零，避免残留上一次的 shadowBlur */
+const setShadow = (
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  blur: number,
+) => {
+  if (!ENABLE_CANVAS_SHADOWS) {
+    ctx.shadowBlur = 0;
+    return;
+  }
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+};
 
 const drawMechanicalRabbitPet = (
   ctx: CanvasRenderingContext2D,
@@ -72,11 +87,11 @@ const drawMechanicalRabbitPet = (
   ctx.lineTo(cannonTipX - pet.radius * 0.25, 0);
   ctx.stroke();
   ctx.fillStyle = "#92d7ff";
-  ctx.shadowColor = "#92d7ff";
-  ctx.shadowBlur = 8;
+  setShadow(ctx, "#92d7ff", 8);
   ctx.beginPath();
   ctx.arc(-pet.radius * 0.2, 0, 2.4, 0, Math.PI * 2);
   ctx.fill();
+  ctx.shadowBlur = 0;
   if (pet.attackPulse > 0) {
     const flash = 1 + (pet.attackPulse / 0.16) * 0.75;
     ctx.globalCompositeOperation = "screen";
@@ -152,8 +167,7 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState)
       ctx.strokeStyle = projectile.color;
       ctx.lineWidth = 2.2;
       ctx.lineCap = "round";
-      ctx.shadowColor = projectile.color;
-      ctx.shadowBlur = 8;
+      setShadow(ctx, projectile.color, 8);
       ctx.beginPath();
       ctx.moveTo(trailX, trailY);
       ctx.lineTo(projectile.x, projectile.y);
@@ -185,8 +199,7 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState)
     ctx.strokeStyle = projectile.color;
     ctx.lineWidth = projectile.size + 3;
     ctx.lineCap = "round";
-    ctx.shadowColor = projectile.color;
-    ctx.shadowBlur = 16;
+    setShadow(ctx, projectile.color, 16);
     ctx.beginPath();
     ctx.moveTo(trailX, trailY);
     ctx.lineTo(projectile.x, projectile.y);
@@ -219,8 +232,7 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
     ctx.fill();
     ctx.strokeStyle = zone.color;
     ctx.lineWidth = 3;
-    ctx.shadowColor = zone.color;
-    ctx.shadowBlur = 18;
+    setShadow(ctx, zone.color, 18);
     ctx.beginPath();
     ctx.arc(zone.x, zone.y, zone.radius * pulse, 0, Math.PI * 2);
     ctx.stroke();
@@ -242,15 +254,14 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
       ctx.lineTo(targetX, targetY);
       ctx.strokeStyle = effect.color;
       ctx.lineWidth = width + 4;
-      ctx.shadowColor = effect.color;
-      ctx.shadowBlur = 18;
+      setShadow(ctx, effect.color, 18);
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(effect.x, effect.y);
       ctx.lineTo(targetX, targetY);
       ctx.strokeStyle = "rgba(244, 251, 255, 0.96)";
       ctx.lineWidth = Math.max(1, width * 0.48);
-      ctx.shadowBlur = 4;
+      setShadow(ctx, effect.color, 4);
       ctx.stroke();
     } else if (effect.kind === "ring") {
       ctx.beginPath();
@@ -296,8 +307,7 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
       ctx.fill();
       ctx.strokeStyle = "#ff6b2d";
       ctx.lineWidth = 5 * (1 - progress * 0.5);
-      ctx.shadowColor = "#ff3b1a";
-      ctx.shadowBlur = 22;
+      setShadow(ctx, "#ff3b1a", 22);
       ctx.beginPath();
       ctx.arc(effect.x, effect.y, radius * 0.72, 0, Math.PI * 2);
       ctx.stroke();

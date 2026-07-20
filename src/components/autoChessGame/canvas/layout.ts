@@ -3,7 +3,15 @@ import type { Rect } from "./types";
 export const WIDTH = 1120;
 export const HEIGHT = 720;
 export const TOOLBAR_HEIGHT = 38;
-export const MAX_CANVAS_PIXELS = 8_000_000;
+/** 限制物理像素，避免大屏 DPR=2 时单帧绘制数百万像素拖垮主线程 */
+export const MAX_CANVAS_PIXELS = 3_000_000;
+/** 再压一档 DPR，清晰度略降但大幅减轻 Canvas 2D 压力 */
+export const MAX_DEVICE_PIXEL_RATIO = 1.5;
+/**
+ * Canvas 2D 的 shadowBlur 成本极高（每次 fill/stroke 都触发模糊），
+ * 默认关闭以避免鼠标移动/战斗时拖死同浏览器其它标签页的音视频。
+ */
+export const ENABLE_CANVAS_SHADOWS = false;
 
 export const TRAIT_STRIP: Rect = { x: 48, y: 194, w: 700, h: 25 };
 export const TRAIT_PILL_GAP = 6;
