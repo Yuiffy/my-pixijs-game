@@ -102,12 +102,32 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
-test("文字、圆形头像和宿主 Canvas 公开高 DPI 元数据", () => {
-  assert.match(scene, /textResolution = 2/);
-  assert.match(scene, /resolution: this\.textResolution/);
-  assert.match(scene, /window\.devicePixelRatio/);
+test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
+  assert.match(layout, /MAX_RENDER_PIXELS/);
+  assert.match(layout, /renderSizeFor/);
+  assert.match(host, /ResizeObserver/);
+  assert.match(host, /scale\.setParentSize/);
+  assert.doesNotMatch(host, /scale\.setGameSize/);
   assert.match(host, /dataset\.devicePixelRatio/);
   assert.match(host, /dataset\.renderScale/);
+  assert.match(scene, /scale\.parentSize/);
+  assert.match(scene, /cameras\.main\.setZoom/);
+  assert.match(scene, /MAX_TEXT_RESOLUTION/);
+  assert.match(scene, /resolution: this\.textResolution/);
+});
+
+test("整备页用 WebGL 安全 viewport、分区面板和受限文本还原 Canvas 层级", () => {
+  assert.match(scene, /renderTexture\(strip\.x, strip\.y, strip\.width, strip\.height\)/);
+  assert.doesNotMatch(scene, /createGeometryMask/);
+  assert.doesNotMatch(scene, /\.setMask\(/);
+  assert.match(scene, /PREPARATION_BOARD_PANEL/);
+  assert.match(scene, /PREPARATION_BENCH_PANEL/);
+  assert.match(scene, /PREPARATION_SHOP_PANEL/);
+  assert.match(scene, /boundedText\(/);
+  assert.match(scene, /truncateText\(/);
+  assert.match(scene, /definition\.traits\.slice/);
+  assert.match(scene, /def\.color/);
+  assert.match(layout, /WIDE_TRAIT_STRIP/);
 });
 
 test("Phaser UI 恢复语义按钮、羁绊暗态、垂直裂隙与拖拽跟手", () => {

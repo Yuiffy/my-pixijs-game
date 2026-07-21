@@ -10,7 +10,7 @@ import {
 import Codex from "./Codex";
 import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
-import { RENDER_SCALE, TOOLBAR_HEIGHT, WORLD_HEIGHT, WORLD_WIDTH } from "./phaser/layout";
+import { TOOLBAR_HEIGHT, WORLD_HEIGHT, WORLD_WIDTH, renderSizeFor } from "./phaser/layout";
 
 declare global {
   interface Window {
@@ -82,18 +82,42 @@ export default function AutoChessGame() {
     bridge.onEvent = onBridgeEvent;
 
     let disposed = false;
+    let resizeFrame = 0;
+    let resizeObserver: ResizeObserver | null = null;
+
+    const syncGameSize = () => {
+      resizeFrame = 0;
+      const game = gameRef.current;
+      const host = gameHostRef.current;
+      if (!game || !host || !host.clientWidth || !host.clientHeight) return;
+
+      game.scale.setParentSize(host.clientWidth, host.clientHeight);
+      game.scale.refresh();
+      const target = renderSizeFor(
+        game.scale.displaySize.width,
+        game.scale.displaySize.height,
+        window.devicePixelRatio || 1,
+      );
+      // Phaser 4's setGameSize changes the authored world size as well as the
+      // backing buffer. Keep the 1120×720 logical world stable for FIT.
+
+      game.canvas.dataset.logicalWidth = String(WORLD_WIDTH);
+      game.canvas.dataset.logicalHeight = String(WORLD_HEIGHT);
+      game.canvas.dataset.renderScale = target.renderScale.toFixed(3);
+      game.canvas.dataset.devicePixelRatio = target.devicePixelRatio.toFixed(3);
+    };
+    const scheduleGameSizeSync = () => {
+      if (!resizeFrame) resizeFrame = window.requestAnimationFrame(syncGameSize);
+    };
     const boot = async () => {
       const Phaser = (await import("phaser")).default;
       if (disposed || !gameHostRef.current) return;
       const game = new Phaser.Game(createGameConfig(gameHostRef.current, bridge));
       gameRef.current = game;
       game.canvas.setAttribute("data-game-canvas", "rift-line");
-      game.canvas.dataset.logicalWidth = String(WORLD_WIDTH);
-      game.canvas.dataset.logicalHeight = String(WORLD_HEIGHT);
-      game.canvas.dataset.renderScale = String(RENDER_SCALE);
-      game.canvas.dataset.devicePixelRatio = String(Math.min(RENDER_SCALE, window.devicePixelRatio || 1));
       game.canvas.setAttribute("aria-label", "裂隙阵线自走棋游戏画布");
       game.canvas.tabIndex = 0;
+      scheduleGameSizeSync();
     };
     boot().catch(() => setMessage("无法初始化 Phaser 游戏画面。"));
 
@@ -108,18 +132,24 @@ export default function AutoChessGame() {
     const onFullscreenChange = () => {
       const isFullscreen = document.fullscreenElement === containerRef.current;
       setFullscreen(isFullscreen);
-      window.setTimeout(() => {
-        gameRef.current?.scale.refresh();
-      }, 0);
+      scheduleGameSizeSync();
     };
     const onFullscreenError = () => setMessage("全屏请求被浏览器拒绝。");
+    const onWindowResize = () => scheduleGameSizeSync();
+    if (gameHostRef.current) {
+      resizeObserver = new ResizeObserver(scheduleGameSizeSync);
+      resizeObserver.observe(gameHostRef.current);
+    }
     document.addEventListener("visibilitychange", onVisibility);
     document.addEventListener("fullscreenchange", onFullscreenChange);
     document.addEventListener("fullscreenerror", onFullscreenError);
+    window.addEventListener("resize", onWindowResize);
     setFullscreenSupported(Boolean(document.fullscreenEnabled && containerRef.current?.requestFullscreen));
 
     return () => {
       disposed = true;
+      if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+      resizeObserver?.disconnect();
       bridge.onEvent = null;
       gameRef.current?.destroy(true);
       gameRef.current = null;
@@ -129,6 +159,7 @@ export default function AutoChessGame() {
       document.removeEventListener("visibilitychange", onVisibility);
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("fullscreenerror", onFullscreenError);
+      window.removeEventListener("resize", onWindowResize);
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
@@ -173,7 +204,7 @@ export default function AutoChessGame() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: fullscreen ? "flex-start" : "center",
         background: "#050b12",
         margin: "0 auto",
         overflow: "hidden",
@@ -197,7 +228,16 @@ export default function AutoChessGame() {
         <span className="rift-shortcut">快捷键 F</span>
         <button type="button" aria-pressed={fullscreen} disabled={!fullscreenSupported} onClick={() => { toggleFullscreen().catch(() => {}); }} style={toolbarButtonStyle}>{fullscreen ? "退出全屏" : "全屏游玩"}</button>
       </div>
-      <div ref={gameHostRef} style={{ width: "100%", aspectRatio: `${WORLD_WIDTH} / ${WORLD_HEIGHT}`, touchAction: "none" }} />
+      <div
+        ref={gameHostRef}
+        style={{
+          width: "100%",
+          flex: fullscreen ? "1 1 auto" : "0 0 auto",
+          minHeight: 0,
+          aspectRatio: fullscreen ? undefined : `${WORLD_WIDTH} / ${WORLD_HEIGHT}`,
+          touchAction: "none",
+        }}
+      />
       <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
     </div>
   );

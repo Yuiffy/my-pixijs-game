@@ -29,6 +29,12 @@ import {
   textureKeyForUnit,
 } from "./assets";
 import {
+  COMPACT_TRAIT_STRIP,
+  PREPARATION_BENCH_PANEL,
+  PREPARATION_BOARD_PANEL,
+  PREPARATION_SHOP_PANEL,
+  WIDE_TRAIT_STRIP,
+  MAX_TEXT_RESOLUTION,
   WORLD_HEIGHT,
   WORLD_WIDTH,
   benchSlot,
@@ -168,8 +174,17 @@ export class RiftLineScene extends Phaser.Scene {
 
   private handleResize() {
     this.updateQuality();
-    this.profile = profileFor(this.scale.displaySize.width, this.scale.displaySize.height);
+    this.profile = this.profileForViewport();
     this.rebuild();
+  }
+
+  private profileForViewport() {
+    const { width, height } = this.scale.parentSize;
+    return profileFor(width || this.scale.displaySize.width, height || this.scale.displaySize.height);
+  }
+
+  private renderScale() {
+    return Math.max(1, this.scale.baseSize.width / WORLD_WIDTH);
   }
 
   private isCompact() {
@@ -195,7 +210,8 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private rebuild() {
-    this.profile = profileFor(this.scale.displaySize.width, this.scale.displaySize.height);
+    this.profile = this.profileForViewport();
+    this.cameras.main.setZoom(1);
     this.resetLayers();
     this.phase = this.bridge.engine.state.phase;
     this.drawHeader();
@@ -230,8 +246,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private updateQuality() {
-    const deviceResolution = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
-    this.textResolution = Math.max(1, Math.min(2, deviceResolution));
+    this.textResolution = Math.max(1, Math.min(MAX_TEXT_RESOLUTION, Math.ceil(this.renderScale())));
   }
 
   private text(x: number, y: number, value: string, size = 14, color = COLORS.text, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
@@ -242,6 +257,33 @@ export class RiftLineScene extends Phaser.Scene {
       resolution: this.textResolution,
       ...style,
     });
+  }
+
+  private truncateText(value: string, maxWidth: number, size: number, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
+    const measure = this.text(0, 0, value, size, COLORS.text, style).setVisible(false);
+    if (measure.width <= maxWidth) {
+      measure.destroy();
+      return value;
+    }
+    const ellipsis = "…";
+    let result = "";
+    for (const character of value) {
+      measure.setText(`${result}${character}${ellipsis}`);
+      if (measure.width > maxWidth) break;
+      result += character;
+    }
+    measure.destroy();
+    return result ? `${result}${ellipsis}` : ellipsis;
+  }
+
+  private boundedText(value: string, maxWidth: number, maxLines: number, size: number, color: string, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
+    const probe = this.text(0, 0, value, size, color, { ...style, wordWrap: { width: maxWidth } }).setVisible(false);
+    const lines = probe.text.split("\n");
+    probe.destroy();
+    const bounded = lines.length <= maxLines
+      ? lines
+      : [...lines.slice(0, maxLines - 1), this.truncateText(lines.slice(maxLines - 1).join(""), maxWidth, size, style)];
+    return this.text(0, 0, bounded.join("\n"), size, color, { ...style, wordWrap: { width: maxWidth } });
   }
 
   private panel(x: number, y: number, width: number, height: number, color = COLORS.panel, alpha = 0.96, border = COLORS.border) {
@@ -359,19 +401,35 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, 650, `本局战术种子 · ${String(state.seed % 100000).padStart(5, "0")}`, 11, "#648297").setOrigin(0.5));
   }
 
+  private drawPreparationPanel(x: number, y: number, width: number, height: number) {
+    const graphics = this.add.graphics();
+    graphics.fillGradientStyle(0x132736, 0x132736, 0x101929, 0x101929, 0.94);
+    graphics.fillRoundedRect(x, y, width, height, 18);
+    graphics.lineStyle(1, 0x66b6e0, 0.25).strokeRoundedRect(x, y, width, height, 18);
+    return graphics;
+  }
+
   private drawPreparation() {
     const { engine } = this.bridge;
     const { state, currentWave } = engine;
     const compact = this.isCompact();
-    this.phaseLayer.add(this.panel(26, 98, compact ? 1068 : 752, compact ? 400 : 430));
+    const boardPanel = compact
+      ? { x: 26, y: 98, width: 1068, height: 430 }
+      : PREPARATION_BOARD_PANEL;
+    this.phaseLayer.add(this.drawPreparationPanel(boardPanel.x, boardPanel.y, boardPanel.width, boardPanel.height));
     this.phaseLayer.add(this.text(48, 116, currentWave.tag === "boss" ? "BOSS" : `WAVE ${currentWave.round}`, 10, currentWave.tag === "boss" ? "#ff8ba7" : "#72d8ff", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(48, 136, currentWave.name, 20, "#f1f7ff", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(48, 158, currentWave.description, 11, "#91aab9", { wordWrap: { width: compact ? 720 : 500 } }));
+    this.phaseLayer.add(this.text(48, 136, this.truncateText(currentWave.name, compact ? 680 : 470, 20, { fontStyle: "bold" }), 20, "#f1f7ff", { fontStyle: "bold" }));
+    const description = this.boundedText(currentWave.description, compact ? 680 : 470, 2, 11, "#91aab9", { lineSpacing: 2 });
+    description.setPosition(48, 158);
+    this.phaseLayer.add(description);
     this.drawTraits();
     if (!compact) {
-      this.phaseLayer.add(this.text(48, 218, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }));
-      this.phaseLayer.add(this.text(415, 218, `6 × 4 自由部署区 · 满级 ${engine.boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
-      this.phaseLayer.add(this.text(744, 218, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1));
+      this.phaseLayer.add(this.text(48, 221, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
+      this.phaseLayer.add(this.text(390, 221, `6 × 4 自由部署区 · 满级 ${engine.boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
+      this.phaseLayer.add(this.text(756, 221, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
+      this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
+      this.phaseLayer.add(this.text(48, 563, `备战席 ${state.bench.filter(Boolean).length}/${state.bench.length}`, 11, "#91b5c8", { fontStyle: "bold" }));
+      this.phaseLayer.add(this.text(748, 563, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`, 10, "#7499ad").setOrigin(1));
     }
     state.board.forEach((unit, index) => this.drawSlot("board", index, unit, compact));
     state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, compact));
@@ -381,57 +439,77 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private drawTraits() {
+    const strip = this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
     const traits = Object.entries(this.bridge.engine.getTraitCounts()).filter(([, count]) => count > 0);
-    const stripX = 48;
-    const stripY = 190;
-    const stripWidth = this.isCompact() ? 1028 : 720;
     const entries = traits.map(([id, count]) => {
       const trait = TRAITS[id as keyof typeof TRAITS];
       const status = this.bridge.engine.getTraitStatus(trait.id);
       const nextThreshold = trait.thresholds.find((threshold) => threshold > count) ?? status.maxThreshold;
       const label = `${trait.name} ${count}/${nextThreshold}${status.active ? "" : " !"}`;
-      return { trait, status, label, width: Math.max(90, label.length * 9 + 34) };
+      const probe = this.text(0, 0, label, 10, "#ffffff", { fontStyle: "bold" }).setVisible(false);
+      const width = Math.max(72, Math.ceil(probe.width) + 34);
+      probe.destroy();
+      return { trait, status, label, width };
     });
-    const contentWidth = entries.reduce((total, entry) => total + entry.width + 8, 0);
-    const minimumOffset = Math.min(0, stripWidth - contentWidth);
+    const gap = 6;
+    const contentWidth = entries.reduce((total, entry) => total + entry.width + gap, 0);
+    const minimumOffset = Math.min(0, strip.width - contentWidth);
     this.traitOffset = Phaser.Math.Clamp(this.traitOffset, minimumOffset, 0);
-    const clip = this.add.graphics();
-    clip.fillStyle(0xffffff, 1).fillRect(stripX, stripY, stripWidth, 27);
-    const mask = clip.createGeometryMask();
-    const container = this.add.container(stripX + this.traitOffset, stripY).setMask(mask);
+
+    const source = this.add.container(strip.x + this.traitOffset, strip.y);
     let cursor = 0;
     entries.forEach(({ trait, status, label, width }) => {
       const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
       const graphics = this.add.graphics();
       graphics.fillStyle(status.active ? color : 0x142735, status.active ? 0.24 : 0.96);
-      graphics.fillRoundedRect(cursor, 0, width, 25, 12);
+      graphics.fillRoundedRect(cursor, 0, width, strip.height, 12);
       graphics.lineStyle(1, status.active ? color : 0x395467, status.active ? 0.9 : 1);
-      graphics.strokeRoundedRect(cursor, 0, width, 25, 12);
-      const dot = this.add.circle(cursor + 12, 12.5, 3, color, status.active ? 1 : 0.72);
-      const labelText = this.text(cursor + 21, 7, label, 10, status.active ? "#effaff" : "#7f96a6", { fontStyle: "bold" });
-      const zone = this.add.zone(cursor + width / 2, 12.5, width, 25).setInteractive({ useHandCursor: true });
-      zone.setData("trait", trait.id);
-      zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showTraitTooltip(trait.id, pointer));
-      zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
-        this.traitDrag = { startX: pointer.x, offset: this.traitOffset, moved: false };
-      });
-      zone.on(Phaser.Input.Events.POINTER_UP, (pointer: Phaser.Input.Pointer) => {
-        if (!this.traitDrag?.moved) this.showTraitTooltip(trait.id, pointer);
-        this.traitDrag = null;
-      });
-      zone.on(Phaser.Input.Events.POINTER_OUT, () => {
-        if (!this.isCompact() && !this.traitDrag) this.clearTooltip();
-      });
-      container.add([graphics, dot, labelText, zone]);
-      cursor += width + 8;
+      graphics.strokeRoundedRect(cursor, 0, width, strip.height, 12);
+      source.add([
+        graphics,
+        this.add.circle(cursor + 12, strip.height / 2, 3, color, status.active ? 1 : 0.72),
+        this.text(cursor + 21, 7, label, 10, status.active ? "#effaff" : "#7f96a6", { fontStyle: "bold" }),
+      ]);
+      cursor += width + gap;
     });
-    this.phaseLayer.add([clip, container]);
-    if (contentWidth > stripWidth) {
+    const viewport = this.add.renderTexture(strip.x, strip.y, strip.width, strip.height).setOrigin(0);
+    viewport.draw(source, -strip.x, -strip.y);
+    source.destroy(true);
+    const zone = this.add.zone(strip.x + strip.width / 2, strip.y + strip.height / 2, strip.width, strip.height).setInteractive({ useHandCursor: true });
+    zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
+      const trait = this.traitEntryAt(entries, gap, strip, pointer.x);
+      if (trait) this.showTraitTooltip(trait.trait.id, pointer);
+    });
+    zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
+      this.traitDrag = { startX: pointer.x, offset: this.traitOffset, moved: false };
+    });
+    zone.on(Phaser.Input.Events.POINTER_UP, (pointer: Phaser.Input.Pointer) => {
+      if (!this.traitDrag?.moved) {
+        const trait = this.traitEntryAt(entries, gap, strip, pointer.x);
+        if (trait) this.showTraitTooltip(trait.trait.id, pointer);
+      }
+      this.traitDrag = null;
+    });
+    zone.on(Phaser.Input.Events.POINTER_OUT, () => {
+      if (!this.isCompact() && !this.traitDrag) this.clearTooltip();
+    });
+    this.phaseLayer.add([viewport, zone]);
+    if (contentWidth > strip.width) {
       const fade = this.add.graphics();
-      if (this.traitOffset < 0) fade.fillGradientStyle(0x0d1d2a, 0x0d1d2a, 0x0d1d2a, 0x0d1d2a, 0, 0.9, 0, 0.9).fillRect(stripX, stripY, 22, 25);
-      if (this.traitOffset > minimumOffset) fade.fillGradientStyle(0x0d1d2a, 0x0d1d2a, 0x0d1d2a, 0x0d1d2a, 0.9, 0, 0.9, 0).fillRect(stripX + stripWidth - 22, stripY, 22, 25);
+      if (this.traitOffset < 0) fade.fillGradientStyle(0x132736, 0x132736, 0x132736, 0x132736, 0, 0.9, 0, 0.9).fillRect(strip.x, strip.y, 20, strip.height);
+      if (this.traitOffset > minimumOffset) fade.fillGradientStyle(0x132736, 0x132736, 0x132736, 0x132736, 0.9, 0, 0.9, 0).fillRect(strip.x + strip.width - 20, strip.y, 20, strip.height);
       this.phaseLayer.add(fade);
     }
+  }
+
+  private traitEntryAt<T extends { width: number }>(entries: T[], gap: number, strip: { x: number; width: number }, pointerX: number) {
+    const localX = pointerX - strip.x - this.traitOffset;
+    let cursor = 0;
+    return entries.find((entry) => {
+      const hit = localX >= cursor && localX <= cursor + entry.width;
+      cursor += entry.width + gap;
+      return hit;
+    });
   }
 
   private drawSlot(zone: UnitLocation["zone"], index: number, unit: OwnedUnit | null | undefined, compact: boolean) {
@@ -439,14 +517,17 @@ export class RiftLineScene extends Phaser.Scene {
     const selected = this.bridge.engine.state.selected?.zone === zone && this.bridge.engine.state.selected.index === index;
     const draggingSource = this.dragState && this.sameLocation(this.dragState.origin, { zone, index });
     const draggingTarget = this.dragState?.target && this.sameLocation(this.dragState.target, { zone, index });
+    const isBench = zone === "bench";
     const graphics = this.add.graphics();
-    graphics.fillStyle(draggingSource ? 0x153b4a : draggingTarget ? 0x1a4b3b : 0x0c1c29, draggingSource ? 0.5 : 0.82);
-    graphics.fillRoundedRect(rect.x, rect.y, rect.width, rect.height, 12);
-    graphics.lineStyle(selected || draggingTarget ? 2 : 1, draggingTarget ? 0x77e8b4 : selected ? 0x7de2ff : 0x294a60, 1);
-    graphics.strokeRoundedRect(rect.x, rect.y, rect.width, rect.height, 12);
-    if (!unit) {
-      graphics.lineStyle(1, 0x426176, 0.35).lineBetween(rect.x + 12, rect.y + rect.height / 2, rect.x + rect.width - 12, rect.y + rect.height / 2);
-      graphics.fillStyle(0x426176, 0.65).fillCircle(rect.x + rect.width / 2, rect.y + rect.height / 2, 2);
+    const baseFill = isBench ? 0x0c1b27 : 0x07121c;
+    const baseAlpha = isBench ? 0.75 : 0.48;
+    graphics.fillStyle(draggingSource ? 0x153b4a : draggingTarget ? 0x1a4b3b : baseFill, draggingSource ? 0.5 : baseAlpha);
+    graphics.fillRoundedRect(rect.x, rect.y, rect.width, rect.height, 10);
+    graphics.lineStyle(selected || draggingTarget ? 2 : 1, draggingTarget ? 0x77e8b4 : selected ? 0x7de2ff : isBench ? 0x223d4f : 0x223d50, 1);
+    graphics.strokeRoundedRect(rect.x, rect.y, rect.width, rect.height, 10);
+    if (!unit && !isBench) {
+      graphics.lineStyle(1, 0x64b4e1, 0.08).lineBetween(rect.x + 12, rect.y + rect.height / 2, rect.x + rect.width - 12, rect.y + rect.height / 2);
+      graphics.fillStyle(0x29465a, 0.8).fillCircle(rect.x + rect.width / 2, rect.y + rect.height / 2, 2);
     }
     const slot = this.add.zone(rect.x + rect.width / 2, rect.y + rect.height / 2, rect.width, rect.height).setInteractive({ useHandCursor: true });
     const location = { zone, index } as UnitLocation;
@@ -463,12 +544,19 @@ export class RiftLineScene extends Phaser.Scene {
     });
     this.phaseLayer.add([graphics, slot]);
     if (!unit) {
-      this.phaseLayer.add(this.text(rect.x + rect.width / 2, rect.y + rect.height / 2, zone === "bench" ? "空" : "·", 14, "#426176").setOrigin(0.5));
+      if (isBench) this.phaseLayer.add(this.text(rect.x + rect.width / 2, rect.y + rect.height / 2, "空", 13, "#426176").setOrigin(0.5));
       return;
     }
-    const portrait = this.createPortrait(unit.id, rect.x + rect.width / 2, rect.y + rect.height * 0.44, compact ? 20 : 18);
-    const name = this.text(rect.x + rect.width / 2, rect.y + rect.height - 12, `${unit.star > 1 ? "★".repeat(unit.star) : ""}${UNIT_DEFS[unit.id].name}`, compact ? 10 : 9, "#e5f4ff", { fontStyle: "bold" }).setOrigin(0.5);
-    this.phaseLayer.add([portrait, name]);
+    const definition = UNIT_DEFS[unit.id];
+    const portraitRadius = compact ? 18 : isBench ? 24 : 20;
+    const portraitY = rect.y + (compact ? rect.height * 0.43 : isBench ? 31 : 26);
+    const stars = this.text(rect.x + rect.width / 2, rect.y + 4, "★".repeat(unit.star), compact ? 8 : 9, "#ffdc68", { fontStyle: "bold" }).setOrigin(0.5, 0);
+    const portrait = this.createPortrait(unit.id, rect.x + rect.width / 2, portraitY, portraitRadius);
+    const name = this.text(rect.x + rect.width / 2, rect.y + rect.height - 7, this.truncateText(definition.name, rect.width - 12, compact ? 10 : 9, { fontStyle: "bold" }), compact ? 10 : 9, "#e5f4ff", { fontStyle: "bold" }).setOrigin(0.5, 1);
+    const traitDots = !compact
+      ? definition.traits.slice(0, 3).map((traitId, traitIndex) => this.add.circle(rect.x + rect.width / 2 + (traitIndex - (definition.traits.length - 1) / 2) * 7, rect.y + rect.height - 17, 2, Phaser.Display.Color.HexStringToColor(TRAITS[traitId].color).color, 0.9))
+      : [];
+    this.phaseLayer.add([stars, portrait, name, ...traitDots]);
   }
 
   private slotRect(location: UnitLocation, compact = this.isCompact()) {
@@ -617,26 +705,41 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawWideShop() {
     const { state, isMaxPlayerLevel, upgradeCost } = this.bridge.engine;
-    this.phaseLayer.add(this.panel(794, 98, 300, 500, 0x08131f));
+    this.phaseLayer.add(this.panel(PREPARATION_SHOP_PANEL.x, PREPARATION_SHOP_PANEL.y, PREPARATION_SHOP_PANEL.width, PREPARATION_SHOP_PANEL.height, 0x08121c, 0.96, 0x6fbfeb));
     this.phaseLayer.add(this.text(812, 112, `战术商店 · ${bookLevelForPlayerLevel(state.playerLevel)} 本`, 16, "#f1f8ff", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(1076, 117, isMaxPlayerLevel ? "MAX" : `升本还需 ${upgradeCost}`, 9, "#7593a5").setOrigin(1));
     state.shop.forEach((unitId, index) => {
       const y = 143 + index * 74;
       const item = this.add.container(810, y);
-      item.add(this.panel(0, 0, 270, 68, 0x112431, unitId ? 0.95 : 0.55, 0x2d5064));
+      const card = this.add.graphics();
+      card.fillStyle(unitId ? 0x11222f : 0x0a1620, unitId ? 0.92 : 0.8);
+      card.fillRoundedRect(0, 0, 270, 70, 10);
+      card.lineStyle(1, unitId ? 0x294658 : 0x203748, 1).strokeRoundedRect(0, 0, 270, 70, 10);
+      item.add(card);
       if (unitId) {
         const def = UNIT_DEFS[unitId];
         const affordable = this.canBuyShopUnit(unitId);
         item.add(this.createPortrait(unitId, 31, 34, 20).setAlpha(affordable ? 1 : 0.48));
-        item.add(this.text(62, 11, def.name, 13, affordable ? "#edf7ff" : "#718896", { fontStyle: "bold" }));
-        item.add(this.text(62, 29, def.title, 9, affordable ? "#94acbc" : "#617886"));
+        const role = def.title.includes(" · ") ? def.title.split(" · ").at(-1) || def.title : def.title;
+        item.add(this.text(62, 11, this.truncateText(def.name, 138, 13, { fontStyle: "bold" }), 13, affordable ? "#edf7ff" : "#617888", { fontStyle: "bold" }));
+        item.add(this.text(62, 29, this.truncateText(role, 150, 9), 9, affordable ? "#94acbc" : "#526b7b"));
         item.add(this.text(245, 22, `${def.cost}`, 22, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
         item.add(this.createShopTraitTags(unitId, 62, 46, 224, affordable));
         const zone = this.add.zone(135, 34, 270, 68).setInteractive({ useHandCursor: affordable });
         const action = { type: "shop", index } satisfies GameAction;
         zone.setData("action", action);
         if (affordable) zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch(action));
-        zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(unitId, pointer));
+        zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
+          card.clear();
+          const accent = Phaser.Display.Color.HexStringToColor(def.accent).color;
+          card.fillStyle(accent, 0.12).fillRoundedRect(0, 0, 270, 70, 10);
+          card.lineStyle(2, accent, 0.9).strokeRoundedRect(0, 0, 270, 70, 10);
+          this.showUnitTooltip(unitId, pointer);
+        });
         zone.on(Phaser.Input.Events.POINTER_OUT, () => {
+          card.clear();
+          card.fillStyle(0x11222f, 0.92).fillRoundedRect(0, 0, 270, 70, 10);
+          card.lineStyle(1, 0x294658, 1).strokeRoundedRect(0, 0, 270, 70, 10);
           if (!this.isCompact()) this.clearTooltip();
         });
         item.add(zone);
@@ -1116,18 +1219,29 @@ export class RiftLineScene extends Phaser.Scene {
   private createPortrait(unitId: UnitId, x: number, y: number, radius: number, enemy = false) {
     const def = UNIT_DEFS[unitId];
     const container = this.add.container(x, y);
-    const border = this.add.circle(0, 0, radius + 2, enemy ? 0xff688e : Phaser.Display.Color.HexStringToColor(def.accent).color, 0.95);
     const key = def.portraitStyle === "sprite" ? textureKeyForUnit(unitId) : circularTextureKeyForUnit(unitId);
     const hasTexture = this.textures.exists(key);
     const portrait = this.add.image(0, 0, hasTexture ? key : "rift-fallback-unit").setName("portraitImage");
+    const accent = Phaser.Display.Color.HexStringToColor(enemy ? "#ff688e" : def.accent).color;
+    const unitColor = Phaser.Display.Color.HexStringToColor(def.color).color;
+    const layers: Phaser.GameObjects.GameObject[] = [];
 
     if (def.portraitStyle === "sprite") {
       const { frame } = portrait;
       portrait.setScale(Math.min((radius * 2) / frame.width, (radius * 2) / frame.height));
-    } else portrait.setDisplaySize(radius * 2, radius * 2);
+      if (!hasTexture) layers.push(this.add.circle(0, 0, radius, unitColor, 0.72));
+    } else {
+      layers.push(
+        this.add.circle(0, 0, radius + 3, 0x09131d, 0.96),
+        this.add.circle(0, 0, radius + 1, unitColor, 0.92),
+        this.add.circle(-radius * 0.2, -radius * 0.24, radius * 0.7, accent, 0.3),
+      );
+      portrait.setDisplaySize(radius * 2, radius * 2);
+      layers.push(this.add.circle(0, 0, radius + 1, accent, 0).setStrokeStyle(1.5, accent, 0.95));
+    }
 
     const glyph = this.text(0, 0, hasTexture ? "" : def.glyph, Math.max(12, radius), "#ffffff", { fontStyle: "bold" }).setOrigin(0.5);
-    container.add([border, portrait, glyph]);
+    container.add([...layers, portrait, glyph]);
     return container;
   }
 
