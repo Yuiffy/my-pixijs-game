@@ -120,11 +120,12 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(scene, /resolution: this\.textResolution/);
 });
 
-test("整备页用 WebGL 安全 viewport、分区面板和受限文本还原 Canvas 层级", () => {
-  assert.match(scene, /Math\.ceil\(strip\.width \* renderScale\)/);
-  assert.match(scene, /setScale\(1 \/ renderScale\)/);
-  assert.doesNotMatch(scene, /createGeometryMask/);
-  assert.doesNotMatch(scene, /\.setMask\(/);
+test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 Canvas 层级", () => {
+  assert.match(scene, /createGeometryMask\(\)/);
+  assert.match(scene, /content\.setMask\(/);
+  assert.match(scene, /traitMinimumOffset/);
+  assert.match(scene, /updateTraitViewport\(\)/);
+  assert.doesNotMatch(scene, /viewport\.draw\(source/);
   assert.match(scene, /PREPARATION_BOARD_PANEL/);
   assert.match(scene, /PREPARATION_BENCH_PANEL/);
   assert.match(scene, /PREPARATION_SHOP_PANEL/);
@@ -135,8 +136,11 @@ test("整备页用 WebGL 安全 viewport、分区面板和受限文本还原 Can
   assert.match(layout, /WIDE_TRAIT_STRIP/);
 });
 
-test("Phaser UI 恢复语义按钮、羁绊暗态、垂直裂隙与拖拽跟手", () => {
-  assert.match(scene, /hoverLabel: "点击接入并开始"/);
+test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手", () => {
+  assert.match(scene, /点击接入并开始/);
+  assert.match(scene, /type: "starter", id/);
+  assert.match(scene, /type: "augment", index/);
+  assert.match(scene, /cardWidth \/ 2, cardHeight \/ 2, cardWidth, cardHeight/);
   assert.match(scene, /enabled: canBattle/);
   assert.match(scene, /enabled: this\.canReroll\(\)/);
   assert.match(scene, /traitOffset/);
@@ -152,11 +156,27 @@ test("Phaser UI 恢复语义按钮、羁绊暗态、垂直裂隙与拖拽跟手"
   assert.match(scene, /胜利奖励/);
 });
 
-test("结果页面不会在后续 battle HUD 同步中销毁继续按钮", () => {
-  assert.match(scene, /if \(this\.phase === "battle"\)/);
+test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示", () => {
+  assert.match(scene, /buildBattleOverlay/);
+  assert.match(scene, /rankingStateKey/);
+  assert.doesNotMatch(scene, /private syncBattleOverlay\(\)[\s\S]*buttonViews\.forEach/);
+  assert.match(scene, /createInputBlocker/);
+  assert.match(scene, /showUnitTooltip\(fighter\.unitId, pointer, fighter\.star, fighter\)/);
+  assert.match(scene, /damageTaken/);
   assert.match(scene, /resultContinueLabel/);
   assert.match(scene, /继续 · 进入整备/);
   assert.match(scene, /DEPTH\.overlay \+ 3/);
+});
+
+test("Phaser 备战信息恢复商店概率、激活羁绊、敌情和快捷回收", () => {
+  assert.match(scene, /tierOddsForLevel/);
+  assert.match(scene, /距 \$\{bookLevelForPlayerLevel/);
+  assert.match(scene, /getActiveTraits\(\)/);
+  assert.match(scene, /currentWave\.units/);
+  assert.match(scene, /currentWave\.tag === "elite"/);
+  assert.match(scene, /rightButtonDown\(\)/);
+  assert.match(scene, /preventContextMenu/);
+  assert.match(scene, /回收 \+\$\{refund\}/);
 });
 
 test("场景预加载单位头像并保留缺图降级纹理", () => {
