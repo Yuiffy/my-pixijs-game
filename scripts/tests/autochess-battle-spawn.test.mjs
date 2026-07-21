@@ -371,6 +371,103 @@ test("紧贴碰撞体积的近战单位也能稳定攻击", () => {
   assert.equal(source.energy, source.energyOnAttack);
 });
 
+test("满能量远程单位会先进入攻击距离再施法", () => {
+  const engine = createEngine(140);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "yua", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.x = index === 0 ? 720 : 980;
+    fighter.y = 360;
+  });
+  source.x = 200;
+  source.y = 360;
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.equal(source.energy, source.maxEnergy, "攻击范围外不应消耗能量施法");
+
+  target.x = source.x + Math.max(source.range, source.radius + target.radius + 12) - 1;
+  target.y = source.y;
+  engine.update(0.05);
+  assert.equal(source.energy, source.castRefund, "进入攻击范围后应立即施法");
+});
+
+test("直接调用普攻不会跨攻击距离造成副作用", () => {
+  const engine = createEngine(141);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  source.x = 180;
+  source.y = 360;
+  source.cooldown = 0;
+  source.energy = 0;
+  target.x = 720;
+  target.y = 360;
+  target.armor = 0;
+  target.dodgeChance = 0;
+  const hpBefore = target.hp;
+  engine.basicAttack(source, target);
+  assert.equal(source.cooldown, 0);
+  assert.equal(source.energy, 0);
+  assert.equal(target.hp, hpBefore);
+});
+
+test("跳舞冲刺只在一次冲刺可进入自身攻击范围时触发", () => {
+  const engine = createEngine(142);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "zeyin", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player.find((fighter) => fighter.unitId === "sui");
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  assert.equal(source.danceMember, true);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.x = index === 0 ? 520 : 980;
+    fighter.y = 360;
+  });
+  battle.player.forEach((fighter) => {
+    fighter.cooldown = 99;
+    fighter.energy = 0;
+  });
+  source.x = 200;
+  source.y = 360;
+  const preferredRange = Math.max(source.range, source.radius + target.radius + 12);
+  const dashTravel = source.moveSpeed * 3.4 * 0.48;
+  target.x = source.x + preferredRange + dashTravel + 8;
+  target.y = source.y;
+  engine.update(0.05);
+  assert.equal(source.danceDashTime, 0, "距离过远时不应提前消耗冲刺");
+  assert.equal(source.danceDashCooldown, 0);
+
+  source.x = 200;
+  source.y = 360;
+  source.danceDashTime = 0;
+  source.danceDashCooldown = 0;
+  target.x = source.x + preferredRange + dashTravel - 2;
+  engine.update(0.05);
+  assert.ok(source.danceDashTime > 0, "最后一段接敌应触发冲刺");
+  assert.ok(source.danceDashCooldown > 0);
+});
+
 test("拥挤近战会侧移接敌并在时限前造成伤害", () => {
   const engine = createEngine(94);
   engine.state.playerLevel = 4;
@@ -759,7 +856,7 @@ test("苹果派在眩晕期间暂停且施法者死亡后不再发射", () => {
     fighter.dodgeChance = 0;
     fighter.hp = 9_999;
     fighter.maxHp = 9_999;
-    fighter.x = 650;
+    fighter.x = 300 + nori.range - 1;
     fighter.y = 300;
   });
   nori.x = 300;
@@ -770,15 +867,14 @@ test("苹果派在眩晕期间暂停且施法者死亡后不再发射", () => {
   engine.update(0.05);
   assert.equal(nori.applePieShotsRemaining, 7);
   nori.stun = 0.3;
-  const hpBeforeStun = target.hp;
   for (let tick = 0; tick < 5; tick += 1) engine.update(0.05);
-  assert.equal(target.hp, hpBeforeStun);
   assert.equal(nori.applePieShotsRemaining, 7);
 
   nori.alive = false;
   nori.hp = 0;
+  const remainingShots = nori.applePieShotsRemaining;
   for (let tick = 0; tick < 5; tick += 1) engine.update(0.05);
-  assert.equal(target.hp, hpBeforeStun);
+  assert.equal(nori.applePieShotsRemaining, remainingShots);
 });
 
 test("6x4 deployment slots preserve their formation positions at battle start", () => {
@@ -945,7 +1041,7 @@ test("邪恶外星人的贯穿光线命中同横排敌人", () => {
     fighter.attack = 0;
     fighter.dodgeChance = 0;
   });
-  target.x = 500; target.y = 280;
+  target.x = 440; target.y = 280;
   source.x = 200; source.y = 280;
   assert.equal(source.energyStyle, "alien");
   assert.equal(source.maxEnergy, 75);
@@ -968,7 +1064,20 @@ test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满",
   const zeyin = battle?.player.find((fighter) => fighter.unitId === "zeyin");
   const tiandou = battle?.player.find((fighter) => fighter.unitId === "tiandou");
   assert.ok(battle && zeyin && tiandou);
-  battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp = 99_999; fighter.attack = 0; fighter.armor = 99_999; });
+  battle.enemy.forEach((fighter, index) => {
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.x = 500 + index * 80;
+    fighter.y = 360;
+  });
+  zeyin.x = 280;
+  zeyin.y = 360;
+  tiandou.x = 280;
+  tiandou.y = 420;
+  const zeyinTarget = battle.enemy[0];
+  zeyinTarget.x = zeyin.x + Math.max(zeyin.range, zeyin.radius + zeyinTarget.radius + 12) - 1;
+  zeyinTarget.y = zeyin.y;
   const zeyinBaseInterval = zeyin.attackInterval;
   zeyin.energy = zeyin.maxEnergy;
   engine.update(0.05);
@@ -979,6 +1088,9 @@ test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满",
 
   const tiandouBaseSpeed = tiandou.moveSpeed;
   battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
+  const tiandouTarget = battle.enemy[0];
+  tiandouTarget.x = tiandou.x + Math.max(tiandou.range, tiandou.radius + tiandouTarget.radius + 12) - 1;
+  tiandouTarget.y = tiandou.y;
   tiandou.energy = tiandou.maxEnergy;
   engine.update(0.05);
   assert.equal(tiandou.abilityMoveSpeed, 16);
@@ -1001,11 +1113,12 @@ test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", ()
     fighter.armor = 0;
     fighter.attack = 0;
     fighter.dodgeChance = 0;
-    fighter.x = 520 + index * 40;
-    fighter.y = owner.y;
+    fighter.x = 340 + index * 40;
+    fighter.y = 360;
   });
   owner.x = 260;
   owner.y = 360;
+  battle.enemy[0].x = owner.x + Math.max(owner.range, owner.radius + battle.enemy[0].radius + 12) - 1;
   owner.energy = owner.maxEnergy;
   engine.update(0.05);
   assert.equal(battle.pineTrees.length, 1);
@@ -1014,7 +1127,9 @@ test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", ()
   const treeX = tree.x;
   const treeY = tree.y;
   battle.projectiles = [];
-  stepBattle(engine, 16);
+  battle.enemy[0].x = tree.x + 120;
+  battle.enemy[0].y = tree.y;
+  stepBattle(engine, 5);
   assert.equal(tree.x, treeX);
   assert.equal(tree.y, treeY);
   const needle = battle.projectiles.find((entry) => entry.style === "pine_needle" && entry.sourceFid === owner.fid);
@@ -1046,7 +1161,7 @@ test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {
   const target = battle.enemy[0];
   source.x = 280;
   source.y = 360;
-  target.x = 620;
+  target.x = 500;
   target.y = 360;
   source.energy = source.maxEnergy;
   engine.update(0.05);

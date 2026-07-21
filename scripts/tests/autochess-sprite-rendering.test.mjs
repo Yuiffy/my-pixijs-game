@@ -102,6 +102,21 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
+test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对齐", () => {
+  assert.match(scene, /drawRabbitBody\(/);
+  assert.match(scene, /drawRabbitCannon\(/);
+  assert.match(scene, /fillGradientStyle\(0x111a27, 0x728998, 0x3b4f60, 0x728998, 1\)/);
+  assert.match(scene, /lineStyle\(1\.2, 0xb8ccd8\)/);
+  assert.match(scene, /fillStyle\(0x1b2938\)/);
+  assert.match(scene, /fillStyle\(0xf4f0f2\)/);
+  assert.match(scene, /fillStyle\(0xefc8d1\)/);
+  assert.match(scene, /lineStyle\(1\.4, 0x92d7ff\)/);
+  assert.match(scene, /lineTo\(muzzleDistance, 0\)/);
+  assert.match(scene, /flash\.setX\(muzzleDistance\)/);
+  assert.match(scene, /1 \+ \(pet\.attackPulse \/ 0\.16\) \* 0\.75/);
+  assert.match(scene, /setRotation\(-angle\)\.setY\(pet\.radius \* 0\.88 - bob\)/);
+});
+
 test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
   assert.match(layout, /MAX_RENDER_PIXELS/);
   assert.match(layout, /renderSizeFor/);

@@ -1389,9 +1389,13 @@ export class AutoChessEngine {
     return target;
   }
 
+  private combatAttackRange(attacker: Fighter, target: Fighter) {
+    return Math.max(attacker.range, attacker.radius + target.radius + CONTACT_ATTACK_BUFFER);
+  }
+
   private moveTowardCombatTarget(fighter: Fighter, target: Fighter, fighters: Fighter[], dt: number, movementIntents: Map<string, MovementIntent>) {
     const targetDistance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
-    const preferredRange = Math.max(fighter.range, fighter.radius + target.radius + CONTACT_ATTACK_BUFFER);
+    const preferredRange = this.combatAttackRange(fighter, target);
     if (targetDistance <= preferredRange) {
       fighter.stuckTime = 0;
       fighter.progressAnchorDistance = targetDistance;
@@ -2241,25 +2245,19 @@ export class AutoChessEngine {
       const targets = this.living(targetTeam);
       if (!targets.length) return;
 
-      if (!fighter.barrageActive && fighter.energy >= fighter.maxEnergy) {
-        this.castAbility(fighter, targets);
-        return;
-      }
-
       const target = this.resolveCombatTarget(fighter, targets, dt);
       if (!target) return;
       const distance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
-      const preferredRange = Math.max(
-        fighter.range,
-        fighter.radius + target.radius + CONTACT_ATTACK_BUFFER,
-      );
+      const preferredRange = this.combatAttackRange(fighter, target);
       if (distance > preferredRange) {
-        // 跳舞成员：接近敌人时高移速冲刺，冲刺期间提高闪避
+        // 跳舞成员：只在一段完整冲刺可进入自身攻击范围的最后接近阶段加速。
+        const dashTravel = fighter.moveSpeed * DANCE_DASH_SPEED_MULT * (fighter.slowTime > 0 ? 0.55 : 1) * DANCE_DASH_DURATION;
         if (
           fighter.danceMember &&
           fighter.danceDashCooldown <= 0 &&
           fighter.danceDashTime <= 0 &&
-          danceLevel > 0
+          danceLevel > 0 &&
+          distance - dashTravel <= preferredRange
         ) {
           fighter.danceDashTime = DANCE_DASH_DURATION;
           fighter.danceDashCooldown = DANCE_DASH_COOLDOWN[danceLevel];
@@ -2284,6 +2282,9 @@ export class AutoChessEngine {
           });
         }
         this.moveTowardCombatTarget(fighter, target, [...battle.player, ...battle.enemy], dt, movementIntents);
+      } else if (!fighter.barrageActive && fighter.energy >= fighter.maxEnergy) {
+        fighter.stuckTime = 0;
+        this.castAbility(fighter, targets);
       } else if (fighter.cooldown <= 0) {
         fighter.stuckTime = 0;
         this.basicAttack(fighter, target);
@@ -2343,6 +2344,7 @@ export class AutoChessEngine {
   }
 
   private basicAttack(source: Fighter, target: Fighter) {
+    if (Math.hypot(target.x - source.x, target.y - source.y) > this.combatAttackRange(source, target)) return;
     this.faceTowardX(source, target.x);
     source.cooldown = source.attackInterval;
     if (source.unitId === "nori") {

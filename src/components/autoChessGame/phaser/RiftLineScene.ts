@@ -1139,15 +1139,71 @@ export class RiftLineScene extends Phaser.Scene {
     }
   }
 
-  private createRabbit(_pet: MechanicalRabbitPet) {
+  private createRabbit(pet: MechanicalRabbitPet) {
     const container = this.add.container(0, 0);
-    const shadow = this.add.ellipse(0, 0, 30, 9, 0x000000, 0.28).setName("shadow");
-    const body = this.add.polygon(0, 0, [-16, 0, -6, -8, 12, -6, 17, 0, 12, 6, -6, 8], 0x506979).setName("body");
-    const cannon = this.add.rectangle(17, 0, 28, 7, 0xbed0db).setOrigin(0, 0.5).setName("cannon");
-    const eye = this.add.circle(-5, 0, 2.5, 0x92d7ff).setName("eye");
-    const flash = this.add.circle(45, 0, 5, 0xe8fbff, 0).setName("flash");
-    container.add([shadow, body, cannon, eye, flash]);
+    const muzzle = mechanicalRabbitMuzzle(pet);
+    const muzzleDistance = Math.hypot(muzzle.x - pet.x, muzzle.y - pet.y);
+    const shadow = this.add.ellipse(0, 0, pet.radius * 2.4, pet.radius * 0.6, 0x000000, 0.26).setName("shadow");
+    const body = this.add.graphics().setName("body");
+    const cannon = this.add.graphics().setName("cannon");
+    const details = this.add.graphics().setName("details");
+    const eye = this.add.circle(-pet.radius * 0.2, 0, 2.4, 0x92d7ff).setName("eye");
+    const flash = this.add.circle(muzzleDistance, 0, 4.5, 0xdafaff, 0).setName("flash");
+
+    this.drawRabbitBody(body, pet.radius);
+    this.drawRabbitCannon(cannon, details, pet.radius, muzzleDistance);
+    container.add([shadow, body, cannon, details, eye, flash]);
     return container;
+  }
+
+  private drawRabbitBody(graphics: Phaser.GameObjects.Graphics, radius: number) {
+    graphics
+      .fillGradientStyle(0x111a27, 0x728998, 0x3b4f60, 0x728998, 1)
+      .beginPath()
+      .moveTo(-radius * 0.62, 0)
+      .lineTo(-radius * 0.22, -radius * 0.31)
+      .lineTo(radius * 0.38, -radius * 0.2)
+      .lineTo(radius * 0.5, 0)
+      .lineTo(radius * 0.38, radius * 0.2)
+      .lineTo(-radius * 0.22, radius * 0.31)
+      .closePath()
+      .fillPath()
+      .lineStyle(1.2, 0xb8ccd8)
+      .strokePath();
+  }
+
+  private drawRabbitCannon(
+    cannon: Phaser.GameObjects.Graphics,
+    details: Phaser.GameObjects.Graphics,
+    radius: number,
+    muzzleDistance: number,
+  ) {
+    cannon
+      .fillStyle(0x1b2938)
+      .lineStyle(1.25, 0xdce6ec)
+      .beginPath()
+      .moveTo(-radius * 0.08, -radius * 0.23)
+      .lineTo(muzzleDistance - radius * 0.08, -radius * 0.1)
+      .lineTo(muzzleDistance, 0)
+      .lineTo(muzzleDistance - radius * 0.08, radius * 0.1)
+      .lineTo(-radius * 0.08, radius * 0.23)
+      .closePath()
+      .fillPath()
+      .strokePath();
+    details
+      .fillStyle(0xf4f0f2)
+      .beginPath()
+      .moveTo(radius * 0.04, -radius * 0.11)
+      .lineTo(muzzleDistance - radius * 0.22, -radius * 0.045)
+      .lineTo(muzzleDistance - radius * 0.08, 0)
+      .lineTo(muzzleDistance - radius * 0.22, radius * 0.045)
+      .lineTo(radius * 0.04, radius * 0.11)
+      .closePath()
+      .fillPath()
+      .fillStyle(0xefc8d1)
+      .fillRect(radius * 0.16, -radius * 0.17, radius * 0.24, radius * 0.34)
+      .lineStyle(1.4, 0x92d7ff)
+      .lineBetween(radius * 0.4, 0, muzzleDistance - radius * 0.25, 0);
   }
 
   private updateRabbit(view: Phaser.GameObjects.Container, pet: MechanicalRabbitPet, visualTime: number) {
@@ -1157,9 +1213,10 @@ export class RiftLineScene extends Phaser.Scene {
     const flash = view.getByName("flash") as Phaser.GameObjects.Arc;
     const muzzle = mechanicalRabbitMuzzle(pet);
     const muzzleDistance = Math.hypot(muzzle.x - pet.x, muzzle.y - pet.y);
+    const flashScale = 1 + (pet.attackPulse / 0.16) * 0.75;
     view.setPosition(pet.x, pet.y + bob).setRotation(angle).setAlpha(fade).setDepth(DEPTH.entities + pet.y + 0.5);
     (view.getByName("shadow") as Phaser.GameObjects.Ellipse).setRotation(-angle).setY(pet.radius * 0.88 - bob);
-    flash.setX(muzzleDistance).setAlpha(pet.attackPulse > 0 ? Math.min(1, pet.attackPulse / 0.16) : 0).setScale(1 + pet.attackPulse * 4);
+    flash.setX(muzzleDistance).setAlpha(pet.attackPulse > 0 ? Math.min(0.96, pet.attackPulse / 0.16) : 0).setScale(flashScale);
   }
 
   private createPineTree(_tree: PineTreeTurret) {
