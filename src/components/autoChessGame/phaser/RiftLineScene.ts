@@ -32,10 +32,12 @@ import {
   textureKeyForUnit,
 } from "./assets";
 import {
+  COMPACT_RESULT_LAYOUT,
   COMPACT_TRAIT_STRIP,
   PREPARATION_BENCH_PANEL,
   PREPARATION_BOARD_PANEL,
   PREPARATION_SHOP_PANEL,
+  WIDE_RESULT_LAYOUT,
   WIDE_TRAIT_STRIP,
   MAX_TEXT_RESOLUTION,
   WORLD_HEIGHT,
@@ -44,6 +46,7 @@ import {
   boardSlot,
   compactBenchSlot,
   compactBoardSlot,
+  occupiedSlotLayout,
   profileFor,
   type LayoutProfile,
 } from "./layout";
@@ -75,6 +78,13 @@ type TraitDragState = {
   moved: boolean;
 };
 
+type ResultRowLayout = {
+  height: number;
+  portraitRadius: number;
+  nameSize: number;
+  detailSize: number;
+};
+
 const resultMetricLabel: Record<RankingMetric, string> = {
   damage: "输出",
   support: "治疗/护盾",
@@ -82,6 +92,16 @@ const resultMetricLabel: Record<RankingMetric, string> = {
 };
 
 const short = (value: number) => (value < 1000 ? `${Math.round(value)}` : `${(value / 1000).toFixed(1)}k`);
+
+const BURST_GRADIENT_TEXTURE = "rift-burst-gradient";
+const PROJECTILE_EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+
+const projectileEmoji = (projectile: Projectile) => {
+  if (projectile.emoji) return projectile.emoji;
+  if (projectile.style === "shark") return "🦈";
+  if (projectile.style === "carrot") return "🥕";
+  return "";
+};
 
 export class RiftLineScene extends Phaser.Scene {
   private readonly bridge: EngineBridge;
@@ -156,6 +176,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.updateQuality();
     createFallbackTextures(this);
     createCircularPortraitTextures(this);
+    this.createBurstGradientTexture();
     this.input.setTopOnly(true);
     this.game.canvas.addEventListener("contextmenu", this.preventContextMenu);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.handlePointerMove, this);
@@ -327,7 +348,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private boundedText(value: string, maxWidth: number, maxLines: number, size: number, color: string, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
     const probe = this.text(0, 0, value, size, color, { ...style, wordWrap: { width: maxWidth } }).setVisible(false);
-    const lines = probe.text.split("\n");
+    const lines = probe.getWrappedText(value);
     probe.destroy();
     const bounded = lines.length <= maxLines
       ? lines
@@ -500,8 +521,8 @@ export class RiftLineScene extends Phaser.Scene {
     const augmentSummary = state.augmentHistory.length
       ? state.augmentHistory.map(({ round, id }) => `${round}战·${AUGMENTS.find((augment) => augment.id === id)?.name ?? id}`).join(" · ")
       : "第 2 战后可选择首个天赋";
-    this.phaseLayer.add(this.text(48, compact ? 188 : 184, this.truncateText(`已激活：${traitSummary}`, compact ? 650 : 470, 10, { fontStyle: "bold" }), 10, activeTraits.length ? "#8ce8bd" : "#7893a5", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(compact ? 708 : 748, compact ? 188 : 184, this.truncateText(augmentSummary, compact ? 360 : 330, 9), 9, "#8ea8b9").setOrigin(compact ? 0 : 1));
+    this.phaseLayer.add(this.text(48, compact ? 226 : 184, this.truncateText(`已激活：${traitSummary}`, compact ? 650 : 470, 10, { fontStyle: "bold" }), 10, activeTraits.length ? "#8ce8bd" : "#7893a5", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(compact ? 708 : 748, compact ? 226 : 184, this.truncateText(augmentSummary, compact ? 360 : 330, 9), 9, "#8ea8b9").setOrigin(compact ? 0 : 1));
     if (!compact) {
       this.phaseLayer.add(this.text(48, 221, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
       this.phaseLayer.add(this.text(390, 221, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
@@ -645,15 +666,40 @@ export class RiftLineScene extends Phaser.Scene {
       return;
     }
     const definition = UNIT_DEFS[unit.id];
-    const portraitRadius = compact ? 18 : isBench ? 24 : 20;
-    const portraitY = rect.y + (compact ? rect.height * 0.43 : isBench ? 31 : 26);
-    const stars = this.text(rect.x + rect.width / 2, rect.y + 4, "★".repeat(unit.star), compact ? 8 : 9, "#ffdc68", { fontStyle: "bold" }).setOrigin(0.5, 0);
-    const portrait = this.createPortrait(unit.id, rect.x + rect.width / 2, portraitY, portraitRadius);
-    const name = this.text(rect.x + rect.width / 2, rect.y + rect.height - 7, this.truncateText(definition.name, rect.width - 12, compact ? 10 : 9, { fontStyle: "bold" }), compact ? 10 : 9, "#e5f4ff", { fontStyle: "bold" }).setOrigin(0.5, 1);
-    const traitDots = !compact
-      ? definition.traits.slice(0, 3).map((traitId, traitIndex) => this.add.circle(rect.x + rect.width / 2 + (traitIndex - (definition.traits.length - 1) / 2) * 7, rect.y + rect.height - 17, 2, Phaser.Display.Color.HexStringToColor(TRAITS[traitId].color).color, 0.9))
-      : [];
-    this.phaseLayer.add([stars, portrait, name, ...traitDots]);
+    const slotLayout = occupiedSlotLayout(rect, isBench, compact);
+    const displayedTraits = compact ? [] : definition.traits.slice(0, 3);
+    const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontStyle: "bold",
+      stroke: COLORS.slotTextStroke,
+      strokeThickness: compact ? 1 : 1.5,
+      shadow: { color: "#000000", blur: 1, offsetY: 1, fill: true, stroke: true },
+    };
+    const portrait = this.createPortrait(unit.id, rect.x + rect.width / 2, slotLayout.portraitY, slotLayout.portraitRadius);
+    const starBadge = this.add.graphics();
+    starBadge.fillStyle(COLORS.slotLabelFill, 0.84);
+    starBadge.fillRoundedRect(slotLayout.starBadge.x, slotLayout.starBadge.y, slotLayout.starBadge.width, slotLayout.starBadge.height, 5);
+    starBadge.lineStyle(1, COLORS.slotLabelBorder, 0.65);
+    starBadge.strokeRoundedRect(slotLayout.starBadge.x, slotLayout.starBadge.y, slotLayout.starBadge.width, slotLayout.starBadge.height, 5);
+    const stars = this.text(slotLayout.starBadge.x + slotLayout.starBadge.width / 2, slotLayout.starBadge.y + slotLayout.starBadge.height / 2, "★".repeat(unit.star), compact ? 8 : 9, "#ffdc68", textStyle).setOrigin(0.5);
+    const labelBackplate = this.add.graphics();
+    labelBackplate.fillStyle(COLORS.slotLabelFill, 0.76);
+    labelBackplate.fillRoundedRect(slotLayout.label.x, slotLayout.label.y, slotLayout.label.width, slotLayout.label.height, 5);
+    labelBackplate.lineStyle(1, COLORS.slotLabelBorder, 0.45);
+    labelBackplate.strokeRoundedRect(slotLayout.label.x, slotLayout.label.y, slotLayout.label.width, slotLayout.label.height, 5);
+    const name = this.text(
+      rect.x + rect.width / 2,
+      slotLayout.nameY,
+      this.truncateText(definition.name, slotLayout.label.width - 8, compact ? 10 : 9, textStyle),
+      compact ? 10 : 9,
+      "#e5f4ff",
+      textStyle,
+    ).setOrigin(0.5, 1);
+    const traitDots = displayedTraits.flatMap((traitId, traitIndex) => {
+      const x = rect.x + rect.width / 2 + (traitIndex - (displayedTraits.length - 1) / 2) * 7;
+      const { color } = Phaser.Display.Color.HexStringToColor(TRAITS[traitId].color);
+      return [this.add.circle(x, slotLayout.traitY, 3, COLORS.slotLabelFill, 0.9), this.add.circle(x, slotLayout.traitY, 2, color, 1)];
+    });
+    this.phaseLayer.add([portrait, starBadge, stars, labelBackplate, ...traitDots, name]);
   }
 
   private slotRect(location: UnitLocation, compact = this.isCompact()) {
@@ -1074,9 +1120,15 @@ export class RiftLineScene extends Phaser.Scene {
     const container = this.add.container(projectile.x, projectile.y);
     const trail = this.add.graphics().setName("trail");
     const core = this.add.circle(0, 0, Math.max(2, projectile.size), 0xf8fcff).setName("core");
-    const icon = this.text(0, 0, projectile.style === "shark" ? "🦈" : projectile.style === "carrot" ? "🥕" : "", Math.max(12, projectile.size), "#ffffff").setOrigin(0.5).setName("icon");
+    const icon = this.text(0, 0, "", Math.max(12, projectile.size), "#ffffff", { fontFamily: PROJECTILE_EMOJI_FONT }).setOrigin(0.5).setName("icon");
     container.add([trail, core, icon]);
     return container;
+  }
+
+  private drawProjectileTrail(graphics: Phaser.GameObjects.Graphics, tailX: number, tailY: number, width: number, color: number) {
+    const capRadius = width / 2;
+    graphics.lineStyle(width, color, 1).lineBetween(tailX, tailY, 0, 0);
+    graphics.fillStyle(color, 1).fillCircle(tailX, tailY, capRadius).fillCircle(0, 0, capRadius);
   }
 
   private updateProjectile(view: Phaser.GameObjects.Container, projectile: Projectile) {
@@ -1085,24 +1137,54 @@ export class RiftLineScene extends Phaser.Scene {
     const trail = view.getByName("trail") as Phaser.GameObjects.Graphics;
     const core = view.getByName("core") as Phaser.GameObjects.Arc;
     const icon = view.getByName("icon") as Phaser.GameObjects.Text;
-    view.setPosition(projectile.x, projectile.y).setDepth(DEPTH.effects + projectile.y);
-    trail.clear();
-    const trailLength = projectile.style === "pine_needle" ? 16 : 22;
-    const tailX = -(projectile.velocityX / speed) * trailLength;
-    const tailY = -(projectile.velocityY / speed) * trailLength;
+    const emoji = projectileEmoji(projectile);
     const { color: projectileColor } = Phaser.Display.Color.HexStringToColor(projectile.color);
-    trail.lineStyle(projectile.style === "pine_needle" ? 2.2 : projectile.size + 3, projectileColor, projectile.style === "pine_needle" ? 0.94 : 0.65);
-    trail.lineBetween(tailX, tailY, 0, 0);
-    core.setRadius(Math.max(2, projectile.size)).setFillStyle(0xf8fcff, projectile.style === "pine_needle" ? 0 : 0.98);
-    icon.setText(projectile.emoji || (projectile.style === "shark" ? "🦈" : projectile.style === "carrot" ? "🥕" : ""));
-    icon.setRotation(angle).setVisible(icon.text.length > 0);
+    view.setPosition(projectile.x, projectile.y).setDepth(DEPTH.effects + projectile.y);
+    trail.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+    core.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+    icon.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+
+    if (projectile.style === "pine_needle") {
+      const tailX = -(projectile.velocityX / speed) * 16;
+      const tailY = -(projectile.velocityY / speed) * 16;
+      trail.setVisible(true);
+      this.drawProjectileTrail(trail, tailX, tailY, 2.2, projectileColor);
+      return;
+    }
+
+    if (emoji) {
+      const fontSize = projectile.style === "shark" ? Math.max(12, projectile.size) : Math.max(14, projectile.size);
+      icon.setText(emoji).setFontSize(fontSize).setRotation(angle).setVisible(true);
+      return;
+    }
+
+    const tailX = -(projectile.velocityX / speed) * 22;
+    const tailY = -(projectile.velocityY / speed) * 22;
+    trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+    core.setRadius(Math.max(2, projectile.size)).setFillStyle(0xf8fcff, 0.98).setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+    this.drawProjectileTrail(trail, tailX, tailY, projectile.size + 3, projectileColor);
+  }
+
+  private createBurstGradientTexture() {
+    if (this.textures.exists(BURST_GRADIENT_TEXTURE)) return;
+    const texture = this.textures.createCanvas(BURST_GRADIENT_TEXTURE, 128, 128);
+    if (!texture) return;
+    const context = texture.getContext();
+    const radius = 64;
+    const gradient = context.createRadialGradient(radius, radius, 0, radius, radius, radius);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 128, 128);
+    texture.refresh();
   }
 
   private createEffect(effect: BattleEffect) {
     const container = this.add.container(effect.x, effect.y);
     const graphics = this.add.graphics().setName("shape");
+    const burstGradient = this.add.image(0, 0, BURST_GRADIENT_TEXTURE).setOrigin(0.5).setName("burstGradient").setVisible(false);
     const label = this.text(0, 0, "", 14, "#ffffff", { fontStyle: "bold" }).setOrigin(0.5).setName("label");
-    container.add([graphics, label]);
+    container.add([graphics, burstGradient, label]);
     return container;
   }
 
@@ -1110,10 +1192,12 @@ export class RiftLineScene extends Phaser.Scene {
     const progress = 1 - effect.life / effect.maxLife;
     const alpha = Math.max(0, effect.life / effect.maxLife);
     const graphics = view.getByName("shape") as Phaser.GameObjects.Graphics;
+    const burstGradient = view.getByName("burstGradient") as Phaser.GameObjects.Image;
     const label = view.getByName("label") as Phaser.GameObjects.Text;
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
     view.setPosition(effect.x, effect.y).setAlpha(alpha).setDepth(DEPTH.effects + effect.y + 1);
     graphics.clear();
+    burstGradient.setVisible(false);
     label.setVisible(false);
     if (effect.kind === "line") {
       const targetX = (effect.x2 ?? effect.x) - effect.x;
@@ -1123,7 +1207,10 @@ export class RiftLineScene extends Phaser.Scene {
       graphics.lineStyle(Math.max(1, width * 0.5), 0xf4fbff, 0.96).lineBetween(0, 0, targetX, targetY);
     } else if (effect.kind === "ring") {
       graphics.lineStyle(Math.max(2, 8 * (1 - progress)), color, 1).strokeCircle(0, 0, Math.max(6, (effect.size || 80) * progress));
-    } else if (effect.kind === "burst" || effect.kind === "chronosphere" || effect.kind === "hotpot") {
+    } else if (effect.kind === "burst") {
+      const radius = (effect.size || 40) * (0.35 + progress * 0.65);
+      burstGradient.setTint(color).setDisplaySize(radius * 2, radius * 2).setVisible(true);
+    } else if (effect.kind === "chronosphere" || effect.kind === "hotpot") {
       const radius = (effect.size || (effect.kind === "hotpot" ? 130 : 50)) * (effect.kind === "hotpot" ? 0.45 + progress * 0.7 : 0.35 + progress * 0.65);
       const fill = effect.kind === "hotpot" ? 0xff6b2d : color;
       graphics.fillStyle(fill, effect.kind === "hotpot" ? 0.3 : 0.24).fillCircle(0, 0, radius);
@@ -1350,53 +1437,100 @@ export class RiftLineScene extends Phaser.Scene {
     return augmentRound ? "继续 · 选择契印" : "继续 · 进入整备";
   }
 
-  private drawResultRow(x: number, y: number, width: number, rank: number, fighter: Fighter, value: number, metric: RankingMetric) {
+  private drawResultMetricTab(x: number, y: number, width: number, metric: RankingMetric, selected: boolean) {
+    const accent = metric === "damage" ? COLORS.resultMetricDamage : metric === "support" ? COLORS.resultMetricSupport : COLORS.resultMetricTaken;
+    const graphics = this.add.graphics().setDepth(DEPTH.overlay + 3);
+    const label = this.text(x + width / 2, y + 12, resultMetricLabel[metric], 10, selected ? `#${accent.toString(16).padStart(6, "0")}` : COLORS.resultMetricIdleText, { fontStyle: "bold" })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.overlay + 4);
+    const draw = (hover = false) => {
+      graphics.clear();
+      graphics.fillStyle(selected ? accent : hover ? COLORS.resultMetricIdleHover : COLORS.resultMetricIdle, selected ? 0.2 : 0.96);
+      graphics.fillRoundedRect(x, y, width, 24, 9);
+      graphics.lineStyle(selected ? 2 : 1, selected ? accent : COLORS.resultMetricIdleBorder, selected ? 0.96 : hover ? 0.92 : 0.7);
+      graphics.strokeRoundedRect(x, y, width, 24, 9);
+      label.setColor(selected ? `#${accent.toString(16).padStart(6, "0")}` : hover ? "#eaf7ff" : COLORS.resultMetricIdleText);
+    };
+    draw();
+    const zone = this.add.zone(x + width / 2, y + 12, width, 24).setDepth(DEPTH.overlay + 5).setInteractive({ useHandCursor: true });
+    zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch({ type: "metric", metric }));
+    zone.on(Phaser.Input.Events.POINTER_OVER, () => draw(true));
+    zone.on(Phaser.Input.Events.POINTER_OUT, () => draw(false));
+  }
+
+  private drawResultRow(x: number, y: number, width: number, rank: number, fighter: Fighter, value: number, metric: RankingMetric, layout: ResultRowLayout) {
     const accent = Phaser.Display.Color.HexStringToColor(UNIT_DEFS[fighter.unitId].accent).color;
-    const row = this.add.graphics();
-    row.fillStyle(0x102230, fighter.alive ? 0.96 : 0.52).fillRoundedRect(x, y, width, 54, 9);
-    row.lineStyle(1, accent, fighter.alive ? 0.45 : 0.2).strokeRoundedRect(x, y, width, 54, 9);
-    this.overlayLayer.add(row);
-    this.overlayLayer.add(this.createPortrait(fighter.unitId, x + 28, y + 27, 18, fighter.team === "enemy").setAlpha(fighter.alive ? 1 : 0.45));
-    this.overlayLayer.add(this.text(x + 54, y + 10, `${rank}. ${UNIT_DEFS[fighter.unitId].name}${"★".repeat(fighter.star)}`, 10, UNIT_DEFS[fighter.unitId].accent, { fontStyle: "bold" }).setAlpha(fighter.alive ? 1 : 0.55));
-    this.overlayLayer.add(this.text(x + width - 12, y + 10, fighter.alive ? "存活" : "已阵亡", 8, fighter.alive ? "#75e6b0" : "#81919d", { fontStyle: "bold" }).setOrigin(1));
-    this.overlayLayer.add(this.text(x + 54, y + 26, `血 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 盾 ${Math.round(fighter.shield)} · 攻 ${Math.round(fighter.attack)} · 甲 ${Math.round(fighter.armor)}`, 8, "#a9bfcc"));
+    const { height, portraitRadius, nameSize, detailSize } = layout;
+    const portraitX = x + portraitRadius + 10;
+    const contentX = x + portraitRadius * 2 + 18;
+    const statusWidth = 42;
     const metricText = metric === "support"
       ? `治 ${short(fighter.healingDone)} · 盾 ${short(fighter.shieldingDone)}`
       : `${resultMetricLabel[metric]} ${short(value)}`;
-    this.overlayLayer.add(this.text(x + 54, y + 40, metricText, 9, "#e6f4fb", { fontStyle: "bold" }));
-    const zone = this.add.zone(x + width / 2, y + 27, width, 54).setDepth(DEPTH.overlay + 5).setInteractive({ useHandCursor: true });
+    const name = this.truncateText(`${rank}. ${UNIT_DEFS[fighter.unitId].name}${"★".repeat(fighter.star)}`, width - (contentX - x) - statusWidth - 18, nameSize, { fontStyle: "bold" });
+    const health = `血 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}${fighter.shield > 0 ? ` · 盾 ${Math.round(fighter.shield)}` : ""}`;
+    const row = this.add.graphics();
+    row.fillStyle(0x102230, fighter.alive ? 0.94 : 0.48).fillRoundedRect(x, y, width, height, 8);
+    row.lineStyle(1, accent, fighter.alive ? 0.3 : 0.14).strokeRoundedRect(x, y, width, height, 8);
+    this.overlayLayer.add(row);
+    this.overlayLayer.add(this.createPortrait(fighter.unitId, portraitX, y + height / 2, portraitRadius, fighter.team === "enemy").setAlpha(fighter.alive ? 1 : 0.42));
+    this.overlayLayer.add(this.text(contentX, y + 5, name, nameSize, UNIT_DEFS[fighter.unitId].accent, { fontStyle: "bold" }).setAlpha(fighter.alive ? 1 : 0.55));
+    this.overlayLayer.add(this.text(x + width - 10, y + 6, fighter.alive ? "存活" : "已击败", detailSize, fighter.alive ? "#75e6b0" : "#81919d", { fontStyle: "bold" }).setOrigin(1));
+    this.overlayLayer.add(this.text(contentX, y + Math.round(height * 0.44), health, detailSize, "#a9bfcc"));
+    this.overlayLayer.add(this.text(contentX, y + height - detailSize - 5, `攻 ${Math.round(fighter.attack)} · 甲 ${Math.round(fighter.armor)}`, detailSize, fighter.team === "player" ? "#7fdcff" : "#ff91a9", { fontStyle: "bold" }));
+    this.overlayLayer.add(this.text(x + width - 10, y + height - detailSize - 5, metricText, detailSize, "#edf8ff", { fontStyle: "bold" }).setOrigin(1));
+    const zone = this.add.zone(x + width / 2, y + height / 2, width, height).setDepth(DEPTH.overlay + 5).setInteractive({ useHandCursor: true });
     zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
     zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
     zone.on(Phaser.Input.Events.POINTER_OUT, () => { if (!this.isCompact()) this.clearTooltip(); });
-    this.overlayLayer.add(zone);
   }
 
   private drawResult() {
     const { result, battle } = this.bridge.engine.state;
     if (!result || !battle) return;
+    const layout = this.isCompact() ? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT;
+    const { panel } = layout;
     const dim = this.add.rectangle(560, 399, 1120, 642, 0x02070d, 0.76);
     this.overlayLayer.add(dim);
     this.overlayLayer.add(this.createInputBlocker(0, 78, WORLD_WIDTH, WORLD_HEIGHT - 78, DEPTH.overlay + 1));
-    this.overlayLayer.add(this.panel(40, 94, 1040, 602, 0x07131e, 0.99, result.won ? 0x62e3a6 : 0xff718a));
-    this.overlayLayer.add(this.text(560, 114, result.won ? "战斗结算 · 胜利" : "战斗结算 · 失利", 13, result.won ? "#62e3a6" : "#ff718a", { fontStyle: "bold" }).setOrigin(0.5));
-    this.overlayLayer.add(this.text(560, 141, result.headline, 23, "#f2f8ff", { fontStyle: "bold" }).setOrigin(0.5));
-    this.overlayLayer.add(this.text(560, 166, result.detail, 10, "#9cb4c3", { wordWrap: { width: 860 }, align: "center" }).setOrigin(0.5, 0));
+    this.overlayLayer.add(this.panel(panel.x, panel.y, panel.width, panel.height, 0x07131e, 0.99, result.won ? 0x62e3a6 : 0xff718a));
+    this.overlayLayer.add(this.text(560, layout.kickerY, result.won ? "战斗结算 · 胜利" : "战斗结算 · 失利", 13, result.won ? "#62e3a6" : "#ff718a", { fontStyle: "bold" }).setOrigin(0.5));
+    const headline = this.truncateText(result.headline, 920, layout.headlineSize, { fontStyle: "bold" });
+    this.overlayLayer.add(this.text(560, layout.headlineY, headline, layout.headlineSize, "#f2f8ff", { fontStyle: "bold" }).setOrigin(0.5));
+    const detail = this.boundedText(result.detail, 860, 2, layout.detailSize, "#9cb4c3", { align: "center" }).setOrigin(0.5, 0);
+    detail.setPosition(560, layout.detailY);
+    this.overlayLayer.add(detail);
     const reward = result.won
-      ? `胜利奖励：+${result.income} 金币${result.upgradeDiscount ? ` · 下次升本减免 ${result.upgradeDiscount}` : ""}`
-      : `核心 -${result.damage} · +${result.income} 金币${result.upgradeDiscount ? ` · 下次升本减免 ${result.upgradeDiscount}` : ""}`;
-    this.overlayLayer.add(this.text(560, 194, reward, 10, result.won ? "#8ce8bd" : "#ff9caf", { fontStyle: "bold" }).setOrigin(0.5));
-    (["damage", "support", "taken"] as RankingMetric[]).forEach((metric, index) => {
-      const tone: ButtonTone = metric === "damage" ? "metricDamage" : metric === "support" ? "metricSupport" : "metricTaken";
-      this.button(426 + index * 98, 220, metric === "support" ? 92 : 80, 24, resultMetricLabel[metric], { type: "metric", metric }, { tone, selected: battle.rankingMetric === metric }, DEPTH.overlay + 3);
+      ? `+${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`
+      : `核心 -${result.damage} · +${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`;
+    this.overlayLayer.add(this.text(560, layout.rewardY, reward, 13, result.won ? COLORS.resultReward : "#ff9caf", { fontStyle: "bold" }).setOrigin(0.5));
+    const metricWidths: Record<RankingMetric, number> = { damage: 78, support: 96, taken: 76 };
+    const metrics: RankingMetric[] = ["damage", "support", "taken"];
+    const totalMetricWidth = metrics.reduce((total, metric) => total + metricWidths[metric], 0) + 16;
+    let metricX = 560 - totalMetricWidth / 2;
+    metrics.forEach((metric) => {
+      this.drawResultMetricTab(metricX, layout.metricsY, metricWidths[metric], metric, battle.rankingMetric === metric);
+      metricX += metricWidths[metric] + 8;
     });
-    this.overlayLayer.add(this.text(68, 258, "我方阵容", 13, "#7fdcff", { fontStyle: "bold" }));
-    this.overlayLayer.add(this.text(574, 258, "敌方阵容", 13, "#ff91a9", { fontStyle: "bold" }));
-    (["player", "enemy"] as const).forEach((team, teamIndex) => {
-      this.bridge.engine.getBattleRanking(team).slice(0, 6).forEach(({ fighter, value }, index) => {
-        this.drawResultRow(teamIndex ? 574 : 68, 278 + index * 58, 478, index + 1, fighter, value, battle.rankingMetric);
+    this.overlayLayer.add(this.text(layout.columnX[0], layout.rosterHeadingY, "我方阵容", 13, "#7fdcff", { fontStyle: "bold" }));
+    this.overlayLayer.add(this.text(layout.columnX[1], layout.rosterHeadingY, "敌方阵容", 13, "#ff91a9", { fontStyle: "bold" }));
+    const playerRows = this.bridge.engine.getBattleRanking("player");
+    const enemyRows = this.bridge.engine.getBattleRanking("enemy");
+    const rowCount = Math.max(playerRows.length, enemyRows.length);
+    const gap = rowCount > 6 ? 3 : 5;
+    const height = Math.min(52, Math.floor((layout.rosterBottom - layout.rosterY - gap * Math.max(0, rowCount - 1)) / Math.max(1, rowCount)));
+    const rowLayout: ResultRowLayout = {
+      height,
+      portraitRadius: Math.max(12, Math.min(17, Math.floor(height / 2 - 3))),
+      nameSize: height < 45 ? 9 : 10,
+      detailSize: height < 45 ? 7 : 8,
+    };
+    ([playerRows, enemyRows] as const).forEach((rows, teamIndex) => {
+      rows.forEach(({ fighter, value }, index) => {
+        this.drawResultRow(layout.columnX[teamIndex], layout.rosterY + index * (height + gap), layout.columnWidth, index + 1, fighter, value, battle.rankingMetric, rowLayout);
       });
     });
-    this.button(410, 646, 300, 38, this.resultContinueLabel(), { type: "resultContinue" }, { tone: result.won ? "confirm" : "danger" }, DEPTH.overlay + 3);
+    this.button(410, layout.continueY, 300, 38, this.resultContinueLabel(), { type: "resultContinue" }, { tone: result.won ? "confirm" : "danger" }, DEPTH.overlay + 3);
   }
 
   private drawAugments() {
@@ -1503,19 +1637,48 @@ export class RiftLineScene extends Phaser.Scene {
     this.pinnedTooltip = this.isCompact() ? unitId : null;
     const def = UNIT_DEFS[unitId];
     const width = 342;
+    const contentWidth = width - 36;
     const detail = fighter
       ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)}\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}\n战斗：输出 ${short(fighter.damageDealt)} · 治疗 ${short(fighter.healingDone)} · 护盾 ${short(fighter.shieldingDone)} · 承伤 ${short(fighter.damageTaken)}`
       : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;
-    const ability = this.text(0, 0, `${def.abilityName}\n${def.abilityDescription}`, 10, "#adc1cc", { wordWrap: { width: width - 36 }, lineSpacing: 4 });
-    const height = Math.max(this.isCompact() ? 202 : 224, 130 + ability.height);
-    ability.destroy();
+    const ability = this.boundedText(def.abilityDescription, contentWidth, this.isCompact() ? 4 : 6, 10, "#adc1cc", { lineSpacing: 4 });
+    const traitHeight = 19;
+    const detailY = 44;
+    const energyY = detailY + (fighter ? 74 : 50);
+    const traitsY = energyY + 23;
+    const abilityY = traitsY + traitHeight + 8;
+    const height = Math.max(this.isCompact() ? 226 : 244, abilityY + ability.height + 18);
     const { x, y } = this.tooltipPosition(pointer, width, height, 280);
     const container = this.add.container(x, y);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(def.accent).color));
     container.add(this.text(18, 16, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, 16, "#f1f8ff", { fontStyle: "bold" }));
-    container.add(this.text(18, 44, detail, 10, "#abc1ce", { lineSpacing: 3 }));
-    container.add(this.text(18, fighter ? 118 : 94, `${def.energyProfile.name} · ${fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${def.energyProfile.start}/${def.energyProfile.max}`}`, 10, def.energyProfile.color));
-    container.add(this.text(18, fighter ? 140 : 116, `${def.abilityName}\n${def.abilityDescription}`, 10, "#adc1cc", { wordWrap: { width: width - 36 }, lineSpacing: 4 }));
+    container.add(this.text(18, detailY, detail, 10, "#abc1ce", { lineSpacing: 3 }));
+    container.add(this.text(18, energyY, `${def.energyProfile.name} · ${fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${def.energyProfile.start}/${def.energyProfile.max}`}`, 10, def.energyProfile.color));
+    const traitContainer = this.add.container(18, traitsY);
+    traitContainer.add(this.text(0, 2, "羁绊", 9, "#8fa9b9", { fontStyle: "bold" }));
+    let traitX = 32;
+    def.traits.forEach((traitId) => {
+      const trait = TRAITS[traitId];
+      const status = this.bridge.engine.getTraitStatus(traitId);
+      const nextThreshold = trait.thresholds.find((threshold) => threshold > status.count);
+      const statusLabel = status.active ? `${status.count}/${status.maxThreshold}` : `${status.count}/${nextThreshold ?? status.maxThreshold}`;
+      const label = `${trait.name} ${statusLabel}`;
+      const probe = this.text(0, 0, label, 8, "#ffffff", { fontStyle: "bold" }).setVisible(false);
+      const tagWidth = Math.ceil(probe.width) + 15;
+      probe.destroy();
+      const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
+      const tag = this.add.graphics();
+      tag.fillStyle(status.active ? color : COLORS.slotLabelFill, status.active ? 0.28 : 0.92);
+      tag.fillRoundedRect(traitX, 0, tagWidth, 17, 8);
+      tag.lineStyle(1, status.active ? color : COLORS.slotLabelBorder, status.active ? 0.95 : 0.7);
+      tag.strokeRoundedRect(traitX, 0, tagWidth, 17, 8);
+      traitContainer.add([tag, this.add.circle(traitX + 7, 8.5, 2, color, status.active ? 1 : 0.7), this.text(traitX + 12, 4, label, 8, status.active ? "#f4fbff" : "#a9c0cb", { fontStyle: "bold" })]);
+      traitX += tagWidth + 4;
+    });
+    container.add(traitContainer);
+    const abilityTitle = this.text(18, abilityY, def.abilityName, 10, "#eea7d5", { fontStyle: "bold" });
+    ability.setPosition(18, abilityY + abilityTitle.height + 2);
+    container.add([abilityTitle, ability]);
     container.setName("tooltip");
     this.tooltipLayer.add(container);
   }

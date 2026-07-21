@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [host, scene, bridge, assets, config, layout] = await Promise.all([
+const [host, scene, bridge, assets, config, layout, theme] = await Promise.all([
   readFile(new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/RiftLineScene.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/EngineBridge.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/assets.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/gameConfig.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/layout.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/theme.ts", import.meta.url), "utf8"),
 ]);
 
 test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
@@ -117,6 +118,34 @@ test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对�
   assert.match(scene, /setRotation\(-angle\)\.setY\(pet\.radius \* 0\.88 - bob\)/);
 });
 
+test("投射物按原版互斥分支绘制 Emoji、松针与光弹", () => {
+  assert.match(scene, /const projectileEmoji = \(projectile: Projectile\)/);
+  assert.match(scene, /if \(projectile\.emoji\) return projectile\.emoji/);
+  assert.match(scene, /if \(projectile\.style === "pine_needle"\)/);
+  assert.match(scene, /\* 16/);
+  assert.match(scene, /drawProjectileTrail\(trail, tailX, tailY, 2\.2, projectileColor\)/);
+  assert.match(scene, /if \(emoji\)/);
+  assert.match(scene, /Math\.max\(12, projectile\.size\)/);
+  assert.match(scene, /Math\.max\(14, projectile\.size\)/);
+  assert.match(scene, /trail\.clear\(\)\.setVisible\(false\)/);
+  assert.match(scene, /core\.setVisible\(false\)/);
+  assert.match(scene, /setBlendMode\(Phaser\.BlendModes\.SCREEN\)/);
+  assert.match(scene, /drawProjectileTrail\(trail, tailX, tailY, projectile\.size \+ 3, projectileColor\)/);
+  assert.match(scene, /fillCircle\(tailX, tailY, capRadius\)\.fillCircle\(0, 0, capRadius\)/);
+});
+
+test("投射物命中使用可复用的径向渐变爆裂", () => {
+  assert.match(scene, /BURST_GRADIENT_TEXTURE/);
+  assert.match(scene, /createBurstGradientTexture\(\)/);
+  assert.match(scene, /textures\.createCanvas\(BURST_GRADIENT_TEXTURE, 128, 128\)/);
+  assert.match(scene, /context\.createRadialGradient/);
+  assert.match(scene, /texture\.refresh\(\)/);
+  assert.match(scene, /setName\("burstGradient"\)/);
+  assert.match(scene, /effect\.kind === "burst"/);
+  assert.match(scene, /\(effect\.size \|\| 40\) \* \(0\.35 \+ progress \* 0\.65\)/);
+  assert.match(scene, /burstGradient\.setTint\(color\)\.setDisplaySize\(radius \* 2, radius \* 2\)\.setVisible\(true\)/);
+});
+
 test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
   assert.match(layout, /MAX_RENDER_PIXELS/);
   assert.match(layout, /renderSizeFor/);
@@ -145,10 +174,18 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /PREPARATION_BENCH_PANEL/);
   assert.match(scene, /PREPARATION_SHOP_PANEL/);
   assert.match(scene, /boundedText\(/);
+  assert.match(scene, /probe\.getWrappedText\(value\)/);
   assert.match(scene, /truncateText\(/);
+  assert.match(scene, /occupiedSlotLayout/);
+  assert.match(scene, /slotLabelFill/);
+  assert.match(scene, /strokeThickness/);
+  assert.match(scene, /displayedTraits\.length/);
   assert.match(scene, /definition\.traits\.slice/);
-  assert.match(scene, /def\.color/);
+  assert.match(scene, /def\.traits\.forEach/);
+  assert.match(scene, /getTraitStatus\(traitId\)/);
   assert.match(layout, /WIDE_TRAIT_STRIP/);
+  assert.match(layout, /COMPACT_TRAIT_STRIP = \{ x: 48, y: 194/);
+  assert.match(layout, /occupiedSlotLayout/);
 });
 
 test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手", () => {
@@ -168,7 +205,7 @@ test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手"
   assert.match(scene, /POINTER_UP_OUTSIDE/);
   assert.match(scene, /type: "move", from: drag\.origin, to: target/);
   assert.match(scene, /drawResultRow/);
-  assert.match(scene, /胜利奖励/);
+  assert.match(scene, /\+\$\{result\.income\} 金币/);
 });
 
 test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示", () => {
@@ -181,6 +218,19 @@ test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示",
   assert.match(scene, /resultContinueLabel/);
   assert.match(scene, /继续 · 进入整备/);
   assert.match(scene, /DEPTH\.overlay \+ 3/);
+});
+
+test("结算报告约束摘要文本、保留八人阵容并适配紧凑布局", () => {
+  assert.match(theme, /Noto Sans CJK SC/);
+  assert.match(theme, /resultReward: "#ffd166"/);
+  assert.match(scene, /truncateText\(result\.headline, 920/);
+  assert.match(scene, /boundedText\(result\.detail, 860, 2/);
+  assert.match(scene, /drawResultMetricTab/);
+  assert.match(scene, /this\.isCompact\(\) \? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT/);
+  assert.match(scene, /const rowCount = Math\.max\(playerRows\.length, enemyRows\.length\)/);
+  assert.doesNotMatch(scene, /getBattleRanking\(team\)\.slice\(0, 6\)/);
+  assert.match(layout, /WIDE_RESULT_LAYOUT/);
+  assert.match(layout, /COMPACT_RESULT_LAYOUT/);
 });
 
 test("Phaser 备战信息恢复商店概率、激活羁绊、敌情和快捷回收", () => {

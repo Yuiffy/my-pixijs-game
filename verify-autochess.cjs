@@ -127,6 +127,17 @@ mkdirSync(artifactDirectory, { recursive: true });
   const resultRound1 = await state();
   await advance(150);
   await page.screenshot({ path: `${artifactDirectory}/autochess-result-round1.png` });
+  await clickLogical(560, 232);
+  const resultRound1Support = await state();
+  if (resultRound1Support.battle?.rankingMetric !== 'support') throw new Error('结算指标切换未生效');
+  await page.screenshot({ path: `${artifactDirectory}/autochess-result-round1-support.png` });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(300);
+  const resultMobileBox = await canvas.boundingBox();
+  if (!resultMobileBox || Math.abs(resultMobileBox.width / resultMobileBox.height - 1120 / 720) > 0.01) throw new Error('结算移动端画布未保持逻辑世界比例');
+  await page.screenshot({ path: `${artifactDirectory}/autochess-result-mobile.png` });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(300);
   await clickLogical(560, 659);
   const preparationRound2 = await state();
   if (preparationRound2.phase !== 'preparation' || preparationRound2.round !== 2) {
@@ -200,6 +211,6 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (!mobileBox || Math.abs(displayAspect - 1120 / 720) > 0.01) throw new Error('移动端画布未保持逻辑世界比例');
   await page.screenshot({ path: `${artifactDirectory}/autochess-mobile.png` });
 
-  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, fullscreenResolution, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));
+  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, resultRound1SupportMetric: resultRound1Support.battle?.rankingMetric, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { resultMobileBox, beforeFullscreen, afterFullscreen, fullscreenResolution, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));
   await browser.close();
 })().catch((error) => { console.error(error); process.exit(1); });

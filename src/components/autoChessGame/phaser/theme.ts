@@ -1,4 +1,4 @@
-export const FONT_FAMILY = '"Microsoft YaHei", "PingFang SC", sans-serif';
+export const FONT_FAMILY = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif';
 
 export const COLORS = {
   background: 0x07121d,
@@ -11,6 +11,17 @@ export const COLORS = {
   enemy: 0xff7898,
   gold: "#ffd166",
   success: 0x61dda3,
+  slotLabelFill: 0x06111b,
+  slotLabelBorder: 0x5d8ba3,
+  slotTextStroke: "#02080d",
+  resultReward: "#ffd166",
+  resultMetricIdle: 0x1c3343,
+  resultMetricIdleHover: 0x294b60,
+  resultMetricIdleBorder: 0x47687b,
+  resultMetricIdleText: "#abc2cf",
+  resultMetricDamage: 0xff9b79,
+  resultMetricSupport: 0x75e6b0,
+  resultMetricTaken: 0xc69bff,
 };
 
 export type ButtonTone = "neutral" | "confirm" | "economic" | "lock" | "danger" | "metricDamage" | "metricSupport" | "metricTaken";
