@@ -578,6 +578,9 @@ export class RiftLineScene extends Phaser.Scene {
     this.traitContent = content;
     const zone = this.add.zone(strip.x + strip.width / 2, strip.y + strip.height / 2, strip.width, strip.height).setInteractive({ useHandCursor: true });
     zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.updateTraitTooltip(pointer));
+    zone.on(Phaser.Input.Events.POINTER_MOVE, (pointer: Phaser.Input.Pointer) => {
+      if (!this.traitDrag?.moved) this.updateTraitTooltip(pointer);
+    });
     zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
       this.clearTooltip();
       this.traitDrag = { startX: this.logicalPointer(pointer).x, offset: this.traitOffset, moved: false };
@@ -667,39 +670,24 @@ export class RiftLineScene extends Phaser.Scene {
     }
     const definition = UNIT_DEFS[unit.id];
     const slotLayout = occupiedSlotLayout(rect, isBench, compact);
-    const displayedTraits = compact ? [] : definition.traits.slice(0, 3);
     const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       fontStyle: "bold",
       stroke: COLORS.slotTextStroke,
-      strokeThickness: compact ? 1 : 1.5,
+      strokeThickness: 1,
       shadow: { color: "#000000", blur: 1, offsetY: 1, fill: true, stroke: true },
     };
+    const starColor = unit.star === 3 ? "#ffdc68" : unit.star === 2 ? "#8ee9ff" : "#8ba1b2";
     const portrait = this.createPortrait(unit.id, rect.x + rect.width / 2, slotLayout.portraitY, slotLayout.portraitRadius);
-    const starBadge = this.add.graphics();
-    starBadge.fillStyle(COLORS.slotLabelFill, 0.84);
-    starBadge.fillRoundedRect(slotLayout.starBadge.x, slotLayout.starBadge.y, slotLayout.starBadge.width, slotLayout.starBadge.height, 5);
-    starBadge.lineStyle(1, COLORS.slotLabelBorder, 0.65);
-    starBadge.strokeRoundedRect(slotLayout.starBadge.x, slotLayout.starBadge.y, slotLayout.starBadge.width, slotLayout.starBadge.height, 5);
-    const stars = this.text(slotLayout.starBadge.x + slotLayout.starBadge.width / 2, slotLayout.starBadge.y + slotLayout.starBadge.height / 2, "★".repeat(unit.star), compact ? 8 : 9, "#ffdc68", textStyle).setOrigin(0.5);
-    const labelBackplate = this.add.graphics();
-    labelBackplate.fillStyle(COLORS.slotLabelFill, 0.76);
-    labelBackplate.fillRoundedRect(slotLayout.label.x, slotLayout.label.y, slotLayout.label.width, slotLayout.label.height, 5);
-    labelBackplate.lineStyle(1, COLORS.slotLabelBorder, 0.45);
-    labelBackplate.strokeRoundedRect(slotLayout.label.x, slotLayout.label.y, slotLayout.label.width, slotLayout.label.height, 5);
+    const stars = this.text(rect.x + rect.width / 2, slotLayout.starY + slotLayout.starHeight / 2, "★".repeat(unit.star), compact ? 9 : 10, starColor, textStyle).setOrigin(0.5);
     const name = this.text(
       rect.x + rect.width / 2,
       slotLayout.nameY,
-      this.truncateText(definition.name, slotLayout.label.width - 8, compact ? 10 : 9, textStyle),
+      this.truncateText(definition.name, slotLayout.nameWidth, compact ? 10 : 9, textStyle),
       compact ? 10 : 9,
       "#e5f4ff",
       textStyle,
-    ).setOrigin(0.5, 1);
-    const traitDots = displayedTraits.flatMap((traitId, traitIndex) => {
-      const x = rect.x + rect.width / 2 + (traitIndex - (displayedTraits.length - 1) / 2) * 7;
-      const { color } = Phaser.Display.Color.HexStringToColor(TRAITS[traitId].color);
-      return [this.add.circle(x, slotLayout.traitY, 3, COLORS.slotLabelFill, 0.9), this.add.circle(x, slotLayout.traitY, 2, color, 1)];
-    });
-    this.phaseLayer.add([portrait, starBadge, stars, labelBackplate, ...traitDots, name]);
+    ).setOrigin(0.5, 0.5);
+    this.phaseLayer.add([portrait, stars, name]);
   }
 
   private slotRect(location: UnitLocation, compact = this.isCompact()) {
@@ -1456,6 +1444,7 @@ export class RiftLineScene extends Phaser.Scene {
     zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch({ type: "metric", metric }));
     zone.on(Phaser.Input.Events.POINTER_OVER, () => draw(true));
     zone.on(Phaser.Input.Events.POINTER_OUT, () => draw(false));
+    this.overlayLayer.add([graphics, label, zone]);
   }
 
   private drawResultRow(x: number, y: number, width: number, rank: number, fighter: Fighter, value: number, metric: RankingMetric, layout: ResultRowLayout) {
@@ -1483,6 +1472,7 @@ export class RiftLineScene extends Phaser.Scene {
     zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
     zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
     zone.on(Phaser.Input.Events.POINTER_OUT, () => { if (!this.isCompact()) this.clearTooltip(); });
+    this.overlayLayer.add(zone);
   }
 
   private drawResult() {

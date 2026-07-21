@@ -41,30 +41,14 @@ export const occupiedSlotLayout = (
   rect: { x: number; y: number; width: number; height: number },
   isBench: boolean,
   compact: boolean,
-) => {
-  const showsTraits = !compact;
-  const labelHeight = showsTraits ? 23 : 16;
-  const label = {
-    x: rect.x + 4,
-    y: rect.y + rect.height - labelHeight - 3,
-    width: rect.width - 8,
-    height: labelHeight,
-  };
-
-  return {
-    portraitRadius: compact ? 17 : isBench ? 21 : 17,
-    portraitY: rect.y + (compact ? 22 : isBench ? 29 : 23),
-    starBadge: {
-      x: rect.x + rect.width - (compact ? 34 : 40),
-      y: rect.y + 3,
-      width: compact ? 30 : 36,
-      height: compact ? 11 : 12,
-    },
-    label,
-    traitY: label.y + 6,
-    nameY: rect.y + rect.height - 4,
-  };
-};
+) => ({
+  portraitRadius: compact ? (isBench ? 17 : 15) : isBench ? 18 : 16,
+  portraitY: rect.y + (compact ? (isBench ? 27 : 26) : 28),
+  starY: rect.y + 2,
+  starHeight: compact ? 9 : 10,
+  nameY: rect.y + rect.height - (compact ? 5 : isBench ? 8 : 6),
+  nameWidth: rect.width - 12,
+});
 
 export type ResultLayout = {
   panel: { x: number; y: number; width: number; height: number };

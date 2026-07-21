@@ -177,15 +177,18 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /probe\.getWrappedText\(value\)/);
   assert.match(scene, /truncateText\(/);
   assert.match(scene, /occupiedSlotLayout/);
-  assert.match(scene, /slotLabelFill/);
-  assert.match(scene, /strokeThickness/);
-  assert.match(scene, /displayedTraits\.length/);
-  assert.match(scene, /definition\.traits\.slice/);
+  assert.match(scene, /"★"\.repeat\(unit\.star\)/);
+  assert.match(scene, /const starColor = unit\.star === 3/);
   assert.match(scene, /def\.traits\.forEach/);
   assert.match(scene, /getTraitStatus\(traitId\)/);
+  assert.doesNotMatch(scene, /const labelBackplate = this\.add\.graphics\(\)/);
+  assert.doesNotMatch(scene, /const traitDots =/);
   assert.match(layout, /WIDE_TRAIT_STRIP/);
   assert.match(layout, /COMPACT_TRAIT_STRIP = \{ x: 48, y: 194/);
-  assert.match(layout, /occupiedSlotLayout/);
+  assert.match(layout, /portraitY/);
+  assert.match(layout, /starY/);
+  assert.match(layout, /nameY/);
+  assert.match(scene, /POINTER_MOVE, \(pointer: Phaser\.Input\.Pointer\) => \{\n      if \(!this\.traitDrag\?\.moved\) this\.updateTraitTooltip\(pointer\);/);
 });
 
 test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手", () => {
@@ -218,6 +221,8 @@ test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示",
   assert.match(scene, /resultContinueLabel/);
   assert.match(scene, /继续 · 进入整备/);
   assert.match(scene, /DEPTH\.overlay \+ 3/);
+  assert.match(scene, /this\.overlayLayer\.add\(\[graphics, label, zone\]\)/);
+  assert.match(scene, /this\.overlayLayer\.add\(zone\)/);
 });
 
 test("结算报告约束摘要文本、保留八人阵容并适配紧凑布局", () => {
