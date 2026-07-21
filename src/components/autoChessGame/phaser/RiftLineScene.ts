@@ -1464,7 +1464,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.overlayLayer.add(row);
     this.overlayLayer.add(this.createPortrait(fighter.unitId, portraitX, y + height / 2, portraitRadius, fighter.team === "enemy").setAlpha(fighter.alive ? 1 : 0.42));
     this.overlayLayer.add(this.text(contentX, y + 5, name, nameSize, UNIT_DEFS[fighter.unitId].accent, { fontStyle: "bold" }).setAlpha(fighter.alive ? 1 : 0.55));
-    this.overlayLayer.add(this.text(x + width - 10, y + 6, fighter.alive ? "存活" : "已击败", detailSize, fighter.alive ? "#75e6b0" : "#81919d", { fontStyle: "bold" }).setOrigin(1));
+    this.overlayLayer.add(this.text(x + width - 10, y + 6, fighter.alive ? "存活" : "已击败", detailSize, fighter.alive ? "#75e6b0" : "#81919d", { fontStyle: "bold" }).setOrigin(1, 0));
     this.overlayLayer.add(this.text(contentX, y + Math.round(height * 0.44), health, detailSize, "#a9bfcc"));
     this.overlayLayer.add(this.text(contentX, y + height - detailSize - 5, `攻 ${Math.round(fighter.attack)} · 甲 ${Math.round(fighter.armor)}`, detailSize, fighter.team === "player" ? "#7fdcff" : "#ff91a9", { fontStyle: "bold" }));
     this.overlayLayer.add(this.text(x + width - 10, y + height - detailSize - 5, metricText, detailSize, "#edf8ff", { fontStyle: "bold" }).setOrigin(1));
