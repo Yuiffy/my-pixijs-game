@@ -254,7 +254,7 @@ test("深夜档会随战斗时间逐步提高攻击力", () => {
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "spark_mage", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "yua", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "grove_mender", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   const fighter = battle?.player.find((entry) => entry.unitId === "spark_mage");

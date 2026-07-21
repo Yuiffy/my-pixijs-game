@@ -245,7 +245,7 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.UNIT_DEFS.clock_gunner.abilityDescription, /4 秒/);
   assert.equal(data.UNIT_DEFS.clock_gunner.attackInterval, 0.84);
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.onAttack, 15);
-  assert.equal(data.UNIT_DEFS.yua.traits.includes("ranger"), true);
+  assert.deepEqual(data.UNIT_DEFS.yua.traits, ["gluttony", "dance", "ranger"]);
   assert.equal(data.UNIT_DEFS.yua.abilityName, "外星贯穿光线");
   assert.match(data.UNIT_DEFS.yua.abilityDescription, /横排/);
   assert.equal(data.UNIT_DEFS.rift_tyrant.energyProfile.id, "reservoir");
@@ -282,6 +282,9 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
   ["sui_flower"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
   ["grove_mender", "sui_blue"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
+  assert.equal(data.UNIT_DEFS.grove_mender.tier, 4);
+  assert.equal(data.UNIT_DEFS.grove_mender.cost, 4);
+  assert.equal(data.UNIT_DEFS.grove_mender.traits.includes("ember"), true);
   assert.equal(data.UNIT_DEFS.biscuit_sui.traits.includes("gluttony"), true);
   assert.equal(data.UNIT_DEFS.sui.traits.includes("gluttony"), false);
   assert.equal(data.UNIT_DEFS.sui_cat.traits.includes("gluttony"), false);
