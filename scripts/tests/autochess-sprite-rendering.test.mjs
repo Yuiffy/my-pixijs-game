@@ -107,17 +107,22 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(layout, /renderSizeFor/);
   assert.match(host, /ResizeObserver/);
   assert.match(host, /scale\.setParentSize/);
-  assert.doesNotMatch(host, /scale\.setGameSize/);
+  assert.match(host, /scale\.setGameSize/);
+  assert.match(host, /baseSize\.width !== target\.width/);
   assert.match(host, /dataset\.devicePixelRatio/);
   assert.match(host, /dataset\.renderScale/);
   assert.match(scene, /scale\.parentSize/);
-  assert.match(scene, /cameras\.main\.setZoom/);
+  assert.match(scene, /setViewport/);
+  assert.match(scene, /setZoom\(scale\)/);
+  assert.match(scene, /centerOn\(WORLD_WIDTH \/ 2, WORLD_HEIGHT \/ 2\)/);
+  assert.match(scene, /positionToCamera\(this\.cameras\.main\)/);
   assert.match(scene, /MAX_TEXT_RESOLUTION/);
   assert.match(scene, /resolution: this\.textResolution/);
 });
 
 test("整备页用 WebGL 安全 viewport、分区面板和受限文本还原 Canvas 层级", () => {
-  assert.match(scene, /renderTexture\(strip\.x, strip\.y, strip\.width, strip\.height\)/);
+  assert.match(scene, /Math\.ceil\(strip\.width \* renderScale\)/);
+  assert.match(scene, /setScale\(1 \/ renderScale\)/);
   assert.doesNotMatch(scene, /createGeometryMask/);
   assert.doesNotMatch(scene, /\.setMask\(/);
   assert.match(scene, /PREPARATION_BOARD_PANEL/);

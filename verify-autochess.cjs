@@ -161,9 +161,11 @@ mkdirSync(artifactDirectory, { recursive: true });
     clearance: minClearance([...entry.battle.playerUnits, ...entry.battle.enemyUnits]),
   }));
 
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  await page.waitForTimeout(300);
   const beforeFullscreen = await canvas.boundingBox();
   await page.locator('button:has-text("全屏游玩")').click();
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(500);
   const fullscreen = await page.evaluate(() => Boolean(document.fullscreenElement));
   const afterFullscreen = await canvas.boundingBox();
   const fullscreenResolution = await canvas.evaluate((element) => ({ width: element.width, height: element.height, renderScale: element.dataset.renderScale, devicePixelRatio: element.dataset.devicePixelRatio }));
@@ -176,10 +178,9 @@ mkdirSync(artifactDirectory, { recursive: true });
     throw new Error('全屏画布超出了工具栏后的游戏宿主');
   }
   if (Math.abs(fullscreenResolution.width / fullscreenResolution.height - 1120 / 720) > 0.01) throw new Error('全屏 backing canvas 未保持逻辑世界比例');
-  // Phaser 4 keeps a stable logical framebuffer for FIT. CSS display size may
-  // exceed its backing dimensions in fullscreen; text/portrait textures retain
-  // their separate high-density backing surfaces.
-  if (fullscreenResolution.width < 1120 || fullscreenResolution.height < 720) throw new Error('全屏 backing canvas 低于逻辑世界尺寸');
+  if (fullscreenResolution.width < afterFullscreen.width || fullscreenResolution.height < afterFullscreen.height) throw new Error('全屏 backing canvas 未随显示尺寸同步');
+  if (fullscreenResolution.width <= 1120 || fullscreenResolution.height <= 720) throw new Error('2K 全屏 backing canvas 未提升物理分辨率');
+  if (fullscreenResolution.width * fullscreenResolution.height > 8_000_000) throw new Error('全屏 backing canvas 超过像素预算');
   await page.screenshot({ path: `${artifactDirectory}/autochess-fullscreen.png` });
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -190,6 +191,6 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (!mobileBox || Math.abs(displayAspect - 1120 / 720) > 0.01) throw new Error('移动端画布未保持逻辑世界比例');
   await page.screenshot({ path: `${artifactDirectory}/autochess-mobile.png` });
 
-  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));
+  console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { beforeFullscreen, afterFullscreen, fullscreenResolution, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));
   await browser.close();
 })().catch((error) => { console.error(error); process.exit(1); });

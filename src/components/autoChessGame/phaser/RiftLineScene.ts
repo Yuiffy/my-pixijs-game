@@ -131,6 +131,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   create() {
+    this.syncLogicalCamera();
     this.updateQuality();
     createFallbackTextures(this);
     createCircularPortraitTextures(this);
@@ -173,9 +174,19 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handleResize() {
+    this.syncLogicalCamera();
     this.updateQuality();
     this.profile = this.profileForViewport();
     this.rebuild();
+  }
+
+  private syncLogicalCamera() {
+    const { width, height } = this.scale.baseSize;
+    const scale = Math.max(1, Math.min(width / WORLD_WIDTH, height / WORLD_HEIGHT));
+    this.cameras.main
+      .setViewport(0, 0, width, height)
+      .setZoom(scale)
+      .centerOn(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
   }
 
   private profileForViewport() {
@@ -184,7 +195,11 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private renderScale() {
-    return Math.max(1, this.scale.baseSize.width / WORLD_WIDTH);
+    return Math.max(1, Math.min(this.scale.baseSize.width / WORLD_WIDTH, this.scale.baseSize.height / WORLD_HEIGHT));
+  }
+
+  private logicalPointer(pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 {
+    return pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
   }
 
   private isCompact() {
@@ -211,7 +226,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private rebuild() {
     this.profile = this.profileForViewport();
-    this.cameras.main.setZoom(1);
+    this.syncLogicalCamera();
     this.resetLayers();
     this.phase = this.bridge.engine.state.phase;
     this.drawHeader();
@@ -472,20 +487,27 @@ export class RiftLineScene extends Phaser.Scene {
       ]);
       cursor += width + gap;
     });
-    const viewport = this.add.renderTexture(strip.x, strip.y, strip.width, strip.height).setOrigin(0);
-    viewport.draw(source, -strip.x, -strip.y);
+    const renderScale = this.renderScale();
+    const viewport = this.add
+      .renderTexture(strip.x, strip.y, Math.ceil(strip.width * renderScale), Math.ceil(strip.height * renderScale))
+      .setOrigin(0)
+      .setScale(1 / renderScale);
+    source.setScale(renderScale);
+    viewport.draw(source, -strip.x * renderScale, -strip.y * renderScale);
     source.destroy(true);
     const zone = this.add.zone(strip.x + strip.width / 2, strip.y + strip.height / 2, strip.width, strip.height).setInteractive({ useHandCursor: true });
     zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
-      const trait = this.traitEntryAt(entries, gap, strip, pointer.x);
+      const logical = this.logicalPointer(pointer);
+      const trait = this.traitEntryAt(entries, gap, strip, logical.x);
       if (trait) this.showTraitTooltip(trait.trait.id, pointer);
     });
     zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
-      this.traitDrag = { startX: pointer.x, offset: this.traitOffset, moved: false };
+      this.traitDrag = { startX: this.logicalPointer(pointer).x, offset: this.traitOffset, moved: false };
     });
     zone.on(Phaser.Input.Events.POINTER_UP, (pointer: Phaser.Input.Pointer) => {
       if (!this.traitDrag?.moved) {
-        const trait = this.traitEntryAt(entries, gap, strip, pointer.x);
+        const logical = this.logicalPointer(pointer);
+        const trait = this.traitEntryAt(entries, gap, strip, logical.x);
         if (trait) this.showTraitTooltip(trait.trait.id, pointer);
       }
       this.traitDrag = null;
@@ -534,7 +556,8 @@ export class RiftLineScene extends Phaser.Scene {
     slot.setData("slot", location);
     slot.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
       if (!unit) return;
-      this.dragState = { origin: location, unit, pointerId: pointer.id, startX: pointer.x, startY: pointer.y, active: false, ghost: null, targetMarker: null, target: null };
+      const logical = this.logicalPointer(pointer);
+      this.dragState = { origin: location, unit, pointerId: pointer.id, startX: logical.x, startY: logical.y, active: false, ghost: null, targetMarker: null, target: null };
     });
     slot.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
       if (unit) this.showUnitTooltip(unit.id, pointer, unit.star);
@@ -586,8 +609,9 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer) {
+    const logical = this.logicalPointer(pointer);
     if (this.traitDrag && pointer.isDown) {
-      const delta = pointer.x - this.traitDrag.startX;
+      const delta = logical.x - this.traitDrag.startX;
       if (Math.abs(delta) > 6) {
         this.traitDrag.moved = true;
         this.traitOffset = Math.min(0, this.traitDrag.offset + delta);
@@ -597,15 +621,15 @@ export class RiftLineScene extends Phaser.Scene {
     }
     const drag = this.dragState;
     if (!drag || pointer.id !== drag.pointerId || !pointer.isDown) return;
-    const distance = Phaser.Math.Distance.Between(drag.startX, drag.startY, pointer.x, pointer.y);
+    const distance = Phaser.Math.Distance.Between(drag.startX, drag.startY, logical.x, logical.y);
     if (!drag.active && distance > 8) {
       drag.active = true;
       drag.ghost = this.createDragGhost(drag.unit);
       this.game.canvas.style.cursor = "grabbing";
     }
     if (!drag.active) return;
-    drag.ghost?.setPosition(pointer.x + 18, pointer.y - 18);
-    const target = this.locationAt(pointer.x, pointer.y);
+    drag.ghost?.setPosition(logical.x + 18, logical.y - 18);
+    const target = this.locationAt(logical.x, logical.y);
     const nextTarget = target && !this.sameLocation(target, drag.origin) ? target : null;
     const previousKey = drag.target ? `${drag.target.zone}:${drag.target.index}` : "";
     const nextKey = nextTarget ? `${nextTarget.zone}:${nextTarget.index}` : "";
@@ -623,7 +647,8 @@ export class RiftLineScene extends Phaser.Scene {
     }
     const drag = this.dragState;
     if (!drag || pointer.id !== drag.pointerId) return;
-    const target = this.locationAt(pointer.x, pointer.y);
+    const logical = this.logicalPointer(pointer);
+    const target = this.locationAt(logical.x, logical.y);
     const shouldMove = drag.active && target && !this.sameLocation(drag.origin, target);
     const action = shouldMove ? { type: "move", from: drag.origin, to: target } satisfies GameAction : { type: "slot", location: drag.origin } satisfies GameAction;
     this.cancelDrag();
@@ -1247,9 +1272,10 @@ export class RiftLineScene extends Phaser.Scene {
 
   private tooltipPosition(pointer: Phaser.Input.Pointer | undefined, width: number, height: number, compactY: number) {
     if (this.isCompact() || !pointer) return { x: 28, y: compactY };
+    const logical = this.logicalPointer(pointer);
     return {
-      x: Phaser.Math.Clamp(pointer.x + 18, 12, WORLD_WIDTH - width - 12),
-      y: Phaser.Math.Clamp(pointer.y + 18, 86, WORLD_HEIGHT - height - 12),
+      x: Phaser.Math.Clamp(logical.x + 18, 12, WORLD_WIDTH - width - 12),
+      y: Phaser.Math.Clamp(logical.y + 18, 86, WORLD_HEIGHT - height - 12),
     };
   }
 

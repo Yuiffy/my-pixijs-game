@@ -98,8 +98,11 @@ export default function AutoChessGame() {
         game.scale.displaySize.height,
         window.devicePixelRatio || 1,
       );
-      // Phaser 4's setGameSize changes the authored world size as well as the
-      // backing buffer. Keep the 1120×720 logical world stable for FIT.
+      // Phaser couples its drawing buffer to the base game size. RiftLineScene
+      // maps this physical surface back to the fixed 1120×720 authored world.
+      if (game.scale.baseSize.width !== target.width || game.scale.baseSize.height !== target.height) {
+        game.scale.setGameSize(target.width, target.height);
+      }
 
       game.canvas.dataset.logicalWidth = String(WORLD_WIDTH);
       game.canvas.dataset.logicalHeight = String(WORLD_HEIGHT);
