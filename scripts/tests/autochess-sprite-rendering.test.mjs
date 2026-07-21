@@ -76,10 +76,11 @@ test("战斗视图由引擎 fighter 状态同步，并支持完整动作、状�
   assert.match(scene, /setDepth\(DEPTH\.entities \+ visualY\)/);
 });
 
-test("头像保持焦点裁切并使用 Phaser 4 WebGL mask", () => {
-  assert.match(scene, /portraitFocus === "top"/);
-  assert.match(scene, /portrait\.setCrop/);
-  assert.doesNotMatch(scene, /createGeometryMask/);
+test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () => {
+  assert.match(assets, /createCircularPortraitTextures/);
+  assert.match(assets, /context\.arc/);
+  assert.match(assets, /context\.clip/);
+  assert.match(scene, /circularTextureKeyForUnit/);
   assert.match(scene, /portraitStyle === "sprite"/);
   assert.match(scene, /portraitImage\.setFlipX/);
 });
@@ -101,10 +102,29 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
-test("文字通过统一高 DPI resolution 策略绘制", () => {
+test("文字、圆形头像和宿主 Canvas 公开高 DPI 元数据", () => {
   assert.match(scene, /textResolution = 2/);
   assert.match(scene, /resolution: this\.textResolution/);
   assert.match(scene, /window\.devicePixelRatio/);
+  assert.match(host, /dataset\.devicePixelRatio/);
+  assert.match(host, /dataset\.renderScale/);
+});
+
+test("Phaser UI 恢复语义按钮、羁绊暗态、垂直裂隙与拖拽跟手", () => {
+  assert.match(scene, /hoverLabel: "点击接入并开始"/);
+  assert.match(scene, /enabled: canBattle/);
+  assert.match(scene, /enabled: this\.canReroll\(\)/);
+  assert.match(scene, /traitOffset/);
+  assert.doesNotMatch(scene, /filter\(\(\[, count\]\) => count > 0\)\.slice/);
+  assert.match(scene, /0x142735/);
+  assert.match(scene, /lineBetween\(560, 104, 560, 680\)/);
+  assert.doesNotMatch(scene, /field\.fillGradientStyle/);
+  assert.match(scene, /createDragGhost/);
+  assert.match(scene, /handlePointerMove/);
+  assert.match(scene, /POINTER_UP_OUTSIDE/);
+  assert.match(scene, /type: "move", from: drag\.origin, to: target/);
+  assert.match(scene, /drawResultRow/);
+  assert.match(scene, /胜利奖励/);
 });
 
 test("结果页面不会在后续 battle HUD 同步中销毁继续按钮", () => {

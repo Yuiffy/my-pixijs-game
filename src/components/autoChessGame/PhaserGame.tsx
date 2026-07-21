@@ -91,6 +91,7 @@ export default function AutoChessGame() {
       game.canvas.dataset.logicalWidth = String(WORLD_WIDTH);
       game.canvas.dataset.logicalHeight = String(WORLD_HEIGHT);
       game.canvas.dataset.renderScale = String(RENDER_SCALE);
+      game.canvas.dataset.devicePixelRatio = String(Math.min(RENDER_SCALE, window.devicePixelRatio || 1));
       game.canvas.setAttribute("aria-label", "裂隙阵线自走棋游戏画布");
       game.canvas.tabIndex = 0;
     };

@@ -13,6 +13,28 @@ export const COLORS = {
   success: 0x61dda3,
 };
 
+export type ButtonTone = "neutral" | "confirm" | "economic" | "lock" | "danger" | "metricDamage" | "metricSupport" | "metricTaken";
+
+type ButtonColors = {
+  fill: number;
+  hover: number;
+  border: number;
+  text: string;
+  hoverText: string;
+};
+
+export const BUTTONS: Record<ButtonTone | "disabled", ButtonColors> = {
+  neutral: { fill: 0x24546e, hover: 0x3c7898, border: 0x8edfff, text: "#eaf7ff", hoverText: "#ffffff" },
+  confirm: { fill: 0x47bd8a, hover: 0x71e0b0, border: 0xa5f2d0, text: "#071b15", hoverText: "#04140e" },
+  economic: { fill: 0xb9872d, hover: 0xe0b552, border: 0xffdf8b, text: "#241806", hoverText: "#130d02" },
+  lock: { fill: 0x485d6b, hover: 0x6d8291, border: 0xa2bfce, text: "#eaf5fb", hoverText: "#ffffff" },
+  danger: { fill: 0x983f55, hover: 0xc95b76, border: 0xffa4b8, text: "#fff4f6", hoverText: "#ffffff" },
+  metricDamage: { fill: 0x7d453c, hover: 0xa65c4d, border: 0xffaa91, text: "#fff2ee", hoverText: "#ffffff" },
+  metricSupport: { fill: 0x27694f, hover: 0x3f9973, border: 0x8af0bd, text: "#effff7", hoverText: "#ffffff" },
+  metricTaken: { fill: 0x544277, hover: 0x765ca5, border: 0xd4b1ff, text: "#f7f1ff", hoverText: "#ffffff" },
+  disabled: { fill: 0x253746, hover: 0x253746, border: 0x405767, text: "#708896", hoverText: "#708896" },
+};
+
 export const DEPTH = {
   backdrop: 0,
   board: 10,

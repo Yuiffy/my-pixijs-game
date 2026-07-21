@@ -13,10 +13,15 @@ export const createGameConfig = (
   height: WORLD_HEIGHT,
   backgroundColor: "#07121d",
   render: {
+    // Phaser 4 has no game-level resolution field. Textures and text use their
+    // own high-density backing surfaces; keep the renderer smoothly filtered.
     antialias: true,
     antialiasGL: true,
     pixelArt: false,
     roundPixels: false,
+  },
+  input: {
+    windowEvents: true,
   },
   scale: {
     mode: Phaser.Scale.FIT,
