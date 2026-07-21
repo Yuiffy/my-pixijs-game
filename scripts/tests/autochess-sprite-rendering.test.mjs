@@ -167,7 +167,12 @@ test("场景预加载单位头像并保留缺图降级纹理", () => {
   assert.match(scene, /this\.textures\.exists\(key\)/);
 });
 
-test("React 工具栏仍提供图鉴、音频、全屏与安全区支撑", () => {
+test("React 宿主默认填满网页视口并保留工具栏与安全区支撑", () => {
+  assert.match(host, /width: fullscreen \? "100vw" : "100%"/);
+  assert.match(host, /height: fullscreen \? "100dvh" : "100%"/);
+  assert.match(host, /flex: "1 1 auto"/);
+  assert.doesNotMatch(host, /min\(\$\{WORLD_WIDTH\}px/);
+  assert.doesNotMatch(host, /aspectRatio:/);
   assert.match(host, /Codex/);
   assert.match(host, /AutoChessAudio/);
   assert.match(host, /全屏游玩/);

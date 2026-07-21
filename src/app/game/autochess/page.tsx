@@ -16,8 +16,7 @@ export default function AutoChessPage() {
         position: 'fixed',
         inset: 0,
         background: '#050b12',
-        display: 'grid',
-        placeItems: 'center',
+        display: 'block',
         overflow: 'hidden',
       }}
     >

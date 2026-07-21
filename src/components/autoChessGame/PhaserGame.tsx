@@ -202,14 +202,13 @@ export default function AutoChessGame() {
     <div
       ref={containerRef}
       style={{
-        width: fullscreen ? "100vw" : `min(${WORLD_WIDTH}px, 100vw, calc((100dvh - ${TOOLBAR_HEIGHT}px) * ${WORLD_WIDTH / WORLD_HEIGHT}))`,
-        height: fullscreen ? "100dvh" : "auto",
+        width: fullscreen ? "100vw" : "100%",
+        height: fullscreen ? "100dvh" : "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: fullscreen ? "flex-start" : "center",
+        justifyContent: "flex-start",
         background: "#050b12",
-        margin: "0 auto",
         overflow: "hidden",
         position: "relative",
         paddingBottom: "max(0px, env(safe-area-inset-bottom))",
@@ -235,9 +234,8 @@ export default function AutoChessGame() {
         ref={gameHostRef}
         style={{
           width: "100%",
-          flex: fullscreen ? "1 1 auto" : "0 0 auto",
+          flex: "1 1 auto",
           minHeight: 0,
-          aspectRatio: fullscreen ? undefined : `${WORLD_WIDTH} / ${WORLD_HEIGHT}`,
           touchAction: "none",
         }}
       />

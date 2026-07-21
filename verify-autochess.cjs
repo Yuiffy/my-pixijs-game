@@ -39,6 +39,15 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.goto(`${process.env.AUTOCHESS_BASE_URL || 'http://127.0.0.1:3100'}/game/autochess?seed=1`);
   const canvas = page.locator('[data-game-canvas="rift-line"]');
   await canvas.waitFor();
+  const pageLayout = await page.evaluate(() => {
+    const root = document.querySelector('[data-game-canvas="rift-line"]')?.parentElement?.parentElement?.getBoundingClientRect();
+    const toolbar = document.querySelector('.rift-toolbar')?.getBoundingClientRect();
+    const host = document.querySelector('[data-game-canvas="rift-line"]')?.parentElement?.getBoundingClientRect();
+    return { root, toolbar, host, viewport: { width: window.innerWidth, height: window.innerHeight } };
+  });
+  if (!pageLayout.root || !pageLayout.toolbar || !pageLayout.host) throw new Error('网页全视口布局未初始化');
+  if (Math.abs(pageLayout.root.width - pageLayout.viewport.width) > 1 || Math.abs(pageLayout.root.height - pageLayout.viewport.height) > 1) throw new Error('普通网页模式未填满视口');
+  if (pageLayout.host.y < pageLayout.toolbar.y + pageLayout.toolbar.height - 1 || pageLayout.host.height < pageLayout.viewport.height - pageLayout.toolbar.height - 1) throw new Error('游戏宿主未填满工具栏下方空间');
 
   const pointForLogical = async (x, y) => {
     const box = await canvas.boundingBox();
