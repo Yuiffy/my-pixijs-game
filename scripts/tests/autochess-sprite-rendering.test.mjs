@@ -175,6 +175,12 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /PREPARATION_SHOP_PANEL/);
   assert.match(scene, /boundedText\(/);
   assert.match(scene, /probe\.getWrappedText\(value\)/);
+  assert.match(scene, /wordWrap: \{ width: maxWidth, useAdvancedWrap: true \}/);
+  assert.match(scene, /abilityTitle\.height/);
+  assert.match(scene, /traitX \+ tagWidth > contentWidth/);
+  assert.match(scene, /boundedText\(trait\.description/);
+  assert.match(scene, /const xMin = Math\.min\(12, Math\.max\(0, WORLD_WIDTH - width\)\)/);
+  assert.match(scene, /const yMax = Math\.max\(yMin, WORLD_HEIGHT - height - 12\)/);
   assert.match(scene, /truncateText\(/);
   assert.match(scene, /occupiedSlotLayout/);
   assert.match(scene, /"★"\.repeat\(unit\.star\)/);

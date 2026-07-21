@@ -347,13 +347,14 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private boundedText(value: string, maxWidth: number, maxLines: number, size: number, color: string, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
-    const probe = this.text(0, 0, value, size, color, { ...style, wordWrap: { width: maxWidth } }).setVisible(false);
+    const wrapStyle = { ...style, wordWrap: { width: maxWidth, useAdvancedWrap: true } };
+    const probe = this.text(0, 0, value, size, color, wrapStyle).setVisible(false);
     const lines = probe.getWrappedText(value);
     probe.destroy();
     const bounded = lines.length <= maxLines
       ? lines
       : [...lines.slice(0, maxLines - 1), this.truncateText(lines.slice(maxLines - 1).join(""), maxWidth, size, style)];
-    return this.text(0, 0, bounded.join("\n"), size, color, { ...style, wordWrap: { width: maxWidth } });
+    return this.text(0, 0, bounded.join("\n"), size, color, style);
   }
 
   private panel(x: number, y: number, width: number, height: number, color = COLORS.panel, alpha = 0.96, border = COLORS.border) {
@@ -1614,11 +1615,19 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private tooltipPosition(pointer: Phaser.Input.Pointer | undefined, width: number, height: number, compactY: number) {
-    if (this.isCompact() || !pointer) return { x: 28, y: compactY };
-    const logical = this.logicalPointer(pointer);
+    const xMin = Math.min(12, Math.max(0, WORLD_WIDTH - width));
+    const xMax = Math.max(xMin, WORLD_WIDTH - width - 12);
+    const yMin = Math.min(86, Math.max(0, WORLD_HEIGHT - height));
+    const yMax = Math.max(yMin, WORLD_HEIGHT - height - 12);
+    const preferred = this.isCompact() || !pointer
+      ? { x: 28, y: compactY }
+      : (() => {
+        const logical = this.logicalPointer(pointer);
+        return { x: logical.x + 18, y: logical.y + 18 };
+      })();
     return {
-      x: Phaser.Math.Clamp(logical.x + 18, 12, WORLD_WIDTH - width - 12),
-      y: Phaser.Math.Clamp(logical.y + 18, 86, WORLD_HEIGHT - height - 12),
+      x: Phaser.Math.Clamp(preferred.x, xMin, xMax),
+      y: Phaser.Math.Clamp(preferred.y, yMin, yMax),
     };
   }
 
@@ -1632,21 +1641,14 @@ export class RiftLineScene extends Phaser.Scene {
       ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)}\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}\n战斗：输出 ${short(fighter.damageDealt)} · 治疗 ${short(fighter.healingDone)} · 护盾 ${short(fighter.shieldingDone)} · 承伤 ${short(fighter.damageTaken)}`
       : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;
     const ability = this.boundedText(def.abilityDescription, contentWidth, this.isCompact() ? 4 : 6, 10, "#adc1cc", { lineSpacing: 4 });
-    const traitHeight = 19;
+    const abilityTitle = this.text(0, 0, def.abilityName, 10, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
     const detailY = 44;
     const energyY = detailY + (fighter ? 74 : 50);
     const traitsY = energyY + 23;
-    const abilityY = traitsY + traitHeight + 8;
-    const height = Math.max(this.isCompact() ? 226 : 244, abilityY + ability.height + 18);
-    const { x, y } = this.tooltipPosition(pointer, width, height, 280);
-    const container = this.add.container(x, y);
-    container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(def.accent).color));
-    container.add(this.text(18, 16, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, 16, "#f1f8ff", { fontStyle: "bold" }));
-    container.add(this.text(18, detailY, detail, 10, "#abc1ce", { lineSpacing: 3 }));
-    container.add(this.text(18, energyY, `${def.energyProfile.name} · ${fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${def.energyProfile.start}/${def.energyProfile.max}`}`, 10, def.energyProfile.color));
     const traitContainer = this.add.container(18, traitsY);
     traitContainer.add(this.text(0, 2, "羁绊", 9, "#8fa9b9", { fontStyle: "bold" }));
     let traitX = 32;
+    let traitY = 0;
     def.traits.forEach((traitId) => {
       const trait = TRAITS[traitId];
       const status = this.bridge.engine.getTraitStatus(traitId);
@@ -1656,18 +1658,32 @@ export class RiftLineScene extends Phaser.Scene {
       const probe = this.text(0, 0, label, 8, "#ffffff", { fontStyle: "bold" }).setVisible(false);
       const tagWidth = Math.ceil(probe.width) + 15;
       probe.destroy();
+      if (traitX > 32 && traitX + tagWidth > contentWidth) {
+        traitX = 0;
+        traitY += 21;
+      }
       const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
       const tag = this.add.graphics();
       tag.fillStyle(status.active ? color : COLORS.slotLabelFill, status.active ? 0.28 : 0.92);
-      tag.fillRoundedRect(traitX, 0, tagWidth, 17, 8);
+      tag.fillRoundedRect(traitX, traitY, tagWidth, 17, 8);
       tag.lineStyle(1, status.active ? color : COLORS.slotLabelBorder, status.active ? 0.95 : 0.7);
-      tag.strokeRoundedRect(traitX, 0, tagWidth, 17, 8);
-      traitContainer.add([tag, this.add.circle(traitX + 7, 8.5, 2, color, status.active ? 1 : 0.7), this.text(traitX + 12, 4, label, 8, status.active ? "#f4fbff" : "#a9c0cb", { fontStyle: "bold" })]);
+      tag.strokeRoundedRect(traitX, traitY, tagWidth, 17, 8);
+      traitContainer.add([tag, this.add.circle(traitX + 7, traitY + 8.5, 2, color, status.active ? 1 : 0.7), this.text(traitX + 12, traitY + 4, label, 8, status.active ? "#f4fbff" : "#a9c0cb", { fontStyle: "bold" })]);
       traitX += tagWidth + 4;
     });
+    const traitHeight = traitY + 17;
+    const abilityTitleY = traitsY + traitHeight + 8;
+    const abilityBodyY = abilityTitleY + abilityTitle.height + 2;
+    const height = Math.max(this.isCompact() ? 226 : 244, abilityBodyY + ability.height + 18);
+    const { x, y } = this.tooltipPosition(pointer, width, height, 280);
+    const container = this.add.container(x, y);
+    container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(def.accent).color));
+    container.add(this.text(18, 16, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, 16, "#f1f8ff", { fontStyle: "bold" }));
+    container.add(this.text(18, detailY, detail, 10, "#abc1ce", { lineSpacing: 3 }));
+    container.add(this.text(18, energyY, `${def.energyProfile.name} · ${fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${def.energyProfile.start}/${def.energyProfile.max}`}`, 10, def.energyProfile.color));
     container.add(traitContainer);
-    const abilityTitle = this.text(18, abilityY, def.abilityName, 10, "#eea7d5", { fontStyle: "bold" });
-    ability.setPosition(18, abilityY + abilityTitle.height + 2);
+    abilityTitle.setPosition(18, abilityTitleY).setVisible(true);
+    ability.setPosition(18, abilityBodyY);
     container.add([abilityTitle, ability]);
     container.setName("tooltip");
     this.tooltipLayer.add(container);
@@ -1678,19 +1694,19 @@ export class RiftLineScene extends Phaser.Scene {
     const trait = TRAITS[traitId];
     const status = this.bridge.engine.getTraitStatus(traitId);
     const width = 360;
+    const contentWidth = width - 36;
     const thresholds = trait.thresholds.map((threshold, index) => `${status.count >= threshold ? "◆" : "◇"} ${threshold} 名：${trait.bonuses[index]}`).join("\n");
-    const thresholdText = this.text(0, 0, thresholds, 10, "#dcefff", { wordWrap: { width: 324 }, lineSpacing: 5 });
-    const descriptionText = this.text(0, 0, trait.description, 10, "#a9bfcc", { wordWrap: { width: 324 } });
-    const height = Math.max(184, 80 + descriptionText.height + thresholdText.height);
-    thresholdText.destroy();
-    descriptionText.destroy();
+    const description = this.boundedText(trait.description, contentWidth, this.isCompact() ? 4 : 5, 10, "#a9bfcc");
+    const thresholdText = this.boundedText(thresholds, contentWidth, this.isCompact() ? 5 : 6, 10, "#dcefff", { lineSpacing: 5 });
+    const thresholdY = 55 + description.height;
+    const height = Math.max(184, thresholdY + thresholdText.height + 18);
     const { x, y } = this.tooltipPosition(pointer, width, height, 300);
     const container = this.add.container(x, y);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(trait.color).color));
     container.add(this.text(18, 16, `${trait.name} · ${status.count}/${status.maxThreshold}`, 16, "#f1f8ff", { fontStyle: "bold" }));
-    const description = this.text(18, 45, trait.description, 10, "#a9bfcc", { wordWrap: { width: 324 } });
-    container.add(description);
-    container.add(this.text(18, 55 + description.height, thresholds, 10, "#dcefff", { wordWrap: { width: 324 }, lineSpacing: 5 }));
+    description.setPosition(18, 45);
+    thresholdText.setPosition(18, thresholdY);
+    container.add([description, thresholdText]);
     container.setName("tooltip");
     this.tooltipLayer.add(container);
   }
