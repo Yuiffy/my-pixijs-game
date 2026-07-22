@@ -867,13 +867,18 @@ export class RiftLineScene extends Phaser.Scene {
     return container;
   }
 
-  private ownedUnitCount(unitId: UnitId) {
+  private ownedUnitStars(unitId: UnitId) {
     const { state } = this.bridge.engine;
-    return [...state.board, ...state.bench].filter((unit) => unit?.id === unitId).length;
+    const stars: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
+    [...state.board, ...state.bench].forEach((unit) => {
+      if (unit?.id === unitId) stars[unit.star] += 1;
+    });
+    return stars;
   }
 
-  private addShopOwnedCue(item: Phaser.GameObjects.Container, unitId: UnitId, count: number, compact: boolean) {
-    if (count <= 0) return;
+  private addShopOwnedCue(item: Phaser.GameObjects.Container, unitId: UnitId, stars: Record<1 | 2 | 3, number>, compact: boolean) {
+    const total = stars[1] + stars[2] + stars[3];
+    if (total <= 0) return;
     const accent = Phaser.Display.Color.HexStringToColor(UNIT_DEFS[unitId].accent).color;
     const portraitX = compact ? 27 : 31;
     const portraitY = compact ? 33 : 34;
@@ -889,13 +894,19 @@ export class RiftLineScene extends Phaser.Scene {
       repeat: -1,
       yoyo: true,
     });
-    const badgeX = compact ? 108 : 165;
+    const badgeX = compact ? 90 : 150;
     const badgeY = compact ? 4 : 8;
-    const badgeWidth = compact ? 53 : 62;
+    const badgeWidth = compact ? 72 : 74;
+    const starEntries = ([3, 2, 1] as const)
+      .filter((star) => stars[star] > 0)
+      .map((star) => `${star}星×${stars[star]}`);
+    const labelText = starEntries.length === 1 && stars[1] === total
+      ? `已有 ×${total}`
+      : `已有 ${starEntries.join(" ")}`;
     const badge = this.add.graphics();
     badge.fillStyle(accent, 0.18).fillRoundedRect(badgeX, badgeY, badgeWidth, 16, 8);
     badge.lineStyle(1, accent, 0.8).strokeRoundedRect(badgeX, badgeY, badgeWidth, 16, 8);
-    const label = this.text(badgeX + badgeWidth / 2, badgeY + 8, `已有 ×${count}`, compact ? 7 : 8, "#f4fbff", { fontStyle: "bold" }).setOrigin(0.5);
+    const label = this.text(badgeX + badgeWidth / 2, badgeY + 8, labelText, compact ? 7 : 8, "#f4fbff", { fontStyle: "bold" }).setOrigin(0.5);
     item.add([badge, label]);
   }
 
@@ -920,7 +931,8 @@ export class RiftLineScene extends Phaser.Scene {
       const y = 151 + index * 74;
       const item = this.add.container(810, y);
       const card = this.add.graphics();
-      const ownedCount = unitId ? this.ownedUnitCount(unitId) : 0;
+      const ownedStars = unitId ? this.ownedUnitStars(unitId) : { 1: 0, 2: 0, 3: 0 };
+      const hasOwned = ownedStars[1] + ownedStars[2] + ownedStars[3] > 0;
       card.fillStyle(unitId ? 0x11222f : 0x0a1620, unitId ? 0.92 : 0.8);
       card.fillRoundedRect(0, 0, 270, 70, 10);
       card.lineStyle(1, unitId ? 0x294658 : 0x203748, 1).strokeRoundedRect(0, 0, 270, 70, 10);
@@ -928,10 +940,10 @@ export class RiftLineScene extends Phaser.Scene {
       if (unitId) {
         const def = UNIT_DEFS[unitId];
         const affordable = this.canBuyShopUnit(unitId);
-        this.addShopOwnedCue(item, unitId, ownedCount, false);
+        this.addShopOwnedCue(item, unitId, ownedStars, false);
         item.add(this.createPortrait(unitId, 31, 34, 20).setAlpha(affordable ? 1 : 0.48));
         const role = def.title.includes(" · ") ? def.title.split(" · ").at(-1) || def.title : def.title;
-        item.add(this.text(62, 11, this.truncateText(def.name, ownedCount ? 96 : 138, 13, { fontStyle: "bold" }), 13, affordable ? "#edf7ff" : "#617888", { fontStyle: "bold" }));
+        item.add(this.text(62, 11, this.truncateText(def.name, hasOwned ? 82 : 138, 13, { fontStyle: "bold" }), 13, affordable ? "#edf7ff" : "#617888", { fontStyle: "bold" }));
         item.add(this.text(62, 29, this.truncateText(role, 150, 9), 9, affordable ? "#94acbc" : "#526b7b"));
         item.add(this.text(245, 22, `${def.cost}`, 22, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
         item.add(this.createShopTraitTags(unitId, 62, 46, 224, affordable));
@@ -974,10 +986,11 @@ export class RiftLineScene extends Phaser.Scene {
       if (unitId) {
         const def = UNIT_DEFS[unitId];
         const affordable = this.canBuyShopUnit(unitId);
-        const ownedCount = this.ownedUnitCount(unitId);
-        this.addShopOwnedCue(item, unitId, ownedCount, true);
+        const ownedStars = this.ownedUnitStars(unitId);
+        const hasOwned = ownedStars[1] + ownedStars[2] + ownedStars[3] > 0;
+        this.addShopOwnedCue(item, unitId, ownedStars, true);
         item.add(this.createPortrait(unitId, 27, 33, 19).setAlpha(affordable ? 1 : 0.48));
-        item.add(this.text(54, 10, this.truncateText(def.name, ownedCount ? 98 : 112, 12, { fontStyle: "bold" }), 12, affordable ? "#edf7ff" : "#718896", { fontStyle: "bold" }));
+        item.add(this.text(54, 10, this.truncateText(def.name, hasOwned ? 78 : 112, 12, { fontStyle: "bold" }), 12, affordable ? "#edf7ff" : "#718896", { fontStyle: "bold" }));
         item.add(this.text(174, 21, `${def.cost}`, 21, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
         item.add(this.createShopTraitTags(unitId, 54, 45, 154, affordable, true));
         const zone = this.add.zone(98, 33, 196, 66).setInteractive({ useHandCursor: affordable });

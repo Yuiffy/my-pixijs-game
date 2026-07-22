@@ -81,3 +81,6 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 已完成：移除备战区左上角冗余「已激活」总结；羁绊横条按已激活优先排序；修正横条与「后方 · 远程与辅助 / 6 × 4 / 前线」说明行的间距。
 - 已完成：提示层初始化增加空保护，兼容自动化虚拟时间早于 Phaser 场景创建的边界。
 - 验证：`pnpm autochess:test` 69/69、`pnpm exec tsc --noEmit` 通过；`verify-autochess.cjs` 完整 Chrome 流程通过且控制台无错误；通用 action client headed 流程可结束，旧版 headless shell 截图仍受环境 WebGL 限制。
+
+- 2026-07-22 追加：商店已有棋子提示改为按 1/2/3 星分桶；纯一星继续显示「已有 ×N」，出现二星或三星时显示对应星级数量，混合星级同时列出各档数量。
+- 追加验证：`pnpm exec tsc --noEmit` 通过；通用 action client 可结束且无错误文件，截图仍受本机旧版 headless WebGL 环境限制。
