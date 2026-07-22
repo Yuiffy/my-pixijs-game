@@ -257,7 +257,7 @@ export class RiftLineScene extends Phaser.Scene {
   private syncLogicalCamera() {
     const { width, height } = this.scale.baseSize;
     const logical = this.logicalSize();
-    const scale = Math.max(1, Math.min(width / logical.width, height / logical.height));
+    const scale = Math.min(width / logical.width, height / logical.height);
     this.cameras.main
       .setViewport(0, 0, width, height)
       .setZoom(scale)
@@ -328,13 +328,10 @@ export class RiftLineScene extends Phaser.Scene {
     if (this.isMobile() && this.phase === "battle") {
       [this.phaseLayer, this.entityLayer, this.effectsLayer, this.overlayLayer, this.tooltipLayer].forEach((layer) => layer.setPosition(16, 124).setScale(0.4));
     }
-    this.drawHeader();
-    if (this.phase === "title") this.drawTitle();
-    if (this.phase === "preparation") this.drawPreparation();
-    if (this.phase === "battle" || this.phase === "result") this.drawBattle();
-    if (this.phase === "result") this.drawResult();
-    if (this.phase === "augment") this.drawAugments();
-    if (this.phase === "gameover") this.drawGameOver();
+    // Fixed HUD, menus and explanatory copy are native DOM overlays (RiftHud).
+    // Phaser retains the interactive board and world-following battle feedback.
+    if (this.phase === "preparation") this.drawCanvasPreparation();
+    if (this.phase === "battle") this.drawBattle();
     this.drawToast();
   }
 
@@ -369,7 +366,9 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private updateQuality() {
-    this.textResolution = Math.max(1, Math.min(MAX_TEXT_RESOLUTION, Math.ceil(this.renderScale())));
+    // World-following feedback (damage/heal/status text) stays in Phaser. Keep
+    // it at a stable high-density texture while fixed UI is rendered by DOM.
+    this.textResolution = Math.min(MAX_TEXT_RESOLUTION, 2);
   }
 
   private text(x: number, y: number, value: string, size = 14, color = COLORS.text, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
@@ -615,6 +614,22 @@ export class RiftLineScene extends Phaser.Scene {
     graphics.fillRoundedRect(x, y, width, height, 18);
     graphics.lineStyle(1, 0x66b6e0, 0.25).strokeRoundedRect(x, y, width, height, 18);
     return graphics;
+  }
+
+  private drawCanvasPreparation() {
+    const { state, boardCount, boardCap } = this.bridge.engine;
+    const compact = this.isCompact();
+    const boardPanel = compact
+      ? { x: 26, y: 98, width: 1068, height: 430 }
+      : PREPARATION_BOARD_PANEL;
+    this.phaseLayer.add(this.drawPreparationPanel(boardPanel.x, boardPanel.y, boardPanel.width, boardPanel.height));
+    state.board.forEach((unit, index) => this.drawSlot("board", index, unit, compact));
+    if (!compact) {
+      this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
+      this.phaseLayer.add(this.text(48, 570, `备战席  ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3"));
+      this.phaseLayer.add(this.text(612, 570, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${boardCount}/${boardCap}`, 11, "#72d8ff").setOrigin(1, 0));
+      state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, false));
+    }
   }
 
   private drawPreparation() {

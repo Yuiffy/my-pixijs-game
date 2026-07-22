@@ -156,8 +156,9 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(layout, /width: Math\.max\(1, Math\.round\(displayWidth \* density\)\)/);
   assert.match(host, /ResizeObserver/);
   assert.match(host, /scale\.setParentSize/);
-  assert.match(host, /scale\.setGameSize/);
-  assert.match(host, /baseSize\.width !== target\.width/);
+  assert.doesNotMatch(host, /scale\.setGameSize/);
+  assert.doesNotMatch(host, /baseSize\.width !== target\.width/);
+  assert.match(host, /RiftHud/);
   assert.match(host, /dataset\.devicePixelRatio/);
   assert.match(host, /dataset\.renderScale/);
   assert.match(host, /dataset\.layoutProfile/);

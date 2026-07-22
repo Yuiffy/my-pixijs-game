@@ -8,6 +8,8 @@ import {
   loadAudioPreferences,
 } from "./audio";
 import Codex from "./Codex";
+import RiftHud from "./RiftHud";
+import "./RiftHud.css";
 import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
 import { TOOLBAR_HEIGHT, logicalSizeFor, profileFor, renderSizeFor } from "./phaser/layout";
@@ -92,17 +94,14 @@ export default function AutoChessGame() {
       if (!game || !host || !host.clientWidth || !host.clientHeight) return;
 
       game.scale.setParentSize(host.clientWidth, host.clientHeight);
-      game.scale.refresh();
       const target = renderSizeFor(
-        game.scale.displaySize.width,
-        game.scale.displaySize.height,
+        host.getBoundingClientRect().width,
+        host.getBoundingClientRect().height,
         window.devicePixelRatio || 1,
       );
-      // Phaser couples its drawing buffer to the base game size. RiftLineScene
-      // maps this physical surface back to the fixed 1120×720 authored world.
-      if (game.scale.baseSize.width !== target.width || game.scale.baseSize.height !== target.height) {
-        game.scale.setGameSize(target.width, target.height);
-      }
+      // RESIZE owns Phaser's canvas/base dimensions. The scene camera maps that
+      // CSS surface to its logical world; do not fight the scale manager by
+      // treating setGameSize as a backing-buffer-only API.
 
       const profile = profileFor(
         game.scale.displaySize.width,
@@ -133,6 +132,7 @@ export default function AutoChessGame() {
       game.canvas.setAttribute("data-game-canvas", "rift-line");
       game.canvas.setAttribute("aria-label", "裂隙阵线自走棋游戏画布");
       game.canvas.tabIndex = 0;
+      setRevision((value) => value + 1);
       scheduleGameSizeSync();
     };
     boot().catch(() => setMessage("无法初始化 Phaser 游戏画面。"));
@@ -160,6 +160,7 @@ export default function AutoChessGame() {
     document.addEventListener("fullscreenchange", onFullscreenChange);
     document.addEventListener("fullscreenerror", onFullscreenError);
     window.addEventListener("resize", onWindowResize);
+    window.visualViewport?.addEventListener("resize", onWindowResize);
     setFullscreenSupported(Boolean(document.fullscreenEnabled && containerRef.current?.requestFullscreen));
 
     return () => {
@@ -176,6 +177,7 @@ export default function AutoChessGame() {
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("fullscreenerror", onFullscreenError);
       window.removeEventListener("resize", onWindowResize);
+      window.visualViewport?.removeEventListener("resize", onWindowResize);
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
@@ -210,6 +212,10 @@ export default function AutoChessGame() {
   }, [codexOpen, toggleFullscreen]);
 
   const engine = bridgeRef.current?.engine;
+  const dispatch = useCallback((action: import("./phaser/EngineBridge").GameAction) => {
+    bridgeRef.current?.dispatch(action);
+    setRevision((value) => value + 1);
+  }, []);
 
   return (
     <div
@@ -224,6 +230,7 @@ export default function AutoChessGame() {
         background: "#050b12",
         overflow: "hidden",
         position: "relative",
+        boxSizing: "border-box",
         paddingBottom: "max(0px, env(safe-area-inset-bottom))",
       }}
     >
@@ -234,7 +241,7 @@ export default function AutoChessGame() {
           .rift-toolbar button { min-width: 0 !important; padding-inline: 10px !important; }
         }
       `}</style>
-      <div className="rift-toolbar" style={{ width: "100%", minHeight: TOOLBAR_HEIGHT, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
+      <div className="rift-toolbar" style={{ width: "100%", height: TOOLBAR_HEIGHT, flex: "0 0 auto", display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
         <span className="rift-toolbar-status" aria-live="polite" style={{ flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#82a8bd" }}>{message}</span>
         <button type="button" onClick={() => setCodexOpen(true)} style={toolbarButtonStyle}>图鉴 / 本局天赋</button>
         <button type="button" aria-pressed={audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })} style={toolbarButtonStyle}>{audioPreferences.muted ? "静音" : "声音"}</button>
@@ -252,6 +259,7 @@ export default function AutoChessGame() {
           touchAction: "none",
         }}
       />
+      <RiftHud engine={engine || null} onAction={dispatch} />
       <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
     </div>
   );
