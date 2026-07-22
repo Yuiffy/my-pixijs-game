@@ -55,7 +55,7 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "pine_needle";
+  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin";
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
   emoji?: string;
 }
@@ -303,6 +303,8 @@ export interface GameState {
   bench: Array<OwnedUnit | null>;
   shop: Array<UnitId | null>;
   shopLocked: boolean;
+  /** 剩余免费刷新次数（如远程开局的首次免费刷新） */
+  freeRerollCharges: number;
   selected: UnitLocation | null;
   augments: AugmentId[];
   augmentHistory: AugmentSelection[];

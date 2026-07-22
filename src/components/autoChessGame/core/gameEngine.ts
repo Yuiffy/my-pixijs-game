@@ -133,6 +133,18 @@ const SHARK_BARRAGE_SPEED = 340;
 const SHARK_BARRAGE_RANGE = 520;
 const SHARK_BARRAGE_DAMAGE = 0.42;
 const SHARK_BARRAGE_RADIUS = 10;
+/** 果冻风纪：护盾破碎钢镚弹幕 */
+const SUN_GUARD_COIN_COUNT = 5;
+const SUN_GUARD_COIN_SPEED = 380;
+const SUN_GUARD_COIN_RANGE = 480;
+const SUN_GUARD_COIN_DAMAGE = 0.72;
+const SUN_GUARD_COIN_RADIUS = 9;
+const SUN_GUARD_SHIELD_RATIO = 0.42;
+/** 雅吨辣福：打翻火锅灼烧范围 */
+const RIFT_BRAWLER_HOTPOT_RADIUS = 98;
+const RIFT_BRAWLER_SELF_BURN = 0.85;
+const RIFT_BRAWLER_AOE_BURN = 1.05;
+const RIFT_BRAWLER_PASSIVE_BURN = 0.55;
 /** 跳舞冲刺 */
 const DANCE_DASH_DURATION = 0.48;
 const DANCE_DASH_SPEED_MULT = 3.4;
@@ -248,6 +260,7 @@ export class AutoChessEngine {
       bench: emptySlots<OwnedUnit>(BENCH_SIZE),
       shop: emptySlots<UnitId>(SHOP_SIZE),
       shopLocked: false,
+      freeRerollCharges: 0,
       selected: null,
       augments: [],
       augmentHistory: [],
@@ -312,6 +325,8 @@ export class AutoChessEngine {
     this.state.hp = 20 + (effects.hpBonus || 0);
     this.state.maxHp = this.state.hp;
     this.state.gold = 8 + (effects.goldBonus || 0);
+    // 远程开局：仅赠送 1 次免费刷新，而不是整回合无限免费
+    this.state.freeRerollCharges = effects.freeFirstReroll ? 1 : 0;
 
     const starterUnit: OwnedUnit = {
       uid: this.uid++,
@@ -525,16 +540,17 @@ export class AutoChessEngine {
 
   public rerollShop() {
     if (this.state.phase !== "preparation") return;
-    const freeReroll = this.state.starter === "ranger_start" && this.state.round === 1;
+    const freeReroll = this.state.freeRerollCharges > 0;
     if (!freeReroll && this.state.gold < 1) {
       this.setToast("金币不足，无法刷新商店。", "bad");
       return;
     }
-    if (!freeReroll) this.state.gold -= 1;
+    if (freeReroll) this.state.freeRerollCharges -= 1;
+    else this.state.gold -= 1;
     this.state.shop = this.generateShop();
     this.state.shopLocked = false;
     this.state.selected = null;
-    this.setToast("商店已刷新并自动解锁。", "info");
+    this.setToast(freeReroll ? "免费刷新已使用，商店已自动解锁。" : "商店已刷新并自动解锁。", "info");
   }
 
   public buyShopUnit(index: number) {
@@ -1677,7 +1693,7 @@ export class AutoChessEngine {
       y: source.y,
       velocityX: Math.cos(baseAngle) * shot.speed,
       velocityY: Math.sin(baseAngle) * shot.speed,
-      radius: shot.emoji || shot.style === "carrot" || shot.style === "shark" ? 9 : 7,
+      radius: shot.emoji || shot.style === "carrot" || shot.style === "shark" || shot.style === "coin" ? 9 : 7,
       remainingRange: 880,
       damage: shot.damage,
       burnPower: shot.burnPower,
@@ -1685,6 +1701,49 @@ export class AutoChessEngine {
       size: shot.size,
       style: shot.style,
       emoji: shot.emoji,
+    });
+  }
+
+  /** 果冻风纪护盾破碎：向随机方向射出钢镚 */
+  private fireSunGuardCoins(source: Fighter) {
+    const battle = this.state.battle;
+    if (!battle || !source.alive) return;
+    const def = UNIT_DEFS.sun_guard;
+    for (let index = 0; index < SUN_GUARD_COIN_COUNT; index += 1) {
+      const angle = this.rng.next() * Math.PI * 2;
+      battle.projectiles.push({
+        sourceFid: source.fid,
+        team: source.team,
+        x: source.x,
+        y: source.y,
+        velocityX: Math.cos(angle) * SUN_GUARD_COIN_SPEED,
+        velocityY: Math.sin(angle) * SUN_GUARD_COIN_SPEED,
+        radius: SUN_GUARD_COIN_RADIUS,
+        remainingRange: SUN_GUARD_COIN_RANGE,
+        damage: source.attack * SUN_GUARD_COIN_DAMAGE,
+        burnPower: 0,
+        color: def.accent,
+        size: 10,
+        style: "coin",
+        emoji: "🪙",
+      });
+    }
+    this.addEffect({
+      kind: "burst",
+      x: source.x,
+      y: source.y,
+      color: def.accent,
+      life: 0.55,
+      size: 64,
+    });
+    this.addEffect({
+      kind: "text",
+      x: source.x,
+      y: source.y - 40,
+      color: def.accent,
+      text: "钢镚",
+      life: 0.65,
+      size: 12,
     });
   }
 
@@ -2376,6 +2435,10 @@ export class AutoChessEngine {
     if (source.spiceBurnOnHitPower > 0 && target.alive) {
       this.applyBurn(source, target, source.attack * source.spiceBurnOnHitPower);
     }
+    // 雅吨被动：自身灼烧时普攻附带灼烧
+    if (source.unitId === "rift_brawler" && source.burnTime > 0 && target.alive) {
+      this.applyBurn(source, target, source.attack * RIFT_BRAWLER_PASSIVE_BURN);
+    }
     this.triggerYueGangSupport(source, target);
     const def = UNIT_DEFS[source.unitId];
     this.addEffect({
@@ -2459,20 +2522,23 @@ export class AutoChessEngine {
         break;
       }
       case "sun_guard": {
-        this.grantShield(source, source, source.maxHp * 0.32, 0.48);
-        const target = this.nearestTarget(source, targets);
-        if (target) {
-          const dealt = this.damage(source, target, source.attack * 0.75);
-          target.stun = Math.max(target.stun, 0.45);
-          if (dealt > 0) this.addDamageText(target, dealt);
-        }
+        this.grantShield(source, source, source.maxHp * SUN_GUARD_SHIELD_RATIO, 0.55);
         this.addEffect({
           kind: "ring",
           x: source.x,
           y: source.y,
           color: def.accent,
+          life: 0.75,
+          size: 72,
+        });
+        this.addEffect({
+          kind: "text",
+          x: source.x,
+          y: source.y - 46,
+          color: def.accent,
+          text: "绿冻护甲",
           life: 0.7,
-          size: 62,
+          size: 12,
         });
         break;
       }
@@ -2600,20 +2666,62 @@ export class AutoChessEngine {
         break;
       }
       case "rift_brawler": {
-        const target = this.nearestTarget(source, targets);
-        if (!target) break;
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -42 : 42), y: target.y });
-        const dealt = this.damage(source, target, source.attack * 1.7);
-        this.applyBurn(source, target, source.attack * 1.1);
-        if (dealt > 0) this.addDamageText(target, dealt);
+        // 主动：打翻火锅，灼烧自己与周围小范围敌人
+        this.applyBurn(source, source, source.attack * RIFT_BRAWLER_SELF_BURN);
+        targets
+          .filter(
+            (target) =>
+              Math.hypot(target.x - source.x, target.y - source.y) <= RIFT_BRAWLER_HOTPOT_RADIUS,
+          )
+          .forEach((target) => {
+            this.applyBurn(source, target, source.attack * RIFT_BRAWLER_AOE_BURN);
+            const dealt = this.damage(source, target, source.attack * 0.45);
+            if (dealt > 0) this.addDamageText(target, dealt);
+          });
+        this.addEffect({
+          kind: "hotpot",
+          x: source.x,
+          y: source.y,
+          color: "#ff4d3a",
+          life: 1.05,
+          size: RIFT_BRAWLER_HOTPOT_RADIUS + 28,
+        });
+        this.addEffect({
+          kind: "ring",
+          x: source.x,
+          y: source.y,
+          color: "#ff6b2d",
+          life: 0.85,
+          size: RIFT_BRAWLER_HOTPOT_RADIUS + 18,
+        });
         this.addEffect({
           kind: "burst",
-          x: target.x,
-          y: target.y,
-          color: def.accent,
-          life: 0.55,
-          size: 48,
+          x: source.x,
+          y: source.y,
+          color: "#ff8a3d",
+          life: 0.7,
+          size: 88,
         });
+        this.addEffect({
+          kind: "text",
+          x: source.x,
+          y: source.y - 22,
+          color: "#ffd0a8",
+          text: "辣福",
+          life: 0.75,
+          size: 14,
+        });
+        for (let spark = 0; spark < 5; spark += 1) {
+          const angle = (Math.PI * 2 * spark) / 5 + this.rng.next() * 0.35;
+          this.addEffect({
+            kind: "burst",
+            x: source.x + Math.cos(angle) * 36,
+            y: source.y + Math.sin(angle) * 36,
+            color: spark % 2 === 0 ? "#ff5a2e" : "#ffb347",
+            life: 0.5 + spark * 0.04,
+            size: 24,
+          });
+        }
         break;
       }
       case "spark_mage": {
@@ -3079,10 +3187,15 @@ export class AutoChessEngine {
     amount *= 100 / (100 + Math.max(-50, target.armor));
     let remaining = amount;
     let absorbed = 0;
+    const hadShield = target.shield > 0;
     if (target.shield > 0) {
       absorbed = Math.min(target.shield, remaining);
       target.shield -= absorbed;
       remaining -= absorbed;
+    }
+    // 果冻风纪：护盾从有到无时发射钢镚弹幕
+    if (hadShield && target.shield <= 0 && target.unitId === "sun_guard") {
+      this.fireSunGuardCoins(target);
     }
     const hpLoss = Math.min(target.hp, remaining);
     target.hp -= hpLoss;
@@ -3409,6 +3522,7 @@ export class AutoChessEngine {
         hp: this.state.hp,
         maxHp: this.state.maxHp,
         gold: this.state.gold,
+        freeRerollCharges: this.state.freeRerollCharges,
         level: this.state.playerLevel,
         bookLevel: bookLevelForPlayerLevel(this.state.playerLevel),
         upgradeRemaining: this.upgradeCost,

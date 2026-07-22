@@ -102,6 +102,7 @@ const projectileEmoji = (projectile: Projectile) => {
   if (projectile.emoji) return projectile.emoji;
   if (projectile.style === "shark") return "🦈";
   if (projectile.style === "carrot") return "🥕";
+  if (projectile.style === "coin") return "🪙";
   return "";
 };
 
@@ -870,7 +871,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private canReroll() {
     const { state } = this.bridge.engine;
-    return state.gold >= 1 || (state.starter === "ranger_start" && state.round === 1);
+    return state.gold >= 1 || state.freeRerollCharges > 0;
   }
 
   private drawWideShop() {
@@ -919,7 +920,7 @@ export class RiftLineScene extends Phaser.Scene {
     });
     this.button(810, 530, 82, 48, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, { tone: "neutral", enabled: !isMaxPlayerLevel && state.gold >= (upgradeCost ?? Number.POSITIVE_INFINITY), secondary: isMaxPlayerLevel ? "MAX" : "一次付清" }, DEPTH.board);
     this.button(900, 530, 82, 22, state.shopLocked ? "已锁定" : "锁定商店", { type: "lock" }, { tone: "lock", selected: state.shopLocked }, DEPTH.board);
-    this.button(900, 556, 82, 22, "刷新 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() }, DEPTH.board);
+    this.button(900, 556, 82, 22, state.freeRerollCharges > 0 ? "刷新 · 免费" : "刷新 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() }, DEPTH.board);
   }
 
   private drawCompactShop() {
@@ -964,7 +965,7 @@ export class RiftLineScene extends Phaser.Scene {
     if (compact) {
       this.button(42, 675, 190, 40, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, { enabled: canBuyXp, secondary: isMaxPlayerLevel ? "MAX" : "一次付清" });
       this.button(252, 675, 190, 40, state.shopLocked ? "已锁定商店" : "锁定商店", { type: "lock" }, { tone: "lock", selected: state.shopLocked });
-      this.button(462, 675, 190, 40, "刷新商店 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() });
+      this.button(462, 675, 190, 40, state.freeRerollCharges > 0 ? "刷新商店 · 免费" : "刷新商店 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() });
       this.button(672, 675, 190, 40, state.selected ? `回收 +${refund}` : "选择棋子后出售", { type: "sell" }, { tone: "danger", enabled: Boolean(state.selected) });
       this.button(882, 675, 196, 40, "开始战斗", { type: "battle" }, { tone: "confirm", enabled: canBattle, secondary: "SPACE" });
     } else {

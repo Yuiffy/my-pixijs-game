@@ -25,7 +25,6 @@ export type TraitId = (typeof TRAIT_IDS)[number];
 export const SHOP_UNIT_IDS = [
   // 每位角色暂时只保留一个低费代表；岁己保留多种形态。
   // 1 费
-  "sun_guard",
   "ember_blade",
   "gale_archer",
   "rift_stalker",
@@ -36,6 +35,7 @@ export const SHOP_UNIT_IDS = [
   "meme",
   "zeyin",
   // 2 费
+  "sun_guard",
   "rift_brawler",
   "sui_blue",
   "shiori",
@@ -265,14 +265,14 @@ export const traitLevelForCount = (trait: TraitDefinition, count: number) =>
   trait.thresholds.filter((threshold) => count >= threshold).length;
 
 const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">> = {
-  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 46 },
+  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 44 },
   ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58 },
   gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44 },
   rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82 },
   cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46 },
   mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40 },
   sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48 },
-  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 72 },
+  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58 },
   spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50 },
   clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48 },
   dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86 },
@@ -311,29 +311,30 @@ const unit = (definition: Omit<UnitDefinition, "attackType" | "energyProfile" | 
 });
 
 export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
-  // 1 费：可靠的构筑零件，每个都能明确指向一条阵容路线。
+  // 2 费前排：果冻风纪（由 1 费上调）
   sun_guard: unit({
     id: "sun_guard",
     name: "果冻风纪",
-    title: "灰泽满Hazel · 前排防守",
+    title: "灰泽满Hazel · 绿冻护甲",
     glyph: "满",
     color: "#245f80",
     accent: "#7de2ff",
-    tier: 1,
-    cost: 1,
+    tier: 2,
+    cost: 2,
     traits: ["vanguard", "gen27", "traffic"],
-    hp: 245,
-    attack: 16,
-    armor: 30,
+    hp: 305,
+    attack: 18,
+    armor: 28,
     range: 48,
-    attackInterval: 1.12,
-    moveSpeed: 52,
-    abilityName: "折光壁垒",
-    abilityDescription: "获得护盾，震击并短暂眩晕当前目标。",
+    attackInterval: 1.18,
+    moveSpeed: 44,
+    abilityName: "绿冻护甲",
+    abilityDescription: "获得护盾。护盾破碎时向随机方向射出 5 枚钢镚弹幕。",
     portrait: "/images/livers/hazel.png",
     portraitFocus: "top",
     shop: true,
   }),
+  // 1 费：可靠的构筑零件，每个都能明确指向一条阵容路线。
   ember_blade: unit({
     id: "ember_blade",
     name: "兔子射手",
@@ -471,21 +472,21 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   rift_brawler: unit({
     id: "rift_brawler",
     name: "雅吨",
-    title: "克罗雅Kloa · 辣福灼烧",
+    title: "克罗雅Kloa · 辣福",
     glyph: "雅",
     color: "#4c3c72",
     accent: "#c4a1ff",
     tier: 2,
     cost: 2,
     traits: ["gen27", "yue_gang"],
-    hp: 205,
-    attack: 29,
-    armor: 14,
+    hp: 295,
+    attack: 22,
+    armor: 12,
     range: 52,
-    attackInterval: 1.02,
-    moveSpeed: 76,
-    abilityName: "辣福一口",
-    abilityDescription: "扑向最近敌人咬一口，造成伤害并施加辣味灼烧。",
+    attackInterval: 1.16,
+    moveSpeed: 58,
+    abilityName: "辣福",
+    abilityDescription: "被动：自身灼烧时普攻附带灼烧。主动：打翻火锅，灼烧自己与周围小范围敌人。",
     portrait: "/images/livers/kloa.jpg",
     portraitFocus: "top",
     shop: true,
