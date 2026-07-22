@@ -129,6 +129,70 @@ export const compactBenchSlot = (index: number) => ({
   height: 60,
 });
 
+export type TitleLayout = {
+  eyebrowY: number;
+  titleY: number;
+  summaryY: number;
+  promptY: number;
+  cardY: number;
+  cardWidth: number;
+  cardHeight: number;
+  cardXs: readonly [number, number, number];
+  portraitY: number;
+  subtitleY: number;
+  nameY: number;
+  descriptionY: number;
+  descriptionWidth: number;
+  ctaY: number;
+  seedY: number;
+  controlsY: number;
+};
+
+export const WIDE_TITLE_LAYOUT: TitleLayout = {
+  eyebrowY: 126,
+  titleY: 166,
+  summaryY: 232,
+  promptY: 264,
+  cardY: 318,
+  cardWidth: 300,
+  cardHeight: 260,
+  cardXs: [90, 410, 730],
+  portraitY: 58,
+  subtitleY: 108,
+  nameY: 138,
+  descriptionY: 164,
+  descriptionWidth: 252,
+  ctaY: 218,
+  seedY: 626,
+  controlsY: 666,
+};
+
+export const COMPACT_TITLE_LAYOUT: TitleLayout = {
+  eyebrowY: 108,
+  titleY: 144,
+  summaryY: 198,
+  promptY: 224,
+  cardY: 266,
+  cardWidth: 310,
+  cardHeight: 260,
+  cardXs: [50, 405, 760],
+  portraitY: 58,
+  subtitleY: 108,
+  nameY: 138,
+  descriptionY: 164,
+  descriptionWidth: 260,
+  ctaY: 218,
+  seedY: 574,
+  controlsY: 612,
+};
+
+export const titleLayoutFor = (profile: LayoutProfile) => profile === "compact" ? COMPACT_TITLE_LAYOUT : WIDE_TITLE_LAYOUT;
+
+export const starterCardRect = (index: number, profile: LayoutProfile) => {
+  const layout = titleLayoutFor(profile);
+  return { x: layout.cardXs[index] ?? layout.cardXs[0], y: layout.cardY, width: layout.cardWidth, height: layout.cardHeight };
+};
+
 export const profileFor = (width: number, height: number): LayoutProfile => {
   if (width < 720 || height > width * 1.15) return "compact";
   return "wide";

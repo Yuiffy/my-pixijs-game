@@ -46,6 +46,24 @@ export const BUTTONS: Record<ButtonTone | "disabled", ButtonColors> = {
   disabled: { fill: 0x253746, hover: 0x253746, border: 0x405767, text: "#708896", hoverText: "#708896" },
 };
 
+export const TITLE = {
+  cardTop: 0x182b39,
+  cardBottom: 0x09131f,
+  cardHoverOverlay: 0.18,
+  cardBorderAlpha: 0.82,
+  eyebrow: "#aac2d2",
+  summary: "#6fb4d8",
+  prompt: "#829cad",
+  description: "#aac0cc",
+  seed: "#66869a",
+  controls: "#5d7c91",
+  starCyan: 0x78d9ff,
+  starLilac: 0xb797ff,
+  glow: 0x536dff,
+  ctaText: "#eaf7ff",
+  ctaHoverText: "#07131d",
+};
+
 export const DEPTH = {
   backdrop: 0,
   board: 10,

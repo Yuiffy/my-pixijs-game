@@ -197,11 +197,30 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /POINTER_MOVE, \(pointer: Phaser\.Input\.Pointer\) => \{\n      if \(!this\.traitDrag\?\.moved\) this\.updateTraitTooltip\(pointer\);/);
 });
 
+test("标题页复用响应式布局、主题协议卡与缓存氛围光", () => {
+  assert.match(scene, /titleLayoutFor\(this\.profile\)/);
+  assert.match(layout, /WIDE_TITLE_LAYOUT/);
+  assert.match(layout, /COMPACT_TITLE_LAYOUT/);
+  assert.match(layout, /starterCardRect/);
+  assert.match(scene, /this\.boundedText\(starter\.description, layout\.descriptionWidth, 2/);
+  assert.match(scene, /fillGradientStyle\(TITLE\.cardTop, TITLE\.cardTop, TITLE\.cardBottom, TITLE\.cardBottom/);
+  assert.match(scene, /fillRoundedRect\(0, 0, layout\.cardWidth, layout\.cardHeight, 20\)/);
+  assert.match(scene, /createTitleGlowTexture\(\)/);
+  assert.match(scene, /TITLE_GLOW_TEXTURE/);
+  assert.match(scene, /this\.tweens\.add/);
+  assert.match(scene, /轻量构筑 · 自动战斗 · 一局约 8 分钟/);
+  assert.match(scene, /选择一项开局协议/);
+  assert.match(scene, /操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏/);
+  assert.match(theme, /export const TITLE/);
+  assert.match(theme, /cardTop/);
+  assert.match(theme, /ctaHoverText/);
+});
+
 test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手", () => {
   assert.match(scene, /点击接入并开始/);
   assert.match(scene, /type: "starter", id/);
   assert.match(scene, /type: "augment", index/);
-  assert.match(scene, /cardWidth \/ 2, cardHeight \/ 2, cardWidth, cardHeight/);
+  assert.match(scene, /layout\.cardWidth \/ 2, layout\.cardHeight \/ 2, layout\.cardWidth, layout\.cardHeight/);
   assert.match(scene, /enabled: canBattle/);
   assert.match(scene, /enabled: this\.canReroll\(\)/);
   assert.match(scene, /traitOffset/);

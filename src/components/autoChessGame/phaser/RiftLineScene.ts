@@ -48,9 +48,10 @@ import {
   compactBoardSlot,
   occupiedSlotLayout,
   profileFor,
+  titleLayoutFor,
   type LayoutProfile,
 } from "./layout";
-import { BUTTONS, COLORS, DEPTH, FONT_FAMILY, type ButtonTone } from "./theme";
+import { BUTTONS, COLORS, DEPTH, FONT_FAMILY, TITLE, type ButtonTone } from "./theme";
 
 type ButtonOptions = {
   tone?: ButtonTone;
@@ -94,6 +95,7 @@ const resultMetricLabel: Record<RankingMetric, string> = {
 const short = (value: number) => (value < 1000 ? `${Math.round(value)}` : `${(value / 1000).toFixed(1)}k`);
 
 const BURST_GRADIENT_TEXTURE = "rift-burst-gradient";
+const TITLE_GLOW_TEXTURE = "rift-title-glow";
 const PROJECTILE_EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", sans-serif';
 
 const projectileEmoji = (projectile: Projectile) => {
@@ -177,6 +179,7 @@ export class RiftLineScene extends Phaser.Scene {
     createFallbackTextures(this);
     createCircularPortraitTextures(this);
     this.createBurstGradientTexture();
+    this.createTitleGlowTexture();
     this.input.setTopOnly(true);
     this.game.canvas.addEventListener("contextmenu", this.preventContextMenu);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.handlePointerMove, this);
@@ -307,11 +310,19 @@ export class RiftLineScene extends Phaser.Scene {
     const graphics = this.add.graphics().setDepth(DEPTH.backdrop);
     graphics.fillGradientStyle(0x07121d, 0x0b1825, 0x160f20, 0x0b1825, 1);
     graphics.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+    this.add.image(WORLD_WIDTH / 2, 294, TITLE_GLOW_TEXTURE).setDepth(DEPTH.backdrop + 1).setDisplaySize(930, 540).setAlpha(0.72);
     for (let index = 0; index < 56; index += 1) {
       const x = (index * 193 + 47) % WORLD_WIDTH;
       const y = (index * 83 + 29) % WORLD_HEIGHT;
-      graphics.fillStyle(index % 3 ? 0x78d9ff : 0xb797ff, 0.25);
-      graphics.fillCircle(x, y, index % 5 === 0 ? 2 : 1);
+      const star = this.add.circle(x, y, index % 5 === 0 ? 2 : 1, index % 3 ? TITLE.starCyan : TITLE.starLilac, 0.16 + (index % 4) * 0.05).setDepth(DEPTH.backdrop + 2);
+      this.tweens.add({
+        targets: star,
+        alpha: Math.min(0.55, star.alpha + 0.22),
+        duration: 1700 + (index % 5) * 320,
+        delay: (index % 7) * 140,
+        yoyo: true,
+        repeat: -1,
+      });
     }
   }
 
@@ -436,47 +447,60 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawTitle() {
     const { state } = this.bridge.engine;
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, 128, "守住八次远征冲击，然后向无限裂隙挑战极限。", 16, "#9db7c9").setOrigin(0.5));
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, 188, "裂 隙 阵 线", 48, "#f4f9ff", { fontStyle: "bold" }).setOrigin(0.5));
-    const compact = this.isCompact();
-    const cardWidth = compact ? 310 : 300;
-    const cardX = compact ? [50, 405, 760] : [90, 410, 730];
+    const layout = titleLayoutFor(this.profile);
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住八次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.titleY, "裂 隙 阵 线", 48, "#f4f9ff", { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.summaryY, "轻量构筑 · 自动战斗 · 一局约 8 分钟", 13, TITLE.summary, { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.promptY, "选择一项开局协议", 11, TITLE.prompt).setOrigin(0.5));
+
     state.starterChoices.forEach((id, index) => {
       const starter = STARTERS.find((item) => item.id === id);
       if (!starter) return;
-      const x = cardX[index];
-      const y = compact ? 274 : 318;
-      const cardHeight = compact ? 250 : 260;
+      const x = layout.cardXs[index];
+      const y = layout.cardY;
       const accent = Phaser.Display.Color.HexStringToColor(starter.color).color;
+      const accentColor = Phaser.Display.Color.IntegerToColor(accent);
+      const ctaFill = Phaser.Display.Color.GetColor(Math.round(accentColor.red * 0.46), Math.round(accentColor.green * 0.46), Math.round(accentColor.blue * 0.46));
+      const ctaHover = Phaser.Display.Color.GetColor(Math.min(255, Math.round(accentColor.red * 1.14 + 18)), Math.min(255, Math.round(accentColor.green * 1.14 + 18)), Math.min(255, Math.round(accentColor.blue * 1.14 + 18)));
       const container = this.add.container(x, y);
-      const cardPanel = this.panel(0, 0, cardWidth, cardHeight, 0x122230, 0.98, accent);
-      container.add(cardPanel);
-      const portrait = this.createPortrait(starter.unit, cardWidth / 2, 58, 35);
-      container.add(portrait);
-      container.add(this.text(cardWidth / 2, 108, starter.subtitle, 11, starter.color, { fontStyle: "bold" }).setOrigin(0.5));
-      container.add(this.text(cardWidth / 2, 138, starter.name, 21, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5));
-      container.add(this.text(20, 162, starter.description, 12, "#aebfcb", { wordWrap: { width: cardWidth - 40 }, lineSpacing: 4 }).setOrigin(0));
+      const cardPanel = this.add.graphics();
       const cta = this.add.graphics();
-      cta.fillStyle(BUTTONS.confirm.fill, 1).fillRoundedRect(62, compact ? 204 : 218, cardWidth - 124, 32, 10);
-      cta.lineStyle(1, BUTTONS.confirm.border, 0.8).strokeRoundedRect(62, compact ? 204 : 218, cardWidth - 124, 32, 10);
-      const ctaText = this.text(cardWidth / 2, (compact ? 204 : 218) + 16, "选择协议", 12, BUTTONS.confirm.text, { fontStyle: "bold" }).setOrigin(0.5);
-      const zone = this.add.zone(cardWidth / 2, cardHeight / 2, cardWidth, cardHeight).setInteractive({ useHandCursor: true });
-      const drawHover = (hover: boolean) => {
+      const ctaWidth = layout.cardWidth - 124;
+      const ctaX = (layout.cardWidth - ctaWidth) / 2;
+      const ctaText = this.text(layout.cardWidth / 2, layout.ctaY + 16, "选择协议", 12, TITLE.ctaText, { fontStyle: "bold" }).setOrigin(0.5);
+      const drawCard = (hover = false) => {
         cardPanel.clear();
-        cardPanel.fillStyle(hover ? accent : 0x122230, hover ? 0.2 : 0.98).fillRoundedRect(0, 0, cardWidth, cardHeight, 14);
-        cardPanel.lineStyle(hover ? 2 : 1, accent, hover ? 1 : 0.9).strokeRoundedRect(0, 0, cardWidth, cardHeight, 14);
+        cardPanel.fillGradientStyle(TITLE.cardTop, TITLE.cardTop, TITLE.cardBottom, TITLE.cardBottom, 0.98);
+        cardPanel.fillRoundedRect(0, 0, layout.cardWidth, layout.cardHeight, 20);
+        if (hover) cardPanel.fillStyle(accent, TITLE.cardHoverOverlay).fillRoundedRect(0, 0, layout.cardWidth, layout.cardHeight, 20);
+        cardPanel.lineStyle(hover ? 2 : 1, accent, hover ? 1 : TITLE.cardBorderAlpha).strokeRoundedRect(0, 0, layout.cardWidth, layout.cardHeight, 20);
         cta.clear();
-        cta.fillStyle(hover ? BUTTONS.confirm.hover : BUTTONS.confirm.fill, 1).fillRoundedRect(62, compact ? 204 : 218, cardWidth - 124, 32, 10);
-        cta.lineStyle(1, BUTTONS.confirm.border, 0.9).strokeRoundedRect(62, compact ? 204 : 218, cardWidth - 124, 32, 10);
-        ctaText.setText(hover ? "点击接入并开始" : "选择协议").setColor(hover ? BUTTONS.confirm.hoverText : BUTTONS.confirm.text);
+        cta.fillStyle(hover ? ctaHover : ctaFill, 1).fillRoundedRect(ctaX, layout.ctaY, ctaWidth, 32, 12);
+        cta.lineStyle(1, accent, hover ? 1 : 0.84).strokeRoundedRect(ctaX, layout.ctaY, ctaWidth, 32, 12);
+        ctaText.setText(hover ? "点击接入并开始" : "选择协议").setColor(hover ? TITLE.ctaHoverText : TITLE.ctaText);
       };
-      zone.on(Phaser.Input.Events.POINTER_OVER, () => { container.setY(y - 5); drawHover(true); });
-      zone.on(Phaser.Input.Events.POINTER_OUT, () => { container.setY(y); drawHover(false); });
+      drawCard();
+      const portrait = this.createPortrait(starter.unit, layout.cardWidth / 2, layout.portraitY, 35);
+      const description = this.boundedText(starter.description, layout.descriptionWidth, 2, 12, TITLE.description, { align: "center", lineSpacing: 4 });
+      description.setPosition(layout.cardWidth / 2, layout.descriptionY).setOrigin(0.5, 0);
+      const zone = this.add.zone(layout.cardWidth / 2, layout.cardHeight / 2, layout.cardWidth, layout.cardHeight).setInteractive({ useHandCursor: true });
+      zone.on(Phaser.Input.Events.POINTER_OVER, () => { container.setY(y - 5); drawCard(true); });
+      zone.on(Phaser.Input.Events.POINTER_OUT, () => { container.setY(y); drawCard(false); });
       zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch({ type: "starter", id }));
-      container.add([cta, ctaText, zone]);
+      container.add([
+        cardPanel,
+        portrait,
+        this.text(layout.cardWidth / 2, layout.subtitleY, starter.subtitle, 11, starter.color, { fontStyle: "bold" }).setOrigin(0.5),
+        this.text(layout.cardWidth / 2, layout.nameY, starter.name, 21, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5),
+        description,
+        cta,
+        ctaText,
+        zone,
+      ]);
       this.phaseLayer.add(container);
     });
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, 650, `本局战术种子 · ${String(state.seed % 100000).padStart(5, "0")}`, 11, "#648297").setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.seedY, `本局战术种子 · ${String(state.seed % 100000).padStart(5, "0")}`, 11, TITLE.seed).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.controlsY, "操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏", 10, TITLE.controls).setOrigin(0.5));
   }
 
   private drawPreparationPanel(x: number, y: number, width: number, height: number) {
@@ -1152,6 +1176,21 @@ export class RiftLineScene extends Phaser.Scene {
     trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
     core.setRadius(Math.max(2, projectile.size)).setFillStyle(0xf8fcff, 0.98).setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
     this.drawProjectileTrail(trail, tailX, tailY, projectile.size + 3, projectileColor);
+  }
+
+  private createTitleGlowTexture() {
+    if (this.textures.exists(TITLE_GLOW_TEXTURE)) return;
+    const texture = this.textures.createCanvas(TITLE_GLOW_TEXTURE, 256, 256);
+    if (!texture) return;
+    const context = texture.getContext();
+    const radius = 128;
+    const gradient = context.createRadialGradient(radius, radius, 0, radius, radius, radius);
+    gradient.addColorStop(0, "rgba(83, 109, 255, 0.34)");
+    gradient.addColorStop(0.48, "rgba(49, 81, 177, 0.15)");
+    gradient.addColorStop(1, "rgba(10, 19, 33, 0)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 256, 256);
+    texture.refresh();
   }
 
   private createBurstGradientTexture() {
