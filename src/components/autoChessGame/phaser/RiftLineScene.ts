@@ -159,6 +159,11 @@ export class RiftLineScene extends Phaser.Scene {
 
   private rankingStateKey = "";
 
+  /** 战斗统计面板展开时的刷新计时（秒） */
+  private rankingRefreshAccum = 0;
+
+  private static readonly RANKING_REFRESH_INTERVAL = 1;
+
   private traitContent: Phaser.GameObjects.Container | null = null;
 
   private traitFade: Phaser.GameObjects.Graphics | null = null;
@@ -212,7 +217,7 @@ export class RiftLineScene extends Phaser.Scene {
   update(_: number, delta: number) {
     this.bridge.update(delta / 1000);
     if (this.phase !== this.bridge.engine.state.phase) this.rebuild();
-    else this.sync();
+    else this.sync(delta / 1000);
   }
 
   public refresh() {
@@ -279,6 +284,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.battleBannerText = null;
     this.rankingLayer = null;
     this.rankingStateKey = "";
+    this.rankingRefreshAccum = 0;
     this.traitContent = null;
     this.traitFade = null;
     this.traitEntries = [];
@@ -300,11 +306,11 @@ export class RiftLineScene extends Phaser.Scene {
     this.drawToast();
   }
 
-  private sync() {
+  private sync(deltaSec = 0) {
     if (this.phase === "battle") {
       this.syncBattleEntities();
       this.syncCombatEffects();
-      this.syncBattleOverlay();
+      this.syncBattleOverlay(deltaSec);
     }
     this.syncToast();
   }
@@ -1131,7 +1137,7 @@ export class RiftLineScene extends Phaser.Scene {
     const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0).setName("shield");
     const hitFlash = this.add.circle(0, 0, radius, 0xff526f, 0).setName("hitFlash");
     const burn = this.add.circle(radius * 0.7, -radius * 0.55, 5, 0xff7a50, 0).setName("burn");
-    const status = this.text(0, -radius - 29, "", 15, "#ffd95e", { fontFamily: PROJECTILE_EMOJI_FONT, fontStyle: "bold" }).setOrigin(0.5).setName("status");
+    const status = this.text(0, -radius - 8, "", 13, "#ffd95e", { fontFamily: PROJECTILE_EMOJI_FONT, fontStyle: "bold" }).setOrigin(0.5).setName("status");
     const portrait = this.createPortrait(fighter.unitId, 0, 0, radius, fighter.team === "enemy");
     portrait.setName("portrait");
     const hpBack = this.add.rectangle(0, radius + 10, radius * 2.25, 7, 0x152430).setName("hpBack");
@@ -1139,7 +1145,7 @@ export class RiftLineScene extends Phaser.Scene {
     const energyBack = this.add.rectangle(0, radius + 20, radius * 2.25, 4, 0x14222d).setName("energyBack");
     const energy = this.add.rectangle(-radius * 1.125, radius + 20, radius * 2.25, 4, 0x8edfff).setOrigin(0, 0.5).setName("energy");
     const label = this.text(0, radius + 30, UNIT_DEFS[fighter.unitId].name, 9, fighter.team === "player" ? "#b8dcef" : "#efb1c3").setOrigin(0.5).setName("label");
-    const star = this.text(0, -radius - 18, "★".repeat(fighter.star), 11, "#ffdc68").setOrigin(0.5).setName("star");
+    const star = this.text(0, radius + 30, "★".repeat(fighter.star), 9, "#ffdc68").setOrigin(0, 0.5).setName("star");
     const zone = this.add.zone(0, 0, radius * 2.4, radius * 2.4).setInteractive({ useHandCursor: true });
     zone.setData("fighter", fighter.fid);
     zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
@@ -1173,6 +1179,7 @@ export class RiftLineScene extends Phaser.Scene {
     const status = view.getByName("status") as Phaser.GameObjects.Text;
     const shadow = view.getByName("shadow") as Phaser.GameObjects.Ellipse;
     const label = view.getByName("label") as Phaser.GameObjects.Text;
+    const star = view.getByName("star") as Phaser.GameObjects.Text;
     const hitProgress = fighter.hitPulse > 0 ? fighter.hitPulse / 0.2 : 0;
     const growth = fighter.growthStacks > 0
       ? 1 + fighter.growthStacks * 0.015 + Math.sin(this.bridge.engine.state.visualTime * 8) * 0.008
@@ -1202,9 +1209,10 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.enraged ? "!" : "",
     ].filter(Boolean);
     status.setText(statusBadges.join(" "));
-    status.setY(-radius - (statusBadges.length > 1 ? 34 : 29));
+    status.setY(-radius - 8);
     status.setColor(fighter.enraged ? "#ff4f9a" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e");
     label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}`);
+    star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
   }
 
   private syncCombatEffects() {
@@ -1506,7 +1514,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.syncBattleOverlay();
   }
 
-  private syncBattleOverlay() {
+  private syncBattleOverlay(deltaSec = 0) {
     const { battle } = this.bridge.engine.state;
     if (!battle || !this.battleTimerText || !this.battleTimerPanel || !this.battleBannerText) return;
     const remaining = Math.max(0, battle.limit - battle.elapsed);
@@ -1519,12 +1527,28 @@ export class RiftLineScene extends Phaser.Scene {
     const rankingKey = battle.rankingOpen ? battle.rankingMetric : "closed";
     if (rankingKey !== this.rankingStateKey) {
       this.rankingStateKey = rankingKey;
+      this.rankingRefreshAccum = 0;
       if (battle.rankingOpen) this.drawRanking();
       else {
-        this.rankingLayer?.destroy(true);
-        this.rankingLayer = null;
+        this.clearRankingPanel();
+      }
+      return;
+    }
+    // 展开时按间隔刷新数值，避免战斗中面板静止
+    if (battle.rankingOpen) {
+      this.rankingRefreshAccum += deltaSec;
+      if (this.rankingRefreshAccum >= RiftLineScene.RANKING_REFRESH_INTERVAL) {
+        this.rankingRefreshAccum = 0;
+        this.drawRanking();
       }
     }
+  }
+
+  private clearRankingPanel() {
+    this.rankingLayer?.destroy(true);
+    this.rankingLayer = null;
+    // 页签按钮挂在 buttonViews，销毁面板后清掉已失效引用
+    this.buttonViews = this.buttonViews.filter((button) => button.active && Boolean(button.scene));
   }
 
   private createInputBlocker(x: number, y: number, width: number, height: number, depth: number) {
@@ -1538,7 +1562,7 @@ export class RiftLineScene extends Phaser.Scene {
   private drawRanking() {
     const { battle } = this.bridge.engine.state;
     if (!battle) return;
-    this.rankingLayer?.destroy(true);
+    this.clearRankingPanel();
     const layer = this.add.container(0, 0).setDepth(DEPTH.overlay + 1);
     this.rankingLayer = layer;
     layer.add(this.panel(802, 142, 270, 344, 0x07111b, 0.96));
@@ -1546,7 +1570,8 @@ export class RiftLineScene extends Phaser.Scene {
     layer.add(this.createInputBlocker(802, 142, 270, 344, DEPTH.overlay + 1));
     (["damage", "support", "taken"] as RankingMetric[]).forEach((metric, index) => {
       const tone: ButtonTone = metric === "damage" ? "metricDamage" : metric === "support" ? "metricSupport" : "metricTaken";
-      this.button(814 + index * 84, 178, metric === "support" ? 88 : 76, 24, resultMetricLabel[metric], { type: "metric", metric }, { tone, selected: battle.rankingMetric === metric }, DEPTH.overlay + 3);
+      // 页签挂到统计层，随面板一起销毁，避免定时刷新泄漏按钮
+      layer.add(this.button(814 + index * 84, 178, metric === "support" ? 88 : 76, 24, resultMetricLabel[metric], { type: "metric", metric }, { tone, selected: battle.rankingMetric === metric }, DEPTH.overlay + 3));
     });
     const ranking = this.bridge.engine.getBattleRanking();
     const maximum = Math.max(1, ...ranking.map(({ value }) => value));
