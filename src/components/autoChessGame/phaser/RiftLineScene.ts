@@ -5,6 +5,7 @@ import {
   AUGMENTS,
   CAMPAIGN_ROUNDS,
   ENERGY_PROFILES,
+  SHOP_UNITS,
   STARTERS,
   TRAITS,
   UNIT_DEFS,
@@ -550,8 +551,18 @@ export class RiftLineScene extends Phaser.Scene {
       this.phaseLayer.add(this.text(390, 225, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
       this.phaseLayer.add(this.text(756, 225, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
       this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
-      this.phaseLayer.add(this.text(48, 563, `备战席 ${state.bench.filter(Boolean).length}/${state.bench.length}`, 11, "#91b5c8", { fontStyle: "bold" }));
-      this.phaseLayer.add(this.text(748, 563, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`, 10, "#7499ad").setOrigin(1));
+      // 备战席计数在出售按钮左侧；上阵人口右对齐到出售按钮前，避免被挡住
+      this.phaseLayer.add(this.text(48, 570, `备战席  ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3"));
+      const boardCapFull = engine.boardCount === engine.boardCap;
+      this.phaseLayer.add(
+        this.text(
+          612,
+          570,
+          `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`,
+          11,
+          boardCapFull ? "#ffd166" : "#72d8ff",
+        ).setOrigin(1, 0),
+      );
     }
     state.board.forEach((unit, index) => this.drawSlot("board", index, unit, compact));
     state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, compact));
@@ -971,6 +982,45 @@ export class RiftLineScene extends Phaser.Scene {
     this.button(810, 530, 82, 48, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, { tone: "neutral", enabled: !isMaxPlayerLevel && state.gold >= (upgradeCost ?? Number.POSITIVE_INFINITY), secondary: isMaxPlayerLevel ? "MAX" : "一次付清" }, DEPTH.board);
     this.button(900, 530, 82, 22, state.shopLocked ? "已锁定" : "锁定商店", { type: "lock" }, { tone: "lock", selected: state.shopLocked }, DEPTH.board);
     this.button(900, 556, 82, 22, state.freeRerollCharges > 0 ? "刷新 · 免费" : "刷新 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() }, DEPTH.board);
+    // 商店面板下方说明：兵种规则、激活羁绊、利息计算、最新天赋
+    this.phaseLayer.add(this.text(807, 622, `${SHOP_UNITS.length} 个兵种 · 同名三合一 · 羁绊同名只计一次`, 10, "#607d91"));
+    const activeNames = this.bridge.engine
+      .getActiveTraits()
+      .map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`)
+      .join(" · ");
+    this.phaseLayer.add(
+      this.text(
+        807,
+        647,
+        this.truncateText(activeNames ? `已激活：${activeNames}` : "常规羁绊按 2/4/6；关系羁绊按图标说明", 270, 10, { fontStyle: "bold" }),
+        10,
+        activeNames ? "#7de2ff" : "#526d80",
+        { fontStyle: "bold" },
+      ),
+    );
+    this.phaseLayer.add(
+      this.text(
+        807,
+        672,
+        this.truncateText(`连胜 ${state.streak} · 10 金币提供 1 利息（最多 2）`, 270, 10),
+        10,
+        "#7d94a4",
+      ),
+    );
+    if (state.augmentHistory.length) {
+      const latest = state.augmentHistory[state.augmentHistory.length - 1];
+      const augment = AUGMENTS.find((item) => item.id === latest.id);
+      this.phaseLayer.add(
+        this.text(
+          807,
+          692,
+          this.truncateText(`最新天赋（共 ${state.augmentHistory.length} 项）：第 ${latest.round} 战 · ${augment?.name || ""}`, 270, 9, { fontStyle: "bold" }),
+          9,
+          "#c9b1ee",
+          { fontStyle: "bold" },
+        ),
+      );
+    }
   }
 
   private drawCompactShop() {
