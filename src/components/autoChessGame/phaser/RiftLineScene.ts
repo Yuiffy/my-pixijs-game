@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { UnitId } from "../core/gameData";
 import {
+  ABILITY_CAST_TIMING_LABELS,
   AUGMENTS,
   CAMPAIGN_ROUNDS,
   ENERGY_PROFILES,
@@ -540,19 +541,14 @@ export class RiftLineScene extends Phaser.Scene {
       });
     }
     this.drawTraits();
-    const activeTraits = engine.getActiveTraits();
-    const traitSummary = activeTraits.length
-      ? activeTraits.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`).join(" · ")
-      : "暂无激活羁绊";
     const augmentSummary = state.augmentHistory.length
       ? state.augmentHistory.map(({ round, id }) => `${round}战·${AUGMENTS.find((augment) => augment.id === id)?.name ?? id}`).join(" · ")
       : "第 2 战后可选择首个天赋";
-    this.phaseLayer.add(this.text(48, compact ? 226 : 184, this.truncateText(`已激活：${traitSummary}`, compact ? 650 : 470, 10, { fontStyle: "bold" }), 10, activeTraits.length ? "#8ce8bd" : "#7893a5", { fontStyle: "bold" }));
     this.phaseLayer.add(this.text(compact ? 708 : 748, compact ? 226 : 184, this.truncateText(augmentSummary, compact ? 360 : 330, 9), 9, "#8ea8b9").setOrigin(compact ? 0 : 1));
     if (!compact) {
-      this.phaseLayer.add(this.text(48, 221, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
-      this.phaseLayer.add(this.text(390, 221, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
-      this.phaseLayer.add(this.text(756, 221, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
+      this.phaseLayer.add(this.text(48, 225, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
+      this.phaseLayer.add(this.text(390, 225, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
+      this.phaseLayer.add(this.text(756, 225, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
       this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
       this.phaseLayer.add(this.text(48, 563, `备战席 ${state.bench.filter(Boolean).length}/${state.bench.length}`, 11, "#91b5c8", { fontStyle: "bold" }));
       this.phaseLayer.add(this.text(748, 563, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`, 10, "#7499ad").setOrigin(1));
@@ -566,10 +562,18 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawTraits() {
     const strip = this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
-    const traits = Object.entries(this.bridge.engine.getTraitCounts()).filter(([, count]) => count > 0);
-    this.traitEntries = traits.map(([id, count]) => {
-      const trait = TRAITS[id as keyof typeof TRAITS];
-      const status = this.bridge.engine.getTraitStatus(trait.id);
+    const traits = Object.entries(this.bridge.engine.getTraitCounts())
+      .filter(([, count]) => count > 0)
+      .map(([id, count]) => {
+        const trait = TRAITS[id as keyof typeof TRAITS];
+        return { trait, count, status: this.bridge.engine.getTraitStatus(trait.id) };
+      })
+      .sort((left, right) => (
+        Number(right.status.active) - Number(left.status.active)
+        || right.status.level - left.status.level
+        || left.trait.name.localeCompare(right.trait.name, "zh-CN")
+      ));
+    this.traitEntries = traits.map(({ trait, count, status }) => {
       const nextThreshold = trait.thresholds.find((threshold) => threshold > count) ?? status.maxThreshold;
       const label = `${trait.name} ${count}/${nextThreshold}${status.active ? "" : " !"}`;
       const probe = this.text(0, 0, label, 10, "#ffffff", { fontStyle: "bold" }).setVisible(false);
@@ -863,6 +867,38 @@ export class RiftLineScene extends Phaser.Scene {
     return container;
   }
 
+  private ownedUnitCount(unitId: UnitId) {
+    const { state } = this.bridge.engine;
+    return [...state.board, ...state.bench].filter((unit) => unit?.id === unitId).length;
+  }
+
+  private addShopOwnedCue(item: Phaser.GameObjects.Container, unitId: UnitId, count: number, compact: boolean) {
+    if (count <= 0) return;
+    const accent = Phaser.Display.Color.HexStringToColor(UNIT_DEFS[unitId].accent).color;
+    const portraitX = compact ? 27 : 31;
+    const portraitY = compact ? 33 : 34;
+    const halo = this.add.circle(portraitX, portraitY, compact ? 25 : 27, accent, 0.08);
+    const ring = this.add.graphics();
+    ring.lineStyle(1.5, accent, 0.82).strokeCircle(portraitX, portraitY, compact ? 24 : 26);
+    item.add([halo, ring]);
+    this.tweens.add({
+      targets: [halo, ring],
+      alpha: { from: 0.2, to: 0.72 },
+      duration: 900,
+      ease: "Sine.inOut",
+      repeat: -1,
+      yoyo: true,
+    });
+    const badgeX = compact ? 108 : 165;
+    const badgeY = compact ? 4 : 8;
+    const badgeWidth = compact ? 53 : 62;
+    const badge = this.add.graphics();
+    badge.fillStyle(accent, 0.18).fillRoundedRect(badgeX, badgeY, badgeWidth, 16, 8);
+    badge.lineStyle(1, accent, 0.8).strokeRoundedRect(badgeX, badgeY, badgeWidth, 16, 8);
+    const label = this.text(badgeX + badgeWidth / 2, badgeY + 8, `已有 ×${count}`, compact ? 7 : 8, "#f4fbff", { fontStyle: "bold" }).setOrigin(0.5);
+    item.add([badge, label]);
+  }
+
   private canBuyShopUnit(unitId: UnitId) {
     const { engine } = this.bridge;
     return engine.state.gold >= UNIT_DEFS[unitId].cost
@@ -884,6 +920,7 @@ export class RiftLineScene extends Phaser.Scene {
       const y = 151 + index * 74;
       const item = this.add.container(810, y);
       const card = this.add.graphics();
+      const ownedCount = unitId ? this.ownedUnitCount(unitId) : 0;
       card.fillStyle(unitId ? 0x11222f : 0x0a1620, unitId ? 0.92 : 0.8);
       card.fillRoundedRect(0, 0, 270, 70, 10);
       card.lineStyle(1, unitId ? 0x294658 : 0x203748, 1).strokeRoundedRect(0, 0, 270, 70, 10);
@@ -891,9 +928,10 @@ export class RiftLineScene extends Phaser.Scene {
       if (unitId) {
         const def = UNIT_DEFS[unitId];
         const affordable = this.canBuyShopUnit(unitId);
+        this.addShopOwnedCue(item, unitId, ownedCount, false);
         item.add(this.createPortrait(unitId, 31, 34, 20).setAlpha(affordable ? 1 : 0.48));
         const role = def.title.includes(" · ") ? def.title.split(" · ").at(-1) || def.title : def.title;
-        item.add(this.text(62, 11, this.truncateText(def.name, 138, 13, { fontStyle: "bold" }), 13, affordable ? "#edf7ff" : "#617888", { fontStyle: "bold" }));
+        item.add(this.text(62, 11, this.truncateText(def.name, ownedCount ? 96 : 138, 13, { fontStyle: "bold" }), 13, affordable ? "#edf7ff" : "#617888", { fontStyle: "bold" }));
         item.add(this.text(62, 29, this.truncateText(role, 150, 9), 9, affordable ? "#94acbc" : "#526b7b"));
         item.add(this.text(245, 22, `${def.cost}`, 22, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
         item.add(this.createShopTraitTags(unitId, 62, 46, 224, affordable));
@@ -936,8 +974,10 @@ export class RiftLineScene extends Phaser.Scene {
       if (unitId) {
         const def = UNIT_DEFS[unitId];
         const affordable = this.canBuyShopUnit(unitId);
+        const ownedCount = this.ownedUnitCount(unitId);
+        this.addShopOwnedCue(item, unitId, ownedCount, true);
         item.add(this.createPortrait(unitId, 27, 33, 19).setAlpha(affordable ? 1 : 0.48));
-        item.add(this.text(54, 10, def.name, 12, affordable ? "#edf7ff" : "#718896", { fontStyle: "bold" }));
+        item.add(this.text(54, 10, this.truncateText(def.name, ownedCount ? 98 : 112, 12, { fontStyle: "bold" }), 12, affordable ? "#edf7ff" : "#718896", { fontStyle: "bold" }));
         item.add(this.text(174, 21, `${def.cost}`, 21, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
         item.add(this.createShopTraitTags(unitId, 54, 45, 154, affordable, true));
         const zone = this.add.zone(98, 33, 196, 66).setInteractive({ useHandCursor: affordable });
@@ -1028,7 +1068,7 @@ export class RiftLineScene extends Phaser.Scene {
     const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0).setName("shield");
     const hitFlash = this.add.circle(0, 0, radius, 0xff526f, 0).setName("hitFlash");
     const burn = this.add.circle(radius * 0.7, -radius * 0.55, 5, 0xff7a50, 0).setName("burn");
-    const status = this.text(0, -radius - 29, "", 14, "#ffd95e", { fontStyle: "bold" }).setOrigin(0.5).setName("status");
+    const status = this.text(0, -radius - 29, "", 15, "#ffd95e", { fontFamily: PROJECTILE_EMOJI_FONT, fontStyle: "bold" }).setOrigin(0.5).setName("status");
     const portrait = this.createPortrait(fighter.unitId, 0, 0, radius, fighter.team === "enemy");
     portrait.setName("portrait");
     const hpBack = this.add.rectangle(0, radius + 10, radius * 2.25, 7, 0x152430).setName("hpBack");
@@ -1088,8 +1128,19 @@ export class RiftLineScene extends Phaser.Scene {
     hitFlash.setAlpha(0.72 * hitProgress).setRadius(radius * growth);
     shield.setRadius(radius + 7 + Math.sin(this.bridge.engine.state.visualTime * 6) * 2).setAlpha(fighter.shield > 0 ? 0.28 : 0);
     burn.setAlpha(fighter.burnTime > 0 ? 0.9 : 0).setScale(1 + Math.sin(this.bridge.engine.state.visualTime * 10) * 0.35);
-    status.setText(fighter.stun > 0 ? "✦" : fighter.jumpPending ? "⌁" : fighter.gen27Buffed ? "27" : fighter.enraged ? "!" : "");
-    status.setColor(fighter.enraged ? "#ff4f9a" : fighter.gen27Buffed ? "#dfccff" : "#ffd95e");
+    const statusBadges = [
+      fighter.weakenTime > 0 ? "🦑" : "",
+      fighter.slowTime > 0 ? "🐌" : "",
+      fighter.burnTime > 0 ? "🔥" : "",
+      fighter.stun > 0 ? "✦" : "",
+      fighter.jumpPending ? "⌁" : "",
+      fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
+      fighter.gen27Buffed ? "27" : "",
+      fighter.enraged ? "!" : "",
+    ].filter(Boolean);
+    status.setText(statusBadges.join(" "));
+    status.setY(-radius - (statusBadges.length > 1 ? 34 : 29));
+    status.setColor(fighter.enraged ? "#ff4f9a" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e");
     label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}`);
   }
 
@@ -1248,6 +1299,7 @@ export class RiftLineScene extends Phaser.Scene {
     } else {
       label
         .setText(effect.text || "")
+        .setFontFamily(effect.emoji ? PROJECTILE_EMOJI_FONT : FONT_FAMILY)
         .setColor(effect.color)
         .setFontSize(effect.size || 14)
         .setY(-progress * 26)
@@ -1613,7 +1665,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawToast() {
     const { toast } = this.bridge.engine.state;
-    if (!toast) return;
+    if (!toast || !this.tooltipLayer) return;
     const color = toast.tone === "good" ? "#68e3aa" : toast.tone === "bad" ? "#ff7890" : "#79d8ff";
     const text = this.text(560, 90, toast.text, 12, color, { backgroundColor: "#07111bee", padding: { x: 22, y: 10 }, wordWrap: { width: 560 }, align: "center" }).setOrigin(0.5, 0);
     text.setName("toast");
@@ -1621,6 +1673,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private syncToast() {
+    if (!this.tooltipLayer) return;
     this.tooltipLayer.getAll("name", "toast").forEach((item) => item.destroy());
     this.drawToast();
   }
@@ -1681,7 +1734,7 @@ export class RiftLineScene extends Phaser.Scene {
       ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)}\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}\n战斗：输出 ${short(fighter.damageDealt)} · 治疗 ${short(fighter.healingDone)} · 护盾 ${short(fighter.shieldingDone)} · 承伤 ${short(fighter.damageTaken)}`
       : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;
     const ability = this.boundedText(def.abilityDescription, contentWidth, this.isCompact() ? 4 : 6, 10, "#adc1cc", { lineSpacing: 4 });
-    const abilityTitle = this.text(0, 0, def.abilityName, 10, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
+    const abilityTitle = this.text(0, 0, `${def.abilityName} · ${ABILITY_CAST_TIMING_LABELS[def.abilityCastTiming]}`, 10, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
     const detailY = 44;
     const energyY = detailY + (fighter ? 74 : 50);
     const traitsY = energyY + 23;
@@ -1752,6 +1805,10 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private clearTooltip() {
+    if (!this.tooltipLayer) {
+      this.pinnedTooltip = null;
+      return;
+    }
     this.tooltipLayer.getAll("name", "tooltip").forEach((item) => item.destroy());
     this.pinnedTooltip = null;
   }

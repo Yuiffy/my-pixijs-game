@@ -36,6 +36,7 @@ export interface BattleEffect {
   y2?: number;
   color: string;
   text?: string;
+  emoji?: boolean;
   life: number;
   maxLife: number;
   size?: number;

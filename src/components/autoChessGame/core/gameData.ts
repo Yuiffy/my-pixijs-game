@@ -118,6 +118,35 @@ export const describeEnergyRecovery = (profile: EnergyProfile) => {
   return `初始 ${profile.start}/${profile.max}；${sources.join("；") || "不回复"}`;
 };
 
+/**
+ * 技能释放类别：同一类共用同一触发方式。
+ * - selfOnHit：自保，能量满且受击时释放
+ * - supportShield：支援护盾，能量满即放
+ * - supportHeal：支援治疗，能量满且候选友军生命比例低于阈值时释放
+ * - engage：突进，能量满即放
+ * - offenseInRange：近距进攻，能量满且进入普攻距离时释放
+ * - offenseReady：远程/战场进攻，能量满即放
+ */
+export type AbilityCastTiming =
+  | "selfOnHit"
+  | "supportShield"
+  | "supportHeal"
+  | "engage"
+  | "offenseInRange"
+  | "offenseReady";
+
+export const ABILITY_CAST_TIMING_LABELS: Record<AbilityCastTiming, string> = {
+  selfOnHit: "自保 · 受击释放",
+  supportShield: "支援护盾 · 满能量即放",
+  supportHeal: "支援治疗 · 友军残血释放",
+  engage: "突进 · 满能量即放",
+  offenseInRange: "进攻 · 进入攻击范围释放",
+  offenseReady: "进攻 · 满能量即放",
+};
+
+/** 支援治疗：候选友军生命比例低至此值（含）才释放 */
+export const SUPPORT_HEAL_HP_RATIO = 0.7;
+
 export interface UnitDefinition {
   id: UnitId;
   name: string;
@@ -136,6 +165,8 @@ export interface UnitDefinition {
   moveSpeed: number;
   attackType: AttackType;
   energyProfile: EnergyProfile;
+  /** 技能释放类别，决定满能量后的触发时机 */
+  abilityCastTiming: AbilityCastTiming;
   abilityName: string;
   abilityDescription: string;
   portrait?: string;
@@ -264,48 +295,60 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
 export const traitLevelForCount = (trait: TraitDefinition, count: number) =>
   trait.thresholds.filter((threshold) => count >= threshold).length;
 
-const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">> = {
-  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 44 },
-  ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58 },
-  gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44 },
-  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82 },
-  cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46 },
-  mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40 },
-  sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48 },
-  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58 },
-  spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50 },
-  clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48 },
-  dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86 },
-  grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44 },
-  cinder_ram: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 52 },
-  sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 240, moveSpeed: 58 },
-  shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 48 },
-  sui_bird: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 62 },
-  sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
-  yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54 },
-  mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50 },
-  guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80 },
-  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 98 },
-  nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38 },
-  biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64 },
-  nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60 },
-  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42 },
-  zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60 },
-  kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56 },
-  nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
-  tiandou: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 52 },
-  youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88 },
-  akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96 },
-  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68 },
-  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54 },
-  xuehui: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 270, moveSpeed: 58 },
-  rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54 },
-  rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 48, moveSpeed: 42 },
-  lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56 },
-  rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56 },
+const COMBAT_PROFILES: Record<
+  UnitId,
+  Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming">
+> = {
+  // selfOnHit：自保，受击时放
+  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 44, abilityCastTiming: "selfOnHit" },
+  sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48, abilityCastTiming: "selfOnHit" },
+  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58, abilityCastTiming: "selfOnHit" },
+  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42, abilityCastTiming: "selfOnHit" },
+  // supportShield：支援护盾，满能量即放
+  mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40, abilityCastTiming: "supportShield" },
+  shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 48, abilityCastTiming: "supportShield" },
+  nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38, abilityCastTiming: "supportShield" },
+  rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 48, moveSpeed: 42, abilityCastTiming: "supportShield" },
+  // supportHeal：支援治疗，友军残血时放
+  gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44, abilityCastTiming: "supportHeal" },
+  cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46, abilityCastTiming: "supportHeal" },
+  cinder_ram: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 52, abilityCastTiming: "supportHeal" },
+  sui_bird: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 62, abilityCastTiming: "supportHeal" },
+  tiandou: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 52, abilityCastTiming: "supportHeal" },
+  // engage：突进，满能量即放
+  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82, abilityCastTiming: "engage" },
+  guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80, abilityCastTiming: "engage" },
+  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 98, abilityCastTiming: "engage" },
+  biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64, abilityCastTiming: "engage" },
+  youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88, abilityCastTiming: "engage" },
+  akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96, abilityCastTiming: "engage" },
+  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68, abilityCastTiming: "engage" },
+  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
+  // offenseInRange：近距进攻，进入攻击范围放
+  zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60, abilityCastTiming: "offenseInRange" },
+  mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50, abilityCastTiming: "offenseInRange" },
+  // offenseReady：远程/战场进攻，满能量即放
+  ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50, abilityCastTiming: "offenseReady" },
+  clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48, abilityCastTiming: "offenseReady" },
+  dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86, abilityCastTiming: "offenseReady" },
+  grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44, abilityCastTiming: "offenseReady" },
+  sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 240, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
+  yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54, abilityCastTiming: "offenseReady" },
+  nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60, abilityCastTiming: "offenseReady" },
+  kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56, abilityCastTiming: "offenseReady" },
+  nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
+  xuehui: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 270, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
+  lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
+  rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56, abilityCastTiming: "offenseReady" },
 };
 
-const unit = (definition: Omit<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed"> & Partial<Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">>): UnitDefinition => ({
+const unit = (
+  definition: Omit<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming"> &
+    Partial<Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming">>,
+): UnitDefinition => ({
   ...definition,
   ...COMBAT_PROFILES[definition.id],
 });

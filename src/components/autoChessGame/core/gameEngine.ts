@@ -18,6 +18,7 @@ import {
   TraitId,
   UNIT_DEFS,
   UnitId,
+  SUPPORT_HEAL_HP_RATIO,
   bookLevelForPlayerLevel,
   upgradeCostForLevel,
   waveForRound,
@@ -2304,10 +2305,56 @@ export class AutoChessEngine {
       const targets = this.living(targetTeam);
       if (!targets.length) return;
 
+      const allies = this.living(fighter.team);
+      const abilityTiming = UNIT_DEFS[fighter.unitId].abilityCastTiming;
+      const energyReady = !fighter.barrageActive && fighter.energy >= fighter.maxEnergy;
+
+      // 不依赖普攻距离的技能：突进 / 远程进攻 / 支援护盾 / 自保受击 / 支援治疗
+      if (energyReady) {
+        let shouldCast = false;
+        switch (abilityTiming) {
+          case "engage":
+          case "offenseReady":
+          case "supportShield":
+            shouldCast = true;
+            break;
+          case "selfOnHit":
+            // 自保：能量满且刚受击才放
+            shouldCast = fighter.hitPulse > 0;
+            break;
+          case "supportHeal": {
+            // 支援治疗：能量满且最虚弱友军生命比例降到阈值
+            const weakestAlly = [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+            shouldCast = Boolean(weakestAlly && weakestAlly.hp / weakestAlly.maxHp <= SUPPORT_HEAL_HP_RATIO);
+            break;
+          }
+          case "offenseInRange":
+            break;
+          default: {
+            const exhaustive: never = abilityTiming;
+            void exhaustive;
+            break;
+          }
+        }
+        if (shouldCast) {
+          fighter.stuckTime = 0;
+          this.castAbility(fighter, targets);
+          return;
+        }
+      }
+
       const target = this.resolveCombatTarget(fighter, targets, dt);
       if (!target) return;
       const distance = Math.hypot(target.x - fighter.x, target.y - fighter.y);
       const preferredRange = this.combatAttackRange(fighter, target);
+
+      // 近距进攻：能量满且进入普攻距离才放
+      if (energyReady && abilityTiming === "offenseInRange" && distance <= preferredRange) {
+        fighter.stuckTime = 0;
+        this.castAbility(fighter, targets);
+        return;
+      }
+
       if (distance > preferredRange) {
         // 跳舞成员：只在一段完整冲刺可进入自身攻击范围的最后接近阶段加速。
         const dashTravel = fighter.moveSpeed * DANCE_DASH_SPEED_MULT * (fighter.slowTime > 0 ? 0.55 : 1) * DANCE_DASH_DURATION;
@@ -2341,9 +2388,6 @@ export class AutoChessEngine {
           });
         }
         this.moveTowardCombatTarget(fighter, target, [...battle.player, ...battle.enemy], dt, movementIntents);
-      } else if (!fighter.barrageActive && fighter.energy >= fighter.maxEnergy) {
-        fighter.stuckTime = 0;
-        this.castAbility(fighter, targets);
       } else if (fighter.cooldown <= 0) {
         fighter.stuckTime = 0;
         this.basicAttack(fighter, target);
@@ -3011,6 +3055,7 @@ export class AutoChessEngine {
           target.weakenArmorPenalty = 10;
           target.armor -= target.weakenArmorPenalty;
         }
+        this.addEffect({ kind: "text", x: target.x, y: target.y - 54, color: def.accent, text: "🦑", emoji: true, life: 1.05, size: 18 });
         this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: def.accent, text: "讨厌你", life: 0.65, size: 12 });
         this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.5, size: 5 });
         break;
@@ -3202,7 +3247,8 @@ export class AutoChessEngine {
     const effectiveApplied = absorbed + hpLoss;
     source.damageDealt += effectiveApplied;
     target.damageTaken += effectiveApplied;
-    if (hpLoss > 0) target.hitPulse = 0.2;
+    // 任意有效命中都记受击（含仅打盾），供自保技能「受击释放」判定
+    if (effectiveApplied > 0) target.hitPulse = 0.2;
 
     if (
       target.vanguardMember &&

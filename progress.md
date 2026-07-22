@@ -73,3 +73,11 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 已合并 `origin/feature/add-image-auto-chess`，保留裂隙首领头像、主播图片池、弹幕/舞台梦等新内容，并解决核心数据、引擎和类型定义冲突。
 - 合并后移除旧的瞬时坐标推送，保留怕死的 0.46 秒真实跳跃；后撤会越出自身攻击距离时改走攻击者侧向弧线，并使用 0.72 秒冷却。
 - 回归验证：`pnpm autochess:test` 59/59、`pnpm exec tsc --noEmit` 通过；`verify-autochess.cjs` 浏览器流程无错误，专门场景捕获到 `jumping: true` 且 `jumpFrom`/`jumpTo` 不同。
+
+## 2026-07-22 · 战斗状态与备战区视觉反馈
+
+- 已完成：美·鱿鱼点名减甲时，目标头顶显示持续 🦑 状态，并额外播放一次上浮鱿鱼 emoji；通用头顶标记补齐灼烧、减速、眩晕、跳跃和技能增益状态。
+- 已完成：商店中已有同名棋子显示「已有 ×N」徽标、头像脉冲圈和强调边框，宽屏与紧凑布局均覆盖。
+- 已完成：移除备战区左上角冗余「已激活」总结；羁绊横条按已激活优先排序；修正横条与「后方 · 远程与辅助 / 6 × 4 / 前线」说明行的间距。
+- 已完成：提示层初始化增加空保护，兼容自动化虚拟时间早于 Phaser 场景创建的边界。
+- 验证：`pnpm autochess:test` 69/69、`pnpm exec tsc --noEmit` 通过；`verify-autochess.cjs` 完整 Chrome 流程通过且控制台无错误；通用 action client headed 流程可结束，旧版 headless shell 截图仍受环境 WebGL 限制。
