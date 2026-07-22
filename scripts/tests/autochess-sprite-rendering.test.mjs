@@ -23,7 +23,7 @@ test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
 test("游戏配置保持 1120×720 逻辑世界并使用 Phaser 缩放管理", () => {
   assert.match(config, /width: WORLD_WIDTH/);
   assert.match(config, /height: WORLD_HEIGHT/);
-  assert.match(config, /mode: Phaser\.Scale\.FIT/);
+  assert.match(config, /mode: Phaser\.Scale\.RESIZE/);
   assert.match(config, /autoCenter: Phaser\.Scale\.CENTER_BOTH/);
   assert.match(layout, /WORLD_WIDTH = 1120/);
   assert.match(layout, /WORLD_HEIGHT = 720/);
@@ -148,17 +148,25 @@ test("投射物命中使用可复用的径向渐变爆裂", () => {
 
 test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
   assert.match(layout, /MAX_RENDER_PIXELS/);
+  assert.match(layout, /MAX_DEVICE_PIXEL_RATIO = 2/);
+  assert.match(layout, /MOBILE_WORLD_WIDTH/);
+  assert.match(layout, /MOBILE_WORLD_HEIGHT/);
+  assert.match(layout, /logicalSizeFor/);
   assert.match(layout, /renderSizeFor/);
+  assert.match(layout, /width: Math\.max\(1, Math\.round\(displayWidth \* density\)\)/);
   assert.match(host, /ResizeObserver/);
   assert.match(host, /scale\.setParentSize/);
   assert.match(host, /scale\.setGameSize/);
   assert.match(host, /baseSize\.width !== target\.width/);
   assert.match(host, /dataset\.devicePixelRatio/);
   assert.match(host, /dataset\.renderScale/);
+  assert.match(host, /dataset\.layoutProfile/);
+  assert.match(host, /document\.fonts\?\.load/);
   assert.match(scene, /scale\.parentSize/);
+  assert.match(scene, /logicalSizeFor\(this\.profile\)/);
   assert.match(scene, /setViewport/);
   assert.match(scene, /setZoom\(scale\)/);
-  assert.match(scene, /centerOn\(WORLD_WIDTH \/ 2, WORLD_HEIGHT \/ 2\)/);
+  assert.match(scene, /centerOn\(logical\.width \/ 2, logical\.height \/ 2\)/);
   assert.match(scene, /positionToCamera\(this\.cameras\.main\)/);
   assert.match(scene, /MAX_TEXT_RESOLUTION/);
   assert.match(scene, /resolution: this\.textResolution/);

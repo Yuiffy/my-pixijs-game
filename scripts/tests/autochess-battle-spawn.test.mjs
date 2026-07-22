@@ -1177,3 +1177,65 @@ test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {
   const baseAim = Math.atan2(target.y - source.y, target.x - source.x);
   assert.ok(angles.some((angle) => Math.abs(angle - baseAim) > 0.05));
 });
+
+test("胆小羁绊为成员提供闪避与移速，高阶惠及全队", () => {
+  const engine = createEngine(71);
+  engine.state.playerLevel = 8;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui_cat", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  engine.startBattle();
+  const timid = engine.state.battle?.player.find((fighter) => fighter.unitId === "sui_cat");
+  const ally = engine.state.battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(timid && ally);
+  // 2 名胆小成员 → 1 阶：成员 +10% 闪避、+8 移速；全队无额外闪避
+  assert.equal(timid.dodgeChance, 0.1);
+  assert.equal(timid.baseMoveSpeed, gameData.UNIT_DEFS.sui_cat.moveSpeed + 8);
+  assert.equal(ally.dodgeChance, 0);
+});
+
+test("小猫拳会闪现到最远敌人身后并推进击晕", () => {
+  const engine = createEngine(72);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui_cat", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  assert.ok(battle && source);
+
+  // 布置近远两个敌人，技能应锁定更远者
+  const near = battle.enemy[0];
+  const far = battle.enemy[1] || battle.enemy[0];
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.energy = 0;
+  });
+  near.x = 520;
+  near.y = 360;
+  if (far !== near) {
+    far.x = 760;
+    far.y = 360;
+  }
+  source.x = 220;
+  source.y = 360;
+  source.jumpPending = false;
+  source.jumpTime = 0;
+  source.energy = source.maxEnergy;
+
+  const target = far !== near ? far : near;
+  const beforeTargetX = target.x;
+  engine.update(0.05);
+
+  assert.ok(source.x > target.x, "应闪现到敌人身后（更靠敌方半场）");
+  assert.ok(target.x < beforeTargetX, "敌人应被往己方半场推开");
+  assert.ok(target.stun > 0.8, "目标应被击晕");
+  assert.ok(battle.effects.some((effect) => effect.kind === "burst"));
+  assert.ok(battle.effects.some((effect) => effect.kind === "line"));
+  assert.ok(battle.effects.some((effect) => effect.text === "猫拳三连" || effect.text === "闪"));
+});

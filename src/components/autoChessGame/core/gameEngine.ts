@@ -826,9 +826,15 @@ export class AutoChessEngine {
       const hostLevel = def.traits.includes("host") ? traitLevel("host") : 0;
       const globalHostLevel = globalTraitLevel("host");
       const dwarfLevel = def.traits.includes("dwarf") ? traitLevel("dwarf") : 0;
+      const timidLevel = def.traits.includes("timid") ? traitLevel("timid") : 0;
+      const globalTimidLevel = globalTraitLevel("timid");
       const aggressionLevel = globalTraitLevel("aggression");
       const aggressionMember = def.traits.includes("aggression") && aggressionLevel > 0;
-      const moveSpeed = def.moveSpeed + [0, 10, 22, 36][globalHostLevel] + (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
+      const moveSpeed =
+        def.moveSpeed +
+        [0, 10, 22, 36][globalHostLevel] +
+        (hostLevel ? [0, 18, 32, 50][hostLevel] : 0) +
+        (timidLevel ? [0, 8, 16, 26][timidLevel] : 0);
 
       if (aggressionLevel) attack *= 1 + [0, 0.05, 0.1, 0.2][aggressionLevel] + (aggressionMember ? [0, 0.15, 0.3, 0.55][aggressionLevel] : 0);
       // 怕死：拉远攻击距离，高阶给全队生命
@@ -925,7 +931,10 @@ export class AutoChessEngine {
           [0, 0.45, 0.8][chuanmeiLevel],
           isRanged ? [0, 0, 0.22][globalChuanmeiLevel] : 0,
         ),
-        dodgeChance: dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0,
+        dodgeChance:
+          (dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0) +
+          (timidLevel ? [0, 0.1, 0.18, 0.28][timidLevel] : 0) +
+          [0, 0, 0.05, 0.12][globalTimidLevel],
         dwarfMember: dwarfLevel > 0,
         gluttonyHolder,
         growthStacks: 0,
@@ -2996,12 +3005,67 @@ export class AutoChessEngine {
       case "sui_cat": {
         const target = farthest(targets);
         if (!target) break;
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -34 : 34), y: target.y });
-        let total = 0;
-        for (let strike = 0; strike < 3 && target.alive; strike += 1)
-          total += deal(target, 0.8);
-        this.heal(source, source, total * 0.25);
-        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.72, size: 66 });
+        const startX = source.x;
+        const startY = source.y;
+        // 身后：继续深入敌方半场；推进方向则把敌人往己方半场推
+        const behindSign = source.team === "player" ? 1 : -1;
+        const pushDir = -behindSign;
+        const pushDistance = 112;
+        const contactGap = source.radius + target.radius + 6;
+
+        // 闪现出发特效
+        this.addEffect({ kind: "burst", x: startX, y: startY, color: def.accent, life: 0.32, size: 42 });
+        this.addEffect({ kind: "ring", x: startX, y: startY, color: def.accent, life: 0.4, size: 54 });
+        this.addEffect({ kind: "text", x: startX, y: startY - 36, color: def.accent, text: "闪", life: 0.38, size: 12 });
+
+        this.relocateFighter(source, { x: target.x + behindSign * contactGap, y: target.y });
+        this.faceTowardX(source, target.x);
+
+        // 闪现落点特效
+        this.addEffect({ kind: "burst", x: source.x, y: source.y, color: def.accent, life: 0.42, size: 56 });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: "#ffffff", life: 0.28, size: 34 });
+        this.addEffect({
+          kind: "line",
+          x: startX,
+          y: startY,
+          x2: source.x,
+          y2: source.y,
+          color: def.accent,
+          life: 0.36,
+          size: 5,
+        });
+
+        const pushFromX = target.x;
+        const pushFromY = target.y;
+        const pushedTarget = this.clampFighterPosition(target, {
+          x: target.x + pushDir * pushDistance,
+          y: target.y,
+        });
+        target.x = pushedTarget.x;
+        target.y = pushedTarget.y;
+        this.relocateFighter(source, {
+          x: target.x + behindSign * contactGap,
+          y: target.y,
+        });
+        this.faceTowardX(source, target.x);
+
+        for (let strike = 0; strike < 3 && target.alive; strike += 1) {
+          deal(target, 0.95);
+        }
+        target.stun = Math.max(target.stun, 0.95);
+
+        this.addEffect({
+          kind: "line",
+          x: pushFromX,
+          y: pushFromY,
+          x2: target.x,
+          y2: target.y,
+          color: def.accent,
+          life: 0.48,
+          size: 10,
+        });
+        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 70 });
+        this.addEffect({ kind: "text", x: target.x, y: target.y - 48, color: def.accent, text: "猫拳三连", life: 0.7, size: 12 });
         break;
       }
       case "nagisa": {

@@ -76,7 +76,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
         color: "#dfefff",
         boxShadow: "0 24px 80px rgba(0,0,0,.65)",
         overflow: "hidden",
-        fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif',
+        fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif',
       }}
     >
       <header

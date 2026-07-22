@@ -18,6 +18,7 @@ export const TRAIT_IDS = [
   "mature",
   "dance",
   "aggression",
+  "timid",
 ] as const;
 
 export type TraitId = (typeof TRAIT_IDS)[number];
@@ -290,6 +291,19 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
   mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速每 4 秒降低 1 个百分点直至正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
   dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏冲向舞台中央：成员攻速提升，并在最后接近阶段高移速冲刺，冲刺中更易闪避。", bonuses: ["跳舞成员 +12% 攻速；最后接近攻击范围时可冲刺（期间闪避提升）", "跳舞成员 +26% 攻速；冲刺强化；所有近战友军 +8% 攻速、+8 移速", "跳舞成员 +45% 攻速；冲刺强化；所有近战友军 +16% 攻速、+16 移速"] },
   aggression: { id: "aggression", name: "攻击性", family: "关系", color: "#ff596f", thresholds: [2, 4, 6], description: "发言要有攻击性：成员直接提高攻击力，也会带动全队火力。", bonuses: ["攻击性成员 +15% 攻击力；全体友军 +5% 攻击力", "攻击性成员 +30% 攻击力；全体友军 +10% 攻击力", "攻击性成员 +55% 攻击力；全体友军 +20% 攻击力"] },
+  timid: {
+    id: "timid",
+    name: "胆小",
+    family: "关系",
+    color: "#9bb0e8",
+    thresholds: [2, 4, 6],
+    description: "胆子小所以更会躲开，跑起来也更利索。",
+    bonuses: [
+      "胆小成员 +10% 闪避、+8 移速",
+      "胆小成员 +18% 闪避、+16 移速；全体友军 +5% 闪避",
+      "胆小成员 +28% 闪避、+26 移速；全体友军 +12% 闪避",
+    ],
+  },
 };
 
 export const traitLevelForCount = (trait: TraitDefinition, count: number) =>
@@ -318,7 +332,7 @@ const COMBAT_PROFILES: Record<
   // engage：突进，满能量即放
   rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82, abilityCastTiming: "engage" },
   guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80, abilityCastTiming: "engage" },
-  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 98, abilityCastTiming: "engage" },
+  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 106, abilityCastTiming: "engage" },
   biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64, abilityCastTiming: "engage" },
   youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88, abilityCastTiming: "engage" },
   akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96, abilityCastTiming: "engage" },
@@ -497,7 +511,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ffabb5",
     tier: 1,
     cost: 1,
-    traits: ["dance", "aggression"],
+    traits: ["dance", "aggression", "timid"],
     hp: 244,
     attack: 17,
     armor: 24,
@@ -699,7 +713,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#f7d77c",
     tier: 3,
     cost: 3,
-    traits: ["mystic", "wild"],
+    traits: ["mystic", "wild", "timid"],
     hp: 188,
     attack: 27,
     armor: 11,
@@ -811,15 +825,15 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#e8a8f4",
     tier: 4,
     cost: 4,
-    traits: ["assassin", "aggression"],
-    hp: 226,
+    traits: ["assassin", "aggression", "dance", "timid"],
+    hp: 252,
     attack: 39,
-    armor: 15,
+    armor: 19,
     range: 50,
     attackInterval: 0.74,
-    moveSpeed: 94,
-    abilityName: "小猫拳",
-    abilityDescription: "切入最远敌人，连续打出三记小猫拳并恢复造成伤害的生命。",
+    moveSpeed: 102,
+    abilityName: "猫拳三连",
+    abilityDescription: "闪现到最远敌人身后，与其一同推开一段距离，打出三记猫拳并击晕目标。",
     portrait: "/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png",
     portraitFocus: "top",
     shop: true,
@@ -874,7 +888,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   // 公开成员的角色化战斗设计；无可核验梗时采用公开人设或名字意象。
   nori: unit({
     id: "nori", name: "能能弄你", title: "能能Nori · 弹幕射手", glyph: "能", color: "#526a9e", accent: "#9bb8ff", tier: 1, cost: 1,
-    traits: ["ranger", "host"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
+    traits: ["ranger", "host", "timid"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
     abilityName: "苹果派", abilityDescription: "发射 8 枚低伤害苹果派子弹。",
     portrait: "/images/livers/nori.jpg", portraitFocus: "top", shop: true,
   }),
@@ -903,13 +917,13 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   tiandou: unit({
     id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 舞台支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
-    traits: ["mystic", "dance"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
+    traits: ["mystic", "dance", "timid"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
     abilityName: "甜点转圈", abilityDescription: "为生命最低的两名友军回复生命，并提升她们短暂移速。",
     portrait: "/images/livers/tiandou.jpg", portraitFocus: "top", shop: true,
   }),
   youyi: unit({
     id: "youyi", name: "又一·叛逆舞步", title: "四禧丸子 · 突进舞者", glyph: "又", color: "#84536f", accent: "#f0add2", tier: 3, cost: 3,
-    traits: ["assassin", "dance"], hp: 212, attack: 31, armor: 14, range: 50, attackInterval: 0.86, moveSpeed: 82,
+    traits: ["assassin", "dance", "timid"], hp: 212, attack: 31, armor: 14, range: 50, attackInterval: 0.86, moveSpeed: 82,
     abilityName: "叛逆转场", abilityDescription: "跃向最远敌人，连续踢击两次并短暂眩晕。",
     portrait: "/images/livers/youyi.jpg", portraitFocus: "top", shop: true,
   }),
@@ -921,7 +935,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   lovely: unit({
     id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
-    traits: ["assassin", "host", "dance"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
+    traits: ["assassin", "host", "dance", "timid"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
     abilityName: "元气冲场", abilityDescription: "跃入敌人最密集处横扫；每命中一名敌人，都会提升自身攻击速度。",
     portrait: "/images/livers/lovely.webp", portraitFocus: "top", shop: true,
   }),

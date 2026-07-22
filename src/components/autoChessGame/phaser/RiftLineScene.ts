@@ -36,18 +36,27 @@ import {
 import {
   COMPACT_RESULT_LAYOUT,
   COMPACT_TRAIT_STRIP,
+  MOBILE_BENCH_PANEL,
+  MOBILE_BOARD_PANEL,
+  MOBILE_SHOP_PANEL,
+  MOBILE_TRAIT_STRIP,
   PREPARATION_BENCH_PANEL,
   PREPARATION_BOARD_PANEL,
   PREPARATION_SHOP_PANEL,
   WIDE_RESULT_LAYOUT,
   WIDE_TRAIT_STRIP,
   MAX_TEXT_RESOLUTION,
+  MOBILE_TOUCH_TARGET,
   WORLD_HEIGHT,
   WORLD_WIDTH,
   benchSlot,
   boardSlot,
   compactBenchSlot,
   compactBoardSlot,
+  isMobileProfile,
+  logicalSizeFor,
+  mobileBenchSlot,
+  mobileBoardSlot,
   occupiedSlotLayout,
   profileFor,
   titleLayoutFor,
@@ -137,6 +146,8 @@ export class RiftLineScene extends Phaser.Scene {
 
   private pinnedTooltip: UnitId | null = null;
 
+  private mobilePage = 0;
+
   private textResolution = 2;
 
   private projectileViews = new Map<Projectile, Phaser.GameObjects.Container>();
@@ -182,6 +193,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   create() {
+    this.profile = this.profileForViewport();
     this.syncLogicalCamera();
     this.updateQuality();
     createFallbackTextures(this);
@@ -232,28 +244,39 @@ export class RiftLineScene extends Phaser.Scene {
   private preventContextMenu = (event: Event) => event.preventDefault();
 
   private handleResize() {
+    this.profile = this.profileForViewport();
     this.syncLogicalCamera();
     this.updateQuality();
-    this.profile = this.profileForViewport();
     this.rebuild();
+  }
+
+  private logicalSize() {
+    return logicalSizeFor(this.profile);
   }
 
   private syncLogicalCamera() {
     const { width, height } = this.scale.baseSize;
-    const scale = Math.max(1, Math.min(width / WORLD_WIDTH, height / WORLD_HEIGHT));
+    const logical = this.logicalSize();
+    const scale = Math.max(1, Math.min(width / logical.width, height / logical.height));
     this.cameras.main
       .setViewport(0, 0, width, height)
       .setZoom(scale)
-      .centerOn(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+      .centerOn(logical.width / 2, logical.height / 2);
   }
 
   private profileForViewport() {
     const { width, height } = this.scale.parentSize;
-    return profileFor(width || this.scale.displaySize.width, height || this.scale.displaySize.height);
+    const coarsePointer = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+    return profileFor(width || this.scale.displaySize.width, height || this.scale.displaySize.height, coarsePointer);
   }
 
   private renderScale() {
-    return Math.max(1, Math.min(this.scale.baseSize.width / WORLD_WIDTH, this.scale.baseSize.height / WORLD_HEIGHT));
+    const logical = this.logicalSize();
+    return Math.max(1, Math.min(this.scale.baseSize.width / logical.width, this.scale.baseSize.height / logical.height));
+  }
+
+  private isMobile() {
+    return isMobileProfile(this.profile);
   }
 
   private logicalPointer(pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 {
@@ -261,11 +284,17 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private isCompact() {
-    return this.profile === "compact";
+    return this.profile !== "wide";
+  }
+
+  private traitStrip() {
+    if (this.isMobile()) return MOBILE_TRAIT_STRIP;
+    return this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
   }
 
   private resetLayers() {
     this.cancelDrag();
+    [this.phaseLayer, this.entityLayer, this.effectsLayer, this.overlayLayer, this.tooltipLayer].forEach((layer) => layer.setPosition(0, 0).setScale(1));
     this.phaseLayer.removeAll(true);
     this.entityLayer.removeAll(true);
     this.effectsLayer.removeAll(true);
@@ -296,6 +325,9 @@ export class RiftLineScene extends Phaser.Scene {
     this.syncLogicalCamera();
     this.resetLayers();
     this.phase = this.bridge.engine.state.phase;
+    if (this.isMobile() && this.phase === "battle") {
+      [this.phaseLayer, this.entityLayer, this.effectsLayer, this.overlayLayer, this.tooltipLayer].forEach((layer) => layer.setPosition(16, 124).setScale(0.4));
+    }
     this.drawHeader();
     if (this.phase === "title") this.drawTitle();
     if (this.phase === "preparation") this.drawPreparation();
@@ -316,13 +348,14 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private drawBackdrop() {
+    const logical = this.logicalSize();
     const graphics = this.add.graphics().setDepth(DEPTH.backdrop);
     graphics.fillGradientStyle(0x07121d, 0x0b1825, 0x160f20, 0x0b1825, 1);
-    graphics.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-    this.add.image(WORLD_WIDTH / 2, 294, TITLE_GLOW_TEXTURE).setDepth(DEPTH.backdrop + 1).setDisplaySize(930, 540).setAlpha(0.72);
+    graphics.fillRect(0, 0, logical.width, logical.height);
+    this.add.image(logical.width / 2, this.isMobile() ? 430 : 294, TITLE_GLOW_TEXTURE).setDepth(DEPTH.backdrop + 1).setDisplaySize(this.isMobile() ? 460 : 930, this.isMobile() ? 700 : 540).setAlpha(0.72);
     for (let index = 0; index < 56; index += 1) {
-      const x = (index * 193 + 47) % WORLD_WIDTH;
-      const y = (index * 83 + 29) % WORLD_HEIGHT;
+      const x = (index * 193 + 47) % logical.width;
+      const y = (index * 83 + 29) % logical.height;
       const star = this.add.circle(x, y, index % 5 === 0 ? 2 : 1, index % 3 ? TITLE.starCyan : TITLE.starLilac, 0.16 + (index % 4) * 0.05).setDepth(DEPTH.backdrop + 2);
       this.tweens.add({
         targets: star,
@@ -392,9 +425,10 @@ export class RiftLineScene extends Phaser.Scene {
     width: number,
     height: number,
     label: string,
-    action: GameAction,
+    action: GameAction | undefined,
     options: ButtonOptions = {},
     depth = DEPTH.ui,
+    onPress?: () => void,
   ) {
     const { tone = "neutral", enabled = true, hoverLabel, selected = false, secondary } = options;
     const palette = BUTTONS[enabled ? tone : "disabled"];
@@ -417,7 +451,10 @@ export class RiftLineScene extends Phaser.Scene {
     draw();
     const zone = this.add.zone(width / 2, height / 2, width, height).setInteractive({ useHandCursor: enabled });
     if (enabled) {
-      zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch(action));
+      zone.on(Phaser.Input.Events.POINTER_DOWN, () => {
+        if (onPress) onPress();
+        else if (action) this.dispatch(action);
+      });
       zone.on(Phaser.Input.Events.POINTER_OVER, () => draw(true));
       zone.on(Phaser.Input.Events.POINTER_OUT, () => draw(false));
     }
@@ -428,6 +465,27 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawHeader() {
     const { state, boardCap, boardCount } = this.bridge.engine;
+    if (this.isMobile()) {
+      const graphics = this.add.graphics();
+      graphics.fillStyle(0x050c14, 0.96).fillRect(0, 0, 480, 104);
+      graphics.lineStyle(1, 0x39627a, 0.55).lineBetween(0, 103, 480, 103);
+      this.headerLayer.add(graphics);
+      this.headerLayer.add(this.text(16, 14, "裂隙阵线", 21, "#f1f8ff", { fontStyle: "bold" }));
+      if (state.phase === "title") {
+        this.headerLayer.add(this.text(464, 21, `最高 ${state.bestScore.toLocaleString()}`, 12, "#b5cedd", { fontStyle: "bold" }).setOrigin(1, 0.5));
+        return;
+      }
+      const label = state.round > CAMPAIGN_ROUNDS ? `∞ 第 ${state.round} 层` : `第 ${state.round}/${CAMPAIGN_ROUNDS} 战`;
+      this.headerLayer.add(this.text(16, 49, label, 14, "#d8efff", { fontStyle: "bold" }));
+      this.headerLayer.add(this.text(156, 49, `核心 ${state.hp}/${state.maxHp}`, 14, "#ff9caf", { fontStyle: "bold" }));
+      this.headerLayer.add(this.text(300, 49, `金币 ${state.gold}`, 14, COLORS.gold, { fontStyle: "bold" }));
+      this.headerLayer.add(this.text(464, 49, `上阵 ${boardCount}/${boardCap}`, 14, "#8ce8bd", { fontStyle: "bold" }).setOrigin(1, 0.5));
+      const health = this.add.graphics();
+      health.fillStyle(0x1a2b38, 1).fillRoundedRect(16, 76, 448, 12, 6);
+      health.fillStyle(0xff718b, 1).fillRoundedRect(16, 76, 448 * (state.hp / state.maxHp), 12, 6);
+      this.headerLayer.add(health);
+      return;
+    }
     const graphics = this.add.graphics();
     graphics.fillStyle(0x050c14, 0.92);
     graphics.fillRect(0, 0, WORLD_WIDTH, 78);
@@ -455,6 +513,10 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private drawTitle() {
+    if (this.isMobile()) {
+      this.drawMobileTitle();
+      return;
+    }
     const { state } = this.bridge.engine;
     const layout = titleLayoutFor(this.profile);
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住八次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
@@ -512,6 +574,41 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.controlsY, "操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏", 10, TITLE.controls).setOrigin(0.5));
   }
 
+  private drawMobileTitle() {
+    const { state } = this.bridge.engine;
+    const choiceCount = state.starterChoices.length;
+    if (!choiceCount) return;
+    const index = Phaser.Math.Clamp(this.mobilePage, 0, choiceCount - 1);
+    const starter = STARTERS.find((item) => item.id === state.starterChoices[index]);
+    if (!starter) return;
+    const accent = Phaser.Display.Color.HexStringToColor(starter.color).color;
+    const card = this.add.container(16, 212);
+    card.add(this.panel(0, 0, 448, 418, 0x112331, 0.98, accent));
+    card.add(this.createPortrait(starter.unit, 224, 70, 48));
+    card.add(this.text(224, 136, starter.subtitle, 15, starter.color, { fontStyle: "bold" }).setOrigin(0.5));
+    card.add(this.text(224, 170, starter.name, 26, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5));
+    const description = this.boundedText(starter.description, 364, 3, 16, TITLE.description, { align: "center", lineSpacing: 6 });
+    description.setPosition(224, 210).setOrigin(0.5, 0);
+    card.add(description);
+    this.phaseLayer.add(this.text(240, 132, "选择开局协议", 17, TITLE.eyebrow, { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(this.text(240, 168, "为手机操作优化的纵向布局", 12, TITLE.summary).setOrigin(0.5));
+    this.button(54, 522, 372, MOBILE_TOUCH_TARGET, "选择协议并开始", { type: "starter", id: starter.id }, { tone: "confirm" });
+    card.add(this.text(224, 356, `${index + 1} / ${choiceCount}`, 14, "#a8c0cf", { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(card);
+    if (choiceCount > 1) {
+      this.button(32, 644, 188, MOBILE_TOUCH_TARGET, "上一项", undefined, { tone: "neutral", enabled: index > 0, secondary: "浏览" }, DEPTH.board, () => {
+        this.mobilePage = Math.max(0, this.mobilePage - 1);
+        this.rebuild();
+      });
+      this.button(260, 644, 188, MOBILE_TOUCH_TARGET, "下一项", undefined, { tone: "neutral", enabled: index < choiceCount - 1, secondary: "浏览" }, DEPTH.board, () => {
+        this.mobilePage = Math.min(choiceCount - 1, this.mobilePage + 1);
+        this.rebuild();
+      });
+    }
+    this.phaseLayer.add(this.text(240, 734, `战术种子 · ${String(state.seed % 100000).padStart(5, "0")}`, 12, TITLE.seed).setOrigin(0.5));
+    this.phaseLayer.add(this.text(240, 766, "点击卡片或按钮选择；部署棋子后可开始战斗", 12, TITLE.controls).setOrigin(0.5));
+  }
+
   private drawPreparationPanel(x: number, y: number, width: number, height: number) {
     const graphics = this.add.graphics();
     graphics.fillGradientStyle(0x132736, 0x132736, 0x101929, 0x101929, 0.94);
@@ -521,6 +618,10 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private drawPreparation() {
+    if (this.isMobile()) {
+      this.drawMobilePreparation();
+      return;
+    }
     const { engine } = this.bridge;
     const { state, currentWave } = engine;
     const compact = this.isCompact();
@@ -577,8 +678,25 @@ export class RiftLineScene extends Phaser.Scene {
     this.drawPreparationActions(compact);
   }
 
+  private drawMobilePreparation() {
+    const { engine } = this.bridge;
+    const { state, currentWave } = engine;
+    this.phaseLayer.add(this.drawPreparationPanel(MOBILE_BOARD_PANEL.x, MOBILE_BOARD_PANEL.y, MOBILE_BOARD_PANEL.width, MOBILE_BOARD_PANEL.height));
+    this.phaseLayer.add(this.drawPreparationPanel(MOBILE_BENCH_PANEL.x, MOBILE_BENCH_PANEL.y, MOBILE_BENCH_PANEL.width, MOBILE_BENCH_PANEL.height));
+    const waveLabel = currentWave.tag === "boss" ? "BOSS" : currentWave.tag === "elite" ? "ELITE" : `WAVE ${currentWave.round}`;
+    const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
+    this.phaseLayer.add(this.text(16, 108, `${waveLabel} · ${this.truncateText(currentWave.name, 292, 14, { fontStyle: "bold" })}`, 14, waveColor, { fontStyle: "bold" }));
+    this.drawTraits();
+    this.phaseLayer.add(this.text(24, 178, `部署区 · ${engine.boardCount}/${engine.boardCap}`, 12, "#8ce8bd", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(24, 434, `备战席 · ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3", { fontStyle: "bold" }));
+    state.board.forEach((unit, index) => this.drawSlot("board", index, unit, true));
+    state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, true));
+    this.drawMobileShop();
+    this.drawMobilePreparationActions();
+  }
+
   private drawTraits() {
-    const strip = this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
+    const strip = this.traitStrip();
     const traits = Object.entries(this.bridge.engine.getTraitCounts())
       .filter(([, count]) => count > 0)
       .map(([id, count]) => {
@@ -654,7 +772,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private updateTraitViewport() {
-    const strip = this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
+    const strip = this.traitStrip();
     this.traitContent?.setX(strip.x + this.traitOffset);
     this.traitFade?.destroy();
     this.traitFade = null;
@@ -667,7 +785,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private updateTraitTooltip(pointer: Phaser.Input.Pointer) {
-    const strip = this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
+    const strip = this.traitStrip();
     const trait = this.traitEntryAt(this.traitEntries, 6, strip, this.logicalPointer(pointer).x);
     if (trait) this.showTraitTooltip(trait.trait.id, pointer);
   }
@@ -738,6 +856,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private slotRect(location: UnitLocation, compact = this.isCompact()) {
+    if (this.isMobile()) return location.zone === "board" ? mobileBoardSlot(location.index) : mobileBenchSlot(location.index);
     if (compact) return location.zone === "board" ? compactBoardSlot(location.index) : compactBenchSlot(location.index);
     return location.zone === "board" ? boardSlot(location.index) : benchSlot(location.index);
   }
@@ -798,7 +917,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private handlePointerWheel(pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _deltaX: number, deltaY: number) {
     if (this.phase !== "preparation" || this.traitMinimumOffset === 0) return;
-    const strip = this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
+    const strip = this.traitStrip();
     const logical = this.logicalPointer(pointer);
     if (logical.x < strip.x || logical.x > strip.x + strip.width || logical.y < strip.y || logical.y > strip.y + strip.height) return;
     this.traitOffset = Phaser.Math.Clamp(this.traitOffset - deltaY * 0.35, this.traitMinimumOffset, 0);
@@ -859,7 +978,9 @@ export class RiftLineScene extends Phaser.Scene {
 
   private createShopTraitTags(unitId: UnitId, x: number, y: number, maxX: number, affordable: boolean, compact = false) {
     const container = this.add.container(x, y);
-    const fontSize = compact ? 7 : 8;
+    const fontSize = this.isMobile() ? 11 : compact ? 10 : 10;
+    const tagHeight = this.isMobile() ? 24 : compact ? 20 : 21;
+    const horizontalPadding = this.isMobile() ? 18 : compact ? 14 : 16;
     let cursor = 0;
     UNIT_DEFS[unitId].traits.forEach((traitId) => {
       const { [traitId]: trait } = TRAITS;
@@ -867,17 +988,17 @@ export class RiftLineScene extends Phaser.Scene {
       const completes = this.traitActivatesAfterPurchase(unitId, traitId);
       const label = trait.name;
       const labelText = this.text(0, 0, label, fontSize, "#ffffff", { fontStyle: "bold" });
-      const width = Math.ceil(labelText.width) + (compact ? 10 : 14);
+      const width = Math.ceil(labelText.width) + horizontalPadding;
       labelText.destroy();
       if (x + cursor + width > maxX) return;
       const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
       const { active } = status;
       const graphic = this.add.graphics();
       graphic.fillStyle(active || (completes && affordable) ? color : 0x142735, active ? 0.22 : completes && affordable ? 0.38 : 0.9);
-      graphic.fillRoundedRect(cursor, 0, width, compact ? 15 : 17, 8);
+      graphic.fillRoundedRect(cursor, 0, width, tagHeight, tagHeight / 2);
       graphic.lineStyle(completes && affordable ? 1.5 : 1, active || (completes && affordable) ? color : 0x395467, 1);
-      graphic.strokeRoundedRect(cursor, 0, width, compact ? 15 : 17, 8);
-      const text = this.text(cursor + width / 2, (compact ? 15 : 17) / 2, label, fontSize, active || (completes && affordable) ? "#f4fbff" : "#7890a1", { fontStyle: "bold" }).setOrigin(0.5);
+      graphic.strokeRoundedRect(cursor, 0, width, tagHeight, tagHeight / 2);
+      const text = this.text(cursor + width / 2, tagHeight / 2, label, fontSize, active || (completes && affordable) ? "#f4fbff" : "#b3c7d1", { fontStyle: "bold" }).setOrigin(0.5);
       container.add([graphic, text]);
       cursor += width + 4;
     });
@@ -961,9 +1082,9 @@ export class RiftLineScene extends Phaser.Scene {
         item.add(this.createPortrait(unitId, 31, 34, 20).setAlpha(affordable ? 1 : 0.48));
         const role = def.title.includes(" · ") ? def.title.split(" · ").at(-1) || def.title : def.title;
         item.add(this.text(62, 11, this.truncateText(def.name, hasOwned ? 82 : 138, 13, { fontStyle: "bold" }), 13, affordable ? "#edf7ff" : "#617888", { fontStyle: "bold" }));
-        item.add(this.text(62, 29, this.truncateText(role, 150, 9), 9, affordable ? "#94acbc" : "#526b7b"));
+        item.add(this.text(62, 29, this.truncateText(role, 158, 12), 12, affordable ? "#c3dbe7" : "#a1b8c4", { fontStyle: "bold" }));
         item.add(this.text(245, 22, `${def.cost}`, 22, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
-        item.add(this.createShopTraitTags(unitId, 62, 46, 224, affordable));
+        item.add(this.createShopTraitTags(unitId, 62, 47, 242, affordable));
         const zone = this.add.zone(135, 34, 270, 68).setInteractive({ useHandCursor: affordable });
         const action = { type: "shop", index } satisfies GameAction;
         zone.setData("action", action);
@@ -1058,6 +1179,53 @@ export class RiftLineScene extends Phaser.Scene {
       }
       this.phaseLayer.add(item);
     });
+  }
+
+  private drawMobileShop() {
+    const { state } = this.bridge.engine;
+    this.phaseLayer.add(this.panel(MOBILE_SHOP_PANEL.x, MOBILE_SHOP_PANEL.y, MOBILE_SHOP_PANEL.width, MOBILE_SHOP_PANEL.height, 0x08121c, 0.98, 0x6fbfeb));
+    this.phaseLayer.add(this.text(28, 618, "战术商店 · 左右翻页", 13, "#f1f8ff", { fontStyle: "bold" }));
+    const available = state.shop.map((unitId, index) => ({ unitId, index })).filter((entry) => entry.unitId);
+    if (!available.length) {
+      this.phaseLayer.add(this.text(240, 666, "商店已售罄", 16, "#89a5b5").setOrigin(0.5));
+      return;
+    }
+    const page = Phaser.Math.Clamp(this.mobilePage, 0, available.length - 1);
+    const { unitId, index } = available[page];
+    if (!unitId) return;
+    const def = UNIT_DEFS[unitId];
+    const affordable = this.canBuyShopUnit(unitId);
+    const role = def.title.includes(" · ") ? def.title.split(" · ").at(-1) || def.title : def.title;
+    this.phaseLayer.add(this.createPortrait(unitId, 56, 669, 29).setAlpha(affordable ? 1 : 0.56));
+    this.phaseLayer.add(this.text(98, 638, this.truncateText(def.name, 252, 17, { fontStyle: "bold" }), 17, affordable ? "#edf7ff" : "#a0b2bc", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(98, 664, this.truncateText(role, 252, 13), 13, affordable ? "#c3dbe7" : "#9ab0bc"));
+    this.phaseLayer.add(this.text(412, 650, `${def.cost}`, 28, affordable ? COLORS.gold : "#a0adb3", { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(this.createShopTraitTags(unitId, 98, 684, 416, affordable, true));
+    const cardZone = this.add.zone(240, 665, 348, 90).setInteractive({ useHandCursor: affordable });
+    if (affordable) cardZone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch({ type: "shop", index }));
+    this.phaseLayer.add(cardZone);
+    this.button(24, 734, 92, MOBILE_TOUCH_TARGET, "上一张", undefined, { tone: "neutral", enabled: page > 0 }, DEPTH.board, () => {
+      this.mobilePage = Math.max(0, page - 1);
+      this.rebuild();
+    });
+    this.button(132, 734, 216, MOBILE_TOUCH_TARGET, `购买 · ${page + 1}/${available.length}`, { type: "shop", index }, { tone: "economic", enabled: affordable }, DEPTH.board);
+    this.button(364, 734, 92, MOBILE_TOUCH_TARGET, "下一张", undefined, { tone: "neutral", enabled: page < available.length - 1 }, DEPTH.board, () => {
+      this.mobilePage = Math.min(available.length - 1, page + 1);
+      this.rebuild();
+    });
+  }
+
+  private drawMobilePreparationActions() {
+    const { state, isMaxPlayerLevel, upgradeCost, boardCount } = this.bridge.engine;
+    const refund = this.selectedRefund();
+    const canBuyXp = !isMaxPlayerLevel && state.gold >= (upgradeCost ?? Number.POSITIVE_INFINITY);
+    this.button(16, 800, 448, MOBILE_TOUCH_TARGET, "开始战斗", { type: "battle" }, { tone: "confirm", enabled: boardCount > 0 });
+    // Compact portrait hosts may crop this final row; it is deliberately positioned
+    // below the shop and available when the browser gives the game full height.
+    this.button(16, 866, 210, MOBILE_TOUCH_TARGET, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, { enabled: canBuyXp });
+    this.button(254, 866, 210, MOBILE_TOUCH_TARGET, state.shopLocked ? "已锁定" : "锁定商店", { type: "lock" }, { tone: "lock", selected: state.shopLocked });
+    this.button(16, 932, 210, MOBILE_TOUCH_TARGET, state.freeRerollCharges > 0 ? "刷新 · 免费" : "刷新 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() });
+    this.button(254, 932, 210, MOBILE_TOUCH_TARGET, state.selected ? `出售 +${refund}` : "选择后出售", { type: "sell" }, { tone: "danger", enabled: Boolean(state.selected) });
   }
 
   private selectedRefund() {

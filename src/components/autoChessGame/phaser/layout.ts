@@ -1,6 +1,9 @@
 export const WORLD_WIDTH = 1120;
 export const WORLD_HEIGHT = 720;
+export const MOBILE_WORLD_WIDTH = 480;
+export const MOBILE_WORLD_HEIGHT = 1000;
 export const TOOLBAR_HEIGHT = 42;
+export const MOBILE_TOUCH_TARGET = 54;
 
 /** Prevent a fullscreen, high-DPI canvas from allocating an unbounded framebuffer. */
 export const MAX_RENDER_PIXELS = 8_000_000;
@@ -14,28 +17,44 @@ export type RenderSize = {
   devicePixelRatio: number;
 };
 
+/**
+ * Size the physical Phaser drawing surface from its actual CSS host. The scene
+ * owns the logical aspect ratio, so portrait hosts must not inherit the desktop
+ * 1120×720 backing-buffer ratio.
+ */
 export const renderSizeFor = (displayWidth: number, displayHeight: number, devicePixelRatio: number): RenderSize => {
   const requestedDensity = Math.max(1, Math.min(MAX_DEVICE_PIXEL_RATIO, devicePixelRatio || 1));
   const displayPixels = Math.max(1, displayWidth * displayHeight);
   const budgetDensity = Math.sqrt(MAX_RENDER_PIXELS / displayPixels);
   const density = Math.max(1, Math.min(requestedDensity, budgetDensity));
-  const renderScale = Math.max(1, (displayWidth * density) / WORLD_WIDTH);
 
   return {
-    width: Math.round(WORLD_WIDTH * renderScale),
-    height: Math.round(WORLD_HEIGHT * renderScale),
-    renderScale,
+    width: Math.max(1, Math.round(displayWidth * density)),
+    height: Math.max(1, Math.round(displayHeight * density)),
+    renderScale: density,
     devicePixelRatio: density,
   };
 };
 
-export type LayoutProfile = "wide" | "compact";
+export type LayoutProfile = "wide" | "compact" | "mobile";
+
+export const logicalSizeFor = (profile: LayoutProfile) => {
+  return profile === "mobile"
+    ? { width: MOBILE_WORLD_WIDTH, height: MOBILE_WORLD_HEIGHT }
+    : { width: WORLD_WIDTH, height: WORLD_HEIGHT };
+};
+
+export const isMobileProfile = (profile: LayoutProfile) => profile === "mobile";
 
 export const PREPARATION_BOARD_PANEL = { x: 26, y: 98, width: 752, height: 430 };
 export const PREPARATION_SHOP_PANEL = { x: 794, y: 98, width: 300, height: 500 };
 export const PREPARATION_BENCH_PANEL = { x: 26, y: 548, width: 752, height: 148 };
 export const WIDE_TRAIT_STRIP = { x: 48, y: 190, width: 700, height: 25 };
 export const COMPACT_TRAIT_STRIP = { x: 48, y: 194, width: 1028, height: 25 };
+export const MOBILE_TRAIT_STRIP = { x: 16, y: 126, width: 448, height: 32 };
+export const MOBILE_BOARD_PANEL = { x: 16, y: 172, width: 448, height: 244 };
+export const MOBILE_BENCH_PANEL = { x: 16, y: 428, width: 448, height: 168 };
+export const MOBILE_SHOP_PANEL = { x: 16, y: 608, width: 448, height: 112 };
 
 export const occupiedSlotLayout = (
   rect: { x: number; y: number; width: number; height: number },
@@ -129,6 +148,22 @@ export const compactBenchSlot = (index: number) => ({
   height: 60,
 });
 
+/** Six-by-four board keeps every portrait target at least 54 CSS px on a 390 px phone. */
+export const mobileBoardSlot = (index: number) => ({
+  x: 24 + (index % 6) * 73,
+  y: 190 + Math.floor(index / 6) * 54,
+  width: 66,
+  height: 48,
+});
+
+/** The nine-slot bench is a 3×3 grid rather than a desktop-width row. */
+export const mobileBenchSlot = (index: number) => ({
+  x: 24 + (index % 3) * 146,
+  y: 442 + Math.floor(index / 3) * 50,
+  width: 136,
+  height: 44,
+});
+
 export type TitleLayout = {
   eyebrowY: number;
   titleY: number;
@@ -193,7 +228,8 @@ export const starterCardRect = (index: number, profile: LayoutProfile) => {
   return { x: layout.cardXs[index] ?? layout.cardXs[0], y: layout.cardY, width: layout.cardWidth, height: layout.cardHeight };
 };
 
-export const profileFor = (width: number, height: number): LayoutProfile => {
+export const profileFor = (width: number, height: number, coarsePointer = false): LayoutProfile => {
+  if (height > width * 1.08 && (width < 700 || coarsePointer)) return "mobile";
   if (width < 720 || height > width * 1.15) return "compact";
   return "wide";
 };

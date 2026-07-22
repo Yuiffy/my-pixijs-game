@@ -10,7 +10,7 @@ import {
 import Codex from "./Codex";
 import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
-import { TOOLBAR_HEIGHT, WORLD_HEIGHT, WORLD_WIDTH, renderSizeFor } from "./phaser/layout";
+import { TOOLBAR_HEIGHT, logicalSizeFor, profileFor, renderSizeFor } from "./phaser/layout";
 
 declare global {
   interface Window {
@@ -19,7 +19,7 @@ declare global {
   }
 }
 
-const FONT = '"Microsoft YaHei", "PingFang SC", sans-serif';
+const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 
 export default function AutoChessGame() {
   const gameHostRef = useRef<HTMLDivElement>(null);
@@ -104,8 +104,15 @@ export default function AutoChessGame() {
         game.scale.setGameSize(target.width, target.height);
       }
 
-      game.canvas.dataset.logicalWidth = String(WORLD_WIDTH);
-      game.canvas.dataset.logicalHeight = String(WORLD_HEIGHT);
+      const profile = profileFor(
+        game.scale.displaySize.width,
+        game.scale.displaySize.height,
+        window.matchMedia?.("(pointer: coarse)").matches ?? false,
+      );
+      const logical = logicalSizeFor(profile);
+      game.canvas.dataset.layoutProfile = profile;
+      game.canvas.dataset.logicalWidth = String(logical.width);
+      game.canvas.dataset.logicalHeight = String(logical.height);
       game.canvas.dataset.renderScale = target.renderScale.toFixed(3);
       game.canvas.dataset.devicePixelRatio = target.devicePixelRatio.toFixed(3);
     };
@@ -113,8 +120,14 @@ export default function AutoChessGame() {
       if (!resizeFrame) resizeFrame = window.requestAnimationFrame(syncGameSize);
     };
     const boot = async () => {
-      const Phaser = (await import("phaser")).default;
+      try {
+        await document.fonts?.load(`400 16px ${FONT}`);
+        await document.fonts?.load(`700 16px ${FONT}`);
+      } catch {
+        // System CJK fallbacks remain usable when a browser cannot report font readiness.
+      }
       if (disposed || !gameHostRef.current) return;
+      const Phaser = (await import("phaser")).default;
       const game = new Phaser.Game(createGameConfig(gameHostRef.current, bridge));
       gameRef.current = game;
       game.canvas.setAttribute("data-game-canvas", "rift-line");

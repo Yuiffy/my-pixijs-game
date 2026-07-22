@@ -51,7 +51,11 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   const pointForLogical = async (x, y) => {
     const box = await canvas.boundingBox();
-    return { x: box.x + (x / 1120) * box.width, y: box.y + (y / 720) * box.height };
+    const logical = await canvas.evaluate((element) => ({
+      width: Number(element.dataset.logicalWidth || 1120),
+      height: Number(element.dataset.logicalHeight || 720),
+    }));
+    return { x: box.x + (x / logical.width) * box.width, y: box.y + (y / logical.height) * box.height };
   };
   const clickLogical = async (x, y) => {
     const point = await pointForLogical(x, y);
@@ -78,9 +82,9 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(300);
   const titleMobileBox = await canvas.boundingBox();
-  if (!titleMobileBox || Math.abs(titleMobileBox.width / titleMobileBox.height - 1120 / 720) > 0.01) throw new Error('标题移动端画布未保持逻辑世界比例');
+  if (!titleMobileBox || titleMobileBox.width < 380 || titleMobileBox.height < 500) throw new Error(`标题移动端画布未填满竖屏游戏宿主: ${JSON.stringify(titleMobileBox)}`);
   await page.screenshot({ path: `${artifactDirectory}/autochess-title-mobile.png` });
-  await clickLogical(205, 396);
+  await clickLogical(240, 549);
   let prep = await state();
   if (prep.phase !== 'preparation') throw new Error(`紧凑标题协议选择未进入备战: ${JSON.stringify(prep)}`);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -144,7 +148,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(300);
   const resultMobileBox = await canvas.boundingBox();
-  if (!resultMobileBox || Math.abs(resultMobileBox.width / resultMobileBox.height - 1120 / 720) > 0.01) throw new Error('结算移动端画布未保持逻辑世界比例');
+  if (!resultMobileBox || resultMobileBox.width < 380 || resultMobileBox.height < 700) throw new Error('结算移动端画布未填满竖屏游戏宿主');
   await page.screenshot({ path: `${artifactDirectory}/autochess-result-mobile.png` });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(300);
@@ -198,7 +202,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.waitForTimeout(500);
   const fullscreen = await page.evaluate(() => Boolean(document.fullscreenElement));
   const afterFullscreen = await canvas.boundingBox();
-  const fullscreenResolution = await canvas.evaluate((element) => ({ width: element.width, height: element.height, renderScale: element.dataset.renderScale, devicePixelRatio: element.dataset.devicePixelRatio }));
+  const fullscreenResolution = await canvas.evaluate((element) => ({ width: element.width, height: element.height, renderScale: element.dataset.renderScale, devicePixelRatio: element.dataset.devicePixelRatio, layoutProfile: element.dataset.layoutProfile }));
   const gameHost = await canvas.evaluate((element) => {
     const host = element.parentElement?.getBoundingClientRect();
     return host && { x: host.x, y: host.y, width: host.width, height: host.height };
@@ -207,7 +211,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (afterFullscreen.x < gameHost.x - 1 || afterFullscreen.y < gameHost.y - 1 || afterFullscreen.x + afterFullscreen.width > gameHost.x + gameHost.width + 1 || afterFullscreen.y + afterFullscreen.height > gameHost.y + gameHost.height + 1) {
     throw new Error('全屏画布超出了工具栏后的游戏宿主');
   }
-  if (Math.abs(fullscreenResolution.width / fullscreenResolution.height - 1120 / 720) > 0.01) throw new Error('全屏 backing canvas 未保持逻辑世界比例');
+  if (fullscreenResolution.layoutProfile !== 'wide') throw new Error(`全屏未保留 wide 桌面布局: ${JSON.stringify(fullscreenResolution)}`);
   if (fullscreenResolution.width < afterFullscreen.width || fullscreenResolution.height < afterFullscreen.height) throw new Error('全屏 backing canvas 未随显示尺寸同步');
   if (fullscreenResolution.width <= 1120 || fullscreenResolution.height <= 720) throw new Error('2K 全屏 backing canvas 未提升物理分辨率');
   if (fullscreenResolution.width * fullscreenResolution.height > 8_000_000) throw new Error('全屏 backing canvas 超过像素预算');
@@ -216,9 +220,18 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(300);
   const mobileBox = await canvas.boundingBox();
-  const canvasResolution = await canvas.evaluate((element) => ({ width: element.width, height: element.height, renderScale: element.dataset.renderScale, devicePixelRatio: element.dataset.devicePixelRatio }));
+  const canvasResolution = await canvas.evaluate((element) => ({
+    width: element.width,
+    height: element.height,
+    renderScale: element.dataset.renderScale,
+    devicePixelRatio: element.dataset.devicePixelRatio,
+    layoutProfile: element.dataset.layoutProfile,
+    logicalWidth: element.dataset.logicalWidth,
+    logicalHeight: element.dataset.logicalHeight,
+  }));
   const displayAspect = mobileBox.width / mobileBox.height;
-  if (!mobileBox || Math.abs(displayAspect - 1120 / 720) > 0.01) throw new Error('移动端画布未保持逻辑世界比例');
+  if (!mobileBox || mobileBox.width < 380 || mobileBox.height < 700) throw new Error('移动端画布未填满工具栏下方宿主');
+  if (canvasResolution.layoutProfile !== 'mobile' || canvasResolution.logicalWidth !== '480' || canvasResolution.logicalHeight !== '1000') throw new Error(`移动端未进入竖屏 mobile 布局: ${JSON.stringify(canvasResolution)}`);
   await page.screenshot({ path: `${artifactDirectory}/autochess-mobile.png` });
 
   console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, resultRound1SupportMetric: resultRound1Support.battle?.ranking?.metric, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { titleMobileBox, resultMobileBox, beforeFullscreen, afterFullscreen, fullscreenResolution, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));

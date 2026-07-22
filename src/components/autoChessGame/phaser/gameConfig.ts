@@ -24,7 +24,9 @@ export const createGameConfig = (
     windowEvents: true,
   },
   scale: {
-    mode: Phaser.Scale.FIT,
+    // The scene maps a stable logical world through its camera. RESIZE lets the
+    // canvas fill portrait hosts instead of FIT shrinking a 16:10 desktop box.
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     parent,
   },
