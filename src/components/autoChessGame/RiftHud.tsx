@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AutoChessEngine } from "./core/gameEngine";
 import { AUGMENTS, STARTERS, TRAITS, UNIT_DEFS, bookLevelForPlayerLevel, tierOddsForLevel } from "./core/gameData";
 import type { OwnedUnit, RankingMetric, UnitLocation } from "./core/gameTypes";
@@ -46,14 +46,20 @@ export default function RiftHud({ engine, onAction }: Props) {
   const state = engine?.state;
 
   const shopEntries = useMemo(() => state?.shop.map((unitId, index) => ({ unitId, index })).filter((entry) => entry.unitId) ?? [], [state?.shop]);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 700px), (pointer: coarse) and (orientation: portrait)");
+    const sync = () => setIsMobile(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
   if (!engine || !state) return null;
 
   const dispatch = (action: GameAction) => onAction(action);
   const selected = state.selected
     ? (state.selected.zone === "board" ? state.board[state.selected.index] : state.bench[state.selected.index])
     : null;
-  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 700px), (pointer: coarse) and (orientation: portrait)").matches;
-
   const header = (
     <header className="rift-dom-header" style={{ fontFamily: FONT }}>
       <strong>裂隙阵线 <small>RIFT LINE</small></strong>
@@ -80,7 +86,7 @@ export default function RiftHud({ engine, onAction }: Props) {
     return <div className="rift-dom-layer rift-dom-title">{header}<div className="rift-dom-title-body"><p>守住八次冲击。每一次购买，都该改变你的答案。</p><h1>裂 隙 阵 线</h1><h2>选择一项开局协议</h2><div className="rift-dom-choice-grid">{state.starterChoices.map((id, index) => {
       const starter = STARTERS.find((item) => item.id === id);
       if (!starter) return null;
-      return <button key={id} className={`rift-dom-choice ${index === page ? "active" : ""}`} style={{ borderColor: starter.color }} onClick={() => dispatch({ type: "starter", id })}><div className="rift-dom-choice-portrait" style={{ borderColor: starter.color }}><UnitPortrait unitId={starter.unit} size={78} /></div><small style={{ color: starter.color }}>{starter.subtitle}</small><strong>{starter.name}</strong><span>{starter.description}</span><em>选择协议</em></button>;
+      return <button key={id} className={`rift-dom-choice ${isMobile && index === page ? "active" : ""}`} style={{ borderColor: starter.color }} onClick={() => dispatch({ type: "starter", id })}><div className="rift-dom-choice-portrait" style={{ borderColor: starter.color }}><UnitPortrait unitId={starter.unit} size={78} /></div><small style={{ color: starter.color }}>{starter.subtitle}</small><strong>{starter.name}</strong><span>{starter.description}</span><em>选择协议</em></button>;
     })}</div>{isMobile && <Pager index={page} total={state.starterChoices.length} onPrevious={() => setStarterPage(Math.max(0, page - 1))} onNext={() => setStarterPage(Math.min(state.starterChoices.length - 1, page + 1))} />}</div></div>;
   }
 
@@ -105,7 +111,7 @@ export default function RiftHud({ engine, onAction }: Props) {
   const wave = engine.currentWave;
   const activeTraits = engine.getActiveTraits();
   const odds = tierOddsForLevel(state.playerLevel).map((chance, index) => chance ? `${index + 1}费${chance}%` : "").filter(Boolean).join(" · ");
-  return <div className="rift-dom-layer" style={{ fontFamily: FONT }}>{header}{state.phase === "preparation" && <><div className="rift-dom-stage"><section className="rift-dom-briefing"><div><b className={`rift-dom-wave ${wave.tag}`}>{wave.tag === "boss" ? "BOSS" : wave.tag === "elite" ? "ELITE" : `WAVE ${wave.round}`}</b><h2>{wave.name}</h2><p>{wave.description}</p></div><div className="rift-dom-enemies"><small>敌情预览 · 悬浮查看技能</small><div>{wave.units.slice(0, 7).map((unit, index) => <span key={`${unit.id}-${index}`}><UnitPortrait unitId={unit.id} size={30} /></span>)}</div></div></section><div className="rift-dom-traits rift-dom-stage-traits">{Object.entries(engine.getTraitCounts()).filter(([, count]) => count > 0).map(([id, count]) => { const trait = TRAITS[id as keyof typeof TRAITS]; const status = engine.getTraitStatus(trait.id); const threshold = trait.thresholds.find((value) => value > count) ?? status.maxThreshold; return <span key={id} style={{ borderColor: trait.color, color: status.active ? "#f5fcff" : "#aabdc8" }}>{trait.name} {count}/{threshold}</span>; })}</div><div className="rift-dom-deployment"><span>后方 · 远程与辅助</span><b>6 × 4 自由部署区 · 满级 8 人口</b><span>前线 · 优先接敌 →</span></div><aside className="rift-dom-shop-desktop"><header><strong>战术商店 · {bookLevelForPlayerLevel(state.playerLevel)} 本</strong><small>{engine.isMaxPlayerLevel ? "已满级" : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${engine.upgradeCost} 金币`}</small><em>{odds}</em></header>{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} index={index} engine={engine} onBuy={() => dispatch({ type: "shop", index })} />)}<div className="rift-dom-shop-actions"><button style={actionButton()} onClick={() => dispatch({ type: "buyXp" })}>升本 · {engine.isMaxPlayerLevel ? "已满级" : engine.upgradeCost}</button><button style={actionButton()} onClick={() => dispatch({ type: "lock" })}>{state.shopLocked ? "已锁定" : "锁定商店"}</button><button style={actionButton("economic")} onClick={() => dispatch({ type: "reroll" })}>刷新 · {state.freeRerollCharges ? "免费" : 1}</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></div><footer>{activeTraits.length ? `已激活：${activeTraits.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`).join(" · ")}` : "常规羁绊按 2/4/6；关系羁绊按图标说明"}</footer></aside></div><nav className="rift-dom-mobile-actions"><button style={actionButton()} onClick={() => setSheet("shop")}>商店</button><button style={actionButton()} onClick={() => setSheet("bench")}>备战席</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></nav></>}{battleOverlay}{sheet === "shop" && <ShopSheet entries={shopEntries} page={shopPage} setPage={setShopPage} engine={engine} onClose={() => setSheet(null)} onAction={dispatch} />}{sheet === "bench" && <BenchSheet engine={engine} selected={selected} onClose={() => setSheet(null)} onAction={dispatch} />}</div>;
+  return <div className="rift-dom-layer" style={{ fontFamily: FONT }}>{header}{state.phase === "preparation" && <>{isMobile && <><div className="rift-dom-stage"><section className="rift-dom-briefing"><div><b className={`rift-dom-wave ${wave.tag}`}>{wave.tag === "boss" ? "BOSS" : wave.tag === "elite" ? "ELITE" : `WAVE ${wave.round}`}</b><h2>{wave.name}</h2><p>{wave.description}</p></div><div className="rift-dom-enemies"><small>敌情预览 · 悬浮查看技能</small><div>{wave.units.slice(0, 7).map((unit, index) => <span key={`${unit.id}-${index}`}><UnitPortrait unitId={unit.id} size={30} /></span>)}</div></div></section><div className="rift-dom-traits rift-dom-stage-traits">{Object.entries(engine.getTraitCounts()).filter(([, count]) => count > 0).map(([id, count]) => { const trait = TRAITS[id as keyof typeof TRAITS]; const status = engine.getTraitStatus(trait.id); const threshold = trait.thresholds.find((value) => value > count) ?? status.maxThreshold; return <span key={id} style={{ borderColor: trait.color, color: status.active ? "#f5fcff" : "#aabdc8" }}>{trait.name} {count}/{threshold}</span>; })}</div><div className="rift-dom-deployment"><span>后方 · 远程与辅助</span><b>6 × 4 自由部署区 · 满级 8 人口</b><span>前线 · 优先接敌 →</span></div><aside className="rift-dom-shop-desktop"><header><strong>战术商店 · {bookLevelForPlayerLevel(state.playerLevel)} 本</strong><small>{engine.isMaxPlayerLevel ? "已满级" : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${engine.upgradeCost} 金币`}</small><em>{odds}</em></header>{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} index={index} engine={engine} onBuy={() => dispatch({ type: "shop", index })} />)}<div className="rift-dom-shop-actions"><button style={actionButton()} onClick={() => dispatch({ type: "buyXp" })}>升本 · {engine.isMaxPlayerLevel ? "已满级" : engine.upgradeCost}</button><button style={actionButton()} onClick={() => dispatch({ type: "lock" })}>{state.shopLocked ? "已锁定" : "锁定商店"}</button><button style={actionButton("economic")} onClick={() => dispatch({ type: "reroll" })}>刷新 · {state.freeRerollCharges ? "免费" : 1}</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></div><footer>{activeTraits.length ? `已激活：${activeTraits.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`).join(" · ")}` : "常规羁绊按 2/4/6；关系羁绊按图标说明"}</footer></aside></div><nav className="rift-dom-mobile-actions"><button style={actionButton()} onClick={() => setSheet("shop")}>商店</button><button style={actionButton()} onClick={() => setSheet("bench")}>备战席</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></nav></>}</>}{battleOverlay}{sheet === "shop" && <ShopSheet entries={shopEntries} page={shopPage} setPage={setShopPage} engine={engine} onClose={() => setSheet(null)} onAction={dispatch} />}{sheet === "bench" && <BenchSheet engine={engine} selected={selected} onClose={() => setSheet(null)} onAction={dispatch} />}</div>;
 }
 
 function ShopCard({ unitId, index, engine, onBuy }: { unitId: string | null; index: number; engine: AutoChessEngine; onBuy: () => void }) {

@@ -79,7 +79,11 @@ export default function AutoChessGame() {
         audio.play(event.event);
       }
       if (event.type === "toast" && event.text) setMessage(event.text);
-      if (event.type === "state" || event.type === "phase") setRevision((value) => value + 1);
+      if (event.type === "state" || event.type === "phase") {
+        setRevision((value) => value + 1);
+        const scene = gameRef.current?.scene.getScene("RiftLineScene") as { refresh?: () => void } | undefined;
+        scene?.refresh?.();
+      }
     };
     bridge.onEvent = onBridgeEvent;
 

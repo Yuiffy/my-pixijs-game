@@ -328,9 +328,13 @@ export class RiftLineScene extends Phaser.Scene {
     if (this.isMobile() && this.phase === "battle") {
       [this.phaseLayer, this.entityLayer, this.effectsLayer, this.overlayLayer, this.tooltipLayer].forEach((layer) => layer.setPosition(16, 124).setScale(0.4));
     }
-    // Fixed HUD, menus and explanatory copy are native DOM overlays (RiftHud).
-    // Phaser retains the interactive board and world-following battle feedback.
-    if (this.phase === "preparation") this.drawCanvasPreparation();
+    // The desktop preparation stage keeps its established Phaser composition:
+    // slot hit areas, enemy hover tooltips, trait activation, shop highlights and
+    // drag/drop all share the same logical frame. Portrait uses DOM sheets.
+    if (this.phase === "preparation") {
+      if (this.isMobile()) this.drawCanvasPreparation();
+      else this.drawPreparation();
+    }
     if (this.phase === "battle") this.drawBattle();
     this.drawToast();
   }
