@@ -2341,8 +2341,7 @@ export class AutoChessEngine {
             break;
           default: {
             const exhaustive: never = abilityTiming;
-            void exhaustive;
-            break;
+            throw new Error(`未处理的技能时机: ${String(exhaustive)}`);
           }
         }
         if (shouldCast) {

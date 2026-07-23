@@ -87,7 +87,6 @@ export type TooltipLayout = {
 
 export const tooltipLayoutFor = (usableWidth: number, usableHeight: number, preferredWidth: number): TooltipLayout => {
   const { fitScale } = viewportScaleFor(usableWidth, usableHeight);
-  void usableHeight;
   return {
     scale: 1 / fitScale,
     width: Math.max(1, Math.min(preferredWidth, usableWidth - TOOLTIP_TYPOGRAPHY.edgeInset * 2)),
