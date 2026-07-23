@@ -645,7 +645,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ff9a64",
     tier: 5,
     cost: 5,
-    traits: ["ember", "mystic", "mature", "aggression"],
+    traits: ["ember", "chuanmei", "mature", "aggression"],
     hp: 340,
     attack: 38,
     armor: 22,
@@ -965,7 +965,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   lian: unit({
     id: "lian", name: "梨安·终场谢幕", title: "四禧丸子 · 终场舞者", glyph: "梨", color: "#8b5b9b", accent: "#e3b2ff", tier: 5, cost: 5,
-    traits: ["mystic", "dance"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
+    traits: ["mystic", "dance", "chuanmei"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
     abilityName: "终场谢幕", abilityDescription: "轰击敌人最密集处，造成范围伤害并为全体友军补充能量。",
     portrait: "/images/livers/lian.jpg", portraitFocus: "top", shop: true,
   }),

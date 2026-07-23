@@ -291,7 +291,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.dwarf.name, "矮人");
   assert.equal(data.TRAITS.skeleton_soldier.name, "骷髅兵");
   assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
-  ["sui_flower"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
+  ["sui_flower", "cinder_ram", "lian"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
   ["grove_mender", "sui_blue"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
   assert.equal(data.UNIT_DEFS.grove_mender.tier, 4);
   assert.equal(data.UNIT_DEFS.grove_mender.cost, 4);
