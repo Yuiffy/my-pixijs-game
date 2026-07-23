@@ -2,143 +2,326 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [renderer, effects, primitives] = await Promise.all([
+const [host, scene, bridge, assets, config, layout, theme] = await Promise.all([
   readFile(new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../../src/components/autoChessGame/canvas/effects.ts", import.meta.url), "utf8"),
-  readFile(new URL("../../src/components/autoChessGame/canvas/primitives.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/RiftLineScene.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/EngineBridge.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/assets.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/gameConfig.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/layout.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/theme.ts", import.meta.url), "utf8"),
 ]);
 
-test("精灵头像在战斗中支持朝向镜像且不再绘制方框", () => {
-  assert.match(renderer, /mirrorSpriteX = false/);
-  assert.match(renderer, /ctx\.scale\(-1, 1\)/);
-  assert.match(renderer, /fighter\.facingX < 0/);
-  assert.doesNotMatch(renderer, /drawSpriteCornerMarks/);
-  assert.doesNotMatch(renderer, /strokeRect\(x - radius, y - radius, radius \* 2, radius \* 2\)/);
+test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
+  assert.match(host, /data-game-canvas", "rift-line"/);
+  assert.match(host, /window\.render_game_to_text/);
+  assert.match(host, /window\.advanceTime/);
+  assert.match(host, /gameRef\.current\?\.destroy\(true\)/);
+  assert.match(host, /await import\("phaser"\)/);
+  assert.doesNotMatch(host, /DomTooltip|onTooltip|tooltip=/);
 });
 
-test("战斗技能条使用棋子上限并展示能量身份", () => {
-  assert.match(renderer, /fighter\.energy \/ fighter\.maxEnergy/);
-  assert.match(renderer, /ENERGY_PROFILES\[fighter\.energyStyle\]\.color/);
-  assert.match(renderer, /describeEnergyRecovery\(profile\)/);
-  assert.match(renderer, /attackType === "ranged" \? "远程" : "近战"/);
+test("游戏配置保持 1120×720 逻辑世界并使用 Phaser 缩放管理", () => {
+  assert.match(config, /width: WORLD_WIDTH/);
+  assert.match(config, /height: WORLD_HEIGHT/);
+  assert.match(config, /mode: Phaser\.Scale\.RESIZE/);
+  assert.match(config, /autoCenter: Phaser\.Scale\.CENTER_BOTH/);
+  assert.match(layout, /WORLD_WIDTH = 1120/);
+  assert.match(layout, /WORLD_HEIGHT = 720/);
+  assert.match(layout, /MIN_CARD_SCALE = 0\.72/);
+  assert.match(layout, /MAX_CARD_SCALE = 1\.25/);
+  assert.match(layout, /viewportScaleFor/);
+  assert.match(scene, /viewportScaleFor\(width, height\)/);
+  assert.match(scene, /setZoom\(fitScale\)/);
+  assert.match(layout, /MAX_TEXT_RESOLUTION = 2/);
 });
 
-test("单位提示会完整换行能量说明并动态扩展高度", () => {
-  const tooltip = renderer.match(/const drawTooltip = \([\s\S]*?\n};/);
-  assert.ok(tooltip);
-  assert.match(tooltip[0], /const energyLines = wrapText\(ctx, energyText, textWidth\)/);
-  assert.match(tooltip[0], /energyLines\.forEach/);
-  assert.doesNotMatch(tooltip[0], /truncateText\(\s*ctx,\s*energyText/);
-  assert.match(tooltip[0], /const traitY = abilityDescriptionY \+ abilityLines\.length \* abilityLineHeight \+ 19/);
-  assert.match(tooltip[0], /const h = Math\.max\(fighter \? 252 : 222, traitY \+ 34\)/);
-  assert.match(tooltip[0], /HEIGHT - h - 12/);
+test("引擎桥接只派发公开规则命令并使用固定步长测试推进", () => {
+  assert.match(bridge, /new AutoChessEngine/);
+  assert.match(bridge, /engine\.moveUnit/);
+  assert.match(bridge, /engine\.sellUnit/);
+  assert.match(bridge, /engine\.update\(1 \/ 60\)/);
+  assert.match(bridge, /Math\.min\(0\.05/);
+  assert.doesNotMatch(bridge, /state\.selected\s*=/);
 });
 
-test("弹道特效同时绘制柔光外层与明亮核心", () => {
-  const drawEffects = effects.match(/export const drawEffects = \([\s\S]*?\n};/);
-  assert.ok(drawEffects);
-  assert.match(drawEffects[0], /ctx\.globalCompositeOperation = "screen"/);
-  assert.match(drawEffects[0], /ctx\.lineWidth = width \+ 4/);
-  assert.match(drawEffects[0], /rgba\(244, 251, 255, 0\.96\)/);
-  assert.match(drawEffects[0], /setShadow\(ctx, effect\.color, 18\)/);
-  assert.match(effects, /ctx\.shadowBlur = blur/);
+test("Phaser 场景覆盖标题、备战、战斗、结算、强化和结束阶段", () => {
+  assert.match(scene, /drawTitle\(\)/);
+  assert.match(scene, /drawPreparation\(\)/);
+  assert.match(scene, /drawBattle\(\)/);
+  assert.match(scene, /drawResult\(\)/);
+  assert.match(scene, /drawAugments\(\)/);
+  assert.match(scene, /drawGameOver\(\)/);
 });
 
-test("实体子弹按实时位置和速度绘制尾迹", () => {
-  const drawProjectiles = effects.match(/export const drawProjectiles = \([\s\S]*?\n};/);
-  assert.ok(drawProjectiles);
-  assert.match(drawProjectiles[0], /battle\.projectiles\.forEach/);
-  assert.match(drawProjectiles[0], /projectile\.velocityX/);
-  assert.match(drawProjectiles[0], /trailLength/);
-  assert.match(renderer, /drawProjectiles\(ctx, state\)/);
+test("备战和手机布局使用相同引擎动作并提供紧凑 profile", () => {
+  assert.match(scene, /createShopTraitTags/);
+  assert.match(scene, /traitActivatesAfterPurchase/);
+  assert.match(scene, /type: "shop"/);
+  assert.match(scene, /type: "buyXp"/);
+  assert.match(scene, /type: "lock"/);
+  assert.match(scene, /type: "reroll"/);
+  assert.match(scene, /type: "battle"/);
+  assert.match(scene, /type: "sell"/);
+  assert.match(scene, /compactBoardSlot/);
+  assert.match(scene, /drawCompactShop/);
+  assert.match(layout, /profileFor/);
+  assert.match(layout, /"compact"/);
 });
 
-test("机械兔耳宠物在子弹和特效前使用独立绘制路径", () => {
-  const drawPets = effects.match(/export const drawMechanicalRabbitPets = \([\s\S]*?\n};/);
-  assert.ok(drawPets);
-  assert.match(drawPets[0], /battle\.pets\.forEach/);
-  const drawPet = effects.match(/const drawMechanicalRabbitPet = \([\s\S]*?\n};/);
-  assert.ok(drawPet);
-  assert.match(drawPet[0], /mechanicalRabbitMuzzle\(pet\)/);
-  assert.match(drawPet[0], /Math\.atan2\(pet\.aimY, pet\.aimX\)/);
-  assert.match(drawPet[0], /ctx\.rotate\(aimAngle\)/);
-  assert.match(drawPet[0], /pet\.attackPulse/);
-  assert.match(drawPet[0], /cannonTipX/);
-  assert.doesNotMatch(drawPet[0], /\[-1, 1\]\.forEach/);
-  assert.match(renderer, /drawMechanicalRabbitPets\(ctx, state\);\s*drawPineTreeTurrets\(ctx, state\);\s*drawProjectiles\(ctx, state\);/);
+test("战斗视图由引擎 fighter 状态同步，并支持完整动作、状态和能量反馈", () => {
+  assert.match(scene, /fighter\.jumpTime/);
+  assert.match(scene, /fighter\.jumpArcHeight/);
+  assert.match(scene, /fighter\.attackPulse/);
+  assert.match(scene, /fighter\.hitPulse/);
+  assert.match(scene, /fighter\.shield/);
+  assert.match(scene, /fighter\.burnTime/);
+  assert.match(scene, /fighter\.stun/);
+  assert.match(scene, /fighter\.facingX < 0/);
+  assert.match(scene, /fighter\.energy \/ fighter\.maxEnergy/);
+  assert.match(scene, /ENERGY_PROFILES\[fighter\.energyStyle\]\.color/);
+  assert.match(scene, /this\.fighterViews\.get\(fighter\.fid\)/);
+  assert.match(scene, /setDepth\(DEPTH\.entities \+ visualY\)/);
 });
 
-test("结算页使用显式继续按钮推进阶段", () => {
-  assert.match(renderer, /resultContinueRect/);
-  assert.match(renderer, /resultContinueLabel/);
-  assert.match(renderer, /target\.kind === "resultContinue"\) engine\.continueAfterResult\(\)/);
-  assert.match(renderer, /getBattleRanking\("enemy"\)/);
+test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () => {
+  assert.match(assets, /createCircularPortraitTextures/);
+  assert.match(assets, /context\.arc/);
+  assert.match(assets, /context\.clip/);
+  assert.match(scene, /circularTextureKeyForUnit/);
+  assert.match(scene, /portraitStyle === "sprite"/);
+  assert.match(scene, /portraitImage\.setFlipX/);
 });
 
-test("羁绊提示会按内容自动换行并动态调整高度", () => {
-  const traitTooltip = renderer.match(/const drawTraitTooltip = \([\s\S]*?\n};/);
-  assert.ok(traitTooltip);
-  assert.match(traitTooltip[0], /const descriptionLines = wrapText\(ctx, trait\.description, w - 40\)/);
-  assert.match(traitTooltip[0], /const lines = wrapText\(ctx, `\$\{threshold\} 名：\$\{trait\.bonuses\[index\]\}`, w - 62\)/);
-  assert.match(traitTooltip[0], /const h = Math\.max\(174, contentY \+ 10\)/);
-  assert.match(traitTooltip[0], /row\.lines\.forEach/);
-  assert.doesNotMatch(traitTooltip[0], /const h = 174/);
-  assert.doesNotMatch(traitTooltip[0], /index \* 22/);
+test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () => {
+  assert.match(scene, /battle\.projectiles/);
+  assert.match(scene, /battle\.effects/);
+  assert.match(scene, /battle\.pets/);
+  assert.match(scene, /battle\.pineTrees/);
+  assert.match(scene, /battle\.chronospheres/);
+  assert.match(scene, /projectile\.style === "pine_needle"/);
+  assert.match(scene, /projectile\.style === "shark"/);
+  assert.match(scene, /projectile\.style === "carrot"/);
+  assert.match(scene, /effect\.kind === "line"/);
+  assert.match(scene, /effect\.kind === "ring"/);
+  assert.match(scene, /effect\.kind === "burst"/);
+  assert.match(scene, /effect\.kind === "chronosphere"/);
+  assert.match(scene, /effect\.kind === "hotpot"/);
+  assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
-test("商店以可读羁绊标签、定位和单一费用呈现棋子", () => {
-  const shopTags = renderer.match(/const drawShopTraitTags = \([\s\S]*?\n};/);
-  assert.ok(shopTags);
-  assert.match(shopTags[0], /traitActivationAfterPurchase/);
-  assert.match(shopTags[0], /setCanvasShadow\(ctx, trait\.color, 10\)/);
-  assert.match(shopTags[0], /trait\.name/);
-  assert.match(renderer, /shopRole\(unitId\)/);
-  assert.match(renderer, /drawShopTraitTags\(ctx, engine, unitId, rect, affordable\)/);
-  assert.doesNotMatch(renderer, /`\$\{def\.tier\}费`/);
+test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对齐", () => {
+  assert.match(scene, /drawRabbitBody\(/);
+  assert.match(scene, /drawRabbitCannon\(/);
+  assert.match(scene, /fillGradientStyle\(0x111a27, 0x728998, 0x3b4f60, 0x728998, 1\)/);
+  assert.match(scene, /lineStyle\(1\.2, 0xb8ccd8\)/);
+  assert.match(scene, /fillStyle\(0x1b2938\)/);
+  assert.match(scene, /fillStyle\(0xf4f0f2\)/);
+  assert.match(scene, /fillStyle\(0xefc8d1\)/);
+  assert.match(scene, /lineStyle\(1\.4, 0x92d7ff\)/);
+  assert.match(scene, /lineTo\(muzzleDistance, 0\)/);
+  assert.match(scene, /flash\.setX\(muzzleDistance\)/);
+  assert.match(scene, /1 \+ \(pet\.attackPulse \/ 0\.16\) \* 0\.75/);
+  assert.match(scene, /setRotation\(-angle\)\.setY\(pet\.radius \* 0\.88 - bob\)/);
 });
 
-test("备战阶段可用滚轮横向浏览溢出的羁绊栏", () => {
-  const wheelHandler = renderer.match(/const onWheel = \([\s\S]*?\n  };/);
-  assert.ok(wheelHandler);
-  assert.match(wheelHandler[0], /inRect\(point\.x, point\.y, TRAIT_STRIP\)/);
-  assert.match(wheelHandler[0], /event\.preventDefault\(\)/);
-  assert.match(wheelHandler[0], /traitScrollXRef\.current/);
-  assert.match(renderer, /onWheel=\{onWheel\}/);
+test("投射物按原版互斥分支绘制 Emoji、松针与光弹", () => {
+  assert.match(scene, /const projectileEmoji = \(projectile: Projectile\)/);
+  assert.match(scene, /if \(projectile\.emoji\) return projectile\.emoji/);
+  assert.match(scene, /if \(projectile\.style === "pine_needle"\)/);
+  assert.match(scene, /\* 16/);
+  assert.match(scene, /drawProjectileTrail\(trail, tailX, tailY, 2\.2, projectileColor\)/);
+  assert.match(scene, /if \(emoji\)/);
+  assert.match(scene, /Math\.max\(12, projectile\.size\)/);
+  assert.match(scene, /Math\.max\(14, projectile\.size\)/);
+  assert.match(scene, /trail\.clear\(\)\.setVisible\(false\)/);
+  assert.match(scene, /core\.setVisible\(false\)/);
+  assert.match(scene, /setBlendMode\(Phaser\.BlendModes\.SCREEN\)/);
+  assert.match(scene, /drawProjectileTrail\(trail, tailX, tailY, projectile\.size \+ 3, projectileColor\)/);
+  assert.match(scene, /fillCircle\(tailX, tailY, capRadius\)\.fillCircle\(0, 0, capRadius\)/);
 });
 
-test("连续输入请求下一帧绘制而静态阶段不持续重绘", () => {
-  assert.match(renderer, /const onPointerMove = \(/);
-  assert.match(renderer, /const onWheel = \(/);
-  assert.match(renderer, /requestDrawRef\.current\(\)/);
-  assert.match(renderer, /const loop = \(timestamp: number\) => \{/);
-  assert.match(renderer, /engine\.state\.phase === "battle"/);
-  assert.match(renderer, /shouldKeepLooping/);
-  assert.match(renderer, /if \(drawRequested\)/);
-  assert.match(renderer, /window\.advanceTime = \(milliseconds: number\) => \{/);
+test("投射物命中使用可复用的径向渐变爆裂", () => {
+  assert.match(scene, /BURST_GRADIENT_TEXTURE/);
+  assert.match(scene, /createBurstGradientTexture\(\)/);
+  assert.match(scene, /textures\.createCanvas\(BURST_GRADIENT_TEXTURE, 128, 128\)/);
+  assert.match(scene, /context\.createRadialGradient/);
+  assert.match(scene, /texture\.refresh\(\)/);
+  assert.match(scene, /setName\("burstGradient"\)/);
+  assert.match(scene, /effect\.kind === "burst"/);
+  assert.match(scene, /\(effect\.size \|\| 40\) \* \(0\.35 \+ progress \* 0\.65\)/);
+  assert.match(scene, /burstGradient\.setTint\(color\)\.setDisplaySize\(radius \* 2, radius \* 2\)\.setVisible\(true\)/);
 });
 
-test("受限 Canvas 文本会按宽度换行或省略", () => {
-  assert.match(primitives, /export const truncateText = \(/);
-  assert.match(primitives, /export const boundedTextLines = \(/);
-  assert.match(primitives, /export const drawBoundedText = \(/);
-  assert.match(primitives, /truncateText\(ctx, lines\.slice\(maxLines - 1\)\.join\(""\), maxWidth\)/);
+test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
+  assert.match(layout, /MAX_RENDER_PIXELS/);
+  assert.match(layout, /MAX_DEVICE_PIXEL_RATIO = 2/);
+  assert.match(layout, /logicalSizeFor/);
+  assert.match(layout, /renderSizeFor/);
+  assert.match(layout, /viewportScaleFor/);
+  assert.match(layout, /tooltipLayoutFor/);
+  assert.match(layout, /scale: 1 \/ fitScale/);
+  assert.match(layout, /TOOLTIP_TYPOGRAPHY/);
+  assert.match(layout, /width: Math\.max\(1, Math\.round\(displayWidth \* density\)\)/);
+  assert.match(host, /ResizeObserver/);
+  assert.match(host, /scale\.setParentSize/);
+  assert.doesNotMatch(host, /scale\.setGameSize/);
+  assert.doesNotMatch(host, /baseSize\.width !== target\.width/);
+  assert.match(host, /RiftHud/);
+  assert.match(host, /dataset\.devicePixelRatio/);
+  assert.match(host, /dataset\.renderScale/);
+  assert.match(host, /dataset\.layoutProfile/);
+  assert.match(host, /document\.fonts\?\.load/);
+  assert.match(scene, /scale\.parentSize/);
+  assert.match(scene, /logicalSizeFor\(\)/);
+  assert.match(scene, /setViewport/);
+  assert.match(scene, /setZoom\(fitScale\)/);
+  assert.match(scene, /centerOn\(logical\.width \/ 2, logical\.height \/ 2\)/);
+  assert.match(scene, /positionToCamera\(this\.cameras\.main\)/);
+  assert.match(scene, /Math\.min\(MAX_TEXT_RESOLUTION, 2, Math\.ceil\(devicePixelRatio\)\)/);
+  assert.match(scene, /resolution: this\.textResolution/);
+  assert.match(scene, /tooltipLayoutFor\(/);
+  assert.match(scene, /container = this\.add\.container\(x, y\)\.setScale\(metrics\.scale\)/);
+  assert.match(scene, /width \* metrics\.scale, height \* metrics\.scale/);
+  assert.match(scene, /const offset = TOOLTIP_TYPOGRAPHY\.pointerOffset \* scale/);
+  assert.match(scene, /scale\.off\(Phaser\.Scale\.Events\.RESIZE, this\.handleResize, this\)/);
 });
 
-test("开局与契印卡说明限制在按钮上方的两行区域", () => {
-  const drawTitle = renderer.match(/const drawTitle = \([\s\S]*?\n};/);
-  const drawAugments = renderer.match(/const drawAugments = \([\s\S]*?\n};/);
-  assert.ok(drawTitle);
-  assert.ok(drawAugments);
-  assert.match(drawTitle[0], /drawBoundedText\([\s\S]*?starter\.description[\s\S]*?2,/);
-  assert.doesNotMatch(drawTitle[0], /starter\.description\.split\("；"\)/);
-  assert.match(drawAugments[0], /drawBoundedText\([\s\S]*?augment\.description[\s\S]*?2,/);
-  assert.match(drawAugments[0], /selectionHistory[\s\S]*?drawBoundedText/);
+test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 Canvas 层级", () => {
+  assert.match(scene, /createGeometryMask\(\)/);
+  assert.match(scene, /content\.setMask\(/);
+  assert.match(scene, /traitMinimumOffset/);
+  assert.match(scene, /updateTraitViewport\(\)/);
+  assert.doesNotMatch(scene, /viewport\.draw\(source/);
+  assert.match(scene, /PREPARATION_BOARD_PANEL/);
+  assert.match(scene, /PREPARATION_BENCH_PANEL/);
+  assert.match(scene, /PREPARATION_SHOP_PANEL/);
+  assert.match(scene, /boundedText\(/);
+  assert.match(scene, /probe\.getWrappedText\(value\)/);
+  assert.match(scene, /wordWrap: \{ width: maxWidth, useAdvancedWrap: true \}/);
+  assert.match(scene, /abilityTitle\.height/);
+  assert.match(scene, /detailText\.height/);
+  assert.match(scene, /traitX \+ tagWidth > contentWidth/);
+  assert.match(scene, /TOOLTIP_TYPOGRAPHY/);
+  assert.match(scene, /const \{ padding, title, body/);
+  assert.match(scene, /boundedText\(trait\.description/);
+  assert.match(scene, /const inset = TOOLTIP_TYPOGRAPHY\.edgeInset \* scale/);
+  assert.match(scene, /const xMin = Math\.min\(inset, Math\.max\(0, WORLD_WIDTH - width\)\)/);
+  assert.match(scene, /const yMax = Math\.max\(yMin, WORLD_HEIGHT - height - inset\)/);
+  assert.match(scene, /truncateText\(/);
+  assert.match(scene, /occupiedSlotLayout/);
+  assert.match(scene, /"★"\.repeat\(unit\.star\)/);
+  assert.match(scene, /const starColor = unit\.star === 3/);
+  assert.match(scene, /def\.traits\.forEach/);
+  assert.match(scene, /getTraitStatus\(traitId\)/);
+  assert.doesNotMatch(scene, /const labelBackplate = this\.add\.graphics\(\)/);
+  assert.doesNotMatch(scene, /const traitDots =/);
+  assert.match(layout, /WIDE_TRAIT_STRIP/);
+  assert.match(layout, /COMPACT_TRAIT_STRIP = \{ x: 48, y: 194/);
+  assert.match(layout, /portraitY/);
+  assert.match(layout, /starY/);
+  assert.match(layout, /nameY/);
+  assert.match(scene, /POINTER_MOVE, \(pointer: Phaser\.Input\.Pointer\) => \{\n      if \(!this\.traitDrag\?\.moved\) this\.updateTraitTooltip\(pointer\);/);
 });
 
-test("运行时提示和固定宽度行不会越界", () => {
-  assert.match(renderer, /const toastLines = boundedTextLines\(ctx, state\.toast\.text, 600, 2\)/);
-  assert.match(renderer, /const height = toastLines\.length === 2 \? 56 : 38/);
-  assert.match(renderer, /truncateText\(ctx, def\.name, 136\)/);
-  assert.match(renderer, /truncateText\(ctx, `\$\{definition\.name\}\$\{"★"\.repeat\(fighter\.star\)\}`, 118\)/);
-  assert.match(renderer, /truncateText\(ctx, traitNames, textWidth\)/);
+test("标题页复用响应式布局、主题协议卡与缓存氛围光", () => {
+  assert.match(scene, /titleLayoutFor\(this\.profile\)/);
+  assert.match(layout, /WIDE_TITLE_LAYOUT/);
+  assert.match(layout, /COMPACT_TITLE_LAYOUT/);
+  assert.match(layout, /starterCardRect/);
+  assert.match(scene, /this\.boundedText\(starter\.description, layout\.descriptionWidth, 2/);
+  assert.match(scene, /fillGradientStyle\(TITLE\.cardTop, TITLE\.cardTop, TITLE\.cardBottom, TITLE\.cardBottom/);
+  assert.match(scene, /fillRoundedRect\(0, 0, layout\.cardWidth, layout\.cardHeight, 20\)/);
+  assert.match(scene, /createTitleGlowTexture\(\)/);
+  assert.match(scene, /TITLE_GLOW_TEXTURE/);
+  assert.match(scene, /this\.tweens\.add/);
+  assert.match(scene, /轻量构筑 · 自动战斗 · 一局约 8 分钟/);
+  assert.match(scene, /选择一项开局协议/);
+  assert.match(scene, /操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏/);
+  assert.match(theme, /export const TITLE/);
+  assert.match(theme, /cardTop/);
+  assert.match(theme, /ctaHoverText/);
+});
+
+test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手", () => {
+  assert.match(scene, /点击接入并开始/);
+  assert.match(scene, /type: "starter", id/);
+  assert.match(scene, /type: "augment", index/);
+  assert.match(scene, /if \(this\.phase === "result"\)/);
+  assert.match(scene, /this\.drawResult\(\)/);
+  assert.match(scene, /if \(this\.phase === "augment"\) this\.drawAugments\(\)/);
+  assert.doesNotMatch(bridge, /onTooltip|DomTooltip/);
+  assert.match(scene, /layout\.cardWidth \/ 2, layout\.cardHeight \/ 2, layout\.cardWidth, layout\.cardHeight/);
+  assert.match(scene, /enabled: canBattle/);
+  assert.match(scene, /enabled: this\.canReroll\(\)/);
+  assert.match(scene, /traitOffset/);
+  assert.doesNotMatch(scene, /filter\(\(\[, count\]\) => count > 0\)\.slice/);
+  assert.match(scene, /0x142735/);
+  assert.match(scene, /lineBetween\(560, 104, 560, 680\)/);
+  assert.doesNotMatch(scene, /field\.fillGradientStyle/);
+  assert.match(scene, /createDragGhost/);
+  assert.match(scene, /handlePointerMove/);
+  assert.match(scene, /POINTER_UP_OUTSIDE/);
+  assert.match(scene, /type: "move", from: drag\.origin, to: target/);
+  assert.match(scene, /drawResultRow/);
+  assert.match(scene, /\+\$\{result\.income\} 金币/);
+});
+
+test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示", () => {
+  assert.match(scene, /buildBattleOverlay/);
+  assert.match(scene, /rankingStateKey/);
+  assert.doesNotMatch(scene, /private syncBattleOverlay\(\)[\s\S]*buttonViews\.forEach/);
+  assert.match(scene, /createInputBlocker/);
+  assert.match(scene, /showUnitTooltip\(fighter\.unitId, pointer, fighter\.star, fighter\)/);
+  assert.match(scene, /damageTaken/);
+  assert.match(scene, /resultContinueLabel/);
+  assert.match(scene, /继续 · 进入整备/);
+  assert.match(scene, /DEPTH\.overlay \+ 3/);
+  assert.match(scene, /this\.overlayLayer\.add\(\[graphics, label, zone\]\)/);
+  assert.match(scene, /this\.overlayLayer\.add\(zone\)/);
+});
+
+test("结算报告约束摘要文本、保留八人阵容并适配紧凑布局", () => {
+  assert.match(theme, /Noto Sans CJK SC/);
+  assert.match(theme, /resultReward: "#ffd166"/);
+  assert.match(scene, /truncateText\(result\.headline, 920/);
+  assert.match(scene, /boundedText\(result\.detail, 860, 2/);
+  assert.match(scene, /drawResultMetricTab/);
+  assert.match(scene, /this\.isCompact\(\) \? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT/);
+  assert.match(scene, /const rowCount = Math\.max\(playerRows\.length, enemyRows\.length\)/);
+  assert.doesNotMatch(scene, /getBattleRanking\(team\)\.slice\(0, 6\)/);
+  assert.match(layout, /WIDE_RESULT_LAYOUT/);
+  assert.match(layout, /COMPACT_RESULT_LAYOUT/);
+});
+
+test("Phaser 备战信息恢复商店概率、激活羁绊、敌情和快捷回收", () => {
+  assert.match(scene, /tierOddsForLevel/);
+  assert.match(scene, /距 \$\{bookLevelForPlayerLevel/);
+  assert.match(scene, /getActiveTraits\(\)/);
+  assert.match(scene, /currentWave\.units/);
+  assert.match(scene, /currentWave\.tag === "elite"/);
+  assert.match(scene, /rightButtonDown\(\)/);
+  assert.match(scene, /preventContextMenu/);
+  assert.match(scene, /回收 \+\$\{refund\}/);
+});
+
+test("场景预加载单位头像并保留缺图降级纹理", () => {
+  assert.match(assets, /Object\.values\(UNIT_DEFS\)/);
+  assert.match(assets, /scene\.load\.image/);
+  assert.match(assets, /rift-fallback-unit/);
+  assert.match(scene, /textureKeyForUnit/);
+  assert.match(scene, /this\.textures\.exists\(key\)/);
+});
+
+test("React 宿主默认填满网页视口并保留工具栏与安全区支撑", () => {
+  assert.match(host, /width: fullscreen \? "100vw" : "100%"/);
+  assert.match(host, /height: fullscreen \? "100dvh" : "100%"/);
+  assert.match(host, /flex: "1 1 auto"/);
+  assert.doesNotMatch(host, /min\(\$\{WORLD_WIDTH\}px/);
+  assert.doesNotMatch(host, /aspectRatio:/);
+  assert.match(host, /Codex/);
+  assert.match(host, /AutoChessAudio/);
+  assert.match(host, /全屏游玩/);
+  assert.match(host, /safe-area-inset-bottom/);
+  assert.match(host, /aria-live="polite"/);
 });

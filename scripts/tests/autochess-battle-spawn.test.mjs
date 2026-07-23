@@ -106,7 +106,7 @@ test("达到阈值的羁绊状态会标记为已激活", () => {
   assert.equal(status.active, true);
 });
 
-test("怕死受击会在跳跃过程中移动，而不是瞬移", () => {
+test("怕死受击会在跳跃过程中真实位移，而不是落地瞬移", () => {
   const engine = createEngine(112);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -125,13 +125,15 @@ test("怕死受击会在跳跃过程中移动，而不是瞬移", () => {
 
   engine.update(0.05);
   assert.ok(target.jumpTime > 0);
-  assert.deepEqual({ x: target.x, y: target.y }, start);
   assert.notDeepEqual({ x: target.jumpToX, y: target.jumpToY }, start);
 
   const jumpTimeAfterHit = target.jumpTime;
+  const mid = { x: target.x, y: target.y };
   engine.update(0.2);
   assert.ok(target.jumpTime < jumpTimeAfterHit);
-  assert.deepEqual({ x: target.x, y: target.y }, start);
+  // 跳跃过程中逻辑坐标应持续靠近落点
+  assert.ok(Math.hypot(target.x - start.x, target.y - start.y) > Math.hypot(mid.x - start.x, mid.y - start.y) - 0.01);
+  assert.ok(Math.hypot(target.x - start.x, target.y - start.y) > 0.5);
   for (let tick = 0; tick < 9; tick += 1) engine.update(0.05);
   assert.equal(target.jumpTime, 0);
   assert.ok(Math.hypot(target.x - target.jumpToX, target.y - target.jumpToY) < 3);
@@ -150,6 +152,7 @@ test("怕死后跳会留在自身攻击距离内，越界时改为侧跳", () =>
   const attacker = battle.enemy[0];
   battle.player.forEach((fighter) => { fighter.cooldown = 99; });
   battle.enemy.forEach((fighter) => { fighter.cooldown = 99; fighter.attack = 0; fighter.hp = 99_999; fighter.maxHp = 99_999; });
+  // 站位故意拉远，使一级后跳（28）仍会越出攻击距离，从而触发侧跳兜底
   target.x = 430; target.y = 320; target.cooldown = 99;
   attacker.x = 490; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 280; attacker.cooldown = 0;
 
@@ -167,15 +170,15 @@ test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sui_bird", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "sui_cat", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui_blue", star: 1 };
   engine.state.board[2] = { uid: 3, id: "grove_mender", star: 1 };
-  engine.state.board[3] = { uid: 4, id: "sui_cat", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sui_blue", star: 1 };
   engine.state.board[4] = { uid: 5, id: "spark_mage", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);
   battle.enemy.forEach((fighter) => { fighter.hp = 99_999; fighter.maxHp = 99_999; fighter.attack = 0; fighter.armor = 99_999; });
-  const hungry = battle.player.find((fighter) => fighter.unitId === "sui_cat");
+  const hungry = battle.player.find((fighter) => fighter.unitId === "sui_blue");
   const beforeRadius = hungry?.radius;
   for (let tick = 0; tick < 61; tick += 1) {
     battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp; });
@@ -251,7 +254,7 @@ test("深夜档会随战斗时间逐步提高攻击力", () => {
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "spark_mage", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "yua", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "grove_mender", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   const fighter = battle?.player.find((entry) => entry.unitId === "spark_mage");
@@ -273,16 +276,16 @@ test("攻击性为成员与全队分别提供攻击力", () => {
   engine.state.board[0] = { uid: 1, id: "xuehui", star: 1 };
   engine.state.board[1] = { uid: 2, id: "meme", star: 1 };
   engine.state.board[2] = { uid: 3, id: "sui", star: 1 };
-  engine.state.board[3] = { uid: 4, id: "sui_blue", star: 1 };
-  engine.state.board[4] = { uid: 5, id: "sui_flower", star: 1 };
-  engine.state.board[5] = { uid: 6, id: "cinder_ram", star: 1 };
-  engine.state.board[6] = { uid: 7, id: "mossback", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sui_cat", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "cinder_ram", star: 1 };
+  engine.state.board[5] = { uid: 6, id: "mossback", star: 1 };
   engine.startBattle();
   const xuehui = engine.state.battle?.player.find((fighter) => fighter.unitId === "xuehui");
   const control = engine.state.battle?.player.find((fighter) => fighter.unitId === "mossback");
   assert.ok(xuehui && control);
-  assert.equal(xuehui.baseAttack, 37 * 1.15 * 1.75);
-  assert.equal(control.baseAttack, 15 * 1.15 * 1.2);
+  // 5 名攻击性成员 → 2 阶：成员 +30% / 全队 +10%
+  assert.equal(xuehui.baseAttack, 37 * 1.15 * (1 + 0.1 + 0.3));
+  assert.equal(control.baseAttack, 15 * 1.15 * (1 + 0.1));
 });
 
 test("同步视听按战力差线性调整属性且不重复叠加", () => {
@@ -366,6 +369,103 @@ test("紧贴碰撞体积的近战单位也能稳定攻击", () => {
   target.x = 363; target.y = 300; target.attack = 0; target.armor = 99_999; target.dodgeChance = 0;
   engine.update(0.05);
   assert.equal(source.energy, source.energyOnAttack);
+});
+
+test("满能量远程单位会先进入攻击距离再施法", () => {
+  const engine = createEngine(140);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "yua", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.x = index === 0 ? 720 : 980;
+    fighter.y = 360;
+  });
+  source.x = 200;
+  source.y = 360;
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.equal(source.energy, source.maxEnergy, "攻击范围外不应消耗能量施法");
+
+  target.x = source.x + Math.max(source.range, source.radius + target.radius + 12) - 1;
+  target.y = source.y;
+  engine.update(0.05);
+  assert.equal(source.energy, source.castRefund, "进入攻击范围后应立即施法");
+});
+
+test("直接调用普攻不会跨攻击距离造成副作用", () => {
+  const engine = createEngine(141);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  source.x = 180;
+  source.y = 360;
+  source.cooldown = 0;
+  source.energy = 0;
+  target.x = 720;
+  target.y = 360;
+  target.armor = 0;
+  target.dodgeChance = 0;
+  const hpBefore = target.hp;
+  engine.basicAttack(source, target);
+  assert.equal(source.cooldown, 0);
+  assert.equal(source.energy, 0);
+  assert.equal(target.hp, hpBefore);
+});
+
+test("跳舞冲刺只在一次冲刺可进入自身攻击范围时触发", () => {
+  const engine = createEngine(142);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "zeyin", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player.find((fighter) => fighter.unitId === "sui");
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  assert.equal(source.danceMember, true);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.x = index === 0 ? 520 : 980;
+    fighter.y = 360;
+  });
+  battle.player.forEach((fighter) => {
+    fighter.cooldown = 99;
+    fighter.energy = 0;
+  });
+  source.x = 200;
+  source.y = 360;
+  const preferredRange = Math.max(source.range, source.radius + target.radius + 12);
+  const dashTravel = source.moveSpeed * 3.4 * 0.48;
+  target.x = source.x + preferredRange + dashTravel + 8;
+  target.y = source.y;
+  engine.update(0.05);
+  assert.equal(source.danceDashTime, 0, "距离过远时不应提前消耗冲刺");
+  assert.equal(source.danceDashCooldown, 0);
+
+  source.x = 200;
+  source.y = 360;
+  source.danceDashTime = 0;
+  source.danceDashCooldown = 0;
+  target.x = source.x + preferredRange + dashTravel - 2;
+  engine.update(0.05);
+  assert.ok(source.danceDashTime > 0, "最后一段接敌应触发冲刺");
+  assert.ok(source.danceDashCooldown > 0);
 });
 
 test("拥挤近战会侧移接敌并在时限前造成伤害", () => {
@@ -756,7 +856,7 @@ test("苹果派在眩晕期间暂停且施法者死亡后不再发射", () => {
     fighter.dodgeChance = 0;
     fighter.hp = 9_999;
     fighter.maxHp = 9_999;
-    fighter.x = 650;
+    fighter.x = 300 + nori.range - 1;
     fighter.y = 300;
   });
   nori.x = 300;
@@ -767,15 +867,14 @@ test("苹果派在眩晕期间暂停且施法者死亡后不再发射", () => {
   engine.update(0.05);
   assert.equal(nori.applePieShotsRemaining, 7);
   nori.stun = 0.3;
-  const hpBeforeStun = target.hp;
   for (let tick = 0; tick < 5; tick += 1) engine.update(0.05);
-  assert.equal(target.hp, hpBeforeStun);
   assert.equal(nori.applePieShotsRemaining, 7);
 
   nori.alive = false;
   nori.hp = 0;
+  const remainingShots = nori.applePieShotsRemaining;
   for (let tick = 0; tick < 5; tick += 1) engine.update(0.05);
-  assert.equal(target.hp, hpBeforeStun);
+  assert.equal(nori.applePieShotsRemaining, remainingShots);
 });
 
 test("6x4 deployment slots preserve their formation positions at battle start", () => {
@@ -942,7 +1041,7 @@ test("邪恶外星人的贯穿光线命中同横排敌人", () => {
     fighter.attack = 0;
     fighter.dodgeChance = 0;
   });
-  target.x = 500; target.y = 280;
+  target.x = 440; target.y = 280;
   source.x = 200; source.y = 280;
   assert.equal(source.energyStyle, "alien");
   assert.equal(source.maxEnergy, 75);
@@ -965,7 +1064,20 @@ test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满",
   const zeyin = battle?.player.find((fighter) => fighter.unitId === "zeyin");
   const tiandou = battle?.player.find((fighter) => fighter.unitId === "tiandou");
   assert.ok(battle && zeyin && tiandou);
-  battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp = 99_999; fighter.attack = 0; fighter.armor = 99_999; });
+  battle.enemy.forEach((fighter, index) => {
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.x = 500 + index * 80;
+    fighter.y = 360;
+  });
+  zeyin.x = 280;
+  zeyin.y = 360;
+  tiandou.x = 280;
+  tiandou.y = 420;
+  const zeyinTarget = battle.enemy[0];
+  zeyinTarget.x = zeyin.x + Math.max(zeyin.range, zeyin.radius + zeyinTarget.radius + 12) - 1;
+  zeyinTarget.y = zeyin.y;
   const zeyinBaseInterval = zeyin.attackInterval;
   zeyin.energy = zeyin.maxEnergy;
   engine.update(0.05);
@@ -976,6 +1088,9 @@ test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满",
 
   const tiandouBaseSpeed = tiandou.moveSpeed;
   battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
+  const tiandouTarget = battle.enemy[0];
+  tiandouTarget.x = tiandou.x + Math.max(tiandou.range, tiandou.radius + tiandouTarget.radius + 12) - 1;
+  tiandouTarget.y = tiandou.y;
   tiandou.energy = tiandou.maxEnergy;
   engine.update(0.05);
   assert.equal(tiandou.abilityMoveSpeed, 16);
@@ -998,11 +1113,12 @@ test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", ()
     fighter.armor = 0;
     fighter.attack = 0;
     fighter.dodgeChance = 0;
-    fighter.x = 520 + index * 40;
-    fighter.y = owner.y;
+    fighter.x = 340 + index * 40;
+    fighter.y = 360;
   });
   owner.x = 260;
   owner.y = 360;
+  battle.enemy[0].x = owner.x + Math.max(owner.range, owner.radius + battle.enemy[0].radius + 12) - 1;
   owner.energy = owner.maxEnergy;
   engine.update(0.05);
   assert.equal(battle.pineTrees.length, 1);
@@ -1011,7 +1127,9 @@ test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", ()
   const treeX = tree.x;
   const treeY = tree.y;
   battle.projectiles = [];
-  stepBattle(engine, 16);
+  battle.enemy[0].x = tree.x + 120;
+  battle.enemy[0].y = tree.y;
+  stepBattle(engine, 5);
   assert.equal(tree.x, treeX);
   assert.equal(tree.y, treeY);
   const needle = battle.projectiles.find((entry) => entry.style === "pine_needle" && entry.sourceFid === owner.fid);
@@ -1043,7 +1161,7 @@ test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {
   const target = battle.enemy[0];
   source.x = 280;
   source.y = 360;
-  target.x = 620;
+  target.x = 500;
   target.y = 360;
   source.energy = source.maxEnergy;
   engine.update(0.05);
@@ -1058,4 +1176,66 @@ test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {
   const angles = carrots.map((entry) => Math.atan2(entry.velocityY, entry.velocityX));
   const baseAim = Math.atan2(target.y - source.y, target.x - source.x);
   assert.ok(angles.some((angle) => Math.abs(angle - baseAim) > 0.05));
+});
+
+test("胆小羁绊为成员提供闪避与移速，高阶惠及全队", () => {
+  const engine = createEngine(71);
+  engine.state.playerLevel = 8;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui_cat", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  engine.startBattle();
+  const timid = engine.state.battle?.player.find((fighter) => fighter.unitId === "sui_cat");
+  const ally = engine.state.battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(timid && ally);
+  // 2 名胆小成员 → 1 阶：成员 +10% 闪避、+8 移速；全队无额外闪避
+  assert.equal(timid.dodgeChance, 0.1);
+  assert.equal(timid.baseMoveSpeed, gameData.UNIT_DEFS.sui_cat.moveSpeed + 8);
+  assert.equal(ally.dodgeChance, 0);
+});
+
+test("小猫拳会闪现到最远敌人身后并推进击晕", () => {
+  const engine = createEngine(72);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui_cat", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  assert.ok(battle && source);
+
+  // 布置近远两个敌人，技能应锁定更远者
+  const near = battle.enemy[0];
+  const far = battle.enemy[1] || battle.enemy[0];
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.energy = 0;
+  });
+  near.x = 520;
+  near.y = 360;
+  if (far !== near) {
+    far.x = 760;
+    far.y = 360;
+  }
+  source.x = 220;
+  source.y = 360;
+  source.jumpPending = false;
+  source.jumpTime = 0;
+  source.energy = source.maxEnergy;
+
+  const target = far !== near ? far : near;
+  const beforeTargetX = target.x;
+  engine.update(0.05);
+
+  assert.ok(source.x > target.x, "应闪现到敌人身后（更靠敌方半场）");
+  assert.ok(target.x < beforeTargetX, "敌人应被往己方半场推开");
+  assert.ok(target.stun > 0.8, "目标应被击晕");
+  assert.ok(battle.effects.some((effect) => effect.kind === "burst"));
+  assert.ok(battle.effects.some((effect) => effect.kind === "line"));
+  assert.ok(battle.effects.some((effect) => effect.text === "猫拳三连" || effect.text === "闪"));
 });

@@ -302,7 +302,7 @@ class MainScene extends Phaser.Scene {
 
     // --- 平台循环 ---
     const cameraBottom = this.cameras.main.scrollY + 600;
-    this.platforms.children.iterate((child: any) => {
+    this.platforms.getChildren().forEach((child) => {
       const platform = child as Phaser.Physics.Arcade.Sprite;
       if (platform.y > cameraBottom + 50) {
         platform.y = this.highestY - Phaser.Math.Between(100, 170);
@@ -310,7 +310,6 @@ class MainScene extends Phaser.Scene {
         this.highestY = platform.y;
         platform.setScale(Phaser.Math.FloatBetween(0.5, 1.0), 1).refreshBody();
       }
-      return true;
     });
 
     // --- 死亡判定 ---

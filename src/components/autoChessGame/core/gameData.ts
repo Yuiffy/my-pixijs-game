@@ -18,6 +18,7 @@ export const TRAIT_IDS = [
   "mature",
   "dance",
   "aggression",
+  "timid",
 ] as const;
 
 export type TraitId = (typeof TRAIT_IDS)[number];
@@ -25,7 +26,6 @@ export type TraitId = (typeof TRAIT_IDS)[number];
 export const SHOP_UNIT_IDS = [
   // 每位角色暂时只保留一个低费代表；岁己保留多种形态。
   // 1 费
-  "sun_guard",
   "ember_blade",
   "gale_archer",
   "rift_stalker",
@@ -36,6 +36,7 @@ export const SHOP_UNIT_IDS = [
   "meme",
   "zeyin",
   // 2 费
+  "sun_guard",
   "rift_brawler",
   "sui_blue",
   "shiori",
@@ -118,6 +119,35 @@ export const describeEnergyRecovery = (profile: EnergyProfile) => {
   return `初始 ${profile.start}/${profile.max}；${sources.join("；") || "不回复"}`;
 };
 
+/**
+ * 技能释放类别：同一类共用同一触发方式。
+ * - selfOnHit：自保，能量满且受击时释放
+ * - supportShield：支援护盾，能量满即放
+ * - supportHeal：支援治疗，能量满且候选友军生命比例低于阈值时释放
+ * - engage：突进，能量满即放
+ * - offenseInRange：近距进攻，能量满且进入普攻距离时释放
+ * - offenseReady：远程/战场进攻，能量满即放
+ */
+export type AbilityCastTiming =
+  | "selfOnHit"
+  | "supportShield"
+  | "supportHeal"
+  | "engage"
+  | "offenseInRange"
+  | "offenseReady";
+
+export const ABILITY_CAST_TIMING_LABELS: Record<AbilityCastTiming, string> = {
+  selfOnHit: "自保 · 受击释放",
+  supportShield: "支援护盾 · 满能量即放",
+  supportHeal: "支援治疗 · 友军残血释放",
+  engage: "突进 · 满能量即放",
+  offenseInRange: "进攻 · 进入攻击范围释放",
+  offenseReady: "进攻 · 满能量即放",
+};
+
+/** 支援治疗：候选友军生命比例低至此值（含）才释放 */
+export const SUPPORT_HEAL_HP_RATIO = 0.7;
+
 export interface UnitDefinition {
   id: UnitId;
   name: string;
@@ -136,6 +166,8 @@ export interface UnitDefinition {
   moveSpeed: number;
   attackType: AttackType;
   energyProfile: EnergyProfile;
+  /** 技能释放类别，决定满能量后的触发时机 */
+  abilityCastTiming: AbilityCastTiming;
   abilityName: string;
   abilityDescription: string;
   portrait?: string;
@@ -257,83 +289,109 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
   },
   traffic: { id: "traffic", name: "流量", family: "关系", color: "#ff7197", thresholds: [2, 4, 6], description: "被更多人看见，才有继续输出的底气。", bonuses: ["流量成员获得 8% 吸血", "流量成员获得 15% 吸血；所有远程友军获得 5% 吸血", "流量成员获得 24% 吸血；所有远程友军获得 10% 吸血"] },
   mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速每 4 秒降低 1 个百分点直至正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
-  dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏冲向舞台中央：成员攻速提升，接近敌人时会高移速冲刺且冲刺中更易闪避。", bonuses: ["跳舞成员 +12% 攻速；接近敌人时可冲刺（期间闪避提升）", "跳舞成员 +26% 攻速；冲刺强化；所有近战友军 +8% 攻速、+8 移速", "跳舞成员 +45% 攻速；冲刺强化；所有近战友军 +16% 攻速、+16 移速"] },
+  dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏冲向舞台中央：成员攻速提升，并在最后接近阶段高移速冲刺，冲刺中更易闪避。", bonuses: ["跳舞成员 +12% 攻速；最后接近攻击范围时可冲刺（期间闪避提升）", "跳舞成员 +26% 攻速；冲刺强化；所有近战友军 +8% 攻速、+8 移速", "跳舞成员 +45% 攻速；冲刺强化；所有近战友军 +16% 攻速、+16 移速"] },
   aggression: { id: "aggression", name: "攻击性", family: "关系", color: "#ff596f", thresholds: [2, 4, 6], description: "发言要有攻击性：成员直接提高攻击力，也会带动全队火力。", bonuses: ["攻击性成员 +15% 攻击力；全体友军 +5% 攻击力", "攻击性成员 +30% 攻击力；全体友军 +10% 攻击力", "攻击性成员 +55% 攻击力；全体友军 +20% 攻击力"] },
+  timid: {
+    id: "timid",
+    name: "胆小",
+    family: "关系",
+    color: "#9bb0e8",
+    thresholds: [2, 4, 6],
+    description: "胆子小所以更会躲开，跑起来也更利索。",
+    bonuses: [
+      "胆小成员 +10% 闪避、+8 移速",
+      "胆小成员 +18% 闪避、+16 移速；全体友军 +5% 闪避",
+      "胆小成员 +28% 闪避、+26 移速；全体友军 +12% 闪避",
+    ],
+  },
 };
 
 export const traitLevelForCount = (trait: TraitDefinition, count: number) =>
   trait.thresholds.filter((threshold) => count >= threshold).length;
 
-const COMBAT_PROFILES: Record<UnitId, Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">> = {
-  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 46 },
-  ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58 },
-  gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44 },
-  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82 },
-  cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46 },
-  mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40 },
-  sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48 },
-  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 72 },
-  spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50 },
-  clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48 },
-  dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86 },
-  grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44 },
-  cinder_ram: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 52 },
-  sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 240, moveSpeed: 58 },
-  shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 48 },
-  sui_bird: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 62 },
-  sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
-  yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54 },
-  mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50 },
-  guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80 },
-  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 98 },
-  nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38 },
-  biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64 },
-  nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60 },
-  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42 },
-  zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60 },
-  kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56 },
-  nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50 },
-  tiandou: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 52 },
-  youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88 },
-  akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96 },
-  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68 },
-  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54 },
-  xuehui: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 270, moveSpeed: 58 },
-  rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54 },
-  rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 48, moveSpeed: 42 },
-  lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56 },
-  rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56 },
+const COMBAT_PROFILES: Record<
+  UnitId,
+  Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming">
+> = {
+  // selfOnHit：自保，受击时放
+  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 44, abilityCastTiming: "selfOnHit" },
+  sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48, abilityCastTiming: "selfOnHit" },
+  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58, abilityCastTiming: "selfOnHit" },
+  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42, abilityCastTiming: "selfOnHit" },
+  // supportShield：支援护盾，满能量即放
+  mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40, abilityCastTiming: "supportShield" },
+  shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 48, abilityCastTiming: "supportShield" },
+  nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38, abilityCastTiming: "supportShield" },
+  rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 48, moveSpeed: 42, abilityCastTiming: "supportShield" },
+  // supportHeal：支援治疗，友军残血时放
+  gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44, abilityCastTiming: "supportHeal" },
+  cog_scribe: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 46, abilityCastTiming: "supportHeal" },
+  cinder_ram: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 52, abilityCastTiming: "supportHeal" },
+  sui_bird: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 62, abilityCastTiming: "supportHeal" },
+  tiandou: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 52, abilityCastTiming: "supportHeal" },
+  // engage：突进，满能量即放
+  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82, abilityCastTiming: "engage" },
+  guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80, abilityCastTiming: "engage" },
+  sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 106, abilityCastTiming: "engage" },
+  biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64, abilityCastTiming: "engage" },
+  youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88, abilityCastTiming: "engage" },
+  akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96, abilityCastTiming: "engage" },
+  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68, abilityCastTiming: "engage" },
+  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
+  // offenseInRange：近距进攻，进入攻击范围放
+  zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60, abilityCastTiming: "offenseInRange" },
+  mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50, abilityCastTiming: "offenseInRange" },
+  // offenseReady：远程/战场进攻，满能量即放
+  ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50, abilityCastTiming: "offenseReady" },
+  clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48, abilityCastTiming: "offenseReady" },
+  dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86, abilityCastTiming: "offenseReady" },
+  grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44, abilityCastTiming: "offenseReady" },
+  sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 240, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
+  yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54, abilityCastTiming: "offenseReady" },
+  nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60, abilityCastTiming: "offenseReady" },
+  kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56, abilityCastTiming: "offenseReady" },
+  nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
+  xuehui: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 270, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
+  lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
+  rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56, abilityCastTiming: "offenseReady" },
 };
 
-const unit = (definition: Omit<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed"> & Partial<Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed">>): UnitDefinition => ({
+const unit = (
+  definition: Omit<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming"> &
+    Partial<Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming">>,
+): UnitDefinition => ({
   ...definition,
   ...COMBAT_PROFILES[definition.id],
 });
 
 export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
-  // 1 费：可靠的构筑零件，每个都能明确指向一条阵容路线。
+  // 2 费前排：果冻风纪（由 1 费上调）
   sun_guard: unit({
     id: "sun_guard",
     name: "果冻风纪",
-    title: "灰泽满Hazel · 前排防守",
+    title: "灰泽满Hazel · 绿冻护甲",
     glyph: "满",
     color: "#245f80",
     accent: "#7de2ff",
-    tier: 1,
-    cost: 1,
+    tier: 2,
+    cost: 2,
     traits: ["vanguard", "gen27", "traffic"],
-    hp: 245,
-    attack: 16,
-    armor: 30,
+    hp: 305,
+    attack: 18,
+    armor: 28,
     range: 48,
-    attackInterval: 1.12,
-    moveSpeed: 52,
-    abilityName: "折光壁垒",
-    abilityDescription: "获得护盾，震击并短暂眩晕当前目标。",
+    attackInterval: 1.18,
+    moveSpeed: 44,
+    abilityName: "绿冻护甲",
+    abilityDescription: "获得护盾。护盾破碎时向随机方向射出 5 枚钢镚弹幕。",
     portrait: "/images/livers/hazel.png",
     portraitFocus: "top",
     shop: true,
   }),
+  // 1 费：可靠的构筑零件，每个都能明确指向一条阵容路线。
   ember_blade: unit({
     id: "ember_blade",
     name: "兔子射手",
@@ -453,7 +511,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ffabb5",
     tier: 1,
     cost: 1,
-    traits: ["vanguard", "dance", "aggression"],
+    traits: ["dance", "aggression", "timid"],
     hp: 244,
     attack: 17,
     armor: 24,
@@ -461,7 +519,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.12,
     moveSpeed: 52,
     abilityName: "攻击弹幕",
-    abilityDescription: "进入攻击弹幕状态：攻速、攻击力与移速提升；期间能量从满缓慢降到空且无法回能，能量耗尽后结束。",
+    abilityDescription: "进入攻击弹幕状态：大幅提升攻速，并小幅提升攻击力与移速；期间能量从满缓慢降到空且无法回能，能量耗尽后结束。",
     portrait: "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png",
     portraitFocus: "top",
     shop: true,
@@ -471,21 +529,21 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   rift_brawler: unit({
     id: "rift_brawler",
     name: "雅吨",
-    title: "克罗雅Kloa · 辣福灼烧",
+    title: "克罗雅Kloa · 辣福",
     glyph: "雅",
     color: "#4c3c72",
     accent: "#c4a1ff",
     tier: 2,
     cost: 2,
     traits: ["gen27", "yue_gang"],
-    hp: 205,
-    attack: 29,
-    armor: 14,
+    hp: 295,
+    attack: 22,
+    armor: 12,
     range: 52,
-    attackInterval: 1.02,
-    moveSpeed: 76,
-    abilityName: "辣福一口",
-    abilityDescription: "扑向最近敌人咬一口，造成伤害并施加辣味灼烧。",
+    attackInterval: 1.16,
+    moveSpeed: 58,
+    abilityName: "辣福",
+    abilityDescription: "被动：自身灼烧时普攻附带灼烧。主动：打翻火锅，灼烧自己与周围小范围敌人。",
     portrait: "/images/livers/kloa.jpg",
     portraitFocus: "top",
     shop: true,
@@ -563,9 +621,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     glyph: "七",
     color: "#28644b",
     accent: "#79f2ad",
-    tier: 2,
-    cost: 2,
-    traits: ["wild", "mystic", "gluttony"],
+    tier: 4,
+    cost: 4,
+    traits: ["wild", "mystic", "gluttony", "ember"],
     hp: 158,
     attack: 16,
     armor: 9,
@@ -587,7 +645,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ff9a64",
     tier: 5,
     cost: 5,
-    traits: ["ember", "mystic", "mature", "aggression"],
+    traits: ["ember", "chuanmei", "mature", "aggression"],
     hp: 340,
     attack: 38,
     armor: 22,
@@ -602,14 +660,14 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   sui_blue: unit({
     id: "sui_blue",
-    name: "骷髅兵岁",
+    name: "贪吃岁",
     title: "岁己SUI · 后排补刀",
     glyph: "蓝",
     color: "#3a5d94",
     accent: "#92c8ff",
     tier: 2,
     cost: 2,
-    traits: ["ranger", "skeleton_soldier", "aggression"],
+    traits: ["skeleton_soldier", "gluttony"],
     hp: 148,
     attack: 25,
     armor: 8,
@@ -655,7 +713,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#f7d77c",
     tier: 3,
     cost: 3,
-    traits: ["mystic", "wild"],
+    traits: ["mystic", "wild", "timid"],
     hp: 188,
     attack: 27,
     armor: 11,
@@ -669,14 +727,14 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   sui_flower: unit({
     id: "sui_flower",
-    name: "川妹岁",
-    title: "岁己SUI · 辣味控场",
+    name: "暴龙岁",
+    title: "岁己SUI · 川渝暴龙",
     glyph: "花",
     color: "#a15282",
     accent: "#f6a8d4",
     tier: 3,
     cost: 3,
-    traits: ["mystic", "chuanmei", "aggression"],
+    traits: ["vanguard", "chuanmei", "mystic"],
     hp: 184,
     attack: 27,
     armor: 12,
@@ -698,7 +756,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#ffc28a",
     tier: 3,
     cost: 3,
-    traits: ["ember", "ranger"],
+    traits: ["gluttony", "dance", "ranger"],
     hp: 182,
     attack: 34,
     armor: 11,
@@ -767,15 +825,15 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#e8a8f4",
     tier: 4,
     cost: 4,
-    traits: ["assassin", "gluttony"],
-    hp: 226,
+    traits: ["assassin", "aggression", "dance", "timid"],
+    hp: 252,
     attack: 39,
-    armor: 15,
+    armor: 19,
     range: 50,
     attackInterval: 0.74,
-    moveSpeed: 94,
-    abilityName: "小猫拳",
-    abilityDescription: "切入最远敌人，连续打出三记小猫拳并恢复造成伤害的生命。",
+    moveSpeed: 102,
+    abilityName: "猫拳三连",
+    abilityDescription: "闪现到最远敌人身后，与其一同推开一段距离，打出三记猫拳并击晕目标。",
     portrait: "/images/materials/岁己SUI小猫帽带饼干岁紫色外套双马尾.png",
     portraitFocus: "top",
     shop: true,
@@ -830,7 +888,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   // 公开成员的角色化战斗设计；无可核验梗时采用公开人设或名字意象。
   nori: unit({
     id: "nori", name: "能能弄你", title: "能能Nori · 弹幕射手", glyph: "能", color: "#526a9e", accent: "#9bb8ff", tier: 1, cost: 1,
-    traits: ["ranger", "host"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
+    traits: ["ranger", "host", "timid"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
     abilityName: "苹果派", abilityDescription: "发射 8 枚低伤害苹果派子弹。",
     portrait: "/images/livers/nori.jpg", portraitFocus: "top", shop: true,
   }),
@@ -859,13 +917,13 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   tiandou: unit({
     id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 舞台支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
-    traits: ["mystic", "dance"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
+    traits: ["mystic", "dance", "timid"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
     abilityName: "甜点转圈", abilityDescription: "为生命最低的两名友军回复生命，并提升她们短暂移速。",
     portrait: "/images/livers/tiandou.jpg", portraitFocus: "top", shop: true,
   }),
   youyi: unit({
     id: "youyi", name: "又一·叛逆舞步", title: "四禧丸子 · 突进舞者", glyph: "又", color: "#84536f", accent: "#f0add2", tier: 3, cost: 3,
-    traits: ["assassin", "dance"], hp: 212, attack: 31, armor: 14, range: 50, attackInterval: 0.86, moveSpeed: 82,
+    traits: ["assassin", "dance", "timid"], hp: 212, attack: 31, armor: 14, range: 50, attackInterval: 0.86, moveSpeed: 82,
     abilityName: "叛逆转场", abilityDescription: "跃向最远敌人，连续踢击两次并短暂眩晕。",
     portrait: "/images/livers/youyi.jpg", portraitFocus: "top", shop: true,
   }),
@@ -877,7 +935,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   lovely: unit({
     id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
-    traits: ["assassin", "host", "dance"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
+    traits: ["assassin", "host", "dance", "timid"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
     abilityName: "元气冲场", abilityDescription: "跃入敌人最密集处横扫；每命中一名敌人，都会提升自身攻击速度。",
     portrait: "/images/livers/lovely.webp", portraitFocus: "top", shop: true,
   }),
@@ -907,7 +965,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   lian: unit({
     id: "lian", name: "梨安·终场谢幕", title: "四禧丸子 · 终场舞者", glyph: "梨", color: "#8b5b9b", accent: "#e3b2ff", tier: 5, cost: 5,
-    traits: ["mystic", "dance"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
+    traits: ["mystic", "dance", "chuanmei"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
     abilityName: "终场谢幕", abilityDescription: "轰击敌人最密集处，造成范围伤害并为全体友军补充能量。",
     portrait: "/images/livers/lian.jpg", portraitFocus: "top", shop: true,
   }),

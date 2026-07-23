@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
+  ABILITY_CAST_TIMING_LABELS,
   AUGMENTS,
   ENERGY_PROFILES,
   describeEnergyRecovery,
@@ -75,7 +76,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
         color: "#dfefff",
         boxShadow: "0 24px 80px rgba(0,0,0,.65)",
         overflow: "hidden",
-        fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif',
+        fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif',
       }}
     >
       <header
@@ -213,6 +214,9 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
               </div>
               <p style={{ color: "#708a9d", margin: "8px 0 12px", fontSize: 12 }}>以上为基础属性；羁绊、天赋和契印会在战斗中进一步修改数值。</p>
               <h3 style={{ color: unit.accent, marginBottom: 6 }}>{unit.abilityName}</h3>
+              <div style={{ color: "#8eb0c4", fontSize: 12, marginBottom: 6 }}>
+                {ABILITY_CAST_TIMING_LABELS[unit.abilityCastTiming]}
+              </div>
               <p style={{ color: "#b6c8d4", lineHeight: 1.7 }}>{unit.abilityDescription}</p>
               <h3 style={{ marginBottom: 6 }}>所属羁绊</h3>
               {unit.traits.map((id) => (
@@ -347,7 +351,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
             <h2>操作</h2>
             <ul><li>点击商店购买；点击或拖拽棋子调整站位；右键棋子可快速回收。</li><li>R 刷新商店，Space 开战，F 全屏，Esc 关闭面板/取消选中。</li><li>敌情预览、棋子、羁绊均可悬浮查看详情。</li></ul>
             <h2>能量</h2>
-            <p>棋子满能会自动施放技能。每张棋子卡和悬浮详情都会写明初始能量与回能来源：自动回能按秒累积；攻击回能在普攻命中后获得；受击回能在被普攻命中后获得。能量数值会受到羁绊、开局与天赋影响。</p>
+            <p>棋子能量满后按技能类别触发：自保需受击才放；支援护盾满能量即放；支援治疗要等友军生命降到约 70% 才放；突进与远程进攻满能量即放；近距进攻需进入普攻距离。每张棋子卡和悬浮详情都会写明初始能量、回能来源与技能释放类别：自动回能按秒累积；攻击回能在普攻命中后获得；受击回能在被普攻命中后获得。能量数值会受到羁绊、开局与天赋影响。</p>
             <h2>经济</h2>
             <p>每 10 金提供 1 利息，最多 2；连胜和精英战提供额外收入。升本是“支付当前剩余费用直接升级”，不再购买抽象 XP。</p>
           </section>

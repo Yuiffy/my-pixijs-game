@@ -200,11 +200,13 @@ test("岁己形态拆分到不同关系构筑", () => {
     assert.ok(data.UNIT_DEFS[id].portrait);
   });
   assert.equal(data.UNIT_DEFS.sui.name, "小红帽");
-  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["vanguard", "dance", "aggression"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["ranger", "skeleton_soldier", "aggression"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["mystic", "chuanmei", "aggression"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "gluttony"]);
+  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["dance", "aggression", "timid"]);
+  assert.equal(data.UNIT_DEFS.sui_blue.name, "贪吃岁");
+  assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["skeleton_soldier", "gluttony"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild", "timid"]);
+  assert.equal(data.UNIT_DEFS.sui_flower.name, "暴龙岁");
+  assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["vanguard", "chuanmei", "mystic"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "aggression", "dance", "timid"]);
   assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["wild", "gluttony"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
 });
@@ -243,7 +245,7 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.UNIT_DEFS.clock_gunner.abilityDescription, /4 秒/);
   assert.equal(data.UNIT_DEFS.clock_gunner.attackInterval, 0.84);
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.onAttack, 15);
-  assert.equal(data.UNIT_DEFS.yua.traits.includes("ranger"), true);
+  assert.deepEqual(data.UNIT_DEFS.yua.traits, ["gluttony", "dance", "ranger"]);
   assert.equal(data.UNIT_DEFS.yua.abilityName, "外星贯穿光线");
   assert.match(data.UNIT_DEFS.yua.abilityDescription, /横排/);
   assert.equal(data.UNIT_DEFS.rift_tyrant.energyProfile.id, "reservoir");
@@ -255,7 +257,12 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.meme.tier, 3);
   assert.equal(data.UNIT_DEFS.meme.cost, 3);
   assert.ok(data.UNIT_DEFS.nagisa.moveSpeed <= 40);
-  assert.ok(data.UNIT_DEFS.sui_cat.moveSpeed >= 90);
+  assert.ok(data.UNIT_DEFS.sui_cat.moveSpeed >= 100);
+  assert.equal(data.UNIT_DEFS.sui_cat.abilityName, "猫拳三连");
+  assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /闪现到最远敌人身后/);
+  assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /击晕/);
+  assert.ok(data.UNIT_DEFS.sui_cat.hp >= 250);
+  assert.ok(data.UNIT_DEFS.sui_cat.armor >= 18);
 });
 
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
@@ -267,9 +274,15 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
     assert.equal(data.SHOP_UNITS.includes(id), false);
     assert.equal(data.UNIT_DEFS[id], undefined);
   });
-  ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "host", "dwarf", "traffic", "mature", "dance", "aggression"].forEach((id) => {
+  ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "host", "dwarf", "traffic", "mature", "dance", "aggression", "timid"].forEach((id) => {
     assert.equal(data.TRAITS[id].family, "关系");
     assert.equal(data.TRAITS[id].thresholds.length, data.TRAITS[id].bonuses.length);
+  });
+  assert.equal(data.TRAITS.timid.name, "胆小");
+  assert.deepEqual(data.TRAITS.timid.thresholds, [2, 4, 6]);
+  assert.match(data.TRAITS.timid.bonuses[0], /闪避/);
+  ["sui_cat", "sui", "sui_bird", "nori", "tiandou", "youyi", "lovely"].forEach((id) => {
+    assert.ok(data.UNIT_DEFS[id].traits.includes("timid"));
   });
   assert.equal(data.TRAITS.rift, undefined);
   assert.equal(data.TRAITS.clockwork, undefined);
@@ -278,10 +291,14 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.dwarf.name, "矮人");
   assert.equal(data.TRAITS.skeleton_soldier.name, "骷髅兵");
   assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
-  ["sui_flower"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
-  ["grove_mender", "sui_cat"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
+  ["sui_flower", "cinder_ram", "lian"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
+  ["grove_mender", "sui_blue"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
+  assert.equal(data.UNIT_DEFS.grove_mender.tier, 4);
+  assert.equal(data.UNIT_DEFS.grove_mender.cost, 4);
+  assert.equal(data.UNIT_DEFS.grove_mender.traits.includes("ember"), true);
   assert.equal(data.UNIT_DEFS.biscuit_sui.traits.includes("gluttony"), true);
   assert.equal(data.UNIT_DEFS.sui.traits.includes("gluttony"), false);
+  assert.equal(data.UNIT_DEFS.sui_cat.traits.includes("gluttony"), false);
   assert.equal(data.TRAITS.assassin.name, "偷袭");
   assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
   assert.ok(data.UNIT_DEFS.lovely.traits.includes("assassin"));
@@ -304,7 +321,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.deepEqual(data.UNIT_DEFS.xuehui.traits, ["dwarf", "ember", "aggression"]);
   assert.deepEqual(data.TRAITS.aggression.thresholds, [2, 4, 6]);
   assert.match(data.TRAITS.aggression.bonuses[2], /成员 \+55% 攻击力；全体友军 \+20% 攻击力/);
-  ["xuehui", "cinder_ram", "meme", "sui", "sui_blue", "sui_flower"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("aggression")));
+  ["xuehui", "cinder_ram", "meme", "sui", "sui_cat"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("aggression")));
   assert.equal(data.UNIT_DEFS.nightin.name, "南町");
   assert.equal(data.UNIT_DEFS.lovely.name, "狍子偶像");
   ["sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
