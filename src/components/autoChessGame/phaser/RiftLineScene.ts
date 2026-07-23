@@ -1999,8 +1999,10 @@ export class RiftLineScene extends Phaser.Scene {
     };
   }
 
-  private showUnitTooltip(unitId: UnitId, pointer?: Phaser.Input.Pointer, star = 1, fighter?: Fighter) {
+  private showUnitTooltip(unitId: UnitId, pointer?: Phaser.Input.Pointer, star: 1 | 2 | 3 = 1, fighter?: Fighter) {
+    const logical = pointer ? this.logicalPointer(pointer) : { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 };
     this.clearTooltip();
+    this.bridge.onTooltip?.({ kind: "unit", unitId, star, fighter, x: logical.x, y: logical.y });
     this.pinnedTooltip = this.isCompact() ? unitId : null;
     const def = UNIT_DEFS[unitId];
     const width = 342;
@@ -2058,7 +2060,9 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private showTraitTooltip(traitId: keyof typeof TRAITS, pointer?: Phaser.Input.Pointer) {
+    const logical = pointer ? this.logicalPointer(pointer) : { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 };
     this.clearTooltip();
+    this.bridge.onTooltip?.({ kind: "trait", traitId, x: logical.x, y: logical.y });
     const trait = TRAITS[traitId];
     const status = this.bridge.engine.getTraitStatus(traitId);
     const width = 360;
@@ -2080,6 +2084,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private clearTooltip() {
+    this.bridge.onTooltip?.(null);
     if (!this.tooltipLayer) {
       this.pinnedTooltip = null;
       return;

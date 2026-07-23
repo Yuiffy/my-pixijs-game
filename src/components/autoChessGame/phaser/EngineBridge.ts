@@ -1,7 +1,11 @@
 import type { GameAudioEvent } from "../audio";
 import { AutoChessEngine } from "../core/gameEngine";
-import type { GamePhase, RankingMetric, UnitLocation } from "../core/gameTypes";
+import type { Fighter, GamePhase, RankingMetric, UnitLocation } from "../core/gameTypes";
 import type { StarterId } from "../core/gameData";
+
+export type DomTooltip =
+  | { kind: "unit"; unitId: import("../core/gameData").UnitId; star: 1 | 2 | 3; fighter?: Fighter; x: number; y: number }
+  | { kind: "trait"; traitId: keyof typeof import("../core/gameData").TRAITS; x: number; y: number };
 
 export type BridgeEvent =
   | { type: "audio"; event: GameAudioEvent }
@@ -27,6 +31,8 @@ export class EngineBridge {
   public hidden = false;
 
   public onEvent: ((event: BridgeEvent) => void) | null = null;
+
+  public onTooltip: ((tooltip: DomTooltip | null) => void) | null = null;
 
   private testSpeed: number;
 

@@ -2,15 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { AutoChessEngine } from "./core/gameEngine";
-import { AUGMENTS, STARTERS, TRAITS, UNIT_DEFS, bookLevelForPlayerLevel, tierOddsForLevel } from "./core/gameData";
+import { ABILITY_CAST_TIMING_LABELS, AUGMENTS, STARTERS, TRAITS, UNIT_DEFS, bookLevelForPlayerLevel, tierOddsForLevel } from "./core/gameData";
 import type { OwnedUnit, RankingMetric, UnitLocation } from "./core/gameTypes";
-import type { GameAction } from "./phaser/EngineBridge";
+import type { DomTooltip, GameAction } from "./phaser/EngineBridge";
 
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 
 type Props = {
   engine: AutoChessEngine | null;
   onAction: (action: GameAction) => void;
+  tooltip: DomTooltip | null;
 };
 
 type Sheet = "shop" | "bench" | null;
@@ -37,7 +38,7 @@ function UnitPortrait({ unitId, size = 42 }: { unitId: keyof typeof UNIT_DEFS; s
     : { width: size, height: size, objectFit: "cover", objectPosition: definition.portraitFocus === "top" ? "center 16%" : "center" }} />;
 }
 
-export default function RiftHud({ engine, onAction }: Props) {
+export default function RiftHud({ engine, onAction, tooltip }: Props) {
   const [sheet, setSheet] = useState<Sheet>(null);
   const [shopPage, setShopPage] = useState(0);
   const [starterPage, setStarterPage] = useState(0);
@@ -108,10 +109,30 @@ export default function RiftHud({ engine, onAction }: Props) {
 
   const battleOverlay = state.phase === "battle" && state.battle && <div className="rift-dom-battle-tools"><b>⏱ {Math.max(0, state.battle.limit - state.battle.elapsed).toFixed(1)}s</b><button style={actionButton()} onClick={() => dispatch({ type: "rankingToggle" })}>战斗统计</button></div>;
 
+  const tooltipCard = tooltip && (tooltip.kind === "unit"
+    ? <UnitTooltip tooltip={tooltip} engine={engine} />
+    : <TraitTooltip tooltip={tooltip} engine={engine} />);
   const wave = engine.currentWave;
   const activeTraits = engine.getActiveTraits();
   const odds = tierOddsForLevel(state.playerLevel).map((chance, index) => chance ? `${index + 1}费${chance}%` : "").filter(Boolean).join(" · ");
-  return <div className="rift-dom-layer" style={{ fontFamily: FONT }}>{header}{state.phase === "preparation" && <>{isMobile && <><div className="rift-dom-stage"><section className="rift-dom-briefing"><div><b className={`rift-dom-wave ${wave.tag}`}>{wave.tag === "boss" ? "BOSS" : wave.tag === "elite" ? "ELITE" : `WAVE ${wave.round}`}</b><h2>{wave.name}</h2><p>{wave.description}</p></div><div className="rift-dom-enemies"><small>敌情预览 · 悬浮查看技能</small><div>{wave.units.slice(0, 7).map((unit, index) => <span key={`${unit.id}-${index}`}><UnitPortrait unitId={unit.id} size={30} /></span>)}</div></div></section><div className="rift-dom-traits rift-dom-stage-traits">{Object.entries(engine.getTraitCounts()).filter(([, count]) => count > 0).map(([id, count]) => { const trait = TRAITS[id as keyof typeof TRAITS]; const status = engine.getTraitStatus(trait.id); const threshold = trait.thresholds.find((value) => value > count) ?? status.maxThreshold; return <span key={id} style={{ borderColor: trait.color, color: status.active ? "#f5fcff" : "#aabdc8" }}>{trait.name} {count}/{threshold}</span>; })}</div><div className="rift-dom-deployment"><span>后方 · 远程与辅助</span><b>6 × 4 自由部署区 · 满级 8 人口</b><span>前线 · 优先接敌 →</span></div><aside className="rift-dom-shop-desktop"><header><strong>战术商店 · {bookLevelForPlayerLevel(state.playerLevel)} 本</strong><small>{engine.isMaxPlayerLevel ? "已满级" : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${engine.upgradeCost} 金币`}</small><em>{odds}</em></header>{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} index={index} engine={engine} onBuy={() => dispatch({ type: "shop", index })} />)}<div className="rift-dom-shop-actions"><button style={actionButton()} onClick={() => dispatch({ type: "buyXp" })}>升本 · {engine.isMaxPlayerLevel ? "已满级" : engine.upgradeCost}</button><button style={actionButton()} onClick={() => dispatch({ type: "lock" })}>{state.shopLocked ? "已锁定" : "锁定商店"}</button><button style={actionButton("economic")} onClick={() => dispatch({ type: "reroll" })}>刷新 · {state.freeRerollCharges ? "免费" : 1}</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></div><footer>{activeTraits.length ? `已激活：${activeTraits.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`).join(" · ")}` : "常规羁绊按 2/4/6；关系羁绊按图标说明"}</footer></aside></div><nav className="rift-dom-mobile-actions"><button style={actionButton()} onClick={() => setSheet("shop")}>商店</button><button style={actionButton()} onClick={() => setSheet("bench")}>备战席</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></nav></>}</>}{battleOverlay}{sheet === "shop" && <ShopSheet entries={shopEntries} page={shopPage} setPage={setShopPage} engine={engine} onClose={() => setSheet(null)} onAction={dispatch} />}{sheet === "bench" && <BenchSheet engine={engine} selected={selected} onClose={() => setSheet(null)} onAction={dispatch} />}</div>;
+  return <div className="rift-dom-layer" style={{ fontFamily: FONT }}>{header}{state.phase === "preparation" && <>{isMobile && <><div className="rift-dom-stage"><section className="rift-dom-briefing"><div><b className={`rift-dom-wave ${wave.tag}`}>{wave.tag === "boss" ? "BOSS" : wave.tag === "elite" ? "ELITE" : `WAVE ${wave.round}`}</b><h2>{wave.name}</h2><p>{wave.description}</p></div><div className="rift-dom-enemies"><small>敌情预览 · 悬浮查看技能</small><div>{wave.units.slice(0, 7).map((unit, index) => <span key={`${unit.id}-${index}`}><UnitPortrait unitId={unit.id} size={30} /></span>)}</div></div></section><div className="rift-dom-traits rift-dom-stage-traits">{Object.entries(engine.getTraitCounts()).filter(([, count]) => count > 0).map(([id, count]) => { const trait = TRAITS[id as keyof typeof TRAITS]; const status = engine.getTraitStatus(trait.id); const threshold = trait.thresholds.find((value) => value > count) ?? status.maxThreshold; return <span key={id} style={{ borderColor: trait.color, color: status.active ? "#f5fcff" : "#aabdc8" }}>{trait.name} {count}/{threshold}</span>; })}</div><div className="rift-dom-deployment"><span>后方 · 远程与辅助</span><b>6 × 4 自由部署区 · 满级 8 人口</b><span>前线 · 优先接敌 →</span></div><aside className="rift-dom-shop-desktop"><header><strong>战术商店 · {bookLevelForPlayerLevel(state.playerLevel)} 本</strong><small>{engine.isMaxPlayerLevel ? "已满级" : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${engine.upgradeCost} 金币`}</small><em>{odds}</em></header>{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} index={index} engine={engine} onBuy={() => dispatch({ type: "shop", index })} />)}<div className="rift-dom-shop-actions"><button style={actionButton()} onClick={() => dispatch({ type: "buyXp" })}>升本 · {engine.isMaxPlayerLevel ? "已满级" : engine.upgradeCost}</button><button style={actionButton()} onClick={() => dispatch({ type: "lock" })}>{state.shopLocked ? "已锁定" : "锁定商店"}</button><button style={actionButton("economic")} onClick={() => dispatch({ type: "reroll" })}>刷新 · {state.freeRerollCharges ? "免费" : 1}</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></div><footer>{activeTraits.length ? `已激活：${activeTraits.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`).join(" · ")}` : "常规羁绊按 2/4/6；关系羁绊按图标说明"}</footer></aside></div><nav className="rift-dom-mobile-actions"><button style={actionButton()} onClick={() => setSheet("shop")}>商店</button><button style={actionButton()} onClick={() => setSheet("bench")}>备战席</button><button style={actionButton("confirm")} onClick={() => dispatch({ type: "battle" })}>开始战斗</button></nav></>}</>}{tooltipCard}{battleOverlay}{sheet === "shop" && <ShopSheet entries={shopEntries} page={shopPage} setPage={setShopPage} engine={engine} onClose={() => setSheet(null)} onAction={dispatch} />}{sheet === "bench" && <BenchSheet engine={engine} selected={selected} onClose={() => setSheet(null)} onAction={dispatch} />}</div>;
+}
+
+function UnitTooltip({ tooltip, engine }: { tooltip: Extract<DomTooltip, { kind: "unit" }>; engine: AutoChessEngine }) {
+  const unit = UNIT_DEFS[tooltip.unitId];
+  const fighter = tooltip.fighter;
+  const traits = unit.traits.map((id) => {
+    const trait = TRAITS[id];
+    const status = engine.getTraitStatus(id);
+    return { trait, status };
+  });
+  return <aside className="rift-dom-tooltip rift-dom-unit-tooltip" style={{ borderColor: unit.accent }}><header><div className="rift-dom-tooltip-portrait" style={{ borderColor: unit.accent }}><UnitPortrait unitId={tooltip.unitId} size={54} /></div><div><strong>{unit.name} {"★".repeat(tooltip.star)}</strong><span>{unit.title} · {unit.cost}费</span></div></header><p className="rift-dom-tooltip-stats">{fighter ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)}\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}` : `${unit.attackType === "ranged" ? "远程" : "近战"} · 生命 ${unit.hp} · 攻击 ${unit.attack} · 护甲 ${unit.armor}\n射程 ${unit.range} · 攻速 ${unit.attackInterval.toFixed(2)}s · 移速 ${unit.moveSpeed}`}</p><div className="rift-dom-tooltip-energy" style={{ color: unit.energyProfile.color }}>{unit.energyProfile.name} · {fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${unit.energyProfile.start}/${unit.energyProfile.max}`}</div><div className="rift-dom-tooltip-traits">{traits.map(({ trait, status }) => <span key={trait.id} style={{ borderColor: trait.color, color: status.active ? "#f4fbff" : "#a9c0cb" }}>{trait.name} {status.count}/{status.maxThreshold}</span>)}</div><h4>{unit.abilityName} · {ABILITY_CAST_TIMING_LABELS[unit.abilityCastTiming]}</h4><p className="rift-dom-tooltip-description">{unit.abilityDescription}</p></aside>;
+}
+
+function TraitTooltip({ tooltip, engine }: { tooltip: Extract<DomTooltip, { kind: "trait" }>; engine: AutoChessEngine }) {
+  const trait = TRAITS[tooltip.traitId];
+  const status = engine.getTraitStatus(trait.id);
+  return <aside className="rift-dom-tooltip rift-dom-trait-tooltip" style={{ borderColor: trait.color }}><header><strong>{trait.name}</strong><span>{status.count}/{status.maxThreshold}</span></header><p className="rift-dom-tooltip-description">{trait.description}</p><ul>{trait.thresholds.map((threshold, index) => <li key={threshold} className={status.count >= threshold ? "active" : ""}><b>{status.count >= threshold ? "◆" : "◇"} {threshold} 名</b>{trait.bonuses[index]}</li>)}</ul></aside>;
 }
 
 function ShopCard({ unitId, index, engine, onBuy }: { unitId: string | null; index: number; engine: AutoChessEngine; onBuy: () => void }) {
