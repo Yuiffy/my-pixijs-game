@@ -1,14 +1,16 @@
+/** Stable authored coordinates for every card, slot, panel, and hit area. */
 export const WORLD_WIDTH = 1120;
 export const WORLD_HEIGHT = 720;
-export const MOBILE_WORLD_WIDTH = 480;
-export const MOBILE_WORLD_HEIGHT = 1000;
 export const TOOLBAR_HEIGHT = 42;
+export const MIN_CARD_SCALE = 0.72;
+export const MAX_CARD_SCALE = 1.25;
+/** Legacy compact helpers remain declared while their mobile profile is disabled. */
 export const MOBILE_TOUCH_TARGET = 54;
 
 /** Prevent a fullscreen, high-DPI canvas from allocating an unbounded framebuffer. */
 export const MAX_RENDER_PIXELS = 8_000_000;
 export const MAX_DEVICE_PIXEL_RATIO = 2;
-export const MAX_TEXT_RESOLUTION = 3;
+export const MAX_TEXT_RESOLUTION = 2;
 
 export type RenderSize = {
   width: number;
@@ -36,15 +38,61 @@ export const renderSizeFor = (displayWidth: number, displayHeight: number, devic
   };
 };
 
-export type LayoutProfile = "wide" | "compact" | "mobile";
+export type LayoutProfile = "wide" | "compact";
 
-export const logicalSizeFor = (profile: LayoutProfile) => {
-  return profile === "mobile"
-    ? { width: MOBILE_WORLD_WIDTH, height: MOBILE_WORLD_HEIGHT }
-    : { width: WORLD_WIDTH, height: WORLD_HEIGHT };
+export type ViewportScale = {
+  fitScale: number;
+  cardScale: number;
+  compact: boolean;
 };
 
-export const isMobileProfile = (profile: LayoutProfile) => profile === "mobile";
+/**
+ * DPR is intentionally absent: it changes render density, never authored UI geometry.
+ * `fitScale` is the actual camera scale; `cardScale` is the bounded readability target
+ * used to choose the compact information profile when the host is too small.
+ */
+export const viewportScaleFor = (usableWidth: number, usableHeight: number): ViewportScale => {
+  const fitScale = Math.max(0.01, Math.min(usableWidth / WORLD_WIDTH, usableHeight / WORLD_HEIGHT));
+  return {
+    fitScale,
+    cardScale: Math.min(MAX_CARD_SCALE, Math.max(MIN_CARD_SCALE, fitScale)),
+    compact: fitScale < MIN_CARD_SCALE,
+  };
+};
+
+export const logicalSizeFor = () => ({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
+
+/**
+ * Tooltip typography is expressed in CSS-sized visual units. Its container
+ * cancels the camera fit scale so a narrower browser does not shrink it.
+ * DPR remains a text-texture quality concern in the scene, not a font-size input.
+ */
+export const TOOLTIP_TYPOGRAPHY = {
+  title: 20,
+  body: 14,
+  section: 14,
+  traitHeading: 12,
+  tag: 12,
+  padding: 20,
+  tagHeight: 24,
+  tagGap: 5,
+  pointerOffset: 18,
+  edgeInset: 12,
+} as const;
+
+export type TooltipLayout = {
+  scale: number;
+  width: number;
+};
+
+export const tooltipLayoutFor = (usableWidth: number, usableHeight: number, preferredWidth: number): TooltipLayout => {
+  const { fitScale } = viewportScaleFor(usableWidth, usableHeight);
+  void usableHeight;
+  return {
+    scale: 1 / fitScale,
+    width: Math.max(1, Math.min(preferredWidth, usableWidth - TOOLTIP_TYPOGRAPHY.edgeInset * 2)),
+  };
+};
 
 export const PREPARATION_BOARD_PANEL = { x: 26, y: 98, width: 752, height: 430 };
 export const PREPARATION_SHOP_PANEL = { x: 794, y: 98, width: 300, height: 500 };
@@ -228,8 +276,6 @@ export const starterCardRect = (index: number, profile: LayoutProfile) => {
   return { x: layout.cardXs[index] ?? layout.cardXs[0], y: layout.cardY, width: layout.cardWidth, height: layout.cardHeight };
 };
 
-export const profileFor = (width: number, height: number, coarsePointer = false): LayoutProfile => {
-  if (height > width * 1.08 && (width < 700 || coarsePointer)) return "mobile";
-  if (width < 720 || height > width * 1.15) return "compact";
-  return "wide";
-};
+export const profileFor = (width: number, height: number): LayoutProfile => (
+  viewportScaleFor(width, height).compact ? "compact" : "wide"
+);

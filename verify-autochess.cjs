@@ -55,7 +55,11 @@ mkdirSync(artifactDirectory, { recursive: true });
       width: Number(element.dataset.logicalWidth || 1120),
       height: Number(element.dataset.logicalHeight || 720),
     }));
-    return { x: box.x + (x / logical.width) * box.width, y: box.y + (y / logical.height) * box.height };
+    const fitScale = Math.min(box.width / logical.width, box.height / logical.height);
+    return {
+      x: box.x + (box.width - logical.width * fitScale) / 2 + x * fitScale,
+      y: box.y + (box.height - logical.height * fitScale) / 2 + y * fitScale,
+    };
   };
   const clickLogical = async (x, y) => {
     const point = await pointForLogical(x, y);
@@ -140,7 +144,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const resultRound1 = await state();
   await advance(150);
   await page.screenshot({ path: `${artifactDirectory}/autochess-result-round1.png` });
-  await page.getByRole('button', { name: '治疗/护盾' }).click();
+  await clickLogical(560, 232);
   await page.waitForTimeout(100);
   const resultRound1Support = await state();
   if (resultRound1Support.battle?.ranking?.metric !== 'support') throw new Error(`结算指标切换未生效: ${JSON.stringify(resultRound1Support.battle?.ranking?.metric)}`);
@@ -152,7 +156,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.screenshot({ path: `${artifactDirectory}/autochess-result-mobile.png` });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(300);
-  await page.getByRole('button', { name: '继续' }).click();
+  await clickLogical(560, 665);
   const preparationRound2 = await state();
   if (preparationRound2.phase !== 'preparation' || preparationRound2.round !== 2) {
     throw new Error(`Result continue did not reach round-2 preparation: ${JSON.stringify(preparationRound2)}`);
@@ -163,13 +167,13 @@ mkdirSync(artifactDirectory, { recursive: true });
   const resultRound2 = await state();
   await advance(150);
   await page.screenshot({ path: `${artifactDirectory}/autochess-result-round2.png` });
-  await page.getByRole('button', { name: '继续' }).click();
+  await clickLogical(560, 665);
   const augmentRound2 = await state();
   if (augmentRound2.phase !== 'augment' || augmentRound2.round !== 2) {
     throw new Error(`Round-2 continue did not reach augment selection: ${JSON.stringify(augmentRound2)}`);
   }
   await page.screenshot({ path: `${artifactDirectory}/autochess-augment-round2.png` });
-  await page.getByRole('button', { name: '装备契印' }).click();
+  await clickLogical(245, 525);
   const preparationRound3 = await state();
   if (preparationRound3.phase !== 'preparation' || preparationRound3.round !== 3) {
     throw new Error(`Augment choice did not reach round-3 preparation: ${JSON.stringify(preparationRound3)}`);
@@ -231,7 +235,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   }));
   const displayAspect = mobileBox.width / mobileBox.height;
   if (!mobileBox || mobileBox.width < 380 || mobileBox.height < 700) throw new Error('移动端画布未填满工具栏下方宿主');
-  if (canvasResolution.layoutProfile !== 'mobile' || canvasResolution.logicalWidth !== '480' || canvasResolution.logicalHeight !== '1000') throw new Error(`移动端未进入竖屏 mobile 布局: ${JSON.stringify(canvasResolution)}`);
+  if (canvasResolution.layoutProfile !== 'compact' || canvasResolution.logicalWidth !== '1120' || canvasResolution.logicalHeight !== '720') throw new Error(`移动端未进入固定世界紧凑布局: ${JSON.stringify(canvasResolution)}`);
   await page.screenshot({ path: `${artifactDirectory}/autochess-mobile.png` });
 
   console.log(JSON.stringify({ initial, locked: { shopLocked: locked.shopLocked }, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, resultRound1SupportMetric: resultRound1Support.battle?.ranking?.metric, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { titleMobileBox, resultMobileBox, beforeFullscreen, afterFullscreen, fullscreenResolution, mobileBox, canvasResolution, displayAspect }, errors }, null, 2));

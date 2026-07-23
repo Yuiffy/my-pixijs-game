@@ -10,7 +10,7 @@ import {
 import Codex from "./Codex";
 import RiftHud from "./RiftHud";
 import "./RiftHud.css";
-import { EngineBridge, type BridgeEvent, type DomTooltip } from "./phaser/EngineBridge";
+import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
 import { TOOLBAR_HEIGHT, logicalSizeFor, profileFor, renderSizeFor } from "./phaser/layout";
 
@@ -34,7 +34,6 @@ export default function AutoChessGame() {
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
   const [message, setMessage] = useState("图鉴可查看棋子、羁绊与本局天赋");
-  const [tooltip, setTooltip] = useState<DomTooltip | null>(null);
   const [, setRevision] = useState(0);
 
   const updateAudio = useCallback((patch: Partial<AudioPreferences>) => {
@@ -87,7 +86,6 @@ export default function AutoChessGame() {
       }
     };
     bridge.onEvent = onBridgeEvent;
-    bridge.onTooltip = setTooltip;
 
     let disposed = false;
     let resizeFrame = 0;
@@ -112,9 +110,8 @@ export default function AutoChessGame() {
       const profile = profileFor(
         game.scale.displaySize.width,
         game.scale.displaySize.height,
-        window.matchMedia?.("(pointer: coarse)").matches ?? false,
       );
-      const logical = logicalSizeFor(profile);
+      const logical = logicalSizeFor();
       game.canvas.dataset.layoutProfile = profile;
       game.canvas.dataset.logicalWidth = String(logical.width);
       game.canvas.dataset.logicalHeight = String(logical.height);
@@ -174,7 +171,6 @@ export default function AutoChessGame() {
       if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
       resizeObserver?.disconnect();
       bridge.onEvent = null;
-      bridge.onTooltip = null;
       gameRef.current?.destroy(true);
       gameRef.current = null;
       bridgeRef.current = null;
@@ -266,7 +262,7 @@ export default function AutoChessGame() {
           touchAction: "none",
         }}
       />
-      <RiftHud engine={engine || null} onAction={dispatch} tooltip={tooltip} />
+      <RiftHud engine={engine || null} onAction={dispatch} />
       <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
     </div>
   );

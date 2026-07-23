@@ -39,27 +39,26 @@ import {
   MOBILE_BENCH_PANEL,
   MOBILE_BOARD_PANEL,
   MOBILE_SHOP_PANEL,
-  MOBILE_TRAIT_STRIP,
+  MOBILE_TOUCH_TARGET,
   PREPARATION_BENCH_PANEL,
   PREPARATION_BOARD_PANEL,
   PREPARATION_SHOP_PANEL,
   WIDE_RESULT_LAYOUT,
   WIDE_TRAIT_STRIP,
   MAX_TEXT_RESOLUTION,
-  MOBILE_TOUCH_TARGET,
+  TOOLTIP_TYPOGRAPHY,
   WORLD_HEIGHT,
   WORLD_WIDTH,
   benchSlot,
   boardSlot,
   compactBenchSlot,
   compactBoardSlot,
-  isMobileProfile,
   logicalSizeFor,
-  mobileBenchSlot,
-  mobileBoardSlot,
   occupiedSlotLayout,
   profileFor,
   titleLayoutFor,
+  tooltipLayoutFor,
+  viewportScaleFor,
   type LayoutProfile,
 } from "./layout";
 import { BUTTONS, COLORS, DEPTH, FONT_FAMILY, TITLE, type ButtonTone } from "./theme";
@@ -136,6 +135,9 @@ export class RiftLineScene extends Phaser.Scene {
 
   private profile: LayoutProfile = "wide";
 
+  /** Used only by unreachable legacy mobile drawing helpers. */
+  private mobilePage = 0;
+
   private fighterViews = new Map<string, Phaser.GameObjects.Container>();
 
   private dragState: DragState | null = null;
@@ -145,8 +147,6 @@ export class RiftLineScene extends Phaser.Scene {
   private traitDrag: TraitDragState | null = null;
 
   private pinnedTooltip: UnitId | null = null;
-
-  private mobilePage = 0;
 
   private textResolution = 2;
 
@@ -207,7 +207,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.cancelDrag, this);
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, this.handlePointerWheel, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cancelDrag, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.game.canvas.removeEventListener("contextmenu", this.preventContextMenu));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.disposeSceneInput, this);
     this.drawBackdrop();
     this.headerLayer = this.add.container(0, 0).setDepth(DEPTH.ui);
     this.phaseLayer = this.add.container(0, 0).setDepth(DEPTH.board);
@@ -243,6 +243,19 @@ export class RiftLineScene extends Phaser.Scene {
 
   private preventContextMenu = (event: Event) => event.preventDefault();
 
+  private disposeSceneInput() {
+    this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
+    this.input.off(Phaser.Input.Events.POINTER_MOVE, this.handlePointerMove, this);
+    this.input.off(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
+    this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.cancelDrag, this);
+    this.input.off(Phaser.Input.Events.POINTER_WHEEL, this.handlePointerWheel, this);
+    this.input.keyboard?.off("keydown-R");
+    this.input.keyboard?.off("keydown-SPACE");
+    this.input.keyboard?.off("keydown-D");
+    this.input.keyboard?.off("keydown-ESC");
+    this.game.canvas.removeEventListener("contextmenu", this.preventContextMenu);
+  }
+
   private handleResize() {
     this.profile = this.profileForViewport();
     this.syncLogicalCamera();
@@ -251,36 +264,31 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private logicalSize() {
-    return logicalSizeFor(this.profile);
+    return logicalSizeFor();
   }
 
   private syncLogicalCamera() {
     const { width, height } = this.scale.baseSize;
     const logical = this.logicalSize();
-    const scale = Math.min(width / logical.width, height / logical.height);
+    const { fitScale } = viewportScaleFor(width, height);
     this.cameras.main
       .setViewport(0, 0, width, height)
-      .setZoom(scale)
+      .setZoom(fitScale)
       .centerOn(logical.width / 2, logical.height / 2);
   }
 
   private profileForViewport() {
     const { width, height } = this.scale.parentSize;
-    const coarsePointer = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
-    return profileFor(width || this.scale.displaySize.width, height || this.scale.displaySize.height, coarsePointer);
-  }
-
-  private renderScale() {
-    const logical = this.logicalSize();
-    return Math.max(1, Math.min(this.scale.baseSize.width / logical.width, this.scale.baseSize.height / logical.height));
-  }
-
-  private isMobile() {
-    return isMobileProfile(this.profile);
+    return profileFor(width || this.scale.displaySize.width, height || this.scale.displaySize.height);
   }
 
   private logicalPointer(pointer: Phaser.Input.Pointer): Phaser.Math.Vector2 {
     return pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+  }
+
+  /** Legacy mobile helpers remain unreachable under the fixed-world profile. */
+  private isMobile() {
+    return false;
   }
 
   private isCompact() {
@@ -288,7 +296,6 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private traitStrip() {
-    if (this.isMobile()) return MOBILE_TRAIT_STRIP;
     return this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
   }
 
@@ -325,17 +332,16 @@ export class RiftLineScene extends Phaser.Scene {
     this.syncLogicalCamera();
     this.resetLayers();
     this.phase = this.bridge.engine.state.phase;
-    if (this.isMobile() && this.phase === "battle") {
-      [this.phaseLayer, this.entityLayer, this.effectsLayer, this.overlayLayer, this.tooltipLayer].forEach((layer) => layer.setPosition(16, 124).setScale(0.4));
-    }
     // The desktop preparation stage keeps its established Phaser composition:
     // slot hit areas, enemy hover tooltips, trait activation, shop highlights and
     // drag/drop all share the same logical frame. Portrait uses DOM sheets.
-    if (this.phase === "preparation") {
-      if (this.isMobile()) this.drawCanvasPreparation();
-      else this.drawPreparation();
-    }
+    if (this.phase === "preparation") this.drawPreparation();
     if (this.phase === "battle") this.drawBattle();
+    if (this.phase === "result") {
+      this.drawBattle();
+      this.drawResult();
+    }
+    if (this.phase === "augment") this.drawAugments();
     this.drawToast();
   }
 
@@ -353,7 +359,7 @@ export class RiftLineScene extends Phaser.Scene {
     const graphics = this.add.graphics().setDepth(DEPTH.backdrop);
     graphics.fillGradientStyle(0x07121d, 0x0b1825, 0x160f20, 0x0b1825, 1);
     graphics.fillRect(0, 0, logical.width, logical.height);
-    this.add.image(logical.width / 2, this.isMobile() ? 430 : 294, TITLE_GLOW_TEXTURE).setDepth(DEPTH.backdrop + 1).setDisplaySize(this.isMobile() ? 460 : 930, this.isMobile() ? 700 : 540).setAlpha(0.72);
+    this.add.image(logical.width / 2, 294, TITLE_GLOW_TEXTURE).setDepth(DEPTH.backdrop + 1).setDisplaySize(930, 540).setAlpha(0.72);
     for (let index = 0; index < 56; index += 1) {
       const x = (index * 193 + 47) % logical.width;
       const y = (index * 83 + 29) % logical.height;
@@ -370,9 +376,9 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private updateQuality() {
-    // World-following feedback (damage/heal/status text) stays in Phaser. Keep
-    // it at a stable high-density texture while fixed UI is rendered by DOM.
-    this.textResolution = Math.min(MAX_TEXT_RESOLUTION, 2);
+    // DPR sharpens text textures only; authored card geometry remains unchanged.
+    const devicePixelRatio = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
+    this.textResolution = Math.min(MAX_TEXT_RESOLUTION, 2, Math.ceil(devicePixelRatio));
   }
 
   private text(x: number, y: number, value: string, size = 14, color = COLORS.text, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
@@ -468,27 +474,6 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawHeader() {
     const { state, boardCap, boardCount } = this.bridge.engine;
-    if (this.isMobile()) {
-      const graphics = this.add.graphics();
-      graphics.fillStyle(0x050c14, 0.96).fillRect(0, 0, 480, 104);
-      graphics.lineStyle(1, 0x39627a, 0.55).lineBetween(0, 103, 480, 103);
-      this.headerLayer.add(graphics);
-      this.headerLayer.add(this.text(16, 14, "裂隙阵线", 21, "#f1f8ff", { fontStyle: "bold" }));
-      if (state.phase === "title") {
-        this.headerLayer.add(this.text(464, 21, `最高 ${state.bestScore.toLocaleString()}`, 12, "#b5cedd", { fontStyle: "bold" }).setOrigin(1, 0.5));
-        return;
-      }
-      const label = state.round > CAMPAIGN_ROUNDS ? `∞ 第 ${state.round} 层` : `第 ${state.round}/${CAMPAIGN_ROUNDS} 战`;
-      this.headerLayer.add(this.text(16, 49, label, 14, "#d8efff", { fontStyle: "bold" }));
-      this.headerLayer.add(this.text(156, 49, `核心 ${state.hp}/${state.maxHp}`, 14, "#ff9caf", { fontStyle: "bold" }));
-      this.headerLayer.add(this.text(300, 49, `金币 ${state.gold}`, 14, COLORS.gold, { fontStyle: "bold" }));
-      this.headerLayer.add(this.text(464, 49, `上阵 ${boardCount}/${boardCap}`, 14, "#8ce8bd", { fontStyle: "bold" }).setOrigin(1, 0.5));
-      const health = this.add.graphics();
-      health.fillStyle(0x1a2b38, 1).fillRoundedRect(16, 76, 448, 12, 6);
-      health.fillStyle(0xff718b, 1).fillRoundedRect(16, 76, 448 * (state.hp / state.maxHp), 12, 6);
-      this.headerLayer.add(health);
-      return;
-    }
     const graphics = this.add.graphics();
     graphics.fillStyle(0x050c14, 0.92);
     graphics.fillRect(0, 0, WORLD_WIDTH, 78);
@@ -508,18 +493,12 @@ export class RiftLineScene extends Phaser.Scene {
     health.fillStyle(0x1a2b38, 1).fillRoundedRect(770, 38, 120, 11, 5);
     health.fillStyle(0xff718b, 1).fillRoundedRect(770, 38, 120 * (state.hp / state.maxHp), 11, 5);
     this.headerLayer.add(health);
-    this.headerLayer.add(this.text(930, 18, "金币", 10, "#8ba3b5"));
-    this.headerLayer.add(this.text(930, 35, `${state.gold}`, 22, COLORS.gold, { fontStyle: "bold" }));
     this.headerLayer.add(this.text(1010, 18, "积分", 10, "#8ba3b5"));
     this.headerLayer.add(this.text(1010, 37, state.score.toLocaleString(), 18, "#e0f0fc", { fontStyle: "bold" }));
     this.headerLayer.add(this.text(580, 52, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${boardCount}/${boardCap}`, 10, "#84b8d5").setOrigin(0.5));
   }
 
   private drawTitle() {
-    if (this.isMobile()) {
-      this.drawMobileTitle();
-      return;
-    }
     const { state } = this.bridge.engine;
     const layout = titleLayoutFor(this.profile);
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住八次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
@@ -623,10 +602,7 @@ export class RiftLineScene extends Phaser.Scene {
   private drawCanvasPreparation() {
     const { state, boardCount, boardCap } = this.bridge.engine;
     const compact = this.isCompact();
-    const boardPanel = compact
-      ? { x: 26, y: 98, width: 1068, height: 430 }
-      : PREPARATION_BOARD_PANEL;
-    this.phaseLayer.add(this.drawPreparationPanel(boardPanel.x, boardPanel.y, boardPanel.width, boardPanel.height));
+    this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BOARD_PANEL.x, PREPARATION_BOARD_PANEL.y, PREPARATION_BOARD_PANEL.width, PREPARATION_BOARD_PANEL.height));
     state.board.forEach((unit, index) => this.drawSlot("board", index, unit, compact));
     if (!compact) {
       this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
@@ -637,17 +613,10 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private drawPreparation() {
-    if (this.isMobile()) {
-      this.drawMobilePreparation();
-      return;
-    }
     const { engine } = this.bridge;
     const { state, currentWave } = engine;
     const compact = this.isCompact();
-    const boardPanel = compact
-      ? { x: 26, y: 98, width: 1068, height: 430 }
-      : PREPARATION_BOARD_PANEL;
-    this.phaseLayer.add(this.drawPreparationPanel(boardPanel.x, boardPanel.y, boardPanel.width, boardPanel.height));
+    this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BOARD_PANEL.x, PREPARATION_BOARD_PANEL.y, PREPARATION_BOARD_PANEL.width, PREPARATION_BOARD_PANEL.height));
     const waveLabel = currentWave.tag === "boss" ? "BOSS" : currentWave.tag === "elite" ? "ELITE" : `WAVE ${currentWave.round}`;
     const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
     this.phaseLayer.add(this.text(48, 116, waveLabel, 10, waveColor, { fontStyle: "bold" }));
@@ -690,11 +659,10 @@ export class RiftLineScene extends Phaser.Scene {
         ).setOrigin(1, 0),
       );
     }
-    state.board.forEach((unit, index) => this.drawSlot("board", index, unit, compact));
-    state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, compact));
-    if (compact) this.drawCompactShop();
-    else this.drawWideShop();
-    this.drawPreparationActions(compact);
+    state.board.forEach((unit, index) => this.drawSlot("board", index, unit, false));
+    state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, false));
+    this.drawWideShop();
+    this.drawPreparationActions(false);
   }
 
   private drawMobilePreparation() {
@@ -875,7 +843,6 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private slotRect(location: UnitLocation, compact = this.isCompact()) {
-    if (this.isMobile()) return location.zone === "board" ? mobileBoardSlot(location.index) : mobileBenchSlot(location.index);
     if (compact) return location.zone === "board" ? compactBoardSlot(location.index) : compactBenchSlot(location.index);
     return location.zone === "board" ? boardSlot(location.index) : benchSlot(location.index);
   }
@@ -997,9 +964,9 @@ export class RiftLineScene extends Phaser.Scene {
 
   private createShopTraitTags(unitId: UnitId, x: number, y: number, maxX: number, affordable: boolean, compact = false) {
     const container = this.add.container(x, y);
-    const fontSize = this.isMobile() ? 11 : compact ? 10 : 10;
-    const tagHeight = this.isMobile() ? 24 : compact ? 20 : 21;
-    const horizontalPadding = this.isMobile() ? 18 : compact ? 14 : 16;
+    const fontSize = 10;
+    const tagHeight = compact ? 20 : 21;
+    const horizontalPadding = compact ? 14 : 16;
     let cursor = 0;
     UNIT_DEFS[unitId].traits.forEach((traitId) => {
       const { [traitId]: trait } = TRAITS;
@@ -1084,6 +1051,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add(this.text(812, 112, `战术商店 · ${bookLevelForPlayerLevel(state.playerLevel)} 本`, 16, "#f1f8ff", { fontStyle: "bold" }));
     this.phaseLayer.add(this.text(1076, 117, isMaxPlayerLevel ? "已满级" : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${upgradeCost} 金币`, 9, "#7593a5").setOrigin(1));
     this.phaseLayer.add(this.text(812, 131, tierOddsForLevel(state.playerLevel).map((chance, index) => (chance ? `${index + 1}费${chance}%` : "")).filter(Boolean).join(" · "), 9, "#8dc3e0", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(1076, 137, `金币 ${state.gold}`, 14, COLORS.gold, { fontStyle: "bold" }).setOrigin(1));
     state.shop.forEach((unitId, index) => {
       const y = 151 + index * 74;
       const item = this.add.container(810, y);
@@ -1982,16 +1950,33 @@ export class RiftLineScene extends Phaser.Scene {
     return container;
   }
 
-  private tooltipPosition(pointer: Phaser.Input.Pointer | undefined, width: number, height: number, compactY: number) {
-    const xMin = Math.min(12, Math.max(0, WORLD_WIDTH - width));
-    const xMax = Math.max(xMin, WORLD_WIDTH - width - 12);
-    const yMin = Math.min(86, Math.max(0, WORLD_HEIGHT - height));
-    const yMax = Math.max(yMin, WORLD_HEIGHT - height - 12);
+  private tooltipMetrics(preferredWidth: number) {
+    const { width, height } = this.scale.parentSize;
+    return tooltipLayoutFor(
+      width || this.scale.displaySize.width,
+      height || this.scale.displaySize.height,
+      preferredWidth,
+    );
+  }
+
+  private tooltipPosition(
+    pointer: Phaser.Input.Pointer | undefined,
+    width: number,
+    height: number,
+    compactY: number,
+    scale: number,
+  ) {
+    const inset = TOOLTIP_TYPOGRAPHY.edgeInset * scale;
+    const xMin = Math.min(inset, Math.max(0, WORLD_WIDTH - width));
+    const xMax = Math.max(xMin, WORLD_WIDTH - width - inset);
+    const yMin = Math.min(86 * scale, Math.max(0, WORLD_HEIGHT - height));
+    const yMax = Math.max(yMin, WORLD_HEIGHT - height - inset);
     const preferred = this.isCompact() || !pointer
-      ? { x: 28, y: compactY }
+      ? { x: 28 * scale, y: compactY * scale }
       : (() => {
         const logical = this.logicalPointer(pointer);
-        return { x: logical.x + 18, y: logical.y + 18 };
+        const offset = TOOLTIP_TYPOGRAPHY.pointerOffset * scale;
+        return { x: logical.x + offset, y: logical.y + offset };
       })();
     return {
       x: Phaser.Math.Clamp(preferred.x, xMin, xMax),
@@ -2000,91 +1985,99 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private showUnitTooltip(unitId: UnitId, pointer?: Phaser.Input.Pointer, star: 1 | 2 | 3 = 1, fighter?: Fighter) {
-    const logical = pointer ? this.logicalPointer(pointer) : { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 };
     this.clearTooltip();
-    this.bridge.onTooltip?.({ kind: "unit", unitId, star, fighter, x: logical.x, y: logical.y });
     this.pinnedTooltip = this.isCompact() ? unitId : null;
     const def = UNIT_DEFS[unitId];
-    const width = 342;
-    const contentWidth = width - 36;
+    const metrics = this.tooltipMetrics(408);
+    const width = metrics.width;
+    const { padding, title, body, section, traitHeading, tag, tagHeight, tagGap } = TOOLTIP_TYPOGRAPHY;
+    const contentWidth = width - padding * 2;
     const detail = fighter
       ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)}\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}\n战斗：输出 ${short(fighter.damageDealt)} · 治疗 ${short(fighter.healingDone)} · 护盾 ${short(fighter.shieldingDone)} · 承伤 ${short(fighter.damageTaken)}`
       : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;
-    const ability = this.boundedText(def.abilityDescription, contentWidth, this.isCompact() ? 4 : 6, 10, "#adc1cc", { lineSpacing: 4 });
-    const abilityTitle = this.text(0, 0, `${def.abilityName} · ${ABILITY_CAST_TIMING_LABELS[def.abilityCastTiming]}`, 10, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
-    const detailY = 44;
-    const energyY = detailY + (fighter ? 74 : 50);
-    const traitsY = energyY + 23;
-    const traitContainer = this.add.container(18, traitsY);
-    traitContainer.add(this.text(0, 2, "羁绊", 9, "#8fa9b9", { fontStyle: "bold" }));
-    let traitX = 32;
+    const detailText = this.boundedText(detail, contentWidth, fighter ? 5 : 3, body, "#abc1ce", { lineSpacing: 5 });
+    const ability = this.boundedText(def.abilityDescription, contentWidth, this.isCompact() ? 5 : 7, body, "#adc1cc", { lineSpacing: 5 });
+    const abilityTitle = this.text(0, 0, `${def.abilityName} · ${ABILITY_CAST_TIMING_LABELS[def.abilityCastTiming]}`, section, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
+    const titleY = padding - 2;
+    const detailY = titleY + title + 14;
+    const energyY = detailY + detailText.height + 8;
+    const traitsY = energyY + body + 12;
+    const traitContainer = this.add.container(padding, traitsY);
+    const traitLabel = this.text(0, 3, "羁绊", traitHeading, "#8fa9b9", { fontStyle: "bold" });
+    traitContainer.add(traitLabel);
+    let traitX = Math.ceil(traitLabel.width) + 12;
     let traitY = 0;
     def.traits.forEach((traitId) => {
-      const trait = TRAITS[traitId];
+      const traitDef = TRAITS[traitId];
       const status = this.bridge.engine.getTraitStatus(traitId);
-      const nextThreshold = trait.thresholds.find((threshold) => threshold > status.count);
+      const nextThreshold = traitDef.thresholds.find((threshold) => threshold > status.count);
       const statusLabel = status.active ? `${status.count}/${status.maxThreshold}` : `${status.count}/${nextThreshold ?? status.maxThreshold}`;
-      const label = `${trait.name} ${statusLabel}`;
-      const probe = this.text(0, 0, label, 8, "#ffffff", { fontStyle: "bold" }).setVisible(false);
-      const tagWidth = Math.ceil(probe.width) + 15;
+      const label = `${traitDef.name} ${statusLabel}`;
+      const probe = this.text(0, 0, label, tag, "#ffffff", { fontStyle: "bold" }).setVisible(false);
+      const tagWidth = Math.ceil(probe.width) + 22;
       probe.destroy();
-      if (traitX > 32 && traitX + tagWidth > contentWidth) {
+      if (traitX > traitLabel.width + 12 && traitX + tagWidth > contentWidth) {
         traitX = 0;
-        traitY += 21;
+        traitY += tagHeight + tagGap;
       }
-      const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
-      const tag = this.add.graphics();
-      tag.fillStyle(status.active ? color : COLORS.slotLabelFill, status.active ? 0.28 : 0.92);
-      tag.fillRoundedRect(traitX, traitY, tagWidth, 17, 8);
-      tag.lineStyle(1, status.active ? color : COLORS.slotLabelBorder, status.active ? 0.95 : 0.7);
-      tag.strokeRoundedRect(traitX, traitY, tagWidth, 17, 8);
-      traitContainer.add([tag, this.add.circle(traitX + 7, traitY + 8.5, 2, color, status.active ? 1 : 0.7), this.text(traitX + 12, traitY + 4, label, 8, status.active ? "#f4fbff" : "#a9c0cb", { fontStyle: "bold" })]);
-      traitX += tagWidth + 4;
+      const { color } = Phaser.Display.Color.HexStringToColor(traitDef.color);
+      const tagBackplate = this.add.graphics();
+      tagBackplate.fillStyle(status.active ? color : COLORS.slotLabelFill, status.active ? 0.28 : 0.92);
+      tagBackplate.fillRoundedRect(traitX, traitY, tagWidth, tagHeight, tagHeight / 2);
+      tagBackplate.lineStyle(1, status.active ? color : COLORS.slotLabelBorder, status.active ? 0.95 : 0.7);
+      tagBackplate.strokeRoundedRect(traitX, traitY, tagWidth, tagHeight, tagHeight / 2);
+      traitContainer.add([
+        tagBackplate,
+        this.add.circle(traitX + 9, traitY + tagHeight / 2, 2.5, color, status.active ? 1 : 0.7),
+        this.text(traitX + 16, traitY + 4, label, tag, status.active ? "#f4fbff" : "#a9c0cb", { fontStyle: "bold" }),
+      ]);
+      traitX += tagWidth + tagGap;
     });
-    const traitHeight = traitY + 17;
-    const abilityTitleY = traitsY + traitHeight + 8;
-    const abilityBodyY = abilityTitleY + abilityTitle.height + 2;
-    const height = Math.max(this.isCompact() ? 226 : 244, abilityBodyY + ability.height + 18);
-    const { x, y } = this.tooltipPosition(pointer, width, height, 280);
-    const container = this.add.container(x, y);
+    const traitHeight = traitY + tagHeight;
+    const abilityTitleY = traitsY + traitHeight + 12;
+    const abilityBodyY = abilityTitleY + abilityTitle.height + 5;
+    const height = Math.max(292, abilityBodyY + ability.height + padding);
+    const { x, y } = this.tooltipPosition(pointer, width * metrics.scale, height * metrics.scale, 280, metrics.scale);
+    const container = this.add.container(x, y).setScale(metrics.scale);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(def.accent).color));
-    container.add(this.text(18, 16, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, 16, "#f1f8ff", { fontStyle: "bold" }));
-    container.add(this.text(18, detailY, detail, 10, "#abc1ce", { lineSpacing: 3 }));
-    container.add(this.text(18, energyY, `${def.energyProfile.name} · ${fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${def.energyProfile.start}/${def.energyProfile.max}`}`, 10, def.energyProfile.color));
+    container.add(this.text(padding, titleY, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, title, "#f1f8ff", { fontStyle: "bold" }));
+    detailText.setPosition(padding, detailY);
+    container.add(detailText);
+    container.add(this.text(padding, energyY, `${def.energyProfile.name} · ${fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${def.energyProfile.start}/${def.energyProfile.max}`}`, body, def.energyProfile.color));
     container.add(traitContainer);
-    abilityTitle.setPosition(18, abilityTitleY).setVisible(true);
-    ability.setPosition(18, abilityBodyY);
+    abilityTitle.setPosition(padding, abilityTitleY).setVisible(true);
+    ability.setPosition(padding, abilityBodyY);
     container.add([abilityTitle, ability]);
     container.setName("tooltip");
     this.tooltipLayer.add(container);
   }
 
   private showTraitTooltip(traitId: keyof typeof TRAITS, pointer?: Phaser.Input.Pointer) {
-    const logical = pointer ? this.logicalPointer(pointer) : { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 };
     this.clearTooltip();
-    this.bridge.onTooltip?.({ kind: "trait", traitId, x: logical.x, y: logical.y });
     const trait = TRAITS[traitId];
     const status = this.bridge.engine.getTraitStatus(traitId);
-    const width = 360;
-    const contentWidth = width - 36;
+    const metrics = this.tooltipMetrics(416);
+    const width = metrics.width;
+    const { padding, title, body } = TOOLTIP_TYPOGRAPHY;
+    const contentWidth = width - padding * 2;
     const thresholds = trait.thresholds.map((threshold, index) => `${status.count >= threshold ? "◆" : "◇"} ${threshold} 名：${trait.bonuses[index]}`).join("\n");
-    const description = this.boundedText(trait.description, contentWidth, this.isCompact() ? 4 : 5, 10, "#a9bfcc");
-    const thresholdText = this.boundedText(thresholds, contentWidth, this.isCompact() ? 5 : 6, 10, "#dcefff", { lineSpacing: 5 });
-    const thresholdY = 55 + description.height;
-    const height = Math.max(184, thresholdY + thresholdText.height + 18);
-    const { x, y } = this.tooltipPosition(pointer, width, height, 300);
-    const container = this.add.container(x, y);
+    const description = this.boundedText(trait.description, contentWidth, this.isCompact() ? 5 : 6, body, "#a9bfcc", { lineSpacing: 5 });
+    const thresholdText = this.boundedText(thresholds, contentWidth, this.isCompact() ? 6 : 7, body, "#dcefff", { lineSpacing: 6 });
+    const descriptionY = padding + title + 10;
+    const thresholdY = descriptionY + description.height + 12;
+    const height = Math.max(234, thresholdY + thresholdText.height + padding);
+    const { x, y } = this.tooltipPosition(pointer, width * metrics.scale, height * metrics.scale, 300, metrics.scale);
+    const container = this.add.container(x, y).setScale(metrics.scale);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(trait.color).color));
-    container.add(this.text(18, 16, `${trait.name} · ${status.count}/${status.maxThreshold}`, 16, "#f1f8ff", { fontStyle: "bold" }));
-    description.setPosition(18, 45);
-    thresholdText.setPosition(18, thresholdY);
+    container.add(this.text(padding, padding - 2, `${trait.name} · ${status.count}/${status.maxThreshold}`, title, "#f1f8ff", { fontStyle: "bold" }));
+    description.setPosition(padding, descriptionY);
+    thresholdText.setPosition(padding, thresholdY);
     container.add([description, thresholdText]);
     container.setName("tooltip");
     this.tooltipLayer.add(container);
   }
 
   private clearTooltip() {
-    this.bridge.onTooltip?.(null);
     if (!this.tooltipLayer) {
       this.pinnedTooltip = null;
       return;

@@ -18,6 +18,7 @@ test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
   assert.match(host, /window\.advanceTime/);
   assert.match(host, /gameRef\.current\?\.destroy\(true\)/);
   assert.match(host, /await import\("phaser"\)/);
+  assert.doesNotMatch(host, /DomTooltip|onTooltip|tooltip=/);
 });
 
 test("游戏配置保持 1120×720 逻辑世界并使用 Phaser 缩放管理", () => {
@@ -27,6 +28,12 @@ test("游戏配置保持 1120×720 逻辑世界并使用 Phaser 缩放管理", (
   assert.match(config, /autoCenter: Phaser\.Scale\.CENTER_BOTH/);
   assert.match(layout, /WORLD_WIDTH = 1120/);
   assert.match(layout, /WORLD_HEIGHT = 720/);
+  assert.match(layout, /MIN_CARD_SCALE = 0\.72/);
+  assert.match(layout, /MAX_CARD_SCALE = 1\.25/);
+  assert.match(layout, /viewportScaleFor/);
+  assert.match(scene, /viewportScaleFor\(width, height\)/);
+  assert.match(scene, /setZoom\(fitScale\)/);
+  assert.match(layout, /MAX_TEXT_RESOLUTION = 2/);
 });
 
 test("引擎桥接只派发公开规则命令并使用固定步长测试推进", () => {
@@ -149,10 +156,12 @@ test("投射物命中使用可复用的径向渐变爆裂", () => {
 test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
   assert.match(layout, /MAX_RENDER_PIXELS/);
   assert.match(layout, /MAX_DEVICE_PIXEL_RATIO = 2/);
-  assert.match(layout, /MOBILE_WORLD_WIDTH/);
-  assert.match(layout, /MOBILE_WORLD_HEIGHT/);
   assert.match(layout, /logicalSizeFor/);
   assert.match(layout, /renderSizeFor/);
+  assert.match(layout, /viewportScaleFor/);
+  assert.match(layout, /tooltipLayoutFor/);
+  assert.match(layout, /scale: 1 \/ fitScale/);
+  assert.match(layout, /TOOLTIP_TYPOGRAPHY/);
   assert.match(layout, /width: Math\.max\(1, Math\.round\(displayWidth \* density\)\)/);
   assert.match(host, /ResizeObserver/);
   assert.match(host, /scale\.setParentSize/);
@@ -164,13 +173,18 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(host, /dataset\.layoutProfile/);
   assert.match(host, /document\.fonts\?\.load/);
   assert.match(scene, /scale\.parentSize/);
-  assert.match(scene, /logicalSizeFor\(this\.profile\)/);
+  assert.match(scene, /logicalSizeFor\(\)/);
   assert.match(scene, /setViewport/);
-  assert.match(scene, /setZoom\(scale\)/);
+  assert.match(scene, /setZoom\(fitScale\)/);
   assert.match(scene, /centerOn\(logical\.width \/ 2, logical\.height \/ 2\)/);
   assert.match(scene, /positionToCamera\(this\.cameras\.main\)/);
-  assert.match(scene, /MAX_TEXT_RESOLUTION/);
+  assert.match(scene, /Math\.min\(MAX_TEXT_RESOLUTION, 2, Math\.ceil\(devicePixelRatio\)\)/);
   assert.match(scene, /resolution: this\.textResolution/);
+  assert.match(scene, /tooltipLayoutFor\(/);
+  assert.match(scene, /container = this\.add\.container\(x, y\)\.setScale\(metrics\.scale\)/);
+  assert.match(scene, /width \* metrics\.scale, height \* metrics\.scale/);
+  assert.match(scene, /const offset = TOOLTIP_TYPOGRAPHY\.pointerOffset \* scale/);
+  assert.match(scene, /scale\.off\(Phaser\.Scale\.Events\.RESIZE, this\.handleResize, this\)/);
 });
 
 test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 Canvas 层级", () => {
@@ -186,10 +200,14 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /probe\.getWrappedText\(value\)/);
   assert.match(scene, /wordWrap: \{ width: maxWidth, useAdvancedWrap: true \}/);
   assert.match(scene, /abilityTitle\.height/);
+  assert.match(scene, /detailText\.height/);
   assert.match(scene, /traitX \+ tagWidth > contentWidth/);
+  assert.match(scene, /TOOLTIP_TYPOGRAPHY/);
+  assert.match(scene, /const \{ padding, title, body/);
   assert.match(scene, /boundedText\(trait\.description/);
-  assert.match(scene, /const xMin = Math\.min\(12, Math\.max\(0, WORLD_WIDTH - width\)\)/);
-  assert.match(scene, /const yMax = Math\.max\(yMin, WORLD_HEIGHT - height - 12\)/);
+  assert.match(scene, /const inset = TOOLTIP_TYPOGRAPHY\.edgeInset \* scale/);
+  assert.match(scene, /const xMin = Math\.min\(inset, Math\.max\(0, WORLD_WIDTH - width\)\)/);
+  assert.match(scene, /const yMax = Math\.max\(yMin, WORLD_HEIGHT - height - inset\)/);
   assert.match(scene, /truncateText\(/);
   assert.match(scene, /occupiedSlotLayout/);
   assert.match(scene, /"★"\.repeat\(unit\.star\)/);
@@ -229,6 +247,10 @@ test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手"
   assert.match(scene, /点击接入并开始/);
   assert.match(scene, /type: "starter", id/);
   assert.match(scene, /type: "augment", index/);
+  assert.match(scene, /if \(this\.phase === "result"\)/);
+  assert.match(scene, /this\.drawResult\(\)/);
+  assert.match(scene, /if \(this\.phase === "augment"\) this\.drawAugments\(\)/);
+  assert.doesNotMatch(bridge, /onTooltip|DomTooltip/);
   assert.match(scene, /layout\.cardWidth \/ 2, layout\.cardHeight \/ 2, layout\.cardWidth, layout\.cardHeight/);
   assert.match(scene, /enabled: canBattle/);
   assert.match(scene, /enabled: this\.canReroll\(\)/);

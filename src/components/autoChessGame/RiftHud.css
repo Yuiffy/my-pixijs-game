@@ -38,6 +38,7 @@
 .rift-dom-header strong small { display: block; color: #79a1b7; font-size: 10px; }
 .rift-dom-header span:first-of-type { margin-left: auto; }
 .rift-dom-header b { font-size: 18px; }
+.rift-dom-header-gold { display: none; }
 
 /* Desktop stage mirrors the established 1120×720 tactical composition. */
 .rift-dom-stage {
@@ -118,6 +119,22 @@
   background: rgba(8, 18, 28, 0.96);
 }
 .rift-dom-shop-desktop > header { display: grid; gap: 2px; padding: 0 2px 6px; }
+.rift-dom-shop-gold {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 209, 102, .65);
+  border-radius: 10px;
+  background: rgba(8, 18, 28, .96);
+  color: #d6e8f2;
+  font-size: 11px;
+  font-weight: 700;
+}
+.rift-dom-shop-gold b { color: #ffd166; font-size: 23px; }
 .rift-dom-shop-desktop > header strong { font-size: 18px; }
 .rift-dom-shop-desktop > header small { color: #7593a5; font-size: 10px; text-align: right; }
 .rift-dom-shop-desktop > header em { color: #8dc3e0; font-size: 10px; font-style: normal; font-weight: 700; }
@@ -218,24 +235,6 @@
 .rift-dom-tabs button.active { border-color: #8edfff; background: #23546e; }
 .rift-dom-result ol { margin: 14px 0; padding: 0; list-style: none; text-align: left; }
 .rift-dom-result li { display: flex; justify-content: space-between; margin: 5px 0; padding: 9px 12px; border-radius: 8px; background: #102330; }
-
-.rift-dom-tooltip { position: absolute; z-index: 6; width: min(360px, calc(100% - 28px)); box-sizing: border-box; padding: 16px; border: 1px solid; border-radius: 16px; background: rgba(7, 17, 27, .98); box-shadow: 0 18px 48px rgba(0, 0, 0, .56); pointer-events: none; }
-.rift-dom-unit-tooltip { top: 112px; left: max(16px, calc(50% - 510px)); }
-.rift-dom-trait-tooltip { top: 156px; left: max(16px, calc(50% - 510px)); }
-.rift-dom-tooltip header { display: flex; align-items: center; gap: 12px; }
-.rift-dom-tooltip header strong { display: block; color: #f1f8ff; font-size: 17px; }
-.rift-dom-tooltip header span { display: block; margin-top: 3px; color: #9eb6c5; font-size: 11px; }
-.rift-dom-tooltip-portrait { display: grid; width: 54px; height: 54px; overflow: hidden; flex: 0 0 auto; place-items: center; border: 2px solid; border-radius: 50%; background: #07121c; }
-.rift-dom-tooltip-stats { margin: 13px 0 8px; color: #abc1ce; font-size: 12px; line-height: 1.65; white-space: pre-line; }
-.rift-dom-tooltip-energy { margin-bottom: 10px; font-size: 12px; font-weight: 700; }
-.rift-dom-tooltip-traits { display: flex; flex-wrap: wrap; gap: 5px; }
-.rift-dom-tooltip-traits span { padding: 3px 7px; border: 1px solid; border-radius: 999px; background: #0e202d; font-size: 10px; font-weight: 700; }
-.rift-dom-tooltip h4 { margin: 13px 0 5px; color: #eea7d5; font-size: 13px; }
-.rift-dom-tooltip-description { margin: 0; color: #adc1cc; font-size: 12px; line-height: 1.6; }
-.rift-dom-trait-tooltip ul { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; color: #a9bfcc; font-size: 12px; line-height: 1.5; }
-.rift-dom-trait-tooltip li { display: grid; grid-template-columns: 58px 1fr; gap: 8px; }
-.rift-dom-trait-tooltip li b { color: #718895; }
-.rift-dom-trait-tooltip li.active b { color: #f1f8ff; }
 
 .rift-dom-sheet-backdrop { position: absolute; inset: 0; display: flex; align-items: end; background: rgba(0, 0, 0, .58); }
 .rift-dom-sheet { width: min(640px, 100%); max-height: min(76%, 620px); box-sizing: border-box; margin: 0 auto; padding: 16px; overflow: auto; border: 1px solid #6fbfeb; border-radius: 20px 20px 0 0; background: #081722; }
