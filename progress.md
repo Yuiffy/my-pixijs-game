@@ -139,3 +139,9 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 桌面备战席新增暗红“拖到这里出售”区域，拖拽进入后亮红并显示返还金币，松开直接出售；右键出售和移动端出售入口保留。
 - Phaser 棋子/羁绊 tooltip 在桌面备战阶段自动避开 React 商店，完整显示在商店左侧。
 - 验证：`pnpm exec tsc --noEmit` 通过；HUD/Phaser ESLint 无新增错误（仅 `<img>` 与既有 `_tree` 警告）；Playwright 验证移动、出售、hover 说明与商店拥有态，无 console error；390×844 商店 5 张、已有徽标可见且无横向溢出。
+
+## 2026-07-24 · 拖拽 hover 与出售金额反馈
+
+- 拖拽棋子时屏蔽所有棋盘/备战席 slot 的 `pointerover`，经过其他棋子不再弹出说明；拖拽结束后 hover 说明恢复。
+- 拖拽开始后出售区即时显示 `出售 +N 金币`，进入出售区显示 `松开出售 +N 金币`；拖拽幽灵移到按钮上方偏右，避免遮住返还金额。
+- 验证：两个备战席棋子拖拽经过目标后成功交换且无 tooltip；拖拽备战席棋子出售成功，出售区金额可见，Playwright 无 console error，TypeScript 通过。

@@ -693,9 +693,10 @@ export class RiftLineScene extends Phaser.Scene {
     const { x, y, width, height } = PREPARATION_SELL_ZONE;
     const refund = unit ? this.refundForUnit(unit) : 0;
     this.sellDropZoneGraphics.clear();
-    this.sellDropZoneGraphics.fillStyle(active ? 0xa73e56 : 0x3a1d2a, active ? 0.46 : 0.58).fillRoundedRect(x, y, width, height, 8);
-    this.sellDropZoneGraphics.lineStyle(active ? 2 : 1, active ? 0xff8fa5 : 0x8b4c60, active ? 0.98 : 0.72).strokeRoundedRect(x, y, width, height, 8);
-    this.sellDropZoneLabel.setText(active ? `松开出售 · +${refund}` : "拖到这里出售").setColor(active ? "#fff0f3" : "#d68b9d");
+    const dragging = Boolean(unit);
+    this.sellDropZoneGraphics.fillStyle(active ? 0xa73e56 : dragging ? 0x5d2736 : 0x3a1d2a, active ? 0.46 : dragging ? 0.38 : 0.58).fillRoundedRect(x, y, width, height, 8);
+    this.sellDropZoneGraphics.lineStyle(active ? 2 : dragging ? 1.5 : 1, active ? 0xff8fa5 : dragging ? 0xd86c83 : 0x8b4c60, active ? 0.98 : dragging ? 0.86 : 0.72).strokeRoundedRect(x, y, width, height, 8);
+    this.sellDropZoneLabel.setText(active ? `松开出售 +${refund} 金币` : dragging ? `出售 +${refund} 金币` : "拖到这里出售").setColor(active || dragging ? "#fff0f3" : "#d68b9d");
   }
 
   private drawMobilePreparation() {
@@ -841,7 +842,7 @@ export class RiftLineScene extends Phaser.Scene {
       this.dragState = { origin: location, unit, pointerId: pointer.id, startX: logical.x, startY: logical.y, active: false, ghost: null, targetMarker: null, target: null };
     });
     slot.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
-      if (unit) this.showUnitTooltip(unit.id, pointer, unit.star);
+      if (unit && !this.dragState) this.showUnitTooltip(unit.id, pointer, unit.star);
     });
     slot.on(Phaser.Input.Events.POINTER_OUT, () => {
       if (!this.isCompact() && !this.dragState) this.clearTooltip();
@@ -921,15 +922,16 @@ export class RiftLineScene extends Phaser.Scene {
       this.game.canvas.style.cursor = "grabbing";
     }
     if (!drag.active) return;
-    drag.ghost?.setPosition(logical.x + 18, logical.y - 18);
-    if (this.isInSellDropZone(logical.x, logical.y)) {
+    const overSellZone = this.isInSellDropZone(logical.x, logical.y);
+    drag.ghost?.setPosition(logical.x + (overSellZone ? 44 : 18), logical.y - (overSellZone ? 48 : 18));
+    if (overSellZone) {
       drag.target = null;
       drag.targetMarker?.destroy();
       drag.targetMarker = null;
       this.updateSellDropZone(true, drag.unit);
       return;
     }
-    this.updateSellDropZone(false);
+    this.updateSellDropZone(false, drag.unit);
     const target = this.locationAt(logical.x, logical.y);
     const nextTarget = target && !this.sameLocation(target, drag.origin) ? target : null;
     const previousKey = drag.target ? `${drag.target.zone}:${drag.target.index}` : "";

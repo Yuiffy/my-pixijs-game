@@ -177,9 +177,10 @@ export default function RiftHud({ engine, onAction }: Props) {
   if (state.phase === "augment" || state.phase === "result") return null;
 
   const battleOverlay = state.phase === "battle" && state.battle && (
-    <div className="rift-dom-battle-tools" style={{ fontFamily: FONT }}>
-      <div className="rift-battle-live"><i />战斗进行中 <b>{Math.max(0, state.battle.limit - state.battle.elapsed).toFixed(1)}s</b></div>
-      <ActionButton onClick={() => dispatch({ type: "rankingToggle" })}>{state.battle.rankingOpen ? "收起统计" : "查看统计"}<span>D</span></ActionButton>
+    <div className="rift-dom-world-frame">
+      <div className="rift-dom-battle-tools" style={{ fontFamily: FONT }}>
+        <ActionButton onClick={() => dispatch({ type: "rankingToggle" })}>{state.battle.rankingOpen ? "收起统计" : "查看统计"}<span>D</span></ActionButton>
+      </div>
     </div>
   );
 
