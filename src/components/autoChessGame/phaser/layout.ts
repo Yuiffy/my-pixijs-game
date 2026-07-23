@@ -97,6 +97,7 @@ export const tooltipLayoutFor = (usableWidth: number, usableHeight: number, pref
 export const PREPARATION_BOARD_PANEL = { x: 26, y: 98, width: 752, height: 430 };
 export const PREPARATION_SHOP_PANEL = { x: 794, y: 98, width: 300, height: 500 };
 export const PREPARATION_BENCH_PANEL = { x: 26, y: 548, width: 752, height: 148 };
+export const PREPARATION_SELL_ZONE = { x: 628, y: 552, width: 136, height: 35 };
 export const WIDE_TRAIT_STRIP = { x: 48, y: 190, width: 700, height: 25 };
 export const COMPACT_TRAIT_STRIP = { x: 48, y: 194, width: 1028, height: 25 };
 export const MOBILE_TRAIT_STRIP = { x: 16, y: 126, width: 448, height: 32 };

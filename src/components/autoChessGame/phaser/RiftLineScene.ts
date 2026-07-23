@@ -38,10 +38,12 @@ import {
   COMPACT_TRAIT_STRIP,
   MOBILE_BENCH_PANEL,
   MOBILE_BOARD_PANEL,
+  MOBILE_TRAIT_STRIP,
   MOBILE_SHOP_PANEL,
   MOBILE_TOUCH_TARGET,
   PREPARATION_BENCH_PANEL,
   PREPARATION_BOARD_PANEL,
+  PREPARATION_SELL_ZONE,
   PREPARATION_SHOP_PANEL,
   WIDE_RESULT_LAYOUT,
   WIDE_TRAIT_STRIP,
@@ -54,6 +56,8 @@ import {
   compactBenchSlot,
   compactBoardSlot,
   logicalSizeFor,
+  mobileBenchSlot,
+  mobileBoardSlot,
   occupiedSlotLayout,
   profileFor,
   titleLayoutFor,
@@ -141,6 +145,10 @@ export class RiftLineScene extends Phaser.Scene {
   private fighterViews = new Map<string, Phaser.GameObjects.Container>();
 
   private dragState: DragState | null = null;
+
+  private sellDropZoneGraphics: Phaser.GameObjects.Graphics | null = null;
+
+  private sellDropZoneLabel: Phaser.GameObjects.Text | null = null;
 
   private traitOffset = 0;
 
@@ -264,13 +272,20 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private logicalSize() {
+    // Portrait preparation uses the authored mobile composition instead of
+    // shrinking the 1120×720 desktop board into a postage stamp.
+    if (this.isMobile() && this.bridge.engine.state.phase === "preparation") {
+      return { width: 480, height: 1000 };
+    }
     return logicalSizeFor();
   }
 
   private syncLogicalCamera() {
     const { width, height } = this.scale.baseSize;
     const logical = this.logicalSize();
-    const { fitScale } = viewportScaleFor(width, height);
+    const fitScale = logical.width === WORLD_WIDTH && logical.height === WORLD_HEIGHT
+      ? viewportScaleFor(width, height).fitScale
+      : Math.max(0.01, Math.min(width / logical.width, height / logical.height));
     this.cameras.main
       .setViewport(0, 0, width, height)
       .setZoom(fitScale)
@@ -286,9 +301,9 @@ export class RiftLineScene extends Phaser.Scene {
     return pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
   }
 
-  /** Legacy mobile helpers remain unreachable under the fixed-world profile. */
   private isMobile() {
-    return false;
+    const { width, height } = this.scale.parentSize;
+    return Boolean(width && height && height > width * 1.12);
   }
 
   private isCompact() {
@@ -296,7 +311,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private traitStrip() {
-    return this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
+    return this.isMobile() ? MOBILE_TRAIT_STRIP : this.isCompact() ? COMPACT_TRAIT_STRIP : WIDE_TRAIT_STRIP;
   }
 
   private resetLayers() {
@@ -325,6 +340,8 @@ export class RiftLineScene extends Phaser.Scene {
     this.traitFade = null;
     this.traitEntries = [];
     this.pinnedTooltip = null;
+    this.sellDropZoneGraphics = null;
+    this.sellDropZoneLabel = null;
   }
 
   private rebuild() {
@@ -335,7 +352,10 @@ export class RiftLineScene extends Phaser.Scene {
     // The desktop preparation stage keeps its established Phaser composition:
     // slot hit areas, enemy hover tooltips, trait activation, shop highlights and
     // drag/drop all share the same logical frame. Portrait uses DOM sheets.
-    if (this.phase === "preparation") this.drawPreparation();
+    if (this.phase === "preparation") {
+      if (this.isMobile()) this.drawMobilePreparation();
+      else this.drawPreparation();
+    }
     if (this.phase === "battle") this.drawBattle();
     if (this.phase === "result") {
       this.drawBattle();
@@ -646,23 +666,36 @@ export class RiftLineScene extends Phaser.Scene {
       this.phaseLayer.add(this.text(390, 225, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
       this.phaseLayer.add(this.text(756, 225, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
       this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
+      this.drawSellDropZone();
       // 备战席计数在出售按钮左侧；上阵人口右对齐到出售按钮前，避免被挡住
       this.phaseLayer.add(this.text(48, 570, `备战席  ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3"));
       const boardCapFull = engine.boardCount === engine.boardCap;
-      this.phaseLayer.add(
-        this.text(
-          612,
-          570,
-          `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`,
-          11,
-          boardCapFull ? "#ffd166" : "#72d8ff",
-        ).setOrigin(1, 0),
-      );
+      this.phaseLayer.add(this.text(492, 570, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`, 11, boardCapFull ? "#ffd166" : "#72d8ff"));
     }
     state.board.forEach((unit, index) => this.drawSlot("board", index, unit, false));
     state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, false));
-    this.drawWideShop();
-    this.drawPreparationActions(false);
+    // The React HUD owns the desktop shop now. Keeping the legacy Phaser shop
+    // and action row here would render duplicate controls at wide browser sizes.
+  }
+
+  private drawSellDropZone() {
+    const { x, y, width, height } = PREPARATION_SELL_ZONE;
+    const graphics = this.add.graphics();
+    const label = this.text(x + width / 2, y + height / 2, "拖到这里出售", 10, "#d68b9d", { fontStyle: "bold" }).setOrigin(0.5);
+    this.phaseLayer.add([graphics, label]);
+    this.sellDropZoneGraphics = graphics;
+    this.sellDropZoneLabel = label;
+    this.updateSellDropZone(false);
+  }
+
+  private updateSellDropZone(active: boolean, unit?: OwnedUnit) {
+    if (!this.sellDropZoneGraphics || !this.sellDropZoneLabel) return;
+    const { x, y, width, height } = PREPARATION_SELL_ZONE;
+    const refund = unit ? this.refundForUnit(unit) : 0;
+    this.sellDropZoneGraphics.clear();
+    this.sellDropZoneGraphics.fillStyle(active ? 0xa73e56 : 0x3a1d2a, active ? 0.46 : 0.58).fillRoundedRect(x, y, width, height, 8);
+    this.sellDropZoneGraphics.lineStyle(active ? 2 : 1, active ? 0xff8fa5 : 0x8b4c60, active ? 0.98 : 0.72).strokeRoundedRect(x, y, width, height, 8);
+    this.sellDropZoneLabel.setText(active ? `松开出售 · +${refund}` : "拖到这里出售").setColor(active ? "#fff0f3" : "#d68b9d");
   }
 
   private drawMobilePreparation() {
@@ -678,8 +711,6 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add(this.text(24, 434, `备战席 · ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3", { fontStyle: "bold" }));
     state.board.forEach((unit, index) => this.drawSlot("board", index, unit, true));
     state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, true));
-    this.drawMobileShop();
-    this.drawMobilePreparationActions();
   }
 
   private drawTraits() {
@@ -843,6 +874,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private slotRect(location: UnitLocation, compact = this.isCompact()) {
+    if (this.isMobile()) return location.zone === "board" ? mobileBoardSlot(location.index) : mobileBenchSlot(location.index);
     if (compact) return location.zone === "board" ? compactBoardSlot(location.index) : compactBenchSlot(location.index);
     return location.zone === "board" ? boardSlot(location.index) : benchSlot(location.index);
   }
@@ -890,6 +922,14 @@ export class RiftLineScene extends Phaser.Scene {
     }
     if (!drag.active) return;
     drag.ghost?.setPosition(logical.x + 18, logical.y - 18);
+    if (this.isInSellDropZone(logical.x, logical.y)) {
+      drag.target = null;
+      drag.targetMarker?.destroy();
+      drag.targetMarker = null;
+      this.updateSellDropZone(true, drag.unit);
+      return;
+    }
+    this.updateSellDropZone(false);
     const target = this.locationAt(logical.x, logical.y);
     const nextTarget = target && !this.sameLocation(target, drag.origin) ? target : null;
     const previousKey = drag.target ? `${drag.target.zone}:${drag.target.index}` : "";
@@ -919,11 +959,21 @@ export class RiftLineScene extends Phaser.Scene {
     const drag = this.dragState;
     if (!drag || pointer.id !== drag.pointerId) return;
     const logical = this.logicalPointer(pointer);
+    const shouldSell = drag.active && this.isInSellDropZone(logical.x, logical.y);
     const target = this.locationAt(logical.x, logical.y);
     const shouldMove = drag.active && target && !this.sameLocation(drag.origin, target);
-    const action = shouldMove ? { type: "move", from: drag.origin, to: target } satisfies GameAction : { type: "slot", location: drag.origin } satisfies GameAction;
+    const action = shouldSell
+      ? { type: "sell", location: drag.origin } satisfies GameAction
+      : shouldMove
+        ? { type: "move", from: drag.origin, to: target } satisfies GameAction
+        : { type: "slot", location: drag.origin } satisfies GameAction;
     this.cancelDrag();
     this.dispatch(action);
+  }
+
+  private isInSellDropZone(x: number, y: number) {
+    const zone = PREPARATION_SELL_ZONE;
+    return !this.isMobile() && x >= zone.x && x <= zone.x + zone.width && y >= zone.y && y <= zone.y + zone.height;
   }
 
   private createDragTargetMarker(location: UnitLocation) {
@@ -951,6 +1001,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.dragState = null;
     this.traitDrag = null;
     this.clearTooltip();
+    this.updateSellDropZone(false);
     if (this.game?.canvas) this.game.canvas.style.cursor = "";
   }
 
@@ -1218,7 +1269,11 @@ export class RiftLineScene extends Phaser.Scene {
   private selectedRefund() {
     const { selected } = this.bridge.engine.state;
     const unit = selected ? this.unitAt(selected) : null;
-    return unit ? UNIT_DEFS[unit.id].cost * (unit.star === 3 ? 9 : unit.star === 2 ? 3 : 1) : 0;
+    return unit ? this.refundForUnit(unit) : 0;
+  }
+
+  private refundForUnit(unit: OwnedUnit) {
+    return UNIT_DEFS[unit.id].cost * (unit.star === 3 ? 9 : unit.star === 2 ? 3 : 1);
   }
 
   private drawPreparationActions(compact: boolean) {
@@ -1664,7 +1719,6 @@ export class RiftLineScene extends Phaser.Scene {
     this.battleTimerText = this.text(560, 118, "", 14, "#dcefff", { fontStyle: "bold" }).setOrigin(0.5);
     this.battleBannerText = this.text(560, 155, "", 14, "#f5fbff", { backgroundColor: "#09131ddd", padding: { x: 18, y: 10 }, wordWrap: { width: 310 }, align: "center" }).setOrigin(0.5);
     this.overlayLayer.add([this.battleTimerPanel, this.battleTimerText, this.battleBannerText]);
-    this.button(892, 98, 180, 34, `战斗统计 · D · ${battle.rankingOpen ? "收起" : "展开"}`, { type: "rankingToggle" }, { tone: "neutral", selected: battle.rankingOpen }, DEPTH.overlay + 1);
     if (battle.rankingOpen) this.drawRanking();
     this.syncBattleOverlay();
   }
@@ -1908,7 +1962,10 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawToast() {
     const { toast } = this.bridge.engine.state;
-    if (!toast || !this.tooltipLayer) return;
+    // Preparation feedback is already surfaced in the DOM command bar. A
+    // second toast over the board competes with the wave briefing, so reserve
+    // the canvas toast for combat-only feedback.
+    if (!toast || !this.tooltipLayer || this.bridge.engine.state.phase === "preparation") return;
     const color = toast.tone === "good" ? "#68e3aa" : toast.tone === "bad" ? "#ff7890" : "#79d8ff";
     const text = this.text(560, 90, toast.text, 12, color, { backgroundColor: "#07111bee", padding: { x: 22, y: 10 }, wordWrap: { width: 560 }, align: "center" }).setOrigin(0.5, 0);
     text.setName("toast");
@@ -1978,18 +2035,21 @@ export class RiftLineScene extends Phaser.Scene {
         const offset = TOOLTIP_TYPOGRAPHY.pointerOffset * scale;
         return { x: logical.x + offset, y: logical.y + offset };
       })();
-    return {
-      x: Phaser.Math.Clamp(preferred.x, xMin, xMax),
-      y: Phaser.Math.Clamp(preferred.y, yMin, yMax),
-    };
+    let x = Phaser.Math.Clamp(preferred.x, xMin, xMax);
+    const y = Phaser.Math.Clamp(preferred.y, yMin, yMax);
+    // The React shop sits over the right side of the Phaser canvas during
+    // desktop preparation. Keep unit/trait tooltips fully visible to its left.
+    if (this.phase === "preparation" && !this.isMobile() && x + width > PREPARATION_SHOP_PANEL.x - 14) {
+      x = Math.max(xMin, PREPARATION_SHOP_PANEL.x - 14 - width);
+    }
+    return { x, y };
   }
 
   private showUnitTooltip(unitId: UnitId, pointer?: Phaser.Input.Pointer, star: 1 | 2 | 3 = 1, fighter?: Fighter) {
     this.clearTooltip();
     this.pinnedTooltip = this.isCompact() ? unitId : null;
     const def = UNIT_DEFS[unitId];
-    const metrics = this.tooltipMetrics(408);
-    const width = metrics.width;
+    const { width, scale } = this.tooltipMetrics(408);
     const { padding, title, body, section, traitHeading, tag, tagHeight, tagGap } = TOOLTIP_TYPOGRAPHY;
     const contentWidth = width - padding * 2;
     const detail = fighter
@@ -2037,8 +2097,8 @@ export class RiftLineScene extends Phaser.Scene {
     const abilityTitleY = traitsY + traitHeight + 12;
     const abilityBodyY = abilityTitleY + abilityTitle.height + 5;
     const height = Math.max(292, abilityBodyY + ability.height + padding);
-    const { x, y } = this.tooltipPosition(pointer, width * metrics.scale, height * metrics.scale, 280, metrics.scale);
-    const container = this.add.container(x, y).setScale(metrics.scale);
+    const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 280, scale);
+    const container = this.add.container(x, y).setScale(scale);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(def.accent).color));
     container.add(this.text(padding, titleY, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, title, "#f1f8ff", { fontStyle: "bold" }));
     detailText.setPosition(padding, detailY);
@@ -2056,8 +2116,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.clearTooltip();
     const trait = TRAITS[traitId];
     const status = this.bridge.engine.getTraitStatus(traitId);
-    const metrics = this.tooltipMetrics(416);
-    const width = metrics.width;
+    const { width, scale } = this.tooltipMetrics(416);
     const { padding, title, body } = TOOLTIP_TYPOGRAPHY;
     const contentWidth = width - padding * 2;
     const thresholds = trait.thresholds.map((threshold, index) => `${status.count >= threshold ? "◆" : "◇"} ${threshold} 名：${trait.bonuses[index]}`).join("\n");
@@ -2066,8 +2125,8 @@ export class RiftLineScene extends Phaser.Scene {
     const descriptionY = padding + title + 10;
     const thresholdY = descriptionY + description.height + 12;
     const height = Math.max(234, thresholdY + thresholdText.height + padding);
-    const { x, y } = this.tooltipPosition(pointer, width * metrics.scale, height * metrics.scale, 300, metrics.scale);
-    const container = this.add.container(x, y).setScale(metrics.scale);
+    const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 300, scale);
+    const container = this.add.container(x, y).setScale(scale);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(trait.color).color));
     container.add(this.text(padding, padding - 2, `${trait.name} · ${status.count}/${status.maxThreshold}`, title, "#f1f8ff", { fontStyle: "bold" }));
     description.setPosition(padding, descriptionY);
