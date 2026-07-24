@@ -1474,6 +1474,7 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
       fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
       fighter.reborn ? "涅" : "",
+      fighter.rebirthRecoilTime > 0 ? "退" : "",
       fighter.channelTime > 0 ? "捏" : "",
       fighter.syncAvDirection > 0 ? "骄" : fighter.syncAvDirection < 0 ? "哀" : "",
       fighter.gen27Buffed ? "27" : "",
@@ -1694,6 +1695,37 @@ export class RiftLineScene extends Phaser.Scene {
         .setBlendMode(Phaser.BlendModes.SCREEN)
         .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.8)
         .strokeCircle(0, 0, radius * 0.72);
+    } else if (effect.kind === "rebirth") {
+      const radius = effect.size || 78;
+      const outerRadius = radius * (0.28 + progress * 0.92);
+      const innerRadius = radius * (1.08 - progress * 0.54);
+      const flash = Math.max(0, 1 - progress * 1.5);
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .fillStyle(color, 0.12 + flash * 0.28)
+        .fillCircle(0, 0, innerRadius)
+        .lineStyle(Math.max(1.5, 5 * (1 - progress)), color, 0.96)
+        .strokeCircle(0, 0, outerRadius)
+        .lineStyle(1.5, 0xffffff, 0.82)
+        .strokeCircle(0, 0, innerRadius);
+      for (let index = 0; index < 8; index += 1) {
+        const angle = index * (Math.PI / 4) + progress * 0.9;
+        const rayStart = innerRadius * 0.48;
+        const rayEnd = innerRadius * (0.86 + (index % 2) * 0.12);
+        graphics.lineStyle(index % 2 ? 2 : 3, index % 2 ? color : 0xffffff, 0.72);
+        graphics.lineBetween(
+          Math.cos(angle) * rayStart,
+          Math.sin(angle) * rayStart,
+          Math.cos(angle) * rayEnd,
+          Math.sin(angle) * rayEnd,
+        );
+      }
+      burstGradient
+        .setTint(color)
+        .setDisplaySize(innerRadius * 1.35, innerRadius * 1.35)
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .setAlpha(0.38 + flash * 0.42)
+        .setVisible(true);
     } else if (effect.kind === "chronosphere" || effect.kind === "hotpot") {
       const radius = (effect.size || (effect.kind === "hotpot" ? 130 : 50)) * (effect.kind === "hotpot" ? 0.45 + progress * 0.7 : 0.35 + progress * 0.65);
       const fill = effect.kind === "hotpot" ? 0xff6b2d : color;

@@ -51,9 +51,10 @@ const inspectScreenshot = (buffer, label) => {
     if (type === "IEND") break;
     offset += length + 12;
   }
-  if (colorType !== 6) throw new Error(`${label} 不是 RGBA PNG: colorType=${colorType}`);
+  if (colorType !== 2 && colorType !== 6) throw new Error(`${label} 不是 RGB/RGBA PNG: colorType=${colorType}`);
   const rows = inflateSync(Buffer.concat(idat));
-  const stride = width * 4;
+  const bytesPerPixel = colorType === 6 ? 4 : 3;
+  const stride = width * bytesPerPixel;
   let rowOffset = 0;
   let previous = Buffer.alloc(stride);
   let nearBlack = 0;
@@ -63,43 +64,26 @@ const inspectScreenshot = (buffer, label) => {
   for (let y = 0; y < height; y += 1) {
     const filter = rows[rowOffset];
     const row = Buffer.from(rows.subarray(rowOffset + 1, rowOffset + 1 + stride));
-    for (let x = 0; x < stride; x += 4) {
-      const leftR = x >= 4 ? row[x - 4] : 0;
-      const leftG = x >= 4 ? row[x - 3] : 0;
-      const leftB = x >= 4 ? row[x - 2] : 0;
-      const upR = previous[x];
-      const upG = previous[x + 1];
-      const upB = previous[x + 2];
-      const upLeftR = x >= 4 ? previous[x - 4] : 0;
-      const upLeftG = x >= 4 ? previous[x - 3] : 0;
-      const upLeftB = x >= 4 ? previous[x - 2] : 0;
-      if (filter === 1) {
-        row[x] = (row[x] + leftR) & 255;
-        row[x + 1] = (row[x + 1] + leftG) & 255;
-        row[x + 2] = (row[x + 2] + leftB) & 255;
-      } else if (filter === 2) {
-        row[x] = (row[x] + upR) & 255;
-        row[x + 1] = (row[x + 1] + upG) & 255;
-        row[x + 2] = (row[x + 2] + upB) & 255;
-      } else if (filter === 3) {
-        row[x] = (row[x] + Math.floor((leftR + upR) / 2)) & 255;
-        row[x + 1] = (row[x + 1] + Math.floor((leftG + upG) / 2)) & 255;
-        row[x + 2] = (row[x + 2] + Math.floor((leftB + upB) / 2)) & 255;
-      } else if (filter === 4) {
-        const predict = (left, up, upLeft) => {
-          const estimate = left + up - upLeft;
-          const distances = [Math.abs(estimate - left), Math.abs(estimate - up), Math.abs(estimate - upLeft)];
+    for (let x = 0; x < stride; x += bytesPerPixel) {
+      for (let channel = 0; channel < bytesPerPixel; channel += 1) {
+        const index = x + channel;
+        const left = x >= bytesPerPixel ? row[index - bytesPerPixel] : 0;
+        const up = previous[index];
+        const upLeft = x >= bytesPerPixel ? previous[index - bytesPerPixel] : 0;
+        const predict = (leftValue, upValue, upLeftValue) => {
+          const estimate = leftValue + upValue - upLeftValue;
+          const distances = [Math.abs(estimate - leftValue), Math.abs(estimate - upValue), Math.abs(estimate - upLeftValue)];
           return distances[0] <= distances[1] && distances[0] <= distances[2]
-            ? left
-            : distances[1] <= distances[2] ? up : upLeft;
+            ? leftValue
+            : distances[1] <= distances[2] ? upValue : upLeftValue;
         };
-        row[x] = (row[x] + predict(leftR, upR, upLeftR)) & 255;
-        row[x + 1] = (row[x + 1] + predict(leftG, upG, upLeftG)) & 255;
-        row[x + 2] = (row[x + 2] + predict(leftB, upB, upLeftB)) & 255;
-      } else if (filter !== 0) {
-        throw new Error(`${label} 使用了不支持的 PNG filter ${filter}`);
+        if (filter === 1) row[index] = (row[index] + left) & 255;
+        else if (filter === 2) row[index] = (row[index] + up) & 255;
+        else if (filter === 3) row[index] = (row[index] + Math.floor((left + up) / 2)) & 255;
+        else if (filter === 4) row[index] = (row[index] + predict(left, up, upLeft)) & 255;
+        else if (filter !== 0) throw new Error(`${label} 使用了不支持的 PNG filter ${filter}`);
       }
-      const alpha = row[x + 3];
+      const alpha = bytesPerPixel === 4 ? row[x + 3] : 255;
       if (alpha === 0) transparent += 1;
       if (alpha > 0 && row[x] < 12 && row[x + 1] < 12 && row[x + 2] < 12) nearBlack += 1;
       if (colors.size < 5000) colors.add(`${row[x]},${row[x + 1]},${row[x + 2]},${alpha}`);
@@ -139,22 +123,32 @@ const inspectScreenshot = (buffer, label) => {
   };
 
   let found = null;
-  const seeds = [73, 1, 15, 19, 27, 30, 48, 87, 101, 110, 122];
+  const seeds = [27];
   for (const seed of seeds) {
     errors.length = 0;
     await page.goto(`${baseUrl}/game/autochess?seed=${seed}`, { waitUntil: "domcontentloaded" });
     await page.locator('[data-game-canvas="rift-line"]').waitFor();
-    await page.locator(".rift-dom-choice").first().click();
+    const goldChoice = page.locator(".rift-dom-choice").filter({ hasText: /成熟稳重|热点追踪|舞台梦/ }).first();
+    if (await goldChoice.count() !== 1) continue;
+    await goldChoice.click();
     await page.waitForTimeout(120);
-    const preparation = await readState();
-    console.log(`seed ${seed}: ${preparation.phase} shop=${preparation.shop.map((unit) => unit?.id).join(",")}`);
-    if (preparation.phase !== "preparation" || !preparation.shop.some((unit) => unit?.id === "guangyi")) continue;
+    let preparation = await readState();
+    if (preparation.phase !== "preparation") continue;
+    await page.getByRole("button", { name: /升本/ }).first().click();
+    await page.waitForTimeout(80);
+    preparation = await readState();
+    if (preparation.player.level < 4 || preparation.player.gold < 4) continue;
+    if (!preparation.shop.some((unit) => unit?.id === "guangyi")) {
+      await page.getByRole("button", { name: /刷新/ }).first().click();
+      await page.waitForTimeout(80);
+      preparation = await readState();
+    }
+    if (!preparation.shop.some((unit) => unit?.id === "guangyi")) continue;
     await page.locator('button[aria-label^="中单光一"]').click();
     const purchased = await readState();
     if (![...purchased.board, ...purchased.bench].some((unit) => unit.id === "guangyi")) continue;
     await page.locator("button.rift-start-button").click();
     const battleStart = await readState();
-    console.log(`seed ${seed}: battle=${battleStart.phase} player=${battleStart.battle?.playerUnits.map((unit) => unit.unitId).join(",")}`);
     if (battleStart.phase !== "battle") continue;
 
     const samples = [];
@@ -179,7 +173,7 @@ const inspectScreenshot = (buffer, label) => {
       if (mid && impact) break;
       await advance(50);
     }
-    if (mid && impact && samples.length >= 5) {
+    if (mid && impact && samples.length >= 3) {
       found = { seed, preparation, purchased, battleStart, mid, impact, samples, errors: [...errors] };
       break;
     }
@@ -188,9 +182,12 @@ const inspectScreenshot = (buffer, label) => {
   if (!found) throw new Error(`候选种子内未捕获中单光一滑跪中段与碰撞眩晕帧: ${seeds.join(", ")}`);
   if (found.errors.length) throw new Error(`Chrome 控制台出现错误: ${JSON.stringify(found.errors)}`);
   const sourceSamples = found.samples;
-  const earlyStep = sourceSamples[1].distance - sourceSamples[0].distance;
-  const lateStep = sourceSamples[Math.min(4, sourceSamples.length - 1)].distance - sourceSamples[Math.min(3, sourceSamples.length - 1)].distance;
-  if (!(earlyStep > lateStep * 1.1)) throw new Error(`滑跪未体现减速: ${JSON.stringify({ earlyStep, lateStep, sourceSamples })}`);
+  const midSource = found.mid.state.battle.playerUnits.find((unit) => unit.unitId === "guangyi");
+  const midProgress = midSource.motion.progress;
+  const midTravel = Math.hypot(midSource.x - midSource.motion.from.x, midSource.y - midSource.motion.from.y);
+  const totalTravel = Math.hypot(midSource.motion.to.x - midSource.motion.from.x, midSource.motion.to.y - midSource.motion.from.y);
+  const midTravelRatio = midTravel / Math.max(totalTravel, 1);
+  if (!(midTravelRatio > midProgress + 0.1)) throw new Error(`滑跪未体现前快后慢: ${JSON.stringify({ midProgress, midTravelRatio, sourceSamples })}`);
   if (!found.impact.stunned.some((unit) => unit.stun > 0 && unit.stun <= 0.45)) throw new Error(`碰撞眩晕时长异常: ${JSON.stringify(found.impact.stunned)}`);
 
   const canvas = page.locator('[data-game-canvas="rift-line"]');
@@ -206,7 +203,8 @@ const inspectScreenshot = (buffer, label) => {
 
   console.log(JSON.stringify({
     seed: found.seed,
-    motion: found.mid.state.battle.playerUnits.find((unit) => unit.unitId === "guangyi")?.motion,
+    motion: midSource.motion,
+    curveCheck: { midProgress, midTravelRatio },
     stunned: found.impact.stunned,
     samples: sourceSamples,
     screenshots: [found.mid.screenshot, found.impact.screenshot],

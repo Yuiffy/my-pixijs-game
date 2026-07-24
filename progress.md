@@ -411,6 +411,9 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 滑跪保留原有直线扫掠、逐目标一次命中和击退逻辑，位移改为专属三次缓出曲线，前段冲刺、末段逐渐减速到停下。
 - 被滑跪撞到的敌人新增 `0.45` 秒眩晕，并同步更新技能说明。
 - 回归增加前后段位移增量比较和命中时眩晕时长断言。
+- `render_game_to_text` 的战斗单位摘要新增 `stun`，并新增 `scripts/verify-guangyi-slide.cjs`，用系统 Chrome 捕获滑跪中段与碰撞帧。
+- 种子 27 的 Chrome 验证：滑跪进度 `0.21–0.31` 时已完成约 `51%–67%` 路程，碰撞时敌人剩余眩晕 `0.33–0.39` 秒；两张 1440×900 截图均非黑、非透明，画布逻辑尺寸 1120×720，控制台无错误。
+- 验证：滑跪专项 `1/1`、TypeScript 与差异检查通过；完整自走棋套件 `113/114`，唯一失败仍是既有“满能量远程单位会先进入攻击距离再施法”断言。
 
 ## 2026-07-25 · 升本费用降至零并跨本结转
 
@@ -421,3 +424,25 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 新增系统 Chrome 专项脚本 `scripts/verify-autochess-upgrade-discount.cjs`；实测 3 本费用降至 0、再等一回合结转 1，免费升到 4 本后金币不变且下一本费用为 8。桌面与移动 DOM、文本状态、画布尺寸、控制台错误和截图像素交叉检查通过。
 - 截图：`.tmp/autochess/upgrade-discount-zero.png`、`.tmp/autochess/upgrade-discount-carried.png`、`.tmp/autochess/upgrade-discount-carried-mobile.png`、`.tmp/autochess/upgrade-discount-next-level.png`，四张均已逐张打开检查。
 - 验证：专项引擎与 Phaser/HUD 静态回归 `2/2`、`pnpm exec tsc --noEmit`、`git diff --check` 和专项 Chrome 流程通过。升本核心改动完成时完整套件为 `106/107`，仅有既有远程施法断言失败；并行的滑跪/数值改动随后继续进入工作区，最终当前套件为 `101/107`，新增失败落在部署属性、成熟护盾、两条绿冻护甲和开局文案，均不经过本轮升本状态链。仓库长流程 `verify-autochess.cjs` 仍在已有的首战结算等待处超时。
+
+## 2026-07-25 · 泽音涅槃特效与短时攻击后坐力
+
+- 策划结论：泽音第二形态的生存改善应来自短时撤离窗口，而不是永久拉扯或额外提高生命；后坐力必须以当前攻击目标为参照，并把“落点仍在自身攻击距离内”作为硬约束，避免改善生存却造成停火。
+- 重生新增专属 `rebirth` 特效：核心闪光、收放双环与旋转放射线共同表现形态切换，不复用有伤害语义的 AOE 圆圈；Phaser 与兼容 Canvas 渲染器同步实现。
+- 重生后 4 秒内，每次普攻最多向目标反方向后退 34 像素，使用 0.16 秒 `push` 运动状态逐帧缓动；提交落点前会校验确实远离目标、没有占位冲突且保留 4 像素射程余量，任一条件不满足就取消该次后坐力。
+- `render_game_to_text` 暴露 `rebirthRecoilTime` 与既有运动详情；战斗状态标记在撤离窗口显示“退”，技能说明同步写明持续时间和射程保护。
+- 新增 `scripts/verify-zeyin-rebirth.cjs`，使用系统 Chrome 构造确定性重生场景，交叉验证涅槃特效、后坐力中间态、射程边缘不后退、4 秒后停止、画布尺寸、控制台/资源错误和截图像素。
+- Chrome 实测：泽音从 `x=280` 向后缓动至 `x=246`，中间帧位于 `x=258`；与目标距离从 120 增至 154，仍小于 245 攻击距离。截图 `.tmp/autochess/zeyin-rebirth-effect.png` 与 `.tmp/autochess/zeyin-rebirth-recoil.png` 均为 1440×900、非纯色/透明/近黑图，并已逐张打开检查。
+- 验证：泽音专项 `1/1`、Phaser 静态回归 `26/26`、`pnpm exec tsc --noEmit`、`git diff --check` 与专项 Chrome 流程通过；完整 `pnpm autochess:test` 为 `113/114`，唯一失败仍是既有“满能量远程单位会先进入攻击距离再施法”断言。仓库长流程 `verify-autochess.cjs` 仍在已有的首战结算等待处超时。
+
+## 2026-07-25 · 天赋三档与同轮平衡
+
+- 将局内成长明确拆为开局天赋、局中小天赋、局中大天赋：第 2 战后只出现小天赋，第 5 战后只出现大天赋；无限模式从第 14 战开始每 6 战交替两档。
+- 两个局中档位各扩充到 6 项。小天赋统一收敛为约 8%–15% 常驻战力或 4 金净经济；大天赋以“德川家康”为锚，加入并校准抢先施法、持续治疗、斩杀、风险输出和开战护航等同档选择。
+- 开局协议按起始棋子的 1/2 费价值重新补偿：成熟稳重与舞台梦增加金币，火热整活和持久抗压收回过强附加值，热点追踪与稳定输出保留方向性优势。
+- 同档天赋在全部拿完前严格不重复；只有极后期耗尽该档 6 项后才回补旧项。回补项会标为“再次强化”，所有数值按层数生效。
+- 图鉴、选择页、结算按钮、提示、历史记录和 `render_game_to_text` 均显示小/大档位、选择 ID、层数与历史；图鉴按三类分组展示。
+- 新增 `scripts/tests/autochess-talents.test.mjs` 和系统 Chrome 专项 `scripts/verify-autochess-talents.cjs`，覆盖轮次分档、去重、耗尽回补、开局资产、关键数值、真实点击、图鉴滚动和截图有效性。
+- 系统 Chrome 使用 seed 4 验证：第 2 战为花呗生活/弹幕加速/体能储备，第 5 战为德川家康/收割/出道推流；实际点击后历史档位正确，耗尽小天赋池后才出现“再次强化”。七张 1440×900 截图均非黑、非透明，逐张打开检查，控制台无 error。
+- 截图：`.tmp/autochess/talents/opening-talents.png`、`talent-codex.png`、`talent-codex-major.png`、`talent-codex-major-bottom.png`、`minor-talents-round-2.png`、`major-talents-round-5.png`、`minor-talents-exhausted-refill.png`。
+- 验证：TypeScript、专项数据/战斗/Phaser 回归 `46/46`、`git diff --check` 与系统 Chrome 专项通过；完整自走棋套件 `113/114`，唯一失败仍是既有“满能量远程单位会先进入攻击距离再施法”断言。仓库长流程 `verify-autochess.cjs` 仍在已有的首战结算等待处超时。

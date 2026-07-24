@@ -158,14 +158,49 @@ test("大天赋提供德川家康同档的显著战斗拐点", () => {
   engine.state.augments = ["glass_cannon"];
   const overclocked = engine.getPlayerCombatStats(unit);
   assert.ok(Math.abs(overclocked.maxHp / base.maxHp - 0.85) < 1e-9);
-  assert.ok(Math.abs(overclocked.attack / base.attack - 1.3) < 1e-9);
-  assert.ok(Math.abs(base.attackInterval / overclocked.attackInterval - 1.25) < 1e-9);
+  assert.ok(Math.abs(overclocked.attack / base.attack - 1.25) < 1e-9);
+  assert.ok(Math.abs(base.attackInterval / overclocked.attackInterval - 1.2) < 1e-9);
 
   engine.state.augments = ["overclock", "united_front", "precision"];
   engine.startBattle();
   const fighter = engine.state.battle.player[0];
   assert.equal(fighter.energy, Math.min(fighter.maxEnergy, base.energy + 60));
-  assert.ok(Math.abs(fighter.shield / fighter.maxHp - 0.2) < 1e-9);
+  assert.ok(Math.abs(fighter.shield / fighter.maxHp - 0.25) < 1e-9);
   assert.ok(fighter.critChance >= 0.15);
   assert.ok(fighter.castRefund >= 10);
+});
+
+test("大天赋的持续治疗与斩杀增伤按标称数值结算", () => {
+  const triageEngine = createEngine(81, "ranger_start");
+  triageEngine.state.board.fill(null);
+  triageEngine.state.board[0] = { uid: 1, id: "ember_blade", star: 1 };
+  triageEngine.state.augments = ["triage"];
+  triageEngine.startBattle();
+  const triageBattle = triageEngine.state.battle;
+  const patient = triageBattle.player[0];
+  triageBattle.player.forEach((fighter) => { fighter.cooldown = 99; });
+  triageBattle.enemy.forEach((fighter) => {
+    fighter.cooldown = 99;
+    fighter.attack = 0;
+  });
+  patient.hp = patient.maxHp * 0.5;
+  const hpBefore = patient.hp;
+  triageBattle.fieldMedicTimer = 0.01;
+  triageEngine.update(0.05);
+  assert.ok(Math.abs(patient.hp - hpBefore - patient.maxHp * 0.05) < 1e-9);
+
+  const executionEngine = createEngine(82, "ranger_start");
+  executionEngine.state.board.fill(null);
+  executionEngine.state.board[0] = { uid: 1, id: "ember_blade", star: 1 };
+  executionEngine.state.augments = ["execution"];
+  executionEngine.startBattle();
+  const source = executionEngine.state.battle.player[0];
+  const target = executionEngine.state.battle.enemy[0];
+  source.critChance = 0;
+  source.lowHealthBonus = 0;
+  target.armor = 0;
+  target.shield = 0;
+  target.hp = target.maxHp * 0.44;
+  const dealt = executionEngine.damage(source, target, 10);
+  assert.ok(Math.abs(dealt - 15) < 1e-9);
 });

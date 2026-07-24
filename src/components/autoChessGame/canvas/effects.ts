@@ -373,6 +373,57 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
       ctx.beginPath();
       ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
       ctx.fill();
+    } else if (effect.kind === "rebirth") {
+      const radius = effect.size || 78;
+      const outerRadius = radius * (0.28 + progress * 0.92);
+      const innerRadius = radius * (1.08 - progress * 0.54);
+      const flash = Math.max(0, 1 - progress * 1.5);
+      const glow = ctx.createRadialGradient(
+        effect.x,
+        effect.y,
+        0,
+        effect.x,
+        effect.y,
+        innerRadius,
+      );
+      glow.addColorStop(0, `rgba(255,255,255,${0.46 + flash * 0.3})`);
+      glow.addColorStop(0.38, effect.color);
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = alpha * (0.42 + flash * 0.36);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, innerRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = Math.max(1.5, 5 * (1 - progress));
+      setShadow(ctx, effect.color, 18);
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, outerRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.82)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, innerRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let index = 0; index < 8; index += 1) {
+        const angle = index * (Math.PI / 4) + progress * 0.9;
+        const rayStart = innerRadius * 0.48;
+        const rayEnd = innerRadius * (0.86 + (index % 2) * 0.12);
+        ctx.strokeStyle = index % 2 ? effect.color : "rgba(255,255,255,0.9)";
+        ctx.lineWidth = index % 2 ? 2 : 3;
+        ctx.beginPath();
+        ctx.moveTo(
+          effect.x + Math.cos(angle) * rayStart,
+          effect.y + Math.sin(angle) * rayStart,
+        );
+        ctx.lineTo(
+          effect.x + Math.cos(angle) * rayEnd,
+          effect.y + Math.sin(angle) * rayEnd,
+        );
+        ctx.stroke();
+      }
     } else if (effect.kind === "chronosphere") {
       const radius = (effect.size || 120) * (0.7 + progress * 0.35);
       const gradient = ctx.createRadialGradient(effect.x, effect.y, 0, effect.x, effect.y, radius);

@@ -29,7 +29,7 @@ export interface UnitLocation {
 }
 
 export interface BattleEffect {
-  kind: "line" | "ring" | "burst" | "text" | "heal" | "chronosphere" | "hotpot";
+  kind: "line" | "ring" | "burst" | "rebirth" | "text" | "heal" | "chronosphere" | "hotpot";
   x: number;
   y: number;
   x2?: number;
@@ -225,6 +225,8 @@ export interface Fighter {
   secondWindUsed: boolean;
   /** 泽音美乐蒂的涅槃重生是否已经触发 */
   reborn: boolean;
+  /** 涅槃后普攻后坐力的剩余持续时间。 */
+  rebirthRecoilTime: number;
   enraged: boolean;
   attackPulse: number;
   facingX: -1 | 1;

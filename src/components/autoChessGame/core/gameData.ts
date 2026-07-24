@@ -1038,7 +1038,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   zeyin: unit({
     id: "zeyin", name: "泽音美乐蒂", title: "泽音Melody · 涅槃斗士", glyph: "泽", color: "#6c4c86", accent: "#e2a9ff", tier: 4, cost: 4,
     traits: ["ranger", "mature", "dance", "traffic"], hp: 180, attack: 34, armor: 15, range: 54, attackInterval: 0.86, moveSpeed: 68,
-    abilityName: "涅槃重生", abilityDescription: "初始以近战形态作战。首次倒下时重生为低生命远程形态，攻击力与攻击速度大幅提高。",
+    abilityName: "涅槃重生", abilityDescription: "初始以近战形态作战。首次倒下时伴随涅槃特效重生为低生命远程形态，攻击力与攻击速度大幅提高；重生后 4 秒内普攻会后退，但不会退出当前攻击距离。",
     portrait: "/images/livers/zeyin.jpg", portraitFocus: "top", shop: true,
   }),
   kioi: unit({
@@ -1210,7 +1210,7 @@ export const AUGMENTS: AugmentDefinition[] = [
     tier: "major",
     name: "全员续航",
     kicker: "团队 · 持续回复",
-    description: "每 2.5 秒治疗全部友军 4% 最大生命。",
+    description: "每 2.5 秒治疗全部友军 5% 最大生命。",
     color: "#72e7a5",
   },
   {
@@ -1218,7 +1218,7 @@ export const AUGMENTS: AugmentDefinition[] = [
     tier: "major",
     name: "收割",
     kicker: "输出 · 补刀",
-    description: "对生命低于 45% 的敌人造成 40% 额外伤害。",
+    description: "对生命低于 45% 的敌人造成 50% 额外伤害。",
     color: "#ff6b8a",
   },
   {
@@ -1234,7 +1234,7 @@ export const AUGMENTS: AugmentDefinition[] = [
     tier: "major",
     name: "极限超频",
     kicker: "输出 · 风险换火力",
-    description: "所有友军攻击力 +30%、攻击速度 +25%，但最大生命降低 15%。",
+    description: "所有友军攻击力 +25%、攻击速度 +20%，但最大生命降低 15%。",
     color: "#ff7d71",
   },
   {
@@ -1242,7 +1242,7 @@ export const AUGMENTS: AugmentDefinition[] = [
     tier: "major",
     name: "全员护航",
     kicker: "生存 · 开战防线",
-    description: "所有友军开战获得 20% 最大生命护盾和 15 能量。",
+    description: "所有友军开战获得 25% 最大生命护盾和 15 能量。",
     color: "#66d9d1",
   },
 ];

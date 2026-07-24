@@ -142,6 +142,10 @@ const ZEYIN_REBIRTH_HP_RATIO = 0.72;
 const ZEYIN_REBIRTH_ATTACK_MULTIPLIER = 1.36;
 const ZEYIN_REBIRTH_ATTACK_INTERVAL_MULTIPLIER = 0.7;
 const ZEYIN_REBIRTH_RANGE = 245;
+const ZEYIN_REBIRTH_RECOIL_WINDOW = 4;
+const ZEYIN_REBIRTH_RECOIL_DISTANCE = 34;
+const ZEYIN_REBIRTH_RECOIL_DURATION = 0.16;
+const ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN = 4;
 /** 流量：成员全能吸血，以及 4/6 人档的全队全能吸血 */
 const TRAFFIC_MEMBER_LIFESTEAL = [0, 0.12, 0.2, 0.32];
 const TRAFFIC_TEAM_LIFESTEAL = [0, 0, 0.08, 0.15];
@@ -543,6 +547,7 @@ export class AutoChessEngine {
       energyOnHit: fighter.energyOnHit,
       energyStyle: fighter.energyStyle,
       reborn: fighter.reborn,
+      rebirthRecoilTime: Number(fighter.rebirthRecoilTime.toFixed(2)),
       stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
       damageDealt: Math.round(fighter.damageDealt),
@@ -662,9 +667,9 @@ export class AutoChessEngine {
         glassCannonStacks * 0.15,
     );
     armor += augmentStacks("tempered") * 10 + secondWindStacks * 10;
-    attack *= 1 + augmentStacks("sharp_edge") * 0.12 + glassCannonStacks * 0.3;
+    attack *= 1 + augmentStacks("sharp_edge") * 0.12 + glassCannonStacks * 0.25;
     attackInterval /=
-      1 + augmentStacks("momentum") * 0.14 + glassCannonStacks * 0.25;
+      1 + augmentStacks("momentum") * 0.14 + glassCannonStacks * 0.2;
     if (this.state.starter === "dance_start" && danceLevel) {
       attackInterval /= 1 + (starterEffect.danceAttackSpeed || 0);
     }
@@ -1166,6 +1171,7 @@ export class AutoChessEngine {
         ),
         secondWindUsed: false,
         reborn: false,
+        rebirthRecoilTime: 0,
         enraged: false,
         jumpPending: assassinLevel > 0,
         jumpDelay: assassinLevel ? 3.4 + spawn.row * 0.12 : 0,
@@ -1296,6 +1302,7 @@ export class AutoChessEngine {
         castRefund: 0,
         secondWindUsed: false,
         reborn: false,
+        rebirthRecoilTime: 0,
         enraged: false,
         attackPulse: 0,
         facingX: -1,
@@ -1376,7 +1383,7 @@ export class AutoChessEngine {
         this.grantShield(
           null,
           fighter,
-          fighter.maxHp * 0.2 * unitedFrontStacks,
+          fighter.maxHp * 0.25 * unitedFrontStacks,
           0.8,
           battle,
         );
@@ -2936,7 +2943,7 @@ export class AutoChessEngine {
       if (battle.fieldMedicTimer <= 0) {
         battle.fieldMedicTimer += 2.5;
         this.living("player").forEach((fighter) =>
-          this.heal(null, fighter, fighter.maxHp * 0.04 * triageStacks),
+          this.heal(null, fighter, fighter.maxHp * 0.05 * triageStacks),
         );
       }
     }
@@ -2952,6 +2959,7 @@ export class AutoChessEngine {
       fighter.abilityAttackSpeedTime = Math.max(0, fighter.abilityAttackSpeedTime - dt);
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
+      fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
       fighter.abilityAttackBonusTime = Math.max(0, fighter.abilityAttackBonusTime - dt);
       fighter.abilityLifestealTime = Math.max(0, fighter.abilityLifestealTime - dt);
       fighter.danceDashCooldown = Math.max(0, fighter.danceDashCooldown - dt);
@@ -3232,6 +3240,66 @@ export class AutoChessEngine {
     });
   }
 
+  private tryZeyinRebirthRecoil(source: Fighter, target: Fighter) {
+    const battle = this.state.battle;
+    if (
+      !battle ||
+      source.unitId !== "zeyin" ||
+      !source.reborn ||
+      source.rebirthRecoilTime <= 0 ||
+      !source.alive ||
+      source.abilityMotion
+    ) return false;
+
+    const deltaX = source.x - target.x;
+    const deltaY = source.y - target.y;
+    const distance = Math.hypot(deltaX, deltaY);
+    if (distance < 0.01) return false;
+    const attackRange = this.combatAttackRange(source, target);
+    const availableDistance = attackRange - ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN - distance;
+    const recoilDistance = Math.min(ZEYIN_REBIRTH_RECOIL_DISTANCE, availableDistance);
+    if (recoilDistance < 4) return false;
+
+    const awayX = deltaX / distance;
+    const awayY = deltaY / distance;
+    const occupants = [...battle.player, ...battle.enemy].filter((fighter) => fighter !== source);
+    const landing = this.findOpenPlacement(
+      source,
+      {
+        x: source.x + awayX * recoilDistance,
+        y: source.y + awayY * recoilDistance,
+      },
+      occupants,
+      PLACEMENT_MARGIN,
+    );
+    const landingDistance = Math.hypot(landing.x - target.x, landing.y - target.y);
+    const travelX = landing.x - source.x;
+    const travelY = landing.y - source.y;
+    const travelDistance = Math.hypot(travelX, travelY);
+    const awayProgress = travelX * awayX + travelY * awayY;
+    if (
+      travelDistance < 4 ||
+      awayProgress < 3 ||
+      landingDistance > attackRange - ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN + 0.01
+    ) return false;
+
+    source.abilityMotion = {
+      kind: "push",
+      abilityId: null,
+      targetFid: target.fid,
+      fromX: source.x,
+      fromY: source.y,
+      toX: landing.x,
+      toY: landing.y,
+      time: 0,
+      duration: ZEYIN_REBIRTH_RECOIL_DURATION,
+      arcHeight: 0,
+      hitFids: [],
+    };
+    this.faceTowardX(source, target.x);
+    return true;
+  }
+
   private basicAttack(source: Fighter, target: Fighter) {
     if (Math.hypot(target.x - source.x, target.y - source.y) > this.combatAttackRange(source, target)) return;
     this.markFightersEngaged(source, target);
@@ -3309,6 +3377,7 @@ export class AutoChessEngine {
       life: source.attackType === "ranged" ? 0.16 : 0.24,
       size: source.attackType === "ranged" ? 3 : 22,
     });
+    this.tryZeyinRebirthRecoil(source, target);
     if (dealt > 0) this.addDamageText(target, dealt);
   }
 
@@ -3980,7 +4049,7 @@ export class AutoChessEngine {
       this.augmentStacks("execution") > 0 &&
       target.hp / target.maxHp < 0.45
     )
-      amount *= 1 + this.augmentStacks("execution") * 0.4;
+      amount *= 1 + this.augmentStacks("execution") * 0.5;
     if (
       source.team === "player" &&
       source.critChance > 0 &&
@@ -4153,6 +4222,15 @@ export class AutoChessEngine {
       target.energy = 0;
       target.cooldown = Math.max(target.cooldown, 0.45);
       target.abilityMotion = null;
+      target.rebirthRecoilTime = ZEYIN_REBIRTH_RECOIL_WINDOW;
+      this.addEffect({
+        kind: "rebirth",
+        x: target.x,
+        y: target.y,
+        color: UNIT_DEFS.zeyin.accent,
+        life: 1.1,
+        size: 78,
+      });
       this.addEffect({ kind: "text", x: target.x, y: target.y - 46, color: UNIT_DEFS.zeyin.accent, text: "涅槃重生", life: 0.95, size: 14 });
       return false;
     }

@@ -123,7 +123,7 @@ test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () =>
   assert.match(scene, /portraitImage\.setFlipX/);
 });
 
-test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () => {
+test("战斗同步覆盖投射物、技能效果与两类召唤物", () => {
   assert.match(scene, /battle\.projectiles/);
   assert.match(scene, /battle\.effects/);
   assert.match(scene, /battle\.pets/);
@@ -137,6 +137,8 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /effect\.kind === "line"/);
   assert.match(scene, /effect\.kind === "ring"/);
   assert.match(scene, /effect\.kind === "burst"/);
+  assert.match(scene, /effect\.kind === "rebirth"/);
+  assert.match(canvasEffects, /effect\.kind === "rebirth"/);
   assert.match(scene, /effect\.kind === "chronosphere"/);
   assert.match(scene, /effect\.kind === "hotpot"/);
   assert.match(scene, /mechanicalRabbitMuzzle/);

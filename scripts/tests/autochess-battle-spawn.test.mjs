@@ -1567,7 +1567,7 @@ test("邪恶外星人的贯穿光线沿目标方向发射并命中同线敌人",
   assert.ok(Math.abs(targetCrossProduct) < 0.001);
 });
 
-test("泽音首次倒下后以低生命远程形态涅槃重生", () => {
+test("泽音涅槃有专属特效，重生后短时普攻后退且不会退出射程", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -1597,7 +1597,42 @@ test("泽音首次倒下后以低生命远程形态涅槃重生", () => {
   assert.equal(zeyin.hp, zeyin.maxHp);
   assert.ok(zeyin.baseAttack >= zeyinBaseAttack * 1.35);
   assert.ok(zeyin.baseAttackInterval < zeyinBaseInterval * 0.71);
+  assert.equal(zeyin.rebirthRecoilTime, 4);
+  assert.ok(battle.effects.some((effect) => effect.kind === "rebirth"));
 
+  const target = battle.enemy[0];
+  target.x = 400;
+  target.y = 360;
+  target.armor = 0;
+  const distanceBeforeRecoil = Math.hypot(target.x - zeyin.x, target.y - zeyin.y);
+  engine["basicAttack"](zeyin, target);
+  const recoil = zeyin.abilityMotion;
+  assert.equal(recoil?.kind, "push");
+  assert.equal(recoil?.abilityId, null);
+  assert.ok(recoil && recoil.toX < recoil.fromX);
+  const recoilLandingDistance = Math.hypot(target.x - recoil.toX, target.y - recoil.toY);
+  assert.ok(recoilLandingDistance > distanceBeforeRecoil);
+  assert.ok(recoilLandingDistance <= zeyin.range - 3.9);
+
+  engine["updateAbilityMotion"](zeyin, 0.08, battle);
+  assert.ok(zeyin.x < recoil.fromX);
+  engine["updateAbilityMotion"](zeyin, 0.08, battle);
+  assert.equal(zeyin.abilityMotion, null);
+  assert.ok(Math.hypot(target.x - zeyin.x, target.y - zeyin.y) > distanceBeforeRecoil);
+
+  zeyin.x = 300;
+  zeyin.y = 360;
+  target.x = 543;
+  target.y = 360;
+  zeyin.rebirthRecoilTime = 4;
+  engine["basicAttack"](zeyin, target);
+  assert.equal(zeyin.abilityMotion, null, "接近射程边缘时不应继续后退");
+
+  zeyin.x = 300;
+  target.x = 400;
+  zeyin.rebirthRecoilTime = 0;
+  engine["basicAttack"](zeyin, target);
+  assert.equal(zeyin.abilityMotion, null, "撤离窗口结束后不应再触发后坐力");
 });
 
 test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害与眩晕", () => {
