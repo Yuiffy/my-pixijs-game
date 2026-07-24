@@ -1431,6 +1431,54 @@ test("七海变身吸血、恬豆棒棒糖与三理理嘲讽均按碰撞和锁�
   assert.equal(tauntEngine["resolveCombatTarget"](tauntedEnemy, tauntBattle.player, 0.05)?.fid, mitsuri.fid);
 });
 
+test("蛙梓终场歌唱持续治疗全队，并将单体激光切换为范围灼烧火焰弹", () => {
+  const engine = createEngine(205);
+  engine.state.playerLevel = 5;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "cinder_ram", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const cinder = battle?.player.find((fighter) => fighter.unitId === "cinder_ram");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "sui");
+  assert.ok(battle && cinder && ally);
+  const [primary, nearby] = battle.enemy;
+  assert.ok(primary && nearby);
+  battle.enemy.forEach((enemy, index) => {
+    enemy.x = index === 0 ? 480 : 530;
+    enemy.y = 360;
+    enemy.hp = enemy.maxHp = 9_999;
+    enemy.armor = 0;
+    enemy.dodgeChance = 0;
+    enemy.attack = 0;
+    enemy.cooldown = 99;
+  });
+  cinder.x = 260;
+  cinder.y = 360;
+  ally.x = 300;
+  ally.y = 430;
+  ally.hp = ally.maxHp * 0.5;
+  assert.equal(cinder.attackType, "ranged");
+  const normalRange = cinder.range;
+  cinder.energy = cinder.maxEnergy;
+  engine["castAbility"](cinder, battle.enemy);
+  assert.equal(cinder.barrageActive, true);
+  assert.ok(cinder.range > normalRange);
+  const allyHpBefore = ally.hp;
+  engine.update(0.05);
+  assert.ok(ally.hp > allyHpBefore);
+  cinder.cooldown = 0;
+  engine["basicAttack"](cinder, primary);
+  assert.equal(battle.projectiles[0]?.style, "fireball");
+  engine["updateProjectiles"](battle, 0.5);
+  assert.ok(primary.hp < primary.maxHp);
+  assert.ok(nearby.hp < nearby.maxHp);
+  assert.ok(primary.burnTime > 0 && nearby.burnTime > 0);
+  for (let tick = 0; tick < 120; tick += 1) engine.update(0.05);
+  assert.equal(cinder.barrageActive, false);
+  assert.equal(cinder.range, cinder.baseRange);
+});
+
 test("露蒂丝咕咕诊所治疗全队并只保护生命比例最低的两名友军", () => {
   const engine = createEngine(205);
   engine.state.playerLevel = 4;

@@ -120,6 +120,7 @@ const projectileEmoji = (projectile: Projectile) => {
   if (projectile.style === "carrot") return "🥕";
   if (projectile.style === "coin") return "🪙";
   if (projectile.style === "lollipop") return "🍭";
+  if (projectile.style === "fireball") return "🔥";
   return "";
 };
 
@@ -1445,6 +1446,7 @@ export class RiftLineScene extends Phaser.Scene {
       abilityMotion?.kind === "dash" ? "»" : "",
       abilityMotion?.kind === "push" ? "›" : "",
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
+      fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
       fighter.reborn ? "涅" : "",
       fighter.channelTime > 0 ? "捏" : "",
       fighter.syncAvDirection > 0 ? "骄" : fighter.syncAvDirection < 0 ? "哀" : "",

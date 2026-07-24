@@ -2081,6 +2081,7 @@ export class AutoChessEngine {
       size: shot.size,
       style: shot.style,
       emoji: shot.emoji,
+      splashRadius: shot.splashRadius,
     });
   }
 
@@ -2391,9 +2392,16 @@ export class AutoChessEngine {
           this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
           return false;
         }
-        const dealt = this.damage(source, hit.target, projectile.damage, true);
-        if (dealt > 0) this.addDamageText(hit.target, dealt);
-        if (hit.target.alive && projectile.burnPower > 0) this.applyBurn(source, hit.target, projectile.burnPower);
+        const splashRadius = projectile.splashRadius;
+        const affected = splashRadius
+          ? targets.filter((target) => Math.hypot(target.x - projectile.x, target.y - projectile.y) <= splashRadius + target.radius)
+          : [hit.target];
+        affected.forEach((target) => {
+          const damage = target === hit.target ? projectile.damage : projectile.damage * 0.7;
+          const dealt = this.damage(source, target, damage, true);
+          if (dealt > 0) this.addDamageText(target, dealt);
+          if (target.alive && projectile.burnPower > 0) this.applyBurn(source, target, projectile.burnPower);
+        });
         this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
         return false;
       }
@@ -2484,6 +2492,7 @@ export class AutoChessEngine {
         (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
       fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier;
       fighter.range = fighter.baseRange * syncMultiplier;
+      if (fighter.barrageActive && fighter.unitId === "cinder_ram") fighter.range = CINDER_RAM_SONG_RANGE;
       fighter.matureAttackSpeedCurrent = matureAttackSpeed;
     });
   }
@@ -2614,6 +2623,14 @@ export class AutoChessEngine {
       // 攻击弹幕：能量缓慢清空，期间不回能
       if (fighter.barrageActive) {
         fighter.energy = Math.max(0, fighter.energy - fighter.barrageDrainPerSecond * dt);
+        if (fighter.unitId === "cinder_ram") {
+          fighter.cinderSongPulseTimer -= dt;
+          if (fighter.cinderSongPulseTimer <= 0) {
+            fighter.cinderSongPulseTimer += CINDER_RAM_SONG_HEAL_INTERVAL;
+            this.living(fighter.team).forEach((ally) => this.heal(fighter, ally, ally.maxHp * CINDER_RAM_SONG_HEAL_RATIO));
+            this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: UNIT_DEFS.cinder_ram.accent, life: 0.35, size: 116 });
+          }
+        }
         if (fighter.energy <= 0) {
           fighter.energy = 0;
           fighter.barrageActive = false;
@@ -2626,12 +2643,13 @@ export class AutoChessEngine {
           fighter.abilityAttackSpeedTime = 0;
           fighter.abilityMoveSpeed = 0;
           fighter.abilityMoveSpeedTime = 0;
+          fighter.cinderSongPulseTimer = 0;
           this.addEffect({
             kind: "text",
             x: fighter.x,
             y: fighter.y - 42,
             color: UNIT_DEFS[fighter.unitId].accent,
-            text: "弹幕结束",
+            text: fighter.unitId === "cinder_ram" ? "歌声停下" : "弹幕结束",
             life: 0.55,
             size: 11,
           });
@@ -2904,6 +2922,23 @@ export class AutoChessEngine {
         size: 3,
       });
       this.addEnergy(source, source.energyOnAttack);
+      this.addEnergy(target, target.energyOnHit);
+      return;
+    }
+    if (source.unitId === "cinder_ram" && source.barrageActive) {
+      this.fireFixedProjectile(source, target, {
+        sourceFid: source.fid,
+        targetFid: target.fid,
+        delay: 0,
+        damage: source.attack * CINDER_RAM_FIREBALL_DAMAGE,
+        burnPower: source.attack * CINDER_RAM_FIREBALL_BURN,
+        speed: CINDER_RAM_FIREBALL_SPEED,
+        color: UNIT_DEFS.cinder_ram.accent,
+        size: 18,
+        style: "fireball",
+        emoji: "🔥",
+        splashRadius: CINDER_RAM_FIREBALL_SPLASH,
+      });
       this.addEnergy(target, target.energyOnHit);
       return;
     }
@@ -3274,12 +3309,13 @@ export class AutoChessEngine {
         break;
       }
       case "cinder_ram": {
-        allies.forEach((ally) => this.heal(source, ally, ally.maxHp * 0.16 + source.attack * 0.65));
-        targets.forEach((target) => {
-          target.slowTime = Math.max(target.slowTime, 2.6);
-          this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: def.accent, text: "减速", life: 0.6, size: 11 });
-        });
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 190 });
+        source.energy = source.maxEnergy;
+        source.barrageActive = true;
+        source.barrageDrainPerSecond = source.maxEnergy / CINDER_RAM_SONG_DURATION;
+        source.cinderSongPulseTimer = 0;
+        source.range = CINDER_RAM_SONG_RANGE;
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 128 });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: def.accent, text: "终场歌唱", life: 0.75, size: 12 });
         break;
       }
       case "sui_bird": {

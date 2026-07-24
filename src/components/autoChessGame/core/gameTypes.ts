@@ -266,6 +266,7 @@ export interface ProjectileVolleyShot {
   angleOffset?: number;
   emoji?: string;
   style?: Projectile["style"];
+  splashRadius?: number;
 }
 
 export interface BattleState {
