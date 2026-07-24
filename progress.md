@@ -365,3 +365,13 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 验证：`pnpm exec tsc --noEmit`、绿冻护甲专项 `1/1`、Phaser 静态回归 `25/25` 通过；完整 `pnpm autochess:test` 为 `101/102`，唯一失败仍是既有的“满能量远程单位会先进入攻击距离再施法”断言。
 - 追加验证：本轮完整 `pnpm autochess:test` 为 `101/103`；新增失败的能量回收断言也不涉及本轮改动，恬豆专项 `1/1`、Phaser 静态回归 `25/25` 通过。
 - 系统 Chrome 专项脚本 `scripts/verify-tiandou-lollipop.cjs` 以 seed 20 实际购买并开战，捕获 5 颗落地糖果，剩余时间约 9.5 秒，截图为 `.tmp/autochess/tiandou-lollipop-grounded.png`，控制台无 error。
+
+## 2026-07-25 · 非自身中心 AOE 投送动画
+
+- 将非自身中心 AOE 分为两类：椰子栞“大声”和帕可“全配音实况”为即时声束型；北欧时停、火锅云、礼小虎出击、尖塔压顶、烟头烫屁股、幽灵终演、终场谢幕为弹幕型。
+- 弹幕型会从施法者放出带技能主题符号的缩小范围球，飞到施法时锁定的固定圆心后才同步生成 AOE、结算伤害与控制；飞行期间不会提前伤害或提前显示范围。
+- 即时型会在施法者与 AOE 圆心之间生成亮线，并在同一模拟帧触发伤害、控制和范围视觉；自身中心 AOE 与位移落地 AOE 保持原逻辑。
+- Phaser 与 Canvas 兼容渲染器均新增 `aoe_orb` 表现；`render_game_to_text` 的投射物状态包含对应技能 ID，便于识别归属和自动化捕获。
+- 专项回归覆盖全部 7 个弹幕型技能的延迟结算，以及 2 个声束型技能的同步触发；`pnpm exec tsc --noEmit` 和 `git diff --check` 通过。完整 `pnpm autochess:test` 为 `102/103`，唯一失败仍是既有“满能量远程单位会先进入攻击距离再施法”断言。
+- 系统 Chrome 专项脚本 `scripts/verify-remote-aoe.cjs` 使用 seed 22 捕获北欧时停飞行/落地，使用 seed 15 捕获大声声束/范围同帧；画布、文本状态与效果坐标一致，控制台无 error。
+- 截图：`.tmp/autochess/remote-aoe-projectile-flight.png`、`.tmp/autochess/remote-aoe-projectile-impact.png`、`.tmp/autochess/remote-aoe-beam-impact.png`。三张均为 1440×900 有效非黑图，透明率和近黑率均为 0，已逐张打开检查。

@@ -143,7 +143,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const dialog = page.getByRole("dialog", { name: "裂隙阵线图鉴" });
   await dialog.getByRole("button", { name: /果冻风纪/ }).click();
   const codexText = await dialog.innerText();
-  const expectedRecovery = "能量 · 稳态回能：初始 10/100；自动回能（6.7 秒回满，每秒 +15）；受击回能（每下 +3）";
+  const expectedRecovery = "能量 · 稳态回能：初始 0/100；自动回能（20 秒回满，每秒 +5）；受击回能（每下 +1）";
   if (!codexText.includes(expectedRecovery)) throw new Error(`Codex recovery text mismatch: ${codexText}`);
   if (!codexText.includes("主要随时间自动充能，受击仅小幅加速")) throw new Error("Codex ability description is stale");
   await capture("sun-guard-energy-codex");
@@ -158,10 +158,10 @@ mkdirSync(artifactDirectory, { recursive: true });
   await advance(1000);
   const automaticState = await readState();
   const automaticGuard = automaticState.battle.playerUnits.find((unit) => unit.unitId === "sun_guard");
-  if (!automaticGuard || automaticGuard.energy - startGuard.energy !== 15) {
+  if (!automaticGuard || automaticGuard.energy - startGuard.energy !== 5) {
     throw new Error(`Automatic recovery mismatch: ${JSON.stringify({ startGuard, automaticGuard })}`);
   }
-  if (automaticGuard.energyPerSecond !== 15 || automaticGuard.energyOnHit !== 3 || automaticGuard.energyOnAttack !== 0) {
+  if (automaticGuard.energyPerSecond !== 5 || automaticGuard.energyOnHit !== 1 || automaticGuard.energyOnAttack !== 0) {
     throw new Error(`Battle energy profile mismatch: ${JSON.stringify(automaticGuard)}`);
   }
   await page.keyboard.press("Escape");

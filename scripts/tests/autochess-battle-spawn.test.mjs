@@ -475,6 +475,7 @@ test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", ()
   engine.castAbility(guard, battle.enemy);
 
   assert.ok(guard.shield > 0);
+  assert.ok(Math.abs(guard.shield - guard.maxHp * 0.35 * 1.3) < 0.001);
   assert.equal(guard.shieldPeak, guard.shield);
   assert.equal(battle.effects.filter((effect) => effect.text === "绿冻护甲").length, 1);
   assert.ok(!battle.effects.some((effect) => effect.kind === "ring" && effect.x === guard.x && effect.y === guard.y));
@@ -498,9 +499,9 @@ test("绿冻护甲以自动回能为主，三次受击只提供少量额外能�
   const battle = engine.state.battle;
   const guard = battle?.player[0];
   assert.ok(battle && guard);
-  assert.equal(guard.energyPerSecond, 15);
+  assert.equal(guard.energyPerSecond, 5);
   assert.equal(guard.energyOnAttack, 0);
-  assert.equal(guard.energyOnHit, 3);
+  assert.equal(guard.energyOnHit, 1);
 
   battle.player.forEach((fighter) => { fighter.cooldown = 99; });
   battle.enemy.forEach((enemy) => {
@@ -510,15 +511,41 @@ test("绿冻护甲以自动回能为主，三次受击只提供少量额外能�
   });
   guard.energy = 0;
   for (let tick = 0; tick < 20; tick += 1) engine.update(0.05);
-  assert.equal(guard.energy, 15);
+  assert.ok(Math.abs(guard.energy - 5) < 0.001);
 
   guard.energy = 0;
   const attacker = battle.enemy[0];
   attacker.x = guard.x + 1;
   attacker.y = guard.y;
   for (let hit = 0; hit < 3; hit += 1) engine.basicAttack(attacker, guard);
-  assert.equal(guard.energy, 9);
+  assert.equal(guard.energy, 3);
   assert.ok(guard.energy < guard.energyPerSecond);
+});
+
+test("一星绿冻护甲无法在三名一星敌人围攻下无限续盾", () => {
+  const engine = createEngine(148);
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const guard = battle?.player[0];
+  assert.ok(battle && guard);
+  assert.equal(battle.enemy.length, 3);
+  battle.player.forEach((fighter) => { fighter.attack = 0; });
+
+  stepBattle(engine, 480);
+
+  assert.equal(guard.alive, false, JSON.stringify({
+    hp: guard.hp,
+    shield: guard.shield,
+    energy: guard.energy,
+    shieldingDone: guard.shieldingDone,
+    elapsed: battle.elapsed,
+    phase: engine.state.phase,
+  }));
+  assert.equal(engine.state.phase, "result");
 });
 
 test("满能量远程单位会先进入攻击距离再施法", () => {
