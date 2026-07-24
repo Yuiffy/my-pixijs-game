@@ -1597,31 +1597,12 @@ export class RiftLineScene extends Phaser.Scene {
     view
       .setPosition(effect.x, effect.y)
       .setAlpha(alpha ** 0.65)
-      .setRotation(effect.kind === "cast" ? progress * 0.9 : 0)
+      .setRotation(0)
       .setDepth(DEPTH.effects + effect.y + 1);
     graphics.clear();
     burstGradient.setVisible(false);
     label.setVisible(false);
-    if (effect.kind === "cast") {
-      const radius = (effect.size || 58) * (0.72 + progress * 0.28);
-      const orbit = radius * 0.72;
-      graphics
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .fillStyle(color, 0.1)
-        .fillCircle(0, 0, radius * 0.78)
-        .lineStyle(Math.max(2, 5 * (1 - progress)), color, 0.95)
-        .strokeCircle(0, 0, radius)
-        .lineStyle(1.5, 0xf4fbff, 0.8)
-        .strokeCircle(0, 0, radius * 0.58);
-      for (let spark = 0; spark < 3; spark += 1) {
-        const angle = progress * Math.PI * 2 + (spark * Math.PI * 2) / 3;
-        graphics.fillStyle(spark === 0 ? 0xf4fbff : color, 0.95).fillCircle(
-          Math.cos(angle) * orbit,
-          Math.sin(angle) * orbit,
-          spark === 0 ? 3.4 : 2.4,
-        );
-      }
-    } else if (effect.kind === "line") {
+    if (effect.kind === "line") {
       const targetX = (effect.x2 ?? effect.x) - effect.x;
       const targetY = (effect.y2 ?? effect.y) - effect.y;
       const width = effect.size || 3;

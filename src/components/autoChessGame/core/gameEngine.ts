@@ -3754,14 +3754,6 @@ export class AutoChessEngine {
     }
 
     this.addEffect({
-      kind: "cast",
-      x: source.x,
-      y: source.y,
-      color: def.accent,
-      life: 0.58,
-      size: Math.max(54, source.radius * 2.4),
-    });
-    this.addEffect({
       kind: "text",
       x: source.x,
       y: source.y - 48,

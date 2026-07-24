@@ -246,41 +246,7 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
     const alpha = Math.max(0, effect.life / effect.maxLife);
     ctx.save();
     ctx.globalAlpha = alpha;
-    if (effect.kind === "cast") {
-      const radius = (effect.size || 58) * (0.72 + progress * 0.28);
-      const orbit = radius * 0.72;
-      ctx.globalCompositeOperation = "screen";
-      ctx.fillStyle = effect.color;
-      ctx.globalAlpha = alpha * 0.1;
-      ctx.beginPath();
-      ctx.arc(effect.x, effect.y, radius * 0.78, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = effect.color;
-      ctx.lineWidth = Math.max(2, 5 * (1 - progress));
-      setShadow(ctx, effect.color, 16);
-      ctx.beginPath();
-      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = "rgba(244, 251, 255, 0.8)";
-      ctx.beginPath();
-      ctx.arc(effect.x, effect.y, radius * 0.58, 0, Math.PI * 2);
-      ctx.stroke();
-      for (let spark = 0; spark < 3; spark += 1) {
-        const angle = progress * Math.PI * 2 + (spark * Math.PI * 2) / 3;
-        ctx.fillStyle = spark === 0 ? "#f4fbff" : effect.color;
-        ctx.beginPath();
-        ctx.arc(
-          effect.x + Math.cos(angle) * orbit,
-          effect.y + Math.sin(angle) * orbit,
-          spark === 0 ? 3.4 : 2.4,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fill();
-      }
-    } else if (effect.kind === "line") {
+    if (effect.kind === "line") {
       const targetX = effect.x2 || effect.x;
       const targetY = effect.y2 || effect.y;
       const width = effect.size || 3;

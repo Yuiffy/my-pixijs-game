@@ -76,7 +76,7 @@ test("备战和手机布局使用相同引擎动作并提供紧凑 profile", () 
 test("战斗视图由引擎 fighter 状态同步，并支持完整动作、状态和能量反馈", () => {
   assert.match(scene, /fighter\.jumpTime/);
   assert.match(scene, /fighter\.jumpArcHeight/);
-  assert.match(scene, /fighter\.abilityMotion/);
+  assert.match(scene, /const \{ abilityMotion \} = fighter/);
   assert.match(scene, /abilityMotion\?\.kind === "jump"/);
   assert.match(scene, /fighter\.attackPulse/);
   assert.match(scene, /fighter\.hitPulse/);
@@ -140,14 +140,14 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
-test("所有技能都有通用施法反馈，范围与连线效果提供范围染色和飞行脉冲", () => {
-  assert.match(gameTypes, /kind: "cast" \| "line"/);
-  assert.match(engine, /kind: "cast"/);
-  assert.match(engine, /size: Math\.max\(54, source\.radius \* 2\.4\)/);
-  assert.match(scene, /effect\.kind === "cast"/);
+test("技能只保留名称提示，范围与连线效果提供范围染色和飞行脉冲", () => {
+  assert.doesNotMatch(gameTypes, /kind: "cast"/);
+  assert.doesNotMatch(engine, /kind: "cast"/);
+  assert.doesNotMatch(scene, /effect\.kind === "cast"/);
+  assert.doesNotMatch(canvasEffects, /effect\.kind === "cast"/);
+  assert.match(engine, /text: def\.abilityName/);
   assert.match(scene, /const travel = Math\.min\(1, progress \* 1\.35\)/);
   assert.match(scene, /fillCircle\(0, 0, fieldRadius\)/);
-  assert.match(canvasEffects, /effect\.kind === "cast"/);
   assert.match(engine, /visualEffects:/);
   assert.match(engine, /projectiles: battle\.projectiles\.map/);
 });
