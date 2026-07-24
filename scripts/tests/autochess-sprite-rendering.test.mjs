@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [host, scene, bridge, assets, config, layout, theme] = await Promise.all([
+const [host, scene, bridge, assets, config, layout, theme, engine, gameTypes, canvasEffects] = await Promise.all([
   readFile(new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/RiftLineScene.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/EngineBridge.ts", import.meta.url), "utf8"),
@@ -10,6 +10,9 @@ const [host, scene, bridge, assets, config, layout, theme] = await Promise.all([
   readFile(new URL("../../src/components/autoChessGame/phaser/gameConfig.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/layout.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/theme.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/core/gameEngine.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/core/gameTypes.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/canvas/effects.ts", import.meta.url), "utf8"),
 ]);
 
 test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
@@ -52,6 +55,7 @@ test("Phaser 场景覆盖标题、备战、战斗、结算、强化和结束阶�
   assert.match(scene, /drawResult\(\)/);
   assert.match(scene, /drawAugments\(\)/);
   assert.match(scene, /drawGameOver\(\)/);
+  assert.match(scene, /if \(!this\.phaseLayer \|\| !this\.entityLayer \|\| !this\.effectsLayer\) return/);
 });
 
 test("备战和手机布局使用相同引擎动作并提供紧凑 profile", () => {
@@ -110,6 +114,18 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
+test("所有技能都有通用施法反馈，范围与连线效果提供范围染色和飞行脉冲", () => {
+  assert.match(gameTypes, /kind: "cast" \| "line"/);
+  assert.match(engine, /kind: "cast"/);
+  assert.match(engine, /size: Math\.max\(54, source\.radius \* 2\.4\)/);
+  assert.match(scene, /effect\.kind === "cast"/);
+  assert.match(scene, /const travel = Math\.min\(1, progress \* 1\.35\)/);
+  assert.match(scene, /fillCircle\(0, 0, fieldRadius\)/);
+  assert.match(canvasEffects, /effect\.kind === "cast"/);
+  assert.match(engine, /visualEffects:/);
+  assert.match(engine, /projectiles: battle\.projectiles\.map/);
+});
+
 test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对齐", () => {
   assert.match(scene, /drawRabbitBody\(/);
   assert.match(scene, /drawRabbitCannon\(/);
@@ -150,7 +166,7 @@ test("投射物命中使用可复用的径向渐变爆裂", () => {
   assert.match(scene, /setName\("burstGradient"\)/);
   assert.match(scene, /effect\.kind === "burst"/);
   assert.match(scene, /\(effect\.size \|\| 40\) \* \(0\.35 \+ progress \* 0\.65\)/);
-  assert.match(scene, /burstGradient\.setTint\(color\)\.setDisplaySize\(radius \* 2, radius \* 2\)\.setVisible\(true\)/);
+  assert.match(scene, /burstGradient[\s\S]*?\.setTint\(color\)[\s\S]*?\.setDisplaySize\(radius \* 2, radius \* 2\)[\s\S]*?\.setVisible\(true\)/);
 });
 
 test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {

@@ -245,30 +245,92 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
     const alpha = Math.max(0, effect.life / effect.maxLife);
     ctx.save();
     ctx.globalAlpha = alpha;
-    if (effect.kind === "line") {
+    if (effect.kind === "cast") {
+      const radius = (effect.size || 58) * (0.72 + progress * 0.28);
+      const orbit = radius * 0.72;
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = effect.color;
+      ctx.globalAlpha = alpha * 0.1;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius * 0.78, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = Math.max(2, 5 * (1 - progress));
+      setShadow(ctx, effect.color, 16);
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(244, 251, 255, 0.8)";
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius * 0.58, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let spark = 0; spark < 3; spark += 1) {
+        const angle = progress * Math.PI * 2 + (spark * Math.PI * 2) / 3;
+        ctx.fillStyle = spark === 0 ? "#f4fbff" : effect.color;
+        ctx.beginPath();
+        ctx.arc(
+          effect.x + Math.cos(angle) * orbit,
+          effect.y + Math.sin(angle) * orbit,
+          spark === 0 ? 3.4 : 2.4,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
+    } else if (effect.kind === "line") {
       const targetX = effect.x2 || effect.x;
       const targetY = effect.y2 || effect.y;
       const width = effect.size || 3;
+      const travel = Math.min(1, progress * 1.35);
+      const tail = Math.max(0, travel - 0.2);
+      const pulseX = effect.x + (targetX - effect.x) * travel;
+      const pulseY = effect.y + (targetY - effect.y) * travel;
       ctx.globalCompositeOperation = "screen";
       ctx.beginPath();
       ctx.moveTo(effect.x, effect.y);
       ctx.lineTo(targetX, targetY);
       ctx.strokeStyle = effect.color;
       ctx.lineWidth = width + 4;
+      ctx.globalAlpha = alpha * 0.3;
       setShadow(ctx, effect.color, 18);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(effect.x, effect.y);
-      ctx.lineTo(targetX, targetY);
+      ctx.moveTo(
+        effect.x + (targetX - effect.x) * tail,
+        effect.y + (targetY - effect.y) * tail,
+      );
+      ctx.lineTo(pulseX, pulseY);
       ctx.strokeStyle = "rgba(244, 251, 255, 0.96)";
       ctx.lineWidth = Math.max(1, width * 0.48);
+      ctx.globalAlpha = alpha;
       setShadow(ctx, effect.color, 4);
       ctx.stroke();
-    } else if (effect.kind === "ring") {
+      ctx.fillStyle = "#f4fbff";
       ctx.beginPath();
-      ctx.arc(effect.x, effect.y, Math.max(6, (effect.size || 80) * progress), 0, Math.PI * 2);
+      ctx.arc(pulseX, pulseY, width + 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (effect.kind === "ring") {
+      const radius = effect.size || 80;
+      const arrival = 1 - Math.pow(1 - progress, 3);
+      const fieldRadius = Math.max(6, radius * (0.72 + arrival * 0.28));
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = alpha * 0.12;
+      ctx.fillStyle = effect.color;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, fieldRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, fieldRadius, 0, Math.PI * 2);
       ctx.strokeStyle = effect.color;
-      ctx.lineWidth = Math.max(2, 8 * (1 - progress));
+      ctx.lineWidth = Math.max(2, 7 * (1 - progress));
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(244, 251, 255, 0.66)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, Math.max(5, radius * arrival * 0.72), 0, Math.PI * 2);
       ctx.stroke();
     } else if (effect.kind === "burst") {
       const radius = (effect.size || 40) * (0.35 + progress * 0.65);

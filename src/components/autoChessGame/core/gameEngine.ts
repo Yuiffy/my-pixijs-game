@@ -3243,6 +3243,14 @@ export class AutoChessEngine {
     }
 
     this.addEffect({
+      kind: "cast",
+      x: source.x,
+      y: source.y,
+      color: def.accent,
+      life: 0.58,
+      size: Math.max(54, source.radius * 2.4),
+    });
+    this.addEffect({
       kind: "text",
       x: source.x,
       y: source.y - 48,
@@ -3721,6 +3729,23 @@ export class AutoChessEngine {
           enemyRows: this.getBattleRanking("enemy").map(({ fighter, value }) =>
             this.summarizeBattleFighter(fighter, value),
           ),
+        },
+        visualEffects: {
+          effects: battle.effects
+            .filter((effect) => effect.kind !== "text" && effect.kind !== "heal")
+            .map((effect) => ({
+              kind: effect.kind,
+              x: Math.round(effect.x),
+              y: Math.round(effect.y),
+              x2: effect.x2 === undefined ? undefined : Math.round(effect.x2),
+              y2: effect.y2 === undefined ? undefined : Math.round(effect.y2),
+              size: effect.size,
+            })),
+          projectiles: battle.projectiles.map((projectile) => ({
+            x: Math.round(projectile.x),
+            y: Math.round(projectile.y),
+            style: projectile.style || "default",
+          })),
         },
         enemyUnits: battle.enemy
           .filter((unit) => unit.alive)

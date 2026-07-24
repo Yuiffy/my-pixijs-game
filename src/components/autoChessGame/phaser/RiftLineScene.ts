@@ -241,6 +241,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   public refresh() {
+    if (!this.phaseLayer || !this.entityLayer || !this.effectsLayer) return;
     this.rebuild();
   }
 
@@ -1558,21 +1559,81 @@ export class RiftLineScene extends Phaser.Scene {
     const burstGradient = view.getByName("burstGradient") as Phaser.GameObjects.Image;
     const label = view.getByName("label") as Phaser.GameObjects.Text;
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
-    view.setPosition(effect.x, effect.y).setAlpha(alpha).setDepth(DEPTH.effects + effect.y + 1);
+    view
+      .setPosition(effect.x, effect.y)
+      .setAlpha(Math.pow(alpha, 0.65))
+      .setRotation(effect.kind === "cast" ? progress * 0.9 : 0)
+      .setDepth(DEPTH.effects + effect.y + 1);
     graphics.clear();
     burstGradient.setVisible(false);
     label.setVisible(false);
-    if (effect.kind === "line") {
+    if (effect.kind === "cast") {
+      const radius = (effect.size || 58) * (0.72 + progress * 0.28);
+      const orbit = radius * 0.72;
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .fillStyle(color, 0.1)
+        .fillCircle(0, 0, radius * 0.78)
+        .lineStyle(Math.max(2, 5 * (1 - progress)), color, 0.95)
+        .strokeCircle(0, 0, radius)
+        .lineStyle(1.5, 0xf4fbff, 0.8)
+        .strokeCircle(0, 0, radius * 0.58);
+      for (let spark = 0; spark < 3; spark += 1) {
+        const angle = progress * Math.PI * 2 + (spark * Math.PI * 2) / 3;
+        graphics.fillStyle(spark === 0 ? 0xf4fbff : color, 0.95).fillCircle(
+          Math.cos(angle) * orbit,
+          Math.sin(angle) * orbit,
+          spark === 0 ? 3.4 : 2.4,
+        );
+      }
+    } else if (effect.kind === "line") {
       const targetX = (effect.x2 ?? effect.x) - effect.x;
       const targetY = (effect.y2 ?? effect.y) - effect.y;
       const width = effect.size || 3;
-      graphics.lineStyle(width + 4, color, 0.45).lineBetween(0, 0, targetX, targetY);
-      graphics.lineStyle(Math.max(1, width * 0.5), 0xf4fbff, 0.96).lineBetween(0, 0, targetX, targetY);
+      const travel = Math.min(1, progress * 1.35);
+      const tail = Math.max(0, travel - 0.2);
+      const pulseX = targetX * travel;
+      const pulseY = targetY * travel;
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .lineStyle(width + 4, color, 0.22)
+        .lineBetween(0, 0, targetX, targetY)
+        .lineStyle(width + 2, color, 0.88)
+        .lineBetween(targetX * tail, targetY * tail, pulseX, pulseY)
+        .lineStyle(Math.max(1, width * 0.45), 0xf4fbff, 0.96)
+        .lineBetween(targetX * tail, targetY * tail, pulseX, pulseY)
+        .fillStyle(color, 0.38)
+        .fillCircle(pulseX, pulseY, width + 7)
+        .fillStyle(0xf4fbff, 1)
+        .fillCircle(pulseX, pulseY, width + 2);
+      if (travel > 0.82) {
+        graphics
+          .lineStyle(Math.max(1.5, width * 0.7), color, 0.9)
+          .strokeCircle(targetX, targetY, (travel - 0.82) * 54 + width * 2);
+      }
     } else if (effect.kind === "ring") {
-      graphics.lineStyle(Math.max(2, 8 * (1 - progress)), color, 1).strokeCircle(0, 0, Math.max(6, (effect.size || 80) * progress));
+      const radius = effect.size || 80;
+      const arrival = 1 - Math.pow(1 - progress, 3);
+      const fieldRadius = Math.max(6, radius * (0.72 + arrival * 0.28));
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .fillStyle(color, 0.1 + (1 - progress) * 0.08)
+        .fillCircle(0, 0, fieldRadius)
+        .lineStyle(Math.max(2, 7 * (1 - progress)), color, 0.95)
+        .strokeCircle(0, 0, fieldRadius)
+        .lineStyle(1.5, 0xf4fbff, 0.66)
+        .strokeCircle(0, 0, Math.max(5, radius * arrival * 0.72));
     } else if (effect.kind === "burst") {
       const radius = (effect.size || 40) * (0.35 + progress * 0.65);
-      burstGradient.setTint(color).setDisplaySize(radius * 2, radius * 2).setVisible(true);
+      burstGradient
+        .setTint(color)
+        .setDisplaySize(radius * 2, radius * 2)
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .setVisible(true);
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.8)
+        .strokeCircle(0, 0, radius * 0.72);
     } else if (effect.kind === "chronosphere" || effect.kind === "hotpot") {
       const radius = (effect.size || (effect.kind === "hotpot" ? 130 : 50)) * (effect.kind === "hotpot" ? 0.45 + progress * 0.7 : 0.35 + progress * 0.65);
       const fill = effect.kind === "hotpot" ? 0xff6b2d : color;
