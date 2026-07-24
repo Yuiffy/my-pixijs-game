@@ -2178,7 +2178,7 @@ export class RiftLineScene extends Phaser.Scene {
     if (!maxOffset) return null;
     const teamIndex = team === "player" ? 0 : 1;
     const trackHeight = RESULT_VIEWPORT_HEIGHT;
-    const thumbHeight = Math.max(38, Math.round(trackHeight * RESULT_VISIBLE_ROWS / rowCount));
+    const thumbHeight = Math.max(38, Math.round((trackHeight * RESULT_VISIBLE_ROWS) / rowCount));
     const offset = Phaser.Math.Clamp(this.resultScrollOffsets[team], 0, maxOffset);
     const thumbY = layout.rosterY + (trackHeight - thumbHeight) * (offset / maxOffset);
     return {

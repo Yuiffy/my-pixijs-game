@@ -293,13 +293,41 @@ mkdirSync(artifactDirectory, { recursive: true });
   }
   await capture("result-support-preserves-scroll");
 
-  const canvasState = await canvas.evaluate((element) => ({
+  const playerTrackBottom = await pointForLogical(541, 580);
+  await page.mouse.click(playerTrackBottom.x, playerTrackBottom.y);
+  await page.waitForTimeout(120);
+  const afterTrackClick = await inspectScene();
+  if (afterTrackClick.offsets.player !== 4 || afterTrackClick.offsets.enemy !== 2) {
+    throw new Error(`Scrollbar track click did not jump independently: ${JSON.stringify(afterTrackClick)}`);
+  }
+  if (afterTrackClick.playerRange !== "5\u201310 / 10") {
+    throw new Error(`Track click did not reveal the final player row: ${JSON.stringify(afterTrackClick)}`);
+  }
+
+  const wideCanvasState = await canvas.evaluate((element) => ({
     width: element.width,
     height: element.height,
     logicalWidth: element.dataset.logicalWidth,
     logicalHeight: element.dataset.logicalHeight,
     profile: element.dataset.layoutProfile,
   }));
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(200);
+  const compact = await inspectScene();
+  const mobileLayout = await page.evaluate(() => ({
+    innerWidth: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    canvasProfile: document.querySelector('[data-game-canvas="rift-line"]')?.dataset.layoutProfile,
+  }));
+  if (compact.offsets.player !== 4 || compact.offsets.enemy !== 2 || compact.rowNames.length !== 12) {
+    throw new Error(`Compact result lost scroll state or visible rows: ${JSON.stringify(compact)}`);
+  }
+  if (mobileLayout.canvasProfile !== "compact" || mobileLayout.scrollWidth > mobileLayout.innerWidth) {
+    throw new Error(`Compact result overflowed the viewport: ${JSON.stringify(mobileLayout)}`);
+  }
+  await capture("result-mobile-scrolled");
+
   if (errors.length || failedResponses.length) {
     throw new Error(`Browser errors: ${JSON.stringify({ errors, failedResponses })}`);
   }
@@ -309,11 +337,14 @@ mkdirSync(artifactDirectory, { recursive: true });
     afterWheel,
     afterDrag,
     afterMetric,
+    afterTrackClick,
     rankingCounts: {
       player: state.battle.ranking.playerRows.length,
       enemy: state.battle.ranking.enemyRows.length,
     },
-    canvas: canvasState,
+    wideCanvas: wideCanvasState,
+    compact,
+    mobileLayout,
     screenshots,
     errors,
   }, null, 2));

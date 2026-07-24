@@ -188,9 +188,12 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   await forcePreparation(5);
   const elite = await readState();
-  const eliteText = await page.locator("body").innerText();
-  if (elite.wave.tag !== "elite" || elite.progressionMode !== "campaign" || !eliteText.includes("ELITE WARNING")) {
-    throw new Error(`Elite warning is incomplete: ${JSON.stringify({ elite, eliteText })}`);
+  if (
+    elite.wave.tag !== "elite"
+    || elite.progressionMode !== "campaign"
+    || !elite.wave.description.includes("精英预警")
+  ) {
+    throw new Error(`Elite warning is incomplete: ${JSON.stringify(elite)}`);
   }
   await capture("round-05-elite-warning");
 
@@ -223,14 +226,38 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   await page.getByRole("button", { name: "图鉴 / 本局天赋" }).click();
   const dialog = page.getByRole("dialog", { name: "裂隙阵线图鉴" });
-  await dialog.getByRole("button", { name: "规则" }).click();
+  await dialog.getByRole("button", { name: "玩法说明" }).click();
   const rulesText = await dialog.innerText();
   for (const expected of ["第 26—40 战", "20 利息", "连胜与赏金全部复投", "80 金"]) {
     if (!rulesText.includes(expected)) throw new Error(`Rules are missing ${expected}`);
   }
   await capture("progression-rules");
 
-  const canvasState = await canvas.evaluate((element) => ({
+  const desktopCanvas = await canvas.evaluate((element) => ({
+    width: element.width,
+    height: element.height,
+    logicalWidth: element.dataset.logicalWidth,
+    logicalHeight: element.dataset.logicalHeight,
+    layoutProfile: element.dataset.layoutProfile,
+  }));
+  await dialog.getByRole("button", { name: "关闭 Esc" }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(250);
+  await forcePreparation(5);
+  const mobileBrief = page.locator(".rift-mobile-brief");
+  const mobileBriefText = await mobileBrief.innerText();
+  const mobileBriefBox = await mobileBrief.boundingBox();
+  const mobileActionsBox = await page.locator(".rift-dom-mobile-actions").boundingBox();
+  if (
+    !mobileBriefText.includes("ELITE WARNING")
+    || !mobileBriefBox
+    || !mobileActionsBox
+    || mobileBriefBox.y + mobileBriefBox.height >= mobileActionsBox.y
+  ) {
+    throw new Error(`Mobile elite warning layout is invalid: ${JSON.stringify({ mobileBriefText, mobileBriefBox, mobileActionsBox })}`);
+  }
+  await capture("round-05-elite-warning-mobile");
+  const mobileCanvas = await canvas.evaluate((element) => ({
     width: element.width,
     height: element.height,
     logicalWidth: element.dataset.logicalWidth,
@@ -245,7 +272,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     endless: { round: endless.round, mode: endless.progressionMode, budget: endless.wave.enemyBudget },
     hell: { round: hell.round, mode: hell.progressionMode, budget: hell.wave.enemyBudget, interest: hell.player.interestIncome },
     interestText,
-    canvas: canvasState,
+    canvas: { desktop: desktopCanvas, mobile: mobileCanvas },
     screenshots,
     errors,
     failedResponses,
