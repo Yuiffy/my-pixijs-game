@@ -1372,10 +1372,15 @@ export class RiftLineScene extends Phaser.Scene {
 
   private updateFighter(view: Phaser.GameObjects.Container, fighter: Fighter) {
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
-    const jumping = fighter.jumpTime > 0 && fighter.jumpDuration > 0;
-    const jumpProgress = jumping ? 1 - fighter.jumpTime / fighter.jumpDuration : 0;
-    const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * (fighter.jumpArcHeight || 92) : 0;
-    const attackProgress = fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
+    const abilityMotion = fighter.abilityMotion;
+    const abilityJumping = abilityMotion?.kind === "jump";
+    const jumping = abilityJumping || (fighter.jumpTime > 0 && fighter.jumpDuration > 0);
+    const jumpProgress = abilityJumping
+      ? abilityMotion.time / Math.max(abilityMotion.duration, 0.001)
+      : jumping ? 1 - fighter.jumpTime / fighter.jumpDuration : 0;
+    const jumpArcHeight = abilityJumping ? abilityMotion.arcHeight : fighter.jumpArcHeight || 92;
+    const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * jumpArcHeight : 0;
+    const attackProgress = !abilityMotion && fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
     const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
     const targetDistance = Math.hypot(fighter.attackTargetX - fighter.x, fighter.attackTargetY - fighter.y) || 1;
     const attackOffsetX = ((fighter.attackTargetX - fighter.x) / targetDistance) * lunge;
@@ -1401,7 +1406,15 @@ export class RiftLineScene extends Phaser.Scene {
     const attackScaleY = 1 - lunge / 130;
     const hitScaleX = 1 - 0.08 * hitProgress;
     const hitScaleY = 1 + 0.08 * hitProgress;
-    portrait.setScale(growth * attackScaleX * hitScaleX, growth * attackScaleY * hitScaleY).setAlpha(fighter.stun > 0 ? 0.72 : 1);
+    const groundMotion = abilityMotion && abilityMotion.kind !== "jump";
+    const motionPulse = groundMotion ? Math.sin((abilityMotion.time / Math.max(abilityMotion.duration, 0.001)) * Math.PI) : 0;
+    portrait
+      .setScale(
+        growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08),
+        growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12),
+      )
+      .setAngle(groundMotion ? fighter.facingX * motionPulse * 7 : 0)
+      .setAlpha(fighter.stun > 0 ? 0.72 : 1);
     const portraitImage = portrait.getByName("portraitImage") as Phaser.GameObjects.Image;
     portraitImage.setFlipX(fighter.facingX < 0);
     shadow.setPosition(-attackOffsetX, radius * 0.8 + jumpArc - attackOffsetY).setScale(growth, growth);
@@ -1417,6 +1430,8 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.burnTime > 0 ? "🔥" : "",
       fighter.stun > 0 ? "✦" : "",
       fighter.jumpPending ? "⌁" : "",
+      abilityMotion?.kind === "dash" ? "»" : "",
+      abilityMotion?.kind === "push" ? "›" : "",
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
       fighter.gen27Buffed ? "27" : "",
       fighter.enraged ? "!" : "",

@@ -28,6 +28,7 @@ import {
 import { BATTLE_BOUNDS, fighterVisualRadius, mechanicalRabbitMuzzle } from "./battleGeometry";
 import type {
   AugmentSelection,
+  AbilityMotion,
   BattleEffect,
   BattleState,
   ChronosphereZone,
@@ -49,6 +50,7 @@ import type {
 
 export type {
   AugmentSelection,
+  AbilityMotion,
   BattleEffect,
   BattleState,
   ChronosphereZone,
@@ -826,15 +828,12 @@ export class AutoChessEngine {
       const hostLevel = def.traits.includes("host") ? traitLevel("host") : 0;
       const globalHostLevel = globalTraitLevel("host");
       const dwarfLevel = def.traits.includes("dwarf") ? traitLevel("dwarf") : 0;
-      const timidLevel = def.traits.includes("timid") ? traitLevel("timid") : 0;
-      const globalTimidLevel = globalTraitLevel("timid");
       const aggressionLevel = globalTraitLevel("aggression");
       const aggressionMember = def.traits.includes("aggression") && aggressionLevel > 0;
       const moveSpeed =
         def.moveSpeed +
         [0, 10, 22, 36][globalHostLevel] +
-        (hostLevel ? [0, 18, 32, 50][hostLevel] : 0) +
-        (timidLevel ? [0, 8, 16, 26][timidLevel] : 0);
+        (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
 
       if (aggressionLevel) attack *= 1 + [0, 0.05, 0.1, 0.2][aggressionLevel] + (aggressionMember ? [0, 0.15, 0.3, 0.55][aggressionLevel] : 0);
       // 怕死：拉远攻击距离，高阶给全队生命
@@ -932,9 +931,7 @@ export class AutoChessEngine {
           isRanged ? [0, 0, 0.22][globalChuanmeiLevel] : 0,
         ),
         dodgeChance:
-          (dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0) +
-          (timidLevel ? [0, 0.1, 0.18, 0.28][timidLevel] : 0) +
-          [0, 0, 0.05, 0.12][globalTimidLevel],
+          (dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0),
         dwarfMember: dwarfLevel > 0,
         gluttonyHolder,
         growthStacks: 0,
@@ -998,6 +995,7 @@ export class AutoChessEngine {
         jumpFromY: spawn.y,
         jumpToX: spawn.x,
         jumpToY: spawn.y,
+        abilityMotion: null,
         targetFid: null,
         targetLock: 0,
         progressAnchorDistance: Infinity,
@@ -1115,6 +1113,7 @@ export class AutoChessEngine {
         jumpFromY: 180 + row * 165,
         jumpToX: 990 - rank * 96,
         jumpToY: 180 + row * 165,
+        abilityMotion: null,
         targetFid: null,
         targetLock: 0,
         progressAnchorDistance: Infinity,
@@ -1197,7 +1196,9 @@ export class AutoChessEngine {
   }
 
   private occupiedPosition(fighter: Fighter) {
-    return fighter.jumpTime > 0
+    return fighter.abilityMotion
+      ? { x: fighter.abilityMotion.toX, y: fighter.abilityMotion.toY }
+      : fighter.jumpTime > 0
       ? { x: fighter.jumpToX, y: fighter.jumpToY }
       : { x: fighter.x, y: fighter.y };
   }
@@ -1215,7 +1216,7 @@ export class AutoChessEngine {
     const unitX = pathX / pathLength;
     const unitY = pathY / pathLength;
     return fighters
-      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.jumpPending && other.jumpTime <= 0)
+      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.abilityMotion && !other.jumpPending && other.jumpTime <= 0)
       .map((other) => {
         const relativeX = other.x - from.x;
         const relativeY = other.y - from.y;
@@ -1368,7 +1369,7 @@ export class AutoChessEngine {
 
   private findFrontAllyBlocker(mover: Fighter, towardX: number, towardY: number, fighters: Fighter[]) {
     return fighters
-      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.jumpPending && other.jumpTime <= 0)
+      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.abilityMotion && !other.jumpPending && other.jumpTime <= 0)
       .map((other) => {
         const relativeX = other.x - mover.x;
         const relativeY = other.y - mover.y;
@@ -1395,8 +1396,226 @@ export class AutoChessEngine {
     source.y = landing.y;
   }
 
+  private startAbilityMotion(
+    source: Fighter,
+    kind: AbilityMotion["kind"],
+    preferred: { x: number; y: number },
+    options: {
+      abilityId?: UnitId | null;
+      targetFid?: string | null;
+      duration?: number;
+      arcHeight?: number;
+      avoidOccupied?: boolean;
+    } = {},
+  ) {
+    const battle = this.state.battle;
+    if (!battle || !source.alive) return null;
+    const occupants = [...battle.player, ...battle.enemy].filter((fighter) => fighter !== source);
+    const landing = options.avoidOccupied === false
+      ? this.clampFighterPosition(source, preferred)
+      : this.findOpenPlacement(source, preferred, occupants);
+    const distance = Math.hypot(landing.x - source.x, landing.y - source.y);
+    const duration = options.duration ?? Math.max(0.28, Math.min(0.72, distance / (kind === "jump" ? 760 : 900)));
+    source.jumpPending = false;
+    source.jumpTime = 0;
+    source.attackPulse = 0;
+    source.abilityMotion = {
+      kind,
+      abilityId: options.abilityId === undefined ? source.unitId : options.abilityId,
+      targetFid: options.targetFid || null,
+      fromX: source.x,
+      fromY: source.y,
+      toX: landing.x,
+      toY: landing.y,
+      time: 0,
+      duration,
+      arcHeight: options.arcHeight ?? (kind === "jump" ? 88 : 0),
+      hitFids: [],
+    };
+    this.faceTowardX(source, landing.x);
+    this.addEffect({
+      kind: "ring",
+      x: source.x,
+      y: source.y,
+      color: UNIT_DEFS[source.unitId].accent,
+      life: Math.min(0.5, duration),
+      size: source.radius * 1.65,
+    });
+    return source.abilityMotion;
+  }
+
+  private distanceToSegment(
+    pointX: number,
+    pointY: number,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+  ) {
+    const segmentX = toX - fromX;
+    const segmentY = toY - fromY;
+    const lengthSquared = segmentX * segmentX + segmentY * segmentY;
+    if (lengthSquared < 0.0001) return Math.hypot(pointX - fromX, pointY - fromY);
+    const projection = Math.max(0, Math.min(1, ((pointX - fromX) * segmentX + (pointY - fromY) * segmentY) / lengthSquared));
+    return Math.hypot(pointX - (fromX + segmentX * projection), pointY - (fromY + segmentY * projection));
+  }
+
+  private dealAbilityDamage(source: Fighter, target: Fighter, multiplier: number, bonus = 0) {
+    const dealt = this.damage(source, target, source.attack * multiplier + bonus);
+    if (dealt > 0) this.addDamageText(target, dealt);
+    return dealt;
+  }
+
+  private sweepGuangyiDash(source: Fighter, motion: AbilityMotion, fromX: number, fromY: number) {
+    const battle = this.state.battle;
+    if (!battle) return;
+    const opponents = source.team === "player" ? battle.enemy : battle.player;
+    const pathX = motion.toX - motion.fromX;
+    const pathY = motion.toY - motion.fromY;
+    const pathLength = Math.hypot(pathX, pathY) || 1;
+    const forwardX = pathX / pathLength;
+    const forwardY = pathY / pathLength;
+    opponents.forEach((target) => {
+      if (!target.alive || motion.hitFids.includes(target.fid)) return;
+      const collisionDistance = source.radius + target.radius + 10;
+      if (this.distanceToSegment(target.x, target.y, fromX, fromY, source.x, source.y) > collisionDistance) return;
+      motion.hitFids.push(target.fid);
+      const cross = forwardX * (target.y - source.y) - forwardY * (target.x - source.x);
+      const side = Math.abs(cross) > 0.01 ? (cross < 0 ? -1 : 1) : target.avoidSide;
+      this.startAbilityMotion(
+        target,
+        "push",
+        {
+          x: target.x + forwardX * 58 - forwardY * side * 34,
+          y: target.y + forwardY * 58 + forwardX * side * 34,
+        },
+        { abilityId: null, duration: 0.26, avoidOccupied: false },
+      );
+      this.dealAbilityDamage(source, target, 1.1);
+      if (target.alive) target.stun = Math.max(target.stun, 0.6);
+      this.addEffect({
+        kind: "burst",
+        x: target.x,
+        y: target.y,
+        color: UNIT_DEFS[source.unitId].accent,
+        life: 0.38,
+        size: target.radius * 1.7,
+      });
+    });
+  }
+
+  private resolveAbilityMotion(source: Fighter, motion: AbilityMotion) {
+    const battle = this.state.battle;
+    if (!battle || !source.alive || !motion.abilityId) return;
+    const allies = source.team === "player" ? battle.player : battle.enemy;
+    const targets = source.team === "player" ? battle.enemy : battle.player;
+    const livingTargets = targets.filter((target) => target.alive);
+    const target = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === motion.targetFid && fighter.alive) || null;
+    const accent = UNIT_DEFS[source.unitId].accent;
+
+    switch (motion.abilityId) {
+      case "sui_bird": {
+        if (target && target.team === source.team) {
+          this.heal(source, target, target.maxHp * 0.18 + source.attack * 1.15);
+          this.grantShield(source, target, target.maxHp * 0.08, 0.32);
+        }
+        livingTargets
+          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 135)
+          .forEach((enemy) => this.dealAbilityDamage(source, enemy, 0.9));
+        break;
+      }
+      case "biscuit_sui":
+        livingTargets
+          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 145)
+          .forEach((enemy) => {
+            this.dealAbilityDamage(source, enemy, 1.85);
+            if (enemy.alive) enemy.stun = Math.max(enemy.stun, 0.85);
+          });
+        this.grantShield(source, source, source.maxHp * 0.22, 0.55);
+        break;
+      case "youyi":
+        if (target) {
+          this.dealAbilityDamage(source, target, 0.78);
+          if (target.alive) this.dealAbilityDamage(source, target, 0.78);
+          if (target.alive) target.stun = Math.max(target.stun, 0.45);
+        }
+        break;
+      case "akirinco":
+        if (target) {
+          let total = 0;
+          for (let strike = 0; strike < 3 && target.alive; strike += 1) {
+            total += Math.max(0, this.dealAbilityDamage(source, target, 0.82));
+          }
+          if (!target.alive) this.heal(source, source, total * 0.3);
+        }
+        break;
+      case "lovely": {
+        let hits = 0;
+        livingTargets
+          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 135)
+          .forEach((enemy) => {
+            this.dealAbilityDamage(source, enemy, 1.22);
+            hits += 1;
+          });
+        source.attackInterval /= 1 + Math.min(0.3, hits * 0.06);
+        source.baseAttackInterval = source.attackInterval;
+        break;
+      }
+      case "mumu":
+        livingTargets
+          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 125)
+          .forEach((enemy) => this.dealAbilityDamage(source, enemy, 1.15));
+        allies
+          .filter((ally) => ally.alive && Math.hypot(ally.x - source.x, ally.y - source.y) < 150)
+          .forEach((ally) => this.grantShield(source, ally, ally.maxHp * 0.12, 0.38));
+        break;
+      case "sui_cat":
+        if (target) {
+          for (let strike = 0; strike < 3 && target.alive; strike += 1) {
+            this.dealAbilityDamage(source, target, 0.95);
+          }
+          if (target.alive) target.stun = Math.max(target.stun, 0.95);
+          this.addEffect({ kind: "text", x: target.x, y: target.y - 48, color: accent, text: "猫拳三连", life: 0.7, size: 12 });
+        }
+        break;
+      default:
+        break;
+    }
+    this.addEffect({
+      kind: motion.kind === "jump" ? "burst" : "ring",
+      x: source.x,
+      y: source.y,
+      color: accent,
+      life: 0.58,
+      size: Math.max(60, source.radius * 2),
+    });
+  }
+
+  private updateAbilityMotion(fighter: Fighter, dt: number, battle: BattleState) {
+    const motion = fighter.abilityMotion;
+    if (!motion) return false;
+    if (this.isInsideChronosphere(fighter, battle)) return true;
+    const previousX = fighter.x;
+    const previousY = fighter.y;
+    motion.time = Math.min(motion.duration, motion.time + dt);
+    const progress = motion.duration > 0 ? motion.time / motion.duration : 1;
+    const eased = motion.kind === "dash"
+      ? progress
+      : progress * progress * (3 - 2 * progress);
+    fighter.x = motion.fromX + (motion.toX - motion.fromX) * eased;
+    fighter.y = motion.fromY + (motion.toY - motion.fromY) * eased;
+    if (motion.abilityId === "guangyi") this.sweepGuangyiDash(fighter, motion, previousX, previousY);
+    if (progress >= 1) {
+      fighter.x = motion.toX;
+      fighter.y = motion.toY;
+      fighter.abilityMotion = null;
+      this.resolveAbilityMotion(fighter, motion);
+    }
+    return true;
+  }
+
   private resolveCombatTarget(source: Fighter, targets: Fighter[], dt: number) {
-    const available = targets.filter((target) => target.alive && !target.jumpPending && target.jumpTime <= 0);
+    const available = targets.filter((target) => target.alive && !target.abilityMotion && !target.jumpPending && target.jumpTime <= 0);
     const current = available.find((target) => target.fid === source.targetFid) || null;
     const nearest = this.nearestTarget(source, available);
     source.targetLock = Math.max(0, source.targetLock - dt);
@@ -1437,7 +1656,7 @@ export class AutoChessEngine {
       y: target.y - towardY * preferredRange,
     };
     const blockedAhead = fighters.some((other) => {
-      if (!other.alive || other === fighter || other === target || other.jumpTime > 0) return false;
+      if (!other.alive || other === fighter || other === target || other.abilityMotion || other.jumpTime > 0) return false;
       const relativeX = other.x - fighter.x;
       const relativeY = other.y - fighter.y;
       const forward = relativeX * towardX + relativeY * towardY;
@@ -1541,7 +1760,7 @@ export class AutoChessEngine {
   }
 
   private prepareVanguardJump(fighter: Fighter, source: Fighter, battle: BattleState) {
-    if (!fighter.vanguardMember || fighter.vanguardKnockback <= 0 || fighter.jumpTime > 0) return false;
+    if (!fighter.vanguardMember || fighter.vanguardKnockback <= 0 || fighter.abilityMotion || fighter.jumpTime > 0) return false;
     const deltaX = fighter.x - source.x;
     const deltaY = fighter.y - source.y;
     const distance = Math.hypot(deltaX, deltaY) || 1;
@@ -1618,10 +1837,10 @@ export class AutoChessEngine {
       let resolvedOverlap = false;
       for (let leftIndex = 0; leftIndex < fighters.length; leftIndex += 1) {
         const left = fighters[leftIndex];
-        if (!left.alive || left.jumpTime > 0) continue;
+        if (!left.alive || left.abilityMotion || left.jumpTime > 0) continue;
         for (let rightIndex = leftIndex + 1; rightIndex < fighters.length; rightIndex += 1) {
           const right = fighters[rightIndex];
-          if (!right.alive || right.jumpTime > 0) continue;
+          if (!right.alive || right.abilityMotion || right.jumpTime > 0) continue;
           let dx = right.x - left.x;
           let dy = right.y - left.y;
           let distance = Math.hypot(dx, dy);
@@ -1674,7 +1893,7 @@ export class AutoChessEngine {
 
   private nearestTarget(source: Fighter, targets: Fighter[]) {
     const availableTargets = targets.filter(
-      (target) => !target.jumpPending && target.jumpTime <= 0,
+      (target) => !target.abilityMotion && !target.jumpPending && target.jumpTime <= 0,
     );
     return availableTargets.reduce<Fighter | null>((best, target) => {
       if (!best) return target;
@@ -2215,6 +2434,7 @@ export class AutoChessEngine {
       }
       fighter.attackPulse = Math.max(0, fighter.attackPulse - dt);
       fighter.hitPulse = Math.max(0, fighter.hitPulse - dt);
+      if (this.updateAbilityMotion(fighter, dt, battle)) return;
       if (fighter.jumpPending) {
         if (this.isInsideChronosphere(fighter, battle)) return;
         fighter.jumpDelay = Math.max(0, fighter.jumpDelay - dt);
@@ -2429,7 +2649,7 @@ export class AutoChessEngine {
     const liveTarget = target.alive ? target : this.nearestTarget(source, battle.enemy);
     if (!liveTarget) return;
     const supporters = battle.player
-      .filter((fighter) => fighter !== source && fighter.alive && fighter.yueGangMember && fighter.jumpTime <= 0 && !fighter.jumpPending && fighter.stun <= 0)
+      .filter((fighter) => fighter !== source && fighter.alive && fighter.yueGangMember && !fighter.abilityMotion && fighter.jumpTime <= 0 && !fighter.jumpPending && fighter.stun <= 0)
       .filter((fighter) => Math.hypot(fighter.x - liveTarget.x, fighter.y - liveTarget.y) > fighter.range + liveTarget.radius + 12)
       .sort((left, right) => Math.hypot(left.x - liveTarget.x, left.y - liveTarget.y) - Math.hypot(right.x - liveTarget.x, right.y - liveTarget.y))
       .slice(0, level >= 2 ? 2 : 1);
@@ -2875,14 +3095,12 @@ export class AutoChessEngine {
       case "sui_bird": {
         const target = weakest(allies);
         if (!target) break;
-        this.heal(source, target, target.maxHp * 0.18 + source.attack * 1.15);
-        addShield(target, target.maxHp * 0.08, 0.32);
-        targets
-          .filter(
-            (enemy) => Math.hypot(enemy.x - target.x, enemy.y - target.y) < 135,
-          )
-          .forEach((enemy) => deal(enemy, 0.9));
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -52 : 52), y: target.y - 20 });
+        this.startAbilityMotion(
+          source,
+          "jump",
+          { x: target.x + (source.team === "player" ? -52 : 52), y: target.y - 20 },
+          { targetFid: target.fid, duration: 0.56, arcHeight: 82 },
+        );
         this.addEffect({
           kind: "ring",
           x: target.x,
@@ -2986,19 +3204,16 @@ export class AutoChessEngine {
         if (!target) break;
         const startX = source.x;
         const startY = source.y;
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -46 : 46), y: target.y });
-        targets
-          .filter((candidate) => {
-            const distance = Math.hypot(candidate.x - startX, candidate.y - startY);
-            const endpointDistance = Math.hypot(candidate.x - source.x, candidate.y - source.y);
-            return distance + endpointDistance <= Math.hypot(source.x - startX, source.y - startY) + 42;
-          })
-          .forEach((candidate) => {
-            deal(candidate, 1.1);
-            candidate.stun = Math.max(candidate.stun, 0.6);
-          });
+        const motion = this.startAbilityMotion(
+          source,
+          "dash",
+          { x: target.x + (source.team === "player" ? -46 : 46), y: target.y },
+          { targetFid: target.fid, avoidOccupied: false },
+        );
         addShield(source, source.maxHp * 0.2, 0.45);
-        this.addEffect({ kind: "line", x: startX, y: startY, x2: source.x, y2: source.y, color: def.accent, life: 0.5, size: 8 });
+        if (motion) {
+          this.addEffect({ kind: "line", x: startX, y: startY, x2: motion.toX, y2: motion.toY, color: def.accent, life: motion.duration, size: 8 });
+        }
         break;
       }
       case "sui_cat": {
@@ -3034,37 +3249,28 @@ export class AutoChessEngine {
           size: 5,
         });
 
-        const pushFromX = target.x;
-        const pushFromY = target.y;
-        const pushedTarget = this.clampFighterPosition(target, {
+        const targetMotion = this.startAbilityMotion(target, "push", {
           x: target.x + pushDir * pushDistance,
           y: target.y,
-        });
-        target.x = pushedTarget.x;
-        target.y = pushedTarget.y;
-        this.relocateFighter(source, {
-          x: target.x + behindSign * contactGap,
-          y: target.y,
-        });
+        }, { abilityId: null, duration: 0.34, avoidOccupied: false });
+        const sourceMotion = this.startAbilityMotion(source, "push", {
+          x: (targetMotion?.toX ?? target.x) + behindSign * contactGap,
+          y: targetMotion?.toY ?? target.y,
+        }, { targetFid: target.fid, duration: 0.34, avoidOccupied: false });
         this.faceTowardX(source, target.x);
 
-        for (let strike = 0; strike < 3 && target.alive; strike += 1) {
-          deal(target, 0.95);
+        if (targetMotion && sourceMotion) {
+          this.addEffect({
+            kind: "line",
+            x: targetMotion.fromX,
+            y: targetMotion.fromY,
+            x2: targetMotion.toX,
+            y2: targetMotion.toY,
+            color: def.accent,
+            life: sourceMotion.duration,
+            size: 10,
+          });
         }
-        target.stun = Math.max(target.stun, 0.95);
-
-        this.addEffect({
-          kind: "line",
-          x: pushFromX,
-          y: pushFromY,
-          x2: target.x,
-          y2: target.y,
-          color: def.accent,
-          life: 0.48,
-          size: 10,
-        });
-        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 70 });
-        this.addEffect({ kind: "text", x: target.x, y: target.y - 48, color: def.accent, text: "猫拳三连", life: 0.7, size: 12 });
         break;
       }
       case "nagisa": {
@@ -3081,14 +3287,12 @@ export class AutoChessEngine {
       case "biscuit_sui": {
         const center = densest(targets);
         if (!center) break;
-        this.relocateFighter(source, { x: center.x + (source.team === "player" ? -42 : 42), y: center.y });
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 145)
-          .forEach((target) => {
-            deal(target, 1.85);
-            target.stun = Math.max(target.stun, 0.85);
-          });
-        addShield(source, source.maxHp * 0.22, 0.55);
+        this.startAbilityMotion(
+          source,
+          "dash",
+          { x: center.x + (source.team === "player" ? -42 : 42), y: center.y },
+          { targetFid: center.fid },
+        );
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.95, size: 155 });
         break;
       }
@@ -3142,40 +3346,48 @@ export class AutoChessEngine {
       case "youyi": {
         const target = farthest(targets);
         if (!target) break;
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -36 : 36), y: target.y });
-        deal(target, 0.78);
-        deal(target, 0.78);
-        target.stun = Math.max(target.stun, 0.45);
+        this.startAbilityMotion(
+          source,
+          "jump",
+          { x: target.x + (source.team === "player" ? -36 : 36), y: target.y },
+          { targetFid: target.fid, duration: 0.52, arcHeight: 94 },
+        );
         this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.55, size: 56 });
         break;
       }
       case "akirinco": {
         const target = weakest(targets);
         if (!target) break;
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -34 : 34), y: target.y });
-        let total = 0;
-        for (let strike = 0; strike < 3 && target.alive; strike += 1) total += deal(target, 0.82);
-        if (!target.alive) this.heal(source, source, total * 0.3);
+        this.startAbilityMotion(
+          source,
+          "jump",
+          { x: target.x + (source.team === "player" ? -34 : 34), y: target.y },
+          { targetFid: target.fid, duration: 0.5, arcHeight: 90 },
+        );
         this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.68, size: 68 });
         break;
       }
       case "lovely": {
         const center = densest(targets);
         if (!center) break;
-        this.relocateFighter(source, { x: center.x + (source.team === "player" ? -42 : 42), y: center.y });
-        let hits = 0;
-        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 135).forEach((target) => { deal(target, 1.22); hits += 1; });
-        source.attackInterval /= 1 + Math.min(0.3, hits * 0.06);
-        source.baseAttackInterval = source.attackInterval;
+        this.startAbilityMotion(
+          source,
+          "jump",
+          { x: center.x + (source.team === "player" ? -42 : 42), y: center.y },
+          { targetFid: center.fid, duration: 0.54, arcHeight: 96 },
+        );
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.72, size: 142 });
         break;
       }
       case "mumu": {
         const center = densest(targets);
         if (!center) break;
-        this.relocateFighter(source, { x: center.x + (source.team === "player" ? -44 : 44), y: center.y });
-        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125).forEach((target) => deal(target, 1.15));
-        allies.filter((ally) => Math.hypot(ally.x - source.x, ally.y - source.y) < 150).forEach((ally) => addShield(ally, ally.maxHp * 0.12, 0.38));
+        this.startAbilityMotion(
+          source,
+          "dash",
+          { x: center.x + (source.team === "player" ? -44 : 44), y: center.y },
+          { targetFid: center.fid },
+        );
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: 136 });
         break;
       }
@@ -3325,6 +3537,7 @@ export class AutoChessEngine {
       target.vanguardMember &&
       target.vanguardKnockback > 0 &&
       target.vanguardJumpCooldown <= 0 &&
+      !target.abilityMotion &&
       target.jumpTime <= 0 &&
       target.alive &&
       effectiveApplied > 0
@@ -3426,6 +3639,7 @@ export class AutoChessEngine {
     if (!target.alive) return;
     target.alive = false;
     target.hp = 0;
+    target.abilityMotion = null;
     this.addEffect({
       kind: "burst",
       x: target.x,
@@ -3716,7 +3930,14 @@ export class AutoChessEngine {
             attacking: unit.attackPulse > 0,
             hit: unit.hitPulse > 0,
             jumpPending: unit.jumpPending,
-            jumping: unit.jumpTime > 0,
+            jumping: unit.abilityMotion?.kind === "jump" || unit.jumpTime > 0,
+            motion: unit.abilityMotion && {
+              kind: unit.abilityMotion.kind,
+              abilityId: unit.abilityMotion.abilityId,
+              progress: Number((unit.abilityMotion.time / Math.max(unit.abilityMotion.duration, 0.001)).toFixed(2)),
+              from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
+              to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },
+            },
             jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
             jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
           })),
@@ -3759,7 +3980,14 @@ export class AutoChessEngine {
             attacking: unit.attackPulse > 0,
             hit: unit.hitPulse > 0,
             jumpPending: unit.jumpPending,
-            jumping: unit.jumpTime > 0,
+            jumping: unit.abilityMotion?.kind === "jump" || unit.jumpTime > 0,
+            motion: unit.abilityMotion && {
+              kind: unit.abilityMotion.kind,
+              abilityId: unit.abilityMotion.abilityId,
+              progress: Number((unit.abilityMotion.time / Math.max(unit.abilityMotion.duration, 0.001)).toFixed(2)),
+              from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
+              to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },
+            },
             jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
             jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
           })),

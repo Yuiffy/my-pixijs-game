@@ -106,6 +106,20 @@ export interface PineTreeTurret {
   attackPulse: number;
 }
 
+export interface AbilityMotion {
+  kind: "dash" | "jump" | "push";
+  abilityId: UnitId | null;
+  targetFid: string | null;
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  time: number;
+  duration: number;
+  arcHeight: number;
+  hitFids: string[];
+}
+
 export interface Fighter {
   fid: string;
   unitId: UnitId;
@@ -202,6 +216,7 @@ export interface Fighter {
   jumpFromY: number;
   jumpToX: number;
   jumpToY: number;
+  abilityMotion: AbilityMotion | null;
   targetFid: string | null;
   targetLock: number;
   progressAnchorDistance: number;

@@ -200,13 +200,13 @@ test("岁己形态拆分到不同关系构筑", () => {
     assert.ok(data.UNIT_DEFS[id].portrait);
   });
   assert.equal(data.UNIT_DEFS.sui.name, "小红帽");
-  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["dance", "aggression", "timid"]);
+  assert.deepEqual(data.UNIT_DEFS.sui.traits, ["dance", "aggression", "vanguard"]);
   assert.equal(data.UNIT_DEFS.sui_blue.name, "贪吃岁");
   assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["skeleton_soldier", "gluttony"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild", "timid"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild", "vanguard"]);
   assert.equal(data.UNIT_DEFS.sui_flower.name, "暴龙岁");
   assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["vanguard", "chuanmei", "mystic"]);
-  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "aggression", "dance", "timid"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "aggression", "dance", "vanguard"]);
   assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["wild", "gluttony"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
 });
@@ -274,15 +274,15 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
     assert.equal(data.SHOP_UNITS.includes(id), false);
     assert.equal(data.UNIT_DEFS[id], undefined);
   });
-  ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "host", "dwarf", "traffic", "mature", "dance", "aggression", "timid"].forEach((id) => {
+  ["chuanmei", "gluttony", "skeleton_soldier", "gen27", "yue_gang", "host", "dwarf", "traffic", "mature", "dance", "aggression"].forEach((id) => {
     assert.equal(data.TRAITS[id].family, "关系");
     assert.equal(data.TRAITS[id].thresholds.length, data.TRAITS[id].bonuses.length);
   });
-  assert.equal(data.TRAITS.timid.name, "胆小");
-  assert.deepEqual(data.TRAITS.timid.thresholds, [2, 4, 6]);
-  assert.match(data.TRAITS.timid.bonuses[0], /闪避/);
+  assert.equal(data.TRAITS.timid, undefined);
+  assert.equal(data.TRAIT_IDS.includes("timid"), false);
+  assert.equal(data.TRAITS.vanguard.name, "怕死");
   ["sui_cat", "sui", "sui_bird", "nori", "tiandou", "youyi", "lovely"].forEach((id) => {
-    assert.ok(data.UNIT_DEFS[id].traits.includes("timid"));
+    assert.ok(data.UNIT_DEFS[id].traits.includes("vanguard"));
   });
   assert.equal(data.TRAITS.rift, undefined);
   assert.equal(data.TRAITS.clockwork, undefined);

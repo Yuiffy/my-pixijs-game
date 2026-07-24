@@ -76,6 +76,8 @@ test("备战和手机布局使用相同引擎动作并提供紧凑 profile", () 
 test("战斗视图由引擎 fighter 状态同步，并支持完整动作、状态和能量反馈", () => {
   assert.match(scene, /fighter\.jumpTime/);
   assert.match(scene, /fighter\.jumpArcHeight/);
+  assert.match(scene, /fighter\.abilityMotion/);
+  assert.match(scene, /abilityMotion\?\.kind === "jump"/);
   assert.match(scene, /fighter\.attackPulse/);
   assert.match(scene, /fighter\.hitPulse/);
   assert.match(scene, /fighter\.shield/);
@@ -86,6 +88,29 @@ test("战斗视图由引擎 fighter 状态同步，并支持完整动作、状�
   assert.match(scene, /ENERGY_PROFILES\[fighter\.energyStyle\]\.color/);
   assert.match(scene, /this\.fighterViews\.get\(fighter\.fid\)/);
   assert.match(scene, /setDepth\(DEPTH\.entities \+ visualY\)/);
+});
+
+test("突进、跃击与击退由引擎运动状态推进，仅保留明确设计的两处闪现", () => {
+  assert.match(gameTypes, /kind: "dash" \| "jump" \| "push"/);
+  assert.match(engine, /private updateAbilityMotion/);
+  assert.match(engine, /private sweepGuangyiDash/);
+  assert.match(engine, /motion\.hitFids\.includes/);
+  ["sui_bird", "guangyi", "biscuit_sui", "youyi", "akirinco", "lovely", "mumu"].forEach((unitId) => {
+    const marker = `case "${unitId}":`;
+    let searchFrom = 0;
+    let usesMotion = false;
+    while (!usesMotion) {
+      const branchStart = engine.indexOf(marker, searchFrom);
+      if (branchStart < 0) break;
+      const nextCase = engine.indexOf("\n      case \"", branchStart + marker.length);
+      const branch = engine.slice(branchStart, nextCase < 0 ? engine.length : nextCase);
+      usesMotion = /startAbilityMotion/.test(branch);
+      searchFrom = branchStart + marker.length;
+    }
+    assert.ok(usesMotion, `${unitId} 不应再直接瞬移`);
+  });
+  const relocationCalls = engine.match(/this\.relocateFighter\(/g) || [];
+  assert.equal(relocationCalls.length, 2, "只允许冷笑话与猫拳起手保留瞬移");
 });
 
 test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () => {

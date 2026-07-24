@@ -1178,24 +1178,129 @@ test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {
   assert.ok(angles.some((angle) => Math.abs(angle - baseAim) > 0.05));
 });
 
-test("胆小羁绊为成员提供闪避与移速，高阶惠及全队", () => {
+test("原胆小成员合并为怕死并获得怕死加成", () => {
   const engine = createEngine(71);
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
   engine.state.board[1] = { uid: 2, id: "sui_cat", star: 1 };
   engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  const status = engine.getTraitStatus("vanguard");
+  assert.equal(status.count, 3);
+  assert.equal(status.level, 1);
   engine.startBattle();
-  const timid = engine.state.battle?.player.find((fighter) => fighter.unitId === "sui_cat");
+  const mergedMember = engine.state.battle?.player.find((fighter) => fighter.unitId === "sui_cat");
   const ally = engine.state.battle?.player.find((fighter) => fighter.unitId === "mossback");
-  assert.ok(timid && ally);
-  // 2 名胆小成员 → 1 阶：成员 +10% 闪避、+8 移速；全队无额外闪避
-  assert.equal(timid.dodgeChance, 0.1);
-  assert.equal(timid.baseMoveSpeed, gameData.UNIT_DEFS.sui_cat.moveSpeed + 8);
+  assert.ok(mergedMember && ally);
+  assert.equal(mergedMember.range, gameData.UNIT_DEFS.sui_cat.range + 36);
+  assert.equal(mergedMember.dodgeChance, 0);
+  assert.equal(mergedMember.baseMoveSpeed, gameData.UNIT_DEFS.sui_cat.moveSpeed);
   assert.equal(ally.dodgeChance, 0);
 });
 
-test("小猫拳会闪现到最远敌人身后并推进击晕", () => {
+test("滑跪会沿直线路径移动并逐个撞开沿途敌人", () => {
+  const engine = createEngine(73);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "guangyi", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  assert.ok(battle && source && battle.enemy.length >= 2);
+  const middle = battle.enemy[0];
+  const far = battle.enemy[1];
+  battle.enemy.forEach((fighter) => {
+    fighter.x = 300;
+    fighter.y = 560;
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.moveSpeed = 0;
+    fighter.cooldown = 99;
+    fighter.energy = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
+  source.x = 220;
+  source.y = 360;
+  middle.x = 420;
+  middle.y = 360;
+  far.x = 760;
+  far.y = 360;
+  source.energy = source.maxEnergy;
+  const expectedSkillDamage = source.attack * 1.1;
+
+  engine.update(0.05);
+  assert.equal(source.abilityMotion?.kind, "dash");
+  assert.equal(source.abilityMotion?.abilityId, "guangyi");
+  assert.equal(source.x, 220, "施法帧只建立运动状态，不应直接抵达终点");
+  assert.ok((source.abilityMotion?.toX || 0) > 650);
+
+  source.cooldown = 99;
+  source.energy = 0;
+  const sampledX = [];
+  for (let tick = 0; tick < 16; tick += 1) {
+    engine.update(0.05);
+    sampledX.push(source.x);
+  }
+  assert.ok(new Set(sampledX.map((x) => Math.round(x))).size >= 6, "滑跪过程应经过多个中间坐标");
+  assert.equal(source.abilityMotion, null);
+  assert.ok(source.x > 650);
+  assert.ok(Math.abs(middle.damageTaken - expectedSkillDamage) < 0.01, "沿途目标应只受到一次滑跪伤害");
+  assert.ok(Math.abs(far.damageTaken - expectedSkillDamage) < 0.01, "终点目标也应只受到一次滑跪伤害");
+  assert.ok(middle.x > 420 || Math.abs(middle.y - 360) > 1, "沿途目标应被短位移撞开");
+  assert.ok(far.x > 760 || Math.abs(far.y - 360) > 1, "终点目标应被短位移撞开");
+  assert.ok(source.shield > 0);
+  assertInsideBattleBounds(source);
+  assertInsideBattleBounds(middle);
+  assertInsideBattleBounds(far);
+});
+
+test("跃击技能会经过空中过程并在落地后结算伤害", () => {
+  const engine = createEngine(74);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "youyi", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  assert.ok(battle && source);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = 720 + index * 90;
+    fighter.y = 360 + index * 90;
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.moveSpeed = 0;
+    fighter.cooldown = 99;
+    fighter.energy = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
+  source.x = 220;
+  source.y = 360;
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.equal(source.abilityMotion?.kind, "jump");
+  assert.equal(source.abilityMotion?.abilityId, "youyi");
+  const target = battle.enemy.find((fighter) => fighter.fid === source.abilityMotion?.targetFid);
+  assert.ok(target);
+  const startHp = target.hp;
+  assert.equal(target.hp, startHp, "起跳时不应提前结算落地伤害");
+  engine.update(0.05);
+  assert.ok(source.x > 220 && source.x < (source.abilityMotion?.toX || Infinity));
+  assert.equal(target.hp, startHp, "空中阶段不应提前结算伤害");
+
+  source.cooldown = 99;
+  source.energy = 0;
+  stepBattle(engine, 11);
+  assert.equal(source.abilityMotion, null);
+  assert.ok(target.hp < startHp);
+  assert.ok(target.stun > 0);
+  assertInsideBattleBounds(source);
+});
+
+test("小猫拳会先闪现到最远敌人身后，再与目标同步推进并击晕", () => {
   const engine = createEngine(72);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -1233,9 +1338,24 @@ test("小猫拳会闪现到最远敌人身后并推进击晕", () => {
   engine.update(0.05);
 
   assert.ok(source.x > target.x, "应闪现到敌人身后（更靠敌方半场）");
-  assert.ok(target.x < beforeTargetX, "敌人应被往己方半场推开");
-  assert.ok(target.stun > 0.8, "目标应被击晕");
+  assert.equal(source.abilityMotion?.kind, "push");
+  assert.equal(target.abilityMotion?.kind, "push");
+  const hadPushLine = battle.effects.some((effect) => effect.kind === "line");
+  assert.ok(target.x < beforeTargetX, "敌方更新阶段可以开始推进");
+  assert.ok(target.x > target.abilityMotion.toX, "施法帧不应把目标瞬间推到终点");
+  assert.equal(target.stun, 0, "三连击应在推进完成后结算");
+
+  engine.update(0.05);
+  assert.ok(target.x < beforeTargetX, "推进过程应在后续帧逐步移动目标");
+  assert.ok(target.x > (target.abilityMotion?.toX || -Infinity), "推进中途不应提前抵达终点");
+  source.cooldown = 99;
+  source.energy = 0;
+  stepBattle(engine, 7);
+  assert.equal(source.abilityMotion, null);
+  assert.equal(target.abilityMotion, null);
+  assert.ok(target.x < beforeTargetX - 80, "敌人应被往己方半场推开");
+  assert.ok(target.stun > 0.8, "推进结束后目标应被三连击晕");
   assert.ok(battle.effects.some((effect) => effect.kind === "burst"));
-  assert.ok(battle.effects.some((effect) => effect.kind === "line"));
+  assert.ok(hadPushLine);
   assert.ok(battle.effects.some((effect) => effect.text === "猫拳三连" || effect.text === "闪"));
 });
