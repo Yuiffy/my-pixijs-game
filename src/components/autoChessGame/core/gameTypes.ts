@@ -165,6 +165,8 @@ export interface Fighter {
   emberAttackStackCap: number;
   syncAvMember: boolean;
   syncAvDirection: -1 | 0 | 1;
+  /** 同步视听根据战力差计算出的效果强度，供战斗表现使用。 */
+  syncAvStrength: number;
   gen27Member: boolean;
   gen27Buffed: boolean;
   matureMember: boolean;
@@ -227,6 +229,10 @@ export interface Fighter {
   jumpToX: number;
   jumpToY: number;
   abilityMotion: AbilityMotion | null;
+  /** 狍子偶像「捏捏摸摸」的引导目标与剩余时间。 */
+  channelTargetFid: string | null;
+  channelTime: number;
+  channelPulseTimer: number;
   targetFid: string | null;
   targetLock: number;
   progressAnchorDistance: number;

@@ -167,6 +167,11 @@ const TIANDOU_LOLLIPOP_SLOW_DURATION = 2.4;
 const MITSURI_TAUNT_RADIUS = 155;
 const MITSURI_TAUNT_DURATION = 3.2;
 const MITSURI_SHIELD_RATIO = 0.22;
+/** 狍子偶像：双方均被锁定的持续施法。 */
+const LOVELY_CHANNEL_DURATION = 3.4;
+const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
+const LOVELY_CHANNEL_LIFESTEAL = 0.9;
+const LOVELY_CHANNEL_PULSE_INTERVAL = 0.32;
 /** 果冻风纪：护盾破碎钢镚弹幕 */
 const SUN_GUARD_COIN_COUNT = 5;
 const SUN_GUARD_COIN_SPEED = 380;
@@ -199,11 +204,9 @@ const NORI_APPLE_PIE_INTERVAL = 0.14;
 const NORI_APPLE_PIE_DAMAGE_MULTIPLIER = 0.32;
 const NORI_PROJECTILE_SPEED = 700;
 const NORI_PROJECTILE_RANGE = 560;
-const XUEHUI_VOLLEY_SHOTS = 3;
-const XUEHUI_VOLLEY_INTERVAL = 0.12;
-const XUEHUI_PROJECTILE_SPEED = 780;
-const XUEHUI_PROJECTILE_DAMAGE_MULTIPLIER = 0.84;
-const XUEHUI_PROJECTILE_BURN_MULTIPLIER = 0.62;
+const XUEHUI_CLEAVE_RADIUS = 98;
+const XUEHUI_CLEAVE_DAMAGE_MULTIPLIER = 1.12;
+const XUEHUI_CLEAVE_BURN_MULTIPLIER = 0.68;
 
 interface RandomSource {
   next: () => number;
@@ -1020,6 +1023,7 @@ export class AutoChessEngine {
         emberAttackStackCap: [0, 5, 5, 5][emberLevel],
         syncAvMember: owned.id === "xuehui",
         syncAvDirection: 0,
+        syncAvStrength: 0,
         gen27Member,
         gen27Buffed: false,
         matureMember: matureLevel > 0,
@@ -1075,6 +1079,9 @@ export class AutoChessEngine {
         jumpToX: spawn.x,
         jumpToY: spawn.y,
         abilityMotion: null,
+        channelTargetFid: null,
+        channelTime: 0,
+        channelPulseTimer: 0,
         targetFid: null,
         targetLock: 0,
         progressAnchorDistance: Infinity,
@@ -1146,6 +1153,7 @@ export class AutoChessEngine {
         emberAttackStackCap: 0,
         syncAvMember: waveUnit.id === "xuehui",
         syncAvDirection: 0,
+        syncAvStrength: 0,
         gen27Member: false,
         gen27Buffed: false,
         matureMember: false,
@@ -1199,6 +1207,9 @@ export class AutoChessEngine {
         jumpToX: 990 - rank * 96,
         jumpToY: 180 + row * 165,
         abilityMotion: null,
+        channelTargetFid: null,
+        channelTime: 0,
+        channelPulseTimer: 0,
         targetFid: null,
         targetLock: 0,
         progressAnchorDistance: Infinity,
@@ -2404,11 +2415,15 @@ export class AutoChessEngine {
         const strength = Math.min(1, Math.abs(advantage) / 0.5);
         const direction: -1 | 0 | 1 = advantage > 0.0001 ? 1 : advantage < -0.0001 ? -1 : 0;
         syncMultiplier = 1 - direction * strength * 0.5;
+        fighter.syncAvStrength = strength;
         if (fighter.syncAvDirection !== direction) {
           fighter.syncAvDirection = direction;
-          const text = direction > 0 ? "同步领先" : direction < 0 ? "同步落后" : "同步持平";
-          this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: UNIT_DEFS[fighter.unitId].accent, text, life: 0.55, size: 10 });
+          const text = direction > 0 ? "骄兵必败" : direction < 0 ? "哀兵必胜" : "同步持平";
+          const color = direction > 0 ? "#ff9a5c" : direction < 0 ? "#79dcff" : UNIT_DEFS[fighter.unitId].accent;
+          this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color, text, life: 0.7, size: 11 });
         }
+      } else {
+        fighter.syncAvStrength = 0;
       }
       fighter.attack = fighter.baseAttack
         * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks)
@@ -2421,9 +2436,41 @@ export class AutoChessEngine {
         : 0;
       fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
         (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
-      fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier * syncMultiplier;
+      fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier;
       fighter.range = fighter.baseRange * syncMultiplier;
       fighter.matureAttackSpeedCurrent = matureAttackSpeed;
+    });
+  }
+
+  private updateLovelyChannels(battle: BattleState, dt: number) {
+    [...battle.player, ...battle.enemy].forEach((source) => {
+      if (!source.alive || source.channelTime <= 0 || !source.channelTargetFid) return;
+      const target = [...battle.player, ...battle.enemy].find(
+        (fighter) => fighter.fid === source.channelTargetFid && fighter.alive,
+      );
+      if (!target) {
+        source.channelTime = 0;
+        source.channelTargetFid = null;
+        source.channelPulseTimer = 0;
+        return;
+      }
+      source.channelTime = Math.max(0, source.channelTime - dt);
+      // 维持目标硬控到其本帧行动判定结束，两个单位都不会移动或普攻。
+      target.stun = Math.max(target.stun, dt + 0.05);
+      const dealt = this.damage(source, target, source.attack * LOVELY_CHANNEL_DAMAGE_PER_SECOND * dt);
+      if (dealt > 0) this.heal(source, source, dealt * LOVELY_CHANNEL_LIFESTEAL, false);
+      source.channelPulseTimer -= dt;
+      if (source.channelPulseTimer <= 0) {
+        source.channelPulseTimer += LOVELY_CHANNEL_PULSE_INTERVAL;
+        this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: UNIT_DEFS.lovely.accent, life: 0.28, size: 4 });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: UNIT_DEFS.lovely.accent, life: 0.32, size: source.radius * 1.65 });
+      }
+      if (!target.alive || source.channelTime <= 0) {
+        source.channelTime = 0;
+        source.channelTargetFid = null;
+        source.channelPulseTimer = 0;
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 40, color: UNIT_DEFS.lovely.accent, text: "松开", life: 0.45, size: 10 });
+      }
     });
   }
 
@@ -2454,6 +2501,7 @@ export class AutoChessEngine {
     this.updatePineTreeTurrets(battle, dt);
     this.updateProjectileVolley(battle, dt);
     this.updateProjectiles(battle, dt);
+    this.updateLovelyChannels(battle, dt);
 
     const emberLevel = this.getActiveTraits().find((trait) => trait.id === "ember")?.level || 0;
     if (emberLevel) {
@@ -2551,6 +2599,7 @@ export class AutoChessEngine {
       }
       fighter.attackPulse = Math.max(0, fighter.attackPulse - dt);
       fighter.hitPulse = Math.max(0, fighter.hitPulse - dt);
+      if (fighter.channelTime > 0) return;
       if (this.updateAbilityMotion(fighter, dt, battle)) return;
       if (fighter.jumpPending) {
         if (this.isInsideChronosphere(fighter, battle)) return;
@@ -3486,15 +3535,16 @@ export class AutoChessEngine {
         break;
       }
       case "lovely": {
-        const center = densest(targets);
-        if (!center) break;
-        this.startAbilityMotion(
-          source,
-          "jump",
-          { x: center.x + (source.team === "player" ? -42 : 42), y: center.y },
-          { targetFid: center.fid, duration: 0.54, arcHeight: 96 },
-        );
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.72, size: 142 });
+        const target = this.nearestTarget(source, targets);
+        if (!target) break;
+        source.channelTargetFid = target.fid;
+        source.channelTime = LOVELY_CHANNEL_DURATION;
+        source.channelPulseTimer = 0;
+        target.stun = Math.max(target.stun, 0.15);
+        this.faceTowardX(source, target.x);
+        this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.45, size: 5 });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.55, size: source.radius * 1.8 });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 40, color: def.accent, text: "捏捏摸摸", life: 0.7, size: 12 });
         break;
       }
       case "mumu": {
@@ -3510,22 +3560,14 @@ export class AutoChessEngine {
         break;
       }
       case "xuehui": {
-        [...targets]
-          .sort((left, right) => Math.hypot(left.x - source.x, left.y - source.y) - Math.hypot(right.x - source.x, right.y - source.y) || left.fid.localeCompare(right.fid))
-          .slice(0, XUEHUI_VOLLEY_SHOTS)
-          .forEach((target, index) => {
-            this.state.battle?.projectileVolley.push({
-              sourceFid: source.fid,
-              targetFid: target.fid,
-              delay: index * XUEHUI_VOLLEY_INTERVAL,
-              damage: source.attack * XUEHUI_PROJECTILE_DAMAGE_MULTIPLIER,
-              burnPower: source.attack * XUEHUI_PROJECTILE_BURN_MULTIPLIER,
-              speed: XUEHUI_PROJECTILE_SPEED,
-              color: def.accent,
-              size: 5,
-            });
+        targets
+          .filter((target) => Math.hypot(target.x - source.x, target.y - source.y) <= XUEHUI_CLEAVE_RADIUS)
+          .forEach((target) => {
+            deal(target, XUEHUI_CLEAVE_DAMAGE_MULTIPLIER);
+            this.applyBurn(source, target, source.attack * XUEHUI_CLEAVE_BURN_MULTIPLIER);
           });
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.42, size: 76 });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.5, size: XUEHUI_CLEAVE_RADIUS * 1.35 });
+        this.addEffect({ kind: "burst", x: source.x + source.facingX * 22, y: source.y, color: def.accent, life: 0.32, size: 48 });
         break;
       }
       case "rei": {
@@ -3778,6 +3820,16 @@ export class AutoChessEngine {
       this.addEffect({ kind: "ring", x: target.x, y: target.y, color: UNIT_DEFS.zeyin.accent, life: 1, size: 96 });
       this.addEffect({ kind: "text", x: target.x, y: target.y - 46, color: UNIT_DEFS.zeyin.accent, text: "涅槃重生", life: 0.95, size: 14 });
       return false;
+    }
+    const battle = this.state.battle;
+    if (battle) {
+      [...battle.player, ...battle.enemy].forEach((fighter) => {
+        if (fighter.fid === target.fid || fighter.channelTargetFid === target.fid) {
+          fighter.channelTargetFid = null;
+          fighter.channelTime = 0;
+          fighter.channelPulseTimer = 0;
+        }
+      });
     }
     target.alive = false;
     target.hp = 0;

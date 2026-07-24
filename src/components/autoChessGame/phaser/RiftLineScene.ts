@@ -1351,6 +1351,7 @@ export class RiftLineScene extends Phaser.Scene {
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
     const shadow = this.add.ellipse(0, radius * 0.8, radius * 1.8, radius * 0.6, 0x000000, 0.3).setName("shadow");
     const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0).setName("shield");
+    const syncAura = this.add.circle(0, 0, radius + 13, 0x79dcff, 0).setName("syncAura");
     const hitFlash = this.add.circle(0, 0, radius, 0xff526f, 0).setName("hitFlash");
     const burn = this.add.circle(radius * 0.7, -radius * 0.55, 5, 0xff7a50, 0).setName("burn");
     const status = this.text(0, -radius - 8, "", 13, "#ffd95e", { fontFamily: PROJECTILE_EMOJI_FONT, fontStyle: "bold" }).setOrigin(0.5).setName("status");
@@ -1369,7 +1370,7 @@ export class RiftLineScene extends Phaser.Scene {
     zone.on(Phaser.Input.Events.POINTER_OUT, () => {
       if (!this.isCompact()) this.clearTooltip();
     });
-    container.add([shadow, shield, portrait, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
+    container.add([shadow, syncAura, shield, portrait, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
     return container;
   }
 
@@ -1396,6 +1397,7 @@ export class RiftLineScene extends Phaser.Scene {
     const portrait = view.getByName("portrait") as Phaser.GameObjects.Container;
     const hitFlash = view.getByName("hitFlash") as Phaser.GameObjects.Arc;
     const shield = view.getByName("shield") as Phaser.GameObjects.Arc;
+    const syncAura = view.getByName("syncAura") as Phaser.GameObjects.Arc;
     const burn = view.getByName("burn") as Phaser.GameObjects.Arc;
     const status = view.getByName("status") as Phaser.GameObjects.Text;
     const shadow = view.getByName("shadow") as Phaser.GameObjects.Ellipse;
@@ -1426,6 +1428,12 @@ export class RiftLineScene extends Phaser.Scene {
     energy.fillColor = Phaser.Display.Color.HexStringToColor(ENERGY_PROFILES[fighter.energyStyle].color).color;
     hitFlash.setAlpha(0.72 * hitProgress).setRadius(radius * growth);
     shield.setRadius(radius + 7 + Math.sin(this.bridge.engine.state.visualTime * 6) * 2).setAlpha(fighter.shield > 0 ? 0.28 : 0);
+    const syncPulse = 1 + Math.sin(this.bridge.engine.state.visualTime * 7) * 0.12;
+    const syncColor = fighter.syncAvDirection > 0 ? 0xff9a5c : 0x79dcff;
+    syncAura
+      .setFillStyle(syncColor, 1)
+      .setRadius((radius + 13 + fighter.syncAvStrength * 12) * syncPulse)
+      .setAlpha(fighter.syncAvDirection === 0 ? 0 : 0.12 + fighter.syncAvStrength * 0.32);
     burn.setAlpha(fighter.burnTime > 0 ? 0.9 : 0).setScale(1 + Math.sin(this.bridge.engine.state.visualTime * 10) * 0.35);
     const statusBadges = [
       fighter.weakenTime > 0 ? "🦑" : "",
@@ -1438,12 +1446,14 @@ export class RiftLineScene extends Phaser.Scene {
       abilityMotion?.kind === "push" ? "›" : "",
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
       fighter.reborn ? "涅" : "",
+      fighter.channelTime > 0 ? "捏" : "",
+      fighter.syncAvDirection > 0 ? "骄" : fighter.syncAvDirection < 0 ? "哀" : "",
       fighter.gen27Buffed ? "27" : "",
       fighter.enraged ? "!" : "",
     ].filter(Boolean);
     status.setText(statusBadges.join(" "));
     status.setY(-radius - 8);
-    status.setColor(fighter.enraged ? "#ff4f9a" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e");
+    status.setColor(fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e");
     label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}`);
     star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
   }

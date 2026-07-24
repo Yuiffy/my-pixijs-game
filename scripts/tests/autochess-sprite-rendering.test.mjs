@@ -95,7 +95,7 @@ test("突进、跃击与击退由引擎运动状态推进，仅保留明确设�
   assert.match(engine, /private updateAbilityMotion/);
   assert.match(engine, /private sweepGuangyiDash/);
   assert.match(engine, /motion\.hitFids\.includes/);
-  ["sui_bird", "guangyi", "biscuit_sui", "youyi", "akirinco", "lovely", "mumu"].forEach((unitId) => {
+  ["sui_bird", "guangyi", "biscuit_sui", "youyi", "akirinco", "mumu"].forEach((unitId) => {
     const marker = `case "${unitId}":`;
     let searchFrom = 0;
     let usesMotion = false;

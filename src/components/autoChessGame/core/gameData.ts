@@ -384,7 +384,7 @@ const COMBAT_PROFILES: Record<
   nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60, abilityCastTiming: "offenseReady" },
   kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
-  xuehui: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 270, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  xuehui: { attackType: "melee", energyProfile: ENERGY_PROFILES.tempo, range: 56, moveSpeed: 58, abilityCastTiming: "offenseInRange" },
   rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
   lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56, abilityCastTiming: "offenseReady" },
@@ -984,7 +984,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   lovely: unit({
     id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
     traits: ["assassin", "host", "dance", "vanguard"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
-    abilityName: "元气冲场", abilityDescription: "跃入敌人最密集处横扫；每命中一名敌人，都会提升自身攻击速度。",
+    abilityName: "捏捏摸摸", abilityDescription: "持续捏住最近的一名敌人，双方都无法行动；期间持续造成伤害，并将伤害的大部分转化为自身生命。",
     portrait: "/images/livers/lovely.webp", portraitFocus: "top", shop: true,
   }),
   mumu: unit({
@@ -995,8 +995,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   xuehui: unit({
     id: "xuehui", name: "雪绘", title: "雪绘 · 同步视听", glyph: "绘", color: "#445a8e", accent: "#8dc8ff", tier: 4, cost: 4,
-    traits: ["dwarf", "ember", "aggression"], hp: 205, attack: 37, armor: 13, range: 270, attackInterval: 0.88, moveSpeed: 58,
-    abilityName: "同步视听", abilityDescription: "己方越优势，自身攻速移速越低、射程越近；越劣势则反之。快速向三个不同敌人方向射出子弹，命中造成伤害和灼烧。",
+    traits: ["dwarf", "ember", "aggression"], hp: 205, attack: 37, armor: 13, range: 56, attackInterval: 0.88, moveSpeed: 58,
+    abilityName: "同步视听", abilityDescription: "近战挥斩周围敌人并附加灼烧。己方越优势，攻速与射程越低（骄兵必败）；越劣势则越高（哀兵必胜），移速始终不受影响。",
     portrait: "/images/livers/xuehui.jpg", portraitFocus: "top", shop: true,
   }),
   rei: unit({

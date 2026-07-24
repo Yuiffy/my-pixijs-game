@@ -313,7 +313,7 @@ test("攻击性为成员与全队分别提供攻击力", () => {
   assert.equal(control.baseAttack, 15 * 1.15 * (1 + 0.1));
 });
 
-test("同步视听按战力差线性调整属性且不重复叠加", () => {
+test("同步视听按战力差线性调整属性且不影响移速", () => {
   const engine = createEngine(57);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -326,17 +326,21 @@ test("同步视听按战力差线性调整属性且不重复叠加", () => {
   battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
   engine.update(0.05);
   assert.equal(xuehui.range, xuehui.baseRange * 0.5);
-  assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed * 0.5);
+  assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed);
+  assert.equal(xuehui.syncAvDirection, 1);
+  assert.equal(xuehui.syncAvStrength, 1);
   engine.update(0.05);
   assert.equal(xuehui.range, xuehui.baseRange * 0.5);
   battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
   battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp; });
   engine.update(0.05);
   assert.equal(xuehui.range, xuehui.baseRange * 1.5);
-  assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed * 1.5);
+  assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed);
+  assert.equal(xuehui.syncAvDirection, -1);
+  assert.equal(xuehui.syncAvStrength, 1);
 });
 
-test("雪绘固定方向子弹可被路径上的首个敌人拦截并施加灼烧", () => {
+test("雪绘近战范围挥斩会灼烧身边敌人", () => {
   const engine = createEngine(58);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -349,16 +353,60 @@ test("雪绘固定方向子弹可被路径上的首个敌人拦截并施加灼�
     fighter.hp = fighter.maxHp = 9999;
     fighter.armor = 0;
     fighter.attack = 0;
-    fighter.x = index === 0 ? 460 : 800;
-    fighter.y = source.y;
+    fighter.x = index === 0 ? 270 : 800;
+    fighter.y = 360;
   });
+  source.x = 220;
+  source.y = 360;
   source.energy = source.maxEnergy;
   engine.update(0.05);
-  assert.ok(battle.projectileVolley.length > 0 || battle.projectiles.length > 0);
-  for (let tick = 0; tick < 25; tick += 1) engine.update(0.05);
-  const interceptor = battle.enemy[0];
-  assert.ok(interceptor.hp < interceptor.maxHp);
-  assert.ok(interceptor.burnTime > 0);
+  const target = battle.enemy[0];
+  assert.equal(source.attackType, "melee");
+  assert.ok(target.hp < target.maxHp);
+  assert.ok(target.burnTime > 0);
+});
+
+test("狍子偶像捏捏摸摸会同时定住双方、持续吸血并在结束时松开", () => {
+  const engine = createEngine(151);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "lovely", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = index === 0 ? 360 : 900;
+    fighter.y = 360;
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.cooldown = 99;
+    fighter.hp = fighter.maxHp = 9999;
+  });
+  source.x = 260;
+  source.y = 360;
+  source.hp = source.maxHp * 0.5;
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.equal(source.channelTargetFid, target.fid);
+  assert.ok(source.channelTime > 3);
+  source.energy = 0;
+  source.energyPerSecond = 0;
+  source.cooldown = 99;
+  const sourceX = source.x;
+  const targetX = target.x;
+  const hpBefore = target.hp;
+  const sourceHpBefore = source.hp;
+  engine.update(0.1);
+  assert.equal(source.x, sourceX);
+  assert.equal(target.x, targetX);
+  assert.ok(target.hp < hpBefore);
+  assert.ok(source.hp > sourceHpBefore);
+  assert.ok(target.stun > 0);
+  for (let tick = 0; tick < 72; tick += 1) engine.update(0.1);
+  assert.equal(source.channelTime, 0);
+  assert.equal(source.channelTargetFid, null);
 });
 
 test("能量 profile 会落地为个体上限、持续回能与攻击分类", () => {
