@@ -42,7 +42,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const advance = async (milliseconds) => page.evaluate((value) => window.advanceTime(value), milliseconds);
   let found = null;
 
-  for (const seed of [8, 9, 10, 11, 12]) {
+  for (const seed of [20]) {
     if (found) break;
     errors.length = 0;
     await page.goto(`${baseUrl}/game/autochess?seed=${seed}`, { waitUntil: "domcontentloaded" });
@@ -50,18 +50,19 @@ mkdirSync(artifactDirectory, { recursive: true });
     const danceChoice = page.locator(".rift-dom-choice").filter({ hasText: "舞台梦" });
     if (await danceChoice.count()) await danceChoice.first().click();
     else await page.locator(".rift-dom-choice").first().click();
-    await page.waitForTimeout(120);
+    await page.waitForTimeout(500);
     const preparation = await readState();
-    if (preparation.phase !== "preparation" || !preparation.shop.includes("tiandou")) continue;
+    if (preparation.phase !== "preparation" || !preparation.shop.some((unit) => unit?.id === "tiandou")) continue;
 
     const tiandouCard = page.locator('button[aria-label^="恬豆·甜点转圈"]');
-    if (await tiandouCard.count() !== 1) continue;
+    await tiandouCard.waitFor({ state: "visible" });
     await tiandouCard.click();
+    await page.waitForTimeout(500);
     const afterBuy = await readState();
     if (!afterBuy.board.some((unit) => unit.id === "tiandou")) continue;
 
     await page.locator("button.rift-start-button").click();
-    for (let step = 0; step < 240; step += 1) {
+    for (let step = 0; step < 60; step += 1) {
       const current = await readState();
       const lollipops = current.battle?.visualEffects?.projectiles?.filter((projectile) => projectile.style === "lollipop") || [];
       if (current.phase === "battle" && lollipops.some((projectile) => projectile.grounded)) {
@@ -69,7 +70,7 @@ mkdirSync(artifactDirectory, { recursive: true });
         break;
       }
       if (current.phase !== "battle") break;
-      await advance(100);
+      await advance(500);
     }
   }
 

@@ -352,3 +352,16 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 已完成：5 颗糖果的落点限制在恬豆周围 72–108 像素的扇形范围；飞行阶段不碰撞，落地后保留 10 秒，友军踩到治疗并加速，敌人踩到造成伤害并减速，触发后消失。
 - 已完成：Phaser 与兼容 Canvas 为落地糖果增加地面范围圈；`render_game_to_text` 暴露 `grounded` 与剩余时间。
 - 验证：恬豆地面糖果专项战斗回归通过；`pnpm exec tsc --noEmit` 与 `git diff --check` 通过。完整 `autochess-battle-spawn` 仍只有既有的远程单位施法失败。
+
+## 2026-07-25 · 护盾贴身显示与额外圆圈清理
+
+- 绿冻护甲不再生成施法 `ring`，只保留统一的技能名浮字；所有护盾都由角色身上的贴身盾图形表达。
+- 战斗实体新增当前护盾池峰值；贴身盾的填充与描边透明度按 `shield / shieldPeak` 下降，护盾耗尽、死亡或重生时同步清零。
+- `render_game_to_text` 暴露 `shieldPeak`，便于把视觉强度与战斗状态交叉核对。
+- 再次审计全部 17 个残余 `ring` 生成点：均对应真实 AOE 伤害、眩晕、嘲讽或全场冲击范围；纯护盾、自强化、治疗、位移起手、召唤起手和投射物起手没有额外圆圈。
+- 回归覆盖绿冻护甲无中心 `ring`、只生成一次技能名、护盾比例衰减和耗尽重置；Phaser 静态回归锁定透明度公式。
+- 系统 Chrome 使用种子 2 捕获满盾 `167/167` 与受击后 `62/167` 两帧：技能名只显示一次，角色贴身盾明显变淡且没有额外大圈；火锅 AOE 仍保留实际命中范围。
+- 截图：`.tmp/autochess-skill-vfx/shield-high.png`、`.tmp/autochess-skill-vfx/shield-low.png`、`.tmp/autochess-skill-vfx/aoe-cast.png`。三张均为 1440×900 有效非黑图，页面单画布、逻辑尺寸 1120×720，DOM、文本状态与控制台错误检查通过。
+- 验证：`pnpm exec tsc --noEmit`、绿冻护甲专项 `1/1`、Phaser 静态回归 `25/25` 通过；完整 `pnpm autochess:test` 为 `101/102`，唯一失败仍是既有的“满能量远程单位会先进入攻击距离再施法”断言。
+- 追加验证：本轮完整 `pnpm autochess:test` 为 `101/103`；新增失败的能量回收断言也不涉及本轮改动，恬豆专项 `1/1`、Phaser 静态回归 `25/25` 通过。
+- 系统 Chrome 专项脚本 `scripts/verify-tiandou-lollipop.cjs` 以 seed 20 实际购买并开战，捕获 5 颗落地糖果，剩余时间约 9.5 秒，截图为 `.tmp/autochess/tiandou-lollipop-grounded.png`，控制台无 error。

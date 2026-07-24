@@ -154,6 +154,14 @@ test("技能只保留名称提示，范围与连线效果提供范围染色和�
   assert.match(engine, /projectiles: battle\.projectiles\.map/);
 });
 
+test("贴身护盾按当前值相对峰值降低透明强度", () => {
+  assert.match(engine, /shieldPeak: Math\.round\(fighter\.shieldPeak\)/);
+  assert.match(scene, /fighter\.shield \/ Math\.max\(fighter\.shieldPeak, 1\)/);
+  assert.match(scene, /0\.06 \+ shieldStrength \* 0\.14/);
+  assert.match(scene, /0\.24 \+ shieldStrength \* 0\.66/);
+  assert.match(scene, /\.setAlpha\(fighter\.shield > 0 \? 1 : 0\)/);
+});
+
 test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对齐", () => {
   assert.match(scene, /drawRabbitBody\(/);
   assert.match(scene, /drawRabbitCannon\(/);

@@ -225,7 +225,7 @@ test("岁己形态拆分到不同关系构筑", () => {
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
-  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "alien", "reservoir", "automatic", "feast", "passive"]);
+  const profiles = new Set(["assault", "bulwark", "steady_guard", "flow", "tempo", "alien", "reservoir", "automatic", "feast", "passive"]);
   Object.values(data.UNIT_DEFS).forEach((unit) => {
     assert.ok(["melee", "ranged"].includes(unit.attackType), `${unit.id} must declare an attack type`);
     assert.ok(profiles.has(unit.energyProfile.id), `${unit.id} must use a known energy profile`);
@@ -233,8 +233,13 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     ["start", "perSecond", "onAttack", "onHit", "castRefund"].forEach((field) => assert.ok(unit.energyProfile[field] >= 0));
   });
   assert.equal(data.UNIT_DEFS.nagisa.energyProfile.id, "bulwark");
-  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 15);
-  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 20);
+  assert.deepEqual(data.UNIT_DEFS.sun_guard.energyProfile, data.ENERGY_PROFILES.steady_guard);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 10);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 15);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onAttack, 0);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 3);
+  assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /主要随时间自动充能.*受击仅小幅加速/);
+  assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /自动回能（6\.7 秒回满，每秒 \+15）.*受击回能（每下 \+3）/);
   ["rift_stalker", "rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "biscuit_sui", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
     const profile = data.UNIT_DEFS[id].energyProfile;
     assert.equal(profile.id, "automatic", `${id} should use automatic energy recovery`);

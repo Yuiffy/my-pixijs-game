@@ -455,7 +455,7 @@ test("紧贴碰撞体积的近战单位也能稳定攻击", () => {
   source.x = 300; source.y = 300; source.cooldown = 0; source.energy = 0;
   target.x = 363; target.y = 300; target.attack = 0; target.armor = 99_999; target.dodgeChance = 0;
   engine.update(0.05);
-  assert.equal(source.energy, source.energyOnAttack);
+  assert.equal(source.energy, source.energyPerSecond * 0.05 + source.energyOnAttack);
 });
 
 test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", () => {
@@ -487,6 +487,38 @@ test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", ()
   engine.damage(attacker, guard, 99_999);
   assert.equal(guard.shield, 0);
   assert.equal(guard.shieldPeak, 0);
+});
+
+test("绿冻护甲以自动回能为主，三次受击只提供少量额外能量", () => {
+  const engine = createEngine(147);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const guard = battle?.player[0];
+  assert.ok(battle && guard);
+  assert.equal(guard.energyPerSecond, 15);
+  assert.equal(guard.energyOnAttack, 0);
+  assert.equal(guard.energyOnHit, 3);
+
+  battle.player.forEach((fighter) => { fighter.cooldown = 99; });
+  battle.enemy.forEach((enemy) => {
+    enemy.attack = 0;
+    enemy.dodgeChance = 0;
+    enemy.cooldown = 99;
+  });
+  guard.energy = 0;
+  for (let tick = 0; tick < 20; tick += 1) engine.update(0.05);
+  assert.equal(guard.energy, 15);
+
+  guard.energy = 0;
+  const attacker = battle.enemy[0];
+  attacker.x = guard.x + 1;
+  attacker.y = guard.y;
+  for (let hit = 0; hit < 3; hit += 1) engine.basicAttack(attacker, guard);
+  assert.equal(guard.energy, 9);
+  assert.ok(guard.energy < guard.energyPerSecond);
 });
 
 test("满能量远程单位会先进入攻击距离再施法", () => {
@@ -1061,8 +1093,8 @@ test("能量按未闪避命中回收，护盾吸收仍会回能", () => {
   source.x = 300; source.y = 300; source.cooldown = 0; source.energy = 0;
   target.x = 345; target.y = 300; target.energy = 0; target.shield = 99_999; target.dodgeChance = 0;
   engine.update(0.05);
-  assert.equal(source.energy, source.energyOnAttack);
-  assert.equal(target.energy, target.energyOnHit);
+  assert.equal(source.energy, source.energyPerSecond * 0.05 + source.energyOnAttack);
+  assert.equal(target.energy, target.energyPerSecond * 0.05 + target.energyOnHit);
 });
 
 test("能能弄你的苹果派会以节奏分离的 8 发子弹重定向目标", () => {

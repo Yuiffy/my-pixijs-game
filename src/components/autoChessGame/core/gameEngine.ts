@@ -514,6 +514,7 @@ export class AutoChessEngine {
       hp: Math.round(fighter.hp),
       maxHp: Math.round(fighter.maxHp),
       shield: Math.round(fighter.shield),
+      shieldPeak: Math.round(fighter.shieldPeak),
       attack: Math.round(fighter.attack),
       armor: Math.round(fighter.armor),
       range: Math.round(fighter.range),

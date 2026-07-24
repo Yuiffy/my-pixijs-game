@@ -91,7 +91,7 @@ export type AugmentId =
   | "second_wind";
 
 export type AttackType = "melee" | "ranged";
-export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "alien" | "reservoir" | "automatic" | "feast" | "passive";
+export type EnergyProfileId = "assault" | "bulwark" | "steady_guard" | "flow" | "tempo" | "alien" | "reservoir" | "automatic" | "feast" | "passive";
 
 export interface EnergyProfile {
   id: EnergyProfileId;
@@ -108,6 +108,7 @@ export interface EnergyProfile {
 export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
   assault: { id: "assault", name: "攻击回能", max: 100, start: 0, perSecond: 0, onAttack: 24, onHit: 5, castRefund: 0, color: "#b585ff" },
   bulwark: { id: "bulwark", name: "受击回能", max: 90, start: 15, perSecond: 0, onAttack: 6, onHit: 20, castRefund: 0, color: "#f2b45e" },
+  steady_guard: { id: "steady_guard", name: "稳态回能", max: 100, start: 10, perSecond: 15, onAttack: 0, onHit: 3, castRefund: 0, color: "#72d8cf" },
   flow: { id: "flow", name: "流转回能", max: 100, start: 0, perSecond: 7, onAttack: 10, onHit: 4, castRefund: 0, color: "#65d8ca" },
   tempo: { id: "tempo", name: "疾奏回能", max: 80, start: 0, perSecond: 3, onAttack: 15, onHit: 4, castRefund: 0, color: "#ee8fc4" },
   alien: { id: "alien", name: "外星回能", max: 75, start: 10, perSecond: 5, onAttack: 18, onHit: 5, castRefund: 0, color: "#ffc28a" },
@@ -351,7 +352,7 @@ const COMBAT_PROFILES: Record<
   Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming">
 > = {
   // selfOnHit：自保，受击时放
-  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 44, abilityCastTiming: "selfOnHit" },
+  sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 48, moveSpeed: 44, abilityCastTiming: "selfOnHit" },
   sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48, abilityCastTiming: "selfOnHit" },
   rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58, abilityCastTiming: "selfOnHit" },
   meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42, abilityCastTiming: "selfOnHit" },
@@ -427,7 +428,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.18,
     moveSpeed: 44,
     abilityName: "绿冻护甲",
-    abilityDescription: "获得护盾。护盾破碎时向随机方向射出 5 枚钢镚弹幕。",
+    abilityDescription: "主要随时间自动充能，受击仅小幅加速；能量满且受击时获得护盾。护盾破碎时向随机方向射出 5 枚钢镚弹幕。",
     portrait: "/images/livers/hazel.png",
     portraitFocus: "top",
     shop: true,
