@@ -89,18 +89,58 @@ test("三至十本的人口、升本成本与商店概率完整", () => {
   );
 });
 
-test("八关后生成持续成长的无限关", () => {
-  const first = data.waveForRound(9);
-  const elite = data.waveForRound(11);
-  const boss = data.waveForRound(13);
-  const late = data.waveForRound(26);
-  assert.equal(first.round, 9);
-  assert.equal(first.tag, "normal");
-  assert.equal(elite.tag, "elite");
+test("二十五战主线每五战预警精英并以首领收束", () => {
+  assert.equal(data.CAMPAIGN_ROUNDS, 25);
+  [5, 10, 15, 20].forEach((round) => {
+    const wave = data.waveForRound(round);
+    assert.equal(wave.tag, "elite");
+    assert.match(wave.description, /精英预警/);
+  });
+  const boss = data.waveForRound(25);
   assert.equal(boss.tag, "boss");
   assert.equal(boss.units[0].id, "rift_tyrant");
-  assert.ok(late.modifier > first.modifier);
-  assert.ok(late.units.some((unit) => (unit.star || 1) >= 2));
+  assert.match(boss.description, /首领预警/);
+});
+
+test("普通无限与地狱无限按完整回合收入递推敌军总价值", () => {
+  const normal = data.waveForRound(26);
+  const threshold = data.waveForRound(40);
+  const hell = data.waveForRound(41);
+  assert.equal(data.progressionModeForRound(25), "campaign");
+  assert.equal(data.progressionModeForRound(26), "endless");
+  assert.equal(data.progressionModeForRound(40), "endless");
+  assert.equal(data.progressionModeForRound(41), "hell");
+  assert.equal(normal.units.length, 10);
+  assert.match(normal.description, /5 利息.*连胜.*赏金/);
+  assert.match(hell.description, /20 利息.*理财固定收入.*连胜.*赏金/);
+
+  const normalIncome = data.projectedIncomeAfterRound(26);
+  assert.deepEqual(
+    { interest: normalIncome.interest, streak: normalIncome.streak, finance: normalIncome.finance },
+    { interest: 5, streak: 2, finance: 0 },
+  );
+  assert.equal(
+    data.enemyBudgetForRound(27) - data.enemyBudgetForRound(26),
+    normalIncome.total,
+  );
+
+  const thresholdIncome = data.projectedIncomeAfterRound(40);
+  assert.deepEqual(thresholdIncome, {
+    interest: 20,
+    streak: 2,
+    finance: 2,
+    bounty: 30,
+    total: 54,
+  });
+  assert.equal(data.enemyBudgetForRound(40), 504);
+  assert.equal(data.enemyBudgetForRound(41), 558);
+  assert.equal(
+    data.enemyBudgetForRound(41) - data.enemyBudgetForRound(40),
+    thresholdIncome.total,
+  );
+  assert.ok(data.enemyBudgetForRound(50) > data.enemyBudgetForRound(41));
+  assert.ok(threshold.modifier > 1);
+  assert.ok(hell.modifier > 1);
 });
 
 test("浣熊店员使用原创展示文案与独立精灵头像", async () => {
@@ -430,9 +470,10 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.equal(seki.abilityName, "山猪冲阵");
   assert.equal(towerGod.abilityName, "尖塔压顶");
   assert.equal(sumi.abilityName, "礼小虎出击");
-  assert.deepEqual(seki.traits, ["wild", "aggression"]);
+  assert.deepEqual(seki.traits, ["wild", "aggression", "skeleton_soldier"]);
   assert.deepEqual(towerGod.traits, ["mystic", "traffic"]);
   assert.deepEqual(sumi.traits, ["mystic", "ranger"]);
+  assert.deepEqual(data.UNIT_DEFS.meme.traits, ["wild", "skeleton_soldier", "aggression", "traffic"]);
 });
 
 test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊", async () => {
@@ -458,7 +499,7 @@ test("理财与流量羁绊拥有完整的经济成员池", () => {
   assert.deepEqual(data.TRAITS.finance.thresholds, [2, 4]);
   assert.match(data.TRAITS.finance.bonuses[0], /额外获得 2 金币/);
   assert.match(data.TRAITS.finance.bonuses[1], /每 4 金币/);
-  assert.match(data.TRAITS.finance.bonuses[1], /利息无上限/);
+  assert.match(data.TRAITS.finance.bonuses[1], /最多 20 利息/);
   ["sui_blue", "sui_flower", "biscuit_sui", "shiori", "grove_mender", "lian", "mitsuri"].forEach((id) => {
     assert.ok(data.UNIT_DEFS[id].traits.includes("finance"), `${id} should join finance`);
   });

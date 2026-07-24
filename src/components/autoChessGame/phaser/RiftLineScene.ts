@@ -6,6 +6,7 @@ import {
   AUGMENT_TIER_LABELS,
   CAMPAIGN_ROUNDS,
   ENERGY_PROFILES,
+  NORMAL_ENDLESS_END_ROUND,
   SHOP_UNITS,
   STARTERS,
   TRAITS,
@@ -16,6 +17,8 @@ import {
   augmentTierForRound,
   describeAbilityStarGrowth,
   bookLevelForPlayerLevel,
+  enemyBudgetForRound,
+  progressionModeForRound,
   tierOddsForLevel,
 } from "../core/gameData";
 import type {
@@ -26,6 +29,7 @@ import type {
   PineTreeTurret,
   Projectile,
   RankingMetric,
+  Team,
   UnitLocation,
 } from "../core/gameTypes";
 import { fighterVisualRadius, mechanicalRabbitMuzzle } from "../core/battleGeometry";
@@ -110,6 +114,23 @@ type ResultRowLayout = {
   nameSize: number;
   detailSize: number;
 };
+
+type ResultScrollDrag = {
+  team: Team;
+  pointerId: number;
+  grabOffsetY: number;
+};
+
+const RESULT_VISIBLE_ROWS = 6;
+const RESULT_ROW_GAP = 5;
+const RESULT_ROW_LAYOUT: ResultRowLayout = {
+  height: 48,
+  portraitRadius: 17,
+  nameSize: 10,
+  detailSize: 8,
+};
+const RESULT_VIEWPORT_HEIGHT = RESULT_VISIBLE_ROWS * RESULT_ROW_LAYOUT.height
+  + (RESULT_VISIBLE_ROWS - 1) * RESULT_ROW_GAP;
 
 const resultMetricLabel: Record<RankingMetric, string> = {
   damage: "输出",
@@ -196,6 +217,10 @@ export class RiftLineScene extends Phaser.Scene {
 
   private static readonly RANKING_REFRESH_INTERVAL = 1;
 
+  private resultScrollOffsets: Record<Team, number> = { player: 0, enemy: 0 };
+
+  private resultScrollDrag: ResultScrollDrag | null = null;
+
   private traitContent: Phaser.GameObjects.Container | null = null;
 
   private traitFade: Phaser.GameObjects.Graphics | null = null;
@@ -225,7 +250,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.game.canvas.addEventListener("contextmenu", this.preventContextMenu);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.handlePointerMove, this);
     this.input.on(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
-    this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.cancelDrag, this);
+    this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePointerUpOutside, this);
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, this.handlePointerWheel, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cancelDrag, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.disposeSceneInput, this);
@@ -269,7 +294,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.input.off(Phaser.Input.Events.POINTER_MOVE, this.handlePointerMove, this);
     this.input.off(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
-    this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.cancelDrag, this);
+    this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePointerUpOutside, this);
     this.input.off(Phaser.Input.Events.POINTER_WHEEL, this.handlePointerWheel, this);
     this.input.keyboard?.off("keydown-R");
     this.input.keyboard?.off("keydown-SPACE");
@@ -359,10 +384,17 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private rebuild() {
+    const nextPhase = this.bridge.engine.state.phase;
+    if (nextPhase !== this.phase) {
+      this.stopResultScrollDrag();
+      if (nextPhase === "result" || this.phase === "result") {
+        this.resultScrollOffsets = { player: 0, enemy: 0 };
+      }
+    }
     this.profile = this.profileForViewport();
     this.syncLogicalCamera();
     this.resetLayers();
-    this.phase = this.bridge.engine.state.phase;
+    this.phase = nextPhase;
     // The desktop preparation stage keeps its established Phaser composition:
     // slot hit areas, enemy hover tooltips, trait activation, shop highlights and
     // drag/drop all share the same logical frame. Portrait uses DOM sheets.
@@ -508,6 +540,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawHeader() {
     const { state, boardCap, boardCount } = this.bridge.engine;
+    const mode = progressionModeForRound(state.round);
     const graphics = this.add.graphics();
     graphics.fillStyle(0x050c14, 0.92);
     graphics.fillRect(0, 0, WORLD_WIDTH, 78);
@@ -515,13 +548,24 @@ export class RiftLineScene extends Phaser.Scene {
     graphics.lineBetween(0, 77, WORLD_WIDTH, 77);
     this.headerLayer.add(graphics);
     this.headerLayer.add(this.text(28, 16, "裂隙阵线", 23, "#f1f8ff", { fontStyle: "bold" }));
-    this.headerLayer.add(this.text(30, 47, state.endlessUnlocked ? "RIFT LINE · 无限裂隙" : "RIFT LINE · 八战远征", 10, "#79a1b7", { fontStyle: "bold" }));
+    const modeSubtitle =
+      mode === "campaign"
+        ? "RIFT LINE · 二十五战远征"
+        : mode === "endless"
+          ? "RIFT LINE · 普通无限"
+          : "RIFT LINE · 地狱无限";
+    this.headerLayer.add(this.text(30, 47, modeSubtitle, 10, "#79a1b7", { fontStyle: "bold" }));
     if (state.phase === "title") {
       this.headerLayer.add(this.text(1088, 30, `最高纪录 ${state.bestScore.toLocaleString()}`, 14, "#91aabd").setOrigin(1, 0.5));
       return;
     }
-    const label = state.round > CAMPAIGN_ROUNDS ? `∞ 第 ${state.round} 层` : `第 ${state.round}/${CAMPAIGN_ROUNDS} 战`;
-    this.headerLayer.add(this.text(465, 28, label, 15, "#d8efff", { fontStyle: "bold" }).setOrigin(0.5));
+    const label =
+      mode === "campaign"
+        ? `第 ${state.round}/${CAMPAIGN_ROUNDS} 战`
+        : mode === "endless"
+          ? `无限 ${state.round}/${NORMAL_ENDLESS_END_ROUND}`
+          : `地狱 · 第 ${state.round} 战`;
+    this.headerLayer.add(this.text(465, 28, label, 15, mode === "hell" ? "#ff9baf" : "#d8efff", { fontStyle: "bold" }).setOrigin(0.5));
     this.headerLayer.add(this.text(770, 18, `核心 ${state.hp}/${state.maxHp}`, 11, "#afc3d1"));
     const health = this.add.graphics();
     health.fillStyle(0x1a2b38, 1).fillRoundedRect(770, 38, 120, 11, 5);
@@ -535,9 +579,9 @@ export class RiftLineScene extends Phaser.Scene {
   private drawTitle() {
     const { state } = this.bridge.engine;
     const layout = titleLayoutFor(this.profile);
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住八次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住二十五次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.titleY, "裂 隙 阵 线", 48, "#f4f9ff", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.summaryY, "轻量构筑 · 自动战斗 · 一局约 8 分钟", 13, TITLE.summary, { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.summaryY, "二十五战远征 · 自动战斗 · 无限冲层", 13, TITLE.summary, { fontStyle: "bold" }).setOrigin(0.5));
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.promptY, "选择一项开局协议", 11, TITLE.prompt).setOrigin(0.5));
 
     state.starterChoices.forEach((id, index) => {
@@ -650,8 +694,9 @@ export class RiftLineScene extends Phaser.Scene {
     const { engine } = this.bridge;
     const { state, currentWave } = engine;
     const compact = this.isCompact();
+    const mode = progressionModeForRound(state.round);
     this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BOARD_PANEL.x, PREPARATION_BOARD_PANEL.y, PREPARATION_BOARD_PANEL.width, PREPARATION_BOARD_PANEL.height));
-    const waveLabel = currentWave.tag === "boss" ? "BOSS" : currentWave.tag === "elite" ? "ELITE" : `WAVE ${currentWave.round}`;
+    const waveLabel = currentWave.tag === "boss" ? "BOSS WARNING" : currentWave.tag === "elite" ? "ELITE WARNING" : mode === "hell" ? `HELL ${currentWave.round}` : `WAVE ${currentWave.round}`;
     const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
     this.phaseLayer.add(this.text(48, 116, waveLabel, 10, waveColor, { fontStyle: "bold" }));
     this.phaseLayer.add(this.text(48, 136, this.truncateText(currentWave.name, compact ? 680 : 470, 20, { fontStyle: "bold" }), 20, "#f1f7ff", { fontStyle: "bold" }));
@@ -659,7 +704,13 @@ export class RiftLineScene extends Phaser.Scene {
     description.setPosition(48, 158);
     this.phaseLayer.add(description);
     if (!compact) {
-      this.phaseLayer.add(this.text(536, 124, "敌情预览 · 悬浮查看技能", 9, "#e89aaa", { fontStyle: "bold" }));
+      const pressureLabel =
+        currentWave.tag === "boss"
+          ? `首领预警 · 敌军价值约 ${enemyBudgetForRound(state.round)}`
+          : currentWave.tag === "elite"
+            ? `精英预警 · 敌军价值约 ${enemyBudgetForRound(state.round)}`
+            : `敌情预览 · 总价值约 ${enemyBudgetForRound(state.round)}`;
+      this.phaseLayer.add(this.text(536, 124, pressureLabel, 9, currentWave.tag === "normal" ? "#e89aaa" : waveColor, { fontStyle: "bold" }));
       currentWave.units.slice(0, 7).forEach((waveUnit, index) => {
         const x = 554 + index * 29;
         const star = waveUnit.star ?? 1;
@@ -716,11 +767,13 @@ export class RiftLineScene extends Phaser.Scene {
   private drawMobilePreparation() {
     const { engine } = this.bridge;
     const { state, currentWave } = engine;
+    const mode = progressionModeForRound(state.round);
     this.phaseLayer.add(this.drawPreparationPanel(MOBILE_BOARD_PANEL.x, MOBILE_BOARD_PANEL.y, MOBILE_BOARD_PANEL.width, MOBILE_BOARD_PANEL.height));
     this.phaseLayer.add(this.drawPreparationPanel(MOBILE_BENCH_PANEL.x, MOBILE_BENCH_PANEL.y, MOBILE_BENCH_PANEL.width, MOBILE_BENCH_PANEL.height));
-    const waveLabel = currentWave.tag === "boss" ? "BOSS" : currentWave.tag === "elite" ? "ELITE" : `WAVE ${currentWave.round}`;
+    const waveLabel = currentWave.tag === "boss" ? "BOSS WARNING" : currentWave.tag === "elite" ? "ELITE WARNING" : mode === "hell" ? `HELL ${currentWave.round}` : `WAVE ${currentWave.round}`;
     const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
-    this.phaseLayer.add(this.text(16, 108, `${waveLabel} · ${this.truncateText(currentWave.name, 292, 14, { fontStyle: "bold" })}`, 14, waveColor, { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(16, 108, `${waveLabel} · ${this.truncateText(currentWave.name, 242, 14, { fontStyle: "bold" })}`, 14, waveColor, { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(464, 108, `价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
     this.drawTraits();
     this.phaseLayer.add(this.text(24, 178, `部署区 · ${engine.boardCount}/${engine.boardCap}`, 12, "#8ce8bd", { fontStyle: "bold" }));
     this.phaseLayer.add(this.text(24, 434, `备战席 · ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3", { fontStyle: "bold" }));
@@ -984,6 +1037,33 @@ export class RiftLineScene extends Phaser.Scene {
 
   private handlePointerMove(pointer: Phaser.Input.Pointer) {
     const logical = this.logicalPointer(pointer);
+    if (this.resultScrollDrag && pointer.id === this.resultScrollDrag.pointerId) {
+      if (!pointer.isDown) {
+        this.stopResultScrollDrag();
+        return;
+      }
+      const { team, grabOffsetY } = this.resultScrollDrag;
+      const layout = this.isCompact() ? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT;
+      const rowCount = this.bridge.engine.getBattleRanking(team).length;
+      const geometry = this.resultScrollbarGeometry(layout, team, rowCount);
+      if (!geometry) {
+        this.stopResultScrollDrag();
+        return;
+      }
+      const thumbY = Phaser.Math.Clamp(
+        logical.y - grabOffsetY,
+        geometry.trackY,
+        geometry.trackY + geometry.trackHeight - geometry.thumbHeight,
+      );
+      const travel = geometry.trackHeight - geometry.thumbHeight;
+      const nextOffset = Math.round(((thumbY - geometry.trackY) / travel) * geometry.maxOffset);
+      if (this.setResultScrollOffset(team, nextOffset, rowCount)) {
+        this.clearTooltip();
+        this.rebuild();
+        if (this.game?.canvas) this.game.canvas.style.cursor = "grabbing";
+      }
+      return;
+    }
     if (this.traitDrag && pointer.isDown) {
       const delta = logical.x - this.traitDrag.startX;
       if (Math.abs(delta) > 6) {
@@ -1025,6 +1105,25 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handlePointerWheel(pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _deltaX: number, deltaY: number) {
+    if (this.phase === "result") {
+      const layout = this.isCompact() ? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT;
+      const logical = this.logicalPointer(pointer);
+      const team = (["player", "enemy"] as Team[]).find((candidate, index) => {
+        const x = layout.columnX[index];
+        return logical.x >= x
+          && logical.x <= x + layout.columnWidth + 18
+          && logical.y >= layout.rosterY
+          && logical.y <= layout.rosterY + RESULT_VIEWPORT_HEIGHT;
+      });
+      if (!team) return;
+      const rowCount = this.bridge.engine.getBattleRanking(team).length;
+      const direction = Math.sign(deltaY);
+      if (direction && this.setResultScrollOffset(team, this.resultScrollOffsets[team] + direction, rowCount)) {
+        this.clearTooltip();
+        this.rebuild();
+      }
+      return;
+    }
     if (this.phase !== "preparation" || this.traitMinimumOffset === 0) return;
     const strip = this.traitStrip();
     const logical = this.logicalPointer(pointer);
@@ -1035,6 +1134,10 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer) {
+    if (this.resultScrollDrag?.pointerId === pointer.id) {
+      this.stopResultScrollDrag();
+      return;
+    }
     if (this.traitDrag) {
       this.traitDrag = null;
       return;
@@ -1052,6 +1155,16 @@ export class RiftLineScene extends Phaser.Scene {
         : { type: "slot", location: drag.origin } satisfies GameAction;
     this.cancelDrag();
     this.dispatch(action);
+  }
+
+  private handlePointerUpOutside(pointer: Phaser.Input.Pointer) {
+    if (this.resultScrollDrag?.pointerId === pointer.id) this.stopResultScrollDrag();
+    this.cancelDrag();
+  }
+
+  private stopResultScrollDrag() {
+    this.resultScrollDrag = null;
+    if (this.game?.canvas) this.game.canvas.style.cursor = "";
   }
 
   private isInSellDropZone(x: number, y: number) {
@@ -1237,7 +1350,7 @@ export class RiftLineScene extends Phaser.Scene {
       .map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`)
       .join(" · ");
     const interestRule = this.bridge.engine.getTraitStatus("finance").level >= 2
-      ? "理财Ⅱ · 每 4 金币提供 1 利息（无上限）"
+      ? "理财Ⅱ · 每 4 金币提供 1 利息（80 金币封顶）"
       : "每 5 金币提供 1 利息（20 金币封顶）";
     this.phaseLayer.add(
       this.text(
@@ -2052,6 +2165,98 @@ export class RiftLineScene extends Phaser.Scene {
     this.overlayLayer.add([graphics, label, zone]);
   }
 
+  private setResultScrollOffset(team: Team, offset: number, rowCount: number) {
+    const maximum = Math.max(0, rowCount - RESULT_VISIBLE_ROWS);
+    const nextOffset = Phaser.Math.Clamp(Math.round(offset), 0, maximum);
+    if (nextOffset === this.resultScrollOffsets[team]) return false;
+    this.resultScrollOffsets[team] = nextOffset;
+    return true;
+  }
+
+  private resultScrollbarGeometry(layout: typeof WIDE_RESULT_LAYOUT, team: Team, rowCount: number) {
+    const maxOffset = Math.max(0, rowCount - RESULT_VISIBLE_ROWS);
+    if (!maxOffset) return null;
+    const teamIndex = team === "player" ? 0 : 1;
+    const trackHeight = RESULT_VIEWPORT_HEIGHT;
+    const thumbHeight = Math.max(38, Math.round(trackHeight * RESULT_VISIBLE_ROWS / rowCount));
+    const offset = Phaser.Math.Clamp(this.resultScrollOffsets[team], 0, maxOffset);
+    const thumbY = layout.rosterY + (trackHeight - thumbHeight) * (offset / maxOffset);
+    return {
+      maxOffset,
+      trackX: layout.columnX[teamIndex] + layout.columnWidth + 9,
+      trackY: layout.rosterY,
+      trackHeight,
+      thumbHeight,
+      thumbY,
+    };
+  }
+
+  private drawResultScrollbar(layout: typeof WIDE_RESULT_LAYOUT, team: Team, rowCount: number) {
+    const geometry = this.resultScrollbarGeometry(layout, team, rowCount);
+    if (!geometry) return;
+    const accent = team === "player" ? COLORS.player : COLORS.enemy;
+    const graphics = this.add.graphics()
+      .setName(`resultScrollbar-${team}`)
+      .setDepth(DEPTH.overlay + 4);
+    graphics.fillStyle(0x28404f, 0.72).fillRoundedRect(
+      geometry.trackX - 2,
+      geometry.trackY,
+      4,
+      geometry.trackHeight,
+      2,
+    );
+    graphics.fillStyle(accent, 0.88).fillRoundedRect(
+      geometry.trackX - 3,
+      geometry.thumbY,
+      6,
+      geometry.thumbHeight,
+      3,
+    );
+    const trackZone = this.add.zone(
+      geometry.trackX,
+      geometry.trackY + geometry.trackHeight / 2,
+      18,
+      geometry.trackHeight,
+    )
+      .setName(`resultScrollbarTrack-${team}`)
+      .setDepth(DEPTH.overlay + 5)
+      .setInteractive({ useHandCursor: true });
+    trackZone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
+      const logical = this.logicalPointer(pointer);
+      const travel = geometry.trackHeight - geometry.thumbHeight;
+      const thumbY = Phaser.Math.Clamp(
+        logical.y - geometry.thumbHeight / 2,
+        geometry.trackY,
+        geometry.trackY + travel,
+      );
+      const offset = Math.round(((thumbY - geometry.trackY) / travel) * geometry.maxOffset);
+      if (this.setResultScrollOffset(team, offset, rowCount)) {
+        this.clearTooltip();
+        this.rebuild();
+      }
+    });
+    const thumbZone = this.add.zone(
+      geometry.trackX,
+      geometry.thumbY + geometry.thumbHeight / 2,
+      20,
+      geometry.thumbHeight,
+    )
+      .setName(`resultScrollbarThumb-${team}`)
+      .setDepth(DEPTH.overlay + 6)
+      .setInteractive({ useHandCursor: true });
+    thumbZone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
+      const logical = this.logicalPointer(pointer);
+      this.resultScrollDrag = {
+        team,
+        pointerId: pointer.id,
+        grabOffsetY: logical.y - geometry.thumbY,
+      };
+      this.clearTooltip();
+      if (this.game?.canvas) this.game.canvas.style.cursor = "grabbing";
+    });
+    this.overlayLayer.add([graphics, trackZone, thumbZone]);
+  }
+
   private drawResultRow(x: number, y: number, width: number, rank: number, fighter: Fighter, value: number, metric: RankingMetric, layout: ResultRowLayout) {
     const accent = Phaser.Display.Color.HexStringToColor(UNIT_DEFS[fighter.unitId].accent).color;
     const { height, portraitRadius, nameSize, detailSize } = layout;
@@ -2073,7 +2278,10 @@ export class RiftLineScene extends Phaser.Scene {
     this.overlayLayer.add(this.text(contentX, y + Math.round(height * 0.44), health, detailSize, "#a9bfcc"));
     this.overlayLayer.add(this.text(contentX, y + height - detailSize - 5, `攻 ${Math.round(fighter.attack)} · 甲 ${Math.round(fighter.armor)}`, detailSize, fighter.team === "player" ? "#7fdcff" : "#ff91a9", { fontStyle: "bold" }));
     this.overlayLayer.add(this.text(x + width - 10, y + height - detailSize - 5, metricText, detailSize, "#edf8ff", { fontStyle: "bold" }).setOrigin(1));
-    const zone = this.add.zone(x + width / 2, y + height / 2, width, height).setDepth(DEPTH.overlay + 5).setInteractive({ useHandCursor: true });
+    const zone = this.add.zone(x + width / 2, y + height / 2, width, height)
+      .setName(`resultRow-${fighter.team}-${rank}`)
+      .setDepth(DEPTH.overlay + 5)
+      .setInteractive({ useHandCursor: true });
     zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
     zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
     zone.on(Phaser.Input.Events.POINTER_OUT, () => { if (!this.isCompact()) this.clearTooltip(); });
@@ -2107,23 +2315,43 @@ export class RiftLineScene extends Phaser.Scene {
       this.drawResultMetricTab(metricX, layout.metricsY, metricWidths[metric], metric, battle.rankingMetric === metric);
       metricX += metricWidths[metric] + 8;
     });
-    this.overlayLayer.add(this.text(layout.columnX[0], layout.rosterHeadingY, "我方阵容", 13, "#7fdcff", { fontStyle: "bold" }));
-    this.overlayLayer.add(this.text(layout.columnX[1], layout.rosterHeadingY, "敌方阵容", 13, "#ff91a9", { fontStyle: "bold" }));
     const playerRows = this.bridge.engine.getBattleRanking("player");
     const enemyRows = this.bridge.engine.getBattleRanking("enemy");
-    const rowCount = Math.max(playerRows.length, enemyRows.length);
-    const gap = rowCount > 6 ? 3 : 5;
-    const height = Math.min(52, Math.floor((layout.rosterBottom - layout.rosterY - gap * Math.max(0, rowCount - 1)) / Math.max(1, rowCount)));
-    const rowLayout: ResultRowLayout = {
-      height,
-      portraitRadius: Math.max(12, Math.min(17, Math.floor(height / 2 - 3))),
-      nameSize: height < 45 ? 9 : 10,
-      detailSize: height < 45 ? 7 : 8,
-    };
     ([playerRows, enemyRows] as const).forEach((rows, teamIndex) => {
-      rows.forEach(({ fighter, value }, index) => {
-        this.drawResultRow(layout.columnX[teamIndex], layout.rosterY + index * (height + gap), layout.columnWidth, index + 1, fighter, value, battle.rankingMetric, rowLayout);
+      const team: Team = teamIndex === 0 ? "player" : "enemy";
+      const maximumOffset = Math.max(0, rows.length - RESULT_VISIBLE_ROWS);
+      const offset = Phaser.Math.Clamp(this.resultScrollOffsets[team], 0, maximumOffset);
+      this.resultScrollOffsets[team] = offset;
+      const rangeEnd = Math.min(rows.length, offset + RESULT_VISIBLE_ROWS);
+      this.overlayLayer.add(this.text(
+        layout.columnX[teamIndex],
+        layout.rosterHeadingY,
+        team === "player" ? "我方阵容" : "敌方阵容",
+        13,
+        team === "player" ? "#7fdcff" : "#ff91a9",
+        { fontStyle: "bold" },
+      ));
+      this.overlayLayer.add(this.text(
+        layout.columnX[teamIndex] + layout.columnWidth,
+        layout.rosterHeadingY + 2,
+        rows.length ? `${offset + 1}–${rangeEnd} / ${rows.length}` : "0 / 0",
+        9,
+        "#829aaa",
+        { fontStyle: "bold" },
+      ).setName(`resultRange-${team}`).setOrigin(1, 0));
+      rows.slice(offset, offset + RESULT_VISIBLE_ROWS).forEach(({ fighter, value }, index) => {
+        this.drawResultRow(
+          layout.columnX[teamIndex],
+          layout.rosterY + index * (RESULT_ROW_LAYOUT.height + RESULT_ROW_GAP),
+          layout.columnWidth,
+          offset + index + 1,
+          fighter,
+          value,
+          battle.rankingMetric,
+          RESULT_ROW_LAYOUT,
+        );
       });
+      this.drawResultScrollbar(layout, team, rows.length);
     });
     this.button(410, layout.continueY, 300, 38, this.resultContinueLabel(), { type: "resultContinue" }, { tone: result.won ? "confirm" : "danger" }, DEPTH.overlay + 3);
   }

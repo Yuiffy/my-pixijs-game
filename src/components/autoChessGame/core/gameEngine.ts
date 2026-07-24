@@ -6,7 +6,10 @@ import {
   AugmentTier,
   AUGMENT_TIER_LABELS,
   CAMPAIGN_ROUNDS,
+  FINANCE_INTEREST_CAP,
+  HELL_ENDLESS_START_ROUND,
   MAX_PLAYER_LEVEL,
+  NORMAL_INTEREST_CAP,
   PASSIVE_UPGRADE_DISCOUNT,
   PLAYER_LEVEL_CONFIG,
   PlayerLevel,
@@ -24,6 +27,8 @@ import {
   abilityStatForStar,
   augmentTierForRound,
   bookLevelForPlayerLevel,
+  enemyBudgetForRound,
+  progressionModeForRound,
   upgradeCostForLevel,
   waveForRound,
   tierOddsForLevel,
@@ -464,8 +469,8 @@ export class AutoChessEngine {
   public get interestIncome() {
     const financeLevel = this.getTraitStatus("finance").level;
     return financeLevel >= 2
-      ? Math.floor(this.state.gold / 4)
-      : Math.min(4, Math.floor(this.state.gold / 5));
+      ? Math.min(FINANCE_INTEREST_CAP, Math.floor(this.state.gold / 4))
+      : Math.min(NORMAL_INTEREST_CAP, Math.floor(this.state.gold / 5));
   }
 
   public get financeIncomeBonus() {
@@ -1232,7 +1237,10 @@ export class AutoChessEngine {
         shield: 0,
         shieldPeak: 0,
         attack: def.attack * scale * 1.15,
-        armor: def.armor + Math.max(0, this.state.round - 4) * 2,
+        armor:
+          def.armor +
+          (star - 1) * 4 +
+          Math.max(0, wave.modifier - 1) * 20,
         range: def.range,
         baseRange: def.range,
         attackInterval: def.attackInterval,
@@ -4373,7 +4381,7 @@ export class AutoChessEngine {
     if (this.state.round === CAMPAIGN_ROUNDS && result.won) {
       this.state.endlessUnlocked = true;
       this.state.score += this.state.hp * 45 + 500;
-      this.setToast("八战通关！无限裂隙已开启，挑战将持续升级。", "good");
+      this.setToast("25 战通关！普通无限已开启，40 战后将进入地狱无限。", "good");
     }
     const augmentTier = augmentTierForRound(this.state.round);
     if (augmentTier) {
@@ -4430,6 +4438,14 @@ export class AutoChessEngine {
     // 流量刷新是每个备战回合重新结算，未使用的次数不会带入下一回合。
     this.state.freeRerollCharges = this.getTraitStatus("traffic").level;
     if (!this.state.shopLocked) this.state.shop = this.generateShop();
+    const wave = this.currentWave;
+    if (this.state.round === HELL_ENDLESS_START_ROUND) {
+      this.setToast("地狱预警：敌军将把 20 利息、理财收入、连胜与赏金全部复投。", "bad");
+    } else if (wave.tag === "boss") {
+      this.setToast(`首领预警：第 ${wave.round} 战将检验爆发与续航。`, "bad");
+    } else if (wave.tag === "elite") {
+      this.setToast(`精英预警：第 ${wave.round} 战强度跃升，请提前升级与调整站位。`, "info");
+    }
   }
 
   private endGame(won: boolean) {
@@ -4474,11 +4490,13 @@ export class AutoChessEngine {
       maxRounds: this.state.maxRounds,
       campaignCleared: this.state.endlessUnlocked,
       endlessRound: Math.max(0, this.state.round - CAMPAIGN_ROUNDS),
+      progressionMode: progressionModeForRound(this.state.round),
       wave: this.currentWave
         ? {
             name: this.currentWave.name,
             tag: this.currentWave.tag,
             description: this.currentWave.description,
+            enemyBudget: enemyBudgetForRound(this.state.round),
             potentialBounty: this.potentialBounty,
           }
         : null,

@@ -287,7 +287,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.evaluate((ids) => {
     window.__codexAutoChessBridge.engine.state.augments = [...ids];
   }, minorIds);
-  await forceAugmentRound(14);
+  await forceAugmentRound(10);
   const repeated = await readState();
   if (
     repeated.phase !== "augment" ||

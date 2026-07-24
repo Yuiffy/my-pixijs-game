@@ -312,7 +312,7 @@ test("标题页复用响应式布局、主题协议卡与缓存氛围光", () =>
   assert.match(scene, /createTitleGlowTexture\(\)/);
   assert.match(scene, /TITLE_GLOW_TEXTURE/);
   assert.match(scene, /this\.tweens\.add/);
-  assert.match(scene, /轻量构筑 · 自动战斗 · 一局约 8 分钟/);
+  assert.match(scene, /二十五战远征 · 自动战斗 · 无限冲层/);
   assert.match(scene, /选择一项开局协议/);
   assert.match(scene, /操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏/);
   assert.match(theme, /export const TITLE/);
@@ -371,15 +371,20 @@ test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示",
   assert.match(scene, /this\.overlayLayer\.add\(zone\)/);
 });
 
-test("结算报告约束摘要文本、保留八人阵容并适配紧凑布局", () => {
+test("结算报告保持固定可读行高并让完整阵容独立滚动", () => {
   assert.match(theme, /Noto Sans CJK SC/);
   assert.match(theme, /resultReward: "#ffd166"/);
   assert.match(scene, /truncateText\(result\.headline, 920/);
   assert.match(scene, /boundedText\(result\.detail, 860, 2/);
   assert.match(scene, /drawResultMetricTab/);
   assert.match(scene, /this\.isCompact\(\) \? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT/);
-  assert.match(scene, /const rowCount = Math\.max\(playerRows\.length, enemyRows\.length\)/);
-  assert.doesNotMatch(scene, /getBattleRanking\(team\)\.slice\(0, 6\)/);
+  assert.match(scene, /const RESULT_VISIBLE_ROWS = 6/);
+  assert.match(scene, /height: 48/);
+  assert.match(scene, /rows\.slice\(offset, offset \+ RESULT_VISIBLE_ROWS\)/);
+  assert.match(scene, /drawResultScrollbar/);
+  assert.match(scene, /resultScrollOffsets: Record<Team, number>/);
+  assert.match(scene, /resultRow-\$\{fighter\.team\}-\$\{rank\}/);
+  assert.doesNotMatch(scene, /const height = Math\.min\(52/);
   assert.match(layout, /WIDE_RESULT_LAYOUT/);
   assert.match(layout, /COMPACT_RESULT_LAYOUT/);
 });

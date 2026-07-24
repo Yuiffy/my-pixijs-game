@@ -4,12 +4,17 @@ import { useEffect, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { AutoChessEngine } from "./core/gameEngine";
 import {
+  CAMPAIGN_ROUNDS,
+  FINANCE_INTEREST_CAP,
+  NORMAL_ENDLESS_END_ROUND,
   STARTERS,
   TRAITS,
   UNIT_DEFS,
   bookLevelForPlayerLevel,
   describeAbilityStarGrowth,
   describeEnergyRecovery,
+  enemyBudgetForRound,
+  progressionModeForRound,
   tierOddsForLevel,
 } from "./core/gameData";
 import type { OwnedUnit, UnitLocation } from "./core/gameTypes";
@@ -67,7 +72,30 @@ function ActionButton({ tone = "neutral", className = "", children, ...props }: 
 }
 
 function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) {
-  const progress = state.phase === "title" ? 0 : Math.min(100, ((state.round - 1) / state.maxRounds) * 100);
+  const mode = progressionModeForRound(state.round);
+  const progress =
+    state.phase === "title"
+      ? 0
+      : mode === "campaign"
+        ? Math.min(100, (state.round / CAMPAIGN_ROUNDS) * 100)
+        : mode === "endless"
+          ? Math.min(100, ((state.round - CAMPAIGN_ROUNDS) / (NORMAL_ENDLESS_END_ROUND - CAMPAIGN_ROUNDS)) * 100)
+          : 100;
+  const progressLabel = mode === "campaign" ? "远征进度" : mode === "endless" ? "普通无限" : "地狱无限";
+  const progressValue =
+    mode === "campaign"
+      ? `${state.round}/${CAMPAIGN_ROUNDS} 战`
+      : mode === "endless"
+        ? `${state.round}/${NORMAL_ENDLESS_END_ROUND} 战`
+        : `第 ${state.round} 战`;
+  const progressHint =
+    mode === "campaign"
+      ? state.round === CAMPAIGN_ROUNDS
+        ? "终局首领已抵达"
+        : "每 5 战强度跃升"
+      : mode === "endless"
+        ? `距离地狱无限还有 ${NORMAL_ENDLESS_END_ROUND - state.round} 战`
+        : "20 利息、连胜与赏金全部复投";
   return (
     <header className="rift-dom-header" style={{ fontFamily: FONT }}>
       <div className="rift-brand">
@@ -78,10 +106,10 @@ function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) 
         </div>
       </div>
       {state.phase !== "title" && (
-        <div className="rift-run-progress" aria-label={`远征进度 ${state.round}/${state.maxRounds}`}>
-          <div className="rift-run-progress-label"><span>远征进度</span><b>{state.round}/{state.maxRounds} 战</b></div>
+        <div className={`rift-run-progress mode-${mode}`} aria-label={`${progressLabel} ${progressValue}`}>
+          <div className="rift-run-progress-label"><span>{progressLabel}</span><b>{progressValue}</b></div>
           <div className="rift-run-track"><i style={{ width: `${progress}%` }} /></div>
-          <small>{state.round >= state.maxRounds ? "终局冲击已解锁" : `距离首领还有 ${Math.max(0, state.maxRounds - state.round)} 战`}</small>
+          <small>{progressHint}</small>
         </div>
       )}
       {state.phase === "title" ? (
@@ -128,7 +156,7 @@ export default function RiftHud({ engine, onAction }: Props) {
         <HudHeader state={state} />
         <div className="rift-dom-title-body">
           <section className="rift-title-copy">
-            <span className="rift-eyebrow">RIFT LINE // 08 WAVE EXPEDITION</span>
+            <span className="rift-eyebrow">RIFT LINE // 25 WAVE EXPEDITION</span>
             <h1>裂隙<span>阵线</span></h1>
             <p>每一战都要重新回答同一个问题：<br />你愿意把资源押在谁身上？</p>
             <div className="rift-title-notes"><span>短局构筑</span><span>自动战斗</span><span>自由布阵</span></div>
@@ -166,7 +194,7 @@ export default function RiftHud({ engine, onAction }: Props) {
         <section className={`rift-dom-phase-card ${state.finalWon ? "is-win" : "is-loss"}`}>
           <span className="rift-eyebrow">RUN COMPLETE // {state.finalWon ? "RIFT SEALED" : "LINE LOST"}</span>
           <h1>{state.finalWon ? "裂隙已封闭" : "战线已失守"}</h1>
-          <p>{state.finalWon ? "你守住了八次冲击。无限裂隙已开启，继续挑战你的纪录。" : "这一局的答案到此为止。调整开局协议，再试一次。"}</p>
+          <p>{state.finalWon ? "你守住了二十五次冲击。普通无限与地狱无限已经开启。" : "这一局的答案到此为止。调整开局协议，再试一次。"}</p>
           <div className="rift-final-stats"><span>本局积分 <b>{state.score.toLocaleString()}</b></span><span>核心 <b>{state.hp}/{state.maxHp}</b></span><span>最高纪录 <b>{state.bestScore.toLocaleString()}</b></span></div>
           <ActionButton tone={state.finalWon ? "confirm" : "danger"} onClick={() => dispatch({ type: "restart" })}>重新接入 <b>↗</b></ActionButton>
         </section>
@@ -199,9 +227,9 @@ export default function RiftHud({ engine, onAction }: Props) {
               <footer>{activeTraits.length ? <><span className="rift-status-dot" />已激活 {activeTraits.map((trait) => `${trait.name}${STAR_LABEL[trait.level]}`).join(" · ")}</> : "上阵两名同名羁绊单位，开始构筑你的第一套答案"}</footer>
             </aside>
           </div>
-          <section className="rift-mobile-brief">
-            <div><span className="rift-eyebrow">ROUND {String(state.round).padStart(2, "0")} / QUICK READ</span><strong>{wave.name}</strong></div>
-            <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。全歼本战敌军可得 ${engine.potentialBounty} 金。` : `人口已满。全歼本战敌军可得 ${engine.potentialBounty} 金。`}</p>
+          <section className={`rift-mobile-brief ${wave.tag === "normal" ? "" : `is-${wave.tag}`}`}>
+            <div><span className="rift-eyebrow">{wave.tag === "boss" ? "BOSS WARNING" : wave.tag === "elite" ? "ELITE WARNING" : `ROUND ${String(state.round).padStart(2, "0")} / QUICK READ`}</span><strong>{wave.name}</strong></div>
+            <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军价值约 ${enemyBudgetForRound(state.round)}，全歼赏金 ${engine.potentialBounty} 金。` : `人口已满。敌军价值约 ${enemyBudgetForRound(state.round)}，全歼赏金 ${engine.potentialBounty} 金。`}</p>
             <button onClick={() => setSheet("traits")}>查看羁绊 <b>↗</b></button>
           </section>
           <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></nav>
@@ -298,7 +326,7 @@ function InterestInfo({ engine, compact = false }: { engine: AutoChessEngine; co
   const [open, setOpen] = useState(false);
   const financeLevel = engine.getTraitStatus("finance").level;
   const enhanced = financeLevel >= 2;
-  const rule = enhanced ? "理财Ⅱ：每 4 金币提供 1 利息，且不设上限。" : "每 5 金币提供 1 利息，最多计算 20 金币（最高 4 利息）。";
+  const rule = enhanced ? `理财Ⅱ：每 4 金币提供 1 利息，最多 ${FINANCE_INTEREST_CAP} 利息（80 金币封顶）。` : "每 5 金币提供 1 利息，最多计算 20 金币（最高 4 利息）。";
   return (
     <div className={`rift-interest-info ${compact ? "is-compact" : ""} ${open ? "is-open" : ""}`} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} onFocus={() => setOpen(true)}><span>利息</span><b>+{engine.interestIncome}</b><i aria-hidden="true">i</i></button>

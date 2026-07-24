@@ -78,9 +78,12 @@ test("主线与无限模式按轮次交替提供小天赋和大天赋", () => {
   assert.equal(gameData.augmentTierForRound(2), "minor");
   assert.equal(gameData.augmentTierForRound(5), "major");
   assert.equal(gameData.augmentTierForRound(8), null);
-  assert.equal(gameData.augmentTierForRound(14), "minor");
-  assert.equal(gameData.augmentTierForRound(20), "major");
-  assert.equal(gameData.augmentTierForRound(26), "minor");
+  assert.equal(gameData.augmentTierForRound(10), "minor");
+  assert.equal(gameData.augmentTierForRound(15), "major");
+  assert.equal(gameData.augmentTierForRound(20), "minor");
+  assert.equal(gameData.augmentTierForRound(25), "major");
+  assert.equal(gameData.augmentTierForRound(31), "minor");
+  assert.equal(gameData.augmentTierForRound(37), "major");
 });
 
 test("同档未拿完前严格去重，全部拿完后才回补重复强化", () => {
@@ -93,7 +96,7 @@ test("同档未拿完前严格去重，全部拿完后才回补重复强化", ()
   });
 
   engine.state.augments = ["tempered", "sharp_edge"];
-  completeRound(engine, 14);
+  completeRound(engine, 10);
   assert.equal(engine.state.augmentChoices.length, 3);
   assert.equal(engine.state.augmentChoices.includes("tempered"), false);
   assert.equal(engine.state.augmentChoices.includes("sharp_edge"), false);
@@ -102,7 +105,7 @@ test("同档未拿完前严格去重，全部拿完后才回补重复强化", ()
     .filter((augment) => augment.tier === "minor")
     .map((augment) => augment.id);
   engine.state.augments = [...allMinor];
-  completeRound(engine, 14);
+  completeRound(engine, 10);
   assert.equal(engine.state.augmentChoices.length, 3);
   engine.state.augmentChoices.forEach((id) => assert.ok(allMinor.includes(id)));
 });

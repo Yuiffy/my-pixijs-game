@@ -849,7 +849,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#5ed9cf",
     tier: 3,
     cost: 3,
-    traits: ["wild", "aggression"],
+    traits: ["wild", "aggression", "skeleton_soldier"],
     hp: 332,
     attack: 31,
     armor: 26,
@@ -1031,7 +1031,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   meme: unit({
     id: "meme", name: "毛神", title: "毛神 · 前排续航", glyph: "毛", color: "#54735b", accent: "#9be6aa", tier: 3, cost: 3,
-    traits: ["wild", "vanguard", "aggression", "traffic"], hp: 290, attack: 23, armor: 28, range: 60, attackInterval: 1.06, moveSpeed: 48,
+    traits: ["wild", "skeleton_soldier", "aggression", "traffic"], hp: 290, attack: 23, armor: 28, range: 60, attackInterval: 1.06, moveSpeed: 48,
     abilityName: "夺回人生", abilityDescription: "震晕附近敌人并造成伤害，随后按造成伤害回复自身生命。",
     portrait: "/images/livers/meme.jpg", portraitFocus: "top", shop: true,
   }),
@@ -1415,10 +1415,16 @@ export const enemyBudgetForRound = (round: number) => {
     const tag = tagForRound(safeRound);
     return Math.round(baseBudget * (tag === "boss" ? 1.35 : tag === "elite" ? 1.25 : 1));
   }
-  if (safeRound <= NORMAL_ENDLESS_END_ROUND) {
-    return 96 + (safeRound - CAMPAIGN_ROUNDS - 1) * 10;
+  let budget = 96;
+  for (let waveRound = CAMPAIGN_ROUNDS + 1; waveRound < safeRound; waveRound += 1) {
+    const nextMode = progressionModeForRound(waveRound + 1);
+    const bounty = projectedBountyForGeneratedRound(waveRound, budget);
+    const interest = nextMode === "hell" ? FINANCE_INTEREST_CAP : 5;
+    const finance = nextMode === "hell" ? 2 : 0;
+    const streak = 2;
+    budget += interest + finance + streak + bounty;
   }
-  return 260 + (safeRound - HELL_ENDLESS_START_ROUND) * 22;
+  return budget;
 };
 
 const generatedUnitCount = (round: number) =>
@@ -1475,6 +1481,31 @@ const buildBudgetedUnits = (
   return units;
 };
 
+const bountyForUnits = (units: readonly WaveUnit[]) =>
+  units.reduce((total, unit) => total + (unit.star ?? 1), 0);
+
+const projectedBountyForGeneratedRound = (round: number, budget: number) =>
+  bountyForUnits(buildBudgetedUnits(round, tagForRound(round), budget));
+
+export const projectedIncomeAfterRound = (round: number) => {
+  const safeRound = Math.max(CAMPAIGN_ROUNDS + 1, Math.floor(round));
+  const nextMode = progressionModeForRound(safeRound + 1);
+  const interest = nextMode === "hell" ? FINANCE_INTEREST_CAP : 5;
+  const finance = nextMode === "hell" ? 2 : 0;
+  const streak = 2;
+  const bounty = projectedBountyForGeneratedRound(
+    safeRound,
+    enemyBudgetForRound(safeRound),
+  );
+  return {
+    interest,
+    streak,
+    finance,
+    bounty,
+    total: interest + streak + finance + bounty,
+  };
+};
+
 export const waveForRound = (round: number): WaveDefinition => {
   if (round <= WAVES.length) return WAVES[Math.max(0, round - 1)];
 
@@ -1509,8 +1540,8 @@ export const waveForRound = (round: number): WaveDefinition => {
       mode === "campaign"
         ? `${pressurePrefix}敌军总价值约 ${budget}，优先用人口与升星检验当前阵容。`
         : mode === "endless"
-          ? `${pressurePrefix}普通无限每战约增加 10 总价值，40 战后将进入地狱无限。当前约 ${budget}。`
-          : `${pressurePrefix}地狱无限按 20 利息玩家的成长速度，每战约增加 22 总价值。当前约 ${budget}。`,
+          ? `${pressurePrefix}普通无限按 5 利息、连胜与上战赏金全部复投。当前总价值约 ${budget}，40 战后进入地狱无限。`
+          : `${pressurePrefix}地狱无限按 20 利息、理财固定收入、连胜与上战赏金全部复投。当前总价值约 ${budget}。`,
     modifier,
     units,
   };

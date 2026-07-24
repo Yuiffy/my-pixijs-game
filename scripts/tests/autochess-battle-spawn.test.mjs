@@ -1285,6 +1285,42 @@ test("结算继续会保留契印与失败结局分支", () => {
   assert.equal(lossEngine.state.phase, "gameover");
 });
 
+test("精英关、主线通关与地狱入口会在备战前发出预警", () => {
+  const engine = createEngine(74);
+  const completeWonRound = (round) => {
+    engine.state.round = round;
+    engine.state.phase = "result";
+    engine.state.result = {
+      won: true,
+      headline: "",
+      detail: "",
+      income: 0,
+      bounty: 0,
+      defeatedEnemies: 0,
+      defeatedByStar: { 1: 0, 2: 0, 3: 0 },
+      upgradeDiscount: 0,
+      damage: 0,
+    };
+    engine.continueAfterResult();
+  };
+
+  completeWonRound(4);
+  assert.equal(engine.state.round, 5);
+  assert.equal(engine.currentWave.tag, "elite");
+  assert.match(engine.state.toast?.text || "", /精英预警.*第 5 战/);
+
+  completeWonRound(25);
+  assert.equal(engine.state.endlessUnlocked, true);
+  assert.equal(engine.state.phase, "augment");
+  assert.match(engine.state.toast?.text || "", /25 战通关.*40 战后/);
+  engine.chooseAugment(0);
+  assert.equal(engine.state.round, 26);
+
+  completeWonRound(40);
+  assert.equal(engine.state.round, 41);
+  assert.match(engine.state.toast?.text || "", /地狱预警.*20 利息.*赏金/);
+});
+
 test("普通利息每 5 金币提供 1 点并在 20 金币封顶", () => {
   const engine = createEngine(300);
   engine.state.gold = 19;
@@ -1295,7 +1331,7 @@ test("普通利息每 5 金币提供 1 点并在 20 金币封顶", () => {
   assert.equal(engine.interestIncome, 4);
 });
 
-test("理财在结算增加收入，高档按每 4 金币计算无上限利息", () => {
+test("理财在结算增加收入，高档按每 4 金币计算并在 20 利息封顶", () => {
   const lowTierEngine = createEngine(301);
   lowTierEngine.state.playerLevel = 4;
   lowTierEngine.state.board.fill(null);
@@ -1325,6 +1361,12 @@ test("理财在结算增加收入，高档按每 4 金币计算无上限利息",
   highTierEngine.state.battle.enemy.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
   highTierEngine.update(0.05);
   assert.equal(highTierEngine.state.result.income, 12);
+  highTierEngine.state.gold = 79;
+  assert.equal(highTierEngine.interestIncome, 19);
+  highTierEngine.state.gold = 80;
+  assert.equal(highTierEngine.interestIncome, 20);
+  highTierEngine.state.gold = 200;
+  assert.equal(highTierEngine.interestIncome, 20);
 });
 
 test("每颗敌方星级提供一金币赏金，失败也结算已击败敌人", () => {
