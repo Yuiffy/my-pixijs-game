@@ -489,7 +489,9 @@ test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊",
   assert.equal(pako.traits.includes("traffic"), false);
   assert.equal(pako.abilityName, "天使摸鱼");
   assert.match(pako.abilityDescription, /受伤友军最密集/);
-  assert.match(pako.abilityDescription, /范围内的队友回复生命/);
+  assert.match(pako.abilityDescription, /落地治疗范围内友军/);
+  assert.match(pako.abilityDescription, /持续 3\.2 秒/);
+  assert.match(pako.abilityDescription, /帕可自身属性/);
   assert.equal(pako.abilityCastTiming, "supportHeal");
   assert.equal(pako.portrait, "/images/livers/pako.jpg");
   await access(path.resolve("public", pako.portrait.slice(1)));

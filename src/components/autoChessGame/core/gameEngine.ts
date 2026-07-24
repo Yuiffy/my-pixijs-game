@@ -72,6 +72,7 @@ export type {
   Fighter,
   GamePhase,
   GameState,
+  HealingZone,
   MechanicalRabbitPet,
   OwnedUnit,
   PineTreeTurret,
@@ -209,10 +210,14 @@ const COG_ORANGE_HEAL_MULTIPLIERS = [1, 0.82, 0.66, 0.54, 0.44] as const;
 const COG_ORANGE_INTERVAL = 0.2;
 const COG_ORANGE_HEAL_HP_RATIO = 0.11;
 const COG_ORANGE_HEAL_ATTACK_RATIO = 0.75;
-/** 帕可「天使摸鱼」：投向受伤友军密集区域的范围治疗。 */
-const PAKO_ANGEL_FISH_RADIUS = 128;
-const PAKO_ANGEL_FISH_HEAL_HP_RATIO = 0.15;
-const PAKO_ANGEL_FISH_HEAL_ATTACK_RATIO = 0.9;
+/** 帕可「天使摸鱼」：落地治疗并留下可供友军进出的持续治疗区。 */
+const PAKO_ANGEL_FISH_RADIUS = 145;
+const PAKO_ANGEL_FISH_INITIAL_HEAL_ATTACK_RATIO = 1.6;
+const PAKO_ANGEL_FISH_INITIAL_HEAL_CASTER_HP_RATIO = 0.08;
+const PAKO_ANGEL_FISH_ZONE_DURATION = 3.2;
+const PAKO_ANGEL_FISH_PULSE_INTERVAL = 0.7;
+const PAKO_ANGEL_FISH_PULSE_HEAL_ATTACK_RATIO = 0.7;
+const PAKO_ANGEL_FISH_PULSE_HEAL_CASTER_HP_RATIO = 0.025;
 /** 非自身中心 AOE：声束同帧触发，弹幕抵达固定落点后触发。 */
 const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile"; glyph?: string }>> = {
   shiori: { kind: "beam" },
@@ -1196,6 +1201,7 @@ export class AutoChessEngine {
         jumpFromY: spawn.y,
         jumpToX: spawn.x,
         jumpToY: spawn.y,
+        vanguardJumpAdvancing: false,
         abilityMotion: null,
         channelTargetFid: null,
         channelTime: 0,
@@ -1330,6 +1336,7 @@ export class AutoChessEngine {
         jumpFromY: 180 + row * 165,
         jumpToX: 990 - rank * 96,
         jumpToY: 180 + row * 165,
+        vanguardJumpAdvancing: false,
         abilityMotion: null,
         channelTargetFid: null,
         channelTime: 0,
@@ -1359,6 +1366,7 @@ export class AutoChessEngine {
       projectiles: [],
       projectileVolley: [],
       chronospheres: [],
+      healingZones: [],
       pets: [],
       petSerial: 0,
       pineTrees: [],
@@ -1647,6 +1655,7 @@ export class AutoChessEngine {
     const duration = options.duration ?? Math.max(0.28, Math.min(0.72, distance / (kind === "jump" ? 760 : 900)));
     source.jumpPending = false;
     source.jumpTime = 0;
+    source.vanguardJumpAdvancing = false;
     source.attackPulse = 0;
     source.abilityMotion = {
       kind,
@@ -1992,6 +2001,7 @@ export class AutoChessEngine {
     fighter.jumpToY = landing.y;
     this.faceTowardX(fighter, target.x);
     fighter.jumpPending = false;
+    fighter.vanguardJumpAdvancing = false;
     fighter.jumpArcHeight = DEFAULT_JUMP_ARC_HEIGHT;
     fighter.jumpTime = fighter.jumpDuration;
     return true;
@@ -2048,6 +2058,7 @@ export class AutoChessEngine {
     fighter.jumpDuration = VANGUARD_JUMP_DURATION;
     fighter.jumpArcHeight = fighter.vanguardJumpArc;
     fighter.jumpTime = fighter.jumpDuration;
+    fighter.vanguardJumpAdvancing = true;
     fighter.vanguardJumpCooldown = VANGUARD_JUMP_COOLDOWN;
     this.faceTowardX(fighter, source.x);
     this.addEffect({
@@ -2060,6 +2071,30 @@ export class AutoChessEngine {
       size: 10,
     });
     return true;
+  }
+
+  /** 怕死后跳仍保持原移速接近目标，前进位移会平移整条跳跃轨迹。 */
+  private advanceDuringVanguardJump(
+    fighter: Fighter,
+    battle: BattleState,
+    dt: number,
+    movementIntents: Map<string, MovementIntent>,
+  ) {
+    const targets = this.living(fighter.team === "player" ? "enemy" : "player");
+    const target = this.resolveCombatTarget(fighter, targets, dt);
+    if (!target) return;
+    const beforeX = fighter.x;
+    const beforeY = fighter.y;
+    if (Math.hypot(target.x - fighter.x, target.y - fighter.y) > this.combatAttackRange(fighter, target)) {
+      this.moveTowardCombatTarget(fighter, target, [...battle.player, ...battle.enemy], dt, movementIntents);
+    }
+    const moveX = fighter.x - beforeX;
+    const moveY = fighter.y - beforeY;
+    if (Math.hypot(moveX, moveY) < 0.001) return;
+    fighter.jumpFromX += moveX;
+    fighter.jumpFromY += moveY;
+    fighter.jumpToX += moveX;
+    fighter.jumpToY += moveY;
   }
 
   private resolveFighterSeparation(fighters: Fighter[], movementIntents: Map<string, MovementIntent> = new Map()) {
@@ -2302,10 +2337,29 @@ export class AutoChessEngine {
             this.heal(
               source,
               ally,
-              ally.maxHp * PAKO_ANGEL_FISH_HEAL_HP_RATIO + source.attack * PAKO_ANGEL_FISH_HEAL_ATTACK_RATIO,
+              source.attack * PAKO_ANGEL_FISH_INITIAL_HEAL_ATTACK_RATIO +
+                source.maxHp * PAKO_ANGEL_FISH_INITIAL_HEAL_CASTER_HP_RATIO,
             );
           });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: PAKO_ANGEL_FISH_RADIUS + 14 });
+        this.state.battle?.healingZones.push({
+          sourceFid: source.fid,
+          team: source.team,
+          x: center.x,
+          y: center.y,
+          radius: PAKO_ANGEL_FISH_RADIUS,
+          life: PAKO_ANGEL_FISH_ZONE_DURATION,
+          maxLife: PAKO_ANGEL_FISH_ZONE_DURATION,
+          pulseTimer: PAKO_ANGEL_FISH_PULSE_INTERVAL,
+          color: def.accent,
+        });
+        this.addEffect({
+          kind: "ring",
+          x: center.x,
+          y: center.y,
+          color: def.accent,
+          life: PAKO_ANGEL_FISH_ZONE_DURATION,
+          size: PAKO_ANGEL_FISH_RADIUS + 14,
+        });
         this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f4eaff", life: 0.52, size: 88 });
         this.addEffect({ kind: "text", x: center.x, y: center.y - 42, color: def.accent, text: "天使摸鱼", life: 0.75, size: 13 });
         break;
@@ -2882,6 +2936,48 @@ export class AutoChessEngine {
     });
   }
 
+  private updateHealingZones(battle: BattleState, dt: number) {
+    battle.healingZones = battle.healingZones.filter((zone) => {
+      const activeTime = Math.min(dt, zone.life);
+      zone.life = Math.max(0, zone.life - dt);
+      zone.pulseTimer -= activeTime;
+      while (zone.pulseTimer <= 0) {
+        zone.pulseTimer += PAKO_ANGEL_FISH_PULSE_INTERVAL;
+        const source = [...battle.player, ...battle.enemy].find(
+          (fighter) => fighter.fid === zone.sourceFid,
+        ) || null;
+        this.living(zone.team)
+          .filter((ally) => Math.hypot(ally.x - zone.x, ally.y - zone.y) <= zone.radius)
+          .forEach((ally) => {
+            if (!source) return;
+            this.heal(
+              source,
+              ally,
+              source.attack * PAKO_ANGEL_FISH_PULSE_HEAL_ATTACK_RATIO +
+                source.maxHp * PAKO_ANGEL_FISH_PULSE_HEAL_CASTER_HP_RATIO,
+            );
+          });
+        this.addEffect({
+          kind: "ring",
+          x: zone.x,
+          y: zone.y,
+          color: zone.color,
+          life: 0.34,
+          size: zone.radius + 8,
+        });
+        this.addEffect({
+          kind: "burst",
+          x: zone.x,
+          y: zone.y,
+          color: "#bfffe3",
+          life: 0.3,
+          size: zone.radius * 0.72,
+        });
+      }
+      return zone.life > 0;
+    });
+  }
+
   private updateBattle(dt: number) {
     const battle = this.state.battle;
     if (!battle) return;
@@ -2905,6 +3001,7 @@ export class AutoChessEngine {
       zone.life -= dt;
     });
     battle.chronospheres = battle.chronospheres.filter((zone) => zone.life > 0);
+    this.updateHealingZones(battle, dt);
     this.updateMechanicalRabbitPets(battle, dt);
     this.updatePineTreeTurrets(battle, dt);
     this.updateProjectileVolley(battle, dt);
@@ -3040,6 +3137,7 @@ export class AutoChessEngine {
         if (fighter.jumpTime <= 0) {
           fighter.x = fighter.jumpToX;
           fighter.y = fighter.jumpToY;
+          fighter.vanguardJumpAdvancing = false;
           this.addEffect({
             kind: "burst",
             x: fighter.x,
@@ -3048,6 +3146,9 @@ export class AutoChessEngine {
             life: 0.45,
             size: fighter.radius * 1.8,
           });
+        }
+        if (fighter.vanguardJumpAdvancing && fighter.jumpTime > 0) {
+          this.advanceDuringVanguardJump(fighter, battle, dt, movementIntents);
         }
         return;
       }
@@ -4107,6 +4208,7 @@ export class AutoChessEngine {
       target.vanguardKnockback > 0 &&
       target.vanguardJumpCooldown <= 0 &&
       !target.abilityMotion &&
+      target.danceDashTime <= 0 &&
       target.jumpTime <= 0 &&
       target.alive &&
       effectiveApplied > 0
@@ -4639,6 +4741,14 @@ export class AutoChessEngine {
             radius: zone.radius,
             remaining: Number(zone.life.toFixed(2)),
             duration: zone.maxLife,
+          })),
+          healingZones: battle.healingZones.map((zone) => ({
+            x: Math.round(zone.x),
+            y: Math.round(zone.y),
+            radius: zone.radius,
+            remaining: Number(zone.life.toFixed(2)),
+            duration: zone.maxLife,
+            nextPulse: Number(zone.pulseTimer.toFixed(2)),
           })),
         },
         enemyUnits: battle.enemy

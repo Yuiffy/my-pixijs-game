@@ -80,6 +80,18 @@ export interface ChronosphereZone {
   color: string;
 }
 
+export interface HealingZone {
+  sourceFid: string;
+  team: Team;
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  pulseTimer: number;
+  color: string;
+}
+
 export interface MechanicalRabbitPet {
   id: string;
   ownerFid: string;
@@ -245,6 +257,8 @@ export interface Fighter {
   jumpFromY: number;
   jumpToX: number;
   jumpToY: number;
+  /** 怕死受击后跳期间仍保持正常接敌移动。 */
+  vanguardJumpAdvancing: boolean;
   abilityMotion: AbilityMotion | null;
   /** 狍子偶像「捏捏摸摸」的引导目标与剩余时间。 */
   channelTargetFid: string | null;
@@ -294,6 +308,7 @@ export interface BattleState {
   projectiles: Projectile[];
   projectileVolley: ProjectileVolleyShot[];
   chronospheres: ChronosphereZone[];
+  healingZones: HealingZone[];
   pets: MechanicalRabbitPet[];
   petSerial: number;
   pineTrees: PineTreeTurret[];

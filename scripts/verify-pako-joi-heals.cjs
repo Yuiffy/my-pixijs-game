@@ -203,13 +203,31 @@ mkdirSync(artifactDirectory, { recursive: true });
     || mossbackAfterPako.hp <= pakoBefore.mossbackHp
     || pakoUnit.healingDone <= 0
   ) throw new Error(`帕可范围治疗未结算: ${JSON.stringify({ pakoBefore, pakoUnit, joiAfterPako, mossbackAfterPako })}`);
-  if (!pakoImpact.battle.visualEffects.effects.some((effect) => effect.kind === "ring" && effect.size === 142)) {
+  if (!pakoImpact.battle.visualEffects.effects.some((effect) => effect.kind === "ring" && effect.size === 159)) {
     throw new Error(`帕可范围治疗落地圈缺失: ${JSON.stringify(pakoImpact.battle.visualEffects.effects)}`);
+  }
+  if (!pakoImpact.battle.visualEffects.healingZones.some((zone) => zone.radius === 145)) {
+    throw new Error(`帕可持续治疗区缺失: ${JSON.stringify(pakoImpact.battle.visualEffects.healingZones)}`);
   }
   if (JSON.stringify(pakoImpact.battle.enemyUnits.map((unit) => unit.hp)) !== JSON.stringify(pakoBefore.enemyHp)) {
     throw new Error("帕可治疗技能不应伤害敌人");
   }
   await capture("pako-angel-fish-impact");
+
+  await advance(1250);
+  const pakoSustain = await readState();
+  const pakoSustainUnit = pakoSustain.battle.playerUnits.find((unit) => unit.unitId === "pako");
+  if (
+    pakoSustainUnit.healingDone <= pakoUnit.healingDone
+    || !pakoSustain.battle.visualEffects.healingZones.some((zone) => zone.remaining > 0)
+  ) {
+    throw new Error(`帕可治疗区未持续脉冲: ${JSON.stringify({
+      impactHealing: pakoUnit.healingDone,
+      sustainUnit: pakoSustainUnit,
+      zones: pakoSustain.battle.visualEffects.healingZones,
+    })}`);
+  }
+  await capture("pako-angel-fish-sustain");
 
   await loadGame(202);
   await page.evaluate(() => {
@@ -283,7 +301,10 @@ mkdirSync(artifactDirectory, { recursive: true });
       flightElapsed: pakoFlight.battle.elapsed,
       flightProjectiles: pakoFlight.battle.visualEffects.projectiles,
       impactElapsed: pakoImpact.battle.elapsed,
-      healingDone: pakoUnit.healingDone,
+      impactHealingDone: pakoUnit.healingDone,
+      sustainElapsed: pakoSustain.battle.elapsed,
+      sustainHealingDone: pakoSustainUnit.healingDone,
+      healingZones: pakoSustain.battle.visualEffects.healingZones,
       joiHpAfter: joiAfterPako.hp,
       mossbackHpAfter: mossbackAfterPako.hp,
     },

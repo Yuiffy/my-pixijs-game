@@ -219,6 +219,70 @@ test("怕死后跳会留在自身攻击距离内，越界时改为侧跳", () =>
   assertInsideBattleBounds({ ...target, x: target.jumpToX, y: target.jumpToY });
 });
 
+test("怕死后跳期间近战仍按原移速接近远程目标", () => {
+  const engine = createEngine(114);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const target = battle.player[0];
+  const attacker = battle.enemy[0];
+  battle.player.slice(1).forEach((fighter) => { fighter.alive = false; });
+  battle.enemy.slice(1).forEach((fighter) => { fighter.alive = false; });
+  target.x = 300; target.y = 320; target.cooldown = 99; target.baseMoveSpeed = 160; target.moveSpeed = 160;
+  attacker.x = 900; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 700; attacker.cooldown = 0;
+  const start = { x: target.x, y: target.y };
+
+  engine.update(0.05);
+  assert.ok(target.jumpTime > 0);
+  assert.equal(target.vanguardJumpAdvancing, true);
+  const jumpFrom = { x: target.jumpFromX, y: target.jumpFromY };
+  const jumpTo = { x: target.jumpToX, y: target.jumpToY };
+
+  engine.update(0.2);
+  const progress = 1 - target.jumpTime / target.jumpDuration;
+  const ease = 0.5 - Math.cos(progress * Math.PI) / 2;
+  const jumpOnlyX = jumpFrom.x + (jumpTo.x - jumpFrom.x) * ease;
+  assert.ok(target.x > jumpOnlyX + 5, "跳跃期间应叠加正常接敌移动，而不是停在跳跃轨迹上");
+  assert.ok(target.x > start.x, "远程目标较远时，近战单位跳跃期间仍应向前推进");
+});
+
+test("怕死不会打断跳舞成员的冲刺", () => {
+  const engine = createEngine(115);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "guangyi", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const dancer = battle.player[0];
+  const vanguard = battle.player[1];
+  const attacker = battle.enemy[0];
+  battle.player.slice(2).forEach((fighter) => { fighter.alive = false; });
+  battle.enemy.slice(1).forEach((fighter) => { fighter.alive = false; });
+  dancer.danceDashTime = 0.3;
+  dancer.abilityMotion = null;
+  attacker.x = dancer.x + 80;
+  attacker.y = dancer.y;
+  attacker.attackType = "ranged";
+  attacker.range = 300;
+  attacker.attack = 40;
+  attacker.cooldown = 0;
+  vanguard.x = attacker.x - 120;
+  vanguard.y = attacker.y + 80;
+  vanguard.cooldown = 99;
+
+  engine.update(0.05);
+
+  assert.ok(dancer.damageTaken > 0, "冲刺中的跳舞成员应正常承受命中");
+  assert.ok(dancer.danceDashTime > 0);
+  assert.equal(dancer.jumpTime, 0, "冲刺中的跳舞成员不应被怕死跳跃打断");
+});
+
 test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   const engine = createEngine(23);
   engine.state.playerLevel = 8;
@@ -2254,7 +2318,7 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
   assert.ok(target.stun > 0, "尖塔压顶应眩晕区域内敌人");
 });
 
-test("帕可天使摸鱼会投出范围治疗并在抵达后回复密集友军", () => {
+test("帕可天使摸鱼按自身属性落地治疗，并留下可进出的持续治疗区", () => {
   const engine = createEngine(173);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2274,7 +2338,8 @@ test("帕可天使摸鱼会投出范围治疗并在抵达后回复密集友军",
   nonHost.x = 710;
   nonHost.y = 370;
   host.hp = host.maxHp * 0.35;
-  nonHost.hp = nonHost.maxHp * 0.5;
+  nonHost.maxHp = 10_000;
+  nonHost.hp = 5_000;
   const hostHpBefore = host.hp;
   const nonHostHpBefore = nonHost.hp;
   const enemyHpBefore = battle.enemy.map((fighter) => fighter.hp);
@@ -2289,12 +2354,41 @@ test("帕可天使摸鱼会投出范围治疗并在抵达后回复密集友军",
 
   engine["updateProjectiles"](battle, 1);
 
-  assert.ok(host.hp > hostHpBefore);
-  assert.ok(nonHost.hp > nonHostHpBefore);
+  const hostInitialHeal = host.hp - hostHpBefore;
+  const highCostInitialHeal = nonHost.hp - nonHostHpBefore;
+  assert.ok(hostInitialHeal > 35);
+  assert.ok(hostInitialHeal < 50);
+  assert.ok(Math.abs(hostInitialHeal - highCostInitialHeal) < 0.001, "治疗量不应按目标最大生命放大");
   assert.deepEqual(battle.enemy.map((fighter) => fighter.hp), enemyHpBefore);
   assert.ok(pako.healingDone > 0);
   assert.ok(battle.effects.some((effect) => effect.text === "天使摸鱼"));
-  assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 142));
+  assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 159));
+  assert.equal(battle.healingZones.length, 1);
+  assert.equal(battle.healingZones[0].radius, 145);
+  assert.equal(battle.healingZones[0].maxLife, 3.2);
+
+  const zone = battle.healingZones[0];
+  host.x = zone.x + zone.radius + 20;
+  const hostHpOutside = host.hp;
+  pako.x = zone.x;
+  pako.y = zone.y;
+  pako.hp = pako.maxHp * 0.4;
+  const pakoHpBeforePulse = pako.hp;
+  const nonHostHpBeforePulse = nonHost.hp;
+
+  engine["updateHealingZones"](battle, 0.7);
+
+  const pakoPulseHeal = pako.hp - pakoHpBeforePulse;
+  const highCostPulseHeal = nonHost.hp - nonHostHpBeforePulse;
+  assert.ok(pakoPulseHeal > 14);
+  assert.ok(pakoPulseHeal < hostInitialHeal);
+  assert.ok(Math.abs(pakoPulseHeal - highCostPulseHeal) < 0.001);
+  assert.equal(host.hp, hostHpOutside, "走出治疗区后不应继续回血");
+  assert.ok(battle.effects.some((effect) => effect.kind === "burst" && effect.color === "#bfffe3"));
+
+  engine["updateHealingZones"](battle, 2.5);
+  assert.equal(battle.healingZones.length, 0);
+  assert.ok(pako.hp > pakoHpBeforePulse + pakoPulseHeal * 3.9, "治疗区应完整触发四次脉冲");
 });
 
 test("轴伊连续扔出五个治疗逐次减弱的橘子", () => {
