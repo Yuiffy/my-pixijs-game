@@ -460,6 +460,7 @@ export class AutoChessEngine {
       energyOnHit: fighter.energyOnHit,
       energyStyle: fighter.energyStyle,
       reborn: fighter.reborn,
+      tauntTime: Number(fighter.tauntTime.toFixed(1)),
       damageDealt: Math.round(fighter.damageDealt),
       healingDone: Math.round(fighter.healingDone),
       shieldingDone: Math.round(fighter.shieldingDone),
@@ -3166,49 +3167,15 @@ export class AutoChessEngine {
         break;
       }
       case "grove_mender": {
-        const center = densest(targets);
-        if (!center) break;
-        const aimX = center.x - source.x;
-        const aimY = center.y - source.y;
-        const baseAngle = Math.atan2(aimY, aimX);
-        const battle = this.state.battle;
-        for (let index = 0; index < SHARK_BARRAGE_COUNT; index += 1) {
-          const t = index / (SHARK_BARRAGE_COUNT - 1);
-          const angle = baseAngle - SHARK_BARRAGE_SPREAD / 2 + t * SHARK_BARRAGE_SPREAD;
-          battle?.projectiles.push({
-            sourceFid: source.fid,
-            team: source.team,
-            x: source.x,
-            y: source.y,
-            velocityX: Math.cos(angle) * SHARK_BARRAGE_SPEED,
-            velocityY: Math.sin(angle) * SHARK_BARRAGE_SPEED,
-            radius: SHARK_BARRAGE_RADIUS,
-            remainingRange: SHARK_BARRAGE_RANGE,
-            damage: source.attack * SHARK_BARRAGE_DAMAGE,
-            burnPower: 0,
-            color: def.accent,
-            size: 9,
-            style: "shark",
-            emoji: "🦈",
-          });
-        }
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.45,
-          size: 70,
-        });
-        this.addEffect({
-          kind: "text",
-          x: source.x,
-          y: source.y - 44,
-          color: def.accent,
-          text: "鲨鱼弹幕",
-          life: 0.55,
-          size: 12,
-        });
+        source.energy = source.maxEnergy;
+        source.barrageActive = true;
+        source.barrageDrainPerSecond = source.maxEnergy / NANA_SHARK_FORM_DURATION;
+        source.abilityAttackBonus = NANA_SHARK_FORM_ATTACK_BONUS;
+        source.abilityAttackBonusTime = NANA_SHARK_FORM_DURATION + 0.05;
+        source.abilityLifesteal = NANA_SHARK_FORM_LIFESTEAL;
+        source.abilityLifestealTime = NANA_SHARK_FORM_DURATION + 0.05;
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 86 });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: def.accent, text: "鲨鱼变身", life: 0.75, size: 12 });
         break;
       }
       case "cinder_ram": {
@@ -3321,13 +3288,15 @@ export class AutoChessEngine {
         break;
       }
       case "mitsuri": {
-        const target = this.nearestTarget(source, targets);
-        if (target) {
-          deal(target, 1.28);
-          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.36, size: 3 });
-        }
-        const recipient = [...allies].sort((left, right) => left.energy - right.energy)[0];
-        if (recipient) this.addEnergy(recipient, 28);
+        addShield(source, source.maxHp * MITSURI_SHIELD_RATIO, 0.5);
+        targets
+          .filter((target) => Math.hypot(target.x - source.x, target.y - source.y) <= MITSURI_TAUNT_RADIUS)
+          .forEach((target) => {
+            target.tauntedByFid = source.fid;
+            target.tauntTime = Math.max(target.tauntTime, MITSURI_TAUNT_DURATION);
+            this.addEffect({ kind: "text", x: target.x, y: target.y - 42, color: def.accent, text: "嘲讽", life: 0.7, size: 11 });
+          });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.8, size: MITSURI_TAUNT_RADIUS + 12 });
         break;
       }
       case "guangyi": {
@@ -3466,11 +3435,29 @@ export class AutoChessEngine {
         break;
       }
       case "tiandou": {
-        [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, 2).forEach((target) => {
-          this.heal(source, target, target.maxHp * 0.17 + source.attack * 0.9);
-          target.abilityMoveSpeed = Math.max(target.abilityMoveSpeed, 16);
-          target.abilityMoveSpeedTime = Math.max(target.abilityMoveSpeedTime, 3);
-        });
+        const center = densest(targets);
+        if (!center) break;
+        const baseAngle = Math.atan2(center.y - source.y, center.x - source.x);
+        for (let index = 0; index < TIANDOU_LOLLIPOP_COUNT; index += 1) {
+          const t = index / (TIANDOU_LOLLIPOP_COUNT - 1);
+          const angle = baseAngle - TIANDOU_LOLLIPOP_SPREAD / 2 + t * TIANDOU_LOLLIPOP_SPREAD;
+          this.state.battle?.projectiles.push({
+            sourceFid: source.fid,
+            team: source.team,
+            x: source.x + Math.cos(angle) * (source.radius + TIANDOU_LOLLIPOP_RADIUS + 3),
+            y: source.y + Math.sin(angle) * (source.radius + TIANDOU_LOLLIPOP_RADIUS + 3),
+            velocityX: Math.cos(angle) * TIANDOU_LOLLIPOP_SPEED,
+            velocityY: Math.sin(angle) * TIANDOU_LOLLIPOP_SPEED,
+            radius: TIANDOU_LOLLIPOP_RADIUS,
+            remainingRange: TIANDOU_LOLLIPOP_RANGE,
+            damage: source.attack * TIANDOU_LOLLIPOP_DAMAGE_MULTIPLIER,
+            burnPower: 0,
+            color: def.accent,
+            size: 18,
+            style: "lollipop",
+            emoji: "🍭",
+          });
+        }
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.65, size: 110 });
         break;
       }
@@ -3677,8 +3664,8 @@ export class AutoChessEngine {
       const battle = this.state.battle;
       if (battle) this.prepareVanguardJump(target, source, battle);
     }
-    if (source.lifesteal > 0)
-      this.heal(source, source, hpLoss * source.lifesteal, false);
+    const lifesteal = source.lifesteal + (source.abilityLifestealTime > 0 ? source.abilityLifesteal : 0);
+    if (lifesteal > 0) this.heal(source, source, hpLoss * lifesteal, false);
 
     if (
       target.team === "player" &&

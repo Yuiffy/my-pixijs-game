@@ -149,6 +149,7 @@ const projectileEmoji = (projectile: Projectile) => {
   if (projectile.style === "shark") return "🦈";
   if (projectile.style === "carrot") return "🥕";
   if (projectile.style === "coin") return "🪙";
+  if (projectile.style === "lollipop") return "🍭";
   return null;
 };
 

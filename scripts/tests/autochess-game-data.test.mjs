@@ -216,6 +216,12 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.zeyin.attackType, "melee");
   assert.equal(data.UNIT_DEFS.zeyin.abilityName, "涅槃重生");
   assert.equal(data.UNIT_DEFS.zeyin.abilityCastTiming, "passive");
+  assert.equal(data.UNIT_DEFS.grove_mender.abilityName, "鲨鱼变身");
+  assert.match(data.UNIT_DEFS.grove_mender.abilityDescription, /攻击力.*吸血/);
+  assert.equal(data.UNIT_DEFS.tiandou.abilityName, "棒棒糖刘海");
+  assert.match(data.UNIT_DEFS.tiandou.abilityDescription, /友军.*回复生命.*敌人.*减速/);
+  assert.equal(data.UNIT_DEFS.mitsuri.abilityName, "站我后面");
+  assert.match(data.UNIT_DEFS.mitsuri.abilityDescription, /护盾.*嘲讽/);
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {

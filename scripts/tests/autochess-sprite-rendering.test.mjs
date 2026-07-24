@@ -131,6 +131,7 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /projectile\.style === "pine_needle"/);
   assert.match(scene, /projectile\.style === "shark"/);
   assert.match(scene, /projectile\.style === "carrot"/);
+  assert.match(scene, /projectile\.style === "lollipop"/);
   assert.match(scene, /effect\.kind === "line"/);
   assert.match(scene, /effect\.kind === "ring"/);
   assert.match(scene, /effect\.kind === "burst"/);

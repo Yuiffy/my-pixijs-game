@@ -1174,17 +1174,15 @@ test("邪恶外星人的贯穿光线沿目标方向发射并命中同线敌人",
   assert.ok(Math.abs(targetCrossProduct) < 0.001);
 });
 
-test("泽音首次倒下后以低生命远程形态涅槃重生，恬豆强化移速持续到期满", () => {
+test("泽音首次倒下后以低生命远程形态涅槃重生", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "zeyin", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "tiandou", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   const zeyin = battle?.player.find((fighter) => fighter.unitId === "zeyin");
-  const tiandou = battle?.player.find((fighter) => fighter.unitId === "tiandou");
-  assert.ok(battle && zeyin && tiandou);
+  assert.ok(battle && zeyin);
   battle.enemy.forEach((fighter, index) => {
     fighter.hp = fighter.maxHp = 99_999;
     fighter.attack = 0;
@@ -1194,8 +1192,6 @@ test("泽音首次倒下后以低生命远程形态涅槃重生，恬豆强化�
   });
   zeyin.x = 280;
   zeyin.y = 360;
-  tiandou.x = 280;
-  tiandou.y = 420;
   const zeyinMaxHp = zeyin.maxHp;
   const zeyinBaseAttack = zeyin.baseAttack;
   const zeyinBaseInterval = zeyin.baseAttackInterval;
@@ -1209,17 +1205,6 @@ test("泽音首次倒下后以低生命远程形态涅槃重生，恬豆强化�
   assert.ok(zeyin.baseAttack >= zeyinBaseAttack * 1.35);
   assert.ok(zeyin.baseAttackInterval < zeyinBaseInterval * 0.71);
 
-  const tiandouBaseSpeed = tiandou.moveSpeed;
-  battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
-  const tiandouTarget = battle.enemy[0];
-  tiandouTarget.x = tiandou.x + Math.max(tiandou.range, tiandou.radius + tiandouTarget.radius + 12) - 1;
-  tiandouTarget.y = tiandou.y;
-  tiandou.energy = tiandou.maxEnergy;
-  engine.update(0.05);
-  assert.equal(tiandou.abilityMoveSpeed, 16);
-  assert.ok(tiandou.abilityMoveSpeedTime > 2.9);
-  engine.update(0.05);
-  assert.ok(tiandou.moveSpeed >= tiandouBaseSpeed + 15);
 });
 
 test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害与眩晕", () => {
@@ -1259,6 +1244,91 @@ test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害�
   assert.ok(battle.enemy.every((enemy) => enemy.stun >= 0.65));
   assert.ok(battle.enemy.every((enemy) => enemy.hp < enemy.maxHp));
   assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 136));
+});
+
+test("七海变身吸血、恬豆棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {
+  const nanaEngine = createEngine(202);
+  nanaEngine.state.playerLevel = 4;
+  nanaEngine.state.board.fill(null);
+  nanaEngine.state.board[0] = { uid: 1, id: "grove_mender", star: 1 };
+  nanaEngine.startBattle();
+  const nanaBattle = nanaEngine.state.battle;
+  const nana = nanaBattle?.player[0];
+  const nanaTarget = nanaBattle?.enemy[0];
+  assert.ok(nanaBattle && nana && nanaTarget);
+  nana.x = 260;
+  nana.y = 360;
+  nanaTarget.x = 400;
+  nanaTarget.y = 360;
+  nanaTarget.hp = nanaTarget.maxHp = 9_999;
+  nanaTarget.armor = 0;
+  nana.hp = nana.maxHp * 0.5;
+  nanaEngine["castAbility"](nana, nanaBattle.enemy);
+  assert.equal(nana.barrageActive, true);
+  assert.equal(nana.abilityAttackBonus, 0.85);
+  assert.equal(nana.abilityLifesteal, 0.45);
+  nana.attack = nana.baseAttack * 1.85;
+  const nanaHpBefore = nana.hp;
+  nanaEngine["basicAttack"](nana, nanaTarget);
+  assert.ok(nana.hp > nanaHpBefore);
+
+  const candyEngine = createEngine(203);
+  candyEngine.state.playerLevel = 4;
+  candyEngine.state.board.fill(null);
+  candyEngine.state.board[0] = { uid: 1, id: "tiandou", star: 1 };
+  candyEngine.state.board[1] = { uid: 2, id: "sui", star: 1 };
+  candyEngine.startBattle();
+  const candyBattle = candyEngine.state.battle;
+  const tiandou = candyBattle?.player.find((fighter) => fighter.unitId === "tiandou");
+  const ally = candyBattle?.player.find((fighter) => fighter.unitId === "sui");
+  const candyTarget = candyBattle?.enemy[0];
+  assert.ok(candyBattle && tiandou && ally && candyTarget);
+  tiandou.x = 260;
+  tiandou.y = 360;
+  ally.x = 355;
+  ally.y = 360;
+  ally.hp = ally.maxHp * 0.5;
+  candyTarget.x = 480;
+  candyTarget.y = 360;
+  candyTarget.hp = candyTarget.maxHp = 9_999;
+  candyTarget.armor = 0;
+  candyEngine["castAbility"](tiandou, candyBattle.enemy);
+  assert.equal(candyBattle.projectiles.filter((projectile) => projectile.style === "lollipop").length, 5);
+  const allyHpBefore = ally.hp;
+  candyEngine["updateProjectiles"](candyBattle, 0.3);
+  assert.ok(ally.hp > allyHpBefore);
+  assert.ok(ally.abilityMoveSpeed >= 16);
+  candyBattle.projectiles = [];
+  ally.x = 260;
+  ally.y = 550;
+  candyEngine["castAbility"](tiandou, candyBattle.enemy);
+  const enemyHpBefore = candyTarget.hp;
+  candyEngine["updateProjectiles"](candyBattle, 0.7);
+  assert.ok(candyTarget.hp < enemyHpBefore);
+  assert.ok(candyTarget.slowTime >= 2.4);
+
+  const tauntEngine = createEngine(204);
+  tauntEngine.state.playerLevel = 4;
+  tauntEngine.state.board.fill(null);
+  tauntEngine.state.board[0] = { uid: 1, id: "mitsuri", star: 1 };
+  tauntEngine.state.board[1] = { uid: 2, id: "sui", star: 1 };
+  tauntEngine.startBattle();
+  const tauntBattle = tauntEngine.state.battle;
+  const mitsuri = tauntBattle?.player.find((fighter) => fighter.unitId === "mitsuri");
+  const closerAlly = tauntBattle?.player.find((fighter) => fighter.unitId === "sui");
+  const tauntedEnemy = tauntBattle?.enemy[0];
+  assert.ok(tauntBattle && mitsuri && closerAlly && tauntedEnemy);
+  mitsuri.x = 330;
+  mitsuri.y = 360;
+  closerAlly.x = 430;
+  closerAlly.y = 360;
+  tauntedEnemy.x = 460;
+  tauntedEnemy.y = 360;
+  tauntEngine["castAbility"](mitsuri, tauntBattle.enemy);
+  assert.ok(mitsuri.shield > 0);
+  assert.equal(tauntedEnemy.tauntedByFid, mitsuri.fid);
+  assert.ok(tauntedEnemy.tauntTime >= 3.2);
+  assert.equal(tauntEngine["resolveCombatTarget"](tauntedEnemy, tauntBattle.player, 0.05)?.fid, mitsuri.fid);
 });
 
 test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", () => {

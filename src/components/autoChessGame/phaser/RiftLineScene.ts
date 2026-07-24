@@ -119,6 +119,7 @@ const projectileEmoji = (projectile: Projectile) => {
   if (projectile.style === "shark") return "🦈";
   if (projectile.style === "carrot") return "🥕";
   if (projectile.style === "coin") return "🪙";
+  if (projectile.style === "lollipop") return "🍭";
   return "";
 };
 
@@ -1431,6 +1432,7 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.slowTime > 0 ? "🐌" : "",
       fighter.burnTime > 0 ? "🔥" : "",
       fighter.stun > 0 ? "✦" : "",
+      fighter.tauntTime > 0 ? "嘲" : "",
       fighter.jumpPending ? "⌁" : "",
       abilityMotion?.kind === "dash" ? "»" : "",
       abilityMotion?.kind === "push" ? "›" : "",
