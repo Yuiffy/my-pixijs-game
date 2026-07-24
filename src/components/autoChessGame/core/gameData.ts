@@ -1096,7 +1096,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   rutice: unit({
     id: "rutice", name: "露蒂丝·诊所护航", title: "露蒂丝Rutice · 决战守卫", glyph: "医", color: "#4b7280", accent: "#90e7df", tier: 5, cost: 5,
-    traits: ["vanguard"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
+    traits: ["vanguard", "mystic"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
     abilityName: "咕咕诊所", abilityDescription: "为全体友军回复生命，并为生命比例最低的两名友军提供护盾。",
     portrait: "/images/livers/rutice.jpg", portraitFocus: "top", shop: true,
   }),

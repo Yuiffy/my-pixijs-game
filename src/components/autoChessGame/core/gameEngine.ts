@@ -969,7 +969,9 @@ export class AutoChessEngine {
               this.sameLocation(location, currentPreferred))
             : null;
           const boardMatch = matches.find((location) => location.zone === "board");
-          const keep = preferredMatch || boardMatch || matches[0];
+          // A newly merged bench unit may trigger the next star tier, but an
+          // existing board unit always owns the final placement.
+          const keep = boardMatch || preferredMatch || matches[0];
           const removals = matches
             .filter((location) => !this.sameLocation(location, keep))
             .slice(0, 2);

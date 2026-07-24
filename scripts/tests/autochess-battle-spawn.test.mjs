@@ -76,6 +76,21 @@ test("跨场上与备战席合成时保留场上棋子的位置", () => {
   assert.equal(engine.state.bench[1], null);
 });
 
+test("连锁合成三星时场上二星优先于新合成的备战席二星", () => {
+  const engine = createEngine(9);
+  engine.state.board.fill(null);
+  engine.state.bench.fill(null);
+  engine.state.board[11] = { uid: 201, id: "sun_guard", star: 2 };
+  engine.state.bench[0] = { uid: 202, id: "sun_guard", star: 2 };
+  engine.state.bench[1] = { uid: 203, id: "sun_guard", star: 1 };
+  engine.state.bench[2] = { uid: 204, id: "sun_guard", star: 1 };
+  engine.state.bench[3] = { uid: 205, id: "sun_guard", star: 1 };
+
+  assert.equal(engine.checkMerges(), true);
+  assert.deepEqual(engine.state.board[11], { uid: 201, id: "sun_guard", star: 3 });
+  assert.ok(engine.state.bench.every((unit) => !unit));
+});
+
 test("已选择的天赋会按回合记入历史", () => {
   const engine = createEngine(9);
   engine.state.phase = "augment";

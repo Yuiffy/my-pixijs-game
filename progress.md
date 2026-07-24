@@ -446,3 +446,11 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 系统 Chrome 使用 seed 4 验证：第 2 战为花呗生活/弹幕加速/体能储备，第 5 战为德川家康/收割/出道推流；实际点击后历史档位正确，耗尽小天赋池后才出现“再次强化”。七张 1440×900 截图均非黑、非透明，逐张打开检查，控制台无 error。
 - 截图：`.tmp/autochess/talents/opening-talents.png`、`talent-codex.png`、`talent-codex-major.png`、`talent-codex-major-bottom.png`、`minor-talents-round-2.png`、`major-talents-round-5.png`、`minor-talents-exhausted-refill.png`。
 - 验证：TypeScript、专项数据/战斗/Phaser 回归 `46/46`、`git diff --check` 与系统 Chrome 专项通过；完整自走棋套件 `113/114`，唯一失败仍是既有“满能量远程单位会先进入攻击距离再施法”断言。仓库长流程 `verify-autochess.cjs` 仍在已有的首战结算等待处超时。
+
+## 2026-07-25 · 连锁三星场上位置优先
+
+- 修复连锁合成的保留位优先级：此前备战席一星先合出的二星会覆盖场上已有二星的优先级，导致最终三星错误留在备战席。
+- 现在每一轮合成均先选择场上材料；仅在该轮没有场上材料时，才保留连锁合成刚生成的位置。
+- 回归覆盖一枚场上一星的跨区二星，以及“场上一枚二星 + 备战席一枚二星与三枚一星”的完整连锁三星场景。
+- 验证：两项升星回归 `2/2`、`pnpm exec tsc --noEmit` 与 `git diff --check` 通过。
+- 系统 Chrome 已确认备战画布截图有效、非黑且布局正常；仓库长流程仍在已有的首局结算等待处超时，与此次合成保留位无调用关系。
