@@ -1380,7 +1380,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private updateFighter(view: Phaser.GameObjects.Container, fighter: Fighter) {
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
-    const abilityMotion = fighter.abilityMotion;
+    const { abilityMotion } = fighter;
     const abilityJumping = abilityMotion?.kind === "jump";
     const jumping = abilityJumping || (fighter.jumpTime > 0 && fighter.jumpDuration > 0);
     const jumpProgress = abilityJumping
@@ -1596,7 +1596,7 @@ export class RiftLineScene extends Phaser.Scene {
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
     view
       .setPosition(effect.x, effect.y)
-      .setAlpha(Math.pow(alpha, 0.65))
+      .setAlpha(alpha ** 0.65)
       .setRotation(effect.kind === "cast" ? progress * 0.9 : 0)
       .setDepth(DEPTH.effects + effect.y + 1);
     graphics.clear();
@@ -1648,7 +1648,7 @@ export class RiftLineScene extends Phaser.Scene {
       }
     } else if (effect.kind === "ring") {
       const radius = effect.size || 80;
-      const arrival = 1 - Math.pow(1 - progress, 3);
+      const arrival = 1 - (1 - progress) ** 3;
       const fieldRadius = Math.max(6, radius * (0.72 + arrival * 0.28));
       graphics
         .setBlendMode(Phaser.BlendModes.SCREEN)

@@ -314,7 +314,7 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
       ctx.fill();
     } else if (effect.kind === "ring") {
       const radius = effect.size || 80;
-      const arrival = 1 - Math.pow(1 - progress, 3);
+      const arrival = 1 - (1 - progress) ** 3;
       const fieldRadius = Math.max(6, radius * (0.72 + arrival * 0.28));
       ctx.globalCompositeOperation = "screen";
       ctx.globalAlpha = alpha * 0.12;
