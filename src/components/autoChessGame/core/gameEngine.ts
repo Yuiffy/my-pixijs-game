@@ -337,6 +337,7 @@ export class AutoChessEngine {
       gold: 8,
       playerLevel: STARTING_PLAYER_LEVEL,
       upgradeRemaining: upgradeCostForLevel(STARTING_PLAYER_LEVEL) || 0,
+      upgradeDiscountCarry: 0,
       score: 0,
       bestScore,
       streak: 0,
@@ -723,7 +724,12 @@ export class AutoChessEngine {
   private levelUp() {
     if (this.isMaxPlayerLevel) return false;
     this.state.playerLevel = (this.state.playerLevel + 1) as PlayerLevel;
-    this.state.upgradeRemaining = upgradeCostForLevel(this.state.playerLevel) || 0;
+    const nextCost = upgradeCostForLevel(this.state.playerLevel) || 0;
+    const carriedDiscount = Math.min(nextCost, this.state.upgradeDiscountCarry);
+    this.state.upgradeRemaining = nextCost - carriedDiscount;
+    this.state.upgradeDiscountCarry = this.isMaxPlayerLevel
+      ? 0
+      : this.state.upgradeDiscountCarry - carriedDiscount;
     this.setToast(
       `升至 ${bookLevelForPlayerLevel(this.state.playerLevel)} 本，现在可上阵 ${this.boardCap} 名单位！`,
       "good",
@@ -4234,10 +4240,12 @@ export class AutoChessEngine {
       return;
     }
     if (result.upgradeDiscount > 0 && !this.isMaxPlayerLevel) {
-      this.state.upgradeRemaining = Math.max(
-        1,
-        this.state.upgradeRemaining - result.upgradeDiscount,
+      const appliedDiscount = Math.min(
+        this.state.upgradeRemaining,
+        result.upgradeDiscount,
       );
+      this.state.upgradeRemaining -= appliedDiscount;
+      this.state.upgradeDiscountCarry += result.upgradeDiscount - appliedDiscount;
     }
     if (this.state.round === CAMPAIGN_ROUNDS && result.won) {
       this.state.endlessUnlocked = true;
@@ -4361,6 +4369,7 @@ export class AutoChessEngine {
         level: this.state.playerLevel,
         bookLevel: bookLevelForPlayerLevel(this.state.playerLevel),
         upgradeRemaining: this.upgradeCost,
+        upgradeDiscountCarry: this.state.upgradeDiscountCarry,
         nextLevelInitialCost: this.isMaxPlayerLevel
           ? null
           : upgradeCostForLevel(this.state.playerLevel),

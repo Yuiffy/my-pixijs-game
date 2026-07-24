@@ -331,7 +331,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
         {tab === "odds" && (
           <section>
             <h2>各等级商店抽取概率</h2>
-            <p style={{ color: "#8da7b8" }}>每个商店格独立按下表抽取。升本需要一次付清当前剩余费用，每完成一回合费用自动减少 1 金币，最低为 1。</p>
+            <p style={{ color: "#8da7b8" }}>每个商店格独立按下表抽取。升本需要一次付清当前剩余费用，每完成一回合费用自动减少 1 金币，最低可减至 0；零费后继续获得的减费会结转到后续本级。</p>
             <table style={{ width: "100%", borderCollapse: "collapse", background: "#0a1a26", border: "1px solid #294658" }}>
               <thead><tr><th style={cellStyle}>等级</th><th style={cellStyle}>人口</th><th style={cellStyle}>初始升本费用</th>{[1, 2, 3, 4, 5].map((value) => <th key={value} style={cellStyle}>{value} 费</th>)}</tr></thead>
               <tbody>{PLAYER_LEVELS.map((level) => <tr key={level}><td style={cellStyle}>{bookLevelForPlayerLevel(level)} 本</td><td style={cellStyle}>{PLAYER_LEVEL_CONFIG[level].boardCap}</td><td style={cellStyle}>{PLAYER_LEVEL_CONFIG[level].upgradeCost ?? "满级"}</td>{tierOddsForLevel(level).map((chance, index) => <td key={index} style={{ ...cellStyle, color: chance ? "#dcefff" : "#526775" }}>{chance}%</td>)}</tr>)}</tbody>
@@ -339,7 +339,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
             <h3 style={{ marginTop: 22 }}>数值节奏</h3>
             <ul style={{ color: "#a8bdca", lineHeight: 2 }}>
               <li>3→4 本初始 5 金；8→9 本初始 36 金；9→10 本初始 46 金。</li>
-              <li>自然等待会降低升本负担，抢节奏则需要牺牲购买棋子的金币。</li>
+              <li>自然等待会降低升本负担；未及时升本不会损失减费，溢出部分会继续抵扣下一本。</li>
               <li>刷新花费 1 金；锁定后下回合保留货架，主动刷新会自动解锁。</li>
             </ul>
           </section>
@@ -353,7 +353,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
             <h2>能量</h2>
             <p>棋子能量满后按技能类别触发：自保需受击才放；支援护盾满能量即放；支援治疗要等友军生命降到约 70% 才放；突进与远程进攻满能量即放；近距进攻需进入普攻距离。每张棋子卡和悬浮详情都会写明初始能量、回能来源与技能释放类别：自动回能按秒累积；攻击回能在普攻命中后获得；受击回能在被普攻命中后获得。能量数值会受到羁绊、开局与天赋影响。</p>
             <h2>经济</h2>
-            <p>没有固定工资：每击败一名敌人，按其星级获得赏金，1/2/3 星分别提供 1/2/3 金。即使战斗失利，已击败敌人的赏金也会正常结算。每 5 金提供 1 利息，最多计算 20 金，即最高 4 利息；理财Ⅱ改为每 4 金提供 1 利息且无上限。连胜和理财还能提供额外收入。升本是“支付当前剩余费用直接升级”，最高 10 本可上阵 10 人。</p>
+            <p>没有固定工资：每击败一名敌人，按其星级获得赏金，1/2/3 星分别提供 1/2/3 金。即使战斗失利，已击败敌人的赏金也会正常结算。每 5 金提供 1 利息，最多计算 20 金，即最高 4 利息；理财Ⅱ改为每 4 金提供 1 利息且无上限。连胜和理财还能提供额外收入。升本是“支付当前剩余费用直接升级”；每回合的自然减费最低可将费用降至 0，溢出减费会结转到后续本级。最高 10 本可上阵 10 人。</p>
           </section>
         )}
       </main>

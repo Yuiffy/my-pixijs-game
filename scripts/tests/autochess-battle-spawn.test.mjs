@@ -1340,6 +1340,53 @@ test("连续升本可以到达十本并上阵十人", () => {
   assert.equal(engine.upgradeCost, null);
 });
 
+test("自然减费可降到零，溢出减费会结转并连续抵扣后续本级", () => {
+  const engine = createEngine(307);
+  engine.state.upgradeRemaining = 1;
+
+  const finishRound = () => {
+    engine.startBattle();
+    assert.ok(engine.state.battle);
+    engine.state.battle.enemy.forEach((fighter) => {
+      fighter.hp = 0;
+      fighter.alive = false;
+    });
+    engine.update(0.05);
+    assert.equal(engine.state.result.upgradeDiscount, 1);
+    engine.continueAfterResult();
+    if (engine.state.phase === "augment") engine.chooseAugment(0);
+  };
+
+  finishRound();
+  assert.equal(engine.upgradeCost, 0);
+  assert.equal(engine.state.upgradeDiscountCarry, 0);
+
+  finishRound();
+  assert.equal(engine.upgradeCost, 0);
+  assert.equal(engine.state.upgradeDiscountCarry, 1);
+
+  engine.state.gold = 0;
+  engine.buyExperience();
+  assert.equal(engine.state.playerLevel, 4);
+  assert.equal(engine.upgradeCost, 8);
+  assert.equal(engine.state.upgradeDiscountCarry, 0);
+
+  engine.state.upgradeRemaining = 0;
+  engine.state.upgradeDiscountCarry = 25;
+  engine.buyExperience();
+  assert.equal(engine.state.playerLevel, 5);
+  assert.equal(engine.upgradeCost, 0);
+  assert.equal(engine.state.upgradeDiscountCarry, 11);
+  engine.buyExperience();
+  assert.equal(engine.state.playerLevel, 6);
+  assert.equal(engine.upgradeCost, 9);
+  assert.equal(engine.state.upgradeDiscountCarry, 0);
+
+  const textState = JSON.parse(engine.renderTextState());
+  assert.equal(textState.player.upgradeRemaining, 9);
+  assert.equal(textState.player.upgradeDiscountCarry, 0);
+});
+
 test("零赏金时花呗只抵扣当回合收入，不会产生负金币", () => {
   const engine = createEngine(305);
   engine.state.gold = 0;
@@ -2107,7 +2154,7 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
   assert.ok(target.stun > 0, "尖塔压顶应眩晕区域内敌人");
 });
 
-test("帕可全配音实况会打断密集敌人并为主持成员补充能量", () => {
+test("帕可天使摸鱼会投出范围治疗并在抵达后回复密集友军", () => {
   const engine = createEngine(173);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2120,31 +2167,78 @@ test("帕可全配音实况会打断密集敌人并为主持成员补充能量",
   const host = battle?.player.find((fighter) => fighter.unitId === "cog_scribe");
   const nonHost = battle?.player.find((fighter) => fighter.unitId === "mossback");
   assert.ok(battle && pako && host && nonHost);
-  battle.enemy.forEach((fighter, index) => {
-    fighter.x = 650 + index * 28;
-    fighter.y = 350 + index * 18;
-    fighter.attack = 0;
-    fighter.armor = 0;
-    fighter.dodgeChance = 0;
-    fighter.hp = fighter.maxHp = 99_999;
-    fighter.cooldown = 99;
-  });
-  host.energy = 0;
-  nonHost.energy = 0;
-  const target = battle.enemy[0];
-  const hpBefore = target.hp;
+  pako.x = 300;
+  pako.y = 350;
+  host.x = 650;
+  host.y = 340;
+  nonHost.x = 710;
+  nonHost.y = 370;
+  host.hp = host.maxHp * 0.35;
+  nonHost.hp = nonHost.maxHp * 0.5;
+  const hostHpBefore = host.hp;
+  const nonHostHpBefore = nonHost.hp;
+  const enemyHpBefore = battle.enemy.map((fighter) => fighter.hp);
 
   engine.castAbility(pako, battle.enemy);
 
-  const dubBeam = battle.effects.find((effect) => effect.kind === "line" && effect.size === 7);
-  assert.ok(dubBeam);
-  assert.equal(dubBeam.x, pako.x);
-  assert.equal(dubBeam.y, pako.y);
-  assert.ok(Math.hypot(dubBeam.x2 - target.x, dubBeam.y2 - target.y) < 1);
-  assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "pako"));
-  assert.ok(target.hp < hpBefore);
-  assert.ok(target.stun >= 0.72);
-  assert.equal(host.energy, 18);
-  assert.equal(nonHost.energy, 0);
-  assert.ok(battle.effects.some((effect) => effect.text === "全配音"));
+  const angelFish = battle.projectiles.find((projectile) => projectile.impactAbilityId === "pako");
+  assert.ok(angelFish);
+  assert.equal(angelFish.emoji, "🐟");
+  assert.equal(host.hp, hostHpBefore, "治疗弹抵达前不应提前回血");
+  assert.equal(nonHost.hp, nonHostHpBefore, "治疗弹抵达前不应提前回血");
+
+  engine["updateProjectiles"](battle, 1);
+
+  assert.ok(host.hp > hostHpBefore);
+  assert.ok(nonHost.hp > nonHostHpBefore);
+  assert.deepEqual(battle.enemy.map((fighter) => fighter.hp), enemyHpBefore);
+  assert.ok(pako.healingDone > 0);
+  assert.ok(battle.effects.some((effect) => effect.text === "天使摸鱼"));
+  assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 142));
+});
+
+test("轴伊连续扔出五个治疗逐次减弱的橘子", () => {
+  const engine = createEngine(174);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "cog_scribe", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "pako", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const joi = battle?.player.find((fighter) => fighter.unitId === "cog_scribe");
+  const weakest = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  const other = battle?.player.find((fighter) => fighter.unitId === "pako");
+  assert.ok(battle && joi && weakest && other);
+  weakest.maxHp = 10_000;
+  weakest.hp = 100;
+  other.hp = other.maxHp;
+
+  engine.castAbility(joi, battle.enemy);
+
+  const scheduled = battle.projectileVolley.filter((shot) => shot.supportHealMultiplier !== undefined);
+  assert.equal(scheduled.length, 5);
+  assert.deepEqual(
+    scheduled.map((shot) => shot.supportHealMultiplier),
+    [1, 0.82, 0.66, 0.54, 0.44],
+  );
+
+  const heals = [];
+  for (let shot = 0; shot < 5; shot += 1) {
+    engine["updateProjectileVolley"](battle, shot === 0 ? 0 : 0.201);
+    const orange = battle.projectiles.find((projectile) => projectile.impactAbilityId === "cog_scribe");
+    assert.ok(orange);
+    assert.equal(orange.emoji, "🍊");
+    assert.equal(orange.impactTargetFid, weakest.fid);
+    const hpBefore = weakest.hp;
+    engine["updateProjectiles"](battle, 1);
+    heals.push(weakest.hp - hpBefore);
+  }
+
+  assert.equal(battle.projectileVolley.filter((shot) => shot.supportHealMultiplier !== undefined).length, 0);
+  assert.equal(heals.length, 5);
+  heals.slice(1).forEach((amount, index) => {
+    assert.ok(amount < heals[index], `第 ${index + 2} 个橘子的治疗量应低于前一颗`);
+  });
+  assert.ok(joi.healingDone > 0);
 });

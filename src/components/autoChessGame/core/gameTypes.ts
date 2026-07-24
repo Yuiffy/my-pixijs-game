@@ -346,6 +346,7 @@ export interface GameState {
   gold: number;
   playerLevel: PlayerLevel;
   upgradeRemaining: number;
+  upgradeDiscountCarry: number;
   score: number;
   bestScore: number;
   streak: number;
