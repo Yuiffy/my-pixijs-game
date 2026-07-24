@@ -66,7 +66,7 @@ function ActionButton({ tone = "neutral", className = "", children, ...props }: 
   return <button className={`rift-action rift-action-${tone} ${className}`} {...props}>{children}</button>;
 }
 
-function HudHeader({ state, interestIncome }: { state: NonNullable<AutoChessEngine["state"]>; interestIncome: number }) {
+function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) {
   const progress = state.phase === "title" ? 0 : Math.min(100, ((state.round - 1) / state.maxRounds) * 100);
   return (
     <header className="rift-dom-header" style={{ fontFamily: FONT }}>
@@ -89,7 +89,6 @@ function HudHeader({ state, interestIncome }: { state: NonNullable<AutoChessEngi
       ) : (
         <div className="rift-header-metrics">
           <div className="rift-header-metric rift-header-core"><span>核心</span><b>{state.hp}<small>/{state.maxHp}</small></b><i><em style={{ width: `${Math.max(0, (state.hp / state.maxHp) * 100)}%` }} /></i></div>
-          <div className="rift-header-metric rift-header-gold"><span>金币</span><b>{state.gold}</b><small>利息 {interestIncome}</small></div>
           <div className="rift-header-metric rift-header-score"><span>积分</span><b>{state.score.toLocaleString()}</b><small>{state.streak > 0 ? `连胜 ${state.streak}` : "等待首胜"}</small></div>
         </div>
       )}
@@ -126,7 +125,7 @@ export default function RiftHud({ engine, onAction }: Props) {
   if (state.phase === "title") {
     return (
       <div className="rift-dom-layer rift-dom-title" style={{ fontFamily: FONT }}>
-        <HudHeader state={state} interestIncome={engine.interestIncome} />
+        <HudHeader state={state} />
         <div className="rift-dom-title-body">
           <section className="rift-title-copy">
             <span className="rift-eyebrow">RIFT LINE // 08 WAVE EXPEDITION</span>
@@ -163,7 +162,7 @@ export default function RiftHud({ engine, onAction }: Props) {
   if (state.phase === "gameover") {
     return (
       <div className="rift-dom-layer rift-dom-modal-phase" style={{ fontFamily: FONT }}>
-        <HudHeader state={state} interestIncome={engine.interestIncome} />
+        <HudHeader state={state} />
         <section className={`rift-dom-phase-card ${state.finalWon ? "is-win" : "is-loss"}`}>
           <span className="rift-eyebrow">RUN COMPLETE // {state.finalWon ? "RIFT SEALED" : "LINE LOST"}</span>
           <h1>{state.finalWon ? "裂隙已封闭" : "战线已失守"}</h1>
@@ -187,13 +186,13 @@ export default function RiftHud({ engine, onAction }: Props) {
 
   return (
     <div className="rift-dom-layer" style={{ fontFamily: FONT }}>
-      <HudHeader state={state} interestIncome={engine.interestIncome} />
+      <HudHeader state={state} />
       {state.phase === "preparation" && (
         <>
           <div className="rift-dom-stage">
             <aside className="rift-dom-shop-desktop">
               <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? "MAX LEVEL" : `下本还需 ${engine.upgradeCost} 金`}</small></div></div>
-              <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>本战赏金 <b>{engine.potentialBounty}</b></span><span>利息 <b>+{engine.interestIncome}</b></span><span>连胜 <b>{state.streak || "—"}</b></span></div>
+              <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>本战赏金 <b>{engine.potentialBounty}</b></span><InterestInfo engine={engine} /><span>连胜 <b>{state.streak || "—"}</b></span></div>
               <div className="rift-tier-odds">{odds.map((chance, index) => <span key={index} className={`tier-${index + 1} ${chance ? "" : "is-muted"}`}><i>{index + 1}</i><b>{chance}%</b></span>)}</div>
               <div className="rift-shop-list">{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} />)}</div>
               <div className="rift-dom-shop-actions"><ActionButton onClick={() => dispatch({ type: "buyXp" })} disabled={engine.isMaxPlayerLevel || state.gold < (engine.upgradeCost ?? Number.POSITIVE_INFINITY)}><span>升本</span><b>{engine.isMaxPlayerLevel ? "MAX" : engine.upgradeCost}</b></ActionButton><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></div>
@@ -274,7 +273,7 @@ function ShopSheet({ engine, onClose, onAction }: { engine: AutoChessEngine; onC
   const ownedStars = (unitId: string) => countOwnedStars([...engine.state.board, ...engine.state.bench], unitId);
   return (
     <Sheet title="战术商店" eyebrow="SHOP / 五张随机单位" onClose={onClose}>
-      <div className="rift-sheet-summary"><span>金币 <b>{engine.state.gold}</b></span><span>概率 <b>{tierOddsForLevel(engine.state.playerLevel).filter(Boolean).map((chance, index) => `${index + 1}费 ${chance}%`).join(" · ")}</b></span></div>
+      <div className="rift-sheet-summary"><span>金币 <b>{engine.state.gold}</b></span><InterestInfo engine={engine} compact /><span>概率 <b>{tierOddsForLevel(engine.state.playerLevel).filter(Boolean).map((chance, index) => `${index + 1}费 ${chance}%`).join(" · ")}</b></span></div>
       <div className="rift-sheet-shop-list">{engine.state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => onAction({ type: "shop", index })} />)}</div>
       <div className="rift-dom-sheet-grid"><ActionButton onClick={() => onAction({ type: "buyXp" })} disabled={engine.isMaxPlayerLevel || engine.state.gold < (engine.upgradeCost ?? Number.POSITIVE_INFINITY)}>升本 · {engine.isMaxPlayerLevel ? "MAX" : engine.upgradeCost}</ActionButton><ActionButton tone="lock" className={engine.state.shopLocked ? "is-selected" : ""} onClick={() => onAction({ type: "lock" })}>{engine.state.shopLocked ? "已锁定" : "锁定商店"}</ActionButton><ActionButton tone="economic" onClick={() => onAction({ type: "reroll" })} disabled={!engine.state.freeRerollCharges && engine.state.gold < 1}>刷新 · {engine.state.freeRerollCharges ? `免费 ${engine.state.freeRerollCharges}` : 1}</ActionButton></div>
     </Sheet>
@@ -286,11 +285,24 @@ function BenchSheet({ engine, selected, onClose, onAction }: { engine: AutoChess
     <Sheet title="备战席" eyebrow="ROSTER / 点击棋子再点目标格换位" onClose={onClose}>
       <div className="rift-sheet-bench-grid">{engine.state.bench.map((unit, index) => {
         const location: UnitLocation = { zone: "bench", index };
-        return <button key={index} className={engine.state.selected?.zone === "bench" && engine.state.selected.index === index ? "selected" : ""} onClick={() => onAction({ type: "slot", location })}>{unit ? <><span className="rift-dom-bench-portrait" style={{ borderColor: UNIT_DEFS[unit.id].accent }}><UnitPortrait unitId={unit.id} size={42} /></span><b>{UNIT_DEFS[unit.id].name}</b><span className="rift-bench-stars">{STAR_LABEL[unit.star]}</span></> : <><span className="rift-empty-slot">+</span><small>空位</small></>}</button>;
+        const sellValue = unit ? engine.getUnitSellValue(unit) : 0;
+        return <button key={index} className={engine.state.selected?.zone === "bench" && engine.state.selected.index === index ? "selected" : ""} onClick={() => onAction({ type: "slot", location })}>{unit ? <><span className="rift-dom-bench-portrait" style={{ borderColor: UNIT_DEFS[unit.id].accent }}><UnitPortrait unitId={unit.id} size={42} /></span><b>{UNIT_DEFS[unit.id].name}</b><span className="rift-bench-stars">{STAR_LABEL[unit.star]}</span><span className={`rift-bench-value ${sellValue > 5 ? "is-high" : ""}`} aria-label={`回收价值 ${sellValue} 金币`}><i aria-hidden="true" /><b>{sellValue}</b></span></> : <><span className="rift-empty-slot">+</span><small>空位</small></>}</button>;
       })}</div>
       <div className="rift-sheet-selection">{selected ? <><span className="rift-status-dot" />已选择 <b>{UNIT_DEFS[selected.id].name}</b> · 点击棋盘目标格可换位</> : "点击一个棋子开始布阵；右键棋子可快速回收"}</div>
-      <ActionButton tone="danger" disabled={!selected} onClick={() => onAction({ type: "sell" })}>出售选中棋子 <b>{selected ? `+${UNIT_DEFS[selected.id].cost}` : ""}</b></ActionButton>
+      <ActionButton tone="danger" disabled={!selected} onClick={() => onAction({ type: "sell" })}>出售选中棋子 <b>{selected ? `+${engine.getUnitSellValue(selected)}` : ""}</b></ActionButton>
     </Sheet>
+  );
+}
+
+function InterestInfo({ engine, compact = false }: { engine: AutoChessEngine; compact?: boolean }) {
+  const financeLevel = engine.getTraitStatus("finance").level;
+  const enhanced = financeLevel >= 2;
+  const rule = enhanced ? "理财Ⅱ：每 4 金币提供 1 利息，且不设上限。" : "每 5 金币提供 1 利息，最多计算 20 金币（最高 4 利息）。";
+  return (
+    <details className={`rift-interest-info ${compact ? "is-compact" : ""}`}>
+      <summary><span>利息</span><b>+{engine.interestIncome}</b><i aria-hidden="true">i</i></summary>
+      <div role="tooltip"><strong>{enhanced ? "理财Ⅱ利息" : "利息规则"}</strong><span>{rule}</span><small>当前 {engine.state.gold} 金币，本回合可得 {engine.interestIncome} 利息。</small></div>
+    </details>
   );
 }
 

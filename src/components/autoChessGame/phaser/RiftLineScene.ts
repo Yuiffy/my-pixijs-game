@@ -876,7 +876,19 @@ export class RiftLineScene extends Phaser.Scene {
       "#e5f4ff",
       textStyle,
     ).setOrigin(0.5, 0.5);
-    this.phaseLayer.add([portrait, stars, name]);
+    const value = isBench ? this.bridge.engine.getUnitSellValue(unit) : 0;
+    const valueColor = value > 5 ? COLORS.gold : "#b7a271";
+    const valueLabel = isBench
+      ? this.text(
+        compact ? rect.x + rect.width - 7 : rect.x + rect.width / 2,
+        compact ? rect.y + 8 : rect.y + 51,
+        `● ${value}`,
+        compact ? 8 : 9,
+        valueColor,
+        { ...textStyle, strokeThickness: value > 5 ? 2 : 1 },
+      ).setOrigin(compact ? 1 : 0.5, 0.5)
+      : null;
+    this.phaseLayer.add(valueLabel ? [portrait, stars, name, valueLabel] : [portrait, stars, name]);
   }
 
   private slotRect(location: UnitLocation, compact = this.isCompact()) {
@@ -2223,7 +2235,21 @@ export class RiftLineScene extends Phaser.Scene {
     const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 280, scale);
     const container = this.add.container(x, y).setScale(scale);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(def.accent).color));
-    container.add(this.text(padding, titleY, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, title, "#f1f8ff", { fontStyle: "bold" }));
+    const priceLabel = `${def.cost} 费`;
+    const priceProbe = this.text(0, 0, priceLabel, title - 2, COLORS.gold, { fontStyle: "bold" }).setVisible(false);
+    const priceWidth = Math.ceil(priceProbe.width) + 20;
+    priceProbe.destroy();
+    const titleLabel = this.truncateText(`${def.name} ${"★".repeat(star)}`, contentWidth - priceWidth - 12, title, { fontStyle: "bold" });
+    const priceBackplate = this.add.graphics();
+    priceBackplate.fillStyle(Phaser.Display.Color.HexStringToColor(COLORS.gold).color, 0.12);
+    priceBackplate.fillRoundedRect(width - padding - priceWidth, titleY - 4, priceWidth, title + 8, 7);
+    priceBackplate.lineStyle(1, Phaser.Display.Color.HexStringToColor(COLORS.gold).color, 0.7);
+    priceBackplate.strokeRoundedRect(width - padding - priceWidth, titleY - 4, priceWidth, title + 8, 7);
+    container.add([
+      this.text(padding, titleY, titleLabel, title, "#f1f8ff", { fontStyle: "bold" }),
+      priceBackplate,
+      this.text(width - padding - priceWidth / 2, titleY + title / 2, priceLabel, title - 2, COLORS.gold, { fontStyle: "bold" }).setOrigin(0.5),
+    ]);
     detailText.setPosition(padding, detailY);
     container.add(detailText);
     const energy = fighter

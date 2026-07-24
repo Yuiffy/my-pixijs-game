@@ -220,7 +220,7 @@ const SUN_GUARD_COIN_SPEED = 380;
 const SUN_GUARD_COIN_RANGE = 480;
 const SUN_GUARD_COIN_DAMAGE = 0.72;
 const SUN_GUARD_COIN_RADIUS = 9;
-const SUN_GUARD_SHIELD_RATIO = 0.35;
+const SUN_GUARD_SHIELD_RATIO = 0.3;
 /** 雅吨辣福：打翻火锅灼烧范围 */
 const RIFT_BRAWLER_HOTPOT_RADIUS = 98;
 const RIFT_BRAWLER_SELF_BURN = 0.85;
@@ -890,8 +890,7 @@ export class AutoChessEngine {
     if (this.state.phase !== "preparation" || !this.state.selected) return;
     const unit = this.getAt(this.state.selected);
     if (!unit) return;
-    const copies = unit.star === 1 ? 1 : unit.star === 2 ? 3 : 9;
-    const refund = UNIT_DEFS[unit.id].cost * copies;
+    const refund = this.getUnitSellValue(unit);
     this.setAt(this.state.selected, null);
     this.state.selected = null;
     this.state.gold += refund;
@@ -899,6 +898,11 @@ export class AutoChessEngine {
       `已回收 ${UNIT_DEFS[unit.id].name}，返还 ${refund} 金币。`,
       "info",
     );
+  }
+
+  public getUnitSellValue(unit: OwnedUnit) {
+    const copies = unit.star === 1 ? 1 : unit.star === 2 ? 3 : 9;
+    return UNIT_DEFS[unit.id].cost * copies;
   }
 
   private allLocations() {

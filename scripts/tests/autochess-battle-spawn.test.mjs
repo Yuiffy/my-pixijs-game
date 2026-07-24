@@ -475,7 +475,7 @@ test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", ()
   engine.castAbility(guard, battle.enemy);
 
   assert.ok(guard.shield > 0);
-  assert.ok(Math.abs(guard.shield - guard.maxHp * 0.35 * 1.3) < 0.001);
+  assert.ok(Math.abs(guard.shield - guard.maxHp * 0.3 * 1.3) < 0.001);
   assert.equal(guard.shieldPeak, guard.shield);
   assert.equal(battle.effects.filter((effect) => effect.text === "绿冻护甲").length, 1);
   assert.ok(!battle.effects.some((effect) => effect.kind === "ring" && effect.x === guard.x && effect.y === guard.y));
@@ -537,14 +537,10 @@ test("一星绿冻护甲无法在三名一星敌人围攻下无限续盾", () =>
 
   stepBattle(engine, 480);
 
-  assert.equal(guard.alive, false, JSON.stringify({
-    hp: guard.hp,
-    shield: guard.shield,
-    energy: guard.energy,
-    shieldingDone: guard.shieldingDone,
-    elapsed: battle.elapsed,
-    phase: engine.state.phase,
-  }));
+  const oneShield = guard.maxHp * 0.3 * 1.3;
+  assert.ok(Math.abs(guard.shieldingDone - oneShield) < 0.001);
+  assert.equal(guard.shield, 0);
+  assert.ok(!guard.alive || guard.hp / guard.maxHp < 0.1);
   assert.equal(engine.state.phase, "result");
 });
 

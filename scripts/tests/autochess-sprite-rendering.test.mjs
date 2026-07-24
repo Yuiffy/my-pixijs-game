@@ -387,6 +387,18 @@ test("Phaser 备战信息恢复商店概率、激活羁绊、敌情和快捷回�
   assert.match(scene, /回收 \+\$\{refund\}/);
 });
 
+test("经济信息只在商店出现，并提供利息规则与清晰的备战价值", () => {
+  assert.doesNotMatch(hud, /rift-header-gold/);
+  assert.match(hud, /function InterestInfo/);
+  assert.match(hud, /每 5 金币提供 1 利息/);
+  assert.match(hud, /理财Ⅱ：每 4 金币提供 1 利息/);
+  assert.match(hud, /rift-bench-value/);
+  assert.match(engine, /public getUnitSellValue/);
+  assert.match(scene, /getUnitSellValue\(unit\)/);
+  assert.match(scene, /const priceLabel = `\$\{def\.cost\} 费`/);
+  assert.match(scene, /priceBackplate/);
+});
+
 test("场景预加载单位头像并保留缺图降级纹理", () => {
   assert.match(assets, /Object\.values\(UNIT_DEFS\)/);
   assert.match(assets, /scene\.load\.image/);
