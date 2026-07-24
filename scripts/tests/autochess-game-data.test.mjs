@@ -315,11 +315,12 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.timid, undefined);
   assert.equal(data.TRAIT_IDS.includes("timid"), false);
   assert.equal(data.TRAITS.vanguard.name, "怕死");
-  ["sui_cat", "sui", "sui_bird", "nori", "youyi", "lovely"].forEach((id) => {
+  ["sui_cat", "sui", "sui_bird", "nori", "youyi"].forEach((id) => {
     assert.ok(data.UNIT_DEFS[id].traits.includes("vanguard"));
   });
   assert.equal(data.UNIT_DEFS.tiandou.traits.includes("vanguard"), false);
   assert.equal(data.UNIT_DEFS.tiandou.traits.includes("mystic"), false);
+  assert.equal(data.UNIT_DEFS.lovely.traits.includes("vanguard"), false);
   assert.equal(data.TRAITS.rift, undefined);
   assert.equal(data.TRAITS.clockwork, undefined);
   assert.equal(data.TRAITS.brawler, undefined);

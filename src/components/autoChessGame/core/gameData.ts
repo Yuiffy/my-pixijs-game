@@ -1059,7 +1059,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   lovely: unit({
     id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
-    traits: ["assassin", "host", "dance", "vanguard"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
+    traits: ["assassin", "host", "dance"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
     abilityName: "捏捏摸摸", abilityDescription: "持续捏住最近的一名敌人，双方都无法行动；期间持续造成伤害，并将伤害的大部分转化为自身生命。",
     portrait: "/images/livers/lovely.webp", portraitFocus: "top", shop: true,
   }),
