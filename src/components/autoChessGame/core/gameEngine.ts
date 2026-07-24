@@ -152,6 +152,15 @@ const CHRONOSPHERE_DURATION = 2.8;
 const NANA_SHARK_FORM_DURATION = 5;
 const NANA_SHARK_FORM_ATTACK_BONUS = 0.85;
 const NANA_SHARK_FORM_LIFESTEAL = 0.45;
+/** 蛙梓：持续歌唱期间的群体治疗与火焰弹。 */
+const CINDER_RAM_SONG_DURATION = 5.5;
+const CINDER_RAM_SONG_HEAL_INTERVAL = 0.6;
+const CINDER_RAM_SONG_HEAL_RATIO = 0.032;
+const CINDER_RAM_SONG_RANGE = 235;
+const CINDER_RAM_FIREBALL_SPEED = 640;
+const CINDER_RAM_FIREBALL_DAMAGE = 0.9;
+const CINDER_RAM_FIREBALL_BURN = 0.9;
+const CINDER_RAM_FIREBALL_SPLASH = 68;
 /** 恬豆：可被双方碰撞消耗的棒棒糖 */
 const TIANDOU_LOLLIPOP_COUNT = 5;
 const TIANDOU_LOLLIPOP_SPREAD = Math.PI * 0.72;
@@ -167,6 +176,16 @@ const TIANDOU_LOLLIPOP_SLOW_DURATION = 2.4;
 const MITSURI_TAUNT_RADIUS = 155;
 const MITSURI_TAUNT_DURATION = 3.2;
 const MITSURI_SHIELD_RATIO = 0.22;
+/** 山猪王「山猪冲阵」 */
+const SEKI_CHARGE_RADIUS = 132;
+const SEKI_CHARGE_SHIELD_RATIO = 0.2;
+/** 礼墨「礼小虎出击」 */
+const SUMI_SEAL_RADIUS = 128;
+const SUMI_SEAL_ARMOR_PENALTY = 9;
+const SUMI_SEAL_DURATION = 2.8;
+/** 塔神「尖塔压顶」 */
+const TOWER_GOD_TOWER_RADIUS = 146;
+const TOWER_GOD_TOWER_STUN = 0.82;
 /** 狍子偶像：双方均被锁定的持续施法。 */
 const LOVELY_CHANNEL_DURATION = 3.4;
 const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
@@ -1055,6 +1074,7 @@ export class AutoChessEngine {
         danceDashDodge: danceLevel ? DANCE_DASH_DODGE[danceLevel] : 0,
         barrageActive: false,
         barrageDrainPerSecond: 0,
+        cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
         abilityLifesteal: 0,
@@ -1185,6 +1205,7 @@ export class AutoChessEngine {
         danceDashDodge: 0,
         barrageActive: false,
         barrageDrainPerSecond: 0,
+        cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
         abilityLifesteal: 0,
@@ -1640,6 +1661,16 @@ export class AutoChessEngine {
             if (enemy.alive) enemy.stun = Math.max(enemy.stun, 0.85);
           });
         this.grantShield(source, source, source.maxHp * 0.22, 0.55);
+        break;
+      case "seki_boar_king":
+        livingTargets
+          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < SEKI_CHARGE_RADIUS)
+          .forEach((enemy) => {
+            this.dealAbilityDamage(source, enemy, 1.42);
+            if (enemy.alive) enemy.stun = Math.max(enemy.stun, 0.82);
+          });
+        this.grantShield(source, source, source.maxHp * SEKI_CHARGE_SHIELD_RATIO, 0.5);
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "冲阵", life: 0.68, size: 12 });
         break;
       case "youyi":
         if (target) {
@@ -3351,6 +3382,41 @@ export class AutoChessEngine {
         });
         break;
       }
+      case "seki_boar_king": {
+        const center = densest(targets);
+        if (!center) break;
+        const startX = source.x;
+        const startY = source.y;
+        const motion = this.startAbilityMotion(
+          source,
+          "dash",
+          { x: center.x + (source.team === "player" ? -44 : 44), y: center.y },
+          { targetFid: center.fid, avoidOccupied: false },
+        );
+        if (motion) {
+          this.addEffect({ kind: "line", x: startX, y: startY, x2: motion.toX, y2: motion.toY, color: def.accent, life: motion.duration, size: 9 });
+        }
+        break;
+      }
+      case "sumi": {
+        const center = densest(targets);
+        if (!center) break;
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= SUMI_SEAL_RADIUS)
+          .forEach((target) => {
+            deal(target, 1.32);
+            if (!target.alive) return;
+            target.stun = Math.max(target.stun, 0.62);
+            target.weakenTime = Math.max(target.weakenTime, SUMI_SEAL_DURATION);
+            if (target.weakenArmorPenalty === 0) {
+              target.weakenArmorPenalty = SUMI_SEAL_ARMOR_PENALTY;
+              target.armor -= target.weakenArmorPenalty;
+            }
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.78, size: SUMI_SEAL_RADIUS + 12 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#edf3ff", life: 0.45, size: 72 });
+        break;
+      }
       case "mitsuri": {
         addShield(source, source.maxHp * MITSURI_SHIELD_RATIO, 0.5);
         targets
@@ -3446,6 +3512,19 @@ export class AutoChessEngine {
             target.stun = Math.max(target.stun, 0.85);
           });
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.9, size: 165 });
+        break;
+      }
+      case "tower_god": {
+        const center = densest(targets);
+        if (!center) break;
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= TOWER_GOD_TOWER_RADIUS)
+          .forEach((target) => {
+            deal(target, 1.6);
+            if (target.alive) target.stun = Math.max(target.stun, TOWER_GOD_TOWER_STUN);
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: TOWER_GOD_TOWER_RADIUS + 16 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#fff1bd", life: 0.5, size: 90 });
         break;
       }
       case "biscuit_sui": {

@@ -1723,3 +1723,59 @@ test("小猫拳会先闪现到最远敌人身后，再与目标同步推进并�
   assert.ok(hadPushLine);
   assert.ok(battle.effects.some((effect) => effect.text === "猫拳三连" || effect.text === "闪"));
 });
+
+test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", () => {
+  const engine = createEngine(141);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "seki_boar_king", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sumi", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "tower_god", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const seki = battle.player.find((fighter) => fighter.unitId === "seki_boar_king");
+  const sumi = battle.player.find((fighter) => fighter.unitId === "sumi");
+  const tower = battle.player.find((fighter) => fighter.unitId === "tower_god");
+  assert.ok(seki && sumi && tower);
+
+  assert.equal(Math.round(seki.maxHp), gameData.UNIT_DEFS.seki_boar_king.hp);
+  assert.equal(Math.round(sumi.maxHp), gameData.UNIT_DEFS.sumi.hp);
+  assert.equal(tower.energy, gameData.UNIT_DEFS.tower_god.energyProfile.start + 20);
+
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = 650 + index * 32;
+    fighter.y = 360 + index * 18;
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.cooldown = 99;
+  });
+  const target = battle.enemy[0];
+  seki.x = 240;
+  seki.y = 360;
+  engine.castAbility(seki, battle.enemy);
+  assert.equal(seki.abilityMotion?.abilityId, "seki_boar_king");
+  stepBattle(engine, 16);
+  assert.equal(seki.abilityMotion, null);
+  assert.ok(target.damageTaken > 0, "山猪冲阵应在落地后造成伤害");
+  assert.ok(target.stun > 0, "山猪冲阵应在落地后眩晕敌人");
+  assert.ok(seki.shield > 0, "山猪冲阵应为自身提供护盾");
+
+  target.stun = 0;
+  target.armor = 20;
+  target.weakenArmorPenalty = 0;
+  target.weakenTime = 0;
+  engine.castAbility(sumi, battle.enemy);
+  assert.ok(target.stun > 0, "礼小虎出击应眩晕区域内敌人");
+  assert.equal(target.armor, 11, "礼小虎出击应削弱护甲");
+  assert.ok(target.weakenTime >= 2.8);
+
+  target.stun = 0;
+  const hpBeforeTower = target.hp;
+  engine.castAbility(tower, battle.enemy);
+  assert.ok(target.hp < hpBeforeTower, "尖塔压顶应伤害最密集区域");
+  assert.ok(target.stun > 0, "尖塔压顶应眩晕区域内敌人");
+});

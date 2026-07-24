@@ -56,7 +56,9 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop";
+  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball";
+  /** 命中后对附近敌人造成伤害与灼烧的半径。 */
+  splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
   emoji?: string;
 }
@@ -185,6 +187,8 @@ export interface Fighter {
   /** 小红帽攻击弹幕：能量锁定并缓慢消耗 */
   barrageActive: boolean;
   barrageDrainPerSecond: number;
+  /** 蛙梓歌唱形态的全队治疗节拍。 */
+  cinderSongPulseTimer: number;
   abilityAttackBonus: number;
   abilityAttackBonusTime: number;
   /** 变身等持续技能提供的临时吸血 */

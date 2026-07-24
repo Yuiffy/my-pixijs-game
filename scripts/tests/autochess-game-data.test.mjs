@@ -301,7 +301,7 @@ test("北欧魔法师技能定义提供三档时停范围与持续时间", () =>
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 36);
+  assert.equal(data.SHOP_UNITS.length, 39);
   ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
   assert.equal(data.SHOP_UNITS.includes("akirinco"), false);
   ["aza", "ayana", "yy", "haruka"].forEach((id) => {
@@ -381,6 +381,31 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
     assert.ok(unit.traits.length >= 1 && unit.traits.length <= 4);
     unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
   });
+});
+
+test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角色定位", async () => {
+  assert.equal(data.TRAITS.star_tower_ink, undefined);
+  assert.equal(data.TRAIT_IDS.includes("star_tower_ink"), false);
+  const seki = data.UNIT_DEFS.seki_boar_king;
+  const towerGod = data.UNIT_DEFS.tower_god;
+  const sumi = data.UNIT_DEFS.sumi;
+  const portraits = {
+    seki_boar_king: "/images/livers/seki.webp",
+    tower_god: "/images/livers/shengge.jpg",
+    sumi: "/images/livers/sumi.jpg",
+  };
+  [seki, towerGod, sumi].forEach((unit) => {
+    assert.ok(data.SHOP_UNITS.includes(unit.id));
+    assert.equal(unit.cost, unit.tier);
+    assert.equal(unit.portrait, portraits[unit.id]);
+  });
+  await Promise.all(Object.values(portraits).map((portrait) => access(path.resolve("public", portrait.slice(1)))));
+  assert.equal(seki.abilityName, "山猪冲阵");
+  assert.equal(towerGod.abilityName, "尖塔压顶");
+  assert.equal(sumi.abilityName, "礼小虎出击");
+  assert.deepEqual(seki.traits, ["wild", "aggression"]);
+  assert.deepEqual(towerGod.traits, ["host", "mystic"]);
+  assert.deepEqual(sumi.traits, ["mystic", "ranger"]);
 });
 
 test("理财与流量羁绊拥有完整的经济成员池", () => {
