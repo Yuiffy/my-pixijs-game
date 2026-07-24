@@ -12,7 +12,13 @@ import RiftHud from "./RiftHud";
 import "./RiftHud.css";
 import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
-import { TOOLBAR_HEIGHT, logicalSizeFor, profileFor, renderSizeFor } from "./phaser/layout";
+import {
+  TOOLBAR_HEIGHT,
+  logicalSizeFor,
+  profileFor,
+  renderSizeFor,
+  uiScaleFor,
+} from "./phaser/layout";
 
 declare global {
   interface Window {
@@ -26,6 +32,7 @@ const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans S
 export default function AutoChessGame() {
   const gameHostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const uiScaleRef = useRef(1);
   const bridgeRef = useRef<EngineBridge | null>(null);
   const gameRef = useRef<import("phaser").Game | null>(null);
   const audioRef = useRef<AutoChessAudio | null>(null);
@@ -34,7 +41,30 @@ export default function AutoChessGame() {
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
   const [message, setMessage] = useState("图鉴可查看棋子、羁绊与本局天赋");
+  const [uiScale, setUiScale] = useState(1);
   const [, setRevision] = useState(0);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    let resizeFrame = 0;
+    const syncUiScale = () => {
+      resizeFrame = 0;
+      const next = uiScaleFor(container.clientWidth, container.clientHeight);
+      uiScaleRef.current = next;
+      setUiScale((current) => (Math.abs(current - next) > 0.001 ? next : current));
+    };
+    const scheduleUiScaleSync = () => {
+      if (!resizeFrame) resizeFrame = window.requestAnimationFrame(syncUiScale);
+    };
+    const observer = new ResizeObserver(scheduleUiScaleSync);
+    observer.observe(container);
+    syncUiScale();
+    return () => {
+      if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+      observer.disconnect();
+    };
+  }, []);
 
   const updateAudio = useCallback((patch: Partial<AudioPreferences>) => {
     setAudioPreferences((current) => {
@@ -97,19 +127,23 @@ export default function AutoChessGame() {
       const host = gameHostRef.current;
       if (!game || !host || !host.clientWidth || !host.clientHeight) return;
 
-      game.scale.setParentSize(host.clientWidth, host.clientHeight);
+      const displayWidth = host.clientWidth;
+      const displayHeight = host.clientHeight;
       const target = renderSizeFor(
-        host.getBoundingClientRect().width,
-        host.getBoundingClientRect().height,
-        window.devicePixelRatio || 1,
+        displayWidth,
+        displayHeight,
+        (window.devicePixelRatio || 1) * uiScaleRef.current,
       );
-      // RESIZE owns Phaser's canvas/base dimensions. The scene camera maps that
-      // CSS surface to its logical world; do not fight the scale manager by
-      // treating setGameSize as a backing-buffer-only API.
+      game.canvas.style.width = `${displayWidth}px`;
+      game.canvas.style.height = `${displayHeight}px`;
+      game.scale.setParentSize(displayWidth, displayHeight);
+      if (game.scale.baseSize.width !== target.width || game.scale.baseSize.height !== target.height) {
+        game.scale.resize(target.width, target.height);
+      }
 
       const profile = profileFor(
-        game.scale.displaySize.width,
-        game.scale.displaySize.height,
+        displayWidth,
+        displayHeight,
       );
       const logical = logicalSizeFor();
       game.canvas.dataset.layoutProfile = profile;
@@ -226,44 +260,57 @@ export default function AutoChessGame() {
       style={{
         width: fullscreen ? "100vw" : "100%",
         height: fullscreen ? "100dvh" : "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
         background: "#050b12",
         overflow: "hidden",
         position: "relative",
         boxSizing: "border-box",
-        paddingBottom: "max(0px, env(safe-area-inset-bottom))",
       }}
     >
-      <style>{`
-        @media (max-width: 600px) {
-          .rift-toolbar-status, .rift-audio-range, .rift-shortcut { display: none !important; }
-          .rift-toolbar { justify-content: center !important; }
-          .rift-toolbar button { min-width: 0 !important; padding-inline: 10px !important; }
-        }
-      `}</style>
-      <div className="rift-toolbar" style={{ width: "100%", height: TOOLBAR_HEIGHT, flex: "0 0 auto", display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
-        <span className="rift-toolbar-status" aria-live="polite" style={{ flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#82a8bd" }}>{message}</span>
-        <button type="button" onClick={() => setCodexOpen(true)} style={toolbarButtonStyle}>图鉴 / 本局天赋</button>
-        <button type="button" aria-pressed={audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })} style={toolbarButtonStyle}>{audioPreferences.muted ? "静音" : "声音"}</button>
-        <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>乐<input aria-label="音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} style={{ width: 58 }} /></span>
-        <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>效<input aria-label="音效音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.effectsVolume} onChange={(event) => updateAudio({ effectsVolume: Number(event.target.value) })} style={{ width: 58 }} /></span>
-        <span className="rift-shortcut">快捷键 F</span>
-        <button type="button" aria-pressed={fullscreen} disabled={!fullscreenSupported} onClick={() => { toggleFullscreen().catch(() => {}); }} style={toolbarButtonStyle}>{fullscreen ? "退出全屏" : "全屏游玩"}</button>
-      </div>
       <div
-        ref={gameHostRef}
+        data-ui-scale={uiScale.toFixed(3)}
         style={{
-          width: "100%",
-          flex: "1 1 auto",
-          minHeight: 0,
-          touchAction: "none",
+          position: "absolute",
+          inset: "0 auto auto 0",
+          width: `${100 / uiScale}%`,
+          height: `${100 / uiScale}%`,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          transform: `scale(${uiScale})`,
+          transformOrigin: "top left",
+          boxSizing: "border-box",
+          paddingBottom: "max(0px, env(safe-area-inset-bottom))",
         }}
-      />
-      <RiftHud engine={engine || null} onAction={dispatch} />
-      <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
+      >
+        <style>{`
+          @media (max-width: 600px) {
+            .rift-toolbar-status, .rift-audio-range, .rift-shortcut { display: none !important; }
+            .rift-toolbar { justify-content: center !important; }
+            .rift-toolbar button { min-width: 0 !important; padding-inline: 10px !important; }
+          }
+        `}</style>
+        <div className="rift-toolbar" style={{ width: "100%", height: TOOLBAR_HEIGHT, flex: "0 0 auto", display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
+          <span className="rift-toolbar-status" aria-live="polite" style={{ flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#82a8bd" }}>{message}</span>
+          <button type="button" onClick={() => setCodexOpen(true)} style={toolbarButtonStyle}>图鉴 / 本局天赋</button>
+          <button type="button" aria-pressed={audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })} style={toolbarButtonStyle}>{audioPreferences.muted ? "静音" : "声音"}</button>
+          <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>乐<input aria-label="音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} style={{ width: 58 }} /></span>
+          <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>效<input aria-label="音效音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.effectsVolume} onChange={(event) => updateAudio({ effectsVolume: Number(event.target.value) })} style={{ width: 58 }} /></span>
+          <span className="rift-shortcut">快捷键 F</span>
+          <button type="button" aria-pressed={fullscreen} disabled={!fullscreenSupported} onClick={() => { toggleFullscreen().catch(() => {}); }} style={toolbarButtonStyle}>{fullscreen ? "退出全屏" : "全屏游玩"}</button>
+        </div>
+        <div
+          ref={gameHostRef}
+          style={{
+            width: "100%",
+            flex: "1 1 auto",
+            minHeight: 0,
+            touchAction: "none",
+          }}
+        />
+        <RiftHud engine={engine || null} onAction={dispatch} />
+        <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
+      </div>
     </div>
   );
 }

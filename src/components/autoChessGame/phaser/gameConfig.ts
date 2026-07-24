@@ -13,8 +13,8 @@ export const createGameConfig = (
   height: WORLD_HEIGHT,
   backgroundColor: "#07121d",
   render: {
-    // Phaser 4 has no game-level resolution field. Textures and text use their
-    // own high-density backing surfaces; keep the renderer smoothly filtered.
+    // The host owns the high-density backing size. Keep vector edges and
+    // texture downsampling smooth when the backing canvas is shown at CSS size.
     antialias: true,
     antialiasGL: true,
     pixelArt: false,
@@ -24,9 +24,10 @@ export const createGameConfig = (
     windowEvents: true,
   },
   scale: {
-    // The scene maps a stable logical world through its camera. RESIZE lets the
-    // canvas fill portrait hosts instead of FIT shrinking a 16:10 desktop box.
-    mode: Phaser.Scale.RESIZE,
+    // The React host explicitly separates backing pixels from CSS dimensions.
+    // NONE prevents the scale manager from replacing that high-DPI buffer with
+    // the parent's CSS-pixel size on its own resize pass.
+    mode: Phaser.Scale.NONE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     parent,
   },

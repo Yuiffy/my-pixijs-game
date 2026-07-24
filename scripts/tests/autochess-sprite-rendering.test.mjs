@@ -21,10 +21,10 @@ test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
   assert.doesNotMatch(host, /DomTooltip|onTooltip|tooltip=/);
 });
 
-test("游戏配置保持 1120×720 逻辑世界并使用 Phaser 缩放管理", () => {
+test("游戏配置保持 1120×720 逻辑世界并由宿主管理高 DPI 缩放", () => {
   assert.match(config, /width: WORLD_WIDTH/);
   assert.match(config, /height: WORLD_HEIGHT/);
-  assert.match(config, /mode: Phaser\.Scale\.RESIZE/);
+  assert.match(config, /mode: Phaser\.Scale\.NONE/);
   assert.match(config, /autoCenter: Phaser\.Scale\.CENTER_BOTH/);
   assert.match(layout, /WORLD_WIDTH = 1120/);
   assert.match(layout, /WORLD_HEIGHT = 720/);
@@ -158,6 +158,8 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(layout, /MAX_DEVICE_PIXEL_RATIO = 2/);
   assert.match(layout, /logicalSizeFor/);
   assert.match(layout, /renderSizeFor/);
+  assert.match(layout, /uiScaleFor/);
+  assert.match(layout, /MAX_UI_SCALE = 1\.25/);
   assert.match(layout, /viewportScaleFor/);
   assert.match(layout, /tooltipLayoutFor/);
   assert.match(layout, /scale: 1 \/ fitScale/);
@@ -165,9 +167,12 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(layout, /width: Math\.max\(1, Math\.round\(displayWidth \* density\)\)/);
   assert.match(host, /ResizeObserver/);
   assert.match(host, /scale\.setParentSize/);
+  assert.match(host, /scale\.resize\(target\.width, target\.height\)/);
   assert.doesNotMatch(host, /scale\.setGameSize/);
-  assert.doesNotMatch(host, /baseSize\.width !== target\.width/);
+  assert.match(host, /baseSize\.width !== target\.width/);
   assert.match(host, /RiftHud/);
+  assert.match(host, /data-ui-scale/);
+  assert.match(host, /transform: `scale\(\$\{uiScale\}\)`/);
   assert.match(host, /dataset\.devicePixelRatio/);
   assert.match(host, /dataset\.renderScale/);
   assert.match(host, /dataset\.layoutProfile/);
@@ -181,8 +186,8 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(scene, /Math\.min\(MAX_TEXT_RESOLUTION, 2, Math\.ceil\(devicePixelRatio\)\)/);
   assert.match(scene, /resolution: this\.textResolution/);
   assert.match(scene, /tooltipLayoutFor\(/);
-  assert.match(scene, /container = this\.add\.container\(x, y\)\.setScale\(metrics\.scale\)/);
-  assert.match(scene, /width \* metrics\.scale, height \* metrics\.scale/);
+  assert.match(scene, /container = this\.add\.container\(x, y\)\.setScale\(scale\)/);
+  assert.match(scene, /width \* scale, height \* scale/);
   assert.match(scene, /const offset = TOOLTIP_TYPOGRAPHY\.pointerOffset \* scale/);
   assert.match(scene, /scale\.off\(Phaser\.Scale\.Events\.RESIZE, this\.handleResize, this\)/);
 });

@@ -2,6 +2,10 @@
 export const WORLD_WIDTH = 1120;
 export const WORLD_HEIGHT = 720;
 export const TOOLBAR_HEIGHT = 42;
+export const MIN_UI_SCALE = 1;
+export const MAX_UI_SCALE = 1.25;
+export const UI_SCALE_BASE_WIDTH = 1280;
+export const UI_SCALE_BASE_HEIGHT = 720;
 export const MIN_CARD_SCALE = 0.72;
 export const MAX_CARD_SCALE = 1.25;
 /** Legacy compact helpers remain declared while their mobile profile is disabled. */
@@ -18,6 +22,18 @@ export type RenderSize = {
   renderScale: number;
   devicePixelRatio: number;
 };
+
+/**
+ * Give roomy desktop viewports the same visual density as 125% browser zoom.
+ * Smaller windows continuously fall back to the original 100% layout.
+ */
+export const uiScaleFor = (width: number, height: number) => Math.min(
+  MAX_UI_SCALE,
+  Math.max(
+    MIN_UI_SCALE,
+    Math.min(width / UI_SCALE_BASE_WIDTH, height / UI_SCALE_BASE_HEIGHT),
+  ),
+);
 
 /**
  * Size the physical Phaser drawing surface from its actual CSS host. The scene
