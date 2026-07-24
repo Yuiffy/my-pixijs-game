@@ -74,15 +74,15 @@ const inspectPng = (buffer) => {
   return { width, height, hasTransparentPixel };
 };
 
-test("六本八人口的升本成本与商店概率符合短局节奏", () => {
+test("三至十本的人口、升本成本与商店概率完整", () => {
   assert.deepEqual(
     data.PLAYER_LEVELS.map((level) => data.PLAYER_LEVEL_CONFIG[level].upgradeCost),
-    [5, 9, 14, 20, 27, null],
+    [5, 9, 14, 20, 27, 36, 46, null],
   );
-  assert.deepEqual(data.PLAYER_LEVELS.map(data.bookLevelForPlayerLevel), [1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(data.PLAYER_LEVELS.map(data.bookLevelForPlayerLevel), [3, 4, 5, 6, 7, 8, 9, 10]);
   assert.deepEqual(
     data.PLAYER_LEVELS.map((level) => data.PLAYER_LEVEL_CONFIG[level].boardCap),
-    [3, 4, 5, 6, 7, 8],
+    [3, 4, 5, 6, 7, 8, 9, 10],
   );
   data.PLAYER_LEVELS.forEach((level) =>
     assert.equal(data.PLAYER_LEVEL_CONFIG[level].tierOdds.reduce((sum, chance) => sum + chance, 0), 100),
@@ -411,7 +411,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
 test("理财与流量羁绊拥有完整的经济成员池", () => {
   assert.deepEqual(data.TRAITS.finance.thresholds, [2, 4]);
   assert.match(data.TRAITS.finance.bonuses[0], /额外获得 2 金币/);
-  assert.match(data.TRAITS.finance.bonuses[1], /每 5 金币/);
+  assert.match(data.TRAITS.finance.bonuses[1], /每 4 金币/);
   assert.match(data.TRAITS.finance.bonuses[1], /利息无上限/);
   ["sui_blue", "sui_flower", "biscuit_sui", "shiori", "grove_mender", "lian", "mitsuri"].forEach((id) => {
     assert.ok(data.UNIT_DEFS[id].traits.includes("finance"), `${id} should join finance`);

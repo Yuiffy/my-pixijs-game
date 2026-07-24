@@ -1105,7 +1105,17 @@ test("结算继续会保留契印与失败结局分支", () => {
   assert.equal(lossEngine.state.phase, "gameover");
 });
 
-test("理财在结算增加收入，高档按每 5 金币计算无上限利息", () => {
+test("普通利息每 5 金币提供 1 点并在 20 金币封顶", () => {
+  const engine = createEngine(300);
+  engine.state.gold = 19;
+  assert.equal(engine.interestIncome, 3);
+  engine.state.gold = 20;
+  assert.equal(engine.interestIncome, 4);
+  engine.state.gold = 35;
+  assert.equal(engine.interestIncome, 4);
+});
+
+test("理财在结算增加收入，高档按每 4 金币计算无上限利息", () => {
   const lowTierEngine = createEngine(301);
   lowTierEngine.state.playerLevel = 4;
   lowTierEngine.state.board.fill(null);
@@ -1113,12 +1123,13 @@ test("理财在结算增加收入，高档按每 5 金币计算无上限利息",
   lowTierEngine.state.board[1] = { uid: 2, id: "shiori", star: 1 };
   lowTierEngine.state.gold = 20;
   assert.equal(lowTierEngine.getTraitStatus("finance").level, 1);
-  assert.equal(lowTierEngine.interestIncome, 2);
+  assert.equal(lowTierEngine.interestIncome, 4);
   assert.equal(lowTierEngine.financeIncomeBonus, 2);
   lowTierEngine.startBattle();
   lowTierEngine.state.battle.enemy.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
   lowTierEngine.update(0.05);
-  assert.equal(lowTierEngine.state.result.income, 9);
+  assert.equal(lowTierEngine.state.result.income, 8);
+  assert.equal(lowTierEngine.state.result.bounty, 2);
   assert.match(lowTierEngine.state.result.detail, /理财 2/);
 
   const highTierEngine = createEngine(302);
@@ -1129,11 +1140,52 @@ test("理财在结算增加收入，高档按每 5 金币计算无上限利息",
   });
   highTierEngine.state.gold = 35;
   assert.equal(highTierEngine.getTraitStatus("finance").level, 2);
-  assert.equal(highTierEngine.interestIncome, 7);
+  assert.equal(highTierEngine.interestIncome, 8);
   highTierEngine.startBattle();
   highTierEngine.state.battle.enemy.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
   highTierEngine.update(0.05);
-  assert.equal(highTierEngine.state.result.income, 14);
+  assert.equal(highTierEngine.state.result.income, 12);
+});
+
+test("每颗敌方星级提供一金币赏金，失败也结算已击败敌人", () => {
+  const engine = createEngine(304);
+  engine.state.gold = 0;
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  battle.enemy[0].star = 2;
+  battle.enemy[0].hp = 0;
+  battle.enemy[0].alive = false;
+  battle.player.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
+  engine.update(0.05);
+  assert.equal(engine.state.result.won, false);
+  assert.equal(engine.state.result.bounty, 2);
+  assert.equal(engine.state.result.income, 2);
+  assert.equal(engine.state.result.defeatedEnemies, 1);
+  assert.deepEqual(engine.state.result.defeatedByStar, { 1: 0, 2: 1, 3: 0 });
+  assert.match(engine.state.result.detail, /击败赏金 2（2星×1）/);
+});
+
+test("连续升本可以到达十本并上阵十人", () => {
+  const engine = createEngine(306);
+  engine.state.gold = 1000;
+  while (!engine.isMaxPlayerLevel) engine.buyExperience();
+  assert.equal(engine.state.playerLevel, 10);
+  assert.equal(engine.boardCap, 10);
+  assert.equal(engine.upgradeCost, null);
+});
+
+test("零赏金时花呗只抵扣当回合收入，不会产生负金币", () => {
+  const engine = createEngine(305);
+  engine.state.gold = 0;
+  engine.state.paydayDebtRounds = 1;
+  engine.startBattle();
+  engine.state.battle.player.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
+  engine.update(0.05);
+  assert.equal(engine.state.result.bounty, 0);
+  assert.equal(engine.state.result.income, 0);
+  assert.equal(engine.state.gold, 0);
+  assert.equal(engine.state.paydayDebtRounds, 0);
 });
 
 test("流量在每个备战回合按羁绊等级重置免费刷新次数", () => {

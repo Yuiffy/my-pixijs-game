@@ -66,7 +66,7 @@ function ActionButton({ tone = "neutral", className = "", children, ...props }: 
   return <button className={`rift-action rift-action-${tone} ${className}`} {...props}>{children}</button>;
 }
 
-function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) {
+function HudHeader({ state, interestIncome }: { state: NonNullable<AutoChessEngine["state"]>; interestIncome: number }) {
   const progress = state.phase === "title" ? 0 : Math.min(100, ((state.round - 1) / state.maxRounds) * 100);
   return (
     <header className="rift-dom-header" style={{ fontFamily: FONT }}>
@@ -89,7 +89,7 @@ function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) 
       ) : (
         <div className="rift-header-metrics">
           <div className="rift-header-metric rift-header-core"><span>核心</span><b>{state.hp}<small>/{state.maxHp}</small></b><i><em style={{ width: `${Math.max(0, (state.hp / state.maxHp) * 100)}%` }} /></i></div>
-          <div className="rift-header-metric rift-header-gold"><span>金币</span><b>{state.gold}</b><small>利息 {Math.min(2, Math.floor(state.gold / 10))}</small></div>
+          <div className="rift-header-metric rift-header-gold"><span>金币</span><b>{state.gold}</b><small>利息 {interestIncome}</small></div>
           <div className="rift-header-metric rift-header-score"><span>积分</span><b>{state.score.toLocaleString()}</b><small>{state.streak > 0 ? `连胜 ${state.streak}` : "等待首胜"}</small></div>
         </div>
       )}
@@ -126,7 +126,7 @@ export default function RiftHud({ engine, onAction }: Props) {
   if (state.phase === "title") {
     return (
       <div className="rift-dom-layer rift-dom-title" style={{ fontFamily: FONT }}>
-        <HudHeader state={state} />
+        <HudHeader state={state} interestIncome={engine.interestIncome} />
         <div className="rift-dom-title-body">
           <section className="rift-title-copy">
             <span className="rift-eyebrow">RIFT LINE // 08 WAVE EXPEDITION</span>
@@ -163,7 +163,7 @@ export default function RiftHud({ engine, onAction }: Props) {
   if (state.phase === "gameover") {
     return (
       <div className="rift-dom-layer rift-dom-modal-phase" style={{ fontFamily: FONT }}>
-        <HudHeader state={state} />
+        <HudHeader state={state} interestIncome={engine.interestIncome} />
         <section className={`rift-dom-phase-card ${state.finalWon ? "is-win" : "is-loss"}`}>
           <span className="rift-eyebrow">RUN COMPLETE // {state.finalWon ? "RIFT SEALED" : "LINE LOST"}</span>
           <h1>{state.finalWon ? "裂隙已封闭" : "战线已失守"}</h1>
@@ -187,13 +187,13 @@ export default function RiftHud({ engine, onAction }: Props) {
 
   return (
     <div className="rift-dom-layer" style={{ fontFamily: FONT }}>
-      <HudHeader state={state} />
+      <HudHeader state={state} interestIncome={engine.interestIncome} />
       {state.phase === "preparation" && (
         <>
           <div className="rift-dom-stage">
             <aside className="rift-dom-shop-desktop">
               <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? "MAX LEVEL" : `下本还需 ${engine.upgradeCost} 金`}</small></div></div>
-              <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>利息 <b>+{engine.interestIncome}</b></span><span>连胜 <b>{state.streak || "—"}</b></span></div>
+              <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>本战赏金 <b>{engine.potentialBounty}</b></span><span>利息 <b>+{engine.interestIncome}</b></span><span>连胜 <b>{state.streak || "—"}</b></span></div>
               <div className="rift-tier-odds">{odds.map((chance, index) => <span key={index} className={`tier-${index + 1} ${chance ? "" : "is-muted"}`}><i>{index + 1}</i><b>{chance}%</b></span>)}</div>
               <div className="rift-shop-list">{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} />)}</div>
               <div className="rift-dom-shop-actions"><ActionButton onClick={() => dispatch({ type: "buyXp" })} disabled={engine.isMaxPlayerLevel || state.gold < (engine.upgradeCost ?? Number.POSITIVE_INFINITY)}><span>升本</span><b>{engine.isMaxPlayerLevel ? "MAX" : engine.upgradeCost}</b></ActionButton><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></div>
@@ -202,7 +202,7 @@ export default function RiftHud({ engine, onAction }: Props) {
           </div>
           <section className="rift-mobile-brief">
             <div><span className="rift-eyebrow">ROUND {String(state.round).padStart(2, "0")} / QUICK READ</span><strong>{wave.name}</strong></div>
-            <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。先补齐阵容，再决定是否升本。` : "人口已满。现在可以调整站位，或把金币留给下一次刷新。"}</p>
+            <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。全歼本战敌军可得 ${engine.potentialBounty} 金。` : `人口已满。全歼本战敌军可得 ${engine.potentialBounty} 金。`}</p>
             <button onClick={() => setSheet("traits")}>查看羁绊 <b>↗</b></button>
           </section>
           <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></nav>

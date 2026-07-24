@@ -422,8 +422,8 @@ export class AutoChessEngine {
   public get interestIncome() {
     const financeLevel = this.getTraitStatus("finance").level;
     return financeLevel >= 2
-      ? Math.floor(this.state.gold / 5)
-      : Math.min(2, Math.floor(this.state.gold / 10));
+      ? Math.floor(this.state.gold / 4)
+      : Math.min(4, Math.floor(this.state.gold / 5));
   }
 
   public get financeIncomeBonus() {
@@ -432,6 +432,13 @@ export class AutoChessEngine {
 
   public get currentWave() {
     return waveForRound(this.state.round);
+  }
+
+  public get potentialBounty() {
+    return this.currentWave.units.reduce(
+      (total, unit) => total + (unit.star || 1),
+      0,
+    );
   }
 
   public setRankingMetric(metric: RankingMetric) {
@@ -3982,27 +3989,38 @@ export class AutoChessEngine {
     const wave = this.currentWave;
     const interest = this.interestIncome;
     const financeIncome = this.financeIncomeBonus;
+    const defeatedByStar: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
+    this.state.battle.enemy.forEach((fighter) => {
+      if (!fighter.alive || fighter.hp <= 0) defeatedByStar[fighter.star] += 1;
+    });
+    const defeatedEnemies = defeatedByStar[1] + defeatedByStar[2] + defeatedByStar[3];
+    const bounty = defeatedByStar[1] + defeatedByStar[2] * 2 + defeatedByStar[3] * 3;
+    const bountyBreakdown = ([1, 2, 3] as const)
+      .filter((star) => defeatedByStar[star] > 0)
+      .map((star) => `${star}星×${defeatedByStar[star]}`)
+      .join("、");
+    const bountyDetail = `击败赏金 ${bounty}（${bountyBreakdown || "未击败敌人"}）`;
     let income = 0;
     let damage = 0;
-    const debtPayment = this.state.paydayDebtRounds > 0 ? 1 : 0;
-    if (debtPayment) this.state.paydayDebtRounds -= 1;
+    const debtRoundActive = this.state.paydayDebtRounds > 0;
+    let debtPayment = 0;
+    if (debtRoundActive) this.state.paydayDebtRounds -= 1;
 
     if (won) {
       this.state.streak += 1;
       this.state.victories += 1;
       const streakBonus = Math.min(2, Math.max(0, this.state.streak - 1));
-      const eliteBonus = wave.tag === "elite" ? 2 : 0;
       const blazeBonus =
         this.state.victories === 1 ? starterEffects[this.state.starter || "bastion"].firstWinGold || 0 : 0;
-      income =
-        5 +
+      const grossIncome =
+        bounty +
         interest +
         streakBonus +
-        eliteBonus +
         blazeBonus +
         financeIncome +
-        this.state.incomeBonus -
-        debtPayment;
+        this.state.incomeBonus;
+      debtPayment = Math.min(debtRoundActive ? 1 : 0, grossIncome);
+      income = grossIncome - debtPayment;
       this.state.gold += income;
       const healthRatio = this.living("player").reduce(
         (sum, fighter) => sum + fighter.hp / fighter.maxHp,
@@ -4014,8 +4032,11 @@ export class AutoChessEngine {
       this.state.result = {
         won: true,
         headline: wave.tag === "boss" ? "裂隙封闭" : "战线守住了",
-        detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? ` + 首胜 ${blazeBonus}` : ""}${financeIncome ? " + 理财 2" : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
+        detail: `${bountyDetail} + 利息 ${interest} + 连胜 ${streakBonus}${blazeBonus ? ` + 首胜 ${blazeBonus}` : ""}${financeIncome ? " + 理财 2" : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
         income,
+        bounty,
+        defeatedEnemies,
+        defeatedByStar,
         upgradeDiscount:
           this.state.round < Number.MAX_SAFE_INTEGER && !this.isMaxPlayerLevel
             ? PASSIVE_UPGRADE_DISCOUNT
@@ -4032,18 +4053,19 @@ export class AutoChessEngine {
           Math.min(3, enemySurvivors),
       );
       this.state.hp = Math.max(0, this.state.hp - damage);
-      income =
-        4 + interest + financeIncome + this.state.incomeBonus + (this.state.hp > 0 ? 1 : 0) - debtPayment;
+      const grossIncome = bounty + interest + financeIncome + this.state.incomeBonus;
+      debtPayment = Math.min(debtRoundActive ? 1 : 0, grossIncome);
+      income = grossIncome - debtPayment;
       this.state.gold += income;
       this.state.score += this.state.round * 35;
       this.state.result = {
         won: false,
         headline: this.state.hp > 0 ? "防线后撤" : "核心失守",
-        detail:
-          this.state.hp > 0
-            ? `获得 1 金币整备补偿${financeIncome ? "与 2 金币理财收入" : ""}。调整前后排仍有机会。`
-            : "本次阵容止步于此。",
+        detail: `${bountyDetail} + 利息 ${interest}${financeIncome ? " + 理财 2" : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
         income,
+        bounty,
+        defeatedEnemies,
+        defeatedByStar,
         upgradeDiscount:
           this.state.hp > 0 && !this.isMaxPlayerLevel
             ? PASSIVE_UPGRADE_DISCOUNT
@@ -4178,6 +4200,7 @@ export class AutoChessEngine {
             name: this.currentWave.name,
             tag: this.currentWave.tag,
             description: this.currentWave.description,
+            potentialBounty: this.potentialBounty,
           }
         : null,
       player: {
@@ -4185,6 +4208,7 @@ export class AutoChessEngine {
         maxHp: this.state.maxHp,
         gold: this.state.gold,
         freeRerollCharges: this.state.freeRerollCharges,
+        interestIncome: this.interestIncome,
         level: this.state.playerLevel,
         bookLevel: bookLevelForPlayerLevel(this.state.playerLevel),
         upgradeRemaining: this.upgradeCost,

@@ -299,6 +299,9 @@ export interface RoundResult {
   headline: string;
   detail: string;
   income: number;
+  bounty: number;
+  defeatedEnemies: number;
+  defeatedByStar: Record<1 | 2 | 3, number>;
   upgradeDiscount: number;
   damage: number;
 }

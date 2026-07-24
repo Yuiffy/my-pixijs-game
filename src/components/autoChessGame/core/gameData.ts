@@ -336,7 +336,7 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     bonuses: ["矮人成员 +12% 闪避率", "矮人成员 +22% 闪避率"],
   },
   traffic: { id: "traffic", name: "流量", family: "关系", color: "#ff7197", thresholds: [2, 4, 6], description: "被更多人看见，才有继续输出的底气；每回合还能获得免费刷新。", bonuses: ["流量成员获得 8% 吸血；每回合 1 次免费刷新", "流量成员获得 15% 吸血；所有远程友军获得 5% 吸血；每回合 2 次免费刷新", "流量成员获得 24% 吸血；所有远程友军获得 10% 吸血；每回合 3 次免费刷新"] },
-  finance: { id: "finance", name: "理财", family: "关系", color: "#f1bd5e", thresholds: [2, 4], description: "会理财也会买股票：低档稳稳加钱，高档让每一笔存款都开始生息。", bonuses: ["每场结束额外获得 2 金币", "每场结束额外获得 2 金币；每 5 金币提供 1 利息，利息无上限"] },
+  finance: { id: "finance", name: "理财", family: "关系", color: "#f1bd5e", thresholds: [2, 4], description: "会理财也会买股票：低档稳稳加钱，高档让每一笔存款都开始生息。", bonuses: ["每场结束额外获得 2 金币", "每场结束额外获得 2 金币；每 4 金币提供 1 利息，利息无上限"] },
   mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速每 4 秒降低 1 个百分点直至正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
   dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏冲向舞台中央：成员攻速提升，并在最后接近阶段高移速冲刺，冲刺中更易闪避。", bonuses: ["跳舞成员 +12% 攻速；最后接近攻击范围时可冲刺（期间闪避提升）", "跳舞成员 +26% 攻速；冲刺强化；所有近战友军 +8% 攻速、+8 移速", "跳舞成员 +45% 攻速；冲刺强化；所有近战友军 +16% 攻速、+16 移速"] },
   aggression: { id: "aggression", name: "攻击性", family: "关系", color: "#ff596f", thresholds: [2, 4, 6], description: "发言要有攻击性：成员直接提高攻击力，也会带动全队火力。", bonuses: ["攻击性成员 +15% 攻击力；全体友军 +5% 攻击力", "攻击性成员 +30% 攻击力；全体友军 +10% 攻击力", "攻击性成员 +55% 攻击力；全体友军 +20% 攻击力"] },
@@ -1332,7 +1332,7 @@ export const waveForRound = (round: number): WaveDefinition => {
   };
 };
 
-export const PLAYER_LEVELS = [3, 4, 5, 6, 7, 8] as const;
+export const PLAYER_LEVELS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 export type PlayerLevel = (typeof PLAYER_LEVELS)[number];
 export type ShopTierOdds = readonly [number, number, number, number, number];
 
@@ -1343,8 +1343,8 @@ interface PlayerLevelConfig {
 }
 
 export const STARTING_PLAYER_LEVEL: PlayerLevel = 3;
-export const MAX_PLAYER_LEVEL: PlayerLevel = 8;
-export const bookLevelForPlayerLevel = (level: PlayerLevel) => level - 2;
+export const MAX_PLAYER_LEVEL: PlayerLevel = 10;
+export const bookLevelForPlayerLevel = (level: PlayerLevel) => level;
 export const PASSIVE_UPGRADE_DISCOUNT = 1;
 
 export const PLAYER_LEVEL_CONFIG: Record<PlayerLevel, PlayerLevelConfig> = {
@@ -1353,7 +1353,9 @@ export const PLAYER_LEVEL_CONFIG: Record<PlayerLevel, PlayerLevelConfig> = {
   5: { boardCap: 5, upgradeCost: 14, tierOdds: [30, 33, 26, 10, 1] },
   6: { boardCap: 6, upgradeCost: 20, tierOdds: [10, 20, 30, 29, 11] },
   7: { boardCap: 7, upgradeCost: 27, tierOdds: [5, 15, 29, 34, 17] },
-  8: { boardCap: 8, upgradeCost: null, tierOdds: [2, 10, 23, 36, 29] },
+  8: { boardCap: 8, upgradeCost: 36, tierOdds: [2, 10, 23, 36, 29] },
+  9: { boardCap: 9, upgradeCost: 46, tierOdds: [1, 7, 18, 36, 38] },
+  10: { boardCap: 10, upgradeCost: null, tierOdds: [0, 4, 12, 32, 52] },
 };
 
 export const tierOddsForLevel = (level: PlayerLevel) =>

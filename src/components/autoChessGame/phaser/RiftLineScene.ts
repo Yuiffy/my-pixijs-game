@@ -1160,6 +1160,9 @@ export class RiftLineScene extends Phaser.Scene {
       .getActiveTraits()
       .map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`)
       .join(" · ");
+    const interestRule = this.bridge.engine.getTraitStatus("finance").level >= 2
+      ? "理财Ⅱ · 每 4 金币提供 1 利息（无上限）"
+      : "每 5 金币提供 1 利息（20 金币封顶）";
     this.phaseLayer.add(
       this.text(
         807,
@@ -1174,7 +1177,7 @@ export class RiftLineScene extends Phaser.Scene {
       this.text(
         807,
         672,
-        this.truncateText(`连胜 ${state.streak} · 10 金币提供 1 利息（最多 2）`, 270, 10),
+        this.truncateText(`连胜 ${state.streak} · ${interestRule}`, 270, 10),
         10,
         "#7d94a4",
       ),
