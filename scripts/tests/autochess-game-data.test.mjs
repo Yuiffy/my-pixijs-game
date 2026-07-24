@@ -203,16 +203,23 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.deepEqual(data.UNIT_DEFS.sui.traits, ["dance", "aggression", "vanguard"]);
   assert.equal(data.UNIT_DEFS.sui_blue.name, "贪吃岁");
   assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["skeleton_soldier", "gluttony"]);
+  assert.equal(data.UNIT_DEFS.sui_blue.abilityName, "吃！");
+  assert.equal(data.UNIT_DEFS.sui_blue.energyProfile.id, "feast");
   assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild", "vanguard"]);
   assert.equal(data.UNIT_DEFS.sui_flower.name, "暴龙岁");
   assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["vanguard", "chuanmei", "mystic"]);
   assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "aggression", "dance", "vanguard"]);
   assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["wild", "gluttony"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
+  assert.equal(data.UNIT_DEFS.shiori.name, "椰子栞");
+  assert.equal(data.UNIT_DEFS.shiori.abilityName, "大声");
+  assert.equal(data.UNIT_DEFS.zeyin.attackType, "melee");
+  assert.equal(data.UNIT_DEFS.zeyin.abilityName, "涅槃重生");
+  assert.equal(data.UNIT_DEFS.zeyin.abilityCastTiming, "passive");
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
-  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "alien", "reservoir", "automatic"]);
+  const profiles = new Set(["assault", "bulwark", "flow", "tempo", "alien", "reservoir", "automatic", "feast", "passive"]);
   Object.values(data.UNIT_DEFS).forEach((unit) => {
     assert.ok(["melee", "ranged"].includes(unit.attackType), `${unit.id} must declare an attack type`);
     assert.ok(profiles.has(unit.energyProfile.id), `${unit.id} must use a known energy profile`);
@@ -265,11 +272,29 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.ok(data.UNIT_DEFS.sui_cat.armor >= 18);
 });
 
+test("北欧魔法师技能定义提供三档时停范围与持续时间", () => {
+  const unit = data.UNIT_DEFS.spark_mage;
+  assert.equal(unit.abilityLevels.length, 3);
+  assert.deepEqual(
+    unit.abilityLevels.map((level) => level.stats.radius),
+    [108, 132, 162],
+  );
+  assert.deepEqual(
+    unit.abilityLevels.map((level) => level.stats.duration),
+    [1.8, 2.5, 3.4],
+  );
+  assert.equal(data.abilityStatForStar(unit, 2, "radius", 0), 132);
+  assert.match(data.abilityDescriptionForStar(unit, 3), /半径 162/);
+  assert.match(data.describeAbilityStarGrowth(unit), /1星.*2星.*3星/);
+  assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
+});
+
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 37);
-  ["nori", "meme", "kioi", "nightin", "guangyi", "akirinco", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
+  assert.equal(data.SHOP_UNITS.length, 36);
+  ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
+  assert.equal(data.SHOP_UNITS.includes("akirinco"), false);
   ["aza", "ayana", "yy", "haruka"].forEach((id) => {
     assert.equal(data.SHOP_UNITS.includes(id), false);
     assert.equal(data.UNIT_DEFS[id], undefined);

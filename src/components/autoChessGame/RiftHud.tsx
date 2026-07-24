@@ -8,6 +8,7 @@ import {
   TRAITS,
   UNIT_DEFS,
   bookLevelForPlayerLevel,
+  describeAbilityStarGrowth,
   describeEnergyRecovery,
   tierOddsForLevel,
 } from "./core/gameData";
@@ -223,6 +224,7 @@ function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | null; eng
   const canStore = engine.boardCount < engine.boardCap || engine.state.bench.some((unit) => !unit);
   const affordable = engine.state.gold >= def.cost && canStore;
   const role = def.title.split(" · ").at(-1) || def.title;
+  const abilityGrowth = describeAbilityStarGrowth(def);
   const traitTags = def.traits.map((id) => {
     const trait = TRAITS[id];
     const status = engine.getTraitStatus(id);
@@ -261,7 +263,7 @@ function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | null; eng
           <div className="rift-detail-head"><span className="rift-eyebrow">UNIT BRIEF / TIER {def.tier}</span><strong>{def.name}</strong><small>{def.title}</small></div>
           <div className="rift-detail-tags">{traitTags.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties}>{trait.name}</i>)}</div>
           <div className="rift-detail-stats"><span>生命 <b>{def.hp}</b></span><span>攻击 <b>{def.attack}</b></span><span>护甲 <b>{def.armor}</b></span><span>射程 <b>{def.range}</b></span></div>
-          <div className="rift-detail-skill"><span>技能 · {def.abilityName}</span><p>{def.abilityDescription}</p></div>
+          <div className="rift-detail-skill"><span>技能 · {def.abilityName}</span><p>{def.abilityDescription}{abilityGrowth && <><br />星级成长：{abilityGrowth}</>}</p></div>
           <small className="rift-detail-energy">{def.energyProfile.name} · {describeEnergyRecovery(def.energyProfile)}</small>
         </div>
       )}

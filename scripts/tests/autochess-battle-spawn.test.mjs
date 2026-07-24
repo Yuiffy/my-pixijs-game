@@ -826,6 +826,47 @@ test("偷袭成员会在己方首个单位交战后提前起跳", () => {
   assert.ok(battle.elapsed < 0.2, "不应继续等待原本约 3.4 秒的兜底倒计时");
 });
 
+test("北欧时停按施法者星级提升持续时间、范围与特效尺寸", () => {
+  const expected = [
+    { star: 1, radius: 108, duration: 1.8 },
+    { star: 2, radius: 132, duration: 2.5 },
+    { star: 3, radius: 162, duration: 3.4 },
+  ];
+
+  expected.forEach(({ star, radius, duration }) => {
+    const engine = createEngine(120 + star);
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: "spark_mage", star };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const source = battle?.player[0];
+    assert.ok(battle && source);
+    battle.enemy.forEach((fighter) => {
+      fighter.attack = 0;
+      fighter.energy = 0;
+      fighter.hp = fighter.maxHp = 99_999;
+    });
+    source.energy = source.maxEnergy;
+    engine.update(0.05);
+
+    assert.equal(battle.chronospheres.length, 1);
+    const zone = battle.chronospheres[0];
+    assert.equal(zone.radius, radius);
+    assert.equal(zone.maxLife, duration);
+    assert.ok(Math.abs(zone.life - duration) < 1e-9);
+    assert.ok(battle.effects.some((effect) => effect.kind === "chronosphere" && effect.size === radius));
+    const textState = JSON.parse(engine.renderTextState());
+    assert.deepEqual(textState.battle.visualEffects.chronospheres, [{
+      x: Math.round(zone.x),
+      y: Math.round(zone.y),
+      radius,
+      remaining: duration,
+      duration,
+    }]);
+  });
+});
+
 test("刺客在拥挤后排选择有界的最高空隙落点", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;
@@ -1133,7 +1174,7 @@ test("邪恶外星人的贯穿光线沿目标方向发射并命中同线敌人",
   assert.ok(Math.abs(targetCrossProduct) < 0.001);
 });
 
-test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满", () => {
+test("泽音首次倒下后以低生命远程形态涅槃重生，恬豆强化移速持续到期满", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -1155,16 +1196,18 @@ test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满",
   zeyin.y = 360;
   tiandou.x = 280;
   tiandou.y = 420;
-  const zeyinTarget = battle.enemy[0];
-  zeyinTarget.x = zeyin.x + Math.max(zeyin.range, zeyin.radius + zeyinTarget.radius + 12) - 1;
-  zeyinTarget.y = zeyin.y;
-  const zeyinBaseInterval = zeyin.attackInterval;
-  zeyin.energy = zeyin.maxEnergy;
-  engine.update(0.05);
-  assert.equal(zeyin.abilityAttackSpeed, 0.25);
-  assert.ok(zeyin.abilityAttackSpeedTime > 3.9);
-  engine.update(0.05);
-  assert.ok(zeyin.attackInterval < zeyinBaseInterval / 1.2);
+  const zeyinMaxHp = zeyin.maxHp;
+  const zeyinBaseAttack = zeyin.baseAttack;
+  const zeyinBaseInterval = zeyin.baseAttackInterval;
+  engine["damage"](battle.enemy[0], zeyin, 99_999);
+  assert.equal(zeyin.alive, true);
+  assert.equal(zeyin.reborn, true);
+  assert.equal(zeyin.attackType, "ranged");
+  assert.equal(zeyin.range, 245);
+  assert.equal(zeyin.maxHp, Math.round(zeyinMaxHp * 0.72));
+  assert.equal(zeyin.hp, zeyin.maxHp);
+  assert.ok(zeyin.baseAttack >= zeyinBaseAttack * 1.35);
+  assert.ok(zeyin.baseAttackInterval < zeyinBaseInterval * 0.71);
 
   const tiandouBaseSpeed = tiandou.moveSpeed;
   battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
@@ -1177,6 +1220,45 @@ test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满",
   assert.ok(tiandou.abilityMoveSpeedTime > 2.9);
   engine.update(0.05);
   assert.ok(tiandou.moveSpeed >= tiandouBaseSpeed + 15);
+});
+
+test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害与眩晕", () => {
+  const engine = createEngine(201);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui_blue", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "shiori", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const hungry = battle?.player.find((fighter) => fighter.unitId === "sui_blue");
+  const shiori = battle?.player.find((fighter) => fighter.unitId === "shiori");
+  assert.ok(battle && hungry && shiori);
+  battle.enemy.forEach((enemy, index) => {
+    enemy.hp = enemy.maxHp = 9_999;
+    enemy.armor = 0;
+    enemy.dodgeChance = 0;
+    enemy.x = 480 + index * 42;
+    enemy.y = 360;
+  });
+  hungry.x = 280;
+  hungry.y = 360;
+  hungry.hp = hungry.maxHp * 0.5;
+  engine["castAbility"](hungry, battle.enemy);
+  assert.equal(hungry.abilityAttackBonus, 0.9);
+  assert.equal(hungry.nextAttackLifesteal, 0.45);
+  hungry.attack = hungry.baseAttack * 1.9;
+  const hungryHpBefore = hungry.hp;
+  engine["basicAttack"](hungry, battle.enemy[0]);
+  assert.ok(hungry.hp > hungryHpBefore);
+  assert.equal(hungry.nextAttackLifesteal, 0);
+  assert.equal(hungry.abilityAttackBonus, 0);
+
+  shiori.x = 300;
+  shiori.y = 360;
+  engine["castAbility"](shiori, battle.enemy);
+  assert.ok(battle.enemy.every((enemy) => enemy.stun >= 0.65));
+  assert.ok(battle.enemy.every((enemy) => enemy.hp < enemy.maxHp));
+  assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 136));
 });
 
 test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", () => {

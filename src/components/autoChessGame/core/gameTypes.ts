@@ -56,7 +56,7 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin";
+  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop";
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
   emoji?: string;
 }
@@ -146,6 +146,9 @@ export interface Fighter {
   energyStyle: EnergyProfileId;
   attackType: AttackType;
   stun: number;
+  /** 被嘲讽时只能以指定单位为攻击目标 */
+  tauntedByFid: string | null;
+  tauntTime: number;
   burnTime: number;
   burnDps: number;
   burnSourceFid: string | null;
@@ -182,6 +185,11 @@ export interface Fighter {
   barrageDrainPerSecond: number;
   abilityAttackBonus: number;
   abilityAttackBonusTime: number;
+  /** 变身等持续技能提供的临时吸血 */
+  abilityLifesteal: number;
+  abilityLifestealTime: number;
+  /** 仅作用于下一次普攻的额外吸血 */
+  nextAttackLifesteal: number;
   abilityAttackSpeed: number;
   abilityAttackSpeedTime: number;
   abilityMoveSpeed: number;
@@ -198,6 +206,8 @@ export interface Fighter {
   critMultiplier: number;
   castRefund: number;
   secondWindUsed: boolean;
+  /** 泽音美乐蒂的涅槃重生是否已经触发 */
+  reborn: boolean;
   enraged: boolean;
   attackPulse: number;
   facingX: -1 | 1;

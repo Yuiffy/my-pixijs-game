@@ -56,7 +56,7 @@ export const SHOP_UNIT_IDS = [
   // 4 费
   "sui_cat",
   "nagisa",
-  "akirinco",
+  // "akirinco",
   "lovely",
   "mumu",
   "xuehui",
@@ -69,7 +69,8 @@ export const SHOP_UNIT_IDS = [
 ] as const;
 
 export type ShopUnitId = (typeof SHOP_UNIT_IDS)[number];
-export type UnitId = ShopUnitId | "rift_tyrant";
+// 秋凛子暂时隐藏，但保留完整单位类型以兼容已有数据和战斗逻辑。
+export type UnitId = ShopUnitId | "akirinco" | "rift_tyrant";
 
 export type StarterId = "mature_start" | "blaze" | "traffic_start" | "bastion" | "dance_start" | "ranger_start";
 export const STARTER_OFFER_SIZE = 3;
@@ -85,7 +86,7 @@ export type AugmentId =
   | "second_wind";
 
 export type AttackType = "melee" | "ranged";
-export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "alien" | "reservoir" | "automatic";
+export type EnergyProfileId = "assault" | "bulwark" | "flow" | "tempo" | "alien" | "reservoir" | "automatic" | "feast" | "passive";
 
 export interface EnergyProfile {
   id: EnergyProfileId;
@@ -107,6 +108,8 @@ export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
   alien: { id: "alien", name: "外星回能", max: 75, start: 10, perSecond: 5, onAttack: 18, onHit: 5, castRefund: 0, color: "#ffc28a" },
   reservoir: { id: "reservoir", name: "蓄势回能", max: 120, start: 0, perSecond: 3, onAttack: 16, onHit: 6, castRefund: 0, color: "#7e9bff" },
   automatic: { id: "automatic", name: "自动回能", max: 100, start: 20, perSecond: 20, onAttack: 0, onHit: 0, castRefund: 0, color: "#9bb8ff" },
+  feast: { id: "feast", name: "吃货回能", max: 50, start: 10, perSecond: 8, onAttack: 18, onHit: 0, castRefund: 0, color: "#92c8ff" },
+  passive: { id: "passive", name: "被动技能", max: 1, start: 0, perSecond: 0, onAttack: 0, onHit: 0, castRefund: 0, color: "#e2a9ff" },
 };
 
 export const describeEnergyRecovery = (profile: EnergyProfile) => {
@@ -126,6 +129,7 @@ export const describeEnergyRecovery = (profile: EnergyProfile) => {
  * - engage：突进，能量满即放
  * - offenseInRange：近距进攻，能量满且进入普攻距离时释放
  * - offenseReady：远程/战场进攻，能量满即放
+ * - passive：由专属战斗事件触发，不消耗能量施放
  */
 export type AbilityCastTiming =
   | "selfOnHit"
@@ -133,7 +137,8 @@ export type AbilityCastTiming =
   | "supportHeal"
   | "engage"
   | "offenseInRange"
-  | "offenseReady";
+  | "offenseReady"
+  | "passive";
 
 export const ABILITY_CAST_TIMING_LABELS: Record<AbilityCastTiming, string> = {
   selfOnHit: "自保 · 受击释放",
@@ -142,10 +147,26 @@ export const ABILITY_CAST_TIMING_LABELS: Record<AbilityCastTiming, string> = {
   engage: "突进 · 满能量即放",
   offenseInRange: "进攻 · 进入攻击范围释放",
   offenseReady: "进攻 · 满能量即放",
+  passive: "被动 · 特殊事件触发",
 };
 
 /** 支援治疗：候选友军生命比例低至此值（含）才释放 */
 export const SUPPORT_HEAL_HP_RATIO = 0.7;
+
+export interface AbilityLevelDefinition {
+  /** 用于商店和图鉴概览的简短星级差异 */
+  summary: string;
+  /** 当前星级下展示给玩家的完整技能说明 */
+  description: string;
+  /** 战斗逻辑读取的技能参数；键由对应技能定义 */
+  stats: Readonly<Record<string, number>>;
+}
+
+export type AbilityLevels = readonly [
+  AbilityLevelDefinition,
+  AbilityLevelDefinition,
+  AbilityLevelDefinition,
+];
 
 export interface UnitDefinition {
   id: UnitId;
@@ -169,11 +190,35 @@ export interface UnitDefinition {
   abilityCastTiming: AbilityCastTiming;
   abilityName: string;
   abilityDescription: string;
+  /** 可选的 1/2/3 星技能参数；未配置的技能继续使用固定技能逻辑 */
+  abilityLevels?: AbilityLevels;
   portrait?: string;
   portraitFocus?: "top" | "center";
   portraitStyle?: "round" | "sprite";
   shop: boolean;
 }
+
+export const abilityLevelForStar = (
+  definition: UnitDefinition,
+  star: 1 | 2 | 3,
+) => definition.abilityLevels?.[star - 1];
+
+export const abilityStatForStar = (
+  definition: UnitDefinition,
+  star: 1 | 2 | 3,
+  stat: string,
+  fallback: number,
+) => abilityLevelForStar(definition, star)?.stats[stat] ?? fallback;
+
+export const abilityDescriptionForStar = (
+  definition: UnitDefinition,
+  star: 1 | 2 | 3,
+) => abilityLevelForStar(definition, star)?.description ?? definition.abilityDescription;
+
+export const describeAbilityStarGrowth = (definition: UnitDefinition) =>
+  definition.abilityLevels
+    ?.map((level, index) => `${index + 1}星 ${level.summary}`)
+    .join(" · ") ?? null;
 
 export interface TraitDefinition {
   id: TraitId;
@@ -306,7 +351,7 @@ const COMBAT_PROFILES: Record<
   meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42, abilityCastTiming: "selfOnHit" },
   // supportShield：支援护盾，满能量即放
   mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40, abilityCastTiming: "supportShield" },
-  shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 48, abilityCastTiming: "supportShield" },
+  shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 50, abilityCastTiming: "offenseReady" },
   nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38, abilityCastTiming: "supportShield" },
   rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 48, moveSpeed: 42, abilityCastTiming: "supportShield" },
   // supportHeal：支援治疗，友军残血时放
@@ -325,7 +370,7 @@ const COMBAT_PROFILES: Record<
   lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68, abilityCastTiming: "engage" },
   mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
   // offenseInRange：近距进攻，进入攻击范围放
-  zeyin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 210, moveSpeed: 60, abilityCastTiming: "offenseInRange" },
+  zeyin: { attackType: "melee", energyProfile: ENERGY_PROFILES.passive, range: 54, moveSpeed: 68, abilityCastTiming: "passive" },
   mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50, abilityCastTiming: "offenseInRange" },
   // offenseReady：远程/战场进攻，满能量即放
   ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58, abilityCastTiming: "offenseReady" },
@@ -333,7 +378,7 @@ const COMBAT_PROFILES: Record<
   clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48, abilityCastTiming: "offenseReady" },
   dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86, abilityCastTiming: "offenseReady" },
   grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44, abilityCastTiming: "offenseReady" },
-  sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 240, moveSpeed: 58, abilityCastTiming: "offenseReady" },
+  sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.feast, range: 240, moveSpeed: 58, abilityCastTiming: "offenseReady" },
   sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
   yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54, abilityCastTiming: "offenseReady" },
   nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60, abilityCastTiming: "offenseReady" },
@@ -551,7 +596,24 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.18,
     moveSpeed: 50,
     abilityName: "北欧时停",
-    abilityDescription: "在敌人最密集处展开时间停止球，球内敌我单位都无法行动。",
+    abilityDescription: "在敌人最密集处展开时间停止球，球内敌我单位都无法行动；范围和持续时间随星级提升。",
+    abilityLevels: [
+      {
+        summary: "半径 108 / 1.8 秒",
+        description: "在敌人最密集处展开半径 108 的时间停止球，球内敌我单位都无法行动，持续 1.8 秒。",
+        stats: { radius: 108, duration: 1.8 },
+      },
+      {
+        summary: "半径 132 / 2.5 秒",
+        description: "在敌人最密集处展开半径 132 的时间停止球，球内敌我单位都无法行动，持续 2.5 秒。",
+        stats: { radius: 132, duration: 2.5 },
+      },
+      {
+        summary: "半径 162 / 3.4 秒",
+        description: "在敌人最密集处展开半径 162 的时间停止球，球内敌我单位都无法行动，持续 3.4 秒。",
+        stats: { radius: 162, duration: 3.4 },
+      },
+    ],
     portrait: "/images/livers/rhea.png",
     portraitFocus: "top",
     shop: true,
@@ -603,7 +665,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   grove_mender: unit({
     id: "grove_mender",
     name: "七海大鲨鱼",
-    title: "七海Nana7mi · 鲨鱼弹幕",
+    title: "七海Nana7mi · 鲨鱼变身",
     glyph: "七",
     color: "#28644b",
     accent: "#79f2ad",
@@ -616,8 +678,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 190,
     attackInterval: 1.22,
     moveSpeed: 46,
-    abilityName: "鲨鱼弹幕",
-    abilityDescription: "朝前方扇形发射大量无跟踪鲨鱼弹幕，命中敌人造成伤害。",
+    abilityName: "鲨鱼变身",
+    abilityDescription: "进入持续变身，期间攻击力大幅提高，造成伤害时吸血。",
     portrait: "/images/livers/nana7mi.png",
     portraitFocus: "top",
     shop: true,
@@ -660,30 +722,30 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 235,
     attackInterval: 0.82,
     moveSpeed: 58,
-    abilityName: "闪购闪购",
-    abilityDescription: "连续射出三道闪购，优先追击残血敌人。",
+    abilityName: "吃！",
+    abilityDescription: "自动与攻击双重回能；强化下一次攻击，大幅提高攻击力并按伤害吸血。",
     portrait: "/images/materials/blue/5a2bcc519c33a2213134bdc196799d041954091502.png",
     portraitFocus: "top",
     shop: true,
   }),
   shiori: unit({
     id: "shiori",
-    name: "椰子鸡栞",
-    title: "栞栞Shiori · 团队护盾",
+    name: "椰子栞",
+    title: "栞栞Shiori · 范围控场",
     glyph: "栞",
     color: "#6c7599",
     accent: "#c3cfff",
     tier: 2,
     cost: 2,
     traits: ["skeleton_soldier", "yue_gang", "dance"],
-    hp: 164,
-    attack: 20,
-    armor: 11,
-    range: 205,
-    attackInterval: 1.08,
+    hp: 160,
+    attack: 22,
+    armor: 10,
+    range: 190,
+    attackInterval: 1.02,
     moveSpeed: 50,
-    abilityName: "椰子鸡大嗓门",
-    abilityDescription: "用超大嗓门招呼椰子鸡，为两名最低生命比例的友军提供护盾。",
+    abilityName: "大声",
+    abilityDescription: "对敌人最密集区域大声喊话，造成范围伤害并眩晕。",
     portrait: "/images/livers/shiori.png",
     portraitFocus: "top",
     shop: true,
@@ -759,7 +821,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   mitsuri: unit({
     id: "mitsuri",
     name: "三理理",
-    title: "三理Mit3uri · 远程支援",
+    title: "三理Mit3uri · 嘲讽护卫",
     glyph: "理",
     color: "#587d8e",
     accent: "#8be7df",
@@ -772,8 +834,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 225,
     attackInterval: 0.96,
     moveSpeed: 52,
-    abilityName: "hello酷狗",
-    abilityDescription: "向当前目标发射强化音波，并为能量最低的友军补充大量能量。",
+    abilityName: "站我后面",
+    abilityDescription: "获得护盾并嘲讽周围敌人，使其优先攻击自己。",
     portrait: "/images/livers/mitsuri.jpg",
     portraitFocus: "top",
     shop: true,
@@ -885,9 +947,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     portrait: "/images/livers/meme.jpg", portraitFocus: "top", shop: true,
   }),
   zeyin: unit({
-    id: "zeyin", name: "泽音美乐蒂", title: "泽音Melody · 舞台射手", glyph: "泽", color: "#6c4c86", accent: "#e2a9ff", tier: 4, cost: 4,
-    traits: ["ranger", "mature", "dance"], hp: 210, attack: 32, armor: 12, range: 220, attackInterval: 0.82, moveSpeed: 60,
-    abilityName: "虹光起舞", abilityDescription: "向当前目标连射两次，并为自己获得短暂攻速。",
+    id: "zeyin", name: "泽音美乐蒂", title: "泽音Melody · 涅槃斗士", glyph: "泽", color: "#6c4c86", accent: "#e2a9ff", tier: 4, cost: 4,
+    traits: ["ranger", "mature", "dance"], hp: 180, attack: 34, armor: 15, range: 54, attackInterval: 0.86, moveSpeed: 68,
+    abilityName: "涅槃重生", abilityDescription: "初始以近战形态作战。首次倒下时重生为低生命远程形态，攻击力与攻击速度大幅提高。",
     portrait: "/images/livers/zeyin.jpg", portraitFocus: "top", shop: true,
   }),
   kioi: unit({
@@ -902,9 +964,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     abilityName: "烟头烫屁股", abilityDescription: "向敌人最密集处甩出烟头，造成范围伤害、灼烧并短暂眩晕。", portrait: "/images/livers/nightin.jpg", portraitFocus: "top", shop: true,
   }),
   tiandou: unit({
-    id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 舞台支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
+    id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 糖果支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
     traits: ["mystic", "dance", "vanguard"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
-    abilityName: "甜点转圈", abilityDescription: "为生命最低的两名友军回复生命，并提升她们短暂移速。",
+    abilityName: "棒棒糖刘海", abilityDescription: "扔出数颗棒棒糖；友军吃到会回复生命并加速，敌人吃到会受伤并减速。",
     portrait: "/images/livers/tiandou.jpg", portraitFocus: "top", shop: true,
   }),
   youyi: unit({

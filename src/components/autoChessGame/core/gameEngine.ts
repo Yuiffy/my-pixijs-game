@@ -19,6 +19,7 @@ import {
   UNIT_DEFS,
   UnitId,
   SUPPORT_HEAL_HP_RATIO,
+  abilityStatForStar,
   bookLevelForPlayerLevel,
   upgradeCostForLevel,
   waveForRound,
@@ -133,16 +134,39 @@ const SUI_BARRAGE_DURATION = 4;
 const SUI_BARRAGE_ATTACK_BONUS = 0.15;
 const SUI_BARRAGE_ATTACK_SPEED = 0.75;
 const SUI_BARRAGE_MOVE_SPEED = 28;
-/** 北欧时停球 */
+/** 泽音美乐蒂：低生命二阶段换取远程火力 */
+const ZEYIN_REBIRTH_HP_RATIO = 0.72;
+const ZEYIN_REBIRTH_ATTACK_MULTIPLIER = 1.36;
+const ZEYIN_REBIRTH_ATTACK_INTERVAL_MULTIPLIER = 0.7;
+const ZEYIN_REBIRTH_RANGE = 245;
+/** 贪吃岁：下一发强化普攻的收益 */
+const SUI_BLUE_FEAST_ATTACK_BONUS = 0.9;
+const SUI_BLUE_FEAST_LIFESTEAL = 0.45;
+const SUI_BLUE_FEAST_DURATION = 4;
+/** 椰子栞「大声」的区域 */
+const SHIORI_SHOUT_RADIUS = 122;
+/** 未配置星级成长时，北欧时停球的兼容默认值 */
 const CHRONOSPHERE_RADIUS = 128;
 const CHRONOSPHERE_DURATION = 2.8;
-/** 七海鲨鱼扇形弹幕 */
-const SHARK_BARRAGE_COUNT = 11;
-const SHARK_BARRAGE_SPREAD = Math.PI * 0.55;
-const SHARK_BARRAGE_SPEED = 340;
-const SHARK_BARRAGE_RANGE = 520;
-const SHARK_BARRAGE_DAMAGE = 0.42;
-const SHARK_BARRAGE_RADIUS = 10;
+/** 七海大鲨鱼：持续变身 */
+const NANA_SHARK_FORM_DURATION = 5;
+const NANA_SHARK_FORM_ATTACK_BONUS = 0.85;
+const NANA_SHARK_FORM_LIFESTEAL = 0.45;
+/** 恬豆：可被双方碰撞消耗的棒棒糖 */
+const TIANDOU_LOLLIPOP_COUNT = 5;
+const TIANDOU_LOLLIPOP_SPREAD = Math.PI * 0.72;
+const TIANDOU_LOLLIPOP_SPEED = 300;
+const TIANDOU_LOLLIPOP_RANGE = 380;
+const TIANDOU_LOLLIPOP_RADIUS = 11;
+const TIANDOU_LOLLIPOP_HEAL_RATIO = 0.14;
+const TIANDOU_LOLLIPOP_MOVE_SPEED = 16;
+const TIANDOU_LOLLIPOP_MOVE_DURATION = 3;
+const TIANDOU_LOLLIPOP_DAMAGE_MULTIPLIER = 0.9;
+const TIANDOU_LOLLIPOP_SLOW_DURATION = 2.4;
+/** 三理理：护盾和范围嘲讽 */
+const MITSURI_TAUNT_RADIUS = 155;
+const MITSURI_TAUNT_DURATION = 3.2;
+const MITSURI_SHIELD_RATIO = 0.22;
 /** 果冻风纪：护盾破碎钢镚弹幕 */
 const SUN_GUARD_COIN_COUNT = 5;
 const SUN_GUARD_COIN_SPEED = 380;
@@ -435,6 +459,7 @@ export class AutoChessEngine {
       energyOnAttack: fighter.energyOnAttack,
       energyOnHit: fighter.energyOnHit,
       energyStyle: fighter.energyStyle,
+      reborn: fighter.reborn,
       damageDealt: Math.round(fighter.damageDealt),
       healingDone: Math.round(fighter.healingDone),
       shieldingDone: Math.round(fighter.shieldingDone),
@@ -968,6 +993,8 @@ export class AutoChessEngine {
         burnTime: 0,
         burnDps: 0,
         burnSourceFid: null,
+        tauntedByFid: null,
+        tauntTime: 0,
         lifesteal:
           [0, 0.08, 0.15, 0.24][trafficLevel] +
           [0, 0, 0.05, 0.1][globalTrafficLevel] * (isRanged ? 1 : 0) +
@@ -1010,6 +1037,9 @@ export class AutoChessEngine {
         barrageDrainPerSecond: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
+        abilityLifesteal: 0,
+        abilityLifestealTime: 0,
+        nextAttackLifesteal: 0,
         abilityAttackSpeed: 0,
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
@@ -1025,6 +1055,7 @@ export class AutoChessEngine {
         critMultiplier: 1.65,
         castRefund: Math.min(def.energyProfile.max, def.energyProfile.castRefund + [0, 0, 8, 15][mysticLevel]),
         secondWindUsed: false,
+        reborn: false,
         enraged: false,
         jumpPending: assassinLevel > 0,
         jumpDelay: assassinLevel ? 3.4 + spawn.row * 0.12 : 0,
@@ -1099,6 +1130,8 @@ export class AutoChessEngine {
         burnTime: 0,
         burnDps: 0,
         burnSourceFid: null,
+        tauntedByFid: null,
+        tauntTime: 0,
         lifesteal: 0,
         burnOnHitPower: 0,
         spiceBurnOnHitPower: 0,
@@ -1130,6 +1163,9 @@ export class AutoChessEngine {
         barrageDrainPerSecond: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
+        abilityLifesteal: 0,
+        abilityLifestealTime: 0,
+        nextAttackLifesteal: 0,
         abilityAttackSpeed: 0,
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
@@ -1143,6 +1179,7 @@ export class AutoChessEngine {
         critMultiplier: 1.65,
         castRefund: 0,
         secondWindUsed: false,
+        reborn: false,
         enraged: false,
         attackPulse: 0,
         facingX: -1,
@@ -1660,6 +1697,18 @@ export class AutoChessEngine {
 
   private resolveCombatTarget(source: Fighter, targets: Fighter[], dt: number) {
     const available = targets.filter((target) => target.alive && !target.abilityMotion && !target.jumpPending && target.jumpTime <= 0);
+    const tauntTarget = source.tauntTime > 0
+      ? available.find((target) => target.fid === source.tauntedByFid) || null
+      : null;
+    if (tauntTarget) {
+      source.targetFid = tauntTarget.fid;
+      source.targetLock = MITSURI_TAUNT_DURATION;
+      return tauntTarget;
+    }
+    if (source.tauntTime > 0) {
+      source.tauntTime = 0;
+      source.tauntedByFid = null;
+    }
     const current = available.find((target) => target.fid === source.targetFid) || null;
     const nearest = this.nearestTarget(source, available);
     source.targetLock = Math.max(0, source.targetLock - dt);
@@ -2248,7 +2297,10 @@ export class AutoChessEngine {
     battle.projectiles = battle.projectiles.filter((projectile) => {
       const source = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === projectile.sourceFid);
       const targetTeam: Team = projectile.team === "player" ? "enemy" : "player";
-      const targets = this.living(targetTeam).sort((left, right) => left.fid.localeCompare(right.fid));
+      const targets = (projectile.style === "lollipop"
+        ? [...this.living("player"), ...this.living("enemy")].filter((fighter) => fighter.fid !== projectile.sourceFid)
+        : this.living(targetTeam)
+      ).sort((left, right) => left.fid.localeCompare(right.fid));
       const startX = projectile.x;
       const startY = projectile.y;
       const endX = startX + projectile.velocityX * dt;
@@ -2266,6 +2318,21 @@ export class AutoChessEngine {
       if (hit && source) {
         projectile.x = startX + stepX * hit.progress;
         projectile.y = startY + stepY * hit.progress;
+        if (projectile.style === "lollipop") {
+          if (hit.target.team === projectile.team) {
+            this.heal(source, hit.target, hit.target.maxHp * TIANDOU_LOLLIPOP_HEAL_RATIO);
+            hit.target.abilityMoveSpeed = Math.max(hit.target.abilityMoveSpeed, TIANDOU_LOLLIPOP_MOVE_SPEED);
+            hit.target.abilityMoveSpeedTime = Math.max(hit.target.abilityMoveSpeedTime, TIANDOU_LOLLIPOP_MOVE_DURATION);
+            this.addEffect({ kind: "heal", x: hit.target.x, y: hit.target.y, color: projectile.color, text: "🍭", emoji: true, life: 0.7, size: 16 });
+          } else {
+            const dealt = this.damage(source, hit.target, projectile.damage, true);
+            if (dealt > 0) this.addDamageText(hit.target, dealt);
+            hit.target.slowTime = Math.max(hit.target.slowTime, TIANDOU_LOLLIPOP_SLOW_DURATION);
+            this.addEffect({ kind: "text", x: hit.target.x, y: hit.target.y - 38, color: projectile.color, text: "🍭减速", emoji: true, life: 0.7, size: 12 });
+          }
+          this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
+          return false;
+        }
         const dealt = this.damage(source, hit.target, projectile.damage, true);
         if (dealt > 0) this.addDamageText(hit.target, dealt);
         if (hit.target.alive && projectile.burnPower > 0) this.applyBurn(source, hit.target, projectile.burnPower);
@@ -2439,10 +2506,13 @@ export class AutoChessEngine {
       if (!fighter.alive) return;
       fighter.cooldown -= dt;
       fighter.stun = Math.max(0, fighter.stun - dt);
+      fighter.tauntTime = Math.max(0, fighter.tauntTime - dt);
+      if (fighter.tauntTime <= 0) fighter.tauntedByFid = null;
       fighter.abilityAttackSpeedTime = Math.max(0, fighter.abilityAttackSpeedTime - dt);
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.abilityAttackBonusTime = Math.max(0, fighter.abilityAttackBonusTime - dt);
+      fighter.abilityLifestealTime = Math.max(0, fighter.abilityLifestealTime - dt);
       fighter.danceDashCooldown = Math.max(0, fighter.danceDashCooldown - dt);
       fighter.danceDashTime = Math.max(0, fighter.danceDashTime - dt);
       fighter.slowTime = Math.max(0, fighter.slowTime - dt);
@@ -2455,6 +2525,8 @@ export class AutoChessEngine {
           fighter.barrageDrainPerSecond = 0;
           fighter.abilityAttackBonus = 0;
           fighter.abilityAttackBonusTime = 0;
+          fighter.abilityLifesteal = 0;
+          fighter.abilityLifestealTime = 0;
           fighter.abilityAttackSpeed = 0;
           fighter.abilityAttackSpeedTime = 0;
           fighter.abilityMoveSpeed = 0;
@@ -2602,6 +2674,7 @@ export class AutoChessEngine {
             break;
           }
           case "offenseInRange":
+          case "passive":
             break;
           default: {
             const exhaustive: never = abilityTiming;
@@ -2742,6 +2815,16 @@ export class AutoChessEngine {
     source.attackTargetX = target.x;
     source.attackTargetY = target.y;
     const dealt = this.damage(source, target, source.attack);
+    const nextAttackLifesteal = source.nextAttackLifesteal;
+    if (nextAttackLifesteal > 0) {
+      source.nextAttackLifesteal = 0;
+      source.abilityAttackBonus = 0;
+      source.abilityAttackBonusTime = 0;
+      if (dealt > 0) {
+        this.heal(source, source, dealt * nextAttackLifesteal);
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: UNIT_DEFS.sui_blue.accent, text: "吃饱", life: 0.55, size: 11 });
+      }
+    }
     if (dealt >= 0) {
       this.addEnergy(source, source.energyOnAttack);
       this.addEnergy(target, target.energyOnHit);
@@ -2815,6 +2898,9 @@ export class AutoChessEngine {
       this.grantShield(source, target, amount, capRatio);
 
     switch (source.unitId) {
+      case "zeyin":
+        // 涅槃重生由死亡事件触发，不进入通用主动施法流程。
+        return;
       case "sui": {
         // 攻击弹幕：能量保持满并缓慢清空，期间加攻速/攻击/移速且不回能
         source.energy = source.maxEnergy;
@@ -2958,35 +3044,23 @@ export class AutoChessEngine {
           });
         break;
       }
-      case "zeyin": {
-        for (let shot = 0; shot < 2; shot += 1) {
-          const target = this.nearestTarget(source, targets);
-          if (!target) break;
-          deal(target, 0.95);
-          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.28, size: 3 });
-        }
-        source.abilityAttackSpeed = Math.max(source.abilityAttackSpeed, 0.25);
-        source.abilityAttackSpeedTime = Math.max(source.abilityAttackSpeedTime, 4);
-        break;
-      }
       case "sui_blue": {
-        const ordered = [...targets].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
-        for (let shot = 0; shot < 3; shot += 1) {
-          const target = ordered[shot % ordered.length];
-          if (!target?.alive) continue;
-          deal(target, 0.72);
-          this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.28 + shot * 0.06, size: 3 });
-        }
+        source.abilityAttackBonus = SUI_BLUE_FEAST_ATTACK_BONUS;
+        source.abilityAttackBonusTime = SUI_BLUE_FEAST_DURATION;
+        source.nextAttackLifesteal = SUI_BLUE_FEAST_LIFESTEAL;
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.55, size: 72 });
         break;
       }
       case "shiori": {
-        [...allies]
-          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
-          .slice(0, 2)
+        const center = densest(targets);
+        if (!center) break;
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < SHIORI_SHOUT_RADIUS)
           .forEach((target) => {
-            addShield(target, target.maxHp * 0.17, 0.4);
-            this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.55, size: 4 });
+            deal(target, 1.25);
+            if (target.alive) target.stun = Math.max(target.stun, 0.65);
           });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: SHIORI_SHOUT_RADIUS + 14 });
         break;
       }
       case "rift_brawler": {
@@ -3051,14 +3125,16 @@ export class AutoChessEngine {
       case "spark_mage": {
         const center = densest(targets);
         if (!center) break;
+        const radius = abilityStatForStar(def, source.star, "radius", CHRONOSPHERE_RADIUS);
+        const duration = abilityStatForStar(def, source.star, "duration", CHRONOSPHERE_DURATION);
         const battle = this.state.battle;
         if (battle) {
           battle.chronospheres.push({
             x: center.x,
             y: center.y,
-            radius: CHRONOSPHERE_RADIUS,
-            life: CHRONOSPHERE_DURATION,
-            maxLife: CHRONOSPHERE_DURATION,
+            radius,
+            life: duration,
+            maxLife: duration,
             color: def.accent,
           });
         }
@@ -3068,7 +3144,7 @@ export class AutoChessEngine {
           y: center.y,
           color: def.accent,
           life: 0.85,
-          size: CHRONOSPHERE_RADIUS,
+          size: radius,
         });
         this.addEffect({
           kind: "text",
@@ -3616,8 +3692,8 @@ export class AutoChessEngine {
     }
 
     if (target.hp <= 0) {
-      this.killFighter(target);
-      if (source.team === "player") this.state.score += 12;
+      const permanentlyKilled = this.killFighter(target);
+      if (permanentlyKilled && source.team === "player") this.state.score += 12;
     }
     return effectiveApplied;
   }
@@ -3692,7 +3768,30 @@ export class AutoChessEngine {
   }
 
   private killFighter(target: Fighter) {
-    if (!target.alive) return;
+    if (!target.alive) return false;
+    if (target.unitId === "zeyin" && !target.reborn) {
+      target.reborn = true;
+      target.alive = true;
+      target.maxHp = Math.max(1, Math.round(target.maxHp * ZEYIN_REBIRTH_HP_RATIO));
+      target.hp = target.maxHp;
+      target.shield = 0;
+      target.burnTime = 0;
+      target.burnDps = 0;
+      target.burnSourceFid = null;
+      target.baseAttack *= ZEYIN_REBIRTH_ATTACK_MULTIPLIER;
+      target.attack = target.baseAttack;
+      target.baseAttackInterval *= ZEYIN_REBIRTH_ATTACK_INTERVAL_MULTIPLIER;
+      target.attackInterval = target.baseAttackInterval;
+      target.baseRange = ZEYIN_REBIRTH_RANGE;
+      target.range = ZEYIN_REBIRTH_RANGE;
+      target.attackType = "ranged";
+      target.energy = 0;
+      target.cooldown = Math.max(target.cooldown, 0.45);
+      target.abilityMotion = null;
+      this.addEffect({ kind: "ring", x: target.x, y: target.y, color: UNIT_DEFS.zeyin.accent, life: 1, size: 96 });
+      this.addEffect({ kind: "text", x: target.x, y: target.y - 46, color: UNIT_DEFS.zeyin.accent, text: "涅槃重生", life: 0.95, size: 14 });
+      return false;
+    }
     target.alive = false;
     target.hp = 0;
     target.abilityMotion = null;
@@ -3704,6 +3803,7 @@ export class AutoChessEngine {
       life: 0.7,
       size: 58,
     });
+    return true;
   }
 
   private finishBattle(won: boolean) {
@@ -4022,7 +4122,14 @@ export class AutoChessEngine {
           projectiles: battle.projectiles.map((projectile) => ({
             x: Math.round(projectile.x),
             y: Math.round(projectile.y),
-            style: projectile.style || "default",
+              style: projectile.style || "default",
+            })),
+          chronospheres: battle.chronospheres.map((zone) => ({
+            x: Math.round(zone.x),
+            y: Math.round(zone.y),
+            radius: zone.radius,
+            remaining: Number(zone.life.toFixed(2)),
+            duration: zone.maxLife,
           })),
         },
         enemyUnits: battle.enemy

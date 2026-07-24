@@ -11,6 +11,8 @@ import {
   UNIT_DEFS,
   MAX_PLAYER_LEVEL,
   PLAYER_LEVEL_CONFIG,
+  abilityDescriptionForStar,
+  describeAbilityStarGrowth,
   bookLevelForPlayerLevel,
   tierOddsForLevel,
 } from "../core/gameData";
@@ -1433,6 +1435,7 @@ export class RiftLineScene extends Phaser.Scene {
       abilityMotion?.kind === "dash" ? "»" : "",
       abilityMotion?.kind === "push" ? "›" : "",
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
+      fighter.reborn ? "涅" : "",
       fighter.gen27Buffed ? "27" : "",
       fighter.enraged ? "!" : "",
     ].filter(Boolean);
@@ -2143,7 +2146,12 @@ export class RiftLineScene extends Phaser.Scene {
         ? `${def.attackType === "ranged" ? "远程" : "近战"} · 部署生命 ${Math.round(combatStats.maxHp)} · 攻击 ${Math.round(combatStats.attack)} · 护甲 ${Math.round(combatStats.armor)}\n射程 ${Math.round(combatStats.range)} · 攻速 ${combatStats.attackInterval.toFixed(2)}s · 移速 ${Math.round(combatStats.moveSpeed)}`
         : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;
     const detailText = this.boundedText(detail, contentWidth, fighter ? 5 : 3, body, "#abc1ce", { lineSpacing: 5 });
-    const ability = this.boundedText(def.abilityDescription, contentWidth, this.isCompact() ? 5 : 7, body, "#adc1cc", { lineSpacing: 5 });
+    const abilityGrowth = describeAbilityStarGrowth(def);
+    const abilityDescription = [
+      abilityDescriptionForStar(def, star),
+      abilityGrowth ? `星级成长：${abilityGrowth}` : "",
+    ].filter(Boolean).join("\n");
+    const ability = this.boundedText(abilityDescription, contentWidth, this.isCompact() ? 7 : 9, body, "#adc1cc", { lineSpacing: 5 });
     const abilityTitle = this.text(0, 0, `${def.abilityName} · ${ABILITY_CAST_TIMING_LABELS[def.abilityCastTiming]}`, section, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
     const titleY = padding - 2;
     const detailY = titleY + title + 14;
