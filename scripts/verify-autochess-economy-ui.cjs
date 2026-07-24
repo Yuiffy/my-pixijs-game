@@ -107,11 +107,12 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.waitForTimeout(300);
   await page.locator(".rift-dom-mobile-actions button").nth(0).click();
   const mobileInterest = page.locator(".rift-interest-info.is-compact");
-  await mobileInterest.locator("summary").click();
+  await mobileInterest.locator("button").click();
   const mobileInterestDisplay = await mobileInterest.locator('[role="tooltip"]').evaluate((element) => getComputedStyle(element).display);
   if (mobileInterestDisplay === "none") throw new Error("Mobile interest explanation did not open");
   await page.screenshot({ path: `${artifactDirectory}/economy-interest-mobile.png`, fullPage: true });
-  await page.getByRole("button", { name: "关闭面板" }).click();
+  await page.getByRole("button", { name: "关闭面板" }).evaluate((button) => button.click());
+  await page.locator(".rift-dom-sheet-backdrop").waitFor({ state: "detached" });
 
   await page.locator(".rift-dom-mobile-actions button").nth(1).click();
   const mobileValues = await page.locator(".rift-bench-value").allInnerTexts();

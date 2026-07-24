@@ -190,10 +190,15 @@ const SUMI_SEAL_DURATION = 2.8;
 /** 塔神「尖塔压顶」 */
 const TOWER_GOD_TOWER_RADIUS = 146;
 const TOWER_GOD_TOWER_STUN = 0.82;
-/** 帕可「全配音实况」：范围打断，并带动主持成员接续技能。 */
-const PAKO_DUB_RADIUS = 150;
-const PAKO_DUB_STUN = 0.72;
-const PAKO_HOST_ENERGY = 18;
+/** 轴伊「扔橘子」：五段治疗逐次减弱，每段发射时重新选择最虚弱友军。 */
+const COG_ORANGE_HEAL_MULTIPLIERS = [1, 0.82, 0.66, 0.54, 0.44] as const;
+const COG_ORANGE_INTERVAL = 0.2;
+const COG_ORANGE_HEAL_HP_RATIO = 0.11;
+const COG_ORANGE_HEAL_ATTACK_RATIO = 0.75;
+/** 帕可「天使摸鱼」：投向受伤友军密集区域的范围治疗。 */
+const PAKO_ANGEL_FISH_RADIUS = 128;
+const PAKO_ANGEL_FISH_HEAL_HP_RATIO = 0.15;
+const PAKO_ANGEL_FISH_HEAL_ATTACK_RATIO = 0.9;
 /** 非自身中心 AOE：声束同帧触发，弹幕抵达固定落点后触发。 */
 const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile"; glyph?: string }>> = {
   shiori: { kind: "beam" },
@@ -201,7 +206,7 @@ const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile
   sui_flower: { kind: "projectile", glyph: "🌶️" },
   sumi: { kind: "projectile", glyph: "🐯" },
   tower_god: { kind: "projectile", glyph: "塔" },
-  pako: { kind: "beam" },
+  pako: { kind: "projectile", glyph: "🐟" },
   nightin: { kind: "projectile", glyph: "🚬" },
   rei: { kind: "projectile", glyph: "👻" },
   lian: { kind: "projectile", glyph: "✦" },
@@ -2124,6 +2129,7 @@ export class AutoChessEngine {
     source: Fighter,
     abilityId: UnitId,
     center: { x: number; y: number },
+    support?: { targetFid?: string; multiplier?: number },
   ) {
     const targets = this.living(source.team === "player" ? "enemy" : "player");
     const allies = this.living(source.team);
@@ -2209,19 +2215,38 @@ export class AutoChessEngine {
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: TOWER_GOD_TOWER_RADIUS + 16 });
         this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#fff1bd", life: 0.5, size: 90 });
         break;
+      case "cog_scribe": {
+        const target = support?.targetFid
+          ? allies.find((ally) => ally.fid === support.targetFid)
+          : [...allies].sort(
+            (left, right) =>
+              Math.hypot(left.x - center.x, left.y - center.y) -
+              Math.hypot(right.x - center.x, right.y - center.y),
+          )[0];
+        if (!target) break;
+        const multiplier = support?.multiplier ?? 1;
+        this.heal(
+          source,
+          target,
+          (target.maxHp * COG_ORANGE_HEAL_HP_RATIO + source.attack * COG_ORANGE_HEAL_ATTACK_RATIO) * multiplier,
+        );
+        this.addEffect({ kind: "burst", x: target.x, y: target.y, color: def.accent, life: 0.32, size: 30 });
+        this.addEffect({ kind: "text", x: target.x, y: target.y - 42, color: def.accent, text: "🍊", emoji: true, life: 0.55, size: 16 });
+        break;
+      }
       case "pako":
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= PAKO_DUB_RADIUS)
-          .forEach((target) => {
-            deal(target, 1.55);
-            if (target.alive) target.stun = Math.max(target.stun, PAKO_DUB_STUN);
-          });
         allies
-          .filter((ally) => UNIT_DEFS[ally.unitId].traits.includes("host"))
-          .forEach((ally) => this.addEnergy(ally, PAKO_HOST_ENERGY));
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: PAKO_DUB_RADIUS + 16 });
-        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f4eaff", life: 0.52, size: 96 });
-        this.addEffect({ kind: "text", x: center.x, y: center.y - 42, color: def.accent, text: "全配音", life: 0.75, size: 13 });
+          .filter((ally) => Math.hypot(ally.x - center.x, ally.y - center.y) <= PAKO_ANGEL_FISH_RADIUS)
+          .forEach((ally) => {
+            this.heal(
+              source,
+              ally,
+              ally.maxHp * PAKO_ANGEL_FISH_HEAL_HP_RATIO + source.attack * PAKO_ANGEL_FISH_HEAL_ATTACK_RATIO,
+            );
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: PAKO_ANGEL_FISH_RADIUS + 14 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f4eaff", life: 0.52, size: 88 });
+        this.addEffect({ kind: "text", x: center.x, y: center.y - 42, color: def.accent, text: "天使摸鱼", life: 0.75, size: 13 });
         break;
       case "nightin":
         targets
@@ -2536,6 +2561,39 @@ export class AutoChessEngine {
       if (shot.delay > 0) return true;
       const source = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === shot.sourceFid);
       if (!source?.alive) return false;
+      if (shot.supportHealMultiplier !== undefined) {
+        const target = [...this.living(source.team)]
+          .sort((left, right) => left.hp / left.maxHp - right.hp / right.maxHp)[0];
+        if (target) {
+          const deltaX = target.x - source.x;
+          const deltaY = target.y - source.y;
+          const distance = Math.hypot(deltaX, deltaY);
+          const duration = Math.max(
+            REMOTE_AOE_PROJECTILE_MIN_DURATION,
+            Math.min(REMOTE_AOE_PROJECTILE_MAX_DURATION, distance / REMOTE_AOE_PROJECTILE_SPEED),
+          );
+          battle.projectiles.push({
+            sourceFid: source.fid,
+            team: source.team,
+            x: source.x,
+            y: source.y,
+            velocityX: deltaX / duration,
+            velocityY: deltaY / duration,
+            radius: 7,
+            remainingRange: distance,
+            damage: 0,
+            burnPower: 0,
+            color: shot.color,
+            size: shot.size,
+            style: "aoe_orb",
+            emoji: shot.emoji,
+            impactAbilityId: "cog_scribe",
+            impactTargetFid: target.fid,
+            impactMultiplier: shot.supportHealMultiplier,
+          });
+        }
+        return false;
+      }
       const locked = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === shot.targetFid);
       const targetTeam: Team = source.team === "player" ? "enemy" : "player";
       // 带角度偏移的弹幕（近视射击）开火时重新找最近目标，体现瞄不准
@@ -2561,7 +2619,10 @@ export class AutoChessEngine {
           const impactProgress = projectile.remainingRange / Math.max(traveled, 0.001);
           projectile.x = startX + stepX * impactProgress;
           projectile.y = startY + stepY * impactProgress;
-          this.resolveRemoteAoeImpact(source, projectile.impactAbilityId, projectile);
+          this.resolveRemoteAoeImpact(source, projectile.impactAbilityId, projectile, {
+            targetFid: projectile.impactTargetFid,
+            multiplier: projectile.impactMultiplier,
+          });
           return false;
         }
         projectile.x += stepX;
@@ -3332,22 +3393,22 @@ export class AutoChessEngine {
         break;
       }
       case "cog_scribe": {
-        [...allies]
-          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
-          .slice(0, 2)
-          .forEach((target) => {
-            this.heal(source, target, target.maxHp * 0.14 + source.attack * 0.8);
-            this.addEffect({
-              kind: "line",
-              x: source.x,
-              y: source.y,
-              x2: target.x,
-              y2: target.y,
-              color: def.accent,
-              life: 0.38,
-              size: 3,
-            });
+        COG_ORANGE_HEAL_MULTIPLIERS.forEach((multiplier, index) => {
+          this.state.battle?.projectileVolley.push({
+            sourceFid: source.fid,
+            targetFid: source.fid,
+            delay: index * COG_ORANGE_INTERVAL,
+            damage: 0,
+            burnPower: 0,
+            speed: REMOTE_AOE_PROJECTILE_SPEED,
+            color: def.accent,
+            size: 10,
+            style: "aoe_orb",
+            emoji: "🍊",
+            supportHealMultiplier: multiplier,
           });
+        });
+        this.addEffect({ kind: "burst", x: source.x, y: source.y, color: def.accent, life: 0.3, size: 30 });
         break;
       }
       case "mossback": {
@@ -3648,7 +3709,8 @@ export class AutoChessEngine {
         break;
       }
       case "pako": {
-        const center = densest(targets);
+        const injuredAllies = allies.filter((ally) => ally.hp < ally.maxHp);
+        const center = densest(injuredAllies.length ? injuredAllies : allies);
         if (!center) break;
         this.deliverRemoteAoe(source, center);
         break;

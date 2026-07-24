@@ -385,3 +385,13 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 专项回归覆盖全部 7 个弹幕型技能的延迟结算，以及 2 个声束型技能的同步触发；`pnpm exec tsc --noEmit` 和 `git diff --check` 通过。完整 `pnpm autochess:test` 为 `102/103`，唯一失败仍是既有“满能量远程单位会先进入攻击距离再施法”断言。
 - 系统 Chrome 专项脚本 `scripts/verify-remote-aoe.cjs` 使用 seed 22 捕获北欧时停飞行/落地，使用 seed 15 捕获大声声束/范围同帧；画布、文本状态与效果坐标一致，控制台无 error。
 - 截图：`.tmp/autochess/remote-aoe-projectile-flight.png`、`.tmp/autochess/remote-aoe-projectile-impact.png`、`.tmp/autochess/remote-aoe-beam-impact.png`。三张均为 1440×900 有效非黑图，透明率和近黑率均为 0，已逐张打开检查。
+
+## 2026-07-25 · 商店经济信息与备战价值层级
+
+- 设计评审确认顶栏金币与商店经济栏重复；已移除顶栏金币，仅在战术商店保留金币、赏金、利息和连胜决策信息。
+- 利息数字新增可聚焦、可点击的 info 说明：普通规则为每 5 金提供 1 利息、20 金封顶；理财Ⅱ为每 4 金提供 1 利息且无上限，并显示当前金币对应的实际收益。移动端说明在商店抽屉内就地展开，不遮挡概率与商店卡。
+- 备战席为每个棋子常驻显示实际回收价值；二/三星使用与出售逻辑相同的 1/3/9 份价值，高于 5 金时使用明亮金色。单位 tooltip 将费用拆成右上角独立金色标签，长名字会自动截断避让。
+- 抽取 `getUnitSellValue()` 统一备战显示、移动端出售按钮与实际返还金额，避免星级棋子显示基础价但返还总价。
+- 新增 `scripts/verify-autochess-economy-ui.cjs`，使用系统 Chrome 覆盖桌面利息 hover、备战 tooltip、移动端利息点击展开与备战价值；DOM、`render_game_to_text`、画布尺寸和控制台错误交叉检查通过。
+- 截图：`.tmp/autochess/economy-interest-desktop.png`、`.tmp/autochess/economy-bench-tooltip-desktop.png`、`.tmp/autochess/economy-interest-mobile.png`、`.tmp/autochess/economy-bench-mobile.png`。四张均已逐张检查，抽样颜色数 570–3495、近黑率最高 0.01%、透明率 0。
+- 验证：`pnpm exec tsc --noEmit`、Phaser/HUD 静态回归 `26/26`、专项 Chrome 流程和 `git diff --check` 通过；完整 `pnpm autochess:test` 为 `104/105`，唯一失败仍是已有的“满能量远程单位会先进入攻击距离再施法”断言。

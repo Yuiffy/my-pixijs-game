@@ -295,14 +295,15 @@ function BenchSheet({ engine, selected, onClose, onAction }: { engine: AutoChess
 }
 
 function InterestInfo({ engine, compact = false }: { engine: AutoChessEngine; compact?: boolean }) {
+  const [open, setOpen] = useState(false);
   const financeLevel = engine.getTraitStatus("finance").level;
   const enhanced = financeLevel >= 2;
   const rule = enhanced ? "理财Ⅱ：每 4 金币提供 1 利息，且不设上限。" : "每 5 金币提供 1 利息，最多计算 20 金币（最高 4 利息）。";
   return (
-    <details className={`rift-interest-info ${compact ? "is-compact" : ""}`}>
-      <summary><span>利息</span><b>+{engine.interestIncome}</b><i aria-hidden="true">i</i></summary>
+    <div className={`rift-interest-info ${compact ? "is-compact" : ""} ${open ? "is-open" : ""}`} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} onFocus={() => setOpen(true)}><span>利息</span><b>+{engine.interestIncome}</b><i aria-hidden="true">i</i></button>
       <div role="tooltip"><strong>{enhanced ? "理财Ⅱ利息" : "利息规则"}</strong><span>{rule}</span><small>当前 {engine.state.gold} 金币，本回合可得 {engine.interestIncome} 利息。</small></div>
-    </details>
+    </div>
   );
 }
 

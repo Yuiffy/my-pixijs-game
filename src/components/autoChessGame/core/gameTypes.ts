@@ -65,6 +65,10 @@ export interface Projectile {
   grounded?: boolean;
   /** 远端 AOE 弹幕抵达固定落点后触发的技能。 */
   impactAbilityId?: UnitId;
+  /** 支援弹幕锁定的友军；目标移动时仍在弹幕落地后获得效果。 */
+  impactTargetFid?: string;
+  /** 支援弹幕的逐段效果倍率。 */
+  impactMultiplier?: number;
 }
 
 export interface ChronosphereZone {
@@ -274,6 +278,8 @@ export interface ProjectileVolleyShot {
   emoji?: string;
   style?: Projectile["style"];
   splashRadius?: number;
+  /** 有值时，这一段弹幕会改为治疗发射时生命比例最低的友军。 */
+  supportHealMultiplier?: number;
 }
 
 export interface BattleState {
