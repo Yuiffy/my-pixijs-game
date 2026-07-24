@@ -443,7 +443,8 @@ test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊",
   assert.equal(pako.hp, 142);
   assert.equal(pako.attack, 18);
   assert.equal(pako.armor, 7);
-  assert.deepEqual(pako.traits, ["host", "mystic", "traffic"]);
+  assert.deepEqual(pako.traits, ["host", "mystic"]);
+  assert.equal(pako.traits.includes("traffic"), false);
   assert.equal(pako.abilityName, "天使摸鱼");
   assert.match(pako.abilityDescription, /受伤友军最密集/);
   assert.match(pako.abilityDescription, /范围内的队友回复生命/);

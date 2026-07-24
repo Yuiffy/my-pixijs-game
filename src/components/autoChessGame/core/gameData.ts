@@ -1108,7 +1108,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   pako: unit({
     id: "pako", name: "帕可Pako", title: "帕可Pako · 范围治疗", glyph: "帕", color: "#6f52a3", accent: "#d7b3ff", tier: 1, cost: 1,
-    traits: ["host", "mystic", "traffic"], hp: 142, attack: 18, armor: 7, range: 195, attackInterval: 1.08, moveSpeed: 50,
+    traits: ["host", "mystic"], hp: 142, attack: 18, armor: 7, range: 195, attackInterval: 1.08, moveSpeed: 50,
     abilityName: "天使摸鱼", abilityDescription: "向受伤友军最密集的区域扔出一条天使鱼，为范围内的队友回复生命。",
     portrait: "/images/livers/pako.jpg", portraitFocus: "top", shop: true,
   }),
