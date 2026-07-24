@@ -1385,6 +1385,47 @@ test("精英关、主线通关与地狱入口会在备战前发出预警", () =>
   assert.match(engine.state.toast?.text || "", /地狱预警.*20 利息.*赏金/);
 });
 
+test("截图中的高存款七人阵容在十五战会受精英威胁且十六战仍有胜机", () => {
+  const slots = [4, 5, 10, 11, 16, 17, 22];
+  const lineup = [
+    ["spark_mage", 1],
+    ["lian", 1],
+    ["nori", 2],
+    ["youyi", 2],
+    ["grove_mender", 2],
+    ["mumu", 2],
+    ["yua", 1],
+  ];
+  const prepareScreenshotLineup = (engine, round) => {
+    engine.state.round = round;
+    engine.state.playerLevel = 7;
+    engine.state.board.fill(null);
+    slots.forEach((slot, index) => {
+      const [id, star] = lineup[index];
+      engine.state.board[slot] = { uid: index + 1, id, star };
+    });
+    engine.state.augments = ["sharp_edge", "execution"];
+  };
+
+  const eliteEngine = createEngine(2);
+  prepareScreenshotLineup(eliteEngine, 15);
+  eliteEngine.startBattle();
+  for (let tick = 0; tick < 600 && eliteEngine.state.phase === "battle"; tick += 1) {
+    eliteEngine.update(0.05);
+  }
+  assert.equal(eliteEngine.state.result.won, false);
+  assert.ok(eliteEngine.state.battle.enemy.filter((unit) => unit.alive).length <= 2);
+
+  const normalEngine = createEngine(4);
+  prepareScreenshotLineup(normalEngine, 16);
+  normalEngine.startBattle();
+  for (let tick = 0; tick < 600 && normalEngine.state.phase === "battle"; tick += 1) {
+    normalEngine.update(0.05);
+  }
+  assert.equal(normalEngine.state.result.won, true);
+  assert.ok(normalEngine.state.battle.player.filter((unit) => unit.alive).length <= 3);
+});
+
 test("普通利息每 5 金币提供 1 点并在 20 金币封顶", () => {
   const engine = createEngine(300);
   engine.state.gold = 19;

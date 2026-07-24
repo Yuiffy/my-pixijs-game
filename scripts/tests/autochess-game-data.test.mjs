@@ -102,6 +102,21 @@ test("二十五战主线每五战预警精英并以首领收束", () => {
   assert.match(boss.description, /首领预警/);
 });
 
+test("主线预算会计入累计收入并在普通关与精英关持续加压", () => {
+  assert.deepEqual(
+    Array.from({ length: 8 }, (_, index) => data.enemyBudgetForRound(index + 1)),
+    [2, 5, 9, 12, 16, 17, 21, 14],
+  );
+  assert.deepEqual(
+    [9, 10, 15, 16, 20, 24, 25, 26].map((round) =>
+      data.enemyBudgetForRound(round),
+    ),
+    [20, 48, 112, 67, 204, 157, 230, 190],
+  );
+  assert.ok(data.enemyBudgetForRound(15) > data.enemyBudgetForRound(14) * 1.4);
+  assert.ok(data.enemyBudgetForRound(20) > data.enemyBudgetForRound(19) * 1.4);
+});
+
 test("普通无限与地狱无限按完整回合收入递推敌军总价值", () => {
   const normal = data.waveForRound(26);
   const threshold = data.waveForRound(40);
@@ -132,8 +147,8 @@ test("普通无限与地狱无限按完整回合收入递推敌军总价值", ()
     bounty: 30,
     total: 54,
   });
-  assert.equal(data.enemyBudgetForRound(40), 504);
-  assert.equal(data.enemyBudgetForRound(41), 558);
+  assert.equal(data.enemyBudgetForRound(40), 662);
+  assert.equal(data.enemyBudgetForRound(41), 716);
   assert.equal(
     data.enemyBudgetForRound(41) - data.enemyBudgetForRound(40),
     thresholdIncome.total,

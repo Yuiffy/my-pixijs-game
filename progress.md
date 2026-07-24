@@ -497,3 +497,11 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 修复自走棋构建阻断项：图鉴天赋分组的 `tier` 变量遮蔽、波次计算的 `unit` 变量遮蔽、条件箭头表达式、循环内预算闭包和 `Math.pow` 限制。
 - 目标源码 ESLint 已达到 `0 errors`，`pnpm exec tsc --noEmit` 通过；清理不一致的本地 `.next` 生成产物后，`pnpm run build` 完整通过，线上构建也已通过。
 - 构建仍保留仓库既有非阻断 warning；`pnpm autochess:test` 当前为 `116/117`，唯一失败仍是已有“满能量远程单位会先进入攻击距离再施法”断言，与本轮 lint 修复无关。
+
+## 2026-07-25 · 怕死后跳保持接敌移动
+
+- 怕死单位受击后跳期间继续执行正常接敌移动，前进位移会同步平移整条跳跃轨迹，不再因 `jumpTime` 暂停近战单位接近远程目标；跳跃中仍不会提前普攻或施放技能。
+- 跳舞成员处于 `danceDashTime` 冲刺期间不会被怕死后跳打断，受击仍正常结算，冲刺状态保留。
+- `render_game_to_text` 新增 `jumpProgress` 与 `jumpAdvancing`，并新增系统 Chrome 专项脚本 `scripts/verify-vanguard-jump.cjs`。
+- 引擎回归新增后跳前进和冲刺保护两项；专项 Chrome seed 2 捕获果冻风纪在 `jumpProgress 0.09`、`jumpAdvancing: true` 的后跳中段，x 坐标连续前进，截图 `.tmp/autochess/vanguard-jump-advancing.png` 已打开检查，画布和控制台无错误。
+- 验证：`pnpm exec tsc --noEmit`、Phaser 静态回归 `26/26`、`git diff --check` 通过；完整 `pnpm autochess:test` 为 `119/120`，唯一失败仍是已有的远程施法距离断言。

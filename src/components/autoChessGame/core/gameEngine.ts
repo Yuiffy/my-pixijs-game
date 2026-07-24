@@ -4696,6 +4696,10 @@ export class AutoChessEngine {
             hit: unit.hitPulse > 0,
             jumpPending: unit.jumpPending,
             jumping: unit.abilityMotion?.kind === "jump" || unit.jumpTime > 0,
+            jumpProgress: unit.jumpTime > 0
+              ? Number((1 - unit.jumpTime / Math.max(unit.jumpDuration, 0.001)).toFixed(2))
+              : 0,
+            jumpAdvancing: unit.vanguardJumpAdvancing,
             motion: unit.abilityMotion && {
               kind: unit.abilityMotion.kind,
               abilityId: unit.abilityMotion.abilityId,
@@ -4764,6 +4768,10 @@ export class AutoChessEngine {
             hit: unit.hitPulse > 0,
             jumpPending: unit.jumpPending,
             jumping: unit.abilityMotion?.kind === "jump" || unit.jumpTime > 0,
+            jumpProgress: unit.jumpTime > 0
+              ? Number((1 - unit.jumpTime / Math.max(unit.jumpDuration, 0.001)).toFixed(2))
+              : 0,
+            jumpAdvancing: unit.vanguardJumpAdvancing,
             motion: unit.abilityMotion && {
               kind: unit.abilityMotion.kind,
               abilityId: unit.abilityMotion.abilityId,

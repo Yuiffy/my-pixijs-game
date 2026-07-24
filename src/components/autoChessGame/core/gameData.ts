@@ -75,7 +75,12 @@ export const SHOP_UNIT_IDS = [
 
 export type ShopUnitId = (typeof SHOP_UNIT_IDS)[number];
 // 秋凛子暂时隐藏，但保留完整单位类型以兼容已有数据和战斗逻辑。
-export type UnitId = ShopUnitId | "akirinco" | "rift_tyrant";
+export type UnitId =
+  | ShopUnitId
+  | "akirinco"
+  | "miki_guest"
+  | "hatsuse_guest"
+  | "rift_tyrant";
 
 export type StarterId = "mature_start" | "blaze" | "traffic_start" | "bastion" | "dance_start" | "ranger_start";
 export const STARTER_OFFER_SIZE = 3;
@@ -282,7 +287,7 @@ export interface WaveDefinition {
 export const TRAITS: Record<TraitId, TraitDefinition> = {
   ember: { id: "ember", name: "深夜档", family: "阵营", color: "#ff7657", thresholds: [2, 4, 6], description: "熬得越久，状态越稳；战斗中攻击力会逐步叠加。", bonuses: ["深夜档成员每 3 秒 +5% 攻击力，最多 +25%", "深夜档成员每 3 秒 +8% 攻击力，最多 +40%；所有远程友军最多 +12% 攻击力", "深夜档成员每 3 秒 +12% 攻击力，最多 +60%；所有远程友军最多 +25% 攻击力"] },
   wild: { id: "wild", name: "毛茸茸", family: "阵营", color: "#70e1a0", thresholds: [2, 4, 6], description: "厚实的毛层只负责挡伤害，不额外堆血量。", bonuses: ["毛茸茸成员 +10 护甲", "毛茸茸成员 +22 护甲；所有近战友军 +8 护甲", "毛茸茸成员 +38 护甲；所有近战友军 +16 护甲"] },
-  vanguard: { id: "vanguard", name: "怕死", family: "职业", color: "#819eff", thresholds: [2, 4, 6], description: "怕死所以不敢贴脸：攻击距离更远，受击后会真实跳开；若后撤会离开攻击距离，就改为侧跳。", bonuses: ["怕死单位攻击距离 +36；受击时小幅跳开", "怕死单位攻击距离 +56；受击跳开增强；全体友军 +10% 最大生命", "怕死单位攻击距离 +80；受击跳开更远；全体友军 +18% 最大生命"] },
+  vanguard: { id: "vanguard", name: "怕死", family: "职业", color: "#819eff", thresholds: [2, 4, 6], description: "怕死所以不敢贴脸：攻击距离更远，受击后会真实跳开；跳跃期间仍保持接敌移动；若后撤会离开攻击距离，就改为侧跳。", bonuses: ["怕死单位攻击距离 +36；受击时小幅跳开，接敌移速不中断", "怕死单位攻击距离 +56；受击跳开增强，接敌移速不中断；全体友军 +10% 最大生命", "怕死单位攻击距离 +80；受击跳开更远，接敌移速不中断；全体友军 +18% 最大生命"] },
   ranger: { id: "ranger", name: "射手", family: "职业", color: "#f2d15e", thresholds: [2, 4, 6], description: "射手擅长持续远程输出，高阶会带动全队后排火力。", bonuses: ["射手单位 +12% 攻速", "射手单位 +26% 攻速；所有远程友军 +15% 攻速", "射手单位 +45% 攻速；所有远程友军 +30% 攻速"] },
   mystic: { id: "mystic", name: "杂谈", family: "职业", color: "#de87ff", thresholds: [2, 4, 6], description: "杂谈位开麦快、话题多，总能把全队情绪带起来。", bonuses: ["杂谈单位开战 +20 能量", "杂谈开战 +45、施法返还 8；全体友军开战 +10 能量", "杂谈开战 +70、施法返还 15；全体友军开战 +22 能量"] },
   assassin: { id: "assassin", name: "偷袭", family: "职业", color: "#ff6fae", thresholds: [2, 4, 6], description: "偷袭成员会悄悄贴近同事，在后排制造猝不及防的贴贴事故。", bonuses: ["偷袭成员跃向后排、获得 15% 暴击率", "偷袭成员 30% 暴击；所有远程友军 +12% 暴击率", "偷袭成员 50% 暴击；所有远程友军 +25% 暴击率"] },
@@ -410,6 +415,8 @@ const COMBAT_PROFILES: Record<
   rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
   lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   pako: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 195, moveSpeed: 50, abilityCastTiming: "supportHeal" },
+  miki_guest: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 230, moveSpeed: 56, abilityCastTiming: "offenseReady" },
+  hatsuse_guest: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 225, moveSpeed: 62, abilityCastTiming: "offenseReady" },
   rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56, abilityCastTiming: "offenseReady" },
 };
 
@@ -1113,6 +1120,51 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     portrait: "/images/livers/pako.jpg", portraitFocus: "top", shop: true,
   }),
 
+  miki_guest: unit({
+    id: "miki_guest",
+    name: "弥希Miki",
+    title: "毕业返场 · 双声道法控",
+    glyph: "弥",
+    color: "#554687",
+    accent: "#c6b4ff",
+    tier: 5,
+    cost: 5,
+    traits: ["mystic", "host", "mature", "traffic"],
+    hp: 286,
+    attack: 42,
+    armor: 20,
+    range: 230,
+    attackInterval: 0.86,
+    moveSpeed: 56,
+    abilityName: "双声道返场",
+    abilityDescription: "仅敌方可用。以左右双声道轰击敌人最密集处，造成两段范围伤害并短暂眩晕。",
+    portrait: "/images/autochess/enemy-guests/miki.jpg",
+    portraitFocus: "center",
+    shop: false,
+  }),
+  hatsuse_guest: unit({
+    id: "hatsuse_guest",
+    name: "初濑Hatsuse",
+    title: "毕业返场 · 蝙蝠夜歌",
+    glyph: "濑",
+    color: "#5b466f",
+    accent: "#ff9fce",
+    tier: 5,
+    cost: 5,
+    traits: ["ember", "mystic", "yue_gang", "ranger"],
+    hp: 268,
+    attack: 40,
+    armor: 18,
+    range: 225,
+    attackInterval: 0.78,
+    moveSpeed: 62,
+    abilityName: "蝙蝠夜歌",
+    abilityDescription: "仅敌方可用。召来蝙蝠声浪穿过数名敌人，造成伤害并将部分伤害转化为全队治疗。",
+    portrait: "/images/autochess/enemy-guests/hatsuse.jpg",
+    portraitFocus: "center",
+    shop: false,
+  }),
+
   rift_tyrant: unit({
     id: "rift_tyrant",
     name: "弹幕暴走体",
@@ -1253,7 +1305,7 @@ export const WAVES: WaveDefinition[] = [
     name: "直播间暖场",
     tag: "normal",
     description: "果冻风纪与兔子射手在前排，适合熟悉站位。",
-    modifier: 0.64,
+    modifier: Math.sqrt(2 / 3),
     units: [{ id: "sun_guard" }, { id: "ember_blade" }],
   },
   {
@@ -1261,7 +1313,7 @@ export const WAVES: WaveDefinition[] = [
     name: "毛茸茸联动",
     tag: "normal",
     description: "犬绒·绒绒卫士保护十六萤·浣熊射手，优先处理后排输出。",
-    modifier: 0.75,
+    modifier: Math.sqrt(5 / 6),
     units: [{ id: "mossback" }, { id: "gale_archer" }, { id: "cog_scribe" }],
   },
   {
@@ -1269,7 +1321,7 @@ export const WAVES: WaveDefinition[] = [
     name: "深夜档突入",
     tag: "normal",
     description: "可爱冲阵会打乱前线，分散站位可降低损失。",
-    modifier: 0.88,
+    modifier: Math.sqrt(9 / 11),
     units: [
       { id: "cinder_ram" },
       { id: "rift_brawler" },
@@ -1280,9 +1332,9 @@ export const WAVES: WaveDefinition[] = [
   {
     round: 4,
     name: "果冻火力网",
-    tag: "normal",
-    description: "果冻风纪控制前排，弥月火力锁定远端单位。",
-    modifier: 0.96,
+    tag: "elite",
+    description: "精英预警：果冻风纪控制前排，弥月火力锁定远端单位。",
+    modifier: Math.sqrt(18 / 8),
     units: [
       { id: "sun_guard" },
       { id: "clock_gunner" },
@@ -1293,9 +1345,9 @@ export const WAVES: WaveDefinition[] = [
   {
     round: 5,
     name: "毛茸茸团建",
-    tag: "elite",
-    description: "精英预警：七海·海盐医师与犬绒·绒绒卫士续航很强，需要集火或切后。",
-    modifier: 1,
+    tag: "normal",
+    description: "七海·海盐医师与犬绒·绒绒卫士续航很强，需要集火或切后。",
+    modifier: Math.sqrt(16 / 9),
     units: [
       { id: "mossback" },
       { id: "mossback" },
@@ -1309,7 +1361,7 @@ export const WAVES: WaveDefinition[] = [
     name: "攻城序列",
     tag: "normal",
     description: "阿梓的前排冲阵惩罚抱团，浣熊射手持续压制后排。",
-    modifier: 1.02,
+    modifier: Math.sqrt(17 / 11),
     units: [
       { id: "cinder_ram" },
       { id: "rift_stalker" },
@@ -1323,7 +1375,7 @@ export const WAVES: WaveDefinition[] = [
     name: "五系禁卫",
     tag: "normal",
     description: "前排、输出与辅助同时登场，检验阵容完整度。",
-    modifier: 1.04,
+    modifier: Math.sqrt(21 / 15),
     units: [
       { id: "dawn_duelist" },
       { id: "cog_scribe" },
@@ -1336,15 +1388,15 @@ export const WAVES: WaveDefinition[] = [
   {
     round: 8,
     name: "暴君投影",
-    tag: "normal",
-    description: "暴君投影携带双辅卫队；这是终局首领前的第一次机制演练。",
-    modifier: 0.92,
+    tag: "elite",
+    description: "精英预警：暴君投影携带双辅卫队；这是终局首领前的机制演练。",
+    modifier: Math.sqrt(32 / 9),
     units: [{ id: "rift_tyrant" }, { id: "shiori" }, { id: "rift_brawler" }],
   },
 ];
 
-export const CAMPAIGN_ROUNDS = 25;
-export const NORMAL_ENDLESS_END_ROUND = 40;
+export const CAMPAIGN_ROUNDS = 16;
+export const NORMAL_ENDLESS_END_ROUND = 31;
 export const HELL_ENDLESS_START_ROUND = NORMAL_ENDLESS_END_ROUND + 1;
 export const NORMAL_INTEREST_CAP = 4;
 export const FINANCE_INTEREST_CAP = 20;
@@ -1360,11 +1412,10 @@ export const progressionModeForRound = (round: number): ProgressionMode => {
 export const augmentTierForRound = (round: number): AugmentTier | null => {
   const campaignTier: Partial<Record<number, AugmentTier>> = {
     2: "minor",
-    5: "major",
-    10: "minor",
-    15: "major",
-    20: "minor",
-    25: "major",
+    4: "major",
+    8: "minor",
+    12: "major",
+    16: "major",
   };
   if (round <= CAMPAIGN_ROUNDS) return campaignTier[round] ?? null;
   if ((round - CAMPAIGN_ROUNDS) % 6 !== 0) return null;
@@ -1387,6 +1438,40 @@ const HELL_NAMES = [
 
 const STAR_COPY_VALUE = [0, 1, 3, 9] as const;
 
+export const ENEMY_GUEST_IDS = ["miki_guest", "hatsuse_guest"] as const;
+
+const ENEMY_SQUADS: ReadonlyArray<{
+  name: string;
+  units: readonly UnitId[];
+}> = [
+  {
+    name: "深夜声场",
+    units: ["spark_mage", "nightin", "cinder_ram", "rei", "sui_flower", "lian", "shiori"],
+  },
+  {
+    name: "舞台突袭",
+    units: ["mumu", "youyi", "lian", "sui_cat", "lovely", "tiandou", "pako"],
+  },
+  {
+    name: "同期联动",
+    units: ["sun_guard", "ember_blade", "rift_brawler", "clock_gunner", "shiori", "mitsuri", "sumi"],
+  },
+  {
+    name: "毛茸盛宴",
+    units: ["mossback", "grove_mender", "sui_bird", "biscuit_sui", "meme", "kioi", "seki_boar_king"],
+  },
+];
+
+const enemySquadForRound = (round: number, seed = 0) =>
+  ENEMY_SQUADS[Math.abs(round * 7 + seed * 11) % ENEMY_SQUADS.length];
+
+const enemyGuestForRound = (round: number, seed = 0): UnitId | null => {
+  if (round <= WAVES.length) return null;
+  const guestChance = round > CAMPAIGN_ROUNDS ? 2 : 1;
+  if (Math.abs(round * 31 + seed * 17) % 7 > guestChance) return null;
+  return ENEMY_GUEST_IDS[Math.abs(round + seed) % ENEMY_GUEST_IDS.length];
+};
+
 export const waveCompositionValue = (wave: Pick<WaveDefinition, "units">) =>
   wave.units.reduce(
     (total, waveUnit) =>
@@ -1394,10 +1479,30 @@ export const waveCompositionValue = (wave: Pick<WaveDefinition, "units">) =>
     0,
   );
 
+export const enemyTraitActivations = (
+  units: readonly WaveUnit[],
+) => {
+  const uniqueIds = new Set(units.map((unit) => unit.id));
+  return TRAIT_IDS.flatMap((id) => {
+    const count = [...uniqueIds].filter((unitId) =>
+      UNIT_DEFS[unitId].traits.includes(id),
+    ).length;
+    const level = traitLevelForCount(TRAITS[id], count);
+    return level ? [{ id, count, level }] : [];
+  });
+};
+
+const describeEnemyTraits = (units: readonly WaveUnit[]) => {
+  const labels = enemyTraitActivations(units).map(
+    ({ id, level }) => `${TRAITS[id].name}${["Ⅰ", "Ⅱ", "Ⅲ"][level - 1]}`,
+  );
+  return labels.length ? `敌方羁绊：${labels.join("、")}` : "敌方羁绊：未成型";
+};
+
 const tagForRound = (round: number): WaveDefinition["tag"] => {
   if (round <= CAMPAIGN_ROUNDS) {
     if (round === CAMPAIGN_ROUNDS) return "boss";
-    return round % 5 === 0 ? "elite" : "normal";
+    return round % 4 === 0 ? "elite" : "normal";
   }
   const endlessRound = round - CAMPAIGN_ROUNDS;
   if (endlessRound % 5 === 0) return "boss";
@@ -1411,11 +1516,15 @@ export const enemyBudgetForRound = (round: number) => {
     return Math.round(waveCompositionValue(wave) * wave.modifier * wave.modifier);
   }
   if (safeRound <= CAMPAIGN_ROUNDS) {
-    const baseBudget = 12 + (safeRound - WAVES.length) * 3.2;
+    const campaignDepth = safeRound - WAVES.length;
+    const baseBudget =
+      18 + campaignDepth * 4.5 + campaignDepth * campaignDepth * 0.42;
     const tag = tagForRound(safeRound);
-    return Math.round(baseBudget * (tag === "boss" ? 1.35 : tag === "elite" ? 1.25 : 1));
+    return Math.round(
+      baseBudget * (tag === "boss" ? 1.55 : tag === "elite" ? 1.9 : 1),
+    );
   }
-  let budget = 96;
+  let budget = 120;
   for (let waveRound = CAMPAIGN_ROUNDS + 1; waveRound < safeRound; waveRound += 1) {
     const nextMode = progressionModeForRound(waveRound + 1);
     const bounty = projectedBountyForGeneratedRound(waveRound, budget);
@@ -1434,27 +1543,20 @@ const generatedUnitCount = (round: number) => {
   return 10;
 };
 
-const minimumGeneratedTier = (round: number) => {
-  if (round <= 14) return 2;
-  if (round <= 20) return 3;
-  if (round <= CAMPAIGN_ROUNDS) return 4;
-  if (round <= NORMAL_ENDLESS_END_ROUND) return 4;
-  return 5;
-};
-
 const buildBudgetedUnits = (
   round: number,
   tag: WaveDefinition["tag"],
   budget: number,
+  seed = 0,
 ) => {
   const count = generatedUnitCount(round);
-  const candidates = SHOP_UNITS.filter(
-    (id) => UNIT_DEFS[id].tier >= minimumGeneratedTier(round),
-  );
+  const squad = enemySquadForRound(round, seed);
   const units: WaveUnit[] = Array.from({ length: count }, (_, index) => ({
-    id: candidates[(round * 7 + index * 11) % candidates.length],
+    id: squad.units[index % squad.units.length],
     star: 1,
   }));
+  const guest = enemyGuestForRound(round, seed);
+  if (guest && units.length > 1) units[units.length - 1] = { id: guest, star: 1 };
   if (tag === "boss") units[0] = { id: "rift_tyrant", star: 1 };
 
   const maxStar: 1 | 2 | 3 = round < 15 ? 2 : 3;
@@ -1511,18 +1613,30 @@ export const projectedIncomeAfterRound = (round: number) => {
   };
 };
 
-export const waveForRound = (round: number): WaveDefinition => {
-  if (round <= WAVES.length) return WAVES[Math.max(0, round - 1)];
+export const waveForRound = (round: number, seed = 0): WaveDefinition => {
+  if (round <= WAVES.length) {
+    const authored = WAVES[Math.max(0, round - 1)];
+    return {
+      ...authored,
+      description: `${authored.description} ${describeEnemyTraits(authored.units)}。`,
+    };
+  }
 
   const mode = progressionModeForRound(round);
   const tag = tagForRound(round);
   const budget = enemyBudgetForRound(round);
-  const units = buildBudgetedUnits(round, tag, budget);
+  const units = buildBudgetedUnits(round, tag, budget, seed);
   const compositionValue = Math.max(1, waveCompositionValue({ units }));
   const modifier = Math.sqrt(budget / compositionValue);
   const endlessRound = round - CAMPAIGN_ROUNDS;
   const nameIndex = Math.max(0, endlessRound - 1);
   const pressurePrefix = tag === "boss" ? "首领预警：" : tag === "elite" ? "精英预警：" : "";
+  const squad = enemySquadForRound(round, seed);
+  const guest = units.find((unit) =>
+    ENEMY_GUEST_IDS.includes(unit.id as (typeof ENEMY_GUEST_IDS)[number]),
+  );
+  const guestText = guest ? ` 毕业嘉宾：${UNIT_DEFS[guest.id].name}。` : "";
+  const traitText = describeEnemyTraits(units);
 
   return {
     round,
@@ -1535,18 +1649,18 @@ export const waveForRound = (round: number): WaveDefinition => {
             : `暴君回响 · ${Math.ceil(endlessRound / 5)}`
         : mode === "campaign"
           ? tag === "elite"
-            ? `精英封锁线 · ${round}`
-            : `远征推进线 · ${round}`
+            ? `${squad.name} · 精英 ${round}`
+            : `${squad.name} · ${round}`
           : mode === "hell"
             ? `${HELL_NAMES[nameIndex % HELL_NAMES.length]} · ${round}`
             : `${ENDLESS_NAMES[nameIndex % ENDLESS_NAMES.length]} · ${round}`,
     tag,
     description:
       mode === "campaign"
-        ? `${pressurePrefix}敌军总价值约 ${budget}，优先用人口与升星检验当前阵容。`
+        ? `${pressurePrefix}敌军总价值约 ${budget}。${traitText}。${guestText}`
         : mode === "endless"
-          ? `${pressurePrefix}普通无限按 5 利息、连胜与上战赏金全部复投。当前总价值约 ${budget}，40 战后进入地狱无限。`
-          : `${pressurePrefix}地狱无限按 20 利息、理财固定收入、连胜与上战赏金全部复投。当前总价值约 ${budget}。`,
+          ? `${pressurePrefix}普通无限按 5 利息、连胜与上战赏金全部复投。当前总价值约 ${budget}，31 战后进入地狱无限。${traitText}。${guestText}`
+          : `${pressurePrefix}地狱无限按 20 利息、理财固定收入、连胜与上战赏金全部复投。当前总价值约 ${budget}。${traitText}。${guestText}`,
     modifier,
     units,
   };
