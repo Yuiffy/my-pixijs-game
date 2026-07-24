@@ -234,7 +234,6 @@ function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | null; eng
       && !status.active
       && nextThreshold
       && status.count + 1 >= nextThreshold
-      && engine.boardCount < engine.boardCap
       && !engine.state.board.some((unit) => unit?.id === unitId),
     );
     return { id, trait, status, willActivate };

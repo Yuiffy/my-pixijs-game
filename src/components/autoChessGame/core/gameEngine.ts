@@ -139,8 +139,11 @@ const ZEYIN_REBIRTH_HP_RATIO = 0.72;
 const ZEYIN_REBIRTH_ATTACK_MULTIPLIER = 1.36;
 const ZEYIN_REBIRTH_ATTACK_INTERVAL_MULTIPLIER = 0.7;
 const ZEYIN_REBIRTH_RANGE = 245;
+/** 流量：成员全能吸血，以及 4/6 人档的全队全能吸血 */
+const TRAFFIC_MEMBER_LIFESTEAL = [0, 0.12, 0.2, 0.32];
+const TRAFFIC_TEAM_LIFESTEAL = [0, 0, 0.08, 0.15];
 /** 贪吃岁：下一发强化普攻的收益 */
-const SUI_BLUE_FEAST_ATTACK_BONUS = 0.9;
+const SUI_BLUE_FEAST_ATTACK_BONUS = 1.25;
 const SUI_BLUE_FEAST_LIFESTEAL = 0.45;
 const SUI_BLUE_FEAST_DURATION = 4;
 /** 椰子栞「大声」的区域 */
@@ -1045,8 +1048,8 @@ export class AutoChessEngine {
         tauntedByFid: null,
         tauntTime: 0,
         lifesteal:
-          [0, 0.08, 0.15, 0.24][trafficLevel] +
-          [0, 0, 0.05, 0.1][globalTrafficLevel] * (isRanged ? 1 : 0) +
+          TRAFFIC_MEMBER_LIFESTEAL[trafficLevel] +
+          TRAFFIC_TEAM_LIFESTEAL[globalTrafficLevel] +
           (trafficLevel && this.state.starter === "traffic_start" ? 0.06 : 0),
         burnOnHitPower: 0,
         spiceBurnOnHitPower: Math.max(

@@ -154,6 +154,7 @@ export interface Fighter {
   burnTime: number;
   burnDps: number;
   burnSourceFid: string | null;
+  /** 普攻和技能造成生命伤害时均会触发的全能吸血 */
   lifesteal: number;
   burnOnHitPower: number;
   spiceBurnOnHitPower: number;

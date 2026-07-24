@@ -1015,7 +1015,7 @@ export class RiftLineScene extends Phaser.Scene {
   private traitActivatesAfterPurchase(unitId: UnitId, traitId: keyof typeof TRAITS) {
     const { engine } = this.bridge;
     const status = engine.getTraitStatus(traitId);
-    if (status.active || engine.boardCount >= engine.boardCap) return false;
+    if (status.active) return false;
     const threshold = TRAITS[traitId].thresholds[status.level];
     return status.count + 1 >= threshold && !engine.state.board.some((unit) => unit?.id === unitId);
   }

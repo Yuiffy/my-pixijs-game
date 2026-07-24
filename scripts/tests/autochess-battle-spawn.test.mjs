@@ -1224,6 +1224,35 @@ test("流量在每个备战回合按羁绊等级重置免费刷新次数", () =>
   assert.equal(engine.state.gold, 9);
 });
 
+test("四流量为全队提供技能可触发的全能吸血", () => {
+  const engine = createEngine(304);
+  engine.state.playerLevel = 6;
+  engine.state.board.fill(null);
+  ["sun_guard", "dawn_duelist", "sui_blue", "meme", "rift_stalker", "clock_gunner"].forEach((id, index) => {
+    engine.state.board[index] = { uid: index + 1, id, star: 1 };
+  });
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const trafficMember = battle.player.find((fighter) => fighter.unitId === "sui_blue");
+  const meleeAlly = battle.player.find((fighter) => fighter.unitId === "rift_stalker");
+  const rangedAlly = battle.player.find((fighter) => fighter.unitId === "clock_gunner");
+  assert.ok(trafficMember && meleeAlly && rangedAlly);
+  assert.ok(Math.abs(trafficMember.lifesteal - 0.28) < 0.0001);
+  assert.equal(meleeAlly.lifesteal, 0.08);
+  assert.equal(rangedAlly.lifesteal, 0.08);
+
+  meleeAlly.hp = meleeAlly.maxHp * 0.5;
+  battle.enemy.forEach((enemy) => {
+    enemy.hp = enemy.maxHp = 9_999;
+    enemy.armor = 0;
+    enemy.dodgeChance = 0;
+  });
+  const hpBeforeAbility = meleeAlly.hp;
+  engine["castAbility"](meleeAlly, battle.enemy);
+  assert.ok(meleeAlly.hp > hpBeforeAbility, "近战非流量友军的技能伤害应触发全能吸血");
+});
+
 test("双方战斗排行按当前指标独立排序", () => {
   const engine = createEngine(83);
   engine.state.playerLevel = 4;
@@ -1396,9 +1425,9 @@ test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害�
   hungry.y = 360;
   hungry.hp = hungry.maxHp * 0.5;
   engine["castAbility"](hungry, battle.enemy);
-  assert.equal(hungry.abilityAttackBonus, 0.9);
+  assert.equal(hungry.abilityAttackBonus, 1.25);
   assert.equal(hungry.nextAttackLifesteal, 0.45);
-  hungry.attack = hungry.baseAttack * 1.9;
+  hungry.attack = hungry.baseAttack * 2.25;
   const hungryHpBefore = hungry.hp;
   engine["basicAttack"](hungry, battle.enemy[0]);
   assert.ok(hungry.hp > hungryHpBefore);
