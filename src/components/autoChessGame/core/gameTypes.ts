@@ -251,6 +251,7 @@ export interface ProjectileVolleyShot {
 export interface BattleState {
   elapsed: number;
   limit: number;
+  engagedTeams: Record<Team, boolean>;
   player: Fighter[];
   enemy: Fighter[];
   effects: BattleEffect[];

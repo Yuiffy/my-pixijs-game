@@ -751,6 +751,56 @@ test("被友军贴脸挡住时会物理推开队友并接敌", () => {
   [source, blocker].forEach(assertInsideBattleBounds);
 });
 
+test("偷袭成员会在己方首个单位交战后提前起跳", () => {
+  const engine = createEngine(98);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rift_stalker", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "akirinco", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "ember_blade", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const assassins = battle.player.filter((fighter) => fighter.jumpPending);
+  const rangedAlly = battle.player.find((fighter) => fighter.unitId === "ember_blade");
+  assert.equal(assassins.length, 2);
+  assert.ok(rangedAlly);
+
+  assassins.forEach((fighter, index) => {
+    fighter.x = 170;
+    fighter.y = 300 + index * 120;
+    fighter.energy = 0;
+    fighter.cooldown = 99;
+  });
+  rangedAlly.x = 300;
+  rangedAlly.y = 360;
+  rangedAlly.range = 280;
+  rangedAlly.baseRange = 280;
+  rangedAlly.energy = 0;
+  rangedAlly.cooldown = 0;
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = index === 0 ? 540 : 900;
+    fighter.y = 360 + index * 100;
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.moveSpeed = 0;
+    fighter.cooldown = 99;
+    fighter.energy = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
+
+  engine.update(0.05);
+  assert.equal(battle.engagedTeams.player, true, "远程队友首次出手后应记录己方已经交战");
+  assert.ok(assassins.every((fighter) => fighter.jumpPending), "本帧先处理的偷袭成员要到下一帧响应交战信号");
+
+  engine.update(0.05);
+  assert.ok(assassins.every((fighter) => !fighter.jumpPending && fighter.jumpTime > 0));
+  assert.ok(assassins.every((fighter) => fighter.jumpDelay > 3), "起跳时原等待时间应仍有大量剩余");
+  assert.ok(battle.elapsed < 0.2, "不应继续等待原本约 3.4 秒的兜底倒计时");
+});
+
 test("刺客在拥挤后排选择有界的最高空隙落点", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;

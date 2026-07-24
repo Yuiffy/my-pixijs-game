@@ -1132,6 +1132,7 @@ export class AutoChessEngine {
     const battle: BattleState = {
       elapsed: 0,
       limit: 24,
+      engagedTeams: { player: false, enemy: false },
       player,
       enemy,
       effects: [],
@@ -1169,18 +1170,14 @@ export class AutoChessEngine {
     return battle;
   }
 
-  private frontlinesEngaged(battle: BattleState) {
-    return battle.player.some(
-      (player) =>
-        player.alive &&
-        !player.jumpPending &&
-        battle.enemy.some(
-          (enemy) =>
-            enemy.alive &&
-            Math.hypot(enemy.x - player.x, enemy.y - player.y) <=
-              player.radius + enemy.radius + 78,
-        ),
-    );
+  private markTeamEngaged(team: Team) {
+    const battle = this.state.battle;
+    if (battle) battle.engagedTeams[team] = true;
+  }
+
+  private markFightersEngaged(source: Fighter, target: Fighter) {
+    this.markTeamEngaged(source.team);
+    this.markTeamEngaged(target.team);
   }
 
   private faceTowardX(fighter: Fighter, targetX: number) {
@@ -2438,7 +2435,7 @@ export class AutoChessEngine {
       if (fighter.jumpPending) {
         if (this.isInsideChronosphere(fighter, battle)) return;
         fighter.jumpDelay = Math.max(0, fighter.jumpDelay - dt);
-        if (!this.frontlinesEngaged(battle) && fighter.jumpDelay > 0) return;
+        if (!battle.engagedTeams[fighter.team] && fighter.jumpDelay > 0) return;
         if (this.prepareAssassinJump(fighter, battle)) return;
         fighter.jumpPending = false;
       }
@@ -2676,6 +2673,7 @@ export class AutoChessEngine {
 
   private basicAttack(source: Fighter, target: Fighter) {
     if (Math.hypot(target.x - source.x, target.y - source.y) > this.combatAttackRange(source, target)) return;
+    this.markFightersEngaged(source, target);
     this.faceTowardX(source, target.x);
     source.cooldown = source.attackInterval;
     if (source.unitId === "nori") {
@@ -2730,6 +2728,13 @@ export class AutoChessEngine {
     source.energy = Math.min(source.maxEnergy, source.castRefund);
     source.cooldown = Math.max(source.cooldown, 0.35);
     const def = UNIT_DEFS[source.unitId];
+    if (
+      def.abilityCastTiming === "engage" ||
+      def.abilityCastTiming === "offenseReady" ||
+      def.abilityCastTiming === "offenseInRange"
+    ) {
+      this.markTeamEngaged(source.team);
+    }
     const allies = this.living(source.team);
     const weakest = (units: Fighter[]) =>
       [...units].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
@@ -3474,6 +3479,8 @@ export class AutoChessEngine {
   }
 
   private damage(source: Fighter, target: Fighter, rawAmount: number, allowInactiveSource = false) {
+    if ((!source.alive && !allowInactiveSource) || !target.alive) return 0;
+    this.markFightersEngaged(source, target);
     const effectiveDodge =
       target.dodgeChance + (target.danceDashTime > 0 ? target.danceDashDodge : 0);
     const dodged = effectiveDodge > 0 && this.rng.next() < effectiveDodge;
@@ -3481,7 +3488,6 @@ export class AutoChessEngine {
       this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: "#d9e6f4", text: "闪避", life: 0.55, size: 12 });
       return -1;
     }
-    if ((!source.alive && !allowInactiveSource) || !target.alive) return 0;
     let amount = rawAmount * (source.weakenTime > 0 ? 0.72 : 1);
     if (
       source.team === "player" &&
@@ -3915,6 +3921,7 @@ export class AutoChessEngine {
       selected: this.state.selected,
       battle: battle && {
         elapsed: Number(battle.elapsed.toFixed(1)),
+        engagedTeams: { ...battle.engagedTeams },
         timeRemaining: Number(
           Math.max(0, battle.limit - battle.elapsed).toFixed(1),
         ),
