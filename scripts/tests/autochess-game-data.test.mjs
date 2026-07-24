@@ -202,14 +202,14 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.sui.name, "小红帽");
   assert.deepEqual(data.UNIT_DEFS.sui.traits, ["dance", "aggression", "vanguard"]);
   assert.equal(data.UNIT_DEFS.sui_blue.name, "贪吃岁");
-  assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["skeleton_soldier", "gluttony"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_blue.traits, ["skeleton_soldier", "gluttony", "finance", "traffic"]);
   assert.equal(data.UNIT_DEFS.sui_blue.abilityName, "吃！");
   assert.equal(data.UNIT_DEFS.sui_blue.energyProfile.id, "feast");
   assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild", "vanguard"]);
   assert.equal(data.UNIT_DEFS.sui_flower.name, "暴龙岁");
-  assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["vanguard", "chuanmei", "mystic"]);
+  assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["vanguard", "chuanmei", "mystic", "finance"]);
   assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "aggression", "dance", "vanguard"]);
-  assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["wild", "gluttony"]);
+  assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["wild", "gluttony", "finance"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
   assert.equal(data.UNIT_DEFS.shiori.name, "椰子栞");
   assert.equal(data.UNIT_DEFS.shiori.abilityName, "大声");
@@ -381,4 +381,20 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
     assert.ok(unit.traits.length >= 1 && unit.traits.length <= 4);
     unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
   });
+});
+
+test("理财与流量羁绊拥有完整的经济成员池", () => {
+  assert.deepEqual(data.TRAITS.finance.thresholds, [2, 4]);
+  assert.match(data.TRAITS.finance.bonuses[0], /额外获得 2 金币/);
+  assert.match(data.TRAITS.finance.bonuses[1], /每 5 金币/);
+  assert.match(data.TRAITS.finance.bonuses[1], /利息无上限/);
+  ["sui_blue", "sui_flower", "biscuit_sui", "shiori", "grove_mender", "lian", "mitsuri"].forEach((id) => {
+    assert.ok(data.UNIT_DEFS[id].traits.includes("finance"), `${id} should join finance`);
+  });
+  assert.equal(data.UNIT_DEFS.grove_mender.traits.includes("mystic"), false);
+  ["sun_guard", "dawn_duelist", "sui_blue", "nori", "mumu", "rei"].forEach((id) => {
+    assert.ok(data.UNIT_DEFS[id].traits.includes("traffic"), `${id} should join traffic`);
+  });
+  assert.match(data.TRAITS.traffic.bonuses[0], /1 次免费刷新/);
+  assert.match(data.TRAITS.traffic.bonuses[2], /3 次免费刷新/);
 });

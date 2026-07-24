@@ -1105,6 +1105,58 @@ test("结算继续会保留契印与失败结局分支", () => {
   assert.equal(lossEngine.state.phase, "gameover");
 });
 
+test("理财在结算增加收入，高档按每 5 金币计算无上限利息", () => {
+  const lowTierEngine = createEngine(301);
+  lowTierEngine.state.playerLevel = 4;
+  lowTierEngine.state.board.fill(null);
+  lowTierEngine.state.board[0] = { uid: 1, id: "sui_blue", star: 1 };
+  lowTierEngine.state.board[1] = { uid: 2, id: "shiori", star: 1 };
+  lowTierEngine.state.gold = 20;
+  assert.equal(lowTierEngine.getTraitStatus("finance").level, 1);
+  assert.equal(lowTierEngine.interestIncome, 2);
+  assert.equal(lowTierEngine.financeIncomeBonus, 2);
+  lowTierEngine.startBattle();
+  lowTierEngine.state.battle.enemy.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
+  lowTierEngine.update(0.05);
+  assert.equal(lowTierEngine.state.result.income, 9);
+  assert.match(lowTierEngine.state.result.detail, /理财 2/);
+
+  const highTierEngine = createEngine(302);
+  highTierEngine.state.playerLevel = 6;
+  highTierEngine.state.board.fill(null);
+  ["sui_blue", "sui_flower", "shiori", "grove_mender"].forEach((id, index) => {
+    highTierEngine.state.board[index] = { uid: index + 1, id, star: 1 };
+  });
+  highTierEngine.state.gold = 35;
+  assert.equal(highTierEngine.getTraitStatus("finance").level, 2);
+  assert.equal(highTierEngine.interestIncome, 7);
+  highTierEngine.startBattle();
+  highTierEngine.state.battle.enemy.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
+  highTierEngine.update(0.05);
+  assert.equal(highTierEngine.state.result.income, 14);
+});
+
+test("流量在每个备战回合按羁绊等级重置免费刷新次数", () => {
+  const engine = createEngine(303);
+  engine.state.playerLevel = 8;
+  engine.state.board.fill(null);
+  ["sun_guard", "dawn_duelist", "sui_blue", "nori", "mumu", "rei"].forEach((id, index) => {
+    engine.state.board[index] = { uid: index + 1, id, star: 1 };
+  });
+  engine.state.gold = 10;
+  engine.state.freeRerollCharges = 0;
+  engine["prepareNextRound"]();
+  assert.equal(engine.getTraitStatus("traffic").level, 3);
+  assert.equal(engine.state.freeRerollCharges, 3);
+  engine.rerollShop();
+  engine.rerollShop();
+  engine.rerollShop();
+  assert.equal(engine.state.gold, 10);
+  assert.equal(engine.state.freeRerollCharges, 0);
+  engine.rerollShop();
+  assert.equal(engine.state.gold, 9);
+});
+
 test("双方战斗排行按当前指标独立排序", () => {
   const engine = createEngine(83);
   engine.state.playerLevel = 4;

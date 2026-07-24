@@ -400,6 +400,17 @@ export class AutoChessEngine {
     return this.state.board.filter(Boolean).length;
   }
 
+  public get interestIncome() {
+    const financeLevel = this.getTraitStatus("finance").level;
+    return financeLevel >= 2
+      ? Math.floor(this.state.gold / 5)
+      : Math.min(2, Math.floor(this.state.gold / 10));
+  }
+
+  public get financeIncomeBonus() {
+    return this.getTraitStatus("finance").level > 0 ? 2 : 0;
+  }
+
   public get currentWave() {
     return waveForRound(this.state.round);
   }
@@ -3854,7 +3865,8 @@ export class AutoChessEngine {
   private finishBattle(won: boolean) {
     if (this.state.phase !== "battle" || !this.state.battle) return;
     const wave = this.currentWave;
-    const interest = Math.min(2, Math.floor(this.state.gold / 10));
+    const interest = this.interestIncome;
+    const financeIncome = this.financeIncomeBonus;
     let income = 0;
     let damage = 0;
     const debtPayment = this.state.paydayDebtRounds > 0 ? 1 : 0;
@@ -3873,6 +3885,7 @@ export class AutoChessEngine {
         streakBonus +
         eliteBonus +
         blazeBonus +
+        financeIncome +
         this.state.incomeBonus -
         debtPayment;
       this.state.gold += income;
@@ -3886,7 +3899,7 @@ export class AutoChessEngine {
       this.state.result = {
         won: true,
         headline: wave.tag === "boss" ? "裂隙封闭" : "战线守住了",
-        detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? ` + 首胜 ${blazeBonus}` : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
+        detail: `基础 5 + 利息 ${interest} + 连胜 ${streakBonus}${eliteBonus ? ` + 精英 ${eliteBonus}` : ""}${blazeBonus ? ` + 首胜 ${blazeBonus}` : ""}${financeIncome ? " + 理财 2" : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
         income,
         upgradeDiscount:
           this.state.round < Number.MAX_SAFE_INTEGER && !this.isMaxPlayerLevel
@@ -3905,7 +3918,7 @@ export class AutoChessEngine {
       );
       this.state.hp = Math.max(0, this.state.hp - damage);
       income =
-        4 + interest + this.state.incomeBonus + (this.state.hp > 0 ? 1 : 0) - debtPayment;
+        4 + interest + financeIncome + this.state.incomeBonus + (this.state.hp > 0 ? 1 : 0) - debtPayment;
       this.state.gold += income;
       this.state.score += this.state.round * 35;
       this.state.result = {
@@ -3913,7 +3926,7 @@ export class AutoChessEngine {
         headline: this.state.hp > 0 ? "防线后撤" : "核心失守",
         detail:
           this.state.hp > 0
-            ? "获得 1 金币整备补偿。调整前后排仍有机会。"
+            ? `获得 1 金币整备补偿${financeIncome ? "与 2 金币理财收入" : ""}。调整前后排仍有机会。`
             : "本次阵容止步于此。",
         income,
         upgradeDiscount:
@@ -3998,6 +4011,8 @@ export class AutoChessEngine {
     this.state.result = null;
     this.state.selected = null;
     this.state.augmentChoices = [];
+    // 流量刷新是每个备战回合重新结算，未使用的次数不会带入下一回合。
+    this.state.freeRerollCharges = this.getTraitStatus("traffic").level;
     if (!this.state.shopLocked) this.state.shop = this.generateShop();
   }
 
