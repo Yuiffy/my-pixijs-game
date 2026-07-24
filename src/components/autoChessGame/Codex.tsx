@@ -276,17 +276,17 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                 ))}
               </div>
             </div>
-            {(["minor", "major"] as const).map((tier) => (
-              <div key={tier}>
-                <h2 style={{ margin: "0 0 8px" }}>{AUGMENT_TIER_LABELS[tier]}</h2>
+            {(["minor", "major"] as const).map((augmentTier) => (
+              <div key={augmentTier}>
+                <h2 style={{ margin: "0 0 8px" }}>{AUGMENT_TIER_LABELS[augmentTier]}</h2>
                 <p style={{ color: "#8da7b8" }}>
-                  {tier === "minor"
+                  {augmentTier === "minor"
                     ? "第 2 战后出现，提供早期定向强化。"
                     : "第 5 战后出现，每项都按足以改变后期打法的强度设计。"}
                   {" "}同档天赋拿完前不会重复。
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-                  {AUGMENTS.filter((augment) => augment.tier === tier).map((augment) => (
+                  {AUGMENTS.filter((augment) => augment.tier === augmentTier).map((augment) => (
                     <article key={augment.id} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
                       <strong style={{ color: augment.color }}>{augment.name}</strong>
                       <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>

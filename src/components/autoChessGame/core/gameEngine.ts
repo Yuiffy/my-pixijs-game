@@ -1832,7 +1832,7 @@ export class AutoChessEngine {
     const progress = motion.duration > 0 ? motion.time / motion.duration : 1;
     // 滑跪先冲后刹，末段速度降到零，避免像匀速传送一样穿过战场。
     const eased = motion.abilityId === "guangyi"
-      ? 1 - Math.pow(1 - progress, 3)
+      ? 1 - (1 - progress) ** 3
       : motion.kind === "dash"
         ? progress
       : progress * progress * (3 - 2 * progress);

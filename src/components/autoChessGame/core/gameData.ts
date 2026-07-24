@@ -1389,8 +1389,8 @@ const STAR_COPY_VALUE = [0, 1, 3, 9] as const;
 
 export const waveCompositionValue = (wave: Pick<WaveDefinition, "units">) =>
   wave.units.reduce(
-    (total, unit) =>
-      total + UNIT_DEFS[unit.id].cost * STAR_COPY_VALUE[unit.star ?? 1],
+    (total, waveUnit) =>
+      total + UNIT_DEFS[waveUnit.id].cost * STAR_COPY_VALUE[waveUnit.star ?? 1],
     0,
   );
 
@@ -1427,10 +1427,12 @@ export const enemyBudgetForRound = (round: number) => {
   return budget;
 };
 
-const generatedUnitCount = (round: number) =>
-  round <= CAMPAIGN_ROUNDS
-    ? Math.min(10, 5 + Math.floor((round - 9) / 3))
-    : 10;
+const generatedUnitCount = (round: number) => {
+  if (round <= CAMPAIGN_ROUNDS) {
+    return Math.min(10, 5 + Math.floor((round - 9) / 3));
+  }
+  return 10;
+};
 
 const minimumGeneratedTier = (round: number) => {
   if (round <= 14) return 2;
@@ -1459,21 +1461,24 @@ const buildBudgetedUnits = (
   let remaining = Math.max(0, budget - waveCompositionValue({ units }));
   for (let guard = 0; guard < 30; guard += 1) {
     const options = units
-      .map((unit, index) => {
-        const star = unit.star ?? 1;
+      .map((candidateUnit, index) => {
+        const star = candidateUnit.star ?? 1;
         const nextStar = Math.min(3, star + 1) as 1 | 2 | 3;
         return {
           index,
           nextStar,
           cost:
-            UNIT_DEFS[unit.id].cost *
+            UNIT_DEFS[candidateUnit.id].cost *
             (STAR_COPY_VALUE[nextStar] - STAR_COPY_VALUE[star]),
           priority: (index * 7 + round) % Math.max(1, units.length),
         };
       })
-      .filter((option) => option.nextStar <= maxStar && option.cost <= remaining)
       .sort((left, right) => right.cost - left.cost || left.priority - right.priority);
-    const choice = options[0];
+    let [choice] = options;
+    while (choice && (choice.nextStar > maxStar || choice.cost > remaining)) {
+      options.shift();
+      [choice] = options;
+    }
     if (!choice) break;
     units[choice.index] = { ...units[choice.index], star: choice.nextStar };
     remaining -= choice.cost;
@@ -1482,7 +1487,7 @@ const buildBudgetedUnits = (
 };
 
 const bountyForUnits = (units: readonly WaveUnit[]) =>
-  units.reduce((total, unit) => total + (unit.star ?? 1), 0);
+  units.reduce((total, waveUnit) => total + (waveUnit.star ?? 1), 0);
 
 const projectedBountyForGeneratedRound = (round: number, budget: number) =>
   bountyForUnits(buildBudgetedUnits(round, tagForRound(round), budget));
