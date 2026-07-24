@@ -352,7 +352,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.xuehui.tier, 4);
   assert.equal(data.UNIT_DEFS.xuehui.cost, 4);
   assert.equal(data.UNIT_DEFS.xuehui.attackType, "melee");
-  assert.deepEqual(data.UNIT_DEFS.xuehui.traits, ["dwarf", "ember", "aggression"]);
+  assert.deepEqual(data.UNIT_DEFS.xuehui.traits, ["dwarf", "ember", "aggression", "traffic"]);
   assert.deepEqual(data.TRAITS.aggression.thresholds, [2, 4, 6]);
   assert.match(data.TRAITS.aggression.bonuses[2], /成员 \+55% 攻击力；全体友军 \+20% 攻击力/);
   ["xuehui", "cinder_ram", "meme", "sui", "sui_cat"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("aggression")));
@@ -404,7 +404,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.equal(towerGod.abilityName, "尖塔压顶");
   assert.equal(sumi.abilityName, "礼小虎出击");
   assert.deepEqual(seki.traits, ["wild", "aggression"]);
-  assert.deepEqual(towerGod.traits, ["host", "mystic"]);
+  assert.deepEqual(towerGod.traits, ["host", "mystic", "traffic"]);
   assert.deepEqual(sumi.traits, ["mystic", "ranger"]);
 });
 
@@ -417,8 +417,11 @@ test("理财与流量羁绊拥有完整的经济成员池", () => {
     assert.ok(data.UNIT_DEFS[id].traits.includes("finance"), `${id} should join finance`);
   });
   assert.equal(data.UNIT_DEFS.grove_mender.traits.includes("mystic"), false);
-  ["sun_guard", "dawn_duelist", "sui_blue", "nori", "mumu", "rei"].forEach((id) => {
+  ["sun_guard", "dawn_duelist", "sui_blue", "meme", "zeyin", "tiandou", "mitsuri", "xuehui", "tower_god"].forEach((id) => {
     assert.ok(data.UNIT_DEFS[id].traits.includes("traffic"), `${id} should join traffic`);
+  });
+  ["nori", "mumu", "rei"].forEach((id) => {
+    assert.equal(data.UNIT_DEFS[id].traits.includes("traffic"), false, `${id} should leave traffic`);
   });
   assert.match(data.TRAITS.traffic.bonuses[0], /1 次免费刷新/);
   assert.match(data.TRAITS.traffic.bonuses[2], /3 次免费刷新/);

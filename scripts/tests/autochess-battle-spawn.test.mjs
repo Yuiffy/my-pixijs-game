@@ -62,6 +62,20 @@ const assertInsideBattleBounds = (fighter) => {
   assert.ok(fighter.y <= BATTLE_BOUNDS.bottom - fighter.radius);
 };
 
+test("跨场上与备战席合成时保留场上棋子的位置", () => {
+  const engine = createEngine(8);
+  engine.state.board.fill(null);
+  engine.state.bench.fill(null);
+  engine.state.board[11] = { uid: 101, id: "sun_guard", star: 1 };
+  engine.state.bench[0] = { uid: 102, id: "sun_guard", star: 1 };
+  engine.state.bench[1] = { uid: 103, id: "sun_guard", star: 1 };
+
+  assert.equal(engine.checkMerges(), true);
+  assert.deepEqual(engine.state.board[11], { uid: 101, id: "sun_guard", star: 2 });
+  assert.equal(engine.state.bench[0], null);
+  assert.equal(engine.state.bench[1], null);
+});
+
 test("已选择的天赋会按回合记入历史", () => {
   const engine = createEngine(9);
   engine.state.phase = "augment";
@@ -1192,7 +1206,7 @@ test("流量在每个备战回合按羁绊等级重置免费刷新次数", () =>
   const engine = createEngine(303);
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
-  ["sun_guard", "dawn_duelist", "sui_blue", "nori", "mumu", "rei"].forEach((id, index) => {
+  ["sun_guard", "dawn_duelist", "sui_blue", "meme", "zeyin", "tiandou"].forEach((id, index) => {
     engine.state.board[index] = { uid: index + 1, id, star: 1 };
   });
   engine.state.gold = 10;
