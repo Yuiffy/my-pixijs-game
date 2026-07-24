@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [host, scene, bridge, assets, config, layout, theme, engine, gameTypes, canvasEffects] = await Promise.all([
+const [host, hud, scene, bridge, assets, config, layout, theme, engine, gameTypes, canvasEffects] = await Promise.all([
   readFile(new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/RiftHud.tsx", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/RiftLineScene.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/EngineBridge.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/assets.ts", import.meta.url), "utf8"),
@@ -132,6 +133,7 @@ test("战斗同步覆盖投射物、七类技能效果与两类召唤物", () =>
   assert.match(scene, /projectile\.style === "shark"/);
   assert.match(scene, /projectile\.style === "carrot"/);
   assert.match(scene, /projectile\.style === "lollipop"/);
+  assert.match(scene, /projectile\.style === "aoe_orb"/);
   assert.match(scene, /effect\.kind === "line"/);
   assert.match(scene, /effect\.kind === "ring"/);
   assert.match(scene, /effect\.kind === "burst"/);
@@ -181,6 +183,15 @@ test("投射物按原版互斥分支绘制 Emoji、松针与光弹", () => {
   assert.match(scene, /setBlendMode\(Phaser\.BlendModes\.SCREEN\)/);
   assert.match(scene, /drawProjectileTrail\(trail, tailX, tailY, projectile\.size \+ 3, projectileColor\)/);
   assert.match(scene, /fillCircle\(tailX, tailY, capRadius\)\.fillCircle\(0, 0, capRadius\)/);
+});
+
+test("远端 AOE 投送弹幕以缩小范围圈和主题符号绘制", () => {
+  assert.match(scene, /if \(projectile\.style === "aoe_orb"\)/);
+  assert.match(scene, /strokeCircle\(0, 0, 11\)/);
+  assert.match(scene, /strokeCircle\(0, 0, 6\)/);
+  assert.match(canvasEffects, /if \(projectile\.style === "aoe_orb"\)/);
+  assert.match(canvasEffects, /ctx\.arc\(projectile\.x, projectile\.y, 14/);
+  assert.match(canvasEffects, /ctx\.arc\(projectile\.x, projectile\.y, 11/);
 });
 
 test("投射物命中使用可复用的径向渐变爆裂", () => {
@@ -315,6 +326,19 @@ test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手"
   assert.match(scene, /type: "move", from: drag\.origin, to: target/);
   assert.match(scene, /drawResultRow/);
   assert.match(scene, /\+\$\{result\.income\} 金币/);
+});
+
+test("场上满员时 Phaser 与 DOM 商店仍预测待激活羁绊", () => {
+  const phaserPrediction = scene.match(/private traitActivatesAfterPurchase[\s\S]*?\n  }\n\n  private createShopTraitTags/)?.[0];
+  const domPrediction = hud.match(/const traitTags = def\.traits\.map[\s\S]*?return \{ id, trait, status, willActivate \};\n  \}\);/)?.[0];
+  assert.ok(phaserPrediction);
+  assert.ok(domPrediction);
+  assert.doesNotMatch(phaserPrediction, /boardCount|boardCap/);
+  assert.doesNotMatch(domPrediction, /boardCount|boardCap/);
+  assert.match(phaserPrediction, /status\.count \+ 1 >= threshold/);
+  assert.match(domPrediction, /status\.count \+ 1 >= nextThreshold/);
+  assert.match(phaserPrediction, /!engine\.state\.board\.some/);
+  assert.match(domPrediction, /!engine\.state\.board\.some/);
 });
 
 test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示", () => {

@@ -161,6 +161,71 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState)
     const angle = Math.atan2(projectile.velocityY, projectile.velocityX);
     const emoji = projectileEmoji(projectile);
 
+    if (projectile.style === "lollipop" && projectile.grounded) {
+      ctx.save();
+      ctx.strokeStyle = projectile.color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.72;
+      setShadow(ctx, projectile.color, 8);
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, projectile.radius + 7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, projectile.radius + 12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      ctx.save();
+      ctx.translate(projectile.x, projectile.y);
+      ctx.font = `${Math.max(14, projectile.size)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(emoji || "🍭", 0, 0);
+      ctx.restore();
+      return;
+    }
+
+    if (projectile.style === "aoe_orb") {
+      const tailX = projectile.x - ((projectile.velocityX / speed) * 18);
+      const tailY = projectile.y - ((projectile.velocityY / speed) * 18);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.strokeStyle = projectile.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      setShadow(ctx, projectile.color, 14);
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(projectile.x, projectile.y);
+      ctx.stroke();
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = projectile.color;
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.92;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, 11, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.globalAlpha = 0.68;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+      if (emoji) {
+        ctx.globalAlpha = 1;
+        ctx.font = '11px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(emoji, projectile.x, projectile.y);
+      }
+      ctx.restore();
+      return;
+    }
+
     if (projectile.style === "pine_needle") {
       const trailLength = 16;
       const trailX = projectile.x - ((projectile.velocityX / speed) * trailLength);

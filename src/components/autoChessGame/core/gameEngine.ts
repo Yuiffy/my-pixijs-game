@@ -164,11 +164,12 @@ const CINDER_RAM_FIREBALL_SPEED = 640;
 const CINDER_RAM_FIREBALL_DAMAGE = 0.9;
 const CINDER_RAM_FIREBALL_BURN = 0.9;
 const CINDER_RAM_FIREBALL_SPLASH = 68;
-/** 恬豆：可被双方碰撞消耗的棒棒糖 */
+/** 恬豆：扔在身边地上、可被双方踩到的棒棒糖 */
 const TIANDOU_LOLLIPOP_COUNT = 5;
-const TIANDOU_LOLLIPOP_SPREAD = Math.PI * 0.72;
-const TIANDOU_LOLLIPOP_SPEED = 300;
-const TIANDOU_LOLLIPOP_RANGE = 380;
+const TIANDOU_LOLLIPOP_SPREAD = Math.PI * 0.62;
+const TIANDOU_LOLLIPOP_THROW_SPEED = 360;
+const TIANDOU_LOLLIPOP_LANDING_DISTANCES = [72, 90, 108, 90, 72];
+const TIANDOU_LOLLIPOP_GROUND_LIFETIME = 10;
 const TIANDOU_LOLLIPOP_RADIUS = 11;
 const TIANDOU_LOLLIPOP_HEAL_RATIO = 0.14;
 const TIANDOU_LOLLIPOP_MOVE_SPEED = 16;
@@ -193,6 +194,21 @@ const TOWER_GOD_TOWER_STUN = 0.82;
 const PAKO_DUB_RADIUS = 150;
 const PAKO_DUB_STUN = 0.72;
 const PAKO_HOST_ENERGY = 18;
+/** 非自身中心 AOE：声束同帧触发，弹幕抵达固定落点后触发。 */
+const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile"; glyph?: string }>> = {
+  shiori: { kind: "beam" },
+  spark_mage: { kind: "projectile", glyph: "⏳" },
+  sui_flower: { kind: "projectile", glyph: "🌶️" },
+  sumi: { kind: "projectile", glyph: "🐯" },
+  tower_god: { kind: "projectile", glyph: "塔" },
+  pako: { kind: "beam" },
+  nightin: { kind: "projectile", glyph: "🚬" },
+  rei: { kind: "projectile", glyph: "👻" },
+  lian: { kind: "projectile", glyph: "✦" },
+};
+const REMOTE_AOE_PROJECTILE_MIN_DURATION = 0.28;
+const REMOTE_AOE_PROJECTILE_MAX_DURATION = 0.58;
+const REMOTE_AOE_PROJECTILE_SPEED = 620;
 /** 狍子偶像：双方均被锁定的持续施法。 */
 const LOVELY_CHANNEL_DURATION = 3.4;
 const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
@@ -1024,6 +1040,7 @@ export class AutoChessEngine {
         hp: maxHp,
         maxHp,
         shield: 0,
+        shieldPeak: 0,
         attack,
         armor,
         range,
@@ -1166,6 +1183,7 @@ export class AutoChessEngine {
         hp: maxHp,
         maxHp,
         shield: 0,
+        shieldPeak: 0,
         attack: def.attack * scale * 1.15,
         armor: def.armor + Math.max(0, this.state.round - 4) * 2,
         range: def.range,
@@ -2048,6 +2066,190 @@ export class AutoChessEngine {
     this.state.battle?.effects.push({ ...effect, maxLife: effect.life });
   }
 
+  private deliverRemoteAoe(source: Fighter, center: { x: number; y: number }) {
+    const battle = this.state.battle;
+    if (!battle) return;
+    const delivery = REMOTE_AOE_DELIVERIES[source.unitId];
+    if (!delivery || delivery.kind === "beam") {
+      this.addEffect({
+        kind: "line",
+        x: source.x,
+        y: source.y,
+        x2: center.x,
+        y2: center.y,
+        color: UNIT_DEFS[source.unitId].accent,
+        life: 0.36,
+        size: 7,
+      });
+      this.resolveRemoteAoeImpact(source, source.unitId, center);
+      return;
+    }
+
+    const deltaX = center.x - source.x;
+    const deltaY = center.y - source.y;
+    const distance = Math.hypot(deltaX, deltaY);
+    if (distance < 1) {
+      this.resolveRemoteAoeImpact(source, source.unitId, center);
+      return;
+    }
+    const duration = Math.max(
+      REMOTE_AOE_PROJECTILE_MIN_DURATION,
+      Math.min(REMOTE_AOE_PROJECTILE_MAX_DURATION, distance / REMOTE_AOE_PROJECTILE_SPEED),
+    );
+    battle.projectiles.push({
+      sourceFid: source.fid,
+      team: source.team,
+      x: source.x,
+      y: source.y,
+      velocityX: deltaX / duration,
+      velocityY: deltaY / duration,
+      radius: 8,
+      remainingRange: distance,
+      damage: 0,
+      burnPower: 0,
+      color: UNIT_DEFS[source.unitId].accent,
+      size: 9,
+      style: "aoe_orb",
+      emoji: delivery.glyph,
+      impactAbilityId: source.unitId,
+    });
+  }
+
+  private resolveRemoteAoeImpact(
+    source: Fighter,
+    abilityId: UnitId,
+    center: { x: number; y: number },
+  ) {
+    const targets = this.living(source.team === "player" ? "enemy" : "player");
+    const allies = this.living(source.team);
+    const def = UNIT_DEFS[abilityId];
+    const deal = (target: Fighter, multiplier: number, bonus = 0) => {
+      const dealt = this.damage(source, target, source.attack * multiplier + bonus, true);
+      if (dealt > 0) this.addDamageText(target, dealt);
+      return dealt;
+    };
+
+    switch (abilityId) {
+      case "shiori":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < SHIORI_SHOUT_RADIUS)
+          .forEach((target) => {
+            deal(target, 1.25);
+            if (target.alive) target.stun = Math.max(target.stun, 0.65);
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: SHIORI_SHOUT_RADIUS + 14 });
+        break;
+      case "spark_mage": {
+        const radius = abilityStatForStar(def, source.star, "radius", CHRONOSPHERE_RADIUS);
+        const duration = abilityStatForStar(def, source.star, "duration", CHRONOSPHERE_DURATION);
+        this.state.battle?.chronospheres.push({
+          x: center.x,
+          y: center.y,
+          radius,
+          life: duration,
+          maxLife: duration,
+          color: def.accent,
+        });
+        this.addEffect({ kind: "chronosphere", x: center.x, y: center.y, color: def.accent, life: 0.85, size: radius });
+        this.addEffect({ kind: "text", x: center.x, y: center.y - 18, color: "#e7a3ff", text: "时停", life: 0.85, size: 14 });
+        break;
+      }
+      case "sui_flower":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
+          .forEach((target) => {
+            deal(target, 1.45);
+            this.applyBurn(source, target, source.attack * 0.7);
+            target.stun = Math.max(target.stun, 0.7);
+          });
+        this.addEffect({ kind: "hotpot", x: center.x, y: center.y, color: "#ff4d3a", life: 1.15, size: 138 });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: "#ff6b2d", life: 0.95, size: 132 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#ff8a3d", life: 0.85, size: 110 });
+        this.addEffect({ kind: "text", x: center.x, y: center.y - 20, color: "#ffd0a8", text: "火锅", life: 0.8, size: 14 });
+        for (let spark = 0; spark < 5; spark += 1) {
+          const angle = (Math.PI * 2 * spark) / 5;
+          this.addEffect({
+            kind: "burst",
+            x: center.x + Math.cos(angle) * 42,
+            y: center.y + Math.sin(angle) * 42,
+            color: spark % 2 === 0 ? "#ff5a2e" : "#ffb347",
+            life: 0.55 + spark * 0.05,
+            size: 28,
+          });
+        }
+        break;
+      case "sumi":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= SUMI_SEAL_RADIUS)
+          .forEach((target) => {
+            deal(target, 1.32);
+            if (!target.alive) return;
+            target.stun = Math.max(target.stun, 0.62);
+            target.weakenTime = Math.max(target.weakenTime, SUMI_SEAL_DURATION);
+            if (target.weakenArmorPenalty === 0) {
+              target.weakenArmorPenalty = SUMI_SEAL_ARMOR_PENALTY;
+              target.armor -= target.weakenArmorPenalty;
+            }
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.78, size: SUMI_SEAL_RADIUS + 12 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#edf3ff", life: 0.45, size: 72 });
+        break;
+      case "tower_god":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= TOWER_GOD_TOWER_RADIUS)
+          .forEach((target) => {
+            deal(target, 1.6);
+            if (target.alive) target.stun = Math.max(target.stun, TOWER_GOD_TOWER_STUN);
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: TOWER_GOD_TOWER_RADIUS + 16 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#fff1bd", life: 0.5, size: 90 });
+        break;
+      case "pako":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= PAKO_DUB_RADIUS)
+          .forEach((target) => {
+            deal(target, 1.55);
+            if (target.alive) target.stun = Math.max(target.stun, PAKO_DUB_STUN);
+          });
+        allies
+          .filter((ally) => UNIT_DEFS[ally.unitId].traits.includes("host"))
+          .forEach((ally) => this.addEnergy(ally, PAKO_HOST_ENERGY));
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: PAKO_DUB_RADIUS + 16 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f4eaff", life: 0.52, size: 96 });
+        this.addEffect({ kind: "text", x: center.x, y: center.y - 42, color: def.accent, text: "全配音", life: 0.75, size: 13 });
+        break;
+      case "nightin":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
+          .forEach((target) => {
+            deal(target, 1.3);
+            this.applyBurn(source, target, source.attack * 0.6);
+            target.stun = Math.max(target.stun, 0.5);
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
+        break;
+      case "rei":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 145)
+          .forEach((target) => {
+            deal(target, 1.85);
+            this.applyBurn(source, target, source.attack * 0.8);
+            target.stun = Math.max(target.stun, 0.72);
+          });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: 152 });
+        break;
+      case "lian":
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 140)
+          .forEach((target) => deal(target, 1.55));
+        allies.forEach((ally) => this.addEnergy(ally, 15));
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.85, size: 150 });
+        break;
+      default:
+        break;
+    }
+  }
+
   private fireFixedProjectile(source: Fighter, target: Fighter, shot: ProjectileVolleyShot) {
     const deltaX = target.x - source.x;
     const deltaY = target.y - source.y;
@@ -2343,11 +2545,52 @@ export class AutoChessEngine {
   private updateProjectiles(battle: BattleState, dt: number) {
     battle.projectiles = battle.projectiles.filter((projectile) => {
       const source = [...battle.player, ...battle.enemy].find((fighter) => fighter.fid === projectile.sourceFid);
+      if (projectile.impactAbilityId) {
+        if (!source) return false;
+        const startX = projectile.x;
+        const startY = projectile.y;
+        const stepX = projectile.velocityX * dt;
+        const stepY = projectile.velocityY * dt;
+        const traveled = Math.hypot(stepX, stepY);
+        if (projectile.remainingRange <= traveled) {
+          const impactProgress = projectile.remainingRange / Math.max(traveled, 0.001);
+          projectile.x = startX + stepX * impactProgress;
+          projectile.y = startY + stepY * impactProgress;
+          this.resolveRemoteAoeImpact(source, projectile.impactAbilityId, projectile);
+          return false;
+        }
+        projectile.x += stepX;
+        projectile.y += stepY;
+        projectile.remainingRange -= traveled;
+        return true;
+      }
       const targetTeam: Team = projectile.team === "player" ? "enemy" : "player";
       const targets = (projectile.style === "lollipop"
-        ? [...this.living("player"), ...this.living("enemy")].filter((fighter) => fighter.fid !== projectile.sourceFid)
+        ? (projectile.grounded ? [...this.living("player"), ...this.living("enemy")] : [])
         : this.living(targetTeam)
       ).sort((left, right) => left.fid.localeCompare(right.fid));
+      if (projectile.style === "lollipop" && projectile.grounded) {
+        const steppedOn = targets.find((target) =>
+          Math.hypot(target.x - projectile.x, target.y - projectile.y) <= target.radius + projectile.radius,
+        );
+        projectile.remainingRange -= dt;
+        if (!steppedOn) return projectile.remainingRange > 0;
+        if (source) {
+          if (steppedOn.team === projectile.team) {
+            this.heal(source, steppedOn, steppedOn.maxHp * TIANDOU_LOLLIPOP_HEAL_RATIO);
+            steppedOn.abilityMoveSpeed = Math.max(steppedOn.abilityMoveSpeed, TIANDOU_LOLLIPOP_MOVE_SPEED);
+            steppedOn.abilityMoveSpeedTime = Math.max(steppedOn.abilityMoveSpeedTime, TIANDOU_LOLLIPOP_MOVE_DURATION);
+            this.addEffect({ kind: "heal", x: steppedOn.x, y: steppedOn.y, color: projectile.color, text: "🍭", emoji: true, life: 0.7, size: 16 });
+          } else {
+            const dealt = this.damage(source, steppedOn, projectile.damage, true);
+            if (dealt > 0) this.addDamageText(steppedOn, dealt);
+            steppedOn.slowTime = Math.max(steppedOn.slowTime, TIANDOU_LOLLIPOP_SLOW_DURATION);
+            this.addEffect({ kind: "text", x: steppedOn.x, y: steppedOn.y - 38, color: projectile.color, text: "🍭减速", emoji: true, life: 0.7, size: 12 });
+          }
+        }
+        this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
+        return false;
+      }
       const startX = projectile.x;
       const startY = projectile.y;
       const endX = startX + projectile.velocityX * dt;
@@ -2365,21 +2608,6 @@ export class AutoChessEngine {
       if (hit && source) {
         projectile.x = startX + stepX * hit.progress;
         projectile.y = startY + stepY * hit.progress;
-        if (projectile.style === "lollipop") {
-          if (hit.target.team === projectile.team) {
-            this.heal(source, hit.target, hit.target.maxHp * TIANDOU_LOLLIPOP_HEAL_RATIO);
-            hit.target.abilityMoveSpeed = Math.max(hit.target.abilityMoveSpeed, TIANDOU_LOLLIPOP_MOVE_SPEED);
-            hit.target.abilityMoveSpeedTime = Math.max(hit.target.abilityMoveSpeedTime, TIANDOU_LOLLIPOP_MOVE_DURATION);
-            this.addEffect({ kind: "heal", x: hit.target.x, y: hit.target.y, color: projectile.color, text: "🍭", emoji: true, life: 0.7, size: 16 });
-          } else {
-            const dealt = this.damage(source, hit.target, projectile.damage, true);
-            if (dealt > 0) this.addDamageText(hit.target, dealt);
-            hit.target.slowTime = Math.max(hit.target.slowTime, TIANDOU_LOLLIPOP_SLOW_DURATION);
-            this.addEffect({ kind: "text", x: hit.target.x, y: hit.target.y - 38, color: projectile.color, text: "🍭减速", emoji: true, life: 0.7, size: 12 });
-          }
-          this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
-          return false;
-        }
         const splashRadius = projectile.splashRadius;
         const affected = splashRadius
           ? targets.filter((target) => Math.hypot(target.x - projectile.x, target.y - projectile.y) <= splashRadius + target.radius)
@@ -2395,7 +2623,18 @@ export class AutoChessEngine {
       }
       projectile.x = endX;
       projectile.y = endY;
-      projectile.remainingRange -= Math.hypot(stepX, stepY);
+      const traveled = Math.hypot(stepX, stepY);
+      if (projectile.style === "lollipop" && projectile.remainingRange <= traveled) {
+        const landingProgress = projectile.remainingRange / Math.max(traveled, 0.001);
+        projectile.x = startX + stepX * landingProgress;
+        projectile.y = startY + stepY * landingProgress;
+        projectile.velocityX = 0;
+        projectile.velocityY = 0;
+        projectile.grounded = true;
+        projectile.remainingRange = TIANDOU_LOLLIPOP_GROUND_LIFETIME;
+        return true;
+      }
+      projectile.remainingRange -= traveled;
       return projectile.remainingRange > 0 && projectile.x >= BATTLE_BOUNDS.left - 36 && projectile.x <= BATTLE_BOUNDS.right + 36 && projectile.y >= BATTLE_BOUNDS.top - 36 && projectile.y <= BATTLE_BOUNDS.bottom + 36;
     });
   }
@@ -3033,23 +3272,6 @@ export class AutoChessEngine {
       }
       case "sun_guard": {
         this.grantShield(source, source, source.maxHp * SUN_GUARD_SHIELD_RATIO, 0.55);
-        this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.75,
-          size: 72,
-        });
-        this.addEffect({
-          kind: "text",
-          x: source.x,
-          y: source.y - 46,
-          color: def.accent,
-          text: "绿冻护甲",
-          life: 0.7,
-          size: 12,
-        });
         break;
       }
       case "ember_blade": {
@@ -3152,13 +3374,7 @@ export class AutoChessEngine {
       case "shiori": {
         const center = densest(targets);
         if (!center) break;
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < SHIORI_SHOUT_RADIUS)
-          .forEach((target) => {
-            deal(target, 1.25);
-            if (target.alive) target.stun = Math.max(target.stun, 0.65);
-          });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: SHIORI_SHOUT_RADIUS + 14 });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "rift_brawler": {
@@ -3223,36 +3439,7 @@ export class AutoChessEngine {
       case "spark_mage": {
         const center = densest(targets);
         if (!center) break;
-        const radius = abilityStatForStar(def, source.star, "radius", CHRONOSPHERE_RADIUS);
-        const duration = abilityStatForStar(def, source.star, "duration", CHRONOSPHERE_DURATION);
-        const battle = this.state.battle;
-        if (battle) {
-          battle.chronospheres.push({
-            x: center.x,
-            y: center.y,
-            radius,
-            life: duration,
-            maxLife: duration,
-            color: def.accent,
-          });
-        }
-        this.addEffect({
-          kind: "chronosphere",
-          x: center.x,
-          y: center.y,
-          color: def.accent,
-          life: 0.85,
-          size: radius,
-        });
-        this.addEffect({
-          kind: "text",
-          x: center.x,
-          y: center.y - 18,
-          color: "#e7a3ff",
-          text: "时停",
-          life: 0.85,
-          size: 14,
-        });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "clock_gunner": {
@@ -3305,58 +3492,7 @@ export class AutoChessEngine {
       case "sui_flower": {
         const center = densest(targets);
         if (!center) break;
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
-          .forEach((target) => {
-            deal(target, 1.45);
-            this.applyBurn(source, target, source.attack * 0.7);
-            target.stun = Math.max(target.stun, 0.7);
-          });
-        // 红色火锅云视觉：多层圆环 + 灼烧爆发
-        this.addEffect({
-          kind: "hotpot",
-          x: center.x,
-          y: center.y,
-          color: "#ff4d3a",
-          life: 1.15,
-          size: 138,
-        });
-        this.addEffect({
-          kind: "ring",
-          x: center.x,
-          y: center.y,
-          color: "#ff6b2d",
-          life: 0.95,
-          size: 132,
-        });
-        this.addEffect({
-          kind: "burst",
-          x: center.x,
-          y: center.y,
-          color: "#ff8a3d",
-          life: 0.85,
-          size: 110,
-        });
-        this.addEffect({
-          kind: "text",
-          x: center.x,
-          y: center.y - 20,
-          color: "#ffd0a8",
-          text: "火锅",
-          life: 0.8,
-          size: 14,
-        });
-        for (let spark = 0; spark < 5; spark += 1) {
-          const angle = (Math.PI * 2 * spark) / 5;
-          this.addEffect({
-            kind: "burst",
-            x: center.x + Math.cos(angle) * 42,
-            y: center.y + Math.sin(angle) * 42,
-            color: spark % 2 === 0 ? "#ff5a2e" : "#ffb347",
-            life: 0.55 + spark * 0.05,
-            size: 28,
-          });
-        }
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "yua": {
@@ -3402,20 +3538,7 @@ export class AutoChessEngine {
       case "sumi": {
         const center = densest(targets);
         if (!center) break;
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= SUMI_SEAL_RADIUS)
-          .forEach((target) => {
-            deal(target, 1.32);
-            if (!target.alive) return;
-            target.stun = Math.max(target.stun, 0.62);
-            target.weakenTime = Math.max(target.weakenTime, SUMI_SEAL_DURATION);
-            if (target.weakenArmorPenalty === 0) {
-              target.weakenArmorPenalty = SUMI_SEAL_ARMOR_PENALTY;
-              target.armor -= target.weakenArmorPenalty;
-            }
-          });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.78, size: SUMI_SEAL_RADIUS + 12 });
-        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#edf3ff", life: 0.45, size: 72 });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "mitsuri": {
@@ -3516,31 +3639,13 @@ export class AutoChessEngine {
       case "tower_god": {
         const center = densest(targets);
         if (!center) break;
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= TOWER_GOD_TOWER_RADIUS)
-          .forEach((target) => {
-            deal(target, 1.6);
-            if (target.alive) target.stun = Math.max(target.stun, TOWER_GOD_TOWER_STUN);
-          });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: TOWER_GOD_TOWER_RADIUS + 16 });
-        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#fff1bd", life: 0.5, size: 90 });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "pako": {
         const center = densest(targets);
         if (!center) break;
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= PAKO_DUB_RADIUS)
-          .forEach((target) => {
-            deal(target, 1.55);
-            if (target.alive) target.stun = Math.max(target.stun, PAKO_DUB_STUN);
-          });
-        allies
-          .filter((ally) => UNIT_DEFS[ally.unitId].traits.includes("host"))
-          .forEach((ally) => this.addEnergy(ally, PAKO_HOST_ENERGY));
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: PAKO_DUB_RADIUS + 16 });
-        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f4eaff", life: 0.52, size: 96 });
-        this.addEffect({ kind: "text", x: center.x, y: center.y - 42, color: def.accent, text: "全配音", life: 0.75, size: 13 });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "biscuit_sui": {
@@ -3588,8 +3693,7 @@ export class AutoChessEngine {
       case "nightin": {
         const center = densest(targets);
         if (!center) break;
-        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125).forEach((target) => { deal(target, 1.3); this.applyBurn(source, target, source.attack * 0.6); target.stun = Math.max(target.stun, 0.5); });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "tiandou": {
@@ -3599,21 +3703,32 @@ export class AutoChessEngine {
         for (let index = 0; index < TIANDOU_LOLLIPOP_COUNT; index += 1) {
           const t = index / (TIANDOU_LOLLIPOP_COUNT - 1);
           const angle = baseAngle - TIANDOU_LOLLIPOP_SPREAD / 2 + t * TIANDOU_LOLLIPOP_SPREAD;
+          const landingDistance = TIANDOU_LOLLIPOP_LANDING_DISTANCES[index];
+          const landingX = Math.max(
+            BATTLE_BOUNDS.left + TIANDOU_LOLLIPOP_RADIUS,
+            Math.min(BATTLE_BOUNDS.right - TIANDOU_LOLLIPOP_RADIUS, source.x + Math.cos(angle) * landingDistance),
+          );
+          const landingY = Math.max(
+            BATTLE_BOUNDS.top + TIANDOU_LOLLIPOP_RADIUS,
+            Math.min(BATTLE_BOUNDS.bottom - TIANDOU_LOLLIPOP_RADIUS, source.y + Math.sin(angle) * landingDistance),
+          );
+          const launchDistance = Math.hypot(landingX - source.x, landingY - source.y) || 1;
           this.state.battle?.projectiles.push({
             sourceFid: source.fid,
             team: source.team,
-            x: source.x + Math.cos(angle) * (source.radius + TIANDOU_LOLLIPOP_RADIUS + 3),
-            y: source.y + Math.sin(angle) * (source.radius + TIANDOU_LOLLIPOP_RADIUS + 3),
-            velocityX: Math.cos(angle) * TIANDOU_LOLLIPOP_SPEED,
-            velocityY: Math.sin(angle) * TIANDOU_LOLLIPOP_SPEED,
+            x: source.x,
+            y: source.y,
+            velocityX: ((landingX - source.x) / launchDistance) * TIANDOU_LOLLIPOP_THROW_SPEED,
+            velocityY: ((landingY - source.y) / launchDistance) * TIANDOU_LOLLIPOP_THROW_SPEED,
             radius: TIANDOU_LOLLIPOP_RADIUS,
-            remainingRange: TIANDOU_LOLLIPOP_RANGE,
+            remainingRange: launchDistance,
             damage: source.attack * TIANDOU_LOLLIPOP_DAMAGE_MULTIPLIER,
             burnPower: 0,
             color: def.accent,
             size: 18,
             style: "lollipop",
             emoji: "🍭",
+            grounded: false,
           });
         }
         break;
@@ -3680,16 +3795,13 @@ export class AutoChessEngine {
       case "rei": {
         const center = densest(targets);
         if (!center) break;
-        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 145).forEach((target) => { deal(target, 1.85); this.applyBurn(source, target, source.attack * 0.8); target.stun = Math.max(target.stun, 0.72); });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: 152 });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "lian": {
         const center = densest(targets);
         if (!center) break;
-        targets.filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 140).forEach((target) => deal(target, 1.55));
-        allies.forEach((ally) => { this.addEnergy(ally, 15); });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.85, size: 150 });
+        this.deliverRemoteAoe(source, center);
         break;
       }
       case "rutice": {
@@ -3782,8 +3894,13 @@ export class AutoChessEngine {
       target.shield -= absorbed;
       remaining -= absorbed;
     }
+    const shieldBroken = hadShield && target.shield <= 0;
+    if (shieldBroken) {
+      target.shield = 0;
+      target.shieldPeak = 0;
+    }
     // 果冻风纪：护盾从有到无时发射钢镚弹幕
-    if (hadShield && target.shield <= 0 && target.unitId === "sun_guard") {
+    if (shieldBroken && target.unitId === "sun_guard") {
       this.fireSunGuardCoins(target);
     }
     const hpLoss = Math.min(target.hp, remaining);
@@ -3849,11 +3966,13 @@ export class AutoChessEngine {
     if (!target.alive || amount <= 0) return 0;
     const starterMultiplier =
       target.team === "player" ? starterEffects[this.state.starter || "bastion"].shieldMultiplier || 1 : 1;
+    if (target.shield <= 0) target.shieldPeak = 0;
     const before = target.shield;
     target.shield = Math.min(
       target.maxHp * capRatio * starterMultiplier,
       target.shield + amount * starterMultiplier,
     );
+    target.shieldPeak = Math.max(target.shieldPeak, target.shield);
     const granted = target.shield - before;
     if (source && battle) source.shieldingDone += granted;
     return granted;
@@ -3904,6 +4023,7 @@ export class AutoChessEngine {
       target.maxHp = Math.max(1, Math.round(target.maxHp * ZEYIN_REBIRTH_HP_RATIO));
       target.hp = target.maxHp;
       target.shield = 0;
+      target.shieldPeak = 0;
       target.burnTime = 0;
       target.burnDps = 0;
       target.burnSourceFid = null;
@@ -3932,6 +4052,8 @@ export class AutoChessEngine {
     }
     target.alive = false;
     target.hp = 0;
+    target.shield = 0;
+    target.shieldPeak = 0;
     target.abilityMotion = null;
     this.addEffect({
       kind: "burst",
@@ -4281,8 +4403,11 @@ export class AutoChessEngine {
           projectiles: battle.projectiles.map((projectile) => ({
             x: Math.round(projectile.x),
             y: Math.round(projectile.y),
-              style: projectile.style || "default",
-            })),
+            style: projectile.style || "default",
+            ability: projectile.impactAbilityId,
+            grounded: Boolean(projectile.grounded),
+            remaining: projectile.style === "lollipop" ? Number(projectile.remainingRange.toFixed(1)) : undefined,
+          })),
           chronospheres: battle.chronospheres.map((zone) => ({
             x: Math.round(zone.x),
             y: Math.round(zone.y),

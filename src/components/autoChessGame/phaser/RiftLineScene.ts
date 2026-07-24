@@ -1354,7 +1354,9 @@ export class RiftLineScene extends Phaser.Scene {
     const container = this.add.container(fighter.x, fighter.y);
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
     const shadow = this.add.ellipse(0, radius * 0.8, radius * 1.8, radius * 0.6, 0x000000, 0.3).setName("shadow");
-    const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0).setName("shield");
+    const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0)
+      .setStrokeStyle(2, 0xc6f7ff, 0)
+      .setName("shield");
     const syncAura = this.add.circle(0, 0, radius + 13, 0x79dcff, 0).setName("syncAura");
     const hitFlash = this.add.circle(0, 0, radius, 0xff526f, 0).setName("hitFlash");
     const burn = this.add.circle(radius * 0.7, -radius * 0.55, 5, 0xff7a50, 0).setName("burn");
@@ -1431,7 +1433,14 @@ export class RiftLineScene extends Phaser.Scene {
     energy.width = radius * 2.25 * Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
     energy.fillColor = Phaser.Display.Color.HexStringToColor(ENERGY_PROFILES[fighter.energyStyle].color).color;
     hitFlash.setAlpha(0.72 * hitProgress).setRadius(radius * growth);
-    shield.setRadius(radius + 7 + Math.sin(this.bridge.engine.state.visualTime * 6) * 2).setAlpha(fighter.shield > 0 ? 0.28 : 0);
+    const shieldStrength = fighter.shield > 0
+      ? Math.max(0, Math.min(1, fighter.shield / Math.max(fighter.shieldPeak, 1)))
+      : 0;
+    shield
+      .setRadius(radius + 7 + Math.sin(this.bridge.engine.state.visualTime * 6) * 2)
+      .setFillStyle(0x6edeff, 0.06 + shieldStrength * 0.14)
+      .setStrokeStyle(1.5 + shieldStrength * 1.5, 0xc6f7ff, 0.24 + shieldStrength * 0.66)
+      .setAlpha(fighter.shield > 0 ? 1 : 0);
     const syncPulse = 1 + Math.sin(this.bridge.engine.state.visualTime * 7) * 0.12;
     const syncColor = fighter.syncAvDirection > 0 ? 0xff9a5c : 0x79dcff;
     syncAura
@@ -1527,6 +1536,27 @@ export class RiftLineScene extends Phaser.Scene {
     trail.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     core.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     icon.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+
+    if (projectile.style === "lollipop" && projectile.grounded) {
+      trail.setVisible(true);
+      trail.lineStyle(2, projectileColor, 0.72).strokeCircle(0, 0, projectile.radius + 7);
+      trail.lineStyle(1, 0xfff2f7, 0.35).strokeCircle(0, 0, projectile.radius + 12);
+      icon.setText(emoji || "🍭").setFontSize(Math.max(14, projectile.size)).setRotation(0).setVisible(true);
+      return;
+    }
+
+    if (projectile.style === "aoe_orb") {
+      const tailX = -(projectile.velocityX / speed) * 18;
+      const tailY = -(projectile.velocityY / speed) * 18;
+      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      this.drawProjectileTrail(trail, tailX, tailY, 3, projectileColor);
+      trail.fillStyle(projectileColor, 0.2).fillCircle(0, 0, 14);
+      trail.lineStyle(2, projectileColor, 0.92).strokeCircle(0, 0, 11);
+      trail.lineStyle(1, 0xffffff, 0.68).strokeCircle(0, 0, 6);
+      if (emoji) icon.setText(emoji).setFontSize(11).setRotation(0).setVisible(true);
+      else core.setRadius(4).setFillStyle(0xf8fcff, 0.98).setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      return;
+    }
 
     if (projectile.style === "pine_needle") {
       const tailX = -(projectile.velocityX / speed) * 16;

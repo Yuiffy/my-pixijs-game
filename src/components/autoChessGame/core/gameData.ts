@@ -1042,7 +1042,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   tiandou: unit({
     id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 糖果支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,
     traits: ["dance", "traffic"], hp: 172, attack: 23, armor: 11, range: 200, attackInterval: 0.98, moveSpeed: 56,
-    abilityName: "棒棒糖刘海", abilityDescription: "扔出数颗棒棒糖；友军吃到会回复生命并加速，敌人吃到会受伤并减速。",
+    abilityName: "棒棒糖刘海", abilityDescription: "向自身周围抛落数颗棒棒糖；糖果会留在地上，友军踩到会回复生命并加速，敌人踩到会受伤并减速。",
     portrait: "/images/livers/tiandou.jpg", portraitFocus: "top", shop: true,
   }),
   youyi: unit({

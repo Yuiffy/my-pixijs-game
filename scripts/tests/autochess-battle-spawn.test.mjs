@@ -458,6 +458,37 @@ test("紧贴碰撞体积的近战单位也能稳定攻击", () => {
   assert.equal(source.energy, source.energyOnAttack);
 });
 
+test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", () => {
+  const engine = createEngine(146);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const guard = battle?.player[0];
+  const attacker = battle?.enemy[0];
+  assert.ok(battle && guard && attacker);
+  battle.effects.length = 0;
+  guard.shield = 0;
+  guard.shieldPeak = 0;
+
+  engine.castAbility(guard, battle.enemy);
+
+  assert.ok(guard.shield > 0);
+  assert.equal(guard.shieldPeak, guard.shield);
+  assert.equal(battle.effects.filter((effect) => effect.text === "绿冻护甲").length, 1);
+  assert.ok(!battle.effects.some((effect) => effect.kind === "ring" && effect.x === guard.x && effect.y === guard.y));
+
+  attacker.dodgeChance = 0;
+  engine.damage(attacker, guard, guard.shield);
+  assert.ok(guard.shield > 0 && guard.shield < guard.shieldPeak);
+  assert.ok(guard.shield / guard.shieldPeak < 1);
+
+  engine.damage(attacker, guard, 99_999);
+  assert.equal(guard.shield, 0);
+  assert.equal(guard.shieldPeak, 0);
+});
+
 test("满能量远程单位会先进入攻击距离再施法", () => {
   const engine = createEngine(140);
   engine.state.playerLevel = 4;
@@ -912,6 +943,13 @@ test("北欧时停按施法者星级提升持续时间、范围与特效尺寸",
     source.energy = source.maxEnergy;
     engine.update(0.05);
 
+    const delivery = battle.projectiles.find((projectile) =>
+      projectile.style === "aoe_orb" && projectile.impactAbilityId === "spark_mage",
+    );
+    assert.ok(delivery);
+    assert.equal(battle.chronospheres.length, 0);
+    assert.ok(!battle.effects.some((effect) => effect.kind === "chronosphere"));
+    engine["updateProjectiles"](battle, 1);
     assert.equal(battle.chronospheres.length, 1);
     const zone = battle.chronospheres[0];
     assert.equal(zone.radius, radius);
@@ -926,6 +964,63 @@ test("北欧时停按施法者星级提升持续时间、范围与特效尺寸",
       remaining: duration,
       duration,
     }]);
+  });
+});
+
+test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", () => {
+  const projectileAbilities = [
+    "spark_mage",
+    "sui_flower",
+    "sumi",
+    "tower_god",
+    "nightin",
+    "rei",
+    "lian",
+  ];
+
+  projectileAbilities.forEach((abilityId, index) => {
+    const engine = createEngine(260 + index);
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: abilityId, star: 1 };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const source = battle?.player[0];
+    assert.ok(battle && source);
+    source.x = 240;
+    source.y = 360;
+    battle.effects = [];
+    battle.enemy.forEach((target, targetIndex) => {
+      target.x = 620 + targetIndex * 28;
+      target.y = 350 + targetIndex * 16;
+      target.hp = target.maxHp = 99_999;
+      target.armor = 0;
+      target.dodgeChance = 0;
+    });
+    const hpBefore = battle.enemy.map((target) => target.hp);
+
+    engine["castAbility"](source, battle.enemy);
+
+    const delivery = battle.projectiles.find((projectile) =>
+      projectile.style === "aoe_orb" && projectile.impactAbilityId === abilityId,
+    );
+    assert.ok(delivery, `${abilityId} 应创建 AOE 投送弹幕`);
+    assert.ok(Math.hypot(delivery.x - source.x, delivery.y - source.y) < 1);
+    assert.deepEqual(battle.enemy.map((target) => target.hp), hpBefore, `${abilityId} 不应在起手帧提前伤害`);
+    assert.ok(!battle.effects.some((effect) =>
+      ["ring", "chronosphere", "hotpot"].includes(effect.kind)
+      && Math.hypot(effect.x - battle.enemy[0].x, effect.y - battle.enemy[0].y) < 160
+    ), `${abilityId} 不应在弹幕抵达前提前显示 AOE`);
+
+    engine["updateProjectiles"](battle, 1);
+
+    assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === abilityId));
+    assert.ok(battle.effects.some((effect) =>
+      ["ring", "chronosphere", "hotpot"].includes(effect.kind)
+      && Math.hypot(effect.x - battle.enemy[0].x, effect.y - battle.enemy[0].y) < 40
+    ), `${abilityId} 抵达后应在固定落点显示 AOE`);
+    if (abilityId === "spark_mage") assert.equal(battle.chronospheres.length, 1);
+    else assert.ok(battle.enemy.some((target, targetIndex) => target.hp < hpBefore[targetIndex]), `${abilityId} 抵达后应结算伤害`);
   });
 });
 
@@ -1437,12 +1532,18 @@ test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害�
   shiori.x = 300;
   shiori.y = 360;
   engine["castAbility"](shiori, battle.enemy);
+  const shoutBeam = battle.effects.find((effect) => effect.kind === "line" && effect.size === 7);
+  assert.ok(shoutBeam);
+  assert.equal(shoutBeam.x, shiori.x);
+  assert.equal(shoutBeam.y, shiori.y);
+  assert.ok(Math.hypot(shoutBeam.x2 - battle.enemy[0].x, shoutBeam.y2 - battle.enemy[0].y) < 1);
+  assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "shiori"));
   assert.ok(battle.enemy.every((enemy) => enemy.stun >= 0.65));
   assert.ok(battle.enemy.every((enemy) => enemy.hp < enemy.maxHp));
   assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 136));
 });
 
-test("七海变身吸血、恬豆棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {
+test("七海变身吸血、恬豆地面棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {
   const nanaEngine = createEngine(202);
   nanaEngine.state.playerLevel = 4;
   nanaEngine.state.board.fill(null);
@@ -1489,17 +1590,37 @@ test("七海变身吸血、恬豆棒棒糖与三理理嘲讽均按碰撞和锁�
   candyTarget.hp = candyTarget.maxHp = 9_999;
   candyTarget.armor = 0;
   candyEngine["castAbility"](tiandou, candyBattle.enemy);
-  assert.equal(candyBattle.projectiles.filter((projectile) => projectile.style === "lollipop").length, 5);
+  const launchedLollipops = candyBattle.projectiles.filter((projectile) => projectile.style === "lollipop");
+  assert.equal(launchedLollipops.length, 5);
+  assert.ok(launchedLollipops.every((projectile) => !projectile.grounded));
+  assert.ok(launchedLollipops.every((projectile) => Math.hypot(projectile.x - tiandou.x, projectile.y - tiandou.y) < 1));
+  assert.ok(launchedLollipops.every((projectile) => projectile.remainingRange <= 108));
+  ally.x = 368;
+  ally.y = 360;
   const allyHpBefore = ally.hp;
-  candyEngine["updateProjectiles"](candyBattle, 0.3);
+  candyEngine["updateProjectiles"](candyBattle, 0.5);
+  assert.ok(candyBattle.projectiles.filter((projectile) => projectile.style === "lollipop").every((projectile) => projectile.grounded));
+  assert.equal(ally.hp, allyHpBefore);
+  candyEngine["updateProjectiles"](candyBattle, 0.05);
   assert.ok(ally.hp > allyHpBefore);
   assert.ok(ally.abilityMoveSpeed >= 16);
   candyBattle.projectiles = [];
   ally.x = 260;
   ally.y = 550;
+  candyTarget.x = 368;
+  candyTarget.y = 360;
   candyEngine["castAbility"](tiandou, candyBattle.enemy);
+  candyEngine["updateProjectiles"](candyBattle, 0.5);
+  assert.ok(candyBattle.projectiles.some((projectile) => projectile.style === "lollipop" && projectile.grounded));
+  const groundedCountBeforeWait = candyBattle.projectiles.filter((projectile) => projectile.grounded).length;
+  candyTarget.x = 600;
+  candyTarget.y = 550;
+  candyEngine["updateProjectiles"](candyBattle, 5);
+  assert.equal(candyBattle.projectiles.filter((projectile) => projectile.grounded).length, groundedCountBeforeWait);
+  candyTarget.x = 368;
+  candyTarget.y = 360;
   const enemyHpBefore = candyTarget.hp;
-  candyEngine["updateProjectiles"](candyBattle, 0.7);
+  candyEngine["updateProjectiles"](candyBattle, 0.05);
   assert.ok(candyTarget.hp < enemyHpBefore);
   assert.ok(candyTarget.slowTime >= 2.4);
 
@@ -1913,6 +2034,10 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
   target.weakenArmorPenalty = 0;
   target.weakenTime = 0;
   engine.castAbility(sumi, battle.enemy);
+  assert.equal(target.stun, 0, "礼小虎弹幕抵达前不应提前眩晕");
+  assert.equal(target.armor, 20, "礼小虎弹幕抵达前不应提前削甲");
+  assert.ok(battle.projectiles.some((projectile) => projectile.impactAbilityId === "sumi"));
+  engine["updateProjectiles"](battle, 1);
   assert.ok(target.stun > 0, "礼小虎出击应眩晕区域内敌人");
   assert.equal(target.armor, 11, "礼小虎出击应削弱护甲");
   assert.ok(target.weakenTime >= 2.8);
@@ -1920,6 +2045,9 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
   target.stun = 0;
   const hpBeforeTower = target.hp;
   engine.castAbility(tower, battle.enemy);
+  assert.equal(target.hp, hpBeforeTower, "尖塔弹幕抵达前不应提前伤害");
+  assert.ok(battle.projectiles.some((projectile) => projectile.impactAbilityId === "tower_god"));
+  engine["updateProjectiles"](battle, 1);
   assert.ok(target.hp < hpBeforeTower, "尖塔压顶应伤害最密集区域");
   assert.ok(target.stun > 0, "尖塔压顶应眩晕区域内敌人");
 });
@@ -1953,6 +2081,12 @@ test("帕可全配音实况会打断密集敌人并为主持成员补充能量",
 
   engine.castAbility(pako, battle.enemy);
 
+  const dubBeam = battle.effects.find((effect) => effect.kind === "line" && effect.size === 7);
+  assert.ok(dubBeam);
+  assert.equal(dubBeam.x, pako.x);
+  assert.equal(dubBeam.y, pako.y);
+  assert.ok(Math.hypot(dubBeam.x2 - target.x, dubBeam.y2 - target.y) < 1);
+  assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "pako"));
   assert.ok(target.hp < hpBefore);
   assert.ok(target.stun >= 0.72);
   assert.equal(host.energy, 18);

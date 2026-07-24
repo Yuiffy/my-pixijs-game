@@ -56,11 +56,15 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball";
+  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball" | "aoe_orb";
   /** 命中后对附近敌人造成伤害与灼烧的半径。 */
   splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
   emoji?: string;
+  /** 棒棒糖落地后停止移动，变为可被单位踩到的地面效果。 */
+  grounded?: boolean;
+  /** 远端 AOE 弹幕抵达固定落点后触发的技能。 */
+  impactAbilityId?: UnitId;
 }
 
 export interface ChronosphereZone {
@@ -133,6 +137,8 @@ export interface Fighter {
   hp: number;
   maxHp: number;
   shield: number;
+  /** 当前护盾池的峰值，用于显示剩余护盾强度。 */
+  shieldPeak: number;
   attack: number;
   armor: number;
   range: number;
