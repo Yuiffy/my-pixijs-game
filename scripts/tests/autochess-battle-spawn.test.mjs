@@ -72,6 +72,31 @@ test("已选择的天赋会按回合记入历史", () => {
   assert.deepEqual(engine.state.augmentHistory, [{ round: 2, id: "overclock" }]);
 });
 
+test("备战部署属性与战斗生成属性使用同一计算口径", () => {
+  const engine = createEngine(10);
+  engine.state.board.fill(null);
+  const rabbit = { uid: 1, id: "ember_blade", star: 3 };
+  engine.state.board[0] = rabbit;
+  engine.state.augments = ["tempered", "second_wind"];
+
+  const preview = engine.getPlayerCombatStats(rabbit);
+  assert.equal(Math.round(preview.maxHp), 474);
+  assert.equal(Math.round(preview.attack), 75);
+  assert.equal(Math.round(preview.armor), 33);
+  assert.equal(Math.round(preview.range), 230);
+
+  engine.startBattle();
+  const fighter = engine.state.battle?.player[0];
+  assert.ok(fighter);
+  assert.equal(fighter.maxHp, preview.maxHp);
+  assert.equal(fighter.attack, preview.attack);
+  assert.equal(fighter.armor, preview.armor);
+  assert.equal(fighter.range, preview.range);
+  assert.equal(fighter.attackInterval, preview.attackInterval);
+  assert.equal(fighter.moveSpeed, preview.moveSpeed);
+  assert.equal(fighter.energy, preview.energy);
+});
+
 test("克罗雅可同时触发 27期与粤帮关系", () => {
   const engine = createEngine(24);
   engine.state.playerLevel = 4;
@@ -1072,7 +1097,7 @@ test("老弥召唤的机械兔耳移动射击且伤害归属老弥", () => {
   assert.equal(battle.pets.length, 0);
 });
 
-test("邪恶外星人的贯穿光线命中同横排敌人", () => {
+test("邪恶外星人的贯穿光线沿目标方向发射并命中同线敌人", () => {
   const engine = createEngine(96);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -1082,8 +1107,8 @@ test("邪恶外星人的贯穿光线命中同横排敌人", () => {
   const source = battle?.player[0];
   assert.ok(battle && source);
   const target = battle.enemy[0];
-  const aligned = { ...target, fid: "test-aligned", x: 760, y: 330 };
-  const outside = { ...target, fid: "test-outside", x: 720, y: 361 };
+  const aligned = { ...target, fid: "test-aligned", x: 600, y: 240 };
+  const outside = { ...target, fid: "test-outside", x: 600, y: 360 };
   battle.enemy.push(aligned, outside);
   [target, aligned, outside].forEach((fighter) => {
     fighter.hp = fighter.maxHp = 9_999;
@@ -1091,8 +1116,8 @@ test("邪恶外星人的贯穿光线命中同横排敌人", () => {
     fighter.attack = 0;
     fighter.dodgeChance = 0;
   });
-  target.x = 440; target.y = 280;
-  source.x = 200; source.y = 280;
+  target.x = 400; target.y = 400;
+  source.x = 200; source.y = 560;
   assert.equal(source.energyStyle, "alien");
   assert.equal(source.maxEnergy, 75);
   assert.equal(source.energy, 10);
@@ -1101,6 +1126,11 @@ test("邪恶外星人的贯穿光线命中同横排敌人", () => {
   assert.ok(target.hp < target.maxHp);
   assert.ok(aligned.hp < aligned.maxHp);
   assert.equal(outside.hp, outside.maxHp);
+  const beam = battle.effects.find((effect) => effect.kind === "line" && effect.size === 8);
+  assert.ok(beam && beam.x2 !== undefined && beam.y2 !== undefined);
+  const targetCrossProduct = (target.x - beam.x) * (beam.y2 - beam.y)
+    - (target.y - beam.y) * (beam.x2 - beam.x);
+  assert.ok(Math.abs(targetCrossProduct) < 0.001);
 });
 
 test("泽音与恬豆的技能强化会在动态属性刷新后持续到期满", () => {

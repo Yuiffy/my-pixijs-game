@@ -25,7 +25,13 @@ import {
   tierOddsForLevel,
   traitLevelForCount,
 } from "./gameData";
-import { BATTLE_BOUNDS, fighterVisualRadius, mechanicalRabbitMuzzle } from "./battleGeometry";
+import {
+  BATTLE_BOUNDS,
+  fighterVisualRadius,
+  mechanicalRabbitMuzzle,
+  pointDistanceFromForwardRay,
+  rayEndpointAtBattleBounds,
+} from "./battleGeometry";
 import type {
   AugmentSelection,
   AbilityMotion,
@@ -92,6 +98,7 @@ const STUCK_PUSH_FORCE_DELAY = 0.28;
 const SEPARATION_PASSES = 2;
 const VANGUARD_JUMP_DURATION = 0.46;
 const VANGUARD_JUMP_COOLDOWN = 0.72;
+const ALIEN_BEAM_HALF_WIDTH = 80;
 /** 刺客/粤语帮等通用跳跃弧高 */
 const DEFAULT_JUMP_ARC_HEIGHT = 92;
 const CLOCK_GUNNER_RABBIT_COUNT = 2;
@@ -457,6 +464,117 @@ export class AutoChessEngine {
     return counts;
   }
 
+  public getPlayerCombatStats(owned: Pick<OwnedUnit, "id" | "star">) {
+    return this.calculatePlayerCombatStats(owned, this.getTraitCounts());
+  }
+
+  private calculatePlayerCombatStats(
+    owned: Pick<OwnedUnit, "id" | "star">,
+    traitCounts: Record<TraitId, number>,
+  ) {
+    const def = UNIT_DEFS[owned.id];
+    const traitLevel = (trait: TraitId) =>
+      traitLevelForCount(TRAITS[trait], traitCounts[trait]);
+    const memberLevel = (trait: TraitId) => {
+      if (def.traits.includes(trait)) return traitLevel(trait);
+      return 0;
+    };
+    const hasAugment = (id: AugmentId) => this.state.augments.includes(id);
+    const scale = STAR_SCALE[owned.star];
+    const isRanged = def.attackType === "ranged";
+    const aggressionLevel = traitLevel("aggression");
+    const aggressionMember = def.traits.includes("aggression") && aggressionLevel > 0;
+    const vanguardLevel = memberLevel("vanguard");
+    const wildLevel = memberLevel("wild");
+    const rangerLevel = memberLevel("ranger");
+    const skeletonLevel = memberLevel("skeleton_soldier");
+    const danceLevel = memberLevel("dance");
+    const matureLevel = memberLevel("mature");
+    const hostLevel = memberLevel("host");
+    const mysticLevel = memberLevel("mystic");
+    const globalWildLevel = traitLevel("wild");
+    const globalVanguardLevel = traitLevel("vanguard");
+    const globalRangerLevel = traitLevel("ranger");
+    const globalMysticLevel = traitLevel("mystic");
+    const globalDanceLevel = traitLevel("dance");
+    const globalHostLevel = traitLevel("host");
+    const gen27Member = def.traits.includes("gen27") && traitLevel("gen27") > 0;
+    const starterEffect = this.state.starter ? starterEffects[this.state.starter] : {};
+
+    let maxHp = def.hp * scale;
+    let attack = def.attack * scale * 1.15;
+    let armor = def.armor;
+    let attackInterval = def.attackInterval;
+    let range = def.range;
+    const moveSpeed =
+      def.moveSpeed +
+      [0, 10, 22, 36][globalHostLevel] +
+      (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
+
+    if (aggressionLevel) {
+      attack *=
+        1 +
+        [0, 0.05, 0.1, 0.2][aggressionLevel] +
+        (aggressionMember ? [0, 0.15, 0.3, 0.55][aggressionLevel] : 0);
+    }
+    if (vanguardLevel) range += [0, 36, 56, 80][vanguardLevel];
+    if (globalVanguardLevel >= 2) {
+      maxHp *= globalVanguardLevel === 3 ? 1.18 : 1.1;
+    }
+    if (wildLevel) armor += [0, 10, 22, 38][wildLevel];
+    if (rangerLevel) attackInterval /= [1, 1.12, 1.26, 1.45][rangerLevel];
+    if (skeletonLevel) {
+      attack *= 1.35;
+      armor -= 12;
+    }
+    if (danceLevel) attackInterval /= [1, 1.12, 1.26, 1.45][danceLevel];
+    if (!isRanged) {
+      if (globalWildLevel >= 2) armor += globalWildLevel === 3 ? 16 : 8;
+      if (globalDanceLevel >= 2) {
+        attackInterval /= globalDanceLevel === 3 ? 1.16 : 1.08;
+      }
+    } else if (globalRangerLevel >= 2) {
+      attackInterval /= globalRangerLevel === 3 ? 1.3 : 1.15;
+    }
+    const danceMoveSpeed =
+      !isRanged && globalDanceLevel >= 2
+        ? globalDanceLevel === 3
+          ? 16
+          : 8
+        : 0;
+    if (hasAugment("tempered")) armor += 16;
+    if (hasAugment("second_wind")) {
+      maxHp *= 1.12;
+      armor += 10;
+    }
+    if (hasAugment("sharp_edge")) attack *= 1.15;
+    if (hasAugment("momentum")) attackInterval /= 1.18;
+    if (this.state.starter === "dance_start" && danceLevel) {
+      attackInterval /= 1 + (starterEffect.danceAttackSpeed || 0);
+    }
+    const matureAttackSpeed = [0, 0.08, 0.16, 0.24][matureLevel];
+    if (matureAttackSpeed) attackInterval /= 1 + matureAttackSpeed;
+
+    return {
+      maxHp,
+      attack,
+      armor,
+      range,
+      attackInterval,
+      moveSpeed: moveSpeed + danceMoveSpeed,
+      energy: Math.min(
+        def.energyProfile.max,
+        def.energyProfile.start +
+          [0, 20, 45, 70][mysticLevel] +
+          [0, 0, 10, 22][globalMysticLevel] +
+          [0, 0, 10, 22][traitLevel("gen27")] * (gen27Member ? 1 : 0) +
+          (starterEffect.startingEnergy || 0) +
+          (hasAugment("overclock") ? 35 : 0),
+      ),
+      maxEnergy: def.energyProfile.max,
+    };
+  }
+
   public getActiveTraits() {
     return (Object.keys(TRAITS) as TraitId[])
       .map((trait) => {
@@ -768,7 +886,6 @@ export class AutoChessEngine {
     const traitCounts = this.getTraitCounts();
     const traitLevel = (trait: TraitId) =>
       traitLevelForCount(TRAITS[trait], traitCounts[trait]);
-    const hasAugment = (id: AugmentId) => this.state.augments.includes(id);
     const globalTraitLevel = (trait: TraitId) => traitLevel(trait);
     const playerSpawn = (index: number) => {
       const col = index % 6;
@@ -784,19 +901,18 @@ export class AutoChessEngine {
       if (!owned) return [];
       const def = UNIT_DEFS[owned.id];
       const spawn = playerSpawn(index);
-      const scale = STAR_SCALE[owned.star];
-      let maxHp = def.hp * scale;
-      let attack = def.attack * scale * 1.15;
-      let armor = def.armor;
-      let attackInterval = def.attackInterval;
-      const starterEffect = this.state.starter ? starterEffects[this.state.starter] : {};
+      const {
+        maxHp,
+        attack,
+        armor,
+        range,
+        attackInterval,
+        moveSpeed,
+        energy,
+      } = this.calculatePlayerCombatStats(owned, traitCounts);
       const emberLevel = def.traits.includes("ember") ? traitLevel("ember") : 0;
-      const wildLevel = def.traits.includes("wild") ? traitLevel("wild") : 0;
       const vanguardLevel = def.traits.includes("vanguard")
         ? traitLevel("vanguard")
-        : 0;
-      const rangerLevel = def.traits.includes("ranger")
-        ? traitLevel("ranger")
         : 0;
       const mysticLevel = def.traits.includes("mystic")
         ? traitLevel("mystic")
@@ -807,79 +923,18 @@ export class AutoChessEngine {
       const chuanmeiLevel = def.traits.includes("chuanmei")
         ? traitLevel("chuanmei")
         : 0;
-      const skeletonLevel = def.traits.includes("skeleton_soldier")
-        ? traitLevel("skeleton_soldier")
-        : 0;
       const gluttonyHolder = def.traits.includes("gluttony") && traitLevel("gluttony") > 0;
       const gen27Member = def.traits.includes("gen27") && traitLevel("gen27") > 0;
       const yueGangMember = def.traits.includes("yue_gang") && traitLevel("yue_gang") > 0;
       const isRanged = def.attackType === "ranged";
-      const globalWildLevel = globalTraitLevel("wild");
-      const globalVanguardLevel = globalTraitLevel("vanguard");
-      const globalRangerLevel = globalTraitLevel("ranger");
-      const globalMysticLevel = globalTraitLevel("mystic");
       const trafficLevel = def.traits.includes("traffic") ? traitLevel("traffic") : 0;
       const globalTrafficLevel = globalTraitLevel("traffic");
       const matureLevel = def.traits.includes("mature") ? traitLevel("mature") : 0;
       const danceLevel = def.traits.includes("dance") ? traitLevel("dance") : 0;
-      const globalDanceLevel = globalTraitLevel("dance");
       const globalAssassinLevel = globalTraitLevel("assassin");
       const globalChuanmeiLevel = globalTraitLevel("chuanmei");
-      const hostLevel = def.traits.includes("host") ? traitLevel("host") : 0;
-      const globalHostLevel = globalTraitLevel("host");
       const dwarfLevel = def.traits.includes("dwarf") ? traitLevel("dwarf") : 0;
-      const aggressionLevel = globalTraitLevel("aggression");
-      const aggressionMember = def.traits.includes("aggression") && aggressionLevel > 0;
-      const moveSpeed =
-        def.moveSpeed +
-        [0, 10, 22, 36][globalHostLevel] +
-        (hostLevel ? [0, 18, 32, 50][hostLevel] : 0);
-
-      if (aggressionLevel) attack *= 1 + [0, 0.05, 0.1, 0.2][aggressionLevel] + (aggressionMember ? [0, 0.15, 0.3, 0.55][aggressionLevel] : 0);
-      // 怕死：拉远攻击距离，高阶给全队生命
-      let range = def.range;
-      if (vanguardLevel) {
-        range += [0, 36, 56, 80][vanguardLevel];
-      }
-      if (globalVanguardLevel >= 2) {
-        maxHp *= globalVanguardLevel === 3 ? 1.18 : 1.1;
-      }
-      // 毛茸茸：只加护甲
-      if (wildLevel) {
-        armor += [0, 10, 22, 38][wildLevel];
-      }
-      if (rangerLevel) attackInterval /= [1, 1.12, 1.26, 1.45][rangerLevel];
-      if (skeletonLevel) {
-        attack *= 1.35;
-        armor -= 12;
-      }
-      if (danceLevel) {
-        attackInterval /= [1, 1.12, 1.26, 1.45][danceLevel];
-      }
-      if (!isRanged) {
-        if (globalWildLevel >= 2) {
-          armor += globalWildLevel === 3 ? 16 : 8;
-        }
-        if (globalDanceLevel >= 2) {
-          attackInterval /= globalDanceLevel === 3 ? 1.16 : 1.08;
-        }
-      } else if (globalRangerLevel >= 2) {
-        attackInterval /= globalRangerLevel === 3 ? 1.3 : 1.15;
-      }
-      // 跳舞高阶给近战移速，成员本身不再加移速
-      const danceMoveSpeed = !isRanged && globalDanceLevel >= 2 ? (globalDanceLevel === 3 ? 16 : 8) : 0;
-      if (hasAugment("tempered")) armor += 16;
-      if (hasAugment("second_wind")) {
-        maxHp *= 1.12;
-        armor += 10;
-      }
-      if (hasAugment("sharp_edge")) attack *= 1.15;
-      if (hasAugment("momentum")) attackInterval /= 1.18;
-      if (this.state.starter === "dance_start" && danceLevel) {
-        attackInterval /= 1 + (starterEffect.danceAttackSpeed || 0);
-      }
       const matureAttackSpeed = [0, 0.08, 0.16, 0.24][matureLevel];
-      if (matureAttackSpeed) attackInterval /= 1 + matureAttackSpeed;
 
       const fighter: Fighter = {
         fid: `p-${owned.uid}`,
@@ -897,10 +952,10 @@ export class AutoChessEngine {
         range,
         baseRange: range,
         attackInterval,
-        moveSpeed: moveSpeed + danceMoveSpeed,
+        moveSpeed,
         baseAttack: attack,
         baseAttackInterval: attackInterval,
-        baseMoveSpeed: moveSpeed + danceMoveSpeed,
+        baseMoveSpeed: moveSpeed,
         cooldown: this.rng.next() * 0.25,
         maxEnergy: def.energyProfile.max,
         energyPerSecond: def.energyProfile.perSecond,
@@ -908,15 +963,7 @@ export class AutoChessEngine {
         energyOnHit: def.energyProfile.onHit,
         energyStyle: def.energyProfile.id,
         attackType: def.attackType,
-        energy: Math.min(
-          def.energyProfile.max,
-          def.energyProfile.start +
-            [0, 20, 45, 70][mysticLevel] +
-            [0, 0, 10, 22][globalMysticLevel] +
-            [0, 0, 10, 22][globalTraitLevel("gen27")] * (gen27Member ? 1 : 0) +
-            (starterEffect.startingEnergy || 0) +
-            (hasAugment("overclock") ? 35 : 0),
-        ),
+        energy,
         stun: 0,
         burnTime: 0,
         burnDps: 0,
@@ -3176,8 +3223,11 @@ export class AutoChessEngine {
       case "yua": {
         const target = this.nearestTarget(source, targets);
         if (!target) break;
+        const beamEndpoint = rayEndpointAtBattleBounds(source, target);
         targets
-          .filter((candidate) => Math.abs(candidate.y - target.y) < 80)
+          .filter(
+            (candidate) => pointDistanceFromForwardRay(source, target, candidate) < ALIEN_BEAM_HALF_WIDTH,
+          )
           .forEach((candidate) => {
             const dealt = this.damage(source, candidate, source.attack * 1.35);
             this.addDamageText(candidate, dealt);
@@ -3186,8 +3236,8 @@ export class AutoChessEngine {
           kind: "line",
           x: source.x,
           y: source.y,
-          x2: source.team === "player" ? 1100 : 20,
-          y2: target.y,
+          x2: beamEndpoint.x,
+          y2: beamEndpoint.y,
           color: def.accent,
           life: 0.48,
           size: 8,

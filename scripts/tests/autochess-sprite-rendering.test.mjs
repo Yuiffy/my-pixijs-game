@@ -258,6 +258,9 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /occupiedSlotLayout/);
   assert.match(scene, /"★"\.repeat\(unit\.star\)/);
   assert.match(scene, /const starColor = unit\.star === 3/);
+  assert.match(scene, /showUnitTooltip\(unit\.id, pointer, unit\.star, undefined, unit\)/);
+  assert.match(scene, /getPlayerCombatStats\(owned\)/);
+  assert.match(scene, /部署生命 \$\{Math\.round\(combatStats\.maxHp\)\}/);
   assert.match(scene, /def\.traits\.forEach/);
   assert.match(scene, /getTraitStatus\(traitId\)/);
   assert.doesNotMatch(scene, /const labelBackplate = this\.add\.graphics\(\)/);

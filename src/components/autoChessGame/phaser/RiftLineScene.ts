@@ -843,7 +843,7 @@ export class RiftLineScene extends Phaser.Scene {
       this.dragState = { origin: location, unit, pointerId: pointer.id, startX: logical.x, startY: logical.y, active: false, ghost: null, targetMarker: null, target: null };
     });
     slot.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
-      if (unit && !this.dragState) this.showUnitTooltip(unit.id, pointer, unit.star);
+      if (unit && !this.dragState) this.showUnitTooltip(unit.id, pointer, unit.star, undefined, unit);
     });
     slot.on(Phaser.Input.Events.POINTER_OUT, () => {
       if (!this.isCompact() && !this.dragState) this.clearTooltip();
@@ -2123,16 +2123,25 @@ export class RiftLineScene extends Phaser.Scene {
     return { x, y };
   }
 
-  private showUnitTooltip(unitId: UnitId, pointer?: Phaser.Input.Pointer, star: 1 | 2 | 3 = 1, fighter?: Fighter) {
+  private showUnitTooltip(
+    unitId: UnitId,
+    pointer?: Phaser.Input.Pointer,
+    star: 1 | 2 | 3 = 1,
+    fighter?: Fighter,
+    owned?: OwnedUnit,
+  ) {
     this.clearTooltip();
     this.pinnedTooltip = this.isCompact() ? unitId : null;
     const def = UNIT_DEFS[unitId];
     const { width, scale } = this.tooltipMetrics(408);
     const { padding, title, body, section, traitHeading, tag, tagHeight, tagGap } = TOOLTIP_TYPOGRAPHY;
     const contentWidth = width - padding * 2;
+    const combatStats = owned ? this.bridge.engine.getPlayerCombatStats(owned) : null;
     const detail = fighter
       ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)}\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}\n战斗：输出 ${short(fighter.damageDealt)} · 治疗 ${short(fighter.healingDone)} · 护盾 ${short(fighter.shieldingDone)} · 承伤 ${short(fighter.damageTaken)}`
-      : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;
+      : combatStats
+        ? `${def.attackType === "ranged" ? "远程" : "近战"} · 部署生命 ${Math.round(combatStats.maxHp)} · 攻击 ${Math.round(combatStats.attack)} · 护甲 ${Math.round(combatStats.armor)}\n射程 ${Math.round(combatStats.range)} · 攻速 ${combatStats.attackInterval.toFixed(2)}s · 移速 ${Math.round(combatStats.moveSpeed)}`
+        : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;
     const detailText = this.boundedText(detail, contentWidth, fighter ? 5 : 3, body, "#abc1ce", { lineSpacing: 5 });
     const ability = this.boundedText(def.abilityDescription, contentWidth, this.isCompact() ? 5 : 7, body, "#adc1cc", { lineSpacing: 5 });
     const abilityTitle = this.text(0, 0, `${def.abilityName} · ${ABILITY_CAST_TIMING_LABELS[def.abilityCastTiming]}`, section, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
@@ -2181,7 +2190,12 @@ export class RiftLineScene extends Phaser.Scene {
     container.add(this.text(padding, titleY, `${def.name} ${"★".repeat(star)} · ${def.cost}费`, title, "#f1f8ff", { fontStyle: "bold" }));
     detailText.setPosition(padding, detailY);
     container.add(detailText);
-    container.add(this.text(padding, energyY, `${def.energyProfile.name} · ${fighter ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}` : `${def.energyProfile.start}/${def.energyProfile.max}`}`, body, def.energyProfile.color));
+    const energy = fighter
+      ? `${Math.round(fighter.energy)}/${fighter.maxEnergy}`
+      : combatStats
+        ? `${Math.round(combatStats.energy)}/${combatStats.maxEnergy}`
+        : `${def.energyProfile.start}/${def.energyProfile.max}`;
+    container.add(this.text(padding, energyY, `${def.energyProfile.name} · ${energy}`, body, def.energyProfile.color));
     container.add(traitContainer);
     abilityTitle.setPosition(padding, abilityTitleY).setVisible(true);
     ability.setPosition(padding, abilityBodyY);
