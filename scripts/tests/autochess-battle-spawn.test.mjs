@@ -96,7 +96,7 @@ test("备战部署属性与战斗生成属性使用同一计算口径", () => {
   const preview = engine.getPlayerCombatStats(rabbit);
   assert.equal(Math.round(preview.maxHp), 474);
   assert.equal(Math.round(preview.attack), 75);
-  assert.equal(Math.round(preview.armor), 33);
+  assert.equal(Math.round(preview.armor), 27);
   assert.equal(Math.round(preview.range), 230);
 
   engine.startBattle();
@@ -257,7 +257,7 @@ test("成熟开战护盾和攻速每 4 秒降低 1 个百分点", () => {
   const battle = engine.state.battle;
   const mature = battle?.player.find((fighter) => fighter.unitId === "gale_archer");
   assert.ok(battle && mature);
-  assert.ok(Math.abs(mature.shield - mature.maxHp * 0.13) < 1e-9);
+  assert.ok(Math.abs(mature.shield - mature.maxHp * 0.12) < 1e-9);
   assert.equal(mature.attackInterval, 1.05 / 1.08);
   battle.enemy.forEach((enemy) => { enemy.hp = 99_999; enemy.maxHp = 99_999; enemy.attack = 0; enemy.armor = 99_999; });
 
@@ -475,7 +475,7 @@ test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", ()
   engine.castAbility(guard, battle.enemy);
 
   assert.ok(guard.shield > 0);
-  assert.ok(Math.abs(guard.shield - guard.maxHp * 0.3 * 1.3) < 0.001);
+  assert.ok(Math.abs(guard.shield - guard.maxHp * 0.3 * 1.2) < 0.001);
   assert.equal(guard.shieldPeak, guard.shield);
   assert.equal(battle.effects.filter((effect) => effect.text === "绿冻护甲").length, 1);
   assert.ok(!battle.effects.some((effect) => effect.kind === "ring" && effect.x === guard.x && effect.y === guard.y));
@@ -537,7 +537,7 @@ test("一星绿冻护甲无法在三名一星敌人围攻下无限续盾", () =>
 
   stepBattle(engine, 480);
 
-  const oneShield = guard.maxHp * 0.3 * 1.3;
+  const oneShield = guard.maxHp * 0.3 * 1.2;
   assert.ok(Math.abs(guard.shieldingDone - oneShield) < 0.001);
   assert.equal(guard.shield, 0);
   assert.ok(!guard.alive || guard.hp / guard.maxHp < 0.1);
@@ -1970,15 +1970,23 @@ test("滑跪会沿直线路径移动并逐个撞开沿途敌人", () => {
   source.cooldown = 99;
   source.energy = 0;
   const sampledX = [];
+  let collisionStun = 0;
+  let previousMiddleDamage = middle.damageTaken;
   for (let tick = 0; tick < 16; tick += 1) {
     engine.update(0.05);
     sampledX.push(source.x);
+    if (middle.damageTaken > previousMiddleDamage && collisionStun === 0) collisionStun = middle.stun;
+    previousMiddleDamage = middle.damageTaken;
   }
   assert.ok(new Set(sampledX.map((x) => Math.round(x))).size >= 6, "滑跪过程应经过多个中间坐标");
+  const earlyStep = sampledX[1] - sampledX[0];
+  const lateStep = sampledX[5] - sampledX[4];
+  assert.ok(earlyStep > lateStep * 1.4, "滑跪应在前段快速冲刺、末段逐渐减速");
   assert.equal(source.abilityMotion, null);
   assert.ok(source.x > 650);
   assert.ok(Math.abs(middle.damageTaken - expectedSkillDamage) < 0.01, "沿途目标应只受到一次滑跪伤害");
   assert.ok(Math.abs(far.damageTaken - expectedSkillDamage) < 0.01, "终点目标也应只受到一次滑跪伤害");
+  assert.ok(collisionStun >= 0.39 && collisionStun <= 0.45, "被滑跪撞到的敌人应短暂眩晕");
   assert.ok(middle.x > 420 || Math.abs(middle.y - 360) > 1, "沿途目标应被短位移撞开");
   assert.ok(far.x > 760 || Math.abs(far.y - 360) > 1, "终点目标应被短位移撞开");
   assert.ok(source.shield > 0);

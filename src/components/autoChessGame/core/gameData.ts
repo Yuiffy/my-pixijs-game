@@ -82,13 +82,24 @@ export const STARTER_OFFER_SIZE = 3;
 
 export type AugmentId =
   | "tempered"
-  | "overclock"
   | "sharp_edge"
   | "momentum"
-  | "triage"
   | "payday"
+  | "vitality"
+  | "precision"
+  | "overclock"
+  | "triage"
   | "execution"
-  | "second_wind";
+  | "second_wind"
+  | "glass_cannon"
+  | "united_front";
+
+export type AugmentTier = "minor" | "major";
+
+export const AUGMENT_TIER_LABELS: Record<AugmentTier, string> = {
+  minor: "局中小天赋",
+  major: "局中大天赋",
+};
 
 export type AttackType = "melee" | "ranged";
 export type EnergyProfileId = "assault" | "bulwark" | "steady_guard" | "flow" | "tempo" | "alien" | "reservoir" | "automatic" | "feast" | "passive";
@@ -247,6 +258,7 @@ export interface StarterDefinition {
 
 export interface AugmentDefinition {
   id: AugmentId;
+  tier: AugmentTier;
   name: string;
   kicker: string;
   description: string;
@@ -379,7 +391,7 @@ const COMBAT_PROFILES: Record<
   mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
   // offenseInRange：近距进攻，进入攻击范围放
   zeyin: { attackType: "melee", energyProfile: ENERGY_PROFILES.passive, range: 54, moveSpeed: 68, abilityCastTiming: "passive" },
-  mitsuri: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 200, moveSpeed: 50, abilityCastTiming: "offenseInRange" },
+  mitsuri: { attackType: "melee", energyProfile: ENERGY_PROFILES.flow, range: 54, moveSpeed: 50, abilityCastTiming: "offenseInRange" },
   // offenseReady：远程/战场进攻，满能量即放
   ember_blade: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 230, moveSpeed: 58, abilityCastTiming: "offenseReady" },
   spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50, abilityCastTiming: "offenseReady" },
@@ -914,7 +926,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.9,
     moveSpeed: 72,
     abilityName: "滑跪",
-    abilityDescription: "向最远敌人滑跪突进，击退沿途敌人并为自己获得护盾。",
+    abilityDescription: "向最远敌人滑跪突进，击退沿途敌人并使撞到的敌人短暂眩晕，同时为自己获得护盾。",
     portrait: "/images/livers/guangyi.jpg",
     portraitFocus: "top",
     shop: true,
@@ -1128,70 +1140,110 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
 export const SHOP_UNITS: ShopUnitId[] = [...SHOP_UNIT_IDS];
 
 export const STARTERS: StarterDefinition[] = [
-  { id: "mature_start", name: "成熟稳重", subtitle: "老派开场", description: "携带浣熊店员开局；成熟成员开战护盾 +6%，初始金币 +1。", unit: "gale_archer", color: "#b9a274" },
-  { id: "blaze", name: "火热整活", subtitle: "辣福灼烧", description: "携带雅吨开局；灼烧伤害 +40%，首次胜利额外获得 2 金币。", unit: "rift_brawler", color: "#ff8058" },
+  { id: "mature_start", name: "成熟稳重", subtitle: "老派开场", description: "携带浣熊店员开局；成熟成员开战护盾 +6%，初始金币 +2。", unit: "gale_archer", color: "#b9a274" },
+  { id: "blaze", name: "火热整活", subtitle: "辣福灼烧", description: "携带雅吨开局；灼烧伤害 +30%，首次胜利额外获得 1 金币。", unit: "rift_brawler", color: "#ff8058" },
   { id: "traffic_start", name: "热点追踪", subtitle: "流量续航", description: "携带大黑鼠开局；流量成员吸血额外 +6%，初始金币 +1。", unit: "dawn_duelist", color: "#ff7197" },
-  { id: "bastion", name: "持久抗压", subtitle: "稳扎稳打", description: "携带果冻风纪开局；基地生命 +4，所有护盾效果 +30%。", unit: "sun_guard", color: "#69d8ff" },
-  { id: "dance_start", name: "舞台梦", subtitle: "红帽开场", description: "携带小红帽开局；所有友军开战 +10 能量，跳舞成员攻击速度 +8%。", unit: "sui", color: "#f39ade" },
+  { id: "bastion", name: "持久抗压", subtitle: "稳扎稳打", description: "携带果冻风纪开局；基地生命 +3，所有护盾效果 +20%。", unit: "sun_guard", color: "#69d8ff" },
+  { id: "dance_start", name: "舞台梦", subtitle: "红帽开场", description: "携带小红帽开局；初始金币 +1，所有友军开战 +10 能量，跳舞成员攻击速度 +8%。", unit: "sui", color: "#f39ade" },
   { id: "ranger_start", name: "稳定输出", subtitle: "远程热身", description: "携带兔子射手开局；所有远程友军攻击速度 +10%，首次刷新商店免费。", unit: "ember_blade", color: "#f2d15e" },
 ];
 
 export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "tempered",
+    tier: "minor",
     name: "果冻风纪",
-    kicker: "Hazel · 生存",
-    description: "所有友军获得 16 护甲。",
+    kicker: "生存 · 小幅减伤",
+    description: "所有友军获得 10 护甲。",
     color: "#76cfff",
   },
   {
-    id: "overclock",
-    name: "出道推流",
-    kicker: "技能 · 提前释放",
-    description: "所有友军开战时额外获得 35 能量。",
-    color: "#c58cff",
-  },
-  {
     id: "sharp_edge",
+    tier: "minor",
     name: "炽焰磨刃",
-    kicker: "炽焰 · 输出",
-    description: "所有友军攻击力提高 15%。",
+    kicker: "输出 · 稳定增伤",
+    description: "所有友军攻击力提高 12%。",
     color: "#ff986b",
   },
   {
     id: "momentum",
+    tier: "minor",
     name: "弹幕加速",
-    kicker: "全员 · 节奏",
-    description: "所有友军攻击速度提高 18%。",
+    kicker: "节奏 · 稳定攻速",
+    description: "所有友军攻击速度提高 14%。",
     color: "#f4d35e",
   },
   {
-    id: "triage",
-    name: "全员续航",
-    kicker: "团队 · 续航",
-    description: "每 2.5 秒治疗全部友军 3% 最大生命。",
-    color: "#72e7a5",
-  },
-  {
     id: "payday",
+    tier: "minor",
     name: "花呗生活",
     kicker: "经济 · 先花后还",
-    description: "立即获得 10 金币；之后 4 个回合收入 -1。",
+    description: "立即获得 8 金币；之后 4 个回合收入 -1。",
     color: "#ffd166",
   },
   {
+    id: "vitality",
+    tier: "minor",
+    name: "体能储备",
+    kicker: "生存 · 基础体魄",
+    description: "所有友军最大生命提高 8%。",
+    color: "#69d7a3",
+  },
+  {
+    id: "precision",
+    tier: "minor",
+    name: "弹幕校准",
+    kicker: "输出 · 暴击训练",
+    description: "所有友军暴击率提高 15%。",
+    color: "#f2bb62",
+  },
+  {
+    id: "overclock",
+    tier: "major",
+    name: "出道推流",
+    kicker: "技能 · 抢先启动",
+    description: "所有友军开战时额外获得 45 能量；每次施放技能后保留 10 能量。",
+    color: "#c58cff",
+  },
+  {
+    id: "triage",
+    tier: "major",
+    name: "全员续航",
+    kicker: "团队 · 持续回复",
+    description: "每 2.5 秒治疗全部友军 4% 最大生命。",
+    color: "#72e7a5",
+  },
+  {
     id: "execution",
+    tier: "major",
     name: "收割",
     kicker: "输出 · 补刀",
-    description: "对生命低于 40% 的敌人造成 28% 额外伤害。",
+    description: "对生命低于 45% 的敌人造成 40% 额外伤害。",
     color: "#ff6b8a",
   },
   {
     id: "second_wind",
+    tier: "major",
     name: "德川家康",
     kicker: "生存 · 活得久",
     description: "所有友军 +12% 最大生命、+10 护甲；每名友军首次低于 30% 生命时恢复 18% 最大生命。",
     color: "#88a7ff",
+  },
+  {
+    id: "glass_cannon",
+    tier: "major",
+    name: "极限超频",
+    kicker: "输出 · 风险换火力",
+    description: "所有友军攻击力 +30%、攻击速度 +25%，但最大生命降低 15%。",
+    color: "#ff7d71",
+  },
+  {
+    id: "united_front",
+    tier: "major",
+    name: "全员护航",
+    kicker: "生存 · 开战防线",
+    description: "所有友军开战获得 20% 最大生命护盾和 15 能量。",
+    color: "#66d9d1",
   },
 ];
 
@@ -1292,6 +1344,13 @@ export const WAVES: WaveDefinition[] = [
 ];
 
 export const CAMPAIGN_ROUNDS = WAVES.length;
+
+export const augmentTierForRound = (round: number): AugmentTier | null => {
+  if (round === 2) return "minor";
+  if (round === 5) return "major";
+  if (round <= CAMPAIGN_ROUNDS || (round - CAMPAIGN_ROUNDS) % 6 !== 0) return null;
+  return ((round - CAMPAIGN_ROUNDS) / 6) % 2 === 1 ? "minor" : "major";
+};
 
 const ENDLESS_NAMES = [
   "回响突击群",

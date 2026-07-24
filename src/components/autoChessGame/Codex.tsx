@@ -6,6 +6,7 @@ import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
   ABILITY_CAST_TIMING_LABELS,
   AUGMENTS,
+  AUGMENT_TIER_LABELS,
   ENERGY_PROFILES,
   describeEnergyRecovery,
   PLAYER_LEVELS,
@@ -212,7 +213,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                   能量 · {unit.energyProfile.name}：{describeEnergyRecovery(unit.energyProfile)}
                 </span>
               </div>
-              <p style={{ color: "#708a9d", margin: "8px 0 12px", fontSize: 12 }}>以上为基础属性；羁绊、天赋和契印会在战斗中进一步修改数值。</p>
+              <p style={{ color: "#708a9d", margin: "8px 0 12px", fontSize: 12 }}>以上为基础属性；羁绊、开局和局中天赋会在战斗中进一步修改数值。</p>
               <h3 style={{ color: unit.accent, marginBottom: 6 }}>{unit.abilityName}</h3>
               <div style={{ color: "#8eb0c4", fontSize: 12, marginBottom: 6 }}>
                 {ABILITY_CAST_TIMING_LABELS[unit.abilityCastTiming]}
@@ -275,19 +276,26 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                 ))}
               </div>
             </div>
-            <div>
-              <h2 style={{ margin: "0 0 8px" }}>永久天赋</h2>
-              <p style={{ color: "#8da7b8" }}>第 2、5 战后及无限挑战中会出现三选一；选择记录会显示在备战、结算和本局文本状态里。</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-                {AUGMENTS.map((augment) => (
-                  <article key={augment.id} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
-                    <strong style={{ color: augment.color }}>{augment.name}</strong>
-                    <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>
-                    <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{augment.description}</p>
-                  </article>
-                ))}
+            {(["minor", "major"] as const).map((tier) => (
+              <div key={tier}>
+                <h2 style={{ margin: "0 0 8px" }}>{AUGMENT_TIER_LABELS[tier]}</h2>
+                <p style={{ color: "#8da7b8" }}>
+                  {tier === "minor"
+                    ? "第 2 战后出现，提供早期定向强化。"
+                    : "第 5 战后出现，每项都按足以改变后期打法的强度设计。"}
+                  {" "}同档天赋拿完前不会重复。
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                  {AUGMENTS.filter((augment) => augment.tier === tier).map((augment) => (
+                    <article key={augment.id} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
+                      <strong style={{ color: augment.color }}>{augment.name}</strong>
+                      <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>
+                      <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{augment.description}</p>
+                    </article>
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
           </section>
         )}
         {tab === "runTalents" && (
@@ -317,7 +325,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                   if (!augment) return null;
                   return (
                     <article key={`${round}-${id}`} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
-                      <div style={{ color: "#8da7b8", fontSize: 12, fontWeight: 700 }}>第 {round} 战</div>
+                      <div style={{ color: "#8da7b8", fontSize: 12, fontWeight: 700 }}>第 {round} 战 · {AUGMENT_TIER_LABELS[augment.tier]}</div>
                       <strong style={{ display: "block", marginTop: 6, color: augment.color, fontSize: 18 }}>{augment.name}</strong>
                       <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>
                       <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{augment.description}</p>
@@ -347,7 +355,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
         {tab === "rules" && (
           <section style={{ maxWidth: 820, lineHeight: 1.9 }}>
             <h2>远征与无限裂隙</h2>
-            <p>守住前 8 战即完成远征，随后无缝进入无限裂隙。无限敌军会增加数量、升星和属性，每 5 层迎来强化首领，每 6 层还有机会获取新契印。</p>
+            <p>守住前 8 战即完成远征，随后无缝进入无限裂隙。无限敌军会增加数量、升星和属性，每 5 层迎来强化首领，每 6 层交替获取小天赋或大天赋；同档全部拿完后才会回补重复强化。</p>
             <h2>操作</h2>
             <ul><li>点击商店购买；点击或拖拽棋子调整站位；右键棋子可快速回收。</li><li>R 刷新商店，Space 开战，F 全屏，Esc 关闭面板/取消选中。</li><li>敌情预览、棋子、羁绊均可悬浮查看详情。</li></ul>
             <h2>能量</h2>

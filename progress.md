@@ -395,3 +395,29 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 新增 `scripts/verify-autochess-economy-ui.cjs`，使用系统 Chrome 覆盖桌面利息 hover、备战 tooltip、移动端利息点击展开与备战价值；DOM、`render_game_to_text`、画布尺寸和控制台错误交叉检查通过。
 - 截图：`.tmp/autochess/economy-interest-desktop.png`、`.tmp/autochess/economy-bench-tooltip-desktop.png`、`.tmp/autochess/economy-interest-mobile.png`、`.tmp/autochess/economy-bench-mobile.png`。四张均已逐张检查，抽样颜色数 570–3495、近黑率最高 0.01%、透明率 0。
 - 验证：`pnpm exec tsc --noEmit`、Phaser/HUD 静态回归 `26/26`、专项 Chrome 流程和 `git diff --check` 通过；完整 `pnpm autochess:test` 为 `104/105`，唯一失败仍是已有的“满能量远程单位会先进入攻击距离再施法”断言。
+
+## 2026-07-25 · 帕可与轴伊费用及治疗技能调整
+
+- 帕可 Pako 从 5 费下调为 1 费，并将生命、攻击、护甲、射程、攻速与移速收回到 1 费远程辅助档位。
+- 帕可技能改为“天使摸鱼”：向受伤友军最密集处投出鱼形 AOE 弹，抵达后治疗 128 半径内的所有友军，不再造成伤害、眩晕或主持回能。
+- 轴伊从 1 费上调为 4 费，基础属性提升到 4 费远程辅助档位。
+- 轴伊“扔橘子”改为连续投出 5 颗实体橘子；每次发射重新选择生命比例最低的友军，治疗倍率依次为 `100% / 82% / 66% / 54% / 44%`。
+- 新增系统 Chrome 专项脚本 `scripts/verify-pako-joi-heals.cjs`，交叉验证投射物文本状态、治疗统计、DOM、画布尺寸、控制台错误和截图像素。
+- 专项数据测试 `13/13`，新增帕可与轴伊战斗回归均通过，`pnpm exec tsc --noEmit` 与源码 ESLint 通过；完整 `pnpm autochess:test` 为 `106/107`，唯一失败仍是既有的“满能量远程单位会先进入攻击距离再施法”断言。
+- 系统 Chrome 捕获帕可鱼形弹飞行/落地和轴伊双橘子飞行/治疗完成四帧；帕可累计治疗 `111` 且敌方生命不变，轴伊五段累计治疗 `476`。四张截图均为 1440×900、抽样颜色至少 4096、近黑率与透明率均为 0，已逐张打开检查，控制台无 error。
+- 截图：`.tmp/autochess/pako-joi-heals/pako-angel-fish-flight.png`、`.tmp/autochess/pako-joi-heals/pako-angel-fish-impact.png`、`.tmp/autochess/pako-joi-heals/joi-orange-volley.png`、`.tmp/autochess/pako-joi-heals/joi-orange-impact.png`。
+## 2026-07-25 · 中单光一滑跪减速与短眩晕
+
+- 滑跪保留原有直线扫掠、逐目标一次命中和击退逻辑，位移改为专属三次缓出曲线，前段冲刺、末段逐渐减速到停下。
+- 被滑跪撞到的敌人新增 `0.45` 秒眩晕，并同步更新技能说明。
+- 回归增加前后段位移增量比较和命中时眩晕时长断言。
+
+## 2026-07-25 · 升本费用降至零并跨本结转
+
+- 修复自然减费被 `Math.max(1, ...)` 锁在 1 金的问题；当前升本费用现在可以正常降到 0。
+- 新增未消费减费结转：费用已经为 0 后继续完成回合，溢出的每一点减费都会保留；免费升本时先抵扣下一本，仍有剩余就继续跨本级抵扣，玩家不会因为暂时不升本而损失进度。
+- `render_game_to_text` 暴露 `upgradeDiscountCarry`；图鉴规则同步说明零费与结转，桌面商店和移动商店会直接显示结转数量。
+- 新增引擎回归，覆盖 `1 → 0`、零费后结转、免费升本后 `9 → 8` 以及大额结转连续跨两本抵扣。
+- 新增系统 Chrome 专项脚本 `scripts/verify-autochess-upgrade-discount.cjs`；实测 3 本费用降至 0、再等一回合结转 1，免费升到 4 本后金币不变且下一本费用为 8。桌面与移动 DOM、文本状态、画布尺寸、控制台错误和截图像素交叉检查通过。
+- 截图：`.tmp/autochess/upgrade-discount-zero.png`、`.tmp/autochess/upgrade-discount-carried.png`、`.tmp/autochess/upgrade-discount-carried-mobile.png`、`.tmp/autochess/upgrade-discount-next-level.png`，四张均已逐张打开检查。
+- 验证：专项引擎与 Phaser/HUD 静态回归 `2/2`、`pnpm exec tsc --noEmit`、`git diff --check` 和专项 Chrome 流程通过。升本核心改动完成时完整套件为 `106/107`，仅有既有远程施法断言失败；并行的滑跪/数值改动随后继续进入工作区，最终当前套件为 `101/107`，新增失败落在部署属性、成熟护盾、两条绿冻护甲和开局文案，均不经过本轮升本状态链。仓库长流程 `verify-autochess.cjs` 仍在已有的首战结算等待处超时。

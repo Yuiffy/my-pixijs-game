@@ -191,7 +191,7 @@ export default function RiftHud({ engine, onAction }: Props) {
         <>
           <div className="rift-dom-stage">
             <aside className="rift-dom-shop-desktop">
-              <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? "MAX LEVEL" : `下本还需 ${engine.upgradeCost} 金`}</small></div></div>
+              <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? "MAX LEVEL" : `下本还需 ${engine.upgradeCost} 金${state.upgradeDiscountCarry ? ` · 结转 ${state.upgradeDiscountCarry}` : ""}`}</small></div></div>
               <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>本战赏金 <b>{engine.potentialBounty}</b></span><InterestInfo engine={engine} /><span>连胜 <b>{state.streak || "—"}</b></span></div>
               <div className="rift-tier-odds">{odds.map((chance, index) => <span key={index} className={`tier-${index + 1} ${chance ? "" : "is-muted"}`}><i>{index + 1}</i><b>{chance}%</b></span>)}</div>
               <div className="rift-shop-list">{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} />)}</div>
@@ -273,7 +273,7 @@ function ShopSheet({ engine, onClose, onAction }: { engine: AutoChessEngine; onC
   const ownedStars = (unitId: string) => countOwnedStars([...engine.state.board, ...engine.state.bench], unitId);
   return (
     <Sheet title="战术商店" eyebrow="SHOP / 五张随机单位" onClose={onClose}>
-      <div className="rift-sheet-summary"><span>金币 <b>{engine.state.gold}</b></span><InterestInfo engine={engine} compact /><span>概率 <b>{tierOddsForLevel(engine.state.playerLevel).filter(Boolean).map((chance, index) => `${index + 1}费 ${chance}%`).join(" · ")}</b></span></div>
+      <div className="rift-sheet-summary"><span>金币 <b>{engine.state.gold}</b></span><InterestInfo engine={engine} compact />{engine.state.upgradeDiscountCarry > 0 && <span>减费结转 <b>{engine.state.upgradeDiscountCarry}</b></span>}<span>概率 <b>{tierOddsForLevel(engine.state.playerLevel).filter(Boolean).map((chance, index) => `${index + 1}费 ${chance}%`).join(" · ")}</b></span></div>
       <div className="rift-sheet-shop-list">{engine.state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => onAction({ type: "shop", index })} />)}</div>
       <div className="rift-dom-sheet-grid"><ActionButton onClick={() => onAction({ type: "buyXp" })} disabled={engine.isMaxPlayerLevel || engine.state.gold < (engine.upgradeCost ?? Number.POSITIVE_INFINITY)}>升本 · {engine.isMaxPlayerLevel ? "MAX" : engine.upgradeCost}</ActionButton><ActionButton tone="lock" className={engine.state.shopLocked ? "is-selected" : ""} onClick={() => onAction({ type: "lock" })}>{engine.state.shopLocked ? "已锁定" : "锁定商店"}</ActionButton><ActionButton tone="economic" onClick={() => onAction({ type: "reroll" })} disabled={!engine.state.freeRerollCharges && engine.state.gold < 1}>刷新 · {engine.state.freeRerollCharges ? `免费 ${engine.state.freeRerollCharges}` : 1}</ActionButton></div>
     </Sheet>

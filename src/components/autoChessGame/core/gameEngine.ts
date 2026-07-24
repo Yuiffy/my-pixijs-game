@@ -3,6 +3,8 @@
 import {
   AUGMENTS,
   AugmentId,
+  AugmentTier,
+  AUGMENT_TIER_LABELS,
   CAMPAIGN_ROUNDS,
   MAX_PLAYER_LEVEL,
   PASSIVE_UPGRADE_DISCOUNT,
@@ -20,6 +22,7 @@ import {
   UnitId,
   SUPPORT_HEAL_HP_RATIO,
   abilityStatForStar,
+  augmentTierForRound,
   bookLevelForPlayerLevel,
   upgradeCostForLevel,
   waveForRound,
@@ -183,6 +186,8 @@ const MITSURI_SHIELD_RATIO = 0.22;
 /** 山猪王「山猪冲阵」 */
 const SEKI_CHARGE_RADIUS = 132;
 const SEKI_CHARGE_SHIELD_RATIO = 0.2;
+/** 中单光一滑跪：撞到的敌人短暂失去行动。 */
+const GUANGYI_SLIDE_STUN_DURATION = 0.45;
 /** 礼墨「礼小虎出击」 */
 const SUMI_SEAL_RADIUS = 128;
 const SUMI_SEAL_ARMOR_PENALTY = 9;
@@ -303,11 +308,11 @@ const starterEffects: Record<StarterId, {
   rangedAttackSpeed?: number;
   freeFirstReroll?: boolean;
 }> = {
-  mature_start: { goldBonus: 1, matureShieldBonus: 0.06 },
-  blaze: { burnMultiplier: 1.4, firstWinGold: 2 },
+  mature_start: { goldBonus: 2, matureShieldBonus: 0.06 },
+  blaze: { burnMultiplier: 1.3, firstWinGold: 1 },
   traffic_start: { goldBonus: 1, trafficLifesteal: 0.06 },
-  bastion: { hpBonus: 4, shieldMultiplier: 1.3 },
-  dance_start: { startingEnergy: 10, danceAttackSpeed: 0.08 },
+  bastion: { hpBonus: 3, shieldMultiplier: 1.2 },
+  dance_start: { goldBonus: 1, startingEnergy: 10, danceAttackSpeed: 0.08 },
   ranger_start: { rangedAttackSpeed: 0.1, freeFirstReroll: true },
 };
 
@@ -374,6 +379,10 @@ export class AutoChessEngine {
 
   private isRanged(unitId: UnitId) {
     return UNIT_DEFS[unitId].attackType === "ranged";
+  }
+
+  private augmentStacks(id: AugmentId) {
+    return this.state.augments.filter((augmentId) => augmentId === id).length;
   }
 
   private addEnergy(fighter: Fighter, amount: number) {
@@ -534,6 +543,7 @@ export class AutoChessEngine {
       energyOnHit: fighter.energyOnHit,
       energyStyle: fighter.energyStyle,
       reborn: fighter.reborn,
+      stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
       damageDealt: Math.round(fighter.damageDealt),
       healingDone: Math.round(fighter.healingDone),
@@ -579,7 +589,7 @@ export class AutoChessEngine {
       if (def.traits.includes(trait)) return traitLevel(trait);
       return 0;
     };
-    const hasAugment = (id: AugmentId) => this.state.augments.includes(id);
+    const augmentStacks = (id: AugmentId) => this.augmentStacks(id);
     const scale = STAR_SCALE[owned.star];
     const isRanged = def.attackType === "ranged";
     const aggressionLevel = traitLevel("aggression");
@@ -642,13 +652,19 @@ export class AutoChessEngine {
           ? 16
           : 8
         : 0;
-    if (hasAugment("tempered")) armor += 16;
-    if (hasAugment("second_wind")) {
-      maxHp *= 1.12;
-      armor += 10;
-    }
-    if (hasAugment("sharp_edge")) attack *= 1.15;
-    if (hasAugment("momentum")) attackInterval /= 1.18;
+    const secondWindStacks = augmentStacks("second_wind");
+    const glassCannonStacks = augmentStacks("glass_cannon");
+    maxHp *= Math.max(
+      0.4,
+      1 +
+        augmentStacks("vitality") * 0.08 +
+        secondWindStacks * 0.12 -
+        glassCannonStacks * 0.15,
+    );
+    armor += augmentStacks("tempered") * 10 + secondWindStacks * 10;
+    attack *= 1 + augmentStacks("sharp_edge") * 0.12 + glassCannonStacks * 0.3;
+    attackInterval /=
+      1 + augmentStacks("momentum") * 0.14 + glassCannonStacks * 0.25;
     if (this.state.starter === "dance_start" && danceLevel) {
       attackInterval /= 1 + (starterEffect.danceAttackSpeed || 0);
     }
@@ -669,7 +685,8 @@ export class AutoChessEngine {
           [0, 0, 10, 22][globalMysticLevel] +
           [0, 0, 10, 22][traitLevel("gen27")] * (gen27Member ? 1 : 0) +
           (starterEffect.startingEnergy || 0) +
-          (hasAugment("overclock") ? 35 : 0),
+          augmentStacks("overclock") * 45 +
+          augmentStacks("united_front") * 15,
       ),
       maxEnergy: def.energyProfile.max,
     };
@@ -1138,9 +1155,15 @@ export class AutoChessEngine {
         lowHealthBonus: 0,
         critChance:
           [0, 0.15, 0.3, 0.5][assassinLevel] +
-          (isRanged ? [0, 0, 0.12, 0.25][globalAssassinLevel] : 0),
+          (isRanged ? [0, 0, 0.12, 0.25][globalAssassinLevel] : 0) +
+          this.augmentStacks("precision") * 0.15,
         critMultiplier: 1.65,
-        castRefund: Math.min(def.energyProfile.max, def.energyProfile.castRefund + [0, 0, 8, 15][mysticLevel]),
+        castRefund: Math.min(
+          def.energyProfile.max,
+          def.energyProfile.castRefund +
+            [0, 0, 8, 15][mysticLevel] +
+            this.augmentStacks("overclock") * 10,
+        ),
         secondWindUsed: false,
         reborn: false,
         enraged: false,
@@ -1345,6 +1368,18 @@ export class AutoChessEngine {
       battle.player.forEach((fighter) => {
         const ratio = (fighter.matureMember ? memberShield : 0) + allShield;
         if (ratio) this.grantShield(null, fighter, fighter.maxHp * ratio, 0.6, battle);
+      });
+    }
+    const unitedFrontStacks = this.augmentStacks("united_front");
+    if (unitedFrontStacks) {
+      battle.player.forEach((fighter) => {
+        this.grantShield(
+          null,
+          fighter,
+          fighter.maxHp * 0.2 * unitedFrontStacks,
+          0.8,
+          battle,
+        );
       });
     }
     return battle;
@@ -1661,7 +1696,7 @@ export class AutoChessEngine {
         { abilityId: null, duration: 0.26, avoidOccupied: false },
       );
       this.dealAbilityDamage(source, target, 1.1);
-      if (target.alive) target.stun = Math.max(target.stun, 0.6);
+      if (target.alive) target.stun = Math.max(target.stun, GUANGYI_SLIDE_STUN_DURATION);
       this.addEffect({
         kind: "burst",
         x: target.x,
@@ -1778,8 +1813,11 @@ export class AutoChessEngine {
     const previousY = fighter.y;
     motion.time = Math.min(motion.duration, motion.time + dt);
     const progress = motion.duration > 0 ? motion.time / motion.duration : 1;
-    const eased = motion.kind === "dash"
-      ? progress
+    // 滑跪先冲后刹，末段速度降到零，避免像匀速传送一样穿过战场。
+    const eased = motion.abilityId === "guangyi"
+      ? 1 - Math.pow(1 - progress, 3)
+      : motion.kind === "dash"
+        ? progress
       : progress * progress * (3 - 2 * progress);
     fighter.x = motion.fromX + (motion.toX - motion.fromX) * eased;
     fighter.y = motion.fromY + (motion.toY - motion.fromY) * eased;
@@ -2892,12 +2930,13 @@ export class AutoChessEngine {
       }
     }
 
-    if (this.state.augments.includes("triage")) {
+    const triageStacks = this.augmentStacks("triage");
+    if (triageStacks) {
       battle.fieldMedicTimer -= dt;
       if (battle.fieldMedicTimer <= 0) {
         battle.fieldMedicTimer += 2.5;
         this.living("player").forEach((fighter) =>
-          this.heal(null, fighter, fighter.maxHp * 0.03),
+          this.heal(null, fighter, fighter.maxHp * 0.04 * triageStacks),
         );
       }
     }
@@ -3938,10 +3977,10 @@ export class AutoChessEngine {
     }
     if (
       source.team === "player" &&
-      this.state.augments.includes("execution") &&
-      target.hp / target.maxHp < 0.4
+      this.augmentStacks("execution") > 0 &&
+      target.hp / target.maxHp < 0.45
     )
-      amount *= 1.28;
+      amount *= 1 + this.augmentStacks("execution") * 0.4;
     if (
       source.team === "player" &&
       source.critChance > 0 &&
@@ -4001,13 +4040,17 @@ export class AutoChessEngine {
 
     if (
       target.team === "player" &&
-      this.state.augments.includes("second_wind") &&
+      this.augmentStacks("second_wind") > 0 &&
       !target.secondWindUsed &&
       target.hp > 0 &&
       target.hp / target.maxHp < 0.3
     ) {
       target.secondWindUsed = true;
-      this.heal(target, target, target.maxHp * 0.18);
+      this.heal(
+        target,
+        target,
+        target.maxHp * 0.18 * this.augmentStacks("second_wind"),
+      );
     }
 
     if (target.hp <= 0) {
@@ -4252,14 +4295,9 @@ export class AutoChessEngine {
       this.state.score += this.state.hp * 45 + 500;
       this.setToast("八战通关！无限裂隙已开启，挑战将持续升级。", "good");
     }
-    if (
-      this.state.round === 2 ||
-      this.state.round === 5 ||
-      (this.state.round > CAMPAIGN_ROUNDS &&
-        (this.state.round - CAMPAIGN_ROUNDS) % 6 === 0 &&
-        this.state.augments.length < AUGMENTS.length)
-    ) {
-      this.state.augmentChoices = this.rollAugmentChoices();
+    const augmentTier = augmentTierForRound(this.state.round);
+    if (augmentTier) {
+      this.state.augmentChoices = this.rollAugmentChoices(augmentTier);
       this.state.phase = "augment";
       this.state.battle = null;
       this.state.result = null;
@@ -4268,10 +4306,13 @@ export class AutoChessEngine {
     this.prepareNextRound();
   }
 
-  private rollAugmentChoices() {
-    const pool = AUGMENTS.map((augment) => augment.id).filter(
-      (id) => !this.state.augments.includes(id),
+  private rollAugmentChoices(tier: AugmentTier) {
+    const tierPool = AUGMENTS.filter((augment) => augment.tier === tier).map(
+      (augment) => augment.id,
     );
+    const unseen = tierPool.filter((id) => !this.state.augments.includes(id));
+    // 只有该档全部拿完后才回补重复项；主线两次选择永远不会见到旧天赋。
+    const pool = unseen.length ? unseen : [...tierPool];
     const choices: AugmentId[] = [];
     while (choices.length < 3 && pool.length) {
       const index = Math.floor(this.rng.next() * pool.length);
@@ -4287,12 +4328,13 @@ export class AutoChessEngine {
     this.state.augments.push(id);
     this.state.augmentHistory.push({ round: this.state.round, id });
     if (id === "payday") {
-      this.state.gold += 10;
-      this.state.paydayDebtRounds = 4;
+      this.state.gold += 8;
+      this.state.paydayDebtRounds = Math.max(this.state.paydayDebtRounds, 4);
     }
     this.state.score += 75;
+    const augment = AUGMENTS.find((item) => item.id === id);
     this.setToast(
-      `已装配战术契印：${AUGMENTS.find((augment) => augment.id === id)?.name}`,
+      `已选择${augment ? AUGMENT_TIER_LABELS[augment.tier] : "局中天赋"}：${augment?.name || id}`,
       "good",
     );
     this.prepareNextRound();
@@ -4332,7 +4374,7 @@ export class AutoChessEngine {
       preparation: "购买与布阵",
       battle: "自动战斗",
       result: "回合结算",
-      augment: "选择战术契印",
+      augment: "选择局中天赋",
       gameover: "本局结束",
     };
     const unitSummary = (unit: OwnedUnit | null, index: number) =>
@@ -4408,6 +4450,12 @@ export class AutoChessEngine {
       augments: this.state.augments.map(
         (id) => AUGMENTS.find((augment) => augment.id === id)?.name,
       ),
+      augmentStacks: AUGMENTS.map((augment) => ({
+        id: augment.id,
+        name: augment.name,
+        tier: augment.tier,
+        stacks: this.augmentStacks(augment.id),
+      })).filter((augment) => augment.stacks > 0),
       starterHistory: this.state.starterHistory.map(({ id }) => {
         const starter = STARTERS.find((item) => item.id === id);
         return { name: starter?.name, description: starter?.description };
@@ -4415,6 +4463,7 @@ export class AutoChessEngine {
       augmentHistory: this.state.augmentHistory.map(({ round, id }) => ({
         round,
         name: AUGMENTS.find((augment) => augment.id === id)?.name,
+        tier: AUGMENTS.find((augment) => augment.id === id)?.tier,
         description: AUGMENTS.find((augment) => augment.id === id)?.description,
       })),
       starterChoices: this.state.starterChoices.map((id, index) => {
@@ -4423,7 +4472,9 @@ export class AutoChessEngine {
       }),
       augmentChoices: this.state.augmentChoices.map((id, index) => ({
         index,
+        id,
         name: AUGMENTS.find((augment) => augment.id === id)?.name,
+        tier: AUGMENTS.find((augment) => augment.id === id)?.tier,
       })),
       selected: this.state.selected,
       battle: battle && {
@@ -4532,7 +4583,7 @@ export class AutoChessEngine {
               "F 全屏",
             ]
           : this.state.phase === "augment"
-            ? ["点击一个战术契印"]
+            ? ["点击一个局中天赋"]
             : this.state.phase === "title"
               ? ["点击一个开局协议"]
               : this.state.phase === "gameover"

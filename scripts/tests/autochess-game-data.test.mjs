@@ -229,6 +229,8 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.match(data.UNIT_DEFS.tiandou.abilityDescription, /友军.*回复生命.*敌人.*减速/);
   assert.equal(data.UNIT_DEFS.mitsuri.abilityName, "站我后面");
   assert.match(data.UNIT_DEFS.mitsuri.abilityDescription, /护盾.*嘲讽/);
+  assert.equal(data.UNIT_DEFS.mitsuri.attackType, "melee");
+  assert.ok(data.UNIT_DEFS.mitsuri.range <= 60);
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
@@ -366,7 +368,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   const danceStarter = data.STARTERS.find((starter) => starter.id === "dance_start");
   assert.equal(danceStarter?.name, "舞台梦");
   assert.equal(danceStarter?.unit, "sui");
-  assert.match(danceStarter?.description || "", /携带小红帽开局；所有友军开战 \+10 能量.*跳舞成员攻击速度 \+8%/);
+  assert.match(danceStarter?.description || "", /携带小红帽开局；初始金币 \+1.*所有友军开战 \+10 能量.*跳舞成员攻击速度 \+8%/);
   assert.equal(data.UNIT_DEFS.cinder_ram.name, "蛙梓");
   assert.equal(data.UNIT_DEFS.cinder_ram.tier, 5);
   assert.equal(data.UNIT_DEFS.kioi.name, "美·鱿鱼");

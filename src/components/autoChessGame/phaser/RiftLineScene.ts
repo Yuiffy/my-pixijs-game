@@ -3,6 +3,7 @@ import type { UnitId } from "../core/gameData";
 import {
   ABILITY_CAST_TIMING_LABELS,
   AUGMENTS,
+  AUGMENT_TIER_LABELS,
   CAMPAIGN_ROUNDS,
   ENERGY_PROFILES,
   SHOP_UNITS,
@@ -12,6 +13,7 @@ import {
   MAX_PLAYER_LEVEL,
   PLAYER_LEVEL_CONFIG,
   abilityDescriptionForStar,
+  augmentTierForRound,
   describeAbilityStarGrowth,
   bookLevelForPlayerLevel,
   tierOddsForLevel,
@@ -664,7 +666,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.drawTraits();
     const augmentSummary = state.augmentHistory.length
       ? state.augmentHistory.map(({ round, id }) => `${round}战·${AUGMENTS.find((augment) => augment.id === id)?.name ?? id}`).join(" · ")
-      : "第 2 战后可选择首个天赋";
+      : "第 2 战后可选择首个小天赋";
     this.phaseLayer.add(this.text(compact ? 708 : 748, compact ? 226 : 184, this.truncateText(augmentSummary, compact ? 360 : 330, 9), 9, "#8ea8b9").setOrigin(compact ? 0 : 1));
     if (!compact) {
       this.phaseLayer.add(this.text(48, 225, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
@@ -1332,9 +1334,9 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add(this.text(560, 108, "裂隙", 12, "#f0d8ff", { fontStyle: "bold" }).setOrigin(0.5));
     const activeTraits = this.bridge.engine.getActiveTraits();
     const traitSummary = activeTraits.length ? activeTraits.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`).join(" · ") : "无激活羁绊";
-    const augmentSummary = this.bridge.engine.state.augments.map((id) => AUGMENTS.find((augment) => augment.id === id)?.name ?? id).join(" · ") || "无契印";
+    const augmentSummary = this.bridge.engine.state.augments.map((id) => AUGMENTS.find((augment) => augment.id === id)?.name ?? id).join(" · ") || "无天赋";
     this.phaseLayer.add(this.text(48, 670, this.truncateText(`羁绊：${traitSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#8ce8bd", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(1072, 670, this.truncateText(`契印：${augmentSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#d5b7ff", { fontStyle: "bold" }).setOrigin(1));
+    this.phaseLayer.add(this.text(1072, 670, this.truncateText(`天赋：${augmentSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#d5b7ff", { fontStyle: "bold" }).setOrigin(1));
     this.syncBattleEntities();
     this.syncCombatEffects();
     if (this.phase === "battle") this.buildBattleOverlay();
@@ -1928,12 +1930,10 @@ export class RiftLineScene extends Phaser.Scene {
   private resultContinueLabel() {
     const { state } = this.bridge.engine;
     if (state.hp <= 0) return "继续 · 查看结局";
-    const augmentRound = state.round === 2 || state.round === 5 || (
-      state.round > CAMPAIGN_ROUNDS
-      && (state.round - CAMPAIGN_ROUNDS) % 6 === 0
-      && state.augments.length < AUGMENTS.length
-    );
-    return augmentRound ? "继续 · 选择契印" : "继续 · 进入整备";
+    const tier = augmentTierForRound(state.round);
+    return tier
+      ? `继续 · 选择${tier === "minor" ? "小" : "大"}天赋`
+      : "继续 · 进入整备";
   }
 
   private drawResultMetricTab(x: number, y: number, width: number, metric: RankingMetric, selected: boolean) {
@@ -2036,24 +2036,29 @@ export class RiftLineScene extends Phaser.Scene {
 
   private drawAugments() {
     const { state } = this.bridge.engine;
-    this.phaseLayer.add(this.text(560, 142, "战术契印", 36, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(560, 185, "选择一项永久天赋，立刻进入下一轮整备。", 13, "#95adbd").setOrigin(0.5));
+    const tier = AUGMENTS.find((item) => item.id === state.augmentChoices[0])?.tier
+      || augmentTierForRound(state.round)
+      || "minor";
+    this.phaseLayer.add(this.text(560, 142, AUGMENT_TIER_LABELS[tier], 36, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(this.text(560, 185, tier === "minor" ? "早期定向强化" : "后期核心强化", 13, "#95adbd").setOrigin(0.5));
+    const choiceWidth = state.augmentChoices.length * 320 + Math.max(0, state.augmentChoices.length - 1) * 30;
     state.augmentChoices.forEach((id, index) => {
       const augment = AUGMENTS.find((item) => item.id === id);
       if (!augment) return;
-      const x = 75 + index * 350;
+      const repeated = state.augments.includes(id);
+      const x = 560 - choiceWidth / 2 + index * 350;
       const y = 255;
       const accent = Phaser.Display.Color.HexStringToColor(augment.color).color;
       const card = this.add.container(x, y);
       const panel = this.panel(0, 0, 320, 300, 0x132231, 0.98, accent);
       card.add(panel);
-      card.add(this.text(160, 48, augment.kicker.toUpperCase(), 10, augment.color, { fontStyle: "bold" }).setOrigin(0.5));
+      card.add(this.text(160, 48, `${repeated ? "再次强化 · " : ""}${augment.kicker}`.toUpperCase(), 10, augment.color, { fontStyle: "bold" }).setOrigin(0.5));
       card.add(this.text(160, 82, augment.name, 22, "#eff7ff", { fontStyle: "bold" }).setOrigin(0.5));
       card.add(this.text(24, 118, augment.description, 13, "#a9bfcc", { wordWrap: { width: 272 }, align: "center" }).setOrigin(0));
       const cta = this.add.graphics();
       cta.fillStyle(BUTTONS.confirm.fill, 1).fillRoundedRect(70, 244, 180, 34, 10);
       cta.lineStyle(1, BUTTONS.confirm.border, 0.9).strokeRoundedRect(70, 244, 180, 34, 10);
-      const ctaText = this.text(160, 261, "装备契印", 12, BUTTONS.confirm.text, { fontStyle: "bold" }).setOrigin(0.5);
+      const ctaText = this.text(160, 261, repeated ? "再次强化" : "选择天赋", 12, BUTTONS.confirm.text, { fontStyle: "bold" }).setOrigin(0.5);
       const zone = this.add.zone(160, 150, 320, 300).setInteractive({ useHandCursor: true });
       const drawHover = (hover: boolean) => {
         panel.clear();
@@ -2062,7 +2067,7 @@ export class RiftLineScene extends Phaser.Scene {
         cta.clear();
         cta.fillStyle(hover ? BUTTONS.confirm.hover : BUTTONS.confirm.fill, 1).fillRoundedRect(70, 244, 180, 34, 10);
         cta.lineStyle(1, BUTTONS.confirm.border, 0.9).strokeRoundedRect(70, 244, 180, 34, 10);
-        ctaText.setText(hover ? "装配并进入整备" : "装备契印").setColor(hover ? BUTTONS.confirm.hoverText : BUTTONS.confirm.text);
+        ctaText.setText(hover ? "选定并进入整备" : repeated ? "再次强化" : "选择天赋").setColor(hover ? BUTTONS.confirm.hoverText : BUTTONS.confirm.text);
       };
       zone.on(Phaser.Input.Events.POINTER_OVER, () => { card.setY(y - 6); drawHover(true); });
       zone.on(Phaser.Input.Events.POINTER_OUT, () => { card.setY(y); drawHover(false); });
