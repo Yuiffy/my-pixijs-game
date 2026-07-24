@@ -70,6 +70,7 @@ export const SHOP_UNIT_IDS = [
   "rei",
   "rutice",
   "lian",
+  "pako",
 ] as const;
 
 export type ShopUnitId = (typeof SHOP_UNIT_IDS)[number];
@@ -395,6 +396,7 @@ const COMBAT_PROFILES: Record<
   tower_god: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 48, abilityCastTiming: "offenseReady" },
   rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
   lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
+  pako: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 235, moveSpeed: 54, abilityCastTiming: "offenseReady" },
   rift_tyrant: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 78, moveSpeed: 56, abilityCastTiming: "offenseReady" },
 };
 
@@ -969,7 +971,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#f0c76b",
     tier: 4,
     cost: 4,
-    traits: ["host", "mystic", "traffic"],
+    traits: ["mystic", "traffic"],
     hp: 238,
     attack: 30,
     armor: 18,
@@ -1010,7 +1012,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   // 公开成员的角色化战斗设计；无可核验梗时采用公开人设或名字意象。
   nori: unit({
     id: "nori", name: "能能弄你", title: "能能Nori · 弹幕射手", glyph: "能", color: "#526a9e", accent: "#9bb8ff", tier: 1, cost: 1,
-    traits: ["ranger", "host", "vanguard"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
+    traits: ["ranger", "vanguard"], hp: 138, attack: 23, armor: 7, range: 225, attackInterval: 1.02, moveSpeed: 56,
     abilityName: "苹果派", abilityDescription: "发射 8 枚低伤害苹果派子弹。",
     portrait: "/images/livers/nori.jpg", portraitFocus: "top", shop: true,
   }),
@@ -1028,7 +1030,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   kioi: unit({
     id: "kioi", name: "美·鱿鱼", title: "美·鱿鱼 · 远程削弱", glyph: "鱿", color: "#7b6942", accent: "#f5d56f", tier: 2, cost: 2,
-    traits: ["wild", "ranger", "host"], hp: 162, attack: 27, armor: 9, range: 235, attackInterval: 0.84, moveSpeed: 60,
+    traits: ["wild", "ranger"], hp: 162, attack: 27, armor: 9, range: 235, attackInterval: 0.84, moveSpeed: 60,
     abilityName: "讨厌你", abilityDescription: "点名一名敌人，造成伤害并降低其攻击力与护甲。",
     portrait: "/images/livers/kioi.jpg", portraitFocus: "top", shop: true,
   }),
@@ -1051,7 +1053,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   akirinco: unit({
     id: "akirinco", name: "秋凛子", title: "秋凛子Aki Rinco · 残血收割", glyph: "秋", color: "#65445f", accent: "#eca5d3", tier: 4, cost: 4,
-    traits: ["assassin", "host"], hp: 222, attack: 39, armor: 14, range: 50, attackInterval: 0.76, moveSpeed: 92,
+    traits: ["assassin"], hp: 222, attack: 39, armor: 14, range: 50, attackInterval: 0.76, moveSpeed: 92,
     abilityName: "神社夜巡", abilityDescription: "跃至生命最低的敌人身边连续斩击；完成击杀后恢复生命。",
     portrait: "/images/livers/akirinco.jpg", portraitFocus: "top", shop: true,
   }),
@@ -1063,7 +1065,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   mumu: unit({
     id: "mumu", name: "沐霂·领舞开场", title: "四禧丸子 · 领舞前排", glyph: "沐", color: "#5b7992", accent: "#a9e5ff", tier: 4, cost: 4,
-    traits: ["vanguard", "dance"], hp: 330, attack: 34, armor: 29, range: 52, attackInterval: 0.96, moveSpeed: 68,
+    traits: ["host", "dance"], hp: 330, attack: 34, armor: 29, range: 52, attackInterval: 0.96, moveSpeed: 68,
     abilityName: "领舞开场", abilityDescription: "冲至敌人最密集处，造成范围伤害并为附近友军提供护盾。",
     portrait: "/images/livers/mumu.webp", portraitFocus: "top", shop: true,
   }),
@@ -1081,7 +1083,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   }),
   rutice: unit({
     id: "rutice", name: "露蒂丝·诊所护航", title: "露蒂丝Rutice · 决战守卫", glyph: "医", color: "#4b7280", accent: "#90e7df", tier: 5, cost: 5,
-    traits: ["vanguard", "host"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
+    traits: ["vanguard"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
     abilityName: "咕咕诊所", abilityDescription: "为全体友军回复生命，并为生命比例最低的两名友军提供护盾。",
     portrait: "/images/livers/rutice.jpg", portraitFocus: "top", shop: true,
   }),
@@ -1090,6 +1092,12 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     traits: ["mystic", "dance", "chuanmei", "finance"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
     abilityName: "终场谢幕", abilityDescription: "轰击敌人最密集处，造成范围伤害并为全体友军补充能量。",
     portrait: "/images/livers/lian.jpg", portraitFocus: "top", shop: true,
+  }),
+  pako: unit({
+    id: "pako", name: "帕可Pako", title: "帕可Pako · 全配音控场", glyph: "帕", color: "#6f52a3", accent: "#d7b3ff", tier: 5, cost: 5,
+    traits: ["host", "mystic", "traffic"], hp: 285, attack: 45, armor: 20, range: 235, attackInterval: 0.82, moveSpeed: 54,
+    abilityName: "全配音实况", abilityDescription: "为敌人最密集区域现场配音，造成范围伤害并打断行动；随后为所有主持成员补充能量。",
+    portrait: "/images/livers/pako.jpg", portraitFocus: "top", shop: true,
   }),
 
   rift_tyrant: unit({

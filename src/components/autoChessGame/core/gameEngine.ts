@@ -186,6 +186,10 @@ const SUMI_SEAL_DURATION = 2.8;
 /** 塔神「尖塔压顶」 */
 const TOWER_GOD_TOWER_RADIUS = 146;
 const TOWER_GOD_TOWER_STUN = 0.82;
+/** 帕可「全配音实况」：范围打断，并带动主持成员接续技能。 */
+const PAKO_DUB_RADIUS = 150;
+const PAKO_DUB_STUN = 0.72;
+const PAKO_HOST_ENERGY = 18;
 /** 狍子偶像：双方均被锁定的持续施法。 */
 const LOVELY_CHANNEL_DURATION = 3.4;
 const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
@@ -1569,14 +1573,6 @@ export class AutoChessEngine {
       hitFids: [],
     };
     this.faceTowardX(source, landing.x);
-    this.addEffect({
-      kind: "ring",
-      x: source.x,
-      y: source.y,
-      color: UNIT_DEFS[source.unitId].accent,
-      life: Math.min(0.5, duration),
-      size: source.radius * 1.65,
-    });
     return source.abilityMotion;
   }
 
@@ -1906,14 +1902,6 @@ export class AutoChessEngine {
     fighter.jumpPending = false;
     fighter.jumpArcHeight = DEFAULT_JUMP_ARC_HEIGHT;
     fighter.jumpTime = fighter.jumpDuration;
-    this.addEffect({
-      kind: "ring",
-      x: fighter.jumpFromX,
-      y: fighter.jumpFromY,
-      color: UNIT_DEFS[fighter.unitId].accent,
-      life: 0.42,
-      size: fighter.radius * 1.8,
-    });
     return true;
   }
 
@@ -1970,14 +1958,6 @@ export class AutoChessEngine {
     fighter.jumpTime = fighter.jumpDuration;
     fighter.vanguardJumpCooldown = VANGUARD_JUMP_COOLDOWN;
     this.faceTowardX(fighter, source.x);
-    this.addEffect({
-      kind: "ring",
-      x: fighter.jumpFromX,
-      y: fighter.jumpFromY,
-      color: TRAITS.vanguard.color,
-      life: 0.38,
-      size: fighter.radius * 1.55,
-    });
     this.addEffect({
       kind: "text",
       x: fighter.jumpFromX,
@@ -2165,7 +2145,6 @@ export class AutoChessEngine {
         attackPulse: 0,
       });
     }
-    this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.45, size: 72 });
   }
 
   private summonPineTree(source: Fighter, targets: Fighter[]) {
@@ -2203,7 +2182,6 @@ export class AutoChessEngine {
       fireTimer: 0.2,
       attackPulse: 0,
     });
-    this.addEffect({ kind: "ring", x: clampedX, y: clampedY, color: def.accent, life: 0.55, size: 88 });
     this.addEffect({ kind: "text", x: clampedX, y: clampedY - 36, color: def.accent, text: "迎客松", life: 0.7, size: 12 });
   }
 
@@ -2525,7 +2503,6 @@ export class AutoChessEngine {
       if (source.channelPulseTimer <= 0) {
         source.channelPulseTimer += LOVELY_CHANNEL_PULSE_INTERVAL;
         this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: UNIT_DEFS.lovely.accent, life: 0.28, size: 4 });
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: UNIT_DEFS.lovely.accent, life: 0.32, size: source.radius * 1.65 });
       }
       if (!target.alive || source.channelTime <= 0) {
         source.channelTime = 0;
@@ -2635,7 +2612,6 @@ export class AutoChessEngine {
           if (fighter.cinderSongPulseTimer <= 0) {
             fighter.cinderSongPulseTimer += CINDER_RAM_SONG_HEAL_INTERVAL;
             this.living(fighter.team).forEach((ally) => this.heal(fighter, ally, ally.maxHp * CINDER_RAM_SONG_HEAL_RATIO));
-            this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: UNIT_DEFS.cinder_ram.accent, life: 0.35, size: 116 });
           }
         }
         if (fighter.energy <= 0) {
@@ -2757,14 +2733,6 @@ export class AutoChessEngine {
         fighter.attackInterval /= 1.35;
         battle.banner = "暴君狂暴 · 攻速与伤害提升";
         battle.bannerTimer = 1.8;
-        this.addEffect({
-          kind: "ring",
-          x: fighter.x,
-          y: fighter.y,
-          color: "#ff4f9a",
-          life: 1.1,
-          size: 120,
-        });
       }
 
       const targetTeam: Team = fighter.team === "player" ? "enemy" : "player";
@@ -2908,7 +2876,6 @@ export class AutoChessEngine {
       fighter.jumpDuration = 0.38;
       fighter.jumpArcHeight = DEFAULT_JUMP_ARC_HEIGHT;
       fighter.jumpTime = fighter.jumpDuration;
-      this.addEffect({ kind: "ring", x: fighter.x, y: fighter.y, color: TRAITS.yue_gang.color, life: 0.35, size: fighter.radius * 1.5 });
     });
   }
 
@@ -3051,14 +3018,6 @@ export class AutoChessEngine {
         source.abilityMoveSpeed = SUI_BARRAGE_MOVE_SPEED;
         source.abilityMoveSpeedTime = SUI_BARRAGE_DURATION + 0.05;
         this.addEffect({
-          kind: "ring",
-          x: source.x,
-          y: source.y,
-          color: def.accent,
-          life: 0.7,
-          size: 78,
-        });
-        this.addEffect({
           kind: "text",
           x: source.x,
           y: source.y - 46,
@@ -3108,7 +3067,6 @@ export class AutoChessEngine {
             emoji: "🥕",
           });
         }
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.4, size: 64 });
         break;
       }
       case "gale_archer": {
@@ -3186,7 +3144,6 @@ export class AutoChessEngine {
         source.abilityAttackBonus = SUI_BLUE_FEAST_ATTACK_BONUS;
         source.abilityAttackBonusTime = SUI_BLUE_FEAST_DURATION;
         source.nextAttackLifesteal = SUI_BLUE_FEAST_LIFESTEAL;
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.55, size: 72 });
         break;
       }
       case "shiori": {
@@ -3311,7 +3268,6 @@ export class AutoChessEngine {
         source.abilityAttackBonusTime = NANA_SHARK_FORM_DURATION + 0.05;
         source.abilityLifesteal = NANA_SHARK_FORM_LIFESTEAL;
         source.abilityLifestealTime = NANA_SHARK_FORM_DURATION + 0.05;
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 86 });
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: def.accent, text: "鲨鱼变身", life: 0.75, size: 12 });
         break;
       }
@@ -3321,7 +3277,6 @@ export class AutoChessEngine {
         source.barrageDrainPerSecond = source.maxEnergy / CINDER_RAM_SONG_DURATION;
         source.cinderSongPulseTimer = 0;
         source.range = CINDER_RAM_SONG_RANGE;
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.75, size: 128 });
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: def.accent, text: "终场歌唱", life: 0.75, size: 12 });
         break;
       }
@@ -3502,7 +3457,6 @@ export class AutoChessEngine {
 
         // 闪现出发特效
         this.addEffect({ kind: "burst", x: startX, y: startY, color: def.accent, life: 0.32, size: 42 });
-        this.addEffect({ kind: "ring", x: startX, y: startY, color: def.accent, life: 0.4, size: 54 });
         this.addEffect({ kind: "text", x: startX, y: startY - 36, color: def.accent, text: "闪", life: 0.38, size: 12 });
 
         this.relocateFighter(source, { x: target.x + behindSign * contactGap, y: target.y });
@@ -3510,7 +3464,6 @@ export class AutoChessEngine {
 
         // 闪现落点特效
         this.addEffect({ kind: "burst", x: source.x, y: source.y, color: def.accent, life: 0.42, size: 56 });
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: "#ffffff", life: 0.28, size: 34 });
         this.addEffect({
           kind: "line",
           x: startX,
@@ -3570,6 +3523,23 @@ export class AutoChessEngine {
         this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#fff1bd", life: 0.5, size: 90 });
         break;
       }
+      case "pako": {
+        const center = densest(targets);
+        if (!center) break;
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= PAKO_DUB_RADIUS)
+          .forEach((target) => {
+            deal(target, 1.55);
+            if (target.alive) target.stun = Math.max(target.stun, PAKO_DUB_STUN);
+          });
+        allies
+          .filter((ally) => UNIT_DEFS[ally.unitId].traits.includes("host"))
+          .forEach((ally) => this.addEnergy(ally, PAKO_HOST_ENERGY));
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: PAKO_DUB_RADIUS + 16 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f4eaff", life: 0.52, size: 96 });
+        this.addEffect({ kind: "text", x: center.x, y: center.y - 42, color: def.accent, text: "全配音", life: 0.75, size: 13 });
+        break;
+      }
       case "biscuit_sui": {
         const center = densest(targets);
         if (!center) break;
@@ -3585,7 +3555,6 @@ export class AutoChessEngine {
       case "nori": {
         source.applePieShotsRemaining = NORI_APPLE_PIE_SHOTS;
         source.applePieShotTimer = 0;
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.44, size: 74 });
         this.addEffect({ kind: "burst", x: source.x, y: source.y, color: def.accent, life: 0.22, size: 30 });
         break;
       }
@@ -3644,7 +3613,6 @@ export class AutoChessEngine {
             emoji: "🍭",
           });
         }
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.65, size: 110 });
         break;
       }
       case "youyi": {
@@ -3680,7 +3648,6 @@ export class AutoChessEngine {
         target.stun = Math.max(target.stun, 0.15);
         this.faceTowardX(source, target.x);
         this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.45, size: 5 });
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.55, size: source.radius * 1.8 });
         this.addEffect({ kind: "text", x: source.x, y: source.y - 40, color: def.accent, text: "捏捏摸摸", life: 0.7, size: 12 });
         break;
       }
@@ -3728,7 +3695,6 @@ export class AutoChessEngine {
           .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
           .slice(0, RUTICE_LOWEST_SHIELD_TARGET_COUNT)
           .forEach((target) => addShield(target, target.maxHp * RUTICE_LOWEST_SHIELD_RATIO, 0.5));
-        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.9, size: 172 });
         break;
       }
       case "rift_tyrant": {
@@ -3948,7 +3914,6 @@ export class AutoChessEngine {
       target.energy = 0;
       target.cooldown = Math.max(target.cooldown, 0.45);
       target.abilityMotion = null;
-      this.addEffect({ kind: "ring", x: target.x, y: target.y, color: UNIT_DEFS.zeyin.accent, life: 1, size: 96 });
       this.addEffect({ kind: "text", x: target.x, y: target.y - 46, color: UNIT_DEFS.zeyin.accent, text: "涅槃重生", life: 0.95, size: 14 });
       return false;
     }

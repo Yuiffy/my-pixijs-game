@@ -1002,7 +1002,8 @@ test("能能弄你的苹果派会以节奏分离的 8 发子弹重定向目标",
 
   engine.update(0.05);
   assert.equal(nori.applePieShotsRemaining, 8);
-  assert.ok(battle.effects.some((effect) => effect.kind === "ring"));
+  assert.ok(battle.effects.some((effect) => effect.kind === "burst"));
+  assert.ok(!battle.effects.some((effect) => effect.kind === "ring" && effect.x === nori.x && effect.y === nori.y));
   assert.equal(secondTarget.hp, 9_999);
 
   engine.update(0.05);
@@ -1892,4 +1893,40 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
   engine.castAbility(tower, battle.enemy);
   assert.ok(target.hp < hpBeforeTower, "尖塔压顶应伤害最密集区域");
   assert.ok(target.stun > 0, "尖塔压顶应眩晕区域内敌人");
+});
+
+test("帕可全配音实况会打断密集敌人并为主持成员补充能量", () => {
+  const engine = createEngine(173);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "pako", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "cog_scribe", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const pako = battle?.player.find((fighter) => fighter.unitId === "pako");
+  const host = battle?.player.find((fighter) => fighter.unitId === "cog_scribe");
+  const nonHost = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(battle && pako && host && nonHost);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = 650 + index * 28;
+    fighter.y = 350 + index * 18;
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.cooldown = 99;
+  });
+  host.energy = 0;
+  nonHost.energy = 0;
+  const target = battle.enemy[0];
+  const hpBefore = target.hp;
+
+  engine.castAbility(pako, battle.enemy);
+
+  assert.ok(target.hp < hpBefore);
+  assert.ok(target.stun >= 0.72);
+  assert.equal(host.energy, 18);
+  assert.equal(nonHost.energy, 0);
+  assert.ok(battle.effects.some((effect) => effect.text === "全配音"));
 });

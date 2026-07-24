@@ -301,7 +301,7 @@ test("北欧魔法师技能定义提供三档时停范围与持续时间", () =>
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 39);
+  assert.equal(data.SHOP_UNITS.length, 40);
   ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
   assert.equal(data.SHOP_UNITS.includes("akirinco"), false);
   ["aza", "ayana", "yy", "haruka"].forEach((id) => {
@@ -322,6 +322,15 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.clockwork, undefined);
   assert.equal(data.TRAITS.brawler, undefined);
   assert.equal(data.TRAITS.host.name, "主持");
+  assert.deepEqual(
+    Object.values(data.UNIT_DEFS)
+      .filter((unit) => unit.traits.includes("host"))
+      .map((unit) => unit.id)
+      .sort(),
+    ["cog_scribe", "guangyi", "lovely", "mumu", "pako", "spark_mage"],
+  );
+  assert.deepEqual(data.UNIT_DEFS.mumu.traits, ["host", "dance"]);
+  assert.equal(data.UNIT_DEFS.mumu.traits.includes("vanguard"), false);
   assert.equal(data.TRAITS.dwarf.name, "矮人");
   assert.equal(data.TRAITS.skeleton_soldier.name, "骷髅兵");
   assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
@@ -404,8 +413,21 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.equal(towerGod.abilityName, "尖塔压顶");
   assert.equal(sumi.abilityName, "礼小虎出击");
   assert.deepEqual(seki.traits, ["wild", "aggression"]);
-  assert.deepEqual(towerGod.traits, ["host", "mystic", "traffic"]);
+  assert.deepEqual(towerGod.traits, ["mystic", "traffic"]);
   assert.deepEqual(sumi.traits, ["mystic", "ranger"]);
+});
+
+test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊", async () => {
+  const pako = data.UNIT_DEFS.pako;
+  assert.ok(data.SHOP_UNITS.includes("pako"));
+  assert.equal(pako.name, "帕可Pako");
+  assert.equal(pako.cost, 5);
+  assert.deepEqual(pako.traits, ["host", "mystic", "traffic"]);
+  assert.equal(pako.abilityName, "全配音实况");
+  assert.match(pako.abilityDescription, /范围伤害.*打断行动/);
+  assert.match(pako.abilityDescription, /主持成员补充能量/);
+  assert.equal(pako.portrait, "/images/livers/pako.jpg");
+  await access(path.resolve("public", pako.portrait.slice(1)));
 });
 
 test("理财与流量羁绊拥有完整的经济成员池", () => {
