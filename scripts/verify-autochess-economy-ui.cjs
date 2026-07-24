@@ -63,7 +63,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const boardIndex = state.board[0].index;
   const boardSource = await pointForLogical(
     44 + (boardIndex % 6) * 116 + (Math.floor(boardIndex / 6) % 2) * 20 + 52,
-    232 + Math.floor(boardIndex / 6) * 68 + 29,
+    278 + Math.floor(boardIndex / 6) * 58 + 26,
   );
   const benchTarget = await pointForLogical(88, 638);
   await page.mouse.move(boardSource.x, boardSource.y);

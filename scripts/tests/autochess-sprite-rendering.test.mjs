@@ -260,6 +260,10 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /content\.setMask\(/);
   assert.match(scene, /traitMinimumOffset/);
   assert.match(scene, /updateTraitViewport\(\)/);
+  assert.match(scene, /drawWrappedTraits\(strip\)/);
+  assert.match(scene, /occupiedWidth \+ gap \+ entry\.width > strip\.width/);
+  assert.match(scene, /strip\.x \+ \(strip\.width - rowWidths\[rowIndex\]\) \/ 2/);
+  assert.match(scene, /const tagHeight = 22/);
   assert.doesNotMatch(scene, /viewport\.draw\(source/);
   assert.match(scene, /PREPARATION_BOARD_PANEL/);
   assert.match(scene, /PREPARATION_BENCH_PANEL/);
@@ -288,6 +292,8 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.doesNotMatch(scene, /const labelBackplate = this\.add\.graphics\(\)/);
   assert.doesNotMatch(scene, /const traitDots =/);
   assert.match(layout, /WIDE_TRAIT_STRIP/);
+  assert.match(layout, /WIDE_TRAIT_STRIP = \{ x: 48, y: 184, width: 700, height: 76 \}/);
+  assert.match(layout, /y: 278 \+ Math\.floor\(index \/ 6\) \* 58/);
   assert.match(layout, /COMPACT_TRAIT_STRIP = \{ x: 48, y: 194/);
   assert.match(layout, /portraitY/);
   assert.match(layout, /starY/);

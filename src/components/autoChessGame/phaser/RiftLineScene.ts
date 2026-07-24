@@ -97,6 +97,13 @@ type TraitDragState = {
   moved: boolean;
 };
 
+type TraitEntry = {
+  trait: (typeof TRAITS)[keyof typeof TRAITS];
+  status: { count: number; level: number; active: boolean; maxThreshold: number };
+  label: string;
+  width: number;
+};
+
 type ResultRowLayout = {
   height: number;
   portraitRadius: number;
@@ -195,7 +202,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private traitMinimumOffset = 0;
 
-  private traitEntries: Array<{ trait: (typeof TRAITS)[keyof typeof TRAITS]; status: { count: number; level: number; active: boolean; maxThreshold: number }; label: string; width: number }> = [];
+  private traitEntries: TraitEntry[] = [];
 
   constructor(bridge: EngineBridge) {
     super({ key: "RiftLineScene" });
@@ -667,11 +674,11 @@ export class RiftLineScene extends Phaser.Scene {
     const augmentSummary = state.augmentHistory.length
       ? state.augmentHistory.map(({ round, id }) => `${round}战·${AUGMENTS.find((augment) => augment.id === id)?.name ?? id}`).join(" · ")
       : "第 2 战后可选择首个小天赋";
-    this.phaseLayer.add(this.text(compact ? 708 : 748, compact ? 226 : 184, this.truncateText(augmentSummary, compact ? 360 : 330, 9), 9, "#8ea8b9").setOrigin(compact ? 0 : 1));
+    this.phaseLayer.add(this.text(compact ? 708 : 748, compact ? 226 : 174, this.truncateText(augmentSummary, compact ? 360 : 330, 9), 9, "#8ea8b9").setOrigin(compact ? 0 : 1));
     if (!compact) {
-      this.phaseLayer.add(this.text(48, 225, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
-      this.phaseLayer.add(this.text(390, 225, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
-      this.phaseLayer.add(this.text(756, 225, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
+      this.phaseLayer.add(this.text(48, 269, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
+      this.phaseLayer.add(this.text(390, 269, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
+      this.phaseLayer.add(this.text(756, 269, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
       this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
       this.drawSellDropZone();
       // 备战席计数在出售按钮左侧；上阵人口右对齐到出售按钮前，避免被挡住
@@ -738,10 +745,14 @@ export class RiftLineScene extends Phaser.Scene {
       const nextThreshold = trait.thresholds.find((threshold) => threshold > count) ?? status.maxThreshold;
       const label = `${trait.name} ${count}/${nextThreshold}${status.active ? "" : " !"}`;
       const probe = this.text(0, 0, label, 10, "#ffffff", { fontStyle: "bold" }).setVisible(false);
-      const width = Math.max(72, Math.ceil(probe.width) + 34);
+      const width = Math.min(95, Math.max(64, Math.ceil(probe.width) + 26));
       probe.destroy();
       return { trait, status, label, width };
     });
+    if (!this.isCompact() && !this.isMobile()) {
+      this.drawWrappedTraits(strip);
+      return;
+    }
     const gap = 6;
     const contentWidth = Math.max(0, this.traitEntries.reduce((total, entry) => total + entry.width + gap, 0) - gap);
     this.traitMinimumOffset = Math.min(0, strip.width - contentWidth);
@@ -785,6 +796,57 @@ export class RiftLineScene extends Phaser.Scene {
     });
     this.phaseLayer.add([maskGraphics, content, zone]);
     this.updateTraitViewport();
+  }
+
+  private drawWrappedTraits(strip: { x: number; y: number; width: number; height: number }) {
+    const gap = 5;
+    const rowGap = 5;
+    const tagHeight = 22;
+    let rowCount = 1;
+    let occupiedWidth = 0;
+    this.traitEntries.forEach((entry) => {
+      if (occupiedWidth && occupiedWidth + gap + entry.width > strip.width) {
+        rowCount += 1;
+        occupiedWidth = entry.width;
+      } else {
+        occupiedWidth += (occupiedWidth ? gap : 0) + entry.width;
+      }
+    });
+    const rows = Array.from({ length: rowCount }, (_, rowIndex) => {
+      const start = Math.ceil((this.traitEntries.length * rowIndex) / rowCount);
+      const end = Math.ceil((this.traitEntries.length * (rowIndex + 1)) / rowCount);
+      return this.traitEntries.slice(start, end);
+    });
+    const rowWidths = rows.map((row) => row.reduce(
+      (width, entry, entryIndex) => width + (entryIndex ? gap : 0) + entry.width,
+      0,
+    ));
+
+    const content = this.add.container(0, 0);
+    rows.forEach((row, rowIndex) => {
+      let x = strip.x + (strip.width - rowWidths[rowIndex]) / 2;
+      const y = strip.y + rowIndex * (tagHeight + rowGap);
+      row.forEach((entry) => {
+        const { color } = Phaser.Display.Color.HexStringToColor(entry.trait.color);
+        const graphics = this.add.graphics();
+        graphics.fillStyle(entry.status.active ? color : 0x142735, entry.status.active ? 0.24 : 0.96);
+        graphics.fillRoundedRect(x, y, entry.width, tagHeight, tagHeight / 2);
+        graphics.lineStyle(1, entry.status.active ? color : 0x395467, entry.status.active ? 0.9 : 1);
+        graphics.strokeRoundedRect(x, y, entry.width, tagHeight, tagHeight / 2);
+        const zone = this.add.zone(x + entry.width / 2, y + tagHeight / 2, entry.width, tagHeight).setInteractive({ useHandCursor: true });
+        zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showTraitTooltip(entry.trait.id, pointer));
+        zone.on(Phaser.Input.Events.POINTER_OUT, () => this.clearTooltip());
+        content.add([
+          graphics,
+          this.add.circle(x + 10, y + tagHeight / 2, 3, color, entry.status.active ? 1 : 0.72),
+          this.text(x + 18, y + 6, entry.label, 9, entry.status.active ? "#effaff" : "#7f96a6", { fontStyle: "bold" }),
+          zone,
+        ]);
+        x += entry.width + gap;
+      });
+    });
+    this.traitContent = content;
+    this.phaseLayer.add(content);
   }
 
   private traitEntryAt<T extends { width: number }>(entries: T[], gap: number, strip: { x: number; width: number }, pointerX: number) {

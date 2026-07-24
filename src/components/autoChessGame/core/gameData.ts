@@ -350,7 +350,7 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     bonuses: ["矮人成员 +12% 闪避率", "矮人成员 +22% 闪避率"],
   },
   traffic: { id: "traffic", name: "流量", family: "关系", color: "#ff7197", thresholds: [2, 4, 6], description: "被更多人看见，才有继续输出的底气；全能吸血可由普攻和技能伤害触发，每回合还能获得免费刷新。", bonuses: ["流量成员获得 12% 全能吸血；每回合 1 次免费刷新", "流量成员获得 20% 全能吸血；全体友军获得 8% 全能吸血（可叠加）；每回合 2 次免费刷新", "流量成员获得 32% 全能吸血；全体友军获得 15% 全能吸血（可叠加）；每回合 3 次免费刷新"] },
-  finance: { id: "finance", name: "理财", family: "关系", color: "#f1bd5e", thresholds: [2, 4], description: "会理财也会买股票：低档稳稳加钱，高档让每一笔存款都开始生息。", bonuses: ["每场结束额外获得 2 金币", "每场结束额外获得 2 金币；每 4 金币提供 1 利息，利息无上限"] },
+  finance: { id: "finance", name: "理财", family: "关系", color: "#f1bd5e", thresholds: [2, 4], description: "会理财也会买股票：低档稳稳加钱，高档让每一笔存款都开始生息。", bonuses: ["每场结束额外获得 2 金币", "每场结束额外获得 2 金币；每 4 金币提供 1 利息，最多 20 利息"] },
   mature: { id: "mature", name: "成熟", family: "关系", color: "#b9a274", thresholds: [2, 4, 6], description: "老派作品开局稳健爆发，攻速每 4 秒降低 1 个百分点直至正常，移速最终降至正常移速的 70%。", bonuses: ["成熟成员开战获得 10% 最大生命护盾、+8% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%", "成熟成员开战获得 18% 最大生命护盾、+16% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 4% 最大生命护盾", "成熟成员开战获得 28% 最大生命护盾、+24% 攻速；攻速每 4 秒降低 1 个百分点，直至正常攻速；移速每 4 秒降低 5%，最终为正常移速的 70%；全队获得 8% 最大生命护盾"] },
   dance: { id: "dance", name: "跳舞", family: "关系", color: "#f39ade", thresholds: [2, 4, 6], description: "踩准节奏冲向舞台中央：成员攻速提升，并在最后接近阶段高移速冲刺，冲刺中更易闪避。", bonuses: ["跳舞成员 +12% 攻速；最后接近攻击范围时可冲刺（期间闪避提升）", "跳舞成员 +26% 攻速；冲刺强化；所有近战友军 +8% 攻速、+8 移速", "跳舞成员 +45% 攻速；冲刺强化；所有近战友军 +16% 攻速、+16 移速"] },
   aggression: { id: "aggression", name: "攻击性", family: "关系", color: "#ff596f", thresholds: [2, 4, 6], description: "发言要有攻击性：成员直接提高攻击力，也会带动全队火力。", bonuses: ["攻击性成员 +15% 攻击力；全体友军 +5% 攻击力", "攻击性成员 +30% 攻击力；全体友军 +10% 攻击力", "攻击性成员 +55% 攻击力；全体友军 +20% 攻击力"] },
@@ -1280,7 +1280,7 @@ export const WAVES: WaveDefinition[] = [
   {
     round: 4,
     name: "果冻火力网",
-    tag: "elite",
+    tag: "normal",
     description: "果冻风纪控制前排，弥月火力锁定远端单位。",
     modifier: 0.96,
     units: [
@@ -1293,8 +1293,8 @@ export const WAVES: WaveDefinition[] = [
   {
     round: 5,
     name: "毛茸茸团建",
-    tag: "normal",
-    description: "七海·海盐医师与犬绒·绒绒卫士续航很强，需要集火或切后。",
+    tag: "elite",
+    description: "精英预警：七海·海盐医师与犬绒·绒绒卫士续航很强，需要集火或切后。",
     modifier: 1,
     units: [
       { id: "mossback" },
@@ -1321,8 +1321,8 @@ export const WAVES: WaveDefinition[] = [
   {
     round: 7,
     name: "五系禁卫",
-    tag: "elite",
-    description: "精英战：前排、输出与辅助同时登场，检验阵容完整度。",
+    tag: "normal",
+    description: "前排、输出与辅助同时登场，检验阵容完整度。",
     modifier: 1.04,
     units: [
       { id: "dawn_duelist" },
@@ -1335,20 +1335,39 @@ export const WAVES: WaveDefinition[] = [
   },
   {
     round: 8,
-    name: "暴君降临",
-    tag: "boss",
-    description: "暴君携带双辅卫队；优先拆掉护盾与诅咒源。",
-    modifier: 1,
+    name: "暴君投影",
+    tag: "normal",
+    description: "暴君投影携带双辅卫队；这是终局首领前的第一次机制演练。",
+    modifier: 0.92,
     units: [{ id: "rift_tyrant" }, { id: "shiori" }, { id: "rift_brawler" }],
   },
 ];
 
-export const CAMPAIGN_ROUNDS = WAVES.length;
+export const CAMPAIGN_ROUNDS = 25;
+export const NORMAL_ENDLESS_END_ROUND = 40;
+export const HELL_ENDLESS_START_ROUND = NORMAL_ENDLESS_END_ROUND + 1;
+export const NORMAL_INTEREST_CAP = 4;
+export const FINANCE_INTEREST_CAP = 20;
+
+export type ProgressionMode = "campaign" | "endless" | "hell";
+
+export const progressionModeForRound = (round: number): ProgressionMode => {
+  if (round <= CAMPAIGN_ROUNDS) return "campaign";
+  if (round <= NORMAL_ENDLESS_END_ROUND) return "endless";
+  return "hell";
+};
 
 export const augmentTierForRound = (round: number): AugmentTier | null => {
-  if (round === 2) return "minor";
-  if (round === 5) return "major";
-  if (round <= CAMPAIGN_ROUNDS || (round - CAMPAIGN_ROUNDS) % 6 !== 0) return null;
+  const campaignTier: Partial<Record<number, AugmentTier>> = {
+    2: "minor",
+    5: "major",
+    10: "minor",
+    15: "major",
+    20: "minor",
+    25: "major",
+  };
+  if (round <= CAMPAIGN_ROUNDS) return campaignTier[round] ?? null;
+  if ((round - CAMPAIGN_ROUNDS) % 6 !== 0) return null;
   return ((round - CAMPAIGN_ROUNDS) / 6) % 2 === 1 ? "minor" : "major";
 };
 
@@ -1359,43 +1378,140 @@ const ENDLESS_NAMES = [
   "深层守望者",
 ] as const;
 
+const HELL_NAMES = [
+  "猩红清算者",
+  "地狱追猎群",
+  "失控升星潮",
+  "终焉守门人",
+] as const;
+
+const STAR_COPY_VALUE = [0, 1, 3, 9] as const;
+
+export const waveCompositionValue = (wave: Pick<WaveDefinition, "units">) =>
+  wave.units.reduce(
+    (total, unit) =>
+      total + UNIT_DEFS[unit.id].cost * STAR_COPY_VALUE[unit.star ?? 1],
+    0,
+  );
+
+const tagForRound = (round: number): WaveDefinition["tag"] => {
+  if (round <= CAMPAIGN_ROUNDS) {
+    if (round === CAMPAIGN_ROUNDS) return "boss";
+    return round % 5 === 0 ? "elite" : "normal";
+  }
+  const endlessRound = round - CAMPAIGN_ROUNDS;
+  if (endlessRound % 5 === 0) return "boss";
+  return endlessRound % 3 === 0 ? "elite" : "normal";
+};
+
+export const enemyBudgetForRound = (round: number) => {
+  const safeRound = Math.max(1, Math.floor(round));
+  if (safeRound <= WAVES.length) {
+    const wave = WAVES[safeRound - 1];
+    return Math.round(waveCompositionValue(wave) * wave.modifier * wave.modifier);
+  }
+  if (safeRound <= CAMPAIGN_ROUNDS) {
+    const baseBudget = 12 + (safeRound - WAVES.length) * 3.2;
+    const tag = tagForRound(safeRound);
+    return Math.round(baseBudget * (tag === "boss" ? 1.35 : tag === "elite" ? 1.25 : 1));
+  }
+  if (safeRound <= NORMAL_ENDLESS_END_ROUND) {
+    return 96 + (safeRound - CAMPAIGN_ROUNDS - 1) * 10;
+  }
+  return 260 + (safeRound - HELL_ENDLESS_START_ROUND) * 22;
+};
+
+const generatedUnitCount = (round: number) =>
+  round <= CAMPAIGN_ROUNDS
+    ? Math.min(10, 5 + Math.floor((round - 9) / 3))
+    : 10;
+
+const minimumGeneratedTier = (round: number) => {
+  if (round <= 14) return 2;
+  if (round <= 20) return 3;
+  if (round <= CAMPAIGN_ROUNDS) return 4;
+  if (round <= NORMAL_ENDLESS_END_ROUND) return 4;
+  return 5;
+};
+
+const buildBudgetedUnits = (
+  round: number,
+  tag: WaveDefinition["tag"],
+  budget: number,
+) => {
+  const count = generatedUnitCount(round);
+  const candidates = SHOP_UNITS.filter(
+    (id) => UNIT_DEFS[id].tier >= minimumGeneratedTier(round),
+  );
+  const units: WaveUnit[] = Array.from({ length: count }, (_, index) => ({
+    id: candidates[(round * 7 + index * 11) % candidates.length],
+    star: 1,
+  }));
+  if (tag === "boss") units[0] = { id: "rift_tyrant", star: 1 };
+
+  const maxStar: 1 | 2 | 3 = round < 15 ? 2 : 3;
+  let remaining = Math.max(0, budget - waveCompositionValue({ units }));
+  for (let guard = 0; guard < 30; guard += 1) {
+    const options = units
+      .map((unit, index) => {
+        const star = unit.star ?? 1;
+        const nextStar = Math.min(3, star + 1) as 1 | 2 | 3;
+        return {
+          index,
+          nextStar,
+          cost:
+            UNIT_DEFS[unit.id].cost *
+            (STAR_COPY_VALUE[nextStar] - STAR_COPY_VALUE[star]),
+          priority: (index * 7 + round) % Math.max(1, units.length),
+        };
+      })
+      .filter((option) => option.nextStar <= maxStar && option.cost <= remaining)
+      .sort((left, right) => right.cost - left.cost || left.priority - right.priority);
+    const choice = options[0];
+    if (!choice) break;
+    units[choice.index] = { ...units[choice.index], star: choice.nextStar };
+    remaining -= choice.cost;
+  }
+  return units;
+};
+
 export const waveForRound = (round: number): WaveDefinition => {
   if (round <= WAVES.length) return WAVES[Math.max(0, round - 1)];
 
-  const endlessRound = round - WAVES.length;
-  const cycle = Math.floor((endlessRound - 1) / 5);
-  const boss = endlessRound % 5 === 0;
-  const elite = !boss && endlessRound % 3 === 0;
-  const tag: WaveDefinition["tag"] = boss ? "boss" : elite ? "elite" : "normal";
-  const unitCount = Math.min(8, 5 + Math.floor((endlessRound + 1) / 3));
-  const minimumTier = Math.min(4, 2 + Math.floor(endlessRound / 5));
-  const candidates = SHOP_UNITS.filter(
-    (id) => UNIT_DEFS[id].tier >= minimumTier,
-  );
-  const units: WaveUnit[] = Array.from({ length: unitCount }, (_, index) => {
-    const id = candidates[(round * 7 + index * 11 + cycle * 3) % candidates.length];
-    const star: 1 | 2 | 3 =
-      endlessRound >= 18 && index < 2
-        ? 3
-        : endlessRound >= 6 && index < 2 + Math.floor(endlessRound / 8)
-          ? 2
-          : 1;
-    return { id, star };
-  });
-  if (boss) units[0] = { id: "rift_tyrant", star: cycle >= 3 ? 2 : 1 };
+  const mode = progressionModeForRound(round);
+  const tag = tagForRound(round);
+  const budget = enemyBudgetForRound(round);
+  const units = buildBudgetedUnits(round, tag, budget);
+  const compositionValue = Math.max(1, waveCompositionValue({ units }));
+  const modifier = Math.sqrt(budget / compositionValue);
+  const endlessRound = round - CAMPAIGN_ROUNDS;
+  const nameIndex = Math.max(0, endlessRound - 1);
+  const pressurePrefix = tag === "boss" ? "首领预警：" : tag === "elite" ? "精英预警：" : "";
 
   return {
     round,
-    name: boss
-      ? `暴君回响 · ${cycle + 1}`
-      : `${ENDLESS_NAMES[(endlessRound - 1) % ENDLESS_NAMES.length]} · ${endlessRound}`,
+    name:
+      tag === "boss"
+        ? mode === "campaign"
+          ? "暴君本体 · 远征终局"
+          : mode === "hell"
+            ? `地狱暴君 · ${Math.ceil(endlessRound / 5)}`
+            : `暴君回响 · ${Math.ceil(endlessRound / 5)}`
+        : mode === "campaign"
+          ? tag === "elite"
+            ? `精英封锁线 · ${round}`
+            : `远征推进线 · ${round}`
+          : mode === "hell"
+            ? `${HELL_NAMES[nameIndex % HELL_NAMES.length]} · ${round}`
+            : `${ENDLESS_NAMES[nameIndex % ENDLESS_NAMES.length]} · ${round}`,
     tag,
-    description: boss
-      ? "无限首领战：暴君会随循环强化，保存阵型的同时准备爆发。"
-      : elite
-        ? "无限精英战：高费混编与升星单位同时出现。"
-        : "无限挑战：敌军编成与强度将持续成长。",
-    modifier: 1.06 + endlessRound * 0.035 + cycle * 0.035,
+    description:
+      mode === "campaign"
+        ? `${pressurePrefix}敌军总价值约 ${budget}，优先用人口与升星检验当前阵容。`
+        : mode === "endless"
+          ? `${pressurePrefix}普通无限每战约增加 10 总价值，40 战后将进入地狱无限。当前约 ${budget}。`
+          : `${pressurePrefix}地狱无限按 20 利息玩家的成长速度，每战约增加 22 总价值。当前约 ${budget}。`,
+    modifier,
     units,
   };
 };
