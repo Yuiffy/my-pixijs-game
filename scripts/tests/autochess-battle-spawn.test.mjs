@@ -1379,6 +1379,38 @@ test("七海变身吸血、恬豆棒棒糖与三理理嘲讽均按碰撞和锁�
   assert.equal(tauntEngine["resolveCombatTarget"](tauntedEnemy, tauntBattle.player, 0.05)?.fid, mitsuri.fid);
 });
 
+test("露蒂丝咕咕诊所治疗全队并只保护生命比例最低的两名友军", () => {
+  const engine = createEngine(205);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rutice", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "ember_blade", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const rutice = battle?.player.find((fighter) => fighter.unitId === "rutice");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "sui");
+  const healthiest = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
+  const enemy = battle?.enemy[0];
+  assert.ok(battle && rutice && ally && healthiest && enemy);
+
+  const allies = [rutice, ally, healthiest];
+  allies.forEach((fighter) => {
+    fighter.hp = fighter.maxHp * (fighter === rutice ? 0.4 : fighter === ally ? 0.25 : 0.75);
+    fighter.shield = 0;
+  });
+  const hpBefore = allies.map((fighter) => fighter.hp);
+  const enemyHpBefore = enemy.hp;
+  engine["castAbility"](rutice, battle.enemy);
+
+  allies.forEach((fighter, index) => assert.ok(fighter.hp > hpBefore[index]));
+  assert.ok(rutice.shield > 0);
+  assert.ok(ally.shield > 0);
+  assert.equal(healthiest.shield, 0);
+  assert.equal(enemy.hp, enemyHpBefore);
+  assert.equal(enemy.stun, 0);
+});
+
 test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", () => {
   const engine = createEngine(98);
   engine.state.playerLevel = 4;

@@ -274,6 +274,9 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.sui_cat.abilityName, "猫拳三连");
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /闪现到最远敌人身后/);
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /击晕/);
+  assert.equal(data.UNIT_DEFS.rutice.abilityName, "咕咕诊所");
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /全体友军回复生命/);
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /生命比例最低的两名友军.*护盾/);
   assert.ok(data.UNIT_DEFS.sui_cat.hp >= 250);
   assert.ok(data.UNIT_DEFS.sui_cat.armor >= 18);
 });

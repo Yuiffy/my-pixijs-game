@@ -207,6 +207,10 @@ const NORI_PROJECTILE_RANGE = 560;
 const XUEHUI_CLEAVE_RADIUS = 98;
 const XUEHUI_CLEAVE_DAMAGE_MULTIPLIER = 1.12;
 const XUEHUI_CLEAVE_BURN_MULTIPLIER = 0.68;
+/** 露蒂丝「咕咕诊所」：全队治疗，并优先保护最虚弱的两名友军。 */
+const RUTICE_GROUP_HEAL_RATIO = 0.2;
+const RUTICE_LOWEST_SHIELD_RATIO = 0.16;
+const RUTICE_LOWEST_SHIELD_TARGET_COUNT = 2;
 
 interface RandomSource {
   next: () => number;
@@ -3586,9 +3590,11 @@ export class AutoChessEngine {
         break;
       }
       case "rutice": {
-        allies.forEach((target) => addShield(target, target.maxHp * 0.16, 0.5));
-        this.heal(source, source, source.maxHp * 0.2);
-        targets.filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 160).forEach((target) => { deal(target, 0.9); target.stun = Math.max(target.stun, 0.8); });
+        allies.forEach((target) => this.heal(source, target, target.maxHp * RUTICE_GROUP_HEAL_RATIO));
+        [...allies]
+          .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
+          .slice(0, RUTICE_LOWEST_SHIELD_TARGET_COUNT)
+          .forEach((target) => addShield(target, target.maxHp * RUTICE_LOWEST_SHIELD_RATIO, 0.5));
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.9, size: 172 });
         break;
       }
