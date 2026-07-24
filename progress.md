@@ -294,3 +294,14 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 确认自动升星已优先保留场上同名同星棋子的原格；当其余材料位于备战席时，合成后的二星或三星仍留在场上。
 - 新增引擎回归测试，覆盖一枚场上与两枚备战席同名一星棋子合成为二星的场景。
 - 验证：新增回归通过；战斗专项仍仅有既有的“满能量远程单位会先进入攻击距离再施法”断言失败。
+
+## 2026-07-25 · 自走棋视觉验证入口
+
+- 仓库所有者明确要求：自走棋视觉验证不得先运行通用
+  `web_game_playwright_client.js`。它强制使用 headless ANGLE/SwiftShader，
+  已知会浪费时间生成纯黑 WebGL 截图。
+- 第一次浏览器尝试就必须使用项目内 `verify-autochess.cjs` 的系统 Chrome
+  与整页 `page.screenshot()` 流程；专项交互应扩展项目内 Chrome 脚本或使用
+  Browser/Chrome 工具，不得回退到通用 SwiftShader 客户端。
+- 截图仍需做纯黑、透明和近黑有效性检查，并与 `render_game_to_text`、
+  DOM、画布尺寸及控制台错误交叉验证。
