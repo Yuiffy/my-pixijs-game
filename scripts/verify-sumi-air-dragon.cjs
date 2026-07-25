@@ -31,31 +31,30 @@ const advance = (page, milliseconds) => page.evaluate((value) => window.advanceT
 
 (async () => {
   const browser = await chromium.launch({ channel: "chrome", headless: true });
-  let page = null;
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   let seed = null;
   let state = null;
   const errors = [];
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  page.on("pageerror", (error) => errors.push(error.message));
 
   for (let candidate = 1; candidate <= 240; candidate += 1) {
-    const nextPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    nextPage.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
-    nextPage.on("pageerror", (error) => errors.push(error.message));
-    await nextPage.goto(`${baseUrl}/game/autochess?seed=${candidate}`, { waitUntil: "domcontentloaded" });
-    await nextPage.locator('[data-game-canvas="rift-line"]').waitFor({ state: "attached", timeout: 60000 });
-    await nextPage.waitForTimeout(600);
-    await nextPage.getByText("火热整活", { exact: true }).click();
-    await nextPage.waitForTimeout(80);
-    const nextState = await readState(nextPage);
-    if (nextState.shop?.includes("sumi")) {
-      page = nextPage;
+    await page.goto(`${baseUrl}/game/autochess?seed=${candidate}`, { waitUntil: "domcontentloaded" });
+    await page.locator('[data-game-canvas="rift-line"]').waitFor({ state: "attached", timeout: 60000 });
+    await page.waitForTimeout(600);
+    await page.getByText("火热整活", { exact: true }).click();
+    await page.waitForTimeout(80);
+    await page.getByRole("button", { name: /升本/ }).first().click();
+    await page.waitForTimeout(80);
+    const nextState = await readState(page);
+    if (nextState.shop?.some((card) => card?.id === "sumi")) {
       seed = candidate;
       state = nextState;
       break;
     }
-    await nextPage.close();
   }
 
-  if (!page || !state) throw new Error("未在 240 个确定性种子中找到礼墨商店卡");
+  if (!state) throw new Error("未在 240 个确定性种子中找到礼墨商店卡");
   await page.screenshot({ path: `${artifactDirectory}/sumi-shop.png`, fullPage: true });
   await page.getByRole("button", { name: /礼墨Sumi/ }).first().click();
   await page.waitForTimeout(100);
