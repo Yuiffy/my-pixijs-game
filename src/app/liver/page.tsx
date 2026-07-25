@@ -4,8 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { getAllLiverConfigs } from '@/data/livers';
 import LiverAvatar from '@/components/LiverAvatar';
-import { ConfigProvider, Typography, Card } from 'antd';
-import { theme } from 'antd';
+import { ConfigProvider, Typography, Card, theme } from 'antd';
 
 const { Title, Text } = Typography;
 

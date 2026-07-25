@@ -2785,10 +2785,25 @@ test("帕可天使摸鱼按自身属性落地治疗，并留下可进出的持�
   assert.deepEqual(battle.enemy.map((fighter) => fighter.hp), enemyHpBefore);
   assert.ok(pako.healingDone > 0);
   assert.ok(battle.effects.some((effect) => effect.text === "天使摸鱼"));
-  assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 159));
+  assert.ok(battle.effects.some(
+    (effect) =>
+      effect.kind === "healing_field"
+      && effect.size === 145
+      && effect.color === "#6ff0b5",
+  ));
+  assert.ok(battle.effects.some(
+    (effect) =>
+      effect.kind === "healing_pulse"
+      && effect.size === 68
+      && effect.color === "#6ff0b5",
+  ));
+  assert.ok(!battle.effects.some(
+    (effect) => effect.kind === "ring" && effect.x === host.x && effect.y === host.y,
+  ), "帕可落地不应再使用攻击感强烈的大型扩张圆环");
   assert.equal(battle.healingZones.length, 1);
   assert.equal(battle.healingZones[0].radius, 145);
   assert.equal(battle.healingZones[0].maxLife, 3.2);
+  assert.equal(battle.healingZones[0].color, "#6ff0b5");
 
   const zone = battle.healingZones[0];
   host.x = zone.x + zone.radius + 20;
@@ -2807,7 +2822,15 @@ test("帕可天使摸鱼按自身属性落地治疗，并留下可进出的持�
   assert.ok(pakoPulseHeal < hostInitialHeal);
   assert.ok(Math.abs(pakoPulseHeal - highCostPulseHeal) < 0.001);
   assert.equal(host.hp, hostHpOutside, "走出治疗区后不应继续回血");
-  assert.ok(battle.effects.some((effect) => effect.kind === "burst" && effect.color === "#bfffe3"));
+  assert.ok(battle.effects.some(
+    (effect) =>
+      effect.kind === "healing_pulse"
+      && effect.color === "#6ff0b5"
+      && effect.size === 60,
+  ));
+  assert.ok(!battle.effects.some(
+    (effect) => effect.kind === "ring" && effect.size >= zone.radius,
+  ), "持续治疗脉冲不应重新生成覆盖完整范围的攻击圆环");
 
   engine["updateHealingZones"](battle, 2.5);
   assert.equal(battle.healingZones.length, 0);

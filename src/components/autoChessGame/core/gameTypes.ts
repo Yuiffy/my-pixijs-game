@@ -29,7 +29,17 @@ export interface UnitLocation {
 }
 
 export interface BattleEffect {
-  kind: "line" | "ring" | "burst" | "rebirth" | "text" | "heal" | "chronosphere" | "hotpot";
+  kind:
+    | "line"
+    | "ring"
+    | "burst"
+    | "rebirth"
+    | "text"
+    | "heal"
+    | "healing_field"
+    | "healing_pulse"
+    | "chronosphere"
+    | "hotpot";
   x: number;
   y: number;
   x2?: number;

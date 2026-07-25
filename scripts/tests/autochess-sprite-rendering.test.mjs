@@ -2,7 +2,20 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [host, hud, scene, bridge, assets, config, layout, theme, engine, gameTypes, canvasEffects] = await Promise.all([
+const [
+  host,
+  hud,
+  scene,
+  bridge,
+  assets,
+  config,
+  layout,
+  theme,
+  engine,
+  gameTypes,
+  canvasEffects,
+  healingEffects,
+] = await Promise.all([
   readFile(new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/RiftHud.tsx", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/RiftLineScene.ts", import.meta.url), "utf8"),
@@ -14,6 +27,7 @@ const [host, hud, scene, bridge, assets, config, layout, theme, engine, gameType
   readFile(new URL("../../src/components/autoChessGame/core/gameEngine.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/core/gameTypes.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/canvas/effects.ts", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/phaser/healingEffects.ts", import.meta.url), "utf8"),
 ]);
 
 test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
@@ -154,6 +168,28 @@ test("技能只保留名称提示，范围与连线效果提供范围染色和�
   assert.match(scene, /fillCircle\(0, 0, fieldRadius\)/);
   assert.match(engine, /visualEffects:/);
   assert.match(engine, /projectiles: battle\.projectiles\.map/);
+});
+
+test("帕可治疗区使用小型恢复脉冲和淡色范围标识", () => {
+  const pakoAbility = engine.slice(engine.indexOf('case "pako":'), engine.indexOf('case "nightin":'));
+  const healingZoneUpdate = engine.slice(
+    engine.indexOf("private updateHealingZones"),
+    engine.indexOf("private updateBattle"),
+  );
+  assert.match(gameTypes, /"healing_field"/);
+  assert.match(gameTypes, /"healing_pulse"/);
+  assert.match(pakoAbility, /kind: "healing_field"/);
+  assert.match(pakoAbility, /kind: "healing_pulse"/);
+  assert.doesNotMatch(pakoAbility, /kind: "ring"/);
+  assert.match(healingZoneUpdate, /kind: "healing_pulse"/);
+  assert.doesNotMatch(healingZoneUpdate, /kind: "ring"/);
+  assert.match(scene, /drawHealingFieldEffect\(graphics, burstGradient, color, progress, effect\.size\)/);
+  assert.match(scene, /drawHealingPulseEffect\(graphics, burstGradient, color, progress, effect\.size\)/);
+  assert.match(healingEffects, /const markerDistance = radius \* 0\.7/);
+  assert.match(healingEffects, /const radius = \(size \|\| 64\) \* \(0\.34 \+ progress \* 0\.3\)/);
+  assert.match(healingEffects, /HEALING_HIGHLIGHT/);
+  assert.match(canvasEffects, /effect\.kind === "healing_field"/);
+  assert.match(canvasEffects, /effect\.kind === "healing_pulse"/);
 });
 
 test("贴身护盾按当前值相对峰值降低透明强度", () => {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Typography, Button, Space, Card, Tag, Pagination, Image as AntImage } from 'antd';
-import { CalendarOutlined, HistoryOutlined, StarOutlined, EyeOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import { CalendarOutlined, HistoryOutlined, EyeOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { StreamData, HighlightsDisplay, getDownloadFilename, getPeriodInfo, getPublicFileUrl } from './RecordsShared';
 
 const { Title, Text } = Typography;
@@ -13,7 +13,7 @@ interface RecordsListViewProps {
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
-  onStreamSelect: (stream: StreamData) => void;
+  onStreamSelect?: (stream: StreamData) => void;
 }
 
 const RecordsListView: React.FC<RecordsListViewProps> = ({
@@ -22,7 +22,6 @@ const RecordsListView: React.FC<RecordsListViewProps> = ({
   currentPage,
   pageSize,
   onPageChange,
-  onStreamSelect
 }) => {
   const paginatedStreams = streams.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 

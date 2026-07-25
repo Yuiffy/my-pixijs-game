@@ -364,6 +364,117 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
       ctx.beginPath();
       ctx.arc(effect.x, effect.y, Math.max(5, radius * arrival * 0.72), 0, Math.PI * 2);
       ctx.stroke();
+    } else if (effect.kind === "healing_field") {
+      const radius = effect.size || 145;
+      const fieldAlpha = Math.min(1, alpha * 5);
+      const breath = 0.5 + Math.sin(progress * Math.PI * 8) * 0.5;
+      const markerDistance = radius * 0.7;
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = fieldAlpha * 0.025;
+      ctx.fillStyle = effect.color;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = fieldAlpha * (0.3 + breath * 0.06);
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = fieldAlpha * 0.12;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius * 0.84, 0, Math.PI * 2);
+      ctx.stroke();
+      const centerGlow = ctx.createRadialGradient(
+        effect.x,
+        effect.y,
+        0,
+        effect.x,
+        effect.y,
+        48,
+      );
+      centerGlow.addColorStop(0, "rgba(217,255,240,0.44)");
+      centerGlow.addColorStop(0.42, effect.color);
+      centerGlow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalAlpha = fieldAlpha * (0.18 + breath * 0.035);
+      ctx.fillStyle = centerGlow;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, 48, 0, Math.PI * 2);
+      ctx.fill();
+      for (let index = 0; index < 4; index += 1) {
+        const angle = index * (Math.PI / 2);
+        const markerX = effect.x + Math.cos(angle) * markerDistance;
+        const markerY = effect.y + Math.sin(angle) * markerDistance;
+        ctx.globalAlpha = fieldAlpha * 0.78;
+        ctx.strokeStyle = "#d9fff0";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(markerX - 4.5, markerY);
+        ctx.lineTo(markerX + 4.5, markerY);
+        ctx.moveTo(markerX, markerY - 4.5);
+        ctx.lineTo(markerX, markerY + 4.5);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = fieldAlpha * 0.92;
+      ctx.strokeStyle = "#d9fff0";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(effect.x - 11, effect.y);
+      ctx.lineTo(effect.x + 11, effect.y);
+      ctx.moveTo(effect.x, effect.y - 11);
+      ctx.lineTo(effect.x, effect.y + 11);
+      ctx.stroke();
+    } else if (effect.kind === "healing_pulse") {
+      const radius = (effect.size || 64) * (0.34 + progress * 0.3);
+      const crossY = effect.y - progress * 9;
+      const pulse = ctx.createRadialGradient(
+        effect.x,
+        effect.y,
+        0,
+        effect.x,
+        effect.y,
+        radius * 1.18,
+      );
+      pulse.addColorStop(0, "rgba(217,255,240,0.92)");
+      pulse.addColorStop(0.38, effect.color);
+      pulse.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.fillStyle = pulse;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius * 1.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = alpha * 0.48;
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = Math.max(1, 2.5 * (1 - progress));
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = "#d9fff0";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(effect.x - 11, crossY);
+      ctx.lineTo(effect.x + 11, crossY);
+      ctx.moveTo(effect.x, crossY - 11);
+      ctx.lineTo(effect.x, crossY + 11);
+      ctx.stroke();
+      for (let index = 0; index < 3; index += 1) {
+        const angle = -Math.PI * (0.16 + index * 0.34);
+        const distance = 17 + progress * (10 + index * 3);
+        ctx.globalAlpha = alpha * (0.8 - progress * 0.35);
+        ctx.fillStyle = index === 1 ? "#d9fff0" : effect.color;
+        ctx.beginPath();
+        ctx.arc(
+          effect.x + Math.cos(angle) * distance,
+          effect.y + Math.sin(angle) * distance - progress * 8,
+          2.5 - progress * 0.7,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
     } else if (effect.kind === "burst") {
       const radius = (effect.size || 40) * (0.35 + progress * 0.65);
       const gradient = ctx.createRadialGradient(effect.x, effect.y, 0, effect.x, effect.y, radius);

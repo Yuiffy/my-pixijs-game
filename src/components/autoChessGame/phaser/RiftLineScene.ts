@@ -44,6 +44,7 @@ import {
   SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY,
   textureKeyForUnit,
 } from "./assets";
+import { drawHealingFieldEffect, drawHealingPulseEffect } from "./healingEffects";
 import {
   COMPACT_RESULT_LAYOUT,
   COMPACT_TRAIT_STRIP,
@@ -1951,9 +1952,12 @@ export class RiftLineScene extends Phaser.Scene {
     const burstGradient = view.getByName("burstGradient") as Phaser.GameObjects.Image;
     const label = view.getByName("label") as Phaser.GameObjects.Text;
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
+    const viewAlpha = effect.kind === "healing_field"
+      ? Math.min(1, alpha * 5)
+      : alpha ** 0.65;
     view
       .setPosition(effect.x, effect.y)
-      .setAlpha(alpha ** 0.65)
+      .setAlpha(viewAlpha)
       .setRotation(0)
       .setDepth(DEPTH.effects + effect.y + 1);
     graphics.clear();
@@ -1996,6 +2000,10 @@ export class RiftLineScene extends Phaser.Scene {
         .strokeCircle(0, 0, fieldRadius)
         .lineStyle(1.5, 0xf4fbff, 0.66)
         .strokeCircle(0, 0, Math.max(5, radius * arrival * 0.72));
+    } else if (effect.kind === "healing_field") {
+      drawHealingFieldEffect(graphics, burstGradient, color, progress, effect.size);
+    } else if (effect.kind === "healing_pulse") {
+      drawHealingPulseEffect(graphics, burstGradient, color, progress, effect.size);
     } else if (effect.kind === "burst") {
       const radius = (effect.size || 40) * (0.35 + progress * 0.65);
       burstGradient
@@ -2135,7 +2143,7 @@ export class RiftLineScene extends Phaser.Scene {
     flash.setX(muzzleDistance).setAlpha(pet.attackPulse > 0 ? Math.min(0.96, pet.attackPulse / 0.16) : 0).setScale(flashScale);
   }
 
-  private createPineTree(_tree: PineTreeTurret) {
+  private createPineTree(_tree: PineTreeTurret) { // eslint-disable-line @typescript-eslint/no-unused-vars
     const container = this.add.container(0, 0);
     const shadow = this.add.ellipse(0, 0, 30, 9, 0x000000, 0.3).setName("shadow");
     const tree = this.text(0, -4, "🌲", 42, "#ffffff").setOrigin(0.5).setName("tree");

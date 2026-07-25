@@ -591,3 +591,11 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 系统 Chrome 专项验证：3 个羁绊为单行且居中，18 个羁绊为单行；滚轮偏移 `-315`、拖动偏移约 `-250.11`、最终偏移精确停在 `-710`，WebGL 滤镜类型为 `FilterMask`，控制台无错误。
 - 截图 `.tmp/autochess/trait-layout/few-traits-single-row.png`、`all-traits-row-start.png`、`all-traits-row-scrolled.png` 均通过纯色、透明和近黑拒绝检查，并已逐张打开确认起点、终点和面板裁切正常。
 - 验证：`pnpm exec tsc --noEmit --incremental false`、Phaser 静态回归 `26/26`、完整 `pnpm autochess:test`（`146/146`）、目标源码 ESLint（`0 error`，仅保留既有 `_tree` warning）与 `git diff --check` 通过。
+
+## 2026-07-25 · 帕可治疗区视觉重做
+
+- “天使摸鱼”不再复用紫色大型 `ring` / `burst` 攻击特效，改为专属 `healing_field` 与 `healing_pulse`；治疗数值、145 判定半径、3.2 秒持续时间和 0.7 秒跳奶间隔均未改变。
+- 实际范围只保留极淡的薄荷绿边界与低透明底色，中心和四个方位使用医疗加号明确表达友方恢复；每次治疗只在中心约 60 像素范围内柔和闪烁并上浮光点，不再高亮整个判定区。
+- Phaser 专属绘制拆到 `phaser/healingEffects.ts`，场景类只负责特效分发；备用 Canvas 渲染同步实现同一视觉语义。
+- 回归新增帕可不再生成大型攻击圆环、治疗色与尺寸、Phaser 接线及 Canvas 分支守卫。`pnpm exec tsc --noEmit --incremental false`、完整 `pnpm autochess:test`（`147/147`）、本次视觉源码 ESLint（`0 error`，仅保留既有 `_tree` warning）与 `git diff --check` 通过。
+- 按用户此前要求，本轮未启动浏览器或截图视觉验证，由用户在实际游戏中验收观感。

@@ -57,6 +57,7 @@ function UnitPortrait({ unitId, size = 42 }: { unitId: keyof typeof UNIT_DEFS; s
   }
 
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={definition.portrait}
       alt={definition.name}

@@ -1,8 +1,6 @@
-import { generateBattle } from "../logic/battle";
-import { SECTS_DATA, MERCHANT_ITEMS } from "../logic/constants";
 import { SECT_ARTS, getSectArts, getArtByName } from "../logic/skills";
-import { MartialArt, Person, Personality, RelationType, Sect, StoryChoice, StoryLine, StorySnippet, StoryStage, LocationInfo, Relation } from "../logic/types";
-import { rand, genName, genPersonality, genAppearance, describeAppearanceChange, describeAppearance, getSectMembersList, getAvailableCompanions, updateLastInteraction } from "../logic/utils";
+import { MartialArt, Person, StoryChoice, StoryLine, StorySnippet, StoryStage, LocationInfo } from "../logic/types";
+import { rand, genName } from "../logic/utils";
 
 // 同行事件：露营
 export const generateCompanionCampEvent = (companion: Person): StoryLine[] => {
@@ -219,7 +217,6 @@ export const generateGroupTravelEvent = (companions: Person[]): StoryLine[] => {
   ];
 
   const activity = travelActivities[Math.floor(Math.random() * travelActivities.length)];
-  const groupDesc = getPartyDescription(companions);
 
   const lines: StoryLine[] = [
     {

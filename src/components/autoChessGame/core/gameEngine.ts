@@ -43,29 +43,21 @@ import {
   rayEndpointAtBattleBounds,
 } from "./battleGeometry";
 import type {
-  AugmentSelection,
   AbilityMotion,
   BattleEffect,
   BattleState,
-  ChronosphereZone,
   Fighter,
   GamePhase,
   GameState,
-  MechanicalRabbitPet,
   OwnedUnit,
-  PineTreeTurret,
-  Projectile,
   ProjectileVolleyShot,
   RankingMetric,
-  RoundResult,
-  StarterSelection,
   Team,
   ToastState,
   UnitLocation,
 } from "./gameTypes";
 
 export type {
-  AugmentSelection,
   AbilityMotion,
   BattleEffect,
   BattleState,
@@ -228,6 +220,8 @@ const PAKO_ANGEL_FISH_ZONE_DURATION = 3.2;
 const PAKO_ANGEL_FISH_PULSE_INTERVAL = 0.7;
 const PAKO_ANGEL_FISH_PULSE_HEAL_ATTACK_RATIO = 0.7;
 const PAKO_ANGEL_FISH_PULSE_HEAL_CASTER_HP_RATIO = 0.025;
+const PAKO_ANGEL_FISH_FIELD_COLOR = "#6ff0b5";
+const PAKO_ANGEL_FISH_HIGHLIGHT_COLOR = "#d9fff0";
 /** 非自身中心 AOE：声束同帧触发，弹幕抵达固定落点后触发。 */
 const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile"; glyph?: string }>> = {
   shiori: { kind: "beam" },
@@ -278,6 +272,7 @@ const NORI_APPLE_PIE_SHOTS = 8;
 const NORI_APPLE_PIE_INTERVAL = 0.14;
 const NORI_APPLE_PIE_DAMAGE_MULTIPLIER = 0.32;
 const NORI_PROJECTILE_SPEED = 700;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const NORI_PROJECTILE_RANGE = 560;
 const XUEHUI_CLEAVE_RADIUS = 98;
 const XUEHUI_CLEAVE_DAMAGE_MULTIPLIER = 1.12;
@@ -2062,7 +2057,7 @@ export class AutoChessEngine {
     const targetTeam: Team = fighter.team === "player" ? "enemy" : "player";
     const backlineTargets = (targetTeam === "player" ? battle.player : battle.enemy)
       .filter((enemy) => enemy.alive)
-      .sort((a, b) => fighter.team === "player" ? b.x - a.x : a.x - b.x);
+      .sort((a, b) => (fighter.team === "player" ? b.x - a.x : a.x - b.x));
     const target = backlineTargets[0];
     if (!target) return false;
 
@@ -2437,18 +2432,33 @@ export class AutoChessEngine {
           life: PAKO_ANGEL_FISH_ZONE_DURATION,
           maxLife: PAKO_ANGEL_FISH_ZONE_DURATION,
           pulseTimer: PAKO_ANGEL_FISH_PULSE_INTERVAL,
-          color: def.accent,
+          color: PAKO_ANGEL_FISH_FIELD_COLOR,
         });
         this.addEffect({
-          kind: "ring",
+          kind: "healing_field",
           x: center.x,
           y: center.y,
-          color: def.accent,
+          color: PAKO_ANGEL_FISH_FIELD_COLOR,
           life: PAKO_ANGEL_FISH_ZONE_DURATION,
-          size: PAKO_ANGEL_FISH_RADIUS + 14,
+          size: PAKO_ANGEL_FISH_RADIUS,
         });
-        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f4eaff", life: 0.52, size: 88 });
-        this.addEffect({ kind: "text", x: center.x, y: center.y - 42, color: def.accent, text: "天使摸鱼", life: 0.75, size: 13 });
+        this.addEffect({
+          kind: "healing_pulse",
+          x: center.x,
+          y: center.y,
+          color: PAKO_ANGEL_FISH_FIELD_COLOR,
+          life: 0.46,
+          size: 68,
+        });
+        this.addEffect({
+          kind: "text",
+          x: center.x,
+          y: center.y - 42,
+          color: PAKO_ANGEL_FISH_HIGHLIGHT_COLOR,
+          text: "天使摸鱼",
+          life: 0.75,
+          size: 13,
+        });
         break;
       case "nightin":
         targets
@@ -2558,7 +2568,6 @@ export class AutoChessEngine {
     const battle = this.state.battle;
     if (!battle) return;
     battle.pets = battle.pets.filter((pet) => pet.ownerFid !== source.fid);
-    const def = UNIT_DEFS[source.unitId];
     for (let slot = 0; slot < CLOCK_GUNNER_RABBIT_COUNT; slot += 1) {
       const verticalOffset = slot === 0 ? -26 : 26;
       const horizontalOffset = source.facingX * 24;
@@ -3058,22 +3067,14 @@ export class AutoChessEngine {
               source.attack * PAKO_ANGEL_FISH_PULSE_HEAL_ATTACK_RATIO +
                 source.maxHp * PAKO_ANGEL_FISH_PULSE_HEAL_CASTER_HP_RATIO,
             );
-          });
+        });
         this.addEffect({
-          kind: "ring",
+          kind: "healing_pulse",
           x: zone.x,
           y: zone.y,
           color: zone.color,
-          life: 0.34,
-          size: zone.radius + 8,
-        });
-        this.addEffect({
-          kind: "burst",
-          x: zone.x,
-          y: zone.y,
-          color: "#bfffe3",
-          life: 0.3,
-          size: zone.radius * 0.72,
+          life: 0.42,
+          size: 60,
         });
       }
       return zone.life > 0;

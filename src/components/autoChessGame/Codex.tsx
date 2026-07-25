@@ -219,10 +219,12 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                 {ABILITY_CAST_TIMING_LABELS[unit.abilityCastTiming]}
               </div>
               <p style={{ color: "#b6c8d4", lineHeight: 1.7 }}>{unit.abilityDescription}</p>
-              {unit.passiveName && unit.passiveDescription && <>
-                <h3 style={{ color: "#c3a7ff", marginBottom: 6 }}>被动 · {unit.passiveName}</h3>
-                <p style={{ color: "#b6c8d4", lineHeight: 1.7 }}>{unit.passiveDescription}</p>
-              </>}
+              {unit.passiveName && unit.passiveDescription && (
+                <>
+                  <h3 style={{ color: "#c3a7ff", marginBottom: 6 }}>被动 · {unit.passiveName}</h3>
+                  <p style={{ color: "#b6c8d4", lineHeight: 1.7 }}>{unit.passiveDescription}</p>
+                </>
+              )}
               <h3 style={{ marginBottom: 6 }}>所属羁绊</h3>
               {unit.traits.map((id) => (
                 <div key={id} style={{ marginBottom: 8, color: TRAITS[id].color }}>

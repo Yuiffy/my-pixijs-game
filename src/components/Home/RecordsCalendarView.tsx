@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Button, Select, Calendar, ConfigProvider, theme, Radio, Tooltip, Space } from 'antd';
+import { Button, Calendar, ConfigProvider, theme, Radio, Tooltip, Space } from 'antd';
 import { LeftOutlined, RightOutlined, DoubleLeftOutlined, DoubleRightOutlined, HistoryOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -30,15 +30,6 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
   onCalendarModeChange,
   onStreamSelect
 }) => {
-  const handleDateSelect = (value: Dayjs) => {
-    const dateStr = value.format('YYYY-MM-DD');
-    const dayStreams = streams.filter(stream => stream.date === dateStr);
-
-    if (dayStreams.length > 0) {
-      onStreamSelect(dayStreams[0]);
-    }
-  };
-
   const cellRender = (value: Dayjs, info: any) => {
     if (info.type === 'month') {
       const monthStr = value.format('YYYY-MM');
@@ -74,7 +65,7 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
         <div className="relative">
           {/* {info.originNode} */}
           <ul className="list-none p-0 flex flex-col gap-1.5 overflow-visible mt-1">
-            {dayStreams.slice(0, 2).map((stream, index) => {
+            {dayStreams.slice(0, 2).map((stream) => {
               const period = getPeriodInfo(stream.time);
               const hours = stream.duration ? (stream.duration / 3600).toFixed(1) : null;
 
@@ -131,11 +122,6 @@ const RecordsCalendarView: React.FC<RecordsCalendarViewProps> = ({
     }
 
     return info.originNode;
-  };
-
-  const isFutureYear = (value: Dayjs) => {
-    const today = dayjs();
-    return value.year() > today.year() || (value.year() === today.year() && value.month() > today.month());
   };
 
   const calendarHeaderRender = ({ value, type, onChange, onTypeChange }: any) => {
