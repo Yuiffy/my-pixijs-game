@@ -1,5 +1,5 @@
 import { SECT_ARTS, getSectArts, getArtByName } from "../logic/skills";
-import { MartialArt, Person, StoryChoice, StoryLine, StorySnippet, StoryStage, LocationInfo } from "../logic/types";
+import { MartialArt, Person, Personality, Sect, StoryChoice, StoryLine, StorySnippet, StoryStage, LocationInfo } from "../logic/types";
 import { rand, genName } from "../logic/utils";
 
 // 同行事件：露营

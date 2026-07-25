@@ -13,7 +13,7 @@ interface RecordsListViewProps {
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
-  onStreamSelect?: (stream: StreamData) => void;
+  onStreamSelect?: (stream: StreamData) => void; // eslint-disable-line react/no-unused-prop-types
 }
 
 const RecordsListView: React.FC<RecordsListViewProps> = ({

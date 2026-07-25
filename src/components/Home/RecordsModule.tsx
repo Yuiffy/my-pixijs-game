@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Button, Space, Modal } from 'antd';
-// eslint-disable-next-line import/no-duplicates
+import { Typography, Button, Space, Modal, Image as AntImage, Tag } from 'antd';
 import { HistoryOutlined, CalendarOutlined, ThunderboltOutlined, CloseOutlined, PlayCircleOutlined, InfoCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -11,8 +10,6 @@ import localeData from 'dayjs/plugin/localeData';
 import RecordsListView from './RecordsListView';
 import RecordsCalendarView from './RecordsCalendarView';
 import { StreamData, HighlightsDisplay, ModalMarkdownComponents, getDownloadFilename, getPeriodInfo, getPublicFileUrl } from './RecordsShared';
-import { Image as AntImage, Tag } from 'antd';
-// eslint-disable-next-line import/no-duplicates
 import { getLiverConfig, type LiverInfo } from '@/data/livers';
 
 // Extend dayjs with required plugins for Ant Design Calendar
