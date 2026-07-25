@@ -199,6 +199,28 @@ mkdirSync(artifactDirectory, { recursive: true });
   }
   await capture("round-02-low-cost-wave");
 
+  await page.evaluate(() => {
+    const bridge = window.__codexAutoChessBridge;
+    const engine = bridge.engine;
+    engine.startBattle();
+    engine.state.battle.player.forEach((fighter) => {
+      fighter.hp = 0;
+      fighter.alive = false;
+    });
+    engine.finishBattle(false);
+    bridge.dispatch({ type: "clearSelection" });
+  });
+  await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "result");
+  const lossSettlement = await readState();
+  if (
+    lossSettlement.result.bounty !== opening.wave.potentialBounty
+    || lossSettlement.result.defeatedEnemies !== 0
+    || !lossSettlement.result.detail.includes("击败 0/3")
+  ) {
+    throw new Error(`Loss did not receive the full board settlement: ${JSON.stringify(lossSettlement.result)}`);
+  }
+  await capture("round-02-loss-full-settlement");
+
   await forcePreparation(4);
   const elite = await readState();
   if (
@@ -243,7 +265,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const dialog = page.getByRole("dialog", { name: "裂隙阵线图鉴" });
   await dialog.getByRole("button", { name: "玩法说明" }).click();
   const rulesText = await dialog.innerText();
-  for (const expected of ["第 17—31 战", "20 利息", "连胜与赏金全部复投", "80 金"]) {
+  for (const expected of ["第 17—31 战", "20 利息", "连胜与结算金全部复投", "80 金"]) {
     if (!rulesText.includes(expected)) throw new Error(`Rules are missing ${expected}`);
   }
   await capture("progression-rules");
@@ -284,6 +306,7 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   console.log(JSON.stringify({
     opening: { round: opening.round, budget: opening.wave.enemyBudget, units: opening.wave.units },
+    lossSettlement: lossSettlement.result,
     elite: { round: elite.round, tag: elite.wave.tag, budget: elite.wave.enemyBudget },
     endless: { round: endless.round, mode: endless.progressionMode, budget: endless.wave.enemyBudget },
     hell: { round: hell.round, mode: hell.progressionMode, budget: hell.wave.enemyBudget, interest: hell.player.interestIncome },

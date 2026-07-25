@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { UNIT_DEFS } from "../core/gameData";
 
 export const textureKeyForUnit = (unitId: string) => `rift-unit:${unitId}`;
+export const SUMI_LITTLE_DRAGON_TEXTURE_KEY = "rift-projectile:sumi-little-dragon";
+export const SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY = "rift-projectile:sumi-little-dragon-circle";
 
 export const preloadUnitPortraits = (scene: Phaser.Scene) => {
   Object.values(UNIT_DEFS).forEach((unit) => {
@@ -9,6 +11,9 @@ export const preloadUnitPortraits = (scene: Phaser.Scene) => {
     const key = textureKeyForUnit(unit.id);
     if (!scene.textures.exists(key)) scene.load.image(key, unit.portrait);
   });
+  if (!scene.textures.exists(SUMI_LITTLE_DRAGON_TEXTURE_KEY)) {
+    scene.load.image(SUMI_LITTLE_DRAGON_TEXTURE_KEY, "/images/livers/sumi-little-dragon.jpg");
+  }
 };
 
 export const circularTextureKeyForUnit = (unitId: string) => `rift-unit-circle:${unitId}`;
@@ -54,6 +59,25 @@ export const createCircularPortraitTextures = (scene: Phaser.Scene) => {
     context.restore();
     texture.refresh();
   });
+};
+
+export const createCircularProjectileTextures = (scene: Phaser.Scene) => {
+  if (scene.textures.exists(SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY)) return;
+  if (!scene.textures.exists(SUMI_LITTLE_DRAGON_TEXTURE_KEY)) return;
+  const source = scene.textures.get(SUMI_LITTLE_DRAGON_TEXTURE_KEY).getSourceImage();
+  if (!(source instanceof HTMLImageElement || source instanceof HTMLCanvasElement)) return;
+  const size = Math.min(source.width, source.height);
+  const texture = scene.textures.createCanvas(SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY, 256, 256);
+  if (!texture) return;
+  const context = texture.getContext();
+  context.clearRect(0, 0, 256, 256);
+  context.save();
+  context.beginPath();
+  context.arc(128, 128, 125, 0, Math.PI * 2);
+  context.clip();
+  context.drawImage(source, (source.width - size) / 2, (source.height - size) / 2, size, size, 3, 3, 250, 250);
+  context.restore();
+  texture.refresh();
 };
 
 export const createFallbackTextures = (scene: Phaser.Scene) => {

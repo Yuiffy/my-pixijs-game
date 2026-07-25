@@ -117,7 +117,7 @@ test("前两战只使用低费教学棋子，轴伊不会提前出现在固定�
   assert.ok(data.enemyTraitActivations(secondWave.units).some(({ id }) => id === "wild"));
 });
 
-test("主线预算会计入累计收入并在普通关与精英关持续加压", () => {
+test("主线普通关保留储蓄空间，精英关与首领集中检查战力", () => {
   assert.deepEqual(
     Array.from({ length: 8 }, (_, index) => data.enemyBudgetForRound(index + 1)),
     [2, 5, 9, 18, 16, 17, 21, 32],
@@ -126,10 +126,13 @@ test("主线预算会计入累计收入并在普通关与精英关持续加压",
     [9, 10, 11, 12, 13, 14, 15, 16, 17].map((round) =>
       data.enemyBudgetForRound(round),
     ),
-    [23, 29, 35, 81, 51, 60, 70, 125, 135],
+    [17, 22, 26, 81, 38, 45, 53, 125, 135],
   );
   [4, 8, 12, 16].forEach((round) => {
     assert.ok(data.enemyBudgetForRound(round) > data.enemyBudgetForRound(round - 1) * 1.4);
+  });
+  [9, 13].forEach((round) => {
+    assert.ok(data.enemyBudgetForRound(round) < data.enemyBudgetForRound(round - 1));
   });
   assert.ok(data.enemyBudgetForRound(17) > data.enemyBudgetForRound(16));
 });
@@ -339,13 +342,35 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     assert.ok(unit.energyProfile.max > 0);
     ["start", "perSecond", "onAttack", "onHit", "castRefund"].forEach((field) => assert.ok(unit.energyProfile[field] >= 0));
   });
-  assert.equal(data.UNIT_DEFS.nagisa.energyProfile.id, "bulwark");
+  const repeatableShieldUnits = [
+    "sun_guard",
+    "rift_stalker",
+    "mossback",
+    "sui_bird",
+    "seki_boar_king",
+    "mitsuri",
+    "guangyi",
+    "nagisa",
+    "biscuit_sui",
+    "mumu",
+    "rutice",
+  ];
+  repeatableShieldUnits.forEach((id) => {
+    assert.ok(
+      data.UNIT_DEFS[id].energyProfile.onHit <= 4,
+      `${id} must not use high on-hit recovery for a repeatable shield`,
+    );
+  });
+  ["mossback", "nagisa", "seki_boar_king", "mumu"].forEach((id) => {
+    assert.deepEqual(data.UNIT_DEFS[id].energyProfile, data.ENERGY_PROFILES.steady_guard);
+  });
   assert.deepEqual(data.UNIT_DEFS.sun_guard.energyProfile, data.ENERGY_PROFILES.steady_guard);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 25);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 8);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onAttack, 6);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 3);
   assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /持续自动充能.*攻击与受击也会回复能量.*30% 最大生命护盾/);
+  assert.match(data.UNIT_DEFS.mossback.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*回复自身生命.*两名友军提供护盾/);
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /初始 25\/100.*自动回能（12\.5 秒回满，每秒 \+8）.*攻击回能（每下 \+6）.*受击回能（每下 \+3）/);
   ["rift_stalker", "rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "biscuit_sui", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
     const profile = data.UNIT_DEFS[id].energyProfile;
@@ -525,13 +550,36 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
     assert.equal(unit.portrait, portraits[unit.id]);
   });
   await Promise.all(Object.values(portraits).map((portrait) => access(path.resolve("public", portrait.slice(1)))));
+  await access(path.resolve("public/images/livers/sumi-little-dragon.jpg"));
   assert.equal(seki.abilityName, "山猪冲阵");
   assert.equal(towerGod.abilityName, "尖塔压顶");
-  assert.equal(sumi.abilityName, "礼小虎出击");
+  assert.equal(sumi.abilityName, "空气龙");
+  assert.match(sumi.abilityDescription, /隐身.*最低攻击优先级/);
+  assert.equal(sumi.passiveName, "社恐");
+  assert.match(sumi.passiveDescription, /后坐力.*礼小龙/);
+  assert.equal(sumi.abilityCastTiming, "selfBuff");
   assert.deepEqual(seki.traits, ["wild", "aggression", "skeleton_soldier"]);
   assert.deepEqual(towerGod.traits, ["mystic", "traffic"]);
   assert.deepEqual(sumi.traits, ["mystic", "ranger"]);
   assert.deepEqual(data.UNIT_DEFS.meme.traits, ["wild", "skeleton_soldier", "aggression", "traffic"]);
+});
+
+test("主动技能触发类别与技能形态一致", () => {
+  const expectedTimings = {
+    sun_guard: "selfOnHit",
+    sui: "offenseReady",
+    rift_brawler: "offenseInRange",
+    meme: "offenseInRange",
+    sumi: "selfBuff",
+  };
+  Object.entries(expectedTimings).forEach(([id, timing]) => {
+    assert.equal(data.UNIT_DEFS[id].abilityCastTiming, timing, `${id} should use ${timing}`);
+  });
+  assert.deepEqual(
+    data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].abilityCastTiming === "selfOnHit"),
+    ["sun_guard"],
+    "只有明确的自保技能应使用受击触发",
+  );
 });
 
 test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊", async () => {

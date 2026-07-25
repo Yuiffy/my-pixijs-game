@@ -165,6 +165,9 @@
 .rift-detail-skill { padding: 8px 9px; border-left: 2px solid #78d8ff; background: rgba(120, 216, 255, .07); }
 .rift-detail-skill span { color: #b8eaff; font-size: 10px; font-weight: 800; }
 .rift-detail-skill p { margin: 5px 0 0; color: #a6c0cb; font-size: 10px; line-height: 1.55; }
+.rift-detail-passive { margin-top: 7px; padding: 8px 9px; border-left: 2px solid #c3a7ff; background: rgba(195, 167, 255, .07); }
+.rift-detail-passive span { color: #d6c3ff; font-size: 10px; font-weight: 800; }
+.rift-detail-passive p { margin: 5px 0 0; color: #a6c0cb; font-size: 10px; line-height: 1.55; }
 .rift-detail-energy { color: #7599a8; font-size: 9px; line-height: 1.45; }
 .rift-shop-card-meta { display: grid; justify-items: end; gap: 2px; min-width: 29px; }
 .rift-shop-card-meta small { color: #73d3ae; font-size: 8px; white-space: nowrap; }

@@ -37,9 +37,11 @@ import { fighterVisualRadius, mechanicalRabbitMuzzle } from "../core/battleGeome
 import { EngineBridge, type GameAction } from "./EngineBridge";
 import {
   circularTextureKeyForUnit,
+  createCircularProjectileTextures,
   createCircularPortraitTextures,
   createFallbackTextures,
   preloadUnitPortraits,
+  SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY,
   textureKeyForUnit,
 } from "./assets";
 import {
@@ -245,6 +247,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.updateQuality();
     createFallbackTextures(this);
     createCircularPortraitTextures(this);
+    createCircularProjectileTextures(this);
     this.createBurstGradientTexture();
     this.createTitleGlowTexture();
     this.input.setTopOnly(true);
@@ -1597,7 +1600,10 @@ export class RiftLineScene extends Phaser.Scene {
     const attackOffsetX = ((fighter.attackTargetX - fighter.x) / targetDistance) * lunge;
     const attackOffsetY = ((fighter.attackTargetY - fighter.y) / targetDistance) * lunge;
     const visualY = fighter.y - jumpArc + attackOffsetY;
-    view.setPosition(fighter.x + attackOffsetX, visualY).setDepth(DEPTH.entities + visualY);
+    view
+      .setPosition(fighter.x + attackOffsetX, visualY)
+      .setDepth(DEPTH.entities + visualY)
+      .setAlpha(fighter.stealthTime > 0 ? 0.56 : 1);
 
     const hp = view.getByName("hp") as Phaser.GameObjects.Rectangle;
     const energy = view.getByName("energy") as Phaser.GameObjects.Rectangle;
@@ -1662,6 +1668,7 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
       fighter.reborn ? "涅" : "",
       fighter.rebirthRecoilTime > 0 ? "退" : "",
+      fighter.stealthTime > 0 ? "隐" : "",
       fighter.channelTime > 0 ? "捏" : "",
       fighter.syncAvDirection > 0 ? "骄" : fighter.syncAvDirection < 0 ? "哀" : "",
       fighter.gen27Buffed ? "27" : "",
@@ -1669,7 +1676,7 @@ export class RiftLineScene extends Phaser.Scene {
     ].filter(Boolean);
     status.setText(statusBadges.join(" "));
     status.setY(-radius - 8);
-    status.setColor(fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e");
+    status.setColor(fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e");
     label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}`);
     star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
   }
@@ -1716,7 +1723,8 @@ export class RiftLineScene extends Phaser.Scene {
     const trail = this.add.graphics().setName("trail");
     const core = this.add.circle(0, 0, Math.max(2, projectile.size), 0xf8fcff).setName("core");
     const icon = this.text(0, 0, "", Math.max(12, projectile.size), "#ffffff", { fontFamily: PROJECTILE_EMOJI_FONT }).setOrigin(0.5).setName("icon");
-    container.add([trail, core, icon]);
+    const dragon = this.add.image(0, 0, SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY).setName("dragon");
+    container.add([trail, core, icon, dragon]);
     return container;
   }
 
@@ -1732,12 +1740,30 @@ export class RiftLineScene extends Phaser.Scene {
     const trail = view.getByName("trail") as Phaser.GameObjects.Graphics;
     const core = view.getByName("core") as Phaser.GameObjects.Arc;
     const icon = view.getByName("icon") as Phaser.GameObjects.Text;
+    const dragon = view.getByName("dragon") as Phaser.GameObjects.Image;
     const emoji = projectileEmoji(projectile);
     const { color: projectileColor } = Phaser.Display.Color.HexStringToColor(projectile.color);
     view.setPosition(projectile.x, projectile.y).setDepth(DEPTH.effects + projectile.y);
     trail.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     core.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     icon.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+    dragon.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+
+    if (projectile.style === "sumi_dragon") {
+      const frameColor = Phaser.Display.Color.HexStringToColor(projectile.color).color;
+      trail
+        .setVisible(true)
+        .lineStyle(2.5, frameColor, 0.95)
+        .strokeCircle(0, 0, projectile.radius + 5)
+        .lineStyle(1, 0xffffff, 0.6)
+        .strokeCircle(0, 0, projectile.radius + 8);
+      dragon
+        .setDisplaySize(projectile.size * 2.1, projectile.size * 2.1)
+        .setRotation(angle)
+        .setAlpha(0.98)
+        .setVisible(true);
+      return;
+    }
 
     if (projectile.style === "lollipop" && projectile.grounded) {
       trail.setVisible(true);
@@ -2532,6 +2558,12 @@ export class RiftLineScene extends Phaser.Scene {
     ].filter(Boolean).join("\n");
     const ability = this.boundedText(abilityDescription, contentWidth, this.isCompact() ? 7 : 9, body, "#adc1cc", { lineSpacing: 5 });
     const abilityTitle = this.text(0, 0, `${def.abilityName} · ${ABILITY_CAST_TIMING_LABELS[def.abilityCastTiming]}`, section, "#eea7d5", { fontStyle: "bold" }).setVisible(false);
+    const passive = def.passiveName && def.passiveDescription
+      ? this.boundedText(def.passiveDescription, contentWidth, this.isCompact() ? 6 : 8, body, "#b8aecf", { lineSpacing: 5 })
+      : null;
+    const passiveTitle = def.passiveName
+      ? this.text(0, 0, `被动 · ${def.passiveName}`, section, "#c3a7ff", { fontStyle: "bold" }).setVisible(false)
+      : null;
     const titleY = padding - 2;
     const detailY = titleY + title + 14;
     const energyY = detailY + detailText.height + 8;
@@ -2570,7 +2602,9 @@ export class RiftLineScene extends Phaser.Scene {
     const traitHeight = traitY + tagHeight;
     const abilityTitleY = traitsY + traitHeight + 12;
     const abilityBodyY = abilityTitleY + abilityTitle.height + 5;
-    const height = Math.max(292, abilityBodyY + ability.height + padding);
+    const passiveTitleY = abilityBodyY + ability.height + (passiveTitle ? 12 : 0);
+    const passiveBodyY = passiveTitleY + (passiveTitle?.height || 0) + 5;
+    const height = Math.max(292, (passive ? passiveBodyY + passive.height : abilityBodyY + ability.height) + padding);
     const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 280, scale);
     const container = this.add.container(x, y).setScale(scale);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, Phaser.Display.Color.HexStringToColor(def.accent).color));
@@ -2601,6 +2635,11 @@ export class RiftLineScene extends Phaser.Scene {
     abilityTitle.setPosition(padding, abilityTitleY).setVisible(true);
     ability.setPosition(padding, abilityBodyY);
     container.add([abilityTitle, ability]);
+    if (passiveTitle && passive) {
+      passiveTitle.setPosition(padding, passiveTitleY).setVisible(true);
+      passive.setPosition(padding, passiveBodyY);
+      container.add([passiveTitle, passive]);
+    }
     container.setName("tooltip");
     this.tooltipLayer.add(container);
   }

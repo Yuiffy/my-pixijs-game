@@ -153,6 +153,15 @@ const ZEYIN_REBIRTH_RECOIL_WINDOW = 4;
 const ZEYIN_REBIRTH_RECOIL_DISTANCE = 34;
 const ZEYIN_REBIRTH_RECOIL_DURATION = 0.16;
 const ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN = 4;
+/** 礼墨空气龙与社恐：短时隐身，破隐时发射礼小龙，普攻后真实后退。 */
+const SUMI_STEALTH_DURATION = 3.4;
+const SUMI_DRAGON_DAMAGE_MULTIPLIER = 1.35;
+const SUMI_DRAGON_PROJECTILE_SPEED = 680;
+const SUMI_DRAGON_PROJECTILE_RADIUS = 14;
+const SUMI_DRAGON_PROJECTILE_SIZE = 21;
+const SUMI_SOCIAL_RECOIL_DISTANCE = 28;
+const SUMI_SOCIAL_RECOIL_DURATION = 0.16;
+const SUMI_SOCIAL_RECOIL_RANGE_MARGIN = 4;
 /** 流量：成员全能吸血，以及 4/6 人档的全队全能吸血 */
 const TRAFFIC_MEMBER_LIFESTEAL = [0, 0.12, 0.2, 0.32];
 const TRAFFIC_TEAM_LIFESTEAL = [0, 0, 0.08, 0.15];
@@ -224,7 +233,6 @@ const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile
   shiori: { kind: "beam" },
   spark_mage: { kind: "projectile", glyph: "⏳" },
   sui_flower: { kind: "projectile", glyph: "🌶️" },
-  sumi: { kind: "projectile", glyph: "🐯" },
   tower_god: { kind: "projectile", glyph: "塔" },
   pako: { kind: "projectile", glyph: "🐟" },
   nightin: { kind: "projectile", glyph: "🚬" },
@@ -559,6 +567,8 @@ export class AutoChessEngine {
       energyStyle: fighter.energyStyle,
       reborn: fighter.reborn,
       rebirthRecoilTime: Number(fighter.rebirthRecoilTime.toFixed(2)),
+      stealthTime: Number(fighter.stealthTime.toFixed(2)),
+      sumiDragonReady: fighter.sumiDragonReady,
       stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
       damageDealt: Math.round(fighter.damageDealt),
@@ -1213,6 +1223,8 @@ export class AutoChessEngine {
         secondWindUsed: false,
         reborn: false,
         rebirthRecoilTime: 0,
+        stealthTime: 0,
+        sumiDragonReady: false,
         enraged: false,
         jumpPending: assassinLevel > 0,
         jumpDelay: assassinLevel ? 3.4 + spawn.row * 0.12 : 0,
@@ -1379,6 +1391,8 @@ export class AutoChessEngine {
         secondWindUsed: false,
         reborn: false,
         rebirthRecoilTime: 0,
+        stealthTime: 0,
+        sumiDragonReady: false,
         enraged: false,
         attackPulse: 0,
         facingX: -1,
@@ -1943,7 +1957,7 @@ export class AutoChessEngine {
     const current = available.find((target) => target.fid === source.targetFid) || null;
     const nearest = this.nearestTarget(source, available);
     source.targetLock = Math.max(0, source.targetLock - dt);
-    const shouldSwitch = !current || !nearest || (source.targetLock <= 0 && (
+    const shouldSwitch = !current || !nearest || (current.stealthTime > 0 && nearest.stealthTime <= 0) || (source.targetLock <= 0 && (
       source.stuckTime >= STUCK_RECOVERY_DELAY ||
       Math.hypot(nearest.x - source.x, nearest.y - source.y) + TARGET_SWITCH_DISTANCE < Math.hypot(current.x - source.x, current.y - source.y)
     ));
@@ -2045,9 +2059,10 @@ export class AutoChessEngine {
   }
 
   private prepareAssassinJump(fighter: Fighter, battle: BattleState) {
-    const backlineTargets = battle.enemy
+    const targetTeam: Team = fighter.team === "player" ? "enemy" : "player";
+    const backlineTargets = (targetTeam === "player" ? battle.player : battle.enemy)
       .filter((enemy) => enemy.alive)
-      .sort((a, b) => b.x - a.x);
+      .sort((a, b) => fighter.team === "player" ? b.x - a.x : a.x - b.x);
     const target = backlineTargets[0];
     if (!target) return false;
 
@@ -2231,6 +2246,9 @@ export class AutoChessEngine {
     );
     return availableTargets.reduce<Fighter | null>((best, target) => {
       if (!best) return target;
+      const targetStealthed = target.stealthTime > 0;
+      const bestStealthed = best.stealthTime > 0;
+      if (targetStealthed !== bestStealthed) return targetStealthed ? best : target;
       const bestDistance = Math.hypot(best.x - source.x, best.y - source.y);
       const distance = Math.hypot(target.x - source.x, target.y - source.y);
       return distance < bestDistance ? target : best;
@@ -2479,7 +2497,9 @@ export class AutoChessEngine {
       y: source.y,
       velocityX: Math.cos(baseAngle) * shot.speed,
       velocityY: Math.sin(baseAngle) * shot.speed,
-      radius: shot.emoji || shot.style === "carrot" || shot.style === "shark" || shot.style === "coin" ? 9 : 7,
+      radius: shot.style === "sumi_dragon"
+        ? SUMI_DRAGON_PROJECTILE_RADIUS
+        : shot.emoji || shot.style === "carrot" || shot.style === "shark" || shot.style === "coin" ? 9 : 7,
       remainingRange: 880,
       damage: shot.damage,
       burnPower: shot.burnPower,
@@ -3165,6 +3185,12 @@ export class AutoChessEngine {
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
+      const wasStealthed = fighter.stealthTime > 0;
+      fighter.stealthTime = Math.max(0, fighter.stealthTime - dt);
+      if (wasStealthed && fighter.stealthTime === 0 && fighter.sumiDragonReady) {
+        fighter.sumiDragonReady = false;
+        this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: UNIT_DEFS[fighter.unitId].accent, text: "现身", life: 0.55, size: 11 });
+      }
       fighter.abilityAttackBonusTime = Math.max(0, fighter.abilityAttackBonusTime - dt);
       fighter.abilityLifestealTime = Math.max(0, fighter.abilityLifestealTime - dt);
       fighter.danceDashCooldown = Math.max(0, fighter.danceDashCooldown - dt);
@@ -3320,6 +3346,7 @@ export class AutoChessEngine {
           case "engage":
           case "offenseReady":
           case "supportShield":
+          case "selfBuff":
             shouldCast = true;
             break;
           case "selfOnHit":
@@ -3455,13 +3482,15 @@ export class AutoChessEngine {
     });
   }
 
-  private tryZeyinRebirthRecoil(source: Fighter, target: Fighter) {
+  private tryAttackRecoil(
+    source: Fighter,
+    target: Fighter,
+    options: { active: boolean; distance: number; duration: number; rangeMargin: number },
+  ) {
     const battle = this.state.battle;
     if (
       !battle ||
-      source.unitId !== "zeyin" ||
-      !source.reborn ||
-      source.rebirthRecoilTime <= 0 ||
+      !options.active ||
       !source.alive ||
       source.abilityMotion
     ) return false;
@@ -3471,8 +3500,8 @@ export class AutoChessEngine {
     const distance = Math.hypot(deltaX, deltaY);
     if (distance < 0.01) return false;
     const attackRange = this.combatAttackRange(source, target);
-    const availableDistance = attackRange - ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN - distance;
-    const recoilDistance = Math.min(ZEYIN_REBIRTH_RECOIL_DISTANCE, availableDistance);
+    const availableDistance = attackRange - options.rangeMargin - distance;
+    const recoilDistance = Math.min(options.distance, availableDistance);
     if (recoilDistance < 4) return false;
 
     const awayX = deltaX / distance;
@@ -3495,7 +3524,7 @@ export class AutoChessEngine {
     if (
       travelDistance < 4 ||
       awayProgress < 3 ||
-      landingDistance > attackRange - ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN + 0.01
+      landingDistance > attackRange - options.rangeMargin + 0.01
     ) return false;
 
     source.abilityMotion = {
@@ -3507,7 +3536,7 @@ export class AutoChessEngine {
       toX: landing.x,
       toY: landing.y,
       time: 0,
-      duration: ZEYIN_REBIRTH_RECOIL_DURATION,
+      duration: options.duration,
       arcHeight: 0,
       hitFids: [],
     };
@@ -3515,11 +3544,49 @@ export class AutoChessEngine {
     return true;
   }
 
+  private tryZeyinRebirthRecoil(source: Fighter, target: Fighter) {
+    return this.tryAttackRecoil(source, target, {
+      active: source.unitId === "zeyin" && source.reborn && source.rebirthRecoilTime > 0,
+      distance: ZEYIN_REBIRTH_RECOIL_DISTANCE,
+      duration: ZEYIN_REBIRTH_RECOIL_DURATION,
+      rangeMargin: ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN,
+    });
+  }
+
+  private trySumiSocialRecoil(source: Fighter, target: Fighter) {
+    return this.tryAttackRecoil(source, target, {
+      active: source.unitId === "sumi",
+      distance: SUMI_SOCIAL_RECOIL_DISTANCE,
+      duration: SUMI_SOCIAL_RECOIL_DURATION,
+      rangeMargin: SUMI_SOCIAL_RECOIL_RANGE_MARGIN,
+    });
+  }
+
   private basicAttack(source: Fighter, target: Fighter) {
     if (Math.hypot(target.x - source.x, target.y - source.y) > this.combatAttackRange(source, target)) return;
     this.markFightersEngaged(source, target);
     this.faceTowardX(source, target.x);
     source.cooldown = source.attackInterval;
+    if (source.unitId === "sumi" && source.stealthTime > 0 && source.sumiDragonReady) {
+      source.stealthTime = 0;
+      source.sumiDragonReady = false;
+      this.fireFixedProjectile(source, target, {
+        sourceFid: source.fid,
+        targetFid: target.fid,
+        delay: 0,
+        damage: source.attack * SUMI_DRAGON_DAMAGE_MULTIPLIER,
+        burnPower: 0,
+        speed: SUMI_DRAGON_PROJECTILE_SPEED,
+        color: UNIT_DEFS.sumi.accent,
+        size: SUMI_DRAGON_PROJECTILE_SIZE,
+        style: "sumi_dragon",
+      });
+      this.addEnergy(source, source.energyOnAttack);
+      this.addEnergy(target, target.energyOnHit);
+      this.addEffect({ kind: "text", x: source.x, y: source.y - 46, color: UNIT_DEFS.sumi.accent, text: "破隐一击", life: 0.7, size: 12 });
+      this.trySumiSocialRecoil(source, target);
+      return;
+    }
     if (source.unitId === "nori") {
       this.fireFixedProjectile(source, target, {
         sourceFid: source.fid,
@@ -3593,6 +3660,7 @@ export class AutoChessEngine {
       size: source.attackType === "ranged" ? 3 : 22,
     });
     this.tryZeyinRebirthRecoil(source, target);
+    this.trySumiSocialRecoil(source, target);
     if (dealt > 0) this.addDamageText(target, dealt);
   }
 
@@ -3640,6 +3708,22 @@ export class AutoChessEngine {
       this.grantShield(source, target, amount, capRatio);
 
     switch (source.unitId) {
+      case "sumi": {
+        source.stealthTime = SUMI_STEALTH_DURATION;
+        source.sumiDragonReady = true;
+        source.targetFid = null;
+        source.targetLock = 0;
+        const opponents = source.team === "player" ? this.state.battle?.enemy : this.state.battle?.player;
+        opponents?.forEach((opponent) => {
+          if (opponent.targetFid === source.fid) {
+            opponent.targetFid = null;
+            opponent.targetLock = 0;
+          }
+        });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.72, size: source.radius * 2.5 });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: def.accent, text: "空气龙 · 隐身", life: 0.78, size: 12 });
+        break;
+      }
       case "zeyin":
         // 涅槃重生由死亡事件触发，不进入通用主动施法流程。
         return;
@@ -3928,12 +4012,6 @@ export class AutoChessEngine {
         if (motion) {
           this.addEffect({ kind: "line", x: startX, y: startY, x2: motion.toX, y2: motion.toY, color: def.accent, life: motion.duration, size: 9 });
         }
-        break;
-      }
-      case "sumi": {
-        const center = densest(targets);
-        if (!center) break;
-        this.deliverRemoteAoe(source, center);
         break;
       }
       case "mitsuri": {

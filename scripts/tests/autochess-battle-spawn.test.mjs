@@ -322,7 +322,7 @@ test("舞台梦携带小红帽，并为全队提供少量能量和跳舞攻速",
   const nonDancer = battle?.player.find((fighter) => fighter.unitId === "mossback");
   assert.ok(dancer && nonDancer);
   assert.equal(dancer.energy, 25);
-  assert.equal(nonDancer.energy, 25);
+  assert.equal(nonDancer.energy, 35);
   assert.equal(dancer.attackInterval, 1.12 / 1.12 / 1.08);
   assert.equal(nonDancer.attackInterval, 1.2);
 });
@@ -631,6 +631,117 @@ test("一星绿冻护甲在三名一星敌人围攻下最多续盾两次且会�
   assert.equal(engine.state.phase, "result");
 });
 
+test("一星绒绒的狗在三名一星敌人围攻下不会靠受击无限续盾", () => {
+  const engine = createEngine(149);
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const mossback = battle?.player[0];
+  assert.ok(battle && mossback);
+  assert.equal(battle.enemy.length, 3);
+  assert.equal(mossback.energyPerSecond, 8);
+  assert.equal(mossback.energyOnAttack, 6);
+  assert.equal(mossback.energyOnHit, 3);
+  battle.enemy.forEach((fighter) => {
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
+
+  let castCount = 0;
+  const castAbility = engine.castAbility.bind(engine);
+  engine.castAbility = (source, targets) => {
+    if (source === mossback) castCount += 1;
+    return castAbility(source, targets);
+  };
+  stepBattle(engine, 480);
+
+  assert.ok(castCount >= 1, "绒绒的狗仍应能正常施放技能");
+  assert.ok(castCount <= 2, "三打一不应通过受击回能反复刷新护盾");
+  assert.equal(mossback.alive, false);
+  assert.equal(mossback.shield, 0);
+  assert.equal(engine.state.phase, "result");
+});
+
+test("所有可重复护盾角色在三人持续集火下都能被击破", async (context) => {
+  const shieldUnitIds = [
+    "sun_guard",
+    "rift_stalker",
+    "mossback",
+    "sui_bird",
+    "seki_boar_king",
+    "mitsuri",
+    "guangyi",
+    "nagisa",
+    "biscuit_sui",
+    "mumu",
+    "rutice",
+  ];
+
+  for (const [index, unitId] of shieldUnitIds.entries()) {
+    await context.test(unitId, () => {
+      const engine = createEngine(160 + index);
+      engine.state.round = 2;
+      engine.state.playerLevel = 4;
+      engine.state.starter = "blaze";
+      engine.state.board.fill(null);
+      engine.state.board[0] = { uid: 1, id: unitId, star: 1 };
+      engine.startBattle();
+      const battle = engine.state.battle;
+      const shieldUnit = battle?.player[0];
+      assert.ok(battle && shieldUnit);
+      shieldUnit.x = 500;
+      shieldUnit.y = 360;
+      shieldUnit.moveSpeed = 0;
+      shieldUnit.energy = shieldUnit.maxEnergy * 0.9;
+
+      const normalizedAttack =
+        (shieldUnit.maxHp / 5 / (3 / 0.8)) * ((100 + shieldUnit.armor) / 100);
+      battle.enemy.forEach((attacker, attackerIndex) => {
+        attacker.x = 560;
+        attacker.y = 300 + attackerIndex * 60;
+        attacker.hp = 99_999;
+        attacker.maxHp = 99_999;
+        attacker.armor = 99_999;
+        attacker.attack = normalizedAttack;
+        attacker.baseAttack = normalizedAttack;
+        attacker.attackInterval = 0.8;
+        attacker.baseAttackInterval = 0.8;
+        attacker.cooldown = 0;
+        attacker.moveSpeed = 180;
+        attacker.baseMoveSpeed = 180;
+        attacker.energy = 0;
+        attacker.energyPerSecond = 0;
+        attacker.energyOnAttack = 0;
+        attacker.energyOnHit = 0;
+        attacker.dodgeChance = 0;
+      });
+
+      let castCount = 0;
+      const castAbility = engine.castAbility.bind(engine);
+      engine.castAbility = (source, targets) => {
+        if (source === shieldUnit) castCount += 1;
+        return castAbility(source, targets);
+      };
+      stepBattle(engine, 480);
+
+      assert.ok(
+        castCount >= 1,
+        `${unitId} should still cast its shield ability (elapsed ${battle.elapsed.toFixed(2)}, energy ${shieldUnit.energy.toFixed(1)}, damage ${shieldUnit.damageTaken.toFixed(1)})`,
+      );
+      assert.equal(
+        shieldUnit.alive,
+        false,
+        `${unitId} should not sustain forever (elapsed ${battle.elapsed.toFixed(2)}, hp ${shieldUnit.hp.toFixed(1)}, shield ${shieldUnit.shield.toFixed(1)}, damage ${shieldUnit.damageTaken.toFixed(1)}, casts ${castCount})`,
+      );
+      assert.equal(shieldUnit.shield, 0, `${unitId} shield should be fully broken`);
+      assert.equal(engine.state.phase, "result");
+    });
+  }
+});
+
 test("满能量远程单位会先进入攻击距离再施法", () => {
   const engine = createEngine(140);
   engine.state.playerLevel = 4;
@@ -726,6 +837,73 @@ test("跳舞冲刺只在一次冲刺可进入自身攻击范围时触发", () =>
   engine.update(0.05);
   assert.ok(source.danceDashTime > 0, "最后一段接敌应触发冲刺");
   assert.ok(source.danceDashCooldown > 0);
+});
+
+test("小红帽满能量时按攻击释放，而不是等待受击", () => {
+  const engine = createEngine(143);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  assert.ok(battle && source);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = index === 0 ? 900 : 980;
+    fighter.y = 360;
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+  });
+  source.x = 180;
+  source.y = 360;
+  source.hitPulse = 0;
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.equal(source.barrageActive, true);
+  assert.ok(battle.effects.some((effect) => effect.text === "攻击弹幕"));
+});
+
+test("近身范围主动技能只在进入攻击距离后释放", () => {
+  ["rift_brawler", "meme"].forEach((unitId, index) => {
+    const engine = createEngine(144 + index);
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: unitId, star: 1 };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const source = battle?.player[0];
+    const target = battle?.enemy[0];
+    assert.ok(battle && source && target);
+    battle.enemy.forEach((fighter, enemyIndex) => {
+      fighter.x = enemyIndex === 0 ? 900 : 980;
+      fighter.y = 360;
+      fighter.attack = 0;
+      fighter.cooldown = 99;
+      fighter.armor = 99_999;
+      fighter.hp = fighter.maxHp = 99_999;
+    });
+    source.x = 180;
+    source.y = 360;
+    source.moveSpeed = 0;
+    source.cooldown = 0;
+    source.hitPulse = 0;
+    source.energy = source.maxEnergy;
+    engine.update(0.05);
+    assert.equal(source.energy, source.maxEnergy, `${unitId} should wait outside attack range`);
+    assert.equal(
+      battle.effects.some((effect) => effect.text === gameData.UNIT_DEFS[unitId].abilityName),
+      false,
+      `${unitId} should not cast outside attack range`,
+    );
+
+    target.x = source.x + source.range - 1;
+    target.y = source.y;
+    engine.update(0.05);
+    assert.ok(
+      battle.effects.some((effect) => effect.text === gameData.UNIT_DEFS[unitId].abilityName),
+      `${unitId} should cast after entering attack range`,
+    );
+  });
 });
 
 test("拥挤近战会侧移接敌并在时限前造成伤害", () => {
@@ -1061,6 +1239,48 @@ test("偷袭成员会在己方首个单位交战后提前起跳", () => {
   assert.ok(battle.elapsed < 0.2, "不应继续等待原本约 3.4 秒的兜底倒计时");
 });
 
+test("敌方偷袭成员会跳向我方后排，而不是跳回敌方阵地", () => {
+  const engine = createEngine(98);
+  engine.state.round = 17;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const target = battle.player[0];
+  const assassin = battle.enemy.find((fighter) => fighter.unitId === "youyi");
+  assert.ok(target && assassin);
+
+  target.x = 300;
+  target.y = 320;
+  battle.player.forEach((fighter) => {
+    fighter.cooldown = 99;
+    fighter.moveSpeed = 0;
+    fighter.energy = 0;
+  });
+  battle.enemy.forEach((fighter) => {
+    fighter.x = fighter === assassin ? 900 : 950;
+    fighter.y = 320;
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+    fighter.moveSpeed = 0;
+    fighter.energy = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
+  battle.engagedTeams.enemy = true;
+
+  engine.update(0.05);
+  assert.equal(assassin.jumpPending, false);
+  assert.ok(assassin.jumpTime > 0);
+  assert.ok(assassin.jumpToX < target.x, "敌方偷袭落点应在我方目标的左侧");
+  assert.ok(
+    Math.hypot(assassin.jumpToX - target.x, assassin.jumpToY - target.y) < 100,
+    "敌方偷袭落点应贴近我方后排目标",
+  );
+});
+
 test("北欧时停按施法者星级提升持续时间、范围与特效尺寸", () => {
   const expected = [
     { star: 1, radius: 108, duration: 1.8 },
@@ -1113,7 +1333,6 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
   const projectileAbilities = [
     "spark_mage",
     "sui_flower",
-    "sumi",
     "tower_god",
     "nightin",
     "rei",
@@ -1519,6 +1738,35 @@ test("高存款七人阵容在后段精英与终局首领前必须继续投入�
   assert.ok(bossEngine.state.battle.enemy.some((unit) => unit.alive));
 });
 
+test("通过精英关的阵容可以连续三场普通关攒钱", () => {
+  const slots = [4, 5, 10, 11, 16, 17, 22];
+  const lineup = [
+    "spark_mage",
+    "lian",
+    "nori",
+    "youyi",
+    "grove_mender",
+    "mumu",
+    "yua",
+  ];
+
+  [12, 13, 14, 15].forEach((round) => {
+    const engine = createEngine(2);
+    engine.state.round = round;
+    engine.state.playerLevel = 7;
+    engine.state.board.fill(null);
+    slots.forEach((slot, index) => {
+      engine.state.board[slot] = { uid: index + 1, id: lineup[index], star: 2 };
+    });
+    engine.state.augments = ["sharp_edge", "execution"];
+    engine.startBattle();
+    for (let tick = 0; tick < 600 && engine.state.phase === "battle"; tick += 1) {
+      engine.update(0.05);
+    }
+    assert.equal(engine.state.result.won, true, `round ${round} should not require another spend`);
+  });
+});
+
 test("普通利息每 5 金币提供 1 点并在 20 金币封顶", () => {
   const engine = createEngine(300);
   engine.state.gold = 19;
@@ -1567,7 +1815,7 @@ test("理财在结算增加收入，高档按每 4 金币计算并在 20 利息�
   assert.equal(highTierEngine.interestIncome, 20);
 });
 
-test("每颗敌方星级提供一金币赏金，失败也结算已击败敌人", () => {
+test("每颗敌方星级提供一金币结算金，失败也结算完整敌方阵容", () => {
   const engine = createEngine(304);
   engine.state.gold = 0;
   engine.startBattle();
@@ -1579,11 +1827,11 @@ test("每颗敌方星级提供一金币赏金，失败也结算已击败敌人",
   battle.player.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
   engine.update(0.05);
   assert.equal(engine.state.result.won, false);
-  assert.equal(engine.state.result.bounty, 2);
-  assert.equal(engine.state.result.income, 2);
+  assert.equal(engine.state.result.bounty, 3);
+  assert.equal(engine.state.result.income, 3);
   assert.equal(engine.state.result.defeatedEnemies, 1);
   assert.deepEqual(engine.state.result.defeatedByStar, { 1: 0, 2: 1, 3: 0 });
-  assert.match(engine.state.result.detail, /击败赏金 2（2星×1）/);
+  assert.match(engine.state.result.detail, /阵容结算 3（敌军1星×1、2星×1；击败 1\/2）/);
 });
 
 test("连续升本可以到达十本并上阵十人", () => {
@@ -1642,13 +1890,13 @@ test("自然减费可降到零，溢出减费会结转并连续抵扣后续本�
   assert.equal(textState.player.upgradeDiscountCarry, 0);
 });
 
-test("零赏金时花呗只抵扣当回合收入，不会产生负金币", () => {
+test("敌方阵容为空时花呗只抵扣当回合收入，不会产生负金币", () => {
   const engine = createEngine(305);
   engine.state.gold = 0;
   engine.state.paydayDebtRounds = 1;
   engine.startBattle();
-  engine.state.battle.player.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
-  engine.update(0.05);
+  engine.state.battle.enemy = [];
+  engine["finishBattle"](false);
   assert.equal(engine.state.result.bounty, 0);
   assert.equal(engine.state.result.income, 0);
   assert.equal(engine.state.gold, 0);
@@ -1888,6 +2136,53 @@ test("泽音涅槃有专属特效，重生后短时普攻后退且不会退出�
   zeyin.rebirthRecoilTime = 0;
   engine["basicAttack"](zeyin, target);
   assert.equal(zeyin.abilityMotion, null, "撤离窗口结束后不应再触发后坐力");
+});
+
+test("礼墨空气龙降低仇恨，破隐一击发射礼小龙并触发社恐后坐力", () => {
+  const engine = createEngine(198);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sumi", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const sumi = battle?.player.find((fighter) => fighter.unitId === "sumi");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "sun_guard");
+  const enemy = battle?.enemy[0];
+  assert.ok(battle && sumi && ally && enemy);
+
+  sumi.x = 200;
+  sumi.y = 360;
+  ally.x = 280;
+  ally.y = 360;
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = 390 + index * 70;
+    fighter.y = 360 + index * 18;
+    fighter.hp = fighter.maxHp = 99_999;
+    fighter.attack = 0;
+    fighter.armor = 99_999;
+    fighter.cooldown = 99;
+    fighter.moveSpeed = 0;
+  });
+  sumi.energy = sumi.maxEnergy;
+  sumi.cooldown = 99;
+  engine.update(0.05);
+
+  assert.ok(sumi.stealthTime > 3.3 && sumi.stealthTime <= 3.4);
+  assert.equal(sumi.sumiDragonReady, true);
+  assert.notEqual(enemy.targetFid, sumi.fid, "隐身后敌方应优先锁定其他可见友军");
+
+  const target = battle.enemy[0];
+  const beforeX = sumi.x;
+  sumi.cooldown = 0;
+  engine["basicAttack"](sumi, target);
+  assert.equal(sumi.stealthTime, 0);
+  assert.equal(sumi.sumiDragonReady, false);
+  assert.equal(sumi.abilityMotion?.kind, "push");
+  assert.ok(battle.projectiles.some((projectile) => projectile.style === "sumi_dragon"));
+  engine.update(0.08);
+  assert.ok(sumi.x < beforeX, "社恐后坐力应把礼墨推离目标");
+  assert.ok(battle.effects.some((effect) => effect.text === "破隐一击"));
 });
 
 test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害与眩晕", () => {
@@ -2429,18 +2724,16 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
   assert.ok(target.stun > 0, "山猪冲阵应在落地后眩晕敌人");
   assert.ok(seki.shield > 0, "山猪冲阵应为自身提供护盾");
 
-  target.stun = 0;
+  sumi.stealthTime = 0;
+  sumi.sumiDragonReady = false;
+  sumi.energy = sumi.maxEnergy;
   target.armor = 20;
-  target.weakenArmorPenalty = 0;
-  target.weakenTime = 0;
+  target.stun = 0;
   engine.castAbility(sumi, battle.enemy);
-  assert.equal(target.stun, 0, "礼小虎弹幕抵达前不应提前眩晕");
-  assert.equal(target.armor, 20, "礼小虎弹幕抵达前不应提前削甲");
-  assert.ok(battle.projectiles.some((projectile) => projectile.impactAbilityId === "sumi"));
-  engine["updateProjectiles"](battle, 1);
-  assert.ok(target.stun > 0, "礼小虎出击应眩晕区域内敌人");
-  assert.equal(target.armor, 11, "礼小虎出击应削弱护甲");
-  assert.ok(target.weakenTime >= 2.8);
+  assert.ok(sumi.stealthTime > 3.3, "空气龙应立即进入隐身");
+  assert.equal(sumi.sumiDragonReady, true);
+  assert.equal(target.stun, 0, "空气龙不应在施放时直接控制敌人");
+  assert.equal(target.armor, 20, "空气龙不应在施放时削弱敌人护甲");
 
   target.stun = 0;
   const hpBeforeTower = target.hp;

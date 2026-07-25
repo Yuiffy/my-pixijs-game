@@ -56,7 +56,7 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball" | "aoe_orb";
+  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "sumi_dragon";
   /** 命中后对附近敌人造成伤害与灼烧的半径。 */
   splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
@@ -239,6 +239,10 @@ export interface Fighter {
   reborn: boolean;
   /** 涅槃后普攻后坐力的剩余持续时间。 */
   rebirthRecoilTime: number;
+  /** 礼墨空气龙隐身剩余时间；隐身会降低敌方选中优先级。 */
+  stealthTime: number;
+  /** 礼墨隐身期间是否仍保留一次破隐礼小龙弹幕。 */
+  sumiDragonReady: boolean;
   enraged: boolean;
   attackPulse: number;
   facingX: -1 | 1;

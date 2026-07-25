@@ -148,6 +148,7 @@ export const describeEnergyRecovery = (profile: EnergyProfile) => {
  * - selfOnHit：自保，能量满且受击时释放
  * - supportShield：支援护盾，能量满即放
  * - supportHeal：支援治疗，能量满且候选友军生命比例低于阈值时释放
+ * - selfBuff：自保强化，能量满即放
  * - engage：突进，能量满即放
  * - offenseInRange：近距进攻，能量满且进入普攻距离时释放
  * - offenseReady：远程/战场进攻，能量满即放
@@ -157,6 +158,7 @@ export type AbilityCastTiming =
   | "selfOnHit"
   | "supportShield"
   | "supportHeal"
+  | "selfBuff"
   | "engage"
   | "offenseInRange"
   | "offenseReady"
@@ -166,6 +168,7 @@ export const ABILITY_CAST_TIMING_LABELS: Record<AbilityCastTiming, string> = {
   selfOnHit: "自保 · 受击释放",
   supportShield: "支援护盾 · 满能量即放",
   supportHeal: "支援治疗 · 友军残血释放",
+  selfBuff: "自保 · 满能量即放",
   engage: "突进 · 满能量即放",
   offenseInRange: "进攻 · 进入攻击范围释放",
   offenseReady: "进攻 · 满能量即放",
@@ -212,6 +215,9 @@ export interface UnitDefinition {
   abilityCastTiming: AbilityCastTiming;
   abilityName: string;
   abilityDescription: string;
+  /** 可选的独立被动说明，供同时拥有主动与被动机制的单位展示。 */
+  passiveName?: string;
+  passiveDescription?: string;
   /** 可选的 1/2/3 星技能参数；未配置的技能继续使用固定技能逻辑 */
   abilityLevels?: AbilityLevels;
   portrait?: string;
@@ -370,13 +376,13 @@ const COMBAT_PROFILES: Record<
 > = {
   // selfOnHit：自保，受击时放
   sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 48, moveSpeed: 44, abilityCastTiming: "selfOnHit" },
-  sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48, abilityCastTiming: "selfOnHit" },
-  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58, abilityCastTiming: "selfOnHit" },
-  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42, abilityCastTiming: "selfOnHit" },
+  sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48, abilityCastTiming: "offenseReady" },
+  rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58, abilityCastTiming: "offenseInRange" },
+  meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42, abilityCastTiming: "offenseInRange" },
   // supportShield：支援护盾，满能量即放
-  mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 44, moveSpeed: 40, abilityCastTiming: "supportShield" },
+  mossback: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 44, moveSpeed: 40, abilityCastTiming: "supportShield" },
   shiori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 190, moveSpeed: 50, abilityCastTiming: "offenseReady" },
-  nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 46, moveSpeed: 38, abilityCastTiming: "supportShield" },
+  nagisa: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 46, moveSpeed: 38, abilityCastTiming: "supportShield" },
   rutice: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 48, moveSpeed: 42, abilityCastTiming: "supportShield" },
   // supportHeal：支援治疗，友军残血时放
   gale_archer: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 44, abilityCastTiming: "supportHeal" },
@@ -388,12 +394,12 @@ const COMBAT_PROFILES: Record<
   rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82, abilityCastTiming: "engage" },
   guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80, abilityCastTiming: "engage" },
   sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 106, abilityCastTiming: "engage" },
-  seki_boar_king: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 62, abilityCastTiming: "engage" },
+  seki_boar_king: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 60, moveSpeed: 62, abilityCastTiming: "engage" },
   biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64, abilityCastTiming: "engage" },
   youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88, abilityCastTiming: "engage" },
   akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96, abilityCastTiming: "engage" },
   lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68, abilityCastTiming: "engage" },
-  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
+  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
   // offenseInRange：近距进攻，进入攻击范围放
   zeyin: { attackType: "melee", energyProfile: ENERGY_PROFILES.passive, range: 54, moveSpeed: 68, abilityCastTiming: "passive" },
   mitsuri: { attackType: "melee", energyProfile: ENERGY_PROFILES.flow, range: 54, moveSpeed: 50, abilityCastTiming: "offenseInRange" },
@@ -406,7 +412,7 @@ const COMBAT_PROFILES: Record<
   sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.feast, range: 240, moveSpeed: 58, abilityCastTiming: "offenseReady" },
   sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
   yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54, abilityCastTiming: "offenseReady" },
-  sumi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 245, moveSpeed: 54, abilityCastTiming: "offenseReady" },
+  sumi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 245, moveSpeed: 54, abilityCastTiming: "selfBuff" },
   nori: { attackType: "ranged", energyProfile: ENERGY_PROFILES.automatic, range: 220, moveSpeed: 60, abilityCastTiming: "offenseReady" },
   kioi: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 235, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
@@ -558,7 +564,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.2,
     moveSpeed: 45,
     abilityName: "绒绒互助",
-    abilityDescription: "回复自身生命，并为生命比例最低的两名友军提供护盾。",
+    abilityDescription: "持续自动充能，攻击与受击也会少量回复能量；回复自身生命，并为生命比例最低的两名友军提供护盾。",
     portrait: "/images/livers/mofu.jpg",
     portraitFocus: "top",
     shop: true,
@@ -885,8 +891,10 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 245,
     attackInterval: 0.92,
     moveSpeed: 54,
-    abilityName: "礼小虎出击",
-    abilityDescription: "唤出礼小虎扑向敌人最密集区域，造成范围伤害、眩晕，并削弱护甲。",
+    abilityName: "空气龙",
+    abilityDescription: "进入短暂隐身，降低自身存在感；敌人会把你放到最低攻击优先级，优先寻找其他目标。隐身期间的第一次普攻会破隐并发射礼小龙。",
+    passiveName: "社恐",
+    passiveDescription: "每次普攻后都会像泽音变身后一样产生攻击后坐力，把自己推离目标；破隐一击同时触发礼小龙弹幕。",
     portrait: "/images/livers/sumi.jpg",
     portraitFocus: "top",
     shop: true,
