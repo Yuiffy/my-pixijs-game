@@ -186,6 +186,19 @@ mkdirSync(artifactDirectory, { recursive: true });
     screenshots[name] = { path, bytes: buffer.length, ...inspectPng(buffer) };
   };
 
+  await forcePreparation(2);
+  const opening = await readState();
+  const openingUnitIds = opening.wave.units.map((unit) => unit.id);
+  if (
+    opening.wave.enemyBudget !== 5
+    || openingUnitIds.includes("cog_scribe")
+    || opening.wave.units.some((unit) => unit.cost > 2)
+    || !opening.wave.enemyTraits.some((trait) => trait.id === "wild")
+  ) {
+    throw new Error(`Opening wave is out of date: ${JSON.stringify(opening.wave)}`);
+  }
+  await capture("round-02-low-cost-wave");
+
   await forcePreparation(4);
   const elite = await readState();
   if (
@@ -270,6 +283,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (failedResponses.length) throw new Error(`Failed responses: ${JSON.stringify(failedResponses)}`);
 
   console.log(JSON.stringify({
+    opening: { round: opening.round, budget: opening.wave.enemyBudget, units: opening.wave.units },
     elite: { round: elite.round, tag: elite.wave.tag, budget: elite.wave.enemyBudget },
     endless: { round: endless.round, mode: endless.progressionMode, budget: endless.wave.enemyBudget },
     hell: { round: hell.round, mode: hell.progressionMode, budget: hell.wave.enemyBudget, interest: hell.player.interestIncome },

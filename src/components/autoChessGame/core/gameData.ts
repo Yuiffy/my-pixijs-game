@@ -124,7 +124,7 @@ export interface EnergyProfile {
 export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
   assault: { id: "assault", name: "攻击回能", max: 100, start: 0, perSecond: 0, onAttack: 24, onHit: 5, castRefund: 0, color: "#b585ff" },
   bulwark: { id: "bulwark", name: "受击回能", max: 90, start: 15, perSecond: 0, onAttack: 6, onHit: 20, castRefund: 0, color: "#f2b45e" },
-  steady_guard: { id: "steady_guard", name: "稳态回能", max: 100, start: 25, perSecond: 5, onAttack: 0, onHit: 1, castRefund: 0, color: "#72d8cf" },
+  steady_guard: { id: "steady_guard", name: "稳态回能", max: 100, start: 25, perSecond: 8, onAttack: 6, onHit: 3, castRefund: 0, color: "#72d8cf" },
   flow: { id: "flow", name: "流转回能", max: 100, start: 0, perSecond: 7, onAttack: 10, onHit: 4, castRefund: 0, color: "#65d8ca" },
   tempo: { id: "tempo", name: "疾奏回能", max: 80, start: 0, perSecond: 3, onAttack: 15, onHit: 4, castRefund: 0, color: "#ee8fc4" },
   alien: { id: "alien", name: "外星回能", max: 75, start: 10, perSecond: 5, onAttack: 18, onHit: 5, castRefund: 0, color: "#ffc28a" },
@@ -447,7 +447,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.18,
     moveSpeed: 44,
     abilityName: "绿冻护甲",
-    abilityDescription: "主要随时间自动充能，受击仅小幅加速；能量满且受击时获得 30% 最大生命护盾。护盾破碎时向随机方向射出 5 枚钢镚弹幕。",
+    abilityDescription: "持续自动充能，攻击与受击也会回复能量；能量满且受击时获得 30% 最大生命护盾。护盾破碎时向随机方向射出 5 枚钢镚弹幕。",
     portrait: "/images/livers/hazel.png",
     portraitFocus: "top",
     shop: true,
@@ -1310,11 +1310,11 @@ export const WAVES: WaveDefinition[] = [
   },
   {
     round: 2,
-    name: "毛茸茸联动",
+    name: "毛茸茸夜班",
     tag: "normal",
-    description: "犬绒·绒绒卫士保护十六萤·浣熊射手，优先处理后排输出。",
-    modifier: Math.sqrt(5 / 6),
-    units: [{ id: "mossback" }, { id: "gale_archer" }, { id: "cog_scribe" }],
+    description: "绒绒的狗与浣熊店员撑住前排，好笑姐姐会从侧翼突入后排。",
+    modifier: Math.sqrt(5 / 3),
+    units: [{ id: "mossback" }, { id: "gale_archer" }, { id: "rift_stalker" }],
   },
   {
     round: 3,
@@ -1515,7 +1515,7 @@ export const enemyBudgetForRound = (round: number) => {
       18 + campaignDepth * 4.5 + campaignDepth * campaignDepth * 0.42;
     const tag = tagForRound(safeRound);
     return Math.round(
-      baseBudget * (tag === "boss" ? 1.55 : tag === "elite" ? 1.9 : 1),
+      baseBudget * (tag === "boss" ? 1.55 : tag === "elite" ? 1.9 : 0.75),
     );
   }
   let budget = 135;

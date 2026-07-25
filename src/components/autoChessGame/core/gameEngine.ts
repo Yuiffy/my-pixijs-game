@@ -4519,16 +4519,19 @@ export class AutoChessEngine {
     const interest = this.interestIncome;
     const financeIncome = this.financeIncomeBonus;
     const defeatedByStar: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
+    const enemyByStar: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
     this.state.battle.enemy.forEach((fighter) => {
+      enemyByStar[fighter.star] += 1;
       if (!fighter.alive || fighter.hp <= 0) defeatedByStar[fighter.star] += 1;
     });
     const defeatedEnemies = defeatedByStar[1] + defeatedByStar[2] + defeatedByStar[3];
-    const bounty = defeatedByStar[1] + defeatedByStar[2] * 2 + defeatedByStar[3] * 3;
+    const enemyCount = enemyByStar[1] + enemyByStar[2] + enemyByStar[3];
+    const bounty = enemyByStar[1] + enemyByStar[2] * 2 + enemyByStar[3] * 3;
     const bountyBreakdown = ([1, 2, 3] as const)
-      .filter((star) => defeatedByStar[star] > 0)
-      .map((star) => `${star}星×${defeatedByStar[star]}`)
+      .filter((star) => enemyByStar[star] > 0)
+      .map((star) => `${star}星×${enemyByStar[star]}`)
       .join("、");
-    const bountyDetail = `击败赏金 ${bounty}（${bountyBreakdown || "未击败敌人"}）`;
+    const bountyDetail = `阵容结算 ${bounty}（敌军${bountyBreakdown}；击败 ${defeatedEnemies}/${enemyCount}）`;
     let income = 0;
     let damage = 0;
     const debtRoundActive = this.state.paydayDebtRounds > 0;
@@ -4742,6 +4745,12 @@ export class AutoChessEngine {
             description: currentWave.description,
             enemyBudget: enemyBudgetForRound(this.state.round),
             potentialBounty: this.potentialBounty,
+            units: currentWave.units.map(({ id, star = 1 }) => ({
+              id,
+              name: UNIT_DEFS[id].name,
+              cost: UNIT_DEFS[id].cost,
+              star,
+            })),
             enemyTraits: enemyTraitActivations(currentWave.units).map(
               ({ id, count, level }) => ({
                 id,

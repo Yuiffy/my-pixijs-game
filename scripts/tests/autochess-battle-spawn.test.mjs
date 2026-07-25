@@ -570,7 +570,7 @@ test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", ()
   assert.equal(guard.shieldPeak, 0);
 });
 
-test("绿冻护甲以自动回能为主，三次受击只提供少量额外能量", () => {
+test("绿冻护甲同时按自动、攻击和受击三种来源回能", () => {
   const engine = createEngine(147);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -579,9 +579,9 @@ test("绿冻护甲以自动回能为主，三次受击只提供少量额外能�
   const battle = engine.state.battle;
   const guard = battle?.player[0];
   assert.ok(battle && guard);
-  assert.equal(guard.energyPerSecond, 5);
-  assert.equal(guard.energyOnAttack, 0);
-  assert.equal(guard.energyOnHit, 1);
+  assert.equal(guard.energyPerSecond, 8);
+  assert.equal(guard.energyOnAttack, 6);
+  assert.equal(guard.energyOnHit, 3);
 
   battle.player.forEach((fighter) => { fighter.cooldown = 99; });
   battle.enemy.forEach((enemy) => {
@@ -591,18 +591,21 @@ test("绿冻护甲以自动回能为主，三次受击只提供少量额外能�
   });
   guard.energy = 0;
   for (let tick = 0; tick < 20; tick += 1) engine.update(0.05);
-  assert.ok(Math.abs(guard.energy - 5) < 0.001);
+  assert.ok(Math.abs(guard.energy - 8) < 0.001);
 
   guard.energy = 0;
   const attacker = battle.enemy[0];
   attacker.x = guard.x + 1;
   attacker.y = guard.y;
   for (let hit = 0; hit < 3; hit += 1) engine.basicAttack(attacker, guard);
-  assert.equal(guard.energy, 3);
-  assert.ok(guard.energy < guard.energyPerSecond);
+  assert.equal(guard.energy, 9);
+
+  guard.cooldown = 0;
+  engine.basicAttack(guard, attacker);
+  assert.equal(guard.energy, 15);
 });
 
-test("一星绿冻护甲无法在三名一星敌人围攻下无限续盾", () => {
+test("一星绿冻护甲在三名一星敌人围攻下最多续盾两次且会被击破", () => {
   const engine = createEngine(148);
   engine.state.round = 2;
   engine.state.playerLevel = 4;
@@ -613,14 +616,18 @@ test("一星绿冻护甲无法在三名一星敌人围攻下无限续盾", () =>
   const guard = battle?.player[0];
   assert.ok(battle && guard);
   assert.equal(battle.enemy.length, 3);
-  battle.player.forEach((fighter) => { fighter.attack = 0; });
+  battle.enemy.forEach((fighter) => {
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
 
   stepBattle(engine, 480);
 
   const oneShield = guard.maxHp * 0.3 * 1.2;
-  assert.ok(Math.abs(guard.shieldingDone - oneShield) < 0.001);
+  assert.ok(guard.shieldingDone > oneShield);
+  assert.ok(guard.shieldingDone <= oneShield * 2 + 0.001);
+  assert.equal(guard.alive, false);
   assert.equal(guard.shield, 0);
-  assert.ok(!guard.alive || guard.hp / guard.maxHp < 0.1);
   assert.equal(engine.state.phase, "result");
 });
 
@@ -1408,6 +1415,26 @@ test("敌方成熟与流量羁绊会实际写入战斗属性", () => {
   );
   assert.equal(trafficMembers.length, 2);
   trafficMembers.forEach((fighter) => assert.ok(fighter.lifesteal > 0));
+});
+
+test("第二战低费固定阵容不会压制正常投入的三人阵容", () => {
+  const engine = new AutoChessEngine(121);
+  engine.state.starterChoices = ["traffic_start"];
+  engine.startRun("traffic_start");
+  engine.state.round = 2;
+  engine.state.playerLevel = 3;
+  engine.state.board.fill(null);
+  ["clock_gunner", "sui_blue", "dawn_duelist"].forEach((id, index) => {
+    engine.state.board[[4, 10, 16][index]] = { uid: index + 1, id, star: 1 };
+  });
+
+  engine.startBattle();
+  for (let tick = 0; tick < 600 && engine.state.phase === "battle"; tick += 1) {
+    engine.update(0.05);
+  }
+
+  assert.equal(engine.state.result.won, true);
+  assert.ok(engine.state.battle.player.some((fighter) => fighter.alive));
 });
 
 test("弥希双声道与初濑蝙蝠夜歌会完成控制和团队治疗", () => {

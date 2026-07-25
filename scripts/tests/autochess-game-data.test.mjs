@@ -102,6 +102,21 @@ test("十六战主线每四战预警精英并以首领收束", () => {
   assert.match(boss.description, /首领预警/);
 });
 
+test("前两战只使用低费教学棋子，轴伊不会提前出现在固定关", () => {
+  data.WAVES.slice(0, 2).forEach((wave) => {
+    wave.units.forEach(({ id }) => {
+      assert.ok(
+        data.UNIT_DEFS[id].cost <= 2,
+        `round ${wave.round} should not use ${data.UNIT_DEFS[id].cost}-cost ${id}`,
+      );
+    });
+  });
+  const secondWave = data.waveForRound(2);
+  assert.deepEqual(secondWave.units.map(({ id }) => id), ["mossback", "gale_archer", "rift_stalker"]);
+  assert.equal(data.enemyBudgetForRound(2), 5);
+  assert.ok(data.enemyTraitActivations(secondWave.units).some(({ id }) => id === "wild"));
+});
+
 test("主线预算会计入累计收入并在普通关与精英关持续加压", () => {
   assert.deepEqual(
     Array.from({ length: 8 }, (_, index) => data.enemyBudgetForRound(index + 1)),
@@ -327,11 +342,11 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.nagisa.energyProfile.id, "bulwark");
   assert.deepEqual(data.UNIT_DEFS.sun_guard.energyProfile, data.ENERGY_PROFILES.steady_guard);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 25);
-  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 5);
-  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onAttack, 0);
-  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 1);
-  assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /主要随时间自动充能.*受击仅小幅加速.*30% 最大生命护盾/);
-  assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /初始 25\/100.*自动回能（20 秒回满，每秒 \+5）.*受击回能（每下 \+1）/);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 8);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onAttack, 6);
+  assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 3);
+  assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /持续自动充能.*攻击与受击也会回复能量.*30% 最大生命护盾/);
+  assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /初始 25\/100.*自动回能（12\.5 秒回满，每秒 \+8）.*攻击回能（每下 \+6）.*受击回能（每下 \+3）/);
   ["rift_stalker", "rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "biscuit_sui", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
     const profile = data.UNIT_DEFS[id].energyProfile;
     assert.equal(profile.id, "automatic", `${id} should use automatic energy recovery`);
