@@ -65,6 +65,8 @@ test("局中天赋固定分为六个小天赋与六个大天赋", () => {
   const major = gameData.AUGMENTS.filter((augment) => augment.tier === "major");
   assert.equal(minor.length, 6);
   assert.equal(major.length, 6);
+  assert.equal(gameData.AUGMENTS.every((augment) => augment.icon.length > 0), true);
+  assert.equal(new Set(gameData.AUGMENTS.map((augment) => augment.icon)).size, gameData.AUGMENTS.length);
   assert.equal(minor.some((augment) => augment.id === "second_wind"), false);
   assert.equal(major.some((augment) => augment.id === "second_wind"), true);
   assert.match(

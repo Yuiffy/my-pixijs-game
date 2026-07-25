@@ -260,6 +260,7 @@ export interface TraitDefinition {
 
 export interface StarterDefinition {
   id: StarterId;
+  icon: string;
   name: string;
   subtitle: string;
   description: string;
@@ -270,6 +271,7 @@ export interface StarterDefinition {
 export interface AugmentDefinition {
   id: AugmentId;
   tier: AugmentTier;
+  icon: string;
   name: string;
   kicker: string;
   description: string;
@@ -1202,18 +1204,19 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
 export const SHOP_UNITS: ShopUnitId[] = [...SHOP_UNIT_IDS];
 
 export const STARTERS: StarterDefinition[] = [
-  { id: "mature_start", name: "成熟稳重", subtitle: "老派开场", description: "携带浣熊店员开局；成熟成员开战护盾 +6%，初始金币 +2。", unit: "gale_archer", color: "#b9a274" },
-  { id: "blaze", name: "火热整活", subtitle: "辣福灼烧", description: "携带雅吨开局；灼烧伤害 +30%，首次胜利额外获得 1 金币。", unit: "rift_brawler", color: "#ff8058" },
-  { id: "traffic_start", name: "热点追踪", subtitle: "流量续航", description: "携带大黑鼠开局；流量成员吸血额外 +6%，初始金币 +1。", unit: "dawn_duelist", color: "#ff7197" },
-  { id: "bastion", name: "持久抗压", subtitle: "稳扎稳打", description: "携带果冻风纪开局；基地生命 +3，所有护盾效果 +20%。", unit: "sun_guard", color: "#69d8ff" },
-  { id: "dance_start", name: "舞台梦", subtitle: "红帽开场", description: "携带小红帽开局；初始金币 +1，所有友军开战 +10 能量，跳舞成员攻击速度 +8%。", unit: "sui", color: "#f39ade" },
-  { id: "ranger_start", name: "稳定输出", subtitle: "远程热身", description: "携带兔子射手开局；所有远程友军攻击速度 +10%，首次刷新商店免费。", unit: "ember_blade", color: "#f2d15e" },
+  { id: "mature_start", icon: "🧱", name: "成熟稳重", subtitle: "老派开场", description: "携带浣熊店员开局；成熟成员开战护盾 +6%，初始金币 +2。", unit: "gale_archer", color: "#b9a274" },
+  { id: "blaze", icon: "🔥", name: "火热整活", subtitle: "辣福灼烧", description: "携带雅吨开局；灼烧伤害 +30%，首次胜利额外获得 1 金币。", unit: "rift_brawler", color: "#ff8058" },
+  { id: "traffic_start", icon: "📈", name: "热点追踪", subtitle: "流量续航", description: "携带大黑鼠开局；流量成员吸血额外 +6%，初始金币 +1。", unit: "dawn_duelist", color: "#ff7197" },
+  { id: "bastion", icon: "🏰", name: "持久抗压", subtitle: "稳扎稳打", description: "携带果冻风纪开局；基地生命 +3，所有护盾效果 +20%。", unit: "sun_guard", color: "#69d8ff" },
+  { id: "dance_start", icon: "🎭", name: "舞台梦", subtitle: "红帽开场", description: "携带小红帽开局；初始金币 +1，所有友军开战 +10 能量，跳舞成员攻击速度 +8%。", unit: "sui", color: "#f39ade" },
+  { id: "ranger_start", icon: "🏹", name: "稳定输出", subtitle: "远程热身", description: "携带兔子射手开局；所有远程友军攻击速度 +10%，首次刷新商店免费。", unit: "ember_blade", color: "#f2d15e" },
 ];
 
 export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "tempered",
     tier: "minor",
+    icon: "🛡️",
     name: "果冻风纪",
     kicker: "生存 · 小幅减伤",
     description: "所有友军获得 10 护甲。",
@@ -1222,6 +1225,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "sharp_edge",
     tier: "minor",
+    icon: "⚔️",
     name: "炽焰磨刃",
     kicker: "输出 · 稳定增伤",
     description: "所有友军攻击力提高 12%。",
@@ -1230,6 +1234,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "momentum",
     tier: "minor",
+    icon: "⚡",
     name: "弹幕加速",
     kicker: "节奏 · 稳定攻速",
     description: "所有友军攻击速度提高 14%。",
@@ -1238,6 +1243,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "payday",
     tier: "minor",
+    icon: "💳",
     name: "花呗生活",
     kicker: "经济 · 先花后还",
     description: "立即获得 8 金币；之后 4 个回合收入 -1。",
@@ -1246,6 +1252,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "vitality",
     tier: "minor",
+    icon: "❤️",
     name: "体能储备",
     kicker: "生存 · 基础体魄",
     description: "所有友军最大生命提高 8%。",
@@ -1254,6 +1261,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "precision",
     tier: "minor",
+    icon: "🎯",
     name: "弹幕校准",
     kicker: "输出 · 暴击训练",
     description: "所有友军暴击率提高 15%。",
@@ -1262,6 +1270,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "overclock",
     tier: "major",
+    icon: "📡",
     name: "出道推流",
     kicker: "技能 · 抢先启动",
     description: "所有友军开战时额外获得 45 能量；每次施放技能后保留 10 能量。",
@@ -1270,6 +1279,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "triage",
     tier: "major",
+    icon: "✚",
     name: "全员续航",
     kicker: "团队 · 持续回复",
     description: "每 2.5 秒治疗全部友军 5% 最大生命。",
@@ -1278,6 +1288,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "execution",
     tier: "major",
+    icon: "☠️",
     name: "收割",
     kicker: "输出 · 补刀",
     description: "对生命低于 45% 的敌人造成 50% 额外伤害。",
@@ -1286,6 +1297,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "second_wind",
     tier: "major",
+    icon: "🏯",
     name: "德川家康",
     kicker: "生存 · 活得久",
     description: "所有友军 +12% 最大生命、+10 护甲；每名友军首次低于 30% 生命时恢复 18% 最大生命。",
@@ -1294,6 +1306,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "glass_cannon",
     tier: "major",
+    icon: "💥",
     name: "极限超频",
     kicker: "输出 · 风险换火力",
     description: "所有友军攻击力 +25%、攻击速度 +20%，但最大生命降低 15%。",
@@ -1302,6 +1315,7 @@ export const AUGMENTS: AugmentDefinition[] = [
   {
     id: "united_front",
     tier: "major",
+    icon: "🤝",
     name: "全员护航",
     kicker: "生存 · 开战防线",
     description: "所有友军开战获得 25% 最大生命护盾和 15 能量。",

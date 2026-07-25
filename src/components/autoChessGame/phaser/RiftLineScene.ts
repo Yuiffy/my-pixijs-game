@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { UnitId } from "../core/gameData";
+import type { UnitId, WaveUnit } from "../core/gameData";
 import {
   ABILITY_CAST_TIMING_LABELS,
   AUGMENTS,
@@ -109,6 +109,11 @@ type TraitEntry = {
   status: { count: number; level: number; active: boolean; maxThreshold: number };
   label: string;
   width: number;
+};
+
+type AugmentHistoryEntry = {
+  augment: (typeof AUGMENTS)[number];
+  rounds: number[];
 };
 
 type ResultRowLayout = {
@@ -715,32 +720,21 @@ export class RiftLineScene extends Phaser.Scene {
             ? `精英预警 · 敌军价值约 ${enemyBudgetForRound(state.round)}`
             : `敌情预览 · 总价值约 ${enemyBudgetForRound(state.round)}`;
       this.phaseLayer.add(this.text(536, 124, pressureLabel, 9, currentWave.tag === "normal" ? "#e89aaa" : waveColor, { fontStyle: "bold" }));
-      const enemyTraits = enemyTraitActivations(currentWave.units)
-        .map(({ id, level }) => `${TRAITS[id].name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][level]}`)
-        .join(" · ");
-      this.phaseLayer.add(this.text(
-        536,
-        139,
-        this.truncateText(`敌方羁绊 · ${enemyTraits || "未成型"}`, 214, 9, { fontStyle: "bold" }),
-        9,
-        "#d3b5ff",
-        { fontStyle: "bold" },
-      ));
+      this.drawEnemyTraitPreview(currentWave.units);
       currentWave.units.slice(0, 7).forEach((waveUnit, index) => {
         const x = 554 + index * 29;
         const star = waveUnit.star ?? 1;
         const portrait = this.createPortrait(waveUnit.id, x, 165, 12, true);
-        const zone = this.add.zone(x, 165, 28, 28).setInteractive({ useHandCursor: true });
+        const zone = this.add.zone(x, 165, 28, 28)
+          .setName(`enemy-preview-${index}`)
+          .setInteractive({ useHandCursor: true });
         zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(waveUnit.id, pointer, star));
         zone.on(Phaser.Input.Events.POINTER_OUT, () => this.clearTooltip());
         this.phaseLayer.add([portrait, zone]);
       });
     }
     this.drawTraits();
-    const augmentSummary = state.augmentHistory.length
-      ? state.augmentHistory.map(({ round, id }) => `${round}战·${AUGMENTS.find((augment) => augment.id === id)?.name ?? id}`).join(" · ")
-      : "第 2 战后可选择首个小天赋";
-    this.phaseLayer.add(this.text(compact ? 708 : 748, compact ? 226 : 174, this.truncateText(augmentSummary, compact ? 360 : 330, 9), 9, "#8ea8b9").setOrigin(compact ? 0 : 1));
+    this.drawTalentHistory(compact);
     if (!compact) {
       this.phaseLayer.add(this.text(48, 269, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
       this.phaseLayer.add(this.text(390, 269, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
@@ -794,6 +788,75 @@ export class RiftLineScene extends Phaser.Scene {
     this.phaseLayer.add(this.text(24, 434, `备战席 · ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3", { fontStyle: "bold" }));
     state.board.forEach((unit, index) => this.drawSlot("board", index, unit, true));
     state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, true));
+  }
+
+  private drawAugmentHistory(compact: boolean) {
+    const history = this.bridge.engine.state.augmentHistory.reduce<AugmentHistoryEntry[]>((entries, selection) => {
+      const augment = AUGMENTS.find((item) => item.id === selection.id);
+      if (!augment) return entries;
+      const existing = entries.find((entry) => entry.augment.id === augment.id);
+      if (existing) existing.rounds.push(selection.round);
+      else entries.push({ augment, rounds: [selection.round] });
+      return entries;
+    }, []);
+    const labelX = compact ? 744 : 156;
+    const iconStartX = compact ? 790 : 202;
+    const y = 123;
+    if (!history.length) {
+      this.phaseLayer.add(this.text(labelX, 116, "天赋 · 第 2 战后解锁", 8, "#607f91", { fontStyle: "bold" }));
+      return;
+    }
+    this.phaseLayer.add(this.text(labelX, 116, `天赋 ${history.length}`, 8, "#7898aa", { fontStyle: "bold" }));
+    history.forEach((entry, index) => {
+      const { augment, rounds } = entry;
+      const { color } = Phaser.Display.Color.HexStringToColor(augment.color);
+      const container = this.add.container(iconStartX + index * 24, y);
+      const backplate = this.add.graphics();
+      const drawBackplate = (hover = false) => {
+        backplate.clear();
+        backplate.fillStyle(color, hover ? 0.34 : 0.18);
+        backplate.lineStyle(hover ? 2 : 1, color, hover ? 1 : 0.82);
+        if (augment.tier === "major") {
+          const radius = hover ? 10 : 9;
+          const points = [
+            new Phaser.Math.Vector2(0, -radius),
+            new Phaser.Math.Vector2(radius, 0),
+            new Phaser.Math.Vector2(0, radius),
+            new Phaser.Math.Vector2(-radius, 0),
+          ];
+          backplate.fillPoints(points, true).strokePoints(points, true);
+        } else {
+          backplate.fillCircle(0, 0, hover ? 10 : 9).strokeCircle(0, 0, hover ? 10 : 9);
+        }
+      };
+      drawBackplate();
+      const icon = this.text(0, 0, augment.icon, 10, "#ffffff", {
+        fontFamily: PROJECTILE_EMOJI_FONT,
+        fontStyle: "bold",
+      }).setOrigin(0.5);
+      const zone = this.add.zone(0, 0, 22, 22)
+        .setName(`augment-history-${augment.id}`)
+        .setInteractive({ useHandCursor: true });
+      zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
+        drawBackplate(true);
+        container.setScale(1.08);
+        this.showAugmentTooltip(entry, pointer);
+      });
+      zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showAugmentTooltip(entry, pointer));
+      zone.on(Phaser.Input.Events.POINTER_OUT, () => {
+        drawBackplate(false);
+        container.setScale(1);
+        if (!this.isCompact()) this.clearTooltip();
+      });
+      container.add([backplate, icon, zone]);
+      if (rounds.length > 1) {
+        container.add([
+          this.add.circle(7, -7, 5, 0x07111b, 1).setStrokeStyle(1, color, 0.9),
+          this.text(7, -7, `${rounds.length}`, 6, "#f4fbff", { fontStyle: "bold" }).setOrigin(0.5),
+        ]);
+      }
+      this.phaseLayer.add(container);
+    });
   }
 
   private drawTraits() {
@@ -2413,7 +2476,10 @@ export class RiftLineScene extends Phaser.Scene {
       const panel = this.panel(0, 0, 320, 300, 0x132231, 0.98, accent);
       card.add(panel);
       card.add(this.text(160, 48, `${repeated ? "再次强化 · " : ""}${augment.kicker}`.toUpperCase(), 10, augment.color, { fontStyle: "bold" }).setOrigin(0.5));
-      card.add(this.text(160, 82, augment.name, 22, "#eff7ff", { fontStyle: "bold" }).setOrigin(0.5));
+      card.add(this.text(160, 82, `${augment.icon} ${augment.name}`, 22, "#eff7ff", {
+        fontFamily: PROJECTILE_EMOJI_FONT,
+        fontStyle: "bold",
+      }).setOrigin(0.5));
       card.add(this.text(24, 118, augment.description, 13, "#a9bfcc", { wordWrap: { width: 272 }, align: "center" }).setOrigin(0));
       const cta = this.add.graphics();
       cta.fillStyle(BUTTONS.confirm.fill, 1).fillRoundedRect(70, 244, 180, 34, 10);
@@ -2664,6 +2730,32 @@ export class RiftLineScene extends Phaser.Scene {
     description.setPosition(padding, descriptionY);
     thresholdText.setPosition(padding, thresholdY);
     container.add([description, thresholdText]);
+    container.setName("tooltip");
+    this.tooltipLayer.add(container);
+  }
+
+  private showAugmentTooltip(entry: AugmentHistoryEntry, pointer?: Phaser.Input.Pointer) {
+    this.clearTooltip();
+    const { augment, rounds } = entry;
+    const { width, scale } = this.tooltipMetrics(390);
+    const { padding, title, body, section } = TOOLTIP_TYPOGRAPHY;
+    const contentWidth = width - padding * 2;
+    const description = this.boundedText(augment.description, contentWidth, this.isCompact() ? 5 : 4, body, "#d7e6ed", { lineSpacing: 5 });
+    const historyLabel = `第 ${rounds.join("、")} 战获得${rounds.length > 1 ? ` · 已叠加 ${rounds.length} 次` : ""}`;
+    const descriptionY = padding + title + 42;
+    const height = Math.max(174, descriptionY + description.height + padding);
+    const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 250, scale);
+    const color = Phaser.Display.Color.HexStringToColor(augment.color).color;
+    const container = this.add.container(x, y).setScale(scale);
+    container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, color));
+    container.add(this.text(padding, padding - 3, augment.icon, title + 2, "#ffffff", {
+      fontFamily: PROJECTILE_EMOJI_FONT,
+    }));
+    container.add(this.text(padding + 34, padding - 2, augment.name, title, "#f1f8ff", { fontStyle: "bold" }));
+    container.add(this.text(padding, padding + title + 11, `${AUGMENT_TIER_LABELS[augment.tier]} · ${augment.kicker}`, section, augment.color, { fontStyle: "bold" }));
+    container.add(this.text(padding, padding + title + 28, historyLabel, 10, "#7898aa", { fontStyle: "bold" }));
+    description.setPosition(padding, descriptionY);
+    container.add(description);
     container.setName("tooltip");
     this.tooltipLayer.add(container);
   }

@@ -289,6 +289,12 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /部署生命 \$\{Math\.round\(combatStats\.maxHp\)\}/);
   assert.match(scene, /def\.traits\.forEach/);
   assert.match(scene, /getTraitStatus\(traitId\)/);
+  assert.match(scene, /drawAugmentHistory\(compact\)/);
+  assert.match(scene, /setName\(`augment-history-\$\{augment\.id\}`\)/);
+  assert.match(scene, /augment\.tier === "major"/);
+  assert.match(scene, /showAugmentTooltip\(entry, pointer\)/);
+  assert.match(scene, /已叠加 \$\{rounds\.length\} 次/);
+  assert.doesNotMatch(scene, /compact \? 708 : 748/);
   assert.doesNotMatch(scene, /const labelBackplate = this\.add\.graphics\(\)/);
   assert.doesNotMatch(scene, /const traitDots =/);
   assert.match(layout, /WIDE_TRAIT_STRIP/);

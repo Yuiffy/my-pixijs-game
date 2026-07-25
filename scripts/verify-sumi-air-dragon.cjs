@@ -38,9 +38,11 @@ const prepareSeed = async (page, candidate) => {
   await page.goto(baseUrl + "/game/autochess?seed=" + candidate, { waitUntil: "domcontentloaded" });
   await page.locator('[data-game-canvas="rift-line"]').waitFor({ state: "attached", timeout: 15000 });
   await page.waitForFunction(() => typeof window.render_game_to_text === "function", null, { timeout: 15000 });
-  await page.getByText("火热整活", { exact: true }).click({ timeout: 10000 });
+  await page.getByText("稳定输出", { exact: true }).click({ timeout: 10000 });
   await page.waitForTimeout(50);
   await page.getByRole("button", { name: /升本/ }).first().click({ timeout: 10000 });
+  await page.waitForTimeout(50);
+  await page.getByRole("button", { name: /刷新/ }).first().click({ timeout: 10000 });
   await page.waitForTimeout(50);
   return readState(page);
 };
@@ -57,7 +59,7 @@ const findSumiSeed = async (browser) => {
       const candidatePage = await browser.newPage({ viewport });
       try {
         const candidateState = await prepareSeed(candidatePage, candidate);
-        if (candidateState.shop?.includes("sumi")) {
+        if (candidateState.shop?.some((card) => card?.id === "sumi")) {
           found = { page: candidatePage, seed: candidate, state: candidateState };
           return;
         }
@@ -81,6 +83,7 @@ const findSumiSeed = async (browser) => {
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
 
+  await page.getByRole("button", { name: /礼墨Sumi/ }).first().waitFor({ state: "visible", timeout: 15000 });
   await page.screenshot({ path: `${artifactDirectory}/sumi-shop.png`, fullPage: true });
   await page.getByRole("button", { name: /礼墨Sumi/ }).first().click();
   await page.waitForTimeout(100);

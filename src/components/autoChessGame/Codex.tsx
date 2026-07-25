@@ -273,7 +273,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
                 {STARTERS.map((starter) => (
                   <article key={starter.id} style={{ padding: 14, border: `1px solid ${starter.color}88`, borderRadius: 12, background: `${starter.color}0d` }}>
-                    <strong style={{ color: starter.color }}>{starter.name}</strong>
+                    <strong style={{ color: starter.color }}>{starter.icon} {starter.name}</strong>
                     <div style={{ marginTop: 6, color: "#e4f2fb", fontWeight: 700 }}>{starter.subtitle}</div>
                     <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{starter.description}</p>
                   </article>
@@ -292,7 +292,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
                   {AUGMENTS.filter((augment) => augment.tier === augmentTier).map((augment) => (
                     <article key={augment.id} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
-                      <strong style={{ color: augment.color }}>{augment.name}</strong>
+                      <strong style={{ color: augment.color }}>{augment.icon} {augment.name}</strong>
                       <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>
                       <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{augment.description}</p>
                     </article>
@@ -312,7 +312,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
               return (
                 <article key={`starter-${id}`} style={{ marginBottom: 12, padding: 14, border: `1px solid ${starter.color}88`, borderRadius: 12, background: `${starter.color}0d` }}>
                   <div style={{ color: "#8da7b8", fontSize: 12, fontWeight: 700 }}>开局选择</div>
-                  <strong style={{ display: "block", marginTop: 6, color: starter.color, fontSize: 18 }}>{starter.name}</strong>
+                  <strong style={{ display: "block", marginTop: 6, color: starter.color, fontSize: 18 }}>{starter.icon} {starter.name}</strong>
                   <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{starter.description}</p>
                 </article>
               );
@@ -330,7 +330,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                   return (
                     <article key={`${round}-${id}`} style={{ padding: 14, border: `1px solid ${augment.color}88`, borderRadius: 12, background: `${augment.color}0d` }}>
                       <div style={{ color: "#8da7b8", fontSize: 12, fontWeight: 700 }}>第 {round} 战 · {AUGMENT_TIER_LABELS[augment.tier]}</div>
-                      <strong style={{ display: "block", marginTop: 6, color: augment.color, fontSize: 18 }}>{augment.name}</strong>
+                      <strong style={{ display: "block", marginTop: 6, color: augment.color, fontSize: 18 }}>{augment.icon} {augment.name}</strong>
                       <div style={{ marginTop: 6, color: augment.color, fontSize: 12, fontWeight: 800 }}>{augment.kicker}</div>
                       <p style={{ marginBottom: 0, color: "#a8bdca", lineHeight: 1.6 }}>{augment.description}</p>
                     </article>
