@@ -25,36 +25,62 @@ const { chromium } = loadPlaywright();
 const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
 const artifactDirectory = ".tmp/autochess/sumi-air-dragon";
 mkdirSync(artifactDirectory, { recursive: true });
+const viewport = { width: 1440, height: 900 };
+const requestedSeed = Number(process.env.AUTOCHESS_SEED);
+const seedCandidates = Number.isFinite(requestedSeed) && requestedSeed > 0
+  ? [Math.trunc(requestedSeed)]
+  : Array.from({ length: 120 }, (_, index) => index + 1);
 
 const readState = (page) => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 const advance = (page, milliseconds) => page.evaluate((value) => window.advanceTime(value), milliseconds);
 
+const prepareSeed = async (page, candidate) => {
+  await page.goto(baseUrl + "/game/autochess?seed=" + candidate, { waitUntil: "domcontentloaded" });
+  await page.locator('[data-game-canvas="rift-line"]').waitFor({ state: "attached", timeout: 15000 });
+  await page.waitForFunction(() => typeof window.render_game_to_text === "function", null, { timeout: 15000 });
+  await page.getByText("火热整活", { exact: true }).click({ timeout: 10000 });
+  await page.waitForTimeout(50);
+  await page.getByRole("button", { name: /升本/ }).first().click({ timeout: 10000 });
+  await page.waitForTimeout(50);
+  return readState(page);
+};
+
+const findSumiSeed = async (browser) => {
+  let cursor = 0;
+  let found = null;
+  const worker = async () => {
+    while (!found) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= seedCandidates.length) return;
+      const candidate = seedCandidates[index];
+      const candidatePage = await browser.newPage({ viewport });
+      try {
+        const candidateState = await prepareSeed(candidatePage, candidate);
+        if (candidateState.shop?.includes("sumi")) {
+          found = { page: candidatePage, seed: candidate, state: candidateState };
+          return;
+        }
+      } catch {
+        // Continue probing other deterministic seeds; the final error stays focused.
+      }
+      await candidatePage.close();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(6, seedCandidates.length) }, worker));
+  return found;
+};
+
 (async () => {
   const browser = await chromium.launch({ channel: "chrome", headless: true });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  let seed = null;
-  let state = null;
+  const match = await findSumiSeed(browser);
+  if (!match) throw new Error("未在 " + seedCandidates.length + " 个确定性种子中找到礼墨商店卡");
+  const { page, seed } = match;
+  let state = match.state;
   const errors = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
 
-  for (let candidate = 1; candidate <= 240; candidate += 1) {
-    await page.goto(`${baseUrl}/game/autochess?seed=${candidate}`, { waitUntil: "domcontentloaded" });
-    await page.locator('[data-game-canvas="rift-line"]').waitFor({ state: "attached", timeout: 60000 });
-    await page.waitForTimeout(600);
-    await page.getByText("火热整活", { exact: true }).click();
-    await page.waitForTimeout(80);
-    await page.getByRole("button", { name: /升本/ }).first().click();
-    await page.waitForTimeout(80);
-    const nextState = await readState(page);
-    if (nextState.shop?.some((card) => card?.id === "sumi")) {
-      seed = candidate;
-      state = nextState;
-      break;
-    }
-  }
-
-  if (!state) throw new Error("未在 240 个确定性种子中找到礼墨商店卡");
   await page.screenshot({ path: `${artifactDirectory}/sumi-shop.png`, fullPage: true });
   await page.getByRole("button", { name: /礼墨Sumi/ }).first().click();
   await page.waitForTimeout(100);
