@@ -742,7 +742,7 @@ test("所有可重复护盾角色在三人持续集火下都能被击破", async
   }
 });
 
-test("满能量远程单位会先进入攻击距离再施法", () => {
+test("满能量远程进攻技能在攻击范围外即可施法", () => {
   const engine = createEngine(140);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -763,12 +763,8 @@ test("满能量远程单位会先进入攻击距离再施法", () => {
   source.y = 360;
   source.energy = source.maxEnergy;
   engine.update(0.05);
-  assert.equal(source.energy, source.maxEnergy, "攻击范围外不应消耗能量施法");
-
-  target.x = source.x + Math.max(source.range, source.radius + target.radius + 12) - 1;
-  target.y = source.y;
-  engine.update(0.05);
-  assert.equal(source.energy, source.castRefund, "进入攻击范围后应立即施法");
+  assert.equal(source.energy, source.castRefund, "远程进攻技能满能量后应立即施法");
+  assert.ok(battle.effects.some((effect) => effect.kind === "line"), "外星贯穿光线应在远距离生成攻击反馈");
 });
 
 test("直接调用普攻不会跨攻击距离造成副作用", () => {

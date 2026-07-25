@@ -376,7 +376,9 @@ const COMBAT_PROFILES: Record<
 > = {
   // selfOnHit：自保，受击时放
   sun_guard: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 48, moveSpeed: 44, abilityCastTiming: "selfOnHit" },
+  // offenseReady：攻击型强化，满能量即放
   sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 48, moveSpeed: 48, abilityCastTiming: "offenseReady" },
+  // offenseInRange：近身范围攻击，进入攻击范围后放
   rift_brawler: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 58, abilityCastTiming: "offenseInRange" },
   meme: { attackType: "melee", energyProfile: ENERGY_PROFILES.bulwark, range: 60, moveSpeed: 42, abilityCastTiming: "offenseInRange" },
   // supportShield：支援护盾，满能量即放

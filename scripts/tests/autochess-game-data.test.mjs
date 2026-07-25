@@ -570,6 +570,7 @@ test("主动技能触发类别与技能形态一致", () => {
     sui: "offenseReady",
     rift_brawler: "offenseInRange",
     meme: "offenseInRange",
+    yua: "offenseReady",
     sumi: "selfBuff",
   };
   Object.entries(expectedTimings).forEach(([id, timing]) => {
