@@ -194,6 +194,8 @@ export class RiftLineScene extends Phaser.Scene {
 
   private traitOffset = 0;
 
+  private traitBaseOffset = 0;
+
   private traitDrag: TraitDragState | null = null;
 
   private pinnedTooltip: UnitId | null = null;
@@ -387,6 +389,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.traitContent = null;
     this.traitFade = null;
     this.traitEntries = [];
+    this.traitBaseOffset = 0;
     this.pinnedTooltip = null;
     this.sellDropZoneGraphics = null;
     this.sellDropZoneLabel = null;
@@ -736,9 +739,9 @@ export class RiftLineScene extends Phaser.Scene {
     this.drawTraits();
     this.drawTalentHistory(compact);
     if (!compact) {
-      this.phaseLayer.add(this.text(48, 269, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
-      this.phaseLayer.add(this.text(390, 269, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
-      this.phaseLayer.add(this.text(756, 269, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
+      this.phaseLayer.add(this.text(48, 225, "后方 · 远程与辅助", 9, "#6f9eb8", { fontStyle: "bold" }).setOrigin(0, 0.5));
+      this.phaseLayer.add(this.text(390, 225, `6 × 4 自由部署区 · 满级 ${PLAYER_LEVEL_CONFIG[MAX_PLAYER_LEVEL].boardCap} 人口`, 9, "#63849b").setOrigin(0.5));
+      this.phaseLayer.add(this.text(756, 225, "前线 · 优先接敌 →", 9, "#78b8d2", { fontStyle: "bold" }).setOrigin(1, 0.5));
       this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
       this.drawSellDropZone();
       // 备战席计数在出售按钮左侧；上阵人口右对齐到出售按钮前，避免被挡住
@@ -962,19 +965,21 @@ export class RiftLineScene extends Phaser.Scene {
       probe.destroy();
       return { trait, status, label, width };
     });
-    if (!this.isCompact() && !this.isMobile()) {
-      this.drawWrappedTraits(strip);
-      return;
-    }
     const gap = 6;
     const contentWidth = Math.max(0, this.traitEntries.reduce((total, entry) => total + entry.width + gap, 0) - gap);
     this.traitMinimumOffset = Math.min(0, strip.width - contentWidth);
     this.traitOffset = Phaser.Math.Clamp(this.traitOffset, this.traitMinimumOffset, 0);
+    this.traitBaseOffset = contentWidth < strip.width ? (strip.width - contentWidth) / 2 : 0;
 
-    const maskGraphics = this.add.graphics().setVisible(false);
+    const maskGraphics = this.add.graphics();
     maskGraphics.fillStyle(0xffffff).fillRect(strip.x, strip.y, strip.width, strip.height);
-    const content = this.add.container(strip.x + this.traitOffset, strip.y);
-    content.setMask(maskGraphics.createGeometryMask());
+    this.children.remove(maskGraphics);
+    const content = this.add.container(strip.x + this.traitBaseOffset + this.traitOffset, strip.y);
+    if (this.renderer.type === Phaser.CANVAS) {
+      content.setMask(maskGraphics.createGeometryMask());
+    } else {
+      content.enableFilters().filters!.external.addMask(maskGraphics, false, this.cameras.main, "world");
+    }
     let cursor = 0;
     this.traitEntries.forEach(({ trait, status, label, width }) => {
       const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
@@ -1007,63 +1012,12 @@ export class RiftLineScene extends Phaser.Scene {
     zone.on(Phaser.Input.Events.POINTER_OUT, () => {
       if (!this.isCompact() && !this.traitDrag) this.clearTooltip();
     });
-    this.phaseLayer.add([maskGraphics, content, zone]);
+    this.phaseLayer.add([content, zone]);
     this.updateTraitViewport();
   }
 
-  private drawWrappedTraits(strip: { x: number; y: number; width: number; height: number }) {
-    const gap = 5;
-    const rowGap = 5;
-    const tagHeight = 22;
-    let rowCount = 1;
-    let occupiedWidth = 0;
-    this.traitEntries.forEach((entry) => {
-      if (occupiedWidth && occupiedWidth + gap + entry.width > strip.width) {
-        rowCount += 1;
-        occupiedWidth = entry.width;
-      } else {
-        occupiedWidth += (occupiedWidth ? gap : 0) + entry.width;
-      }
-    });
-    const rows = Array.from({ length: rowCount }, (_, rowIndex) => {
-      const start = Math.ceil((this.traitEntries.length * rowIndex) / rowCount);
-      const end = Math.ceil((this.traitEntries.length * (rowIndex + 1)) / rowCount);
-      return this.traitEntries.slice(start, end);
-    });
-    const rowWidths = rows.map((row) => row.reduce(
-      (width, entry, entryIndex) => width + (entryIndex ? gap : 0) + entry.width,
-      0,
-    ));
-
-    const content = this.add.container(0, 0);
-    rows.forEach((row, rowIndex) => {
-      let x = strip.x + (strip.width - rowWidths[rowIndex]) / 2;
-      const y = strip.y + rowIndex * (tagHeight + rowGap);
-      row.forEach((entry) => {
-        const { color } = Phaser.Display.Color.HexStringToColor(entry.trait.color);
-        const graphics = this.add.graphics();
-        graphics.fillStyle(entry.status.active ? color : 0x142735, entry.status.active ? 0.24 : 0.96);
-        graphics.fillRoundedRect(x, y, entry.width, tagHeight, tagHeight / 2);
-        graphics.lineStyle(1, entry.status.active ? color : 0x395467, entry.status.active ? 0.9 : 1);
-        graphics.strokeRoundedRect(x, y, entry.width, tagHeight, tagHeight / 2);
-        const zone = this.add.zone(x + entry.width / 2, y + tagHeight / 2, entry.width, tagHeight).setInteractive({ useHandCursor: true });
-        zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showTraitTooltip(entry.trait.id, pointer));
-        zone.on(Phaser.Input.Events.POINTER_OUT, () => this.clearTooltip());
-        content.add([
-          graphics,
-          this.add.circle(x + 10, y + tagHeight / 2, 3, color, entry.status.active ? 1 : 0.72),
-          this.text(x + 18, y + 6, entry.label, 9, entry.status.active ? "#effaff" : "#7f96a6", { fontStyle: "bold" }),
-          zone,
-        ]);
-        x += entry.width + gap;
-      });
-    });
-    this.traitContent = content;
-    this.phaseLayer.add(content);
-  }
-
   private traitEntryAt<T extends { width: number }>(entries: T[], gap: number, strip: { x: number; width: number }, pointerX: number) {
-    const localX = pointerX - strip.x - this.traitOffset;
+    const localX = pointerX - strip.x - this.traitBaseOffset - this.traitOffset;
     let cursor = 0;
     return entries.find((entry) => {
       const hit = localX >= cursor && localX <= cursor + entry.width;
@@ -1074,7 +1028,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private updateTraitViewport() {
     const strip = this.traitStrip();
-    this.traitContent?.setX(strip.x + this.traitOffset);
+    this.traitContent?.setX(strip.x + this.traitBaseOffset + this.traitOffset);
     this.traitFade?.destroy();
     this.traitFade = null;
     if (this.traitMinimumOffset === 0) return;

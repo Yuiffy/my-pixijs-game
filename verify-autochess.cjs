@@ -100,14 +100,14 @@ mkdirSync(artifactDirectory, { recursive: true });
   prep = await state();
   const afterUpgrade = { level: prep.player.level, bookLevel: prep.player.bookLevel, upgradeRemaining: prep.player.upgradeRemaining, cap: prep.player.boardCap, gold: prep.player.gold, odds: prep.roster.currentTierOdds, toast: prep.toast, shopLocked: prep.shopLocked };
   await page.screenshot({ path: `${artifactDirectory}/autochess-prep.png` });
-  await moveLogical(80, 195);
+  await moveLogical(80, 202);
   await page.screenshot({ path: `${artifactDirectory}/autochess-trait-tooltip.png` });
 
   await clickLogical(945, 175 + 3 * 74);
   await clickLogical(945, 175 + 4 * 74);
   prep = await state();
-  const dragSource = { x: 44 + 52, y: 278 + 26 };
-  const dragTarget = { x: 44 + 116 + 52, y: 278 + 26 };
+  const dragSource = { x: 44 + 52, y: 232 + 29 };
+  const dragTarget = { x: 44 + 116 + 52, y: 232 + 29 };
   const dragStart = await pointForLogical(dragSource.x, dragSource.y);
   const dragEnd = await pointForLogical(dragTarget.x, dragTarget.y);
   await page.mouse.move(dragStart.x, dragStart.y);

@@ -139,10 +139,67 @@ mkdirSync(artifactDirectory, { recursive: true });
   });
   if (!attached) throw new Error("Unable to locate the active game and bridge through the React host");
 
+  const pointForLogical = async (x, y) => {
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error("Canvas is not visible");
+    const logical = await canvas.evaluate((element) => ({
+      width: Number(element.dataset.logicalWidth || 1120),
+      height: Number(element.dataset.logicalHeight || 720),
+    }));
+    const fitScale = Math.min(box.width / logical.width, box.height / logical.height);
+    return {
+      x: box.x + (box.width - logical.width * fitScale) / 2 + x * fitScale,
+      y: box.y + (box.height - logical.height * fitScale) / 2 + y * fitScale,
+    };
+  };
+  const capture = async (name) => {
+    const path = `${artifactDirectory}/${name}.png`;
+    const buffer = await page.screenshot({ path, fullPage: true });
+    return { path, ...inspectPng(buffer) };
+  };
+  const readTraitLayout = async () => page.evaluate(() => {
+    const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
+    const content = scene.traitContent;
+    return {
+      labels: content.list
+        .filter((child) => child.type === "Text")
+        .map((label) => ({ text: label.text, x: label.x, y: label.y, width: label.width })),
+      contentX: content.x,
+      offset: scene.traitOffset,
+      baseOffset: scene.traitBaseOffset,
+      minimumOffset: scene.traitMinimumOffset,
+      filterTypes: content.filters?.external.list.map((filter) => filter.renderNode) ?? [],
+      canvas: {
+        width: scene.game.canvas.width,
+        height: scene.game.canvas.height,
+        logicalWidth: scene.game.canvas.dataset.logicalWidth,
+        logicalHeight: scene.game.canvas.dataset.logicalHeight,
+      },
+      state: JSON.parse(window.render_game_to_text()),
+    };
+  });
+
   await page.evaluate(() => {
     const bridge = window.__codexAutoChessBridge;
     const engine = bridge.engine;
     engine.startRun(engine.state.starterChoices[0]);
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 690, id: "sun_guard", star: 1 };
+    bridge.dispatch({ type: "clearSelection" });
+  });
+  await page.waitForTimeout(250);
+  const shortLayout = await readTraitLayout();
+  if (shortLayout.labels.length !== 3 || shortLayout.minimumOffset !== 0 || shortLayout.baseOffset <= 0) {
+    throw new Error(`Short trait row did not stay centered on one line: ${JSON.stringify(shortLayout)}`);
+  }
+  if (new Set(shortLayout.labels.map((label) => label.y)).size !== 1) {
+    throw new Error(`Short traits used more than one row: ${JSON.stringify(shortLayout.labels)}`);
+  }
+  const shortScreenshot = await capture("few-traits-single-row");
+
+  await page.evaluate(() => {
+    const bridge = window.__codexAutoChessBridge;
+    const engine = bridge.engine;
     engine.state.playerLevel = 10;
     engine.state.board.fill(null);
     [
@@ -162,48 +219,83 @@ mkdirSync(artifactDirectory, { recursive: true });
   });
   await page.waitForTimeout(250);
 
-  const layout = await page.evaluate(() => {
+  const fullLayout = await readTraitLayout();
+  if (fullLayout.labels.length !== 18 || fullLayout.minimumOffset >= 0 || fullLayout.baseOffset !== 0) {
+    throw new Error(`Full trait row did not become horizontally scrollable: ${JSON.stringify(fullLayout)}`);
+  }
+  if (new Set(fullLayout.labels.map((label) => label.y)).size !== 1) {
+    throw new Error(`Full traits used more than one row: ${JSON.stringify(fullLayout.labels)}`);
+  }
+  if (!fullLayout.filterTypes.includes("FilterMask")) {
+    throw new Error(`WebGL mask filter was not installed: ${JSON.stringify(fullLayout.filterTypes)}`);
+  }
+  const fullScreenshot = await capture("all-traits-row-start");
+
+  const traitPoint = await pointForLogical(690, 202);
+  await page.mouse.move(traitPoint.x, traitPoint.y);
+  await page.mouse.wheel(0, 900);
+  await page.waitForTimeout(150);
+  const wheelLayout = await readTraitLayout();
+  if (wheelLayout.offset >= 0 || wheelLayout.offset < wheelLayout.minimumOffset) {
+    throw new Error(`Mouse wheel did not scroll within trait bounds: ${JSON.stringify(wheelLayout)}`);
+  }
+
+  await page.evaluate(() => {
     const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
-    const zones = scene.traitContent.list
-      .filter((child) => child.type === "Zone")
-      .map((zone) => ({ x: zone.x - zone.width / 2, y: zone.y - zone.height / 2, width: zone.width, height: zone.height }));
-    return {
-      zones,
-      rows: [...new Set(zones.map((zone) => zone.y))],
-      canvas: {
-        width: scene.game.canvas.width,
-        height: scene.game.canvas.height,
-        logicalWidth: scene.game.canvas.dataset.logicalWidth,
-        logicalHeight: scene.game.canvas.dataset.logicalHeight,
-      },
-      state: JSON.parse(window.render_game_to_text()),
-    };
+    scene.traitOffset = 0;
+    scene.updateTraitViewport();
   });
+  const dragStart = await pointForLogical(690, 202);
+  const dragEnd = await pointForLogical(440, 202);
+  await page.mouse.move(dragStart.x, dragStart.y);
+  await page.mouse.down();
+  await page.mouse.move(dragEnd.x, dragEnd.y, { steps: 8 });
+  await page.mouse.up();
+  await page.mouse.move(10, 10);
+  await page.waitForTimeout(150);
+  await page.evaluate(() => {
+    window.__codexAutoChessGame.scene.getScene("RiftLineScene").clearTooltip();
+  });
+  const dragLayout = await readTraitLayout();
+  if (dragLayout.offset >= 0 || dragLayout.offset < dragLayout.minimumOffset) {
+    throw new Error(`Pointer drag did not scroll within trait bounds: ${JSON.stringify(dragLayout)}`);
+  }
+  await page.mouse.move(traitPoint.x, traitPoint.y);
+  await page.mouse.wheel(0, 5000);
+  await page.mouse.move(10, 10);
+  await page.waitForTimeout(150);
+  await page.evaluate(() => {
+    window.__codexAutoChessGame.scene.getScene("RiftLineScene").clearTooltip();
+  });
+  const endLayout = await readTraitLayout();
+  if (Math.abs(endLayout.offset - endLayout.minimumOffset) > 0.01) {
+    throw new Error(`Trait row did not stop at its final item: ${JSON.stringify(endLayout)}`);
+  }
+  const scrolledScreenshot = await capture("all-traits-row-scrolled");
 
-  if (layout.zones.length !== 18) throw new Error(`Expected all 18 traits, found ${layout.zones.length}`);
-  if (layout.rows.length !== 3) throw new Error(`Expected three centered trait rows, found ${layout.rows.length}`);
-  const outOfBounds = layout.zones.filter((zone) => (
-    zone.x < 48 || zone.x + zone.width > 748 || zone.y < 184 || zone.y + zone.height > 260
-  ));
-  if (outOfBounds.length) throw new Error(`Trait chips escaped the board panel: ${JSON.stringify(outOfBounds)}`);
   if (errors.length) throw new Error(`Browser errors: ${JSON.stringify(errors)}`);
-
-  const screenshotPath = `${artifactDirectory}/all-traits-desktop.png`;
-  const buffer = await page.screenshot({ path: screenshotPath, fullPage: true });
-  const screenshot = inspectPng(buffer);
   console.log(JSON.stringify({
-    screenshotPath,
-    screenshot,
-    rows: layout.rows,
-    bounds: {
-      left: Math.min(...layout.zones.map((zone) => zone.x)),
-      right: Math.max(...layout.zones.map((zone) => zone.x + zone.width)),
-      top: Math.min(...layout.zones.map((zone) => zone.y)),
-      bottom: Math.max(...layout.zones.map((zone) => zone.y + zone.height)),
+    screenshots: {
+      short: shortScreenshot,
+      full: fullScreenshot,
+      scrolled: scrolledScreenshot,
     },
-    canvas: layout.canvas,
-    phase: layout.state.phase,
-    boardCount: layout.state.player.boardCount,
+    short: {
+      labels: shortLayout.labels.length,
+      baseOffset: shortLayout.baseOffset,
+      rows: new Set(shortLayout.labels.map((label) => label.y)).size,
+    },
+    full: {
+      labels: fullLayout.labels.length,
+      minimumOffset: fullLayout.minimumOffset,
+      wheelOffset: wheelLayout.offset,
+      dragOffset: dragLayout.offset,
+      endOffset: endLayout.offset,
+      filterTypes: fullLayout.filterTypes,
+    },
+    canvas: fullLayout.canvas,
+    phase: fullLayout.state.phase,
+    boardCount: fullLayout.state.player.boardCount,
     errors,
   }, null, 2));
   await browser.close();

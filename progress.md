@@ -582,3 +582,12 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 新增 `scripts/verify-sumi-air-dragon.cjs` 的快速系统 Chrome 流程；种子 `9` 捕获到 `stealthTime: 3.29`、`sumiDragonReady: true` 和 `sumi_dragon` 投射物，`render_game_to_text` 与画面一致，控制台无错误。
 - 截图 `.tmp/autochess/sumi-air-dragon/sumi-shop.png`、`sumi-preparation.png`、`sumi-air-dragon-stealth.png`、`sumi-little-dragon-projectile.png` 均已打开检查，非纯色、非透明、非近黑画面。
 - 本轮最终验证：礼墨数据/战斗专项、完整 `pnpm autochess:test`（`145/145`）与 `git diff --check` 通过；类型检查被工作期间出现的另一组未提交天赋 UI 改动阻断，错误位于 `RiftLineScene.ts:835` 的 `Vector2[]` 参数，与礼墨改动无关，相关用户改动已保留。
+
+## 2026-07-25 · 桌面羁绊恢复单行滚动
+
+- 按用户反馈撤销此前桌面羁绊三行收纳方案：宽屏羁绊始终只占一行，少量羁绊在栏内居中，不再提前预留两行空白；棋盘方向说明、24 个部署格和行高恢复到原位置。
+- 羁绊总宽度超过 700 逻辑像素时从左侧开始，保留鼠标横向拖动与滚轮浏览；滚动偏移限制在 `0..minimumOffset`，可完整抵达最后一个羁绊。
+- 根因是 Phaser 4 `GeometryMask` 只支持 Canvas 渲染器；WebGL 现改用 Mask Filter 裁切，Canvas 继续使用几何遮罩，因此两种渲染路径都不会让标签越出主面板。
+- 系统 Chrome 专项验证：3 个羁绊为单行且居中，18 个羁绊为单行；滚轮偏移 `-315`、拖动偏移约 `-250.11`、最终偏移精确停在 `-710`，WebGL 滤镜类型为 `FilterMask`，控制台无错误。
+- 截图 `.tmp/autochess/trait-layout/few-traits-single-row.png`、`all-traits-row-start.png`、`all-traits-row-scrolled.png` 均通过纯色、透明和近黑拒绝检查，并已逐张打开确认起点、终点和面板裁切正常。
+- 验证：`pnpm exec tsc --noEmit --incremental false`、Phaser 静态回归 `26/26`、完整 `pnpm autochess:test`（`146/146`）、目标源码 ESLint（`0 error`，仅保留既有 `_tree` warning）与 `git diff --check` 通过。
