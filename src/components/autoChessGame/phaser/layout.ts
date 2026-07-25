@@ -14,7 +14,9 @@ export const MOBILE_TOUCH_TARGET = 54;
 /** Prevent a fullscreen, high-DPI canvas from allocating an unbounded framebuffer. */
 export const MAX_RENDER_PIXELS = 8_000_000;
 export const MAX_DEVICE_PIXEL_RATIO = 2;
+export const MAX_MOBILE_DEVICE_PIXEL_RATIO = 1.5;
 export const MAX_TEXT_RESOLUTION = 2;
+export const MAX_MOBILE_TEXT_RESOLUTION = 1.5;
 
 export type RenderSize = {
   width: number;
@@ -41,7 +43,10 @@ export const uiScaleFor = (width: number, height: number) => Math.min(
  * 1120×720 backing-buffer ratio.
  */
 export const renderSizeFor = (displayWidth: number, displayHeight: number, devicePixelRatio: number): RenderSize => {
-  const requestedDensity = Math.max(1, Math.min(MAX_DEVICE_PIXEL_RATIO, devicePixelRatio || 1));
+  const mobileSized = Math.min(displayWidth, displayHeight) <= 700
+    && Math.max(displayWidth, displayHeight) <= 1200;
+  const maximumDensity = mobileSized ? MAX_MOBILE_DEVICE_PIXEL_RATIO : MAX_DEVICE_PIXEL_RATIO;
+  const requestedDensity = Math.max(1, Math.min(maximumDensity, devicePixelRatio || 1));
   const displayPixels = Math.max(1, displayWidth * displayHeight);
   const budgetDensity = Math.sqrt(MAX_RENDER_PIXELS / displayPixels);
   const density = Math.max(1, Math.min(requestedDensity, budgetDensity));

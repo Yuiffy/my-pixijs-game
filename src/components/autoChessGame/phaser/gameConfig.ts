@@ -12,6 +12,13 @@ export const createGameConfig = (
   width: WORLD_WIDTH,
   height: WORLD_HEIGHT,
   backgroundColor: "#07121d",
+  fps: {
+    // High-refresh phones otherwise run the full simulation and every dynamic
+    // Text/Graphics sync at 90-120 Hz with no gameplay benefit.
+    target: 60,
+    limit: 60,
+    smoothStep: true,
+  },
   render: {
     // The host owns the high-density backing size. Keep vector edges and
     // texture downsampling smooth when the backing canvas is shown at CSS size.

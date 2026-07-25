@@ -8,7 +8,7 @@ import {
   loadAudioPreferences,
 } from "./audio";
 import Codex from "./Codex";
-import RiftHud from "./RiftHud";
+import RiftHud, { type BattleViewAction } from "./RiftHud";
 import "./RiftHud.css";
 import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
@@ -253,10 +253,17 @@ export default function AutoChessGame() {
     bridgeRef.current?.dispatch(action);
     setRevision((value) => value + 1);
   }, []);
+  const adjustBattleView = useCallback((action: BattleViewAction) => {
+    const scene = gameRef.current?.scene.getScene("RiftLineScene") as {
+      adjustBattleView?: (nextAction: BattleViewAction) => void;
+    } | undefined;
+    scene?.adjustBattleView?.(action);
+  }, []);
 
   return (
     <div
       ref={containerRef}
+      className={`rift-game-shell rift-shell-${engine?.state.phase || "loading"}`}
       style={{
         width: fullscreen ? "100vw" : "100%",
         height: fullscreen ? "100dvh" : "100%",
@@ -308,7 +315,7 @@ export default function AutoChessGame() {
             touchAction: "none",
           }}
         />
-        <RiftHud engine={engine || null} onAction={dispatch} />
+        <RiftHud engine={engine || null} onAction={dispatch} onBattleViewAction={adjustBattleView} />
         <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
       </div>
     </div>

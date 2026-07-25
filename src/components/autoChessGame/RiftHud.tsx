@@ -10,6 +10,7 @@ import {
   STARTERS,
   TRAITS,
   UNIT_DEFS,
+  augmentTierForRound,
   bookLevelForPlayerLevel,
   describeAbilityStarGrowth,
   describeEnergyRecovery,
@@ -18,7 +19,7 @@ import {
   progressionModeForRound,
   tierOddsForLevel,
 } from "./core/gameData";
-import type { OwnedUnit, UnitLocation } from "./core/gameTypes";
+import type { OwnedUnit, RankingMetric, Team, UnitLocation } from "./core/gameTypes";
 import type { GameAction } from "./phaser/EngineBridge";
 
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
@@ -27,11 +28,14 @@ const STAR_LABEL = ["", "Ⅰ", "Ⅱ", "Ⅲ"];
 type Props = {
   engine: AutoChessEngine | null;
   onAction: (action: GameAction) => void;
+  onBattleViewAction: (action: BattleViewAction) => void;
 };
 
+export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
 type SheetName = "shop" | "bench" | "traits" | null;
 type Tone = "neutral" | "confirm" | "economic" | "danger" | "lock";
 type OwnedStars = Record<1 | 2 | 3, number>;
+const MOBILE_VIEW_QUERY = "(max-width: 700px), (pointer: coarse) and (max-width: 1200px)";
 
 function countOwnedStars(units: readonly (OwnedUnit | null | undefined)[], unitId: string): OwnedStars {
   const stars: OwnedStars = { 1: 0, 2: 0, 3: 0 };
@@ -126,14 +130,14 @@ function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) 
   );
 }
 
-export default function RiftHud({ engine, onAction }: Props) {
+export default function RiftHud({ engine, onAction, onBattleViewAction }: Props) {
   const [sheet, setSheet] = useState<SheetName>(null);
   const [starterPage, setStarterPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const state = engine?.state;
 
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 700px), (pointer: coarse) and (orientation: portrait)");
+    const query = window.matchMedia(MOBILE_VIEW_QUERY);
     const sync = () => setIsMobile(query.matches);
     sync();
     query.addEventListener("change", sync);
@@ -207,18 +211,28 @@ export default function RiftHud({ engine, onAction }: Props) {
     );
   }
 
-  if (state.phase === "augment" || state.phase === "result") return null;
+  if (state.phase === "augment") return null;
+  if (state.phase === "result") {
+    return isMobile
+      ? <MobileResult engine={engine} onAction={dispatch} />
+      : null;
+  }
 
   const battleOverlay = state.phase === "battle" && state.battle && (
     <div className="rift-dom-world-frame">
       <div className="rift-dom-battle-tools" style={{ fontFamily: FONT }}>
-        <ActionButton onClick={() => dispatch({ type: "rankingToggle" })}>{state.battle.rankingOpen ? "收起统计" : "查看统计"}<span>D</span></ActionButton>
+        <div className="rift-battle-view-controls" aria-label="战场视图">
+          <button type="button" onClick={() => onBattleViewAction("zoomOut")} aria-label="缩小战场" title="缩小战场">−</button>
+          <button type="button" onClick={() => onBattleViewAction("reset")} aria-label="复位战场视图" title="复位战场视图">⌖</button>
+          <button type="button" onClick={() => onBattleViewAction("zoomIn")} aria-label="放大战场" title="放大战场">+</button>
+        </div>
+        <ActionButton className="rift-ranking-button" onClick={() => dispatch({ type: "rankingToggle" })}>{state.battle.rankingOpen ? "收起统计" : "查看统计"}<span>D</span></ActionButton>
       </div>
     </div>
   );
 
   return (
-    <div className="rift-dom-layer" style={{ fontFamily: FONT }}>
+    <div className={`rift-dom-layer rift-phase-${state.phase}`} style={{ fontFamily: FONT }}>
       <HudHeader state={state} />
       {state.phase === "preparation" && (
         <>
@@ -237,7 +251,7 @@ export default function RiftHud({ engine, onAction }: Props) {
             <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。` : `人口已满。敌军价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。`} 无论胜负都会发放结算金。敌方羁绊：{enemyTraits || "未成型"}。</p>
             <button onClick={() => setSheet("traits")}>查看羁绊 <b>↗</b></button>
           </section>
-          <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></nav>
+          <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton tone="danger" onClick={() => dispatch({ type: "sell" })} disabled={!selected}><span className="rift-mobile-action-icon">¥</span><span>出售</span><b>{selected ? `+${engine.getUnitSellValue(selected)}` : "—"}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开战</span><b>SPACE</b></ActionButton></nav>
         </>
       )}
       {battleOverlay}
@@ -306,7 +320,7 @@ function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | null; eng
 function ShopSheet({ engine, onClose, onAction }: { engine: AutoChessEngine; onClose: () => void; onAction: (action: GameAction) => void }) {
   const ownedStars = (unitId: string) => countOwnedStars([...engine.state.board, ...engine.state.bench], unitId);
   return (
-    <Sheet title="战术商店" eyebrow="SHOP / 五张随机单位" onClose={onClose}>
+    <Sheet title="战术商店" eyebrow="SHOP / 五张随机单位" className="rift-dom-sheet-shop" onClose={onClose}>
       <div className="rift-sheet-summary"><span>金币 <b>{engine.state.gold}</b></span><InterestInfo engine={engine} compact />{engine.state.upgradeDiscountCarry > 0 && <span>减费结转 <b>{engine.state.upgradeDiscountCarry}</b></span>}<span>概率 <b>{tierOddsForLevel(engine.state.playerLevel).filter(Boolean).map((chance, index) => `${index + 1}费 ${chance}%`).join(" · ")}</b></span></div>
       <div className="rift-sheet-shop-list">{engine.state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => onAction({ type: "shop", index })} />)}</div>
       <div className="rift-dom-sheet-grid"><ActionButton onClick={() => onAction({ type: "buyXp" })} disabled={engine.isMaxPlayerLevel || engine.state.gold < (engine.upgradeCost ?? Number.POSITIVE_INFINITY)}>升本 · {engine.isMaxPlayerLevel ? "MAX" : engine.upgradeCost}</ActionButton><ActionButton tone="lock" className={engine.state.shopLocked ? "is-selected" : ""} onClick={() => onAction({ type: "lock" })}>{engine.state.shopLocked ? "已锁定" : "锁定商店"}</ActionButton><ActionButton tone="economic" onClick={() => onAction({ type: "reroll" })} disabled={!engine.state.freeRerollCharges && engine.state.gold < 1}>刷新 · {engine.state.freeRerollCharges ? `免费 ${engine.state.freeRerollCharges}` : 1}</ActionButton></div>
@@ -346,8 +360,66 @@ function TraitSheet({ engine, onClose }: { engine: AutoChessEngine; onClose: () 
   return <Sheet title="羁绊网络" eyebrow="SYNERGY / 悬浮棋子查看完整技能" onClose={onClose}><div className="rift-trait-sheet-list">{traits.length ? traits.map(({ trait, count, status }) => <div key={trait.id} className={status.active ? "is-active" : ""} style={{ "--trait-color": trait.color } as CSSProperties}><span className="rift-trait-orb">{status.active ? "✦" : "·"}</span><div><strong>{trait.name} <small>{trait.family}</small></strong><p>{count} 人 · {status.active ? trait.bonuses[status.level - 1] : `还差 ${Math.max(1, (trait.thresholds.find((threshold) => threshold > count) ?? count + 1) - count)} 人激活`}</p></div><b>{status.active ? STAR_LABEL[status.level] : "—"}</b></div>) : <p className="rift-sheet-empty">上阵单位后，羁绊会在这里展开。</p>}</div></Sheet>;
 }
 
-function Sheet({ title, eyebrow, children, onClose }: { title: string; eyebrow: string; children: ReactNode; onClose: () => void }) {
-  return <div className="rift-dom-sheet-backdrop" role="dialog" aria-modal="true"><section className="rift-dom-sheet"><header><div><span className="rift-eyebrow">{eyebrow}</span><strong>{title}</strong></div><button onClick={onClose} aria-label="关闭面板">关闭 <b>×</b></button></header>{children}</section></div>;
+function MobileResult({ engine, onAction }: { engine: AutoChessEngine; onAction: (action: GameAction) => void }) {
+  const [team, setTeam] = useState<Team>("player");
+  const { state } = engine;
+  const { result, battle } = state;
+  if (!result || !battle) return null;
+  const rows = engine.getBattleRanking(team);
+  const metric = battle.rankingMetric;
+  const metricValue = (value: number) => (value < 1000 ? Math.round(value).toString() : `${(value / 1000).toFixed(1)}k`);
+  const metricText = (value: number, fighter: (typeof rows)[number]["fighter"]) => {
+    if (metric === "support") return `治 ${metricValue(fighter.healingDone)} · 盾 ${metricValue(fighter.shieldingDone)}`;
+    return `${metric === "damage" ? "输出" : "承伤"} ${metricValue(value)}`;
+  };
+  const reward = result.won
+    ? `+${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`
+    : `核心 -${result.damage} · +${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`;
+  return (
+    <div className="rift-dom-layer rift-phase-result" style={{ fontFamily: FONT }}>
+      <main className={`rift-mobile-result ${result.won ? "is-win" : "is-loss"}`}>
+        <section className="rift-mobile-result-summary">
+          <span className="rift-eyebrow">{result.won ? "战斗结算 · 胜利" : "战斗结算 · 失利"}</span>
+          <h1>{result.headline}</h1>
+          <p>{result.detail}</p>
+          <strong>{reward}</strong>
+          <div className="rift-mobile-result-metrics" role="tablist" aria-label="统计指标">
+            {(["damage", "support", "taken"] as RankingMetric[]).map((nextMetric) => (
+              <button key={nextMetric} type="button" role="tab" aria-selected={metric === nextMetric} onClick={() => onAction({ type: "metric", metric: nextMetric })}>
+                {nextMetric === "damage" ? "输出" : nextMetric === "support" ? "治疗/护盾" : "承伤"}
+              </button>
+            ))}
+          </div>
+        </section>
+        <section className="rift-mobile-result-roster">
+          <div className="rift-mobile-result-team-tabs" role="tablist" aria-label="阵容">
+            <button type="button" role="tab" aria-selected={team === "player"} onClick={() => setTeam("player")}>我方阵容 <b>{battle.player.length}</b></button>
+            <button type="button" role="tab" aria-selected={team === "enemy"} onClick={() => setTeam("enemy")}>敌方阵容 <b>{battle.enemy.length}</b></button>
+          </div>
+          <div className="rift-mobile-result-list">
+            {rows.map(({ fighter, value }, index) => (
+              <article key={fighter.fid} className={fighter.alive ? "" : "is-defeated"}>
+                <span className="rift-mobile-result-rank">{index + 1}</span>
+                <span className="rift-mobile-result-portrait" style={{ borderColor: UNIT_DEFS[fighter.unitId].accent }}><UnitPortrait unitId={fighter.unitId} size={44} /></span>
+                <div>
+                  <strong>{UNIT_DEFS[fighter.unitId].name}<i>{"★".repeat(fighter.star)}</i></strong>
+                  <small>血 {Math.round(fighter.hp)}/{Math.round(fighter.maxHp)} · 攻 {Math.round(fighter.attack)} · 甲 {Math.round(fighter.armor)}</small>
+                </div>
+                <span className="rift-mobile-result-value"><b>{metricText(value, fighter)}</b><small>{fighter.alive ? "存活" : "已击败"}</small></span>
+              </article>
+            ))}
+          </div>
+        </section>
+        <ActionButton tone={result.won ? "confirm" : "danger"} className="rift-mobile-result-continue" onClick={() => onAction({ type: "resultContinue" })}>
+          {state.hp <= 0 ? "继续 · 查看结局" : augmentTierForRound(state.round) ? `继续 · 选择${augmentTierForRound(state.round) === "minor" ? "小" : "大"}天赋` : "继续 · 进入整备"}
+        </ActionButton>
+      </main>
+    </div>
+  );
+}
+
+function Sheet({ title, eyebrow, children, className = "", onClose }: { title: string; eyebrow: string; children: ReactNode; className?: string; onClose: () => void }) {
+  return <div className="rift-dom-sheet-backdrop" role="dialog" aria-modal="true"><section className={`rift-dom-sheet ${className}`}><header><div><span className="rift-eyebrow">{eyebrow}</span><strong>{title}</strong></div><button onClick={onClose} aria-label="关闭面板">关闭 <b>×</b></button></header>{children}</section></div>;
 }
 
 function Pager({ index, total, onPrevious, onNext }: { index: number; total: number; onPrevious: () => void; onNext: () => void }) {

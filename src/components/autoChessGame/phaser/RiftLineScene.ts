@@ -59,6 +59,7 @@ import {
   PREPARATION_SHOP_PANEL,
   WIDE_RESULT_LAYOUT,
   WIDE_TRAIT_STRIP,
+  MAX_MOBILE_TEXT_RESOLUTION,
   MAX_TEXT_RESOLUTION,
   TOOLTIP_TYPOGRAPHY,
   WORLD_HEIGHT,
@@ -129,6 +130,37 @@ type ResultScrollDrag = {
   pointerId: number;
   grabOffsetY: number;
 };
+
+type BattleViewPointer = {
+  x: number;
+  y: number;
+};
+
+type ProjectileViewParts = {
+  trail: Phaser.GameObjects.Graphics;
+  core: Phaser.GameObjects.Arc;
+  icon: Phaser.GameObjects.Text;
+  dragon: Phaser.GameObjects.Image;
+};
+
+type ProjectileVisualState = {
+  style: Projectile["style"];
+  grounded: boolean;
+  velocityX: number;
+  velocityY: number;
+  size: number;
+  radius: number;
+  color: string;
+  emoji: string;
+};
+
+type EffectViewParts = {
+  graphics: Phaser.GameObjects.Graphics;
+  burstGradient: Phaser.GameObjects.Image;
+  label: Phaser.GameObjects.Text;
+};
+
+export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
 
 const RESULT_VISIBLE_ROWS = 6;
 const RESULT_ROW_GAP = 5;
@@ -205,7 +237,17 @@ export class RiftLineScene extends Phaser.Scene {
 
   private projectileViews = new Map<Projectile, Phaser.GameObjects.Container>();
 
+  private projectileViewPool: Phaser.GameObjects.Container[] = [];
+
+  private projectileViewParts = new WeakMap<Phaser.GameObjects.Container, ProjectileViewParts>();
+
+  private projectileVisualStates = new WeakMap<Phaser.GameObjects.Container, ProjectileVisualState>();
+
   private effectViews = new Map<BattleEffect, Phaser.GameObjects.Container>();
+
+  private effectViewPool: Phaser.GameObjects.Container[] = [];
+
+  private effectViewParts = new WeakMap<Phaser.GameObjects.Container, EffectViewParts>();
 
   private petViews = new Map<string, Phaser.GameObjects.Container>();
 
@@ -231,6 +273,16 @@ export class RiftLineScene extends Phaser.Scene {
   private resultScrollOffsets: Record<Team, number> = { player: 0, enemy: 0 };
 
   private resultScrollDrag: ResultScrollDrag | null = null;
+
+  private battleViewZoom = 1;
+
+  private battleViewCenter = new Phaser.Math.Vector2(WORLD_WIDTH / 2, 392);
+
+  private battleViewPointers = new Map<number, BattleViewPointer>();
+
+  private battleViewPinchDistance = 0;
+
+  private battleViewCustomized = false;
 
   private traitContent: Phaser.GameObjects.Container | null = null;
 
@@ -259,7 +311,9 @@ export class RiftLineScene extends Phaser.Scene {
     this.createBurstGradientTexture();
     this.createTitleGlowTexture();
     this.input.setTopOnly(true);
+    this.input.addPointer(2);
     this.game.canvas.addEventListener("contextmenu", this.preventContextMenu);
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, this.handlePointerDown, this);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.handlePointerMove, this);
     this.input.on(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePointerUpOutside, this);
@@ -295,6 +349,18 @@ export class RiftLineScene extends Phaser.Scene {
     this.rebuild();
   }
 
+  public adjustBattleView(action: BattleViewAction) {
+    if (this.bridge.engine.state.phase !== "battle") return;
+    if (action === "reset") {
+      this.resetBattleView();
+    } else {
+      this.battleViewCustomized = true;
+      const factor = action === "zoomIn" ? 1.18 : 1 / 1.18;
+      this.battleViewZoom = Phaser.Math.Clamp(this.battleViewZoom * factor, 1, 2.4);
+    }
+    this.syncLogicalCamera();
+  }
+
   private dispatch(action: GameAction) {
     this.bridge.dispatch(action);
     this.rebuild();
@@ -304,6 +370,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private disposeSceneInput() {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
+    this.input.off(Phaser.Input.Events.POINTER_DOWN, this.handlePointerDown, this);
     this.input.off(Phaser.Input.Events.POINTER_MOVE, this.handlePointerMove, this);
     this.input.off(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
     this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePointerUpOutside, this);
@@ -317,6 +384,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private handleResize() {
     this.profile = this.profileForViewport();
+    if (!this.battleViewCustomized) this.battleViewZoom = this.defaultBattleViewZoom();
     this.syncLogicalCamera();
     this.updateQuality();
     this.rebuild();
@@ -337,10 +405,18 @@ export class RiftLineScene extends Phaser.Scene {
     const fitScale = logical.width === WORLD_WIDTH && logical.height === WORLD_HEIGHT
       ? viewportScaleFor(width, height).fitScale
       : Math.max(0.01, Math.min(width / logical.width, height / logical.height));
+    const battle = this.bridge.engine.state.phase === "battle";
+    const zoom = fitScale * (battle ? this.battleViewZoom : 1);
+    const center = battle ? this.clampBattleViewCenter(this.battleViewCenter.x, this.battleViewCenter.y, zoom) : new Phaser.Math.Vector2(logical.width / 2, logical.height / 2);
+    if (battle) this.battleViewCenter.copy(center);
     this.cameras.main
       .setViewport(0, 0, width, height)
-      .setZoom(fitScale)
-      .centerOn(logical.width / 2, logical.height / 2);
+      .setZoom(zoom)
+      .centerOn(center.x, center.y);
+    this.game.canvas.dataset.battleViewZoom = battle ? this.battleViewZoom.toFixed(3) : "1.000";
+    this.game.canvas.dataset.battleViewCenter = battle
+      ? `${this.battleViewCenter.x.toFixed(1)},${this.battleViewCenter.y.toFixed(1)}`
+      : `${center.x.toFixed(1)},${center.y.toFixed(1)}`;
   }
 
   private profileForViewport() {
@@ -355,6 +431,37 @@ export class RiftLineScene extends Phaser.Scene {
   private isMobile() {
     const { width, height } = this.scale.parentSize;
     return Boolean(width && height && height > width * 1.12);
+  }
+
+  private isLandscapePhone() {
+    const { width, height } = this.scale.parentSize;
+    return Boolean(width && height && width > height * 1.25 && height <= 700);
+  }
+
+  private defaultBattleViewZoom() {
+    return this.isLandscapePhone() ? 1.18 : 1;
+  }
+
+  private resetBattleView() {
+    this.battleViewCustomized = false;
+    this.battleViewZoom = this.defaultBattleViewZoom();
+    this.battleViewCenter.set(WORLD_WIDTH / 2, 392);
+    this.battleViewPointers.clear();
+    this.battleViewPinchDistance = 0;
+  }
+
+  private clampBattleViewCenter(x: number, y: number, zoom = this.cameras.main.zoom) {
+    const { width, height } = this.scale.baseSize;
+    const halfWidth = width / Math.max(zoom, 0.01) / 2;
+    const halfHeight = height / Math.max(zoom, 0.01) / 2;
+    const minX = halfWidth >= WORLD_WIDTH / 2 ? WORLD_WIDTH / 2 : halfWidth;
+    const maxX = halfWidth >= WORLD_WIDTH / 2 ? WORLD_WIDTH / 2 : WORLD_WIDTH - halfWidth;
+    const minY = halfHeight >= WORLD_HEIGHT / 2 ? WORLD_HEIGHT / 2 : halfHeight;
+    const maxY = halfHeight >= WORLD_HEIGHT / 2 ? WORLD_HEIGHT / 2 : WORLD_HEIGHT - halfHeight;
+    return new Phaser.Math.Vector2(
+      Phaser.Math.Clamp(x, minX, maxX),
+      Phaser.Math.Clamp(y, minY, maxY),
+    );
   }
 
   private isCompact() {
@@ -376,7 +483,9 @@ export class RiftLineScene extends Phaser.Scene {
     this.headerLayer.removeAll(true);
     this.fighterViews.clear();
     this.projectileViews.clear();
+    this.projectileViewPool = [];
     this.effectViews.clear();
+    this.effectViewPool = [];
     this.petViews.clear();
     this.treeViews.clear();
     this.buttonViews.forEach((button) => button.destroy());
@@ -400,6 +509,9 @@ export class RiftLineScene extends Phaser.Scene {
     const nextPhase = this.bridge.engine.state.phase;
     if (nextPhase !== this.phase) {
       this.stopResultScrollDrag();
+      this.battleViewPointers.clear();
+      this.battleViewPinchDistance = 0;
+      if (nextPhase === "battle") this.resetBattleView();
       if (nextPhase === "result" || this.phase === "result") {
         this.resultScrollOffsets = { player: 0, enemy: 0 };
       }
@@ -457,7 +569,10 @@ export class RiftLineScene extends Phaser.Scene {
   private updateQuality() {
     // DPR sharpens text textures only; authored card geometry remains unchanged.
     const devicePixelRatio = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
-    this.textResolution = Math.min(MAX_TEXT_RESOLUTION, 2, Math.ceil(devicePixelRatio));
+    const { width, height } = this.scale.parentSize;
+    const mobileSized = Math.min(width, height) <= 700 && Math.max(width, height) <= 1200;
+    const maximumResolution = mobileSized ? MAX_MOBILE_TEXT_RESOLUTION : MAX_TEXT_RESOLUTION;
+    this.textResolution = Math.min(maximumResolution, Math.ceil(devicePixelRatio));
   }
 
   private text(x: number, y: number, value: string, size = 14, color = COLORS.text, style: Phaser.Types.GameObjects.Text.TextStyle = {}) {
@@ -1150,7 +1265,57 @@ export class RiftLineScene extends Phaser.Scene {
     }) ?? null;
   }
 
+  private handlePointerDown(pointer: Phaser.Input.Pointer) {
+    if (this.phase !== "battle" || !pointer.isDown) return;
+    this.battleViewPointers.set(pointer.id, { x: pointer.x, y: pointer.y });
+    if (this.battleViewPointers.size >= 2) {
+      const [first, second] = Array.from(this.battleViewPointers.values());
+      this.battleViewPinchDistance = Phaser.Math.Distance.Between(first.x, first.y, second.x, second.y);
+    }
+  }
+
+  private handleBattleViewPointerMove(pointer: Phaser.Input.Pointer) {
+    if (this.phase !== "battle" || !pointer.isDown || !this.battleViewPointers.has(pointer.id)) return false;
+    const previous = this.battleViewPointers.get(pointer.id)!;
+    const next = { x: pointer.x, y: pointer.y };
+    this.battleViewPointers.set(pointer.id, next);
+    if (this.battleViewPointers.size >= 2) {
+      const [first, second] = Array.from(this.battleViewPointers.values());
+      const distance = Phaser.Math.Distance.Between(first.x, first.y, second.x, second.y);
+      if (this.battleViewPinchDistance > 1 && distance > 1) {
+        this.battleViewCustomized = true;
+        this.battleViewZoom = Phaser.Math.Clamp(
+          this.battleViewZoom * (distance / this.battleViewPinchDistance),
+          1,
+          2.4,
+        );
+        this.syncLogicalCamera();
+        this.clearTooltip();
+      }
+      this.battleViewPinchDistance = distance;
+      return true;
+    }
+    const deltaX = next.x - previous.x;
+    const deltaY = next.y - previous.y;
+    if (Math.abs(deltaX) + Math.abs(deltaY) < 0.5) return true;
+    this.battleViewCustomized = true;
+    const nextCenter = this.clampBattleViewCenter(
+      this.battleViewCenter.x - deltaX / Math.max(this.cameras.main.zoom, 0.01),
+      this.battleViewCenter.y - deltaY / Math.max(this.cameras.main.zoom, 0.01),
+    );
+    this.battleViewCenter.copy(nextCenter);
+    this.syncLogicalCamera();
+    this.clearTooltip();
+    return true;
+  }
+
+  private releaseBattleViewPointer(pointer: Phaser.Input.Pointer) {
+    this.battleViewPointers.delete(pointer.id);
+    if (this.battleViewPointers.size < 2) this.battleViewPinchDistance = 0;
+  }
+
   private handlePointerMove(pointer: Phaser.Input.Pointer) {
+    if (this.handleBattleViewPointerMove(pointer)) return;
     const logical = this.logicalPointer(pointer);
     if (this.resultScrollDrag && pointer.id === this.resultScrollDrag.pointerId) {
       if (!pointer.isDown) {
@@ -1220,6 +1385,10 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handlePointerWheel(pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _deltaX: number, deltaY: number) {
+    if (this.phase === "battle") {
+      if (deltaY) this.adjustBattleView(deltaY < 0 ? "zoomIn" : "zoomOut");
+      return;
+    }
     if (this.phase === "result") {
       const layout = this.isCompact() ? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT;
       const logical = this.logicalPointer(pointer);
@@ -1249,6 +1418,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer) {
+    this.releaseBattleViewPointer(pointer);
     if (this.resultScrollDrag?.pointerId === pointer.id) {
       this.stopResultScrollDrag();
       return;
@@ -1273,6 +1443,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private handlePointerUpOutside(pointer: Phaser.Input.Pointer) {
+    this.releaseBattleViewPointer(pointer);
     if (this.resultScrollDrag?.pointerId === pointer.id) this.stopResultScrollDrag();
     this.cancelDrag();
   }
@@ -1776,7 +1947,8 @@ export class RiftLineScene extends Phaser.Scene {
     ].filter(Boolean);
     status.setText(statusBadges.join(" "));
     status.setY(-radius - 8);
-    status.setColor(fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e");
+    const statusColor = fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e";
+    if (status.style.color !== statusColor) status.setColor(statusColor);
     label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}`);
     star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
   }
@@ -1784,8 +1956,22 @@ export class RiftLineScene extends Phaser.Scene {
   private syncCombatEffects() {
     const { battle, visualTime } = this.bridge.engine.state;
     if (!battle) return;
-    this.syncObjectMap(this.projectileViews, battle.projectiles, (projectile) => this.createProjectile(projectile), (view, projectile) => this.updateProjectile(view, projectile));
-    this.syncObjectMap(this.effectViews, battle.effects, (effect) => this.createEffect(effect), (view, effect) => this.updateEffect(view, effect));
+    this.syncObjectMap(
+      this.projectileViews,
+      battle.projectiles,
+      (projectile) => this.createProjectile(projectile),
+      (view, projectile) => this.updateProjectile(view, projectile),
+      undefined,
+      (view) => this.recycleBattleView(view, this.projectileViewPool, 48),
+    );
+    this.syncObjectMap(
+      this.effectViews,
+      battle.effects,
+      (effect) => this.createEffect(effect),
+      (view, effect) => this.updateEffect(view, effect),
+      undefined,
+      (view) => this.recycleBattleView(view, this.effectViewPool, 96),
+    );
     this.syncObjectMap(this.petViews, battle.pets, (pet) => this.createRabbit(pet), (view, pet) => this.updateRabbit(view, pet, visualTime), (pet) => pet.id);
     this.syncObjectMap(this.treeViews, battle.pineTrees, (tree) => this.createPineTree(tree), (view, tree) => this.updatePineTree(view, tree, visualTime), (tree) => tree.id);
     this.syncChronospheres(battle.chronospheres, visualTime);
@@ -1797,6 +1983,7 @@ export class RiftLineScene extends Phaser.Scene {
     create: (item: T) => Phaser.GameObjects.Container,
     update: (view: Phaser.GameObjects.Container, item: T) => void,
     keyFor: (item: T) => K = (item) => item as unknown as K,
+    release: (view: Phaser.GameObjects.Container) => void = (view) => view.destroy(),
   ) {
     const active = new Set<K>();
     items.forEach((item) => {
@@ -1812,19 +1999,45 @@ export class RiftLineScene extends Phaser.Scene {
     });
     views.forEach((view, key) => {
       if (!active.has(key)) {
-        view.destroy();
+        release(view);
         views.delete(key);
       }
     });
   }
 
+  private recycleBattleView(view: Phaser.GameObjects.Container, pool: Phaser.GameObjects.Container[], limit: number) {
+    if (pool.length >= limit) {
+      view.destroy();
+      return;
+    }
+    view.setActive(false).setVisible(false);
+    pool.push(view);
+  }
+
   private createProjectile(projectile: Projectile) {
+    const pooled = this.projectileViewPool.pop();
+    if (pooled) {
+      this.projectileVisualStates.delete(pooled);
+      return pooled
+        .setActive(true)
+        .setVisible(true)
+        .setAlpha(1)
+        .setScale(1)
+        .setRotation(0)
+        .setPosition(projectile.x, projectile.y);
+    }
     const container = this.add.container(projectile.x, projectile.y);
     const trail = this.add.graphics().setName("trail");
     const core = this.add.circle(0, 0, Math.max(2, projectile.size), 0xf8fcff).setName("core");
     const icon = this.text(0, 0, "", Math.max(12, projectile.size), "#ffffff", { fontFamily: PROJECTILE_EMOJI_FONT }).setOrigin(0.5).setName("icon");
     const dragon = this.add.image(0, 0, SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY).setName("dragon");
     container.add([trail, core, icon, dragon]);
+    this.projectileViewParts.set(container, {
+      trail,
+      core,
+      icon,
+      dragon,
+    });
     return container;
   }
 
@@ -1835,15 +2048,40 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private updateProjectile(view: Phaser.GameObjects.Container, projectile: Projectile) {
+    const emoji = projectileEmoji(projectile);
+    const grounded = Boolean(projectile.grounded);
+    view.setPosition(projectile.x, projectile.y).setDepth(DEPTH.effects + projectile.y);
+    const previous = this.projectileVisualStates.get(view);
+    if (
+      previous
+      && previous.style === projectile.style
+      && previous.grounded === grounded
+      && previous.velocityX === projectile.velocityX
+      && previous.velocityY === projectile.velocityY
+      && previous.size === projectile.size
+      && previous.radius === projectile.radius
+      && previous.color === projectile.color
+      && previous.emoji === emoji
+    ) return;
+    this.projectileVisualStates.set(view, {
+      style: projectile.style,
+      grounded,
+      velocityX: projectile.velocityX,
+      velocityY: projectile.velocityY,
+      size: projectile.size,
+      radius: projectile.radius,
+      color: projectile.color,
+      emoji,
+    });
     const speed = Math.hypot(projectile.velocityX, projectile.velocityY) || 1;
     const angle = Math.atan2(projectile.velocityY, projectile.velocityX);
-    const trail = view.getByName("trail") as Phaser.GameObjects.Graphics;
-    const core = view.getByName("core") as Phaser.GameObjects.Arc;
-    const icon = view.getByName("icon") as Phaser.GameObjects.Text;
-    const dragon = view.getByName("dragon") as Phaser.GameObjects.Image;
-    const emoji = projectileEmoji(projectile);
+    const {
+      trail,
+      core,
+      icon,
+      dragon,
+    } = this.projectileViewParts.get(view)!;
     const { color: projectileColor } = Phaser.Display.Color.HexStringToColor(projectile.color);
-    view.setPosition(projectile.x, projectile.y).setDepth(DEPTH.effects + projectile.y);
     trail.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     core.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     icon.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
@@ -1937,21 +2175,49 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private createEffect(effect: BattleEffect) {
+    const pooled = this.effectViewPool.pop();
+    if (pooled) {
+      this.resetEffectView(pooled);
+      return pooled
+        .setActive(true)
+        .setVisible(true)
+        .setAlpha(1)
+        .setScale(1)
+        .setRotation(0)
+        .setPosition(effect.x, effect.y);
+    }
     const container = this.add.container(effect.x, effect.y);
-    const graphics = this.add.graphics().setName("shape");
+    const graphics = this.add.graphics().setName("shape").setVisible(false);
     const burstGradient = this.add.image(0, 0, BURST_GRADIENT_TEXTURE).setOrigin(0.5).setName("burstGradient").setVisible(false);
-    const label = this.text(0, 0, "", 14, "#ffffff", { fontStyle: "bold" }).setOrigin(0.5).setName("label");
+    const label = this.text(0, 0, "", 14, "#ffffff", { fontStyle: "bold" }).setOrigin(0.5).setName("label").setVisible(false);
     container.add([graphics, burstGradient, label]);
+    this.effectViewParts.set(container, {
+      graphics,
+      burstGradient,
+      label,
+    });
     return container;
+  }
+
+  private resetEffectView(view: Phaser.GameObjects.Container) {
+    const {
+      graphics,
+      burstGradient,
+      label,
+    } = this.effectViewParts.get(view)!;
+    graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
+    burstGradient.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL).setAlpha(1).clearTint();
+    label.setVisible(false).setAlpha(1).setRotation(0);
   }
 
   private updateEffect(view: Phaser.GameObjects.Container, effect: BattleEffect) {
     const progress = 1 - effect.life / effect.maxLife;
     const alpha = Math.max(0, effect.life / effect.maxLife);
-    const graphics = view.getByName("shape") as Phaser.GameObjects.Graphics;
-    const burstGradient = view.getByName("burstGradient") as Phaser.GameObjects.Image;
-    const label = view.getByName("label") as Phaser.GameObjects.Text;
-    const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
+    const {
+      graphics,
+      burstGradient,
+      label,
+    } = this.effectViewParts.get(view)!;
     const viewAlpha = effect.kind === "healing_field"
       ? Math.min(1, alpha * 5)
       : alpha ** 0.65;
@@ -1960,9 +2226,18 @@ export class RiftLineScene extends Phaser.Scene {
       .setAlpha(viewAlpha)
       .setRotation(0)
       .setDepth(DEPTH.effects + effect.y + 1);
-    graphics.clear();
-    burstGradient.setVisible(false);
-    label.setVisible(false);
+    if (effect.kind === "text" || effect.kind === "heal") {
+      label
+        .setText(effect.text || "")
+        .setFontFamily(effect.emoji ? PROJECTILE_EMOJI_FONT : FONT_FAMILY)
+        .setFontSize(effect.size || 14)
+        .setY(-progress * 26)
+        .setVisible(true);
+      if (label.style.color !== effect.color) label.setColor(effect.color);
+      return;
+    }
+    const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
+    graphics.clear().setVisible(true);
     if (effect.kind === "line") {
       const targetX = (effect.x2 ?? effect.x) - effect.x;
       const targetY = (effect.y2 ?? effect.y) - effect.y;
@@ -2052,14 +2327,6 @@ export class RiftLineScene extends Phaser.Scene {
       graphics.fillStyle(fill, effect.kind === "hotpot" ? 0.3 : 0.24).fillCircle(0, 0, radius);
       graphics.lineStyle(effect.kind === "hotpot" ? 4 : 3, color, 0.9).strokeCircle(0, 0, radius * (effect.kind === "hotpot" ? 0.72 : 0.92));
       if (effect.kind === "hotpot") graphics.lineStyle(2, 0xffd27a, 0.9).strokeCircle(0, 0, radius * 0.48);
-    } else {
-      label
-        .setText(effect.text || "")
-        .setFontFamily(effect.emoji ? PROJECTILE_EMOJI_FONT : FONT_FAMILY)
-        .setColor(effect.color)
-        .setFontSize(effect.size || 14)
-        .setY(-progress * 26)
-        .setVisible(true);
     }
   }
 
@@ -2206,7 +2473,9 @@ export class RiftLineScene extends Phaser.Scene {
     this.battleTimerPanel.clear();
     this.battleTimerPanel.fillStyle(0x09131d, 0.88).fillRoundedRect(508, 104, 104, 28, 8);
     this.battleTimerPanel.lineStyle(1, urgent ? 0xff718e : 0x8edfff, 0.8).strokeRoundedRect(508, 104, 104, 28, 8);
-    this.battleTimerText.setText(`⏱ ${remaining.toFixed(1)}s`).setColor(urgent ? "#ff718e" : "#dcefff");
+    const timerColor = urgent ? "#ff718e" : "#dcefff";
+    this.battleTimerText.setText(`⏱ ${remaining.toFixed(1)}s`);
+    if (this.battleTimerText.style.color !== timerColor) this.battleTimerText.setColor(timerColor);
     this.battleBannerText.setText(battle.bannerTimer > 0 ? battle.banner : "").setVisible(battle.bannerTimer > 0);
     const rankingKey = battle.rankingOpen ? battle.rankingMetric : "closed";
     if (rankingKey !== this.rankingStateKey) {
