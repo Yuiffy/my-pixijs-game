@@ -790,7 +790,49 @@ export class RiftLineScene extends Phaser.Scene {
     state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, true));
   }
 
-  private drawAugmentHistory(compact: boolean) {
+  private drawEnemyTraitPreview(units: readonly WaveUnit[]) {
+    const activations = enemyTraitActivations(units);
+    const values = activations.map(({ id, level }) => `${TRAITS[id].name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][level]}`);
+    const measuredWidth = (size: number) => {
+      const labels = ["敌方羁绊", ...values];
+      const width = labels.reduce((total, value) => {
+        const probe = this.text(0, 0, value, size, "#ffffff", { fontStyle: "bold" }).setVisible(false);
+        const next = total + probe.width;
+        probe.destroy();
+        return next;
+      }, 0);
+      return width + Math.max(0, labels.length - 1) * 7;
+    };
+    const size = measuredWidth(8) <= 214 ? 8 : 7;
+    const heading = this.text(536, 139, "敌方羁绊", size, "#a889c7", { fontStyle: "bold" });
+    this.phaseLayer.add(heading);
+    if (!activations.length) {
+      this.phaseLayer.add(this.text(536 + heading.width + 7, 139, "未成型", size, "#786b88", { fontStyle: "bold" }));
+      return;
+    }
+    let x = 536 + heading.width + 7;
+    activations.forEach(({ id, count, level }) => {
+      const trait = TRAITS[id];
+      const value = `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][level]}`;
+      const label = this.text(x, 139, value, size, trait.color, { fontStyle: "bold" }).setAlpha(0.88);
+      const zone = this.add.zone(x + label.width / 2, 145, label.width + 5, 16)
+        .setName(`enemy-trait-${id}`)
+        .setInteractive({ useHandCursor: true });
+      zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
+        label.setAlpha(1).setScale(1.04);
+        this.showEnemyTraitTooltip(id, count, level, pointer);
+      });
+      zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showEnemyTraitTooltip(id, count, level, pointer));
+      zone.on(Phaser.Input.Events.POINTER_OUT, () => {
+        label.setAlpha(0.88).setScale(1);
+        if (!this.isCompact()) this.clearTooltip();
+      });
+      this.phaseLayer.add([label, zone]);
+      x += label.width + 7;
+    });
+  }
+
+  private drawTalentHistory(compact: boolean) {
     const history = this.bridge.engine.state.augmentHistory.reduce<AugmentHistoryEntry[]>((entries, selection) => {
       const augment = AUGMENTS.find((item) => item.id === selection.id);
       if (!augment) return entries;
@@ -800,17 +842,57 @@ export class RiftLineScene extends Phaser.Scene {
       return entries;
     }, []);
     const labelX = compact ? 744 : 156;
-    const iconStartX = compact ? 790 : 202;
+    const iconStartX = compact ? 790 : 190;
     const y = 123;
-    if (!history.length) {
-      this.phaseLayer.add(this.text(labelX, 116, "天赋 · 第 2 战后解锁", 8, "#607f91", { fontStyle: "bold" }));
+    const starterSelection = this.bridge.engine.state.starterHistory[0];
+    const starter = starterSelection ? STARTERS.find((item) => item.id === starterSelection.id) : null;
+    if (!starter && !history.length) {
+      this.phaseLayer.add(this.text(labelX, 116, "天赋 · 选择开局后记录", 8, "#607f91", { fontStyle: "bold" }));
       return;
     }
-    this.phaseLayer.add(this.text(labelX, 116, `天赋 ${history.length}`, 8, "#7898aa", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(labelX, 116, "天赋", 8, "#7898aa", { fontStyle: "bold" }));
+    if (starter) {
+      const { color } = Phaser.Display.Color.HexStringToColor(starter.color);
+      const container = this.add.container(iconStartX, y);
+      const backplate = this.add.graphics();
+      const drawBackplate = (hover = false) => {
+        const radius = hover ? 10 : 9;
+        const points = Array.from({ length: 6 }, (_, index) => {
+          const angle = (-Math.PI / 2) + ((index * Math.PI) / 3);
+          return new Phaser.Math.Vector2(Math.cos(angle) * radius, Math.sin(angle) * radius);
+        });
+        backplate.clear();
+        backplate.fillStyle(color, hover ? 0.34 : 0.18);
+        backplate.lineStyle(hover ? 2 : 1, color, hover ? 1 : 0.86);
+        backplate.fillPoints(points, true).strokePoints(points, true);
+      };
+      drawBackplate();
+      const icon = this.text(0, 0, starter.icon, 10, "#ffffff", {
+        fontFamily: PROJECTILE_EMOJI_FONT,
+        fontStyle: "bold",
+      }).setOrigin(0.5);
+      const zone = this.add.zone(0, 0, 22, 22)
+        .setName(`starter-history-${starter.id}`)
+        .setInteractive({ useHandCursor: true });
+      zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
+        drawBackplate(true);
+        container.setScale(1.08);
+        this.showStarterTooltip(starter, pointer);
+      });
+      zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showStarterTooltip(starter, pointer));
+      zone.on(Phaser.Input.Events.POINTER_OUT, () => {
+        drawBackplate(false);
+        container.setScale(1);
+        if (!this.isCompact()) this.clearTooltip();
+      });
+      container.add([backplate, icon, zone]);
+      this.phaseLayer.add(container);
+    }
+    const augmentStartX = iconStartX + (starter ? 28 : 0);
     history.forEach((entry, index) => {
       const { augment, rounds } = entry;
       const { color } = Phaser.Display.Color.HexStringToColor(augment.color);
-      const container = this.add.container(iconStartX + index * 24, y);
+      const container = this.add.container(augmentStartX + index * 24, y);
       const backplate = this.add.graphics();
       const drawBackplate = (hover = false) => {
         backplate.clear();
@@ -2734,6 +2816,61 @@ export class RiftLineScene extends Phaser.Scene {
     this.tooltipLayer.add(container);
   }
 
+  private showEnemyTraitTooltip(
+    traitId: keyof typeof TRAITS,
+    count: number,
+    level: number,
+    pointer?: Phaser.Input.Pointer,
+  ) {
+    this.clearTooltip();
+    const trait = TRAITS[traitId];
+    const { width, scale } = this.tooltipMetrics(416);
+    const { padding, title, body, section } = TOOLTIP_TYPOGRAPHY;
+    const contentWidth = width - padding * 2;
+    const description = this.boundedText(trait.description, contentWidth, this.isCompact() ? 5 : 4, body, "#a9bfcc", { lineSpacing: 5 });
+    const thresholds = trait.thresholds
+      .map((threshold, index) => `${count >= threshold ? "◆" : "◇"} ${threshold} 名：${trait.bonuses[index]}`)
+      .join("\n");
+    const thresholdText = this.boundedText(thresholds, contentWidth, this.isCompact() ? 6 : 7, body, "#dcefff", { lineSpacing: 6 });
+    const descriptionY = padding + title + 34;
+    const thresholdY = descriptionY + description.height + 12;
+    const height = Math.max(242, thresholdY + thresholdText.height + padding);
+    const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 300, scale);
+    const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
+    const container = this.add.container(x, y).setScale(scale);
+    container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, color));
+    container.add(this.text(padding, padding - 2, `敌方羁绊 · ${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][level]}`, title, "#f1f8ff", { fontStyle: "bold" }));
+    container.add(this.text(padding, padding + title + 8, `当前 ${count} 名 · ${level} 档生效`, section, trait.color, { fontStyle: "bold" }));
+    description.setPosition(padding, descriptionY);
+    thresholdText.setPosition(padding, thresholdY);
+    container.add([description, thresholdText]);
+    container.setName("tooltip");
+    this.tooltipLayer.add(container);
+  }
+
+  private showStarterTooltip(starter: (typeof STARTERS)[number], pointer?: Phaser.Input.Pointer) {
+    this.clearTooltip();
+    const { width, scale } = this.tooltipMetrics(390);
+    const { padding, title, body, section } = TOOLTIP_TYPOGRAPHY;
+    const contentWidth = width - padding * 2;
+    const description = this.boundedText(starter.description, contentWidth, this.isCompact() ? 5 : 4, body, "#d7e6ed", { lineSpacing: 5 });
+    const descriptionY = padding + title + 32;
+    const height = Math.max(158, descriptionY + description.height + padding);
+    const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 250, scale);
+    const { color } = Phaser.Display.Color.HexStringToColor(starter.color);
+    const container = this.add.container(x, y).setScale(scale);
+    container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, color));
+    container.add(this.text(padding, padding - 3, starter.icon, title + 2, "#ffffff", {
+      fontFamily: PROJECTILE_EMOJI_FONT,
+    }));
+    container.add(this.text(padding + 34, padding - 2, starter.name, title, "#f1f8ff", { fontStyle: "bold" }));
+    container.add(this.text(padding, padding + title + 10, `开局天赋 · ${starter.subtitle}`, section, starter.color, { fontStyle: "bold" }));
+    description.setPosition(padding, descriptionY);
+    container.add(description);
+    container.setName("tooltip");
+    this.tooltipLayer.add(container);
+  }
+
   private showAugmentTooltip(entry: AugmentHistoryEntry, pointer?: Phaser.Input.Pointer) {
     this.clearTooltip();
     const { augment, rounds } = entry;
@@ -2745,7 +2882,7 @@ export class RiftLineScene extends Phaser.Scene {
     const descriptionY = padding + title + 42;
     const height = Math.max(174, descriptionY + description.height + padding);
     const { x, y } = this.tooltipPosition(pointer, width * scale, height * scale, 250, scale);
-    const color = Phaser.Display.Color.HexStringToColor(augment.color).color;
+    const { color } = Phaser.Display.Color.HexStringToColor(augment.color);
     const container = this.add.container(x, y).setScale(scale);
     container.add(this.panel(0, 0, width, height, 0x07111b, 0.98, color));
     container.add(this.text(padding, padding - 3, augment.icon, title + 2, "#ffffff", {

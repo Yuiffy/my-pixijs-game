@@ -289,7 +289,9 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /部署生命 \$\{Math\.round\(combatStats\.maxHp\)\}/);
   assert.match(scene, /def\.traits\.forEach/);
   assert.match(scene, /getTraitStatus\(traitId\)/);
-  assert.match(scene, /drawAugmentHistory\(compact\)/);
+  assert.match(scene, /drawTalentHistory\(compact\)/);
+  assert.match(scene, /setName\(`starter-history-\$\{starter\.id\}`\)/);
+  assert.match(scene, /showStarterTooltip\(starter, pointer\)/);
   assert.match(scene, /setName\(`augment-history-\$\{augment\.id\}`\)/);
   assert.match(scene, /augment\.tier === "major"/);
   assert.match(scene, /showAugmentTooltip\(entry, pointer\)/);
@@ -348,8 +350,9 @@ test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手"
   assert.match(scene, /type: "move", from: drag\.origin, to: target/);
   assert.match(scene, /drawResultRow/);
   assert.match(scene, /\+\$\{result\.income\} 金币/);
-  assert.match(scene, /enemyTraitActivations\(currentWave\.units\)/);
-  assert.match(scene, /敌方羁绊 ·/);
+  assert.match(scene, /drawEnemyTraitPreview\(currentWave\.units\)/);
+  assert.match(scene, /setName\(`enemy-trait-\$\{id\}`\)/);
+  assert.match(scene, /showEnemyTraitTooltip\(id, count, level, pointer\)/);
   assert.match(hud, /enemyTraitActivations\(wave\.units\)/);
   assert.match(hud, /敌方羁绊：/);
 });

@@ -75,6 +75,12 @@ test("局中天赋固定分为六个小天赋与六个大天赋", () => {
   );
 });
 
+test("开局与局中天赋都有唯一徽记", () => {
+  const icons = [...gameData.STARTERS, ...gameData.AUGMENTS].map((talent) => talent.icon);
+  assert.equal(icons.every((icon) => icon.length > 0), true);
+  assert.equal(new Set(icons).size, icons.length);
+});
+
 test("主线与无限模式按轮次交替提供小天赋和大天赋", () => {
   assert.equal(gameData.augmentTierForRound(1), null);
   assert.equal(gameData.augmentTierForRound(2), "minor");

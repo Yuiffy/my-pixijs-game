@@ -184,16 +184,20 @@ mkdirSync(artifactDirectory, { recursive: true });
         };
       });
     return {
+      starters: boundsFor("starter-history-"),
       augments: boundsFor("augment-history-"),
+      enemyTraits: boundsFor("enemy-trait-"),
       enemies: boundsFor("enemy-preview-"),
     };
   });
+  if (sceneState.starters.length !== 1) throw new Error(`Expected one starter talent icon: ${JSON.stringify(sceneState)}`);
   if (sceneState.augments.length !== 3) throw new Error(`Expected three grouped talent icons: ${JSON.stringify(sceneState)}`);
+  if (!sceneState.enemyTraits.length) throw new Error(`Enemy trait hover zones are missing: ${JSON.stringify(sceneState)}`);
   if (!sceneState.enemies.length) throw new Error(`Enemy preview zones are missing: ${JSON.stringify(sceneState)}`);
-  const augmentRight = Math.max(...sceneState.augments.map((bounds) => bounds.right));
+  const talentRight = Math.max(...[...sceneState.starters, ...sceneState.augments].map((bounds) => bounds.right));
   const enemyLeft = Math.min(...sceneState.enemies.map((bounds) => bounds.x));
-  if (augmentRight >= enemyLeft) {
-    throw new Error(`Talent strip overlaps enemy preview: ${JSON.stringify({ augmentRight, enemyLeft, sceneState })}`);
+  if (talentRight >= enemyLeft) {
+    throw new Error(`Talent strip overlaps enemy preview: ${JSON.stringify({ talentRight, enemyLeft, sceneState })}`);
   }
 
   const capture = async (name) => {
@@ -214,14 +218,11 @@ mkdirSync(artifactDirectory, { recursive: true });
     profile: element.dataset.layoutProfile,
   }));
   const scale = Math.min(box.width / logical.width, box.height / logical.height);
-  const point = {
-    x: box.x + (box.width - logical.width * scale) / 2 + 202 * scale,
-    y: box.y + (box.height - logical.height * scale) / 2 + 123 * scale,
-  };
-  await page.mouse.move(point.x, point.y);
-  await page.waitForTimeout(160);
-
-  const tooltipText = await page.evaluate(() => {
+  const pagePoint = (x, y) => ({
+    x: box.x + (box.width - logical.width * scale) / 2 + x * scale,
+    y: box.y + (box.height - logical.height * scale) / 2 + y * scale,
+  });
+  const readTooltip = () => page.evaluate(() => {
     const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
     const tooltip = scene.tooltipLayer.list.find((item) => item.name === "tooltip");
     const flatten = (items) => items.flatMap((item) => [
@@ -232,10 +233,37 @@ mkdirSync(artifactDirectory, { recursive: true });
       ? flatten(tooltip.list).filter((item) => typeof item.text === "string").map((item) => item.text).join("\n")
       : "";
   });
+
+  const starterPoint = pagePoint(190, 123);
+  await page.mouse.move(starterPoint.x, starterPoint.y);
+  await page.waitForTimeout(160);
+  const starterTooltipText = await readTooltip();
+  for (const expected of ["开局天赋", "携带"]) {
+    if (!starterTooltipText.includes(expected)) throw new Error(`Starter tooltip is missing ${expected}: ${starterTooltipText}`);
+  }
+  const starterHoverScreenshot = await capture("starter-talent-hover");
+
+  const augmentPoint = pagePoint(218, 123);
+  await page.mouse.move(augmentPoint.x, augmentPoint.y);
+  await page.waitForTimeout(160);
+  const tooltipText = await readTooltip();
   for (const expected of ["果冻风纪", "所有友军获得 10 护甲", "第 2、10 战获得", "已叠加 2 次"]) {
     if (!tooltipText.includes(expected)) throw new Error(`Talent tooltip is missing ${expected}: ${tooltipText}`);
   }
   const hoverScreenshot = await capture("talent-strip-hover");
+
+  const firstEnemyTrait = sceneState.enemyTraits[0];
+  const enemyTraitPoint = pagePoint(
+    (firstEnemyTrait.x + firstEnemyTrait.right) / 2,
+    (firstEnemyTrait.y + firstEnemyTrait.bottom) / 2,
+  );
+  await page.mouse.move(enemyTraitPoint.x, enemyTraitPoint.y);
+  await page.waitForTimeout(160);
+  const enemyTraitTooltipText = await readTooltip();
+  for (const expected of ["敌方羁绊", "当前", "名", "档生效"]) {
+    if (!enemyTraitTooltipText.includes(expected)) throw new Error(`Enemy trait tooltip is missing ${expected}: ${enemyTraitTooltipText}`);
+  }
+  const enemyTraitHoverScreenshot = await capture("enemy-trait-hover");
 
   const textState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
   if (textState.phase !== "preparation" || textState.round !== 11 || textState.augmentHistory.length !== 4) {
@@ -246,8 +274,10 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   console.log(JSON.stringify({
     layout: { logical, box },
-    separation: { augmentRight, enemyLeft, gap: enemyLeft - augmentRight },
+    separation: { talentRight, enemyLeft, gap: enemyLeft - talentRight },
+    starterTooltipText,
     tooltipText,
+    enemyTraitTooltipText,
     textState: {
       phase: textState.phase,
       round: textState.round,
@@ -255,7 +285,9 @@ mkdirSync(artifactDirectory, { recursive: true });
     },
     screenshots: {
       default: defaultScreenshot,
+      starterHover: starterHoverScreenshot,
       hover: hoverScreenshot,
+      enemyTraitHover: enemyTraitHoverScreenshot,
     },
     errors,
   }, null, 2));
