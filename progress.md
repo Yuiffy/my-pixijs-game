@@ -600,6 +600,18 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 回归新增帕可不再生成大型攻击圆环、治疗色与尺寸、Phaser 接线及 Canvas 分支守卫。`pnpm exec tsc --noEmit --incremental false`、完整 `pnpm autochess:test`（`147/147`）、本次视觉源码 ESLint（`0 error`，仅保留既有 `_tree` warning）与 `git diff --check` 通过。
 - 按用户此前要求，本轮未启动浏览器或截图视觉验证，由用户在实际游戏中验收观感。
 
+## 2026-07-25 · 手机战斗性能优化
+
+- 用户反馈手机浏览器战斗卡顿；研究 Phaser 官方性能文章、Phaser FPSConfig 文档与 MDN WebGL 最佳实践后，按“限制无收益刷新、缩小移动端 back buffer、缓存引用、复用短命对象、选择性处理高频视觉”的路径优化。
+- 高刷新手机的 Phaser 游戏循环封顶 60 FPS；390×844、设备 DPR 3 的手机画布渲染密度由 2 限到 1.5，文字纹理同样限到 1.5，桌面仍保留最高 2。
+- 投射物和技能特效容器加入有界对象池，缓存内部 Graphics/Text/Image 引用与静态投射物外观；棋子视图也缓存子节点引用，计时框只在进入最后 6 秒时重画。
+- 压测发现 10 对 10 场景平均同时存在约 32 个飘字、峰值 49—59 个；手机渲染层现最多保留 18 个并发伤害/治疗数字，非文字技能特效、战斗模拟和统计不受影响，桌面不裁剪。
+- 新增 `scripts/verify-autochess-performance.cjs`，用系统 Chrome、390×844、DPR 3、10 对 10、12 倍生命压力场景采样实际游戏更新率、组件耗时、长任务、CPU、堆、并发特效，并执行截图纯色/透明/近黑拒绝检查。
+- 干净 dev server 实测：正常 CPU 为 `60.36` 次游戏更新/秒，战斗同步平均 `3.00 ms`、P95 `4.6 ms`，0 个长任务；飘字预算前同档为平均 `3.46 ms`、特效同步 `1.17 ms`，预算后分别为 `3.00 ms`、`0.77 ms`。4 倍 CPU 降速极端压力下为 `12.99` 次更新/秒；旧基线约 `8.55 FPS`。
+- 最终性能截图 `.tmp/autochess/performance/final-mobile-cpu1-battle.png` 与 `final-mobile-cpu4-battle.png` 均通过检查并逐张打开确认；控制台、失败请求和错误响应为空。移动端专项 9 张截图也全部逐张检查。
+- 验证：`pnpm exec tsc --noEmit --incremental false`、目标源码 ESLint、Phaser 静态回归 `28/28`、完整 `pnpm autochess:test`（`148/148`）、移动端 Chrome 专项和 `git diff --check` 通过。
+- 仓库主 `verify-autochess.cjs` 仍在既有首战 `result` 等待处超时；本轮性能与移动端专项均能推进至战斗/结算并通过，故继续归类为旧长流程脚本问题。
+
 ## 2026-07-25 · 手机横竖屏战斗、商店与统计适配
 
 - 粗指针手机在横竖屏都切换为低干扰 HUD：隐藏网页工具栏，备战状态压缩为悬浮信息，操作区固定到安全区；横屏商店改为右侧全高面板，五张商品卡无需滚动即可看全。

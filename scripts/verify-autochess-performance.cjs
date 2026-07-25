@@ -183,6 +183,7 @@ mkdirSync(artifactDirectory, { recursive: true });
       ["simulation", []],
       ...componentMethods.map((method) => [method, []]),
     ]);
+    window.__autochessPerfRenderLoad = { effects: [], textEffects: [] };
     const originalUpdate = scene.update.bind(scene);
     const bridge = window.__codexAutoChessBridge;
     const originalBridgeUpdate = bridge.update.bind(bridge);
@@ -200,6 +201,13 @@ mkdirSync(artifactDirectory, { recursive: true });
         const result = original(...args);
         if (window.__autochessPerfSampling) {
           window.__autochessPerfComponentSamples[method].push(performance.now() - start);
+          if (method === "syncCombatEffects") {
+            const renderedEffects = [...scene.effectViews.keys()].filter((effect) => typeof effect?.kind === "string");
+            window.__autochessPerfRenderLoad.effects.push(renderedEffects.length);
+            window.__autochessPerfRenderLoad.textEffects.push(
+              renderedEffects.filter((effect) => effect.kind === "text" || effect.kind === "heal").length,
+            );
+          }
         }
         return result;
       };
@@ -276,6 +284,9 @@ mkdirSync(artifactDirectory, { recursive: true });
   const frameSample = await page.evaluate((sampleDuration) => new Promise((resolve) => {
     const deltas = [];
     const longTasks = [];
+    const effects = [];
+    const textEffects = [];
+    const projectiles = [];
     const start = performance.now();
     let previous = start;
     const observer = typeof PerformanceObserver === "function"
@@ -287,9 +298,21 @@ mkdirSync(artifactDirectory, { recursive: true });
     const onFrame = (now) => {
       deltas.push(now - previous);
       previous = now;
+      const battle = window.__codexAutoChessBridge?.engine.state.battle;
+      const currentEffects = battle?.effects || [];
+      effects.push(currentEffects.length);
+      textEffects.push(currentEffects.filter((effect) => effect.kind === "text" || effect.kind === "heal").length);
+      projectiles.push(battle?.projectiles.length || 0);
       if (now - start >= sampleDuration) {
         observer?.disconnect();
-        resolve({ deltas, longTasks, elapsed: now - start });
+        resolve({
+          deltas,
+          longTasks,
+          effects,
+          textEffects,
+          projectiles,
+          elapsed: now - start,
+        });
         return;
       }
       requestAnimationFrame(onFrame);
@@ -304,6 +327,7 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   const updateSamples = await page.evaluate(() => window.__autochessPerfUpdateSamples);
   const componentSamples = await page.evaluate(() => window.__autochessPerfComponentSamples);
+  const renderLoad = await page.evaluate(() => window.__autochessPerfRenderLoad);
   const trackedSceneSamples = Array.from(
     { length: Math.max(...["simulation", "syncBattleEntities", "syncCombatEffects", "syncBattleOverlay"].map((name) => componentSamples[name].length)) },
     (_, index) => ["simulation", "syncBattleEntities", "syncCombatEffects", "syncBattleOverlay"]
@@ -345,12 +369,23 @@ mkdirSync(artifactDirectory, { recursive: true });
       over25ms: frameSample.deltas.filter((delta) => delta > 25).length,
       over50ms: frameSample.deltas.filter((delta) => delta > 50).length,
     },
+    gameLoop: {
+      updates: trackedSceneSamples.length,
+      effectiveFps: Number((trackedSceneSamples.length * 1000 / frameSample.elapsed).toFixed(2)),
+    },
     sceneUpdateMs: summarize(updateSamples),
     trackedSceneWorkMs: summarize(trackedSceneSamples),
     componentsMs: Object.fromEntries(
       Object.entries(componentSamples).map(([name, samples]) => [name, summarize(samples)]),
     ),
     longTasksMs: summarize(frameSample.longTasks),
+    battleLoad: {
+      effects: summarize(frameSample.effects),
+      textEffects: summarize(frameSample.textEffects),
+      projectiles: summarize(frameSample.projectiles),
+      renderedEffects: summarize(renderLoad.effects),
+      renderedTextEffects: summarize(renderLoad.textEffects),
+    },
     browserCpu: {
       taskDurationSeconds: Number(((after.TaskDuration || 0) - (before.TaskDuration || 0)).toFixed(4)),
       scriptDurationSeconds: Number(((after.ScriptDuration || 0) - (before.ScriptDuration || 0)).toFixed(4)),

@@ -255,6 +255,19 @@ test("投射物命中使用可复用的径向渐变爆裂", () => {
   assert.match(scene, /burstGradient[\s\S]*?\.setTint\(color\)[\s\S]*?\.setDisplaySize\(radius \* 2, radius \* 2\)[\s\S]*?\.setVisible\(true\)/);
 });
 
+test("战斗热路径复用短命视图并缓存棋子子节点", () => {
+  assert.match(scene, /fighterViewParts = new WeakMap/);
+  assert.match(scene, /this\.fighterViewParts\.set\(container/);
+  assert.match(scene, /this\.fighterViewParts\.get\(view\)!/);
+  assert.match(scene, /projectileViewPool/);
+  assert.match(scene, /effectViewPool/);
+  assert.match(scene, /recycleBattleView/);
+  assert.match(scene, /MOBILE_TEXT_EFFECT_LIMIT = 18/);
+  assert.match(scene, /visibleCombatEffects\(battle\.effects\)/);
+  assert.match(scene, /this\.suppressedEffectViews\.add\(effect\)/);
+  assert.match(scene, /if \(urgent !== this\.battleTimerUrgent\)/);
+});
+
 test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
   assert.match(layout, /MAX_RENDER_PIXELS/);
   assert.match(layout, /MAX_DEVICE_PIXEL_RATIO = 2/);
@@ -290,7 +303,7 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(scene, /adjustBattleView/);
   assert.match(scene, /battleViewPointers/);
   assert.match(scene, /positionToCamera\(this\.cameras\.main\)/);
-  assert.match(scene, /maximumResolution = mobileSized \? MAX_MOBILE_TEXT_RESOLUTION : MAX_TEXT_RESOLUTION/);
+  assert.match(scene, /maximumResolution = this\.isMobileSizedViewport\(\) \? MAX_MOBILE_TEXT_RESOLUTION : MAX_TEXT_RESOLUTION/);
   assert.match(scene, /Math\.min\(maximumResolution, Math\.ceil\(devicePixelRatio\)\)/);
   assert.match(scene, /resolution: this\.textResolution/);
   assert.match(scene, /tooltipLayoutFor\(/);
