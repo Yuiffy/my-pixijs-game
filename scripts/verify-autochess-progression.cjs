@@ -186,31 +186,33 @@ mkdirSync(artifactDirectory, { recursive: true });
     screenshots[name] = { path, bytes: buffer.length, ...inspectPng(buffer) };
   };
 
-  await forcePreparation(5);
+  await forcePreparation(4);
   const elite = await readState();
   if (
     elite.wave.tag !== "elite"
     || elite.progressionMode !== "campaign"
     || !elite.wave.description.includes("精英预警")
+    || !elite.wave.enemyTraits.length
   ) {
     throw new Error(`Elite warning is incomplete: ${JSON.stringify(elite)}`);
   }
-  await capture("round-05-elite-warning");
+  await capture("round-04-elite-warning");
 
-  await forcePreparation(26);
+  await forcePreparation(17);
   const endless = await readState();
   const endlessHeader = await page.locator(".rift-dom-header").innerText();
-  if (endless.progressionMode !== "endless" || endless.wave.enemyBudget !== 96 || !endlessHeader.includes("普通无限")) {
+  if (endless.progressionMode !== "endless" || endless.wave.enemyBudget !== 135 || !endless.wave.enemyTraits.length || !endlessHeader.includes("普通无限")) {
     throw new Error(`Normal endless state is incomplete: ${JSON.stringify({ endless, endlessHeader })}`);
   }
-  await capture("round-26-normal-endless");
+  await capture("round-17-normal-endless");
 
-  await forcePreparation(41, true);
+  await forcePreparation(32, true);
   const hell = await readState();
   const hellHeader = await page.locator(".rift-dom-header").innerText();
   if (
     hell.progressionMode !== "hell"
-    || hell.wave.enemyBudget !== 558
+    || hell.wave.enemyBudget !== 666
+    || !hell.wave.enemyTraits.length
     || hell.player.interestIncome !== 20
     || !hellHeader.includes("地狱无限")
   ) {
@@ -222,13 +224,13 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (!interestText.includes("最多 20 利息") || !interestText.includes("80 金币封顶")) {
     throw new Error(`Finance cap tooltip is incomplete: ${interestText}`);
   }
-  await capture("round-41-hell-finance-cap");
+  await capture("round-32-hell-finance-cap");
 
   await page.getByRole("button", { name: "图鉴 / 本局天赋" }).click();
   const dialog = page.getByRole("dialog", { name: "裂隙阵线图鉴" });
   await dialog.getByRole("button", { name: "玩法说明" }).click();
   const rulesText = await dialog.innerText();
-  for (const expected of ["第 26—40 战", "20 利息", "连胜与赏金全部复投", "80 金"]) {
+  for (const expected of ["第 17—31 战", "20 利息", "连胜与赏金全部复投", "80 金"]) {
     if (!rulesText.includes(expected)) throw new Error(`Rules are missing ${expected}`);
   }
   await capture("progression-rules");
@@ -243,7 +245,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   await dialog.getByRole("button", { name: "关闭 Esc" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(250);
-  await forcePreparation(5);
+  await forcePreparation(4);
   const mobileBrief = page.locator(".rift-mobile-brief");
   const mobileBriefText = await mobileBrief.innerText();
   const mobileBriefBox = await mobileBrief.boundingBox();
@@ -256,7 +258,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   ) {
     throw new Error(`Mobile elite warning layout is invalid: ${JSON.stringify({ mobileBriefText, mobileBriefBox, mobileActionsBox })}`);
   }
-  await capture("round-05-elite-warning-mobile");
+  await capture("round-04-elite-warning-mobile");
   const mobileCanvas = await canvas.evaluate((element) => ({
     width: element.width,
     height: element.height,

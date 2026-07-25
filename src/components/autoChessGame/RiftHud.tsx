@@ -14,6 +14,7 @@ import {
   describeAbilityStarGrowth,
   describeEnergyRecovery,
   enemyBudgetForRound,
+  enemyTraitActivations,
   progressionModeForRound,
   tierOddsForLevel,
 } from "./core/gameData";
@@ -92,7 +93,7 @@ function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) 
     mode === "campaign"
       ? state.round === CAMPAIGN_ROUNDS
         ? "终局首领已抵达"
-        : "每 5 战强度跃升"
+        : "每 4 战迎战精英"
       : mode === "endless"
         ? `距离地狱无限还有 ${NORMAL_ENDLESS_END_ROUND - state.round} 战`
         : "20 利息、连胜与赏金全部复投";
@@ -146,6 +147,9 @@ export default function RiftHud({ engine, onAction }: Props) {
     : null;
   const ownedStars = (unitId: string) => countOwnedStars([...state.board, ...state.bench], unitId);
   const wave = engine.currentWave;
+  const enemyTraits = enemyTraitActivations(wave.units)
+    .map(({ id, level }) => `${TRAITS[id].name}${STAR_LABEL[level]}`)
+    .join(" · ");
   const activeTraits = engine.getActiveTraits();
   const odds = tierOddsForLevel(state.playerLevel);
   const starterIndex = Math.min(starterPage, Math.max(0, state.starterChoices.length - 1));
@@ -156,7 +160,7 @@ export default function RiftHud({ engine, onAction }: Props) {
         <HudHeader state={state} />
         <div className="rift-dom-title-body">
           <section className="rift-title-copy">
-            <span className="rift-eyebrow">RIFT LINE // 25 WAVE EXPEDITION</span>
+            <span className="rift-eyebrow">RIFT LINE // 16 WAVE EXPEDITION</span>
             <h1>裂隙<span>阵线</span></h1>
             <p>每一战都要重新回答同一个问题：<br />你愿意把资源押在谁身上？</p>
             <div className="rift-title-notes"><span>短局构筑</span><span>自动战斗</span><span>自由布阵</span></div>
@@ -194,7 +198,7 @@ export default function RiftHud({ engine, onAction }: Props) {
         <section className={`rift-dom-phase-card ${state.finalWon ? "is-win" : "is-loss"}`}>
           <span className="rift-eyebrow">RUN COMPLETE // {state.finalWon ? "RIFT SEALED" : "LINE LOST"}</span>
           <h1>{state.finalWon ? "裂隙已封闭" : "战线已失守"}</h1>
-          <p>{state.finalWon ? "你守住了二十五次冲击。普通无限与地狱无限已经开启。" : "这一局的答案到此为止。调整开局协议，再试一次。"}</p>
+          <p>{state.finalWon ? "你守住了十六次冲击。普通无限与地狱无限已经开启。" : "这一局的答案到此为止。调整开局协议，再试一次。"}</p>
           <div className="rift-final-stats"><span>本局积分 <b>{state.score.toLocaleString()}</b></span><span>核心 <b>{state.hp}/{state.maxHp}</b></span><span>最高纪录 <b>{state.bestScore.toLocaleString()}</b></span></div>
           <ActionButton tone={state.finalWon ? "confirm" : "danger"} onClick={() => dispatch({ type: "restart" })}>重新接入 <b>↗</b></ActionButton>
         </section>
@@ -229,7 +233,7 @@ export default function RiftHud({ engine, onAction }: Props) {
           </div>
           <section className={`rift-mobile-brief ${wave.tag === "normal" ? "" : `is-${wave.tag}`}`}>
             <div><span className="rift-eyebrow">{wave.tag === "boss" ? "BOSS WARNING" : wave.tag === "elite" ? "ELITE WARNING" : `ROUND ${String(state.round).padStart(2, "0")} / QUICK READ`}</span><strong>{wave.name}</strong></div>
-            <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军价值约 ${enemyBudgetForRound(state.round)}，全歼赏金 ${engine.potentialBounty} 金。` : `人口已满。敌军价值约 ${enemyBudgetForRound(state.round)}，全歼赏金 ${engine.potentialBounty} 金。`}</p>
+            <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军价值约 ${enemyBudgetForRound(state.round)}，全歼赏金 ${engine.potentialBounty} 金。` : `人口已满。敌军价值约 ${enemyBudgetForRound(state.round)}，全歼赏金 ${engine.potentialBounty} 金。`} 敌方羁绊：{enemyTraits || "未成型"}。</p>
             <button onClick={() => setSheet("traits")}>查看羁绊 <b>↗</b></button>
           </section>
           <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></nav>

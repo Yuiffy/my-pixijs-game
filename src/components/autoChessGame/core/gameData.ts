@@ -1123,7 +1123,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   miki_guest: unit({
     id: "miki_guest",
     name: "弥希Miki",
-    title: "毕业返场 · 双声道法控",
+    title: "弥希Miki · 双声道法控",
     glyph: "弥",
     color: "#554687",
     accent: "#c6b4ff",
@@ -1137,7 +1137,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.86,
     moveSpeed: 56,
     abilityName: "双声道返场",
-    abilityDescription: "仅敌方可用。以左右双声道轰击敌人最密集处，造成两段范围伤害并短暂眩晕。",
+    abilityDescription: "以左右双声道轰击敌人最密集处，造成两段范围伤害并短暂眩晕。",
     portrait: "/images/autochess/enemy-guests/miki.jpg",
     portraitFocus: "center",
     shop: false,
@@ -1145,7 +1145,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   hatsuse_guest: unit({
     id: "hatsuse_guest",
     name: "初濑Hatsuse",
-    title: "毕业返场 · 蝙蝠夜歌",
+    title: "初濑Hatsuse · 蝙蝠夜歌",
     glyph: "濑",
     color: "#5b466f",
     accent: "#ff9fce",
@@ -1159,7 +1159,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.78,
     moveSpeed: 62,
     abilityName: "蝙蝠夜歌",
-    abilityDescription: "仅敌方可用。召来蝙蝠声浪穿过数名敌人，造成伤害并将部分伤害转化为全队治疗。",
+    abilityDescription: "召来蝙蝠声浪穿过数名敌人，造成伤害并将部分伤害转化为全队治疗。",
     portrait: "/images/autochess/enemy-guests/hatsuse.jpg",
     portraitFocus: "center",
     shop: false,
@@ -1482,21 +1482,15 @@ export const waveCompositionValue = (wave: Pick<WaveDefinition, "units">) =>
 export const enemyTraitActivations = (
   units: readonly WaveUnit[],
 ) => {
-  const uniqueIds = new Set(units.map((unit) => unit.id));
+  const uniqueIds = new Set(units.map((waveUnit) => waveUnit.id));
   return TRAIT_IDS.flatMap((id) => {
-    const count = [...uniqueIds].filter((unitId) =>
-      UNIT_DEFS[unitId].traits.includes(id),
-    ).length;
+    let count = 0;
+    uniqueIds.forEach((unitId) => {
+      if (UNIT_DEFS[unitId].traits.includes(id)) count += 1;
+    });
     const level = traitLevelForCount(TRAITS[id], count);
     return level ? [{ id, count, level }] : [];
   });
-};
-
-const describeEnemyTraits = (units: readonly WaveUnit[]) => {
-  const labels = enemyTraitActivations(units).map(
-    ({ id, level }) => `${TRAITS[id].name}${["Ⅰ", "Ⅱ", "Ⅲ"][level - 1]}`,
-  );
-  return labels.length ? `敌方羁绊：${labels.join("、")}` : "敌方羁绊：未成型";
 };
 
 const tagForRound = (round: number): WaveDefinition["tag"] => {
@@ -1524,7 +1518,7 @@ export const enemyBudgetForRound = (round: number) => {
       baseBudget * (tag === "boss" ? 1.55 : tag === "elite" ? 1.9 : 1),
     );
   }
-  let budget = 120;
+  let budget = 135;
   for (let waveRound = CAMPAIGN_ROUNDS + 1; waveRound < safeRound; waveRound += 1) {
     const nextMode = progressionModeForRound(waveRound + 1);
     const bounty = projectedBountyForGeneratedRound(waveRound, budget);
@@ -1614,13 +1608,7 @@ export const projectedIncomeAfterRound = (round: number) => {
 };
 
 export const waveForRound = (round: number, seed = 0): WaveDefinition => {
-  if (round <= WAVES.length) {
-    const authored = WAVES[Math.max(0, round - 1)];
-    return {
-      ...authored,
-      description: `${authored.description} ${describeEnemyTraits(authored.units)}。`,
-    };
-  }
+  if (round <= WAVES.length) return WAVES[Math.max(0, round - 1)];
 
   const mode = progressionModeForRound(round);
   const tag = tagForRound(round);
@@ -1632,11 +1620,6 @@ export const waveForRound = (round: number, seed = 0): WaveDefinition => {
   const nameIndex = Math.max(0, endlessRound - 1);
   const pressurePrefix = tag === "boss" ? "首领预警：" : tag === "elite" ? "精英预警：" : "";
   const squad = enemySquadForRound(round, seed);
-  const guest = units.find((unit) =>
-    ENEMY_GUEST_IDS.includes(unit.id as (typeof ENEMY_GUEST_IDS)[number]),
-  );
-  const guestText = guest ? ` 毕业嘉宾：${UNIT_DEFS[guest.id].name}。` : "";
-  const traitText = describeEnemyTraits(units);
 
   return {
     round,
@@ -1657,10 +1640,10 @@ export const waveForRound = (round: number, seed = 0): WaveDefinition => {
     tag,
     description:
       mode === "campaign"
-        ? `${pressurePrefix}敌军总价值约 ${budget}。${traitText}。${guestText}`
+        ? `${pressurePrefix}敌军总价值约 ${budget}，敌方会按成型羁绊协同作战。`
         : mode === "endless"
-          ? `${pressurePrefix}普通无限按 5 利息、连胜与上战赏金全部复投。当前总价值约 ${budget}，31 战后进入地狱无限。${traitText}。${guestText}`
-          : `${pressurePrefix}地狱无限按 20 利息、理财固定收入、连胜与上战赏金全部复投。当前总价值约 ${budget}。${traitText}。${guestText}`,
+          ? `${pressurePrefix}普通无限按 5 利息、连胜与上战赏金全部复投。当前总价值约 ${budget}，31 战后进入地狱无限。`
+          : `${pressurePrefix}地狱无限按 20 利息、理财固定收入、连胜与上战赏金全部复投。当前总价值约 ${budget}。`,
     modifier,
     units,
   };

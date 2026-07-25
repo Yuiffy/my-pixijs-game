@@ -173,8 +173,8 @@ test("怕死受击会在跳跃过程中真实位移，而不是落地瞬移", ()
   const attacker = battle.enemy[0];
   battle.player.forEach((fighter) => { fighter.cooldown = 99; });
   battle.enemy.forEach((fighter) => { fighter.cooldown = 99; fighter.attack = 0; fighter.hp = 99_999; fighter.maxHp = 99_999; });
-  target.x = 430; target.y = 320; target.cooldown = 99;
-  attacker.x = 490; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 280; attacker.cooldown = 0;
+  target.x = 430; target.y = 320; target.cooldown = 99; target.baseMoveSpeed = 0; target.moveSpeed = 0;
+  attacker.x = 490; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.baseRange = 280; attacker.range = 280; attacker.baseMoveSpeed = 0; attacker.moveSpeed = 0; attacker.cooldown = 0;
   const start = { x: target.x, y: target.y };
 
   engine.update(0.05);
@@ -233,7 +233,7 @@ test("怕死后跳期间近战仍按原移速接近远程目标", () => {
   battle.player.slice(1).forEach((fighter) => { fighter.alive = false; });
   battle.enemy.slice(1).forEach((fighter) => { fighter.alive = false; });
   target.x = 300; target.y = 320; target.cooldown = 99; target.baseMoveSpeed = 160; target.moveSpeed = 160;
-  attacker.x = 900; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.range = 700; attacker.cooldown = 0;
+  attacker.x = 900; attacker.y = 320; attacker.attack = 40; attacker.attackType = "ranged"; attacker.baseRange = 700; attacker.range = 700; attacker.cooldown = 0;
   const start = { x: target.x, y: target.y };
 
   engine.update(0.05);
@@ -269,6 +269,7 @@ test("怕死不会打断跳舞成员的冲刺", () => {
   attacker.x = dancer.x + 80;
   attacker.y = dancer.y;
   attacker.attackType = "ranged";
+  attacker.baseRange = 300;
   attacker.range = 300;
   attacker.attack = 40;
   attacker.cooldown = 0;
@@ -1368,24 +1369,89 @@ test("精英关、主线通关与地狱入口会在备战前发出预警", () =>
     engine.continueAfterResult();
   };
 
-  completeWonRound(4);
-  assert.equal(engine.state.round, 5);
+  completeWonRound(3);
+  assert.equal(engine.state.round, 4);
   assert.equal(engine.currentWave.tag, "elite");
-  assert.match(engine.state.toast?.text || "", /精英预警.*第 5 战/);
+  assert.match(engine.state.toast?.text || "", /精英预警.*第 4 战/);
 
-  completeWonRound(25);
+  completeWonRound(16);
   assert.equal(engine.state.endlessUnlocked, true);
   assert.equal(engine.state.phase, "augment");
-  assert.match(engine.state.toast?.text || "", /25 战通关.*40 战后/);
+  assert.match(engine.state.toast?.text || "", /16 战通关.*31 战后/);
   engine.chooseAugment(0);
-  assert.equal(engine.state.round, 26);
+  assert.equal(engine.state.round, 17);
 
-  completeWonRound(40);
-  assert.equal(engine.state.round, 41);
+  completeWonRound(31);
+  assert.equal(engine.state.round, 32);
   assert.match(engine.state.toast?.text || "", /地狱预警.*20 利息.*赏金/);
 });
 
-test("截图中的高存款七人阵容在十五战会受精英威胁且十六战仍有胜机", () => {
+test("敌方成熟与流量羁绊会实际写入战斗属性", () => {
+  const matureEngine = createEngine(2);
+  matureEngine.state.round = 3;
+  matureEngine.startBattle();
+  const cinderRam = matureEngine.state.battle.enemy.find((fighter) => fighter.unitId === "cinder_ram");
+  const clockGunner = matureEngine.state.battle.enemy.find((fighter) => fighter.unitId === "clock_gunner");
+  const sparkMage = matureEngine.state.battle.enemy.find((fighter) => fighter.unitId === "spark_mage");
+  assert.equal(cinderRam.matureMember, true);
+  assert.equal(clockGunner.matureMember, true);
+  assert.ok(cinderRam.shield >= cinderRam.maxHp * 0.099);
+  assert.ok(clockGunner.shield >= clockGunner.maxHp * 0.099);
+  assert.equal(sparkMage.matureMember, false);
+  assert.equal(sparkMage.shield, 0);
+
+  const trafficEngine = createEngine(4);
+  trafficEngine.state.round = 4;
+  trafficEngine.startBattle();
+  const trafficMembers = trafficEngine.state.battle.enemy.filter(
+    (fighter) => gameData.UNIT_DEFS[fighter.unitId].traits.includes("traffic"),
+  );
+  assert.equal(trafficMembers.length, 2);
+  trafficMembers.forEach((fighter) => assert.ok(fighter.lifesteal > 0));
+});
+
+test("弥希双声道与初濑蝙蝠夜歌会完成控制和团队治疗", () => {
+  const mikiEngine = createEngine(18);
+  mikiEngine.state.board.fill(null);
+  mikiEngine.state.board[0] = { uid: 1, id: "miki_guest", star: 1 };
+  mikiEngine.startBattle();
+  const mikiBattle = mikiEngine.state.battle;
+  const miki = mikiBattle.player[0];
+  mikiBattle.enemy.forEach((fighter, index) => {
+    fighter.x = 720 + index * 28;
+    fighter.y = 320;
+    fighter.hp = fighter.maxHp = 2_000;
+  });
+  const mikiEnemyHp = mikiBattle.enemy.map((fighter) => fighter.hp);
+  mikiEngine["castAbility"](miki, mikiBattle.enemy);
+  mikiBattle.enemy.forEach((fighter, index) => {
+    assert.ok(fighter.hp < mikiEnemyHp[index]);
+    assert.ok(fighter.stun >= 0.62);
+  });
+
+  const hatsuseEngine = createEngine(19);
+  hatsuseEngine.state.playerLevel = 4;
+  hatsuseEngine.state.board.fill(null);
+  hatsuseEngine.state.board[0] = { uid: 1, id: "hatsuse_guest", star: 1 };
+  hatsuseEngine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  hatsuseEngine.startBattle();
+  const hatsuseBattle = hatsuseEngine.state.battle;
+  const hatsuse = hatsuseBattle.player.find((fighter) => fighter.unitId === "hatsuse_guest");
+  const woundedAlly = hatsuseBattle.player.find((fighter) => fighter.unitId === "sun_guard");
+  woundedAlly.hp = woundedAlly.maxHp * 0.4;
+  hatsuseBattle.enemy.forEach((fighter) => {
+    fighter.hp = fighter.maxHp = 2_000;
+  });
+  const allyHp = woundedAlly.hp;
+  const enemyHp = hatsuseBattle.enemy.map((fighter) => fighter.hp);
+  hatsuseEngine["castAbility"](hatsuse, hatsuseBattle.enemy);
+  assert.ok(woundedAlly.hp > allyHp);
+  hatsuseBattle.enemy.forEach((fighter, index) => {
+    assert.ok(fighter.hp < enemyHp[index]);
+  });
+});
+
+test("高存款七人阵容在后段精英与终局首领前必须继续投入战力", () => {
   const slots = [4, 5, 10, 11, 16, 17, 22];
   const lineup = [
     ["spark_mage", 1],
@@ -1408,22 +1474,22 @@ test("截图中的高存款七人阵容在十五战会受精英威胁且十六�
   };
 
   const eliteEngine = createEngine(2);
-  prepareScreenshotLineup(eliteEngine, 15);
+  prepareScreenshotLineup(eliteEngine, 12);
   eliteEngine.startBattle();
   for (let tick = 0; tick < 600 && eliteEngine.state.phase === "battle"; tick += 1) {
     eliteEngine.update(0.05);
   }
   assert.equal(eliteEngine.state.result.won, false);
-  assert.ok(eliteEngine.state.battle.enemy.filter((unit) => unit.alive).length <= 2);
+  assert.ok(eliteEngine.state.battle.enemy.filter((unit) => unit.alive).length >= 1);
 
-  const normalEngine = createEngine(4);
-  prepareScreenshotLineup(normalEngine, 16);
-  normalEngine.startBattle();
-  for (let tick = 0; tick < 600 && normalEngine.state.phase === "battle"; tick += 1) {
-    normalEngine.update(0.05);
+  const bossEngine = createEngine(4);
+  prepareScreenshotLineup(bossEngine, 16);
+  bossEngine.startBattle();
+  for (let tick = 0; tick < 600 && bossEngine.state.phase === "battle"; tick += 1) {
+    bossEngine.update(0.05);
   }
-  assert.equal(normalEngine.state.result.won, true);
-  assert.ok(normalEngine.state.battle.player.filter((unit) => unit.alive).length <= 3);
+  assert.equal(bossEngine.state.result.won, false);
+  assert.ok(bossEngine.state.battle.enemy.some((unit) => unit.alive));
 });
 
 test("普通利息每 5 金币提供 1 点并在 20 金币封顶", () => {

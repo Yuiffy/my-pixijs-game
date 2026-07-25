@@ -18,6 +18,7 @@ import {
   describeAbilityStarGrowth,
   bookLevelForPlayerLevel,
   enemyBudgetForRound,
+  enemyTraitActivations,
   progressionModeForRound,
   tierOddsForLevel,
 } from "../core/gameData";
@@ -550,7 +551,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.headerLayer.add(this.text(28, 16, "裂隙阵线", 23, "#f1f8ff", { fontStyle: "bold" }));
     const modeSubtitle =
       mode === "campaign"
-        ? "RIFT LINE · 二十五战远征"
+        ? "RIFT LINE · 十六战远征"
         : mode === "endless"
           ? "RIFT LINE · 普通无限"
           : "RIFT LINE · 地狱无限";
@@ -579,9 +580,9 @@ export class RiftLineScene extends Phaser.Scene {
   private drawTitle() {
     const { state } = this.bridge.engine;
     const layout = titleLayoutFor(this.profile);
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住二十五次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住十六次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.titleY, "裂 隙 阵 线", 48, "#f4f9ff", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.summaryY, "二十五战远征 · 自动战斗 · 无限冲层", 13, TITLE.summary, { fontStyle: "bold" }).setOrigin(0.5));
+    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.summaryY, "十六战远征 · 自动战斗 · 无限冲层", 13, TITLE.summary, { fontStyle: "bold" }).setOrigin(0.5));
     this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.promptY, "选择一项开局协议", 11, TITLE.prompt).setOrigin(0.5));
 
     state.starterChoices.forEach((id, index) => {
@@ -711,11 +712,22 @@ export class RiftLineScene extends Phaser.Scene {
             ? `精英预警 · 敌军价值约 ${enemyBudgetForRound(state.round)}`
             : `敌情预览 · 总价值约 ${enemyBudgetForRound(state.round)}`;
       this.phaseLayer.add(this.text(536, 124, pressureLabel, 9, currentWave.tag === "normal" ? "#e89aaa" : waveColor, { fontStyle: "bold" }));
+      const enemyTraits = enemyTraitActivations(currentWave.units)
+        .map(({ id, level }) => `${TRAITS[id].name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][level]}`)
+        .join(" · ");
+      this.phaseLayer.add(this.text(
+        536,
+        139,
+        this.truncateText(`敌方羁绊 · ${enemyTraits || "未成型"}`, 214, 9, { fontStyle: "bold" }),
+        9,
+        "#d3b5ff",
+        { fontStyle: "bold" },
+      ));
       currentWave.units.slice(0, 7).forEach((waveUnit, index) => {
         const x = 554 + index * 29;
         const star = waveUnit.star ?? 1;
-        const portrait = this.createPortrait(waveUnit.id, x, 158, 12, true);
-        const zone = this.add.zone(x, 158, 28, 28).setInteractive({ useHandCursor: true });
+        const portrait = this.createPortrait(waveUnit.id, x, 165, 12, true);
+        const zone = this.add.zone(x, 165, 28, 28).setInteractive({ useHandCursor: true });
         zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(waveUnit.id, pointer, star));
         zone.on(Phaser.Input.Events.POINTER_OUT, () => this.clearTooltip());
         this.phaseLayer.add([portrait, zone]);

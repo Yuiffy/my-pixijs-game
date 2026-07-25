@@ -89,14 +89,14 @@ test("三至十本的人口、升本成本与商店概率完整", () => {
   );
 });
 
-test("二十五战主线每五战预警精英并以首领收束", () => {
-  assert.equal(data.CAMPAIGN_ROUNDS, 25);
-  [5, 10, 15, 20].forEach((round) => {
+test("十六战主线每四战预警精英并以首领收束", () => {
+  assert.equal(data.CAMPAIGN_ROUNDS, 16);
+  [4, 8, 12].forEach((round) => {
     const wave = data.waveForRound(round);
     assert.equal(wave.tag, "elite");
     assert.match(wave.description, /精英预警/);
   });
-  const boss = data.waveForRound(25);
+  const boss = data.waveForRound(16);
   assert.equal(boss.tag, "boss");
   assert.equal(boss.units[0].id, "rift_tyrant");
   assert.match(boss.description, /首领预警/);
@@ -105,41 +105,43 @@ test("二十五战主线每五战预警精英并以首领收束", () => {
 test("主线预算会计入累计收入并在普通关与精英关持续加压", () => {
   assert.deepEqual(
     Array.from({ length: 8 }, (_, index) => data.enemyBudgetForRound(index + 1)),
-    [2, 5, 9, 12, 16, 17, 21, 14],
+    [2, 5, 9, 18, 16, 17, 21, 32],
   );
   assert.deepEqual(
-    [9, 10, 15, 16, 20, 24, 25, 26].map((round) =>
+    [9, 10, 11, 12, 13, 14, 15, 16, 17].map((round) =>
       data.enemyBudgetForRound(round),
     ),
-    [20, 48, 112, 67, 204, 157, 230, 190],
+    [23, 29, 35, 81, 51, 60, 70, 125, 135],
   );
-  assert.ok(data.enemyBudgetForRound(15) > data.enemyBudgetForRound(14) * 1.4);
-  assert.ok(data.enemyBudgetForRound(20) > data.enemyBudgetForRound(19) * 1.4);
+  [4, 8, 12, 16].forEach((round) => {
+    assert.ok(data.enemyBudgetForRound(round) > data.enemyBudgetForRound(round - 1) * 1.4);
+  });
+  assert.ok(data.enemyBudgetForRound(17) > data.enemyBudgetForRound(16));
 });
 
 test("普通无限与地狱无限按完整回合收入递推敌军总价值", () => {
-  const normal = data.waveForRound(26);
-  const threshold = data.waveForRound(40);
-  const hell = data.waveForRound(41);
-  assert.equal(data.progressionModeForRound(25), "campaign");
-  assert.equal(data.progressionModeForRound(26), "endless");
-  assert.equal(data.progressionModeForRound(40), "endless");
-  assert.equal(data.progressionModeForRound(41), "hell");
+  const normal = data.waveForRound(17);
+  const threshold = data.waveForRound(31);
+  const hell = data.waveForRound(32);
+  assert.equal(data.progressionModeForRound(16), "campaign");
+  assert.equal(data.progressionModeForRound(17), "endless");
+  assert.equal(data.progressionModeForRound(31), "endless");
+  assert.equal(data.progressionModeForRound(32), "hell");
   assert.equal(normal.units.length, 10);
   assert.match(normal.description, /5 利息.*连胜.*赏金/);
   assert.match(hell.description, /20 利息.*理财固定收入.*连胜.*赏金/);
 
-  const normalIncome = data.projectedIncomeAfterRound(26);
+  const normalIncome = data.projectedIncomeAfterRound(17);
   assert.deepEqual(
     { interest: normalIncome.interest, streak: normalIncome.streak, finance: normalIncome.finance },
     { interest: 5, streak: 2, finance: 0 },
   );
   assert.equal(
-    data.enemyBudgetForRound(27) - data.enemyBudgetForRound(26),
+    data.enemyBudgetForRound(18) - data.enemyBudgetForRound(17),
     normalIncome.total,
   );
 
-  const thresholdIncome = data.projectedIncomeAfterRound(40);
+  const thresholdIncome = data.projectedIncomeAfterRound(31);
   assert.deepEqual(thresholdIncome, {
     interest: 20,
     streak: 2,
@@ -147,15 +149,41 @@ test("普通无限与地狱无限按完整回合收入递推敌军总价值", ()
     bounty: 30,
     total: 54,
   });
-  assert.equal(data.enemyBudgetForRound(40), 662);
-  assert.equal(data.enemyBudgetForRound(41), 716);
   assert.equal(
-    data.enemyBudgetForRound(41) - data.enemyBudgetForRound(40),
+    data.enemyBudgetForRound(32) - data.enemyBudgetForRound(31),
     thresholdIncome.total,
   );
-  assert.ok(data.enemyBudgetForRound(50) > data.enemyBudgetForRound(41));
+  assert.ok(data.enemyBudgetForRound(40) > data.enemyBudgetForRound(32));
   assert.ok(threshold.modifier > 1);
   assert.ok(hell.modifier > 1);
+});
+
+test("敌方阵容始终组成羁绊，特殊角色偶尔出现但不进入商店", async () => {
+  for (let round = 1; round <= 40; round += 1) {
+    const wave = data.waveForRound(round, 3);
+    assert.ok(data.enemyTraitActivations(wave.units).length > 0, `round ${round} should activate an enemy trait`);
+  }
+
+  const seenGuests = new Set();
+  for (let seed = 0; seed < 20; seed += 1) {
+    for (let round = 9; round <= 32; round += 1) {
+      data.waveForRound(round, seed).units.forEach(({ id }) => {
+        if (data.ENEMY_GUEST_IDS.includes(id)) seenGuests.add(id);
+      });
+    }
+  }
+  assert.deepEqual([...seenGuests].sort(), [...data.ENEMY_GUEST_IDS].sort());
+  data.ENEMY_GUEST_IDS.forEach((id) => {
+    assert.equal(data.SHOP_UNITS.includes(id), false);
+    assert.doesNotMatch(
+      `${data.UNIT_DEFS[id].title} ${data.UNIT_DEFS[id].abilityDescription}`,
+      /毕业嘉宾|毕业返场|仅敌方可用/,
+    );
+  });
+
+  await Promise.all(data.ENEMY_GUEST_IDS.map((id) =>
+    access(path.resolve("public", data.UNIT_DEFS[id].portrait.slice(1))),
+  ));
 });
 
 test("浣熊店员使用原创展示文案与独立精灵头像", async () => {
@@ -400,7 +428,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
       .filter((unit) => unit.traits.includes("host"))
       .map((unit) => unit.id)
       .sort(),
-    ["cog_scribe", "guangyi", "lovely", "mumu", "pako", "spark_mage"],
+    ["cog_scribe", "guangyi", "lovely", "miki_guest", "mumu", "pako", "spark_mage"],
   );
   assert.deepEqual(data.UNIT_DEFS.mumu.traits, ["host", "dance"]);
   assert.equal(data.UNIT_DEFS.mumu.traits.includes("vanguard"), false);

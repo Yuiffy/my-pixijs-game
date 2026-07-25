@@ -312,7 +312,7 @@ test("标题页复用响应式布局、主题协议卡与缓存氛围光", () =>
   assert.match(scene, /createTitleGlowTexture\(\)/);
   assert.match(scene, /TITLE_GLOW_TEXTURE/);
   assert.match(scene, /this\.tweens\.add/);
-  assert.match(scene, /二十五战远征 · 自动战斗 · 无限冲层/);
+  assert.match(scene, /十六战远征 · 自动战斗 · 无限冲层/);
   assert.match(scene, /选择一项开局协议/);
   assert.match(scene, /操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏/);
   assert.match(theme, /export const TITLE/);
@@ -342,6 +342,10 @@ test("Phaser UI 恢复整卡选择、羁绊暗态、垂直裂隙与拖拽跟手"
   assert.match(scene, /type: "move", from: drag\.origin, to: target/);
   assert.match(scene, /drawResultRow/);
   assert.match(scene, /\+\$\{result\.income\} 金币/);
+  assert.match(scene, /enemyTraitActivations\(currentWave\.units\)/);
+  assert.match(scene, /敌方羁绊 ·/);
+  assert.match(hud, /enemyTraitActivations\(wave\.units\)/);
+  assert.match(hud, /敌方羁绊：/);
 });
 
 test("场上满员时 Phaser 与 DOM 商店仍预测待激活羁绊", () => {

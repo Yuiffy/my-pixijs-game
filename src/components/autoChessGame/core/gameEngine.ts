@@ -28,6 +28,7 @@ import {
   augmentTierForRound,
   bookLevelForPlayerLevel,
   enemyBudgetForRound,
+  enemyTraitActivations,
   progressionModeForRound,
   upgradeCostForLevel,
   waveForRound,
@@ -483,7 +484,7 @@ export class AutoChessEngine {
   }
 
   public get currentWave() {
-    return waveForRound(this.state.round);
+    return waveForRound(this.state.round, this.state.seed);
   }
 
   public get potentialBounty() {
@@ -593,10 +594,29 @@ export class AutoChessEngine {
     return this.calculatePlayerCombatStats(owned, this.getTraitCounts());
   }
 
+  private traitCountsForUnitIds(unitIds: readonly UnitId[]) {
+    const counts = Object.keys(TRAITS).reduce(
+      (result, key) => {
+        result[key as TraitId] = 0;
+        return result;
+      },
+      {} as Record<TraitId, number>,
+    );
+    const uniqueIds = new Set(unitIds);
+    uniqueIds.forEach((id) => {
+      UNIT_DEFS[id].traits.forEach((trait) => {
+        counts[trait] += 1;
+      });
+    });
+    return counts;
+  }
+
   private calculatePlayerCombatStats(
     owned: Pick<OwnedUnit, "id" | "star">,
     traitCounts: Record<TraitId, number>,
+    options: { runBonuses?: boolean; scaleModifier?: number } = {},
   ) {
+    const runBonuses = options.runBonuses ?? true;
     const def = UNIT_DEFS[owned.id];
     const traitLevel = (trait: TraitId) =>
       traitLevelForCount(TRAITS[trait], traitCounts[trait]);
@@ -604,8 +624,10 @@ export class AutoChessEngine {
       if (def.traits.includes(trait)) return traitLevel(trait);
       return 0;
     };
-    const augmentStacks = (id: AugmentId) => this.augmentStacks(id);
-    const scale = STAR_SCALE[owned.star];
+    const augmentStacks = (id: AugmentId) => (
+      runBonuses ? this.augmentStacks(id) : 0
+    );
+    const scale = STAR_SCALE[owned.star] * (options.scaleModifier ?? 1);
     const isRanged = def.attackType === "ranged";
     const aggressionLevel = traitLevel("aggression");
     const aggressionMember = def.traits.includes("aggression") && aggressionLevel > 0;
@@ -624,7 +646,8 @@ export class AutoChessEngine {
     const globalDanceLevel = traitLevel("dance");
     const globalHostLevel = traitLevel("host");
     const gen27Member = def.traits.includes("gen27") && traitLevel("gen27") > 0;
-    const starterEffect = this.state.starter ? starterEffects[this.state.starter] : {};
+    const starterEffect =
+      runBonuses && this.state.starter ? starterEffects[this.state.starter] : {};
 
     let maxHp = def.hp * scale;
     let attack = def.attack * scale * 1.15;
@@ -680,7 +703,7 @@ export class AutoChessEngine {
     attack *= 1 + augmentStacks("sharp_edge") * 0.12 + glassCannonStacks * 0.25;
     attackInterval /=
       1 + augmentStacks("momentum") * 0.14 + glassCannonStacks * 0.2;
-    if (this.state.starter === "dance_start" && danceLevel) {
+    if (runBonuses && this.state.starter === "dance_start" && danceLevel) {
       attackInterval /= 1 + (starterEffect.danceAttackSpeed || 0);
     }
     const matureAttackSpeed = [0, 0.08, 0.16, 0.24][matureLevel];
@@ -1030,6 +1053,12 @@ export class AutoChessEngine {
     const traitLevel = (trait: TraitId) =>
       traitLevelForCount(TRAITS[trait], traitCounts[trait]);
     const globalTraitLevel = (trait: TraitId) => traitLevel(trait);
+    const wave = this.currentWave;
+    const enemyTraitCounts = this.traitCountsForUnitIds(
+      wave.units.map((unit) => unit.id),
+    );
+    const enemyTraitLevel = (trait: TraitId) =>
+      traitLevelForCount(TRAITS[trait], enemyTraitCounts[trait]);
     const playerSpawn = (index: number) => {
       const col = index % 6;
       const row = Math.floor(index / 6);
@@ -1222,14 +1251,33 @@ export class AutoChessEngine {
       return [fighter];
     });
 
-    const wave = this.currentWave;
     const enemy = wave.units.map((waveUnit, index) => {
       const def = UNIT_DEFS[waveUnit.id];
       const star = waveUnit.star || 1;
-      const scale = STAR_SCALE[star] * wave.modifier;
       const row = index % 3;
       const rank = Math.floor(index / 3);
-      const maxHp = def.hp * scale;
+      const stats = this.calculatePlayerCombatStats(
+        { id: waveUnit.id, star },
+        enemyTraitCounts,
+        { runBonuses: false, scaleModifier: wave.modifier },
+      );
+      const emberLevel = def.traits.includes("ember") ? enemyTraitLevel("ember") : 0;
+      const vanguardLevel = def.traits.includes("vanguard") ? enemyTraitLevel("vanguard") : 0;
+      const mysticLevel = def.traits.includes("mystic") ? enemyTraitLevel("mystic") : 0;
+      const assassinLevel = def.traits.includes("assassin") ? enemyTraitLevel("assassin") : 0;
+      const chuanmeiLevel = def.traits.includes("chuanmei") ? enemyTraitLevel("chuanmei") : 0;
+      const gluttonyHolder = def.traits.includes("gluttony") && enemyTraitLevel("gluttony") > 0;
+      const gen27Member = def.traits.includes("gen27") && enemyTraitLevel("gen27") > 0;
+      const yueGangMember = def.traits.includes("yue_gang") && enemyTraitLevel("yue_gang") > 0;
+      const trafficLevel = def.traits.includes("traffic") ? enemyTraitLevel("traffic") : 0;
+      const matureLevel = def.traits.includes("mature") ? enemyTraitLevel("mature") : 0;
+      const danceLevel = def.traits.includes("dance") ? enemyTraitLevel("dance") : 0;
+      const dwarfLevel = def.traits.includes("dwarf") ? enemyTraitLevel("dwarf") : 0;
+      const isRanged = def.attackType === "ranged";
+      const globalTrafficLevel = enemyTraitLevel("traffic");
+      const globalAssassinLevel = enemyTraitLevel("assassin");
+      const globalChuanmeiLevel = enemyTraitLevel("chuanmei");
+      const matureAttackSpeed = [0, 0.08, 0.16, 0.24][matureLevel];
       return {
         fid: `e-${this.state.round}-${index}`,
         unitId: waveUnit.id,
@@ -1238,22 +1286,22 @@ export class AutoChessEngine {
         x: 990 - rank * 96,
         y: 180 + row * 165,
         radius: fighterVisualRadius(waveUnit.id, star),
-        hp: maxHp,
-        maxHp,
+        hp: stats.maxHp,
+        maxHp: stats.maxHp,
         shield: 0,
         shieldPeak: 0,
-        attack: def.attack * scale * 1.15,
+        attack: stats.attack,
         armor:
-          def.armor +
+          stats.armor +
           (star - 1) * 4 +
           Math.max(0, wave.modifier - 1) * 20,
-        range: def.range,
-        baseRange: def.range,
-        attackInterval: def.attackInterval,
-        moveSpeed: def.moveSpeed,
-        baseAttack: def.attack * scale * 1.15,
-        baseAttackInterval: def.attackInterval,
-        baseMoveSpeed: def.moveSpeed,
+        range: stats.range,
+        baseRange: stats.range,
+        attackInterval: stats.attackInterval,
+        moveSpeed: stats.moveSpeed,
+        baseAttack: stats.attack,
+        baseAttackInterval: stats.attackInterval,
+        baseMoveSpeed: stats.moveSpeed,
         cooldown: this.rng.next() * 0.4,
         maxEnergy: def.energyProfile.max,
         energyPerSecond: def.energyProfile.perSecond,
@@ -1261,41 +1309,48 @@ export class AutoChessEngine {
         energyOnHit: def.energyProfile.onHit,
         energyStyle: def.energyProfile.id,
         attackType: def.attackType,
-        energy: Math.min(def.energyProfile.max, def.energyProfile.start + (wave.tag === "boss" ? 28 : 0)),
+        energy: Math.min(def.energyProfile.max, stats.energy + (wave.tag === "boss" ? 28 : 0)),
         stun: 0,
         burnTime: 0,
         burnDps: 0,
         burnSourceFid: null,
         tauntedByFid: null,
         tauntTime: 0,
-        lifesteal: 0,
+        lifesteal:
+          TRAFFIC_MEMBER_LIFESTEAL[trafficLevel] +
+          TRAFFIC_TEAM_LIFESTEAL[globalTrafficLevel],
         burnOnHitPower: 0,
-        spiceBurnOnHitPower: 0,
-        dodgeChance: 0,
-        dwarfMember: false,
-        gluttonyHolder: false,
+        spiceBurnOnHitPower: Math.max(
+          [0, 0.45, 0.8][chuanmeiLevel],
+          isRanged ? [0, 0, 0.22][globalChuanmeiLevel] : 0,
+        ),
+        dodgeChance: dwarfLevel ? [0, 0.12, 0.22][dwarfLevel] : 0,
+        dwarfMember: dwarfLevel > 0,
+        gluttonyHolder,
         growthStacks: 0,
-        emberMember: false,
-        emberAttackPerStack: 0,
+        emberMember: emberLevel > 0,
+        emberAttackPerStack: emberLevel
+          ? [0, 0.05, 0.08, 0.12][emberLevel]
+          : 0,
         emberAttackStacks: 0,
-        emberAttackStackCap: 0,
+        emberAttackStackCap: [0, 5, 5, 5][emberLevel],
         syncAvMember: waveUnit.id === "xuehui",
         syncAvDirection: 0,
         syncAvStrength: 0,
-        gen27Member: false,
+        gen27Member,
         gen27Buffed: false,
-        matureMember: false,
-        matureMoveFloor: 1,
-        matureAttackSpeed: 0,
-        matureAttackSpeedCurrent: 0,
-        vanguardMember: false,
-        vanguardKnockback: 0,
-        vanguardJumpArc: 0,
+        matureMember: matureLevel > 0,
+        matureMoveFloor: matureLevel ? 0.7 : 1,
+        matureAttackSpeed,
+        matureAttackSpeedCurrent: matureAttackSpeed,
+        vanguardMember: vanguardLevel > 0,
+        vanguardKnockback: vanguardLevel ? [0, 28, 38, 50][vanguardLevel] : 0,
+        vanguardJumpArc: vanguardLevel ? [0, 24, 27, 32][vanguardLevel] : 0,
         vanguardJumpCooldown: 0,
-        danceMember: false,
+        danceMember: danceLevel > 0,
         danceDashCooldown: 0,
         danceDashTime: 0,
-        danceDashDodge: 0,
+        danceDashDodge: danceLevel ? DANCE_DASH_DODGE[danceLevel] : 0,
         barrageActive: false,
         barrageDrainPerSecond: 0,
         cinderSongPulseTimer: 0,
@@ -1311,11 +1366,16 @@ export class AutoChessEngine {
         slowTime: 0,
         weakenTime: 0,
         weakenArmorPenalty: 0,
-        yueGangMember: false,
+        yueGangMember,
         lowHealthBonus: 0,
-        critChance: 0,
+        critChance:
+          [0, 0.15, 0.3, 0.5][assassinLevel] +
+          (isRanged ? [0, 0, 0.12, 0.25][globalAssassinLevel] : 0),
         critMultiplier: 1.65,
-        castRefund: 0,
+        castRefund: Math.min(
+          def.energyProfile.max,
+          def.energyProfile.castRefund + [0, 0, 8, 15][mysticLevel],
+        ),
         secondWindUsed: false,
         reborn: false,
         rebirthRecoilTime: 0,
@@ -1327,10 +1387,10 @@ export class AutoChessEngine {
         hitPulse: 0,
         applePieShotsRemaining: 0,
         applePieShotTimer: 0,
-        jumpPending: false,
-        jumpDelay: 0,
+        jumpPending: assassinLevel > 0,
+        jumpDelay: assassinLevel ? 3.4 + row * 0.12 : 0,
         jumpTime: 0,
-        jumpDuration: 0,
+        jumpDuration: assassinLevel ? 0.68 : 0,
         jumpArcHeight: DEFAULT_JUMP_ARC_HEIGHT,
         jumpFromX: 990 - rank * 96,
         jumpFromY: 180 + row * 165,
@@ -1391,6 +1451,15 @@ export class AutoChessEngine {
       const memberShield = [0, 0.1, 0.18, 0.28][matureLevel] + (this.state.starter === "mature_start" ? 0.06 : 0);
       const allShield = [0, 0, 0.04, 0.08][matureLevel];
       battle.player.forEach((fighter) => {
+        const ratio = (fighter.matureMember ? memberShield : 0) + allShield;
+        if (ratio) this.grantShield(null, fighter, fighter.maxHp * ratio, 0.6, battle);
+      });
+    }
+    const enemyMatureLevel = enemyTraitLevel("mature");
+    if (enemyMatureLevel) {
+      const memberShield = [0, 0.1, 0.18, 0.28][enemyMatureLevel];
+      const allShield = [0, 0, 0.04, 0.08][enemyMatureLevel];
+      battle.enemy.forEach((fighter) => {
         const ratio = (fighter.matureMember ? memberShield : 0) + allShield;
         if (ratio) this.grantShield(null, fighter, fighter.maxHp * ratio, 0.6, battle);
       });
@@ -2851,57 +2920,70 @@ export class AutoChessEngine {
     return true;
   }
 
+  private battleTraitLevel(
+    battle: BattleState,
+    team: Team,
+    trait: TraitId,
+  ) {
+    const counts = this.traitCountsForUnitIds(
+      battle[team].map((fighter) => fighter.unitId),
+    );
+    return traitLevelForCount(TRAITS[trait], counts[trait]);
+  }
+
   private refreshDynamicCombatModifiers(battle: BattleState) {
-    const level = this.getActiveTraits().find((trait) => trait.id === "gen27")?.level || 0;
-    const gen27Multiplier = [1, 1.12, 1.2, 1.3][level];
     const healthRatio = (team: Team) => this.living(team).reduce((sum, fighter) => sum + fighter.hp / fighter.maxHp, 0);
-    battle.player.forEach((fighter) => {
-      if (!fighter.alive) return;
-      const matureSteps = Math.min(6, Math.floor(battle.elapsed / 4));
-      const matureMoveMultiplier = fighter.matureMember
-        ? Math.max(fighter.matureMoveFloor, 1 - matureSteps * 0.05)
-        : 1;
-      const matureAttackSpeed = fighter.matureMember
-        ? Math.max(0, fighter.matureAttackSpeed - matureSteps * 0.01)
-        : 0;
-      const hasNearbyPartner = fighter.gen27Member && battle.player.some(
-        (other) => other !== fighter && other.alive && other.gen27Member &&
-          Math.hypot(other.x - fighter.x, other.y - fighter.y) <= 165,
-      );
-      const nearbyMultiplier = hasNearbyPartner ? gen27Multiplier : 1;
-      fighter.gen27Buffed = hasNearbyPartner;
-      let syncMultiplier = 1;
-      if (fighter.syncAvMember) {
-        const opposingTeam: Team = fighter.team === "player" ? "enemy" : "player";
-        const advantage = healthRatio(fighter.team) - healthRatio(opposingTeam);
-        const strength = Math.min(1, Math.abs(advantage) / 0.5);
-        const direction: -1 | 0 | 1 = advantage > 0.0001 ? 1 : advantage < -0.0001 ? -1 : 0;
-        syncMultiplier = 1 - direction * strength * 0.5;
-        fighter.syncAvStrength = strength;
-        if (fighter.syncAvDirection !== direction) {
-          fighter.syncAvDirection = direction;
-          const text = direction > 0 ? "骄兵必败" : direction < 0 ? "哀兵必胜" : "同步持平";
-          const color = direction > 0 ? "#ff9a5c" : direction < 0 ? "#79dcff" : UNIT_DEFS[fighter.unitId].accent;
-          this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color, text, life: 0.7, size: 11 });
+    (["player", "enemy"] as const).forEach((team) => {
+      const gen27Level = this.battleTraitLevel(battle, team, "gen27");
+      const gen27Multiplier = [1, 1.12, 1.2, 1.3][gen27Level];
+      battle[team].forEach((fighter) => {
+        if (!fighter.alive) return;
+        const matureSteps = Math.min(6, Math.floor(battle.elapsed / 4));
+        const matureMoveMultiplier = fighter.matureMember
+          ? Math.max(fighter.matureMoveFloor, 1 - matureSteps * 0.05)
+          : 1;
+        const matureAttackSpeed = fighter.matureMember
+          ? Math.max(0, fighter.matureAttackSpeed - matureSteps * 0.01)
+          : 0;
+        const hasNearbyPartner = fighter.gen27Member && battle[team].some(
+          (other) => other !== fighter && other.alive && other.gen27Member &&
+            Math.hypot(other.x - fighter.x, other.y - fighter.y) <= 165,
+        );
+        const nearbyMultiplier = hasNearbyPartner ? gen27Multiplier : 1;
+        fighter.gen27Buffed = hasNearbyPartner;
+        let syncMultiplier = 1;
+        if (fighter.syncAvMember) {
+          const opposingTeam: Team = fighter.team === "player" ? "enemy" : "player";
+          const advantage = healthRatio(fighter.team) - healthRatio(opposingTeam);
+          const strength = Math.min(1, Math.abs(advantage) / 0.5);
+          const direction: -1 | 0 | 1 = advantage > 0.0001 ? 1 : advantage < -0.0001 ? -1 : 0;
+          syncMultiplier = 1 - direction * strength * 0.5;
+          fighter.syncAvStrength = strength;
+          if (fighter.syncAvDirection !== direction) {
+            fighter.syncAvDirection = direction;
+            const text = direction > 0 ? "骄兵必败" : direction < 0 ? "哀兵必胜" : "同步持平";
+            const color = direction > 0 ? "#ff9a5c" : direction < 0 ? "#79dcff" : UNIT_DEFS[fighter.unitId].accent;
+            this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color, text, life: 0.7, size: 11 });
+          }
+        } else {
+          fighter.syncAvStrength = 0;
         }
-      } else {
-        fighter.syncAvStrength = 0;
-      }
-      fighter.attack = fighter.baseAttack
-        * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks)
-        * (1 + (fighter.barrageActive || fighter.abilityAttackBonusTime > 0 ? fighter.abilityAttackBonus : 0));
-      const abilityAttackSpeed = fighter.barrageActive || fighter.abilityAttackSpeedTime > 0
-        ? fighter.abilityAttackSpeed
-        : 0;
-      const abilityMoveSpeed = fighter.barrageActive || fighter.abilityMoveSpeedTime > 0
-        ? fighter.abilityMoveSpeed
-        : 0;
-      fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
-        (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
-      fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier;
-      fighter.range = fighter.baseRange * syncMultiplier;
-      if (fighter.barrageActive && fighter.unitId === "cinder_ram") fighter.range = CINDER_RAM_SONG_RANGE;
-      fighter.matureAttackSpeedCurrent = matureAttackSpeed;
+        fighter.attack = fighter.baseAttack
+          * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks)
+          * (1 + (fighter.barrageActive || fighter.abilityAttackBonusTime > 0 ? fighter.abilityAttackBonus : 0));
+        const abilityAttackSpeed = fighter.barrageActive || fighter.abilityAttackSpeedTime > 0
+          ? fighter.abilityAttackSpeed
+          : 0;
+        const abilityMoveSpeed = fighter.barrageActive || fighter.abilityMoveSpeedTime > 0
+          ? fighter.abilityMoveSpeed
+          : 0;
+        fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
+          (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
+        fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier;
+        fighter.range = fighter.baseRange * syncMultiplier;
+        if (fighter.barrageActive && fighter.unitId === "cinder_ram") fighter.range = CINDER_RAM_SONG_RANGE;
+        fighter.matureAttackSpeedCurrent = matureAttackSpeed;
+      });
     });
   }
 
@@ -2986,7 +3068,7 @@ export class AutoChessEngine {
     battle.matureTimer -= dt;
     if (battle.matureTimer <= 0) {
       battle.matureTimer += 4;
-      this.living("player").filter((fighter) => fighter.matureMember).forEach((fighter) =>
+      [...this.living("player"), ...this.living("enemy")].filter((fighter) => fighter.matureMember).forEach((fighter) =>
         this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#b9a274", text: "慢一点", life: 0.65, size: 10 }),
       );
     }
@@ -3008,38 +3090,51 @@ export class AutoChessEngine {
     this.updateProjectiles(battle, dt);
     this.updateLovelyChannels(battle, dt);
 
-    const emberLevel = this.getActiveTraits().find((trait) => trait.id === "ember")?.level || 0;
-    if (emberLevel) {
+    const emberLevels = {
+      player: this.battleTraitLevel(battle, "player", "ember"),
+      enemy: this.battleTraitLevel(battle, "enemy", "ember"),
+    };
+    if (emberLevels.player || emberLevels.enemy) {
       battle.emberTimer -= dt;
       if (battle.emberTimer <= 0) {
         battle.emberTimer += 3;
-        const rangedCapRatio = [0, 0, 0.12, 0.25][emberLevel];
-        this.living("player").forEach((fighter) => {
-          if (fighter.emberMember && fighter.emberAttackStacks < fighter.emberAttackStackCap) {
-            fighter.emberAttackStacks += 1;
-            fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
-            this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#ff7657", text: `夜 ${fighter.emberAttackStacks}/5`, life: 0.65, size: 10 });
-          } else if (!fighter.emberMember && fighter.attackType === "ranged" && rangedCapRatio > 0 && fighter.emberAttackStacks < 5) {
-            fighter.emberAttackStacks += 1;
-            fighter.attack = fighter.baseAttack * (1 + (rangedCapRatio / 5) * fighter.emberAttackStacks);
-          }
+        (["player", "enemy"] as const).forEach((team) => {
+          const level = emberLevels[team];
+          const rangedCapRatio = [0, 0, 0.12, 0.25][level];
+          this.living(team).forEach((fighter) => {
+            if (fighter.emberMember && fighter.emberAttackStacks < fighter.emberAttackStackCap) {
+              fighter.emberAttackStacks += 1;
+              fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
+              this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#ff7657", text: `夜 ${fighter.emberAttackStacks}/5`, life: 0.65, size: 10 });
+            } else if (!fighter.emberMember && fighter.attackType === "ranged" && rangedCapRatio > 0 && fighter.emberAttackStacks < 5) {
+              fighter.emberAttackStacks += 1;
+              fighter.emberAttackPerStack = rangedCapRatio / 5;
+              fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
+            }
+          });
         });
       }
     }
 
-    const gluttonyLevel = this.getActiveTraits().find((trait) => trait.id === "gluttony")?.level || 0;
-    if (gluttonyLevel) {
+    const gluttonyLevels = {
+      player: this.battleTraitLevel(battle, "player", "gluttony"),
+      enemy: this.battleTraitLevel(battle, "enemy", "gluttony"),
+    };
+    if (gluttonyLevels.player || gluttonyLevels.enemy) {
       battle.gluttonyTimer -= dt;
       if (battle.gluttonyTimer <= 0) {
         battle.gluttonyTimer += 3;
-        const allHealRatio = gluttonyLevel >= 2 ? 0.015 : 0;
-        this.living("player").forEach((fighter) => {
-          const holderHealRatio = fighter.gluttonyHolder ? (gluttonyLevel >= 2 ? 0.04 : 0.03) : allHealRatio;
-          if (holderHealRatio > 0) this.heal(null, fighter, fighter.maxHp * holderHealRatio);
-          if (fighter.gluttonyHolder) {
-            fighter.growthStacks = Math.min(5, fighter.growthStacks + 1);
-            this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#93d86b", text: `饱 ${fighter.growthStacks}/5`, life: 0.65, size: 10 });
-          }
+        (["player", "enemy"] as const).forEach((team) => {
+          const level = gluttonyLevels[team];
+          const allHealRatio = level >= 2 ? 0.015 : 0;
+          this.living(team).forEach((fighter) => {
+            const holderHealRatio = fighter.gluttonyHolder ? (level >= 2 ? 0.04 : 0.03) : allHealRatio;
+            if (holderHealRatio > 0) this.heal(null, fighter, fighter.maxHp * holderHealRatio);
+            if (fighter.gluttonyHolder) {
+              fighter.growthStacks = Math.min(5, fighter.growthStacks + 1);
+              this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#93d86b", text: `饱 ${fighter.growthStacks}/5`, life: 0.65, size: 10 });
+            }
+          });
         });
       }
     }
@@ -3056,7 +3151,10 @@ export class AutoChessEngine {
     }
 
     const movementIntents = new Map<string, MovementIntent>();
-    const danceLevel = this.getActiveTraits().find((trait) => trait.id === "dance")?.level || 0;
+    const danceLevels = {
+      player: this.battleTraitLevel(battle, "player", "dance"),
+      enemy: this.battleTraitLevel(battle, "enemy", "dance"),
+    };
     [...battle.player, ...battle.enemy].forEach((fighter) => {
       if (!fighter.alive) return;
       fighter.cooldown -= dt;
@@ -3262,6 +3360,7 @@ export class AutoChessEngine {
       }
 
       if (distance > preferredRange) {
+        const danceLevel = danceLevels[fighter.team];
         // 跳舞成员：只在一段完整冲刺可进入自身攻击范围的最后接近阶段加速。
         const dashTravel = fighter.moveSpeed * DANCE_DASH_SPEED_MULT * (fighter.slowTime > 0 ? 0.55 : 1) * DANCE_DASH_DURATION;
         if (
@@ -3322,11 +3421,13 @@ export class AutoChessEngine {
 
   private triggerYueGangSupport(source: Fighter, target: Fighter) {
     const battle = this.state.battle;
-    const level = this.getActiveTraits().find((trait) => trait.id === "yue_gang")?.level || 0;
-    if (!battle || !level || battle.yueGangTimer > 0 || source.team !== "player" || !source.yueGangMember) return;
-    const liveTarget = target.alive ? target : this.nearestTarget(source, battle.enemy);
+    if (!battle) return;
+    const level = this.battleTraitLevel(battle, source.team, "yue_gang");
+    if (!level || battle.yueGangTimer > 0 || !source.yueGangMember) return;
+    const targetTeam: Team = source.team === "player" ? "enemy" : "player";
+    const liveTarget = target.alive ? target : this.nearestTarget(source, battle[targetTeam]);
     if (!liveTarget) return;
-    const supporters = battle.player
+    const supporters = battle[source.team]
       .filter((fighter) => fighter !== source && fighter.alive && fighter.yueGangMember && !fighter.abilityMotion && fighter.jumpTime <= 0 && !fighter.jumpPending && fighter.stun <= 0)
       .filter((fighter) => Math.hypot(fighter.x - liveTarget.x, fighter.y - liveTarget.y) > fighter.range + liveTarget.radius + 12)
       .sort((left, right) => Math.hypot(left.x - liveTarget.x, left.y - liveTarget.y) - Math.hypot(right.x - liveTarget.x, right.y - liveTarget.y))
@@ -3339,7 +3440,10 @@ export class AutoChessEngine {
       fighter.jumpFromY = fighter.y;
       const landing = this.findOpenPlacement(
         fighter,
-        { x: liveTarget.x - distance, y: liveTarget.y + (index ? 52 : -52) },
+        {
+          x: liveTarget.x + (source.team === "player" ? -distance : distance),
+          y: liveTarget.y + (index ? 52 : -52),
+        },
         [...battle.player, ...battle.enemy].filter((other) => other !== fighter),
       );
       fighter.jumpToX = landing.x;
@@ -4096,6 +4200,43 @@ export class AutoChessEngine {
         this.deliverRemoteAoe(source, center);
         break;
       }
+      case "miki_guest": {
+        const center = densest(targets);
+        if (!center) break;
+        targets
+          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= 138)
+          .forEach((target) => {
+            deal(target, 0.82);
+            if (target.alive) {
+              deal(target, 0.58);
+              target.stun = Math.max(target.stun, 0.62);
+            }
+          });
+        this.addEffect({ kind: "line", x: source.x, y: source.y - 8, x2: center.x, y2: center.y - 18, color: "#b9a8ff", life: 0.52, size: 5 });
+        this.addEffect({ kind: "line", x: source.x, y: source.y + 8, x2: center.x, y2: center.y + 18, color: "#ffabd8", life: 0.52, size: 5 });
+        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.78, size: 148 });
+        break;
+      }
+      case "hatsuse_guest": {
+        let totalDamage = 0;
+        [...targets]
+          .sort(
+            (left, right) =>
+              Math.hypot(left.x - source.x, left.y - source.y) -
+              Math.hypot(right.x - source.x, right.y - source.y),
+          )
+          .slice(0, 3)
+          .forEach((target, index) => {
+            totalDamage += deal(target, 1.08 - index * 0.14);
+            this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.42, size: 5 });
+            this.addEffect({ kind: "text", x: target.x, y: target.y - 42, color: def.accent, text: "蝙蝠", life: 0.55, size: 10 });
+          });
+        if (totalDamage > 0 && allies.length) {
+          const healPerAlly = (totalDamage * 0.3) / allies.length;
+          allies.forEach((ally) => this.heal(source, ally, healPerAlly));
+        }
+        break;
+      }
       case "rutice": {
         allies.forEach((target) => this.heal(source, target, target.maxHp * RUTICE_GROUP_HEAL_RATIO));
         [...allies]
@@ -4483,7 +4624,7 @@ export class AutoChessEngine {
     if (this.state.round === CAMPAIGN_ROUNDS && result.won) {
       this.state.endlessUnlocked = true;
       this.state.score += this.state.hp * 45 + 500;
-      this.setToast("25 战通关！普通无限已开启，40 战后将进入地狱无限。", "good");
+      this.setToast("16 战通关！普通无限已开启，31 战后将进入地狱无限。", "good");
     }
     const augmentTier = augmentTierForRound(this.state.round);
     if (augmentTier) {
@@ -4584,6 +4725,7 @@ export class AutoChessEngine {
         star: unit.star,
       };
     const battle = this.state.battle;
+    const currentWave = this.currentWave;
     return JSON.stringify({
       coordinateSystem: "画布 1120x720；原点在左上，x 向右、y 向下。",
       phase: this.state.phase,
@@ -4593,13 +4735,21 @@ export class AutoChessEngine {
       campaignCleared: this.state.endlessUnlocked,
       endlessRound: Math.max(0, this.state.round - CAMPAIGN_ROUNDS),
       progressionMode: progressionModeForRound(this.state.round),
-      wave: this.currentWave
+      wave: currentWave
         ? {
-            name: this.currentWave.name,
-            tag: this.currentWave.tag,
-            description: this.currentWave.description,
+            name: currentWave.name,
+            tag: currentWave.tag,
+            description: currentWave.description,
             enemyBudget: enemyBudgetForRound(this.state.round),
             potentialBounty: this.potentialBounty,
+            enemyTraits: enemyTraitActivations(currentWave.units).map(
+              ({ id, count, level }) => ({
+                id,
+                name: TRAITS[id].name,
+                count,
+                level,
+              }),
+            ),
           }
         : null,
       player: {
