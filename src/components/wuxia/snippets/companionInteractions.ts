@@ -1,4 +1,4 @@
-import { StorySnippet, Person, StoryLine } from "../logic/types";
+import { StorySnippet, StoryLine } from "../logic/types";
 import { getCompanion, getRelationValue } from "./companionUtils";
 
 type Personality = 'gentle' | 'bold' | 'cunning' | 'righteous' | 'mysterious' | 'playful' | 'serious' | 'passionate';

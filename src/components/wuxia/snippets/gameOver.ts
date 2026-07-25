@@ -8,7 +8,7 @@ export const gameOverSnippets: StorySnippet[] = [
     weight: 100,
     // 只在玩家生命值低于等于0且游戏未结束时触发
     req: (hero, world) => hero.status === 'dead' && !world.flags?.gameOver,
-    run: (hero, world) => {
+    run: () => {
       // 30% 的几率有路过的好心人相救
       if (Math.random() < 0.3) {
         const saviors = [

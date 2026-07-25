@@ -381,7 +381,6 @@ export const commonSnippets: StorySnippet[] = [
     weight: 100, // 🆕 提高权重，确保总是能选择移动
     run: (hero, world) => {
       const choices: StoryChoice[] = [];
-      const lastAction = hero.flags.lastAction || 'explore';
       const actionCount = (hero.flags.actionCount || 0) + 1;
       const shouldOfferTraining = actionCount % 3 === 0; // 每3次行动提供一次修炼选项
 
@@ -631,7 +630,7 @@ export const commonSnippets: StorySnippet[] = [
     tags: ['wild_daily'],
     weight: 200,
     req: (hero) => hero.knowledge.includes('rumor_hidden_master') && hero.locationId.startsWith('wild_') && !hero.flags.met_hidden_master,
-    run: (hero, world) => {
+    run: () => {
       const art = rand(SECT_ARTS.default); // 随机给个基础武功
       return {
         lines: [
@@ -928,7 +927,6 @@ export const commonSnippets: StorySnippet[] = [
       // Get the most relevant enemy, or use default
       const mainEnemy = enemyRelations[0]?.npc;
       const enemyName = mainEnemy?.name || '魔教教主';
-      const enemyId = mainEnemy?.id;
 
       // 🆕 核心修复：选择最厉害的武功（优先门派武功，然后按类型排序）
       let bestArt: MartialArt | null = null;
@@ -1056,7 +1054,7 @@ export const commonSnippets: StorySnippet[] = [
     id: 'sect_chat',
     tags: ['sect_daily'],
     weight: 5,
-    run: (hero, world) => ({ lines: [{ text: '你与几位师兄弟闲聊了一会江湖趣闻。', type: 'narrative' }] }),
+    run: () => ({ lines: [{ text: '你与几位师兄弟闲聊了一会江湖趣闻。', type: 'narrative' }] }),
   }
   // ===================================
   // 🌲 通用日常（续）

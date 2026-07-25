@@ -10,7 +10,6 @@ import {
   describeAppearanceChange,
   describeAppearance,
   getBattleOutcomeChoices,
-  getCompanionNamesList,
   getCompanionInviteChoices,
   filterAliveNpcs
 } from "../logic/utils";
@@ -338,6 +337,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
         } else {
           bestArt = getArtByName('太祖长拳');
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const move = rand(bestArt.moves);
 
         // 🆕 添加外表描述
@@ -797,7 +797,7 @@ export const otherPeopleSnippets: StorySnippet[] = [
     tags: ['wild_daily'],
     weight: 15,
     req: (hero) => hero.locationId.startsWith('wild_') && !hero.flags.found_manual,
-    run: (hero) => {
+    run: () => {
       const manualNames = ['无名剑谱', '残破心法', '古旧拳经', '内功要诀'];
       const manualName = rand(manualNames);
 

@@ -1,5 +1,5 @@
 import { StorySnippet, Sect, Person, Personality, StoryStage, RelationType } from "../logic/types";
-import { getSectMembersList, getAvailableCompanions, updateLastInteraction, rand, genName } from "../logic/utils";
+import { getSectMembersList, updateLastInteraction, rand, genName } from "../logic/utils";
 import { generateCompanionRomanticEvent } from "./common";
 
 export const friendSnippets: StorySnippet[] = [
@@ -297,7 +297,7 @@ export const friendSnippets: StorySnippet[] = [
     stageMax: StoryStage.RISING,
     // 如果呆了超过 3 回合还没对象
     req: (hero, world, turn) => !hero.relations.some((r) => r.type === 'crush' || r.type === 'spouse') && turn > 3,
-    run: (hero, world) => {
+    run: (hero) => {
       const targetGender = hero.gender === 'male' ? 'female' : 'male';
       const newName = genName(targetGender);
       const newNpc: Person = {

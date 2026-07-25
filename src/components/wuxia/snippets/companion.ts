@@ -1,16 +1,14 @@
-import { generateBattle } from "../logic/battle";
-import { SECTS_DATA, MERCHANT_ITEMS } from "../logic/constants";
-import { SECT_ARTS, getSectArts, getArtByName } from "../logic/skills";
-import { StorySnippet, Sect, Person, StoryChoice, StoryStage, MartialArt, RelationType, StoryLine, Personality, LocationInfo } from "../logic/types";
-import { getSectById, describeAppearance, rand, genName, genPersonality, genAppearance, describeAppearanceChange } from "../logic/utils";
-import { generateCompanionCampEvent, generateCompanionMealEvent, generateCompanionRomanticEvent } from "./common";
+import { SECTS_DATA } from "../logic/constants";
+import { StorySnippet, Sect, Person, StoryLine } from "../logic/types";
+import { getSectById, describeAppearance, genName } from "../logic/utils";
 
 // 动态事件：门派仇杀
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const eventRumorDuel: StorySnippet = {
   id: 'event_rumor_duel',
   tags: ['wild_daily'],
   weight: 200,
-  req: (hero, world) => hero.knowledge.includes('rumor_duel') &&
+  req: (hero) => hero.knowledge.includes('rumor_duel') &&
     hero.locationId.startsWith('wild_') &&
     !hero.flags.watched_duel,
   run: (hero, world) => {
@@ -80,6 +78,7 @@ const eventRumorDuel: StorySnippet = {
 };
 
 // 动态事件：偶遇隐世高人
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const eventMeetHiddenMaster: StorySnippet = {
   id: 'event_meet_hidden_master',
   tags: ['wild_daily', 'city_daily'],
@@ -163,7 +162,7 @@ export const compainionSnippets: StorySnippet[] = [
 
       // 获取第一个未触发过的rumor
       for (const rumor of duelRumors) {
-        const [_, sectIds] = rumor.split(':');
+        const [, sectIds] = rumor.split(':');
         const [sect1Id, sect2Id] = sectIds.split(',');
         const flag = `watched_duel_${sect1Id}_${sect2Id}`;
 
@@ -204,8 +203,6 @@ export const compainionSnippets: StorySnippet[] = [
 
       // 随机选择哪一方先说话
       const firstSpeaker = Math.random() > 0.5 ? sect1 : sect2;
-      // 使用firstSpeaker和sect1/sect2的关系来决定第二说话者
-      const secondSpeaker = firstSpeaker === sect1 ? sect2 : sect1;
 
       // 先自动观察战斗
       const initialLines: StoryLine[] = [
