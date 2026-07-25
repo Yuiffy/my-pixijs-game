@@ -59,6 +59,7 @@ import type {
 
 export type {
   AbilityMotion,
+  AugmentSelection,
   BattleEffect,
   BattleState,
   ChronosphereZone,
