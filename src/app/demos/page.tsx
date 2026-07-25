@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Typography, Card, Button, Breadcrumb, ConfigProvider, theme, Tag, Divider } from 'antd';
-import { HomeOutlined, ExperimentOutlined, ArrowLeftOutlined, ReadOutlined, CalendarOutlined, RocketOutlined } from '@ant-design/icons';
+import { HomeOutlined, ExperimentOutlined, ArrowLeftOutlined, CalendarOutlined, RocketOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';

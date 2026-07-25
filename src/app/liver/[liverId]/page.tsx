@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { ConfigProvider, theme, Typography, Spin } from 'antd';
-import { notFound } from 'next/navigation';
 import { getLiverConfig, LiverInfo } from '@/data/livers';
 import LiverAvatar from '@/components/LiverAvatar';
 import RecordsModule from '@/components/Home/RecordsModule';
 import { StreamData } from '@/components/Home/RecordsShared';
 import Link from 'next/link';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import type { ReactNode } from 'react';
 
 const { Title, Text } = Typography;
 
