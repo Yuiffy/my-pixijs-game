@@ -342,10 +342,11 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     assert.ok(unit.energyProfile.max > 0);
     ["start", "perSecond", "onAttack", "onHit", "castRefund"].forEach((field) => assert.ok(unit.energyProfile[field] >= 0));
   });
-  const repeatableShieldUnits = [
+  const repeatableSustainUnits = [
     "sun_guard",
     "rift_stalker",
     "mossback",
+    "gale_archer",
     "sui_bird",
     "seki_boar_king",
     "mitsuri",
@@ -355,15 +356,17 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     "mumu",
     "rutice",
   ];
-  repeatableShieldUnits.forEach((id) => {
+  repeatableSustainUnits.forEach((id) => {
     assert.ok(
       data.UNIT_DEFS[id].energyProfile.onHit <= 4,
-      `${id} must not use high on-hit recovery for a repeatable shield`,
+      `${id} must not use high on-hit recovery for repeatable sustain`,
     );
   });
   ["mossback", "nagisa", "seki_boar_king", "mumu"].forEach((id) => {
     assert.deepEqual(data.UNIT_DEFS[id].energyProfile, data.ENERGY_PROFILES.steady_guard);
   });
+  assert.deepEqual(data.UNIT_DEFS.gale_archer.energyProfile, data.ENERGY_PROFILES.steady_guard);
+  assert.match(data.UNIT_DEFS.gale_archer.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*回复生命/);
   assert.deepEqual(data.UNIT_DEFS.sun_guard.energyProfile, data.ENERGY_PROFILES.steady_guard);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 25);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 8);
@@ -560,7 +563,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.equal(sumi.abilityCastTiming, "selfBuff");
   assert.deepEqual(seki.traits, ["wild", "aggression", "skeleton_soldier"]);
   assert.deepEqual(towerGod.traits, ["mystic", "traffic"]);
-  assert.deepEqual(sumi.traits, ["mystic", "ranger"]);
+  assert.deepEqual(sumi.traits, ["mystic", "ranger", "gluttony"]);
   assert.deepEqual(data.UNIT_DEFS.meme.traits, ["wild", "skeleton_soldier", "aggression", "traffic"]);
 });
 

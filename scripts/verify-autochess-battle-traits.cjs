@@ -153,9 +153,20 @@ const openBattle = async (page, seed) => {
   await attachBridge(page);
   await page.evaluate(() => {
     const bridge = window.__codexAutoChessBridge;
+    bridge.engine.state.playerLevel = 10;
     bridge.engine.state.board.fill(null);
-    bridge.engine.state.board[0] = { uid: 91001, id: "mossback", star: 1 };
-    bridge.engine.state.board[1] = { uid: 91002, id: "sui_bird", star: 1 };
+    [
+      "sun_guard",
+      "ember_blade",
+      "rift_brawler",
+      "mossback",
+      "clock_gunner",
+      "spark_mage",
+      "sui_blue",
+      "shiori",
+    ].forEach((id, index) => {
+      bridge.engine.state.board[index] = { uid: 91001 + index, id, star: 1 };
+    });
     bridge.dispatch({ type: "battle" });
   });
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "battle");
@@ -205,12 +216,12 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   await openBattle(desktop, 81);
   const desktopOpen = await layoutSnapshot(desktop);
   assert.equal(desktopOpen.collapsed, false);
-  assert.ok(desktopOpen.playerTags >= 2, JSON.stringify(desktopOpen));
+  assert.ok(desktopOpen.playerTags >= 6, JSON.stringify(desktopOpen));
   assert.ok(desktopOpen.enemyTags >= 1, JSON.stringify(desktopOpen));
   assert.equal(desktopOpen.playerTags, desktopOpen.textState.playerTraits.length);
   assert.equal(desktopOpen.enemyTags, desktopOpen.textState.enemyTraits.length);
   assert.equal(desktopOpen.textState.phase, "battle");
-  assert.equal(desktopOpen.textState.playerUnits, 2);
+  assert.equal(desktopOpen.textState.playerUnits, 8);
   assert.ok(desktopOpen.bar.x >= desktopOpen.canvas.x && desktopOpen.bar.right <= desktopOpen.canvas.right);
   await desktop.locator('.rift-battle-trait-side[data-team="enemy"] .rift-battle-trait-tags button').first().hover();
   await desktop.locator(".rift-battle-trait-detail").waitFor();
@@ -247,7 +258,7 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   await portrait.locator('.rift-battle-trait-side[data-team="enemy"] .rift-battle-trait-tags button').first().click();
   await portrait.locator(".rift-battle-trait-detail").waitFor();
   const portraitExpanded = await layoutSnapshot(portrait);
-  assert.ok(portraitExpanded.playerTags >= 2 && portraitExpanded.enemyTags >= 1, JSON.stringify(portraitExpanded));
+  assert.ok(portraitExpanded.playerTags >= 6 && portraitExpanded.enemyTags >= 1, JSON.stringify(portraitExpanded));
   assert.ok(portraitExpanded.detail.x >= 0 && portraitExpanded.detail.right <= 390, JSON.stringify(portraitExpanded));
   assert.ok(portraitExpanded.overflow <= 1, JSON.stringify(portraitExpanded));
   await capture(portrait, "portrait-expanded-detail", screenshots);
@@ -269,7 +280,7 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   await capture(landscape, "landscape-default-collapsed", screenshots);
   await landscape.getByRole("button", { name: "展开双方羁绊" }).click();
   const landscapeExpanded = await layoutSnapshot(landscape);
-  assert.ok(landscapeExpanded.playerTags >= 2 && landscapeExpanded.enemyTags >= 1, JSON.stringify(landscapeExpanded));
+  assert.ok(landscapeExpanded.playerTags >= 6 && landscapeExpanded.enemyTags >= 1, JSON.stringify(landscapeExpanded));
   assert.ok(landscapeExpanded.overflow <= 1, JSON.stringify(landscapeExpanded));
   await capture(landscape, "landscape-expanded", screenshots);
   report.landscape = { collapsed: landscapeCollapsed, expanded: landscapeExpanded, diagnostics: landscapeDiagnostics };

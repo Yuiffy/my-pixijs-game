@@ -293,17 +293,22 @@ test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   engine.state.board[2] = { uid: 3, id: "grove_mender", star: 1 };
   engine.state.board[3] = { uid: 4, id: "sui_blue", star: 1 };
   engine.state.board[4] = { uid: 5, id: "spark_mage", star: 1 };
+  engine.state.board[5] = { uid: 6, id: "sumi", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);
   battle.enemy.forEach((fighter) => { fighter.hp = 99_999; fighter.maxHp = 99_999; fighter.attack = 0; fighter.armor = 99_999; });
   const hungry = battle.player.find((fighter) => fighter.unitId === "sui_blue");
+  const sumi = battle.player.find((fighter) => fighter.unitId === "sumi");
+  assert.equal(sumi?.gluttonyHolder, true);
   const beforeRadius = hungry?.radius;
+  const beforeSumiGrowth = sumi?.growthStacks || 0;
   for (let tick = 0; tick < 61; tick += 1) {
     battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp; });
     engine.update(0.05);
   }
   assert.ok((hungry?.growthStacks || 0) > 0);
+  assert.ok((sumi?.growthStacks || 0) > beforeSumiGrowth);
   assert.equal(hungry?.radius, beforeRadius);
 });
 
@@ -339,7 +344,13 @@ test("成熟开战护盾和攻速每 4 秒降低 1 个百分点", () => {
   assert.ok(battle && mature);
   assert.ok(Math.abs(mature.shield - mature.maxHp * 0.12) < 1e-9);
   assert.equal(mature.attackInterval, 1.05 / 1.08);
-  battle.enemy.forEach((enemy) => { enemy.hp = 99_999; enemy.maxHp = 99_999; enemy.attack = 0; enemy.armor = 99_999; });
+  battle.enemy.forEach((enemy) => {
+    enemy.hp = 99_999;
+    enemy.maxHp = 99_999;
+    enemy.attack = 0;
+    enemy.baseAttack = 0;
+    enemy.armor = 99_999;
+  });
 
   stepBattle(engine, 81);
   assert.ok(Math.abs(mature.matureAttackSpeedCurrent - 0.07) < 1e-9);
@@ -662,6 +673,39 @@ test("一星绒绒的狗在三名一星敌人围攻下不会靠受击无限续�
   assert.ok(castCount <= 2, "三打一不应通过受击回能反复刷新护盾");
   assert.equal(mossback.alive, false);
   assert.equal(mossback.shield, 0);
+  assert.equal(engine.state.phase, "result");
+});
+
+test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限治疗", () => {
+  const engine = createEngine(150);
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "gale_archer", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const raccoon = battle?.player[0];
+  assert.ok(battle && raccoon);
+  assert.equal(battle.enemy.length, 3);
+  assert.equal(raccoon.energyPerSecond, 8);
+  assert.equal(raccoon.energyOnAttack, 6);
+  assert.equal(raccoon.energyOnHit, 3);
+  battle.enemy.forEach((fighter) => {
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
+
+  let castCount = 0;
+  const castAbility = engine.castAbility.bind(engine);
+  engine.castAbility = (source, targets) => {
+    if (source === raccoon) castCount += 1;
+    return castAbility(source, targets);
+  };
+  stepBattle(engine, 480);
+
+  assert.ok(castCount >= 1, "浣熊店员仍应能正常施放治疗");
+  assert.ok(castCount <= 2, "三打一不应通过受击回能反复刷新治疗");
+  assert.equal(raccoon.alive, false);
   assert.equal(engine.state.phase, "result");
 });
 
