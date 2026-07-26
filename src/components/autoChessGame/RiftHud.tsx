@@ -19,6 +19,7 @@ import {
   progressionModeForRound,
   tierOddsForLevel,
 } from "./core/gameData";
+import type { TraitId } from "./core/gameData";
 import type { OwnedUnit, RankingMetric, Team, UnitLocation } from "./core/gameTypes";
 import type { GameAction } from "./phaser/EngineBridge";
 
@@ -35,6 +36,7 @@ export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
 type SheetName = "shop" | "bench" | "traits" | null;
 type Tone = "neutral" | "confirm" | "economic" | "danger" | "lock";
 type OwnedStars = Record<1 | 2 | 3, number>;
+type BattleTraitInfo = (typeof TRAITS)[TraitId] & { count: number; level: number };
 const MOBILE_VIEW_QUERY = "(max-width: 700px), (pointer: coarse) and (max-width: 1200px)";
 
 function countOwnedStars(units: readonly (OwnedUnit | null | undefined)[], unitId: string): OwnedStars {
@@ -130,10 +132,143 @@ function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) 
   );
 }
 
+function BattleTraitSide({
+  team,
+  label,
+  traits,
+  collapsed,
+  activeKey,
+  onActivate,
+  onDeactivate,
+}: {
+  team: Team;
+  label: string;
+  traits: BattleTraitInfo[];
+  collapsed: boolean;
+  activeKey: string | null;
+  onActivate: (key: string) => void;
+  onDeactivate: () => void;
+}) {
+  return (
+    <section className={`rift-battle-trait-side is-${team}`} data-team={team}>
+      <header>
+        <span>{label}</span>
+        <b>{traits.length ? `${traits.length} 羁绊` : "未成型"}</b>
+      </header>
+      {collapsed ? (
+        <div className="rift-battle-trait-summary" aria-hidden="true">
+          {traits.slice(0, 5).map((trait) => (
+            <i key={trait.id} style={{ "--trait-color": trait.color } as CSSProperties} />
+          ))}
+          {traits.length > 5 && <em>+{traits.length - 5}</em>}
+        </div>
+      ) : (
+        <div className="rift-battle-trait-tags">
+          {traits.length ? traits.map((trait) => {
+            const key = `${team}:${trait.id}`;
+            return (
+              <button
+                key={trait.id}
+                type="button"
+                className={activeKey === key ? "is-open" : ""}
+                style={{ "--trait-color": trait.color } as CSSProperties}
+                aria-expanded={activeKey === key}
+                aria-label={`${label}${trait.name}${STAR_LABEL[trait.level]}，${trait.count}人`}
+                onMouseEnter={() => onActivate(key)}
+                onMouseLeave={onDeactivate}
+                onFocus={() => onActivate(key)}
+                onBlur={onDeactivate}
+                onClick={() => onActivate(key)}
+              >
+                <i />
+                <span>{trait.name}</span>
+                <small>{trait.count}</small>
+                <b>{STAR_LABEL[trait.level]}</b>
+              </button>
+            );
+          }) : <span className="rift-battle-trait-empty">没有已激活羁绊</span>}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function BattleTraitBar({
+  playerTraits,
+  enemyTraits,
+  collapsed,
+  onToggle,
+}: {
+  playerTraits: BattleTraitInfo[];
+  enemyTraits: BattleTraitInfo[];
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const activeTrait = [...playerTraits.map((trait) => ({ team: "player" as const, trait })), ...enemyTraits.map((trait) => ({ team: "enemy" as const, trait }))]
+    .find(({ team, trait }) => `${team}:${trait.id}` === activeKey);
+
+  return (
+    <div className={`rift-battle-traits ${collapsed ? "is-collapsed" : ""}`} aria-label="双方战斗羁绊">
+      <BattleTraitSide
+        team="player"
+        label="我方"
+        traits={playerTraits}
+        collapsed={collapsed}
+        activeKey={activeKey}
+        onActivate={setActiveKey}
+        onDeactivate={() => setActiveKey(null)}
+      />
+      <button
+        type="button"
+        className="rift-battle-traits-toggle"
+        aria-label={collapsed ? "展开双方羁绊" : "收起双方羁绊"}
+        aria-expanded={!collapsed}
+        title={collapsed ? "展开双方羁绊" : "收起双方羁绊"}
+        onClick={onToggle}
+      >
+        <span aria-hidden="true">{collapsed ? "⌄" : "⌃"}</span>
+      </button>
+      <BattleTraitSide
+        team="enemy"
+        label="敌方"
+        traits={enemyTraits}
+        collapsed={collapsed}
+        activeKey={activeKey}
+        onActivate={setActiveKey}
+        onDeactivate={() => setActiveKey(null)}
+      />
+      {activeTrait && !collapsed && (
+        <aside
+          className={`rift-battle-trait-detail is-${activeTrait.team}`}
+          style={{ "--trait-color": activeTrait.trait.color } as CSSProperties}
+          role="tooltip"
+        >
+          <header>
+            <div><span>{activeTrait.team === "player" ? "我方" : "敌方"} · {activeTrait.trait.family}</span><strong>{activeTrait.trait.name} {STAR_LABEL[activeTrait.trait.level]}</strong></div>
+            <b>{activeTrait.trait.count} 人</b>
+          </header>
+          <p>{activeTrait.trait.description}</p>
+          <em>当前效果：{activeTrait.trait.bonuses[activeTrait.trait.level - 1]}</em>
+          <div>
+            {activeTrait.trait.thresholds.map((threshold, index) => (
+              <span key={threshold} className={index + 1 === activeTrait.trait.level ? "is-current" : ""}>
+                <b>{threshold}人 {STAR_LABEL[index + 1]}</b>
+                <small>{activeTrait.trait.bonuses[index]}</small>
+              </span>
+            ))}
+          </div>
+        </aside>
+      )}
+    </div>
+  );
+}
+
 export default function RiftHud({ engine, onAction, onBattleViewAction }: Props) {
   const [sheet, setSheet] = useState<SheetName>(null);
   const [starterPage, setStarterPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [battleTraitsCollapsed, setBattleTraitsCollapsed] = useState(false);
   const state = engine?.state;
 
   useEffect(() => {
@@ -143,6 +278,10 @@ export default function RiftHud({ engine, onAction, onBattleViewAction }: Props)
     query.addEventListener("change", sync);
     return () => query.removeEventListener("change", sync);
   }, []);
+
+  useEffect(() => {
+    if (state?.phase === "battle") setBattleTraitsCollapsed(isMobile);
+  }, [isMobile, state?.phase]);
 
   if (!engine || !state) return null;
 
@@ -156,6 +295,15 @@ export default function RiftHud({ engine, onAction, onBattleViewAction }: Props)
     .map(({ id, level }) => `${TRAITS[id].name}${STAR_LABEL[level]}`)
     .join(" · ");
   const activeTraits = engine.getActiveTraits();
+  const playerBattleTraits = (Object.keys(TRAITS) as TraitId[]).flatMap((id) => {
+    const status = engine.getTraitStatus(id);
+    return status.level ? [{ ...TRAITS[id], count: status.count, level: status.level }] : [];
+  });
+  const enemyBattleTraits = enemyTraitActivations(wave.units).map(({ id, count, level }) => ({
+    ...TRAITS[id],
+    count,
+    level,
+  }));
   const odds = tierOddsForLevel(state.playerLevel);
   const starterIndex = Math.min(starterPage, Math.max(0, state.starterChoices.length - 1));
 
@@ -220,6 +368,12 @@ export default function RiftHud({ engine, onAction, onBattleViewAction }: Props)
 
   const battleOverlay = state.phase === "battle" && state.battle && (
     <div className="rift-dom-world-frame">
+      <BattleTraitBar
+        playerTraits={playerBattleTraits}
+        enemyTraits={enemyBattleTraits}
+        collapsed={battleTraitsCollapsed}
+        onToggle={() => setBattleTraitsCollapsed((current) => !current)}
+      />
       <div className="rift-dom-battle-tools" style={{ fontFamily: FONT }}>
         <div className="rift-battle-view-controls" aria-label="战场视图">
           <button type="button" onClick={() => onBattleViewAction("zoomOut")} aria-label="缩小战场" title="缩小战场">−</button>

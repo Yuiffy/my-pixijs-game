@@ -5,6 +5,7 @@ import test from "node:test";
 const [
   host,
   hud,
+  hudCss,
   scene,
   bridge,
   assets,
@@ -18,6 +19,7 @@ const [
 ] = await Promise.all([
   readFile(new URL("../../src/components/autoChessGame/PhaserGame.tsx", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/RiftHud.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../../src/components/autoChessGame/RiftHud.css", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/RiftLineScene.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/EngineBridge.ts", import.meta.url), "utf8"),
   readFile(new URL("../../src/components/autoChessGame/phaser/assets.ts", import.meta.url), "utf8"),
@@ -262,10 +264,22 @@ test("战斗热路径复用短命视图并缓存棋子子节点", () => {
   assert.match(scene, /projectileViewPool/);
   assert.match(scene, /effectViewPool/);
   assert.match(scene, /recycleBattleView/);
+  assert.match(scene, /takePooledBattleView/);
+  assert.match(scene, /if \(!parts\.has\(view\) \|\| pool\.length >= limit\)/);
+  assert.match(scene, /while \(view && !parts\.has\(view\)\)/);
   assert.match(scene, /MOBILE_TEXT_EFFECT_LIMIT = 18/);
   assert.match(scene, /visibleCombatEffects\(battle\.effects\)/);
   assert.match(scene, /this\.suppressedEffectViews\.add\(effect\)/);
   assert.match(scene, /if \(urgent !== this\.battleTimerUrgent\)/);
+});
+
+test("持续时停领域与短命特效对象池使用独立生命周期", () => {
+  assert.match(scene, /private chronosphereView: Phaser\.GameObjects\.Container \| null = null/);
+  assert.match(scene, /let view = this\.chronosphereView/);
+  assert.match(scene, /this\.chronosphereView = view/);
+  assert.match(scene, /this\.chronosphereView = null/);
+  assert.doesNotMatch(scene, /rift-chronosphere/);
+  assert.doesNotMatch(scene, /as unknown as BattleEffect/);
 });
 
 test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲染", () => {
@@ -441,6 +455,20 @@ test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示",
   assert.match(scene, /DEPTH\.overlay \+ 3/);
   assert.match(scene, /this\.overlayLayer\.add\(\[graphics, label, zone\]\)/);
   assert.match(scene, /this\.overlayLayer\.add\(zone\)/);
+});
+
+test("战斗顶部展示双方羁绊、完整说明并支持小屏收起", () => {
+  assert.match(hud, /function BattleTraitBar/);
+  assert.match(hud, /playerBattleTraits/);
+  assert.match(hud, /enemyBattleTraits/);
+  assert.match(hud, /当前效果：/);
+  assert.match(hud, /展开双方羁绊/);
+  assert.match(hud, /setBattleTraitsCollapsed\(isMobile\)/);
+  assert.match(hudCss, /\.rift-battle-traits/);
+  assert.match(hudCss, /\.rift-battle-trait-detail/);
+  assert.match(hudCss, /\.rift-battle-traits\.is-collapsed/);
+  assert.match(hudCss, /orientation: portrait/);
+  assert.match(hudCss, /orientation: landscape/);
 });
 
 test("结算报告保持固定可读行高并让完整阵容独立滚动", () => {

@@ -620,3 +620,24 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 竖屏备战底部新增始终可见的“出售”按钮，选中棋子后显示售价并可直接完成出售，不再依赖不可见的拖拽回收区；桌面端原工具栏、商店和拖拽出售交互保持不变。
 - 新增系统 Chrome 专项 `scripts/verify-autochess-mobile-ui.cjs`；横屏备战/商店/战斗/缩放/双方统计、竖屏备战出售/统计、桌面备战共 9 张截图位于 `.tmp/autochess/mobile-ui/`，均通过纯色、透明和近黑拒绝检查并已逐张打开确认，控制台与失败请求为空。
 - 验证：`pnpm exec tsc --noEmit --incremental false`、完整 `pnpm autochess:test`（`147/147`）、目标源码 ESLint、`git diff --check` 与系统 Chrome 专项均通过。
+
+## 2026-07-26 · 战斗双方羁绊态势栏
+
+- 战斗顶部新增双方羁绊态势栏：左侧我方、右侧敌方，tag 直接显示羁绊名、实际人数与当前档位；数据分别来自我方当前上阵阵容和本战敌方阵容，不复制战斗数值。
+- 桌面 hover / 键盘 focus、触屏点按 tag 都会显示完整说明，包括羁绊定位、基础机制、当前生效效果和所有档位数值。
+- 中央图标按钮支持收起与展开；桌面默认展开，小屏和粗指针设备默认收起。收起态缩为居中的双方颜色摘要，竖屏放在缩放战场上沿外侧，避免长期遮挡棋子。
+- 双方 tag 保持单行并可横向浏览；说明层会按阵营靠左或靠右展开，竖屏改为全宽详情，三种视口均无页面横向溢出。
+- 新增 `scripts/verify-autochess-battle-traits.cjs`，使用系统 Chrome 覆盖 `1440×900`、`390×844`、`1138×640` 的展开、hover/点按说明、默认收起和手动切换；DOM 羁绊数量与 `render_game_to_text()` 中的名称、人数、档位一致，画布尺寸、控制台和失败请求均通过交叉检查。
+- 六张截图位于 `.tmp/autochess/battle-traits/`，均通过纯色、透明和近黑拒绝检查并逐张打开确认。最终验证：`pnpm autochess:test`（`149/149`）、`pnpm exec tsc --noEmit --incremental false`、HUD ESLint、脚本语法、`git diff --check` 与 `pnpm run build` 通过；构建只保留仓库已有的 Browserslist 数据过期提醒。
+
+## 2026-07-26 · 时停领域特效对象池崩溃修复
+
+- [x] 根因确认：`syncChronospheres()` 把持续时停领域专用容器以伪造 `BattleEffect` key 写入通用 `effectViews`；通用同步下一帧将其回收到 `effectViewPool`，后续短命特效复用时因缺少 `effectViewParts` 而崩溃。
+- [x] 持续时停领域改用独立 `chronosphereView` 生命周期，不再与通用短命特效共享 Map 或对象池。
+- [x] 审计全部 Phaser 视图池；投射物池和特效池都在入池、出池两端校验对应 WeakMap 元数据，异类容器会被销毁而不是复用。
+- [x] 新增静态回归，禁止恢复 `rift-chronosphere` 伪 key / `as unknown as BattleEffect`，并锁定两个对象池的元数据防线。
+- [x] 使用系统 Chrome 复跑北欧时停专项并检查截图、文本状态、画布、DOM 与控制台。
+- [x] 运行完整自走棋测试、目标 ESLint 和最终差异检查。
+- 系统 Chrome 专项使用 seed 22 捕获北欧时停弹幕飞行与落地：落地状态为半径 `108`、剩余 `1.75s` 的持续领域；随后继续验证另一场声束范围特效，对象池跨特效类型复用正常，控制台错误为空，Canvas 为 `1440×853`。
+- 三张专项截图均完成像素抽样和人工检查，颜色数为 `2424—2998`，透明与近黑比例均为 `0`；画面中的飞行弹、时停领域和声束范围圈清晰可见。
+- 最终验证：`pnpm exec tsc --noEmit --incremental false`、专项静态回归 `3/3`、完整 `pnpm autochess:test`（`150/150`）、目标场景 ESLint、测试脚本语法、`git diff --check` 与 `pnpm build` 全部通过；构建只保留既有的 Browserslist/Baseline 数据过期提醒。仓库主 `verify-autochess.cjs` 仍在已知的首战 `result` 等待处超时。

@@ -266,6 +266,8 @@ export class RiftLineScene extends Phaser.Scene {
 
   private effectViewParts = new WeakMap<Phaser.GameObjects.Container, EffectViewParts>();
 
+  private chronosphereView: Phaser.GameObjects.Container | null = null;
+
   private suppressedEffectViews = new WeakSet<BattleEffect>();
 
   private petViews = new Map<string, Phaser.GameObjects.Container>();
@@ -514,6 +516,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.projectileViewPool = [];
     this.effectViews.clear();
     this.effectViewPool = [];
+    this.chronosphereView = null;
     this.petViews.clear();
     this.treeViews.clear();
     this.buttonViews.forEach((button) => button.destroy());
@@ -2006,7 +2009,7 @@ export class RiftLineScene extends Phaser.Scene {
       (projectile) => this.createProjectile(projectile),
       (view, projectile) => this.updateProjectile(view, projectile),
       undefined,
-      (view) => this.recycleBattleView(view, this.projectileViewPool, 48),
+      (view) => this.recycleBattleView(view, this.projectileViewPool, this.projectileViewParts, 48),
     );
     this.syncObjectMap(
       this.effectViews,
@@ -2014,7 +2017,7 @@ export class RiftLineScene extends Phaser.Scene {
       (effect) => this.createEffect(effect),
       (view, effect) => this.updateEffect(view, effect),
       undefined,
-      (view) => this.recycleBattleView(view, this.effectViewPool, 96),
+      (view) => this.recycleBattleView(view, this.effectViewPool, this.effectViewParts, 96),
     );
     this.syncObjectMap(this.petViews, battle.pets, (pet) => this.createRabbit(pet), (view, pet) => this.updateRabbit(view, pet, visualTime), (pet) => pet.id);
     this.syncObjectMap(this.treeViews, battle.pineTrees, (tree) => this.createPineTree(tree), (view, tree) => this.updatePineTree(view, tree, visualTime), (tree) => tree.id);
@@ -2070,8 +2073,13 @@ export class RiftLineScene extends Phaser.Scene {
     });
   }
 
-  private recycleBattleView(view: Phaser.GameObjects.Container, pool: Phaser.GameObjects.Container[], limit: number) {
-    if (pool.length >= limit) {
+  private recycleBattleView<T>(
+    view: Phaser.GameObjects.Container,
+    pool: Phaser.GameObjects.Container[],
+    parts: WeakMap<Phaser.GameObjects.Container, T>,
+    limit: number,
+  ) {
+    if (!parts.has(view) || pool.length >= limit) {
       view.destroy();
       return;
     }
@@ -2079,8 +2087,20 @@ export class RiftLineScene extends Phaser.Scene {
     pool.push(view);
   }
 
+  private takePooledBattleView<T>(
+    pool: Phaser.GameObjects.Container[],
+    parts: WeakMap<Phaser.GameObjects.Container, T>,
+  ) {
+    let view = pool.pop();
+    while (view && !parts.has(view)) {
+      view.destroy();
+      view = pool.pop();
+    }
+    return view;
+  }
+
   private createProjectile(projectile: Projectile) {
-    const pooled = this.projectileViewPool.pop();
+    const pooled = this.takePooledBattleView(this.projectileViewPool, this.projectileViewParts);
     if (pooled) {
       this.projectileVisualStates.delete(pooled);
       return pooled
@@ -2240,7 +2260,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private createEffect(effect: BattleEffect) {
-    const pooled = this.effectViewPool.pop();
+    const pooled = this.takePooledBattleView(this.effectViewPool, this.effectViewParts);
     if (pooled) {
       this.resetEffectView(pooled);
       return pooled
@@ -2494,20 +2514,18 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private syncChronospheres(zones: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; color: string }>, visualTime: number) {
-    const key = "rift-chronosphere";
-    const existing = this.effectViews.get(key as unknown as BattleEffect);
     if (!zones.length) {
-      if (existing) {
-        existing.destroy();
-        this.effectViews.delete(key as unknown as BattleEffect);
+      if (this.chronosphereView) {
+        this.chronosphereView.destroy();
+        this.chronosphereView = null;
       }
       return;
     }
-    let view = existing;
+    let view = this.chronosphereView;
     if (!view) {
       view = this.add.container(0, 0);
       view.add(this.add.graphics().setName("shape"));
-      this.effectViews.set(key as unknown as BattleEffect, view);
+      this.chronosphereView = view;
       this.effectsLayer.add(view);
     }
     const zone = zones[0];
