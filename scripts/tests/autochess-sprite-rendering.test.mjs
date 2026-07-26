@@ -443,6 +443,11 @@ test("场上满员时 Phaser 与 DOM 商店仍预测待激活羁绊", () => {
   assert.match(domPrediction, /!engine\.state\.board\.some/);
 });
 
+test("桌面商店下半区详情向上展开并保持箭头贴近卡片", () => {
+  assert.match(hudCss, /\.rift-dom-shop-desktop \.rift-shop-card-wrap:nth-child\(n \+ 3\) \.rift-shop-card-detail \{ top: auto; bottom: -5px; \}/);
+  assert.match(hudCss, /\.rift-dom-shop-desktop \.rift-shop-card-wrap:nth-child\(n \+ 3\) \.rift-shop-card-detail::after \{ top: auto; bottom: 19px; \}/);
+});
+
 test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示", () => {
   assert.match(scene, /buildBattleOverlay/);
   assert.match(scene, /rankingStateKey/);
