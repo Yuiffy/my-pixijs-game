@@ -139,6 +139,8 @@ test("主线普通关保留储蓄空间，精英关与首领集中检查战力",
 
 test("普通无限与地狱无限按完整回合收入递推敌军总价值", () => {
   const normal = data.waveForRound(17);
+  const elite = data.waveForRound(19);
+  const boss = data.waveForRound(21);
   const threshold = data.waveForRound(31);
   const hell = data.waveForRound(32);
   assert.equal(data.progressionModeForRound(16), "campaign");
@@ -146,8 +148,13 @@ test("普通无限与地狱无限按完整回合收入递推敌军总价值", ()
   assert.equal(data.progressionModeForRound(31), "endless");
   assert.equal(data.progressionModeForRound(32), "hell");
   assert.equal(normal.units.length, 10);
-  assert.match(normal.description, /5 利息.*连胜.*赏金/);
-  assert.match(hell.description, /20 利息.*理财固定收入.*连胜.*赏金/);
+  assert.equal(normal.description, "敌人会持续变强，请继续强化阵容。");
+  assert.equal(elite.description, data.ELITE_WARNING_TEXT);
+  assert.equal(boss.description, data.BOSS_WARNING_TEXT);
+  assert.equal(hell.description, "地狱无限：敌人会越来越强，请不断强化阵容。");
+  [normal, elite, boss, hell].forEach((wave) => {
+    assert.doesNotMatch(wave.description, /利息|连胜|赏金|复投|总价值/);
+  });
 
   const normalIncome = data.projectedIncomeAfterRound(17);
   assert.deepEqual(

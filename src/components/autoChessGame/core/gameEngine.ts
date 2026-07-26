@@ -5,9 +5,12 @@ import {
   AugmentId,
   AugmentTier,
   AUGMENT_TIER_LABELS,
+  BOSS_WARNING_TEXT,
   CAMPAIGN_ROUNDS,
+  ELITE_WARNING_TEXT,
   FINANCE_INTEREST_CAP,
   HELL_ENDLESS_START_ROUND,
+  HELL_WARNING_TEXT,
   MAX_PLAYER_LEVEL,
   NORMAL_INTEREST_CAP,
   PASSIVE_UPGRADE_DISCOUNT,
@@ -4766,11 +4769,11 @@ export class AutoChessEngine {
     if (!this.state.shopLocked) this.state.shop = this.generateShop();
     const wave = this.currentWave;
     if (this.state.round === HELL_ENDLESS_START_ROUND) {
-      this.setToast("地狱预警：敌军将把 20 利息、理财收入、连胜与赏金全部复投。", "bad");
+      this.setToast(HELL_WARNING_TEXT, "bad");
     } else if (wave.tag === "boss") {
-      this.setToast(`首领预警：第 ${wave.round} 战将检验爆发与续航。`, "bad");
+      this.setToast(BOSS_WARNING_TEXT, "bad");
     } else if (wave.tag === "elite") {
-      this.setToast(`精英预警：第 ${wave.round} 战强度跃升，请提前升级与调整站位。`, "info");
+      this.setToast(ELITE_WARNING_TEXT, "info");
     }
   }
 

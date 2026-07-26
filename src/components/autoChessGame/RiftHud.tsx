@@ -103,7 +103,7 @@ function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) 
         : "每 4 战迎战精英"
       : mode === "endless"
         ? `距离地狱无限还有 ${NORMAL_ENDLESS_END_ROUND - state.round} 战`
-        : "20 利息、连胜与赏金全部复投";
+        : "敌人会持续变强";
   return (
     <header className="rift-dom-header" style={{ fontFamily: FONT }}>
       <div className="rift-brand">

@@ -1424,6 +1424,9 @@ export const NORMAL_ENDLESS_END_ROUND = 31;
 export const HELL_ENDLESS_START_ROUND = NORMAL_ENDLESS_END_ROUND + 1;
 export const NORMAL_INTEREST_CAP = 4;
 export const FINANCE_INTEREST_CAP = 20;
+export const BOSS_WARNING_TEXT = "首领预警：敌人非常强大，请倾尽所有资源应对，否则可能会失败。";
+export const ELITE_WARNING_TEXT = "精英预警：敌人强度明显提升，请升级阵容并调整站位。";
+export const HELL_WARNING_TEXT = "地狱预警：敌人会持续变强，请不断强化阵容。";
 
 export type ProgressionMode = "campaign" | "endless" | "hell";
 
@@ -1642,7 +1645,6 @@ export const waveForRound = (round: number, seed = 0): WaveDefinition => {
   const modifier = Math.sqrt(budget / compositionValue);
   const endlessRound = round - CAMPAIGN_ROUNDS;
   const nameIndex = Math.max(0, endlessRound - 1);
-  const pressurePrefix = tag === "boss" ? "首领预警：" : tag === "elite" ? "精英预警：" : "";
   const squad = enemySquadForRound(round, seed);
 
   return {
@@ -1663,11 +1665,15 @@ export const waveForRound = (round: number, seed = 0): WaveDefinition => {
             : `${ENDLESS_NAMES[nameIndex % ENDLESS_NAMES.length]} · ${round}`,
     tag,
     description:
-      mode === "campaign"
-        ? `${pressurePrefix}敌军总价值约 ${budget}，敌方会按成型羁绊协同作战。`
-        : mode === "endless"
-          ? `${pressurePrefix}普通无限按 5 利息、连胜与上战赏金全部复投。当前总价值约 ${budget}，31 战后进入地狱无限。`
-          : `${pressurePrefix}地狱无限按 20 利息、理财固定收入、连胜与上战赏金全部复投。当前总价值约 ${budget}。`,
+      tag === "boss"
+        ? BOSS_WARNING_TEXT
+        : tag === "elite"
+          ? ELITE_WARNING_TEXT
+          : mode === "campaign"
+            ? "敌人组成了完整羁绊，请根据敌方阵容调整站位。"
+            : mode === "endless"
+              ? "敌人会持续变强，请继续强化阵容。"
+              : "地狱无限：敌人会越来越强，请不断强化阵容。",
     modifier,
     units,
   };

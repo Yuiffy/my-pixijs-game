@@ -241,6 +241,18 @@ mkdirSync(artifactDirectory, { recursive: true });
   }
   await capture("round-17-normal-endless");
 
+  await forcePreparation(21);
+  const bossWarning = await readState();
+  const expectedBossWarning = "首领预警：敌人非常强大，请倾尽所有资源应对，否则可能会失败。";
+  if (
+    bossWarning.wave.tag !== "boss"
+    || bossWarning.wave.description !== expectedBossWarning
+    || /利息|连胜|赏金|复投|总价值/.test(bossWarning.wave.description)
+  ) {
+    throw new Error(`Boss warning is too technical: ${JSON.stringify(bossWarning.wave)}`);
+  }
+  await capture("round-21-boss-warning");
+
   await forcePreparation(32, true);
   const hell = await readState();
   const hellHeader = await page.locator(".rift-dom-header").innerText();
@@ -309,6 +321,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     lossSettlement: lossSettlement.result,
     elite: { round: elite.round, tag: elite.wave.tag, budget: elite.wave.enemyBudget },
     endless: { round: endless.round, mode: endless.progressionMode, budget: endless.wave.enemyBudget },
+    bossWarning: { round: bossWarning.round, description: bossWarning.wave.description },
     hell: { round: hell.round, mode: hell.progressionMode, budget: hell.wave.enemyBudget, interest: hell.player.interestIncome },
     interestText,
     canvas: { desktop: desktopCanvas, mobile: mobileCanvas },

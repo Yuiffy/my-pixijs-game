@@ -1638,7 +1638,7 @@ test("精英关、主线通关与地狱入口会在备战前发出预警", () =>
   completeWonRound(3);
   assert.equal(engine.state.round, 4);
   assert.equal(engine.currentWave.tag, "elite");
-  assert.match(engine.state.toast?.text || "", /精英预警.*第 4 战/);
+  assert.equal(engine.state.toast?.text, gameData.ELITE_WARNING_TEXT);
 
   completeWonRound(16);
   assert.equal(engine.state.endlessUnlocked, true);
@@ -1647,9 +1647,13 @@ test("精英关、主线通关与地狱入口会在备战前发出预警", () =>
   engine.chooseAugment(0);
   assert.equal(engine.state.round, 17);
 
+  completeWonRound(20);
+  assert.equal(engine.state.round, 21);
+  assert.equal(engine.state.toast?.text, gameData.BOSS_WARNING_TEXT);
+
   completeWonRound(31);
   assert.equal(engine.state.round, 32);
-  assert.match(engine.state.toast?.text || "", /地狱预警.*20 利息.*赏金/);
+  assert.equal(engine.state.toast?.text, gameData.HELL_WARNING_TEXT);
 });
 
 test("敌方成熟与流量羁绊会实际写入战斗属性", () => {
