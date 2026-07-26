@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:esa": "node scripts/build-esa.mjs",
     "export": "next build && next export",
     "gh-pages": "npx gh-pages -d out --dotfiles true",
     "build-export-gh-pages": "npm run export && npm run gh-pages",

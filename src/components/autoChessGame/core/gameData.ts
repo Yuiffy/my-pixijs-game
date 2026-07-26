@@ -981,7 +981,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     accent: "#91e4dc",
     tier: 4,
     cost: 4,
-    traits: ["chuanmei", "assassin"],
+    traits: ["chuanmei", "assassin", "mystic"],
     hp: 360,
     attack: 29,
     armor: 32,

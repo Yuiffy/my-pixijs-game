@@ -442,6 +442,7 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.meme.tier, 3);
   assert.equal(data.UNIT_DEFS.meme.cost, 3);
   assert.ok(data.UNIT_DEFS.nagisa.moveSpeed <= 40);
+  assert.deepEqual(data.UNIT_DEFS.nagisa.traits, ["chuanmei", "assassin", "mystic"]);
   assert.ok(data.UNIT_DEFS.sui_cat.moveSpeed >= 100);
   assert.equal(data.UNIT_DEFS.sui_cat.abilityName, "猫拳三连");
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /闪现到最远敌人身后/);

@@ -692,3 +692,9 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 第三至第五张详情底边分别为约 `614 / 701 / 787px`，均完整位于视口内；Canvas 为 `2048×948`，`render_game_to_text()`、DOM、控制台和失败请求交叉检查通过。
 - `third-card-detail.png` 与 `fifth-card-detail.png` 均通过纯色、透明和近黑拒绝检查并逐张打开确认，技能、回能说明和箭头均无裁切。
 - 最终验证：完整 `pnpm autochess:test`（`157/157`）、`pnpm exec tsc --noEmit --incremental false`、验证脚本语法和 `git diff --check` 通过。主 `verify-autochess.cjs` 仍复现既有首战 `result` 等待超时，专项系统 Chrome 流程通过。
+
+## 2026-07-27 · 米米加入杂谈羁绊
+
+- 米米（`nagisa`）新增现有 `mystic` 羁绊，显示名称为“杂谈”；她现在拥有 `川妹 / 偷袭 / 杂谈`。
+- 未新增重复羁绊定义，直接复用杂谈已有的开战能量与施法返还机制。
+- 验证：数据回归 `20/20`、完整 `pnpm autochess:test` `157/157`、TypeScript 与 `git diff --check` 通过；本轮未启动浏览器专项。

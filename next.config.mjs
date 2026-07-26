@@ -1,6 +1,7 @@
 import { loadShardConfig, rawGitHubBase } from './scripts/stream-shards.mjs';
 
 const shardConfig = loadShardConfig();
+const isEsaStaticExport = process.env.ESA_STATIC_EXPORT === '1';
 
 function streamRewrites() {
   const indexBase = rawGitHubBase(shardConfig.index.repo, shardConfig.index.branch);
@@ -40,14 +41,22 @@ function knightGameRewrites() {
 }
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  async rewrites() {
-    return {
-      beforeFiles: [...knightGameRewrites(), ...streamRewrites()],
-      afterFiles: [],
-      fallback: [],
+const nextConfig = isEsaStaticExport
+  ? {
+      output: 'export',
+      trailingSlash: true,
+      images: {
+        unoptimized: true,
+      },
+    }
+  : {
+      async rewrites() {
+        return {
+          beforeFiles: [...knightGameRewrites(), ...streamRewrites()],
+          afterFiles: [],
+          fallback: [],
+        };
+      },
     };
-  },
-};
 
 export default nextConfig;
