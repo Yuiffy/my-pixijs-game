@@ -1782,6 +1782,102 @@ test("高存款七人阵容在后段精英与终局首领前必须继续投入�
   assert.ok(bossEngine.state.battle.enemy.some((unit) => unit.alive));
 });
 
+test("无限后段敌军突破十人后使用多行阵型且文本状态公开主题", () => {
+  const engine = createEngine(42);
+  engine.state.round = 32;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 3 };
+  engine.startBattle();
+
+  const battle = engine.state.battle;
+  assert.equal(battle.enemy.length, 14);
+  assert.equal(new Set(battle.enemy.map(({ x, y }) => `${x},${y}`)).size, 14);
+  assert.equal(new Set(battle.enemy.map(({ y }) => y)).size, 5);
+  battle.enemy.forEach(assertInsideBattleBounds);
+
+  const textState = JSON.parse(engine.renderTextState());
+  assert.equal(textState.wave.enemyCount, 14);
+  assert.equal(textState.wave.formationTheme, "终焉守门人");
+  assert.equal(textState.wave.units.length, textState.wave.enemyCount);
+});
+
+test("我方天赋不会成为敌方的隐藏天赋加成", () => {
+  const createBossBattle = (augments) => {
+    const engine = createEngine(43);
+    engine.state.round = 21;
+    engine.state.augments = augments;
+    engine.startBattle();
+    return engine;
+  };
+  const plain = createBossBattle([]);
+  const augmented = createBossBattle([
+    "tempered",
+    "overclock",
+    "sharp_edge",
+    "united_front",
+  ]);
+
+  assert.equal(JSON.parse(plain.renderTextState()).wave.formationTheme, "时停合唱团");
+  assert.deepEqual(
+    augmented.state.battle.enemy.map(({ unitId, star, maxHp, attack, armor }) => ({
+      unitId,
+      star,
+      maxHp,
+      attack,
+      armor,
+    })),
+    plain.state.battle.enemy.map(({ unitId, star, maxHp, attack, armor }) => ({
+      unitId,
+      star,
+      maxHp,
+      attack,
+      armor,
+    })),
+  );
+});
+
+test("十名三星高费阵容会在四十战后遇到终局压力", () => {
+  const slots = [0, 4, 5, 6, 10, 11, 12, 16, 17, 23];
+  const fiveCostLineup = [
+    "biscuit_sui",
+    "cinder_ram",
+    "rei",
+    "rutice",
+    "lian",
+  ];
+  const fightRound = (round) => {
+    const engine = createEngine(77);
+    engine.state.round = round;
+    engine.state.playerLevel = 10;
+    engine.state.board.fill(null);
+    slots.forEach((slot, index) => {
+      engine.state.board[slot] = {
+        uid: index + 1,
+        id: fiveCostLineup[index % fiveCostLineup.length],
+        star: 3,
+      };
+    });
+    engine.state.augments = [
+      "tempered",
+      "overclock",
+      "sharp_edge",
+      "execution",
+      "united_front",
+    ];
+    engine.startBattle();
+    for (let tick = 0; tick < 600 && engine.state.phase === "battle"; tick += 1) {
+      engine.update(0.05);
+    }
+    return engine;
+  };
+
+  const round40 = fightRound(40);
+  assert.equal(round40.state.result.won, true);
+  const round42 = fightRound(42);
+  assert.equal(round42.state.result.won, false);
+  assert.ok(round42.state.battle.enemy.some((unit) => unit.alive));
+});
+
 test("通过精英关的阵容可以连续三场普通关攒钱", () => {
   const slots = [4, 5, 10, 11, 16, 17, 22];
   const lineup = [

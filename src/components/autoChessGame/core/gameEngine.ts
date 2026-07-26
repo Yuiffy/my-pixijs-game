@@ -1077,6 +1077,16 @@ export class AutoChessEngine {
         row,
       };
     };
+    const enemySpawn = (index: number) => {
+      if (wave.units.length <= 10) {
+        const row = index % 3;
+        const rank = Math.floor(index / 3);
+        return { x: 990 - rank * 96, y: 180 + row * 165, row };
+      }
+      const row = index % 5;
+      const rank = Math.floor(index / 5);
+      return { x: 1000 - rank * 76, y: 180 + row * 88, row };
+    };
 
     const player = this.state.board.flatMap((owned, index) => {
       if (!owned) return [];
@@ -1265,12 +1275,14 @@ export class AutoChessEngine {
     const enemy = wave.units.map((waveUnit, index) => {
       const def = UNIT_DEFS[waveUnit.id];
       const star = waveUnit.star || 1;
-      const row = index % 3;
-      const rank = Math.floor(index / 3);
+      const spawn = enemySpawn(index);
       const stats = this.calculatePlayerCombatStats(
         { id: waveUnit.id, star },
         enemyTraitCounts,
-        { runBonuses: false, scaleModifier: wave.modifier },
+        {
+          runBonuses: false,
+          scaleModifier: wave.modifier,
+        },
       );
       const emberLevel = def.traits.includes("ember") ? enemyTraitLevel("ember") : 0;
       const vanguardLevel = def.traits.includes("vanguard") ? enemyTraitLevel("vanguard") : 0;
@@ -1294,8 +1306,8 @@ export class AutoChessEngine {
         unitId: waveUnit.id,
         team: "enemy" as const,
         star,
-        x: 990 - rank * 96,
-        y: 180 + row * 165,
+        x: spawn.x,
+        y: spawn.y,
         radius: fighterVisualRadius(waveUnit.id, star),
         hp: stats.maxHp,
         maxHp: stats.maxHp,
@@ -1395,20 +1407,20 @@ export class AutoChessEngine {
         enraged: false,
         attackPulse: 0,
         facingX: -1,
-        attackTargetX: 990 - rank * 96,
-        attackTargetY: 180 + row * 165,
+        attackTargetX: spawn.x,
+        attackTargetY: spawn.y,
         hitPulse: 0,
         applePieShotsRemaining: 0,
         applePieShotTimer: 0,
         jumpPending: assassinLevel > 0,
-        jumpDelay: assassinLevel ? 3.4 + row * 0.12 : 0,
+        jumpDelay: assassinLevel ? 3.4 + spawn.row * 0.12 : 0,
         jumpTime: 0,
         jumpDuration: assassinLevel ? 0.68 : 0,
         jumpArcHeight: DEFAULT_JUMP_ARC_HEIGHT,
-        jumpFromX: 990 - rank * 96,
-        jumpFromY: 180 + row * 165,
-        jumpToX: 990 - rank * 96,
-        jumpToY: 180 + row * 165,
+        jumpFromX: spawn.x,
+        jumpFromY: spawn.y,
+        jumpToX: spawn.x,
+        jumpToY: spawn.y,
         vanguardJumpAdvancing: false,
         abilityMotion: null,
         channelTargetFid: null,
@@ -4827,6 +4839,8 @@ export class AutoChessEngine {
             tag: currentWave.tag,
             description: currentWave.description,
             enemyBudget: enemyBudgetForRound(this.state.round),
+            enemyCount: currentWave.units.length,
+            formationTheme: currentWave.name.split(" · ")[0],
             potentialBounty: this.potentialBounty,
             units: currentWave.units.map(({ id, star = 1 }) => ({
               id,

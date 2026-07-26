@@ -171,8 +171,8 @@ test("普通无限与地狱无限按完整回合收入递推敌军总价值", ()
     interest: 20,
     streak: 2,
     finance: 2,
-    bounty: 30,
-    total: 54,
+    bounty: 39,
+    total: 63,
   });
   assert.equal(
     data.enemyBudgetForRound(32) - data.enemyBudgetForRound(31),
@@ -181,6 +181,31 @@ test("普通无限与地狱无限按完整回合收入递推敌军总价值", ()
   assert.ok(data.enemyBudgetForRound(40) > data.enemyBudgetForRound(32));
   assert.ok(threshold.modifier > 1);
   assert.ok(hell.modifier > 1);
+});
+
+test("无限后段提前突破十人并以可见人口持续加压", () => {
+  assert.deepEqual(
+    [17, 21, 22, 26, 29, 32, 40].map((round) => data.waveForRound(round).units.length),
+    [10, 10, 11, 12, 13, 14, 18],
+  );
+  assert.ok(data.waveForRound(60).units.length > data.waveForRound(40).units.length);
+});
+
+test("无限首领轮换时停、续航与高费压制主题编队", () => {
+  const control = data.waveForRound(21, 4);
+  const sustain = data.waveForRound(26, 4);
+  const highCost = data.waveForRound(31, 4);
+
+  assert.match(control.name, /^时停合唱团/);
+  assert.ok(control.units.filter(({ id }) => id === "spark_mage").length >= 4);
+  assert.match(sustain.name, /^终场续航团/);
+  assert.ok(sustain.units.filter(({ id }) => id === "cinder_ram").length >= 4);
+  assert.match(highCost.name, /^高费压制团/);
+  assert.ok(highCost.units.filter(({ id }) => id === "lian").length >= 3);
+  [control, sustain, highCost].forEach((wave) => {
+    assert.equal(wave.units[0].id, "rift_tyrant");
+    assert.ok(data.enemyTraitActivations(wave.units).length > 0);
+  });
 });
 
 test("敌方阵容始终组成羁绊，特殊角色偶尔出现但不进入商店", async () => {

@@ -494,6 +494,7 @@ test("Phaser 备战信息恢复商店概率、激活羁绊、敌情和快捷回�
   assert.match(scene, /距 \$\{bookLevelForPlayerLevel/);
   assert.match(scene, /getActiveTraits\(\)/);
   assert.match(scene, /currentWave\.units/);
+  assert.match(scene, /敌军 \$\{currentWave\.units\.length\}/);
   assert.match(scene, /currentWave\.tag === "elite"/);
   assert.match(scene, /rightButtonDown\(\)/);
   assert.match(scene, /preventContextMenu/);

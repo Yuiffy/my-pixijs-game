@@ -864,10 +864,10 @@ export class RiftLineScene extends Phaser.Scene {
     if (!compact) {
       const pressureLabel =
         currentWave.tag === "boss"
-          ? `首领预警 · 敌军价值约 ${enemyBudgetForRound(state.round)}`
+          ? `首领预警 · 敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`
           : currentWave.tag === "elite"
-            ? `精英预警 · 敌军价值约 ${enemyBudgetForRound(state.round)}`
-            : `敌情预览 · 总价值约 ${enemyBudgetForRound(state.round)}`;
+            ? `精英预警 · 敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`
+            : `敌情预览 · 敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`;
       this.phaseLayer.add(this.text(536, 124, pressureLabel, 9, currentWave.tag === "normal" ? "#e89aaa" : waveColor, { fontStyle: "bold" }));
       this.drawEnemyTraitPreview(currentWave.units);
       currentWave.units.slice(0, 7).forEach((waveUnit, index) => {
@@ -931,7 +931,7 @@ export class RiftLineScene extends Phaser.Scene {
     const waveLabel = currentWave.tag === "boss" ? "BOSS WARNING" : currentWave.tag === "elite" ? "ELITE WARNING" : mode === "hell" ? `HELL ${currentWave.round}` : `WAVE ${currentWave.round}`;
     const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
     this.phaseLayer.add(this.text(16, 108, `${waveLabel} · ${this.truncateText(currentWave.name, 242, 14, { fontStyle: "bold" })}`, 14, waveColor, { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(464, 108, `价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
+    this.phaseLayer.add(this.text(464, 108, `敌军 ${currentWave.units.length} · 价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
     this.drawTraits();
     this.phaseLayer.add(this.text(24, 178, `部署区 · ${engine.boardCount}/${engine.boardCap}`, 12, "#8ce8bd", { fontStyle: "bold" }));
     this.phaseLayer.add(this.text(24, 434, `备战席 · ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3", { fontStyle: "bold" }));

@@ -236,16 +236,35 @@ mkdirSync(artifactDirectory, { recursive: true });
   await forcePreparation(17);
   const endless = await readState();
   const endlessHeader = await page.locator(".rift-dom-header").innerText();
-  if (endless.progressionMode !== "endless" || endless.wave.enemyBudget !== 135 || !endless.wave.enemyTraits.length || !endlessHeader.includes("普通无限")) {
+  if (
+    endless.progressionMode !== "endless"
+    || endless.wave.enemyBudget !== 135
+    || endless.wave.enemyCount !== 10
+    || !endless.wave.enemyTraits.length
+    || !endlessHeader.includes("普通无限")
+  ) {
     throw new Error(`Normal endless state is incomplete: ${JSON.stringify({ endless, endlessHeader })}`);
   }
   await capture("round-17-normal-endless");
+
+  await forcePreparation(22);
+  const expandedEndless = await readState();
+  if (
+    expandedEndless.progressionMode !== "endless"
+    || expandedEndless.wave.enemyCount !== 11
+    || expandedEndless.wave.units.length !== 11
+  ) {
+    throw new Error(`Normal endless population did not expand: ${JSON.stringify(expandedEndless.wave)}`);
+  }
+  await capture("round-22-expanded-endless");
 
   await forcePreparation(21);
   const bossWarning = await readState();
   const expectedBossWarning = "首领预警：敌人非常强大，请倾尽所有资源应对，否则可能会失败。";
   if (
     bossWarning.wave.tag !== "boss"
+    || bossWarning.wave.formationTheme !== "时停合唱团"
+    || bossWarning.wave.units.filter((unit) => unit.id === "spark_mage").length < 4
     || bossWarning.wave.description !== expectedBossWarning
     || /利息|连胜|赏金|复投|总价值/.test(bossWarning.wave.description)
   ) {
@@ -258,7 +277,9 @@ mkdirSync(artifactDirectory, { recursive: true });
   const hellHeader = await page.locator(".rift-dom-header").innerText();
   if (
     hell.progressionMode !== "hell"
-    || hell.wave.enemyBudget !== 666
+    || hell.wave.enemyBudget !== 721
+    || hell.wave.enemyCount !== 14
+    || hell.wave.units.length !== 14
     || !hell.wave.enemyTraits.length
     || hell.player.interestIncome !== 20
     || !hellHeader.includes("地狱无限")
@@ -277,7 +298,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const dialog = page.getByRole("dialog", { name: "裂隙阵线图鉴" });
   await dialog.getByRole("button", { name: "玩法说明" }).click();
   const rulesText = await dialog.innerText();
-  for (const expected of ["第 17—31 战", "20 利息", "连胜与结算金全部复投", "80 金"]) {
+  for (const expected of ["第 17—31 战", "第 22 战起", "20 利息", "人数此后不设硬上限", "80 金"]) {
     if (!rulesText.includes(expected)) throw new Error(`Rules are missing ${expected}`);
   }
   await capture("progression-rules");

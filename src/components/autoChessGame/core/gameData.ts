@@ -1489,8 +1489,32 @@ const ENEMY_SQUADS: ReadonlyArray<{
   },
 ];
 
-const enemySquadForRound = (round: number, seed = 0) =>
-  ENEMY_SQUADS[Math.abs(round * 7 + seed * 11) % ENEMY_SQUADS.length];
+const ENDLESS_BOSS_SQUADS: ReadonlyArray<{
+  name: string;
+  units: readonly UnitId[];
+}> = [
+  {
+    name: "时停合唱团",
+    units: ["spark_mage", "spark_mage", "spark_mage", "nightin", "cinder_ram", "rei"],
+  },
+  {
+    name: "终场续航团",
+    units: ["cinder_ram", "cinder_ram", "cinder_ram", "lian", "clock_gunner", "shiori"],
+  },
+  {
+    name: "高费压制团",
+    units: ["lian", "lian", "cinder_ram", "spark_mage", "seki_boar_king", "guangyi"],
+  },
+];
+
+const enemySquadForRound = (round: number, seed = 0) => {
+  const endlessDepth = round - CAMPAIGN_ROUNDS;
+  if (endlessDepth > 0 && endlessDepth % 5 === 0) {
+    const bossIndex = endlessDepth / 5 - 1;
+    return ENDLESS_BOSS_SQUADS[bossIndex % ENDLESS_BOSS_SQUADS.length];
+  }
+  return ENEMY_SQUADS[Math.abs(round * 7 + seed * 11) % ENEMY_SQUADS.length];
+};
 
 const enemyGuestForRound = (round: number, seed = 0): UnitId | null => {
   if (round <= WAVES.length) return null;
@@ -1561,7 +1585,11 @@ const generatedUnitCount = (round: number) => {
   if (round <= CAMPAIGN_ROUNDS) {
     return Math.min(10, 5 + Math.floor((round - 9) / 3));
   }
-  return 10;
+  if (round <= 21) return 10;
+  if (round <= 25) return 11;
+  if (round <= 28) return 12;
+  if (round <= NORMAL_ENDLESS_END_ROUND) return 13;
+  return 14 + Math.floor((round - HELL_ENDLESS_START_ROUND) / 2);
 };
 
 const buildBudgetedUnits = (
@@ -1572,17 +1600,20 @@ const buildBudgetedUnits = (
 ) => {
   const count = generatedUnitCount(round);
   const squad = enemySquadForRound(round, seed);
-  const units: WaveUnit[] = Array.from({ length: count }, (_, index) => ({
-    id: squad.units[index % squad.units.length],
-    star: 1,
-  }));
+  const units: WaveUnit[] = Array.from({ length: count }, (_, index) => {
+    if (tag === "boss" && index === 0) return { id: "rift_tyrant", star: 1 };
+    const squadIndex = tag === "boss" ? index - 1 : index;
+    return {
+      id: squad.units[squadIndex % squad.units.length],
+      star: 1,
+    };
+  });
   const guest = enemyGuestForRound(round, seed);
   if (guest && units.length > 1) units[units.length - 1] = { id: guest, star: 1 };
-  if (tag === "boss") units[0] = { id: "rift_tyrant", star: 1 };
 
   const maxStar: 1 | 2 | 3 = round < 15 ? 2 : 3;
   let remaining = Math.max(0, budget - waveCompositionValue({ units }));
-  for (let guard = 0; guard < 30; guard += 1) {
+  for (let guard = 0; guard < units.length * 2; guard += 1) {
     const options = units
       .map((candidateUnit, index) => {
         const star = candidateUnit.star ?? 1;
@@ -1653,9 +1684,7 @@ export const waveForRound = (round: number, seed = 0): WaveDefinition => {
       tag === "boss"
         ? mode === "campaign"
           ? "暴君本体 · 远征终局"
-          : mode === "hell"
-            ? `地狱暴君 · ${Math.ceil(endlessRound / 5)}`
-            : `暴君回响 · ${Math.ceil(endlessRound / 5)}`
+          : `${squad.name} · ${round}`
         : mode === "campaign"
           ? tag === "elite"
             ? `${squad.name} · 精英 ${round}`
