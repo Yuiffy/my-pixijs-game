@@ -706,3 +706,9 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 新增数据不变量回归：自动统计每个羁绊的唯一可购买成员数，要求最高阈值可达且阈值/效果数组长度一致；同时锁定四个本轮修正羁绊的成员数与 `2/4` 档位。
 - 系统 Chrome 图鉴专项确认 `27期`、`深夜档`、`偷袭`、`成熟` 均只显示 `2 名 / 4 名`；Canvas `1440×853`，截图 `.tmp/autochess/trait-thresholds/trait-thresholds-codex.png` 通过非纯色/透明/近黑检查，控制台和失败请求为空。
 - 验证：数据回归 `21/21`、完整 `pnpm autochess:test` `158/158`、`pnpm exec tsc --noEmit --incremental false`、`git diff --check` 和羁绊布局专项通过；主 `verify-autochess.cjs` 仍在既有首战 `result` 等待处超时。
+
+## 2026-07-28 · 狍子偶像近距离捏捏摸摸
+
+- 狍子偶像（`lovely`）的技能触发从 `engage` 改为 `offenseInRange`，远距离满能量时会先接近目标，不再远程发动“捏捏摸摸”。
+- 技能说明同步标注需要接近敌人；战斗回归覆盖远距离不施法与进入近距离后正常 channel。
+- 验证：专项 `119/119`、完整 `pnpm autochess:test` `158/158`、`pnpm exec tsc --noEmit` 与 `git diff --check` 通过；本轮未启动浏览器专项。

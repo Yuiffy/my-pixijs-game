@@ -471,7 +471,7 @@ test("雪绘近战范围挥斩会灼烧身边敌人", () => {
   assert.ok(target.burnTime > 0);
 });
 
-test("狍子偶像捏捏摸摸会同时定住双方、持续吸血并在结束时松开", () => {
+test("狍子偶像只能近距离发动捏捏摸摸，并同时定住双方、持续吸血", () => {
   const engine = createEngine(151);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -493,6 +493,11 @@ test("狍子偶像捏捏摸摸会同时定住双方、持续吸血并在结束�
   source.y = 360;
   source.hp = source.maxHp * 0.5;
   source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.equal(source.channelTargetFid, null, "远距离时狍子偶像不应发动捏捏摸摸");
+  source.x = target.x - 50;
+  source.energy = source.maxEnergy;
+  source.cooldown = 0;
   engine.update(0.05);
   assert.equal(source.channelTargetFid, target.fid);
   assert.ok(source.channelTime > 3);

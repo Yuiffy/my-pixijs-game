@@ -364,6 +364,8 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.match(data.UNIT_DEFS.mitsuri.abilityDescription, /护盾.*嘲讽/);
   assert.equal(data.UNIT_DEFS.mitsuri.attackType, "melee");
   assert.ok(data.UNIT_DEFS.mitsuri.range <= 60);
+  assert.equal(data.UNIT_DEFS.lovely.abilityCastTiming, "offenseInRange");
+  assert.match(data.UNIT_DEFS.lovely.abilityDescription, /需要接近敌人才能发动/);
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {

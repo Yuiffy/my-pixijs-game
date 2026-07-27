@@ -402,7 +402,7 @@ const COMBAT_PROFILES: Record<
   biscuit_sui: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 70, moveSpeed: 64, abilityCastTiming: "engage" },
   youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88, abilityCastTiming: "engage" },
   akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96, abilityCastTiming: "engage" },
-  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68, abilityCastTiming: "engage" },
+  lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68, abilityCastTiming: "offenseInRange" },
   mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
   // offenseInRange：近距进攻，进入攻击范围放
   zeyin: { attackType: "melee", energyProfile: ENERGY_PROFILES.passive, range: 54, moveSpeed: 68, abilityCastTiming: "passive" },
@@ -1092,7 +1092,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   lovely: unit({
     id: "lovely", name: "狍子偶像", title: "狍子偶像 · 范围斗士", glyph: "狍", color: "#b36a72", accent: "#ffb0af", tier: 4, cost: 4,
     traits: ["assassin", "host", "dance"], hp: 270, attack: 37, armor: 18, range: 52, attackInterval: 0.84, moveSpeed: 72,
-    abilityName: "捏捏摸摸", abilityDescription: "持续捏住最近的一名敌人，双方都无法行动；期间持续造成伤害，并将伤害的大部分转化为自身生命。",
+    abilityName: "捏捏摸摸", abilityDescription: "需要接近敌人才能发动；持续捏住最近的一名敌人，双方都无法行动，期间持续造成伤害，并将伤害的大部分转化为自身生命。",
     portrait: "/images/livers/lovely.webp", portraitFocus: "top", shop: true,
   }),
   mumu: unit({
