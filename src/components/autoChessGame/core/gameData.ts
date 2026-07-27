@@ -896,7 +896,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.92,
     moveSpeed: 54,
     abilityName: "空气龙",
-    abilityDescription: "进入短暂隐身，降低自身存在感；敌人会把你放到最低攻击优先级，优先寻找其他目标。隐身期间的第一次普攻会破隐并发射礼小龙。",
+    abilityDescription: "进入约4.2秒隐身，能量持续消耗；敌人会把你放到最低攻击优先级，优先寻找其他目标。隐身期间仍可正常攻击并获得移速提升，能量耗尽解除隐身并发射礼小龙。",
     passiveName: "社恐",
     passiveDescription: "每次普攻后都会像泽音变身后一样产生攻击后坐力，把自己推离目标。",
     portrait: "/images/livers/sumi.jpg",

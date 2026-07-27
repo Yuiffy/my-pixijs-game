@@ -149,8 +149,9 @@ const ZEYIN_REBIRTH_RECOIL_WINDOW = 4;
 const ZEYIN_REBIRTH_RECOIL_DISTANCE = 34;
 const ZEYIN_REBIRTH_RECOIL_DURATION = 0.16;
 const ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN = 4;
-/** 礼墨空气龙与社恐：短时隐身，破隐时发射礼小龙，普攻后真实后退。 */
-const SUMI_STEALTH_DURATION = 3.4;
+/** 礼墨空气龙与社恐：能量驱动的隐身，耗尽时发射礼小龙，普攻后真实后退。 */
+const SUMI_STEALTH_DURATION = 4.2;
+const SUMI_STEALTH_MOVE_SPEED = 30;
 const SUMI_DRAGON_DAMAGE_MULTIPLIER = 1.35;
 const SUMI_DRAGON_PROJECTILE_SPEED = 680;
 const SUMI_DRAGON_PROJECTILE_RADIUS = 14;
@@ -408,8 +409,8 @@ export class AutoChessEngine {
   }
 
   private addEnergy(fighter: Fighter, amount: number) {
-    // 攻击弹幕期间能量只减不增
-    if (fighter.barrageActive) return;
+    // 持续技能期间能量只减不增，避免技能被普攻或受击回能延长。
+    if (fighter.barrageActive || (fighter.unitId === "sumi" && fighter.stealthTime > 0)) return;
     fighter.energy = Math.max(0, Math.min(fighter.maxEnergy, fighter.energy + amount));
   }
 
@@ -3203,10 +3204,18 @@ export class AutoChessEngine {
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
       const wasStealthed = fighter.stealthTime > 0;
-      fighter.stealthTime = Math.max(0, fighter.stealthTime - dt);
-      if (wasStealthed && fighter.stealthTime === 0 && fighter.sumiDragonReady) {
-        fighter.sumiDragonReady = false;
-        this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: UNIT_DEFS[fighter.unitId].accent, text: "现身", life: 0.55, size: 11 });
+      if (fighter.unitId === "sumi" && fighter.sumiDragonReady && wasStealthed) {
+        const drainPerSecond = fighter.maxEnergy / SUMI_STEALTH_DURATION;
+        fighter.energy = Math.max(0, fighter.energy - drainPerSecond * dt);
+        fighter.stealthTime = drainPerSecond > 0
+          ? Math.min(fighter.stealthTime, fighter.energy / drainPerSecond)
+          : 0;
+        if (fighter.energy <= 0) this.releaseSumiStealth(fighter, battle);
+      } else {
+        fighter.stealthTime = Math.max(0, fighter.stealthTime - dt);
+        if (wasStealthed && fighter.stealthTime === 0 && fighter.sumiDragonReady) {
+          this.releaseSumiStealth(fighter, battle);
+        }
       }
       fighter.abilityAttackBonusTime = Math.max(0, fighter.abilityAttackBonusTime - dt);
       fighter.abilityLifestealTime = Math.max(0, fighter.abilityLifestealTime - dt);
@@ -3333,7 +3342,9 @@ export class AutoChessEngine {
         return;
       }
       if (!fighter.alive || fighter.stun > 0) return;
-      if (!fighter.barrageActive && fighter.energyPerSecond > 0) this.addEnergy(fighter, fighter.energyPerSecond * dt);
+      if (!fighter.barrageActive && fighter.energyPerSecond > 0 && !(fighter.unitId === "sumi" && wasStealthed)) {
+        this.addEnergy(fighter, fighter.energyPerSecond * dt);
+      }
       if (this.updateNoriApplePie(fighter, dt)) return;
 
       if (
@@ -3579,31 +3590,40 @@ export class AutoChessEngine {
     });
   }
 
+  private releaseSumiStealth(source: Fighter, battle: BattleState) {
+    if (!source.sumiDragonReady) return;
+    source.stealthTime = 0;
+    source.sumiDragonReady = false;
+    source.energy = 0;
+    source.abilityMoveSpeed = 0;
+    source.abilityMoveSpeedTime = 0;
+    const targetTeam: Team = source.team === "player" ? "enemy" : "player";
+    const opponents = battle[targetTeam].filter((fighter) => fighter.alive && fighter.hp > 0);
+    const target = this.nearestTarget(source, opponents) || opponents[0] || null;
+    if (!target) {
+      this.addEffect({ kind: "text", x: source.x, y: source.y - 42, color: UNIT_DEFS.sumi.accent, text: "现身", life: 0.55, size: 11 });
+      return;
+    }
+    source.targetFid = target.fid;
+    this.fireFixedProjectile(source, target, {
+      sourceFid: source.fid,
+      targetFid: target.fid,
+      delay: 0,
+      damage: source.attack * SUMI_DRAGON_DAMAGE_MULTIPLIER,
+      burnPower: 0,
+      speed: SUMI_DRAGON_PROJECTILE_SPEED,
+      color: UNIT_DEFS.sumi.accent,
+      size: SUMI_DRAGON_PROJECTILE_SIZE,
+      style: "sumi_dragon",
+    });
+    this.addEffect({ kind: "text", x: source.x, y: source.y - 46, color: UNIT_DEFS.sumi.accent, text: "破隐一击", life: 0.7, size: 12 });
+  }
+
   private basicAttack(source: Fighter, target: Fighter) {
     if (Math.hypot(target.x - source.x, target.y - source.y) > this.combatAttackRange(source, target)) return;
     this.markFightersEngaged(source, target);
     this.faceTowardX(source, target.x);
     source.cooldown = source.attackInterval;
-    if (source.unitId === "sumi" && source.stealthTime > 0 && source.sumiDragonReady) {
-      source.stealthTime = 0;
-      source.sumiDragonReady = false;
-      this.fireFixedProjectile(source, target, {
-        sourceFid: source.fid,
-        targetFid: target.fid,
-        delay: 0,
-        damage: source.attack * SUMI_DRAGON_DAMAGE_MULTIPLIER,
-        burnPower: 0,
-        speed: SUMI_DRAGON_PROJECTILE_SPEED,
-        color: UNIT_DEFS.sumi.accent,
-        size: SUMI_DRAGON_PROJECTILE_SIZE,
-        style: "sumi_dragon",
-      });
-      this.addEnergy(source, source.energyOnAttack);
-      this.addEnergy(target, target.energyOnHit);
-      this.addEffect({ kind: "text", x: source.x, y: source.y - 46, color: UNIT_DEFS.sumi.accent, text: "破隐一击", life: 0.7, size: 12 });
-      this.trySumiSocialRecoil(source, target);
-      return;
-    }
     if (source.unitId === "nori") {
       this.fireFixedProjectile(source, target, {
         sourceFid: source.fid,
@@ -3726,8 +3746,11 @@ export class AutoChessEngine {
 
     switch (source.unitId) {
       case "sumi": {
+        source.energy = source.maxEnergy;
         source.stealthTime = SUMI_STEALTH_DURATION;
         source.sumiDragonReady = true;
+        source.abilityMoveSpeed = SUMI_STEALTH_MOVE_SPEED;
+        source.abilityMoveSpeedTime = SUMI_STEALTH_DURATION + 0.05;
         source.targetFid = null;
         source.targetLock = 0;
         const opponents = source.team === "player" ? this.state.battle?.enemy : this.state.battle?.player;

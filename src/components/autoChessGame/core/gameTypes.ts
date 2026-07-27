@@ -251,7 +251,7 @@ export interface Fighter {
   rebirthRecoilTime: number;
   /** 礼墨空气龙隐身剩余时间；隐身会降低敌方选中优先级。 */
   stealthTime: number;
-  /** 礼墨隐身期间是否仍保留一次破隐礼小龙弹幕。 */
+  /** 礼墨是否等待解除隐身时发射一次礼小龙弹幕。 */
   sumiDragonReady: boolean;
   enraged: boolean;
   attackPulse: number;

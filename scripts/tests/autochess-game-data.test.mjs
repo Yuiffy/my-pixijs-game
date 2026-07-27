@@ -616,7 +616,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.equal(seki.abilityName, "山猪冲阵");
   assert.equal(towerGod.abilityName, "尖塔压顶");
   assert.equal(sumi.abilityName, "空气龙");
-  assert.match(sumi.abilityDescription, /隐身.*最低攻击优先级.*礼小龙/);
+  assert.match(sumi.abilityDescription, /隐身.*最低攻击优先级.*正常攻击.*移速.*能量耗尽.*礼小龙/);
   assert.equal(sumi.passiveName, "社恐");
   assert.match(sumi.passiveDescription, /后坐力.*推离目标/);
   assert.equal(sumi.abilityCastTiming, "selfBuff");

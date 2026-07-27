@@ -2278,7 +2278,7 @@ test("泽音涅槃有专属特效，重生后短时普攻后退且不会退出�
   assert.equal(zeyin.abilityMotion, null, "撤离窗口结束后不应再触发后坐力");
 });
 
-test("礼墨空气龙降低仇恨，破隐一击发射礼小龙并触发社恐后坐力", () => {
+test("礼墨空气龙持续隐身，期间可攻击，能量耗尽发射礼小龙并触发社恐后坐力", () => {
   const engine = createEngine(198);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2308,20 +2308,33 @@ test("礼墨空气龙降低仇恨，破隐一击发射礼小龙并触发社恐�
   sumi.cooldown = 99;
   engine.update(0.05);
 
-  assert.ok(sumi.stealthTime > 3.3 && sumi.stealthTime <= 3.4);
+  assert.ok(sumi.stealthTime > 4.1 && sumi.stealthTime <= 4.2);
   assert.equal(sumi.sumiDragonReady, true);
   assert.notEqual(enemy.targetFid, sumi.fid, "隐身后敌方应优先锁定其他可见友军");
 
+  engine.update(0.05);
+  const energyBeforeAttack = sumi.energy;
+  assert.ok(sumi.moveSpeed > sumi.baseMoveSpeed, "隐身期间应提高移速");
+  assert.ok(sumi.energy < sumi.maxEnergy, "隐身期间能量应持续下降");
   const target = battle.enemy[0];
   const beforeX = sumi.x;
   sumi.cooldown = 0;
   engine["basicAttack"](sumi, target);
-  assert.equal(sumi.stealthTime, 0);
-  assert.equal(sumi.sumiDragonReady, false);
+  assert.ok(sumi.stealthTime > 0, "隐身期间普通攻击不应立即破隐");
+  assert.equal(sumi.sumiDragonReady, true);
+  assert.equal(sumi.energy, energyBeforeAttack, "隐身期间普攻不应回能");
+  assert.equal(battle.projectiles.some((projectile) => projectile.style === "sumi_dragon"), false);
   assert.equal(sumi.abilityMotion?.kind, "push");
-  assert.ok(battle.projectiles.some((projectile) => projectile.style === "sumi_dragon"));
   engine.update(0.08);
   assert.ok(sumi.x < beforeX, "社恐后坐力应把礼墨推离目标");
+  sumi.cooldown = 99;
+  for (let step = 0; step < 77; step += 1) engine.update(0.05);
+  assert.ok(sumi.stealthTime > 0 && sumi.energy > 0, "隐身不应在能量耗尽前结束");
+  for (let step = 0; step < 6; step += 1) engine.update(0.05);
+  assert.equal(sumi.stealthTime, 0);
+  assert.equal(sumi.sumiDragonReady, false);
+  assert.equal(sumi.energy, 0);
+  assert.ok(battle.projectiles.some((projectile) => projectile.style === "sumi_dragon"));
   assert.ok(battle.effects.some((effect) => effect.text === "破隐一击"));
 });
 
@@ -2870,7 +2883,7 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
   target.armor = 20;
   target.stun = 0;
   engine.castAbility(sumi, battle.enemy);
-  assert.ok(sumi.stealthTime > 3.3, "空气龙应立即进入隐身");
+  assert.ok(sumi.stealthTime > 4.1, "空气龙应立即进入隐身");
   assert.equal(sumi.sumiDragonReady, true);
   assert.equal(target.stun, 0, "空气龙不应在施放时直接控制敌人");
   assert.equal(target.armor, 20, "空气龙不应在施放时削弱敌人护甲");
