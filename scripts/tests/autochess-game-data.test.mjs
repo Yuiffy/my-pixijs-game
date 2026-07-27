@@ -457,8 +457,15 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.ok(data.UNIT_DEFS.sui_cat.armor >= 18);
 });
 
-test("北欧魔法师技能定义提供三档时停范围与持续时间", () => {
+test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
   const unit = data.UNIT_DEFS.spark_mage;
+  assert.equal(unit.tier, 3);
+  assert.equal(unit.cost, 3);
+  assert.equal(unit.hp, 165);
+  assert.equal(unit.attack, 25);
+  assert.equal(unit.armor, 8);
+  assert.match(unit.abilityDescription, /能量从满降至 0/);
+  assert.match(unit.abilityDescription, /无法回复/);
   assert.equal(unit.abilityLevels.length, 3);
   assert.deepEqual(
     unit.abilityLevels.map((level) => level.stats.radius),
@@ -470,7 +477,14 @@ test("北欧魔法师技能定义提供三档时停范围与持续时间", () =>
   );
   assert.equal(data.abilityStatForStar(unit, 2, "radius", 0), 132);
   assert.match(data.abilityDescriptionForStar(unit, 3), /半径 162/);
+  assert.match(data.abilityDescriptionForStar(unit, 3), /能量耗尽时结束/);
   assert.match(data.describeAbilityStarGrowth(unit), /1星.*2星.*3星/);
+  assert.deepEqual(
+    [1, 2, 3, 4, 5].map(
+      (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
+    ),
+    [7, 9, 10, 9, 5],
+  );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
 

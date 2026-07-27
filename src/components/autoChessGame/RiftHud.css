@@ -248,7 +248,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 .rift-battle-trait-side > header { display: flex; flex: 0 0 auto; align-items: center; }
-.rift-battle-trait-side > header span { color: #93dff5; font-size: 8px; font-weight: 900; text-shadow: 0 1px 4px #020a10; }
+.rift-battle-trait-side > header span { color: #93dff5; font-size: 7px; font-weight: 900; text-shadow: 0 1px 4px #020a10; }
 .rift-battle-trait-side > header b { display: none; }
 .rift-battle-trait-side.is-enemy > header { grid-column: 2; grid-row: 1; text-align: right; }
 .rift-battle-trait-side.is-enemy > header span { color: #ff9cb4; }
@@ -259,28 +259,32 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
 }
 .rift-battle-trait-tags::-webkit-scrollbar { display: none; }
+.rift-battle-trait-tags.is-dragging,
+.rift-battle-trait-tags.is-dragging button { cursor: grabbing; }
 .rift-battle-trait-side.is-enemy .rift-battle-trait-tags {
   grid-column: 1;
   grid-row: 1;
-  justify-content: flex-end;
+  justify-content: safe flex-end;
 }
 .rift-battle-trait-tags button {
   display: inline-flex;
   min-width: max-content;
-  height: 18px;
+  height: 16px;
   align-items: center;
-  gap: 3px;
-  padding: 1px 3px;
+  gap: 2px;
+  padding: 1px 2px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, var(--trait-color) 72%, transparent);
   border-radius: 2px;
   background: transparent;
   color: color-mix(in srgb, var(--trait-color) 52%, #eefaff);
-  font: 800 8px/1 inherit;
+  font: 800 7px/1 inherit;
   text-shadow: 0 1px 4px #020a10;
-  cursor: help;
+  cursor: grab;
   transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
 }
 .rift-battle-trait-tags button:hover,
@@ -299,8 +303,8 @@
   background: var(--trait-color);
   box-shadow: 0 0 5px var(--trait-color);
 }
-.rift-battle-trait-tags button small { color: #8fa9b5; font: 800 7px/1 Arial, sans-serif; }
-.rift-battle-trait-tags button b { color: var(--trait-color); font: 900 8px/1 Arial, sans-serif; }
+.rift-battle-trait-tags button small { color: #8fa9b5; font: 800 6px/1 Arial, sans-serif; }
+.rift-battle-trait-tags button b { color: var(--trait-color); font: 900 7px/1 Arial, sans-serif; }
 .rift-battle-trait-empty { overflow: hidden; color: #657f8c; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .rift-battle-traits-toggle {
   display: grid;

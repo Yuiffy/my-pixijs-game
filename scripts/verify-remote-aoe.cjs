@@ -118,12 +118,50 @@ mkdirSync(artifactDirectory, { recursive: true });
               && impactState.battle.visualEffects.chronospheres.length > 0
             ) {
               const impactScreenshot = await screenshot("remote-aoe-projectile-impact.png");
+              const impactSource = impactState.battle.playerUnits.find((unit) => unit.unitId === "spark_mage");
+              if (!impactSource || impactSource.energy <= 0) {
+                throw new Error(`时停落地时北欧魔法师能量异常: ${JSON.stringify(impactSource)}`);
+              }
+              await advance(600);
+              const drainingState = await readState();
+              const drainingSource = drainingState.battle?.playerUnits.find((unit) => unit.unitId === "spark_mage");
+              if (
+                !drainingSource
+                || !drainingState.battle.visualEffects.chronospheres.length
+                || drainingSource.energy >= impactSource.energy
+              ) {
+                throw new Error(`时停持续期间能量未下降: ${JSON.stringify({ impactSource, drainingSource })}`);
+              }
+              const drainingScreenshot = await screenshot("remote-aoe-energy-draining.png");
+              let endedState = drainingState;
+              for (let endStep = 0; endStep < 80; endStep += 1) {
+                await advance(50);
+                endedState = await readState();
+                if (
+                  endedState.battle
+                  && !endedState.battle.visualEffects.chronospheres.length
+                ) break;
+              }
+              const endedSource = endedState.battle?.playerUnits.find((unit) => unit.unitId === "spark_mage");
+              if (
+                !endedState.battle
+                || endedState.battle.visualEffects.chronospheres.length
+                || !endedSource
+                || endedSource.energy > 1
+              ) {
+                throw new Error(`时停未在能量耗尽时结束: ${JSON.stringify({ endedSource, chronospheres: endedState.battle?.visualEffects.chronospheres })}`);
+              }
+              const endedScreenshot = await screenshot("remote-aoe-energy-empty.png");
               return {
                 seed,
                 inFlightState: state,
                 impactState,
+                drainingState,
+                endedState,
                 inFlightScreenshot,
                 impactScreenshot,
+                drainingScreenshot,
+                endedScreenshot,
                 errors: [...errors],
               };
             }
@@ -198,7 +236,20 @@ mkdirSync(artifactDirectory, { recursive: true });
         effects: projectile.impactState.battle.visualEffects.effects,
         chronospheres: projectile.impactState.battle.visualEffects.chronospheres,
       },
-      screenshots: [projectile.inFlightScreenshot, projectile.impactScreenshot],
+      draining: {
+        source: projectile.drainingState.battle.playerUnits.find((unit) => unit.unitId === "spark_mage"),
+        chronospheres: projectile.drainingState.battle.visualEffects.chronospheres,
+      },
+      ended: {
+        source: projectile.endedState.battle.playerUnits.find((unit) => unit.unitId === "spark_mage"),
+        chronospheres: projectile.endedState.battle.visualEffects.chronospheres,
+      },
+      screenshots: [
+        projectile.inFlightScreenshot,
+        projectile.impactScreenshot,
+        projectile.drainingScreenshot,
+        projectile.endedScreenshot,
+      ],
     },
     beam: {
       seed: beam.seed,

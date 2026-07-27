@@ -82,6 +82,7 @@ export interface Projectile {
 }
 
 export interface ChronosphereZone {
+  sourceFid: string;
   x: number;
   y: number;
   radius: number;

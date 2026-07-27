@@ -1326,7 +1326,7 @@ test("敌方偷袭成员会跳向我方后排，而不是跳回敌方阵地", ()
   );
 });
 
-test("北欧时停按施法者星级提升持续时间、范围与特效尺寸", () => {
+test("北欧时停按星级成长，并以不可回复的自身能量控制持续时间", () => {
   const expected = [
     { star: 1, radius: 108, duration: 1.8 },
     { star: 2, radius: 132, duration: 2.5 },
@@ -1342,11 +1342,21 @@ test("北欧时停按施法者星级提升持续时间、范围与特效尺寸",
     const battle = engine.state.battle;
     const source = battle?.player[0];
     assert.ok(battle && source);
+    const advance = (seconds) => {
+      let remaining = seconds;
+      while (remaining > 1e-9) {
+        const step = Math.min(0.05, remaining);
+        engine.update(step);
+        remaining -= step;
+      }
+    };
     battle.enemy.forEach((fighter) => {
       fighter.attack = 0;
       fighter.energy = 0;
       fighter.hp = fighter.maxHp = 99_999;
     });
+    source.cooldown = 99;
+    source.moveSpeed = 0;
     source.energy = source.maxEnergy;
     engine.update(0.05);
 
@@ -1354,23 +1364,49 @@ test("北欧时停按施法者星级提升持续时间、范围与特效尺寸",
       projectile.style === "aoe_orb" && projectile.impactAbilityId === "spark_mage",
     );
     assert.ok(delivery);
+    assert.equal(source.energy, source.maxEnergy);
     assert.equal(battle.chronospheres.length, 0);
     assert.ok(!battle.effects.some((effect) => effect.kind === "chronosphere"));
+    engine.update(0.05);
+    assert.equal(
+      battle.projectiles.filter((projectile) => projectile.impactAbilityId === "spark_mage").length,
+      1,
+      "时停弹飞行期间不能重复施法",
+    );
     engine["updateProjectiles"](battle, 1);
     assert.equal(battle.chronospheres.length, 1);
     const zone = battle.chronospheres[0];
+    assert.equal(zone.sourceFid, source.fid);
     assert.equal(zone.radius, radius);
     assert.equal(zone.maxLife, duration);
     assert.ok(Math.abs(zone.life - duration) < 1e-9);
     assert.ok(battle.effects.some((effect) => effect.kind === "chronosphere" && effect.size === radius));
+
+    source.energyPerSecond = 100;
+    source.energyOnAttack = 100;
+    source.energyOnHit = 100;
+    advance(duration * 0.4);
+    assert.ok(Math.abs(source.energy - source.maxEnergy * 0.6) < 1e-6);
+    assert.ok(Math.abs(zone.life - duration * 0.6) < 1e-6);
+    engine["addEnergy"](source, source.maxEnergy);
+    assert.ok(Math.abs(source.energy - source.maxEnergy * 0.6) < 1e-6);
+
     const textState = JSON.parse(engine.renderTextState());
     assert.deepEqual(textState.battle.visualEffects.chronospheres, [{
       x: Math.round(zone.x),
       y: Math.round(zone.y),
       radius,
-      remaining: duration,
+      remaining: Number((duration * 0.6).toFixed(2)),
       duration,
     }]);
+
+    source.energyPerSecond = 0;
+    advance(duration * 0.61);
+    assert.equal(source.energy, 0);
+    assert.equal(battle.chronospheres.length, 0);
+    source.energyPerSecond = 10;
+    engine.update(0.1);
+    assert.ok(source.energy > 0, "时停结束后应恢复正常充能");
   });
 });
 

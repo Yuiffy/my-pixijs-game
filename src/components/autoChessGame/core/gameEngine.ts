@@ -410,8 +410,25 @@ export class AutoChessEngine {
 
   private addEnergy(fighter: Fighter, amount: number) {
     // 持续技能期间能量只减不增，避免技能被普攻或受击回能延长。
-    if (fighter.barrageActive || (fighter.unitId === "sumi" && fighter.stealthTime > 0)) return;
+    if (
+      fighter.barrageActive ||
+      (fighter.unitId === "sumi" && fighter.stealthTime > 0) ||
+      this.hasChronosphereInFlightOrActive(fighter)
+    ) return;
     fighter.energy = Math.max(0, Math.min(fighter.maxEnergy, fighter.energy + amount));
+  }
+
+  private hasChronosphereInFlightOrActive(
+    fighter: Fighter,
+    battle = this.state.battle,
+  ) {
+    if (!battle || fighter.unitId !== "spark_mage") return false;
+    return battle.chronospheres.some((zone) => zone.sourceFid === fighter.fid) ||
+      battle.projectiles.some(
+        (projectile) =>
+          projectile.sourceFid === fighter.fid &&
+          projectile.impactAbilityId === "spark_mage",
+      );
   }
 
   private isInsideChronosphere(fighter: Fighter, battle: BattleState) {
@@ -2348,7 +2365,9 @@ export class AutoChessEngine {
       case "spark_mage": {
         const radius = abilityStatForStar(def, source.star, "radius", CHRONOSPHERE_RADIUS);
         const duration = abilityStatForStar(def, source.star, "duration", CHRONOSPHERE_DURATION);
+        source.energy = source.maxEnergy;
         this.state.battle?.chronospheres.push({
+          sourceFid: source.fid,
           x: center.x,
           y: center.y,
           radius,
@@ -3118,7 +3137,24 @@ export class AutoChessEngine {
     });
     battle.effects = battle.effects.filter((effect) => effect.life > 0);
     battle.chronospheres.forEach((zone) => {
-      zone.life -= dt;
+      const source = [...battle.player, ...battle.enemy].find(
+        (fighter) => fighter.fid === zone.sourceFid,
+      );
+      if (!source?.alive) {
+        if (source) source.energy = 0;
+        zone.life = 0;
+        return;
+      }
+      const drainPerSecond = source.maxEnergy / Math.max(zone.maxLife, 0.001);
+      source.energy = Math.max(0, source.energy - drainPerSecond * dt);
+      zone.life = Math.min(
+        zone.life - dt,
+        (source.energy / Math.max(source.maxEnergy, 0.001)) * zone.maxLife,
+      );
+      if (zone.life <= 1e-6 || source.energy <= 1e-6) {
+        source.energy = 0;
+        zone.life = 0;
+      }
     });
     battle.chronospheres = battle.chronospheres.filter((zone) => zone.life > 0);
     this.updateHealingZones(battle, dt);
@@ -3365,7 +3401,10 @@ export class AutoChessEngine {
 
       const allies = this.living(fighter.team);
       const abilityTiming = UNIT_DEFS[fighter.unitId].abilityCastTiming;
-      const energyReady = !fighter.barrageActive && fighter.energy >= fighter.maxEnergy;
+      const energyReady =
+        !fighter.barrageActive &&
+        !this.hasChronosphereInFlightOrActive(fighter, battle) &&
+        fighter.energy >= fighter.maxEnergy;
 
       // 不依赖普攻距离的技能：突进 / 远程进攻 / 支援护盾 / 自保受击 / 支援治疗
       if (energyReady) {
@@ -3958,6 +3997,7 @@ export class AutoChessEngine {
       case "spark_mage": {
         const center = densest(targets);
         if (!center) break;
+        source.energy = source.maxEnergy;
         this.deliverRemoteAoe(source, center);
         break;
       }

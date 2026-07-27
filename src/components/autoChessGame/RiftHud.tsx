@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+  WheelEvent as ReactWheelEvent,
+} from "react";
 import type { AutoChessEngine } from "./core/gameEngine";
 import {
   CAMPAIGN_ROUNDS,
@@ -132,6 +138,83 @@ function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) 
   );
 }
 
+function useHorizontalTraitScroll(onDragStart: () => void) {
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startScrollLeft: number;
+    moved: boolean;
+  } | null>(null);
+  const suppressClickRef = useRef(false);
+  const [dragging, setDragging] = useState(false);
+
+  const onWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    if (container.scrollWidth <= container.clientWidth) return;
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    if (!delta) return;
+    container.scrollLeft += delta;
+  };
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    if (event.pointerType === "touch" || event.button !== 0 || container.scrollWidth <= container.clientWidth) return;
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: container.scrollLeft,
+      moved: false,
+    };
+    suppressClickRef.current = false;
+    container.setPointerCapture(event.pointerId);
+    setDragging(true);
+    onDragStart();
+    event.preventDefault();
+  };
+
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const distance = event.clientX - drag.startX;
+    if (Math.abs(distance) > 3) {
+      drag.moved = true;
+      suppressClickRef.current = true;
+    }
+    event.currentTarget.scrollLeft = drag.startScrollLeft - distance;
+    event.preventDefault();
+  };
+
+  const finishDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    dragRef.current = null;
+    setDragging(false);
+    if (drag.moved) window.setTimeout(() => { suppressClickRef.current = false; }, 0);
+  };
+
+  const onClickCapture = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!suppressClickRef.current) return;
+    suppressClickRef.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  return {
+    dragging,
+    scrollHandlers: {
+      onWheel,
+      onPointerDown,
+      onPointerMove,
+      onPointerUp: finishDrag,
+      onPointerCancel: finishDrag,
+      onClickCapture,
+    },
+  };
+}
+
 function BattleTraitSide({
   team,
   label,
@@ -149,6 +232,8 @@ function BattleTraitSide({
   onActivate: (key: string) => void;
   onDeactivate: () => void;
 }) {
+  const { dragging, scrollHandlers } = useHorizontalTraitScroll(onDeactivate);
+
   return (
     <section className={`rift-battle-trait-side is-${team}`} data-team={team}>
       <header>
@@ -163,7 +248,11 @@ function BattleTraitSide({
           {traits.length > 5 && <em>+{traits.length - 5}</em>}
         </div>
       ) : (
-        <div className="rift-battle-trait-tags">
+        <div
+          className={`rift-battle-trait-tags ${dragging ? "is-dragging" : ""}`}
+          data-scrollable-traits
+          {...scrollHandlers}
+        >
           {traits.length ? traits.map((trait) => {
             const key = `${team}:${trait.id}`;
             return (

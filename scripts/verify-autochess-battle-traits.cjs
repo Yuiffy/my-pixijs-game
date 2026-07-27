@@ -143,7 +143,7 @@ const attachBridge = async (page) => {
   if (!attached) throw new Error("Unable to locate the AutoChess bridge");
 };
 
-const openBattle = async (page, seed) => {
+const openBattle = async (page, seed, round = 1) => {
   const response = await page.goto(`${baseUrl}/game/autochess?seed=${seed}`, { waitUntil: "domcontentloaded" });
   if (!response?.ok()) throw new Error(`Autochess URL returned ${response?.status()}`);
   await page.locator('[data-game-canvas="rift-line"]').waitFor();
@@ -151,24 +151,27 @@ const openBattle = async (page, seed) => {
   await page.locator(".rift-dom-choice").first().click();
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "preparation");
   await attachBridge(page);
-  await page.evaluate(() => {
+  await page.evaluate(({ targetRound }) => {
     const bridge = window.__codexAutoChessBridge;
+    bridge.engine.state.round = targetRound;
     bridge.engine.state.playerLevel = 10;
     bridge.engine.state.board.fill(null);
     [
-      "sun_guard",
-      "ember_blade",
-      "rift_brawler",
-      "mossback",
-      "clock_gunner",
-      "spark_mage",
-      "sui_blue",
       "shiori",
+      "ember_blade",
+      "xuehui",
+      "sui_bird",
+      "clock_gunner",
+      "zeyin",
+      "cinder_ram",
+      "sui_flower",
+      "grove_mender",
+      "sui_blue",
     ].forEach((id, index) => {
       bridge.engine.state.board[index] = { uid: 91001 + index, id, star: 1 };
     });
     bridge.dispatch({ type: "battle" });
-  });
+  }, { targetRound: round });
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "battle");
   await page.locator(".rift-battle-traits").waitFor();
 };
@@ -177,6 +180,21 @@ const capture = async (page, name, screenshots) => {
   const buffer = await page.screenshot({ path: `${artifactDirectory}/${name}.png`, fullPage: true });
   screenshots[name] = inspectPng(buffer);
 };
+
+const traitScrollSnapshot = (page, team = "player") => page
+  .locator(`.rift-battle-trait-side[data-team="${team}"] .rift-battle-trait-tags`)
+  .evaluate((container) => {
+    const lastTag = container.querySelector("button:last-of-type");
+    const containerRect = container.getBoundingClientRect();
+    const lastRect = lastTag?.getBoundingClientRect();
+    return {
+      clientWidth: container.clientWidth,
+      scrollWidth: container.scrollWidth,
+      scrollLeft: container.scrollLeft,
+      maxScrollLeft: container.scrollWidth - container.clientWidth,
+      lastTagVisible: Boolean(lastRect && lastRect.left >= containerRect.left - 1 && lastRect.right <= containerRect.right + 1),
+    };
+  });
 
 const layoutSnapshot = (page) => page.evaluate(() => {
   const state = JSON.parse(window.render_game_to_text());
@@ -216,13 +234,45 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   await openBattle(desktop, 81);
   const desktopOpen = await layoutSnapshot(desktop);
   assert.equal(desktopOpen.collapsed, false);
-  assert.ok(desktopOpen.playerTags >= 6, JSON.stringify(desktopOpen));
+  assert.ok(desktopOpen.playerTags >= 14, JSON.stringify(desktopOpen));
   assert.ok(desktopOpen.enemyTags >= 1, JSON.stringify(desktopOpen));
   assert.equal(desktopOpen.playerTags, desktopOpen.textState.playerTraits.length);
   assert.equal(desktopOpen.enemyTags, desktopOpen.textState.enemyTraits.length);
   assert.equal(desktopOpen.textState.phase, "battle");
-  assert.equal(desktopOpen.textState.playerUnits, 8);
+  assert.equal(desktopOpen.textState.playerUnits, 10);
   assert.ok(desktopOpen.bar.x >= desktopOpen.canvas.x && desktopOpen.bar.right <= desktopOpen.canvas.right);
+  const desktopPlayerTags = desktop.locator('.rift-battle-trait-side[data-team="player"] .rift-battle-trait-tags');
+  const scrollStart = await traitScrollSnapshot(desktop);
+  assert.ok(scrollStart.scrollWidth > scrollStart.clientWidth, JSON.stringify(scrollStart));
+  assert.equal(scrollStart.scrollLeft, 0);
+  assert.equal(scrollStart.lastTagVisible, false);
+  await desktopPlayerTags.hover({ position: { x: 12, y: 8 } });
+  await desktop.mouse.wheel(0, 180);
+  await desktop.waitForFunction(() => {
+    const container = document.querySelector('.rift-battle-trait-side[data-team="player"] .rift-battle-trait-tags');
+    return container && container.scrollLeft > 0;
+  });
+  const scrollAfterWheel = await traitScrollSnapshot(desktop);
+  assert.ok(scrollAfterWheel.scrollLeft > scrollStart.scrollLeft, JSON.stringify(scrollAfterWheel));
+  await desktopPlayerTags.evaluate((container) => { container.scrollLeft = 0; });
+  const playerTagsBox = await desktopPlayerTags.boundingBox();
+  assert.ok(playerTagsBox);
+  await desktop.mouse.move(playerTagsBox.x + playerTagsBox.width - 10, playerTagsBox.y + playerTagsBox.height / 2);
+  await desktop.mouse.down();
+  await desktop.mouse.move(playerTagsBox.x + 20, playerTagsBox.y + playerTagsBox.height / 2, { steps: 8 });
+  await desktop.mouse.up();
+  const scrollAfterDrag = await traitScrollSnapshot(desktop);
+  assert.ok(scrollAfterDrag.scrollLeft > 0, JSON.stringify(scrollAfterDrag));
+  await desktopPlayerTags.hover({ position: { x: 12, y: 8 } });
+  await desktop.mouse.wheel(0, 10000);
+  await desktop.waitForFunction(() => {
+    const container = document.querySelector('.rift-battle-trait-side[data-team="player"] .rift-battle-trait-tags');
+    return container && container.scrollWidth - container.clientWidth - container.scrollLeft <= 1;
+  });
+  const scrollAtEnd = await traitScrollSnapshot(desktop);
+  assert.equal(scrollAtEnd.lastTagVisible, true, JSON.stringify(scrollAtEnd));
+  await desktop.mouse.move(0, 0);
+  await capture(desktop, "desktop-expanded-scroll-end", screenshots);
   await desktop.locator('.rift-battle-trait-side[data-team="enemy"] .rift-battle-trait-tags button').first().hover();
   await desktop.locator(".rift-battle-trait-detail").waitFor();
   const detailText = await desktop.locator(".rift-battle-trait-detail").innerText();
@@ -237,7 +287,64 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   assert.equal(desktopCollapsed.playerTags, 0);
   assert.equal(desktopCollapsed.enemyTags, 0);
   await capture(desktop, "desktop-collapsed", screenshots);
-  report.desktop = { open: desktopOpen, detail: desktopDetail, collapsed: desktopCollapsed, detailText, diagnostics: desktopDiagnostics };
+  report.desktop = {
+    open: desktopOpen,
+    scroll: { start: scrollStart, afterWheel: scrollAfterWheel, afterDrag: scrollAfterDrag, end: scrollAtEnd },
+    detail: desktopDetail,
+    collapsed: desktopCollapsed,
+    detailText,
+    diagnostics: desktopDiagnostics,
+  };
+
+  const narrowContext = await browser.newContext({ viewport: { width: 800, height: 700 }, deviceScaleFactor: 1 });
+  const narrow = await narrowContext.newPage();
+  const narrowDiagnostics = attachDiagnostics(narrow);
+  await openBattle(narrow, 4, 17);
+  const narrowOpen = await layoutSnapshot(narrow);
+  assert.equal(narrowOpen.collapsed, false);
+  assert.ok(narrowOpen.enemyTags >= 9, JSON.stringify(narrowOpen));
+  const narrowEnemyTags = narrow.locator('.rift-battle-trait-side[data-team="enemy"] .rift-battle-trait-tags');
+  const enemyScrollStart = await traitScrollSnapshot(narrow, "enemy");
+  assert.ok(enemyScrollStart.scrollWidth > enemyScrollStart.clientWidth, JSON.stringify(enemyScrollStart));
+  assert.equal(enemyScrollStart.scrollLeft, 0);
+  assert.equal(enemyScrollStart.lastTagVisible, false);
+  await narrowEnemyTags.hover({ position: { x: 12, y: 8 } });
+  await narrow.mouse.wheel(0, 120);
+  await narrow.waitForFunction(() => {
+    const container = document.querySelector('.rift-battle-trait-side[data-team="enemy"] .rift-battle-trait-tags');
+    return container && container.scrollLeft > 0;
+  });
+  const enemyScrollAfterWheel = await traitScrollSnapshot(narrow, "enemy");
+  assert.ok(enemyScrollAfterWheel.scrollLeft > 0, JSON.stringify(enemyScrollAfterWheel));
+  await narrowEnemyTags.evaluate((container) => { container.scrollLeft = 0; });
+  const enemyTagsBox = await narrowEnemyTags.boundingBox();
+  assert.ok(enemyTagsBox);
+  await narrow.mouse.move(enemyTagsBox.x + enemyTagsBox.width - 10, enemyTagsBox.y + enemyTagsBox.height / 2);
+  await narrow.mouse.down();
+  await narrow.mouse.move(enemyTagsBox.x + 20, enemyTagsBox.y + enemyTagsBox.height / 2, { steps: 8 });
+  await narrow.mouse.up();
+  const enemyScrollAfterDrag = await traitScrollSnapshot(narrow, "enemy");
+  assert.ok(enemyScrollAfterDrag.scrollLeft > 0, JSON.stringify(enemyScrollAfterDrag));
+  await narrowEnemyTags.hover({ position: { x: 12, y: 8 } });
+  await narrow.mouse.wheel(0, 10000);
+  await narrow.waitForFunction(() => {
+    const container = document.querySelector('.rift-battle-trait-side[data-team="enemy"] .rift-battle-trait-tags');
+    return container && container.scrollWidth - container.clientWidth - container.scrollLeft <= 1;
+  });
+  const enemyScrollAtEnd = await traitScrollSnapshot(narrow, "enemy");
+  assert.equal(enemyScrollAtEnd.lastTagVisible, true, JSON.stringify(enemyScrollAtEnd));
+  await narrow.mouse.move(0, 0);
+  await capture(narrow, "narrow-desktop-enemy-scroll-end", screenshots);
+  report.narrow = {
+    open: narrowOpen,
+    scroll: {
+      start: enemyScrollStart,
+      afterWheel: enemyScrollAfterWheel,
+      afterDrag: enemyScrollAfterDrag,
+      end: enemyScrollAtEnd,
+    },
+    diagnostics: narrowDiagnostics,
+  };
 
   const portraitContext = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -258,7 +365,7 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   await portrait.locator('.rift-battle-trait-side[data-team="enemy"] .rift-battle-trait-tags button').first().click();
   await portrait.locator(".rift-battle-trait-detail").waitFor();
   const portraitExpanded = await layoutSnapshot(portrait);
-  assert.ok(portraitExpanded.playerTags >= 6 && portraitExpanded.enemyTags >= 1, JSON.stringify(portraitExpanded));
+  assert.ok(portraitExpanded.playerTags >= 14 && portraitExpanded.enemyTags >= 1, JSON.stringify(portraitExpanded));
   assert.ok(portraitExpanded.detail.x >= 0 && portraitExpanded.detail.right <= 390, JSON.stringify(portraitExpanded));
   assert.ok(portraitExpanded.overflow <= 1, JSON.stringify(portraitExpanded));
   await capture(portrait, "portrait-expanded-detail", screenshots);
@@ -280,13 +387,15 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   await capture(landscape, "landscape-default-collapsed", screenshots);
   await landscape.getByRole("button", { name: "展开双方羁绊" }).click();
   const landscapeExpanded = await layoutSnapshot(landscape);
-  assert.ok(landscapeExpanded.playerTags >= 6 && landscapeExpanded.enemyTags >= 1, JSON.stringify(landscapeExpanded));
+  assert.ok(landscapeExpanded.playerTags >= 14 && landscapeExpanded.enemyTags >= 1, JSON.stringify(landscapeExpanded));
   assert.ok(landscapeExpanded.overflow <= 1, JSON.stringify(landscapeExpanded));
   await capture(landscape, "landscape-expanded", screenshots);
   report.landscape = { collapsed: landscapeCollapsed, expanded: landscapeExpanded, diagnostics: landscapeDiagnostics };
 
   assert.deepEqual(desktopDiagnostics.errors, []);
   assert.deepEqual(desktopDiagnostics.failedResponses, []);
+  assert.deepEqual(narrowDiagnostics.errors, []);
+  assert.deepEqual(narrowDiagnostics.failedResponses, []);
   assert.deepEqual(portraitDiagnostics.errors, []);
   assert.deepEqual(portraitDiagnostics.failedResponses, []);
   assert.deepEqual(landscapeDiagnostics.errors, []);
@@ -295,6 +404,7 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   console.log(JSON.stringify(report, null, 2));
 
   await desktopContext.close();
+  await narrowContext.close();
   await portraitContext.close();
   await landscapeContext.close();
   await browser.close();
