@@ -253,10 +253,16 @@ const layoutSnapshot = (page) => page.evaluate(() => {
     return container && container.scrollLeft > 0;
   });
   const scrollAfterWheel = await traitScrollSnapshot(desktop);
-  assert.ok(scrollAfterWheel.scrollLeft > scrollStart.scrollLeft, JSON.stringify(scrollAfterWheel));
+  assert.ok(Math.abs(scrollAfterWheel.scrollLeft - 63) <= 1, JSON.stringify(scrollAfterWheel));
   await desktopPlayerTags.evaluate((container) => { container.scrollLeft = 0; });
   const playerTagsBox = await desktopPlayerTags.boundingBox();
   assert.ok(playerTagsBox);
+  await desktop.mouse.move(playerTagsBox.x + playerTagsBox.width - 10, playerTagsBox.y + playerTagsBox.height / 2);
+  await desktop.mouse.down();
+  await desktop.mouse.move(playerTagsBox.x + playerTagsBox.width - 14, playerTagsBox.y + playerTagsBox.height / 2);
+  await desktop.mouse.up();
+  const scrollAfterSmallDrag = await traitScrollSnapshot(desktop);
+  assert.equal(scrollAfterSmallDrag.scrollLeft, 0, JSON.stringify(scrollAfterSmallDrag));
   await desktop.mouse.move(playerTagsBox.x + playerTagsBox.width - 10, playerTagsBox.y + playerTagsBox.height / 2);
   await desktop.mouse.down();
   await desktop.mouse.move(playerTagsBox.x + 20, playerTagsBox.y + playerTagsBox.height / 2, { steps: 8 });
@@ -289,7 +295,13 @@ const layoutSnapshot = (page) => page.evaluate(() => {
   await capture(desktop, "desktop-collapsed", screenshots);
   report.desktop = {
     open: desktopOpen,
-    scroll: { start: scrollStart, afterWheel: scrollAfterWheel, afterDrag: scrollAfterDrag, end: scrollAtEnd },
+    scroll: {
+      start: scrollStart,
+      afterWheel: scrollAfterWheel,
+      afterSmallDrag: scrollAfterSmallDrag,
+      afterDrag: scrollAfterDrag,
+      end: scrollAtEnd,
+    },
     detail: desktopDetail,
     collapsed: desktopCollapsed,
     detailText,
@@ -315,7 +327,7 @@ const layoutSnapshot = (page) => page.evaluate(() => {
     return container && container.scrollLeft > 0;
   });
   const enemyScrollAfterWheel = await traitScrollSnapshot(narrow, "enemy");
-  assert.ok(enemyScrollAfterWheel.scrollLeft > 0, JSON.stringify(enemyScrollAfterWheel));
+  assert.ok(Math.abs(enemyScrollAfterWheel.scrollLeft - 42) <= 1, JSON.stringify(enemyScrollAfterWheel));
   await narrowEnemyTags.evaluate((container) => { container.scrollLeft = 0; });
   const enemyTagsBox = await narrowEnemyTags.boundingBox();
   assert.ok(enemyTagsBox);

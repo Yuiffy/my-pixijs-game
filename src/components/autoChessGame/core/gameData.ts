@@ -1496,7 +1496,7 @@ const ENDLESS_BOSS_SQUADS: ReadonlyArray<{
 }> = [
   {
     name: "时停合唱团",
-    units: ["spark_mage", "spark_mage", "spark_mage", "nightin", "cinder_ram", "rei"],
+    units: ["spark_mage", "nightin", "shiori", "cinder_ram", "rei", "sui_flower"],
   },
   {
     name: "终场续航团",

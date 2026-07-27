@@ -346,6 +346,8 @@ export class AutoChessEngine {
 
   private uid = 1;
 
+  private chronosphereEnergyLocks = new Set<string>();
+
   constructor(seed = freshSeed()) {
     this.rng = createSeededRandom(seed);
     this.state = this.createInitialState(seed, loadBestScore());
@@ -413,6 +415,7 @@ export class AutoChessEngine {
     if (
       fighter.barrageActive ||
       (fighter.unitId === "sumi" && fighter.stealthTime > 0) ||
+      this.chronosphereEnergyLocks.has(fighter.fid) ||
       this.hasChronosphereInFlightOrActive(fighter)
     ) return;
     fighter.energy = Math.max(0, Math.min(fighter.maxEnergy, fighter.energy + amount));
@@ -3120,6 +3123,7 @@ export class AutoChessEngine {
   private updateBattle(dt: number) {
     const battle = this.state.battle;
     if (!battle) return;
+    this.chronosphereEnergyLocks.clear();
     battle.elapsed += dt;
     battle.yueGangTimer = Math.max(0, battle.yueGangTimer - dt);
     battle.matureTimer -= dt;
@@ -3154,6 +3158,7 @@ export class AutoChessEngine {
       if (zone.life <= 1e-6 || source.energy <= 1e-6) {
         source.energy = 0;
         zone.life = 0;
+        this.chronosphereEnergyLocks.add(source.fid);
       }
     });
     battle.chronospheres = battle.chronospheres.filter((zone) => zone.life > 0);

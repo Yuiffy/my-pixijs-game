@@ -1400,8 +1400,7 @@ test("北欧时停按星级成长，并以不可回复的自身能量控制持�
       duration,
     }]);
 
-    source.energyPerSecond = 0;
-    advance(duration * 0.61);
+    advance(duration * 0.6);
     assert.equal(source.energy, 0);
     assert.equal(battle.chronospheres.length, 0);
     source.energyPerSecond = 10;

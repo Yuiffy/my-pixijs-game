@@ -26,6 +26,7 @@ const loadPlaywright = () => {
 
 const { chromium } = loadPlaywright();
 const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
+const debug = process.env.AUTOCHESS_DEBUG === "1";
 const artifactDirectory = ".tmp/autochess";
 mkdirSync(artifactDirectory, { recursive: true });
 
@@ -68,18 +69,50 @@ mkdirSync(artifactDirectory, { recursive: true });
     await page.locator('[data-game-canvas="rift-line"]').waitFor();
     await page.locator(".rift-dom-choice").first().click();
     await page.waitForTimeout(80);
-    const preparation = await readState();
+    let preparation = await readState();
+    let starterSold = false;
+    if (unitId === "spark_mage") {
+      const starter = preparation.board[0];
+      if (starter) {
+        const row = Math.floor(starter.index / 6);
+        const slotX = 44 + (starter.index % 6) * 116 + (row % 2) * 20;
+        const slotY = 232 + row * 68;
+        await clickLogical(slotX + 52, slotY + 29, { button: "right" });
+        starterSold = true;
+      }
+      await page.locator(".rift-dom-shop-actions button").filter({ hasText: "升本" }).click();
+      preparation = await readState();
+      while (
+        !preparation.shop.some((entry) => entry.id === unitId)
+        && preparation.player.gold > 3
+      ) {
+        await page.locator(".rift-dom-shop-actions button").filter({ hasText: "刷新" }).click();
+        preparation = await readState();
+      }
+    }
     if (
       preparation.phase !== "preparation"
       || !preparation.shop.some((entry) => entry.id === unitId)
-    ) return null;
+    ) {
+      if (debug) {
+        console.log("scenario-skip", {
+          seed,
+          unitId,
+          phase: preparation.phase,
+          level: preparation.player.level,
+          gold: preparation.player.gold,
+          shop: preparation.shop.map((entry) => entry.id),
+        });
+      }
+      return null;
+    }
 
     const card = page.locator(`button[aria-label^="${unitName}"]`);
     if (await card.count() !== 1) return null;
     await card.click();
     let purchased = await readState();
     if (![...purchased.board, ...purchased.bench].some((unit) => unit.id === unitId)) return null;
-    const starter = purchased.board.find((unit) => unit.id !== unitId);
+    const starter = starterSold ? null : purchased.board.find((unit) => unit.id !== unitId);
     if (starter) {
       const row = Math.floor(starter.index / 6);
       const slotX = 44 + (starter.index % 6) * 116 + (row % 2) * 20;
@@ -92,6 +125,15 @@ mkdirSync(artifactDirectory, { recursive: true });
     }
     await page.locator("button.rift-start-button").click();
     const battle = await readState();
+    if (debug) {
+      console.log("scenario-enter", {
+        seed,
+        unitId,
+        phase: battle.phase,
+        gold: battle.player.gold,
+        board: battle.board.map((unit) => unit.id),
+      });
+    }
     return battle.phase === "battle" ? battle : null;
   };
 
@@ -169,6 +211,7 @@ mkdirSync(artifactDirectory, { recursive: true });
         }
         await advance(100);
       }
+      if (debug) console.log("scenario-no-capture", { seed });
     }
     throw new Error(`已知商店种子内未捕获北欧时停的 AOE 弹幕飞行与落地帧: ${seeds.join(",")}`);
   };

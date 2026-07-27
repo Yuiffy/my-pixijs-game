@@ -197,7 +197,7 @@ test("无限首领轮换时停、续航与高费压制主题编队", () => {
   const highCost = data.waveForRound(31, 4);
 
   assert.match(control.name, /^时停合唱团/);
-  assert.ok(control.units.filter(({ id }) => id === "spark_mage").length >= 4);
+  assert.equal(control.units.filter(({ id }) => id === "spark_mage").length, 2);
   assert.match(sustain.name, /^终场续航团/);
   assert.ok(sustain.units.filter(({ id }) => id === "cinder_ram").length >= 4);
   assert.match(highCost.name, /^高费压制团/);
