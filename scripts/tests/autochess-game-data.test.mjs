@@ -569,6 +569,32 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   });
 });
 
+test("所有羁绊的最高档都能由可购买成员达到", () => {
+  const memberCounts = Object.fromEntries(
+    data.TRAIT_IDS.map((traitId) => [
+      traitId,
+      data.SHOP_UNITS.filter((unitId) => data.UNIT_DEFS[unitId].traits.includes(traitId)).length,
+    ]),
+  );
+
+  data.TRAIT_IDS.forEach((traitId) => {
+    const trait = data.TRAITS[traitId];
+    assert.equal(trait.thresholds.length, trait.bonuses.length, `${traitId} thresholds and bonuses must align`);
+    assert.ok(
+      trait.thresholds.at(-1) <= memberCounts[traitId],
+      `${traitId} highest threshold ${trait.thresholds.at(-1)} exceeds ${memberCounts[traitId]} purchasable members`,
+    );
+  });
+
+  assert.deepEqual(
+    Object.fromEntries(["ember", "assassin", "gen27", "mature"].map((traitId) => [traitId, memberCounts[traitId]])),
+    { ember: 4, assassin: 5, gen27: 5, mature: 5 },
+  );
+  ["ember", "assassin", "gen27", "mature"].forEach((traitId) => {
+    assert.deepEqual(data.TRAITS[traitId].thresholds, [2, 4]);
+  });
+});
+
 test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角色定位", async () => {
   assert.equal(data.TRAITS.star_tower_ink, undefined);
   assert.equal(data.TRAIT_IDS.includes("star_tower_ink"), false);
