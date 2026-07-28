@@ -364,13 +364,22 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.sui_blue.abilityName, "吃！");
   assert.equal(data.UNIT_DEFS.sui_blue.energyProfile.id, "feast");
   assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild", "vanguard"]);
+  assert.equal(data.UNIT_DEFS.sui_bird.attackType, "melee");
+  assert.equal(data.UNIT_DEFS.sui_bird.abilityCastTiming, "engage");
+  assert.equal(data.UNIT_DEFS.sui_bird.abilityName, "连续肘击");
+  assert.match(data.UNIT_DEFS.sui_bird.abilityDescription, /连续发动 3 次.*击退.*短暂眩晕/);
   assert.equal(data.UNIT_DEFS.sui_flower.name, "暴龙岁");
   assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["vanguard", "chuanmei", "mystic", "finance"]);
   assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "aggression", "dance", "vanguard"]);
   assert.deepEqual(data.UNIT_DEFS.biscuit_sui.traits, ["wild", "gluttony", "finance"]);
   assert.equal(data.UNIT_DEFS.sui_bird.name, "小岁鸟");
   assert.equal(data.UNIT_DEFS.shiori.name, "椰子栞");
-  assert.equal(data.UNIT_DEFS.shiori.abilityName, "大声");
+  assert.equal(data.UNIT_DEFS.shiori.tier, 3);
+  assert.equal(data.UNIT_DEFS.shiori.cost, 3);
+  assert.equal(data.UNIT_DEFS.shiori.attackType, "melee");
+  assert.equal(data.UNIT_DEFS.shiori.abilityCastTiming, "engage");
+  assert.equal(data.UNIT_DEFS.shiori.abilityName, "海獭冲击");
+  assert.match(data.UNIT_DEFS.shiori.abilityDescription, /最远.*范围伤害.*眩晕.*护盾/);
   assert.equal(data.UNIT_DEFS.zeyin.attackType, "melee");
   assert.equal(data.UNIT_DEFS.zeyin.abilityName, "涅槃重生");
   assert.equal(data.UNIT_DEFS.zeyin.abilityCastTiming, "passive");
@@ -402,7 +411,6 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     "rift_stalker",
     "mossback",
     "gale_archer",
-    "sui_bird",
     "seki_boar_king",
     "mitsuri",
     "guangyi",
@@ -430,7 +438,7 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /持续自动充能.*攻击与受击也会回复能量.*30% 最大生命护盾/);
   assert.match(data.UNIT_DEFS.mossback.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*回复自身生命.*两名友军提供护盾/);
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /初始 25\/100.*自动回能（12\.5 秒回满，每秒 \+8）.*攻击回能（每下 \+6）.*受击回能（每下 \+3）/);
-  ["rift_stalker", "rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "biscuit_sui", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
+  ["rift_stalker", "rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "shiori", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
     const profile = data.UNIT_DEFS[id].energyProfile;
     assert.equal(profile.id, "automatic", `${id} should use automatic energy recovery`);
     assert.equal(profile.start, 20);
@@ -438,6 +446,11 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     assert.equal(profile.onAttack, 0);
   });
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.automatic), /自动回能（5 秒回满，每秒 \+20）/);
+  assert.deepEqual(data.UNIT_DEFS.biscuit_sui.energyProfile, data.WARM_SUPPORT_ENERGY_PROFILE);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.energyProfile.start, 36);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.energyProfile.max, 90);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.energyProfile.perSecond, 18);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.energyProfile.castRefund, 10);
   assert.equal(data.UNIT_DEFS.cog_scribe.energyProfile.id, "flow");
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.id, "tempo");
   assert.equal(data.UNIT_DEFS.yua.energyProfile.id, "alien");
@@ -504,7 +517,7 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
     [1, 2, 3, 4, 5].map(
       (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
     ),
-    [7, 9, 10, 9, 5],
+    [7, 8, 11, 9, 5],
   );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
@@ -562,8 +575,10 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.ok(data.UNIT_DEFS.lovely.traits.includes("assassin"));
   assert.equal(data.UNIT_DEFS.biscuit_sui.tier, 4);
   assert.equal(data.UNIT_DEFS.biscuit_sui.cost, 4);
-  assert.equal(data.UNIT_DEFS.biscuit_sui.abilityRange, 300);
-  assert.match(data.UNIT_DEFS.biscuit_sui.abilityDescription, /300 距离内最远的敌人/);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.abilityRange, 360);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.abilityCastTiming, "supportHeal");
+  assert.equal(data.UNIT_DEFS.biscuit_sui.abilityName, "暖男回复");
+  assert.match(data.UNIT_DEFS.biscuit_sui.abilityDescription, /最虚弱的友军.*治疗.*护盾.*击退/);
   assert.doesNotMatch(data.TRAITS.gluttony.description, /只影响外观|不改变碰撞体积/);
   assert.match(data.TRAITS.gluttony.description, /击杀.*碰撞体积.*攻击力/);
   assert.deepEqual(

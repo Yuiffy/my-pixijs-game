@@ -131,6 +131,8 @@ const attachEngine = async (page) => {
       hook = hook.next;
     }
     if (!bridge) throw new Error("Unable to locate the autochess engine bridge");
+    bridge.setHidden(true);
+    window.__characterReworkBridge = bridge;
     window.__characterReworkEngine = bridge.engine;
   });
 };
@@ -369,6 +371,234 @@ const enterPreparation = async (page, seed) => {
   assert.equal(reiTextState.battle.playerUnits.length, 11);
   await capture("rei-ten-ghost-revival.png");
 
+  await enterPreparation(page, 304);
+  const shioriSetup = await page.evaluate(() => {
+    const engine = window.__characterReworkEngine;
+    engine.state.round = 6;
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: "shiori", star: 1 };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const shiori = battle.player[0];
+    shiori.x = 260;
+    shiori.y = 360;
+    [...battle.player, ...battle.enemy].forEach((fighter) => {
+      fighter.attack = 0;
+      fighter.cooldown = 99;
+      fighter.energy = 0;
+      fighter.dodgeChance = 0;
+      fighter.moveSpeed = 0;
+      fighter.baseMoveSpeed = 0;
+    });
+    battle.enemy.forEach((fighter, index) => {
+      const cluster = [
+        { x: 455, y: 330 },
+        { x: 455, y: 430 },
+        { x: 540, y: 380 },
+      ];
+      fighter.x = index < cluster.length ? cluster[index].x : 880 + index * 18;
+      fighter.y = index < cluster.length ? cluster[index].y : 190 + index * 70;
+      fighter.hp = fighter.maxHp = 99_999;
+      fighter.armor = 0;
+    });
+    shiori.cooldown = 0;
+    shiori.energy = shiori.maxEnergy;
+    engine.update(0.05);
+    return {
+      attackType: shiori.attackType,
+      targetFid: shiori.abilityMotion?.targetFid,
+      motion: shiori.abilityMotion,
+      shield: shiori.shield,
+    };
+  });
+  assert.equal(shioriSetup.attackType, "melee");
+  assert.ok(shioriSetup.motion?.abilityId === "shiori");
+  await page.evaluate(() => window.advanceTime(340));
+  const shioriImpact = await page.evaluate(() => {
+    const engine = window.__characterReworkEngine;
+    const battle = engine.state.battle;
+    const shiori = battle.player[0];
+    return {
+      shield: shiori.shield,
+      damaged: battle.enemy.filter((fighter) => fighter.damageTaken > 0).length,
+      stunned: battle.enemy.filter((fighter) => fighter.stun > 0).length,
+      position: { x: shiori.x, y: shiori.y },
+      enemies: battle.enemy.map((fighter) => ({
+        fid: fighter.fid,
+        x: fighter.x,
+        y: fighter.y,
+        distance: Math.hypot(fighter.x - shiori.x, fighter.y - shiori.y),
+        damageTaken: fighter.damageTaken,
+        stun: fighter.stun,
+      })),
+    };
+  });
+  assert.ok(shioriImpact.shield > shioriSetup.shield);
+  assert.ok(shioriImpact.damaged >= 3, JSON.stringify(shioriImpact));
+  assert.ok(shioriImpact.stunned >= 3, JSON.stringify(shioriImpact));
+  await capture("shiori-sea-otter-impact.png");
+
+  await enterPreparation(page, 305);
+  const biscuitSetup = await page.evaluate(() => {
+    const engine = window.__characterReworkEngine;
+    engine.state.round = 6;
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: "biscuit_sui", star: 1 };
+    engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+    engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const biscuit = battle.player.find((fighter) => fighter.unitId === "biscuit_sui");
+    const weakest = battle.player.find((fighter) => fighter.unitId === "sun_guard");
+    const healthy = battle.player.find((fighter) => fighter.unitId === "mossback");
+    const pathEnemy = battle.enemy[0];
+    const landingEnemy = battle.enemy[1];
+    biscuit.x = 220;
+    biscuit.y = 360;
+    weakest.x = 540;
+    weakest.y = 360;
+    weakest.hp = weakest.maxHp * 0.25;
+    weakest.shield = 0;
+    healthy.x = 300;
+    healthy.y = 500;
+    healthy.hp = healthy.maxHp;
+    pathEnemy.x = 380;
+    pathEnemy.y = 360;
+    landingEnemy.x = 500;
+    landingEnemy.y = 420;
+    [...battle.player, ...battle.enemy].forEach((fighter) => {
+      fighter.attack = 0;
+      fighter.cooldown = 99;
+      fighter.energy = 0;
+      fighter.dodgeChance = 0;
+    });
+    battle.enemy.forEach((fighter) => {
+      fighter.hp = fighter.maxHp = 99_999;
+    });
+    biscuit.cooldown = 0;
+    biscuit.energy = biscuit.maxEnergy;
+    engine.update(0.05);
+    return {
+      targetFid: biscuit.abilityMotion?.targetFid,
+      weakestFid: weakest.fid,
+      weakestHp: weakest.hp,
+      weakestShield: weakest.shield,
+      castRefund: biscuit.castRefund,
+      energy: biscuit.energy,
+      motion: biscuit.abilityMotion,
+      pathEnemy: { fid: pathEnemy.fid, x: pathEnemy.x, y: pathEnemy.y },
+      landingEnemy: { fid: landingEnemy.fid, x: landingEnemy.x, y: landingEnemy.y },
+    };
+  });
+  assert.equal(biscuitSetup.targetFid, biscuitSetup.weakestFid);
+  assert.equal(biscuitSetup.energy, biscuitSetup.castRefund);
+  await page.evaluate(() => window.advanceTime(170));
+  const biscuitPathState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+  assert.ok(
+    biscuitPathState.battle.playerUnits.some(
+      (unit) => unit.unitId === "biscuit_sui" && unit.motion?.abilityId === "biscuit_sui",
+    ),
+    JSON.stringify(biscuitPathState.battle),
+  );
+  await capture("biscuit-warm-rescue-path.png");
+  await page.evaluate(() => window.advanceTime(520));
+  const biscuitImpact = await page.evaluate(({ pathFid, landingFid }) => {
+    const engine = window.__characterReworkEngine;
+    const battle = engine.state.battle;
+    const biscuit = battle.player.find((fighter) => fighter.unitId === "biscuit_sui");
+    const weakest = battle.player.find((fighter) => fighter.unitId === "sun_guard");
+    const pathEnemy = battle.enemy.find((fighter) => fighter.fid === pathFid);
+    const landingEnemy = battle.enemy.find((fighter) => fighter.fid === landingFid);
+    return {
+      biscuitEnergy: biscuit.energy,
+      weakestHp: weakest.hp,
+      weakestShield: weakest.shield,
+      pathEnemy: { x: pathEnemy.x, y: pathEnemy.y, damageTaken: pathEnemy.damageTaken },
+      landingEnemy: { x: landingEnemy.x, y: landingEnemy.y, damageTaken: landingEnemy.damageTaken },
+    };
+  }, { pathFid: biscuitSetup.pathEnemy.fid, landingFid: biscuitSetup.landingEnemy.fid });
+  assert.ok(biscuitImpact.weakestHp > biscuitSetup.weakestHp);
+  assert.ok(biscuitImpact.weakestShield > biscuitSetup.weakestShield);
+  assert.ok(
+    Math.hypot(
+      biscuitImpact.pathEnemy.x - biscuitSetup.pathEnemy.x,
+      biscuitImpact.pathEnemy.y - biscuitSetup.pathEnemy.y,
+    ) > 10,
+  );
+  assert.ok(
+    Math.hypot(
+      biscuitImpact.landingEnemy.x - biscuitSetup.landingEnemy.x,
+      biscuitImpact.landingEnemy.y - biscuitSetup.landingEnemy.y,
+    ) > 10,
+  );
+  assert.equal(biscuitImpact.pathEnemy.damageTaken, 0);
+  assert.equal(biscuitImpact.landingEnemy.damageTaken, 0);
+  await capture("biscuit-warm-rescue-impact.png");
+
+  await enterPreparation(page, 306);
+  const birdSetup = await page.evaluate(() => {
+    const engine = window.__characterReworkEngine;
+    engine.state.round = 6;
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: "sui_bird", star: 1 };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const bird = battle.player[0];
+    bird.x = 240;
+    bird.y = 360;
+    battle.enemy.forEach((fighter, index) => {
+      fighter.x = 430 + index * 65;
+      fighter.y = 340 + (index % 2) * 40;
+      fighter.hp = fighter.maxHp = 99_999;
+      fighter.armor = 0;
+      fighter.attack = 0;
+      fighter.cooldown = 99;
+      fighter.energy = 0;
+      fighter.dodgeChance = 0;
+    });
+    bird.cooldown = 0;
+    bird.energy = bird.maxEnergy;
+    engine.update(0.05);
+    return {
+      attackType: bird.attackType,
+      charges: bird.suiBirdChargesRemaining,
+      motion: bird.abilityMotion,
+      enemyStarts: battle.enemy.map((fighter) => ({ fid: fighter.fid, x: fighter.x, y: fighter.y })),
+    };
+  });
+  assert.equal(birdSetup.attackType, "melee");
+  assert.equal(birdSetup.charges, 2);
+  assert.equal(birdSetup.motion?.abilityId, "sui_bird");
+  await page.evaluate(() => window.advanceTime(390));
+  const birdMidState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+  const birdMid = birdMidState.battle.playerUnits.find((unit) => unit.unitId === "sui_bird");
+  assert.ok(birdMid?.motion?.abilityId === "sui_bird" || birdMid?.elbowCharges > 0);
+  await capture("sui-bird-elbow-chain.png");
+  await page.evaluate(() => window.advanceTime(1000));
+  const birdImpact = await page.evaluate(() => {
+    const engine = window.__characterReworkEngine;
+    const battle = engine.state.battle;
+    const bird = battle.player[0];
+    return {
+      charges: bird.suiBirdChargesRemaining,
+      motion: bird.abilityMotion,
+      damaged: battle.enemy.filter((fighter) => fighter.damageTaken > 0).length,
+      pushed: battle.enemy.map((fighter) => ({ fid: fighter.fid, x: fighter.x, y: fighter.y })),
+    };
+  });
+  assert.equal(birdImpact.charges, 0);
+  assert.equal(birdImpact.motion, null);
+  assert.ok(birdImpact.damaged >= 1);
+  assert.ok(
+    birdImpact.pushed.some((fighter) => {
+      const start = birdSetup.enemyStarts.find((candidate) => candidate.fid === fighter.fid);
+      return start && Math.hypot(fighter.x - start.x, fighter.y - start.y) > 10;
+    }),
+  );
+
   const canvas = page.locator('[data-game-canvas="rift-line"]');
   const canvasBox = await canvas.boundingBox();
   const canvasMeta = await canvas.evaluate((element) => ({
@@ -395,6 +625,12 @@ const enterPreparation = async (page, seed) => {
     nanaCounter,
     gluttonyGrowth,
     reiRevival,
+    shioriSetup,
+    shioriImpact,
+    biscuitSetup,
+    biscuitImpact,
+    birdSetup,
+    birdImpact,
     screenshots,
     canvasBox,
     canvasMeta,

@@ -170,8 +170,23 @@ const TRAFFIC_TEAM_LIFESTEAL = [0, 0, 0.08, 0.15];
 const SUI_BLUE_FEAST_ATTACK_BONUS = 1.25;
 const SUI_BLUE_FEAST_LIFESTEAL = 0.45;
 const SUI_BLUE_FEAST_DURATION = 4;
-/** 椰子栞「大声」的区域 */
-const SHIORI_SHOUT_RADIUS = 122;
+/** 椰子栞「海獭冲击」：三费突进控场。 */
+const SHIORI_OTTER_RADIUS = 122;
+const SHIORI_OTTER_DAMAGE = 1.08;
+const SHIORI_OTTER_STUN = 0.35;
+const SHIORI_OTTER_SHIELD_RATIO = 0.12;
+/** 饼干岁「暖男回复」：高频救援与两段击退。 */
+const BISCUIT_RESCUE_HEAL_HP_RATIO = 0.14;
+const BISCUIT_RESCUE_HEAL_ATTACK_RATIO = 1;
+const BISCUIT_RESCUE_SHIELD_RATIO = 0.1;
+const BISCUIT_RESCUE_LANDING_RADIUS = 112;
+const BISCUIT_RESCUE_PATH_PUSH = 52;
+const BISCUIT_RESCUE_LANDING_PUSH = 58;
+/** 小岁鸟「连续肘击」：三段短冲撞。 */
+const SUI_BIRD_ELBOW_CHARGES = 3;
+const SUI_BIRD_ELBOW_DAMAGE = 0.58;
+const SUI_BIRD_ELBOW_STUN = 0.22;
+const SUI_BIRD_ELBOW_PUSH = 46;
 /** 未配置星级成长时，北欧时停球的兼容默认值 */
 const CHRONOSPHERE_RADIUS = 128;
 const CHRONOSPHERE_DURATION = 2.8;
@@ -239,7 +254,6 @@ const PAKO_ANGEL_FISH_FIELD_COLOR = "#6ff0b5";
 const PAKO_ANGEL_FISH_HIGHLIGHT_COLOR = "#d9fff0";
 /** 非自身中心 AOE：声束同帧触发，弹幕抵达固定落点后触发。 */
 const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile"; glyph?: string }>> = {
-  shiori: { kind: "beam" },
   spark_mage: { kind: "projectile", glyph: "⏳" },
   sui_flower: { kind: "projectile", glyph: "🌶️" },
   tower_god: { kind: "projectile", glyph: "塔" },
@@ -1236,6 +1250,7 @@ export class AutoChessEngine {
         danceDashDodge: danceLevel ? DANCE_DASH_DODGE[danceLevel] : 0,
         barrageActive: false,
         barrageDrainPerSecond: 0,
+        suiBirdChargesRemaining: 0,
         cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
@@ -1412,6 +1427,7 @@ export class AutoChessEngine {
         danceDashDodge: danceLevel ? DANCE_DASH_DODGE[danceLevel] : 0,
         barrageActive: false,
         barrageDrainPerSecond: 0,
+        suiBirdChargesRemaining: 0,
         cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
@@ -1867,6 +1883,146 @@ export class AutoChessEngine {
     });
   }
 
+  private pushFighterAwayFrom(
+    target: Fighter,
+    originX: number,
+    originY: number,
+    distance: number,
+    duration = 0.24,
+  ) {
+    const deltaX = target.x - originX;
+    const deltaY = target.y - originY;
+    const length = Math.hypot(deltaX, deltaY);
+    const fallbackX = target.team === "player" ? -1 : 1;
+    const directionX = length > 0.001 ? deltaX / length : fallbackX;
+    const directionY = length > 0.001 ? deltaY / length : 0;
+    return this.startAbilityMotion(
+      target,
+      "push",
+      {
+        x: target.x + directionX * distance,
+        y: target.y + directionY * distance,
+      },
+      { abilityId: null, duration, avoidOccupied: false },
+    );
+  }
+
+  private sweepBiscuitRescueDash(source: Fighter, motion: AbilityMotion, fromX: number, fromY: number) {
+    const battle = this.state.battle;
+    if (!battle) return;
+    const opponents = source.team === "player" ? battle.enemy : battle.player;
+    const pathX = motion.toX - motion.fromX;
+    const pathY = motion.toY - motion.fromY;
+    const pathLength = Math.hypot(pathX, pathY) || 1;
+    const forwardX = pathX / pathLength;
+    const forwardY = pathY / pathLength;
+    opponents.forEach((target) => {
+      if (!target.alive || motion.hitFids.includes(target.fid)) return;
+      const collisionDistance = source.radius + target.radius + 8;
+      if (this.distanceToSegment(target.x, target.y, fromX, fromY, source.x, source.y) > collisionDistance) return;
+      motion.hitFids.push(target.fid);
+      this.startAbilityMotion(
+        target,
+        "push",
+        {
+          x: target.x + forwardX * BISCUIT_RESCUE_PATH_PUSH,
+          y: target.y + forwardY * BISCUIT_RESCUE_PATH_PUSH,
+        },
+        { abilityId: null, duration: 0.24, avoidOccupied: false },
+      );
+      this.addEffect({
+        kind: "burst",
+        x: target.x,
+        y: target.y,
+        color: UNIT_DEFS.biscuit_sui.accent,
+        life: 0.34,
+        size: target.radius * 1.55,
+      });
+    });
+  }
+
+  private sweepSuiBirdElbowDash(source: Fighter, motion: AbilityMotion, fromX: number, fromY: number) {
+    const battle = this.state.battle;
+    if (!battle) return;
+    const opponents = source.team === "player" ? battle.enemy : battle.player;
+    const pathX = motion.toX - motion.fromX;
+    const pathY = motion.toY - motion.fromY;
+    const pathLength = Math.hypot(pathX, pathY) || 1;
+    const forwardX = pathX / pathLength;
+    const forwardY = pathY / pathLength;
+    opponents.forEach((target) => {
+      if (!target.alive || motion.hitFids.includes(target.fid)) return;
+      const collisionDistance = source.radius + target.radius + 10;
+      if (this.distanceToSegment(target.x, target.y, fromX, fromY, source.x, source.y) > collisionDistance) return;
+      motion.hitFids.push(target.fid);
+      this.dealAbilityDamage(source, target, SUI_BIRD_ELBOW_DAMAGE);
+      if (target.alive) {
+        target.stun = Math.max(target.stun, SUI_BIRD_ELBOW_STUN);
+        this.startAbilityMotion(
+          target,
+          "push",
+          {
+            x: target.x + forwardX * SUI_BIRD_ELBOW_PUSH,
+            y: target.y + forwardY * SUI_BIRD_ELBOW_PUSH,
+          },
+          { abilityId: null, duration: 0.22, avoidOccupied: false },
+        );
+      }
+      this.addEffect({
+        kind: "burst",
+        x: target.x,
+        y: target.y,
+        color: UNIT_DEFS.sui_bird.accent,
+        life: 0.3,
+        size: target.radius * 1.6,
+      });
+    });
+  }
+
+  private startSuiBirdElbowDash(source: Fighter, targets: Fighter[]) {
+    if (source.suiBirdChargesRemaining <= 0) return false;
+    const target = this.nearestTarget(source, targets.filter((candidate) => candidate.alive));
+    if (!target) {
+      source.suiBirdChargesRemaining = 0;
+      return false;
+    }
+    const deltaX = target.x - source.x;
+    const deltaY = target.y - source.y;
+    const distance = Math.hypot(deltaX, deltaY) || 1;
+    const directionX = deltaX / distance;
+    const directionY = deltaY / distance;
+    const overshoot = source.radius + target.radius + 34;
+    source.suiBirdChargesRemaining -= 1;
+    const motion = this.startAbilityMotion(
+      source,
+      "dash",
+      {
+        x: target.x + directionX * overshoot,
+        y: target.y + directionY * overshoot,
+      },
+      {
+        targetFid: target.fid,
+        duration: Math.max(0.22, Math.min(0.4, distance / 900)),
+        avoidOccupied: false,
+      },
+    );
+    if (!motion) {
+      source.suiBirdChargesRemaining = 0;
+      return false;
+    }
+    const strike = SUI_BIRD_ELBOW_CHARGES - source.suiBirdChargesRemaining;
+    this.addEffect({
+      kind: "text",
+      x: source.x,
+      y: source.y - 44,
+      color: UNIT_DEFS.sui_bird.accent,
+      text: `肘击 ${strike}/${SUI_BIRD_ELBOW_CHARGES}`,
+      life: 0.42,
+      size: 11,
+    });
+    return true;
+  }
+
   private resolveAbilityMotion(source: Fighter, motion: AbilityMotion) {
     const battle = this.state.battle;
     if (!battle || !source.alive || !motion.abilityId) return;
@@ -1877,25 +2033,47 @@ export class AutoChessEngine {
     const accent = UNIT_DEFS[source.unitId].accent;
 
     switch (motion.abilityId) {
-      case "sui_bird": {
-        if (target && target.team === source.team) {
-          this.heal(source, target, target.maxHp * 0.18 + source.attack * 1.15);
-          this.grantShield(source, target, target.maxHp * 0.08, 0.32);
-        }
+      case "shiori":
         livingTargets
-          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 135)
-          .forEach((enemy) => this.dealAbilityDamage(source, enemy, 0.9));
+          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < SHIORI_OTTER_RADIUS)
+          .forEach((enemy) => {
+            this.dealAbilityDamage(source, enemy, SHIORI_OTTER_DAMAGE);
+            if (enemy.alive) enemy.stun = Math.max(enemy.stun, SHIORI_OTTER_STUN);
+          });
+        this.grantShield(source, source, source.maxHp * SHIORI_OTTER_SHIELD_RATIO, 0.45);
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "海獭冲击", life: 0.68, size: 12 });
+        break;
+      case "sui_bird": {
+        if (!this.startSuiBirdElbowDash(source, livingTargets)) {
+          source.suiBirdChargesRemaining = 0;
+          this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "三连完成", life: 0.5, size: 11 });
+        }
         break;
       }
-      case "biscuit_sui":
+      case "biscuit_sui": {
+        if (target && target.team === source.team) {
+          this.heal(
+            source,
+            target,
+            target.maxHp * BISCUIT_RESCUE_HEAL_HP_RATIO + source.attack * BISCUIT_RESCUE_HEAL_ATTACK_RATIO,
+          );
+          this.grantShield(source, target, target.maxHp * BISCUIT_RESCUE_SHIELD_RATIO, 0.36);
+        }
         livingTargets
-          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 125)
+          .filter(
+            (enemy) =>
+              !motion.hitFids.includes(enemy.fid) &&
+              Math.hypot(enemy.x - source.x, enemy.y - source.y) <=
+                BISCUIT_RESCUE_LANDING_RADIUS + enemy.radius,
+          )
           .forEach((enemy) => {
-            this.dealAbilityDamage(source, enemy, 1.35);
-            if (enemy.alive) enemy.stun = Math.max(enemy.stun, 0.45);
+            motion.hitFids.push(enemy.fid);
+            this.pushFighterAwayFrom(enemy, source.x, source.y, BISCUIT_RESCUE_LANDING_PUSH);
           });
-        this.grantShield(source, source, source.maxHp * 0.18, 0.5);
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: accent, life: 0.65, size: BISCUIT_RESCUE_LANDING_RADIUS });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "暖男回复", life: 0.68, size: 12 });
         break;
+      }
       case "grove_mender":
         source.energy = source.maxEnergy;
         source.barrageActive = true;
@@ -2000,6 +2178,8 @@ export class AutoChessEngine {
     fighter.x = motion.fromX + (motion.toX - motion.fromX) * eased;
     fighter.y = motion.fromY + (motion.toY - motion.fromY) * eased;
     if (motion.abilityId === "guangyi") this.sweepGuangyiDash(fighter, motion, previousX, previousY);
+    if (motion.abilityId === "biscuit_sui") this.sweepBiscuitRescueDash(fighter, motion, previousX, previousY);
+    if (motion.abilityId === "sui_bird") this.sweepSuiBirdElbowDash(fighter, motion, previousX, previousY);
     if (progress >= 1) {
       fighter.x = motion.toX;
       fighter.y = motion.toY;
@@ -2486,15 +2666,6 @@ export class AutoChessEngine {
     };
 
     switch (abilityId) {
-      case "shiori":
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < SHIORI_SHOUT_RADIUS)
-          .forEach((target) => {
-            deal(target, 1.25);
-            if (target.alive) target.stun = Math.max(target.stun, 0.65);
-          });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: SHIORI_SHOUT_RADIUS + 14 });
-        break;
       case "spark_mage": {
         const radius = abilityStatForStar(def, source.star, "radius", CHRONOSPHERE_RADIUS);
         const duration = abilityStatForStar(def, source.star, "duration", CHRONOSPHERE_DURATION);
@@ -4080,9 +4251,15 @@ export class AutoChessEngine {
         break;
       }
       case "shiori": {
-        const center = densest(targets);
-        if (!center) break;
-        this.deliverRemoteAoe(source, center);
+        const target = farthest(targets);
+        if (!target) break;
+        this.startAbilityMotion(
+          source,
+          "dash",
+          { x: target.x + (source.team === "player" ? -42 : 42), y: target.y },
+          { targetFid: target.fid },
+        );
+        this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 0.85, size: SHIORI_OTTER_RADIUS + 16 });
         break;
       }
       case "rift_brawler": {
@@ -4185,22 +4362,8 @@ export class AutoChessEngine {
         break;
       }
       case "sui_bird": {
-        const target = weakest(allies);
-        if (!target) break;
-        this.startAbilityMotion(
-          source,
-          "jump",
-          { x: target.x + (source.team === "player" ? -52 : 52), y: target.y - 20 },
-          { targetFid: target.fid, duration: 0.56, arcHeight: 82 },
-        );
-        this.addEffect({
-          kind: "ring",
-          x: target.x,
-          y: target.y,
-          color: def.accent,
-          life: 0.8,
-          size: 140,
-        });
+        source.suiBirdChargesRemaining = SUI_BIRD_ELBOW_CHARGES;
+        this.startSuiBirdElbowDash(source, targets);
         break;
       }
       case "sui_flower": {
@@ -4358,15 +4521,24 @@ export class AutoChessEngine {
         break;
       }
       case "biscuit_sui": {
-        const target = farthest(targets);
+        const target = weakest(allies);
         if (!target) break;
+        const deltaX = target.x - source.x;
+        const deltaY = target.y - source.y;
+        const distance = Math.hypot(deltaX, deltaY);
+        const directionX = distance > 0.001 ? deltaX / distance : (source.team === "player" ? 1 : -1);
+        const directionY = distance > 0.001 ? deltaY / distance : 0;
+        const allyGap = target === source ? 0 : source.radius + target.radius + 8;
         this.startAbilityMotion(
           source,
           "dash",
-          { x: target.x + (source.team === "player" ? -42 : 42), y: target.y },
-          { targetFid: target.fid },
+          {
+            x: target.x - directionX * allyGap,
+            y: target.y - directionY * allyGap,
+          },
+          { targetFid: target.fid, duration: Math.max(0.2, Math.min(0.58, distance / 880)), avoidOccupied: false },
         );
-        this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 0.95, size: 155 });
+        this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 0.75, size: BISCUIT_RESCUE_LANDING_RADIUS + 12 });
         break;
       }
       case "nori": {
@@ -4619,6 +4791,7 @@ export class AutoChessEngine {
       burnSourceFid: null,
       barrageActive: false,
       barrageDrainPerSecond: 0,
+      suiBirdChargesRemaining: 0,
       cinderSongPulseTimer: 0,
       abilityAttackBonus: 0,
       abilityAttackBonusTime: 0,
@@ -5309,6 +5482,7 @@ export class AutoChessEngine {
               from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
               to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },
             },
+            elbowCharges: unit.suiBirdChargesRemaining || undefined,
             jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
             jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
           })),
@@ -5383,6 +5557,7 @@ export class AutoChessEngine {
               from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
               to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },
             },
+            elbowCharges: unit.suiBirdChargesRemaining || undefined,
             jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
             jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
           })),

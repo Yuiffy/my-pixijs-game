@@ -124,7 +124,7 @@ test("突进、跃击与击退由引擎运动状态推进，仅保留明确设�
       if (branchStart < 0) break;
       const nextCase = engine.indexOf("\n      case \"", branchStart + marker.length);
       const branch = engine.slice(branchStart, nextCase < 0 ? engine.length : nextCase);
-      usesMotion = /startAbilityMotion/.test(branch);
+      usesMotion = /startAbilityMotion|startSuiBirdElbowDash/.test(branch);
       searchFrom = branchStart + marker.length;
     }
     assert.ok(usesMotion, `${unitId} 不应再直接瞬移`);

@@ -731,7 +731,6 @@ test("所有可重复护盾角色在三人持续集火下都能被击破", async
     "sun_guard",
     "rift_stalker",
     "mossback",
-    "sui_bird",
     "seki_boar_king",
     "mitsuri",
     "guangyi",
@@ -1376,23 +1375,19 @@ test("偷袭成员会在己方首个单位交战后提前起跳", () => {
   );
 });
 
-test("北欧时停覆盖最密集人群，饼干岁冲向施法距离内最远敌人", () => {
+test("北欧时停覆盖施法距离内最密集人群", () => {
   const engine = createEngine(206);
   engine.state.round = 6;
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "spark_mage", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "biscuit_sui", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   const mage = battle?.player.find((fighter) => fighter.unitId === "spark_mage");
-  const biscuit = battle?.player.find((fighter) => fighter.unitId === "biscuit_sui");
-  assert.ok(battle && mage && biscuit);
+  assert.ok(battle && mage);
 
   mage.x = 240;
   mage.y = 260;
-  biscuit.x = 240;
-  biscuit.y = 460;
   battle.enemy.forEach((fighter, index) => {
     fighter.attack = 0;
     fighter.energy = 0;
@@ -1405,16 +1400,6 @@ test("北欧时停覆盖最密集人群，饼干岁冲向施法距离内最远�
       fighter.y = 540 - (index - 3) * 130;
     }
   });
-  const castableEnemies = battle.enemy.filter(
-    (enemy) =>
-      Math.hypot(enemy.x - biscuit.x, enemy.y - biscuit.y) <=
-      gameData.UNIT_DEFS.biscuit_sui.abilityRange + enemy.radius,
-  );
-  const farthestEnemy = [...castableEnemies].sort(
-    (a, b) =>
-      Math.hypot(b.x - biscuit.x, b.y - biscuit.y) -
-      Math.hypot(a.x - biscuit.x, a.y - biscuit.y),
-  )[0];
 
   engine.castAbility(mage, battle.enemy);
   const delivery = battle.projectiles.find(
@@ -1430,20 +1415,61 @@ test("北欧时停覆盖最密集人群，饼干岁冲向施法距离内最远�
     "北欧时停应落在能覆盖三人的密集区域",
   );
   assert.ok(zone.x < 750, "北欧时停不应跟随右侧孤立远敌");
+});
 
-  engine.castAbility(biscuit, battle.enemy, true);
-  assert.equal(biscuit.abilityMotion?.targetFid, farthestEnemy.fid);
+test("饼干岁冲向最虚弱友军，治疗护盾并撞开沿途与落点敌人", () => {
+  const engine = createEngine(207);
+  engine.state.round = 6;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "biscuit_sui", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const biscuit = battle?.player.find((fighter) => fighter.unitId === "biscuit_sui");
+  const weakest = battle?.player.find((fighter) => fighter.unitId === "sun_guard");
+  const healthy = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  const pathEnemy = battle?.enemy[0];
+  const landingEnemy = battle?.enemy[1];
+  assert.ok(battle && biscuit && weakest && healthy && pathEnemy && landingEnemy);
+
+  biscuit.x = 220;
+  biscuit.y = 360;
+  weakest.x = 540;
+  weakest.y = 360;
+  weakest.hp = weakest.maxHp * 0.25;
+  weakest.shield = 0;
+  healthy.x = 300;
+  healthy.y = 500;
+  healthy.hp = healthy.maxHp;
+  pathEnemy.x = 380;
+  pathEnemy.y = 360;
+  landingEnemy.x = 520;
+  landingEnemy.y = 420;
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+    fighter.hp = fighter.maxHp = 99_999;
+  });
+  const weakestHp = weakest.hp;
+  const pathEnemyX = pathEnemy.x;
+  const landingEnemyPosition = { x: landingEnemy.x, y: landingEnemy.y };
+
+  biscuit.energy = biscuit.maxEnergy;
+  engine["castAbility"](biscuit, battle.enemy, true);
+  assert.equal(biscuit.abilityMotion?.targetFid, weakest.fid);
+  assert.equal(biscuit.energy, biscuit.castRefund);
+  for (let tick = 0; tick < 20 && biscuit.abilityMotion; tick += 1) engine.update(0.05);
+
+  assert.ok(weakest.hp > weakestHp);
+  assert.ok(weakest.shield > 0);
+  assert.ok(pathEnemy.abilityMotion?.kind === "push" || pathEnemy.x > pathEnemyX);
   assert.ok(
-    Math.hypot(farthestEnemy.x - biscuit.x, farthestEnemy.y - biscuit.y) <=
-      gameData.UNIT_DEFS.biscuit_sui.abilityRange + farthestEnemy.radius,
+    landingEnemy.abilityMotion?.kind === "push" ||
+      Math.hypot(landingEnemy.x - landingEnemyPosition.x, landingEnemy.y - landingEnemyPosition.y) > 1,
   );
-  assert.ok(
-    Math.hypot(
-      biscuit.abilityMotion.toX - farthestEnemy.x,
-      biscuit.abilityMotion.toY - farthestEnemy.y,
-    ) < 160,
-    "饼干岁应冲到最远敌人身旁",
-  );
+  assert.equal(pathEnemy.damageTaken, 0, "暖男回复的撞开效果不应额外造成伤害");
 });
 
 test("敌方偷袭成员会跳向我方后排，而不是跳回敌方阵地", () => {
@@ -2009,7 +2035,7 @@ test("弥希双声道与初濑蝙蝠夜歌会完成控制和团队治疗", () =>
   });
 });
 
-test("二星七海可帮助高存款七人阵容通过后段精英，但终局首领仍要求继续投入", () => {
+test("二星七海与三星饼干岁可帮助高存款七人阵容通过后段精英，但终局首领仍要求继续投入", () => {
   const slots = [4, 5, 10, 11, 16, 17, 22];
   const lineup = [
     ["spark_mage", 1],
@@ -2017,7 +2043,7 @@ test("二星七海可帮助高存款七人阵容通过后段精英，但终局�
     ["nori", 2],
     ["youyi", 2],
     ["grove_mender", 2],
-    ["mumu", 2],
+    ["biscuit_sui", 3],
     ["yua", 1],
   ];
   const prepareScreenshotLineup = (engine, round) => {
@@ -2037,7 +2063,27 @@ test("二星七海可帮助高存款七人阵容通过后段精英，但终局�
   for (let tick = 0; tick < 600 && eliteEngine.state.phase === "battle"; tick += 1) {
     eliteEngine.update(0.05);
   }
-  assert.equal(eliteEngine.state.result.won, true);
+  assert.equal(
+    eliteEngine.state.result.won,
+    true,
+    JSON.stringify({
+      allies: eliteEngine.state.battle.player.map((unit) => ({
+        id: unit.unitId,
+        alive: unit.alive,
+        hp: Math.round(unit.hp),
+        damage: Math.round(unit.damageDealt),
+        healing: Math.round(unit.healingDone),
+        shielding: Math.round(unit.shieldingDone),
+      })),
+      enemies: eliteEngine.state.battle.enemy.map((unit) => ({
+        id: unit.unitId,
+        star: unit.star,
+        alive: unit.alive,
+        hp: Math.round(unit.hp),
+        damage: Math.round(unit.damageDealt),
+      })),
+    }),
+  );
 
   const bossEngine = createEngine(4);
   prepareScreenshotLineup(bossEngine, 16);
@@ -2605,7 +2651,7 @@ test("礼墨空气龙持续隐身，期间可攻击，能量耗尽发射礼小�
   assert.ok(battle.effects.some((effect) => effect.text === "破隐一击"));
 });
 
-test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害与眩晕", () => {
+test("贪吃岁强化下一击吸血，椰子栞海獭冲击突进并范围控场", () => {
   const engine = createEngine(201);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2638,16 +2684,76 @@ test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害�
 
   shiori.x = 300;
   shiori.y = 360;
-  engine["castAbility"](shiori, battle.enemy);
-  const shoutBeam = battle.effects.find((effect) => effect.kind === "line" && effect.size === 7);
-  assert.ok(shoutBeam);
-  assert.equal(shoutBeam.x, shiori.x);
-  assert.equal(shoutBeam.y, shiori.y);
-  assert.ok(Math.hypot(shoutBeam.x2 - battle.enemy[0].x, shoutBeam.y2 - battle.enemy[0].y) < 1);
-  assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "shiori"));
-  assert.ok(battle.enemy.every((enemy) => enemy.stun >= 0.65));
+  const farthestEnemy = battle.enemy.at(-1);
+  const shioriShield = shiori.shield;
+  engine["castAbility"](shiori, battle.enemy, true);
+  assert.equal(shiori.abilityMotion?.targetFid, farthestEnemy.fid);
+  assert.equal(shiori.attackType, "melee");
+  for (let tick = 0; tick < 20 && shiori.abilityMotion; tick += 1) engine.update(0.05);
+  assert.ok(shiori.shield > shioriShield);
+  assert.ok(battle.enemy.every((enemy) => enemy.stun > 0.2));
   assert.ok(battle.enemy.every((enemy) => enemy.hp < enemy.maxHp));
-  assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 136));
+  assert.ok(battle.effects.some((effect) => effect.text === "海獭冲击"));
+  assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "shiori"));
+});
+
+test("小岁鸟连续三次肘击会反复冲撞、击退并短暂眩晕敌人", () => {
+  const engine = createEngine(201);
+  engine.state.round = 6;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui_bird", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const bird = battle?.player[0];
+  assert.ok(battle && bird && battle.enemy.length >= 2);
+  bird.x = 240;
+  bird.y = 360;
+  battle.enemy.forEach((enemy, index) => {
+    enemy.x = 430 + index * 65;
+    enemy.y = 340 + (index % 2) * 40;
+    enemy.hp = enemy.maxHp = 99_999;
+    enemy.armor = 0;
+    enemy.dodgeChance = 0;
+    enemy.attack = 0;
+    enemy.cooldown = 99;
+  });
+  const enemyStarts = new Map(
+    battle.enemy.map((enemy) => [enemy.fid, { x: enemy.x, y: enemy.y }]),
+  );
+
+  bird.energy = bird.maxEnergy;
+  engine["castAbility"](bird, battle.enemy, true);
+  assert.equal(bird.suiBirdChargesRemaining, 2);
+  assert.equal(bird.abilityMotion?.abilityId, "sui_bird");
+  let sawStun = false;
+  let sawPush = false;
+  const elbowLabels = new Set();
+  for (let tick = 0; tick < 40 && (bird.abilityMotion || bird.suiBirdChargesRemaining > 0); tick += 1) {
+    engine.update(0.05);
+    sawStun ||= battle.enemy.some((enemy) => enemy.stun > 0);
+    sawPush ||= battle.enemy.some((enemy) => enemy.abilityMotion?.kind === "push");
+    battle.effects
+      .filter((effect) => effect.text?.startsWith("肘击 "))
+      .forEach((effect) => elbowLabels.add(effect.text));
+  }
+
+  const hitEnemies = battle.enemy.filter((enemy) => enemy.damageTaken > 0);
+  assert.equal(bird.suiBirdChargesRemaining, 0);
+  assert.equal(bird.abilityMotion, null);
+  assert.ok(hitEnemies.length >= 1);
+  assert.equal(sawStun, true);
+  assert.equal(sawPush, true);
+  assert.ok(
+    hitEnemies.some((enemy) => {
+      const start = enemyStarts.get(enemy.fid);
+      return start && Math.hypot(enemy.x - start.x, enemy.y - start.y) > 10;
+    }),
+  );
+  assert.ok(
+    elbowLabels.size >= 3,
+    "三次冲撞都应生成独立的肘击反馈",
+  );
 });
 
 test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {

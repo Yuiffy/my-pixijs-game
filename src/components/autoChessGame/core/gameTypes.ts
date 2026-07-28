@@ -226,6 +226,8 @@ export interface Fighter {
   /** 小红帽攻击弹幕：能量锁定并缓慢消耗 */
   barrageActive: boolean;
   barrageDrainPerSecond: number;
+  /** 小岁鸟连续肘击尚未发动的冲撞次数。 */
+  suiBirdChargesRemaining: number;
   /** 蛙梓歌唱形态的全队治疗节拍。 */
   cinderSongPulseTimer: number;
   abilityAttackBonus: number;
