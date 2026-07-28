@@ -199,7 +199,7 @@ const NANA_PICKAXE_COUNTER_DAMAGE = 0.46;
 const NANA_PICKAXE_COUNTER_STUN = 0.24;
 const NANA_PICKAXE_COUNTER_SPEED = 620;
 const GLUTTONY_ATTACK_PER_STACK = 0.06;
-const REI_MIN_CORPSES = 5;
+const REI_REVIVE_HP_RATIO = 0.25;
 /** 蛙梓：持续歌唱期间的群体治疗与火焰弹。 */
 const CINDER_RAM_SONG_DURATION = 5.5;
 const CINDER_RAM_SONG_HEAL_INTERVAL = 0.6;
@@ -225,9 +225,13 @@ const TIANDOU_LOLLIPOP_SLOW_DURATION = 2.4;
 const MITSURI_TAUNT_RADIUS = 155;
 const MITSURI_TAUNT_DURATION = 3.2;
 const MITSURI_SHIELD_RATIO = 0.22;
-/** 山猪王「山猪冲阵」 */
-const SEKI_CHARGE_RADIUS = 132;
-const SEKI_CHARGE_SHIELD_RATIO = 0.2;
+/** 山猪王「山猪冲阵」：持续耗能、低转向、高速反弹的控场冲锋。 */
+const SEKI_CHARGE_DURATION = 4.8;
+const SEKI_CHARGE_SPEED = 235;
+const SEKI_CHARGE_TURN_RATE = 1.2;
+const SEKI_CHARGE_COLLISION_PADDING = 8;
+const SEKI_CHARGE_PUSH_DISTANCE = 78;
+const SEKI_CHARGE_STUN_DURATION = 0.42;
 /** 中单光一滑跪：撞到的敌人短暂失去行动。 */
 const GUANGYI_SLIDE_STUN_DURATION = 0.45;
 /** 礼墨「礼小虎出击」 */
@@ -438,6 +442,7 @@ export class AutoChessEngine {
     // 持续技能期间能量只减不增，避免技能被普攻或受击回能延长。
     if (
       fighter.barrageActive ||
+      fighter.sekiChargeActive ||
       (fighter.unitId === "sumi" && fighter.stealthTime > 0) ||
       this.chronosphereEnergyLocks.has(fighter.fid) ||
       this.hasChronosphereInFlightOrActive(fighter)
@@ -1251,6 +1256,11 @@ export class AutoChessEngine {
         barrageActive: false,
         barrageDrainPerSecond: 0,
         suiBirdChargesRemaining: 0,
+        sekiChargeActive: false,
+        sekiChargeDirectionX: 0,
+        sekiChargeDirectionY: 0,
+        sekiChargeHitFids: [],
+        sekiChargeHitCount: 0,
         cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
@@ -1428,6 +1438,11 @@ export class AutoChessEngine {
         barrageActive: false,
         barrageDrainPerSecond: 0,
         suiBirdChargesRemaining: 0,
+        sekiChargeActive: false,
+        sekiChargeDirectionX: 0,
+        sekiChargeDirectionY: 0,
+        sekiChargeHitFids: [],
+        sekiChargeHitCount: 0,
         cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
@@ -1839,6 +1854,155 @@ export class AutoChessEngine {
     return Math.hypot(pointX - (fromX + segmentX * projection), pointY - (fromY + segmentY * projection));
   }
 
+  private updateSekiBoarCharge(
+    source: Fighter,
+    dt: number,
+    battle: BattleState,
+    movementIntents: Map<string, MovementIntent>,
+  ) {
+    const targets = (source.team === "player" ? battle.enemy : battle.player)
+      .filter((fighter) => fighter.alive && fighter.hp > 0);
+    const target = this.nearestTarget(source, targets);
+    let directionX = source.sekiChargeDirectionX;
+    let directionY = source.sekiChargeDirectionY;
+    if (target) {
+      const desiredAngle = Math.atan2(target.y - source.y, target.x - source.x);
+      const currentAngle = Math.atan2(directionY, directionX);
+      const angleDelta = Math.atan2(
+        Math.sin(desiredAngle - currentAngle),
+        Math.cos(desiredAngle - currentAngle),
+      );
+      const turn = Math.max(
+        -SEKI_CHARGE_TURN_RATE * dt,
+        Math.min(SEKI_CHARGE_TURN_RATE * dt, angleDelta),
+      );
+      const nextAngle = currentAngle + turn;
+      directionX = Math.cos(nextAngle);
+      directionY = Math.sin(nextAngle);
+    }
+
+    const previousX = source.x;
+    const previousY = source.y;
+    const travel = SEKI_CHARGE_SPEED * (source.slowTime > 0 ? 0.7 : 1) * dt;
+    let nextX = source.x + directionX * travel;
+    let nextY = source.y + directionY * travel;
+    const minX = BATTLE_BOUNDS.left + source.radius;
+    const maxX = BATTLE_BOUNDS.right - source.radius;
+    const minY = BATTLE_BOUNDS.top + source.radius;
+    const maxY = BATTLE_BOUNDS.bottom - source.radius;
+    let bounced = false;
+    if (nextX < minX) {
+      nextX = minX + (minX - nextX);
+      directionX = Math.abs(directionX);
+      bounced = true;
+    } else if (nextX > maxX) {
+      nextX = maxX - (nextX - maxX);
+      directionX = -Math.abs(directionX);
+      bounced = true;
+    }
+    if (nextY < minY) {
+      nextY = minY + (minY - nextY);
+      directionY = Math.abs(directionY);
+      bounced = true;
+    } else if (nextY > maxY) {
+      nextY = maxY - (nextY - maxY);
+      directionY = -Math.abs(directionY);
+      bounced = true;
+    }
+
+    source.x = Math.max(minX, Math.min(maxX, nextX));
+    source.y = Math.max(minY, Math.min(maxY, nextY));
+    source.sekiChargeDirectionX = directionX;
+    source.sekiChargeDirectionY = directionY;
+    source.facingX = directionX < 0 ? -1 : 1;
+    source.attackPulse = 0;
+    movementIntents.set(source.fid, { x: directionX, y: directionY });
+
+    if (bounced) {
+      this.addEffect({
+        kind: "burst",
+        x: source.x,
+        y: source.y,
+        color: UNIT_DEFS.seki_boar_king.accent,
+        life: 0.32,
+        size: source.radius * 1.7,
+      });
+      this.addEffect({
+        kind: "text",
+        x: source.x,
+        y: source.y - 42,
+        color: UNIT_DEFS.seki_boar_king.accent,
+        text: "反弹",
+        life: 0.4,
+        size: 10,
+      });
+    }
+
+    const targetsByFid = new Map(targets.map((enemy) => [enemy.fid, enemy]));
+    source.sekiChargeHitFids = source.sekiChargeHitFids.filter((fid) => {
+      const enemy = targetsByFid.get(fid);
+      return Boolean(
+        enemy &&
+        Math.hypot(enemy.x - source.x, enemy.y - source.y) <=
+          source.radius + enemy.radius + SEKI_CHARGE_COLLISION_PADDING + 14,
+      );
+    });
+    targets.forEach((enemy) => {
+      if (!enemy.alive || source.sekiChargeHitFids.includes(enemy.fid)) return;
+      const collisionDistance = source.radius + enemy.radius + SEKI_CHARGE_COLLISION_PADDING;
+      if (
+        this.distanceToSegment(
+          enemy.x,
+          enemy.y,
+          previousX,
+          previousY,
+          source.x,
+          source.y,
+        ) > collisionDistance
+      ) return;
+      source.sekiChargeHitFids.push(enemy.fid);
+      source.sekiChargeHitCount += 1;
+      this.startAbilityMotion(
+        enemy,
+        "push",
+        {
+          x: enemy.x + directionX * SEKI_CHARGE_PUSH_DISTANCE,
+          y: enemy.y + directionY * SEKI_CHARGE_PUSH_DISTANCE,
+        },
+        { abilityId: null, duration: 0.24, avoidOccupied: false },
+      );
+      enemy.stun = Math.max(enemy.stun, SEKI_CHARGE_STUN_DURATION);
+      this.addEffect({
+        kind: "burst",
+        x: enemy.x,
+        y: enemy.y,
+        color: UNIT_DEFS.seki_boar_king.accent,
+        life: 0.38,
+        size: enemy.radius * 1.8,
+      });
+      this.addEffect({
+        kind: "text",
+        x: enemy.x,
+        y: enemy.y - 42,
+        color: UNIT_DEFS.seki_boar_king.accent,
+        text: "撞飞",
+        life: 0.52,
+        size: 11,
+      });
+    });
+
+    this.addEffect({
+      kind: "line",
+      x: previousX,
+      y: previousY,
+      x2: source.x,
+      y2: source.y,
+      color: UNIT_DEFS.seki_boar_king.accent,
+      life: 0.16,
+      size: 7,
+    });
+  }
+
   private dealAbilityDamage(source: Fighter, target: Fighter, multiplier: number, bonus = 0) {
     const dealt = this.damage(source, target, source.attack * multiplier + bonus);
     if (dealt > 0) this.addDamageText(target, dealt);
@@ -2093,16 +2257,6 @@ export class AutoChessEngine {
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: accent, life: 0.65, size: NANA_PICKAXE_TAUNT_RADIUS });
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "护甲提升 · 全员看我", life: 0.8, size: 11 });
         break;
-      case "seki_boar_king":
-        livingTargets
-          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < SEKI_CHARGE_RADIUS)
-          .forEach((enemy) => {
-            this.dealAbilityDamage(source, enemy, 1.42);
-            if (enemy.alive) enemy.stun = Math.max(enemy.stun, 0.82);
-          });
-        this.grantShield(source, source, source.maxHp * SEKI_CHARGE_SHIELD_RATIO, 0.5);
-        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "冲阵", life: 0.68, size: 12 });
-        break;
       case "youyi":
         if (target) {
           this.dealAbilityDamage(source, target, 0.78);
@@ -2251,6 +2405,10 @@ export class AutoChessEngine {
             Math.hypot(right.x - source.x, right.y - source.y) ||
           left.id.localeCompare(right.id),
       );
+  }
+
+  private reiReviveCount(source: Fighter) {
+    return abilityStatForStar(UNIT_DEFS.rei, source.star, "reviveCount", 2);
   }
 
   private refreshFighterAttack(fighter: Fighter) {
@@ -3526,6 +3684,7 @@ export class AutoChessEngine {
     };
     [...battle.player, ...battle.enemy].forEach((fighter) => {
       if (!fighter.alive) return;
+      const wasSekiCharging = fighter.sekiChargeActive;
       fighter.cooldown -= dt;
       fighter.stun = Math.max(0, fighter.stun - dt);
       fighter.tauntTime = Math.max(0, fighter.tauntTime - dt);
@@ -3553,6 +3712,28 @@ export class AutoChessEngine {
       fighter.danceDashCooldown = Math.max(0, fighter.danceDashCooldown - dt);
       fighter.danceDashTime = Math.max(0, fighter.danceDashTime - dt);
       fighter.slowTime = Math.max(0, fighter.slowTime - dt);
+      if (fighter.sekiChargeActive) {
+        fighter.energy = Math.max(
+          0,
+          fighter.energy - (fighter.maxEnergy / SEKI_CHARGE_DURATION) * dt,
+        );
+        if (fighter.energy <= 0) {
+          fighter.sekiChargeActive = false;
+          fighter.sekiChargeDirectionX = 0;
+          fighter.sekiChargeDirectionY = 0;
+          fighter.sekiChargeHitFids = [];
+          fighter.sekiChargeHitCount = 0;
+          this.addEffect({
+            kind: "text",
+            x: fighter.x,
+            y: fighter.y - 42,
+            color: UNIT_DEFS.seki_boar_king.accent,
+            text: "冲锋结束",
+            life: 0.55,
+            size: 11,
+          });
+        }
+      }
       // 攻击弹幕：能量缓慢清空，期间不回能
       if (fighter.barrageActive) {
         fighter.energy = Math.max(0, fighter.energy - fighter.barrageDrainPerSecond * dt);
@@ -3694,6 +3875,12 @@ export class AutoChessEngine {
         }
         return;
       }
+      if (wasSekiCharging) {
+        if (fighter.alive && fighter.stun <= 0 && fighter.sekiChargeActive) {
+          this.updateSekiBoarCharge(fighter, dt, battle, movementIntents);
+        }
+        return;
+      }
       if (!fighter.alive || fighter.stun > 0) return;
       if (!fighter.barrageActive && fighter.energyPerSecond > 0 && !(fighter.unitId === "sumi" && wasStealthed)) {
         this.addEnergy(fighter, fighter.energyPerSecond * dt);
@@ -3732,7 +3919,7 @@ export class AutoChessEngine {
           case "engage":
           case "offenseReady":
             shouldCast = fighter.unitId === "rei"
-              ? this.reiCorpsesWithinRange(fighter).length >= REI_MIN_CORPSES
+              ? this.reiCorpsesWithinRange(fighter).length >= this.reiReviveCount(fighter)
               : abilityTargets.length > 0;
             break;
           case "supportShield":
@@ -4070,7 +4257,10 @@ export class AutoChessEngine {
     const targets = enforceRange
       ? this.targetsWithinAbilityRange(source, availableTargets)
       : availableTargets.filter((target) => target.alive);
-    if (source.unitId === "rei" && this.reiCorpsesWithinRange(source).length < REI_MIN_CORPSES) return;
+    if (
+      source.unitId === "rei" &&
+      this.reiCorpsesWithinRange(source).length < this.reiReviveCount(source)
+    ) return;
     source.energy = Math.min(source.maxEnergy, source.castRefund);
     source.cooldown = Math.max(source.cooldown, 0.35);
     if (
@@ -4399,17 +4589,18 @@ export class AutoChessEngine {
       case "seki_boar_king": {
         const center = densest(targets);
         if (!center) break;
-        const startX = source.x;
-        const startY = source.y;
-        const motion = this.startAbilityMotion(
-          source,
-          "dash",
-          { x: center.x + (source.team === "player" ? -44 : 44), y: center.y },
-          { targetFid: center.fid, avoidOccupied: false },
-        );
-        if (motion) {
-          this.addEffect({ kind: "line", x: startX, y: startY, x2: motion.toX, y2: motion.toY, color: def.accent, life: motion.duration, size: 9 });
-        }
+        const deltaX = center.x - source.x;
+        const deltaY = center.y - source.y;
+        const distance = Math.hypot(deltaX, deltaY) || 1;
+        source.energy = source.maxEnergy;
+        source.sekiChargeActive = true;
+        source.sekiChargeDirectionX = deltaX / distance;
+        source.sekiChargeDirectionY = deltaY / distance;
+        source.sekiChargeHitFids = [];
+        source.sekiChargeHitCount = 0;
+        source.attackPulse = 0;
+        this.faceTowardX(source, center.x);
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.7, size: source.radius * 2.4 });
         break;
       }
       case "mitsuri": {
@@ -4778,7 +4969,7 @@ export class AutoChessEngine {
       team: source.team,
       x: position.x,
       y: position.y,
-      hp: original.maxHp * 0.5,
+      hp: original.maxHp * REI_REVIVE_HP_RATIO,
       shield: 0,
       shieldPeak: 0,
       cooldown: 0.35,
@@ -4792,6 +4983,11 @@ export class AutoChessEngine {
       barrageActive: false,
       barrageDrainPerSecond: 0,
       suiBirdChargesRemaining: 0,
+      sekiChargeActive: false,
+      sekiChargeDirectionX: 0,
+      sekiChargeDirectionY: 0,
+      sekiChargeHitFids: [],
+      sekiChargeHitCount: 0,
       cinderSongPulseTimer: 0,
       abilityAttackBonus: 0,
       abilityAttackBonusTime: 0,
@@ -4834,19 +5030,17 @@ export class AutoChessEngine {
     this.refreshFighterAttack(revived);
     battle[source.team].push(revived);
     this.addEffect({ kind: "rebirth", x: revived.x, y: revived.y, color: UNIT_DEFS.rei.accent, life: 1, size: revived.radius * 2.7 });
-    this.addEffect({ kind: "text", x: revived.x, y: revived.y - 44, color: UNIT_DEFS.rei.accent, text: "👻 半血返场", emoji: true, life: 0.85, size: 12 });
+    this.addEffect({ kind: "text", x: revived.x, y: revived.y - 44, color: UNIT_DEFS.rei.accent, text: "👻 残血返场", emoji: true, life: 0.85, size: 12 });
     return revived;
   }
 
   private resurrectWithRei(source: Fighter) {
     const corpses = this.reiCorpsesWithinRange(source);
-    if (corpses.length < REI_MIN_CORPSES) return 0;
-    const reviveCount = abilityStatForStar(UNIT_DEFS.rei, source.star, "reviveCount", 5);
+    const reviveCount = this.reiReviveCount(source);
+    if (corpses.length < reviveCount) return 0;
     const selected = corpses.slice(0, reviveCount);
-    selected.forEach((corpse) => {
-      corpse.consumed = true;
-      this.reviveCorpseForRei(source, corpse);
-    });
+    selected.forEach((corpse) => { corpse.consumed = true; });
+    selected.forEach((corpse) => this.reviveCorpseForRei(source, corpse));
     const battle = this.state.battle;
     if (battle) {
       battle.banner = `幽灵复活 · ${selected.length} 名幽灵加入${source.team === "player" ? "我方" : "敌方"}`;
@@ -5482,6 +5676,15 @@ export class AutoChessEngine {
               from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
               to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },
             },
+            boarCharge: unit.sekiChargeActive
+              ? {
+                direction: {
+                  x: Number(unit.sekiChargeDirectionX.toFixed(2)),
+                  y: Number(unit.sekiChargeDirectionY.toFixed(2)),
+                },
+                hitCount: unit.sekiChargeHitCount,
+              }
+              : undefined,
             elbowCharges: unit.suiBirdChargesRemaining || undefined,
             jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
             jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },
@@ -5557,6 +5760,15 @@ export class AutoChessEngine {
               from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
               to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },
             },
+            boarCharge: unit.sekiChargeActive
+              ? {
+                direction: {
+                  x: Number(unit.sekiChargeDirectionX.toFixed(2)),
+                  y: Number(unit.sekiChargeDirectionY.toFixed(2)),
+                },
+                hitCount: unit.sekiChargeHitCount,
+              }
+              : undefined,
             elbowCharges: unit.suiBirdChargesRemaining || undefined,
             jumpFrom: { x: Math.round(unit.jumpFromX), y: Math.round(unit.jumpFromY) },
             jumpTo: { x: Math.round(unit.jumpToX), y: Math.round(unit.jumpToY) },

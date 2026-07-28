@@ -228,6 +228,13 @@ export interface Fighter {
   barrageDrainPerSecond: number;
   /** 小岁鸟连续肘击尚未发动的冲撞次数。 */
   suiBirdChargesRemaining: number;
+  /** 星汐山猪冲阵：能量耗尽前持续冲锋，方向只能缓慢转动。 */
+  sekiChargeActive: boolean;
+  sekiChargeDirectionX: number;
+  sekiChargeDirectionY: number;
+  /** 当前仍与山猪冲锋接触的敌人；离开后可被再次撞击。 */
+  sekiChargeHitFids: string[];
+  sekiChargeHitCount: number;
   /** 蛙梓歌唱形态的全队治疗节拍。 */
   cinderSongPulseTimer: number;
   abilityAttackBonus: number;

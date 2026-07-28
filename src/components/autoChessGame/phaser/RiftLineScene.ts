@@ -1909,7 +1909,7 @@ export class RiftLineScene extends Phaser.Scene {
       : jumping ? 1 - fighter.jumpTime / fighter.jumpDuration : 0;
     const jumpArcHeight = abilityJumping ? abilityMotion.arcHeight : fighter.jumpArcHeight || 92;
     const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * jumpArcHeight : 0;
-    const attackProgress = !abilityMotion && fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
+    const attackProgress = !abilityMotion && !fighter.sekiChargeActive && fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
     const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
     const targetDistance = Math.hypot(fighter.attackTargetX - fighter.x, fighter.attackTargetY - fighter.y) || 1;
     const attackOffsetX = ((fighter.attackTargetX - fighter.x) / targetDistance) * lunge;
@@ -1942,8 +1942,12 @@ export class RiftLineScene extends Phaser.Scene {
     const attackScaleY = 1 - lunge / 130;
     const hitScaleX = 1 - 0.08 * hitProgress;
     const hitScaleY = 1 + 0.08 * hitProgress;
-    const groundMotion = abilityMotion && abilityMotion.kind !== "jump";
-    const motionPulse = groundMotion ? Math.sin((abilityMotion.time / Math.max(abilityMotion.duration, 0.001)) * Math.PI) : 0;
+    const groundMotion = (abilityMotion && abilityMotion.kind !== "jump") || fighter.sekiChargeActive;
+    const motionPulse = fighter.sekiChargeActive
+      ? 0.72 + Math.sin(this.bridge.engine.state.visualTime * 18) * 0.2
+      : groundMotion && abilityMotion
+        ? Math.sin((abilityMotion.time / Math.max(abilityMotion.duration, 0.001)) * Math.PI)
+        : 0;
     portrait
       .setScale(
         growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08),
@@ -1981,6 +1985,7 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.jumpPending ? "⌁" : "",
       abilityMotion?.kind === "dash" ? "»" : "",
       abilityMotion?.kind === "push" ? "›" : "",
+      fighter.sekiChargeActive ? "冲" : "",
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
       fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
       fighter.reborn ? "涅" : "",

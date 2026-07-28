@@ -1654,32 +1654,43 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
   });
 });
 
-test("病院坂灵至少等待五人阵亡，并按星级把敌我尸体半血复活为己方幽灵", () => {
-  const thresholdEngine = createEngine(271);
-  thresholdEngine.state.round = 22;
-  thresholdEngine.state.playerLevel = 4;
-  thresholdEngine.state.board.fill(null);
-  thresholdEngine.state.board[0] = { uid: 1, id: "rei", star: 1 };
-  thresholdEngine.startBattle();
-  const thresholdBattle = thresholdEngine.state.battle;
-  const thresholdRei = thresholdBattle?.player[0];
-  assert.ok(thresholdBattle && thresholdRei && thresholdBattle.enemy.length >= 5);
-  thresholdRei.x = 500;
-  thresholdRei.y = 360;
-  thresholdBattle.enemy.slice(0, 4).forEach((fighter, index) => {
-    fighter.x = 600 + index * 12;
-    fighter.y = 330 + index * 14;
-    thresholdEngine["killFighter"](fighter);
-  });
-  thresholdRei.energy = thresholdRei.maxEnergy;
-  thresholdEngine["castAbility"](thresholdRei, thresholdBattle.enemy);
-  assert.equal(thresholdRei.energy, thresholdRei.maxEnergy);
-  assert.equal(thresholdBattle.player.filter((fighter) => fighter.reiRevival).length, 0);
+test("病院坂灵仅缓慢自动回能，攻击与受击均不回能", () => {
+  const engine = createEngine(270);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rei", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const rei = battle?.player[0];
+  const enemy = battle?.enemy[0];
+  assert.ok(battle && rei && enemy);
+  assert.equal(rei.energy, 25);
+  rei.x = 500;
+  rei.y = 360;
+  enemy.x = 520;
+  enemy.y = 360;
+  rei.energy = 0;
+  rei.cooldown = 0;
+  enemy.cooldown = 0;
 
+  engine.basicAttack(rei, enemy);
+  assert.equal(rei.energy, 0);
+  engine.basicAttack(enemy, rei);
+  assert.equal(rei.energy, 0);
+
+  [...battle.player, ...battle.enemy].forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+  });
+  for (let tick = 0; tick < 20; tick += 1) engine.update(0.05);
+  assert.ok(Math.abs(rei.energy - 5) < 0.001);
+});
+
+test("病院坂灵按星级等待足量新尸体，并把敌我尸体以四分之一血复活为己方幽灵", () => {
   [
-    { star: 1, expected: 5 },
-    { star: 2, expected: 7 },
-    { star: 3, expected: 10 },
+    { star: 1, expected: 2 },
+    { star: 2, expected: 3 },
+    { star: 3, expected: 5 },
   ].forEach(({ star, expected }, scenario) => {
     const engine = createEngine(272 + scenario);
     engine.state.round = 22;
@@ -1697,17 +1708,25 @@ test("病院坂灵至少等待五人阵亡，并按星级把敌我尸体半血�
     fallenAlly.x = 525;
     fallenAlly.y = 360;
     engine["killFighter"](fallenAlly);
-    battle.enemy.slice(0, 9).forEach((fighter, index) => {
+    battle.enemy.slice(0, expected - 2).forEach((fighter, index) => {
       fighter.x = 590 + (index % 5) * 16;
       fighter.y = 290 + Math.floor(index / 5) * 100 + (index % 2) * 14;
       engine["killFighter"](fighter);
     });
     rei.energy = rei.maxEnergy;
     engine["castAbility"](rei, battle.enemy);
+    assert.equal(rei.energy, rei.maxEnergy, "未达到当前星级尸体数量时不应消耗能量");
+    assert.equal(battle.player.filter((fighter) => fighter.reiRevival).length, 0);
+
+    const finalCorpse = battle.enemy[expected - 2];
+    finalCorpse.x = 600;
+    finalCorpse.y = 360;
+    engine["killFighter"](finalCorpse);
+    engine["castAbility"](rei, battle.enemy);
     const ghosts = battle.player.filter((fighter) => fighter.reiRevival);
     assert.equal(ghosts.length, expected);
     assert.ok(ghosts.every((fighter) => fighter.team === "player"));
-    assert.ok(ghosts.every((fighter) => fighter.hp === fighter.maxHp * 0.5));
+    assert.ok(ghosts.every((fighter) => fighter.hp === fighter.maxHp * 0.25));
     assert.ok(ghosts.some((fighter) => fighter.unitId === "sun_guard"), "己方尸体也应能被返场");
     assert.equal(battle.corpses.filter((corpse) => corpse.consumed).length, expected);
     assert.match(battle.banner, new RegExp(`${expected} 名幽灵加入我方`));
@@ -1717,6 +1736,46 @@ test("病院坂灵至少等待五人阵亡，并按星级把敌我尸体半血�
       assert.equal(battle.corpses.length, corpseCount, "Rei 复活的幽灵死亡后不能再次提供尸体");
     }
   });
+});
+
+test("多个病院坂灵会消费互不重复的尸体", () => {
+  const engine = createEngine(276);
+  engine.state.round = 22;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rei", star: 3 };
+  engine.state.board[1] = { uid: 2, id: "rei", star: 3 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const [firstRei, secondRei] = battle?.player || [];
+  assert.ok(battle && firstRei?.unitId === "rei" && secondRei?.unitId === "rei");
+  assert.ok(battle.enemy.length >= 10);
+  firstRei.x = 500;
+  firstRei.y = 340;
+  secondRei.x = 500;
+  secondRei.y = 390;
+  battle.enemy.slice(0, 10).forEach((fighter, index) => {
+    fighter.x = 590 + (index % 5) * 16;
+    fighter.y = 290 + Math.floor(index / 5) * 100 + (index % 2) * 14;
+    engine["killFighter"](fighter);
+  });
+
+  firstRei.energy = firstRei.maxEnergy;
+  engine["castAbility"](firstRei, battle.enemy);
+  const firstConsumed = new Set(
+    battle.corpses.filter((corpse) => corpse.consumed).map((corpse) => corpse.id),
+  );
+  assert.equal(firstConsumed.size, 5);
+
+  secondRei.energy = secondRei.maxEnergy;
+  engine["castAbility"](secondRei, battle.enemy);
+  const allConsumed = battle.corpses
+    .filter((corpse) => corpse.consumed)
+    .map((corpse) => corpse.id);
+  const secondConsumed = allConsumed.filter((corpseId) => !firstConsumed.has(corpseId));
+  assert.equal(secondConsumed.length, 5);
+  assert.equal(new Set(allConsumed).size, 10);
+  assert.equal(battle.player.filter((fighter) => fighter.reiRevival).length, 10);
 });
 
 test("刺客在拥挤后排选择有界的最高空隙落点", () => {
@@ -3228,22 +3287,106 @@ test("小猫拳会先闪现到最远敌人身后，再与目标同步推进并�
   assert.ok(battle.effects.some((effect) => effect.text === "猫拳三连" || effect.text === "闪"));
 });
 
-test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", () => {
-  const engine = createEngine(141);
+test("星汐山猪冲阵持续耗能、缓慢转向、撞飞敌人并在边缘反弹", () => {
+  const engine = createEngine(140);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "seki_boar_king", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "sumi", star: 1 };
-  engine.state.board[2] = { uid: 3, id: "tower_god", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const seki = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && seki && target);
+
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = index === 0 ? 360 : 820 + index * 34;
+    fighter.y = index === 0 ? 360 : 180 + index * 86;
+    fighter.moveSpeed = 0;
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+    fighter.armor = 0;
+    fighter.dodgeChance = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+  });
+  seki.x = 240;
+  seki.y = 360;
+  seki.cooldown = 0;
+  const targetStartX = target.x;
+  const targetStartHp = target.hp;
+
+  engine.castAbility(seki, battle.enemy);
+  assert.equal(seki.sekiChargeActive, true);
+  assert.equal(seki.energy, seki.maxEnergy);
+  assert.equal(seki.abilityMotion, null);
+
+  stepBattle(engine, 8);
+  assert.ok(seki.energy < seki.maxEnergy && seki.energy > 0, "冲锋期间能量应持续下降");
+  assert.ok(target.x > targetStartX, "撞到敌人时应沿冲锋方向击退");
+  assert.ok(target.stun > 0, "撞到敌人时应短暂眩晕");
+  assert.equal(target.hp, targetStartHp, "山猪冲阵不应复用海獭冲击的伤害");
+  assert.equal(seki.damageDealt, 0, "冲锋期间不能通过普攻造成伤害");
+  assert.equal(seki.attackPulse, 0, "冲锋期间不能普攻");
+  assert.equal(seki.sekiChargeHitCount, 1);
+
+  seki.x = 240;
+  seki.y = 360;
+  target.x = 520;
+  target.y = 360;
+  target.abilityMotion = null;
+  engine.update(0.05);
+  assert.equal(seki.sekiChargeHitFids.includes(target.fid), false, "目标被撞开后应退出当前接触集合");
+
+  target.x = 360;
+  target.y = 360;
+  target.abilityMotion = null;
+  target.stun = 0;
+  seki.x = 240;
+  seki.y = 360;
+  seki.sekiChargeDirectionX = 1;
+  seki.sekiChargeDirectionY = 0;
+  stepBattle(engine, 8);
+  assert.equal(seki.sekiChargeHitCount, 2, "离开后再次撞上同一目标应重新触发");
+
+  seki.x = 500;
+  seki.y = 500;
+  seki.sekiChargeDirectionX = 1;
+  seki.sekiChargeDirectionY = 0;
+  target.x = 500;
+  target.y = 170;
+  engine.update(0.05);
+  assert.ok(seki.sekiChargeDirectionX > 0.99, "单帧不能瞬间转向目标");
+  assert.ok(seki.sekiChargeDirectionY < 0 && seki.sekiChargeDirectionY > -0.08);
+
+  seki.x = BATTLE_BOUNDS.right - seki.radius - 1;
+  seki.y = 500;
+  seki.sekiChargeDirectionX = 1;
+  seki.sekiChargeDirectionY = 0;
+  engine.update(0.05);
+  assert.ok(seki.sekiChargeDirectionX < 0, "撞到右侧边缘后应反向弹回");
+  assert.ok(seki.x < BATTLE_BOUNDS.right - seki.radius);
+  assert.ok(battle.effects.some((effect) => effect.text === "反弹"));
+
+  for (let tick = 0; tick < 120 && seki.sekiChargeActive; tick += 1) engine.update(0.05);
+  assert.equal(seki.sekiChargeActive, false);
+  assert.equal(seki.energy, 0);
+  assert.equal(seki.sekiChargeDirectionX, 0);
+  assert.equal(seki.sekiChargeDirectionY, 0);
+});
+
+test("礼墨与塔神完成空气龙和尖塔压顶结算", () => {
+  const engine = createEngine(141);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 2, id: "sumi", star: 1 };
+  engine.state.board[1] = { uid: 3, id: "tower_god", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);
-  const seki = battle.player.find((fighter) => fighter.unitId === "seki_boar_king");
   const sumi = battle.player.find((fighter) => fighter.unitId === "sumi");
   const tower = battle.player.find((fighter) => fighter.unitId === "tower_god");
-  assert.ok(seki && sumi && tower);
+  assert.ok(sumi && tower);
 
-  assert.equal(Math.round(seki.maxHp), gameData.UNIT_DEFS.seki_boar_king.hp);
   assert.equal(Math.round(sumi.maxHp), gameData.UNIT_DEFS.sumi.hp);
   assert.equal(tower.energy, gameData.UNIT_DEFS.tower_god.energyProfile.start + 20);
 
@@ -3258,16 +3401,6 @@ test("星汐、礼墨与塔神完成冲阵、礼小虎与尖塔压顶结算", ()
     fighter.cooldown = 99;
   });
   const target = battle.enemy[0];
-  seki.x = 240;
-  seki.y = 360;
-  engine.castAbility(seki, battle.enemy);
-  assert.equal(seki.abilityMotion?.abilityId, "seki_boar_king");
-  stepBattle(engine, 16);
-  assert.equal(seki.abilityMotion, null);
-  assert.ok(target.damageTaken > 0, "山猪冲阵应在落地后造成伤害");
-  assert.ok(target.stun > 0, "山猪冲阵应在落地后眩晕敌人");
-  assert.ok(seki.shield > 0, "山猪冲阵应为自身提供护盾");
-
   sumi.stealthTime = 0;
   sumi.sumiDragonReady = false;
   sumi.energy = sumi.maxEnergy;

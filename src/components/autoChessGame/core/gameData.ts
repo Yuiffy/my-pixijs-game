@@ -146,6 +146,18 @@ export const WARM_SUPPORT_ENERGY_PROFILE: EnergyProfile = {
   color: "#ffd28d",
 };
 
+export const REI_SLOW_ENERGY_PROFILE: EnergyProfile = {
+  id: "automatic",
+  name: "幽灵回能",
+  max: 100,
+  start: 25,
+  perSecond: 5,
+  onAttack: 0,
+  onHit: 0,
+  castRefund: 0,
+  color: "#e8b5ff",
+};
+
 export const describeEnergyRecovery = (profile: EnergyProfile) => {
   const sources = [
     profile.perSecond > 0 && `自动回能（${(profile.max / profile.perSecond).toFixed(1).replace(/\.0$/, "")} 秒回满，每秒 +${profile.perSecond}）`,
@@ -436,7 +448,7 @@ const COMBAT_PROFILES: Record<
   nightin: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
   xuehui: { attackType: "melee", energyProfile: ENERGY_PROFILES.tempo, range: 56, moveSpeed: 58, abilityCastTiming: "offenseInRange" },
   tower_god: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 48, abilityCastTiming: "offenseReady" },
-  rei: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
+  rei: { attackType: "ranged", energyProfile: REI_SLOW_ENERGY_PROFILE, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
   lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   pako: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 195, moveSpeed: 50, abilityCastTiming: "supportHeal" },
   miki_guest: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 230, moveSpeed: 56, abilityCastTiming: "offenseReady" },
@@ -919,7 +931,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.02,
     moveSpeed: 62,
     abilityName: "山猪冲阵",
-    abilityDescription: "向敌人最密集处冲阵，落地造成范围伤害、眩晕，并为自己获得护盾。",
+    abilityDescription: "进入持续耗能的山猪冲锋：大幅提高移速但无法普攻，缓慢转向；撞到敌人会将其击退并短暂眩晕，撞到战场边缘会反弹。",
     portrait: "/images/livers/seki.webp",
     portraitFocus: "top",
     shop: true,
@@ -1157,11 +1169,11 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     id: "rei", name: "病院坂灵", title: "病院坂灵Rei · 群体法师", glyph: "灵", color: "#735779", accent: "#e8b5ff", tier: 5, cost: 5,
     traits: ["mystic", "ranger"], hp: 270, attack: 43, armor: 18, range: 230, attackInterval: 0.82, moveSpeed: 66,
     abilityRange: 520,
-    abilityName: "幽灵复活", abilityDescription: "战场至少出现 5 具可用尸体后，复活施法范围内最多 5 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。",
+    abilityName: "幽灵复活", abilityDescription: "开场拥有 25 点能量，之后仅随时间缓慢回复，攻击与受击均不回能。施法范围内出现当前星级所需的 2/3/5 具尚未被复活的尸体后，将他们以四分之一血幽灵形态复活并加入己方；每具尸体只能复活一次。",
     abilityLevels: [
-      { summary: "最多复活 5 名", description: "战场至少出现 5 具可用尸体后，复活施法范围内最多 5 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。", stats: { reviveCount: 5 } },
-      { summary: "最多复活 7 名", description: "战场至少出现 5 具可用尸体后，复活施法范围内最多 7 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。", stats: { reviveCount: 7 } },
-      { summary: "最多复活 10 名", description: "战场至少出现 5 具可用尸体后，复活施法范围内最多 10 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。", stats: { reviveCount: 10 } },
+      { summary: "2 具尸体 · 复活 2 名", description: "施法范围内出现 2 具尚未被复活的己方或敌方尸体后，将他们以四分之一血幽灵形态复活并加入己方；每具尸体只能复活一次。", stats: { reviveCount: 2 } },
+      { summary: "3 具尸体 · 复活 3 名", description: "施法范围内出现 3 具尚未被复活的己方或敌方尸体后，将他们以四分之一血幽灵形态复活并加入己方；每具尸体只能复活一次。", stats: { reviveCount: 3 } },
+      { summary: "5 具尸体 · 复活 5 名", description: "施法范围内出现 5 具尚未被复活的己方或敌方尸体后，将他们以四分之一血幽灵形态复活并加入己方；每具尸体只能复活一次。", stats: { reviveCount: 5 } },
     ],
     portrait: "/images/livers/rei.jpg", portraitFocus: "top", shop: true,
   }),

@@ -329,6 +329,7 @@ const enterPreparation = async (page, seed) => {
     const battle = engine.state.battle;
     const rei = battle.player.find((fighter) => fighter.unitId === "rei");
     const ally = battle.player.find((fighter) => fighter.unitId === "sun_guard");
+    const startingEnergy = rei.energy;
     rei.x = 500;
     rei.y = 360;
     ally.x = 525;
@@ -351,6 +352,12 @@ const enterPreparation = async (page, seed) => {
     return {
       phase: engine.state.phase,
       banner: battle.banner,
+      energyProfile: {
+        start: startingEnergy,
+        perSecond: rei.energyPerSecond,
+        onAttack: rei.energyOnAttack,
+        onHit: rei.energyOnHit,
+      },
       ghosts: ghosts.map((fighter) => ({
         unitId: fighter.unitId,
         hp: fighter.hp,
@@ -361,15 +368,21 @@ const enterPreparation = async (page, seed) => {
     };
   });
   assert.equal(reiRevival.phase, "battle");
-  assert.equal(reiRevival.ghosts.length, 10);
+  assert.deepEqual(reiRevival.energyProfile, {
+    start: 25,
+    perSecond: 5,
+    onAttack: 0,
+    onHit: 0,
+  });
+  assert.equal(reiRevival.ghosts.length, 5);
   assert.ok(reiRevival.ghosts.some((ghost) => ghost.unitId === "sun_guard"));
   assert.ok(reiRevival.ghosts.every((ghost) => ghost.team === "player"));
-  assert.ok(reiRevival.ghosts.every((ghost) => ghost.hp === ghost.maxHp * 0.5));
-  assert.equal(reiRevival.consumedCorpses, 10);
-  assert.match(reiRevival.banner, /10 名幽灵加入我方/);
+  assert.ok(reiRevival.ghosts.every((ghost) => ghost.hp === ghost.maxHp * 0.25));
+  assert.equal(reiRevival.consumedCorpses, 5);
+  assert.match(reiRevival.banner, /5 名幽灵加入我方/);
   const reiTextState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
-  assert.equal(reiTextState.battle.playerUnits.length, 11);
-  await capture("rei-ten-ghost-revival.png");
+  assert.equal(reiTextState.battle.playerUnits.length, 6);
+  await capture("rei-five-ghost-revival.png");
 
   await enterPreparation(page, 304);
   const shioriSetup = await page.evaluate(() => {

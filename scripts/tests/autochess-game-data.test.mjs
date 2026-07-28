@@ -614,9 +614,16 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.match(data.TRAITS.gluttony.description, /击杀.*碰撞体积.*攻击力/);
   assert.deepEqual(
     data.UNIT_DEFS.rei.abilityLevels.map((level) => level.stats.reviveCount),
-    [5, 7, 10],
+    [2, 3, 5],
   );
-  assert.match(data.UNIT_DEFS.rei.abilityDescription, /至少出现 5 具.*半血幽灵/);
+  assert.deepEqual(data.UNIT_DEFS.rei.energyProfile, data.REI_SLOW_ENERGY_PROFILE);
+  assert.equal(data.UNIT_DEFS.rei.energyProfile.start, 25);
+  assert.equal(data.UNIT_DEFS.rei.energyProfile.max, 100);
+  assert.equal(data.UNIT_DEFS.rei.energyProfile.perSecond, 5);
+  assert.equal(data.UNIT_DEFS.rei.energyProfile.onAttack, 0);
+  assert.equal(data.UNIT_DEFS.rei.energyProfile.onHit, 0);
+  assert.equal(data.UNIT_DEFS.rei.energyProfile.castRefund, 0);
+  assert.match(data.UNIT_DEFS.rei.abilityDescription, /开场拥有 25 点能量.*仅随时间缓慢回复.*攻击与受击均不回能.*2\/3\/5 具.*四分之一血幽灵/);
   ["cinder_ram", "nagisa", "rutice", "lian", "hatsuse_guest", "rift_tyrant"].forEach((id) => {
     assert.match(data.UNIT_DEFS[id].abilityDescription, /施法距离内/);
     assert.doesNotMatch(data.UNIT_DEFS[id].abilityDescription, /全队|全体友军|全场/);
@@ -713,6 +720,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   await Promise.all(Object.values(portraits).map((portrait) => access(path.resolve("public", portrait.slice(1)))));
   await access(path.resolve("public/images/livers/sumi-little-dragon.jpg"));
   assert.equal(seki.abilityName, "山猪冲阵");
+  assert.match(seki.abilityDescription, /持续耗能.*提高移速.*无法普攻.*缓慢转向.*击退.*眩晕.*边缘.*反弹/);
   assert.equal(towerGod.abilityName, "尖塔压顶");
   assert.equal(sumi.abilityName, "空气龙");
   assert.match(sumi.abilityDescription, /隐身.*最低攻击优先级.*正常攻击.*移速.*能量耗尽.*礼小龙/);
