@@ -599,6 +599,27 @@ const enterPreparation = async (page, seed) => {
     }),
   );
 
+  await enterPreparation(page, 307);
+  const roundFiveWave = await page.evaluate(() => {
+    const engine = window.__characterReworkEngine;
+    engine.state.round = 5;
+    engine.startBattle();
+    return engine.state.battle.enemy.map((fighter) => fighter.unitId);
+  });
+  await page.evaluate(() => window.advanceTime(1));
+  await page.waitForFunction(() => document.body.textContent?.includes("5/16 战"));
+  assert.deepEqual(
+    roundFiveWave,
+    ["mossback", "mossback", "biscuit_sui", "rift_brawler", "ember_blade"],
+  );
+  const roundFiveTextState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+  assert.deepEqual(
+    roundFiveTextState.battle.enemyUnits.map((fighter) => fighter.unitId),
+    roundFiveWave,
+  );
+  assert.ok(!roundFiveWave.includes("grove_mender"));
+  await capture("round-five-fixed-wave.png");
+
   const canvas = page.locator('[data-game-canvas="rift-line"]');
   const canvasBox = await canvas.boundingBox();
   const canvasMeta = await canvas.evaluate((element) => ({
@@ -631,6 +652,7 @@ const enterPreparation = async (page, seed) => {
     biscuitImpact,
     birdSetup,
     birdImpact,
+    roundFiveWave,
     screenshots,
     canvasBox,
     canvasMeta,

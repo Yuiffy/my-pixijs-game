@@ -135,11 +135,42 @@ test("前两战只使用低费教学棋子，轴伊不会提前出现在固定�
   assert.ok(data.enemyTraitActivations(secondWave.units).some(({ id }) => id === "wild"));
 });
 
-test("主线普通关保留储蓄空间，精英关与首领集中检查战力", () => {
+test("固定关逐关锁定原始费用、最高单卡费用与有效预算", () => {
+  assert.deepEqual(
+    data.WAVES.map((wave) => data.waveCompositionValue(wave)),
+    [3, 3, 12, 9, 9, 12, 16, 10],
+  );
+  assert.deepEqual(
+    data.WAVES.map((wave) =>
+      Math.max(...wave.units.map(({ id }) => data.UNIT_DEFS[id].cost)),
+    ),
+    [2, 1, 5, 3, 4, 5, 5, 5],
+  );
+  assert.deepEqual(
+    data.WAVES.flatMap((wave) =>
+      wave.units
+        .filter(({ id }) => data.UNIT_DEFS[id].cost === 5)
+        .map(({ id }) => `${wave.round}:${id}`),
+    ),
+    [
+      "3:cinder_ram",
+      "6:cinder_ram",
+      "7:grove_mender",
+      "8:rift_tyrant",
+    ],
+  );
+  assert.deepEqual(
+    data.WAVES[4].units.map(({ id }) => id),
+    ["mossback", "mossback", "biscuit_sui", "rift_brawler", "ember_blade"],
+  );
+  assert.match(data.WAVES[4].description, /饼干岁.*治疗.*护盾/);
   assert.deepEqual(
     Array.from({ length: 8 }, (_, index) => data.enemyBudgetForRound(index + 1)),
     [2, 5, 9, 18, 16, 17, 21, 32],
   );
+});
+
+test("主线普通关保留储蓄空间，精英关与首领集中检查战力", () => {
   assert.deepEqual(
     [9, 10, 11, 12, 13, 14, 15, 16, 17].map((round) =>
       data.enemyBudgetForRound(round),
