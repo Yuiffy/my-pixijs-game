@@ -298,7 +298,7 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
   vanguard: { id: "vanguard", name: "怕死", family: "职业", color: "#819eff", thresholds: [2, 4, 6], description: "怕死所以不敢贴脸：攻击距离更远，受击后会真实跳开；跳跃期间仍保持接敌移动；若后撤会离开攻击距离，就改为侧跳。", bonuses: ["怕死单位攻击距离 +36；受击时小幅跳开，接敌移速不中断", "怕死单位攻击距离 +56；受击跳开增强，接敌移速不中断；全体友军 +10% 最大生命", "怕死单位攻击距离 +80；受击跳开更远，接敌移速不中断；全体友军 +18% 最大生命"] },
   ranger: { id: "ranger", name: "射手", family: "职业", color: "#f2d15e", thresholds: [2, 4, 6], description: "射手擅长持续远程输出，高阶会带动全队后排火力。", bonuses: ["射手单位 +12% 攻速", "射手单位 +26% 攻速；所有远程友军 +15% 攻速", "射手单位 +45% 攻速；所有远程友军 +30% 攻速"] },
   mystic: { id: "mystic", name: "杂谈", family: "职业", color: "#de87ff", thresholds: [2, 4, 6], description: "杂谈位开麦快、话题多，总能把全队情绪带起来。", bonuses: ["杂谈单位开战 +20 能量", "杂谈开战 +45、施法返还 8；全体友军开战 +10 能量", "杂谈开战 +70、施法返还 15；全体友军开战 +22 能量"] },
-  assassin: { id: "assassin", name: "偷袭", family: "职业", color: "#ff6fae", thresholds: [2, 4], description: "偷袭成员会悄悄贴近同事，在后排制造猝不及防的贴贴事故。", bonuses: ["偷袭成员跃向后排、获得 15% 暴击率", "偷袭成员 30% 暴击；所有远程友军 +12% 暴击率"] },
+  assassin: { id: "assassin", name: "偷袭", family: "职业", color: "#ff6fae", thresholds: [2, 4], description: "偷袭成员会集中跃向敌方最后排中最虚弱的目标，快速形成集火。", bonuses: ["偷袭成员集火最后排、获得 15% 暴击率", "偷袭成员 30% 暴击；所有远程友军 +12% 暴击率"] },
   chuanmei: {
     id: "chuanmei",
     name: "川妹",
@@ -1036,7 +1036,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.92,
     moveSpeed: 58,
     abilityName: "饼干拳法",
-    abilityDescription: "冲进敌人最密集处施展饼干拳法，造成范围伤害、眩晕并获得护盾。",
+    abilityDescription: "冲向距离自己最远的敌人施展饼干拳法，落地造成范围伤害、眩晕并获得护盾。",
     portrait: "/images/materials/biscuit/饼干岁2.png",
     portraitFocus: "top",
     shop: true,

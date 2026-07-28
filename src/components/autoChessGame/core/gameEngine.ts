@@ -108,6 +108,8 @@ const VANGUARD_JUMP_COOLDOWN = 0.72;
 const ALIEN_BEAM_HALF_WIDTH = 80;
 /** 刺客/粤语帮等通用跳跃弧高 */
 const DEFAULT_JUMP_ARC_HEIGHT = 92;
+/** 偷袭只把敌方最深一列视作最后排。 */
+const ASSASSIN_BACKLINE_DEPTH_TOLERANCE = 48;
 const CLOCK_GUNNER_RABBIT_COUNT = 2;
 const CLOCK_GUNNER_RABBIT_LIFETIME = 4;
 const CLOCK_GUNNER_RABBIT_RADIUS = 14;
@@ -2092,10 +2094,20 @@ export class AutoChessEngine {
 
   private prepareAssassinJump(fighter: Fighter, battle: BattleState) {
     const targetTeam: Team = fighter.team === "player" ? "enemy" : "player";
-    const backlineTargets = (targetTeam === "player" ? battle.player : battle.enemy)
-      .filter((enemy) => enemy.alive)
-      .sort((a, b) => (fighter.team === "player" ? b.x - a.x : a.x - b.x));
-    const target = backlineTargets[0];
+    const livingTargets = (targetTeam === "player" ? battle.player : battle.enemy)
+      .filter((enemy) => enemy.alive);
+    if (!livingTargets.length) return false;
+    const deepestX = fighter.team === "player"
+      ? Math.max(...livingTargets.map((target) => target.x))
+      : Math.min(...livingTargets.map((target) => target.x));
+    const backlineTargets = livingTargets.filter(
+      (target) => Math.abs(target.x - deepestX) <= ASSASSIN_BACKLINE_DEPTH_TOLERANCE,
+    );
+    const target = [...backlineTargets].sort((a, b) =>
+      a.hp / a.maxHp - b.hp / b.maxHp ||
+      a.hp - b.hp ||
+      a.fid.localeCompare(b.fid),
+    )[0];
     if (!target) return false;
 
     const occupied = [...battle.player, ...battle.enemy]
@@ -2120,6 +2132,8 @@ export class AutoChessEngine {
     fighter.vanguardJumpAdvancing = false;
     fighter.jumpArcHeight = DEFAULT_JUMP_ARC_HEIGHT;
     fighter.jumpTime = fighter.jumpDuration;
+    fighter.targetFid = target.fid;
+    fighter.targetLock = fighter.jumpDuration + TARGET_LOCK_DURATION;
     return true;
   }
 
@@ -2285,6 +2299,35 @@ export class AutoChessEngine {
       const distance = Math.hypot(target.x - source.x, target.y - source.y);
       return distance < bestDistance ? target : best;
     }, null);
+  }
+
+  private densestTarget(units: Fighter[], radius: number): Fighter | null {
+    let best: Fighter | null = null;
+    let bestNearby = -1;
+    let bestSpread = Number.POSITIVE_INFINITY;
+    for (const candidate of units) {
+      const nearby = units.filter(
+        (other) => Math.hypot(candidate.x - other.x, candidate.y - other.y) <= radius,
+      );
+      const spread = nearby.reduce(
+        (sum, other) => sum + Math.hypot(candidate.x - other.x, candidate.y - other.y),
+        0,
+      );
+      if (
+        nearby.length > bestNearby ||
+        (nearby.length === bestNearby && spread < bestSpread) ||
+        (
+          nearby.length === bestNearby &&
+          spread === bestSpread &&
+          (!best || candidate.fid.localeCompare(best.fid) < 0)
+        )
+      ) {
+        best = candidate;
+        bestNearby = nearby.length;
+        bestSpread = spread;
+      }
+    }
+    return best;
   }
 
   private addEffect(effect: Omit<BattleEffect, "maxLife">) {
@@ -3765,17 +3808,7 @@ export class AutoChessEngine {
           Math.hypot(b.x - source.x, b.y - source.y) -
           Math.hypot(a.x - source.x, a.y - source.y),
       )[0];
-    const densest = (units: Fighter[]) =>
-      units.reduce(
-        (best, candidate) => {
-          const nearby = units.filter(
-            (other) =>
-              Math.hypot(candidate.x - other.x, candidate.y - other.y) < 125,
-          ).length;
-          return nearby > best.nearby ? { target: candidate, nearby } : best;
-        },
-        { target: units[0], nearby: 0 },
-      ).target;
+    const densest = (units: Fighter[]) => this.densestTarget(units, 125);
     const deal = (target: Fighter, multiplier: number, bonus = 0) => {
       const dealt = this.damage(
         source,
@@ -4000,7 +4033,8 @@ export class AutoChessEngine {
         break;
       }
       case "spark_mage": {
-        const center = densest(targets);
+        const radius = abilityStatForStar(def, source.star, "radius", CHRONOSPHERE_RADIUS);
+        const center = this.densestTarget(targets, radius);
         if (!center) break;
         source.energy = source.maxEnergy;
         this.deliverRemoteAoe(source, center);
@@ -4208,15 +4242,15 @@ export class AutoChessEngine {
         break;
       }
       case "biscuit_sui": {
-        const center = densest(targets);
-        if (!center) break;
+        const target = farthest(targets);
+        if (!target) break;
         this.startAbilityMotion(
           source,
           "dash",
-          { x: center.x + (source.team === "player" ? -42 : 42), y: center.y },
-          { targetFid: center.fid },
+          { x: target.x + (source.team === "player" ? -42 : 42), y: target.y },
+          { targetFid: target.fid },
         );
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.95, size: 155 });
+        this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 0.95, size: 155 });
         break;
       }
       case "nori": {

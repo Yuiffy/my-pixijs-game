@@ -1236,6 +1236,7 @@ test("被友军贴脸挡住时会物理推开队友并接敌", () => {
 
 test("偷袭成员会在己方首个单位交战后提前起跳", () => {
   const engine = createEngine(98);
+  engine.state.round = 6;
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "rift_stalker", star: 1 };
@@ -1262,8 +1263,8 @@ test("偷袭成员会在己方首个单位交战后提前起跳", () => {
   rangedAlly.energy = 0;
   rangedAlly.cooldown = 0;
   battle.enemy.forEach((fighter, index) => {
-    fighter.x = index === 0 ? 540 : 900;
-    fighter.y = 360 + index * 100;
+    fighter.x = index < 2 ? 900 : index === 2 ? 540 : 620;
+    fighter.y = index === 0 ? 280 : index === 1 ? 460 : index === 2 ? 360 : 220 + index * 55;
     fighter.attack = 0;
     fighter.armor = 0;
     fighter.dodgeChance = 0;
@@ -1273,6 +1274,12 @@ test("偷袭成员会在己方首个单位交战后提前起跳", () => {
     fighter.hp = 99_999;
     fighter.maxHp = 99_999;
   });
+  battle.enemy[0].hp = 50_000;
+  battle.enemy[1].hp = 75_000;
+  const backlineTargetFids = new Set(
+    battle.enemy.filter((fighter) => fighter.x === 900).map((fighter) => fighter.fid),
+  );
+  const focusTargetFid = battle.enemy[0].fid;
 
   engine.update(0.05);
   assert.equal(battle.engagedTeams.player, true, "远程队友首次出手后应记录己方已经交战");
@@ -1282,6 +1289,75 @@ test("偷袭成员会在己方首个单位交战后提前起跳", () => {
   assert.ok(assassins.every((fighter) => !fighter.jumpPending && fighter.jumpTime > 0));
   assert.ok(assassins.every((fighter) => fighter.jumpDelay > 3), "起跳时原等待时间应仍有大量剩余");
   assert.ok(battle.elapsed < 0.2, "不应继续等待原本约 3.4 秒的兜底倒计时");
+  assert.ok(
+    assassins.every((fighter) => fighter.targetFid === focusTargetFid),
+    "多名偷袭成员应集中锁定最后排中最虚弱的目标",
+  );
+  assert.ok(
+    assassins.every((fighter) => backlineTargetFids.has(fighter.targetFid)),
+    "偷袭成员不应为了集火改跳前排",
+  );
+});
+
+test("北欧时停覆盖最密集人群，饼干岁改为冲向最远敌人", () => {
+  const engine = createEngine(206);
+  engine.state.round = 6;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "spark_mage", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "biscuit_sui", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const mage = battle?.player.find((fighter) => fighter.unitId === "spark_mage");
+  const biscuit = battle?.player.find((fighter) => fighter.unitId === "biscuit_sui");
+  assert.ok(battle && mage && biscuit);
+
+  mage.x = 240;
+  mage.y = 260;
+  biscuit.x = 240;
+  biscuit.y = 460;
+  battle.enemy.forEach((fighter, index) => {
+    fighter.attack = 0;
+    fighter.energy = 0;
+    fighter.hp = fighter.maxHp = 99_999;
+    if (index < 3) {
+      fighter.x = 650 + index * 24;
+      fighter.y = 270 + index * 22;
+    } else {
+      fighter.x = 920;
+      fighter.y = 540 - (index - 3) * 130;
+    }
+  });
+  const farthestEnemy = [...battle.enemy].sort(
+    (a, b) =>
+      Math.hypot(b.x - biscuit.x, b.y - biscuit.y) -
+      Math.hypot(a.x - biscuit.x, a.y - biscuit.y),
+  )[0];
+
+  engine.castAbility(mage, battle.enemy);
+  const delivery = battle.projectiles.find(
+    (projectile) => projectile.impactAbilityId === "spark_mage",
+  );
+  assert.ok(delivery);
+  engine["updateProjectiles"](battle, 1);
+  const zone = battle.chronospheres[0];
+  assert.ok(zone);
+  assert.equal(
+    battle.enemy.filter((target) => Math.hypot(target.x - zone.x, target.y - zone.y) <= zone.radius).length,
+    3,
+    "北欧时停应落在能覆盖三人的密集区域",
+  );
+  assert.ok(zone.x < 750, "北欧时停不应跟随右侧孤立远敌");
+
+  engine.castAbility(biscuit, battle.enemy);
+  assert.equal(biscuit.abilityMotion?.targetFid, farthestEnemy.fid);
+  assert.ok(
+    Math.hypot(
+      biscuit.abilityMotion.toX - farthestEnemy.x,
+      biscuit.abilityMotion.toY - farthestEnemy.y,
+    ) < 160,
+    "饼干岁应冲到最远敌人身旁",
+  );
 });
 
 test("敌方偷袭成员会跳向我方后排，而不是跳回敌方阵地", () => {

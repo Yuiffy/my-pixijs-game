@@ -536,8 +536,10 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.sui.traits.includes("gluttony"), false);
   assert.equal(data.UNIT_DEFS.sui_cat.traits.includes("gluttony"), false);
   assert.equal(data.TRAITS.assassin.name, "偷袭");
+  assert.match(data.TRAITS.assassin.description, /集中跃向敌方最后排中最虚弱的目标/);
   assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
   assert.ok(data.UNIT_DEFS.lovely.traits.includes("assassin"));
+  assert.match(data.UNIT_DEFS.biscuit_sui.abilityDescription, /距离自己最远的敌人/);
   assert.deepEqual(data.UNIT_DEFS.nightin.traits, ["mystic", "dwarf"]);
   assert.match(data.TRAITS.mature.bonuses[0], /每 4 秒降低 1 个百分点/);
   assert.match(data.TRAITS.mature.bonuses[0], /正常移速的 70%/);
