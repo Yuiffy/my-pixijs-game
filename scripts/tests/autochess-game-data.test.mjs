@@ -84,8 +84,26 @@ test("三至十本的人口、升本成本与商店概率完整", () => {
     data.PLAYER_LEVELS.map((level) => data.PLAYER_LEVEL_CONFIG[level].boardCap),
     [3, 4, 5, 6, 7, 8, 9, 10],
   );
+  assert.deepEqual(
+    data.PLAYER_LEVELS.map((level) => data.PLAYER_LEVEL_CONFIG[level].tierOdds),
+    [
+      [75, 25, 0, 0, 0],
+      [50, 38, 11, 1, 0],
+      [35, 35, 24, 5, 1],
+      [25, 30, 30, 13, 2],
+      [15, 25, 32, 23, 5],
+      [10, 20, 30, 30, 10],
+      [7, 15, 25, 35, 18],
+      [5, 10, 20, 40, 25],
+    ],
+  );
   data.PLAYER_LEVELS.forEach((level) =>
     assert.equal(data.PLAYER_LEVEL_CONFIG[level].tierOdds.reduce((sum, chance) => sum + chance, 0), 100),
+  );
+  assert.ok(data.PLAYER_LEVEL_CONFIG[10].tierOdds[0] > 0, "满级商店仍应能搜到一费棋");
+  assert.ok(
+    data.PLAYER_LEVEL_CONFIG[10].tierOdds[3] + data.PLAYER_LEVEL_CONFIG[10].tierOdds[4] <= 65,
+    "满级四费与五费总概率不应重新膨胀",
   );
 });
 

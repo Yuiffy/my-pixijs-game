@@ -1726,13 +1726,13 @@ export const PASSIVE_UPGRADE_DISCOUNT = 1;
 
 export const PLAYER_LEVEL_CONFIG: Record<PlayerLevel, PlayerLevelConfig> = {
   3: { boardCap: 3, upgradeCost: 5, tierOdds: [75, 25, 0, 0, 0] },
-  4: { boardCap: 4, upgradeCost: 9, tierOdds: [48, 38, 13, 1, 0] },
-  5: { boardCap: 5, upgradeCost: 14, tierOdds: [30, 33, 26, 10, 1] },
-  6: { boardCap: 6, upgradeCost: 20, tierOdds: [10, 20, 30, 29, 11] },
-  7: { boardCap: 7, upgradeCost: 27, tierOdds: [5, 15, 29, 34, 17] },
-  8: { boardCap: 8, upgradeCost: 36, tierOdds: [2, 10, 23, 36, 29] },
-  9: { boardCap: 9, upgradeCost: 46, tierOdds: [1, 7, 18, 36, 38] },
-  10: { boardCap: 10, upgradeCost: null, tierOdds: [0, 4, 12, 32, 52] },
+  4: { boardCap: 4, upgradeCost: 9, tierOdds: [50, 38, 11, 1, 0] },
+  5: { boardCap: 5, upgradeCost: 14, tierOdds: [35, 35, 24, 5, 1] },
+  6: { boardCap: 6, upgradeCost: 20, tierOdds: [25, 30, 30, 13, 2] },
+  7: { boardCap: 7, upgradeCost: 27, tierOdds: [15, 25, 32, 23, 5] },
+  8: { boardCap: 8, upgradeCost: 36, tierOdds: [10, 20, 30, 30, 10] },
+  9: { boardCap: 9, upgradeCost: 46, tierOdds: [7, 15, 25, 35, 18] },
+  10: { boardCap: 10, upgradeCost: null, tierOdds: [5, 10, 20, 40, 25] },
 };
 
 export const tierOddsForLevel = (level: PlayerLevel) =>

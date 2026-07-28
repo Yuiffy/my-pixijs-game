@@ -41,7 +41,7 @@ const tabNames: Record<Tab, string> = {
 };
 
 const cellStyle = {
-  padding: "8px 10px",
+  padding: "8px 6px",
   borderBottom: "1px solid rgba(125, 190, 225, 0.12)",
   textAlign: "center" as const,
 };
@@ -345,9 +345,9 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
         {tab === "odds" && (
           <section>
             <h2>各等级商店抽取概率</h2>
-            <p style={{ color: "#8da7b8" }}>每个商店格独立按下表抽取。升本需要一次付清当前剩余费用，每完成一回合费用自动减少 1 金币，最低可减至 0；零费后继续获得的减费会结转到后续本级。</p>
+            <p style={{ color: "#8da7b8" }}>每个商店格独立按下表抽取。高本会提高高费棋出现率，但满级仍保留低费棋，方便继续追阵容核心。升本需要一次付清当前剩余费用，每完成一回合费用自动减少 1 金币，最低可减至 0；零费后继续获得的减费会结转到后续本级。</p>
             <table style={{ width: "100%", borderCollapse: "collapse", background: "#0a1a26", border: "1px solid #294658" }}>
-              <thead><tr><th style={cellStyle}>等级</th><th style={cellStyle}>人口</th><th style={cellStyle}>初始升本费用</th>{[1, 2, 3, 4, 5].map((value) => <th key={value} style={cellStyle}>{value} 费</th>)}</tr></thead>
+              <thead><tr><th style={cellStyle}>等级</th><th style={cellStyle}>人口</th><th style={cellStyle}>升本费</th>{[1, 2, 3, 4, 5].map((value) => <th key={value} style={cellStyle}>{value} 费</th>)}</tr></thead>
               <tbody>{PLAYER_LEVELS.map((level) => <tr key={level}><td style={cellStyle}>{bookLevelForPlayerLevel(level)} 本</td><td style={cellStyle}>{PLAYER_LEVEL_CONFIG[level].boardCap}</td><td style={cellStyle}>{PLAYER_LEVEL_CONFIG[level].upgradeCost ?? "满级"}</td>{tierOddsForLevel(level).map((chance, index) => <td key={index} style={{ ...cellStyle, color: chance ? "#dcefff" : "#526775" }}>{chance}%</td>)}</tr>)}</tbody>
             </table>
             <h3 style={{ marginTop: 22 }}>数值节奏</h3>
