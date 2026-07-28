@@ -52,9 +52,9 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
   const [traitFamily, setTraitFamily] = useState<TraitFamilyFilter>("all");
   const [selectedUnit, setSelectedUnit] = useState<UnitId>(SHOP_UNITS[0]);
   const units = useMemo(
-    () => SHOP_UNITS.filter(
-      (id) => tier === "all" || UNIT_DEFS[id].tier === tier,
-    ),
+    () => SHOP_UNITS
+      .filter((id) => tier === "all" || UNIT_DEFS[id].tier === tier)
+      .sort((left, right) => UNIT_DEFS[left].cost - UNIT_DEFS[right].cost),
     [tier],
   );
   if (!open) return null;
@@ -209,6 +209,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
               <div style={{ color: "#99b1c1", lineHeight: 1.8 }}>
                 生命 {unit.hp} · 攻击 {unit.attack} · 护甲 {unit.armor}<br />
                 {unit.attackType === "ranged" ? "远程" : "近战"} · 射程 {unit.range} · 攻击间隔 {unit.attackInterval.toFixed(2)} 秒 · 移速 {unit.moveSpeed}<br />
+                技能距离 {unit.abilityRange > 0 ? unit.abilityRange : "自身"}<br />
                 <span style={{ color: ENERGY_PROFILES[unit.energyProfile.id].color }}>
                   能量 · {unit.energyProfile.name}：{describeEnergyRecovery(unit.energyProfile)}
                 </span>

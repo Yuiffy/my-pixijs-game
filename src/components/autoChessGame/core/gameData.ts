@@ -207,6 +207,8 @@ export interface UnitDefinition {
   attack: number;
   armor: number;
   range: number;
+  /** 主动技能可选择目标或尸体的最大中心距离；0 表示纯自身技能。 */
+  abilityRange: number;
   attackInterval: number;
   moveSpeed: number;
   attackType: AttackType;
@@ -314,8 +316,8 @@ export const TRAITS: Record<TraitId, TraitDefinition> = {
     family: "关系",
     color: "#93d86b",
     thresholds: [2, 4],
-    description: "吃饱才有力气整活；成长只影响外观，不改变碰撞体积。",
-    bonuses: ["贪吃成员每 3 秒回复 3% 最大生命，并缓慢长大", "全体友军每 3 秒回复 1.5% 最大生命；贪吃成员回复提升至 4%"],
+    description: "吃饱才有力气整活；定时进食与亲手击杀都会长大，碰撞体积和攻击力随层数提高。",
+    bonuses: ["贪吃成员每 3 秒回复 3% 最大生命并获得 1 层饱腹；每层增加体积与 6% 攻击力，击杀额外获得 1 层", "全体友军每 3 秒回复 1.5% 最大生命；贪吃成员回复提升至 4%，饱腹成长与击杀叠层不变"],
   },
   skeleton_soldier: {
     id: "skeleton_soldier",
@@ -412,7 +414,7 @@ const COMBAT_PROFILES: Record<
   spark_mage: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 50, abilityCastTiming: "offenseReady" },
   clock_gunner: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 280, moveSpeed: 48, abilityCastTiming: "offenseReady" },
   dawn_duelist: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 86, abilityCastTiming: "offenseReady" },
-  grove_mender: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 170, moveSpeed: 44, abilityCastTiming: "offenseReady" },
+  grove_mender: { attackType: "melee", energyProfile: ENERGY_PROFILES.flow, range: 58, moveSpeed: 66, abilityCastTiming: "engage" },
   sui_blue: { attackType: "ranged", energyProfile: ENERGY_PROFILES.feast, range: 240, moveSpeed: 58, abilityCastTiming: "offenseReady" },
   sui_flower: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 180, moveSpeed: 50, abilityCastTiming: "offenseReady" },
   yua: { attackType: "ranged", energyProfile: ENERGY_PROFILES.alien, range: 295, moveSpeed: 54, abilityCastTiming: "offenseReady" },
@@ -431,12 +433,39 @@ const COMBAT_PROFILES: Record<
 };
 
 const unit = (
-  definition: Omit<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming"> &
-    Partial<Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming">>,
-): UnitDefinition => ({
-  ...definition,
-  ...COMBAT_PROFILES[definition.id],
-});
+  definition: Omit<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming" | "abilityRange"> &
+    Partial<Pick<UnitDefinition, "attackType" | "energyProfile" | "range" | "moveSpeed" | "abilityCastTiming" | "abilityRange">>,
+): UnitDefinition => {
+  const resolved = {
+    ...definition,
+    ...COMBAT_PROFILES[definition.id],
+  };
+  const defaultAbilityRange = (() => {
+    switch (resolved.abilityCastTiming) {
+      case "passive":
+      case "selfBuff":
+      case "selfOnHit":
+        return 0;
+      case "offenseInRange":
+        return resolved.range;
+      case "supportHeal":
+      case "supportShield":
+        return 420;
+      case "engage":
+        return 420;
+      case "offenseReady":
+        return Math.min(520, Math.max(360, resolved.range + 180));
+      default: {
+        const exhaustive: never = resolved.abilityCastTiming;
+        return exhaustive;
+      }
+    }
+  })();
+  return {
+    ...resolved,
+    abilityRange: definition.abilityRange ?? defaultAbilityRange,
+  };
+};
 
 export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   // 2 费前排：果冻风纪（由 1 费上调）
@@ -706,21 +735,22 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   grove_mender: unit({
     id: "grove_mender",
     name: "七海大鲨鱼",
-    title: "七海Nana7mi · 鲨鱼变身",
+    title: "七海Nana7mi · 凿击前排",
     glyph: "七",
     color: "#28644b",
     accent: "#79f2ad",
-    tier: 4,
-    cost: 4,
+    tier: 5,
+    cost: 5,
     traits: ["wild", "finance", "gluttony", "ember"],
-    hp: 158,
-    attack: 16,
-    armor: 9,
-    range: 190,
-    attackInterval: 1.22,
-    moveSpeed: 46,
-    abilityName: "鲨鱼变身",
-    abilityDescription: "进入持续变身，期间攻击力大幅提高，造成伤害时吸血。",
+    hp: 510,
+    attack: 41,
+    armor: 34,
+    range: 58,
+    abilityRange: 430,
+    attackInterval: 0.9,
+    moveSpeed: 66,
+    abilityName: "凿凿冲击",
+    abilityDescription: "冲到施法范围内最远的敌人身边，持续消耗能量并提升护甲、嘲讽周围敌人；期间每次受击都会发射 ⛏️ 反击，造成伤害与短暂眩晕。",
     portrait: "/images/livers/nana7mi.png",
     portraitFocus: "top",
     shop: true,
@@ -742,7 +772,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.96,
     moveSpeed: 58,
     abilityName: "终场歌唱",
-    abilityDescription: "基础攻击为单体激光。施放后持续耗尽能量，为全体友军回复生命；期间改用远程火焰弹，命中后在小范围内造成伤害与灼烧。",
+    abilityDescription: "基础攻击为单体激光。施放后持续耗尽能量，为施法距离内友军回复生命；期间改用远程火焰弹，命中后在小范围内造成伤害与灼烧。",
     portrait: "/images/livers/azi.webp",
     portraitFocus: "top",
     shop: true,
@@ -990,7 +1020,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.16,
     moveSpeed: 44,
     abilityName: "脑控",
-    abilityDescription: "为全队提供护盾，并震晕身边的敌人。",
+    abilityDescription: "为施法距离内友军提供护盾，并震晕身边的敌人。",
     portrait: "/images/livers/nagisa.png",
     portraitFocus: "top",
     shop: true,
@@ -1018,7 +1048,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     shop: true,
   }),
 
-  // 5 费：暂时仅保留岁己终局形态。
+  // 饼干岁回落为 4 费前排。
   biscuit_sui: unit({
     id: "biscuit_sui",
     name: "饼干岁",
@@ -1026,17 +1056,18 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     glyph: "饼",
     color: "#9a6a4c",
     accent: "#ffd28d",
-    tier: 5,
-    cost: 5,
+    tier: 4,
+    cost: 4,
     traits: ["wild", "gluttony", "finance"],
-    hp: 420,
-    attack: 44,
-    armor: 34,
+    hp: 350,
+    attack: 36,
+    armor: 27,
     range: 58,
-    attackInterval: 0.92,
-    moveSpeed: 58,
+    abilityRange: 300,
+    attackInterval: 0.96,
+    moveSpeed: 60,
     abilityName: "饼干拳法",
-    abilityDescription: "冲向距离自己最远的敌人施展饼干拳法，落地造成范围伤害、眩晕并获得护盾。",
+    abilityDescription: "冲向 300 距离内最远的敌人施展饼干拳法，落地造成中等范围伤害、短暂眩晕并获得护盾。",
     portrait: "/images/materials/biscuit/饼干岁2.png",
     portraitFocus: "top",
     shop: true,
@@ -1111,19 +1142,25 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   rei: unit({
     id: "rei", name: "病院坂灵", title: "病院坂灵Rei · 群体法师", glyph: "灵", color: "#735779", accent: "#e8b5ff", tier: 5, cost: 5,
     traits: ["mystic", "ranger"], hp: 270, attack: 43, armor: 18, range: 230, attackInterval: 0.82, moveSpeed: 66,
-    abilityName: "幽灵终演", abilityDescription: "召唤幽灵轰击敌人最密集区域，造成高额范围伤害、灼烧与眩晕。",
+    abilityRange: 520,
+    abilityName: "幽灵复活", abilityDescription: "战场至少出现 5 具可用尸体后，复活施法范围内最多 5 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。",
+    abilityLevels: [
+      { summary: "最多复活 5 名", description: "战场至少出现 5 具可用尸体后，复活施法范围内最多 5 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。", stats: { reviveCount: 5 } },
+      { summary: "最多复活 7 名", description: "战场至少出现 5 具可用尸体后，复活施法范围内最多 7 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。", stats: { reviveCount: 7 } },
+      { summary: "最多复活 10 名", description: "战场至少出现 5 具可用尸体后，复活施法范围内最多 10 名已阵亡的己方或敌方单位；他们以半血幽灵形态加入己方且每具尸体只能复活一次。", stats: { reviveCount: 10 } },
+    ],
     portrait: "/images/livers/rei.jpg", portraitFocus: "top", shop: true,
   }),
   rutice: unit({
     id: "rutice", name: "露蒂丝·诊所护航", title: "露蒂丝Rutice · 决战守卫", glyph: "医", color: "#4b7280", accent: "#90e7df", tier: 5, cost: 5,
     traits: ["vanguard", "mystic"], hp: 455, attack: 38, armor: 38, range: 55, attackInterval: 1.02, moveSpeed: 60,
-    abilityName: "咕咕诊所", abilityDescription: "为全体友军回复生命，并为生命比例最低的两名友军提供护盾。",
+    abilityName: "咕咕诊所", abilityDescription: "为施法距离内友军回复生命，并为其中生命比例最低的两名友军提供护盾。",
     portrait: "/images/livers/rutice.jpg", portraitFocus: "top", shop: true,
   }),
   lian: unit({
     id: "lian", name: "梨安·终场谢幕", title: "四禧丸子 · 终场舞者", glyph: "梨", color: "#8b5b9b", accent: "#e3b2ff", tier: 5, cost: 5,
     traits: ["mystic", "dance", "chuanmei", "finance"], hp: 252, attack: 43, armor: 18, range: 225, attackInterval: 0.8, moveSpeed: 70,
-    abilityName: "终场谢幕", abilityDescription: "轰击敌人最密集处，造成范围伤害并为全体友军补充能量。",
+    abilityName: "终场谢幕", abilityDescription: "轰击施法距离内敌人最密集处，造成范围伤害并为施法距离内友军补充能量。",
     portrait: "/images/livers/lian.jpg", portraitFocus: "top", shop: true,
   }),
   pako: unit({
@@ -1172,7 +1209,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 0.78,
     moveSpeed: 62,
     abilityName: "蝙蝠夜歌",
-    abilityDescription: "召来蝙蝠声浪穿过数名敌人，造成伤害并将部分伤害转化为全队治疗。",
+    abilityDescription: "召来蝙蝠声浪穿过施法距离内数名敌人，造成伤害并将部分伤害转化为施法距离内友军治疗。",
     portrait: "/images/autochess/enemy-guests/hatsuse.jpg",
     portraitFocus: "center",
     shop: false,
@@ -1195,7 +1232,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     attackInterval: 1.04,
     moveSpeed: 46,
     abilityName: "裂界冲击",
-    abilityDescription: "冲击全场并眩晕所有敌人，半血后进入狂暴。",
+    abilityDescription: "冲击施法距离内的所有敌人并造成眩晕，半血后进入狂暴。",
     portrait: "/images/autochess/portraits/rift-tyrant.png",
     portraitFocus: "center",
     shop: false,
@@ -1372,7 +1409,7 @@ export const WAVES: WaveDefinition[] = [
     name: "毛茸茸团建",
     tag: "normal",
     description: "七海·海盐医师与犬绒·绒绒卫士续航很强，需要集火或切后。",
-    modifier: Math.sqrt(16 / 9),
+    modifier: Math.sqrt(16 / 10),
     units: [
       { id: "mossback" },
       { id: "mossback" },
@@ -1400,7 +1437,7 @@ export const WAVES: WaveDefinition[] = [
     name: "五系禁卫",
     tag: "normal",
     description: "前排、输出与辅助同时登场，检验阵容完整度。",
-    modifier: Math.sqrt(21 / 15),
+    modifier: Math.sqrt(21 / 16),
     units: [
       { id: "dawn_duelist" },
       { id: "cog_scribe" },

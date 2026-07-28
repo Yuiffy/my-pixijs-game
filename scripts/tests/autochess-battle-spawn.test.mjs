@@ -284,7 +284,7 @@ test("怕死不会打断跳舞成员的冲刺", () => {
   assert.equal(dancer.jumpTime, 0, "冲刺中的跳舞成员不应被怕死跳跃打断");
 });
 
-test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
+test("主持为全队提供移速，贪吃定时与击杀成长会提高攻击和碰撞体积", () => {
   const engine = createEngine(23);
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
@@ -302,6 +302,7 @@ test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   const sumi = battle.player.find((fighter) => fighter.unitId === "sumi");
   assert.equal(sumi?.gluttonyHolder, true);
   const beforeRadius = hungry?.radius;
+  const beforeAttack = hungry?.attack;
   const beforeSumiGrowth = sumi?.growthStacks || 0;
   for (let tick = 0; tick < 61; tick += 1) {
     battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp; });
@@ -309,7 +310,18 @@ test("主持为全队提供移速，贪吃成长不改变碰撞体积", () => {
   }
   assert.ok((hungry?.growthStacks || 0) > 0);
   assert.ok((sumi?.growthStacks || 0) > beforeSumiGrowth);
-  assert.equal(hungry?.radius, beforeRadius);
+  assert.ok((hungry?.radius || 0) > (beforeRadius || 0));
+  assert.ok((hungry?.attack || 0) > (beforeAttack || 0));
+  const stacksBeforeKill = hungry?.growthStacks || 0;
+  const radiusBeforeKill = hungry?.radius || 0;
+  const attackBeforeKill = hungry?.attack || 0;
+  const victim = battle.enemy[0];
+  victim.armor = 0;
+  victim.hp = 1;
+  engine["damage"](hungry, victim, 99_999);
+  assert.equal(hungry?.growthStacks, stacksBeforeKill + 1);
+  assert.ok((hungry?.radius || 0) > radiusBeforeKill);
+  assert.ok((hungry?.attack || 0) > attackBeforeKill);
 });
 
 test("舞台梦携带小红帽，并为全队提供少量能量和跳舞攻速", () => {
@@ -791,7 +803,7 @@ test("所有可重复护盾角色在三人持续集火下都能被击破", async
   }
 });
 
-test("满能量远程进攻技能在攻击范围外即可施法", () => {
+test("远程进攻技能超出技能距离会等待，进入技能距离后释放", () => {
   const engine = createEngine(140);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -812,8 +824,73 @@ test("满能量远程进攻技能在攻击范围外即可施法", () => {
   source.y = 360;
   source.energy = source.maxEnergy;
   engine.update(0.05);
-  assert.equal(source.energy, source.castRefund, "远程进攻技能满能量后应立即施法");
-  assert.ok(battle.effects.some((effect) => effect.kind === "line"), "外星贯穿光线应在远距离生成攻击反馈");
+  assert.equal(source.energy, source.maxEnergy, "超出技能距离时应保留满能量");
+  assert.ok(!battle.effects.some((effect) => effect.kind === "line"), "超出技能距离不应生成攻击反馈");
+  target.x = source.x + gameData.UNIT_DEFS.yua.abilityRange - 1;
+  engine.update(0.05);
+  assert.equal(source.energy, source.castRefund, "进入技能距离后应立即施法");
+  assert.ok(battle.effects.some((effect) => effect.kind === "line"));
+});
+
+test("支援技能只影响技能距离内的友军", () => {
+  const engine = createEngine(146);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rutice", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player.find((fighter) => fighter.unitId === "rutice");
+  const near = battle?.player.find((fighter) => fighter.unitId === "sun_guard");
+  const far = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(battle && source && near && far);
+  source.x = 250;
+  source.y = 360;
+  near.x = source.x + gameData.UNIT_DEFS.rutice.abilityRange - 10;
+  near.y = 360;
+  far.x = source.x + gameData.UNIT_DEFS.rutice.abilityRange + 80;
+  far.y = 360;
+  near.hp = near.maxHp * 0.4;
+  far.hp = far.maxHp * 0.4;
+  const nearHp = near.hp;
+  const farHp = far.hp;
+  engine["castAbility"](source, battle.enemy, true);
+  assert.ok(near.hp > nearHp);
+  assert.equal(far.hp, farHp);
+
+  const songEngine = createEngine(147);
+  songEngine.state.playerLevel = 4;
+  songEngine.state.board.fill(null);
+  songEngine.state.board[0] = { uid: 1, id: "cinder_ram", star: 1 };
+  songEngine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  songEngine.state.board[2] = { uid: 3, id: "mossback", star: 1 };
+  songEngine.startBattle();
+  const songBattle = songEngine.state.battle;
+  const singer = songBattle?.player.find((fighter) => fighter.unitId === "cinder_ram");
+  const songNear = songBattle?.player.find((fighter) => fighter.unitId === "sun_guard");
+  const songFar = songBattle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(songBattle && singer && songNear && songFar);
+  singer.x = 260;
+  singer.y = 360;
+  songNear.x = singer.x + gameData.UNIT_DEFS.cinder_ram.abilityRange - 20;
+  songNear.y = 360;
+  songFar.x = singer.x + gameData.UNIT_DEFS.cinder_ram.abilityRange + 100;
+  songFar.y = 360;
+  songNear.hp = songNear.maxHp * 0.4;
+  songFar.hp = songFar.maxHp * 0.4;
+  const songNearHp = songNear.hp;
+  const songFarHp = songFar.hp;
+  songEngine["castAbility"](singer, songBattle.enemy, true);
+  singer.cinderSongPulseTimer = 0;
+  singer.cooldown = 99;
+  songBattle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+  });
+  songEngine.update(0.05);
+  assert.ok(songNear.hp > songNearHp, "持续治疗应覆盖技能距离内友军");
+  assert.equal(songFar.hp, songFarHp, "持续治疗不应越过技能距离");
 });
 
 test("直接调用普攻不会跨攻击距离造成副作用", () => {
@@ -894,7 +971,7 @@ test("小红帽满能量时按攻击释放，而不是等待受击", () => {
   const source = battle?.player[0];
   assert.ok(battle && source);
   battle.enemy.forEach((fighter, index) => {
-    fighter.x = index === 0 ? 900 : 980;
+    fighter.x = index === 0 ? 460 : 980;
     fighter.y = 360;
     fighter.attack = 0;
     fighter.cooldown = 99;
@@ -1299,7 +1376,7 @@ test("偷袭成员会在己方首个单位交战后提前起跳", () => {
   );
 });
 
-test("北欧时停覆盖最密集人群，饼干岁改为冲向最远敌人", () => {
+test("北欧时停覆盖最密集人群，饼干岁冲向施法距离内最远敌人", () => {
   const engine = createEngine(206);
   engine.state.round = 6;
   engine.state.playerLevel = 4;
@@ -1321,14 +1398,19 @@ test("北欧时停覆盖最密集人群，饼干岁改为冲向最远敌人", ()
     fighter.energy = 0;
     fighter.hp = fighter.maxHp = 99_999;
     if (index < 3) {
-      fighter.x = 650 + index * 24;
+      fighter.x = 480 + index * 24;
       fighter.y = 270 + index * 22;
     } else {
       fighter.x = 920;
       fighter.y = 540 - (index - 3) * 130;
     }
   });
-  const farthestEnemy = [...battle.enemy].sort(
+  const castableEnemies = battle.enemy.filter(
+    (enemy) =>
+      Math.hypot(enemy.x - biscuit.x, enemy.y - biscuit.y) <=
+      gameData.UNIT_DEFS.biscuit_sui.abilityRange + enemy.radius,
+  );
+  const farthestEnemy = [...castableEnemies].sort(
     (a, b) =>
       Math.hypot(b.x - biscuit.x, b.y - biscuit.y) -
       Math.hypot(a.x - biscuit.x, a.y - biscuit.y),
@@ -1349,8 +1431,12 @@ test("北欧时停覆盖最密集人群，饼干岁改为冲向最远敌人", ()
   );
   assert.ok(zone.x < 750, "北欧时停不应跟随右侧孤立远敌");
 
-  engine.castAbility(biscuit, battle.enemy);
+  engine.castAbility(biscuit, battle.enemy, true);
   assert.equal(biscuit.abilityMotion?.targetFid, farthestEnemy.fid);
+  assert.ok(
+    Math.hypot(farthestEnemy.x - biscuit.x, farthestEnemy.y - biscuit.y) <=
+      gameData.UNIT_DEFS.biscuit_sui.abilityRange + farthestEnemy.radius,
+  );
   assert.ok(
     Math.hypot(
       biscuit.abilityMotion.toX - farthestEnemy.x,
@@ -1426,10 +1512,12 @@ test("北欧时停按星级成长，并以不可回复的自身能量控制持�
         remaining -= step;
       }
     };
-    battle.enemy.forEach((fighter) => {
+    battle.enemy.forEach((fighter, index) => {
       fighter.attack = 0;
       fighter.energy = 0;
       fighter.hp = fighter.maxHp = 99_999;
+      fighter.x = source.x + 250 + index * 12;
+      fighter.y = source.y + (index - 1) * 20;
     });
     source.cooldown = 99;
     source.moveSpeed = 0;
@@ -1491,7 +1579,6 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
     "sui_flower",
     "tower_god",
     "nightin",
-    "rei",
     "lian",
   ];
 
@@ -1538,6 +1625,71 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
     ), `${abilityId} 抵达后应在固定落点显示 AOE`);
     if (abilityId === "spark_mage") assert.equal(battle.chronospheres.length, 1);
     else assert.ok(battle.enemy.some((target, targetIndex) => target.hp < hpBefore[targetIndex]), `${abilityId} 抵达后应结算伤害`);
+  });
+});
+
+test("病院坂灵至少等待五人阵亡，并按星级把敌我尸体半血复活为己方幽灵", () => {
+  const thresholdEngine = createEngine(271);
+  thresholdEngine.state.round = 22;
+  thresholdEngine.state.playerLevel = 4;
+  thresholdEngine.state.board.fill(null);
+  thresholdEngine.state.board[0] = { uid: 1, id: "rei", star: 1 };
+  thresholdEngine.startBattle();
+  const thresholdBattle = thresholdEngine.state.battle;
+  const thresholdRei = thresholdBattle?.player[0];
+  assert.ok(thresholdBattle && thresholdRei && thresholdBattle.enemy.length >= 5);
+  thresholdRei.x = 500;
+  thresholdRei.y = 360;
+  thresholdBattle.enemy.slice(0, 4).forEach((fighter, index) => {
+    fighter.x = 600 + index * 12;
+    fighter.y = 330 + index * 14;
+    thresholdEngine["killFighter"](fighter);
+  });
+  thresholdRei.energy = thresholdRei.maxEnergy;
+  thresholdEngine["castAbility"](thresholdRei, thresholdBattle.enemy);
+  assert.equal(thresholdRei.energy, thresholdRei.maxEnergy);
+  assert.equal(thresholdBattle.player.filter((fighter) => fighter.reiRevival).length, 0);
+
+  [
+    { star: 1, expected: 5 },
+    { star: 2, expected: 7 },
+    { star: 3, expected: 10 },
+  ].forEach(({ star, expected }, scenario) => {
+    const engine = createEngine(272 + scenario);
+    engine.state.round = 22;
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: "rei", star };
+    engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const rei = battle?.player.find((fighter) => fighter.unitId === "rei");
+    const fallenAlly = battle?.player.find((fighter) => fighter.unitId === "sun_guard");
+    assert.ok(battle && rei && fallenAlly && battle.enemy.length >= 10);
+    rei.x = 500;
+    rei.y = 360;
+    fallenAlly.x = 525;
+    fallenAlly.y = 360;
+    engine["killFighter"](fallenAlly);
+    battle.enemy.slice(0, 9).forEach((fighter, index) => {
+      fighter.x = 590 + (index % 5) * 16;
+      fighter.y = 290 + Math.floor(index / 5) * 100 + (index % 2) * 14;
+      engine["killFighter"](fighter);
+    });
+    rei.energy = rei.maxEnergy;
+    engine["castAbility"](rei, battle.enemy);
+    const ghosts = battle.player.filter((fighter) => fighter.reiRevival);
+    assert.equal(ghosts.length, expected);
+    assert.ok(ghosts.every((fighter) => fighter.team === "player"));
+    assert.ok(ghosts.every((fighter) => fighter.hp === fighter.maxHp * 0.5));
+    assert.ok(ghosts.some((fighter) => fighter.unitId === "sun_guard"), "己方尸体也应能被返场");
+    assert.equal(battle.corpses.filter((corpse) => corpse.consumed).length, expected);
+    assert.match(battle.banner, new RegExp(`${expected} 名幽灵加入我方`));
+    if (star === 1) {
+      const corpseCount = battle.corpses.length;
+      engine["killFighter"](ghosts[0]);
+      assert.equal(battle.corpses.length, corpseCount, "Rei 复活的幽灵死亡后不能再次提供尸体");
+    }
   });
 });
 
@@ -1857,7 +2009,7 @@ test("弥希双声道与初濑蝙蝠夜歌会完成控制和团队治疗", () =>
   });
 });
 
-test("高存款七人阵容在后段精英与终局首领前必须继续投入战力", () => {
+test("二星七海可帮助高存款七人阵容通过后段精英，但终局首领仍要求继续投入", () => {
   const slots = [4, 5, 10, 11, 16, 17, 22];
   const lineup = [
     ["spark_mage", 1],
@@ -1885,8 +2037,7 @@ test("高存款七人阵容在后段精英与终局首领前必须继续投入�
   for (let tick = 0; tick < 600 && eliteEngine.state.phase === "battle"; tick += 1) {
     eliteEngine.update(0.05);
   }
-  assert.equal(eliteEngine.state.result.won, false);
-  assert.ok(eliteEngine.state.battle.enemy.filter((unit) => unit.alive).length >= 1);
+  assert.equal(eliteEngine.state.result.won, true);
 
   const bossEngine = createEngine(4);
   prepareScreenshotLineup(bossEngine, 16);
@@ -1952,10 +2103,10 @@ test("我方天赋不会成为敌方的隐藏天赋加成", () => {
   );
 });
 
-test("十名三星高费阵容会在四十战后遇到终局压力", () => {
+test("十名三星高费阵容会在三十二战后遇到终局压力", () => {
   const slots = [0, 4, 5, 6, 10, 11, 12, 16, 17, 23];
   const fiveCostLineup = [
-    "biscuit_sui",
+    "grove_mender",
     "cinder_ram",
     "rei",
     "rutice",
@@ -1987,8 +2138,8 @@ test("十名三星高费阵容会在四十战后遇到终局压力", () => {
     return engine;
   };
 
-  const round40 = fightRound(40);
-  assert.equal(round40.state.result.won, true);
+  const round32 = fightRound(32);
+  assert.equal(round32.state.result.won, true);
   const round42 = fightRound(42);
   assert.equal(round42.state.result.won, false);
   assert.ok(round42.state.battle.enemy.some((unit) => unit.alive));
@@ -2300,8 +2451,8 @@ test("邪恶外星人的贯穿光线沿目标方向发射并命中同线敌人",
   const source = battle?.player[0];
   assert.ok(battle && source);
   const target = battle.enemy[0];
-  const aligned = { ...target, fid: "test-aligned", x: 600, y: 240 };
-  const outside = { ...target, fid: "test-outside", x: 600, y: 360 };
+  const aligned = { ...target, fid: "test-aligned", x: 500, y: 320 };
+  const outside = { ...target, fid: "test-outside", x: 500, y: 440 };
   battle.enemy.push(aligned, outside);
   [target, aligned, outside].forEach((fighter) => {
     fighter.hp = fighter.maxHp = 9_999;
@@ -2499,7 +2650,7 @@ test("贪吃岁吃！强化下一击吸血，椰子栞大声造成范围伤害�
   assert.ok(battle.effects.some((effect) => effect.kind === "ring" && effect.size === 136));
 });
 
-test("七海变身吸血、恬豆地面棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {
+test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {
   const nanaEngine = createEngine(202);
   nanaEngine.state.playerLevel = 4;
   nanaEngine.state.board.fill(null);
@@ -2507,23 +2658,41 @@ test("七海变身吸血、恬豆地面棒棒糖与三理理嘲讽均按碰撞�
   nanaEngine.startBattle();
   const nanaBattle = nanaEngine.state.battle;
   const nana = nanaBattle?.player[0];
-  const nanaTarget = nanaBattle?.enemy[0];
-  assert.ok(nanaBattle && nana && nanaTarget);
+  assert.ok(nanaBattle && nana && nanaBattle.enemy.length >= 2);
+  const nanaNear = nanaBattle.enemy[0];
+  const nanaTarget = nanaBattle.enemy[1];
   nana.x = 260;
   nana.y = 360;
-  nanaTarget.x = 400;
+  nanaNear.x = 400;
+  nanaNear.y = 360;
+  nanaTarget.x = 620;
   nanaTarget.y = 360;
-  nanaTarget.hp = nanaTarget.maxHp = 9_999;
-  nanaTarget.armor = 0;
-  nana.hp = nana.maxHp * 0.5;
+  nanaBattle.enemy.forEach((fighter) => {
+    fighter.hp = fighter.maxHp = 9_999;
+    fighter.armor = 0;
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+  });
+  const baseArmor = nana.armor;
   nanaEngine["castAbility"](nana, nanaBattle.enemy);
+  assert.equal(nana.abilityMotion?.targetFid, nanaTarget.fid);
+  assert.equal(nana.barrageActive, false, "冲锋落地前不应提前进入持续状态");
+  stepBattle(nanaEngine, 14);
+  assert.equal(nana.abilityMotion, null);
   assert.equal(nana.barrageActive, true);
-  assert.equal(nana.abilityAttackBonus, 0.85);
-  assert.equal(nana.abilityLifesteal, 0.45);
-  nana.attack = nana.baseAttack * 1.85;
-  const nanaHpBefore = nana.hp;
-  nanaEngine["basicAttack"](nana, nanaTarget);
-  assert.ok(nana.hp > nanaHpBefore);
+  assert.equal(nana.abilityArmorBonus, 42);
+  assert.equal(nana.armor, baseArmor + 42);
+  assert.equal(nanaTarget.tauntedByFid, nana.fid);
+  assert.ok(nana.energy > 0 && nana.energy < nana.maxEnergy);
+  nanaNear.alive = false;
+  nanaTarget.stun = 0;
+  const counterTargetHp = nanaTarget.hp;
+  nanaEngine["damage"](nanaTarget, nana, 80);
+  const pickaxe = nanaBattle.projectiles.find((projectile) => projectile.emoji === "⛏️");
+  assert.ok(pickaxe, "持续状态受击时应立即发射矿镐");
+  nanaEngine["updateProjectiles"](nanaBattle, 0.5);
+  assert.ok(nanaTarget.hp < counterTargetHp);
+  assert.ok(nanaTarget.stun >= 0.24);
 
   const candyEngine = createEngine(203);
   candyEngine.state.playerLevel = 4;
@@ -2604,7 +2773,7 @@ test("七海变身吸血、恬豆地面棒棒糖与三理理嘲讽均按碰撞�
   assert.equal(tauntEngine["resolveCombatTarget"](tauntedEnemy, tauntBattle.player, 0.05)?.fid, mitsuri.fid);
 });
 
-test("蛙梓终场歌唱持续治疗全队，并将单体激光切换为范围灼烧火焰弹", () => {
+test("蛙梓终场歌唱持续治疗施法距离内友军，并将单体激光切换为范围灼烧火焰弹", () => {
   const engine = createEngine(205);
   engine.state.playerLevel = 5;
   engine.state.board.fill(null);
@@ -2652,7 +2821,7 @@ test("蛙梓终场歌唱持续治疗全队，并将单体激光切换为范围�
   assert.equal(cinder.range, cinder.baseRange);
 });
 
-test("露蒂丝咕咕诊所治疗全队并只保护生命比例最低的两名友军", () => {
+test("露蒂丝咕咕诊所治疗施法距离内友军并只保护其中生命比例最低的两名友军", () => {
   const engine = createEngine(205);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2810,7 +2979,7 @@ test("滑跪会沿直线路径移动并逐个撞开沿途敌人", () => {
   source.y = 360;
   middle.x = 420;
   middle.y = 360;
-  far.x = 760;
+  far.x = 550;
   far.y = 360;
   source.energy = source.maxEnergy;
   const expectedSkillDamage = source.attack * 1.1;
@@ -2819,7 +2988,7 @@ test("滑跪会沿直线路径移动并逐个撞开沿途敌人", () => {
   assert.equal(source.abilityMotion?.kind, "dash");
   assert.equal(source.abilityMotion?.abilityId, "guangyi");
   assert.equal(source.x, 220, "施法帧只建立运动状态，不应直接抵达终点");
-  assert.ok((source.abilityMotion?.toX || 0) > 650);
+  assert.ok((source.abilityMotion?.toX || 0) > 500);
 
   source.cooldown = 99;
   source.energy = 0;
@@ -2837,12 +3006,12 @@ test("滑跪会沿直线路径移动并逐个撞开沿途敌人", () => {
   const lateStep = sampledX[5] - sampledX[4];
   assert.ok(earlyStep > lateStep * 1.4, "滑跪应在前段快速冲刺、末段逐渐减速");
   assert.equal(source.abilityMotion, null);
-  assert.ok(source.x > 650);
+  assert.ok(source.x > 500);
   assert.ok(Math.abs(middle.damageTaken - expectedSkillDamage) < 0.01, "沿途目标应只受到一次滑跪伤害");
   assert.ok(Math.abs(far.damageTaken - expectedSkillDamage) < 0.01, "终点目标也应只受到一次滑跪伤害");
   assert.ok(collisionStun >= 0.39 && collisionStun <= 0.45, "被滑跪撞到的敌人应短暂眩晕");
   assert.ok(middle.x > 420 || Math.abs(middle.y - 360) > 1, "沿途目标应被短位移撞开");
-  assert.ok(far.x > 760 || Math.abs(far.y - 360) > 1, "终点目标应被短位移撞开");
+  assert.ok(far.x > 550 || Math.abs(far.y - 360) > 1, "终点目标应被短位移撞开");
   assert.ok(source.shield > 0);
   assertInsideBattleBounds(source);
   assertInsideBattleBounds(middle);
@@ -2859,7 +3028,7 @@ test("跃击技能会经过空中过程并在落地后结算伤害", () => {
   const source = battle?.player[0];
   assert.ok(battle && source);
   battle.enemy.forEach((fighter, index) => {
-    fighter.x = 720 + index * 90;
+    fighter.x = 500 + index * 24;
     fighter.y = 360 + index * 90;
     fighter.attack = 0;
     fighter.armor = 0;
@@ -2914,10 +3083,10 @@ test("小猫拳会先闪现到最远敌人身后，再与目标同步推进并�
     fighter.maxHp = 99_999;
     fighter.energy = 0;
   });
-  near.x = 520;
+  near.x = 400;
   near.y = 360;
   if (far !== near) {
-    far.x = 760;
+    far.x = 540;
     far.y = 360;
   }
   source.x = 220;

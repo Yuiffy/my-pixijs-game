@@ -33,7 +33,7 @@ import type {
   Team,
   UnitLocation,
 } from "../core/gameTypes";
-import { fighterVisualRadius, mechanicalRabbitMuzzle } from "../core/battleGeometry";
+import { GLUTTONY_RADIUS_PER_STACK, fighterVisualRadius, mechanicalRabbitMuzzle } from "../core/battleGeometry";
 import { EngineBridge, type GameAction } from "./EngineBridge";
 import {
   circularTextureKeyForUnit,
@@ -1936,7 +1936,7 @@ export class RiftLineScene extends Phaser.Scene {
     } = this.fighterViewParts.get(view)!;
     const hitProgress = fighter.hitPulse > 0 ? fighter.hitPulse / 0.2 : 0;
     const growth = fighter.growthStacks > 0
-      ? 1 + fighter.growthStacks * 0.015 + Math.sin(this.bridge.engine.state.visualTime * 8) * 0.008
+      ? 1 + fighter.growthStacks * GLUTTONY_RADIUS_PER_STACK + Math.sin(this.bridge.engine.state.visualTime * 8) * 0.008
       : 1;
     const attackScaleX = 1 + lunge / 70;
     const attackScaleY = 1 - lunge / 130;
@@ -1956,7 +1956,7 @@ export class RiftLineScene extends Phaser.Scene {
     hp.width = radius * 2.25 * Math.max(0, fighter.hp / fighter.maxHp);
     energy.width = radius * 2.25 * Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
     energy.fillColor = Phaser.Display.Color.HexStringToColor(ENERGY_PROFILES[fighter.energyStyle].color).color;
-    hitFlash.setAlpha(0.72 * hitProgress).setRadius(radius * growth);
+    hitFlash.setAlpha(0.72 * hitProgress).setRadius(radius);
     const shieldStrength = fighter.shield > 0
       ? Math.max(0, Math.min(1, fighter.shield / Math.max(fighter.shieldPeak, 1)))
       : 0;

@@ -71,6 +71,8 @@ export interface Projectile {
   splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
   emoji?: string;
+  /** 命中存活目标后施加的眩晕时间。 */
+  stunDuration?: number;
   /** 棒棒糖落地后停止移动，变为可被单位踩到的地面效果。 */
   grounded?: boolean;
   /** 远端 AOE 弹幕抵达固定落点后触发的技能。 */
@@ -161,6 +163,7 @@ export interface Fighter {
   x: number;
   y: number;
   radius: number;
+  baseRadius: number;
   hp: number;
   maxHp: number;
   shield: number;
@@ -195,6 +198,8 @@ export interface Fighter {
   dwarfMember: boolean;
   gluttonyHolder: boolean;
   growthStacks: number;
+  /** Rei 复活的幽灵不会再次生成可复活尸体。 */
+  reiRevival: boolean;
   emberMember: boolean;
   emberAttackPerStack: number;
   emberAttackStacks: number;
@@ -234,6 +239,7 @@ export interface Fighter {
   abilityAttackSpeedTime: number;
   abilityMoveSpeed: number;
   abilityMoveSpeedTime: number;
+  abilityArmorBonus: number;
   slowTime: number;
   weakenTime: number;
   weakenArmorPenalty: number;
@@ -309,8 +315,17 @@ export interface ProjectileVolleyShot {
   emoji?: string;
   style?: Projectile["style"];
   splashRadius?: number;
+  stunDuration?: number;
   /** 有值时，这一段弹幕会改为治疗发射时生命比例最低的友军。 */
   supportHealMultiplier?: number;
+}
+
+export interface BattleCorpse {
+  id: string;
+  fighter: Fighter;
+  x: number;
+  y: number;
+  consumed: boolean;
 }
 
 export interface BattleState {
@@ -322,6 +337,8 @@ export interface BattleState {
   effects: BattleEffect[];
   projectiles: Projectile[];
   projectileVolley: ProjectileVolleyShot[];
+  corpses: BattleCorpse[];
+  resurrectionSerial: number;
   chronospheres: ChronosphereZone[];
   healingZones: HealingZone[];
   pets: MechanicalRabbitPet[];

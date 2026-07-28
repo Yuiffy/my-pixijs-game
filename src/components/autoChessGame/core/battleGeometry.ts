@@ -2,6 +2,7 @@ import type { UnitId } from "./gameData";
 import type { MechanicalRabbitPet } from "./gameTypes";
 
 const CLOCK_GUNNER_RABBIT_MUZZLE_DISTANCE = 1.55;
+export const GLUTTONY_RADIUS_PER_STACK = 0.025;
 
 export const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
 

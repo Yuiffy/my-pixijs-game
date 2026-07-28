@@ -351,7 +351,7 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.TRAITS.sui_forms, undefined);
   assert.deepEqual(
     forms.map((id) => data.UNIT_DEFS[id].tier),
-    [1, 2, 3, 3, 4, 5],
+    [1, 2, 3, 3, 4, 4],
   );
   forms.forEach((id) => {
     assert.ok(data.SHOP_UNITS.includes(id));
@@ -374,8 +374,10 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.zeyin.attackType, "melee");
   assert.equal(data.UNIT_DEFS.zeyin.abilityName, "涅槃重生");
   assert.equal(data.UNIT_DEFS.zeyin.abilityCastTiming, "passive");
-  assert.equal(data.UNIT_DEFS.grove_mender.abilityName, "鲨鱼变身");
-  assert.match(data.UNIT_DEFS.grove_mender.abilityDescription, /攻击力.*吸血/);
+  assert.equal(data.UNIT_DEFS.grove_mender.abilityName, "凿凿冲击");
+  assert.equal(data.UNIT_DEFS.grove_mender.attackType, "melee");
+  assert.equal(data.UNIT_DEFS.grove_mender.abilityCastTiming, "engage");
+  assert.match(data.UNIT_DEFS.grove_mender.abilityDescription, /最远.*护甲.*嘲讽.*⛏️.*眩晕/);
   assert.equal(data.UNIT_DEFS.tiandou.abilityName, "棒棒糖刘海");
   assert.match(data.UNIT_DEFS.tiandou.abilityDescription, /友军.*回复生命.*敌人.*减速/);
   assert.equal(data.UNIT_DEFS.mitsuri.abilityName, "站我后面");
@@ -393,6 +395,7 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     assert.ok(profiles.has(unit.energyProfile.id), `${unit.id} must use a known energy profile`);
     assert.ok(unit.energyProfile.max > 0);
     ["start", "perSecond", "onAttack", "onHit", "castRefund"].forEach((field) => assert.ok(unit.energyProfile[field] >= 0));
+    assert.ok(Number.isFinite(unit.abilityRange) && unit.abilityRange >= 0 && unit.abilityRange <= 520);
   });
   const repeatableSustainUnits = [
     "sun_guard",
@@ -468,7 +471,7 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /闪现到最远敌人身后/);
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /击晕/);
   assert.equal(data.UNIT_DEFS.rutice.abilityName, "咕咕诊所");
-  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /全体友军回复生命/);
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /施法距离内友军回复生命/);
   assert.match(data.UNIT_DEFS.rutice.abilityDescription, /生命比例最低的两名友军.*护盾/);
   assert.ok(data.UNIT_DEFS.rutice.traits.includes("mystic"));
   assert.ok(data.UNIT_DEFS.sui_cat.hp >= 250);
@@ -547,8 +550,8 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.match(data.TRAITS.skeleton_soldier.bonuses[0], /攻击力/);
   ["sui_flower", "cinder_ram", "lian"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("chuanmei")));
   ["grove_mender", "sui_blue"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("gluttony")));
-  assert.equal(data.UNIT_DEFS.grove_mender.tier, 4);
-  assert.equal(data.UNIT_DEFS.grove_mender.cost, 4);
+  assert.equal(data.UNIT_DEFS.grove_mender.tier, 5);
+  assert.equal(data.UNIT_DEFS.grove_mender.cost, 5);
   assert.equal(data.UNIT_DEFS.grove_mender.traits.includes("ember"), true);
   assert.equal(data.UNIT_DEFS.biscuit_sui.traits.includes("gluttony"), true);
   assert.equal(data.UNIT_DEFS.sui.traits.includes("gluttony"), false);
@@ -557,7 +560,21 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.match(data.TRAITS.assassin.description, /集中跃向敌方最后排中最虚弱的目标/);
   assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
   assert.ok(data.UNIT_DEFS.lovely.traits.includes("assassin"));
-  assert.match(data.UNIT_DEFS.biscuit_sui.abilityDescription, /距离自己最远的敌人/);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.tier, 4);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.cost, 4);
+  assert.equal(data.UNIT_DEFS.biscuit_sui.abilityRange, 300);
+  assert.match(data.UNIT_DEFS.biscuit_sui.abilityDescription, /300 距离内最远的敌人/);
+  assert.doesNotMatch(data.TRAITS.gluttony.description, /只影响外观|不改变碰撞体积/);
+  assert.match(data.TRAITS.gluttony.description, /击杀.*碰撞体积.*攻击力/);
+  assert.deepEqual(
+    data.UNIT_DEFS.rei.abilityLevels.map((level) => level.stats.reviveCount),
+    [5, 7, 10],
+  );
+  assert.match(data.UNIT_DEFS.rei.abilityDescription, /至少出现 5 具.*半血幽灵/);
+  ["cinder_ram", "nagisa", "rutice", "lian", "hatsuse_guest", "rift_tyrant"].forEach((id) => {
+    assert.match(data.UNIT_DEFS[id].abilityDescription, /施法距离内/);
+    assert.doesNotMatch(data.UNIT_DEFS[id].abilityDescription, /全队|全体友军|全场/);
+  });
   assert.deepEqual(data.UNIT_DEFS.nightin.traits, ["mystic", "dwarf"]);
   assert.match(data.TRAITS.mature.bonuses[0], /每 4 秒降低 1 个百分点/);
   assert.match(data.TRAITS.mature.bonuses[0], /正常移速的 70%/);
@@ -719,4 +736,13 @@ test("理财与流量羁绊拥有完整的经济成员池", () => {
   });
   assert.match(data.TRAITS.traffic.bonuses[0], /1 次免费刷新/);
   assert.match(data.TRAITS.traffic.bonuses[2], /3 次免费刷新/);
+});
+
+test("棋子图鉴按费用从低到高稳定排序并展示技能距离", async () => {
+  const source = await readFile(
+    new URL("../../src/components/autoChessGame/Codex.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /\.sort\(\(left, right\) => UNIT_DEFS\[left\]\.cost - UNIT_DEFS\[right\]\.cost\)/);
+  assert.match(source, /技能距离.*unit\.abilityRange/);
 });

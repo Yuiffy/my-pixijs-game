@@ -40,6 +40,7 @@ import {
 } from "./gameData";
 import {
   BATTLE_BOUNDS,
+  GLUTTONY_RADIUS_PER_STACK,
   fighterVisualRadius,
   mechanicalRabbitMuzzle,
   pointDistanceFromForwardRay,
@@ -47,6 +48,7 @@ import {
 } from "./battleGeometry";
 import type {
   AbilityMotion,
+  BattleCorpse,
   BattleEffect,
   BattleState,
   Fighter,
@@ -174,9 +176,15 @@ const SHIORI_SHOUT_RADIUS = 122;
 const CHRONOSPHERE_RADIUS = 128;
 const CHRONOSPHERE_DURATION = 2.8;
 /** 七海大鲨鱼：持续变身 */
-const NANA_SHARK_FORM_DURATION = 5;
-const NANA_SHARK_FORM_ATTACK_BONUS = 0.85;
-const NANA_SHARK_FORM_LIFESTEAL = 0.45;
+const NANA_PICKAXE_DURATION = 5.5;
+const NANA_PICKAXE_ARMOR_BONUS = 42;
+const NANA_PICKAXE_TAUNT_RADIUS = 155;
+const NANA_PICKAXE_TAUNT_REFRESH = 0.3;
+const NANA_PICKAXE_COUNTER_DAMAGE = 0.46;
+const NANA_PICKAXE_COUNTER_STUN = 0.24;
+const NANA_PICKAXE_COUNTER_SPEED = 620;
+const GLUTTONY_ATTACK_PER_STACK = 0.06;
+const REI_MIN_CORPSES = 5;
 /** 蛙梓：持续歌唱期间的群体治疗与火焰弹。 */
 const CINDER_RAM_SONG_DURATION = 5.5;
 const CINDER_RAM_SONG_HEAL_INTERVAL = 0.6;
@@ -1158,6 +1166,7 @@ export class AutoChessEngine {
         x: spawn.x,
         y: spawn.y,
         radius: fighterVisualRadius(owned.id, owned.star),
+        baseRadius: fighterVisualRadius(owned.id, owned.star),
         hp: maxHp,
         maxHp,
         shield: 0,
@@ -1199,6 +1208,7 @@ export class AutoChessEngine {
         dwarfMember: dwarfLevel > 0,
         gluttonyHolder,
         growthStacks: 0,
+        reiRevival: false,
         emberMember: emberLevel > 0,
         emberAttackPerStack: emberLevel
           ? (emberLevel && def.traits.includes("ember")
@@ -1236,6 +1246,7 @@ export class AutoChessEngine {
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
         abilityMoveSpeedTime: 0,
+        abilityArmorBonus: 0,
         slowTime: 0,
         weakenTime: 0,
         weakenArmorPenalty: 0,
@@ -1332,6 +1343,7 @@ export class AutoChessEngine {
         x: spawn.x,
         y: spawn.y,
         radius: fighterVisualRadius(waveUnit.id, star),
+        baseRadius: fighterVisualRadius(waveUnit.id, star),
         hp: stats.maxHp,
         maxHp: stats.maxHp,
         shield: 0,
@@ -1374,6 +1386,7 @@ export class AutoChessEngine {
         dwarfMember: dwarfLevel > 0,
         gluttonyHolder,
         growthStacks: 0,
+        reiRevival: false,
         emberMember: emberLevel > 0,
         emberAttackPerStack: emberLevel
           ? [0, 0.05, 0.08, 0.12][emberLevel]
@@ -1409,6 +1422,7 @@ export class AutoChessEngine {
         abilityAttackSpeedTime: 0,
         abilityMoveSpeed: 0,
         abilityMoveSpeedTime: 0,
+        abilityArmorBonus: 0,
         slowTime: 0,
         weakenTime: 0,
         weakenArmorPenalty: 0,
@@ -1473,6 +1487,8 @@ export class AutoChessEngine {
       effects: [],
       projectiles: [],
       projectileVolley: [],
+      corpses: [],
+      resurrectionSerial: 0,
       chronospheres: [],
       healingZones: [],
       pets: [],
@@ -1873,12 +1889,31 @@ export class AutoChessEngine {
       }
       case "biscuit_sui":
         livingTargets
-          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 145)
+          .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < 125)
           .forEach((enemy) => {
-            this.dealAbilityDamage(source, enemy, 1.85);
-            if (enemy.alive) enemy.stun = Math.max(enemy.stun, 0.85);
+            this.dealAbilityDamage(source, enemy, 1.35);
+            if (enemy.alive) enemy.stun = Math.max(enemy.stun, 0.45);
           });
-        this.grantShield(source, source, source.maxHp * 0.22, 0.55);
+        this.grantShield(source, source, source.maxHp * 0.18, 0.5);
+        break;
+      case "grove_mender":
+        source.energy = source.maxEnergy;
+        source.barrageActive = true;
+        source.barrageDrainPerSecond = source.maxEnergy / NANA_PICKAXE_DURATION;
+        source.abilityArmorBonus = NANA_PICKAXE_ARMOR_BONUS;
+        source.armor += source.abilityArmorBonus;
+        livingTargets
+          .filter(
+            (enemy) =>
+              Math.hypot(enemy.x - source.x, enemy.y - source.y) <=
+              NANA_PICKAXE_TAUNT_RADIUS + enemy.radius,
+          )
+          .forEach((enemy) => {
+            enemy.tauntedByFid = source.fid;
+            enemy.tauntTime = Math.max(enemy.tauntTime, NANA_PICKAXE_TAUNT_REFRESH);
+          });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: accent, life: 0.65, size: NANA_PICKAXE_TAUNT_RADIUS });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "护甲提升 · 全员看我", life: 0.8, size: 11 });
         break;
       case "seki_boar_king":
         livingTargets
@@ -2008,6 +2043,58 @@ export class AutoChessEngine {
 
   private combatAttackRange(attacker: Fighter, target: Fighter) {
     return Math.max(attacker.range, attacker.radius + target.radius + CONTACT_ATTACK_BUFFER);
+  }
+
+  private targetsWithinAbilityRange(source: Fighter, targets: Fighter[]) {
+    const abilityRange = UNIT_DEFS[source.unitId].abilityRange;
+    if (abilityRange <= 0) return [];
+    return targets.filter(
+      (target) =>
+        target.alive &&
+        Math.hypot(target.x - source.x, target.y - source.y) <= abilityRange + target.radius,
+    );
+  }
+
+  private reiCorpsesWithinRange(source: Fighter) {
+    const battle = this.state.battle;
+    if (!battle) return [];
+    const abilityRange = UNIT_DEFS.rei.abilityRange;
+    return battle.corpses
+      .filter(
+        (corpse) =>
+          !corpse.consumed &&
+          Math.hypot(corpse.x - source.x, corpse.y - source.y) <= abilityRange,
+      )
+      .sort(
+        (left, right) =>
+          Math.hypot(left.x - source.x, left.y - source.y) -
+            Math.hypot(right.x - source.x, right.y - source.y) ||
+          left.id.localeCompare(right.id),
+      );
+  }
+
+  private refreshFighterAttack(fighter: Fighter) {
+    fighter.attack = fighter.baseAttack
+      * (1 + fighter.growthStacks * GLUTTONY_ATTACK_PER_STACK)
+      * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks)
+      * (1 + (fighter.barrageActive || fighter.abilityAttackBonusTime > 0 ? fighter.abilityAttackBonus : 0));
+  }
+
+  private addGluttonyStack(fighter: Fighter, label: string) {
+    if (!fighter.alive || !fighter.gluttonyHolder || fighter.growthStacks >= 5) return false;
+    fighter.growthStacks += 1;
+    fighter.radius = fighter.baseRadius * (1 + fighter.growthStacks * GLUTTONY_RADIUS_PER_STACK);
+    this.refreshFighterAttack(fighter);
+    this.addEffect({
+      kind: "text",
+      x: fighter.x,
+      y: fighter.y - 42,
+      color: TRAITS.gluttony.color,
+      text: `${label} ${fighter.growthStacks}/5`,
+      life: 0.65,
+      size: 10,
+    });
+    return true;
   }
 
   private moveTowardCombatTarget(fighter: Fighter, target: Fighter, fighters: Fighter[], dt: number, movementIntents: Map<string, MovementIntent>) {
@@ -2552,21 +2639,11 @@ export class AutoChessEngine {
           });
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
         break;
-      case "rei":
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 145)
-          .forEach((target) => {
-            deal(target, 1.85);
-            this.applyBurn(source, target, source.attack * 0.8);
-            target.stun = Math.max(target.stun, 0.72);
-          });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: 152 });
-        break;
       case "lian":
         targets
           .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 140)
           .forEach((target) => deal(target, 1.55));
-        allies.forEach((ally) => this.addEnergy(ally, 15));
+        this.targetsWithinAbilityRange(source, allies).forEach((ally) => this.addEnergy(ally, 15));
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.85, size: 150 });
         break;
       default:
@@ -2600,6 +2677,7 @@ export class AutoChessEngine {
       style: shot.style,
       emoji: shot.emoji,
       splashRadius: shot.splashRadius,
+      stunDuration: shot.stunDuration,
     });
   }
 
@@ -2978,6 +3056,9 @@ export class AutoChessEngine {
           const dealt = this.damage(source, target, damage, true);
           if (dealt > 0) this.addDamageText(target, dealt);
           if (target.alive && projectile.burnPower > 0) this.applyBurn(source, target, projectile.burnPower);
+          if (target.alive && projectile.stunDuration) {
+            target.stun = Math.max(target.stun, projectile.stunDuration);
+          }
         });
         this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
         return false;
@@ -3079,9 +3160,7 @@ export class AutoChessEngine {
         } else {
           fighter.syncAvStrength = 0;
         }
-        fighter.attack = fighter.baseAttack
-          * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks)
-          * (1 + (fighter.barrageActive || fighter.abilityAttackBonusTime > 0 ? fighter.abilityAttackBonus : 0));
+        this.refreshFighterAttack(fighter);
         const abilityAttackSpeed = fighter.barrageActive || fighter.abilityAttackSpeedTime > 0
           ? fighter.abilityAttackSpeed
           : 0;
@@ -3226,12 +3305,12 @@ export class AutoChessEngine {
           this.living(team).forEach((fighter) => {
             if (fighter.emberMember && fighter.emberAttackStacks < fighter.emberAttackStackCap) {
               fighter.emberAttackStacks += 1;
-              fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
+              this.refreshFighterAttack(fighter);
               this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#ff7657", text: `夜 ${fighter.emberAttackStacks}/5`, life: 0.65, size: 10 });
             } else if (!fighter.emberMember && fighter.attackType === "ranged" && rangedCapRatio > 0 && fighter.emberAttackStacks < 5) {
               fighter.emberAttackStacks += 1;
               fighter.emberAttackPerStack = rangedCapRatio / 5;
-              fighter.attack = fighter.baseAttack * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks);
+              this.refreshFighterAttack(fighter);
             }
           });
         });
@@ -3252,10 +3331,7 @@ export class AutoChessEngine {
           this.living(team).forEach((fighter) => {
             const holderHealRatio = fighter.gluttonyHolder ? (level >= 2 ? 0.04 : 0.03) : allHealRatio;
             if (holderHealRatio > 0) this.heal(null, fighter, fighter.maxHp * holderHealRatio);
-            if (fighter.gluttonyHolder) {
-              fighter.growthStacks = Math.min(5, fighter.growthStacks + 1);
-              this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#93d86b", text: `饱 ${fighter.growthStacks}/5`, life: 0.65, size: 10 });
-            }
+            this.addGluttonyStack(fighter, "饱");
           });
         });
       }
@@ -3309,11 +3385,25 @@ export class AutoChessEngine {
       // 攻击弹幕：能量缓慢清空，期间不回能
       if (fighter.barrageActive) {
         fighter.energy = Math.max(0, fighter.energy - fighter.barrageDrainPerSecond * dt);
+        if (fighter.unitId === "grove_mender") {
+          const targetTeam: Team = fighter.team === "player" ? "enemy" : "player";
+          this.living(targetTeam)
+            .filter(
+              (enemy) =>
+                Math.hypot(enemy.x - fighter.x, enemy.y - fighter.y) <=
+                NANA_PICKAXE_TAUNT_RADIUS + enemy.radius,
+            )
+            .forEach((enemy) => {
+              enemy.tauntedByFid = fighter.fid;
+              enemy.tauntTime = Math.max(enemy.tauntTime, NANA_PICKAXE_TAUNT_REFRESH);
+            });
+        }
         if (fighter.unitId === "cinder_ram") {
           fighter.cinderSongPulseTimer -= dt;
           if (fighter.cinderSongPulseTimer <= 0) {
             fighter.cinderSongPulseTimer += CINDER_RAM_SONG_HEAL_INTERVAL;
-            this.living(fighter.team).forEach((ally) => this.heal(fighter, ally, ally.maxHp * CINDER_RAM_SONG_HEAL_RATIO));
+            this.targetsWithinAbilityRange(fighter, this.living(fighter.team))
+              .forEach((ally) => this.heal(fighter, ally, ally.maxHp * CINDER_RAM_SONG_HEAL_RATIO));
           }
         }
         if (fighter.energy <= 0) {
@@ -3328,13 +3418,21 @@ export class AutoChessEngine {
           fighter.abilityAttackSpeedTime = 0;
           fighter.abilityMoveSpeed = 0;
           fighter.abilityMoveSpeedTime = 0;
+          if (fighter.abilityArmorBonus > 0) {
+            fighter.armor -= fighter.abilityArmorBonus;
+            fighter.abilityArmorBonus = 0;
+          }
           fighter.cinderSongPulseTimer = 0;
           this.addEffect({
             kind: "text",
             x: fighter.x,
             y: fighter.y - 42,
             color: UNIT_DEFS[fighter.unitId].accent,
-            text: fighter.unitId === "cinder_ram" ? "歌声停下" : "弹幕结束",
+            text: fighter.unitId === "cinder_ram"
+              ? "歌声停下"
+              : fighter.unitId === "grove_mender"
+                ? "凿击结束"
+                : "弹幕结束",
             life: 0.55,
             size: 11,
           });
@@ -3408,7 +3506,7 @@ export class AutoChessEngine {
             size: 12,
           });
         }
-        if (fighter.hp <= 0) this.killFighter(fighter);
+        if (fighter.hp <= 0) this.killFighter(fighter, source || undefined);
       }
       // 时停球内敌我单位都不能行动（灼烧等 DoT 仍结算）
       if (this.isInsideChronosphere(fighter, battle)) {
@@ -3448,6 +3546,8 @@ export class AutoChessEngine {
       if (!targets.length) return;
 
       const allies = this.living(fighter.team);
+      const abilityTargets = this.targetsWithinAbilityRange(fighter, targets);
+      const abilityAllies = this.targetsWithinAbilityRange(fighter, allies);
       const abilityTiming = UNIT_DEFS[fighter.unitId].abilityCastTiming;
       const energyReady =
         !fighter.barrageActive &&
@@ -3460,6 +3560,10 @@ export class AutoChessEngine {
         switch (abilityTiming) {
           case "engage":
           case "offenseReady":
+            shouldCast = fighter.unitId === "rei"
+              ? this.reiCorpsesWithinRange(fighter).length >= REI_MIN_CORPSES
+              : abilityTargets.length > 0;
+            break;
           case "supportShield":
           case "selfBuff":
             shouldCast = true;
@@ -3470,7 +3574,9 @@ export class AutoChessEngine {
             break;
           case "supportHeal": {
             // 支援治疗：能量满且最虚弱友军生命比例降到阈值
-            const weakestAlly = [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+            const weakestAlly = [...abilityAllies, fighter]
+              .filter((ally, index, candidates) => candidates.indexOf(ally) === index)
+              .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
             shouldCast = Boolean(weakestAlly && weakestAlly.hp / weakestAlly.maxHp <= SUPPORT_HEAL_HP_RATIO);
             break;
           }
@@ -3484,7 +3590,7 @@ export class AutoChessEngine {
         }
         if (shouldCast) {
           fighter.stuckTime = 0;
-          this.castAbility(fighter, targets);
+          this.castAbility(fighter, abilityTargets, true);
           return;
         }
       }
@@ -3497,7 +3603,7 @@ export class AutoChessEngine {
       // 近距进攻：能量满且进入普攻距离才放
       if (energyReady && abilityTiming === "offenseInRange" && distance <= preferredRange) {
         fighter.stuckTime = 0;
-        this.castAbility(fighter, targets);
+        this.castAbility(fighter, abilityTargets, true);
         return;
       }
 
@@ -3788,10 +3894,14 @@ export class AutoChessEngine {
     if (dealt > 0) this.addDamageText(target, dealt);
   }
 
-  private castAbility(source: Fighter, targets: Fighter[]) {
+  private castAbility(source: Fighter, availableTargets: Fighter[], enforceRange = false) {
+    const def = UNIT_DEFS[source.unitId];
+    const targets = enforceRange
+      ? this.targetsWithinAbilityRange(source, availableTargets)
+      : availableTargets.filter((target) => target.alive);
+    if (source.unitId === "rei" && this.reiCorpsesWithinRange(source).length < REI_MIN_CORPSES) return;
     source.energy = Math.min(source.maxEnergy, source.castRefund);
     source.cooldown = Math.max(source.cooldown, 0.35);
-    const def = UNIT_DEFS[source.unitId];
     if (
       def.abilityCastTiming === "engage" ||
       def.abilityCastTiming === "offenseReady" ||
@@ -3799,7 +3909,9 @@ export class AutoChessEngine {
     ) {
       this.markTeamEngaged(source.team);
     }
-    const allies = this.living(source.team);
+    const allies = enforceRange && def.abilityRange > 0
+      ? this.targetsWithinAbilityRange(source, this.living(source.team))
+      : this.living(source.team);
     const weakest = (units: Fighter[]) =>
       [...units].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
     const farthest = (units: Fighter[]) =>
@@ -4049,14 +4161,18 @@ export class AutoChessEngine {
         break;
       }
       case "grove_mender": {
-        source.energy = source.maxEnergy;
-        source.barrageActive = true;
-        source.barrageDrainPerSecond = source.maxEnergy / NANA_SHARK_FORM_DURATION;
-        source.abilityAttackBonus = NANA_SHARK_FORM_ATTACK_BONUS;
-        source.abilityAttackBonusTime = NANA_SHARK_FORM_DURATION + 0.05;
-        source.abilityLifesteal = NANA_SHARK_FORM_LIFESTEAL;
-        source.abilityLifestealTime = NANA_SHARK_FORM_DURATION + 0.05;
-        this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: def.accent, text: "鲨鱼变身", life: 0.75, size: 12 });
+        const target = farthest(targets);
+        if (!target) break;
+        this.startAbilityMotion(
+          source,
+          "dash",
+          {
+            x: target.x + (source.team === "player" ? -source.radius - target.radius - 8 : source.radius + target.radius + 8),
+            y: target.y,
+          },
+          { targetFid: target.fid },
+        );
+        this.addEffect({ kind: "text", x: target.x, y: target.y - 44, color: def.accent, text: "凿凿冲击", life: 0.75, size: 12 });
         break;
       }
       case "cinder_ram": {
@@ -4386,9 +4502,7 @@ export class AutoChessEngine {
         break;
       }
       case "rei": {
-        const center = densest(targets);
-        if (!center) break;
-        this.deliverRemoteAoe(source, center);
+        this.resurrectWithRei(source);
         break;
       }
       case "lian": {
@@ -4475,6 +4589,99 @@ export class AutoChessEngine {
     });
   }
 
+  private reviveCorpseForRei(source: Fighter, corpse: BattleCorpse) {
+    const battle = this.state.battle;
+    if (!battle) return null;
+    battle.resurrectionSerial += 1;
+    const original = corpse.fighter;
+    const angle = battle.resurrectionSerial * 2.4;
+    const offset = 10 + (battle.resurrectionSerial % 3) * 5;
+    const position = this.clampFighterPosition(original, {
+      x: corpse.x + Math.cos(angle) * offset,
+      y: corpse.y + Math.sin(angle) * offset,
+    });
+    const revived: Fighter = {
+      ...original,
+      fid: `${source.team === "player" ? "p" : "e"}-rei-${battle.resurrectionSerial}`,
+      team: source.team,
+      x: position.x,
+      y: position.y,
+      hp: original.maxHp * 0.5,
+      shield: 0,
+      shieldPeak: 0,
+      cooldown: 0.35,
+      energy: 0,
+      stun: 0,
+      tauntedByFid: null,
+      tauntTime: 0,
+      burnTime: 0,
+      burnDps: 0,
+      burnSourceFid: null,
+      barrageActive: false,
+      barrageDrainPerSecond: 0,
+      cinderSongPulseTimer: 0,
+      abilityAttackBonus: 0,
+      abilityAttackBonusTime: 0,
+      abilityLifesteal: 0,
+      abilityLifestealTime: 0,
+      nextAttackLifesteal: 0,
+      abilityAttackSpeed: 0,
+      abilityAttackSpeedTime: 0,
+      abilityMoveSpeed: 0,
+      abilityMoveSpeedTime: 0,
+      armor: original.armor - original.abilityArmorBonus,
+      abilityArmorBonus: 0,
+      slowTime: 0,
+      weakenTime: 0,
+      weakenArmorPenalty: 0,
+      attackPulse: 0,
+      hitPulse: 0,
+      applePieShotsRemaining: 0,
+      applePieShotTimer: 0,
+      jumpPending: false,
+      jumpDelay: 0,
+      jumpTime: 0,
+      vanguardJumpAdvancing: false,
+      abilityMotion: null,
+      channelTargetFid: null,
+      channelTime: 0,
+      channelPulseTimer: 0,
+      targetFid: null,
+      targetLock: 0,
+      progressAnchorDistance: Infinity,
+      progressWindowTime: 0,
+      stuckTime: 0,
+      damageDealt: 0,
+      healingDone: 0,
+      shieldingDone: 0,
+      damageTaken: 0,
+      reiRevival: true,
+      alive: true,
+    };
+    this.refreshFighterAttack(revived);
+    battle[source.team].push(revived);
+    this.addEffect({ kind: "rebirth", x: revived.x, y: revived.y, color: UNIT_DEFS.rei.accent, life: 1, size: revived.radius * 2.7 });
+    this.addEffect({ kind: "text", x: revived.x, y: revived.y - 44, color: UNIT_DEFS.rei.accent, text: "👻 半血返场", emoji: true, life: 0.85, size: 12 });
+    return revived;
+  }
+
+  private resurrectWithRei(source: Fighter) {
+    const corpses = this.reiCorpsesWithinRange(source);
+    if (corpses.length < REI_MIN_CORPSES) return 0;
+    const reviveCount = abilityStatForStar(UNIT_DEFS.rei, source.star, "reviveCount", 5);
+    const selected = corpses.slice(0, reviveCount);
+    selected.forEach((corpse) => {
+      corpse.consumed = true;
+      this.reviveCorpseForRei(source, corpse);
+    });
+    const battle = this.state.battle;
+    if (battle) {
+      battle.banner = `幽灵复活 · ${selected.length} 名幽灵加入${source.team === "player" ? "我方" : "敌方"}`;
+      battle.bannerTimer = 1.8;
+    }
+    return selected.length;
+  }
+
   private damage(source: Fighter, target: Fighter, rawAmount: number, allowInactiveSource = false) {
     if ((!source.alive && !allowInactiveSource) || !target.alive) return 0;
     this.markFightersEngaged(source, target);
@@ -4540,6 +4747,27 @@ export class AutoChessEngine {
     target.damageTaken += effectiveApplied;
     // 任意有效命中都记受击（含仅打盾），供自保技能「受击释放」判定
     if (effectiveApplied > 0) target.hitPulse = 0.2;
+    if (
+      effectiveApplied > 0 &&
+      target.hp > 0 &&
+      target.unitId === "grove_mender" &&
+      target.barrageActive &&
+      source.alive &&
+      source.team !== target.team
+    ) {
+      this.fireFixedProjectile(target, source, {
+        sourceFid: target.fid,
+        targetFid: source.fid,
+        delay: 0,
+        damage: target.attack * NANA_PICKAXE_COUNTER_DAMAGE,
+        burnPower: 0,
+        speed: NANA_PICKAXE_COUNTER_SPEED,
+        color: UNIT_DEFS.grove_mender.accent,
+        size: 18,
+        emoji: "⛏️",
+        stunDuration: NANA_PICKAXE_COUNTER_STUN,
+      });
+    }
 
     if (
       target.vanguardMember &&
@@ -4573,7 +4801,7 @@ export class AutoChessEngine {
     }
 
     if (target.hp <= 0) {
-      const permanentlyKilled = this.killFighter(target);
+      const permanentlyKilled = this.killFighter(target, source);
       if (permanentlyKilled && source.team === "player") this.state.score += 12;
     }
     return effectiveApplied;
@@ -4650,7 +4878,7 @@ export class AutoChessEngine {
     });
   }
 
-  private killFighter(target: Fighter) {
+  private killFighter(target: Fighter, source?: Fighter) {
     if (!target.alive) return false;
     if (target.unitId === "zeyin" && !target.reborn) {
       target.reborn = true;
@@ -4693,7 +4921,23 @@ export class AutoChessEngine {
           fighter.channelPulseTimer = 0;
         }
       });
+      if (!target.reiRevival) {
+        battle.corpses.push({
+          id: `corpse-${target.fid}`,
+          fighter: target,
+          x: target.x,
+          y: target.y,
+          consumed: false,
+        });
+      }
     }
+    if (source?.alive && source.team !== target.team) this.addGluttonyStack(source, "击杀");
+    if (target.abilityArmorBonus > 0) {
+      target.armor -= target.abilityArmorBonus;
+      target.abilityArmorBonus = 0;
+    }
+    target.barrageActive = false;
+    target.barrageDrainPerSecond = 0;
     target.alive = false;
     target.hp = 0;
     target.shield = 0;
@@ -5093,6 +5337,8 @@ export class AutoChessEngine {
             x: Math.round(projectile.x),
             y: Math.round(projectile.y),
             style: projectile.style || "default",
+            emoji: projectile.emoji,
+            stunDuration: projectile.stunDuration,
             ability: projectile.impactAbilityId,
             grounded: Boolean(projectile.grounded),
             remaining: projectile.style === "lollipop" ? Number(projectile.remainingRange.toFixed(1)) : undefined,
