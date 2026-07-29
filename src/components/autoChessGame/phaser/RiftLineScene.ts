@@ -356,11 +356,16 @@ export class RiftLineScene extends Phaser.Scene {
     this.overlayLayer = this.add.container(0, 0).setDepth(DEPTH.overlay);
     this.tooltipLayer = this.add.container(0, 0).setDepth(DEPTH.tooltip);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
-    this.input.keyboard?.on("keydown-R", () => this.dispatch({ type: "reroll" }));
-    this.input.keyboard?.on("keydown-SPACE", () => this.dispatch({ type: "battle" }));
+    this.input.keyboard?.on("keydown-R", () => {
+      if (!this.bridge.enemyFormationOpen) this.dispatch({ type: "reroll" });
+    });
+    this.input.keyboard?.on("keydown-SPACE", () => {
+      if (!this.bridge.enemyFormationOpen) this.dispatch({ type: "battle" });
+    });
     this.input.keyboard?.on("keydown-D", () => this.dispatch({ type: "rankingToggle" }));
     this.input.keyboard?.on("keydown-ESC", () => {
-      if (this.pinnedTooltip) this.clearTooltip();
+      if (this.bridge.enemyFormationOpen) this.bridge.setEnemyFormationOpen(false);
+      else if (this.pinnedTooltip) this.clearTooltip();
       else this.dispatch({ type: "clearSelection" });
     });
     this.rebuild();
@@ -865,13 +870,12 @@ export class RiftLineScene extends Phaser.Scene {
     description.setPosition(48, 158);
     this.phaseLayer.add(description);
     if (!compact) {
-      const pressureLabel =
-        currentWave.tag === "boss"
-          ? `首领预警 · 敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`
-          : currentWave.tag === "elite"
-            ? `精英预警 · 敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`
-            : `敌情预览 · 敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`;
+      const pressureLabel = `敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`;
       this.phaseLayer.add(this.text(536, 124, pressureLabel, 9, currentWave.tag === "normal" ? "#e89aaa" : waveColor, { fontStyle: "bold" }));
+      this.button(682, 112, 74, 25, "▦ 站位", undefined, {
+        tone: currentWave.tag === "normal" ? "neutral" : "danger",
+        hoverLabel: "查看站位",
+      }, DEPTH.ui, () => this.bridge.setEnemyFormationOpen(true)).setName("enemy-formation-trigger-desktop");
       this.drawEnemyTraitPreview(currentWave.units);
       currentWave.units.slice(0, 7).forEach((waveUnit, index) => {
         const x = 554 + index * 29;
@@ -934,7 +938,10 @@ export class RiftLineScene extends Phaser.Scene {
     const waveLabel = currentWave.tag === "boss" ? "BOSS WARNING" : currentWave.tag === "elite" ? "ELITE WARNING" : mode === "hell" ? `HELL ${currentWave.round}` : `WAVE ${currentWave.round}`;
     const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
     this.phaseLayer.add(this.text(16, 108, `${waveLabel} · ${this.truncateText(currentWave.name, 242, 14, { fontStyle: "bold" })}`, 14, waveColor, { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(464, 108, `敌军 ${currentWave.units.length} · 价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
+    this.phaseLayer.add(this.text(338, 108, `敌军 ${currentWave.units.length} · 价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
+    this.button(354, 96, 110, 26, "▦ 敌方站位", undefined, {
+      tone: currentWave.tag === "normal" ? "neutral" : "danger",
+    }, DEPTH.ui, () => this.bridge.setEnemyFormationOpen(true)).setName("enemy-formation-trigger-mobile");
     this.drawTraits();
     this.phaseLayer.add(this.text(24, 178, `部署区 · ${engine.boardCount}/${engine.boardCap}`, 12, "#8ce8bd", { fontStyle: "bold" }));
     this.phaseLayer.add(this.text(24, 434, `备战席 · ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3", { fontStyle: "bold" }));
@@ -1998,11 +2005,16 @@ export class RiftLineScene extends Phaser.Scene {
       .setStrokeStyle(2 + abilityShieldStrength * 1.8, 0xe6d0ff, 0.34 + abilityShieldStrength * 0.62)
       .setAlpha(fighter.abilityShield > 0 ? 1 : 0);
     const syncPulse = 1 + Math.sin(this.bridge.engine.state.visualTime * 7) * 0.12;
-    const syncColor = fighter.syncAvDirection > 0 ? 0xff9a5c : 0x79dcff;
+    const towerHackVisible = fighter.towerHackArmed || fighter.towerHackBuffed;
+    const syncColor = towerHackVisible
+      ? 0xf0c76b
+      : fighter.syncAvDirection > 0
+        ? 0xff9a5c
+        : 0x79dcff;
     syncAura
       .setFillStyle(syncColor, 1)
-      .setRadius((radius + 13 + fighter.syncAvStrength * 12) * syncPulse)
-      .setAlpha(fighter.syncAvDirection === 0 ? 0 : 0.12 + fighter.syncAvStrength * 0.32);
+      .setRadius((radius + 13 + (towerHackVisible ? 9 : fighter.syncAvStrength * 12)) * syncPulse)
+      .setAlpha(towerHackVisible ? (fighter.towerHackBuffed ? 0.34 : 0.18) : fighter.syncAvDirection === 0 ? 0 : 0.12 + fighter.syncAvStrength * 0.32);
     burn.setAlpha(fighter.burnTime > 0 ? 0.9 : 0).setScale(1 + Math.sin(this.bridge.engine.state.visualTime * 10) * 0.35);
     const statusBadges = [
       fighter.weakenTime > 0 ? "🦑" : "",
@@ -2022,6 +2034,8 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.rebirthRecoilTime > 0 ? "退" : "",
       fighter.stealthTime > 0 ? "隐" : "",
       fighter.channelTime > 0 ? "捏" : "",
+      fighter.towerHackArmed ? "待挂" : "",
+      fighter.towerHackBuffed ? "挂" : "",
       fighter.syncAvDirection > 0 ? "骄" : fighter.syncAvDirection < 0 ? "哀" : "",
       fighter.gen27Buffed ? "27" : "",
       fighter.enraged ? "!" : "",

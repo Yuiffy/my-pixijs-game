@@ -1119,7 +1119,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   tower_god: unit({
     id: "tower_god",
     name: "塔神",
-    title: "笙歌 · 尖塔压顶",
+    title: "笙歌 · 把别人当自己",
     glyph: "塔",
     color: "#313e6d",
     accent: "#f0c76b",
@@ -1132,8 +1132,25 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 225,
     attackInterval: 1.0,
     moveSpeed: 48,
-    abilityName: "尖塔压顶",
-    abilityDescription: "将背后的尖塔虚影砸向敌人最密集区域，造成范围伤害并眩晕。",
+    abilityName: "开挂",
+    abilityDescription: "发动后进入“开挂”状态；塔神死亡时，让最近的存活队友继承持续到本场结束的攻击、护甲、攻速和移速增益。同名增益不叠加，只保留更强档位。",
+    abilityLevels: [
+      {
+        summary: "攻击 +45% · 护甲 +25 · 攻速 +45% · 移速 +45",
+        description: "发动后进入“开挂”状态；塔神死亡时，让最近的存活队友攻击 +45%、护甲 +25、攻速 +45%、移速 +45，持续到本场结束。同名增益不叠加，只保留更强档位。",
+        stats: { attackBonus: 0.45, armorBonus: 25, attackSpeed: 0.45, moveSpeed: 45 },
+      },
+      {
+        summary: "攻击 +65% · 护甲 +38 · 攻速 +65% · 移速 +65",
+        description: "发动后进入“开挂”状态；塔神死亡时，让最近的存活队友攻击 +65%、护甲 +38、攻速 +65%、移速 +65，持续到本场结束。同名增益不叠加，只保留更强档位。",
+        stats: { attackBonus: 0.65, armorBonus: 38, attackSpeed: 0.65, moveSpeed: 65 },
+      },
+      {
+        summary: "攻击 +90% · 护甲 +55 · 攻速 +90% · 移速 +90",
+        description: "发动后进入“开挂”状态；塔神死亡时，让最近的存活队友攻击 +90%、护甲 +55、攻速 +90%、移速 +90，持续到本场结束。同名增益不叠加，只保留更强档位。",
+        stats: { attackBonus: 0.9, armorBonus: 55, attackSpeed: 0.9, moveSpeed: 90 },
+      },
+    ],
     portrait: "/images/livers/shengge.jpg",
     portraitFocus: "top",
     shop: true,

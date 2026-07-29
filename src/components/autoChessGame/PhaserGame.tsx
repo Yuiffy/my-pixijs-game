@@ -43,6 +43,7 @@ export default function AutoChessGame() {
   const [message, setMessage] = useState("图鉴可查看棋子、羁绊与本局天赋");
   const [uiScale, setUiScale] = useState(1);
   const [, setRevision] = useState(0);
+  const enemyFormationOpen = bridgeRef.current?.enemyFormationOpen || false;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -231,12 +232,17 @@ export default function AutoChessGame() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && enemyFormationOpen) {
+        event.preventDefault();
+        bridgeRef.current?.setEnemyFormationOpen(false);
+        return;
+      }
       if (event.key === "Escape" && codexOpen) {
         event.preventDefault();
         setCodexOpen(false);
         return;
       }
-      if (codexOpen || event.repeat) return;
+      if (codexOpen || enemyFormationOpen || event.repeat) return;
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLButtonElement || active instanceof HTMLSelectElement || active instanceof HTMLTextAreaElement || active?.getAttribute("contenteditable") === "true") return;
       if (event.key.toLowerCase() === "f") {
@@ -246,7 +252,7 @@ export default function AutoChessGame() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [codexOpen, toggleFullscreen]);
+  }, [codexOpen, enemyFormationOpen, toggleFullscreen]);
 
   const engine = bridgeRef.current?.engine;
   const dispatch = useCallback((action: import("./phaser/EngineBridge").GameAction) => {
@@ -258,6 +264,9 @@ export default function AutoChessGame() {
       adjustBattleView?: (nextAction: BattleViewAction) => void;
     } | undefined;
     scene?.adjustBattleView?.(action);
+  }, []);
+  const setEnemyFormationOpen = useCallback((open: boolean) => {
+    bridgeRef.current?.setEnemyFormationOpen(open);
   }, []);
 
   return (
@@ -315,7 +324,13 @@ export default function AutoChessGame() {
             touchAction: "none",
           }}
         />
-        <RiftHud engine={engine || null} onAction={dispatch} onBattleViewAction={adjustBattleView} />
+        <RiftHud
+          engine={engine || null}
+          enemyFormationOpen={enemyFormationOpen}
+          onAction={dispatch}
+          onBattleViewAction={adjustBattleView}
+          onEnemyFormationOpenChange={setEnemyFormationOpen}
+        />
         <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
       </div>
     </div>

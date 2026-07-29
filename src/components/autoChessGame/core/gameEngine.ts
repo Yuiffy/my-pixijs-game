@@ -41,6 +41,7 @@ import {
 import {
   BATTLE_BOUNDS,
   GLUTTONY_RADIUS_PER_STACK,
+  enemyFormationPosition,
   fighterVisualRadius,
   mechanicalRabbitMuzzle,
   pointDistanceFromForwardRay,
@@ -244,9 +245,6 @@ const GUANGYI_SLIDE_STUN_DURATION = 0.45;
 const SUMI_SEAL_RADIUS = 128;
 const SUMI_SEAL_ARMOR_PENALTY = 9;
 const SUMI_SEAL_DURATION = 2.8;
-/** 塔神「尖塔压顶」 */
-const TOWER_GOD_TOWER_RADIUS = 146;
-const TOWER_GOD_TOWER_STUN = 0.82;
 /** 轴伊「扔橘子」：五段治疗逐次减弱，每段发射时重新选择最虚弱友军。 */
 const COG_ORANGE_HEAL_MULTIPLIERS = [1, 0.82, 0.66, 0.54, 0.44] as const;
 const COG_ORANGE_INTERVAL = 0.2;
@@ -266,7 +264,6 @@ const PAKO_ANGEL_FISH_HIGHLIGHT_COLOR = "#d9fff0";
 const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile"; glyph?: string }>> = {
   spark_mage: { kind: "projectile", glyph: "⏳" },
   sui_flower: { kind: "projectile", glyph: "🌶️" },
-  tower_god: { kind: "projectile", glyph: "塔" },
   pako: { kind: "projectile", glyph: "🐟" },
   nightin: { kind: "projectile", glyph: "🚬" },
   rei: { kind: "projectile", glyph: "👻" },
@@ -703,6 +700,12 @@ export class AutoChessEngine {
       manquTime: Number(fighter.manquTime.toFixed(2)),
       stealthTime: Number(fighter.stealthTime.toFixed(2)),
       sumiDragonReady: fighter.sumiDragonReady,
+      towerHackArmed: fighter.towerHackArmed,
+      towerHackBuffed: fighter.towerHackBuffed,
+      towerHackAttackBonus: fighter.towerHackAttackBonus,
+      towerHackArmorBonus: fighter.towerHackArmorBonus,
+      towerHackAttackSpeed: fighter.towerHackAttackSpeed,
+      towerHackMoveSpeed: fighter.towerHackMoveSpeed,
       stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
       damageDealt: Math.round(fighter.damageDealt),
@@ -1212,17 +1215,6 @@ export class AutoChessEngine {
         row,
       };
     };
-    const enemySpawn = (index: number) => {
-      if (wave.units.length <= 10) {
-        const row = index % 3;
-        const rank = Math.floor(index / 3);
-        return { x: 990 - rank * 96, y: 180 + row * 165, row };
-      }
-      const row = index % 5;
-      const rank = Math.floor(index / 5);
-      return { x: 1000 - rank * 76, y: 180 + row * 88, row };
-    };
-
     const player = this.state.board.flatMap((owned, index) => {
       if (!owned) return [];
       const def = UNIT_DEFS[owned.id];
@@ -1350,6 +1342,12 @@ export class AutoChessEngine {
         sekiChargeDirectionY: 0,
         sekiChargeHitFids: [],
         sekiChargeHitCount: 0,
+        towerHackArmed: false,
+        towerHackBuffed: false,
+        towerHackAttackBonus: 0,
+        towerHackArmorBonus: 0,
+        towerHackAttackSpeed: 0,
+        towerHackMoveSpeed: 0,
         cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
@@ -1424,7 +1422,7 @@ export class AutoChessEngine {
     const enemy = wave.units.map((waveUnit, index) => {
       const def = UNIT_DEFS[waveUnit.id];
       const star = waveUnit.star || 1;
-      const spawn = enemySpawn(index);
+      const spawn = enemyFormationPosition(index, wave.units.length);
       const stats = this.calculatePlayerCombatStats(
         { id: waveUnit.id, star },
         enemyTraitCounts,
@@ -1537,6 +1535,12 @@ export class AutoChessEngine {
         sekiChargeDirectionY: 0,
         sekiChargeHitFids: [],
         sekiChargeHitCount: 0,
+        towerHackArmed: false,
+        towerHackBuffed: false,
+        towerHackAttackBonus: 0,
+        towerHackArmorBonus: 0,
+        towerHackAttackSpeed: 0,
+        towerHackMoveSpeed: 0,
         cinderSongPulseTimer: 0,
         abilityAttackBonus: 0,
         abilityAttackBonusTime: 0,
@@ -2517,7 +2521,60 @@ export class AutoChessEngine {
     fighter.attack = fighter.baseAttack
       * (1 + fighter.growthStacks * GLUTTONY_ATTACK_PER_STACK)
       * (1 + fighter.emberAttackPerStack * fighter.emberAttackStacks)
-      * (1 + (fighter.barrageActive || fighter.abilityAttackBonusTime > 0 ? fighter.abilityAttackBonus : 0));
+      * (1 + (fighter.barrageActive || fighter.abilityAttackBonusTime > 0 ? fighter.abilityAttackBonus : 0))
+      * (1 + fighter.towerHackAttackBonus);
+  }
+
+  private transferTowerHack(source: Fighter) {
+    if (!source.towerHackArmed || !this.state.battle) return null;
+    source.towerHackArmed = false;
+    const target = this.state.battle[source.team]
+      .filter((fighter) => fighter !== source && fighter.alive && fighter.hp > 0)
+      .sort(
+        (left, right) =>
+          Math.hypot(left.x - source.x, left.y - source.y) -
+            Math.hypot(right.x - source.x, right.y - source.y) ||
+          left.fid.localeCompare(right.fid),
+      )[0];
+    if (!target) return null;
+
+    const def = UNIT_DEFS.tower_god;
+    const attackBonus = abilityStatForStar(def, source.star, "attackBonus", 0.45);
+    const armorBonus = abilityStatForStar(def, source.star, "armorBonus", 25);
+    const attackSpeed = abilityStatForStar(def, source.star, "attackSpeed", 0.45);
+    const moveSpeed = abilityStatForStar(def, source.star, "moveSpeed", 45);
+    if (attackBonus > target.towerHackAttackBonus) {
+      const previousArmor = target.towerHackArmorBonus;
+      const previousAttackSpeed = target.towerHackAttackSpeed;
+      const previousMoveSpeed = target.towerHackMoveSpeed;
+      target.towerHackBuffed = true;
+      target.towerHackAttackBonus = attackBonus;
+      target.towerHackArmorBonus = armorBonus;
+      target.towerHackAttackSpeed = attackSpeed;
+      target.towerHackMoveSpeed = moveSpeed;
+      target.armor += armorBonus - previousArmor;
+      target.attackInterval *= (1 + previousAttackSpeed) / (1 + attackSpeed);
+      target.moveSpeed += moveSpeed - previousMoveSpeed;
+      this.refreshFighterAttack(target);
+    }
+
+    const battle = this.state.battle;
+    battle.banner = "哈哈哈我开挂了 这游戏怎么这么简单啊！";
+    battle.bannerTimer = 2.4;
+    this.addEffect({
+      kind: "line",
+      x: source.x,
+      y: source.y,
+      x2: target.x,
+      y2: target.y,
+      color: def.accent,
+      life: 0.75,
+      size: 7,
+    });
+    this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 1.1, size: target.radius + 34 });
+    this.addEffect({ kind: "burst", x: target.x, y: target.y, color: "#fff1bd", life: 0.72, size: 74 });
+    this.addEffect({ kind: "text", x: target.x, y: target.y - 48, color: "#ffe58a", text: "哈哈哈我开挂了！", life: 1.15, size: 13 });
+    return target;
   }
 
   private addGluttonyStack(fighter: Fighter, label: string) {
@@ -3020,16 +3077,6 @@ export class AutoChessEngine {
           });
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.78, size: SUMI_SEAL_RADIUS + 12 });
         this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#edf3ff", life: 0.45, size: 72 });
-        break;
-      case "tower_god":
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) <= TOWER_GOD_TOWER_RADIUS)
-          .forEach((target) => {
-            deal(target, 1.6);
-            if (target.alive) target.stun = Math.max(target.stun, TOWER_GOD_TOWER_STUN);
-          });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.9, size: TOWER_GOD_TOWER_RADIUS + 16 });
-        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#fff1bd", life: 0.5, size: 90 });
         break;
       case "cog_scribe": {
         const target = support?.targetFid
@@ -3622,8 +3669,9 @@ export class AutoChessEngine {
           )
           : 0;
         fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
-          (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
-        fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed + manquMoveSpeed) *
+          (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) *
+            (1 + fighter.towerHackAttackSpeed) * syncMultiplier);
+        fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed + manquMoveSpeed + fighter.towerHackMoveSpeed) *
           matureMoveMultiplier * nearbyMultiplier;
         fighter.range = fighter.baseRange * syncMultiplier;
         if (fighter.barrageActive && fighter.unitId === "cinder_ram") fighter.range = CINDER_RAM_SONG_RANGE;
@@ -4079,7 +4127,9 @@ export class AutoChessEngine {
           case "offenseReady":
             shouldCast = fighter.unitId === "rei"
               ? this.reiCorpsesWithinRange(fighter).length >= this.reiReviveCount(fighter)
-              : abilityTargets.length > 0;
+              : fighter.unitId === "tower_god"
+                ? !fighter.towerHackArmed && abilityTargets.length > 0
+                : abilityTargets.length > 0;
             break;
           case "supportShield":
           case "selfBuff":
@@ -4886,9 +4936,13 @@ export class AutoChessEngine {
         break;
       }
       case "tower_god": {
-        const center = densest(targets);
-        if (!center) break;
-        this.deliverRemoteAoe(source, center);
+        source.towerHackArmed = true;
+        if (this.state.battle) {
+          this.state.battle.banner = "塔神已开挂 · 死亡后转移给最近队友";
+          this.state.battle.bannerTimer = 1.8;
+        }
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.9, size: source.radius + 28 });
+        this.addEffect({ kind: "burst", x: source.x, y: source.y, color: "#fff1bd", life: 0.55, size: 62 });
         break;
       }
       case "pako": {
@@ -5156,15 +5210,17 @@ export class AutoChessEngine {
       }
     }
 
-    this.addEffect({
-      kind: "text",
-      x: source.x,
-      y: source.y - 48,
-      color: def.accent,
-      text: def.abilityName,
-      life: 0.85,
-      size: 14,
-    });
+    if (source.unitId !== "tower_god") {
+      this.addEffect({
+        kind: "text",
+        x: source.x,
+        y: source.y - 48,
+        color: def.accent,
+        text: def.abilityName,
+        life: 0.85,
+        size: 14,
+      });
+    }
   }
 
   private reviveCorpseForRei(source: Fighter, corpse: BattleCorpse) {
@@ -5556,6 +5612,7 @@ export class AutoChessEngine {
       this.addEffect({ kind: "text", x: target.x, y: target.y - 46, color: UNIT_DEFS.zeyin.accent, text: "涅槃重生", life: 0.95, size: 14 });
       return false;
     }
+    if (target.unitId === "tower_god") this.transferTowerHack(target);
     const battle = this.state.battle;
     if (battle) {
       [...battle.player, ...battle.enemy].forEach((fighter) => {
@@ -5835,11 +5892,12 @@ export class AutoChessEngine {
             enemyCount: currentWave.units.length,
             formationTheme: currentWave.name.split(" · ")[0],
             potentialBounty: this.potentialBounty,
-            units: currentWave.units.map(({ id, star = 1 }) => ({
+            units: currentWave.units.map(({ id, star = 1 }, index) => ({
               id,
               name: UNIT_DEFS[id].name,
               cost: UNIT_DEFS[id].cost,
               star,
+              formation: enemyFormationPosition(index, currentWave.units.length),
             })),
             enemyTraits: enemyTraitActivations(currentWave.units).map(
               ({ id, count, level }) => ({

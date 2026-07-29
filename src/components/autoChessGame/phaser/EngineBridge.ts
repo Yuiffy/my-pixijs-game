@@ -24,6 +24,8 @@ export class EngineBridge {
 
   public codexOpen = false;
 
+  public enemyFormationOpen = false;
+
   public hidden = false;
 
   public onEvent: ((event: BridgeEvent) => void) | null = null;
@@ -106,6 +108,13 @@ export class EngineBridge {
     this.onEvent?.({ type: "state" });
   }
 
+  public setEnemyFormationOpen(open: boolean) {
+    const next = open && this.engine.state.phase === "preparation";
+    if (next === this.enemyFormationOpen) return;
+    this.enemyFormationOpen = next;
+    this.onEvent?.({ type: "state" });
+  }
+
   public update(deltaSeconds: number) {
     if (this.codexOpen || this.hidden) return;
     if (this.engine.state.phase === "battle" || this.engine.state.toast) {
@@ -130,7 +139,13 @@ export class EngineBridge {
   }
 
   public renderTextState() {
-    return this.engine.renderTextState();
+    const state = JSON.parse(this.engine.renderTextState()) as Record<string, unknown>;
+    return JSON.stringify({
+      ...state,
+      interface: {
+        enemyFormationOpen: this.enemyFormationOpen,
+      },
+    });
   }
 
   private emitAudio(event: GameAudioEvent) {
@@ -139,6 +154,7 @@ export class EngineBridge {
 
   private flushEvents() {
     const { phase } = this.engine.state;
+    if (phase !== "preparation") this.enemyFormationOpen = false;
     if (phase !== this.previousPhase) {
       if (phase === "battle") this.emitAudio("battle");
       if (phase === "result") this.emitAudio(this.engine.state.result?.won ? "win" : "loss");

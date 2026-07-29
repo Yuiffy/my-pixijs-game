@@ -30,6 +30,7 @@ const battleGeometry = await compileModule(
   "src/components/autoChessGame/core/battleGeometry.ts",
   { "./gameTypes": gameTypes },
 );
+const { enemyFormationPosition } = battleGeometry;
 const { AutoChessEngine, mechanicalRabbitMuzzle } = await compileModule(
   "src/components/autoChessGame/core/gameEngine.ts",
   {
@@ -61,6 +62,36 @@ const assertInsideBattleBounds = (fighter) => {
   assert.ok(fighter.y >= BATTLE_BOUNDS.top + fighter.radius);
   assert.ok(fighter.y <= BATTLE_BOUNDS.bottom - fighter.radius);
 };
+
+test("敌方部署图与战斗出生共用疏密两套站位规则", () => {
+  assert.deepEqual(
+    [0, 3, 9].map((index) => enemyFormationPosition(index, 10)),
+    [
+      { x: 990, y: 180, row: 0 },
+      { x: 894, y: 180, row: 0 },
+      { x: 702, y: 180, row: 0 },
+    ],
+  );
+  assert.deepEqual(
+    [0, 5, 19].map((index) => enemyFormationPosition(index, 20)),
+    [
+      { x: 1000, y: 180, row: 0 },
+      { x: 924, y: 180, row: 0 },
+      { x: 772, y: 532, row: 4 },
+    ],
+  );
+
+  const engine = createEngine(311);
+  const preview = JSON.parse(engine.renderTextState()).wave.units;
+  assert.ok(preview.length > 0);
+  assert.ok(preview.every((unit) => Number.isFinite(unit.formation.x) && Number.isFinite(unit.formation.y)));
+  engine.startBattle();
+  assert.ok(engine.state.battle);
+  assert.deepEqual(
+    engine.state.battle.enemy.map(({ x, y }) => ({ x, y })),
+    preview.map(({ formation }) => ({ x: formation.x, y: formation.y })),
+  );
+});
 
 test("跨场上与备战席合成时保留场上棋子的位置", () => {
   const engine = createEngine(8);
@@ -1826,7 +1857,6 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
   const projectileAbilities = [
     "spark_mage",
     "sui_flower",
-    "tower_god",
     "nightin",
     "lian",
   ];
@@ -3771,18 +3801,20 @@ test("星汐山猪冲阵持续耗能、缓慢转向、撞飞敌人并在边缘�
   assert.equal(seki.sekiChargeDirectionY, 0);
 });
 
-test("礼墨与塔神完成空气龙和尖塔压顶结算", () => {
+test("礼墨完成空气龙，塔神发动开挂后死亡并强化最近队友", () => {
   const engine = createEngine(141);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 2, id: "sumi", star: 1 };
   engine.state.board[1] = { uid: 3, id: "tower_god", star: 1 };
+  engine.state.board[2] = { uid: 4, id: "mossback", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   assert.ok(battle);
   const sumi = battle.player.find((fighter) => fighter.unitId === "sumi");
   const tower = battle.player.find((fighter) => fighter.unitId === "tower_god");
-  assert.ok(sumi && tower);
+  const mossback = battle.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(sumi && tower && mossback);
 
   assert.equal(Math.round(sumi.maxHp), gameData.UNIT_DEFS.sumi.hp);
   assert.equal(tower.energy, gameData.UNIT_DEFS.tower_god.energyProfile.start + 20);
@@ -3810,13 +3842,121 @@ test("礼墨与塔神完成空气龙和尖塔压顶结算", () => {
   assert.equal(target.armor, 20, "空气龙不应在施放时削弱敌人护甲");
 
   target.stun = 0;
-  const hpBeforeTower = target.hp;
+  tower.x = 300;
+  tower.y = 360;
+  sumi.x = 350;
+  sumi.y = 360;
+  mossback.x = 80;
+  mossback.y = 600;
+  const sumiBefore = {
+    attack: sumi.attack,
+    armor: sumi.armor,
+    attackInterval: sumi.attackInterval,
+    moveSpeed: sumi.moveSpeed,
+  };
+  const mossbackBefore = {
+    attack: mossback.attack,
+    armor: mossback.armor,
+    attackInterval: mossback.attackInterval,
+    moveSpeed: mossback.moveSpeed,
+  };
   engine.castAbility(tower, battle.enemy);
-  assert.equal(target.hp, hpBeforeTower, "尖塔弹幕抵达前不应提前伤害");
-  assert.ok(battle.projectiles.some((projectile) => projectile.impactAbilityId === "tower_god"));
-  engine["updateProjectiles"](battle, 1);
-  assert.ok(target.hp < hpBeforeTower, "尖塔压顶应伤害最密集区域");
-  assert.ok(target.stun > 0, "尖塔压顶应眩晕区域内敌人");
+  assert.equal(tower.towerHackArmed, true);
+  assert.equal(sumi.towerHackBuffed, false, "塔神存活时不应提前强化队友");
+  assert.equal(battle.projectiles.some((projectile) => projectile.impactAbilityId === "tower_god"), false);
+
+  engine["damage"](target, tower, tower.maxHp * 20);
+  assert.equal(tower.alive, false);
+  assert.equal(sumi.towerHackBuffed, true, "最近的队友应继承开挂");
+  assert.equal(mossback.towerHackBuffed, false, "较远队友不应继承开挂");
+  assert.equal(sumi.towerHackAttackBonus, 0.45);
+  assert.equal(sumi.towerHackArmorBonus, 25);
+  assert.equal(sumi.towerHackAttackSpeed, 0.45);
+  assert.equal(sumi.towerHackMoveSpeed, 45);
+  assert.ok(Math.abs(sumi.attack - sumiBefore.attack * 1.45) < 0.001);
+  assert.equal(sumi.armor, sumiBefore.armor + 25);
+  assert.ok(Math.abs(sumi.attackInterval - sumiBefore.attackInterval / 1.45) < 0.001);
+  assert.equal(sumi.moveSpeed, sumiBefore.moveSpeed + 45);
+  assert.deepEqual(
+    {
+      attack: mossback.attack,
+      armor: mossback.armor,
+      attackInterval: mossback.attackInterval,
+      moveSpeed: mossback.moveSpeed,
+    },
+    mossbackBefore,
+  );
+  assert.match(battle.banner, /哈哈哈我开挂了.*这游戏怎么这么简单啊/);
+});
+
+test("塔神未发动不转移开挂，同档不叠加且高星档位覆盖低星", () => {
+  const engine = createEngine(142);
+  engine.state.playerLevel = 5;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "mossback", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "tower_god", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "tower_god", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "tower_god", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "tower_god", star: 2 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  assert.ok(battle);
+  const target = battle.player.find((fighter) => fighter.unitId === "mossback");
+  const towers = battle.player.filter((fighter) => fighter.unitId === "tower_god");
+  const enemy = battle.enemy[0];
+  assert.ok(target && enemy);
+  assert.equal(towers.length, 4);
+  target.x = 400;
+  target.y = 360;
+  towers.forEach((tower, index) => {
+    tower.x = 800;
+    tower.y = 180 + index * 90;
+  });
+
+  towers[0].x = 430;
+  towers[0].y = 360;
+  engine["damage"](enemy, towers[0], towers[0].maxHp * 20);
+  assert.equal(target.towerHackBuffed, false, "未发动开挂的塔神死亡不应强化队友");
+
+  towers[1].x = 420;
+  towers[1].y = 360;
+  engine.castAbility(towers[1], battle.enemy);
+  engine["damage"](enemy, towers[1], towers[1].maxHp * 20);
+  assert.equal(target.towerHackAttackBonus, 0.45);
+  const oneStarStats = {
+    attack: target.attack,
+    armor: target.armor,
+    attackInterval: target.attackInterval,
+    moveSpeed: target.moveSpeed,
+  };
+
+  towers[2].x = 420;
+  towers[2].y = 360;
+  engine.castAbility(towers[2], battle.enemy);
+  engine["damage"](enemy, towers[2], towers[2].maxHp * 20);
+  assert.deepEqual(
+    {
+      attack: target.attack,
+      armor: target.armor,
+      attackInterval: target.attackInterval,
+      moveSpeed: target.moveSpeed,
+    },
+    oneStarStats,
+    "同档开挂不能叠加",
+  );
+
+  towers[3].x = 420;
+  towers[3].y = 360;
+  engine.castAbility(towers[3], battle.enemy);
+  engine["damage"](enemy, towers[3], towers[3].maxHp * 20);
+  assert.equal(target.towerHackAttackBonus, 0.65);
+  assert.equal(target.towerHackArmorBonus, 38);
+  assert.equal(target.towerHackAttackSpeed, 0.65);
+  assert.equal(target.towerHackMoveSpeed, 65);
+  assert.ok(target.attack > oneStarStats.attack);
+  assert.equal(target.armor, oneStarStats.armor + 13);
+  assert.ok(target.attackInterval < oneStarStats.attackInterval);
+  assert.equal(target.moveSpeed, oneStarStats.moveSpeed + 20);
 });
 
 test("帕可天使摸鱼按自身属性落地治疗，并留下可进出的持续治疗区", () => {

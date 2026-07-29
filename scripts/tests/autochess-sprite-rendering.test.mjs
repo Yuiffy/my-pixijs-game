@@ -478,6 +478,24 @@ test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示",
   assert.match(scene, /this\.overlayLayer\.add\(zone\)/);
 });
 
+test("备战界面可从桌面和移动端查看敌方真实部署", () => {
+  assert.match(scene, /enemy-formation-trigger-desktop/);
+  assert.match(scene, /enemy-formation-trigger-mobile/);
+  assert.match(scene, /setEnemyFormationOpen\(true\)/);
+  assert.match(scene, /if \(!this\.bridge\.enemyFormationOpen\) this\.dispatch\(\{ type: "battle" \}\)/);
+  assert.match(bridge, /enemyFormationOpen = false/);
+  assert.match(bridge, /interface:\s*\{\s*enemyFormationOpen:/);
+  assert.match(hud, /function EnemyFormationOverlay/);
+  assert.match(hud, /enemyFormationPosition\(index, wave\.units\.length\)/);
+  assert.match(hud, /role="dialog" aria-modal="true"/);
+  assert.match(hud, /rift-enemy-formation-unit/);
+  assert.match(hud, /onPointerEnter=\{\(\) => setActiveIndex\(index\)\}/);
+  assert.match(hud, /abilityDescriptionForStar\(activeDefinition, activeWaveUnit\.star \?\? 1\)/);
+  assert.match(hudCss, /\.rift-enemy-formation-backdrop/);
+  assert.match(hudCss, /\.rift-enemy-formation-layout/);
+  assert.match(hudCss, /grid-template-rows: minmax\(210px, 42vh\) auto/);
+});
+
 test("战斗顶部展示双方羁绊、完整说明并支持小屏收起", () => {
   assert.match(hud, /function BattleTraitBar/);
   assert.match(hud, /playerBattleTraits/);

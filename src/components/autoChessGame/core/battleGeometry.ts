@@ -6,6 +6,17 @@ export const GLUTTONY_RADIUS_PER_STACK = 0.025;
 
 export const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
 
+export const enemyFormationPosition = (index: number, unitCount: number) => {
+  if (unitCount <= 10) {
+    const row = index % 3;
+    const rank = Math.floor(index / 3);
+    return { x: 990 - rank * 96, y: 180 + row * 165, row };
+  }
+  const row = index % 5;
+  const rank = Math.floor(index / 5);
+  return { x: 1000 - rank * 76, y: 180 + row * 88, row };
+};
+
 export const rayEndpointAtBattleBounds = (
   source: { x: number; y: number },
   target: { x: number; y: number },

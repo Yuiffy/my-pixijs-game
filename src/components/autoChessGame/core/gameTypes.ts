@@ -245,6 +245,14 @@ export interface Fighter {
   /** 当前仍与山猪冲锋接触的敌人；离开后可被再次撞击。 */
   sekiChargeHitFids: string[];
   sekiChargeHitCount: number;
+  /** 塔神「开挂」已经发动，等待自身死亡时把增益转移给队友。 */
+  towerHackArmed: boolean;
+  /** 已继承塔神「开挂」；同名增益不叠加，只保留更强档位。 */
+  towerHackBuffed: boolean;
+  towerHackAttackBonus: number;
+  towerHackArmorBonus: number;
+  towerHackAttackSpeed: number;
+  towerHackMoveSpeed: number;
   /** 蛙梓歌唱形态的全队治疗节拍。 */
   cinderSongPulseTimer: number;
   abilityAttackBonus: number;

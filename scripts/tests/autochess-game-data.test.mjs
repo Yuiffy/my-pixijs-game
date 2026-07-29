@@ -789,7 +789,16 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   await access(path.resolve("public/images/livers/sumi-little-dragon.jpg"));
   assert.equal(seki.abilityName, "山猪冲阵");
   assert.match(seki.abilityDescription, /持续耗能.*提高移速.*无法普攻.*缓慢转向.*击退.*眩晕.*边缘.*反弹/);
-  assert.equal(towerGod.abilityName, "尖塔压顶");
+  assert.equal(towerGod.abilityName, "开挂");
+  assert.match(towerGod.abilityDescription, /发动.*死亡.*最近.*攻击.*护甲.*攻速.*移速.*不叠加/);
+  assert.deepEqual(
+    towerGod.abilityLevels.map((level) => level.stats),
+    [
+      { attackBonus: 0.45, armorBonus: 25, attackSpeed: 0.45, moveSpeed: 45 },
+      { attackBonus: 0.65, armorBonus: 38, attackSpeed: 0.65, moveSpeed: 65 },
+      { attackBonus: 0.9, armorBonus: 55, attackSpeed: 0.9, moveSpeed: 90 },
+    ],
+  );
   assert.equal(sumi.abilityName, "空气龙");
   assert.match(sumi.abilityDescription, /隐身.*最低攻击优先级.*正常攻击.*移速.*能量耗尽.*礼小龙/);
   assert.equal(sumi.passiveName, "社恐");
