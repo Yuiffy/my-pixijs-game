@@ -4,10 +4,6 @@ import {
   ABILITY_CAST_TIMING_LABELS,
   AUGMENTS,
   AUGMENT_TIER_LABELS,
-  CAMPAIGN_ROUNDS,
-  ENERGY_PROFILES,
-  NORMAL_ENDLESS_END_ROUND,
-  SHOP_UNITS,
   STARTERS,
   TRAITS,
   UNIT_DEFS,
@@ -20,40 +16,35 @@ import {
   enemyBudgetForRound,
   enemyTraitActivations,
   progressionModeForRound,
-  tierOddsForLevel,
 } from "../core/gameData";
 import type {
   BattleEffect,
   Fighter,
-  MechanicalRabbitPet,
   OwnedUnit,
-  PineTreeTurret,
   Projectile,
   RankingMetric,
   Team,
   UnitLocation,
 } from "../core/gameTypes";
-import { GLUTTONY_RADIUS_PER_STACK, fighterVisualRadius, mechanicalRabbitMuzzle } from "../core/battleGeometry";
 import { EngineBridge, type GameAction } from "./EngineBridge";
 import {
   circularTextureKeyForUnit,
   createCircularProjectileTextures,
   createCircularPortraitTextures,
   createFallbackTextures,
-  HAZEL_MANQU_TEXTURE_KEY,
   preloadUnitPortraits,
-  SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY,
   textureKeyForUnit,
 } from "./assets";
-import { drawHealingFieldEffect, drawHealingPulseEffect } from "./healingEffects";
+import { FighterViewRenderer } from "./battle/FighterView";
+import { ProjectileViewRenderer } from "./battle/ProjectileView";
+import { EffectViewRenderer } from "./battle/EffectView";
+import { SummonViewRenderer } from "./battle/SummonView";
 import {
   COMPACT_RESULT_LAYOUT,
   COMPACT_TRAIT_STRIP,
   MOBILE_BENCH_PANEL,
   MOBILE_BOARD_PANEL,
   MOBILE_TRAIT_STRIP,
-  MOBILE_SHOP_PANEL,
-  MOBILE_TOUCH_TARGET,
   PREPARATION_BENCH_PANEL,
   PREPARATION_BOARD_PANEL,
   PREPARATION_SELL_ZONE,
@@ -74,7 +65,6 @@ import {
   mobileBoardSlot,
   occupiedSlotLayout,
   profileFor,
-  titleLayoutFor,
   tooltipLayoutFor,
   viewportScaleFor,
   type LayoutProfile,
@@ -132,49 +122,9 @@ type ResultScrollDrag = {
   grabOffsetY: number;
 };
 
-type FighterViewParts = {
-  hp: Phaser.GameObjects.Rectangle;
-  energy: Phaser.GameObjects.Rectangle;
-  portrait: Phaser.GameObjects.Container;
-  portraitImage: Phaser.GameObjects.Image;
-  hitFlash: Phaser.GameObjects.Arc;
-  shield: Phaser.GameObjects.Arc;
-  abilityShield: Phaser.GameObjects.Arc;
-  syncAura: Phaser.GameObjects.Arc;
-  burn: Phaser.GameObjects.Arc;
-  status: Phaser.GameObjects.Text;
-  shadow: Phaser.GameObjects.Ellipse;
-  label: Phaser.GameObjects.Text;
-  star: Phaser.GameObjects.Text;
-};
-
 type BattleViewPointer = {
   x: number;
   y: number;
-};
-
-type ProjectileViewParts = {
-  trail: Phaser.GameObjects.Graphics;
-  core: Phaser.GameObjects.Arc;
-  icon: Phaser.GameObjects.Text;
-  dragon: Phaser.GameObjects.Image;
-};
-
-type ProjectileVisualState = {
-  style: Projectile["style"];
-  grounded: boolean;
-  velocityX: number;
-  velocityY: number;
-  size: number;
-  radius: number;
-  color: string;
-  emoji: string;
-};
-
-type EffectViewParts = {
-  graphics: Phaser.GameObjects.Graphics;
-  burstGradient: Phaser.GameObjects.Image;
-  label: Phaser.GameObjects.Text;
 };
 
 export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
@@ -202,19 +152,16 @@ const BURST_GRADIENT_TEXTURE = "rift-burst-gradient";
 const TITLE_GLOW_TEXTURE = "rift-title-glow";
 const PROJECTILE_EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", sans-serif';
 
-const projectileEmoji = (projectile: Projectile) => {
-  if (projectile.emoji) return projectile.emoji;
-  if (projectile.style === "shark") return "🦈";
-  if (projectile.style === "carrot") return "🥕";
-  if (projectile.style === "coin") return "🪙";
-  if (projectile.style === "lollipop") return "🍭";
-  if (projectile.style === "fireball") return "🔥";
-  if (projectile.style === "laugh") return "😂";
-  return "";
-};
-
 export class RiftLineScene extends Phaser.Scene {
   private readonly bridge: EngineBridge;
+
+  private readonly fighterRenderer: FighterViewRenderer;
+
+  private readonly projectileRenderer: ProjectileViewRenderer;
+
+  private readonly effectRenderer: EffectViewRenderer;
+
+  private readonly summonRenderer: SummonViewRenderer;
 
   private phaseLayer!: Phaser.GameObjects.Container;
 
@@ -232,12 +179,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private profile: LayoutProfile = "wide";
 
-  /** Used only by unreachable legacy mobile drawing helpers. */
-  private mobilePage = 0;
-
   private fighterViews = new Map<string, Phaser.GameObjects.Container>();
-
-  private fighterViewParts = new WeakMap<Phaser.GameObjects.Container, FighterViewParts>();
 
   private dragState: DragState | null = null;
 
@@ -257,25 +199,11 @@ export class RiftLineScene extends Phaser.Scene {
 
   private projectileViews = new Map<Projectile, Phaser.GameObjects.Container>();
 
-  private projectileViewPool: Phaser.GameObjects.Container[] = [];
-
-  private projectileViewParts = new WeakMap<Phaser.GameObjects.Container, ProjectileViewParts>();
-
-  private projectileVisualStates = new WeakMap<Phaser.GameObjects.Container, ProjectileVisualState>();
-
   private effectViews = new Map<BattleEffect, Phaser.GameObjects.Container>();
-
-  private effectViewPool: Phaser.GameObjects.Container[] = [];
-
-  private effectViewParts = new WeakMap<Phaser.GameObjects.Container, EffectViewParts>();
 
   private chronosphereView: Phaser.GameObjects.Container | null = null;
 
   private suppressedEffectViews = new WeakSet<BattleEffect>();
-
-  private petViews = new Map<string, Phaser.GameObjects.Container>();
-
-  private treeViews = new Map<string, Phaser.GameObjects.Container>();
 
   private buttonViews: Phaser.GameObjects.Container[] = [];
 
@@ -323,6 +251,28 @@ export class RiftLineScene extends Phaser.Scene {
   constructor(bridge: EngineBridge) {
     super({ key: "RiftLineScene" });
     this.bridge = bridge;
+    this.effectRenderer = new EffectViewRenderer({
+      scene: this,
+      text: (x, y, value, size, color, style) => this.text(x, y, value, size, color, style),
+    });
+    this.projectileRenderer = new ProjectileViewRenderer({
+      scene: this,
+      bridge,
+      text: (x, y, value, size, color, style) => this.text(x, y, value, size, color, style),
+    });
+    this.fighterRenderer = new FighterViewRenderer({
+      scene: this,
+      bridge,
+      isCompact: () => this.isCompact(),
+      text: (x, y, value, size, color, style) => this.text(x, y, value, size, color, style),
+      createPortrait: (unitId, x, y, radius, enemy) => this.createPortrait(unitId, x, y, radius, enemy),
+      showUnitTooltip: (unitId, pointer, star, fighter) => this.showUnitTooltip(unitId, pointer, star, fighter),
+      clearTooltip: () => this.clearTooltip(),
+    });
+    this.summonRenderer = new SummonViewRenderer({
+      scene: this,
+      text: (x, y, value, size, color, style) => this.text(x, y, value, size, color, style),
+    });
   }
 
   preload() {
@@ -521,12 +471,11 @@ export class RiftLineScene extends Phaser.Scene {
     this.headerLayer.removeAll(true);
     this.fighterViews.clear();
     this.projectileViews.clear();
-    this.projectileViewPool = [];
+    this.projectileRenderer.reset();
     this.effectViews.clear();
-    this.effectViewPool = [];
+    this.effectRenderer.reset();
     this.chronosphereView = null;
-    this.petViews.clear();
-    this.treeViews.clear();
+    this.summonRenderer.reset();
     this.buttonViews.forEach((button) => button.destroy());
     this.buttonViews = [];
     this.battleTimerText = null;
@@ -704,156 +653,12 @@ export class RiftLineScene extends Phaser.Scene {
     return container;
   }
 
-  private drawHeader() {
-    const { state, boardCap, boardCount } = this.bridge.engine;
-    const mode = progressionModeForRound(state.round);
-    const graphics = this.add.graphics();
-    graphics.fillStyle(0x050c14, 0.92);
-    graphics.fillRect(0, 0, WORLD_WIDTH, 78);
-    graphics.lineStyle(1, 0x39627a, 0.45);
-    graphics.lineBetween(0, 77, WORLD_WIDTH, 77);
-    this.headerLayer.add(graphics);
-    this.headerLayer.add(this.text(28, 16, "裂隙阵线", 23, "#f1f8ff", { fontStyle: "bold" }));
-    const modeSubtitle =
-      mode === "campaign"
-        ? "RIFT LINE · 十六战远征"
-        : mode === "endless"
-          ? "RIFT LINE · 普通无限"
-          : "RIFT LINE · 地狱无限";
-    this.headerLayer.add(this.text(30, 47, modeSubtitle, 10, "#79a1b7", { fontStyle: "bold" }));
-    if (state.phase === "title") {
-      this.headerLayer.add(this.text(1088, 30, `最高纪录 ${state.bestScore.toLocaleString()}`, 14, "#91aabd").setOrigin(1, 0.5));
-      return;
-    }
-    const label =
-      mode === "campaign"
-        ? `第 ${state.round}/${CAMPAIGN_ROUNDS} 战`
-        : mode === "endless"
-          ? `无限 ${state.round}/${NORMAL_ENDLESS_END_ROUND}`
-          : `地狱 · 第 ${state.round} 战`;
-    this.headerLayer.add(this.text(465, 28, label, 15, mode === "hell" ? "#ff9baf" : "#d8efff", { fontStyle: "bold" }).setOrigin(0.5));
-    this.headerLayer.add(this.text(770, 18, `核心 ${state.hp}/${state.maxHp}`, 11, "#afc3d1"));
-    const health = this.add.graphics();
-    health.fillStyle(0x1a2b38, 1).fillRoundedRect(770, 38, 120, 11, 5);
-    health.fillStyle(0xff718b, 1).fillRoundedRect(770, 38, 120 * (state.hp / state.maxHp), 11, 5);
-    this.headerLayer.add(health);
-    this.headerLayer.add(this.text(1010, 18, "积分", 10, "#8ba3b5"));
-    this.headerLayer.add(this.text(1010, 37, state.score.toLocaleString(), 18, "#e0f0fc", { fontStyle: "bold" }));
-    this.headerLayer.add(this.text(580, 52, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${boardCount}/${boardCap}`, 10, "#84b8d5").setOrigin(0.5));
-  }
-
-  private drawTitle() {
-    const { state } = this.bridge.engine;
-    const layout = titleLayoutFor(this.profile);
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.eyebrowY, "守住十六次冲击。每一次购买，都该改变你的答案。", 15, TITLE.eyebrow).setOrigin(0.5));
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.titleY, "裂 隙 阵 线", 48, "#f4f9ff", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.summaryY, "十六战远征 · 自动战斗 · 无限冲层", 13, TITLE.summary, { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.promptY, "选择一项开局协议", 11, TITLE.prompt).setOrigin(0.5));
-
-    state.starterChoices.forEach((id, index) => {
-      const starter = STARTERS.find((item) => item.id === id);
-      if (!starter) return;
-      const x = layout.cardXs[index];
-      const y = layout.cardY;
-      const accent = Phaser.Display.Color.HexStringToColor(starter.color).color;
-      const accentColor = Phaser.Display.Color.IntegerToColor(accent);
-      const ctaFill = Phaser.Display.Color.GetColor(Math.round(accentColor.red * 0.46), Math.round(accentColor.green * 0.46), Math.round(accentColor.blue * 0.46));
-      const ctaHover = Phaser.Display.Color.GetColor(Math.min(255, Math.round(accentColor.red * 1.14 + 18)), Math.min(255, Math.round(accentColor.green * 1.14 + 18)), Math.min(255, Math.round(accentColor.blue * 1.14 + 18)));
-      const container = this.add.container(x, y);
-      const cardPanel = this.add.graphics();
-      const cta = this.add.graphics();
-      const ctaWidth = layout.cardWidth - 124;
-      const ctaX = (layout.cardWidth - ctaWidth) / 2;
-      const ctaText = this.text(layout.cardWidth / 2, layout.ctaY + 16, "选择协议", 12, TITLE.ctaText, { fontStyle: "bold" }).setOrigin(0.5);
-      const drawCard = (hover = false) => {
-        cardPanel.clear();
-        cardPanel.fillGradientStyle(TITLE.cardTop, TITLE.cardTop, TITLE.cardBottom, TITLE.cardBottom, 0.98);
-        cardPanel.fillRoundedRect(0, 0, layout.cardWidth, layout.cardHeight, 20);
-        if (hover) cardPanel.fillStyle(accent, TITLE.cardHoverOverlay).fillRoundedRect(0, 0, layout.cardWidth, layout.cardHeight, 20);
-        cardPanel.lineStyle(hover ? 2 : 1, accent, hover ? 1 : TITLE.cardBorderAlpha).strokeRoundedRect(0, 0, layout.cardWidth, layout.cardHeight, 20);
-        cta.clear();
-        cta.fillStyle(hover ? ctaHover : ctaFill, 1).fillRoundedRect(ctaX, layout.ctaY, ctaWidth, 32, 12);
-        cta.lineStyle(1, accent, hover ? 1 : 0.84).strokeRoundedRect(ctaX, layout.ctaY, ctaWidth, 32, 12);
-        ctaText.setText(hover ? "点击接入并开始" : "选择协议").setColor(hover ? TITLE.ctaHoverText : TITLE.ctaText);
-      };
-      drawCard();
-      const portrait = this.createPortrait(starter.unit, layout.cardWidth / 2, layout.portraitY, 35);
-      const description = this.boundedText(starter.description, layout.descriptionWidth, 2, 12, TITLE.description, { align: "center", lineSpacing: 4 });
-      description.setPosition(layout.cardWidth / 2, layout.descriptionY).setOrigin(0.5, 0);
-      const zone = this.add.zone(layout.cardWidth / 2, layout.cardHeight / 2, layout.cardWidth, layout.cardHeight).setInteractive({ useHandCursor: true });
-      zone.on(Phaser.Input.Events.POINTER_OVER, () => { container.setY(y - 5); drawCard(true); });
-      zone.on(Phaser.Input.Events.POINTER_OUT, () => { container.setY(y); drawCard(false); });
-      zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch({ type: "starter", id }));
-      container.add([
-        cardPanel,
-        portrait,
-        this.text(layout.cardWidth / 2, layout.subtitleY, starter.subtitle, 11, starter.color, { fontStyle: "bold" }).setOrigin(0.5),
-        this.text(layout.cardWidth / 2, layout.nameY, starter.name, 21, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5),
-        description,
-        cta,
-        ctaText,
-        zone,
-      ]);
-      this.phaseLayer.add(container);
-    });
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.seedY, `本局战术种子 · ${String(state.seed % 100000).padStart(5, "0")}`, 11, TITLE.seed).setOrigin(0.5));
-    this.phaseLayer.add(this.text(WORLD_WIDTH / 2, layout.controlsY, "操作：点击购买与移动 · 右键快速回收 · R 刷新 · Space 开战 · F 全屏", 10, TITLE.controls).setOrigin(0.5));
-  }
-
-  private drawMobileTitle() {
-    const { state } = this.bridge.engine;
-    const choiceCount = state.starterChoices.length;
-    if (!choiceCount) return;
-    const index = Phaser.Math.Clamp(this.mobilePage, 0, choiceCount - 1);
-    const starter = STARTERS.find((item) => item.id === state.starterChoices[index]);
-    if (!starter) return;
-    const accent = Phaser.Display.Color.HexStringToColor(starter.color).color;
-    const card = this.add.container(16, 212);
-    card.add(this.panel(0, 0, 448, 418, 0x112331, 0.98, accent));
-    card.add(this.createPortrait(starter.unit, 224, 70, 48));
-    card.add(this.text(224, 136, starter.subtitle, 15, starter.color, { fontStyle: "bold" }).setOrigin(0.5));
-    card.add(this.text(224, 170, starter.name, 26, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5));
-    const description = this.boundedText(starter.description, 364, 3, 16, TITLE.description, { align: "center", lineSpacing: 6 });
-    description.setPosition(224, 210).setOrigin(0.5, 0);
-    card.add(description);
-    this.phaseLayer.add(this.text(240, 132, "选择开局协议", 17, TITLE.eyebrow, { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(240, 168, "为手机操作优化的纵向布局", 12, TITLE.summary).setOrigin(0.5));
-    this.button(54, 522, 372, MOBILE_TOUCH_TARGET, "选择协议并开始", { type: "starter", id: starter.id }, { tone: "confirm" });
-    card.add(this.text(224, 356, `${index + 1} / ${choiceCount}`, 14, "#a8c0cf", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(card);
-    if (choiceCount > 1) {
-      this.button(32, 644, 188, MOBILE_TOUCH_TARGET, "上一项", undefined, { tone: "neutral", enabled: index > 0, secondary: "浏览" }, DEPTH.board, () => {
-        this.mobilePage = Math.max(0, this.mobilePage - 1);
-        this.rebuild();
-      });
-      this.button(260, 644, 188, MOBILE_TOUCH_TARGET, "下一项", undefined, { tone: "neutral", enabled: index < choiceCount - 1, secondary: "浏览" }, DEPTH.board, () => {
-        this.mobilePage = Math.min(choiceCount - 1, this.mobilePage + 1);
-        this.rebuild();
-      });
-    }
-    this.phaseLayer.add(this.text(240, 734, `战术种子 · ${String(state.seed % 100000).padStart(5, "0")}`, 12, TITLE.seed).setOrigin(0.5));
-    this.phaseLayer.add(this.text(240, 766, "点击卡片或按钮选择；部署棋子后可开始战斗", 12, TITLE.controls).setOrigin(0.5));
-  }
-
   private drawPreparationPanel(x: number, y: number, width: number, height: number) {
     const graphics = this.add.graphics();
     graphics.fillGradientStyle(0x132736, 0x132736, 0x101929, 0x101929, 0.94);
     graphics.fillRoundedRect(x, y, width, height, 18);
     graphics.lineStyle(1, 0x66b6e0, 0.25).strokeRoundedRect(x, y, width, height, 18);
     return graphics;
-  }
-
-  private drawCanvasPreparation() {
-    const { state, boardCount, boardCap } = this.bridge.engine;
-    const compact = this.isCompact();
-    this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BOARD_PANEL.x, PREPARATION_BOARD_PANEL.y, PREPARATION_BOARD_PANEL.width, PREPARATION_BOARD_PANEL.height));
-    state.board.forEach((unit, index) => this.drawSlot("board", index, unit, compact));
-    if (!compact) {
-      this.phaseLayer.add(this.drawPreparationPanel(PREPARATION_BENCH_PANEL.x, PREPARATION_BENCH_PANEL.y, PREPARATION_BENCH_PANEL.width, PREPARATION_BENCH_PANEL.height));
-      this.phaseLayer.add(this.text(48, 570, `备战席  ${state.bench.filter(Boolean).length}/${state.bench.length}`, 12, "#9cb3c3"));
-      this.phaseLayer.add(this.text(612, 570, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${boardCount}/${boardCap}`, 11, "#72d8ff").setOrigin(1, 0));
-      state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, false));
-    }
   }
 
   private drawPreparation() {
@@ -1527,270 +1332,6 @@ export class RiftLineScene extends Phaser.Scene {
     if (this.game?.canvas) this.game.canvas.style.cursor = "";
   }
 
-  private traitActivatesAfterPurchase(unitId: UnitId, traitId: keyof typeof TRAITS) {
-    const { engine } = this.bridge;
-    const status = engine.getTraitStatus(traitId);
-    if (status.active) return false;
-    const threshold = TRAITS[traitId].thresholds[status.level];
-    return status.count + 1 >= threshold && !engine.state.board.some((unit) => unit?.id === unitId);
-  }
-
-  private createShopTraitTags(unitId: UnitId, x: number, y: number, maxX: number, affordable: boolean, compact = false) {
-    const container = this.add.container(x, y);
-    const fontSize = 10;
-    const tagHeight = compact ? 20 : 21;
-    const horizontalPadding = compact ? 14 : 16;
-    let cursor = 0;
-    UNIT_DEFS[unitId].traits.forEach((traitId) => {
-      const { [traitId]: trait } = TRAITS;
-      const status = this.bridge.engine.getTraitStatus(traitId);
-      const completes = this.traitActivatesAfterPurchase(unitId, traitId);
-      const label = trait.name;
-      const labelText = this.text(0, 0, label, fontSize, "#ffffff", { fontStyle: "bold" });
-      const width = Math.ceil(labelText.width) + horizontalPadding;
-      labelText.destroy();
-      if (x + cursor + width > maxX) return;
-      const { color } = Phaser.Display.Color.HexStringToColor(trait.color);
-      const { active } = status;
-      const graphic = this.add.graphics();
-      graphic.fillStyle(active || (completes && affordable) ? color : 0x142735, active ? 0.22 : completes && affordable ? 0.38 : 0.9);
-      graphic.fillRoundedRect(cursor, 0, width, tagHeight, tagHeight / 2);
-      graphic.lineStyle(completes && affordable ? 1.5 : 1, active || (completes && affordable) ? color : 0x395467, 1);
-      graphic.strokeRoundedRect(cursor, 0, width, tagHeight, tagHeight / 2);
-      const text = this.text(cursor + width / 2, tagHeight / 2, label, fontSize, active || (completes && affordable) ? "#f4fbff" : "#b3c7d1", { fontStyle: "bold" }).setOrigin(0.5);
-      container.add([graphic, text]);
-      cursor += width + 4;
-    });
-    return container;
-  }
-
-  private ownedUnitStars(unitId: UnitId) {
-    const { state } = this.bridge.engine;
-    const stars: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
-    [...state.board, ...state.bench].forEach((unit) => {
-      if (unit?.id === unitId) stars[unit.star] += 1;
-    });
-    return stars;
-  }
-
-  private addShopOwnedCue(item: Phaser.GameObjects.Container, unitId: UnitId, stars: Record<1 | 2 | 3, number>, compact: boolean) {
-    const total = stars[1] + stars[2] + stars[3];
-    if (total <= 0) return;
-    const accent = Phaser.Display.Color.HexStringToColor(UNIT_DEFS[unitId].accent).color;
-    const portraitX = compact ? 27 : 31;
-    const portraitY = compact ? 33 : 34;
-    const halo = this.add.circle(portraitX, portraitY, compact ? 25 : 27, accent, 0.08);
-    const ring = this.add.graphics();
-    ring.lineStyle(1.5, accent, 0.82).strokeCircle(portraitX, portraitY, compact ? 24 : 26);
-    item.add([halo, ring]);
-    this.tweens.add({
-      targets: [halo, ring],
-      alpha: { from: 0.2, to: 0.72 },
-      duration: 900,
-      ease: "Sine.inOut",
-      repeat: -1,
-      yoyo: true,
-    });
-    const badgeX = compact ? 90 : 150;
-    const badgeY = compact ? 4 : 8;
-    const badgeWidth = compact ? 72 : 74;
-    const starEntries = ([3, 2, 1] as const)
-      .filter((star) => stars[star] > 0)
-      .map((star) => `${star}星×${stars[star]}`);
-    const labelText = starEntries.length === 1 && stars[1] === total
-      ? `已有 ×${total}`
-      : `已有 ${starEntries.join(" ")}`;
-    const badge = this.add.graphics();
-    badge.fillStyle(accent, 0.18).fillRoundedRect(badgeX, badgeY, badgeWidth, 16, 8);
-    badge.lineStyle(1, accent, 0.8).strokeRoundedRect(badgeX, badgeY, badgeWidth, 16, 8);
-    const label = this.text(badgeX + badgeWidth / 2, badgeY + 8, labelText, compact ? 7 : 8, "#f4fbff", { fontStyle: "bold" }).setOrigin(0.5);
-    item.add([badge, label]);
-  }
-
-  private canBuyShopUnit(unitId: UnitId) {
-    const { engine } = this.bridge;
-    return engine.state.gold >= UNIT_DEFS[unitId].cost
-      && (engine.boardCount < engine.boardCap || engine.state.bench.some((unit) => !unit));
-  }
-
-  private canReroll() {
-    const { state } = this.bridge.engine;
-    return state.gold >= 1 || state.freeRerollCharges > 0;
-  }
-
-  private drawWideShop() {
-    const { state, isMaxPlayerLevel, upgradeCost } = this.bridge.engine;
-    this.phaseLayer.add(this.panel(PREPARATION_SHOP_PANEL.x, PREPARATION_SHOP_PANEL.y, PREPARATION_SHOP_PANEL.width, PREPARATION_SHOP_PANEL.height, 0x08121c, 0.96, 0x6fbfeb));
-    this.phaseLayer.add(this.text(812, 112, `战术商店 · ${bookLevelForPlayerLevel(state.playerLevel)} 本`, 16, "#f1f8ff", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(1076, 117, isMaxPlayerLevel ? "已满级" : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${upgradeCost} 金币`, 9, "#7593a5").setOrigin(1));
-    this.phaseLayer.add(this.text(812, 131, tierOddsForLevel(state.playerLevel).map((chance, index) => (chance ? `${index + 1}费${chance}%` : "")).filter(Boolean).join(" · "), 9, "#8dc3e0", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(1076, 137, `金币 ${state.gold}`, 14, COLORS.gold, { fontStyle: "bold" }).setOrigin(1));
-    state.shop.forEach((unitId, index) => {
-      const y = 151 + index * 74;
-      const item = this.add.container(810, y);
-      const card = this.add.graphics();
-      const ownedStars = unitId ? this.ownedUnitStars(unitId) : { 1: 0, 2: 0, 3: 0 };
-      const hasOwned = ownedStars[1] + ownedStars[2] + ownedStars[3] > 0;
-      card.fillStyle(unitId ? 0x11222f : 0x0a1620, unitId ? 0.92 : 0.8);
-      card.fillRoundedRect(0, 0, 270, 70, 10);
-      card.lineStyle(1, unitId ? 0x294658 : 0x203748, 1).strokeRoundedRect(0, 0, 270, 70, 10);
-      item.add(card);
-      if (unitId) {
-        const def = UNIT_DEFS[unitId];
-        const affordable = this.canBuyShopUnit(unitId);
-        this.addShopOwnedCue(item, unitId, ownedStars, false);
-        item.add(this.createPortrait(unitId, 31, 34, 20).setAlpha(affordable ? 1 : 0.48));
-        const role = def.title.includes(" · ") ? def.title.split(" · ").at(-1) || def.title : def.title;
-        item.add(this.text(62, 11, this.truncateText(def.name, hasOwned ? 82 : 138, 13, { fontStyle: "bold" }), 13, affordable ? "#edf7ff" : "#617888", { fontStyle: "bold" }));
-        item.add(this.text(62, 29, this.truncateText(role, 158, 12), 12, affordable ? "#c3dbe7" : "#a1b8c4", { fontStyle: "bold" }));
-        item.add(this.text(245, 22, `${def.cost}`, 22, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
-        item.add(this.createShopTraitTags(unitId, 62, 47, 242, affordable));
-        const zone = this.add.zone(135, 34, 270, 68).setInteractive({ useHandCursor: affordable });
-        const action = { type: "shop", index } satisfies GameAction;
-        zone.setData("action", action);
-        if (affordable) zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch(action));
-        zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
-          card.clear();
-          const accent = Phaser.Display.Color.HexStringToColor(def.accent).color;
-          card.fillStyle(accent, 0.12).fillRoundedRect(0, 0, 270, 70, 10);
-          card.lineStyle(2, accent, 0.9).strokeRoundedRect(0, 0, 270, 70, 10);
-          this.showUnitTooltip(unitId, pointer);
-        });
-        zone.on(Phaser.Input.Events.POINTER_OUT, () => {
-          card.clear();
-          card.fillStyle(0x11222f, 0.92).fillRoundedRect(0, 0, 270, 70, 10);
-          card.lineStyle(1, 0x294658, 1).strokeRoundedRect(0, 0, 270, 70, 10);
-          if (!this.isCompact()) this.clearTooltip();
-        });
-        item.add(zone);
-      } else item.add(this.text(135, 34, "已征募", 12, "#547188").setOrigin(0.5));
-      this.phaseLayer.add(item);
-    });
-    this.button(810, 530, 82, 48, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, { tone: "neutral", enabled: !isMaxPlayerLevel && state.gold >= (upgradeCost ?? Number.POSITIVE_INFINITY), secondary: isMaxPlayerLevel ? "MAX" : "一次付清" }, DEPTH.board);
-    this.button(900, 530, 82, 22, state.shopLocked ? "已锁定" : "锁定商店", { type: "lock" }, { tone: "lock", selected: state.shopLocked }, DEPTH.board);
-    this.button(900, 556, 82, 22, state.freeRerollCharges > 0 ? "刷新 · 免费" : "刷新 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() }, DEPTH.board);
-    // 商店面板下方说明：兵种规则、激活羁绊、利息计算、最新天赋
-    this.phaseLayer.add(this.text(807, 622, `${SHOP_UNITS.length} 个兵种 · 同名三合一 · 羁绊同名只计一次`, 10, "#607d91"));
-    const activeNames = this.bridge.engine
-      .getActiveTraits()
-      .map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`)
-      .join(" · ");
-    const interestRule = this.bridge.engine.getTraitStatus("finance").level >= 2
-      ? "理财Ⅱ · 每 4 金币提供 1 利息（80 金币封顶）"
-      : "每 5 金币提供 1 利息（20 金币封顶）";
-    this.phaseLayer.add(
-      this.text(
-        807,
-        647,
-        this.truncateText(activeNames ? `已激活：${activeNames}` : "常规羁绊按 2/4/6；关系羁绊按图标说明", 270, 10, { fontStyle: "bold" }),
-        10,
-        activeNames ? "#7de2ff" : "#526d80",
-        { fontStyle: "bold" },
-      ),
-    );
-    this.phaseLayer.add(
-      this.text(
-        807,
-        672,
-        this.truncateText(`连胜 ${state.streak} · ${interestRule}`, 270, 10),
-        10,
-        "#7d94a4",
-      ),
-    );
-    if (state.augmentHistory.length) {
-      const latest = state.augmentHistory[state.augmentHistory.length - 1];
-      const augment = AUGMENTS.find((item) => item.id === latest.id);
-      this.phaseLayer.add(
-        this.text(
-          807,
-          692,
-          this.truncateText(`最新天赋（共 ${state.augmentHistory.length} 项）：第 ${latest.round} 战 · ${augment?.name || ""}`, 270, 9, { fontStyle: "bold" }),
-          9,
-          "#c9b1ee",
-          { fontStyle: "bold" },
-        ),
-      );
-    }
-  }
-
-  private drawCompactShop() {
-    const { state, isMaxPlayerLevel, upgradeCost } = this.bridge.engine;
-    this.phaseLayer.add(this.panel(24, 548, 1072, 112, 0x08131f));
-    this.phaseLayer.add(this.text(46, 562, "商店 · 横向选择", 12, "#dcefff", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(218, 563, tierOddsForLevel(state.playerLevel).map((chance, index) => (chance ? `${index + 1}费${chance}%` : "")).filter(Boolean).join(" · "), 8, "#8dc3e0", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(1074, 563, isMaxPlayerLevel ? "已满级" : `距 ${bookLevelForPlayerLevel(state.playerLevel) + 1} 本还需 ${upgradeCost} 金币`, 8, "#7593a5").setOrigin(1));
-    state.shop.forEach((unitId, index) => {
-      const x = 46 + index * 211;
-      const item = this.add.container(x, 578);
-      item.add(this.panel(0, 0, 196, 66, 0x112431, unitId ? 0.95 : 0.55, 0x2d5064));
-      if (unitId) {
-        const def = UNIT_DEFS[unitId];
-        const affordable = this.canBuyShopUnit(unitId);
-        const ownedStars = this.ownedUnitStars(unitId);
-        const hasOwned = ownedStars[1] + ownedStars[2] + ownedStars[3] > 0;
-        this.addShopOwnedCue(item, unitId, ownedStars, true);
-        item.add(this.createPortrait(unitId, 27, 33, 19).setAlpha(affordable ? 1 : 0.48));
-        item.add(this.text(54, 10, this.truncateText(def.name, hasOwned ? 78 : 112, 12, { fontStyle: "bold" }), 12, affordable ? "#edf7ff" : "#718896", { fontStyle: "bold" }));
-        item.add(this.text(174, 21, `${def.cost}`, 21, affordable ? COLORS.gold : "#7e8e96", { fontStyle: "bold" }).setOrigin(0.5));
-        item.add(this.createShopTraitTags(unitId, 54, 45, 154, affordable, true));
-        const zone = this.add.zone(98, 33, 196, 66).setInteractive({ useHandCursor: affordable });
-        const action = { type: "shop", index } satisfies GameAction;
-        zone.setData("action", action);
-        if (affordable) zone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch(action));
-        zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(unitId, pointer));
-        item.add(zone);
-      }
-      this.phaseLayer.add(item);
-    });
-  }
-
-  private drawMobileShop() {
-    const { state } = this.bridge.engine;
-    this.phaseLayer.add(this.panel(MOBILE_SHOP_PANEL.x, MOBILE_SHOP_PANEL.y, MOBILE_SHOP_PANEL.width, MOBILE_SHOP_PANEL.height, 0x08121c, 0.98, 0x6fbfeb));
-    this.phaseLayer.add(this.text(28, 618, "战术商店 · 左右翻页", 13, "#f1f8ff", { fontStyle: "bold" }));
-    const available = state.shop.map((unitId, index) => ({ unitId, index })).filter((entry) => entry.unitId);
-    if (!available.length) {
-      this.phaseLayer.add(this.text(240, 666, "商店已售罄", 16, "#89a5b5").setOrigin(0.5));
-      return;
-    }
-    const page = Phaser.Math.Clamp(this.mobilePage, 0, available.length - 1);
-    const { unitId, index } = available[page];
-    if (!unitId) return;
-    const def = UNIT_DEFS[unitId];
-    const affordable = this.canBuyShopUnit(unitId);
-    const role = def.title.includes(" · ") ? def.title.split(" · ").at(-1) || def.title : def.title;
-    this.phaseLayer.add(this.createPortrait(unitId, 56, 669, 29).setAlpha(affordable ? 1 : 0.56));
-    this.phaseLayer.add(this.text(98, 638, this.truncateText(def.name, 252, 17, { fontStyle: "bold" }), 17, affordable ? "#edf7ff" : "#a0b2bc", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(98, 664, this.truncateText(role, 252, 13), 13, affordable ? "#c3dbe7" : "#9ab0bc"));
-    this.phaseLayer.add(this.text(412, 650, `${def.cost}`, 28, affordable ? COLORS.gold : "#a0adb3", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.createShopTraitTags(unitId, 98, 684, 416, affordable, true));
-    const cardZone = this.add.zone(240, 665, 348, 90).setInteractive({ useHandCursor: affordable });
-    if (affordable) cardZone.on(Phaser.Input.Events.POINTER_DOWN, () => this.dispatch({ type: "shop", index }));
-    this.phaseLayer.add(cardZone);
-    this.button(24, 734, 92, MOBILE_TOUCH_TARGET, "上一张", undefined, { tone: "neutral", enabled: page > 0 }, DEPTH.board, () => {
-      this.mobilePage = Math.max(0, page - 1);
-      this.rebuild();
-    });
-    this.button(132, 734, 216, MOBILE_TOUCH_TARGET, `购买 · ${page + 1}/${available.length}`, { type: "shop", index }, { tone: "economic", enabled: affordable }, DEPTH.board);
-    this.button(364, 734, 92, MOBILE_TOUCH_TARGET, "下一张", undefined, { tone: "neutral", enabled: page < available.length - 1 }, DEPTH.board, () => {
-      this.mobilePage = Math.min(available.length - 1, page + 1);
-      this.rebuild();
-    });
-  }
-
-  private drawMobilePreparationActions() {
-    const { state, isMaxPlayerLevel, upgradeCost, boardCount } = this.bridge.engine;
-    const refund = this.selectedRefund();
-    const canBuyXp = !isMaxPlayerLevel && state.gold >= (upgradeCost ?? Number.POSITIVE_INFINITY);
-    this.button(16, 800, 448, MOBILE_TOUCH_TARGET, "开始战斗", { type: "battle" }, { tone: "confirm", enabled: boardCount > 0 });
-    // Compact portrait hosts may crop this final row; it is deliberately positioned
-    // below the shop and available when the browser gives the game full height.
-    this.button(16, 866, 210, MOBILE_TOUCH_TARGET, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, { enabled: canBuyXp });
-    this.button(254, 866, 210, MOBILE_TOUCH_TARGET, state.shopLocked ? "已锁定" : "锁定商店", { type: "lock" }, { tone: "lock", selected: state.shopLocked });
-    this.button(16, 932, 210, MOBILE_TOUCH_TARGET, state.freeRerollCharges > 0 ? "刷新 · 免费" : "刷新 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() });
-    this.button(254, 932, 210, MOBILE_TOUCH_TARGET, state.selected ? `出售 +${refund}` : "选择后出售", { type: "sell" }, { tone: "danger", enabled: Boolean(state.selected) });
-  }
-
   private selectedRefund() {
     const { selected } = this.bridge.engine.state;
     const unit = selected ? this.unitAt(selected) : null;
@@ -1799,23 +1340,6 @@ export class RiftLineScene extends Phaser.Scene {
 
   private refundForUnit(unit: OwnedUnit) {
     return UNIT_DEFS[unit.id].cost * (unit.star === 3 ? 9 : unit.star === 2 ? 3 : 1);
-  }
-
-  private drawPreparationActions(compact: boolean) {
-    const { state, isMaxPlayerLevel, upgradeCost, boardCount } = this.bridge.engine;
-    const canBuyXp = !isMaxPlayerLevel && state.gold >= (upgradeCost ?? Number.POSITIVE_INFINITY);
-    const canBattle = boardCount > 0;
-    const refund = this.selectedRefund();
-    if (compact) {
-      this.button(42, 675, 190, 40, isMaxPlayerLevel ? "已满级" : `升本 · ${upgradeCost}`, { type: "buyXp" }, { enabled: canBuyXp, secondary: isMaxPlayerLevel ? "MAX" : "一次付清" });
-      this.button(252, 675, 190, 40, state.shopLocked ? "已锁定商店" : "锁定商店", { type: "lock" }, { tone: "lock", selected: state.shopLocked });
-      this.button(462, 675, 190, 40, state.freeRerollCharges > 0 ? "刷新商店 · 免费" : "刷新商店 · 1", { type: "reroll" }, { tone: "economic", enabled: this.canReroll() });
-      this.button(672, 675, 190, 40, state.selected ? `回收 +${refund}` : "选择棋子后出售", { type: "sell" }, { tone: "danger", enabled: Boolean(state.selected) });
-      this.button(882, 675, 196, 40, "开始战斗", { type: "battle" }, { tone: "confirm", enabled: canBattle, secondary: "SPACE" });
-    } else {
-      this.button(990, 530, 90, 48, "开始战斗", { type: "battle" }, { tone: "confirm", enabled: canBattle, secondary: "SPACE" });
-      this.button(636, 553, 112, 34, state.selected ? `回收 +${refund}` : "选择棋子", { type: "sell" }, { tone: "danger", enabled: Boolean(state.selected) });
-    }
   }
 
   private drawBattle() {
@@ -1866,186 +1390,14 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private createFighter(fighter: Fighter) {
-    const container = this.add.container(fighter.x, fighter.y);
-    const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
-    const shadow = this.add.ellipse(0, radius * 0.8, radius * 1.8, radius * 0.6, 0x000000, 0.3).setName("shadow");
-    const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0)
-      .setStrokeStyle(2, 0xc6f7ff, 0)
-      .setName("shield");
-    const abilityShield = this.add.circle(0, 0, radius + 13, 0xb98cff, 0)
-      .setStrokeStyle(2, 0xe6d0ff, 0)
-      .setName("abilityShield");
-    const syncAura = this.add.circle(0, 0, radius + 13, 0x79dcff, 0).setName("syncAura");
-    const hitFlash = this.add.circle(0, 0, radius, 0xff526f, 0).setName("hitFlash");
-    const burn = this.add.circle(radius * 0.7, -radius * 0.55, 5, 0xff7a50, 0).setName("burn");
-    const status = this.text(0, -radius - 8, "", 13, "#ffd95e", { fontFamily: PROJECTILE_EMOJI_FONT, fontStyle: "bold" }).setOrigin(0.5).setName("status");
-    const portrait = this.createPortrait(fighter.unitId, 0, 0, radius, fighter.team === "enemy");
-    portrait.setName("portrait");
-    const hpBack = this.add.rectangle(0, radius + 10, radius * 2.25, 7, 0x152430).setName("hpBack");
-    const hp = this.add.rectangle(-radius * 1.125, radius + 10, radius * 2.25, 7, fighter.team === "player" ? 0x52de9b : 0xff668a).setOrigin(0, 0.5).setName("hp");
-    const energyBack = this.add.rectangle(0, radius + 20, radius * 2.25, 4, 0x14222d).setName("energyBack");
-    const energy = this.add.rectangle(-radius * 1.125, radius + 20, radius * 2.25, 4, 0x8edfff).setOrigin(0, 0.5).setName("energy");
-    const label = this.text(0, radius + 30, UNIT_DEFS[fighter.unitId].name, 9, fighter.team === "player" ? "#b8dcef" : "#efb1c3").setOrigin(0.5).setName("label");
-    const star = this.text(0, radius + 30, "★".repeat(fighter.star), 9, "#ffdc68").setOrigin(0, 0.5).setName("star");
-    const zone = this.add.zone(0, 0, radius * 2.4, radius * 2.4).setInteractive({ useHandCursor: true });
-    zone.setData("fighter", fighter.fid);
-    zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
-    zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
-    zone.on(Phaser.Input.Events.POINTER_OUT, () => {
-      if (!this.isCompact()) this.clearTooltip();
-    });
-    container.add([shadow, syncAura, abilityShield, shield, portrait, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
-    this.fighterViewParts.set(container, {
-      hp,
-      energy,
-      portrait,
-      portraitImage: portrait.getByName("portraitImage") as Phaser.GameObjects.Image,
-      hitFlash,
-      shield,
-      abilityShield,
-      syncAura,
-      burn,
-      status,
-      shadow,
-      label,
-      star,
-    });
-    return container;
+    return this.fighterRenderer.create(fighter);
   }
 
-  private updateFighter(view: Phaser.GameObjects.Container, fighter: Fighter) {
-    const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
-    const { abilityMotion } = fighter;
-    const abilityJumping = abilityMotion?.kind === "jump";
-    const jumping = abilityJumping || (fighter.jumpTime > 0 && fighter.jumpDuration > 0);
-    const jumpProgress = abilityJumping
-      ? abilityMotion.time / Math.max(abilityMotion.duration, 0.001)
-      : jumping ? 1 - fighter.jumpTime / fighter.jumpDuration : 0;
-    const jumpArcHeight = abilityJumping ? abilityMotion.arcHeight : fighter.jumpArcHeight || 92;
-    const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * jumpArcHeight : 0;
-    const attackProgress = !abilityMotion && !fighter.sekiChargeActive && fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
-    const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
-    const targetDistance = Math.hypot(fighter.attackTargetX - fighter.x, fighter.attackTargetY - fighter.y) || 1;
-    const attackOffsetX = ((fighter.attackTargetX - fighter.x) / targetDistance) * lunge;
-    const attackOffsetY = ((fighter.attackTargetY - fighter.y) / targetDistance) * lunge;
-    const visualY = fighter.y - jumpArc + attackOffsetY;
-    view
-      .setPosition(fighter.x + attackOffsetX, visualY)
-      .setDepth(DEPTH.entities + visualY)
-      .setAlpha(fighter.stealthTime > 0 ? 0.56 : 1);
-
-    const {
-      hp,
-      energy,
-      portrait,
-      portraitImage,
-      hitFlash,
-      shield,
-      abilityShield,
-      syncAura,
-      burn,
-      status,
-      shadow,
-      label,
-      star,
-    } = this.fighterViewParts.get(view)!;
-    const hitProgress = fighter.hitPulse > 0 ? fighter.hitPulse / 0.2 : 0;
-    const growth = fighter.growthStacks > 0
-      ? 1 + fighter.growthStacks * GLUTTONY_RADIUS_PER_STACK + Math.sin(this.bridge.engine.state.visualTime * 8) * 0.008
-      : 1;
-    const attackScaleX = 1 + lunge / 70;
-    const attackScaleY = 1 - lunge / 130;
-    const hitScaleX = 1 - 0.08 * hitProgress;
-    const hitScaleY = 1 + 0.08 * hitProgress;
-    const groundMotion = (abilityMotion && abilityMotion.kind !== "jump") || fighter.sekiChargeActive;
-    const motionPulse = fighter.sekiChargeActive
-      ? 0.72 + Math.sin(this.bridge.engine.state.visualTime * 18) * 0.2
-      : groundMotion && abilityMotion
-        ? Math.sin((abilityMotion.time / Math.max(abilityMotion.duration, 0.001)) * Math.PI)
-        : 0;
-    const manquPulse = fighter.manquTime > 0
-      ? Math.sin(this.bridge.engine.state.visualTime * 15) * 0.045
-      : 0;
-    portrait
-      .setScale(
-        growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08 + manquPulse),
-        growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12 - manquPulse),
-      )
-      .setAngle(groundMotion ? fighter.facingX * motionPulse * 7 : 0)
-      .setAlpha(fighter.stun > 0 ? 0.72 : 1);
-    const normalPortraitKey = UNIT_DEFS[fighter.unitId].portraitStyle === "sprite"
-      ? textureKeyForUnit(fighter.unitId)
-      : circularTextureKeyForUnit(fighter.unitId);
-    const portraitKey = fighter.unitId === "sun_guard" && fighter.manquTime > 0
-      ? HAZEL_MANQU_TEXTURE_KEY
-      : normalPortraitKey;
-    if (portraitImage.texture.key !== portraitKey && this.textures.exists(portraitKey)) {
-      portraitImage.setTexture(portraitKey);
-    }
-    portraitImage.setFlipX(fighter.facingX < 0);
-    shadow.setPosition(-attackOffsetX, radius * 0.8 + jumpArc - attackOffsetY).setScale(growth, growth);
-    hp.width = radius * 2.25 * Math.max(0, fighter.hp / fighter.maxHp);
-    energy.width = radius * 2.25 * Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
-    energy.fillColor = Phaser.Display.Color.HexStringToColor(ENERGY_PROFILES[fighter.energyStyle].color).color;
-    hitFlash.setAlpha(0.72 * hitProgress).setRadius(radius);
-    const shieldStrength = fighter.shield > 0
-      ? Math.max(0, Math.min(1, fighter.shield / Math.max(fighter.shieldPeak, 1)))
-      : 0;
-    shield
-      .setRadius(radius + 7 + Math.sin(this.bridge.engine.state.visualTime * 6) * 2)
-      .setFillStyle(0x6edeff, 0.06 + shieldStrength * 0.14)
-      .setStrokeStyle(1.5 + shieldStrength * 1.5, 0xc6f7ff, 0.24 + shieldStrength * 0.66)
-      .setAlpha(fighter.shield > 0 ? 1 : 0);
-    const abilityShieldStrength = fighter.abilityShield > 0
-      ? Math.max(0, Math.min(1, fighter.abilityShield / Math.max(fighter.abilityShieldPeak, 1)))
-      : 0;
-    abilityShield
-      .setRadius(radius + 12 + Math.sin(this.bridge.engine.state.visualTime * 7 + 1.2) * 2)
-      .setFillStyle(0xb98cff, 0.04 + abilityShieldStrength * 0.1)
-      .setStrokeStyle(2 + abilityShieldStrength * 1.8, 0xe6d0ff, 0.34 + abilityShieldStrength * 0.62)
-      .setAlpha(fighter.abilityShield > 0 ? 1 : 0);
-    const syncPulse = 1 + Math.sin(this.bridge.engine.state.visualTime * 7) * 0.12;
-    const towerHackVisible = fighter.towerHackArmed || fighter.towerHackBuffed;
-    const syncColor = towerHackVisible
-      ? 0xf0c76b
-      : fighter.syncAvDirection > 0
-        ? 0xff9a5c
-        : 0x79dcff;
-    syncAura
-      .setFillStyle(syncColor, 1)
-      .setRadius((radius + 13 + (towerHackVisible ? 9 : fighter.syncAvStrength * 12)) * syncPulse)
-      .setAlpha(towerHackVisible ? (fighter.towerHackBuffed ? 0.34 : 0.18) : fighter.syncAvDirection === 0 ? 0 : 0.12 + fighter.syncAvStrength * 0.32);
-    burn.setAlpha(fighter.burnTime > 0 ? 0.9 : 0).setScale(1 + Math.sin(this.bridge.engine.state.visualTime * 10) * 0.35);
-    const statusBadges = [
-      fighter.weakenTime > 0 ? "🦑" : "",
-      fighter.slowTime > 0 ? "🐌" : "",
-      fighter.burnTime > 0 ? "🔥" : "",
-      fighter.stun > 0 ? "✦" : "",
-      fighter.tauntTime > 0 ? "嘲" : "",
-      fighter.jumpPending ? "⌁" : "",
-      abilityMotion?.kind === "dash" ? "»" : "",
-      abilityMotion?.kind === "push" ? "›" : "",
-      abilityMotion?.kind === "pull" ? "援" : "",
-      fighter.abilityShield > 0 ? "术" : "",
-      fighter.sekiChargeActive ? "冲" : "",
-      fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
-      fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
-      fighter.reborn ? "涅" : "",
-      fighter.rebirthRecoilTime > 0 ? "退" : "",
-      fighter.stealthTime > 0 ? "隐" : "",
-      fighter.channelTime > 0 ? "捏" : "",
-      fighter.towerHackArmed ? "待挂" : "",
-      fighter.towerHackBuffed ? "挂" : "",
-      fighter.syncAvDirection > 0 ? "骄" : fighter.syncAvDirection < 0 ? "哀" : "",
-      fighter.gen27Buffed ? "27" : "",
-      fighter.enraged ? "!" : "",
-    ].filter(Boolean);
-    status.setText(statusBadges.join(" "));
-    status.setY(-radius - 8);
-    const statusColor = fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e";
-    if (status.style.color !== statusColor) status.setColor(statusColor);
-    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.manquTime > 0 ? " · 满区" : ""}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}${fighter.abilityShield > 0 ? " ◆" : ""}`);
-    star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
+  private updateFighter(
+    view: Phaser.GameObjects.Container,
+    fighter: Fighter,
+  ) {
+    this.fighterRenderer.update(view, fighter);
   }
 
   private syncCombatEffects() {
@@ -2058,7 +1410,7 @@ export class RiftLineScene extends Phaser.Scene {
       (projectile) => this.createProjectile(projectile),
       (view, projectile) => this.updateProjectile(view, projectile),
       undefined,
-      (view) => this.recycleBattleView(view, this.projectileViewPool, this.projectileViewParts, 48),
+      (view) => this.projectileRenderer.recycle(view),
     );
     this.syncObjectMap(
       this.effectViews,
@@ -2066,10 +1418,14 @@ export class RiftLineScene extends Phaser.Scene {
       (effect) => this.createEffect(effect),
       (view, effect) => this.updateEffect(view, effect),
       undefined,
-      (view) => this.recycleBattleView(view, this.effectViewPool, this.effectViewParts, 96),
+      (view) => this.effectRenderer.recycle(view),
     );
-    this.syncObjectMap(this.petViews, battle.pets, (pet) => this.createRabbit(pet), (view, pet) => this.updateRabbit(view, pet, visualTime), (pet) => pet.id);
-    this.syncObjectMap(this.treeViews, battle.pineTrees, (tree) => this.createPineTree(tree), (view, tree) => this.updatePineTree(view, tree, visualTime), (tree) => tree.id);
+    this.summonRenderer.sync(
+      battle.pets,
+      battle.pineTrees,
+      visualTime,
+      this.effectsLayer,
+    );
     this.syncChronospheres(battle.chronospheres, visualTime);
   }
 
@@ -2122,219 +1478,15 @@ export class RiftLineScene extends Phaser.Scene {
     });
   }
 
-  private recycleBattleView<T>(
-    view: Phaser.GameObjects.Container,
-    pool: Phaser.GameObjects.Container[],
-    parts: WeakMap<Phaser.GameObjects.Container, T>,
-    limit: number,
-  ) {
-    if (!parts.has(view) || pool.length >= limit) {
-      view.destroy();
-      return;
-    }
-    view.setActive(false).setVisible(false);
-    pool.push(view);
-  }
-
-  private takePooledBattleView<T>(
-    pool: Phaser.GameObjects.Container[],
-    parts: WeakMap<Phaser.GameObjects.Container, T>,
-  ) {
-    let view = pool.pop();
-    while (view && !parts.has(view)) {
-      view.destroy();
-      view = pool.pop();
-    }
-    return view;
-  }
-
   private createProjectile(projectile: Projectile) {
-    const pooled = this.takePooledBattleView(this.projectileViewPool, this.projectileViewParts);
-    if (pooled) {
-      this.projectileVisualStates.delete(pooled);
-      return pooled
-        .setActive(true)
-        .setVisible(true)
-        .setAlpha(1)
-        .setScale(1)
-        .setRotation(0)
-        .setPosition(projectile.x, projectile.y);
-    }
-    const container = this.add.container(projectile.x, projectile.y);
-    const trail = this.add.graphics().setName("trail");
-    const core = this.add.circle(0, 0, Math.max(2, projectile.size), 0xf8fcff).setName("core");
-    const icon = this.text(0, 0, "", Math.max(12, projectile.size), "#ffffff", { fontFamily: PROJECTILE_EMOJI_FONT }).setOrigin(0.5).setName("icon");
-    const dragon = this.add.image(0, 0, SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY).setName("dragon");
-    container.add([trail, core, icon, dragon]);
-    this.projectileViewParts.set(container, {
-      trail,
-      core,
-      icon,
-      dragon,
-    });
-    return container;
+    return this.projectileRenderer.create(projectile);
   }
 
-  private drawProjectileTrail(graphics: Phaser.GameObjects.Graphics, tailX: number, tailY: number, width: number, color: number) {
-    const capRadius = width / 2;
-    graphics.lineStyle(width, color, 1).lineBetween(tailX, tailY, 0, 0);
-    graphics.fillStyle(color, 1).fillCircle(tailX, tailY, capRadius).fillCircle(0, 0, capRadius);
-  }
-
-  private updateProjectile(view: Phaser.GameObjects.Container, projectile: Projectile) {
-    const emoji = projectileEmoji(projectile);
-    const grounded = Boolean(projectile.grounded);
-    view.setPosition(projectile.x, projectile.y).setDepth(DEPTH.effects + projectile.y);
-    const previous = this.projectileVisualStates.get(view);
-    if (
-      previous
-      && projectile.style !== "finale_star"
-      && projectile.style !== "cigarette"
-      && previous.style === projectile.style
-      && previous.grounded === grounded
-      && previous.velocityX === projectile.velocityX
-      && previous.velocityY === projectile.velocityY
-      && previous.size === projectile.size
-      && previous.radius === projectile.radius
-      && previous.color === projectile.color
-      && previous.emoji === emoji
-    ) return;
-    this.projectileVisualStates.set(view, {
-      style: projectile.style,
-      grounded,
-      velocityX: projectile.velocityX,
-      velocityY: projectile.velocityY,
-      size: projectile.size,
-      radius: projectile.radius,
-      color: projectile.color,
-      emoji,
-    });
-    const speed = Math.hypot(projectile.velocityX, projectile.velocityY) || 1;
-    const angle = Math.atan2(projectile.velocityY, projectile.velocityX);
-    const {
-      trail,
-      core,
-      icon,
-      dragon,
-    } = this.projectileViewParts.get(view)!;
-    const { color: projectileColor } = Phaser.Display.Color.HexStringToColor(projectile.color);
-    trail.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
-    core.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
-    icon.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
-    dragon.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
-
-    if (projectile.style === "sumi_dragon") {
-      const frameColor = Phaser.Display.Color.HexStringToColor(projectile.color).color;
-      trail
-        .setVisible(true)
-        .lineStyle(2.5, frameColor, 0.95)
-        .strokeCircle(0, 0, projectile.radius + 5)
-        .lineStyle(1, 0xffffff, 0.6)
-        .strokeCircle(0, 0, projectile.radius + 8);
-      dragon
-        .setDisplaySize(projectile.size * 2.1, projectile.size * 2.1)
-        .setRotation(angle)
-        .setAlpha(0.98)
-        .setVisible(true);
-      return;
-    }
-
-    if (projectile.style === "lollipop" && projectile.grounded) {
-      trail.setVisible(true);
-      trail.lineStyle(2, projectileColor, 0.72).strokeCircle(0, 0, projectile.radius + 7);
-      trail.lineStyle(1, 0xfff2f7, 0.35).strokeCircle(0, 0, projectile.radius + 12);
-      icon.setText(emoji || "🍭").setFontSize(Math.max(14, projectile.size)).setRotation(0).setVisible(true);
-      return;
-    }
-
-    if (projectile.style === "aoe_orb") {
-      const tailX = -(projectile.velocityX / speed) * 18;
-      const tailY = -(projectile.velocityY / speed) * 18;
-      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
-      this.drawProjectileTrail(trail, tailX, tailY, 3, projectileColor);
-      trail.fillStyle(projectileColor, 0.2).fillCircle(0, 0, 14);
-      trail.lineStyle(2, projectileColor, 0.92).strokeCircle(0, 0, 11);
-      trail.lineStyle(1, 0xffffff, 0.68).strokeCircle(0, 0, 6);
-      if (emoji) icon.setText(emoji).setFontSize(11).setRotation(0).setVisible(true);
-      else core.setRadius(4).setFillStyle(0xf8fcff, 0.98).setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
-      return;
-    }
-
-    if (projectile.style === "finale_star") {
-      const tailX = -(projectile.velocityX / speed) * 46;
-      const tailY = -(projectile.velocityY / speed) * 46;
-      const pulse = 1 + Math.sin(this.bridge.engine.state.visualTime * 13) * 0.16;
-      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
-      this.drawProjectileTrail(trail, tailX, tailY, 9, projectileColor);
-      this.drawProjectileTrail(trail, tailX * 0.72, tailY * 0.72, 3, 0xffffff);
-      trail
-        .fillStyle(projectileColor, 0.24)
-        .fillCircle(0, 0, projectile.radius + 9)
-        .lineStyle(2.5, projectileColor, 0.94)
-        .strokeCircle(0, 0, (projectile.radius + 6) * pulse)
-        .lineStyle(1.2, 0xffffff, 0.82)
-        .strokeCircle(0, 0, projectile.radius + 1);
-      icon
-        .setText(emoji || "✦")
-        .setFontFamily(FONT_FAMILY)
-        .setFontSize(Math.max(18, projectile.size))
-        .setRotation(this.bridge.engine.state.visualTime * 3.8)
-        .setScale(pulse)
-        .setVisible(true)
-        .setBlendMode(Phaser.BlendModes.SCREEN);
-      return;
-    }
-
-    if (projectile.style === "pine_needle") {
-      const tailX = -(projectile.velocityX / speed) * 16;
-      const tailY = -(projectile.velocityY / speed) * 16;
-      trail.setVisible(true);
-      this.drawProjectileTrail(trail, tailX, tailY, 2.2, projectileColor);
-      return;
-    }
-
-    if (projectile.style === "cigarette") {
-      const directionX = projectile.velocityX / speed;
-      const directionY = projectile.velocityY / speed;
-      const driftX = -directionY;
-      const driftY = directionX;
-      const smokePhase = this.bridge.engine.state.visualTime * 5;
-      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
-      for (let index = 1; index <= 4; index += 1) {
-        const distance = 10 + index * 9;
-        const drift = Math.sin(smokePhase + index * 1.4) * (2 + index * 0.7);
-        const alpha = 0.42 - index * 0.065;
-        trail
-          .fillStyle(index % 2 ? 0xe8e3ef : 0xb8b3c4, alpha)
-          .fillCircle(
-            -directionX * distance + driftX * drift,
-            -directionY * distance + driftY * drift,
-            5 + index * 1.7,
-          );
-      }
-      trail
-        .fillStyle(projectileColor, 0.3)
-        .fillCircle(directionX * 7, directionY * 7, projectile.radius + 4);
-      icon
-        .setText(emoji || "🚬")
-        .setFontFamily(PROJECTILE_EMOJI_FONT)
-        .setFontSize(Math.max(19, projectile.size))
-        .setRotation(angle)
-        .setVisible(true);
-      return;
-    }
-
-    if (emoji) {
-      const fontSize = projectile.style === "shark" ? Math.max(12, projectile.size) : Math.max(14, projectile.size);
-      icon.setText(emoji).setFontSize(fontSize).setRotation(angle).setVisible(true);
-      return;
-    }
-
-    const tailX = -(projectile.velocityX / speed) * 22;
-    const tailY = -(projectile.velocityY / speed) * 22;
-    trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
-    core.setRadius(Math.max(2, projectile.size)).setFillStyle(0xf8fcff, 0.98).setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
-    this.drawProjectileTrail(trail, tailX, tailY, projectile.size + 3, projectileColor);
+  private updateProjectile(
+    view: Phaser.GameObjects.Container,
+    projectile: Projectile,
+  ) {
+    this.projectileRenderer.update(view, projectile);
   }
 
   private createTitleGlowTexture() {
@@ -2367,347 +1519,14 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private createEffect(effect: BattleEffect) {
-    const pooled = this.takePooledBattleView(this.effectViewPool, this.effectViewParts);
-    if (pooled) {
-      this.resetEffectView(pooled);
-      return pooled
-        .setActive(true)
-        .setVisible(true)
-        .setAlpha(1)
-        .setScale(1)
-        .setRotation(0)
-        .setPosition(effect.x, effect.y);
-    }
-    const container = this.add.container(effect.x, effect.y);
-    const graphics = this.add.graphics().setName("shape").setVisible(false);
-    const burstGradient = this.add.image(0, 0, BURST_GRADIENT_TEXTURE).setOrigin(0.5).setName("burstGradient").setVisible(false);
-    const label = this.text(0, 0, "", 14, "#ffffff", { fontStyle: "bold" }).setOrigin(0.5).setName("label").setVisible(false);
-    container.add([graphics, burstGradient, label]);
-    this.effectViewParts.set(container, {
-      graphics,
-      burstGradient,
-      label,
-    });
-    return container;
+    return this.effectRenderer.create(effect);
   }
 
-  private resetEffectView(view: Phaser.GameObjects.Container) {
-    const {
-      graphics,
-      burstGradient,
-      label,
-    } = this.effectViewParts.get(view)!;
-    graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
-    burstGradient.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL).setAlpha(1).clearTint();
-    label.setVisible(false).setAlpha(1).setRotation(0).setScale(1);
-  }
-
-  private updateEffect(view: Phaser.GameObjects.Container, effect: BattleEffect) {
-    const progress = 1 - effect.life / effect.maxLife;
-    const alpha = Math.max(0, effect.life / effect.maxLife);
-    const {
-      graphics,
-      burstGradient,
-      label,
-    } = this.effectViewParts.get(view)!;
-    const viewAlpha = effect.kind === "healing_field"
-      ? Math.min(1, alpha * 5)
-      : alpha ** 0.65;
-    view
-      .setPosition(effect.x, effect.y)
-      .setAlpha(viewAlpha)
-      .setRotation(0)
-      .setDepth(DEPTH.effects + effect.y + 1);
-    if (effect.kind === "emoji_burst") {
-      const pickaxeBounce = effect.text === "⛏️";
-      const bounce = pickaxeBounce ? Math.sin(progress * Math.PI) * 46 : 0;
-      label
-        .setText(effect.text || "😂")
-        .setFontFamily(PROJECTILE_EMOJI_FONT)
-        .setFontSize(effect.size || (pickaxeBounce ? 26 : 32))
-        .setVisible(true);
-      if (pickaxeBounce) {
-        label
-          .setY(-10 - bounce - progress * 8)
-          .setScale(0.82 + Math.sin(progress * Math.PI) * 0.34)
-          .setRotation(-0.72 + progress * 2.8);
-      } else {
-        label
-          .setY(0)
-          .setScale(0.62 + progress * 1.48)
-          .setRotation(0);
-      }
-      return;
-    }
-    if (effect.kind === "text" || effect.kind === "heal") {
-      label
-        .setText(effect.text || "")
-        .setFontFamily(effect.emoji ? PROJECTILE_EMOJI_FONT : FONT_FAMILY)
-        .setFontSize(effect.size || 14)
-        .setY(-progress * 26)
-        .setScale(1)
-        .setVisible(true);
-      if (label.style.color !== effect.color) label.setColor(effect.color);
-      return;
-    }
-    const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
-    graphics.clear().setVisible(true);
-    if (effect.kind === "line") {
-      const targetX = (effect.x2 ?? effect.x) - effect.x;
-      const targetY = (effect.y2 ?? effect.y) - effect.y;
-      const width = effect.size || 3;
-      const travel = Math.min(1, progress * 1.35);
-      const tail = Math.max(0, travel - 0.2);
-      const pulseX = targetX * travel;
-      const pulseY = targetY * travel;
-      graphics
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .lineStyle(width + 4, color, 0.22)
-        .lineBetween(0, 0, targetX, targetY)
-        .lineStyle(width + 2, color, 0.88)
-        .lineBetween(targetX * tail, targetY * tail, pulseX, pulseY)
-        .lineStyle(Math.max(1, width * 0.45), 0xf4fbff, 0.96)
-        .lineBetween(targetX * tail, targetY * tail, pulseX, pulseY)
-        .fillStyle(color, 0.38)
-        .fillCircle(pulseX, pulseY, width + 7)
-        .fillStyle(0xf4fbff, 1)
-        .fillCircle(pulseX, pulseY, width + 2);
-      if (travel > 0.82) {
-        graphics
-          .lineStyle(Math.max(1.5, width * 0.7), color, 0.9)
-          .strokeCircle(targetX, targetY, (travel - 0.82) * 54 + width * 2);
-      }
-    } else if (effect.kind === "ring") {
-      const radius = effect.size || 80;
-      const arrival = 1 - (1 - progress) ** 3;
-      const fieldRadius = Math.max(6, radius * (0.72 + arrival * 0.28));
-      graphics
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .fillStyle(color, 0.1 + (1 - progress) * 0.08)
-        .fillCircle(0, 0, fieldRadius)
-        .lineStyle(Math.max(2, 7 * (1 - progress)), color, 0.95)
-        .strokeCircle(0, 0, fieldRadius)
-        .lineStyle(1.5, 0xf4fbff, 0.66)
-        .strokeCircle(0, 0, Math.max(5, radius * arrival * 0.72));
-    } else if (effect.kind === "finale") {
-      const radius = effect.size || 150;
-      const arrival = 1 - (1 - Math.min(1, progress * 1.5)) ** 3;
-      const stageRadius = radius * (0.42 + arrival * 0.58);
-      const rotation = progress * 0.72;
-      graphics
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .fillStyle(color, 0.08 + (1 - progress) * 0.1)
-        .fillCircle(0, 0, stageRadius)
-        .fillStyle(0xf7ddff, 0.08 + (1 - progress) * 0.12)
-        .fillTriangle(-radius * 0.96, -radius * 0.88, -radius * 0.42, -radius * 0.96, 0, radius * 0.16)
-        .fillTriangle(radius * 0.96, -radius * 0.88, radius * 0.42, -radius * 0.96, 0, radius * 0.16)
-        .lineStyle(Math.max(2, 7 * (1 - progress)), color, 0.94)
-        .strokeCircle(0, 0, stageRadius)
-        .lineStyle(1.5, 0xffffff, 0.72)
-        .strokeCircle(0, 0, stageRadius * 0.72);
-      for (let index = 0; index < 12; index += 1) {
-        const angle = rotation + (Math.PI * 2 * index) / 12;
-        const inner = stageRadius * (index % 2 ? 0.64 : 0.54);
-        const outer = stageRadius * (index % 2 ? 0.9 : 1);
-        graphics
-          .lineStyle(index % 2 ? 2 : 3.5, index % 2 ? color : 0xffffff, 0.72)
-          .lineBetween(
-            Math.cos(angle) * inner,
-            Math.sin(angle) * inner,
-            Math.cos(angle) * outer,
-            Math.sin(angle) * outer,
-          );
-      }
-      const starRadius = Math.max(8, radius * (0.24 + Math.sin(progress * Math.PI) * 0.11));
-      const starPoints = Array.from({ length: 8 }, (_, index) => {
-        const angle = -Math.PI / 2 + rotation * 1.8 + (Math.PI * index) / 4;
-        const pointRadius = index % 2 === 0 ? starRadius : starRadius * 0.35;
-        return new Phaser.Math.Vector2(Math.cos(angle) * pointRadius, Math.sin(angle) * pointRadius);
-      });
-      graphics.fillStyle(0xf7ddff, 0.78).fillPoints(starPoints, true);
-      burstGradient
-        .setTint(color)
-        .setDisplaySize(stageRadius * 1.45, stageRadius * 1.45)
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .setAlpha(0.3 + (1 - progress) * 0.34)
-        .setVisible(true);
-    } else if (effect.kind === "energy_pulse") {
-      const radius = effect.size || 48;
-      const arrival = 1 - (1 - progress) ** 2;
-      const pulseRadius = radius * (0.35 + arrival * 0.65);
-      graphics
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .fillStyle(color, 0.08 + (1 - progress) * 0.12)
-        .fillCircle(0, 0, pulseRadius)
-        .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.92)
-        .strokeCircle(0, 0, pulseRadius)
-        .lineStyle(1.2, 0xffffff, 0.7)
-        .strokeCircle(0, 0, pulseRadius * 0.68);
-      for (let index = 0; index < 4; index += 1) {
-        const angle = progress * 2.2 + index * (Math.PI / 2);
-        graphics
-          .fillStyle(index % 2 ? color : 0xffffff, 0.82)
-          .fillCircle(Math.cos(angle) * pulseRadius * 0.82, Math.sin(angle) * pulseRadius * 0.82, 2.8);
-      }
-      label
-        .setText(effect.text || "+15 能量")
-        .setFontFamily(FONT_FAMILY)
-        .setFontSize(11)
-        .setY(-radius * 0.72 - progress * 10)
-        .setScale(1)
-        .setColor("#f7ddff")
-        .setVisible(true);
-    } else if (effect.kind === "healing_field") {
-      drawHealingFieldEffect(graphics, burstGradient, color, progress, effect.size);
-    } else if (effect.kind === "healing_pulse") {
-      drawHealingPulseEffect(graphics, burstGradient, color, progress, effect.size);
-    } else if (effect.kind === "burst") {
-      const radius = (effect.size || 40) * (0.35 + progress * 0.65);
-      burstGradient
-        .setTint(color)
-        .setDisplaySize(radius * 2, radius * 2)
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .setVisible(true);
-      graphics
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.8)
-        .strokeCircle(0, 0, radius * 0.72);
-    } else if (effect.kind === "rebirth") {
-      const radius = effect.size || 78;
-      const outerRadius = radius * (0.28 + progress * 0.92);
-      const innerRadius = radius * (1.08 - progress * 0.54);
-      const flash = Math.max(0, 1 - progress * 1.5);
-      graphics
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .fillStyle(color, 0.12 + flash * 0.28)
-        .fillCircle(0, 0, innerRadius)
-        .lineStyle(Math.max(1.5, 5 * (1 - progress)), color, 0.96)
-        .strokeCircle(0, 0, outerRadius)
-        .lineStyle(1.5, 0xffffff, 0.82)
-        .strokeCircle(0, 0, innerRadius);
-      for (let index = 0; index < 8; index += 1) {
-        const angle = index * (Math.PI / 4) + progress * 0.9;
-        const rayStart = innerRadius * 0.48;
-        const rayEnd = innerRadius * (0.86 + (index % 2) * 0.12);
-        graphics.lineStyle(index % 2 ? 2 : 3, index % 2 ? color : 0xffffff, 0.72);
-        graphics.lineBetween(
-          Math.cos(angle) * rayStart,
-          Math.sin(angle) * rayStart,
-          Math.cos(angle) * rayEnd,
-          Math.sin(angle) * rayEnd,
-        );
-      }
-      burstGradient
-        .setTint(color)
-        .setDisplaySize(innerRadius * 1.35, innerRadius * 1.35)
-        .setBlendMode(Phaser.BlendModes.SCREEN)
-        .setAlpha(0.38 + flash * 0.42)
-        .setVisible(true);
-    } else if (effect.kind === "chronosphere" || effect.kind === "hotpot") {
-      const radius = (effect.size || (effect.kind === "hotpot" ? 130 : 50)) * (effect.kind === "hotpot" ? 0.45 + progress * 0.7 : 0.35 + progress * 0.65);
-      const fill = effect.kind === "hotpot" ? 0xff6b2d : color;
-      graphics.fillStyle(fill, effect.kind === "hotpot" ? 0.3 : 0.24).fillCircle(0, 0, radius);
-      graphics.lineStyle(effect.kind === "hotpot" ? 4 : 3, color, 0.9).strokeCircle(0, 0, radius * (effect.kind === "hotpot" ? 0.72 : 0.92));
-      if (effect.kind === "hotpot") graphics.lineStyle(2, 0xffd27a, 0.9).strokeCircle(0, 0, radius * 0.48);
-    }
-  }
-
-  private createRabbit(pet: MechanicalRabbitPet) {
-    const container = this.add.container(0, 0);
-    const muzzle = mechanicalRabbitMuzzle(pet);
-    const muzzleDistance = Math.hypot(muzzle.x - pet.x, muzzle.y - pet.y);
-    const shadow = this.add.ellipse(0, 0, pet.radius * 2.4, pet.radius * 0.6, 0x000000, 0.26).setName("shadow");
-    const body = this.add.graphics().setName("body");
-    const cannon = this.add.graphics().setName("cannon");
-    const details = this.add.graphics().setName("details");
-    const eye = this.add.circle(-pet.radius * 0.2, 0, 2.4, 0x92d7ff).setName("eye");
-    const flash = this.add.circle(muzzleDistance, 0, 4.5, 0xdafaff, 0).setName("flash");
-
-    this.drawRabbitBody(body, pet.radius);
-    this.drawRabbitCannon(cannon, details, pet.radius, muzzleDistance);
-    container.add([shadow, body, cannon, details, eye, flash]);
-    return container;
-  }
-
-  private drawRabbitBody(graphics: Phaser.GameObjects.Graphics, radius: number) {
-    graphics
-      .fillGradientStyle(0x111a27, 0x728998, 0x3b4f60, 0x728998, 1)
-      .beginPath()
-      .moveTo(-radius * 0.62, 0)
-      .lineTo(-radius * 0.22, -radius * 0.31)
-      .lineTo(radius * 0.38, -radius * 0.2)
-      .lineTo(radius * 0.5, 0)
-      .lineTo(radius * 0.38, radius * 0.2)
-      .lineTo(-radius * 0.22, radius * 0.31)
-      .closePath()
-      .fillPath()
-      .lineStyle(1.2, 0xb8ccd8)
-      .strokePath();
-  }
-
-  private drawRabbitCannon(
-    cannon: Phaser.GameObjects.Graphics,
-    details: Phaser.GameObjects.Graphics,
-    radius: number,
-    muzzleDistance: number,
+  private updateEffect(
+    view: Phaser.GameObjects.Container,
+    effect: BattleEffect,
   ) {
-    cannon
-      .fillStyle(0x1b2938)
-      .lineStyle(1.25, 0xdce6ec)
-      .beginPath()
-      .moveTo(-radius * 0.08, -radius * 0.23)
-      .lineTo(muzzleDistance - radius * 0.08, -radius * 0.1)
-      .lineTo(muzzleDistance, 0)
-      .lineTo(muzzleDistance - radius * 0.08, radius * 0.1)
-      .lineTo(-radius * 0.08, radius * 0.23)
-      .closePath()
-      .fillPath()
-      .strokePath();
-    details
-      .fillStyle(0xf4f0f2)
-      .beginPath()
-      .moveTo(radius * 0.04, -radius * 0.11)
-      .lineTo(muzzleDistance - radius * 0.22, -radius * 0.045)
-      .lineTo(muzzleDistance - radius * 0.08, 0)
-      .lineTo(muzzleDistance - radius * 0.22, radius * 0.045)
-      .lineTo(radius * 0.04, radius * 0.11)
-      .closePath()
-      .fillPath()
-      .fillStyle(0xefc8d1)
-      .fillRect(radius * 0.16, -radius * 0.17, radius * 0.24, radius * 0.34)
-      .lineStyle(1.4, 0x92d7ff)
-      .lineBetween(radius * 0.4, 0, muzzleDistance - radius * 0.25, 0);
-  }
-
-  private updateRabbit(view: Phaser.GameObjects.Container, pet: MechanicalRabbitPet, visualTime: number) {
-    const fade = Math.max(0.25, Math.min(1, pet.life / 0.7));
-    const bob = Math.sin(visualTime * 8 + pet.x * 0.03) * 3;
-    const angle = Math.atan2(pet.aimY, pet.aimX);
-    const flash = view.getByName("flash") as Phaser.GameObjects.Arc;
-    const muzzle = mechanicalRabbitMuzzle(pet);
-    const muzzleDistance = Math.hypot(muzzle.x - pet.x, muzzle.y - pet.y);
-    const flashScale = 1 + (pet.attackPulse / 0.16) * 0.75;
-    view.setPosition(pet.x, pet.y + bob).setRotation(angle).setAlpha(fade).setDepth(DEPTH.entities + pet.y + 0.5);
-    (view.getByName("shadow") as Phaser.GameObjects.Ellipse).setRotation(-angle).setY(pet.radius * 0.88 - bob);
-    flash.setX(muzzleDistance).setAlpha(pet.attackPulse > 0 ? Math.min(0.96, pet.attackPulse / 0.16) : 0).setScale(flashScale);
-  }
-
-  private createPineTree(_tree: PineTreeTurret) { // eslint-disable-line @typescript-eslint/no-unused-vars
-    const container = this.add.container(0, 0);
-    const shadow = this.add.ellipse(0, 0, 30, 9, 0x000000, 0.3).setName("shadow");
-    const tree = this.text(0, -4, "🌲", 42, "#ffffff").setOrigin(0.5).setName("tree");
-    const flash = this.add.circle(0, -8, 7, 0xa0e696, 0).setName("flash");
-    container.add([shadow, tree, flash]);
-    return container;
-  }
-
-  private updatePineTree(view: Phaser.GameObjects.Container, tree: PineTreeTurret, visualTime: number) {
-    const fade = Math.max(0.35, Math.min(1, tree.life / 0.9));
-    const sway = Math.sin(visualTime * 2.4 + tree.x * 0.02) * 1.5;
-    const flash = view.getByName("flash") as Phaser.GameObjects.Arc;
-    view.setPosition(tree.x + sway, tree.y).setAlpha(fade).setDepth(DEPTH.entities + tree.y + 0.4);
-    (view.getByName("shadow") as Phaser.GameObjects.Ellipse).setY(tree.radius * 0.7);
-    flash.setAlpha(tree.attackPulse > 0 ? Math.min(0.85, tree.attackPulse / 0.18) : 0).setScale(1 + tree.attackPulse * 5);
+    this.effectRenderer.update(view, effect);
   }
 
   private syncChronospheres(zones: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; color: string }>, visualTime: number) {
@@ -3098,15 +1917,6 @@ export class RiftLineScene extends Phaser.Scene {
       card.add([cta, ctaText, zone]);
       this.phaseLayer.add(card);
     });
-  }
-
-  private drawGameOver() {
-    const { state } = this.bridge.engine;
-    const won = state.finalWon;
-    this.phaseLayer.add(this.text(560, 185, won ? "裂 隙 已 封 闭" : "战 线 已 失 守", 40, won ? "#65e4a9" : "#ff718e", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(560, 250, won ? "守望成功" : `止步第 ${state.round} 战`, 30, "#f3f8ff", { fontStyle: "bold" }).setOrigin(0.5));
-    this.phaseLayer.add(this.text(560, 340, `本局积分 ${state.score.toLocaleString()} · 最高纪录 ${state.bestScore.toLocaleString()} · 核心 ${state.hp}/${state.maxHp}`, 16, "#b9cfdd").setOrigin(0.5));
-    this.button(420, 548, 280, 62, "再开一局 · 新战术种子", { type: "restart" }, { tone: won ? "confirm" : "danger" });
   }
 
   private drawToast() {
