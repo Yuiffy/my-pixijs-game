@@ -188,7 +188,7 @@ const enterPreparation = async (page, seed) => {
         return { name: button.querySelector("strong")?.textContent?.trim(), cost };
       }),
   );
-  assert.equal(codexUnits.length, 40);
+  assert.equal(codexUnits.length, 41);
   assert.deepEqual(
     codexUnits.map(({ cost }) => cost),
     [...codexUnits].map(({ cost }) => cost).sort((left, right) => left - right),
@@ -270,6 +270,7 @@ const enterPreparation = async (page, seed) => {
         enemy.y = 180;
       });
     engine.damage(counterEnemy, nana, 80);
+    const pickaxe = battle.projectiles.find((projectile) => projectile.emoji === "⛏️");
     return {
       barrageActive: nana.barrageActive,
       energy: nana.energy,
@@ -277,6 +278,7 @@ const enterPreparation = async (page, seed) => {
       armorBonus: nana.abilityArmorBonus,
       taunts: nearbyEnemies.map((enemy) => enemy.tauntedByFid),
       pickaxes: battle.projectiles.filter((projectile) => projectile.emoji === "⛏️").length,
+      pickaxeSpeed: pickaxe ? Math.hypot(pickaxe.velocityX, pickaxe.velocityY) : null,
       baseRadius: nana.baseRadius,
       radius: nana.radius,
       attack: nana.attack,
@@ -287,12 +289,29 @@ const enterPreparation = async (page, seed) => {
   assert.equal(nanaCounter.armorBonus, 42);
   assert.ok(nanaCounter.taunts.length >= 1 && nanaCounter.taunts.every((fid) => fid));
   assert.ok(nanaCounter.pickaxes >= 1);
-  await page.evaluate(() => window.advanceTime(16));
+  assert.equal(nanaCounter.pickaxeSpeed, 320);
+  await page.evaluate(() => window.advanceTime(160));
   const pickaxeState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
   assert.ok(
     pickaxeState.battle.visualEffects.projectiles.some((projectile) => projectile.emoji === "⛏️"),
   );
   await capture("nana-pickaxe-counter.png");
+  await page.evaluate(() => window.advanceTime(360));
+  const pickaxeImpact = await page.evaluate(() => {
+    const battle = window.__characterReworkEngine.state.battle;
+    const effect = battle.effects.find(
+      (candidate) => candidate.kind === "emoji_burst" && candidate.text === "⛏️",
+    );
+    return {
+      remainingPickaxes: battle.projectiles.filter((projectile) => projectile.emoji === "⛏️").length,
+      effect: effect
+        ? { x: effect.x, y: effect.y, life: effect.life, maxLife: effect.maxLife }
+        : null,
+    };
+  });
+  assert.equal(pickaxeImpact.remainingPickaxes, 0);
+  assert.ok(pickaxeImpact.effect && pickaxeImpact.effect.life < pickaxeImpact.effect.maxLife);
+  await capture("nana-pickaxe-impact.png");
 
   const gluttonyGrowth = await page.evaluate(() => {
     const engine = window.__characterReworkEngine;

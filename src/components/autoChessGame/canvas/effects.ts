@@ -226,6 +226,47 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState)
       return;
     }
 
+    if (projectile.style === "finale_star") {
+      const tailX = projectile.x - ((projectile.velocityX / speed) * 46);
+      const tailY = projectile.y - ((projectile.velocityY / speed) * 46);
+      const pulse = 1 + Math.sin(state.visualTime * 13) * 0.16;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.lineCap = "round";
+      setShadow(ctx, projectile.color, 18);
+      ctx.strokeStyle = projectile.color;
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(projectile.x, projectile.y);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(projectile.x + (tailX - projectile.x) * 0.72, projectile.y + (tailY - projectile.y) * 0.72);
+      ctx.lineTo(projectile.x, projectile.y);
+      ctx.stroke();
+      ctx.fillStyle = `${projectile.color}3d`;
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, projectile.radius + 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = projectile.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(projectile.x, projectile.y, (projectile.radius + 6) * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.translate(projectile.x, projectile.y);
+      ctx.rotate(state.visualTime * 3.8);
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `800 ${Math.max(18, projectile.size)}px "Microsoft YaHei", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(emoji || "✦", 0, 0);
+      ctx.restore();
+      return;
+    }
+
     if (projectile.style === "pine_needle") {
       const trailLength = 16;
       const trailX = projectile.x - ((projectile.velocityX / speed) * trailLength);
@@ -312,11 +353,21 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
     ctx.save();
     ctx.globalAlpha = alpha;
     if (effect.kind === "emoji_burst") {
+      const pickaxeBounce = effect.text === "⛏️";
+      const bounce = pickaxeBounce ? Math.sin(progress * Math.PI) * 46 : 0;
       ctx.globalAlpha = alpha ** 0.65;
-      ctx.font = `${(effect.size || 32) * (0.62 + progress * 1.48)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.translate(
+        effect.x,
+        effect.y + (pickaxeBounce ? -10 - bounce - progress * 8 : 0),
+      );
+      if (pickaxeBounce) ctx.rotate(-0.72 + progress * 2.8);
+      const scale = pickaxeBounce
+        ? 0.82 + Math.sin(progress * Math.PI) * 0.34
+        : 0.62 + progress * 1.48;
+      ctx.font = `${(effect.size || (pickaxeBounce ? 26 : 32)) * scale}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(effect.text || "😂", effect.x, effect.y);
+      ctx.fillText(effect.text || "😂", 0, 0);
     } else if (effect.kind === "line") {
       const targetX = effect.x2 || effect.x;
       const targetY = effect.y2 || effect.y;
@@ -349,6 +400,43 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
       ctx.beginPath();
       ctx.arc(pulseX, pulseY, width + 2, 0, Math.PI * 2);
       ctx.fill();
+    } else if (effect.kind === "finale") {
+      const radius = effect.size || 150;
+      const arrival = 1 - (1 - Math.min(1, progress * 1.5)) ** 3;
+      const stageRadius = radius * (0.42 + arrival * 0.58);
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = `${effect.color}26`;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, stageRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = Math.max(2, 7 * (1 - progress));
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.72)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, stageRadius * 0.72, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let index = 0; index < 12; index += 1) {
+        const angle = progress * 0.72 + (Math.PI * 2 * index) / 12;
+        const inner = stageRadius * (index % 2 ? 0.64 : 0.54);
+        const outer = stageRadius * (index % 2 ? 0.9 : 1);
+        ctx.beginPath();
+        ctx.moveTo(effect.x + Math.cos(angle) * inner, effect.y + Math.sin(angle) * inner);
+        ctx.lineTo(effect.x + Math.cos(angle) * outer, effect.y + Math.sin(angle) * outer);
+        ctx.stroke();
+      }
+    } else if (effect.kind === "energy_pulse") {
+      const radius = (effect.size || 48) * (0.35 + (1 - (1 - progress) ** 2) * 0.65);
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = `${effect.color}24`;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = Math.max(1.5, 4 * (1 - progress));
+      ctx.stroke();
+      text(ctx, effect.text || "+15 能量", effect.x, effect.y - radius * 0.72 - progress * 10, 11, "#f7ddff", "center", 800);
     } else if (effect.kind === "ring") {
       const radius = effect.size || 80;
       const arrival = 1 - (1 - progress) ** 3;

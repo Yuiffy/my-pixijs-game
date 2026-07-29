@@ -2188,6 +2188,7 @@ export class RiftLineScene extends Phaser.Scene {
     const previous = this.projectileVisualStates.get(view);
     if (
       previous
+      && projectile.style !== "finale_star"
       && previous.style === projectile.style
       && previous.grounded === grounded
       && previous.velocityX === projectile.velocityX
@@ -2255,6 +2256,31 @@ export class RiftLineScene extends Phaser.Scene {
       trail.lineStyle(1, 0xffffff, 0.68).strokeCircle(0, 0, 6);
       if (emoji) icon.setText(emoji).setFontSize(11).setRotation(0).setVisible(true);
       else core.setRadius(4).setFillStyle(0xf8fcff, 0.98).setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      return;
+    }
+
+    if (projectile.style === "finale_star") {
+      const tailX = -(projectile.velocityX / speed) * 46;
+      const tailY = -(projectile.velocityY / speed) * 46;
+      const pulse = 1 + Math.sin(this.bridge.engine.state.visualTime * 13) * 0.16;
+      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      this.drawProjectileTrail(trail, tailX, tailY, 9, projectileColor);
+      this.drawProjectileTrail(trail, tailX * 0.72, tailY * 0.72, 3, 0xffffff);
+      trail
+        .fillStyle(projectileColor, 0.24)
+        .fillCircle(0, 0, projectile.radius + 9)
+        .lineStyle(2.5, projectileColor, 0.94)
+        .strokeCircle(0, 0, (projectile.radius + 6) * pulse)
+        .lineStyle(1.2, 0xffffff, 0.82)
+        .strokeCircle(0, 0, projectile.radius + 1);
+      icon
+        .setText(emoji || "✦")
+        .setFontFamily(FONT_FAMILY)
+        .setFontSize(Math.max(18, projectile.size))
+        .setRotation(this.bridge.engine.state.visualTime * 3.8)
+        .setScale(pulse)
+        .setVisible(true)
+        .setBlendMode(Phaser.BlendModes.SCREEN);
       return;
     }
 
@@ -2361,13 +2387,24 @@ export class RiftLineScene extends Phaser.Scene {
       .setRotation(0)
       .setDepth(DEPTH.effects + effect.y + 1);
     if (effect.kind === "emoji_burst") {
+      const pickaxeBounce = effect.text === "⛏️";
+      const bounce = pickaxeBounce ? Math.sin(progress * Math.PI) * 46 : 0;
       label
         .setText(effect.text || "😂")
         .setFontFamily(PROJECTILE_EMOJI_FONT)
-        .setFontSize(effect.size || 32)
-        .setY(0)
-        .setScale(0.62 + progress * 1.48)
+        .setFontSize(effect.size || (pickaxeBounce ? 26 : 32))
         .setVisible(true);
+      if (pickaxeBounce) {
+        label
+          .setY(-10 - bounce - progress * 8)
+          .setScale(0.82 + Math.sin(progress * Math.PI) * 0.34)
+          .setRotation(-0.72 + progress * 2.8);
+      } else {
+        label
+          .setY(0)
+          .setScale(0.62 + progress * 1.48)
+          .setRotation(0);
+      }
       return;
     }
     if (effect.kind === "text" || effect.kind === "heal") {
@@ -2420,6 +2457,74 @@ export class RiftLineScene extends Phaser.Scene {
         .strokeCircle(0, 0, fieldRadius)
         .lineStyle(1.5, 0xf4fbff, 0.66)
         .strokeCircle(0, 0, Math.max(5, radius * arrival * 0.72));
+    } else if (effect.kind === "finale") {
+      const radius = effect.size || 150;
+      const arrival = 1 - (1 - Math.min(1, progress * 1.5)) ** 3;
+      const stageRadius = radius * (0.42 + arrival * 0.58);
+      const rotation = progress * 0.72;
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .fillStyle(color, 0.08 + (1 - progress) * 0.1)
+        .fillCircle(0, 0, stageRadius)
+        .fillStyle(0xf7ddff, 0.08 + (1 - progress) * 0.12)
+        .fillTriangle(-radius * 0.96, -radius * 0.88, -radius * 0.42, -radius * 0.96, 0, radius * 0.16)
+        .fillTriangle(radius * 0.96, -radius * 0.88, radius * 0.42, -radius * 0.96, 0, radius * 0.16)
+        .lineStyle(Math.max(2, 7 * (1 - progress)), color, 0.94)
+        .strokeCircle(0, 0, stageRadius)
+        .lineStyle(1.5, 0xffffff, 0.72)
+        .strokeCircle(0, 0, stageRadius * 0.72);
+      for (let index = 0; index < 12; index += 1) {
+        const angle = rotation + (Math.PI * 2 * index) / 12;
+        const inner = stageRadius * (index % 2 ? 0.64 : 0.54);
+        const outer = stageRadius * (index % 2 ? 0.9 : 1);
+        graphics
+          .lineStyle(index % 2 ? 2 : 3.5, index % 2 ? color : 0xffffff, 0.72)
+          .lineBetween(
+            Math.cos(angle) * inner,
+            Math.sin(angle) * inner,
+            Math.cos(angle) * outer,
+            Math.sin(angle) * outer,
+          );
+      }
+      const starRadius = Math.max(8, radius * (0.24 + Math.sin(progress * Math.PI) * 0.11));
+      const starPoints = Array.from({ length: 8 }, (_, index) => {
+        const angle = -Math.PI / 2 + rotation * 1.8 + (Math.PI * index) / 4;
+        const pointRadius = index % 2 === 0 ? starRadius : starRadius * 0.35;
+        return new Phaser.Math.Vector2(Math.cos(angle) * pointRadius, Math.sin(angle) * pointRadius);
+      });
+      graphics.fillStyle(0xf7ddff, 0.78).fillPoints(starPoints, true);
+      burstGradient
+        .setTint(color)
+        .setDisplaySize(stageRadius * 1.45, stageRadius * 1.45)
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .setAlpha(0.3 + (1 - progress) * 0.34)
+        .setVisible(true);
+    } else if (effect.kind === "energy_pulse") {
+      const radius = effect.size || 48;
+      const arrival = 1 - (1 - progress) ** 2;
+      const pulseRadius = radius * (0.35 + arrival * 0.65);
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .fillStyle(color, 0.08 + (1 - progress) * 0.12)
+        .fillCircle(0, 0, pulseRadius)
+        .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.92)
+        .strokeCircle(0, 0, pulseRadius)
+        .lineStyle(1.2, 0xffffff, 0.7)
+        .strokeCircle(0, 0, pulseRadius * 0.68);
+      for (let index = 0; index < 4; index += 1) {
+        const angle = progress * 2.2 + index * (Math.PI / 2);
+        graphics
+          .fillStyle(index % 2 ? color : 0xffffff, 0.82)
+          .fillCircle(Math.cos(angle) * pulseRadius * 0.82, Math.sin(angle) * pulseRadius * 0.82, 2.8);
+      }
+      label
+        .setText(effect.text || "+15 能量")
+        .setFontFamily(FONT_FAMILY)
+        .setFontSize(11)
+        .setY(-radius * 0.72 - progress * 10)
+        .setScale(1)
+        .setColor("#f7ddff")
+        .setVisible(true);
     } else if (effect.kind === "healing_field") {
       drawHealingFieldEffect(graphics, burstGradient, color, progress, effect.size);
     } else if (effect.kind === "healing_pulse") {

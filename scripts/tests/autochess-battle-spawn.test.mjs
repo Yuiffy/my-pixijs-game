@@ -1885,26 +1885,108 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
     engine["castAbility"](source, battle.enemy);
 
     const delivery = battle.projectiles.find((projectile) =>
-      projectile.style === "aoe_orb" && projectile.impactAbilityId === abilityId,
+      projectile.impactAbilityId === abilityId,
     );
     assert.ok(delivery, `${abilityId} 应创建 AOE 投送弹幕`);
+    assert.equal(
+      delivery.style,
+      abilityId === "lian" ? "finale_star" : "aoe_orb",
+      `${abilityId} 应使用对应的投送视觉`,
+    );
+    const deliverySpeed = Math.hypot(delivery.velocityX, delivery.velocityY);
+    const impactX = delivery.x + delivery.velocityX / deliverySpeed * delivery.remainingRange;
+    const impactY = delivery.y + delivery.velocityY / deliverySpeed * delivery.remainingRange;
     assert.ok(Math.hypot(delivery.x - source.x, delivery.y - source.y) < 1);
     assert.deepEqual(battle.enemy.map((target) => target.hp), hpBefore, `${abilityId} 不应在起手帧提前伤害`);
     assert.ok(!battle.effects.some((effect) =>
-      ["ring", "chronosphere", "hotpot"].includes(effect.kind)
-      && Math.hypot(effect.x - battle.enemy[0].x, effect.y - battle.enemy[0].y) < 160
+      ["ring", "chronosphere", "hotpot", "finale"].includes(effect.kind)
+      && Math.hypot(effect.x - impactX, effect.y - impactY) < 160
     ), `${abilityId} 不应在弹幕抵达前提前显示 AOE`);
 
     engine["updateProjectiles"](battle, 1);
 
     assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === abilityId));
     assert.ok(battle.effects.some((effect) =>
-      ["ring", "chronosphere", "hotpot"].includes(effect.kind)
-      && Math.hypot(effect.x - battle.enemy[0].x, effect.y - battle.enemy[0].y) < 40
+      ["ring", "chronosphere", "hotpot", "finale"].includes(effect.kind)
+      && Math.hypot(effect.x - impactX, effect.y - impactY) < 1
     ), `${abilityId} 抵达后应在固定落点显示 AOE`);
     if (abilityId === "spark_mage") assert.equal(battle.chronospheres.length, 1);
     else assert.ok(battle.enemy.some((target, targetIndex) => target.hp < hpBefore[targetIndex]), `${abilityId} 抵达后应结算伤害`);
   });
+});
+
+test("梨安终场谢幕分段展示星辉投送、落地舞台与友军能量回响", () => {
+  const engine = createEngine(264);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "lian", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "ember_blade", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const lian = battle?.player.find((fighter) => fighter.unitId === "lian");
+  const nearbyAlly = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  const distantAlly = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
+  assert.ok(battle && lian && nearbyAlly && distantAlly);
+
+  lian.x = 250;
+  lian.y = 360;
+  nearbyAlly.x = 320;
+  nearbyAlly.y = 410;
+  distantAlly.x = 900;
+  distantAlly.y = 560;
+  battle.player.forEach((fighter) => {
+    fighter.energy = 0;
+    fighter.cooldown = 99;
+  });
+  battle.enemy.forEach((target, index) => {
+    target.x = 650 + index * 22;
+    target.y = 330 + (index % 2) * 36;
+    target.hp = target.maxHp = 99_999;
+    target.armor = 0;
+    target.dodgeChance = 0;
+    target.attack = 0;
+    target.cooldown = 99;
+  });
+  battle.effects = [];
+
+  engine["castAbility"](lian, battle.enemy);
+
+  const delivery = battle.projectiles.find((projectile) =>
+    projectile.impactAbilityId === "lian",
+  );
+  assert.ok(delivery);
+  assert.equal(delivery.style, "finale_star");
+  assert.ok(delivery.size >= 18);
+  assert.ok(battle.effects.some((effect) =>
+    effect.kind === "burst" && effect.x === lian.x && effect.y === lian.y,
+  ));
+  assert.ok(!battle.effects.some((effect) => effect.kind === "finale"));
+  assert.ok(!battle.effects.some((effect) => effect.kind === "energy_pulse"));
+  assert.equal(lian.energy, 0);
+  assert.equal(nearbyAlly.energy, 0);
+  assert.equal(distantAlly.energy, 0);
+
+  engine["updateProjectiles"](battle, 1);
+
+  const finale = battle.effects.find((effect) => effect.kind === "finale");
+  assert.ok(finale);
+  assert.equal(finale.size, 150);
+  const energyPulses = battle.effects.filter((effect) => effect.kind === "energy_pulse");
+  assert.deepEqual(
+    energyPulses.map((effect) => effect.text),
+    ["+15 能量", "+15 能量"],
+  );
+  assert.ok(battle.effects.some((effect) =>
+    effect.kind === "line" &&
+    effect.x === finale.x &&
+    effect.y === finale.y &&
+    effect.x2 === nearbyAlly.x &&
+    effect.y2 === nearbyAlly.y,
+  ));
+  assert.equal(lian.energy, 15);
+  assert.equal(nearbyAlly.energy, 15);
+  assert.equal(distantAlly.energy, 0);
 });
 
 test("病院坂灵仅缓慢自动回能，攻击与受击均不回能", () => {
@@ -3282,9 +3364,16 @@ test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞�
   nanaEngine["damage"](nanaTarget, nana, 80);
   const pickaxe = nanaBattle.projectiles.find((projectile) => projectile.emoji === "⛏️");
   assert.ok(pickaxe, "持续状态受击时应立即发射矿镐");
+  assert.equal(pickaxe.style, "pickaxe");
+  assert.ok(Math.abs(Math.hypot(pickaxe.velocityX, pickaxe.velocityY) - 320) < 0.001);
   nanaEngine["updateProjectiles"](nanaBattle, 0.5);
   assert.ok(nanaTarget.hp < counterTargetHp);
   assert.ok(nanaTarget.stun >= 0.24);
+  const pickaxeBounce = nanaBattle.effects.find(
+    (effect) => effect.kind === "emoji_burst" && effect.text === "⛏️",
+  );
+  assert.ok(pickaxeBounce, "矿镐命中后应从目标头顶弹起");
+  assert.ok(pickaxeBounce.y < nanaTarget.y);
 
   const candyEngine = createEngine(203);
   candyEngine.state.playerLevel = 4;

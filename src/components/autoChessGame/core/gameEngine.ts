@@ -204,7 +204,7 @@ const NANA_PICKAXE_TAUNT_RADIUS = 155;
 const NANA_PICKAXE_TAUNT_REFRESH = 0.3;
 const NANA_PICKAXE_COUNTER_DAMAGE = 0.46;
 const NANA_PICKAXE_COUNTER_STUN = 0.24;
-const NANA_PICKAXE_COUNTER_SPEED = 620;
+const NANA_PICKAXE_COUNTER_SPEED = 320;
 const GLUTTONY_ATTACK_PER_STACK = 0.06;
 const REI_REVIVE_HP_RATIO = 0.25;
 /** 蛙梓：持续歌唱期间的群体治疗与火焰弹。 */
@@ -2993,13 +2993,13 @@ export class AutoChessEngine {
       y: source.y,
       velocityX: deltaX / duration,
       velocityY: deltaY / duration,
-      radius: 8,
+      radius: source.unitId === "lian" ? 12 : 8,
       remainingRange: distance,
       damage: 0,
       burnPower: 0,
       color: UNIT_DEFS[source.unitId].accent,
-      size: 9,
-      style: "aoe_orb",
+      size: source.unitId === "lian" ? 18 : 9,
+      style: source.unitId === "lian" ? "finale_star" : "aoe_orb",
       emoji: delivery.glyph,
       impactAbilityId: source.unitId,
     });
@@ -3155,13 +3155,36 @@ export class AutoChessEngine {
           });
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
         break;
-      case "lian":
+      case "lian": {
         targets
           .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 140)
           .forEach((target) => deal(target, 1.55));
-        this.targetsWithinAbilityRange(source, allies).forEach((ally) => this.addEnergy(ally, 15));
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.85, size: 150 });
+        this.targetsWithinAbilityRange(source, allies).forEach((ally) => {
+          this.addEnergy(ally, 15);
+          this.addEffect({
+            kind: "line",
+            x: center.x,
+            y: center.y,
+            x2: ally.x,
+            y2: ally.y,
+            color: "#f2c9ff",
+            life: 0.72,
+            size: 3,
+          });
+          this.addEffect({
+            kind: "energy_pulse",
+            x: ally.x,
+            y: ally.y,
+            color: def.accent,
+            text: "+15 能量",
+            life: 0.92,
+            size: Math.max(48, ally.radius * 2.8),
+          });
+        });
+        this.addEffect({ kind: "finale", x: center.x, y: center.y, color: def.accent, life: 1.18, size: 150 });
+        this.addEffect({ kind: "burst", x: center.x, y: center.y, color: "#f7ddff", life: 0.52, size: 96 });
         break;
+      }
       default:
         break;
     }
@@ -3551,6 +3574,27 @@ export class AutoChessEngine {
             emoji: true,
             life: 0.62,
             size: 32,
+          });
+        }
+        if (projectile.style === "pickaxe") {
+          const impactY = hit.target.y - hit.target.radius * 0.72;
+          this.addEffect({
+            kind: "burst",
+            x: hit.target.x,
+            y: impactY,
+            color: "#ffe08a",
+            life: 0.38,
+            size: 48,
+          });
+          this.addEffect({
+            kind: "emoji_burst",
+            x: hit.target.x,
+            y: impactY,
+            color: projectile.color,
+            text: "⛏️",
+            emoji: true,
+            life: 0.72,
+            size: 26,
           });
         }
         return false;
@@ -5140,6 +5184,8 @@ export class AutoChessEngine {
       case "lian": {
         const center = densest(targets);
         if (!center) break;
+        this.addEffect({ kind: "burst", x: source.x, y: source.y, color: "#f7ddff", life: 0.52, size: 62 });
+        this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.68, size: 58 });
         this.deliverRemoteAoe(source, center);
         break;
       }
@@ -5438,6 +5484,7 @@ export class AutoChessEngine {
         color: UNIT_DEFS.grove_mender.accent,
         size: 18,
         emoji: "⛏️",
+        style: "pickaxe",
         stunDuration: NANA_PICKAXE_COUNTER_STUN,
       });
     }

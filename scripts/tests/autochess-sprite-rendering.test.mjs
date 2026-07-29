@@ -155,9 +155,12 @@ test("战斗同步覆盖投射物、技能效果与两类召唤物", () => {
   assert.match(scene, /projectile\.style === "aoe_orb"/);
   assert.match(scene, /projectile\.style === "laugh"/);
   assert.match(engine, /style: "laugh"/);
+  assert.match(engine, /style: "pickaxe"/);
   assert.match(engine, /kind: "emoji_burst"/);
   assert.match(scene, /effect\.kind === "emoji_burst"/);
   assert.match(scene, /\.setScale\(0\.62 \+ progress \* 1\.48\)/);
+  assert.match(scene, /effect\.text === "⛏️"/);
+  assert.match(scene, /\.setRotation\(-0\.72 \+ progress \* 2\.8\)/);
   assert.match(scene, /effect\.kind === "line"/);
   assert.match(scene, /effect\.kind === "ring"/);
   assert.match(scene, /effect\.kind === "burst"/);
