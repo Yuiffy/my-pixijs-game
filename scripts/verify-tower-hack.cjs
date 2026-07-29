@@ -223,6 +223,8 @@ const attachEngine = async (page) => {
     const armedText = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
     const armedTower = armedText.battle.playerUnits.find((fighter) => fighter.fid === setup.towerFid);
     const armedTarget = armedText.battle.playerUnits.find((fighter) => fighter.fid === setup.targetFid);
+    assert.equal(armedTower.attackType, "melee");
+    assert.equal(armedTower.range, 52);
     assert.equal(armedTower.towerHackArmed, true);
     assert.equal(armedTarget.towerHackBuffed, false);
     await capture("tower-hack-armed.png");

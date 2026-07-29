@@ -4085,6 +4085,44 @@ test("礼墨完成空气龙，塔神发动开挂后死亡并强化最近队友",
   assert.match(battle.banner, /哈哈哈我开挂了.*这游戏怎么这么简单啊/);
 });
 
+test("塔神会以近战射程主动贴近敌人", () => {
+  const engine = createEngine(429);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "tower_god", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const tower = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && tower && target);
+
+  tower.x = 150;
+  tower.y = 360;
+  tower.energy = 0;
+  tower.cooldown = 0;
+  target.x = 420;
+  target.y = 360;
+  target.hp = target.maxHp = 9_999;
+  target.attack = 0;
+  target.armor = 0;
+  target.baseMoveSpeed = 0;
+  target.moveSpeed = 0;
+  target.cooldown = 99;
+  battle.enemy.slice(1).forEach((fighter) => {
+    fighter.alive = false;
+    fighter.hp = 0;
+  });
+
+  const startX = tower.x;
+  const startHp = target.hp;
+  engine.update(0.05);
+  assert.equal(target.hp, startHp, "远距离时塔神不应隔空普攻");
+  assert.ok(tower.x > startX, "塔神应主动走向敌人");
+
+  for (let tick = 0; tick < 200 && target.hp === startHp; tick += 1) engine.update(0.05);
+  assert.ok(target.hp < startHp, "塔神应贴近到近战范围后普攻");
+});
+
 test("塔神未发动不转移开挂，同档不叠加且高星档位覆盖低星", () => {
   const engine = createEngine(142);
   engine.state.playerLevel = 5;
