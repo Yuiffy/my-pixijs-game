@@ -154,7 +154,10 @@ test("战斗同步覆盖投射物、技能效果与两类召唤物", () => {
   assert.match(scene, /projectile\.style === "lollipop"/);
   assert.match(scene, /projectile\.style === "aoe_orb"/);
   assert.match(scene, /projectile\.style === "laugh"/);
+  assert.match(scene, /projectile\.style === "cigarette"/);
+  assert.match(canvasEffects, /projectile\.style === "cigarette"/);
   assert.match(engine, /style: "laugh"/);
+  assert.match(engine, /style: "cigarette"/);
   assert.match(engine, /style: "pickaxe"/);
   assert.match(engine, /kind: "emoji_burst"/);
   assert.match(scene, /effect\.kind === "emoji_burst"/);
@@ -184,7 +187,7 @@ test("技能只保留名称提示，范围与连线效果提供范围染色和�
 });
 
 test("帕可治疗区使用小型恢复脉冲和淡色范围标识", () => {
-  const pakoAbility = engine.slice(engine.indexOf('case "pako":'), engine.indexOf('case "nightin":'));
+  const pakoAbility = engine.slice(engine.indexOf('case "pako":'), engine.indexOf('case "lian":'));
   const healingZoneUpdate = engine.slice(
     engine.indexOf("private updateHealingZones"),
     engine.indexOf("private updateBattle"),

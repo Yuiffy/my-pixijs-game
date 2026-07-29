@@ -284,6 +284,40 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, state: GameState)
       return;
     }
 
+    if (projectile.style === "cigarette") {
+      const directionX = projectile.velocityX / speed;
+      const directionY = projectile.velocityY / speed;
+      const driftX = -directionY;
+      const driftY = directionX;
+      const smokePhase = state.visualTime * 5;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (let index = 1; index <= 4; index += 1) {
+        const distance = 10 + index * 9;
+        const drift = Math.sin(smokePhase + index * 1.4) * (2 + index * 0.7);
+        ctx.globalAlpha = 0.42 - index * 0.065;
+        ctx.fillStyle = index % 2 ? "#e8e3ef" : "#b8b3c4";
+        ctx.beginPath();
+        ctx.arc(
+          projectile.x - directionX * distance + driftX * drift,
+          projectile.y - directionY * distance + driftY * drift,
+          5 + index * 1.7,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.translate(projectile.x, projectile.y);
+      ctx.rotate(angle);
+      ctx.font = `${Math.max(19, projectile.size)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(emoji || "🚬", 0, 0);
+      ctx.restore();
+      return;
+    }
+
     if (emoji) {
       const fontSize = projectile.style === "shark"
         ? Math.max(12, projectile.size)

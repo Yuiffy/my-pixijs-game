@@ -1892,7 +1892,6 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
   const projectileAbilities = [
     "spark_mage",
     "sui_flower",
-    "nightin",
     "lian",
   ];
 
@@ -1948,6 +1947,64 @@ test("非自身中心 AOE 弹幕抵达后才同步触发伤害与范围视觉", 
     if (abilityId === "spark_mage") assert.equal(battle.chronospheres.length, 1);
     else assert.ok(battle.enemy.some((target, targetIndex) => target.hp < hpBefore[targetIndex]), `${abilityId} 抵达后应结算伤害`);
   });
+});
+
+test("南町依次扔出三枚慢速烟头，每枚命中造成伤害与灼烧但不眩晕", () => {
+  const engine = createEngine(263);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "nightin", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const nightin = battle?.player[0];
+  assert.ok(battle && nightin);
+  nightin.x = 250;
+  nightin.y = 400;
+  battle.effects = [];
+  battle.enemy.forEach((target, index) => {
+    target.x = 620;
+    target.y = 320 + index * 80;
+    target.hp = target.maxHp = 99_999;
+    target.armor = 0;
+    target.dodgeChance = 0;
+    target.attack = 0;
+    target.cooldown = 99;
+    target.stun = 0;
+    target.burnTime = 0;
+  });
+  const hpBefore = battle.enemy.map((target) => target.hp);
+
+  engine["castAbility"](nightin, battle.enemy);
+
+  assert.equal(battle.projectileVolley.length, 3);
+  assert.deepEqual(
+    battle.projectileVolley.map((shot) => Number(shot.delay.toFixed(2))),
+    [0, 0.16, 0.32],
+  );
+  battle.projectileVolley.forEach((shot) => {
+    assert.equal(shot.speed, 260);
+    assert.equal(shot.style, "cigarette");
+    assert.equal(shot.emoji, "🚬");
+    assert.ok(shot.damage > 0);
+    assert.ok(shot.burnPower > 0);
+    assert.equal(shot.stunDuration, undefined);
+  });
+  assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "nightin"));
+  assert.deepEqual(battle.enemy.map((target) => target.hp), hpBefore);
+
+  engine["updateProjectileVolley"](battle, 1);
+  assert.equal(battle.projectileVolley.length, 0);
+  assert.equal(battle.projectiles.filter((projectile) => projectile.style === "cigarette").length, 3);
+  for (let tick = 0; tick < 80 && battle.projectiles.length; tick += 1) {
+    engine["updateProjectiles"](battle, 0.05);
+  }
+
+  const damaged = battle.enemy.filter((target, index) => target.hp < hpBefore[index]);
+  assert.equal(battle.projectiles.length, 0);
+  assert.ok(damaged.length >= 2);
+  assert.ok(damaged.every((target) => target.burnTime > 0 && target.burnDps > 0));
+  assert.ok(battle.enemy.every((target) => target.stun === 0));
+  assert.ok(battle.effects.some((effect) => effect.text === "灼烧"));
 });
 
 test("梨安终场谢幕分段展示星辉投送、落地舞台与友军能量回响", () => {

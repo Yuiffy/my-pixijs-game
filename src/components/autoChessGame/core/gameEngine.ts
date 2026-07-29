@@ -265,13 +265,18 @@ const REMOTE_AOE_DELIVERIES: Partial<Record<UnitId, { kind: "beam" | "projectile
   spark_mage: { kind: "projectile", glyph: "⏳" },
   sui_flower: { kind: "projectile", glyph: "🌶️" },
   pako: { kind: "projectile", glyph: "🐟" },
-  nightin: { kind: "projectile", glyph: "🚬" },
   rei: { kind: "projectile", glyph: "👻" },
   lian: { kind: "projectile", glyph: "✦" },
 };
 const REMOTE_AOE_PROJECTILE_MIN_DURATION = 0.28;
 const REMOTE_AOE_PROJECTILE_MAX_DURATION = 0.58;
 const REMOTE_AOE_PROJECTILE_SPEED = 620;
+/** 南町「烟头烫屁股」：三枚慢速烟头分段命中并灼烧。 */
+const NIGHTIN_CIGARETTE_COUNT = 3;
+const NIGHTIN_CIGARETTE_INTERVAL = 0.16;
+const NIGHTIN_CIGARETTE_SPEED = 260;
+const NIGHTIN_CIGARETTE_DAMAGE = 0.9;
+const NIGHTIN_CIGARETTE_BURN = 0.55;
 /** 狍子偶像：双方均被锁定的持续施法。 */
 const LOVELY_CHANNEL_DURATION = 3.4;
 const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
@@ -3159,16 +3164,6 @@ export class AutoChessEngine {
           size: 13,
         });
         break;
-      case "nightin":
-        targets
-          .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
-          .forEach((target) => {
-            deal(target, 1.3);
-            this.applyBurn(source, target, source.attack * 0.6, "ability");
-            target.stun = Math.max(target.stun, 0.5);
-          });
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
-        break;
       case "lian": {
         targets
           .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 140)
@@ -3609,6 +3604,17 @@ export class AutoChessEngine {
             emoji: true,
             life: 0.72,
             size: 26,
+          });
+        }
+        if (projectile.style === "cigarette") {
+          this.addEffect({
+            kind: "text",
+            x: hit.target.x,
+            y: hit.target.y - hit.target.radius - 20,
+            color: "#ffc38a",
+            text: "灼烧",
+            life: 0.68,
+            size: 11,
           });
         }
         return false;
@@ -5064,7 +5070,28 @@ export class AutoChessEngine {
       case "nightin": {
         const center = densest(targets);
         if (!center) break;
-        this.deliverRemoteAoe(source, center);
+        const clusteredTargets = [...targets].sort(
+          (left, right) =>
+            Math.hypot(left.x - center.x, left.y - center.y) -
+              Math.hypot(right.x - center.x, right.y - center.y) ||
+            left.fid.localeCompare(right.fid),
+        );
+        for (let index = 0; index < NIGHTIN_CIGARETTE_COUNT; index += 1) {
+          const target = clusteredTargets[index % clusteredTargets.length];
+          this.state.battle?.projectileVolley.push({
+            sourceFid: source.fid,
+            targetFid: target.fid,
+            delay: index * NIGHTIN_CIGARETTE_INTERVAL,
+            damage: source.attack * NIGHTIN_CIGARETTE_DAMAGE,
+            damageKind: "ability",
+            burnPower: source.attack * NIGHTIN_CIGARETTE_BURN,
+            speed: NIGHTIN_CIGARETTE_SPEED,
+            color: "#d7d1ee",
+            size: 18,
+            style: "cigarette",
+            emoji: "🚬",
+          });
+        }
         break;
       }
       case "tiandou": {

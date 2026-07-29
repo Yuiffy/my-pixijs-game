@@ -885,3 +885,12 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 战斗回归锁定 `320` 弹速、命中伤害、眩晕、头顶特效位置和弹起 Emoji；静态渲染回归同时保留原 `😂` 命中特效并覆盖矿镐旋转分支。
 - 系统 Chrome 分别在发射后 `160ms` 和命中弹起阶段截图；`nana-pickaxe-counter.png` 可见弹道中段矿镐，`nana-pickaxe-impact.png` 可见目标头顶闪光和弹起矿镐。两张 1440×900 截图通过非纯色、透明与近黑检查并已打开确认，Canvas、文本状态、控制台和失败请求正常。
 - 最终验证：完整 `pnpm autochess:test`（`180/180`）、`pnpm exec tsc --noEmit --incremental false`、目标源码 ESLint、浏览器脚本语法、`git diff --check` 与 `pnpm build` 全部通过；构建仅保留既有的 Baseline/Browserslist 数据过期提醒。
+
+## 2026-07-29 · “成熟稳重”开局加强
+
+- 用户反馈“成熟稳重”只给成熟角色增加 6% 护盾，开局强度明显落后于其他协议。
+- 根因不仅是数值偏低：原实现被包在成熟羁绊已激活的分支内，只有一名开局浣熊店员时效果实际为零，凑出羁绊后也只覆盖成熟成员。
+- 改为所有友军开战获得 8% 最大生命护盾，与成熟羁绊成员盾独立叠加；初始金币 +2 保持不变。单成熟成员时也立即生效，两成熟成型后成员获得 10% 羁绊盾加 8% 开局盾。
+- 新增战斗回归覆盖未激活羁绊时的全队 8% 护盾，以及激活后成员盾叠加；完整 `pnpm autochess:test` 为 `182/182`。
+- 系统 Chrome 专项 `scripts/verify-mature-starter.cjs` 确认标题卡文案、第一战护盾和文本状态：浣熊店员为 `18.56/232`、兔子射手为 `12/150`，均为 8%；两张 1440×900 截图通过纯色、透明和近黑拒绝检查并逐张打开确认，Canvas 为 1440×853，控制台与失败请求为空。
+- 主 `verify-autochess.cjs` 仍在既有首战 `result` 等待处超时；专项系统 Chrome 流程通过。最终验证：`pnpm exec tsc --noEmit --incremental false`、目标 TypeScript ESLint、脚本语法、`git diff --check` 与 `pnpm build` 均通过；构建仅保留既有的 Baseline/Browserslist 数据过期提醒。

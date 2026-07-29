@@ -717,6 +717,8 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.match(data.TRAITS.aggression.bonuses[2], /成员 \+55% 攻击力；全体友军 \+20% 攻击力/);
   ["xuehui", "cinder_ram", "meme", "sui", "sui_cat"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("aggression")));
   assert.equal(data.UNIT_DEFS.nightin.name, "南町");
+  assert.match(data.UNIT_DEFS.nightin.abilityDescription, /3 个缓慢飞行的烟头/);
+  assert.doesNotMatch(data.UNIT_DEFS.nightin.abilityDescription, /眩晕/);
   assert.equal(data.UNIT_DEFS.lovely.name, "狍子偶像");
   ["sui_blue", "shiori"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("skeleton_soldier")));
   ["rift_brawler", "mitsuri", "clock_gunner"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("yue_gang")));

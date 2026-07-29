@@ -71,7 +71,7 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe";
+  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe" | "cigarette";
   /** 命中后对附近敌人造成伤害与灼烧的半径。 */
   splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */

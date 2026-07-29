@@ -1207,9 +1207,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     portrait: "/images/livers/kioi.jpg", portraitFocus: "top", shop: true,
   }),
   nightin: unit({
-    id: "nightin", name: "南町", title: "绿色辣妹 · 深夜控场", glyph: "南", color: "#3b426f", accent: "#a9a7ff", tier: 2, cost: 2,
+    id: "nightin", name: "南町", title: "绿色辣妹 · 烟头连投", glyph: "南", color: "#3b426f", accent: "#a9a7ff", tier: 2, cost: 2,
     traits: ["mystic", "dwarf"], hp: 150, attack: 22, armor: 8, range: 210, attackInterval: 1.05, moveSpeed: 55,
-    abilityName: "烟头烫屁股", abilityDescription: "向敌人最密集处甩出烟头，造成范围伤害、灼烧并短暂眩晕。", portrait: "/images/livers/nightin.jpg", portraitFocus: "top", shop: true,
+    abilityName: "烟头烫屁股", abilityDescription: "向敌人最密集处依次扔出 3 个缓慢飞行的烟头；每个烟头命中时造成伤害并灼烧目标。", portrait: "/images/livers/nightin.jpg", portraitFocus: "top", shop: true,
   }),
   tiandou: unit({
     id: "tiandou", name: "恬豆·甜点转圈", title: "四禧丸子 · 糖果支援", glyph: "豆", color: "#c87d95", accent: "#ffc2d7", tier: 2, cost: 2,

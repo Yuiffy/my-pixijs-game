@@ -2189,6 +2189,7 @@ export class RiftLineScene extends Phaser.Scene {
     if (
       previous
       && projectile.style !== "finale_star"
+      && projectile.style !== "cigarette"
       && previous.style === projectile.style
       && previous.grounded === grounded
       && previous.velocityX === projectile.velocityX
@@ -2289,6 +2290,37 @@ export class RiftLineScene extends Phaser.Scene {
       const tailY = -(projectile.velocityY / speed) * 16;
       trail.setVisible(true);
       this.drawProjectileTrail(trail, tailX, tailY, 2.2, projectileColor);
+      return;
+    }
+
+    if (projectile.style === "cigarette") {
+      const directionX = projectile.velocityX / speed;
+      const directionY = projectile.velocityY / speed;
+      const driftX = -directionY;
+      const driftY = directionX;
+      const smokePhase = this.bridge.engine.state.visualTime * 5;
+      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      for (let index = 1; index <= 4; index += 1) {
+        const distance = 10 + index * 9;
+        const drift = Math.sin(smokePhase + index * 1.4) * (2 + index * 0.7);
+        const alpha = 0.42 - index * 0.065;
+        trail
+          .fillStyle(index % 2 ? 0xe8e3ef : 0xb8b3c4, alpha)
+          .fillCircle(
+            -directionX * distance + driftX * drift,
+            -directionY * distance + driftY * drift,
+            5 + index * 1.7,
+          );
+      }
+      trail
+        .fillStyle(projectileColor, 0.3)
+        .fillCircle(directionX * 7, directionY * 7, projectile.radius + 4);
+      icon
+        .setText(emoji || "🚬")
+        .setFontFamily(PROJECTILE_EMOJI_FONT)
+        .setFontSize(Math.max(19, projectile.size))
+        .setRotation(angle)
+        .setVisible(true);
       return;
     }
 
