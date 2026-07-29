@@ -4012,6 +4012,8 @@ test("礼墨完成空气龙，塔神发动开挂后死亡并强化最近队友",
 
   assert.equal(Math.round(sumi.maxHp), gameData.UNIT_DEFS.sumi.hp);
   assert.equal(tower.energy, gameData.UNIT_DEFS.tower_god.energyProfile.start + 20);
+  assert.equal(tower.attackType, "melee");
+  assert.equal(tower.range, 52);
 
   battle.enemy.forEach((fighter, index) => {
     fighter.x = 650 + index * 32;

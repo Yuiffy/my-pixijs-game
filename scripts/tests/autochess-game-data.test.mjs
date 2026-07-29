@@ -792,6 +792,8 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.equal(seki.abilityName, "山猪冲阵");
   assert.match(seki.abilityDescription, /持续耗能.*提高移速.*无法普攻.*缓慢转向.*击退.*眩晕.*边缘.*反弹/);
   assert.equal(towerGod.abilityName, "开挂");
+  assert.equal(towerGod.attackType, "melee");
+  assert.equal(towerGod.range, 52);
   assert.match(towerGod.abilityDescription, /发动.*死亡.*最近.*攻击.*护甲.*攻速.*移速.*不叠加/);
   assert.deepEqual(
     towerGod.abilityLevels.map((level) => level.stats),
