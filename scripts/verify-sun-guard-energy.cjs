@@ -168,7 +168,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const codexText = await dialog.innerText();
   const expectedRecovery = "能量 · 稳态回能：初始 25/100；自动回能（12.5 秒回满，每秒 +8）；攻击回能（每下 +6）；受击回能（每下 +3）";
   if (!codexText.includes(expectedRecovery)) throw new Error(`Codex recovery text mismatch: ${codexText}`);
-  for (const expected of ["满区逃生", "停止攻击和回能", "主动逃离最近敌人", "55% 闪避", "总回复 5%"]) {
+  for (const expected of ["满区逃生", "停止攻击和回能", "主动逃离最近敌人", "20% 闪避", "总回复 25%"]) {
     if (!codexText.includes(expected)) {
       throw new Error(`Codex ability description is missing ${expected}: ${codexText}`);
     }
@@ -255,8 +255,8 @@ mkdirSync(artifactDirectory, { recursive: true });
     beforeTransform.x - beforeTransform.targetX,
     beforeTransform.y - beforeTransform.targetY,
   );
-  const minimumMidHp = beforeTransform.hp + beforeTransform.maxHp * 0.018;
-  const maximumMidHp = beforeTransform.hp + beforeTransform.maxHp * 0.04;
+  const minimumMidHp = beforeTransform.hp + beforeTransform.maxHp * 0.12;
+  const maximumMidHp = beforeTransform.hp + beforeTransform.maxHp * 0.16;
   if (
     !manquGuard ||
     manquRuntime.manquTime <= 0 ||
@@ -276,7 +276,12 @@ mkdirSync(artifactDirectory, { recursive: true });
   await advance(750);
   const endedState = await readState();
   const endedGuard = endedState.battle.playerUnits.find((unit) => unit.unitId === "sun_guard");
-  if (!endedGuard || endedGuard.manquTime !== 0) {
+  const expectedEndedHp = beforeTransform.hp + beforeTransform.maxHp * 0.25;
+  if (
+    !endedGuard ||
+    endedGuard.manquTime !== 0 ||
+    Math.abs(endedGuard.hp - expectedEndedHp) > 0.5
+  ) {
     throw new Error(`Manqu did not end on schedule: ${JSON.stringify(endedGuard)}`);
   }
   await capture("sun-guard-manqu-ended");

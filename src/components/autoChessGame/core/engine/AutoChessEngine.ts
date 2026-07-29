@@ -185,7 +185,7 @@ const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
 const LOVELY_CHANNEL_LIFESTEAL = 0.9;
 const LOVELY_CHANNEL_PULSE_INTERVAL = 0.32;
 /** 果冻风纪：满区逃生的一级默认值；高星参数由单位数据覆盖。 */
-const SUN_GUARD_MANQU_HEAL_PER_SECOND = 0.04;
+const SUN_GUARD_MANQU_HEAL_PER_SECOND = 0.2;
 const SUN_GUARD_MANQU_MOVE_SPEED_BONUS = 105;
 /** 好笑姐姐：偷袭负责进场，冷笑话只负责近距离弹幕爆发。 */
 /** 雅吨辣福：打翻火锅灼烧范围 */

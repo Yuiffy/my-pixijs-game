@@ -364,9 +364,13 @@ test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   );
   assert.deepEqual(
     data.UNIT_DEFS.sun_guard.abilityLevels.map((level) => level.stats.dodge),
-    [0.55, 0.6, 0.65],
+    [0.2, 0.25, 0.3],
   );
-  assert.match(data.abilityDescriptionForStar(data.UNIT_DEFS.sun_guard, 1), /停止攻击和回能.*主动逃离.*55% 闪避.*每秒回复 4%/);
+  assert.deepEqual(
+    data.UNIT_DEFS.sun_guard.abilityLevels.map((level) => level.stats.healPerSecond),
+    [0.2, 0.22, 0.24],
+  );
+  assert.match(data.abilityDescriptionForStar(data.UNIT_DEFS.sun_guard, 1), /停止攻击和回能.*主动逃离.*20% 闪避.*每秒回复 20%/);
   assert.equal(data.UNIT_DEFS.sui_cat.name, "小猫拳");
   assert.match(data.UNIT_DEFS.sui_cat.title, /岁己SUI/);
   assert.equal(data.TRAITS.aegis, undefined);

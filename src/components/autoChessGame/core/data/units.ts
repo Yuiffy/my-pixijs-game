@@ -117,19 +117,19 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     abilityDescription: "持续自动充能，攻击与受击也会回复能量；能量满且受击时变成虫形“满区”，短暂停止攻击和回能，主动逃离最近敌人，并获得闪避和持续治疗。",
     abilityLevels: [
       {
-        summary: "1.25 秒 · 55% 闪避 · 总回复 5%",
-        description: "变成虫形“满区”1.25 秒；期间停止攻击和回能，增加 105 移速并主动逃离最近敌人，获得 55% 闪避，每秒回复 4% 最大生命。",
-        stats: { duration: 1.25, dodge: 0.55, healPerSecond: 0.04, moveSpeedBonus: 105 },
+        summary: "1.25 秒 · 20% 闪避 · 总回复 25%",
+        description: "变成虫形“满区”1.25 秒；期间停止攻击和回能，增加 105 移速并主动逃离最近敌人，获得 20% 闪避，每秒回复 20% 最大生命。",
+        stats: { duration: 1.25, dodge: 0.2, healPerSecond: 0.2, moveSpeedBonus: 105 },
       },
       {
-        summary: "1.35 秒 · 60% 闪避 · 总回复 6.75%",
-        description: "变成虫形“满区”1.35 秒；期间停止攻击和回能，增加 115 移速并主动逃离最近敌人，获得 60% 闪避，每秒回复 5% 最大生命。",
-        stats: { duration: 1.35, dodge: 0.6, healPerSecond: 0.05, moveSpeedBonus: 115 },
+        summary: "1.35 秒 · 25% 闪避 · 总回复 29.7%",
+        description: "变成虫形“满区”1.35 秒；期间停止攻击和回能，增加 115 移速并主动逃离最近敌人，获得 25% 闪避，每秒回复 22% 最大生命。",
+        stats: { duration: 1.35, dodge: 0.25, healPerSecond: 0.22, moveSpeedBonus: 115 },
       },
       {
-        summary: "1.5 秒 · 65% 闪避 · 总回复 9%",
-        description: "变成虫形“满区”1.5 秒；期间停止攻击和回能，增加 125 移速并主动逃离最近敌人，获得 65% 闪避，每秒回复 6% 最大生命。",
-        stats: { duration: 1.5, dodge: 0.65, healPerSecond: 0.06, moveSpeedBonus: 125 },
+        summary: "1.5 秒 · 30% 闪避 · 总回复 36%",
+        description: "变成虫形“满区”1.5 秒；期间停止攻击和回能，增加 125 移速并主动逃离最近敌人，获得 30% 闪避，每秒回复 24% 最大生命。",
+        stats: { duration: 1.5, dodge: 0.3, healPerSecond: 0.24, moveSpeedBonus: 125 },
       },
     ],
     portrait: "/images/livers/hazel.png",

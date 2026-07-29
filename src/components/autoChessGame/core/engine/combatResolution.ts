@@ -21,7 +21,7 @@ const ZEYIN_REBIRTH_RECOIL_WINDOW = 4;
 const NANA_PICKAXE_COUNTER_DAMAGE = 0.46;
 const NANA_PICKAXE_COUNTER_STUN = 0.24;
 const NANA_PICKAXE_COUNTER_SPEED = 320;
-const SUN_GUARD_MANQU_DODGE = 0.55;
+const SUN_GUARD_MANQU_DODGE = 0.2;
 
 export type DamageKind = "attack" | "ability";
 

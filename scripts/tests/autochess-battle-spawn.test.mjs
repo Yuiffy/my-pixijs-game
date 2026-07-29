@@ -654,14 +654,14 @@ test("满区逃生期间停止攻击与回能，主动远离最近敌人并逐�
   for (let tick = 0; tick < 10; tick += 1) engine.update(0.05);
 
   assert.ok(Math.hypot(guard.x - attacker.x, guard.y - attacker.y) > distanceBefore + 50);
-  assert.ok(Math.abs(guard.hp - (hpBefore + guard.maxHp * 0.02)) < 0.001);
+  assert.ok(Math.abs(guard.hp - (hpBefore + guard.maxHp * 0.1)) < 0.001);
   assert.equal(guard.energy, 0);
   assert.equal(attacker.hp, targetHpBefore);
   assert.equal(guard.attackPulse, 0);
 
   for (let tick = 0; tick < 15; tick += 1) engine.update(0.05);
   assert.equal(guard.manquTime, 0);
-  assert.ok(Math.abs(guard.hp - (hpBefore + guard.maxHp * 0.05)) < 0.001);
+  assert.ok(Math.abs(guard.hp - (hpBefore + guard.maxHp * 0.25)) < 0.001);
 
   attacker.x = guard.x + 55;
   attacker.y = guard.y;
@@ -681,7 +681,7 @@ test("满区形态追加闪避，结束后恢复原本受击结算", () => {
   const guard = battle?.player[0];
   const attacker = battle?.enemy[0];
   assert.ok(battle && guard && attacker);
-  engine.rng.next = () => 0.5;
+  engine.rng.next = () => 0.19;
   guard.energy = guard.maxEnergy;
   engine.castAbility(guard, battle.enemy);
   const hpBefore = guard.hp;
