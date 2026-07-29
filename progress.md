@@ -894,3 +894,12 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 新增战斗回归覆盖未激活羁绊时的全队 8% 护盾，以及激活后成员盾叠加；完整 `pnpm autochess:test` 为 `182/182`。
 - 系统 Chrome 专项 `scripts/verify-mature-starter.cjs` 确认标题卡文案、第一战护盾和文本状态：浣熊店员为 `18.56/232`、兔子射手为 `12/150`，均为 8%；两张 1440×900 截图通过纯色、透明和近黑拒绝检查并逐张打开确认，Canvas 为 1440×853，控制台与失败请求为空。
 - 主 `verify-autochess.cjs` 仍在既有首战 `result` 等待处超时；专项系统 Chrome 流程通过。最终验证：`pnpm exec tsc --noEmit --incremental false`、目标 TypeScript ESLint、脚本语法、`git diff --check` 与 `pnpm build` 均通过；构建仅保留既有的 Baseline/Browserslist 数据过期提醒。
+
+## 2026-07-29 · 南町慢速烟头连投
+
+- 南町“烟头烫屁股”由单颗远端范围投送改为依次扔出 3 枚烟头；发射间隔 `0.16s`、弹速 `260`，明显慢于普通远端技能的约 `620`。
+- 三枚烟头优先分配给敌人最密集处附近的不同目标，敌人不足时循环投掷；每枚命中造成 `0.9×` 攻击伤害并施加 `0.55×` 攻击量的 3 秒灼烧。
+- 移除旧版范围伤害与 `0.5s` 眩晕，改为弹体真实碰撞后逐枚结算；Phaser 与备用 Canvas 均新增 `cigarette` 样式，以放大的 `🚬`、四段漂移烟雾和命中“灼烧”标签强化辨识度。
+- 战斗回归覆盖 3 枚、`0/0.16/0.32s` 延迟、`260` 弹速、伤害、灼烧、无眩晕和不再走远端 AOE 投送分支；数据与静态渲染回归同步锁定新文案和两套渲染。
+- 系统 Chrome 专项 `scripts/verify-nightin-cigarettes.cjs` 捕获桌面/手机飞行帧与桌面命中帧；三张截图通过纯色、透明和近黑拒绝检查并逐张打开确认，文本状态显示 3 个灼烧目标、至少 2 个实际掉血目标且眩晕均为 0，Canvas 为 `1440×853`，控制台和失败请求为空。
+- 最终验证：完整 `pnpm autochess:test`（`183/183`）、`pnpm exec tsc --noEmit --incremental false`、目标源码 ESLint、专项脚本语法、`git diff --check` 与 `pnpm build` 全部通过；构建仅保留既有的 Baseline/Browserslist 数据过期提醒。

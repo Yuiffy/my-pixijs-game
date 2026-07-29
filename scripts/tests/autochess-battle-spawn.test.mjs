@@ -30,7 +30,7 @@ const battleGeometry = await compileModule(
   "src/components/autoChessGame/core/battleGeometry.ts",
   { "./gameTypes": gameTypes },
 );
-const { enemyFormationPosition } = battleGeometry;
+const { enemyFormationPosition, playerFormationPosition } = battleGeometry;
 const { AutoChessEngine, mechanicalRabbitMuzzle } = await compileModule(
   "src/components/autoChessGame/core/gameEngine.ts",
   {
@@ -64,6 +64,15 @@ const assertInsideBattleBounds = (fighter) => {
 };
 
 test("敌方部署图与战斗出生共用疏密两套站位规则", () => {
+  assert.deepEqual(
+    [0, 5, 6, 23].map((index) => playerFormationPosition(index)),
+    [
+      { x: 72, y: 175, row: 0 },
+      { x: 512, y: 175, row: 0 },
+      { x: 90, y: 310, row: 1 },
+      { x: 530, y: 580, row: 3 },
+    ],
+  );
   assert.deepEqual(
     [0, 3, 9].map((index) => enemyFormationPosition(index, 10)),
     [
@@ -2339,6 +2348,7 @@ test("6x4 deployment slots preserve their formation positions at battle start", 
   BOARD_SLOTS.forEach((slot, index) => {
     engine.state.board[slot] = { uid: index + 1, id: "sun_guard", star: 1 };
   });
+  const preview = JSON.parse(engine.renderTextState()).board;
   engine.startBattle();
   assert.ok(engine.state.battle);
   const fightersById = new Map(engine.state.battle.player.map((fighter) => [fighter.fid, fighter]));
@@ -2346,9 +2356,12 @@ test("6x4 deployment slots preserve their formation positions at battle start", 
     const fighter = fightersById.get(`p-${index + 1}`);
     const column = slot % 6;
     const row = Math.floor(slot / 6);
+    const expected = playerFormationPosition(slot);
     assert.ok(fighter, `slot ${slot} should create a fighter`);
-    assert.equal(fighter.x, 72 + column * 88 + (row % 2) * 18);
-    assert.equal(fighter.y, 175 + row * 135);
+    assert.equal(fighter.x, expected.x);
+    assert.equal(fighter.y, expected.y);
+    assert.deepEqual(preview[index].formation, expected);
+    assert.deepEqual(preview[index].grid, { column, row });
     assert.ok(fighter.x >= BATTLE_BOUNDS.left && fighter.x <= BATTLE_BOUNDS.right);
   });
 });

@@ -184,6 +184,12 @@ mkdirSync(artifactDirectory, { recursive: true });
       }
       if (!bridge) throw new Error("Unable to locate the autochess engine bridge");
       bridge.engine.state.round = 32;
+      bridge.engine.state.playerLevel = 8;
+      bridge.engine.state.board.fill(null);
+      bridge.engine.state.board[0] = { uid: 9001, id: "sun_guard", star: 1 };
+      bridge.engine.state.board[5] = { uid: 9002, id: "ember_blade", star: 2 };
+      bridge.engine.state.board[12] = { uid: 9003, id: "mumu", star: 2 };
+      bridge.engine.state.board[17] = { uid: 9004, id: "pako", star: 1 };
       bridge.onEvent?.({ type: "state" });
     });
     await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).round === 32);
@@ -191,6 +197,12 @@ mkdirSync(artifactDirectory, { recursive: true });
 
     const preparation = await state();
     assert.ok(preparation.wave.units.length > 10);
+    assert.equal(preparation.board.length, 4);
+    preparation.board.forEach((unit) => {
+      assert.ok(Number.isFinite(unit.formation.x));
+      assert.ok(Number.isFinite(unit.formation.y));
+      assert.ok(Number.isInteger(unit.formation.row));
+    });
     preparation.wave.units.forEach((unit) => {
       assert.ok(Number.isFinite(unit.formation.x));
       assert.ok(Number.isFinite(unit.formation.y));
@@ -204,13 +216,33 @@ mkdirSync(artifactDirectory, { recursive: true });
     await dialog.waitFor();
     let openState = await state();
     assert.equal(openState.interface.enemyFormationOpen, true);
-    assert.equal(await page.locator(".rift-enemy-formation-unit").count(), preparation.wave.units.length);
+    const playerUnits = page.locator('.rift-enemy-formation-unit[data-team="player"]');
+    const enemyUnits = page.locator('.rift-enemy-formation-unit[data-team="enemy"]');
+    assert.equal(await playerUnits.count(), preparation.board.length);
+    assert.equal(await enemyUnits.count(), preparation.wave.units.length);
+    assert.equal(
+      await page.locator(".rift-enemy-formation-unit").count(),
+      preparation.board.length + preparation.wave.units.length,
+    );
 
-    const secondUnit = page.locator(".rift-enemy-formation-unit").nth(Math.min(1, preparation.wave.units.length - 1));
+    const dialogHeights = [];
+    for (const index of [0, Math.floor(preparation.wave.units.length / 2), preparation.wave.units.length - 1]) {
+      await enemyUnits.nth(index).hover();
+      await page.waitForTimeout(40);
+      dialogHeights.push((await dialog.boundingBox()).height);
+    }
+    assert.ok(Math.max(...dialogHeights) - Math.min(...dialogHeights) < 0.5);
+
+    const secondUnit = enemyUnits.nth(Math.min(1, preparation.wave.units.length - 1));
     await secondUnit.hover();
     assert.equal(
       await page.locator(".rift-enemy-detail-identity strong").textContent(),
       preparation.wave.units[Math.min(1, preparation.wave.units.length - 1)].name,
+    );
+    await playerUnits.first().hover();
+    assert.equal(
+      await page.locator(".rift-enemy-detail-identity strong").textContent(),
+      preparation.board[0].name,
     );
     const beforeShortcuts = await state();
     await page.keyboard.press("r");
@@ -236,17 +268,19 @@ mkdirSync(artifactDirectory, { recursive: true });
     assert.equal(openState.interface.enemyFormationOpen, true);
     const mobileDialog = await dialog.boundingBox();
     const mobileField = await page.locator(".rift-enemy-formation-field").boundingBox();
+    const mobileDialogHeight = mobileDialog.height;
     assert.ok(mobileDialog && mobileDialog.x >= 0 && mobileDialog.y >= 0);
     assert.ok(mobileDialog.x + mobileDialog.width <= 390);
     assert.ok(mobileDialog.y + mobileDialog.height <= 844);
     assert.ok(mobileField && mobileField.height >= 210);
 
     const lastIndex = preparation.wave.units.length - 1;
-    await page.locator(".rift-enemy-formation-unit").nth(lastIndex).click();
+    await page.locator('.rift-enemy-formation-unit[data-team="enemy"]').nth(lastIndex).click();
     assert.equal(
       await page.locator(".rift-enemy-detail-identity strong").textContent(),
       preparation.wave.units[lastIndex].name,
     );
+    assert.ok(Math.abs((await dialog.boundingBox()).height - mobileDialogHeight) < 0.5);
     await capture("enemy-formation-mobile.png");
     await page.locator(".rift-enemy-formation-close").click();
     await dialog.waitFor({ state: "detached" });
@@ -256,7 +290,9 @@ mkdirSync(artifactDirectory, { recursive: true });
     assert.deepEqual(failedResponses, []);
     console.log(JSON.stringify({
       wave: preparation.wave.name,
+      playerUnits: preparation.board.map(({ id, star, formation }) => ({ id, star, formation })),
       units: preparation.wave.units.map(({ id, star, formation }) => ({ id, star, formation })),
+      dialogHeights,
       desktopCanvas,
       mobileCanvas,
       screenshots,

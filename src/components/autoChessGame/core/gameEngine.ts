@@ -44,6 +44,7 @@ import {
   enemyFormationPosition,
   fighterVisualRadius,
   mechanicalRabbitMuzzle,
+  playerFormationPosition,
   pointDistanceFromForwardRay,
   rayEndpointAtBattleBounds,
 } from "./battleGeometry";
@@ -1211,19 +1212,10 @@ export class AutoChessEngine {
     );
     const enemyTraitLevel = (trait: TraitId) =>
       traitLevelForCount(TRAITS[trait], enemyTraitCounts[trait]);
-    const playerSpawn = (index: number) => {
-      const col = index % 6;
-      const row = Math.floor(index / 6);
-      return {
-        x: 72 + col * 88 + (row % 2) * 18,
-        y: 175 + row * 135,
-        row,
-      };
-    };
     const player = this.state.board.flatMap((owned, index) => {
       if (!owned) return [];
       const def = UNIT_DEFS[owned.id];
-      const spawn = playerSpawn(index);
+      const spawn = playerFormationPosition(index);
       const {
         maxHp,
         attack,
@@ -5952,13 +5944,14 @@ export class AutoChessEngine {
       augment: "选择局中天赋",
       gameover: "本局结束",
     };
-    const unitSummary = (unit: OwnedUnit | null, index: number) =>
+    const unitSummary = (unit: OwnedUnit | null, index: number, deployed = false) =>
       unit && {
         index,
         grid: { column: index % 6, row: Math.floor(index / 6) },
         id: unit.id,
         name: UNIT_DEFS[unit.id].name,
         star: unit.star,
+        formation: deployed ? playerFormationPosition(index) : undefined,
       };
     const battle = this.state.battle;
     const currentWave = this.currentWave;
@@ -6021,7 +6014,7 @@ export class AutoChessEngine {
         tierCounts: SHOP_TIER_COUNTS,
         currentTierOdds: tierOddsForLevel(this.state.playerLevel),
       },
-      board: this.state.board.map(unitSummary).filter(Boolean),
+      board: this.state.board.map((unit, index) => unitSummary(unit, index, true)).filter(Boolean),
       bench: this.state.bench.map(unitSummary).filter(Boolean),
       shop: this.state.shop
         .map(

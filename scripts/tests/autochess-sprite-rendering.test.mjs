@@ -484,7 +484,7 @@ test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示",
   assert.match(scene, /this\.overlayLayer\.add\(zone\)/);
 });
 
-test("备战界面可从桌面和移动端查看敌方真实部署", () => {
+test("备战界面可从桌面和移动端查看双方真实部署且详情高度稳定", () => {
   assert.match(scene, /enemy-formation-trigger-desktop/);
   assert.match(scene, /enemy-formation-trigger-mobile/);
   assert.match(scene, /setEnemyFormationOpen\(true\)/);
@@ -492,13 +492,17 @@ test("备战界面可从桌面和移动端查看敌方真实部署", () => {
   assert.match(bridge, /enemyFormationOpen = false/);
   assert.match(bridge, /interface:\s*\{\s*enemyFormationOpen:/);
   assert.match(hud, /function EnemyFormationOverlay/);
+  assert.match(hud, /playerFormationPosition\(index\)/);
   assert.match(hud, /enemyFormationPosition\(index, wave\.units\.length\)/);
+  assert.match(hud, /data-team=\{unit\.team\}/);
   assert.match(hud, /role="dialog" aria-modal="true"/);
   assert.match(hud, /rift-enemy-formation-unit/);
-  assert.match(hud, /onPointerEnter=\{\(\) => setActiveIndex\(index\)\}/);
-  assert.match(hud, /abilityDescriptionForStar\(activeDefinition, activeWaveUnit\.star \?\? 1\)/);
+  assert.match(hud, /onPointerEnter=\{\(\) => setActiveKey\(unit\.key\)\}/);
+  assert.match(hud, /abilityDescriptionForStar\(activeDefinition, activeUnit\.star\)/);
   assert.match(hudCss, /\.rift-enemy-formation-backdrop/);
   assert.match(hudCss, /\.rift-enemy-formation-layout/);
+  assert.match(hudCss, /height: min\(596px, calc\(100% - 12px\)\)/);
+  assert.match(hudCss, /grid-template-rows: auto auto 54px minmax\(0, 1fr\)/);
   assert.match(hudCss, /grid-template-rows: minmax\(210px, 42vh\) auto/);
 });
 

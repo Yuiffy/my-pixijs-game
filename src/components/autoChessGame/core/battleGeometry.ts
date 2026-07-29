@@ -6,6 +6,16 @@ export const GLUTTONY_RADIUS_PER_STACK = 0.025;
 
 export const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
 
+export const playerFormationPosition = (index: number) => {
+  const column = index % 6;
+  const row = Math.floor(index / 6);
+  return {
+    x: 72 + column * 88 + (row % 2) * 18,
+    y: 175 + row * 135,
+    row,
+  };
+};
+
 export const enemyFormationPosition = (index: number, unitCount: number) => {
   if (unitCount <= 10) {
     const row = index % 3;
