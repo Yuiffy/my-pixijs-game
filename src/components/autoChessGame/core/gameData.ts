@@ -1362,7 +1362,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
 export const SHOP_UNITS: ShopUnitId[] = [...SHOP_UNIT_IDS];
 
 export const STARTERS: StarterDefinition[] = [
-  { id: "mature_start", icon: "🧱", name: "成熟稳重", subtitle: "老派开场", description: "携带浣熊店员开局；成熟成员开战护盾 +6%，初始金币 +2。", unit: "gale_archer", color: "#b9a274" },
+  { id: "mature_start", icon: "🧱", name: "成熟稳重", subtitle: "老派开场", description: "携带浣熊店员开局；所有友军开战获得 8% 最大生命护盾，初始金币 +2。", unit: "gale_archer", color: "#b9a274" },
   { id: "blaze", icon: "🔥", name: "火热整活", subtitle: "辣福灼烧", description: "携带雅吨开局；灼烧伤害 +30%，首次胜利额外获得 1 金币。", unit: "rift_brawler", color: "#ff8058" },
   { id: "traffic_start", icon: "📈", name: "热点追踪", subtitle: "流量续航", description: "携带大黑鼠开局；流量成员吸血额外 +6%，初始金币 +1。", unit: "dawn_duelist", color: "#ff7197" },
   { id: "bastion", icon: "🏰", name: "持久抗压", subtitle: "稳扎稳打", description: "携带果冻风纪开局；基地生命 +3，所有护盾效果 +20%。", unit: "sun_guard", color: "#69d8ff" },

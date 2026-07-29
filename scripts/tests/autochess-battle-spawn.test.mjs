@@ -375,6 +375,41 @@ test("舞台梦携带小红帽，并为全队提供少量能量和跳舞攻速",
   assert.equal(nonDancer.attackInterval, 1.2);
 });
 
+test("成熟稳重无需激活成熟羁绊也会为全队提供开战护盾", () => {
+  const engine = new AutoChessEngine(135);
+  engine.state.starterChoices = ["mature_start", "bastion", "blaze"];
+  engine.startRun("mature_start");
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "gale_archer", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "ember_blade", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const mature = battle?.player.find((fighter) => fighter.unitId === "gale_archer");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
+  assert.ok(battle && mature && ally);
+  assert.ok(Math.abs(mature.shield - mature.maxHp * 0.08) < 1e-9);
+  assert.ok(Math.abs(ally.shield - ally.maxHp * 0.08) < 1e-9);
+});
+
+test("成熟稳重的全队盾会与成熟羁绊成员盾叠加", () => {
+  const engine = new AutoChessEngine(136);
+  engine.state.starterChoices = ["mature_start", "bastion", "blaze"];
+  engine.startRun("mature_start");
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "gale_archer", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "zeyin", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "ember_blade", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const mature = battle?.player.find((fighter) => fighter.unitId === "gale_archer");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
+  assert.ok(battle && mature && ally);
+  assert.ok(Math.abs(mature.shield - mature.maxHp * 0.18) < 1e-9);
+  assert.ok(Math.abs(ally.shield - ally.maxHp * 0.08) < 1e-9);
+});
+
 test("成熟开战护盾和攻速每 4 秒降低 1 个百分点", () => {
   const engine = createEngine(35);
   engine.state.playerLevel = 4;

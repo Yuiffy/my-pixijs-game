@@ -358,13 +358,13 @@ const starterEffects: Record<StarterId, {
   burnMultiplier?: number;
   firstWinGold?: number;
   trafficLifesteal?: number;
-  matureShieldBonus?: number;
+  openingShield?: number;
   startingEnergy?: number;
   danceAttackSpeed?: number;
   rangedAttackSpeed?: number;
   freeFirstReroll?: boolean;
 }> = {
-  mature_start: { goldBonus: 2, matureShieldBonus: 0.06 },
+  mature_start: { goldBonus: 2, openingShield: 0.08 },
   blaze: { burnMultiplier: 1.3, firstWinGold: 1 },
   traffic_start: { goldBonus: 1, trafficLifesteal: 0.06 },
   bastion: { hpBonus: 3, shieldMultiplier: 1.2 },
@@ -1640,9 +1640,23 @@ export class AutoChessEngine {
       rankingOpen: false,
       rankingMetric: "damage",
     };
+    const openingShield = this.state.starter
+      ? starterEffects[this.state.starter].openingShield || 0
+      : 0;
+    if (openingShield) {
+      battle.player.forEach((fighter) => {
+        this.grantShield(
+          null,
+          fighter,
+          fighter.maxHp * openingShield,
+          0.6,
+          battle,
+        );
+      });
+    }
     const matureLevel = globalTraitLevel("mature");
     if (matureLevel) {
-      const memberShield = [0, 0.1, 0.18, 0.28][matureLevel] + (this.state.starter === "mature_start" ? 0.06 : 0);
+      const memberShield = [0, 0.1, 0.18, 0.28][matureLevel];
       const allShield = [0, 0, 0.04, 0.08][matureLevel];
       battle.player.forEach((fighter) => {
         const ratio = (fighter.matureMember ? memberShield : 0) + allShield;
