@@ -553,6 +553,14 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
 
+test("好笑姐姐使用近距离跳跃技能，不再描述为无过程闪现", () => {
+  const michiya = data.UNIT_DEFS.rift_stalker;
+  assert.equal(michiya.abilityRange, 240);
+  assert.equal(michiya.abilityCastTiming, "engage");
+  assert.match(michiya.abilityDescription, /跳向施法距离内/);
+  assert.doesNotMatch(michiya.abilityDescription, /闪到/);
+});
+
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));

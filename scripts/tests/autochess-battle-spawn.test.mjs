@@ -2462,6 +2462,9 @@ test("四流量为全队提供技能可触发的全能吸血", () => {
   });
   const hpBeforeAbility = meleeAlly.hp;
   engine["castAbility"](meleeAlly, battle.enemy);
+  for (let tick = 0; tick < 10 && meleeAlly.abilityMotion; tick += 1) {
+    engine["updateAbilityMotion"](meleeAlly, 0.05, battle);
+  }
   assert.ok(meleeAlly.hp > hpBeforeAbility, "近战非流量友军的技能伤害应触发全能吸血");
 });
 
@@ -2754,6 +2757,66 @@ test("贪吃岁强化下一击吸血，椰子栞海獭冲击突进并范围控�
   assert.ok(battle.enemy.every((enemy) => enemy.hp < enemy.maxHp));
   assert.ok(battle.effects.some((effect) => effect.text === "海獭冲击"));
   assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "shiori"));
+});
+
+test("好笑姐姐只在近距离起跳，并在落地后结算冷笑话伤害与护盾", () => {
+  const engine = createEngine(211);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rift_stalker", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const michiya = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && michiya && target);
+
+  battle.enemy.slice(1).forEach((enemy) => {
+    enemy.alive = false;
+    enemy.hp = 0;
+  });
+  michiya.jumpPending = false;
+  michiya.jumpTime = 0;
+  michiya.abilityMotion = null;
+  michiya.x = 260;
+  michiya.y = 360;
+  michiya.moveSpeed = 0;
+  michiya.cooldown = 0;
+  michiya.energy = michiya.maxEnergy;
+  target.x = michiya.x + 300;
+  target.y = michiya.y;
+  target.hp = target.maxHp = 9_999;
+  target.armor = 0;
+  target.dodgeChance = 0;
+  target.attack = 0;
+  target.cooldown = 99;
+
+  engine.update(0.05);
+  assert.equal(michiya.abilityMotion, null, "距离超过 240 时不应释放");
+  assert.equal(michiya.energy, michiya.maxEnergy);
+
+  target.x = michiya.x + 220;
+  const startX = michiya.x;
+  const targetHp = target.hp;
+  const shieldBefore = michiya.shield;
+  engine.update(0.05);
+  const motion = michiya.abilityMotion;
+  assert.equal(motion?.kind, "jump");
+  assert.equal(motion?.abilityId, "rift_stalker");
+  assert.equal(motion?.targetFid, target.fid);
+  assert.equal(michiya.x, startX, "施法帧不应直接改写到落点");
+  assert.equal(target.hp, targetHp, "跳跃途中不应提前结算伤害");
+  assert.equal(michiya.shield, shieldBefore, "跳跃途中不应提前获得护盾");
+
+  engine["updateAbilityMotion"](michiya, 0.21, battle);
+  assert.ok(michiya.x > startX && michiya.x < motion.toX);
+  assert.equal(target.hp, targetHp);
+  assert.equal(michiya.shield, shieldBefore);
+
+  engine["updateAbilityMotion"](michiya, 0.21, battle);
+  assert.equal(michiya.abilityMotion, null);
+  assert.ok(target.hp < targetHp);
+  assert.ok(michiya.shield > shieldBefore);
+  assert.ok(battle.effects.some((effect) => effect.text === "冷笑话落地"));
 });
 
 test("小岁鸟连续三次肘击会反复冲撞、击退并短暂眩晕敌人", () => {

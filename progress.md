@@ -810,3 +810,12 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 多 Rei 原本已通过 `corpse.consumed` 排除已用尸体；现在先原子式标记本次全部尸体、再生成幽灵，并增加双三星 Rei 连续消费两组各 5 具不同尸体的回归，明确保证不能重复复活。
 - 系统 Chrome 专项显示“幽灵复活 · 5 名幽灵加入我方”，文本状态确认 `25` 初始能量、`5/0/0` 自动/攻击/受击回能、5 个幽灵均为 25% 生命；`rei-five-ghost-revival.png` 为有效 1440×900 截图并已打开检查，Canvas、控制台和失败请求正常。
 - 最终验证：完整 `pnpm autochess:test`（`167/167`）、`pnpm exec tsc --noEmit --incremental false`、目标源码 ESLint、浏览器脚本语法、`git diff --check` 与 `pnpm build` 全部通过；构建仅保留既有的 Browserslist/Baseline 数据过期提醒。
+
+## 2026-07-29 · 好笑姐姐近距离冷笑话短跳
+
+- 好笑姐姐（`rift_stalker`）的“冷笑话”施法距离收紧为 `240`；距离外会继续接近目标，进入范围后才选择其中最远的敌人起跳。
+- 原先直接调用 `relocateFighter()` 改写坐标、同帧结算伤害与护盾，现改为 `0.42s`、弧高 `64` 的真实短跳；跳跃途中不造成伤害也不获得护盾，落地后才结算原有 `1.4×` 伤害与 `12%` 最大生命护盾。
+- 位移技能审计确认：好笑姐姐、椰子栞、七海、小岁鸟、滑跪、暖男回复、友谊、阿梓、沐霂等均使用引擎 `dash/jump/push` 运动状态；唯一保留直接重定位的是小猫拳明确设计的闪现起手，且已有出发、落点、轨迹与后续同步推进表现。
+- 回归覆盖远距离不释放、近距离起跳、施法帧不瞬移、途中不提前结算、落地伤害/护盾，以及全能吸血等待落地伤害后触发；静态守卫收紧为只允许一处明确闪现。
+- 系统 Chrome 专项使用安装的 Chrome channel：半空帧目标生命/护盾为 `99999 / 0`，落地后为 `99935.52 / 17.52`；`skill-cast-rift-stalker-midair.png` 与 `skill-cast-rift-stalker-landed.png` 均为有效 `1440×900` 整页截图，Canvas `1440×853`，已逐张打开确认抛物线、影子、落点圈、护盾与伤害反馈，控制台和失败请求为空。
+- 最终验证：完整 `pnpm autochess:test`（`169/169`）、`pnpm exec tsc --noEmit --incremental false`、目标源码 ESLint、浏览器脚本语法、`git diff --check` 与 `pnpm build` 全部通过；构建仅保留既有的 Browserslist/Baseline 数据过期提醒。

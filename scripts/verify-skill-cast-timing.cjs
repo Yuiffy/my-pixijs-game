@@ -98,14 +98,19 @@ const inspectPng = (buffer) => {
 
 const { chromium } = loadPlaywright();
 const artifactDirectory = ".tmp/autochess";
+const riftStalkerOnly = process.env.AUTOCHESS_RIFT_STALKER_ONLY === "1";
 mkdirSync(artifactDirectory, { recursive: true });
 
 (async () => {
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
+  const failedResponses = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("response", (response) => {
+    if (response.status() >= 400) failedResponses.push({ status: response.status(), url: response.url() });
+  });
   const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
   const results = [];
 
@@ -171,47 +176,113 @@ mkdirSync(artifactDirectory, { recursive: true });
     return inspectPng(buffer);
   };
 
-  await setup("sui");
-  await advance(50);
-  let state = await readState();
-  const sui = state.battle.playerUnits.find((unit) => unit.unitId === "sui");
-  const suiRuntime = await page.evaluate(() => {
-    const battle = window.__codexAutoChessBridge.engine.state.battle;
-    return { barrageActive: battle.player[0].barrageActive, effects: battle.effects.map((effect) => effect.text).filter(Boolean) };
-  });
-  if (!suiRuntime.barrageActive) throw new Error(`小红帽未在满能量时攻击释放: ${JSON.stringify({ state: sui, runtime: suiRuntime })}`);
-  results.push({ unitId: "sui", phase: state.phase, energy: sui.energy, ...suiRuntime, screenshot: await capture("skill-cast-sui") });
+  let state;
+  if (!riftStalkerOnly) {
+    await setup("sui");
+    await advance(50);
+    state = await readState();
+    const sui = state.battle.playerUnits.find((unit) => unit.unitId === "sui");
+    const suiRuntime = await page.evaluate(() => {
+      const battle = window.__codexAutoChessBridge.engine.state.battle;
+      return { barrageActive: battle.player[0].barrageActive, effects: battle.effects.map((effect) => effect.text).filter(Boolean) };
+    });
+    if (!suiRuntime.barrageActive) throw new Error(`小红帽未在满能量时攻击释放: ${JSON.stringify({ state: sui, runtime: suiRuntime })}`);
+    results.push({ unitId: "sui", phase: state.phase, energy: sui.energy, ...suiRuntime, screenshot: await capture("skill-cast-sui") });
 
-  for (const unitId of ["rift_brawler", "meme"]) {
-    await setup(unitId);
-    await advance(50);
-    state = await readState();
-    let source = state.battle.playerUnits.find((unit) => unit.unitId === unitId);
-    let runtime = await page.evaluate(() => {
-      const battle = window.__codexAutoChessBridge.engine.state.battle;
-      return { energy: battle.player[0].energy, effects: battle.effects.map((effect) => effect.text).filter(Boolean) };
-    });
-    if (runtime.energy < source.maxEnergy || runtime.effects.includes(source.name)) {
-      throw new Error(`${unitId} 在攻击距离外提前释放: ${JSON.stringify({ state: source, runtime })}`);
+    for (const unitId of ["rift_brawler", "meme"]) {
+      await setup(unitId);
+      await advance(50);
+      state = await readState();
+      let source = state.battle.playerUnits.find((unit) => unit.unitId === unitId);
+      let runtime = await page.evaluate(() => {
+        const battle = window.__codexAutoChessBridge.engine.state.battle;
+        return { energy: battle.player[0].energy, effects: battle.effects.map((effect) => effect.text).filter(Boolean) };
+      });
+      if (runtime.energy < source.maxEnergy || runtime.effects.includes(source.name)) {
+        throw new Error(`${unitId} 在攻击距离外提前释放: ${JSON.stringify({ state: source, runtime })}`);
+      }
+      await page.evaluate(() => {
+        const battle = window.__codexAutoChessBridge.engine.state.battle;
+        const source = battle.player[0];
+        battle.enemy[0].x = source.x + source.range - 1;
+        battle.enemy[0].y = source.y;
+      });
+      await advance(50);
+      state = await readState();
+      source = state.battle.playerUnits.find((unit) => unit.unitId === unitId);
+      runtime = await page.evaluate(() => {
+        const battle = window.__codexAutoChessBridge.engine.state.battle;
+        return { energy: battle.player[0].energy, effects: battle.effects.map((effect) => effect.text).filter(Boolean) };
+      });
+      if (!runtime.effects.length) {
+        throw new Error(`${unitId} 进入攻击距离后未释放: ${JSON.stringify({ state: source, runtime })}`);
+      }
+      results.push({ unitId, phase: state.phase, energy: source.energy, ...runtime, screenshot: await capture(`skill-cast-${unitId}`) });
     }
-    await page.evaluate(() => {
-      const battle = window.__codexAutoChessBridge.engine.state.battle;
-      const source = battle.player[0];
-      battle.enemy[0].x = source.x + source.range - 1;
-      battle.enemy[0].y = source.y;
-    });
-    await advance(50);
-    state = await readState();
-    source = state.battle.playerUnits.find((unit) => unit.unitId === unitId);
-    runtime = await page.evaluate(() => {
-      const battle = window.__codexAutoChessBridge.engine.state.battle;
-      return { energy: battle.player[0].energy, effects: battle.effects.map((effect) => effect.text).filter(Boolean) };
-    });
-    if (!runtime.effects.length) {
-      throw new Error(`${unitId} 进入攻击距离后未释放: ${JSON.stringify({ state: source, runtime })}`);
-    }
-    results.push({ unitId, phase: state.phase, energy: source.energy, ...runtime, screenshot: await capture(`skill-cast-${unitId}`) });
   }
+
+  await setup("rift_stalker");
+  await advance(50);
+  state = await readState();
+  let michiya = state.battle.playerUnits.find((unit) => unit.unitId === "rift_stalker");
+  if (michiya.motion || michiya.energy < michiya.maxEnergy) {
+    throw new Error(`好笑姐姐在 240 距离外提前释放: ${JSON.stringify(michiya)}`);
+  }
+  const beforeHop = await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player[0];
+    const target = battle.enemy[0];
+    target.x = source.x + 210;
+    target.y = source.y;
+    target.armor = 0;
+    return { sourceX: source.x, targetHp: target.hp, shield: source.shield };
+  });
+  await advance(180);
+  state = await readState();
+  michiya = state.battle.playerUnits.find((unit) => unit.unitId === "rift_stalker");
+  const hopRuntime = await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player[0];
+    const target = battle.enemy[0];
+    return {
+      sourceX: source.x,
+      targetHp: target.hp,
+      shield: source.shield,
+      effects: battle.effects.map((effect) => effect.text).filter(Boolean),
+    };
+  });
+  if (michiya.motion?.kind !== "jump" || michiya.motion.abilityId !== "rift_stalker") {
+    throw new Error(`好笑姐姐进入近距离后未起跳: ${JSON.stringify({ michiya, hopRuntime })}`);
+  }
+  if (hopRuntime.sourceX <= beforeHop.sourceX || hopRuntime.targetHp !== beforeHop.targetHp || hopRuntime.shield !== beforeHop.shield) {
+    throw new Error(`好笑姐姐跳跃途中提前结算: ${JSON.stringify({ beforeHop, michiya, hopRuntime })}`);
+  }
+  const midairScreenshot = await capture("skill-cast-rift-stalker-midair");
+
+  await advance(350);
+  state = await readState();
+  michiya = state.battle.playerUnits.find((unit) => unit.unitId === "rift_stalker");
+  const landedRuntime = await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player[0];
+    const target = battle.enemy[0];
+    return {
+      targetHp: target.hp,
+      shield: source.shield,
+      effects: battle.effects.map((effect) => effect.text).filter(Boolean),
+    };
+  });
+  if (michiya.motion || landedRuntime.targetHp >= beforeHop.targetHp || landedRuntime.shield <= beforeHop.shield) {
+    throw new Error(`好笑姐姐落地未结算伤害与护盾: ${JSON.stringify({ beforeHop, michiya, landedRuntime })}`);
+  }
+  results.push({
+    unitId: "rift_stalker",
+    phase: state.phase,
+    energy: michiya.energy,
+    range: 240,
+    midair: { motion: "jump", ...hopRuntime, screenshot: midairScreenshot },
+    landed: { ...landedRuntime, screenshot: await capture("skill-cast-rift-stalker-landed") },
+  });
 
   const canvas = page.locator('[data-game-canvas="rift-line"]');
   const canvasMeta = await canvas.evaluate((element) => ({
@@ -221,7 +292,8 @@ mkdirSync(artifactDirectory, { recursive: true });
     logicalHeight: element.dataset.logicalHeight,
   }));
   if (errors.length) throw new Error(`Chrome errors: ${JSON.stringify(errors)}`);
-  console.log(JSON.stringify({ results, canvas: canvasMeta, errors }, null, 2));
+  if (failedResponses.length) throw new Error(`Failed responses: ${JSON.stringify(failedResponses)}`);
+  console.log(JSON.stringify({ results, canvas: canvasMeta, errors, failedResponses }, null, 2));
   await browser.close();
 })().catch((error) => {
   console.error(error);

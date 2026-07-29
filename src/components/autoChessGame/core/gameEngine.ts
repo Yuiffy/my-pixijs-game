@@ -2197,6 +2197,19 @@ export class AutoChessEngine {
     const accent = UNIT_DEFS[source.unitId].accent;
 
     switch (motion.abilityId) {
+      case "rift_stalker":
+        if (target) this.dealAbilityDamage(source, target, 1.4);
+        this.grantShield(source, source, source.maxHp * 0.12, 0.32);
+        this.addEffect({
+          kind: "text",
+          x: source.x,
+          y: source.y - 44,
+          color: accent,
+          text: "冷笑话落地",
+          life: 0.64,
+          size: 11,
+        });
+        break;
       case "shiori":
         livingTargets
           .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < SHIORI_OTTER_RADIUS)
@@ -4382,17 +4395,22 @@ export class AutoChessEngine {
       case "rift_stalker": {
         const target = farthest(targets);
         if (!target) break;
-        this.relocateFighter(source, { x: target.x + (source.team === "player" ? -36 : 36), y: target.y });
-        deal(target, 1.4);
-        addShield(source, source.maxHp * 0.12, 0.32);
+        const motion = this.startAbilityMotion(
+          source,
+          "jump",
+          { x: target.x + (source.team === "player" ? -36 : 36), y: target.y },
+          { targetFid: target.fid, duration: 0.42, arcHeight: 64 },
+        );
+        if (!motion) break;
         this.addEffect({
-          kind: "burst",
-          x: target.x,
-          y: target.y,
+          kind: "ring",
+          x: motion.toX,
+          y: motion.toY,
           color: def.accent,
-          life: 0.5,
-          size: 42,
+          life: motion.duration,
+          size: 48,
         });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 42, color: def.accent, text: "冷笑话起跳", life: 0.48, size: 10 });
         break;
       }
       case "cog_scribe": {
