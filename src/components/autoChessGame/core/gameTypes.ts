@@ -62,6 +62,8 @@ export interface Projectile {
   radius: number;
   remainingRange: number;
   damage: number;
+  /** 普攻弹幕默认 attack；主动技能及其衍生弹幕使用 ability。 */
+  damageKind?: "attack" | "ability";
   burnPower: number;
   color: string;
   size: number;
@@ -142,8 +144,10 @@ export interface PineTreeTurret {
 }
 
 export interface AbilityMotion {
-  kind: "dash" | "jump" | "push";
+  kind: "dash" | "jump" | "push" | "pull";
   abilityId: UnitId | null;
+  /** 外部位移的实际施法者；普通位移为空并由运动单位自身结算。 */
+  sourceFid: string | null;
   targetFid: string | null;
   fromX: number;
   fromY: number;
@@ -169,6 +173,10 @@ export interface Fighter {
   shield: number;
   /** 当前护盾池的峰值，用于显示剩余护盾强度。 */
   shieldPeak: number;
+  /** 只吸收主动技能及其衍生伤害的独立护盾池。 */
+  abilityShield: number;
+  abilityShieldPeak: number;
+  abilityShieldTime: number;
   attack: number;
   armor: number;
   range: number;
@@ -190,6 +198,7 @@ export interface Fighter {
   burnTime: number;
   burnDps: number;
   burnSourceFid: string | null;
+  burnDamageKind: "attack" | "ability";
   /** 普攻和技能造成生命伤害时均会触发的全能吸血 */
   lifesteal: number;
   burnOnHitPower: number;
@@ -315,6 +324,7 @@ export interface ProjectileVolleyShot {
   targetFid: string;
   delay: number;
   damage: number;
+  damageKind?: "attack" | "ability";
   burnPower: number;
   speed: number;
   color: string;

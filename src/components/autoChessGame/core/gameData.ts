@@ -56,6 +56,7 @@ export const SHOP_UNIT_IDS = [
   "seki_boar_king",
   "sumi",
   "spark_mage",
+  "yukisyo",
   // 4 费
   "sui_cat",
   "nagisa",
@@ -158,6 +159,18 @@ export const REI_SLOW_ENERGY_PROFILE: EnergyProfile = {
   color: "#e8b5ff",
 };
 
+export const YUKISYO_EARLY_SHIELD_ENERGY_PROFILE: EnergyProfile = {
+  id: "automatic",
+  name: "镇式回能",
+  max: 100,
+  start: 78,
+  perSecond: 9,
+  onAttack: 4,
+  onHit: 2,
+  castRefund: 0,
+  color: "#d8b7ff",
+};
+
 export const describeEnergyRecovery = (profile: EnergyProfile) => {
   const sources = [
     profile.perSecond > 0 && `自动回能（${(profile.max / profile.perSecond).toFixed(1).replace(/\.0$/, "")} 秒回满，每秒 +${profile.perSecond}）`,
@@ -172,6 +185,7 @@ export const describeEnergyRecovery = (profile: EnergyProfile) => {
  * - selfOnHit：自保，能量满且受击时释放
  * - supportShield：支援护盾，能量满即放
  * - supportHeal：支援治疗，能量满且候选友军生命比例低于阈值时释放
+ * - supportRescue：危险救援，能量满且存在被控制或低血友军时释放
  * - selfBuff：自保强化，能量满即放
  * - engage：突进，能量满即放
  * - offenseInRange：近距进攻，能量满且进入普攻距离时释放
@@ -182,6 +196,7 @@ export type AbilityCastTiming =
   | "selfOnHit"
   | "supportShield"
   | "supportHeal"
+  | "supportRescue"
   | "selfBuff"
   | "engage"
   | "offenseInRange"
@@ -192,6 +207,7 @@ export const ABILITY_CAST_TIMING_LABELS: Record<AbilityCastTiming, string> = {
   selfOnHit: "自保 · 受击释放",
   supportShield: "支援护盾 · 满能量即放",
   supportHeal: "支援治疗 · 友军残血释放",
+  supportRescue: "危险救援 · 友军遇险释放",
   selfBuff: "自保 · 满能量即放",
   engage: "突进 · 满能量即放",
   offenseInRange: "进攻 · 进入攻击范围释放",
@@ -429,7 +445,8 @@ const COMBAT_PROFILES: Record<
   youyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 88, abilityCastTiming: "engage" },
   akirinco: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 96, abilityCastTiming: "engage" },
   lovely: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 58, moveSpeed: 68, abilityCastTiming: "offenseInRange" },
-  mumu: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 52, moveSpeed: 54, abilityCastTiming: "engage" },
+  mumu: { attackType: "ranged", energyProfile: ENERGY_PROFILES.steady_guard, range: 190, moveSpeed: 58, abilityCastTiming: "supportRescue" },
+  yukisyo: { attackType: "ranged", energyProfile: YUKISYO_EARLY_SHIELD_ENERGY_PROFILE, range: 225, moveSpeed: 48, abilityCastTiming: "supportShield" },
   // offenseInRange：近距进攻，进入攻击范围放
   zeyin: { attackType: "melee", energyProfile: ENERGY_PROFILES.passive, range: 54, moveSpeed: 68, abilityCastTiming: "passive" },
   mitsuri: { attackType: "melee", energyProfile: ENERGY_PROFILES.flow, range: 54, moveSpeed: 50, abilityCastTiming: "offenseInRange" },
@@ -474,6 +491,7 @@ const unit = (
         return resolved.range;
       case "supportHeal":
       case "supportShield":
+      case "supportRescue":
         return 420;
       case "engage":
         return 420;
@@ -1155,10 +1173,22 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     portrait: "/images/livers/lovely.webp", portraitFocus: "top", shop: true,
   }),
   mumu: unit({
-    id: "mumu", name: "沐霂·领舞开场", title: "四禧丸子 · 领舞前排", glyph: "沐", color: "#5b7992", accent: "#a9e5ff", tier: 4, cost: 4,
-    traits: ["host", "dance"], hp: 330, attack: 34, armor: 29, range: 52, attackInterval: 0.96, moveSpeed: 68,
-    abilityName: "领舞开场", abilityDescription: "冲至敌人最密集处，造成范围伤害并为附近友军提供护盾。",
+    id: "mumu", name: "沐霂·领舞救场", title: "四禧丸子 · 后排救援", glyph: "沐", color: "#5b7992", accent: "#a9e5ff", tier: 4, cost: 4,
+    traits: ["host", "dance"], hp: 270, attack: 31, armor: 20, range: 190, abilityRange: 420, attackInterval: 0.96, moveSpeed: 58,
+    attackType: "ranged", abilityCastTiming: "supportRescue",
+    abilityName: "领舞救场", abilityDescription: "施法距离内有友军陷入场地控制、持续压制、普通硬控或生命低于 35% 时，用舞带将最危险的一人拉到自己身后。落地后打断压制、净化普通控制，并治疗和添加护盾；时停只能通过被拉出范围解除。",
     portrait: "/images/livers/mumu.webp", portraitFocus: "top", shop: true,
+  }),
+  yukisyo: unit({
+    id: "yukisyo", name: "雪烛Yukisyo", title: "雪烛Yukisyo · 赛博占卜师白虎神", glyph: "烛", color: "#5f5790", accent: "#ddb6ff", tier: 3, cost: 3,
+    traits: ["mystic", "wild", "finance"], hp: 205, attack: 27, armor: 13, range: 225, abilityRange: 300, attackInterval: 1, moveSpeed: 48,
+    abilityName: "八门镇式", abilityDescription: "初始能量较高。发动技能时，为施法距离内友军添加持续 4 秒、只吸收技能及其衍生伤害的技能护盾；护盾由固定值与目标最大生命值共同决定，重复获得时取较高值并刷新持续时间。",
+    abilityLevels: [
+      { summary: "70 + 26% 最大生命", description: "发动技能时，为施法距离内友军添加持续 4 秒的技能护盾，吸收 70 + 目标最大生命值 26% 的技能及其衍生伤害；普通攻击不会消耗该护盾。重复获得时取较高值并刷新持续时间。", stats: { shieldFlat: 70, shieldHpRatio: 0.26, duration: 4 } },
+      { summary: "120 + 36% 最大生命", description: "发动技能时，为施法距离内友军添加持续 4 秒的技能护盾，吸收 120 + 目标最大生命值 36% 的技能及其衍生伤害；普通攻击不会消耗该护盾。重复获得时取较高值并刷新持续时间。", stats: { shieldFlat: 120, shieldHpRatio: 0.36, duration: 4 } },
+      { summary: "200 + 50% 最大生命", description: "发动技能时，为施法距离内友军添加持续 4 秒的技能护盾，吸收 200 + 目标最大生命值 50% 的技能及其衍生伤害；普通攻击不会消耗该护盾。重复获得时取较高值并刷新持续时间。", stats: { shieldFlat: 200, shieldHpRatio: 0.5, duration: 4 } },
+    ],
+    portrait: "/images/livers/yukisyo.png", portraitFocus: "top", shop: true,
   }),
   xuehui: unit({
     id: "xuehui", name: "雪绘", title: "雪绘 · 同步视听", glyph: "绘", color: "#445a8e", accent: "#8dc8ff", tier: 4, cost: 4,

@@ -205,6 +205,17 @@ test("贴身护盾按当前值相对峰值降低透明强度", () => {
   assert.match(scene, /\.setAlpha\(fighter\.shield > 0 \? 1 : 0\)/);
 });
 
+test("技能盾与普通护盾使用独立资源和紫色战场环", () => {
+  assert.match(gameTypes, /abilityShield: number/);
+  assert.match(engine, /abilityShield: Math\.round\(fighter\.abilityShield\)/);
+  assert.match(engine, /damageKind === "ability"/);
+  assert.match(scene, /setName\("abilityShield"\)/);
+  assert.match(scene, /fighter\.abilityShield \/ Math\.max\(fighter\.abilityShieldPeak, 1\)/);
+  assert.match(scene, /fighter\.abilityShield > 0 \? "术" : ""/);
+  assert.match(scene, /abilityMotion\?\.kind === "pull" \? "援" : ""/);
+  assert.match(scene, /技能盾.*abilityShieldTime/);
+});
+
 test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对齐", () => {
   assert.match(scene, /drawRabbitBody\(/);
   assert.match(scene, /drawRabbitCannon\(/);

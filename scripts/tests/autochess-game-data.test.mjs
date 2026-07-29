@@ -548,7 +548,7 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
     [1, 2, 3, 4, 5].map(
       (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
     ),
-    [7, 8, 11, 9, 5],
+    [7, 8, 12, 9, 5],
   );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
@@ -561,10 +561,48 @@ test("好笑姐姐使用近距离跳跃技能，不再描述为无过程闪现",
   assert.doesNotMatch(michiya.abilityDescription, /闪到/);
 });
 
+test("雪烛以高初始能量主动提供固定值加生命比例的四秒技能盾", async () => {
+  const yukisyo = data.UNIT_DEFS.yukisyo;
+  assert.ok(data.SHOP_UNITS.includes("yukisyo"));
+  assert.equal(yukisyo.tier, 3);
+  assert.equal(yukisyo.cost, 3);
+  assert.deepEqual(yukisyo.traits, ["mystic", "wild", "finance"]);
+  assert.equal(yukisyo.abilityCastTiming, "supportShield");
+  assert.equal(yukisyo.energyProfile.start, 78);
+  assert.equal(yukisyo.energyProfile.max, 100);
+  assert.ok(yukisyo.energyProfile.start < yukisyo.energyProfile.max);
+  assert.deepEqual(
+    yukisyo.abilityLevels.map((level) => [
+      level.stats.shieldFlat,
+      level.stats.shieldHpRatio,
+      level.stats.duration,
+    ]),
+    [[70, 0.26, 4], [120, 0.36, 4], [200, 0.5, 4]],
+  );
+  assert.match(yukisyo.abilityDescription, /发动技能时/);
+  assert.doesNotMatch(yukisyo.abilityDescription, /战斗开始时/);
+  assert.match(yukisyo.abilityDescription, /固定值与目标最大生命值/);
+  assert.match(yukisyo.abilityDescription, /只吸收技能/);
+  assert.equal(yukisyo.portrait, "/images/livers/yukisyo.png");
+  await access(path.resolve("public", yukisyo.portrait.slice(1)));
+});
+
+test("沐霂改为后排单体救援且不再造成范围伤害或群盾", () => {
+  const mumu = data.UNIT_DEFS.mumu;
+  assert.equal(mumu.attackType, "ranged");
+  assert.equal(mumu.range, 190);
+  assert.equal(mumu.abilityCastTiming, "supportRescue");
+  assert.equal(mumu.abilityName, "领舞救场");
+  assert.match(mumu.abilityDescription, /最危险的一人/);
+  assert.match(mumu.abilityDescription, /拉到自己身后/);
+  assert.match(mumu.abilityDescription, /时停只能通过被拉出范围解除/);
+  assert.doesNotMatch(mumu.abilityDescription, /造成范围伤害/);
+});
+
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 40);
+  assert.equal(data.SHOP_UNITS.length, 41);
   ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
   assert.equal(data.SHOP_UNITS.includes("akirinco"), false);
   ["aza", "ayana", "yy", "haruka"].forEach((id) => {

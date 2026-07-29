@@ -138,6 +138,7 @@ type FighterViewParts = {
   portraitImage: Phaser.GameObjects.Image;
   hitFlash: Phaser.GameObjects.Arc;
   shield: Phaser.GameObjects.Arc;
+  abilityShield: Phaser.GameObjects.Arc;
   syncAura: Phaser.GameObjects.Arc;
   burn: Phaser.GameObjects.Arc;
   status: Phaser.GameObjects.Text;
@@ -1862,6 +1863,9 @@ export class RiftLineScene extends Phaser.Scene {
     const shield = this.add.circle(0, 0, radius + 8, 0x6edeff, 0)
       .setStrokeStyle(2, 0xc6f7ff, 0)
       .setName("shield");
+    const abilityShield = this.add.circle(0, 0, radius + 13, 0xb98cff, 0)
+      .setStrokeStyle(2, 0xe6d0ff, 0)
+      .setName("abilityShield");
     const syncAura = this.add.circle(0, 0, radius + 13, 0x79dcff, 0).setName("syncAura");
     const hitFlash = this.add.circle(0, 0, radius, 0xff526f, 0).setName("hitFlash");
     const burn = this.add.circle(radius * 0.7, -radius * 0.55, 5, 0xff7a50, 0).setName("burn");
@@ -1881,7 +1885,7 @@ export class RiftLineScene extends Phaser.Scene {
     zone.on(Phaser.Input.Events.POINTER_OUT, () => {
       if (!this.isCompact()) this.clearTooltip();
     });
-    container.add([shadow, syncAura, shield, portrait, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
+    container.add([shadow, syncAura, abilityShield, shield, portrait, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
     this.fighterViewParts.set(container, {
       hp,
       energy,
@@ -1889,6 +1893,7 @@ export class RiftLineScene extends Phaser.Scene {
       portraitImage: portrait.getByName("portraitImage") as Phaser.GameObjects.Image,
       hitFlash,
       shield,
+      abilityShield,
       syncAura,
       burn,
       status,
@@ -1927,6 +1932,7 @@ export class RiftLineScene extends Phaser.Scene {
       portraitImage,
       hitFlash,
       shield,
+      abilityShield,
       syncAura,
       burn,
       status,
@@ -1969,6 +1975,14 @@ export class RiftLineScene extends Phaser.Scene {
       .setFillStyle(0x6edeff, 0.06 + shieldStrength * 0.14)
       .setStrokeStyle(1.5 + shieldStrength * 1.5, 0xc6f7ff, 0.24 + shieldStrength * 0.66)
       .setAlpha(fighter.shield > 0 ? 1 : 0);
+    const abilityShieldStrength = fighter.abilityShield > 0
+      ? Math.max(0, Math.min(1, fighter.abilityShield / Math.max(fighter.abilityShieldPeak, 1)))
+      : 0;
+    abilityShield
+      .setRadius(radius + 12 + Math.sin(this.bridge.engine.state.visualTime * 7 + 1.2) * 2)
+      .setFillStyle(0xb98cff, 0.04 + abilityShieldStrength * 0.1)
+      .setStrokeStyle(2 + abilityShieldStrength * 1.8, 0xe6d0ff, 0.34 + abilityShieldStrength * 0.62)
+      .setAlpha(fighter.abilityShield > 0 ? 1 : 0);
     const syncPulse = 1 + Math.sin(this.bridge.engine.state.visualTime * 7) * 0.12;
     const syncColor = fighter.syncAvDirection > 0 ? 0xff9a5c : 0x79dcff;
     syncAura
@@ -1985,6 +1999,8 @@ export class RiftLineScene extends Phaser.Scene {
       fighter.jumpPending ? "⌁" : "",
       abilityMotion?.kind === "dash" ? "»" : "",
       abilityMotion?.kind === "push" ? "›" : "",
+      abilityMotion?.kind === "pull" ? "援" : "",
+      fighter.abilityShield > 0 ? "术" : "",
       fighter.sekiChargeActive ? "冲" : "",
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
       fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
@@ -2000,7 +2016,7 @@ export class RiftLineScene extends Phaser.Scene {
     status.setY(-radius - 8);
     const statusColor = fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e";
     if (status.style.color !== statusColor) status.setColor(statusColor);
-    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}`);
+    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}${fighter.abilityShield > 0 ? " ◆" : ""}`);
     star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
   }
 
@@ -2773,7 +2789,7 @@ export class RiftLineScene extends Phaser.Scene {
       ? `治 ${short(fighter.healingDone)} · 盾 ${short(fighter.shieldingDone)}`
       : `${resultMetricLabel[metric]} ${short(value)}`;
     const name = this.truncateText(`${rank}. ${UNIT_DEFS[fighter.unitId].name}${"★".repeat(fighter.star)}`, width - (contentX - x) - statusWidth - 18, nameSize, { fontStyle: "bold" });
-    const health = `血 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}${fighter.shield > 0 ? ` · 盾 ${Math.round(fighter.shield)}` : ""}`;
+    const health = `血 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)}${fighter.shield > 0 ? ` · 盾 ${Math.round(fighter.shield)}` : ""}${fighter.abilityShield > 0 ? ` · 术盾 ${Math.round(fighter.abilityShield)}` : ""}`;
     const row = this.add.graphics();
     row.fillStyle(0x102230, fighter.alive ? 0.94 : 0.48).fillRoundedRect(x, y, width, height, 8);
     row.lineStyle(1, accent, fighter.alive ? 0.3 : 0.14).strokeRoundedRect(x, y, width, height, 8);
@@ -3017,7 +3033,7 @@ export class RiftLineScene extends Phaser.Scene {
     const contentWidth = width - padding * 2;
     const combatStats = owned ? this.bridge.engine.getPlayerCombatStats(owned) : null;
     const detail = fighter
-      ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)}\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}\n战斗：输出 ${short(fighter.damageDealt)} · 治疗 ${short(fighter.healingDone)} · 护盾 ${short(fighter.shieldingDone)} · 承伤 ${short(fighter.damageTaken)}`
+      ? `生命 ${Math.round(fighter.hp)}/${Math.round(fighter.maxHp)} · 护盾 ${Math.round(fighter.shield)} · 技能盾 ${Math.round(fighter.abilityShield)}（${fighter.abilityShieldTime.toFixed(1)}s）\n攻击 ${Math.round(fighter.attack)} · 护甲 ${Math.round(fighter.armor)} · 射程 ${Math.round(fighter.range)}\n攻速 ${fighter.attackInterval.toFixed(2)}s · 移速 ${Math.round(fighter.moveSpeed)}\n战斗：输出 ${short(fighter.damageDealt)} · 治疗 ${short(fighter.healingDone)} · 护盾 ${short(fighter.shieldingDone)} · 承伤 ${short(fighter.damageTaken)}`
       : combatStats
         ? `${def.attackType === "ranged" ? "远程" : "近战"} · 部署生命 ${Math.round(combatStats.maxHp)} · 攻击 ${Math.round(combatStats.attack)} · 护甲 ${Math.round(combatStats.armor)}\n射程 ${Math.round(combatStats.range)} · 攻速 ${combatStats.attackInterval.toFixed(2)}s · 移速 ${Math.round(combatStats.moveSpeed)}`
         : `${def.attackType === "ranged" ? "远程" : "近战"} · 生命 ${def.hp} · 攻击 ${def.attack} · 护甲 ${def.armor}\n射程 ${def.range} · 攻速 ${def.attackInterval.toFixed(2)}s · 移速 ${def.moveSpeed}`;

@@ -182,6 +182,12 @@ const BISCUIT_RESCUE_SHIELD_RATIO = 0.1;
 const BISCUIT_RESCUE_LANDING_RADIUS = 112;
 const BISCUIT_RESCUE_PATH_PUSH = 52;
 const BISCUIT_RESCUE_LANDING_PUSH = 58;
+/** 沐霂「领舞救场」：只在队友明确遇险时发动的单体撤离。 */
+const MUMU_RESCUE_HP_RATIO = 0.35;
+const MUMU_RESCUE_DURATION = 0.35;
+const MUMU_RESCUE_HEAL_HP_RATIO = 0.16;
+const MUMU_RESCUE_HEAL_ATTACK_RATIO = 1.4;
+const MUMU_RESCUE_SHIELD_RATIO = 0.12;
 /** 小岁鸟「连续肘击」：三段短冲撞。 */
 const SUI_BIRD_ELBOW_CHARGES = 3;
 const SUI_BIRD_ELBOW_DAMAGE = 0.58;
@@ -314,6 +320,8 @@ const XUEHUI_CLEAVE_BURN_MULTIPLIER = 0.68;
 const RUTICE_GROUP_HEAL_RATIO = 0.2;
 const RUTICE_LOWEST_SHIELD_RATIO = 0.16;
 const RUTICE_LOWEST_SHIELD_TARGET_COUNT = 2;
+
+type DamageKind = "attack" | "ability";
 
 interface RandomSource {
   next: () => number;
@@ -469,6 +477,79 @@ export class AutoChessEngine {
     );
   }
 
+  private mumuRescuePriority(target: Fighter, battle: BattleState) {
+    if (!target.alive || target.abilityMotion?.kind === "pull") return 0;
+    if (this.isInsideChronosphere(target, battle)) return 4;
+    const suppressed = [...battle.player, ...battle.enemy].some(
+      (fighter) =>
+        fighter.alive &&
+        fighter.team !== target.team &&
+        fighter.channelTime > 0 &&
+        fighter.channelTargetFid === target.fid,
+    );
+    if (suppressed) return 3;
+    if (target.stun > 0 || target.tauntTime > 0) return 2;
+    if (target.hp / target.maxHp <= MUMU_RESCUE_HP_RATIO) return 1;
+    return 0;
+  }
+
+  private selectMumuRescueTarget(source: Fighter, candidates: Fighter[], battle: BattleState) {
+    return candidates
+      .filter((target) => target.fid !== source.fid && target.team === source.team)
+      .map((target) => ({ target, priority: this.mumuRescuePriority(target, battle) }))
+      .filter(({ priority }) => priority > 0)
+      .sort(
+        (left, right) =>
+          right.priority - left.priority ||
+          left.target.hp / left.target.maxHp - right.target.hp / right.target.maxHp ||
+          left.target.fid.localeCompare(right.target.fid),
+      )[0]?.target || null;
+  }
+
+  private mumuRescueDestination(source: Fighter, target: Fighter, battle: BattleState) {
+    const behind = source.team === "player" ? -1 : 1;
+    let x = source.x + behind * (source.radius + target.radius + 18);
+    let y = source.y;
+    battle.chronospheres.forEach((zone) => {
+      const distance = Math.hypot(x - zone.x, y - zone.y);
+      if (distance > zone.radius + target.radius + 8) return;
+      const fallbackX = source.x - zone.x;
+      const fallbackY = source.y - zone.y;
+      const fallbackDistance = Math.hypot(fallbackX, fallbackY);
+      const directionX = fallbackDistance > 0.001 ? fallbackX / fallbackDistance : behind;
+      const directionY = fallbackDistance > 0.001 ? fallbackY / fallbackDistance : 0;
+      x = zone.x + directionX * (zone.radius + target.radius + 12);
+      y = zone.y + directionY * (zone.radius + target.radius + 12);
+    });
+    return { x, y };
+  }
+
+  private resolveMumuRescue(target: Fighter, motion: AbilityMotion, battle: BattleState) {
+    const source = [...battle.player, ...battle.enemy].find(
+      (fighter) => fighter.fid === motion.sourceFid && fighter.alive,
+    );
+    if (!source || source.unitId !== "mumu" || source.team !== target.team) return;
+    [...battle.player, ...battle.enemy].forEach((fighter) => {
+      if (fighter.channelTargetFid !== target.fid) return;
+      fighter.channelTargetFid = null;
+      fighter.channelTime = 0;
+      fighter.channelPulseTimer = 0;
+      this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 40, color: UNIT_DEFS.mumu.accent, text: "压制打断", life: 0.55, size: 10 });
+    });
+    target.stun = 0;
+    target.tauntedByFid = null;
+    target.tauntTime = 0;
+    target.slowTime = 0;
+    this.heal(
+      source,
+      target,
+      target.maxHp * MUMU_RESCUE_HEAL_HP_RATIO + source.attack * MUMU_RESCUE_HEAL_ATTACK_RATIO,
+    );
+    this.grantShield(source, target, target.maxHp * MUMU_RESCUE_SHIELD_RATIO, 0.4);
+    this.addEffect({ kind: "ring", x: target.x, y: target.y, color: UNIT_DEFS.mumu.accent, life: 0.7, size: 78 });
+    this.addEffect({ kind: "text", x: target.x, y: target.y - 46, color: UNIT_DEFS.mumu.accent, text: "撤离 · 净化", life: 0.8, size: 12 });
+  }
+
   private rollStarterChoices() {
     const pool = STARTERS.map((starter) => starter.id);
     const choices: StarterId[] = [];
@@ -602,6 +683,9 @@ export class AutoChessEngine {
       maxHp: Math.round(fighter.maxHp),
       shield: Math.round(fighter.shield),
       shieldPeak: Math.round(fighter.shieldPeak),
+      abilityShield: Math.round(fighter.abilityShield),
+      abilityShieldPeak: Math.round(fighter.abilityShieldPeak),
+      abilityShieldTime: Number(fighter.abilityShieldTime.toFixed(2)),
       attack: Math.round(fighter.attack),
       armor: Math.round(fighter.armor),
       range: Math.round(fighter.range),
@@ -1190,6 +1274,9 @@ export class AutoChessEngine {
         maxHp,
         shield: 0,
         shieldPeak: 0,
+        abilityShield: 0,
+        abilityShieldPeak: 0,
+        abilityShieldTime: 0,
         attack,
         armor,
         range,
@@ -1211,6 +1298,7 @@ export class AutoChessEngine {
         burnTime: 0,
         burnDps: 0,
         burnSourceFid: null,
+        burnDamageKind: "attack",
         tauntedByFid: null,
         tauntTime: 0,
         lifesteal:
@@ -1373,6 +1461,9 @@ export class AutoChessEngine {
         maxHp: stats.maxHp,
         shield: 0,
         shieldPeak: 0,
+        abilityShield: 0,
+        abilityShieldPeak: 0,
+        abilityShieldTime: 0,
         attack: stats.attack,
         armor:
           stats.armor +
@@ -1397,6 +1488,7 @@ export class AutoChessEngine {
         burnTime: 0,
         burnDps: 0,
         burnSourceFid: null,
+        burnDamageKind: "attack",
         tauntedByFid: null,
         tauntTime: 0,
         lifesteal:
@@ -1803,6 +1895,7 @@ export class AutoChessEngine {
     preferred: { x: number; y: number },
     options: {
       abilityId?: UnitId | null;
+      sourceFid?: string | null;
       targetFid?: string | null;
       duration?: number;
       arcHeight?: number;
@@ -1824,6 +1917,7 @@ export class AutoChessEngine {
     source.abilityMotion = {
       kind,
       abilityId: options.abilityId === undefined ? source.unitId : options.abilityId,
+      sourceFid: options.sourceFid || null,
       targetFid: options.targetFid || null,
       fromX: source.x,
       fromY: source.y,
@@ -2004,7 +2098,7 @@ export class AutoChessEngine {
   }
 
   private dealAbilityDamage(source: Fighter, target: Fighter, multiplier: number, bonus = 0) {
-    const dealt = this.damage(source, target, source.attack * multiplier + bonus);
+    const dealt = this.damage(source, target, source.attack * multiplier + bonus, false, "ability");
     if (dealt > 0) this.addDamageText(target, dealt);
     return dealt;
   }
@@ -2331,7 +2425,8 @@ export class AutoChessEngine {
   private updateAbilityMotion(fighter: Fighter, dt: number, battle: BattleState) {
     const motion = fighter.abilityMotion;
     if (!motion) return false;
-    if (this.isInsideChronosphere(fighter, battle)) return true;
+    // 沐霂的舞带是外部拉援，目标即使仍在时停范围内也会继续被拖出。
+    if (motion.kind !== "pull" && this.isInsideChronosphere(fighter, battle)) return true;
     const previousX = fighter.x;
     const previousY = fighter.y;
     motion.time = Math.min(motion.duration, motion.time + dt);
@@ -2351,7 +2446,11 @@ export class AutoChessEngine {
       fighter.x = motion.toX;
       fighter.y = motion.toY;
       fighter.abilityMotion = null;
-      this.resolveAbilityMotion(fighter, motion);
+      if (motion.kind === "pull" && motion.abilityId === "mumu") {
+        this.resolveMumuRescue(fighter, motion, battle);
+      } else {
+        this.resolveAbilityMotion(fighter, motion);
+      }
     }
     return true;
   }
@@ -2831,7 +2930,7 @@ export class AutoChessEngine {
     const allies = this.living(source.team);
     const def = UNIT_DEFS[abilityId];
     const deal = (target: Fighter, multiplier: number, bonus = 0) => {
-      const dealt = this.damage(source, target, source.attack * multiplier + bonus, true);
+      const dealt = this.damage(source, target, source.attack * multiplier + bonus, true, "ability");
       if (dealt > 0) this.addDamageText(target, dealt);
       return dealt;
     };
@@ -2859,7 +2958,7 @@ export class AutoChessEngine {
           .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
           .forEach((target) => {
             deal(target, 1.45);
-            this.applyBurn(source, target, source.attack * 0.7);
+            this.applyBurn(source, target, source.attack * 0.7, "ability");
             target.stun = Math.max(target.stun, 0.7);
           });
         this.addEffect({ kind: "hotpot", x: center.x, y: center.y, color: "#ff4d3a", life: 1.15, size: 138 });
@@ -2976,7 +3075,7 @@ export class AutoChessEngine {
           .filter((target) => Math.hypot(target.x - center.x, target.y - center.y) < 125)
           .forEach((target) => {
             deal(target, 1.3);
-            this.applyBurn(source, target, source.attack * 0.6);
+            this.applyBurn(source, target, source.attack * 0.6, "ability");
             target.stun = Math.max(target.stun, 0.5);
           });
         this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.7, size: 135 });
@@ -3013,6 +3112,7 @@ export class AutoChessEngine {
         : shot.emoji || shot.style === "carrot" || shot.style === "shark" || shot.style === "coin" ? 9 : 7,
       remainingRange: 880,
       damage: shot.damage,
+      damageKind: shot.damageKind,
       burnPower: shot.burnPower,
       color: shot.color,
       size: shot.size,
@@ -3040,6 +3140,7 @@ export class AutoChessEngine {
         radius: SUN_GUARD_COIN_RADIUS,
         remainingRange: SUN_GUARD_COIN_RANGE,
         damage: source.attack * SUN_GUARD_COIN_DAMAGE,
+        damageKind: "ability",
         burnPower: 0,
         color: def.accent,
         size: 10,
@@ -3167,6 +3268,7 @@ export class AutoChessEngine {
         radius: PINE_TREE_NEEDLE_RADIUS,
         remainingRange: PINE_TREE_NEEDLE_RANGE,
         damage: owner.attack * PINE_TREE_DAMAGE_MULTIPLIER,
+        damageKind: "ability",
         burnPower: 0,
         color: "#7ecf8a",
         size: 3,
@@ -3254,6 +3356,7 @@ export class AutoChessEngine {
         radius: CLOCK_GUNNER_RABBIT_PROJECTILE_RADIUS,
         remainingRange: CLOCK_GUNNER_RABBIT_PROJECTILE_RANGE,
         damage: owner.attack * CLOCK_GUNNER_RABBIT_DAMAGE_MULTIPLIER,
+        damageKind: "ability",
         burnPower: 0,
         color: UNIT_DEFS.clock_gunner.accent,
         size: 3,
@@ -3363,7 +3466,7 @@ export class AutoChessEngine {
             steppedOn.abilityMoveSpeedTime = Math.max(steppedOn.abilityMoveSpeedTime, TIANDOU_LOLLIPOP_MOVE_DURATION);
             this.addEffect({ kind: "heal", x: steppedOn.x, y: steppedOn.y, color: projectile.color, text: "🍭", emoji: true, life: 0.7, size: 16 });
           } else {
-            const dealt = this.damage(source, steppedOn, projectile.damage, true);
+            const dealt = this.damage(source, steppedOn, projectile.damage, true, projectile.damageKind || "attack");
             if (dealt > 0) this.addDamageText(steppedOn, dealt);
             steppedOn.slowTime = Math.max(steppedOn.slowTime, TIANDOU_LOLLIPOP_SLOW_DURATION);
             this.addEffect({ kind: "text", x: steppedOn.x, y: steppedOn.y - 38, color: projectile.color, text: "🍭减速", emoji: true, life: 0.7, size: 12 });
@@ -3395,9 +3498,11 @@ export class AutoChessEngine {
           : [hit.target];
         affected.forEach((target) => {
           const damage = target === hit.target ? projectile.damage : projectile.damage * 0.7;
-          const dealt = this.damage(source, target, damage, true);
+          const dealt = this.damage(source, target, damage, true, projectile.damageKind || "attack");
           if (dealt > 0) this.addDamageText(target, dealt);
-          if (target.alive && projectile.burnPower > 0) this.applyBurn(source, target, projectile.burnPower);
+          if (target.alive && projectile.burnPower > 0) {
+            this.applyBurn(source, target, projectile.burnPower, projectile.damageKind || "attack");
+          }
           if (target.alive && projectile.stunDuration) {
             target.stun = Math.max(target.stun, projectile.stunDuration);
           }
@@ -3444,6 +3549,7 @@ export class AutoChessEngine {
       targetFid: target.fid,
       delay: 0,
       damage: source.attack * NORI_APPLE_PIE_DAMAGE_MULTIPLIER,
+      damageKind: "ability",
       burnPower: 0,
       speed: NORI_PROJECTILE_SPEED,
       color: def.accent,
@@ -3534,7 +3640,7 @@ export class AutoChessEngine {
       source.channelTime = Math.max(0, source.channelTime - dt);
       // 维持目标硬控到其本帧行动判定结束，两个单位都不会移动或普攻。
       target.stun = Math.max(target.stun, dt + 0.05);
-      const dealt = this.damage(source, target, source.attack * LOVELY_CHANNEL_DAMAGE_PER_SECOND * dt);
+      const dealt = this.damage(source, target, source.attack * LOVELY_CHANNEL_DAMAGE_PER_SECOND * dt, false, "ability");
       if (dealt > 0) this.heal(source, source, dealt * LOVELY_CHANNEL_LIFESTEAL, false);
       source.channelPulseTimer -= dt;
       if (source.channelPulseTimer <= 0) {
@@ -3702,6 +3808,11 @@ export class AutoChessEngine {
       fighter.stun = Math.max(0, fighter.stun - dt);
       fighter.tauntTime = Math.max(0, fighter.tauntTime - dt);
       if (fighter.tauntTime <= 0) fighter.tauntedByFid = null;
+      fighter.abilityShieldTime = Math.max(0, fighter.abilityShieldTime - dt);
+      if (fighter.abilityShieldTime <= 0 && fighter.abilityShield > 0) {
+        fighter.abilityShield = 0;
+        fighter.abilityShieldPeak = 0;
+      }
       fighter.abilityAttackSpeedTime = Math.max(0, fighter.abilityAttackSpeedTime - dt);
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
@@ -3851,14 +3962,20 @@ export class AutoChessEngine {
       }
       if (fighter.burnTime > 0) {
         fighter.burnTime -= dt;
-        const burnDamage = Math.min(fighter.hp, fighter.burnDps * dt);
+        const burnAmount = fighter.burnDps * dt;
+        const { remaining: burnAfterShields, absorbed } = this.absorbDamageWithShields(
+          fighter,
+          burnAmount,
+          fighter.burnDamageKind,
+        );
+        const burnDamage = Math.min(fighter.hp, burnAfterShields);
         fighter.hp -= burnDamage;
         const source = [...battle.player, ...battle.enemy].find(
           (candidate) => candidate.fid === fighter.burnSourceFid,
         );
         if (source) {
-          source.damageDealt += burnDamage;
-          fighter.damageTaken += burnDamage;
+          source.damageDealt += absorbed + burnDamage;
+          fighter.damageTaken += absorbed + burnDamage;
         }
         if (this.rng.next() < dt * 3) {
           this.addEffect({
@@ -3951,6 +4068,9 @@ export class AutoChessEngine {
             shouldCast = Boolean(weakestAlly && weakestAlly.hp / weakestAlly.maxHp <= SUPPORT_HEAL_HP_RATIO);
             break;
           }
+          case "supportRescue":
+            shouldCast = Boolean(this.selectMumuRescueTarget(fighter, abilityAllies, battle));
+            break;
           case "offenseInRange":
           case "passive":
             break;
@@ -4122,6 +4242,7 @@ export class AutoChessEngine {
     source.abilityMotion = {
       kind: "push",
       abilityId: null,
+      sourceFid: null,
       targetFid: target.fid,
       fromX: source.x,
       fromY: source.y,
@@ -4174,6 +4295,7 @@ export class AutoChessEngine {
       targetFid: target.fid,
       delay: 0,
       damage: source.attack * SUMI_DRAGON_DAMAGE_MULTIPLIER,
+      damageKind: "ability",
       burnPower: 0,
       speed: SUMI_DRAGON_PROJECTILE_SPEED,
       color: UNIT_DEFS.sumi.accent,
@@ -4209,6 +4331,7 @@ export class AutoChessEngine {
         targetFid: target.fid,
         delay: 0,
         damage: source.attack * CINDER_RAM_FIREBALL_DAMAGE,
+        damageKind: "ability",
         burnPower: source.attack * CINDER_RAM_FIREBALL_BURN,
         speed: CINDER_RAM_FIREBALL_SPEED,
         color: UNIT_DEFS.cinder_ram.accent,
@@ -4300,6 +4423,8 @@ export class AutoChessEngine {
         source,
         target,
         source.attack * multiplier + bonus,
+        false,
+        "ability",
       );
       if (dealt > 0) this.addDamageText(target, dealt);
       return dealt;
@@ -4365,6 +4490,7 @@ export class AutoChessEngine {
             targetFid: target.fid,
             delay: shot * EMBER_BLADE_CARROT_INTERVAL,
             damage: source.attack * EMBER_BLADE_CARROT_DAMAGE,
+            damageKind: "ability",
             burnPower: 0,
             speed: EMBER_BLADE_CARROT_SPEED,
             color: def.accent,
@@ -4472,15 +4598,15 @@ export class AutoChessEngine {
       }
       case "rift_brawler": {
         // 主动：打翻火锅，灼烧自己与周围小范围敌人
-        this.applyBurn(source, source, source.attack * RIFT_BRAWLER_SELF_BURN);
+        this.applyBurn(source, source, source.attack * RIFT_BRAWLER_SELF_BURN, "ability");
         targets
           .filter(
             (target) =>
               Math.hypot(target.x - source.x, target.y - source.y) <= RIFT_BRAWLER_HOTPOT_RADIUS,
           )
           .forEach((target) => {
-            this.applyBurn(source, target, source.attack * RIFT_BRAWLER_AOE_BURN);
-            const dealt = this.damage(source, target, source.attack * 0.45);
+            this.applyBurn(source, target, source.attack * RIFT_BRAWLER_AOE_BURN, "ability");
+            const dealt = this.damage(source, target, source.attack * 0.45, false, "ability");
             if (dealt > 0) this.addDamageText(target, dealt);
           });
         this.addEffect({
@@ -4589,7 +4715,7 @@ export class AutoChessEngine {
             (candidate) => pointDistanceFromForwardRay(source, target, candidate) < ALIEN_BEAM_HALF_WIDTH,
           )
           .forEach((candidate) => {
-            const dealt = this.damage(source, candidate, source.attack * 1.35);
+            const dealt = this.damage(source, candidate, source.attack * 1.35, false, "ability");
             this.addDamageText(candidate, dealt);
           });
         this.addEffect({
@@ -4813,6 +4939,7 @@ export class AutoChessEngine {
             radius: TIANDOU_LOLLIPOP_RADIUS,
             remainingRange: launchDistance,
             damage: source.attack * TIANDOU_LOLLIPOP_DAMAGE_MULTIPLIER,
+            damageKind: "ability",
             burnPower: 0,
             color: def.accent,
             size: 18,
@@ -4860,15 +4987,42 @@ export class AutoChessEngine {
         break;
       }
       case "mumu": {
-        const center = densest(targets);
-        if (!center) break;
-        this.startAbilityMotion(
-          source,
-          "dash",
-          { x: center.x + (source.team === "player" ? -44 : 44), y: center.y },
-          { targetFid: center.fid },
-        );
-        this.addEffect({ kind: "ring", x: center.x, y: center.y, color: def.accent, life: 0.75, size: 136 });
+        const battle = this.state.battle;
+        if (!battle) break;
+        const target = this.selectMumuRescueTarget(source, allies, battle);
+        if (!target) {
+          source.energy = source.maxEnergy;
+          break;
+        }
+        const destination = this.mumuRescueDestination(source, target, battle);
+        const motion = this.startAbilityMotion(target, "pull", destination, {
+          abilityId: "mumu",
+          sourceFid: source.fid,
+          targetFid: target.fid,
+          duration: MUMU_RESCUE_DURATION,
+          avoidOccupied: false,
+        });
+        if (!motion) {
+          source.energy = source.maxEnergy;
+          break;
+        }
+        this.addEffect({ kind: "line", x: target.x, y: target.y, x2: motion.toX, y2: motion.toY, color: def.accent, life: MUMU_RESCUE_DURATION, size: 8 });
+        this.addEffect({ kind: "text", x: target.x, y: target.y - 44, color: def.accent, text: "舞带救场", life: 0.65, size: 12 });
+        break;
+      }
+      case "yukisyo": {
+        const shieldFlat = abilityStatForStar(def, source.star, "shieldFlat", 70);
+        const shieldHpRatio = abilityStatForStar(def, source.star, "shieldHpRatio", 0.26);
+        const duration = abilityStatForStar(def, source.star, "duration", 4);
+        allies.forEach((target) => {
+          this.grantAbilityShield(
+            source,
+            target,
+            shieldFlat + target.maxHp * shieldHpRatio,
+            duration,
+          );
+          this.addEffect({ kind: "ring", x: target.x, y: target.y, color: def.accent, life: 0.58, size: target.radius * 2.5 });
+        });
         break;
       }
       case "xuehui": {
@@ -4876,7 +5030,7 @@ export class AutoChessEngine {
           .filter((target) => Math.hypot(target.x - source.x, target.y - source.y) <= XUEHUI_CLEAVE_RADIUS)
           .forEach((target) => {
             deal(target, XUEHUI_CLEAVE_DAMAGE_MULTIPLIER);
-            this.applyBurn(source, target, source.attack * XUEHUI_CLEAVE_BURN_MULTIPLIER);
+            this.applyBurn(source, target, source.attack * XUEHUI_CLEAVE_BURN_MULTIPLIER, "ability");
           });
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.5, size: XUEHUI_CLEAVE_RADIUS * 1.35 });
         this.addEffect({ kind: "burst", x: source.x + source.facingX * 22, y: source.y, color: def.accent, life: 0.32, size: 48 });
@@ -4939,7 +5093,7 @@ export class AutoChessEngine {
       }
       case "rift_tyrant": {
         targets.forEach((target) => {
-          const dealt = this.damage(source, target, source.attack * 1.05);
+          const dealt = this.damage(source, target, source.attack * 1.05, false, "ability");
           target.stun = Math.max(target.stun, 0.55);
           if (dealt > 0) this.addDamageText(target, dealt);
         });
@@ -4990,6 +5144,9 @@ export class AutoChessEngine {
       hp: original.maxHp * REI_REVIVE_HP_RATIO,
       shield: 0,
       shieldPeak: 0,
+      abilityShield: 0,
+      abilityShieldPeak: 0,
+      abilityShieldTime: 0,
       cooldown: 0.35,
       energy: 0,
       stun: 0,
@@ -4998,6 +5155,7 @@ export class AutoChessEngine {
       burnTime: 0,
       burnDps: 0,
       burnSourceFid: null,
+      burnDamageKind: "attack",
       barrageActive: false,
       barrageDrainPerSecond: 0,
       suiBirdChargesRemaining: 0,
@@ -5067,7 +5225,44 @@ export class AutoChessEngine {
     return selected.length;
   }
 
-  private damage(source: Fighter, target: Fighter, rawAmount: number, allowInactiveSource = false) {
+  private absorbDamageWithShields(target: Fighter, amount: number, damageKind: DamageKind) {
+    let remaining = amount;
+    let absorbed = 0;
+    if (damageKind === "ability" && target.abilityShield > 0) {
+      const abilityAbsorbed = Math.min(target.abilityShield, remaining);
+      target.abilityShield -= abilityAbsorbed;
+      remaining -= abilityAbsorbed;
+      absorbed += abilityAbsorbed;
+      if (target.abilityShield <= 0) {
+        target.abilityShield = 0;
+        target.abilityShieldPeak = 0;
+        target.abilityShieldTime = 0;
+        this.addEffect({ kind: "text", x: target.x, y: target.y - 44, color: "#ddb6ff", text: "术盾破", life: 0.48, size: 10 });
+      }
+    }
+    const hadShield = target.shield > 0;
+    if (target.shield > 0 && remaining > 0) {
+      const shieldAbsorbed = Math.min(target.shield, remaining);
+      target.shield -= shieldAbsorbed;
+      remaining -= shieldAbsorbed;
+      absorbed += shieldAbsorbed;
+    }
+    const shieldBroken = hadShield && target.shield <= 0;
+    if (shieldBroken) {
+      target.shield = 0;
+      target.shieldPeak = 0;
+      if (target.unitId === "sun_guard") this.fireSunGuardCoins(target);
+    }
+    return { remaining, absorbed };
+  }
+
+  private damage(
+    source: Fighter,
+    target: Fighter,
+    rawAmount: number,
+    allowInactiveSource = false,
+    damageKind: DamageKind = "attack",
+  ) {
     if ((!source.alive && !allowInactiveSource) || !target.alive) return 0;
     this.markFightersEngaged(source, target);
     const effectiveDodge =
@@ -5108,23 +5303,7 @@ export class AutoChessEngine {
       });
     }
     amount *= 100 / (100 + Math.max(-50, target.armor));
-    let remaining = amount;
-    let absorbed = 0;
-    const hadShield = target.shield > 0;
-    if (target.shield > 0) {
-      absorbed = Math.min(target.shield, remaining);
-      target.shield -= absorbed;
-      remaining -= absorbed;
-    }
-    const shieldBroken = hadShield && target.shield <= 0;
-    if (shieldBroken) {
-      target.shield = 0;
-      target.shieldPeak = 0;
-    }
-    // 果冻风纪：护盾从有到无时发射钢镚弹幕
-    if (shieldBroken && target.unitId === "sun_guard") {
-      this.fireSunGuardCoins(target);
-    }
+    const { remaining, absorbed } = this.absorbDamageWithShields(target, amount, damageKind);
     const hpLoss = Math.min(target.hp, remaining);
     target.hp -= hpLoss;
     const effectiveApplied = absorbed + hpLoss;
@@ -5145,6 +5324,7 @@ export class AutoChessEngine {
         targetFid: source.fid,
         delay: 0,
         damage: target.attack * NANA_PICKAXE_COUNTER_DAMAGE,
+        damageKind: "ability",
         burnPower: 0,
         speed: NANA_PICKAXE_COUNTER_SPEED,
         color: UNIT_DEFS.grove_mender.accent,
@@ -5192,7 +5372,12 @@ export class AutoChessEngine {
     return effectiveApplied;
   }
 
-  private applyBurn(source: Fighter, target: Fighter, totalDamage: number) {
+  private applyBurn(
+    source: Fighter,
+    target: Fighter,
+    totalDamage: number,
+    damageKind: DamageKind = "attack",
+  ) {
     if (!target.alive) return;
     const starterMultiplier =
       source.team === "player" ? starterEffects[this.state.starter || "bastion"].burnMultiplier || 1 : 1;
@@ -5200,6 +5385,7 @@ export class AutoChessEngine {
     if (dps >= target.burnDps) {
       target.burnDps = dps;
       target.burnSourceFid = source.fid;
+      target.burnDamageKind = damageKind;
     }
     target.burnTime = 3;
   }
@@ -5222,6 +5408,26 @@ export class AutoChessEngine {
     );
     target.shieldPeak = Math.max(target.shieldPeak, target.shield);
     const granted = target.shield - before;
+    if (source && battle) source.shieldingDone += granted;
+    return granted;
+  }
+
+  private grantAbilityShield(
+    source: Fighter | null,
+    target: Fighter,
+    amount: number,
+    duration: number,
+    battle = this.state.battle,
+  ) {
+    if (!target.alive || amount <= 0 || duration <= 0) return 0;
+    const starterMultiplier =
+      target.team === "player" ? starterEffects[this.state.starter || "bastion"].shieldMultiplier || 1 : 1;
+    const adjusted = amount * starterMultiplier;
+    const before = target.abilityShield;
+    target.abilityShield = Math.max(target.abilityShield, adjusted);
+    target.abilityShieldPeak = Math.max(target.abilityShieldPeak, target.abilityShield);
+    target.abilityShieldTime = duration;
+    const granted = target.abilityShield - before;
     if (source && battle) source.shieldingDone += granted;
     return granted;
   }
@@ -5275,6 +5481,7 @@ export class AutoChessEngine {
       target.burnTime = 0;
       target.burnDps = 0;
       target.burnSourceFid = null;
+      target.burnDamageKind = "attack";
       target.baseAttack *= ZEYIN_REBIRTH_ATTACK_MULTIPLIER;
       target.attack = target.baseAttack;
       target.baseAttackInterval *= ZEYIN_REBIRTH_ATTACK_INTERVAL_MULTIPLIER;
@@ -5327,6 +5534,9 @@ export class AutoChessEngine {
     target.hp = 0;
     target.shield = 0;
     target.shieldPeak = 0;
+    target.abilityShield = 0;
+    target.abilityShieldPeak = 0;
+    target.abilityShieldTime = 0;
     target.abilityMotion = null;
     this.addEffect({
       kind: "burst",
@@ -5690,6 +5900,7 @@ export class AutoChessEngine {
             motion: unit.abilityMotion && {
               kind: unit.abilityMotion.kind,
               abilityId: unit.abilityMotion.abilityId,
+              sourceFid: unit.abilityMotion.sourceFid,
               progress: Number((unit.abilityMotion.time / Math.max(unit.abilityMotion.duration, 0.001)).toFixed(2)),
               from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
               to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },
@@ -5774,6 +5985,7 @@ export class AutoChessEngine {
             motion: unit.abilityMotion && {
               kind: unit.abilityMotion.kind,
               abilityId: unit.abilityMotion.abilityId,
+              sourceFid: unit.abilityMotion.sourceFid,
               progress: Number((unit.abilityMotion.time / Math.max(unit.abilityMotion.duration, 0.001)).toFixed(2)),
               from: { x: Math.round(unit.abilityMotion.fromX), y: Math.round(unit.abilityMotion.fromY) },
               to: { x: Math.round(unit.abilityMotion.toX), y: Math.round(unit.abilityMotion.toY) },

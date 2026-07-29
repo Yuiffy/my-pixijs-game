@@ -736,7 +736,6 @@ test("所有可重复护盾角色在三人持续集火下都能被击破", async
     "guangyi",
     "nagisa",
     "biscuit_sui",
-    "mumu",
     "rutice",
   ];
 
@@ -800,6 +799,193 @@ test("所有可重复护盾角色在三人持续集火下都能被击破", async
       assert.equal(engine.state.phase, "result");
     });
   }
+});
+
+test("雪烛主动施法后提供固定值加生命比例的技能盾，普攻绕过且技能优先消耗", () => {
+  const engine = createEngine(171);
+  engine.state.starter = "blaze";
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "yukisyo", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "nori", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player.find((fighter) => fighter.unitId === "yukisyo");
+  const backliner = battle?.player.find((fighter) => fighter.unitId === "nori");
+  const enemy = battle?.enemy[0];
+  assert.ok(battle && source && backliner && enemy);
+  source.x = 260;
+  source.y = 330;
+  backliner.x = 320;
+  backliner.y = 330;
+  backliner.armor = 0;
+  backliner.dodgeChance = 0;
+  enemy.x = 600;
+  enemy.y = 330;
+  enemy.critChance = 0;
+  battle.enemy.forEach((fighter) => {
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.armor = 99_999;
+    fighter.attack = 0;
+    fighter.baseAttack = 0;
+  });
+
+  assert.equal(source.energy, 78);
+  engine.update(0.05);
+  assert.equal(backliner.abilityShield, 0, "高初始能量不等于开战自动触发");
+
+  source.energy = source.maxEnergy;
+  engine.castAbility(source, battle.enemy, true);
+  const expectedShield = 70 + backliner.maxHp * 0.26;
+  assert.ok(Math.abs(backliner.abilityShield - expectedShield) < 0.001);
+  assert.equal(backliner.abilityShieldTime, 4);
+
+  const shieldBeforeAttack = backliner.abilityShield;
+  const hpBeforeAttack = backliner.hp;
+  engine.damage(enemy, backliner, 30, true, "attack");
+  assert.equal(backliner.abilityShield, shieldBeforeAttack);
+  assert.equal(backliner.hp, hpBeforeAttack - 30);
+
+  const hpBeforeAbility = backliner.hp;
+  engine.damage(enemy, backliner, 40, true, "ability");
+  assert.equal(backliner.hp, hpBeforeAbility);
+  assert.ok(Math.abs(backliner.abilityShield - (shieldBeforeAttack - 40)) < 0.001);
+
+  const shieldBeforeAbilityBurn = backliner.abilityShield;
+  engine.applyBurn(enemy, backliner, 60, "ability");
+  engine.update(0.05);
+  assert.equal(backliner.hp, hpBeforeAbility);
+  assert.ok(Math.abs(backliner.abilityShield - (shieldBeforeAbilityBurn - 1)) < 0.001);
+
+  backliner.abilityShield = 20;
+  backliner.abilityShieldPeak = 20;
+  backliner.abilityShieldTime = 4;
+  backliner.shield = 30;
+  backliner.shieldPeak = 30;
+  engine.damage(enemy, backliner, 40, true, "ability");
+  assert.equal(backliner.abilityShield, 0);
+  assert.equal(backliner.shield, 10);
+
+  backliner.abilityShield = 250;
+  backliner.abilityShieldPeak = 250;
+  backliner.abilityShieldTime = 0.2;
+  source.energy = source.maxEnergy;
+  engine.castAbility(source, battle.enemy, true);
+  assert.equal(backliner.abilityShield, 250, "重复技能盾只取较高值，不相加");
+  assert.equal(backliner.abilityShieldTime, 4, "重复施法刷新四秒持续时间");
+  stepBattle(engine, 81);
+  assert.equal(backliner.abilityShield, 0);
+  assert.equal(backliner.abilityShieldTime, 0);
+});
+
+test("沐霂按场地控制优先拉援，经过移动过程后拉出时停并打断持续压制", () => {
+  const engine = createEngine(172);
+  engine.state.starter = "blaze";
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "mumu", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "nori", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "gale_archer", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player.find((fighter) => fighter.unitId === "mumu");
+  const trapped = battle?.player.find((fighter) => fighter.unitId === "nori");
+  const merelyLow = battle?.player.find((fighter) => fighter.unitId === "gale_archer");
+  const controller = battle?.enemy[0];
+  assert.ok(battle && source && trapped && merelyLow && controller);
+  source.x = 360;
+  source.y = 350;
+  trapped.x = 620;
+  trapped.y = 350;
+  trapped.hp = trapped.maxHp * 0.8;
+  trapped.stun = 2;
+  merelyLow.x = 430;
+  merelyLow.y = 430;
+  merelyLow.hp = merelyLow.maxHp * 0.2;
+  source.energy = source.maxEnergy;
+  battle.enemy.forEach((fighter) => {
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.armor = 99_999;
+    fighter.attack = 0;
+    fighter.baseAttack = 0;
+    fighter.energy = fighter.maxEnergy;
+  });
+  controller.channelTargetFid = trapped.fid;
+  controller.channelTime = 3;
+  controller.channelPulseTimer = 0;
+  battle.chronospheres.push({
+    sourceFid: controller.fid,
+    x: trapped.x,
+    y: trapped.y,
+    radius: 96,
+    life: 3,
+    maxLife: 3,
+    color: "#c9a0ff",
+  });
+
+  const startX = trapped.x;
+  engine.update(0.05);
+  assert.equal(trapped.abilityMotion?.kind, "pull");
+  assert.equal(trapped.abilityMotion?.sourceFid, source.fid);
+  assert.ok(trapped.x !== startX, "拉援首帧进入移动中间态");
+  assert.ok(trapped.x !== trapped.abilityMotion.toX, "拉援不能同帧瞬移到终点");
+  assert.equal(merelyLow.abilityMotion, null, "场地控制优先于普通低血");
+
+  const hpBeforeLanding = trapped.hp;
+  stepBattle(engine, 8);
+  assert.equal(trapped.abilityMotion, null);
+  assert.ok(Math.hypot(trapped.x - 620, trapped.y - 350) > 96, "目标必须离开时停范围");
+  assert.equal(trapped.stun, 0);
+  assert.equal(controller.channelTargetFid, null);
+  assert.equal(controller.channelTime, 0);
+  assert.ok(trapped.hp > hpBeforeLanding);
+  assert.ok(trapped.shield > 0);
+});
+
+test("沐霂没有危险目标或自身处于时停时不会消耗能量", () => {
+  const engine = createEngine(173);
+  engine.state.starter = "blaze";
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "mumu", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "nori", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player.find((fighter) => fighter.unitId === "mumu");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "nori");
+  const zoneOwner = battle?.enemy[0];
+  assert.ok(battle && source && ally && zoneOwner);
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.baseAttack = 0;
+    fighter.hp = 99_999;
+    fighter.maxHp = 99_999;
+    fighter.armor = 99_999;
+  });
+  source.energy = source.maxEnergy;
+  engine.update(0.05);
+  assert.equal(source.energy, source.maxEnergy);
+  assert.equal(ally.abilityMotion, null);
+
+  ally.hp = ally.maxHp * 0.2;
+  zoneOwner.energy = zoneOwner.maxEnergy;
+  battle.chronospheres.push({
+    sourceFid: zoneOwner.fid,
+    x: source.x,
+    y: source.y,
+    radius: 90,
+    life: 2,
+    maxLife: 2,
+    color: "#c9a0ff",
+  });
+  engine.update(0.05);
+  assert.equal(source.energy, source.maxEnergy);
+  assert.equal(ally.abilityMotion, null);
 });
 
 test("远程进攻技能超出技能距离会等待，进入技能距离后释放", () => {
