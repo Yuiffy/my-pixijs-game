@@ -79,7 +79,6 @@ export type {
   HealingZone,
   MechanicalRabbitPet,
   OwnedUnit,
-  PineTreeTurret,
   Projectile,
   RankingMetric,
   RoundResult,
@@ -301,8 +300,6 @@ export class AutoChessEngine {
         this.startSuiBirdElbowDash(source, targets),
       summonClockGunnerRabbits: (source) =>
         this.summonClockGunnerRabbits(source),
-      summonPineTree: (source, targets) =>
-        this.summonPineTree(source, targets),
       targetsWithinAbilityRange: (source, targets) =>
         this.targetsWithinAbilityRange(source, targets),
     });
@@ -443,6 +440,7 @@ export class AutoChessEngine {
     target.tauntedByFid = null;
     target.tauntTime = 0;
     target.slowTime = 0;
+    target.slowMultiplier = 1;
     this.heal(
       source,
       target,
@@ -666,6 +664,8 @@ export class AutoChessEngine {
       reborn: fighter.reborn,
       rebirthRecoilTime: Number(fighter.rebirthRecoilTime.toFixed(2)),
       manquTime: Number(fighter.manquTime.toFixed(2)),
+      raccoonSwitchTime: Number(fighter.raccoonSwitchTime.toFixed(2)),
+      raccoonStunnedAttackers: fighter.raccoonStunnedAttackers.length,
       stealthTime: Number(fighter.stealthTime.toFixed(2)),
       sumiDragonReady: fighter.sumiDragonReady,
       towerHackArmed: fighter.towerHackArmed,
@@ -679,6 +679,8 @@ export class AutoChessEngine {
       gluttonyKillCooldown: Number(fighter.gluttonyKillCooldown.toFixed(2)),
       stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
+      slowTime: Number(fighter.slowTime.toFixed(2)),
+      slowMultiplier: Number(fighter.slowMultiplier.toFixed(2)),
       damageDealt: Math.round(fighter.damageDealt),
       healingDone: Math.round(fighter.healingDone),
       shieldingDone: Math.round(fighter.shieldingDone),
@@ -1086,7 +1088,10 @@ export class AutoChessEngine {
 
     const previousX = source.x;
     const previousY = source.y;
-    const travel = SEKI_CHARGE_SPEED * (source.slowTime > 0 ? 0.7 : 1) * dt;
+    const travel =
+      SEKI_CHARGE_SPEED *
+      (source.slowTime > 0 ? source.slowMultiplier : 1) *
+      dt;
     let nextX = source.x + directionX * travel;
     let nextY = source.y + directionY * travel;
     const minX = BATTLE_BOUNDS.left + source.radius;
@@ -1774,7 +1779,13 @@ export class AutoChessEngine {
       moveDistance = 1;
     }
     const dashMult = fighter.danceDashTime > 0 ? DANCE_DASH_SPEED_MULT : 1;
-    const travel = Math.min(moveDistance, fighter.moveSpeed * dashMult * (fighter.slowTime > 0 ? 0.55 : 1) * dt);
+      const travel = Math.min(
+        moveDistance,
+        fighter.moveSpeed *
+          dashMult *
+          (fighter.slowTime > 0 ? fighter.slowMultiplier : 1) *
+          dt,
+      );
     const motionX = moveX / moveDistance;
     const motionY = moveY / moveDistance;
     movementIntents.set(fighter.fid, { x: motionX, y: motionY });
@@ -1823,7 +1834,10 @@ export class AutoChessEngine {
     const awayAngle = distance > 0.001
       ? Math.atan2(fighter.y - target.y, fighter.x - target.x)
       : fighter.team === "player" ? Math.PI : 0;
-    const travel = fighter.moveSpeed * (fighter.slowTime > 0 ? 0.55 : 1) * dt;
+    const travel =
+      fighter.moveSpeed *
+      (fighter.slowTime > 0 ? fighter.slowMultiplier : 1) *
+      dt;
     const candidates = [0, -Math.PI / 4, Math.PI / 4, -Math.PI / 2, Math.PI / 2]
       .map((offset) => {
         const angle = awayAngle + offset;
@@ -2107,14 +2121,6 @@ export class AutoChessEngine {
     this.projectiles.summonClockGunnerRabbits(source);
   }
 
-  private summonPineTree(source: Fighter, targets: Fighter[]) {
-    this.projectiles.summonPineTree(source, targets);
-  }
-
-  private updatePineTreeTurrets(battle: BattleState, dt: number) {
-    this.projectiles.updatePineTreeTurrets(battle, dt);
-  }
-
   private updateMechanicalRabbitPets(battle: BattleState, dt: number) {
     this.projectiles.updateMechanicalRabbitPets(battle, dt);
   }
@@ -2343,7 +2349,6 @@ export class AutoChessEngine {
     battle.chronospheres = battle.chronospheres.filter((zone) => zone.life > 0);
     this.updateHealingZones(battle, dt);
     this.updateMechanicalRabbitPets(battle, dt);
-    this.updatePineTreeTurrets(battle, dt);
     this.updateProjectileVolley(battle, dt);
     this.updateProjectiles(battle, dt);
     this.updateLovelyChannels(battle, dt);
@@ -2427,6 +2432,11 @@ export class AutoChessEngine {
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.gluttonyKillCooldown = Math.max(0, fighter.gluttonyKillCooldown - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
+      const switchWasActive = fighter.raccoonSwitchTime > 0;
+      fighter.raccoonSwitchTime = Math.max(0, fighter.raccoonSwitchTime - dt);
+      if (switchWasActive && fighter.raccoonSwitchTime <= 0) {
+        fighter.raccoonStunnedAttackers = [];
+      }
       const manquActiveTime = Math.min(dt, fighter.manquTime);
       fighter.manquTime = Math.max(0, fighter.manquTime - dt);
       const wasStealthed = fighter.stealthTime > 0;
@@ -2448,6 +2458,7 @@ export class AutoChessEngine {
       fighter.danceDashCooldown = Math.max(0, fighter.danceDashCooldown - dt);
       fighter.danceDashTime = Math.max(0, fighter.danceDashTime - dt);
       fighter.slowTime = Math.max(0, fighter.slowTime - dt);
+      if (fighter.slowTime <= 0) fighter.slowMultiplier = 1;
       if (fighter.sekiChargeActive) {
         fighter.energy = Math.max(
           0,
@@ -2671,6 +2682,7 @@ export class AutoChessEngine {
       const abilityTiming = UNIT_DEFS[fighter.unitId].abilityCastTiming;
       const energyReady =
         !fighter.barrageActive &&
+        !(fighter.unitId === "gale_archer" && fighter.raccoonSwitchTime > 0) &&
         !this.hasChronosphereInFlightOrActive(fighter, battle) &&
         fighter.energy >= fighter.maxEnergy;
 
@@ -2735,7 +2747,11 @@ export class AutoChessEngine {
       if (distance > preferredRange) {
         const danceLevel = danceLevels[fighter.team];
         // 跳舞成员：只在一段完整冲刺可进入自身攻击范围的最后接近阶段加速。
-        const dashTravel = fighter.moveSpeed * DANCE_DASH_SPEED_MULT * (fighter.slowTime > 0 ? 0.55 : 1) * DANCE_DASH_DURATION;
+        const dashTravel =
+          fighter.moveSpeed *
+          DANCE_DASH_SPEED_MULT *
+          (fighter.slowTime > 0 ? fighter.slowMultiplier : 1) *
+          DANCE_DASH_DURATION;
         if (
           fighter.danceMember &&
           fighter.danceDashCooldown <= 0 &&
@@ -3085,9 +3101,12 @@ export class AutoChessEngine {
       abilityMoveSpeed: 0,
       abilityMoveSpeedTime: 0,
       manquTime: 0,
+      raccoonSwitchTime: 0,
+      raccoonStunnedAttackers: [],
       armor: original.armor - original.abilityArmorBonus,
       abilityArmorBonus: 0,
       slowTime: 0,
+      slowMultiplier: 1,
       weakenTime: 0,
       weakenArmorPenalty: 0,
       attackPulse: 0,

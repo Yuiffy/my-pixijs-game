@@ -368,13 +368,11 @@ test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () =>
   assert.match(scene, /portraitImage\.setFlipX/);
 });
 
-test("战斗同步覆盖投射物、技能效果与两类召唤物", () => {
+test("战斗同步覆盖投射物、技能效果与机械兔召唤物", () => {
   assert.match(scene, /battle\.projectiles/);
   assert.match(scene, /battle\.effects/);
   assert.match(scene, /battle\.pets/);
-  assert.match(scene, /battle\.pineTrees/);
   assert.match(scene, /battle\.chronospheres/);
-  assert.match(scene, /projectile\.style === "pine_needle"/);
   assert.match(scene, /projectile\.style === "shark"/);
   assert.match(scene, /projectile\.style === "carrot"/);
   assert.match(scene, /projectile\.style === "lollipop"/);
@@ -398,14 +396,33 @@ test("战斗同步覆盖投射物、技能效果与两类召唤物", () => {
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
-test("浣熊自动 PK 与犬绒饼干使用独立战场效果", () => {
-  assert.match(gameTypes, /"pk_overheat"/);
+test("花礼迎客松与大吧唧使用独立自绘战场效果", () => {
+  assert.match(gameTypes, /"harei_pine"/);
+  assert.match(gameTypes, /"harei_badge"/);
+  assert.match(engine, /kind: "harei_pine"/);
+  assert.match(engine, /kind: "harei_badge"/);
+  assert.match(effectView, /effect\.kind === "harei_pine"/);
+  assert.match(effectView, /effect\.kind === "harei_badge"/);
+  assert.match(effectView, /needleLight = 0x70d67d/);
+  assert.match(effectView, /\.setText\(effect\.text \|\| "欢迎光临"\)/);
+  assert.match(effectView, /\.setText\(effect\.text \|\| "75mm\\n大吧唧"\)/);
+  assert.doesNotMatch(scene, /"🌲"/);
+});
+
+test("浣熊开关反震与犬绒饼干使用独立战场效果", () => {
+  assert.match(gameTypes, /"switch_on"/);
+  assert.match(gameTypes, /"switch_shock"/);
   assert.match(gameTypes, /"biscuit_share"/);
-  assert.match(engine, /kind: "pk_overheat"/);
+  assert.match(engine, /kind: "switch_on"/);
+  assert.match(engine, /kind: "switch_shock"/);
   assert.match(engine, /kind: "biscuit_share"/);
   assert.match(engine, /text: hasShield \? "choco" : "soda"/);
-  assert.match(effectView, /effect\.kind === "pk_overheat"/);
-  assert.match(effectView, /\.setText\("PK"\)/);
+  assert.match(fighterView, /switchJitterX/);
+  assert.match(fighterView, /fighter\.raccoonSwitchTime > 0/);
+  assert.match(effectView, /effect\.kind === "switch_on"/);
+  assert.match(effectView, /\.setText\(effect\.text \|\| "ON"\)/);
+  assert.match(effectView, /effect\.kind === "switch_shock"/);
+  assert.match(effectView, /\.setText\("麻"\)/);
   assert.match(effectView, /effect\.kind === "biscuit_share"/);
   assert.match(effectView, /effect\.text === "choco"/);
   assert.match(effectView, /fillRoundedRect\(biscuitX - 13/);
@@ -497,15 +514,9 @@ test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对�
   );
 });
 
-test("投射物按原版互斥分支绘制 Emoji、松针与光弹", () => {
+test("投射物按互斥分支绘制 Emoji 与光弹", () => {
   assert.match(scene, /const projectileEmoji = \(projectile: Projectile\)/);
   assert.match(scene, /if \(projectile\.emoji\) return projectile\.emoji/);
-  assert.match(scene, /if \(projectile\.style === "pine_needle"\)/);
-  assert.match(scene, /\* 16/);
-  assert.match(
-    scene,
-    /drawProjectileTrail\(trail, tailX, tailY, 2\.2, projectileColor\)/,
-  );
   assert.match(scene, /if \(emoji\)/);
   assert.match(scene, /Math\.max\(12, projectile\.size\)/);
   assert.match(scene, /Math\.max\(14, projectile\.size\)/);

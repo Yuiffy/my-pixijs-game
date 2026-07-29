@@ -221,14 +221,6 @@ export class ProjectileViewRenderer {
       return;
     }
 
-    if (projectile.style === "pine_needle") {
-      const tailX = -(projectile.velocityX / speed) * 16;
-      const tailY = -(projectile.velocityY / speed) * 16;
-      trail.setVisible(true);
-      this.drawProjectileTrail(trail, tailX, tailY, 2.2, projectileColor);
-      return;
-    }
-
     if (projectile.style === "cigarette") {
       const directionX = projectile.velocityX / speed;
       const directionY = projectile.velocityY / speed;

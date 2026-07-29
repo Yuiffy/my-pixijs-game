@@ -27,14 +27,6 @@ const CLOCK_GUNNER_RABBIT_PROJECTILE_SPEED = 620;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RANGE = 560;
 const CLOCK_GUNNER_RABBIT_PROJECTILE_RADIUS = 5;
 const CLOCK_GUNNER_RABBIT_FLANK_ANGLE = Math.PI * 0.62;
-const PINE_TREE_LIFETIME = 7.5;
-const PINE_TREE_RADIUS = 18;
-const PINE_TREE_RANGE = 175;
-const PINE_TREE_FIRE_INTERVAL = 0.52;
-const PINE_TREE_DAMAGE_MULTIPLIER = 0.58;
-const PINE_TREE_NEEDLE_SPEED = 520;
-const PINE_TREE_NEEDLE_RANGE = 420;
-const PINE_TREE_NEEDLE_RADIUS = 5;
 const SUMI_DRAGON_PROJECTILE_RADIUS = 14;
 const CHRONOSPHERE_DURATION = 2.8;
 const TIANDOU_LOLLIPOP_GROUND_LIFETIME = 10;
@@ -559,110 +551,6 @@ export class CombatProjectileSystem {
     }
   }
 
-  public summonPineTree(source: Fighter, targets: Fighter[]) {
-    const { battle } = this.host.state();
-    if (!battle) return;
-    const def = UNIT_DEFS[source.unitId];
-    const densest = targets.reduce(
-      (best, candidate) => {
-        const nearby = targets.filter(
-          (other) =>
-            Math.hypot(candidate.x - other.x, candidate.y - other.y) < 125,
-        ).length;
-        return nearby > best.nearby ? { target: candidate, nearby } : best;
-      },
-      { target: targets[0] as Fighter | undefined, nearby: 0 },
-    ).target;
-    const anchor = densest || this.host.nearestTarget(source, targets);
-    const forward = source.team === "player" ? 1 : -1;
-    const spawnX = anchor
-      ? (source.x + anchor.x) * 0.5 + forward * 18
-      : source.x + forward * 72;
-    const spawnY = anchor ? (source.y + anchor.y) * 0.5 : source.y;
-    const clampedX = Math.max(
-      BATTLE_BOUNDS.left + PINE_TREE_RADIUS,
-      Math.min(BATTLE_BOUNDS.right - PINE_TREE_RADIUS, spawnX),
-    );
-    const clampedY = Math.max(
-      BATTLE_BOUNDS.top + PINE_TREE_RADIUS,
-      Math.min(BATTLE_BOUNDS.bottom - PINE_TREE_RADIUS, spawnY),
-    );
-    battle.pineTreeSerial += 1;
-    battle.pineTrees.push({
-      id: `${source.fid}-pine-${battle.pineTreeSerial}`,
-      ownerFid: source.fid,
-      team: source.team,
-      x: clampedX,
-      y: clampedY,
-      radius: PINE_TREE_RADIUS,
-      life: PINE_TREE_LIFETIME,
-      maxLife: PINE_TREE_LIFETIME,
-      range: PINE_TREE_RANGE,
-      fireTimer: 0.2,
-      attackPulse: 0,
-    });
-    this.addEffect({
-      kind: "text",
-      x: clampedX,
-      y: clampedY - 36,
-      color: def.accent,
-      text: "迎客松",
-      life: 0.7,
-      size: 12,
-    });
-  }
-
-  public updatePineTreeTurrets(battle: BattleState, dt: number) {
-    const fighters = [...battle.player, ...battle.enemy];
-    battle.pineTrees = battle.pineTrees.filter((tree) => {
-      const owner = fighters.find((fighter) => fighter.fid === tree.ownerFid);
-      tree.life -= dt;
-      tree.attackPulse = Math.max(0, tree.attackPulse - dt);
-      if (!owner?.alive || tree.life <= 0) return false;
-
-      const targetTeam: Team = tree.team === "player" ? "enemy" : "player";
-      const target = this.host
-        .living(targetTeam)
-        .reduce<Fighter | null>((best, candidate) => {
-          const distance = Math.hypot(
-            candidate.x - tree.x,
-            candidate.y - tree.y,
-          );
-          if (distance > tree.range) return best;
-          if (!best) return candidate;
-          return distance < Math.hypot(best.x - tree.x, best.y - tree.y)
-            ? candidate
-            : best;
-        }, null);
-      if (!target) return true;
-
-      tree.fireTimer -= dt;
-      if (tree.fireTimer > 0) return true;
-      const deltaX = target.x - tree.x;
-      const deltaY = target.y - tree.y;
-      const distance = Math.hypot(deltaX, deltaY) || 1;
-      battle.projectiles.push({
-        sourceFid: owner.fid,
-        team: tree.team,
-        x: tree.x,
-        y: tree.y - tree.radius * 0.35,
-        velocityX: (deltaX / distance) * PINE_TREE_NEEDLE_SPEED,
-        velocityY: (deltaY / distance) * PINE_TREE_NEEDLE_SPEED,
-        radius: PINE_TREE_NEEDLE_RADIUS,
-        remainingRange: PINE_TREE_NEEDLE_RANGE,
-        damage: owner.attack * PINE_TREE_DAMAGE_MULTIPLIER,
-        damageKind: "ability",
-        burnPower: 0,
-        color: "#7ecf8a",
-        size: 3,
-        style: "pine_needle",
-      });
-      tree.attackPulse = 0.18;
-      tree.fireTimer = PINE_TREE_FIRE_INTERVAL;
-      return true;
-    });
-  }
-
   public updateMechanicalRabbitPets(battle: BattleState, dt: number) {
     const fighters = [...battle.player, ...battle.enemy];
     battle.pets = battle.pets.filter((pet) => {
@@ -936,6 +824,7 @@ export class CombatProjectileSystem {
               steppedOn.slowTime,
               TIANDOU_LOLLIPOP_SLOW_DURATION,
             );
+            steppedOn.slowMultiplier = 0.55;
             this.addEffect({
               kind: "text",
               x: steppedOn.x,

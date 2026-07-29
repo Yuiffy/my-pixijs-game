@@ -781,7 +781,7 @@ test("一星绒绒的狗在三名一星敌人围攻下不会靠受击无限续�
   assert.equal(engine.state.phase, "result");
 });
 
-test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限刷新 PK 护盾", () => {
+test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限刷新开关护盾", () => {
   const engine = createEngine(150);
   engine.state.round = 2;
   engine.state.playerLevel = 4;
@@ -808,13 +808,13 @@ test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限刷�
   };
   stepBattle(engine, 480);
 
-  assert.ok(castCount >= 1, "浣熊店员仍应能正常发起 PK");
-  assert.ok(castCount <= 2, "三打一不应通过受击回能反复刷新 PK 护盾");
+  assert.ok(castCount >= 1, "浣熊店员仍应能正常打开开关");
+  assert.ok(castCount <= 2, "三打一不应通过受击回能反复刷新开关护盾");
   assert.equal(raccoon.alive, false);
   assert.equal(engine.state.phase, "result");
 });
 
-test("浣熊店员手机过热只让近处敌人参加 PK，并生成专属过热效果", () => {
+test("浣熊店员打开开关后只反震每名普通攻击者一次", () => {
   const engine = createEngine(175);
   engine.state.starter = "blaze";
   engine.state.round = 2;
@@ -826,7 +826,8 @@ test("浣熊店员手机过热只让近处敌人参加 PK，并生成专属过�
   const raccoon = battle?.player[0];
   const near = battle?.enemy[0];
   const far = battle?.enemy[1];
-  assert.ok(battle && raccoon && near && far);
+  const late = battle?.enemy[2];
+  assert.ok(battle && raccoon && near && far && late);
 
   raccoon.x = 300;
   raccoon.y = 360;
@@ -838,14 +839,33 @@ test("浣熊店员手机过热只让近处敌人参加 PK，并生成专属过�
   engine.castAbility(raccoon, battle.enemy);
 
   assert.ok(Math.abs(raccoon.shield - raccoon.maxHp * 0.18) < 0.001);
-  assert.equal(near.tauntedByFid, raccoon.fid);
-  assert.equal(near.tauntTime, 1.4);
-  assert.equal(far.tauntedByFid, null);
-  assert.equal(far.tauntTime, 0);
-  const overheat = battle.effects.find((effect) => effect.kind === "pk_overheat");
-  assert.ok(overheat);
-  assert.equal(overheat.size, 150);
-  assert.equal(overheat.maxLife, 0.9);
+  assert.equal(raccoon.raccoonSwitchTime, 4);
+  assert.deepEqual(raccoon.raccoonStunnedAttackers, []);
+  const switchOn = battle.effects.find((effect) => effect.kind === "switch_on");
+  assert.ok(switchOn);
+  assert.equal(switchOn.text, "ON");
+  assert.equal(switchOn.maxLife, 1);
+
+  engine.damage(near, raccoon, 24, false, "attack");
+  assert.equal(near.stun, 0.5);
+  assert.deepEqual(raccoon.raccoonStunnedAttackers, [near.fid]);
+  const shock = battle.effects.find((effect) => effect.kind === "switch_shock");
+  assert.ok(shock);
+  assert.equal(shock.x, raccoon.x);
+  assert.equal(shock.x2, near.x);
+
+  near.stun = 0;
+  engine.damage(near, raccoon, 24, false, "attack");
+  assert.equal(near.stun, 0, "同一攻击者在一次开关期间不能反复被眩晕");
+  assert.deepEqual(raccoon.raccoonStunnedAttackers, [near.fid]);
+
+  engine.damage(far, raccoon, 24, false, "ability");
+  assert.equal(far.stun, 0, "技能伤害不触发反震");
+  assert.deepEqual(raccoon.raccoonStunnedAttackers, [near.fid]);
+
+  raccoon.raccoonSwitchTime = 0;
+  engine.damage(late, raccoon, 24, false, "attack");
+  assert.equal(late.stun, 0, "开关结束后普通攻击不再触发反震");
 });
 
 test("犬绒给无盾友军发苏打盾，给已有护盾友军发巧克力曲奇回血", () => {
@@ -3718,7 +3738,7 @@ test("露蒂丝咕咕诊所治疗施法距离内友军并只保护其中生命�
   assert.equal(enemy.stun, 0);
 });
 
-test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", () => {
+test("大黑鼠随机使出迎客松或大吧唧并结算不同范围控制", () => {
   const engine = createEngine(98);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -3732,34 +3752,51 @@ test("大黑鼠迎客松会长出固定松树并向附近敌人发射松针", ()
     fighter.armor = 0;
     fighter.attack = 0;
     fighter.dodgeChance = 0;
-    fighter.x = 340 + index * 40;
+    fighter.x = 340 + index * 180;
     fighter.y = 360;
   });
   owner.x = 260;
   owner.y = 360;
-  battle.enemy[0].x = owner.x + Math.max(owner.range, owner.radius + battle.enemy[0].radius + 12) - 1;
-  owner.energy = owner.maxEnergy;
-  engine.update(0.05);
-  assert.equal(battle.pineTrees.length, 1);
-  const tree = battle.pineTrees[0];
-  assert.equal(tree.ownerFid, owner.fid);
-  const treeX = tree.x;
-  const treeY = tree.y;
-  battle.projectiles = [];
-  battle.enemy[0].x = tree.x + 120;
-  battle.enemy[0].y = tree.y;
-  stepBattle(engine, 5);
-  assert.equal(tree.x, treeX);
-  assert.equal(tree.y, treeY);
-  const needle = battle.projectiles.find((entry) => entry.style === "pine_needle" && entry.sourceFid === owner.fid);
-  assert.ok(needle);
-  assert.ok(owner.damageDealt >= 0);
-  stepBattle(engine, 40);
-  assert.ok(owner.damageDealt > 0);
-  owner.hp = 0;
-  owner.alive = false;
-  engine.update(0.05);
-  assert.equal(battle.pineTrees.length, 0);
+  const near = battle.enemy[0];
+  const far = battle.enemy[1];
+  near.x = owner.x + 70;
+  far.x = owner.x + 170;
+
+  engine["rng"].next = () => 0.25;
+  engine["castAbility"](owner, battle.enemy);
+  assert.ok(battle.effects.some((effect) => effect.kind === "harei_pine"));
+  assert.equal(near.tauntedByFid, owner.fid);
+  assert.equal(near.tauntTime, 0.8);
+  assert.equal(near.slowTime, 1.5);
+  assert.equal(near.slowMultiplier, 0.8);
+  assert.equal(near.stun, 0);
+  assert.equal(far.tauntedByFid, null);
+  assert.equal(far.slowTime, 0);
+  const pineTextState = JSON.parse(engine.renderTextState());
+  const pineTextNear = pineTextState.battle.enemyUnits.find((fighter) => fighter.fid === near.fid);
+  assert.equal(pineTextNear.slowMultiplier, 0.8);
+
+  near.slowTime = 2.4;
+  near.slowMultiplier = 0.55;
+  engine["castAbility"](owner, battle.enemy);
+  assert.equal(near.slowTime, 2.4);
+  assert.equal(near.slowMultiplier, 0.55);
+
+  const nearHpBefore = near.hp;
+  const farHpBefore = far.hp;
+  engine["rng"].next = () => 0.75;
+  engine["castAbility"](owner, battle.enemy);
+  assert.ok(battle.effects.some((effect) => effect.kind === "harei_badge"));
+  assert.ok(near.hp < nearHpBefore);
+  assert.equal(near.stun, 0.65);
+  assert.equal(far.hp, farHpBefore);
+  assert.equal(far.stun, 0);
+
+  const textState = JSON.parse(engine.renderTextState());
+  assert.ok(textState.battle.visualEffects.effects.some((effect) => effect.kind === "harei_pine"));
+  assert.ok(textState.battle.visualEffects.effects.some((effect) => effect.kind === "harei_badge"));
+  const textNear = textState.battle.enemyUnits.find((fighter) => fighter.fid === near.fid);
+  assert.equal(textNear.slowMultiplier, 0.55);
 });
 
 test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {

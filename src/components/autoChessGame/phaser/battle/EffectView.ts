@@ -143,46 +143,76 @@ export class EffectViewRenderer {
     }
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
     graphics.clear().setVisible(true);
-    if (effect.kind === "pk_overheat") {
-      const radius = effect.size || 150;
-      const pulse = 0.72 + Math.sin(progress * Math.PI * 3) * 0.08;
-      const shockwave = radius * (0.28 + progress * 0.72);
+    if (effect.kind === "switch_on") {
+      const radius = effect.size || 58;
+      const pulse = 0.9 + Math.sin(progress * Math.PI * 4) * 0.08;
+      const knobX = -14 + Math.min(1, progress * 2.8) * 28;
+      const switchY = -82;
       graphics
         .setBlendMode(Phaser.BlendModes.SCREEN)
-        .fillStyle(0xff563d, 0.08 + (1 - progress) * 0.08)
+        .fillStyle(color, 0.13)
         .fillCircle(0, 0, radius * pulse)
-        .lineStyle(Math.max(2, 7 * (1 - progress)), 0xff765f, 0.92)
-        .strokeCircle(0, 0, shockwave)
-        .lineStyle(2, color, 0.72)
-        .strokeCircle(0, 0, radius * pulse)
-        .fillStyle(0x14252d, 0.96)
-        .fillRoundedRect(-17, -25, 34, 50, 7)
-        .lineStyle(3, 0xff765f, 0.96)
-        .strokeRoundedRect(-17, -25, 34, 50, 7)
-        .fillStyle(0xff765f, 0.88)
-        .fillRoundedRect(-12, -18, 24, 32, 3)
-        .fillStyle(0xffffff, 0.92)
-        .fillCircle(0, 20, 2.3);
-      for (let index = 0; index < 6; index += 1) {
-        const angle = -0.9 + index * 0.36;
-        const rayStart = 29 + index * 2;
-        const rayEnd = rayStart + 13 + progress * 8;
-        graphics
-          .lineStyle(index % 2 ? 2 : 3, index % 2 ? color : 0xffb18e, 0.78)
-          .lineBetween(
-            Math.cos(angle) * rayStart,
-            Math.sin(angle) * rayStart,
-            Math.cos(angle) * rayEnd,
-            Math.sin(angle) * rayEnd,
-          );
-      }
+        .lineStyle(3.5 * (1 - progress) + 1.2, 0xe8c5ff, 0.9)
+        .strokeCircle(0, 0, radius * (0.42 + progress * 0.72))
+        .fillStyle(0x2b123d, 0.98)
+        .fillRoundedRect(-34, switchY - 17, 68, 34, 17)
+        .lineStyle(2.5, color, 1)
+        .strokeRoundedRect(-34, switchY - 17, 68, 34, 17)
+        .fillStyle(0xf2ddff, 1)
+        .fillCircle(knobX, switchY, 12)
+        .lineStyle(2, 0xffffff, 0.9)
+        .strokeCircle(knobX, switchY, 12);
       label
-        .setText("PK")
+        .setText(effect.text || "ON")
         .setFontFamily(FONT_FAMILY)
-        .setFontSize(13)
+        .setFontSize(11)
         .setColor("#ffffff")
-        .setY(-2)
-        .setScale(1 + Math.sin(progress * Math.PI) * 0.12)
+        .setPosition(-11, switchY)
+        .setOrigin(0.5)
+        .setScale(1 + Math.sin(progress * Math.PI) * 0.1)
+        .setVisible(true);
+    } else if (effect.kind === "switch_shock") {
+      const targetX = (effect.x2 ?? effect.x) - effect.x;
+      const targetY = (effect.y2 ?? effect.y) - effect.y;
+      const length = Math.hypot(targetX, targetY) || 1;
+      const normalX = -targetY / length;
+      const normalY = targetX / length;
+      const segments = 7;
+      const points = Array.from({ length: segments + 1 }, (_, index) => {
+        const ratio = index / segments;
+        const zigzag = index === 0 || index === segments
+          ? 0
+          : (index % 2 === 0 ? -1 : 1) * (5 + Math.sin(index * 2.1) * 2);
+        return {
+          x: targetX * ratio + normalX * zigzag,
+          y: targetY * ratio + normalY * zigzag,
+        };
+      });
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .lineStyle((effect.size || 4) + 6, color, 0.18)
+        .beginPath()
+        .moveTo(points[0].x, points[0].y);
+      points.slice(1).forEach((point) => graphics.lineTo(point.x, point.y));
+      graphics
+        .strokePath()
+        .lineStyle(effect.size || 4, 0xe9c8ff, 0.96)
+        .beginPath()
+        .moveTo(points[0].x, points[0].y);
+      points.slice(1).forEach((point) => graphics.lineTo(point.x, point.y));
+      graphics
+        .strokePath()
+        .fillStyle(color, 0.2 + (1 - progress) * 0.18)
+        .fillCircle(targetX, targetY, 20 + progress * 8)
+        .lineStyle(2.5, 0xf4e8ff, 0.92)
+        .strokeCircle(targetX, targetY, 13 + progress * 18);
+      label
+        .setText("麻")
+        .setFontFamily(FONT_FAMILY)
+        .setFontSize(12)
+        .setColor("#f5e8ff")
+        .setPosition(targetX, targetY - 28 - progress * 8)
+        .setScale(1)
         .setVisible(true);
     } else if (effect.kind === "biscuit_share") {
       const targetX = (effect.x2 ?? effect.x) - effect.x;
@@ -234,6 +264,117 @@ export class EffectViewRenderer {
           );
         });
       }
+    } else if (effect.kind === "harei_pine") {
+      const radius = effect.size || 118;
+      const direction = (effect.x2 ?? effect.x + 1) >= effect.x ? 1 : -1;
+      const arrival = 1 - (1 - Math.min(1, progress * 2.6)) ** 3;
+      const grow = 0.4 + arrival * 0.6;
+      const branchColor = 0x704d32;
+      const needleDark = 0x17663b;
+      const needleMid = 0x2d9a55;
+      const needleLight = 0x70d67d;
+      graphics
+        .fillStyle(needleMid, 0.1 + (1 - progress) * 0.08)
+        .fillCircle(0, 0, radius)
+        .lineStyle(Math.max(2, 6 * (1 - progress)), needleLight, 0.88)
+        .strokeCircle(0, 0, radius * (0.7 + arrival * 0.3))
+        .lineStyle(8 * grow, branchColor, 0.98)
+        .beginPath()
+        .moveTo(-direction * 5 * grow, 8)
+        .lineTo(direction * 4 * grow, -20 * grow)
+        .lineTo(direction * 18 * grow, -43 * grow)
+        .lineTo(direction * 36 * grow, -54 * grow)
+        .strokePath()
+        .lineStyle(6 * grow, branchColor, 0.98)
+        .lineBetween(
+          direction * 10 * grow,
+          -32 * grow,
+          direction * 76 * grow,
+          -47 * grow,
+        )
+        .lineStyle(3.5 * grow, branchColor, 0.94)
+        .lineBetween(
+          direction * 35 * grow,
+          -47 * grow,
+          direction * 48 * grow,
+          -69 * grow,
+        )
+        .lineBetween(
+          direction * 57 * grow,
+          -44 * grow,
+          direction * 70 * grow,
+          -65 * grow,
+        );
+      [
+        { x: -direction * 17, y: -45, width: 44, height: 23 },
+        { x: direction * 13, y: -58, width: 54, height: 27 },
+        { x: direction * 44, y: -63, width: 58, height: 28 },
+        { x: direction * 72, y: -54, width: 48, height: 24 },
+      ].forEach((cluster, index) => {
+        const clusterX = cluster.x * grow;
+        const clusterY = cluster.y * grow;
+        graphics
+          .fillStyle(index % 2 ? needleMid : needleDark, 0.98)
+          .fillEllipse(
+            clusterX,
+            clusterY,
+            cluster.width * grow,
+            cluster.height * grow,
+          )
+          .fillStyle(needleLight, 0.72)
+          .fillEllipse(
+            clusterX + direction * 4 * grow,
+            clusterY - 4 * grow,
+            cluster.width * 0.66 * grow,
+            cluster.height * 0.44 * grow,
+          );
+      });
+      label
+        .setText(effect.text || "欢迎光临")
+        .setFontFamily(FONT_FAMILY)
+        .setFontSize(12)
+        .setColor("#d9ffe1")
+        .setY(-86 * grow)
+        .setScale(0.86 + arrival * 0.14)
+        .setVisible(true);
+    } else if (effect.kind === "harei_badge") {
+      const radius = effect.size || 118;
+      const impact = 1 - (1 - Math.min(1, progress * 2.8)) ** 3;
+      const badgeRadius = 35 * (0.42 + impact * 0.58);
+      const badgeY =
+        -86 * (1 - impact) - Math.sin(impact * Math.PI) * 10;
+      const shockwave = Math.max(0, progress - 0.22) / 0.78;
+      graphics
+        .fillStyle(0xff8fb8, 0.08 + (1 - progress) * 0.07)
+        .fillCircle(0, 0, radius)
+        .lineStyle(Math.max(2, 6 * (1 - progress)), 0xff9fc5, 0.88)
+        .strokeCircle(0, 0, radius * (0.66 + shockwave * 0.34));
+      if (shockwave > 0) {
+        graphics
+          .lineStyle(Math.max(1.5, 4 * (1 - shockwave)), 0x9ee8ff, 0.72)
+          .strokeCircle(0, 0, 30 + shockwave * 72);
+      }
+      graphics
+        .fillStyle(0xff8fb8, 1)
+        .fillCircle(0, badgeY, badgeRadius)
+        .lineStyle(3, 0xffd6e6, 0.98)
+        .strokeCircle(0, badgeY, badgeRadius)
+        .fillStyle(0x263044, 1)
+        .fillCircle(0, badgeY, badgeRadius - 5)
+        .lineStyle(1.5, 0x9ee8ff, 0.9)
+        .strokeCircle(0, badgeY, badgeRadius - 9)
+        .fillStyle(0x9ee8ff, 0.92)
+        .fillCircle(-badgeRadius * 0.48, badgeY, 2.6)
+        .fillCircle(badgeRadius * 0.48, badgeY, 2.6);
+      view.setRotation((1 - impact) * -0.72);
+      label
+        .setText(effect.text || "75mm\n大吧唧")
+        .setFontFamily(FONT_FAMILY)
+        .setFontSize(11)
+        .setColor("#ffffff")
+        .setY(badgeY)
+        .setScale(0.78 + impact * 0.22)
+        .setVisible(true);
     } else if (effect.kind === "line") {
       const targetX = (effect.x2 ?? effect.x) - effect.x;
       const targetY = (effect.y2 ?? effect.y) - effect.y;

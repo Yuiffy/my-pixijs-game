@@ -275,12 +275,12 @@ test("敌方阵容始终组成羁绊，特殊角色偶尔出现但不进入商�
 test("浣熊店员使用原创展示文案与独立精灵头像", async () => {
   const unit = data.UNIT_DEFS.gale_archer;
   assert.equal(unit.name, "浣熊店员");
-  assert.equal(unit.title, "浣熊店员 · 前排控场");
+  assert.equal(unit.title, "浣熊店员 · 反震前排");
   assert.equal(unit.glyph, "浣");
-  assert.equal(unit.abilityName, "手机过热 · 自动PK");
+  assert.equal(unit.abilityName, "打开开关");
   assert.equal(unit.abilityCastTiming, "offenseReady");
   assert.equal(unit.abilityRange, 150);
-  assert.match(unit.abilityDescription, /18% 最大生命护盾.*150 范围.*1\.4 秒 PK/);
+  assert.match(unit.abilityDescription, /18% 最大生命护盾.*振动 4 秒.*首次普通攻击.*眩晕 0\.5 秒/);
   assert.deepEqual(unit.traits, ["wild", "mature", "gen27"]);
   assert.equal(unit.portraitStyle, "sprite");
   assert.equal(unit.portrait, "/images/autochess/portraits/raccoon-archer.png");
@@ -728,8 +728,6 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.deepEqual(data.UNIT_DEFS.rift_stalker.traits, ["assassin", "mystic"]);
   ["dawn_duelist", "ember_blade", "nightin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dwarf")));
   ["sun_guard", "dawn_duelist"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("traffic")));
-  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityName, "迎客松");
-  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /松树/);
   assert.equal(data.STARTERS.find((starter) => starter.id === "traffic_start")?.name, "热点追踪");
   ["gale_archer", "clock_gunner", "cinder_ram", "zeyin"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("mature")));
   ["sui", "zeyin", "tiandou", "youyi", "mumu", "lian"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("dance")));
@@ -744,6 +742,12 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
     assert.ok(unit.traits.length >= 1 && unit.traits.length <= 4);
     unit.traits.forEach((trait) => assert.ok(data.TRAIT_IDS.includes(trait)));
   });
+});
+
+test("大黑鼠随机怪话说明包含迎客松与 75mm 大吧唧", () => {
+  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityName, "迎客松·大吧唧");
+  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /迎客松.*嘲讽.*20% 移速/);
+  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /75mm 大吧唧.*范围伤害.*眩晕/);
 });
 
 test("所有羁绊的最高档都能由可购买成员达到", () => {

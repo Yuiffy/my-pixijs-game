@@ -171,7 +171,15 @@ export class FighterViewRenderer {
     const manquPulse = fighter.manquTime > 0
       ? Math.sin(this.host.bridge.engine.state.visualTime * 15) * 0.045
       : 0;
+    const switchActive = fighter.raccoonSwitchTime > 0;
+    const switchJitterX = switchActive
+      ? Math.sin(this.host.bridge.engine.state.visualTime * 58) * 1.5
+      : 0;
+    const switchJitterY = switchActive
+      ? Math.sin(this.host.bridge.engine.state.visualTime * 71 + 0.8) * 0.7
+      : 0;
     portrait
+      .setPosition(switchJitterX, switchJitterY)
       .setScale(
         growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08 + manquPulse),
         growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12 - manquPulse),
@@ -196,10 +204,12 @@ export class FighterViewRenderer {
     const shieldStrength = fighter.shield > 0
       ? Math.max(0, Math.min(1, fighter.shield / Math.max(fighter.shieldPeak, 1)))
       : 0;
+    const shieldFill = switchActive ? 0xa756e8 : 0x6edeff;
+    const shieldStroke = switchActive ? 0xe5baff : 0xc6f7ff;
     shield
       .setRadius(radius + 7 + Math.sin(this.host.bridge.engine.state.visualTime * 6) * 2)
-      .setFillStyle(0x6edeff, 0.06 + shieldStrength * 0.14)
-      .setStrokeStyle(1.5 + shieldStrength * 1.5, 0xc6f7ff, 0.24 + shieldStrength * 0.66)
+      .setFillStyle(shieldFill, 0.06 + shieldStrength * 0.14)
+      .setStrokeStyle(1.5 + shieldStrength * 1.5, shieldStroke, 0.24 + shieldStrength * 0.66)
       .setAlpha(fighter.shield > 0 ? 1 : 0);
     const abilityShieldStrength = fighter.abilityShield > 0
       ? Math.max(0, Math.min(1, fighter.abilityShield / Math.max(fighter.abilityShieldPeak, 1)))
@@ -241,13 +251,14 @@ export class FighterViewRenderer {
       fighter.channelTime > 0 ? "捏" : "",
       fighter.towerHackArmed ? "待挂" : "",
       fighter.towerHackBuffed ? "挂" : "",
+      switchActive ? "ON" : "",
       fighter.syncAvDirection > 0 ? "骄" : fighter.syncAvDirection < 0 ? "哀" : "",
       fighter.gen27Buffed ? "27" : "",
       fighter.enraged ? "!" : "",
     ].filter(Boolean);
     status.setText(statusBadges.join(" "));
     status.setY(-radius - 8);
-    const statusColor = fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e";
+    const statusColor = switchActive ? "#e3b7ff" : fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e";
     if (status.style.color !== statusColor) status.setColor(statusColor);
     label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.manquTime > 0 ? " · 满区" : ""}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}/${GLUTTONY_STACK_CAP}` : ""}${fighter.shield > 0 ? " ◇" : ""}${fighter.abilityShield > 0 ? " ◆" : ""}`);
     star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);

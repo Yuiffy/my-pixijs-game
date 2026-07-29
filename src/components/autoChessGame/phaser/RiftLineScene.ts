@@ -1422,7 +1422,6 @@ export class RiftLineScene extends Phaser.Scene {
     );
     this.summonRenderer.sync(
       battle.pets,
-      battle.pineTrees,
       visualTime,
       this.effectsLayer,
     );

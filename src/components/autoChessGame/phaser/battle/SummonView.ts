@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { mechanicalRabbitMuzzle } from "../../core/battleGeometry";
-import type { MechanicalRabbitPet, PineTreeTurret } from "../../core/gameTypes";
+import type { MechanicalRabbitPet } from "../../core/gameTypes";
 import { DEPTH } from "../theme";
 
 interface SummonViewHost {
@@ -18,18 +18,14 @@ interface SummonViewHost {
 export class SummonViewRenderer {
   private readonly petViews = new Map<string, Phaser.GameObjects.Container>();
 
-  private readonly treeViews = new Map<string, Phaser.GameObjects.Container>();
-
   constructor(private readonly host: SummonViewHost) {}
 
   public reset() {
     this.petViews.clear();
-    this.treeViews.clear();
   }
 
   public sync(
     pets: MechanicalRabbitPet[],
-    trees: PineTreeTurret[],
     visualTime: number,
     layer: Phaser.GameObjects.Container,
   ) {
@@ -38,13 +34,6 @@ export class SummonViewRenderer {
       pets,
       (pet) => this.createRabbit(pet),
       (view, pet) => this.updateRabbit(view, pet, visualTime),
-      layer,
-    );
-    this.syncMap(
-      this.treeViews,
-      trees,
-      () => this.createPineTree(),
-      (view, tree) => this.updatePineTree(view, tree, visualTime),
       layer,
     );
   }
@@ -179,40 +168,4 @@ export class SummonViewRenderer {
       .setScale(flashScale);
   }
 
-  private createPineTree() {
-    const { scene } = this.host;
-    const container = scene.add.container(0, 0);
-    const shadow = scene.add
-      .ellipse(0, 0, 30, 9, 0x000000, 0.3)
-      .setName("shadow");
-    const tree = this.host
-      .text(0, -4, "🌲", 42, "#ffffff")
-      .setOrigin(0.5)
-      .setName("tree");
-    const flash = scene.add.circle(0, -8, 7, 0xa0e696, 0).setName("flash");
-    container.add([shadow, tree, flash]);
-    return container;
-  }
-
-  private updatePineTree(
-    view: Phaser.GameObjects.Container,
-    tree: PineTreeTurret,
-    visualTime: number,
-  ) {
-    const fade = Math.max(0.35, Math.min(1, tree.life / 0.9));
-    const sway = Math.sin(visualTime * 2.4 + tree.x * 0.02) * 1.5;
-    const flash = view.getByName("flash") as Phaser.GameObjects.Arc;
-    view
-      .setPosition(tree.x + sway, tree.y)
-      .setAlpha(fade)
-      .setDepth(DEPTH.entities + tree.y + 0.4);
-    (view.getByName("shadow") as Phaser.GameObjects.Ellipse).setY(
-      tree.radius * 0.7,
-    );
-    flash
-      .setAlpha(
-        tree.attackPulse > 0 ? Math.min(0.85, tree.attackPulse / 0.18) : 0,
-      )
-      .setScale(1 + tree.attackPulse * 5);
-  }
 }

@@ -22,6 +22,8 @@ const NANA_PICKAXE_COUNTER_DAMAGE = 0.46;
 const NANA_PICKAXE_COUNTER_STUN = 0.24;
 const NANA_PICKAXE_COUNTER_SPEED = 320;
 const SUN_GUARD_MANQU_DODGE = 0.2;
+const GALE_ARCHER_SWITCH_STUN = 0.5;
+const GALE_ARCHER_SWITCH_COLOR = "#b86cff";
 
 export type DamageKind = "attack" | "ability";
 
@@ -141,6 +143,37 @@ export class CombatResolutionSystem {
     target.damageTaken += effectiveApplied;
     // 任意有效命中都记受击（含仅打盾），供自保技能「受击释放」判定
     if (effectiveApplied > 0) target.hitPulse = 0.2;
+    if (
+      effectiveApplied > 0 &&
+      damageKind === "attack" &&
+      target.unitId === "gale_archer" &&
+      target.raccoonSwitchTime > 0 &&
+      source.alive &&
+      source.team !== target.team &&
+      !target.raccoonStunnedAttackers.includes(source.fid)
+    ) {
+      target.raccoonStunnedAttackers.push(source.fid);
+      source.stun = Math.max(source.stun, GALE_ARCHER_SWITCH_STUN);
+      this.host.addEffect({
+        kind: "switch_shock",
+        x: target.x,
+        y: target.y,
+        x2: source.x,
+        y2: source.y,
+        color: GALE_ARCHER_SWITCH_COLOR,
+        life: 0.42,
+        size: 4,
+      });
+      this.host.addEffect({
+        kind: "text",
+        x: source.x,
+        y: source.y - 42,
+        color: "#ead3ff",
+        text: "反震",
+        life: 0.55,
+        size: 11,
+      });
+    }
     if (
       effectiveApplied > 0 &&
       target.hp > 0 &&

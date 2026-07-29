@@ -43,8 +43,11 @@ export interface BattleEffect {
     | "energy_pulse"
     | "chronosphere"
     | "hotpot"
-    | "pk_overheat"
-    | "biscuit_share";
+    | "switch_on"
+    | "switch_shock"
+    | "biscuit_share"
+    | "harei_pine"
+    | "harei_badge";
   x: number;
   y: number;
   x2?: number;
@@ -73,7 +76,7 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "pine_needle" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe" | "cigarette";
+  style?: "default" | "shark" | "carrot" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe" | "cigarette";
   /** 命中后对附近敌人造成伤害与灼烧的半径。 */
   splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
@@ -130,21 +133,6 @@ export interface MechanicalRabbitPet {
   returning: boolean;
   aimX: number;
   aimY: number;
-  attackPulse: number;
-}
-
-/** 大黑鼠「迎客松」召唤的固定松树炮台 */
-export interface PineTreeTurret {
-  id: string;
-  ownerFid: string;
-  team: Team;
-  x: number;
-  y: number;
-  radius: number;
-  life: number;
-  maxLife: number;
-  range: number;
-  fireTimer: number;
   attackPulse: number;
 }
 
@@ -273,6 +261,7 @@ export interface Fighter {
   abilityMoveSpeedTime: number;
   abilityArmorBonus: number;
   slowTime: number;
+  slowMultiplier: number;
   weakenTime: number;
   weakenArmorPenalty: number;
   baseAttack: number;
@@ -290,6 +279,10 @@ export interface Fighter {
   rebirthRecoilTime: number;
   /** 果冻风纪变成满区后主动逃离、闪避并回血的剩余时间。 */
   manquTime: number;
+  /** 浣熊店员打开开关后的剩余振动与反震时间。 */
+  raccoonSwitchTime: number;
+  /** 本次开关期间已经被反震过的攻击者。 */
+  raccoonStunnedAttackers: string[];
   /** 礼墨空气龙隐身剩余时间；隐身会降低敌方选中优先级。 */
   stealthTime: number;
   /** 礼墨是否等待解除隐身时发射一次礼小龙弹幕。 */
@@ -378,8 +371,6 @@ export interface BattleState {
   healingZones: HealingZone[];
   pets: MechanicalRabbitPet[];
   petSerial: number;
-  pineTrees: PineTreeTurret[];
-  pineTreeSerial: number;
   fieldMedicTimer: number;
   gluttonyTimer: number;
   emberTimer: number;

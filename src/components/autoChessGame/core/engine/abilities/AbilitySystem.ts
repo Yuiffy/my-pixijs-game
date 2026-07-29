@@ -34,9 +34,9 @@ const EMBER_BLADE_CARROT_JITTER = 0.42;
 const EMBER_BLADE_CARROT_SHOTS = 5;
 const EMBER_BLADE_CARROT_SPEED = 640;
 const LOVELY_CHANNEL_DURATION = 3.4;
-const GALE_ARCHER_PK_RADIUS = 150;
-const GALE_ARCHER_PK_SHIELD_RATIO = 0.18;
-const GALE_ARCHER_PK_TAUNT_DURATION = 1.4;
+const GALE_ARCHER_SWITCH_DURATION = 4;
+const GALE_ARCHER_SWITCH_SHIELD_RATIO = 0.18;
+const GALE_ARCHER_SWITCH_COLOR = "#b86cff";
 const MITSURI_SHIELD_RATIO = 0.22;
 export const MITSURI_TAUNT_DURATION = 3.2;
 const MITSURI_TAUNT_RADIUS = 155;
@@ -78,6 +78,12 @@ const TIANDOU_LOLLIPOP_THROW_SPEED = 360;
 const XUEHUI_CLEAVE_BURN_MULTIPLIER = 0.68;
 const XUEHUI_CLEAVE_DAMAGE_MULTIPLIER = 1.12;
 const XUEHUI_CLEAVE_RADIUS = 98;
+const HAREI_TRICK_RADIUS = 118;
+const HAREI_PINE_TAUNT_DURATION = 0.8;
+const HAREI_PINE_SLOW_DURATION = 1.5;
+const HAREI_PINE_SLOW_MULTIPLIER = 0.8;
+const HAREI_BADGE_DAMAGE_MULTIPLIER = 1.5;
+const HAREI_BADGE_STUN_DURATION = 0.65;
 
 interface AbilityHost {
   state: () => GameState;
@@ -163,7 +169,6 @@ interface AbilityHost {
   ) => AbilityMotion | null;
   startSuiBirdElbowDash: (source: Fighter, targets: Fighter[]) => boolean;
   summonClockGunnerRabbits: (source: Fighter) => void;
-  summonPineTree: (source: Fighter, targets: Fighter[]) => void;
   targetsWithinAbilityRange: (
     source: Fighter,
     targets: Fighter[],
@@ -303,29 +308,17 @@ export class AbilitySystem {
         break;
       }
       case "gale_archer": {
-        addShield(source, source.maxHp * GALE_ARCHER_PK_SHIELD_RATIO, 0.45);
-        targets
-          .filter((target) => {
-            const distance = Math.hypot(
-              target.x - source.x,
-              target.y - source.y,
-            );
-            return distance <= GALE_ARCHER_PK_RADIUS + target.radius;
-          })
-          .forEach((target) => {
-            target.tauntedByFid = source.fid;
-            target.tauntTime = Math.max(
-              target.tauntTime,
-              GALE_ARCHER_PK_TAUNT_DURATION,
-            );
-          });
+        addShield(source, source.maxHp * GALE_ARCHER_SWITCH_SHIELD_RATIO, 0.45);
+        source.raccoonSwitchTime = GALE_ARCHER_SWITCH_DURATION;
+        source.raccoonStunnedAttackers = [];
         this.host.addEffect({
-          kind: "pk_overheat",
+          kind: "switch_on",
           x: source.x,
           y: source.y,
-          color: def.accent,
-          life: 0.9,
-          size: GALE_ARCHER_PK_RADIUS,
+          color: GALE_ARCHER_SWITCH_COLOR,
+          life: 1,
+          size: 58,
+          text: "ON",
         });
         break;
       }
@@ -490,7 +483,68 @@ export class AbilitySystem {
         break;
       }
       case "dawn_duelist": {
-        this.host.summonPineTree(source, targets);
+        const nearby = targets.filter(
+          (target) => (
+            Math.hypot(target.x - source.x, target.y - source.y) <=
+            HAREI_TRICK_RADIUS
+          ),
+        );
+        const castsPine = this.host.rng().next() < 0.5;
+        if (castsPine) {
+          nearby.forEach((target) => {
+            target.tauntedByFid = source.fid;
+            target.tauntTime = Math.max(
+              target.tauntTime,
+              HAREI_PINE_TAUNT_DURATION,
+            );
+            if (
+              target.slowTime <= 0 ||
+              target.slowMultiplier >= HAREI_PINE_SLOW_MULTIPLIER
+            ) {
+              target.slowTime = Math.max(
+                target.slowTime,
+                HAREI_PINE_SLOW_DURATION,
+              );
+              target.slowMultiplier = HAREI_PINE_SLOW_MULTIPLIER;
+            }
+          });
+          this.host.addEffect({
+            kind: "harei_pine",
+            x: source.x,
+            y: source.y,
+            x2: source.x + source.facingX,
+            color: "#58c878",
+            text: "欢迎光临",
+            life: 0.9,
+            size: HAREI_TRICK_RADIUS,
+          });
+        } else {
+          nearby.forEach((target) => {
+            const dealt = this.host.damage(
+              source,
+              target,
+              source.attack * HAREI_BADGE_DAMAGE_MULTIPLIER,
+              false,
+              "ability",
+            );
+            if (dealt > 0) this.host.addDamageText(target, dealt);
+            if (target.alive) {
+              target.stun = Math.max(
+                target.stun,
+                HAREI_BADGE_STUN_DURATION,
+              );
+            }
+          });
+          this.host.addEffect({
+            kind: "harei_badge",
+            x: source.x,
+            y: source.y,
+            color: "#ff8fb8",
+            text: "75mm\n大吧唧",
+            life: 0.78,
+            size: HAREI_TRICK_RADIUS,
+          });
+        }
         break;
       }
       case "grove_mender": {

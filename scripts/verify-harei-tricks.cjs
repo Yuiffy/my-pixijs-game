@@ -13,7 +13,12 @@ const playwrightCandidates = [
 const loadPlaywright = () => {
   for (const candidate of playwrightCandidates) {
     try {
-      if ((candidate.includes("/") || candidate.includes("\\")) && !existsSync(candidate)) continue;
+      if (
+        (candidate.includes("/") || candidate.includes("\\")) &&
+        !existsSync(candidate)
+      ) {
+        continue;
+      }
       return localRequire(candidate);
     } catch {
       // Try the next repository-known Playwright location.
@@ -55,22 +60,29 @@ const inspectPng = (buffer) => {
   const colors = new Set();
   for (let y = 0; y < height; y += 1) {
     const filter = rows[rowOffset];
-    const row = Buffer.from(rows.subarray(rowOffset + 1, rowOffset + 1 + stride));
+    const row = Buffer.from(
+      rows.subarray(rowOffset + 1, rowOffset + 1 + stride),
+    );
     for (let x = 0; x < stride; x += 1) {
       const left = x >= channels ? row[x - channels] : 0;
       const up = previous[x];
       const upperLeft = x >= channels ? previous[x - channels] : 0;
       if (filter === 1) row[x] = (row[x] + left) & 255;
       if (filter === 2) row[x] = (row[x] + up) & 255;
-      if (filter === 3) row[x] = (row[x] + Math.floor((left + up) / 2)) & 255;
+      if (filter === 3) {
+        row[x] = (row[x] + Math.floor((left + up) / 2)) & 255;
+      }
       if (filter === 4) {
         const prediction = left + up - upperLeft;
         const leftDistance = Math.abs(prediction - left);
         const upDistance = Math.abs(prediction - up);
         const upperLeftDistance = Math.abs(prediction - upperLeft);
-        const nearest = leftDistance <= upDistance && leftDistance <= upperLeftDistance
-          ? left
-          : upDistance <= upperLeftDistance ? up : upperLeft;
+        const nearest =
+          leftDistance <= upDistance && leftDistance <= upperLeftDistance
+            ? left
+            : upDistance <= upperLeftDistance
+              ? up
+              : upperLeft;
         row[x] = (row[x] + nearest) & 255;
       }
     }
@@ -83,7 +95,9 @@ const inspectPng = (buffer) => {
       const alpha = channels === 4 ? row[pixel + 3] : 255;
       if (red <= 12 && green <= 12 && blue <= 12) nearBlack += 1;
       if (alpha === 0) transparent += 1;
-      if (colors.size < 4096) colors.add(`${red},${green},${blue},${alpha}`);
+      if (colors.size < 4096) {
+        colors.add(`${red},${green},${blue},${alpha}`);
+      }
     }
     previous = row;
     rowOffset += stride + 1;
@@ -112,7 +126,9 @@ const attachEngine = async (page) => {
     let node = canvas;
     let fiber = null;
     while (node && !fiber) {
-      const fiberKey = Object.keys(node).find((key) => key.startsWith("__reactFiber$"));
+      const fiberKey = Object.keys(node).find((key) =>
+        key.startsWith("__reactFiber$"),
+      );
       fiber = fiberKey ? node[fiberKey] : null;
       node = node.parentElement;
     }
@@ -128,14 +144,14 @@ const attachEngine = async (page) => {
     }
     if (!bridge) throw new Error("Unable to locate the autochess engine bridge");
     bridge.setHidden(true);
-    window.__raccoonMofuBridge = bridge;
-    window.__raccoonMofuEngine = bridge.engine;
+    window.__hareiBridge = bridge;
+    window.__hareiEngine = bridge.engine;
   });
 };
 
 const { chromium } = loadPlaywright();
-const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
-const artifactDirectory = ".tmp/autochess/raccoon-mofu-skills";
+const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3200";
+const artifactDirectory = ".tmp/autochess/harei-tricks";
 mkdirSync(artifactDirectory, { recursive: true });
 
 (async () => {
@@ -156,22 +172,28 @@ mkdirSync(artifactDirectory, { recursive: true });
     });
 
     const capture = async (filename) => {
-      await page.waitForTimeout(80);
+      await page.waitForTimeout(100);
       const path = `${artifactDirectory}/${filename}`;
       const buffer = await page.screenshot({ path, fullPage: true });
-      const result = { path, bytes: buffer.length, metrics: inspectPng(buffer) };
+      const result = {
+        path,
+        bytes: buffer.length,
+        metrics: inspectPng(buffer),
+      };
       screenshots.push(result);
       return result;
     };
 
-    const response = await page.goto(`${baseUrl}/game/autochess?seed=512`, {
+    const response = await page.goto(`${baseUrl}/game/autochess?seed=733`, {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
     assert.ok(response?.ok(), `Autochess URL returned ${response?.status()}`);
     const canvas = page.locator('[data-game-canvas="rift-line"]');
     await canvas.waitFor();
-    await page.waitForFunction(() => typeof window.render_game_to_text === "function");
+    await page.waitForFunction(
+      () => typeof window.render_game_to_text === "function",
+    );
     await page.locator(".rift-dom-choice").first().click();
     await page.waitForFunction(
       () => JSON.parse(window.render_game_to_text()).phase === "preparation",
@@ -179,157 +201,153 @@ mkdirSync(artifactDirectory, { recursive: true });
     await attachEngine(page);
 
     const setup = await page.evaluate(() => {
-      const engine = window.__raccoonMofuEngine;
-      const bridge = window.__raccoonMofuBridge;
-      engine.state.starter = "blaze";
+      const engine = window.__hareiEngine;
+      const bridge = window.__hareiBridge;
       engine.state.round = 2;
       engine.state.playerLevel = 4;
       engine.state.board.fill(null);
-      engine.state.board[0] = { uid: 1, id: "gale_archer", star: 1 };
-      engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
-      engine.state.board[2] = { uid: 3, id: "sun_guard", star: 1 };
-      engine.state.board[3] = { uid: 4, id: "ember_blade", star: 1 };
+      engine.state.board[0] = { uid: 1, id: "dawn_duelist", star: 1 };
       engine.startBattle();
       const battle = engine.state.battle;
-      const raccoon = battle.player.find((fighter) => fighter.unitId === "gale_archer");
-      const mofu = battle.player.find((fighter) => fighter.unitId === "mossback");
-      const sodaTarget = battle.player.find((fighter) => fighter.unitId === "sun_guard");
-      const chocoTarget = battle.player.find((fighter) => fighter.unitId === "ember_blade");
-      raccoon.x = 400;
-      raccoon.y = 350;
-      mofu.x = 255;
-      mofu.y = 470;
-      sodaTarget.x = 520;
-      sodaTarget.y = 430;
-      chocoTarget.x = 535;
-      chocoTarget.y = 545;
+      const harei = battle.player.find(
+        (fighter) => fighter.unitId === "dawn_duelist",
+      );
+      harei.x = 470;
+      harei.y = 430;
+      harei.facingX = 1;
       battle.enemy.forEach((fighter, index) => {
-        fighter.x = index === 0 ? 510 : index === 1 ? 565 : 850;
-        fighter.y = index === 0 ? 325 : index === 1 ? 390 : 560;
+        fighter.x = index === 0 ? 545 : index === 1 ? 420 : 800;
+        fighter.y = index === 0 ? 420 : index === 1 ? 470 : 560;
         fighter.attack = 0;
         fighter.hp = fighter.maxHp = 99_999;
+        fighter.armor = 0;
+        fighter.dodgeChance = 0;
       });
       [...battle.player, ...battle.enemy].forEach((fighter) => {
         fighter.cooldown = 99;
         fighter.energy = 0;
-        fighter.dodgeChance = 0;
         fighter.moveSpeed = 0;
         fighter.baseMoveSpeed = 0;
       });
       battle.effects = [];
-      raccoon.shield = 0;
-      engine.castAbility(raccoon, battle.enemy);
-      const switchEffect = battle.effects.find((effect) => effect.kind === "switch_on");
-      switchEffect.life = switchEffect.maxLife * 0.58;
+      engine.rng.next = () => 0.25;
+      engine.castAbility(harei, battle.enemy);
+      const effect = battle.effects.find(
+        (candidate) => candidate.kind === "harei_pine",
+      );
+      effect.life = effect.maxLife * 0.52;
       bridge.dispatch({ type: "clearSelection" });
       return {
-        raccoonFid: raccoon.fid,
-        attackerFid: battle.enemy[0].fid,
-        mofuFid: mofu.fid,
-        sodaTargetFid: sodaTarget.fid,
-        chocoTargetFid: chocoTarget.fid,
-        shield: raccoon.shield,
-        maxHp: raccoon.maxHp,
-        switchTime: raccoon.raccoonSwitchTime,
-        stunnedAttackers: raccoon.raccoonStunnedAttackers.length,
+        hareiFid: harei.fid,
+        nearbyFids: battle.enemy.slice(0, 2).map((fighter) => fighter.fid),
+        farFid: battle.enemy[2].fid,
       };
     });
-    assert.ok(Math.abs(setup.shield - setup.maxHp * 0.18) < 0.001);
-    assert.equal(setup.switchTime, 4);
-    assert.equal(setup.stunnedAttackers, 0);
-    const switchText = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+    const pineText = JSON.parse(
+      await page.evaluate(() => window.render_game_to_text()),
+    );
     assert.ok(
-      switchText.battle.visualEffects.effects.some((effect) => effect.kind === "switch_on"),
+      pineText.battle.visualEffects.effects.some(
+        (effect) => effect.kind === "harei_pine",
+      ),
     );
-    assert.equal(
-      switchText.battle.playerUnits.find((fighter) => fighter.fid === setup.raccoonFid)
-        .raccoonSwitchTime,
-      4,
+    setup.nearbyFids.forEach((fid) => {
+      const fighter = pineText.battle.enemyUnits.find((unit) => unit.fid === fid);
+      assert.equal(fighter.tauntTime, 0.8);
+      assert.equal(fighter.slowMultiplier, 0.8);
+    });
+    const pineFar = pineText.battle.enemyUnits.find(
+      (fighter) => fighter.fid === setup.farFid,
     );
-    await capture("raccoon-switch-on.png");
+    assert.equal(pineFar.tauntTime, 0);
+    assert.equal(pineFar.slowTime, 0);
+    await capture("harei-welcome-pine.png");
 
-    const shockResult = await page.evaluate(({ raccoonFid, attackerFid }) => {
-      const engine = window.__raccoonMofuEngine;
-      const bridge = window.__raccoonMofuBridge;
+    const badgeResult = await page.evaluate(({ hareiFid, nearbyFids, farFid }) => {
+      const engine = window.__hareiEngine;
+      const bridge = window.__hareiBridge;
       const battle = engine.state.battle;
-      const raccoon = battle.player.find((fighter) => fighter.fid === raccoonFid);
-      const attacker = battle.enemy.find((fighter) => fighter.fid === attackerFid);
+      const harei = battle.player.find((fighter) => fighter.fid === hareiFid);
       battle.effects = [];
-      attacker.stun = 0;
-      engine.damage(attacker, raccoon, 24, false, "attack");
-      const firstStun = attacker.stun;
-      const firstCount = raccoon.raccoonStunnedAttackers.length;
-      const shock = battle.effects.find((effect) => effect.kind === "switch_shock");
-      shock.life = shock.maxLife * 0.72;
-      attacker.stun = 0;
-      engine.damage(attacker, raccoon, 24, false, "attack");
+      battle.enemy.forEach((fighter) => {
+        fighter.stun = 0;
+        fighter.tauntTime = 0;
+        fighter.tauntedByFid = null;
+        fighter.slowTime = 0;
+        fighter.slowMultiplier = 1;
+      });
+      const hpBefore = Object.fromEntries(
+        battle.enemy.map((fighter) => [fighter.fid, fighter.hp]),
+      );
+      engine.rng.next = () => 0.75;
+      engine.castAbility(harei, battle.enemy);
+      const effect = battle.effects.find(
+        (candidate) => candidate.kind === "harei_badge",
+      );
+      effect.life = effect.maxLife * 0.5;
       bridge.dispatch({ type: "clearSelection" });
       return {
-        firstStun,
-        firstCount,
-        repeatedStun: attacker.stun,
-        repeatedCount: raccoon.raccoonStunnedAttackers.length,
-        switchTime: raccoon.raccoonSwitchTime,
+        nearby: nearbyFids.map((fid) => {
+          const fighter = battle.enemy.find((unit) => unit.fid === fid);
+          return {
+            fid,
+            damage: hpBefore[fid] - fighter.hp,
+            stun: fighter.stun,
+          };
+        }),
+        far: (() => {
+          const fighter = battle.enemy.find((unit) => unit.fid === farFid);
+          return {
+            damage: hpBefore[farFid] - fighter.hp,
+            stun: fighter.stun,
+          };
+        })(),
       };
     }, setup);
-    assert.equal(shockResult.firstStun, 0.5);
-    assert.equal(shockResult.firstCount, 1);
-    assert.equal(shockResult.repeatedStun, 0);
-    assert.equal(shockResult.repeatedCount, 1);
-    assert.equal(shockResult.switchTime, 4);
-    const shockText = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
-    assert.ok(
-      shockText.battle.visualEffects.effects.some((effect) => effect.kind === "switch_shock"),
+    badgeResult.nearby.forEach((fighter) => {
+      assert.ok(fighter.damage > 0);
+      assert.equal(fighter.stun, 0.65);
+    });
+    assert.equal(badgeResult.far.damage, 0);
+    assert.equal(badgeResult.far.stun, 0);
+    const badgeText = JSON.parse(
+      await page.evaluate(() => window.render_game_to_text()),
     );
-    await capture("raccoon-switch-shock.png");
+    assert.ok(
+      badgeText.battle.visualEffects.effects.some(
+        (effect) => effect.kind === "harei_badge",
+      ),
+    );
+    await capture("harei-75mm-badge.png");
 
-    const biscuitResult = await page.evaluate(({ mofuFid, sodaTargetFid, chocoTargetFid }) => {
-      const engine = window.__raccoonMofuEngine;
-      const bridge = window.__raccoonMofuBridge;
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(({ hareiFid }) => {
+      const engine = window.__hareiEngine;
       const battle = engine.state.battle;
-      const mofu = battle.player.find((fighter) => fighter.fid === mofuFid);
-      const sodaTarget = battle.player.find((fighter) => fighter.fid === sodaTargetFid);
-      const chocoTarget = battle.player.find((fighter) => fighter.fid === chocoTargetFid);
+      const harei = battle.player.find((fighter) => fighter.fid === hareiFid);
       battle.effects = [];
-      mofu.hp = mofu.maxHp;
-      sodaTarget.hp = sodaTarget.maxHp * 0.5;
-      sodaTarget.shield = 0;
-      chocoTarget.hp = chocoTarget.maxHp * 0.4;
-      chocoTarget.shield = 9;
-      const chocoBefore = chocoTarget.hp;
-      engine.castAbility(mofu, battle.enemy);
-      battle.effects
-        .filter((effect) => effect.kind === "biscuit_share")
-        .forEach((effect) => {
-          effect.life = effect.maxLife * 0.54;
-        });
-      bridge.dispatch({ type: "clearSelection" });
-      return {
-        sodaShield: sodaTarget.shield,
-        sodaMaxHp: sodaTarget.maxHp,
-        chocoHeal: chocoTarget.hp - chocoBefore,
-        chocoMaxHp: chocoTarget.maxHp,
-        effects: battle.effects
-          .filter((effect) => effect.kind === "biscuit_share")
-          .map((effect) => effect.text)
-          .sort(),
-      };
+      engine.rng.next = () => 0.25;
+      engine.castAbility(harei, battle.enemy);
+      const effect = battle.effects.find(
+        (candidate) => candidate.kind === "harei_pine",
+      );
+      effect.life = effect.maxLife * 0.52;
     }, setup);
-    assert.ok(
-      Math.abs(biscuitResult.sodaShield - biscuitResult.sodaMaxHp * 0.15) < 0.001,
-    );
-    assert.ok(
-      Math.abs(biscuitResult.chocoHeal - biscuitResult.chocoMaxHp * 0.12) < 0.001,
-    );
-    assert.deepEqual(biscuitResult.effects, ["choco", "soda"]);
-    const biscuitText = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
-    assert.equal(
-      biscuitText.battle.visualEffects.effects.filter(
-        (effect) => effect.kind === "biscuit_share",
-      ).length,
-      2,
-    );
-    await capture("mofu-biscuit-share.png");
+    await capture("harei-welcome-pine-mobile.png");
+
+    await page.evaluate(({ hareiFid }) => {
+      const engine = window.__hareiEngine;
+      const battle = engine.state.battle;
+      const harei = battle.player.find((fighter) => fighter.fid === hareiFid);
+      battle.effects = [];
+      engine.rng.next = () => 0.75;
+      engine.castAbility(harei, battle.enemy);
+      const effect = battle.effects.find(
+        (candidate) => candidate.kind === "harei_badge",
+      );
+      effect.life = effect.maxLife * 0.5;
+    }, setup);
+    await capture("harei-75mm-badge-mobile.png");
 
     const canvasState = await canvas.evaluate((element) => ({
       width: element.width,
@@ -340,15 +358,20 @@ mkdirSync(artifactDirectory, { recursive: true });
     assert.ok(canvasState.width > 0 && canvasState.height > 0);
     assert.deepEqual(errors, []);
     assert.deepEqual(failedResponses, []);
-    console.log(JSON.stringify({
-      setup,
-      shockResult,
-      biscuitResult,
-      canvas: canvasState,
-      screenshots,
-      errors,
-      failedResponses,
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          setup,
+          badgeResult,
+          canvas: canvasState,
+          screenshots,
+          errors,
+          failedResponses,
+        },
+        null,
+        2,
+      ),
+    );
   } finally {
     await browser.close();
   }
