@@ -463,7 +463,10 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     assert.deepEqual(data.UNIT_DEFS[id].energyProfile, data.ENERGY_PROFILES.steady_guard);
   });
   assert.deepEqual(data.UNIT_DEFS.gale_archer.energyProfile, data.ENERGY_PROFILES.steady_guard);
-  assert.match(data.UNIT_DEFS.gale_archer.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*护盾.*PK/);
+  assert.match(
+    data.UNIT_DEFS.gale_archer.abilityDescription,
+    /持续自动充能.*攻击与受击也会少量回复能量.*打开开关.*18% 最大生命护盾.*振动 4 秒.*首次普通攻击.*眩晕 0\.5 秒/,
+  );
   assert.deepEqual(data.UNIT_DEFS.sun_guard.energyProfile, data.ENERGY_PROFILES.steady_guard);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 25);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 8);
