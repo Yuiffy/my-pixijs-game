@@ -539,16 +539,18 @@ export default function RiftHud({
 
 function EnemyFormationOverlay({ engine, onClose }: { engine: AutoChessEngine; onClose: () => void }) {
   const wave = engine.currentWave;
-  const playerUnits = engine.state.board.flatMap((owned, index) => owned
-    ? [{
-        key: `player-${owned.uid}`,
-        team: "player" as const,
-        unitId: owned.id,
-        star: owned.star,
-        position: playerFormationPosition(index),
-        owned,
-      }]
-    : []);
+  const playerUnits = engine.state.board.flatMap((owned, index) => (
+    owned
+      ? [{
+          key: `player-${owned.uid}`,
+          team: "player" as const,
+          unitId: owned.id,
+          star: owned.star,
+          position: playerFormationPosition(index),
+          owned,
+        }]
+      : []
+  ));
   const enemyUnits = wave.units.map((waveUnit, index) => ({
     key: `enemy-${waveUnit.id}-${index}`,
     team: "enemy" as const,
@@ -599,7 +601,7 @@ function EnemyFormationOverlay({ engine, onClose }: { engine: AutoChessEngine; o
         <div className="rift-enemy-formation-layout">
           <div className="rift-enemy-formation-field" aria-label="双方战场站位">
             <span className="rift-formation-side-label is-player">我方后排</span>
-            <span className="rift-formation-direction">我方 →　交战中轴　← 敌方</span>
+            <span className="rift-formation-direction">我方 → 交战中轴 ← 敌方</span>
             <span className="rift-formation-side-label is-enemy">敌方后排</span>
             <div className="rift-formation-frontline" aria-hidden="true" />
             {formationUnits.map((unit) => {

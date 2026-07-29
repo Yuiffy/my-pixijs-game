@@ -6015,7 +6015,7 @@ export class AutoChessEngine {
         currentTierOdds: tierOddsForLevel(this.state.playerLevel),
       },
       board: this.state.board.map((unit, index) => unitSummary(unit, index, true)).filter(Boolean),
-      bench: this.state.bench.map(unitSummary).filter(Boolean),
+      bench: this.state.bench.map((unit, index) => unitSummary(unit, index)).filter(Boolean),
       shop: this.state.shop
         .map(
           (id, index) =>

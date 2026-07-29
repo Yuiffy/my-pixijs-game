@@ -564,7 +564,13 @@
 .rift-formation-side-label, .rift-formation-direction { position: absolute; z-index: 1; color: #63889a; font-size: 9px; font-weight: 800; }
 .rift-formation-side-label.is-player { bottom: 11px; left: 14px; color: #62b6d7; }
 .rift-formation-side-label.is-enemy { right: 14px; bottom: 11px; color: #d87891; }
-.rift-formation-direction { top: 12px; left: 15px; color: #89b8ca; }
+.rift-formation-direction {
+  top: 50%;
+  left: 54%;
+  color: #89b8ca;
+  white-space: nowrap;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
 .rift-enemy-formation-unit {
   position: absolute;
   z-index: 3;
