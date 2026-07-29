@@ -3,22 +3,9 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { inflateSync } from "node:zlib";
 import test from "node:test";
-import ts from "typescript";
+import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
-const loadModule = async (relativePath) => {
-  const source = await readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-    },
-  }).outputText;
-  const module = { exports: {} };
-  Function("module", "exports", compiled)(module, module.exports);
-  return module.exports;
-};
-
-const data = await loadModule("src/components/autoChessGame/core/gameData.ts");
+const data = await loadTypescriptModule("src/components/autoChessGame/core/gameData.ts");
 
 const inspectPng = (buffer) => {
   const signature = "89504e470d0a1a0a";

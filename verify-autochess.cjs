@@ -116,7 +116,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.screenshot({ path: `${artifactDirectory}/autochess-drag-ghost.png` });
   await page.mouse.up();
   const afterDrag = await state();
-  await clickLogical(1035, 554);
+  await page.getByRole('button', { name: /开始战斗/ }).click();
   await advance(100);
   const battleStart = await state();
   await advance(1000);
@@ -162,7 +162,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     throw new Error(`Result continue did not reach round-2 preparation: ${JSON.stringify(preparationRound2)}`);
   }
   await page.screenshot({ path: `${artifactDirectory}/autochess-preparation-round2.png` });
-  await clickLogical(1035, 554);
+  await page.getByRole('button', { name: /开始战斗/ }).click();
   const resultRound2Elapsed = await advanceUntilPhase('result');
   const resultRound2 = await state();
   await advance(150);

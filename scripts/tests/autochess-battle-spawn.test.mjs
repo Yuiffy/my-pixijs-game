@@ -1,43 +1,18 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
-import ts from "typescript";
+import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
-const compileModule = async (relativePath, dependencies = {}) => {
-  const source = await readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-    },
-  }).outputText;
-  const module = { exports: {} };
-  const require = (specifier) => {
-    if (!(specifier in dependencies)) {
-      throw new Error(`Unexpected dependency: ${specifier}`);
-    }
-    return dependencies[specifier];
-  };
-  Function("module", "exports", "require", compiled)(module, module.exports, require);
-  return module.exports;
-};
-
-const gameData = await compileModule("src/components/autoChessGame/core/gameData.ts");
-const gameTypes = await compileModule("src/components/autoChessGame/core/gameTypes.ts", {
-  "./gameData": gameData,
-});
-const battleGeometry = await compileModule(
+const gameData = await loadTypescriptModule(
+  "src/components/autoChessGame/core/gameData.ts",
+);
+const battleGeometry = await loadTypescriptModule(
   "src/components/autoChessGame/core/battleGeometry.ts",
-  { "./gameTypes": gameTypes },
 );
 const { enemyFormationPosition, playerFormationPosition } = battleGeometry;
-const { AutoChessEngine, mechanicalRabbitMuzzle } = await compileModule(
-  "src/components/autoChessGame/core/gameEngine.ts",
-  {
-    "./battleGeometry": battleGeometry,
-    "./gameData": gameData,
-  },
-);
+const { AutoChessEngine, mechanicalRabbitMuzzle } =
+  await loadTypescriptModule(
+    "src/components/autoChessGame/core/gameEngine.ts",
+  );
 
 const BOARD_SLOTS = [0, 4, 5, 6, 11, 12, 23];
 const BATTLE_BOUNDS = { left: 52, right: 1068, top: 145, bottom: 625 };
@@ -2016,7 +1991,7 @@ test("南町依次扔出三枚慢速烟头，每枚命中造成伤害与灼烧�
   assert.ok(battle.effects.some((effect) => effect.text === "灼烧"));
 });
 
-test("梨安终场谢幕分段展示星辉投送、落地舞台与友军能量回响", () => {
+test("梨安终场谢幕只让落点范围内友军回能，并快速收束瞬发视觉", () => {
   const engine = createEngine(264);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2026,16 +2001,16 @@ test("梨安终场谢幕分段展示星辉投送、落地舞台与友军能量�
   engine.startBattle();
   const battle = engine.state.battle;
   const lian = battle?.player.find((fighter) => fighter.unitId === "lian");
-  const nearbyAlly = battle?.player.find((fighter) => fighter.unitId === "mossback");
-  const distantAlly = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
-  assert.ok(battle && lian && nearbyAlly && distantAlly);
+  const impactAlly = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  const outsideAlly = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
+  assert.ok(battle && lian && impactAlly && outsideAlly);
 
   lian.x = 250;
   lian.y = 360;
-  nearbyAlly.x = 320;
-  nearbyAlly.y = 410;
-  distantAlly.x = 900;
-  distantAlly.y = 560;
+  impactAlly.x = 620;
+  impactAlly.y = 390;
+  outsideAlly.x = 320;
+  outsideAlly.y = 410;
   battle.player.forEach((fighter) => {
     fighter.energy = 0;
     fighter.cooldown = 99;
@@ -2065,29 +2040,48 @@ test("梨安终场谢幕分段展示星辉投送、落地舞台与友军能量�
   assert.ok(!battle.effects.some((effect) => effect.kind === "finale"));
   assert.ok(!battle.effects.some((effect) => effect.kind === "energy_pulse"));
   assert.equal(lian.energy, 0);
-  assert.equal(nearbyAlly.energy, 0);
-  assert.equal(distantAlly.energy, 0);
+  assert.equal(impactAlly.energy, 0);
+  assert.equal(outsideAlly.energy, 0);
 
   engine["updateProjectiles"](battle, 1);
 
   const finale = battle.effects.find((effect) => effect.kind === "finale");
   assert.ok(finale);
   assert.equal(finale.size, 150);
+  assert.equal(finale.maxLife, 0.58);
+  assert.ok(Math.hypot(impactAlly.x - finale.x, impactAlly.y - finale.y) <= 140);
+  assert.ok(Math.hypot(outsideAlly.x - finale.x, outsideAlly.y - finale.y) > 140);
   const energyPulses = battle.effects.filter((effect) => effect.kind === "energy_pulse");
-  assert.deepEqual(
-    energyPulses.map((effect) => effect.text),
-    ["+15 能量", "+15 能量"],
-  );
-  assert.ok(battle.effects.some((effect) =>
+  assert.deepEqual(energyPulses.map((effect) => effect.text), ["+15 能量"]);
+  assert.equal(energyPulses[0].maxLife, 0.46);
+  const energyLink = battle.effects.find((effect) =>
     effect.kind === "line" &&
     effect.x === finale.x &&
     effect.y === finale.y &&
-    effect.x2 === nearbyAlly.x &&
-    effect.y2 === nearbyAlly.y,
+    effect.x2 === impactAlly.x &&
+    effect.y2 === impactAlly.y
+  );
+  assert.ok(energyLink);
+  assert.equal(energyLink.maxLife, 0.36);
+  assert.ok(!battle.effects.some((effect) =>
+    effect.kind === "line" &&
+    effect.x === finale.x &&
+    effect.y === finale.y &&
+    effect.x2 === outsideAlly.x &&
+    effect.y2 === outsideAlly.y
   ));
-  assert.equal(lian.energy, 15);
-  assert.equal(nearbyAlly.energy, 15);
-  assert.equal(distantAlly.energy, 0);
+  assert.equal(lian.energy, 0);
+  assert.equal(impactAlly.energy, 15);
+  assert.equal(outsideAlly.energy, 0);
+
+  for (let frame = 0; frame < 14; frame += 1) engine.update(0.05);
+  assert.ok(!battle.effects.some((effect) => effect.kind === "finale"));
+  assert.ok(!battle.effects.some((effect) => effect.kind === "energy_pulse"));
+  assert.ok(!battle.effects.some((effect) =>
+    effect.kind === "line" &&
+    effect.x === finale.x &&
+    effect.y === finale.y
+  ));
 });
 
 test("病院坂灵仅缓慢自动回能，攻击与受击均不回能", () => {

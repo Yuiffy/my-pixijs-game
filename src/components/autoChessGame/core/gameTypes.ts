@@ -210,6 +210,7 @@ export interface Fighter {
   dwarfMember: boolean;
   gluttonyHolder: boolean;
   growthStacks: number;
+  gluttonyKillCooldown: number;
   /** Rei 复活的幽灵不会再次生成可复活尸体。 */
   reiRevival: boolean;
   emberMember: boolean;

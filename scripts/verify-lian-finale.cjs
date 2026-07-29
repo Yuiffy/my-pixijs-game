@@ -188,30 +188,39 @@ const attachEngine = async (page) => {
       bridge.dispatch({ type: "battle" });
       const battle = engine.state.battle;
       const lian = battle.player.find((fighter) => fighter.unitId === "lian");
-      const nearby = battle.player.filter((fighter) => fighter !== lian);
+      const allies = battle.player.filter((fighter) => fighter !== lian);
       lian.x = 260;
       lian.y = 420;
-      nearby.forEach((fighter, index) => {
-        fighter.x = 220 + index * 82;
-        fighter.y = 510 + (index % 2) * 58;
-      });
       battle.enemy.forEach((fighter, index) => {
         fighter.x = 665 + (index % 3) * 48;
         fighter.y = 350 + Math.floor(index / 3) * 74 + (index % 2) * 28;
+      });
+      allies[0].x = 650;
+      allies[0].y = 420;
+      allies.slice(1).forEach((fighter, index) => {
+        fighter.x = 210 + index * 88;
+        fighter.y = 520 + (index % 2) * 58;
       });
       [...battle.player, ...battle.enemy].forEach((fighter) => {
         fighter.energy = 0;
         fighter.attack = fighter.team === "enemy" ? 0 : fighter.attack;
         fighter.cooldown = 99;
         fighter.dodgeChance = 0;
+        fighter.moveSpeed = 0;
+        fighter.energyPerSecond = 0;
+        fighter.energyOnAttack = 0;
+        fighter.energyOnHit = 0;
       });
       battle.effects = [];
       engine.castAbility(lian, battle.enemy);
-      engine.updateProjectiles(battle, 0.22);
+      for (let frame = 0; frame < 4; frame += 1) engine.update(0.05);
+      engine.update(0.02);
       bridge.dispatch({ type: "clearSelection" });
       const delivery = battle.projectiles.find((projectile) => projectile.impactAbilityId === "lian");
       return {
         lianFid: lian.fid,
+        impactAllyFid: allies[0].fid,
+        outsideAllyFids: allies.slice(1).map((fighter) => fighter.fid),
         delivery: delivery && {
           style: delivery.style,
           x: Number(delivery.x.toFixed(1)),
@@ -228,26 +237,43 @@ const attachEngine = async (page) => {
       const engine = window.__lianEngine;
       const bridge = window.__lianBridge;
       const battle = engine.state.battle;
-      engine.updateProjectiles(battle, 1);
+      let travelFrames = 0;
+      while (
+        battle.projectiles.some((projectile) => projectile.impactAbilityId === "lian") &&
+        travelFrames < 20
+      ) {
+        engine.update(0.05);
+        travelFrames += 1;
+      }
       bridge.dispatch({ type: "clearSelection" });
       return {
+        travelFrames,
         projectileRemaining: battle.projectiles.some((projectile) => projectile.impactAbilityId === "lian"),
         finaleCount: battle.effects.filter((effect) => effect.kind === "finale").length,
         energyPulseCount: battle.effects.filter((effect) => effect.kind === "energy_pulse").length,
+        energyPulsePositions: battle.effects
+          .filter((effect) => effect.kind === "energy_pulse")
+          .map((effect) => ({ x: effect.x, y: effect.y, maxLife: effect.maxLife })),
         energyLabels: battle.effects
           .filter((effect) => effect.kind === "energy_pulse")
           .map((effect) => effect.text),
+        energies: battle.player.map((fighter) => ({ fid: fighter.fid, energy: fighter.energy })),
       };
     });
     assert.equal(impact.projectileRemaining, false);
     assert.equal(impact.finaleCount, 1);
-    assert.ok(impact.energyPulseCount >= 3);
+    assert.equal(impact.energyPulseCount, 1);
     assert.ok(impact.energyLabels.every((label) => label === "+15 能量"));
+    assert.ok(impact.energyPulsePositions.every((effect) => effect.maxLife === 0.46));
+    assert.equal(impact.energies.find((fighter) => fighter.fid === setup.impactAllyFid)?.energy, 15);
+    assert.ok(setup.outsideAllyFids.every((fid) =>
+      impact.energies.find((fighter) => fighter.fid === fid)?.energy === 0
+    ));
 
     const textState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
     assert.equal(textState.phase, "battle");
     const lianState = textState.battle.playerUnits.find((fighter) => fighter.fid === setup.lianFid);
-    assert.equal(lianState.energy, 15);
+    assert.equal(lianState.energy, 0);
     await capture("lian-finale-impact.png");
 
     const desktopCanvas = await canvas.evaluate((element) => ({
@@ -267,6 +293,36 @@ const attachEngine = async (page) => {
       logicalHeight: element.dataset.logicalHeight,
     }));
     assert.ok(mobileCanvas.width > 0 && mobileCanvas.height > 0);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForTimeout(250);
+
+    const fading = await page.evaluate(() => {
+      const engine = window.__lianEngine;
+      const bridge = window.__lianBridge;
+      const battle = engine.state.battle;
+      for (let frame = 0; frame < 7; frame += 1) engine.update(0.05);
+      bridge.dispatch({ type: "clearSelection" });
+      return battle.effects.filter((effect) =>
+        ["finale", "energy_pulse"].includes(effect.kind) ||
+        (effect.kind === "line" && effect.maxLife === 0.36)
+      ).map((effect) => ({ kind: effect.kind, life: effect.life, maxLife: effect.maxLife }));
+    });
+    assert.deepEqual(fading.map((effect) => effect.kind).sort(), ["energy_pulse", "finale", "line"]);
+    await capture("lian-finale-impact-350ms.png");
+
+    const settled = await page.evaluate(() => {
+      const engine = window.__lianEngine;
+      const bridge = window.__lianBridge;
+      const battle = engine.state.battle;
+      for (let frame = 0; frame < 7; frame += 1) engine.update(0.05);
+      bridge.dispatch({ type: "clearSelection" });
+      return battle.effects.filter((effect) =>
+        ["finale", "energy_pulse"].includes(effect.kind) ||
+        (effect.kind === "line" && effect.maxLife === 0.36)
+      ).length;
+    });
+    assert.equal(settled, 0);
+    await capture("lian-finale-settled.png");
     if (errors.length || failedResponses.length) {
       console.error(JSON.stringify({ errors, failedResponses }, null, 2));
     }

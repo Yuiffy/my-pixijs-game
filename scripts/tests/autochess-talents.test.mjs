@@ -1,39 +1,12 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
-import ts from "typescript";
+import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
-const compileModule = async (relativePath, dependencies = {}) => {
-  const source = await readFile(new URL(`../../${relativePath}`, import.meta.url), "utf8");
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-    },
-  }).outputText;
-  const module = { exports: {} };
-  const require = (specifier) => {
-    if (!(specifier in dependencies)) throw new Error(`Unexpected dependency: ${specifier}`);
-    return dependencies[specifier];
-  };
-  Function("module", "exports", "require", compiled)(module, module.exports, require);
-  return module.exports;
-};
-
-const gameData = await compileModule("src/components/autoChessGame/core/gameData.ts");
-const gameTypes = await compileModule("src/components/autoChessGame/core/gameTypes.ts", {
-  "./gameData": gameData,
-});
-const battleGeometry = await compileModule(
-  "src/components/autoChessGame/core/battleGeometry.ts",
-  { "./gameTypes": gameTypes },
+const gameData = await loadTypescriptModule(
+  "src/components/autoChessGame/core/gameData.ts",
 );
-const { AutoChessEngine } = await compileModule(
+const { AutoChessEngine } = await loadTypescriptModule(
   "src/components/autoChessGame/core/gameEngine.ts",
-  {
-    "./battleGeometry": battleGeometry,
-    "./gameData": gameData,
-  },
 );
 
 const createEngine = (seed = 1, starter = "bastion") => {
