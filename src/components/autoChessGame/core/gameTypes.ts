@@ -42,7 +42,9 @@ export interface BattleEffect {
     | "finale"
     | "energy_pulse"
     | "chronosphere"
-    | "hotpot";
+    | "hotpot"
+    | "pk_overheat"
+    | "biscuit_share";
   x: number;
   y: number;
   x2?: number;

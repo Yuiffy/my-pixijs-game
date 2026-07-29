@@ -143,7 +143,98 @@ export class EffectViewRenderer {
     }
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
     graphics.clear().setVisible(true);
-    if (effect.kind === "line") {
+    if (effect.kind === "pk_overheat") {
+      const radius = effect.size || 150;
+      const pulse = 0.72 + Math.sin(progress * Math.PI * 3) * 0.08;
+      const shockwave = radius * (0.28 + progress * 0.72);
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .fillStyle(0xff563d, 0.08 + (1 - progress) * 0.08)
+        .fillCircle(0, 0, radius * pulse)
+        .lineStyle(Math.max(2, 7 * (1 - progress)), 0xff765f, 0.92)
+        .strokeCircle(0, 0, shockwave)
+        .lineStyle(2, color, 0.72)
+        .strokeCircle(0, 0, radius * pulse)
+        .fillStyle(0x14252d, 0.96)
+        .fillRoundedRect(-17, -25, 34, 50, 7)
+        .lineStyle(3, 0xff765f, 0.96)
+        .strokeRoundedRect(-17, -25, 34, 50, 7)
+        .fillStyle(0xff765f, 0.88)
+        .fillRoundedRect(-12, -18, 24, 32, 3)
+        .fillStyle(0xffffff, 0.92)
+        .fillCircle(0, 20, 2.3);
+      for (let index = 0; index < 6; index += 1) {
+        const angle = -0.9 + index * 0.36;
+        const rayStart = 29 + index * 2;
+        const rayEnd = rayStart + 13 + progress * 8;
+        graphics
+          .lineStyle(index % 2 ? 2 : 3, index % 2 ? color : 0xffb18e, 0.78)
+          .lineBetween(
+            Math.cos(angle) * rayStart,
+            Math.sin(angle) * rayStart,
+            Math.cos(angle) * rayEnd,
+            Math.sin(angle) * rayEnd,
+          );
+      }
+      label
+        .setText("PK")
+        .setFontFamily(FONT_FAMILY)
+        .setFontSize(13)
+        .setColor("#ffffff")
+        .setY(-2)
+        .setScale(1 + Math.sin(progress * Math.PI) * 0.12)
+        .setVisible(true);
+    } else if (effect.kind === "biscuit_share") {
+      const targetX = (effect.x2 ?? effect.x) - effect.x;
+      const targetY = (effect.y2 ?? effect.y) - effect.y;
+      const travel = 1 - (1 - Math.min(1, progress * 1.2)) ** 2;
+      const biscuitX = targetX * travel;
+      const biscuitY = targetY * travel - Math.sin(travel * Math.PI) * 22;
+      const isChoco = effect.text === "choco";
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .lineStyle(2, color, 0.3)
+        .lineBetween(0, 0, targetX, targetY)
+        .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.82)
+        .strokeCircle(targetX, targetY, 12 + progress * 16);
+      if (isChoco) {
+        graphics
+          .fillStyle(0xd59a58, 1)
+          .fillCircle(biscuitX, biscuitY, 13)
+          .lineStyle(2, 0xffd99a, 0.9)
+          .strokeCircle(biscuitX, biscuitY, 13);
+        [
+          [-5, -4],
+          [5, -5],
+          [-2, 5],
+          [6, 4],
+        ].forEach(([chipX, chipY]) => {
+          graphics.fillStyle(0x563528, 0.96).fillCircle(
+            biscuitX + chipX,
+            biscuitY + chipY,
+            2.2,
+          );
+        });
+      } else {
+        graphics
+          .fillStyle(0xf1d8a5, 1)
+          .fillRoundedRect(biscuitX - 13, biscuitY - 11, 26, 22, 5)
+          .lineStyle(2, 0xffedbf, 0.95)
+          .strokeRoundedRect(biscuitX - 13, biscuitY - 11, 26, 22, 5);
+        [
+          [-6, -4],
+          [6, -4],
+          [-6, 4],
+          [6, 4],
+        ].forEach(([holeX, holeY]) => {
+          graphics.fillStyle(0x8f6842, 0.92).fillCircle(
+            biscuitX + holeX,
+            biscuitY + holeY,
+            1.9,
+          );
+        });
+      }
+    } else if (effect.kind === "line") {
       const targetX = (effect.x2 ?? effect.x) - effect.x;
       const targetY = (effect.y2 ?? effect.y) - effect.y;
       const width = effect.size || 3;

@@ -398,6 +398,19 @@ test("战斗同步覆盖投射物、技能效果与两类召唤物", () => {
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 
+test("浣熊自动 PK 与犬绒饼干使用独立战场效果", () => {
+  assert.match(gameTypes, /"pk_overheat"/);
+  assert.match(gameTypes, /"biscuit_share"/);
+  assert.match(engine, /kind: "pk_overheat"/);
+  assert.match(engine, /kind: "biscuit_share"/);
+  assert.match(engine, /text: hasShield \? "choco" : "soda"/);
+  assert.match(effectView, /effect\.kind === "pk_overheat"/);
+  assert.match(effectView, /\.setText\("PK"\)/);
+  assert.match(effectView, /effect\.kind === "biscuit_share"/);
+  assert.match(effectView, /effect\.text === "choco"/);
+  assert.match(effectView, /fillRoundedRect\(biscuitX - 13/);
+});
+
 test("技能只保留名称提示，范围与连线效果提供范围染色和飞行脉冲", () => {
   assert.doesNotMatch(gameTypes, /kind: "cast"/);
   assert.doesNotMatch(engine, /kind: "cast"/);

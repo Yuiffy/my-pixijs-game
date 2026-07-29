@@ -102,6 +102,12 @@ export interface CombatProjectileHost {
   addEnergy(fighter: Fighter, amount: number): void;
   nearestTarget(source: Fighter, targets: Fighter[]): Fighter | null;
   faceTowardX(fighter: Fighter, targetX: number): void;
+  retreatFrom(
+    source: Fighter,
+    target: Fighter,
+    distance: number,
+    duration: number,
+  ): boolean;
 }
 
 export class CombatProjectileSystem {
@@ -1033,6 +1039,17 @@ export class CombatProjectileSystem {
             life: 0.62,
             size: 32,
           });
+          if (this.host.retreatFrom(source, hit.target, 36, 0.2)) {
+            this.addEffect({
+              kind: "text",
+              x: source.x,
+              y: source.y - source.radius - 42,
+              color: "#f4c7ff",
+              text: "泥给路哒哟",
+              life: 0.72,
+              size: 12,
+            });
+          }
         }
         if (projectile.style === "pickaxe") {
           const impactY = hit.target.y - hit.target.radius * 0.72;

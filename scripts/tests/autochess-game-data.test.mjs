@@ -275,9 +275,12 @@ test("敌方阵容始终组成羁绊，特殊角色偶尔出现但不进入商�
 test("浣熊店员使用原创展示文案与独立精灵头像", async () => {
   const unit = data.UNIT_DEFS.gale_archer;
   assert.equal(unit.name, "浣熊店员");
-  assert.equal(unit.title, "浣熊店员 · 前排照料");
+  assert.equal(unit.title, "浣熊店员 · 前排控场");
   assert.equal(unit.glyph, "浣");
-  assert.equal(unit.abilityName, "端茶倒水");
+  assert.equal(unit.abilityName, "手机过热 · 自动PK");
+  assert.equal(unit.abilityCastTiming, "offenseReady");
+  assert.equal(unit.abilityRange, 150);
+  assert.match(unit.abilityDescription, /18% 最大生命护盾.*150 范围.*1\.4 秒 PK/);
   assert.deepEqual(unit.traits, ["wild", "mature", "gen27"]);
   assert.equal(unit.portraitStyle, "sprite");
   assert.equal(unit.portrait, "/images/autochess/portraits/raccoon-archer.png");
@@ -460,14 +463,16 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
     assert.deepEqual(data.UNIT_DEFS[id].energyProfile, data.ENERGY_PROFILES.steady_guard);
   });
   assert.deepEqual(data.UNIT_DEFS.gale_archer.energyProfile, data.ENERGY_PROFILES.steady_guard);
-  assert.match(data.UNIT_DEFS.gale_archer.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*回复生命/);
+  assert.match(data.UNIT_DEFS.gale_archer.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*护盾.*PK/);
   assert.deepEqual(data.UNIT_DEFS.sun_guard.energyProfile, data.ENERGY_PROFILES.steady_guard);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.start, 25);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 8);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onAttack, 6);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 3);
   assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /持续自动充能.*攻击与受击也会回复能量.*满区.*闪避.*持续治疗/);
-  assert.match(data.UNIT_DEFS.mossback.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*回复自身生命.*两名友军提供护盾/);
+  assert.equal(data.UNIT_DEFS.mossback.abilityName, "小狗星球熟练工");
+  assert.equal(data.UNIT_DEFS.mossback.title, "犬绒Mofu · 饼干支援");
+  assert.match(data.UNIT_DEFS.mossback.abilityDescription, /持续自动充能.*两名友军.*打孔苏打饼干.*15% 最大生命护盾.*巧克力豆.*12% 最大生命/);
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /初始 25\/100.*自动回能（12\.5 秒回满，每秒 \+8）.*攻击回能（每下 \+6）.*受击回能（每下 \+3）/);
   ["rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "shiori", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
     const profile = data.UNIT_DEFS[id].energyProfile;
@@ -553,16 +558,21 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
 
-test("好笑姐姐使用近距离冷笑话弹幕，技能只保留攻击与控制属性", () => {
+test("好笑姐姐使用近距离冷笑话弹幕与受伤撤步，且没有护盾属性", () => {
   const michiya = data.UNIT_DEFS.rift_stalker;
-  assert.equal(michiya.hp, 146);
-  assert.equal(michiya.attack, 26);
-  assert.equal(michiya.armor, 8);
+  assert.equal(michiya.hp, 180);
+  assert.equal(michiya.attack, 23);
+  assert.equal(michiya.armor, 12);
+  assert.equal(michiya.attackType, "ranged");
+  assert.equal(michiya.range, 145);
+  assert.equal(michiya.moveSpeed, 58);
+  assert.equal(michiya.attackInterval, 1.08);
   assert.equal(michiya.abilityRange, 240);
   assert.equal(michiya.abilityCastTiming, "offenseReady");
   assert.equal(michiya.energyProfile.start, 40);
   assert.equal(michiya.energyProfile.perSecond, 20);
-  assert.match(michiya.abilityDescription, /发射.*😂.*命中.*眩晕/);
+  assert.match(michiya.title, /搞笑沪姐/);
+  assert.match(michiya.abilityDescription, /发射.*😂.*命中.*眩晕.*受伤.*逼近.*泥给路哒哟.*撤步/);
   assert.doesNotMatch(michiya.abilityDescription, /跳|突进|闪现|护盾/);
   assert.deepEqual(
     michiya.abilityLevels.map((level) => [

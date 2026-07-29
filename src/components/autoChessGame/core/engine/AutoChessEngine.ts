@@ -187,7 +187,7 @@ const LOVELY_CHANNEL_PULSE_INTERVAL = 0.32;
 /** 果冻风纪：满区逃生的一级默认值；高星参数由单位数据覆盖。 */
 const SUN_GUARD_MANQU_HEAL_PER_SECOND = 0.2;
 const SUN_GUARD_MANQU_MOVE_SPEED_BONUS = 105;
-/** 好笑姐姐：偷袭负责进场，冷笑话只负责近距离弹幕爆发。 */
+/** 好笑姐姐：偷袭进场，冷笑话命中后慌张撤步。 */
 /** 雅吨辣福：打翻火锅灼烧范围 */
 const RIFT_BRAWLER_PASSIVE_BURN = 0.55;
 /** 跳舞冲刺 */
@@ -259,6 +259,8 @@ export class AutoChessEngine {
       addEnergy: (fighter, amount) => this.addEnergy(fighter, amount),
       nearestTarget: (source, targets) => this.nearestTarget(source, targets),
       faceTowardX: (fighter, targetX) => this.faceTowardX(fighter, targetX),
+      retreatFrom: (source, target, distance, duration) =>
+        this.retreatFrom(source, target, distance, duration),
     });
     this.abilities = new AbilitySystem({
       state: () => this.state,
@@ -1021,6 +1023,22 @@ export class AutoChessEngine {
     };
     this.faceTowardX(source, landing.x);
     return source.abilityMotion;
+  }
+
+  private retreatFrom(
+    source: Fighter,
+    target: Fighter,
+    distance: number,
+    duration: number,
+  ) {
+    return this.tryAttackRecoil(source, target, {
+      active:
+        source.unitId === "rift_stalker" &&
+        source.hp / Math.max(1, source.maxHp) <= 0.65,
+      distance,
+      duration,
+      rangeMargin: 5,
+    });
   }
 
   private distanceToSegment(

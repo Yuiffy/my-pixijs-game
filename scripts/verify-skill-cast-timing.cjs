@@ -148,6 +148,7 @@ mkdirSync(artifactDirectory, { recursive: true });
       engine.state.board.fill(null);
       engine.state.board[0] = { uid: 1, id, star: 1 };
       engine.startBattle();
+      bridge.setHidden(true);
       const battle = engine.state.battle;
       const source = battle.player[0];
       source.x = 180;
@@ -235,6 +236,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     target.x = source.x + 210;
     target.y = source.y;
     target.armor = 0;
+    source.hp = source.maxHp * 0.5;
     return {
       sourceX: source.x,
       sourceMaxHp: source.maxHp,
@@ -280,7 +282,14 @@ mkdirSync(artifactDirectory, { recursive: true });
   }
   const flightScreenshot = await capture("skill-cast-rift-stalker-flight");
 
-  await advance(180);
+  await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player[0];
+    const target = battle.enemy[0];
+    target.x = source.x + 120;
+    target.y = source.y;
+  });
+  await advance(15);
   state = await readState();
   michiya = state.battle.playerUnits.find((unit) => unit.unitId === "rift_stalker");
   const impactRuntime = await page.evaluate(() => {
@@ -288,6 +297,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     const source = battle.player[0];
     const target = battle.enemy[0];
     return {
+      sourceX: source.x,
       targetHp: target.hp,
       targetStun: target.stun,
       shield: source.shield,
@@ -296,13 +306,21 @@ mkdirSync(artifactDirectory, { recursive: true });
     };
   });
   if (
-    michiya.motion ||
+    michiya.motion?.kind !== "push" ||
     impactRuntime.targetHp >= beforeShot.targetHp ||
     impactRuntime.targetStun <= 0 ||
     impactRuntime.shield !== beforeShot.shield ||
-    !impactRuntime.effectKinds.some((effect) => effect.kind === "emoji_burst" && effect.text === "😂")
+    !impactRuntime.effectKinds.some((effect) => effect.kind === "emoji_burst" && effect.text === "😂") ||
+    !impactRuntime.effects.includes("泥给路哒哟")
   ) {
-    throw new Error(`好笑姐姐弹幕命中未结算伤害、眩晕与 😂 特效，或错误获得护盾: ${JSON.stringify({ beforeShot, michiya, impactRuntime })}`);
+    throw new Error(`好笑姐姐弹幕命中未结算伤害、眩晕、撤步与 😂 特效，或错误获得护盾: ${JSON.stringify({ beforeShot, michiya, impactRuntime })}`);
+  }
+  const impactScreenshot = await capture("skill-cast-rift-stalker-impact");
+  await advance(220);
+  state = await readState();
+  michiya = state.battle.playerUnits.find((unit) => unit.unitId === "rift_stalker");
+  if (michiya.motion) {
+    throw new Error(`好笑姐姐撤步未按时结束: ${JSON.stringify(michiya)}`);
   }
   results.push({
     unitId: "rift_stalker",
@@ -310,7 +328,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     energy: michiya.energy,
     range: 240,
     flight: { ...flightRuntime, screenshot: flightScreenshot },
-    impact: { ...impactRuntime, screenshot: await capture("skill-cast-rift-stalker-impact") },
+    impact: { ...impactRuntime, screenshot: impactScreenshot },
   });
 
   const canvas = page.locator('[data-game-canvas="rift-line"]');

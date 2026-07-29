@@ -34,6 +34,9 @@ const EMBER_BLADE_CARROT_JITTER = 0.42;
 const EMBER_BLADE_CARROT_SHOTS = 5;
 const EMBER_BLADE_CARROT_SPEED = 640;
 const LOVELY_CHANNEL_DURATION = 3.4;
+const GALE_ARCHER_PK_RADIUS = 150;
+const GALE_ARCHER_PK_SHIELD_RATIO = 0.18;
+const GALE_ARCHER_PK_TAUNT_DURATION = 1.4;
 const MITSURI_SHIELD_RATIO = 0.22;
 export const MITSURI_TAUNT_DURATION = 3.2;
 const MITSURI_TAUNT_RADIUS = 155;
@@ -49,6 +52,8 @@ const RIFT_BRAWLER_AOE_BURN = 1.05;
 const RIFT_BRAWLER_HOTPOT_RADIUS = 98;
 const RIFT_BRAWLER_SELF_BURN = 0.85;
 const RIFT_STALKER_LAUGH_SPEED = 1200;
+const MOSSBACK_BISCUIT_HEAL_RATIO = 0.12;
+const MOSSBACK_BISCUIT_SHIELD_RATIO = 0.15;
 const RUTICE_GROUP_HEAL_RATIO = 0.2;
 const RUTICE_LOWEST_SHIELD_RATIO = 0.16;
 const RUTICE_LOWEST_SHIELD_TARGET_COUNT = 2;
@@ -298,18 +303,29 @@ export class AbilitySystem {
         break;
       }
       case "gale_archer": {
-        const target = weakest(allies);
-        if (!target) break;
-        this.host.heal(source, target, target.maxHp * 0.2 + source.attack);
+        addShield(source, source.maxHp * GALE_ARCHER_PK_SHIELD_RATIO, 0.45);
+        targets
+          .filter((target) => {
+            const distance = Math.hypot(
+              target.x - source.x,
+              target.y - source.y,
+            );
+            return distance <= GALE_ARCHER_PK_RADIUS + target.radius;
+          })
+          .forEach((target) => {
+            target.tauntedByFid = source.fid;
+            target.tauntTime = Math.max(
+              target.tauntTime,
+              GALE_ARCHER_PK_TAUNT_DURATION,
+            );
+          });
         this.host.addEffect({
-          kind: "line",
+          kind: "pk_overheat",
           x: source.x,
           y: source.y,
-          x2: target.x,
-          y2: target.y,
           color: def.accent,
-          life: 0.5,
-          size: 4,
+          life: 0.9,
+          size: GALE_ARCHER_PK_RADIUS,
         });
         break;
       }
@@ -353,21 +369,34 @@ export class AbilitySystem {
         break;
       }
       case "mossback": {
-        this.host.heal(source, source, source.maxHp * 0.13);
         [...allies]
           .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
           .slice(0, 2)
           .forEach((target) => {
-            addShield(target, target.maxHp * 0.13, 0.36);
+            const hasShield = target.shield > 0;
+            if (hasShield) {
+              this.host.heal(
+                source,
+                target,
+                target.maxHp * MOSSBACK_BISCUIT_HEAL_RATIO,
+              );
+            } else {
+              addShield(
+                target,
+                target.maxHp * MOSSBACK_BISCUIT_SHIELD_RATIO,
+                0.4,
+              );
+            }
             this.host.addEffect({
-              kind: "line",
+              kind: "biscuit_share",
               x: source.x,
               y: source.y,
               x2: target.x,
               y2: target.y,
               color: def.accent,
-              life: 0.55,
-              size: 4,
+              text: hasShield ? "choco" : "soda",
+              life: 0.72,
+              size: 18,
             });
           });
         break;

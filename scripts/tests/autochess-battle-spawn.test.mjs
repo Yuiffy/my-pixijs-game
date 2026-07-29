@@ -781,7 +781,7 @@ test("一星绒绒的狗在三名一星敌人围攻下不会靠受击无限续�
   assert.equal(engine.state.phase, "result");
 });
 
-test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限治疗", () => {
+test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限刷新 PK 护盾", () => {
   const engine = createEngine(150);
   engine.state.round = 2;
   engine.state.playerLevel = 4;
@@ -808,10 +808,78 @@ test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限治�
   };
   stepBattle(engine, 480);
 
-  assert.ok(castCount >= 1, "浣熊店员仍应能正常施放治疗");
-  assert.ok(castCount <= 2, "三打一不应通过受击回能反复刷新治疗");
+  assert.ok(castCount >= 1, "浣熊店员仍应能正常发起 PK");
+  assert.ok(castCount <= 2, "三打一不应通过受击回能反复刷新 PK 护盾");
   assert.equal(raccoon.alive, false);
   assert.equal(engine.state.phase, "result");
+});
+
+test("浣熊店员手机过热只让近处敌人参加 PK，并生成专属过热效果", () => {
+  const engine = createEngine(175);
+  engine.state.starter = "blaze";
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "gale_archer", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const raccoon = battle?.player[0];
+  const near = battle?.enemy[0];
+  const far = battle?.enemy[1];
+  assert.ok(battle && raccoon && near && far);
+
+  raccoon.x = 300;
+  raccoon.y = 360;
+  raccoon.shield = 0;
+  near.x = raccoon.x + 100;
+  near.y = raccoon.y;
+  far.x = raccoon.x + 240;
+  far.y = raccoon.y;
+  engine.castAbility(raccoon, battle.enemy);
+
+  assert.ok(Math.abs(raccoon.shield - raccoon.maxHp * 0.18) < 0.001);
+  assert.equal(near.tauntedByFid, raccoon.fid);
+  assert.equal(near.tauntTime, 1.4);
+  assert.equal(far.tauntedByFid, null);
+  assert.equal(far.tauntTime, 0);
+  const overheat = battle.effects.find((effect) => effect.kind === "pk_overheat");
+  assert.ok(overheat);
+  assert.equal(overheat.size, 150);
+  assert.equal(overheat.maxLife, 0.9);
+});
+
+test("犬绒给无盾友军发苏打盾，给已有护盾友军发巧克力曲奇回血", () => {
+  const engine = createEngine(176);
+  engine.state.starter = "blaze";
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "mossback", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.state.board[2] = { uid: 3, id: "ember_blade", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const mossback = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  const sodaTarget = battle?.player.find((fighter) => fighter.unitId === "sun_guard");
+  const chocoTarget = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
+  assert.ok(battle && mossback && sodaTarget && chocoTarget);
+
+  mossback.hp = mossback.maxHp;
+  sodaTarget.hp = sodaTarget.maxHp * 0.5;
+  sodaTarget.shield = 0;
+  chocoTarget.hp = chocoTarget.maxHp * 0.4;
+  chocoTarget.shield = 9;
+  const chocoHpBefore = chocoTarget.hp;
+  engine.castAbility(mossback, battle.enemy);
+
+  assert.ok(Math.abs(sodaTarget.shield - sodaTarget.maxHp * 0.15) < 0.001);
+  assert.equal(chocoTarget.shield, 9);
+  assert.ok(Math.abs(chocoTarget.hp - (chocoHpBefore + chocoTarget.maxHp * 0.12)) < 0.001);
+  const biscuitEffects = battle.effects.filter((effect) => effect.kind === "biscuit_share");
+  assert.equal(biscuitEffects.length, 2);
+  assert.deepEqual(
+    biscuitEffects.map((effect) => effect.text).sort(),
+    ["choco", "soda"],
+  );
 });
 
 test("所有可重复护盾角色在三人持续集火下都能被击破", async (context) => {
@@ -3193,7 +3261,7 @@ test("贪吃岁强化下一击吸血，椰子栞海獭冲击突进并范围控�
   assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "shiori"));
 });
 
-test("好笑姐姐只在近距离发射 😂 弹幕，并在命中后结算伤害与眩晕", () => {
+test("好笑姐姐只在近距离发射 😂 弹幕，命中后结算伤害、眩晕与撤步", () => {
   const engine = createEngine(211);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -3216,6 +3284,7 @@ test("好笑姐姐只在近距离发射 😂 弹幕，并在命中后结算伤�
   michiya.moveSpeed = 0;
   michiya.cooldown = 0;
   michiya.energy = michiya.maxEnergy;
+  michiya.hp = michiya.maxHp * 0.5;
   target.x = michiya.x + 300;
   target.y = michiya.y;
   target.hp = target.maxHp = 9_999;
@@ -3228,7 +3297,7 @@ test("好笑姐姐只在近距离发射 😂 弹幕，并在命中后结算伤�
   assert.equal(michiya.abilityMotion, null, "距离超过 240 时不应释放");
   assert.equal(michiya.energy, michiya.maxEnergy);
 
-  target.x = michiya.x + 220;
+  target.x = michiya.x + 120;
   const startX = michiya.x;
   const targetHp = target.hp;
   const shieldBefore = michiya.shield;
@@ -3243,7 +3312,7 @@ test("好笑姐姐只在近距离发射 😂 弹幕，并在命中后结算伤�
   assert.equal(target.hp, targetHp, "弹幕飞行途中不应提前结算伤害");
   assert.equal(michiya.shield, shieldBefore, "施法不应获得护盾");
 
-  engine["updateProjectiles"](battle, 0.08);
+  engine["updateProjectiles"](battle, 0.05);
   assert.ok(battle.projectiles.includes(laugh));
   assert.equal(target.hp, targetHp);
   assert.equal(michiya.shield, shieldBefore);
@@ -3254,6 +3323,17 @@ test("好笑姐姐只在近距离发射 😂 弹幕，并在命中后结算伤�
   assert.ok(target.stun >= 0.85);
   assert.equal(michiya.shield, shieldBefore);
   assert.ok(battle.effects.some((effect) => effect.kind === "emoji_burst" && effect.text === "😂"));
+  assert.equal(michiya.abilityMotion?.kind, "push");
+  assert.equal(michiya.abilityMotion?.abilityId, null);
+  assert.equal(michiya.abilityMotion?.targetFid, target.fid);
+  assert.ok(
+    Math.hypot(
+      (michiya.abilityMotion?.toX || michiya.x) - target.x,
+      (michiya.abilityMotion?.toY || michiya.y) - target.y,
+    ) > Math.hypot(startX - target.x, michiya.y - target.y),
+    "撤步终点应比施法位置更远离命中目标",
+  );
+  assert.ok(battle.effects.some((effect) => effect.kind === "text" && effect.text === "泥给路哒哟"));
 });
 
 test("加强后的一星好笑姐姐可以完成对等脆皮后排击杀", () => {
@@ -3313,7 +3393,7 @@ test("加强后的一星好笑姐姐可以完成对等脆皮后排击杀", () =>
   assert.equal(michiya.shieldingDone, 0);
 });
 
-test("一星好笑姐姐仍不能越费单挑二费斗士", () => {
+test("一星好笑姐姐在最有利的单挑中也只能残血险胜二费斗士", () => {
   const engine = createEngine(213);
   engine.state.round = 3;
   engine.state.playerLevel = 3;
@@ -3359,9 +3439,14 @@ test("一星好笑姐姐仍不能越费单挑二费斗士", () => {
     engine.update(0.05);
   }
 
-  assert.equal(engine.state.result?.won, false);
-  assert.equal(michiya.alive, false);
-  assert.equal(target.alive, true);
+  assert.equal(engine.state.result?.won, true, JSON.stringify({
+    michiya: { alive: michiya.alive, hp: michiya.hp, damage: michiya.damageDealt },
+    target: { alive: target.alive, hp: target.hp, damage: target.damageDealt },
+    elapsed: battle.elapsed,
+  }));
+  assert.equal(michiya.alive, true);
+  assert.equal(target.alive, false);
+  assert.ok(michiya.hp / michiya.maxHp < 0.25, "越费单挑必须付出残血代价");
 });
 
 test("小岁鸟连续三次肘击会反复冲撞、击退并短暂眩晕敌人", () => {
