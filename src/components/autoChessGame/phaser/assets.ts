@@ -4,6 +4,7 @@ import { UNIT_DEFS } from "../core/gameData";
 export const textureKeyForUnit = (unitId: string) => `rift-unit:${unitId}`;
 export const SUMI_LITTLE_DRAGON_TEXTURE_KEY = "rift-projectile:sumi-little-dragon";
 export const SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY = "rift-projectile:sumi-little-dragon-circle";
+export const HAZEL_MANQU_TEXTURE_KEY = "rift-transform:hazel-manqu";
 
 export const preloadUnitPortraits = (scene: Phaser.Scene) => {
   Object.values(UNIT_DEFS).forEach((unit) => {
@@ -13,6 +14,9 @@ export const preloadUnitPortraits = (scene: Phaser.Scene) => {
   });
   if (!scene.textures.exists(SUMI_LITTLE_DRAGON_TEXTURE_KEY)) {
     scene.load.image(SUMI_LITTLE_DRAGON_TEXTURE_KEY, "/images/livers/sumi-little-dragon.jpg");
+  }
+  if (!scene.textures.exists(HAZEL_MANQU_TEXTURE_KEY)) {
+    scene.load.image(HAZEL_MANQU_TEXTURE_KEY, "/images/livers/hazel-manqu.png");
   }
 };
 

@@ -8,6 +8,7 @@ import {
   AUGMENTS,
   AUGMENT_TIER_LABELS,
   ENERGY_PROFILES,
+  describeAbilityStarGrowth,
   describeEnergyRecovery,
   PLAYER_LEVELS,
   PLAYER_LEVEL_CONFIG,
@@ -220,6 +221,11 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                 {ABILITY_CAST_TIMING_LABELS[unit.abilityCastTiming]}
               </div>
               <p style={{ color: "#b6c8d4", lineHeight: 1.7 }}>{unit.abilityDescription}</p>
+              {describeAbilityStarGrowth(unit) && (
+                <p style={{ color: "#8eb0c4", lineHeight: 1.7, fontSize: 12 }}>
+                  星级成长：{describeAbilityStarGrowth(unit)}
+                </p>
+              )}
               {unit.passiveName && unit.passiveDescription && (
                 <>
                   <h3 style={{ color: "#c3a7ff", marginBottom: 6 }}>被动 · {unit.passiveName}</h3>

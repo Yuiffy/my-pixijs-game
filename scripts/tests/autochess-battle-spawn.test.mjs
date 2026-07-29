@@ -566,7 +566,7 @@ test("紧贴碰撞体积的近战单位也能稳定攻击", () => {
   assert.equal(source.energy, source.energyPerSecond * 0.05 + source.energyOnAttack);
 });
 
-test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", () => {
+test("满区逃生期间停止攻击与回能，主动远离最近敌人并逐渐回血", () => {
   const engine = createEngine(146);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -577,28 +577,74 @@ test("绿冻护甲只保留贴身护盾，透明强度随剩余护盾下降", ()
   const attacker = battle?.enemy[0];
   assert.ok(battle && guard && attacker);
   battle.effects.length = 0;
-  guard.shield = 0;
-  guard.shieldPeak = 0;
-
+  battle.enemy.forEach((enemy, index) => {
+    enemy.x = index === 0 ? 560 : 1000;
+    enemy.y = index === 0 ? 360 : 600;
+    enemy.attack = 0;
+    enemy.cooldown = 99;
+    enemy.baseMoveSpeed = 0;
+    enemy.moveSpeed = 0;
+  });
+  guard.x = 500;
+  guard.y = 360;
+  guard.hp = guard.maxHp - 100;
+  guard.energy = guard.maxEnergy;
+  guard.cooldown = 0;
+  const hpBefore = guard.hp;
+  const targetHpBefore = attacker.hp;
+  const distanceBefore = Math.hypot(guard.x - attacker.x, guard.y - attacker.y);
   engine.castAbility(guard, battle.enemy);
 
-  assert.ok(guard.shield > 0);
-  assert.ok(Math.abs(guard.shield - guard.maxHp * 0.3 * 1.2) < 0.001);
-  assert.equal(guard.shieldPeak, guard.shield);
-  assert.equal(battle.effects.filter((effect) => effect.text === "绿冻护甲").length, 1);
-  assert.ok(!battle.effects.some((effect) => effect.kind === "ring" && effect.x === guard.x && effect.y === guard.y));
-
-  attacker.dodgeChance = 0;
-  engine.damage(attacker, guard, guard.shield);
-  assert.ok(guard.shield > 0 && guard.shield < guard.shieldPeak);
-  assert.ok(guard.shield / guard.shieldPeak < 1);
-
-  engine.damage(attacker, guard, 99_999);
+  assert.equal(guard.manquTime, 1.25);
+  assert.equal(guard.energy, 0);
   assert.equal(guard.shield, 0);
-  assert.equal(guard.shieldPeak, 0);
+  assert.equal(battle.effects.filter((effect) => effect.text === "满区逃生").length, 1);
+  assert.ok(!battle.effects.some((effect) => effect.kind === "ring"));
+
+  for (let tick = 0; tick < 10; tick += 1) engine.update(0.05);
+
+  assert.ok(Math.hypot(guard.x - attacker.x, guard.y - attacker.y) > distanceBefore + 50);
+  assert.ok(Math.abs(guard.hp - (hpBefore + guard.maxHp * 0.02)) < 0.001);
+  assert.equal(guard.energy, 0);
+  assert.equal(attacker.hp, targetHpBefore);
+  assert.equal(guard.attackPulse, 0);
+
+  for (let tick = 0; tick < 15; tick += 1) engine.update(0.05);
+  assert.equal(guard.manquTime, 0);
+  assert.ok(Math.abs(guard.hp - (hpBefore + guard.maxHp * 0.05)) < 0.001);
+
+  attacker.x = guard.x + 55;
+  attacker.y = guard.y;
+  guard.cooldown = 0;
+  engine.update(0.05);
+  assert.ok(attacker.hp < targetHpBefore);
+  assert.ok(guard.energy > 0);
 });
 
-test("绿冻护甲同时按自动、攻击和受击三种来源回能", () => {
+test("满区形态追加闪避，结束后恢复原本受击结算", () => {
+  const engine = createEngine(147);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const guard = battle?.player[0];
+  const attacker = battle?.enemy[0];
+  assert.ok(battle && guard && attacker);
+  engine.rng.next = () => 0.5;
+  guard.energy = guard.maxEnergy;
+  engine.castAbility(guard, battle.enemy);
+  const hpBefore = guard.hp;
+
+  assert.equal(engine.damage(attacker, guard, 50), -1);
+  assert.equal(guard.hp, hpBefore);
+
+  guard.manquTime = 0;
+  assert.ok(engine.damage(attacker, guard, 50) > 0);
+  assert.ok(guard.hp < hpBefore);
+});
+
+test("满区逃生同时按自动、攻击和受击三种来源回能", () => {
   const engine = createEngine(147);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -633,30 +679,22 @@ test("绿冻护甲同时按自动、攻击和受击三种来源回能", () => {
   assert.equal(guard.energy, 15);
 });
 
-test("一星绿冻护甲在三名一星敌人围攻下最多续盾两次且会被击破", () => {
+test("满区逃生的星级只提升短暂撤离窗口，不产生护盾或攻击弹幕", () => {
   const engine = createEngine(148);
-  engine.state.round = 2;
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
-  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 3 };
   engine.startBattle();
   const battle = engine.state.battle;
   const guard = battle?.player[0];
   assert.ok(battle && guard);
-  assert.equal(battle.enemy.length, 3);
-  battle.enemy.forEach((fighter) => {
-    fighter.hp = 99_999;
-    fighter.maxHp = 99_999;
-  });
-
-  stepBattle(engine, 480);
-
-  const oneShield = guard.maxHp * 0.3 * 1.2;
-  assert.ok(guard.shieldingDone > oneShield);
-  assert.ok(guard.shieldingDone <= oneShield * 2 + 0.001);
-  assert.equal(guard.alive, false);
+  guard.energy = guard.maxEnergy;
+  engine.castAbility(guard, battle.enemy);
+  assert.equal(guard.manquTime, 1.5);
   assert.equal(guard.shield, 0);
-  assert.equal(engine.state.phase, "result");
+  assert.equal(guard.shieldingDone, 0);
+  assert.equal(battle.projectiles.length, 0);
+  assert.equal(battle.projectileVolley.length, 0);
 });
 
 test("一星绒绒的狗在三名一星敌人围攻下不会靠受击无限续盾", () => {
@@ -729,7 +767,6 @@ test("一星浣熊店员在三名一星敌人围攻下不会靠受击无限治�
 test("所有可重复护盾角色在三人持续集火下都能被击破", async (context) => {
   const shieldUnitIds = [
     "sun_guard",
-    "rift_stalker",
     "mossback",
     "seki_boar_king",
     "mitsuri",
@@ -2648,8 +2685,8 @@ test("四流量为全队提供技能可触发的全能吸血", () => {
   });
   const hpBeforeAbility = meleeAlly.hp;
   engine["castAbility"](meleeAlly, battle.enemy);
-  for (let tick = 0; tick < 10 && meleeAlly.abilityMotion; tick += 1) {
-    engine["updateAbilityMotion"](meleeAlly, 0.05, battle);
+  for (let tick = 0; tick < 20 && battle.projectiles.length; tick += 1) {
+    engine["updateProjectiles"](battle, 0.05);
   }
   assert.ok(meleeAlly.hp > hpBeforeAbility, "近战非流量友军的技能伤害应触发全能吸血");
 });
@@ -2945,7 +2982,7 @@ test("贪吃岁强化下一击吸血，椰子栞海獭冲击突进并范围控�
   assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "shiori"));
 });
 
-test("好笑姐姐只在近距离起跳，并在落地后结算冷笑话伤害与护盾", () => {
+test("好笑姐姐只在近距离发射 😂 弹幕，并在命中后结算伤害与眩晕", () => {
   const engine = createEngine(211);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2985,24 +3022,135 @@ test("好笑姐姐只在近距离起跳，并在落地后结算冷笑话伤害�
   const targetHp = target.hp;
   const shieldBefore = michiya.shield;
   engine.update(0.05);
-  const motion = michiya.abilityMotion;
-  assert.equal(motion?.kind, "jump");
-  assert.equal(motion?.abilityId, "rift_stalker");
-  assert.equal(motion?.targetFid, target.fid);
-  assert.equal(michiya.x, startX, "施法帧不应直接改写到落点");
-  assert.equal(target.hp, targetHp, "跳跃途中不应提前结算伤害");
-  assert.equal(michiya.shield, shieldBefore, "跳跃途中不应提前获得护盾");
+  const laugh = battle.projectiles.find((projectile) => projectile.style === "laugh");
+  assert.ok(laugh);
+  assert.equal(laugh.emoji, "😂");
+  assert.equal(laugh.damageKind, "ability");
+  assert.equal(laugh.stunDuration, 0.85);
+  assert.equal(michiya.abilityMotion, null);
+  assert.equal(michiya.x, startX, "发射弹幕不应改变施法者位置");
+  assert.equal(target.hp, targetHp, "弹幕飞行途中不应提前结算伤害");
+  assert.equal(michiya.shield, shieldBefore, "施法不应获得护盾");
 
-  engine["updateAbilityMotion"](michiya, 0.21, battle);
-  assert.ok(michiya.x > startX && michiya.x < motion.toX);
+  engine["updateProjectiles"](battle, 0.08);
+  assert.ok(battle.projectiles.includes(laugh));
   assert.equal(target.hp, targetHp);
   assert.equal(michiya.shield, shieldBefore);
 
-  engine["updateAbilityMotion"](michiya, 0.21, battle);
-  assert.equal(michiya.abilityMotion, null);
+  engine["updateProjectiles"](battle, 0.2);
+  assert.ok(!battle.projectiles.includes(laugh));
   assert.ok(target.hp < targetHp);
-  assert.ok(michiya.shield > shieldBefore);
-  assert.ok(battle.effects.some((effect) => effect.text === "冷笑话落地"));
+  assert.ok(target.stun >= 0.85);
+  assert.equal(michiya.shield, shieldBefore);
+  assert.ok(battle.effects.some((effect) => effect.kind === "emoji_burst" && effect.text === "😂"));
+});
+
+test("加强后的一星好笑姐姐可以完成对等脆皮后排击杀", () => {
+  const engine = createEngine(212);
+  engine.state.round = 1;
+  engine.state.playerLevel = 3;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rift_stalker", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const michiya = battle?.player[0];
+  const target = battle?.enemy.find((fighter) => fighter.unitId === "ember_blade");
+  assert.ok(battle && michiya && target);
+
+  battle.enemy
+    .filter((fighter) => fighter !== target)
+    .forEach((fighter) => {
+      fighter.alive = false;
+      fighter.hp = 0;
+    });
+  const targetStats = engine.getPlayerCombatStats({ uid: 99, id: "ember_blade", star: 1 });
+  Object.assign(target, {
+    hp: targetStats.maxHp,
+    maxHp: targetStats.maxHp,
+    attack: targetStats.attack,
+    baseAttack: targetStats.attack,
+    armor: targetStats.armor,
+    range: targetStats.range,
+    baseRange: targetStats.range,
+    attackInterval: targetStats.attackInterval,
+    baseAttackInterval: targetStats.attackInterval,
+    moveSpeed: targetStats.moveSpeed,
+    baseMoveSpeed: targetStats.moveSpeed,
+    cooldown: 0,
+    dodgeChance: 0,
+    energy: 0,
+  });
+  michiya.x = 300;
+  michiya.y = 360;
+  michiya.jumpPending = false;
+  michiya.jumpTime = 0;
+  target.x = 620;
+  target.y = 360;
+
+  for (let tick = 0; tick < 400 && engine.state.phase === "battle"; tick += 1) {
+    engine.update(0.05);
+  }
+
+  assert.equal(engine.state.result?.won, true, JSON.stringify({
+    michiya: { alive: michiya.alive, hp: michiya.hp, damage: michiya.damageDealt },
+    target: { alive: target.alive, hp: target.hp, damage: target.damageDealt },
+    elapsed: battle.elapsed,
+  }));
+  assert.equal(target.alive, false);
+  assert.equal(michiya.alive, true);
+  assert.ok(michiya.damageDealt >= target.maxHp);
+  assert.equal(michiya.shieldingDone, 0);
+});
+
+test("一星好笑姐姐仍不能越费单挑二费斗士", () => {
+  const engine = createEngine(213);
+  engine.state.round = 3;
+  engine.state.playerLevel = 3;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "rift_stalker", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const michiya = battle?.player[0];
+  const target = battle?.enemy.find((fighter) => fighter.unitId === "rift_brawler");
+  assert.ok(battle && michiya && target);
+
+  battle.enemy
+    .filter((fighter) => fighter !== target)
+    .forEach((fighter) => {
+      fighter.alive = false;
+      fighter.hp = 0;
+    });
+  const targetStats = engine.getPlayerCombatStats({ uid: 99, id: "rift_brawler", star: 1 });
+  Object.assign(target, {
+    hp: targetStats.maxHp,
+    maxHp: targetStats.maxHp,
+    attack: targetStats.attack,
+    baseAttack: targetStats.attack,
+    armor: targetStats.armor,
+    range: targetStats.range,
+    baseRange: targetStats.range,
+    attackInterval: targetStats.attackInterval,
+    baseAttackInterval: targetStats.attackInterval,
+    moveSpeed: targetStats.moveSpeed,
+    baseMoveSpeed: targetStats.moveSpeed,
+    cooldown: 0,
+    dodgeChance: 0,
+    energy: 0,
+  });
+  michiya.x = 300;
+  michiya.y = 360;
+  michiya.jumpPending = false;
+  michiya.jumpTime = 0;
+  target.x = 620;
+  target.y = 360;
+
+  for (let tick = 0; tick < 400 && engine.state.phase === "battle"; tick += 1) {
+    engine.update(0.05);
+  }
+
+  assert.equal(engine.state.result?.won, false);
+  assert.equal(michiya.alive, false);
+  assert.equal(target.alive, true);
 });
 
 test("小岁鸟连续三次肘击会反复冲撞、击退并短暂眩晕敌人", () => {

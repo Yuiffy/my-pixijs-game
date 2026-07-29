@@ -115,7 +115,7 @@ test("突进、跃击与击退由引擎运动状态推进，仅保留明确设�
   assert.match(engine, /private updateAbilityMotion/);
   assert.match(engine, /private sweepGuangyiDash/);
   assert.match(engine, /motion\.hitFids\.includes/);
-  ["rift_stalker", "sui_bird", "guangyi", "biscuit_sui", "youyi", "akirinco", "mumu"].forEach((unitId) => {
+  ["sui_bird", "guangyi", "biscuit_sui", "youyi", "akirinco", "mumu"].forEach((unitId) => {
     const marker = `case "${unitId}":`;
     let searchFrom = 0;
     let usesMotion = false;
@@ -153,6 +153,11 @@ test("战斗同步覆盖投射物、技能效果与两类召唤物", () => {
   assert.match(scene, /projectile\.style === "carrot"/);
   assert.match(scene, /projectile\.style === "lollipop"/);
   assert.match(scene, /projectile\.style === "aoe_orb"/);
+  assert.match(scene, /projectile\.style === "laugh"/);
+  assert.match(engine, /style: "laugh"/);
+  assert.match(engine, /kind: "emoji_burst"/);
+  assert.match(scene, /effect\.kind === "emoji_burst"/);
+  assert.match(scene, /\.setScale\(0\.62 \+ progress \* 1\.48\)/);
   assert.match(scene, /effect\.kind === "line"/);
   assert.match(scene, /effect\.kind === "ring"/);
   assert.match(scene, /effect\.kind === "burst"/);

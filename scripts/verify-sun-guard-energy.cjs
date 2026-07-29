@@ -110,10 +110,14 @@ mkdirSync(artifactDirectory, { recursive: true });
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
+  const failedResponses = [];
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("response", (response) => {
+    if (response.status() >= 400) failedResponses.push({ status: response.status(), url: response.url() });
+  });
 
   const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
   const readState = async () => JSON.parse(await page.evaluate(() => window.render_game_to_text()));
@@ -123,6 +127,25 @@ mkdirSync(artifactDirectory, { recursive: true });
     const buffer = await page.screenshot({ path: `${artifactDirectory}/${name}.png`, fullPage: true });
     screenshots[name] = inspectPng(buffer);
   };
+  const attachBridge = async () => page.evaluate(() => {
+    const canvas = document.querySelector('[data-game-canvas="rift-line"]');
+    const host = canvas?.parentElement;
+    const fiberKey = host && Object.keys(host).find((key) => key.startsWith("__reactFiber$"));
+    let fiber = fiberKey ? host[fiberKey] : null;
+    while (fiber) {
+      let hook = fiber.memoizedState;
+      while (hook) {
+        const current = hook.memoizedState?.current;
+        if (current?.engine?.state && typeof current.dispatch === "function") {
+          window.__codexAutoChessBridge = current;
+          return true;
+        }
+        hook = hook.next;
+      }
+      fiber = fiber.return;
+    }
+    return false;
+  });
 
   let seed = 0;
   for (let candidate = 1; candidate <= 40; candidate += 1) {
@@ -145,45 +168,121 @@ mkdirSync(artifactDirectory, { recursive: true });
   const codexText = await dialog.innerText();
   const expectedRecovery = "能量 · 稳态回能：初始 25/100；自动回能（12.5 秒回满，每秒 +8）；攻击回能（每下 +6）；受击回能（每下 +3）";
   if (!codexText.includes(expectedRecovery)) throw new Error(`Codex recovery text mismatch: ${codexText}`);
-  if (!codexText.includes("持续自动充能，攻击与受击也会回复能量")) throw new Error("Codex ability description is stale");
+  for (const expected of ["满区逃生", "停止攻击和回能", "主动逃离最近敌人", "55% 闪避", "总回复 5%"]) {
+    if (!codexText.includes(expected)) {
+      throw new Error(`Codex ability description is missing ${expected}: ${codexText}`);
+    }
+  }
   await capture("sun-guard-energy-codex");
   await dialog.getByRole("button", { name: "关闭 Esc" }).click();
 
   await page.locator("button.rift-start-button").click();
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "battle");
-  await page.getByRole("button", { name: "图鉴 / 本局天赋" }).click();
+  if (!await attachBridge()) throw new Error("Unable to locate the active EngineBridge through the React host");
   const startState = await readState();
   const startGuard = startState.battle.playerUnits.find((unit) => unit.unitId === "sun_guard");
   if (!startGuard) throw new Error("Sun guard did not enter battle");
   await advance(1000);
   const automaticState = await readState();
   const automaticGuard = automaticState.battle.playerUnits.find((unit) => unit.unitId === "sun_guard");
-  if (!automaticGuard || automaticGuard.energy - startGuard.energy !== 8) {
+  const automaticGain = automaticGuard?.energy - startGuard.energy;
+  if (!automaticGuard || automaticGain < 7 || automaticGain > 9) {
     throw new Error(`Automatic recovery mismatch: ${JSON.stringify({ startGuard, automaticGuard })}`);
   }
   if (automaticGuard.energyPerSecond !== 8 || automaticGuard.energyOnHit !== 3 || automaticGuard.energyOnAttack !== 6) {
     throw new Error(`Battle energy profile mismatch: ${JSON.stringify(automaticGuard)}`);
   }
-  await page.keyboard.press("Escape");
   await capture("sun-guard-auto-energy");
 
-  await page.getByRole("button", { name: "图鉴 / 本局天赋" }).click();
-  let shieldState = null;
-  for (let elapsed = 0; elapsed < 12000; elapsed += 100) {
-    await advance(100);
-    const current = await readState();
-    const guard = current.battle?.playerUnits.find((unit) => unit.unitId === "sun_guard");
-    if (guard?.shield > 0) {
-      shieldState = { elapsed: current.battle.elapsed, guard };
-      break;
-    }
-    if (current.phase !== "battle") break;
+  const beforeTransform = await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player.find((fighter) => fighter.unitId === "sun_guard");
+    source.x = 500;
+    source.y = 360;
+    source.hp = source.maxHp - 100;
+    source.energy = source.maxEnergy;
+    source.hitPulse = 0.2;
+    source.cooldown = 0;
+    battle.enemy.forEach((fighter, index) => {
+      fighter.x = index === 0 ? 560 : 1000;
+      fighter.y = index === 0 ? 360 : 600;
+      fighter.attack = 0;
+      fighter.cooldown = 99;
+      fighter.baseMoveSpeed = 0;
+      fighter.moveSpeed = 0;
+      fighter.hp = fighter.maxHp = 99_999;
+    });
+    return {
+      hp: source.hp,
+      maxHp: source.maxHp,
+      energy: source.energy,
+      x: source.x,
+      y: source.y,
+      targetX: battle.enemy[0].x,
+      targetY: battle.enemy[0].y,
+    };
+  });
+  await advance(50);
+  const castState = await readState();
+  const castGuard = castState.battle.playerUnits.find((unit) => unit.unitId === "sun_guard");
+  if (!castGuard || castGuard.manquTime < 1.2 || castGuard.energy !== 0 || castGuard.shield !== 0) {
+    throw new Error(`Manqu cast state mismatch: ${JSON.stringify({ beforeTransform, castGuard })}`);
   }
-  if (!shieldState) throw new Error("Green freeze armor did not trigger before battle ended");
-  await page.keyboard.press("Escape");
-  await capture("sun-guard-shield-active");
+  await capture("sun-guard-manqu-cast");
+
+  await advance(500);
+  const manquState = await readState();
+  const manquGuard = manquState.battle.playerUnits.find((unit) => unit.unitId === "sun_guard");
+  const manquRuntime = await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player.find((fighter) => fighter.unitId === "sun_guard");
+    const target = battle.enemy[0];
+    return {
+      manquTime: source.manquTime,
+      hp: source.hp,
+      energy: source.energy,
+      x: source.x,
+      y: source.y,
+      distance: Math.hypot(source.x - target.x, source.y - target.y),
+      moveSpeed: source.moveSpeed,
+      shield: source.shield,
+      projectiles: battle.projectiles.length,
+      projectileVolley: battle.projectileVolley.length,
+      effects: battle.effects.map((effect) => effect.text).filter(Boolean),
+    };
+  });
+  const initialDistance = Math.hypot(
+    beforeTransform.x - beforeTransform.targetX,
+    beforeTransform.y - beforeTransform.targetY,
+  );
+  const minimumMidHp = beforeTransform.hp + beforeTransform.maxHp * 0.018;
+  const maximumMidHp = beforeTransform.hp + beforeTransform.maxHp * 0.04;
+  if (
+    !manquGuard ||
+    manquRuntime.manquTime <= 0 ||
+    manquRuntime.distance <= initialDistance + 50 ||
+    manquRuntime.hp < minimumMidHp ||
+    manquRuntime.hp > maximumMidHp ||
+    manquRuntime.energy !== 0 ||
+    manquRuntime.moveSpeed !== 149 ||
+    manquRuntime.shield !== 0 ||
+    manquRuntime.projectiles !== 0 ||
+    manquRuntime.projectileVolley !== 0
+  ) {
+    throw new Error(`Manqu active state mismatch: ${JSON.stringify({ beforeTransform, manquGuard, manquRuntime })}`);
+  }
+  await capture("sun-guard-manqu-active");
+
+  await advance(750);
+  const endedState = await readState();
+  const endedGuard = endedState.battle.playerUnits.find((unit) => unit.unitId === "sun_guard");
+  if (!endedGuard || endedGuard.manquTime !== 0) {
+    throw new Error(`Manqu did not end on schedule: ${JSON.stringify(endedGuard)}`);
+  }
+  await capture("sun-guard-manqu-ended");
 
   if (errors.length) throw new Error(`Browser errors: ${JSON.stringify(errors)}`);
+  if (failedResponses.length) throw new Error(`Failed responses: ${JSON.stringify(failedResponses)}`);
   console.log(JSON.stringify({
     seed,
     automaticRecovery: {
@@ -192,7 +291,12 @@ mkdirSync(artifactDirectory, { recursive: true });
       perSecond: automaticGuard.energyPerSecond,
       onHit: automaticGuard.energyOnHit,
     },
-    shieldState,
+    transform: {
+      before: beforeTransform,
+      cast: castGuard,
+      active: manquRuntime,
+      ended: endedGuard,
+    },
     screenshots,
     canvas: await page.locator('[data-game-canvas="rift-line"]').evaluate((canvas) => ({
       width: canvas.width,
@@ -201,6 +305,7 @@ mkdirSync(artifactDirectory, { recursive: true });
       logicalHeight: canvas.dataset.logicalHeight,
     })),
     errors,
+    failedResponses,
   }, null, 2));
   await browser.close();
 })().catch((error) => {

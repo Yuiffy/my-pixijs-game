@@ -311,7 +311,13 @@ export const drawEffects = (ctx: CanvasRenderingContext2D, state: GameState) => 
     const alpha = Math.max(0, effect.life / effect.maxLife);
     ctx.save();
     ctx.globalAlpha = alpha;
-    if (effect.kind === "line") {
+    if (effect.kind === "emoji_burst") {
+      ctx.globalAlpha = alpha ** 0.65;
+      ctx.font = `${(effect.size || 32) * (0.62 + progress * 1.48)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(effect.text || "😂", effect.x, effect.y);
+    } else if (effect.kind === "line") {
       const targetX = effect.x2 || effect.x;
       const targetY = effect.y2 || effect.y;
       const width = effect.size || 3;

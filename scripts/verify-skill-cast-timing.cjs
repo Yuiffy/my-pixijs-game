@@ -228,60 +228,89 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (michiya.motion || michiya.energy < michiya.maxEnergy) {
     throw new Error(`好笑姐姐在 240 距离外提前释放: ${JSON.stringify(michiya)}`);
   }
-  const beforeHop = await page.evaluate(() => {
+  const beforeShot = await page.evaluate(() => {
     const battle = window.__codexAutoChessBridge.engine.state.battle;
     const source = battle.player[0];
     const target = battle.enemy[0];
     target.x = source.x + 210;
     target.y = source.y;
     target.armor = 0;
-    return { sourceX: source.x, targetHp: target.hp, shield: source.shield };
+    return {
+      sourceX: source.x,
+      sourceMaxHp: source.maxHp,
+      targetHp: target.hp,
+      targetStun: target.stun,
+      shield: source.shield,
+    };
   });
-  await advance(180);
+  await advance(80);
   state = await readState();
   michiya = state.battle.playerUnits.find((unit) => unit.unitId === "rift_stalker");
-  const hopRuntime = await page.evaluate(() => {
+  const flightRuntime = await page.evaluate(() => {
     const battle = window.__codexAutoChessBridge.engine.state.battle;
     const source = battle.player[0];
     const target = battle.enemy[0];
     return {
       sourceX: source.x,
       targetHp: target.hp,
+      targetStun: target.stun,
       shield: source.shield,
       effects: battle.effects.map((effect) => effect.text).filter(Boolean),
+      projectiles: battle.projectiles.map((projectile) => ({
+        style: projectile.style,
+        emoji: projectile.emoji,
+        x: projectile.x,
+        y: projectile.y,
+      })),
     };
   });
-  if (michiya.motion?.kind !== "jump" || michiya.motion.abilityId !== "rift_stalker") {
-    throw new Error(`好笑姐姐进入近距离后未起跳: ${JSON.stringify({ michiya, hopRuntime })}`);
+  if (
+    michiya.motion ||
+    !flightRuntime.projectiles.some((projectile) => projectile.style === "laugh" && projectile.emoji === "😂")
+  ) {
+    throw new Error(`好笑姐姐进入近距离后未发射 😂 弹幕: ${JSON.stringify({ michiya, flightRuntime })}`);
   }
-  if (hopRuntime.sourceX <= beforeHop.sourceX || hopRuntime.targetHp !== beforeHop.targetHp || hopRuntime.shield !== beforeHop.shield) {
-    throw new Error(`好笑姐姐跳跃途中提前结算: ${JSON.stringify({ beforeHop, michiya, hopRuntime })}`);
+  if (
+    Math.abs(flightRuntime.sourceX - beforeShot.sourceX) > 12 ||
+    flightRuntime.targetHp !== beforeShot.targetHp ||
+    flightRuntime.targetStun !== beforeShot.targetStun ||
+    flightRuntime.shield !== beforeShot.shield
+  ) {
+    throw new Error(`好笑姐姐弹幕飞行途中提前结算或发生异常位移: ${JSON.stringify({ beforeShot, michiya, flightRuntime })}`);
   }
-  const midairScreenshot = await capture("skill-cast-rift-stalker-midair");
+  const flightScreenshot = await capture("skill-cast-rift-stalker-flight");
 
-  await advance(350);
+  await advance(180);
   state = await readState();
   michiya = state.battle.playerUnits.find((unit) => unit.unitId === "rift_stalker");
-  const landedRuntime = await page.evaluate(() => {
+  const impactRuntime = await page.evaluate(() => {
     const battle = window.__codexAutoChessBridge.engine.state.battle;
     const source = battle.player[0];
     const target = battle.enemy[0];
     return {
       targetHp: target.hp,
+      targetStun: target.stun,
       shield: source.shield,
       effects: battle.effects.map((effect) => effect.text).filter(Boolean),
+      effectKinds: battle.effects.map((effect) => ({ kind: effect.kind, text: effect.text })),
     };
   });
-  if (michiya.motion || landedRuntime.targetHp >= beforeHop.targetHp || landedRuntime.shield <= beforeHop.shield) {
-    throw new Error(`好笑姐姐落地未结算伤害与护盾: ${JSON.stringify({ beforeHop, michiya, landedRuntime })}`);
+  if (
+    michiya.motion ||
+    impactRuntime.targetHp >= beforeShot.targetHp ||
+    impactRuntime.targetStun <= 0 ||
+    impactRuntime.shield !== beforeShot.shield ||
+    !impactRuntime.effectKinds.some((effect) => effect.kind === "emoji_burst" && effect.text === "😂")
+  ) {
+    throw new Error(`好笑姐姐弹幕命中未结算伤害、眩晕与 😂 特效，或错误获得护盾: ${JSON.stringify({ beforeShot, michiya, impactRuntime })}`);
   }
   results.push({
     unitId: "rift_stalker",
     phase: state.phase,
     energy: michiya.energy,
     range: 240,
-    midair: { motion: "jump", ...hopRuntime, screenshot: midairScreenshot },
-    landed: { ...landedRuntime, screenshot: await capture("skill-cast-rift-stalker-landed") },
+    flight: { ...flightRuntime, screenshot: flightScreenshot },
+    impact: { ...impactRuntime, screenshot: await capture("skill-cast-rift-stalker-impact") },
   });
 
   const canvas = page.locator('[data-game-canvas="rift-line"]');

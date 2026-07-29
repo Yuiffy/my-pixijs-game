@@ -171,6 +171,18 @@ export const YUKISYO_EARLY_SHIELD_ENERGY_PROFILE: EnergyProfile = {
   color: "#d8b7ff",
 };
 
+export const RIFT_STALKER_OFFENSE_ENERGY_PROFILE: EnergyProfile = {
+  id: "automatic",
+  name: "笑点回能",
+  max: 100,
+  start: 40,
+  perSecond: 20,
+  onAttack: 0,
+  onHit: 0,
+  castRefund: 0,
+  color: "#c99cff",
+};
+
 export const describeEnergyRecovery = (profile: EnergyProfile) => {
   const sources = [
     profile.perSecond > 0 && `自动回能（${(profile.max / profile.perSecond).toFixed(1).replace(/\.0$/, "")} 秒回满，每秒 +${profile.perSecond}）`,
@@ -436,8 +448,8 @@ const COMBAT_PROFILES: Record<
   cinder_ram: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 185, moveSpeed: 52, abilityCastTiming: "offenseReady" },
   sui_bird: { attackType: "melee", energyProfile: ENERGY_PROFILES.flow, range: 56, moveSpeed: 75, abilityCastTiming: "engage" },
   tiandou: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 175, moveSpeed: 52, abilityCastTiming: "supportHeal" },
-  // engage：突进，满能量即放
-  rift_stalker: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 52, moveSpeed: 82, abilityCastTiming: "engage" },
+  // offenseReady：偷袭进场后，从近距离发射冷笑话弹幕
+  rift_stalker: { attackType: "melee", energyProfile: RIFT_STALKER_OFFENSE_ENERGY_PROFILE, range: 52, moveSpeed: 82, abilityCastTiming: "offenseReady" },
   guangyi: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 56, moveSpeed: 80, abilityCastTiming: "engage" },
   sui_cat: { attackType: "melee", energyProfile: ENERGY_PROFILES.automatic, range: 54, moveSpeed: 106, abilityCastTiming: "engage" },
   seki_boar_king: { attackType: "melee", energyProfile: ENERGY_PROFILES.steady_guard, range: 60, moveSpeed: 62, abilityCastTiming: "engage" },
@@ -514,7 +526,7 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
   sun_guard: unit({
     id: "sun_guard",
     name: "果冻风纪",
-    title: "灰泽满Hazel · 绿冻护甲",
+    title: "灰泽满Hazel · 满区逃生",
     glyph: "满",
     color: "#245f80",
     accent: "#7de2ff",
@@ -527,8 +539,25 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     range: 48,
     attackInterval: 1.18,
     moveSpeed: 44,
-    abilityName: "绿冻护甲",
-    abilityDescription: "持续自动充能，攻击与受击也会回复能量；能量满且受击时获得 30% 最大生命护盾。护盾破碎时向随机方向射出 5 枚钢镚弹幕。",
+    abilityName: "满区逃生",
+    abilityDescription: "持续自动充能，攻击与受击也会回复能量；能量满且受击时变成虫形“满区”，短暂停止攻击和回能，主动逃离最近敌人，并获得闪避和持续治疗。",
+    abilityLevels: [
+      {
+        summary: "1.25 秒 · 55% 闪避 · 总回复 5%",
+        description: "变成虫形“满区”1.25 秒；期间停止攻击和回能，增加 105 移速并主动逃离最近敌人，获得 55% 闪避，每秒回复 4% 最大生命。",
+        stats: { duration: 1.25, dodge: 0.55, healPerSecond: 0.04, moveSpeedBonus: 105 },
+      },
+      {
+        summary: "1.35 秒 · 60% 闪避 · 总回复 6.75%",
+        description: "变成虫形“满区”1.35 秒；期间停止攻击和回能，增加 115 移速并主动逃离最近敌人，获得 60% 闪避，每秒回复 5% 最大生命。",
+        stats: { duration: 1.35, dodge: 0.6, healPerSecond: 0.05, moveSpeedBonus: 115 },
+      },
+      {
+        summary: "1.5 秒 · 65% 闪避 · 总回复 9%",
+        description: "变成虫形“满区”1.5 秒；期间停止攻击和回能，增加 125 移速并主动逃离最近敌人，获得 65% 闪避，每秒回复 6% 最大生命。",
+        stats: { duration: 1.5, dodge: 0.65, healPerSecond: 0.06, moveSpeedBonus: 125 },
+      },
+    ],
     portrait: "/images/livers/hazel.png",
     portraitFocus: "top",
     shop: true,
@@ -589,14 +618,31 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     cost: 1,
     traits: ["assassin", "mystic"],
     hp: 146,
-    attack: 23,
+    attack: 26,
     armor: 8,
     range: 48,
     abilityRange: 240,
     attackInterval: 0.88,
     moveSpeed: 78,
     abilityName: "冷笑话",
-    abilityDescription: "跳向施法距离内最远的敌人，落地讲出冷笑话造成伤害，并把自己逗出护盾。",
+    abilityDescription: "向施法距离内最远的敌人发射 😂 冷笑话弹幕，命中造成伤害并短暂眩晕目标。",
+    abilityLevels: [
+      {
+        summary: "2.7 倍伤害 · 0.85 秒眩晕",
+        description: "发射 😂 冷笑话弹幕，命中造成 2.7 倍攻击伤害并眩晕 0.85 秒。",
+        stats: { damageMultiplier: 2.7, stunDuration: 0.85 },
+      },
+      {
+        summary: "3.1 倍伤害 · 1.05 秒眩晕",
+        description: "发射 😂 冷笑话弹幕，命中造成 3.1 倍攻击伤害并眩晕 1.05 秒。",
+        stats: { damageMultiplier: 3.1, stunDuration: 1.05 },
+      },
+      {
+        summary: "3.6 倍伤害 · 1.3 秒眩晕",
+        description: "发射 😂 冷笑话弹幕，命中造成 3.6 倍攻击伤害并眩晕 1.3 秒。",
+        stats: { damageMultiplier: 3.6, stunDuration: 1.3 },
+      },
+    ],
     portrait: "/images/livers/michiya.webp",
     portraitFocus: "top",
     shop: true,

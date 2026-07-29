@@ -370,6 +370,16 @@ test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   });
   assert.equal(data.UNIT_DEFS.sun_guard.name, "果冻风纪");
   assert.match(data.UNIT_DEFS.sun_guard.title, /灰泽满Hazel/);
+  assert.equal(data.UNIT_DEFS.sun_guard.abilityName, "满区逃生");
+  assert.deepEqual(
+    data.UNIT_DEFS.sun_guard.abilityLevels.map((level) => level.stats.duration),
+    [1.25, 1.35, 1.5],
+  );
+  assert.deepEqual(
+    data.UNIT_DEFS.sun_guard.abilityLevels.map((level) => level.stats.dodge),
+    [0.55, 0.6, 0.65],
+  );
+  assert.match(data.abilityDescriptionForStar(data.UNIT_DEFS.sun_guard, 1), /停止攻击和回能.*主动逃离.*55% 闪避.*每秒回复 4%/);
   assert.equal(data.UNIT_DEFS.sui_cat.name, "小猫拳");
   assert.match(data.UNIT_DEFS.sui_cat.title, /岁己SUI/);
   assert.equal(data.TRAITS.aegis, undefined);
@@ -439,7 +449,6 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   });
   const repeatableSustainUnits = [
     "sun_guard",
-    "rift_stalker",
     "mossback",
     "gale_archer",
     "seki_boar_king",
@@ -466,10 +475,10 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.perSecond, 8);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onAttack, 6);
   assert.equal(data.UNIT_DEFS.sun_guard.energyProfile.onHit, 3);
-  assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /持续自动充能.*攻击与受击也会回复能量.*30% 最大生命护盾/);
+  assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /持续自动充能.*攻击与受击也会回复能量.*满区.*闪避.*持续治疗/);
   assert.match(data.UNIT_DEFS.mossback.abilityDescription, /持续自动充能.*攻击与受击也会少量回复能量.*回复自身生命.*两名友军提供护盾/);
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /初始 25\/100.*自动回能（12\.5 秒回满，每秒 \+8）.*攻击回能（每下 \+6）.*受击回能（每下 \+3）/);
-  ["rift_stalker", "rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "shiori", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
+  ["rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "shiori", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
     const profile = data.UNIT_DEFS[id].energyProfile;
     assert.equal(profile.id, "automatic", `${id} should use automatic energy recovery`);
     assert.equal(profile.start, 20);
@@ -553,12 +562,25 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
 
-test("好笑姐姐使用近距离跳跃技能，不再描述为无过程闪现", () => {
+test("好笑姐姐使用近距离冷笑话弹幕，技能只保留攻击与控制属性", () => {
   const michiya = data.UNIT_DEFS.rift_stalker;
+  assert.equal(michiya.hp, 146);
+  assert.equal(michiya.attack, 26);
+  assert.equal(michiya.armor, 8);
   assert.equal(michiya.abilityRange, 240);
-  assert.equal(michiya.abilityCastTiming, "engage");
-  assert.match(michiya.abilityDescription, /跳向施法距离内/);
-  assert.doesNotMatch(michiya.abilityDescription, /闪到/);
+  assert.equal(michiya.abilityCastTiming, "offenseReady");
+  assert.equal(michiya.energyProfile.start, 40);
+  assert.equal(michiya.energyProfile.perSecond, 20);
+  assert.match(michiya.abilityDescription, /发射.*😂.*命中.*眩晕/);
+  assert.doesNotMatch(michiya.abilityDescription, /跳|突进|闪现|护盾/);
+  assert.deepEqual(
+    michiya.abilityLevels.map((level) => [
+      level.stats.damageMultiplier,
+      level.stats.stunDuration,
+    ]),
+    [[2.7, 0.85], [3.1, 1.05], [3.6, 1.3]],
+  );
+  assert.ok(michiya.abilityLevels.every((level) => level.stats.shieldRatio === undefined));
 });
 
 test("雪烛以高初始能量主动提供固定值加生命比例的四秒技能盾", async () => {

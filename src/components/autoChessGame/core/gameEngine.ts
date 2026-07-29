@@ -280,13 +280,13 @@ const LOVELY_CHANNEL_DURATION = 3.4;
 const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
 const LOVELY_CHANNEL_LIFESTEAL = 0.9;
 const LOVELY_CHANNEL_PULSE_INTERVAL = 0.32;
-/** 果冻风纪：护盾破碎钢镚弹幕 */
-const SUN_GUARD_COIN_COUNT = 5;
-const SUN_GUARD_COIN_SPEED = 380;
-const SUN_GUARD_COIN_RANGE = 480;
-const SUN_GUARD_COIN_DAMAGE = 0.72;
-const SUN_GUARD_COIN_RADIUS = 9;
-const SUN_GUARD_SHIELD_RATIO = 0.3;
+/** 果冻风纪：满区逃生的一级默认值；高星参数由单位数据覆盖。 */
+const SUN_GUARD_MANQU_DURATION = 1.25;
+const SUN_GUARD_MANQU_DODGE = 0.55;
+const SUN_GUARD_MANQU_HEAL_PER_SECOND = 0.04;
+const SUN_GUARD_MANQU_MOVE_SPEED_BONUS = 105;
+/** 好笑姐姐：偷袭负责进场，冷笑话只负责近距离弹幕爆发。 */
+const RIFT_STALKER_LAUGH_SPEED = 1200;
 /** 雅吨辣福：打翻火锅灼烧范围 */
 const RIFT_BRAWLER_HOTPOT_RADIUS = 98;
 const RIFT_BRAWLER_SELF_BURN = 0.85;
@@ -700,6 +700,7 @@ export class AutoChessEngine {
       energyStyle: fighter.energyStyle,
       reborn: fighter.reborn,
       rebirthRecoilTime: Number(fighter.rebirthRecoilTime.toFixed(2)),
+      manquTime: Number(fighter.manquTime.toFixed(2)),
       stealthTime: Number(fighter.stealthTime.toFixed(2)),
       sumiDragonReady: fighter.sumiDragonReady,
       stun: Number(fighter.stun.toFixed(2)),
@@ -1379,6 +1380,7 @@ export class AutoChessEngine {
         secondWindUsed: false,
         reborn: false,
         rebirthRecoilTime: 0,
+        manquTime: 0,
         stealthTime: 0,
         sumiDragonReady: false,
         enraged: false,
@@ -1562,6 +1564,7 @@ export class AutoChessEngine {
         secondWindUsed: false,
         reborn: false,
         rebirthRecoilTime: 0,
+        manquTime: 0,
         stealthTime: 0,
         sumiDragonReady: false,
         enraged: false,
@@ -2291,19 +2294,6 @@ export class AutoChessEngine {
     const accent = UNIT_DEFS[source.unitId].accent;
 
     switch (motion.abilityId) {
-      case "rift_stalker":
-        if (target) this.dealAbilityDamage(source, target, 1.4);
-        this.grantShield(source, source, source.maxHp * 0.12, 0.32);
-        this.addEffect({
-          kind: "text",
-          x: source.x,
-          y: source.y - 44,
-          color: accent,
-          text: "冷笑话落地",
-          life: 0.64,
-          size: 11,
-        });
-        break;
       case "shiori":
         livingTargets
           .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < SHIORI_OTTER_RADIUS)
@@ -2627,6 +2617,44 @@ export class AutoChessEngine {
       fighter.progressWindowTime = 0;
     }
     return true;
+  }
+
+  private updateManquEscape(
+    fighter: Fighter,
+    targets: Fighter[],
+    dt: number,
+    movementIntents: Map<string, MovementIntent>,
+  ) {
+    const target = this.nearestTarget(fighter, targets);
+    if (!target) return;
+    const distance = Math.hypot(fighter.x - target.x, fighter.y - target.y);
+    const awayAngle = distance > 0.001
+      ? Math.atan2(fighter.y - target.y, fighter.x - target.x)
+      : fighter.team === "player" ? Math.PI : 0;
+    const travel = fighter.moveSpeed * (fighter.slowTime > 0 ? 0.55 : 1) * dt;
+    const candidates = [0, -Math.PI / 4, Math.PI / 4, -Math.PI / 2, Math.PI / 2]
+      .map((offset) => {
+        const angle = awayAngle + offset;
+        const point = this.clampFighterPosition(fighter, {
+          x: fighter.x + Math.cos(angle) * travel,
+          y: fighter.y + Math.sin(angle) * travel,
+        });
+        const moved = Math.hypot(point.x - fighter.x, point.y - fighter.y);
+        return {
+          point,
+          moved,
+          distance: Math.hypot(point.x - target.x, point.y - target.y),
+        };
+      })
+      .sort((left, right) => right.distance - left.distance || right.moved - left.moved);
+    const best = candidates[0];
+    if (!best || best.moved < 0.001) return;
+    const motionX = (best.point.x - fighter.x) / best.moved;
+    const motionY = (best.point.y - fighter.y) / best.moved;
+    fighter.x = best.point.x;
+    fighter.y = best.point.y;
+    movementIntents.set(fighter.fid, { x: motionX, y: motionY });
+    this.faceTowardX(fighter, fighter.x + motionX);
   }
 
   private prepareAssassinJump(fighter: Fighter, battle: BattleState) {
@@ -3109,7 +3137,9 @@ export class AutoChessEngine {
       velocityY: Math.sin(baseAngle) * shot.speed,
       radius: shot.style === "sumi_dragon"
         ? SUMI_DRAGON_PROJECTILE_RADIUS
-        : shot.emoji || shot.style === "carrot" || shot.style === "shark" || shot.style === "coin" ? 9 : 7,
+        : shot.style === "laugh"
+          ? 18
+          : shot.emoji || shot.style === "carrot" || shot.style === "shark" || shot.style === "coin" ? 9 : 7,
       remainingRange: 880,
       damage: shot.damage,
       damageKind: shot.damageKind,
@@ -3120,50 +3150,6 @@ export class AutoChessEngine {
       emoji: shot.emoji,
       splashRadius: shot.splashRadius,
       stunDuration: shot.stunDuration,
-    });
-  }
-
-  /** 果冻风纪护盾破碎：向随机方向射出钢镚 */
-  private fireSunGuardCoins(source: Fighter) {
-    const battle = this.state.battle;
-    if (!battle || !source.alive) return;
-    const def = UNIT_DEFS.sun_guard;
-    for (let index = 0; index < SUN_GUARD_COIN_COUNT; index += 1) {
-      const angle = this.rng.next() * Math.PI * 2;
-      battle.projectiles.push({
-        sourceFid: source.fid,
-        team: source.team,
-        x: source.x,
-        y: source.y,
-        velocityX: Math.cos(angle) * SUN_GUARD_COIN_SPEED,
-        velocityY: Math.sin(angle) * SUN_GUARD_COIN_SPEED,
-        radius: SUN_GUARD_COIN_RADIUS,
-        remainingRange: SUN_GUARD_COIN_RANGE,
-        damage: source.attack * SUN_GUARD_COIN_DAMAGE,
-        damageKind: "ability",
-        burnPower: 0,
-        color: def.accent,
-        size: 10,
-        style: "coin",
-        emoji: "🪙",
-      });
-    }
-    this.addEffect({
-      kind: "burst",
-      x: source.x,
-      y: source.y,
-      color: def.accent,
-      life: 0.55,
-      size: 64,
-    });
-    this.addEffect({
-      kind: "text",
-      x: source.x,
-      y: source.y - 40,
-      color: def.accent,
-      text: "钢镚",
-      life: 0.65,
-      size: 12,
     });
   }
 
@@ -3508,6 +3494,18 @@ export class AutoChessEngine {
           }
         });
         this.addEffect({ kind: "burst", x: projectile.x, y: projectile.y, color: projectile.color, life: 0.3, size: projectile.size * 5 });
+        if (projectile.style === "laugh") {
+          this.addEffect({
+            kind: "emoji_burst",
+            x: projectile.x,
+            y: projectile.y,
+            color: projectile.color,
+            text: "😂",
+            emoji: true,
+            life: 0.62,
+            size: 32,
+          });
+        }
         return false;
       }
       projectile.x = endX;
@@ -3615,9 +3613,18 @@ export class AutoChessEngine {
         const abilityMoveSpeed = fighter.barrageActive || fighter.abilityMoveSpeedTime > 0
           ? fighter.abilityMoveSpeed
           : 0;
+        const manquMoveSpeed = fighter.manquTime > 0
+          ? abilityStatForStar(
+            UNIT_DEFS.sun_guard,
+            fighter.star,
+            "moveSpeedBonus",
+            SUN_GUARD_MANQU_MOVE_SPEED_BONUS,
+          )
+          : 0;
         fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
           (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) * syncMultiplier);
-        fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed) * matureMoveMultiplier * nearbyMultiplier;
+        fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed + manquMoveSpeed) *
+          matureMoveMultiplier * nearbyMultiplier;
         fighter.range = fighter.baseRange * syncMultiplier;
         if (fighter.barrageActive && fighter.unitId === "cinder_ram") fighter.range = CINDER_RAM_SONG_RANGE;
         fighter.matureAttackSpeedCurrent = matureAttackSpeed;
@@ -3817,6 +3824,8 @@ export class AutoChessEngine {
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
+      const manquActiveTime = Math.min(dt, fighter.manquTime);
+      fighter.manquTime = Math.max(0, fighter.manquTime - dt);
       const wasStealthed = fighter.stealthTime > 0;
       if (fighter.unitId === "sumi" && fighter.sumiDragonReady && wasStealthed) {
         const drainPerSecond = fighter.maxEnergy / SUMI_STEALTH_DURATION;
@@ -4011,7 +4020,27 @@ export class AutoChessEngine {
         }
         return;
       }
-      if (!fighter.alive || fighter.stun > 0) return;
+      if (!fighter.alive) return;
+      if (manquActiveTime > 0) {
+        const healPerSecond = abilityStatForStar(
+          UNIT_DEFS.sun_guard,
+          fighter.star,
+          "healPerSecond",
+          SUN_GUARD_MANQU_HEAL_PER_SECOND,
+        );
+        this.heal(fighter, fighter, fighter.maxHp * healPerSecond * manquActiveTime, false);
+      }
+      if (fighter.stun > 0) return;
+      if (manquActiveTime > 0) {
+        const targetTeam: Team = fighter.team === "player" ? "enemy" : "player";
+        this.updateManquEscape(
+          fighter,
+          this.living(targetTeam),
+          manquActiveTime,
+          movementIntents,
+        );
+        return;
+      }
       if (!fighter.barrageActive && fighter.energyPerSecond > 0 && !(fighter.unitId === "sumi" && wasStealthed)) {
         this.addEnergy(fighter, fighter.energyPerSecond * dt);
       }
@@ -4478,7 +4507,22 @@ export class AutoChessEngine {
         break;
       }
       case "sun_guard": {
-        this.grantShield(source, source, source.maxHp * SUN_GUARD_SHIELD_RATIO, 0.55);
+        source.manquTime = abilityStatForStar(
+          def,
+          source.star,
+          "duration",
+          SUN_GUARD_MANQU_DURATION,
+        );
+        source.targetFid = null;
+        source.targetLock = 0;
+        this.addEffect({
+          kind: "burst",
+          x: source.x,
+          y: source.y,
+          color: def.accent,
+          life: 0.5,
+          size: 54,
+        });
         break;
       }
       case "ember_blade": {
@@ -4521,22 +4565,21 @@ export class AutoChessEngine {
       case "rift_stalker": {
         const target = farthest(targets);
         if (!target) break;
-        const motion = this.startAbilityMotion(
-          source,
-          "jump",
-          { x: target.x + (source.team === "player" ? -36 : 36), y: target.y },
-          { targetFid: target.fid, duration: 0.42, arcHeight: 64 },
-        );
-        if (!motion) break;
-        this.addEffect({
-          kind: "ring",
-          x: motion.toX,
-          y: motion.toY,
+        this.fireFixedProjectile(source, target, {
+          sourceFid: source.fid,
+          targetFid: target.fid,
+          delay: 0,
+          damage: source.attack * abilityStatForStar(def, source.star, "damageMultiplier", 2.7),
+          damageKind: "ability",
+          burnPower: 0,
+          speed: RIFT_STALKER_LAUGH_SPEED,
           color: def.accent,
-          life: motion.duration,
-          size: 48,
+          size: 24,
+          style: "laugh",
+          emoji: "😂",
+          stunDuration: abilityStatForStar(def, source.star, "stunDuration", 0.85),
         });
-        this.addEffect({ kind: "text", x: source.x, y: source.y - 42, color: def.accent, text: "冷笑话起跳", life: 0.48, size: 10 });
+        this.addEffect({ kind: "text", x: source.x, y: source.y - 42, color: def.accent, text: "冷笑话", life: 0.48, size: 11 });
         break;
       }
       case "cog_scribe": {
@@ -5174,6 +5217,7 @@ export class AutoChessEngine {
       abilityAttackSpeedTime: 0,
       abilityMoveSpeed: 0,
       abilityMoveSpeedTime: 0,
+      manquTime: 0,
       armor: original.armor - original.abilityArmorBonus,
       abilityArmorBonus: 0,
       slowTime: 0,
@@ -5251,7 +5295,6 @@ export class AutoChessEngine {
     if (shieldBroken) {
       target.shield = 0;
       target.shieldPeak = 0;
-      if (target.unitId === "sun_guard") this.fireSunGuardCoins(target);
     }
     return { remaining, absorbed };
   }
@@ -5266,7 +5309,16 @@ export class AutoChessEngine {
     if ((!source.alive && !allowInactiveSource) || !target.alive) return 0;
     this.markFightersEngaged(source, target);
     const effectiveDodge =
-      target.dodgeChance + (target.danceDashTime > 0 ? target.danceDashDodge : 0);
+      target.dodgeChance +
+      (target.danceDashTime > 0 ? target.danceDashDodge : 0) +
+      (target.manquTime > 0
+        ? abilityStatForStar(
+          UNIT_DEFS.sun_guard,
+          target.star,
+          "dodge",
+          SUN_GUARD_MANQU_DODGE,
+        )
+        : 0);
     const dodged = effectiveDodge > 0 && this.rng.next() < effectiveDodge;
     if (dodged) {
       this.addEffect({ kind: "text", x: target.x, y: target.y - 38, color: "#d9e6f4", text: "闪避", life: 0.55, size: 12 });

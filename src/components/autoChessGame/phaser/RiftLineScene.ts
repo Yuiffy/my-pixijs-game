@@ -40,6 +40,7 @@ import {
   createCircularProjectileTextures,
   createCircularPortraitTextures,
   createFallbackTextures,
+  HAZEL_MANQU_TEXTURE_KEY,
   preloadUnitPortraits,
   SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY,
   textureKeyForUnit,
@@ -208,6 +209,7 @@ const projectileEmoji = (projectile: Projectile) => {
   if (projectile.style === "coin") return "🪙";
   if (projectile.style === "lollipop") return "🍭";
   if (projectile.style === "fireball") return "🔥";
+  if (projectile.style === "laugh") return "😂";
   return "";
 };
 
@@ -1954,13 +1956,25 @@ export class RiftLineScene extends Phaser.Scene {
       : groundMotion && abilityMotion
         ? Math.sin((abilityMotion.time / Math.max(abilityMotion.duration, 0.001)) * Math.PI)
         : 0;
+    const manquPulse = fighter.manquTime > 0
+      ? Math.sin(this.bridge.engine.state.visualTime * 15) * 0.045
+      : 0;
     portrait
       .setScale(
-        growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08),
-        growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12),
+        growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08 + manquPulse),
+        growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12 - manquPulse),
       )
       .setAngle(groundMotion ? fighter.facingX * motionPulse * 7 : 0)
       .setAlpha(fighter.stun > 0 ? 0.72 : 1);
+    const normalPortraitKey = UNIT_DEFS[fighter.unitId].portraitStyle === "sprite"
+      ? textureKeyForUnit(fighter.unitId)
+      : circularTextureKeyForUnit(fighter.unitId);
+    const portraitKey = fighter.unitId === "sun_guard" && fighter.manquTime > 0
+      ? HAZEL_MANQU_TEXTURE_KEY
+      : normalPortraitKey;
+    if (portraitImage.texture.key !== portraitKey && this.textures.exists(portraitKey)) {
+      portraitImage.setTexture(portraitKey);
+    }
     portraitImage.setFlipX(fighter.facingX < 0);
     shadow.setPosition(-attackOffsetX, radius * 0.8 + jumpArc - attackOffsetY).setScale(growth, growth);
     hp.width = radius * 2.25 * Math.max(0, fighter.hp / fighter.maxHp);
@@ -2016,7 +2030,7 @@ export class RiftLineScene extends Phaser.Scene {
     status.setY(-radius - 8);
     const statusColor = fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e";
     if (status.style.color !== statusColor) status.setColor(statusColor);
-    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}${fighter.abilityShield > 0 ? " ◆" : ""}`);
+    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.manquTime > 0 ? " · 满区" : ""}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}` : ""}${fighter.shield > 0 ? " ◇" : ""}${fighter.abilityShield > 0 ? " ◆" : ""}`);
     star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
   }
 
@@ -2313,7 +2327,7 @@ export class RiftLineScene extends Phaser.Scene {
     } = this.effectViewParts.get(view)!;
     graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     burstGradient.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL).setAlpha(1).clearTint();
-    label.setVisible(false).setAlpha(1).setRotation(0);
+    label.setVisible(false).setAlpha(1).setRotation(0).setScale(1);
   }
 
   private updateEffect(view: Phaser.GameObjects.Container, effect: BattleEffect) {
@@ -2332,12 +2346,23 @@ export class RiftLineScene extends Phaser.Scene {
       .setAlpha(viewAlpha)
       .setRotation(0)
       .setDepth(DEPTH.effects + effect.y + 1);
+    if (effect.kind === "emoji_burst") {
+      label
+        .setText(effect.text || "😂")
+        .setFontFamily(PROJECTILE_EMOJI_FONT)
+        .setFontSize(effect.size || 32)
+        .setY(0)
+        .setScale(0.62 + progress * 1.48)
+        .setVisible(true);
+      return;
+    }
     if (effect.kind === "text" || effect.kind === "heal") {
       label
         .setText(effect.text || "")
         .setFontFamily(effect.emoji ? PROJECTILE_EMOJI_FONT : FONT_FAMILY)
         .setFontSize(effect.size || 14)
         .setY(-progress * 26)
+        .setScale(1)
         .setVisible(true);
       if (label.style.color !== effect.color) label.setColor(effect.color);
       return;
