@@ -159,6 +159,18 @@ export const REI_SLOW_ENERGY_PROFILE: EnergyProfile = {
   color: "#e8b5ff",
 };
 
+export const LIAN_FINALE_ENERGY_PROFILE: EnergyProfile = {
+  id: "reservoir",
+  name: "谢幕蓄势",
+  max: 120,
+  start: 0,
+  perSecond: 6,
+  onAttack: 8,
+  onHit: 4,
+  castRefund: 0,
+  color: "#e3b2ff",
+};
+
 export const YUKISYO_EARLY_SHIELD_ENERGY_PROFILE: EnergyProfile = {
   id: "automatic",
   name: "镇式回能",

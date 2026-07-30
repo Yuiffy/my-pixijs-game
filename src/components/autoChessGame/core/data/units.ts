@@ -1,4 +1,4 @@
-import { ENERGY_PROFILES, REI_SLOW_ENERGY_PROFILE, RIFT_STALKER_OFFENSE_ENERGY_PROFILE, SHOP_UNIT_IDS, ShopUnitId, UnitDefinition, UnitId, WARM_SUPPORT_ENERGY_PROFILE, YUKISYO_EARLY_SHIELD_ENERGY_PROFILE } from "./types";
+import { ENERGY_PROFILES, LIAN_FINALE_ENERGY_PROFILE, REI_SLOW_ENERGY_PROFILE, RIFT_STALKER_OFFENSE_ENERGY_PROFILE, SHOP_UNIT_IDS, ShopUnitId, UnitDefinition, UnitId, WARM_SUPPORT_ENERGY_PROFILE, YUKISYO_EARLY_SHIELD_ENERGY_PROFILE } from "./types";
 
 const COMBAT_PROFILES: Record<
   UnitId,
@@ -52,7 +52,7 @@ const COMBAT_PROFILES: Record<
   xuehui: { attackType: "melee", energyProfile: ENERGY_PROFILES.tempo, range: 56, moveSpeed: 58, abilityCastTiming: "offenseInRange" },
   tower_god: { attackType: "melee", energyProfile: ENERGY_PROFILES.reservoir, range: 52, moveSpeed: 48, abilityCastTiming: "offenseReady" },
   rei: { attackType: "ranged", energyProfile: REI_SLOW_ENERGY_PROFILE, range: 225, moveSpeed: 54, abilityCastTiming: "offenseReady" },
-  lian: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
+  lian: { attackType: "ranged", energyProfile: LIAN_FINALE_ENERGY_PROFILE, range: 215, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   pako: { attackType: "ranged", energyProfile: ENERGY_PROFILES.flow, range: 195, moveSpeed: 50, abilityCastTiming: "supportHeal" },
   miki_guest: { attackType: "ranged", energyProfile: ENERGY_PROFILES.reservoir, range: 230, moveSpeed: 56, abilityCastTiming: "offenseReady" },
   hatsuse_guest: { attackType: "ranged", energyProfile: ENERGY_PROFILES.tempo, range: 225, moveSpeed: 62, abilityCastTiming: "offenseReady" },
@@ -1142,13 +1142,13 @@ tier: 5,
 cost: 5,
     traits: ["mystic", "dance", "chuanmei", "finance"],
 hp: 252,
-attack: 43,
+attack: 39,
 armor: 18,
 range: 225,
 attackInterval: 0.8,
 moveSpeed: 70,
     abilityName: "终场谢幕",
-abilityDescription: "轰击施法距离内敌人最密集处，对落点范围内敌人造成伤害，并为同一范围内友军补充能量。",
+abilityDescription: "轰击施法距离内敌人最密集处，对落点范围内所有敌人造成大量伤害。",
     portrait: "/images/livers/lian.jpg",
 portraitFocus: "top",
 shop: true,

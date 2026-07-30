@@ -884,6 +884,32 @@ test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊",
   await access(path.resolve("public", pako.portrait.slice(1)));
 });
 
+test("梨安保留高速普攻并以少量普攻回能蓄势高伤害终场谢幕", () => {
+  const lian = data.UNIT_DEFS.lian;
+  assert.equal(lian.attack, 39);
+  assert.equal(lian.attackInterval, 0.8);
+  assert.deepEqual(
+    {
+      name: lian.energyProfile.name,
+      max: lian.energyProfile.max,
+      start: lian.energyProfile.start,
+      perSecond: lian.energyProfile.perSecond,
+      onAttack: lian.energyProfile.onAttack,
+      onHit: lian.energyProfile.onHit,
+    },
+    {
+      name: "谢幕蓄势",
+      max: 120,
+      start: 0,
+      perSecond: 6,
+      onAttack: 8,
+      onHit: 4,
+    },
+  );
+  assert.match(lian.abilityDescription, /所有敌人造成大量伤害/);
+  assert.doesNotMatch(lian.abilityDescription, /友军|补充能量/);
+});
+
 test("理财与流量羁绊拥有完整的经济成员池", () => {
   assert.deepEqual(data.TRAITS.finance.thresholds, [2, 4]);
   assert.match(data.TRAITS.finance.bonuses[0], /额外获得 2 金币/);

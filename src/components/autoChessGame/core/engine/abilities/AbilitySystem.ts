@@ -323,7 +323,7 @@ export class AbilitySystem {
           y: source.y,
           color: GALE_ARCHER_SWITCH_COLOR,
           life: 1,
-          size: 58,
+          size: 42,
           text: "ON",
         });
         break;

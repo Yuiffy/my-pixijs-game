@@ -48,8 +48,6 @@ const PAKO_ANGEL_FISH_FIELD_COLOR = "#6ff0b5";
 const PAKO_ANGEL_FISH_HIGHLIGHT_COLOR = "#d9fff0";
 const LIAN_FINALE_RADIUS = 140;
 const LIAN_FINALE_STAGE_LIFETIME = 0.58;
-const LIAN_FINALE_ENERGY_LIFETIME = 0.46;
-const LIAN_FINALE_LINK_LIFETIME = 0.36;
 const REMOTE_AOE_DELIVERIES: Partial<
   Record<
     UnitId,
@@ -430,35 +428,7 @@ export class CombatProjectileSystem {
               Math.hypot(target.x - center.x, target.y - center.y) <=
               LIAN_FINALE_RADIUS,
           )
-          .forEach((target) => deal(target, 1.55));
-        allies
-          .filter(
-            (ally) =>
-              Math.hypot(ally.x - center.x, ally.y - center.y) <=
-              LIAN_FINALE_RADIUS,
-          )
-          .forEach((ally) => {
-            this.host.addEnergy(ally, 15);
-            this.addEffect({
-              kind: "line",
-              x: center.x,
-              y: center.y,
-              x2: ally.x,
-              y2: ally.y,
-              color: "#f2c9ff",
-              life: LIAN_FINALE_LINK_LIFETIME,
-              size: 3,
-            });
-            this.addEffect({
-              kind: "energy_pulse",
-              x: ally.x,
-              y: ally.y,
-              color: def.accent,
-              text: "+15 能量",
-              life: LIAN_FINALE_ENERGY_LIFETIME,
-              size: Math.max(48, ally.radius * 2.8),
-            });
-          });
+          .forEach((target) => deal(target, 1.8));
         this.addEffect({
           kind: "finale",
           x: center.x,

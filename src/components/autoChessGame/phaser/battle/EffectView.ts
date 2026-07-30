@@ -231,10 +231,10 @@ export class EffectViewRenderer {
           .lineBetween(target.x, target.y - spark, target.x, target.y + spark);
       }
     } else if (effect.kind === "switch_on") {
-      const radius = effect.size || 58;
+      const radius = effect.size || 42;
       const pulse = 0.9 + Math.sin(progress * Math.PI * 4) * 0.08;
-      const knobX = -14 + Math.min(1, progress * 2.8) * 28;
-      const switchY = -82;
+      const knobX = -10 + Math.min(1, progress * 2.8) * 20;
+      const switchY = -77;
       graphics
         .setBlendMode(Phaser.BlendModes.SCREEN)
         .fillStyle(color, 0.13)
@@ -242,19 +242,19 @@ export class EffectViewRenderer {
         .lineStyle(3.5 * (1 - progress) + 1.2, 0xe8c5ff, 0.9)
         .strokeCircle(0, 0, radius * (0.42 + progress * 0.72))
         .fillStyle(0x2b123d, 0.98)
-        .fillRoundedRect(-34, switchY - 17, 68, 34, 17)
-        .lineStyle(2.5, color, 1)
-        .strokeRoundedRect(-34, switchY - 17, 68, 34, 17)
+        .fillRoundedRect(-24, switchY - 12, 48, 24, 12)
+        .lineStyle(2, color, 1)
+        .strokeRoundedRect(-24, switchY - 12, 48, 24, 12)
         .fillStyle(0xf2ddff, 1)
-        .fillCircle(knobX, switchY, 12)
-        .lineStyle(2, 0xffffff, 0.9)
-        .strokeCircle(knobX, switchY, 12);
+        .fillCircle(knobX, switchY, 8)
+        .lineStyle(1.5, 0xffffff, 0.9)
+        .strokeCircle(knobX, switchY, 8);
       label
         .setText(effect.text || "ON")
         .setFontFamily(FONT_FAMILY)
-        .setFontSize(11)
+        .setFontSize(9)
         .setColor("#ffffff")
-        .setPosition(-11, switchY)
+        .setPosition(-8, switchY)
         .setOrigin(0.5)
         .setScale(1 + Math.sin(progress * Math.PI) * 0.1)
         .setVisible(true);

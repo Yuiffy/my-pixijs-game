@@ -204,6 +204,10 @@ const attachEngine = async (page) => {
       [...battle.player, ...battle.enemy].forEach((fighter) => {
         fighter.energy = 0;
         fighter.attack = fighter.team === "enemy" ? 0 : fighter.attack;
+        if (fighter.team === "enemy") {
+          fighter.hp = fighter.maxHp = 99_999;
+          fighter.armor = 0;
+        }
         fighter.cooldown = 99;
         fighter.dodgeChance = 0;
         fighter.moveSpeed = 0;
@@ -219,8 +223,10 @@ const attachEngine = async (page) => {
       const delivery = battle.projectiles.find((projectile) => projectile.impactAbilityId === "lian");
       return {
         lianFid: lian.fid,
+        lianAttack: lian.attack,
         impactAllyFid: allies[0].fid,
         outsideAllyFids: allies.slice(1).map((fighter) => fighter.fid),
+        enemyHpBefore: battle.enemy.map((fighter) => ({ fid: fighter.fid, hp: fighter.hp })),
         delivery: delivery && {
           style: delivery.style,
           x: Number(delivery.x.toFixed(1)),
@@ -251,24 +257,29 @@ const attachEngine = async (page) => {
         projectileRemaining: battle.projectiles.some((projectile) => projectile.impactAbilityId === "lian"),
         finaleCount: battle.effects.filter((effect) => effect.kind === "finale").length,
         energyPulseCount: battle.effects.filter((effect) => effect.kind === "energy_pulse").length,
-        energyPulsePositions: battle.effects
-          .filter((effect) => effect.kind === "energy_pulse")
-          .map((effect) => ({ x: effect.x, y: effect.y, maxLife: effect.maxLife })),
-        energyLabels: battle.effects
-          .filter((effect) => effect.kind === "energy_pulse")
-          .map((effect) => effect.text),
         energies: battle.player.map((fighter) => ({ fid: fighter.fid, energy: fighter.energy })),
+        enemyHpAfter: battle.enemy.map((fighter) => ({ fid: fighter.fid, hp: fighter.hp })),
       };
     });
     assert.equal(impact.projectileRemaining, false);
     assert.equal(impact.finaleCount, 1);
-    assert.equal(impact.energyPulseCount, 1);
-    assert.ok(impact.energyLabels.every((label) => label === "+15 能量"));
-    assert.ok(impact.energyPulsePositions.every((effect) => effect.maxLife === 0.46));
-    assert.equal(impact.energies.find((fighter) => fighter.fid === setup.impactAllyFid)?.energy, 15);
+    assert.equal(impact.energyPulseCount, 0);
+    assert.equal(impact.energies.find((fighter) => fighter.fid === setup.impactAllyFid)?.energy, 0);
     assert.ok(setup.outsideAllyFids.every((fid) =>
       impact.energies.find((fighter) => fighter.fid === fid)?.energy === 0
     ));
+    const damagedEnemies = impact.enemyHpAfter.filter((fighter) => {
+      const before = setup.enemyHpBefore.find((candidate) => candidate.fid === fighter.fid);
+      return before && fighter.hp < before.hp;
+    });
+    assert.ok(damagedEnemies.length >= 2);
+    damagedEnemies.forEach((fighter) => {
+      const before = setup.enemyHpBefore.find((candidate) => candidate.fid === fighter.fid);
+      assert.equal(
+        Number((before.hp - fighter.hp).toFixed(6)),
+        Number((setup.lianAttack * 1.8).toFixed(6)),
+      );
+    });
 
     const textState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
     assert.equal(textState.phase, "battle");
@@ -303,11 +314,10 @@ const attachEngine = async (page) => {
       for (let frame = 0; frame < 7; frame += 1) engine.update(0.05);
       bridge.dispatch({ type: "clearSelection" });
       return battle.effects.filter((effect) =>
-        ["finale", "energy_pulse"].includes(effect.kind) ||
-        (effect.kind === "line" && effect.maxLife === 0.36)
+        effect.kind === "finale"
       ).map((effect) => ({ kind: effect.kind, life: effect.life, maxLife: effect.maxLife }));
     });
-    assert.deepEqual(fading.map((effect) => effect.kind).sort(), ["energy_pulse", "finale", "line"]);
+    assert.deepEqual(fading.map((effect) => effect.kind), ["finale"]);
     await capture("lian-finale-impact-350ms.png");
 
     const settled = await page.evaluate(() => {
@@ -317,8 +327,7 @@ const attachEngine = async (page) => {
       for (let frame = 0; frame < 7; frame += 1) engine.update(0.05);
       bridge.dispatch({ type: "clearSelection" });
       return battle.effects.filter((effect) =>
-        ["finale", "energy_pulse"].includes(effect.kind) ||
-        (effect.kind === "line" && effect.maxLife === 0.36)
+        effect.kind === "finale"
       ).length;
     });
     assert.equal(settled, 0);

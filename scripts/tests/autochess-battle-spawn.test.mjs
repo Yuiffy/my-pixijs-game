@@ -2111,7 +2111,7 @@ test("南町依次扔出三枚慢速烟头，每枚命中造成伤害与灼烧�
   assert.ok(battle.effects.some((effect) => effect.text === "灼烧"));
 });
 
-test("梨安终场谢幕只让落点范围内友军回能，并快速收束瞬发视觉", () => {
+test("梨安终场谢幕造成高额范围伤害且不再为友军回能", () => {
   const engine = createEngine(264);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -2144,6 +2144,9 @@ test("梨安终场谢幕只让落点范围内友军回能，并快速收束瞬�
     target.attack = 0;
     target.cooldown = 99;
   });
+  const enemyHpBefore = new Map(
+    battle.enemy.map((target) => [target.fid, target.hp]),
+  );
   battle.effects = [];
 
   engine["castAbility"](lian, battle.enemy);
@@ -2171,37 +2174,29 @@ test("梨安终场谢幕只让落点范围内友军回能，并快速收束瞬�
   assert.equal(finale.maxLife, 0.58);
   assert.ok(Math.hypot(impactAlly.x - finale.x, impactAlly.y - finale.y) <= 140);
   assert.ok(Math.hypot(outsideAlly.x - finale.x, outsideAlly.y - finale.y) > 140);
-  const energyPulses = battle.effects.filter((effect) => effect.kind === "energy_pulse");
-  assert.deepEqual(energyPulses.map((effect) => effect.text), ["+15 能量"]);
-  assert.equal(energyPulses[0].maxLife, 0.46);
-  const energyLink = battle.effects.find((effect) =>
-    effect.kind === "line" &&
-    effect.x === finale.x &&
-    effect.y === finale.y &&
-    effect.x2 === impactAlly.x &&
-    effect.y2 === impactAlly.y
+  const targetsInFinale = battle.enemy.filter(
+    (target) => Math.hypot(target.x - finale.x, target.y - finale.y) <= 140,
   );
-  assert.ok(energyLink);
-  assert.equal(energyLink.maxLife, 0.36);
-  assert.ok(!battle.effects.some((effect) =>
-    effect.kind === "line" &&
-    effect.x === finale.x &&
-    effect.y === finale.y &&
-    effect.x2 === outsideAlly.x &&
-    effect.y2 === outsideAlly.y
-  ));
-  assert.equal(lian.energy, 0);
-  assert.equal(impactAlly.energy, 15);
-  assert.equal(outsideAlly.energy, 0);
-
-  for (let frame = 0; frame < 14; frame += 1) engine.update(0.05);
-  assert.ok(!battle.effects.some((effect) => effect.kind === "finale"));
+  assert.ok(targetsInFinale.length >= 2);
+  targetsInFinale.forEach((target) => {
+    assert.equal(
+      Number((enemyHpBefore.get(target.fid) - target.hp).toFixed(6)),
+      Number((lian.attack * 1.8).toFixed(6)),
+    );
+  });
   assert.ok(!battle.effects.some((effect) => effect.kind === "energy_pulse"));
   assert.ok(!battle.effects.some((effect) =>
     effect.kind === "line" &&
     effect.x === finale.x &&
     effect.y === finale.y
   ));
+  assert.equal(lian.energy, 0);
+  assert.equal(impactAlly.energy, 0);
+  assert.equal(outsideAlly.energy, 0);
+
+  for (let frame = 0; frame < 14; frame += 1) engine.update(0.05);
+  assert.ok(!battle.effects.some((effect) => effect.kind === "finale"));
+  assert.ok(!battle.effects.some((effect) => effect.kind === "energy_pulse"));
 });
 
 test("病院坂灵仅缓慢自动回能，攻击与受击均不回能", () => {
