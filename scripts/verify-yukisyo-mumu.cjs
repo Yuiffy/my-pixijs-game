@@ -50,6 +50,7 @@ const inspectPng = (buffer) => {
   let rowOffset = 0;
   let previous = Buffer.alloc(stride);
   let nearBlack = 0;
+  let dark = 0;
   let transparent = 0;
   const colors = new Set();
   for (let y = 0; y < height; y += 1) {
@@ -81,6 +82,7 @@ const inspectPng = (buffer) => {
       const blue = row[pixel + 2];
       const alpha = channels === 4 ? row[pixel + 3] : 255;
       if (red <= 12 && green <= 12 && blue <= 12) nearBlack += 1;
+      if (red * 0.2126 + green * 0.7152 + blue * 0.0722 <= 28) dark += 1;
       if (alpha === 0) transparent += 1;
       if (colors.size < 4096) colors.add(`${red},${green},${blue},${alpha}`);
     }
@@ -93,11 +95,13 @@ const inspectPng = (buffer) => {
     height,
     colors: colors.size,
     nearBlackRatio: Number((nearBlack / pixels).toFixed(4)),
+    darkRatio: Number((dark / pixels).toFixed(4)),
     transparentRatio: Number((transparent / pixels).toFixed(4)),
   };
   assert.ok(
     metrics.colors > 1 &&
       metrics.nearBlackRatio < 0.97 &&
+      metrics.darkRatio < 0.9 &&
       metrics.transparentRatio < 0.97,
     `Invalid screenshot: ${JSON.stringify(metrics)}`,
   );
@@ -150,7 +154,10 @@ const enterPreparation = async (page, seed) => {
 };
 
 (async () => {
-  activeBrowser = await chromium.launch({ channel: "chrome", headless: true });
+  activeBrowser = await chromium.launch({
+    channel: "chrome",
+    headless: process.env.AUTOCHESS_HEADED !== "1",
+  });
   const page = await activeBrowser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   const failedResponses = [];
@@ -201,12 +208,22 @@ const enterPreparation = async (page, seed) => {
     yukisyo.energy = yukisyo.maxEnergy;
     engine.castAbility(yukisyo, battle.enemy, true);
     return {
-      yukisyo: { energy: yukisyo.energy, shield: yukisyo.abilityShield, remaining: yukisyo.abilityShieldTime },
-      nori: { shield: nori.abilityShield, remaining: nori.abilityShieldTime },
+      yukisyo: {
+        energy: yukisyo.energy,
+        maxHp: yukisyo.maxHp,
+        shield: yukisyo.abilityShield,
+        remaining: yukisyo.abilityShieldTime,
+      },
+      nori: {
+        maxHp: nori.maxHp,
+        shield: nori.abilityShield,
+        remaining: nori.abilityShieldTime,
+      },
     };
   });
   assert.equal(shield.yukisyo.energy, 0);
-  assert.ok(shield.yukisyo.shield > 0 && shield.nori.shield > 0);
+  assert.ok(Math.abs(shield.yukisyo.shield - (50 + shield.yukisyo.maxHp * 0.2)) < 0.001);
+  assert.ok(Math.abs(shield.nori.shield - (50 + shield.nori.maxHp * 0.2)) < 0.001);
   assert.equal(shield.nori.remaining, 4);
   const shieldText = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
   const shieldTextNori = shieldText.battle.playerUnits.find((fighter) => fighter.unitId === "nori");
@@ -215,7 +232,7 @@ const enterPreparation = async (page, seed) => {
   await capture("yukisyo-ability-shield.png");
 
   await enterPreparation(page, 502);
-  const rescueMid = await page.evaluate(() => {
+  const rescueCast = await page.evaluate(() => {
     const engine = window.__counterEngine;
     const bridge = window.__counterBridge;
     engine.state.round = 6;
@@ -267,31 +284,85 @@ const enterPreparation = async (page, seed) => {
       mumuEnergy: mumu.energy,
       trapped: {
         x: trapped.x,
+        y: trapped.y,
         motion: trapped.abilityMotion && {
           kind: trapped.abilityMotion.kind,
           sourceFid: trapped.abilityMotion.sourceFid,
           toX: trapped.abilityMotion.toX,
+          toY: trapped.abilityMotion.toY,
         },
       },
       lowMotion: low.abilityMotion?.kind || null,
+      whip: battle.effects.find((effect) => effect.kind === "mumu_whip") || null,
     };
   });
-  assert.equal(rescueMid.mumuEnergy, 0);
-  assert.equal(rescueMid.trapped.motion.kind, "pull");
-  assert.ok(rescueMid.trapped.x !== rescueMid.trapped.motion.toX);
-  assert.equal(rescueMid.lowMotion, null);
-  const rescueMidText = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
-  const rescueMidNori = rescueMidText.battle.playerUnits.find((fighter) => fighter.unitId === "nori");
-  assert.equal(rescueMidNori.motion.kind, "pull");
-  assert.equal(rescueMidNori.motion.sourceFid, rescueMid.trapped.motion.sourceFid);
-  await capture("mumu-rescue-mid-pull.png");
+  assert.equal(rescueCast.mumuEnergy, 0);
+  assert.equal(rescueCast.trapped.motion.kind, "pull");
+  assert.equal(rescueCast.trapped.x, 620);
+  assert.equal(rescueCast.trapped.y, 350);
+  assert.equal(rescueCast.lowMotion, null);
+  assert.equal(rescueCast.whip.kind, "mumu_whip");
+  assert.equal(rescueCast.whip.x, 360);
+  assert.equal(rescueCast.whip.x2, 620);
+  assert.equal(rescueCast.whip.x3, rescueCast.trapped.motion.toX);
+  const rescueCastText = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+  const rescueCastNori = rescueCastText.battle.playerUnits.find((fighter) => fighter.unitId === "nori");
+  const rescueCastWhip = rescueCastText.battle.visualEffects.effects.find((effect) => effect.kind === "mumu_whip");
+  assert.equal(rescueCastNori.motion.kind, "pull");
+  assert.equal(rescueCastNori.motion.sourceFid, rescueCast.trapped.motion.sourceFid);
+  assert.equal(rescueCastWhip.x3, Math.round(rescueCast.trapped.motion.toX));
+  await capture("mumu-rescue-whip-outbound.png");
+
+  const rescueSwing = await page.evaluate(() => {
+    const engine = window.__counterEngine;
+    const battle = engine.state.battle;
+    const trapped = battle.player.find((fighter) => fighter.unitId === "nori");
+    for (let tick = 0; tick < 3; tick += 1) engine.update(0.05);
+    return {
+      x: trapped.x,
+      y: trapped.y,
+      motion: trapped.abilityMotion && {
+        kind: trapped.abilityMotion.kind,
+        progress: trapped.abilityMotion.time / trapped.abilityMotion.duration,
+        toX: trapped.abilityMotion.toX,
+        toY: trapped.abilityMotion.toY,
+      },
+    };
+  });
+  assert.equal(rescueSwing.motion.kind, "pull");
+  assert.ok(rescueSwing.x < 620 && rescueSwing.x > rescueSwing.motion.toX);
+  assert.ok(rescueSwing.y < 350);
+  assert.ok(rescueSwing.motion.progress > 0.24 && rescueSwing.motion.progress < 1);
+  await capture("mumu-rescue-whip-swing.png");
+
+  const rescueOverShoulder = await page.evaluate(() => {
+    const engine = window.__counterEngine;
+    const battle = engine.state.battle;
+    const trapped = battle.player.find((fighter) => fighter.unitId === "nori");
+    for (let tick = 0; tick < 3; tick += 1) engine.update(0.05);
+    return {
+      x: trapped.x,
+      y: trapped.y,
+      motion: trapped.abilityMotion && {
+        kind: trapped.abilityMotion.kind,
+        progress: trapped.abilityMotion.time / trapped.abilityMotion.duration,
+        toX: trapped.abilityMotion.toX,
+        toY: trapped.abilityMotion.toY,
+      },
+    };
+  });
+  assert.equal(rescueOverShoulder.motion.kind, "pull");
+  assert.ok(rescueOverShoulder.x < 360 && rescueOverShoulder.x > rescueOverShoulder.motion.toX);
+  assert.ok(rescueOverShoulder.y < 350);
+  assert.ok(rescueOverShoulder.motion.progress > rescueSwing.motion.progress);
+  await capture("mumu-rescue-whip-over-shoulder.png");
 
   const rescueLanded = await page.evaluate(() => {
     const engine = window.__counterEngine;
     const battle = engine.state.battle;
     const trapped = battle.player.find((fighter) => fighter.unitId === "nori");
     const controller = battle.enemy[0];
-    for (let tick = 0; tick < 8; tick += 1) engine.update(0.05);
+    for (let tick = 0; tick < 6; tick += 1) engine.update(0.05);
     return {
       x: trapped.x,
       y: trapped.y,
@@ -328,7 +399,9 @@ const enterPreparation = async (page, seed) => {
 
   console.log(JSON.stringify({
     shield,
-    rescueMid,
+    rescueCast,
+    rescueSwing,
+    rescueOverShoulder,
     rescueLanded,
     canvas,
     screenshots,

@@ -5,6 +5,7 @@ import {
   type UnitId,
 } from "../../core/gameData";
 import type { Fighter } from "../../core/gameTypes";
+import { mumuWhipPullProgress } from "../../core/motionPaths";
 import {
   GLUTTONY_RADIUS_PER_STACK,
   GLUTTONY_STACK_CAP,
@@ -122,11 +123,18 @@ export class FighterViewRenderer {
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
     const { abilityMotion } = fighter;
     const abilityJumping = abilityMotion?.kind === "jump";
-    const jumping = abilityJumping || (fighter.jumpTime > 0 && fighter.jumpDuration > 0);
+    const mumuPulling = abilityMotion?.kind === "pull" && abilityMotion.abilityId === "mumu";
+    const jumping = abilityJumping || mumuPulling || (fighter.jumpTime > 0 && fighter.jumpDuration > 0);
     const jumpProgress = abilityJumping
       ? abilityMotion.time / Math.max(abilityMotion.duration, 0.001)
+      : mumuPulling
+        ? mumuWhipPullProgress(abilityMotion.time / Math.max(abilityMotion.duration, 0.001))
       : jumping ? 1 - fighter.jumpTime / fighter.jumpDuration : 0;
-    const jumpArcHeight = abilityJumping ? abilityMotion.arcHeight : fighter.jumpArcHeight || 92;
+    const jumpArcHeight = abilityJumping
+      ? abilityMotion.arcHeight
+      : mumuPulling
+        ? 28
+        : fighter.jumpArcHeight || 92;
     const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * jumpArcHeight : 0;
     const attackProgress = !abilityMotion && !fighter.sekiChargeActive && fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
     const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
@@ -184,7 +192,7 @@ export class FighterViewRenderer {
         growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08 + manquPulse),
         growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12 - manquPulse),
       )
-      .setAngle(groundMotion ? fighter.facingX * motionPulse * 7 : 0)
+      .setAngle(groundMotion ? fighter.facingX * motionPulse * (mumuPulling ? 14 : 7) : 0)
       .setAlpha(fighter.stun > 0 ? 0.72 : 1);
     const normalPortraitKey = UNIT_DEFS[fighter.unitId].portraitStyle === "sprite"
       ? textureKeyForUnit(fighter.unitId)
@@ -246,6 +254,7 @@ export class FighterViewRenderer {
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
       fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
       fighter.reborn ? "涅" : "",
+      fighter.rebirthGraceTime > 0 ? "护" : "",
       fighter.rebirthRecoilTime > 0 ? "退" : "",
       fighter.stealthTime > 0 ? "隐" : "",
       fighter.channelTime > 0 ? "捏" : "",

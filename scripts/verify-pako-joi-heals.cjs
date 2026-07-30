@@ -50,6 +50,7 @@ const inspectPng = (buffer) => {
   let rowOffset = 0;
   let previous = Buffer.alloc(stride);
   let nearBlack = 0;
+  let dark = 0;
   let transparent = 0;
   const colors = new Set();
   for (let y = 0; y < height; y += 1) {
@@ -81,6 +82,7 @@ const inspectPng = (buffer) => {
       const blue = row[pixel + 2];
       const alpha = channels === 4 ? row[pixel + 3] : 255;
       if (red <= 12 && green <= 12 && blue <= 12) nearBlack += 1;
+      if (red * 0.2126 + green * 0.7152 + blue * 0.0722 <= 28) dark += 1;
       if (alpha === 0) transparent += 1;
       if (colors.size < 4096) colors.add(`${red},${green},${blue},${alpha}`);
     }
@@ -94,9 +96,15 @@ const inspectPng = (buffer) => {
     height,
     colors: colors.size,
     nearBlackRatio: Number((nearBlack / pixels).toFixed(4)),
+    darkRatio: Number((dark / pixels).toFixed(4)),
     transparentRatio: Number((transparent / pixels).toFixed(4)),
   };
-  if (metrics.colors <= 1 || metrics.nearBlackRatio >= 0.97 || metrics.transparentRatio >= 0.97) {
+  if (
+    metrics.colors <= 1
+    || metrics.nearBlackRatio >= 0.97
+    || metrics.darkRatio >= 0.9
+    || metrics.transparentRatio >= 0.97
+  ) {
     throw new Error(`Invalid screenshot: ${JSON.stringify(metrics)}`);
   }
   return metrics;
@@ -108,7 +116,10 @@ const artifactDirectory = ".tmp/autochess/pako-joi-heals";
 mkdirSync(artifactDirectory, { recursive: true });
 
 (async () => {
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const browser = await chromium.launch({
+    channel: "chrome",
+    headless: process.env.AUTOCHESS_HEADED !== "1",
+  });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   const screenshots = {};
@@ -203,8 +214,8 @@ mkdirSync(artifactDirectory, { recursive: true });
     || mossbackAfterPako.hp <= pakoBefore.mossbackHp
     || pakoUnit.healingDone <= 0
   ) throw new Error(`帕可范围治疗未结算: ${JSON.stringify({ pakoBefore, pakoUnit, joiAfterPako, mossbackAfterPako })}`);
-  if (!pakoImpact.battle.visualEffects.effects.some((effect) => effect.kind === "ring" && effect.size === 159)) {
-    throw new Error(`帕可范围治疗落地圈缺失: ${JSON.stringify(pakoImpact.battle.visualEffects.effects)}`);
+  if (!pakoImpact.battle.visualEffects.effects.some((effect) => effect.kind === "healing_field" && effect.size === 145)) {
+    throw new Error(`帕可范围治疗落地区缺失: ${JSON.stringify(pakoImpact.battle.visualEffects.effects)}`);
   }
   if (!pakoImpact.battle.visualEffects.healingZones.some((zone) => zone.radius === 145)) {
     throw new Error(`帕可持续治疗区缺失: ${JSON.stringify(pakoImpact.battle.visualEffects.healingZones)}`);
@@ -245,16 +256,34 @@ mkdirSync(artifactDirectory, { recursive: true });
     const pako = battle.player.find((fighter) => fighter.unitId === "pako");
     joi.x = 300;
     joi.y = 350;
+    joi.hp = 1;
+    joi.energy = 0;
+    joi.energyPerSecond = 0;
+    joi.energyOnAttack = 0;
+    joi.energyOnHit = 0;
+    joi.cooldown = 99;
+    joi.moveSpeed = 0;
     mossback.x = 650;
     mossback.y = 340;
+    mossback.energyPerSecond = 0;
+    mossback.energyOnAttack = 0;
+    mossback.energyOnHit = 0;
+    mossback.cooldown = 99;
+    mossback.moveSpeed = 0;
     pako.x = 710;
     pako.y = 370;
+    pako.cooldown = 99;
+    pako.moveSpeed = 0;
     mossback.maxHp = 1_000;
     mossback.hp = 100;
+    mossback.energy = 0;
     pako.hp = pako.maxHp;
     battle.enemy.forEach((fighter) => {
+      fighter.x = 1_000;
+      fighter.y = 600;
       fighter.attack = 0;
       fighter.cooldown = 99;
+      fighter.moveSpeed = 0;
       fighter.hp = fighter.maxHp = 99_999;
     });
     engine.castAbility(joi, battle.enemy);
@@ -269,12 +298,41 @@ mkdirSync(artifactDirectory, { recursive: true });
   }
   await capture("joi-orange-volley");
 
-  await advance(1250);
+  await advance(400);
+  const joiEnergyImpact = await readState();
+  const joiAfterEnergyImpact = joiEnergyImpact.battle.playerUnits.find(
+    (unit) => unit.unitId === "cog_scribe",
+  );
+  const mossbackAfterEnergyImpact = joiEnergyImpact.battle.playerUnits.find(
+    (unit) => unit.unitId === "mossback",
+  );
+  if (
+    joiAfterEnergyImpact.energy !== 0
+    || mossbackAfterEnergyImpact.energy <= 0
+    || mossbackAfterEnergyImpact.energy > 15
+    || mossbackAfterEnergyImpact.energy % 3 !== 0
+  ) {
+    throw new Error(`轴伊橘子中途回能错误: ${JSON.stringify({
+      joiAfterEnergyImpact,
+      mossbackAfterEnergyImpact,
+    })}`);
+  }
+  if (!joiEnergyImpact.battle.visualEffects.effects.some(
+    (effect) => effect.kind === "energy_pulse",
+  )) {
+    throw new Error(`轴伊橘子回能反馈缺失: ${JSON.stringify(joiEnergyImpact.battle.visualEffects.effects)}`);
+  }
+  await capture("joi-orange-energy-impact");
+
+  await advance(950);
   const joiImpact = await readState();
   const joiUnit = joiImpact.battle.playerUnits.find((unit) => unit.unitId === "cog_scribe");
   const mossbackAfterJoi = joiImpact.battle.playerUnits.find((unit) => unit.unitId === "mossback");
   if (joiUnit.healingDone <= 0 || mossbackAfterJoi.hp <= 100) {
     throw new Error(`轴伊橘子治疗未结算: ${JSON.stringify({ joiUnit, mossbackAfterJoi })}`);
+  }
+  if (joiUnit.energy !== 0 || mossbackAfterJoi.energy !== 15) {
+    throw new Error(`轴伊五颗橘子累计回能错误: ${JSON.stringify({ joiUnit, mossbackAfterJoi })}`);
   }
   if (joiImpact.battle.visualEffects.projectiles.some((projectile) => projectile.ability === "cog_scribe")) {
     throw new Error("轴伊五颗橘子应已全部抵达");
@@ -311,9 +369,13 @@ mkdirSync(artifactDirectory, { recursive: true });
     joi: {
       volleyElapsed: joiVolley.battle.elapsed,
       volleyProjectiles: orangeProjectiles,
+      energyImpactElapsed: joiEnergyImpact.battle.elapsed,
+      energyAtImpact: mossbackAfterEnergyImpact.energy,
       impactElapsed: joiImpact.battle.elapsed,
       healingDone: joiUnit.healingDone,
       mossbackHpAfter: mossbackAfterJoi.hp,
+      mossbackEnergyAfter: mossbackAfterJoi.energy,
+      joiEnergyAfter: joiUnit.energy,
     },
     screenshots,
     canvasBox,

@@ -47,11 +47,14 @@ export interface BattleEffect {
     | "switch_shock"
     | "biscuit_share"
     | "harei_pine"
-    | "harei_badge";
+    | "harei_badge"
+    | "mumu_whip";
   x: number;
   y: number;
   x2?: number;
   y2?: number;
+  x3?: number;
+  y3?: number;
   color: string;
   text?: string;
   emoji?: boolean;
@@ -149,6 +152,8 @@ export interface AbilityMotion {
   time: number;
   duration: number;
   arcHeight: number;
+  controlX?: number;
+  controlY?: number;
   hitFids: string[];
 }
 
@@ -275,6 +280,8 @@ export interface Fighter {
   secondWindUsed: boolean;
   /** 泽音美乐蒂的涅槃重生是否已经触发 */
   reborn: boolean;
+  /** 涅槃后免疫伤害并降低敌方选中优先级的剩余时间。 */
+  rebirthGraceTime: number;
   /** 涅槃后普攻后坐力的剩余持续时间。 */
   rebirthRecoilTime: number;
   /** 果冻风纪变成满区后主动逃离、闪避并回血的剩余时间。 */

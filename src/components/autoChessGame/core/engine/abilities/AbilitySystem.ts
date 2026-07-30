@@ -18,6 +18,10 @@ import type {
   ProjectileVolleyShot,
   Team,
 } from "../../gameTypes";
+import {
+  MUMU_WHIP_ARC_HEIGHT,
+  mumuWhipControlPoint,
+} from "../../motionPaths";
 import type { RandomSource } from "../random";
 import type { DamageKind } from "../combatResolution";
 
@@ -40,7 +44,7 @@ const GALE_ARCHER_SWITCH_COLOR = "#b86cff";
 const MITSURI_SHIELD_RATIO = 0.22;
 export const MITSURI_TAUNT_DURATION = 3.2;
 const MITSURI_TAUNT_RADIUS = 155;
-const MUMU_RESCUE_DURATION = 0.35;
+const MUMU_RESCUE_DURATION = 0.62;
 const NIGHTIN_CIGARETTE_BURN = 0.55;
 const NIGHTIN_CIGARETTE_COUNT = 3;
 const NIGHTIN_CIGARETTE_DAMAGE = 0.9;
@@ -164,6 +168,8 @@ interface AbilityHost {
       targetFid?: string | null;
       duration?: number;
       arcHeight?: number;
+      controlX?: number;
+      controlY?: number;
       avoidOccupied?: boolean;
     },
   ) => AbilityMotion | null;
@@ -895,24 +901,40 @@ export class AbilitySystem {
           break;
         }
         const destination = this.host.mumuRescueDestination(source, target, battle);
+        const control = mumuWhipControlPoint(target, destination, source);
         const motion = this.host.startAbilityMotion(target, "pull", destination, {
           abilityId: "mumu",
           sourceFid: source.fid,
           targetFid: target.fid,
           duration: MUMU_RESCUE_DURATION,
+          arcHeight: MUMU_WHIP_ARC_HEIGHT,
+          controlX: control.x,
+          controlY: control.y,
           avoidOccupied: false,
         });
         if (!motion) {
           source.energy = source.maxEnergy;
           break;
         }
-        this.host.addEffect({ kind: "line", x: target.x, y: target.y, x2: motion.toX, y2: motion.toY, color: def.accent, life: MUMU_RESCUE_DURATION, size: 8 });
+        this.host.addEffect({
+          kind: "mumu_whip",
+          x: source.x,
+          y: source.y,
+          x2: motion.fromX,
+          y2: motion.fromY,
+          x3: motion.toX,
+          y3: motion.toY,
+          color: def.accent,
+          life: motion.duration,
+          size: motion.arcHeight,
+        });
+        this.host.addEffect({ kind: "burst", x: source.x, y: source.y, color: "#f7ddff", life: 0.38, size: 50 });
         this.host.addEffect({ kind: "text", x: target.x, y: target.y - 44, color: def.accent, text: "舞带救场", life: 0.65, size: 12 });
         break;
       }
       case "yukisyo": {
-        const shieldFlat = abilityStatForStar(def, source.star, "shieldFlat", 70);
-        const shieldHpRatio = abilityStatForStar(def, source.star, "shieldHpRatio", 0.26);
+        const shieldFlat = abilityStatForStar(def, source.star, "shieldFlat", 50);
+        const shieldHpRatio = abilityStatForStar(def, source.star, "shieldHpRatio", 0.2);
         const duration = abilityStatForStar(def, source.star, "duration", 4);
         allies.forEach((target) => {
           this.host.grantAbilityShield(

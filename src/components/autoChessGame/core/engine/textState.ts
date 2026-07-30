@@ -243,6 +243,8 @@ export const renderTextState = (context: TextStateContext) => {
               y: Math.round(effect.y),
               x2: effect.x2 === undefined ? undefined : Math.round(effect.x2),
               y2: effect.y2 === undefined ? undefined : Math.round(effect.y2),
+              x3: effect.x3 === undefined ? undefined : Math.round(effect.x3),
+              y3: effect.y3 === undefined ? undefined : Math.round(effect.y3),
               size: effect.size,
             })),
           projectiles: battle.projectiles.map((projectile) => ({

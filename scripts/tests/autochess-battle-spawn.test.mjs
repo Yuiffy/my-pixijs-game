@@ -1013,7 +1013,7 @@ test("雪烛主动施法后提供固定值加生命比例的技能盾，普攻�
 
   source.energy = source.maxEnergy;
   engine.castAbility(source, battle.enemy, true);
-  const expectedShield = 70 + backliner.maxHp * 0.26;
+  const expectedShield = 50 + backliner.maxHp * 0.2;
   assert.ok(Math.abs(backliner.abilityShield - expectedShield) < 0.001);
   assert.equal(backliner.abilityShieldTime, 4);
 
@@ -1103,15 +1103,47 @@ test("沐霂按场地控制优先拉援，经过移动过程后拉出时停并�
   });
 
   const startX = trapped.x;
+  const startY = trapped.y;
   engine.update(0.05);
   assert.equal(trapped.abilityMotion?.kind, "pull");
   assert.equal(trapped.abilityMotion?.sourceFid, source.fid);
-  assert.ok(trapped.x !== startX, "拉援首帧进入移动中间态");
+  assert.equal(trapped.x, startX, "舞带飞出阶段目标应先留在原地");
+  assert.equal(trapped.y, startY, "舞带飞出阶段目标应先留在原地");
   assert.ok(trapped.x !== trapped.abilityMotion.toX, "拉援不能同帧瞬移到终点");
   assert.equal(merelyLow.abilityMotion, null, "场地控制优先于普通低血");
+  const whip = battle.effects.find((effect) => effect.kind === "mumu_whip");
+  assert.ok(whip, "救场应生成专用舞带特效");
+  assert.deepEqual(
+    { x: whip.x, y: whip.y, x2: whip.x2, y2: whip.y2 },
+    { x: source.x, y: source.y, x2: startX, y2: startY },
+  );
+  assert.equal(whip.x3, trapped.abilityMotion.toX);
+  assert.equal(whip.y3, trapped.abilityMotion.toY);
+
+  stepBattle(engine, 3);
+  assert.ok(trapped.abilityMotion, "套住后应进入抛甩过程");
+  assert.ok(trapped.x < startX && trapped.x > trapped.abilityMotion.toX);
+  assert.ok(trapped.y < startY, "抛甩轨迹应绕过沐霂而非直线冲刺");
+  const textState = JSON.parse(engine.renderTextState());
+  const textWhip = textState.battle.visualEffects.effects.find(
+    (effect) => effect.kind === "mumu_whip",
+  );
+  assert.deepEqual(
+    { x2: textWhip.x2, y2: textWhip.y2, x3: textWhip.x3, y3: textWhip.y3 },
+    {
+      x2: Math.round(startX),
+      y2: Math.round(startY),
+      x3: Math.round(trapped.abilityMotion.toX),
+      y3: Math.round(trapped.abilityMotion.toY),
+    },
+  );
 
   const hpBeforeLanding = trapped.hp;
-  stepBattle(engine, 8);
+  stepBattle(engine, 3);
+  assert.ok(trapped.abilityMotion, "越过沐霂时仍应处于抛甩过程");
+  assert.ok(trapped.x < source.x && trapped.x > trapped.abilityMotion.toX);
+  assert.ok(trapped.y < startY);
+  stepBattle(engine, 6);
   assert.equal(trapped.abilityMotion, null);
   assert.ok(Math.hypot(trapped.x - 620, trapped.y - 350) > 96, "目标必须离开时停范围");
   assert.equal(trapped.stun, 0);
@@ -3107,7 +3139,7 @@ test("邪恶外星人的贯穿光线沿目标方向发射并命中同线敌人",
   assert.ok(Math.abs(targetCrossProduct) < 0.001);
 });
 
-test("泽音涅槃有专属特效，重生后短时普攻后退且不会退出射程", () => {
+test("泽音四秒内必定涅槃，重生后短暂无敌、失去仇恨并以普攻后退", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -3125,6 +3157,8 @@ test("泽音涅槃有专属特效，重生后短时普攻后退且不会退出�
   });
   zeyin.x = 280;
   zeyin.y = 360;
+  battle.enemy[0].targetFid = zeyin.fid;
+  battle.enemy[0].targetLock = 2;
   const zeyinMaxHp = zeyin.maxHp;
   const zeyinBaseAttack = zeyin.baseAttack;
   const zeyinBaseInterval = zeyin.baseAttackInterval;
@@ -3137,13 +3171,20 @@ test("泽音涅槃有专属特效，重生后短时普攻后退且不会退出�
   assert.equal(zeyin.hp, zeyin.maxHp);
   assert.ok(zeyin.baseAttack >= zeyinBaseAttack * 1.35);
   assert.ok(zeyin.baseAttackInterval < zeyinBaseInterval * 0.71);
+  assert.equal(zeyin.rebirthGraceTime, 1);
   assert.equal(zeyin.rebirthRecoilTime, 4);
+  assert.equal(battle.enemy[0].targetFid, null);
   assert.ok(battle.effects.some((effect) => effect.kind === "rebirth"));
 
   const target = battle.enemy[0];
   target.x = 400;
   target.y = 360;
   target.armor = 0;
+  const guardedHp = zeyin.hp;
+  assert.equal(engine["damage"](target, zeyin, 99_999), -1);
+  assert.equal(zeyin.hp, guardedHp);
+  zeyin.rebirthGraceTime = 0;
+  assert.ok(engine["damage"](target, zeyin, 1) > 0);
   const distanceBeforeRecoil = Math.hypot(target.x - zeyin.x, target.y - zeyin.y);
   engine["basicAttack"](zeyin, target);
   const recoil = zeyin.abilityMotion;
@@ -3173,6 +3214,26 @@ test("泽音涅槃有专属特效，重生后短时普攻后退且不会退出�
   zeyin.rebirthRecoilTime = 0;
   engine["basicAttack"](zeyin, target);
   assert.equal(zeyin.abilityMotion, null, "撤离窗口结束后不应再触发后坐力");
+
+  const timedEngine = createEngine(98);
+  timedEngine.state.playerLevel = 4;
+  timedEngine.state.board.fill(null);
+  timedEngine.state.board[0] = { uid: 1, id: "zeyin", star: 1 };
+  timedEngine.startBattle();
+  const timedBattle = timedEngine.state.battle;
+  const timedZeyin = timedBattle?.player.find((fighter) => fighter.unitId === "zeyin");
+  assert.ok(timedBattle && timedZeyin);
+  timedBattle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.hp = fighter.maxHp = 99_999;
+  });
+  timedZeyin.hp = timedZeyin.maxHp;
+  stepBattle(timedEngine, 79);
+  assert.equal(timedZeyin.reborn, false);
+  stepBattle(timedEngine, 1);
+  assert.equal(timedZeyin.reborn, true);
+  assert.equal(timedZeyin.attackType, "ranged");
+  assert.ok(timedZeyin.rebirthGraceTime > 0.9);
 });
 
 test("礼墨空气龙持续隐身，期间可攻击，能量耗尽发射礼小龙并触发社恐后坐力", () => {
@@ -3240,7 +3301,7 @@ test("贪吃岁强化下一击吸血，椰子栞海獭冲击突进并范围控�
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "sui_blue", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "shiori", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "shiori", star: 3 };
   engine.startBattle();
   const battle = engine.state.battle;
   const hungry = battle?.player.find((fighter) => fighter.unitId === "sui_blue");
@@ -3275,7 +3336,7 @@ test("贪吃岁强化下一击吸血，椰子栞海獭冲击突进并范围控�
   assert.equal(shiori.attackType, "melee");
   for (let tick = 0; tick < 20 && shiori.abilityMotion; tick += 1) engine.update(0.05);
   assert.ok(shiori.shield > shioriShield);
-  assert.ok(battle.enemy.every((enemy) => enemy.stun > 0.2));
+  assert.ok(battle.enemy.every((enemy) => enemy.stun > 0.9));
   assert.ok(battle.enemy.every((enemy) => enemy.hp < enemy.maxHp));
   assert.ok(battle.effects.some((effect) => effect.text === "海獭冲击"));
   assert.ok(!battle.projectiles.some((projectile) => projectile.impactAbilityId === "shiori"));
@@ -3560,6 +3621,7 @@ test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞�
   assert.equal(nana.barrageActive, true);
   assert.equal(nana.abilityArmorBonus, 42);
   assert.equal(nana.armor, baseArmor + 42);
+  assert.ok(Math.abs(nana.barrageDrainPerSecond - nana.maxEnergy / 2.8) < 0.001);
   assert.equal(nanaTarget.tauntedByFid, nana.fid);
   assert.ok(nana.energy > 0 && nana.energy < nana.maxEnergy);
   nanaNear.alive = false;
@@ -3578,6 +3640,21 @@ test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞�
   );
   assert.ok(pickaxeBounce, "矿镐命中后应从目标头顶弹起");
   assert.ok(pickaxeBounce.y < nanaTarget.y);
+  nana.energy = nana.maxEnergy;
+  stepBattle(nanaEngine, 50);
+  assert.equal(nana.barrageActive, true, "2.5 秒时仍应处于中短控场窗口");
+  assert.equal(nana.abilityArmorBonus, 42);
+  stepBattle(nanaEngine, 10);
+  assert.equal(nana.barrageActive, false, "一星控场应在 2.8 秒后结束");
+  assert.equal(nana.abilityArmorBonus, 0);
+  assert.equal(nana.armor, baseArmor);
+  nanaBattle.projectiles = [];
+  nanaEngine["damage"](nanaTarget, nana, 80);
+  assert.equal(
+    nanaBattle.projectiles.some((projectile) => projectile.emoji === "⛏️"),
+    false,
+    "控场结束后受击不应继续发射矿镐",
+  );
 
   const candyEngine = createEngine(203);
   candyEngine.state.playerLevel = 4;
@@ -4405,7 +4482,7 @@ test("帕可天使摸鱼按自身属性落地治疗，并留下可进出的持�
   assert.ok(pako.hp > pakoHpBeforePulse + pakoPulseHeal * 3.9, "治疗区应完整触发四次脉冲");
 });
 
-test("轴伊连续扔出五个治疗逐次减弱的橘子", () => {
+test("轴伊连续扔出五个治疗逐次减弱并为其他友军充能的橘子", () => {
   const engine = createEngine(174);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -4418,8 +4495,11 @@ test("轴伊连续扔出五个治疗逐次减弱的橘子", () => {
   const weakest = battle?.player.find((fighter) => fighter.unitId === "mossback");
   const other = battle?.player.find((fighter) => fighter.unitId === "pako");
   assert.ok(battle && joi && weakest && other);
+  joi.hp = 1;
+  joi.energy = 0;
   weakest.maxHp = 10_000;
   weakest.hp = 100;
+  weakest.energy = 0;
   other.hp = other.maxHp;
 
   engine.castAbility(joi, battle.enemy);
@@ -4432,6 +4512,7 @@ test("轴伊连续扔出五个治疗逐次减弱的橘子", () => {
   );
 
   const heals = [];
+  const energies = [];
   for (let shot = 0; shot < 5; shot += 1) {
     engine["updateProjectileVolley"](battle, shot === 0 ? 0 : 0.201);
     const orange = battle.projectiles.find((projectile) => projectile.impactAbilityId === "cog_scribe");
@@ -4439,8 +4520,10 @@ test("轴伊连续扔出五个治疗逐次减弱的橘子", () => {
     assert.equal(orange.emoji, "🍊");
     assert.equal(orange.impactTargetFid, weakest.fid);
     const hpBefore = weakest.hp;
+    const energyBefore = weakest.energy;
     engine["updateProjectiles"](battle, 1);
     heals.push(weakest.hp - hpBefore);
+    energies.push(weakest.energy - energyBefore);
   }
 
   assert.equal(battle.projectileVolley.filter((shot) => shot.supportHealMultiplier !== undefined).length, 0);
@@ -4448,5 +4531,48 @@ test("轴伊连续扔出五个治疗逐次减弱的橘子", () => {
   heals.slice(1).forEach((amount, index) => {
     assert.ok(amount < heals[index], `第 ${index + 2} 个橘子的治疗量应低于前一颗`);
   });
+  assert.deepEqual(energies, [3, 3, 3, 3, 3]);
+  assert.equal(weakest.energy, 15);
+  assert.equal(joi.energy, 0, "轴伊不能用自己的橘子给自己充能");
+  assert.equal(
+    battle.effects.filter((effect) => effect.kind === "energy_pulse" && effect.text === "+3 能量").length,
+    5,
+  );
   assert.ok(joi.healingDone > 0);
+});
+
+test("轴伊只在其他友军低血时消耗能量扔橘子", () => {
+  const engine = createEngine(175);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "cog_scribe", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const joi = battle?.player.find((fighter) => fighter.unitId === "cog_scribe");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(battle && joi && ally);
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+    fighter.hp = fighter.maxHp = 99_999;
+  });
+
+  joi.hp = 1;
+  joi.energy = joi.maxEnergy;
+  ally.hp = ally.maxHp;
+  engine.update(0.05);
+  assert.equal(joi.energy, joi.maxEnergy, "只有轴伊自己低血时不应消耗能量");
+  assert.equal(
+    battle.projectileVolley.filter((shot) => shot.supportHealMultiplier !== undefined).length,
+    0,
+  );
+
+  ally.hp = ally.maxHp * 0.6;
+  engine.update(0.05);
+  assert.equal(joi.energy, 0);
+  assert.ok(
+    battle.projectileVolley.some((shot) => shot.supportHealMultiplier !== undefined),
+    "其他友军低血时应开始五连橘子",
+  );
 });

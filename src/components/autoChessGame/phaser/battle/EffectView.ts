@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 import type { BattleEffect } from "../../core/gameTypes";
 import {
+  MUMU_WHIP_CATCH_FRACTION,
+  mumuWhipControlPoint,
+  mumuWhipPullProgress,
+  quadraticMotionPoint,
+} from "../../core/motionPaths";
+import {
   drawHealingFieldEffect,
   drawHealingPulseEffect,
 } from "../healingEffects";
@@ -143,7 +149,88 @@ export class EffectViewRenderer {
     }
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
     graphics.clear().setVisible(true);
-    if (effect.kind === "switch_on") {
+    if (effect.kind === "mumu_whip") {
+      const start = {
+        x: (effect.x2 ?? effect.x) - effect.x,
+        y: (effect.y2 ?? effect.y) - effect.y,
+      };
+      const landing = {
+        x: (effect.x3 ?? effect.x) - effect.x,
+        y: (effect.y3 ?? effect.y) - effect.y,
+      };
+      const control = mumuWhipControlPoint(
+        start,
+        landing,
+        { x: 0, y: 0 },
+        effect.size,
+      );
+      const catchProgress = Math.min(1, progress / MUMU_WHIP_CATCH_FRACTION);
+      const pullProgress = mumuWhipPullProgress(progress);
+      const caught = progress >= MUMU_WHIP_CATCH_FRACTION;
+      const target = caught
+        ? quadraticMotionPoint(start, control, landing, pullProgress)
+        : start;
+      const ropeEnd = caught ? target : quadraticMotionPoint(
+        { x: 0, y: 0 },
+        {
+          x: start.x * 0.5,
+          y: start.y * 0.5 - Math.min(84, Math.hypot(start.x, start.y) * 0.28),
+        },
+        start,
+        1 - (1 - catchProgress) ** 2,
+      );
+      const ropeDistance = Math.hypot(ropeEnd.x, ropeEnd.y) || 1;
+      const normalX = -ropeEnd.y / ropeDistance;
+      const normalY = ropeEnd.x / ropeDistance;
+      const slack = caught
+        ? (1 - pullProgress) * 22
+        : 42 * Math.sin(catchProgress * Math.PI);
+      const ropeControl = {
+        x: ropeEnd.x * 0.48 + normalX * slack,
+        y: ropeEnd.y * 0.48 + normalY * slack,
+      };
+      const ropePoints = Array.from({ length: 13 }, (_, index) => quadraticMotionPoint(
+        { x: 0, y: 0 },
+        ropeControl,
+        ropeEnd,
+        index / 12,
+      ));
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .lineStyle(12, color, 0.16)
+        .beginPath()
+        .moveTo(ropePoints[0].x, ropePoints[0].y);
+      ropePoints.slice(1).forEach((point) => graphics.lineTo(point.x, point.y));
+      graphics
+        .strokePath()
+        .lineStyle(5, color, 0.94)
+        .beginPath()
+        .moveTo(ropePoints[0].x, ropePoints[0].y);
+      ropePoints.slice(1).forEach((point) => graphics.lineTo(point.x, point.y));
+      graphics
+        .strokePath()
+        .lineStyle(1.5, 0xfff5ff, 0.96)
+        .beginPath()
+        .moveTo(ropePoints[0].x, ropePoints[0].y);
+      ropePoints.slice(1).forEach((point) => graphics.lineTo(point.x, point.y));
+      graphics
+        .strokePath()
+        .lineStyle(2.5, 0xfff5ff, 0.9)
+        .strokeCircle(0, -5, 10 + Math.sin(progress * Math.PI * 4) * 2)
+        .fillStyle(color, caught ? 0.24 : 0.1)
+        .fillCircle(ropeEnd.x, ropeEnd.y, caught ? 19 : 10)
+        .lineStyle(caught ? 4 : 2, 0xfff5ff, 0.96)
+        .strokeCircle(ropeEnd.x, ropeEnd.y, caught ? 17 : 9)
+        .lineStyle(2, color, 0.82)
+        .strokeCircle(landing.x, landing.y, 18 + pullProgress * 12);
+      if (caught) {
+        const spark = 9 + Math.sin(pullProgress * Math.PI * 5) * 3;
+        graphics
+          .lineStyle(2, 0xfff5ff, 0.86)
+          .lineBetween(target.x - spark, target.y, target.x + spark, target.y)
+          .lineBetween(target.x, target.y - spark, target.x, target.y + spark);
+      }
+    } else if (effect.kind === "switch_on") {
       const radius = effect.size || 58;
       const pulse = 0.9 + Math.sin(progress * Math.PI * 4) * 0.08;
       const knobX = -14 + Math.min(1, progress * 2.8) * 28;

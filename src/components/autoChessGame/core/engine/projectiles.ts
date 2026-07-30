@@ -318,9 +318,10 @@ export class CombatProjectileSystem {
         });
         break;
       case "cog_scribe": {
+        const otherAllies = allies.filter((ally) => ally.fid !== source.fid);
         const target = support?.targetFid
-          ? allies.find((ally) => ally.fid === support.targetFid)
-          : [...allies].sort(
+          ? otherAllies.find((ally) => ally.fid === support.targetFid)
+          : [...otherAllies].sort(
               (left, right) =>
                 Math.hypot(left.x - center.x, left.y - center.y) -
                 Math.hypot(right.x - center.x, right.y - center.y),
@@ -334,6 +335,13 @@ export class CombatProjectileSystem {
             source.attack * COG_ORANGE_HEAL_ATTACK_RATIO) *
             multiplier,
         );
+        const energyGranted = abilityStatForStar(
+          def,
+          source.star,
+          "energyPerOrange",
+          3,
+        );
+        this.host.addEnergy(target, energyGranted);
         this.addEffect({
           kind: "burst",
           x: target.x,
@@ -351,6 +359,15 @@ export class CombatProjectileSystem {
           emoji: true,
           life: 0.55,
           size: 16,
+        });
+        this.addEffect({
+          kind: "energy_pulse",
+          x: target.x,
+          y: target.y,
+          color: def.accent,
+          text: `+${energyGranted} 能量`,
+          life: 0.46,
+          size: Math.max(42, target.radius * 2.5),
         });
         break;
       }
@@ -683,9 +700,12 @@ export class CombatProjectileSystem {
       );
       if (!source?.alive) return false;
       if (shot.supportHealMultiplier !== undefined) {
-        const target = [...this.host.living(source.team)].sort(
-          (left, right) => left.hp / left.maxHp - right.hp / right.maxHp,
-        )[0];
+        const target = this.host
+          .living(source.team)
+          .filter((ally) => ally.fid !== source.fid)
+          .sort(
+            (left, right) => left.hp / left.maxHp - right.hp / right.maxHp,
+          )[0];
         if (target) {
           const deltaX = target.x - source.x;
           const deltaY = target.y - source.y;

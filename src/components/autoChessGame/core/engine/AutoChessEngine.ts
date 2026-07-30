@@ -33,6 +33,10 @@ import type {
   UnitLocation,
 } from "../gameTypes";
 import {
+  mumuWhipPullProgress,
+  quadraticMotionPoint,
+} from "../motionPaths";
+import {
   createSeededRandom,
   freshSeed,
   type RandomSource,
@@ -117,7 +121,8 @@ const ASSASSIN_BACKLINE_DEPTH_TOLERANCE = 48;
 /** 莉蔻近视射击 */
 /** 小红帽攻击弹幕持续约 4 秒，能量从满降到空 */
 /** 攻击力加成偏低，把体感重心放在攻速上 */
-/** 泽音美乐蒂：低生命二阶段换取远程火力 */
+/** 泽音美乐蒂：首命兜底涅槃与二阶段后撤。 */
+const ZEYIN_FORCED_REBIRTH_TIME = 4;
 const ZEYIN_REBIRTH_RECOIL_DISTANCE = 34;
 const ZEYIN_REBIRTH_RECOIL_DURATION = 0.16;
 const ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN = 4;
@@ -132,7 +137,7 @@ const SUMI_SOCIAL_RECOIL_RANGE_MARGIN = 4;
 /** 贪吃岁：下一发强化普攻的收益 */
 /** 椰子栞「海獭冲击」：三费突进控场。 */
 const SHIORI_OTTER_DAMAGE = 1.08;
-const SHIORI_OTTER_STUN = 0.35;
+const SHIORI_OTTER_STUN = 0.5;
 const SHIORI_OTTER_SHIELD_RATIO = 0.12;
 /** 饼干岁「暖男回复」：高频救援与两段击退。 */
 const BISCUIT_RESCUE_HEAL_HP_RATIO = 0.14;
@@ -149,8 +154,8 @@ const MUMU_RESCUE_SHIELD_RATIO = 0.12;
 const SUI_BIRD_ELBOW_DAMAGE = 0.58;
 const SUI_BIRD_ELBOW_STUN = 0.22;
 const SUI_BIRD_ELBOW_PUSH = 46;
-/** 七海大鲨鱼：持续变身 */
-const NANA_PICKAXE_DURATION = 5.5;
+/** 七海大鲨鱼：中短时长的冲阵控场。 */
+const NANA_PICKAXE_DURATION = 2.8;
 const NANA_PICKAXE_ARMOR_BONUS = 42;
 const NANA_PICKAXE_TAUNT_RADIUS = 155;
 const NANA_PICKAXE_TAUNT_REFRESH = 0.3;
@@ -662,6 +667,7 @@ export class AutoChessEngine {
       energyOnHit: fighter.energyOnHit,
       energyStyle: fighter.energyStyle,
       reborn: fighter.reborn,
+      rebirthGraceTime: Number(fighter.rebirthGraceTime.toFixed(2)),
       rebirthRecoilTime: Number(fighter.rebirthRecoilTime.toFixed(2)),
       manquTime: Number(fighter.manquTime.toFixed(2)),
       raccoonSwitchTime: Number(fighter.raccoonSwitchTime.toFixed(2)),
@@ -679,8 +685,10 @@ export class AutoChessEngine {
       gluttonyKillCooldown: Number(fighter.gluttonyKillCooldown.toFixed(2)),
       stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
+      burnTime: Number(Math.max(0, fighter.burnTime).toFixed(2)),
       slowTime: Number(fighter.slowTime.toFixed(2)),
       slowMultiplier: Number(fighter.slowMultiplier.toFixed(2)),
+      weakenTime: Number(Math.max(0, fighter.weakenTime).toFixed(2)),
       damageDealt: Math.round(fighter.damageDealt),
       healingDone: Math.round(fighter.healingDone),
       shieldingDone: Math.round(fighter.shieldingDone),
@@ -994,6 +1002,8 @@ export class AutoChessEngine {
       targetFid?: string | null;
       duration?: number;
       arcHeight?: number;
+      controlX?: number;
+      controlY?: number;
       avoidOccupied?: boolean;
     } = {},
   ) {
@@ -1021,6 +1031,8 @@ export class AutoChessEngine {
       time: 0,
       duration,
       arcHeight: options.arcHeight ?? (kind === "jump" ? 88 : 0),
+      controlX: options.controlX,
+      controlY: options.controlY,
       hitFids: [],
     };
     this.faceTowardX(source, landing.x);
@@ -1405,16 +1417,23 @@ export class AutoChessEngine {
     const accent = UNIT_DEFS[source.unitId].accent;
 
     switch (motion.abilityId) {
-      case "shiori":
+      case "shiori": {
+        const stunDuration = abilityStatForStar(
+          UNIT_DEFS.shiori,
+          source.star,
+          "stunDuration",
+          SHIORI_OTTER_STUN,
+        );
         livingTargets
           .filter((enemy) => Math.hypot(enemy.x - source.x, enemy.y - source.y) < SHIORI_OTTER_RADIUS)
           .forEach((enemy) => {
             this.dealAbilityDamage(source, enemy, SHIORI_OTTER_DAMAGE);
-            if (enemy.alive) enemy.stun = Math.max(enemy.stun, SHIORI_OTTER_STUN);
+            if (enemy.alive) enemy.stun = Math.max(enemy.stun, stunDuration);
           });
         this.grantShield(source, source, source.maxHp * SHIORI_OTTER_SHIELD_RATIO, 0.45);
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "海獭冲击", life: 0.68, size: 12 });
         break;
+      }
       case "sui_bird": {
         if (!this.startSuiBirdElbowDash(source, livingTargets)) {
           source.suiBirdChargesRemaining = 0;
@@ -1446,10 +1465,16 @@ export class AutoChessEngine {
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "暖男回复", life: 0.68, size: 12 });
         break;
       }
-      case "grove_mender":
+      case "grove_mender": {
+        const duration = abilityStatForStar(
+          UNIT_DEFS.grove_mender,
+          source.star,
+          "duration",
+          NANA_PICKAXE_DURATION,
+        );
         source.energy = source.maxEnergy;
         source.barrageActive = true;
-        source.barrageDrainPerSecond = source.maxEnergy / NANA_PICKAXE_DURATION;
+        source.barrageDrainPerSecond = source.maxEnergy / duration;
         source.abilityArmorBonus = NANA_PICKAXE_ARMOR_BONUS;
         source.armor += source.abilityArmorBonus;
         livingTargets
@@ -1465,6 +1490,7 @@ export class AutoChessEngine {
         this.addEffect({ kind: "ring", x: source.x, y: source.y, color: accent, life: 0.65, size: NANA_PICKAXE_TAUNT_RADIUS });
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "护甲提升 · 全员看我", life: 0.8, size: 11 });
         break;
+      }
       case "youyi":
         if (target) {
           this.dealAbilityDamage(source, target, 0.78);
@@ -1533,13 +1559,29 @@ export class AutoChessEngine {
     motion.time = Math.min(motion.duration, motion.time + dt);
     const progress = motion.duration > 0 ? motion.time / motion.duration : 1;
     // 滑跪先冲后刹，末段速度降到零，避免像匀速传送一样穿过战场。
-    const eased = motion.abilityId === "guangyi"
-      ? 1 - (1 - progress) ** 3
-      : motion.kind === "dash"
-        ? progress
-      : progress * progress * (3 - 2 * progress);
-    fighter.x = motion.fromX + (motion.toX - motion.fromX) * eased;
-    fighter.y = motion.fromY + (motion.toY - motion.fromY) * eased;
+    if (
+      motion.kind === "pull" &&
+      motion.abilityId === "mumu" &&
+      motion.controlX !== undefined &&
+      motion.controlY !== undefined
+    ) {
+      const point = quadraticMotionPoint(
+        { x: motion.fromX, y: motion.fromY },
+        { x: motion.controlX, y: motion.controlY },
+        { x: motion.toX, y: motion.toY },
+        mumuWhipPullProgress(progress),
+      );
+      fighter.x = point.x;
+      fighter.y = point.y;
+    } else {
+      const eased = motion.abilityId === "guangyi"
+        ? 1 - (1 - progress) ** 3
+        : motion.kind === "dash"
+          ? progress
+        : progress * progress * (3 - 2 * progress);
+      fighter.x = motion.fromX + (motion.toX - motion.fromX) * eased;
+      fighter.y = motion.fromY + (motion.toY - motion.fromY) * eased;
+    }
     if (motion.abilityId === "guangyi") this.sweepGuangyiDash(fighter, motion, previousX, previousY);
     if (motion.abilityId === "biscuit_sui") this.sweepBiscuitRescueDash(fighter, motion, previousX, previousY);
     if (motion.abilityId === "sui_bird") this.sweepSuiBirdElbowDash(fighter, motion, previousX, previousY);
@@ -1573,7 +1615,13 @@ export class AutoChessEngine {
     const current = available.find((target) => target.fid === source.targetFid) || null;
     const nearest = this.nearestTarget(source, available);
     source.targetLock = Math.max(0, source.targetLock - dt);
-    const shouldSwitch = !current || !nearest || (current.stealthTime > 0 && nearest.stealthTime <= 0) || (source.targetLock <= 0 && (
+    const currentProtected = Boolean(
+      current && (current.stealthTime > 0 || current.rebirthGraceTime > 0),
+    );
+    const nearestProtected = Boolean(
+      nearest && (nearest.stealthTime > 0 || nearest.rebirthGraceTime > 0),
+    );
+    const shouldSwitch = !current || !nearest || (currentProtected && !nearestProtected) || (source.targetLock <= 0 && (
       source.stuckTime >= STUCK_RECOVERY_DELAY ||
       Math.hypot(nearest.x - source.x, nearest.y - source.y) + TARGET_SWITCH_DISTANCE < Math.hypot(current.x - source.x, current.y - source.y)
     ));
@@ -2063,9 +2111,9 @@ export class AutoChessEngine {
     );
     return availableTargets.reduce<Fighter | null>((best, target) => {
       if (!best) return target;
-      const targetStealthed = target.stealthTime > 0;
-      const bestStealthed = best.stealthTime > 0;
-      if (targetStealthed !== bestStealthed) return targetStealthed ? best : target;
+      const targetProtected = target.stealthTime > 0 || target.rebirthGraceTime > 0;
+      const bestProtected = best.stealthTime > 0 || best.rebirthGraceTime > 0;
+      if (targetProtected !== bestProtected) return targetProtected ? best : target;
       const bestDistance = Math.hypot(best.x - source.x, best.y - source.y);
       const distance = Math.hypot(target.x - source.x, target.y - source.y);
       return distance < bestDistance ? target : best;
@@ -2310,6 +2358,11 @@ export class AutoChessEngine {
     if (!battle) return;
     this.chronosphereEnergyLocks.clear();
     battle.elapsed += dt;
+    if (battle.elapsed + 1e-6 >= ZEYIN_FORCED_REBIRTH_TIME) {
+      [...battle.player, ...battle.enemy]
+        .filter((fighter) => fighter.alive && fighter.unitId === "zeyin" && !fighter.reborn)
+        .forEach((fighter) => this.killFighter(fighter));
+    }
     battle.yueGangTimer = Math.max(0, battle.yueGangTimer - dt);
     battle.matureTimer -= dt;
     if (battle.matureTimer <= 0) {
@@ -2431,6 +2484,7 @@ export class AutoChessEngine {
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.gluttonyKillCooldown = Math.max(0, fighter.gluttonyKillCooldown - dt);
+      fighter.rebirthGraceTime = Math.max(0, fighter.rebirthGraceTime - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
       const switchWasActive = fighter.raccoonSwitchTime > 0;
       fighter.raccoonSwitchTime = Math.max(0, fighter.raccoonSwitchTime - dt);
@@ -2708,7 +2762,10 @@ export class AutoChessEngine {
             break;
           case "supportHeal": {
             // 支援治疗：能量满且最虚弱友军生命比例降到阈值
-            const weakestAlly = [...abilityAllies, fighter]
+            const healCandidates = fighter.unitId === "cog_scribe"
+              ? abilityAllies.filter((ally) => ally.fid !== fighter.fid)
+              : [...abilityAllies, fighter];
+            const weakestAlly = healCandidates
               .filter((ally, index, candidates) => candidates.indexOf(ally) === index)
               .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
             shouldCast = Boolean(weakestAlly && weakestAlly.hp / weakestAlly.maxHp <= SUPPORT_HEAL_HP_RATIO);

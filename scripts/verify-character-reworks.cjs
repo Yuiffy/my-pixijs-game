@@ -107,6 +107,7 @@ const inspectPng = (buffer) => {
 
 const { chromium } = loadPlaywright();
 const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
+const nanaDurationOnly = process.env.AUTOCHESS_NANA_DURATION_ONLY === "1";
 const artifactDirectory = ".tmp/autochess/character-reworks";
 mkdirSync(artifactDirectory, { recursive: true });
 
@@ -194,11 +195,20 @@ const enterPreparation = async (page, seed) => {
     [...codexUnits].map(({ cost }) => cost).sort((left, right) => left - right),
   );
   await dialog.getByRole("button").filter({ hasText: "七海大鲨鱼" }).click();
+  await dialog.locator("aside").evaluate((element) => {
+    element.scrollTop = 0;
+    let ancestor = element.parentElement;
+    while (ancestor) {
+      if (ancestor.scrollHeight > ancestor.clientHeight) ancestor.scrollTop = 0;
+      ancestor = ancestor.parentElement;
+    }
+  });
   const nanaDetails = await dialog.locator("aside").innerText();
   assert.match(nanaDetails, /5 费/);
   assert.match(nanaDetails, /技能距离 430/);
   assert.match(nanaDetails, /凿凿冲击/);
   assert.match(nanaDetails, /⛏️/);
+  assert.match(nanaDetails, /1星 2\.8 秒.*2星 3\.2 秒.*3星 3\.6 秒/s);
   await capture("codex-cost-order-and-nana.png");
 
   await enterPreparation(page, 302);
@@ -312,6 +322,60 @@ const enterPreparation = async (page, seed) => {
   assert.equal(pickaxeImpact.remainingPickaxes, 0);
   assert.ok(pickaxeImpact.effect && pickaxeImpact.effect.life < pickaxeImpact.effect.maxLife);
   await capture("nana-pickaxe-impact.png");
+
+  if (nanaDurationOnly) {
+    await page.evaluate(() => window.advanceTime(2300));
+    const nanaEnded = await page.evaluate(() => {
+      const engine = window.__characterReworkEngine;
+      const battle = engine.state.battle;
+      const nana = battle.player.find((fighter) => fighter.unitId === "grove_mender");
+      const nearbyEnemy = battle.enemy.find((fighter) => fighter.alive);
+      nearbyEnemy.x = nana.x + 100;
+      nearbyEnemy.y = nana.y;
+      nearbyEnemy.tauntedByFid = null;
+      nearbyEnemy.tauntTime = 0;
+      window.advanceTime(350);
+      return {
+        nanaFid: nana.fid,
+        barrageActive: nana.barrageActive,
+        armorBonus: nana.abilityArmorBonus,
+        nearbyEnemyTauntedBy: nearbyEnemy.tauntedByFid,
+        textState: JSON.parse(window.render_game_to_text()),
+      };
+    });
+    assert.equal(nanaEnded.barrageActive, false);
+    assert.equal(nanaEnded.armorBonus, 0);
+    assert.notEqual(nanaEnded.nearbyEnemyTauntedBy, nanaEnded.nanaFid);
+    assert.equal(nanaEnded.textState.phase, "battle");
+    await capture("nana-control-ended.png");
+    const unexpectedErrors = errors.filter(
+      (error) =>
+        !error.includes("/api/record") &&
+        !error.startsWith("Failed to load resource"),
+    );
+    const unexpectedResponses = failedResponses.filter(
+      (response) =>
+        !response.url.endsWith("/api/record") &&
+        !(
+          response.url.includes("/_next/static/webpack/") &&
+          response.url.endsWith(".webpack.hot-update.json")
+        ),
+    );
+    assert.deepEqual(unexpectedResponses, [], JSON.stringify(unexpectedResponses));
+    assert.deepEqual(unexpectedErrors, [], JSON.stringify(unexpectedErrors));
+    console.log(JSON.stringify({
+      nanaDetails,
+      nanaSetup,
+      nanaCounter,
+      pickaxeImpact,
+      nanaEnded,
+      screenshots,
+      errors,
+      failedResponses,
+    }, null, 2));
+    await browser.close();
+    return;
+  }
 
   const gluttonyGrowth = await page.evaluate(() => {
     const engine = window.__characterReworkEngine;

@@ -428,6 +428,17 @@ test("浣熊开关反震与犬绒饼干使用独立战场效果", () => {
   assert.match(effectView, /fillRoundedRect\(biscuitX - 13/);
 });
 
+test("沐霂救场使用甩带、套住与弧线抛援的独立表现", () => {
+  assert.match(gameTypes, /"mumu_whip"/);
+  assert.match(engineAbilities, /kind: "mumu_whip"/);
+  assert.match(engineAbilities, /mumuWhipControlPoint/);
+  assert.match(effectView, /effect\.kind === "mumu_whip"/);
+  assert.match(effectView, /const catchProgress = Math\.min/);
+  assert.match(effectView, /strokeCircle\(ropeEnd\.x, ropeEnd\.y/);
+  assert.match(fighterView, /mumuWhipPullProgress/);
+  assert.match(fighterView, /mumuPulling \? 14 : 7/);
+});
+
 test("技能只保留名称提示，范围与连线效果提供范围染色和飞行脉冲", () => {
   assert.doesNotMatch(gameTypes, /kind: "cast"/);
   assert.doesNotMatch(engine, /kind: "cast"/);
@@ -576,14 +587,18 @@ test("战斗热路径复用短命视图并缓存棋子子节点", () => {
   assert.match(scene, /if \(urgent !== this\.battleTimerUrgent\)/);
 });
 
-test("持续时停领域与短命特效对象池使用独立生命周期", () => {
+test("多个持续时停领域各自渲染，并与短命特效对象池使用独立生命周期", () => {
   assert.match(
     scene,
-    /private chronosphereView: Phaser\.GameObjects\.Container \| null = null/,
+    /private chronosphereViews = new Map<string, Phaser\.GameObjects\.Container>\(\)/,
   );
-  assert.match(scene, /let view = this\.chronosphereView/);
-  assert.match(scene, /this\.chronosphereView = view/);
-  assert.match(scene, /this\.chronosphereView = null/);
+  assert.match(scene, /new Set\(zones\.map\(\(zone\) => zone\.sourceFid\)\)/);
+  assert.match(scene, /this\.chronosphereViews\.forEach\(\(view, sourceFid\)/);
+  assert.match(scene, /zones\.forEach\(\(zone\)/);
+  assert.match(scene, /this\.chronosphereViews\.get\(zone\.sourceFid\)/);
+  assert.match(scene, /this\.chronosphereViews\.set\(zone\.sourceFid, view\)/);
+  assert.match(scene, /this\.chronosphereViews\.delete\(sourceFid\)/);
+  assert.doesNotMatch(scene, /const zone = zones\[0\]/);
   assert.doesNotMatch(scene, /rift-chronosphere/);
   assert.doesNotMatch(scene, /as unknown as BattleEffect/);
 });

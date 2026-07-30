@@ -296,7 +296,7 @@ test("浣熊店员使用原创展示文案与独立精灵头像", async () => {
 test("轴轴的宝使用围巾格裙 Q 版精灵头像", async () => {
   const unit = data.UNIT_DEFS.cog_scribe;
   assert.equal(unit.name, "轴轴的宝");
-  assert.equal(unit.title, "轴伊Joi · 后排治疗");
+  assert.equal(unit.title, "轴伊Joi · 治疗充能");
   assert.equal(unit.tier, 4);
   assert.equal(unit.cost, 4);
   assert.equal(unit.hp, 238);
@@ -305,6 +305,12 @@ test("轴轴的宝使用围巾格裙 Q 版精灵头像", async () => {
   assert.equal(unit.abilityName, "扔橘子");
   assert.match(unit.abilityDescription, /5 个橘子/);
   assert.match(unit.abilityDescription, /逐次减弱/);
+  assert.match(unit.abilityDescription, /其他友军/);
+  assert.match(unit.abilityDescription, /补充能量/);
+  assert.deepEqual(
+    unit.abilityLevels.map((level) => level.stats.energyPerOrange),
+    [3, 4, 6],
+  );
   assert.equal(unit.portraitStyle, "sprite");
   assert.equal(unit.portrait, "/images/autochess/portraits/cog-scribe.png");
   assert.equal(unit.portraitFocus, undefined);
@@ -415,6 +421,14 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.shiori.abilityCastTiming, "engage");
   assert.equal(data.UNIT_DEFS.shiori.abilityName, "海獭冲击");
   assert.match(data.UNIT_DEFS.shiori.abilityDescription, /最远.*范围伤害.*眩晕.*护盾/);
+  assert.deepEqual(
+    data.UNIT_DEFS.shiori.abilityLevels.map((level) => level.stats.stunDuration),
+    [0.5, 0.75, 1],
+  );
+  assert.match(
+    data.describeAbilityStarGrowth(data.UNIT_DEFS.shiori),
+    /1星 0\.5 秒.*2星 0\.75 秒.*3星 1 秒/,
+  );
   assert.equal(data.UNIT_DEFS.zeyin.attackType, "melee");
   assert.equal(data.UNIT_DEFS.zeyin.abilityName, "涅槃重生");
   assert.equal(data.UNIT_DEFS.zeyin.abilityCastTiming, "passive");
@@ -422,6 +436,14 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.grove_mender.attackType, "melee");
   assert.equal(data.UNIT_DEFS.grove_mender.abilityCastTiming, "engage");
   assert.match(data.UNIT_DEFS.grove_mender.abilityDescription, /最远.*护甲.*嘲讽.*⛏️.*眩晕/);
+  assert.deepEqual(
+    data.UNIT_DEFS.grove_mender.abilityLevels.map((level) => level.stats.duration),
+    [2.8, 3.2, 3.6],
+  );
+  assert.match(
+    data.describeAbilityStarGrowth(data.UNIT_DEFS.grove_mender),
+    /1星 2\.8 秒.*2星 3\.2 秒.*3星 3\.6 秒/,
+  );
   assert.equal(data.UNIT_DEFS.tiandou.abilityName, "棒棒糖刘海");
   assert.match(data.UNIT_DEFS.tiandou.abilityDescription, /友军.*回复生命.*敌人.*减速/);
   assert.equal(data.UNIT_DEFS.mitsuri.abilityName, "站我后面");
@@ -603,7 +625,7 @@ test("雪烛以高初始能量主动提供固定值加生命比例的四秒技�
       level.stats.shieldHpRatio,
       level.stats.duration,
     ]),
-    [[70, 0.26, 4], [120, 0.36, 4], [200, 0.5, 4]],
+    [[50, 0.2, 4], [100, 0.3, 4], [180, 0.42, 4]],
   );
   assert.match(yukisyo.abilityDescription, /发动技能时/);
   assert.doesNotMatch(yukisyo.abilityDescription, /战斗开始时/);

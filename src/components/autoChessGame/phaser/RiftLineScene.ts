@@ -19,6 +19,7 @@ import {
 } from "../core/gameData";
 import type {
   BattleEffect,
+  ChronosphereZone,
   Fighter,
   OwnedUnit,
   Projectile,
@@ -201,7 +202,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private effectViews = new Map<BattleEffect, Phaser.GameObjects.Container>();
 
-  private chronosphereView: Phaser.GameObjects.Container | null = null;
+  private chronosphereViews = new Map<string, Phaser.GameObjects.Container>();
 
   private suppressedEffectViews = new WeakSet<BattleEffect>();
 
@@ -474,7 +475,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.projectileRenderer.reset();
     this.effectViews.clear();
     this.effectRenderer.reset();
-    this.chronosphereView = null;
+    this.chronosphereViews.clear();
     this.summonRenderer.reset();
     this.buttonViews.forEach((button) => button.destroy());
     this.buttonViews = [];
@@ -1528,28 +1529,32 @@ export class RiftLineScene extends Phaser.Scene {
     this.effectRenderer.update(view, effect);
   }
 
-  private syncChronospheres(zones: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; color: string }>, visualTime: number) {
-    if (!zones.length) {
-      if (this.chronosphereView) {
-        this.chronosphereView.destroy();
-        this.chronosphereView = null;
+  private syncChronospheres(
+    zones: ChronosphereZone[],
+    visualTime: number,
+  ) {
+    const activeSourceFids = new Set(zones.map((zone) => zone.sourceFid));
+    this.chronosphereViews.forEach((view, sourceFid) => {
+      if (activeSourceFids.has(sourceFid)) return;
+      view.destroy();
+      this.chronosphereViews.delete(sourceFid);
+    });
+
+    zones.forEach((zone) => {
+      let view = this.chronosphereViews.get(zone.sourceFid);
+      if (!view) {
+        view = this.add.container(0, 0);
+        view.add(this.add.graphics().setName("shape"));
+        this.chronosphereViews.set(zone.sourceFid, view);
+        this.effectsLayer.add(view);
       }
-      return;
-    }
-    let view = this.chronosphereView;
-    if (!view) {
-      view = this.add.container(0, 0);
-      view.add(this.add.graphics().setName("shape"));
-      this.chronosphereView = view;
-      this.effectsLayer.add(view);
-    }
-    const zone = zones[0];
-    const pulse = 0.92 + Math.sin(visualTime * 6) * 0.04;
-    const graphics = view.getByName("shape") as Phaser.GameObjects.Graphics;
-    graphics.clear();
-    graphics.fillStyle(0x783cb4, 0.2 + Math.max(0, zone.life / zone.maxLife) * 0.22).fillCircle(0, 0, zone.radius * pulse);
-    graphics.lineStyle(3, Phaser.Display.Color.HexStringToColor(zone.color).color, 0.92).strokeCircle(0, 0, zone.radius * pulse);
-    view.setPosition(zone.x, zone.y).setDepth(DEPTH.effects - 2);
+      const pulse = 0.92 + Math.sin(visualTime * 6) * 0.04;
+      const graphics = view.getByName("shape") as Phaser.GameObjects.Graphics;
+      graphics.clear();
+      graphics.fillStyle(0x783cb4, 0.2 + Math.max(0, zone.life / zone.maxLife) * 0.22).fillCircle(0, 0, zone.radius * pulse);
+      graphics.lineStyle(3, Phaser.Display.Color.HexStringToColor(zone.color).color, 0.92).strokeCircle(0, 0, zone.radius * pulse);
+      view.setPosition(zone.x, zone.y).setDepth(DEPTH.effects - 2);
+    });
   }
 
   private buildBattleOverlay() {
