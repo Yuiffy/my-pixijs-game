@@ -168,7 +168,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   const codexText = await dialog.innerText();
   const expectedRecovery = "能量 · 稳态回能：初始 25/100；自动回能（12.5 秒回满，每秒 +8）；攻击回能（每下 +6）；受击回能（每下 +3）";
   if (!codexText.includes(expectedRecovery)) throw new Error(`Codex recovery text mismatch: ${codexText}`);
-  for (const expected of ["满区逃生", "停止攻击和回能", "主动逃离最近敌人", "20% 闪避", "总回复 25%"]) {
+  for (const expected of ["满区逃生", "停止攻击和回能", "锁定最安全方向逃跑", "20% 闪避", "总回复 25%"]) {
     if (!codexText.includes(expected)) {
       throw new Error(`Codex ability description is missing ${expected}: ${codexText}`);
     }
@@ -203,6 +203,9 @@ mkdirSync(artifactDirectory, { recursive: true });
     source.energy = source.maxEnergy;
     source.hitPulse = 0.2;
     source.cooldown = 0;
+    source.manquTime = 0;
+    source.manquEscapeX = 0;
+    source.manquEscapeY = 0;
     battle.enemy.forEach((fighter, index) => {
       fighter.x = index === 0 ? 560 : 1000;
       fighter.y = index === 0 ? 360 : 600;
@@ -286,6 +289,114 @@ mkdirSync(artifactDirectory, { recursive: true });
   }
   await capture("sun-guard-manqu-ended");
 
+  const surroundedStart = await page.evaluate(() => {
+    const engine = window.__codexAutoChessBridge.engine;
+    const battle = engine.state.battle;
+    const source = battle.player.find((fighter) => fighter.unitId === "sun_guard");
+    const template = battle.enemy[0];
+    const left = { ...template, fid: "browser-manqu-left", x: 400, y: 360 };
+    const right = { ...template, fid: "browser-manqu-right", x: 600, y: 360 };
+    battle.enemy.splice(0, battle.enemy.length, left, right);
+    battle.enemy.forEach((fighter) => {
+      fighter.attack = 0;
+      fighter.cooldown = 99;
+      fighter.baseMoveSpeed = 0;
+      fighter.moveSpeed = 0;
+      fighter.stun = 99;
+      fighter.hp = fighter.maxHp = 99_999;
+    });
+    const blocker = {
+      ...source,
+      fid: "browser-manqu-blocker",
+      x: 900,
+      y: 500,
+      hp: source.maxHp,
+      energy: 0,
+      cooldown: 99,
+      stun: 99,
+      manquTime: 0,
+      manquEscapeX: 0,
+      manquEscapeY: 0,
+      abilityMotion: null,
+      raccoonStunnedAttackers: [],
+      sekiChargeHitFids: [],
+    };
+    battle.player.splice(0, battle.player.length, source, blocker);
+    source.x = 500;
+    source.y = 360;
+    source.hp = source.maxHp - 80;
+    source.energy = source.maxEnergy;
+    source.cooldown = 99;
+    source.manquTime = 0;
+    source.manquEscapeX = 0;
+    source.manquEscapeY = 0;
+    engine.castAbility(source, battle.enemy);
+    return {
+      source: { x: source.x, y: source.y },
+      totalEnemyDistance: battle.enemy.reduce(
+        (sum, enemy) => sum + Math.hypot(source.x - enemy.x, source.y - enemy.y),
+        0,
+      ),
+    };
+  });
+  await advance(50);
+  const surroundedLocked = await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player.find((fighter) => fighter.fid !== "browser-manqu-blocker");
+    const blocker = battle.player.find((fighter) => fighter.fid === "browser-manqu-blocker");
+    const length = Math.hypot(source.manquEscapeX, source.manquEscapeY) || 1;
+    blocker.x = source.x + (source.manquEscapeX / length) * 38;
+    blocker.y = source.y + (source.manquEscapeY / length) * 38;
+    return {
+      direction: { x: source.manquEscapeX, y: source.manquEscapeY },
+      blocker: { x: blocker.x, y: blocker.y },
+    };
+  });
+  await capture("sun-guard-manqu-surrounded-start");
+  await advance(450);
+  const surroundedEnd = await page.evaluate(() => {
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const source = battle.player.find((fighter) => fighter.fid !== "browser-manqu-blocker");
+    const blocker = battle.player.find((fighter) => fighter.fid === "browser-manqu-blocker");
+    return {
+      source: {
+        x: source.x,
+        y: source.y,
+        direction: { x: source.manquEscapeX, y: source.manquEscapeY },
+      },
+      blocker: { x: blocker.x, y: blocker.y },
+      totalEnemyDistance: battle.enemy.reduce(
+        (sum, enemy) => sum + Math.hypot(source.x - enemy.x, source.y - enemy.y),
+        0,
+      ),
+    };
+  });
+  const sourceTravel = Math.hypot(
+    surroundedEnd.source.x - surroundedStart.source.x,
+    surroundedEnd.source.y - surroundedStart.source.y,
+  );
+  const blockerTravel = Math.hypot(
+    surroundedEnd.blocker.x - surroundedLocked.blocker.x,
+    surroundedEnd.blocker.y - surroundedLocked.blocker.y,
+  );
+  if (
+    Math.abs(surroundedLocked.direction.y) < 0.9 ||
+    Math.abs(surroundedEnd.source.direction.x - surroundedLocked.direction.x) > 0.001 ||
+    Math.abs(surroundedEnd.source.direction.y - surroundedLocked.direction.y) > 0.001 ||
+    sourceTravel < 60 ||
+    blockerTravel < 25 ||
+    surroundedEnd.totalEnemyDistance <= surroundedStart.totalEnemyDistance + 35
+  ) {
+    throw new Error(`Surrounded Manqu escape mismatch: ${JSON.stringify({
+      surroundedStart,
+      surroundedLocked,
+      surroundedEnd,
+      sourceTravel,
+      blockerTravel,
+    })}`);
+  }
+  await capture("sun-guard-manqu-surrounded-end");
+
   if (errors.length) throw new Error(`Browser errors: ${JSON.stringify(errors)}`);
   if (failedResponses.length) throw new Error(`Failed responses: ${JSON.stringify(failedResponses)}`);
   console.log(JSON.stringify({
@@ -301,6 +412,13 @@ mkdirSync(artifactDirectory, { recursive: true });
       cast: castGuard,
       active: manquRuntime,
       ended: endedGuard,
+      surrounded: {
+        start: surroundedStart,
+        locked: surroundedLocked,
+        end: surroundedEnd,
+        sourceTravel,
+        blockerTravel,
+      },
     },
     screenshots,
     canvas: await page.locator('[data-game-canvas="rift-line"]').evaluate((canvas) => ({

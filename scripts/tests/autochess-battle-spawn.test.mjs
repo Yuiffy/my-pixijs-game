@@ -685,6 +685,91 @@ test("满区逃生期间停止攻击与回能，主动远离最近敌人并逐�
   assert.ok(guard.energy > 0);
 });
 
+test("满区被两侧敌人夹住时锁定使全体距离变大的方向，不再左右反复转向", () => {
+  const engine = createEngine(1461);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const guard = battle?.player[0];
+  const template = battle?.enemy[0];
+  assert.ok(battle && guard && template);
+
+  guard.x = 500;
+  guard.y = 360;
+  const left = { ...template, fid: "manqu-left", x: 400, y: 360 };
+  const right = { ...template, fid: "manqu-right", x: 600, y: 360 };
+  battle.enemy.splice(0, battle.enemy.length, left, right);
+  battle.enemy.forEach((enemy) => {
+    enemy.attack = 0;
+    enemy.cooldown = 99;
+    enemy.baseMoveSpeed = 0;
+    enemy.moveSpeed = 0;
+    enemy.stun = 99;
+  });
+  const totalDistanceBefore = battle.enemy.reduce(
+    (sum, enemy) => sum + Math.hypot(guard.x - enemy.x, guard.y - enemy.y),
+    0,
+  );
+  guard.energy = guard.maxEnergy;
+  engine.castAbility(guard, battle.enemy);
+  engine.update(0.05);
+  const lockedDirection = { x: guard.manquEscapeX, y: guard.manquEscapeY };
+  stepBattle(engine, 9);
+
+  const totalDistanceAfter = battle.enemy.reduce(
+    (sum, enemy) => sum + Math.hypot(guard.x - enemy.x, guard.y - enemy.y),
+    0,
+  );
+  assert.ok(Math.abs(guard.y - 360) > 55, "夹击时应沿垂直方向真正脱离");
+  assert.ok(Math.abs(guard.x - 500) < 20, "不应继续在左右敌人之间摇摆");
+  assert.ok(totalDistanceAfter > totalDistanceBefore + 35);
+  assert.ok(Math.abs(lockedDirection.y) > 0.9);
+  assert.ok(Math.abs(guard.manquEscapeX - lockedDirection.x) < 0.001);
+  assert.ok(Math.abs(guard.manquEscapeY - lockedDirection.y) < 0.001);
+});
+
+test("满区会保持逃跑位移并把路径上的友军强力挤开", () => {
+  const engine = createEngine(1462);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sun_guard", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sun_guard", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const guard = battle?.player[0];
+  const blocker = battle?.player[1];
+  const threat = battle?.enemy[0];
+  assert.ok(battle && guard && blocker && threat);
+
+  guard.x = 500;
+  guard.y = 360;
+  blocker.x = 462;
+  blocker.y = 360;
+  blocker.stun = 99;
+  blocker.cooldown = 99;
+  battle.enemy.splice(1);
+  threat.x = 640;
+  threat.y = 360;
+  threat.attack = 0;
+  threat.baseMoveSpeed = 0;
+  threat.moveSpeed = 0;
+  threat.stun = 99;
+  const blockerStart = { x: blocker.x, y: blocker.y };
+  guard.energy = guard.maxEnergy;
+  engine.castAbility(guard, battle.enemy);
+  stepBattle(engine, 10);
+
+  assert.ok(guard.x < 430, "满区应穿过原先的阻挡位置继续远离敌人");
+  assert.ok(
+    Math.hypot(blocker.x - blockerStart.x, blocker.y - blockerStart.y) > 30,
+    `挡路单位应被明显挤开，实际从 (${blockerStart.x},${blockerStart.y}) 到 (${blocker.x},${blocker.y})`,
+  );
+  assertInsideBattleBounds(guard);
+  assertInsideBattleBounds(blocker);
+});
+
 test("满区形态追加闪避，结束后恢复原本受击结算", () => {
   const engine = createEngine(147);
   engine.state.playerLevel = 4;
@@ -3148,7 +3233,7 @@ test("邪恶外星人的贯穿光线沿目标方向发射并命中同线敌人",
   assert.ok(Math.abs(targetCrossProduct) < 0.001);
 });
 
-test("泽音四秒内必定涅槃，重生后短暂无敌、失去仇恨并以普攻后退", () => {
+test("泽音首命自动回能或倒下涅槃，二阶段保留仇恨并以满能量火球灼烧", () => {
   const engine = createEngine(97);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
@@ -3171,34 +3256,81 @@ test("泽音四秒内必定涅槃，重生后短暂无敌、失去仇恨并以�
   const zeyinMaxHp = zeyin.maxHp;
   const zeyinBaseAttack = zeyin.baseAttack;
   const zeyinBaseInterval = zeyin.baseAttackInterval;
+  assert.equal(zeyinMaxHp, 110);
+  assert.equal(zeyin.maxEnergy, 100);
+  assert.equal(zeyin.energy, 0);
+  assert.equal(zeyin.energyPerSecond, 20);
+  assert.equal(zeyin.energyOnAttack, 0);
+  assert.equal(zeyin.energyOnHit, 0);
+  zeyin.stun = 1;
+  zeyin.slowTime = 1;
+  zeyin.slowMultiplier = 0.6;
+  zeyin.burnTime = 1;
+  zeyin.burnDps = 5;
+  zeyin.weakenTime = 1;
+  zeyin.weakenArmorPenalty = 9;
+  zeyin.armor -= 9;
   engine["damage"](battle.enemy[0], zeyin, 99_999);
   assert.equal(zeyin.alive, true);
   assert.equal(zeyin.reborn, true);
   assert.equal(zeyin.attackType, "ranged");
   assert.equal(zeyin.range, 245);
-  assert.equal(zeyin.maxHp, Math.round(zeyinMaxHp * 0.72));
+  assert.equal(zeyin.maxHp, 200);
   assert.equal(zeyin.hp, zeyin.maxHp);
   assert.ok(zeyin.baseAttack >= zeyinBaseAttack * 1.35);
   assert.ok(zeyin.baseAttackInterval < zeyinBaseInterval * 0.71);
-  assert.equal(zeyin.rebirthGraceTime, 1);
+  assert.equal(zeyin.energy, 0);
+  assert.equal(zeyin.cooldown, 0.2);
+  assert.equal(zeyin.stun, 0);
+  assert.equal(zeyin.slowTime, 0);
+  assert.equal(zeyin.burnTime, 0);
+  assert.equal(zeyin.weakenTime, 0);
   assert.equal(zeyin.rebirthRecoilTime, 4);
-  assert.equal(battle.enemy[0].targetFid, null);
+  assert.equal(battle.enemy[0].targetFid, zeyin.fid);
   assert.ok(battle.effects.some((effect) => effect.kind === "rebirth"));
 
   const target = battle.enemy[0];
   target.x = 400;
   target.y = 360;
   target.armor = 0;
-  const guardedHp = zeyin.hp;
-  assert.equal(engine["damage"](target, zeyin, 99_999), -1);
-  assert.equal(zeyin.hp, guardedHp);
-  zeyin.rebirthGraceTime = 0;
-  assert.ok(engine["damage"](target, zeyin, 1) > 0);
+  const rebornHp = zeyin.hp;
+  assert.ok(engine["damage"](target, zeyin, 20) > 0);
+  assert.ok(zeyin.hp < rebornHp, "二阶段不应再有伤害免疫");
+
+  zeyin.energy = zeyin.maxEnergy;
+  engine.update(0.05);
+  const fireball = battle.projectiles.find(
+    (projectile) => projectile.sourceFid === zeyin.fid && projectile.style === "fireball",
+  );
+  assert.ok(fireball);
+  assert.equal(fireball.emoji, "🔥");
+  assert.equal(fireball.damageKind, "ability");
+  assert.ok(Math.abs(fireball.damage - zeyin.attack * 1.6) < 0.001);
+  assert.ok(Math.abs(fireball.burnPower - zeyin.attack * 0.8) < 0.001);
+  assert.equal(zeyin.energy, 0);
+  const targetHpBeforeFireball = target.hp;
+  for (let tick = 0; tick < 20 && target.burnTime <= 0; tick += 1) engine.update(0.05);
+  assert.ok(target.hp < targetHpBeforeFireball);
+  assert.ok(target.burnTime > 0);
+  assert.ok(battle.effects.some((effect) => effect.text === "涅槃火球"));
+
   const distanceBeforeRecoil = Math.hypot(target.x - zeyin.x, target.y - zeyin.y);
+  const recoilBlocker = {
+    ...zeyin,
+    fid: "zeyin-recoil-blocker",
+    x: zeyin.x - 28,
+    y: zeyin.y,
+    abilityMotion: null,
+    cooldown: 99,
+    stun: 99,
+  };
+  battle.player.push(recoilBlocker);
+  const recoilBlockerStart = { x: recoilBlocker.x, y: recoilBlocker.y };
   engine["basicAttack"](zeyin, target);
   const recoil = zeyin.abilityMotion;
   assert.equal(recoil?.kind, "push");
   assert.equal(recoil?.abilityId, null);
+  assert.equal(recoil?.forceThrough, true);
   assert.ok(recoil && recoil.toX < recoil.fromX);
   const recoilLandingDistance = Math.hypot(target.x - recoil.toX, target.y - recoil.toY);
   assert.ok(recoilLandingDistance > distanceBeforeRecoil);
@@ -3209,6 +3341,11 @@ test("泽音四秒内必定涅槃，重生后短暂无敌、失去仇恨并以�
   engine["updateAbilityMotion"](zeyin, 0.08, battle);
   assert.equal(zeyin.abilityMotion, null);
   assert.ok(Math.hypot(target.x - zeyin.x, target.y - zeyin.y) > distanceBeforeRecoil);
+  assert.ok(
+    Math.abs(recoilBlocker.y - recoilBlockerStart.y) > 10,
+    "后坐力应把同路单位挤到侧面，而不是取消自身后退",
+  );
+  assertInsideBattleBounds(recoilBlocker);
 
   zeyin.x = 300;
   zeyin.y = 360;
@@ -3224,25 +3361,33 @@ test("泽音四秒内必定涅槃，重生后短暂无敌、失去仇恨并以�
   engine["basicAttack"](zeyin, target);
   assert.equal(zeyin.abilityMotion, null, "撤离窗口结束后不应再触发后坐力");
 
-  const timedEngine = createEngine(98);
-  timedEngine.state.playerLevel = 4;
-  timedEngine.state.board.fill(null);
-  timedEngine.state.board[0] = { uid: 1, id: "zeyin", star: 1 };
-  timedEngine.startBattle();
-  const timedBattle = timedEngine.state.battle;
-  const timedZeyin = timedBattle?.player.find((fighter) => fighter.unitId === "zeyin");
-  assert.ok(timedBattle && timedZeyin);
-  timedBattle.enemy.forEach((fighter) => {
+  const energyEngine = createEngine(98);
+  energyEngine.state.playerLevel = 4;
+  energyEngine.state.board.fill(null);
+  energyEngine.state.board[0] = { uid: 1, id: "zeyin", star: 1 };
+  energyEngine.startBattle();
+  const energyBattle = energyEngine.state.battle;
+  const energyZeyin = energyBattle?.player.find((fighter) => fighter.unitId === "zeyin");
+  assert.ok(energyBattle && energyZeyin);
+  energyBattle.enemy.forEach((fighter) => {
     fighter.attack = 0;
     fighter.hp = fighter.maxHp = 99_999;
+    fighter.armor = 99_999;
+    fighter.moveSpeed = 0;
+    fighter.cooldown = 99;
   });
-  timedZeyin.hp = timedZeyin.maxHp;
-  stepBattle(timedEngine, 79);
-  assert.equal(timedZeyin.reborn, false);
-  stepBattle(timedEngine, 1);
-  assert.equal(timedZeyin.reborn, true);
-  assert.equal(timedZeyin.attackType, "ranged");
-  assert.ok(timedZeyin.rebirthGraceTime > 0.9);
+  energyZeyin.cooldown = 99;
+  stepBattle(energyEngine, 50);
+  assert.equal(energyZeyin.reborn, false);
+  assert.ok(energyZeyin.energy >= 49.9 && energyZeyin.energy <= 50.1);
+  stepBattle(energyEngine, 49);
+  assert.equal(energyZeyin.reborn, false);
+  assert.ok(energyZeyin.energy >= 98.9 && energyZeyin.energy <= 99.1);
+  stepBattle(energyEngine, 1);
+  assert.equal(energyZeyin.reborn, true);
+  assert.equal(energyZeyin.attackType, "ranged");
+  assert.equal(energyZeyin.maxHp, 200);
+  assert.equal(energyZeyin.energy, 0);
 });
 
 test("礼墨空气龙持续隐身，期间可攻击，能量耗尽发射礼小龙并触发社恐后坐力", () => {
@@ -3568,11 +3713,25 @@ test("小岁鸟连续三次肘击会反复冲撞、击退并短暂眩晕敌人",
   engine["castAbility"](bird, battle.enemy, true);
   assert.equal(bird.suiBirdChargesRemaining, 2);
   assert.equal(bird.abilityMotion?.abilityId, "sui_bird");
+  const elbowMotions = [];
+  const seenElbowMotions = new Set();
+  const captureElbowMotion = () => {
+    const motion = bird.abilityMotion;
+    if (!motion || motion.abilityId !== "sui_bird" || seenElbowMotions.has(motion)) return;
+    seenElbowMotions.add(motion);
+    elbowMotions.push(motion);
+  };
+  captureElbowMotion();
   let sawStun = false;
   let sawPush = false;
+  let firstDashHit = false;
   const elbowLabels = new Set();
   for (let tick = 0; tick < 40 && (bird.abilityMotion || bird.suiBirdChargesRemaining > 0); tick += 1) {
     engine.update(0.05);
+    captureElbowMotion();
+    if (elbowMotions.length === 1) {
+      firstDashHit ||= battle.enemy.some((enemy) => enemy.damageTaken > 0);
+    }
     sawStun ||= battle.enemy.some((enemy) => enemy.stun > 0);
     sawPush ||= battle.enemy.some((enemy) => enemy.abilityMotion?.kind === "push");
     battle.effects
@@ -3583,6 +3742,17 @@ test("小岁鸟连续三次肘击会反复冲撞、击退并短暂眩晕敌人",
   const hitEnemies = battle.enemy.filter((enemy) => enemy.damageTaken > 0);
   assert.equal(bird.suiBirdChargesRemaining, 0);
   assert.equal(bird.abilityMotion, null);
+  assert.equal(firstDashHit, true, "施法距离内的目标应被第一段固定距离冲刺命中");
+  assert.equal(elbowMotions.length, 3);
+  elbowMotions.forEach((motion) => {
+    assert.ok(
+      Math.abs(
+        Math.hypot(motion.toX - motion.fromX, motion.toY - motion.fromY) -
+          gameData.SUI_BIRD_ELBOW_DISTANCE,
+      ) < 0.001,
+      "每段肘击都应使用固定冲刺距离",
+    );
+  });
   assert.ok(hitEnemies.length >= 1);
   assert.equal(sawStun, true);
   assert.equal(sawPush, true);
@@ -3596,6 +3766,40 @@ test("小岁鸟连续三次肘击会反复冲撞、击退并短暂眩晕敌人",
     elbowLabels.size >= 3,
     "三次冲撞都应生成独立的肘击反馈",
   );
+});
+
+test("小岁鸟贴近战场边缘时会转向并保持完整冲刺距离", () => {
+  const engine = createEngine(209);
+  engine.state.round = 6;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "sui_bird", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const bird = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && bird && target);
+  battle.enemy.slice(1).forEach((enemy) => { enemy.alive = false; });
+  bird.x = 500;
+  bird.y = BATTLE_BOUNDS.top + bird.radius + 28;
+  target.x = 650;
+  target.y = BATTLE_BOUNDS.top + target.radius;
+  target.hp = target.maxHp = 99_999;
+  target.attack = 0;
+  bird.energy = bird.maxEnergy;
+
+  engine["castAbility"](bird, [target], true);
+
+  const motion = bird.abilityMotion;
+  assert.equal(motion?.abilityId, "sui_bird");
+  assert.ok(
+    Math.abs(
+      Math.hypot(motion.toX - motion.fromX, motion.toY - motion.fromY) -
+        gameData.SUI_BIRD_ELBOW_DISTANCE,
+    ) < 0.001,
+  );
+  assert.ok(motion.toY >= BATTLE_BOUNDS.top + bird.radius);
+  assert.ok(motion.toY <= BATTLE_BOUNDS.bottom - bird.radius);
 });
 
 test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {
@@ -3824,8 +4028,9 @@ test("露蒂丝咕咕诊所治疗施法距离内友军并只保护其中生命�
   assert.equal(enemy.stun, 0);
 });
 
-test("大黑鼠随机使出迎客松或大吧唧并结算不同范围控制", () => {
+test("大黑鼠贴近后随机使出迎客松或大吧唧并结算防守与进攻分支", () => {
   const engine = createEngine(98);
+  engine.state.starter = "blaze";
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "dawn_duelist", star: 1 };
@@ -3848,6 +4053,7 @@ test("大黑鼠随机使出迎客松或大吧唧并结算不同范围控制", ()
   near.x = owner.x + 70;
   far.x = owner.x + 170;
 
+  owner.shield = 0;
   engine["rng"].next = () => 0.25;
   engine["castAbility"](owner, battle.enemy);
   assert.ok(battle.effects.some((effect) => effect.kind === "harei_pine"));
@@ -3858,6 +4064,8 @@ test("大黑鼠随机使出迎客松或大吧唧并结算不同范围控制", ()
   assert.equal(near.stun, 0);
   assert.equal(far.tauntedByFid, null);
   assert.equal(far.slowTime, 0);
+  assert.equal(owner.shield, owner.maxHp * 0.24);
+  assert.equal(owner.shieldingDone, owner.maxHp * 0.24);
   const pineTextState = JSON.parse(engine.renderTextState());
   const pineTextNear = pineTextState.battle.enemyUnits.find((fighter) => fighter.fid === near.fid);
   assert.equal(pineTextNear.slowMultiplier, 0.8);
@@ -3883,6 +4091,78 @@ test("大黑鼠随机使出迎客松或大吧唧并结算不同范围控制", ()
   assert.ok(textState.battle.visualEffects.effects.some((effect) => effect.kind === "harei_badge"));
   const textNear = textState.battle.enemyUnits.find((fighter) => fighter.fid === near.fid);
   assert.equal(textNear.slowMultiplier, 0.55);
+});
+
+test("大黑鼠不会远距离空放，迎客松护盾随嘲讽人数成长并封顶", () => {
+  const engine = createEngine(208);
+  engine.state.starter = "blaze";
+  engine.state.round = 7;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "dawn_duelist", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const owner = battle?.player[0];
+  assert.ok(battle && owner);
+
+  battle.enemy.forEach((fighter, index) => {
+    fighter.hp = fighter.maxHp = 9_999;
+    fighter.attack = 0;
+    fighter.x = owner.x + 180 + index * 35;
+    fighter.y = owner.y;
+  });
+  owner.energy = owner.maxEnergy;
+  engine.update(0.05);
+  assert.equal(owner.energy, owner.maxEnergy);
+  assert.equal(battle.effects.some((effect) => effect.kind === "harei_pine" || effect.kind === "harei_badge"), false);
+
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = owner.x + 62 + index * 8;
+    fighter.y = owner.y;
+  });
+  owner.shield = 0;
+  owner.shieldingDone = 0;
+  engine["rng"].next = () => 0.25;
+  engine["castAbility"](owner, battle.enemy);
+  assert.equal(owner.shield, owner.maxHp * 0.42);
+  assert.equal(owner.shieldingDone, owner.maxHp * 0.42);
+  battle.enemy.forEach((fighter) => assert.equal(fighter.tauntedByFid, owner.fid));
+});
+
+test("大黑鼠在三人近身围攻下能撑到迎客松，但不会成为无限续盾前排", () => {
+  const engine = createEngine(209);
+  engine.state.starter = "blaze";
+  engine.state.round = 2;
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "dawn_duelist", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const owner = battle?.player[0];
+  assert.ok(battle && owner && battle.enemy.length === 3);
+
+  owner.x = 470;
+  owner.y = 360;
+  owner.dodgeChance = 0;
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = owner.x + 58 + index * 12;
+    fighter.y = owner.y + (index - 1) * 28;
+    fighter.hp = fighter.maxHp = 9_999;
+    fighter.attack = 18;
+    fighter.attackInterval = 1;
+    fighter.baseAttackInterval = 1;
+    fighter.dodgeChance = 0;
+    fighter.energy = 0;
+    fighter.maxEnergy = 9_999;
+  });
+  engine["rng"].next = () => 0.25;
+
+  stepBattle(engine, 90);
+  assert.ok(owner.shieldingDone > 0);
+  assert.equal(owner.alive, true);
+
+  stepBattle(engine, 390);
+  assert.equal(owner.alive, false);
 });
 
 test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {

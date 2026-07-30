@@ -5,6 +5,7 @@ import {
   STARTERS,
   STARTER_OFFER_SIZE,
   StarterId,
+  SUI_BIRD_ELBOW_DISTANCE,
   TRAITS,
   TraitId,
   UNIT_DEFS,
@@ -106,6 +107,10 @@ const CONTACT_PRESSURE_SPEED_FORCE = 160;
 const MAX_CONTACT_SHIFT_PER_TICK = 4;
 const MAX_CONTACT_SHIFT_PER_TICK_FORCE = 10;
 const MAX_SEPARATION_PER_TICK = 3;
+const MAX_FORCED_SEPARATION_PER_TICK = 9;
+const FORCED_MOVEMENT_SIDE_SHIFT = 14;
+const MANQU_ESCAPE_LOOKAHEAD = 96;
+const MANQU_ESCAPE_DIRECTIONS = 16;
 const YIELD_PROGRESS_WINDOW = 0.3;
 const YIELD_MIN_TARGET_PROGRESS = 5;
 const STUCK_RECOVERY_DELAY = 0.65;
@@ -124,8 +129,7 @@ const ASSASSIN_BACKLINE_DEPTH_TOLERANCE = 48;
 /** 莉蔻近视射击 */
 /** 小红帽攻击弹幕持续约 4 秒，能量从满降到空 */
 /** 攻击力加成偏低，把体感重心放在攻速上 */
-/** 泽音美乐蒂：首命兜底涅槃与二阶段后撤。 */
-const ZEYIN_FORCED_REBIRTH_TIME = 4;
+/** 泽音美乐蒂：二阶段普攻后撤。 */
 const ZEYIN_REBIRTH_RECOIL_DISTANCE = 34;
 const ZEYIN_REBIRTH_RECOIL_DURATION = 0.16;
 const ZEYIN_REBIRTH_RECOIL_RANGE_MARGIN = 4;
@@ -205,6 +209,7 @@ const DANCE_DASH_COOLDOWN = [0, 4.2, 3.4, 2.6];
 interface MovementIntent {
   x: number;
   y: number;
+  forced?: boolean;
 }
 
 const NORI_APPLE_PIE_INTERVAL = 0.14;
@@ -670,9 +675,14 @@ export class AutoChessEngine {
       energyOnHit: fighter.energyOnHit,
       energyStyle: fighter.energyStyle,
       reborn: fighter.reborn,
-      rebirthGraceTime: Number(fighter.rebirthGraceTime.toFixed(2)),
       rebirthRecoilTime: Number(fighter.rebirthRecoilTime.toFixed(2)),
       manquTime: Number(fighter.manquTime.toFixed(2)),
+      manquEscapeDirection: fighter.manquTime > 0
+        ? {
+            x: Number(fighter.manquEscapeX.toFixed(2)),
+            y: Number(fighter.manquEscapeY.toFixed(2)),
+          }
+        : null,
       raccoonSwitchTime: Number(fighter.raccoonSwitchTime.toFixed(2)),
       raccoonStunnedAttackers: fighter.raccoonStunnedAttackers.length,
       stealthTime: Number(fighter.stealthTime.toFixed(2)),
@@ -794,6 +804,46 @@ export class AutoChessEngine {
       x: Math.max(BATTLE_BOUNDS.left + fighter.radius, Math.min(BATTLE_BOUNDS.right - fighter.radius, point.x)),
       y: Math.max(BATTLE_BOUNDS.top + fighter.radius, Math.min(BATTLE_BOUNDS.bottom - fighter.radius, point.y)),
     };
+  }
+
+  private fixedDistanceEndpoint(
+    fighter: Fighter,
+    directionX: number,
+    directionY: number,
+    distance: number,
+  ) {
+    const minX = BATTLE_BOUNDS.left + fighter.radius;
+    const maxX = BATTLE_BOUNDS.right - fighter.radius;
+    const minY = BATTLE_BOUNDS.top + fighter.radius;
+    const maxY = BATTLE_BOUNDS.bottom - fighter.radius;
+    const preferredAngle = Math.atan2(directionY, directionX);
+    const angleStep = Math.PI / 72;
+    const insideBounds = (point: { x: number; y: number }) =>
+      point.x >= minX &&
+      point.x <= maxX &&
+      point.y >= minY &&
+      point.y <= maxY;
+
+    for (let step = 0; step <= 72; step += 1) {
+      const offsets = step === 0 ? [0] : [step * angleStep, -step * angleStep];
+      for (const offset of offsets) {
+        const angle = preferredAngle + offset;
+        const point = {
+          x: fighter.x + Math.cos(angle) * distance,
+          y: fighter.y + Math.sin(angle) * distance,
+        };
+        if (insideBounds(point)) return point;
+      }
+    }
+
+    const axisAlignedEndpoint = [
+      { x: fighter.x + distance, y: fighter.y },
+      { x: fighter.x - distance, y: fighter.y },
+      { x: fighter.x, y: fighter.y + distance },
+      { x: fighter.x, y: fighter.y - distance },
+    ].find(insideBounds);
+    if (axisAlignedEndpoint) return axisAlignedEndpoint;
+    throw new Error(`战场空间不足以完成 ${distance} 距离的固定冲刺`);
   }
 
   private occupiedPosition(fighter: Fighter) {
@@ -923,6 +973,88 @@ export class AutoChessEngine {
     blocker.x = best.x;
     blocker.y = best.y;
     return true;
+  }
+
+  /** 逃跑/后坐力只挤开接触路径上的单位；不递归推动整条队列。 */
+  private applyForcedMovementPressure(
+    mover: Fighter,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    fighters: Fighter[],
+  ) {
+    const pathX = toX - fromX;
+    const pathY = toY - fromY;
+    const pathLength = Math.hypot(pathX, pathY);
+    if (pathLength < 0.01) return;
+    const forwardX = pathX / pathLength;
+    const forwardY = pathY / pathLength;
+    const blockers = fighters
+      .filter(
+        (other) =>
+          other.alive &&
+          other !== mover &&
+          !other.abilityMotion &&
+          !other.jumpPending &&
+          other.jumpTime <= 0,
+      )
+      .map((other) => ({
+        other,
+        forward: (other.x - fromX) * forwardX + (other.y - fromY) * forwardY,
+      }))
+      .filter(({ other, forward }) => {
+        if (forward < -other.radius || forward > pathLength + other.radius) return false;
+        const contactRadius = mover.radius + other.radius + CONTACT_SKIN + 4;
+        return this.distanceToSegment(other.x, other.y, fromX, fromY, toX, toY) < contactRadius;
+      })
+      .sort((left, right) => left.forward - right.forward || left.other.fid.localeCompare(right.other.fid));
+
+    blockers.forEach(({ other }) => {
+      const relativeX = other.x - mover.x;
+      const relativeY = other.y - mover.y;
+      const cross = forwardX * relativeY - forwardY * relativeX;
+      const preferredSide: -1 | 1 = Math.abs(cross) > 0.01
+        ? cross < 0 ? -1 : 1
+        : other.avoidSide;
+      const contactRadius = mover.radius + other.radius + CONTACT_SKIN;
+      const overlap = Math.max(0, contactRadius - Math.hypot(relativeX, relativeY));
+      const sideShift = Math.min(
+        FORCED_MOVEMENT_SIDE_SHIFT,
+        Math.max(7, overlap + pathLength * 0.75),
+      );
+      const forwardShift = Math.min(6, pathLength * 0.35);
+      let best: { x: number; y: number; clearance: number; moved: number } | null = null;
+      const sides: Array<-1 | 1> = [preferredSide, preferredSide === 1 ? -1 : 1];
+      for (const side of sides) {
+        const point = this.clampFighterPosition(other, {
+          x: other.x + forwardX * forwardShift - forwardY * sideShift * side,
+          y: other.y + forwardY * forwardShift + forwardX * sideShift * side,
+        });
+        const moved = Math.hypot(point.x - other.x, point.y - other.y);
+        const clearance = fighters.reduce((minimum, candidate) => {
+          if (!candidate.alive || candidate === other || candidate === mover) return minimum;
+          const occupied = this.occupiedPosition(candidate);
+          return Math.min(
+            minimum,
+            Math.hypot(point.x - occupied.x, point.y - occupied.y) -
+              other.radius -
+              candidate.radius,
+          );
+        }, Infinity);
+        if (
+          !best ||
+          clearance > best.clearance + 0.01 ||
+          (Math.abs(clearance - best.clearance) <= 0.01 && moved > best.moved)
+        ) {
+          best = { ...point, clearance, moved };
+        }
+      }
+      if (best && best.moved > 0.01) {
+        other.x = best.x;
+        other.y = best.y;
+      }
+    });
   }
 
   private findOpenPlacement(
@@ -1380,18 +1512,20 @@ export class AutoChessEngine {
     const distance = Math.hypot(deltaX, deltaY) || 1;
     const directionX = deltaX / distance;
     const directionY = deltaY / distance;
-    const overshoot = source.radius + target.radius + 34;
+    const endpoint = this.fixedDistanceEndpoint(
+      source,
+      directionX,
+      directionY,
+      SUI_BIRD_ELBOW_DISTANCE,
+    );
     source.suiBirdChargesRemaining -= 1;
     const motion = this.startAbilityMotion(
       source,
       "dash",
-      {
-        x: target.x + directionX * overshoot,
-        y: target.y + directionY * overshoot,
-      },
+      endpoint,
       {
         targetFid: target.fid,
-        duration: Math.max(0.22, Math.min(0.4, distance / 900)),
+        duration: SUI_BIRD_ELBOW_DISTANCE / 900,
         avoidOccupied: false,
       },
     );
@@ -1587,6 +1721,16 @@ export class AutoChessEngine {
       fighter.x = motion.fromX + (motion.toX - motion.fromX) * eased;
       fighter.y = motion.fromY + (motion.toY - motion.fromY) * eased;
     }
+    if (motion.forceThrough) {
+      this.applyForcedMovementPressure(
+        fighter,
+        previousX,
+        previousY,
+        fighter.x,
+        fighter.y,
+        [...battle.player, ...battle.enemy],
+      );
+    }
     if (motion.abilityId === "guangyi") this.sweepGuangyiDash(fighter, motion, previousX, previousY);
     if (motion.abilityId === "biscuit_sui") this.sweepBiscuitRescueDash(fighter, motion, previousX, previousY);
     if (motion.abilityId === "sui_bird") this.sweepSuiBirdElbowDash(fighter, motion, previousX, previousY);
@@ -1620,13 +1764,7 @@ export class AutoChessEngine {
     const current = available.find((target) => target.fid === source.targetFid) || null;
     const nearest = this.nearestTarget(source, available);
     source.targetLock = Math.max(0, source.targetLock - dt);
-    const currentProtected = Boolean(
-      current && (current.stealthTime > 0 || current.rebirthGraceTime > 0),
-    );
-    const nearestProtected = Boolean(
-      nearest && (nearest.stealthTime > 0 || nearest.rebirthGraceTime > 0),
-    );
-    const shouldSwitch = !current || !nearest || (currentProtected && !nearestProtected) || (source.targetLock <= 0 && (
+    const shouldSwitch = !current || !nearest || (current.stealthTime > 0 && nearest.stealthTime <= 0) || (source.targetLock <= 0 && (
       source.stuckTime >= STUCK_RECOVERY_DELAY ||
       Math.hypot(nearest.x - source.x, nearest.y - source.y) + TARGET_SWITCH_DISTANCE < Math.hypot(current.x - source.x, current.y - source.y)
     ));
@@ -1881,38 +2019,82 @@ export class AutoChessEngine {
     dt: number,
     movementIntents: Map<string, MovementIntent>,
   ) {
-    const target = this.nearestTarget(fighter, targets);
-    if (!target) return;
-    const distance = Math.hypot(fighter.x - target.x, fighter.y - target.y);
-    const awayAngle = distance > 0.001
-      ? Math.atan2(fighter.y - target.y, fighter.x - target.x)
-      : fighter.team === "player" ? Math.PI : 0;
+    if (!targets.length) return;
     const travel =
       fighter.moveSpeed *
       (fighter.slowTime > 0 ? fighter.slowMultiplier : 1) *
       dt;
-    const candidates = [0, -Math.PI / 4, Math.PI / 4, -Math.PI / 2, Math.PI / 2]
-      .map((offset) => {
-        const angle = awayAngle + offset;
+    if (travel < 0.001) return;
+
+    const lockedLength = Math.hypot(fighter.manquEscapeX, fighter.manquEscapeY);
+    const lockedPoint = lockedLength > 0.5
+      ? this.clampFighterPosition(fighter, {
+          x: fighter.x + (fighter.manquEscapeX / lockedLength) * travel,
+          y: fighter.y + (fighter.manquEscapeY / lockedLength) * travel,
+        })
+      : null;
+    const lockedTravel = lockedPoint
+      ? Math.hypot(lockedPoint.x - fighter.x, lockedPoint.y - fighter.y)
+      : 0;
+
+    // 本次变身固定一个使全体敌人加权总距离变大的方向；只有顶住边界时才重选。
+    if (!lockedPoint || lockedTravel < travel * 0.4) {
+      const currentDistances = targets.map((target) =>
+        Math.hypot(fighter.x - target.x, fighter.y - target.y));
+      const candidates = Array.from({ length: MANQU_ESCAPE_DIRECTIONS }, (_, index) => {
+        const baseAngle = fighter.team === "player" ? Math.PI : 0;
+        const angle = baseAngle + (index * Math.PI * 2) / MANQU_ESCAPE_DIRECTIONS;
+        const directionX = Math.cos(angle);
+        const directionY = Math.sin(angle);
         const point = this.clampFighterPosition(fighter, {
-          x: fighter.x + Math.cos(angle) * travel,
-          y: fighter.y + Math.sin(angle) * travel,
+          x: fighter.x + directionX * MANQU_ESCAPE_LOOKAHEAD,
+          y: fighter.y + directionY * MANQU_ESCAPE_LOOKAHEAD,
         });
         const moved = Math.hypot(point.x - fighter.x, point.y - fighter.y);
+        const distances = targets.map((target) =>
+          Math.hypot(point.x - target.x, point.y - target.y));
+        const minimumDistance = Math.min(...distances);
+        const weightedTotal = distances.reduce(
+          (sum, distance, targetIndex) =>
+            sum + distance * Math.min(2.5, 180 / Math.max(72, currentDistances[targetIndex])),
+          0,
+        );
         return {
-          point,
+          directionX,
+          directionY,
+          score:
+            minimumDistance * 4 +
+            weightedTotal -
+            (MANQU_ESCAPE_LOOKAHEAD - moved) * 12,
           moved,
-          distance: Math.hypot(point.x - target.x, point.y - target.y),
         };
-      })
-      .sort((left, right) => right.distance - left.distance || right.moved - left.moved);
-    const best = candidates[0];
-    if (!best || best.moved < 0.001) return;
-    const motionX = (best.point.x - fighter.x) / best.moved;
-    const motionY = (best.point.y - fighter.y) / best.moved;
-    fighter.x = best.point.x;
-    fighter.y = best.point.y;
-    movementIntents.set(fighter.fid, { x: motionX, y: motionY });
+      }).sort((left, right) => right.score - left.score || right.moved - left.moved);
+      const best = candidates[0];
+      if (!best || best.moved < 0.001) return;
+      fighter.manquEscapeX = best.directionX;
+      fighter.manquEscapeY = best.directionY;
+    }
+
+    const directionLength = Math.hypot(fighter.manquEscapeX, fighter.manquEscapeY) || 1;
+    const motionX = fighter.manquEscapeX / directionLength;
+    const motionY = fighter.manquEscapeY / directionLength;
+    const previousX = fighter.x;
+    const previousY = fighter.y;
+    const next = this.clampFighterPosition(fighter, {
+      x: fighter.x + motionX * travel,
+      y: fighter.y + motionY * travel,
+    });
+    fighter.x = next.x;
+    fighter.y = next.y;
+    this.applyForcedMovementPressure(
+      fighter,
+      previousX,
+      previousY,
+      fighter.x,
+      fighter.y,
+      [...(this.state.battle?.player || []), ...(this.state.battle?.enemy || [])],
+    );
+    movementIntents.set(fighter.fid, { x: motionX, y: motionY, forced: true });
     this.faceTowardX(fighter, fighter.x + motionX);
   }
 
@@ -2073,13 +2255,22 @@ export class AutoChessEngine {
           }
           const unitX = dx / distance;
           const unitY = dy / distance;
-          const correction = Math.min((minimum - distance) / 2, MAX_SEPARATION_PER_TICK);
           const leftIntent = movementIntents.get(left.fid);
           const rightIntent = movementIntents.get(right.fid);
+          const leftForced = leftIntent?.forced === true;
+          const rightForced = rightIntent?.forced === true;
+          const forcedPair = leftForced !== rightForced;
+          const correction = forcedPair
+            ? Math.min(minimum - distance, MAX_FORCED_SEPARATION_PER_TICK)
+            : Math.min((minimum - distance) / 2, MAX_SEPARATION_PER_TICK);
           const leftForward = leftIntent && (leftIntent.x * unitX + leftIntent.y * unitY) > 0.2;
           const rightForward = rightIntent && (rightIntent.x * -unitX + rightIntent.y * -unitY) > 0.2;
-          const leftScale = leftForward && !rightForward ? 0.15 : 1;
-          const rightScale = rightForward && !leftForward ? 0.15 : 1;
+          const leftScale = forcedPair
+            ? leftForced ? 0 : 1
+            : leftForward && !rightForward ? 0.15 : 1;
+          const rightScale = forcedPair
+            ? rightForced ? 0 : 1
+            : rightForward && !leftForward ? 0.15 : 1;
           const leftPoint = this.clampFighterPosition(left, { x: left.x - unitX * correction * leftScale, y: left.y - unitY * correction * leftScale });
           const rightPoint = this.clampFighterPosition(right, { x: right.x + unitX * correction * rightScale, y: right.y + unitY * correction * rightScale });
           left.x = leftPoint.x;
@@ -2116,9 +2307,9 @@ export class AutoChessEngine {
     );
     return availableTargets.reduce<Fighter | null>((best, target) => {
       if (!best) return target;
-      const targetProtected = target.stealthTime > 0 || target.rebirthGraceTime > 0;
-      const bestProtected = best.stealthTime > 0 || best.rebirthGraceTime > 0;
-      if (targetProtected !== bestProtected) return targetProtected ? best : target;
+      const targetStealthed = target.stealthTime > 0;
+      const bestStealthed = best.stealthTime > 0;
+      if (targetStealthed !== bestStealthed) return targetStealthed ? best : target;
       const bestDistance = Math.hypot(best.x - source.x, best.y - source.y);
       const distance = Math.hypot(target.x - source.x, target.y - source.y);
       return distance < bestDistance ? target : best;
@@ -2394,11 +2585,6 @@ export class AutoChessEngine {
     if (!battle) return;
     this.chronosphereEnergyLocks.clear();
     battle.elapsed += dt;
-    if (battle.elapsed + 1e-6 >= ZEYIN_FORCED_REBIRTH_TIME) {
-      [...battle.player, ...battle.enemy]
-        .filter((fighter) => fighter.alive && fighter.unitId === "zeyin" && !fighter.reborn)
-        .forEach((fighter) => this.killFighter(fighter));
-    }
     battle.yueGangTimer = Math.max(0, battle.yueGangTimer - dt);
     battle.matureTimer -= dt;
     if (battle.matureTimer <= 0) {
@@ -2520,7 +2706,6 @@ export class AutoChessEngine {
       fighter.abilityMoveSpeedTime = Math.max(0, fighter.abilityMoveSpeedTime - dt);
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.gluttonyKillCooldown = Math.max(0, fighter.gluttonyKillCooldown - dt);
-      fighter.rebirthGraceTime = Math.max(0, fighter.rebirthGraceTime - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
       const switchWasActive = fighter.raccoonSwitchTime > 0;
       fighter.raccoonSwitchTime = Math.max(0, fighter.raccoonSwitchTime - dt);
@@ -2776,6 +2961,18 @@ export class AutoChessEngine {
         !this.hasChronosphereInFlightOrActive(fighter, battle) &&
         fighter.energy >= fighter.maxEnergy;
 
+      if (energyReady && fighter.unitId === "zeyin") {
+        if (!fighter.reborn) {
+          this.killFighter(fighter);
+          return;
+        }
+        if (abilityTargets.length > 0) {
+          fighter.stuckTime = 0;
+          this.castAbility(fighter, abilityTargets, true);
+          return;
+        }
+      }
+
       // 不依赖普攻距离的技能：突进 / 远程进攻 / 支援护盾 / 自保受击 / 支援治疗
       if (energyReady) {
         let shouldCast = false;
@@ -2961,16 +3158,10 @@ export class AutoChessEngine {
 
     const awayX = deltaX / distance;
     const awayY = deltaY / distance;
-    const occupants = [...battle.player, ...battle.enemy].filter((fighter) => fighter !== source);
-    const landing = this.findOpenPlacement(
-      source,
-      {
-        x: source.x + awayX * recoilDistance,
-        y: source.y + awayY * recoilDistance,
-      },
-      occupants,
-      PLACEMENT_MARGIN,
-    );
+    const landing = this.clampFighterPosition(source, {
+      x: source.x + awayX * recoilDistance,
+      y: source.y + awayY * recoilDistance,
+    });
     const landingDistance = Math.hypot(landing.x - target.x, landing.y - target.y);
     const travelX = landing.x - source.x;
     const travelY = landing.y - source.y;
@@ -2987,6 +3178,7 @@ export class AutoChessEngine {
       abilityId: null,
       sourceFid: null,
       targetFid: target.fid,
+      forceThrough: true,
       fromX: source.x,
       fromY: source.y,
       toX: landing.x,
@@ -3194,6 +3386,8 @@ export class AutoChessEngine {
       abilityMoveSpeed: 0,
       abilityMoveSpeedTime: 0,
       manquTime: 0,
+      manquEscapeX: 0,
+      manquEscapeY: 0,
       raccoonSwitchTime: 0,
       raccoonStunnedAttackers: [],
       armor: original.armor - original.abilityArmorBonus,

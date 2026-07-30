@@ -177,31 +177,40 @@ mkdirSync(artifactDirectory, { recursive: true });
     zeyin.x = 280;
     zeyin.y = 360;
     zeyin.cooldown = 99;
-    zeyin.stun = 2;
-    zeyin.slowTime = 2;
-    zeyin.slowMultiplier = 0.6;
-    zeyin.burnTime = 2;
-    zeyin.burnDps = 5;
-    zeyin.weakenTime = 2;
-    zeyin.weakenArmorPenalty = 9;
-    zeyin.armor -= 9;
     battle.enemy[0].targetFid = zeyin.fid;
     battle.enemy[0].targetLock = 2;
   });
-  await advance(3900);
-  const forcedBefore = await readState();
-  const beforeForcedRebirth = forcedBefore.battle.playerUnits.find((unit) => unit.unitId === "zeyin");
-  if (beforeForcedRebirth?.reborn) {
-    throw new Error(`四秒前提前涅槃: ${JSON.stringify(beforeForcedRebirth)}`);
+  await advance(2500);
+  const chargeState = await readState();
+  const charging = chargeState.battle.playerUnits.find((unit) => unit.unitId === "zeyin");
+  if (charging?.reborn || charging.energy < 49 || charging.energy > 51) {
+    throw new Error(`涅槃积蓄进度异常: ${JSON.stringify(charging)}`);
   }
-  await advance(120);
+  await capture("zeyin-rebirth-charge");
+  await page.evaluate(() => {
+    const engine = window.__codexAutoChessBridge.engine;
+    const battle = engine.state.battle;
+    const zeyin = battle.player.find((fighter) => fighter.unitId === "zeyin");
+    if (zeyin.reborn) throw new Error("能量专项设置前泽音已经涅槃");
+    zeyin.energy = 98;
+    zeyin.stun = 0.05;
+    zeyin.slowTime = 1;
+    zeyin.slowMultiplier = 0.6;
+    zeyin.burnTime = 1;
+    zeyin.burnDps = 5;
+    zeyin.weakenTime = 1;
+    zeyin.weakenArmorPenalty = 9;
+    zeyin.armor -= 9;
+  });
+  await advance(150);
   const rebirthState = await readState();
   const reborn = rebirthState.battle.playerUnits.find((unit) => unit.unitId === "zeyin");
   const rebirthEffect = rebirthState.battle.visualEffects.effects.find((effect) => effect.kind === "rebirth");
   if (
     !reborn?.reborn ||
-    reborn.rebirthGraceTime <= 0.8 ||
-    reborn.rebirthRecoilTime <= 3.7 ||
+    reborn.maxHp !== 200 ||
+    reborn.energy > 10 ||
+    reborn.rebirthRecoilTime <= 3.4 ||
     reborn.stun > 0 ||
     reborn.slowTime > 0 ||
     reborn.burnTime > 0 ||
@@ -210,30 +219,104 @@ mkdirSync(artifactDirectory, { recursive: true });
   ) {
     throw new Error(`涅槃状态或特效缺失: ${JSON.stringify({ reborn, rebirthEffect })}`);
   }
-  const guardedHit = await page.evaluate(() => {
+  const normalHit = await page.evaluate(() => {
     const engine = window.__codexAutoChessBridge.engine;
     const battle = engine.state.battle;
     const zeyin = battle.player.find((fighter) => fighter.unitId === "zeyin");
     const attacker = battle.enemy[0];
     const hpBefore = zeyin.hp;
-    const dealt = engine.damage(attacker, zeyin, 99_999);
+    const dealt = engine.damage(attacker, zeyin, 20);
     return {
       dealt,
       hpBefore,
       hpAfter: zeyin.hp,
       attackerTargetFid: attacker.targetFid,
-      graceTime: zeyin.rebirthGraceTime,
     };
   });
   if (
-    guardedHit.dealt !== -1 ||
-    guardedHit.hpAfter !== guardedHit.hpBefore ||
-    guardedHit.attackerTargetFid !== null
+    normalHit.dealt <= 0 ||
+    normalHit.hpAfter >= normalHit.hpBefore ||
+    normalHit.attackerTargetFid !== reborn.fid
   ) {
-    throw new Error(`涅槃护体或仇恨清除失败: ${JSON.stringify(guardedHit)}`);
+    throw new Error(`二阶段仍存在免伤或降仇恨: ${JSON.stringify(normalHit)}`);
   }
   await capture("zeyin-rebirth-effect");
-  await advance(1000);
+  await advance(1200);
+
+  const fireballSetup = await page.evaluate(() => {
+    const engine = window.__codexAutoChessBridge.engine;
+    const battle = engine.state.battle;
+    const zeyin = battle.player.find((fighter) => fighter.unitId === "zeyin");
+    const target = battle.enemy[0];
+    zeyin.x = 280;
+    zeyin.y = 360;
+    zeyin.energy = 99;
+    zeyin.cooldown = 99;
+    zeyin.abilityMotion = null;
+    target.x = 520;
+    target.y = 360;
+    target.hp = target.maxHp = 99_999;
+    target.armor = 0;
+    target.burnTime = 0;
+    battle.enemy.slice(1).forEach((fighter, index) => {
+      fighter.x = 850 + index * 80;
+      fighter.y = 500;
+    });
+    return { zeyinFid: zeyin.fid, targetFid: target.fid, targetHp: target.hp };
+  });
+  await advance(100);
+  const fireballFlight = await page.evaluate(({ zeyinFid }) => {
+    const engine = window.__codexAutoChessBridge.engine;
+    const battle = engine.state.battle;
+    const projectile = battle.projectiles.find(
+      (item) => item.sourceFid === zeyinFid && item.style === "fireball",
+    );
+    const zeyin = battle.player.find((fighter) => fighter.fid === zeyinFid);
+    return {
+      projectile: projectile ? {
+        x: projectile.x,
+        y: projectile.y,
+        damage: projectile.damage,
+        burnPower: projectile.burnPower,
+        emoji: projectile.emoji,
+        style: projectile.style,
+      } : null,
+      energy: zeyin.energy,
+    };
+  }, fireballSetup);
+  const fireballTextState = await readState();
+  if (
+    !fireballFlight.projectile ||
+    fireballFlight.projectile.emoji !== "🔥" ||
+    fireballFlight.projectile.burnPower <= 0 ||
+    fireballFlight.energy > 3 ||
+    !fireballTextState.battle.visualEffects.projectiles.some(
+      (projectile) => projectile.style === "fireball" && projectile.emoji === "🔥",
+    )
+  ) {
+    throw new Error(`涅槃火球飞行状态异常: ${JSON.stringify({ fireballFlight, fireballTextState })}`);
+  }
+  await capture("zeyin-fireball-flight");
+  await advance(500);
+  const fireballImpact = await page.evaluate(({ targetFid, targetHp }) => {
+    const engine = window.__codexAutoChessBridge.engine;
+    const target = engine.state.battle.enemy.find((fighter) => fighter.fid === targetFid);
+    return {
+      hpBefore: targetHp,
+      hpAfter: target.hp,
+      burnTime: target.burnTime,
+      burnDps: target.burnDps,
+    };
+  }, fireballSetup);
+  if (
+    fireballImpact.hpAfter >= fireballImpact.hpBefore ||
+    fireballImpact.burnTime <= 2 ||
+    fireballImpact.burnDps <= 0
+  ) {
+    throw new Error(`涅槃火球命中或灼烧异常: ${JSON.stringify(fireballImpact)}`);
+  }
+  await capture("zeyin-fireball-impact");
+  await advance(500);
 
   const recoilOrigin = await page.evaluate(() => {
     const engine = window.__codexAutoChessBridge.engine;
@@ -244,14 +327,39 @@ mkdirSync(artifactDirectory, { recursive: true });
     zeyin.y = 360;
     zeyin.cooldown = 0;
     zeyin.abilityMotion = null;
+    zeyin.rebirthRecoilTime = 4;
     target.x = 400;
     target.y = 360;
+    const blocker = {
+      ...zeyin,
+      fid: "browser-zeyin-recoil-blocker",
+      unitId: "sun_guard",
+      x: 252,
+      y: 360,
+      hp: zeyin.maxHp,
+      cooldown: 99,
+      stun: 99,
+      rebirthRecoilTime: 0,
+      abilityMotion: null,
+      raccoonStunnedAttackers: [],
+      sekiChargeHitFids: [],
+    };
+    battle.player.splice(0, battle.player.length, zeyin, blocker);
     engine.basicAttack(zeyin, target);
-    return { x: zeyin.x, y: zeyin.y, targetX: target.x, targetY: target.y };
+    return {
+      x: zeyin.x,
+      y: zeyin.y,
+      targetX: target.x,
+      targetY: target.y,
+      blocker: { x: blocker.x, y: blocker.y },
+    };
   });
   await advance(70);
   const recoilState = await readState();
   const recoiling = recoilState.battle.playerUnits.find((unit) => unit.unitId === "zeyin");
+  const recoilBlocker = recoilState.battle.playerUnits.find(
+    (unit) => unit.fid === "browser-zeyin-recoil-blocker",
+  );
   if (recoiling?.motion?.kind !== "push" || recoiling.motion.abilityId !== null) {
     throw new Error(`后坐力运动状态缺失: ${JSON.stringify(recoiling)}`);
   }
@@ -261,8 +369,20 @@ mkdirSync(artifactDirectory, { recursive: true });
     recoiling.motion.to.x - recoilOrigin.targetX,
     recoiling.motion.to.y - recoilOrigin.targetY,
   );
-  if (currentDistance <= originDistance || landingDistance > recoiling.range - 3.9) {
-    throw new Error(`后坐力方向或射程保护异常: ${JSON.stringify({ recoilOrigin, recoiling })}`);
+  const blockerDistance = recoilBlocker
+    ? Math.hypot(recoilBlocker.x - recoilOrigin.blocker.x, recoilBlocker.y - recoilOrigin.blocker.y)
+    : 0;
+  if (
+    currentDistance <= originDistance ||
+    landingDistance > recoiling.range - 3.9 ||
+    blockerDistance <= 10
+  ) {
+    throw new Error(`后坐力方向、推挤或射程保护异常: ${JSON.stringify({
+      recoilOrigin,
+      recoiling,
+      recoilBlocker,
+      blockerDistance,
+    })}`);
   }
   await capture("zeyin-rebirth-recoil");
 
@@ -311,17 +431,24 @@ mkdirSync(artifactDirectory, { recursive: true });
     throw new Error(`游戏画布尺寸异常: ${JSON.stringify(canvasBox)}`);
   }
   if (errors.length) throw new Error(`浏览器控制台出现错误: ${JSON.stringify(errors)}`);
-  const unexpectedResourceErrors = resourceErrors.filter(({ url }) => !url.includes("/images/livers/"));
+  const unexpectedResourceErrors = resourceErrors.filter(
+    ({ url }) => !url.includes("/images/livers/") && !url.endsWith("/api/record"),
+  );
   if (unexpectedResourceErrors.length) {
     throw new Error(`页面资源请求失败: ${JSON.stringify(unexpectedResourceErrors)}`);
   }
 
   console.log(JSON.stringify({
     rebirth: {
-      before: beforeForcedRebirth,
+      charging,
       fighter: reborn,
       effect: rebirthEffect,
-      guardedHit,
+      normalHit,
+    },
+    fireball: {
+      setup: fireballSetup,
+      flight: fireballFlight,
+      impact: fireballImpact,
     },
     recoil: {
       origin: recoilOrigin,
@@ -329,6 +456,8 @@ mkdirSync(artifactDirectory, { recursive: true });
       originDistance,
       currentDistance,
       landingDistance,
+      blocker: recoilBlocker,
+      blockerDistance,
     },
     rangeEdgeMotion: edgeMotion,
     expiredMotion,

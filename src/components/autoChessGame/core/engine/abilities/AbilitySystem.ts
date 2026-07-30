@@ -82,10 +82,14 @@ const TIANDOU_LOLLIPOP_THROW_SPEED = 360;
 const XUEHUI_CLEAVE_BURN_MULTIPLIER = 0.68;
 const XUEHUI_CLEAVE_DAMAGE_MULTIPLIER = 1.12;
 const XUEHUI_CLEAVE_RADIUS = 98;
+const ZEYIN_FIREBALL_SPEED = 420;
 const HAREI_TRICK_RADIUS = 118;
 const HAREI_PINE_TAUNT_DURATION = 0.8;
 const HAREI_PINE_SLOW_DURATION = 1.5;
 const HAREI_PINE_SLOW_MULTIPLIER = 0.8;
+const HAREI_PINE_SHIELD_BASE_RATIO = 0.18;
+const HAREI_PINE_SHIELD_PER_TARGET_RATIO = 0.06;
+const HAREI_PINE_SHIELD_CAP_RATIO = 0.42;
 const HAREI_BADGE_DAMAGE_MULTIPLIER = 1.5;
 const HAREI_BADGE_STUN_DURATION = 0.65;
 
@@ -248,9 +252,37 @@ export class AbilitySystem {
         this.host.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: def.accent, text: "空气龙 · 隐身", life: 0.78, size: 12 });
         break;
       }
-      case "zeyin":
-        // 涅槃重生由死亡事件触发，不进入通用主动施法流程。
-        return;
+      case "zeyin": {
+        const target = this.host.nearestTarget(source, targets);
+        if (!source.reborn || !target) {
+          source.energy = source.maxEnergy;
+          return;
+        }
+        this.host.faceTowardX(source, target.x);
+        this.host.fireFixedProjectile(source, target, {
+          sourceFid: source.fid,
+          targetFid: target.fid,
+          delay: 0,
+          damage: source.attack * abilityStatForStar(def, source.star, "damageMultiplier", 1.6),
+          damageKind: "ability",
+          burnPower: source.attack * abilityStatForStar(def, source.star, "burnMultiplier", 0.8),
+          speed: ZEYIN_FIREBALL_SPEED,
+          color: "#ff795e",
+          size: 18,
+          style: "fireball",
+          emoji: "🔥",
+        });
+        this.host.addEffect({
+          kind: "text",
+          x: source.x,
+          y: source.y - 46,
+          color: "#ff9d7a",
+          text: "涅槃火球",
+          life: 0.7,
+          size: 12,
+        });
+        break;
+      }
       case "sui": {
         // 攻击弹幕：能量保持满并缓慢清空，期间加攻速/攻击/移速且不回能
         source.energy = source.maxEnergy;
@@ -280,6 +312,8 @@ export class AbilitySystem {
           "duration",
           SUN_GUARD_MANQU_DURATION,
         );
+        source.manquEscapeX = 0;
+        source.manquEscapeY = 0;
         source.targetFid = null;
         source.targetLock = 0;
         this.host.addEffect({
@@ -514,6 +548,16 @@ export class AbilitySystem {
               target.slowMultiplier = HAREI_PINE_SLOW_MULTIPLIER;
             }
           });
+          const shieldRatio = Math.min(
+            HAREI_PINE_SHIELD_CAP_RATIO,
+            HAREI_PINE_SHIELD_BASE_RATIO +
+              nearby.length * HAREI_PINE_SHIELD_PER_TARGET_RATIO,
+          );
+          addShield(
+            source,
+            source.maxHp * shieldRatio,
+            HAREI_PINE_SHIELD_CAP_RATIO,
+          );
           this.host.addEffect({
             kind: "harei_pine",
             x: source.x,

@@ -145,6 +145,8 @@ export interface AbilityMotion {
   /** 外部位移的实际施法者；普通位移为空并由运动单位自身结算。 */
   sourceFid: string | null;
   targetFid: string | null;
+  /** 逃生后坐力可挤开路径上的单位，不受普通占位阻挡。 */
+  forceThrough?: boolean;
   fromX: number;
   fromY: number;
   toX: number;
@@ -281,12 +283,13 @@ export interface Fighter {
   secondWindUsed: boolean;
   /** 泽音美乐蒂的涅槃重生是否已经触发 */
   reborn: boolean;
-  /** 涅槃后免疫伤害并降低敌方选中优先级的剩余时间。 */
-  rebirthGraceTime: number;
   /** 涅槃后普攻后坐力的剩余持续时间。 */
   rebirthRecoilTime: number;
   /** 果冻风纪变成满区后主动逃离、闪避并回血的剩余时间。 */
   manquTime: number;
+  /** 满区本次变身锁定的逃跑方向，避免被两侧敌人反复拉扯转向。 */
+  manquEscapeX: number;
+  manquEscapeY: number;
   /** 浣熊店员打开开关后的剩余振动与反震时间。 */
   raccoonSwitchTime: number;
   /** 本次开关期间已经被反震过的攻击者。 */

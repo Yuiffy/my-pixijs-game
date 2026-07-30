@@ -135,6 +135,18 @@ export const ENERGY_PROFILES: Record<EnergyProfileId, EnergyProfile> = {
   passive: { id: "passive", name: "被动技能", max: 1, start: 0, perSecond: 0, onAttack: 0, onHit: 0, castRefund: 0, color: "#e2a9ff" },
 };
 
+export const ZEYIN_REBIRTH_ENERGY_PROFILE: EnergyProfile = {
+  id: "automatic",
+  name: "涅槃积蓄",
+  max: 100,
+  start: 0,
+  perSecond: 20,
+  onAttack: 0,
+  onHit: 0,
+  castRefund: 0,
+  color: "#ff9d7a",
+};
+
 export const WARM_SUPPORT_ENERGY_PROFILE: EnergyProfile = {
   id: "automatic",
   name: "暖意回能",
@@ -145,6 +157,18 @@ export const WARM_SUPPORT_ENERGY_PROFILE: EnergyProfile = {
   onHit: 2,
   castRefund: 10,
   color: "#ffd28d",
+};
+
+export const HAREI_TRICK_ENERGY_PROFILE: EnergyProfile = {
+  id: "automatic",
+  name: "怪话回能",
+  max: 100,
+  start: 45,
+  perSecond: 20,
+  onAttack: 0,
+  onHit: 0,
+  castRefund: 0,
+  color: "#9ee8ff",
 };
 
 export const REI_SLOW_ENERGY_PROFILE: EnergyProfile = {

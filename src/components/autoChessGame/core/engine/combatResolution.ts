@@ -13,11 +13,10 @@ import type {
 import type { RandomSource } from "./random";
 import { STARTER_EFFECTS } from "./runRules";
 
-const ZEYIN_REBIRTH_HP_RATIO = 0.72;
+const ZEYIN_REBIRTH_HP_RATIO = 20 / 11;
 const ZEYIN_REBIRTH_ATTACK_MULTIPLIER = 1.36;
 const ZEYIN_REBIRTH_ATTACK_INTERVAL_MULTIPLIER = 0.7;
 const ZEYIN_REBIRTH_RANGE = 245;
-const ZEYIN_REBIRTH_GRACE_WINDOW = 1;
 const ZEYIN_REBIRTH_RECOIL_WINDOW = 4;
 const NANA_PICKAXE_COUNTER_DAMAGE = 0.46;
 const NANA_PICKAXE_COUNTER_STUN = 0.24;
@@ -89,7 +88,6 @@ export class CombatResolutionSystem {
     damageKind: DamageKind = "attack",
   ) {
     if ((!source.alive && !allowInactiveSource) || !target.alive) return 0;
-    if (target.rebirthGraceTime > 0) return -1;
     this.host.markFightersEngaged(source, target);
     const effectiveDodge =
       target.dodgeChance +
@@ -244,7 +242,7 @@ export class CombatResolutionSystem {
     totalDamage: number,
     damageKind: DamageKind = "attack",
   ) {
-    if (!target.alive || target.rebirthGraceTime > 0) return;
+    if (!target.alive) return;
     const starterMultiplier =
       source.team === "player" ? STARTER_EFFECTS[this.host.state().starter || "bastion"].burnMultiplier || 1 : 1;
     const dps = (totalDamage * starterMultiplier) / 3;
@@ -366,21 +364,11 @@ export class CombatResolutionSystem {
       target.range = ZEYIN_REBIRTH_RANGE;
       target.attackType = "ranged";
       target.energy = 0;
-      target.cooldown = Math.max(target.cooldown, 0.45);
+      target.cooldown = 0.2;
       target.abilityMotion = null;
       target.targetFid = null;
       target.targetLock = 0;
-      target.rebirthGraceTime = ZEYIN_REBIRTH_GRACE_WINDOW;
       target.rebirthRecoilTime = ZEYIN_REBIRTH_RECOIL_WINDOW;
-      const { battle } = this.host.state();
-      if (battle) {
-        [...battle.player, ...battle.enemy].forEach((fighter) => {
-          if (fighter.team !== target.team && fighter.targetFid === target.fid) {
-            fighter.targetFid = null;
-            fighter.targetLock = 0;
-          }
-        });
-      }
       this.host.addEffect({
         kind: "rebirth",
         x: target.x,

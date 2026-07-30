@@ -203,6 +203,7 @@ mkdirSync(artifactDirectory, { recursive: true });
     const setup = await page.evaluate(() => {
       const engine = window.__hareiEngine;
       const bridge = window.__hareiBridge;
+      engine.state.starter = "blaze";
       engine.state.round = 2;
       engine.state.playerLevel = 4;
       engine.state.board.fill(null);
@@ -256,6 +257,10 @@ mkdirSync(artifactDirectory, { recursive: true });
       assert.equal(fighter.tauntTime, 0.8);
       assert.equal(fighter.slowMultiplier, 0.8);
     });
+    const pineHarei = pineText.battle.playerUnits.find(
+      (fighter) => fighter.fid === setup.hareiFid,
+    );
+    assert.equal(pineHarei.shield, Math.round(pineHarei.maxHp * 0.3));
     const pineFar = pineText.battle.enemyUnits.find(
       (fighter) => fighter.fid === setup.farFid,
     );

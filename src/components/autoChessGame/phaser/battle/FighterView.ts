@@ -254,7 +254,6 @@ export class FighterViewRenderer {
       fighter.barrageActive || fighter.abilityAttackSpeedTime > 0 || fighter.abilityMoveSpeedTime > 0 ? "⚡" : "",
       fighter.barrageActive && fighter.unitId === "cinder_ram" ? "歌" : "",
       fighter.reborn ? "涅" : "",
-      fighter.rebirthGraceTime > 0 ? "护" : "",
       fighter.rebirthRecoilTime > 0 ? "退" : "",
       fighter.stealthTime > 0 ? "隐" : "",
       fighter.channelTime > 0 ? "捏" : "",

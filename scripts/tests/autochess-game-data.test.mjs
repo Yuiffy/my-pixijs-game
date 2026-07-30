@@ -367,6 +367,9 @@ test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   assert.equal(data.UNIT_DEFS.sun_guard.name, "果冻风纪");
   assert.match(data.UNIT_DEFS.sun_guard.title, /灰泽满Hazel/);
   assert.equal(data.UNIT_DEFS.sun_guard.abilityName, "满区逃生");
+  assert.match(data.UNIT_DEFS.sun_guard.abilityDescription, /锁定最安全方向逃跑/);
+  assert.ok(data.UNIT_DEFS.sun_guard.abilityLevels.every((level) =>
+    level.description.includes("远离周围敌人的方向并挤开阻挡")));
   assert.deepEqual(
     data.UNIT_DEFS.sun_guard.abilityLevels.map((level) => level.stats.duration),
     [1.25, 1.35, 1.5],
@@ -379,7 +382,10 @@ test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
     data.UNIT_DEFS.sun_guard.abilityLevels.map((level) => level.stats.healPerSecond),
     [0.2, 0.22, 0.24],
   );
-  assert.match(data.abilityDescriptionForStar(data.UNIT_DEFS.sun_guard, 1), /停止攻击和回能.*主动逃离.*20% 闪避.*每秒回复 20%/);
+  assert.match(
+    data.abilityDescriptionForStar(data.UNIT_DEFS.sun_guard, 1),
+    /停止攻击和回能.*锁定.*远离周围敌人.*挤开阻挡.*20% 闪避.*每秒回复 20%/,
+  );
   assert.equal(data.UNIT_DEFS.sui_cat.name, "小猫拳");
   assert.match(data.UNIT_DEFS.sui_cat.title, /岁己SUI/);
   assert.equal(data.TRAITS.aegis, undefined);
@@ -407,8 +413,10 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.deepEqual(data.UNIT_DEFS.sui_bird.traits, ["mystic", "wild", "vanguard"]);
   assert.equal(data.UNIT_DEFS.sui_bird.attackType, "melee");
   assert.equal(data.UNIT_DEFS.sui_bird.abilityCastTiming, "engage");
+  assert.equal(data.UNIT_DEFS.sui_bird.abilityRange, data.SUI_BIRD_ELBOW_DISTANCE);
+  assert.equal(data.SUI_BIRD_ELBOW_DISTANCE, 240);
   assert.equal(data.UNIT_DEFS.sui_bird.abilityName, "连续肘击");
-  assert.match(data.UNIT_DEFS.sui_bird.abilityDescription, /连续发动 3 次.*击退.*短暂眩晕/);
+  assert.match(data.UNIT_DEFS.sui_bird.abilityDescription, /施法距离.*3 次固定 240 距离.*击退.*短暂眩晕/);
   assert.equal(data.UNIT_DEFS.sui_flower.name, "暴龙岁");
   assert.deepEqual(data.UNIT_DEFS.sui_flower.traits, ["vanguard", "chuanmei", "mystic", "finance"]);
   assert.deepEqual(data.UNIT_DEFS.sui_cat.traits, ["assassin", "aggression", "dance", "vanguard"]);
@@ -432,6 +440,27 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.zeyin.attackType, "melee");
   assert.equal(data.UNIT_DEFS.zeyin.abilityName, "涅槃重生");
   assert.equal(data.UNIT_DEFS.zeyin.abilityCastTiming, "passive");
+  assert.equal(data.UNIT_DEFS.zeyin.hp, 110);
+  assert.equal(data.UNIT_DEFS.zeyin.abilityRange, 320);
+  assert.deepEqual(
+    {
+      name: data.UNIT_DEFS.zeyin.energyProfile.name,
+      max: data.UNIT_DEFS.zeyin.energyProfile.max,
+      start: data.UNIT_DEFS.zeyin.energyProfile.start,
+      perSecond: data.UNIT_DEFS.zeyin.energyProfile.perSecond,
+      onAttack: data.UNIT_DEFS.zeyin.energyProfile.onAttack,
+      onHit: data.UNIT_DEFS.zeyin.energyProfile.onHit,
+    },
+    { name: "涅槃积蓄", max: 100, start: 0, perSecond: 20, onAttack: 0, onHit: 0 },
+  );
+  assert.deepEqual(
+    data.UNIT_DEFS.zeyin.abilityLevels.map((level) => [
+      level.stats.damageMultiplier,
+      level.stats.burnMultiplier,
+    ]),
+    [[1.6, 0.8], [1.8, 1], [2.1, 1.25]],
+  );
+  assert.match(data.UNIT_DEFS.zeyin.abilityDescription, /自动积蓄能量.*能量充满.*更高生命.*🔥 火球/);
   assert.equal(data.UNIT_DEFS.grove_mender.abilityName, "凿凿冲击");
   assert.equal(data.UNIT_DEFS.grove_mender.attackType, "melee");
   assert.equal(data.UNIT_DEFS.grove_mender.abilityCastTiming, "engage");
@@ -499,13 +528,16 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.mossback.title, "犬绒Mofu · 饼干支援");
   assert.match(data.UNIT_DEFS.mossback.abilityDescription, /持续自动充能.*两名友军.*打孔苏打饼干.*15% 最大生命护盾.*巧克力豆.*12% 最大生命/);
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.steady_guard), /初始 25\/100.*自动回能（12\.5 秒回满，每秒 \+8）.*攻击回能（每下 \+6）.*受击回能（每下 \+3）/);
-  ["rift_brawler", "dawn_duelist", "guangyi", "sui_cat", "shiori", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
+  ["rift_brawler", "guangyi", "sui_cat", "shiori", "youyi", "akirinco", "lovely", "nori"].forEach((id) => {
     const profile = data.UNIT_DEFS[id].energyProfile;
     assert.equal(profile.id, "automatic", `${id} should use automatic energy recovery`);
     assert.equal(profile.start, 20);
     assert.equal(profile.perSecond, 20);
     assert.equal(profile.onAttack, 0);
   });
+  assert.deepEqual(data.UNIT_DEFS.dawn_duelist.energyProfile, data.HAREI_TRICK_ENERGY_PROFILE);
+  assert.equal(data.UNIT_DEFS.dawn_duelist.energyProfile.start, 45);
+  assert.equal(data.UNIT_DEFS.dawn_duelist.energyProfile.perSecond, 20);
   assert.match(data.describeEnergyRecovery(data.ENERGY_PROFILES.automatic), /自动回能（5 秒回满，每秒 \+20）/);
   assert.deepEqual(data.UNIT_DEFS.biscuit_sui.energyProfile, data.WARM_SUPPORT_ENERGY_PROFILE);
   assert.equal(data.UNIT_DEFS.biscuit_sui.energyProfile.start, 36);
@@ -774,7 +806,13 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
 
 test("大黑鼠随机怪话说明包含迎客松与 75mm 大吧唧", () => {
   assert.equal(data.UNIT_DEFS.dawn_duelist.abilityName, "迎客松·大吧唧");
-  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /迎客松.*嘲讽.*20% 移速/);
+  assert.equal(data.UNIT_DEFS.dawn_duelist.title, "大黑鼠 · 近战怪话");
+  assert.equal(data.UNIT_DEFS.dawn_duelist.hp, 232);
+  assert.equal(data.UNIT_DEFS.dawn_duelist.armor, 22);
+  assert.equal(data.UNIT_DEFS.dawn_duelist.moveSpeed, 64);
+  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityCastTiming, "offenseInRange");
+  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityRange, 118);
+  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /更快积攒第一句怪话.*贴近敌人.*迎客松.*嘲讽.*20% 移速.*护盾/);
   assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /75mm 大吧唧.*范围伤害.*眩晕/);
 });
 
