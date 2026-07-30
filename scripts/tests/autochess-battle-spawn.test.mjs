@@ -480,31 +480,45 @@ test("攻击性为成员与全队分别提供攻击力", () => {
   assert.equal(control.baseAttack, 15 * 1.15 * (1 + 0.1));
 });
 
-test("同步视听按战力差线性调整属性且不影响移速", () => {
+test("同步视听收敛骄兵惩罚，并让哀兵按战力差振奋全队", () => {
   const engine = createEngine(57);
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "xuehui", star: 1 };
-  engine.state.board[1] = { uid: 2, id: "meme", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "mossback", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   const xuehui = battle?.player.find((fighter) => fighter.unitId === "xuehui");
-  assert.ok(battle && xuehui);
+  const ally = battle?.player.find((fighter) => fighter.unitId === "mossback");
+  assert.ok(battle && xuehui && ally);
   battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
   engine.update(0.05);
-  assert.equal(xuehui.range, xuehui.baseRange * 0.5);
+  assert.equal(xuehui.range, xuehui.baseRange * 0.8);
+  assert.equal(xuehui.attackInterval, xuehui.baseAttackInterval / 0.8);
   assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed);
   assert.equal(xuehui.syncAvDirection, 1);
   assert.equal(xuehui.syncAvStrength, 1);
-  engine.update(0.05);
-  assert.equal(xuehui.range, xuehui.baseRange * 0.5);
+  assert.equal(ally.attackInterval, ally.baseAttackInterval);
+  assert.equal(ally.syncAvDirection, 0);
   battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp * 0.5; });
   battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp; });
   engine.update(0.05);
   assert.equal(xuehui.range, xuehui.baseRange * 1.5);
+  assert.equal(xuehui.attackInterval, xuehui.baseAttackInterval / 1.5);
   assert.equal(xuehui.moveSpeed, xuehui.baseMoveSpeed);
   assert.equal(xuehui.syncAvDirection, -1);
   assert.equal(xuehui.syncAvStrength, 1);
+  assert.equal(ally.attackInterval, ally.baseAttackInterval / 1.25);
+  assert.equal(ally.range, ally.baseRange);
+  assert.equal(ally.moveSpeed, ally.baseMoveSpeed);
+  assert.equal(ally.syncAvDirection, -1);
+  assert.equal(ally.syncAvStrength, 1);
+  battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp; });
+  battle.enemy.forEach((fighter) => { fighter.hp = fighter.maxHp; });
+  engine.update(0.05);
+  assert.equal(ally.attackInterval, ally.baseAttackInterval);
+  assert.equal(ally.syncAvDirection, 0);
+  assert.equal(ally.syncAvStrength, 0);
 });
 
 test("雪绘近战范围挥斩会灼烧身边敌人", () => {

@@ -114,6 +114,9 @@ const STUCK_RECOVERY_DURATION = 0.42;
 const STUCK_PUSH_FORCE_DELAY = 0.28;
 const SEPARATION_PASSES = 2;
 const VANGUARD_JUMP_DURATION = 0.46;
+const XUEHUI_ADVANTAGE_PENALTY = 0.2;
+const XUEHUI_DISADVANTAGE_BONUS = 0.5;
+const XUEHUI_TEAM_ATTACK_SPEED_BONUS = 0.25;
 const VANGUARD_JUMP_COOLDOWN = 0.72;
 /** 刺客/粤语帮等通用跳跃弧高 */
 /** 偷袭只把敌方最深一列视作最后排。 */
@@ -689,6 +692,8 @@ export class AutoChessEngine {
       slowTime: Number(fighter.slowTime.toFixed(2)),
       slowMultiplier: Number(fighter.slowMultiplier.toFixed(2)),
       weakenTime: Number(Math.max(0, fighter.weakenTime).toFixed(2)),
+      syncAvDirection: fighter.syncAvDirection,
+      syncAvStrength: Number(fighter.syncAvStrength.toFixed(2)),
       damageDealt: Math.round(fighter.damageDealt),
       healingDone: Math.round(fighter.healingDone),
       shieldingDone: Math.round(fighter.shieldingDone),
@@ -2226,9 +2231,23 @@ export class AutoChessEngine {
 
   private refreshDynamicCombatModifiers(battle: BattleState) {
     const healthRatio = (team: Team) => this.living(team).reduce((sum, fighter) => sum + fighter.hp / fighter.maxHp, 0);
+    const syncStateFor = (team: Team) => {
+      const source = this.living(team).find((fighter) => fighter.syncAvMember);
+      if (!source) return { direction: 0 as const, source: null, strength: 0 };
+      const opposingTeam: Team = team === "player" ? "enemy" : "player";
+      const advantage = healthRatio(team) - healthRatio(opposingTeam);
+      const strength = Math.min(1, Math.abs(advantage) / 0.5);
+      const direction: -1 | 0 | 1 = advantage > 0.0001 ? 1 : advantage < -0.0001 ? -1 : 0;
+      return { direction, source, strength };
+    };
+    const syncStates = {
+      player: syncStateFor("player"),
+      enemy: syncStateFor("enemy"),
+    };
     (["player", "enemy"] as const).forEach((team) => {
       const gen27Level = this.battleTraitLevel(battle, team, "gen27");
       const gen27Multiplier = [1, 1.12, 1.2, 1.3][gen27Level];
+      const syncState = syncStates[team];
       battle[team].forEach((fighter) => {
         if (!fighter.alive) return;
         const matureSteps = Math.min(6, Math.floor(battle.elapsed / 4));
@@ -2244,21 +2263,38 @@ export class AutoChessEngine {
         );
         const nearbyMultiplier = hasNearbyPartner ? gen27Multiplier : 1;
         fighter.gen27Buffed = hasNearbyPartner;
-        let syncMultiplier = 1;
+        let syncAttackSpeedMultiplier = 1;
+        let syncRangeMultiplier = 1;
         if (fighter.syncAvMember) {
-          const opposingTeam: Team = fighter.team === "player" ? "enemy" : "player";
-          const advantage = healthRatio(fighter.team) - healthRatio(opposingTeam);
-          const strength = Math.min(1, Math.abs(advantage) / 0.5);
-          const direction: -1 | 0 | 1 = advantage > 0.0001 ? 1 : advantage < -0.0001 ? -1 : 0;
-          syncMultiplier = 1 - direction * strength * 0.5;
-          fighter.syncAvStrength = strength;
-          if (fighter.syncAvDirection !== direction) {
-            fighter.syncAvDirection = direction;
-            const text = direction > 0 ? "骄兵必败" : direction < 0 ? "哀兵必胜" : "同步持平";
-            const color = direction > 0 ? "#ff9a5c" : direction < 0 ? "#79dcff" : UNIT_DEFS[fighter.unitId].accent;
+          const personalMultiplier = syncState.direction > 0
+            ? 1 - syncState.strength * XUEHUI_ADVANTAGE_PENALTY
+            : 1 + syncState.strength * XUEHUI_DISADVANTAGE_BONUS;
+          syncAttackSpeedMultiplier = personalMultiplier;
+          syncRangeMultiplier = personalMultiplier;
+          fighter.syncAvStrength = syncState.strength;
+          if (fighter.syncAvDirection !== syncState.direction) {
+            fighter.syncAvDirection = syncState.direction;
+            const text = syncState.direction > 0
+              ? "骄兵必败"
+              : syncState.direction < 0
+                ? "哀兵必胜 · 全队振奋"
+                : "同步持平";
+            const color = syncState.direction > 0 ? "#ff9a5c" : syncState.direction < 0 ? "#79dcff" : UNIT_DEFS[fighter.unitId].accent;
             this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color, text, life: 0.7, size: 11 });
+            if (syncState.direction < 0 && syncState.source?.fid === fighter.fid) {
+              this.living(team)
+                .filter((ally) => ally !== fighter)
+                .forEach((ally) => {
+                  this.addEffect({ kind: "ring", x: ally.x, y: ally.y, color, life: 0.42, size: ally.radius * 2.2 });
+                });
+            }
           }
+        } else if (syncState.direction < 0) {
+          syncAttackSpeedMultiplier += syncState.strength * XUEHUI_TEAM_ATTACK_SPEED_BONUS;
+          fighter.syncAvDirection = -1;
+          fighter.syncAvStrength = syncState.strength;
         } else {
+          fighter.syncAvDirection = 0;
           fighter.syncAvStrength = 0;
         }
         this.refreshFighterAttack(fighter);
@@ -2278,10 +2314,10 @@ export class AutoChessEngine {
           : 0;
         fighter.attackInterval = (fighter.baseAttackInterval * (1 + fighter.matureAttackSpeed)) /
           (nearbyMultiplier * (1 + matureAttackSpeed) * (1 + abilityAttackSpeed) *
-            (1 + fighter.towerHackAttackSpeed) * syncMultiplier);
+            (1 + fighter.towerHackAttackSpeed) * syncAttackSpeedMultiplier);
         fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed + manquMoveSpeed + fighter.towerHackMoveSpeed) *
           matureMoveMultiplier * nearbyMultiplier;
-        fighter.range = fighter.baseRange * syncMultiplier;
+        fighter.range = fighter.baseRange * syncRangeMultiplier;
         if (fighter.barrageActive && fighter.unitId === "cinder_ram") fighter.range = CINDER_RAM_SONG_RANGE;
         fighter.matureAttackSpeedCurrent = matureAttackSpeed;
       });

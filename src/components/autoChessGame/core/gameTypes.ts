@@ -213,8 +213,9 @@ export interface Fighter {
   emberAttackStacks: number;
   emberAttackStackCap: number;
   syncAvMember: boolean;
+  /** 当前同步视听状态；非雪绘友军在受到哀兵振奋时也会进入 -1。 */
   syncAvDirection: -1 | 0 | 1;
-  /** 同步视听根据战力差计算出的效果强度，供战斗表现使用。 */
+  /** 同步视听根据战力差计算出的效果强度，供动态属性与战斗表现使用。 */
   syncAvStrength: number;
   gen27Member: boolean;
   gen27Buffed: boolean;

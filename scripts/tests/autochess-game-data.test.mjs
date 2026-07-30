@@ -739,6 +739,9 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.xuehui.cost, 4);
   assert.equal(data.UNIT_DEFS.xuehui.attackType, "melee");
   assert.deepEqual(data.UNIT_DEFS.xuehui.traits, ["dwarf", "ember", "aggression", "traffic"]);
+  assert.match(data.UNIT_DEFS.xuehui.abilityDescription, /最多降低 20%/);
+  assert.match(data.UNIT_DEFS.xuehui.abilityDescription, /自身攻速与射程最多提高 50%/);
+  assert.match(data.UNIT_DEFS.xuehui.abilityDescription, /其余友军攻速最多提高 25%/);
   assert.deepEqual(data.TRAITS.aggression.thresholds, [2, 4, 6]);
   assert.match(data.TRAITS.aggression.bonuses[2], /成员 \+55% 攻击力；全体友军 \+20% 攻击力/);
   ["xuehui", "cinder_ram", "meme", "sui", "sui_cat"].forEach((id) => assert.ok(data.UNIT_DEFS[id].traits.includes("aggression")));

@@ -207,6 +207,9 @@ const attachEngine = async (page) => {
         if (fighter.team === "enemy") {
           fighter.hp = fighter.maxHp = 99_999;
           fighter.armor = 0;
+          fighter.shield = 0;
+          fighter.abilityShield = 0;
+          fighter.abilityShieldTime = 0;
         }
         fighter.cooldown = 99;
         fighter.dodgeChance = 0;
