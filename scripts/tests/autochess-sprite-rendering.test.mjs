@@ -786,6 +786,15 @@ test("DOM 负责阶段命令，Phaser 保留羁绊、战场与拖拽交互", () 
   assert.match(hud, /敌方羁绊：/);
 });
 
+test("紧凑桌面备战区的槽位绘制与拖拽命中共用布局 profile", () => {
+  assert.match(
+    scene,
+    /const compact = this\.isCompact\(\);[\s\S]*?state\.board\.forEach\(\(unit, index\) => this\.drawSlot\("board", index, unit, compact\)\);[\s\S]*?state\.bench\.forEach\(\(unit, index\) => this\.drawSlot\("bench", index, unit, compact\)\);/,
+  );
+  assert.doesNotMatch(scene, /drawSlot\("board", index, unit, false\)/);
+  assert.doesNotMatch(scene, /drawSlot\("bench", index, unit, false\)/);
+});
+
 test("场上满员时 DOM 商店仍预测待激活羁绊", () => {
   const domPrediction = hud.match(
     /const traitTags = def\.traits\.map[\s\S]*?return \{ id, trait, status, willActivate \};\n  \}\);/,

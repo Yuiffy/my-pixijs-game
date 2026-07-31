@@ -708,8 +708,8 @@ export class RiftLineScene extends Phaser.Scene {
       const boardCapFull = engine.boardCount === engine.boardCap;
       this.phaseLayer.add(this.text(492, 570, `${bookLevelForPlayerLevel(state.playerLevel)} 本 · 上阵 ${engine.boardCount}/${engine.boardCap}`, 11, boardCapFull ? "#ffd166" : "#72d8ff"));
     }
-    state.board.forEach((unit, index) => this.drawSlot("board", index, unit, false));
-    state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, false));
+    state.board.forEach((unit, index) => this.drawSlot("board", index, unit, compact));
+    state.bench.forEach((unit, index) => this.drawSlot("bench", index, unit, compact));
     // The React HUD owns the desktop shop now. Keeping the legacy Phaser shop
     // and action row here would render duplicate controls at wide browser sizes.
   }
