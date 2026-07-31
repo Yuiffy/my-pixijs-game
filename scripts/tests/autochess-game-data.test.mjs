@@ -560,6 +560,8 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.equal(data.UNIT_DEFS.clock_gunner.attackInterval, 0.84);
   assert.equal(data.UNIT_DEFS.clock_gunner.energyProfile.onAttack, 15);
   assert.deepEqual(data.UNIT_DEFS.yua.traits, ["gluttony", "dance", "ranger"]);
+  assert.equal(data.UNIT_DEFS.yua.tier, 4);
+  assert.equal(data.UNIT_DEFS.yua.cost, 4);
   assert.equal(data.UNIT_DEFS.yua.abilityName, "外星贯穿光线");
   assert.match(data.UNIT_DEFS.yua.abilityDescription, /横排/);
   assert.equal(data.UNIT_DEFS.rift_tyrant.energyProfile.id, "reservoir");
@@ -610,7 +612,7 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
     [1, 2, 3, 4, 5].map(
       (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
     ),
-    [7, 8, 12, 9, 5],
+    [7, 8, 11, 10, 5],
   );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
@@ -737,7 +739,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.biscuit_sui.abilityName, "暖男回复");
   assert.match(data.UNIT_DEFS.biscuit_sui.abilityDescription, /最虚弱的友军.*治疗.*护盾.*击退/);
   assert.doesNotMatch(data.TRAITS.gluttony.description, /只影响外观|不改变碰撞体积/);
-  assert.match(data.TRAITS.gluttony.description, /击杀.*碰撞体积.*攻击力/);
+  assert.match(data.TRAITS.gluttony.description, /击杀.*饱腹.*最大生命与体型/);
   assert.deepEqual(
     data.UNIT_DEFS.rei.abilityLevels.map((level) => level.stats.reviveCount),
     [2, 3, 5],

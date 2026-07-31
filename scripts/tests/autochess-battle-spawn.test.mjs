@@ -299,7 +299,7 @@ test("怕死不会打断跳舞成员的冲刺", () => {
   assert.equal(dancer.jumpTime, 0, "冲刺中的跳舞成员不应被怕死跳跃打断");
 });
 
-test("主持为全队提供移速，贪吃定时与击杀成长会提高攻击和碰撞体积", () => {
+test("主持为全队提供移速，贪吃定时与击杀成长会提高最大生命和体型", () => {
   const engine = createEngine(23);
   engine.state.playerLevel = 8;
   engine.state.board.fill(null);
@@ -317,7 +317,7 @@ test("主持为全队提供移速，贪吃定时与击杀成长会提高攻击�
   const sumi = battle.player.find((fighter) => fighter.unitId === "sumi");
   assert.equal(sumi?.gluttonyHolder, true);
   const beforeRadius = hungry?.radius;
-  const beforeAttack = hungry?.attack;
+  const beforeMaxHp = hungry?.maxHp;
   const beforeSumiGrowth = sumi?.growthStacks || 0;
   for (let tick = 0; tick < 61; tick += 1) {
     battle.player.forEach((fighter) => { fighter.hp = fighter.maxHp; });
@@ -326,17 +326,17 @@ test("主持为全队提供移速，贪吃定时与击杀成长会提高攻击�
   assert.ok((hungry?.growthStacks || 0) > 0);
   assert.ok((sumi?.growthStacks || 0) > beforeSumiGrowth);
   assert.ok((hungry?.radius || 0) > (beforeRadius || 0));
-  assert.ok((hungry?.attack || 0) > (beforeAttack || 0));
+  assert.ok((hungry?.maxHp || 0) > (beforeMaxHp || 0));
   const stacksBeforeKill = hungry?.growthStacks || 0;
   const radiusBeforeKill = hungry?.radius || 0;
-  const attackBeforeKill = hungry?.attack || 0;
+  const maxHpBeforeKill = hungry?.maxHp || 0;
   const victim = battle.enemy[0];
   victim.armor = 0;
   victim.hp = 1;
   engine["damage"](hungry, victim, 99_999);
   assert.equal(hungry?.growthStacks, stacksBeforeKill + 1);
   assert.ok((hungry?.radius || 0) > radiusBeforeKill);
-  assert.ok((hungry?.attack || 0) > attackBeforeKill);
+  assert.ok((hungry?.maxHp || 0) > maxHpBeforeKill);
 });
 
 test("舞台梦携带小红帽，并为全队提供少量能量和跳舞攻速", () => {
