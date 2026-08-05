@@ -3,8 +3,16 @@
 /* eslint-disable no-console */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { HistoryOutlined } from "@ant-design/icons";
+import {
+  AudioMutedOutlined,
+  CloseOutlined,
+  HistoryOutlined,
+  RobotOutlined,
+  SettingOutlined,
+  SoundOutlined,
+} from "@ant-design/icons";
 import { AutoChessAIController } from "./ai/AutoChessAI";
+import { AutoChessAutopilot } from "./ai/AutoChessAutopilot";
 import {
   AutoChessAudio,
   DEFAULT_AUDIO_PREFERENCES,
@@ -35,17 +43,30 @@ declare global {
 }
 
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
+const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
+
+const loadBackgroundBattlePreference = () => {
+  try {
+    return window.localStorage.getItem(BACKGROUND_BATTLE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
 
 export default function AutoChessGame() {
   const gameHostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const uiScaleRef = useRef(1);
   const bridgeRef = useRef<EngineBridge | null>(null);
+  const autopilotRef = useRef<AutoChessAutopilot | null>(null);
   const gameRef = useRef<import("phaser").Game | null>(null);
   const audioRef = useRef<AutoChessAudio | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [codexOpen, setCodexOpen] = useState(false);
   const [releaseOpen, setReleaseOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [autoplayEnabled, setAutoplayEnabled] = useState(false);
+  const [backgroundBattleEnabled, setBackgroundBattleEnabled] = useState(false);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
   const [message, setMessage] = useState("图鉴可查看棋子、羁绊与本局天赋");
@@ -84,6 +105,34 @@ export default function AutoChessGame() {
     });
   }, []);
 
+  const updateAutoplay = useCallback((enabled: boolean) => {
+    setAutoplayEnabled(enabled);
+    autopilotRef.current?.setEnabled(enabled);
+    bridgeRef.current?.setAutoplayEnabled(enabled);
+    setMessage(enabled ? "AI 托管已开启，可随时接管。" : "已切回手动指挥。");
+    setRevision((value) => value + 1);
+  }, []);
+
+  const startAiRun = useCallback(() => {
+    const started = autopilotRef.current?.startFromTitle() || false;
+    if (!started) return;
+    setAutoplayEnabled(true);
+    setMessage("AI 已接管远征。");
+    setRevision((value) => value + 1);
+  }, []);
+
+  const updateBackgroundBattle = useCallback((enabled: boolean) => {
+    setBackgroundBattleEnabled(enabled);
+    bridgeRef.current?.setBackgroundBattleEnabled(enabled);
+    try {
+      window.localStorage.setItem(BACKGROUND_BATTLE_KEY, enabled ? "1" : "0");
+    } catch {
+      // The setting still applies for this session when storage is unavailable.
+    }
+    setMessage(enabled ? "后台战斗已开启。" : "切出页面时将暂停战斗。");
+    setRevision((value) => value + 1);
+  }, []);
+
   const toggleFullscreen = useCallback(async () => {
     const container = containerRef.current;
     if (!container) return;
@@ -108,6 +157,9 @@ export default function AutoChessGame() {
       Number.isFinite(requestedSpeed) ? requestedSpeed : 1,
     );
     bridgeRef.current = bridge;
+    const storedBackgroundBattle = loadBackgroundBattlePreference();
+    bridge.setBackgroundBattleEnabled(storedBackgroundBattle);
+    setBackgroundBattleEnabled(storedBackgroundBattle);
     const audio = new AutoChessAudio(loadAudioPreferences());
     audioRef.current = audio;
     setAudioPreferences(loadAudioPreferences());
@@ -191,9 +243,18 @@ export default function AutoChessGame() {
     };
     const ai = new AutoChessAIController(bridge);
     window.autoChessAI = ai;
+    const autopilot = new AutoChessAutopilot(bridge);
+    autopilotRef.current = autopilot;
     console.info(`[RiftLine][AI] v${AUTOCHESS_VERSION} ready. Use autoChessAI.help()`, ai.help());
 
-    const onVisibility = () => bridge.setHidden(document.hidden);
+    const automationTimer = window.setInterval(() => {
+      if (document.hidden) bridge.updateBackground();
+      autopilot.tick();
+    }, 250);
+    const onVisibility = () => {
+      bridge.setHidden(document.hidden);
+      autopilot.tick();
+    };
     const onFullscreenChange = () => {
       const isFullscreen = document.fullscreenElement === containerRef.current;
       setFullscreen(isFullscreen);
@@ -211,15 +272,18 @@ export default function AutoChessGame() {
     window.addEventListener("resize", onWindowResize);
     window.visualViewport?.addEventListener("resize", onWindowResize);
     setFullscreenSupported(Boolean(document.fullscreenEnabled && containerRef.current?.requestFullscreen));
+    onVisibility();
 
     return () => {
       disposed = true;
+      window.clearInterval(automationTimer);
       if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
       resizeObserver?.disconnect();
       bridge.onEvent = null;
       gameRef.current?.destroy(true);
       gameRef.current = null;
       bridgeRef.current = null;
+      autopilotRef.current = null;
       audio.destroy();
       audioRef.current = null;
       document.removeEventListener("visibilitychange", onVisibility);
@@ -235,18 +299,23 @@ export default function AutoChessGame() {
 
   useEffect(() => {
     const bridge = bridgeRef.current;
-    bridge?.setCodexOpen(codexOpen || releaseOpen);
-    if (!codexOpen && !releaseOpen) {
+    bridge?.setCodexOpen(codexOpen || releaseOpen || settingsOpen);
+    if (!codexOpen && !releaseOpen && !settingsOpen) {
       const scene = gameRef.current?.scene.getScene("RiftLineScene") as { refresh?: () => void } | undefined;
       scene?.refresh?.();
     }
-  }, [codexOpen, releaseOpen]);
+  }, [codexOpen, releaseOpen, settingsOpen]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && releaseOpen) {
         event.preventDefault();
         setReleaseOpen(false);
+        return;
+      }
+      if (event.key === "Escape" && settingsOpen) {
+        event.preventDefault();
+        setSettingsOpen(false);
         return;
       }
       if (event.key === "Escape" && enemyFormationOpen) {
@@ -259,7 +328,7 @@ export default function AutoChessGame() {
         setCodexOpen(false);
         return;
       }
-      if (codexOpen || releaseOpen || enemyFormationOpen || event.repeat) return;
+      if (codexOpen || releaseOpen || settingsOpen || enemyFormationOpen || event.repeat) return;
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLButtonElement || active instanceof HTMLSelectElement || active instanceof HTMLTextAreaElement || active?.getAttribute("contenteditable") === "true") return;
       const bridge = bridgeRef.current;
@@ -323,7 +392,7 @@ export default function AutoChessGame() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [codexOpen, enemyFormationOpen, releaseOpen, toggleFullscreen]);
+  }, [codexOpen, enemyFormationOpen, releaseOpen, settingsOpen, toggleFullscreen]);
 
   const engine = bridgeRef.current?.engine;
   const dispatch = useCallback((action: import("./phaser/EngineBridge").GameAction) => {
@@ -372,18 +441,22 @@ export default function AutoChessGame() {
       >
         <style>{`
           @media (max-width: 600px) {
-            .rift-toolbar-status, .rift-audio-range, .rift-shortcut { display: none !important; }
+            .rift-toolbar-status, .rift-shortcut { display: none !important; }
             .rift-toolbar { justify-content: center !important; }
             .rift-toolbar button { min-width: 0 !important; padding-inline: 10px !important; }
+            .rift-toolbar-button-label { display: none !important; }
           }
         `}</style>
         <div className="rift-toolbar" style={{ width: "100%", height: TOOLBAR_HEIGHT, flex: "0 0 auto", display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
           <span className="rift-toolbar-status" aria-live="polite" style={{ flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#82a8bd" }}>{message}</span>
-          <button type="button" onClick={() => setReleaseOpen(true)} style={toolbarButtonStyle} title="查看更新日志"><HistoryOutlined aria-hidden="true" /> v{AUTOCHESS_VERSION}</button>
           <button type="button" onClick={() => setCodexOpen(true)} style={toolbarButtonStyle}>图鉴 / 本局天赋</button>
-          <button type="button" aria-pressed={audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })} style={toolbarButtonStyle}>{audioPreferences.muted ? "静音" : "声音"}</button>
-          <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>乐<input aria-label="音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} style={{ width: 58 }} /></span>
-          <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>效<input aria-label="音效音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.effectsVolume} onChange={(event) => updateAudio({ effectsVolume: Number(event.target.value) })} style={{ width: 58 }} /></span>
+          <button type="button" className={autoplayEnabled ? "is-autoplay" : ""} aria-pressed={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)} style={toolbarButtonStyle} title={autoplayEnabled ? "关闭托管并接管" : "让 AI 托管当前对局"}><RobotOutlined aria-hidden="true" /><span className="rift-toolbar-button-label">{autoplayEnabled ? "AI 托管中" : "手动指挥"}</span></button>
+          <div className="rift-toolbar-audio" aria-label="音量控制">
+            <button type="button" aria-label={audioPreferences.muted ? "开启游戏声音" : "静音游戏声音"} aria-pressed={audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })} style={toolbarIconButtonStyle} title={audioPreferences.muted ? "开启游戏声音" : "静音游戏声音"}>{audioPreferences.muted ? <AudioMutedOutlined aria-hidden="true" /> : <SoundOutlined aria-hidden="true" />}</button>
+            <label className="rift-audio-range" htmlFor="rift-toolbar-music-volume"><span>音乐</span><input id="rift-toolbar-music-volume" aria-label="音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} /></label>
+            <label className="rift-audio-range" htmlFor="rift-toolbar-effects-volume"><span>音效</span><input id="rift-toolbar-effects-volume" aria-label="音效音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.effectsVolume} onChange={(event) => updateAudio({ effectsVolume: Number(event.target.value) })} /></label>
+          </div>
+          <button type="button" aria-label="游戏设置" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((open) => !open)} style={toolbarIconButtonStyle} title="游戏设置"><SettingOutlined aria-hidden="true" /></button>
           <span className="rift-shortcut">快捷键 F</span>
           <button type="button" aria-pressed={fullscreen} disabled={!fullscreenSupported} onClick={() => { toggleFullscreen().catch(() => {}); }} style={toolbarButtonStyle}>{fullscreen ? "退出全屏" : "全屏游玩"}</button>
         </div>
@@ -402,9 +475,28 @@ export default function AutoChessGame() {
           onAction={dispatch}
           onBattleViewAction={adjustBattleView}
           onEnemyFormationOpenChange={setEnemyFormationOpen}
+          autoplayEnabled={autoplayEnabled}
+          onAutoplayChange={updateAutoplay}
+          onAutoplayStart={startAiRun}
+          onSettingsOpen={() => setSettingsOpen(true)}
         />
         <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
         <ReleaseNotes open={releaseOpen} onClose={() => setReleaseOpen(false)} />
+        {settingsOpen && (
+          <div className="rift-settings-scrim" role="presentation" onPointerDown={() => setSettingsOpen(false)}>
+            <section className="rift-settings-panel" role="dialog" aria-modal="true" aria-label="游戏设置" onPointerDown={(event) => event.stopPropagation()}>
+              <header><strong>游戏设置</strong><button type="button" aria-label="关闭设置" onClick={() => setSettingsOpen(false)}><CloseOutlined aria-hidden="true" /></button></header>
+              <div className="rift-setting-row"><span>AI 托管</span><button type="button" className="rift-switch" role="switch" aria-label="AI 托管" aria-checked={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)}><i /></button></div>
+              <div className="rift-setting-row"><span>后台继续战斗</span><button type="button" className="rift-switch" role="switch" aria-label="后台继续战斗" aria-checked={backgroundBattleEnabled} onClick={() => updateBackgroundBattle(!backgroundBattleEnabled)}><i /></button></div>
+              <div className="rift-setting-row rift-setting-audio-mobile"><span>游戏声音</span><button type="button" className="rift-switch" role="switch" aria-label="游戏声音" aria-checked={!audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })}><i /></button></div>
+              <label className="rift-setting-slider rift-setting-audio-mobile" htmlFor="rift-music-volume"><span>音乐</span><input id="rift-music-volume" aria-label="设置中的音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} /></label>
+              <label className="rift-setting-slider rift-setting-audio-mobile" htmlFor="rift-effects-volume"><span>音效</span><input id="rift-effects-volume" aria-label="设置中的音效音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.effectsVolume} onChange={(event) => updateAudio({ effectsVolume: Number(event.target.value) })} /></label>
+              <button type="button" className="rift-setting-version" onClick={() => { setSettingsOpen(false); setReleaseOpen(true); }}>
+                <span><HistoryOutlined aria-hidden="true" />版本与更新</span><b>v{AUTOCHESS_VERSION}</b>
+              </button>
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -419,4 +511,10 @@ const toolbarButtonStyle = {
   background: "#173246",
   cursor: "pointer",
   font: `700 12px ${FONT}`,
+};
+
+const toolbarIconButtonStyle = {
+  ...toolbarButtonStyle,
+  width: 30,
+  padding: 0,
 };

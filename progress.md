@@ -1142,3 +1142,40 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 专项记录 `94` 条战斗事件且全部在 console 找到同 ID：包括 `0.02s` 好笑姐姐锁定果冻风纪、`3.78s` 能能弄你从 `(385.5,185.5)` 朝 `(0.952,0.305)` 方向释放苹果派、投射物在 `(741,299.5)` 命中兔子射手造成 `7.91` 技能伤害，以及普通攻击伤害/阵亡/快速结算事件。console/page error 与 4xx/5xx 请求均为空。
 - `release-notes.png`、`preparation-generated-portraits.png`、`battle-ai-control.png`、`result-after-skip.png` 均为 `1440×900`，通过纯色、透明、近黑检查并逐张打开确认；Canvas 为 `1440×853`，三个新资产均实际返回 200，弹窗、整备、战场和结算无裁切或重叠。主 `verify-autochess.cjs` 的 17 张桌面/移动/全屏截图也已逐张检查。
 - 最终功能验证基线：`pnpm autochess:test` `203/203`、`pnpm exec tsc --noEmit`、目标源码 ESLint、`pnpm autochess:release:check`、新脚本语法、主 Chrome 流程与 `git diff --check` 均通过。
+
+## 2026-08-05 · AI 观战、随时托管与后台战斗
+
+- 入口决策：不再增加独立入口页。现有标题页已经承担开局选择，因此在协议卡前加入“亲自指挥 / AI 观战”分段选择；AI 模式既可由玩家指定协议，也可让 AI 自选协议开局，减少重复页面并保留开局决策权。
+- 新增 `AutoChessAutopilot`，与面向控制台的 `window.autoChessAI` 分离。托管会逐步购买、升本、按近战/远程重新布阵、选择天赋、开战和战后继续；战斗保持正常速度播放，不调用快速结算。桌面工具栏、移动端小型控制组和设置面板均可随时开启托管或接管。
+- 设置面板整合 AI 托管、后台继续战斗、游戏声音与音量。后台战斗默认关闭并持久化到本地；开启后 `EngineBridge` 使用隐藏期间真实经过的墙钟时间以固定小步补推进，避免仅取消暂停后仍被后台 `requestAnimationFrame` 降频拖慢。`render_game_to_text()` 同步公开托管、后台设置和页面隐藏状态。
+- 新增 `scripts/verify-autochess-autoplay.cjs` / `pnpm autochess:verify:autoplay`。系统 Chrome seed 1 实测 AI 自动购入并布阵后进入首战；开启后台时战斗 `0.7s → 1.7s`，关闭后隐藏 `0.9s` 保持在 `2.0s`；桌面与 `390×844` 手机端控件、设置和标题页模式均通过。
+- 专项 7 张截图和主流程 17 张截图均通过纯色、透明、近黑拒绝检查并逐张打开确认；Canvas、`render_game_to_text()`、console/page error 与 4xx/5xx 请求交叉检查正常。移动端新增控制与既有缩放、快速结算、统计和备战操作无重叠。
+- 最终验证：`pnpm autochess:test` `206/206`、`pnpm exec tsc --noEmit --incremental false`、目标源码 ESLint、`pnpm build`、专项系统 Chrome、主 `verify-autochess.cjs` 与 `git diff --check` 均通过。
+
+### 后续可选
+
+- 收集真人观战样本后再调整托管的商店估值、羁绊权重与中后期保留金币；本轮先保证策略可解释、全流程稳定并且玩家能随时接管。
+
+## 2026-08-06 · 音量快捷调节与设置内版本入口
+
+- 桌面顶部工具栏移除独立版本按钮，恢复声音开关、音乐音量和音效音量快捷控制；滑杆带独立可访问名称，并沿用既有音频偏好持久化。
+- “版本与更新 v0.2.1”移入游戏设置，点击会先关闭设置再打开现有更新日志；桌面设置不再重复展示音频项。
+- 移动端顶部工具栏原本隐藏，因此继续在设置中保留游戏声音、音乐和音效控制；`390×844` 下音频项、版本入口和关闭按钮均完整可见。
+- 专项静态回归新增桌面音量、版本入口归属和移动端音频样式约束；系统 Chrome 自动化验证两条顶部滑杆可调、版本入口跳转、桌面/移动显示条件、后台战斗推进与暂停均正常。
+- `pnpm autochess:test` `209/209`、TypeScript、目标源码 ESLint、专项脚本语法、专项系统 Chrome 和主 `verify-autochess.cjs` 均通过；专项 8 张及主流程 17 张截图已逐张检查，无黑屏、裁切或控件重叠，console/page error 与失败请求为空。
+
+## 2026-08-06 · v0.2.1 满席换购与点击出售
+
+- 用户观察到 AI 托管在棋盘与 8 格候选席都满后不再继续运营；确认根因是 `AutoChessAutopilot.purchaseAction()` 在无空位时直接返回，托管没有出售决策。
+- 托管现在会先锁定一张买得起且符合既有阵容估值的商店棋，只从目标阵容以外的候选席单位中选择最低价值牺牲位；候选棋必须比牺牲位更有价值，并且不会出售与候选棋同名的升级素材，也不会为了腾位直接出售场上单位。
+- 出售与购买通过待购计划绑定：出售成功后的下一次托管动作优先买入原目标，避免卖完后转去升本、刷新或做其他操作。满席回归实测动作顺序为 `sell → shop`，候选席 `8 → 7 → 8`，阵容总数保持不变。
+- 桌面 Phaser 出售区新增独立点击命中区；选中棋子时显示“点击出售 +N 金币”，点击派发无位置 `sell` 动作，拖动中仍保留“出售 / 松开出售”反馈，并用拖动状态阻止一次松手触发两次出售。
+- 控制台出售回归覆盖 `autoChessAI.sell("board", slot)` 与 `select(...) → sell()`；满席托管回归确认只出售候选席低价值单位并继续买入目标棋。
+- 版本提升到 `0.2.1`，同步 `package.json`、游戏内更新日志、`CHANGELOG.md` 和验证脚本；本版本同时收录当日桌面音量快捷调节与设置内版本入口调整。
+- 系统 Chrome seed 1 实测选中小红帽后点击出售区：金币 `6 → 7`、单位数 `3 → 2`、选中状态清空，console 同时收到成功的 `sell` action 与“已回收”反馈；随后战斗正常开始并快速结算胜利。
+- `release-notes.png`、`preparation-selected-click-sell.png`、`preparation-generated-portraits.png`、`battle-ai-control.png`、`result-after-skip.png` 均为 `1440×900`，通过纯色、透明与近黑拒绝检查并逐张打开确认；Canvas 为 `1440×853`，无重叠或裁切，54 条战斗事件全部同步到 console，page/console error 与失败请求为空。
+- 最终验证：`pnpm autochess:test` `209/209`、`pnpm exec tsc --noEmit --incremental false`、目标源码 ESLint、`pnpm autochess:release:check`、两份浏览器脚本语法、系统 Chrome 专项和 `git diff --check` 均通过。
+
+### 后续可选
+
+- 用更长的托管样本观察满席置换频率和候选席升级素材保留率；当前策略刻意不卖场上单位，也不会为价值不升反降的商店棋腾位。

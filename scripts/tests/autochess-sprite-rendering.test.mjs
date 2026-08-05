@@ -911,6 +911,10 @@ test("DOM 商店与 Phaser 备战棋盘共同覆盖经济、敌情和快捷回�
   assert.match(scene, /rightButtonDown\(\)/);
   assert.match(scene, /preventContextMenu/);
   assert.match(scene, /松开出售 \+\$\{refund\} 金币/);
+  assert.match(scene, /setName\("preparation-sell-zone"\)/);
+  assert.match(scene, /点击出售 \+\$\{refund\} 金币/);
+  assert.match(scene, /if \(this\.dragState\) return;/);
+  assert.match(scene, /this\.dispatch\(\{ type: "sell" \}\)/);
 });
 
 test("经济信息只在商店出现，并提供利息规则与清晰的备战价值", () => {

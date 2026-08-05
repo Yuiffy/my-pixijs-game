@@ -113,7 +113,7 @@ const inspectPng = (buffer) => {
 const { chromium } = loadPlaywright();
 const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
 const pageUrl = `${baseUrl}/game/autochess?seed=1`;
-const artifactDirectory = ".tmp/autochess/ai-v020";
+const artifactDirectory = ".tmp/autochess/ai-v021";
 mkdirSync(artifactDirectory, { recursive: true });
 
 const finitePoint = (point) => point
@@ -187,24 +187,41 @@ let browser;
   ));
   await page.waitForTimeout(600);
 
+  const pointForLogical = async (x, y) => {
+    const box = await canvas.boundingBox();
+    assert.ok(box, "Canvas is not visible");
+    const logical = await canvas.evaluate((element) => ({
+      width: Number(element.dataset.logicalWidth || 1120),
+      height: Number(element.dataset.logicalHeight || 720),
+    }));
+    const fitScale = Math.min(box.width / logical.width, box.height / logical.height);
+    return {
+      x: box.x + (box.width - logical.width * fitScale) / 2 + x * fitScale,
+      y: box.y + (box.height - logical.height * fitScale) / 2 + y * fitScale,
+    };
+  };
+
   const help = await callAI("help");
-  assert.equal(help.version, "0.2.0");
+  assert.equal(help.version, "0.2.1");
   assert.ok(help.flow.includes("skipBattle()"));
   assert.ok(help.testing.includes("consoleLogging(enabled)"));
-  assert.equal((await state()).version, "0.2.0");
+  assert.equal((await state()).version, "0.2.1");
   console.log("[ai-verify] API ready");
 
   await page.keyboard.press("v");
-  const releaseDialog = page.getByRole("dialog", { name: /v0\.2\.0/ });
+  const releaseDialog = page.getByRole("dialog", { name: /v0\.2\.1/ });
   await releaseDialog.waitFor({ state: "visible" });
-  assert.match(await releaseDialog.innerText(), /AI 操作与观测/);
-  assert.match(await releaseDialog.innerText(), /棋子形象/);
+  assert.match(await releaseDialog.innerText(), /出售与托管/);
+  assert.match(await releaseDialog.innerText(), /桌面工具栏/);
   await capture("release-notes");
   await page.keyboard.press("Escape");
   await releaseDialog.waitFor({ state: "hidden" });
   console.log("[ai-verify] keyboard release dialog verified");
 
-  await page.getByRole("button", { name: /v0\.2\.0/ }).click();
+  await page.getByRole("button", { name: "游戏设置" }).click();
+  await page.getByRole("dialog", { name: "游戏设置" })
+    .getByRole("button", { name: /版本与更新.*v0\.2\.1/ })
+    .click();
   await releaseDialog.waitFor({ state: "visible" });
   await page.locator(".rift-release-dismiss").click({ position: { x: 12, y: 54 } });
   await releaseDialog.waitFor({ state: "hidden" });
@@ -280,6 +297,40 @@ let browser;
   assert.ok(restoredFormation.board.some((unit) => unit.index === moveSource.index && unit.id === moveSource.id));
   assert.equal(restoredFormation.player.boardCount, 3);
   console.log("[ai-verify] console purchase and movement verified");
+
+  const sellTarget = restoredFormation.board.at(-1);
+  assert.ok(sellTarget, "No unit is available for selected sell test");
+  const unitCountBeforeSell = restoredFormation.board.length + restoredFormation.bench.length;
+  const goldBeforeSell = restoredFormation.player.gold;
+  const selectForSell = await callAI("select", "board", sellTarget.index + 1);
+  assert.equal(selectForSell.ok, true);
+  assert.deepEqual((await state()).selected, { zone: "board", index: sellTarget.index });
+  await page.waitForTimeout(120);
+  await capture("preparation-selected-click-sell");
+
+  const sellZoneCenter = await pointForLogical(696, 569.5);
+  await page.mouse.click(sellZoneCenter.x, sellZoneCenter.y);
+  await page.waitForFunction(
+    (previousCount) => {
+      const current = window.autoChessAI.state();
+      return current.board.length + current.bench.length === previousCount - 1;
+    },
+    unitCountBeforeSell,
+  );
+  const afterClickSell = await state();
+  assert.equal(afterClickSell.selected, null);
+  assert.equal(afterClickSell.player.gold > goldBeforeSell, true);
+  assert.equal(afterClickSell.board.length + afterClickSell.bench.length, unitCountBeforeSell - 1);
+  const consoleAfterSell = await capturedConsole();
+  assert.ok(consoleAfterSell.some(([tag, payload]) => (
+    tag === "[RiftLine][action]"
+      && payload.action?.type === "sell"
+      && payload.after.gold > payload.before.gold
+  )), "Clicking the sell zone did not emit a successful sell action");
+  assert.ok(consoleAfterSell.some(([tag, payload]) => (
+    tag === "[RiftLine][feedback]" && /已回收/.test(payload.text)
+  )), "Clicking the sell zone did not mirror its refund feedback to the console");
+  console.log("[ai-verify] selected click-to-sell and console feedback verified");
 
   await page.waitForTimeout(350);
   await capture("preparation-generated-portraits");
@@ -361,6 +412,12 @@ let browser;
     keyboardStarter: preparationBeforeReroll.starterHistory[0].name,
     shopAfterReroll: afterReroll.shop.map((unit) => unit.name),
     bought: buyResults,
+    clickSell: {
+      unit: sellTarget.name,
+      goldBefore: goldBeforeSell,
+      goldAfter: afterClickSell.player.gold,
+      remainingUnits: afterClickSell.board.length + afterClickSell.bench.length,
+    },
     skip: {
       steps: skipped.steps,
       simulatedSeconds: skipped.simulatedSeconds,

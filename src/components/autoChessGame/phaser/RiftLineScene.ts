@@ -702,21 +702,35 @@ export class RiftLineScene extends Phaser.Scene {
     const { x, y, width, height } = PREPARATION_SELL_ZONE;
     const graphics = this.add.graphics();
     const label = this.text(x + width / 2, y + height / 2, "拖到这里出售", 10, "#d68b9d", { fontStyle: "bold" }).setOrigin(0.5);
-    this.phaseLayer.add([graphics, label]);
+    const hitZone = this.add.zone(x + width / 2, y + height / 2, width, height)
+      .setName("preparation-sell-zone")
+      .setInteractive({ useHandCursor: true });
+    hitZone.on(Phaser.Input.Events.POINTER_UP, () => {
+      if (this.dragState) return;
+      const { selected } = this.bridge.engine.state;
+      if (selected && this.unitAt(selected)) this.dispatch({ type: "sell" });
+    });
+    this.phaseLayer.add([graphics, label, hitZone]);
     this.sellDropZoneGraphics = graphics;
     this.sellDropZoneLabel = label;
     this.updateSellDropZone(false);
   }
 
-  private updateSellDropZone(active: boolean, unit?: OwnedUnit) {
+  private updateSellDropZone(active: boolean, draggingUnit?: OwnedUnit) {
     if (!this.sellDropZoneGraphics || !this.sellDropZoneLabel) return;
     const { x, y, width, height } = PREPARATION_SELL_ZONE;
+    const { selected } = this.bridge.engine.state;
+    const selectedUnit = !draggingUnit && selected ? this.unitAt(selected) : null;
+    const unit = draggingUnit || selectedUnit || undefined;
     const refund = unit ? this.refundForUnit(unit) : 0;
     this.sellDropZoneGraphics.clear();
-    const dragging = Boolean(unit);
-    this.sellDropZoneGraphics.fillStyle(active ? 0xa73e56 : dragging ? 0x5d2736 : 0x3a1d2a, active ? 0.46 : dragging ? 0.38 : 0.58).fillRoundedRect(x, y, width, height, 8);
-    this.sellDropZoneGraphics.lineStyle(active ? 2 : dragging ? 1.5 : 1, active ? 0xff8fa5 : dragging ? 0xd86c83 : 0x8b4c60, active ? 0.98 : dragging ? 0.86 : 0.72).strokeRoundedRect(x, y, width, height, 8);
-    this.sellDropZoneLabel.setText(active ? `松开出售 +${refund} 金币` : dragging ? `出售 +${refund} 金币` : "拖到这里出售").setColor(active || dragging ? "#fff0f3" : "#d68b9d");
+    const dragging = Boolean(draggingUnit);
+    const clickable = Boolean(selectedUnit);
+    this.sellDropZoneGraphics.fillStyle(active ? 0xa73e56 : dragging || clickable ? 0x5d2736 : 0x3a1d2a, active ? 0.46 : dragging || clickable ? 0.38 : 0.58).fillRoundedRect(x, y, width, height, 8);
+    this.sellDropZoneGraphics.lineStyle(active ? 2 : dragging || clickable ? 1.5 : 1, active ? 0xff8fa5 : dragging || clickable ? 0xd86c83 : 0x8b4c60, active ? 0.98 : dragging || clickable ? 0.86 : 0.72).strokeRoundedRect(x, y, width, height, 8);
+    this.sellDropZoneLabel
+      .setText(active ? `松开出售 +${refund} 金币` : dragging ? `出售 +${refund} 金币` : clickable ? `点击出售 +${refund} 金币` : "拖到这里出售")
+      .setColor(active || dragging || clickable ? "#fff0f3" : "#d68b9d");
   }
 
   private drawMobilePreparation() {

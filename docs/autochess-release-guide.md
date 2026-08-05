@@ -33,7 +33,7 @@ pnpm autochess:release:check
 pnpm autochess:verify:ai
 ```
 
-脚本默认访问 `http://127.0.0.1:3100`，其他端口通过 `AUTOCHESS_BASE_URL` 指定。它必须使用安装的 Chrome channel，并会拒绝纯色、透明或近黑截图；运行后仍要人工打开 `.tmp/autochess/ai-v020/` 中的每张截图。
+脚本默认访问 `http://127.0.0.1:3100`，其他端口通过 `AUTOCHESS_BASE_URL` 指定。它必须使用安装的 Chrome channel，并会拒绝纯色、透明或近黑截图；运行后仍要人工打开 `.tmp/autochess/ai-v<版本号>/` 中的每张截图。
 
 ## 更新日志写法
 

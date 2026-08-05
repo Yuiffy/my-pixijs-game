@@ -31,6 +31,10 @@ export class EngineBridge {
 
   public hidden = false;
 
+  public autoplayEnabled = false;
+
+  public backgroundBattleEnabled = false;
+
   public onEvent: ((event: BridgeEvent) => void) | null = null;
 
   private testSpeed: number;
@@ -44,6 +48,8 @@ export class EngineBridge {
   private consoleBattle: BattleState | null = null;
 
   private lastConsoleEventId = 0;
+
+  private backgroundUpdatedAt: number | null = null;
 
   constructor(seed?: number, testSpeed = 1) {
     this.engine = new AutoChessEngine(seed);
@@ -192,8 +198,39 @@ export class EngineBridge {
     this.codexOpen = open;
   }
 
-  public setHidden(hidden: boolean) {
+  public setAutoplayEnabled(enabled: boolean) {
+    this.autoplayEnabled = enabled;
+  }
+
+  public setBackgroundBattleEnabled(enabled: boolean, now = Date.now()) {
+    this.backgroundBattleEnabled = enabled;
+    this.backgroundUpdatedAt = this.hidden ? now : null;
+  }
+
+  public setHidden(hidden: boolean, now = Date.now()) {
+    if (this.hidden === hidden) return;
+    if (!hidden) this.updateBackground(now);
     this.hidden = hidden;
+    this.backgroundUpdatedAt = hidden ? now : null;
+  }
+
+  public updateBackground(now = Date.now()) {
+    if (!this.hidden || !this.backgroundBattleEnabled || this.codexOpen) {
+      if (this.hidden) this.backgroundUpdatedAt = now;
+      return 0;
+    }
+    const previous = this.backgroundUpdatedAt ?? now;
+    this.backgroundUpdatedAt = now;
+    const elapsedMilliseconds = Math.min(30000, Math.max(0, now - previous));
+    if (!elapsedMilliseconds || (this.engine.state.phase !== "battle" && !this.engine.state.toast)) {
+      return 0;
+    }
+    const steps = Math.max(1, Math.ceil(elapsedMilliseconds / (1000 / 60)));
+    const delta = elapsedMilliseconds / 1000 / steps;
+    for (let index = 0; index < steps; index += 1) this.engine.update(delta);
+    this.flushEvents();
+    this.onEvent?.({ type: "state" });
+    return elapsedMilliseconds;
   }
 
   public renderTextState() {
@@ -202,6 +239,9 @@ export class EngineBridge {
       ...state,
       interface: {
         enemyFormationOpen: this.enemyFormationOpen,
+        autoplayEnabled: this.autoplayEnabled,
+        backgroundBattleEnabled: this.backgroundBattleEnabled,
+        pageHidden: this.hidden,
       },
     });
   }

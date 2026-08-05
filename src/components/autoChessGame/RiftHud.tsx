@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
-import { FastForwardOutlined } from "@ant-design/icons";
+import {
+  FastForwardOutlined,
+  RobotOutlined,
+  SettingOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import type { AutoChessEngine } from "./core/gameEngine";
 import {
   STARTERS,
@@ -38,6 +43,10 @@ type Props = {
   onAction: (action: GameAction) => void;
   onBattleViewAction: (action: BattleViewAction) => void;
   onEnemyFormationOpenChange: (open: boolean) => void;
+  autoplayEnabled: boolean;
+  onAutoplayChange: (enabled: boolean) => void;
+  onAutoplayStart: () => void;
+  onSettingsOpen: () => void;
 };
 
 export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
@@ -50,6 +59,10 @@ export default function RiftHud({
   onAction,
   onBattleViewAction,
   onEnemyFormationOpenChange,
+  autoplayEnabled,
+  onAutoplayChange,
+  onAutoplayStart,
+  onSettingsOpen,
 }: Props) {
   const [sheet, setSheet] = useState<SheetName>(null);
   const [starterPage, setStarterPage] = useState(0);
@@ -110,7 +123,14 @@ export default function RiftHud({
             <small className="rift-title-seed">战术种子 · {String(state.seed % 100000).padStart(5, "0")}</small>
           </section>
           <section className="rift-title-choice-panel">
-            <div className="rift-section-heading"><span>01 / 接入协议</span><strong>选择你的第一笔优势</strong><small>协议会带来一名初始单位，并改变整局经济或战斗节奏。</small></div>
+            <div className="rift-play-mode-block">
+              <span>01 / 游玩方式</span>
+              <div className="rift-play-mode" role="group" aria-label="游玩方式">
+                <button type="button" aria-pressed={!autoplayEnabled} onClick={() => onAutoplayChange(false)}><UserOutlined aria-hidden="true" /><span><strong>亲自指挥</strong><small>单人游玩</small></span></button>
+                <button type="button" aria-pressed={autoplayEnabled} onClick={() => onAutoplayChange(true)}><RobotOutlined aria-hidden="true" /><span><strong>AI 观战</strong><small>全程托管</small></span></button>
+              </div>
+            </div>
+            <div className="rift-section-heading"><span>02 / 接入协议</span><strong>{autoplayEnabled ? "为 AI 指定开局优势" : "选择你的第一笔优势"}</strong><small>协议会带来一名初始单位，并改变整局经济或战斗节奏。</small></div>
             <div className="rift-dom-choice-grid">
               {state.starterChoices.map((id, index) => {
                 const starter = STARTERS.find((item) => item.id === id);
@@ -122,12 +142,13 @@ export default function RiftHud({
                     <small>{starter.subtitle}</small>
                     <strong>{starter.name}</strong>
                     <span>{starter.description}</span>
-                    <em>接入协议 <b>↗</b></em>
+                    <em>{autoplayEnabled ? "选定并开始观战" : "接入协议"} <b>↗</b></em>
                   </button>
                 );
               })}
             </div>
             {isMobile && <Pager index={starterIndex} total={state.starterChoices.length} onPrevious={() => setStarterPage(Math.max(0, starterIndex - 1))} onNext={() => setStarterPage(Math.min(state.starterChoices.length - 1, starterIndex + 1))} />}
+            {autoplayEnabled && <ActionButton className="rift-ai-start" tone="confirm" onClick={onAutoplayStart}><RobotOutlined aria-hidden="true" />由 AI 自选协议并开局</ActionButton>}
           </section>
         </div>
       </div>
@@ -200,6 +221,10 @@ export default function RiftHud({
         </>
       )}
       {battleOverlay}
+      <div className="rift-mobile-session-controls" aria-label="对局控制">
+        <button type="button" aria-pressed={autoplayEnabled} onClick={() => onAutoplayChange(!autoplayEnabled)} title={autoplayEnabled ? "关闭托管并接管" : "开启 AI 托管"}><RobotOutlined aria-hidden="true" /><span>{autoplayEnabled ? "接管" : "托管"}</span></button>
+        <button type="button" aria-label="游戏设置" onClick={onSettingsOpen} title="游戏设置"><SettingOutlined aria-hidden="true" /></button>
+      </div>
       {enemyFormationOpen && state.phase === "preparation" && (
         <EnemyFormationOverlay
           engine={engine}
