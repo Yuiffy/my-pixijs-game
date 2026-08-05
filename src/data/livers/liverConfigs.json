@@ -288,5 +288,65 @@
     "anchorName": "三理Mit3uri",
     "enableTextGeneration": true,
     "enableComicGeneration": true
+  },
+  "chu2u": {
+    "id": "chu2u",
+    "name": "羽啾chu2u",
+    "group": "VirtuaReal 新成员",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/1727074031_羽啾chu2u",
+      "E:/EFiles/Evideo/DDTV录播-E/1727074031_羽啾chu2u"
+    ],
+    "targetDir": "data/streams/chu2u",
+    "bilibiliUid": "2138961136",
+    "avatarPath": "/images/livers/chu2u.jpg",
+    "anchorName": "羽啾chu2u",
+    "enableTextGeneration": true,
+    "enableComicGeneration": false
+  },
+  "sumire": {
+    "id": "sumire",
+    "name": "枝堇Sumire",
+    "group": "VirtuaReal 新成员",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/1727076670_枝堇Sumire",
+      "E:/EFiles/Evideo/DDTV录播-E/1727076670_枝堇Sumire"
+    ],
+    "targetDir": "data/streams/sumire",
+    "bilibiliUid": "1150976664",
+    "avatarPath": "/images/livers/sumire.jpg",
+    "anchorName": "枝堇Sumire",
+    "enableTextGeneration": true,
+    "enableComicGeneration": false
+  },
+  "viridis": {
+    "id": "viridis",
+    "name": "小松绿Viridis",
+    "group": "VirtuaReal 新成员",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/1727071052_小松绿Viridis",
+      "E:/EFiles/Evideo/DDTV录播-E/1727071052_小松绿Viridis"
+    ],
+    "targetDir": "data/streams/viridis",
+    "bilibiliUid": "1891335475",
+    "avatarPath": "/images/livers/viridis.jpg",
+    "anchorName": "小松绿Viridis",
+    "enableTextGeneration": true,
+    "enableComicGeneration": false
+  },
+  "komichi": {
+    "id": "komichi",
+    "name": "四时小路Komichi",
+    "group": "VirtuaReal 新成员",
+    "sourceDirs": [
+      "D:/files/videos/DDTV录播/1700301235_四时小路Komichi",
+      "E:/EFiles/Evideo/DDTV录播-E/1700301235_四时小路Komichi"
+    ],
+    "targetDir": "data/streams/komichi",
+    "bilibiliUid": "1512246445",
+    "avatarPath": "/images/livers/komichi.jpg",
+    "anchorName": "四时小路Komichi",
+    "enableTextGeneration": true,
+    "enableComicGeneration": false
   }
 }
