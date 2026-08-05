@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
+import { FastForwardOutlined } from "@ant-design/icons";
 import type { AutoChessEngine } from "./core/gameEngine";
 import {
   STARTERS,
@@ -169,6 +170,7 @@ export default function RiftHud({
           <button type="button" onClick={() => onBattleViewAction("reset")} aria-label="复位战场视图" title="复位战场视图">⌖</button>
           <button type="button" onClick={() => onBattleViewAction("zoomIn")} aria-label="放大战场" title="放大战场">+</button>
         </div>
+        <ActionButton className="rift-skip-battle-button" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗"><FastForwardOutlined aria-hidden="true" />快速结算<span>S</span></ActionButton>
         <ActionButton className="rift-ranking-button" onClick={() => dispatch({ type: "rankingToggle" })}>{state.battle.rankingOpen ? "收起统计" : "查看统计"}<span>D</span></ActionButton>
       </div>
     </div>

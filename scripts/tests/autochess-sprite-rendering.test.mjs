@@ -842,9 +842,10 @@ test("备战界面可从桌面和移动端查看双方真实部署且详情高�
   assert.match(scene, /enemy-formation-trigger-mobile/);
   assert.match(scene, /setEnemyFormationOpen\(true\)/);
   assert.match(
-    scene,
-    /if \(!this\.bridge\.enemyFormationOpen\) this\.dispatch\(\{ type: "battle" \}\)/,
+    host,
+    /state\.phase === "preparation" && event\.code === "Space"/,
   );
+  assert.match(host, /action = \{ type: "battle" \}/);
   assert.match(bridge, /enemyFormationOpen = false/);
   assert.match(bridge, /interface:\s*\{\s*enemyFormationOpen:/);
   assert.match(hud, /function EnemyFormationOverlay/);

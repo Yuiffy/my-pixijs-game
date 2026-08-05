@@ -2585,7 +2585,7 @@ test("结算会保留双方完整统计，直到玩家显式继续", () => {
   engine.update(60);
   assert.equal(engine.state.phase, "result");
   const textState = JSON.parse(engine.renderTextState());
-  assert.equal(textState.availableActions.includes("点击继续进入下一阶段"), true);
+  assert.equal(textState.availableActions.includes("点击继续或按 Enter 进入下一阶段"), true);
   assert.equal(textState.battle.ranking.playerRows.length, battle.player.length);
   assert.equal(textState.battle.ranking.enemyRows.length, battle.enemy.length);
   assert.equal(typeof textState.battle.ranking.enemyRows[0].attack, "number");
@@ -2699,6 +2699,23 @@ test("第二战低费固定阵容不会压制正常投入的三人阵容", () =>
 
   assert.equal(engine.state.result.won, true);
   assert.ok(engine.state.battle.player.some((fighter) => fighter.alive));
+});
+
+test("早期败局最多只按两名敌方存活者追加核心伤害", () => {
+  const engine = createEngine(122);
+  engine.state.round = 2;
+  engine.state.hp = 20;
+  engine.startBattle();
+  engine.state.battle.player.forEach((fighter) => {
+    fighter.hp = 0;
+    fighter.alive = false;
+  });
+  engine.update(0.05);
+
+  assert.equal(engine.state.result.won, false);
+  assert.equal(engine.state.battle.enemy.filter((fighter) => fighter.alive).length, 3);
+  assert.equal(engine.state.result.damage, 4);
+  assert.equal(engine.state.hp, 16);
 });
 
 test("弥希双声道与初濑蝙蝠夜歌会完成控制和团队治疗", () => {

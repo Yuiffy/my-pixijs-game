@@ -16,7 +16,7 @@ export const WAVES: WaveDefinition[] = [
     name: "毛茸茸夜班",
     tag: "normal",
     description: "绒绒的狗与浣熊店员撑住前排，好笑姐姐会从侧翼突入后排。",
-    modifier: Math.sqrt(5 / 3),
+    modifier: Math.sqrt(4 / 3),
     units: [{ id: "mossback" }, { id: "gale_archer" }, { id: "rift_stalker" }],
   },
   {
@@ -24,7 +24,7 @@ export const WAVES: WaveDefinition[] = [
     name: "深夜档突入",
     tag: "normal",
     description: "可爱冲阵会打乱前线，分散站位可降低损失。",
-    modifier: Math.sqrt(9 / 12),
+    modifier: Math.sqrt(7 / 12),
     units: [
       { id: "cinder_ram" },
       { id: "rift_brawler" },
@@ -37,7 +37,7 @@ export const WAVES: WaveDefinition[] = [
     name: "果冻火力网",
     tag: "elite",
     description: "精英预警：果冻风纪控制前排，弥月火力锁定远端单位。",
-    modifier: Math.sqrt(18 / 9),
+    modifier: Math.sqrt(11 / 9),
     units: [
       { id: "sun_guard" },
       { id: "clock_gunner" },
@@ -50,7 +50,7 @@ export const WAVES: WaveDefinition[] = [
     name: "毛茸茸团建",
     tag: "normal",
     description: "饼干岁会冲向虚弱友军提供治疗与护盾，优先集火可压制这套毛茸茸续航。",
-    modifier: Math.sqrt(16 / 9),
+    modifier: Math.sqrt(10 / 9),
     units: [
       { id: "mossback" },
       { id: "mossback" },
@@ -64,7 +64,7 @@ export const WAVES: WaveDefinition[] = [
     name: "攻城序列",
     tag: "normal",
     description: "阿梓的前排冲阵惩罚抱团，浣熊射手持续压制后排。",
-    modifier: Math.sqrt(17 / 12),
+    modifier: Math.sqrt(13 / 12),
     units: [
       { id: "cinder_ram" },
       { id: "rift_stalker" },
@@ -78,7 +78,7 @@ export const WAVES: WaveDefinition[] = [
     name: "五系禁卫",
     tag: "normal",
     description: "前排、输出与辅助同时登场，检验阵容完整度。",
-    modifier: Math.sqrt(21 / 16),
+    modifier: 1,
     units: [
       { id: "dawn_duelist" },
       { id: "cog_scribe" },
@@ -93,7 +93,7 @@ export const WAVES: WaveDefinition[] = [
     name: "暴君投影",
     tag: "elite",
     description: "精英预警：暴君投影携带双辅卫队；这是终局首领前的机制演练。",
-    modifier: Math.sqrt(32 / 10),
+    modifier: Math.sqrt(24 / 10),
     units: [{ id: "rift_tyrant" }, { id: "shiori" }, { id: "rift_brawler" }],
   },
 ];

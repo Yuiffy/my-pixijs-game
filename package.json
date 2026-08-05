@@ -1,6 +1,6 @@
 {
   "name": "my-pixijs-game",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -23,6 +23,10 @@
     "streams:verify": "node scripts/verify-stream-data.mjs --local --references-only",
     "streams:test": "node --test scripts/tests/stream-shards.test.mjs scripts/tests/sync-failures.test.mjs",
     "autochess:test": "node --test scripts/tests/autochess-*.test.mjs",
+    "autochess:simulate": "node scripts/simulate-autochess-runs.mjs",
+    "autochess:benchmark:waves": "node scripts/benchmark-autochess-waves.mjs",
+    "autochess:verify:ai": "node scripts/verify-autochess-ai.cjs",
+    "autochess:release:check": "node scripts/verify-autochess-release.mjs",
     "autochess:portrait:generate": "node scripts/autochess-portrait-generate.mjs",
     "autochess:portrait:process": "node scripts/autochess-portrait-process.mjs",
     "pm2:start": "pm2 start ecosystem.config.cjs",

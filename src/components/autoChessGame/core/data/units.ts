@@ -133,8 +133,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
         stats: { duration: 1.5, dodge: 0.3, healPerSecond: 0.24, moveSpeedBonus: 125 },
       },
     ],
-    portrait: "/images/livers/hazel.png",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/sun-guard.png",
+    portraitStyle: "sprite",
     shop: true,
   }),
   // 1 费：可靠的构筑零件，每个都能明确指向一条阵容路线。
@@ -280,8 +280,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 45,
     abilityName: "小狗星球熟练工",
     abilityDescription: "持续自动充能，攻击与受击也会少量回复能量；给生命比例最低的两名友军分饼干：没有护盾就发打孔苏打饼干，提供 15% 最大生命护盾；已有护盾就点满巧克力豆，回复 12% 最大生命。",
-    portrait: "/images/livers/mofu.jpg",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/mossback.png",
+    portraitStyle: "sprite",
     shop: true,
   }),
   sui: unit({
@@ -302,8 +302,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 52,
     abilityName: "攻击弹幕",
     abilityDescription: "进入攻击弹幕状态：大幅提升攻速，并小幅提升攻击力与移速；期间能量从满缓慢降到空且无法回能，能量耗尽后结束。",
-    portrait: "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/sui.png",
+    portraitStyle: "sprite",
     shop: true,
   }),
 

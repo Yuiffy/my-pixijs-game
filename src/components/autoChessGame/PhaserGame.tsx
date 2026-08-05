@@ -1,6 +1,10 @@
 "use client";
 
+/* eslint-disable no-console */
+
 import { useCallback, useEffect, useRef, useState } from "react";
+import { HistoryOutlined } from "@ant-design/icons";
+import { AutoChessAIController } from "./ai/AutoChessAI";
 import {
   AutoChessAudio,
   DEFAULT_AUDIO_PREFERENCES,
@@ -8,6 +12,7 @@ import {
   loadAudioPreferences,
 } from "./audio";
 import Codex from "./Codex";
+import ReleaseNotes from "./ReleaseNotes";
 import RiftHud, { type BattleViewAction } from "./RiftHud";
 import "./RiftHud.css";
 import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
@@ -19,11 +24,13 @@ import {
   renderSizeFor,
   uiScaleFor,
 } from "./phaser/layout";
+import { AUTOCHESS_VERSION } from "./version";
 
 declare global {
   interface Window {
     render_game_to_text?: () => string;
     advanceTime?: (milliseconds: number) => void;
+    autoChessAI?: AutoChessAIController;
   }
 }
 
@@ -38,6 +45,7 @@ export default function AutoChessGame() {
   const audioRef = useRef<AutoChessAudio | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [codexOpen, setCodexOpen] = useState(false);
+  const [releaseOpen, setReleaseOpen] = useState(false);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
   const [message, setMessage] = useState("图鉴可查看棋子、羁绊与本局天赋");
@@ -181,6 +189,9 @@ export default function AutoChessGame() {
       const scene = gameRef.current?.scene.getScene("RiftLineScene") as { refresh?: () => void } | undefined;
       scene?.refresh?.();
     };
+    const ai = new AutoChessAIController(bridge);
+    window.autoChessAI = ai;
+    console.info(`[RiftLine][AI] v${AUTOCHESS_VERSION} ready. Use autoChessAI.help()`, ai.help());
 
     const onVisibility = () => bridge.setHidden(document.hidden);
     const onFullscreenChange = () => {
@@ -218,20 +229,26 @@ export default function AutoChessGame() {
       window.visualViewport?.removeEventListener("resize", onWindowResize);
       delete window.render_game_to_text;
       delete window.advanceTime;
+      delete window.autoChessAI;
     };
   }, []);
 
   useEffect(() => {
     const bridge = bridgeRef.current;
-    bridge?.setCodexOpen(codexOpen);
-    if (!codexOpen) {
+    bridge?.setCodexOpen(codexOpen || releaseOpen);
+    if (!codexOpen && !releaseOpen) {
       const scene = gameRef.current?.scene.getScene("RiftLineScene") as { refresh?: () => void } | undefined;
       scene?.refresh?.();
     }
-  }, [codexOpen]);
+  }, [codexOpen, releaseOpen]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && releaseOpen) {
+        event.preventDefault();
+        setReleaseOpen(false);
+        return;
+      }
       if (event.key === "Escape" && enemyFormationOpen) {
         event.preventDefault();
         bridgeRef.current?.setEnemyFormationOpen(false);
@@ -242,17 +259,71 @@ export default function AutoChessGame() {
         setCodexOpen(false);
         return;
       }
-      if (codexOpen || enemyFormationOpen || event.repeat) return;
+      if (codexOpen || releaseOpen || enemyFormationOpen || event.repeat) return;
       const active = document.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLButtonElement || active instanceof HTMLSelectElement || active instanceof HTMLTextAreaElement || active?.getAttribute("contenteditable") === "true") return;
-      if (event.key.toLowerCase() === "f") {
+      const bridge = bridgeRef.current;
+      if (!bridge) return;
+      const { state } = bridge.engine;
+      const key = event.key.toLowerCase();
+      const number = /^[1-5]$/.test(event.key) ? Number(event.key) : 0;
+      let action: import("./phaser/EngineBridge").GameAction | null = null;
+
+      if (key === "f") {
         event.preventDefault();
         toggleFullscreen().catch(() => {});
+        return;
+      }
+      if (key === "c") {
+        event.preventDefault();
+        setCodexOpen(true);
+        return;
+      }
+      if (key === "v") {
+        event.preventDefault();
+        setReleaseOpen(true);
+        return;
+      }
+      if (state.phase === "title" && number >= 1 && number <= state.starterChoices.length) {
+        action = { type: "starter", id: state.starterChoices[number - 1] };
+      } else if (state.phase === "augment" && number >= 1 && number <= state.augmentChoices.length) {
+        action = { type: "augment", index: number - 1 };
+      } else if (state.phase === "preparation" && number >= 1 && number <= 5) {
+        action = { type: "shop", index: number - 1 };
+      } else if (state.phase === "preparation" && key === "r") {
+        action = { type: "reroll" };
+      } else if (state.phase === "preparation" && key === "l") {
+        action = { type: "lock" };
+      } else if (state.phase === "preparation" && key === "u") {
+        action = { type: "buyXp" };
+      } else if (state.phase === "preparation" && key === "e") {
+        event.preventDefault();
+        bridge.setEnemyFormationOpen(true);
+        return;
+      } else if (state.phase === "preparation" && (event.key === "Delete" || event.key === "Backspace")) {
+        action = { type: "sell" };
+      } else if (state.phase === "preparation" && event.code === "Space") {
+        action = { type: "battle" };
+      } else if (state.phase === "battle" && key === "s") {
+        action = { type: "skipBattle" };
+      } else if (state.phase === "battle" && key === "d") {
+        action = { type: "rankingToggle" };
+      } else if (state.phase === "result" && event.key === "Enter") {
+        action = { type: "resultContinue" };
+      } else if (state.phase === "gameover" && event.key === "Enter") {
+        action = { type: "restart" };
+      } else if (event.key === "Escape") {
+        action = { type: "clearSelection" };
+      }
+
+      if (action) {
+        event.preventDefault();
+        bridge.dispatch(action);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [codexOpen, enemyFormationOpen, toggleFullscreen]);
+  }, [codexOpen, enemyFormationOpen, releaseOpen, toggleFullscreen]);
 
   const engine = bridgeRef.current?.engine;
   const dispatch = useCallback((action: import("./phaser/EngineBridge").GameAction) => {
@@ -308,6 +379,7 @@ export default function AutoChessGame() {
         `}</style>
         <div className="rift-toolbar" style={{ width: "100%", height: TOOLBAR_HEIGHT, flex: "0 0 auto", display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
           <span className="rift-toolbar-status" aria-live="polite" style={{ flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#82a8bd" }}>{message}</span>
+          <button type="button" onClick={() => setReleaseOpen(true)} style={toolbarButtonStyle} title="查看更新日志"><HistoryOutlined aria-hidden="true" /> v{AUTOCHESS_VERSION}</button>
           <button type="button" onClick={() => setCodexOpen(true)} style={toolbarButtonStyle}>图鉴 / 本局天赋</button>
           <button type="button" aria-pressed={audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })} style={toolbarButtonStyle}>{audioPreferences.muted ? "静音" : "声音"}</button>
           <span className="rift-audio-range" style={{ display: "flex", alignItems: "center", gap: 4 }}>乐<input aria-label="音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} style={{ width: 58 }} /></span>
@@ -332,6 +404,7 @@ export default function AutoChessGame() {
           onEnemyFormationOpenChange={setEnemyFormationOpen}
         />
         <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
+        <ReleaseNotes open={releaseOpen} onClose={() => setReleaseOpen(false)} />
       </div>
     </div>
   );

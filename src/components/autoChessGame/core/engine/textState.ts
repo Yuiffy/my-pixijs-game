@@ -26,6 +26,7 @@ import type {
   OwnedUnit,
   Team,
 } from "../gameTypes";
+import { AUTOCHESS_VERSION } from "../../version";
 
 interface ActiveTraitSummary {
   id: TraitId;
@@ -76,6 +77,7 @@ export const renderTextState = (context: TextStateContext) => {
     const { battle } = context.state;
     const { currentWave } = context;
     return JSON.stringify({
+      version: AUTOCHESS_VERSION,
       coordinateSystem: "画布 1120x720；原点在左上，x 向右、y 向下。",
       phase: context.state.phase,
       phaseLabel: phaseLabels[context.state.phase],
@@ -190,6 +192,7 @@ export const renderTextState = (context: TextStateContext) => {
         timeRemaining: Number(
           Math.max(0, battle.limit - battle.elapsed).toFixed(1),
         ),
+        log: battle.eventLog.slice(-80),
         playerUnits: battle.player
           .filter((unit) => unit.alive)
           .map((unit) => ({
@@ -324,18 +327,21 @@ export const renderTextState = (context: TextStateContext) => {
               "点击单位再点击格子移动/交换",
               "点击回收出售选中单位",
               "R 刷新商店",
+              "L 锁定/解锁商店",
+              "U 升本",
+              "数字 1-5 购买对应商店棋子",
               "Space 开始战斗",
               "F 全屏",
             ]
           : context.state.phase === "augment"
-            ? ["点击一个局中天赋"]
+            ? ["点击一个局中天赋或按数字 1-3"]
             : context.state.phase === "title"
-              ? ["点击一个开局协议"]
+              ? ["点击一个开局协议或按数字 1-3"]
               : context.state.phase === "gameover"
-                ? ["点击再来一局"]
+                ? ["点击再来一局或按 Enter"]
                 : context.state.phase === "battle"
-                  ? ["自动战斗中", "点击战斗统计或按 D 展开/收起", "F 全屏"]
-                  : ["查看双方战斗统计", "点击继续进入下一阶段", "F 全屏"],
+                  ? ["自动战斗中", "S 快速结算", "点击战斗统计或按 D 展开/收起", "F 全屏"]
+                  : ["查看双方战斗统计", "点击继续或按 Enter 进入下一阶段", "F 全屏"],
       toast: context.state.toast?.text || null,
     });
   }

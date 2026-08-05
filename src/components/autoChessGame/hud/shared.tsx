@@ -8,6 +8,7 @@ import {
   progressionModeForRound,
 } from "../core/gameData";
 import type { OwnedUnit } from "../core/gameTypes";
+import { AUTOCHESS_VERSION } from "../version";
 
 export const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 export const STAR_LABEL = ["", "Ⅰ", "Ⅱ", "Ⅲ"];
@@ -85,7 +86,7 @@ export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state
       <div className="rift-brand">
         <span className="rift-brand-mark">RL</span>
         <div>
-          <strong>裂隙阵线</strong>
+          <div className="rift-brand-title"><strong>裂隙阵线</strong><span>v{AUTOCHESS_VERSION}</span></div>
           <small>RIFT LINE · TACTICAL RUN</small>
         </div>
       </div>

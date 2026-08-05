@@ -156,7 +156,7 @@ public finishBattle(won: boolean) {
         8,
         2 +
           Math.floor((this.state.round - 1) / 3) +
-          Math.min(3, enemySurvivors),
+          Math.min(2, enemySurvivors),
       );
       this.state.hp = Math.max(0, this.state.hp - damage);
       const grossIncome = bounty + interest + financeIncome + this.state.incomeBonus;

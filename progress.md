@@ -1127,3 +1127,18 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 修复：桌面 `drawSlot()` 的棋盘与备战席统一传入 `compact`，让绘制、命中和高亮共用同一布局 profile；新增静态回归禁止恢复宽版参数。
 - 新增 `scripts/verify-autochess-drag-coordinate.cjs`，覆盖 `773×790 CSS px + DPR 1.25`（对应用户约 `966×988` 截图）、`800×800` 紧凑桌面、常规宽屏及 DPR `1/1.25/1.5`；拖拽交换、目标高亮、`render_game_to_text`、截图和失败请求检查通过。
 - 修复后系统 Chrome 截图已打开检查，控制台错误与失败请求为空；定向浏览器脚本覆盖 21 个视口/DPR 组合并全部通过，主 `verify-autochess.cjs`、TypeScript、静态回归与完整 `pnpm autochess:test`（`198/198`）均通过。
+
+## 2026-08-05 · v0.2.0 AI 战术台、首批统一立绘与早期波次调整
+
+- 本轮目标：建立版本号、更新日志和后续维护规范；逐步替换粗糙立绘；让键盘与控制台覆盖完整对局并输出可供 AI 解析的反馈/战斗日志；用多局测试发现并修正早期节奏痛点。
+- 版本更新到 `0.2.0`。新增根目录 `CHANGELOG.md`、游戏内版本按钮与更新日志弹窗、`docs/autochess-release-guide.md` 和一致性检查 `pnpm autochess:release:check`；版本源、发布日期、游戏内摘要与 `package.json` 由检查脚本锁定。
+- 新增 `window.autoChessAI`：支持状态/日志读取、协议选择、五格商店购买、刷新、锁店、升本、场上/备战席选中与移动、出售、开战、天赋选择、结算继续、重开、确定性推进、console 开关和原始 action。各阶段同时补齐数字键、`R/L/U/E/Space/S/D/Enter/Delete/Escape/V` 等快捷操作，`render_game_to_text()` 会公开当前可用动作。
+- `EngineBridge` 将 action、phase、toast 和刷新后的完整商店名称同步到 console。战斗事件包含时间、类型、消息、双方角色与坐标、方向、技能名、飞行物、命中点、伤害量/类型和阵亡；`S` 或 `autoChessAI.skipBattle()` 会以 60Hz 确定性推进到结算，并记录快速结算控制事件。
+- 首批统一立绘为果冻风纪、小红帽和绒绒的狗。身份/配色参考分别为原素材 `/images/livers/hazel.png`、`/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png`、`/images/livers/mofu.jpg`；共同生成约束是全身三分之四战棋角色、清晰小尺寸轮廓、保留身份配色并把技能职责转译为服装/道具、无文字/边框、纯色键背景。审核源保存在 `.tmp/autochess-portraits/v0.2.0/`，经色键软边缘抠图和 `512×512` RGBA 安全边距归一化后发布到 `public/images/autochess/portraits/sun-guard.png`、`sui.png`、`mossback.png`，单位使用 `portraitStyle: "sprite"`。
+- 平衡测试使用最终版节奏/经济/羁绊 AI 各 12 局（共 36 局、种子从 61000 起），另对前四波枚举 455/455/1365/1365 组一星低费阵容并以 3 个战斗种子复测。旧预算下三种策略平均终止于第 `6.17/6.42/6.33` 波，平均胜场 `1.17/1.42/1.33`；第 2/3/4 波可用阵容只有 `14.1%/6.2%/1.2%`，属于过早的特定答案检查。
+- 前八波有效预算由 `2/5/9/18/16/17/21/32` 平滑为 `2/4/7/11/10/13/16/24`，败局存活敌人追加伤害上限由 `3` 降为 `2`。修改后第 2/3/4 波可用阵容升至 `33.0%/13.0%/8.1%`；相同种子下三种策略平均终止波次升至 `7.50/7.83/11.33`，平均胜场升至 `2.67/3.25/7.25`。
+- 没有根据混杂的商店出现率/站位相关性直接修改单卡。羁绊 AI 有 3/12 局抵达第 16 波但无通关，样本少且阵容质量偏弱；后续先增强中后期购买与阵容估值，再用更多真人/高质量 AI 样本判断终局首领和第 5、7 波，不因这三个样本继续削弱首领。
+- 新增 `scripts/verify-autochess-ai.cjs` / `pnpm autochess:verify:ai`。系统 Chrome seed 1 实测键盘选择“舞台梦”，console 刷新得到“好笑姐姐/能能弄你/帕可Pako/贪吃岁/绒绒的狗”，再通过 API 购买、移入备战席并复位；最终重跑从截图时点快速结算推进 `588` 步（`9.8s`）后胜利。
+- 专项记录 `94` 条战斗事件且全部在 console 找到同 ID：包括 `0.02s` 好笑姐姐锁定果冻风纪、`3.78s` 能能弄你从 `(385.5,185.5)` 朝 `(0.952,0.305)` 方向释放苹果派、投射物在 `(741,299.5)` 命中兔子射手造成 `7.91` 技能伤害，以及普通攻击伤害/阵亡/快速结算事件。console/page error 与 4xx/5xx 请求均为空。
+- `release-notes.png`、`preparation-generated-portraits.png`、`battle-ai-control.png`、`result-after-skip.png` 均为 `1440×900`，通过纯色、透明、近黑检查并逐张打开确认；Canvas 为 `1440×853`，三个新资产均实际返回 200，弹窗、整备、战场和结算无裁切或重叠。主 `verify-autochess.cjs` 的 17 张桌面/移动/全屏截图也已逐张检查。
+- 最终功能验证基线：`pnpm autochess:test` `203/203`、`pnpm exec tsc --noEmit`、目标源码 ESLint、`pnpm autochess:release:check`、新脚本语法、主 Chrome 流程与 `git diff --check` 均通过。

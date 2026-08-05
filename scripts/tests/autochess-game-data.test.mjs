@@ -118,7 +118,7 @@ test("前两战只使用低费教学棋子，轴伊不会提前出现在固定�
   });
   const secondWave = data.waveForRound(2);
   assert.deepEqual(secondWave.units.map(({ id }) => id), ["mossback", "gale_archer", "rift_stalker"]);
-  assert.equal(data.enemyBudgetForRound(2), 5);
+  assert.equal(data.enemyBudgetForRound(2), 4);
   assert.ok(data.enemyTraitActivations(secondWave.units).some(({ id }) => id === "wild"));
 });
 
@@ -153,7 +153,7 @@ test("固定关逐关锁定原始费用、最高单卡费用与有效预算", ()
   assert.match(data.WAVES[4].description, /饼干岁.*治疗.*护盾/);
   assert.deepEqual(
     Array.from({ length: 8 }, (_, index) => data.enemyBudgetForRound(index + 1)),
-    [2, 5, 9, 18, 16, 17, 21, 32],
+    [2, 4, 7, 11, 10, 13, 16, 24],
   );
 });
 
@@ -346,6 +346,27 @@ test("莉蔻使用独立精灵头像并加入矮人联盟", async () => {
   assert.equal(portrait.width, portrait.height);
   assert.equal(portrait.width, 512);
   assert.equal(portrait.hasTransparentPixel, true);
+});
+
+test("首批统一棋子形象使用 512px 透明全身精灵", async () => {
+  const expected = {
+    sun_guard: "/images/autochess/portraits/sun-guard.png",
+    sui: "/images/autochess/portraits/sui.png",
+    mossback: "/images/autochess/portraits/mossback.png",
+  };
+  await Promise.all(Object.entries(expected).map(async ([id, portraitPath]) => {
+    const unit = data.UNIT_DEFS[id];
+    assert.equal(unit.portrait, portraitPath);
+    assert.equal(unit.portraitStyle, "sprite");
+    assert.equal(unit.portraitFocus, undefined);
+    const assetPath = path.resolve("public", portraitPath.slice(1));
+    await access(assetPath);
+    const portrait = inspectPng(await readFile(assetPath));
+    assert.deepEqual(
+      { width: portrait.width, height: portrait.height, transparent: portrait.hasTransparentPixel },
+      { width: 512, height: 512, transparent: true },
+    );
+  }));
 });
 
 test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {

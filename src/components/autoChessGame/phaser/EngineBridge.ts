@@ -1,7 +1,10 @@
+/* eslint-disable no-console */
+
 import type { GameAudioEvent } from "../audio";
 import { AutoChessEngine } from "../core/gameEngine";
-import type { GamePhase, RankingMetric, UnitLocation } from "../core/gameTypes";
-import type { StarterId } from "../core/gameData";
+import type { BattleState, GamePhase, RankingMetric, UnitLocation } from "../core/gameTypes";
+import { UNIT_DEFS, type StarterId } from "../core/gameData";
+import { AUTOCHESS_VERSION } from "../version";
 
 export type BridgeEvent =
   | { type: "audio"; event: GameAudioEvent }
@@ -15,7 +18,7 @@ export type GameAction =
   | { type: "slot"; location: UnitLocation }
   | { type: "move"; from: UnitLocation; to: UnitLocation }
   | { type: "sell"; location?: UnitLocation }
-  | { type: "buyXp" | "lock" | "reroll" | "battle" | "rankingToggle" | "resultContinue" | "restart" | "clearSelection" }
+  | { type: "buyXp" | "lock" | "reroll" | "battle" | "skipBattle" | "rankingToggle" | "resultContinue" | "restart" | "clearSelection" }
   | { type: "metric"; metric: RankingMetric }
   | { type: "augment"; index: number };
 
@@ -36,6 +39,12 @@ export class EngineBridge {
 
   private previousToast = "";
 
+  private consoleLogging = true;
+
+  private consoleBattle: BattleState | null = null;
+
+  private lastConsoleEventId = 0;
+
   constructor(seed?: number, testSpeed = 1) {
     this.engine = new AutoChessEngine(seed);
     this.testSpeed = Math.max(1, Math.min(20, Math.floor(testSpeed)));
@@ -46,6 +55,7 @@ export class EngineBridge {
     const { engine } = this;
     const beforeGold = engine.state.gold;
     const beforeLevel = engine.state.playerLevel;
+    const beforePhase = engine.state.phase;
 
     switch (action.type) {
       case "starter":
@@ -81,6 +91,9 @@ export class EngineBridge {
       case "battle":
         engine.startBattle();
         break;
+      case "skipBattle":
+        this.fastForwardBattle();
+        break;
       case "rankingToggle":
         engine.toggleRanking();
         break;
@@ -106,6 +119,51 @@ export class EngineBridge {
 
     this.flushEvents();
     this.onEvent?.({ type: "state" });
+    this.reportAction(action, { gold: beforeGold, level: beforeLevel, phase: beforePhase });
+    return this.getState();
+  }
+
+  public getState() {
+    return JSON.parse(this.renderTextState()) as Record<string, unknown>;
+  }
+
+  public getBattleLog(count = 80) {
+    const safeCount = Math.max(1, Math.min(320, Math.floor(count)));
+    return this.engine.state.battle?.eventLog.slice(-safeCount) || [];
+  }
+
+  public setConsoleLogging(enabled: boolean) {
+    this.consoleLogging = enabled;
+    console.info(`[RiftLine][console] ${enabled ? "enabled" : "disabled"}`);
+    return this.consoleLogging;
+  }
+
+  public skipBattle() {
+    const result = this.fastForwardBattle();
+    this.flushEvents();
+    this.onEvent?.({ type: "state" });
+    return { ...result, state: this.getState() };
+  }
+
+  private fastForwardBattle() {
+    const { engine } = this;
+    if (engine.state.phase !== "battle" || !engine.state.battle) {
+      return { skipped: false, reason: "当前不在战斗阶段", steps: 0 };
+    }
+    const startedAt = engine.state.battle.elapsed;
+    engine.recordBattleControl("收到快速结算指令，开始确定性推进");
+    let steps = 0;
+    const maximumSteps = Math.ceil((engine.state.battle.limit - startedAt + 2) * 60);
+    while (engine.state.phase === "battle" && steps < maximumSteps) {
+      engine.update(1 / 60);
+      steps += 1;
+    }
+    return {
+      skipped: engine.state.phase !== "battle",
+      reason: engine.state.phase === "battle" ? "达到快速结算安全上限" : "战斗已结算",
+      simulatedSeconds: Number((steps / 60).toFixed(2)),
+      steps,
+    };
   }
 
   public setEnemyFormationOpen(open: boolean) {
@@ -153,13 +211,28 @@ export class EngineBridge {
   }
 
   private flushEvents() {
-    const { phase } = this.engine.state;
+    const { phase, battle } = this.engine.state;
+    if (battle !== this.consoleBattle) {
+      this.consoleBattle = battle;
+      this.lastConsoleEventId = 0;
+    }
+    if (battle) {
+      const events = battle.eventLog.filter((event) => event.id > this.lastConsoleEventId);
+      if (events.length && this.consoleLogging) {
+        events.forEach((event) => console.info(`[RiftLine][battle][${event.time.toFixed(3)}s] ${event.message}`, event));
+      }
+      if (events.length) {
+        const { id } = events[events.length - 1];
+        this.lastConsoleEventId = id;
+      }
+    }
     if (phase !== "preparation") this.enemyFormationOpen = false;
     if (phase !== this.previousPhase) {
       if (phase === "battle") this.emitAudio("battle");
       if (phase === "result") this.emitAudio(this.engine.state.result?.won ? "win" : "loss");
       this.previousPhase = phase;
       this.onEvent?.({ type: "phase", phase });
+      if (this.consoleLogging) console.info("[RiftLine][phase]", { phase, round: this.engine.state.round });
     }
 
     const toast = this.engine.state.toast?.text || "";
@@ -167,6 +240,34 @@ export class EngineBridge {
       if (toast.includes("聚合完成")) this.emitAudio("merge");
       this.previousToast = toast;
       this.onEvent?.({ type: "toast", text: toast || null });
+      if (this.consoleLogging && toast) console.info("[RiftLine][feedback]", { text: toast });
+    }
+  }
+
+  private reportAction(
+    action: GameAction,
+    before: { gold: number; level: number; phase: GamePhase },
+  ) {
+    if (!this.consoleLogging) return;
+    const { state } = this.engine;
+    console.info("[RiftLine][action]", {
+      version: AUTOCHESS_VERSION,
+      action,
+      before,
+      after: { gold: state.gold, level: state.playerLevel, phase: state.phase, round: state.round },
+      toast: state.toast?.text || null,
+    });
+    if (
+      action.type === "reroll" ||
+      action.type === "starter" ||
+      action.type === "resultContinue"
+    ) {
+      console.info("[RiftLine][shop]", state.shop.map((unitId, index) => ({
+        slot: index + 1,
+        unitId,
+        name: unitId ? UNIT_DEFS[unitId].name : null,
+        cost: unitId ? UNIT_DEFS[unitId].cost : null,
+      })));
     }
   }
 }

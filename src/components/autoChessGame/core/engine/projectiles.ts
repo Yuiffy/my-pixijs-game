@@ -5,8 +5,10 @@ import { BATTLE_BOUNDS, mechanicalRabbitMuzzle } from "../battleGeometry";
 import type {
   BattleEffect,
   BattleState,
+  DamageTrace,
   Fighter,
   GameState,
+  Projectile,
   ProjectileVolleyShot,
   Team,
 } from "../gameTypes";
@@ -75,6 +77,7 @@ export interface CombatProjectileHost {
     amount: number,
     inactive?: boolean,
     damageKind?: DamageKind,
+    trace?: DamageTrace,
   ): number;
   addDamageText(target: Fighter, amount: number): void;
   applyBurn(
@@ -102,6 +105,13 @@ export interface CombatProjectileHost {
 
 export class CombatProjectileSystem {
   constructor(private readonly host: CombatProjectileHost) {}
+
+  private projectileTrace(projectile: Projectile): DamageTrace {
+    return {
+      projectile: projectile.emoji || projectile.style || "投射物",
+      impact: { x: Number(projectile.x.toFixed(1)), y: Number(projectile.y.toFixed(1)) },
+    };
+  }
 
   private addEffect(effect: Omit<BattleEffect, "maxLife">) {
     this.host.state().battle?.effects.push({ ...effect, maxLife: effect.life });
@@ -164,6 +174,7 @@ export class CombatProjectileSystem {
     abilityId: UnitId,
     center: { x: number; y: number },
     support?: { targetFid?: string; multiplier?: number },
+    trace?: DamageTrace,
   ) {
     const targets = this.host.living(
       source.team === "player" ? "enemy" : "player",
@@ -177,6 +188,7 @@ export class CombatProjectileSystem {
         source.attack * multiplier + bonus,
         true,
         "ability",
+        trace,
       );
       if (dealt > 0) this.host.addDamageText(target, dealt);
       return dealt;
@@ -751,6 +763,7 @@ export class CombatProjectileSystem {
               targetFid: projectile.impactTargetFid,
               multiplier: projectile.impactMultiplier,
             },
+            this.projectileTrace(projectile),
           );
           return false;
         }
@@ -808,6 +821,7 @@ export class CombatProjectileSystem {
               projectile.damage,
               true,
               projectile.damageKind || "attack",
+              this.projectileTrace(projectile),
             );
             if (dealt > 0) this.host.addDamageText(steppedOn, dealt);
             steppedOn.slowTime = Math.max(
@@ -885,6 +899,7 @@ export class CombatProjectileSystem {
             damage,
             true,
             projectile.damageKind || "attack",
+            this.projectileTrace(projectile),
           );
           if (dealt > 0) this.host.addDamageText(target, dealt);
           if (target.alive && projectile.burnPower > 0) {

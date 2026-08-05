@@ -654,6 +654,8 @@ export class CombatSetupSystem {
       bannerTimer: 2.2,
       rankingOpen: false,
       rankingMetric: "damage",
+      eventLog: [],
+      nextEventId: 1,
     };
     const openingShield = this.state.starter
       ? STARTER_EFFECTS[this.state.starter].openingShield || 0

@@ -49,6 +49,8 @@
 
 .rift-brand { display: flex; align-items: center; gap: 11px; min-width: 180px; }
 .rift-brand-mark { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid #70cbea; border-radius: 9px; background: linear-gradient(135deg, #183e54, #11212f); color: #a5ebff; font: 800 10px/1 Arial, sans-serif; letter-spacing: -.05em; box-shadow: inset 0 0 0 2px rgba(120, 216, 255, .09); }
+.rift-brand-title { display: flex; align-items: baseline; gap: 7px; }
+.rift-brand-title > span { color: #6f96aa; font: 700 8px/1 Arial, sans-serif; }
 .rift-brand strong { display: block; font-size: 21px; line-height: 1.1; letter-spacing: .04em; }
 .rift-brand small { display: block; margin-top: 5px; color: #6f96aa; font: 700 8px/1 Arial, sans-serif; letter-spacing: .16em; }
 
@@ -213,6 +215,8 @@
   pointer-events: auto;
 }
 .rift-dom-battle-tools .rift-action { min-height: 34px; }
+.rift-skip-battle-button { gap: 7px; white-space: nowrap; }
+.rift-skip-battle-button > .anticon { color: #9de7ff; font-size: 13px; }
 .rift-dom-battle-tools .rift-action span { display: inline-grid; width: 16px; height: 16px; place-items: center; border-radius: 4px; background: rgba(255, 255, 255, .12); font: 900 9px/1 Arial, sans-serif; }
 .rift-battle-view-controls { display: none; align-items: center; overflow: hidden; border: 1px solid rgba(121, 199, 228, .5); border-radius: 8px; background: rgba(5, 18, 29, .86); box-shadow: 0 8px 24px rgba(0, 0, 0, .2); backdrop-filter: blur(8px); }
 .rift-battle-view-controls button { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-right: 1px solid rgba(121, 199, 228, .24); background: transparent; color: #e6f7ff; font: 800 19px/1 Arial, sans-serif; cursor: pointer; }
@@ -628,6 +632,32 @@
 .rift-enemy-formation-dialog > footer i.is-enemy { background: #ff7898; }
 .rift-enemy-formation-dialog > footer b { margin-left: auto; overflow: hidden; color: #9db4bf; text-overflow: ellipsis; white-space: nowrap; }
 
+.rift-release-backdrop {
+  position: absolute;
+  inset: 42px 0 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 22px;
+  background: rgba(2, 8, 14, .82);
+  color: var(--rift-text);
+  backdrop-filter: blur(8px);
+}
+.rift-release-dismiss { position: absolute; inset: 0; border: 0; background: transparent; cursor: default; }
+.rift-release-notes { position: relative; z-index: 1; width: min(760px, 100%); max-height: min(720px, 100%); overflow: auto; box-sizing: border-box; padding: 24px 26px 28px; border: 1px solid #42758b; border-radius: 8px; background: #091924; box-shadow: 0 24px 80px rgba(0, 0, 0, .55); }
+.rift-release-notes > header { display: grid; grid-template-columns: 30px minmax(0, 1fr) 34px; gap: 12px; align-items: start; padding-bottom: 17px; border-bottom: 1px solid rgba(117, 205, 255, .2); }
+.rift-release-notes > header > .anticon { margin-top: 4px; color: #7ddcff; font-size: 22px; }
+.rift-release-notes > header span { color: #6fa4b9; font: 800 9px/1 Arial, sans-serif; letter-spacing: .12em; }
+.rift-release-notes h2 { margin: 7px 0 0; font-size: 23px; letter-spacing: 0; }
+.rift-release-notes > header button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #456b7d; border-radius: 6px; background: #123145; color: #dff5ff; cursor: pointer; }
+.rift-release-notes > p { max-width: 650px; margin: 20px 0 22px; color: #a4bcc8; font-size: 12px; line-height: 1.75; }
+.rift-release-sections { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.rift-release-sections section { min-width: 0; }
+.rift-release-sections h3 { margin: 0 0 11px; color: #dff7ff; font-size: 14px; letter-spacing: 0; }
+.rift-release-sections ul { margin: 0; padding-left: 17px; color: #8faab8; font-size: 11px; line-height: 1.7; }
+.rift-release-sections li + li { margin-top: 7px; }
+
 @media (max-width: 980px) and (min-width: 701px) {
   .rift-run-progress { width: 185px; }
   .rift-header-score { display: none; }
@@ -646,7 +676,7 @@
   .rift-dom-header { gap: 9px; height: 58px; padding: 0 11px; }
   .rift-brand { min-width: 0; gap: 7px; }
   .rift-brand-mark { width: 24px; height: 24px; border-radius: 7px; font-size: 8px; }
-  .rift-brand strong { font-size: 15px; letter-spacing: .02em; }.rift-brand small { display: none; }
+  .rift-brand strong { font-size: 15px; letter-spacing: .02em; }.rift-brand small { display: none; }.rift-brand-title { gap: 4px; }.rift-brand-title > span { font-size: 7px; }
   .rift-run-progress { width: 80px; margin-left: auto; }.rift-run-progress-label { margin-bottom: 4px; font-size: 8px; }.rift-run-progress-label b { font-size: 10px; }.rift-run-progress > small { display: none; }
   .rift-header-metrics { gap: 2px; }.rift-header-metric { min-width: 0; padding: 3px 5px; border-left: 0; }.rift-header-metric span { font-size: 8px; }.rift-header-metric b { font-size: 14px; }.rift-header-metric b small { font-size: 9px; }.rift-header-metric > small, .rift-header-score, .rift-header-core i { display: none; }.rift-header-core { display: grid; }.rift-header-best { display: none; }
 
@@ -690,6 +720,12 @@
   .rift-enemy-detail-skill { padding-top: 9px; }
   .rift-enemy-detail-skill p { max-height: 48px; margin-top: 5px; overflow: auto; }
   .rift-enemy-formation-dialog > footer { min-height: 34px; gap: 10px; padding-inline: 12px; }
+  .rift-release-backdrop { inset: 0; padding: 10px; }
+  .rift-release-notes { max-height: 100%; padding: 18px 16px 22px; }
+  .rift-release-notes > header { grid-template-columns: 24px minmax(0, 1fr) 34px; gap: 8px; }
+  .rift-release-notes h2 { font-size: 18px; }
+  .rift-release-notes > p { margin-block: 15px 18px; }
+  .rift-release-sections { grid-template-columns: 1fr; gap: 19px; }
 }
 
 @media (pointer: coarse) and (orientation: landscape) and (max-width: 1200px) {

@@ -21,9 +21,12 @@ import {
 } from "../battleGeometry";
 import type {
   AbilityMotion,
+  BattleLogEvent,
+  BattleLogEventType,
   BattleCorpse,
   BattleEffect,
   BattleState,
+  DamageTrace,
   Fighter,
   GameState,
   OwnedUnit,
@@ -228,6 +231,8 @@ export class AutoChessEngine {
 
   private chronosphereEnergyLocks = new Set<string>();
 
+  private observedTargets = new Map<string, string | null>();
+
   private readonly roster: RosterSystem;
 
   private readonly progression: ProgressionSystem;
@@ -261,8 +266,8 @@ export class AutoChessEngine {
     this.projectiles = new CombatProjectileSystem({
       state: () => this.state,
       living: (team) => this.living(team),
-      damage: (source, target, amount, inactive, damageKind) =>
-        this.damage(source, target, amount, inactive, damageKind),
+      damage: (source, target, amount, inactive, damageKind, trace) =>
+        this.damage(source, target, amount, inactive, damageKind, trace),
       addDamageText: (target, amount) => this.addDamageText(target, amount),
       applyBurn: (source, target, totalDamage, damageKind) =>
         this.applyBurn(source, target, totalDamage, damageKind),
@@ -349,6 +354,7 @@ export class AutoChessEngine {
     this.uid = 1;
     this.state = createInitialState(seed, best);
     this.state.starterChoices = this.rollStarterChoices();
+    this.observedTargets.clear();
   }
 
   private isRanged(unitId: UnitId) {
@@ -593,6 +599,7 @@ export class AutoChessEngine {
   }
 
   private finishBattle(won: boolean) {
+    this.logBattleEvent("battle", won ? "战斗结束：我方获胜" : "战斗结束：我方失败");
     this.progression.finishBattle(won);
   }
 
@@ -748,6 +755,81 @@ export class AutoChessEngine {
     this.state.toast = { text, tone, time: 2.8 };
   }
 
+  private logActor(fighter: Fighter) {
+    return {
+      fid: fighter.fid,
+      unitId: fighter.unitId,
+      name: UNIT_DEFS[fighter.unitId].name,
+      team: fighter.team,
+      x: Number(fighter.x.toFixed(1)),
+      y: Number(fighter.y.toFixed(1)),
+    };
+  }
+
+  private logBattleEvent(
+    type: BattleLogEventType,
+    message: string,
+    source?: Fighter | null,
+    target?: Fighter | null,
+    details: Partial<Pick<BattleLogEvent, "ability" | "projectile" | "amount" | "damageKind" | "direction" | "impact">> = {},
+  ) {
+    const battle = this.state.battle;
+    if (!battle) return null;
+    const direction = details.direction || (source && target
+      ? (() => {
+          const deltaX = target.x - source.x;
+          const deltaY = target.y - source.y;
+          const distance = Math.hypot(deltaX, deltaY);
+          return distance > 0.001
+            ? { x: Number((deltaX / distance).toFixed(3)), y: Number((deltaY / distance).toFixed(3)) }
+            : undefined;
+        })()
+      : undefined);
+    const event: BattleLogEvent = {
+      id: battle.nextEventId,
+      time: Number(battle.elapsed.toFixed(3)),
+      type,
+      message,
+      ...(source ? { source: this.logActor(source) } : {}),
+      ...(target ? { target: this.logActor(target) } : {}),
+      ...details,
+      ...(direction ? { direction } : {}),
+    };
+    battle.nextEventId += 1;
+    battle.eventLog.push(event);
+    if (battle.eventLog.length > 320) battle.eventLog.splice(0, battle.eventLog.length - 320);
+    return event;
+  }
+
+  public recordBattleControl(message: string) {
+    return this.logBattleEvent("battle", message);
+  }
+
+  private observeTargetChanges(battle: BattleState) {
+    const fighters = [...battle.player, ...battle.enemy];
+    const byId = new Map(fighters.map((fighter) => [fighter.fid, fighter]));
+    fighters.forEach((fighter) => {
+      const nextTarget = fighter.alive ? fighter.targetFid : null;
+      const hadObservation = this.observedTargets.has(fighter.fid);
+      const previousTarget = this.observedTargets.get(fighter.fid) ?? null;
+      if (hadObservation && previousTarget === nextTarget) return;
+      this.observedTargets.set(fighter.fid, nextTarget);
+      if (!nextTarget) {
+        if (hadObservation && previousTarget) {
+          this.logBattleEvent("target", `${UNIT_DEFS[fighter.unitId].name} 失去目标`, fighter);
+        }
+        return;
+      }
+      const target = byId.get(nextTarget) || null;
+      this.logBattleEvent(
+        "target",
+        `${UNIT_DEFS[fighter.unitId].name} ${hadObservation && previousTarget ? "更换" : "锁定"}目标${target ? `：${UNIT_DEFS[target.unitId].name}` : `：${nextTarget}`}`,
+        fighter,
+        target,
+      );
+    });
+  }
+
   public getTraitStatus(trait: TraitId) {
     const count = this.getTraitCounts()[trait];
     const definition = TRAITS[trait];
@@ -776,6 +858,11 @@ export class AutoChessEngine {
     }
     this.state.selected = null;
     this.state.battle = this.createBattle();
+    this.observedTargets.clear();
+    this.logBattleEvent(
+      "battle",
+      `第 ${this.state.round} 战开始：我方 ${this.state.battle.player.length} 人，对阵敌方 ${this.state.battle.enemy.length} 人`,
+    );
     this.state.phase = "battle";
     this.state.toast = null;
   }
@@ -2290,7 +2377,11 @@ export class AutoChessEngine {
       this.state.toast.time -= dt;
       if (this.state.toast.time <= 0) this.state.toast = null;
     }
-    if (this.state.phase === "battle") this.updateBattle(dt);
+    if (this.state.phase === "battle") {
+      const battle = this.state.battle;
+      this.updateBattle(dt);
+      if (battle) this.observeTargetChanges(battle);
+    }
   }
 
   private living(team: Team) {
@@ -3328,6 +3419,18 @@ export class AutoChessEngine {
     availableTargets: Fighter[],
     enforceRange = false,
   ) {
+    const target = availableTargets.find((candidate) => candidate.fid === source.targetFid)
+      || availableTargets.find((candidate) => candidate.alive)
+      || null;
+    const definition = UNIT_DEFS[source.unitId];
+    const targetText = target ? `，朝向 ${UNIT_DEFS[target.unitId].name}` : "";
+    this.logBattleEvent(
+      "ability",
+      `${definition.name} 在 (${Math.round(source.x)}, ${Math.round(source.y)}) 释放 ${definition.abilityName}${targetText}`,
+      source,
+      target,
+      { ability: definition.abilityName },
+    );
     return this.abilities.castAbility(
       source,
       availableTargets,
@@ -3460,14 +3563,47 @@ export class AutoChessEngine {
     rawAmount: number,
     allowInactiveSource = false,
     damageKind: DamageKind = "attack",
+    trace?: DamageTrace,
   ) {
-    return this.combatResolution.damage(
+    const targetWasAlive = target.alive;
+    const targetWasReborn = target.reborn;
+    const dealt = this.combatResolution.damage(
       source,
       target,
       rawAmount,
       allowInactiveSource,
       damageKind,
     );
+    if (dealt > 0) {
+      const amount = Number(dealt.toFixed(2));
+      const impact = trace?.impact || { x: Number(target.x.toFixed(1)), y: Number(target.y.toFixed(1)) };
+      const damageLabel = damageKind === "ability" ? "技能伤害" : "攻击伤害";
+      this.logBattleEvent(
+        trace?.projectile ? "projectile" : "damage",
+        trace?.projectile
+          ? `${UNIT_DEFS[source.unitId].name} 的 ${trace.projectile} 在 (${Math.round(impact.x)}, ${Math.round(impact.y)}) 命中 ${UNIT_DEFS[target.unitId].name}，造成 ${amount} ${damageLabel}`
+          : `${UNIT_DEFS[source.unitId].name} 对 ${UNIT_DEFS[target.unitId].name} 造成 ${amount} ${damageLabel}`,
+        source,
+        target,
+        {
+          amount,
+          damageKind,
+          ...(trace?.projectile ? { projectile: trace.projectile } : {}),
+          impact,
+        },
+      );
+    }
+    if (targetWasAlive && !target.alive) {
+      this.logBattleEvent(
+        "defeat",
+        `${UNIT_DEFS[target.unitId].name} 被击败，击败者为 ${UNIT_DEFS[source.unitId].name}`,
+        source,
+        target,
+      );
+    } else if (!targetWasReborn && target.reborn) {
+      this.logBattleEvent("ability", `${UNIT_DEFS[target.unitId].name} 触发涅槃重生`, target, target, { ability: "涅槃重生" });
+    }
+    return dealt;
   }
 
   private applyBurn(
@@ -3530,7 +3666,19 @@ export class AutoChessEngine {
   }
 
   private killFighter(target: Fighter, source?: Fighter) {
-    return this.combatResolution.killFighter(target, source);
+    const wasReborn = target.reborn;
+    const killed = this.combatResolution.killFighter(target, source);
+    if (killed) {
+      this.logBattleEvent(
+        "defeat",
+        `${UNIT_DEFS[target.unitId].name} 被击败${source ? `，击败者为 ${UNIT_DEFS[source.unitId].name}` : ""}`,
+        source,
+        target,
+      );
+    } else if (!wasReborn && target.reborn) {
+      this.logBattleEvent("ability", `${UNIT_DEFS[target.unitId].name} 触发涅槃重生`, target, target, { ability: "涅槃重生" });
+    }
+    return killed;
   }
 
   public renderTextState() {

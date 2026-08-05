@@ -307,18 +307,6 @@ export class RiftLineScene extends Phaser.Scene {
     this.overlayLayer = this.add.container(0, 0).setDepth(DEPTH.overlay);
     this.tooltipLayer = this.add.container(0, 0).setDepth(DEPTH.tooltip);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
-    this.input.keyboard?.on("keydown-R", () => {
-      if (!this.bridge.enemyFormationOpen) this.dispatch({ type: "reroll" });
-    });
-    this.input.keyboard?.on("keydown-SPACE", () => {
-      if (!this.bridge.enemyFormationOpen) this.dispatch({ type: "battle" });
-    });
-    this.input.keyboard?.on("keydown-D", () => this.dispatch({ type: "rankingToggle" }));
-    this.input.keyboard?.on("keydown-ESC", () => {
-      if (this.bridge.enemyFormationOpen) this.bridge.setEnemyFormationOpen(false);
-      else if (this.pinnedTooltip) this.clearTooltip();
-      else this.dispatch({ type: "clearSelection" });
-    });
     this.rebuild();
   }
 
@@ -359,10 +347,6 @@ export class RiftLineScene extends Phaser.Scene {
     this.input.off(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
     this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePointerUpOutside, this);
     this.input.off(Phaser.Input.Events.POINTER_WHEEL, this.handlePointerWheel, this);
-    this.input.keyboard?.off("keydown-R");
-    this.input.keyboard?.off("keydown-SPACE");
-    this.input.keyboard?.off("keydown-D");
-    this.input.keyboard?.off("keydown-ESC");
     this.game.canvas.removeEventListener("contextmenu", this.preventContextMenu);
   }
 

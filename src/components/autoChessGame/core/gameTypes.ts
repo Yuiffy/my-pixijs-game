@@ -367,6 +367,43 @@ export interface BattleCorpse {
   consumed: boolean;
 }
 
+export type BattleLogEventType =
+  | "battle"
+  | "target"
+  | "ability"
+  | "damage"
+  | "projectile"
+  | "defeat";
+
+export interface BattleLogActor {
+  fid: string;
+  unitId: UnitId;
+  name: string;
+  team: Team;
+  x: number;
+  y: number;
+}
+
+export interface BattleLogEvent {
+  id: number;
+  time: number;
+  type: BattleLogEventType;
+  message: string;
+  source?: BattleLogActor;
+  target?: BattleLogActor;
+  ability?: string;
+  projectile?: string;
+  amount?: number;
+  damageKind?: "attack" | "ability";
+  direction?: { x: number; y: number };
+  impact?: { x: number; y: number };
+}
+
+export interface DamageTrace {
+  projectile?: string;
+  impact?: { x: number; y: number };
+}
+
 export interface BattleState {
   elapsed: number;
   limit: number;
@@ -391,6 +428,8 @@ export interface BattleState {
   bannerTimer: number;
   rankingOpen: boolean;
   rankingMetric: RankingMetric;
+  eventLog: BattleLogEvent[];
+  nextEventId: number;
 }
 
 export interface RoundResult {
