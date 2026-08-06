@@ -282,7 +282,10 @@ export default function AutoChessGame() {
       }
       if (event.type === "toast" && event.text) setMessage(event.text);
       if (event.type === "state" || event.type === "phase") {
-        if (bridge.engine.state.phase === "gameover") publishRunTrace();
+        if (
+          bridge.engine.state.phase === "gameover"
+          || (event.type === "phase" && (event.phase === "battle" || event.phase === "result"))
+        ) publishRunTrace();
         setRevision((value) => value + 1);
         const scene = gameRef.current?.scene.getScene("RiftLineScene") as { refresh?: () => void } | undefined;
         scene?.refresh?.();
@@ -365,7 +368,11 @@ export default function AutoChessGame() {
     }, 250);
     const onVisibility = () => {
       bridge.setHidden(document.hidden);
+      if (document.hidden && bridge.engine.state.phase !== "title") publishRunTrace();
       autopilot.tick();
+    };
+    const onPageHide = () => {
+      if (bridge.engine.state.phase !== "title") publishRunTrace();
     };
     const onFullscreenChange = () => {
       const isFullscreen = document.fullscreenElement === containerRef.current;
@@ -381,6 +388,7 @@ export default function AutoChessGame() {
     document.addEventListener("visibilitychange", onVisibility);
     document.addEventListener("fullscreenchange", onFullscreenChange);
     document.addEventListener("fullscreenerror", onFullscreenError);
+    window.addEventListener("pagehide", onPageHide);
     window.addEventListener("resize", onWindowResize);
     window.visualViewport?.addEventListener("resize", onWindowResize);
     setFullscreenSupported(Boolean(document.fullscreenEnabled && containerRef.current?.requestFullscreen));
@@ -402,6 +410,7 @@ export default function AutoChessGame() {
       document.removeEventListener("visibilitychange", onVisibility);
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("fullscreenerror", onFullscreenError);
+      window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("resize", onWindowResize);
       window.visualViewport?.removeEventListener("resize", onWindowResize);
       delete window.render_game_to_text;

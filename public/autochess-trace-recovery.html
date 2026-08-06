@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Autochess trace recovery</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        color: #dbeafe;
+        background: #07111d;
+        font: 14px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+      pre {
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <pre id="status">Loading trace...</pre>
+    <script>
+      const status = document.querySelector("#status");
+      const saveTrace = async (trace, source) => {
+        if (!trace) {
+          status.textContent = "No saved run trace was found.";
+          return;
+        }
+        status.textContent = "Saving recovered trace...";
+        try {
+          const response = await fetch("/api/autochess-trace-recovery", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(trace),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+          status.textContent = JSON.stringify({ ...result, source }, null, 2);
+        } catch (error) {
+          status.textContent = `Save failed: ${error instanceof Error ? error.message : String(error)}`;
+        }
+      };
+
+      const sessionTrace = sessionStorage.getItem("rift-line-last-run-trace");
+      if (sessionTrace) {
+        saveTrace(JSON.parse(sessionTrace), "sessionStorage");
+      } else {
+        const request = indexedDB.open("rift-line-run-traces", 1);
+
+        request.onerror = () => {
+          status.textContent = `Open failed: ${request.error?.message || "unknown error"}`;
+        };
+        request.onupgradeneeded = () => {
+          request.transaction.abort();
+          status.textContent = "No saved trace database was found.";
+        };
+        request.onsuccess = () => {
+          const database = request.result;
+          if (!database.objectStoreNames.contains("traces")) {
+            status.textContent = "The trace store is missing.";
+            database.close();
+            return;
+          }
+          const transaction = database.transaction("traces", "readonly");
+          const get = transaction.objectStore("traces").get("rift-line-last-run-trace");
+          get.onerror = () => {
+            status.textContent = `Read failed: ${get.error?.message || "unknown error"}`;
+          };
+          get.onsuccess = () => saveTrace(get.result, "indexedDB");
+          transaction.oncomplete = () => database.close();
+        };
+      }
+    </script>
+  </body>
+</html>

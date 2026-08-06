@@ -180,6 +180,8 @@ test("宿主公开 AI API、阶段快捷键和快速结算键", () => {
   assert.match(hostSource, /sessionStorage\.setItem\(LAST_RUN_TRACE_KEY/);
   assert.match(hostSource, /battles: bridge\.getBattleHistory\(\)/);
   assert.match(hostSource, /persistLastRun\(trace\)/);
+  assert.match(hostSource, /event\.phase === "battle" \|\| event\.phase === "result"/);
+  assert.match(hostSource, /window\.addEventListener\("pagehide", onPageHide\)/);
   assert.match(hostSource, /state\.phase === "title" && number >= 1/);
   assert.match(hostSource, /state\.phase === "preparation" && key === "r"/);
   assert.match(hostSource, /state\.phase === "preparation" && key === "l"/);
