@@ -23,7 +23,11 @@ import Codex from "./Codex";
 import ReleaseNotes from "./ReleaseNotes";
 import RiftHud, { type BattleViewAction } from "./RiftHud";
 import "./RiftHud.css";
-import { EngineBridge, type BridgeEvent } from "./phaser/EngineBridge";
+import {
+  EngineBridge,
+  type ActionTraceEntry,
+  type BridgeEvent,
+} from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
 import {
   TOOLBAR_HEIGHT,
@@ -35,15 +39,24 @@ import {
 import { AUTOCHESS_VERSION } from "./version";
 
 declare global {
+  type AutoChessLastRun = {
+    version: string;
+    capturedAt: string;
+    state: Record<string, unknown>;
+    actions: ActionTraceEntry[];
+  };
+
   interface Window {
     render_game_to_text?: () => string;
     advanceTime?: (milliseconds: number) => void;
     autoChessAI?: AutoChessAIController;
+    autoChessLastRun?: AutoChessLastRun;
   }
 }
 
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
+const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 
 const loadBackgroundBattlePreference = () => {
   try {
@@ -164,6 +177,28 @@ export default function AutoChessGame() {
     audioRef.current = audio;
     setAudioPreferences(loadAudioPreferences());
 
+    try {
+      const storedTrace = window.sessionStorage.getItem(LAST_RUN_TRACE_KEY);
+      if (storedTrace) window.autoChessLastRun = JSON.parse(storedTrace) as AutoChessLastRun;
+    } catch {
+      // The in-memory trace remains available when session storage is blocked or full.
+    }
+
+    const publishRunTrace = () => {
+      const trace: AutoChessLastRun = {
+        version: AUTOCHESS_VERSION,
+        capturedAt: new Date().toISOString(),
+        state: bridge.getState(),
+        actions: bridge.getActionHistory(640),
+      };
+      window.autoChessLastRun = trace;
+      try {
+        window.sessionStorage.setItem(LAST_RUN_TRACE_KEY, JSON.stringify(trace));
+      } catch {
+        // Keeping the window copy is sufficient for restricted or storage-limited browsers.
+      }
+    };
+
     const onBridgeEvent = (event: BridgeEvent) => {
       if (event.type === "audio") {
         audio.unlock().catch(() => {});
@@ -171,6 +206,7 @@ export default function AutoChessGame() {
       }
       if (event.type === "toast" && event.text) setMessage(event.text);
       if (event.type === "state" || event.type === "phase") {
+        if (bridge.engine.state.phase === "gameover") publishRunTrace();
         setRevision((value) => value + 1);
         const scene = gameRef.current?.scene.getScene("RiftLineScene") as { refresh?: () => void } | undefined;
         scene?.refresh?.();
@@ -280,6 +316,7 @@ export default function AutoChessGame() {
       if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
       resizeObserver?.disconnect();
       bridge.onEvent = null;
+      if (bridge.engine.state.phase !== "title") publishRunTrace();
       gameRef.current?.destroy(true);
       gameRef.current = null;
       bridgeRef.current = null;

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 
 export const metadata: Metadata = {
-  title: '裂隙阵线 | RIFT LINE',
+  title: '维阿自走棋：裂隙阵线',
 };
 
 const AutoChessGame = dynamic(() => import('@/components/autoChessGame/PhaserGame'), { ssr: false });

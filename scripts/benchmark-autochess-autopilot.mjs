@@ -18,10 +18,12 @@ const runs = Math.max(1, Math.min(100, Number(option("--runs", "12")) || 12));
 const baseSeed = Math.max(1, Number(option("--seed", "72000")) || 72000);
 const outputPath = option("--output", "");
 const maximumBattles = Math.max(1, Math.min(64, Number(option("--battles", "16")) || 16));
+const forcedStarter = option("--starter", "");
 
 const playRun = (seed) => {
   const bridge = new EngineBridge(seed);
   bridge.setConsoleLogging(false);
+  if (forcedStarter) bridge.engine.state.starterChoices = [forcedStarter];
   const autopilot = new AutoChessAutopilot(bridge);
   if (!autopilot.startFromTitle()) throw new Error(`Autopilot could not start seed ${seed}`);
 
@@ -41,11 +43,23 @@ const playRun = (seed) => {
       const round = bridge.engine.state.round;
       const before = {
         round,
+        starter: bridge.engine.state.starter,
         gold: bridge.engine.state.gold,
+        interest: bridge.engine.interestIncome,
         level: bridge.engine.state.playerLevel,
         boardCount: bridge.engine.boardCount,
         benchCount: bridge.engine.state.bench.filter(Boolean).length,
         fullBench: bridge.engine.state.bench.every(Boolean),
+        board: bridge.engine.state.board.flatMap((unit, index) => unit ? [{
+          index,
+          id: unit.id,
+          star: unit.star,
+        }] : []),
+        bench: bridge.engine.state.bench.flatMap((unit, index) => unit ? [{
+          index,
+          id: unit.id,
+          star: unit.star,
+        }] : []),
         activeTraits: bridge.engine.getActiveTraits().map((trait) => ({
           id: trait.id,
           count: trait.count,
@@ -96,10 +110,19 @@ const aggregate = {
   runs,
   baseSeed,
   maximumBattles,
+  forcedStarter: forcedStarter || null,
   campaignClearRate: results.filter((run) => run.campaignCleared).length / runs,
   averageFinalRound: results.reduce((sum, run) => sum + run.finalRound, 0) / runs,
   averageWins: results.reduce((sum, run) => sum + run.wins, 0) / runs,
   averageFinalHp: results.reduce((sum, run) => sum + run.finalHp, 0) / runs,
+  totalInterest: results.reduce(
+    (sum, run) => sum + run.rounds.reduce((runSum, round) => runSum + round.interest, 0),
+    0,
+  ),
+  averageInterestPerBattle: results.reduce(
+    (sum, run) => sum + run.rounds.reduce((runSum, round) => runSum + round.interest, 0),
+    0,
+  ) / Math.max(1, results.reduce((sum, run) => sum + run.rounds.length, 0)),
   invalidMoves: results.reduce((sum, run) => sum + run.invalidMoves, 0),
   maximumSelectionStreak: Math.max(...results.map((run) => run.maximumSelectionStreak)),
   fullBenchRounds: results.reduce((sum, run) => sum + run.fullBenchRounds, 0),

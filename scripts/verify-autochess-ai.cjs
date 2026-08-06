@@ -113,7 +113,7 @@ const inspectPng = (buffer) => {
 const { chromium } = loadPlaywright();
 const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
 const pageUrl = `${baseUrl}/game/autochess?seed=1`;
-const artifactDirectory = ".tmp/autochess/ai-v021";
+const artifactDirectory = ".tmp/autochess/ai-v022";
 mkdirSync(artifactDirectory, { recursive: true });
 
 const finitePoint = (point) => point
@@ -202,17 +202,18 @@ let browser;
   };
 
   const help = await callAI("help");
-  assert.equal(help.version, "0.2.1");
+  assert.equal(help.version, "0.2.2");
   assert.ok(help.flow.includes("skipBattle()"));
   assert.ok(help.testing.includes("consoleLogging(enabled)"));
-  assert.equal((await state()).version, "0.2.1");
+  assert.ok(help.read.includes("window.autoChessLastRun"));
+  assert.equal((await state()).version, "0.2.2");
   console.log("[ai-verify] API ready");
 
   await page.keyboard.press("v");
-  const releaseDialog = page.getByRole("dialog", { name: /v0\.2\.1/ });
+  const releaseDialog = page.getByRole("dialog", { name: /v0\.2\.2/ });
   await releaseDialog.waitFor({ state: "visible" });
-  assert.match(await releaseDialog.innerText(), /出售与托管/);
-  assert.match(await releaseDialog.innerText(), /桌面工具栏/);
+  assert.match(await releaseDialog.innerText(), /托管策略/);
+  assert.match(await releaseDialog.innerText(), /稳定与测试/);
   await capture("release-notes");
   await page.keyboard.press("Escape");
   await releaseDialog.waitFor({ state: "hidden" });
@@ -220,7 +221,7 @@ let browser;
 
   await page.getByRole("button", { name: "游戏设置" }).click();
   await page.getByRole("dialog", { name: "游戏设置" })
-    .getByRole("button", { name: /版本与更新.*v0\.2\.1/ })
+    .getByRole("button", { name: /版本与更新.*v0\.2\.2/ })
     .click();
   await releaseDialog.waitFor({ state: "visible" });
   await page.locator(".rift-release-dismiss").click({ position: { x: 12, y: 54 } });
@@ -392,6 +393,23 @@ let browser;
     assert.ok(consoleEventIds.has(event.id), `Battle event ${event.id} was not mirrored to the console`);
   });
 
+  await page.evaluate(() => {
+    window.autoChessAI.bridge.engine.state.hp = 0;
+  });
+  await callAI("next");
+  await page.waitForFunction(() => window.autoChessAI.state().phase === "gameover");
+  const terminalTrace = await page.evaluate(() => window.autoChessLastRun);
+  assert.equal(terminalTrace.version, "0.2.2");
+  assert.equal(terminalTrace.state.phase, "gameover");
+  assert.ok(terminalTrace.actions.some((entry) => entry.action.type === "skipBattle"));
+  assert.equal(terminalTrace.actions.at(-1).action.type, "resultContinue");
+  await callAI("restart");
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => Boolean(window.autoChessAI && window.autoChessLastRun));
+  const restoredTrace = await page.evaluate(() => window.autoChessLastRun);
+  assert.deepEqual(restoredTrace, terminalTrace, "Terminal trace did not survive same-tab reload");
+  console.log("[ai-verify] terminal action trace persistence verified");
+
   assert.equal(errors.length, 0, `Console/page errors: ${JSON.stringify(errors, null, 2)}`);
   assert.equal(failedResponses.length, 0, `Failed responses: ${JSON.stringify(failedResponses, null, 2)}`);
   assert.ok(
@@ -430,6 +448,12 @@ let browser;
       damage: damageEvent,
       total: battleLog.length,
       consoleMirrored: consoleBattleEvents.length,
+    },
+    terminalTrace: {
+      phase: terminalTrace.state.phase,
+      actions: terminalTrace.actions.length,
+      finalAction: terminalTrace.actions.at(-1).action.type,
+      restoredAfterReload: true,
     },
     portraitResponses,
     canvas: canvasInfo,

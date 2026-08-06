@@ -22,6 +22,30 @@ export type GameAction =
   | { type: "metric"; metric: RankingMetric }
   | { type: "augment"; index: number };
 
+export type ActionTraceSnapshot = {
+  seed: number;
+  round: number;
+  phase: GamePhase;
+  hp: number;
+  gold: number;
+  level: number;
+  boardCap: number;
+  interest: number;
+  streak: number;
+  board: Array<{ slot: number; uid: number; id: string; name: string; star: number }>;
+  bench: Array<{ slot: number; uid: number; id: string; name: string; star: number }>;
+  shop: Array<{ slot: number; id: string | null; name: string | null; cost: number | null }>;
+  traits: Array<{ id: string; name: string; count: number; level: number }>;
+};
+
+export type ActionTraceEntry = {
+  sequence: number;
+  action: GameAction;
+  before: ActionTraceSnapshot;
+  after: ActionTraceSnapshot;
+  toast: string | null;
+};
+
 export class EngineBridge {
   public readonly engine: AutoChessEngine;
 
@@ -51,6 +75,10 @@ export class EngineBridge {
 
   private backgroundUpdatedAt: number | null = null;
 
+  private actionSequence = 0;
+
+  private actionHistory: ActionTraceEntry[] = [];
+
   constructor(seed?: number, testSpeed = 1) {
     this.engine = new AutoChessEngine(seed);
     this.testSpeed = Math.max(1, Math.min(20, Math.floor(testSpeed)));
@@ -59,9 +87,9 @@ export class EngineBridge {
 
   public dispatch(action: GameAction) {
     const { engine } = this;
+    const before = this.actionSnapshot();
     const beforeGold = engine.state.gold;
     const beforeLevel = engine.state.playerLevel;
-    const beforePhase = engine.state.phase;
 
     switch (action.type) {
       case "starter":
@@ -123,9 +151,9 @@ export class EngineBridge {
         break;
     }
 
+    this.reportAction(action, before);
     this.flushEvents();
     this.onEvent?.({ type: "state" });
-    this.reportAction(action, { gold: beforeGold, level: beforeLevel, phase: beforePhase });
     return this.getState();
   }
 
@@ -138,6 +166,11 @@ export class EngineBridge {
     return this.engine.state.battle?.eventLog.slice(-safeCount) || [];
   }
 
+  public getActionHistory(count = 200) {
+    const safeCount = Math.max(1, Math.min(640, Math.floor(count)));
+    return this.actionHistory.slice(-safeCount);
+  }
+
   public setConsoleLogging(enabled: boolean) {
     this.consoleLogging = enabled;
     console.info(`[RiftLine][console] ${enabled ? "enabled" : "disabled"}`);
@@ -145,7 +178,9 @@ export class EngineBridge {
   }
 
   public skipBattle() {
+    const before = this.actionSnapshot();
     const result = this.fastForwardBattle();
+    this.reportAction({ type: "skipBattle" }, before);
     this.flushEvents();
     this.onEvent?.({ type: "state" });
     return { ...result, state: this.getState() };
@@ -243,7 +278,48 @@ export class EngineBridge {
         backgroundBattleEnabled: this.backgroundBattleEnabled,
         pageHidden: this.hidden,
       },
+      recentActions: this.getActionHistory(12),
     });
+  }
+
+  private actionSnapshot(): ActionTraceSnapshot {
+    const { engine } = this;
+    const { state } = engine;
+    const units = (entries: typeof state.board) => entries.flatMap((unit, index) => {
+      if (!unit) return [];
+      return [{
+        slot: index + 1,
+        uid: unit.uid,
+        id: unit.id,
+        name: UNIT_DEFS[unit.id].name,
+        star: unit.star,
+      }];
+    });
+    return {
+      seed: state.seed,
+      round: state.round,
+      phase: state.phase,
+      hp: state.hp,
+      gold: state.gold,
+      level: state.playerLevel,
+      boardCap: engine.boardCap,
+      interest: engine.interestIncome,
+      streak: state.streak,
+      board: units(state.board),
+      bench: units(state.bench),
+      shop: state.shop.map((id, index) => ({
+        slot: index + 1,
+        id,
+        name: id ? UNIT_DEFS[id].name : null,
+        cost: id ? UNIT_DEFS[id].cost : null,
+      })),
+      traits: engine.getActiveTraits().map((trait) => ({
+        id: trait.id,
+        name: trait.name,
+        count: trait.count,
+        level: trait.level,
+      })),
+    };
   }
 
   private emitAudio(event: GameAudioEvent) {
@@ -286,16 +362,22 @@ export class EngineBridge {
 
   private reportAction(
     action: GameAction,
-    before: { gold: number; level: number; phase: GamePhase },
+    before: ActionTraceSnapshot,
   ) {
-    if (!this.consoleLogging) return;
     const { state } = this.engine;
-    console.info("[RiftLine][action]", {
-      version: AUTOCHESS_VERSION,
+    const record: ActionTraceEntry = {
+      sequence: this.actionSequence += 1,
       action,
       before,
-      after: { gold: state.gold, level: state.playerLevel, phase: state.phase, round: state.round },
+      after: this.actionSnapshot(),
       toast: state.toast?.text || null,
+    };
+    this.actionHistory.push(record);
+    if (this.actionHistory.length > 640) this.actionHistory.splice(0, this.actionHistory.length - 640);
+    if (!this.consoleLogging) return;
+    console.info("[RiftLine][action]", {
+      version: AUTOCHESS_VERSION,
+      ...record,
     });
     if (
       action.type === "reroll" ||

@@ -1,11 +1,27 @@
-import { UNIT_DEFS, type StarterId, type UnitId } from "../core/gameData";
-import type { GamePhase, OwnedUnit, UnitLocation } from "../core/gameTypes";
+import {
+  FINANCE_INTEREST_CAP,
+  NORMAL_INTEREST_CAP,
+  TRAITS,
+  UNIT_DEFS,
+  traitLevelForCount,
+  type StarterId,
+  type TraitId,
+  type UnitId,
+} from "../core/gameData";
+import { AutoChessEngine } from "../core/gameEngine";
+import type {
+  BattleState,
+  GamePhase,
+  OwnedUnit,
+  RoundResult,
+  UnitLocation,
+} from "../core/gameTypes";
 import { EngineBridge, type GameAction } from "../phaser/EngineBridge";
 
 const STARTER_PREFERENCE: StarterId[] = [
+  "ranger_start",
   "mature_start",
   "dance_start",
-  "ranger_start",
   "bastion",
   "traffic_start",
   "blaze",
@@ -29,6 +45,9 @@ const AUGMENT_PREFERENCE = [
 const MELEE_SLOTS = [5, 11, 17, 23, 4, 10, 16, 22, 3, 9];
 const RANGED_SLOTS = [0, 6, 12, 18, 1, 7, 13, 19, 2, 8];
 const STAR_POWER = { 1: 1, 2: 2.6, 3: 7 } as const;
+const ROLLOUT_CANDIDATE_LIMIT = 4;
+const SAFE_WIN_ROLLOUT_SCORE = 10300;
+const STARTER_ROLLOUT_BATTLES = 3;
 
 type OwnedEntry = {
   unit: OwnedUnit;
@@ -58,6 +77,18 @@ export class AutoChessAutopilot {
 
   private pendingPurchase: Pick<ShopCandidate, "index" | "id"> | null = null;
 
+  private plannedLineupKey = "";
+
+  private plannedLineupUids: number[] = [];
+
+  private plannedLineupScore = Number.NEGATIVE_INFINITY;
+
+  private confidenceKey = "";
+
+  private confidenceScore = Number.NEGATIVE_INFINITY;
+
+  private interestSales = 0;
+
   constructor(private readonly bridge: EngineBridge) {}
 
   public get isEnabled() {
@@ -71,7 +102,42 @@ export class AutoChessAutopilot {
   }
 
   public chooseStarter(choices = this.bridge.engine.state.starterChoices) {
-    return STARTER_PREFERENCE.find((id) => choices.includes(id)) || choices[0] || null;
+    if (choices.length <= 1) return choices[0] || null;
+    const preference = (id: StarterId) => {
+      const index = STARTER_PREFERENCE.indexOf(id);
+      return index < 0 ? STARTER_PREFERENCE.length : index;
+    };
+    return choices
+      .map((id) => ({ id, score: this.starterRolloutScore(id), preference: preference(id) }))
+      .sort((left, right) => right.score - left.score || left.preference - right.preference)[0]?.id
+      || null;
+  }
+
+  private starterRolloutScore(starter: StarterId) {
+    const simulationBridge = new EngineBridge(this.bridge.engine.state.seed);
+    simulationBridge.setConsoleLogging(false);
+    simulationBridge.engine.state.starterChoices = [starter];
+    simulationBridge.dispatch({ type: "starter", id: starter });
+    const simulationPilot = new AutoChessAutopilot(simulationBridge);
+    simulationPilot.setEnabled(true);
+    let now = 1000;
+    let battles = 0;
+    let wins = 0;
+    let safety = 0;
+    while (
+      battles < STARTER_ROLLOUT_BATTLES
+      && simulationBridge.engine.state.phase !== "gameover"
+      && safety < 1200
+    ) {
+      safety += 1;
+      now += 1000;
+      if (simulationBridge.engine.state.phase === "battle") {
+        simulationBridge.skipBattle();
+        battles += 1;
+        if (simulationBridge.engine.state.result?.won) wins += 1;
+      } else simulationPilot.tick(now);
+    }
+    return wins * 100 + battles;
   }
 
   public startFromTitle() {
@@ -125,6 +191,12 @@ export class AutoChessAutopilot {
     this.rerolls = 0;
     this.paidRerolls = 0;
     this.pendingPurchase = null;
+    this.plannedLineupKey = "";
+    this.plannedLineupUids = [];
+    this.plannedLineupScore = Number.NEGATIVE_INFINITY;
+    this.confidenceKey = "";
+    this.confidenceScore = Number.NEGATIVE_INFINITY;
+    this.interestSales = 0;
   }
 
   private goldReserve(needsPopulation = false) {
@@ -181,23 +253,237 @@ export class AutoChessAutopilot {
     return selected;
   }
 
+  private lineupHeuristicScore(lineup: OwnedEntry[]) {
+    const traitCounts = lineup.reduce<Partial<Record<TraitId, number>>>((counts, { unit }) => {
+      UNIT_DEFS[unit.id].traits.forEach((trait) => {
+        counts[trait] = (counts[trait] || 0) + 1;
+      });
+      return counts;
+    }, {});
+    const traitScore = (Object.keys(traitCounts) as TraitId[]).reduce((score, trait) => {
+      const count = traitCounts[trait] || 0;
+      const level = traitLevelForCount(TRAITS[trait], count);
+      return score + level * 24 + count * level * 3;
+    }, 0);
+    const melee = lineup.filter(({ unit }) => UNIT_DEFS[unit.id].attackType === "melee").length;
+    const ranged = lineup.length - melee;
+    const roleScore = melee > 0 && ranged > 0 ? 18 : melee === 0 ? -60 : -12;
+    return lineup.reduce((score, { unit }) => score + this.unitScore(unit, lineup), 0)
+      + traitScore
+      + roleScore;
+  }
+
+  private rolloutLineupScore(lineup: OwnedEntry[]) {
+    const sourceState = this.bridge.engine.state;
+    const simulation = new AutoChessEngine(sourceState.seed + sourceState.round * 1009);
+    simulation.state = JSON.parse(JSON.stringify(sourceState));
+    simulation.state.phase = "preparation";
+    simulation.state.board.fill(null);
+    simulation.state.selected = null;
+    simulation.state.battle = null;
+    simulation.state.result = null;
+
+    this.setSimulationLineup(simulation, lineup);
+
+    return this.preparedCombatScore(simulation);
+  }
+
+  private setSimulationLineup(simulation: AutoChessEngine, lineup: OwnedEntry[]) {
+    simulation.state.board.fill(null);
+    const melee = lineup.filter(({ unit }) => UNIT_DEFS[unit.id].attackType === "melee");
+    const ranged = lineup.filter(({ unit }) => UNIT_DEFS[unit.id].attackType === "ranged");
+    [...melee.map((entry, index) => ({ entry, slot: MELEE_SLOTS[index] })),
+      ...ranged.map((entry, index) => ({ entry, slot: RANGED_SLOTS[index] }))]
+      .forEach(({ entry, slot }) => {
+        simulation.state.board[slot] = { ...entry.unit };
+      });
+  }
+
+  private preparedCombatScore(simulation: AutoChessEngine) {
+    if (simulation.state.phase !== "preparation" || simulation.boardCount === 0) {
+      return Number.NEGATIVE_INFINITY;
+    }
+    simulation.startBattle();
+    let steps = 0;
+    while ((simulation.state.phase as GamePhase) === "battle" && steps < 1560) {
+      simulation.update(1 / 60);
+      steps += 1;
+    }
+    const battle = simulation.state.battle as BattleState | null;
+    if (!battle) return Number.NEGATIVE_INFINITY;
+    const healthRatio = (fighters: BattleState["player"]) => fighters.reduce(
+      (sum, fighter) => sum + (fighter.alive ? fighter.hp / fighter.maxHp : 0),
+      0,
+    );
+    const healthMargin = healthRatio(battle.player) - healthRatio(battle.enemy);
+    const result = simulation.state.result as RoundResult | null;
+    const won = result?.won === true;
+    return (won ? 10000 : 0) + healthMargin * 100 - (won ? battle.elapsed : 0);
+  }
+
+  private augmentRolloutScore(index: number) {
+    const sourceState = this.bridge.engine.state;
+    const simulation = new AutoChessEngine(sourceState.seed + (sourceState.round + 1) * 1009);
+    simulation.state = JSON.parse(JSON.stringify(sourceState));
+    simulation.chooseAugment(index);
+    return this.preparedCombatScore(simulation);
+  }
+
+  private rolloutTargetLineup(roster: OwnedEntry[]) {
+    const cap = this.bridge.engine.boardCap;
+    if (roster.length <= cap) return roster;
+    const rosterKey = roster
+      .map(({ unit }) => `${unit.uid}:${unit.id}:${unit.star}`)
+      .sort()
+      .join("|");
+    const key = `${this.bridge.engine.state.round}/${cap}/${rosterKey}`;
+    if (key === this.plannedLineupKey) {
+      const byUid = new Map(roster.map((entry) => [entry.unit.uid, entry]));
+      const planned = this.plannedLineupUids.flatMap((uid) => byUid.get(uid) || []);
+      if (planned.length === cap) return planned;
+    }
+
+    const heuristic = this.targetLineup(roster);
+    const candidates = new Map<string, OwnedEntry[]>();
+    const addCandidate = (lineup: OwnedEntry[]) => {
+      if (lineup.length !== cap) return;
+      const lineupKey = lineup.map(({ unit }) => unit.uid).sort((left, right) => left - right).join(",");
+      candidates.set(lineupKey, lineup);
+    };
+    addCandidate(heuristic);
+    addCandidate(roster.filter(({ location }) => location.zone === "board"));
+
+    const selectedUids = new Set(heuristic.map(({ unit }) => unit.uid));
+    const reserves = roster.filter(({ unit }) => !selectedUids.has(unit.uid));
+    reserves.forEach((reserve) => {
+      heuristic.forEach((_, index) => {
+        const candidate = [...heuristic];
+        candidate[index] = reserve;
+        addCandidate(candidate);
+      });
+    });
+
+    (Object.keys(TRAITS) as TraitId[]).forEach((trait) => {
+      const matching = roster
+        .filter(({ unit }) => UNIT_DEFS[unit.id].traits.includes(trait))
+        .sort((left, right) => this.unitScore(right.unit, roster) - this.unitScore(left.unit, roster));
+      TRAITS[trait].thresholds.forEach((threshold) => {
+        if (threshold > cap || matching.length < threshold) return;
+        const focused = matching.slice(0, threshold);
+        const focusedUids = new Set(focused.map(({ unit }) => unit.uid));
+        const fillers = this.targetLineup(roster).filter(({ unit }) => !focusedUids.has(unit.uid));
+        addCandidate([...focused, ...fillers].slice(0, cap));
+      });
+    });
+
+    const finalists = Array.from(candidates.values())
+      .sort((left, right) => this.lineupHeuristicScore(right) - this.lineupHeuristicScore(left))
+      .slice(0, ROLLOUT_CANDIDATE_LIMIT);
+    const current = candidates.get(
+      roster.filter(({ location }) => location.zone === "board")
+        .map(({ unit }) => unit.uid)
+        .sort((left, right) => left - right)
+        .join(","),
+    );
+    if (current && !finalists.includes(current)) finalists[finalists.length - 1] = current;
+
+    const scored = finalists
+      .map((lineup) => ({
+        lineup,
+        rollout: this.rolloutLineupScore(lineup),
+        heuristic: this.lineupHeuristicScore(lineup),
+      }))
+      .sort((left, right) => right.rollout - left.rollout || right.heuristic - left.heuristic);
+    const selected = scored[0]?.lineup || heuristic;
+    this.plannedLineupKey = key;
+    this.plannedLineupUids = selected.map(({ unit }) => unit.uid);
+    this.plannedLineupScore = scored[0]?.rollout ?? Number.NEGATIVE_INFINITY;
+    return selected;
+  }
+
+  private interestRule() {
+    const financeLevel = this.bridge.engine.getActiveTraits()
+      .find((trait) => trait.id === "finance")?.level || 0;
+    return financeLevel >= 2
+      ? { step: 4, cap: FINANCE_INTEREST_CAP }
+      : { step: 5, cap: NORMAL_INTEREST_CAP };
+  }
+
+  private interestAt(gold: number) {
+    const { step, cap } = this.interestRule();
+    return Math.min(cap, Math.floor(Math.max(0, gold) / step));
+  }
+
+  private losesInterest(cost: number) {
+    const { gold } = this.bridge.engine.state;
+    return this.interestAt(gold - cost) < this.interestAt(gold);
+  }
+
+  private rolloutConfidence(roster: OwnedEntry[]) {
+    const lineup = this.rolloutTargetLineup(roster);
+    const key = `${this.bridge.engine.state.round}/${lineup
+      .map(({ unit }) => `${unit.uid}:${unit.id}:${unit.star}`)
+      .sort()
+      .join("|")}`;
+    if (key === this.confidenceKey) return this.confidenceScore;
+    const plannedMatches = roster.length > this.bridge.engine.boardCap
+      && lineup.length === this.plannedLineupUids.length
+      && lineup.every(({ unit }) => this.plannedLineupUids.includes(unit.uid));
+    this.confidenceKey = key;
+    this.confidenceScore = plannedMatches
+      ? this.plannedLineupScore
+      : this.rolloutLineupScore(lineup);
+    return this.confidenceScore;
+  }
+
+  private shouldBankInterest(cost: number, roster: OwnedEntry[], urgent = false) {
+    const { engine } = this.bridge;
+    if (
+      urgent
+      || engine.state.hp <= 8
+      || engine.state.streak < 2
+      || engine.boardCount < engine.boardCap
+      || !this.losesInterest(cost)
+    ) return false;
+    return this.rolloutConfidence(roster) >= SAFE_WIN_ROLLOUT_SCORE;
+  }
+
   private shopCandidates(roster: OwnedEntry[]) {
     const { engine } = this.bridge;
     const { state } = engine;
     const needsPopulation = roster.length < engine.boardCap;
     const reserve = this.goldReserve(needsPopulation);
-    const ownedIds = new Set(roster.map(({ unit }) => unit.id));
-    const ownedTraits = new Set(roster.flatMap(({ unit }) => UNIT_DEFS[unit.id].traits));
+    const lineup = this.targetLineup(roster);
+    const lineupIds = new Set(lineup.map(({ unit }) => unit.id));
+    const lineupTraitCounts = lineup.reduce<Record<string, number>>((counts, { unit }) => {
+      UNIT_DEFS[unit.id].traits.forEach((trait) => {
+        counts[trait] = (counts[trait] || 0) + 1;
+      });
+      return counts;
+    }, {});
+    const weakestLineupCost = Math.min(...lineup.map(({ unit }) => UNIT_DEFS[unit.id].cost), 5);
     const candidates = state.shop.flatMap((id, index) => {
       if (!id) return [];
       const definition = UNIT_DEFS[id];
       if (state.gold - definition.cost < reserve) return [];
-      const duplicate = ownedIds.has(id);
-      const traitPartners = definition.traits.filter((trait) => ownedTraits.has(trait)).length;
+      const sameUnits = roster.filter(({ unit }) => unit.id === id);
+      const targetDuplicate = lineupIds.has(id);
+      const oneStarCopies = sameUnits.filter(({ unit }) => unit.star === 1).length;
+      const completesMerge = oneStarCopies >= 2;
+      const completesTrait = definition.traits.some((trait) => {
+        const before = lineupTraitCounts[trait] || 0;
+        return traitLevelForCount(TRAITS[trait], before + 1) > traitLevelForCount(TRAITS[trait], before);
+      });
+      const traitPartners = definition.traits.filter((trait) => (lineupTraitCounts[trait] || 0) > 0).length;
+      const clearUpgrade = definition.cost >= weakestLineupCost + 2;
       const score = needsPopulation
         ? 100 - definition.cost * 4 + traitPartners * 5
-        : definition.cost * 5 + (duplicate ? 30 : 0) + traitPartners * 12;
-      if (!needsPopulation && !duplicate && !traitPartners && definition.cost < 3) return [];
+        : definition.cost * 5
+          + (targetDuplicate ? 45 : 0)
+          + (completesMerge ? 90 : 0)
+          + (completesTrait ? 42 : 0)
+          + traitPartners * 6;
+      if (!needsPopulation && !targetDuplicate && !completesMerge && !completesTrait && !clearUpgrade) return [];
       return [{ index, id, score } satisfies ShopCandidate];
     }).sort((left, right) => right.score - left.score || left.index - right.index);
     return candidates;
@@ -238,9 +524,12 @@ export class AutoChessAutopilot {
 
     const candidate = this.shopCandidates(roster)[0];
     if (!candidate) return null;
-    const desiredUids = new Set(this.targetLineup(roster).map(({ unit }) => unit.uid));
+    const desiredUids = new Set(this.rolloutTargetLineup(roster).map(({ unit }) => unit.uid));
     const sellable = roster
-      .filter(({ unit, location }) => location.zone === "bench" && !desiredUids.has(unit.uid) && unit.id !== candidate.id)
+      .filter(({ unit, location }) => location.zone === "bench"
+        && !desiredUids.has(unit.uid)
+        && unit.id !== candidate.id
+        && unit.star === 1)
       .sort(
         (left, right) => this.unitScore(left.unit, roster) - this.unitScore(right.unit, roster)
           || left.unit.star - right.unit.star
@@ -274,8 +563,42 @@ export class AutoChessAutopilot {
     return null;
   }
 
+  private interestSaleAction(roster: OwnedEntry[]): GameAction | null {
+    const { engine } = this.bridge;
+    const { state } = engine;
+    if (
+      this.interestSales >= 1
+      || state.hp <= 8
+      || state.streak < 2
+      || engine.boardCount < engine.boardCap
+      || !state.bench.every(Boolean)
+      || this.rolloutConfidence(roster) < SAFE_WIN_ROLLOUT_SCORE
+    ) return null;
+    const { step, cap } = this.interestRule();
+    const currentInterest = this.interestAt(state.gold);
+    if (currentInterest >= cap) return null;
+    const nextThreshold = (currentInterest + 1) * step;
+    const desiredUids = new Set(this.rolloutTargetLineup(roster).map(({ unit }) => unit.uid));
+    const idCounts = roster.reduce<Partial<Record<UnitId, number>>>((counts, { unit }) => {
+      counts[unit.id] = (counts[unit.id] || 0) + 1;
+      return counts;
+    }, {});
+    const sale = roster
+      .filter(({ unit, location }) => location.zone === "bench"
+        && unit.star === 1
+        && !desiredUids.has(unit.uid)
+        && idCounts[unit.id] === 1
+        && engine.getUnitSellValue(unit) === nextThreshold - state.gold)
+      .sort((left, right) => engine.getUnitSellValue(left.unit) - engine.getUnitSellValue(right.unit)
+        || this.unitScore(left.unit, roster) - this.unitScore(right.unit, roster)
+        || left.unit.uid - right.unit.uid)[0];
+    if (!sale) return null;
+    this.interestSales += 1;
+    return { type: "sell", location: sale.location };
+  }
+
   private formationAction(roster: OwnedEntry[]): GameAction | null {
-    const desired = this.targetLineup(roster);
+    const desired = this.rolloutTargetLineup(roster);
     const desiredIds = new Set(desired.map(({ unit }) => unit.uid));
     const emptyBench = this.bridge.engine.state.bench.findIndex((unit) => !unit);
     const surplusBoard = roster.find(
@@ -338,7 +661,8 @@ export class AutoChessAutopilot {
     const paidRerollLimit = state.hp <= 8 ? 4 : state.hp <= 12 ? 2 : 1;
     const canUseFreeReroll = state.freeRerollCharges > 0 && this.rerolls < 6;
     const canUsePaidReroll = this.paidRerolls < paidRerollLimit
-      && state.gold - 1 >= this.goldReserve();
+      && state.gold - 1 >= this.goldReserve()
+      && !this.shouldBankInterest(1, roster);
     if (
       this.preparationActions < 24
       && (canUseFreeReroll || canUsePaidReroll)
@@ -350,14 +674,26 @@ export class AutoChessAutopilot {
     }
     const formation = this.formationAction(this.ownedEntries());
     if (formation && this.preparationActions < 36) return formation;
+    const interestSale = this.interestSaleAction(this.ownedEntries());
+    if (interestSale) return interestSale;
     if (engine.boardCount) return { type: "battle" };
     return null;
   }
 
   private augmentAction(): GameAction | null {
     const { augmentChoices } = this.bridge.engine.state;
-    const preferred = AUGMENT_PREFERENCE.find((id) => augmentChoices.includes(id));
-    const index = preferred ? augmentChoices.indexOf(preferred) : 0;
+    const preferenceRank = (id: (typeof augmentChoices)[number]) => {
+      const rank = AUGMENT_PREFERENCE.indexOf(id as (typeof AUGMENT_PREFERENCE)[number]);
+      return rank < 0 ? AUGMENT_PREFERENCE.length : rank;
+    };
+    const index = augmentChoices
+      .map((id, choiceIndex) => ({
+        choiceIndex,
+        rollout: this.augmentRolloutScore(choiceIndex),
+        preference: preferenceRank(id),
+      }))
+      .sort((left, right) => right.rollout - left.rollout || left.preference - right.preference)[0]?.choiceIndex
+      ?? 0;
     return augmentChoices[index] ? { type: "augment", index } as GameAction : null;
   }
 }

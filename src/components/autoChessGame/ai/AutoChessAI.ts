@@ -25,7 +25,7 @@ export class AutoChessAIController {
     return {
       version: this.version,
       indexing: "starter/buy/choose/select/move/sell use 1-based slots; act() uses raw GameAction indexes",
-      read: ["state()", "logs(count = 80)", "help()"],
+      read: ["state()", "logs(count = 80)", "actions(count = 200)", "window.autoChessLastRun", "help()"],
       flow: ["starter(choice)", "battle()", "skipBattle()", "next()", "choose(choice)", "restart()"],
       economy: ["buy(shopSlot)", "reroll()", "lock()", "level()"],
       formation: ["select(zone, slot)", "move(fromZone, fromSlot, toZone, toSlot)", "sell(zone?, slot?)"],
@@ -40,6 +40,10 @@ export class AutoChessAIController {
 
   public logs(count = 80) {
     return this.bridge.getBattleLog(count);
+  }
+
+  public actions(count = 200) {
+    return this.bridge.getActionHistory(count);
   }
 
   public act(action: GameAction) {
