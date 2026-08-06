@@ -24,8 +24,10 @@ import ReleaseNotes from "./ReleaseNotes";
 import RiftHud, { type BattleViewAction } from "./RiftHud";
 import "./RiftHud.css";
 import {
+  ACTION_TRACE_LIMIT,
   EngineBridge,
   type ActionTraceEntry,
+  type BattleTraceEntry,
   type BridgeEvent,
 } from "./phaser/EngineBridge";
 import { createGameConfig } from "./phaser/gameConfig";
@@ -44,6 +46,8 @@ declare global {
     capturedAt: string;
     state: Record<string, unknown>;
     actions: ActionTraceEntry[];
+    battles: BattleTraceEntry[];
+    trace: ReturnType<EngineBridge["getTraceStats"]>;
   };
 
   interface Window {
@@ -57,6 +61,53 @@ declare global {
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
+const LAST_RUN_DATABASE = "rift-line-run-traces";
+const LAST_RUN_STORE = "traces";
+const SESSION_TRACE_EVENT_LIMIT = 5_000;
+
+const openLastRunDatabase = () => new Promise<IDBDatabase>((resolve, reject) => {
+  const request = window.indexedDB.open(LAST_RUN_DATABASE, 1);
+  request.onupgradeneeded = () => {
+    if (!request.result.objectStoreNames.contains(LAST_RUN_STORE)) {
+      request.result.createObjectStore(LAST_RUN_STORE);
+    }
+  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+
+const loadLastRunFromDatabase = async () => {
+  if (!window.indexedDB) return null;
+  const database = await openLastRunDatabase();
+  try {
+    return await new Promise<AutoChessLastRun | null>((resolve, reject) => {
+      const request = database
+        .transaction(LAST_RUN_STORE, "readonly")
+        .objectStore(LAST_RUN_STORE)
+        .get(LAST_RUN_TRACE_KEY);
+      request.onsuccess = () => resolve((request.result as AutoChessLastRun | undefined) || null);
+      request.onerror = () => reject(request.error);
+    });
+  } finally {
+    database.close();
+  }
+};
+
+const persistLastRun = async (trace: AutoChessLastRun) => {
+  if (!window.indexedDB) return;
+  const database = await openLastRunDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(LAST_RUN_STORE, "readwrite");
+      transaction.objectStore(LAST_RUN_STORE).put(trace, LAST_RUN_TRACE_KEY);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  } finally {
+    database.close();
+  }
+};
 
 const loadBackgroundBattlePreference = () => {
   try {
@@ -177,26 +228,51 @@ export default function AutoChessGame() {
     audioRef.current = audio;
     setAudioPreferences(loadAudioPreferences());
 
+    let restoredFromSession = false;
     try {
       const storedTrace = window.sessionStorage.getItem(LAST_RUN_TRACE_KEY);
-      if (storedTrace) window.autoChessLastRun = JSON.parse(storedTrace) as AutoChessLastRun;
+      if (storedTrace) {
+        window.autoChessLastRun = JSON.parse(storedTrace) as AutoChessLastRun;
+        restoredFromSession = true;
+      }
     } catch {
-      // The in-memory trace remains available when session storage is blocked or full.
+      // IndexedDB below handles larger traces and restricted session storage.
+    }
+    if (!restoredFromSession) {
+      loadLastRunFromDatabase()
+        .then((trace) => {
+          if (trace) window.autoChessLastRun = trace;
+        })
+        .catch(() => {});
     }
 
+    let lastPublishedSignature = "";
     const publishRunTrace = () => {
+      const traceStats = bridge.getTraceStats();
+      const signature = `${bridge.engine.state.phase}:${traceStats.actions}:${traceStats.battles}:${traceStats.battleEvents}`;
+      if (signature === lastPublishedSignature && window.autoChessLastRun) return;
+      lastPublishedSignature = signature;
       const trace: AutoChessLastRun = {
         version: AUTOCHESS_VERSION,
         capturedAt: new Date().toISOString(),
         state: bridge.getState(),
-        actions: bridge.getActionHistory(640),
+        actions: bridge.getActionHistory(ACTION_TRACE_LIMIT),
+        battles: bridge.getBattleHistory(),
+        trace: traceStats,
       };
       window.autoChessLastRun = trace;
       try {
-        window.sessionStorage.setItem(LAST_RUN_TRACE_KEY, JSON.stringify(trace));
+        if (traceStats.battleEvents <= SESSION_TRACE_EVENT_LIMIT) {
+          window.sessionStorage.setItem(LAST_RUN_TRACE_KEY, JSON.stringify(trace));
+        } else window.sessionStorage.removeItem(LAST_RUN_TRACE_KEY);
       } catch {
-        // Keeping the window copy is sufficient for restricted or storage-limited browsers.
+        try {
+          window.sessionStorage.removeItem(LAST_RUN_TRACE_KEY);
+        } catch {
+          // The in-memory and IndexedDB copies remain available.
+        }
       }
+      persistLastRun(trace).catch(() => {});
     };
 
     const onBridgeEvent = (event: BridgeEvent) => {

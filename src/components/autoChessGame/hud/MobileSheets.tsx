@@ -26,7 +26,7 @@ export function BenchSheet({ engine, selected, onClose, onAction }: { engine: Au
       <div className="rift-sheet-bench-grid">{engine.state.bench.map((unit, index) => {
         const location: UnitLocation = { zone: "bench", index };
         const sellValue = unit ? engine.getUnitSellValue(unit) : 0;
-        return <button key={index} className={engine.state.selected?.zone === "bench" && engine.state.selected.index === index ? "selected" : ""} onClick={() => onAction({ type: "slot", location })}>{unit ? <><span className="rift-dom-bench-portrait" style={{ borderColor: UNIT_DEFS[unit.id].accent }}><UnitPortrait unitId={unit.id} size={42} /></span><b>{UNIT_DEFS[unit.id].name}</b><span className="rift-bench-stars">{STAR_LABEL[unit.star]}</span><span className={`rift-bench-value ${sellValue > 5 ? "is-high" : ""}`} aria-label={`回收价值 ${sellValue} 金币`}><i aria-hidden="true" /><b>{sellValue}</b></span></> : <><span className="rift-empty-slot">+</span><small>空位</small></>}</button>;
+        return <button key={index} className={engine.state.selected?.zone === "bench" && engine.state.selected.index === index ? "selected" : ""} onClick={() => onAction({ type: "slot", location })}>{unit ? <><span className="rift-dom-bench-portrait" style={{ borderColor: UNIT_DEFS[unit.id].accent, backgroundColor: UNIT_DEFS[unit.id].color }}><UnitPortrait unitId={unit.id} size={42} /></span><b>{UNIT_DEFS[unit.id].name}</b><span className="rift-bench-stars">{STAR_LABEL[unit.star]}</span><span className={`rift-bench-value ${sellValue > 5 ? "is-high" : ""}`} aria-label={`回收价值 ${sellValue} 金币`}><i aria-hidden="true" /><b>{sellValue}</b></span></> : <><span className="rift-empty-slot">+</span><small>空位</small></>}</button>;
       })}</div>
       <div className="rift-sheet-selection">{selected ? <><span className="rift-status-dot" />已选择 <b>{UNIT_DEFS[selected.id].name}</b> · 点击棋盘目标格可换位</> : "点击一个棋子开始布阵；右键棋子可快速回收"}</div>
       <ActionButton tone="danger" disabled={!selected} onClick={() => onAction({ type: "sell" })}>出售选中棋子 <b>{selected ? `+${engine.getUnitSellValue(selected)}` : ""}</b></ActionButton>
@@ -79,7 +79,7 @@ export function MobileResult({ engine, onAction }: { engine: AutoChessEngine; on
             {rows.map(({ fighter, value }, index) => (
               <article key={fighter.fid} className={fighter.alive ? "" : "is-defeated"}>
                 <span className="rift-mobile-result-rank">{index + 1}</span>
-                <span className="rift-mobile-result-portrait" style={{ borderColor: UNIT_DEFS[fighter.unitId].accent }}><UnitPortrait unitId={fighter.unitId} size={44} /></span>
+                <span className="rift-mobile-result-portrait" style={{ borderColor: UNIT_DEFS[fighter.unitId].accent, backgroundColor: UNIT_DEFS[fighter.unitId].color }}><UnitPortrait unitId={fighter.unitId} size={44} /></span>
                 <div>
                   <strong>{UNIT_DEFS[fighter.unitId].name}<i>{"★".repeat(fighter.star)}</i></strong>
                   <small>血 {Math.round(fighter.hp)}/{Math.round(fighter.maxHp)} · 攻 {Math.round(fighter.attack)} · 甲 {Math.round(fighter.armor)}</small>

@@ -113,7 +113,7 @@ const inspectPng = (buffer) => {
 const { chromium } = loadPlaywright();
 const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
 const pageUrl = `${baseUrl}/game/autochess?seed=1`;
-const artifactDirectory = ".tmp/autochess/ai-v022";
+const artifactDirectory = ".tmp/autochess/ai-v023";
 mkdirSync(artifactDirectory, { recursive: true });
 
 const finitePoint = (point) => point
@@ -202,18 +202,19 @@ let browser;
   };
 
   const help = await callAI("help");
-  assert.equal(help.version, "0.2.2");
+  assert.equal(help.version, "0.2.3");
   assert.ok(help.flow.includes("skipBattle()"));
   assert.ok(help.testing.includes("consoleLogging(enabled)"));
   assert.ok(help.read.includes("window.autoChessLastRun"));
-  assert.equal((await state()).version, "0.2.2");
+  assert.ok(help.read.includes("battles()"));
+  assert.equal((await state()).version, "0.2.3");
   console.log("[ai-verify] API ready");
 
   await page.keyboard.press("v");
-  const releaseDialog = page.getByRole("dialog", { name: /v0\.2\.2/ });
+  const releaseDialog = page.getByRole("dialog", { name: /v0\.2\.3/ });
   await releaseDialog.waitFor({ state: "visible" });
-  assert.match(await releaseDialog.innerText(), /托管策略/);
-  assert.match(await releaseDialog.innerText(), /稳定与测试/);
+  assert.match(await releaseDialog.innerText(), /日志与复盘/);
+  assert.match(await releaseDialog.innerText(), /持久化/);
   await capture("release-notes");
   await page.keyboard.press("Escape");
   await releaseDialog.waitFor({ state: "hidden" });
@@ -221,7 +222,7 @@ let browser;
 
   await page.getByRole("button", { name: "游戏设置" }).click();
   await page.getByRole("dialog", { name: "游戏设置" })
-    .getByRole("button", { name: /版本与更新.*v0\.2\.2/ })
+    .getByRole("button", { name: /版本与更新.*v0\.2\.3/ })
     .click();
   await releaseDialog.waitFor({ state: "visible" });
   await page.locator(".rift-release-dismiss").click({ position: { x: 12, y: 54 } });
@@ -399,9 +400,12 @@ let browser;
   await callAI("next");
   await page.waitForFunction(() => window.autoChessAI.state().phase === "gameover");
   const terminalTrace = await page.evaluate(() => window.autoChessLastRun);
-  assert.equal(terminalTrace.version, "0.2.2");
+  assert.equal(terminalTrace.version, "0.2.3");
   assert.equal(terminalTrace.state.phase, "gameover");
   assert.ok(terminalTrace.actions.some((entry) => entry.action.type === "skipBattle"));
+  assert.ok(terminalTrace.battles.length > 0);
+  assert.ok(terminalTrace.battles[0].formation.player.every((unit) => unit.slot >= 1));
+  assert.ok(terminalTrace.trace.battleEvents > 0);
   assert.equal(terminalTrace.actions.at(-1).action.type, "resultContinue");
   await callAI("restart");
   await page.reload({ waitUntil: "domcontentloaded" });

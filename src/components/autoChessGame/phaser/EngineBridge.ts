@@ -1,8 +1,15 @@
 /* eslint-disable no-console */
 
 import type { GameAudioEvent } from "../audio";
-import { AutoChessEngine } from "../core/gameEngine";
-import type { BattleState, GamePhase, RankingMetric, UnitLocation } from "../core/gameTypes";
+import { AutoChessEngine, BATTLE_EVENT_LOG_LIMIT } from "../core/gameEngine";
+import type {
+  BattleLogEvent,
+  BattleState,
+  Fighter,
+  GamePhase,
+  RankingMetric,
+  UnitLocation,
+} from "../core/gameTypes";
 import { UNIT_DEFS, type StarterId } from "../core/gameData";
 import { AUTOCHESS_VERSION } from "../version";
 
@@ -46,6 +53,41 @@ export type ActionTraceEntry = {
   toast: string | null;
 };
 
+export type BattleFormationUnit = {
+  fid: string;
+  id: string;
+  name: string;
+  team: Fighter["team"];
+  star: Fighter["star"];
+  slot: number | null;
+  x: number;
+  y: number;
+  maxHp: number;
+  attack: number;
+  armor: number;
+  range: number;
+};
+
+export type BattleTraceEntry = {
+  round: number;
+  formation: {
+    player: BattleFormationUnit[];
+    enemy: BattleFormationUnit[];
+  };
+  events: BattleLogEvent[];
+  result: {
+    won: boolean;
+    elapsed: number;
+    playerSurvivors: number;
+    enemySurvivors: number;
+  } | null;
+};
+
+export type RunBattleLogEvent = BattleLogEvent & { round: number };
+
+export const ACTION_TRACE_LIMIT = 10_000;
+export const RUN_BATTLE_EVENT_LIMIT = BATTLE_EVENT_LOG_LIMIT;
+
 export class EngineBridge {
   public readonly engine: AutoChessEngine;
 
@@ -73,6 +115,16 @@ export class EngineBridge {
 
   private lastConsoleEventId = 0;
 
+  private lastArchivedEventId = 0;
+
+  private activeBattleTrace: BattleTraceEntry | null = null;
+
+  private battleHistory: BattleTraceEntry[] = [];
+
+  private battleEventCount = 0;
+
+  private droppedBattleEventCount = 0;
+
   private backgroundUpdatedAt: number | null = null;
 
   private actionSequence = 0;
@@ -87,6 +139,7 @@ export class EngineBridge {
 
   public dispatch(action: GameAction) {
     const { engine } = this;
+    this.beginNewRun(action);
     const before = this.actionSnapshot();
     const beforeGold = engine.state.gold;
     const beforeLevel = engine.state.playerLevel;
@@ -162,13 +215,49 @@ export class EngineBridge {
   }
 
   public getBattleLog(count = 80) {
-    const safeCount = Math.max(1, Math.min(320, Math.floor(count)));
-    return this.engine.state.battle?.eventLog.slice(-safeCount) || [];
+    this.syncBattleTrace();
+    const safeCount = Math.max(1, Math.min(RUN_BATTLE_EVENT_LIMIT, Math.floor(count)));
+    const events: RunBattleLogEvent[] = [];
+    for (let battleIndex = this.battleHistory.length - 1; battleIndex >= 0; battleIndex -= 1) {
+      const battle = this.battleHistory[battleIndex];
+      for (let eventIndex = battle.events.length - 1; eventIndex >= 0; eventIndex -= 1) {
+        events.push({ ...battle.events[eventIndex], round: battle.round });
+        if (events.length >= safeCount) return events.reverse();
+      }
+    }
+    return events.reverse();
   }
 
   public getActionHistory(count = 200) {
-    const safeCount = Math.max(1, Math.min(640, Math.floor(count)));
+    const safeCount = Math.max(1, Math.min(ACTION_TRACE_LIMIT, Math.floor(count)));
     return this.actionHistory.slice(-safeCount);
+  }
+
+  public getBattleHistory() {
+    this.syncBattleTrace();
+    return this.battleHistory.map((battle) => ({
+      ...battle,
+      formation: {
+        player: battle.formation.player.map((unit) => ({ ...unit })),
+        enemy: battle.formation.enemy.map((unit) => ({ ...unit })),
+      },
+      events: [...battle.events],
+      result: battle.result ? { ...battle.result } : null,
+    }));
+  }
+
+  public getTraceStats() {
+    this.syncBattleTrace();
+    return {
+      actions: this.actionHistory.length,
+      battles: this.battleHistory.length,
+      battleEvents: this.battleEventCount,
+      droppedBattleEvents: this.droppedBattleEventCount,
+      limits: {
+        actions: ACTION_TRACE_LIMIT,
+        battleEvents: RUN_BATTLE_EVENT_LIMIT,
+      },
+    };
   }
 
   public setConsoleLogging(enabled: boolean) {
@@ -278,8 +367,111 @@ export class EngineBridge {
         backgroundBattleEnabled: this.backgroundBattleEnabled,
         pageHidden: this.hidden,
       },
+      trace: this.getTraceStats(),
       recentActions: this.getActionHistory(12),
     });
+  }
+
+  private beginNewRun(action: GameAction) {
+    if (
+      action.type !== "starter" ||
+      this.engine.state.phase !== "title" ||
+      (!this.actionHistory.length && !this.battleHistory.length)
+    ) return;
+    this.actionSequence = 0;
+    this.actionHistory = [];
+    this.consoleBattle = null;
+    this.lastConsoleEventId = 0;
+    this.lastArchivedEventId = 0;
+    this.activeBattleTrace = null;
+    this.battleHistory = [];
+    this.battleEventCount = 0;
+    this.droppedBattleEventCount = 0;
+  }
+
+  private formationUnit(fighter: Fighter): BattleFormationUnit {
+    const boardSlot = fighter.team === "player"
+      ? this.engine.state.board.findIndex((unit) => unit && `p-${unit.uid}` === fighter.fid) + 1
+      : 0;
+    return {
+      fid: fighter.fid,
+      id: fighter.unitId,
+      name: UNIT_DEFS[fighter.unitId].name,
+      team: fighter.team,
+      star: fighter.star,
+      slot: boardSlot || null,
+      x: Number(fighter.x.toFixed(1)),
+      y: Number(fighter.y.toFixed(1)),
+      maxHp: Number(fighter.maxHp.toFixed(2)),
+      attack: Number(fighter.attack.toFixed(2)),
+      armor: Number(fighter.armor.toFixed(2)),
+      range: Number(fighter.range.toFixed(2)),
+    };
+  }
+
+  private startBattleTrace(battle: BattleState) {
+    const trace: BattleTraceEntry = {
+      round: this.engine.state.round,
+      formation: {
+        player: battle.player.map((fighter) => this.formationUnit(fighter)),
+        enemy: battle.enemy.map((fighter) => this.formationUnit(fighter)),
+      },
+      events: [],
+      result: null,
+    };
+    this.battleHistory.push(trace);
+    this.activeBattleTrace = trace;
+    this.lastArchivedEventId = 0;
+  }
+
+  private appendBattleEvents(battle: BattleState) {
+    if (!this.activeBattleTrace) return;
+    const events = battle.eventLog.filter((event) => event.id > this.lastArchivedEventId);
+    if (!events.length) return;
+    this.activeBattleTrace.events.push(...events);
+    this.lastArchivedEventId = events[events.length - 1].id;
+    this.battleEventCount += events.length;
+    this.pruneBattleEvents();
+  }
+
+  private pruneBattleEvents() {
+    let overflow = this.battleEventCount - RUN_BATTLE_EVENT_LIMIT;
+    if (overflow <= 0) return;
+    for (const battle of this.battleHistory) {
+      if (overflow <= 0) break;
+      const drop = Math.min(overflow, battle.events.length);
+      if (!drop) continue;
+      battle.events.splice(0, drop);
+      overflow -= drop;
+      this.battleEventCount -= drop;
+      this.droppedBattleEventCount += drop;
+    }
+  }
+
+  private finishBattleTrace(battle: BattleState) {
+    this.appendBattleEvents(battle);
+    if (!this.activeBattleTrace || this.activeBattleTrace.result || !this.engine.state.result) return;
+    this.activeBattleTrace.result = {
+      won: this.engine.state.result.won,
+      elapsed: Number(battle.elapsed.toFixed(3)),
+      playerSurvivors: battle.player.filter((fighter) => fighter.alive).length,
+      enemySurvivors: battle.enemy.filter((fighter) => fighter.alive).length,
+    };
+  }
+
+  private syncBattleTrace() {
+    const { battle, phase } = this.engine.state;
+    if (battle !== this.consoleBattle) {
+      if (this.consoleBattle) this.finishBattleTrace(this.consoleBattle);
+      this.consoleBattle = battle;
+      this.lastConsoleEventId = 0;
+      this.activeBattleTrace = null;
+      this.lastArchivedEventId = 0;
+      if (battle) this.startBattleTrace(battle);
+    }
+    if (!battle) return;
+    this.appendBattleEvents(battle);
+    if (phase === "result") this.finishBattleTrace(battle);
   }
 
   private actionSnapshot(): ActionTraceSnapshot {
@@ -328,10 +520,7 @@ export class EngineBridge {
 
   private flushEvents() {
     const { phase, battle } = this.engine.state;
-    if (battle !== this.consoleBattle) {
-      this.consoleBattle = battle;
-      this.lastConsoleEventId = 0;
-    }
+    this.syncBattleTrace();
     if (battle) {
       const events = battle.eventLog.filter((event) => event.id > this.lastConsoleEventId);
       if (events.length && this.consoleLogging) {
@@ -373,7 +562,9 @@ export class EngineBridge {
       toast: state.toast?.text || null,
     };
     this.actionHistory.push(record);
-    if (this.actionHistory.length > 640) this.actionHistory.splice(0, this.actionHistory.length - 640);
+    if (this.actionHistory.length > ACTION_TRACE_LIMIT) {
+      this.actionHistory.splice(0, this.actionHistory.length - ACTION_TRACE_LIMIT);
+    }
     if (!this.consoleLogging) return;
     console.info("[RiftLine][action]", {
       version: AUTOCHESS_VERSION,

@@ -1,6 +1,6 @@
 {
   "name": "my-pixijs-game",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -25,6 +25,8 @@
     "autochess:test": "node --test scripts/tests/autochess-*.test.mjs",
     "autochess:simulate": "node scripts/simulate-autochess-runs.mjs",
     "autochess:benchmark:autopilot": "node scripts/benchmark-autochess-autopilot.mjs",
+    "autochess:train:autopilot": "node scripts/train-autochess-autopilot.mjs",
+    "autochess:verify:autopilot-20": "node scripts/benchmark-autochess-autopilot.mjs --runs 1 --seed 73020 --battles 21 --require-win-round 20",
     "autochess:benchmark:waves": "node scripts/benchmark-autochess-waves.mjs",
     "autochess:verify:ai": "node scripts/verify-autochess-ai.cjs",
     "autochess:verify:autoplay": "node scripts/verify-autochess-autoplay.cjs",

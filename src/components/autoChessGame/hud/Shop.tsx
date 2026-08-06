@@ -56,7 +56,7 @@ export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | nu
         aria-label={`${def.name}，${def.abilityName}`}
       >
         <div className="rift-shop-card-accent" />
-        <div className="rift-dom-portrait" style={{ borderColor: def.accent }}><UnitPortrait unitId={unitId as keyof typeof UNIT_DEFS} size={42} /></div>
+        <div className="rift-dom-portrait" style={{ borderColor: def.accent, backgroundColor: def.color }}><UnitPortrait unitId={unitId as keyof typeof UNIT_DEFS} size={42} /></div>
         <div className="rift-dom-shop-copy"><strong>{def.name}</strong><span>{role} · {def.abilityName}</span><div>{traitTags.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties} title={willActivate ? `再买 1 个单位将激活${trait.name}` : trait.description}>{trait.name}</i>)}</div></div>
         <div className="rift-shop-card-meta">{totalOwned > 0 && <small className="rift-shop-owned">{ownedLabel(owned)}</small>}<b className="rift-dom-cost">{def.cost}</b></div>
       </button>

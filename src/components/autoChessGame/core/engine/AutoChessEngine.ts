@@ -97,6 +97,8 @@ export type {
 } from "../gameTypes";
 export { fighterVisualRadius, mechanicalRabbitMuzzle } from "../battleGeometry";
 
+export const BATTLE_EVENT_LOG_LIMIT = 100_000;
+
 const CONTACT_ATTACK_BUFFER = 12;
 const PLACEMENT_MARGIN = 8;
 const TARGET_LOCK_DURATION = 0.45;
@@ -797,7 +799,9 @@ export class AutoChessEngine {
     };
     battle.nextEventId += 1;
     battle.eventLog.push(event);
-    if (battle.eventLog.length > 320) battle.eventLog.splice(0, battle.eventLog.length - 320);
+    if (battle.eventLog.length > BATTLE_EVENT_LOG_LIMIT) {
+      battle.eventLog.splice(0, battle.eventLog.length - BATTLE_EVENT_LOG_LIMIT);
+    }
     return event;
   }
 
