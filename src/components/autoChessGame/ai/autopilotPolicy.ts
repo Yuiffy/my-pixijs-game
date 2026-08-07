@@ -92,11 +92,13 @@ export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
 export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotPolicy>> = {
   survival: {
     safeWinRolloutScore: 10050,
+    minimumWinningLineupMaxPrunes: 0,
   },
   balanced: {
     reserveCap: 10,
     reserveRoundScale: 0.85,
     safeWinRolloutScore: 10010,
+    minimumWinningLineupMaxPrunes: 0,
     maximumDryPaidRerolls: 10,
     financeActivationMaxRolloutDeficit: 40,
     terminalRollDownActivationGold: 120,
@@ -121,6 +123,8 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     terminalCompletionMinimumProjects: 1,
     terminalCompletionActivationGold: 88,
     terminalCompletionReserveGold: 4,
+    woundedHpThreshold: 10,
+    minimumWinningLineupMaxPrunes: 0,
   },
   seer: {
     safeWinRolloutScore: 10050,
@@ -131,6 +135,7 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     terminalCompletionMinimumProjects: 1,
     terminalCompletionActivationGold: 92,
     terminalCompletionReserveGold: 8,
+    minimumWinningLineupMaxPrunes: 0,
   },
 };
 

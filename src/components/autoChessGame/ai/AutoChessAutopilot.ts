@@ -28,6 +28,7 @@ import {
 } from "./autopilotPolicy";
 import {
   AUTOPILOT_LATE_GAME_TARGET_IDS,
+  AUTOPILOT_TERMINAL_TARGET_IDS,
   AUTOPILOT_TERMINAL_TARGETS,
   desiredLateGameLevelForRound,
   lateGameTargetDesiredCopies,
@@ -1145,18 +1146,50 @@ export class AutoChessAutopilot {
     return this.terminalRollDownReserve(roster, rolloutScore) !== null;
   }
 
+  private seerProjectFocusIds(roster: OwnedEntry[]) {
+    if (this.style !== "seer") return new Set<UnitId>(AUTOPILOT_TERMINAL_TARGET_IDS);
+    const { state } = this.bridge.engine;
+    const rows = AUTOPILOT_TERMINAL_TARGETS.map(({ id, priority }) => {
+      const units = roster.filter(({ unit }) => unit.id === id);
+      const copies = units.reduce((sum, { unit }) => sum + unitCopyValue(unit), 0);
+      const shopHits = state.shop.filter((shopId) => shopId === id).length;
+      const projectedCopies = this.seerPlan?.projectedTargetCopies[id] || 0;
+      const progressTier = copies >= 6 ? 4 : copies >= 3 ? 3 : copies > 0 ? 1 : 0;
+      return {
+        id,
+        copies,
+        shopHits,
+        score: progressTier * 1000
+          + Math.min(copies, 8) * 24
+          + shopHits * 260
+          + Math.max(0, projectedCopies - copies) * 8
+          + priority / 10,
+      };
+    });
+    const inProgress = rows.filter(({ copies }) => copies > 0);
+    const candidates = (inProgress.length > 0
+      ? inProgress
+      : rows.filter(({ shopHits }) => shopHits > 0))
+      .sort((left, right) => right.score - left.score || right.copies - left.copies);
+    return new Set(candidates.slice(0, 3).map(({ id }) => id));
+  }
+
   private lateGameReserveUids(roster: OwnedEntry[]) {
     const reserves = new Set<number>();
+    const focusedIds = this.seerProjectFocusIds(roster);
     AUTOPILOT_LATE_GAME_TARGET_IDS.forEach((id) => {
       let reservedCopies = 0;
       const desiredCopies = lateGameTargetDesiredCopies(id);
+      const reserveGoal = this.style === "seer" && !focusedIds.has(id)
+        ? Math.min(desiredCopies, 1)
+        : desiredCopies;
       roster
         .filter(({ unit }) => unit.id === id)
         .sort((left, right) => right.unit.star - left.unit.star
           || this.unitScore(right.unit, roster) - this.unitScore(left.unit, roster)
           || left.unit.uid - right.unit.uid)
-        .forEach(({ unit }) => {
-          if (reservedCopies >= desiredCopies) return;
+        .forEach(({ unit, location }) => {
+          if (location.zone !== "board" && reservedCopies >= reserveGoal) return;
           reserves.add(unit.uid);
           reservedCopies += unitCopyValue(unit);
         });
@@ -1266,6 +1299,7 @@ export class AutoChessAutopilot {
         .map(({ unit }) => unit.id),
     );
     const financeProjectIds = this.financeProjectIds(roster);
+    const seerFocusIds = this.seerProjectFocusIds(roster);
     const weakestFinanceProject = roster
       .filter(({ unit }) => financeProjectIds.has(unit.id))
       .sort((left, right) => this.unitScore(left.unit, roster) - this.unitScore(right.unit, roster))[0];
@@ -1337,6 +1371,7 @@ export class AutoChessAutopilot {
         ? 100 - definition.cost * 4 + traitPartners * 5
         : definition.cost * 5
           + (targetDuplicate ? 45 : 0)
+          + (this.style === "seer" && seerFocusIds.has(id) ? 64 : 0)
           + (completesMerge ? 90 : 0)
           + (advancesFinance ? 64 : 0)
           + (completesTrait ? 42 : 0)

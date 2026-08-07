@@ -22,7 +22,7 @@ const baseSeed = Math.max(1, Number(option("--seed", "74000")) || 74000);
 const battles = Math.max(4, Math.min(64, Number(option("--battles", "20")) || 20));
 const trainingBattleStepHz = Math.max(
   20,
-  Math.min(60, Number(option("--training-hz", "60")) || 60),
+  Math.min(60, Number(option("--training-hz", "30")) || 30),
 );
 const validationBattles = Math.max(
   battles,
@@ -147,7 +147,7 @@ const mutatePolicy = (parent) => clampPolicy(Object.fromEntries(dimensions.map((
 
 class WorkerPool {
   constructor(size) {
-    this.queues = Array.from({ length: size }, () => []);
+    this.queue = [];
     this.pending = new Map();
     this.nextId = 1;
     this.workers = Array.from({ length: size }, (_, workerIndex) => {
@@ -174,8 +174,7 @@ class WorkerPool {
 
   run(task) {
     return new Promise((resolve, reject) => {
-      const workerIndex = Math.abs(task.seed) % this.workers.length;
-      this.queues[workerIndex].push({ id: this.nextId, task, resolve, reject });
+      this.queue.push({ id: this.nextId, task, resolve, reject });
       this.nextId += 1;
       this.dispatch();
     });
@@ -183,7 +182,7 @@ class WorkerPool {
 
   dispatch() {
     this.workers.filter((worker) => !worker.busy).forEach((worker) => {
-      const queued = this.queues[worker.poolIndex].shift();
+      const queued = this.queue.shift();
       if (!queued) return;
       worker.busy = true;
       worker.taskId = queued.id;

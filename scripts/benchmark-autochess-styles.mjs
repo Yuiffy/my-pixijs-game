@@ -26,7 +26,7 @@ if (!["fast", "exact"].includes(planningMode)) {
 class WorkerPool {
   constructor(size) {
     this.pending = new Map();
-    this.queues = Array.from({ length: size }, () => []);
+    this.queue = [];
     this.nextId = 1;
     this.workers = Array.from({ length: size }, (_, workerIndex) => {
       const worker = new Worker(
@@ -55,17 +55,16 @@ class WorkerPool {
 
   run(task) {
     return new Promise((resolve, reject) => {
-      const workerIndex = Math.abs(task.seed) % this.workers.length;
       const queued = { id: this.nextId, task, resolve, reject };
       this.nextId += 1;
-      this.queues[workerIndex].push(queued);
+      this.queue.push(queued);
       this.dispatch();
     });
   }
 
   dispatch() {
     this.workers.filter((worker) => !worker.busy).forEach((worker) => {
-      const queued = this.queues[worker.poolIndex].shift();
+      const queued = this.queue.shift();
       if (!queued) return;
       worker.busy = true;
       worker.taskId = queued.id;

@@ -90,6 +90,52 @@ test("后期目标采用真人长期连胜十人阵容并全部追三星", () =>
   assert.equal(desiredLateGameLevelForRound(18), 10);
 });
 
+test("看穿在候补席满时分流终局项目并为主项目让出复制位", () => {
+  const bridge = new EngineBridge(13070);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.upgradeRemaining = 0;
+  bridge.engine.state.round = 20;
+  bridge.engine.state.hp = 20;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.shop.fill(null);
+  const targetIds = [
+    AUTOPILOT_TERMINAL_TARGET_IDS[0],
+    AUTOPILOT_TERMINAL_TARGET_IDS[1],
+    AUTOPILOT_TERMINAL_TARGET_IDS[2],
+    AUTOPILOT_TERMINAL_TARGET_IDS.at(-1),
+  ];
+  let uid = 130700;
+  targetIds.slice(0, 3).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: uid += 1, id, star: 2 };
+  });
+  SHOP_UNITS.filter((id) => !AUTOPILOT_TERMINAL_TARGET_IDS.includes(id))
+    .slice(0, 7)
+    .forEach((id, index) => {
+      bridge.engine.state.board[index + 3] = { uid: uid += 1, id, star: 1 };
+    });
+  bridge.engine.state.bench[0] = { uid: uid += 1, id: targetIds[3], star: 1 };
+  bridge.engine.state.bench[1] = { uid: uid += 1, id: targetIds[3], star: 1 };
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "heuristic",
+    {},
+    "seer",
+    "oracle",
+  );
+  const roster = autopilot.ownedEntries();
+  const focused = autopilot.seerProjectFocusIds(roster);
+  const reserves = autopilot.lateGameReserveUids(roster);
+  assert.equal(focused.has(targetIds[0]), true);
+  assert.equal(focused.has(targetIds[3]), false);
+  const secondaryCopies = roster.filter(({ unit }) => unit.id === targetIds[3]);
+  assert.equal(secondaryCopies.filter(({ unit }) => reserves.has(unit.uid)).length, 1);
+  assert.equal(secondaryCopies.filter(({ unit }) => !reserves.has(unit.uid)).length, 1);
+});
+
 test("训练桥接关闭战斗遥测、视觉特效和操作快照但仍能结算", () => {
   const bridge = new EngineBridge(90211, 1, {
     simulation: true,
@@ -1577,7 +1623,9 @@ test("托管用固定预演逐个剔除棋子并保留最小稳胜阵容", () =>
   ids.forEach((id, index) => {
     bridge.engine.state.board[index] = { uid: uid += 1, id, star: 1 };
   });
-  const autopilot = new AutoChessAutopilot(bridge);
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {
+    minimumWinningLineupMaxPrunes: 5,
+  });
   autopilot.rolloutLineupScore = (lineup) => lineup.length >= 3 ? 10400 + lineup.length : 9000;
   autopilot.finalizingEconomy = true;
 
