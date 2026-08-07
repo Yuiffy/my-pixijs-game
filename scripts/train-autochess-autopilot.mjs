@@ -66,20 +66,24 @@ const dimensions = [
   { key: "woundedReserve", min: 1, max: 9, step: 1, sigma: 1.5 },
   { key: "targetLevelRoundDivisor", min: 2, max: 5, step: 1, sigma: 0.75 },
   { key: "targetLevelRoundOffset", min: 0, max: 4, step: 1, sigma: 1 },
-  { key: "healthyPaidRerolls", min: 0, max: 3, step: 1, sigma: 0.75 },
-  { key: "woundedPaidRerolls", min: 1, max: 5, step: 1, sigma: 1 },
-  { key: "criticalPaidRerolls", min: 2, max: 8, step: 1, sigma: 1.5 },
   { key: "safeWinRolloutScore", min: 10000, max: 10600, step: 50, sigma: 120 },
   { key: "stabilizeRolloutScore", min: 10000, max: 10350, step: 25, sigma: 80 },
-  { key: "upgradeChaseBonusRerolls", min: 0, max: 3, step: 1, sigma: 1 },
-  { key: "bankRerollInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 2 },
+  { key: "financeActivationRolloutScore", min: 9800, max: 10350, step: 25, sigma: 100 },
+  { key: "financeActivationMaxRolloutDeficit", min: 0, max: 300, step: 25, sigma: 50 },
+  { key: "maximumExcessPaidRerolls", min: 0, max: 64, step: 1, sigma: 8 },
+  { key: "maximumDryPaidRerolls", min: 2, max: 20, step: 1, sigma: 3 },
   { key: "upgradeChaseRerollInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "stabilizeRerollInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 4 },
+  { key: "bankPurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 2 },
+  { key: "upgradeChasePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
+  { key: "stabilizePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 4 },
+  { key: "financePurchaseInterestTiersAtRisk", min: 0, max: 4, step: 1, sigma: 1 },
   { key: "goodPurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "mergePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "levelInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 4 },
   { key: "interestSaleMinimumBench", min: 0, max: 8, step: 1, sigma: 2 },
   { key: "speculativePurchaseMinimumEmptyBench", min: 1, max: 6, step: 1, sigma: 1.5 },
+  { key: "upgradeProjectLimit", min: 0, max: 4, step: 1, sigma: 1 },
   { key: "minimumWinningLineupMaxPrunes", min: 0, max: 6, step: 1, sigma: 1.5 },
   { key: "maximumFinalReinvestments", min: 0, max: 3, step: 1, sigma: 1 },
   { key: "maxStarCleanupSales", min: 0, max: 3, step: 1, sigma: 1 },
@@ -102,6 +106,10 @@ const clampPolicy = (policy) => {
   clamped.stabilizeRolloutScore = Math.min(
     clamped.safeWinRolloutScore,
     clamped.stabilizeRolloutScore,
+  );
+  clamped.financeActivationRolloutScore = Math.min(
+    clamped.safeWinRolloutScore,
+    clamped.financeActivationRolloutScore,
   );
   return clamped;
 };
@@ -211,6 +219,8 @@ const evaluate = async (policy, seedStart, runCount, battleLimit) => {
     perfectEarlyRate: runs.filter((run) => run.perfectEarly).length / runs.length,
     averageMargin: average("averageMargin"),
     averageInterest: average("averageInterest"),
+    averageFirstFourFinanceRound: average("firstFourFinanceRound"),
+    averageFirstMaxInterestRound: average("firstMaxInterestRound"),
     runs,
   };
 };
@@ -224,6 +234,8 @@ const evaluateTraining = (policy) => {
 const compareCandidate = (left, right) => right.training.averageWins - left.training.averageWins
   || left.training.averageEarlyLosses - right.training.averageEarlyLosses
   || right.training.averageFinalRound - left.training.averageFinalRound
+  || left.training.averageFirstFourFinanceRound - right.training.averageFirstFourFinanceRound
+  || left.training.averageFirstMaxInterestRound - right.training.averageFirstMaxInterestRound
   || right.training.fitness - left.training.fitness;
 const baselinePolicy = clampPolicy(DEFAULT_AUTOPILOT_POLICY);
 let population = [baselinePolicy];

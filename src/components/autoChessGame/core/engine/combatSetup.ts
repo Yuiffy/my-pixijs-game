@@ -220,8 +220,11 @@ export class CombatSetupSystem {
       wave.units.map((unit) => unit.id),
     );
     const enemyTraitLevel = (trait: TraitId) => traitLevelForCount(TRAITS[trait], enemyTraitCounts[trait]);
+    let playerOrdinal = 0;
     const player = this.state.board.flatMap((owned, index) => {
       if (!owned) return [];
+      const formationOrdinal = playerOrdinal;
+      playerOrdinal += 1;
       const def = UNIT_DEFS[owned.id];
       const spawn = playerFormationPosition(index);
       const {
@@ -260,7 +263,7 @@ export class CombatSetupSystem {
       const matureAttackSpeed = [0, 0.08, 0.16, 0.24][matureLevel];
 
       const fighter: Fighter = {
-        fid: `p-${owned.uid}`,
+        fid: `p-${index + 1}`,
         unitId: owned.id,
         team: "player",
         star: owned.star,
@@ -419,7 +422,7 @@ export class CombatSetupSystem {
         progressAnchorDistance: Infinity,
         progressWindowTime: 0,
         stuckTime: 0,
-        avoidSide: owned.uid % 2 === 0 ? 1 : -1,
+        avoidSide: formationOrdinal % 2 === 0 ? -1 : 1,
         avoidTime: 0,
         damageDealt: 0,
         healingDone: 0,

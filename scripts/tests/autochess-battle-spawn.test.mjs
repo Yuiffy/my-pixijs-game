@@ -1639,8 +1639,10 @@ test("贴边让位选择未被边界截断的一侧", () => {
   });
   source.x = 300;
   source.y = BATTLE_BOUNDS.top + source.radius;
+  source.avoidSide = 1;
   blocker.x = 355;
   blocker.y = BATTLE_BOUNDS.top + blocker.radius;
+  blocker.avoidSide = 1;
   const beforeY = blocker.y;
   stepBattle(engine, 4);
   assert.ok(blocker.y > beforeY + 5);
@@ -2561,7 +2563,7 @@ test("6x4 deployment slots preserve their formation positions at battle start", 
   assert.ok(engine.state.battle);
   const fightersById = new Map(engine.state.battle.player.map((fighter) => [fighter.fid, fighter]));
   BOARD_SLOTS.forEach((slot, index) => {
-    const fighter = fightersById.get(`p-${index + 1}`);
+    const fighter = fightersById.get(`p-${slot + 1}`);
     const column = slot % 6;
     const row = Math.floor(slot / 6);
     const expected = playerFormationPosition(slot);
@@ -2572,6 +2574,36 @@ test("6x4 deployment slots preserve their formation positions at battle start", 
     assert.deepEqual(preview[index].grid, { column, row });
     assert.ok(fighter.x >= BATTLE_BOUNDS.left && fighter.x <= BATTLE_BOUNDS.right);
   });
+});
+
+test("player combat identity depends on board slots instead of purchase history", () => {
+  const first = createEngine(851);
+  const second = createEngine(851);
+  const slots = [0, 5, 11, 23];
+  const units = ["sun_guard", "sui", "rift_brawler", "grove_mender"];
+  first.state.playerLevel = slots.length;
+  second.state.playerLevel = slots.length;
+  first.state.board.fill(null);
+  second.state.board.fill(null);
+  slots.forEach((slot, index) => {
+    first.state.board[slot] = { uid: index + 1, id: units[index], star: 1 };
+    second.state.board[slot] = { uid: 900 - index * 17, id: units[index], star: 1 };
+  });
+
+  first.startBattle();
+  second.startBattle();
+  const identity = (engine) => engine.state.battle.player.map((fighter) => ({
+    fid: fighter.fid,
+    unitId: fighter.unitId,
+    x: fighter.x,
+    y: fighter.y,
+    avoidSide: fighter.avoidSide,
+  }));
+  assert.deepEqual(identity(second), identity(first));
+  assert.deepEqual(
+    first.state.battle.player.map((fighter) => fighter.fid),
+    slots.map((slot) => `p-${slot + 1}`),
+  );
 });
 
 test("结算会保留双方完整统计，直到玩家显式继续", () => {

@@ -25,6 +25,15 @@ const forcedStarter = option("--starter", "");
 const policyPath = option("--policy", "");
 const policyReport = policyPath ? JSON.parse(await readFile(policyPath, "utf8")) : null;
 const policy = policyReport?.bestPolicy || policyReport?.policy || policyReport || {};
+const style = option("--style", "survival");
+const informationMode = option("--information", "normal");
+const reportProgress = process.argv.includes("--progress");
+if (!["survival", "balanced", "highroll"].includes(style)) {
+  throw new Error(`Unknown autopilot style: ${style}`);
+}
+if (!["normal", "oracle"].includes(informationMode)) {
+  throw new Error(`Unknown autopilot information mode: ${informationMode}`);
+}
 const requiredWinRound = Math.max(
   0,
   Math.min(64, Number(option("--require-win-round", "0")) || 0),
@@ -69,7 +78,13 @@ const playRun = (seed) => {
   const bridge = new EngineBridge(seed);
   bridge.setConsoleLogging(false);
   if (forcedStarter) bridge.engine.state.starterChoices = [forcedStarter];
-  const autopilot = new AutoChessAutopilot(bridge, "evolution", policy);
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    policy,
+    style,
+    informationMode,
+  );
   if (!autopilot.startFromTitle()) throw new Error(`Autopilot could not start seed ${seed}`);
 
   let now = 1000;
@@ -113,6 +128,14 @@ const playRun = (seed) => {
           count: trait.count,
           level: trait.level,
         })),
+        autopilotDecision: {
+          mode: autopilot.rerollMode,
+          predictedScore: autopilot.battlePredictionScore,
+          interestTiersAtRisk: autopilot.stabilizationInterestTiersAtRisk,
+          paidRerolls: autopilot.paidRerolls,
+          dryPaidRerolls: autopilot.dryPaidRerolls,
+          preparationActions: autopilot.preparationActions,
+        },
         actions: { ...(actionsByRound.get(round) || {}) },
       };
       const skipped = bridge.skipBattle();
@@ -137,6 +160,18 @@ const playRun = (seed) => {
           + assetValue * 100
           + margin * 250,
       });
+      if (reportProgress) {
+        const latest = rounds.at(-1);
+        console.error(JSON.stringify({
+          seed,
+          round,
+          won,
+          hpAfter,
+          gold: latest.gold,
+          predictedScore: latest.autopilotDecision.predictedScore,
+          actions: latest.actions,
+        }));
+      }
       continue;
     }
 
@@ -173,6 +208,10 @@ const playRun = (seed) => {
     perfectEarly: rounds.filter((round) => round.round <= 12).length >= Math.min(12, maximumBattles)
       && rounds.every((round) => round.round > 12 || round.won),
     underfilledRounds: rounds.filter((round) => round.boardCount < Math.min(round.level, 10)).length,
+    firstFourFinanceRound: rounds.find((round) => (
+      round.activeTraits.some((trait) => trait.id === "finance" && trait.count >= 4)
+    ))?.round ?? null,
+    firstMaxInterestRound: rounds.find((round) => round.interest >= 20)?.round ?? null,
     actions,
     rounds,
   };
@@ -184,12 +223,47 @@ const playRun = (seed) => {
 };
 
 const results = Array.from({ length: runs }, (_, index) => playRun(baseSeed + index));
+const summarizeDistribution = (values) => {
+  const sorted = [...values].sort((left, right) => left - right);
+  const mean = sorted.reduce((sum, value) => sum + value, 0) / Math.max(1, sorted.length);
+  const variance = sorted.reduce((sum, value) => sum + (value - mean) ** 2, 0)
+    / Math.max(1, sorted.length);
+  const percentile = (ratio) => {
+    if (sorted.length === 0) return 0;
+    const position = (sorted.length - 1) * ratio;
+    const lower = Math.floor(position);
+    const upper = Math.ceil(position);
+    if (lower === upper) return sorted[lower];
+    return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+  };
+  return {
+    mean,
+    variance,
+    standardDeviation: Math.sqrt(variance),
+    minimum: sorted[0] ?? 0,
+    p10: percentile(0.1),
+    median: percentile(0.5),
+    p90: percentile(0.9),
+    maximum: sorted.at(-1) ?? 0,
+  };
+};
+const survivalAt = (round) => ({
+  reachedRate: results.filter((run) => run.rounds.some((entry) => entry.round === round)).length / runs,
+  survivedRate: results.filter((run) => run.rounds.some((entry) => (
+    entry.round === round && entry.hpAfter > 0
+  ))).length / runs,
+  winRate: results.filter((run) => run.rounds.some((entry) => (
+    entry.round === round && entry.won
+  ))).length / runs,
+});
 const aggregate = {
   runs,
   baseSeed,
   maximumBattles,
   forcedStarter: forcedStarter || null,
   policyPath: policyPath || null,
+  style,
+  informationMode,
   requiredWinRound: requiredWinRound || null,
   requiredWinRoundPasses: requiredWinRound
     ? results.filter((run) => run.rounds.some((round) => (
@@ -197,6 +271,11 @@ const aggregate = {
     ))).length
     : null,
   campaignClearRate: results.filter((run) => run.campaignCleared).length / runs,
+  finalRoundDistribution: summarizeDistribution(results.map((run) => run.finalRound)),
+  winDistribution: summarizeDistribution(results.map((run) => run.wins)),
+  netWorthDistribution: summarizeDistribution(results.map((run) => run.finalNetWorth)),
+  survivalByRound: Object.fromEntries([12, 16, 20, 24, 28, 32]
+    .map((round) => [round, survivalAt(round)])),
   averageFinalRound: results.reduce((sum, run) => sum + run.finalRound, 0) / runs,
   averageWins: results.reduce((sum, run) => sum + run.wins, 0) / runs,
   averageFinalHp: results.reduce((sum, run) => sum + run.finalHp, 0) / runs,
@@ -229,6 +308,14 @@ const aggregate = {
     (sum, run) => sum + run.rounds.reduce((runSum, round) => runSum + round.benchCount, 0),
     0,
   ) / Math.max(1, results.reduce((sum, run) => sum + run.rounds.length, 0)),
+  fourFinanceRate: results.filter((run) => run.firstFourFinanceRound !== null).length / runs,
+  averageFirstFourFinanceRound: results
+    .filter((run) => run.firstFourFinanceRound !== null)
+    .reduce((sum, run, _, reached) => sum + run.firstFourFinanceRound / reached.length, 0),
+  maxInterestRate: results.filter((run) => run.firstMaxInterestRound !== null).length / runs,
+  averageFirstMaxInterestRound: results
+    .filter((run) => run.firstMaxInterestRound !== null)
+    .reduce((sum, run, _, reached) => sum + run.firstMaxInterestRound / reached.length, 0),
   invalidMoves: results.reduce((sum, run) => sum + run.invalidMoves, 0),
   maximumSelectionStreak: Math.max(...results.map((run) => run.maximumSelectionStreak)),
   fullBenchRounds: results.reduce((sum, run) => sum + run.fullBenchRounds, 0),

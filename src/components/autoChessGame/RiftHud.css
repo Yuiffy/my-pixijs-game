@@ -42,6 +42,10 @@
 .rift-settings-panel > header strong { font-size: 15px; }
 .rift-settings-panel > header button { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid #42677a; border-radius: 7px; background: #142f40; color: #dceff7; cursor: pointer; }
 .rift-setting-row, .rift-setting-slider { display: flex; min-height: 43px; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(104, 179, 207, .12); color: #cfe3ec; font-size: 12px; font-weight: 700; }
+.rift-setting-strategy { display: grid; gap: 8px; padding: 10px 0 11px; border-bottom: 1px solid rgba(104, 179, 207, .12); color: #cfe3ec; font-size: 12px; font-weight: 700; }
+.rift-setting-strategy > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; border: 1px solid #385a6c; border-radius: 7px; background: #102735; }
+.rift-setting-strategy button { min-width: 0; height: 30px; padding: 0 5px; overflow: hidden; border: 0; border-radius: 5px; background: transparent; color: #91aebd; font: inherit; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.rift-setting-strategy button[aria-checked="true"] { background: #245b4a; color: #effff8; box-shadow: inset 0 0 0 1px #68d4aa; }
 .rift-setting-slider { border-bottom: 0; }
 .rift-setting-slider input { width: 142px; accent-color: #67d6ad; }
 .rift-setting-audio-mobile { display: none; }

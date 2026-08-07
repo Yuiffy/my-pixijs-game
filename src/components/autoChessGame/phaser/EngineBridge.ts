@@ -99,6 +99,10 @@ export class EngineBridge {
 
   public autoplayEnabled = false;
 
+  public autoplayStyle: "survival" | "balanced" | "highroll" = "survival";
+
+  public autoplayInformationMode: "normal" | "oracle" = "normal";
+
   public backgroundBattleEnabled = false;
 
   public onEvent: ((event: BridgeEvent) => void) | null = null;
@@ -326,6 +330,14 @@ export class EngineBridge {
     this.autoplayEnabled = enabled;
   }
 
+  public setAutopilotStrategy(
+    style: "survival" | "balanced" | "highroll",
+    informationMode: "normal" | "oracle",
+  ) {
+    this.autoplayStyle = style;
+    this.autoplayInformationMode = informationMode;
+  }
+
   public setBackgroundBattleEnabled(enabled: boolean, now = Date.now()) {
     this.backgroundBattleEnabled = enabled;
     this.backgroundUpdatedAt = this.hidden ? now : null;
@@ -364,6 +376,8 @@ export class EngineBridge {
       interface: {
         enemyFormationOpen: this.enemyFormationOpen,
         autoplayEnabled: this.autoplayEnabled,
+        autoplayStyle: this.autoplayStyle,
+        autoplayInformationMode: this.autoplayInformationMode,
         backgroundBattleEnabled: this.backgroundBattleEnabled,
         pageHidden: this.hidden,
       },
@@ -390,9 +404,8 @@ export class EngineBridge {
   }
 
   private formationUnit(fighter: Fighter): BattleFormationUnit {
-    const boardSlot = fighter.team === "player"
-      ? this.engine.state.board.findIndex((unit) => unit && `p-${unit.uid}` === fighter.fid) + 1
-      : 0;
+    const boardSlotMatch = fighter.team === "player" ? /^p-(\d+)$/.exec(fighter.fid) : null;
+    const boardSlot = boardSlotMatch ? Number(boardSlotMatch[1]) : 0;
     return {
       fid: fighter.fid,
       id: fighter.unitId,

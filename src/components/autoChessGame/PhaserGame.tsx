@@ -13,6 +13,10 @@ import {
 } from "@ant-design/icons";
 import { AutoChessAIController } from "./ai/AutoChessAI";
 import { AutoChessAutopilot } from "./ai/AutoChessAutopilot";
+import type {
+  AutopilotInformationMode,
+  AutopilotStyle,
+} from "./ai/autopilotPolicy";
 import {
   AutoChessAudio,
   DEFAULT_AUDIO_PREFERENCES,
@@ -60,6 +64,7 @@ declare global {
 
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
+const AUTOPILOT_STRATEGY_KEY = "rift-line-autopilot-strategy";
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
@@ -117,6 +122,22 @@ const loadBackgroundBattlePreference = () => {
   }
 };
 
+const loadAutopilotStrategy = (): {
+  style: AutopilotStyle;
+  informationMode: AutopilotInformationMode;
+} => {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(AUTOPILOT_STRATEGY_KEY) || "null");
+    const style = ["survival", "balanced", "highroll"].includes(stored?.style)
+      ? stored.style as AutopilotStyle
+      : "survival";
+    const informationMode = stored?.informationMode === "oracle" ? "oracle" : "normal";
+    return { style, informationMode };
+  } catch {
+    return { style: "survival", informationMode: "normal" };
+  }
+};
+
 export default function AutoChessGame() {
   const gameHostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -130,6 +151,8 @@ export default function AutoChessGame() {
   const [releaseOpen, setReleaseOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [autoplayEnabled, setAutoplayEnabled] = useState(false);
+  const [autopilotStyle, setAutopilotStyle] = useState<AutopilotStyle>("survival");
+  const [autopilotInformationMode, setAutopilotInformationMode] = useState<AutopilotInformationMode>("normal");
   const [backgroundBattleEnabled, setBackgroundBattleEnabled] = useState(false);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
@@ -174,6 +197,25 @@ export default function AutoChessGame() {
     autopilotRef.current?.setEnabled(enabled);
     bridgeRef.current?.setAutoplayEnabled(enabled);
     setMessage(enabled ? "AI 托管已开启，可随时接管。" : "已切回手动指挥。");
+    setRevision((value) => value + 1);
+  }, []);
+
+  const updateAutopilotStrategy = useCallback((
+    style: AutopilotStyle,
+    informationMode: AutopilotInformationMode,
+  ) => {
+    setAutopilotStyle(style);
+    setAutopilotInformationMode(informationMode);
+    autopilotRef.current?.setStrategy(style, informationMode);
+    try {
+      window.localStorage.setItem(
+        AUTOPILOT_STRATEGY_KEY,
+        JSON.stringify({ style, informationMode }),
+      );
+    } catch {
+      // The strategy still applies for this session when storage is unavailable.
+    }
+    setMessage(informationMode === "oracle" ? "天眼托管策略已更新。" : "托管策略已更新。");
     setRevision((value) => value + 1);
   }, []);
 
@@ -224,6 +266,9 @@ export default function AutoChessGame() {
     const storedBackgroundBattle = loadBackgroundBattlePreference();
     bridge.setBackgroundBattleEnabled(storedBackgroundBattle);
     setBackgroundBattleEnabled(storedBackgroundBattle);
+    const storedAutopilotStrategy = loadAutopilotStrategy();
+    setAutopilotStyle(storedAutopilotStrategy.style);
+    setAutopilotInformationMode(storedAutopilotStrategy.informationMode);
     const audio = new AutoChessAudio(loadAudioPreferences());
     audioRef.current = audio;
     setAudioPreferences(loadAudioPreferences());
@@ -358,7 +403,13 @@ export default function AutoChessGame() {
     };
     const ai = new AutoChessAIController(bridge);
     window.autoChessAI = ai;
-    const autopilot = new AutoChessAutopilot(bridge);
+    const autopilot = new AutoChessAutopilot(
+      bridge,
+      "evolution",
+      {},
+      storedAutopilotStrategy.style,
+      storedAutopilotStrategy.informationMode,
+    );
     autopilotRef.current = autopilot;
     console.info(`[RiftLine][AI] v${AUTOCHESS_VERSION} ready. Use autoChessAI.help()`, ai.help());
 
@@ -609,6 +660,25 @@ export default function AutoChessGame() {
             <section className="rift-settings-panel" role="dialog" aria-modal="true" aria-label="游戏设置" onPointerDown={(event) => event.stopPropagation()}>
               <header><strong>游戏设置</strong><button type="button" aria-label="关闭设置" onClick={() => setSettingsOpen(false)}><CloseOutlined aria-hidden="true" /></button></header>
               <div className="rift-setting-row"><span>AI 托管</span><button type="button" className="rift-switch" role="switch" aria-label="AI 托管" aria-checked={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)}><i /></button></div>
+              <div className="rift-setting-strategy">
+                <span>托管风格</span>
+                <div role="radiogroup" aria-label="托管风格">
+                  {([
+                    ["survival", "稳健"],
+                    ["balanced", "均衡"],
+                    ["highroll", "搏上限"],
+                  ] as const).map(([style, label]) => (
+                    <button
+                      key={style}
+                      type="button"
+                      role="radio"
+                      aria-checked={autopilotStyle === style}
+                      onClick={() => updateAutopilotStrategy(style, autopilotInformationMode)}
+                    >{label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="rift-setting-row"><span>天眼商店</span><button type="button" className="rift-switch" role="switch" aria-label="天眼商店" aria-checked={autopilotInformationMode === "oracle"} onClick={() => updateAutopilotStrategy(autopilotStyle, autopilotInformationMode === "oracle" ? "normal" : "oracle")}><i /></button></div>
               <div className="rift-setting-row"><span>后台继续战斗</span><button type="button" className="rift-switch" role="switch" aria-label="后台继续战斗" aria-checked={backgroundBattleEnabled} onClick={() => updateBackgroundBattle(!backgroundBattleEnabled)}><i /></button></div>
               <div className="rift-setting-row rift-setting-audio-mobile"><span>游戏声音</span><button type="button" className="rift-switch" role="switch" aria-label="游戏声音" aria-checked={!audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })}><i /></button></div>
               <label className="rift-setting-slider rift-setting-audio-mobile" htmlFor="rift-music-volume"><span>音乐</span><input id="rift-music-volume" aria-label="设置中的音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} /></label>

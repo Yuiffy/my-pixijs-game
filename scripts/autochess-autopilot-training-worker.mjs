@@ -76,6 +76,8 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
     }
     const round = bridge.engine.state.round;
     const interest = bridge.engine.interestIncome;
+    const financeCount = bridge.engine.getActiveTraits()
+      .find((trait) => trait.id === "finance")?.count || 0;
     const skipped = bridge.skipBattle();
     if (!skipped.skipped) throw new Error(`Battle did not finish for seed ${seed}, round ${round}`);
     const assets = bridge.engine.state.gold + rosterValue(bridge.engine);
@@ -90,6 +92,7 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
       netWorth: assets + invested,
       margin: battleMargin(bridge.engine.state.battle),
       interest,
+      financeCount,
     });
   }
   if (safety >= 5000) throw new Error(`Autopilot safety limit reached for seed ${seed}`);
@@ -98,11 +101,18 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
   const earlyRounds = rounds.filter((round) => round.round <= 12);
   const earlyLosses = earlyRounds.filter((round) => !round.won).length;
   const final = rounds.at(-1);
+  const missingMilestoneRound = battleLimit + 1;
+  const firstFourFinanceRound = rounds.find((round) => round.financeCount >= 4)?.round
+    ?? missingMilestoneRound;
+  const firstMaxInterestRound = rounds.find((round) => round.interest >= 20)?.round
+    ?? missingMilestoneRound;
   const fitness = wins * 100_000_000
     + (final?.round || 0) * 1_000_000
     - earlyLosses * 100_000
     + (final?.hp || 0) * 2_500
     + (final?.netWorth || 0) * 1_000
+    + Math.max(0, missingMilestoneRound - firstFourFinanceRound) * 500
+    + Math.max(0, missingMilestoneRound - firstMaxInterestRound) * 250
     + rounds.reduce((sum, round) => sum + round.margin * 1_000 + round.interest * 100, 0);
   return {
     seed,
@@ -117,6 +127,8 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
     perfectEarly: earlyRounds.length >= Math.min(12, battleLimit) && earlyLosses === 0,
     averageMargin: rounds.reduce((sum, round) => sum + round.margin, 0) / Math.max(1, rounds.length),
     averageInterest: rounds.reduce((sum, round) => sum + round.interest, 0) / Math.max(1, rounds.length),
+    firstFourFinanceRound,
+    firstMaxInterestRound,
     cacheStats: {
       worker: workerData.workerIndex,
       ...getAutopilotRolloutCacheStats(),

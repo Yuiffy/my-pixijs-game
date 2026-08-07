@@ -229,6 +229,8 @@ export class AutoChessEngine {
 
   private rng: RandomSource;
 
+  private shopRng: RandomSource;
+
   private uid = 1;
 
   private chronosphereEnergyLocks = new Set<string>();
@@ -249,16 +251,17 @@ export class AutoChessEngine {
 
   constructor(seed = freshSeed()) {
     this.rng = createSeededRandom(seed);
+    this.shopRng = createSeededRandom(seed);
     this.state = createInitialState(seed, loadBestScore());
     this.roster = new RosterSystem({
       state: () => this.state,
-      rng: () => this.rng,
+      rng: () => this.shopRng,
       nextUid: () => this.uid++,
       setToast: (text, tone) => this.setToast(text, tone),
     });
     this.progression = new ProgressionSystem({
       state: () => this.state,
-      rng: () => this.rng,
+      rng: () => this.shopRng,
       getTraitLevel: (id) => this.getTraitStatus(id).level,
       living: (team) => this.living(team),
       isMaxPlayerLevel: () => this.isMaxPlayerLevel,
@@ -353,6 +356,7 @@ export class AutoChessEngine {
     const seed = freshSeed();
     const best = Math.max(this.state.bestScore, loadBestScore());
     this.rng = createSeededRandom(seed);
+    this.shopRng = createSeededRandom(seed);
     this.uid = 1;
     this.state = createInitialState(seed, best);
     this.state.starterChoices = this.rollStarterChoices();
@@ -488,6 +492,7 @@ export class AutoChessEngine {
     const seed = this.state.seed;
     const best = this.state.bestScore;
     this.rng = createSeededRandom(seed);
+    this.shopRng = createSeededRandom(seed);
     this.uid = 1;
     this.state = createInitialState(seed, best);
     this.state.phase = "preparation";
@@ -510,6 +515,7 @@ export class AutoChessEngine {
     const preferredSlot = this.isRanged(starter.unit) ? 6 : 11;
     this.state.board[preferredSlot] = starterUnit;
     this.state.shop = this.generateShop();
+    this.rng.restore(this.shopRng.snapshot());
     this.setToast(
       `${starter.name}已接入。购买单位，调整站位，然后开始迎战。`,
       "good",
@@ -530,6 +536,30 @@ export class AutoChessEngine {
 
   public get boardCount() {
     return this.roster.boardCount;
+  }
+
+  public getRandomState() {
+    return this.rng.snapshot();
+  }
+
+  public restoreRandomState(randomState: number) {
+    this.rng.restore(randomState);
+  }
+
+  public getShopRandomState() {
+    return this.shopRng.snapshot();
+  }
+
+  public previewFutureShops(refreshes: number) {
+    const randomState = this.shopRng.snapshot();
+    try {
+      return Array.from(
+        { length: Math.max(0, Math.floor(refreshes)) },
+        () => this.generateShop(),
+      );
+    } finally {
+      this.shopRng.restore(randomState);
+    }
   }
 
   private generateShop() {
