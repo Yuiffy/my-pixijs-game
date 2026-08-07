@@ -88,6 +88,11 @@ export type RunBattleLogEvent = BattleLogEvent & { round: number };
 export const ACTION_TRACE_LIMIT = 10_000;
 export const RUN_BATTLE_EVENT_LIMIT = BATTLE_EVENT_LOG_LIMIT;
 
+export type EngineBridgeOptions = {
+  simulation?: boolean;
+  battleStepHz?: number;
+};
+
 export class EngineBridge {
   public readonly engine: AutoChessEngine;
 
@@ -99,7 +104,7 @@ export class EngineBridge {
 
   public autoplayEnabled = false;
 
-  public autoplayStyle: "survival" | "balanced" | "highroll" = "survival";
+  public autoplayStyle: "survival" | "balanced" | "highroll" | "seer" = "survival";
 
   public autoplayInformationMode: "normal" | "oracle" = "normal";
 
@@ -135,8 +140,16 @@ export class EngineBridge {
 
   private actionHistory: ActionTraceEntry[] = [];
 
-  constructor(seed?: number, testSpeed = 1) {
-    this.engine = new AutoChessEngine(seed);
+  private readonly simulationMode: boolean;
+
+  private readonly battleStepHz: number;
+
+  constructor(seed?: number, testSpeed = 1, options: EngineBridgeOptions = {}) {
+    this.simulationMode = options.simulation === true;
+    this.battleStepHz = Math.max(20, Math.min(60, Math.round(options.battleStepHz || 60)));
+    this.engine = new AutoChessEngine(seed, this.simulationMode
+      ? { telemetry: false, visualEffects: false }
+      : undefined);
     this.testSpeed = Math.max(1, Math.min(20, Math.floor(testSpeed)));
     this.previousPhase = this.engine.state.phase;
   }
@@ -144,7 +157,7 @@ export class EngineBridge {
   public dispatch(action: GameAction) {
     const { engine } = this;
     this.beginNewRun(action);
-    const before = this.actionSnapshot();
+    const before = this.simulationMode ? null : this.actionSnapshot();
     const beforeGold = engine.state.gold;
     const beforeLevel = engine.state.playerLevel;
 
@@ -208,10 +221,13 @@ export class EngineBridge {
         break;
     }
 
-    this.reportAction(action, before);
-    this.flushEvents();
-    this.onEvent?.({ type: "state" });
-    return this.getState();
+    if (before) this.reportAction(action, before);
+    if (!this.simulationMode) {
+      this.flushEvents();
+      this.onEvent?.({ type: "state" });
+      return this.getState();
+    }
+    return null;
   }
 
   public getState() {
@@ -266,17 +282,22 @@ export class EngineBridge {
 
   public setConsoleLogging(enabled: boolean) {
     this.consoleLogging = enabled;
-    console.info(`[RiftLine][console] ${enabled ? "enabled" : "disabled"}`);
+    if (!this.simulationMode) {
+      console.info(`[RiftLine][console] ${enabled ? "enabled" : "disabled"}`);
+    }
     return this.consoleLogging;
   }
 
   public skipBattle() {
-    const before = this.actionSnapshot();
+    const before = this.simulationMode ? null : this.actionSnapshot();
     const result = this.fastForwardBattle();
-    this.reportAction({ type: "skipBattle" }, before);
-    this.flushEvents();
-    this.onEvent?.({ type: "state" });
-    return { ...result, state: this.getState() };
+    if (before) this.reportAction({ type: "skipBattle" }, before);
+    if (!this.simulationMode) {
+      this.flushEvents();
+      this.onEvent?.({ type: "state" });
+      return { ...result, state: this.getState() };
+    }
+    return result;
   }
 
   private fastForwardBattle() {
@@ -287,15 +308,17 @@ export class EngineBridge {
     const startedAt = engine.state.battle.elapsed;
     engine.recordBattleControl("收到快速结算指令，开始确定性推进");
     let steps = 0;
-    const maximumSteps = Math.ceil((engine.state.battle.limit - startedAt + 2) * 60);
+    const maximumSteps = Math.ceil(
+      (engine.state.battle.limit - startedAt + 2) * this.battleStepHz,
+    );
     while (engine.state.phase === "battle" && steps < maximumSteps) {
-      engine.update(1 / 60);
+      engine.update(1 / this.battleStepHz);
       steps += 1;
     }
     return {
       skipped: engine.state.phase !== "battle",
       reason: engine.state.phase === "battle" ? "达到快速结算安全上限" : "战斗已结算",
-      simulatedSeconds: Number((steps / 60).toFixed(2)),
+      simulatedSeconds: Number((steps / this.battleStepHz).toFixed(2)),
       steps,
     };
   }
@@ -331,7 +354,7 @@ export class EngineBridge {
   }
 
   public setAutopilotStrategy(
-    style: "survival" | "balanced" | "highroll",
+    style: "survival" | "balanced" | "highroll" | "seer",
     informationMode: "normal" | "oracle",
   ) {
     this.autoplayStyle = style;

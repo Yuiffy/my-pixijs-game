@@ -339,6 +339,16 @@ export interface Fighter {
 
 export type RankingMetric = "damage" | "support" | "taken";
 
+export interface RunUnitStats {
+  unitId: UnitId;
+  maxStar: 1 | 2 | 3;
+  battles: number;
+  damageDealt: number;
+  healingDone: number;
+  shieldingDone: number;
+  damageTaken: number;
+}
+
 export interface ProjectileVolleyShot {
   sourceFid: string;
   targetFid: string;
@@ -489,6 +499,7 @@ export interface GameState {
   augments: AugmentId[];
   augmentHistory: AugmentSelection[];
   augmentChoices: AugmentId[];
+  runStats: Partial<Record<UnitId, RunUnitStats>>;
   incomeBonus: number;
   paydayDebtRounds: number;
   battle: BattleState | null;

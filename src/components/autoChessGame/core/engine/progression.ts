@@ -12,6 +12,7 @@ import {
   type AugmentId,
   type AugmentTier,
   type TraitId,
+  type UnitId,
   waveForRound,
   augmentTierForRound,
 } from "../gameData";
@@ -87,8 +88,52 @@ public get potentialBounty() {
     );
   }
 
+private recordRunStats() {
+    const battleStats = new Map<UnitId, {
+      maxStar: 1 | 2 | 3;
+      damageDealt: number;
+      healingDone: number;
+      shieldingDone: number;
+      damageTaken: number;
+    }>();
+    this.state.battle?.player.forEach((fighter) => {
+      const stats = battleStats.get(fighter.unitId) || {
+        maxStar: fighter.star,
+        damageDealt: 0,
+        healingDone: 0,
+        shieldingDone: 0,
+        damageTaken: 0,
+      };
+      stats.maxStar = Math.max(stats.maxStar, fighter.star) as 1 | 2 | 3;
+      stats.damageDealt += fighter.damageDealt;
+      stats.healingDone += fighter.healingDone;
+      stats.shieldingDone += fighter.shieldingDone;
+      stats.damageTaken += fighter.damageTaken;
+      battleStats.set(fighter.unitId, stats);
+    });
+    battleStats.forEach((roundStats, unitId) => {
+      const stats = this.state.runStats[unitId] || {
+        unitId,
+        maxStar: roundStats.maxStar,
+        battles: 0,
+        damageDealt: 0,
+        healingDone: 0,
+        shieldingDone: 0,
+        damageTaken: 0,
+      };
+      stats.maxStar = Math.max(stats.maxStar, roundStats.maxStar) as 1 | 2 | 3;
+      stats.battles += 1;
+      stats.damageDealt += roundStats.damageDealt;
+      stats.healingDone += roundStats.healingDone;
+      stats.shieldingDone += roundStats.shieldingDone;
+      stats.damageTaken += roundStats.damageTaken;
+      this.state.runStats[unitId] = stats;
+    });
+  }
+
 public finishBattle(won: boolean) {
     if (this.state.phase !== "battle" || !this.state.battle) return;
+    this.recordRunStats();
     const wave = this.currentWave;
     const interest = this.interestIncome;
     const financeIncome = this.financeIncomeBonus;

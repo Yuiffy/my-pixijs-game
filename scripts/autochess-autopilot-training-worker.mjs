@@ -17,6 +17,13 @@ const {
 const { STARTING_PLAYER_LEVEL, upgradeCostForLevel } = await loadTypescriptModule(
   "src/components/autoChessGame/core/gameData.ts",
 );
+const {
+  AUTOPILOT_LATE_GAME_TARGET_IDS,
+  AUTOPILOT_TERMINAL_TARGETS,
+  lateGameTargetDesiredCopies,
+} = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/lateGamePlan.ts",
+);
 
 const cachePath = workerData.cachePath;
 try {
@@ -55,13 +62,61 @@ const battleMargin = (battle) => {
   );
   return health(battle.player) - health(battle.enemy);
 };
+const unitCopyValue = (unit) => (unit.star === 3 ? 9 : unit.star === 2 ? 3 : 1);
+const terminalProgress = (engine) => {
+  const roster = [...engine.state.board, ...engine.state.bench].filter(Boolean);
+  const copiesById = new Map();
+  roster.forEach((unit) => {
+    copiesById.set(unit.id, (copiesById.get(unit.id) || 0) + unitCopyValue(unit));
+  });
+  const desiredCopies = AUTOPILOT_TERMINAL_TARGETS.reduce(
+    (sum, target) => sum + lateGameTargetDesiredCopies(target.id),
+    0,
+  );
+  const completedCopies = AUTOPILOT_TERMINAL_TARGETS.reduce(
+    (sum, target) => sum + Math.min(
+      lateGameTargetDesiredCopies(target.id),
+      copiesById.get(target.id) || 0,
+    ),
+    0,
+  );
+  return {
+    ownedTargets: AUTOPILOT_TERMINAL_TARGETS.filter(
+      ({ id }) => (copiesById.get(id) || 0) > 0,
+    ).length,
+    threeStarTargets: AUTOPILOT_TERMINAL_TARGETS.filter(
+      ({ id }) => roster.some((unit) => unit.id === id && unit.star === 3),
+    ).length,
+    copyCompletion: completedCopies / Math.max(1, desiredCopies),
+    benchUnits: engine.state.bench.filter(Boolean).length,
+    offPlanBenchUnits: engine.state.bench.filter((unit) => (
+      unit && !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(unit.id)
+    )).length,
+  };
+};
 
-const playRun = ({ seed, policy, battleLimit, starter }) => {
-  const bridge = new EngineBridge(seed);
+const playRun = ({
+  seed,
+  policy,
+  battleLimit,
+  starter,
+  mode = "training",
+  battleStepHz,
+}) => {
+  const startedAt = performance.now();
+  const training = mode === "training";
+  const bridge = new EngineBridge(seed, 1, {
+    simulation: true,
+    battleStepHz: battleStepHz || 60,
+  });
   bridge.setConsoleLogging(false);
   bridge.engine.state.starterChoices = [starter];
   bridge.engine.startRun(starter);
-  const autopilot = new AutoChessAutopilot(bridge, "evolution", policy);
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    training ? "training" : "evolution",
+    policy,
+  );
   autopilot.setEnabled(true);
   let now = 1000;
   let safety = 0;
@@ -82,6 +137,7 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
     if (!skipped.skipped) throw new Error(`Battle did not finish for seed ${seed}, round ${round}`);
     const assets = bridge.engine.state.gold + rosterValue(bridge.engine);
     const invested = developmentValue(bridge.engine);
+    const progress = terminalProgress(bridge.engine);
     rounds.push({
       round,
       won: bridge.engine.state.result?.won || false,
@@ -93,6 +149,7 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
       margin: battleMargin(bridge.engine.state.battle),
       interest,
       financeCount,
+      ...progress,
     });
   }
   if (safety >= 5000) throw new Error(`Autopilot safety limit reached for seed ${seed}`);
@@ -106,15 +163,20 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
     ?? missingMilestoneRound;
   const firstMaxInterestRound = rounds.find((round) => round.interest >= 20)?.round
     ?? missingMilestoneRound;
-  const fitness = wins * 100_000_000
-    + (final?.round || 0) * 1_000_000
+  const finalTerminalProgress = terminalProgress(bridge.engine);
+  const fitness = (final?.round || 0) * 100_000_000
+    + wins * 1_000_000
     - earlyLosses * 100_000
+    + finalTerminalProgress.copyCompletion * 500_000
+    + finalTerminalProgress.threeStarTargets * 100_000
     + (final?.hp || 0) * 2_500
     + (final?.netWorth || 0) * 1_000
     + Math.max(0, missingMilestoneRound - firstFourFinanceRound) * 500
     + Math.max(0, missingMilestoneRound - firstMaxInterestRound) * 250
     + rounds.reduce((sum, round) => sum + round.margin * 1_000 + round.interest * 100, 0);
   return {
+    mode,
+    durationMs: Number((performance.now() - startedAt).toFixed(2)),
     seed,
     wins,
     finalRound: final?.round || 0,
@@ -129,6 +191,11 @@ const playRun = ({ seed, policy, battleLimit, starter }) => {
     averageInterest: rounds.reduce((sum, round) => sum + round.interest, 0) / Math.max(1, rounds.length),
     firstFourFinanceRound,
     firstMaxInterestRound,
+    finalTerminalOwnedTargets: finalTerminalProgress.ownedTargets,
+    finalTerminalThreeStarTargets: finalTerminalProgress.threeStarTargets,
+    finalTerminalCopyCompletion: finalTerminalProgress.copyCompletion,
+    finalBenchUnits: finalTerminalProgress.benchUnits,
+    finalOffPlanBenchUnits: finalTerminalProgress.offPlanBenchUnits,
     cacheStats: {
       worker: workerData.workerIndex,
       ...getAutopilotRolloutCacheStats(),

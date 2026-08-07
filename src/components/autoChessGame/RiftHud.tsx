@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   FastForwardOutlined,
+  ReloadOutlined,
   RobotOutlined,
   SettingOutlined,
   UserOutlined,
@@ -12,12 +13,14 @@ import type { AutoChessEngine } from "./core/gameEngine";
 import {
   STARTERS,
   TRAITS,
+  UNIT_DEFS,
   bookLevelForPlayerLevel,
   enemyBudgetForRound,
   enemyTraitActivations,
   tierOddsForLevel,
 } from "./core/gameData";
 import type { TraitId } from "./core/gameData";
+import type { OwnedUnit, RunUnitStats } from "./core/gameTypes";
 import type { GameAction } from "./phaser/EngineBridge";
 import {
   ActionButton,
@@ -53,6 +56,62 @@ export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
 type SheetName = "shop" | "bench" | "traits" | null;
 const MOBILE_VIEW_QUERY = "(max-width: 700px), (pointer: coarse) and (max-width: 1200px)";
 
+const compactStat = (value: number) => {
+  const rounded = Math.round(value);
+  if (rounded < 10_000) return rounded.toLocaleString();
+  return `${(rounded / 1000).toFixed(rounded < 100_000 ? 1 : 0)}k`;
+};
+
+const perBattle = (stats: RunUnitStats, value: number) => value / Math.max(1, stats.battles);
+
+function FinalRanking({
+  label,
+  title,
+  entries,
+  metric,
+}: {
+  label: string;
+  title: string;
+  entries: RunUnitStats[];
+  metric: "damage" | "support" | "taken";
+}) {
+  return (
+    <section className={`rift-final-ranking is-${metric}`}>
+      <header><span>{label}</span><strong>{title}</strong></header>
+      <div>
+        {entries.length ? entries.map((stats, index) => {
+          const unit = UNIT_DEFS[stats.unitId];
+          const damage = perBattle(stats, stats.damageDealt);
+          const healing = perBattle(stats, stats.healingDone);
+          const shielding = perBattle(stats, stats.shieldingDone);
+          const support = healing + shielding;
+          const taken = perBattle(stats, stats.damageTaken);
+          return (
+            <article key={stats.unitId}>
+              <b>{index + 1}</b>
+              <span
+                className="rift-final-ranking-portrait"
+                style={{ background: unit.color, borderColor: unit.accent }}
+              >
+                <UnitPortrait unitId={stats.unitId} size={30} />
+              </span>
+              <div>
+                <strong>{unit.name}</strong>
+                <small>
+                  {metric === "damage" && `${stats.battles} 战 · 场均 ${compactStat(damage)}`}
+                  {metric === "support" && `治 ${compactStat(healing)} · 盾 ${compactStat(shielding)}`}
+                  {metric === "taken" && `${stats.battles} 战 · 场均 ${compactStat(taken)}`}
+                </small>
+              </div>
+              <em>{compactStat(metric === "damage" ? damage : metric === "support" ? support : taken)}</em>
+            </article>
+          );
+        }) : <span className="rift-final-ranking-empty">本局没有记录</span>}
+      </div>
+    </section>
+  );
+}
+
 export default function RiftHud({
   engine,
   enemyFormationOpen,
@@ -68,6 +127,7 @@ export default function RiftHud({
   const [starterPage, setStarterPage] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [battleTraitsCollapsed, setBattleTraitsCollapsed] = useState(false);
+  const [gameUrl, setGameUrl] = useState("");
   const state = engine?.state;
 
   useEffect(() => {
@@ -85,6 +145,10 @@ export default function RiftHud({
   useEffect(() => {
     if (enemyFormationOpen) setSheet(null);
   }, [enemyFormationOpen]);
+
+  useEffect(() => {
+    setGameUrl(`${window.location.origin}${window.location.pathname}`);
+  }, []);
 
   if (!engine || !state) return null;
 
@@ -156,15 +220,75 @@ export default function RiftHud({
   }
 
   if (state.phase === "gameover") {
+    const finalLineup = state.board.filter((unit): unit is OwnedUnit => Boolean(unit));
+    const finalStats = Object.values(state.runStats)
+      .filter((stats): stats is RunUnitStats => Boolean(stats));
+    const top = (
+      valueFor: (stats: RunUnitStats) => number,
+    ) => [...finalStats]
+      .filter((stats) => valueFor(stats) > 0)
+      .sort((left, right) => valueFor(right) - valueFor(left) || left.unitId.localeCompare(right.unitId))
+      .slice(0, 3);
+    const damageTop = top((stats) => perBattle(stats, stats.damageDealt));
+    const supportTop = top((stats) => perBattle(stats, stats.healingDone + stats.shieldingDone));
+    const takenTop = top((stats) => perBattle(stats, stats.damageTaken));
     return (
       <div className="rift-dom-layer rift-dom-modal-phase" style={{ fontFamily: FONT }}>
         <HudHeader state={state} />
-        <section className={`rift-dom-phase-card ${state.finalWon ? "is-win" : "is-loss"}`}>
-          <span className="rift-eyebrow">RUN COMPLETE // {state.finalWon ? "RIFT SEALED" : "LINE LOST"}</span>
-          <h1>{state.finalWon ? "裂隙已封闭" : "战线已失守"}</h1>
-          <p>{state.finalWon ? "你守住了十六次冲击。普通无限与地狱无限已经开启。" : "这一局的答案到此为止。调整开局协议，再试一次。"}</p>
-          <div className="rift-final-stats"><span>本局积分 <b>{state.score.toLocaleString()}</b></span><span>核心 <b>{state.hp}/{state.maxHp}</b></span><span>最高纪录 <b>{state.bestScore.toLocaleString()}</b></span></div>
-          <ActionButton tone={state.finalWon ? "confirm" : "danger"} onClick={() => dispatch({ type: "restart" })}>重新接入 <b>↗</b></ActionButton>
+        <section className={`rift-dom-phase-card rift-final-report ${state.finalWon ? "is-win" : "is-loss"}`}>
+          <header className="rift-final-heading">
+            <div>
+              <span className="rift-eyebrow">RUN COMPLETE // {state.finalWon ? "RIFT SEALED" : "LINE LOST"}</span>
+              <h1>{state.finalWon ? "裂隙已封闭" : "战线已失守"}</h1>
+              <p>{state.finalWon ? "远征完成，下面是本次战术档案。" : "阵线倒下了，但这套阵容留下了完整战术档案。"}</p>
+            </div>
+            <div className="rift-final-stats">
+              <span>到达战线 <b>第 {state.round} 战</b></span>
+              <span>本局积分 <b>{state.score.toLocaleString()}</b></span>
+              <span>本局战绩 <b>{state.victories} 胜 / {Math.max(0, state.round - state.victories)} 负</b></span>
+            </div>
+          </header>
+
+          <div className="rift-final-build">
+            <section className="rift-final-lineup">
+              <header><span>FINAL LINEUP</span><strong>最终阵容 · {finalLineup.length} 人</strong></header>
+              <div>
+                {finalLineup.map((owned) => {
+                  const unit = UNIT_DEFS[owned.id];
+                  return (
+                    <article key={owned.uid} style={{ "--unit-accent": unit.accent, "--unit-color": unit.color } as CSSProperties}>
+                      <span><UnitPortrait unitId={owned.id} size={38} /></span>
+                      <strong>{unit.name}</strong>
+                      <small>{owned.star} 星</small>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+            <section className="rift-final-traits">
+              <header><span>ACTIVE SYNERGY</span><strong>最终羁绊 · {activeTraits.length} 组</strong></header>
+              <div>
+                {activeTraits.length
+                  ? activeTraits.map((trait) => (
+                    <span key={trait.id} style={{ "--trait-color": trait.color } as CSSProperties}>
+                      <b>{trait.name}{STAR_LABEL[trait.level]}</b><small>{trait.count} 人</small>
+                    </span>
+                  ))
+                  : <em>未激活羁绊</em>}
+              </div>
+            </section>
+          </div>
+
+          <div className="rift-final-leaderboards">
+            <FinalRanking label="DAMAGE TOP 3" title="场均输出" entries={damageTop} metric="damage" />
+            <FinalRanking label="SUPPORT TOP 3" title="场均治疗 / 护盾" entries={supportTop} metric="support" />
+            <FinalRanking label="DAMAGE TAKEN TOP 3" title="场均承伤" entries={takenTop} metric="taken" />
+          </div>
+
+          <footer className="rift-final-footer">
+            <div><span>维阿自走棋 · 裂隙阵线</span><a href={gameUrl || undefined} target="_blank" rel="noreferrer">{gameUrl || "正在读取当前网址..."}</a></div>
+            <ActionButton tone={state.finalWon ? "confirm" : "danger"} onClick={() => dispatch({ type: "restart" })}><ReloadOutlined aria-hidden="true" />再来一局</ActionButton>
+          </footer>
         </section>
       </div>
     );

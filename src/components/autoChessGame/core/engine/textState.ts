@@ -175,6 +175,22 @@ export const renderTextState = (context: TextStateContext) => {
         tier: AUGMENTS.find((augment) => augment.id === id)?.tier,
         description: AUGMENTS.find((augment) => augment.id === id)?.description,
       })),
+      runStats: Object.values(context.state.runStats)
+        .filter((stats): stats is NonNullable<typeof stats> => Boolean(stats))
+        .map((stats) => ({
+          ...stats,
+          name: UNIT_DEFS[stats.unitId].name,
+          damageDealt: Math.round(stats.damageDealt),
+          healingDone: Math.round(stats.healingDone),
+          shieldingDone: Math.round(stats.shieldingDone),
+          damageTaken: Math.round(stats.damageTaken),
+          perBattle: {
+            damageDealt: Math.round(stats.damageDealt / Math.max(1, stats.battles)),
+            healingDone: Math.round(stats.healingDone / Math.max(1, stats.battles)),
+            shieldingDone: Math.round(stats.shieldingDone / Math.max(1, stats.battles)),
+            damageTaken: Math.round(stats.damageTaken / Math.max(1, stats.battles)),
+          },
+        })),
       starterChoices: context.state.starterChoices.map((id, index) => {
         const starter = STARTERS.find((item) => item.id === id);
         return { index, id, name: starter?.name, description: starter?.description };

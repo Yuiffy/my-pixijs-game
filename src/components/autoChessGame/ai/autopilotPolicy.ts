@@ -20,6 +20,7 @@ export interface AutopilotPolicy {
   upgradeChasePurchaseInterestTiersAtRisk: number;
   stabilizePurchaseInterestTiersAtRisk: number;
   financePurchaseInterestTiersAtRisk: number;
+  lateGameTargetPurchaseInterestTiersAtRisk: number;
   goodPurchaseInterestTiersAtRisk: number;
   mergePurchaseInterestTiersAtRisk: number;
   levelInterestTiersAtRisk: number;
@@ -32,46 +33,51 @@ export interface AutopilotPolicy {
   skipMaxStarDuplicatePurchases: number;
 }
 
-export type AutopilotStyle = "survival" | "balanced" | "highroll";
+export type AutopilotStyle = "survival" | "balanced" | "highroll" | "seer";
 export type AutopilotInformationMode = "normal" | "oracle";
 
+export const informationModeForAutopilotStyle = (
+  style: AutopilotStyle,
+): AutopilotInformationMode => (style === "seer" ? "oracle" : "normal");
+
 export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
-  reserveCap: 12,
-  reserveFloor: 3,
-  reserveRoundScale: 1,
+  reserveCap: 14,
+  reserveFloor: 2,
+  reserveRoundScale: 0.7,
   criticalHpThreshold: 8,
   criticalReserve: 2,
-  woundedHpThreshold: 12,
+  woundedHpThreshold: 14,
   woundedReserve: 4,
-  targetLevelRoundDivisor: 3,
-  targetLevelRoundOffset: 1,
-  safeWinRolloutScore: 10020,
-  stabilizeRolloutScore: 10000,
-  financeActivationRolloutScore: 10020,
-  financeActivationMaxRolloutDeficit: 0,
-  maximumExcessPaidRerolls: 64,
-  maximumDryPaidRerolls: 8,
-  upgradeChaseRerollInterestTiersAtRisk: 20,
+  targetLevelRoundDivisor: 2,
+  targetLevelRoundOffset: 2,
+  safeWinRolloutScore: 10050,
+  stabilizeRolloutScore: 10050,
+  financeActivationRolloutScore: 9975,
+  financeActivationMaxRolloutDeficit: 25,
+  maximumExcessPaidRerolls: 55,
+  maximumDryPaidRerolls: 12,
+  upgradeChaseRerollInterestTiersAtRisk: 18,
   stabilizeRerollInterestTiersAtRisk: 20,
   bankPurchaseInterestTiersAtRisk: 0,
-  upgradeChasePurchaseInterestTiersAtRisk: 2,
-  stabilizePurchaseInterestTiersAtRisk: 20,
-  financePurchaseInterestTiersAtRisk: 1,
-  goodPurchaseInterestTiersAtRisk: 20,
+  upgradeChasePurchaseInterestTiersAtRisk: 0,
+  stabilizePurchaseInterestTiersAtRisk: 14,
+  financePurchaseInterestTiersAtRisk: 3,
+  lateGameTargetPurchaseInterestTiersAtRisk: 1,
+  goodPurchaseInterestTiersAtRisk: 18,
   mergePurchaseInterestTiersAtRisk: 20,
-  levelInterestTiersAtRisk: 20,
-  interestSaleMinimumBench: 0,
+  levelInterestTiersAtRisk: 4,
+  interestSaleMinimumBench: 1,
   speculativePurchaseMinimumEmptyBench: 2,
-  upgradeProjectLimit: 2,
-  minimumWinningLineupMaxPrunes: 4,
-  maximumFinalReinvestments: 2,
-  maxStarCleanupSales: 3,
+  upgradeProjectLimit: 3,
+  minimumWinningLineupMaxPrunes: 6,
+  maximumFinalReinvestments: 0,
+  maxStarCleanupSales: 7,
   skipMaxStarDuplicatePurchases: 1,
 };
 
 export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotPolicy>> = {
   survival: {
-    safeWinRolloutScore: 9975,
+    safeWinRolloutScore: 10050,
   },
   balanced: {
     reserveCap: 10,
@@ -89,6 +95,9 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     financeActivationMaxRolloutDeficit: 100,
     financePurchaseInterestTiersAtRisk: 2,
     upgradeProjectLimit: 3,
+  },
+  seer: {
+    safeWinRolloutScore: 9975,
   },
 };
 
@@ -135,6 +144,10 @@ export const resolveAutopilotPolicy = (
     financePurchaseInterestTiersAtRisk: Math.max(
       0,
       Math.floor(policy.financePurchaseInterestTiersAtRisk),
+    ),
+    lateGameTargetPurchaseInterestTiersAtRisk: Math.max(
+      0,
+      Math.floor(policy.lateGameTargetPurchaseInterestTiersAtRisk),
     ),
     upgradeProjectLimit: Math.max(0, Math.floor(policy.upgradeProjectLimit)),
     goodPurchaseInterestTiersAtRisk: Math.max(

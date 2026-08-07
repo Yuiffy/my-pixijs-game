@@ -99,6 +99,11 @@ export { fighterVisualRadius, mechanicalRabbitMuzzle } from "../battleGeometry";
 
 export const BATTLE_EVENT_LOG_LIMIT = 100_000;
 
+export type AutoChessEngineOptions = {
+  telemetry?: boolean;
+  visualEffects?: boolean;
+};
+
 const CONTACT_ATTACK_BUFFER = 12;
 const PLACEMENT_MARGIN = 8;
 const TARGET_LOCK_DURATION = 0.45;
@@ -249,7 +254,13 @@ export class AutoChessEngine {
 
   private readonly abilities: AbilitySystem;
 
-  constructor(seed = freshSeed()) {
+  private readonly telemetryEnabled: boolean;
+
+  private readonly visualEffectsEnabled: boolean;
+
+  constructor(seed = freshSeed(), engineOptions: AutoChessEngineOptions = {}) {
+    this.telemetryEnabled = engineOptions.telemetry !== false;
+    this.visualEffectsEnabled = engineOptions.visualEffects !== false;
     this.rng = createSeededRandom(seed);
     this.shopRng = createSeededRandom(seed);
     this.state = createInitialState(seed, loadBestScore());
@@ -283,6 +294,7 @@ export class AutoChessEngine {
       faceTowardX: (fighter, targetX) => this.faceTowardX(fighter, targetX),
       retreatFrom: (source, target, distance, duration) =>
         this.retreatFrom(source, target, distance, duration),
+      addEffect: (effect) => this.addEffect(effect),
     });
     this.abilities = new AbilitySystem({
       state: () => this.state,
@@ -805,6 +817,7 @@ export class AutoChessEngine {
     target?: Fighter | null,
     details: Partial<Pick<BattleLogEvent, "ability" | "projectile" | "amount" | "damageKind" | "direction" | "impact">> = {},
   ) {
+    if (!this.telemetryEnabled) return null;
     const battle = this.state.battle;
     if (!battle) return null;
     const direction = details.direction || (source && target
@@ -2414,7 +2427,7 @@ export class AutoChessEngine {
     if (this.state.phase === "battle") {
       const battle = this.state.battle;
       this.updateBattle(dt);
-      if (battle) this.observeTargetChanges(battle);
+      if (battle && this.telemetryEnabled) this.observeTargetChanges(battle);
     }
   }
 
@@ -2471,6 +2484,7 @@ export class AutoChessEngine {
   }
 
   private addEffect(effect: Omit<BattleEffect, "maxLife">) {
+    if (!this.visualEffectsEnabled) return;
     this.state.battle?.effects.push({ ...effect, maxLife: effect.life });
   }
 

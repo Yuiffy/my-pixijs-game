@@ -101,6 +101,7 @@ export interface CombatProjectileHost {
     distance: number,
     duration: number,
   ): boolean;
+  addEffect(effect: Omit<BattleEffect, "maxLife">): void;
 }
 
 export class CombatProjectileSystem {
@@ -114,7 +115,7 @@ export class CombatProjectileSystem {
   }
 
   private addEffect(effect: Omit<BattleEffect, "maxLife">) {
-    this.host.state().battle?.effects.push({ ...effect, maxLife: effect.life });
+    this.host.addEffect(effect);
   }
 
   public deliverRemoteAoe(source: Fighter, center: { x: number; y: number }) {

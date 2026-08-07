@@ -2627,6 +2627,56 @@ test("结算会保留双方完整统计，直到玩家显式继续", () => {
   assert.equal(engine.state.round, 2);
 });
 
+test("整局战报按棋种参战场次计算场均贡献", () => {
+  const engine = createEngine(62);
+  const starter = engine.state.board.find(Boolean);
+  assert.ok(starter);
+  engine.state.board[0] = { uid: 999, id: starter.id, star: 1 };
+
+  const finishRound = (damage, healing, shielding, taken) => {
+    engine.startBattle();
+    const battle = engine.state.battle;
+    assert.ok(battle);
+    assert.equal(battle.player.length, 2);
+    battle.player[0].damageDealt = damage[0];
+    battle.player[1].damageDealt = damage[1];
+    battle.player[0].healingDone = healing[0];
+    battle.player[1].healingDone = healing[1];
+    battle.player[0].shieldingDone = shielding[0];
+    battle.player[1].shieldingDone = shielding[1];
+    battle.player[0].damageTaken = taken[0];
+    battle.player[1].damageTaken = taken[1];
+    battle.enemy.forEach((fighter) => { fighter.hp = 0; fighter.alive = false; });
+    engine.update(0.05);
+    assert.equal(engine.state.phase, "result");
+  };
+
+  finishRound([100, 50], [20, 10], [10, 20], [40, 60]);
+  engine.continueAfterResult();
+  finishRound([70, 30], [10, 10], [20, 0], [30, 20]);
+
+  assert.deepEqual(engine.state.runStats[starter.id], {
+    unitId: starter.id,
+    maxStar: 1,
+    battles: 2,
+    damageDealt: 250,
+    healingDone: 50,
+    shieldingDone: 50,
+    damageTaken: 150,
+  });
+  const textStats = JSON.parse(engine.renderTextState()).runStats
+    .find((stats) => stats.unitId === starter.id);
+  assert.deepEqual(textStats.perBattle, {
+    damageDealt: 125,
+    healingDone: 25,
+    shieldingDone: 25,
+    damageTaken: 75,
+  });
+
+  engine.resetToTitle();
+  assert.deepEqual(engine.state.runStats, {});
+});
+
 test("结算继续会保留契印与失败结局分支", () => {
   const augmentEngine = createEngine(72);
   augmentEngine.state.round = 2;
@@ -2647,6 +2697,7 @@ test("结算继续会保留契印与失败结局分支", () => {
   assert.equal(lossEngine.state.hp, 0);
   lossEngine.continueAfterResult();
   assert.equal(lossEngine.state.phase, "gameover");
+  assert.ok(JSON.parse(lossEngine.renderTextState()).runStats.length > 0);
 });
 
 test("精英关、主线通关与地狱入口会在备战前发出预警", () => {

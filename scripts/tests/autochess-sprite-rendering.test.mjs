@@ -293,6 +293,18 @@ test("Phaser 场景与 DOM HUD 按所有权覆盖全部游戏阶段", () => {
   );
 });
 
+test("终局战报展示关卡阵容羁绊场均榜与当前网址", () => {
+  assert.match(hud, /到达战线/);
+  assert.match(hud, /最终阵容/);
+  assert.match(hud, /最终羁绊/);
+  assert.match(hud, /场均输出/);
+  assert.match(hud, /场均治疗 \/ 护盾/);
+  assert.match(hud, /场均承伤/);
+  assert.match(hud, /window\.location\.origin/);
+  assert.doesNotMatch(hud, /核心 <b>\{state\.hp\}/);
+  assert.match(hudShared, /state\.phase === "title" \|\| state\.phase === "gameover"/);
+});
+
 test("备战画布与 DOM 操作层共享引擎动作并提供紧凑 profile", () => {
   assert.match(hud, /type: "shop"/);
   assert.match(hud, /type: "buyXp"/);

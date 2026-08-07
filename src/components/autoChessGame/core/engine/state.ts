@@ -52,6 +52,7 @@ export const createInitialState = (
   augments: [],
   augmentHistory: [],
   augmentChoices: [],
+  runStats: {},
   incomeBonus: 0,
   paydayDebtRounds: 0,
   battle: null,

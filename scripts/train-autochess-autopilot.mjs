@@ -19,13 +19,22 @@ const generations = Math.max(1, Math.min(20, Number(option("--generations", "3")
 const trainingRuns = Math.max(1, Math.min(16, Number(option("--runs", "3")) || 3));
 const validationRuns = Math.max(1, Math.min(16, Number(option("--validation-runs", "3")) || 3));
 const baseSeed = Math.max(1, Number(option("--seed", "74000")) || 74000);
-const battles = Math.max(4, Math.min(32, Number(option("--battles", "12")) || 12));
+const battles = Math.max(4, Math.min(64, Number(option("--battles", "20")) || 20));
+const trainingBattleStepHz = Math.max(
+  20,
+  Math.min(60, Number(option("--training-hz", "60")) || 60),
+);
 const validationBattles = Math.max(
   battles,
-  Math.min(32, Number(option("--validation-battles", "20")) || 20),
+  Math.min(64, Number(option("--validation-battles", "50")) || 50),
 );
 const starter = option("--starter", "traffic_start");
 const outputPath = option("--output", "artifacts/autochess-autopilot-training.json");
+const initialPolicyPath = option("--initial-policy", "");
+const initialPolicyReport = initialPolicyPath
+  ? JSON.parse(await readFile(initialPolicyPath, "utf8"))
+  : null;
+const skipValidation = process.argv.includes("--skip-validation");
 const workerCount = Math.max(1, Math.min(
   16,
   Number(option("--workers", String(Math.min(8, Math.max(1, availableParallelism() - 2))))) || 1,
@@ -86,7 +95,7 @@ const dimensions = [
   { key: "upgradeProjectLimit", min: 0, max: 4, step: 1, sigma: 1 },
   { key: "minimumWinningLineupMaxPrunes", min: 0, max: 6, step: 1, sigma: 1.5 },
   { key: "maximumFinalReinvestments", min: 0, max: 3, step: 1, sigma: 1 },
-  { key: "maxStarCleanupSales", min: 0, max: 3, step: 1, sigma: 1 },
+  { key: "maxStarCleanupSales", min: 0, max: 8, step: 1, sigma: 1.5 },
   { key: "skipMaxStarDuplicatePurchases", min: 0, max: 1, step: 1, sigma: 0.5 },
 ];
 
@@ -200,16 +209,41 @@ class WorkerPool {
 }
 
 const pool = new WorkerPool(workerCount);
-const evaluate = async (policy, seedStart, runCount, battleLimit) => {
+const completedCampaigns = { training: 0, validation: 0 };
+const workerComputeMs = { training: 0, validation: 0 };
+const evaluate = async (policy, seedStart, runCount, battleLimit, mode = "training") => {
+  const startedAt = performance.now();
   const runs = await Promise.all(Array.from(
     { length: runCount },
-    (_, index) => pool.run({ seed: seedStart + index, policy, battleLimit, starter }),
+    (_, index) => pool.run({
+      seed: seedStart + index,
+      policy,
+      battleLimit,
+      starter,
+      mode,
+      battleStepHz: mode === "training" ? trainingBattleStepHz : 60,
+    }),
   ));
+  completedCampaigns[mode] += runs.length;
+  workerComputeMs[mode] += runs.reduce((sum, run) => sum + run.durationMs, 0);
   const average = (key) => runs.reduce((sum, run) => sum + run[key], 0) / runs.length;
+  const averageFinalRound = average("finalRound");
+  const finalRoundVariance = runs.reduce(
+    (sum, run) => sum + (run.finalRound - averageFinalRound) ** 2,
+    0,
+  ) / runs.length;
   return {
+    mode,
+    elapsedMs: Number((performance.now() - startedAt).toFixed(2)),
+    campaignsPerMinute: Number((runs.length * 60_000
+      / Math.max(1, performance.now() - startedAt)).toFixed(2)),
     fitness: average("fitness"),
     averageWins: average("wins"),
-    averageFinalRound: average("finalRound"),
+    averageFinalRound,
+    finalRoundStandardDeviation: Math.sqrt(finalRoundVariance),
+    minimumFinalRound: Math.min(...runs.map((run) => run.finalRound)),
+    maximumFinalRound: Math.max(...runs.map((run) => run.finalRound)),
+    completionRate: runs.filter((run) => run.finalRound >= battleLimit).length / runs.length,
     averageFinalHp: average("finalHp"),
     averageFinalAssetValue: average("finalAssetValue"),
     averageFinalLevel: average("finalLevel"),
@@ -221,6 +255,11 @@ const evaluate = async (policy, seedStart, runCount, battleLimit) => {
     averageInterest: average("averageInterest"),
     averageFirstFourFinanceRound: average("firstFourFinanceRound"),
     averageFirstMaxInterestRound: average("firstMaxInterestRound"),
+    averageFinalTerminalOwnedTargets: average("finalTerminalOwnedTargets"),
+    averageFinalTerminalThreeStarTargets: average("finalTerminalThreeStarTargets"),
+    averageFinalTerminalCopyCompletion: average("finalTerminalCopyCompletion"),
+    averageFinalBenchUnits: average("finalBenchUnits"),
+    averageFinalOffPlanBenchUnits: average("finalOffPlanBenchUnits"),
     runs,
   };
 };
@@ -231,14 +270,24 @@ const evaluateTraining = (policy) => {
   if (!cache.has(key)) cache.set(key, evaluate(policy, baseSeed, trainingRuns, battles));
   return cache.get(key);
 };
-const compareCandidate = (left, right) => right.training.averageWins - left.training.averageWins
+const compareCandidate = (left, right) => right.training.averageFinalRound - left.training.averageFinalRound
+  || right.training.minimumFinalRound - left.training.minimumFinalRound
+  || right.training.maximumFinalRound - left.training.maximumFinalRound
+  || left.training.finalRoundStandardDeviation - right.training.finalRoundStandardDeviation
+  || right.training.averageWins - left.training.averageWins
   || left.training.averageEarlyLosses - right.training.averageEarlyLosses
-  || right.training.averageFinalRound - left.training.averageFinalRound
   || left.training.averageFirstFourFinanceRound - right.training.averageFirstFourFinanceRound
   || left.training.averageFirstMaxInterestRound - right.training.averageFirstMaxInterestRound
   || right.training.fitness - left.training.fitness;
 const baselinePolicy = clampPolicy(DEFAULT_AUTOPILOT_POLICY);
+const initialPolicy = initialPolicyReport
+  ? clampPolicy(initialPolicyReport.bestPolicy || initialPolicyReport.policy || initialPolicyReport)
+  : null;
+const trainingStartedAt = performance.now();
 let population = [baselinePolicy];
+if (initialPolicy && JSON.stringify(initialPolicy) !== JSON.stringify(baselinePolicy)) {
+  population.push(initialPolicy);
+}
 while (population.length < populationSize) population.push(mutatePolicy(baselinePolicy));
 const history = [];
 
@@ -274,20 +323,31 @@ const finalists = (await Promise.all(population.map(async (policy) => ({
   training: await evaluateTraining(policy),
 })))).sort(compareCandidate);
 const bestPolicy = finalists[0].policy;
+const trainingElapsedMs = performance.now() - trainingStartedAt;
 const validationSeed = baseSeed + 10000;
-const [baselineValidation, bestValidation] = await Promise.all([
-  evaluate(baselinePolicy, validationSeed, validationRuns, validationBattles),
-  evaluate(bestPolicy, validationSeed, validationRuns, validationBattles),
-]);
-const recommended = bestValidation.averageWins >= baselineValidation.averageWins
+const validationStartedAt = performance.now();
+const [baselineValidation, bestValidation] = skipValidation
+  ? [null, null]
+  : await Promise.all([
+    evaluate(baselinePolicy, validationSeed, validationRuns, validationBattles, "validation"),
+    evaluate(bestPolicy, validationSeed, validationRuns, validationBattles, "validation"),
+  ]);
+const validationElapsedMs = performance.now() - validationStartedAt;
+const recommended = Boolean(baselineValidation && bestValidation
+  && bestValidation.averageWins >= baselineValidation.averageWins
   && bestValidation.averageEarlyLosses <= baselineValidation.averageEarlyLosses
   && bestValidation.averageFinalRound >= baselineValidation.averageFinalRound
-  && bestValidation.fitness > baselineValidation.fitness;
+  && bestValidation.fitness > baselineValidation.fitness);
 const [baselineTraining, bestTraining] = await Promise.all([
   evaluateTraining(baselinePolicy),
   evaluateTraining(bestPolicy),
 ]);
-const cacheSnapshots = [...baselineValidation.runs, ...bestValidation.runs]
+const cacheSnapshots = [
+  ...baselineTraining.runs,
+  ...bestTraining.runs,
+  ...(baselineValidation?.runs || []),
+  ...(bestValidation?.runs || []),
+]
   .reduce((latest, run) => {
     const current = latest.get(run.cacheStats.worker);
     if (!current || current.hits + current.misses < run.cacheStats.hits + run.cacheStats.misses) {
@@ -314,8 +374,11 @@ const report = {
     baseSeed,
     validationSeed,
     battles,
+    trainingBattleStepHz,
     validationBattles,
+    skipValidation,
     starter,
+    initialPolicyPath: initialPolicyPath || null,
     workerCount,
     balanceCacheVersion,
     persistentCacheDirectory,
@@ -327,6 +390,29 @@ const report = {
   baselineValidation,
   bestValidation,
   recommended,
+  throughput: {
+    training: {
+      campaigns: completedCampaigns.training,
+      elapsedMs: Number(trainingElapsedMs.toFixed(2)),
+      campaignsPerMinute: Number((completedCampaigns.training * 60_000
+        / Math.max(1, trainingElapsedMs)).toFixed(2)),
+      averageWorkerMsPerCampaign: Number((workerComputeMs.training
+        / Math.max(1, completedCampaigns.training)).toFixed(2)),
+      battleStepHz: trainingBattleStepHz,
+      planningMode: "training",
+    },
+    exactValidation: {
+      enabled: !skipValidation,
+      campaigns: completedCampaigns.validation,
+      elapsedMs: Number(validationElapsedMs.toFixed(2)),
+      campaignsPerMinute: Number((completedCampaigns.validation * 60_000
+        / Math.max(1, validationElapsedMs)).toFixed(2)),
+      averageWorkerMsPerCampaign: Number((workerComputeMs.validation
+        / Math.max(1, completedCampaigns.validation)).toFixed(2)),
+      battleStepHz: 60,
+      planningMode: "evolution",
+    },
+  },
   rolloutCache,
   history,
 };
@@ -335,4 +421,5 @@ report.rolloutCache.persistedEntries = await pool.close();
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 console.log(`Wrote autopilot training report to ${outputPath}`);
+console.log(JSON.stringify({ throughput: report.throughput, rolloutCache }, null, 2));
 console.log(JSON.stringify({ recommended, baselineValidation, bestValidation, bestPolicy }, null, 2));

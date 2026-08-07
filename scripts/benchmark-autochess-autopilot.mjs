@@ -26,9 +26,9 @@ const policyPath = option("--policy", "");
 const policyReport = policyPath ? JSON.parse(await readFile(policyPath, "utf8")) : null;
 const policy = policyReport?.bestPolicy || policyReport?.policy || policyReport || {};
 const style = option("--style", "survival");
-const informationMode = option("--information", "normal");
+const informationMode = option("--information", style === "seer" ? "oracle" : "normal");
 const reportProgress = process.argv.includes("--progress");
-if (!["survival", "balanced", "highroll"].includes(style)) {
+if (!["survival", "balanced", "highroll", "seer"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
 if (!["normal", "oracle"].includes(informationMode)) {

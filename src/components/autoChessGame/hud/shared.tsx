@@ -97,7 +97,7 @@ export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state
           <small>{progressHint}</small>
         </div>
       )}
-      {state.phase === "title" ? (
+      {state.phase === "title" || state.phase === "gameover" ? (
         <div className="rift-header-best"><span>最高纪录</span><b>{state.bestScore.toLocaleString()}</b></div>
       ) : (
         <div className="rift-header-metrics">
