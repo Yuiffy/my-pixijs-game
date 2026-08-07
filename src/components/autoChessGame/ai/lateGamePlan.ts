@@ -8,17 +8,16 @@ export type LateGameTarget = {
 };
 
 export const AUTOPILOT_LATE_GAME_TARGETS: readonly LateGameTarget[] = [
-  { id: "cog_scribe", priority: 100, desiredStar: 3, role: "terminal" },
-  { id: "grove_mender", priority: 96, desiredStar: 3, role: "terminal" },
-  { id: "lian", priority: 92, desiredStar: 3, role: "terminal" },
-  { id: "rei", priority: 88, desiredStar: 3, role: "terminal" },
-  { id: "rutice", priority: 84, desiredStar: 3, role: "terminal" },
-  { id: "yua", priority: 80, desiredStar: 3, role: "terminal" },
-  { id: "cinder_ram", priority: 76, desiredStar: 3, role: "terminal" },
-  { id: "spark_mage", priority: 72, desiredStar: 3, role: "terminal" },
-  { id: "sui_flower", priority: 68, desiredStar: 3, role: "terminal" },
-  { id: "xuehui", priority: 64, desiredStar: 3, role: "terminal" },
-  { id: "yukisyo", priority: 56, desiredStar: 2, role: "transition" },
+  { id: "grove_mender", priority: 100, desiredStar: 3, role: "terminal" },
+  { id: "lian", priority: 96, desiredStar: 3, role: "terminal" },
+  { id: "rei", priority: 92, desiredStar: 3, role: "terminal" },
+  { id: "yua", priority: 88, desiredStar: 3, role: "terminal" },
+  { id: "cinder_ram", priority: 84, desiredStar: 3, role: "terminal" },
+  { id: "spark_mage", priority: 80, desiredStar: 3, role: "terminal" },
+  { id: "sui_flower", priority: 76, desiredStar: 3, role: "terminal" },
+  { id: "xuehui", priority: 72, desiredStar: 3, role: "terminal" },
+  { id: "sui_bird", priority: 68, desiredStar: 3, role: "terminal" },
+  { id: "yukisyo", priority: 64, desiredStar: 3, role: "terminal" },
 ] as const;
 
 export const AUTOPILOT_TERMINAL_TARGETS = AUTOPILOT_LATE_GAME_TARGETS

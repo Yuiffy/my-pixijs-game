@@ -1053,6 +1053,46 @@ export class AutoChessAutopilot {
     });
   }
 
+  private terminalCompletionProjectCount(roster: OwnedEntry[]) {
+    return AUTOPILOT_TERMINAL_TARGETS.filter(({ id }) => {
+      const copies = roster
+        .filter(({ unit }) => unit.id === id)
+        .reduce((sum, { unit }) => sum + unitCopyValue(unit), 0);
+      return copies >= 6 && copies < lateGameTargetDesiredCopies(id);
+    }).length;
+  }
+
+  private terminalDevelopmentWindowOpen(roster: OwnedEntry[], rolloutScore: number) {
+    const { state } = this.bridge.engine;
+    return state.playerLevel >= 10
+      && state.round >= this.policy.terminalRollDownMinimumRound
+      && state.hp > this.policy.woundedHpThreshold
+      && this.financeInterestActive()
+      && rolloutScore >= this.policy.safeWinRolloutScore
+      && this.lateGameDevelopmentIncomplete(roster);
+  }
+
+  private terminalCompletionPushActive(roster: OwnedEntry[], rolloutScore: number) {
+    return this.terminalDevelopmentWindowOpen(roster, rolloutScore)
+      && this.preparationStartGold >= this.policy.terminalCompletionActivationGold
+      && this.terminalCompletionProjectCount(roster)
+        >= this.policy.terminalCompletionMinimumProjects;
+  }
+
+  private terminalRollDownReserve(roster: OwnedEntry[], rolloutScore: number) {
+    if (!this.terminalDevelopmentWindowOpen(roster, rolloutScore)) return null;
+    if (this.terminalCompletionPushActive(roster, rolloutScore)) {
+      return this.policy.terminalCompletionReserveGold;
+    }
+    return this.preparationStartGold >= this.policy.terminalRollDownActivationGold
+      ? this.policy.terminalRollDownReserveGold
+      : null;
+  }
+
+  private terminalRollDownActive(roster: OwnedEntry[], rolloutScore: number) {
+    return this.terminalRollDownReserve(roster, rolloutScore) !== null;
+  }
+
   private lateGameReserveUids(roster: OwnedEntry[]) {
     const reserves = new Set<number>();
     AUTOPILOT_LATE_GAME_TARGET_IDS.forEach((id) => {
@@ -1177,6 +1217,11 @@ export class AutoChessAutopilot {
       .filter(({ unit }) => financeProjectIds.has(unit.id))
       .sort((left, right) => this.unitScore(left.unit, roster) - this.unitScore(right.unit, roster))[0];
     const rerollMode = this.rerollStrategy(roster).mode;
+    const terminalReserve = this.terminalRollDownReserve(
+      roster,
+      this.rolloutConfidence(roster),
+    );
+    const terminalRollDown = terminalReserve !== null;
     const configuredPurchaseRisk = rerollMode === "stabilize"
       ? this.policy.stabilizePurchaseInterestTiersAtRisk
       : rerollMode === "upgrade_chase"
@@ -1243,6 +1288,10 @@ export class AutoChessAutopilot {
           + (advancesFinance ? 64 : 0)
           + (completesTrait ? 42 : 0)
           + longTermPriority
+          + (longTermPriority > 0
+            ? Math.min(96, ownedCopies * 12)
+              + (ownedCopies >= 6 ? 48 : ownedCopies >= 3 ? 18 : 0)
+            : 0)
           + (canSpeculate ? 18 + Math.min(24, ownedCopies * 4) + (shopCopies - 1) * 8 : 0)
           + traitPartners * 6;
       if (
@@ -1268,6 +1317,8 @@ export class AutoChessAutopilot {
           : Math.min(candidateInterestRisk, modePurchaseRisk);
       const reserve = needsPopulation
         ? 0
+        : terminalRollDown && longTermPriority > 0
+          ? terminalReserve
         : rerollMode === "bank"
           ? this.goldReserve(false, purchaseInterestRisk)
           : this.stabilizationGoldReserve(purchaseInterestRisk);
@@ -1881,6 +1932,10 @@ export class AutoChessAutopilot {
     const rerollStrategy = this.rerollStrategy(roster);
     const canUseFreeReroll = state.freeRerollCharges > 0 && this.rerolls < 6;
     const needsStabilization = rerollStrategy.rolloutScore < this.policy.safeWinRolloutScore;
+    const terminalReserve = needsStabilization
+      ? null
+      : this.terminalRollDownReserve(roster, rerollStrategy.rolloutScore);
+    const terminalRollDown = terminalReserve !== null;
     const maximumInterestTiersAtRisk = rerollStrategy.mode === "upgrade_chase"
       ? this.policy.upgradeChaseRerollInterestTiersAtRisk
       : this.policy.stabilizeRerollInterestTiersAtRisk;
@@ -1889,13 +1944,15 @@ export class AutoChessAutopilot {
       : 0;
     const rerollReserve = needsStabilization
       ? this.stabilizationGoldReserve(interestTiersAtRisk)
-      : this.goldReserve(false, 0);
+      : terminalRollDown
+        ? terminalReserve + 5
+        : this.goldReserve(false, 0);
     const developmentRerollLimit = Math.min(
       this.policy.maximumExcessPaidRerolls,
       Math.max(0, this.preparationStartGold - rerollReserve),
     );
     const canSearchDevelopment = !needsStabilization
-      && this.shouldSearchLongTermDevelopment(roster);
+      && (terminalRollDown || this.shouldSearchLongTermDevelopment(roster));
     const stabilizationDryRerollLimit = state.hp <= this.policy.criticalHpThreshold
       ? ECONOMY_ACTION_LIMIT
       : state.hp <= this.policy.woundedHpThreshold
@@ -1908,7 +1965,9 @@ export class AutoChessAutopilot {
             && this.dryPaidRerolls < stabilizationDryRerollLimit
           : canSearchDevelopment
             && this.paidRerolls < developmentRerollLimit
-            && this.dryPaidRerolls < this.policy.maximumDryPaidRerolls
+            && this.dryPaidRerolls < (terminalRollDown
+              ? this.policy.terminalRollDownMaximumDryRerolls
+              : this.policy.maximumDryPaidRerolls)
       )
       && this.oracleHasFutureCandidate(roster);
     if (

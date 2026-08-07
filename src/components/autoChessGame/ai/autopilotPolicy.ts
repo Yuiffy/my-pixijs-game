@@ -21,6 +21,13 @@ export interface AutopilotPolicy {
   stabilizePurchaseInterestTiersAtRisk: number;
   financePurchaseInterestTiersAtRisk: number;
   lateGameTargetPurchaseInterestTiersAtRisk: number;
+  terminalRollDownMinimumRound: number;
+  terminalRollDownActivationGold: number;
+  terminalRollDownReserveGold: number;
+  terminalRollDownMaximumDryRerolls: number;
+  terminalCompletionMinimumProjects: number;
+  terminalCompletionActivationGold: number;
+  terminalCompletionReserveGold: number;
   goodPurchaseInterestTiersAtRisk: number;
   mergePurchaseInterestTiersAtRisk: number;
   levelInterestTiersAtRisk: number;
@@ -41,36 +48,43 @@ export const informationModeForAutopilotStyle = (
 ): AutopilotInformationMode => (style === "seer" ? "oracle" : "normal");
 
 export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
-  reserveCap: 14,
-  reserveFloor: 2,
-  reserveRoundScale: 0.7,
+  reserveCap: 13,
+  reserveFloor: 4,
+  reserveRoundScale: 0.4,
   criticalHpThreshold: 8,
-  criticalReserve: 2,
-  woundedHpThreshold: 14,
-  woundedReserve: 4,
-  targetLevelRoundDivisor: 2,
-  targetLevelRoundOffset: 2,
+  criticalReserve: 1,
+  woundedHpThreshold: 16,
+  woundedReserve: 5,
+  targetLevelRoundDivisor: 3,
+  targetLevelRoundOffset: 3,
   safeWinRolloutScore: 10050,
-  stabilizeRolloutScore: 10050,
-  financeActivationRolloutScore: 9975,
-  financeActivationMaxRolloutDeficit: 25,
-  maximumExcessPaidRerolls: 55,
-  maximumDryPaidRerolls: 12,
-  upgradeChaseRerollInterestTiersAtRisk: 18,
-  stabilizeRerollInterestTiersAtRisk: 20,
-  bankPurchaseInterestTiersAtRisk: 0,
-  upgradeChasePurchaseInterestTiersAtRisk: 0,
-  stabilizePurchaseInterestTiersAtRisk: 14,
-  financePurchaseInterestTiersAtRisk: 3,
+  stabilizeRolloutScore: 10000,
+  financeActivationRolloutScore: 9800,
+  financeActivationMaxRolloutDeficit: 0,
+  maximumExcessPaidRerolls: 62,
+  maximumDryPaidRerolls: 9,
+  upgradeChaseRerollInterestTiersAtRisk: 20,
+  stabilizeRerollInterestTiersAtRisk: 14,
+  bankPurchaseInterestTiersAtRisk: 3,
+  upgradeChasePurchaseInterestTiersAtRisk: 2,
+  stabilizePurchaseInterestTiersAtRisk: 20,
+  financePurchaseInterestTiersAtRisk: 4,
   lateGameTargetPurchaseInterestTiersAtRisk: 1,
-  goodPurchaseInterestTiersAtRisk: 18,
+  terminalRollDownMinimumRound: 14,
+  terminalRollDownActivationGold: 132,
+  terminalRollDownReserveGold: 36,
+  terminalRollDownMaximumDryRerolls: 21,
+  terminalCompletionMinimumProjects: 2,
+  terminalCompletionActivationGold: 108,
+  terminalCompletionReserveGold: 32,
+  goodPurchaseInterestTiersAtRisk: 13,
   mergePurchaseInterestTiersAtRisk: 20,
-  levelInterestTiersAtRisk: 4,
-  interestSaleMinimumBench: 1,
-  speculativePurchaseMinimumEmptyBench: 2,
-  upgradeProjectLimit: 3,
-  minimumWinningLineupMaxPrunes: 6,
-  maximumFinalReinvestments: 0,
+  levelInterestTiersAtRisk: 5,
+  interestSaleMinimumBench: 0,
+  speculativePurchaseMinimumEmptyBench: 1,
+  upgradeProjectLimit: 2,
+  minimumWinningLineupMaxPrunes: 5,
+  maximumFinalReinvestments: 1,
   maxStarCleanupSales: 7,
   skipMaxStarDuplicatePurchases: 1,
 };
@@ -85,6 +99,11 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     safeWinRolloutScore: 10010,
     maximumDryPaidRerolls: 10,
     financeActivationMaxRolloutDeficit: 40,
+    terminalRollDownActivationGold: 120,
+    terminalRollDownReserveGold: 44,
+    terminalRollDownMaximumDryRerolls: 40,
+    terminalCompletionActivationGold: 100,
+    terminalCompletionReserveGold: 12,
   },
   highroll: {
     reserveCap: 7,
@@ -95,9 +114,23 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     financeActivationMaxRolloutDeficit: 100,
     financePurchaseInterestTiersAtRisk: 2,
     upgradeProjectLimit: 3,
+    terminalRollDownMinimumRound: 16,
+    terminalRollDownActivationGold: 108,
+    terminalRollDownReserveGold: 32,
+    terminalRollDownMaximumDryRerolls: 55,
+    terminalCompletionMinimumProjects: 1,
+    terminalCompletionActivationGold: 88,
+    terminalCompletionReserveGold: 4,
   },
   seer: {
     safeWinRolloutScore: 9975,
+    terminalRollDownMinimumRound: 16,
+    terminalRollDownActivationGold: 112,
+    terminalRollDownReserveGold: 40,
+    terminalRollDownMaximumDryRerolls: 55,
+    terminalCompletionMinimumProjects: 1,
+    terminalCompletionActivationGold: 92,
+    terminalCompletionReserveGold: 8,
   },
 };
 
@@ -148,6 +181,40 @@ export const resolveAutopilotPolicy = (
     lateGameTargetPurchaseInterestTiersAtRisk: Math.max(
       0,
       Math.floor(policy.lateGameTargetPurchaseInterestTiersAtRisk),
+    ),
+    terminalRollDownMinimumRound: Math.max(
+      1,
+      Math.floor(policy.terminalRollDownMinimumRound),
+    ),
+    terminalRollDownActivationGold: Math.max(
+      0,
+      Math.floor(policy.terminalRollDownActivationGold),
+    ),
+    terminalRollDownReserveGold: Math.max(
+      0,
+      Math.min(
+        Math.floor(policy.terminalRollDownActivationGold),
+        Math.floor(policy.terminalRollDownReserveGold),
+      ),
+    ),
+    terminalRollDownMaximumDryRerolls: Math.max(
+      0,
+      Math.floor(policy.terminalRollDownMaximumDryRerolls),
+    ),
+    terminalCompletionMinimumProjects: Math.max(
+      1,
+      Math.floor(policy.terminalCompletionMinimumProjects),
+    ),
+    terminalCompletionActivationGold: Math.max(
+      0,
+      Math.floor(policy.terminalCompletionActivationGold),
+    ),
+    terminalCompletionReserveGold: Math.max(
+      0,
+      Math.min(
+        Math.floor(policy.terminalCompletionActivationGold),
+        Math.floor(policy.terminalCompletionReserveGold),
+      ),
     ),
     upgradeProjectLimit: Math.max(0, Math.floor(policy.upgradeProjectLimit)),
     goodPurchaseInterestTiersAtRisk: Math.max(

@@ -67,6 +67,15 @@ const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
 const SESSION_TRACE_EVENT_LIMIT = 5_000;
 
+const archiveCompletedRunInDevelopment = async (trace: AutoChessLastRun) => {
+  if (process.env.NODE_ENV !== "development" || trace.state.phase !== "gameover") return;
+  await fetch("/api/autochess-trace-recovery", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(trace),
+  });
+};
+
 const openLastRunDatabase = () => new Promise<IDBDatabase>((resolve, reject) => {
   const request = window.indexedDB.open(LAST_RUN_DATABASE, 1);
   request.onupgradeneeded = () => {
@@ -264,7 +273,9 @@ export default function AutoChessGame() {
     try {
       const storedTrace = window.sessionStorage.getItem(LAST_RUN_TRACE_KEY);
       if (storedTrace) {
-        window.autoChessLastRun = JSON.parse(storedTrace) as AutoChessLastRun;
+        const trace = JSON.parse(storedTrace) as AutoChessLastRun;
+        window.autoChessLastRun = trace;
+        archiveCompletedRunInDevelopment(trace).catch(() => {});
         restoredFromSession = true;
       }
     } catch {
@@ -273,7 +284,10 @@ export default function AutoChessGame() {
     if (!restoredFromSession) {
       loadLastRunFromDatabase()
         .then((trace) => {
-          if (trace) window.autoChessLastRun = trace;
+          if (trace) {
+            window.autoChessLastRun = trace;
+            archiveCompletedRunInDevelopment(trace).catch(() => {});
+          }
         })
         .catch(() => {});
     }
@@ -305,6 +319,7 @@ export default function AutoChessGame() {
         }
       }
       persistLastRun(trace).catch(() => {});
+      archiveCompletedRunInDevelopment(trace).catch(() => {});
     };
 
     const onBridgeEvent = (event: BridgeEvent) => {

@@ -86,6 +86,7 @@ const candidateLimit = Math.max(
   Math.min(120, Number(option("--candidate-limit", "36")) || 36),
 );
 const outputPath = option("--output", "");
+const compareOnly = process.argv.includes("--compare-only");
 const initialLineup = option("--lineup", RESEARCH_SEED_LINEUP.join(","))
   .split(",")
   .filter((id) => SHOP_UNITS.includes(id));
@@ -262,6 +263,44 @@ const replacementNeighbors = (lineup) => uniqueLineups(lineup.flatMap((removed, 
 )));
 
 const baseStarsFor = (lineup) => normalizeStars(lineup);
+if (compareOnly) {
+  const comparison = evaluateBestFormation(initialLineup, baseStarsFor(initialLineup));
+  const report = {
+    generatedAt: new Date().toISOString(),
+    method: "Focused fixed-lineup comparison across the requested late-game rounds and formations.",
+    configuration: {
+      rounds,
+      seedCount,
+      baseSeed,
+      baseStar,
+      formationIds,
+      initialLineup,
+      augmentsByRound: Object.fromEntries(rounds.map((round) => [round, augmentsForRound(round)])),
+    },
+    comparison,
+    evaluations: evaluationCache.size,
+  };
+  const serialized = `${JSON.stringify(report, null, 2)}\n`;
+  if (outputPath) {
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeFile(outputPath, serialized, "utf8");
+    console.log(`Wrote focused autochess lineup benchmark to ${outputPath}`);
+  }
+  console.log(JSON.stringify({
+    ids: comparison.ids,
+    names: comparison.names,
+    formation: comparison.formation,
+    wins: comparison.wins,
+    battles: comparison.battles,
+    winRate: comparison.winRate,
+    worstRoundWins: comparison.worstRoundWins,
+    averageMargin: comparison.averageMargin,
+    worstMargin: comparison.worstMargin,
+    averageElapsed: comparison.averageElapsed,
+    evaluations: evaluationCache.size,
+  }, null, 2));
+  process.exit(0);
+}
 const baselineSearch = evaluateLineup(
   initialLineup,
   baseStarsFor(initialLineup),

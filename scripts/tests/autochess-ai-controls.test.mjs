@@ -40,21 +40,20 @@ test("稳健采用留出验证晋级阈值并保留其他三种风格的风险�
   assert.equal(informationModeForAutopilotStyle("seer"), "oracle");
 });
 
-test("后期目标以全三星终局为终点并保留二星四理财过渡牌", () => {
+test("后期目标采用真人长期连胜十人阵容并全部追三星", () => {
   assert.deepEqual(AUTOPILOT_LATE_GAME_TARGET_IDS, [
-    "cog_scribe",
     "grove_mender",
     "lian",
     "rei",
-    "rutice",
     "yua",
     "cinder_ram",
     "spark_mage",
     "sui_flower",
     "xuehui",
+    "sui_bird",
     "yukisyo",
   ]);
-  assert.equal(new Set(AUTOPILOT_LATE_GAME_TARGET_IDS).size, 11);
+  assert.equal(new Set(AUTOPILOT_LATE_GAME_TARGET_IDS).size, 10);
   assert.deepEqual(new Set(AUTOPILOT_TERMINAL_TARGET_IDS), new Set([
     "rei",
     "yua",
@@ -62,15 +61,15 @@ test("后期目标以全三星终局为终点并保留二星四理财过渡牌",
     "lian",
     "grove_mender",
     "cinder_ram",
-    "cog_scribe",
-    "rutice",
     "spark_mage",
     "xuehui",
+    "sui_bird",
+    "yukisyo",
   ]));
   assert.equal(AUTOPILOT_TERMINAL_TARGET_IDS.every(
     (id) => lateGameTargetDesiredStar(id) === 3,
   ), true);
-  assert.equal(lateGameTargetDesiredStar("yukisyo"), 2);
+  assert.equal(lateGameTargetDesiredStar("yukisyo"), 3);
   const financePlan = AUTOPILOT_LATE_GAME_TARGET_IDS.filter(
     (id) => UNIT_DEFS[id].traits.includes("finance"),
   );
@@ -80,7 +79,7 @@ test("后期目标以全三星终局为终点并保留二星四理财过渡牌",
     "grove_mender",
     "yukisyo",
   ]));
-  assert.ok(lateGameTargetPriority("cog_scribe") > lateGameTargetPriority("xuehui"));
+  assert.ok(lateGameTargetPriority("grove_mender") > lateGameTargetPriority("xuehui"));
   assert.equal(desiredLateGameLevelForRound(9), 3);
   assert.equal(desiredLateGameLevelForRound(10), 3);
   assert.equal(desiredLateGameLevelForRound(12), 8);
@@ -871,7 +870,7 @@ test("终局牌保留到九份且无归属的二星三星可以退役出售", ()
   AUTOPILOT_TERMINAL_TARGET_IDS.forEach((id, index) => {
     bridge.engine.state.board[index] = { uid: uid += 1, id, star: 2 };
   });
-  const terminalId = "cog_scribe";
+  const terminalId = AUTOPILOT_TERMINAL_TARGET_IDS[0];
   const unrelatedIds = SHOP_UNITS.filter((id) => (
     !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id)
     && !UNIT_DEFS[id].traits.includes("finance")
@@ -990,6 +989,7 @@ test("四理财会用八十金以上余额搜索，但连续空搜达到上限�
   bridge.engine.state.round = 12;
   const autopilot = new AutoChessAutopilot(bridge, "evolution", {
     maximumExcessPaidRerolls: 64,
+    maximumDryPaidRerolls: 12,
   });
   autopilot.rolloutConfidence = () => 10400;
   autopilot.purchaseAction = () => null;
@@ -1287,7 +1287,9 @@ test("七本以上四理财只用八十以上余额升本且危险时不突破�
     bridge.engine.state.board[index] = { uid: 130520 + index, id, star: 2 };
   });
   bridge.engine.state.gold = 90;
-  const autopilot = new AutoChessAutopilot(bridge);
+  const autopilot = new AutoChessAutopilot(bridge, "heuristic", {
+    levelInterestTiersAtRisk: 4,
+  });
   autopilot.rolloutConfidence = () => 10400;
   assert.equal(autopilot.upgradeAction(), null);
   const upgradeCost = bridge.engine.upgradeCost;
@@ -1604,6 +1606,169 @@ test("托管不再购买三星主力的无用同名棋并主动清理同名一�
   assert.equal(cleanupSale?.location?.zone, "bench");
   assert.equal(bridge.engine.state.bench.filter(Boolean).length, 1);
   assert.equal(bridge.engine.state.gold, 20 + expectedSellValue);
+});
+
+test("十本四理财会在高存款回合集中搜牌并为后续购买预留五金币", () => {
+  const financeIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].traits.includes("finance")).slice(0, 4);
+  const bridge = new EngineBridge(13061);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.round = 20;
+  bridge.engine.state.hp = 20;
+  bridge.engine.state.gold = 105;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  financeIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 130610 + index, id, star: 3 };
+  });
+  bridge.engine.state.shop.fill(null);
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {
+    terminalRollDownMinimumRound: 18,
+    terminalRollDownActivationGold: 100,
+    terminalRollDownReserveGold: 40,
+    terminalRollDownMaximumDryRerolls: 64,
+    maximumExcessPaidRerolls: 64,
+  });
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.observeStabilizationStrength = () => {};
+  autopilot.purchaseAction = () => null;
+  autopilot.replacementAction = () => null;
+  autopilot.upgradeAction = () => null;
+  autopilot.benchCleanupAction = () => null;
+  autopilot.interestSaleAction = () => null;
+  autopilot.finalReinvestmentAction = () => null;
+  autopilot.formationAction = () => null;
+  autopilot.searchRescueLineup = () => false;
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+
+  const actions = [];
+  for (let step = 0; step < 90 && bridge.engine.state.phase === "preparation"; step += 1) {
+    const action = autopilot.tick(2000 + step * 500);
+    if (action) actions.push(action);
+  }
+  assert.equal(actions.filter((action) => action.type === "reroll").length, 60);
+  assert.equal(bridge.engine.state.gold, 45);
+  assert.equal(actions.at(-1)?.type, "battle");
+});
+
+test("终局集中搜牌只在高额存款安全窗口开启", () => {
+  const financeIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].traits.includes("finance")).slice(0, 4);
+  const bridge = new EngineBridge(13062);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.round = 20;
+  bridge.engine.state.hp = 20;
+  bridge.engine.state.gold = 120;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  financeIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 130620 + index, id, star: 3 };
+  });
+  const terminalId = AUTOPILOT_TERMINAL_TARGET_IDS.find((id) => !financeIds.includes(id));
+  assert.ok(terminalId);
+  bridge.engine.state.shop = [terminalId, null, null, null, null];
+  const autopilot = new AutoChessAutopilot(bridge, "heuristic", {
+    terminalRollDownActivationGold: 128,
+    terminalRollDownReserveGold: 48,
+  });
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.resetPreparation(20);
+  bridge.engine.state.gold = 60;
+  assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400), false);
+  assert.equal(
+    autopilot.shopCandidates(autopilot.ownedEntries(), false).some(({ id }) => id === terminalId),
+    false,
+  );
+  bridge.engine.state.gold = 135;
+  autopilot.resetPreparation(20);
+  assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400), true);
+  assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 9900), false);
+});
+
+test("多个六份终局项目会在较低存款触发冲刺并在下一回合停搜", () => {
+  const financeIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].traits.includes("finance")).slice(0, 4);
+  const projectIds = AUTOPILOT_TERMINAL_TARGET_IDS
+    .filter((id) => !financeIds.includes(id))
+    .slice(0, 2);
+  assert.equal(projectIds.length, 2);
+  const bridge = new EngineBridge(13064);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.round = 24;
+  bridge.engine.state.hp = 20;
+  bridge.engine.state.gold = 108;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  financeIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 130650 + index, id, star: 3 };
+  });
+  projectIds.forEach((id, projectIndex) => {
+    bridge.engine.state.bench[projectIndex * 2] = {
+      uid: 130660 + projectIndex * 2,
+      id,
+      star: 2,
+    };
+    bridge.engine.state.bench[projectIndex * 2 + 1] = {
+      uid: 130661 + projectIndex * 2,
+      id,
+      star: 2,
+    };
+  });
+  const autopilot = new AutoChessAutopilot(bridge, "heuristic", {
+    terminalRollDownActivationGold: 128,
+    terminalRollDownReserveGold: 48,
+    terminalCompletionMinimumProjects: 2,
+    terminalCompletionActivationGold: 104,
+    terminalCompletionReserveGold: 16,
+  });
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.resetPreparation(24);
+  assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400), true);
+  assert.equal(autopilot.terminalRollDownReserve(autopilot.ownedEntries(), 10400), 16);
+
+  bridge.engine.state.gold = 60;
+  autopilot.resetPreparation(25);
+  assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400), false);
+});
+
+test("终局商店优先完成已有六份的三星项目", () => {
+  const financeIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].traits.includes("finance")).slice(0, 4);
+  const nonFinanceTargets = AUTOPILOT_TERMINAL_TARGET_IDS.filter((id) => !financeIds.includes(id));
+  const freshTarget = nonFinanceTargets[0];
+  const focusedTarget = nonFinanceTargets.at(-1);
+  assert.ok(freshTarget && focusedTarget && freshTarget !== focusedTarget);
+  const bridge = new EngineBridge(13063);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.round = 20;
+  bridge.engine.state.hp = 20;
+  bridge.engine.state.gold = 135;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  financeIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 130630 + index, id, star: 3 };
+  });
+  bridge.engine.state.bench[0] = { uid: 130640, id: focusedTarget, star: 2 };
+  bridge.engine.state.bench[1] = { uid: 130641, id: focusedTarget, star: 2 };
+  bridge.engine.state.shop = [freshTarget, focusedTarget, null, null, null];
+  const autopilot = new AutoChessAutopilot(bridge, "heuristic");
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.resetPreparation(20);
+  const candidates = autopilot.shopCandidates(autopilot.ownedEntries(), false);
+  const fresh = candidates.find(({ id }) => id === freshTarget);
+  const focused = candidates.find(({ id }) => id === focusedTarget);
+  assert.ok(fresh && focused);
+  assert.ok(focused.score > fresh.score);
 });
 
 test("标题页和局内都公开托管选择，设置面板公开四种风格和后台开关", () => {

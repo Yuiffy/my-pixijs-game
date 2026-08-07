@@ -87,6 +87,13 @@ const dimensions = [
   { key: "upgradeChasePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "stabilizePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 4 },
   { key: "financePurchaseInterestTiersAtRisk", min: 0, max: 4, step: 1, sigma: 1 },
+  { key: "terminalRollDownMinimumRound", min: 14, max: 26, step: 1, sigma: 2.5 },
+  { key: "terminalRollDownActivationGold", min: 96, max: 160, step: 4, sigma: 12 },
+  { key: "terminalRollDownReserveGold", min: 24, max: 80, step: 4, sigma: 10 },
+  { key: "terminalRollDownMaximumDryRerolls", min: 8, max: 64, step: 1, sigma: 8 },
+  { key: "terminalCompletionMinimumProjects", min: 1, max: 5, step: 1, sigma: 1 },
+  { key: "terminalCompletionActivationGold", min: 80, max: 140, step: 4, sigma: 10 },
+  { key: "terminalCompletionReserveGold", min: 0, max: 48, step: 4, sigma: 8 },
   { key: "goodPurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "mergePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "levelInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 4 },
@@ -108,7 +115,10 @@ const gaussian = () => Math.sqrt(-2 * Math.log(Math.max(1e-9, random())))
   * Math.cos(2 * Math.PI * random());
 const clampPolicy = (policy) => {
   const clamped = Object.fromEntries(dimensions.map((dimension) => {
-    const raw = Math.min(dimension.max, Math.max(dimension.min, policy[dimension.key]));
+    const candidate = Number(policy[dimension.key]);
+    const fallback = Number(DEFAULT_AUTOPILOT_POLICY[dimension.key]);
+    const source = Number.isFinite(candidate) ? candidate : fallback;
+    const raw = Math.min(dimension.max, Math.max(dimension.min, source));
     const quantized = Math.round(raw / dimension.step) * dimension.step;
     return [dimension.key, Number(quantized.toFixed(4))];
   }));
@@ -119,6 +129,14 @@ const clampPolicy = (policy) => {
   clamped.financeActivationRolloutScore = Math.min(
     clamped.safeWinRolloutScore,
     clamped.financeActivationRolloutScore,
+  );
+  clamped.terminalRollDownReserveGold = Math.min(
+    clamped.terminalRollDownActivationGold,
+    clamped.terminalRollDownReserveGold,
+  );
+  clamped.terminalCompletionReserveGold = Math.min(
+    clamped.terminalCompletionActivationGold,
+    clamped.terminalCompletionReserveGold,
   );
   return clamped;
 };
