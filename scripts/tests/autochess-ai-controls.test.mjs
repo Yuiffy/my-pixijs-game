@@ -15,6 +15,9 @@ const { AutoChessAutopilot, getAutopilotRolloutCacheStats } = await loadTypescri
 const { informationModeForAutopilotStyle, resolveAutopilotStylePolicy } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/autopilotPolicy.ts",
 );
+const { planSeerEconomy } = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/seerPlanner.ts",
+);
 const {
   AUTOPILOT_LATE_GAME_TARGET_IDS,
   AUTOPILOT_TERMINAL_TARGET_IDS,
@@ -35,7 +38,7 @@ test("稳健采用留出验证晋级阈值并保留其他三种风格的风险�
   assert.equal(resolveAutopilotStylePolicy("survival").safeWinRolloutScore, 10050);
   assert.equal(resolveAutopilotStylePolicy("balanced").safeWinRolloutScore, 10010);
   assert.equal(resolveAutopilotStylePolicy("highroll").safeWinRolloutScore, 10010);
-  assert.equal(resolveAutopilotStylePolicy("seer").safeWinRolloutScore, 9975);
+  assert.equal(resolveAutopilotStylePolicy("seer").safeWinRolloutScore, 10050);
   assert.equal(informationModeForAutopilotStyle("survival"), "normal");
   assert.equal(informationModeForAutopilotStyle("seer"), "oracle");
 });
@@ -472,6 +475,99 @@ test("未来商店预览不会推进真实随机状态且首个结果与下一�
   assert.deepEqual(bridge.engine.state.shop, future[0]);
   assert.equal(bridge.engine.getRandomState(), battleRandomState);
   assert.notEqual(bridge.engine.getShopRandomState(), shopRandomState);
+});
+
+test("每一本使用由种子导出的独立固定商店序列", () => {
+  const bridge = new EngineBridge(13142);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.gold = 20;
+  const initialLevel = bridge.engine.state.playerLevel;
+  const initialShopState = bridge.engine.getShopRandomState();
+  const level3 = bridge.engine.previewFutureShopsAtLevels([3, 3]);
+  const level10 = bridge.engine.previewFutureShopsAtLevels([10, 10]);
+  const interleaved = bridge.engine.previewFutureShopsAtLevels([3, 10, 3, 10]);
+
+  assert.deepEqual(interleaved, [level3[0], level10[0], level3[1], level10[1]]);
+  assert.equal(bridge.engine.state.playerLevel, initialLevel);
+  assert.equal(bridge.engine.getShopRandomState(), initialShopState);
+
+  bridge.dispatch({ type: "reroll" });
+  assert.deepEqual(bridge.engine.state.shop, level3[0]);
+  bridge.engine.state.playerLevel = 10;
+  bridge.dispatch({ type: "reroll" });
+  assert.deepEqual(bridge.engine.state.shop, level10[0]);
+  bridge.engine.state.playerLevel = 3;
+  bridge.dispatch({ type: "reroll" });
+  assert.deepEqual(bridge.engine.state.shop, level3[1]);
+});
+
+test("看穿动态规划会为高本固定 key 牌序列提前升本并只返回首轮宏动作", () => {
+  const targetId = AUTOPILOT_TERMINAL_TARGET_IDS.find(
+    (id) => UNIT_DEFS[id].tier === 5,
+  );
+  assert.ok(targetId);
+  const emptyShop = [null, null, null, null, null];
+  const futureShops = Object.fromEntries(
+    [3, 4, 5, 6, 7, 8, 9, 10].map((level) => [
+      level,
+      Array.from({ length: 32 }, () => [...emptyShop]),
+    ]),
+  );
+  futureShops[10] = Array.from(
+    { length: 32 },
+    (_, index) => (index < 9 ? [targetId, null, null, null, null] : [...emptyShop]),
+  );
+  const plan = planSeerEconomy({
+    round: 12,
+    seed: 13143,
+    hp: 20,
+    gold: 240,
+    playerLevel: 3,
+    upgradeRemaining: 0,
+    streak: 3,
+    incomeBonus: 0,
+    paydayDebtRounds: 0,
+    freeRerolls: 0,
+    financeActive: true,
+    currentShop: emptyShop,
+    currentCombatScore: 10100,
+    targetCopies: {},
+    targets: [{ id: targetId, priority: 100, desiredCopies: 9 }],
+    futureShops,
+    horizon: 3,
+    beamWidth: 64,
+  });
+
+  assert.equal(plan.firstStep.targetLevel, 10);
+  assert.equal(plan.firstStep.rerolls, 0);
+  assert.equal(plan.projectedTargetCopies[targetId], 9);
+  assert.ok(plan.exploredStates > 0);
+  assert.ok(plan.dominancePrunes > 0);
+  assert.equal(plan.projectedRound, 15);
+});
+
+test("普通托管不会读取未来商店，看穿宏动作会连续升到规划等级", () => {
+  const bridge = new EngineBridge(13144);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.previewFutureShopsAtLevels = () => {
+    throw new Error("normal strategy accessed future shops");
+  };
+  const normal = new AutoChessAutopilot(bridge, "heuristic", {}, "survival");
+  assert.doesNotThrow(() => normal.resetPreparation(bridge.engine.state.round));
+
+  bridge.engine.state.gold = 100;
+  const seer = new AutoChessAutopilot(bridge, "heuristic", {}, "seer");
+  seer.seerPlan = {
+    firstStep: { targetLevel: 5, rerolls: 0, expectedGoldAfterPreparation: 60 },
+  };
+  seer.rolloutConfidence = () => 10400;
+  assert.equal(seer.upgradeAction()?.type, "buyXp");
+  bridge.engine.state.playerLevel = 5;
+  assert.equal(seer.upgradeAction(), null);
 });
 
 test("看穿作为第四种托管风格启用未来商店信息并停止无目标刷新", () => {

@@ -4,12 +4,14 @@ import {
   AugmentId,
   STARTERS,
   STARTER_OFFER_SIZE,
+  PLAYER_LEVELS,
   StarterId,
   SUI_BIRD_ELBOW_DISTANCE,
   TRAITS,
   TraitId,
   UNIT_DEFS,
   UnitId,
+  type PlayerLevel,
   SUPPORT_HEAL_HP_RATIO,
   abilityStatForStar,
   traitLevelForCount,
@@ -47,6 +49,7 @@ import {
 } from "./random";
 import { STARTER_EFFECTS } from "./runRules";
 import {
+  SHOP_SIZE,
   createInitialState,
   loadBestScore,
 } from "./state";
@@ -236,6 +239,17 @@ export class AutoChessEngine {
 
   private shopRng: RandomSource;
 
+  private shopSequenceCounts: Record<PlayerLevel, number> = {
+    3: 0,
+    4: 0,
+    5: 0,
+    6: 0,
+    7: 0,
+    8: 0,
+    9: 0,
+    10: 0,
+  };
+
   private uid = 1;
 
   private chronosphereEnergyLocks = new Set<string>();
@@ -369,6 +383,7 @@ export class AutoChessEngine {
     const best = Math.max(this.state.bestScore, loadBestScore());
     this.rng = createSeededRandom(seed);
     this.shopRng = createSeededRandom(seed);
+    this.resetShopSequences();
     this.uid = 1;
     this.state = createInitialState(seed, best);
     this.state.starterChoices = this.rollStarterChoices();
@@ -505,6 +520,7 @@ export class AutoChessEngine {
     const best = this.state.bestScore;
     this.rng = createSeededRandom(seed);
     this.shopRng = createSeededRandom(seed);
+    this.resetShopSequences();
     this.uid = 1;
     this.state = createInitialState(seed, best);
     this.state.phase = "preparation";
@@ -527,6 +543,7 @@ export class AutoChessEngine {
     const preferredSlot = this.isRanged(starter.unit) ? 6 : 11;
     this.state.board[preferredSlot] = starterUnit;
     this.state.shop = this.generateShop();
+    for (let sample = 0; sample < SHOP_SIZE * 2; sample += 1) this.shopRng.next();
     this.rng.restore(this.shopRng.snapshot());
     this.setToast(
       `${starter.name}已接入。购买单位，调整站位，然后开始迎战。`,
@@ -559,23 +576,62 @@ export class AutoChessEngine {
   }
 
   public getShopRandomState() {
-    return this.shopRng.snapshot();
+    return PLAYER_LEVELS.reduce(
+      (signature, level) => (
+        signature * 31 + this.shopSequenceCounts[level]
+      ) % 2147483647,
+      5381,
+    );
   }
 
   public previewFutureShops(refreshes: number) {
-    const randomState = this.shopRng.snapshot();
-    try {
-      return Array.from(
-        { length: Math.max(0, Math.floor(refreshes)) },
-        () => this.generateShop(),
-      );
-    } finally {
-      this.shopRng.restore(randomState);
-    }
+    return this.previewFutureShopsAtLevels(Array.from(
+      { length: Math.max(0, Math.floor(refreshes)) },
+      () => this.state.playerLevel,
+    ));
+  }
+
+  public previewFutureShopsAtLevels(levels: readonly PlayerLevel[]) {
+    const previewCounts = { ...this.shopSequenceCounts };
+    return levels.map((level) => {
+      const sequenceIndex = previewCounts[level];
+      previewCounts[level] += 1;
+      return this.generateShopAt(level, sequenceIndex);
+    });
   }
 
   private generateShop() {
-    return this.roster.generateShop();
+    const level = this.state.playerLevel;
+    const sequenceIndex = this.shopSequenceCounts[level];
+    this.shopSequenceCounts[level] += 1;
+    return this.generateShopAt(level, sequenceIndex);
+  }
+
+  private resetShopSequences() {
+    PLAYER_LEVELS.forEach((level) => {
+      this.shopSequenceCounts[level] = 0;
+    });
+  }
+
+  private shopSequenceSeed(level: PlayerLevel, sequenceIndex: number) {
+    const seed = Math.abs(Math.trunc(this.state.seed)) % 2147483647;
+    const levelVariant = (seed * 48271 + (level + 17) * 69621) % 2147483647;
+    return (
+      levelVariant * 40699 + (sequenceIndex + 1) * 104729
+    ) % 2147483647 || 1;
+  }
+
+  private generateShopAt(level: PlayerLevel, sequenceIndex: number) {
+    const playerLevel = this.state.playerLevel;
+    const random = this.shopRng;
+    try {
+      this.state.playerLevel = level;
+      this.shopRng = createSeededRandom(this.shopSequenceSeed(level, sequenceIndex));
+      return this.roster.generateShop();
+    } finally {
+      this.state.playerLevel = playerLevel;
+      this.shopRng = random;
+    }
   }
 
   public buyExperience() {
@@ -587,7 +643,21 @@ export class AutoChessEngine {
   }
 
   public rerollShop() {
-    this.roster.rerollShop();
+    if (this.state.phase !== "preparation") return;
+    const freeReroll = this.state.freeRerollCharges > 0;
+    if (!freeReroll && this.state.gold < 1) {
+      this.setToast("金币不足，无法刷新商店。", "bad");
+      return;
+    }
+    if (freeReroll) this.state.freeRerollCharges -= 1;
+    else this.state.gold -= 1;
+    this.state.shop = this.generateShop();
+    this.state.shopLocked = false;
+    this.state.selected = null;
+    this.setToast(
+      freeReroll ? "免费刷新已使用，商店已自动解锁。" : "商店已刷新并自动解锁。",
+      "info",
+    );
   }
 
   public buyShopUnit(index: number) {

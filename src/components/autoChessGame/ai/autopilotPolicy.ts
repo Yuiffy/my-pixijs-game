@@ -123,7 +123,7 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     terminalCompletionReserveGold: 4,
   },
   seer: {
-    safeWinRolloutScore: 9975,
+    safeWinRolloutScore: 10050,
     terminalRollDownMinimumRound: 16,
     terminalRollDownActivationGold: 112,
     terminalRollDownReserveGold: 40,

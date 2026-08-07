@@ -42,6 +42,23 @@ const RESEARCH_SEED_LINEUP = [
 ];
 
 const FORMATIONS = {
+  human_recorded: {
+    rei: 23,
+    units: {
+      yua: [4],
+      lian: [5],
+      sui_bird: [9],
+      yukisyo: [10],
+      cinder_ram: [11],
+      xuehui: [15],
+      sui_flower: [16],
+      grove_mender: [17],
+      spark_mage: [22],
+      rei: [23],
+    },
+    melee: [11, 17, 5, 10, 16, 4, 22, 9, 15, 3],
+    ranged: [10, 16, 4, 22, 9, 15, 3, 21, 8, 14],
+  },
   human_midline: {
     rei: 23,
     melee: [11, 17, 5, 10, 16, 4, 22, 9, 15, 3],
@@ -146,11 +163,14 @@ const placeLineup = (engine, lineup, stars, formationId) => {
   engine.state.board.fill(null);
   lineup.forEach((id) => {
     const definition = UNIT_DEFS[id];
-    const preferred = id === "rei"
-      ? [formation.rei, ...formation.melee]
-      : definition.attackType === "melee"
-        ? formation.melee.slice(meleeIndex++)
-        : formation.ranged.slice(rangedIndex++);
+    const preferred = [
+      ...(formation.units?.[id] || []),
+      ...(id === "rei"
+        ? [formation.rei, ...formation.melee]
+        : definition.attackType === "melee"
+          ? formation.melee.slice(meleeIndex++)
+          : formation.ranged.slice(rangedIndex++)),
+    ];
     const slot = preferred.find((candidate) => !used.has(candidate));
     if (slot === undefined) throw new Error(`No placement available for ${id}`);
     used.add(slot);

@@ -1,6 +1,7 @@
 import {
   FINANCE_INTEREST_CAP,
   NORMAL_INTEREST_CAP,
+  PLAYER_LEVELS,
   TRAITS,
   UNIT_DEFS,
   traitLevelForCount,
@@ -32,6 +33,11 @@ import {
   lateGameTargetDesiredCopies,
   lateGameTargetPriority,
 } from "./lateGamePlan";
+import {
+  planSeerEconomy,
+  type SeerPlan,
+  type SeerShopForecast,
+} from "./seerPlanner";
 
 const STARTER_PREFERENCE: StarterId[] = [
   "ranger_start",
@@ -88,7 +94,7 @@ const PREPARATION_ACTION_LIMIT = 96;
 const REPLACEMENT_PREVIEW_LIMIT = 5;
 const REPLACEMENT_ROLLOUT_MIN_GAIN = 12;
 const RESCUE_HEURISTIC_CANDIDATE_LIMIT = 24;
-const ORACLE_SHOP_LOOKAHEAD = 24;
+const ORACLE_SHOP_LOOKAHEAD = 72;
 const SHARED_ROLLOUT_CACHE_LIMIT = 50000;
 const EXACT_COMBAT_HZ = 60;
 const sharedRolloutScoreCache = new Map<string, number>();
@@ -259,6 +265,8 @@ export class AutoChessAutopilot {
   private preparationStartGold = 0;
 
   private stabilizationInterestTiersAtRisk = 0;
+
+  private seerPlan: SeerPlan | null = null;
 
   private policy: AutopilotPolicy;
 
@@ -448,6 +456,50 @@ export class AutoChessAutopilot {
     this.rerollMode = "bank";
     this.soldUnitIds.clear();
     this.preparationStateVisits.clear();
+    this.seerPlan = this.createSeerPlan();
+  }
+
+  private createSeerPlan() {
+    if (this.style !== "seer" || this.informationMode !== "oracle") return null;
+    const { engine } = this.bridge;
+    const { state } = engine;
+    const roster = this.ownedEntries();
+    const targetCopies = roster.reduce<Partial<Record<UnitId, number>>>((copies, { unit }) => {
+      if (lateGameTargetDesiredCopies(unit.id) <= 0) return copies;
+      copies[unit.id] = (copies[unit.id] || 0) + unitCopyValue(unit);
+      return copies;
+    }, {});
+    const futureShops = {} as SeerShopForecast;
+    PLAYER_LEVELS.forEach((level) => {
+      futureShops[level] = engine.previewFutureShopsAtLevels(Array.from(
+        { length: ORACLE_SHOP_LOOKAHEAD },
+        () => level,
+      ));
+    });
+    return planSeerEconomy({
+      round: state.round,
+      seed: state.seed,
+      hp: state.hp,
+      gold: state.gold,
+      playerLevel: state.playerLevel,
+      upgradeRemaining: state.upgradeRemaining,
+      streak: state.streak,
+      incomeBonus: state.incomeBonus,
+      paydayDebtRounds: state.paydayDebtRounds,
+      freeRerolls: state.freeRerollCharges,
+      financeActive: this.financeInterestActive(),
+      currentShop: state.shop,
+      currentCombatScore: this.rolloutConfidence(roster),
+      targetCopies,
+      targets: AUTOPILOT_TERMINAL_TARGETS.map(({ id, priority }) => ({
+        id,
+        priority,
+        desiredCopies: lateGameTargetDesiredCopies(id),
+      })),
+      futureShops,
+      horizon: this.planningMode === "training" ? 6 : 8,
+      beamWidth: this.planningMode === "training" ? 64 : 96,
+    });
   }
 
   private goldReserve(needsPopulation = false, interestTiersAtRisk = 0) {
@@ -1172,6 +1224,7 @@ export class AutoChessAutopilot {
 
   private oracleHasFutureCandidate(roster: OwnedEntry[]) {
     if (this.informationMode !== "oracle") return true;
+    if (this.seerPlan) return this.rerolls < this.seerPlan.firstStep.rerolls;
     const { engine } = this.bridge;
     const currentShop = engine.state.shop;
     const futureShops = engine.previewFutureShops(ORACLE_SHOP_LOOKAHEAD);
@@ -1315,13 +1368,23 @@ export class AutoChessAutopilot {
         : advancesFinance
           ? this.policy.financePurchaseInterestTiersAtRisk
           : Math.min(candidateInterestRisk, modePurchaseRisk);
-      const reserve = needsPopulation
+      let reserve = needsPopulation
         ? 0
         : terminalRollDown && longTermPriority > 0
           ? terminalReserve
         : rerollMode === "bank"
           ? this.goldReserve(false, purchaseInterestRisk)
           : this.stabilizationGoldReserve(purchaseInterestRisk);
+      if (
+        this.seerPlan
+        && longTermPriority > 0
+        && this.rolloutConfidence(roster) >= this.policy.safeWinRolloutScore
+      ) {
+        reserve = Math.min(
+          reserve,
+          this.seerPlan.firstStep.expectedGoldAfterPreparation,
+        );
+      }
       if (state.gold < definition.cost) return [];
       if (state.gold - definition.cost < reserve && !canSpeculate && !completesMerge) return [];
       if (
@@ -1536,13 +1599,21 @@ export class AutoChessAutopilot {
   private upgradeAction(): GameAction | null {
     const { engine } = this.bridge;
     const { state } = engine;
+    const roster = this.ownedEntries();
+    const currentScore = this.rolloutConfidence(roster);
+    if (this.seerPlan && currentScore >= this.policy.safeWinRolloutScore) {
+      if (
+        state.playerLevel < this.seerPlan.firstStep.targetLevel
+        && engine.upgradeCost !== null
+        && state.gold >= engine.upgradeCost
+      ) return { type: "buyXp" } as GameAction;
+      return null;
+    }
     const scheduledTargetLevel = Math.min(10, 3 + Math.floor(
       (state.round + this.policy.targetLevelRoundOffset) / this.policy.targetLevelRoundDivisor,
     ));
     const cost = engine.upgradeCost;
     if (cost === null || state.gold < cost) return null;
-    const roster = this.ownedEntries();
-    const currentScore = this.rolloutConfidence(roster);
     const developmentTargetLevel = currentScore >= this.policy.safeWinRolloutScore
       && state.hp > this.policy.woundedHpThreshold
       && this.lateGameDevelopmentIncomplete(roster)
@@ -1911,6 +1982,14 @@ export class AutoChessAutopilot {
     this.observeStabilizationStrength(roster);
     const pendingPurchase = this.pendingPurchaseAction();
     if (pendingPurchase) return pendingPurchase;
+    if (
+      this.seerPlan
+      && state.playerLevel < this.seerPlan.firstStep.targetLevel
+      && this.rolloutConfidence(roster) >= this.policy.safeWinRolloutScore
+    ) {
+      const plannedUpgrade = this.upgradeAction();
+      if (plannedUpgrade) return plannedUpgrade;
+    }
     const needsPopulation = roster.length < engine.boardCap
       && this.rolloutConfidence(roster) < this.policy.safeWinRolloutScore;
     const fill = needsPopulation ? this.purchaseAction(roster, true) : null;
@@ -1930,8 +2009,10 @@ export class AutoChessAutopilot {
     const interestSale = this.interestSaleAction(this.ownedEntries());
     if (interestSale) return interestSale;
     const rerollStrategy = this.rerollStrategy(roster);
-    const canUseFreeReroll = state.freeRerollCharges > 0 && this.rerolls < 6;
     const needsStabilization = rerollStrategy.rolloutScore < this.policy.safeWinRolloutScore;
+    const seerRerollLimit = this.seerPlan?.firstStep.rerolls ?? Number.POSITIVE_INFINITY;
+    const canUseFreeReroll = state.freeRerollCharges > 0
+      && this.rerolls < (needsStabilization ? 6 : Math.min(6, seerRerollLimit));
     const terminalReserve = needsStabilization
       ? null
       : this.terminalRollDownReserve(roster, rerollStrategy.rolloutScore);
@@ -1958,7 +2039,15 @@ export class AutoChessAutopilot {
       : state.hp <= this.policy.woundedHpThreshold
         ? Math.min(ECONOMY_ACTION_LIMIT, this.policy.maximumDryPaidRerolls * 2)
         : this.policy.maximumDryPaidRerolls;
-    const canUsePaidReroll = state.gold - 1 >= rerollReserve
+    const seerCanUsePaidReroll = Boolean(
+      this.seerPlan
+      && state.playerLevel >= this.seerPlan.firstStep.targetLevel
+      && this.rerolls < this.seerPlan.firstStep.rerolls
+      && state.gold >= 1,
+    );
+    const canUsePaidReroll = this.seerPlan && !needsStabilization
+      ? seerCanUsePaidReroll
+      : state.gold - 1 >= rerollReserve
       && (
         needsStabilization
           ? this.paidRerolls < ECONOMY_ACTION_LIMIT
@@ -1969,7 +2058,7 @@ export class AutoChessAutopilot {
               ? this.policy.terminalRollDownMaximumDryRerolls
               : this.policy.maximumDryPaidRerolls)
       )
-      && this.oracleHasFutureCandidate(roster);
+      && (needsStabilization || this.oracleHasFutureCandidate(roster));
     if (
       this.preparationActions < ECONOMY_ACTION_LIMIT
       && (canUseFreeReroll || canUsePaidReroll)

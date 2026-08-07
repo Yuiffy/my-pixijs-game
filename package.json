@@ -25,6 +25,7 @@
     "autochess:test": "node --test scripts/tests/autochess-*.test.mjs",
     "autochess:simulate": "node scripts/simulate-autochess-runs.mjs",
     "autochess:benchmark:autopilot": "node scripts/benchmark-autochess-autopilot.mjs",
+    "autochess:benchmark:styles": "node scripts/benchmark-autochess-styles.mjs",
     "autochess:benchmark:lineups": "node scripts/benchmark-autochess-lineups.mjs",
     "autochess:benchmark:training": "node scripts/train-autochess-autopilot.mjs --population 2 --generations 1 --runs 8 --battles 50 --workers 8 --training-hz 60 --skip-validation --output artifacts/autochess-training-throughput.json",
     "autochess:train:autopilot": "node scripts/train-autochess-autopilot.mjs",

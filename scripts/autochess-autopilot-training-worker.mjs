@@ -102,6 +102,8 @@ const playRun = ({
   starter,
   mode = "training",
   battleStepHz,
+  style = "survival",
+  informationMode = style === "seer" ? "oracle" : "normal",
 }) => {
   const startedAt = performance.now();
   const training = mode === "training";
@@ -110,14 +112,20 @@ const playRun = ({
     battleStepHz: battleStepHz || 60,
   });
   bridge.setConsoleLogging(false);
-  bridge.engine.state.starterChoices = [starter];
-  bridge.engine.startRun(starter);
   const autopilot = new AutoChessAutopilot(
     bridge,
     training ? "training" : "evolution",
     policy,
+    style,
+    informationMode,
   );
-  autopilot.setEnabled(true);
+  if (starter) {
+    bridge.engine.state.starterChoices = [starter];
+    bridge.engine.startRun(starter);
+    autopilot.setEnabled(true);
+  } else if (!autopilot.startFromTitle()) {
+    throw new Error(`Autopilot could not choose a starter for seed ${seed}`);
+  }
   let now = 1000;
   let safety = 0;
   const rounds = [];
@@ -176,6 +184,9 @@ const playRun = ({
     + rounds.reduce((sum, round) => sum + round.margin * 1_000 + round.interest * 100, 0);
   return {
     mode,
+    style,
+    informationMode,
+    starter: bridge.engine.state.starter,
     durationMs: Number((performance.now() - startedAt).toFixed(2)),
     seed,
     wins,
