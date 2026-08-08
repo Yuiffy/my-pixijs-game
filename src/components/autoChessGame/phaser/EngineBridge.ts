@@ -219,7 +219,7 @@ export class EngineBridge {
         break;
       case "battle":
         if (this.autoplayStyle === "go") {
-          const state = engine.state;
+          const { state } = engine;
           const signature = goCombatScenarioSignature({
             enemySeed: state.enemySeed,
             round: state.round,

@@ -16,6 +16,7 @@
     "build-export-gh-pages": "npm run export && npm run gh-pages",
     "start": "next start",
     "lint": "next lint",
+    "check": "pnpm lint && pnpm exec tsc --noEmit",
     "run-sync-scripts": "node scripts/sync_streams.mjs",
     "streams:assign": "node scripts/assign-stream-shard.mjs",
     "streams:check": "node scripts/check-stream-sync-setup.mjs",

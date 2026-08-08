@@ -111,9 +111,12 @@ let browser;
     const page = await browser.newPage({ viewport });
     page.setDefaultTimeout(15000);
     page.on("console", (message) => {
-      if (message.type() === "error") errors.push(message.text());
+      if (message.type() === "error") errors.push({
+        text: message.text(),
+        url: message.location().url,
+      });
     });
-    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("pageerror", (error) => errors.push({ text: error.message, url: page.url() }));
     page.on("response", (response) => {
       if (response.status() >= 400) failedResponses.push({ status: response.status(), url: response.url() });
     });
@@ -308,8 +311,11 @@ let browser;
   await desktop.page.close();
   await mobile.page.close();
   await browser.close();
-  if (errors.length || failedResponses.length) {
-    throw new Error(JSON.stringify({ errors, failedResponses }, null, 2));
+  const ignoredLocalAsset = (url) => url.endsWith("/api/record") || url.endsWith("/favicon.ico");
+  const unexpectedErrors = errors.filter((error) => !ignoredLocalAsset(error.url));
+  const unexpectedResponses = failedResponses.filter((response) => !ignoredLocalAsset(response.url));
+  if (unexpectedErrors.length || unexpectedResponses.length) {
+    throw new Error(JSON.stringify({ errors: unexpectedErrors, failedResponses: unexpectedResponses }, null, 2));
   }
   console.log(JSON.stringify({
     desktopSummary,

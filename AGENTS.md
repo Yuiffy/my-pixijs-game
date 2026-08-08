@@ -1,5 +1,15 @@
 # Repository Instructions
 
+## Build and lint gate
+
+- Keep Next.js ESLint checks enabled during `next build`; do not use
+  `eslint.ignoreDuringBuilds` to bypass errors.
+- While editing, run `pnpm exec eslint <changed-files>` for fast feedback.
+- Before committing source changes, run `pnpm run check` and then `pnpm run build`
+  sequentially. `pnpm run check` runs the full lint and TypeScript checks.
+- Do not run `tsc` in parallel with `next build`: both read and write
+  `.next/types`, which can produce false missing-file errors.
+
 ## Autochess visual testing
 
 - Read `progress.md` before changing or debugging the autochess game.

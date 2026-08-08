@@ -50,7 +50,9 @@ export type AutopilotInformationMode = "normal" | "oracle";
 
 export const canonicalAutopilotStyle = (
   style: AutopilotStyle,
-): CanonicalAutopilotStyle => style === "seer2" ? "seer" : style;
+): CanonicalAutopilotStyle => (
+  style === "seer2" ? "seer" : style
+);
 
 export const informationModeForAutopilotStyle = (
   style: AutopilotStyle,
