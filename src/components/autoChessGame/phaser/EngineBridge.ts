@@ -104,7 +104,7 @@ export class EngineBridge {
 
   public autoplayEnabled = false;
 
-  public autoplayStyle: "survival" | "balanced" | "highroll" | "seer" = "survival";
+  public autoplayStyle: "survival" | "balanced" | "highroll" | "seer" | "seer2" | "go" = "survival";
 
   public autoplayInformationMode: "normal" | "oracle" = "normal";
 
@@ -288,6 +288,10 @@ export class EngineBridge {
     return this.consoleLogging;
   }
 
+  public get simulationBattleStepHz() {
+    return this.battleStepHz;
+  }
+
   public skipBattle() {
     const before = this.simulationMode ? null : this.actionSnapshot();
     const result = this.fastForwardBattle();
@@ -354,7 +358,7 @@ export class EngineBridge {
   }
 
   public setAutopilotStrategy(
-    style: "survival" | "balanced" | "highroll" | "seer",
+    style: "survival" | "balanced" | "highroll" | "seer" | "seer2" | "go",
     informationMode: "normal" | "oracle",
   ) {
     this.autoplayStyle = style;

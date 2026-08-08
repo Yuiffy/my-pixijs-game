@@ -62,6 +62,7 @@ declare global {
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
 const AUTOPILOT_STRATEGY_KEY = "rift-line-autopilot-strategy";
+const AUTOPILOT_STRATEGY_VERSION = 2;
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
@@ -132,7 +133,10 @@ const loadAutopilotStrategy = (): AutopilotStyle => {
   try {
     const stored = JSON.parse(window.localStorage.getItem(AUTOPILOT_STRATEGY_KEY) || "null");
     if (stored?.informationMode === "oracle") return "seer";
-    return ["survival", "balanced", "highroll", "seer"].includes(stored?.style)
+    if (stored?.style === "go" && stored?.version !== AUTOPILOT_STRATEGY_VERSION) {
+      return "seer2";
+    }
+    return ["survival", "balanced", "highroll", "seer", "seer2", "go"].includes(stored?.style)
       ? stored.style as AutopilotStyle
       : "survival";
   } catch {
@@ -207,12 +211,16 @@ export default function AutoChessGame() {
     try {
       window.localStorage.setItem(
         AUTOPILOT_STRATEGY_KEY,
-        JSON.stringify({ style }),
+        JSON.stringify({ style, version: AUTOPILOT_STRATEGY_VERSION }),
       );
     } catch {
       // The strategy still applies for this session when storage is unavailable.
     }
-    setMessage(style === "seer" ? "看穿托管策略已更新。" : "托管策略已更新。");
+    setMessage(style === "go"
+      ? "Go级托管策略已更新。"
+      : style === "seer2"
+        ? "看穿2托管策略已更新。"
+        : style === "seer" ? "看穿托管策略已更新。" : "托管策略已更新。");
     setRevision((value) => value + 1);
   }, []);
 
@@ -669,6 +677,8 @@ export default function AutoChessGame() {
                     ["balanced", "均衡"],
                     ["highroll", "搏上限"],
                     ["seer", "看穿"],
+                    ["seer2", "看穿2"],
+                    ["go", "Go级"],
                   ] as const).map(([style, label]) => (
                     <button
                       key={style}

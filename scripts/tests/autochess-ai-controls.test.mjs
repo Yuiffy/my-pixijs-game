@@ -15,7 +15,7 @@ const { AutoChessAutopilot, getAutopilotRolloutCacheStats } = await loadTypescri
 const { informationModeForAutopilotStyle, resolveAutopilotStylePolicy } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/autopilotPolicy.ts",
 );
-const { planSeerEconomy } = await loadTypescriptModule(
+const { planSeerEconomy, forecastSeerWaves } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/seerPlanner.ts",
 );
 const {
@@ -208,6 +208,78 @@ test("训练桥接支持 CPU 快进步长，精确审计仍可使用 60Hz", () =
   assert.ok(turbo.steps < exact.steps);
   assert.equal(turbo.simulatedSeconds, Number((turbo.steps / 20).toFixed(2)));
   assert.equal(exact.simulatedSeconds, Number((exact.steps / 60).toFixed(2)));
+});
+
+test("粗筛推演不会把 exactOnly 候选误升到 60Hz", () => {
+  const bridge = new EngineBridge(90212);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+  );
+  const observed = [];
+  pilot.rolloutLineupScore = (_lineup, _formation, _stableOnly) => {
+    observed.push(pilot.rolloutCombatHz);
+    return 10000;
+  };
+  pilot.previewRosterRollout(pilot.ownedEntries(), true);
+  assert.ok(observed.length > 0);
+  assert.equal(new Set(observed).size, 1);
+  assert.equal(observed[0], 20);
+
+  const exactPilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    60,
+  );
+  const exactObserved = [];
+  exactPilot.rolloutLineupScore = (_lineup, _formation, _stableOnly) => {
+    exactObserved.push(exactPilot.rolloutCombatHz);
+    return 10000;
+  };
+  exactPilot.previewRosterRollout(exactPilot.ownedEntries(), true);
+  assert.ok(exactObserved.length > 0);
+  assert.equal(new Set(exactObserved).size, 1);
+  assert.equal(exactObserved[0], 60);
+});
+
+test("看穿2临界血量会用精确战斗复核并切入稳血", () => {
+  const bridge = new EngineBridge(90213);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.hp = 8;
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer2",
+    "oracle",
+    30,
+  );
+  pilot.rolloutTargetLineup = (roster) => roster.filter(
+    ({ location }) => location.zone === "board",
+  );
+  pilot.rolloutConfidence = () => 10128;
+  const observedHz = [];
+  pilot.rolloutLineupScore = (_lineup, _formation, _stableOnly, combatHz) => {
+    observedHz.push(combatHz);
+    return combatHz === 60 ? 9900 : 10128;
+  };
+
+  const decision = pilot.rerollStrategy(pilot.ownedEntries(), true);
+  assert.equal(decision.mode, "stabilize");
+  assert.equal(decision.rolloutScore, 9900);
+  assert.ok(observedHz.includes(60));
 });
 
 test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
@@ -553,6 +625,44 @@ test("相同战局会复用稳健预演，精确分支会区分当前随机状�
   assert.equal(afterDifferentBoard.misses, afterCrossSeedSecond.misses + 4);
 });
 
+test("看穿计划分数在战斗随机状态变化后会重新精确复核", () => {
+  const bridge = new EngineBridge(13139);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.bench = bridge.engine.state.bench.map((_, index) => ({
+    uid: 131390 + index,
+    id: SHOP_UNITS[index % SHOP_UNITS.length],
+    star: 1,
+  }));
+  const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer", "oracle", 20);
+  const roster = pilot.ownedEntries();
+  const lineup = roster.slice(0, bridge.engine.boardCap);
+  bridge.engine.state.round = 48;
+  pilot.rolloutTargetLineup = () => lineup;
+  pilot.plannedLineupUids = lineup.map(({ unit }) => unit.uid);
+  pilot.plannedLineupUnits = new Map(lineup.map(({ unit }) => [
+    unit.uid,
+    { id: unit.id, star: unit.star },
+  ]));
+  pilot.plannedLineupScore = 10400;
+  pilot.plannedLineupRandomState = bridge.engine.getRandomState();
+  let rolloutCalls = 0;
+  pilot.rolloutLineupScore = () => {
+    rolloutCalls += 1;
+    return 9900;
+  };
+
+  assert.equal(pilot.rolloutConfidence(roster), 10400);
+  assert.equal(rolloutCalls, 0);
+
+  bridge.engine.restoreRandomState(bridge.engine.getRandomState() + 1);
+  assert.equal(pilot.rolloutConfidence(roster), 9900);
+  assert.equal(rolloutCalls, 1);
+  assert.equal(pilot.rolloutConfidence(roster), 9900);
+  assert.equal(rolloutCalls, 1);
+});
+
 test("未来商店预览不会推进真实随机状态且首个结果与下一次刷新一致", () => {
   const bridge = new EngineBridge(13140);
   bridge.setConsoleLogging(false);
@@ -645,6 +755,173 @@ test("看穿动态规划会为高本固定 key 牌序列提前升本并只返回
   assert.equal(plan.projectedRound, 15);
 });
 
+test("看穿会一次建立第1至第60战的敌方时间表并规划完整前缀", () => {
+  const waves = forecastSeerWaves(1, 13148, 60);
+  assert.equal(waves.length, 60);
+  assert.equal(waves[0].round, 1);
+  assert.equal(waves.at(-1).round, 60);
+  assert.equal(waves[15].tag, "boss");
+  assert.equal(waves[30].tag, "boss");
+  assert.ok(waves.every((wave) => wave.units.length > 0 && wave.threat > 0));
+
+  const emptyShop = [null, null, null, null, null];
+  const futureShops = Object.fromEntries(
+    [3, 4, 5, 6, 7, 8, 9, 10].map((level) => [
+      level,
+      Array.from({ length: 64 }, () => [...emptyShop]),
+    ]),
+  );
+  const plan = planSeerEconomy({
+    round: 1,
+    seed: 13148,
+    hp: 100,
+    gold: 0,
+    playerLevel: 3,
+    upgradeRemaining: 5,
+    streak: 0,
+    incomeBonus: 0,
+    paydayDebtRounds: 0,
+    freeRerolls: 0,
+    financeActive: false,
+    currentShop: emptyShop,
+    currentCombatScore: 1_000_000,
+    currentBoardCount: 1,
+    currentBoardStrength: UNIT_DEFS.mossback.cost * 12,
+    currentTransitionUnits: [{ id: "mossback", star: 1 }],
+    targetCopies: {},
+    targets: [{ id: "grove_mender", priority: 100, desiredCopies: 9 }],
+    futureShops,
+    horizon: 60,
+    beamWidth: 8,
+  });
+
+  assert.equal(plan.planningHorizon, 60);
+  assert.equal(plan.complete, true);
+  assert.equal(plan.futureWaves.length, 60);
+  assert.equal(plan.futureWaves.at(-1).round, 60);
+  assert.equal(plan.steps.length, 60);
+  assert.equal(plan.projectedRound, 61);
+});
+
+test("看穿规划会保留当前败局的真实负分幅度", () => {
+  const emptyShop = [null, null, null, null, null];
+  const futureShops = Object.fromEntries(
+    [3, 4, 5, 6, 7, 8, 9, 10].map((level) => [
+      level,
+      Array.from({ length: 2 }, () => [...emptyShop]),
+    ]),
+  );
+  const makePlan = (currentCombatScore) => planSeerEconomy({
+    round: 32,
+    seed: 13150,
+    hp: 20,
+    gold: 0,
+    playerLevel: 10,
+    upgradeRemaining: 0,
+    streak: 0,
+    incomeBonus: 0,
+    paydayDebtRounds: 0,
+    freeRerolls: 0,
+    financeActive: true,
+    currentShop: emptyShop,
+    currentCombatScore,
+    currentBoardCount: 1,
+    currentBoardStrength: 100,
+    targetCopies: {},
+    targets: [{ id: "grove_mender", priority: 100, desiredCopies: 9 }],
+    futureShops,
+    horizon: 1,
+    beamWidth: 8,
+  });
+  const nearMiss = makePlan(-200);
+  const deepLoss = makePlan(-1200);
+  assert.ok(nearMiss.steps[0].expectedBattleMargin > deepLoss.steps[0].expectedBattleMargin);
+  assert.equal(nearMiss.steps[0].expectedBattleWon, false);
+  assert.equal(deepLoss.steps[0].expectedBattleWon, false);
+});
+
+test("看穿在完整未来不可达时仍返回最深可行前缀", () => {
+  const emptyShop = [null, null, null, null, null];
+  const futureShops = Object.fromEntries(
+    [3, 4, 5, 6, 7, 8, 9, 10].map((level) => [
+      level,
+      Array.from({ length: 8 }, () => [...emptyShop]),
+    ]),
+  );
+  const plan = planSeerEconomy({
+    round: 1,
+    seed: 13147,
+    hp: 5,
+    gold: 0,
+    playerLevel: 3,
+    upgradeRemaining: 5,
+    streak: 0,
+    incomeBonus: 0,
+    paydayDebtRounds: 0,
+    freeRerolls: 0,
+    financeActive: false,
+    currentShop: emptyShop,
+    currentCombatScore: 9000,
+    currentBoardCount: 0,
+    currentBoardStrength: 0,
+    targetCopies: {},
+    targets: [{ id: "grove_mender", priority: 100, desiredCopies: 9 }],
+    futureShops,
+    horizon: 5,
+    beamWidth: 8,
+  });
+
+  assert.ok(plan.steps?.length >= 1);
+  assert.equal(plan.complete, false);
+  assert.equal(plan.projectedRound, 2);
+});
+
+test("看穿低血量时不会执行精确预演已经判定必败的旧路线", () => {
+  const bridge = new EngineBridge(13149);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 32;
+  bridge.engine.state.gold = 100;
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  autopilot.resetPreparation(32);
+  autopilot.rolloutConfidence = () => -1000;
+  autopilot.populationAction = () => null;
+  autopilot.purchaseAction = () => null;
+  autopilot.replacementAction = () => null;
+  autopilot.upgradeAction = () => null;
+  autopilot.benchCleanupAction = () => null;
+  autopilot.interestSaleAction = () => null;
+  autopilot.finalReinvestmentAction = () => null;
+  autopilot.formationAction = () => null;
+
+  autopilot.seerPlan = {
+    firstStep: { targetLevel: 3, rerolls: 0, expectedGoldAfterPreparation: 100 },
+    steps: [{ expectedBattleWon: false }],
+    projectedTargetCopies: {},
+  };
+  bridge.engine.state.hp = 20;
+  autopilot.nextPreparationAction();
+  assert.ok(autopilot.seerPlan);
+
+  autopilot.resetPreparation(32);
+  autopilot.seerPlan = {
+    firstStep: { targetLevel: 3, rerolls: 0, expectedGoldAfterPreparation: 100 },
+    steps: [{ expectedBattleWon: false }],
+    projectedTargetCopies: {},
+  };
+  bridge.engine.state.hp = 12;
+  autopilot.nextPreparationAction();
+  assert.equal(autopilot.seerPlan, null);
+});
+
 test("看穿规划会把普通过渡棋纳入人口和战力", () => {
   const emptyShop = [null, null, null, null, null];
   const futureShops = Object.fromEntries(
@@ -699,7 +976,7 @@ test("看穿规划会先卖过渡棋再为终局目标腾出候补位", () => {
     hp: 20,
     gold: UNIT_DEFS.grove_mender.cost,
     playerLevel: 3,
-    upgradeRemaining: 5,
+    upgradeRemaining: 6,
     streak: 2,
     incomeBonus: 0,
     paydayDebtRounds: 0,
@@ -1641,6 +1918,91 @@ test("准备结束仍预测失败时会枚举整队组合寻找当前战局胜�
   assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), false);
 });
 
+test("救援搜索按战斗局面去重，换棋后允许重新搜索", () => {
+  const bridge = new EngineBridge(130581);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 48;
+  bridge.engine.state.playerLevel = 3;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  SHOP_UNITS.slice(0, 3).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1305810 + index, id, star: 1 };
+  });
+  bridge.engine.state.bench[0] = { uid: 1305813, id: SHOP_UNITS[3], star: 1 };
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  let boardCalls = 0;
+  let lineupCalls = 0;
+  autopilot.rolloutConfidence = () => -100;
+  autopilot.rolloutBoardScore = () => {
+    boardCalls += 1;
+    return -100;
+  };
+  autopilot.rolloutLineupScore = () => {
+    lineupCalls += 1;
+    return -100;
+  };
+
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), false);
+  const firstCalls = boardCalls + lineupCalls;
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), false);
+  assert.equal(boardCalls + lineupCalls, firstCalls);
+
+  bridge.engine.state.bench[0].star = 2;
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), false);
+  assert.ok(boardCalls + lineupCalls > firstCalls);
+});
+
+test("救援方案锁定期间先完成换位，不继续买牌或刷新", () => {
+  const bridge = new EngineBridge(130582);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 48;
+  bridge.engine.state.playerLevel = 3;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  SHOP_UNITS.slice(0, 3).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1305820 + index, id, star: 1 };
+  });
+  const rescueUid = 1305823;
+  bridge.engine.state.bench[0] = { uid: rescueUid, id: SHOP_UNITS[3], star: 1 };
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  autopilot.rolloutConfidence = () => -100;
+  autopilot.rolloutBoardScore = (board) => (
+    board.some((entry) => entry?.unit.uid === rescueUid) ? 10100 : -100
+  );
+  autopilot.rolloutLineupScore = (lineup) => (
+    lineup.some(({ unit }) => unit.uid === rescueUid) ? 10100 : -100
+  );
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), true);
+  autopilot.plannedRound = 48;
+  autopilot.purchaseAction = () => {
+    throw new Error("rescue lock must not purchase before moving");
+  };
+  autopilot.seerPlannedPurchaseAction = () => {
+    throw new Error("rescue lock must not execute the oracle purchase macro");
+  };
+  const action = autopilot.nextPreparationAction();
+  assert.equal(action?.type, "move");
+  assert.equal(action?.from.zone, "bench");
+});
+
 test("利息风险档锚定整轮起始金币，保息只花零头且降一档不会连续滑档", () => {
   const runRerollBudget = (seed, tiersAtRisk) => {
     const bridge = new EngineBridge(seed);
@@ -2265,6 +2627,8 @@ test("标题页和局内都公开托管选择，设置面板公开四种风格�
   assert.match(hostSource, /后台继续战斗/);
   assert.match(hostSource, /托管风格/);
   assert.match(hostSource, /看穿/);
+  assert.match(hostSource, /看穿2/);
+  assert.match(hostSource, /Go级/);
   assert.doesNotMatch(hostSource, /天眼商店/);
   assert.match(hostSource, /role="radiogroup"/);
   assert.match(hostSource, /AUTOPILOT_STRATEGY_KEY/);

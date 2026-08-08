@@ -43,12 +43,14 @@ export interface AutopilotPolicy {
   skipMaxStarDuplicatePurchases: number;
 }
 
-export type AutopilotStyle = "survival" | "balanced" | "highroll" | "seer";
+export type AutopilotStyle = "survival" | "balanced" | "highroll" | "seer" | "seer2" | "go";
 export type AutopilotInformationMode = "normal" | "oracle";
 
 export const informationModeForAutopilotStyle = (
   style: AutopilotStyle,
-): AutopilotInformationMode => (style === "seer" ? "oracle" : "normal");
+): AutopilotInformationMode => (
+  style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal"
+);
 
 export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
   reserveCap: 13,
@@ -154,6 +156,20 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     terminalCompletionReserveGold: 8,
     minimumWinningLineupMaxPrunes: 0,
     benchPressureEmptySlots: 0,
+  },
+  seer2: {
+    safeWinRolloutScore: 10050,
+    lateGamePurchaseStartRound: 12,
+    lateGamePurchaseStartLevel: 7,
+    minimumWinningLineupMaxPrunes: 0,
+    benchPressureEmptySlots: 2,
+  },
+  go: {
+    safeWinRolloutScore: 10050,
+    lateGamePurchaseStartRound: 12,
+    lateGamePurchaseStartLevel: 7,
+    minimumWinningLineupMaxPrunes: 0,
+    benchPressureEmptySlots: 2,
   },
 };
 

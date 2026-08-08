@@ -41,6 +41,9 @@ const loadAbsoluteModule = async (sourcePath) => {
 
   const pending = (async () => {
     const sourceText = await readFile(normalizedPath, "utf8");
+    if (path.extname(normalizedPath) === ".json") {
+      return { default: JSON.parse(sourceText) };
+    }
     const dependencies = {};
     for (const specifier of dependencySpecifiers(normalizedPath, sourceText)) {
       if (!specifier.startsWith(".")) continue;

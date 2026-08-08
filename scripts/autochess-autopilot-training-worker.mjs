@@ -104,7 +104,7 @@ const playRun = ({
   battleStepHz,
   rolloutHz = mode === "validation" ? 60 : 30,
   style = "survival",
-  informationMode = style === "seer" ? "oracle" : "normal",
+  informationMode = style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal",
 }) => {
   const startedAt = performance.now();
   const training = mode === "training";
@@ -174,13 +174,13 @@ const playRun = ({
   const firstMaxInterestRound = rounds.find((round) => round.interest >= 20)?.round
     ?? missingMilestoneRound;
   const finalTerminalProgress = terminalProgress(bridge.engine);
-  const fitness = (final?.round || 0) * 100_000_000
+  const fitness = (final?.round || 0) * 1_000_000_000
     + wins * 1_000_000
     - earlyLosses * 100_000
-    + finalTerminalProgress.copyCompletion * 500_000
-    + finalTerminalProgress.threeStarTargets * 100_000
-    + (final?.hp || 0) * 2_500
-    + (final?.netWorth || 0) * 1_000
+    + finalTerminalProgress.copyCompletion * 1_000
+    + finalTerminalProgress.threeStarTargets * 500
+    + (final?.hp || 0) * 10
+    + (final?.netWorth || 0)
     + Math.max(0, missingMilestoneRound - firstFourFinanceRound) * 500
     + Math.max(0, missingMilestoneRound - firstMaxInterestRound) * 250
     + rounds.reduce((sum, round) => sum + round.margin * 1_000 + round.interest * 100, 0);

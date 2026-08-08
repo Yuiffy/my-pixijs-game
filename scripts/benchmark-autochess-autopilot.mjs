@@ -1,13 +1,18 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { performance } from "node:perf_hooks";
 import path from "node:path";
 import { loadTypescriptModule } from "./tests/helpers/load-typescript-module.mjs";
 
 const { EngineBridge } = await loadTypescriptModule(
   "src/components/autoChessGame/phaser/EngineBridge.ts",
 );
-const { AutoChessAutopilot } = await loadTypescriptModule(
-  "src/components/autoChessGame/ai/AutoChessAutopilot.ts",
-);
+const {
+  AutoChessAutopilot,
+  getAutopilotRolloutCacheStats,
+  hydrateAutopilotRolloutCache,
+  snapshotAutopilotRolloutCache,
+} = await loadTypescriptModule("src/components/autoChessGame/ai/AutoChessAutopilot.ts");
 const { STARTING_PLAYER_LEVEL, upgradeCostForLevel } = await loadTypescriptModule(
   "src/components/autoChessGame/core/gameData.ts",
 );
@@ -20,17 +25,20 @@ const option = (name, fallback) => {
 const runs = Math.max(1, Math.min(100, Number(option("--runs", "12")) || 12));
 const baseSeed = Math.max(1, Number(option("--seed", "72000")) || 72000);
 const outputPath = option("--output", "");
-const maximumBattles = Math.max(1, Math.min(64, Number(option("--battles", "16")) || 16));
+const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "16")) || 16));
 const forcedStarter = option("--starter", "");
 const policyPath = option("--policy", "");
 const policyReport = policyPath ? JSON.parse(await readFile(policyPath, "utf8")) : null;
 const policy = policyReport?.bestPolicy || policyReport?.policy || policyReport || {};
 const style = option("--style", "survival");
-const informationMode = option("--information", style === "seer" ? "oracle" : "normal");
+const informationMode = option(
+  "--information",
+  style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal",
+);
 const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "60")) || 60));
 const battleStepHz = Math.max(20, Math.min(60, Number(option("--battle-hz", "60")) || 60));
 const reportProgress = process.argv.includes("--progress");
-if (!["survival", "balanced", "highroll", "seer"].includes(style)) {
+if (!["survival", "balanced", "highroll", "seer", "seer2", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
 if (!["normal", "oracle"].includes(informationMode)) {
@@ -38,12 +46,56 @@ if (!["normal", "oracle"].includes(informationMode)) {
 }
 const requiredWinRound = Math.max(
   0,
-  Math.min(64, Number(option("--require-win-round", "0")) || 0),
+  Math.min(100, Number(option("--require-win-round", "0")) || 0),
 );
 if (requiredWinRound > maximumBattles) {
   throw new Error(
     `Required win round ${requiredWinRound} exceeds battle limit ${maximumBattles}`,
   );
+}
+
+const collectSourceFiles = async (sourcePath) => {
+  const statEntries = await readdir(sourcePath, { withFileTypes: true });
+  const nested = await Promise.all(statEntries.map((entry) => {
+    const entryPath = path.join(sourcePath, entry.name);
+    return entry.isDirectory() ? collectSourceFiles(entryPath) : [entryPath];
+  }));
+  return nested.flat();
+};
+
+const persistentCacheEnabled = !process.argv.includes("--no-rollout-cache")
+  && (style === "seer2" || style === "go" || process.argv.includes("--rollout-cache"));
+let persistentCachePath = "";
+let hydratedCacheEntries = 0;
+if (persistentCacheEnabled) {
+  const balanceSources = [
+    ...(await collectSourceFiles("src/components/autoChessGame/core/data")),
+    ...(await collectSourceFiles("src/components/autoChessGame/core/engine")),
+    "src/components/autoChessGame/ai/rolloutCacheSchema.ts",
+  ].sort();
+  const balanceHash = createHash("sha256");
+  for (const sourcePath of balanceSources) {
+    balanceHash.update(sourcePath);
+    balanceHash.update(await readFile(sourcePath));
+  }
+  const balanceCacheVersion = balanceHash.digest("hex").slice(0, 16);
+  persistentCachePath = path.resolve(option(
+    "--rollout-cache",
+    path.join(
+      "artifacts/autochess-rollout-cache",
+      balanceCacheVersion,
+      "benchmarks",
+      `seed-${baseSeed}-${baseSeed + runs - 1}-hz-${rolloutHz}.json`,
+    ),
+  ));
+  try {
+    const persisted = JSON.parse(await readFile(persistentCachePath, "utf8"));
+    const entries = Array.isArray(persisted.entries) ? persisted.entries : [];
+    hydrateAutopilotRolloutCache(entries);
+    hydratedCacheEntries = entries.length;
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
 }
 
 const rosterAssetValue = (engine) => [
@@ -69,12 +121,12 @@ const combatMargin = (battle) => {
   return remainingHealth(battle.player) - remainingHealth(battle.enemy);
 };
 
-const runFitness = (run) => run.wins * 100_000_000
-  + run.finalRound * 1_000_000
+const runFitness = (run) => run.finalRound * 1_000_000_000
+  + run.wins * 1_000_000
   - run.earlyLosses * 100_000
   + run.finalHp * 2_500
-  + run.finalNetWorth * 1_000
-  + run.rounds.reduce((sum, round) => sum + round.combatMargin * 1_000 + round.interest * 100, 0);
+  + run.finalNetWorth
+  + run.rounds.reduce((sum, round) => sum + round.combatMargin * 100 + round.interest, 0);
 
 const playRun = (seed) => {
   const bridge = new EngineBridge(seed, 1, { battleStepHz });
@@ -99,6 +151,9 @@ const playRun = (seed) => {
   const actions = {};
   const actionsByRound = new Map();
   const rounds = [];
+  let autopilotTickMs = 0;
+  let autopilotTickCount = 0;
+  let maximumAutopilotTickMs = 0;
 
   while (rounds.length < maximumBattles && bridge.engine.state.phase !== "gameover" && safety < 5000) {
     safety += 1;
@@ -134,6 +189,9 @@ const playRun = (seed) => {
         })),
         autopilotDecision: {
           mode: autopilot.rerollMode,
+          plannedFormation: autopilot.plannedFormation,
+          lineageFormation: autopilot.lineageFormation,
+          plannedLineupUids: [...autopilot.plannedLineupUids],
           predictedScore: autopilot.battlePredictionScore,
           interestTiersAtRisk: autopilot.stabilizationInterestTiersAtRisk,
           paidRerolls: autopilot.paidRerolls,
@@ -180,7 +238,12 @@ const playRun = (seed) => {
     }
 
     const actionRound = bridge.engine.state.round;
+    const tickStartedAt = performance.now();
     const action = autopilot.tick(now);
+    const tickElapsedMs = performance.now() - tickStartedAt;
+    autopilotTickMs += tickElapsedMs;
+    autopilotTickCount += 1;
+    maximumAutopilotTickMs = Math.max(maximumAutopilotTickMs, tickElapsedMs);
     if (action) {
       actions[action.type] = (actions[action.type] || 0) + 1;
       const roundActions = actionsByRound.get(actionRound) || {};
@@ -217,6 +280,9 @@ const playRun = (seed) => {
     ))?.round ?? null,
     firstMaxInterestRound: rounds.find((round) => round.interest >= 20)?.round ?? null,
     actions,
+    autopilotTickMs,
+    autopilotTickCount,
+    maximumAutopilotTickMs,
     rounds,
   };
   run.finalAssetValue = rounds.at(-1)?.assetValue || bridge.engine.state.gold + rosterAssetValue(bridge.engine);
@@ -332,8 +398,25 @@ const aggregate = {
     });
     return totals;
   }, {}),
+  averageAutopilotTickMs: results.reduce((sum, run) => sum + run.autopilotTickMs, 0) / runs,
+  maximumAutopilotTickMs: Math.max(...results.map((run) => run.maximumAutopilotTickMs)),
+  rolloutCache: {
+    ...getAutopilotRolloutCacheStats(),
+    persistent: persistentCacheEnabled,
+    hydratedEntries: hydratedCacheEntries,
+    path: persistentCachePath || null,
+  },
 };
 const report = { generatedAt: new Date().toISOString(), aggregate, runs: results };
+
+if (persistentCacheEnabled) {
+  const entries = snapshotAutopilotRolloutCache();
+  await mkdir(path.dirname(persistentCachePath), { recursive: true });
+  const temporaryPath = `${persistentCachePath}.${process.pid}.tmp`;
+  await writeFile(temporaryPath, JSON.stringify({ entries }), "utf8");
+  await rename(temporaryPath, persistentCachePath);
+  aggregate.rolloutCache.persistedEntries = entries.length;
+}
 const serialized = `${JSON.stringify(report, null, 2)}\n`;
 
 if (outputPath) {

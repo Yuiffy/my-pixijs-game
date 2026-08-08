@@ -17,6 +17,7 @@ type Shop = readonly (UnitId | null)[];
 export type SeerPlannerUnit = {
   id: UnitId;
   star: 1 | 2 | 3;
+  zone?: "board" | "bench";
 };
 
 export type SeerTarget = {
@@ -26,6 +27,17 @@ export type SeerTarget = {
 };
 
 export type SeerShopForecast = Record<PlayerLevel, readonly Shop[]>;
+
+export type SeerWaveForecast = {
+  round: number;
+  tag: "normal" | "elite" | "boss";
+  budget: number;
+  threat: number;
+  units: readonly {
+    id: UnitId;
+    star: 1 | 2 | 3;
+  }[];
+};
 
 export type SeerPlannerRequest = {
   round: number;
@@ -47,8 +59,11 @@ export type SeerPlannerRequest = {
   targetCopies: Partial<Record<UnitId, number>>;
   targets: readonly SeerTarget[];
   futureShops: SeerShopForecast;
+  futureWaves?: readonly SeerWaveForecast[];
   horizon?: number;
   beamWidth?: number;
+  /** Keep searching after the abstract damage model reaches zero HP. */
+  continueAfterForecastDeath?: boolean;
 };
 
 export type SeerRoundAction = {
@@ -59,8 +74,28 @@ export type SeerRoundAction = {
   salesByShop?: readonly (readonly UnitId[])[];
 };
 
+export type SeerPlanStep = SeerRoundAction & {
+  expectedGoldBeforePreparation?: number;
+  expectedHp?: number;
+  expectedPlayerLevel: PlayerLevel;
+  expectedShop: readonly (UnitId | null)[];
+  expectedWave?: SeerWaveForecast;
+  expectedBattleMargin?: number;
+  expectedBattleWon?: boolean;
+  expectedTargetCopies: Partial<Record<UnitId, number>>;
+  expectedTransitionUnits: readonly SeerPlannerUnit[];
+  expectedBoardCount: number;
+  expectedRosterCount: number;
+};
+
 export type SeerPlan = {
   firstStep: SeerRoundAction;
+  startRound?: number;
+  steps?: readonly SeerPlanStep[];
+  planningHorizon?: number;
+  complete: boolean;
+  exactValidatedHorizon?: number;
+  futureWaves?: readonly SeerWaveForecast[];
   projectedRound: number;
   projectedHp: number;
   projectedGold: number;
@@ -89,32 +124,81 @@ type PlannerState = {
   boardCount: number;
   activeStrength: number;
   firstStep: SeerRoundAction | null;
+  path: PlannerPathNode | null;
 };
 
-const DEFAULT_HORIZON = 50;
+type PlannerPathNode = {
+  previous: PlannerPathNode | null;
+  step: SeerPlanStep;
+};
+
+const DEFAULT_HORIZON = 60;
 const DEFAULT_BEAM_WIDTH = 96;
 const BENCH_CAPACITY = 8;
 const STAR_POWER = [0, 1, 2.6, 7] as const;
+const UNIT_BASE_POWER = 36;
+const ABSTRACT_POWER_SCORE_SCALE = 10;
+const ABSTRACT_THREAT_SCALE = 0.1;
 const levelIndex = (level: PlayerLevel) => PLAYER_LEVELS.indexOf(level);
-const waveThreatCache = new Map<string, number>();
+const waveForecastCache = new Map<string, SeerWaveForecast>();
 
-const enemyThreatForRound = (round: number, seed: number) => {
+const waveForecastForRound = (round: number, seed: number): SeerWaveForecast => {
   const key = `${seed}/${round}`;
-  const cached = waveThreatCache.get(key);
-  if (cached !== undefined) return cached;
+  const cached = waveForecastCache.get(key);
+  if (cached) return cached;
   const wave = waveForRound(round, seed);
+  const units = wave.units.map((unit) => ({
+    id: unit.id,
+    star: (unit.star || 1) as 1 | 2 | 3,
+  }));
   const traitPressure = enemyTraitActivations(wave.units).reduce(
     (total, trait) => total + trait.level * 35 + trait.count * 4,
     0,
   );
   const tagPressure = wave.tag === "boss" ? 600 : wave.tag === "elite" ? 280 : 0;
-  const threat = enemyBudgetForRound(round) * 12 + traitPressure + tagPressure;
-  waveThreatCache.set(key, threat);
-  return threat;
+  const forecast = {
+    round,
+    tag: wave.tag,
+    budget: enemyBudgetForRound(round),
+    threat: enemyBudgetForRound(round) * 12 + traitPressure + tagPressure,
+    units,
+  } satisfies SeerWaveForecast;
+  waveForecastCache.set(key, forecast);
+  return forecast;
 };
 
+const enemyThreatForRound = (round: number, seed: number) => {
+  return waveForecastForRound(round, seed).threat;
+};
+
+export const forecastSeerWaves = (
+  round: number,
+  seed: number,
+  horizon: number,
+) => Array.from(
+  { length: Math.max(0, Math.floor(horizon)) },
+  (_, index) => waveForecastForRound(round + index, seed),
+);
+
 const unitCombatStrength = (id: UnitId, star: 1 | 2 | 3) => (
-  UNIT_DEFS[id].cost * 12 * STAR_POWER[star]
+  UNIT_BASE_POWER + UNIT_DEFS[id].cost * 12 * STAR_POWER[star]
+);
+
+const rolloutCombatMargin = (score: number) => (
+  score >= 9000 ? (score - 10000) * 2 : score
+);
+
+const calibratedAbstractMargin = (
+  activeStrength: number,
+  threat: number,
+  initialActiveStrength: number,
+  initialEnemyThreat: number,
+  initialCombatScore: number,
+) => (
+  (activeStrength - threat * ABSTRACT_THREAT_SCALE) * ABSTRACT_POWER_SCORE_SCALE
+    + rolloutCombatMargin(initialCombatScore)
+    - (initialActiveStrength - initialEnemyThreat * ABSTRACT_THREAT_SCALE)
+      * ABSTRACT_POWER_SCORE_SCALE
 );
 
 const canonicalTargetUnits = (
@@ -161,6 +245,16 @@ const rosterUnits = (
   ...transitionUnits,
 ];
 
+const financeMemberCount = (
+  copies: readonly number[],
+  targets: readonly SeerTarget[],
+  transitionUnits: readonly SeerPlannerUnit[],
+) => new Set(
+  rosterUnits(copies, targets, transitionUnits)
+    .filter((unit) => UNIT_DEFS[unit.id].traits.includes("finance"))
+    .map((unit) => unit.id),
+).size;
+
 const activeRosterStrength = (
   copies: readonly number[],
   targets: readonly SeerTarget[],
@@ -178,11 +272,25 @@ const activeRosterStrength = (
   };
 };
 
+const activeFinanceMemberCount = (
+  copies: readonly number[],
+  targets: readonly SeerTarget[],
+  transitionUnits: readonly SeerPlannerUnit[],
+  boardCap: number,
+) => new Set(
+  rosterUnits(copies, targets, transitionUnits)
+    .sort((left, right) => unitCombatStrength(right.id, right.star)
+      - unitCombatStrength(left.id, left.star))
+    .slice(0, Math.max(0, boardCap))
+    .filter((unit) => UNIT_DEFS[unit.id].traits.includes("finance"))
+    .map((unit) => unit.id),
+).size;
+
 const addTransitionUnit = (
   transitionUnits: readonly SeerPlannerUnit[],
   id: UnitId,
 ) => {
-  const next = [...transitionUnits, { id, star: 1 as const }];
+  const next = [...transitionUnits, { id, star: 1 as const, zone: "bench" as const }];
   for (const star of [1, 2] as const) {
     while (next.filter((unit) => unit.id === id && unit.star === star).length >= 3) {
       const matches = next
@@ -191,7 +299,11 @@ const addTransitionUnit = (
         .slice(0, 3);
       if (matches.length < 3) break;
       const keep = matches[0];
-      next[keep.index] = { id, star: (star + 1) as 2 | 3 };
+      next[keep.index] = {
+        id,
+        star: (star + 1) as 2 | 3,
+        zone: keep.unit.zone,
+      };
       matches
         .slice(1)
         .sort((left, right) => right.index - left.index)
@@ -201,10 +313,14 @@ const addTransitionUnit = (
   return next;
 };
 
-const transitionSaleIndex = (transitionUnits: readonly SeerPlannerUnit[]) => {
+const transitionSaleIndex = (
+  transitionUnits: readonly SeerPlannerUnit[],
+  preserveFinance = false,
+) => {
   let bestIndex = -1;
   let bestStrength = Number.POSITIVE_INFINITY;
   transitionUnits.forEach((unit, index) => {
+    if (preserveFinance && UNIT_DEFS[unit.id].traits.includes("finance")) return;
     const strength = unitCombatStrength(unit.id, unit.star);
     if (strength < bestStrength) {
       bestIndex = index;
@@ -262,6 +378,14 @@ const buyFromShop = (
     const currentRosterCount = targetPhysicalCount(nextCopies, targets)
       + nextTransitionUnits.length;
     const needsPopulation = currentRosterCount < boardCap;
+    const currentFinanceIds = new Set(
+      rosterUnits(nextCopies, targets, nextTransitionUnits)
+        .sort((left, right) => unitCombatStrength(right.id, right.star)
+          - unitCombatStrength(left.id, left.star))
+        .slice(0, Math.max(0, boardCap))
+        .filter((unit) => UNIT_DEFS[unit.id].traits.includes("finance"))
+        .map((unit) => unit.id),
+    );
     const candidates = shop.flatMap((id, shopIndex) => {
       if (!id || usedShopIndexes.has(shopIndex)) return [];
       const definition = UNIT_DEFS[id];
@@ -284,9 +408,13 @@ const buyFromShop = (
         ? purchaseMarginalValue(nextCopies[index], targets[index])
         : 0;
       const transitionValue = unitCombatStrength(id, 1);
-      const score = isTarget
-        ? targetValue + transitionValue * (needsPopulation ? 2 : 1)
-        : transitionValue * 3 + (definition.traits.includes("finance") ? 24 : 0);
+      const advancesFinance = definition.traits.includes("finance")
+        && !currentFinanceIds.has(id);
+      const score = needsPopulation
+        ? 100 - definition.cost * 4 + (advancesFinance ? 5 : 0)
+        : isTarget
+          ? targetValue + transitionValue + (advancesFinance ? 64 : 0)
+          : transitionValue * 3 + (advancesFinance ? 64 : 0);
       return [{ id, index, shopIndex, score }];
     }).sort((left, right) => right.score - left.score || left.shopIndex - right.shopIndex);
     const candidate = candidates.find(({ id }) => UNIT_DEFS[id].cost <= nextGold);
@@ -300,7 +428,13 @@ const buyFromShop = (
     const nextRosterCount = targetPhysicalCount(nextCopiesForCandidate, targets)
       + nextTransitionForCandidate.length;
     if (nextRosterCount > maxRoster) {
-      const saleIndex = transitionSaleIndex(nextTransitionUnits);
+      const preserveFinance = financeMemberCount(
+        nextCopiesForCandidate,
+        targets,
+        nextTransitionForCandidate,
+      ) >= 4;
+      let saleIndex = transitionSaleIndex(nextTransitionUnits, preserveFinance);
+      if (saleIndex < 0) saleIndex = transitionSaleIndex(nextTransitionUnits);
       if (saleIndex < 0) break;
       const [sold] = nextTransitionUnits.splice(saleIndex, 1);
       nextGold += transitionSellValue(sold);
@@ -346,15 +480,32 @@ const stateEvaluation = (
   initialEnemyThreat: number,
 ) => {
   const progress = targetProgressScore(state.copies, request.targets);
-  const strengthGain = state.activeStrength - initialActiveStrength;
-  const threatGrowth = Math.max(
-    0,
-    enemyThreatForRound(state.round, request.seed) - initialEnemyThreat,
-  );
+  const currentThreat = request.futureWaves?.[state.depth]?.threat
+    ?? enemyThreatForRound(state.round, request.seed);
   const levelGain = (state.playerLevel - request.playerLevel) * 72;
-  const readiness = strengthGain + levelGain - threatGrowth;
-  const nextThreat = enemyThreatForRound(state.round + 1, request.seed);
-  const nextMargin = readiness - Math.max(0, nextThreat - initialEnemyThreat);
+  const nextThreat = request.futureWaves?.[state.depth + 1]?.threat
+    ?? enemyThreatForRound(state.round + 1, request.seed);
+  const currentMargin = calibratedAbstractMargin(
+    state.activeStrength,
+    currentThreat,
+    initialActiveStrength,
+    initialEnemyThreat,
+    request.currentCombatScore,
+  );
+  const nextMargin = calibratedAbstractMargin(
+    state.activeStrength,
+    nextThreat,
+    initialActiveStrength,
+    initialEnemyThreat,
+    request.currentCombatScore,
+  ) + levelGain;
+  const lookaheadThreat = (request.futureWaves || [])
+    .slice(state.depth + 1, state.depth + 5)
+    .reduce((maximum, wave) => Math.max(maximum, wave.threat), nextThreat);
+  const futureRisk = Math.max(
+    0,
+    lookaheadThreat - nextThreat - Math.max(0, currentMargin),
+  );
   const firstStepLevel = state.firstStep?.targetLevel || request.playerLevel;
   const highTierTiming = firstStepLevel >= 8 ? firstStepLevel * 2_500 : 0;
   return state.hp * 100_000_000
@@ -364,6 +515,7 @@ const stateEvaluation = (
     + state.gold * 20
     + state.playerLevel * 480
     + highTierTiming
+    - Math.min(1_200, futureRisk) * 120
     - state.cursors.reduce((total, cursor) => total + cursor, 0) * 2;
 };
 
@@ -373,27 +525,50 @@ const dominanceKey = (state: PlannerState) => [
   state.playerLevel,
   state.upgradeRemaining,
   state.cursors.join(","),
-  state.hp,
-  Math.min(2, state.streak),
-  state.paydayDebtRounds,
+  state.currentShop.join(","),
   state.copies.join(","),
   state.transitionUnits.map((unit) => `${unit.id}:${unit.star}`).sort().join(","),
 ].join("/");
 
 const pruneDominatedStates = (states: readonly PlannerState[]) => {
-  const bestByKey = new Map<string, PlannerState>();
-  let pruned = 0;
+  const groups = new Map<string, PlannerState[]>();
   states.forEach((state) => {
     const key = dominanceKey(state);
-    const current = bestByKey.get(key);
-    if (!current || state.gold > current.gold) {
-      if (current) pruned += 1;
-      bestByKey.set(key, state);
-    } else {
-      pruned += 1;
-    }
+    const group = groups.get(key) || [];
+    group.push(state);
+    groups.set(key, group);
   });
-  return { states: Array.from(bestByKey.values()), pruned };
+  let pruned = 0;
+  const frontier: PlannerState[] = [];
+  groups.forEach((group) => {
+    const survivors: PlannerState[] = [];
+    group
+      .sort((left, right) => right.gold - left.gold || right.hp - left.hp)
+      .forEach((state) => {
+        const dominated = survivors.some((survivor) => (
+          survivor.gold >= state.gold
+          && survivor.hp >= state.hp
+          && survivor.streak >= state.streak
+          && survivor.paydayDebtRounds <= state.paydayDebtRounds
+        ));
+        if (dominated) {
+          pruned += 1;
+          return;
+        }
+        for (let index = survivors.length - 1; index >= 0; index -= 1) {
+          const survivor = survivors[index];
+          if (
+            state.gold >= survivor.gold
+            && state.hp >= survivor.hp
+            && state.streak >= survivor.streak
+            && state.paydayDebtRounds <= survivor.paydayDebtRounds
+          ) survivors.splice(index, 1);
+        }
+        survivors.push(state);
+      });
+    frontier.push(...survivors);
+  });
+  return { states: frontier, pruned };
 };
 
 const projectedBattleWin = (
@@ -402,16 +577,16 @@ const projectedBattleWin = (
   initialActiveStrength: number,
   initialEnemyThreat: number,
 ) => {
-  const exactMargin = request.currentCombatScore >= 9000
-    ? (request.currentCombatScore - 10000) * 2
-    : -240;
-  const strengthGain = state.activeStrength - initialActiveStrength;
+  const waveThreat = request.futureWaves?.[state.depth]?.threat
+    ?? enemyThreatForRound(state.round, request.seed);
   const levelGain = (state.playerLevel - request.playerLevel) * 72;
-  const threatGrowth = Math.max(
-    0,
-    enemyThreatForRound(state.round, request.seed) - initialEnemyThreat,
-  );
-  return exactMargin + strengthGain + levelGain - threatGrowth;
+  return calibratedAbstractMargin(
+    state.activeStrength,
+    waveThreat,
+    initialActiveStrength,
+    initialEnemyThreat,
+    request.currentCombatScore,
+  ) + levelGain;
 };
 
 const predictedDefeatDamage = (round: number, margin: number) => Math.min(
@@ -432,6 +607,7 @@ const buildLevelPrefixes = (
   state: PlannerState,
   targetLevel: PlayerLevel,
   request: SeerPlannerRequest,
+  maximumRequestedRerolls = 24,
 ) => {
   const upgradeCost = upgradeCostToLevel(state, targetLevel);
   if (upgradeCost > state.gold) return [];
@@ -458,7 +634,7 @@ const buildLevelPrefixes = (
   salesByShop.push(currentSales);
 
   const prefixes: PreparedLevelPrefix[] = [];
-  const addPrefix = (rerolls: number) => {
+  const addPrefix = () => {
     prefixes.push({
       gold,
       cursors: [...cursors],
@@ -468,13 +644,13 @@ const buildLevelPrefixes = (
       salesByShop: salesByShop.map((shop) => [...shop]),
     });
   };
-  addPrefix(0);
+  addPrefix();
 
   const availableShops = request.futureShops[targetLevel].length
     - state.cursors[targetLevelIndex];
   const freeRerolls = state.depth === 0 ? request.freeRerolls : 0;
   const maximumRerolls = Math.min(
-    24,
+    Math.max(0, Math.floor(maximumRequestedRerolls)),
     Math.max(0, availableShops),
     Math.max(0, Math.floor(gold + freeRerolls)),
   );
@@ -500,7 +676,7 @@ const buildLevelPrefixes = (
     ));
     purchasesByShop.push(purchases);
     salesByShop.push(sales);
-    addPrefix(refresh + 1);
+    addPrefix();
   }
   return prefixes;
 };
@@ -527,6 +703,23 @@ const advanceState = (
     purchasesByShop: prefix.purchasesByShop,
     salesByShop: prefix.salesByShop,
   } satisfies SeerRoundAction;
+  const step: SeerPlanStep = {
+    ...action,
+    expectedGoldBeforePreparation: state.gold,
+    expectedHp: state.hp,
+    expectedPlayerLevel: state.playerLevel,
+    expectedShop: [...state.currentShop],
+    expectedTargetCopies: Object.fromEntries(request.targets.map((target, index) => [
+      target.id,
+      state.copies[index] || 0,
+    ])) as Partial<Record<UnitId, number>>,
+    expectedTransitionUnits: state.transitionUnits.map((unit) => ({ ...unit })),
+    expectedBoardCount: state.boardCount,
+    expectedRosterCount: targetPhysicalCount(
+      state.copies,
+      request.targets,
+    ) + state.transitionUnits.length,
+  };
   const preparationState: PlannerState = {
     ...state,
     gold: prefix.gold,
@@ -538,6 +731,7 @@ const advanceState = (
     boardCount: active.count,
     activeStrength: active.strength,
     firstStep: state.firstStep || action,
+    path: { previous: state.path, step },
   };
   const battleMargin = projectedBattleWin(
     preparationState,
@@ -546,10 +740,20 @@ const advanceState = (
     initialEnemyThreat,
   );
   const won = battleMargin >= -40;
-  const wave = waveForRound(state.round, request.seed);
-  const bounty = wave.units.reduce((total, unit) => total + (unit.star || 1), 0);
-  const interestStep = request.financeActive ? 4 : 5;
-  const interestCap = request.financeActive ? FINANCE_INTEREST_CAP : NORMAL_INTEREST_CAP;
+  const wave = request.futureWaves?.[state.depth]
+    || waveForecastForRound(state.round, request.seed);
+  step.expectedWave = wave;
+  step.expectedBattleMargin = battleMargin;
+  step.expectedBattleWon = won;
+  const bounty = wave.units.reduce((total, unit) => total + unit.star, 0);
+  const financeActive = request.financeActive || activeFinanceMemberCount(
+    prefix.copies,
+    request.targets,
+    prefix.transitionUnits,
+    PLAYER_LEVEL_CONFIG[targetLevel].boardCap,
+  ) >= 4;
+  const interestStep = financeActive ? 4 : 5;
+  const interestCap = financeActive ? FINANCE_INTEREST_CAP : NORMAL_INTEREST_CAP;
   let gold = prefix.gold;
   const interest = Math.min(interestCap, Math.floor(gold / interestStep));
   const streak = won ? state.streak + 1 : 0;
@@ -557,13 +761,19 @@ const advanceState = (
   const debtPayment = state.paydayDebtRounds > 0 ? 1 : 0;
   gold += Math.max(
     0,
-    bounty + interest + streakBonus + (request.financeActive ? 2 : 0)
+    bounty + interest + streakBonus + (financeActive ? 2 : 0)
       + request.incomeBonus - debtPayment,
   );
-  const hp = won
+  const projectedHp = won
     ? state.hp
     : state.hp - predictedDefeatDamage(state.round, battleMargin);
-  if (hp <= 0) return null;
+  if (projectedHp <= 0 && !request.continueAfterForecastDeath) return null;
+  // The abstract threat model is deliberately conservative and can call an
+  // otherwise playable line dead long before the real combat simulator does.
+  // In oracle mode that is a risk signal, not a reason to stop constructing the
+  // 60-round route. Preserve the negative forecast so the beam can still rank
+  // later routes by how much damage they would have taken.
+  const hp = projectedHp;
 
   let currentShop: Shop = [];
   const cursors = [...prefix.cursors];
@@ -589,6 +799,7 @@ const advanceState = (
     boardCount: active.count,
     activeStrength: active.strength,
     firstStep: state.firstStep || action,
+    path: preparationState.path,
   };
 };
 
@@ -606,9 +817,18 @@ const expandFrontier = (
       const upgradeCost = upgradeCostToLevel(state, targetLevel);
       const availableShops = request.futureShops[targetLevel].length
         - state.cursors[levelIndex(targetLevel)];
-      const prefixes = buildLevelPrefixes(state, targetLevel, request);
-      rerollChoices(state.gold - upgradeCost, depth === 0 ? request.freeRerolls : 0, availableShops)
-        .forEach((rerolls) => {
+      const choices = rerollChoices(
+        state.gold - upgradeCost,
+        depth === 0 ? request.freeRerolls : 0,
+        availableShops,
+      );
+      const prefixes = buildLevelPrefixes(
+        state,
+        targetLevel,
+        request,
+        choices.at(-1) || 0,
+      );
+      choices.forEach((rerolls) => {
           const prefix = prefixes[rerolls];
           if (!prefix) return;
           const next = advanceState(
@@ -630,48 +850,60 @@ const expandFrontier = (
 
 export const planSeerEconomy = (request: SeerPlannerRequest): SeerPlan => {
   const horizon = Math.max(1, Math.floor(request.horizon || DEFAULT_HORIZON));
+  const futureWaves = request.futureWaves?.length === horizon
+    ? request.futureWaves
+    : forecastSeerWaves(request.round, request.seed, horizon);
+  const planningRequest: SeerPlannerRequest = {
+    ...request,
+    horizon,
+    futureWaves,
+  };
   const beamWidth = Math.max(8, Math.floor(request.beamWidth || DEFAULT_BEAM_WIDTH));
-  const initialCopies = request.targets.map((target) => Math.max(
+  const initialCopies = planningRequest.targets.map((target) => Math.max(
     0,
     Math.min(target.desiredCopies, Math.floor(request.targetCopies[target.id] || 0)),
   ));
-  const initialTransitionUnits = (request.currentTransitionUnits || []).map((unit) => ({
+  const initialTransitionUnits = (planningRequest.currentTransitionUnits || []).map((unit) => ({
     id: unit.id,
     star: unit.star,
   }));
-  const initialActiveStrength = request.currentBoardStrength || 0;
-  const initialEnemyThreat = enemyThreatForRound(request.round, request.seed);
+  const initialActiveStrength = planningRequest.currentBoardStrength || 0;
+  const initialEnemyThreat = futureWaves[0]?.threat
+    ?? enemyThreatForRound(planningRequest.round, planningRequest.seed);
   const initialActive = activeRosterStrength(
     initialCopies,
-    request.targets,
+    planningRequest.targets,
     initialTransitionUnits,
-    request.currentBoardCount ?? PLAYER_LEVEL_CONFIG[request.playerLevel].boardCap,
+    planningRequest.currentBoardCount
+      ?? PLAYER_LEVEL_CONFIG[planningRequest.playerLevel].boardCap,
   );
   let frontier: PlannerState[] = [{
     depth: 0,
-    round: request.round,
-    hp: request.hp,
-    gold: request.gold,
-    playerLevel: request.playerLevel,
-    upgradeRemaining: request.upgradeRemaining,
-    streak: request.streak,
-    paydayDebtRounds: request.paydayDebtRounds,
+    round: planningRequest.round,
+    hp: planningRequest.hp,
+    gold: planningRequest.gold,
+    playerLevel: planningRequest.playerLevel,
+    upgradeRemaining: planningRequest.upgradeRemaining,
+    streak: planningRequest.streak,
+    paydayDebtRounds: planningRequest.paydayDebtRounds,
     cursors: PLAYER_LEVELS.map(() => 0),
-    currentShop: request.currentShop,
+    currentShop: planningRequest.currentShop,
     copies: initialCopies,
     transitionUnits: initialTransitionUnits,
-    boardCount: request.currentBoardCount ?? initialActive.count,
+    boardCount: planningRequest.currentBoardCount ?? initialActive.count,
     activeStrength: initialActiveStrength,
     firstStep: null,
+    path: null,
   }];
   let exploredStates = 0;
   let dominancePrunes = 0;
+  let bestReachable = frontier[0];
 
   for (let depth = 0; depth < horizon; depth += 1) {
     const expansion = expandFrontier(
       frontier,
       depth,
-      request,
+      planningRequest,
       initialActiveStrength,
       initialEnemyThreat,
     );
@@ -680,41 +912,69 @@ export const planSeerEconomy = (request: SeerPlannerRequest): SeerPlan => {
     if (expanded.length === 0) break;
     const dominated = pruneDominatedStates(expanded);
     dominancePrunes += dominated.pruned;
-    frontier = dominated.states
+    const deepest = dominated.states
       .sort((left, right) => (
-        stateEvaluation(right, request, initialActiveStrength, initialEnemyThreat)
-          - stateEvaluation(left, request, initialActiveStrength, initialEnemyThreat)
-      ))
+        stateEvaluation(right, planningRequest, initialActiveStrength, initialEnemyThreat)
+          - stateEvaluation(left, planningRequest, initialActiveStrength, initialEnemyThreat)
+      ))[0];
+    if (
+      deepest
+      && (
+        !bestReachable
+        || deepest.depth > bestReachable.depth
+        || (
+          deepest.depth === bestReachable.depth
+          && stateEvaluation(deepest, planningRequest, initialActiveStrength, initialEnemyThreat)
+            > stateEvaluation(bestReachable, planningRequest, initialActiveStrength, initialEnemyThreat)
+        )
+      )
+    ) {
+      bestReachable = deepest;
+    }
+    frontier = dominated.states
       .slice(0, beamWidth);
   }
 
-  const best = [...frontier].sort((left, right) => (
-    stateEvaluation(right, request, initialActiveStrength, initialEnemyThreat)
-      - stateEvaluation(left, request, initialActiveStrength, initialEnemyThreat)
-  ))[0];
+  const best = bestReachable;
   const fallback: SeerRoundAction = {
-    targetLevel: request.playerLevel,
+    targetLevel: planningRequest.playerLevel,
     rerolls: 0,
-    expectedGoldAfterPreparation: request.gold,
+    expectedGoldAfterPreparation: planningRequest.gold,
     purchasesByShop: [],
     salesByShop: [],
   };
-  const projectedTargetCopies = Object.fromEntries(request.targets.map((target, index) => [
+  const steps: SeerPlanStep[] = [];
+  let path = best?.path || null;
+  while (path) {
+    steps.push(path.step);
+    path = path.previous;
+  }
+  steps.reverse();
+  const projectedTargetCopies = Object.fromEntries(planningRequest.targets.map((target, index) => [
     target.id,
     best?.copies[index] || initialCopies[index],
   ])) as Partial<Record<UnitId, number>>;
   return {
-    firstStep: best?.firstStep || fallback,
-    projectedRound: best?.round || request.round,
-    projectedHp: best?.hp || request.hp,
-    projectedGold: best?.gold || request.gold,
-    projectedLevel: best?.playerLevel || request.playerLevel,
+    firstStep: steps[0] || best?.firstStep || fallback,
+    startRound: planningRequest.round,
+    steps,
+    planningHorizon: horizon,
+    complete: steps.length >= horizon,
+    futureWaves,
+    projectedRound: best?.round || planningRequest.round,
+    projectedHp: best?.hp || planningRequest.hp,
+    projectedGold: best?.gold || planningRequest.gold,
+    projectedLevel: best?.playerLevel || planningRequest.playerLevel,
     projectedTargetCopies,
-    projectedBoardCount: best?.boardCount || request.currentBoardCount || initialActive.count,
+    projectedBoardCount: best?.boardCount
+      || planningRequest.currentBoardCount
+      || initialActive.count,
     projectedRosterCount: best
-      ? targetPhysicalCount(best.copies, request.targets) + best.transitionUnits.length
-      : targetPhysicalCount(initialCopies, request.targets) + initialTransitionUnits.length,
-    score: best ? stateEvaluation(best, request, initialActiveStrength, initialEnemyThreat) : 0,
+      ? targetPhysicalCount(best.copies, planningRequest.targets) + best.transitionUnits.length
+      : targetPhysicalCount(initialCopies, planningRequest.targets) + initialTransitionUnits.length,
+    score: best
+      ? stateEvaluation(best, planningRequest, initialActiveStrength, initialEnemyThreat)
+      : 0,
     exploredStates,
     dominancePrunes,
   };

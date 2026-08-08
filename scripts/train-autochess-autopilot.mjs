@@ -5,7 +5,7 @@ import path from "node:path";
 import { Worker } from "node:worker_threads";
 import { loadTypescriptModule } from "./tests/helpers/load-typescript-module.mjs";
 
-const { DEFAULT_AUTOPILOT_POLICY } = await loadTypescriptModule(
+const { DEFAULT_AUTOPILOT_POLICY, resolveAutopilotStylePolicy } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/autopilotPolicy.ts",
 );
 
@@ -20,6 +20,11 @@ const trainingRuns = Math.max(1, Math.min(16, Number(option("--runs", "3")) || 3
 const validationRuns = Math.max(1, Math.min(16, Number(option("--validation-runs", "3")) || 3));
 const baseSeed = Math.max(1, Number(option("--seed", "74000")) || 74000);
 const battles = Math.max(4, Math.min(64, Number(option("--battles", "20")) || 20));
+const style = option("--style", "survival");
+if (!["survival", "balanced", "highroll", "seer", "seer2", "go"].includes(style)) {
+  throw new Error(`Unknown autopilot style: ${style}`);
+}
+const informationMode = style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal";
 const trainingBattleStepHz = Math.max(
   20,
   Math.min(60, Number(option("--training-hz", "20")) || 20),
@@ -55,7 +60,7 @@ const collectSourceFiles = async (sourcePath) => {
 const balanceSources = [
   ...(await collectSourceFiles("src/components/autoChessGame/core/data")),
   ...(await collectSourceFiles("src/components/autoChessGame/core/engine")),
-  "src/components/autoChessGame/ai/AutoChessAutopilot.ts",
+  "src/components/autoChessGame/ai/rolloutCacheSchema.ts",
 ].sort();
 const balanceHash = createHash("sha256");
 for (const sourcePath of balanceSources) {
@@ -244,6 +249,8 @@ const evaluate = async (policy, seedStart, runCount, battleLimit, mode = "traini
       battleLimit,
       starter,
       mode,
+      style,
+      informationMode,
       battleStepHz: mode === "training" ? trainingBattleStepHz : 60,
       rolloutHz: mode === "training" ? trainingRolloutHz : 60,
     }),
@@ -303,7 +310,10 @@ const compareCandidate = (left, right) => right.training.averageFinalRound - lef
   || left.training.averageFirstFourFinanceRound - right.training.averageFirstFourFinanceRound
   || left.training.averageFirstMaxInterestRound - right.training.averageFirstMaxInterestRound
   || right.training.fitness - left.training.fitness;
-const baselinePolicy = clampPolicy(DEFAULT_AUTOPILOT_POLICY);
+const baselinePolicy = clampPolicy({
+  ...DEFAULT_AUTOPILOT_POLICY,
+  ...resolveAutopilotStylePolicy(style),
+});
 const initialPolicy = initialPolicyReport
   ? clampPolicy(initialPolicyReport.bestPolicy || initialPolicyReport.policy || initialPolicyReport)
   : null;
@@ -402,6 +412,8 @@ const report = {
     validationBattles,
     skipValidation,
     starter,
+    style,
+    informationMode,
     initialPolicyPath: initialPolicyPath || null,
     workerCount,
     balanceCacheVersion,

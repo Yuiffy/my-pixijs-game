@@ -3,14 +3,22 @@ import { availableParallelism } from "node:os";
 import path from "node:path";
 import { Worker } from "node:worker_threads";
 
-const STYLES = ["survival", "balanced", "highroll", "seer"];
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] : fallback;
 };
+const ALL_STYLES = ["survival", "balanced", "highroll", "seer", "seer2", "go"];
+const requestedStyles = option("--styles", "")
+  .split(",")
+  .map((style) => style.trim())
+  .filter(Boolean);
+const STYLES = requestedStyles.length > 0 ? [...new Set(requestedStyles)] : ALL_STYLES;
+if (STYLES.some((style) => !ALL_STYLES.includes(style))) {
+  throw new Error(`Unknown style in --styles: ${STYLES.join(",")}`);
+}
 const runs = Math.max(1, Math.min(32, Number(option("--runs", "8")) || 8));
 const baseSeed = Math.max(1, Number(option("--seed", "122000")) || 122000);
-const battles = Math.max(4, Math.min(64, Number(option("--battles", "50")) || 50));
+const battles = Math.max(4, Math.min(64, Number(option("--battles", "60")) || 60));
 const planningMode = option("--planning", "fast");
 const rolloutHz = Math.max(
   20,
@@ -166,7 +174,7 @@ try {
       battleStepHz,
       rolloutHz,
       style,
-      informationMode: style === "seer" ? "oracle" : "normal",
+      informationMode: style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal",
     }),
   )));
 } finally {
@@ -187,6 +195,7 @@ const ranking = STYLES.map((style) => ({ style, ...styles[style] }))
 const report = {
   generatedAt: new Date().toISOString(),
   configuration: {
+    styles: STYLES,
     runs,
     baseSeed,
     battles,

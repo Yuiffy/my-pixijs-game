@@ -107,6 +107,14 @@ export type AutoChessEngineOptions = {
   visualEffects?: boolean;
 };
 
+export type AutoChessEngineSnapshot = {
+  state: GameState;
+  randomState: number;
+  shopRandomState: number;
+  shopSequenceCounts: Record<PlayerLevel, number>;
+  uid: number;
+};
+
 const CONTACT_ATTACK_BUFFER = 12;
 const PLACEMENT_MARGIN = 8;
 const TARGET_LOCK_DURATION = 0.45;
@@ -250,11 +258,16 @@ export class AutoChessEngine {
     10: 0,
   };
 
+  private shopPreviewCache = new Map<string, UnitId[]>();
+
   private uid = 1;
 
   private chronosphereEnergyLocks = new Set<string>();
 
   private observedTargets = new Map<string, string | null>();
+
+  /** Trait membership is fixed for the lifetime of a battle, including revives. */
+  private battleTraitLevelCache = new WeakMap<BattleState, Map<string, number>>();
 
   private readonly roster: RosterSystem;
 
@@ -575,6 +588,32 @@ export class AutoChessEngine {
     this.rng.restore(randomState);
   }
 
+  /**
+   * Snapshot the preparation state so CPU route search can branch without
+   * consuming the live run's random streams or shop cursors.
+   */
+  public getSimulationSnapshot(): AutoChessEngineSnapshot {
+    return {
+      state: structuredClone(this.state),
+      randomState: this.rng.snapshot(),
+      shopRandomState: this.shopRng.snapshot(),
+      shopSequenceCounts: { ...this.shopSequenceCounts },
+      uid: this.uid,
+    };
+  }
+
+  public restoreSimulationSnapshot(snapshot: AutoChessEngineSnapshot) {
+    this.state = structuredClone(snapshot.state);
+    this.rng.restore(snapshot.randomState);
+    this.shopRng.restore(snapshot.shopRandomState);
+    this.shopSequenceCounts = { ...snapshot.shopSequenceCounts };
+    this.uid = snapshot.uid;
+    this.shopPreviewCache.clear();
+    this.chronosphereEnergyLocks.clear();
+    this.observedTargets.clear();
+    this.battleTraitLevelCache = new WeakMap<BattleState, Map<string, number>>();
+  }
+
   public getShopRandomState() {
     return PLAYER_LEVELS.reduce(
       (signature, level) => (
@@ -611,6 +650,7 @@ export class AutoChessEngine {
     PLAYER_LEVELS.forEach((level) => {
       this.shopSequenceCounts[level] = 0;
     });
+    this.shopPreviewCache.clear();
   }
 
   private shopSequenceSeed(level: PlayerLevel, sequenceIndex: number) {
@@ -622,12 +662,17 @@ export class AutoChessEngine {
   }
 
   private generateShopAt(level: PlayerLevel, sequenceIndex: number) {
+    const cacheKey = `${this.state.seed}/${level}/${sequenceIndex}`;
+    const cached = this.shopPreviewCache.get(cacheKey);
+    if (cached) return [...cached];
     const playerLevel = this.state.playerLevel;
     const random = this.shopRng;
     try {
       this.state.playerLevel = level;
       this.shopRng = createSeededRandom(this.shopSequenceSeed(level, sequenceIndex));
-      return this.roster.generateShop();
+      const shop = this.roster.generateShop();
+      this.shopPreviewCache.set(cacheKey, [...shop]);
+      return shop;
     } finally {
       this.state.playerLevel = playerLevel;
       this.shopRng = random;
@@ -1070,21 +1115,35 @@ export class AutoChessEngine {
     if (pathLength < 0.01) return null;
     const unitX = pathX / pathLength;
     const unitY = pathY / pathLength;
-    return fighters
-      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.abilityMotion && !other.jumpPending && other.jumpTime <= 0)
-      .map((other) => {
-        const relativeX = other.x - from.x;
-        const relativeY = other.y - from.y;
-        const forward = relativeX * unitX + relativeY * unitY;
-        const lateral = Math.abs(relativeX * -unitY + relativeY * unitX);
-        return { other, forward, lateral };
-      })
-      .filter(({ other, forward, lateral }) =>
-        forward > YIELD_MIN_FORWARD &&
-        forward <= pathLength + mover.radius + other.radius + YIELD_PATH_PADDING &&
-        lateral < mover.radius + other.radius + YIELD_PATH_PADDING,
-      )
-      .sort((left, right) => left.forward - right.forward || left.other.fid.localeCompare(right.other.fid))[0]?.other || null;
+    let best: Fighter | null = null;
+    let bestForward = Number.POSITIVE_INFINITY;
+    for (const other of fighters) {
+      if (
+        !other.alive
+        || other === mover
+        || other.team !== mover.team
+        || other.abilityMotion
+        || other.jumpPending
+        || other.jumpTime > 0
+      ) continue;
+      const relativeX = other.x - from.x;
+      const relativeY = other.y - from.y;
+      const forward = relativeX * unitX + relativeY * unitY;
+      const lateral = Math.abs(relativeX * -unitY + relativeY * unitX);
+      if (
+        forward <= YIELD_MIN_FORWARD
+        || forward > pathLength + mover.radius + other.radius + YIELD_PATH_PADDING
+        || lateral >= mover.radius + other.radius + YIELD_PATH_PADDING
+      ) continue;
+      if (
+        forward < bestForward
+        || (forward === bestForward && (!best || other.fid.localeCompare(best.fid) < 0))
+      ) {
+        best = other;
+        bestForward = forward;
+      }
+    }
+    return best;
   }
 
   private allyPushForceActive(mover: Fighter) {
@@ -1267,6 +1326,7 @@ export class AutoChessEngine {
     occupants: Fighter[],
     margin = PLACEMENT_MARGIN,
     preferredCandidates: Array<{ x: number; y: number }> = [],
+    excluded: Fighter | null = null,
   ) {
     const side = fighter.avoidSide;
     const candidates = [preferred, ...preferredCandidates];
@@ -1279,11 +1339,28 @@ export class AutoChessEngine {
     let bestClearance = -Infinity;
     for (const candidate of candidates) {
       const clamped = this.clampFighterPosition(fighter, candidate);
-      const clearance = occupants.reduce((minimum, other) => {
-        if (!other.alive || other === fighter) return minimum;
-        const position = this.occupiedPosition(other);
-        return Math.min(minimum, Math.hypot(clamped.x - position.x, clamped.y - position.y) - fighter.radius - other.radius - margin);
-      }, Infinity);
+      let clearance = Infinity;
+      for (const other of occupants) {
+        if (!other.alive || other === fighter || other === excluded) continue;
+        const positionX = other.abilityMotion
+          ? other.abilityMotion.toX
+          : other.jumpTime > 0
+            ? other.jumpToX
+            : other.x;
+        const positionY = other.abilityMotion
+          ? other.abilityMotion.toY
+          : other.jumpTime > 0
+            ? other.jumpToY
+            : other.y;
+        clearance = Math.min(
+          clearance,
+          Math.hypot(clamped.x - positionX, clamped.y - positionY)
+            - fighter.radius
+            - other.radius
+            - margin,
+        );
+        if (clearance < 0) break;
+      }
       if (clearance >= 0) return clamped;
       if (clearance > bestClearance) {
         best = clamped;
@@ -1305,23 +1382,38 @@ export class AutoChessEngine {
   }
 
   private findFrontAllyBlocker(mover: Fighter, towardX: number, towardY: number, fighters: Fighter[]) {
-    return fighters
-      .filter((other) => other.alive && other !== mover && other.team === mover.team && !other.abilityMotion && !other.jumpPending && other.jumpTime <= 0)
-      .map((other) => {
-        const relativeX = other.x - mover.x;
-        const relativeY = other.y - mover.y;
-        const forward = relativeX * towardX + relativeY * towardY;
-        const lateral = Math.abs(relativeX * -towardY + relativeY * towardX);
-        const distance = Math.hypot(relativeX, relativeY);
-        return { other, forward, lateral, distance };
-      })
-      .filter(({ other, forward, lateral, distance }) =>
-        forward > YIELD_MIN_FORWARD &&
-        forward < AVOID_LOOK_AHEAD &&
-        lateral < mover.radius + other.radius + 10 &&
-        distance < mover.radius + other.radius + (this.allyPushForceActive(mover) ? 14 : 4),
-      )
-      .sort((left, right) => left.forward - right.forward || left.other.fid.localeCompare(right.other.fid))[0]?.other || null;
+    const force = this.allyPushForceActive(mover);
+    let best: Fighter | null = null;
+    let bestForward = Number.POSITIVE_INFINITY;
+    for (const other of fighters) {
+      if (
+        !other.alive
+        || other === mover
+        || other.team !== mover.team
+        || other.abilityMotion
+        || other.jumpPending
+        || other.jumpTime > 0
+      ) continue;
+      const relativeX = other.x - mover.x;
+      const relativeY = other.y - mover.y;
+      const forward = relativeX * towardX + relativeY * towardY;
+      const lateral = Math.abs(relativeX * -towardY + relativeY * towardX);
+      const distance = Math.hypot(relativeX, relativeY);
+      if (
+        forward <= YIELD_MIN_FORWARD
+        || forward >= AVOID_LOOK_AHEAD
+        || lateral >= mover.radius + other.radius + 10
+        || distance >= mover.radius + other.radius + (force ? 14 : 4)
+      ) continue;
+      if (
+        forward < bestForward
+        || (forward === bestForward && (!best || other.fid.localeCompare(best.fid) < 0))
+      ) {
+        best = other;
+        bestForward = forward;
+      }
+    }
+    return best;
   }
 
   private relocateFighter(source: Fighter, preferred: { x: number; y: number }) {
@@ -1952,9 +2044,11 @@ export class AutoChessEngine {
   }
 
   private resolveCombatTarget(source: Fighter, targets: Fighter[], dt: number) {
-    const available = targets.filter((target) => target.alive && !target.abilityMotion && !target.jumpPending && target.jumpTime <= 0);
+    const isAvailable = (target: Fighter) => (
+      target.alive && !target.abilityMotion && !target.jumpPending && target.jumpTime <= 0
+    );
     const tauntTarget = source.tauntTime > 0
-      ? available.find((target) => target.fid === source.tauntedByFid) || null
+      ? targets.find((target) => target.fid === source.tauntedByFid && isAvailable(target)) || null
       : null;
     if (tauntTarget) {
       source.targetFid = tauntTarget.fid;
@@ -1965,9 +2059,10 @@ export class AutoChessEngine {
       source.tauntTime = 0;
       source.tauntedByFid = null;
     }
-    const current = available.find((target) => target.fid === source.targetFid) || null;
-    const nearest = this.nearestTarget(source, available);
+    const current = targets.find((target) => target.fid === source.targetFid && isAvailable(target)) || null;
     source.targetLock = Math.max(0, source.targetLock - dt);
+    if (current && source.targetLock > 0 && current.stealthTime <= 0) return current;
+    const nearest = this.nearestTarget(source, targets);
     const shouldSwitch = !current || !nearest || (current.stealthTime > 0 && nearest.stealthTime <= 0) || (source.targetLock <= 0 && (
       source.stuckTime >= STUCK_RECOVERY_DELAY ||
       Math.hypot(nearest.x - source.x, nearest.y - source.y) + TARGET_SWITCH_DISTANCE < Math.hypot(current.x - source.x, current.y - source.y)
@@ -1990,11 +2085,14 @@ export class AutoChessEngine {
   private targetsWithinAbilityRange(source: Fighter, targets: Fighter[]) {
     const abilityRange = UNIT_DEFS[source.unitId].abilityRange;
     if (abilityRange <= 0) return [];
-    return targets.filter(
-      (target) =>
-        target.alive &&
-        Math.hypot(target.x - source.x, target.y - source.y) <= abilityRange + target.radius,
-    );
+    const inRange: Fighter[] = [];
+    for (const target of targets) {
+      if (
+        target.alive
+        && Math.hypot(target.x - source.x, target.y - source.y) <= abilityRange + target.radius
+      ) inRange.push(target);
+    }
+    return inRange;
   }
 
   private reiCorpsesWithinRange(source: Fighter) {
@@ -2161,9 +2259,10 @@ export class AutoChessEngine {
     const desired = this.findOpenPlacement(
       fighter,
       { x: directPoint.x - towardY * lateralOffset, y: directPoint.y + towardX * lateralOffset },
-      fighters.filter((other) => other !== target),
+      fighters,
       2,
       ringCandidates,
+      target,
     );
     let moveX = desired.x - fighter.x;
     let moveY = desired.y - fighter.y;
@@ -2504,24 +2603,40 @@ export class AutoChessEngine {
   private living(team: Team) {
     const battle = this.state.battle;
     if (!battle) return [];
-    return (team === "player" ? battle.player : battle.enemy).filter(
-      (fighter) => fighter.alive && fighter.hp > 0,
-    );
+    const fighters = team === "player" ? battle.player : battle.enemy;
+    const living: Fighter[] = [];
+    for (const fighter of fighters) {
+      if (fighter.alive && fighter.hp > 0) living.push(fighter);
+    }
+    return living;
   }
 
   private nearestTarget(source: Fighter, targets: Fighter[]) {
-    const availableTargets = targets.filter(
-      (target) => !target.abilityMotion && !target.jumpPending && target.jumpTime <= 0,
-    );
-    return availableTargets.reduce<Fighter | null>((best, target) => {
-      if (!best) return target;
+    let best: Fighter | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (const target of targets) {
+      if (target.abilityMotion || target.jumpPending || target.jumpTime > 0) continue;
+      if (!best) {
+        best = target;
+        bestDistance = Math.hypot(target.x - source.x, target.y - source.y);
+        continue;
+      }
       const targetStealthed = target.stealthTime > 0;
       const bestStealthed = best.stealthTime > 0;
-      if (targetStealthed !== bestStealthed) return targetStealthed ? best : target;
-      const bestDistance = Math.hypot(best.x - source.x, best.y - source.y);
+      if (targetStealthed !== bestStealthed) {
+        if (!targetStealthed) {
+          best = target;
+          bestDistance = Math.hypot(target.x - source.x, target.y - source.y);
+        }
+        continue;
+      }
       const distance = Math.hypot(target.x - source.x, target.y - source.y);
-      return distance < bestDistance ? target : best;
-    }, null);
+      if (distance < bestDistance) {
+        best = target;
+        bestDistance = distance;
+      }
+    }
+    return best;
   }
 
   private densestTarget(units: Fighter[], radius: number): Fighter | null {
@@ -2623,10 +2738,20 @@ export class AutoChessEngine {
     team: Team,
     trait: TraitId,
   ) {
+    const key = `${team}:${trait}`;
+    let cache = this.battleTraitLevelCache.get(battle);
+    if (!cache) {
+      cache = new Map<string, number>();
+      this.battleTraitLevelCache.set(battle, cache);
+    }
+    const cached = cache.get(key);
+    if (cached !== undefined) return cached;
     const counts = this.traitCountsForUnitIds(
       battle[team].map((fighter) => fighter.unitId),
     );
-    return traitLevelForCount(TRAITS[trait], counts[trait]);
+    const level = traitLevelForCount(TRAITS[trait], counts[trait]);
+    cache.set(key, level);
+    return level;
   }
 
   private refreshDynamicCombatModifiers(battle: BattleState) {
@@ -2792,23 +2917,26 @@ export class AutoChessEngine {
   private updateBattle(dt: number) {
     const battle = this.state.battle;
     if (!battle) return;
+    const fighters = battle.player.concat(battle.enemy);
     this.chronosphereEnergyLocks.clear();
     battle.elapsed += dt;
     battle.yueGangTimer = Math.max(0, battle.yueGangTimer - dt);
     battle.matureTimer -= dt;
     if (battle.matureTimer <= 0) {
       battle.matureTimer += 4;
-      [...this.living("player"), ...this.living("enemy")].filter((fighter) => fighter.matureMember).forEach((fighter) =>
+      fighters.filter((fighter) => fighter.alive && fighter.hp > 0 && fighter.matureMember).forEach((fighter) =>
         this.addEffect({ kind: "text", x: fighter.x, y: fighter.y - 42, color: "#b9a274", text: "慢一点", life: 0.65, size: 10 }),
       );
     }
     this.refreshDynamicCombatModifiers(battle);
     battle.bannerTimer = Math.max(0, battle.bannerTimer - dt);
 
-    battle.effects.forEach((effect) => {
-      effect.life -= dt;
-    });
-    battle.effects = battle.effects.filter((effect) => effect.life > 0);
+    if (this.visualEffectsEnabled) {
+      battle.effects.forEach((effect) => {
+        effect.life -= dt;
+      });
+      battle.effects = battle.effects.filter((effect) => effect.life > 0);
+    }
     battle.chronospheres.forEach((zone) => {
       const source = [...battle.player, ...battle.enemy].find(
         (fighter) => fighter.fid === zone.sourceFid,
@@ -2899,7 +3027,7 @@ export class AutoChessEngine {
       player: this.battleTraitLevel(battle, "player", "dance"),
       enemy: this.battleTraitLevel(battle, "enemy", "dance"),
     };
-    [...battle.player, ...battle.enemy].forEach((fighter) => {
+    fighters.forEach((fighter) => {
       if (!fighter.alive) return;
       const wasSekiCharging = fighter.sekiChargeActive;
       fighter.cooldown -= dt;
@@ -3280,14 +3408,14 @@ export class AutoChessEngine {
             size: 4,
           });
         }
-        this.moveTowardCombatTarget(fighter, target, [...battle.player, ...battle.enemy], dt, movementIntents);
+        this.moveTowardCombatTarget(fighter, target, fighters, dt, movementIntents);
       } else if (fighter.cooldown <= 0) {
         fighter.stuckTime = 0;
         this.basicAttack(fighter, target);
       }
     });
 
-    this.resolveFighterSeparation([...battle.player, ...battle.enemy], movementIntents);
+    this.resolveFighterSeparation(fighters, movementIntents);
 
     const playersAlive = this.living("player");
     const enemiesAlive = this.living("enemy");
