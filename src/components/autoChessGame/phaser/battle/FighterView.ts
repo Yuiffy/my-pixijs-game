@@ -35,6 +35,9 @@ type FighterViewParts = {
   shadow: Phaser.GameObjects.Ellipse;
   label: Phaser.GameObjects.Text;
   star: Phaser.GameObjects.Text;
+  lastX: number;
+  lastY: number;
+  walkPhaseOffset: number;
 };
 
 interface FighterViewHost {
@@ -115,12 +118,19 @@ export class FighterViewRenderer {
       shadow,
       label,
       star,
+      lastX: fighter.x,
+      lastY: fighter.y,
+      walkPhaseOffset: String(fighter.fid).split("").reduce((sum, character) => sum + character.charCodeAt(0), 0) * 0.17,
     });
     return container;
   }
 
   public update(view: Phaser.GameObjects.Container, fighter: Fighter) {
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
+    const parts = this.fighterViewParts.get(view)!;
+    const movedDistance = Math.hypot(fighter.x - parts.lastX, fighter.y - parts.lastY);
+    parts.lastX = fighter.x;
+    parts.lastY = fighter.y;
     const { abilityMotion } = fighter;
     const abilityJumping = abilityMotion?.kind === "jump";
     const mumuPulling = abilityMotion?.kind === "pull" && abilityMotion.abilityId === "mumu";
@@ -161,7 +171,8 @@ export class FighterViewRenderer {
       shadow,
       label,
       star,
-    } = this.fighterViewParts.get(view)!;
+      walkPhaseOffset,
+    } = parts;
     const hitProgress = fighter.hitPulse > 0 ? fighter.hitPulse / 0.2 : 0;
     const growth = fighter.growthStacks > 0
       ? 1 + fighter.growthStacks * GLUTTONY_RADIUS_PER_STACK + Math.sin(this.host.bridge.engine.state.visualTime * 8) * 0.008
@@ -176,6 +187,17 @@ export class FighterViewRenderer {
       : groundMotion && abilityMotion
         ? Math.sin((abilityMotion.time / Math.max(abilityMotion.duration, 0.001)) * Math.PI)
         : 0;
+    const spriteWalking = UNIT_DEFS[fighter.unitId].portraitStyle === "sprite"
+      && movedDistance > 0.05
+      && !jumping
+      && !groundMotion
+      && attackProgress <= 0
+      && fighter.stun <= 0;
+    const walkPhase = this.host.bridge.engine.state.visualTime * 11 + walkPhaseOffset;
+    const walkStep = spriteWalking ? Math.sin(walkPhase) : 0;
+    const walkBounce = Math.abs(walkStep) * 2.4;
+    const walkSquash = spriteWalking ? Math.cos(walkPhase * 2) * 0.035 : 0;
+    const walkTilt = walkStep * 4;
     const manquPulse = fighter.manquTime > 0
       ? Math.sin(this.host.bridge.engine.state.visualTime * 15) * 0.045
       : 0;
@@ -187,12 +209,12 @@ export class FighterViewRenderer {
       ? Math.sin(this.host.bridge.engine.state.visualTime * 71 + 0.8) * 0.7
       : 0;
     portrait
-      .setPosition(switchJitterX, switchJitterY)
+      .setPosition(switchJitterX, switchJitterY - walkBounce)
       .setScale(
-        growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08 + manquPulse),
-        growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12 - manquPulse),
+        growth * attackScaleX * hitScaleX * (1 + motionPulse * 0.08 + manquPulse + walkSquash),
+        growth * attackScaleY * hitScaleY * (1 - motionPulse * 0.12 - manquPulse - walkSquash * 0.75),
       )
-      .setAngle(groundMotion ? fighter.facingX * motionPulse * (mumuPulling ? 14 : 7) : 0)
+      .setAngle(groundMotion ? fighter.facingX * motionPulse * (mumuPulling ? 14 : 7) : walkTilt)
       .setAlpha(fighter.stun > 0 ? 0.72 : 1);
     const normalPortraitKey = UNIT_DEFS[fighter.unitId].portraitStyle === "sprite"
       ? textureKeyForUnit(fighter.unitId)
@@ -204,7 +226,10 @@ export class FighterViewRenderer {
       portraitImage.setTexture(portraitKey);
     }
     portraitImage.setFlipX(fighter.facingX < 0);
-    shadow.setPosition(-attackOffsetX, radius * 0.8 + jumpArc - attackOffsetY).setScale(growth, growth);
+    const walkShadowScale = spriteWalking ? 1 - walkBounce / 30 : 1;
+    shadow
+      .setPosition(-attackOffsetX, radius * 0.8 + jumpArc - attackOffsetY)
+      .setScale(growth * walkShadowScale, growth * (2 - walkShadowScale));
     hp.width = radius * 2.25 * Math.max(0, fighter.hp / fighter.maxHp);
     energy.width = radius * 2.25 * Math.max(0, Math.min(1, fighter.energy / fighter.maxEnergy));
     energy.fillColor = Phaser.Display.Color.HexStringToColor(ENERGY_PROFILES[fighter.energyStyle].color).color;

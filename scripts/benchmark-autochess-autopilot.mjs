@@ -24,8 +24,18 @@ const option = (name, fallback) => {
   return inline ? inline.slice(name.length + 1) : fallback;
 };
 
-const runs = Math.max(1, Math.min(100, Number(option("--runs", "12")) || 12));
-const baseSeed = Math.max(1, Number(option("--seed", "72000")) || 72000);
+const requestedSnapshotPath = option("--snapshot", "");
+const snapshotPath = requestedSnapshotPath ? path.resolve(requestedSnapshotPath) : null;
+const inputSnapshot = snapshotPath
+  ? JSON.parse(await readFile(snapshotPath, "utf8"))
+  : null;
+if (inputSnapshot && inputSnapshot.schema !== "go-loss-snapshot-v1") {
+  throw new Error(`Unsupported autopilot snapshot schema: ${inputSnapshot.schema}`);
+}
+const requestedRuns = Math.max(1, Math.min(100, Number(option("--runs", "12")) || 12));
+const runs = inputSnapshot ? 1 : requestedRuns;
+const baseSeed = inputSnapshot?.seed
+  || Math.max(1, Number(option("--seed", "72000")) || 72000);
 const outputPath = option("--output", "");
 const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "60")) || 60));
 const forcedStarter = option("--starter", "");
@@ -134,6 +144,7 @@ const runFitness = (run) => run.finalRound * 1_000_000_000
 const playRun = (seed) => {
   const bridge = new EngineBridge(seed, 1, { battleStepHz });
   bridge.setConsoleLogging(false);
+  if (inputSnapshot) bridge.engine.restoreSimulationSnapshot(inputSnapshot.engine);
   if (forcedStarter) bridge.engine.state.starterChoices = [forcedStarter];
   const autopilot = new AutoChessAutopilot(
     bridge,
@@ -159,7 +170,10 @@ const playRun = (seed) => {
     }
     return originalDispatch(action);
   };
-  if (!autopilot.startFromTitle()) throw new Error(`Autopilot could not start seed ${seed}`);
+  if (!inputSnapshot && !autopilot.startFromTitle()) {
+    throw new Error(`Autopilot could not start seed ${seed}`);
+  }
+  if (inputSnapshot) autopilot.setEnabled(true);
 
   let now = 1000;
   let safety = 0;
@@ -174,7 +188,10 @@ const playRun = (seed) => {
   let autopilotTickCount = 0;
   let maximumAutopilotTickMs = 0;
 
-  while (rounds.length < maximumBattles && bridge.engine.state.phase !== "gameover" && safety < 5000) {
+  const battleLimitReached = () => inputSnapshot
+    ? (rounds.at(-1)?.round || 0) >= maximumBattles
+    : rounds.length >= maximumBattles;
+  while (!battleLimitReached() && bridge.engine.state.phase !== "gameover" && safety < 5000) {
     safety += 1;
     now += 1000;
     if (bridge.engine.state.phase === "battle") {
@@ -289,6 +306,7 @@ const playRun = (seed) => {
     enemySeed: bridge.engine.state.enemySeed,
     battles: rounds.length,
     wins: rounds.filter((round) => round.won).length,
+    totalVictories: bridge.engine.state.victories,
     finalRound: rounds.at(-1)?.round || 0,
     finalHp: bridge.engine.state.hp,
     campaignCleared: bridge.engine.state.endlessUnlocked || rounds.some((round) => round.round >= 16 && round.won),
@@ -353,6 +371,7 @@ const survivalAt = (round) => ({
 const aggregate = {
   runs,
   baseSeed,
+  snapshotPath,
   enemySeeds: [...new Set(results.map((run) => run.enemySeed))],
   maximumBattles,
   forcedStarter: forcedStarter || null,

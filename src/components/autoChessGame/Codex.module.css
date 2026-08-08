@@ -6,6 +6,44 @@
   transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
 }
 
+.unitWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: 18px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.unitRoster {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.unitFilters {
+  flex: 0 0 auto;
+}
+
+.unitList,
+.unitDetails {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #36566a #08141e;
+  scrollbar-width: thin;
+}
+
+.unitList {
+  padding-right: 6px;
+}
+
+.unitDetails {
+  min-width: 0;
+  scrollbar-gutter: stable;
+}
+
 .unitListButton:hover,
 .unitListButton:focus-visible {
   transform: translateY(-1px);
@@ -29,6 +67,36 @@
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.detailPortraitPreview {
+  float: right;
+  margin-left: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(123, 220, 255, .24);
+  border-radius: 8px;
+  background: #07131d;
+  line-height: 0;
+}
+
+.detailPortraitPreview :global(.ant-image) {
+  display: block;
+}
+
+.detailPortraitPreview :global(.ant-image-img) {
+  border-radius: 7px;
+}
+
+.detailPortraitPreview :global(.ant-image-mask) {
+  border-radius: 7px;
+}
+
+.detailImagePreviewRoot :global(.ant-image-preview-img) {
+  width: auto !important;
+  height: auto !important;
+  max-width: 90vw !important;
+  max-height: 82vh !important;
+  object-fit: contain !important;
 }
 
 .overview {
@@ -127,6 +195,27 @@
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .unitWorkspace {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .unitRoster {
+    display: block;
+  }
+
+  .unitList,
+  .unitDetails {
+    overflow: visible;
+  }
+
+  .unitDetails {
+    margin-top: 18px;
+  }
 }
 
 @media (max-width: 640px) {

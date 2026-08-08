@@ -180,6 +180,7 @@ const enterPreparation = async (page, seed) => {
   await page.getByRole("button", { name: "图鉴 / 本局天赋" }).click();
   const dialog = page.getByRole("dialog", { name: "裂隙阵线图鉴" });
   await dialog.waitFor();
+  await dialog.getByRole("button", { name: "棋子", exact: true }).click();
   const codexUnits = await dialog.locator("section button").evaluateAll((buttons) =>
     buttons
       .filter((button) => button.querySelector("strong"))

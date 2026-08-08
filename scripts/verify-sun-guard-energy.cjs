@@ -164,6 +164,7 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   await page.getByRole("button", { name: "图鉴 / 本局天赋" }).click();
   const dialog = page.getByRole("dialog", { name: "裂隙阵线图鉴" });
+  await dialog.getByRole("button", { name: "棋子", exact: true }).click();
   await dialog.getByRole("button", { name: /果冻风纪/ }).click();
   const codexText = await dialog.innerText();
   const expectedRecovery = "能量 · 稳态回能：初始 25/100；自动回能（12.5 秒回满，每秒 +8）；攻击回能（每下 +6）；受击回能（每下 +3）";

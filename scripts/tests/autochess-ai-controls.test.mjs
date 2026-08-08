@@ -681,11 +681,22 @@ test("看穿计划分数在战斗随机状态变化后会重新精确复核", ()
   bridge.setConsoleLogging(false);
   bridge.engine.state.starterChoices = ["bastion"];
   bridge.engine.startRun("bastion");
-  bridge.engine.state.bench = bridge.engine.state.bench.map((_, index) => ({
-    uid: 131390 + index,
-    id: SHOP_UNITS[index % SHOP_UNITS.length],
-    star: 1,
-  }));
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  for (let index = 0; index < bridge.engine.boardCap; index += 1) {
+    bridge.engine.state.board[index] = {
+      uid: 131390 + index,
+      id: SHOP_UNITS[index % SHOP_UNITS.length],
+      star: 1,
+    };
+  }
+  for (let index = 0; index < bridge.engine.state.bench.length; index += 1) {
+    bridge.engine.state.bench[index] = {
+      uid: 131400 + index,
+      id: SHOP_UNITS[(index + bridge.engine.boardCap) % SHOP_UNITS.length],
+      star: 1,
+    };
+  }
   const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer", "oracle", 20);
   const roster = pilot.ownedEntries();
   const lineup = roster.slice(0, bridge.engine.boardCap);
@@ -697,6 +708,10 @@ test("看穿计划分数在战斗随机状态变化后会重新精确复核", ()
     { id: unit.id, star: unit.star },
   ]));
   pilot.plannedLineupScore = 10400;
+  pilot.plannedBoardSlots = new Map(lineup.map(({ unit }, index) => [
+    unit.uid,
+    index,
+  ]));
   pilot.plannedLineupRandomState = bridge.engine.getRandomState();
   let rolloutCalls = 0;
   pilot.rolloutLineupScore = () => {
@@ -995,6 +1010,208 @@ test("看穿低血量时不会执行精确预演已经判定必败的旧路线",
   bridge.engine.state.hp = 12;
   autopilot.nextPreparationAction();
   assert.equal(autopilot.seerPlan, null);
+});
+
+test("看穿前期计划预期获胜但当前战力为负时会立即重规划", () => {
+  const bridge = new EngineBridge(131492);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 12;
+  bridge.engine.state.gold = 26;
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  autopilot.resetPreparation(12);
+  autopilot.observeStabilizationStrength = () => {};
+  autopilot.rolloutConfidence = () => -270;
+  autopilot.populationAction = () => null;
+  autopilot.purchaseAction = () => null;
+  autopilot.replacementAction = () => null;
+  autopilot.upgradeAction = () => null;
+  autopilot.benchCleanupAction = () => null;
+  autopilot.interestSaleAction = () => null;
+  autopilot.finalReinvestmentAction = () => null;
+  autopilot.formationAction = () => null;
+
+  const firstStep = {
+    targetLevel: 7,
+    rerolls: 0,
+    expectedGoldAfterPreparation: 26,
+  };
+  autopilot.seerPlan = {
+    firstStep,
+    steps: [{ ...firstStep, expectedBattleWon: true, expectedBattleMargin: 4155 }],
+    projectedTargetCopies: {},
+    complete: false,
+  };
+
+  bridge.engine.state.hp = 20;
+  autopilot.nextPreparationAction();
+  assert.equal(autopilot.seerPlan, null);
+});
+
+test("看穿明确规划卖血时不会因负分提前抢救", () => {
+  const bridge = new EngineBridge(131493);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 12;
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  autopilot.resetPreparation(12);
+  autopilot.observeStabilizationStrength = () => {};
+  autopilot.rolloutConfidence = () => -270;
+  autopilot.populationAction = () => null;
+  autopilot.purchaseAction = () => null;
+  autopilot.replacementAction = () => null;
+  autopilot.upgradeAction = () => null;
+  autopilot.benchCleanupAction = () => null;
+  autopilot.interestSaleAction = () => null;
+  autopilot.finalReinvestmentAction = () => null;
+  autopilot.formationAction = () => null;
+
+  const firstStep = {
+    targetLevel: 7,
+    rerolls: 0,
+    expectedGoldAfterPreparation: 26,
+  };
+  autopilot.seerPlan = {
+    firstStep,
+    steps: [{ ...firstStep, expectedBattleWon: false, expectedBattleMargin: -270 }],
+    projectedTargetCopies: {},
+    complete: false,
+  };
+
+  bridge.engine.state.hp = 20;
+  autopilot.nextPreparationAction();
+  assert.ok(autopilot.seerPlan);
+});
+
+test("看穿开战预测不会使用仍在候补的未落盘正计划分数", () => {
+  const bridge = new EngineBridge(131494, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 62;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const boardIds = SHOP_UNITS.slice(0, 10);
+  boardIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1314940 + index, id, star: 3 };
+  });
+  const benchTarget = { uid: 1314950, id: SHOP_UNITS[10], star: 3 };
+  bridge.engine.state.bench[0] = benchTarget;
+
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  const roster = autopilot.ownedEntries();
+  const target = roster.filter(({ unit, location }) => (
+    location.zone === "board" && unit.uid !== 1314940
+  ));
+  target.push(roster.find(({ unit }) => unit.uid === benchTarget.uid));
+  const planned = target.filter(Boolean);
+  autopilot.rolloutTargetLineup = () => planned;
+  autopilot.plannedLineupUids = planned.map(({ unit }) => unit.uid);
+  autopilot.plannedLineupUnits = new Map(planned.map(({ unit }) => [
+    unit.uid,
+    { id: unit.id, star: unit.star },
+  ]));
+  autopilot.plannedLineupScore = 11369;
+  autopilot.plannedBoardSlots = new Map([
+    [benchTarget.uid, 0],
+    ...planned
+      .filter(({ unit }) => unit.uid !== benchTarget.uid)
+      .map(({ unit }, index) => [unit.uid, index + 1]),
+  ]);
+  autopilot.rolloutBoardScore = () => -6;
+
+  assert.equal(autopilot.battleConfidence(roster), -6);
+});
+
+test("看穿达到整备动作上限时仍先完成满板满候补换位", () => {
+  const bridge = new EngineBridge(131496, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 62;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const boardIds = SHOP_UNITS.slice(0, 10);
+  boardIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1314960 + index, id, star: 3 };
+  });
+  const benchTarget = { uid: 1314970, id: SHOP_UNITS[10], star: 3 };
+  bridge.engine.state.bench[0] = benchTarget;
+  for (let index = 1; index < bridge.engine.state.bench.length; index += 1) {
+    bridge.engine.state.bench[index] = {
+      uid: 1314970 + index,
+      id: SHOP_UNITS[10 + index],
+      star: 1,
+    };
+  }
+
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  const roster = autopilot.ownedEntries();
+  const target = roster.filter(({ unit, location }) => (
+    location.zone === "board" && unit.uid !== 1314960
+  ));
+  target.push(roster.find(({ unit }) => unit.uid === benchTarget.uid));
+  const planned = target.filter(Boolean);
+  const plannedUids = new Set(planned.map(({ unit }) => unit.uid));
+  autopilot.rolloutTargetLineup = () => autopilot.ownedEntries()
+    .filter(({ unit }) => plannedUids.has(unit.uid));
+  autopilot.plannedLineupUids = planned.map(({ unit }) => unit.uid);
+  autopilot.plannedLineupUnits = new Map(planned.map(({ unit }) => [
+    unit.uid,
+    { id: unit.id, star: unit.star },
+  ]));
+  autopilot.plannedBoardSlots = new Map([
+    [benchTarget.uid, 0],
+    ...planned
+      .filter(({ unit }) => unit.uid !== benchTarget.uid)
+      .map(({ unit }, index) => [unit.uid, index + 1]),
+  ]);
+  autopilot.plannedRound = bridge.engine.state.round;
+  autopilot.preparationActions = 96;
+
+  const firstAction = autopilot.nextPreparationAction();
+  assert.deepEqual(firstAction, {
+    type: "move",
+    from: { zone: "bench", index: 0 },
+    to: { zone: "board", index: 0 },
+  });
+  bridge.dispatch(firstAction);
+
+  const battleAction = autopilot.nextPreparationAction();
+  assert.deepEqual(battleAction, { type: "battle" });
+  assert.equal(bridge.engine.state.board[0]?.uid, benchTarget.uid);
 });
 
 test("看穿规划会把普通过渡棋纳入人口和战力", () => {

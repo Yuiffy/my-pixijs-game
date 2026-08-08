@@ -282,6 +282,7 @@ test("看穿2按六进三复筛阵容并独占真人记录站位", () => {
   bridge.engine.state.starterChoices = ["bastion"];
   bridge.engine.startRun("bastion");
   bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.round = 19;
   bridge.engine.state.board.fill(null);
   bridge.engine.state.bench.fill(null);
   SEER2_TERMINAL_TARGET_IDS.forEach((id, index) => {

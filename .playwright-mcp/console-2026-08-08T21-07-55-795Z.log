@@ -1,0 +1,223 @@
+[    2016ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3000/game/autochess?seed=1:0
+[    2397ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ webpack-internal:///./node_modules/.pnpm/react-dom@18.3.1_react@18.3.1/node_modules/react-dom/cjs/react-dom.development.js:29889
+[    2455ms] Error: Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+
+    at getCssError (file://D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\plugins\wellknown-errors-plugin\parseCss.js:24:16)
+    at getModuleBuildError (file://D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\plugins\wellknown-errors-plugin\webpackModuleError.js:116:43)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async (file://D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\plugins\wellknown-errors-plugin\index.js:29:49)
+    at async (file://D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\plugins\wellknown-errors-plugin\index.js:27:21)
+[    2496ms] [LOG] [HMR] connected @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/pages/websocket.js:38
+[    2498ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2532ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2532ms] [ERROR] ./src/components/autoChessGame/Codex.module.css
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+-- inner error --
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+Generated code for D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[2]!D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[3]!D:\workspace\myrepo\my-pixijs-game\src\components\autoChessGame\Codex.module.css
+
+Import trace for requested module:
+./src/components/autoChessGame/Codex.module.css
+./src/components/autoChessGame/Codex.tsx
+./src/components/autoChessGame/PhaserGame.tsx @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2668ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2669ms] [ERROR] ./src/components/autoChessGame/Codex.module.css
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+-- inner error --
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+Generated code for D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[2]!D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[3]!D:\workspace\myrepo\my-pixijs-game\src\components\autoChessGame\Codex.module.css @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2669ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2669ms] [ERROR] ./src/components/autoChessGame/Codex.module.css
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+-- inner error --
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+Generated code for D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[2]!D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[3]!D:\workspace\myrepo\my-pixijs-game\src\components\autoChessGame\Codex.module.css @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2671ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2671ms] [ERROR] ./src/components/autoChessGame/Codex.module.css
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+-- inner error --
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+Generated code for D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[2]!D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[3]!D:\workspace\myrepo\my-pixijs-game\src\components\autoChessGame\Codex.module.css @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2672ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2672ms] [ERROR] ./src/components/autoChessGame/Codex.module.css
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+-- inner error --
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+Generated code for D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[2]!D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[3]!D:\workspace\myrepo\my-pixijs-game\src\components\autoChessGame\Codex.module.css @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2931ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[    2954ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3000/favicon.ico:0
+[   18345ms] [ERROR] ./src/components/autoChessGame/Codex.module.css:94:1
+Syntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important; @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[   18345ms] [ERROR] ./src/components/autoChessGame/Codex.module.css
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+-- inner error --
+CssSyntax error: Selector ":global(.ant-image-preview-img)" is not pure (pure selectors must contain at least one local class or id) (94:1)
+
+  92 | }
+  93 | 
+> 94 | :global(.ant-image-preview-img) {
+     | ^
+  95 |   width: auto !important;
+  96 |   height: auto !important;
+Generated code for D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[2]!D:\workspace\myrepo\my-pixijs-game\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[14].oneOf[7].use[3]!D:\workspace\myrepo\my-pixijs-game\src\components\autoChessGame\Codex.module.css
+
+Import trace for requested module:
+./src/components/autoChessGame/Codex.module.css
+./src/components/autoChessGame/Codex.tsx
+./src/components/autoChessGame/PhaserGame.tsx @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/internal/helpers/hydration-error-info.js:62
+[   18822ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/pages/hot-reloader-client.js:221
+[   20254ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/_next/static/webpack/95564b47cbaf3ff5.webpack.hot-update.json:0
+[   20254ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/react-dev-overlay/pages/hot-reloader-client.js:349
+[   21077ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/./node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/react-dom/cjs/react-dom.development.js:38559
+[   21155ms] [LOG] [Analytics] Reporting view: /game/autochess?seed=1 @ webpack-internal:///(app-pages-browser)/./src/components/Analytics.tsx:23
+[   21156ms] [LOG] [Analytics] Reporting view: /game/autochess?seed=1 @ webpack-internal:///(app-pages-browser)/./src/components/Analytics.tsx:23
+[   23384ms] [INFO] [RiftLine][AI] v0.2.3 ready. Use autoChessAI.help() {version: 0.2.3, indexing: starter/buy/choose/select/move/sell use 1-based slots; act() uses raw GameAction indexes, read: Array(6), flow: Array(6), economy: Array(4)} @ webpack-internal:///(app-pages-browser)/./src/components/autoChessGame/PhaserGame.tsx:410
+[   23386ms] [INFO] [RiftLine][AI] v0.2.3 ready. Use autoChessAI.help() {version: 0.2.3, indexing: starter/buy/choose/select/move/sell use 1-based slots; act() uses raw GameAction indexes, read: Array(6), flow: Array(6), economy: Array(4)} @ webpack-internal:///(app-pages-browser)/./src/components/autoChessGame/PhaserGame.tsx:410
+[   23489ms] [LOG] %cPhaser v4.2.1 (WebGL | Web Audio)%c https://phaser.io/v4021 color: #ffffff; background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAARBJREFUeNpi/P//P0OHsPB/BiCoePuWkYFEwALSXJElzMBgLwE2CNkQxgWr/yMr/p8QimlBu5DQ//+8vBBco/ofzAe6imH+qv/53/6jYJAYSA4ZoxoANYTPKhiuCQZwGcJU+e4dqpMmvsDq14krV2MPAxDha2CMKvoXoiE/PBQUDgQD8j82UFae9B9bOIC8B9UD9gIjjIMN7Ns6lWHn4XMoYu62RgxO3tkMjIyMII2MYAOAtmFVhA+ADHf2ycGMRhANjUq8YO+WKWCvgAORIV8CkpDCrzIwsLIymC1qAtuAD4Bsh3sBmqAY3qcGwL2AC4DCpKtzHlgzOLWihwEuzTCN0GhDJHeYC4gByBphACDAAH2dDIxdjr+VAAAAAElFTkSuQmCC"), linear-gradient(to bottom, #000814, #001d3d, #003566); background-repeat: no-repeat; background-position: 4px center, 0 0; padding: 2px 6px 2px 24px; background: transparent @ webpack-internal:///(app-pages-browser)/./node_modules/.pnpm/phaser@4.2.1/node_modules/phaser/dist/phaser.esm.js:17598

@@ -380,6 +380,17 @@ test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () =>
   assert.match(scene, /portraitImage\.setFlipX/);
 });
 
+test("全身精灵寻路时使用轻量弹跳摆动并避开技能运动", () => {
+  assert.match(fighterView, /movedDistance > 0\.05/);
+  assert.match(fighterView, /portraitStyle === "sprite"/);
+  assert.match(fighterView, /!jumping/);
+  assert.match(fighterView, /!groundMotion/);
+  assert.match(fighterView, /Math\.abs\(walkStep\) \* 2\.4/);
+  assert.match(fighterView, /walkStep \* 4/);
+  assert.match(fighterView, /switchJitterY - walkBounce/);
+  assert.match(fighterView, /walkShadowScale/);
+});
+
 test("战斗同步覆盖投射物、技能效果与机械兔召唤物", () => {
   assert.match(scene, /battle\.projectiles/);
   assert.match(scene, /battle\.effects/);

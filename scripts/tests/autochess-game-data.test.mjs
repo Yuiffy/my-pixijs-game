@@ -389,6 +389,26 @@ test("大头风格专属头像使用 512px 方形圆裁素材", async () => {
   }));
 });
 
+test("新全身棋子使用 512px 透明精灵素材", async () => {
+  const expected = {
+    spark_mage: "/images/autochess/portraits/spark-mage.png",
+    clock_gunner: "/images/autochess/portraits/clock-gunner.png",
+  };
+  await Promise.all(Object.entries(expected).map(async ([id, portraitPath]) => {
+    const unit = data.UNIT_DEFS[id];
+    assert.equal(unit.portrait, portraitPath);
+    assert.equal(unit.portraitStyle, "sprite");
+    assert.equal(unit.portraitFocus, undefined);
+    const assetPath = path.resolve("public", portraitPath.slice(1));
+    await access(assetPath);
+    const portrait = inspectPng(await readFile(assetPath));
+    assert.deepEqual(
+      { width: portrait.width, height: portrait.height, transparent: portrait.hasTransparentPixel },
+      { width: 512, height: 512, transparent: true },
+    );
+  }));
+});
+
 test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   const retained = [
     "sun_guard", "ember_blade", "gale_archer", "rift_stalker", "cog_scribe", "mossback",

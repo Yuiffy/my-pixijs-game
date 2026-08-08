@@ -23,9 +23,10 @@ const option = (name, fallback) => {
 const optionValues = (name) => process.argv.flatMap((value, index, values) => (
   value === name && values[index + 1] ? [values[index + 1]] : []
 ));
+const hasFlag = (name) => process.argv.includes(name);
 
-const seed = Math.max(1, Number(option("--seed", "152101")) || 152101);
-const targetRound = Math.max(1, Number(option("--round", "30")) || 30);
+let seed = Math.max(1, Number(option("--seed", "152101")) || 152101);
+let targetRound = Math.max(1, Number(option("--round", "30")) || 30);
 const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "20")) || 20));
 const modelLimit = Math.max(1, Number(option("--model-limit", "512")) || 512);
 const heuristicLimit = Math.max(1, Number(option("--heuristic-limit", "128")) || 128);
@@ -40,6 +41,19 @@ const cachePath = path.resolve(option(
   "--rollout-cache",
   ".tmp/autochess-go-fixed-v2-seed-152100-152101-hz20.json",
 ));
+const requestedSnapshotPath = option("--snapshot", "");
+const snapshotOnly = hasFlag("--snapshot-only");
+const snapshotPath = requestedSnapshotPath ? path.resolve(requestedSnapshotPath) : null;
+const inputSnapshot = snapshotPath
+  ? JSON.parse(await readFile(snapshotPath, "utf8"))
+  : null;
+if (inputSnapshot) {
+  if (inputSnapshot.schema !== "go-loss-snapshot-v1") {
+    throw new Error(`Unsupported Go loss snapshot schema: ${inputSnapshot.schema}`);
+  }
+  seed = inputSnapshot.seed;
+  targetRound = inputSnapshot.targetRound;
+}
 
 const goCombatScorer = modelPath
   ? createGoCombatScorer(JSON.parse(await readFile(modelPath, "utf8")))
@@ -47,6 +61,10 @@ const goCombatScorer = modelPath
 const outputPath = path.resolve(option(
   "--output",
   `artifacts/autochess-go-loss-${seed}-round-${targetRound}.json`,
+));
+const snapshotOutputPath = path.resolve(option(
+  "--snapshot-output",
+  outputPath.replace(/\.json$/i, ".snapshot.json"),
 ));
 
 let hydratedEntries = 0;
@@ -61,6 +79,7 @@ try {
 
 const bridge = new EngineBridge(seed, 1, { simulation: true, battleStepHz: 60 });
 bridge.setConsoleLogging(false);
+if (inputSnapshot) bridge.engine.restoreSimulationSnapshot(inputSnapshot.engine);
 const autopilot = new AutoChessAutopilot(
   bridge,
   "evolution",
@@ -70,7 +89,17 @@ const autopilot = new AutoChessAutopilot(
   rolloutHz,
 );
 
-let captured = null;
+let captured = inputSnapshot
+  ? {
+    state: structuredClone(inputSnapshot.engine.state),
+    randomState: inputSnapshot.engine.randomState,
+    engineSnapshot: inputSnapshot.engine,
+    plannedLineupUids: inputSnapshot.plan.plannedLineupUids,
+    plannedFormation: inputSnapshot.plan.plannedFormation,
+    plannedScore: inputSnapshot.plan.plannedScore,
+    preparationActions: inputSnapshot.plan.preparationActions,
+  }
+  : null;
 const replayTrace = [];
 const originalDispatch = bridge.dispatch.bind(bridge);
 bridge.dispatch = (action) => {
@@ -83,6 +112,7 @@ bridge.dispatch = (action) => {
     captured = {
       state: structuredClone(bridge.engine.state),
       randomState: bridge.engine.getRandomState(),
+      engineSnapshot: bridge.engine.getSimulationSnapshot(),
       plannedLineupUids: [...autopilot.plannedLineupUids],
       plannedFormation: autopilot.plannedFormation,
       plannedScore: autopilot.plannedLineupScore,
@@ -93,7 +123,9 @@ bridge.dispatch = (action) => {
   return originalDispatch(action);
 };
 
-if (!autopilot.startFromTitle()) throw new Error(`Could not start Go run for seed ${seed}`);
+if (!inputSnapshot && !autopilot.startFromTitle()) {
+  throw new Error(`Could not start Go run for seed ${seed}`);
+}
 let now = 1000;
 let safety = 0;
 while (!captured && safety < replaySafetyLimit && bridge.engine.state.phase !== "gameover") {
@@ -128,6 +160,38 @@ if (!captured) {
     `Could not reach round ${targetRound}; phase=${bridge.engine.state.phase} `
       + `round=${bridge.engine.state.round} trace=${JSON.stringify(replayTrace)}`,
   );
+}
+if (!inputSnapshot) {
+  const snapshotPayload = {
+    schema: "go-loss-snapshot-v1",
+    capturedAt: new Date().toISOString(),
+    seed,
+    enemySeed: captured.state.enemySeed,
+    targetRound,
+    engine: captured.engineSnapshot,
+    plan: {
+      plannedLineupUids: captured.plannedLineupUids,
+      plannedFormation: captured.plannedFormation,
+      plannedScore: captured.plannedScore,
+      preparationActions: captured.preparationActions,
+    },
+  };
+  await mkdir(path.dirname(snapshotOutputPath), { recursive: true });
+  await writeFile(snapshotOutputPath, `${JSON.stringify(snapshotPayload)}\n`, "utf8");
+  console.error(`Wrote Go loss snapshot to ${snapshotOutputPath}`);
+}
+if (snapshotOnly) {
+  console.log(JSON.stringify({
+    seed,
+    enemySeed: captured.state.enemySeed,
+    targetRound,
+    snapshotInputPath: snapshotPath,
+    snapshotOutputPath: inputSnapshot ? null : snapshotOutputPath,
+    phase: captured.state.phase,
+    hp: captured.state.hp,
+    gold: captured.state.gold,
+  }, null, 2));
+  process.exit(0);
 }
 
 const roster = autopilot.ownedEntries();
@@ -270,6 +334,8 @@ const report = {
   targetRound,
   rolloutHz,
   modelPath,
+  snapshotInputPath: snapshotPath,
+  snapshotOutputPath: inputSnapshot ? null : snapshotOutputPath,
   forcedLineupKeys,
   rosterCount: roster.length,
   boardCap: cap,

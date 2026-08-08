@@ -22,6 +22,103 @@ const {
 } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/goValueModel.ts",
 );
+const {
+  selectGoOpportunityTargets,
+} = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/goStrategy.ts",
+);
+
+test("Go级机会项目允许密集来牌压过旧固定目标", () => {
+  const shop = (...ids) => [...ids, ...Array(Math.max(0, 5 - ids.length)).fill(null)];
+  const targets = selectGoOpportunityTargets({
+    candidates: [
+      {
+        id: "lian",
+        priority: 96,
+        desiredStar: 3,
+        role: "terminal",
+        learnedValue: 2.5,
+      },
+      {
+        id: "zeyin",
+        priority: 72,
+        desiredStar: 3,
+        role: "terminal",
+        learnedValue: 2,
+      },
+    ],
+    ownedTargets: [
+      { id: "lian", copies: 3, benchSlots: 1 },
+      { id: "zeyin", copies: 1, benchSlots: 1 },
+    ],
+    currentShop: shop("zeyin", "zeyin", "zeyin", "zeyin", "zeyin"),
+    futureShops: [shop("zeyin", "zeyin", "zeyin")],
+    previousFocusIds: new Set(["lian"]),
+    limit: 1,
+  });
+
+  assert.equal(targets[0].id, "zeyin");
+  assert.equal(targets[0].completionShopIndex, 1);
+});
+
+test("Go级满候补席会释放低进度旧项目并买入新机会项目", () => {
+  const bridge = new EngineBridge(162117);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 20;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.gold = 100;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const boardIds = [
+    "grove_mender",
+    "lian",
+    "rei",
+    "yua",
+    "cinder_ram",
+    "spark_mage",
+    "sui_flower",
+    "xuehui",
+    "sui_bird",
+    "yukisyo",
+  ];
+  boardIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1621170 + index, id, star: 2 };
+  });
+  const benchIds = [
+    "zeyin",
+    "meme",
+    "mossback",
+    "pako",
+    "sun_guard",
+    "rift_brawler",
+    "sui_blue",
+    "shiori",
+  ];
+  benchIds.forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1621190 + index, id, star: 1 };
+  });
+  bridge.engine.state.shop = Array(5).fill("zeyin");
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.goModelScore = (lineup) => (
+    lineup.some(({ unit }) => unit.id === "zeyin" && unit.star === 3) ? 10 : 0
+  );
+  autopilot.rolloutConfidence = () => -100;
+  autopilot.seerFutureShopForecast = () => [Array(5).fill("zeyin")];
+  const roster = autopilot.ownedEntries();
+  const targets = autopilot.goPlanningTargets(roster, [Array(5).fill("zeyin")]);
+  assert.equal(targets.some(({ id }) => id === "zeyin"), true);
+  assert.equal(autopilot.targetDesiredCopies("zeyin"), 9);
+  assert.equal(autopilot.lateGameReserveUids(roster).has(1621190), true);
+
+  const sale = autopilot.goOpportunityInvestmentAction(roster);
+  assert.equal(sale.type, "sell");
+  assert.notEqual(bridge.engine.state.bench[sale.location.index].id, "zeyin");
+  bridge.dispatch(sale);
+  assert.deepEqual(autopilot.pendingPurchaseAction(), { type: "shop", index: 0 });
+});
 
 test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
   assert.equal(GO_COMBAT_MODEL_SCHEMA, "go-combat-ranker-v2");
@@ -407,7 +504,7 @@ test("Go级开战棋盘必须逐格等于冠军评估时的规范站位", () => 
   let moves = 0;
   let finalAction = null;
   autopilot.plannedRound = bridge.engine.state.round;
-  autopilot.preparationActions = 96;
+  autopilot.preparationActions = 1000;
   while (moves < 32) {
     const action = autopilot.nextPreparationAction();
     if (action?.type === "battle") {

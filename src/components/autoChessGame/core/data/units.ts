@@ -368,8 +368,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
         stats: { radius: 162, duration: 3.4 },
       },
     ],
-    portrait: "/images/livers/rhea.png",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/spark-mage.png",
+    portraitStyle: "sprite",
     shop: true,
   }),
   clock_gunner: unit({
@@ -390,8 +390,8 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 48,
     abilityName: "机械兔耳浮游炮",
     abilityDescription: "从头顶放出两只机械兔耳浮游炮；它们高速连射并快速转移，4 秒后回到弥月身上。",
-    portrait: "/images/livers/mizuki.png",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/clock-gunner.png",
+    portraitStyle: "sprite",
     shop: true,
   }),
   dawn_duelist: unit({

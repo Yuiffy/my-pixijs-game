@@ -1,7 +1,10 @@
 "use client";
 
+import { Image as AntImage } from "antd";
 import Image from "next/image";
-import { type CSSProperties, useMemo, useState } from "react";
+import {
+  type CSSProperties, useEffect, useMemo, useRef, useState,
+} from "react";
 import styles from "./Codex.module.css";
 import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
@@ -84,10 +87,11 @@ const cellStyle = {
 };
 
 export default function Codex({ open, augmentHistory, starterHistory, onClose }: CodexProps) {
-  const [tab, setTab] = useState<Tab>("units");
+  const [tab, setTab] = useState<Tab>("overview");
   const [tier, setTier] = useState<number | "all">("all");
   const [traitFamily, setTraitFamily] = useState<TraitFamilyFilter>("all");
   const [selectedUnit, setSelectedUnit] = useState<UnitId>(SHOP_UNITS[0]);
+  const unitDetailsRef = useRef<HTMLElement>(null);
   const units = useMemo(
     () => SHOP_UNITS
       .filter((id) => tier === "all" || UNIT_DEFS[id].tier === tier)
@@ -98,6 +102,12 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
     cost,
     units: SHOP_UNITS.filter((id) => UNIT_DEFS[id].tier === cost),
   })), []);
+  useEffect(() => {
+    if (open) setTab("overview");
+  }, [open]);
+  useEffect(() => {
+    unitDetailsRef.current?.scrollTo({ top: 0 });
+  }, [selectedUnit, tab]);
   if (!open) return null;
 
   const unit = UNIT_DEFS[selectedUnit];
@@ -143,6 +153,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
             key={id}
             type="button"
             onClick={() => setTab(id)}
+            aria-pressed={tab === id}
             style={{
               padding: "7px 13px",
               border: `1px solid ${tab === id ? "#79d8ff" : "#294658"}`,
@@ -172,7 +183,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
           关闭 Esc
         </button>
       </header>
-      <main style={{ flex: 1, overflow: "auto", padding: 18 }}>
+      <main style={{ flex: 1, minHeight: 0, overflow: "auto", padding: 18 }}>
         {tab === "overview" && (
           <section className={styles.overview} aria-label="棋子费用概览">
             {unitsByTier.map(({ cost, units: tierUnits }) => (
@@ -208,9 +219,9 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
           </section>
         )}
         {tab === "units" && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 18 }}>
-            <section>
-              <div style={{ display: "flex", gap: 7, marginBottom: 12 }}>
+          <div className={styles.unitWorkspace}>
+            <section className={styles.unitRoster}>
+              <div className={styles.unitFilters} style={{ display: "flex", gap: 7, marginBottom: 12 }}>
                 {(["all", 1, 2, 3, 4, 5] as const).map((value) => (
                   <button
                     key={value}
@@ -229,7 +240,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                   </button>
                 ))}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 8 }}>
+              <div data-codex-unit-list className={styles.unitList} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 8 }}>
                 {units.map((id) => {
                   const definition = UNIT_DEFS[id];
                   return (
@@ -261,32 +272,30 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                 })}
               </div>
             </section>
-            <aside style={{ padding: 18, border: `1px solid ${unit.accent}`, borderRadius: 14, background: "#091824" }}>
+            <aside data-codex-unit-details ref={unitDetailsRef} className={styles.unitDetails} style={{ padding: 18, border: `1px solid ${unit.accent}`, borderRadius: 14, background: "#091824" }}>
               {unit.portrait && (
-                <Image
-                  src={unit.portrait}
-                  alt={unit.name}
-                  width={unit.portraitStyle === "sprite" ? 112 : 120}
-                  height={unit.portraitStyle === "sprite" ? 112 : 86}
-                  style={unit.portraitStyle === "sprite"
-                    ? {
-                      width: 112,
-                      height: 112,
-                      objectFit: "contain",
-                      imageRendering: "pixelated",
-                      float: "right",
-                      marginLeft: 12,
-                    }
-                    : {
-                      width: 120,
-                      height: 86,
-                      objectFit: "cover",
-                      objectPosition: unit.portraitFocus === "top" ? "center 16%" : "center",
-                      borderRadius: 12,
-                      float: "right",
-                      marginLeft: 12,
-                    }}
-                />
+                <span className={styles.detailPortraitPreview}>
+                  <AntImage
+                    src={unit.portrait}
+                    alt={unit.name}
+                    width={unit.portraitStyle === "sprite" ? 112 : 120}
+                    height={unit.portraitStyle === "sprite" ? 112 : 86}
+                    preview={{ rootClassName: styles.detailImagePreviewRoot }}
+                    style={unit.portraitStyle === "sprite"
+                      ? {
+                        width: 112,
+                        height: 112,
+                        objectFit: "contain",
+                        imageRendering: "pixelated",
+                      }
+                      : {
+                        width: 120,
+                        height: 86,
+                        objectFit: "cover",
+                        objectPosition: unit.portraitFocus === "top" ? "center 16%" : "center",
+                      }}
+                  />
+                </span>
               )}
               <div style={{ color: unit.accent, fontSize: 12 }}>{unit.tier} 费</div>
               <h2 style={{ margin: "6px 0 12px", fontSize: 25 }}>{unit.name}</h2>
