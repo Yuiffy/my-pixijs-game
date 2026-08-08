@@ -55,7 +55,10 @@ import {
   AUTOPILOT_ROLLOUT_CACHE_SCHEMA,
   GO_ROLLOUT_CACHE_SCHEMA,
 } from "./rolloutCacheSchema";
-import { scoreGoCombatCandidate } from "./goValueModel";
+import {
+  scoreGoCombatCandidate,
+  type GoCombatScorer,
+} from "./goValueModel";
 import {
   goCombatScenarioSeed,
   goCombatScenarioSignature,
@@ -165,14 +168,19 @@ const RESCUE_HEURISTIC_CANDIDATE_LIMIT = 24;
 const RESCUE_TWO_SWAP_CANDIDATE_LIMIT = 32;
 const RESCUE_MIN_WIN_SCORE = 10000 - 26;
 const ORACLE_MAX_ROUND = 60;
-const ORACLE_SHOP_LOOKAHEAD = 1600;
+const ORACLE_EXTENDED_MAX_ROUND = 70;
+const ORACLE_SHOP_LOOKAHEAD = 2048;
 /**
  * Most abstract routes fail in the opening. Simulate only this prefix before
  * spending CPU on a complete exact 60-round validation. The chosen route is
  * still validated to the full horizon below.
  */
-const SEER_ROUTE_PREFILTER_LIMIT = 16;
-const SEER_ROUTE_VALIDATION_LIMIT = ORACLE_MAX_ROUND;
+// The abstract beam already supplies route diversity. Exact replay only
+// needs a small set of its best prefixes; replaying every alternative makes
+// cold-start cost grow with horizon instead of with the useful branch count.
+const SEER_ROUTE_PREFILTER_LIMIT = 8;
+const SEER_ROUTE_PREFILTER_CANDIDATE_LIMIT = 4;
+const SEER_ROUTE_VALIDATION_LIMIT = ORACLE_EXTENDED_MAX_ROUND;
 const SEER_ENDGAME_TARGET_LOOKAHEAD = 48;
 const SEER_ENDGAME_MAX_EXTRA_REROLLS = 48;
 const SHARED_ROLLOUT_CACHE_LIMIT = 50000;
@@ -199,6 +207,13 @@ export const snapshotAutopilotRolloutCache = () => Array.from(sharedRolloutScore
 type OwnedEntry = {
   unit: OwnedUnit;
   location: UnitLocation;
+};
+
+type SeerRouteValidationResume = {
+  snapshot: ReturnType<AutoChessEngine["getSimulationSnapshot"]>;
+  validatedSteps: SeerPlanStep[];
+  trace: Array<Record<string, unknown>>;
+  nextIndex: number;
 };
 
 const rosterShapeSignature = (roster: readonly OwnedEntry[]) => roster
@@ -383,6 +398,12 @@ export class AutoChessAutopilot {
 
   private seerPlan: SeerPlan | null = null;
 
+  /** 60 战路线被精确验证仍存活后，下一轮才把 oracle 目标延长到 70 战。 */
+  private seerExtendedPlanningUnlocked = false;
+
+  /** 完整验证从 16 战预筛的模拟快照继续，避免重复重放前缀。 */
+  private seerRouteValidationResumes = new WeakMap<SeerPlan, SeerRouteValidationResume>();
+
   private seerValidationFailure = "";
 
   private seerValidationTrace: Array<Record<string, unknown>> = [];
@@ -419,6 +440,7 @@ export class AutoChessAutopilot {
     style: AutopilotStyle = "survival",
     informationMode: AutopilotInformationMode = informationModeForAutopilotStyle(style),
     rolloutCombatHz = DEFAULT_ROLLOUT_COMBAT_HZ,
+    private readonly goCombatScorer: GoCombatScorer = scoreGoCombatCandidate,
   ) {
     if (planningMode === "training") this.rolloutVariantLimit = 1;
     this.policyOverrides = { ...policy };
@@ -456,6 +478,7 @@ export class AutoChessAutopilot {
     this.bridge.setAutopilotStrategy(canonicalStyle, informationMode);
     this.invalidateFinalLineup();
     this.seerRouteAbandoned = false;
+    this.seerExtendedPlanningUnlocked = false;
     this.seer2FocusIds.clear();
     this.plannedRound = 0;
     this.nextActionAt = 0;
@@ -469,6 +492,24 @@ export class AutoChessAutopilot {
     return this.style === "seer" || this.style === "go";
   }
 
+  private seerPlanningTargetRound() {
+    return this.seerExtendedPlanningUnlocked
+      ? ORACLE_EXTENDED_MAX_ROUND
+      : ORACLE_MAX_ROUND;
+  }
+
+  private seerPlanningRegime() {
+    return this.style === "seer" && !this.seer2EndgameOpen()
+      ? "opening" as const
+      : "terminal" as const;
+  }
+
+  private seerPlanEndRound(plan: SeerPlan) {
+    const startRound = plan.startRound ?? this.bridge.engine.state.round;
+    const horizon = plan.planningHorizon ?? plan.steps?.length ?? 0;
+    return startRound + Math.max(0, horizon) - 1;
+  }
+
   private usesOraclePlanner() {
     return (this.style === "seer" || this.style === "go" || this.seer2EndgameOpen())
       && this.informationMode === "oracle";
@@ -476,6 +517,8 @@ export class AutoChessAutopilot {
 
   private seer2EndgameOpen() {
     const { state } = this.bridge.engine;
+    // 看穿从第 1 战就看完整未来，但前 17 战仍使用稳定过渡目标；看穿2
+    // 的动态终局项目在第 18 战后接管，避免后期追星项目污染开局经济。
     return this.usesSeer2Economy() && state.playerLevel >= 10 && state.round >= 18;
   }
 
@@ -574,6 +617,7 @@ export class AutoChessAutopilot {
     this.lineageUnitIds = [];
     this.lineageFormation = "human_midline";
     this.seerRouteAbandoned = false;
+    this.seerExtendedPlanningUnlocked = false;
     const starter = this.chooseStarter();
     if (!starter) return false;
     this.setEnabled(true);
@@ -670,7 +714,11 @@ export class AutoChessAutopilot {
   }
 
   private invalidateSeerPlan(abandonCompleteRoute = true) {
-    if (abandonCompleteRoute && this.seerPlan?.complete) this.seerRouteAbandoned = true;
+    if (
+      abandonCompleteRoute
+      && this.seerPlan?.complete
+      && this.seerPlan.exactValidatedHorizon
+    ) this.seerRouteAbandoned = true;
     this.seerPlan = null;
     this.seerPurchaseOffsets = [];
     this.seerSaleOffsets = [];
@@ -913,6 +961,9 @@ export class AutoChessAutopilot {
       || (requireComplete && !plan.complete)
     ) return plan;
 
+    const cachedResume = requireComplete
+      ? this.seerRouteValidationResumes.get(plan)
+      : undefined;
     const simulation = new EngineBridge(
       this.bridge.engine.state.seed,
       1,
@@ -931,10 +982,20 @@ export class AutoChessAutopilot {
       this.rolloutCombatHz,
     );
     formationPilot.lineageFormation = this.lineageFormation;
-    const validatedSteps: SeerPlanStep[] = [];
     const maximumSteps = Math.min(validationLimit, plan.steps.length);
+    let startIndex = 0;
+    let validatedSteps: SeerPlanStep[] = [];
+    if (cachedResume && cachedResume.nextIndex < maximumSteps) {
+      simulation.engine.restoreSimulationSnapshot(cachedResume.snapshot);
+      startIndex = cachedResume.nextIndex;
+      validatedSteps = cachedResume.validatedSteps.map((step) => ({ ...step }));
+      this.seerValidationTrace = cachedResume.trace.map((entry) => ({ ...entry }));
+    } else {
+      simulation.engine.restoreSimulationSnapshot(this.bridge.engine.getSimulationSnapshot());
+    }
+    let routeDied = false;
 
-    for (let index = 0; index < maximumSteps; index += 1) {
+    for (let index = startIndex; index < maximumSteps; index += 1) {
       const step = plan.steps[index];
       if (
         simulation.engine.state.phase !== "preparation"
@@ -998,9 +1059,24 @@ export class AutoChessAutopilot {
           .map((unit) => `${unit?.id}:${unit?.star}`),
         margin: battleMargin,
       });
-      if (index + 1 >= maximumSteps) break;
       if (simulation.engine.state.hp <= 0) {
         this.seerValidationFailure = `step ${index}: hp`;
+        routeDied = true;
+        break;
+      }
+      if (index + 1 >= maximumSteps) {
+        if (maximumSteps < plan.steps.length) {
+          simulation.engine.continueAfterResult();
+          const nextPhase = simulation.engine.state.phase as GamePhase;
+          if (nextPhase === "augment" && !this.simulationAugment(simulation)) {
+            this.seerValidationFailure = `step ${index}: augment`;
+            break;
+          }
+          if ((simulation.engine.state.phase as GamePhase) !== "preparation") {
+            this.seerValidationFailure = `step ${index}: next phase`;
+            break;
+          }
+        }
         break;
       }
       simulation.engine.continueAfterResult();
@@ -1015,8 +1091,24 @@ export class AutoChessAutopilot {
       }
     }
 
+    if (
+      !requireComplete
+      && !routeDied
+      && !this.seerValidationFailure
+      && validatedSteps.length === maximumSteps
+      && maximumSteps < plan.steps.length
+      && (simulation.engine.state.phase as GamePhase) === "preparation"
+    ) {
+      this.seerRouteValidationResumes.set(plan, {
+        snapshot: simulation.engine.getSimulationSnapshot(),
+        validatedSteps: validatedSteps.map((step) => ({ ...step })),
+        trace: this.seerValidationTrace.map((entry) => ({ ...entry })),
+        nextIndex: maximumSteps,
+      });
+    }
+
     const expectedSteps = requireComplete ? plan.steps.length : maximumSteps;
-    if (validatedSteps.length !== expectedSteps) {
+    if (routeDied || validatedSteps.length !== expectedSteps) {
       if (!requireComplete && validatedSteps.length > 0) {
         // A route can be useful even when its abstract tail is wrong. Never
         // expose a terminal battle that killed the simulation; the caller can
@@ -1043,7 +1135,8 @@ export class AutoChessAutopilot {
       return null;
     }
     const partialRoute = !requireComplete && maximumSteps < plan.steps.length;
-    return {
+    const exactFinalHp = Number(this.seerValidationTrace.at(-1)?.hp);
+    const validatedPlan = {
       ...plan,
       complete: partialRoute ? false : plan.complete,
       firstStep: validatedSteps[0],
@@ -1051,14 +1144,39 @@ export class AutoChessAutopilot {
       projectedRound: partialRoute
         ? (plan.startRound || this.bridge.engine.state.round) + validatedSteps.length
         : plan.projectedRound,
+      projectedHp: Number.isFinite(exactFinalHp) ? exactFinalHp : plan.projectedHp,
       exactValidatedHorizon: validatedSteps.length,
     };
+    if (
+      requireComplete
+      && plan.complete
+      && this.seerPlanEndRound(plan) >= ORACLE_MAX_ROUND
+      && Number.isFinite(exactFinalHp)
+      && exactFinalHp > 0
+    ) {
+      this.seerExtendedPlanningUnlocked = true;
+      this.seerRouteValidationResumes.delete(plan);
+    }
+    return validatedPlan;
   }
 
   private reusableSeerPlan(roster: OwnedEntry[]) {
     if (!this.usesOraclePlanner() || !this.seerPlan?.steps?.length) return null;
     const { state } = this.bridge.engine;
     const startRound = this.seerPlan.startRound ?? state.round;
+    if (
+      this.seerPlan.planningRegime
+      && this.seerPlan.planningRegime !== this.seerPlanningRegime()
+    ) return null;
+    const routeEndRound = this.seerPlanEndRound(this.seerPlan);
+    const canFinishValidatedBaseRoute = this.seerExtendedPlanningUnlocked
+      && routeEndRound >= ORACLE_MAX_ROUND
+      && state.round <= ORACLE_MAX_ROUND;
+    if (
+      this.seerPlan.planningHorizon !== undefined
+      && routeEndRound < this.seerPlanningTargetRound()
+      && !canFinishValidatedBaseRoute
+    ) return null;
     const offset = state.round - startRound;
     const { steps } = this.seerPlan;
     const step = steps[offset];
@@ -1135,6 +1253,7 @@ export class AutoChessAutopilot {
       ...this.seerPlan,
       startRound: state.round,
       steps: suffix,
+      planningHorizon: suffix.length,
       firstStep: suffix[0],
     };
   }
@@ -1144,17 +1263,23 @@ export class AutoChessAutopilot {
     if (this.style === "seer" && this.seerRouteAbandoned) return null;
     const { engine } = this.bridge;
     const { state } = engine;
-    if (this.usesSeer2Economy() && !this.seer2EndgameOpen()) return null;
+    if (this.style === "go" && !this.seer2EndgameOpen()) return null;
+    const planningRegime = this.seerPlanningRegime();
     const roster = this.ownedEntries();
     const reusable = this.reusableSeerPlan(roster);
     if (reusable) return reusable;
-    if (this.style === "seer" && this.seerPlan?.complete) {
+    if (
+      this.style === "seer"
+      && this.seerPlan?.complete
+      && this.seerPlanEndRound(this.seerPlan) >= this.seerPlanningTargetRound()
+    ) {
       this.seerRouteAbandoned = true;
       return null;
     }
-    const planningHorizon = this.planningMode === "training"
-      ? Math.min(24, Math.max(1, ORACLE_MAX_ROUND - state.round + 1))
-      : Math.max(1, ORACLE_MAX_ROUND - state.round + 1);
+    // Training uses a cheaper abstract planner, but it must see the same
+    // 60-round prefix as the live oracle. A short horizon can select an
+    // opening that looks good now and is already economically doomed later.
+    const planningHorizon = Math.max(1, this.seerPlanningTargetRound() - state.round + 1);
     const shopLookahead = Math.min(
       ORACLE_SHOP_LOOKAHEAD,
       planningHorizon * 25 + 8,
@@ -1166,9 +1291,11 @@ export class AutoChessAutopilot {
         () => level,
       ));
     });
-    const planningTargets = this.usesSeer2Economy()
-      ? this.seer2PlanningTargets(roster, futureShops[state.playerLevel])
-      : this.terminalTargets();
+    const planningTargets = this.style === "seer" && !this.seer2EndgameOpen()
+      ? AUTOPILOT_TERMINAL_TARGETS
+      : this.usesSeer2Economy()
+        ? this.seer2PlanningTargets(roster, futureShops[state.playerLevel])
+        : this.terminalTargets();
     if (planningTargets.length === 0) return null;
     const targetIds = new Set<UnitId>(planningTargets.map(({ id }) => id));
     const targetCopies = roster.reduce<Partial<Record<UnitId, number>>>((copies, { unit }) => {
@@ -1214,14 +1341,21 @@ export class AutoChessAutopilot {
       continueAfterForecastDeath: this.style === "seer",
     });
     const routeCandidates = [
-      plan,
+      { ...plan, planningRegime },
       ...(plan.alternativeSteps || []).map((steps) => ({
         ...plan,
+        planningRegime,
         firstStep: steps[0] || plan.firstStep,
         steps,
         alternativeSteps: [],
       })),
-    ];
+    ].slice(0, SEER_ROUTE_PREFILTER_CANDIDATE_LIMIT);
+    if (
+      this.planningMode !== "evolution"
+      || (this.style === "seer" && planningRegime === "opening")
+    ) {
+      return routeCandidates[0];
+    }
     const prefiltered = routeCandidates.flatMap((candidate) => {
       const prefix = this.validateSeerRoute(
         candidate,
@@ -1386,7 +1520,7 @@ export class AutoChessAutopilot {
   ) {
     const { state } = this.bridge.engine;
     const wave = this.bridge.engine.currentWave;
-    return scoreGoCombatCandidate({
+    return this.goCombatScorer({
       starter: state.starter,
       augments: state.augments,
       waveTag: wave.tag,
@@ -1758,6 +1892,13 @@ export class AutoChessAutopilot {
       rollout: this.rolloutLineupScore(lineup, formation, stableOnly, combatHz),
       heuristic: this.lineupHeuristicScore(lineup),
     });
+    const scoreCommittedGenome = (
+      lineup: OwnedEntry[],
+      formation: FormationProfile,
+      generation: number,
+    ) => (this.style === "go"
+      ? scoreGenome(lineup, formation, generation, true, EXACT_COMBAT_HZ)
+      : scoreGenome(lineup, formation, generation));
     const compareGenome = (
       left: ReturnType<typeof scoreGenome>,
       right: ReturnType<typeof scoreGenome>,
@@ -1811,7 +1952,11 @@ export class AutoChessAutopilot {
         ) break;
         const candidate = pruned.lineup.filter(({ unit }) => unit.uid !== removed.unit.uid);
         if (preserveFinance && financeCount(candidate) < 4) continue;
-        const scored = scoreGenome(candidate, pruned.formation, pruned.generation + 1);
+        const scored = scoreCommittedGenome(
+          candidate,
+          pruned.formation,
+          pruned.generation + 1,
+        );
         if (scored.rollout < this.policy.safeWinRolloutScore) continue;
         pruned = scored;
         accepted += 1;
@@ -1821,7 +1966,7 @@ export class AutoChessAutopilot {
 
     if (roster.length <= cap) {
       const champion = profileOrder
-        .map((formation) => scoreGenome(roster, formation, 0))
+        .map((formation) => scoreCommittedGenome(roster, formation, 0))
         .sort(compareGenome)[0];
       return commitGenome(pruneWinningGenome(champion));
     }

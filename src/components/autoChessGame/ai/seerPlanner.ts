@@ -95,6 +95,8 @@ export type SeerPlan = {
   /** Other high-scoring complete routes, grouped by their first macro action. */
   alternativeSteps?: readonly (readonly SeerPlanStep[])[];
   planningHorizon?: number;
+  /** The target-selection regime used to build this route. */
+  planningRegime?: "opening" | "terminal";
   complete: boolean;
   exactValidatedHorizon?: number;
   futureWaves?: readonly SeerWaveForecast[];

@@ -5,7 +5,9 @@ import { Worker } from "node:worker_threads";
 
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
-  return index >= 0 ? process.argv[index + 1] : fallback;
+  if (index >= 0) return process.argv[index + 1] ?? fallback;
+  const inline = process.argv.find((argument) => argument.startsWith(`${name}=`));
+  return inline ? inline.slice(name.length + 1) : fallback;
 };
 const ALL_STYLES = ["survival", "balanced", "highroll", "seer", "go"];
 const requestedStyles = option("--styles", "")

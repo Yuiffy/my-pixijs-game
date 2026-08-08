@@ -290,6 +290,24 @@ test("Go级即使经济动作很多也必须完成规范站位再开战", () => 
   assert.equal(ordinary.formationBudgetAvailable(), false);
 });
 
+test("Go级小阵容冠军也使用60Hz公共分支提交最终分数", () => {
+  const bridge = new EngineBridge(162113);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  const calls = [];
+  autopilot.rolloutLineupScore = (lineup, _formation, stableOnly = false, combatHz = 20) => {
+    calls.push({ stableOnly, combatHz });
+    return stableOnly && combatHz === 60 ? 10000 + lineup.length : -1000;
+  };
+
+  const chosen = autopilot.rolloutTargetLineup(autopilot.ownedEntries());
+  assert.equal(autopilot.plannedLineupScore, 10000 + chosen.length);
+  assert.equal(calls.length > 0, true);
+  assert.equal(calls.every(({ stableOnly, combatHz }) => stableOnly && combatHz === 60), true);
+});
+
 test("Go级开战棋盘必须逐格等于冠军评估时的规范站位", () => {
   const bridge = new EngineBridge(162111);
   bridge.setConsoleLogging(false);

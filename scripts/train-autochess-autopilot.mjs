@@ -11,7 +11,9 @@ const { DEFAULT_AUTOPILOT_POLICY, resolveAutopilotStylePolicy } = await loadType
 
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
-  return index >= 0 ? process.argv[index + 1] : fallback;
+  if (index >= 0) return process.argv[index + 1] ?? fallback;
+  const inline = process.argv.find((argument) => argument.startsWith(`${name}=`));
+  return inline ? inline.slice(name.length + 1) : fallback;
 };
 
 const populationSize = Math.max(2, Math.min(32, Number(option("--population", "6")) || 6));
@@ -19,7 +21,7 @@ const generations = Math.max(1, Math.min(20, Number(option("--generations", "3")
 const trainingRuns = Math.max(1, Math.min(16, Number(option("--runs", "3")) || 3));
 const validationRuns = Math.max(1, Math.min(16, Number(option("--validation-runs", "3")) || 3));
 const baseSeed = Math.max(1, Number(option("--seed", "74000")) || 74000);
-const battles = Math.max(4, Math.min(64, Number(option("--battles", "20")) || 20));
+const battles = Math.max(4, Math.min(64, Number(option("--battles", "60")) || 60));
 const requestedStyle = option("--style", "survival");
 const style = requestedStyle === "seer2" ? "seer" : requestedStyle;
 if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
@@ -36,7 +38,7 @@ const trainingRolloutHz = Math.max(
 );
 const validationBattles = Math.max(
   battles,
-  Math.min(64, Number(option("--validation-battles", "50")) || 50),
+  Math.min(64, Number(option("--validation-battles", "60")) || 60),
 );
 const starter = option("--starter", "traffic_start");
 const outputPath = option("--output", "artifacts/autochess-autopilot-training.json");

@@ -854,6 +854,30 @@ test("看穿会一次建立第1至第60战的敌方时间表并规划完整前�
   assert.equal(plan.projectedRound, 61);
 });
 
+test("看穿先规划60战，精确通过后才把下一条路线扩到70战", () => {
+  const bridge = new EngineBridge(131481, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "training",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+
+  autopilot.resetPreparation(bridge.engine.state.round);
+  assert.equal(autopilot.seerPlan?.planningHorizon, 60);
+
+  autopilot.seerExtendedPlanningUnlocked = true;
+  bridge.engine.state.round = 61;
+  autopilot.resetPreparation(bridge.engine.state.round);
+  assert.equal(autopilot.seerPlan?.planningHorizon, 10);
+  assert.equal(autopilot.seerPlan?.startRound, 61);
+});
+
 test("看穿规划会保留当前败局的真实负分幅度", () => {
   const emptyShop = [null, null, null, null, null];
   const futureShops = Object.fromEntries(

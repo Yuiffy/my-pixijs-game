@@ -19,13 +19,15 @@ const { STARTING_PLAYER_LEVEL, upgradeCostForLevel } = await loadTypescriptModul
 
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
-  return index >= 0 ? process.argv[index + 1] : fallback;
+  if (index >= 0) return process.argv[index + 1] ?? fallback;
+  const inline = process.argv.find((argument) => argument.startsWith(`${name}=`));
+  return inline ? inline.slice(name.length + 1) : fallback;
 };
 
 const runs = Math.max(1, Math.min(100, Number(option("--runs", "12")) || 12));
 const baseSeed = Math.max(1, Number(option("--seed", "72000")) || 72000);
 const outputPath = option("--output", "");
-const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "16")) || 16));
+const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "60")) || 60));
 const forcedStarter = option("--starter", "");
 const policyPath = option("--policy", "");
 const policyReport = policyPath ? JSON.parse(await readFile(policyPath, "utf8")) : null;
