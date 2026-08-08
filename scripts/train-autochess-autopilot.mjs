@@ -1,8 +1,8 @@
-import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { availableParallelism } from "node:os";
 import path from "node:path";
 import { Worker } from "node:worker_threads";
+import { computeAutoChessRolloutSourceFingerprint } from "./lib/autochess-rollout-cache.mjs";
 import { loadTypescriptModule } from "./tests/helpers/load-typescript-module.mjs";
 
 const { DEFAULT_AUTOPILOT_POLICY, resolveAutopilotStylePolicy } = await loadTypescriptModule(
@@ -52,25 +52,8 @@ const workerCount = Math.max(1, Math.min(
   Number(option("--workers", String(Math.min(8, Math.max(1, availableParallelism() - 2))))) || 1,
 ));
 
-const collectSourceFiles = async (sourcePath) => {
-  const statEntries = await readdir(sourcePath, { withFileTypes: true });
-  const nested = await Promise.all(statEntries.map((entry) => {
-    const entryPath = path.join(sourcePath, entry.name);
-    return entry.isDirectory() ? collectSourceFiles(entryPath) : [entryPath];
-  }));
-  return nested.flat();
-};
-const balanceSources = [
-  ...(await collectSourceFiles("src/components/autoChessGame/core/data")),
-  ...(await collectSourceFiles("src/components/autoChessGame/core/engine")),
-  "src/components/autoChessGame/ai/rolloutCacheSchema.ts",
-].sort();
-const balanceHash = createHash("sha256");
-for (const sourcePath of balanceSources) {
-  balanceHash.update(sourcePath);
-  balanceHash.update(await readFile(sourcePath));
-}
-const balanceCacheVersion = balanceHash.digest("hex").slice(0, 16);
+const rolloutCacheFingerprint = (await computeAutoChessRolloutSourceFingerprint()).hash;
+const balanceCacheVersion = rolloutCacheFingerprint.slice(0, 16);
 const persistentCacheDirectory = path.resolve(
   "artifacts/autochess-rollout-cache",
   balanceCacheVersion,
@@ -173,6 +156,7 @@ class WorkerPool {
           workerData: {
             workerIndex,
             cachePath: path.join(persistentCacheDirectory, `worker-${workerIndex}.json`),
+            cacheFingerprint: rolloutCacheFingerprint,
           },
         },
       );
@@ -420,6 +404,7 @@ const report = {
     initialPolicyPath: initialPolicyPath || null,
     workerCount,
     balanceCacheVersion,
+    rolloutCacheFingerprint,
     persistentCacheDirectory,
   },
   baselinePolicy,

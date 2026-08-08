@@ -1,7 +1,11 @@
-import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
+import {
+  computeAutoChessRolloutSourceFingerprint,
+  createAutoChessRolloutCachePayload,
+  inspectAutoChessRolloutCachePayload,
+} from "./lib/autochess-rollout-cache.mjs";
 import { loadTypescriptModule } from "./tests/helpers/load-typescript-module.mjs";
 
 const { EngineBridge } = await loadTypescriptModule(
@@ -37,6 +41,10 @@ const runs = inputSnapshot ? 1 : requestedRuns;
 const baseSeed = inputSnapshot?.seed
   || Math.max(1, Number(option("--seed", "72000")) || 72000);
 const outputPath = option("--output", "");
+const requestedSnapshotOutputPath = option("--snapshot-output", "");
+const snapshotOutputPath = requestedSnapshotOutputPath
+  ? path.resolve(requestedSnapshotOutputPath)
+  : null;
 const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "60")) || 60));
 const forcedStarter = option("--starter", "");
 const policyPath = option("--policy", "");
@@ -67,31 +75,17 @@ if (requiredWinRound > maximumBattles) {
   );
 }
 
-const collectSourceFiles = async (sourcePath) => {
-  const statEntries = await readdir(sourcePath, { withFileTypes: true });
-  const nested = await Promise.all(statEntries.map((entry) => {
-    const entryPath = path.join(sourcePath, entry.name);
-    return entry.isDirectory() ? collectSourceFiles(entryPath) : [entryPath];
-  }));
-  return nested.flat();
-};
-
 const persistentCacheEnabled = !process.argv.includes("--no-rollout-cache")
   && (style === "seer" || style === "go" || process.argv.includes("--rollout-cache"));
 let persistentCachePath = "";
 let hydratedCacheEntries = 0;
+let persistentCacheFingerprint = null;
+let persistentCacheHydration = "disabled";
+let persistentCacheRejectionReason = null;
 if (persistentCacheEnabled) {
-  const balanceSources = [
-    ...(await collectSourceFiles("src/components/autoChessGame/core/data")),
-    ...(await collectSourceFiles("src/components/autoChessGame/core/engine")),
-    "src/components/autoChessGame/ai/rolloutCacheSchema.ts",
-  ].sort();
-  const balanceHash = createHash("sha256");
-  for (const sourcePath of balanceSources) {
-    balanceHash.update(sourcePath);
-    balanceHash.update(await readFile(sourcePath));
-  }
-  const balanceCacheVersion = balanceHash.digest("hex").slice(0, 16);
+  const fingerprint = await computeAutoChessRolloutSourceFingerprint();
+  persistentCacheFingerprint = fingerprint.hash;
+  const balanceCacheVersion = fingerprint.hash.slice(0, 16);
   persistentCachePath = path.resolve(option(
     "--rollout-cache",
     path.join(
@@ -103,11 +97,22 @@ if (persistentCacheEnabled) {
   ));
   try {
     const persisted = JSON.parse(await readFile(persistentCachePath, "utf8"));
-    const entries = Array.isArray(persisted.entries) ? persisted.entries : [];
-    hydrateAutopilotRolloutCache(entries);
-    hydratedCacheEntries = entries.length;
+    const inspection = inspectAutoChessRolloutCachePayload(
+      persisted,
+      persistentCacheFingerprint,
+    );
+    if (inspection.compatible) {
+      hydrateAutopilotRolloutCache(inspection.entries);
+      hydratedCacheEntries = inspection.entries.length;
+      persistentCacheHydration = "hydrated";
+    } else {
+      persistentCacheHydration = "rejected";
+      persistentCacheRejectionReason = inspection.reason;
+      console.error(`Ignored incompatible rollout cache: ${inspection.reason}`);
+    }
   } catch (error) {
     if (error?.code !== "ENOENT") throw error;
+    persistentCacheHydration = "missing";
   }
 }
 
@@ -141,6 +146,8 @@ const runFitness = (run) => run.finalRound * 1_000_000_000
   + run.finalNetWorth
   + run.rounds.reduce((sum, round) => sum + round.combatMargin * 100 + round.interest, 0);
 
+const completedSnapshots = [];
+
 const playRun = (seed) => {
   const bridge = new EngineBridge(seed, 1, { battleStepHz });
   bridge.setConsoleLogging(false);
@@ -155,9 +162,24 @@ const playRun = (seed) => {
     rolloutHz,
   );
   const goPreBattleVerification = new Map();
+  let latestPreparationSnapshot = null;
   const originalDispatch = bridge.dispatch.bind(bridge);
   bridge.dispatch = (action) => {
     if (style === "go" && action.type === "battle") {
+      latestPreparationSnapshot = {
+        schema: "go-loss-snapshot-v1",
+        capturedAt: new Date().toISOString(),
+        seed,
+        enemySeed: bridge.engine.state.enemySeed,
+        targetRound: bridge.engine.state.round,
+        engine: bridge.engine.getSimulationSnapshot(),
+        plan: {
+          plannedLineupUids: [...autopilot.plannedLineupUids],
+          plannedFormation: autopilot.plannedFormation,
+          plannedScore: autopilot.plannedLineupScore,
+          preparationActions: autopilot.preparationActions,
+        },
+      };
       const rosterByUid = new Map(autopilot.ownedEntries().map((entry) => [entry.unit.uid, entry]));
       const board = bridge.engine.state.board.map((unit) => (
         unit ? rosterByUid.get(unit.uid) || null : null
@@ -331,6 +353,7 @@ const playRun = (seed) => {
   run.finalDevelopmentValue = rounds.at(-1)?.developmentValue || developmentValue(bridge.engine);
   run.finalNetWorth = rounds.at(-1)?.netWorth || run.finalAssetValue + run.finalDevelopmentValue;
   run.fitness = runFitness(run);
+  if (latestPreparationSnapshot) completedSnapshots.push(latestPreparationSnapshot);
   return run;
 };
 
@@ -372,6 +395,7 @@ const aggregate = {
   runs,
   baseSeed,
   snapshotPath,
+  snapshotOutputPath,
   enemySeeds: [...new Set(results.map((run) => run.enemySeed))],
   maximumBattles,
   forcedStarter: forcedStarter || null,
@@ -450,6 +474,9 @@ const aggregate = {
     persistent: persistentCacheEnabled,
     hydratedEntries: hydratedCacheEntries,
     path: persistentCachePath || null,
+    sourceFingerprint: persistentCacheFingerprint,
+    hydration: persistentCacheHydration,
+    rejectionReason: persistentCacheRejectionReason,
   },
 };
 const report = { generatedAt: new Date().toISOString(), aggregate, runs: results };
@@ -458,9 +485,21 @@ if (persistentCacheEnabled) {
   const entries = snapshotAutopilotRolloutCache();
   await mkdir(path.dirname(persistentCachePath), { recursive: true });
   const temporaryPath = `${persistentCachePath}.${process.pid}.tmp`;
-  await writeFile(temporaryPath, JSON.stringify({ entries }), "utf8");
+  await writeFile(
+    temporaryPath,
+    JSON.stringify(createAutoChessRolloutCachePayload(entries, persistentCacheFingerprint)),
+    "utf8",
+  );
   await rename(temporaryPath, persistentCachePath);
   aggregate.rolloutCache.persistedEntries = entries.length;
+}
+if (snapshotOutputPath) {
+  if (completedSnapshots.length !== 1) {
+    throw new Error("--snapshot-output requires exactly one completed run");
+  }
+  await mkdir(path.dirname(snapshotOutputPath), { recursive: true });
+  await writeFile(snapshotOutputPath, `${JSON.stringify(completedSnapshots[0])}\n`, "utf8");
+  console.log(`Wrote autopilot snapshot to ${snapshotOutputPath}`);
 }
 const serialized = `${JSON.stringify(report, null, 2)}\n`;
 

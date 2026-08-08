@@ -303,6 +303,52 @@ test("粗筛推演不会把 exactOnly 候选误升到 60Hz", () => {
   assert.equal(exactObserved[0], 60);
 });
 
+test("浏览器托管默认使用20Hz快速推演而不是60Hz实时步长", () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { localStorage: { getItem: () => null } };
+  try {
+    const bridge = new EngineBridge(902121, 1, { simulation: true, battleStepHz: 20 });
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer", "oracle");
+    assert.equal(pilot.rolloutCombatHz, 20);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
+test("看穿浏览器终局重规划只验证短滚动前缀", () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { localStorage: { getItem: () => null } };
+  try {
+    const bridge = new EngineBridge(902122, 1, { simulation: true, battleStepHz: 20 });
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    bridge.engine.state.round = 50;
+    bridge.engine.state.hp = 13;
+    bridge.engine.state.gold = 1325;
+    bridge.engine.state.playerLevel = 10;
+    bridge.engine.state.upgradeRemaining = 0;
+    bridge.engine.state.board.fill(null);
+    bridge.engine.state.bench.fill(null);
+    SHOP_UNITS.slice(0, 10).forEach((id, index) => {
+      bridge.engine.state.board[index] = { uid: 9021220 + index, id, star: 3 };
+    });
+    SHOP_UNITS.slice(10, 16).forEach((id, index) => {
+      bridge.engine.state.bench[index] = { uid: 9021230 + index, id, star: 3 };
+    });
+    const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer", "oracle");
+    pilot.resetPreparation(50);
+    assert.equal(pilot.rolloutCombatHz, 20);
+    assert.ok(pilot.seerPlan);
+    assert.ok(pilot.seerPlan.planningHorizon <= 6);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
 test("看穿2临界血量会用精确战斗复核并切入稳血", () => {
   const bridge = new EngineBridge(90213);
   bridge.setConsoleLogging(false);
@@ -2336,6 +2382,47 @@ test("救援方案锁定期间先完成换位，不继续买牌或刷新", () =>
   const action = autopilot.nextPreparationAction();
   assert.equal(action?.type, "move");
   assert.equal(action?.from.zone, "bench");
+});
+
+test("稳健类托管在残血满场时会搜索候补替换胜解", () => {
+  const bridge = new EngineBridge(130583);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 26;
+  bridge.engine.state.hp = 5;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  SHOP_UNITS.slice(0, 4).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1305830 + index, id, star: 1 };
+  });
+  const rescueUid = 1305834;
+  bridge.engine.state.bench[0] = { uid: rescueUid, id: SHOP_UNITS[4], star: 1 };
+  bridge.engine.state.playerLevel = 4;
+  assert.equal(bridge.engine.boardCount, bridge.engine.boardCap);
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "highroll",
+    "normal",
+    20,
+  );
+  autopilot.rolloutConfidence = () => -100;
+  autopilot.rolloutBoardScore = (board) => (
+    board.some((entry) => entry?.unit.uid === rescueUid) ? 10100 : -100
+  );
+  autopilot.rolloutLineupScore = (lineup) => (
+    lineup.some(({ unit }) => unit.uid === rescueUid) ? 10100 : -100
+  );
+
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), true);
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+  const action = autopilot.tick(2000);
+  assert.equal(action?.type, "move");
+  assert.equal(action?.from.zone, "bench");
+  assert.equal(autopilot.plannedLineupUids.includes(rescueUid), true);
 });
 
 test("利息风险档锚定整轮起始金币，保息只花零头且降一档不会连续滑档", () => {

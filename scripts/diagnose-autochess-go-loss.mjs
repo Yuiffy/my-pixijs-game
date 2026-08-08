@@ -1,6 +1,11 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
+import {
+  computeAutoChessRolloutSourceFingerprint,
+  createAutoChessRolloutCachePayload,
+  inspectAutoChessRolloutCachePayload,
+} from "./lib/autochess-rollout-cache.mjs";
 import { loadTypescriptModule } from "./tests/helpers/load-typescript-module.mjs";
 
 const { EngineBridge } = await loadTypescriptModule(
@@ -39,7 +44,7 @@ const forcedLineupKeys = optionValues("--force-lineup").map((value) => (
 ));
 const cachePath = path.resolve(option(
   "--rollout-cache",
-  ".tmp/autochess-go-fixed-v2-seed-152100-152101-hz20.json",
+  ".tmp/autochess-go-fixed-v3-seed-152100-152101-hz20.json",
 ));
 const requestedSnapshotPath = option("--snapshot", "");
 const snapshotOnly = hasFlag("--snapshot-only");
@@ -68,11 +73,21 @@ const snapshotOutputPath = path.resolve(option(
 ));
 
 let hydratedEntries = 0;
+const cacheFingerprint = (await computeAutoChessRolloutSourceFingerprint()).hash;
+let cacheHydration = "missing";
+let cacheRejectionReason = null;
 try {
   const persisted = JSON.parse(await readFile(cachePath, "utf8"));
-  const entries = Array.isArray(persisted.entries) ? persisted.entries : [];
-  hydrateAutopilotRolloutCache(entries);
-  hydratedEntries = entries.length;
+  const inspection = inspectAutoChessRolloutCachePayload(persisted, cacheFingerprint);
+  if (inspection.compatible) {
+    hydrateAutopilotRolloutCache(inspection.entries);
+    hydratedEntries = inspection.entries.length;
+    cacheHydration = "hydrated";
+  } else {
+    cacheHydration = "rejected";
+    cacheRejectionReason = inspection.reason;
+    console.error(`Ignored incompatible rollout cache: ${inspection.reason}`);
+  }
 } catch (error) {
   if (error?.code !== "ENOENT") throw error;
 }
@@ -314,7 +329,11 @@ const exact = Array.from(exactCandidates.values()).map((candidate, index, all) =
 const entries = snapshotAutopilotRolloutCache();
 await mkdir(path.dirname(cachePath), { recursive: true });
 const temporaryCachePath = `${cachePath}.${process.pid}.tmp`;
-await writeFile(temporaryCachePath, JSON.stringify({ entries }), "utf8");
+await writeFile(
+  temporaryCachePath,
+  JSON.stringify(createAutoChessRolloutCachePayload(entries, cacheFingerprint)),
+  "utf8",
+);
 await rename(temporaryCachePath, cachePath);
 
 const compactCandidate = (candidate) => ({
@@ -369,6 +388,9 @@ const report = {
     path: cachePath,
     hydratedEntries,
     persistedEntries: entries.length,
+    sourceFingerprint: cacheFingerprint,
+    hydration: cacheHydration,
+    rejectionReason: cacheRejectionReason,
   },
 };
 await mkdir(path.dirname(outputPath), { recursive: true });

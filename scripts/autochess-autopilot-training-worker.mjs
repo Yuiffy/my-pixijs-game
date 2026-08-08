@@ -1,6 +1,10 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parentPort, workerData } from "node:worker_threads";
+import {
+  createAutoChessRolloutCachePayload,
+  inspectAutoChessRolloutCachePayload,
+} from "./lib/autochess-rollout-cache.mjs";
 import { loadTypescriptModule } from "./tests/helpers/load-typescript-module.mjs";
 
 const { EngineBridge } = await loadTypescriptModule(
@@ -26,9 +30,21 @@ const {
 );
 
 const cachePath = workerData.cachePath;
+let cacheHydration = "missing";
+let cacheRejectionReason = null;
 try {
   const persisted = JSON.parse(await readFile(cachePath, "utf8"));
-  hydrateAutopilotRolloutCache(Array.isArray(persisted.entries) ? persisted.entries : []);
+  const inspection = inspectAutoChessRolloutCachePayload(
+    persisted,
+    workerData.cacheFingerprint,
+  );
+  if (inspection.compatible) {
+    hydrateAutopilotRolloutCache(inspection.entries);
+    cacheHydration = "hydrated";
+  } else {
+    cacheHydration = "rejected";
+    cacheRejectionReason = inspection.reason;
+  }
 } catch (error) {
   if (error?.code !== "ENOENT") throw error;
 }
@@ -37,7 +53,11 @@ const persistCache = async () => {
   const entries = snapshotAutopilotRolloutCache();
   await mkdir(path.dirname(cachePath), { recursive: true });
   const temporaryPath = `${cachePath}.${process.pid}.tmp`;
-  await writeFile(temporaryPath, JSON.stringify({ entries }), "utf8");
+  await writeFile(
+    temporaryPath,
+    JSON.stringify(createAutoChessRolloutCachePayload(entries, workerData.cacheFingerprint)),
+    "utf8",
+  );
   await rename(temporaryPath, cachePath);
   return entries.length;
 };
@@ -191,6 +211,9 @@ const playRun = ({
     starter: bridge.engine.state.starter,
     durationMs: Number((performance.now() - startedAt).toFixed(2)),
     seed,
+    // The style benchmark reports checkpoint survival/win rates. Keep only
+    // the fields needed there so worker messages stay compact during training.
+    rounds: rounds.map(({ round, won, hp }) => ({ round, won, hp })),
     wins,
     finalRound: final?.round || 0,
     finalHp: final?.hp || 0,
@@ -211,6 +234,8 @@ const playRun = ({
     finalOffPlanBenchUnits: finalTerminalProgress.offPlanBenchUnits,
     cacheStats: {
       worker: workerData.workerIndex,
+      cacheHydration,
+      cacheRejectionReason,
       ...getAutopilotRolloutCacheStats(),
     },
     fitness,

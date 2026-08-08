@@ -124,7 +124,7 @@ def parse_entry(cache_key: str, score: float, source: str) -> CombatExample | No
         enemy_seed = 0
         round_number = 0
         context_parts = (schema, hz, starter, augments, wave_tag, modifier, enemies, branch)
-    elif schema == "combat-go-v2" and len(parts) == 11:
+    elif schema in {"combat-go-v2", "combat-go-v3"} and len(parts) == 11:
         (
             _,
             hz,

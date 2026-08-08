@@ -17,7 +17,7 @@ Original liver/material art is an identity reference only.
 ## Shape Language
 
 - Use a complete full-body silhouette with all hair, props, and feet visible.
-- Keep the character below two heads tall. The head should occupy 62-66% of the
+- Keep the character below two heads tall. The head should occupy 68-72% of the
   total character height; compress the torso and limbs into short, chunky shapes.
 - Default every new sprite to face screen-right. The face, torso, gaze, leading
   foot, and any aimed weapon or projectile should all read toward the right.
@@ -52,7 +52,7 @@ Original liver/material art is an identity reference only.
 
 Use the original character art as the identity reference and the approved anchors as
 style references. Request a tiny autochess full-body game sprite facing screen-right,
-a 62-66% head ratio, below-two-head-tall proportions, thick near-black outlines, flat
+a 68-72% head ratio, below-two-head-tall proportions, thick near-black outlines, flat
 5-7-region cel colors, one oversized gameplay prop, complete feet/hair, and generous
 padding. Explicitly forbid left-facing poses, text, logos, circular frames, scenery,
 shadows, thin linework, realistic anatomy, and busy effects.

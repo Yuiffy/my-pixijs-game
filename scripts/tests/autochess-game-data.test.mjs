@@ -409,6 +409,33 @@ test("新全身棋子使用 512px 透明精灵素材", async () => {
   }));
 });
 
+test("立绘与访客角色全部使用 512px 透明专属精灵", async () => {
+  const dedicatedIds = [
+    "dawn_duelist", "grove_mender", "cinder_ram", "sui_blue", "shiori", "sui_bird",
+    "sui_flower", "yua", "seki_boar_king", "sumi", "mitsuri", "guangyi", "sui_cat",
+    "nagisa", "tower_god", "biscuit_sui", "nori", "meme", "zeyin", "kioi", "nightin",
+    "tiandou", "youyi", "akirinco", "lovely", "mumu", "yukisyo", "xuehui", "rei",
+    "rutice", "lian", "pako", "miki_guest", "hatsuse_guest",
+  ];
+  assert.equal(dedicatedIds.length, 34);
+
+  await Promise.all(dedicatedIds.map(async (id) => {
+    const unit = data.UNIT_DEFS[id];
+    const expectedPath = `/images/autochess/portraits/${id}.png`;
+    assert.equal(unit.portrait, expectedPath);
+    assert.equal(unit.portraitStyle, "sprite");
+    assert.equal(unit.portraitFocus, undefined);
+    assert.doesNotMatch(unit.portrait, /\/images\/(?:livers|materials)|\/images\/autochess\/enemy-guests/);
+    const assetPath = path.resolve("public", unit.portrait.slice(1));
+    await access(assetPath);
+    const portrait = inspectPng(await readFile(assetPath));
+    assert.deepEqual(
+      { width: portrait.width, height: portrait.height, transparent: portrait.hasTransparentPixel },
+      { width: 512, height: 512, transparent: true },
+    );
+  }));
+});
+
 test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   const retained = [
     "sun_guard", "ember_blade", "gale_archer", "rift_stalker", "cog_scribe", "mossback",
@@ -726,7 +753,9 @@ test("雪烛以高初始能量主动提供固定值加生命比例的四秒技�
   assert.doesNotMatch(yukisyo.abilityDescription, /战斗开始时/);
   assert.match(yukisyo.abilityDescription, /固定值与目标最大生命值/);
   assert.match(yukisyo.abilityDescription, /只吸收技能/);
-  assert.equal(yukisyo.portrait, "/images/livers/yukisyo.png");
+  assert.equal(yukisyo.portrait, "/images/autochess/portraits/yukisyo.png");
+  assert.equal(yukisyo.portraitStyle, "sprite");
+  assert.equal(yukisyo.portraitFocus, undefined);
   await access(path.resolve("public", yukisyo.portrait.slice(1)));
 });
 
@@ -912,14 +941,16 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   const towerGod = data.UNIT_DEFS.tower_god;
   const sumi = data.UNIT_DEFS.sumi;
   const portraits = {
-    seki_boar_king: "/images/livers/seki.webp",
-    tower_god: "/images/livers/shengge.jpg",
-    sumi: "/images/livers/sumi.jpg",
+    seki_boar_king: "/images/autochess/portraits/seki_boar_king.png",
+    tower_god: "/images/autochess/portraits/tower_god.png",
+    sumi: "/images/autochess/portraits/sumi.png",
   };
   [seki, towerGod, sumi].forEach((unit) => {
     assert.ok(data.SHOP_UNITS.includes(unit.id));
     assert.equal(unit.cost, unit.tier);
     assert.equal(unit.portrait, portraits[unit.id]);
+    assert.equal(unit.portraitStyle, "sprite");
+    assert.equal(unit.portraitFocus, undefined);
   });
   await Promise.all(Object.values(portraits).map((portrait) => access(path.resolve("public", portrait.slice(1)))));
   await access(path.resolve("public/images/livers/sumi-little-dragon.jpg"));
@@ -984,7 +1015,9 @@ test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊",
   assert.match(pako.abilityDescription, /持续 3\.2 秒/);
   assert.match(pako.abilityDescription, /帕可自身属性/);
   assert.equal(pako.abilityCastTiming, "supportHeal");
-  assert.equal(pako.portrait, "/images/livers/pako.jpg");
+  assert.equal(pako.portrait, "/images/autochess/portraits/pako.png");
+  assert.equal(pako.portraitStyle, "sprite");
+  assert.equal(pako.portraitFocus, undefined);
   await access(path.resolve("public", pako.portrait.slice(1)));
 });
 

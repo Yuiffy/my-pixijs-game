@@ -12,7 +12,10 @@ import {
   SoundOutlined,
 } from "@ant-design/icons";
 import { AutoChessAIController } from "./ai/AutoChessAI";
-import { AutoChessAutopilot } from "./ai/AutoChessAutopilot";
+import {
+  AutoChessAutopilot,
+  LIVE_AUTOPILOT_COMBAT_HZ,
+} from "./ai/AutoChessAutopilot";
 import type { AutopilotStyle } from "./ai/autopilotPolicy";
 import {
   AutoChessAudio,
@@ -272,6 +275,7 @@ export default function AutoChessGame() {
     const bridge = new EngineBridge(
       Number.isFinite(requestedSeed) && requestedSeed > 0 ? requestedSeed : undefined,
       Number.isFinite(requestedSpeed) ? requestedSpeed : 1,
+      { battleStepHz: LIVE_AUTOPILOT_COMBAT_HZ },
     );
     bridgeRef.current = bridge;
     const storedBackgroundBattle = loadBackgroundBattlePreference();
@@ -467,6 +471,8 @@ export default function AutoChessGame() {
       "evolution",
       {},
       storedAutopilotStrategy,
+      undefined,
+      LIVE_AUTOPILOT_COMBAT_HZ,
     );
     autopilotRef.current = autopilot;
     console.info(`[RiftLine][AI] v${AUTOCHESS_VERSION} ready. Use autoChessAI.help()`, ai.help());

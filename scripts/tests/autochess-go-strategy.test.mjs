@@ -375,7 +375,7 @@ test("Go级战斗缓存只使用固定公共分支并跨实际 RNG 状态命中"
     .map(([key]) => key)
     .filter((key) => !before.has(key));
   assert.equal(added.length, 2);
-  assert.equal(added.every((key) => key.startsWith("combat-go-v2/hz:20/")), true);
+  assert.equal(added.every((key) => key.startsWith("combat-go-v3/hz:20/")), true);
   assert.equal(added.every((key) => key.includes(`/enemy:${bridge.engine.state.enemySeed}/round:37/`)), true);
   assert.deepEqual(added.map((key) => key.split("/").at(-1)).sort(), ["rollout:0", "rollout:1"]);
   assert.equal(added.some((key) => key.includes("actual:")), false);
@@ -667,4 +667,50 @@ test("Go级低血量预测败局会提前用60Hz复核直接单换", () => {
   assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), true);
   assert.equal(autopilot.plannedLineupUids.includes(winningUid), true);
   assert.equal(exactCalls.includes(true), true);
+});
+
+test("Go级宏观出售按同棋种最低星级绑定UID且绝不出售三星", () => {
+  const bridge = new EngineBridge(162117);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 45;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.board[0] = { uid: 1621170, id: "lian", star: 3 };
+  bridge.engine.state.bench[0] = { uid: 1621171, id: "lian", star: 1 };
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 60);
+  const firstStep = {
+    targetLevel: bridge.engine.state.playerLevel,
+    rerolls: 0,
+    expectedGoldAfterPreparation: bridge.engine.state.gold,
+    salesByShop: [["lian"]],
+  };
+  autopilot.seerPlan = {
+    firstStep,
+    steps: [firstStep],
+    startRound: 45,
+    projectedRound: 46,
+    projectedTargetCopies: {},
+    complete: true,
+  };
+
+  assert.deepEqual(autopilot.seerPlannedSaleAction(), {
+    type: "sell",
+    location: { zone: "bench", index: 0 },
+  });
+
+  bridge.engine.state.bench[0] = null;
+  autopilot.seerSaleOffsets[0] = 0;
+  autopilot.seerPlan = {
+    firstStep,
+    steps: [firstStep],
+    startRound: 45,
+    projectedRound: 46,
+    projectedTargetCopies: {},
+    complete: true,
+  };
+  assert.equal(autopilot.seerPlannedSaleAction(), null);
+  assert.equal(autopilot.seerPlan, null);
+  assert.equal(bridge.engine.state.board[0].star, 3);
 });
