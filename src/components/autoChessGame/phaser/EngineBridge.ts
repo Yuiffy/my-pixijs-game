@@ -12,6 +12,16 @@ import type {
 } from "../core/gameTypes";
 import { UNIT_DEFS, type StarterId } from "../core/gameData";
 import { AUTOCHESS_VERSION } from "../version";
+import {
+  goCombatScenarioSeed,
+  goCombatScenarioSignature,
+} from "../ai/goCombatScenario";
+import {
+  canonicalAutopilotStyle,
+  type AutopilotInformationMode,
+  type AutopilotStyle,
+  type CanonicalAutopilotStyle,
+} from "../ai/autopilotPolicy";
 
 export type BridgeEvent =
   | { type: "audio"; event: GameAudioEvent }
@@ -31,6 +41,7 @@ export type GameAction =
 
 export type ActionTraceSnapshot = {
   seed: number;
+  enemySeed: number;
   round: number;
   phase: GamePhase;
   hp: number;
@@ -93,6 +104,12 @@ export type EngineBridgeOptions = {
   battleStepHz?: number;
 };
 
+export const GO_ENEMY_SEEDS = [152100, 152102] as const;
+
+export const goEnemySeedForShopSeed = (seed: number) => (
+  GO_ENEMY_SEEDS[Math.abs(Math.trunc(seed)) % GO_ENEMY_SEEDS.length]
+);
+
 export class EngineBridge {
   public readonly engine: AutoChessEngine;
 
@@ -104,9 +121,9 @@ export class EngineBridge {
 
   public autoplayEnabled = false;
 
-  public autoplayStyle: "survival" | "balanced" | "highroll" | "seer" | "seer2" | "go" = "survival";
+  public autoplayStyle: CanonicalAutopilotStyle = "survival";
 
-  public autoplayInformationMode: "normal" | "oracle" = "normal";
+  public autoplayInformationMode: AutopilotInformationMode = "normal";
 
   public backgroundBattleEnabled = false;
 
@@ -154,6 +171,13 @@ export class EngineBridge {
     this.previousPhase = this.engine.state.phase;
   }
 
+  private applyAutoplayEnemySeed() {
+    if (this.engine.state.phase !== "title") return;
+    this.engine.state.enemySeed = this.autoplayStyle === "go"
+      ? goEnemySeedForShopSeed(this.engine.state.seed)
+      : this.engine.state.seed;
+  }
+
   public dispatch(action: GameAction) {
     const { engine } = this;
     this.beginNewRun(action);
@@ -163,6 +187,7 @@ export class EngineBridge {
 
     switch (action.type) {
       case "starter":
+        this.applyAutoplayEnemySeed();
         engine.startRun(action.id);
         this.emitAudio("click");
         break;
@@ -193,6 +218,22 @@ export class EngineBridge {
         if (engine.state.gold < beforeGold) this.emitAudio("reroll");
         break;
       case "battle":
+        if (this.autoplayStyle === "go") {
+          const state = engine.state;
+          const signature = goCombatScenarioSignature({
+            enemySeed: state.enemySeed,
+            round: state.round,
+            starter: state.starter,
+            augments: state.augments,
+            wave: engine.currentWave,
+            placements: state.board.flatMap((unit, slot) => (unit ? [{
+              slot,
+              id: unit.id,
+              star: unit.star,
+            }] : [])),
+          });
+          engine.restoreRandomState(goCombatScenarioSeed(signature, 0));
+        }
         engine.startBattle();
         break;
       case "skipBattle":
@@ -206,6 +247,7 @@ export class EngineBridge {
         break;
       case "restart":
         engine.resetToTitle();
+        this.applyAutoplayEnemySeed();
         break;
       case "clearSelection":
         engine.clearSelection();
@@ -358,11 +400,12 @@ export class EngineBridge {
   }
 
   public setAutopilotStrategy(
-    style: "survival" | "balanced" | "highroll" | "seer" | "seer2" | "go",
-    informationMode: "normal" | "oracle",
+    style: AutopilotStyle,
+    informationMode: AutopilotInformationMode,
   ) {
-    this.autoplayStyle = style;
+    this.autoplayStyle = canonicalAutopilotStyle(style);
     this.autoplayInformationMode = informationMode;
+    this.applyAutoplayEnemySeed();
   }
 
   public setBackgroundBattleEnabled(enabled: boolean, now = Date.now()) {
@@ -529,6 +572,7 @@ export class EngineBridge {
     });
     return {
       seed: state.seed,
+      enemySeed: state.enemySeed,
       round: state.round,
       phase: state.phase,
       hp: state.hp,

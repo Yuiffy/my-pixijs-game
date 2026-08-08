@@ -20,11 +20,12 @@ const trainingRuns = Math.max(1, Math.min(16, Number(option("--runs", "3")) || 3
 const validationRuns = Math.max(1, Math.min(16, Number(option("--validation-runs", "3")) || 3));
 const baseSeed = Math.max(1, Number(option("--seed", "74000")) || 74000);
 const battles = Math.max(4, Math.min(64, Number(option("--battles", "20")) || 20));
-const style = option("--style", "survival");
-if (!["survival", "balanced", "highroll", "seer", "seer2", "go"].includes(style)) {
+const requestedStyle = option("--style", "survival");
+const style = requestedStyle === "seer2" ? "seer" : requestedStyle;
+if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
-const informationMode = style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal";
+const informationMode = style === "seer" || style === "go" ? "oracle" : "normal";
 const trainingBattleStepHz = Math.max(
   20,
   Math.min(60, Number(option("--training-hz", "20")) || 20),

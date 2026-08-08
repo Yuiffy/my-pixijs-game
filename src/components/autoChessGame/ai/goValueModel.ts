@@ -5,7 +5,7 @@ type Vector = number[];
 type Matrix = number[][];
 
 type GoModelData = {
-  schema: "go-combat-ranker-v1";
+  schema: "go-combat-ranker-v2";
   vocab: {
     units: string[];
     starters: string[];

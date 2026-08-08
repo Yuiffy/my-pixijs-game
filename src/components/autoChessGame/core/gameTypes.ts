@@ -472,6 +472,8 @@ export interface StarterSelection {
 export interface GameState {
   phase: GamePhase;
   seed: number;
+  /** Enemy campaign seed. Shop and player RNG continue to use `seed`. */
+  enemySeed: number;
   visualTime: number;
   round: number;
   maxRounds: number;

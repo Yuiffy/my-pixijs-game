@@ -597,7 +597,9 @@ const levelChoices = (state: PlannerState, request: SeerPlannerRequest) => {
   if (
     scheduled > state.playerLevel
     && upgradeCostToLevel(state, scheduled) <= state.gold
-  ) return choices.filter((level) => level === scheduled);
+  ) {
+    return choices.filter((level) => level === scheduled || futureTargetLevels.has(level));
+  }
   return choices;
 };
 

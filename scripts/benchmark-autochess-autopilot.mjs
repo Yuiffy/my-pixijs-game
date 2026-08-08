@@ -30,15 +30,16 @@ const forcedStarter = option("--starter", "");
 const policyPath = option("--policy", "");
 const policyReport = policyPath ? JSON.parse(await readFile(policyPath, "utf8")) : null;
 const policy = policyReport?.bestPolicy || policyReport?.policy || policyReport || {};
-const style = option("--style", "survival");
+const requestedStyle = option("--style", "survival");
+const style = requestedStyle === "seer2" ? "seer" : requestedStyle;
 const informationMode = option(
   "--information",
-  style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal",
+  style === "seer" || style === "go" ? "oracle" : "normal",
 );
 const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "60")) || 60));
 const battleStepHz = Math.max(20, Math.min(60, Number(option("--battle-hz", "60")) || 60));
 const reportProgress = process.argv.includes("--progress");
-if (!["survival", "balanced", "highroll", "seer", "seer2", "go"].includes(style)) {
+if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
 if (!["normal", "oracle"].includes(informationMode)) {
@@ -64,7 +65,7 @@ const collectSourceFiles = async (sourcePath) => {
 };
 
 const persistentCacheEnabled = !process.argv.includes("--no-rollout-cache")
-  && (style === "seer2" || style === "go" || process.argv.includes("--rollout-cache"));
+  && (style === "seer" || style === "go" || process.argv.includes("--rollout-cache"));
 let persistentCachePath = "";
 let hydratedCacheEntries = 0;
 if (persistentCacheEnabled) {
@@ -140,6 +141,22 @@ const playRun = (seed) => {
     informationMode,
     rolloutHz,
   );
+  const goPreBattleVerification = new Map();
+  const originalDispatch = bridge.dispatch.bind(bridge);
+  bridge.dispatch = (action) => {
+    if (style === "go" && action.type === "battle") {
+      const rosterByUid = new Map(autopilot.ownedEntries().map((entry) => [entry.unit.uid, entry]));
+      const board = bridge.engine.state.board.map((unit) => (
+        unit ? rosterByUid.get(unit.uid) || null : null
+      ));
+      goPreBattleVerification.set(bridge.engine.state.round, {
+        exactBoardScore: autopilot.rolloutBoardScore(board, true, 60),
+        plannedScore: autopilot.plannedLineupScore,
+        plannedLineupUnits: Array.from(autopilot.plannedLineupUnits.entries()),
+      });
+    }
+    return originalDispatch(action);
+  };
   if (!autopilot.startFromTitle()) throw new Error(`Autopilot could not start seed ${seed}`);
 
   let now = 1000;
@@ -174,11 +191,13 @@ const playRun = (seed) => {
         developmentValue: developmentValue(bridge.engine),
         board: bridge.engine.state.board.flatMap((unit, index) => unit ? [{
           index,
+          uid: unit.uid,
           id: unit.id,
           star: unit.star,
         }] : []),
         bench: bridge.engine.state.bench.flatMap((unit, index) => unit ? [{
           index,
+          uid: unit.uid,
           id: unit.id,
           star: unit.star,
         }] : []),
@@ -192,11 +211,13 @@ const playRun = (seed) => {
           plannedFormation: autopilot.plannedFormation,
           lineageFormation: autopilot.lineageFormation,
           plannedLineupUids: [...autopilot.plannedLineupUids],
+          plannedBoardSlots: Array.from(autopilot.plannedBoardSlots.entries()),
           predictedScore: autopilot.battlePredictionScore,
           interestTiersAtRisk: autopilot.stabilizationInterestTiersAtRisk,
           paidRerolls: autopilot.paidRerolls,
           dryPaidRerolls: autopilot.dryPaidRerolls,
           preparationActions: autopilot.preparationActions,
+          preBattleVerification: goPreBattleVerification.get(round) || null,
         },
         actions: { ...(actionsByRound.get(round) || {}) },
       };
@@ -263,6 +284,7 @@ const playRun = (seed) => {
   if (safety >= 5000) throw new Error(`Autopilot safety limit reached for seed ${seed}`);
   const run = {
     seed,
+    enemySeed: bridge.engine.state.enemySeed,
     battles: rounds.length,
     wins: rounds.filter((round) => round.won).length,
     finalRound: rounds.at(-1)?.round || 0,
@@ -329,6 +351,7 @@ const survivalAt = (round) => ({
 const aggregate = {
   runs,
   baseSeed,
+  enemySeeds: [...new Set(results.map((run) => run.enemySeed))],
   maximumBattles,
   forcedStarter: forcedStarter || null,
   policyPath: policyPath || null,

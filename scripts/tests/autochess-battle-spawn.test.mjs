@@ -1911,6 +1911,87 @@ test("北欧时停覆盖施法距离内最密集人群", () => {
   assert.ok(zone.x < 750, "北欧时停不应跟随右侧孤立远敌");
 });
 
+test("北欧时停冻结位移中的唯一目标时，圈外远程仍会接近且进圈单位仍被冻结", () => {
+  const engine = createEngine(208);
+  engine.state.round = 6;
+  engine.state.playerLevel = 10;
+  engine.state.board.fill(null);
+  ["spark_mage", "clock_gunner", "dawn_duelist"].forEach((id, index) => {
+    engine.state.board[index] = { uid: index + 1, id, star: id === "spark_mage" ? 3 : 1 };
+  });
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const mage = battle?.player.find((fighter) => fighter.unitId === "spark_mage");
+  const remote = battle?.player.find((fighter) => fighter.unitId === "clock_gunner");
+  const entering = battle?.player.find((fighter) => fighter.unitId === "dawn_duelist");
+  const target = battle?.enemy[0];
+  assert.ok(battle && mage && remote && entering && target);
+
+  mage.x = 200;
+  mage.y = 360;
+  mage.cooldown = 99;
+  mage.energy = mage.maxEnergy;
+  remote.x = 200;
+  remote.y = 300;
+  entering.x = 470;
+  entering.y = 360;
+  [remote, entering].forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+    fighter.energy = 0;
+    fighter.hp = fighter.maxHp = 99_999;
+  });
+  target.x = 650;
+  target.y = 360;
+  target.attack = 0;
+  target.cooldown = 99;
+  target.moveSpeed = 0;
+  target.baseMoveSpeed = 0;
+  target.hp = target.maxHp = 99_999;
+  target.abilityMotion = {
+    kind: "dash",
+    abilityId: "grove_mender",
+    sourceFid: target.fid,
+    targetFid: null,
+    fromX: target.x,
+    fromY: target.y,
+    toX: target.x + 100,
+    toY: target.y,
+    time: 0,
+    duration: 1,
+    arcHeight: 0,
+    hitFids: [],
+  };
+  battle.enemy.slice(1).forEach((fighter) => {
+    fighter.alive = false;
+    fighter.hp = 0;
+  });
+
+  engine.castAbility(mage, battle.enemy);
+  engine["updateProjectiles"](battle, 1);
+  const zone = battle.chronospheres[0];
+  assert.ok(zone && zone.radius === 162);
+  const remoteStartX = remote.x;
+  for (let tick = 0; tick < 40; tick += 1) engine.update(0.05);
+
+  assert.equal(target.abilityMotion?.kind, "dash", "时停应冻结目标当前位移");
+  assert.equal(remote.targetFid, target.fid, "圈外远程应锁定唯一存活目标");
+  assert.ok(remote.x > remoteStartX + 20, "圈外远程应继续向目标接近");
+  assert.ok(
+    Math.hypot(target.x - remote.x, target.y - remote.y) > remote.range,
+    "断言时停仍在持续期间且远程尚未到攻击距离",
+  );
+
+  const enteringX = entering.x;
+  assert.ok(
+    Math.hypot(entering.x - zone.x, entering.y - zone.y) <= zone.radius,
+    "后来走进时停领域的单位应进入领域",
+  );
+  for (let tick = 0; tick < 8; tick += 1) engine.update(0.05);
+  assert.ok(Math.abs(entering.x - enteringX) < 0.1, "进入领域后单位仍应被冻结");
+  assert.ok(battle.chronospheres.length > 0, "断言时停仍在持续期间内");
+});
+
 test("饼干岁冲向最虚弱友军，治疗护盾并撞开沿途与落点敌人", () => {
   const engine = createEngine(207);
   engine.state.round = 6;

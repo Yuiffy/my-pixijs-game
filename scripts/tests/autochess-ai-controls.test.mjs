@@ -34,6 +34,57 @@ const hostSource = await readFile("src/components/autoChessGame/PhaserGame.tsx",
 const hudSource = await readFile("src/components/autoChessGame/RiftHud.tsx", "utf8");
 const hudStyles = await readFile("src/components/autoChessGame/RiftHud.css", "utf8");
 
+const makeLateSeerCase = (shop, bench = []) => {
+  const bridge = new EngineBridge(13161, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.round = 20;
+  state.playerLevel = 10;
+  state.upgradeRemaining = 0;
+  state.hp = 20;
+  state.gold = 80;
+  state.board.fill(null);
+  state.bench.fill(null);
+  state.shop = shop;
+  for (let index = 0; index < 10; index += 1) {
+    state.board[index] = { uid: 131610 + index, id: "mossback", star: 1 };
+  }
+  bench.forEach((unit, index) => {
+    state.bench[index] = { uid: 131630 + index, ...unit };
+  });
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "heuristic",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  autopilot.plannedRound = state.round;
+  autopilot.preparationStartGold = state.gold;
+  autopilot.observeStabilizationStrength = () => {};
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.formationAction = () => null;
+  const firstStep = {
+    targetLevel: 10,
+    rerolls: 0,
+    expectedGoldAfterPreparation: 80,
+    purchasesByShop: [[]],
+    salesByShop: [[]],
+  };
+  autopilot.seerPlan = {
+    firstStep,
+    steps: [firstStep],
+    startRound: state.round,
+    projectedRound: state.round + 1,
+    projectedTargetCopies: {},
+    complete: true,
+  };
+  return { bridge, autopilot };
+};
+
 test("稳健采用留出验证晋级阈值并保留其他三种风格的风险差异", () => {
   assert.equal(resolveAutopilotStylePolicy("survival").safeWinRolloutScore, 10050);
   assert.equal(resolveAutopilotStylePolicy("balanced").safeWinRolloutScore, 10010);
@@ -157,8 +208,8 @@ test("看穿在候补席满时分流终局项目并为主项目让出复制位",
   assert.equal(focused.has(targetIds[0]), true);
   assert.equal(focused.has(targetIds[3]), false);
   const secondaryCopies = roster.filter(({ unit }) => unit.id === targetIds[3]);
-  assert.equal(secondaryCopies.filter(({ unit }) => reserves.has(unit.uid)).length, 1);
-  assert.equal(secondaryCopies.filter(({ unit }) => !reserves.has(unit.uid)).length, 1);
+  assert.equal(secondaryCopies.filter(({ unit }) => reserves.has(unit.uid)).length, 0);
+  assert.equal(secondaryCopies.filter(({ unit }) => !reserves.has(unit.uid)).length, 2);
 });
 
 test("训练桥接关闭战斗遥测、视觉特效和操作快照但仍能结算", () => {
@@ -262,7 +313,7 @@ test("看穿2临界血量会用精确战斗复核并切入稳血", () => {
     bridge,
     "evolution",
     {},
-    "seer2",
+    "seer",
     "oracle",
     30,
   );
@@ -1039,6 +1090,49 @@ test("看穿作为第四种托管风格启用未来商店信息并停止无目�
   autopilot.setStrategy("highroll");
   assert.equal(autopilot.strategyInformationMode, "normal");
   assert.equal(autopilot.oracleHasFutureCandidate(autopilot.ownedEntries()), true);
+});
+
+test("看穿终局宏动作完成但目标未三星时仍会买当前目标牌", () => {
+  const { bridge, autopilot } = makeLateSeerCase(
+    ["grove_mender", null, null, null, null],
+  );
+  const action = autopilot.nextPreparationAction();
+  assert.deepEqual(action, { type: "shop", index: 0 });
+  assert.equal(autopilot.seerRouteAbandoned, false);
+});
+
+test("看穿终局买目标牌前会先出售候补中的非目标过渡棋", () => {
+  const { bridge, autopilot } = makeLateSeerCase(
+    ["grove_mender", null, null, null, null],
+    Array.from({ length: 8 }, (_, index) => ({
+      id: index === 0 ? "mossback" : "nori",
+      star: 1,
+    })),
+  );
+  const sale = autopilot.nextPreparationAction();
+  assert.equal(sale?.type, "sell");
+  assert.equal(sale?.location.zone, "bench");
+  bridge.dispatch(sale);
+  const purchase = autopilot.nextPreparationAction();
+  assert.deepEqual(purchase, { type: "shop", index: 0 });
+});
+
+test("看穿终局会刷新到短期已知目标店，但目标全三星后允许直接开战", () => {
+  const future = makeLateSeerCase([null, null, null, null, null]);
+  future.bridge.engine.previewFutureShops = () => [
+    ["grove_mender", null, null, null, null],
+  ];
+  assert.deepEqual(future.autopilot.nextPreparationAction(), { type: "reroll" });
+
+  const complete = makeLateSeerCase([null, null, null, null, null]);
+  AUTOPILOT_TERMINAL_TARGET_IDS.forEach((id, index) => {
+    complete.bridge.engine.state.board[index] = {
+      uid: 131700 + index,
+      id,
+      star: 3,
+    };
+  });
+  assert.deepEqual(complete.autopilot.nextPreparationAction(), { type: "battle" });
 });
 
 test("托管以四战真实前瞻选择协议而不是固定偏好", () => {
@@ -2627,7 +2721,7 @@ test("标题页和局内都公开托管选择，设置面板公开四种风格�
   assert.match(hostSource, /后台继续战斗/);
   assert.match(hostSource, /托管风格/);
   assert.match(hostSource, /看穿/);
-  assert.match(hostSource, /看穿2/);
+  assert.doesNotMatch(hostSource, /看穿2/);
   assert.match(hostSource, /Go级/);
   assert.doesNotMatch(hostSource, /天眼商店/);
   assert.match(hostSource, /role="radiogroup"/);

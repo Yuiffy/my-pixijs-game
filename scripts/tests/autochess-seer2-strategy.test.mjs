@@ -34,19 +34,61 @@ test("看穿2保留原 Go级的 oracle 托管策略", async () => {
   const bridge = new EngineBridge(152001);
   bridge.setConsoleLogging(false);
   const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer2");
-  assert.equal(autopilot.strategyStyle, "seer2");
+  assert.equal(autopilot.strategyStyle, "seer");
   assert.equal(autopilot.strategyInformationMode, "oracle");
-  assert.equal(bridge.autoplayStyle, "seer2");
+  assert.equal(bridge.autoplayStyle, "seer");
   assert.equal(bridge.autoplayInformationMode, "oracle");
 
   const hostSource = await readFile("src/components/autoChessGame/PhaserGame.tsx", "utf8");
-  assert.match(hostSource, /\["seer2", "看穿2"\]/);
+  assert.match(hostSource, /\["seer", "看穿"\]/);
   assert.match(hostSource, /\["go", "Go级"\]/);
-  assert.match(hostSource, /"survival", "balanced", "highroll", "seer", "seer2", "go"/);
+  assert.match(hostSource, /"survival", "balanced", "highroll", "seer"/);
 
   const trainingSource = await readFile("scripts/train-autochess-autopilot.mjs", "utf8");
   assert.match(trainingSource, /ai\/rolloutCacheSchema\.ts/);
   assert.doesNotMatch(trainingSource, /balanceSources[\s\S]*ai\/AutoChessAutopilot\.ts/);
+});
+
+test("看穿2计划完成后仍会清理满候补并购买当前终局目标牌", () => {
+  const bridge = new EngineBridge(152005);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 46;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.gold = 1275;
+  bridge.engine.state.shop = ["cog_scribe", "rutice", "sui_flower", "sui_cat", "sumi"];
+  bridge.engine.state.board = [
+    { uid: 1520050, id: "grove_mender", star: 3 },
+    { uid: 1520051, id: "lian", star: 3 },
+    { uid: 1520052, id: "rei", star: 3 },
+    { uid: 1520053, id: "yua", star: 3 },
+    { uid: 1520054, id: "cinder_ram", star: 3 },
+    { uid: 1520055, id: "spark_mage", star: 2 },
+    { uid: 1520056, id: "sui_flower", star: 2 },
+    { uid: 1520057, id: "xuehui", star: 3 },
+    { uid: 1520058, id: "yukisyo", star: 3 },
+    { uid: 1520059, id: "rutice", star: 3 },
+  ];
+  bridge.engine.state.bench = [
+    { uid: 1520060, id: "cog_scribe", star: 2 },
+    { uid: 1520061, id: "zeyin", star: 1 },
+    { uid: 1520062, id: "zeyin", star: 1 },
+    { uid: 1520063, id: "sui_cat", star: 1 },
+    { uid: 1520064, id: "mitsuri", star: 1 },
+    { uid: 1520065, id: "biscuit_sui", star: 1 },
+    { uid: 1520066, id: "yua", star: 1 },
+    { uid: 1520067, id: "sui_bird", star: 1 },
+  ];
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer2", "oracle", 20);
+  const action = autopilot.seerEndgameInvestmentAction(autopilot.ownedEntries());
+  assert.deepEqual(action, { type: "sell", location: { zone: "bench", index: 5 } });
+
+  bridge.dispatch(action);
+  const purchase = autopilot.seerEndgameInvestmentAction(autopilot.ownedEntries());
+  assert.equal(purchase?.type, "shop");
+  assert.ok(SEER2_TERMINAL_TARGET_IDS.includes(bridge.engine.state.shop[purchase.index]));
 });
 
 test("看穿2终局池由十二张三星目标和四条主变化组成", () => {
@@ -277,6 +319,6 @@ test("看穿2按六进三复筛阵容并独占真人记录站位", () => {
   const seer = new AutoChessAutopilot(bridge, "evolution", {}, "seer", "oracle", 20);
   assert.deepEqual(
     seer.formationProfileIds(),
-    ["human_midline", "center_wedge", "split_flanks"],
+    ["human_recorded", "human_midline", "center_wedge", "split_flanks"],
   );
 });

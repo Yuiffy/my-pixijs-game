@@ -25,16 +25,26 @@ const option = (name, fallback) => {
   return index >= 0 ? process.argv[index + 1] : fallback;
 };
 
-const contexts = Math.max(1, Number(option("--contexts", "64")) || 64);
 const candidatesPerContext = Math.max(
   2,
-  Number(option("--candidates", "12")) || 12,
+  Number(option("--candidates", "24")) || 24,
 );
 const seedBase = Math.max(1, Number(option("--seed", "160000")) || 160000);
+const maximumRound = Math.max(1, Math.min(60, Number(option("--rounds", "60")) || 60));
+const enemySeeds = [...new Set(option("--enemy-seeds", "152100,152102")
+  .split(",")
+  .map((value) => Math.max(1, Math.trunc(Number(value))))
+  .filter(Number.isFinite))];
+if (enemySeeds.length === 0) throw new Error("--enemy-seeds must contain at least one seed");
+const branchesPerCandidate = Math.max(
+  1,
+  Math.min(4, Number(option("--branches", "2")) || 2),
+);
 const combatHz = Math.max(20, Math.min(60, Number(option("--combat-hz", "20")) || 20));
+const campaignLabel = enemySeeds.join("-");
 const outputPath = path.resolve(option(
   "--output",
-  `artifacts/autochess-go-combat-dataset-seed-${seedBase}-c${contexts}-hz${combatHz}.json`,
+  `artifacts/autochess-go-combat-enemy-${campaignLabel}-r${maximumRound}-hz${combatHz}.json`,
 ));
 const progress = process.argv.includes("--progress");
 
@@ -46,12 +56,7 @@ const STARTERS = [
   "dance_start",
   "ranger_start",
 ];
-const FORMATIONS = [
-  "human_recorded",
-  "human_midline",
-  "center_wedge",
-  "split_flanks",
-];
+const FORMATION = "go_canonical";
 const AUGMENT_IDS = AUGMENTS.map(({ id }) => id);
 const ABILITY_TIMINGS = [
   "selfOnHit",
@@ -143,8 +148,10 @@ const lineupKey = (lineup) => lineup
   .sort()
   .join("|");
 
+const lineupSizeForRound = (round) => Math.min(10, 3 + Math.floor((round + 1) / 3));
+
 const randomLineup = (round, rng, uidBase) => shuffled(SHOP_UNIT_IDS, rng)
-  .slice(0, 10)
+  .slice(0, lineupSizeForRound(round))
   .map((id, index) => ({
     unit: { uid: uidBase + index, id, star: starForRound(round, rng) },
     location: { zone: "board", index },
@@ -173,68 +180,79 @@ const mutateLineup = (source, round, rng, uidBase) => {
 };
 
 const startedAt = performance.now();
-for (let context = 0; context < contexts; context += 1) {
-  const seed = seedBase + context;
-  const rng = makeRng(seed * 2654435761);
-  const round = 8 + ((context * 17 + rng.integer(57)) % 57);
-  const starter = STARTERS[context % STARTERS.length];
-  const bridge = new EngineBridge(seed);
-  bridge.setConsoleLogging(false);
-  bridge.engine.state.starterChoices = [starter];
-  bridge.engine.startRun(starter);
-  bridge.engine.state.round = round;
-  bridge.engine.state.playerLevel = 10;
-  bridge.engine.state.phase = "preparation";
-  const augmentCount = Math.min(AUGMENT_IDS.length, Math.max(1, Math.floor(round / 6)));
-  bridge.engine.state.augments = shuffled(AUGMENT_IDS, rng).slice(0, augmentCount);
+let completedContexts = 0;
+const totalContexts = enemySeeds.length * maximumRound;
+for (const [enemyIndex, enemySeed] of enemySeeds.entries()) {
+  for (let round = 1; round <= maximumRound; round += 1) {
+    const seed = seedBase + enemyIndex * 10000 + round;
+    const rng = makeRng((seed * 2654435761) ^ enemySeed ^ (round * 104729));
+    const starter = STARTERS[(round + enemyIndex) % STARTERS.length];
+    const bridge = new EngineBridge(seed);
+    bridge.setConsoleLogging(false);
+    bridge.engine.state.enemySeed = enemySeed;
+    bridge.engine.state.starterChoices = [starter];
+    bridge.engine.startRun(starter);
+    bridge.engine.state.round = round;
+    bridge.engine.state.playerLevel = lineupSizeForRound(round);
+    bridge.engine.state.phase = "preparation";
+    const augmentCount = Math.min(AUGMENT_IDS.length, Math.max(0, Math.floor((round + 1) / 6)));
+    bridge.engine.state.augments = shuffled(AUGMENT_IDS, rng).slice(0, augmentCount);
 
-  const autopilot = new AutoChessAutopilot(
-    bridge,
-    "evolution",
-    {},
-    "go",
-    "oracle",
-    combatHz,
-  );
-  autopilot.rolloutVariantLimit = 2;
-  const lineups = new Map();
-  const base = randomLineup(round, rng, seed * 1000);
-  lineups.set(lineupKey(base), base);
-  let attempts = 0;
-  while (lineups.size < candidatesPerContext && attempts < candidatesPerContext * 20) {
-    attempts += 1;
-    const lineup = attempts % 4 === 0
-      ? randomLineup(round, rng, seed * 1000 + attempts * 20)
-      : mutateLineup(base, round, rng, seed * 1000 + attempts * 20);
-    lineups.set(lineupKey(lineup), lineup);
-  }
-
-  for (const lineup of lineups.values()) {
-    for (const formation of FORMATIONS) {
-      autopilot.rolloutLineupScore(lineup, formation, true, combatHz);
+    const autopilot = new AutoChessAutopilot(
+      bridge,
+      "evolution",
+      {},
+      "go",
+      "oracle",
+      combatHz,
+    );
+    autopilot.rolloutVariantLimit = branchesPerCandidate;
+    const lineups = new Map();
+    const bases = Array.from({ length: Math.min(4, candidatesPerContext) }, (_, index) => (
+      randomLineup(round, rng, seed * 1000 + index * 100)
+    ));
+    bases.forEach((lineup) => lineups.set(lineupKey(lineup), lineup));
+    let attempts = 0;
+    while (lineups.size < candidatesPerContext && attempts < candidatesPerContext * 30) {
+      attempts += 1;
+      const base = bases[attempts % bases.length];
+      const lineup = attempts % 5 === 0
+        ? randomLineup(round, rng, seed * 1000 + attempts * 20)
+        : mutateLineup(base, round, rng, seed * 1000 + attempts * 20);
+      lineups.set(lineupKey(lineup), lineup);
     }
-  }
-  if (progress && ((context + 1) % 4 === 0 || context + 1 === contexts)) {
-    const entries = snapshotAutopilotRolloutCache().length;
-    const elapsedSeconds = (performance.now() - startedAt) / 1000;
-    console.error(JSON.stringify({
-      contexts: context + 1,
-      entries,
-      elapsedSeconds,
-      combatsPerSecond: entries / Math.max(0.001, elapsedSeconds),
-    }));
+
+    for (const lineup of lineups.values()) {
+      autopilot.rolloutLineupScore(lineup, FORMATION, true, combatHz);
+    }
+    completedContexts += 1;
+    if (progress && (completedContexts % 4 === 0 || completedContexts === totalContexts)) {
+      const entries = snapshotAutopilotRolloutCache().length;
+      const elapsedSeconds = (performance.now() - startedAt) / 1000;
+      console.error(JSON.stringify({
+        contexts: completedContexts,
+        totalContexts,
+        enemySeed,
+        round,
+        entries,
+        elapsedSeconds,
+        combatsPerSecond: entries / Math.max(0.001, elapsedSeconds),
+      }));
+    }
   }
 }
 
 const entries = snapshotAutopilotRolloutCache();
 const payload = {
-  schema: "go-combat-dataset-v1",
+  schema: "go-combat-dataset-v2",
   generatedAt: new Date().toISOString(),
   seedBase,
-  contexts,
+  enemySeeds,
+  maximumRound,
+  contexts: totalContexts,
   candidatesPerContext,
-  formations: FORMATIONS,
-  branchesPerCandidate: 2,
+  formation: FORMATION,
+  branchesPerCandidate,
   combatHz,
   elapsedSeconds: (performance.now() - startedAt) / 1000,
   unitFeatureNames: UNIT_FEATURE_NAMES,

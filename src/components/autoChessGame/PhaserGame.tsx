@@ -56,13 +56,21 @@ declare global {
     advanceTime?: (milliseconds: number) => void;
     autoChessAI?: AutoChessAIController;
     autoChessLastRun?: AutoChessLastRun;
+    exportAutoChessLastRun?: () => Promise<{
+      filename: string;
+      bytes: number;
+      round: number | null;
+      actions: number;
+      battles: number;
+      battleEvents: number;
+    } | null>;
   }
 }
 
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
 const AUTOPILOT_STRATEGY_KEY = "rift-line-autopilot-strategy";
-const AUTOPILOT_STRATEGY_VERSION = 2;
+const AUTOPILOT_STRATEGY_VERSION = 3;
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
@@ -132,13 +140,13 @@ const loadBackgroundBattlePreference = () => {
 const loadAutopilotStrategy = (): AutopilotStyle => {
   try {
     const stored = JSON.parse(window.localStorage.getItem(AUTOPILOT_STRATEGY_KEY) || "null");
-    if (stored?.informationMode === "oracle") return "seer";
+    if (stored?.style === "seer2") return "seer";
     if (stored?.style === "go" && stored?.version !== AUTOPILOT_STRATEGY_VERSION) {
-      return "seer2";
+      return "seer";
     }
-    return ["survival", "balanced", "highroll", "seer", "seer2", "go"].includes(stored?.style)
+    return ["survival", "balanced", "highroll", "seer", "go"].includes(stored?.style)
       ? stored.style as AutopilotStyle
-      : "survival";
+      : stored?.informationMode === "oracle" ? "seer" : "survival";
   } catch {
     return "survival";
   }
@@ -218,9 +226,7 @@ export default function AutoChessGame() {
     }
     setMessage(style === "go"
       ? "Go级托管策略已更新。"
-      : style === "seer2"
-        ? "看穿2托管策略已更新。"
-        : style === "seer" ? "看穿托管策略已更新。" : "托管策略已更新。");
+      : style === "seer" ? "看穿托管策略已更新。" : "托管策略已更新。");
     setRevision((value) => value + 1);
   }, []);
 
@@ -328,6 +334,49 @@ export default function AutoChessGame() {
       }
       persistLastRun(trace).catch(() => {});
       archiveCompletedRunInDevelopment(trace).catch(() => {});
+    };
+
+    window.exportAutoChessLastRun = async () => {
+      if (bridge.engine.state.phase !== "title") publishRunTrace();
+      let trace: AutoChessLastRun | null | undefined = window.autoChessLastRun;
+      if (!trace) trace = await loadLastRunFromDatabase();
+      if (!trace) {
+        console.warn("[RiftLine][trace] 没有找到可导出的本局记录");
+        return null;
+      }
+
+      const state = trace.state as {
+        round?: unknown;
+        player?: { score?: unknown };
+      };
+      const round = Number.isFinite(Number(state.round)) ? Number(state.round) : null;
+      const score = Number.isFinite(Number(state.player?.score))
+        ? Number(state.player?.score)
+        : null;
+      const suffix = [
+        round === null ? "unknown" : `round-${round}`,
+        score === null ? null : `score-${score}`,
+      ].filter(Boolean).join("-");
+      const filename = `autochess-run-${suffix}.json`;
+      const serialized = JSON.stringify(trace, null, 2);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([serialized], { type: "application/json" }));
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(link.href), 1_000);
+
+      const summary = {
+        filename,
+        bytes: serialized.length,
+        round,
+        actions: trace.actions.length,
+        battles: trace.battles.length,
+        battleEvents: trace.trace.battleEvents,
+      };
+      console.info("[RiftLine][trace] 已导出本局记录", summary);
+      return summary;
     };
 
     const onBridgeEvent = (event: BridgeEvent) => {
@@ -476,6 +525,7 @@ export default function AutoChessGame() {
       delete window.render_game_to_text;
       delete window.advanceTime;
       delete window.autoChessAI;
+      delete window.exportAutoChessLastRun;
     };
   }, []);
 
@@ -677,7 +727,6 @@ export default function AutoChessGame() {
                     ["balanced", "均衡"],
                     ["highroll", "搏上限"],
                     ["seer", "看穿"],
-                    ["seer2", "看穿2"],
                     ["go", "Go级"],
                   ] as const).map(([style, label]) => (
                     <button

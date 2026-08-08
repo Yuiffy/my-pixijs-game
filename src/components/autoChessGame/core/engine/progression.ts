@@ -78,7 +78,7 @@ public get financeIncomeBonus() {
   }
 
 public get currentWave() {
-    return waveForRound(this.state.round, this.state.seed);
+    return waveForRound(this.state.round, this.state.enemySeed);
   }
 
 public get potentialBounty() {

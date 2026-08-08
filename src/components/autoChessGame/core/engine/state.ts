@@ -26,6 +26,7 @@ export const createInitialState = (
 ): GameState => ({
   phase: "title",
   seed,
+  enemySeed: seed,
   visualTime: 0,
   round: 1,
   maxRounds: CAMPAIGN_ROUNDS,

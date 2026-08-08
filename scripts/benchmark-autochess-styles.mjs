@@ -7,10 +7,11 @@ const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] : fallback;
 };
-const ALL_STYLES = ["survival", "balanced", "highroll", "seer", "seer2", "go"];
+const ALL_STYLES = ["survival", "balanced", "highroll", "seer", "go"];
 const requestedStyles = option("--styles", "")
   .split(",")
   .map((style) => style.trim())
+  .map((style) => style === "seer2" ? "seer" : style)
   .filter(Boolean);
 const STYLES = requestedStyles.length > 0 ? [...new Set(requestedStyles)] : ALL_STYLES;
 if (STYLES.some((style) => !ALL_STYLES.includes(style))) {
@@ -174,7 +175,7 @@ try {
       battleStepHz,
       rolloutHz,
       style,
-      informationMode: style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal",
+      informationMode: style === "seer" || style === "go" ? "oracle" : "normal",
     }),
   )));
 } finally {

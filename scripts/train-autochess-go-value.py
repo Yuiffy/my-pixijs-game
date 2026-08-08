@@ -26,7 +26,7 @@ from torch import Tensor, nn
 import torch.nn.functional as F
 
 
-MODEL_SCHEMA = "go-combat-ranker-v1"
+MODEL_SCHEMA = "go-combat-ranker-v2"
 UNKNOWN_TOKEN = "<unk>"
 
 
@@ -35,6 +35,8 @@ class CombatExample:
     cache_key: str
     source: str
     context_key: str
+    enemy_seed: int
+    round: int
     starter: str
     augments: tuple[str, ...]
     wave_tag: str
@@ -54,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--holdout-regex",
-        default=r"seed-152100(?:-|\.)",
+        default=r"enemy-152102(?:-|\.)",
         help="Regex matched against cache paths reserved as the external holdout.",
     )
     parser.add_argument(
@@ -114,16 +116,55 @@ def parse_units(raw: str, positioned: bool) -> tuple[tuple[str, int, int], ...]:
 
 def parse_entry(cache_key: str, score: float, source: str) -> CombatExample | None:
     parts = cache_key.split("/")
-    if len(parts) != 9 or not parts[1].startswith("hz:"):
+    if len(parts) < 9 or not parts[1].startswith("hz:"):
         return None
-    schema, hz, starter, augments, wave_tag, modifier, enemies, players, branch = parts
-    if schema != "combat-v1" or not math.isfinite(float(score)):
+    schema = parts[0]
+    if schema == "combat-v1" and len(parts) == 9:
+        _, hz, starter, augments, wave_tag, modifier, enemies, players, branch = parts
+        enemy_seed = 0
+        round_number = 0
+        context_parts = (schema, hz, starter, augments, wave_tag, modifier, enemies, branch)
+    elif schema == "combat-go-v2" and len(parts) == 11:
+        (
+            _,
+            hz,
+            enemy_token,
+            round_token,
+            starter,
+            augments,
+            wave_tag,
+            modifier,
+            enemies,
+            players,
+            branch,
+        ) = parts
+        if not enemy_token.startswith("enemy:") or not round_token.startswith("round:"):
+            return None
+        enemy_seed = int(enemy_token.removeprefix("enemy:"))
+        round_number = int(round_token.removeprefix("round:"))
+        context_parts = (
+            schema,
+            hz,
+            enemy_token,
+            round_token,
+            starter,
+            augments,
+            wave_tag,
+            modifier,
+            enemies,
+            branch,
+        )
+    else:
         return None
-    context_key = "/".join((schema, hz, starter, augments, wave_tag, modifier, enemies, branch))
+    if not math.isfinite(float(score)):
+        return None
+    context_key = "/".join(context_parts)
     return CombatExample(
         cache_key=cache_key,
         source=source,
         context_key=context_key,
+        enemy_seed=enemy_seed,
+        round=round_number,
         starter=starter or UNKNOWN_TOKEN,
         augments=tuple(filter(None, augments.split(","))),
         wave_tag=wave_tag or UNKNOWN_TOKEN,

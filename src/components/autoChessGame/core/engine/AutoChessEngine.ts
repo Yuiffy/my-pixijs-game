@@ -442,6 +442,10 @@ export class AutoChessEngine {
     );
   }
 
+  private isFrozenByChronosphere(fighter: Fighter, battle: BattleState) {
+    return this.isInsideChronosphere(fighter, battle) && fighter.abilityMotion?.kind !== "pull";
+  }
+
   private mumuRescuePriority(target: Fighter, battle: BattleState) {
     if (!target.alive || target.abilityMotion?.kind === "pull") return 0;
     if (this.isInsideChronosphere(target, battle)) return 4;
@@ -530,12 +534,14 @@ export class AutoChessEngine {
     if (!starter || !this.state.starterChoices.includes(starterId)) return;
 
     const seed = this.state.seed;
+    const enemySeed = this.state.enemySeed;
     const best = this.state.bestScore;
     this.rng = createSeededRandom(seed);
     this.shopRng = createSeededRandom(seed);
     this.resetShopSequences();
     this.uid = 1;
     this.state = createInitialState(seed, best);
+    this.state.enemySeed = enemySeed;
     this.state.phase = "preparation";
     this.state.starter = starterId;
     this.state.starterHistory.push({ id: starterId });
@@ -2044,8 +2050,11 @@ export class AutoChessEngine {
   }
 
   private resolveCombatTarget(source: Fighter, targets: Fighter[], dt: number) {
+    const battle = this.state.battle;
     const isAvailable = (target: Fighter) => (
-      target.alive && !target.abilityMotion && !target.jumpPending && target.jumpTime <= 0
+      target.alive &&
+      (Boolean(battle && this.isFrozenByChronosphere(target, battle)) ||
+        (!target.abilityMotion && !target.jumpPending && target.jumpTime <= 0))
     );
     const tauntTarget = source.tauntTime > 0
       ? targets.find((target) => target.fid === source.tauntedByFid && isAvailable(target)) || null
@@ -2612,10 +2621,17 @@ export class AutoChessEngine {
   }
 
   private nearestTarget(source: Fighter, targets: Fighter[]) {
+    const battle = this.state.battle;
     let best: Fighter | null = null;
     let bestDistance = Number.POSITIVE_INFINITY;
     for (const target of targets) {
-      if (target.abilityMotion || target.jumpPending || target.jumpTime > 0) continue;
+      const frozenInChronosphere = Boolean(
+        battle && this.isFrozenByChronosphere(target, battle),
+      );
+      if (
+        !frozenInChronosphere &&
+        (target.abilityMotion || target.jumpPending || target.jumpTime > 0)
+      ) continue;
       if (!best) {
         best = target;
         bestDistance = Math.hypot(target.x - source.x, target.y - source.y);

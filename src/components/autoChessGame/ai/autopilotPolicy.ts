@@ -43,8 +43,14 @@ export interface AutopilotPolicy {
   skipMaxStarDuplicatePurchases: number;
 }
 
-export type AutopilotStyle = "survival" | "balanced" | "highroll" | "seer" | "seer2" | "go";
+export type CanonicalAutopilotStyle = "survival" | "balanced" | "highroll" | "seer" | "go";
+/** `seer2` is accepted only to migrate old settings and benchmark commands. */
+export type AutopilotStyle = CanonicalAutopilotStyle | "seer2";
 export type AutopilotInformationMode = "normal" | "oracle";
+
+export const canonicalAutopilotStyle = (
+  style: AutopilotStyle,
+): CanonicalAutopilotStyle => style === "seer2" ? "seer" : style;
 
 export const informationModeForAutopilotStyle = (
   style: AutopilotStyle,
@@ -97,7 +103,7 @@ export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
   skipMaxStarDuplicatePurchases: 1,
 };
 
-export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotPolicy>> = {
+export const AUTOPILOT_STYLE_POLICIES: Record<CanonicalAutopilotStyle, Partial<AutopilotPolicy>> = {
   survival: {
     safeWinRolloutScore: 10050,
     lateGamePurchaseStartRound: 12,
@@ -154,13 +160,6 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     terminalCompletionMinimumProjects: 2,
     terminalCompletionActivationGold: 108,
     terminalCompletionReserveGold: 32,
-    minimumWinningLineupMaxPrunes: 0,
-    benchPressureEmptySlots: 2,
-  },
-  seer2: {
-    safeWinRolloutScore: 10050,
-    lateGamePurchaseStartRound: 12,
-    lateGamePurchaseStartLevel: 7,
     minimumWinningLineupMaxPrunes: 0,
     benchPressureEmptySlots: 2,
   },
@@ -275,6 +274,6 @@ export const resolveAutopilotStylePolicy = (
   style: AutopilotStyle,
   overrides: Partial<AutopilotPolicy> = {},
 ) => resolveAutopilotPolicy({
-  ...AUTOPILOT_STYLE_POLICIES[style],
+  ...AUTOPILOT_STYLE_POLICIES[canonicalAutopilotStyle(style)],
   ...overrides,
 });
