@@ -219,8 +219,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
         stats: { damageMultiplier: 3.6, stunDuration: 1.3 },
       },
     ],
-    portrait: "/images/livers/michiya.webp",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/rift-stalker-head.png",
+    portraitFocus: "center",
+    portraitStyle: "round",
     shop: true,
   }),
   cog_scribe: unit({
@@ -326,8 +327,9 @@ export const UNIT_DEFS: Record<UnitId, UnitDefinition> = {
     moveSpeed: 58,
     abilityName: "辣福",
     abilityDescription: "被动：自身灼烧时普攻附带灼烧。主动：打翻火锅，灼烧自己与周围小范围敌人。",
-    portrait: "/images/livers/kloa.jpg",
-    portraitFocus: "top",
+    portrait: "/images/autochess/portraits/rift-brawler-head.png",
+    portraitFocus: "center",
+    portraitStyle: "round",
     shop: true,
   }),
   // 3 费：以脆弱身板换取大范围持续硬控。

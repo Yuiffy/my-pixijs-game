@@ -371,7 +371,8 @@ const aggregate = {
   finalRoundDistribution: summarizeDistribution(results.map((run) => run.finalRound)),
   winDistribution: summarizeDistribution(results.map((run) => run.wins)),
   netWorthDistribution: summarizeDistribution(results.map((run) => run.finalNetWorth)),
-  survivalByRound: Object.fromEntries([12, 16, 20, 24, 28, 32]
+  survivalByRound: Object.fromEntries([12, 16, 20, 24, 28, 32, 40, 50, 60, 70]
+    .filter((round) => round <= maximumBattles)
     .map((round) => [round, survivalAt(round)])),
   averageFinalRound: results.reduce((sum, run) => sum + run.finalRound, 0) / runs,
   averageWins: results.reduce((sum, run) => sum + run.wins, 0) / runs,

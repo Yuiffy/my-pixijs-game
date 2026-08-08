@@ -114,6 +114,41 @@ test("Go级用神经模型扩展候选并只真实复核 Top-K", () => {
   assert.equal(modelCalls.every(({ formation }) => formation === "go_canonical"), true);
 });
 
+test("Go级真实复核候选按棋种与星级去重", () => {
+  const bridge = new EngineBridge(162114);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 3;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  ["spark_mage", "cog_scribe", "yua"].forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1621140 + index, id, star: 2 };
+  });
+  bridge.engine.state.bench[0] = { uid: 1621150, id: "spark_mage", star: 2 };
+  bridge.engine.state.bench[1] = { uid: 1621151, id: "cog_scribe", star: 2 };
+  bridge.engine.state.bench[2] = { uid: 1621152, id: "rei", star: 3 };
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  const exploratoryKeys = [];
+  autopilot.goModelScore = (lineup) => lineup.reduce(
+    (score, { unit }) => score + unit.uid % 17,
+    0,
+  );
+  autopilot.rolloutLineupScore = (lineup, _formation, stableOnly = false) => {
+    if (!stableOnly) {
+      exploratoryKeys.push(lineup
+        .map(({ unit }) => `${unit.id}:${unit.star}`)
+        .sort()
+        .join("|"));
+    }
+    return 10000 + lineup.reduce((score, { unit }) => score + unit.uid % 13, 0);
+  };
+
+  autopilot.rolloutTargetLineup(autopilot.ownedEntries());
+  assert.ok(exploratoryKeys.length > 1);
+  assert.equal(new Set(exploratoryKeys).size, exploratoryKeys.length);
+});
+
 test("Go级规范站位不依赖 UID、购买顺序或当前棋盘顺序", () => {
   const bridge = new EngineBridge(162003);
   bridge.setConsoleLogging(false);
@@ -392,6 +427,38 @@ test("Go级开战棋盘必须逐格等于冠军评估时的规范站位", () => 
   assert.equal(actualPlacements, evaluatedPlacements);
 });
 
+test("Go级预览阵容不会把临时UID槽位泄漏到正式计划", () => {
+  const bridge = new EngineBridge(162116);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  const roster = autopilot.ownedEntries();
+  const plannedUid = roster[0].unit.uid;
+  autopilot.plannedLineupKey = "formal-plan";
+  autopilot.plannedLineupUids = [plannedUid];
+  autopilot.plannedLineupUnits = new Map([[
+    plannedUid,
+    { id: roster[0].unit.id, star: roster[0].unit.star },
+  ]]);
+  autopilot.plannedLineupScore = 10100;
+  autopilot.plannedBoardSlots = new Map([[plannedUid, 11]]);
+  autopilot.rescueLineupLocked = true;
+  autopilot.rolloutTargetLineup = () => {
+    autopilot.plannedLineupUids = [999999];
+    autopilot.plannedBoardSlots = new Map([[999999, 23]]);
+    autopilot.rescueLineupLocked = false;
+    autopilot.plannedLineupScore = -500;
+    return roster;
+  };
+
+  autopilot.previewRosterRollout(roster);
+  assert.deepEqual(autopilot.plannedLineupUids, [plannedUid]);
+  assert.deepEqual(Array.from(autopilot.plannedBoardSlots.entries()), [[plannedUid, 11]]);
+  assert.equal(autopilot.rescueLineupLocked, true);
+  assert.equal(autopilot.plannedLineupScore, 10100);
+});
+
 test("Go级救援只锁定通过60Hz公共分支复核的候选", () => {
   const bridge = new EngineBridge(162112);
   bridge.setConsoleLogging(false);
@@ -421,4 +488,50 @@ test("Go级救援只锁定通过60Hz公共分支复核的候选", () => {
   assert.equal(autopilot.plannedLineupUids.includes(reserveUid), true);
   assert.equal(autopilot.plannedLineupScore, 10120);
   assert.equal(calls.some(({ stableOnly, combatHz }) => stableOnly && combatHz === 60), true);
+});
+
+test("Go级低血量预测败局会提前用60Hz复核直接单换", () => {
+  const bridge = new EngineBridge(162115);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 30;
+  bridge.engine.state.hp = 7;
+  bridge.engine.state.playerLevel = 3;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  ["spark_mage", "cog_scribe", "yua"].forEach((id, index) => {
+    bridge.engine.state.board[[10, 16, 9][index]] = {
+      uid: 1621150 + index,
+      id,
+      star: 2,
+    };
+  });
+  const reserveIds = ["sui_flower", "cinder_ram", "sumi", "kioi", "nightin"];
+  reserveIds.forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1621160 + index, id, star: 2 };
+  });
+  const winningUid = 1621160;
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  const current = autopilot.ownedEntries().filter(({ location }) => location.zone === "board");
+  const exactCalls = [];
+  autopilot.rolloutTargetLineup = () => current;
+  autopilot.rolloutConfidence = () => Number.NEGATIVE_INFINITY;
+  autopilot.lineupHeuristicScore = (lineup) => (
+    lineup.some(({ unit }) => unit.uid === winningUid) ? 100000 : 1000
+  );
+  autopilot.rolloutLineupScore = (lineup, _formation, stableOnly = false, combatHz = 20) => {
+    const includesWinner = lineup.some(({ unit }) => unit.uid === winningUid);
+    if (stableOnly && combatHz === 60) {
+      exactCalls.push(includesWinner);
+      return includesWinner ? 10120 : -500;
+    }
+    if (includesWinner) return -1000;
+    if (lineup.every(({ location }) => location.zone === "board")) return -600;
+    return 10400;
+  };
+
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), true);
+  assert.equal(autopilot.plannedLineupUids.includes(winningUid), true);
+  assert.equal(exactCalls.includes(true), true);
 });

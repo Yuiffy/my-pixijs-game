@@ -369,6 +369,26 @@ test("首批统一棋子形象使用 512px 透明全身精灵", async () => {
   }));
 });
 
+test("大头风格专属头像使用 512px 方形圆裁素材", async () => {
+  const expected = {
+    rift_stalker: "/images/autochess/portraits/rift-stalker-head.png",
+    rift_brawler: "/images/autochess/portraits/rift-brawler-head.png",
+  };
+  await Promise.all(Object.entries(expected).map(async ([id, portraitPath]) => {
+    const unit = data.UNIT_DEFS[id];
+    assert.equal(unit.portrait, portraitPath);
+    assert.equal(unit.portraitStyle, "round");
+    assert.equal(unit.portraitFocus, "center");
+    const assetPath = path.resolve("public", portraitPath.slice(1));
+    await access(assetPath);
+    const portrait = inspectPng(await readFile(assetPath));
+    assert.deepEqual(
+      { width: portrait.width, height: portrait.height },
+      { width: 512, height: 512 },
+    );
+  }));
+});
+
 test("非岁己角色收敛为低费代表，岁己保留多种形态", () => {
   const retained = [
     "sun_guard", "ember_blade", "gale_archer", "rift_stalker", "cog_scribe", "mossback",

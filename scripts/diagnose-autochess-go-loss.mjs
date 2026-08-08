@@ -30,6 +30,7 @@ const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "20"))
 const modelLimit = Math.max(1, Number(option("--model-limit", "512")) || 512);
 const heuristicLimit = Math.max(1, Number(option("--heuristic-limit", "128")) || 128);
 const exactLimit = Math.max(1, Number(option("--exact-limit", "32")) || 32);
+const replaySafetyLimit = Math.max(100, Number(option("--replay-safety", "10000")) || 10000);
 const requestedModelPath = option("--model", "");
 const modelPath = requestedModelPath ? path.resolve(requestedModelPath) : null;
 const forcedLineupKeys = optionValues("--force-lineup").map((value) => (
@@ -70,6 +71,7 @@ const autopilot = new AutoChessAutopilot(
 );
 
 let captured = null;
+const replayTrace = [];
 const originalDispatch = bridge.dispatch.bind(bridge);
 bridge.dispatch = (action) => {
   if (
@@ -94,15 +96,37 @@ bridge.dispatch = (action) => {
 if (!autopilot.startFromTitle()) throw new Error(`Could not start Go run for seed ${seed}`);
 let now = 1000;
 let safety = 0;
-while (!captured && safety < 10000 && bridge.engine.state.phase !== "gameover") {
+while (!captured && safety < replaySafetyLimit && bridge.engine.state.phase !== "gameover") {
   safety += 1;
   now += 1000;
   if (bridge.engine.state.phase === "battle") bridge.skipBattle();
-  else autopilot.tick(now);
+  else {
+    const action = autopilot.tick(now);
+    replayTrace.push({
+      safety,
+      round: bridge.engine.state.round,
+      phase: bridge.engine.state.phase,
+      action: action?.type || null,
+      gold: bridge.engine.state.gold,
+      hp: bridge.engine.state.hp,
+      boardCount: bridge.engine.boardCount,
+      benchCount: bridge.engine.state.bench.filter(Boolean).length,
+      selected: bridge.engine.state.selected,
+      toast: bridge.engine.state.toast?.text || null,
+      preparationActions: autopilot.preparationActions,
+      finalizingEconomy: autopilot.finalizingEconomy,
+      rescueLineupLocked: autopilot.rescueLineupLocked,
+      rescueSearchCompleted: autopilot.rescueSearchCompleted,
+      plannedLineupUids: [...autopilot.plannedLineupUids],
+      plannedBoardSlots: Array.from(autopilot.plannedBoardSlots.entries()),
+    });
+    if (replayTrace.length > 40) replayTrace.shift();
+  }
 }
 if (!captured) {
   throw new Error(
-    `Could not reach round ${targetRound}; phase=${bridge.engine.state.phase} round=${bridge.engine.state.round}`,
+    `Could not reach round ${targetRound}; phase=${bridge.engine.state.phase} `
+      + `round=${bridge.engine.state.round} trace=${JSON.stringify(replayTrace)}`,
   );
 }
 

@@ -21,7 +21,7 @@ if (STYLES.some((style) => !ALL_STYLES.includes(style))) {
 }
 const runs = Math.max(1, Math.min(32, Number(option("--runs", "8")) || 8));
 const baseSeed = Math.max(1, Number(option("--seed", "122000")) || 122000);
-const battles = Math.max(4, Math.min(64, Number(option("--battles", "60")) || 60));
+const battles = Math.max(4, Math.min(70, Number(option("--battles", "60")) || 60));
 const planningMode = option("--planning", "fast");
 const rolloutHz = Math.max(
   20,
@@ -131,6 +131,9 @@ const distribution = (values) => {
   };
 };
 
+const survivalCheckpoints = [12, 16, 20, 24, 28, 32, 40, 50, 60, 70]
+  .filter((round) => round <= battles);
+
 const summarize = (styleRuns) => ({
   finalRound: distribution(styleRuns.map((run) => run.finalRound)),
   wins: distribution(styleRuns.map((run) => run.wins)),
@@ -160,6 +163,16 @@ const summarize = (styleRuns) => ({
     counts[run.starter] = (counts[run.starter] || 0) + 1;
     return counts;
   }, {}),
+  survivalByRound: Object.fromEntries(survivalCheckpoints.map((round) => [round, {
+    reachedRate: styleRuns.filter((run) => run.finalRound >= round).length
+      / Math.max(1, styleRuns.length),
+    survivedRate: styleRuns.filter((run) => run.rounds.some((entry) => (
+      entry.round === round && entry.hp > 0
+    ))).length / Math.max(1, styleRuns.length),
+    winRate: styleRuns.filter((run) => run.rounds.some((entry) => (
+      entry.round === round && entry.won
+    ))).length / Math.max(1, styleRuns.length),
+  }])),
 });
 
 const pool = new WorkerPool(workerCount);

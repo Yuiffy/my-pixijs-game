@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { type CSSProperties, useMemo, useState } from "react";
+import styles from "./Codex.module.css";
 import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
   ABILITY_CAST_TIMING_LABELS,
@@ -22,7 +23,7 @@ import {
   tierOddsForLevel,
 } from "./core/gameData";
 
-type Tab = "units" | "traits" | "talents" | "runTalents" | "odds" | "rules";
+type Tab = "overview" | "units" | "traits" | "talents" | "runTalents" | "odds" | "rules";
 type TraitFamilyFilter = "all" | "阵营" | "职业" | "关系";
 
 interface CodexProps {
@@ -33,6 +34,7 @@ interface CodexProps {
 }
 
 const tabNames: Record<Tab, string> = {
+  overview: "概览",
   units: "棋子",
   traits: "羁绊",
   talents: "开局 / 天赋",
@@ -40,6 +42,40 @@ const tabNames: Record<Tab, string> = {
   odds: "商店概率",
   rules: "玩法说明",
 };
+
+const COST_TIERS = [1, 2, 3, 4, 5] as const;
+
+const tierColors: Record<(typeof COST_TIERS)[number], string> = {
+  1: "#a9bbc8",
+  2: "#68d391",
+  3: "#63b3ed",
+  4: "#b794f4",
+  5: "#f6c85f",
+};
+
+interface UnitPortraitProps {
+  id: UnitId;
+  className?: string;
+}
+
+function UnitPortrait({ id, className }: UnitPortraitProps) {
+  const definition = UNIT_DEFS[id];
+  if (!definition.portrait) return <span className={className} aria-hidden="true" />;
+  return (
+    <Image
+      src={definition.portrait}
+      alt={definition.name}
+      width={160}
+      height={120}
+      className={className}
+      style={{
+        objectFit: definition.portraitStyle === "sprite" ? "contain" : "cover",
+        objectPosition: definition.portraitFocus === "top" ? "center 16%" : "center",
+        imageRendering: definition.portraitStyle === "sprite" ? "pixelated" : "auto",
+      }}
+    />
+  );
+}
 
 const cellStyle = {
   padding: "8px 6px",
@@ -58,9 +94,18 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
       .sort((left, right) => UNIT_DEFS[left].cost - UNIT_DEFS[right].cost),
     [tier],
   );
+  const unitsByTier = useMemo(() => COST_TIERS.map((cost) => ({
+    cost,
+    units: SHOP_UNITS.filter((id) => UNIT_DEFS[id].tier === cost),
+  })), []);
   if (!open) return null;
 
   const unit = UNIT_DEFS[selectedUnit];
+  const showUnitDetails = (id: UnitId) => {
+    setSelectedUnit(id);
+    setTier("all");
+    setTab("units");
+  };
   return (
     <div
       role="dialog"
@@ -128,6 +173,40 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
         </button>
       </header>
       <main style={{ flex: 1, overflow: "auto", padding: 18 }}>
+        {tab === "overview" && (
+          <section className={styles.overview} aria-label="棋子费用概览">
+            {unitsByTier.map(({ cost, units: tierUnits }) => (
+              <div
+                key={cost}
+                className={styles.tierRow}
+                style={{ "--tier-color": tierColors[cost] } as CSSProperties}
+              >
+                <div className={styles.tierLabel}>
+                  <strong>{cost}</strong>
+                  <span>费</span>
+                  <small>{tierUnits.length} 名</small>
+                </div>
+                <div className={styles.tierUnits}>
+                  {tierUnits.map((id) => {
+                    const definition = UNIT_DEFS[id];
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className={styles.overviewUnit}
+                        onClick={() => showUnitDetails(id)}
+                        aria-label={`查看${definition.name}详情`}
+                      >
+                        <UnitPortrait id={id} className={styles.overviewPortrait} />
+                        <span>{definition.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
         {tab === "units" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 18 }}>
             <section>
@@ -150,7 +229,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                   </button>
                 ))}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(135px, 1fr))", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 8 }}>
                 {units.map((id) => {
                   const definition = UNIT_DEFS[id];
                   return (
@@ -158,9 +237,10 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                       key={id}
                       type="button"
                       onClick={() => setSelectedUnit(id)}
+                      className={styles.unitListButton}
                       style={{
-                        minHeight: 72,
-                        padding: 9,
+                        minHeight: 76,
+                        padding: 8,
                         textAlign: "left",
                         border: `1px solid ${selectedUnit === id ? definition.accent : "#294658"}`,
                         borderRadius: 10,
@@ -169,9 +249,12 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                         cursor: "pointer",
                       }}
                     >
-                      <strong style={{ color: definition.accent }}>{definition.name}</strong>
-                      <div style={{ marginTop: 5, fontSize: 11, color: "#7f9aae" }}>
-                        {definition.tier} 费 · {definition.traits.map((traitId) => TRAITS[traitId].name).join(" / ")}
+                      <UnitPortrait id={id} className={styles.unitListPortrait} />
+                      <div className={styles.unitListCopy}>
+                        <strong style={{ color: definition.accent }}>{definition.name}</strong>
+                        <div style={{ marginTop: 5, fontSize: 11, color: "#7f9aae" }}>
+                          {definition.tier} 费 · {definition.traits.map((traitId) => TRAITS[traitId].name).join(" / ")}
+                        </div>
                       </div>
                     </button>
                   );
