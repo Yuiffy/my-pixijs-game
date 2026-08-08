@@ -72,6 +72,16 @@ test('incremental refresh revisits settling and recent incomplete streams only',
   }), true);
 });
 
+test('incremental bootstrap scans every valid date folder without existing streams', () => {
+  const bootstrapState = {
+    mode: 'incremental', refreshStart: null, latestSyncedTime: null,
+  };
+
+  assert.equal(shouldScanDateFolder('2026_08_07', bootstrapState), true);
+  assert.equal(shouldScanDateFolder('2024_01_01', bootstrapState), true);
+  assert.equal(shouldScanDateFolder('bak', bootstrapState), false);
+});
+
 test('refresh merge fills late artifacts and replaces stale adjacent-day images', () => {
   const existing = {
     id: TARGET_ID,

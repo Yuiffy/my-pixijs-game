@@ -120,6 +120,42 @@ test("Go级满候补席会释放低进度旧项目并买入新机会项目", () 
   assert.deepEqual(autopilot.pendingPurchaseAction(), { type: "shop", index: 0 });
 });
 
+test("Go级在核心阵容成熟前不拆阵追全棋池机会", () => {
+  const bridge = new EngineBridge(162118);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 20;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  [
+    "grove_mender",
+    "lian",
+    "rei",
+    "yua",
+    "cinder_ram",
+    "spark_mage",
+    "sui_flower",
+    "xuehui",
+    "sui_bird",
+    "yukisyo",
+  ].forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1621210 + index, id, star: 1 };
+  });
+  bridge.engine.state.shop = Array(5).fill("zeyin");
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  const roster = autopilot.ownedEntries();
+  assert.equal(autopilot.goOpportunityWindowOpen(roster), false);
+  const targets = autopilot.seer2PlanningTargets(roster, [Array(5).fill("zeyin")]);
+  assert.equal(targets.some(({ id }) => id === "zeyin"), false);
+
+  bridge.engine.state.board.slice(0, 6).forEach((unit) => {
+    unit.star = 2;
+  });
+  assert.equal(autopilot.goOpportunityWindowOpen(autopilot.ownedEntries()), true);
+});
+
 test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
   assert.equal(GO_COMBAT_MODEL_SCHEMA, "go-combat-ranker-v2");
   assert.equal(GO_COMBAT_MODEL_VERIFICATION.length, 5);

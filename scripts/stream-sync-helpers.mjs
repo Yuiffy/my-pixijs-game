@@ -97,6 +97,8 @@ export function shouldScanDateFolder(folderName, { mode, refreshStart, latestSyn
   const match = /^(\d{4})_(\d{2})_(\d{2})$/.exec(folderName);
   if (!match) return false;
 
+  if (!refreshStart && !latestSyncedTime) return true;
+
   const folderStart = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
   const folderEnd = new Date(folderStart.getTime() + 24 * 60 * 60 * 1000);
   if (refreshStart && folderEnd.getTime() > refreshStart.getTime()) return true;

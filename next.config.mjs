@@ -50,6 +50,7 @@ const nextConfig = isEsaStaticExport
       },
     }
   : {
+      distDir: process.env.NEXT_DIST_DIR || '.next',
       async rewrites() {
         return {
           beforeFiles: [...knightGameRewrites(), ...streamRewrites()],

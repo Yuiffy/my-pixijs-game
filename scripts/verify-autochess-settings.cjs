@@ -45,8 +45,20 @@ mkdirSync(artifactDirectory, { recursive: true });
     buttons.map((button) => ({
       label: button.textContent?.trim(),
       value: button.getAttribute("aria-checked"),
+      clientWidth: button.clientWidth,
+      scrollWidth: button.scrollWidth,
     }))
   ));
+  const strategyLayout = await strategyGroup.evaluate((group) => {
+    const groupRect = group.getBoundingClientRect();
+    const buttons = Array.from(group.querySelectorAll("button"));
+    const buttonRects = buttons.map((button) => button.getBoundingClientRect());
+    return {
+      leadingInset: buttonRects[0].left - groupRect.left,
+      trailingInset: groupRect.right - buttonRects.at(-1).right,
+      buttonWidths: buttonRects.map(({ width }) => width),
+    };
+  });
   const screenshotPath = `${artifactDirectory}/autochess-settings.png`;
   await page.screenshot({ path: screenshotPath });
   const state = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
@@ -54,9 +66,14 @@ mkdirSync(artifactDirectory, { recursive: true });
   assert.equal(strategies.length, 5);
   assert.equal(strategies.some(({ label }) => label === "看穿2"), false);
   assert.ok(strategies.some(({ label }) => label === "看穿"));
+  assert.ok(strategies.some(({ label }) => label === "Go测试"));
+  assert.ok(strategies.every(({ clientWidth, scrollWidth }) => scrollWidth <= clientWidth));
+  assert.ok(strategyLayout.leadingInset <= 5);
+  assert.ok(strategyLayout.trailingInset <= 5);
+  assert.ok(Math.max(...strategyLayout.buttonWidths) - Math.min(...strategyLayout.buttonWidths) < 1);
   assert.equal(state.interface.autoplayStyle, "survival");
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ exportType, strategies, phase: state.phase, screenshotPath, errors }, null, 2));
+  console.log(JSON.stringify({ exportType, strategies, strategyLayout, phase: state.phase, screenshotPath, errors }, null, 2));
   await browser.close();
 })().catch((error) => {
   console.error(error);

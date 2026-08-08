@@ -556,7 +556,7 @@ export class AutoChessAutopilot {
 
   private targetPriority(id: UnitId) {
     if (this.style === "go" && this.seer2FocusIds.has(id)) {
-      return this.goOpportunityPriorities.get(id) || 64;
+      return this.goOpportunityPriorities.get(id) || seer2TargetPriority(id) || 64;
     }
     return this.seer2EndgameOpen() ? seer2TargetPriority(id) : lateGameTargetPriority(id);
   }
@@ -757,7 +757,10 @@ export class AutoChessAutopilot {
     roster: OwnedEntry[],
     futureShops: readonly (readonly (UnitId | null)[])[],
   ) {
-    if (this.style === "go") return this.goPlanningTargets(roster, futureShops);
+    if (this.style === "go" && this.goOpportunityWindowOpen(roster)) {
+      return this.goPlanningTargets(roster, futureShops);
+    }
+    if (this.style === "go") this.goOpportunityPriorities.clear();
     const ownedTargets = SEER2_TERMINAL_TARGET_IDS.map((id) => ({
       id,
       copies: roster
@@ -789,6 +792,19 @@ export class AutoChessAutopilot {
     });
     this.seer2FocusIds = new Set(targets.map(({ id }) => id));
     return targets;
+  }
+
+  private goOpportunityWindowOpen(roster: OwnedEntry[]) {
+    if (this.style !== "go" || !this.seer2EndgameOpen()) return false;
+    const developedUnits = roster.filter(({ unit }) => unit.star >= 2).length;
+    const completedUnits = roster.filter(({ unit }) => unit.star === 3).length;
+    const { round } = this.bridge.engine.state;
+    return round >= 20 && (
+      developedUnits >= 6
+      || completedUnits > 0
+      || this.preparationStartGold >= 100
+      || round >= 24
+    );
   }
 
   private goCompletedUnitModelGain(roster: OwnedEntry[], id: UnitId) {
@@ -3326,6 +3342,7 @@ export class AutoChessAutopilot {
       || this.informationMode !== "oracle"
       || state.round < 18
       || state.playerLevel < 10
+      || !this.goOpportunityWindowOpen(roster)
       || (this.seerPlan && !this.seerMacroActionsComplete())
     ) return null;
 

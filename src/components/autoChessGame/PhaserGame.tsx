@@ -225,7 +225,7 @@ export default function AutoChessGame() {
       // The strategy still applies for this session when storage is unavailable.
     }
     setMessage(style === "go"
-      ? "Go级托管策略已更新。"
+      ? "Go测试托管策略已更新。"
       : style === "seer" ? "看穿托管策略已更新。" : "托管策略已更新。");
     setRevision((value) => value + 1);
   }, []);
@@ -727,7 +727,7 @@ export default function AutoChessGame() {
                     ["balanced", "均衡"],
                     ["highroll", "搏上限"],
                     ["seer", "看穿"],
-                    ["go", "Go级"],
+                    ["go", "Go测试"],
                   ] as const).map(([style, label]) => (
                     <button
                       key={style}

@@ -2963,7 +2963,7 @@ test("标题页和局内都公开托管选择，设置面板公开四种风格�
   assert.match(hostSource, /托管风格/);
   assert.match(hostSource, /看穿/);
   assert.doesNotMatch(hostSource, /看穿2/);
-  assert.match(hostSource, /Go级/);
+  assert.match(hostSource, /Go测试/);
   assert.doesNotMatch(hostSource, /天眼商店/);
   assert.match(hostSource, /role="radiogroup"/);
   assert.match(hostSource, /AUTOPILOT_STRATEGY_KEY/);
