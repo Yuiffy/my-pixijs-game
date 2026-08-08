@@ -121,6 +121,16 @@ const SEER2_FORMATION_PROFILE_IDS: FormationProfile[] = [
   ...STANDARD_FORMATION_PROFILE_IDS,
 ];
 const STAR_POWER = { 1: 1, 2: 2.6, 3: 7 } as const;
+const PLANNER_UNIT_BASE_POWER = 36;
+const TRANSITION_LINEUP_BONUS: Partial<Record<UnitId, number>> = {
+  sui_blue: 22,
+  seki_boar_king: 18,
+  nightin: 14,
+  sumi: 18,
+  mitsuri: 14,
+  cog_scribe: 18,
+  pako: 10,
+};
 const unitCopyValue = (unit: OwnedUnit) => (unit.star === 3 ? 9 : unit.star === 2 ? 3 : 1);
 const ROLLOUT_CANDIDATE_LIMIT = 3;
 const SEER2_ROLLOUT_CANDIDATE_LIMIT = 6;
@@ -141,6 +151,12 @@ const RESCUE_TWO_SWAP_CANDIDATE_LIMIT = 32;
 const RESCUE_MIN_WIN_SCORE = 10000 - 26;
 const ORACLE_MAX_ROUND = 60;
 const ORACLE_SHOP_LOOKAHEAD = 1600;
+/**
+ * Most abstract routes fail in the opening. Simulate only this prefix before
+ * spending CPU on a complete exact 60-round validation. The chosen route is
+ * still validated to the full horizon below.
+ */
+const SEER_ROUTE_PREFILTER_LIMIT = 16;
 const SEER_ROUTE_VALIDATION_LIMIT = ORACLE_MAX_ROUND;
 const SHARED_ROLLOUT_CACHE_LIMIT = 50000;
 const EXACT_COMBAT_HZ = 60;
@@ -340,6 +356,10 @@ export class AutoChessAutopilot {
   private stabilizationInterestTiersAtRisk = 0;
 
   private seerPlan: SeerPlan | null = null;
+
+  private seerValidationFailure = "";
+
+  private seerValidationTrace: Array<Record<string, unknown>> = [];
 
   /** 完整路线与真实战力失配后，本局不重复计算同一条宏路线。 */
   private seerRouteAbandoned = false;
@@ -706,10 +726,14 @@ export class AutoChessAutopilot {
   private simulationSale(simulation: EngineBridge, id: UnitId) {
     const { state } = simulation.engine;
     const location = state.bench
-      .map((unit, index) => unit?.id === id ? { zone: "bench" as const, index } : null)
+      .map((unit, index) => (
+        unit?.id === id ? { zone: "bench" as const, index } : null
+      ))
       .find(Boolean)
       || state.board
-        .map((unit, index) => unit?.id === id ? { zone: "board" as const, index } : null)
+        .map((unit, index) => (
+          unit?.id === id ? { zone: "board" as const, index } : null
+        ))
         .find(Boolean);
     // A planned transition unit may already have merged or been sold by an
     // earlier exact action. Treat that sale as already satisfied.
@@ -816,7 +840,13 @@ export class AutoChessAutopilot {
     return true;
   }
 
-  private validateSeerRoute(plan: SeerPlan) {
+  private validateSeerRoute(
+    plan: SeerPlan,
+    validationLimit = SEER_ROUTE_VALIDATION_LIMIT,
+    requireComplete = true,
+  ) {
+    this.seerValidationFailure = "";
+    this.seerValidationTrace = [];
     if (
       this.planningMode !== "evolution"
       || this.style !== "seer"
@@ -831,34 +861,50 @@ export class AutoChessAutopilot {
     );
     simulation.setConsoleLogging(false);
     simulation.engine.restoreSimulationSnapshot(this.bridge.engine.getSimulationSnapshot());
+    const exactFormationValidation = requireComplete
+      && validationLimit >= (plan.steps?.length || 0);
     const formationPilot = new AutoChessAutopilot(
       simulation,
-      "training",
+      exactFormationValidation ? "evolution" : "training",
       this.policy,
-      "survival",
-      "normal",
+      exactFormationValidation ? "seer" : "survival",
+      exactFormationValidation ? "oracle" : "normal",
       this.rolloutCombatHz,
     );
     formationPilot.lineageFormation = this.lineageFormation;
     const validatedSteps: SeerPlanStep[] = [];
-    const maximumSteps = Math.min(SEER_ROUTE_VALIDATION_LIMIT, plan.steps.length);
+    const maximumSteps = Math.min(validationLimit, plan.steps.length);
 
     for (let index = 0; index < maximumSteps; index += 1) {
       const step = plan.steps[index];
       if (
         simulation.engine.state.phase !== "preparation"
         || simulation.engine.state.round !== (plan.startRound || this.bridge.engine.state.round) + index
-      ) break;
+      ) {
+        this.seerValidationFailure = `step ${index}: phase/round`;
+        break;
+      }
       const expected = this.simulationStepSnapshot(simulation, step);
-      if (!this.applySimulationSeerStep(simulation, step)) break;
-      if (!this.simulationFormation(simulation, formationPilot)) break;
+      if (!this.applySimulationSeerStep(simulation, step)) {
+        this.seerValidationFailure = `step ${index}: macro`;
+        break;
+      }
+      if (!this.simulationFormation(simulation, formationPilot)) {
+        this.seerValidationFailure = `step ${index}: formation`;
+        break;
+      }
       const preparationGoldAfterActions = simulation.engine.state.gold;
       simulation.engine.startBattle();
-      if ((simulation.engine.state.phase as GamePhase) !== "battle") break;
+      if ((simulation.engine.state.phase as GamePhase) !== "battle") {
+        this.seerValidationFailure = `step ${index}: start battle`;
+        break;
+      }
       simulation.skipBattle();
-      const result = simulation.engine.state.result;
-      if (!result) break;
-      const battle = simulation.engine.state.battle;
+      const { result, battle } = simulation.engine.state;
+      if (!result) {
+        this.seerValidationFailure = `step ${index}: result`;
+        break;
+      }
       const health = (fighters: BattleState["player"]) => fighters.reduce(
         (sum, fighter) => sum + (fighter.alive ? fighter.hp / fighter.maxHp : 0),
         0,
@@ -871,15 +917,51 @@ export class AutoChessAutopilot {
         expectedBattleMargin: battleMargin,
         expectedBattleWon: result.won,
       });
+      const {
+        round,
+        hp,
+        gold,
+        playerLevel,
+        board,
+        bench,
+      } = simulation.engine.state;
+      this.seerValidationTrace.push({
+        round,
+        won: result.won,
+        hp,
+        gold,
+        level: playerLevel,
+        board: board
+          .filter(Boolean)
+          .map((unit) => `${unit?.id}:${unit?.star}`),
+        bench: bench
+          .filter(Boolean)
+          .map((unit) => `${unit?.id}:${unit?.star}`),
+        margin: battleMargin,
+      });
       if (index + 1 >= maximumSteps) break;
-      if (simulation.engine.state.hp <= 0) break;
+      if (simulation.engine.state.hp <= 0) {
+        this.seerValidationFailure = `step ${index}: hp`;
+        break;
+      }
       simulation.engine.continueAfterResult();
       const nextPhase = simulation.engine.state.phase as GamePhase;
-      if (nextPhase === "augment" && !this.simulationAugment(simulation)) break;
-      if ((simulation.engine.state.phase as GamePhase) !== "preparation") break;
+      if (nextPhase === "augment" && !this.simulationAugment(simulation)) {
+        this.seerValidationFailure = `step ${index}: augment`;
+        break;
+      }
+      if ((simulation.engine.state.phase as GamePhase) !== "preparation") {
+        this.seerValidationFailure = `step ${index}: next phase`;
+        break;
+      }
     }
 
-    if (validatedSteps.length !== plan.steps.length) return null;
+    if (validatedSteps.length !== (requireComplete ? plan.steps.length : maximumSteps)) {
+      if (!this.seerValidationFailure) {
+        this.seerValidationFailure = `validated ${validatedSteps.length}`;
+      }
+      return null;
+    }
     return {
       ...plan,
       firstStep: validatedSteps[0],
@@ -893,10 +975,10 @@ export class AutoChessAutopilot {
     const { state } = this.bridge.engine;
     const startRound = this.seerPlan.startRound ?? state.round;
     const offset = state.round - startRound;
-    const steps = this.seerPlan.steps;
+    const { steps } = this.seerPlan;
     const step = steps[offset];
     if (offset <= 0 || !step) return null;
-    const expectedWave = step.expectedWave;
+    const { expectedWave } = step;
     const actualWave = this.bridge.engine.currentWave;
     const waveMatches = !expectedWave || (
       expectedWave.round === state.round
@@ -1014,7 +1096,8 @@ export class AutoChessAutopilot {
       .map(({ unit, location }) => ({ id: unit.id, star: unit.star, zone: location.zone }));
     const currentBoardStrength = state.board.reduce((total, unit) => (
       unit
-        ? total + UNIT_DEFS[unit.id].cost * 12 * STAR_POWER[unit.star]
+        ? total + PLANNER_UNIT_BASE_POWER
+          + UNIT_DEFS[unit.id].cost * 12 * STAR_POWER[unit.star]
         : total
     ), 0);
     const plan = planSeerEconomy({
@@ -1045,8 +1128,44 @@ export class AutoChessAutopilot {
       beamWidth: this.planningMode === "training" ? 48 : 64,
       continueAfterForecastDeath: this.style === "seer",
     });
-    const validated = this.validateSeerRoute(plan);
-    return validated;
+    const routeCandidates = [
+      plan,
+      ...(plan.alternativeSteps || []).map((steps) => ({
+        ...plan,
+        firstStep: steps[0] || plan.firstStep,
+        steps,
+        alternativeSteps: [],
+      })),
+    ];
+    const prefiltered = routeCandidates.flatMap((candidate) => {
+      const prefix = this.validateSeerRoute(
+        candidate,
+        Math.min(SEER_ROUTE_PREFILTER_LIMIT, candidate.steps?.length || 0),
+        false,
+      );
+      if (!prefix) return [];
+      const trace = this.seerValidationTrace.map((entry) => ({ ...entry }));
+      const hpValues = trace
+        .map((entry) => Number(entry.hp))
+        .filter((value) => Number.isFinite(value));
+      const losses = trace.filter((entry) => entry.won === false).length;
+      const finalHp = hpValues.at(-1) ?? Number.NEGATIVE_INFINITY;
+      const minimumHp = hpValues.length > 0 ? Math.min(...hpValues) : finalHp;
+      const marginTotal = trace.reduce((total, entry) => (
+        total + (Number(entry.margin) || 0)
+      ), 0);
+      return [{ candidate, losses, finalHp, minimumHp, marginTotal }];
+    }).sort((left, right) => (
+      right.minimumHp - left.minimumHp
+      || right.finalHp - left.finalHp
+      || left.losses - right.losses
+      || right.marginTotal - left.marginTotal
+    ));
+    for (const { candidate } of prefiltered) {
+      const validated = this.validateSeerRoute(candidate);
+      if (validated) return validated;
+    }
+    return null;
   }
 
   private goldReserve(needsPopulation = false, interestTiersAtRisk = 0) {
@@ -1123,6 +1242,7 @@ export class AutoChessAutopilot {
       + unit.star * 6
       + uniquePartners * 7
       + Math.max(0, duplicateCount) * 4
+      + (TRANSITION_LINEUP_BONUS[unit.id] || 0)
       + lateGameScore;
   }
 
@@ -1675,9 +1795,9 @@ export class AutoChessAutopilot {
         parentLineups.set(lineupKey, lineup);
       });
       parentLineups.forEach((parent) => {
-        const selectedUids = new Set(parent.map(({ unit }) => unit.uid));
+        const parentSelectedUids = new Set(parent.map(({ unit }) => unit.uid));
         roster
-          .filter(({ unit }) => !selectedUids.has(unit.uid))
+          .filter(({ unit }) => !parentSelectedUids.has(unit.uid))
           .forEach((reserve) => parent.forEach((_, index) => {
             const mutation = [...parent];
             mutation[index] = reserve;
@@ -2483,7 +2603,7 @@ export class AutoChessAutopilot {
 
   private seerMacroActionsComplete() {
     if (!this.usesOraclePlanner() || !this.seerPlan) return false;
-    const firstStep = this.seerPlan.firstStep;
+    const { firstStep } = this.seerPlan;
     if (
       this.bridge.engine.state.playerLevel < firstStep.targetLevel
       || this.rerolls < firstStep.rerolls
@@ -2506,7 +2626,7 @@ export class AutoChessAutopilot {
 
   private seerPlannedRerollAction(): GameAction | null {
     if (!this.usesOraclePlanner() || !this.seerPlan) return null;
-    const firstStep = this.seerPlan.firstStep;
+    const { firstStep } = this.seerPlan;
     if (
       this.bridge.engine.state.playerLevel < firstStep.targetLevel
       || this.rerolls >= firstStep.rerolls
@@ -2528,7 +2648,7 @@ export class AutoChessAutopilot {
 
   private seerPlannedPurchaseAction(): GameAction | null {
     if (!this.usesOraclePlanner() || !this.seerPlan) return null;
-    const purchasesByShop = this.seerPlan.firstStep.purchasesByShop;
+    const { purchasesByShop } = this.seerPlan.firstStep;
     const plannedPurchases = purchasesByShop?.[this.rerolls];
     if (!plannedPurchases) return null;
     const offset = this.seerPurchaseOffsets[this.rerolls] || 0;
@@ -2571,7 +2691,7 @@ export class AutoChessAutopilot {
 
   private seerPlannedSaleAction(): GameAction | null {
     if (!this.usesOraclePlanner() || !this.seerPlan) return null;
-    const salesByShop = this.seerPlan.firstStep.salesByShop;
+    const { salesByShop } = this.seerPlan.firstStep;
     const plannedSales = salesByShop?.[this.rerolls];
     if (!plannedSales) return null;
     const offset = this.seerSaleOffsets[this.rerolls] || 0;

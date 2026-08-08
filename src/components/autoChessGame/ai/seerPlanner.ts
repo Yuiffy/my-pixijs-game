@@ -92,6 +92,8 @@ export type SeerPlan = {
   firstStep: SeerRoundAction;
   startRound?: number;
   steps?: readonly SeerPlanStep[];
+  /** Other high-scoring complete routes, grouped by their first macro action. */
+  alternativeSteps?: readonly (readonly SeerPlanStep[])[];
   planningHorizon?: number;
   complete: boolean;
   exactValidatedHorizon?: number;
@@ -123,6 +125,7 @@ type PlannerState = {
   transitionUnits: SeerPlannerUnit[];
   boardCount: number;
   activeStrength: number;
+  levelScheduleDebt: number;
   firstStep: SeerRoundAction | null;
   path: PlannerPathNode | null;
 };
@@ -134,11 +137,16 @@ type PlannerPathNode = {
 
 const DEFAULT_HORIZON = 60;
 const DEFAULT_BEAM_WIDTH = 96;
+const FIRST_STEP_DIVERSITY_LIMIT = 8;
+const ROUTE_PREFIX_DIVERSITY_LIMIT = 16;
+const LEVEL_SCHEDULE_DEBT_WEIGHT = 250_000;
+const LEVEL_SCHEDULE_EXCESS_WEIGHT = 1_500_000;
 const BENCH_CAPACITY = 8;
 const STAR_POWER = [0, 1, 2.6, 7] as const;
 const UNIT_BASE_POWER = 36;
 const ABSTRACT_POWER_SCORE_SCALE = 10;
 const ABSTRACT_THREAT_SCALE = 0.1;
+const MAX_STRONG_TRANSITION_PURCHASES = 2;
 const levelIndex = (level: PlayerLevel) => PLAYER_LEVELS.indexOf(level);
 const waveForecastCache = new Map<string, SeerWaveForecast>();
 
@@ -183,6 +191,28 @@ export const forecastSeerWaves = (
 const unitCombatStrength = (id: UnitId, star: 1 | 2 | 3) => (
   UNIT_BASE_POWER + UNIT_DEFS[id].cost * 12 * STAR_POWER[star]
 );
+
+/**
+ * Cheap transition pieces are not interchangeable in the real simulator.
+ * These bonuses are learned from the recorded human opening and only break
+ * ties between pieces that are otherwise legal population fillers.
+ */
+const TRANSITION_PRIORITY: Partial<Record<UnitId, number>> = {
+  // These are the pieces that repeatedly appear in the successful recorded
+  // opening. They are intentionally preferred over generic high-cost fillers.
+  ember_blade: 78,
+  cog_scribe: 72,
+  seki_boar_king: 68,
+  nightin: 64,
+  sumi: 62,
+  mitsuri: 60,
+  sui_blue: 56,
+  pako: 52,
+  sui: 44,
+  mossback: 30,
+};
+
+const transitionPriority = (id: UnitId) => TRANSITION_PRIORITY[id] || 0;
 
 const rolloutCombatMargin = (score: number) => (
   score >= 9000 ? (score - 10000) * 2 : score
@@ -361,6 +391,7 @@ const buyFromShop = (
   gold: number,
   copies: readonly number[],
   transitionUnits: readonly SeerPlannerUnit[],
+  round: number,
   targetLevel: PlayerLevel,
   targets: readonly SeerTarget[],
   purchaseLog: UnitId[],
@@ -371,8 +402,9 @@ const buyFromShop = (
   let nextGold = gold;
   const targetIndex = new Map(targets.map((target, index) => [target.id, index]));
   const usedShopIndexes = new Set<number>();
-  const boardCap = PLAYER_LEVEL_CONFIG[targetLevel].boardCap;
+  const { boardCap } = PLAYER_LEVEL_CONFIG[targetLevel];
   const maxRoster = boardCap + BENCH_CAPACITY;
+  let strongTransitionPurchases = 0;
 
   while (usedShopIndexes.size < shop.length) {
     const currentRosterCount = targetPhysicalCount(nextCopies, targets)
@@ -386,38 +418,90 @@ const buyFromShop = (
         .filter((unit) => UNIT_DEFS[unit.id].traits.includes("finance"))
         .map((unit) => unit.id),
     );
-    const candidates = shop.flatMap((id, shopIndex) => {
-      if (!id || usedShopIndexes.has(shopIndex)) return [];
+    const currentTraits = new Set(
+      rosterUnits(nextCopies, targets, nextTransitionUnits)
+        .flatMap((unit) => UNIT_DEFS[unit.id].traits),
+    );
+    const candidates: Array<{
+      id: UnitId;
+      index: number | undefined;
+      shopIndex: number;
+      score: number;
+    }> = [];
+    for (let shopIndex = 0; shopIndex < shop.length; shopIndex += 1) {
+      const id = shop[shopIndex];
+      if (!id || usedShopIndexes.has(shopIndex)) continue;
       const definition = UNIT_DEFS[id];
       const index = targetIndex.get(id);
       const isTarget = index !== undefined;
       if (
         isTarget
         && nextCopies[index] >= targets[index].desiredCopies
-      ) return [];
-      if (!isTarget && !needsPopulation) return [];
+      ) continue;
       const nextCopiesForCandidate = [...nextCopies];
       let nextTransitionForCandidate = nextTransitionUnits;
       if (isTarget) nextCopiesForCandidate[index] += 1;
       else nextTransitionForCandidate = addTransitionUnit(nextTransitionUnits, id);
       const nextRosterCount = targetPhysicalCount(nextCopiesForCandidate, targets)
         + nextTransitionForCandidate.length;
-      const overflow = nextRosterCount - maxRoster;
-      if (overflow > 0 && transitionSaleIndex(nextTransitionForCandidate) < 0) return [];
+      if (
+        nextRosterCount - maxRoster > 0
+        && transitionSaleIndex(nextTransitionForCandidate) < 0
+      ) continue;
       const targetValue = isTarget
         ? purchaseMarginalValue(nextCopies[index], targets[index])
         : 0;
-      const transitionValue = unitCombatStrength(id, 1);
+      const transitionValue = unitCombatStrength(id, 1) + transitionPriority(id);
       const advancesFinance = definition.traits.includes("finance")
         && !currentFinanceIds.has(id);
+      let traitSynergy = false;
+      for (const trait of definition.traits) {
+        if (currentTraits.has(trait)) {
+          traitSynergy = true;
+          break;
+        }
+      }
+      let transitionMerge = false;
+      for (const star of [1, 2] as const) {
+        let matchingUnits = 0;
+        for (const unit of nextTransitionUnits) {
+          if (unit.id === id && unit.star === star) matchingUnits += 1;
+        }
+        if (matchingUnits >= 2) {
+          transitionMerge = true;
+          break;
+        }
+      }
+      // A high shop cost is not a transition plan. Generic expensive pieces
+      // fill the bench, consume interest, and often block the actual project.
+      // Only curated bridges, a real merge, or a meaningful finance milestone
+      // may be bought after population is already full.
+      const strongTransition = transitionPriority(id) >= 44
+        || transitionMerge
+        || (advancesFinance && definition.cost >= 3);
+      if (
+        !isTarget
+        && !needsPopulation
+        && (!strongTransition || strongTransitionPurchases >= MAX_STRONG_TRANSITION_PURCHASES)
+      ) continue;
       const score = needsPopulation
-        ? 100 - definition.cost * 4 + (advancesFinance ? 5 : 0)
+        ? transitionValue * 3 - definition.cost * 4 + (advancesFinance ? 64 : 0)
         : isTarget
           ? targetValue + transitionValue + (advancesFinance ? 64 : 0)
-          : transitionValue * 3 + (advancesFinance ? 64 : 0);
-      return [{ id, index, shopIndex, score }];
-    }).sort((left, right) => right.score - left.score || left.shopIndex - right.shopIndex);
-    const candidate = candidates.find(({ id }) => UNIT_DEFS[id].cost <= nextGold);
+          : transitionValue * 3
+            + (transitionMerge ? 720 : 0)
+            + (traitSynergy ? 80 : 0)
+            + (advancesFinance ? 64 : 0);
+      candidates.push({ id, index, shopIndex, score });
+    }
+    candidates.sort((left, right) => right.score - left.score || left.shopIndex - right.shopIndex);
+    let candidate: (typeof candidates)[number] | undefined;
+    for (const possible of candidates) {
+      if (UNIT_DEFS[possible.id].cost <= nextGold) {
+        candidate = possible;
+        break;
+      }
+    }
     if (!candidate) break;
     usedShopIndexes.add(candidate.shopIndex);
     const index = targetIndex.get(candidate.id);
@@ -443,6 +527,7 @@ const buyFromShop = (
     nextGold -= UNIT_DEFS[candidate.id].cost;
     if (index !== undefined) nextCopies[index] += 1;
     else nextTransitionUnits = addTransitionUnit(nextTransitionUnits, candidate.id);
+    if (index === undefined && !needsPopulation) strongTransitionPurchases += 1;
     purchaseLog.push(candidate.id);
   }
   return { gold: nextGold, copies: nextCopies, transitionUnits: nextTransitionUnits };
@@ -469,9 +554,52 @@ const rerollChoices = (gold: number, freeRerolls: number, availableShops: number
     .sort((left, right) => left - right);
 };
 
-const levelChoices = (state: PlannerState) => PLAYER_LEVELS.filter((level) => (
-  level >= state.playerLevel && upgradeCostToLevel(state, level) <= state.gold
-));
+const scheduledLevelForRound = (round: number): PlayerLevel => {
+  if (round >= 18) return 10;
+  if (round >= 17) return 9;
+  if (round >= 15) return 8;
+  if (round >= 12) return 7;
+  if (round >= 7) return 6;
+  return 4;
+};
+
+const levelChoices = (state: PlannerState, request: SeerPlannerRequest) => {
+  // The known opening spends gold on units until the next population break.
+  // Allowing arbitrary early level jumps makes the abstract model buy a
+  // larger shop while leaving the real board one or two pieces short.
+  const scheduled = Math.max(
+    state.playerLevel,
+    scheduledLevelForRound(state.round),
+  ) as PlayerLevel;
+  const futureTargetLevels = new Set(
+    PLAYER_LEVELS.filter((level) => {
+      if (level <= scheduled) return false;
+      const shops = request.futureShops[level] || [];
+      const lookahead = shops.slice(0, Math.min(12, shops.length));
+      const targetHits = request.targets.reduce((total, target) => {
+        if (UNIT_DEFS[target.id].tier < 4) return total;
+        return total + lookahead.reduce(
+          (shopHits, shop) => shopHits + Number(shop.includes(target.id)),
+          0,
+        );
+      }, 0);
+      // A single lucky future shop is not enough to justify destroying the
+      // opening economy. Dense known high-tier traffic is a real oracle
+      // signal and should be allowed to pull the level schedule forward.
+      return targetHits >= 2;
+    }),
+  );
+  const choices = PLAYER_LEVELS.filter((level) => (
+    level >= state.playerLevel
+    && (level <= scheduled || futureTargetLevels.has(level))
+    && upgradeCostToLevel(state, level) <= state.gold
+  ));
+  if (
+    scheduled > state.playerLevel
+    && upgradeCostToLevel(state, scheduled) <= state.gold
+  ) return choices.filter((level) => level === scheduled);
+  return choices;
+};
 
 const stateEvaluation = (
   state: PlannerState,
@@ -508,6 +636,28 @@ const stateEvaluation = (
   );
   const firstStepLevel = state.firstStep?.targetLevel || request.playerLevel;
   const highTierTiming = firstStepLevel >= 8 ? firstStepLevel * 2_500 : 0;
+  const scheduledLevelAtState = scheduledLevelForRound(state.round);
+  const earlyLevelCost = Math.max(0, state.playerLevel - scheduledLevelAtState)
+    * LEVEL_SCHEDULE_EXCESS_WEIGHT;
+  const scheduledLevel = Math.min(
+    10,
+    3 + Math.floor((request.round + 3) / 3),
+  ) as PlayerLevel;
+  // The opening level is a tie-breaker only. Later rounds must remain free to
+  // skip directly to a future high-tier shop when the known route justifies it.
+  const levelTiming = request.round <= 2
+    ? (firstStepLevel === scheduledLevel
+      ? 120_000_000
+      : firstStepLevel > scheduledLevel
+        ? -80_000_000
+        : 0)
+    : 0;
+  const openingFreeReroll = request.freeRerolls > 0
+    && request.currentBoardCount !== undefined
+    && request.currentBoardCount < PLAYER_LEVEL_CONFIG[request.playerLevel].boardCap
+    && (state.firstStep?.rerolls || 0) >= request.freeRerolls
+    ? 2_500_000
+    : 0;
   return state.hp * 100_000_000
     + (nextMargin >= -40 ? 1_000_000 : -1_000_000)
     + Math.max(-1200, Math.min(1200, nextMargin)) * 10_000
@@ -515,6 +665,10 @@ const stateEvaluation = (
     + state.gold * 20
     + state.playerLevel * 480
     + highTierTiming
+    + levelTiming
+    + openingFreeReroll
+    - state.levelScheduleDebt * LEVEL_SCHEDULE_DEBT_WEIGHT
+    - earlyLevelCost
     - Math.min(1_200, futureRisk) * 120
     - state.cursors.reduce((total, cursor) => total + cursor, 0) * 2;
 };
@@ -525,6 +679,7 @@ const dominanceKey = (state: PlannerState) => [
   state.playerLevel,
   state.upgradeRemaining,
   state.cursors.join(","),
+  state.levelScheduleDebt,
   state.currentShop.join(","),
   state.copies.join(","),
   state.transitionUnits.map((unit) => `${unit.id}:${unit.star}`).sort().join(","),
@@ -569,6 +724,66 @@ const pruneDominatedStates = (states: readonly PlannerState[]) => {
     frontier.push(...survivors);
   });
   return { states: frontier, pruned };
+};
+
+const firstStepKey = (state: PlannerState) => JSON.stringify({
+  targetLevel: state.firstStep?.targetLevel,
+  rerolls: state.firstStep?.rerolls,
+  purchases: state.firstStep?.purchasesByShop,
+  sales: state.firstStep?.salesByShop,
+});
+
+const routePrefixKey = (state: PlannerState, length = 12) => {
+  const steps: SeerPlanStep[] = [];
+  let { path } = state;
+  while (path && steps.length < length) {
+    steps.push(path.step);
+    path = path.previous;
+  }
+  steps.reverse();
+  return steps.map((step) => JSON.stringify({
+    targetLevel: step.targetLevel,
+    rerolls: step.rerolls,
+    purchases: step.purchasesByShop,
+    sales: step.salesByShop,
+  })).join("/");
+};
+
+const selectBeamStates = (
+  states: readonly PlannerState[],
+  beamWidth: number,
+  request: SeerPlannerRequest,
+  initialActiveStrength: number,
+  initialEnemyThreat: number,
+) => {
+  const ranked = [...states].sort((left, right) => (
+    stateEvaluation(right, request, initialActiveStrength, initialEnemyThreat)
+      - stateEvaluation(left, request, initialActiveStrength, initialEnemyThreat)
+  ));
+  const limit = Math.min(beamWidth, FIRST_STEP_DIVERSITY_LIMIT);
+  const selected: PlannerState[] = [];
+  const selectedKeys = new Set<string>();
+  ranked.forEach((state) => {
+    if (selected.length >= limit) return;
+    const key = firstStepKey(state);
+    if (selectedKeys.has(key)) return;
+    selectedKeys.add(key);
+    selected.push(state);
+  });
+  const routeLimit = Math.min(beamWidth, ROUTE_PREFIX_DIVERSITY_LIMIT);
+  const routeKeys = new Set<string>();
+  ranked.forEach((state) => {
+    if (selected.length >= routeLimit) return;
+    const key = routePrefixKey(state);
+    if (routeKeys.has(key)) return;
+    routeKeys.add(key);
+    if (!selected.includes(state)) selected.push(state);
+  });
+  ranked.forEach((state) => {
+    if (selected.length >= beamWidth || selected.includes(state)) return;
+    selected.push(state);
+  });
+  return selected;
 };
 
 const projectedBattleWin = (
@@ -625,6 +840,7 @@ const buildLevelPrefixes = (
     gold,
     copies,
     transitionUnits,
+    state.round,
     targetLevel,
     request.targets,
     currentPurchases,
@@ -669,6 +885,7 @@ const buildLevelPrefixes = (
       gold,
       copies,
       transitionUnits,
+      state.round,
       targetLevel,
       request.targets,
       purchases,
@@ -730,6 +947,7 @@ const advanceState = (
     transitionUnits: prefix.transitionUnits,
     boardCount: active.count,
     activeStrength: active.strength,
+    levelScheduleDebt: state.levelScheduleDebt,
     firstStep: state.firstStep || action,
     path: { previous: state.path, step },
   };
@@ -754,7 +972,7 @@ const advanceState = (
   ) >= 4;
   const interestStep = financeActive ? 4 : 5;
   const interestCap = financeActive ? FINANCE_INTEREST_CAP : NORMAL_INTEREST_CAP;
-  let gold = prefix.gold;
+  let { gold } = prefix;
   const interest = Math.min(interestCap, Math.floor(gold / interestStep));
   const streak = won ? state.streak + 1 : 0;
   const streakBonus = won ? Math.min(2, Math.max(0, streak - 1)) : 0;
@@ -783,13 +1001,16 @@ const advanceState = (
     currentShop = request.futureShops[targetLevel][cursor] || [];
     if (currentShop.length > 0) cursors[targetLevelIndex] += 1;
   }
+  const upgradeRemainingAfterPreparation = targetLevel > state.playerLevel
+    ? nextUpgradeRemaining(targetLevel)
+    : state.upgradeRemaining;
   return {
     depth: state.depth + 1,
     round: state.round + 1,
     hp,
     gold,
     playerLevel: targetLevel,
-    upgradeRemaining: Math.max(0, nextUpgradeRemaining(targetLevel) - 1),
+    upgradeRemaining: Math.max(0, upgradeRemainingAfterPreparation - 1),
     streak,
     paydayDebtRounds: Math.max(0, state.paydayDebtRounds - 1),
     cursors,
@@ -798,6 +1019,8 @@ const advanceState = (
     transitionUnits: prefix.transitionUnits,
     boardCount: active.count,
     activeStrength: active.strength,
+    levelScheduleDebt: state.levelScheduleDebt
+      + Math.max(0, scheduledLevelForRound(state.round) - targetLevel),
     firstStep: state.firstStep || action,
     path: preparationState.path,
   };
@@ -813,7 +1036,7 @@ const expandFrontier = (
   const states: PlannerState[] = [];
   let explored = 0;
   frontier.forEach((state) => {
-    levelChoices(state).forEach((targetLevel) => {
+    levelChoices(state, request).forEach((targetLevel) => {
       const upgradeCost = upgradeCostToLevel(state, targetLevel);
       const availableShops = request.futureShops[targetLevel].length
         - state.cursors[levelIndex(targetLevel)];
@@ -892,6 +1115,7 @@ export const planSeerEconomy = (request: SeerPlannerRequest): SeerPlan => {
     transitionUnits: initialTransitionUnits,
     boardCount: planningRequest.currentBoardCount ?? initialActive.count,
     activeStrength: initialActiveStrength,
+    levelScheduleDebt: 0,
     firstStep: null,
     path: null,
   }];
@@ -931,8 +1155,13 @@ export const planSeerEconomy = (request: SeerPlannerRequest): SeerPlan => {
     ) {
       bestReachable = deepest;
     }
-    frontier = dominated.states
-      .slice(0, beamWidth);
+    frontier = selectBeamStates(
+      dominated.states,
+      beamWidth,
+      planningRequest,
+      initialActiveStrength,
+      initialEnemyThreat,
+    );
   }
 
   const best = bestReachable;
@@ -944,12 +1173,43 @@ export const planSeerEconomy = (request: SeerPlannerRequest): SeerPlan => {
     salesByShop: [],
   };
   const steps: SeerPlanStep[] = [];
-  let path = best?.path || null;
-  while (path) {
-    steps.push(path.step);
-    path = path.previous;
-  }
-  steps.reverse();
+  const stepsFromState = (state: PlannerState | undefined) => {
+    const result: SeerPlanStep[] = [];
+    let path = state?.path || null;
+    while (path) {
+      result.push(path.step);
+      path = path.previous;
+    }
+    result.reverse();
+    return result;
+  };
+  steps.push(...stepsFromState(best));
+  const candidateRoutePrefixKey = (candidate: readonly SeerPlanStep[]) => candidate
+    .slice(0, 12)
+    .map((step) => JSON.stringify({
+      targetLevel: step.targetLevel,
+      rerolls: step.rerolls,
+      purchases: step.purchasesByShop,
+      sales: step.salesByShop,
+    }))
+    .join("/");
+  const alternativeSteps = Array.from(
+    [...frontier]
+      .sort((left, right) => (
+        stateEvaluation(right, planningRequest, initialActiveStrength, initialEnemyThreat)
+          - stateEvaluation(left, planningRequest, initialActiveStrength, initialEnemyThreat)
+      ))
+      .reduce<Map<string, readonly SeerPlanStep[]>>((groups, state) => {
+        const candidate = stepsFromState(state);
+        if (candidate.length < horizon) return groups;
+        const key = candidateRoutePrefixKey(candidate);
+        if (!groups.has(key)) groups.set(key, candidate);
+        return groups;
+      }, new Map())
+      .values(),
+  )
+    .filter((candidate) => candidateRoutePrefixKey(candidate) !== candidateRoutePrefixKey(steps))
+    .slice(0, ROUTE_PREFIX_DIVERSITY_LIMIT - 1);
   const projectedTargetCopies = Object.fromEntries(planningRequest.targets.map((target, index) => [
     target.id,
     best?.copies[index] || initialCopies[index],
@@ -958,6 +1218,7 @@ export const planSeerEconomy = (request: SeerPlannerRequest): SeerPlan => {
     firstStep: steps[0] || best?.firstStep || fallback,
     startRound: planningRequest.round,
     steps,
+    alternativeSteps,
     planningHorizon: horizon,
     complete: steps.length >= horizon,
     futureWaves,
