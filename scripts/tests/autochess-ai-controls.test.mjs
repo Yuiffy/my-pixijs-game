@@ -43,6 +43,31 @@ test("稳健采用留出验证晋级阈值并保留其他三种风格的风险�
   assert.equal(informationModeForAutopilotStyle("seer"), "oracle");
 });
 
+test("非看穿风格前期不把未拥有的终局一星牌塞满候补", () => {
+  const bridge = new EngineBridge(13069);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 5;
+  bridge.engine.state.playerLevel = 5;
+  const transitionIds = SHOP_UNITS.filter((id) => (
+    !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id) && UNIT_DEFS[id].cost >= 4
+  )).slice(0, 4);
+  assert.equal(transitionIds.length, 4);
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  transitionIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 130690 + index, id, star: 1 };
+  });
+  bridge.engine.state.shop = ["xuehui", null, null, null, null];
+  bridge.engine.state.gold = 20;
+  const autopilot = new AutoChessAutopilot(bridge, "heuristic", {}, "balanced", "normal");
+  const candidate = autopilot.shopCandidates(autopilot.ownedEntries(), false);
+  const targetCandidate = candidate.find(({ id }) => id === "xuehui");
+  assert.ok(targetCandidate);
+  assert.equal(targetCandidate.lateGamePriority, 0);
+});
+
 test("后期目标采用真人长期连胜十人阵容并全部追三星", () => {
   assert.deepEqual(AUTOPILOT_LATE_GAME_TARGET_IDS, [
     "grove_mender",
@@ -157,6 +182,32 @@ test("训练桥接关闭战斗遥测、视觉特效和操作快照但仍能结�
   assert.deepEqual(bridge.engine.state.battle.eventLog, []);
   assert.deepEqual(bridge.getActionHistory(), []);
   assert.equal("state" in result, false);
+});
+
+test("训练桥接支持 CPU 快进步长，精确审计仍可使用 60Hz", () => {
+  const run = (battleStepHz) => {
+    const bridge = new EngineBridge(90212, 1, {
+      simulation: true,
+      battleStepHz,
+    });
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    bridge.dispatch({ type: "battle" });
+    const result = bridge.skipBattle();
+    return {
+      ...result,
+      won: bridge.engine.state.result?.won,
+      phase: bridge.engine.state.phase,
+    };
+  };
+  const turbo = run(20);
+  const exact = run(60);
+  assert.equal(turbo.phase, "result");
+  assert.equal(exact.phase, "result");
+  assert.equal(turbo.won, exact.won);
+  assert.ok(turbo.steps < exact.steps);
+  assert.equal(turbo.simulatedSeconds, Number((turbo.steps / 20).toFixed(2)));
+  assert.equal(exact.simulatedSeconds, Number((exact.steps / 60).toFixed(2)));
 });
 
 test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
@@ -449,7 +500,7 @@ test("相同战局会复用稳健预演，精确分支会区分当前随机状�
     bridge.engine.startRun("bastion");
     bridge.engine.state.seed = battleSeed;
     bridge.engine.state.augments = [...augments];
-    const pilot = new AutoChessAutopilot(bridge);
+    const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "survival", "normal", 60);
     return { pilot, roster: pilot.ownedEntries() };
   };
 
@@ -594,6 +645,83 @@ test("看穿动态规划会为高本固定 key 牌序列提前升本并只返回
   assert.equal(plan.projectedRound, 15);
 });
 
+test("看穿规划会把普通过渡棋纳入人口和战力", () => {
+  const emptyShop = [null, null, null, null, null];
+  const futureShops = Object.fromEntries(
+    [3, 4, 5, 6, 7, 8, 9, 10].map((level) => [
+      level,
+      Array.from({ length: 8 }, () => [...emptyShop]),
+    ]),
+  );
+  const plan = planSeerEconomy({
+    round: 1,
+    seed: 13145,
+    hp: 20,
+    gold: 2,
+    playerLevel: 3,
+    upgradeRemaining: 5,
+    streak: 0,
+    incomeBonus: 0,
+    paydayDebtRounds: 0,
+    freeRerolls: 0,
+    financeActive: false,
+    currentShop: ["mossback", "gale_archer", null, null, null],
+    currentCombatScore: 10000,
+    currentBoardCount: 1,
+    currentBoardStrength: UNIT_DEFS.mossback.cost * 12,
+    currentTransitionUnits: [{ id: "mossback", star: 1 }],
+    targetCopies: {},
+    targets: [{ id: "grove_mender", priority: 100, desiredCopies: 9 }],
+    futureShops,
+    horizon: 1,
+    beamWidth: 16,
+  });
+
+  assert.deepEqual(plan.firstStep.purchasesByShop?.[0], ["mossback", "gale_archer"]);
+  assert.equal(plan.projectedBoardCount, 3);
+  assert.equal(plan.projectedRosterCount, 3);
+});
+
+test("看穿规划会先卖过渡棋再为终局目标腾出候补位", () => {
+  const emptyShop = [null, null, null, null, null];
+  const futureShops = Object.fromEntries(
+    [3, 4, 5, 6, 7, 8, 9, 10].map((level) => [
+      level,
+      Array.from({ length: 8 }, () => [...emptyShop]),
+    ]),
+  );
+  const transitionIds = SHOP_UNITS
+    .filter((id) => !AUTOPILOT_TERMINAL_TARGET_IDS.includes(id))
+    .slice(0, 11);
+  const plan = planSeerEconomy({
+    round: 10,
+    seed: 13146,
+    hp: 20,
+    gold: UNIT_DEFS.grove_mender.cost,
+    playerLevel: 3,
+    upgradeRemaining: 5,
+    streak: 2,
+    incomeBonus: 0,
+    paydayDebtRounds: 0,
+    freeRerolls: 0,
+    financeActive: true,
+    currentShop: ["grove_mender", null, null, null, null],
+    currentCombatScore: 10000,
+    currentBoardCount: 3,
+    currentBoardStrength: 100,
+    currentTransitionUnits: transitionIds.map((id) => ({ id, star: 1 })),
+    targetCopies: {},
+    targets: [{ id: "grove_mender", priority: 100, desiredCopies: 9 }],
+    futureShops,
+    horizon: 1,
+    beamWidth: 16,
+  });
+
+  assert.deepEqual(plan.firstStep.purchasesByShop?.[0], ["grove_mender"]);
+  assert.equal(plan.firstStep.salesByShop?.[0]?.length, 1);
+  assert.equal(plan.projectedRosterCount, 11);
+});
+
 test("普通托管不会读取未来商店，看穿宏动作会连续升到规划等级", () => {
   const bridge = new EngineBridge(13144);
   bridge.setConsoleLogging(false);
@@ -699,6 +827,220 @@ test("托管在棋盘与候选席全满时会出售低价值候选并买入目�
   assert.equal(bridge.engine.state.shop[0], null);
   assert.ok(bridge.engine.state.bench.some((unit) => unit?.id === candidateId));
   assert.equal(bridge.engine.boardCount + bridge.engine.state.bench.filter(Boolean).length, rosterCount);
+});
+
+test("候补未满但缺钱且预演失败时会卖闲棋为强牌腾出预算", () => {
+  const bridge = new EngineBridge(1302801);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const expensiveIds = SHOP_UNITS.filter((id) => (
+    UNIT_DEFS[id].cost >= 3 && !AUTOPILOT_TERMINAL_TARGET_IDS.includes(id)
+  ));
+  const cheapId = SHOP_UNITS.find((id) => UNIT_DEFS[id].cost === 1);
+  const candidateId = "sui_bird";
+  assert.ok(expensiveIds.length > 0);
+  assert.ok(cheapId);
+  let uid = 13028010;
+
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.upgradeRemaining = 0;
+  bridge.engine.state.round = 20;
+  bridge.engine.state.hp = 5;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  for (let index = 0; index < bridge.engine.boardCap; index += 1) {
+    bridge.engine.state.board[index] = {
+      uid: uid += 1,
+      id: expensiveIds[index % expensiveIds.length],
+      star: 2,
+    };
+  }
+  bridge.engine.state.bench[0] = { uid: uid += 1, id: cheapId, star: 1 };
+  bridge.engine.state.shop = [candidateId, null, null, null, null];
+  bridge.engine.state.gold = 3;
+
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+  );
+  autopilot.rolloutConfidence = () => 9900;
+  autopilot.previewRosterRollout = (roster) => (
+    roster.some(({ unit }) => unit.id === candidateId) ? 10400 : 9900
+  );
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+
+  const sellAction = autopilot.tick(2000);
+  assert.equal(sellAction?.type, "sell");
+  assert.equal(sellAction?.location?.zone, "bench");
+  assert.equal(bridge.engine.state.bench.filter(Boolean).length, 0);
+
+  const buyAction = autopilot.tick(2500);
+  assert.deepEqual(buyAction, { type: "shop", index: 0 });
+  assert.ok(bridge.engine.state.bench.some((unit) => unit?.id === candidateId));
+});
+
+test("均衡在候补席接近满且战力不足时会先卖暂存棋再买直接替换牌", () => {
+  const bridge = new EngineBridge(130281);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const weakIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].cost === 1);
+  const candidateId = "grove_mender";
+  const strongIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].cost === 5 && id !== candidateId);
+  assert.ok(candidateId);
+  let uid = 1302810;
+
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.upgradeRemaining = 0;
+  bridge.engine.state.board.fill(null);
+  for (let index = 0; index < bridge.engine.boardCap; index += 1) {
+    bridge.engine.state.board[index] = {
+      uid: uid += 1,
+      id: strongIds[index % strongIds.length],
+      star: 2,
+    };
+  }
+  bridge.engine.state.bench = bridge.engine.state.bench.map((_, index) => (
+    index < 6
+      ? { uid: uid += 1, id: weakIds[(index + 3) % weakIds.length], star: 1 }
+      : null
+  ));
+  bridge.engine.state.shop = [candidateId, null, null, null, null];
+  bridge.engine.state.gold = 40;
+  bridge.engine.state.round = 12;
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "balanced", "normal");
+  autopilot.rolloutConfidence = () => 9900;
+  autopilot.previewRosterRollout = (roster) => (
+    roster.some(({ unit }) => unit.id === candidateId) ? 10020 : 9900
+  );
+  autopilot.upgradeAction = () => ({ type: "buyXp" });
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+
+  const sellAction = autopilot.tick(2000);
+  assert.equal(sellAction?.type, "sell");
+  assert.equal(sellAction?.location?.zone, "bench");
+  assert.equal(bridge.engine.state.bench.filter(Boolean).length, 5);
+
+  const buyAction = autopilot.tick(2500);
+  assert.deepEqual(buyAction, { type: "shop", index: 0 });
+  assert.equal(bridge.engine.state.shop[0], null);
+  assert.ok(bridge.engine.state.bench.some((unit) => unit?.id === candidateId));
+});
+
+test("托管在有足够候补棋时先补满当前人口再升本或搜牌", () => {
+  const bridge = new EngineBridge(130282);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.upgradeRemaining = 0;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const ids = SHOP_UNITS.slice(0, 10);
+  ids.slice(0, 7).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1302820 + index, id, star: 1 };
+  });
+  ids.slice(7).forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1302830 + index, id, star: 1 };
+  });
+  bridge.engine.state.shop.fill(null);
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "balanced", "normal");
+  autopilot.rolloutTargetLineup = (roster) => roster;
+  autopilot.rolloutConfidence = () => 9900;
+  autopilot.upgradeAction = () => ({ type: "buyXp" });
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+
+  const action = autopilot.tick(2000);
+  assert.equal(action?.type, "move");
+  assert.equal(action?.from?.zone, "bench");
+  assert.equal(action?.to?.zone, "board");
+  assert.equal(bridge.engine.boardCount, 8);
+  for (let step = 0; bridge.engine.boardCount < bridge.engine.boardCap; step += 1) {
+    const next = autopilot.tick(2500 + step * 500);
+    assert.equal(next?.type, "move");
+  }
+  assert.equal(bridge.engine.boardCount, bridge.engine.boardCap);
+});
+
+test("候补棋可直接上场时即使看起来安全也不会先升本", () => {
+  const bridge = new EngineBridge(130284);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 6;
+  bridge.engine.state.upgradeRemaining = bridge.engine.upgradeCost || 0;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const ids = SHOP_UNITS.slice(0, 6);
+  ids.slice(0, 4).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1302840 + index, id, star: 1 };
+  });
+  ids.slice(4).forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1302850 + index, id, star: 1 };
+  });
+  bridge.engine.state.gold = 100;
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "balanced", "normal");
+  autopilot.rolloutTargetLineup = (roster) => roster;
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.upgradeAction = () => ({ type: "buyXp" });
+  autopilot.setEnabled(true);
+
+  assert.equal(autopilot.tick(1000), null);
+  const action = autopilot.tick(2000);
+  assert.equal(action?.type, "move");
+  assert.equal(action?.from?.zone, "bench");
+  assert.equal(action?.to?.zone, "board");
+  assert.equal(bridge.engine.boardCount, 5);
+});
+
+test("均衡残血且候补席满时会出售已有高星终局棋的低星重复件", () => {
+  const bridge = new EngineBridge(130283);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.upgradeRemaining = 0;
+  bridge.engine.state.round = 23;
+  bridge.engine.state.hp = 5;
+  bridge.engine.state.gold = 8;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const boardIds = [
+    "sui_flower", "xuehui", "sui_bird", "lian", "yua", "grove_mender", "spark_mage", "rei", "meme", "biscuit_sui",
+  ];
+  boardIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = {
+      uid: 1302830 + index,
+      id,
+      star: index < 4 ? 2 : 1,
+    };
+  });
+  const benchIds = ["sui_flower", "xuehui", "sui_bird", "lian", "yua", "grove_mender", "biscuit_sui", "meme"];
+  benchIds.forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1302840 + index, id, star: 1 };
+  });
+  bridge.engine.state.shop.fill(null);
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "balanced", "normal");
+  autopilot.rolloutConfidence = () => 9900;
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+
+  const action = autopilot.tick(2000);
+  assert.equal(action?.type, "sell");
+  assert.equal(action?.location?.zone, "bench");
+  assert.ok(["sui_flower", "xuehui", "sui_bird", "lian"].includes(benchIds[action.location.index]));
+  assert.equal(bridge.engine.state.bench.filter(Boolean).length, 7);
 });
 
 test("危险回合满席时会用真实预演决定是否牺牲低价值二星培养项目", () => {

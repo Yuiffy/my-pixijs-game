@@ -12,6 +12,14 @@ const runs = Math.max(1, Math.min(32, Number(option("--runs", "8")) || 8));
 const baseSeed = Math.max(1, Number(option("--seed", "122000")) || 122000);
 const battles = Math.max(4, Math.min(64, Number(option("--battles", "50")) || 50));
 const planningMode = option("--planning", "fast");
+const rolloutHz = Math.max(
+  20,
+  Math.min(60, Number(option("--rollout-hz", planningMode === "exact" ? "60" : "20")) || 20),
+);
+const battleStepHz = Math.max(
+  20,
+  Math.min(60, Number(option("--battle-hz", planningMode === "exact" ? "60" : "20")) || 20),
+);
 const starterOption = option("--starter", "auto");
 const starter = starterOption === "auto" ? "" : starterOption;
 const outputPath = option("--output", "artifacts/autochess-style-benchmark.json");
@@ -155,7 +163,8 @@ try {
       battleLimit: battles,
       starter,
       mode: planningMode === "fast" ? "training" : "validation",
-      battleStepHz: 60,
+      battleStepHz,
+      rolloutHz,
       style,
       informationMode: style === "seer" ? "oracle" : "normal",
     }),
@@ -182,6 +191,8 @@ const report = {
     baseSeed,
     battles,
     planningMode,
+    rolloutHz,
+    battleStepHz,
     starter: starter || "auto",
     workerCount,
   },

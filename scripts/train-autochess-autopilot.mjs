@@ -22,7 +22,11 @@ const baseSeed = Math.max(1, Number(option("--seed", "74000")) || 74000);
 const battles = Math.max(4, Math.min(64, Number(option("--battles", "20")) || 20));
 const trainingBattleStepHz = Math.max(
   20,
-  Math.min(60, Number(option("--training-hz", "30")) || 30),
+  Math.min(60, Number(option("--training-hz", "20")) || 20),
+);
+const trainingRolloutHz = Math.max(
+  20,
+  Math.min(60, Number(option("--training-rollout-hz", "20")) || 20),
 );
 const validationBattles = Math.max(
   battles,
@@ -75,6 +79,8 @@ const dimensions = [
   { key: "woundedReserve", min: 1, max: 9, step: 1, sigma: 1.5 },
   { key: "targetLevelRoundDivisor", min: 2, max: 5, step: 1, sigma: 0.75 },
   { key: "targetLevelRoundOffset", min: 0, max: 4, step: 1, sigma: 1 },
+  { key: "lateGamePurchaseStartRound", min: 6, max: 16, step: 1, sigma: 2 },
+  { key: "lateGamePurchaseStartLevel", min: 5, max: 9, step: 1, sigma: 1 },
   { key: "safeWinRolloutScore", min: 10000, max: 10600, step: 50, sigma: 120 },
   { key: "stabilizeRolloutScore", min: 10000, max: 10350, step: 25, sigma: 80 },
   { key: "financeActivationRolloutScore", min: 9800, max: 10350, step: 25, sigma: 100 },
@@ -239,6 +245,7 @@ const evaluate = async (policy, seedStart, runCount, battleLimit, mode = "traini
       starter,
       mode,
       battleStepHz: mode === "training" ? trainingBattleStepHz : 60,
+      rolloutHz: mode === "training" ? trainingRolloutHz : 60,
     }),
   ));
   completedCampaigns[mode] += runs.length;
@@ -416,6 +423,7 @@ const report = {
       averageWorkerMsPerCampaign: Number((workerComputeMs.training
         / Math.max(1, completedCampaigns.training)).toFixed(2)),
       battleStepHz: trainingBattleStepHz,
+      rolloutHz: trainingRolloutHz,
       planningMode: "training",
     },
     exactValidation: {
@@ -427,6 +435,7 @@ const report = {
       averageWorkerMsPerCampaign: Number((workerComputeMs.validation
         / Math.max(1, completedCampaigns.validation)).toFixed(2)),
       battleStepHz: 60,
+      rolloutHz: 60,
       planningMode: "evolution",
     },
   },

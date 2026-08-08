@@ -27,6 +27,8 @@ const policyReport = policyPath ? JSON.parse(await readFile(policyPath, "utf8"))
 const policy = policyReport?.bestPolicy || policyReport?.policy || policyReport || {};
 const style = option("--style", "survival");
 const informationMode = option("--information", style === "seer" ? "oracle" : "normal");
+const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "60")) || 60));
+const battleStepHz = Math.max(20, Math.min(60, Number(option("--battle-hz", "60")) || 60));
 const reportProgress = process.argv.includes("--progress");
 if (!["survival", "balanced", "highroll", "seer"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
@@ -75,7 +77,7 @@ const runFitness = (run) => run.wins * 100_000_000
   + run.rounds.reduce((sum, round) => sum + round.combatMargin * 1_000 + round.interest * 100, 0);
 
 const playRun = (seed) => {
-  const bridge = new EngineBridge(seed);
+  const bridge = new EngineBridge(seed, 1, { battleStepHz });
   bridge.setConsoleLogging(false);
   if (forcedStarter) bridge.engine.state.starterChoices = [forcedStarter];
   const autopilot = new AutoChessAutopilot(
@@ -84,6 +86,7 @@ const playRun = (seed) => {
     policy,
     style,
     informationMode,
+    rolloutHz,
   );
   if (!autopilot.startFromTitle()) throw new Error(`Autopilot could not start seed ${seed}`);
 
@@ -109,6 +112,7 @@ const playRun = (seed) => {
         interest: bridge.engine.interestIncome,
         level: bridge.engine.state.playerLevel,
         boardCount: bridge.engine.boardCount,
+        boardCap: bridge.engine.boardCap,
         benchCount: bridge.engine.state.bench.filter(Boolean).length,
         fullBench: bridge.engine.state.bench.every(Boolean),
         rosterValue: rosterAssetValue(bridge.engine),
@@ -207,7 +211,7 @@ const playRun = (seed) => {
     earlyLosses: rounds.filter((round) => round.round <= 12 && !round.won).length,
     perfectEarly: rounds.filter((round) => round.round <= 12).length >= Math.min(12, maximumBattles)
       && rounds.every((round) => round.round > 12 || round.won),
-    underfilledRounds: rounds.filter((round) => round.boardCount < Math.min(round.level, 10)).length,
+    underfilledRounds: rounds.filter((round) => round.boardCount < round.boardCap).length,
     firstFourFinanceRound: rounds.find((round) => (
       round.activeTraits.some((trait) => trait.id === "finance" && trait.count >= 4)
     ))?.round ?? null,
@@ -264,6 +268,8 @@ const aggregate = {
   policyPath: policyPath || null,
   style,
   informationMode,
+  rolloutHz,
+  battleStepHz,
   requiredWinRound: requiredWinRound || null,
   requiredWinRoundPasses: requiredWinRound
     ? results.filter((run) => run.rounds.some((round) => (

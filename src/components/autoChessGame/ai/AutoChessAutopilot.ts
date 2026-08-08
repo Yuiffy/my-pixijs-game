@@ -37,6 +37,7 @@ import {
 import {
   planSeerEconomy,
   type SeerPlan,
+  type SeerPlannerUnit,
   type SeerShopForecast,
 } from "./seerPlanner";
 
@@ -95,9 +96,10 @@ const PREPARATION_ACTION_LIMIT = 96;
 const REPLACEMENT_PREVIEW_LIMIT = 5;
 const REPLACEMENT_ROLLOUT_MIN_GAIN = 12;
 const RESCUE_HEURISTIC_CANDIDATE_LIMIT = 24;
-const ORACLE_SHOP_LOOKAHEAD = 72;
+const ORACLE_SHOP_LOOKAHEAD = 128;
 const SHARED_ROLLOUT_CACHE_LIMIT = 50000;
 const EXACT_COMBAT_HZ = 60;
+const DEFAULT_ROLLOUT_COMBAT_HZ = 30;
 const sharedRolloutScoreCache = new Map<string, number>();
 const sharedRolloutCacheStats = { hits: 0, misses: 0 };
 
@@ -269,11 +271,17 @@ export class AutoChessAutopilot {
 
   private seerPlan: SeerPlan | null = null;
 
+  private seerPurchaseOffsets: number[] = [];
+
+  private seerSaleOffsets: number[] = [];
+
   private policy: AutopilotPolicy;
 
   private style: AutopilotStyle;
 
   private informationMode: AutopilotInformationMode;
+
+  private rolloutCombatHz: number;
 
   private readonly policyOverrides: Partial<AutopilotPolicy>;
 
@@ -283,11 +291,16 @@ export class AutoChessAutopilot {
     policy: Partial<AutopilotPolicy> = {},
     style: AutopilotStyle = "survival",
     informationMode: AutopilotInformationMode = informationModeForAutopilotStyle(style),
+    rolloutCombatHz = DEFAULT_ROLLOUT_COMBAT_HZ,
   ) {
     if (planningMode === "training") this.rolloutVariantLimit = 1;
     this.policyOverrides = { ...policy };
     this.style = style;
     this.informationMode = informationMode;
+    this.rolloutCombatHz = Math.max(20, Math.min(
+      EXACT_COMBAT_HZ,
+      Math.round(rolloutCombatHz),
+    ));
     this.policy = resolveAutopilotStylePolicy(style, this.policyOverrides);
     this.bridge.setAutopilotStrategy(style, informationMode);
   }
@@ -350,6 +363,7 @@ export class AutoChessAutopilot {
       this.policy,
       this.style,
       this.informationMode,
+      this.rolloutCombatHz,
     );
     simulationPilot.setEnabled(true);
     let now = 1000;
@@ -457,6 +471,8 @@ export class AutoChessAutopilot {
     this.rerollMode = "bank";
     this.soldUnitIds.clear();
     this.preparationStateVisits.clear();
+    this.seerPurchaseOffsets = [];
+    this.seerSaleOffsets = [];
     this.seerPlan = this.createSeerPlan();
   }
 
@@ -465,11 +481,20 @@ export class AutoChessAutopilot {
     const { engine } = this.bridge;
     const { state } = engine;
     const roster = this.ownedEntries();
+    const targetIds = new Set<UnitId>(AUTOPILOT_TERMINAL_TARGET_IDS);
     const targetCopies = roster.reduce<Partial<Record<UnitId, number>>>((copies, { unit }) => {
       if (lateGameTargetDesiredCopies(unit.id) <= 0) return copies;
       copies[unit.id] = (copies[unit.id] || 0) + unitCopyValue(unit);
       return copies;
     }, {});
+    const currentTransitionUnits: SeerPlannerUnit[] = roster
+      .filter(({ unit }) => !targetIds.has(unit.id))
+      .map(({ unit }) => ({ id: unit.id, star: unit.star }));
+    const currentBoardStrength = state.board.reduce((total, unit) => (
+      unit
+        ? total + UNIT_DEFS[unit.id].cost * 12 * STAR_POWER[unit.star]
+        : total
+    ), 0);
     const futureShops = {} as SeerShopForecast;
     PLAYER_LEVELS.forEach((level) => {
       futureShops[level] = engine.previewFutureShopsAtLevels(Array.from(
@@ -491,6 +516,9 @@ export class AutoChessAutopilot {
       financeActive: this.financeInterestActive(),
       currentShop: state.shop,
       currentCombatScore: this.rolloutConfidence(roster),
+      currentBoardCount: engine.boardCount,
+      currentBoardStrength,
+      currentTransitionUnits,
       targetCopies,
       targets: AUTOPILOT_TERMINAL_TARGETS.map(({ id, priority }) => ({
         id,
@@ -498,8 +526,10 @@ export class AutoChessAutopilot {
         desiredCopies: lateGameTargetDesiredCopies(id),
       })),
       futureShops,
-      horizon: this.planningMode === "training" ? 6 : 8,
-      beamWidth: this.planningMode === "training" ? 64 : 96,
+      horizon: this.planningMode === "training"
+        ? Math.min(24, Math.max(1, 51 - state.round))
+        : Math.max(1, Math.min(50, 51 - state.round)),
+      beamWidth: this.planningMode === "training" ? 48 : 64,
     });
   }
 
@@ -661,9 +691,12 @@ export class AutoChessAutopilot {
       placements,
     ].join("/");
     const actualRandomState = this.bridge.engine.getRandomState();
-    const combatHz = EXACT_COMBAT_HZ;
+    const combatHz = this.rolloutCombatHz;
+    const stableVariantLimit = this.rolloutCombatHz >= EXACT_COMBAT_HZ
+      ? this.rolloutVariantLimit
+      : Math.min(2, this.rolloutVariantLimit);
     const scores = Array.from({
-      length: stableOnly ? this.rolloutVariantLimit : 1,
+      length: stableOnly ? stableVariantLimit : 1,
     }, (_, variant) => {
       const exactBranch = variant === 0;
       const branch = exactBranch ? `actual:${actualRandomState}` : `rollout:${variant - 1}`;
@@ -1006,6 +1039,12 @@ export class AutoChessAutopilot {
     return plannedFinanceIds.size >= 4;
   }
 
+  private lateGamePurchaseWindowOpen() {
+    const { state } = this.bridge.engine;
+    return state.round >= this.policy.lateGamePurchaseStartRound
+      || state.playerLevel >= this.policy.lateGamePurchaseStartLevel;
+  }
+
   private interestRule() {
     return this.financeInterestActive()
       ? { step: 4, cap: FINANCE_INTEREST_CAP }
@@ -1177,12 +1216,13 @@ export class AutoChessAutopilot {
   private lateGameReserveUids(roster: OwnedEntry[]) {
     const reserves = new Set<number>();
     const focusedIds = this.seerProjectFocusIds(roster);
+    const lateGamePurchaseWindowOpen = this.lateGamePurchaseWindowOpen();
     AUTOPILOT_LATE_GAME_TARGET_IDS.forEach((id) => {
       let reservedCopies = 0;
       const desiredCopies = lateGameTargetDesiredCopies(id);
       const reserveGoal = this.style === "seer" && !focusedIds.has(id)
         ? Math.min(desiredCopies, 1)
-        : desiredCopies;
+        : lateGamePurchaseWindowOpen ? desiredCopies : Math.min(desiredCopies, 3);
       roster
         .filter(({ unit }) => unit.id === id)
         .sort((left, right) => right.unit.star - left.unit.star
@@ -1300,6 +1340,7 @@ export class AutoChessAutopilot {
     );
     const financeProjectIds = this.financeProjectIds(roster);
     const seerFocusIds = this.seerProjectFocusIds(roster);
+    const lateGamePurchaseWindowOpen = this.lateGamePurchaseWindowOpen();
     const weakestFinanceProject = roster
       .filter(({ unit }) => financeProjectIds.has(unit.id))
       .sort((left, right) => this.unitScore(left.unit, roster) - this.unitScore(right.unit, roster))[0];
@@ -1333,13 +1374,22 @@ export class AutoChessAutopilot {
       );
       const targetPlanPriority = lateGameTargetPriority(id);
       const targetDesiredCopies = lateGameTargetDesiredCopies(id);
+      const shopCopies = state.shop.filter((shopId) => shopId === id).length;
+      const canStartTerminalProject = targetDesiredCopies <= 0
+        || lateGamePurchaseWindowOpen
+        || sameUnits.length > 0
+        || shopCopies >= 2
+        || completesMerge
+        || definition.cost >= weakestLineupCost + 2;
       const targetNeedsCopies = ownedCopies < targetDesiredCopies;
-      const longTermPriority = targetNeedsCopies ? targetPlanPriority : 0;
+      const longTermPriority = targetNeedsCopies && canStartTerminalProject
+        ? targetPlanPriority
+        : 0;
       const targetDuplicate = (targetDesiredCopies > 0
         ? targetNeedsCopies
         : lineupIds.has(id) || upgradeProjectIds.has(id))
+        && canStartTerminalProject
         && !skipMaxStarDuplicate;
-      const shopCopies = state.shop.filter((shopId) => shopId === id).length;
       const emptyBench = state.bench.filter((unit) => !unit).length;
       const canSpeculate = !needsPopulation
         && !skipMaxStarDuplicate
@@ -1478,6 +1528,37 @@ export class AutoChessAutopilot {
     return { type: "shop", index: pending.index };
   }
 
+  private seerPlannedPurchaseAction(): GameAction | null {
+    if (this.style !== "seer" || !this.seerPlan) return null;
+    const purchasesByShop = this.seerPlan.firstStep.purchasesByShop;
+    const plannedPurchases = purchasesByShop?.[this.rerolls];
+    if (!plannedPurchases) return null;
+    const offset = this.seerPurchaseOffsets[this.rerolls] || 0;
+    const id = plannedPurchases[offset];
+    if (!id) return null;
+    const { engine } = this.bridge;
+    const { state } = engine;
+    const index = state.shop.findIndex((shopId) => shopId === id);
+    const hasCapacity = engine.boardCount < engine.boardCap || state.bench.some((unit) => !unit);
+    if (index < 0 || !hasCapacity || state.gold < UNIT_DEFS[id].cost) return null;
+    this.seerPurchaseOffsets[this.rerolls] = offset + 1;
+    return { type: "shop", index } as GameAction;
+  }
+
+  private seerPlannedSaleAction(): GameAction | null {
+    if (this.style !== "seer" || !this.seerPlan) return null;
+    const salesByShop = this.seerPlan.firstStep.salesByShop;
+    const plannedSales = salesByShop?.[this.rerolls];
+    if (!plannedSales) return null;
+    const offset = this.seerSaleOffsets[this.rerolls] || 0;
+    const id = plannedSales[offset];
+    if (!id) return null;
+    const index = this.bridge.engine.state.bench.findIndex((unit) => unit?.id === id);
+    if (index < 0) return null;
+    this.seerSaleOffsets[this.rerolls] = offset + 1;
+    return { type: "sell", location: { zone: "bench", index } } as GameAction;
+  }
+
   private replacementRoster(
     roster: OwnedEntry[],
     candidate: ShopCandidate,
@@ -1520,7 +1601,11 @@ export class AutoChessAutopilot {
     return next;
   }
 
-  private previewRosterRollout(roster: OwnedEntry[], exactOnly = false) {
+  private previewRosterRollout(
+    roster: OwnedEntry[],
+    exactOnly = false,
+    combatHz = this.rolloutCombatHz,
+  ) {
     const planning = {
       plannedLineupKey: this.plannedLineupKey,
       plannedLineupUids: [...this.plannedLineupUids],
@@ -1530,9 +1615,16 @@ export class AutoChessAutopilot {
       lineageUnitIds: [...this.lineageUnitIds],
       lineageFormation: this.lineageFormation,
       rolloutVariantLimit: this.rolloutVariantLimit,
+      rolloutCombatHz: this.rolloutCombatHz,
     };
     try {
-      if (exactOnly) this.rolloutVariantLimit = 1;
+      if (exactOnly) {
+        this.rolloutVariantLimit = 1;
+        this.rolloutCombatHz = EXACT_COMBAT_HZ;
+      } else this.rolloutCombatHz = Math.max(20, Math.min(
+        EXACT_COMBAT_HZ,
+        Math.round(combatHz),
+      ));
       this.plannedLineupKey = "";
       this.plannedLineupUids = [];
       this.plannedLineupUnits.clear();
@@ -1548,13 +1640,18 @@ export class AutoChessAutopilot {
       this.lineageUnitIds = planning.lineageUnitIds;
       this.lineageFormation = planning.lineageFormation;
       this.rolloutVariantLimit = planning.rolloutVariantLimit;
+      this.rolloutCombatHz = planning.rolloutCombatHz;
     }
   }
 
   private replacementAction(roster: OwnedEntry[]): GameAction | null {
     const { engine } = this.bridge;
     const { state } = engine;
-    if (engine.boardCount < engine.boardCap || state.bench.some((unit) => !unit)) return null;
+    const emptyBench = state.bench.filter((unit) => !unit).length;
+    if (
+      engine.boardCount < engine.boardCap
+      || emptyBench > this.policy.benchPressureEmptySlots
+    ) return null;
 
     const candidates = this.shopCandidates(roster);
     if (candidates.length === 0) return null;
@@ -1599,11 +1696,24 @@ export class AutoChessAutopilot {
         }
         return best;
       }, new Map());
-    const finalists = Array.from(bestPlanByCandidate.values())
+    const screened = Array.from(bestPlanByCandidate.values())
       .sort((left, right) => right.heuristicScore - left.heuristicScore
         || right.candidate.score - left.candidate.score)
       .slice(0, this.planningMode === "training" ? 1 : REPLACEMENT_PREVIEW_LIMIT)
-      .map((plan) => ({ ...plan, rolloutScore: this.previewRosterRollout(plan.roster, true) }))
+      .map((plan) => ({
+        ...plan,
+        rolloutScore: this.previewRosterRollout(plan.roster, false, 30),
+      }))
+      .sort((left, right) => right.rolloutScore - left.rolloutScore
+        || right.heuristicScore - left.heuristicScore);
+    const finalists = screened
+      .slice(0, this.planningMode === "training"
+        ? 1
+        : this.rolloutCombatHz >= EXACT_COMBAT_HZ ? 2 : 1)
+      .map((plan) => ({
+        ...plan,
+        rolloutScore: this.previewRosterRollout(plan.roster, true),
+      }))
       .sort((left, right) => right.rolloutScore - left.rolloutScore
         || right.heuristicScore - left.heuristicScore);
     const plan = finalists.find(({ candidate, heuristicScore, rolloutScore }) => {
@@ -1636,7 +1746,7 @@ export class AutoChessAutopilot {
     const { state } = engine;
     const roster = this.ownedEntries();
     const currentScore = this.rolloutConfidence(roster);
-    if (this.seerPlan && currentScore >= this.policy.safeWinRolloutScore) {
+    if (this.seerPlan) {
       if (
         state.playerLevel < this.seerPlan.firstStep.targetLevel
         && engine.upgradeCost !== null
@@ -1710,7 +1820,26 @@ export class AutoChessAutopilot {
     ) return null;
     const desired = this.rolloutTargetLineup(roster);
     const emptyBench = engine.state.bench.filter((unit) => !unit).length;
-    const underBenchPressure = emptyBench < 3;
+    const underBenchPressure = emptyBench <= this.policy.benchPressureEmptySlots;
+    const emergencyProjectSales = underBenchPressure
+      && this.style !== "seer"
+      ? (() => {
+        const mergeProjectIds = this.oneCopyFromMergeIds(roster);
+        const desiredUids = new Set(desired.map(({ unit }) => unit.uid));
+        const boardStars = new Map<UnitId, number>();
+        engine.state.board.forEach((unit) => {
+          if (!unit) return;
+          boardStars.set(unit.id, Math.max(boardStars.get(unit.id) || 0, unit.star));
+        });
+        return roster.filter(({ unit, location }) => (
+          location.zone === "bench"
+          && !desiredUids.has(unit.uid)
+          && unit.star === 1
+          && !mergeProjectIds.has(unit.id)
+          && (boardStars.get(unit.id) || 0) >= 2
+        ));
+      })()
+      : [];
     const completedDuplicates = roster.filter(({ unit, location }) => (
       location.zone === "bench"
       && roster.some(({ unit: owned }) => owned.id === unit.id && owned.star === 3)
@@ -1720,7 +1849,8 @@ export class AutoChessAutopilot {
         .filter(({ location }) => location.zone === "bench")
       : [];
     const sale = Array.from(new Map(
-      [...completedDuplicates, ...pressureSales].map((entry) => [entry.unit.uid, entry]),
+      [...completedDuplicates, ...pressureSales, ...emergencyProjectSales]
+        .map((entry) => [entry.unit.uid, entry]),
     ).values())
       .sort((left, right) => lateGameTargetPriority(left.unit.id)
         - lateGameTargetPriority(right.unit.id)
@@ -1731,6 +1861,108 @@ export class AutoChessAutopilot {
     this.benchCleanupSales += 1;
     this.soldUnitIds.add(sale.unit.id);
     return { type: "sell", location: sale.location };
+  }
+
+  private fundingSaleAction(roster: OwnedEntry[], currentScore: number): GameAction | null {
+    const { engine } = this.bridge;
+    const { state } = engine;
+    const desired = this.rolloutTargetLineup(roster);
+    const desiredUids = new Set(desired.map(({ unit }) => unit.uid));
+    const mergeProjectIds = this.oneCopyFromMergeIds(roster);
+    const boardStars = new Map<UnitId, number>();
+    state.board.forEach((unit) => {
+      if (!unit) return;
+      boardStars.set(unit.id, Math.max(boardStars.get(unit.id) || 0, unit.star));
+    });
+    const emergencySales = roster.filter(({ unit, location }) => (
+      location.zone === "bench"
+      && !desiredUids.has(unit.uid)
+      && unit.star === 1
+      && !mergeProjectIds.has(unit.id)
+      && (boardStars.get(unit.id) || 0) >= 2
+    ));
+    const salePool = Array.from(new Map(
+      [
+        ...this.expendableInterestEntries(roster, desired),
+        ...emergencySales,
+      ]
+        .filter(({ location }) => location.zone === "bench")
+        .map((entry) => [entry.unit.uid, entry]),
+    ).values())
+      .sort((left, right) => this.unitScore(left.unit, roster) - this.unitScore(right.unit, roster)
+        || engine.getUnitSellValue(left.unit) - engine.getUnitSellValue(right.unit)
+        || left.unit.uid - right.unit.uid)
+      .slice(0, 8);
+    if (salePool.length === 0) return null;
+
+    const originalGold = state.gold;
+    let levelScore: number | null = null;
+    let best: {
+      sale: OwnedEntry;
+      candidate: ShopCandidate | null;
+      score: number;
+      action: "upgrade" | "purchase";
+    } | null = null;
+    try {
+      salePool.forEach((sale) => {
+        state.gold = originalGold + engine.getUnitSellValue(sale.unit);
+        const upgrade = this.upgradeAction();
+        let upgradeScore = Number.NEGATIVE_INFINITY;
+        if (upgrade?.type === "buyXp") {
+          if (levelScore === null) {
+            const currentLevel = state.playerLevel;
+            try {
+              if (currentLevel < 10) {
+                state.playerLevel = (currentLevel + 1) as PlayerLevel;
+                levelScore = this.previewRosterRollout(roster, false, 30);
+              } else levelScore = Number.NEGATIVE_INFINITY;
+            } finally {
+              state.playerLevel = currentLevel;
+            }
+          }
+          upgradeScore = levelScore;
+        }
+
+        const candidate = this.shopCandidates(roster, false)[0] || null;
+        let purchaseScore = Number.NEGATIVE_INFINITY;
+        if (candidate) {
+          purchaseScore = this.previewRosterRollout(
+            this.replacementRoster(roster, candidate, sale),
+            false,
+            30,
+          );
+        }
+        const action = upgradeScore >= purchaseScore ? "upgrade" : "purchase";
+        const score = Math.max(upgradeScore, purchaseScore);
+        const meaningfulGain = score >= currentScore + REPLACEMENT_ROLLOUT_MIN_GAIN
+          || (currentScore < this.policy.safeWinRolloutScore
+            && score >= this.policy.safeWinRolloutScore);
+        if (!meaningfulGain) return;
+        if (
+          !best
+          || score > best.score
+          || (score === best.score
+            && engine.getUnitSellValue(sale.unit) < engine.getUnitSellValue(best.sale.unit))
+        ) {
+          best = { sale, candidate: action === "purchase" ? candidate : null, score, action };
+        }
+      });
+    } finally {
+      state.gold = originalGold;
+    }
+    const chosen = best as {
+      sale: OwnedEntry;
+      candidate: ShopCandidate | null;
+      score: number;
+      action: "upgrade" | "purchase";
+    } | null;
+    if (!chosen) return null;
+    if (chosen.action === "purchase" && chosen.candidate) {
+      this.pendingPurchase = { index: chosen.candidate.index, id: chosen.candidate.id };
+      if (chosen.candidate.speculative) this.speculativeUnitIds.add(chosen.candidate.id);
+    }
+    this.soldUnitIds.add(chosen.sale.unit.id);
+    return { type: "sell", location: chosen.sale.location };
   }
 
   private interestSaleAction(roster: OwnedEntry[]): GameAction | null {
@@ -1862,6 +2094,26 @@ export class AutoChessAutopilot {
       return { type: "shop", index: candidate.index };
     }
     return null;
+  }
+
+  private populationAction(roster: OwnedEntry[]): GameAction | null {
+    const { engine } = this.bridge;
+    if (engine.boardCount >= engine.boardCap) return null;
+    const emptyBoard = engine.state.board.findIndex((unit) => !unit);
+    if (emptyBoard < 0) return null;
+    const desired = this.rolloutTargetLineup(roster);
+    const desiredBench = desired.find(({ location }) => location.zone === "bench");
+    const fallbackBench = roster
+      .filter(({ location }) => location.zone === "bench")
+      .sort((left, right) => this.unitScore(right.unit, roster) - this.unitScore(left.unit, roster)
+        || left.unit.uid - right.unit.uid)[0];
+    const source = desiredBench || fallbackBench;
+    if (!source) return null;
+    return {
+      type: "move",
+      from: source.location,
+      to: { zone: "board", index: emptyBoard },
+    } as GameAction;
   }
 
   private formationAction(roster: OwnedEntry[]): GameAction | null {
@@ -2017,24 +2269,43 @@ export class AutoChessAutopilot {
     this.observeStabilizationStrength(roster);
     const pendingPurchase = this.pendingPurchaseAction();
     if (pendingPurchase) return pendingPurchase;
-    if (
-      this.seerPlan
-      && state.playerLevel < this.seerPlan.firstStep.targetLevel
-      && this.rolloutConfidence(roster) >= this.policy.safeWinRolloutScore
-    ) {
+    const plannedSale = this.seerPlannedSaleAction();
+    if (plannedSale) return plannedSale;
+    // A legal board slot is immediate combat power; fill it before any economic action.
+    const population = this.populationAction(roster);
+    if (population) return population;
+    const needsPopulation = roster.length < engine.boardCap;
+    const benchUnderPressure = engine.boardCount >= engine.boardCap
+      && engine.state.bench.filter((unit) => !unit).length <= this.policy.benchPressureEmptySlots;
+    const rolloutScore = this.rolloutConfidence(roster);
+    if (benchUnderPressure && rolloutScore < this.policy.safeWinRolloutScore) {
+      const replacement = this.preparationActions < ECONOMY_ACTION_LIMIT
+        ? this.replacementAction(roster)
+        : null;
+      if (replacement) return replacement;
+      const pressureCleanup = this.benchCleanupAction(this.ownedEntries());
+      if (pressureCleanup) return pressureCleanup;
+    }
+    if (this.seerPlan && state.playerLevel < this.seerPlan.firstStep.targetLevel) {
       const plannedUpgrade = this.upgradeAction();
       if (plannedUpgrade) return plannedUpgrade;
     }
-    const needsPopulation = roster.length < engine.boardCap
-      && this.rolloutConfidence(roster) < this.policy.safeWinRolloutScore;
+    const plannedPurchase = this.seerPlannedPurchaseAction();
+    if (plannedPurchase) return plannedPurchase;
     const fill = needsPopulation ? this.purchaseAction(roster, true) : null;
     if (fill) return fill;
+    const fundingSale = this.preparationActions < ECONOMY_ACTION_LIMIT
+      ? this.fundingSaleAction(roster, rolloutScore)
+      : null;
+    if (fundingSale) return fundingSale;
     const upgrade = this.upgradeAction();
     if (upgrade) return upgrade;
     const replacement = this.preparationActions < ECONOMY_ACTION_LIMIT
       ? this.replacementAction(roster)
       : null;
     if (replacement) return replacement;
+    const pressureCleanup = this.benchCleanupAction(this.ownedEntries());
+    if (pressureCleanup) return pressureCleanup;
     const purchase = this.preparationActions < ECONOMY_ACTION_LIMIT
       ? this.purchaseAction(roster, false)
       : null;
@@ -2044,7 +2315,8 @@ export class AutoChessAutopilot {
     const interestSale = this.interestSaleAction(this.ownedEntries());
     if (interestSale) return interestSale;
     const rerollStrategy = this.rerollStrategy(roster);
-    const needsStabilization = rerollStrategy.rolloutScore < this.policy.safeWinRolloutScore;
+    const needsStabilization = !this.seerPlan
+      && rerollStrategy.rolloutScore < this.policy.safeWinRolloutScore;
     const seerRerollLimit = this.seerPlan?.firstStep.rerolls ?? Number.POSITIVE_INFINITY;
     const canUseFreeReroll = state.freeRerollCharges > 0
       && this.rerolls < (needsStabilization ? 6 : Math.min(6, seerRerollLimit));

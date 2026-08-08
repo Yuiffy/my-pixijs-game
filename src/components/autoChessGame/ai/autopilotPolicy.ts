@@ -8,6 +8,8 @@ export interface AutopilotPolicy {
   woundedReserve: number;
   targetLevelRoundDivisor: number;
   targetLevelRoundOffset: number;
+  lateGamePurchaseStartRound: number;
+  lateGamePurchaseStartLevel: number;
   safeWinRolloutScore: number;
   stabilizeRolloutScore: number;
   financeActivationRolloutScore: number;
@@ -37,6 +39,7 @@ export interface AutopilotPolicy {
   minimumWinningLineupMaxPrunes: number;
   maximumFinalReinvestments: number;
   maxStarCleanupSales: number;
+  benchPressureEmptySlots: number;
   skipMaxStarDuplicatePurchases: number;
 }
 
@@ -57,6 +60,8 @@ export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
   woundedReserve: 5,
   targetLevelRoundDivisor: 3,
   targetLevelRoundOffset: 3,
+  lateGamePurchaseStartRound: 10,
+  lateGamePurchaseStartLevel: 7,
   safeWinRolloutScore: 10050,
   stabilizeRolloutScore: 10000,
   financeActivationRolloutScore: 9800,
@@ -86,19 +91,26 @@ export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
   minimumWinningLineupMaxPrunes: 5,
   maximumFinalReinvestments: 1,
   maxStarCleanupSales: 7,
+  benchPressureEmptySlots: 2,
   skipMaxStarDuplicatePurchases: 1,
 };
 
 export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotPolicy>> = {
   survival: {
     safeWinRolloutScore: 10050,
+    lateGamePurchaseStartRound: 12,
+    lateGamePurchaseStartLevel: 7,
     minimumWinningLineupMaxPrunes: 0,
+    benchPressureEmptySlots: 2,
   },
   balanced: {
     reserveCap: 10,
     reserveRoundScale: 0.85,
     safeWinRolloutScore: 10010,
+    lateGamePurchaseStartRound: 10,
+    lateGamePurchaseStartLevel: 7,
     minimumWinningLineupMaxPrunes: 0,
+    benchPressureEmptySlots: 2,
     maximumDryPaidRerolls: 10,
     financeActivationMaxRolloutDeficit: 40,
     terminalRollDownActivationGold: 120,
@@ -112,6 +124,8 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     reserveFloor: 2,
     reserveRoundScale: 0.6,
     safeWinRolloutScore: 10010,
+    lateGamePurchaseStartRound: 8,
+    lateGamePurchaseStartLevel: 6,
     maximumDryPaidRerolls: 16,
     financeActivationMaxRolloutDeficit: 100,
     financePurchaseInterestTiersAtRisk: 2,
@@ -125,9 +139,12 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     terminalCompletionReserveGold: 4,
     woundedHpThreshold: 10,
     minimumWinningLineupMaxPrunes: 0,
+    benchPressureEmptySlots: 1,
   },
   seer: {
     safeWinRolloutScore: 10050,
+    lateGamePurchaseStartRound: 6,
+    lateGamePurchaseStartLevel: 6,
     terminalRollDownMinimumRound: 16,
     terminalRollDownActivationGold: 112,
     terminalRollDownReserveGold: 40,
@@ -136,6 +153,7 @@ export const AUTOPILOT_STYLE_POLICIES: Record<AutopilotStyle, Partial<AutopilotP
     terminalCompletionActivationGold: 92,
     terminalCompletionReserveGold: 8,
     minimumWinningLineupMaxPrunes: 0,
+    benchPressureEmptySlots: 0,
   },
 };
 
@@ -222,6 +240,9 @@ export const resolveAutopilotPolicy = (
       ),
     ),
     upgradeProjectLimit: Math.max(0, Math.floor(policy.upgradeProjectLimit)),
+    lateGamePurchaseStartRound: Math.max(1, Math.floor(policy.lateGamePurchaseStartRound)),
+    lateGamePurchaseStartLevel: Math.max(3, Math.min(10, Math.floor(policy.lateGamePurchaseStartLevel))),
+    benchPressureEmptySlots: Math.max(0, Math.min(8, Math.floor(policy.benchPressureEmptySlots))),
     goodPurchaseInterestTiersAtRisk: Math.max(
       0,
       Math.floor(policy.goodPurchaseInterestTiersAtRisk),

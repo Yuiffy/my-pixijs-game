@@ -102,6 +102,7 @@ const playRun = ({
   starter,
   mode = "training",
   battleStepHz,
+  rolloutHz = mode === "validation" ? 60 : 30,
   style = "survival",
   informationMode = style === "seer" ? "oracle" : "normal",
 }) => {
@@ -118,6 +119,7 @@ const playRun = ({
     policy,
     style,
     informationMode,
+    rolloutHz,
   );
   if (starter) {
     bridge.engine.state.starterChoices = [starter];
