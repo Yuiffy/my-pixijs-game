@@ -926,7 +926,7 @@ test("大黑鼠随机怪话说明包含迎客松与 75mm 大吧唧", () => {
   assert.equal(data.UNIT_DEFS.dawn_duelist.moveSpeed, 64);
   assert.equal(data.UNIT_DEFS.dawn_duelist.abilityCastTiming, "offenseReady");
   assert.equal(data.UNIT_DEFS.dawn_duelist.abilityRange, 260);
-  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /更快积攒第一句怪话.*敌人接近.*迎客松.*行进路线.*小范围.*减速/);
+  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /更快积攒第一句怪话.*敌人接近.*迎客松.*前进路线.*小范围.*减速/);
   assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /75mm 大吧唧.*单个敌人.*击退/);
   assert.doesNotMatch(data.UNIT_DEFS.dawn_duelist.abilityDescription, /嘲讽|护盾|眩晕/);
 });

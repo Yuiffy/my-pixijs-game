@@ -217,8 +217,8 @@ mkdirSync(artifactDirectory, { recursive: true });
       harei.y = 430;
       harei.facingX = 1;
       battle.enemy.forEach((fighter, index) => {
-        fighter.x = index === 0 ? 545 : index === 1 ? 420 : 800;
-        fighter.y = index === 0 ? 420 : index === 1 ? 470 : 560;
+        fighter.x = index === 0 ? 590 : 780 + index * 40;
+        fighter.y = index === 0 ? 430 : 560;
         fighter.attack = 0;
         fighter.hp = fighter.maxHp = 99_999;
         fighter.armor = 0;
@@ -233,15 +233,12 @@ mkdirSync(artifactDirectory, { recursive: true });
       battle.effects = [];
       engine.rng.next = () => 0.25;
       engine.castAbility(harei, battle.enemy);
-      const effect = battle.effects.find(
-        (candidate) => candidate.kind === "harei_pine",
-      );
-      effect.life = effect.maxLife * 0.52;
+      engine.updateControlZones(battle, 0.05);
       bridge.dispatch({ type: "clearSelection" });
       return {
         hareiFid: harei.fid,
-        nearbyFids: battle.enemy.slice(0, 2).map((fighter) => fighter.fid),
-        farFid: battle.enemy[2].fid,
+        nearFid: battle.enemy[0].fid,
+        farFid: battle.enemy[1].fid,
       };
     });
     const pineText = JSON.parse(
@@ -252,15 +249,20 @@ mkdirSync(artifactDirectory, { recursive: true });
         (effect) => effect.kind === "harei_pine",
       ),
     );
-    setup.nearbyFids.forEach((fid) => {
-      const fighter = pineText.battle.enemyUnits.find((unit) => unit.fid === fid);
-      assert.equal(fighter.tauntTime, 0.8);
-      assert.equal(fighter.slowMultiplier, 0.8);
-    });
+    const slowZone = pineText.battle.visualEffects.controlZones.find(
+      (zone) => zone.kind === "slow",
+    );
+    assert.equal(slowZone.radius, 82);
+    assert.equal(slowZone.slowMultiplier, 0.82);
+    const pineNear = pineText.battle.enemyUnits.find(
+      (fighter) => fighter.fid === setup.nearFid,
+    );
+    assert.equal(pineNear.tauntTime, 0);
+    assert.equal(pineNear.slowMultiplier, 0.82);
     const pineHarei = pineText.battle.playerUnits.find(
       (fighter) => fighter.fid === setup.hareiFid,
     );
-    assert.equal(pineHarei.shield, Math.round(pineHarei.maxHp * 0.3));
+    assert.equal(pineHarei.shield, 0);
     const pineFar = pineText.battle.enemyUnits.find(
       (fighter) => fighter.fid === setup.farFid,
     );
@@ -268,12 +270,14 @@ mkdirSync(artifactDirectory, { recursive: true });
     assert.equal(pineFar.slowTime, 0);
     await capture("harei-welcome-pine.png");
 
-    const badgeResult = await page.evaluate(({ hareiFid, nearbyFids, farFid }) => {
+    const badgeFlight = await page.evaluate(({ hareiFid, nearFid, farFid }) => {
       const engine = window.__hareiEngine;
       const bridge = window.__hareiBridge;
       const battle = engine.state.battle;
       const harei = battle.player.find((fighter) => fighter.fid === hareiFid);
       battle.effects = [];
+      battle.projectiles = [];
+      battle.controlZones = [];
       battle.enemy.forEach((fighter) => {
         fighter.stun = 0;
         fighter.tauntTime = 0;
@@ -286,73 +290,163 @@ mkdirSync(artifactDirectory, { recursive: true });
       );
       engine.rng.next = () => 0.75;
       engine.castAbility(harei, battle.enemy);
-      const effect = battle.effects.find(
-        (candidate) => candidate.kind === "harei_badge",
+      engine.updateProjectiles(battle, 0.1);
+      const projectile = battle.projectiles.find(
+        (candidate) => candidate.style === "badge",
       );
-      effect.life = effect.maxLife * 0.5;
       bridge.dispatch({ type: "clearSelection" });
       return {
-        nearby: nearbyFids.map((fid) => {
-          const fighter = battle.enemy.find((unit) => unit.fid === fid);
-          return {
-            fid,
-            damage: hpBefore[fid] - fighter.hp,
-            stun: fighter.stun,
-          };
-        }),
-        far: (() => {
-          const fighter = battle.enemy.find((unit) => unit.fid === farFid);
-          return {
-            damage: hpBefore[farFid] - fighter.hp,
-            stun: fighter.stun,
-          };
-        })(),
+        style: projectile.style,
+        emoji: projectile.emoji,
+        knockbackDistance: projectile.knockbackDistance,
+        nearHpBefore: hpBefore[nearFid],
+        farHpBefore: hpBefore[farFid],
       };
     }, setup);
-    badgeResult.nearby.forEach((fighter) => {
-      assert.ok(fighter.damage > 0);
-      assert.equal(fighter.stun, 0.65);
+    assert.deepEqual(badgeFlight, {
+      style: "badge",
+      emoji: "🔘",
+      knockbackDistance: 48,
+      nearHpBefore: badgeFlight.nearHpBefore,
+      farHpBefore: badgeFlight.farHpBefore,
     });
-    assert.equal(badgeResult.far.damage, 0);
-    assert.equal(badgeResult.far.stun, 0);
-    const badgeText = JSON.parse(
+    const badgeFlightText = JSON.parse(
       await page.evaluate(() => window.render_game_to_text()),
     );
     assert.ok(
-      badgeText.battle.visualEffects.effects.some(
+      badgeFlightText.battle.visualEffects.projectiles.some(
+        (projectile) => projectile.style === "badge" &&
+          projectile.knockbackDistance === 48,
+      ),
+    );
+    await capture("harei-75mm-badge-flight.png");
+
+    const badgeImpact = await page.evaluate(({ nearFid, farFid, nearHpBefore, farHpBefore }) => {
+      const engine = window.__hareiEngine;
+      const battle = engine.state.battle;
+      for (let tick = 0; tick < 12 && battle.projectiles.length; tick += 1) {
+        engine.updateProjectiles(battle, 0.05);
+      }
+      const near = battle.enemy.find((fighter) => fighter.fid === nearFid);
+      const far = battle.enemy.find((fighter) => fighter.fid === farFid);
+      return {
+        nearDamage: nearHpBefore - near.hp,
+        nearStun: near.stun,
+        nearMotion: near.abilityMotion?.kind,
+        nearPush: near.abilityMotion ? near.abilityMotion.toX - near.x : 0,
+        farDamage: farHpBefore - far.hp,
+      };
+    }, { ...setup, ...badgeFlight });
+    assert.ok(badgeImpact.nearDamage > 0);
+    assert.equal(badgeImpact.nearStun, 0);
+    assert.equal(badgeImpact.nearMotion, "push");
+    assert.ok(badgeImpact.nearPush > 40);
+    assert.equal(badgeImpact.farDamage, 0);
+    const badgeImpactText = JSON.parse(
+      await page.evaluate(() => window.render_game_to_text()),
+    );
+    assert.ok(
+      badgeImpactText.battle.visualEffects.effects.some(
         (effect) => effect.kind === "harei_badge",
       ),
     );
-    await capture("harei-75mm-badge.png");
+    await capture("harei-75mm-badge-impact.png");
+
+    const testTubeFlight = await page.evaluate(() => {
+      const engine = window.__hareiEngine;
+      const bridge = window.__hareiBridge;
+      engine.state.phase = "preparation";
+      engine.state.board.fill(null);
+      engine.state.board[0] = { uid: 2, id: "mitsuri", star: 1 };
+      engine.startBattle();
+      const battle = engine.state.battle;
+      const mitsuri = battle.player.find(
+        (fighter) => fighter.unitId === "mitsuri",
+      );
+      mitsuri.x = 350;
+      mitsuri.y = 430;
+      battle.enemy.forEach((fighter, index) => {
+        fighter.x = index === 0 ? 555 : 820 + index * 30;
+        fighter.y = index === 0 ? 430 : 560;
+        fighter.attack = 0;
+        fighter.hp = fighter.maxHp = 99_999;
+        fighter.baseMoveSpeed = 0;
+        fighter.moveSpeed = 0;
+      });
+      mitsuri.cooldown = 99;
+      mitsuri.energy = 0;
+      mitsuri.baseMoveSpeed = 0;
+      mitsuri.moveSpeed = 0;
+      battle.effects = [];
+      engine.castAbility(mitsuri, battle.enemy);
+      engine.updateProjectiles(battle, 0.1);
+      const projectile = battle.projectiles.find(
+        (candidate) => candidate.style === "test_tube",
+      );
+      bridge.dispatch({ type: "clearSelection" });
+      return {
+        mitsuriFid: mitsuri.fid,
+        targetFid: battle.enemy[0].fid,
+        style: projectile.style,
+        emoji: projectile.emoji,
+      };
+    });
+    assert.equal(testTubeFlight.style, "test_tube");
+    assert.equal(testTubeFlight.emoji, "🧪");
+    const tubeText = JSON.parse(
+      await page.evaluate(() => window.render_game_to_text()),
+    );
+    assert.ok(
+      tubeText.battle.visualEffects.projectiles.some(
+        (projectile) => projectile.style === "test_tube" &&
+          projectile.emoji === "🧪",
+      ),
+    );
+    await capture("mitsuri-test-tube-flight.png");
+
+    const fearResult = await page.evaluate(({ targetFid }) => {
+      const engine = window.__hareiEngine;
+      const battle = engine.state.battle;
+      for (let tick = 0; tick < 12 && battle.projectiles.length; tick += 1) {
+        engine.updateProjectiles(battle, 0.05);
+      }
+      const zone = battle.controlZones.find((candidate) => candidate.kind === "fear");
+      const target = battle.enemy.find((fighter) => fighter.fid === targetFid);
+      target.x = zone.x + 8;
+      target.y = zone.y;
+      target.baseMoveSpeed = 58;
+      target.moveSpeed = 58;
+      const distanceBefore = Math.hypot(target.x - zone.x, target.y - zone.y);
+      engine.update(0.05);
+      return {
+        radius: zone.radius,
+        duration: zone.maxLife,
+        fearTime: target.fearTime,
+        distanceBefore,
+        distanceAfter: Math.hypot(target.x - zone.x, target.y - zone.y),
+      };
+    }, testTubeFlight);
+    assert.equal(fearResult.radius, 118);
+    assert.equal(fearResult.duration, 4.2);
+    assert.ok(fearResult.fearTime > 0);
+    assert.ok(fearResult.distanceAfter > fearResult.distanceBefore);
+    const fearText = JSON.parse(
+      await page.evaluate(() => window.render_game_to_text()),
+    );
+    assert.ok(
+      fearText.battle.visualEffects.controlZones.some(
+        (zone) => zone.kind === "fear" && zone.radius === 118,
+      ),
+    );
+    assert.ok(
+      fearText.battle.visualEffects.effects.some(
+        (effect) => effect.kind === "fear_field",
+      ),
+    );
+    await capture("mitsuri-fear-field.png");
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.evaluate(({ hareiFid }) => {
-      const engine = window.__hareiEngine;
-      const battle = engine.state.battle;
-      const harei = battle.player.find((fighter) => fighter.fid === hareiFid);
-      battle.effects = [];
-      engine.rng.next = () => 0.25;
-      engine.castAbility(harei, battle.enemy);
-      const effect = battle.effects.find(
-        (candidate) => candidate.kind === "harei_pine",
-      );
-      effect.life = effect.maxLife * 0.52;
-    }, setup);
-    await capture("harei-welcome-pine-mobile.png");
-
-    await page.evaluate(({ hareiFid }) => {
-      const engine = window.__hareiEngine;
-      const battle = engine.state.battle;
-      const harei = battle.player.find((fighter) => fighter.fid === hareiFid);
-      battle.effects = [];
-      engine.rng.next = () => 0.75;
-      engine.castAbility(harei, battle.enemy);
-      const effect = battle.effects.find(
-        (candidate) => candidate.kind === "harei_badge",
-      );
-      effect.life = effect.maxLife * 0.5;
-    }, setup);
-    await capture("harei-75mm-badge-mobile.png");
+    await capture("mitsuri-fear-field-mobile.png");
 
     const canvasState = await canvas.evaluate((element) => ({
       width: element.width,
@@ -367,7 +461,10 @@ mkdirSync(artifactDirectory, { recursive: true });
       JSON.stringify(
         {
           setup,
-          badgeResult,
+          badgeFlight,
+          badgeImpact,
+          testTubeFlight,
+          fearResult,
           canvas: canvasState,
           screenshots,
           errors,

@@ -42,7 +42,6 @@ mkdirSync(artifactDirectory, { recursive: true });
   await settings.waitFor({ state: "visible" });
   const strategyGroup = settings.getByRole("radiogroup", { name: "托管风格" });
   const levelGroup = settings.getByRole("radiogroup", { name: "AI 等级" });
-  const researchGroup = settings.getByRole("radiogroup", { name: "研究模式" });
   const strategies = await strategyGroup.getByRole("radio").evaluateAll((buttons) => (
     buttons.map((button) => ({
       label: button.textContent?.trim(),
@@ -62,7 +61,10 @@ mkdirSync(artifactDirectory, { recursive: true });
     };
   });
   const levels = await levelGroup.getByRole("radio").allTextContents();
-  const research = await researchGroup.getByRole("radio").allTextContents();
+  const researchModeVisible = await settings
+    .getByRole("radiogroup", { name: "研究模式" })
+    .count() > 0;
+  const goTestVisible = await settings.getByText("Go测试", { exact: true }).count() > 0;
   const screenshotPath = `${artifactDirectory}/autochess-settings.png`;
   await page.screenshot({ path: screenshotPath });
   const state = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
@@ -73,7 +75,8 @@ mkdirSync(artifactDirectory, { recursive: true });
     ["稳健", "平衡", "搏上限"],
   );
   assert.deepEqual(levels, ["新手", "老手", "长考", "看穿"]);
-  assert.deepEqual(research, ["Go测试"]);
+  assert.equal(researchModeVisible, false);
+  assert.equal(goTestVisible, false);
   assert.ok(strategies.every(({ clientWidth, scrollWidth }) => scrollWidth <= clientWidth));
   assert.ok(strategyLayout.leadingInset <= 5);
   assert.ok(strategyLayout.trailingInset <= 5);
@@ -86,7 +89,8 @@ mkdirSync(artifactDirectory, { recursive: true });
     exportType,
     strategies,
     levels,
-    research,
+    researchModeVisible,
+    goTestVisible,
     strategyLayout,
     phase: state.phase,
     screenshotPath,

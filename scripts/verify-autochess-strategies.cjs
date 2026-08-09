@@ -163,7 +163,6 @@ let browser;
   const settings = page.getByRole("dialog", { name: "游戏设置" });
   const strategies = settings.getByRole("radiogroup", { name: "托管风格" });
   const levels = settings.getByRole("radiogroup", { name: "AI 等级" });
-  const research = settings.getByRole("radiogroup", { name: "研究模式" });
   await assert.doesNotReject(() => strategies.getByRole("radio", { name: "稳健" }).waitFor());
   assert.deepEqual(
     await strategies.getByRole("radio").allTextContents(),
@@ -173,7 +172,8 @@ let browser;
     await levels.getByRole("radio").allTextContents(),
     ["新手", "老手", "长考", "看穿"],
   );
-  assert.deepEqual(await research.getByRole("radio").allTextContents(), ["Go测试"]);
+  assert.equal(await settings.getByRole("radiogroup", { name: "研究模式" }).count(), 0);
+  assert.equal(await settings.getByText("Go测试", { exact: true }).count(), 0);
 
   const assertStoredConfiguration = async (style, level) => {
     const stored = await readStoredStrategy();
@@ -186,8 +186,7 @@ let browser;
     await assertStoredConfiguration(style, state.interface.autoplayThinkingLevel);
   };
   const selectLevel = async (name, level, effectiveStyle, informationMode) => {
-    const group = level === "go" ? research : levels;
-    await group.getByRole("radio", { name }).click();
+    await levels.getByRole("radio", { name }).click();
     const state = await readState();
     assert.equal(state.interface.autoplayThinkingLevel, level);
     assert.equal(state.interface.autoplayEffectiveStyle, effectiveStyle);
@@ -201,14 +200,13 @@ let browser;
   await selectLevel("老手", "veteran", "highroll", "normal");
   await selectLevel("长考", "deep", "highroll", "normal");
   await selectLevel("看穿", "oracle", "seer", "oracle");
-  await selectLevel("Go测试", "go", "go", "oracle");
   await selectStyle("平衡", "balanced");
   await selectLevel("老手", "veteran", "balanced", "normal");
 
   const layout = await page.evaluate(() => {
     const panel = document.querySelector(".rift-settings-panel")?.getBoundingClientRect();
     const buttons = Array.from(document.querySelectorAll(
-      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"], [aria-label="研究模式"] [role="radio"]',
+      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"]',
     )).map((button) => ({
       text: button.textContent,
       width: button.getBoundingClientRect().width,
@@ -233,7 +231,7 @@ let browser;
   const mobileLayout = await page.evaluate(() => {
     const panel = document.querySelector(".rift-settings-panel")?.getBoundingClientRect();
     const buttons = Array.from(document.querySelectorAll(
-      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"], [aria-label="研究模式"] [role="radio"]',
+      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"]',
     )).map((button) => ({
       text: button.textContent,
       width: button.getBoundingClientRect().width,
@@ -253,17 +251,25 @@ let browser;
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.keyboard.press("Escape");
+  const rolloutStatsBeforeStart = await page.evaluate(() => (
+    window.getAutoChessRolloutCacheStats()
+  ));
   await page.getByText("AI 观战", { exact: true }).click();
   await page.getByRole("button", { name: "由 AI 自选协议并开局" }).click();
   await page.waitForFunction(() => {
     const state = JSON.parse(window.render_game_to_text());
     return state.phase === "preparation" && state.interface.autoplayEnabled === true;
   });
+  await page.waitForTimeout(1200);
   const started = await readState();
+  const rolloutStatsAfterStart = await page.evaluate(() => (
+    window.getAutoChessRolloutCacheStats()
+  ));
   assert.equal(started.interface.autoplayPreferenceStyle, "highroll");
   assert.equal(started.interface.autoplayThinkingLevel, "veteran");
   assert.equal(started.interface.autoplayStyle, "highroll");
   assert.equal(started.interface.autoplayInformationMode, "normal");
+  assert.equal(rolloutStatsAfterStart.misses, rolloutStatsBeforeStart.misses);
 
   const relevantFailures = failedResponses.filter(({ url }) => (
     !url.endsWith("/api/record") && !url.includes("/_next/webpack-hmr")
@@ -279,7 +285,7 @@ let browser;
     },
     styles: ["稳健", "平衡", "搏上限"],
     levels: ["新手", "老手", "长考", "看穿"],
-    research: ["Go测试"],
+    researchModeVisible: false,
     started: {
       phase: started.phase,
       style: started.interface.autoplayPreferenceStyle,
@@ -288,6 +294,7 @@ let browser;
       autoplayEnabled: started.interface.autoplayEnabled,
     },
     screenshots: { desktop, mobile },
+    veteranRolloutMisses: rolloutStatsAfterStart.misses - rolloutStatsBeforeStart.misses,
     errors,
     failedResponses: relevantFailures,
   }, null, 2));

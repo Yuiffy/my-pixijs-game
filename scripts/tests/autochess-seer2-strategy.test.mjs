@@ -41,7 +41,9 @@ test("看穿2保留原 Go级的 oracle 托管策略", async () => {
 
   const hostSource = await readFile("src/components/autoChessGame/PhaserGame.tsx", "utf8");
   assert.match(hostSource, /\["oracle", "看穿"\]/);
-  assert.match(hostSource, />Go测试<\/button>/);
+  assert.doesNotMatch(hostSource, /Go测试|研究模式/);
+  assert.match(hostSource, /stored\?\.style === "go"/);
+  assert.match(hostSource, /stored\?\.version >= 3 \? "go" : "oracle"/);
   assert.match(hostSource, /\["survival", "稳健"\]/);
   assert.match(hostSource, /\["balanced", "平衡"\]/);
   assert.match(hostSource, /\["highroll", "搏上限"\]/);

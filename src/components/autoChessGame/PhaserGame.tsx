@@ -420,9 +420,7 @@ export default function AutoChessGame() {
     } catch {
       // The strategy still applies for this session when storage is unavailable.
     }
-    const label = level === "go"
-      ? "Go测试"
-      : AUTOPILOT_LEVEL_OPTIONS.find(([option]) => option === level)?.[1] || level;
+    const label = AUTOPILOT_LEVEL_OPTIONS.find(([option]) => option === level)?.[1] || level;
     setMessage(`AI 等级已切换为${label}。`);
     setRevision((value) => value + 1);
   }, [autopilotStyle]);
@@ -980,17 +978,6 @@ export default function AutoChessGame() {
                       onClick={() => updateAutopilotLevel(level)}
                     >{label}</button>
                   ))}
-                </div>
-              </div>
-              <div className="rift-setting-strategy rift-setting-autopilot-research">
-                <span>研究模式</span>
-                <div role="radiogroup" aria-label="研究模式">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={autopilotLevel === "go"}
-                    onClick={() => updateAutopilotLevel("go")}
-                  >Go测试</button>
                 </div>
               </div>
               <div className="rift-setting-row"><span>后台继续战斗</span><button type="button" className="rift-switch" role="switch" aria-label="后台继续战斗" aria-checked={backgroundBattleEnabled} onClick={() => updateBackgroundBattle(!backgroundBattleEnabled)}><i /></button></div>

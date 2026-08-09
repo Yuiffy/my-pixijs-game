@@ -4215,7 +4215,7 @@ test("小岁鸟贴近战场边缘时会转向并保持完整冲刺距离", () =>
   assert.ok(motion.toY <= BATTLE_BOUNDS.bottom - bird.radius);
 });
 
-test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞和锁敌结算", () => {
+test("七海凿凿冲击、恬豆地面棒棒糖与三理理恐惧试管均按空间位置结算", () => {
   const nanaEngine = createEngine(202);
   nanaEngine.state.playerLevel = 4;
   nanaEngine.state.board.fill(null);
@@ -4337,28 +4337,56 @@ test("七海凿凿冲击、恬豆地面棒棒糖与三理理嘲讽均按碰撞�
   assert.ok(candyTarget.hp < enemyHpBefore);
   assert.ok(candyTarget.slowTime >= 2.4);
 
-  const tauntEngine = createEngine(204);
-  tauntEngine.state.playerLevel = 4;
-  tauntEngine.state.board.fill(null);
-  tauntEngine.state.board[0] = { uid: 1, id: "mitsuri", star: 1 };
-  tauntEngine.state.board[1] = { uid: 2, id: "sui", star: 1 };
-  tauntEngine.startBattle();
-  const tauntBattle = tauntEngine.state.battle;
-  const mitsuri = tauntBattle?.player.find((fighter) => fighter.unitId === "mitsuri");
-  const closerAlly = tauntBattle?.player.find((fighter) => fighter.unitId === "sui");
-  const tauntedEnemy = tauntBattle?.enemy[0];
-  assert.ok(tauntBattle && mitsuri && closerAlly && tauntedEnemy);
+  const fearEngine = createEngine(204);
+  fearEngine.state.playerLevel = 4;
+  fearEngine.state.board.fill(null);
+  fearEngine.state.board[0] = { uid: 1, id: "mitsuri", star: 1 };
+  fearEngine.state.board[1] = { uid: 2, id: "sui", star: 1 };
+  fearEngine.startBattle();
+  const fearBattle = fearEngine.state.battle;
+  const mitsuri = fearBattle?.player.find((fighter) => fighter.unitId === "mitsuri");
+  const closerAlly = fearBattle?.player.find((fighter) => fighter.unitId === "sui");
+  const fearedEnemy = fearBattle?.enemy[0];
+  assert.ok(fearBattle && mitsuri && closerAlly && fearedEnemy);
   mitsuri.x = 330;
   mitsuri.y = 360;
   closerAlly.x = 430;
   closerAlly.y = 360;
-  tauntedEnemy.x = 460;
-  tauntedEnemy.y = 360;
-  tauntEngine["castAbility"](mitsuri, tauntBattle.enemy);
-  assert.ok(mitsuri.shield > 0);
-  assert.equal(tauntedEnemy.tauntedByFid, mitsuri.fid);
-  assert.ok(tauntedEnemy.tauntTime >= 3.2);
-  assert.equal(tauntEngine["resolveCombatTarget"](tauntedEnemy, tauntBattle.player, 0.05)?.fid, mitsuri.fid);
+  fearedEnemy.x = 460;
+  fearedEnemy.y = 360;
+  fearedEnemy.attack = 0;
+  fearedEnemy.hp = fearedEnemy.maxHp = 9_999;
+  fearEngine["castAbility"](mitsuri, fearBattle.enemy);
+  assert.equal(mitsuri.shield, 0);
+  assert.equal(fearedEnemy.tauntedByFid, null);
+  const testTube = fearBattle.projectiles.find((projectile) => projectile.style === "test_tube");
+  assert.ok(testTube);
+  assert.equal(testTube.emoji, "🧪");
+  assert.equal(fearBattle.controlZones.length, 0);
+  for (let tick = 0; tick < 12 && fearBattle.projectiles.length; tick += 1) {
+    fearEngine["updateProjectiles"](fearBattle, 0.05);
+  }
+  const fearZone = fearBattle.controlZones.find((zone) => zone.kind === "fear");
+  assert.ok(fearZone);
+  assert.equal(fearZone.radius, 118);
+  assert.equal(fearZone.maxLife, 4.2);
+  assert.ok(fearBattle.effects.some((effect) => effect.kind === "fear_field"));
+  fearedEnemy.x = fearZone.x;
+  fearedEnemy.y = fearZone.y;
+  const distanceBeforeFear = Math.hypot(
+    fearedEnemy.x - fearZone.x,
+    fearedEnemy.y - fearZone.y,
+  );
+  fearEngine.update(0.05);
+  const distanceAfterFear = Math.hypot(
+    fearedEnemy.x - fearZone.x,
+    fearedEnemy.y - fearZone.y,
+  );
+  assert.ok(fearedEnemy.fearTime > 0);
+  assert.ok(distanceAfterFear > distanceBeforeFear);
+  assert.equal(fearedEnemy.targetFid, null);
+  const fearTextState = JSON.parse(fearEngine.renderTextState());
+  assert.ok(fearTextState.battle.visualEffects.controlZones.some((zone) => zone.kind === "fear"));
 });
 
 test("蛙梓终场歌唱持续治疗施法距离内友军，并将单体激光切换为范围灼烧火焰弹", () => {
@@ -4521,7 +4549,7 @@ test("露蒂丝咕咕诊所向最低血队友发射随机治疗、护盾与大�
   assert.equal(enemy.stun, 0);
 });
 
-test("大黑鼠贴近后随机使出迎客松或大吧唧并结算防守与进攻分支", () => {
+test("大黑鼠随机种下持续减速的迎客松，或发射单体击退的大吧唧", () => {
   const engine = createEngine(98);
   engine.state.starter = "blaze";
   engine.state.playerLevel = 4;
@@ -4550,22 +4578,29 @@ test("大黑鼠贴近后随机使出迎客松或大吧唧并结算防守与进�
   engine["rng"].next = () => 0.25;
   engine["castAbility"](owner, battle.enemy);
   assert.ok(battle.effects.some((effect) => effect.kind === "harei_pine"));
-  assert.equal(near.tauntedByFid, owner.fid);
-  assert.equal(near.tauntTime, 0.8);
-  assert.equal(near.slowTime, 1.5);
-  assert.equal(near.slowMultiplier, 0.8);
+  const pineZone = battle.controlZones.find((zone) => zone.kind === "slow");
+  assert.ok(pineZone);
+  assert.equal(pineZone.radius, 82);
+  assert.equal(pineZone.maxLife, 5.2);
+  assert.equal(pineZone.slowMultiplier, 0.82);
+  engine["updateControlZones"](battle, 0.05);
+  assert.equal(near.tauntedByFid, null);
+  assert.equal(near.tauntTime, 0);
+  assert.ok(near.slowTime > 0);
+  assert.equal(near.slowMultiplier, 0.82);
   assert.equal(near.stun, 0);
   assert.equal(far.tauntedByFid, null);
   assert.equal(far.slowTime, 0);
-  assert.equal(owner.shield, owner.maxHp * 0.24);
-  assert.equal(owner.shieldingDone, owner.maxHp * 0.24);
+  assert.equal(owner.shield, 0);
+  assert.equal(owner.shieldingDone, 0);
   const pineTextState = JSON.parse(engine.renderTextState());
   const pineTextNear = pineTextState.battle.enemyUnits.find((fighter) => fighter.fid === near.fid);
-  assert.equal(pineTextNear.slowMultiplier, 0.8);
+  assert.equal(pineTextNear.slowMultiplier, 0.82);
+  assert.ok(pineTextState.battle.visualEffects.controlZones.some((zone) => zone.kind === "slow"));
 
   near.slowTime = 2.4;
   near.slowMultiplier = 0.55;
-  engine["castAbility"](owner, battle.enemy);
+  engine["updateControlZones"](battle, 0.05);
   assert.equal(near.slowTime, 2.4);
   assert.equal(near.slowMultiplier, 0.55);
 
@@ -4573,20 +4608,28 @@ test("大黑鼠贴近后随机使出迎客松或大吧唧并结算防守与进�
   const farHpBefore = far.hp;
   engine["rng"].next = () => 0.75;
   engine["castAbility"](owner, battle.enemy);
+  const badge = battle.projectiles.find((projectile) => projectile.style === "badge");
+  assert.ok(badge);
+  assert.equal(badge.emoji, "🔘");
+  assert.equal(badge.knockbackDistance, 48);
+  assert.equal(near.hp, nearHpBefore);
+  for (let tick = 0; tick < 12 && battle.projectiles.some((projectile) => projectile.style === "badge"); tick += 1) {
+    engine["updateProjectiles"](battle, 0.05);
+  }
   assert.ok(battle.effects.some((effect) => effect.kind === "harei_badge"));
   assert.ok(near.hp < nearHpBefore);
-  assert.equal(near.stun, 0.65);
+  assert.equal(near.stun, 0);
+  assert.equal(near.abilityMotion?.kind, "push");
+  assert.ok(near.abilityMotion.toX > near.x + 40);
   assert.equal(far.hp, farHpBefore);
   assert.equal(far.stun, 0);
 
   const textState = JSON.parse(engine.renderTextState());
   assert.ok(textState.battle.visualEffects.effects.some((effect) => effect.kind === "harei_pine"));
   assert.ok(textState.battle.visualEffects.effects.some((effect) => effect.kind === "harei_badge"));
-  const textNear = textState.battle.enemyUnits.find((fighter) => fighter.fid === near.fid);
-  assert.equal(textNear.slowMultiplier, 0.55);
 });
 
-test("大黑鼠不会远距离空放，迎客松护盾随嘲讽人数成长并封顶", () => {
+test("大黑鼠等待敌人进入怪话距离，再把迎客松种到前进路线上", () => {
   const engine = createEngine(208);
   engine.state.starter = "blaze";
   engine.state.round = 7;
@@ -4598,31 +4641,38 @@ test("大黑鼠不会远距离空放，迎客松护盾随嘲讽人数成长并�
   const owner = battle?.player[0];
   assert.ok(battle && owner);
 
+  owner.x = 260;
+  owner.y = 360;
+  owner.baseMoveSpeed = 0;
+  owner.moveSpeed = 0;
   battle.enemy.forEach((fighter, index) => {
     fighter.hp = fighter.maxHp = 9_999;
     fighter.attack = 0;
-    fighter.x = owner.x + 180 + index * 35;
+    fighter.baseMoveSpeed = 0;
+    fighter.moveSpeed = 0;
+    fighter.x = owner.x + 300 + index * 35;
     fighter.y = owner.y;
   });
   owner.energy = owner.maxEnergy;
+  engine["rng"].next = () => 0.25;
   engine.update(0.05);
   assert.equal(owner.energy, owner.maxEnergy);
   assert.equal(battle.effects.some((effect) => effect.kind === "harei_pine" || effect.kind === "harei_badge"), false);
 
   battle.enemy.forEach((fighter, index) => {
-    fighter.x = owner.x + 62 + index * 8;
+    fighter.x = owner.x + 180 + index * 35;
     fighter.y = owner.y;
   });
-  owner.shield = 0;
-  owner.shieldingDone = 0;
-  engine["rng"].next = () => 0.25;
-  engine["castAbility"](owner, battle.enemy);
-  assert.equal(owner.shield, owner.maxHp * 0.42);
-  assert.equal(owner.shieldingDone, owner.maxHp * 0.42);
-  battle.enemy.forEach((fighter) => assert.equal(fighter.tauntedByFid, owner.fid));
+  engine.update(0.05);
+  assert.ok(owner.energy < owner.maxEnergy);
+  const zone = battle.controlZones.find((candidate) => candidate.kind === "slow");
+  assert.ok(zone);
+  assert.ok(zone.x > owner.x && zone.x < battle.enemy[0].x);
+  assert.equal(owner.shield, 0);
+  assert.equal(battle.enemy.every((fighter) => fighter.tauntedByFid === null), true);
 });
 
-test("大黑鼠在三人近身围攻下能撑到迎客松，但不会成为无限续盾前排", () => {
+test("迎客松只在自身小范围内刷新轻度减速，并会按时消失", () => {
   const engine = createEngine(209);
   engine.state.starter = "blaze";
   engine.state.round = 2;
@@ -4633,29 +4683,31 @@ test("大黑鼠在三人近身围攻下能撑到迎客松，但不会成为无�
   const battle = engine.state.battle;
   const owner = battle?.player[0];
   assert.ok(battle && owner && battle.enemy.length === 3);
-
-  owner.x = 470;
+  owner.x = 260;
   owner.y = 360;
-  owner.dodgeChance = 0;
-  battle.enemy.forEach((fighter, index) => {
-    fighter.x = owner.x + 58 + index * 12;
-    fighter.y = owner.y + (index - 1) * 28;
+  battle.enemy.forEach((fighter) => {
     fighter.hp = fighter.maxHp = 9_999;
-    fighter.attack = 18;
-    fighter.attackInterval = 1;
-    fighter.baseAttackInterval = 1;
-    fighter.dodgeChance = 0;
-    fighter.energy = 0;
-    fighter.maxEnergy = 9_999;
+    fighter.attack = 0;
   });
+  battle.enemy[0].x = 400;
+  battle.enemy[0].y = 360;
   engine["rng"].next = () => 0.25;
-
-  stepBattle(engine, 90);
-  assert.ok(owner.shieldingDone > 0);
-  assert.equal(owner.alive, true);
-
-  stepBattle(engine, 390);
-  assert.equal(owner.alive, false);
+  engine["castAbility"](owner, battle.enemy);
+  const zone = battle.controlZones.find((candidate) => candidate.kind === "slow");
+  assert.ok(zone);
+  const inside = battle.enemy[0];
+  const outside = battle.enemy[1];
+  inside.x = zone.x;
+  inside.y = zone.y;
+  outside.x = zone.x + zone.radius + 30;
+  outside.y = zone.y;
+  engine["updateControlZones"](battle, 0.05);
+  assert.equal(inside.slowMultiplier, 0.82);
+  assert.equal(outside.slowTime, 0);
+  assert.equal(owner.shieldingDone, 0);
+  assert.equal(inside.tauntTime, 0);
+  engine["updateControlZones"](battle, 5.2);
+  assert.equal(battle.controlZones.length, 0);
 });
 
 test("莉蔻近视射击依次发出带随机偏移的胡萝卜弹幕", () => {

@@ -3730,7 +3730,7 @@ test("rollout 缓存快照支持按前缀限量读取", () => {
   );
 });
 
-test("标题页和局内都公开托管选择，设置面板分离风格、等级与研究模式", () => {
+test("标题页和局内都公开托管选择，设置面板分离风格与等级并隐藏研究模式", () => {
   assert.match(hudSource, /亲自指挥/);
   assert.match(hudSource, /AI 观战/);
   assert.match(hudSource, /由 AI 自选协议并开局/);
@@ -3744,7 +3744,9 @@ test("标题页和局内都公开托管选择，设置面板分离风格、等�
   assert.match(hostSource, /\["veteran", "老手"\]/);
   assert.match(hostSource, /\["deep", "长考"\]/);
   assert.match(hostSource, /\["oracle", "看穿"\]/);
-  assert.match(hostSource, /Go测试/);
+  assert.doesNotMatch(hostSource, /Go测试|研究模式/);
+  assert.match(hostSource, /stored\?\.style === "go"/);
+  assert.match(hostSource, /stored\?\.version >= 3 \? "go" : "oracle"/);
   assert.doesNotMatch(hostSource, /\["fair", "实战"\]/);
   assert.match(hostSource, /AUTOPILOT_STRATEGY_VERSION = 6/);
   assert.match(hostSource, /style: "balanced",\s*level: "veteran"/);
