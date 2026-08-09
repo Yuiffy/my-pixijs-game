@@ -410,6 +410,10 @@ test("角色样式以极简为默认并在所有界面共用三档资源解析",
   assert.match(characterStyle, /spark_mage: \{ portrait: "\/images\/livers\/rhea\.png"/);
   assert.match(characterStyle, /cog_scribe: \{ portrait: "\/images\/autochess\/portraits\/classic\/cog-scribe\.png"/);
   assert.match(characterStyle, /portraits\/\$\{style\}\/\$\{filename\}/);
+  assert.match(characterStyle, /unitId === "komichi" && style === "detail"/);
+  assert.match(characterStyle, /resolveUnitAbilityPortrait/);
+  assert.match(characterStyle, /classic\/komichi-sign\.png/);
+  assert.match(characterStyle, /minimal\/komichi-sign\.png/);
   assert.match(characterStyle, /unitId === "rift_tyrant"/);
   assert.doesNotMatch(characterStyle, /unitId === "rift_stalker" \|\| unitId === "rift_brawler"/);
   assert.match(characterStyle, /portraitStyle: "sprite",/);
@@ -437,9 +441,12 @@ test("角色样式以极简为默认并在所有界面共用三档资源解析",
   ))).sort();
   const expectedMinimal = detailFiles.filter((filename) => filename !== "rift-tyrant.png");
   assert.equal(detailFiles.length, 45);
-  assert.equal(minimalFiles.length, 44);
-  assert.equal(classicFiles.length, 11);
-  assert.deepEqual(minimalFiles, expectedMinimal);
+  assert.equal(minimalFiles.length, 46);
+  assert.equal(classicFiles.length, 13);
+  assert.deepEqual(
+    minimalFiles,
+    [...expectedMinimal, "komichi-sign.png", "komichi.png"].sort(),
+  );
 });
 
 test("棋子图片处理保留九成画布占用", () => {
@@ -482,6 +489,13 @@ test("战斗同步覆盖投射物、技能效果与机械兔召唤物", () => {
   assert.match(scene, /effect\.kind === "rebirth"/);
   assert.match(scene, /effect\.kind === "chronosphere"/);
   assert.match(scene, /effect\.kind === "hotpot"/);
+  assert.match(gameTypes, /"komichi_sign"/);
+  assert.match(assets, /KOMICHI_SIGNPOST_TEXTURE_KEY/);
+  assert.match(assets, /effects\/komichi-signpost\.png/);
+  assert.match(effectView, /effect\.kind === "komichi_sign"/);
+  assert.match(effectView, /setDisplaySize\(size \* scale, size \* scale\)/);
+  assert.match(fighterView, /fighter\.unitId === "komichi" && fighter\.komichiSignTime > 0/);
+  assert.match(fighterView, /abilityTextureKeyForUnit/);
   assert.match(scene, /mechanicalRabbitMuzzle/);
 });
 

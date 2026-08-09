@@ -37,7 +37,6 @@ const EMBER_BLADE_CARROT_INTERVAL = 0.11;
 const EMBER_BLADE_CARROT_JITTER = 0.42;
 const EMBER_BLADE_CARROT_SHOTS = 5;
 const EMBER_BLADE_CARROT_SPEED = 640;
-const LOVELY_CHANNEL_DURATION = 3.4;
 const GALE_ARCHER_SWITCH_DURATION = 4;
 const GALE_ARCHER_SWITCH_SHIELD_RATIO = 0.18;
 const GALE_ARCHER_SWITCH_COLOR = "#b86cff";
@@ -58,8 +57,8 @@ const RIFT_BRAWLER_SELF_BURN = 0.85;
 const RIFT_STALKER_LAUGH_SPEED = 1200;
 const MOSSBACK_BISCUIT_HEAL_RATIO = 0.12;
 const MOSSBACK_BISCUIT_SHIELD_RATIO = 0.15;
-const RUTICE_GROUP_HEAL_RATIO = 0.2;
-const RUTICE_LOWEST_SHIELD_RATIO = 0.16;
+const RUTICE_GROUP_HEAL_RATIO = 0.15;
+const RUTICE_LOWEST_SHIELD_RATIO = 0.12;
 const RUTICE_LOWEST_SHIELD_TARGET_COUNT = 2;
 export const SHIORI_OTTER_RADIUS = 122;
 const SUI_BARRAGE_ATTACK_BONUS = 0.15;
@@ -927,13 +926,26 @@ export class AbilitySystem {
       case "lovely": {
         const target = this.host.nearestTarget(source, targets);
         if (!target) break;
-        source.channelTargetFid = target.fid;
-        source.channelTime = LOVELY_CHANNEL_DURATION;
-        source.channelPulseTimer = 0;
-        target.stun = Math.max(target.stun, 0.15);
+        const duration = abilityStatForStar(def, source.star, "duration", 5);
+        const shieldRatio = abilityStatForStar(def, source.star, "shieldRatio", 0.25);
+        source.lovelyControlTime = duration;
+        addShield(source, source.maxHp * shieldRatio, 0.75);
         this.host.faceTowardX(source, target.x);
-        this.host.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: def.accent, life: 0.45, size: 5 });
-        this.host.addEffect({ kind: "text", x: source.x, y: source.y - 40, color: def.accent, text: "捏捏摸摸", life: 0.7, size: 12 });
+        this.host.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.7, size: source.radius * 2.6 });
+        this.host.addEffect({ kind: "text", x: source.x, y: source.y - 40, color: def.accent, text: "偶像控场", life: 0.7, size: 12 });
+        break;
+      }
+      case "komichi": {
+        const duration = abilityStatForStar(def, source.star, "duration", 5.5);
+        source.komichiSignTime = duration;
+        this.host.addEffect({
+          kind: "komichi_sign",
+          x: source.x,
+          y: source.y,
+          color: def.accent,
+          life: 0.68,
+          size: 118,
+        });
         break;
       }
       case "mumu": {

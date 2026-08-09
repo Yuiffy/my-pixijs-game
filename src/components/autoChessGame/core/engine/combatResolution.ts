@@ -107,6 +107,28 @@ export class CombatResolutionSystem {
     }
     let amount = rawAmount * (source.weakenTime > 0 ? 0.72 : 1);
     if (
+      target.unitId === "komichi" &&
+      target.komichiSignTime > 0 &&
+      source.attackType === "ranged"
+    ) {
+      const reduction = abilityStatForStar(
+        UNIT_DEFS.komichi,
+        target.star,
+        "rangedReduction",
+        0.28,
+      );
+      amount *= 1 - reduction;
+      this.host.addEffect({
+        kind: "text",
+        x: target.x,
+        y: target.y - 42,
+        color: UNIT_DEFS.komichi.accent,
+        text: "路牌格挡",
+        life: 0.42,
+        size: 10,
+      });
+    }
+    if (
       source.team === "player" &&
       source.lowHealthBonus > 0 &&
       target.hp / target.maxHp < 0.5

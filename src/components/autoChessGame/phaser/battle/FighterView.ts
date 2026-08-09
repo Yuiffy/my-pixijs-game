@@ -14,6 +14,7 @@ import {
 } from "../../core/battleGeometry";
 import type { EngineBridge } from "../EngineBridge";
 import {
+  abilityTextureKeyForUnit,
   circularTextureKeyForUnit,
   HAZEL_MANQU_TEXTURE_KEY,
   textureKeyForUnit,
@@ -235,6 +236,8 @@ export class FighterViewRenderer {
       : circularTextureKeyForUnit(fighter.unitId, characterStyle);
     const portraitKey = fighter.unitId === "sun_guard" && fighter.manquTime > 0
       ? HAZEL_MANQU_TEXTURE_KEY
+      : fighter.unitId === "komichi" && fighter.komichiSignTime > 0
+        ? abilityTextureKeyForUnit(fighter.unitId, characterStyle)
       : normalPortraitKey;
     if (portraitImage.texture.key !== portraitKey && this.host.scene.textures.exists(portraitKey)) {
       portraitImage.setTexture(portraitKey);
@@ -307,7 +310,8 @@ export class FighterViewRenderer {
       fighter.reborn ? "涅" : "",
       fighter.rebirthRecoilTime > 0 ? "退" : "",
       fighter.stealthTime > 0 ? "隐" : "",
-      fighter.channelTime > 0 ? "捏" : "",
+      fighter.lovelyControlTime > 0 ? "控" : "",
+      fighter.komichiSignTime > 0 ? "牌" : "",
       fighter.towerHackArmed ? "待挂" : "",
       fighter.towerHackBuffed ? "挂" : "",
       switchActive ? "ON" : "",

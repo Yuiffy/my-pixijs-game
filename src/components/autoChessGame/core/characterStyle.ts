@@ -49,6 +49,7 @@ const CLASSIC_OVERRIDES: Partial<Record<UnitId, ResolvedUnitPortrait>> = {
   youyi: { portrait: "/images/livers/youyi.jpg", portraitFocus: "top", portraitStyle: "round" },
   akirinco: { portrait: "/images/livers/akirinco.jpg", portraitFocus: "top", portraitStyle: "round" },
   lovely: { portrait: "/images/livers/lovely.webp", portraitFocus: "top", portraitStyle: "round" },
+  komichi: { portrait: "/images/autochess/portraits/classic/komichi.png", portraitStyle: "sprite" },
   mumu: { portrait: "/images/livers/mumu.webp", portraitFocus: "top", portraitStyle: "round" },
   yukisyo: { portrait: "/images/livers/yukisyo.png", portraitFocus: "top", portraitStyle: "round" },
   xuehui: { portrait: "/images/livers/xuehui.jpg", portraitFocus: "top", portraitStyle: "round" },
@@ -110,6 +111,12 @@ export const resolveUnitPortrait = (
     portraitStyle: definition.portraitStyle || "round",
   };
   if (!base.portrait) return base;
+  if (unitId === "komichi" && style === "detail") {
+    return {
+      portrait: "/images/autochess/portraits/minimal/komichi.png",
+      portraitStyle: "sprite",
+    };
+  }
   if (style === "classic") {
     const classicOverride = CLASSIC_OVERRIDES[unitId];
     if (classicOverride) return classicOverride;
@@ -124,6 +131,19 @@ export const resolveUnitPortrait = (
   const filename = base.portrait.slice(base.portrait.lastIndexOf("/") + 1);
   return {
     portrait: `/images/autochess/portraits/${style}/${filename}`,
+    portraitStyle: "sprite",
+  };
+};
+
+export const resolveUnitAbilityPortrait = (
+  unitId: UnitId,
+  style: CharacterStyle = getCharacterStyle(),
+): ResolvedUnitPortrait => {
+  if (unitId !== "komichi") return resolveUnitPortrait(unitId, style);
+  return {
+    portrait: style === "classic"
+      ? "/images/autochess/portraits/classic/komichi-sign.png"
+      : "/images/autochess/portraits/minimal/komichi-sign.png",
     portraitStyle: "sprite",
   };
 };

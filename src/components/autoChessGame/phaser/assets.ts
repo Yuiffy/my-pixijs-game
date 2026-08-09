@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import {
   getCharacterStyle,
+  resolveUnitAbilityPortrait,
   resolveUnitPortrait,
   type CharacterStyle,
 } from "../core/characterStyle";
@@ -10,9 +11,14 @@ export const textureKeyForUnit = (
   unitId: string,
   style: CharacterStyle = getCharacterStyle(),
 ) => `rift-unit:${style}:${unitId}`;
+export const abilityTextureKeyForUnit = (
+  unitId: string,
+  style: CharacterStyle = getCharacterStyle(),
+) => `rift-unit-ability:${style}:${unitId}`;
 export const SUMI_LITTLE_DRAGON_TEXTURE_KEY = "rift-projectile:sumi-little-dragon";
 export const SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY = "rift-projectile:sumi-little-dragon-circle";
 export const HAZEL_MANQU_TEXTURE_KEY = "rift-transform:hazel-manqu";
+export const KOMICHI_SIGNPOST_TEXTURE_KEY = "rift-effect:komichi-signpost";
 
 export const preloadUnitPortraits = (
   scene: Phaser.Scene,
@@ -27,6 +33,14 @@ export const preloadUnitPortraits = (
       scene.load.image(key, portrait.portrait);
       queued += 1;
     }
+    if (unit.id === "komichi") {
+      const abilityPortrait = resolveUnitAbilityPortrait(unit.id, style);
+      const abilityKey = abilityTextureKeyForUnit(unit.id, style);
+      if (!scene.textures.exists(abilityKey)) {
+        scene.load.image(abilityKey, abilityPortrait.portrait);
+        queued += 1;
+      }
+    }
   }));
   if (!scene.textures.exists(SUMI_LITTLE_DRAGON_TEXTURE_KEY)) {
     scene.load.image(SUMI_LITTLE_DRAGON_TEXTURE_KEY, "/images/livers/sumi-little-dragon.jpg");
@@ -34,6 +48,10 @@ export const preloadUnitPortraits = (
   }
   if (!scene.textures.exists(HAZEL_MANQU_TEXTURE_KEY)) {
     scene.load.image(HAZEL_MANQU_TEXTURE_KEY, "/images/livers/hazel-manqu.png");
+    queued += 1;
+  }
+  if (!scene.textures.exists(KOMICHI_SIGNPOST_TEXTURE_KEY)) {
+    scene.load.image(KOMICHI_SIGNPOST_TEXTURE_KEY, "/images/autochess/effects/komichi-signpost.png");
     queued += 1;
   }
   return queued;

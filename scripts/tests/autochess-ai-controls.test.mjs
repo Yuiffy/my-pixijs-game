@@ -1918,7 +1918,11 @@ test("候补未满但缺钱且预演失败时会卖闲棋为强牌腾出预算",
   const expensiveIds = SHOP_UNITS.filter((id) => (
     UNIT_DEFS[id].cost >= 3 && !AUTOPILOT_TERMINAL_TARGET_IDS.includes(id)
   ));
-  const cheapId = SHOP_UNITS.find((id) => UNIT_DEFS[id].cost === 1);
+  const cheapId = SHOP_UNITS.find((id) => (
+    UNIT_DEFS[id].cost === 1
+    && !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id)
+    && !UNIT_DEFS[id].traits.includes("finance")
+  ));
   const candidateId = "sui_bird";
   assert.ok(expensiveIds.length > 0);
   assert.ok(cheapId);
@@ -1939,7 +1943,7 @@ test("候补未满但缺钱且预演失败时会卖闲棋为强牌腾出预算",
   }
   bridge.engine.state.bench[0] = { uid: uid += 1, id: cheapId, star: 1 };
   bridge.engine.state.shop = [candidateId, null, null, null, null];
-  bridge.engine.state.gold = 3;
+  bridge.engine.state.gold = 2;
 
   const autopilot = new AutoChessAutopilot(
     bridge,
@@ -1951,6 +1955,9 @@ test("候补未满但缺钱且预演失败时会卖闲棋为强牌腾出预算",
   autopilot.rolloutConfidence = () => 9900;
   autopilot.previewRosterRollout = (roster) => (
     roster.some(({ unit }) => unit.id === candidateId) ? 10400 : 9900
+  );
+  autopilot.rolloutTargetLineup = (roster) => (
+    roster.filter(({ location }) => location.zone === "board")
   );
   autopilot.setEnabled(true);
   assert.equal(autopilot.tick(1000), null);
@@ -1983,7 +1990,7 @@ test("均衡在候补席接近满且战力不足时会先卖暂存棋再买直�
     bridge.engine.state.board[index] = {
       uid: uid += 1,
       id: strongIds[index % strongIds.length],
-      star: 2,
+      star: 3,
     };
   }
   bridge.engine.state.bench = bridge.engine.state.bench.map((_, index) => (

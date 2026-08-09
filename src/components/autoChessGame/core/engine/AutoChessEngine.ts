@@ -212,10 +212,6 @@ const GUANGYI_SLIDE_STUN_DURATION = 0.45;
 const PAKO_ANGEL_FISH_PULSE_HEAL_ATTACK_RATIO = 0.7;
 const PAKO_ANGEL_FISH_PULSE_HEAL_CASTER_HP_RATIO = 0.025;
 /** 南町「烟头烫屁股」：三枚慢速烟头分段命中并灼烧。 */
-/** 狍子偶像：双方均被锁定的持续施法。 */
-const LOVELY_CHANNEL_DAMAGE_PER_SECOND = 0.8;
-const LOVELY_CHANNEL_LIFESTEAL = 0.9;
-const LOVELY_CHANNEL_PULSE_INTERVAL = 0.32;
 /** 果冻风纪：满区逃生的一级默认值；高星参数由单位数据覆盖。 */
 const SUN_GUARD_MANQU_HEAL_PER_SECOND = 0.2;
 const SUN_GUARD_MANQU_MOVE_SPEED_BONUS = 105;
@@ -416,6 +412,8 @@ export class AutoChessEngine {
     if (
       fighter.barrageActive ||
       fighter.sekiChargeActive ||
+      fighter.lovelyControlTime > 0 ||
+      fighter.komichiSignTime > 0 ||
       (fighter.unitId === "sumi" && fighter.stealthTime > 0) ||
       this.chronosphereEnergyLocks.has(fighter.fid) ||
       this.hasChronosphereInFlightOrActive(fighter)
@@ -877,6 +875,8 @@ export class AutoChessEngine {
         : null,
       raccoonSwitchTime: Number(fighter.raccoonSwitchTime.toFixed(2)),
       raccoonStunnedAttackers: fighter.raccoonStunnedAttackers.length,
+      lovelyControlTime: Number(fighter.lovelyControlTime.toFixed(2)),
+      komichiSignTime: Number(fighter.komichiSignTime.toFixed(2)),
       stealthTime: Number(fighter.stealthTime.toFixed(2)),
       sumiDragonReady: fighter.sumiDragonReady,
       towerHackArmed: fighter.towerHackArmed,
@@ -2143,7 +2143,7 @@ export class AutoChessEngine {
   }
 
   private reiReviveCount(source: Fighter) {
-    return abilityStatForStar(UNIT_DEFS.rei, source.star, "reviveCount", 2);
+    return abilityStatForStar(UNIT_DEFS.rei, source.star, "reviveCount", 1);
   }
 
   private refreshFighterAttack(fighter: Fighter) {
@@ -2879,40 +2879,17 @@ export class AutoChessEngine {
         fighter.moveSpeed = (fighter.baseMoveSpeed + abilityMoveSpeed + manquMoveSpeed + fighter.towerHackMoveSpeed) *
           matureMoveMultiplier * nearbyMultiplier;
         fighter.range = fighter.baseRange * syncRangeMultiplier;
+        if (fighter.unitId === "komichi" && fighter.komichiSignTime > 0) {
+          fighter.range += abilityStatForStar(
+            UNIT_DEFS.komichi,
+            fighter.star,
+            "rangeBonus",
+            105,
+          );
+        }
         if (fighter.barrageActive && fighter.unitId === "cinder_ram") fighter.range = CINDER_RAM_SONG_RANGE;
         fighter.matureAttackSpeedCurrent = matureAttackSpeed;
       });
-    });
-  }
-
-  private updateLovelyChannels(battle: BattleState, dt: number) {
-    [...battle.player, ...battle.enemy].forEach((source) => {
-      if (!source.alive || source.channelTime <= 0 || !source.channelTargetFid) return;
-      const target = [...battle.player, ...battle.enemy].find(
-        (fighter) => fighter.fid === source.channelTargetFid && fighter.alive,
-      );
-      if (!target) {
-        source.channelTime = 0;
-        source.channelTargetFid = null;
-        source.channelPulseTimer = 0;
-        return;
-      }
-      source.channelTime = Math.max(0, source.channelTime - dt);
-      // 维持目标硬控到其本帧行动判定结束，两个单位都不会移动或普攻。
-      target.stun = Math.max(target.stun, dt + 0.05);
-      const dealt = this.damage(source, target, source.attack * LOVELY_CHANNEL_DAMAGE_PER_SECOND * dt, false, "ability");
-      if (dealt > 0) this.heal(source, source, dealt * LOVELY_CHANNEL_LIFESTEAL, false);
-      source.channelPulseTimer -= dt;
-      if (source.channelPulseTimer <= 0) {
-        source.channelPulseTimer += LOVELY_CHANNEL_PULSE_INTERVAL;
-        this.addEffect({ kind: "line", x: source.x, y: source.y, x2: target.x, y2: target.y, color: UNIT_DEFS.lovely.accent, life: 0.28, size: 4 });
-      }
-      if (!target.alive || source.channelTime <= 0) {
-        source.channelTime = 0;
-        source.channelTargetFid = null;
-        source.channelPulseTimer = 0;
-        this.addEffect({ kind: "text", x: source.x, y: source.y - 40, color: UNIT_DEFS.lovely.accent, text: "松开", life: 0.45, size: 10 });
-      }
     });
   }
 
@@ -2999,7 +2976,6 @@ export class AutoChessEngine {
     this.updateMechanicalRabbitPets(battle, dt);
     this.updateProjectileVolley(battle, dt);
     this.updateProjectiles(battle, dt);
-    this.updateLovelyChannels(battle, dt);
 
     const emberLevels = {
       player: this.battleTraitLevel(battle, "player", "ember"),
@@ -3080,6 +3056,8 @@ export class AutoChessEngine {
       fighter.vanguardJumpCooldown = Math.max(0, fighter.vanguardJumpCooldown - dt);
       fighter.gluttonyKillCooldown = Math.max(0, fighter.gluttonyKillCooldown - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
+      fighter.lovelyControlTime = Math.max(0, fighter.lovelyControlTime - dt);
+      fighter.komichiSignTime = Math.max(0, fighter.komichiSignTime - dt);
       const switchWasActive = fighter.raccoonSwitchTime > 0;
       fighter.raccoonSwitchTime = Math.max(0, fighter.raccoonSwitchTime - dt);
       if (switchWasActive && fighter.raccoonSwitchTime <= 0) {
@@ -3693,6 +3671,56 @@ export class AutoChessEngine {
     });
     this.tryZeyinRebirthRecoil(source, target);
     this.trySumiSocialRecoil(source, target);
+    if (source.unitId === "lovely" && source.lovelyControlTime > 0 && target.alive) {
+      target.stun = Math.max(
+        target.stun,
+        abilityStatForStar(UNIT_DEFS.lovely, source.star, "stunDuration", 0.28),
+      );
+      const distance = Math.hypot(source.x - target.x, source.y - target.y);
+      const availablePull = Math.max(0, distance - source.radius - target.radius - CONTACT_SKIN);
+      const pullDistance = Math.min(
+        availablePull,
+        abilityStatForStar(UNIT_DEFS.lovely, source.star, "pullDistance", 42),
+      );
+      if (distance > 0.01 && pullDistance >= 4 && !target.abilityMotion) {
+        this.startAbilityMotion(
+          target,
+          "pull",
+          {
+            x: target.x + ((source.x - target.x) / distance) * pullDistance,
+            y: target.y + ((source.y - target.y) / distance) * pullDistance,
+          },
+          {
+            abilityId: null,
+            sourceFid: source.fid,
+            targetFid: target.fid,
+            duration: 0.2,
+            avoidOccupied: false,
+          },
+        );
+      }
+      this.addEffect({ kind: "text", x: target.x, y: target.y - 42, color: UNIT_DEFS.lovely.accent, text: "拉近", life: 0.4, size: 10 });
+    }
+    if (source.unitId === "komichi" && source.komichiSignTime > 0 && target.alive) {
+      const distance = Math.hypot(target.x - source.x, target.y - source.y);
+      const knockback = abilityStatForStar(UNIT_DEFS.komichi, source.star, "knockback", 28);
+      if (distance > 0.01 && knockback >= 4 && !target.abilityMotion) {
+        this.startAbilityMotion(
+          target,
+          "push",
+          {
+            x: target.x + ((target.x - source.x) / distance) * knockback,
+            y: target.y + ((target.y - source.y) / distance) * knockback,
+          },
+          {
+            abilityId: null,
+            sourceFid: source.fid,
+            targetFid: target.fid,
+            duration: 0.18,
+          },
+        );
+      }
+    }
     if (dealt > 0) this.addDamageText(target, dealt);
   }
 
@@ -3775,6 +3803,8 @@ export class AutoChessEngine {
       manquEscapeY: 0,
       raccoonSwitchTime: 0,
       raccoonStunnedAttackers: [],
+      lovelyControlTime: 0,
+      komichiSignTime: 0,
       armor: original.armor - original.abilityArmorBonus,
       abilityArmorBonus: 0,
       slowTime: 0,

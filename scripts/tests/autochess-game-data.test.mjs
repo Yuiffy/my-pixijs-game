@@ -415,9 +415,9 @@ test("立绘与访客角色全部使用 512px 透明专属精灵", async () => {
     "sui_flower", "yua", "seki_boar_king", "sumi", "mitsuri", "guangyi", "sui_cat",
     "nagisa", "tower_god", "biscuit_sui", "nori", "meme", "zeyin", "kioi", "nightin",
     "tiandou", "youyi", "akirinco", "lovely", "mumu", "yukisyo", "xuehui", "rei",
-    "rutice", "lian", "pako", "miki_guest", "hatsuse_guest",
+    "rutice", "lian", "pako", "komichi", "miki_guest", "hatsuse_guest",
   ];
-  assert.equal(dedicatedIds.length, 34);
+  assert.equal(dedicatedIds.length, 35);
 
   await Promise.all(dedicatedIds.map(async (id) => {
     const unit = data.UNIT_DEFS[id];
@@ -569,6 +569,7 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.ok(data.UNIT_DEFS.mitsuri.range <= 60);
   assert.equal(data.UNIT_DEFS.lovely.abilityCastTiming, "offenseInRange");
   assert.match(data.UNIT_DEFS.lovely.abilityDescription, /需要接近敌人才能发动/);
+  assert.match(data.UNIT_DEFS.lovely.abilityDescription, /护盾.*普攻.*眩晕.*拉近/);
 });
 
 test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
@@ -667,7 +668,7 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /闪现到最远敌人身后/);
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /击晕/);
   assert.equal(data.UNIT_DEFS.rutice.abilityName, "咕咕诊所");
-  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /施法距离内友军回复生命/);
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /施法距离内友军回复.*生命值/);
   assert.match(data.UNIT_DEFS.rutice.abilityDescription, /生命比例最低的两名友军.*护盾/);
   assert.ok(data.UNIT_DEFS.rutice.traits.includes("mystic"));
   assert.ok(data.UNIT_DEFS.sui_cat.hp >= 250);
@@ -700,7 +701,7 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
     [1, 2, 3, 4, 5].map(
       (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
     ),
-    [7, 8, 11, 10, 5],
+    [7, 8, 10, 11, 6],
   );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
@@ -774,8 +775,8 @@ test("沐霂改为后排单体救援且不再造成范围伤害或群盾", () =>
 test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(new Set(data.SHOP_UNITS).size, data.SHOP_UNITS.length);
   assert.ok(data.SHOP_UNITS.includes("mitsuri"));
-  assert.equal(data.SHOP_UNITS.length, 41);
-  ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
+  assert.equal(data.SHOP_UNITS.length, 42);
+  ["nori", "meme", "kioi", "nightin", "guangyi", "lovely", "rei", "rutice", "komichi"].forEach((id) => assert.ok(data.SHOP_UNITS.includes(id)));
   assert.equal(data.SHOP_UNITS.includes("akirinco"), false);
   ["aza", "ayana", "yy", "haruka"].forEach((id) => {
     assert.equal(data.SHOP_UNITS.includes(id), false);
@@ -793,7 +794,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   });
   assert.equal(data.UNIT_DEFS.tiandou.traits.includes("vanguard"), false);
   assert.equal(data.UNIT_DEFS.tiandou.traits.includes("mystic"), false);
-  assert.equal(data.UNIT_DEFS.lovely.traits.includes("vanguard"), false);
+  assert.equal(data.UNIT_DEFS.lovely.traits.includes("vanguard"), true);
   assert.equal(data.TRAITS.rift, undefined);
   assert.equal(data.TRAITS.clockwork, undefined);
   assert.equal(data.TRAITS.brawler, undefined);
@@ -821,7 +822,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.assassin.name, "偷袭");
   assert.match(data.TRAITS.assassin.description, /集中跃向敌方最后排中最虚弱的目标/);
   assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
-  assert.ok(data.UNIT_DEFS.lovely.traits.includes("assassin"));
+  assert.equal(data.UNIT_DEFS.lovely.traits.includes("assassin"), false);
   assert.equal(data.UNIT_DEFS.biscuit_sui.tier, 4);
   assert.equal(data.UNIT_DEFS.biscuit_sui.cost, 4);
   assert.equal(data.UNIT_DEFS.biscuit_sui.abilityRange, 360);
@@ -832,7 +833,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.match(data.TRAITS.gluttony.description, /击杀.*饱腹.*最大生命与体型/);
   assert.deepEqual(
     data.UNIT_DEFS.rei.abilityLevels.map((level) => level.stats.reviveCount),
-    [2, 3, 5],
+    [1, 2, 3],
   );
   assert.deepEqual(data.UNIT_DEFS.rei.energyProfile, data.REI_SLOW_ENERGY_PROFILE);
   assert.equal(data.UNIT_DEFS.rei.energyProfile.start, 25);
@@ -841,7 +842,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.UNIT_DEFS.rei.energyProfile.onAttack, 0);
   assert.equal(data.UNIT_DEFS.rei.energyProfile.onHit, 0);
   assert.equal(data.UNIT_DEFS.rei.energyProfile.castRefund, 0);
-  assert.match(data.UNIT_DEFS.rei.abilityDescription, /开场拥有 25 点能量.*仅随时间缓慢回复.*攻击与受击均不回能.*2\/3\/5 具.*四分之一血幽灵/);
+  assert.match(data.UNIT_DEFS.rei.abilityDescription, /开场拥有 25 点能量.*仅随时间缓慢回复.*攻击与受击均不回能.*1\/2\/3 具.*四分之一血幽灵/);
   ["cinder_ram", "nagisa", "rutice", "lian", "hatsuse_guest", "rift_tyrant"].forEach((id) => {
     assert.match(data.UNIT_DEFS[id].abilityDescription, /施法距离内/);
     assert.doesNotMatch(data.UNIT_DEFS[id].abilityDescription, /全队|全体友军|全场/);
@@ -927,7 +928,7 @@ test("所有羁绊的最高档都能由可购买成员达到", () => {
 
   assert.deepEqual(
     Object.fromEntries(["ember", "assassin", "gen27", "mature"].map((traitId) => [traitId, memberCounts[traitId]])),
-    { ember: 4, assassin: 5, gen27: 5, mature: 5 },
+    { ember: 4, assassin: 4, gen27: 5, mature: 5 },
   );
   ["ember", "assassin", "gen27", "mature"].forEach((traitId) => {
     assert.deepEqual(data.TRAITS[traitId].thresholds, [2, 4]);
@@ -955,6 +956,10 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   await Promise.all(Object.values(portraits).map((portrait) => access(path.resolve("public", portrait.slice(1)))));
   await access(path.resolve("public/images/livers/sumi-little-dragon.jpg"));
   assert.equal(seki.abilityName, "山猪冲阵");
+  assert.deepEqual(
+    { tier: seki.tier, cost: seki.cost, hp: seki.hp, attack: seki.attack, armor: seki.armor },
+    { tier: 5, cost: 5, hp: 410, attack: 41, armor: 32 },
+  );
   assert.match(seki.abilityDescription, /持续耗能.*提高移速.*无法普攻.*缓慢转向.*击退.*眩晕.*边缘.*反弹/);
   assert.equal(towerGod.abilityName, "开挂");
   assert.equal(towerGod.attackType, "melee");
@@ -1019,6 +1024,89 @@ test("帕可使用公开头像、公开内容衍生技能与主持阵容羁绊",
   assert.equal(pako.portraitStyle, "sprite");
   assert.equal(pako.portraitFocus, undefined);
   await access(path.resolve("public", pako.portrait.slice(1)));
+});
+
+test("五费四时小路使用双形象路牌技能，降费角色同步削弱", async () => {
+  const komichi = data.UNIT_DEFS.komichi;
+  assert.deepEqual(
+    {
+      tier: komichi.tier,
+      cost: komichi.cost,
+      traits: komichi.traits,
+      hp: komichi.hp,
+      attack: komichi.attack,
+      armor: komichi.armor,
+      attackType: komichi.attackType,
+      abilityCastTiming: komichi.abilityCastTiming,
+    },
+    {
+      tier: 5,
+      cost: 5,
+      traits: ["traffic", "aggression"],
+      hp: 360,
+      attack: 48,
+      armor: 24,
+      attackType: "melee",
+      abilityCastTiming: "offenseInRange",
+    },
+  );
+  assert.equal(komichi.abilityName, "路牌开道");
+  assert.match(komichi.abilityDescription, /摘下围巾.*路牌.*攻击距离.*击退.*远程来源伤害/);
+  assert.deepEqual(
+    komichi.abilityLevels.map((level) => [
+      level.stats.duration,
+      level.stats.rangeBonus,
+      level.stats.knockback,
+      level.stats.rangedReduction,
+    ]),
+    [[5.5, 105, 28, 0.28], [6.25, 120, 36, 0.35], [7, 140, 44, 0.42]],
+  );
+
+  const lovely = data.UNIT_DEFS.lovely;
+  assert.deepEqual(
+    { tier: lovely.tier, cost: lovely.cost, traits: lovely.traits, hp: lovely.hp, attack: lovely.attack, armor: lovely.armor },
+    { tier: 5, cost: 5, traits: ["vanguard", "host", "dance"], hp: 430, attack: 42, armor: 36 },
+  );
+  assert.deepEqual(
+    lovely.abilityLevels.map((level) => [
+      level.stats.duration,
+      level.stats.shieldRatio,
+      level.stats.stunDuration,
+      level.stats.pullDistance,
+    ]),
+    [[5, 0.25, 0.28, 42], [6, 0.35, 0.36, 52], [7, 0.5, 0.46, 64]],
+  );
+
+  assert.deepEqual(
+    {
+      tier: data.UNIT_DEFS.rei.tier,
+      cost: data.UNIT_DEFS.rei.cost,
+      hp: data.UNIT_DEFS.rei.hp,
+      attack: data.UNIT_DEFS.rei.attack,
+      armor: data.UNIT_DEFS.rei.armor,
+    },
+    { tier: 4, cost: 4, hp: 230, attack: 36, armor: 13 },
+  );
+  assert.deepEqual(
+    {
+      tier: data.UNIT_DEFS.rutice.tier,
+      cost: data.UNIT_DEFS.rutice.cost,
+      hp: data.UNIT_DEFS.rutice.hp,
+      attack: data.UNIT_DEFS.rutice.attack,
+      armor: data.UNIT_DEFS.rutice.armor,
+    },
+    { tier: 4, cost: 4, hp: 380, attack: 32, armor: 31 },
+  );
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /15%.*12%/);
+
+  await Promise.all([
+    "public/images/autochess/portraits/komichi.png",
+    "public/images/autochess/portraits/minimal/komichi.png",
+    "public/images/autochess/portraits/minimal/komichi-sign.png",
+    "public/images/autochess/portraits/classic/komichi.png",
+    "public/images/autochess/portraits/classic/komichi-sign.png",
+    "public/images/autochess/effects/komichi-signpost.png",
+  ].map((asset) => access(path.resolve(asset))));
 });
 
 test("梨安保留高速普攻并以少量普攻回能蓄势高伤害终场谢幕", () => {

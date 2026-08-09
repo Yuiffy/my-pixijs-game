@@ -161,6 +161,7 @@ const SEER2_ROLLOUT_SURVIVOR_LIMIT = 3;
 const GO_MODEL_PARENT_LIMIT = 8;
 const GO_MODEL_SHORTLIST_LIMIT = 24;
 const GO_MODEL_ROLLOUT_SURVIVOR_LIMIT = 12;
+const GO_MODEL_ROBUST_LIMIT = 16;
 const GO_RESCUE_MODEL_BEAM_WIDTH = 24;
 const GO_RESCUE_MODEL_CANDIDATE_LIMIT = 24;
 /**
@@ -2517,6 +2518,8 @@ export class AutoChessAutopilot {
       const bestFinance = exploratory.find(({ lineup }) => financeCount(lineup) >= 4);
       addRobustCandidate(bestFinance);
       let robust = Array.from(robustCandidates.values())
+        .sort(compareGenome)
+        .slice(0, GO_MODEL_ROBUST_LIMIT)
         .map(({ lineup, formation, generation }) => scoreGenome(
           lineup,
           formation,

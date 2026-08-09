@@ -652,8 +652,9 @@ test("雪绘近战范围挥斩会灼烧身边敌人", () => {
   assert.ok(target.burnTime > 0);
 });
 
-test("狍子偶像只能近距离发动捏捏摸摸，并同时定住双方、持续吸血", () => {
+test("狍子偶像只能近距离发动控场，获得护盾后普攻短晕并拉近目标", () => {
   const engine = createEngine(151);
+  engine.state.starter = "blaze";
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "lovely", star: 1 };
@@ -672,32 +673,92 @@ test("狍子偶像只能近距离发动捏捏摸摸，并同时定住双方、�
   });
   source.x = 260;
   source.y = 360;
-  source.hp = source.maxHp * 0.5;
+  source.shield = 0;
   source.energy = source.maxEnergy;
   engine.update(0.05);
-  assert.equal(source.channelTargetFid, null, "远距离时狍子偶像不应发动捏捏摸摸");
+  assert.equal(source.lovelyControlTime, 0, "远距离时狍子偶像不应发动控场");
+  assert.equal(source.shield, 0);
   source.x = target.x - 50;
   source.energy = source.maxEnergy;
   source.cooldown = 0;
   engine.update(0.05);
-  assert.equal(source.channelTargetFid, target.fid);
-  assert.ok(source.channelTime > 3);
+  assert.ok(source.lovelyControlTime > 4.9);
+  assert.equal(source.shield, source.maxHp * 0.25);
   source.energy = 0;
   source.energyPerSecond = 0;
-  source.cooldown = 99;
-  const sourceX = source.x;
+  source.range = 120;
+  source.cooldown = 0;
+  target.x = source.x + 90;
   const targetX = target.x;
-  const hpBefore = target.hp;
-  const sourceHpBefore = source.hp;
-  engine.update(0.1);
-  assert.equal(source.x, sourceX);
-  assert.equal(target.x, targetX);
-  assert.ok(target.hp < hpBefore);
-  assert.ok(source.hp > sourceHpBefore);
+  engine["basicAttack"](source, target);
   assert.ok(target.stun > 0);
-  for (let tick = 0; tick < 72; tick += 1) engine.update(0.1);
-  assert.equal(source.channelTime, 0);
-  assert.equal(source.channelTargetFid, null);
+  assert.equal(target.abilityMotion?.kind, "pull");
+  engine.update(0.2);
+  assert.ok(target.x < targetX);
+  source.cooldown = 99;
+  for (let tick = 0; tick < 110; tick += 1) engine.update(0.05);
+  assert.equal(source.lovelyControlTime, 0);
+});
+
+test("四时小路持牌时增加射程、击退且格挡远程伤害，结束后恢复空手状态", () => {
+  const engine = createEngine(152);
+  engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "komichi", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const source = battle?.player[0];
+  const target = battle?.enemy[0];
+  assert.ok(battle && source && target);
+  battle.enemy.forEach((fighter, index) => {
+    fighter.x = index === 0 ? 310 : 900;
+    fighter.y = 360;
+    fighter.attack = 0;
+    fighter.armor = 0;
+    fighter.cooldown = 99;
+    fighter.hp = fighter.maxHp = 9999;
+  });
+  source.x = 260;
+  source.y = 360;
+  source.energy = source.maxEnergy;
+  source.cooldown = 0;
+  engine.update(0.05);
+  assert.ok(source.komichiSignTime > 5.4);
+  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign"));
+  engine.update(0.05);
+  assert.equal(source.range, source.baseRange + 105);
+
+  source.armor = 0;
+  source.shield = 0;
+  target.attackType = "ranged";
+  target.attack = 100;
+  target.range = 500;
+  target.cooldown = 0;
+  const hpBeforeBlock = source.hp;
+  engine["basicAttack"](target, source);
+  assert.ok(Math.abs((hpBeforeBlock - source.hp) - 72) < 0.001);
+
+  target.attack = 0;
+  target.stun = 0;
+  target.abilityMotion = null;
+  target.x = source.x + 100;
+  source.attack = 1;
+  source.range = 200;
+  source.cooldown = 0;
+  const targetX = target.x;
+  engine["basicAttack"](source, target);
+  assert.equal(target.stun, 0, "四时小路的路牌普攻不应附带眩晕");
+  assert.equal(target.abilityMotion?.kind, "push");
+  engine.update(0.2);
+  assert.ok(target.x > targetX);
+
+  source.cooldown = 99;
+  for (let tick = 0; tick < 120; tick += 1) engine.update(0.05);
+  engine.update(0.05);
+  assert.equal(source.komichiSignTime, 0);
+  assert.equal(source.range, source.baseRange);
+  const state = JSON.parse(engine.renderTextState());
+  assert.equal(state.battle.playerUnits[0].komichiSignTime, 0);
 });
 
 test("能量 profile 会落地为个体上限、持续回能与攻击分类", () => {
@@ -2520,9 +2581,9 @@ test("病院坂灵仅缓慢自动回能，攻击与受击均不回能", () => {
 
 test("病院坂灵按星级等待足量新尸体，并把敌我尸体以四分之一血复活为己方幽灵", () => {
   [
-    { star: 1, expected: 2 },
-    { star: 2, expected: 3 },
-    { star: 3, expected: 5 },
+    { star: 1, expected: 1 },
+    { star: 2, expected: 2 },
+    { star: 3, expected: 3 },
   ].forEach(({ star, expected }, scenario) => {
     const engine = createEngine(272 + scenario);
     engine.state.round = 22;
@@ -2537,10 +2598,8 @@ test("病院坂灵按星级等待足量新尸体，并把敌我尸体以四分�
     assert.ok(battle && rei && fallenAlly && battle.enemy.length >= 10);
     rei.x = 500;
     rei.y = 360;
-    fallenAlly.x = 525;
-    fallenAlly.y = 360;
-    engine["killFighter"](fallenAlly);
-    battle.enemy.slice(0, expected - 2).forEach((fighter, index) => {
+    const corpseCandidates = [fallenAlly, ...battle.enemy];
+    corpseCandidates.slice(0, expected - 1).forEach((fighter, index) => {
       fighter.x = 590 + (index % 5) * 16;
       fighter.y = 290 + Math.floor(index / 5) * 100 + (index % 2) * 14;
       engine["killFighter"](fighter);
@@ -2550,7 +2609,7 @@ test("病院坂灵按星级等待足量新尸体，并把敌我尸体以四分�
     assert.equal(rei.energy, rei.maxEnergy, "未达到当前星级尸体数量时不应消耗能量");
     assert.equal(battle.player.filter((fighter) => fighter.reiRevival).length, 0);
 
-    const finalCorpse = battle.enemy[expected - 2];
+    const finalCorpse = corpseCandidates[expected - 1];
     finalCorpse.x = 600;
     finalCorpse.y = 360;
     engine["killFighter"](finalCorpse);
@@ -2581,12 +2640,12 @@ test("多个病院坂灵会消费互不重复的尸体", () => {
   const battle = engine.state.battle;
   const [firstRei, secondRei] = battle?.player || [];
   assert.ok(battle && firstRei?.unitId === "rei" && secondRei?.unitId === "rei");
-  assert.ok(battle.enemy.length >= 10);
+  assert.ok(battle.enemy.length >= 6);
   firstRei.x = 500;
   firstRei.y = 340;
   secondRei.x = 500;
   secondRei.y = 390;
-  battle.enemy.slice(0, 10).forEach((fighter, index) => {
+  battle.enemy.slice(0, 6).forEach((fighter, index) => {
     fighter.x = 590 + (index % 5) * 16;
     fighter.y = 290 + Math.floor(index / 5) * 100 + (index % 2) * 14;
     engine["killFighter"](fighter);
@@ -2597,7 +2656,7 @@ test("多个病院坂灵会消费互不重复的尸体", () => {
   const firstConsumed = new Set(
     battle.corpses.filter((corpse) => corpse.consumed).map((corpse) => corpse.id),
   );
-  assert.equal(firstConsumed.size, 5);
+  assert.equal(firstConsumed.size, 3);
 
   secondRei.energy = secondRei.maxEnergy;
   engine["castAbility"](secondRei, battle.enemy);
@@ -2605,9 +2664,9 @@ test("多个病院坂灵会消费互不重复的尸体", () => {
     .filter((corpse) => corpse.consumed)
     .map((corpse) => corpse.id);
   const secondConsumed = allConsumed.filter((corpseId) => !firstConsumed.has(corpseId));
-  assert.equal(secondConsumed.length, 5);
-  assert.equal(new Set(allConsumed).size, 10);
-  assert.equal(battle.player.filter((fighter) => fighter.reiRevival).length, 10);
+  assert.equal(secondConsumed.length, 3);
+  assert.equal(new Set(allConsumed).size, 6);
+  assert.equal(battle.player.filter((fighter) => fighter.reiRevival).length, 6);
 });
 
 test("刺客在拥挤后排选择有界的最高空隙落点", () => {
@@ -4346,6 +4405,7 @@ test("蛙梓终场歌唱持续治疗施法距离内友军，并将单体激光�
 
 test("露蒂丝咕咕诊所治疗施法距离内友军并只保护其中生命比例最低的两名友军", () => {
   const engine = createEngine(205);
+  engine.state.starter = "blaze";
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "rutice", star: 1 };
@@ -4369,8 +4429,9 @@ test("露蒂丝咕咕诊所治疗施法距离内友军并只保护其中生命�
   engine["castAbility"](rutice, battle.enemy);
 
   allies.forEach((fighter, index) => assert.ok(fighter.hp > hpBefore[index]));
-  assert.ok(rutice.shield > 0);
-  assert.ok(ally.shield > 0);
+  allies.forEach((fighter, index) => assert.equal(fighter.hp, hpBefore[index] + fighter.maxHp * 0.15));
+  assert.equal(rutice.shield, rutice.maxHp * 0.12);
+  assert.equal(ally.shield, ally.maxHp * 0.12);
   assert.equal(healthiest.shield, 0);
   assert.equal(enemy.hp, enemyHpBefore);
   assert.equal(enemy.stun, 0);

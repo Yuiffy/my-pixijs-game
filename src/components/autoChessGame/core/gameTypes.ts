@@ -48,6 +48,7 @@ export interface BattleEffect {
     | "biscuit_share"
     | "harei_pine"
     | "harei_badge"
+    | "komichi_sign"
     | "mumu_whip";
   x: number;
   y: number;
@@ -294,6 +295,10 @@ export interface Fighter {
   raccoonSwitchTime: number;
   /** 本次开关期间已经被反震过的攻击者。 */
   raccoonStunnedAttackers: string[];
+  /** 狍子偶像开启普攻控场的剩余时间。 */
+  lovelyControlTime: number;
+  /** 四时小路持路牌形态的剩余时间。 */
+  komichiSignTime: number;
   /** 礼墨空气龙隐身剩余时间；隐身会降低敌方选中优先级。 */
   stealthTime: number;
   /** 礼墨是否等待解除隐身时发射一次礼小龙弹幕。 */

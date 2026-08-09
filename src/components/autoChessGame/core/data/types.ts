@@ -53,7 +53,6 @@ export const SHOP_UNIT_IDS = [
   "mitsuri",
   "guangyi",
   "youyi",
-  "seki_boar_king",
   "sumi",
   "spark_mage",
   "yukisyo",
@@ -61,7 +60,8 @@ export const SHOP_UNIT_IDS = [
   "sui_cat",
   "nagisa",
   // "akirinco",
-  "lovely",
+  "rei",
+  "rutice",
   "mumu",
   "xuehui",
   "tower_god",
@@ -69,8 +69,9 @@ export const SHOP_UNIT_IDS = [
   // 5 费
   "biscuit_sui",
   "cinder_ram",
-  "rei",
-  "rutice",
+  "seki_boar_king",
+  "lovely",
+  "komichi",
   "lian",
 ] as const;
 

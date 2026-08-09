@@ -10,6 +10,7 @@ import {
   drawHealingFieldEffect,
   drawHealingPulseEffect,
 } from "../healingEffects";
+import { KOMICHI_SIGNPOST_TEXTURE_KEY } from "../assets";
 import { DEPTH, FONT_FAMILY } from "../theme";
 
 const BURST_GRADIENT_TEXTURE = "rift-burst-gradient";
@@ -18,6 +19,7 @@ const PROJECTILE_EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", sans-serif
 type EffectViewParts = {
   graphics: Phaser.GameObjects.Graphics;
   burstGradient: Phaser.GameObjects.Image;
+  komichiSignpost: Phaser.GameObjects.Image;
   label: Phaser.GameObjects.Text;
 };
 
@@ -78,11 +80,13 @@ export class EffectViewRenderer {
     const container = this.host.scene.add.container(effect.x, effect.y);
     const graphics = this.host.scene.add.graphics().setName("shape").setVisible(false);
     const burstGradient = this.host.scene.add.image(0, 0, BURST_GRADIENT_TEXTURE).setOrigin(0.5).setName("burstGradient").setVisible(false);
+    const komichiSignpost = this.host.scene.add.image(0, 0, KOMICHI_SIGNPOST_TEXTURE_KEY).setOrigin(0.5).setName("komichiSignpost").setVisible(false);
     const label = this.host.text(0, 0, "", 14, "#ffffff", { fontStyle: "bold" }).setOrigin(0.5).setName("label").setVisible(false);
-    container.add([graphics, burstGradient, label]);
+    container.add([graphics, burstGradient, komichiSignpost, label]);
     this.effectViewParts.set(container, {
       graphics,
       burstGradient,
+      komichiSignpost,
       label,
     });
     return container;
@@ -92,10 +96,18 @@ export class EffectViewRenderer {
     const {
       graphics,
       burstGradient,
+      komichiSignpost,
       label,
     } = this.effectViewParts.get(view)!;
     graphics.clear().setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL);
     burstGradient.setVisible(false).setBlendMode(Phaser.BlendModes.NORMAL).setAlpha(1).clearTint();
+    komichiSignpost
+      .setVisible(false)
+      .setAlpha(1)
+      .setPosition(0, 0)
+      .setRotation(0)
+      .setScale(1)
+      .clearTint();
     label.setVisible(false).setAlpha(1).setRotation(0).setScale(1);
   }
 
@@ -105,6 +117,7 @@ export class EffectViewRenderer {
     const {
       graphics,
       burstGradient,
+      komichiSignpost,
       label,
     } = this.effectViewParts.get(view)!;
     const viewAlpha = effect.kind === "healing_field"
@@ -145,6 +158,17 @@ export class EffectViewRenderer {
         .setScale(1)
         .setVisible(true);
       if (label.style.color !== effect.color) label.setColor(effect.color);
+      return;
+    }
+    if (effect.kind === "komichi_sign") {
+      const arrival = 1 - (1 - Math.min(1, progress * 2.8)) ** 3;
+      const size = effect.size || 118;
+      const scale = 0.48 + arrival * 0.52;
+      komichiSignpost
+        .setVisible(true)
+        .setDisplaySize(size * scale, size * scale)
+        .setPosition(0, -30 - Math.sin(arrival * Math.PI) * 24)
+        .setRotation((1 - arrival) * -0.5 + Math.sin(progress * Math.PI * 2) * 0.04);
       return;
     }
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
