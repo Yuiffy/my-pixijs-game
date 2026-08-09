@@ -27,7 +27,7 @@ export class AutoChessAIController {
       indexing: "starter/buy/choose/select/move/sell use 1-based slots; act() uses raw GameAction indexes",
       read: ["state()", "logs(count = 80)", "battles()", "actions(count = 200)", "window.autoChessLastRun", "help()"],
       flow: ["starter(choice)", "battle()", "skipBattle()", "next()", "choose(choice)", "restart()"],
-      economy: ["buy(shopSlot)", "reroll()", "lock()", "level()"],
+      economy: ["buy(shopSlot)", "reroll()", "lock()", "level()", "starForge(zone?, slot?)"],
       formation: ["select(zone, slot)", "move(fromZone, fromSlot, toZone, toSlot)", "sell(zone?, slot?)"],
       testing: ["advance(milliseconds)", "consoleLogging(enabled)", "act(rawGameAction)"],
       zones: ["board", "bench"],
@@ -76,6 +76,19 @@ export class AutoChessAIController {
 
   public level() {
     return this.perform({ type: "buyXp" }, "bought next book level");
+  }
+
+  public starForge(zone?: Zone, slot?: number) {
+    if (zone === undefined && slot === undefined) {
+      return this.perform({ type: "starForge" }, "used star forge");
+    }
+    if (!zone || slot === undefined || !this.validLocation(zone, slot)) {
+      return this.failure("starForge requires a valid zone and slot");
+    }
+    return this.perform(
+      { type: "starForge", location: location(zone, slot) },
+      `used star forge on ${zone}:${slot}`,
+    );
   }
 
   public select(zone: Zone, slot: number) {

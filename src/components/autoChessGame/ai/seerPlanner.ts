@@ -548,11 +548,48 @@ const nextUpgradeRemaining = (level: PlayerLevel) => (
   level >= MAX_PLAYER_LEVEL ? 0 : PLAYER_LEVEL_CONFIG[level].upgradeCost || 0
 );
 
-const rerollChoices = (gold: number, freeRerolls: number, availableShops: number) => {
+const rerollChoices = (
+  state: PlannerState,
+  targetLevel: PlayerLevel,
+  request: SeerPlannerRequest,
+  availableShops: number,
+) => {
+  const { gold, freeRerolls } = {
+    gold: state.gold - upgradeCostToLevel(state, targetLevel),
+    freeRerolls: state.depth === 0 ? request.freeRerolls : 0,
+  };
   const affordable = Math.max(0, Math.min(availableShops, gold + freeRerolls));
   const loose = Math.max(0, gold % 4);
-  return Array.from(new Set([0, freeRerolls, loose, 2, 4, 8, 12, 24]
-    .map((value) => Math.max(0, Math.min(affordable, Math.floor(value))))))
+  const choices = new Set([0, freeRerolls, loose, 2, 4, 8, 12, 16, 24]);
+  const levelShops = request.futureShops[targetLevel] || [];
+  const cursor = state.cursors[levelIndex(targetLevel)] || 0;
+  const targetIds = new Set(request.targets.map((target) => target.id));
+  const copies = new Map(request.targets.map((target, index) => [
+    target.id,
+    state.copies[index] || 0,
+  ]));
+  const observed = new Map(copies);
+  levelShops.slice(cursor, cursor + affordable).forEach((shop, index) => {
+    const rerolls = index + 1;
+    const targetHits = shop.filter((id): id is UnitId => Boolean(id && targetIds.has(id)));
+    if (targetHits.length > 0) {
+      targetHits.forEach((id) => {
+        const before = observed.get(id) || 0;
+        const after = before + 1;
+        observed.set(id, after);
+        // Keep the first shop that crosses each physical merge milestone. A
+        // later target shop may be more valuable than the coarse 8/12/24
+        // checkpoints even when it is not itself a three-copy merge.
+        if (
+          (before < 3 && after >= 3)
+          || (before < 6 && after >= 6)
+          || (before < 9 && after >= 9)
+        ) choices.add(rerolls);
+      });
+    }
+  });
+  return Array.from(choices)
+    .map((value) => Math.max(0, Math.min(affordable, Math.floor(value))))
     .sort((left, right) => left - right);
 };
 
@@ -1041,12 +1078,12 @@ const expandFrontier = (
   let explored = 0;
   frontier.forEach((state) => {
     levelChoices(state, request).forEach((targetLevel) => {
-      const upgradeCost = upgradeCostToLevel(state, targetLevel);
       const availableShops = request.futureShops[targetLevel].length
         - state.cursors[levelIndex(targetLevel)];
       const choices = rerollChoices(
-        state.gold - upgradeCost,
-        depth === 0 ? request.freeRerolls : 0,
+        state,
+        targetLevel,
+        request,
         availableShops,
       );
       const prefixes = buildLevelPrefixes(

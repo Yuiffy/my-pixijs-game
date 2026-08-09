@@ -201,8 +201,10 @@ const SEER_ROUTE_PREFILTER_CANDIDATE_LIMIT = 4;
 const SEER_ROUTE_VALIDATION_LIMIT = ORACLE_EXTENDED_MAX_ROUND;
 const SEER_ENDGAME_TARGET_LOOKAHEAD = 48;
 const SEER_ENDGAME_MAX_EXTRA_REROLLS = 48;
-const GO_OPPORTUNITY_SHOP_LOOKAHEAD = 64;
+const GO_OPPORTUNITY_SHOP_LOOKAHEAD = 128;
 const GO_OPPORTUNITY_MAX_REROLLS = 64;
+const STAR_FORGE_MIN_ROUND = 32;
+const STAR_FORGE_MIN_SURPLUS = 200;
 const SHARED_ROLLOUT_CACHE_LIMIT = 200000;
 const EXACT_COMBAT_HZ = 60;
 const DEFAULT_ROLLOUT_COMBAT_HZ = 30;
@@ -458,6 +460,8 @@ export class AutoChessAutopilot {
   private goOpportunityPriorities = new Map<UnitId, number>();
 
   private goOpportunityRerolls = 0;
+
+  private goOpportunityInvestmentInProgress = false;
 
   private seerPurchaseOffsets: number[] = [];
 
@@ -812,6 +816,7 @@ export class AutoChessAutopilot {
     this.seerSaleOffsets = [];
     this.seerExtraRerolls = 0;
     this.goOpportunityRerolls = 0;
+    this.goOpportunityInvestmentInProgress = false;
     this.seerFutureShopPreviewKey = "";
     this.seerFutureShopPreview = [];
     this.seerPlan = this.createSeerPlan();
@@ -3208,6 +3213,93 @@ export class AutoChessAutopilot {
     return { type: "shop", index: candidate.index } as GameAction;
   }
 
+  /**
+   * At max level the forge is a deterministic substitute for a long reroll
+   * chase. Use it only on an active board unit or a real late-game project,
+   * and keep the same reserve used by ordinary economic actions.
+   */
+  private starForgeAction(roster: OwnedEntry[]): GameAction | null {
+    const { engine } = this.bridge;
+    const { state } = engine;
+    if (!engine.isMaxPlayerLevel || state.round < STAR_FORGE_MIN_ROUND) return null;
+
+    const desired = this.rolloutTargetLineup(roster);
+    const desiredUids = new Set(desired.map(({ unit }) => unit.uid));
+    const focusIds = this.seerProjectFocusIds(roster);
+    const upgradeProjectIds = this.upgradeProjectIds(roster, desired);
+    const copiesById = roster.reduce<Partial<Record<UnitId, number>>>((copies, { unit }) => {
+      copies[unit.id] = (copies[unit.id] || 0) + unitCopyValue(unit);
+      return copies;
+    }, {});
+    const immediateShopProject = state.shop.some((id) => {
+      if (!id) return false;
+      const copies = copiesById[id] || 0;
+      const oneStarCopies = roster.filter(({ unit }) => (
+        unit.id === id && unit.star === 1
+      )).length;
+      return (
+        (this.targetDesiredCopies(id) > 0 && copies < this.targetDesiredCopies(id))
+        || oneStarCopies >= 2
+      );
+    });
+    if (immediateShopProject) return null;
+    const candidates = roster.flatMap((entry) => {
+      const { unit, location } = entry;
+      const cost = engine.getStarForgeUpgradeCost(unit);
+      if (cost === null) return [];
+      const currentCopies = copiesById[unit.id] || 0;
+      const nextStar = (unit.star + 1) as 2 | 3;
+      const nextCopies = currentCopies - unitCopyValue(unit) + unitCopyValue({
+        ...unit,
+        star: nextStar,
+      });
+      const desiredCopies = this.targetDesiredCopies(unit.id);
+      const targetProject = desiredCopies > 0 && currentCopies < desiredCopies;
+      const focusedProject = focusIds.has(unit.id) || upgradeProjectIds.has(unit.id);
+      const selectedForBattle = desiredUids.has(unit.uid) && unit.star >= 2;
+      const onBoard = location.zone === "board";
+      const developedBoard = onBoard && unit.star >= 2;
+      if (!targetProject && !focusedProject && !selectedForBattle && !developedBoard) return [];
+
+      const nextUnit = { ...unit, star: nextStar };
+      const marginalStrength = this.unitScore(nextUnit, roster) - this.unitScore(unit, roster);
+      const completesTarget = desiredCopies > 0 && nextCopies >= desiredCopies;
+      const reachesTwoStar = currentCopies < 3 && nextCopies >= 3;
+      const reachesThreeStar = currentCopies < 6 && nextCopies >= 9;
+      const score = (completesTarget ? 1_000_000 : 0)
+        + (reachesThreeStar ? 300_000 : 0)
+        + (reachesTwoStar ? 80_000 : 0)
+        + (focusedProject ? 20_000 : 0)
+        + (selectedForBattle ? 8_000 : 0)
+        + (developedBoard ? 4_000 : 0)
+        + this.targetPriority(unit.id) * 100
+        + marginalStrength * 20
+        - cost;
+      return [{ entry, cost, score }];
+    }).sort((left, right) => (
+      right.score - left.score
+      || right.entry.unit.star - left.entry.unit.star
+      || left.cost - right.cost
+      || left.entry.unit.uid - right.entry.unit.uid
+    ));
+    const candidate = candidates[0];
+    if (!candidate) return null;
+
+    const unlockCost = engine.isStarForgeUnlocked ? 0 : engine.starForgeUnlockCost;
+    const reserve = this.goldReserve(false, 0);
+    if (
+      state.gold < unlockCost + candidate.cost
+      || state.gold - unlockCost - candidate.cost < reserve + STAR_FORGE_MIN_SURPLUS
+    ) return null;
+
+    // A forge changes star values without consuming a shop cursor. Cached
+    // planner purchases and formation scores must therefore be rebuilt from
+    // the new roster before the next action.
+    this.invalidateFinalLineup();
+    if (this.usesOraclePlanner()) this.invalidateSeerPlan(false);
+    return { type: "starForge", location: candidate.entry.location };
+  }
+
   private pendingPurchaseAction(): GameAction | null {
     const pending = this.pendingPurchase;
     if (!pending) return null;
@@ -3527,6 +3619,76 @@ export class AutoChessAutopilot {
       })[0] || null;
   }
 
+  private goOpportunityStarForgeAction(
+    roster: OwnedEntry[],
+    targets: readonly GoOpportunityTarget[],
+    reserve: number,
+  ): GameAction | null {
+    const { engine } = this.bridge;
+    const { state } = engine;
+    if (state.round < STAR_FORGE_MIN_ROUND) return null;
+    const targetById = new Map(targets.map((target) => [target.id, target]));
+    const hasImmediateTargetPurchase = state.shop.some((id) => {
+      if (!id) return false;
+      const target = targetById.get(id);
+      const { cost } = UNIT_DEFS[id];
+      if (
+        !target
+        || target.copies >= 9
+        || target.completionShopIndex === null
+        || state.gold < cost
+        || state.gold - cost < reserve
+      ) return false;
+      const hasCapacity = engine.boardCount < engine.boardCap
+        || state.bench.some((unit) => !unit);
+      return hasCapacity || Boolean(this.goOpportunityBenchSale(roster, id));
+    });
+    if (hasImmediateTargetPurchase) return null;
+    const gainById = new Map<UnitId, number>();
+    const gainFor = (id: UnitId) => {
+      const target = targetById.get(id);
+      if (target) return target.learnedValue;
+      const cached = gainById.get(id);
+      if (cached !== undefined) return cached;
+      const gain = this.goCompletedUnitModelGain(roster, id);
+      gainById.set(id, gain);
+      return gain;
+    };
+    const unlockCost = engine.isStarForgeUnlocked ? 0 : engine.starForgeUnlockCost;
+    const candidate = roster
+      .filter(({ unit }) => unit.star < 3)
+      .flatMap((entry) => {
+        const upgradeCost = engine.getStarForgeUpgradeCost(entry.unit);
+        const learnedGain = gainFor(entry.unit.id);
+        if (
+          upgradeCost === null
+          || learnedGain <= 0
+          || state.gold - unlockCost - upgradeCost
+            < reserve + STAR_FORGE_MIN_SURPLUS
+        ) return [];
+        return [{
+          entry,
+          upgradeCost,
+          learnedGain,
+          target: targetById.get(entry.unit.id),
+        }];
+      })
+      .sort((left, right) => (
+        Number(Boolean(right.target)) - Number(Boolean(left.target))
+        || right.entry.unit.star - left.entry.unit.star
+        || (right.target?.copies || 0) - (left.target?.copies || 0)
+        || right.learnedGain / right.upgradeCost - left.learnedGain / left.upgradeCost
+        || right.learnedGain - left.learnedGain
+        || Number(right.entry.location.zone === "board")
+          - Number(left.entry.location.zone === "board")
+        || left.entry.unit.uid - right.entry.unit.uid
+      ))[0];
+    if (!candidate) return null;
+    this.invalidateSeerPlan(false);
+    if (!engine.isStarForgeUnlocked) return { type: "starForge" };
+    return { type: "starForge", location: candidate.entry.location };
+  }
+
   /**
    * Go may finish its validated macro with a large surplus. Re-evaluate every
    * purchasable unit using the learned combat model, then convert deterministic
@@ -3549,14 +3711,18 @@ export class AutoChessAutopilot {
     const reachableTargets = targets.filter(({ completionShopIndex }) => (
       completionShopIndex !== null
     ));
-    if (reachableTargets.length === 0) return null;
 
     const targetById = new Map(reachableTargets.map((target) => [target.id, target]));
-    const currentScore = this.rolloutConfidence(roster);
-    const reserve = (
-      state.hp <= this.policy.woundedHpThreshold
-      || currentScore < this.policy.safeWinRolloutScore
-    ) ? 0 : this.goldReserve(false, 0);
+    const wounded = state.hp <= this.policy.woundedHpThreshold;
+    const currentScore = wounded
+      ? Number.NEGATIVE_INFINITY
+      : this.rolloutConfidence(roster);
+    const reserve = wounded || currentScore < this.policy.safeWinRolloutScore
+      ? 0
+      : this.goldReserve(false, 0);
+    const starForge = this.goOpportunityStarForgeAction(roster, targets, reserve);
+    if (starForge) return starForge;
+    if (reachableTargets.length === 0) return null;
     const currentTarget = state.shop.flatMap((id, index) => {
       if (!id) return [];
       const target = targetById.get(id);
@@ -3619,6 +3785,17 @@ export class AutoChessAutopilot {
       this.dryPaidRerolls += 1;
     }
     return { type: "reroll" };
+  }
+
+  private continueGoOpportunityInvestment(roster: OwnedEntry[]) {
+    const pendingPurchase = this.pendingPurchaseAction();
+    if (pendingPurchase) {
+      this.goOpportunityInvestmentInProgress = true;
+      return pendingPurchase;
+    }
+    const investment = this.goOpportunityInvestmentAction(roster);
+    this.goOpportunityInvestmentInProgress = Boolean(investment);
+    return investment;
   }
 
   private replacementRoster(
@@ -4845,10 +5022,28 @@ export class AutoChessAutopilot {
       const rescueAction = this.formationAction(roster);
       if (rescueAction) return rescueAction;
       if (this.plannedLineupIsOnBoard(roster)) {
+        if (this.style === "go") {
+          const opportunityInvestment = this.continueGoOpportunityInvestment(roster);
+          if (opportunityInvestment) {
+            // Batch deterministic shop investment behind the already verified
+            // lineup, then re-search and re-form only once when it is exhausted.
+            this.rescueLineupLocked = true;
+            return opportunityInvestment;
+          }
+          if (this.searchRescueLineup(roster)) {
+            const finalFormation = this.formationAction(roster);
+            if (finalFormation) return finalFormation;
+          }
+        }
         return engine.boardCount > 0 ? { type: "battle" } : null;
       }
       this.invalidateFinalLineup();
       if (this.style === "seer") this.invalidateSeerPlan(false);
+    }
+
+    if (this.style === "go" && this.goOpportunityInvestmentInProgress) {
+      const opportunityInvestment = this.continueGoOpportunityInvestment(roster);
+      if (opportunityInvestment) return opportunityInvestment;
     }
 
     const preparationSignature = JSON.stringify({
@@ -4931,7 +5126,9 @@ export class AutoChessAutopilot {
     }
     const plannedPurchase = this.seerPlannedPurchaseAction();
     if (plannedPurchase) return plannedPurchase;
-    const goOpportunityInvestment = this.goOpportunityInvestmentAction(roster);
+    const starForge = this.style === "go" ? null : this.starForgeAction(roster);
+    if (starForge) return starForge;
+    const goOpportunityInvestment = this.continueGoOpportunityInvestment(roster);
     if (goOpportunityInvestment) return goOpportunityInvestment;
     const seerEndgameInvestment = this.seerEndgameInvestmentAction(roster);
     if (seerEndgameInvestment) return seerEndgameInvestment;

@@ -36,6 +36,7 @@ const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "20"))
 const modelLimit = Math.max(1, Number(option("--model-limit", "512")) || 512);
 const heuristicLimit = Math.max(1, Number(option("--heuristic-limit", "128")) || 128);
 const exactLimit = Math.max(1, Number(option("--exact-limit", "32")) || 32);
+const exactOffset = Math.max(0, Number(option("--exact-offset", "0")) || 0);
 const replaySafetyLimit = Math.max(100, Number(option("--replay-safety", "10000")) || 10000);
 const requestedModelPath = option("--model", "");
 const modelPath = requestedModelPath ? path.resolve(requestedModelPath) : null;
@@ -303,7 +304,9 @@ const exploratory = Array.from(screened.values()).map((candidate, index, all) =>
 ));
 
 const exactCandidates = new Map();
-exploratory.slice(0, exactLimit).forEach((candidate) => exactCandidates.set(candidate.key, candidate));
+exploratory
+  .slice(exactOffset, exactOffset + exactLimit)
+  .forEach((candidate) => exactCandidates.set(candidate.key, candidate));
 addScreened(combinations.find(({ key }) => key === plannedKey));
 for (const key of [plannedKey, currentKey]) {
   const candidate = exploratory.find((entry) => entry.key === key);
@@ -361,6 +364,7 @@ const report = {
   combinationCount,
   uniqueCombinationCount: combinations.length,
   screenedCount: screened.size,
+  exactOffset,
   exactCount: exact.length,
   elapsedMs: performance.now() - startedAt,
   state: {

@@ -69,6 +69,45 @@ const startGoRun = async (page) => {
   await page.getByRole('button', { name: /由 AI 自选协议并开局/ }).click();
 };
 
+const captureWithSanityCheck = async (page, path) => {
+  const screenshot = await page.screenshot({ path, fullPage: true });
+  const stats = await page.evaluate((dataUrl) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.min(160, image.naturalWidth);
+      canvas.height = Math.min(100, image.naturalHeight);
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let opaque = 0;
+      let nearBlack = 0;
+      const colors = new Set();
+      for (let index = 0; index < pixels.length; index += 4) {
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        const alpha = pixels[index + 3];
+        if (alpha > 250) opaque += 1;
+        if (red < 12 && green < 12 && blue < 12) nearBlack += 1;
+        colors.add(`${red >> 4}:${green >> 4}:${blue >> 4}:${alpha >> 4}`);
+      }
+      const samples = pixels.length / 4;
+      resolve({
+        opaqueRatio: opaque / samples,
+        nearBlackRatio: nearBlack / samples,
+        colorBuckets: colors.size,
+      });
+    };
+    image.onerror = () => reject(new Error('Unable to decode page screenshot'));
+    image.src = dataUrl;
+  }), `data:image/png;base64,${screenshot.toString('base64')}`);
+  if (stats.opaqueRatio < 0.99 || stats.nearBlackRatio > 0.95 || stats.colorBuckets < 8) {
+    throw new Error(`Invalid browser screenshot: ${JSON.stringify(stats)}`);
+  }
+  return stats;
+};
+
 let browser;
 
 (async () => {
@@ -100,7 +139,10 @@ let browser;
     return stats && stats.entries > 0 && stats.misses > 0;
   }, null, { timeout: 120_000 });
   const coldStats = await page.evaluate(() => window.getAutoChessRolloutCacheStats());
-  await page.screenshot({ path: `${outputDirectory}/cold-cache.png`, fullPage: true });
+  const coldScreenshot = await captureWithSanityCheck(
+    page,
+    `${outputDirectory}/cold-cache.png`,
+  );
 
   await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
   await page.waitForTimeout(1_000);
@@ -134,7 +176,22 @@ let browser;
   });
   const warmStats = await page.evaluate(() => window.getAutoChessRolloutCacheStats());
   const textState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
-  await page.screenshot({ path: `${outputDirectory}/warm-cache-after-reload.png`, fullPage: true });
+  const canvasMetrics = await page.locator('[data-game-canvas="rift-line"]').evaluate((canvas) => {
+    const bounds = canvas.getBoundingClientRect();
+    return {
+      display: { width: bounds.width, height: bounds.height },
+      backing: { width: canvas.width, height: canvas.height },
+      layoutProfile: canvas.dataset.layoutProfile,
+      logical: {
+        width: canvas.dataset.logicalWidth,
+        height: canvas.dataset.logicalHeight,
+      },
+    };
+  });
+  const warmScreenshot = await captureWithSanityCheck(
+    page,
+    `${outputDirectory}/warm-cache-after-reload.png`,
+  );
 
   if (errors.length > 0) throw new Error(`Browser errors: ${errors.join(' | ')}`);
   console.log(JSON.stringify({
@@ -143,6 +200,8 @@ let browser;
     hydratedStats,
     warmStats,
     state: { phase: textState.phase, round: textState.round },
+    canvasMetrics,
+    screenshots: { cold: coldScreenshot, warm: warmScreenshot },
     errors,
   }, null, 2));
   await browser.close();

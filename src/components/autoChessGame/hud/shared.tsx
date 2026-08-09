@@ -47,7 +47,7 @@ export function UnitPortrait({ unitId, size = 42 }: { unitId: keyof typeof UNIT_
       alt={definition.name}
       onError={() => setFailed(true)}
       style={definition.portraitStyle === "sprite"
-        ? { width: size, height: size, objectFit: "contain", imageRendering: "pixelated" }
+        ? { width: size, height: size, objectFit: "contain" }
         : { width: size, height: size, objectFit: "cover", objectPosition: definition.portraitFocus === "top" ? "center 16%" : "center" }}
     />
   );

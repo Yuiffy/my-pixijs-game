@@ -74,7 +74,6 @@ function UnitPortrait({ id, className }: UnitPortraitProps) {
       style={{
         objectFit: definition.portraitStyle === "sprite" ? "contain" : "cover",
         objectPosition: definition.portraitFocus === "top" ? "center 16%" : "center",
-        imageRendering: definition.portraitStyle === "sprite" ? "pixelated" : "auto",
       }}
     />
   );
@@ -286,7 +285,6 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                         width: 112,
                         height: 112,
                         objectFit: "contain",
-                        imageRendering: "pixelated",
                       }
                       : {
                         width: 120,

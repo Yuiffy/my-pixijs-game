@@ -25,7 +25,7 @@ export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | nu
   if (!unitId) return <div className="rift-dom-shop-card empty">已征募</div>;
   const def = UNIT_DEFS[unitId as keyof typeof UNIT_DEFS];
   const totalOwned = owned[1] + owned[2] + owned[3];
-  const canStore = engine.boardCount < engine.boardCap || engine.state.bench.some((unit) => !unit);
+  const canStore = engine.canStoreUnit(def.id);
   const affordable = engine.state.gold >= def.cost && canStore;
   const role = def.title.split(" · ").at(-1) || def.title;
   const abilityGrowth = describeAbilityStarGrowth(def);

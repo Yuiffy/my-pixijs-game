@@ -64,6 +64,133 @@ test("Go级机会项目允许密集来牌压过旧固定目标", () => {
   assert.equal(targets[0].completionShopIndex, 1);
 });
 
+test("Go级会提前追逐九十次刷新后才能完成的机会项目", () => {
+  const bridge = new EngineBridge(162119);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 54;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.gold = 1_000;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  [
+    "grove_mender",
+    "lian",
+    "rei",
+    "yua",
+    "cinder_ram",
+    "spark_mage",
+    "sui_flower",
+    "xuehui",
+    "sui_bird",
+    "yukisyo",
+  ].forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1621300 + index, id, star: 3 };
+  });
+  bridge.engine.state.shop = Array(5).fill("lian");
+  const futureShops = Array.from({ length: 128 }, (_, index) => (
+    index >= 90 && index <= 98
+      ? ["zeyin", "lian", "lian", "lian", "lian"]
+      : Array(5).fill("lian")
+  ));
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  let requestedLookahead = 0;
+  autopilot.seerFutureShopForecast = (lookahead) => {
+    requestedLookahead = lookahead;
+    return futureShops;
+  };
+  autopilot.goModelScore = (lineup) => (
+    lineup.some(({ unit }) => unit.id === "zeyin" && unit.star === 3) ? 10 : 0
+  );
+  autopilot.rolloutConfidence = () => -100;
+
+  assert.deepEqual(
+    autopilot.goOpportunityInvestmentAction(autopilot.ownedEntries()),
+    { type: "reroll" },
+  );
+  assert.equal(requestedLookahead, 128);
+  assert.equal(autopilot.seer2FocusIds.has("zeyin"), true);
+});
+
+test("Go级残血高金币时用升星工坊完成模型高价值项目", () => {
+  const bridge = new EngineBridge(162122);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 54;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.hp = 8;
+  bridge.engine.state.gold = 1_000;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.board[0] = { uid: 1621220, id: "lian", star: 3 };
+  bridge.engine.state.bench[0] = { uid: 1621221, id: "youyi", star: 2 };
+  bridge.engine.state.shop = [null, null, null, null, null];
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.seerFutureShopForecast = () => [];
+  autopilot.goCompletedUnitModelGain = (_roster, id) => (id === "youyi" ? 3 : -3);
+  let rolloutCalls = 0;
+  autopilot.rolloutConfidence = () => {
+    rolloutCalls += 1;
+    return -100;
+  };
+
+  assert.deepEqual(
+    autopilot.goOpportunityInvestmentAction(autopilot.ownedEntries()),
+    { type: "starForge" },
+  );
+  bridge.dispatch({ type: "starForge" });
+  assert.equal(bridge.engine.isStarForgeUnlocked, true);
+  assert.deepEqual(
+    autopilot.goOpportunityInvestmentAction(autopilot.ownedEntries()),
+    { type: "starForge", location: { zone: "bench", index: 0 } },
+  );
+  bridge.dispatch({ type: "starForge", location: { zone: "bench", index: 0 } });
+  assert.equal(bridge.engine.state.bench[0].star, 3);
+  assert.equal(bridge.engine.state.gold, 1_000 - 40 - 48);
+  assert.equal(rolloutCalls, 0);
+});
+
+test("Go级当前商店有可购买目标时先买牌再使用工坊", () => {
+  const bridge = new EngineBridge(162123);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 54;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.hp = 8;
+  bridge.engine.state.gold = 1_000;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.board[0] = { uid: 1621230, id: "lian", star: 3 };
+  bridge.engine.state.bench[0] = { uid: 1621231, id: "youyi", star: 2 };
+  bridge.engine.state.shop = ["youyi", null, null, null, null];
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.seerFutureShopForecast = () => Array.from({ length: 6 }, () => (
+    ["youyi", null, null, null, null]
+  ));
+  autopilot.goPlanningTargets = () => [{
+    id: "youyi",
+    priority: 100,
+    desiredStar: 3,
+    role: "terminal",
+    learnedValue: 3,
+    copies: 3,
+    benchSlots: 1,
+    currentShopHits: 1,
+    forecastHits: 6,
+    completionShopIndex: 5,
+    remainingAfterForecast: 0,
+    score: 100,
+  }];
+
+  assert.deepEqual(
+    autopilot.goOpportunityInvestmentAction(autopilot.ownedEntries()),
+    { type: "shop", index: 0 },
+  );
+});
+
 test("Go级满候补席会释放低进度旧项目并买入新机会项目", () => {
   const bridge = new EngineBridge(162117);
   bridge.setConsoleLogging(false);
@@ -71,7 +198,8 @@ test("Go级满候补席会释放低进度旧项目并买入新机会项目", () 
   bridge.engine.startRun("bastion");
   bridge.engine.state.round = 20;
   bridge.engine.state.playerLevel = 10;
-  bridge.engine.state.gold = 100;
+  bridge.engine.state.starForgeUnlocked = true;
+  bridge.engine.state.gold = 4;
   bridge.engine.state.board.fill(null);
   bridge.engine.state.bench.fill(null);
   const boardIds = [
@@ -613,6 +741,77 @@ test("Go级救援不会让已提交的60Hz胜解退回20Hz重筛", () => {
   assert.equal(autopilot.rescueLineupLocked, true);
   assert.equal(autopilot.plannedLineupScore, 10123);
   assert.equal(coarseCalls, 1);
+});
+
+test("Go级已锁定胜阵落盘后仍先执行安全机会投资", () => {
+  const bridge = new EngineBridge(162120);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 54;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const unit = { uid: 1621200, id: "sui_flower", star: 3 };
+  bridge.engine.state.board[0] = unit;
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.plannedRound = bridge.engine.state.round;
+  autopilot.plannedLineupUids = [unit.uid];
+  autopilot.plannedBoardSlots = new Map([[unit.uid, 0]]);
+  autopilot.rescueLineupLocked = true;
+  let investmentCalls = 0;
+  let rescueSearchCalls = 0;
+  autopilot.goOpportunityInvestmentAction = () => {
+    investmentCalls += 1;
+    return investmentCalls === 1 ? { type: "reroll" } : null;
+  };
+  autopilot.searchRescueLineup = () => {
+    rescueSearchCalls += 1;
+    return false;
+  };
+
+  assert.deepEqual(autopilot.nextPreparationAction(), { type: "reroll" });
+  assert.equal(investmentCalls, 1);
+  assert.equal(rescueSearchCalls, 0);
+  assert.equal(autopilot.rescueLineupLocked, true);
+  assert.equal(autopilot.goOpportunityInvestmentInProgress, true);
+  assert.deepEqual(autopilot.nextPreparationAction(), { type: "battle" });
+  assert.equal(investmentCalls, 2);
+  assert.equal(rescueSearchCalls, 1);
+  assert.equal(autopilot.goOpportunityInvestmentInProgress, false);
+});
+
+test("非Go策略已锁定胜阵落盘后仍立即开战", () => {
+  const bridge = new EngineBridge(162121);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const unit = { uid: 1621210, id: "sui_flower", star: 3 };
+  bridge.engine.state.board[0] = unit;
+
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "survival",
+    "normal",
+    20,
+  );
+  autopilot.plannedRound = bridge.engine.state.round;
+  autopilot.plannedLineupUids = [unit.uid];
+  autopilot.plannedBoardSlots = new Map([[unit.uid, 0]]);
+  autopilot.rescueLineupLocked = true;
+  let investmentCalls = 0;
+  autopilot.goOpportunityInvestmentAction = () => {
+    investmentCalls += 1;
+    return { type: "reroll" };
+  };
+
+  assert.deepEqual(autopilot.nextPreparationAction(), { type: "battle" });
+  assert.equal(investmentCalls, 0);
 });
 
 test("Go级开战棋盘必须逐格等于冠军评估时的规范站位", () => {

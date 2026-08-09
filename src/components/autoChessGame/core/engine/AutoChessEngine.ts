@@ -727,6 +727,10 @@ export class AutoChessEngine {
     this.roster.buyShopUnit(index);
   }
 
+  public canStoreUnit(id: UnitId) {
+    return this.roster.canStoreUnit(id);
+  }
+
   public clearSelection() {
     this.roster.clearSelection();
   }

@@ -91,7 +91,98 @@ test("跨场上与备战席合成时保留场上棋子的位置", () => {
   assert.equal(engine.state.bench[1], null);
 });
 
-test("连锁合成三星时场上二星优先于新合成的备战席二星", () => {
+test("新购棋子出现在左上角时合成保留最老棋子站位", () => {
+  const engine = createEngine(81);
+  engine.state.board.fill(null);
+  engine.state.bench.fill(null);
+  engine.state.board[11] = { uid: 101, id: "sun_guard", star: 1 };
+  engine.state.bench[0] = { uid: 102, id: "sun_guard", star: 1 };
+  engine.state.shop[0] = "sun_guard";
+  engine.state.gold = 10;
+  const snapshot = engine.getSimulationSnapshot();
+  engine.restoreSimulationSnapshot({ ...snapshot, uid: 1000 });
+
+  engine.buyShopUnit(0);
+
+  assert.equal(engine.state.board[0], null);
+  assert.deepEqual(engine.state.board[11], { uid: 101, id: "sun_guard", star: 2 });
+  assert.equal(engine.state.bench[0], null);
+  assert.equal(engine.state.shop[0], null);
+});
+
+test("场上和备战席全满时仍可购买能立即合成的棋子", () => {
+  const engine = createEngine(82);
+  engine.state.board.fill(null);
+  engine.state.bench.fill(null);
+  engine.state.board[11] = { uid: 101, id: "sun_guard", star: 1 };
+  engine.state.board[12] = { uid: 201, id: "ember_blade", star: 1 };
+  engine.state.board[13] = { uid: 202, id: "rift_brawler", star: 1 };
+  engine.state.bench[0] = { uid: 102, id: "sun_guard", star: 1 };
+  const fillerIds = [
+    "clock_gunner",
+    "shiori",
+    "mitsuri",
+    "sumi",
+    "mossback",
+    "grove_mender",
+    "spark_mage",
+  ];
+  fillerIds.forEach((id, index) => {
+    engine.state.bench[index + 1] = { uid: 300 + index, id, star: 1 };
+  });
+  engine.state.shop[0] = "sun_guard";
+  engine.state.gold = 10;
+  const snapshot = engine.getSimulationSnapshot();
+  engine.restoreSimulationSnapshot({ ...snapshot, uid: 1000 });
+  const goldBefore = engine.state.gold;
+
+  assert.equal(engine.boardCount, engine.boardCap);
+  assert.ok(engine.state.bench.every(Boolean));
+  assert.equal(engine.canStoreUnit("sun_guard"), true);
+  engine.buyShopUnit(0);
+
+  assert.deepEqual(engine.state.board[11], { uid: 101, id: "sun_guard", star: 2 });
+  assert.equal(engine.state.bench[0], null);
+  assert.equal(engine.state.shop[0], null);
+  assert.equal(engine.state.gold, goldBefore - gameData.UNIT_DEFS.sun_guard.cost);
+});
+
+test("场上和备战席全满且无法合成时仍拒绝购买", () => {
+  const engine = createEngine(83);
+  engine.state.board.fill(null);
+  engine.state.bench.fill(null);
+  const fillerIds = [
+    "sun_guard",
+    "ember_blade",
+    "rift_brawler",
+    "clock_gunner",
+    "shiori",
+    "mitsuri",
+    "sumi",
+    "mossback",
+    "grove_mender",
+    "spark_mage",
+    "gale_archer",
+  ];
+  fillerIds.slice(0, engine.boardCap).forEach((id, index) => {
+    engine.state.board[index] = { uid: 400 + index, id, star: 1 };
+  });
+  fillerIds.slice(engine.boardCap).forEach((id, index) => {
+    engine.state.bench[index] = { uid: 500 + index, id, star: 1 };
+  });
+  engine.state.shop[0] = "sun_guard";
+  engine.state.gold = 10;
+  const goldBefore = engine.state.gold;
+
+  assert.equal(engine.canStoreUnit("sun_guard"), false);
+  engine.buyShopUnit(0);
+
+  assert.equal(engine.state.shop[0], "sun_guard");
+  assert.equal(engine.state.gold, goldBefore);
+  assert.match(engine.state.toast.text, /备战席已满/);
+});
+
+test("连锁合成三星时保留最老的二星棋子", () => {
   const engine = createEngine(9);
   engine.state.board.fill(null);
   engine.state.bench.fill(null);

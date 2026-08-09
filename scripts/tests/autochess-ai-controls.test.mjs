@@ -34,13 +34,13 @@ const hostSource = await readFile("src/components/autoChessGame/PhaserGame.tsx",
 const hudSource = await readFile("src/components/autoChessGame/RiftHud.tsx", "utf8");
 const hudStyles = await readFile("src/components/autoChessGame/RiftHud.css", "utf8");
 
-const makeLateSeerCase = (shop, bench = []) => {
+const makeLateSeerCase = (shop, bench = [], round = 20) => {
   const bridge = new EngineBridge(13161, 1, { simulation: true, battleStepHz: 20 });
   bridge.setConsoleLogging(false);
   bridge.engine.state.starterChoices = ["bastion"];
   bridge.engine.startRun("bastion");
   const state = bridge.engine.state;
-  state.round = 20;
+  state.round = round;
   state.playerLevel = 10;
   state.upgradeRemaining = 0;
   state.hp = 20;
@@ -707,6 +707,57 @@ test("AI 出售接口支持指定槽位和选中后点击式出售", () => {
   assert.equal(bridge.engine.state.gold, selectedGold + UNIT_DEFS[boardUnit.id].cost);
 });
 
+test("后期托管会解锁工坊并用确定性直升替代目标刷新", () => {
+  const { bridge, autopilot } = makeLateSeerCase([null, null, null, null, null], [], 32);
+  const state = bridge.engine.state;
+  state.board[0] = { uid: 771300, id: "grove_mender", star: 2 };
+  state.gold = 500;
+
+  const unlock = autopilot.nextPreparationAction();
+  assert.deepEqual(unlock, {
+    type: "starForge",
+    location: { zone: "board", index: 0 },
+  });
+  bridge.dispatch(unlock);
+  assert.equal(bridge.engine.isStarForgeUnlocked, true);
+  assert.equal(state.board[0].star, 2);
+
+  const upgrade = autopilot.nextPreparationAction();
+  assert.deepEqual(upgrade, {
+    type: "starForge",
+    location: { zone: "board", index: 0 },
+  });
+  bridge.dispatch(upgrade);
+  assert.equal(state.board[0].star, 3);
+  assert.equal(state.gold, 500 - bridge.engine.starForgeUnlockCost - 72);
+});
+
+test("后期托管资金尚未溢出时不会启用工坊", () => {
+  const { bridge, autopilot } = makeLateSeerCase([null, null, null, null, null], [], 32);
+  bridge.engine.state.gold = 160;
+  bridge.engine.state.board[0] = { uid: 771301, id: "grove_mender", star: 2 };
+
+  assert.equal(autopilot.starForgeAction(autopilot.ownedEntries()), null);
+});
+
+test("AI 控制台公开指定棋子工坊调用", () => {
+  const bridge = new EngineBridge(77131, 1, { simulation: true });
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.upgradeRemaining = 0;
+  bridge.engine.state.gold = 160;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.board[0] = { uid: 771310, id: "grove_mender", star: 2 };
+  const ai = new AutoChessAIController(bridge);
+
+  assert.equal(ai.starForge().ok, true);
+  assert.equal(bridge.engine.isStarForgeUnlocked, true);
+  assert.equal(ai.starForge("board", 1).ok, true);
+  assert.equal(bridge.engine.state.board[0].star, 3);
+});
+
 test("宿主公开 AI API、阶段快捷键和快速结算键", () => {
   assert.match(hostSource, /window\.autoChessAI = ai/);
   assert.match(hostSource, /delete window\.autoChessAI/);
@@ -1068,6 +1119,59 @@ test("看穿动态规划会为高本固定 key 牌序列提前升本并只返回
   assert.ok(plan.exploredStates > 0);
   assert.ok(plan.dominancePrunes > 0);
   assert.equal(plan.projectedRound, 15);
+});
+
+test("看穿会把关键牌第六次刷新这样的非粗粒度节点纳入搜索", () => {
+  const targetId = AUTOPILOT_TERMINAL_TARGET_IDS.find(
+    (id) => UNIT_DEFS[id].tier === 5,
+  );
+  assert.ok(targetId);
+  const emptyShop = [null, null, null, null, null];
+  const futureShops = Object.fromEntries(
+    [3, 4, 5, 6, 7, 8, 9, 10].map((level) => [
+      level,
+      Array.from({ length: 24 }, () => [...emptyShop]),
+    ]),
+  );
+  futureShops[10][5] = [targetId, targetId, targetId, targetId, targetId];
+  futureShops[10][6] = [targetId, targetId, targetId, targetId, null];
+  const plan = planSeerEconomy({
+    round: 12,
+    seed: 131431,
+    hp: 20,
+    gold: 240,
+    playerLevel: 3,
+    upgradeRemaining: 0,
+    streak: 3,
+    incomeBonus: 0,
+    paydayDebtRounds: 0,
+    freeRerolls: 0,
+    financeActive: true,
+    currentShop: emptyShop,
+    // The current board is deliberately losing, so the planner must spend
+    // this preparation on the known seventh-shop completion instead of
+    // banking at the scheduled seventh book.
+    currentCombatScore: -1000,
+    targetCopies: {},
+    targets: [{ id: targetId, priority: 100, desiredCopies: 9 }],
+    futureShops,
+    horizon: 1,
+    beamWidth: 64,
+  });
+
+  assert.equal(plan.firstStep.targetLevel, 10);
+  assert.equal(plan.firstStep.rerolls, 7);
+  assert.deepEqual(plan.firstStep.purchasesByShop?.slice(1).flat(), [
+    targetId,
+    targetId,
+    targetId,
+    targetId,
+    targetId,
+    targetId,
+    targetId,
+    targetId,
+    targetId,
+  ]);
 });
 
 test("看穿会一次建立第1至第60战的敌方时间表并规划完整前缀", () => {

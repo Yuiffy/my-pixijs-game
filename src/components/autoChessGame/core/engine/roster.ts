@@ -72,6 +72,15 @@ public get boardCount() {
     return this.state.board.filter(Boolean).length;
   }
 
+public canStoreUnit(id: UnitId) {
+    if (this.boardCount < this.boardCap) return true;
+    if (this.state.bench.some((unit) => !unit)) return true;
+    return this.allLocations().filter((location) => {
+      const unit = this.getAt(location);
+      return unit?.id === id && unit.star === 1;
+    }).length >= 2;
+  }
+
 private rollTier() {
     const odds = tierOddsForLevel(this.state.playerLevel);
     const roll = this.rng.next() * 100;
@@ -221,7 +230,8 @@ public buyShopUnit(index: number) {
         ? this.state.board.findIndex((unit) => !unit)
         : -1;
     const benchSlot = this.state.bench.findIndex((unit) => !unit);
-    if (boardSlot < 0 && benchSlot < 0) {
+    const mergeAtCapacity = boardSlot < 0 && benchSlot < 0;
+    if (mergeAtCapacity && !this.canStoreUnit(id)) {
       this.setToast("备战席已满。出售或合成一个单位后再购买。", "bad");
       return;
     }
@@ -230,9 +240,11 @@ public buyShopUnit(index: number) {
     this.state.gold -= def.cost;
     this.state.shop[index] = null;
     if (boardSlot >= 0) this.state.board[boardSlot] = owned;
-    else this.state.bench[benchSlot] = owned;
+    else if (benchSlot >= 0) this.state.bench[benchSlot] = owned;
     this.state.score += def.cost * 5;
-    const merged = this.checkMerges();
+    const merged = mergeAtCapacity
+      ? this.mergeOverflowPurchase(owned)
+      : this.checkMerges();
     if (!merged) this.setToast(
         `${def.name}已加入${boardSlot >= 0 ? "阵地" : "备战席"}。`,
         "good",
@@ -329,7 +341,7 @@ public getUnitSellValue(unit: OwnedUnit) {
     return UNIT_DEFS[unit.id].cost * copies;
   }
 
-private allLocations() {
+  private allLocations() {
     const locations: UnitLocation[] = [];
     this.state.board.forEach((unit, index) => {
       if (unit) locations.push({ zone: "board", index });
@@ -340,42 +352,65 @@ private allLocations() {
     return locations;
   }
 
+  private locationsByAge(locations: UnitLocation[]) {
+    return [...locations].sort((left, right) => {
+      const leftUnit = this.getAt(left);
+      const rightUnit = this.getAt(right);
+      return (leftUnit?.uid ?? Number.MAX_SAFE_INTEGER)
+        - (rightUnit?.uid ?? Number.MAX_SAFE_INTEGER);
+    });
+  }
+
+  private completeMerge(
+    id: UnitId,
+    star: 1 | 2,
+    keep: UnitLocation,
+    removals: UnitLocation[],
+  ) {
+    const keptUnit = this.getAt(keep);
+    if (!keptUnit) return false;
+    keptUnit.star = (star + 1) as 2 | 3;
+    removals.forEach((location) => this.setAt(location, null));
+    this.state.selected = null;
+    this.state.score += 80 * star;
+    this.setToast(
+      `聚合完成：${UNIT_DEFS[id].name}升至 ${star + 1} 星，并保留最老棋子的站位！`,
+      "good",
+    );
+    return true;
+  }
+
+  private mergeOverflowPurchase(owned: OwnedUnit) {
+    const matches = this.locationsByAge(
+      this.allLocations().filter((location) => {
+        const unit = this.getAt(location);
+        return unit?.id === owned.id && unit.star === 1;
+      }),
+    );
+    const [keep, removal] = matches;
+    if (!keep || !removal) return false;
+    if (!this.completeMerge(owned.id, 1, keep, [removal])) return false;
+    this.checkMerges();
+    return true;
+  }
+
 public checkMerges() {
     let didMerge = false;
-    let preferred: UnitLocation | undefined;
     let found = true;
     while (found) {
       found = false;
       for (const id of SHOP_UNITS) {
         for (const star of [1, 2] as const) {
-          const matches = this.allLocations().filter((location) => {
-            const unit = this.getAt(location);
-            return unit?.id === id && unit.star === star;
-          });
+          const matches = this.locationsByAge(
+            this.allLocations().filter((location) => {
+              const unit = this.getAt(location);
+              return unit?.id === id && unit.star === star;
+            }),
+          );
           if (matches.length < 3) continue;
 
-          const currentPreferred = preferred;
-          const preferredMatch = currentPreferred
-            ? matches.find((location) => this.sameLocation(location, currentPreferred))
-            : null;
-          const boardMatch = matches.find((location) => location.zone === "board");
-          // A newly merged bench unit may trigger the next star tier, but an
-          // existing board unit always owns the final placement.
-          const keep = boardMatch || preferredMatch || matches[0];
-          const removals = matches
-            .filter((location) => !this.sameLocation(location, keep))
-            .slice(0, 2);
-          const keptUnit = this.getAt(keep);
-          if (!keptUnit || removals.length < 2) continue;
-          keptUnit.star = (star + 1) as 2 | 3;
-          removals.forEach((location) => this.setAt(location, null));
-          preferred = keep;
-          this.state.selected = null;
-          this.state.score += 80 * star;
-          this.setToast(
-            `聚合完成：${UNIT_DEFS[id].name}升至 ${star + 1} 星，并保留原站位！`,
-            "good",
-          );
+          const [keep, ...removals] = matches.slice(0, 3);
+          if (!keep || !this.completeMerge(id, star, keep, removals)) continue;
           didMerge = true;
           found = true;
           break;

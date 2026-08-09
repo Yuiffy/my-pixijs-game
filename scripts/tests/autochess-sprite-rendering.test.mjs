@@ -819,6 +819,7 @@ test("紧凑桌面备战区的槽位绘制与拖拽命中共用布局 profile", 
 });
 
 test("场上满员时 DOM 商店仍预测待激活羁绊", () => {
+  assert.match(hud, /const canStore = engine\.canStoreUnit\(def\.id\)/);
   const domPrediction = hud.match(
     /const traitTags = def\.traits\.map[\s\S]*?return \{ id, trait, status, willActivate \};\n  \}\);/,
   )?.[0];

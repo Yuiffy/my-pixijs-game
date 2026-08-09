@@ -252,12 +252,15 @@ const rankLineups = (pilot) => {
     unit.star === 3 || location.zone === "board"
   ));
   const unique = new Map();
+  const addUnique = (lineup) => {
+    if (lineup.length !== cap) return;
+    const key = shapeKey(lineup);
+    if (!unique.has(key)) unique.set(key, lineup);
+  };
   const selected = [];
   const collect = (start) => {
     if (selected.length === cap) {
-      const lineup = [...selected];
-      const key = shapeKey(lineup);
-      if (!unique.has(key)) unique.set(key, lineup);
+      addUnique([...selected]);
       return;
     }
     const needed = cap - selected.length;
@@ -268,6 +271,29 @@ const rankLineups = (pilot) => {
     }
   };
   collect(0);
+  const current = roster.filter(({ location }) => location.zone === "board");
+  const currentUids = new Set(current.map(({ unit }) => unit.uid));
+  const reserves = roster.filter(({ unit }) => !currentUids.has(unit.uid));
+  addUnique(current);
+  reserves.forEach((reserve) => {
+    current.forEach((_, boardIndex) => {
+      const candidate = [...current];
+      candidate[boardIndex] = reserve;
+      addUnique(candidate);
+    });
+  });
+  for (let leftReserve = 0; leftReserve < reserves.length; leftReserve += 1) {
+    for (let rightReserve = leftReserve + 1; rightReserve < reserves.length; rightReserve += 1) {
+      for (let leftBoard = 0; leftBoard < current.length; leftBoard += 1) {
+        for (let rightBoard = leftBoard + 1; rightBoard < current.length; rightBoard += 1) {
+          const candidate = [...current];
+          candidate[leftBoard] = reserves[leftReserve];
+          candidate[rightBoard] = reserves[rightReserve];
+          addUnique(candidate);
+        }
+      }
+    }
+  }
   const scored = Array.from(unique.values()).map((lineup) => ({
     lineup,
     key: shapeKey(lineup),
