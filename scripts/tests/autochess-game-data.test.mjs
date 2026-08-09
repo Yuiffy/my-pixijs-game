@@ -563,10 +563,19 @@ test("岁己形态拆分到不同关系构筑", () => {
   );
   assert.equal(data.UNIT_DEFS.tiandou.abilityName, "棒棒糖刘海");
   assert.match(data.UNIT_DEFS.tiandou.abilityDescription, /友军.*回复生命.*敌人.*减速/);
-  assert.equal(data.UNIT_DEFS.mitsuri.abilityName, "站我后面");
-  assert.match(data.UNIT_DEFS.mitsuri.abilityDescription, /护盾.*嘲讽/);
+  assert.equal(data.UNIT_DEFS.mitsuri.abilityName, "脚臭试管");
+  assert.match(data.UNIT_DEFS.mitsuri.abilityDescription, /🧪.*持续区域.*恐惧.*停止攻击.*远离/);
   assert.equal(data.UNIT_DEFS.mitsuri.attackType, "melee");
   assert.ok(data.UNIT_DEFS.mitsuri.range <= 60);
+  assert.equal(data.UNIT_DEFS.mitsuri.abilityCastTiming, "offenseReady");
+  assert.equal(data.UNIT_DEFS.mitsuri.abilityRange, 320);
+  assert.deepEqual(
+    data.UNIT_DEFS.mitsuri.abilityLevels.map((level) => [
+      level.stats.radius,
+      level.stats.duration,
+    ]),
+    [[118, 4.2], [134, 4.8], [152, 5.4]],
+  );
   assert.equal(data.UNIT_DEFS.lovely.abilityCastTiming, "offenseInRange");
   assert.match(data.UNIT_DEFS.lovely.abilityDescription, /需要接近敌人才能发动/);
   assert.match(data.UNIT_DEFS.lovely.abilityDescription, /护盾.*普攻.*眩晕.*拉近/);
@@ -749,6 +758,10 @@ test("雪烛以高初始能量主动提供固定值加生命比例的四秒技�
   assert.equal(yukisyo.abilityCastTiming, "supportShield");
   assert.equal(yukisyo.energyProfile.start, 78);
   assert.equal(yukisyo.energyProfile.max, 100);
+  assert.deepEqual(
+    { hp: yukisyo.hp, attack: yukisyo.attack, attackInterval: yukisyo.attackInterval },
+    { hp: 175, attack: 23, attackInterval: 1.08 },
+  );
   assert.ok(yukisyo.energyProfile.start < yukisyo.energyProfile.max);
   assert.deepEqual(
     yukisyo.abilityLevels.map((level) => [
@@ -911,10 +924,11 @@ test("大黑鼠随机怪话说明包含迎客松与 75mm 大吧唧", () => {
   assert.equal(data.UNIT_DEFS.dawn_duelist.hp, 232);
   assert.equal(data.UNIT_DEFS.dawn_duelist.armor, 22);
   assert.equal(data.UNIT_DEFS.dawn_duelist.moveSpeed, 64);
-  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityCastTiming, "offenseInRange");
-  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityRange, 118);
-  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /更快积攒第一句怪话.*贴近敌人.*迎客松.*嘲讽.*20% 移速.*护盾/);
-  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /75mm 大吧唧.*范围伤害.*眩晕/);
+  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityCastTiming, "offenseReady");
+  assert.equal(data.UNIT_DEFS.dawn_duelist.abilityRange, 260);
+  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /更快积攒第一句怪话.*敌人接近.*迎客松.*行进路线.*小范围.*减速/);
+  assert.match(data.UNIT_DEFS.dawn_duelist.abilityDescription, /75mm 大吧唧.*单个敌人.*击退/);
+  assert.doesNotMatch(data.UNIT_DEFS.dawn_duelist.abilityDescription, /嘲讽|护盾|眩晕/);
 });
 
 test("所有羁绊的最高档都能由可购买成员达到", () => {
@@ -966,7 +980,7 @@ test("星汐、塔神与礼墨使用已下载的公开头像并保留各自角�
   assert.equal(seki.abilityName, "山猪冲阵");
   assert.deepEqual(
     { tier: seki.tier, cost: seki.cost, hp: seki.hp, attack: seki.attack, armor: seki.armor },
-    { tier: 5, cost: 5, hp: 410, attack: 41, armor: 32 },
+    { tier: 5, cost: 5, hp: 450, attack: 41, armor: 32 },
   );
   assert.match(seki.abilityDescription, /持续耗能.*提高移速.*无法普攻.*缓慢转向.*击退.*眩晕.*边缘.*反弹/);
   assert.equal(towerGod.abilityName, "开挂");
@@ -1093,8 +1107,9 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
       attack: data.UNIT_DEFS.rei.attack,
       armor: data.UNIT_DEFS.rei.armor,
     },
-    { tier: 4, cost: 4, hp: 230, attack: 36, armor: 13 },
+    { tier: 4, cost: 4, hp: 230, attack: 31, armor: 13 },
   );
+  assert.equal(data.UNIT_DEFS.rei.attackInterval, 0.96);
   assert.deepEqual(
     {
       tier: data.UNIT_DEFS.rutice.tier,
@@ -1103,7 +1118,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
       attack: data.UNIT_DEFS.rutice.attack,
       armor: data.UNIT_DEFS.rutice.armor,
     },
-    { tier: 3, cost: 3, hp: 380, attack: 32, armor: 31 },
+    { tier: 3, cost: 3, hp: 320, attack: 27, armor: 26 },
   );
   assert.match(data.UNIT_DEFS.rutice.abilityDescription, /24%\/30%\/36%.*12%.*2\.6 倍/);
 

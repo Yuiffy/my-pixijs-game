@@ -68,6 +68,8 @@ const goCombatScorer = goModelPath
   : undefined;
 const requestedStyle = option("--style", "survival");
 const style = requestedStyle === "seer2" ? "seer" : requestedStyle;
+const requestedThinkingLevel = option("--level", "");
+const thinkingLevel = requestedThinkingLevel || undefined;
 const informationMode = option(
   "--information",
   style === "seer" || style === "go" ? "oracle" : "normal",
@@ -83,6 +85,12 @@ if (!["survival", "balanced", "highroll", "fair", "seer", "go"].includes(style))
 }
 if (!["normal", "oracle"].includes(informationMode)) {
   throw new Error(`Unknown autopilot information mode: ${informationMode}`);
+}
+if (
+  thinkingLevel
+  && !["novice", "veteran", "deep", "oracle", "go"].includes(thinkingLevel)
+) {
+  throw new Error(`Unknown autopilot thinking level: ${thinkingLevel}`);
 }
 const requiredWinRound = Math.max(
   0,
@@ -182,6 +190,7 @@ const playRun = (seed) => {
     rolloutHz,
     goCombatScorer,
     true,
+    thinkingLevel,
   );
   const goPreBattleVerification = new Map();
   let latestPreparationSnapshot = null;
@@ -536,6 +545,7 @@ const aggregate = {
   policyPath: policyPath || null,
   goModelPath,
   style,
+  thinkingLevel: thinkingLevel || null,
   informationMode,
   rolloutHz,
   battleStepHz,

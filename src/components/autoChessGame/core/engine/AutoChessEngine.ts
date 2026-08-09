@@ -64,7 +64,6 @@ import {
   AbilitySystem,
   BISCUIT_RESCUE_LANDING_RADIUS,
   CINDER_RAM_SONG_RANGE,
-  MITSURI_TAUNT_DURATION,
   SHIORI_OTTER_RADIUS,
   SUI_BIRD_ELBOW_CHARGES,
   SUMI_STEALTH_DURATION,
@@ -80,6 +79,7 @@ import {
 
 export type {
   AbilityMotion,
+  AreaControlZone,
   AugmentSelection,
   BattleEffect,
   BattleState,
@@ -118,6 +118,9 @@ export type AutoChessEngineSnapshot = {
 const CONTACT_ATTACK_BUFFER = 12;
 const PLACEMENT_MARGIN = 8;
 const TARGET_LOCK_DURATION = 0.45;
+const TAUNT_TARGET_LOCK_DURATION = 3.2;
+const CONTROL_ZONE_STATUS_REFRESH = 0.16;
+const FEAR_MOVE_SPEED_MULTIPLIER = 1.18;
 const TARGET_SWITCH_DISTANCE = 28;
 const AVOID_LOOK_AHEAD = 78;
 const YIELD_PATH_PADDING = 3;
@@ -897,6 +900,7 @@ export class AutoChessEngine {
       gluttonyKillCooldown: Number(fighter.gluttonyKillCooldown.toFixed(2)),
       stun: Number(fighter.stun.toFixed(2)),
       tauntTime: Number(fighter.tauntTime.toFixed(1)),
+      fearTime: Number(fighter.fearTime.toFixed(2)),
       burnTime: Number(Math.max(0, fighter.burnTime).toFixed(2)),
       slowTime: Number(fighter.slowTime.toFixed(2)),
       slowMultiplier: Number(fighter.slowMultiplier.toFixed(2)),
@@ -2088,7 +2092,7 @@ export class AutoChessEngine {
       : null;
     if (tauntTarget) {
       source.targetFid = tauntTarget.fid;
-      source.targetLock = MITSURI_TAUNT_DURATION;
+      source.targetLock = TAUNT_TARGET_LOCK_DURATION;
       return tauntTarget;
     }
     if (source.tauntTime > 0) {
@@ -2942,6 +2946,82 @@ export class AutoChessEngine {
     });
   }
 
+  private updateControlZones(battle: BattleState, dt: number) {
+    battle.controlZones = battle.controlZones.filter((zone) => {
+      zone.life = Math.max(0, zone.life - dt);
+      const targetTeam: Team = zone.team === "player" ? "enemy" : "player";
+      this.living(targetTeam)
+        .filter((fighter) => (
+          Math.hypot(fighter.x - zone.x, fighter.y - zone.y) <= zone.radius
+        ))
+        .forEach((fighter) => {
+          if (zone.kind === "fear") {
+            fighter.fearTime = Math.max(
+              fighter.fearTime,
+              CONTROL_ZONE_STATUS_REFRESH,
+            );
+            fighter.fearSourceX = zone.x;
+            fighter.fearSourceY = zone.y;
+            fighter.targetFid = null;
+            fighter.targetLock = 0;
+            fighter.channelTargetFid = null;
+            fighter.channelTime = 0;
+            fighter.channelPulseTimer = 0;
+            return;
+          }
+          const slowMultiplier = zone.slowMultiplier ?? 1;
+          if (
+            fighter.slowTime <= 0 ||
+            fighter.slowMultiplier >= slowMultiplier
+          ) {
+            fighter.slowTime = Math.max(
+              fighter.slowTime,
+              CONTROL_ZONE_STATUS_REFRESH,
+            );
+            fighter.slowMultiplier = slowMultiplier;
+          }
+        });
+      return zone.life > 0;
+    });
+  }
+
+  private updateFearEscape(
+    fighter: Fighter,
+    dt: number,
+    movementIntents: Map<string, MovementIntent>,
+  ) {
+    let directionX = fighter.x - fighter.fearSourceX;
+    let directionY = fighter.y - fighter.fearSourceY;
+    const distance = Math.hypot(directionX, directionY);
+    if (distance < 0.001) {
+      directionX = fighter.team === "player" ? -1 : 1;
+      directionY = 0;
+    } else {
+      directionX /= distance;
+      directionY /= distance;
+    }
+    const travel =
+      fighter.moveSpeed *
+      FEAR_MOVE_SPEED_MULTIPLIER *
+      (fighter.slowTime > 0 ? fighter.slowMultiplier : 1) *
+      dt;
+    const next = this.clampFighterPosition(fighter, {
+      x: fighter.x + directionX * travel,
+      y: fighter.y + directionY * travel,
+    });
+    fighter.x = next.x;
+    fighter.y = next.y;
+    fighter.targetFid = null;
+    fighter.targetLock = 0;
+    fighter.stuckTime = 0;
+    movementIntents.set(fighter.fid, {
+      x: directionX,
+      y: directionY,
+      forced: true,
+    });
+    this.faceTowardX(fighter, fighter.x + directionX);
+  }
+
   private updateBattle(dt: number) {
     const battle = this.state.battle;
     if (!battle) return;
@@ -2991,6 +3071,7 @@ export class AutoChessEngine {
     this.updateMechanicalRabbitPets(battle, dt);
     this.updateProjectileVolley(battle, dt);
     this.updateProjectiles(battle, dt);
+    this.updateControlZones(battle, dt);
 
     const emberLevels = {
       player: this.battleTraitLevel(battle, "player", "ember"),
@@ -3100,6 +3181,7 @@ export class AutoChessEngine {
       fighter.danceDashTime = Math.max(0, fighter.danceDashTime - dt);
       fighter.slowTime = Math.max(0, fighter.slowTime - dt);
       if (fighter.slowTime <= 0) fighter.slowMultiplier = 1;
+      fighter.fearTime = Math.max(0, fighter.fearTime - dt);
       if (fighter.sekiChargeActive) {
         fighter.energy = Math.max(
           0,
@@ -3286,6 +3368,10 @@ export class AutoChessEngine {
         this.heal(fighter, fighter, fighter.maxHp * healPerSecond * manquActiveTime, false);
       }
       if (fighter.stun > 0) return;
+      if (fighter.fearTime > 0) {
+        this.updateFearEscape(fighter, dt, movementIntents);
+        return;
+      }
       if (manquActiveTime > 0) {
         const targetTeam: Team = fighter.team === "player" ? "enemy" : "player";
         this.updateManquEscape(
@@ -3791,6 +3877,9 @@ export class AutoChessEngine {
       stun: 0,
       tauntedByFid: null,
       tauntTime: 0,
+      fearTime: 0,
+      fearSourceX: 0,
+      fearSourceY: 0,
       burnTime: 0,
       burnDps: 0,
       burnSourceFid: null,

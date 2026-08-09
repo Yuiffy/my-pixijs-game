@@ -9,10 +9,20 @@ const { EngineBridge } = await loadTypescriptModule(
 const { AutoChessAIController } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/AutoChessAI.ts",
 );
-const { AutoChessAutopilot, getAutopilotRolloutCacheStats } = await loadTypescriptModule(
+const {
+  AutoChessAutopilot,
+  getAutopilotRolloutCacheStats,
+  hydrateAutopilotRolloutCache,
+  snapshotAutopilotRolloutCache,
+} = await loadTypescriptModule(
   "src/components/autoChessGame/ai/AutoChessAutopilot.ts",
 );
-const { informationModeForAutopilotStyle, resolveAutopilotStylePolicy } = await loadTypescriptModule(
+const {
+  effectiveStyleForAutopilotConfiguration,
+  informationModeForAutopilotStyle,
+  informationModeForAutopilotThinkingLevel,
+  resolveAutopilotStylePolicy,
+} = await loadTypescriptModule(
   "src/components/autoChessGame/ai/autopilotPolicy.ts",
 );
 const { planSeerEconomy, forecastSeerWaves } = await loadTypescriptModule(
@@ -897,6 +907,9 @@ test("后台战斗为可选设置，开启后按隐藏期间的墙钟时间推�
   assert.deepEqual(textState.interface, {
     enemyFormationOpen: false,
     autoplayEnabled: false,
+    autoplayPreferenceStyle: "balanced",
+    autoplayThinkingLevel: "veteran",
+    autoplayEffectiveStyle: "survival",
     autoplayStyle: "survival",
     autoplayInformationMode: "normal",
     backgroundBattleEnabled: true,
@@ -3614,7 +3627,110 @@ test("终局商店优先完成已有六份的三星项目", () => {
   assert.ok(focused.score > fresh.score);
 });
 
-test("标题页和局内都公开托管选择，设置面板公开两种同信息策略与两种研究策略", () => {
+test("新手和老手不运行隐藏战斗，只有长考产生 rollout miss", () => {
+  const makePilot = (seed, level, scorer) => {
+    const bridge = new EngineBridge(seed, 1, { simulation: true, battleStepHz: 60 });
+    bridge.setConsoleLogging(false);
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    bridge.engine.state.board.fill(null);
+    ["mossback", "gale_archer", "grove_mender"].forEach((id, index) => {
+      bridge.engine.state.board[index] = { uid: seed * 10 + index, id, star: 1 };
+    });
+    const pilot = new AutoChessAutopilot(
+      bridge,
+      "evolution",
+      {},
+      "balanced",
+      "normal",
+      20,
+      scorer,
+      true,
+      level,
+    );
+    return { bridge, pilot };
+  };
+
+  let noviceModelCalls = 0;
+  const novice = makePilot(991001, "novice", () => {
+    noviceModelCalls += 1;
+    return 10;
+  });
+  const beforeNovice = getAutopilotRolloutCacheStats().misses;
+  const noviceRoster = novice.pilot.ownedEntries();
+  novice.pilot.rolloutTargetLineup(noviceRoster);
+  novice.pilot.rolloutLineupScore(noviceRoster);
+  assert.equal(getAutopilotRolloutCacheStats().misses, beforeNovice);
+  assert.equal(noviceModelCalls, 0);
+  assert.equal(novice.pilot.chooseStarter(["blaze", "bastion"]), "bastion");
+
+  let veteranModelCalls = 0;
+  const veteran = makePilot(991002, "veteran", () => {
+    veteranModelCalls += 1;
+    return 2.5;
+  });
+  const beforeVeteran = getAutopilotRolloutCacheStats().misses;
+  const veteranRoster = veteran.pilot.ownedEntries();
+  veteran.pilot.rolloutTargetLineup(veteranRoster);
+  assert.equal(veteran.pilot.rolloutLineupScore(veteranRoster), 10250);
+  assert.equal(getAutopilotRolloutCacheStats().misses, beforeVeteran);
+  assert.ok(veteranModelCalls > 0);
+  assert.equal(veteran.pilot.shouldAuditLiveBattle(), false);
+  assert.equal(veteran.bridge.autoplayPreferenceStyle, "balanced");
+  assert.equal(veteran.bridge.autoplayThinkingLevel, "veteran");
+  assert.equal(veteran.bridge.autoplayInformationMode, "normal");
+
+  const deep = makePilot(991003, "deep", () => 2.5);
+  const beforeDeep = getAutopilotRolloutCacheStats().misses;
+  deep.pilot.rolloutLineupScore(deep.pilot.ownedEntries(), "go_canonical");
+  assert.ok(getAutopilotRolloutCacheStats().misses > beforeDeep);
+});
+
+test("风格独立控制经济策略，等级独立控制信息和有效算法", () => {
+  assert.equal(effectiveStyleForAutopilotConfiguration("survival", "veteran"), "survival");
+  assert.equal(effectiveStyleForAutopilotConfiguration("highroll", "oracle"), "seer");
+  assert.equal(informationModeForAutopilotThinkingLevel("veteran"), "normal");
+  assert.equal(informationModeForAutopilotThinkingLevel("oracle"), "oracle");
+
+  const bridge = new EngineBridge(991004, 1, { simulation: true });
+  bridge.setConsoleLogging(false);
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    () => 0,
+    true,
+    "veteran",
+  );
+  pilot.setConfiguration("survival", "oracle");
+  assert.equal(pilot.strategyPreferenceStyle, "survival");
+  assert.equal(pilot.strategyThinkingLevel, "oracle");
+  assert.equal(pilot.strategyStyle, "seer");
+  assert.equal(pilot.strategyInformationMode, "oracle");
+  assert.equal(pilot.policy.safeWinRolloutScore, 10050);
+  pilot.setConfiguration("highroll", "novice");
+  assert.equal(pilot.strategyStyle, "highroll");
+  assert.equal(pilot.strategyInformationMode, "normal");
+  assert.equal(pilot.policy.reserveCap, resolveAutopilotStylePolicy("highroll").reserveCap);
+});
+
+test("rollout 缓存快照支持按前缀限量读取", () => {
+  const prefix = "test-modern-autopilot-cache/";
+  hydrateAutopilotRolloutCache([
+    [`${prefix}1`, 1],
+    [`${prefix}2`, 2],
+    [`${prefix}3`, 3],
+  ]);
+  assert.deepEqual(
+    snapshotAutopilotRolloutCache({ prefix, limit: 2 }),
+    [[`${prefix}2`, 2], [`${prefix}3`, 3]],
+  );
+});
+
+test("标题页和局内都公开托管选择，设置面板分离风格、等级与研究模式", () => {
   assert.match(hudSource, /亲自指挥/);
   assert.match(hudSource, /AI 观战/);
   assert.match(hudSource, /由 AI 自选协议并开局/);
@@ -3622,13 +3738,19 @@ test("标题页和局内都公开托管选择，设置面板公开两种同信�
   assert.match(hostSource, /后台继续战斗/);
   assert.match(hostSource, /托管风格/);
   assert.match(hostSource, /\["survival", "稳健"\]/);
+  assert.match(hostSource, /\["balanced", "平衡"\]/);
   assert.match(hostSource, /\["highroll", "搏上限"\]/);
-  assert.match(hostSource, /看穿2/);
+  assert.match(hostSource, /\["novice", "新手"\]/);
+  assert.match(hostSource, /\["veteran", "老手"\]/);
+  assert.match(hostSource, /\["deep", "长考"\]/);
+  assert.match(hostSource, /\["oracle", "看穿"\]/);
   assert.match(hostSource, /Go测试/);
-  assert.doesNotMatch(hostSource, /\["balanced", "均衡"\]/);
   assert.doesNotMatch(hostSource, /\["fair", "实战"\]/);
-  assert.match(hostSource, /AUTOPILOT_STRATEGY_VERSION = 5/);
-  assert.match(hostSource, /stored\?\.style === "fair".*stored\?\.style === "balanced".*return "survival"/s);
+  assert.match(hostSource, /AUTOPILOT_STRATEGY_VERSION = 6/);
+  assert.match(hostSource, /style: "balanced",\s*level: "veteran"/);
+  assert.match(hostSource, /stored\?\.style === "fair".*stored\?\.style === "balanced".*level: "deep"/s);
+  assert.match(hostSource, /GO_ROLLOUT_PERSIST_LIMIT = 5_000/);
+  assert.match(hostSource, /snapshotAutopilotRolloutCache\(\{\s*prefix: goKeyPrefix/s);
   assert.doesNotMatch(hostSource, /天眼商店/);
   assert.match(hostSource, /role="radiogroup"/);
   assert.match(hostSource, /AUTOPILOT_STRATEGY_KEY/);

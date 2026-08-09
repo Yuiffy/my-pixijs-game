@@ -305,6 +305,7 @@ export class FighterViewRenderer {
     const statusBadges = [
       fighter.weakenTime > 0 ? "🦑" : "",
       fighter.slowTime > 0 ? "🐌" : "",
+      fighter.fearTime > 0 ? "惧" : "",
       fighter.burnTime > 0 ? "🔥" : "",
       fighter.stun > 0 ? "✦" : "",
       fighter.tauntTime > 0 ? "嘲" : "",

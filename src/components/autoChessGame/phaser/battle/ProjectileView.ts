@@ -14,6 +14,8 @@ const projectileEmoji = (projectile: Projectile) => {
   if (projectile.style === "lollipop") return "🍭";
   if (projectile.style === "fireball") return "🔥";
   if (projectile.style === "laugh") return "😂";
+  if (projectile.style === "test_tube") return "🧪";
+  if (projectile.style === "badge") return "🔘";
   return "";
 };
 
@@ -193,6 +195,45 @@ export class ProjectileViewRenderer {
         .setFontFamily(PROJECTILE_EMOJI_FONT)
         .setFontSize(Math.max(22, projectile.size))
         .setRotation(angle + Math.PI * 0.75)
+        .setVisible(true);
+      return;
+    }
+
+    if (projectile.style === "test_tube") {
+      const directionX = projectile.velocityX / speed;
+      const directionY = projectile.velocityY / speed;
+      const tailX = -directionX * 28;
+      const tailY = -directionY * 28;
+      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      this.drawProjectileTrail(trail, tailX, tailY, 6, projectileColor);
+      this.drawProjectileTrail(trail, tailX * 0.68, tailY * 0.68, 2.2, 0xe7fff7);
+      icon
+        .setText(emoji || "🧪")
+        .setFontFamily(PROJECTILE_EMOJI_FONT)
+        .setFontSize(Math.max(24, projectile.size))
+        .setRotation(angle + Math.PI * 0.25)
+        .setVisible(true);
+      return;
+    }
+
+    if (projectile.style === "badge") {
+      const directionX = projectile.velocityX / speed;
+      const directionY = projectile.velocityY / speed;
+      const tailX = -directionX * 36;
+      const tailY = -directionY * 36;
+      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      this.drawProjectileTrail(trail, tailX, tailY, 8, projectileColor);
+      this.drawProjectileTrail(trail, tailX * 0.7, tailY * 0.7, 2.5, 0xffffff);
+      trail
+        .fillStyle(projectileColor, 0.28)
+        .fillCircle(0, 0, projectile.radius + 7)
+        .lineStyle(2, 0xffd6e6, 0.92)
+        .strokeCircle(0, 0, projectile.radius + 4);
+      icon
+        .setText(emoji || "🔘")
+        .setFontFamily(PROJECTILE_EMOJI_FONT)
+        .setFontSize(Math.max(22, projectile.size))
+        .setRotation(this.host.bridge.engine.state.visualTime * 8)
         .setVisible(true);
       return;
     }

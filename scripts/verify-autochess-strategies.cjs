@@ -150,39 +150,65 @@ let browser;
 
   await page.waitForFunction(() => {
     const state = JSON.parse(window.render_game_to_text());
-    return state.interface.autoplayStyle === "survival";
+    return state.interface.autoplayPreferenceStyle === "balanced"
+      && state.interface.autoplayThinkingLevel === "deep";
   });
   const migrated = await readState();
-  assert.equal(migrated.interface.autoplayStyle, "survival");
+  assert.equal(migrated.interface.autoplayPreferenceStyle, "balanced");
+  assert.equal(migrated.interface.autoplayThinkingLevel, "deep");
+  assert.equal(migrated.interface.autoplayStyle, "balanced");
   assert.equal(migrated.interface.autoplayInformationMode, "normal");
 
   await page.getByRole("button", { name: "游戏设置" }).click();
   const settings = page.getByRole("dialog", { name: "游戏设置" });
   const strategies = settings.getByRole("radiogroup", { name: "托管风格" });
+  const levels = settings.getByRole("radiogroup", { name: "AI 等级" });
+  const research = settings.getByRole("radiogroup", { name: "研究模式" });
   await assert.doesNotReject(() => strategies.getByRole("radio", { name: "稳健" }).waitFor());
   assert.deepEqual(
     await strategies.getByRole("radio").allTextContents(),
-    ["稳健", "搏上限", "看穿2", "Go测试"],
+    ["稳健", "平衡", "搏上限"],
   );
+  assert.deepEqual(
+    await levels.getByRole("radio").allTextContents(),
+    ["新手", "老手", "长考", "看穿"],
+  );
+  assert.deepEqual(await research.getByRole("radio").allTextContents(), ["Go测试"]);
 
-  const selectStrategy = async (name, style, informationMode) => {
+  const assertStoredConfiguration = async (style, level) => {
+    const stored = await readStoredStrategy();
+    assert.deepEqual(stored, { style, level, version: 6 });
+  };
+  const selectStyle = async (name, style) => {
     await strategies.getByRole("radio", { name }).click();
     const state = await readState();
-    const stored = await readStoredStrategy();
-    assert.equal(state.interface.autoplayStyle, style);
-    assert.equal(state.interface.autoplayInformationMode, informationMode);
-    assert.deepEqual(stored, { style, version: 5 });
+    assert.equal(state.interface.autoplayPreferenceStyle, style);
+    await assertStoredConfiguration(style, state.interface.autoplayThinkingLevel);
   };
-  await selectStrategy("稳健", "survival", "normal");
-  await selectStrategy("搏上限", "highroll", "normal");
-  await selectStrategy("看穿2", "seer", "oracle");
-  await selectStrategy("Go测试", "go", "oracle");
-  await selectStrategy("稳健", "survival", "normal");
+  const selectLevel = async (name, level, effectiveStyle, informationMode) => {
+    const group = level === "go" ? research : levels;
+    await group.getByRole("radio", { name }).click();
+    const state = await readState();
+    assert.equal(state.interface.autoplayThinkingLevel, level);
+    assert.equal(state.interface.autoplayEffectiveStyle, effectiveStyle);
+    assert.equal(state.interface.autoplayInformationMode, informationMode);
+    await assertStoredConfiguration(state.interface.autoplayPreferenceStyle, level);
+  };
+  await selectStyle("稳健", "survival");
+  await selectStyle("平衡", "balanced");
+  await selectStyle("搏上限", "highroll");
+  await selectLevel("新手", "novice", "highroll", "normal");
+  await selectLevel("老手", "veteran", "highroll", "normal");
+  await selectLevel("长考", "deep", "highroll", "normal");
+  await selectLevel("看穿", "oracle", "seer", "oracle");
+  await selectLevel("Go测试", "go", "go", "oracle");
+  await selectStyle("平衡", "balanced");
+  await selectLevel("老手", "veteran", "balanced", "normal");
 
   const layout = await page.evaluate(() => {
     const panel = document.querySelector(".rift-settings-panel")?.getBoundingClientRect();
     const buttons = Array.from(document.querySelectorAll(
-      '[aria-label="托管风格"] [role="radio"]',
+      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"], [aria-label="研究模式"] [role="radio"]',
     )).map((button) => ({
       text: button.textContent,
       width: button.getBoundingClientRect().width,
@@ -201,13 +227,13 @@ let browser;
   });
   const desktop = inspectPng(desktopBuffer);
 
-  await selectStrategy("搏上限", "highroll", "normal");
+  await selectStyle("搏上限", "highroll");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(300);
   const mobileLayout = await page.evaluate(() => {
     const panel = document.querySelector(".rift-settings-panel")?.getBoundingClientRect();
     const buttons = Array.from(document.querySelectorAll(
-      '[aria-label="托管风格"] [role="radio"]',
+      '[aria-label="托管风格"] [role="radio"], [aria-label="AI 等级"] [role="radio"], [aria-label="研究模式"] [role="radio"]',
     )).map((button) => ({
       text: button.textContent,
       width: button.getBoundingClientRect().width,
@@ -234,6 +260,8 @@ let browser;
     return state.phase === "preparation" && state.interface.autoplayEnabled === true;
   });
   const started = await readState();
+  assert.equal(started.interface.autoplayPreferenceStyle, "highroll");
+  assert.equal(started.interface.autoplayThinkingLevel, "veteran");
   assert.equal(started.interface.autoplayStyle, "highroll");
   assert.equal(started.interface.autoplayInformationMode, "normal");
 
@@ -245,13 +273,17 @@ let browser;
 
   console.log(JSON.stringify({
     migrated: {
-      style: migrated.interface.autoplayStyle,
+      style: migrated.interface.autoplayPreferenceStyle,
+      level: migrated.interface.autoplayThinkingLevel,
       informationMode: migrated.interface.autoplayInformationMode,
     },
-    choices: ["稳健", "搏上限", "看穿2", "Go测试"],
+    styles: ["稳健", "平衡", "搏上限"],
+    levels: ["新手", "老手", "长考", "看穿"],
+    research: ["Go测试"],
     started: {
       phase: started.phase,
-      style: started.interface.autoplayStyle,
+      style: started.interface.autoplayPreferenceStyle,
+      level: started.interface.autoplayThinkingLevel,
       informationMode: started.interface.autoplayInformationMode,
       autoplayEnabled: started.interface.autoplayEnabled,
     },

@@ -41,6 +41,8 @@ mkdirSync(artifactDirectory, { recursive: true });
   const settings = page.getByRole("dialog", { name: "游戏设置" });
   await settings.waitFor({ state: "visible" });
   const strategyGroup = settings.getByRole("radiogroup", { name: "托管风格" });
+  const levelGroup = settings.getByRole("radiogroup", { name: "AI 等级" });
+  const researchGroup = settings.getByRole("radiogroup", { name: "研究模式" });
   const strategies = await strategyGroup.getByRole("radio").evaluateAll((buttons) => (
     buttons.map((button) => ({
       label: button.textContent?.trim(),
@@ -59,25 +61,37 @@ mkdirSync(artifactDirectory, { recursive: true });
       buttonWidths: buttonRects.map(({ width }) => width),
     };
   });
+  const levels = await levelGroup.getByRole("radio").allTextContents();
+  const research = await researchGroup.getByRole("radio").allTextContents();
   const screenshotPath = `${artifactDirectory}/autochess-settings.png`;
   await page.screenshot({ path: screenshotPath });
   const state = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
   assert.equal(exportType, "function");
-  assert.equal(strategies.length, 4);
+  assert.equal(strategies.length, 3);
   assert.deepEqual(
     strategies.map(({ label }) => label),
-    ["稳健", "搏上限", "看穿2", "Go测试"],
+    ["稳健", "平衡", "搏上限"],
   );
-  assert.ok(strategies.some(({ label }) => label === "看穿2"));
-  assert.equal(strategies.some(({ label }) => label === "看穿"), false);
-  assert.ok(strategies.some(({ label }) => label === "Go测试"));
+  assert.deepEqual(levels, ["新手", "老手", "长考", "看穿"]);
+  assert.deepEqual(research, ["Go测试"]);
   assert.ok(strategies.every(({ clientWidth, scrollWidth }) => scrollWidth <= clientWidth));
   assert.ok(strategyLayout.leadingInset <= 5);
   assert.ok(strategyLayout.trailingInset <= 5);
   assert.ok(Math.max(...strategyLayout.buttonWidths) - Math.min(...strategyLayout.buttonWidths) < 1);
-  assert.equal(state.interface.autoplayStyle, "survival");
+  assert.equal(state.interface.autoplayPreferenceStyle, "balanced");
+  assert.equal(state.interface.autoplayThinkingLevel, "veteran");
+  assert.equal(state.interface.autoplayStyle, "balanced");
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ exportType, strategies, strategyLayout, phase: state.phase, screenshotPath, errors }, null, 2));
+  console.log(JSON.stringify({
+    exportType,
+    strategies,
+    levels,
+    research,
+    strategyLayout,
+    phase: state.phase,
+    screenshotPath,
+    errors,
+  }, null, 2));
   await browser.close();
 })().catch((error) => {
   console.error(error);

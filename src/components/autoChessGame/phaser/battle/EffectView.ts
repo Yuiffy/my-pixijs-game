@@ -120,7 +120,9 @@ export class EffectViewRenderer {
       komichiSignpost,
       label,
     } = this.effectViewParts.get(view)!;
-    const viewAlpha = effect.kind === "healing_field"
+    const viewAlpha = effect.kind === "healing_field" ||
+      effect.kind === "harei_pine" ||
+      effect.kind === "fear_field"
       ? Math.min(1, alpha * 5)
       : alpha ** 0.65;
     view
@@ -436,6 +438,36 @@ export class EffectViewRenderer {
           );
         });
       }
+    } else if (effect.kind === "fear_field") {
+      const radius = effect.size || 118;
+      const pulse = 0.96 + Math.sin(progress * Math.PI * 10) * 0.04;
+      const puddleRadius = radius * pulse;
+      graphics
+        .fillStyle(0x5dcf9d, 0.22)
+        .fillEllipse(0, 6, puddleRadius * 1.9, puddleRadius * 1.15)
+        .fillStyle(0x8be7df, 0.18)
+        .fillEllipse(-radius * 0.34, -radius * 0.08, radius * 0.88, radius * 0.55)
+        .fillEllipse(radius * 0.38, radius * 0.12, radius * 0.72, radius * 0.48)
+        .lineStyle(2.5, 0xb8fff0, 0.78)
+        .strokeEllipse(0, 6, puddleRadius * 1.9, puddleRadius * 1.15);
+      for (let index = 0; index < 5; index += 1) {
+        const x = (index - 2) * radius * 0.22;
+        const drift = Math.sin(progress * 8 + index * 1.7) * 7;
+        graphics
+          .lineStyle(index % 2 ? 1.5 : 2.2, index % 2 ? 0xc9fff4 : color, 0.7)
+          .beginPath()
+          .moveTo(x, -radius * 0.18)
+          .lineTo(x + drift, -radius * 0.42)
+          .lineTo(x - drift * 0.5, -radius * 0.66)
+          .strokePath();
+      }
+      label
+        .setText(effect.text || "🧪")
+        .setFontFamily(PROJECTILE_EMOJI_FONT)
+        .setFontSize(27)
+        .setPosition(-radius * 0.55, -radius * 0.38)
+        .setRotation(-0.42 + Math.sin(progress * 6) * 0.08)
+        .setVisible(true);
     } else if (effect.kind === "harei_pine") {
       const radius = effect.size || 118;
       const direction = (effect.x2 ?? effect.x + 1) >= effect.x ? 1 : -1;

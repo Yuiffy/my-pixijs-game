@@ -48,6 +48,7 @@ export interface BattleEffect {
     | "biscuit_share"
     | "harei_pine"
     | "harei_badge"
+    | "fear_field"
     | "komichi_sign"
     | "mumu_whip"
     | "mind_control"
@@ -82,13 +83,15 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe" | "cigarette" | "syringe";
+  style?: "default" | "shark" | "carrot" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe" | "cigarette" | "syringe" | "test_tube" | "badge";
   /** 命中后对附近敌人造成伤害与灼烧的半径。 */
   splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */
   emoji?: string;
   /** 命中存活目标后施加的眩晕时间。 */
   stunDuration?: number;
+  /** 命中主目标后沿弹道方向造成的击退距离。 */
+  knockbackDistance?: number;
   /** 棒棒糖落地后停止移动，变为可被单位踩到的地面效果。 */
   grounded?: boolean;
   /** 远端 AOE 弹幕抵达固定落点后触发的技能。 */
@@ -119,6 +122,19 @@ export interface HealingZone {
   maxLife: number;
   pulseTimer: number;
   color: string;
+}
+
+export interface AreaControlZone {
+  kind: "fear" | "slow";
+  sourceFid: string;
+  team: Team;
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  slowMultiplier?: number;
 }
 
 export interface MechanicalRabbitPet {
@@ -273,6 +289,9 @@ export interface Fighter {
   abilityArmorBonus: number;
   slowTime: number;
   slowMultiplier: number;
+  fearTime: number;
+  fearSourceX: number;
+  fearSourceY: number;
   weakenTime: number;
   weakenArmorPenalty: number;
   baseAttack: number;
@@ -372,6 +391,7 @@ export interface ProjectileVolleyShot {
   style?: Projectile["style"];
   splashRadius?: number;
   stunDuration?: number;
+  knockbackDistance?: number;
   /** 有值时，这一段弹幕会改为治疗发射时生命比例最低的友军。 */
   supportHealMultiplier?: number;
 }
@@ -434,6 +454,7 @@ export interface BattleState {
   resurrectionSerial: number;
   chronospheres: ChronosphereZone[];
   healingZones: HealingZone[];
+  controlZones: AreaControlZone[];
   pets: MechanicalRabbitPet[];
   petSerial: number;
   fieldMedicTimer: number;

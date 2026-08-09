@@ -49,6 +49,8 @@ export const PAKO_ANGEL_FISH_PULSE_INTERVAL = 0.7;
 const PAKO_ANGEL_FISH_FIELD_COLOR = "#6ff0b5";
 const PAKO_ANGEL_FISH_HIGHLIGHT_COLOR = "#d9fff0";
 const RUTICE_SYRINGE_SPEED = 660;
+const MITSURI_FEAR_RADIUS = 118;
+const MITSURI_FEAR_DURATION = 4.2;
 const LIAN_FINALE_RADIUS = 140;
 const LIAN_FINALE_STAGE_LIFETIME = 0.58;
 const REMOTE_AOE_DELIVERIES: Partial<
@@ -65,6 +67,7 @@ const REMOTE_AOE_DELIVERIES: Partial<
   pako: { kind: "projectile", glyph: "🐟" },
   rei: { kind: "projectile", glyph: "👻" },
   lian: { kind: "projectile", glyph: "✦" },
+  mitsuri: { kind: "projectile", glyph: "🧪" },
 };
 const REMOTE_AOE_PROJECTILE_MIN_DURATION = 0.28;
 const REMOTE_AOE_PROJECTILE_MAX_DURATION = 0.58;
@@ -174,13 +177,13 @@ export class CombatProjectileSystem {
       y: source.y,
       velocityX: deltaX / duration,
       velocityY: deltaY / duration,
-      radius: source.unitId === "lian" ? 12 : 8,
+      radius: source.unitId === "lian" ? 12 : source.unitId === "mitsuri" ? 10 : 8,
       remainingRange: distance,
       damage: 0,
       burnPower: 0,
       color: UNIT_DEFS[source.unitId].accent,
-      size: source.unitId === "lian" ? 18 : 9,
-      style: source.unitId === "lian" ? "finale_star" : "aoe_orb",
+      size: source.unitId === "lian" ? 18 : source.unitId === "mitsuri" ? 26 : 9,
+      style: source.unitId === "lian" ? "finale_star" : source.unitId === "mitsuri" ? "test_tube" : "aoe_orb",
       emoji: delivery.glyph,
       impactAbilityId: source.unitId,
     });
@@ -485,6 +488,51 @@ export class CombatProjectileSystem {
         });
         break;
       }
+      case "mitsuri": {
+        const radius = abilityStatForStar(
+          def,
+          source.star,
+          "radius",
+          MITSURI_FEAR_RADIUS,
+        );
+        const duration = abilityStatForStar(
+          def,
+          source.star,
+          "duration",
+          MITSURI_FEAR_DURATION,
+        );
+        this.host.state().battle?.controlZones.push({
+          kind: "fear",
+          sourceFid: source.fid,
+          team: source.team,
+          x: center.x,
+          y: center.y,
+          radius,
+          life: duration,
+          maxLife: duration,
+          color: def.accent,
+        });
+        this.addEffect({
+          kind: "fear_field",
+          x: center.x,
+          y: center.y,
+          color: def.accent,
+          text: "🧪",
+          emoji: true,
+          life: duration,
+          size: radius,
+        });
+        this.addEffect({
+          kind: "text",
+          x: center.x,
+          y: center.y - radius * 0.55,
+          color: "#d7fff1",
+          text: "脚臭实验",
+          life: 0.72,
+          size: 12,
+        });
+        break;
+      }
       case "pako":
         allies
           .filter(
@@ -590,9 +638,11 @@ export class CombatProjectileSystem {
       radius:
         shot.style === "sumi_dragon"
           ? SUMI_DRAGON_PROJECTILE_RADIUS
-          : shot.style === "laugh"
-            ? 18
-            : shot.emoji ||
+            : shot.style === "laugh"
+              ? 18
+              : shot.style === "badge"
+                ? 13
+              : shot.emoji ||
                 shot.style === "carrot" ||
                 shot.style === "shark" ||
                 shot.style === "coin"
@@ -608,6 +658,7 @@ export class CombatProjectileSystem {
       emoji: shot.emoji,
       splashRadius: shot.splashRadius,
       stunDuration: shot.stunDuration,
+      knockbackDistance: shot.knockbackDistance,
     });
   }
 
@@ -1048,6 +1099,19 @@ export class CombatProjectileSystem {
           if (target.alive && projectile.stunDuration) {
             target.stun = Math.max(target.stun, projectile.stunDuration);
           }
+          if (
+            target === hit.target &&
+            target.alive &&
+            projectile.knockbackDistance
+          ) {
+            this.host.pushFighterAwayFrom(
+              target,
+              target.x - projectile.velocityX,
+              target.y - projectile.velocityY,
+              projectile.knockbackDistance,
+              0.22,
+            );
+          }
         });
         this.addEffect({
           kind: "burst",
@@ -1079,6 +1143,17 @@ export class CombatProjectileSystem {
               size: 12,
             });
           }
+        }
+        if (projectile.style === "badge") {
+          this.addEffect({
+            kind: "harei_badge",
+            x: hit.target.x,
+            y: hit.target.y,
+            color: projectile.color,
+            text: "75mm\n大吧唧",
+            life: 0.68,
+            size: 62,
+          });
         }
         if (projectile.style === "pickaxe") {
           const impactY = hit.target.y - hit.target.radius * 0.72;

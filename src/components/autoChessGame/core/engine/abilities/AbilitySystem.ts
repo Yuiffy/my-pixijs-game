@@ -40,9 +40,7 @@ const EMBER_BLADE_CARROT_SPEED = 640;
 const GALE_ARCHER_SWITCH_DURATION = 4;
 const GALE_ARCHER_SWITCH_SHIELD_RATIO = 0.18;
 const GALE_ARCHER_SWITCH_COLOR = "#b86cff";
-const MITSURI_SHIELD_RATIO = 0.22;
-export const MITSURI_TAUNT_DURATION = 3.2;
-const MITSURI_TAUNT_RADIUS = 155;
+const MITSURI_FEAR_RADIUS = 118;
 const MUMU_RESCUE_DURATION = 0.62;
 const NIGHTIN_CIGARETTE_BURN = 0.55;
 const NIGHTIN_CIGARETTE_COUNT = 3;
@@ -79,15 +77,12 @@ const XUEHUI_CLEAVE_BURN_MULTIPLIER = 0.68;
 const XUEHUI_CLEAVE_DAMAGE_MULTIPLIER = 1.12;
 const XUEHUI_CLEAVE_RADIUS = 98;
 const ZEYIN_FIREBALL_SPEED = 420;
-const HAREI_TRICK_RADIUS = 118;
-const HAREI_PINE_TAUNT_DURATION = 0.8;
-const HAREI_PINE_SLOW_DURATION = 1.5;
-const HAREI_PINE_SLOW_MULTIPLIER = 0.8;
-const HAREI_PINE_SHIELD_BASE_RATIO = 0.18;
-const HAREI_PINE_SHIELD_PER_TARGET_RATIO = 0.06;
-const HAREI_PINE_SHIELD_CAP_RATIO = 0.42;
-const HAREI_BADGE_DAMAGE_MULTIPLIER = 1.5;
-const HAREI_BADGE_STUN_DURATION = 0.65;
+const HAREI_PINE_RADIUS = 82;
+const HAREI_PINE_DURATION = 5.2;
+const HAREI_PINE_SLOW_MULTIPLIER = 0.82;
+const HAREI_BADGE_DAMAGE_MULTIPLIER = 1.1;
+const HAREI_BADGE_KNOCKBACK = 48;
+const HAREI_BADGE_SPEED = 470;
 
 interface AbilityHost {
   state: () => GameState;
@@ -524,77 +519,56 @@ export class AbilitySystem {
         break;
       }
       case "dawn_duelist": {
-        const nearby = targets.filter(
-          (target) => (
-            Math.hypot(target.x - source.x, target.y - source.y) <=
-            HAREI_TRICK_RADIUS
-          ),
-        );
+        const target = this.host.nearestTarget(source, targets);
+        if (!target) break;
         const castsPine = this.host.rng().next() < 0.5;
         if (castsPine) {
-          nearby.forEach((target) => {
-            target.tauntedByFid = source.fid;
-            target.tauntTime = Math.max(
-              target.tauntTime,
-              HAREI_PINE_TAUNT_DURATION,
-            );
-            if (
-              target.slowTime <= 0 ||
-              target.slowMultiplier >= HAREI_PINE_SLOW_MULTIPLIER
-            ) {
-              target.slowTime = Math.max(
-                target.slowTime,
-                HAREI_PINE_SLOW_DURATION,
-              );
-              target.slowMultiplier = HAREI_PINE_SLOW_MULTIPLIER;
-            }
+          const deltaX = target.x - source.x;
+          const deltaY = target.y - source.y;
+          const distance = Math.hypot(deltaX, deltaY) || 1;
+          const plantDistance = Math.min(110, distance * 0.55);
+          const center = {
+            x: source.x + (deltaX / distance) * plantDistance,
+            y: source.y + (deltaY / distance) * plantDistance,
+          };
+          this.state.battle?.controlZones.push({
+            kind: "slow",
+            sourceFid: source.fid,
+            team: source.team,
+            x: center.x,
+            y: center.y,
+            radius: HAREI_PINE_RADIUS,
+            life: HAREI_PINE_DURATION,
+            maxLife: HAREI_PINE_DURATION,
+            color: "#58c878",
+            slowMultiplier: HAREI_PINE_SLOW_MULTIPLIER,
           });
-          const shieldRatio = Math.min(
-            HAREI_PINE_SHIELD_CAP_RATIO,
-            HAREI_PINE_SHIELD_BASE_RATIO +
-              nearby.length * HAREI_PINE_SHIELD_PER_TARGET_RATIO,
-          );
-          addShield(
-            source,
-            source.maxHp * shieldRatio,
-            HAREI_PINE_SHIELD_CAP_RATIO,
-          );
           this.host.addEffect({
             kind: "harei_pine",
-            x: source.x,
-            y: source.y,
-            x2: source.x + source.facingX,
+            x: center.x,
+            y: center.y,
+            x2: target.x,
             color: "#58c878",
             text: "欢迎光临",
-            life: 0.9,
-            size: HAREI_TRICK_RADIUS,
+            life: HAREI_PINE_DURATION,
+            size: HAREI_PINE_RADIUS,
           });
         } else {
-          nearby.forEach((target) => {
-            const dealt = this.host.damage(
-              source,
-              target,
-              source.attack * HAREI_BADGE_DAMAGE_MULTIPLIER,
-              false,
-              "ability",
-            );
-            if (dealt > 0) this.host.addDamageText(target, dealt);
-            if (target.alive) {
-              target.stun = Math.max(
-                target.stun,
-                HAREI_BADGE_STUN_DURATION,
-              );
-            }
-          });
-          this.host.addEffect({
-            kind: "harei_badge",
-            x: source.x,
-            y: source.y,
+          this.host.fireFixedProjectile(source, target, {
+            sourceFid: source.fid,
+            targetFid: target.fid,
+            delay: 0,
+            damage: source.attack * HAREI_BADGE_DAMAGE_MULTIPLIER,
+            damageKind: "ability",
+            burnPower: 0,
+            speed: HAREI_BADGE_SPEED,
             color: "#ff8fb8",
-            text: "75mm\n大吧唧",
-            life: 0.78,
-            size: HAREI_TRICK_RADIUS,
+            size: 24,
+            style: "badge",
+            emoji: "🔘",
+            knockbackDistance: HAREI_BADGE_KNOCKBACK,
           });
+          this.host.addEffect({ kind: "text", x: source.x, y: source.y - 42, color: "#ffb5d0", text: "75mm 大吧唧", life: 0.62, size: 11 });
         }
         break;
       }
@@ -675,15 +649,9 @@ export class AbilitySystem {
         break;
       }
       case "mitsuri": {
-        addShield(source, source.maxHp * MITSURI_SHIELD_RATIO, 0.5);
-        targets
-          .filter((target) => Math.hypot(target.x - source.x, target.y - source.y) <= MITSURI_TAUNT_RADIUS)
-          .forEach((target) => {
-            target.tauntedByFid = source.fid;
-            target.tauntTime = Math.max(target.tauntTime, MITSURI_TAUNT_DURATION);
-            this.host.addEffect({ kind: "text", x: target.x, y: target.y - 42, color: def.accent, text: "嘲讽", life: 0.7, size: 11 });
-          });
-        this.host.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.8, size: MITSURI_TAUNT_RADIUS + 12 });
+        const center = this.host.densestTarget(targets, MITSURI_FEAR_RADIUS);
+        if (!center) break;
+        this.host.deliverRemoteAoe(source, center);
         break;
       }
       case "guangyi": {
