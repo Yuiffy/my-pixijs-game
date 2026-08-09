@@ -42,7 +42,7 @@ const parseExample = ([cacheKey, score], source) => {
   const parts = cacheKey.split("/");
   if (
     parts.length !== 11
-    || !["combat-go-v2", "combat-go-v3"].includes(parts[0])
+    || !["combat-go-v2", "combat-go-v3", "combat-go-v4"].includes(parts[0])
     || parts[1] !== "hz:60"
   ) {
     return null;

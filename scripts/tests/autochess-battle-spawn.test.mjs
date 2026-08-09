@@ -3184,6 +3184,68 @@ test("连续升本可以到达十本并上阵十人", () => {
   assert.equal(engine.upgradeCost, null);
 });
 
+test("满本升星工坊需先解锁，并按棋子费用直升到三星", () => {
+  const engine = createEngine(309);
+  engine.state.gold = 1000;
+  while (!engine.isMaxPlayerLevel) engine.buyExperience();
+  engine.state.board.fill(null);
+  engine.state.bench.fill(null);
+  engine.state.board[0] = { uid: 30901, id: "sun_guard", star: 1 };
+  const location = { zone: "board", index: 0 };
+
+  engine.state.gold = engine.starForgeUnlockCost - 1;
+  assert.equal(engine.useStarForge(), false);
+  assert.equal(engine.isStarForgeUnlocked, false);
+  assert.equal(engine.state.gold, engine.starForgeUnlockCost - 1);
+
+  engine.state.gold = 200;
+  assert.equal(engine.useStarForge(location), true);
+  assert.equal(engine.isStarForgeUnlocked, true);
+  assert.equal(engine.state.gold, 200 - engine.starForgeUnlockCost);
+  assert.equal(engine.state.board[0].star, 1, "解锁动作不应顺便升级被拖入的棋子");
+
+  const oneToTwoCost = engine.getStarForgeUpgradeCost(engine.state.board[0]);
+  assert.equal(oneToTwoCost, (gameData.UNIT_DEFS.sun_guard.cost + 1) * 4);
+  assert.equal(engine.useStarForge(location), true);
+  assert.equal(engine.state.board[0].star, 2);
+  assert.equal(engine.state.gold, 200 - engine.starForgeUnlockCost - oneToTwoCost);
+
+  const twoToThreeCost = engine.getStarForgeUpgradeCost(engine.state.board[0]);
+  assert.equal(twoToThreeCost, (gameData.UNIT_DEFS.sun_guard.cost + 1) * 12);
+  assert.equal(engine.useStarForge(location), true);
+  assert.equal(engine.state.board[0].star, 3);
+  assert.equal(engine.getStarForgeUpgradeCost(engine.state.board[0]), null);
+
+  const goldAfterThreeStar = engine.state.gold;
+  assert.equal(engine.useStarForge(location), false);
+  assert.equal(engine.state.gold, goldAfterThreeStar);
+  assert.match(engine.state.toast.text, /已经是三星/);
+
+  const textState = JSON.parse(engine.renderTextState());
+  assert.deepEqual(textState.player.starForge, {
+    available: true,
+    unlocked: true,
+    unlockCost: engine.starForgeUnlockCost,
+    selectedUpgradeCost: null,
+  });
+});
+
+test("升星工坊价格覆盖一至五费且未满本时不可提前使用", () => {
+  const engine = createEngine(310);
+  engine.state.gold = 1000;
+  assert.equal(engine.useStarForge(), false);
+  assert.equal(engine.state.gold, 1000);
+  assert.equal(engine.isStarForgeUnlocked, false);
+
+  for (let cost = 1; cost <= 5; cost += 1) {
+    const id = gameData.SHOP_UNITS.find((unitId) => gameData.UNIT_DEFS[unitId].cost === cost);
+    assert.ok(id, `缺少 ${cost} 费棋子`);
+    assert.equal(engine.getStarForgeUpgradeCost({ uid: cost, id, star: 1 }), (cost + 1) * 4);
+    assert.equal(engine.getStarForgeUpgradeCost({ uid: cost, id, star: 2 }), (cost + 1) * 12);
+    assert.equal(engine.getStarForgeUpgradeCost({ uid: cost, id, star: 3 }), null);
+  }
+});
+
 test("自然减费可降到零，溢出减费会结转并连续抵扣后续本级", () => {
   const engine = createEngine(307);
   engine.state.upgradeRemaining = 1;

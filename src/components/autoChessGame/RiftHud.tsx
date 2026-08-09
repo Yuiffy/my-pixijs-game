@@ -27,6 +27,7 @@ import {
   FONT,
   HudHeader,
   STAR_LABEL,
+  StarForgeAction,
   UnitPortrait,
   countOwnedStars,
 } from "./hud/shared";
@@ -328,11 +329,11 @@ export default function RiftHud({
         <>
           <div className="rift-dom-stage">
             <aside className="rift-dom-shop-desktop">
-              <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? "MAX LEVEL" : `下本还需 ${engine.upgradeCost} 金${state.upgradeDiscountCarry ? ` · 结转 ${state.upgradeDiscountCarry}` : ""}`}</small></div></div>
+              <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? engine.isStarForgeUnlocked ? "升星工坊已接入" : "满本 · 可解锁工坊" : `下本还需 ${engine.upgradeCost} 金${state.upgradeDiscountCarry ? ` · 结转 ${state.upgradeDiscountCarry}` : ""}`}</small></div></div>
               <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>结算金 <b>{engine.potentialBounty}</b></span><InterestInfo engine={engine} /><span>连胜 <b>{state.streak || "—"}</b></span></div>
               <div className="rift-tier-odds">{odds.map((chance, index) => <span key={index} className={`tier-${index + 1} ${chance ? "" : "is-muted"}`}><i>{index + 1}</i><b>{chance}%</b></span>)}</div>
               <div className="rift-shop-list">{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} />)}</div>
-              <div className="rift-dom-shop-actions"><ActionButton onClick={() => dispatch({ type: "buyXp" })} disabled={engine.isMaxPlayerLevel || state.gold < (engine.upgradeCost ?? Number.POSITIVE_INFINITY)}><span>升本</span><b>{engine.isMaxPlayerLevel ? "MAX" : engine.upgradeCost}</b></ActionButton><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></div>
+              <div className="rift-dom-shop-actions"><StarForgeAction engine={engine} selected={selected} onAction={dispatch} /><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></div>
               <footer>{activeTraits.length ? <><span className="rift-status-dot" />已激活 {activeTraits.map((trait) => `${trait.name}${STAR_LABEL[trait.level]}`).join(" · ")}</> : "上阵两名同名羁绊单位，开始构筑你的第一套答案"}</footer>
             </aside>
           </div>

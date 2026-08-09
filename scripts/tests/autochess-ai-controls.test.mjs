@@ -318,6 +318,37 @@ test("浏览器托管默认使用20Hz快速推演而不是60Hz实时步长", () 
   }
 });
 
+test("离线正式演练可以显式开启线上同款60Hz临战审计", () => {
+  const bridge = new EngineBridge(902125, 1, { simulation: true, battleStepHz: 60 });
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    undefined,
+    true,
+  );
+  pilot.phase = "preparation";
+  pilot.plannedRound = 1;
+  pilot.nextActionAt = 0;
+  pilot.nextPreparationAction = () => ({ type: "battle" });
+  pilot.setEnabled(true);
+  const observedHz = [];
+  pilot.battleConfidence = () => 10100;
+  pilot.rolloutBoardScore = (_board, _stableOnly, combatHz = pilot.rolloutCombatHz) => {
+    observedHz.push(combatHz);
+    return combatHz === 60 ? -120 : 10100;
+  };
+
+  assert.equal(pilot.tick(1000), null);
+  assert.equal(bridge.engine.state.phase, "preparation");
+  assert.deepEqual(observedHz, [60]);
+});
+
 test("看穿浏览器终局重规划只验证短滚动前缀", () => {
   const previousWindow = globalThis.window;
   globalThis.window = { localStorage: { getItem: () => null } };
@@ -339,10 +370,95 @@ test("看穿浏览器终局重规划只验证短滚动前缀", () => {
       bridge.engine.state.bench[index] = { uid: 9021230 + index, id, star: 3 };
     });
     const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer", "oracle");
+    pilot.validateSeerRoute = () => {
+      throw new Error("interactive late planner must not replay a full route");
+    };
     pilot.resetPreparation(50);
     assert.equal(pilot.rolloutCombatHz, 20);
     assert.ok(pilot.seerPlan);
     assert.ok(pilot.seerPlan.planningHorizon <= 6);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
+test("看穿浏览器开战前会用60Hz审计20Hz假胜并重新决策一次", () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { localStorage: { getItem: () => null } };
+  try {
+    const bridge = new EngineBridge(902123, 1, { simulation: true, battleStepHz: 20 });
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    bridge.engine.state.round = 50;
+    bridge.engine.state.board[0] = { uid: 9021230, id: SHOP_UNITS[0], star: 3 };
+    const pilot = new AutoChessAutopilot(bridge, "evolution", {}, "seer", "oracle");
+    pilot.phase = "preparation";
+    pilot.plannedRound = 50;
+    pilot.nextActionAt = 0;
+    pilot.nextPreparationAction = () => ({ type: "battle" });
+    pilot.setEnabled(true);
+    const observedHz = [];
+    pilot.rolloutBoardScore = (_board, _stableOnly, combatHz = pilot.rolloutCombatHz) => {
+      observedHz.push(combatHz);
+      return combatHz === 60 ? 9900 : 10100;
+    };
+
+    const rejected = pilot.tick(1000);
+    assert.equal(rejected, null);
+    assert.equal(bridge.engine.state.phase, "preparation");
+    assert.deepEqual(observedHz, [20, 60]);
+
+    const retried = pilot.tick(2000);
+    assert.equal(retried?.type, "battle");
+    assert.equal(bridge.engine.state.phase, "battle");
+    assert.deepEqual(observedHz, [20, 60, 20]);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
+test("均衡浏览器开战前也不会直接相信20Hz假胜", () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { localStorage: { getItem: () => null } };
+  try {
+    const bridge = new EngineBridge(902124, 1, { simulation: true, battleStepHz: 60 });
+    bridge.setConsoleLogging(false);
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    const pilot = new AutoChessAutopilot(
+      bridge,
+      "evolution",
+      {},
+      "balanced",
+      "normal",
+      20,
+    );
+    pilot.phase = "preparation";
+    pilot.plannedRound = 1;
+    pilot.nextActionAt = 0;
+    pilot.nextPreparationAction = () => ({ type: "battle" });
+    pilot.setEnabled(true);
+    const observedHz = [];
+    pilot.battleConfidence = () => {
+      observedHz.push(20);
+      return 10100;
+    };
+    pilot.rolloutBoardScore = (_board, _stableOnly, combatHz = pilot.rolloutCombatHz) => {
+      observedHz.push(combatHz);
+      return combatHz === 60 ? -120 : 10100;
+    };
+
+    const rejected = pilot.tick(1000);
+    assert.equal(rejected, null);
+    assert.equal(bridge.engine.state.phase, "preparation");
+    assert.deepEqual(observedHz, [20, 60]);
+
+    const retried = pilot.tick(2000);
+    assert.equal(retried?.type, "battle");
+    assert.equal(bridge.engine.state.phase, "battle");
+    assert.deepEqual(observedHz, [20, 60, 20]);
   } finally {
     if (previousWindow === undefined) delete globalThis.window;
     else globalThis.window = previousWindow;
@@ -377,6 +493,64 @@ test("看穿2临界血量会用精确战斗复核并切入稳血", () => {
   assert.equal(decision.mode, "stabilize");
   assert.equal(decision.rolloutScore, 9900);
   assert.ok(observedHz.includes(60));
+});
+
+test("看穿开局会用60Hz首步验证淘汰抽象假胜并尝试备选", () => {
+  const bridge = new EngineBridge(902131);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "seer",
+    "oracle",
+    20,
+  );
+  const makePlan = (id) => ({
+    id,
+    firstStep: { targetLevel: 3, rerolls: 0, expectedGoldAfterPreparation: 0 },
+    steps: [{
+      targetLevel: 3,
+      rerolls: 0,
+      expectedGoldAfterPreparation: 0,
+      expectedBattleWon: true,
+      expectedBattleMargin: 0,
+    }],
+    complete: false,
+    projectedRound: 1,
+    projectedHp: 20,
+    projectedGold: 0,
+    projectedLevel: 3,
+    projectedTargetCopies: {},
+    projectedBoardCount: 3,
+    projectedRosterCount: 3,
+    score: 0,
+    exploredStates: 0,
+    dominancePrunes: 0,
+  });
+  const calls = [];
+  pilot.validateSeerRoute = (plan, limit, requireComplete) => {
+    calls.push({ id: plan.id, limit, requireComplete });
+    const won = plan.id === "backup";
+    const step = {
+      ...plan.steps[0],
+      expectedBattleWon: won,
+      expectedBattleMargin: won ? 2.5 : -18,
+    };
+    return { ...plan, firstStep: step, steps: [step] };
+  };
+
+  const selected = pilot.validateSeerOpeningCandidates([
+    makePlan("abstract-best"),
+    makePlan("backup"),
+  ]);
+  assert.equal(selected?.id, "backup");
+  assert.deepEqual(calls, [
+    { id: "abstract-best", limit: 1, requireComplete: false },
+    { id: "backup", limit: 1, requireComplete: false },
+  ]);
 });
 
 test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
@@ -580,6 +754,35 @@ test("后台战斗为可选设置，开启后按隐藏期间的墙钟时间推�
   bridge.setHidden(false, 6500);
   assert.equal(bridge.hidden, false);
   assert.ok(battle.elapsed >= 2.49);
+});
+
+test("浏览器战斗用固定60Hz子步进，低帧和高帧结果一致", () => {
+  const run = (frameHz) => {
+    const bridge = new EngineBridge(80211);
+    bridge.setConsoleLogging(false);
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    bridge.engine.startBattle();
+    const frameSeconds = 1 / frameHz;
+    for (let frame = 0; frame < frameHz * 26 && bridge.engine.state.phase === "battle"; frame += 1) {
+      bridge.update(frameSeconds);
+    }
+    return {
+      phase: bridge.engine.state.phase,
+      won: bridge.engine.state.result?.won,
+      elapsed: bridge.engine.state.battle?.elapsed,
+      player: bridge.engine.state.battle?.player.map((fighter) => ({
+        hp: fighter.hp,
+        alive: fighter.alive,
+      })),
+      enemy: bridge.engine.state.battle?.enemy.map((fighter) => ({
+        hp: fighter.hp,
+        alive: fighter.alive,
+      })),
+    };
+  };
+
+  assert.deepEqual(run(20), run(60));
 });
 
 test("托管会完成开局、整备、布阵、开战和战后继续", () => {
@@ -2425,6 +2628,45 @@ test("稳健类托管在残血满场时会搜索候补替换胜解", () => {
   assert.equal(autopilot.plannedLineupUids.includes(rescueUid), true);
 });
 
+test("残血救援不会被20Hz假阴性挡住，候补胜解用60Hz确认", () => {
+  const bridge = new EngineBridge(130584);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 23;
+  bridge.engine.state.hp = 8;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  SHOP_UNITS.slice(0, 4).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1305840 + index, id, star: 1 };
+  });
+  const rescueUid = 1305844;
+  bridge.engine.state.bench[0] = { uid: rescueUid, id: SHOP_UNITS[4], star: 1 };
+  bridge.engine.state.playerLevel = 4;
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "survival",
+    "normal",
+    20,
+  );
+  autopilot.rolloutConfidence = () => -100;
+  autopilot.rolloutBoardScore = (board, _stableOnly, combatHz = 20) => (
+    board.some((entry) => entry?.unit.uid === rescueUid) && combatHz === 60
+      ? 10100
+      : -100
+  );
+  autopilot.rolloutLineupScore = (lineup, _formation, _stableOnly, combatHz = 20) => (
+    lineup.some(({ unit }) => unit.uid === rescueUid) && combatHz === 60
+      ? 10100
+      : -100
+  );
+
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), true);
+  assert.equal(autopilot.plannedLineupUids.includes(rescueUid), true);
+});
+
 test("利息风险档锚定整轮起始金币，保息只花零头且降一档不会连续滑档", () => {
   const runRerollBudget = (seed, tiersAtRisk) => {
     const bridge = new EngineBridge(seed);
@@ -3048,9 +3290,8 @@ test("标题页和局内都公开托管选择，设置面板公开四种风格�
   assert.match(hudSource, /rift-mobile-session-controls/);
   assert.match(hostSource, /后台继续战斗/);
   assert.match(hostSource, /托管风格/);
-  assert.match(hostSource, /看穿/);
-  assert.doesNotMatch(hostSource, /看穿2/);
-  assert.match(hostSource, /Go测试/);
+  assert.match(hostSource, /看穿2/);
+  assert.match(hostSource, /Go级/);
   assert.doesNotMatch(hostSource, /天眼商店/);
   assert.match(hostSource, /role="radiogroup"/);
   assert.match(hostSource, /AUTOPILOT_STRATEGY_KEY/);

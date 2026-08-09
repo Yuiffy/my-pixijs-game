@@ -35,6 +35,7 @@ class CombatExample:
     cache_key: str
     source: str
     context_key: str
+    combat_hz: int
     enemy_seed: int
     round: int
     starter: str
@@ -74,6 +75,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=2e-3)
     parser.add_argument("--weight-decay", type=float, default=2e-4)
     parser.add_argument("--max-pairs-per-context", type=int, default=96)
+    parser.add_argument(
+        "--max-train-examples-per-context",
+        type=int,
+        default=0,
+        help=(
+            "Cap training candidates per combat context while keeping top-score and "
+            "score-quantile coverage; 0 keeps every candidate."
+        ),
+    )
+    parser.add_argument(
+        "--combat-hz",
+        type=int,
+        choices=(20, 30, 60),
+        default=60,
+        help="Only train and evaluate cache entries produced at this combat frequency.",
+    )
     parser.add_argument("--seed", type=int, default=20260808)
     parser.add_argument("--cpu", action="store_true", help="Disable CUDA even when available.")
     return parser.parse_args()
@@ -124,7 +141,7 @@ def parse_entry(cache_key: str, score: float, source: str) -> CombatExample | No
         enemy_seed = 0
         round_number = 0
         context_parts = (schema, hz, starter, augments, wave_tag, modifier, enemies, branch)
-    elif schema in {"combat-go-v2", "combat-go-v3"} and len(parts) == 11:
+    elif schema in {"combat-go-v2", "combat-go-v3", "combat-go-v4"} and len(parts) == 11:
         (
             _,
             hz,
@@ -163,6 +180,7 @@ def parse_entry(cache_key: str, score: float, source: str) -> CombatExample | No
         cache_key=cache_key,
         source=source,
         context_key=context_key,
+        combat_hz=int(hz.removeprefix("hz:")),
         enemy_seed=enemy_seed,
         round=round_number,
         starter=starter or UNKNOWN_TOKEN,
@@ -175,11 +193,15 @@ def parse_entry(cache_key: str, score: float, source: str) -> CombatExample | No
     )
 
 
-def load_examples(files: Sequence[Path]) -> tuple[list[CombatExample], dict[str, int], dict]:
+def load_examples(
+    files: Sequence[Path],
+    combat_hz: int,
+) -> tuple[list[CombatExample], dict[str, int], dict]:
     deduplicated: dict[str, CombatExample] = {}
     unit_feature_names: list[str] = []
     unit_features: dict[str, list[float]] = {}
     rejected = 0
+    frequency_filtered = 0
     raw_entries = 0
     for path in files:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -202,6 +224,9 @@ def load_examples(files: Sequence[Path]) -> tuple[list[CombatExample], dict[str,
             if example is None:
                 rejected += 1
                 continue
+            if example.combat_hz != combat_hz:
+                frequency_filtered += 1
+                continue
             deduplicated[example.cache_key] = example
     examples = sorted(deduplicated.values(), key=lambda example: example.cache_key)
     return examples, {
@@ -209,6 +234,8 @@ def load_examples(files: Sequence[Path]) -> tuple[list[CombatExample], dict[str,
         "rawEntries": raw_entries,
         "deduplicatedEntries": len(examples),
         "rejectedEntries": rejected,
+        "frequencyFilteredEntries": frequency_filtered,
+        "combatHz": combat_hz,
     }, {
         "names": unit_feature_names,
         "values": unit_features,
@@ -218,6 +245,39 @@ def load_examples(files: Sequence[Path]) -> tuple[list[CombatExample], dict[str,
 def stable_bucket(value: str, buckets: int = 10) -> int:
     digest = hashlib.sha256(value.encode("utf-8")).digest()
     return int.from_bytes(digest[:4], "big") % buckets
+
+
+def limit_context_examples(
+    examples: Sequence[CombatExample],
+    maximum: int,
+) -> list[CombatExample]:
+    if maximum <= 0:
+        return list(examples)
+    groups: dict[str, list[CombatExample]] = defaultdict(list)
+    for example in examples:
+        groups[example.context_key].append(example)
+    selected: list[CombatExample] = []
+    for context_key in sorted(groups):
+        ranked = sorted(
+            groups[context_key],
+            key=lambda example: (-example.score, example.cache_key),
+        )
+        if len(ranked) <= maximum:
+            selected.extend(ranked)
+            continue
+        top_count = max(1, maximum // 2)
+        chosen = ranked[:top_count]
+        remainder = ranked[top_count:]
+        remaining_count = maximum - len(chosen)
+        if remaining_count == 1:
+            chosen.append(remainder[-1])
+        else:
+            chosen.extend(
+                remainder[round(index * (len(remainder) - 1) / (remaining_count - 1))]
+                for index in range(remaining_count)
+            )
+        selected.extend(chosen)
+    return sorted(selected, key=lambda example: example.cache_key)
 
 
 def vocab(values: Iterable[str]) -> list[str]:
@@ -524,12 +584,17 @@ def main() -> None:
         torch.cuda.manual_seed_all(args.seed)
     device = torch.device("cpu" if args.cpu or not torch.cuda.is_available() else "cuda")
     files = cache_files(args.cache)
-    examples, source_stats, static_features = load_examples(files)
+    examples, source_stats, static_features = load_examples(files, args.combat_hz)
     holdout_pattern = re.compile(args.holdout_regex)
     external_holdout = [example for example in examples if holdout_pattern.search(example.source)]
     train_pool = [example for example in examples if not holdout_pattern.search(example.source)]
     if not train_pool:
         raise RuntimeError("No training examples remain after applying --holdout-regex")
+    uncapped_train_pool_size = len(train_pool)
+    train_pool = limit_context_examples(
+        train_pool,
+        args.max_train_examples_per_context,
+    )
     train = [example for example in train_pool if stable_bucket(example.context_key) != 0]
     validation = [example for example in train_pool if stable_bucket(example.context_key) == 0]
     if not validation:
@@ -725,6 +790,9 @@ def main() -> None:
             "validation": len(validation),
             "holdout": len(external_holdout),
             "holdoutRegex": args.holdout_regex,
+            "combatHz": args.combat_hz,
+            "uncappedTrainPool": uncapped_train_pool_size,
+            "maxTrainExamplesPerContext": args.max_train_examples_per_context,
         },
         "vocabSizes": {key: len(values) for key, values in vocabularies.items()},
         "metrics": final_metrics,

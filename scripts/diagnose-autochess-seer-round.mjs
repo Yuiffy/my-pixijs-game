@@ -20,15 +20,26 @@ const seed = Math.max(1, Number(option("--seed", "73020")) || 73020);
 const targetRound = Math.max(1, Number(option("--round", "47")) || 47);
 const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "60")) || 60));
 const battleStepHz = Math.max(20, Math.min(60, Number(option("--battle-hz", "60")) || 60));
+const requestedStyle = option("--style", "seer");
+const style = requestedStyle === "seer2" ? "seer" : requestedStyle;
+const informationMode = option(
+  "--information",
+  style === "seer" || style === "go" ? "oracle" : "normal",
+);
+const liveBattleAudit = process.argv.includes("--live-audit");
+if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
+  throw new Error(`Unknown autopilot style: ${style}`);
+}
 const outputPath = option(
   "--output",
-  `artifacts/autochess-seer-round-${seed}-${targetRound}-diagnostic.json`,
+  `artifacts/autochess-${style}-round-${seed}-${targetRound}-diagnostic.json`,
 );
 const snapshotPath = option("--snapshot-output", "");
 const snapshotInputPath = option("--snapshot-input", "");
 const snapshotOnly = process.argv.includes("--snapshot-only");
 const inspectPlan = process.argv.includes("--inspect-plan");
 const simulateFormation = process.argv.includes("--simulate-formation");
+const includeTwoSwaps = process.argv.includes("--two-swaps");
 
 const describeUnit = (unit) => unit && { uid: unit.uid, id: unit.id, star: unit.star };
 const describeEntries = (entries) => entries.flatMap((unit, index) => (
@@ -114,9 +125,11 @@ const routeToRound = () => {
     bridge,
     "evolution",
     {},
-    "seer",
-    "oracle",
+    style,
+    informationMode,
     rolloutHz,
+    undefined,
+    liveBattleAudit,
   );
   if (!autopilot.startFromTitle()) throw new Error(`Could not start seed ${seed}`);
 
@@ -241,9 +254,11 @@ if (inspectPlan) {
     bridge,
     "evolution",
     {},
-    "seer",
-    "oracle",
+    style,
+    informationMode,
     rolloutHz,
+    undefined,
+    liveBattleAudit,
   );
   const lineup = pilot.rolloutTargetLineup(pilot.ownedEntries());
   console.log(JSON.stringify({
@@ -263,9 +278,11 @@ if (simulateFormation) {
     bridge,
     "evolution",
     {},
-    "seer",
-    "oracle",
+    style,
+    informationMode,
     rolloutHz,
+    undefined,
+    liveBattleAudit,
   );
   pilot.rolloutTargetLineup(pilot.ownedEntries());
   const actions = [];
@@ -330,6 +347,39 @@ for (const boardEntry of boardEntries) {
   }
 }
 
+if (includeTwoSwaps) {
+  for (let leftBench = 0; leftBench < benchEntries.length; leftBench += 1) {
+    for (let rightBench = leftBench + 1; rightBench < benchEntries.length; rightBench += 1) {
+      for (let leftBoard = 0; leftBoard < boardEntries.length; leftBoard += 1) {
+        for (let rightBoard = leftBoard + 1; rightBoard < boardEntries.length; rightBoard += 1) {
+          const incomingLeft = benchEntries[leftBench];
+          const incomingRight = benchEntries[rightBench];
+          const replacedLeft = boardEntries[leftBoard];
+          const replacedRight = boardEntries[rightBoard];
+          const board = baseBoard.map((unit) => unit && { ...unit });
+          board[replacedLeft.index] = { ...incomingLeft.unit };
+          board[replacedRight.index] = { ...incomingRight.unit };
+          const signature = board.map(describeUnit).map(JSON.stringify).join("|");
+          if (signatures.has(signature)) continue;
+          signatures.add(signature);
+          candidates.push({
+            label: `two-swap:${incomingLeft.unit.id}${incomingLeft.unit.star}+${incomingRight.unit.id}${incomingRight.unit.star}`
+              + `>${replacedLeft.unit.id}${replacedLeft.unit.star}+${replacedRight.unit.id}${replacedRight.unit.star}`
+              + `@${replacedLeft.index},${replacedRight.index}`,
+            board,
+            metadata: {
+              benchIndices: [incomingLeft.index, incomingRight.index],
+              replacedBoardIndices: [replacedLeft.index, replacedRight.index],
+              replacedUnits: [describeUnit(replacedLeft.unit), describeUnit(replacedRight.unit)],
+              incomingUnits: [describeUnit(incomingLeft.unit), describeUnit(incomingRight.unit)],
+            },
+          });
+        }
+      }
+    }
+  }
+}
+
 const results = candidates.map((candidate, index) => {
   if (index > 0 && index % 20 === 0) console.error(`tested ${index}/${candidates.length} candidates`);
   return runBattle(snapshot, candidate.board, candidate.label, candidate.metadata);
@@ -342,6 +392,9 @@ results.sort((left, right) => (
 const report = {
   seed,
   targetRound,
+  style,
+  informationMode,
+  liveBattleAudit,
   rolloutHz,
   battleStepHz,
   state: {

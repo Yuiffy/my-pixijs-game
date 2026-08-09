@@ -35,6 +35,7 @@ export type GameAction =
   | { type: "slot"; location: UnitLocation }
   | { type: "move"; from: UnitLocation; to: UnitLocation }
   | { type: "sell"; location?: UnitLocation }
+  | { type: "starForge"; location?: UnitLocation }
   | { type: "buyXp" | "lock" | "reroll" | "battle" | "skipBattle" | "rankingToggle" | "resultContinue" | "restart" | "clearSelection" }
   | { type: "metric"; metric: RankingMetric }
   | { type: "augment"; index: number };
@@ -98,6 +99,7 @@ export type RunBattleLogEvent = BattleLogEvent & { round: number };
 
 export const ACTION_TRACE_LIMIT = 10_000;
 export const RUN_BATTLE_EVENT_LIMIT = BATTLE_EVENT_LOG_LIMIT;
+const LIVE_BATTLE_STEP_SECONDS = 1 / 60;
 
 export type EngineBridgeOptions = {
   simulation?: boolean;
@@ -152,6 +154,9 @@ export class EngineBridge {
   private droppedBattleEventCount = 0;
 
   private backgroundUpdatedAt: number | null = null;
+
+  /** Accumulates render time while keeping visible combat on fixed 60Hz steps. */
+  private liveBattleTimeRemainder = 0;
 
   private actionSequence = 0;
 
@@ -208,6 +213,9 @@ export class EngineBridge {
       case "buyXp":
         engine.buyExperience();
         if (engine.state.playerLevel > beforeLevel) this.emitAudio("upgrade");
+        break;
+      case "starForge":
+        if (engine.useStarForge(action.location)) this.emitAudio("upgrade");
         break;
       case "lock":
         engine.toggleShopLock();
@@ -378,7 +386,20 @@ export class EngineBridge {
 
   public update(deltaSeconds: number) {
     if (this.codexOpen || this.hidden) return;
-    if (this.engine.state.phase === "battle" || this.engine.state.toast) {
+    if (this.engine.state.phase === "battle") {
+      this.liveBattleTimeRemainder += Math.min(0.05, Math.max(0, deltaSeconds));
+      while (
+        this.engine.state.phase === "battle"
+        && this.liveBattleTimeRemainder + 1e-9 >= LIVE_BATTLE_STEP_SECONDS
+      ) {
+        this.engine.update(LIVE_BATTLE_STEP_SECONDS);
+        this.liveBattleTimeRemainder -= LIVE_BATTLE_STEP_SECONDS;
+      }
+      this.flushEvents();
+      return;
+    }
+    this.liveBattleTimeRemainder = 0;
+    if (this.engine.state.toast) {
       this.engine.update(Math.min(0.05, Math.max(0, deltaSeconds)));
       this.flushEvents();
     }

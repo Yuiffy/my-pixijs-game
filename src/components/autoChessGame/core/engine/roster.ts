@@ -18,6 +18,14 @@ import type {
 import type { RandomSource } from "./random";
 import { SHOP_SIZE } from "./state";
 
+export const STAR_FORGE_UNLOCK_COST = 40;
+
+export const starForgeUpgradeCost = (unit: OwnedUnit) => {
+  if (unit.star === 3) return null;
+  const stageMultiplier = unit.star === 1 ? 4 : 12;
+  return (UNIT_DEFS[unit.id].cost + 1) * stageMultiplier;
+};
+
 interface RosterHost {
   state: () => GameState;
   rng: () => RandomSource;
@@ -50,6 +58,14 @@ public get upgradeCost() {
 
 public get isMaxPlayerLevel() {
     return this.state.playerLevel === MAX_PLAYER_LEVEL;
+  }
+
+public get isStarForgeUnlocked() {
+    return this.state.starForgeUnlocked;
+  }
+
+public get starForgeUnlockCost() {
+    return STAR_FORGE_UNLOCK_COST;
   }
 
 public get boardCount() {
@@ -108,6 +124,60 @@ public buyExperience() {
 
     this.state.gold -= cost;
     this.levelUp();
+  }
+
+public useStarForge(location?: UnitLocation) {
+    if (this.state.phase !== "preparation") return false;
+    if (!this.isMaxPlayerLevel) {
+      this.setToast("升星工坊会在达到最高等级后开放。", "info");
+      return false;
+    }
+
+    if (!this.isStarForgeUnlocked) {
+      if (this.state.gold < STAR_FORGE_UNLOCK_COST) {
+        this.setToast(
+          `还差 ${STAR_FORGE_UNLOCK_COST - this.state.gold} 金币，无法解锁升星工坊。`,
+          "bad",
+        );
+        return false;
+      }
+      this.state.gold -= STAR_FORGE_UNLOCK_COST;
+      this.state.starForgeUnlocked = true;
+      this.setToast("升星工坊已解锁。把一星或二星棋子拖到工坊即可直升。", "good");
+      return true;
+    }
+
+    const targetLocation = location || this.state.selected;
+    const unit = targetLocation ? this.getAt(targetLocation) : null;
+    if (!targetLocation || !unit) {
+      this.setToast("请先选择棋子，或把棋子拖到升星工坊。", "info");
+      return false;
+    }
+    const cost = starForgeUpgradeCost(unit);
+    if (cost === null) {
+      this.setToast(`${UNIT_DEFS[unit.id].name}已经是三星。`, "info");
+      return false;
+    }
+    if (this.state.gold < cost) {
+      this.setToast(`还差 ${cost - this.state.gold} 金币，无法直升。`, "bad");
+      return false;
+    }
+
+    const fromStar = unit.star;
+    this.state.gold -= cost;
+    unit.star = (fromStar + 1) as 2 | 3;
+    this.state.selected = null;
+    this.state.score += cost * 3;
+    this.setToast(
+      `工坊完成：${UNIT_DEFS[unit.id].name}直升 ${unit.star} 星，消耗 ${cost} 金币。`,
+      "good",
+    );
+    this.checkMerges();
+    return true;
+  }
+
+public getStarForgeUpgradeCost(unit: OwnedUnit) {
+    return starForgeUpgradeCost(unit);
   }
 
 public toggleShopLock() {

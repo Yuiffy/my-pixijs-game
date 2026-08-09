@@ -12,6 +12,7 @@ import {
 import type { GameAction } from "../phaser/EngineBridge";
 import {
   ActionButton,
+  StarForgeAction,
   UnitPortrait,
   countOwnedStars,
   ownedLabel,
@@ -76,11 +77,16 @@ export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | nu
 
 export function ShopSheet({ engine, onClose, onAction }: { engine: AutoChessEngine; onClose: () => void; onAction: (action: GameAction) => void }) {
   const ownedStars = (unitId: string) => countOwnedStars([...engine.state.board, ...engine.state.bench], unitId);
+  const selected = engine.state.selected
+    ? (engine.state.selected.zone === "board"
+        ? engine.state.board[engine.state.selected.index]
+        : engine.state.bench[engine.state.selected.index])
+    : null;
   return (
     <Sheet title="战术商店" eyebrow="SHOP / 五张随机单位" className="rift-dom-sheet-shop" onClose={onClose}>
       <div className="rift-sheet-summary"><span>金币 <b>{engine.state.gold}</b></span><InterestInfo engine={engine} compact />{engine.state.upgradeDiscountCarry > 0 && <span>减费结转 <b>{engine.state.upgradeDiscountCarry}</b></span>}<span>概率 <b>{tierOddsForLevel(engine.state.playerLevel).filter(Boolean).map((chance, index) => `${index + 1}费 ${chance}%`).join(" · ")}</b></span></div>
       <div className="rift-sheet-shop-list">{engine.state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => onAction({ type: "shop", index })} />)}</div>
-      <div className="rift-dom-sheet-grid"><ActionButton onClick={() => onAction({ type: "buyXp" })} disabled={engine.isMaxPlayerLevel || engine.state.gold < (engine.upgradeCost ?? Number.POSITIVE_INFINITY)}>升本 · {engine.isMaxPlayerLevel ? "MAX" : engine.upgradeCost}</ActionButton><ActionButton tone="lock" className={engine.state.shopLocked ? "is-selected" : ""} onClick={() => onAction({ type: "lock" })}>{engine.state.shopLocked ? "已锁定" : "锁定商店"}</ActionButton><ActionButton tone="economic" onClick={() => onAction({ type: "reroll" })} disabled={!engine.state.freeRerollCharges && engine.state.gold < 1}>刷新 · {engine.state.freeRerollCharges ? `免费 ${engine.state.freeRerollCharges}` : 1}</ActionButton></div>
+      <div className="rift-dom-sheet-grid"><StarForgeAction engine={engine} selected={selected} onAction={onAction} /><ActionButton tone="lock" className={engine.state.shopLocked ? "is-selected" : ""} onClick={() => onAction({ type: "lock" })}>{engine.state.shopLocked ? "已锁定" : "锁定商店"}</ActionButton><ActionButton tone="economic" onClick={() => onAction({ type: "reroll" })} disabled={!engine.state.freeRerollCharges && engine.state.gold < 1}>刷新 · {engine.state.freeRerollCharges ? `免费 ${engine.state.freeRerollCharges}` : 1}</ActionButton></div>
     </Sheet>
   );
 }

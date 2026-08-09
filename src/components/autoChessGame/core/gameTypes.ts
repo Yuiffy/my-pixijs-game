@@ -484,6 +484,7 @@ export interface GameState {
   playerLevel: PlayerLevel;
   upgradeRemaining: number;
   upgradeDiscountCarry: number;
+  starForgeUnlocked: boolean;
   score: number;
   bestScore: number;
   streak: number;

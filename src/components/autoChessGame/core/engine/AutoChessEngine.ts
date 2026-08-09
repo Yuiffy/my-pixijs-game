@@ -582,6 +582,14 @@ export class AutoChessEngine {
     return this.roster.isMaxPlayerLevel;
   }
 
+  public get isStarForgeUnlocked() {
+    return this.roster.isStarForgeUnlocked;
+  }
+
+  public get starForgeUnlockCost() {
+    return this.roster.starForgeUnlockCost;
+  }
+
   public get boardCount() {
     return this.roster.boardCount;
   }
@@ -689,6 +697,10 @@ export class AutoChessEngine {
     this.roster.buyExperience();
   }
 
+  public useStarForge(location?: UnitLocation) {
+    return this.roster.useStarForge(location);
+  }
+
   public toggleShopLock() {
     this.roster.toggleShopLock();
   }
@@ -741,6 +753,10 @@ export class AutoChessEngine {
 
   public getUnitSellValue(unit: OwnedUnit) {
     return this.roster.getUnitSellValue(unit);
+  }
+
+  public getStarForgeUpgradeCost(unit: OwnedUnit) {
+    return this.roster.getStarForgeUpgradeCost(unit);
   }
 
   private checkMerges() {

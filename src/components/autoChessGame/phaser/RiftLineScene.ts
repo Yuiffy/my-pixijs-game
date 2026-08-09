@@ -297,6 +297,8 @@ export class RiftLineScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePointerUpOutside, this);
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, this.handlePointerWheel, this);
+    window.addEventListener("pointermove", this.handleWindowPointerMove);
+    window.addEventListener("pointerup", this.handleWindowPointerUp);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cancelDrag, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.disposeSceneInput, this);
     this.drawBackdrop();
@@ -347,6 +349,8 @@ export class RiftLineScene extends Phaser.Scene {
     this.input.off(Phaser.Input.Events.POINTER_UP, this.handlePointerUp, this);
     this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePointerUpOutside, this);
     this.input.off(Phaser.Input.Events.POINTER_WHEEL, this.handlePointerWheel, this);
+    window.removeEventListener("pointermove", this.handleWindowPointerMove);
+    window.removeEventListener("pointerup", this.handleWindowPointerUp);
     this.game.canvas.removeEventListener("contextmenu", this.preventContextMenu);
   }
 
@@ -1036,6 +1040,11 @@ export class RiftLineScene extends Phaser.Scene {
       }
       const logical = this.logicalPointer(pointer);
       this.dragState = { origin: location, unit, pointerId: pointer.id, startX: logical.x, startY: logical.y, active: false, ghost: null, targetMarker: null, target: null };
+      const nativeEvent = pointer.event as PointerEvent;
+      const eventTarget = nativeEvent.target as Element | null;
+      if (Number.isFinite(nativeEvent.pointerId) && eventTarget?.setPointerCapture) {
+        eventTarget.setPointerCapture(nativeEvent.pointerId);
+      }
     });
     slot.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
       if (unit && !this.dragState) this.showUnitTooltip(unit.id, pointer, unit.star, undefined, unit);
@@ -1208,7 +1217,16 @@ export class RiftLineScene extends Phaser.Scene {
     }
     if (!drag.active) return;
     const overSellZone = this.isInSellDropZone(logical.x, logical.y);
-    drag.ghost?.setPosition(logical.x + (overSellZone ? 44 : 18), logical.y - (overSellZone ? 48 : 18));
+    const overStarForge = this.isPointerOverStarForge(pointer);
+    this.updateStarForgeDropZone(drag.unit, overStarForge);
+    drag.ghost?.setPosition(logical.x + (overSellZone || overStarForge ? 44 : 18), logical.y - (overSellZone || overStarForge ? 48 : 18));
+    if (overStarForge) {
+      drag.target = null;
+      drag.targetMarker?.destroy();
+      drag.targetMarker = null;
+      this.updateSellDropZone(false, drag.unit);
+      return;
+    }
     if (overSellZone) {
       drag.target = null;
       drag.targetMarker?.destroy();
@@ -1274,14 +1292,17 @@ export class RiftLineScene extends Phaser.Scene {
     const drag = this.dragState;
     if (!drag || pointer.id !== drag.pointerId) return;
     const logical = this.logicalPointer(pointer);
+    const shouldForge = drag.active && this.isPointerOverStarForge(pointer);
     const shouldSell = drag.active && this.isInSellDropZone(logical.x, logical.y);
     const target = this.locationAt(logical.x, logical.y);
     const shouldMove = drag.active && target && !this.sameLocation(drag.origin, target);
-    const action = shouldSell
-      ? { type: "sell", location: drag.origin } satisfies GameAction
-      : shouldMove
-        ? { type: "move", from: drag.origin, to: target } satisfies GameAction
-        : { type: "slot", location: drag.origin } satisfies GameAction;
+    const action = shouldForge
+      ? { type: "starForge", location: drag.origin } satisfies GameAction
+      : shouldSell
+        ? { type: "sell", location: drag.origin } satisfies GameAction
+        : shouldMove
+          ? { type: "move", from: drag.origin, to: target } satisfies GameAction
+          : { type: "slot", location: drag.origin } satisfies GameAction;
     this.cancelDrag();
     this.dispatch(action);
   }
@@ -1289,6 +1310,13 @@ export class RiftLineScene extends Phaser.Scene {
   private handlePointerUpOutside(pointer: Phaser.Input.Pointer) {
     this.releaseBattleViewPointer(pointer);
     if (this.resultScrollDrag?.pointerId === pointer.id) this.stopResultScrollDrag();
+    const drag = this.dragState;
+    if (drag?.active && drag.pointerId === pointer.id && this.isPointerOverStarForge(pointer)) {
+      const { origin } = drag;
+      this.cancelDrag();
+      this.dispatch({ type: "starForge", location: origin });
+      return;
+    }
     this.cancelDrag();
   }
 
@@ -1300,6 +1328,96 @@ export class RiftLineScene extends Phaser.Scene {
   private isInSellDropZone(x: number, y: number) {
     const zone = PREPARATION_SELL_ZONE;
     return !this.isMobile() && x >= zone.x && x <= zone.x + zone.width && y >= zone.y && y <= zone.y + zone.height;
+  }
+
+  private starForgeDropZone() {
+    return Array.from(document.querySelectorAll<HTMLElement>("[data-star-forge-dropzone='true']"))
+      .find((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      }) ?? null;
+  }
+
+  private pointerClientPosition(pointer: Phaser.Input.Pointer) {
+    const nativeEvent = pointer.event as PointerEvent;
+    if (Number.isFinite(nativeEvent.clientX) && Number.isFinite(nativeEvent.clientY)) {
+      return { x: nativeEvent.clientX, y: nativeEvent.clientY };
+    }
+    const rect = this.game.canvas.getBoundingClientRect();
+    return { x: rect.left + pointer.x, y: rect.top + pointer.y };
+  }
+
+  private isClientPointOverStarForge(x: number, y: number) {
+    const element = this.starForgeDropZone();
+    if (!element) return false;
+    const rect = element.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }
+
+  private isPointerOverStarForge(pointer: Phaser.Input.Pointer) {
+    const point = this.pointerClientPosition(pointer);
+    return this.isClientPointOverStarForge(point.x, point.y);
+  }
+
+  private handleWindowPointerMove = (event: PointerEvent) => {
+    const drag = this.dragState;
+    if (!drag?.active) return;
+    this.updateStarForgeDropZone(
+      drag.unit,
+      this.isClientPointOverStarForge(event.clientX, event.clientY),
+    );
+  };
+
+  private handleWindowPointerUp = (event: PointerEvent) => {
+    const drag = this.dragState;
+    if (!drag?.active || !this.isClientPointOverStarForge(event.clientX, event.clientY)) return;
+    const { origin } = drag;
+    this.cancelDrag();
+    this.dispatch({ type: "starForge", location: origin });
+  };
+
+  private updateStarForgeDropZone(unit?: OwnedUnit, active = false) {
+    const elements = document.querySelectorAll<HTMLElement>("[data-star-forge-dropzone='true']");
+    elements.forEach((element) => {
+      element.classList.remove("is-drag-ready", "is-drag-over", "is-drag-invalid");
+      if (!unit && element.dataset.forgeCopySaved === "true") {
+        const label = element.querySelector<HTMLElement>("span");
+        const detail = element.querySelector<HTMLElement>("b");
+        if (label) label.textContent = element.dataset.forgeOriginalLabel || "拖棋升星";
+        if (detail) detail.textContent = element.dataset.forgeOriginalDetail || "选择棋子";
+        delete element.dataset.forgeCopySaved;
+        delete element.dataset.forgeOriginalLabel;
+        delete element.dataset.forgeOriginalDetail;
+      }
+    });
+    if (!unit || !this.bridge.engine.isStarForgeUnlocked) return;
+    const element = this.starForgeDropZone();
+    if (!element) return;
+    const cost = this.bridge.engine.getStarForgeUpgradeCost(unit);
+    const valid = cost !== null && this.bridge.engine.state.gold >= cost;
+    const label = element.querySelector<HTMLElement>("span");
+    const detail = element.querySelector<HTMLElement>("b");
+    if (element.dataset.forgeCopySaved !== "true") {
+      element.dataset.forgeCopySaved = "true";
+      element.dataset.forgeOriginalLabel = label?.textContent || "拖棋升星";
+      element.dataset.forgeOriginalDetail = detail?.textContent || "选择棋子";
+    }
+    if (label) {
+      label.textContent = cost === null
+        ? "已经三星"
+        : valid
+          ? `${active ? "松开升" : "拖入升"} ${unit.star + 1} 星`
+          : "金币不足";
+    }
+    if (detail) {
+      detail.textContent = cost === null
+        ? "不可直升"
+        : valid
+          ? `${cost} 金`
+          : `还差 ${cost - this.bridge.engine.state.gold}`;
+    }
+    element.classList.add(valid ? "is-drag-ready" : "is-drag-invalid");
+    if (active && valid) element.classList.add("is-drag-over");
   }
 
   private createDragTargetMarker(location: UnitLocation) {
@@ -1328,6 +1446,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.traitDrag = null;
     this.clearTooltip();
     this.updateSellDropZone(false);
+    this.updateStarForgeDropZone();
     if (this.game?.canvas) this.game.canvas.style.cursor = "";
   }
 

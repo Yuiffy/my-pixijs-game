@@ -14,9 +14,14 @@ import {
 import { AutoChessAIController } from "./ai/AutoChessAI";
 import {
   AutoChessAutopilot,
-  LIVE_AUTOPILOT_COMBAT_HZ,
+  getAutopilotRolloutCacheStats,
+  hydrateAutopilotRolloutCache,
+  LIVE_AUTOPILOT_BATTLE_STEP_HZ,
+  LIVE_AUTOPILOT_ROLLOUT_HZ,
+  snapshotAutopilotRolloutCache,
 } from "./ai/AutoChessAutopilot";
 import type { AutopilotStyle } from "./ai/autopilotPolicy";
+import { GO_ROLLOUT_CACHE_SCHEMA } from "./ai/rolloutCacheSchema";
 import {
   AutoChessAudio,
   DEFAULT_AUDIO_PREFERENCES,
@@ -58,6 +63,7 @@ declare global {
     render_game_to_text?: () => string;
     advanceTime?: (milliseconds: number) => void;
     autoChessAI?: AutoChessAIController;
+    getAutoChessRolloutCacheStats?: typeof getAutopilotRolloutCacheStats;
     autoChessLastRun?: AutoChessLastRun;
     exportAutoChessLastRun?: () => Promise<{
       filename: string;
@@ -77,7 +83,18 @@ const AUTOPILOT_STRATEGY_VERSION = 3;
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
+const GO_ROLLOUT_DATABASE = "rift-line-go-rollout-cache";
+const GO_ROLLOUT_STORE = "cache";
+const GO_ROLLOUT_RECORD_KEY = "latest";
+const GO_ROLLOUT_PERSIST_INTERVAL_MS = 15_000;
+const GO_ROLLOUT_PERSIST_LIMIT = 25_000;
 const SESSION_TRACE_EVENT_LIMIT = 5_000;
+
+type PersistedGoRolloutCache = {
+  schema: string;
+  savedAt: string;
+  entries: Array<[string, number]>;
+};
 
 const archiveCompletedRunInDevelopment = async (trace: AutoChessLastRun) => {
   if (process.env.NODE_ENV !== "development" || trace.state.phase !== "gameover") return;
@@ -123,6 +140,56 @@ const persistLastRun = async (trace: AutoChessLastRun) => {
     await new Promise<void>((resolve, reject) => {
       const transaction = database.transaction(LAST_RUN_STORE, "readwrite");
       transaction.objectStore(LAST_RUN_STORE).put(trace, LAST_RUN_TRACE_KEY);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  } finally {
+    database.close();
+  }
+};
+
+const openGoRolloutDatabase = () => new Promise<IDBDatabase>((resolve, reject) => {
+  const request = window.indexedDB.open(GO_ROLLOUT_DATABASE, 1);
+  request.onupgradeneeded = () => {
+    if (!request.result.objectStoreNames.contains(GO_ROLLOUT_STORE)) {
+      request.result.createObjectStore(GO_ROLLOUT_STORE);
+    }
+  };
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+
+const loadGoRolloutCache = async () => {
+  if (!window.indexedDB) return null;
+  const database = await openGoRolloutDatabase();
+  try {
+    return await new Promise<PersistedGoRolloutCache | null>((resolve, reject) => {
+      const request = database
+        .transaction(GO_ROLLOUT_STORE, "readonly")
+        .objectStore(GO_ROLLOUT_STORE)
+        .get(GO_ROLLOUT_RECORD_KEY);
+      request.onsuccess = () => resolve(
+        (request.result as PersistedGoRolloutCache | undefined) || null,
+      );
+      request.onerror = () => reject(request.error);
+    });
+  } finally {
+    database.close();
+  }
+};
+
+const persistGoRolloutCache = async (entries: Array<[string, number]>) => {
+  if (!window.indexedDB) return;
+  const database = await openGoRolloutDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(GO_ROLLOUT_STORE, "readwrite");
+      transaction.objectStore(GO_ROLLOUT_STORE).put({
+        schema: GO_ROLLOUT_CACHE_SCHEMA,
+        savedAt: new Date().toISOString(),
+        entries,
+      } satisfies PersistedGoRolloutCache, GO_ROLLOUT_RECORD_KEY);
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
       transaction.onabort = () => reject(transaction.error);
@@ -178,6 +245,50 @@ export default function AutoChessGame() {
   const enemyFormationOpen = bridgeRef.current?.enemyFormationOpen || false;
 
   useEffect(() => {
+    let disposed = false;
+    let persistedEntryCount = 0;
+    let writeInFlight = false;
+    const goKeyPrefix = `${GO_ROLLOUT_CACHE_SCHEMA}/`;
+
+    loadGoRolloutCache().then((payload) => {
+      if (disposed || payload?.schema !== GO_ROLLOUT_CACHE_SCHEMA) return;
+      const entries = payload.entries.filter(([key, score]) => (
+        key.startsWith(goKeyPrefix) && Number.isFinite(score)
+      ));
+      hydrateAutopilotRolloutCache(entries);
+      persistedEntryCount = entries.length;
+    }).catch(() => {});
+
+    const persist = () => {
+      if (disposed || writeInFlight) return;
+      const allEntries = snapshotAutopilotRolloutCache();
+      if (allEntries.length === persistedEntryCount) return;
+      const entries = allEntries
+        .filter(([key]) => key.startsWith(goKeyPrefix))
+        .slice(-GO_ROLLOUT_PERSIST_LIMIT);
+      writeInFlight = true;
+      persistGoRolloutCache(entries).then(() => {
+        persistedEntryCount = allEntries.length;
+      }).catch(() => {}).finally(() => {
+        writeInFlight = false;
+      });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") persist();
+    };
+    const interval = window.setInterval(persist, GO_ROLLOUT_PERSIST_INTERVAL_MS);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", persist);
+    return () => {
+      persist();
+      disposed = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", persist);
+    };
+  }, []);
+
+  useEffect(() => {
     const container = containerRef.current;
     if (!container) return undefined;
     let resizeFrame = 0;
@@ -228,8 +339,8 @@ export default function AutoChessGame() {
       // The strategy still applies for this session when storage is unavailable.
     }
     setMessage(style === "go"
-      ? "Go测试托管策略已更新。"
-      : style === "seer" ? "看穿托管策略已更新。" : "托管策略已更新。");
+      ? "Go级托管策略已更新。"
+      : style === "seer" ? "看穿2托管策略已更新。" : "托管策略已更新。");
     setRevision((value) => value + 1);
   }, []);
 
@@ -275,7 +386,7 @@ export default function AutoChessGame() {
     const bridge = new EngineBridge(
       Number.isFinite(requestedSeed) && requestedSeed > 0 ? requestedSeed : undefined,
       Number.isFinite(requestedSpeed) ? requestedSpeed : 1,
-      { battleStepHz: LIVE_AUTOPILOT_COMBAT_HZ },
+      { battleStepHz: LIVE_AUTOPILOT_BATTLE_STEP_HZ },
     );
     bridgeRef.current = bridge;
     const storedBackgroundBattle = loadBackgroundBattlePreference();
@@ -466,13 +577,14 @@ export default function AutoChessGame() {
     };
     const ai = new AutoChessAIController(bridge);
     window.autoChessAI = ai;
+    window.getAutoChessRolloutCacheStats = getAutopilotRolloutCacheStats;
     const autopilot = new AutoChessAutopilot(
       bridge,
       "evolution",
       {},
       storedAutopilotStrategy,
       undefined,
-      LIVE_AUTOPILOT_COMBAT_HZ,
+      LIVE_AUTOPILOT_ROLLOUT_HZ,
     );
     autopilotRef.current = autopilot;
     console.info(`[RiftLine][AI] v${AUTOCHESS_VERSION} ready. Use autoChessAI.help()`, ai.help());
@@ -531,6 +643,7 @@ export default function AutoChessGame() {
       delete window.render_game_to_text;
       delete window.advanceTime;
       delete window.autoChessAI;
+      delete window.getAutoChessRolloutCacheStats;
       delete window.exportAutoChessLastRun;
     };
   }, []);
@@ -602,7 +715,9 @@ export default function AutoChessGame() {
       } else if (state.phase === "preparation" && key === "l") {
         action = { type: "lock" };
       } else if (state.phase === "preparation" && key === "u") {
-        action = { type: "buyXp" };
+        action = bridge.engine.isMaxPlayerLevel
+          ? { type: "starForge" }
+          : { type: "buyXp" };
       } else if (state.phase === "preparation" && key === "e") {
         event.preventDefault();
         bridge.setEnemyFormationOpen(true);
@@ -732,8 +847,8 @@ export default function AutoChessGame() {
                     ["survival", "稳健"],
                     ["balanced", "均衡"],
                     ["highroll", "搏上限"],
-                    ["seer", "看穿"],
-                    ["go", "Go测试"],
+                    ["seer", "看穿2"],
+                    ["go", "Go级"],
                   ] as const).map(([style, label]) => (
                     <button
                       key={style}

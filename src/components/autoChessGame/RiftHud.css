@@ -213,6 +213,11 @@
 .rift-action b { font: 900 9px/1 Arial, sans-serif; opacity: .8; }
 .rift-action-confirm { border-color: #7ee7ba; background: linear-gradient(135deg, #47c28f, #32a879); color: #06251a; }
 .rift-action-economic { border-color: #d3ad52; background: #745824; color: #fff0bd; }
+.rift-action-forge { border-color: #c99e49; background: #62491d; color: #fff2be; }
+.rift-action-forge.is-unlocked { border-color: #58cda3; background: #1c5948; color: #e5fff4; }
+.rift-action-forge.is-drag-ready { border-color: #91f0ca; box-shadow: 0 0 0 2px rgba(99, 224, 177, .24), 0 0 20px rgba(88, 205, 163, .28); }
+.rift-action-forge.is-drag-over { transform: translateY(-2px) scale(1.02); border-color: #fff1a8; background: #8a6828; color: #fffbdc; box-shadow: 0 0 0 3px rgba(255, 220, 104, .3), 0 0 24px rgba(255, 209, 102, .42); }
+.rift-action-forge.is-drag-invalid { border-color: #cf7187; background: #5b2b39; color: #ffe5eb; }
 .rift-action-danger { border-color: #b8657a; background: #542738; color: #ffe9ed; }
 .rift-action-lock { border-color: #557a8e; background: #18384b; }
 .rift-action-lock.is-selected { border-color: #86dbef; background: #22566b; color: #c9f5ff; }
@@ -564,6 +569,8 @@
 .rift-empty-slot { color: #568094; font-size: 21px; }
 .rift-sheet-bench-grid small { color: #66889a; font-size: 9px; }
 .rift-sheet-selection { margin: 12px 0; padding: 10px 11px; border: 1px dashed #385a6b; border-radius: 7px; color: #8ba8b5; font-size: 10px; line-height: 1.5; }
+.rift-sheet-bench-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.rift-sheet-bench-actions > :only-child { grid-column: 1 / -1; }
 .rift-sheet-selection b { color: #e7f6fb; }
 .rift-trait-sheet-list { display: grid; gap: 7px; }
 .rift-trait-sheet-list > div { display: flex; align-items: center; gap: 10px; padding: 11px; border: 1px solid #294a5b; border-radius: 9px; background: rgba(16, 38, 53, .82); }

@@ -8,12 +8,13 @@ import {
   progressionModeForRound,
 } from "../core/gameData";
 import type { OwnedUnit } from "../core/gameTypes";
+import type { GameAction } from "../phaser/EngineBridge";
 import { AUTOCHESS_VERSION } from "../version";
 
 export const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 export const STAR_LABEL = ["", "Ⅰ", "Ⅱ", "Ⅲ"];
 
-type Tone = "neutral" | "confirm" | "economic" | "danger" | "lock";
+type Tone = "neutral" | "confirm" | "economic" | "danger" | "lock" | "forge";
 export type OwnedStars = Record<1 | 2 | 3, number>;
 
 export function countOwnedStars(units: readonly (OwnedUnit | null | undefined)[], unitId: string): OwnedStars {
@@ -54,6 +55,66 @@ export function UnitPortrait({ unitId, size = 42 }: { unitId: keyof typeof UNIT_
 
 export function ActionButton({ tone = "neutral", className = "", children, ...props }: { tone?: Tone; className?: string; children: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button className={`rift-action rift-action-${tone} ${className}`} {...props}>{children}</button>;
+}
+
+export function StarForgeAction({
+  engine,
+  selected,
+  onAction,
+  className = "",
+}: {
+  engine: AutoChessEngine;
+  selected: OwnedUnit | null;
+  onAction: (action: GameAction) => void;
+  className?: string;
+}) {
+  if (!engine.isMaxPlayerLevel) {
+    const cost = engine.upgradeCost ?? Number.POSITIVE_INFINITY;
+    return (
+      <ActionButton
+        className={className}
+        onClick={() => onAction({ type: "buyXp" })}
+        disabled={engine.state.gold < cost}
+      >
+        <span>升本</span><b>{engine.upgradeCost}</b>
+      </ActionButton>
+    );
+  }
+
+  const upgradeCost = selected
+    ? engine.getStarForgeUpgradeCost(selected)
+    : null;
+  const locked = !engine.isStarForgeUnlocked;
+  const disabled = locked
+    ? engine.state.gold < engine.starForgeUnlockCost
+    : upgradeCost !== null && engine.state.gold < upgradeCost;
+  const label = locked
+    ? "解锁工坊"
+    : selected
+      ? upgradeCost !== null
+        ? `直升 ${selected.star + 1} 星`
+        : "已经三星"
+      : "拖棋升星";
+  const detail = locked
+    ? engine.starForgeUnlockCost
+    : selected
+      ? upgradeCost ?? "不可直升"
+      : "选择棋子";
+
+  return (
+    <ActionButton
+      tone="forge"
+      className={`rift-star-forge ${engine.isStarForgeUnlocked ? "is-unlocked" : "is-locked"} ${className}`}
+      data-star-forge-dropzone={engine.isStarForgeUnlocked ? "true" : undefined}
+      onClick={() => onAction({ type: "starForge" })}
+      disabled={disabled}
+      title={locked
+        ? `花 ${engine.starForgeUnlockCost} 金币解锁升星工坊`
+        : "把一星或二星棋子拖到这里，或选中棋子后点击直升"}
+    >
+      <span>{label}</span><b>{detail}</b>
+    </ActionButton>
+  );
 }
 
 export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) {

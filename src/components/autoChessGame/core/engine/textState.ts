@@ -27,6 +27,10 @@ import type {
   Team,
 } from "../gameTypes";
 import { AUTOCHESS_VERSION } from "../../version";
+import {
+  STAR_FORGE_UNLOCK_COST,
+  starForgeUpgradeCost,
+} from "./roster";
 
 interface ActiveTraitSummary {
   id: TraitId;
@@ -76,6 +80,11 @@ export const renderTextState = (context: TextStateContext) => {
       };
     const { battle } = context.state;
     const { currentWave } = context;
+    const selectedUnit = context.state.selected
+      ? (context.state.selected.zone === "board"
+          ? context.state.board[context.state.selected.index]
+          : context.state.bench[context.state.selected.index])
+      : null;
     return JSON.stringify({
       version: AUTOCHESS_VERSION,
       coordinateSystem: "画布 1120x720；原点在左上，x 向右、y 向下。",
@@ -126,6 +135,14 @@ export const renderTextState = (context: TextStateContext) => {
           ? null
           : upgradeCostForLevel(context.state.playerLevel),
         maxLevel: context.isMaxPlayerLevel,
+        starForge: {
+          available: context.isMaxPlayerLevel,
+          unlocked: context.state.starForgeUnlocked,
+          unlockCost: STAR_FORGE_UNLOCK_COST,
+          selectedUpgradeCost: selectedUnit
+            ? starForgeUpgradeCost(selectedUnit)
+            : null,
+        },
         score: context.state.score,
         streak: context.state.streak,
         boardCount: context.boardCount,
@@ -338,13 +355,17 @@ export const renderTextState = (context: TextStateContext) => {
         context.state.phase === "preparation"
           ? [
               "点击商店购买",
-              `点击升本：一次支付 ${context.upgradeCost ?? 0} 金币升至下一本`,
+              context.isMaxPlayerLevel
+                ? context.state.starForgeUnlocked
+                  ? "把一星或二星棋子拖到升星工坊，或选中后点击工坊直升"
+                  : `点击升星工坊：支付 ${STAR_FORGE_UNLOCK_COST} 金币在本局解锁功能`
+                : `点击升本：一次支付 ${context.upgradeCost ?? 0} 金币升至下一本`,
               "点击锁定/解锁保留下回合商店",
               "点击单位再点击格子移动/交换",
               "点击回收出售选中单位",
               "R 刷新商店",
               "L 锁定/解锁商店",
-              "U 升本",
+              context.isMaxPlayerLevel ? "U 使用升星工坊" : "U 升本",
               "数字 1-5 购买对应商店棋子",
               "Space 开始战斗",
               "F 全屏",

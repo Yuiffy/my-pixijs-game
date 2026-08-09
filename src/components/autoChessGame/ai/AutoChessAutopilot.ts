@@ -160,7 +160,18 @@ const SEER2_ROLLOUT_CANDIDATE_LIMIT = 6;
 const SEER2_ROLLOUT_SURVIVOR_LIMIT = 3;
 const GO_MODEL_PARENT_LIMIT = 8;
 const GO_MODEL_SHORTLIST_LIMIT = 24;
-const GO_MODEL_ROLLOUT_SURVIVOR_LIMIT = 4;
+const GO_MODEL_ROLLOUT_SURVIVOR_LIMIT = 12;
+const GO_RESCUE_MODEL_BEAM_WIDTH = 24;
+const GO_RESCUE_MODEL_CANDIDATE_LIMIT = 24;
+/**
+ * Cheap rollouts can reject a real win in critical Go positions. Once the
+ * normal shortlist is still unsafe, exact-check a bounded heuristic cover;
+ * the model cover is a second pass because most positions are solved by the
+ * cheaper first pass.
+ */
+const GO_CRITICAL_EXACT_HEURISTIC_INITIAL_LIMIT = 24;
+const GO_CRITICAL_EXACT_HEURISTIC_EXPANDED_LIMIT = 48;
+const GO_CRITICAL_EXACT_MODEL_LIMIT = 64;
 const EVOLUTION_ELITE_LIMIT = 1;
 const ROLLOUT_SEED_VARIANTS = 4;
 const STARTER_ROLLOUT_BATTLES = 4;
@@ -195,7 +206,12 @@ const GO_OPPORTUNITY_MAX_REROLLS = 64;
 const SHARED_ROLLOUT_CACHE_LIMIT = 200000;
 const EXACT_COMBAT_HZ = 60;
 const DEFAULT_ROLLOUT_COMBAT_HZ = 30;
-export const LIVE_AUTOPILOT_COMBAT_HZ = 20;
+/** Browser planning uses a cheap CPU timestep; it is never the live battle timestep. */
+export const LIVE_AUTOPILOT_ROLLOUT_HZ = 20;
+/** Fast-forward and route validation must use the same precise timestep as combat audits. */
+export const LIVE_AUTOPILOT_BATTLE_STEP_HZ = EXACT_COMBAT_HZ;
+/** Compatibility alias for callers that used the old, ambiguous name. */
+export const LIVE_AUTOPILOT_COMBAT_HZ = LIVE_AUTOPILOT_ROLLOUT_HZ;
 const INTERACTIVE_SEER_LATE_ROUND = 48;
 const INTERACTIVE_SEER_LATE_HORIZON = 6;
 const INTERACTIVE_SEER_LATE_BEAM_WIDTH = 24;
@@ -318,6 +334,10 @@ const formationPlacements = (
   return placements;
 };
 
+export const goCanonicalFormationPlacements = (lineup: OwnedEntry[]) => (
+  formationPlacements(lineup, "go_canonical")
+);
+
 export class AutoChessAutopilot {
   private enabled = false;
 
@@ -388,6 +408,14 @@ export class AutoChessAutopilot {
 
   private criticalExactConfidenceScore = Number.NEGATIVE_INFINITY;
 
+  /** Live search is coarse, but the actual board gets one exact audit before
+   * combat so a timestep change cannot hide a loss. */
+  private exactBattleAuditKey = "";
+
+  private exactBattleAuditScore = Number.NEGATIVE_INFINITY;
+
+  private exactBattleAuditRejectedKey = "";
+
   private interestSales = 0;
 
   private benchCleanupSales = 0;
@@ -451,6 +479,8 @@ export class AutoChessAutopilot {
 
   private readonly interactiveRuntime = typeof window !== "undefined";
 
+  private readonly liveBattleAuditEnabled: boolean;
+
   private readonly policyOverrides: Partial<AutopilotPolicy>;
 
   constructor(
@@ -461,8 +491,9 @@ export class AutoChessAutopilot {
     informationMode: AutopilotInformationMode = informationModeForAutopilotStyle(style),
     rolloutCombatHz = typeof window === "undefined"
       ? DEFAULT_ROLLOUT_COMBAT_HZ
-      : LIVE_AUTOPILOT_COMBAT_HZ,
+      : LIVE_AUTOPILOT_ROLLOUT_HZ,
     private readonly goCombatScorer: GoCombatScorer = scoreGoCombatCandidate,
+    liveBattleAudit = typeof window !== "undefined",
   ) {
     if (planningMode === "training") this.rolloutVariantLimit = 1;
     this.policyOverrides = { ...policy };
@@ -473,6 +504,7 @@ export class AutoChessAutopilot {
       EXACT_COMBAT_HZ,
       Math.round(rolloutCombatHz),
     ));
+    this.liveBattleAuditEnabled = liveBattleAudit;
     this.policy = resolveAutopilotStylePolicy(canonicalStyle, this.policyOverrides);
     this.bridge.setAutopilotStrategy(canonicalStyle, informationMode);
   }
@@ -633,6 +665,8 @@ export class AutoChessAutopilot {
       this.style,
       this.informationMode,
       this.rolloutCombatHz,
+      this.goCombatScorer,
+      false,
     );
     simulationPilot.setEnabled(true);
     let now = 1000;
@@ -686,7 +720,30 @@ export class AutoChessAutopilot {
     if (!action) return null;
 
     if (action.type === "battle") {
-      this.lastBattlePredictionScore = this.battleConfidence(this.ownedEntries());
+      const roster = this.ownedEntries();
+      const coarseScore = this.battleConfidence(roster);
+      this.lastBattlePredictionScore = coarseScore;
+      const auditEligible = this.style === "seer" || coarseScore > 0;
+      if (this.shouldAuditLiveBattle() && auditEligible) {
+        const audit = this.exactBattleAudit(roster);
+        this.lastBattlePredictionScore = audit.score;
+        const expectsWin = this.style === "seer"
+          ? this.seerPlan?.steps?.[0]?.expectedBattleWon !== false
+          : coarseScore > 0;
+        if (
+          expectsWin
+          && audit.score < 10000
+          && this.exactBattleAuditRejectedKey !== audit.key
+        ) {
+          // Reopen the decision window once. If no legal improvement exists,
+          // the next pass may still accept this unavoidable loss.
+          this.exactBattleAuditRejectedKey = audit.key;
+          this.invalidateFinalLineup();
+          this.invalidateSeerPlan(false);
+          this.nextActionAt = now;
+          return null;
+        }
+      }
     }
     this.bridge.dispatch(action);
     this.nextActionAt = now + this.actionDelay(action);
@@ -739,6 +796,9 @@ export class AutoChessAutopilot {
     this.lastBattlePredictionScore = Number.NEGATIVE_INFINITY;
     this.criticalExactConfidenceKey = "";
     this.criticalExactConfidenceScore = Number.NEGATIVE_INFINITY;
+    this.exactBattleAuditKey = "";
+    this.exactBattleAuditScore = Number.NEGATIVE_INFINITY;
+    this.exactBattleAuditRejectedKey = "";
     this.interestSales = 0;
     this.benchCleanupSales = 0;
     this.speculativeUnitIds.clear();
@@ -1108,6 +1168,8 @@ export class AutoChessAutopilot {
       exactFormationValidation ? "seer" : "survival",
       exactFormationValidation ? "oracle" : "normal",
       this.rolloutCombatHz,
+      this.goCombatScorer,
+      false,
     );
     formationPilot.lineageFormation = this.lineageFormation;
     const maximumSteps = Math.min(validationLimit, plan.steps.length);
@@ -1487,11 +1549,15 @@ export class AutoChessAutopilot {
         alternativeSteps: [],
       })),
     ].slice(0, interactiveLatePlan ? 2 : SEER_ROUTE_PREFILTER_CANDIDATE_LIMIT);
-    if (
-      this.planningMode !== "evolution"
-      || (this.style === "seer" && planningRegime === "opening")
-    ) {
-      return routeCandidates[0];
+    if (interactiveLatePlan) {
+      // The live controller audits the real board at 60Hz immediately before
+      // battle. Replaying several six-round routes here would block the main
+      // thread while adding no information about the action being chosen now.
+      return routeCandidates[0] || null;
+    }
+    if (this.planningMode !== "evolution") return routeCandidates[0];
+    if (this.style === "seer" && planningRegime === "opening") {
+      return this.validateSeerOpeningCandidates(routeCandidates);
     }
     const prefiltered = routeCandidates.flatMap((candidate) => {
       const prefix = this.validateSeerRoute(
@@ -1532,6 +1598,45 @@ export class AutoChessAutopilot {
         || left.losses - right.losses
       ))[0]?.prefix;
     return fallbackPrefix?.steps?.length ? fallbackPrefix : null;
+  }
+
+  private validateSeerOpeningCandidates(routeCandidates: readonly SeerPlan[]) {
+    // The opening route is still abstractly planned, but its first macro
+    // action is immediately executable. Validate only that one step at the
+    // real battle timestep so an upgrade/buy/sell bundle that looks safe in
+    // the abstract model cannot spend the current round's win by accident.
+    // Keep the exact losing candidate as a fallback: an intentional sell line
+    // is valid when every available opening route loses this wave.
+    let bestOpeningPlan: SeerPlan | null = null;
+    let bestOpeningWin = false;
+    let bestOpeningMargin = Number.NEGATIVE_INFINITY;
+    for (const candidate of routeCandidates) {
+      const validated = this.validateSeerRoute(candidate, 1, false);
+      const firstStep = validated?.steps?.[0];
+      if (!validated || !firstStep) continue;
+      const openingWin = firstStep.expectedBattleWon === true;
+      const openingMargin = Number(firstStep.expectedBattleMargin);
+      const comparableMargin = Number.isFinite(openingMargin)
+        ? openingMargin
+        : openingWin ? 0 : Number.NEGATIVE_INFINITY;
+      if (
+        !bestOpeningPlan
+        || Number(openingWin) > Number(bestOpeningWin)
+        || (
+          openingWin === bestOpeningWin
+          && comparableMargin > bestOpeningMargin
+        )
+      ) {
+        bestOpeningPlan = validated;
+        bestOpeningWin = openingWin;
+        bestOpeningMargin = comparableMargin;
+      }
+      // The candidates are already ordered by the abstract planner. Once
+      // its first choice also wins exact combat, further route replays add no
+      // value to the current action.
+      if (openingWin) return validated;
+    }
+    return bestOpeningPlan;
   }
 
   private goldReserve(needsPopulation = false, interestTiersAtRisk = 0) {
@@ -1765,9 +1870,8 @@ export class AutoChessAutopilot {
       ? this.rolloutVariantLimit
       : Math.min(2, this.rolloutVariantLimit);
     const cacheScenario = fixedScenario;
-    const scores = Array.from({
-      length: stableOnly ? stableVariantLimit : 1,
-    }, (_, variant) => {
+    const scoreVariantCount = stableOnly && this.style !== "go" ? stableVariantLimit : 1;
+    const scores = Array.from({ length: scoreVariantCount }, (_, variant) => {
       const exactBranch = this.style !== "go" && variant === 0;
       const branch = this.style === "go"
         ? `rollout:${variant}`
@@ -1795,7 +1899,16 @@ export class AutoChessAutopilot {
         { telemetry: false, visualEffects: false },
       );
       simulation.state = JSON.parse(JSON.stringify(sourceState));
-      if (exactBranch) simulation.restoreRandomState(actualRandomState);
+      const simulationRandomState = this.style === "go"
+        ? goCombatScenarioSeed(fixedScenario, variant)
+        : exactBranch ? actualRandomState : null;
+      if (simulationRandomState !== null) {
+        // The live Go bridge restores this exact state before startBattle.
+        // Passing it only to AutoChessEngine's constructor applies the seed
+        // transformation twice and can make a planned win differ from the
+        // battle that is actually opened.
+        simulation.restoreRandomState(simulationRandomState);
+      }
       simulation.state.phase = "preparation";
       simulation.state.board.fill(null);
       simulation.state.selected = null;
@@ -1816,7 +1929,8 @@ export class AutoChessAutopilot {
       return score;
     });
     if (!stableOnly) return scores[0];
-    if (this.usesSeer2Foundation() || this.style === "go") return Math.min(...scores);
+    if (this.style === "go") return scores[0];
+    if (this.usesSeer2Foundation()) return Math.min(...scores);
     const robust = scores.slice(1).sort((left, right) => left - right);
     if (robust.length > 0) {
       if (this.style === "survival" || this.style === "seer") {
@@ -2214,6 +2328,9 @@ export class AutoChessAutopilot {
       const rankedByModel = Array.from(candidates.values())
         .flatMap((lineup) => profileOrder.map((formation) => modelScore(lineup, formation)))
         .sort(compareModel);
+      const rankedByHeuristic = Array.from(candidates.values())
+        .flatMap((lineup) => profileOrder.map((formation) => modelScore(lineup, formation)))
+        .sort((left, right) => right.heuristic - left.heuristic || right.value - left.value);
       const shortlist = new Map<string, ReturnType<typeof modelScore>>();
       const addShortlist = (genome: ReturnType<typeof modelScore> | undefined) => {
         if (!genome || shortlist.size >= GO_MODEL_SHORTLIST_LIMIT) return;
@@ -2239,10 +2356,26 @@ export class AutoChessAutopilot {
           exploratoryCombatHz,
         ))
         .sort(compareGenome);
-      const robustCandidates = exploratory.slice(0, GO_MODEL_ROLLOUT_SURVIVOR_LIMIT);
+      const robustCandidates = new Map<string, ReturnType<typeof scoreGenome>>();
+      const addRobustCandidate = (genome: ReturnType<typeof scoreGenome> | undefined) => {
+        if (!genome) return;
+        robustCandidates.set(modelGenomeKey(genome.lineup, genome.formation), genome);
+      };
+      exploratory
+        .slice(0, GO_MODEL_ROLLOUT_SURVIVOR_LIMIT)
+        .forEach(addRobustCandidate);
+      Array.from(shortlist.values())
+        .sort(compareModel)
+        .slice(0, GO_MODEL_ROLLOUT_SURVIVOR_LIMIT)
+        .forEach((modelGenome) => addRobustCandidate(
+          exploratory.find((candidate) => (
+            modelGenomeKey(candidate.lineup, candidate.formation)
+              === modelGenomeKey(modelGenome.lineup, modelGenome.formation)
+          )),
+        ));
       const bestFinance = exploratory.find(({ lineup }) => financeCount(lineup) >= 4);
-      if (bestFinance && !robustCandidates.includes(bestFinance)) robustCandidates.push(bestFinance);
-      const robust = robustCandidates
+      addRobustCandidate(bestFinance);
+      let robust = Array.from(robustCandidates.values())
         .map(({ lineup, formation, generation }) => scoreGenome(
           lineup,
           formation,
@@ -2251,6 +2384,47 @@ export class AutoChessAutopilot {
           EXACT_COMBAT_HZ,
         ))
         .sort(compareGenome);
+
+      const { state } = this.bridge.engine;
+      const criticalGoExactCoverage = this.rolloutCombatHz < EXACT_COMBAT_HZ
+        && this.finalizingEconomy
+        && state.round >= 28
+        && state.hp <= this.policy.woundedHpThreshold
+        && robust[0]?.rollout < this.policy.safeWinRolloutScore;
+      if (criticalGoExactCoverage) {
+        const exactCoverage = (
+          ranked: ReturnType<typeof modelScore>[],
+          start: number,
+          limit: number,
+        ) => {
+          const exact: ReturnType<typeof scoreGenome>[] = [];
+          for (const { lineup, formation } of ranked.slice(start, limit)) {
+            const candidate = scoreCommittedGenome(lineup, formation, 1);
+            exact.push(candidate);
+            if (candidate.rollout >= this.policy.safeWinRolloutScore) break;
+          }
+          return exact;
+        };
+        robust = [...robust, ...exactCoverage(
+          rankedByHeuristic,
+          0,
+          GO_CRITICAL_EXACT_HEURISTIC_INITIAL_LIMIT,
+        )].sort(compareGenome);
+        if (robust[0]?.rollout < this.policy.safeWinRolloutScore) {
+          robust = [...robust, ...exactCoverage(
+            rankedByHeuristic,
+            GO_CRITICAL_EXACT_HEURISTIC_INITIAL_LIMIT,
+            GO_CRITICAL_EXACT_HEURISTIC_EXPANDED_LIMIT,
+          )].sort(compareGenome);
+        }
+        if (robust[0]?.rollout < this.policy.safeWinRolloutScore) {
+          robust = [...robust, ...exactCoverage(
+            rankedByModel,
+            0,
+            GO_CRITICAL_EXACT_MODEL_LIMIT,
+          )].sort(compareGenome);
+        }
+      }
       const champion = robust[0]
         || exploratory[0]
         || scoreGenome(heuristic, profileOrder[0], 0);
@@ -2480,6 +2654,21 @@ export class AutoChessAutopilot {
   }
 
   private rolloutConfidence(roster: OwnedEntry[]) {
+    if (this.interactiveLateSeerPlan() && this.plannedLineupUids.length === 0) {
+      const board = this.bridge.engine.state.board.map((unit) => (
+        unit ? roster.find(({ unit: owned }) => owned.uid === unit.uid) || null : null
+      ));
+      if (board.some(Boolean)) {
+        const randomState = this.bridge.engine.getRandomState();
+        const key = `${this.bridge.engine.state.round}/${randomState}/board/${board
+          .map((entry) => (entry ? `${entry.unit.uid}:${entry.unit.id}:${entry.unit.star}` : "-"))
+          .join(",")}`;
+        if (key === this.confidenceKey) return this.confidenceScore;
+        this.confidenceKey = key;
+        this.confidenceScore = this.rolloutBoardScore(board);
+        return this.confidenceScore;
+      }
+    }
     const lineup = this.rolloutTargetLineup(roster);
     const randomState = this.bridge.engine.getRandomState();
     const key = `${this.bridge.engine.state.round}/${randomState}/${lineup
@@ -2511,6 +2700,31 @@ export class AutoChessAutopilot {
       unit ? roster.find(({ unit: owned }) => owned.uid === unit.uid) || null : null
     ));
     return this.rolloutBoardScore(board);
+  }
+
+  private exactBattleAudit(roster: OwnedEntry[]) {
+    const { state } = this.bridge.engine;
+    const board = state.board.map((unit) => (
+      unit ? roster.find(({ unit: owned }) => owned.uid === unit.uid) || null : null
+    ));
+    const key = `${state.round}/${this.bridge.engine.getRandomState()}/${board
+      .map((entry) => (entry ? `${entry.unit.uid}:${entry.unit.id}:${entry.unit.star}` : "-"))
+      .join(",")}`;
+    if (key !== this.exactBattleAuditKey) {
+      this.exactBattleAuditKey = key;
+      // Search uses the cheap live timestep. This single formal combat branch
+      // checks only the board that will really enter combat.
+      this.exactBattleAuditScore = this.rolloutBoardScore(board, false, EXACT_COMBAT_HZ);
+    }
+    return {
+      key,
+      score: this.exactBattleAuditScore,
+    };
+  }
+
+  private shouldAuditLiveBattle() {
+    return this.liveBattleAuditEnabled
+      && this.rolloutCombatHz < EXACT_COMBAT_HZ;
   }
 
   private criticalExactRolloutConfidence(roster: OwnedEntry[], score: number) {
@@ -4132,6 +4346,12 @@ export class AutoChessAutopilot {
     const expandedRescueSearch = lateRescueSearch
       || woundedRescueSearch
       || woundedGoRescueSearch;
+    // A wounded board is exactly where a 20Hz screen is most dangerous: a
+    // coarse rollout can both bless a losing board and reject a one-swap win.
+    // Use the battle timestep for this bounded rescue search; ordinary
+    // planning remains on the cheaper rollout timestep.
+    const exactRescueSearch = this.style !== "go"
+      && (lateRescueSearch || woundedRescueSearch);
     const boardForRescueCheck = this.bridge.engine.state.board.map((unit) => (
       unit ? roster.find(({ unit: owned }) => owned.uid === unit.uid) || null : null
     ));
@@ -4140,23 +4360,48 @@ export class AutoChessAutopilot {
       ? Number.POSITIVE_INFINITY
       : this.style === "go"
         ? this.rolloutLineupScore(currentBoardLineup, "go_canonical")
-        : this.rolloutBoardScore(boardForRescueCheck);
+        : this.rolloutBoardScore(
+          boardForRescueCheck,
+          false,
+          exactRescueSearch ? EXACT_COMBAT_HZ : this.rolloutCombatHz,
+        );
     const currentBoardUnsafe = expandedRescueSearch
       && boardForRescueCheck.filter(Boolean).length === cap
       && currentBoardScore < this.policy.safeWinRolloutScore;
     const lateStarRescuePotential = lateRescueSearch
-      && state.hp <= this.policy.woundedHpThreshold
-      && state.board.some((unit) => Boolean(unit && unit.star < 3))
-      && state.bench.some((unit) => Boolean(unit && unit.star === 3));
+        && state.hp <= this.policy.woundedHpThreshold
+        && state.board.some((unit) => Boolean(unit && unit.star < 3))
+        && state.bench.some((unit) => Boolean(unit && unit.star === 3));
+    const rescueCombatHz = exactRescueSearch
+      && (currentBoardUnsafe || lateStarRescuePotential)
+      ? EXACT_COMBAT_HZ
+      : this.rolloutCombatHz;
     if (
       !currentBoardUnsafe
       && !lateStarRescuePotential
-      && this.rolloutConfidence(roster) >= this.policy.safeWinRolloutScore
+      && (
+        this.rolloutConfidence(roster) >= this.policy.safeWinRolloutScore
+        || (exactRescueSearch && currentBoardScore >= this.policy.safeWinRolloutScore)
+      )
     ) {
       return false;
     }
 
     const current = this.rolloutTargetLineup(roster);
+    const currentUids = new Set(current.map(({ unit }) => unit.uid));
+    const committedGoWin = this.style === "go"
+      && current.length === cap
+      && this.plannedLineupScore >= RESCUE_MIN_WIN_SCORE
+      && this.plannedLineupUids.length === cap
+      && this.plannedLineupUids.every((uid) => currentUids.has(uid))
+      && this.plannedBoardSlots.size === cap;
+    if (committedGoWin) {
+      // rolloutTargetLineup has already 60Hz-verified and committed this Go
+      // genome. Do not make it survive a second, lower-fidelity 20Hz screen.
+      this.rescueLineupLocked = true;
+      this.rescueSearchCompleted = true;
+      return true;
+    }
     const lineupKey = (lineup: OwnedEntry[]) => (
       this.style === "go"
         ? rosterShapeSignature(lineup)
@@ -4184,6 +4429,8 @@ export class AutoChessAutopilot {
         selected.pop();
       }
     };
+    let goGroupedRoster: OwnedEntry[][] = [];
+    let goGroupedSuffixCounts: number[] = [];
     if (this.style === "go") {
       const groups = new Map<string, OwnedEntry[]>();
       roster.forEach((entry) => {
@@ -4192,23 +4439,27 @@ export class AutoChessAutopilot {
         group.push(entry);
         groups.set(key, group);
       });
-      const groupedRoster = Array.from(groups.values()).map((group) => group.sort(
+      goGroupedRoster = Array.from(groups.values()).map((group) => group.sort(
         (left, right) => Number(left.location.zone === "bench")
           - Number(right.location.zone === "bench")
           || left.unit.uid - right.unit.uid,
       ));
-      const suffixCounts = Array(groupedRoster.length + 1).fill(0) as number[];
-      for (let index = groupedRoster.length - 1; index >= 0; index -= 1) {
-        suffixCounts[index] = suffixCounts[index + 1] + groupedRoster[index].length;
+      goGroupedSuffixCounts = Array(goGroupedRoster.length + 1).fill(0) as number[];
+      for (let index = goGroupedRoster.length - 1; index >= 0; index -= 1) {
+        goGroupedSuffixCounts[index] = goGroupedSuffixCounts[index + 1]
+          + goGroupedRoster[index].length;
       }
       const collectByComposition = (groupIndex: number, needed: number) => {
         if (needed === 0) {
           addCombination();
           return;
         }
-        if (groupIndex >= groupedRoster.length || suffixCounts[groupIndex] < needed) return;
-        const group = groupedRoster[groupIndex];
-        const minimum = Math.max(0, needed - suffixCounts[groupIndex + 1]);
+        if (
+          groupIndex >= goGroupedRoster.length
+          || goGroupedSuffixCounts[groupIndex] < needed
+        ) return;
+        const group = goGroupedRoster[groupIndex];
+        const minimum = Math.max(0, needed - goGroupedSuffixCounts[groupIndex + 1]);
         const maximum = Math.min(group.length, needed);
         for (let count = minimum; count <= maximum; count += 1) {
           selected.push(...group.slice(0, count));
@@ -4234,7 +4485,6 @@ export class AutoChessAutopilot {
       });
     };
     addTargeted(current);
-    const currentUids = new Set(current.map(({ unit }) => unit.uid));
     const reserves = roster.filter(({ unit }) => !currentUids.has(unit.uid));
     // A rescue search must test direct board/bench swaps even when the cheap
     // heuristic ranks the incoming unit below the current lineup. Late waves
@@ -4290,6 +4540,58 @@ export class AutoChessAutopilot {
         .sort((left, right) => this.lineupHeuristicScore(right) - this.lineupHeuristicScore(left))
         .slice(0, RESCUE_TWO_SWAP_CANDIDATE_LIMIT)
         .forEach((lineup) => addTargeted(lineup));
+    }
+
+    const goModelFinalistKeys = new Set<string>();
+    if (this.style === "go") {
+      type ModelBeamNode = {
+        lineup: OwnedEntry[];
+        lastGroupIndex: number;
+        lastGroupCount: number;
+        model: number;
+        heuristic: number;
+      };
+      let beam: ModelBeamNode[] = [{
+        lineup: [],
+        lastGroupIndex: -1,
+        lastGroupCount: 0,
+        model: Number.NEGATIVE_INFINITY,
+        heuristic: Number.NEGATIVE_INFINITY,
+      }];
+      for (let depth = 0; depth < cap; depth += 1) {
+        const expanded = new Map<string, ModelBeamNode>();
+        beam.forEach((parent) => {
+          const firstGroup = Math.max(0, parent.lastGroupIndex);
+          for (let groupIndex = firstGroup; groupIndex < goGroupedRoster.length; groupIndex += 1) {
+            const group = goGroupedRoster[groupIndex];
+            const used = groupIndex === parent.lastGroupIndex ? parent.lastGroupCount : 0;
+            if (used >= group.length) continue;
+            const lineup = [...parent.lineup, group[used]];
+            const remainingHere = group.length - used - 1;
+            const remainingLater = goGroupedSuffixCounts[groupIndex + 1];
+            if (lineup.length + remainingHere + remainingLater < cap) continue;
+            const key = rosterShapeSignature(lineup);
+            if (expanded.has(key)) continue;
+            expanded.set(key, {
+              lineup,
+              lastGroupIndex: groupIndex,
+              lastGroupCount: used + 1,
+              model: this.goModelScore(lineup, "go_canonical"),
+              heuristic: this.lineupHeuristicScore(lineup),
+            });
+          }
+        });
+        beam = Array.from(expanded.values())
+          .sort((left, right) => right.model - left.model
+            || right.heuristic - left.heuristic)
+          .slice(0, GO_RESCUE_MODEL_BEAM_WIDTH);
+        if (beam.length === 0) break;
+      }
+      beam.slice(0, GO_RESCUE_MODEL_CANDIDATE_LIMIT).forEach(({ lineup }) => {
+        const key = lineupKey(lineup);
+        goModelFinalistKeys.add(key);
+        addTargeted(lineup);
+      });
     }
 
     const heuristicFinalists = Array.from(combinations.values())
@@ -4389,10 +4691,12 @@ export class AutoChessAutopilot {
       formation: FormationProfile;
       rollout: number;
       heuristic: number;
+      model: number;
       board: Array<OwnedEntry | null> | null;
     };
     let best: RescueCandidate | null = null;
     const goScreened: RescueCandidate[] = [];
+    let exactRescueWinFound = false;
     const consider = (candidate: RescueCandidate) => {
       if (this.style === "go") goScreened.push(candidate);
       if (
@@ -4402,18 +4706,25 @@ export class AutoChessAutopilot {
       ) best = candidate;
     };
     try {
-      if (this.style !== "go") directBoardCandidates.forEach((board) => {
+      if (this.style !== "go") for (const board of directBoardCandidates) {
         const lineup = board.flatMap((entry) => (entry ? [entry] : []));
-        const rollout = this.rolloutBoardScore(board);
+        const rollout = this.rolloutBoardScore(board, false, rescueCombatHz);
         const heuristic = this.lineupHeuristicScore(lineup);
         consider({
           lineup,
           formation: this.lineageFormation,
           rollout,
           heuristic,
+          model: Number.NEGATIVE_INFINITY,
           board,
         });
-      });
+        // Once a physically executable board is exactly verified as a win,
+        // there is no reason to spend more time enumerating weaker rescues.
+        if (rescueCombatHz === EXACT_COMBAT_HZ && rollout >= RESCUE_MIN_WIN_SCORE) {
+          exactRescueWinFound = true;
+          break;
+        }
+      }
       for (const { lineup, heuristic } of interactiveLateSeerRescue ? [] : finalists) {
         for (const formation of this.formationProfileIds()) {
           const placements = formationPlacements(lineup, formation);
@@ -4423,9 +4734,22 @@ export class AutoChessAutopilot {
             || this.bridge.engine.boardCount < this.bridge.engine.boardCap
           ));
           if (expandedRescueSearch && !executable) continue;
-          const rollout = this.rolloutLineupScore(lineup, formation);
-          consider({ lineup, formation, rollout, heuristic, board: null });
+          const rollout = this.rolloutLineupScore(
+            lineup,
+            formation,
+            false,
+            rescueCombatHz,
+          );
+          const model = this.style === "go"
+            ? this.goModelScore(lineup, formation)
+            : Number.NEGATIVE_INFINITY;
+          consider({ lineup, formation, rollout, heuristic, model, board: null });
+          if (rescueCombatHz === EXACT_COMBAT_HZ && rollout >= RESCUE_MIN_WIN_SCORE) {
+            exactRescueWinFound = true;
+            break;
+          }
         }
+        if (exactRescueWinFound) break;
       }
     } finally {
       this.rolloutVariantLimit = previousVariantLimit;
@@ -4444,13 +4768,20 @@ export class AutoChessAutopilot {
         .slice(0, GO_MODEL_ROLLOUT_SURVIVOR_LIMIT)
         .forEach(addRobustCandidate);
       goScreened
+        .filter((candidate) => goModelFinalistKeys.has(lineupKey(candidate.lineup)))
+        .sort((left, right) => right.model - left.model
+          || right.rollout - left.rollout)
+        .slice(0, GO_MODEL_ROLLOUT_SURVIVOR_LIMIT)
+        .forEach(addRobustCandidate);
+      goScreened
         .filter((candidate) => directSwapKeys.has(lineupKey(candidate.lineup)))
         .sort((left, right) => right.heuristic - left.heuristic
           || right.rollout - left.rollout)
         .slice(0, GO_MODEL_ROLLOUT_SURVIVOR_LIMIT)
         .forEach(addRobustCandidate);
-      best = Array.from(robustCandidates.values())
-        .map((candidate) => ({
+      best = null;
+      for (const candidate of Array.from(robustCandidates.values())) {
+        const exactCandidate = {
           ...candidate,
           rollout: this.rolloutLineupScore(
             candidate.lineup,
@@ -4458,9 +4789,17 @@ export class AutoChessAutopilot {
             true,
             EXACT_COMBAT_HZ,
           ),
-        }))
-        .sort((left, right) => right.rollout - left.rollout
-          || right.heuristic - left.heuristic)[0] || null;
+        };
+        if (
+          !best
+          || exactCandidate.rollout > best.rollout
+          || (
+            exactCandidate.rollout === best.rollout
+            && exactCandidate.heuristic > best.heuristic
+          )
+        ) best = exactCandidate;
+        if (exactCandidate.rollout >= RESCUE_MIN_WIN_SCORE) break;
+      }
     }
     if (!best || best.rollout < RESCUE_MIN_WIN_SCORE) return false;
 

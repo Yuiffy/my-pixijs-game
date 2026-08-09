@@ -45,6 +45,10 @@ const requestedSnapshotOutputPath = option("--snapshot-output", "");
 const snapshotOutputPath = requestedSnapshotOutputPath
   ? path.resolve(requestedSnapshotOutputPath)
   : null;
+const requestedResumeOutputPath = option("--resume-output", "");
+const resumeOutputPath = requestedResumeOutputPath
+  ? path.resolve(requestedResumeOutputPath)
+  : null;
 const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "60")) || 60));
 const forcedStarter = option("--starter", "");
 const policyPath = option("--policy", "");
@@ -147,6 +151,7 @@ const runFitness = (run) => run.finalRound * 1_000_000_000
   + run.rounds.reduce((sum, round) => sum + round.combatMargin * 100 + round.interest, 0);
 
 const completedSnapshots = [];
+const completedResumeSnapshots = [];
 
 const playRun = (seed) => {
   const bridge = new EngineBridge(seed, 1, { battleStepHz });
@@ -160,6 +165,8 @@ const playRun = (seed) => {
     style,
     informationMode,
     rolloutHz,
+    undefined,
+    true,
   );
   const goPreBattleVerification = new Map();
   let latestPreparationSnapshot = null;
@@ -354,6 +361,23 @@ const playRun = (seed) => {
   run.finalNetWorth = rounds.at(-1)?.netWorth || run.finalAssetValue + run.finalDevelopmentValue;
   run.fitness = runFitness(run);
   if (latestPreparationSnapshot) completedSnapshots.push(latestPreparationSnapshot);
+  if (bridge.engine.state.phase === "result") {
+    originalDispatch({ type: "resultContinue" });
+  }
+  completedResumeSnapshots.push({
+    schema: "go-loss-snapshot-v1",
+    capturedAt: new Date().toISOString(),
+    seed,
+    enemySeed: bridge.engine.state.enemySeed,
+    targetRound: bridge.engine.state.round,
+    engine: bridge.engine.getSimulationSnapshot(),
+    plan: latestPreparationSnapshot?.plan || {
+      plannedLineupUids: [...autopilot.plannedLineupUids],
+      plannedFormation: autopilot.plannedFormation,
+      plannedScore: autopilot.plannedLineupScore,
+      preparationActions: autopilot.preparationActions,
+    },
+  });
   return run;
 };
 
@@ -396,6 +420,7 @@ const aggregate = {
   baseSeed,
   snapshotPath,
   snapshotOutputPath,
+  resumeOutputPath,
   enemySeeds: [...new Set(results.map((run) => run.enemySeed))],
   maximumBattles,
   forcedStarter: forcedStarter || null,
@@ -500,6 +525,14 @@ if (snapshotOutputPath) {
   await mkdir(path.dirname(snapshotOutputPath), { recursive: true });
   await writeFile(snapshotOutputPath, `${JSON.stringify(completedSnapshots[0])}\n`, "utf8");
   console.log(`Wrote autopilot snapshot to ${snapshotOutputPath}`);
+}
+if (resumeOutputPath) {
+  if (completedResumeSnapshots.length !== 1) {
+    throw new Error("--resume-output requires exactly one completed run");
+  }
+  await mkdir(path.dirname(resumeOutputPath), { recursive: true });
+  await writeFile(resumeOutputPath, `${JSON.stringify(completedResumeSnapshots[0])}\n`, "utf8");
+  console.log(`Wrote autopilot resume snapshot to ${resumeOutputPath}`);
 }
 const serialized = `${JSON.stringify(report, null, 2)}\n`;
 

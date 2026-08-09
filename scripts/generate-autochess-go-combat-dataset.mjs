@@ -36,10 +36,7 @@ const enemySeeds = [...new Set(option("--enemy-seeds", "152100,152102")
   .map((value) => Math.max(1, Math.trunc(Number(value))))
   .filter(Number.isFinite))];
 if (enemySeeds.length === 0) throw new Error("--enemy-seeds must contain at least one seed");
-const branchesPerCandidate = Math.max(
-  1,
-  Math.min(4, Number(option("--branches", "2")) || 2),
-);
+const branchesPerCandidate = 1;
 const combatHz = Math.max(20, Math.min(60, Number(option("--combat-hz", "20")) || 20));
 const campaignLabel = enemySeeds.join("-");
 const outputPath = path.resolve(option(

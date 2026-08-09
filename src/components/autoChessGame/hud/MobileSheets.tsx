@@ -17,6 +17,7 @@ import {
   ActionButton,
   FONT,
   STAR_LABEL,
+  StarForgeAction,
   UnitPortrait,
 } from "./shared";
 
@@ -29,7 +30,10 @@ export function BenchSheet({ engine, selected, onClose, onAction }: { engine: Au
         return <button key={index} className={engine.state.selected?.zone === "bench" && engine.state.selected.index === index ? "selected" : ""} onClick={() => onAction({ type: "slot", location })}>{unit ? <><span className="rift-dom-bench-portrait" style={{ borderColor: UNIT_DEFS[unit.id].accent, backgroundColor: UNIT_DEFS[unit.id].color }}><UnitPortrait unitId={unit.id} size={42} /></span><b>{UNIT_DEFS[unit.id].name}</b><span className="rift-bench-stars">{STAR_LABEL[unit.star]}</span><span className={`rift-bench-value ${sellValue > 5 ? "is-high" : ""}`} aria-label={`回收价值 ${sellValue} 金币`}><i aria-hidden="true" /><b>{sellValue}</b></span></> : <><span className="rift-empty-slot">+</span><small>空位</small></>}</button>;
       })}</div>
       <div className="rift-sheet-selection">{selected ? <><span className="rift-status-dot" />已选择 <b>{UNIT_DEFS[selected.id].name}</b> · 点击棋盘目标格可换位</> : "点击一个棋子开始布阵；右键棋子可快速回收"}</div>
-      <ActionButton tone="danger" disabled={!selected} onClick={() => onAction({ type: "sell" })}>出售选中棋子 <b>{selected ? `+${engine.getUnitSellValue(selected)}` : ""}</b></ActionButton>
+      <div className="rift-sheet-bench-actions">
+        {engine.isMaxPlayerLevel && <StarForgeAction engine={engine} selected={selected} onAction={onAction} />}
+        <ActionButton tone="danger" disabled={!selected} onClick={() => onAction({ type: "sell" })}>出售选中棋子 <b>{selected ? `+${engine.getUnitSellValue(selected)}` : ""}</b></ActionButton>
+      </div>
     </Sheet>
   );
 }

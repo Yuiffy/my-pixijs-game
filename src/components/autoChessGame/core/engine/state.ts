@@ -37,6 +37,7 @@ export const createInitialState = (
   playerLevel: STARTING_PLAYER_LEVEL,
   upgradeRemaining: upgradeCostForLevel(STARTING_PLAYER_LEVEL) || 0,
   upgradeDiscountCarry: 0,
+  starForgeUnlocked: false,
   score: 0,
   bestScore,
   streak: 0,

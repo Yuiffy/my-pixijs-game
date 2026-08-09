@@ -27,6 +27,9 @@ const {
 } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/goStrategy.ts",
 );
+const { scorePreparedAutoChessCombat } = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/rolloutCombat.ts",
+);
 
 test("Go级机会项目允许密集来牌压过旧固定目标", () => {
   const shop = (...ids) => [...ids, ...Array(Math.max(0, 5 - ids.length)).fill(null)];
@@ -241,8 +244,8 @@ test("Go级用神经模型扩展候选并只真实复核 Top-K", () => {
   assert.equal(chosen.length, 10);
   assert.ok(modelCalls.length > rolloutCalls.length * 3);
   assert.ok(exploratory.length <= 24);
-  assert.ok(robust.length <= 5);
-  assert.ok(robust.length >= 4);
+  assert.ok(robust.length <= 16);
+  assert.ok(robust.length >= 12);
   assert.equal(modelCalls.some(({ formation }) => formation === "human_recorded"), false);
   assert.equal(modelCalls.every(({ formation }) => formation === "go_canonical"), true);
 });
@@ -280,6 +283,61 @@ test("Go级真实复核候选按棋种与星级去重", () => {
   autopilot.rolloutTargetLineup(autopilot.ownedEntries());
   assert.ok(exploratoryKeys.length > 1);
   assert.equal(new Set(exploratoryKeys).size, exploratoryKeys.length);
+});
+
+test("Go级残血时会用60Hz覆盖复核被低频误判的启发式候选", () => {
+  const bridge = new EngineBridge(162116);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 31;
+  bridge.engine.state.hp = 8;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  [
+    "grove_mender",
+    "lian",
+    "yua",
+    "cinder_ram",
+    "spark_mage",
+    "sui_flower",
+    "xuehui",
+    "sui_bird",
+    "yukisyo",
+    "cog_scribe",
+  ].forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1621160 + index, id, star: 3 };
+  });
+  [
+    "rei",
+    "rutice",
+    "tower_god",
+    "lovely",
+    "sumi",
+    "pako",
+    "mossback",
+    "mumu",
+  ].forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1621170 + index, id, star: 3 };
+  });
+
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.finalizingEconomy = true;
+  const exactCalls = [];
+  autopilot.goModelScore = () => 0;
+  autopilot.rolloutLineupScore = (lineup, _formation, stableOnly = false, combatHz = 20) => {
+    const hasRescue = lineup.some(({ unit }) => unit.id === "mumu");
+    if (stableOnly) exactCalls.push({ hasRescue, combatHz });
+    return stableOnly && combatHz === 60
+      ? (hasRescue ? 10060 : -100)
+      : (hasRescue ? -500 : 0);
+  };
+
+  const chosen = autopilot.rolloutTargetLineup(autopilot.ownedEntries());
+  assert.equal(chosen.some(({ unit }) => unit.id === "mumu"), true);
+  assert.ok(exactCalls.length > 5, `expected expanded exact coverage, got ${exactCalls.length}`);
+  assert.ok(exactCalls.some(({ hasRescue, combatHz }) => hasRescue && combatHz === 60));
 });
 
 test("Go级规范站位不依赖 UID、购买顺序或当前棋盘顺序", () => {
@@ -353,7 +411,7 @@ test("Go级将商店种子映射到两套固定敌方战役且不改变商店", 
   assert.ok(differingRound, "expected the two fixed enemy campaigns to diverge");
 });
 
-test("Go级战斗缓存只使用固定公共分支并跨实际 RNG 状态命中", () => {
+test("Go级战斗缓存只使用实际固定分支并跨实际 RNG 状态命中", () => {
   const bridge = new EngineBridge(162104);
   bridge.setConsoleLogging(false);
   const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
@@ -374,10 +432,10 @@ test("Go级战斗缓存只使用固定公共分支并跨实际 RNG 状态命中"
   const added = snapshotAutopilotRolloutCache()
     .map(([key]) => key)
     .filter((key) => !before.has(key));
-  assert.equal(added.length, 2);
-  assert.equal(added.every((key) => key.startsWith("combat-go-v3/hz:20/")), true);
+  assert.equal(added.length, 1);
+  assert.equal(added.every((key) => key.startsWith("combat-go-v4/hz:20/")), true);
   assert.equal(added.every((key) => key.includes(`/enemy:${bridge.engine.state.enemySeed}/round:37/`)), true);
-  assert.deepEqual(added.map((key) => key.split("/").at(-1)).sort(), ["rollout:0", "rollout:1"]);
+  assert.deepEqual(added.map((key) => key.split("/").at(-1)), ["rollout:0"]);
   assert.equal(added.some((key) => key.includes("actual:")), false);
 
   const entryCount = snapshotAutopilotRolloutCache().length;
@@ -403,7 +461,14 @@ test("Go级第18战后优先存钱升到10人口", () => {
 test("Go级实际战斗固定到与缓存一致的公共 rollout:0 分支", () => {
   const source = new EngineBridge(162108, 1, { simulation: true, battleStepHz: 60 });
   source.setConsoleLogging(false);
-  new AutoChessAutopilot(source, "evolution", {}, "go", "oracle", 20);
+  const sourceAutopilot = new AutoChessAutopilot(
+    source,
+    "evolution",
+    {},
+    "go",
+    "oracle",
+    20,
+  );
   source.engine.state.starterChoices = ["bastion"];
   source.dispatch({ type: "starter", id: "bastion" });
   source.engine.state.round = 24;
@@ -434,9 +499,47 @@ test("Go级实际战斗固定到与缓存一致的公共 rollout:0 分支", () =
     first.engine.state.battle.player.map(({ unitId, x, y }) => ({ unitId, x, y })),
     second.engine.state.battle.player.map(({ unitId, x, y }) => ({ unitId, x, y })),
   );
-  first.skipBattle();
+  const ownedByUid = new Map(sourceAutopilot.ownedEntries().map((entry) => [entry.unit.uid, entry]));
+  const board = source.engine.state.board.map((unit) => (
+    unit ? ownedByUid.get(unit.uid) || null : null
+  ));
+  const predictedScore = sourceAutopilot.rolloutBoardScore(board, false, 60);
+  const actualScore = scorePreparedAutoChessCombat(first.engine, 60);
+  assert.equal(predictedScore, actualScore);
   second.skipBattle();
   assert.deepEqual(first.engine.state.result, second.engine.state.result);
+});
+
+test("Go级预演显式恢复公共 RNG，分数与实际开战一致", () => {
+  const bridge = new EngineBridge(162112, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "go",
+    "oracle",
+    20,
+  );
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 24;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.board[23] = { uid: 1621120, id: "rei", star: 2 };
+  bridge.engine.state.board[10] = { uid: 1621121, id: "spark_mage", star: 2 };
+
+  const predicted = autopilot.rolloutLineupScore(
+    autopilot.ownedEntries(),
+    "go_canonical",
+    false,
+    60,
+  );
+  bridge.dispatch({ type: "battle" });
+  const actual = scorePreparedAutoChessCombat(bridge.engine, 60);
+
+  assert.ok(Number.isFinite(predicted));
+  assert.ok(Math.abs(predicted - actual) < 1e-9, `${predicted} !== ${actual}`);
 });
 
 test("Go级即使经济动作很多也必须完成规范站位再开战", () => {
@@ -474,6 +577,42 @@ test("Go级小阵容冠军也使用60Hz公共分支提交最终分数", () => {
   assert.equal(autopilot.plannedLineupScore, 10000 + chosen.length);
   assert.equal(calls.length > 0, true);
   assert.equal(calls.every(({ stableOnly, combatHz }) => stableOnly && combatHz === 60), true);
+});
+
+test("Go级救援不会让已提交的60Hz胜解退回20Hz重筛", () => {
+  const bridge = new EngineBridge(162118);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.hp = 7;
+  bridge.engine.state.playerLevel = 3;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  ["lian", "xuehui", "zeyin"].forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1621180 + index, id, star: 2 };
+  });
+  bridge.engine.state.bench[0] = { uid: 1621199, id: "tower_god", star: 1 };
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  const roster = autopilot.ownedEntries();
+  const target = [roster[0], roster[1], roster.at(-1)];
+  let coarseCalls = 0;
+  autopilot.rolloutLineupScore = () => {
+    coarseCalls += 1;
+    return -1000;
+  };
+  autopilot.rolloutConfidence = () => -1000;
+  autopilot.rolloutTargetLineup = () => {
+    autopilot.plannedLineupUids = target.map(({ unit }) => unit.uid);
+    autopilot.plannedLineupScore = 10123;
+    autopilot.plannedFormation = "go_canonical";
+    autopilot.plannedBoardSlots = new Map(target.map(({ unit }, index) => [unit.uid, index]));
+    return target;
+  };
+
+  assert.equal(autopilot.searchRescueLineup(roster), true);
+  assert.equal(autopilot.rescueLineupLocked, true);
+  assert.equal(autopilot.plannedLineupScore, 10123);
+  assert.equal(coarseCalls, 1);
 });
 
 test("Go级开战棋盘必须逐格等于冠军评估时的规范站位", () => {
@@ -621,6 +760,60 @@ test("Go级救援只锁定通过60Hz公共分支复核的候选", () => {
   assert.equal(autopilot.plannedLineupUids.includes(reserveUid), true);
   assert.equal(autopilot.plannedLineupScore, 10120);
   assert.equal(calls.some(({ stableOnly, combatHz }) => stableOnly && combatHz === 60), true);
+});
+
+test("Go级神经beam能保留启发式与20Hz都排除的三换胜解", () => {
+  const bridge = new EngineBridge(162119);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 30;
+  bridge.engine.state.hp = 7;
+  bridge.engine.state.playerLevel = 4;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  ["sun_guard", "sui", "rift_brawler", "meme"].forEach((id, index) => {
+    bridge.engine.state.board[[11, 17, 10, 16][index]] = {
+      uid: 1621190 + index,
+      id,
+      star: 2,
+    };
+  });
+  ["mossback", "shiori", "nagisa", "rutice", "gale_archer"].forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1621200 + index, id, star: 2 };
+  });
+
+  const targetIds = new Set(["sun_guard", "nagisa", "rutice", "gale_archer"]);
+  const isTarget = (lineup) => (
+    lineup.length === 4 && lineup.every(({ unit }) => targetIds.has(unit.id))
+  );
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  const current = autopilot.ownedEntries().filter(({ location }) => location.zone === "board");
+  const exactKeys = [];
+  autopilot.rolloutTargetLineup = () => current;
+  autopilot.rolloutConfidence = () => Number.NEGATIVE_INFINITY;
+  autopilot.goModelScore = (lineup) => lineup.reduce(
+    (score, { unit }) => score + (targetIds.has(unit.id) ? 100 : 0),
+    0,
+  );
+  autopilot.lineupHeuristicScore = (lineup) => -lineup.reduce(
+    (score, { unit }) => score + (targetIds.has(unit.id) ? 100 : 0),
+    0,
+  );
+  autopilot.rolloutLineupScore = (lineup, _formation, stableOnly = false, combatHz = 20) => {
+    if (stableOnly && combatHz === 60) {
+      exactKeys.push(lineup.map(({ unit }) => unit.id).sort().join("|"));
+      return isTarget(lineup) ? 10140 : -500;
+    }
+    return isTarget(lineup) ? -1000 : 0;
+  };
+
+  assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), true);
+  assert.deepEqual(
+    Array.from(autopilot.plannedLineupUnits.values()).map(({ id }) => id).sort(),
+    Array.from(targetIds).sort(),
+  );
+  assert.equal(exactKeys.includes(Array.from(targetIds).sort().join("|")), true);
 });
 
 test("Go级低血量预测败局会提前用60Hz复核直接单换", () => {
