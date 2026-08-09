@@ -84,7 +84,7 @@ declare global {
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
 const AUTOPILOT_STRATEGY_KEY = "rift-line-autopilot-strategy";
-const AUTOPILOT_STRATEGY_VERSION = 4;
+const AUTOPILOT_STRATEGY_VERSION = 5;
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
@@ -95,7 +95,8 @@ const GO_ROLLOUT_PERSIST_INTERVAL_MS = 15_000;
 const GO_ROLLOUT_PERSIST_LIMIT = 25_000;
 const SESSION_TRACE_EVENT_LIMIT = 5_000;
 const AUTOPILOT_STYLE_OPTIONS = [
-  ["fair", "实战"],
+  ["survival", "稳健"],
+  ["highroll", "搏上限"],
   ["seer", "看穿2"],
   ["go", "Go测试"],
 ] as const;
@@ -222,11 +223,11 @@ const loadAutopilotStrategy = (): AutopilotStyle => {
     const stored = JSON.parse(window.localStorage.getItem(AUTOPILOT_STRATEGY_KEY) || "null");
     if (stored?.style === "seer2") return "seer";
     if (stored?.style === "go") return stored?.version >= 3 ? "go" : "seer";
-    if (stored?.style === "seer" || stored?.style === "fair") return stored.style;
-    if (["survival", "balanced", "highroll"].includes(stored?.style)) return "fair";
-    return stored?.informationMode === "oracle" ? "seer" : "fair";
+    if (["survival", "highroll", "seer"].includes(stored?.style)) return stored.style;
+    if (stored?.style === "fair" || stored?.style === "balanced") return "survival";
+    return stored?.informationMode === "oracle" ? "seer" : "survival";
   } catch {
-    return "fair";
+    return "survival";
   }
 };
 
@@ -244,7 +245,7 @@ export default function AutoChessGame() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const characterStyle = useCharacterStyle();
   const [autoplayEnabled, setAutoplayEnabled] = useState(false);
-  const [autopilotStyle, setAutopilotStyle] = useState<AutopilotStyle>("fair");
+  const [autopilotStyle, setAutopilotStyle] = useState<AutopilotStyle>("survival");
   const [backgroundBattleEnabled, setBackgroundBattleEnabled] = useState(false);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
@@ -875,7 +876,7 @@ export default function AutoChessGame() {
                 </div>
               </div>
               <div className="rift-setting-row"><span>AI 托管</span><button type="button" className="rift-switch" role="switch" aria-label="AI 托管" aria-checked={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)}><i /></button></div>
-              <div className="rift-setting-strategy">
+              <div className="rift-setting-strategy rift-setting-autopilot-style">
                 <span>托管风格</span>
                 <div role="radiogroup" aria-label="托管风格">
                   {AUTOPILOT_STYLE_OPTIONS.map(([style, label]) => (

@@ -401,7 +401,18 @@ test("角色样式以极简为默认并在所有界面共用三档资源解析",
   assert.match(characterStyle, /let activeStyle: CharacterStyle = "minimal"/);
   assert.match(characterStyle, /localStorage\.setItem\(STORAGE_KEY, style\)/);
   assert.match(characterStyle, /CLASSIC_OVERRIDES/);
+  assert.match(characterStyle, /ember_blade: \{ portrait: "\/images\/livers\/liko\.png"/);
+  assert.match(characterStyle, /gale_archer: \{ portrait: "\/images\/livers\/izayoi\.png"/);
+  assert.match(characterStyle, /mossback: \{ portrait: "\/images\/livers\/mofu\.jpg"/);
+  assert.match(characterStyle, /sui: \{ portrait: "\/images\/materials\/red\/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502\.png"/);
+  assert.match(characterStyle, /sun_guard: \{ portrait: "\/images\/livers\/hazel\.png"/);
+  assert.match(characterStyle, /clock_gunner: \{ portrait: "\/images\/livers\/mizuki\.png"/);
+  assert.match(characterStyle, /spark_mage: \{ portrait: "\/images\/livers\/rhea\.png"/);
+  assert.match(characterStyle, /cog_scribe: \{ portrait: "\/images\/livers\/joi\.png"/);
   assert.match(characterStyle, /portraits\/\$\{style\}\/\$\{filename\}/);
+  assert.match(characterStyle, /unitId === "rift_tyrant"/);
+  assert.doesNotMatch(characterStyle, /unitId === "rift_stalker" \|\| unitId === "rift_brawler"/);
+  assert.match(characterStyle, /portraitStyle: "sprite",/);
   assert.match(host, />角色样式</);
   assert.match(host, /"minimal", "极简"/);
   assert.match(host, /"detail", "细节"/);
@@ -424,13 +435,9 @@ test("角色样式以极简为默认并在所有界面共用三档资源解析",
     "../../public/images/autochess/portraits/classic/",
     import.meta.url,
   ))).sort();
-  const expectedMinimal = detailFiles.filter((filename) => ![
-    "rift-brawler-head.png",
-    "rift-stalker-head.png",
-    "rift-tyrant.png",
-  ].includes(filename));
+  const expectedMinimal = detailFiles.filter((filename) => filename !== "rift-tyrant.png");
   assert.equal(detailFiles.length, 45);
-  assert.equal(minimalFiles.length, 42);
+  assert.equal(minimalFiles.length, 44);
   assert.equal(classicFiles.length, 11);
   assert.deepEqual(minimalFiles, expectedMinimal);
 });

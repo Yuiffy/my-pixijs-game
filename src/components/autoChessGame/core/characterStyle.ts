@@ -16,6 +16,14 @@ let activeStyle: CharacterStyle = "minimal";
 let storageRead = false;
 
 const CLASSIC_OVERRIDES: Partial<Record<UnitId, ResolvedUnitPortrait>> = {
+  sun_guard: { portrait: "/images/livers/hazel.png", portraitFocus: "top", portraitStyle: "round" },
+  ember_blade: { portrait: "/images/livers/liko.png", portraitFocus: "top", portraitStyle: "round" },
+  gale_archer: { portrait: "/images/livers/izayoi.png", portraitFocus: "top", portraitStyle: "round" },
+  cog_scribe: { portrait: "/images/livers/joi.png", portraitFocus: "top", portraitStyle: "round" },
+  mossback: { portrait: "/images/livers/mofu.jpg", portraitFocus: "top", portraitStyle: "round" },
+  sui: { portrait: "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png", portraitFocus: "top", portraitStyle: "round" },
+  spark_mage: { portrait: "/images/livers/rhea.png", portraitFocus: "top", portraitStyle: "round" },
+  clock_gunner: { portrait: "/images/livers/mizuki.png", portraitFocus: "top", portraitStyle: "round" },
   dawn_duelist: { portrait: "/images/livers/harei.png", portraitFocus: "top", portraitStyle: "round" },
   grove_mender: { portrait: "/images/livers/nana7mi.png", portraitFocus: "top", portraitStyle: "round" },
   cinder_ram: { portrait: "/images/livers/azi.webp", portraitFocus: "top", portraitStyle: "round" },
@@ -53,7 +61,7 @@ const CLASSIC_OVERRIDES: Partial<Record<UnitId, ResolvedUnitPortrait>> = {
 };
 
 const keepOriginalInMinimal = (unitId: UnitId) => (
-  unitId === "rift_stalker" || unitId === "rift_brawler" || unitId === "rift_tyrant"
+  unitId === "rift_tyrant"
 );
 
 const isCharacterStyle = (value: unknown): value is CharacterStyle => (
@@ -116,6 +124,6 @@ export const resolveUnitPortrait = (
   const filename = base.portrait.slice(base.portrait.lastIndexOf("/") + 1);
   return {
     portrait: `/images/autochess/portraits/${style}/${filename}`,
-    portraitStyle: base.portraitStyle,
+    portraitStyle: "sprite",
   };
 };

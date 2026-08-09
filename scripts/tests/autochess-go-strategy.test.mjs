@@ -661,14 +661,7 @@ test("Go级规范站位不依赖 UID、购买顺序或当前棋盘顺序", () =>
   assert.equal(new Set(signatures[0].split(",").map((token) => token.split(":")[0])).size, units.length);
 });
 
-test("实战使用 Go v4 模型与规范站位但不读取未来信息", () => {
-  const bridge = new EngineBridge(162131);
-  bridge.setConsoleLogging(false);
-  bridge.engine.state.starterChoices = ["bastion"];
-  bridge.engine.startRun("bastion");
-  bridge.engine.state.playerLevel = 6;
-  bridge.engine.state.board.fill(null);
-  bridge.engine.state.bench.fill(null);
+test("稳健与搏上限使用 Go v4 模型和规范站位但不读取未来信息", () => {
   const ids = [
     "lian",
     "rei",
@@ -679,82 +672,102 @@ test("实战使用 Go v4 模型与规范站位但不读取未来信息", () => {
     "xuehui",
     "yukisyo",
   ];
-  const cap = bridge.engine.boardCap;
-  ids.slice(0, cap).forEach((id, index) => {
-    bridge.engine.state.board[index] = { uid: 1621310 + index, id, star: index % 2 ? 2 : 1 };
-  });
-  ids.slice(cap, cap + 2).forEach((id, index) => {
-    bridge.engine.state.bench[index] = { uid: 1621320 + index, id, star: 2 };
-  });
+  for (const [style, seed] of [
+    ["survival", 162131],
+    ["highroll", 162132],
+    ["fair", 162134],
+  ]) {
+    const bridge = new EngineBridge(seed);
+    bridge.setConsoleLogging(false);
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.engine.startRun("bastion");
+    bridge.engine.state.playerLevel = 6;
+    bridge.engine.state.board.fill(null);
+    bridge.engine.state.bench.fill(null);
+    const cap = bridge.engine.boardCap;
+    ids.slice(0, cap).forEach((id, index) => {
+      bridge.engine.state.board[index] = { uid: seed * 10 + index, id, star: index % 2 ? 2 : 1 };
+    });
+    ids.slice(cap, cap + 2).forEach((id, index) => {
+      bridge.engine.state.bench[index] = { uid: seed * 10 + cap + index, id, star: 2 };
+    });
 
-  let modelCalls = 0;
-  let futureShopCalls = 0;
-  let nextRoundCalls = 0;
-  const autopilot = new AutoChessAutopilot(
-    bridge,
-    "evolution",
-    {},
-    "fair",
-    "oracle",
-    20,
-    ({ players }) => {
-      modelCalls += 1;
-      return players.reduce((score, player) => score + player.star, 0);
-    },
-  );
-  bridge.engine.previewFutureShops = () => {
-    futureShopCalls += 1;
-    throw new Error("实战不应读取未来商店");
-  };
-  bridge.engine.previewFutureShopsAtLevels = () => {
-    futureShopCalls += 1;
-    throw new Error("实战不应读取未来等级商店");
-  };
-  autopilot.rolloutLineupScoreAtRound = () => {
-    nextRoundCalls += 1;
-    throw new Error("实战不应读取下一关");
-  };
-  autopilot.rolloutLineupScore = (lineup) => 10_000 + lineup.reduce(
-    (score, { unit }) => score + unit.star,
-    0,
-  );
+    let modelCalls = 0;
+    let futureShopCalls = 0;
+    let nextRoundCalls = 0;
+    const autopilot = new AutoChessAutopilot(
+      bridge,
+      "evolution",
+      {},
+      style,
+      "oracle",
+      20,
+      ({ players }) => {
+        modelCalls += 1;
+        return players.reduce((score, player) => score + player.star, 0);
+      },
+    );
+    bridge.engine.previewFutureShops = () => {
+      futureShopCalls += 1;
+      throw new Error(`${style} 不应读取未来商店`);
+    };
+    bridge.engine.previewFutureShopsAtLevels = () => {
+      futureShopCalls += 1;
+      throw new Error(`${style} 不应读取未来等级商店`);
+    };
+    autopilot.rolloutLineupScoreAtRound = () => {
+      nextRoundCalls += 1;
+      throw new Error(`${style} 不应读取下一关`);
+    };
+    autopilot.rolloutLineupScore = (lineup) => 10_000 + lineup.reduce(
+      (score, { unit }) => score + unit.star,
+      0,
+    );
 
-  const roster = autopilot.ownedEntries();
-  const lineup = autopilot.rolloutTargetLineup(roster);
-  autopilot.resetPreparation(bridge.engine.state.round);
-  autopilot.oracleHasFutureCandidate(roster);
-  autopilot.rerollStrategy(roster);
+    const roster = autopilot.ownedEntries();
+    const lineup = autopilot.rolloutTargetLineup(roster);
+    autopilot.resetPreparation(bridge.engine.state.round);
+    autopilot.oracleHasFutureCandidate(roster);
+    autopilot.rerollStrategy(roster);
 
-  assert.equal(autopilot.strategyStyle, "fair");
-  assert.equal(autopilot.strategyInformationMode, "normal");
-  assert.equal(bridge.autoplayStyle, "fair");
-  assert.equal(bridge.autoplayInformationMode, "normal");
-  assert.deepEqual(autopilot.formationProfileIds(), ["go_canonical"]);
-  assert.equal(lineup.length, cap);
-  assert.ok(modelCalls > 0);
-  assert.equal(futureShopCalls, 0);
-  assert.equal(nextRoundCalls, 0);
+    assert.equal(autopilot.strategyStyle, style);
+    assert.equal(autopilot.strategyInformationMode, "normal");
+    assert.equal(bridge.autoplayStyle, style);
+    assert.equal(bridge.autoplayInformationMode, "normal");
+    assert.deepEqual(autopilot.formationProfileIds(), ["go_canonical"]);
+    assert.equal(lineup.length, cap);
+    assert.ok(modelCalls > 0);
+    assert.equal(futureShopCalls, 0);
+    assert.equal(nextRoundCalls, 0);
+  }
 });
 
-test("实战不映射敌方战役种子且开战不固定 RNG", () => {
-  const bridge = new EngineBridge(162133);
-  bridge.setConsoleLogging(false);
-  new AutoChessAutopilot(bridge, "evolution", {}, "fair", "normal", 20);
-  bridge.engine.state.starterChoices = ["bastion"];
-  bridge.dispatch({ type: "starter", id: "bastion" });
-  assert.equal(bridge.engine.state.enemySeed, 162133);
+test("同信息策略不映射敌方战役种子且开战不固定 RNG", () => {
+  for (const [style, seed] of [
+    ["survival", 162133],
+    ["highroll", 162135],
+    ["fair", 162137],
+  ]) {
+    const bridge = new EngineBridge(seed);
+    bridge.setConsoleLogging(false);
+    new AutoChessAutopilot(bridge, "evolution", {}, style, "oracle", 20);
+    bridge.engine.state.starterChoices = ["bastion"];
+    bridge.dispatch({ type: "starter", id: "bastion" });
+    assert.equal(bridge.engine.state.enemySeed, seed);
+    assert.equal(bridge.autoplayInformationMode, "normal");
 
-  bridge.engine.state.board[0] = { uid: 1621330, id: "lian", star: 2 };
-  let restoreCalls = 0;
-  const restoreRandomState = bridge.engine.restoreRandomState.bind(bridge.engine);
-  bridge.engine.restoreRandomState = (randomState) => {
-    restoreCalls += 1;
-    return restoreRandomState(randomState);
-  };
-  bridge.dispatch({ type: "battle" });
+    bridge.engine.state.board[0] = { uid: seed * 10, id: "lian", star: 2 };
+    let restoreCalls = 0;
+    const restoreRandomState = bridge.engine.restoreRandomState.bind(bridge.engine);
+    bridge.engine.restoreRandomState = (randomState) => {
+      restoreCalls += 1;
+      return restoreRandomState(randomState);
+    };
+    bridge.dispatch({ type: "battle" });
 
-  assert.equal(restoreCalls, 0);
-  assert.equal(bridge.engine.state.phase, "battle");
+    assert.equal(restoreCalls, 0);
+    assert.equal(bridge.engine.state.phase, "battle");
+  }
 });
 
 test("Go级将商店种子映射到两套固定敌方战役且不改变商店", () => {
@@ -926,23 +939,22 @@ test("Go级预演显式恢复公共 RNG，分数与实际开战一致", () => {
   assert.ok(Math.abs(predicted - actual) < 1e-9, `${predicted} !== ${actual}`);
 });
 
-test("Go级即使经济动作很多也必须完成规范站位再开战", () => {
-  const goBridge = new EngineBridge(162109);
-  const go = new AutoChessAutopilot(goBridge, "evolution", {}, "go", "oracle", 20);
-  go.preparationActions = 1000;
-  assert.equal(go.formationBudgetAvailable(), true);
+test("学习型策略即使经济动作很多也必须完成规范站位再开战", () => {
+  for (const [index, style] of ["survival", "highroll", "fair", "go"].entries()) {
+    const bridge = new EngineBridge(162109 + index);
+    const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, style);
+    autopilot.preparationActions = 1000;
+    assert.equal(autopilot.formationBudgetAvailable(), true);
+  }
 
-  const ordinaryBridge = new EngineBridge(162110);
-  const ordinary = new AutoChessAutopilot(
-    ordinaryBridge,
+  const legacy = new AutoChessAutopilot(
+    new EngineBridge(162114),
     "evolution",
     {},
-    "survival",
-    "normal",
-    20,
+    "balanced",
   );
-  ordinary.preparationActions = 1000;
-  assert.equal(ordinary.formationBudgetAvailable(), false);
+  legacy.preparationActions = 1000;
+  assert.equal(legacy.formationBudgetAvailable(), false);
 });
 
 test("Go级小阵容冠军也使用60Hz公共分支提交最终分数", () => {

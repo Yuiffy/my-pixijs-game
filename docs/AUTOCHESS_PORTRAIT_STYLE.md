@@ -12,17 +12,40 @@ that a unit never changes identity between surfaces.
 
 - `minimal` / 极简 is the default and the production target for new artwork. Assets
   live under `public/images/autochess/portraits/minimal/`.
-- `detail` / 细节 preserves the previous full-body dedicated sprite set. Its frozen
-  snapshot lives under `public/images/autochess/portraits/detail/`.
-- `classic` / 棋子 preserves the older mix of dedicated chess-piece art, liver art,
-  and large-head material art. Dedicated historical assets live under
-  `public/images/autochess/portraits/classic/`; liver and material paths are mapped
-  centrally in `core/characterStyle.ts`.
+- `detail` / 细节 is the richer full-body chibi set. It keeps the same identity,
+  facing, silhouette, and pose rules as `minimal`, but allows moderate costume detail
+  and shading. Assets live under `public/images/autochess/portraits/detail/`.
+- `classic` / 棋子 uses original liver, material, or character-sheet art inside the
+  round portrait treatment. Generated full-body sprites must not be substituted into
+  this mode. Source paths are mapped centrally in `core/characterStyle.ts`; dedicated
+  historical assets under `public/images/autochess/portraits/classic/` are only used
+  when no explicit original-art override exists.
 
 The selection is persisted in `localStorage` under
 `rift-line-character-style`. Missing or invalid values must resolve to `minimal`.
 All portrait consumers must go through `resolveUnitPortrait()` rather than reading
 `UNIT_DEFS[id].portrait` directly.
+
+`minimal` and `detail` dedicated assets always resolve as `portraitStyle: "sprite"`,
+even when the base unit originally used a round portrait. `classic` preserves the
+round/sprite treatment declared by its explicit source mapping.
+
+## Identity Reference Policy
+
+- Prefer the project's full-body character sheet or official standing art. If only a
+  liver/avatar image is available, combine it with an existing approved game sprite
+  for pose and outfit context; the original image remains authoritative for hair,
+  eyes, face, signature headwear, and palette.
+- Do not invent a generic class costume, weapon, mascot, or species when it is absent
+  from the reference. Ability props are optional recognition anchors, not a default.
+- Bare-handed characters remain bare-handed. In particular, Lian reads through her
+  dance pose, Yua through her glasses and blue-white technical jacket, and Nightin
+  through her racing outfit and visor rather than a large launcher.
+- When a small prop is essential, keep it subordinate to the character: Joi may show
+  one orange, Kioi one plush, Seki one compact boar motif, and Zeyin one small flame.
+- The classic mappings for Liko, Izayoi, Mofu, SUI's red-hood form, Hazel, Mizuki,
+  Rhea, and Joi point directly to their local original art rather than generated
+  portrait snapshots.
 
 ## Approved Anchors
 
@@ -88,6 +111,18 @@ Original liver/material art is an identity reference only.
   distinguishable without zooming.
 - Set the unit to `portraitStyle: "sprite"`; procedural bounce/sway provides walking
   motion, so no frame animation is required.
+
+## 2026-08 Fidelity Pass
+
+- Added complete `minimal` and `detail` sprites for Michiya and Kloa, replacing the
+  round generated heads that previously leaked into those modes.
+- Corrected Nana7mi to use one pickaxe; rebuilt SUI's flower form from the angel-girl
+  reference without dinosaur parts or a hotpot.
+- Rebuilt both styles for Joi, Azi, Lian, and Yua from local identity references.
+- Rebuilt the default minimal sprites for Kioi, Nightin, Guangyi, Seki, Yukisyo, and
+  Zeyin; Nightin's detail sprite was also corrected to remove the launcher.
+- Every replaced asset was chroma-key extracted, normalized to `512x512` RGBA with
+  90% maximum subject occupancy, and checked at `42x42`, `56x56`, and `72x72`.
 
 ## Generation Prompt Core
 

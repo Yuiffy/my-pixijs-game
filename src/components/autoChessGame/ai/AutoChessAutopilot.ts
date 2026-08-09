@@ -513,7 +513,9 @@ export class AutoChessAutopilot {
     this.policyOverrides = { ...policy };
     const canonicalStyle = canonicalAutopilotStyle(style);
     this.style = canonicalStyle;
-    this.informationMode = canonicalStyle === "fair" ? "normal" : informationMode;
+    this.informationMode = informationModeForAutopilotStyle(canonicalStyle) === "normal"
+      ? "normal"
+      : informationMode;
     this.rolloutCombatHz = Math.max(20, Math.min(
       EXACT_COMBAT_HZ,
       Math.round(rolloutCombatHz),
@@ -541,7 +543,9 @@ export class AutoChessAutopilot {
   ) {
     const canonicalStyle = canonicalAutopilotStyle(style);
     this.style = canonicalStyle;
-    this.informationMode = canonicalStyle === "fair" ? "normal" : informationMode;
+    this.informationMode = informationModeForAutopilotStyle(canonicalStyle) === "normal"
+      ? "normal"
+      : informationMode;
     this.policy = resolveAutopilotStylePolicy(canonicalStyle, this.policyOverrides);
     this.bridge.setAutopilotStrategy(canonicalStyle, this.informationMode);
     this.invalidateFinalLineup();
@@ -562,7 +566,10 @@ export class AutoChessAutopilot {
   }
 
   private usesLearnedCombatPlanner() {
-    return this.style === "fair" || this.style === "go";
+    return this.style === "survival"
+      || this.style === "highroll"
+      || this.style === "fair"
+      || this.style === "go";
   }
 
   private usesBalancedEconomy() {

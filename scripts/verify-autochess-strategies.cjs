@@ -133,6 +133,7 @@ let browser;
     }
   });
   await page.addInitScript(() => {
+    window.localStorage.setItem("rift-line-character-style", "detail");
     window.localStorage.setItem(
       "rift-line-autopilot-strategy",
       JSON.stringify({ style: "balanced", version: 3 }),
@@ -149,19 +150,19 @@ let browser;
 
   await page.waitForFunction(() => {
     const state = JSON.parse(window.render_game_to_text());
-    return state.interface.autoplayStyle === "fair";
+    return state.interface.autoplayStyle === "survival";
   });
   const migrated = await readState();
-  assert.equal(migrated.interface.autoplayStyle, "fair");
+  assert.equal(migrated.interface.autoplayStyle, "survival");
   assert.equal(migrated.interface.autoplayInformationMode, "normal");
 
   await page.getByRole("button", { name: "游戏设置" }).click();
   const settings = page.getByRole("dialog", { name: "游戏设置" });
   const strategies = settings.getByRole("radiogroup", { name: "托管风格" });
-  await assert.doesNotReject(() => strategies.getByRole("radio", { name: "实战" }).waitFor());
+  await assert.doesNotReject(() => strategies.getByRole("radio", { name: "稳健" }).waitFor());
   assert.deepEqual(
     await strategies.getByRole("radio").allTextContents(),
-    ["实战", "看穿2", "Go测试"],
+    ["稳健", "搏上限", "看穿2", "Go测试"],
   );
 
   const selectStrategy = async (name, style, informationMode) => {
@@ -170,12 +171,13 @@ let browser;
     const stored = await readStoredStrategy();
     assert.equal(state.interface.autoplayStyle, style);
     assert.equal(state.interface.autoplayInformationMode, informationMode);
-    assert.deepEqual(stored, { style, version: 4 });
+    assert.deepEqual(stored, { style, version: 5 });
   };
-  await selectStrategy("实战", "fair", "normal");
+  await selectStrategy("稳健", "survival", "normal");
+  await selectStrategy("搏上限", "highroll", "normal");
   await selectStrategy("看穿2", "seer", "oracle");
   await selectStrategy("Go测试", "go", "oracle");
-  await selectStrategy("实战", "fair", "normal");
+  await selectStrategy("稳健", "survival", "normal");
 
   const layout = await page.evaluate(() => {
     const panel = document.querySelector(".rift-settings-panel")?.getBoundingClientRect();
@@ -199,6 +201,7 @@ let browser;
   });
   const desktop = inspectPng(desktopBuffer);
 
+  await selectStrategy("搏上限", "highroll", "normal");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(300);
   const mobileLayout = await page.evaluate(() => {
@@ -231,7 +234,7 @@ let browser;
     return state.phase === "preparation" && state.interface.autoplayEnabled === true;
   });
   const started = await readState();
-  assert.equal(started.interface.autoplayStyle, "fair");
+  assert.equal(started.interface.autoplayStyle, "highroll");
   assert.equal(started.interface.autoplayInformationMode, "normal");
 
   const relevantFailures = failedResponses.filter(({ url }) => (
@@ -245,7 +248,7 @@ let browser;
       style: migrated.interface.autoplayStyle,
       informationMode: migrated.interface.autoplayInformationMode,
     },
-    choices: ["实战", "看穿2", "Go测试"],
+    choices: ["稳健", "搏上限", "看穿2", "Go测试"],
     started: {
       phase: started.phase,
       style: started.interface.autoplayStyle,

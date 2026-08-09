@@ -85,16 +85,24 @@ const makeLateSeerCase = (shop, bench = [], round = 20, style = "seer") => {
   return { bridge, autopilot };
 };
 
-test("实战继承均衡经济参数但保持普通信息模式", () => {
-  assert.equal(resolveAutopilotStylePolicy("survival").safeWinRolloutScore, 10050);
+test("稳健与搏上限保持普通信息并使用不同的生存经济目标", () => {
+  const survival = resolveAutopilotStylePolicy("survival");
+  const highroll = resolveAutopilotStylePolicy("highroll");
+  assert.equal(survival.safeWinRolloutScore, 10050);
   assert.equal(resolveAutopilotStylePolicy("balanced").safeWinRolloutScore, 10010);
-  assert.equal(resolveAutopilotStylePolicy("highroll").safeWinRolloutScore, 10010);
+  assert.equal(highroll.safeWinRolloutScore, 10010);
   assert.deepEqual(
     resolveAutopilotStylePolicy("fair"),
     resolveAutopilotStylePolicy("balanced"),
   );
+  assert.ok(survival.woundedHpThreshold > highroll.woundedHpThreshold);
+  assert.ok(survival.financeActivationMaxRolloutDeficit < highroll.financeActivationMaxRolloutDeficit);
+  assert.ok(survival.lateGamePurchaseStartRound > highroll.lateGamePurchaseStartRound);
+  assert.ok(survival.financePurchaseInterestTiersAtRisk > highroll.financePurchaseInterestTiersAtRisk);
+  assert.ok(survival.upgradeProjectLimit < highroll.upgradeProjectLimit);
   assert.equal(resolveAutopilotStylePolicy("seer").safeWinRolloutScore, 10050);
   assert.equal(informationModeForAutopilotStyle("survival"), "normal");
+  assert.equal(informationModeForAutopilotStyle("highroll"), "normal");
   assert.equal(informationModeForAutopilotStyle("fair"), "normal");
   assert.equal(informationModeForAutopilotStyle("seer"), "oracle");
 });
@@ -971,7 +979,7 @@ test("托管会完成开局、整备、布阵、开战和战后继续", () => {
   assert.equal(bridge.autoplayEnabled, false);
 });
 
-test("托管以真人中线为种子并让优胜阵容与站位逐代变异", () => {
+test("学习型托管以规范站位为种子并让优胜阵容逐代变异", () => {
   const bridge = new EngineBridge(13028);
   bridge.setConsoleLogging(false);
   const autopilot = new AutoChessAutopilot(bridge, "evolution", {
@@ -993,13 +1001,13 @@ test("托管以真人中线为种子并让优胜阵容与站位逐代变异", ()
 
   const evolved = autopilot.rolloutTargetLineup(roster);
   assert.deepEqual(evolved.map((entry) => entry.unit.uid).sort(), [3, 4, 5]);
-  assert.equal(autopilot.plannedFormation, "human_midline");
+  assert.equal(autopilot.plannedFormation, "go_canonical");
   assert.deepEqual(autopilot.lineageUnitIds.sort(), ["shiori", "yua", "yukisyo"]);
 
   bridge.engine.state.round = 2;
   const nextGeneration = autopilot.rolloutTargetLineup(roster);
   assert.deepEqual(nextGeneration.map((entry) => entry.unit.uid).sort(), [3, 4, 5]);
-  assert.equal(autopilot.plannedFormation, "split_flanks");
+  assert.equal(autopilot.plannedFormation, "go_canonical");
 
   const simulation = new EngineBridge(13029).engine;
   autopilot.setSimulationLineup(simulation, [roster[0], roster[1], roster[2], roster[3]], "human_midline");
@@ -2861,7 +2869,7 @@ test("均衡残血已有安全救援阵容时仍会用终局余钱搜牌", () =>
   assert.equal(autopilot.plannedLineupUids.length, boardUnits.length);
 });
 
-test("稳健类托管在残血满场时会搜索候补替换胜解", () => {
+test("搏上限在残血满场时会完成规范站位并换入候补胜解", () => {
   const bridge = new EngineBridge(130583);
   bridge.setConsoleLogging(false);
   bridge.engine.state.starterChoices = ["bastion"];
@@ -2895,11 +2903,17 @@ test("稳健类托管在残血满场时会搜索候补替换胜解", () => {
 
   assert.equal(autopilot.searchRescueLineup(autopilot.ownedEntries()), true);
   autopilot.setEnabled(true);
-  assert.equal(autopilot.tick(1000), null);
-  const action = autopilot.tick(2000);
-  assert.equal(action?.type, "move");
-  assert.equal(action?.from.zone, "bench");
+  const actions = [];
+  for (let step = 1; step <= 20; step += 1) {
+    const action = autopilot.tick(step * 1000);
+    if (action) actions.push(action);
+    const rescue = autopilot.ownedEntries().find(({ unit }) => unit.uid === rescueUid);
+    if (rescue?.location.zone === "board") break;
+  }
   assert.equal(autopilot.plannedLineupUids.includes(rescueUid), true);
+  const rescue = autopilot.ownedEntries().find(({ unit }) => unit.uid === rescueUid);
+  assert.equal(rescue?.location.zone, "board");
+  assert.equal(actions.some((action) => action.type === "move" && action.from.zone === "bench"), true);
 });
 
 test("残血救援不会被20Hz假阴性挡住，候补胜解用60Hz确认", () => {
@@ -3593,21 +3607,21 @@ test("终局商店优先完成已有六份的三星项目", () => {
   assert.ok(focused.score > fresh.score);
 });
 
-test("标题页和局内都公开托管选择，设置面板只公开实战与两种研究策略", () => {
+test("标题页和局内都公开托管选择，设置面板公开两种同信息策略与两种研究策略", () => {
   assert.match(hudSource, /亲自指挥/);
   assert.match(hudSource, /AI 观战/);
   assert.match(hudSource, /由 AI 自选协议并开局/);
   assert.match(hudSource, /rift-mobile-session-controls/);
   assert.match(hostSource, /后台继续战斗/);
   assert.match(hostSource, /托管风格/);
-  assert.match(hostSource, /\["fair", "实战"\]/);
+  assert.match(hostSource, /\["survival", "稳健"\]/);
+  assert.match(hostSource, /\["highroll", "搏上限"\]/);
   assert.match(hostSource, /看穿2/);
   assert.match(hostSource, /Go测试/);
-  assert.doesNotMatch(hostSource, /\["survival", "稳健"\]/);
   assert.doesNotMatch(hostSource, /\["balanced", "均衡"\]/);
-  assert.doesNotMatch(hostSource, /\["highroll", "搏上限"\]/);
-  assert.match(hostSource, /AUTOPILOT_STRATEGY_VERSION = 4/);
-  assert.match(hostSource, /\["survival", "balanced", "highroll"\].*return "fair"/s);
+  assert.doesNotMatch(hostSource, /\["fair", "实战"\]/);
+  assert.match(hostSource, /AUTOPILOT_STRATEGY_VERSION = 5/);
+  assert.match(hostSource, /stored\?\.style === "fair".*stored\?\.style === "balanced".*return "survival"/s);
   assert.doesNotMatch(hostSource, /天眼商店/);
   assert.match(hostSource, /role="radiogroup"/);
   assert.match(hostSource, /AUTOPILOT_STRATEGY_KEY/);
