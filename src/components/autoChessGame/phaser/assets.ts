@@ -1,34 +1,60 @@
 import Phaser from "phaser";
+import {
+  getCharacterStyle,
+  resolveUnitPortrait,
+  type CharacterStyle,
+} from "../core/characterStyle";
 import { UNIT_DEFS } from "../core/gameData";
 
-export const textureKeyForUnit = (unitId: string) => `rift-unit:${unitId}`;
+export const textureKeyForUnit = (
+  unitId: string,
+  style: CharacterStyle = getCharacterStyle(),
+) => `rift-unit:${style}:${unitId}`;
 export const SUMI_LITTLE_DRAGON_TEXTURE_KEY = "rift-projectile:sumi-little-dragon";
 export const SUMI_LITTLE_DRAGON_CIRCLE_TEXTURE_KEY = "rift-projectile:sumi-little-dragon-circle";
 export const HAZEL_MANQU_TEXTURE_KEY = "rift-transform:hazel-manqu";
 
-export const preloadUnitPortraits = (scene: Phaser.Scene) => {
-  Object.values(UNIT_DEFS).forEach((unit) => {
-    if (!unit.portrait) return;
-    const key = textureKeyForUnit(unit.id);
-    if (!scene.textures.exists(key)) scene.load.image(key, unit.portrait);
-  });
+export const preloadUnitPortraits = (
+  scene: Phaser.Scene,
+  styles: readonly CharacterStyle[] = [getCharacterStyle()],
+) => {
+  let queued = 0;
+  styles.forEach((style) => Object.values(UNIT_DEFS).forEach((unit) => {
+    const portrait = resolveUnitPortrait(unit.id, style);
+    if (!portrait.portrait) return;
+    const key = textureKeyForUnit(unit.id, style);
+    if (!scene.textures.exists(key)) {
+      scene.load.image(key, portrait.portrait);
+      queued += 1;
+    }
+  }));
   if (!scene.textures.exists(SUMI_LITTLE_DRAGON_TEXTURE_KEY)) {
     scene.load.image(SUMI_LITTLE_DRAGON_TEXTURE_KEY, "/images/livers/sumi-little-dragon.jpg");
+    queued += 1;
   }
   if (!scene.textures.exists(HAZEL_MANQU_TEXTURE_KEY)) {
     scene.load.image(HAZEL_MANQU_TEXTURE_KEY, "/images/livers/hazel-manqu.png");
+    queued += 1;
   }
+  return queued;
 };
 
-export const circularTextureKeyForUnit = (unitId: string) => `rift-unit-circle:${unitId}`;
+export const circularTextureKeyForUnit = (
+  unitId: string,
+  style: CharacterStyle = getCharacterStyle(),
+) => `rift-unit-circle:${style}:${unitId}`;
 
 const CIRCULAR_PORTRAIT_SIZE = 256;
 
-export const createCircularPortraitTextures = (scene: Phaser.Scene) => {
+export const createCircularPortraitTextures = (
+  scene: Phaser.Scene,
+  style: CharacterStyle = getCharacterStyle(),
+) => {
   Object.values(UNIT_DEFS).forEach((unit) => {
-    if (unit.portraitStyle === "sprite") return;
-    const sourceKey = textureKeyForUnit(unit.id);
-    const targetKey = circularTextureKeyForUnit(unit.id);
+    const portrait = resolveUnitPortrait(unit.id, style);
+    if (portrait.portraitStyle === "sprite") return;
+    const sourceKey = textureKeyForUnit(unit.id, style);
+    const targetKey = circularTextureKeyForUnit(unit.id, style);
     if (!scene.textures.exists(sourceKey) || scene.textures.exists(targetKey)) return;
 
     const source = scene.textures.get(sourceKey).getSourceImage();
@@ -38,7 +64,7 @@ export const createCircularPortraitTextures = (scene: Phaser.Scene) => {
     const cropSize = Math.min(sourceWidth, sourceHeight);
     const cropX = Math.max(0, (sourceWidth - cropSize) / 2);
     const remainingY = Math.max(0, sourceHeight - cropSize);
-    const cropY = unit.portraitFocus === "top" ? remainingY * 0.16 : remainingY / 2;
+    const cropY = portrait.portraitFocus === "top" ? remainingY * 0.16 : remainingY / 2;
     const texture = scene.textures.createCanvas(targetKey, CIRCULAR_PORTRAIT_SIZE, CIRCULAR_PORTRAIT_SIZE);
     if (!texture) return;
 

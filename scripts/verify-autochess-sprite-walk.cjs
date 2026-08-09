@@ -189,11 +189,15 @@ const capture = async (page, name, screenshots) => {
 
   const assetStatuses = await page.evaluate(async () => Object.fromEntries(await Promise.all([
     "/images/autochess/portraits/spark-mage.png",
+    "/images/autochess/portraits/dawn_duelist.png",
+    "/images/autochess/portraits/grove_mender.png",
     "/images/autochess/portraits/clock-gunner.png",
     "/images/autochess/portraits/biscuit_sui.png",
   ].map(async (url) => [url, (await fetch(url)).status]))));
   assert.deepEqual(assetStatuses, {
     "/images/autochess/portraits/spark-mage.png": 200,
+    "/images/autochess/portraits/dawn_duelist.png": 200,
+    "/images/autochess/portraits/grove_mender.png": 200,
     "/images/autochess/portraits/clock-gunner.png": 200,
     "/images/autochess/portraits/biscuit_sui.png": 200,
   });
@@ -203,24 +207,82 @@ const capture = async (page, name, screenshots) => {
     const engine = bridge.engine;
     engine.startRun(engine.state.starterChoices[0]);
     engine.state.playerLevel = 10;
+    engine.state.gold = 99;
     engine.state.board.fill(null);
     engine.state.bench.fill(null);
     engine.state.board[6] = { uid: 8801, id: "spark_mage", star: 1 };
-    engine.state.board[7] = { uid: 8802, id: "clock_gunner", star: 1 };
-    engine.state.board[8] = { uid: 8803, id: "biscuit_sui", star: 1 };
+    engine.state.board[7] = { uid: 8802, id: "dawn_duelist", star: 2 };
+    engine.state.board[8] = { uid: 8803, id: "grove_mender", star: 3 };
+    engine.state.bench[0] = { uid: 8804, id: "clock_gunner", star: 1 };
+    engine.state.bench[1] = { uid: 8805, id: "biscuit_sui", star: 3 };
+    engine.state.shop = ["spark_mage", "dawn_duelist", "grove_mender", "clock_gunner", "biscuit_sui"];
     bridge.dispatch({ type: "clearSelection" });
   });
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "preparation");
   await page.waitForTimeout(500);
   const preparationText = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
   assert.ok(JSON.stringify(preparationText).includes("北欧魔法师"), "Preparation state is missing 北欧魔法师");
+  assert.ok(JSON.stringify(preparationText).includes("大黑鼠"), "Preparation state is missing 大黑鼠");
+  assert.ok(JSON.stringify(preparationText).includes("七海大鲨鱼"), "Preparation state is missing 七海大鲨鱼");
   assert.ok(JSON.stringify(preparationText).includes("老弥"), "Preparation state is missing 老弥");
   assert.ok(JSON.stringify(preparationText).includes("饼干岁"), "Preparation state is missing 饼干岁");
+  const preparationLayout = await page.evaluate(() => {
+    const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
+    const texts = scene.phaseLayer.list.filter((item) => item.type === "Text");
+    const text = (value, zone) => {
+      const item = texts.find((candidate) => candidate.text === value
+        && (zone === "bench" ? candidate.y >= 550 : zone === "board" ? candidate.y < 550 : true));
+      return item && { x: item.x, y: item.y, originX: item.originX, originY: item.originY };
+    };
+    const portrait = (unitId) => {
+      const container = scene.phaseLayer.list.find((item) => item.type === "Container"
+        && item.getByName?.("portraitImage")?.texture?.key === `rift-unit:${unitId}`);
+      const image = container?.getByName?.("portraitImage");
+      return container && image && { x: container.x, y: container.y, width: image.displayWidth, height: image.displayHeight };
+    };
+    const shopSprites = [...document.querySelectorAll(".rift-dom-shop-desktop .rift-dom-portrait.is-sprite")]
+      .map((item) => {
+        const box = item.getBoundingClientRect();
+        return { width: box.width, height: box.height };
+      });
+    return {
+      board: { stars: text("★★", "board"), name: text("大黑鼠"), portrait: portrait("dawn_duelist") },
+      bench: { stars: text("★", "bench"), name: text("老弥"), value: text("● 2", "bench"), portrait: portrait("clock_gunner") },
+      shopSprites,
+    };
+  });
+  assert.deepEqual(preparationLayout.board.stars, { x: 186, y: 307, originX: 0, originY: 0.5 });
+  assert.deepEqual(preparationLayout.board.name, { x: 186, y: 351, originX: 0, originY: 0.5 });
+  assert.ok(preparationLayout.board.portrait.width >= 53 && preparationLayout.board.portrait.height >= 53, JSON.stringify(preparationLayout));
+  assert.deepEqual(preparationLayout.bench.stars, { x: 54, y: 607, originX: 0, originY: 0.5 });
+  assert.deepEqual(preparationLayout.bench.name, { x: 54, y: 669, originX: 0, originY: 0.5 });
+  assert.deepEqual(preparationLayout.bench.value, { x: 122, y: 669, originX: 1, originY: 0.5 });
+  assert.ok(preparationLayout.bench.portrait.width >= 58 && preparationLayout.bench.portrait.height >= 58, JSON.stringify(preparationLayout));
+  assert.equal(preparationLayout.shopSprites.length, 5);
+  assert.ok(preparationLayout.shopSprites.every(({ width, height }) => width >= 60 && height >= 60));
   const screenshots = {};
-  await capture(page, "preparation-fullbody-sprites", screenshots);
+  await capture(page, "preparation-large-sprites-desktop", screenshots);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(250);
+  await capture(page, "preparation-large-sprites-mobile", screenshots);
+  await page.getByRole("button", { name: /商店/ }).click();
+  const mobileShopSpriteSizes = await page.locator(".rift-dom-sheet-shop .rift-dom-portrait.is-sprite").evaluateAll((items) => items.map((item) => {
+    const box = item.getBoundingClientRect();
+    return { width: box.width, height: box.height };
+  }));
+  assert.equal(mobileShopSpriteSizes.length, 5);
+  assert.ok(mobileShopSpriteSizes.every(({ width, height }) => width >= 60 && height >= 60));
+  await capture(page, "preparation-large-shop-mobile", screenshots);
+  await page.getByRole("button", { name: "关闭面板" }).click();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(250);
 
   await page.evaluate(() => {
     const bridge = window.__codexAutoChessBridge;
+    bridge.engine.state.board[9] = bridge.engine.state.bench[0];
+    bridge.engine.state.board[10] = bridge.engine.state.bench[1];
+    bridge.engine.state.bench.fill(null);
     bridge.engine.startBattle();
     const battle = bridge.engine.state.battle;
     battle.limit = 30;

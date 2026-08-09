@@ -85,12 +85,17 @@ const makeLateSeerCase = (shop, bench = [], round = 20, style = "seer") => {
   return { bridge, autopilot };
 };
 
-test("稳健采用留出验证晋级阈值并保留其他三种风格的风险差异", () => {
+test("实战继承均衡经济参数但保持普通信息模式", () => {
   assert.equal(resolveAutopilotStylePolicy("survival").safeWinRolloutScore, 10050);
   assert.equal(resolveAutopilotStylePolicy("balanced").safeWinRolloutScore, 10010);
   assert.equal(resolveAutopilotStylePolicy("highroll").safeWinRolloutScore, 10010);
+  assert.deepEqual(
+    resolveAutopilotStylePolicy("fair"),
+    resolveAutopilotStylePolicy("balanced"),
+  );
   assert.equal(resolveAutopilotStylePolicy("seer").safeWinRolloutScore, 10050);
   assert.equal(informationModeForAutopilotStyle("survival"), "normal");
+  assert.equal(informationModeForAutopilotStyle("fair"), "normal");
   assert.equal(informationModeForAutopilotStyle("seer"), "oracle");
 });
 
@@ -1113,6 +1118,21 @@ test("看穿计划分数在战斗随机状态变化后会重新精确复核", ()
   bridge.engine.restoreRandomState(bridge.engine.getRandomState() + 1);
   assert.equal(pilot.rolloutConfidence(roster), 9900);
   assert.equal(rolloutCalls, 1);
+  assert.equal(pilot.rolloutConfidence(roster), 9900);
+  assert.equal(rolloutCalls, 1);
+
+  pilot.setStrategy("balanced", "normal");
+  pilot.plannedLineupUids = lineup.map(({ unit }) => unit.uid);
+  pilot.plannedLineupUnits = new Map(lineup.map(({ unit }) => [
+    unit.uid,
+    { id: unit.id, star: unit.star },
+  ]));
+  pilot.plannedLineupScore = 10400;
+  pilot.plannedLineupRandomState = bridge.engine.getRandomState();
+  rolloutCalls = 0;
+  assert.equal(pilot.rolloutConfidence(roster), 10400);
+  assert.equal(rolloutCalls, 0);
+  bridge.engine.restoreRandomState(bridge.engine.getRandomState() + 1);
   assert.equal(pilot.rolloutConfidence(roster), 9900);
   assert.equal(rolloutCalls, 1);
 });
@@ -2779,6 +2799,68 @@ test("救援方案锁定期间先完成换位，不继续买牌或刷新", () =>
   assert.equal(action?.from.zone, "bench");
 });
 
+test("均衡残血已有安全救援阵容时仍会用终局余钱搜牌", () => {
+  const bridge = new EngineBridge(1305821);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.round = 24;
+  state.hp = 13;
+  state.playerLevel = 10;
+  state.upgradeRemaining = 0;
+  state.gold = 207;
+  state.board.fill(null);
+  state.bench.fill(null);
+  state.shop.fill(null);
+  const boardUnits = SHOP_UNITS.slice(0, 10).map((id, index) => ({
+    uid: 13058210 + index,
+    id,
+    star: index < 2 ? 2 : 1,
+  }));
+  const benchUnits = SHOP_UNITS.slice(10, 13).map((id, index) => ({
+    uid: 13058230 + index,
+    id,
+    star: 1,
+  }));
+  boardUnits.forEach((unit, index) => { state.board[index] = unit; });
+  benchUnits.forEach((unit, index) => { state.bench[index] = unit; });
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+  );
+  autopilot.plannedRound = state.round;
+  autopilot.preparationStartGold = 212;
+  autopilot.preparationActions = 0;
+  autopilot.plannedLineupUids = boardUnits.map(({ uid }) => uid);
+  autopilot.plannedLineupUnits = new Map(boardUnits.map(({ uid, id, star }) => [
+    uid,
+    { id, star },
+  ]));
+  autopilot.plannedBoardSlots = new Map(boardUnits.map(({ uid }, index) => [uid, index]));
+  autopilot.plannedLineupScore = 10100;
+  autopilot.rescueLineupLocked = true;
+  autopilot.formationAction = () => null;
+  autopilot.starForgeAction = () => null;
+  autopilot.searchRescueLineup = () => false;
+  autopilot.rolloutConfidence = () => 10100;
+  autopilot.observeStabilizationStrength = () => {};
+  autopilot.fundingSaleAction = () => null;
+  autopilot.interestSaleAction = () => null;
+  autopilot.benchCleanupAction = () => null;
+  autopilot.replacementAction = () => null;
+  autopilot.purchaseAction = () => null;
+
+  const action = autopilot.nextPreparationAction();
+  assert.deepEqual(action, { type: "reroll" });
+  assert.equal(autopilot.rescueLineupLocked, false);
+  assert.equal(autopilot.plannedLineupUids.length, boardUnits.length);
+});
+
 test("稳健类托管在残血满场时会搜索候补替换胜解", () => {
   const bridge = new EngineBridge(130583);
   bridge.setConsoleLogging(false);
@@ -3395,6 +3477,42 @@ test("终局集中搜牌只在高额存款安全窗口开启", () => {
   assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 9900), false);
 });
 
+test("均衡和搏上限在未成四理财但现金明显溢出时也会追当前三星项目", () => {
+  for (const [style, gold] of [["balanced", 165], ["highroll", 125]]) {
+    const { bridge, autopilot } = makeLateSeerCase(
+      [null, null, null, null, null],
+      [],
+      24,
+      style,
+    );
+    bridge.engine.state.hp = 13;
+    bridge.engine.state.gold = gold;
+    autopilot.rolloutConfidence = () => 10400;
+    autopilot.resetPreparation(24);
+    assert.equal(
+      autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400),
+      true,
+      `${style} should use surplus cash without requiring four finance units`,
+    );
+  }
+
+  const { bridge, autopilot } = makeLateSeerCase(
+    [null, null, null, null, null],
+    [],
+    24,
+    "survival",
+  );
+  bridge.engine.state.hp = 13;
+  bridge.engine.state.gold = 220;
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.resetPreparation(24);
+  assert.equal(
+    autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400),
+    false,
+    "survival should keep the four-finance and wounded-health guard",
+  );
+});
+
 test("多个六份终局项目会在较低存款触发冲刺并在下一回合停搜", () => {
   const financeIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].traits.includes("finance")).slice(0, 4);
   const projectIds = AUTOPILOT_TERMINAL_TARGET_IDS
@@ -3475,15 +3593,21 @@ test("终局商店优先完成已有六份的三星项目", () => {
   assert.ok(focused.score > fresh.score);
 });
 
-test("标题页和局内都公开托管选择，设置面板公开四种风格和后台开关", () => {
+test("标题页和局内都公开托管选择，设置面板只公开实战与两种研究策略", () => {
   assert.match(hudSource, /亲自指挥/);
   assert.match(hudSource, /AI 观战/);
   assert.match(hudSource, /由 AI 自选协议并开局/);
   assert.match(hudSource, /rift-mobile-session-controls/);
   assert.match(hostSource, /后台继续战斗/);
   assert.match(hostSource, /托管风格/);
+  assert.match(hostSource, /\["fair", "实战"\]/);
   assert.match(hostSource, /看穿2/);
-  assert.match(hostSource, /Go级/);
+  assert.match(hostSource, /Go测试/);
+  assert.doesNotMatch(hostSource, /\["survival", "稳健"\]/);
+  assert.doesNotMatch(hostSource, /\["balanced", "均衡"\]/);
+  assert.doesNotMatch(hostSource, /\["highroll", "搏上限"\]/);
+  assert.match(hostSource, /AUTOPILOT_STRATEGY_VERSION = 4/);
+  assert.match(hostSource, /\["survival", "balanced", "highroll"\].*return "fair"/s);
   assert.doesNotMatch(hostSource, /天眼商店/);
   assert.match(hostSource, /role="radiogroup"/);
   assert.match(hostSource, /AUTOPILOT_STRATEGY_KEY/);

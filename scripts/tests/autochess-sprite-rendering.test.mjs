@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
 const [
@@ -30,6 +30,7 @@ const [
   engineTextState,
   gameTypes,
   healingEffects,
+  portraitProcessor,
 ] = await Promise.all([
   readFile(
     new URL(
@@ -211,6 +212,10 @@ const [
     ),
     "utf8",
   ),
+  readFile(
+    new URL("../autochess-portrait-process.mjs", import.meta.url),
+    "utf8",
+  ),
 ]);
 
 const hud = [
@@ -236,6 +241,13 @@ const engine = [
   engineAbilities,
   engineTextState,
 ].join("\n");
+const characterStyle = await readFile(
+  new URL(
+    "../../src/components/autoChessGame/core/characterStyle.ts",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("Phaser 宿主保留浏览器验证画布和确定性时间接口", () => {
   assert.match(host, /data-game-canvas", "rift-line"/);
@@ -380,7 +392,51 @@ test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () =>
   assert.match(scene, /const spriteDiameter = radius \* 2\.45/);
   assert.match(scene, /portraitImage\.setFlipX/);
   assert.match(hudShop, /portraitStyle === "sprite" \? "is-sprite"/);
-  assert.match(hudCss, /\.rift-dom-portrait\.is-sprite \{ width: 50px; height: 50px;/);
+  assert.match(hudShop, /portraitStyle === "sprite" \? 60 : 46/);
+  assert.match(hudCss, /\.rift-dom-portrait\.is-sprite \{ width: 60px; height: 60px;/);
+});
+
+test("角色样式以极简为默认并在所有界面共用三档资源解析", async () => {
+  assert.match(characterStyle, /\["minimal", "detail", "classic"\] as const/);
+  assert.match(characterStyle, /let activeStyle: CharacterStyle = "minimal"/);
+  assert.match(characterStyle, /localStorage\.setItem\(STORAGE_KEY, style\)/);
+  assert.match(characterStyle, /CLASSIC_OVERRIDES/);
+  assert.match(characterStyle, /portraits\/\$\{style\}\/\$\{filename\}/);
+  assert.match(host, />角色样式</);
+  assert.match(host, /"minimal", "极简"/);
+  assert.match(host, /"detail", "细节"/);
+  assert.match(host, /"classic", "棋子"/);
+  assert.match(host, /scene\?\.setCharacterStyle\?\.\(characterStyle\)/);
+  assert.match(hudShared, /resolveUnitPortrait/);
+  assert.match(hudShop, /resolveUnitPortrait/);
+  assert.match(assets, /textureKeyForUnit[\s\S]*style: CharacterStyle/);
+  assert.match(sceneRoot, /public setCharacterStyle\(style: CharacterStyle\)/);
+
+  const minimalFiles = (await readdir(new URL(
+    "../../public/images/autochess/portraits/minimal/",
+    import.meta.url,
+  ))).sort();
+  const detailFiles = (await readdir(new URL(
+    "../../public/images/autochess/portraits/detail/",
+    import.meta.url,
+  ))).sort();
+  const classicFiles = (await readdir(new URL(
+    "../../public/images/autochess/portraits/classic/",
+    import.meta.url,
+  ))).sort();
+  const expectedMinimal = detailFiles.filter((filename) => ![
+    "rift-brawler-head.png",
+    "rift-stalker-head.png",
+    "rift-tyrant.png",
+  ].includes(filename));
+  assert.equal(detailFiles.length, 45);
+  assert.equal(minimalFiles.length, 42);
+  assert.equal(classicFiles.length, 11);
+  assert.deepEqual(minimalFiles, expectedMinimal);
+});
+
+test("棋子图片处理保留九成画布占用", () => {
+  assert.match(portraitProcessor, /max_side = round\(512 \* 0\.90\)/);
 });
 
 test("全身精灵寻路时使用轻量弹跳摆动并避开技能运动", () => {
@@ -765,8 +821,12 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(layout, /y: 232 \+ Math\.floor\(index \/ 6\) \* 68/);
   assert.match(layout, /COMPACT_TRAIT_STRIP = \{ x: 48, y: 194/);
   assert.match(layout, /portraitY/);
-  assert.match(layout, /starY/);
-  assert.match(layout, /nameY/);
+  assert.match(layout, /portraitRadius: compact \? \(isBench \? 22 : 21\) : isBench \? 24 : 22/);
+  assert.match(layout, /starX: rect\.x \+ 6/);
+  assert.match(layout, /nameX: rect\.x \+ 6/);
+  assert.match(layout, /valueX: rect\.x \+ rect\.width - 6/);
+  assert.match(scene, /setOrigin\(0, 0\.5\)/);
+  assert.match(scene, /slotLayout\.valueX/);
   assert.match(
     scene,
     /POINTER_MOVE, \(pointer: Phaser\.Input\.Pointer\) => \{\n      if \(!this\.traitDrag\?\.moved\) this\.updateTraitTooltip\(pointer\);/,

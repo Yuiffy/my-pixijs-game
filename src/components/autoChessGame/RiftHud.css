@@ -37,13 +37,14 @@
 .rift-audio-range { display: grid; grid-template-columns: auto 74px; align-items: center; gap: 5px; color: #9db8c7; font-size: 10px; white-space: nowrap; }
 .rift-audio-range input { width: 74px; margin: 0; accent-color: #67d6ad; cursor: pointer; }
 .rift-settings-scrim { position: absolute; inset: 0; z-index: 80; background: rgba(2, 8, 14, .36); font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif; }
-.rift-settings-panel { position: absolute; top: 48px; right: 12px; display: grid; width: min(310px, calc(100% - 24px)); gap: 0; box-sizing: border-box; padding: 14px 16px 17px; border: 1px solid #4f7f94; border-radius: 10px; background: #0b1d29; color: var(--rift-text); box-shadow: 0 18px 50px rgba(0, 0, 0, .48); }
+.rift-settings-panel { position: absolute; top: 48px; right: 12px; display: grid; width: min(310px, calc(100% - 24px)); max-height: calc(100% - 60px); gap: 0; box-sizing: border-box; padding: 14px 16px 17px; overflow-y: auto; border: 1px solid #4f7f94; border-radius: 10px; background: #0b1d29; color: var(--rift-text); box-shadow: 0 18px 50px rgba(0, 0, 0, .48); }
 .rift-settings-panel > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; padding-bottom: 11px; border-bottom: 1px solid rgba(104, 179, 207, .22); }
 .rift-settings-panel > header strong { font-size: 15px; }
 .rift-settings-panel > header button { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid #42677a; border-radius: 7px; background: #142f40; color: #dceff7; cursor: pointer; }
 .rift-setting-row, .rift-setting-slider { display: flex; min-height: 43px; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(104, 179, 207, .12); color: #cfe3ec; font-size: 12px; font-weight: 700; }
 .rift-setting-strategy { display: grid; gap: 8px; padding: 10px 0 11px; border-bottom: 1px solid rgba(104, 179, 207, .12); color: #cfe3ec; font-size: 12px; font-weight: 700; }
-.rift-setting-strategy > div { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; padding: 3px; border: 1px solid #385a6c; border-radius: 7px; background: #102735; }
+.rift-setting-strategy > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; border: 1px solid #385a6c; border-radius: 7px; background: #102735; }
+.rift-setting-character-style > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .rift-setting-strategy button { min-width: 0; height: 30px; padding: 0 5px; overflow: hidden; border: 0; border-radius: 5px; background: transparent; color: #91aebd; font: inherit; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .rift-setting-strategy button[aria-checked="true"] { background: #245b4a; color: #effff8; box-shadow: inset 0 0 0 1px #68d4aa; }
 .rift-setting-slider { border-bottom: 0; }
@@ -166,7 +167,7 @@
 .rift-shop-list { display: grid; gap: 4px; }
 .rift-shop-card-wrap { position: relative; z-index: 1; }
 .rift-shop-card-wrap.is-detail-open { z-index: 40; }
-.rift-dom-shop-card { position: relative; display: flex; align-items: center; width: 100%; min-height: 64px; gap: 9px; padding: 6px 9px 6px 11px; overflow: hidden; box-sizing: border-box; border: 1px solid #29495c; border-radius: 9px; background: rgba(16, 38, 52, .9); color: #edf7ff; text-align: left; cursor: pointer; transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease; }
+.rift-dom-shop-card { position: relative; display: flex; align-items: center; width: 100%; min-height: 72px; gap: 8px; padding: 5px 9px 5px 9px; overflow: hidden; box-sizing: border-box; border: 1px solid #29495c; border-radius: 9px; background: rgba(16, 38, 52, .9); color: #edf7ff; text-align: left; cursor: pointer; transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease; }
 .rift-dom-shop-card:hover:not(.disabled), .rift-dom-shop-card:focus-visible:not(.disabled) { transform: translateX(3px); border-color: #89e2ff; background: #173b51; box-shadow: 0 6px 18px rgba(80, 184, 235, .16); outline: none; }
 .rift-dom-shop-card.has-owned { border-color: color-mix(in srgb, var(--rift-green) 64%, #29495c); background: linear-gradient(135deg, rgba(17, 49, 56, .98), rgba(16, 38, 52, .94)); box-shadow: inset 0 0 0 1px rgba(98, 215, 164, .12), 0 0 15px rgba(98, 215, 164, .08); }
 .rift-dom-shop-card.has-owned:hover:not(.disabled), .rift-dom-shop-card.has-owned:focus-visible:not(.disabled) { border-color: #89e2ff; box-shadow: 0 6px 18px rgba(80, 184, 235, .16), inset 0 0 0 1px rgba(98, 215, 164, .12); }
@@ -174,9 +175,9 @@
 .rift-dom-shop-card.empty { justify-content: center; color: #7892a4; cursor: default; }
 .rift-shop-card-accent { position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--card-accent, #6c9db4); }
 .tier-card-1 .rift-shop-card-accent { background: #9cd7e9; }.tier-card-2 .rift-shop-card-accent { background: #83e7bf; }.tier-card-3 .rift-shop-card-accent { background: #c7a8ff; }.tier-card-4 .rift-shop-card-accent { background: #ff9db1; }.tier-card-5 .rift-shop-card-accent { background: #ffc86e; }
-.rift-dom-portrait { position: relative; display: grid; width: 40px; height: 40px; overflow: hidden; flex: 0 0 auto; place-items: center; border: 2px solid; border-radius: 50%; background: #07121c; }
+.rift-dom-portrait { position: relative; display: grid; width: 46px; height: 46px; overflow: hidden; flex: 0 0 auto; place-items: center; border: 2px solid; border-radius: 50%; background: #07121c; }
 .rift-dom-portrait img { display: block; }
-.rift-dom-portrait.is-sprite { width: 50px; height: 50px; overflow: visible; border: 0; border-radius: 0; background: transparent !important; }
+.rift-dom-portrait.is-sprite { width: 60px; height: 60px; overflow: visible; border: 0; border-radius: 0; background: transparent !important; }
 .rift-dom-portrait.is-sprite img { width: 100% !important; height: 100% !important; }
 .rift-dom-portrait-glyph { display: grid; width: 100%; height: 100%; place-items: center; font-size: 20px; }
 .rift-dom-shop-copy { display: grid; min-width: 0; flex: 1; gap: 2px; }
@@ -933,9 +934,9 @@
   .rift-dom-sheet > header button { padding: 6px 8px; }
   .rift-dom-sheet-shop .rift-sheet-summary { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-bottom: 7px; }
   .rift-dom-sheet-shop .rift-sheet-shop-list { gap: 4px; }
-  .rift-dom-sheet-shop .rift-dom-shop-card { min-height: 52px; padding-block: 4px; }
-  .rift-dom-sheet-shop .rift-dom-portrait { width: 34px; height: 34px; }
-  .rift-dom-sheet-shop .rift-dom-portrait.is-sprite { width: 44px; height: 44px; }
+  .rift-dom-sheet-shop .rift-dom-shop-card { min-height: 60px; padding-block: 4px; }
+  .rift-dom-sheet-shop .rift-dom-portrait { width: 40px; height: 40px; }
+  .rift-dom-sheet-shop .rift-dom-portrait.is-sprite { width: 52px; height: 52px; }
   .rift-dom-sheet-shop .rift-dom-shop-copy > span { display: none; }
   .rift-dom-sheet-shop .rift-dom-shop-copy > div { flex-wrap: nowrap; max-height: 20px; }
   .rift-dom-sheet-shop .rift-dom-shop-copy i { padding: 1px 5px; font-size: 9px; }

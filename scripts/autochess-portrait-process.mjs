@@ -46,13 +46,13 @@ if remove_background:
 elif image.getchannel("A").getextrema()[0] == 255:
     raise SystemExit("Input has no transparent pixels. Re-run with --remove-background after installing rembg, or approve a transparent candidate.")
 
-# Preserve the approved silhouette, center it, and enforce a 10% transparent safety margin.
+# Preserve the approved silhouette, center it, and enforce a 5% transparent safety margin.
 alpha = image.getchannel("A")
 bbox = alpha.getbbox()
 if bbox is None:
     raise SystemExit("Input contains no visible pixels after processing.")
 subject = image.crop(bbox)
-max_side = round(512 * 0.80)
+max_side = round(512 * 0.90)
 scale = min(max_side / subject.width, max_side / subject.height)
 resample = Image.Resampling.LANCZOS
 subject = subject.resize((max(1, round(subject.width * scale)), max(1, round(subject.height * scale))), resample)

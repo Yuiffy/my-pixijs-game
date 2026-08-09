@@ -21,6 +21,11 @@ import {
   snapshotAutopilotRolloutCache,
 } from "./ai/AutoChessAutopilot";
 import type { AutopilotStyle } from "./ai/autopilotPolicy";
+import {
+  setCharacterStyle,
+  useCharacterStyle,
+  type CharacterStyle,
+} from "./core/characterStyle";
 import { GO_ROLLOUT_CACHE_SCHEMA } from "./ai/rolloutCacheSchema";
 import {
   AutoChessAudio,
@@ -79,7 +84,7 @@ declare global {
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
 const AUTOPILOT_STRATEGY_KEY = "rift-line-autopilot-strategy";
-const AUTOPILOT_STRATEGY_VERSION = 3;
+const AUTOPILOT_STRATEGY_VERSION = 4;
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
@@ -211,14 +216,12 @@ const loadAutopilotStrategy = (): AutopilotStyle => {
   try {
     const stored = JSON.parse(window.localStorage.getItem(AUTOPILOT_STRATEGY_KEY) || "null");
     if (stored?.style === "seer2") return "seer";
-    if (stored?.style === "go" && stored?.version !== AUTOPILOT_STRATEGY_VERSION) {
-      return "seer";
-    }
-    return ["survival", "balanced", "highroll", "seer", "go"].includes(stored?.style)
-      ? stored.style as AutopilotStyle
-      : stored?.informationMode === "oracle" ? "seer" : "survival";
+    if (stored?.style === "go") return stored?.version >= 3 ? "go" : "seer";
+    if (stored?.style === "seer" || stored?.style === "fair") return stored.style;
+    if (["survival", "balanced", "highroll"].includes(stored?.style)) return "fair";
+    return stored?.informationMode === "oracle" ? "seer" : "fair";
   } catch {
-    return "survival";
+    return "fair";
   }
 };
 
@@ -234,8 +237,9 @@ export default function AutoChessGame() {
   const [codexOpen, setCodexOpen] = useState(false);
   const [releaseOpen, setReleaseOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const characterStyle = useCharacterStyle();
   const [autoplayEnabled, setAutoplayEnabled] = useState(false);
-  const [autopilotStyle, setAutopilotStyle] = useState<AutopilotStyle>("survival");
+  const [autopilotStyle, setAutopilotStyle] = useState<AutopilotStyle>("fair");
   const [backgroundBattleEnabled, setBackgroundBattleEnabled] = useState(false);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
@@ -339,8 +343,10 @@ export default function AutoChessGame() {
       // The strategy still applies for this session when storage is unavailable.
     }
     setMessage(style === "go"
-      ? "Go级托管策略已更新。"
-      : style === "seer" ? "看穿2托管策略已更新。" : "托管策略已更新。");
+      ? "Go测试托管策略已更新。"
+      : style === "seer"
+        ? "看穿2托管策略已更新。"
+        : "实战托管策略已更新。");
     setRevision((value) => value + 1);
   }, []);
 
@@ -658,6 +664,13 @@ export default function AutoChessGame() {
   }, [codexOpen, releaseOpen, settingsOpen]);
 
   useEffect(() => {
+    const scene = gameRef.current?.scene.getScene("RiftLineScene") as {
+      setCharacterStyle?: (style: CharacterStyle) => void;
+    } | undefined;
+    scene?.setCharacterStyle?.(characterStyle);
+  }, [characterStyle]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && releaseOpen) {
         event.preventDefault();
@@ -839,16 +852,34 @@ export default function AutoChessGame() {
           <div className="rift-settings-scrim" role="presentation" onPointerDown={() => setSettingsOpen(false)}>
             <section className="rift-settings-panel" role="dialog" aria-modal="true" aria-label="游戏设置" onPointerDown={(event) => event.stopPropagation()}>
               <header><strong>游戏设置</strong><button type="button" aria-label="关闭设置" onClick={() => setSettingsOpen(false)}><CloseOutlined aria-hidden="true" /></button></header>
+              <div className="rift-setting-strategy rift-setting-character-style">
+                <span>角色样式</span>
+                <div role="radiogroup" aria-label="角色样式">
+                  {([[
+                    "minimal", "极简",
+                  ], [
+                    "detail", "细节",
+                  ], [
+                    "classic", "棋子",
+                  ]] as const).map(([style, label]) => (
+                    <button
+                      key={style}
+                      type="button"
+                      role="radio"
+                      aria-checked={characterStyle === style}
+                      onClick={() => setCharacterStyle(style)}
+                    >{label}</button>
+                  ))}
+                </div>
+              </div>
               <div className="rift-setting-row"><span>AI 托管</span><button type="button" className="rift-switch" role="switch" aria-label="AI 托管" aria-checked={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)}><i /></button></div>
               <div className="rift-setting-strategy">
                 <span>托管风格</span>
                 <div role="radiogroup" aria-label="托管风格">
                   {([
-                    ["survival", "稳健"],
-                    ["balanced", "均衡"],
-                    ["highroll", "搏上限"],
+                    ["fair", "实战"],
                     ["seer", "看穿2"],
-                    ["go", "Go级"],
+                    ["go", "Go测试"],
                   ] as const).map(([style, label]) => (
                     <button
                       key={style}

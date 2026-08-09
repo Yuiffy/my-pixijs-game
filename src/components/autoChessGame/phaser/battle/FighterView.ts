@@ -5,6 +5,7 @@ import {
   type UnitId,
 } from "../../core/gameData";
 import type { Fighter } from "../../core/gameTypes";
+import { getCharacterStyle, resolveUnitPortrait } from "../../core/characterStyle";
 import { mumuWhipPullProgress } from "../../core/motionPaths";
 import {
   GLUTTONY_RADIUS_PER_STACK,
@@ -198,7 +199,8 @@ export class FighterViewRenderer {
       : groundMotion && abilityMotion
         ? Math.sin((abilityMotion.time / Math.max(abilityMotion.duration, 0.001)) * Math.PI)
         : 0;
-    const spriteWalking = UNIT_DEFS[fighter.unitId].portraitStyle === "sprite"
+    const resolvedPortrait = resolveUnitPortrait(fighter.unitId);
+    const spriteWalking = resolvedPortrait.portraitStyle === "sprite"
       && movedDistance > 0.05
       && !jumping
       && !groundMotion
@@ -227,9 +229,10 @@ export class FighterViewRenderer {
       )
       .setAngle(groundMotion ? fighter.facingX * motionPulse * (mumuPulling ? 14 : 7) : walkTilt)
       .setAlpha(fighter.stun > 0 ? 0.72 : 1);
-    const normalPortraitKey = UNIT_DEFS[fighter.unitId].portraitStyle === "sprite"
-      ? textureKeyForUnit(fighter.unitId)
-      : circularTextureKeyForUnit(fighter.unitId);
+    const characterStyle = getCharacterStyle();
+    const normalPortraitKey = resolvedPortrait.portraitStyle === "sprite"
+      ? textureKeyForUnit(fighter.unitId, characterStyle)
+      : circularTextureKeyForUnit(fighter.unitId, characterStyle);
     const portraitKey = fighter.unitId === "sun_guard" && fighter.manquTime > 0
       ? HAZEL_MANQU_TEXTURE_KEY
       : normalPortraitKey;

@@ -1,4 +1,9 @@
 import Phaser from "phaser";
+import {
+  getCharacterStyle,
+  resolveUnitPortrait,
+  type CharacterStyle,
+} from "../core/characterStyle";
 import type { UnitId, WaveUnit } from "../core/gameData";
 import {
   ABILITY_CAST_TIMING_LABELS,
@@ -321,6 +326,20 @@ export class RiftLineScene extends Phaser.Scene {
   public refresh() {
     if (!this.phaseLayer || !this.entityLayer || !this.effectsLayer) return;
     this.rebuild();
+  }
+
+  public setCharacterStyle(style: CharacterStyle) {
+    const finish = () => {
+      createCircularPortraitTextures(this, style);
+      this.refresh();
+    };
+    const queued = preloadUnitPortraits(this, [style]);
+    if (queued === 0) {
+      finish();
+      return;
+    }
+    this.load.once(Phaser.Loader.Events.COMPLETE, finish);
+    if (!this.load.isLoading()) this.load.start();
   }
 
   public adjustBattleView(action: BattleViewAction) {
@@ -1067,26 +1086,26 @@ export class RiftLineScene extends Phaser.Scene {
     };
     const starColor = unit.star === 3 ? "#ffdc68" : unit.star === 2 ? "#8ee9ff" : "#8ba1b2";
     const portrait = this.createPortrait(unit.id, rect.x + rect.width / 2, slotLayout.portraitY, slotLayout.portraitRadius);
-    const stars = this.text(rect.x + rect.width / 2, slotLayout.starY + slotLayout.starHeight / 2, "★".repeat(unit.star), compact ? 9 : 10, starColor, textStyle).setOrigin(0.5);
+    const stars = this.text(slotLayout.starX, slotLayout.starY, "★".repeat(unit.star), compact ? 9 : 10, starColor, textStyle).setOrigin(0, 0.5);
     const name = this.text(
-      rect.x + rect.width / 2,
+      slotLayout.nameX,
       slotLayout.nameY,
       this.truncateText(definition.name, slotLayout.nameWidth, compact ? 10 : 9, textStyle),
       compact ? 10 : 9,
       "#e5f4ff",
       textStyle,
-    ).setOrigin(0.5, 0.5);
+    ).setOrigin(0, 0.5);
     const value = isBench ? this.bridge.engine.getUnitSellValue(unit) : 0;
     const valueColor = value > 5 ? COLORS.gold : "#b7a271";
     const valueLabel = isBench
       ? this.text(
-        compact ? rect.x + rect.width - 7 : rect.x + rect.width / 2,
-        compact ? rect.y + 8 : rect.y + 51,
+        slotLayout.valueX,
+        slotLayout.valueY,
         `● ${value}`,
         compact ? 8 : 9,
         valueColor,
         { ...textStyle, strokeThickness: value > 5 ? 2 : 1 },
-      ).setOrigin(compact ? 1 : 0.5, 0.5)
+      ).setOrigin(1, 0.5)
       : null;
     this.phaseLayer.add(valueLabel ? [portrait, stars, name, valueLabel] : [portrait, stars, name]);
   }
@@ -2060,15 +2079,19 @@ export class RiftLineScene extends Phaser.Scene {
 
   private createPortrait(unitId: UnitId, x: number, y: number, radius: number, enemy = false) {
     const def = UNIT_DEFS[unitId];
+    const characterStyle = getCharacterStyle();
+    const resolvedPortrait = resolveUnitPortrait(unitId, characterStyle);
     const container = this.add.container(x, y);
-    const key = def.portraitStyle === "sprite" ? textureKeyForUnit(unitId) : circularTextureKeyForUnit(unitId);
+    const key = resolvedPortrait.portraitStyle === "sprite"
+      ? textureKeyForUnit(unitId, characterStyle)
+      : circularTextureKeyForUnit(unitId, characterStyle);
     const hasTexture = this.textures.exists(key);
     const portrait = this.add.image(0, 0, hasTexture ? key : "rift-fallback-unit").setName("portraitImage");
     const accent = Phaser.Display.Color.HexStringToColor(enemy ? "#ff688e" : def.accent).color;
     const unitColor = Phaser.Display.Color.HexStringToColor(def.color).color;
     const layers: Phaser.GameObjects.GameObject[] = [];
 
-    if (def.portraitStyle === "sprite") {
+    if (resolvedPortrait.portraitStyle === "sprite") {
       const { frame } = portrait;
       const spriteDiameter = radius * 2.45;
       portrait

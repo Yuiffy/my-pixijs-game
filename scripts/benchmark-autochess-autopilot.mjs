@@ -75,6 +75,9 @@ const informationMode = option(
 const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "60")) || 60));
 const battleStepHz = Math.max(20, Math.min(60, Number(option("--battle-hz", "60")) || 60));
 const reportProgress = process.argv.includes("--progress");
+const diagnosticsEnabled = process.argv.includes("--diagnostics");
+const diagnosticRound = Math.max(0, Number(option("--diagnostic-round", "0")) || 0);
+const profileEnabled = process.argv.includes("--profile");
 if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
@@ -229,6 +232,9 @@ const playRun = (seed) => {
   let autopilotTickMs = 0;
   let autopilotTickCount = 0;
   let maximumAutopilotTickMs = 0;
+  const slowTicks = [];
+  let consecutiveIdleTicks = 0;
+  let lastIdleSnapshot = null;
 
   const battleLimitReached = () => inputSnapshot
     ? (rounds.at(-1)?.round || 0) >= maximumBattles
@@ -238,6 +244,45 @@ const playRun = (seed) => {
     now += 1000;
     if (bridge.engine.state.phase === "battle") {
       const round = bridge.engine.state.round;
+      const diagnostic = diagnosticsEnabled
+        && (!diagnosticRound || diagnosticRound === round)
+        ? (() => {
+          // These calls only expose the already-computed decision boundary;
+          // they are deliberately opt-in because confidence can be expensive.
+          const introspection = autopilot;
+          const roster = introspection.ownedEntries();
+          const rolloutConfidence = introspection.rolloutConfidence(roster);
+          const rerollStrategy = introspection.rerollStrategy(roster, true);
+          return {
+            preparationStartGold: introspection.preparationStartGold,
+            currentGold: bridge.engine.state.gold,
+            hp: bridge.engine.state.hp,
+            playerLevel: bridge.engine.state.playerLevel,
+            financeInterestActive: introspection.financeInterestActive(),
+            lateGameDevelopmentIncomplete: introspection.lateGameDevelopmentIncomplete(roster),
+            terminalCompletionProjectCount: introspection.terminalCompletionProjectCount(roster),
+            rolloutConfidence,
+            rerollScore: rerollStrategy.rolloutScore,
+            rerollMode: rerollStrategy.mode,
+            safeWinRolloutScore: introspection.policy.safeWinRolloutScore,
+            terminalDevelopmentWindowOpen: introspection.terminalDevelopmentWindowOpen(
+              roster,
+              rerollStrategy.rolloutScore,
+            ),
+            terminalRollDownReserve: introspection.terminalRollDownReserve(
+              roster,
+              rerollStrategy.rolloutScore,
+            ),
+            shouldSearchLongTermDevelopment: introspection.shouldSearchLongTermDevelopment(roster),
+            goldReserve: introspection.goldReserve(false, 0),
+            preparationActions: introspection.preparationActions,
+            rerolls: introspection.rerolls,
+            paidRerolls: introspection.paidRerolls,
+            dryPaidRerolls: introspection.dryPaidRerolls,
+            rescueLineupLocked: introspection.rescueLineupLocked,
+          };
+        })()
+        : null;
       const before = {
         round,
         starter: bridge.engine.state.starter,
@@ -279,6 +324,7 @@ const playRun = (seed) => {
           dryPaidRerolls: autopilot.dryPaidRerolls,
           preparationActions: autopilot.preparationActions,
           preBattleVerification: goPreBattleVerification.get(round) || null,
+          diagnostic,
         },
         actions: { ...(actionsByRound.get(round) || {}) },
       };
@@ -326,11 +372,56 @@ const playRun = (seed) => {
     autopilotTickMs += tickElapsedMs;
     autopilotTickCount += 1;
     maximumAutopilotTickMs = Math.max(maximumAutopilotTickMs, tickElapsedMs);
+    if (profileEnabled && tickElapsedMs >= 1000) {
+      slowTicks.push({
+        round: actionRound,
+        phase: bridge.engine.state.phase,
+        elapsedMs: Number(tickElapsedMs.toFixed(2)),
+        action: action?.type || null,
+        preparationActions: autopilot.preparationActions,
+        rerolls: autopilot.rerolls,
+        paidRerolls: autopilot.paidRerolls,
+        gold: bridge.engine.state.gold,
+        hp: bridge.engine.state.hp,
+      });
+      slowTicks.sort((left, right) => right.elapsedMs - left.elapsedMs);
+      if (slowTicks.length > 24) slowTicks.length = 24;
+    }
     if (action) {
+      consecutiveIdleTicks = 0;
       actions[action.type] = (actions[action.type] || 0) + 1;
       const roundActions = actionsByRound.get(actionRound) || {};
       roundActions[action.type] = (roundActions[action.type] || 0) + 1;
       actionsByRound.set(actionRound, roundActions);
+    } else {
+      consecutiveIdleTicks += 1;
+      if (consecutiveIdleTicks === 25) {
+        lastIdleSnapshot = {
+          round: bridge.engine.state.round,
+          phase: bridge.engine.state.phase,
+          gold: bridge.engine.state.gold,
+          hp: bridge.engine.state.hp,
+          level: bridge.engine.state.playerLevel,
+          boardCount: bridge.engine.boardCount,
+          boardCap: bridge.engine.boardCap,
+          board: bridge.engine.state.board.map((unit) => (
+            unit ? `${unit.id}:${unit.star}:${unit.uid}` : null
+          )),
+          bench: bridge.engine.state.bench.map((unit) => (
+            unit ? `${unit.id}:${unit.star}:${unit.uid}` : null
+          )),
+          shop: [...bridge.engine.state.shop],
+          plannedLineupUids: [...autopilot.plannedLineupUids],
+          plannedBoardSlots: Array.from(autopilot.plannedBoardSlots.entries()),
+          plannedScore: autopilot.plannedLineupScore,
+          preparationActions: autopilot.preparationActions,
+          rerolls: autopilot.rerolls,
+          paidRerolls: autopilot.paidRerolls,
+          dryPaidRerolls: autopilot.dryPaidRerolls,
+          finalizingEconomy: autopilot.finalizingEconomy,
+          pendingPurchase: autopilot.pendingPurchase,
+        };
+      }
     }
     if (action?.type === "move" && bridge.engine.state.toast?.text.startsWith("当前只能上阵")) {
       invalidMoves += 1;
@@ -342,7 +433,11 @@ const playRun = (seed) => {
     previousSelection = selectionKey;
   }
 
-  if (safety >= 5000) throw new Error(`Autopilot safety limit reached for seed ${seed}`);
+  if (safety >= 5000) {
+    throw new Error(
+      `Autopilot safety limit reached for seed ${seed}: ${JSON.stringify(lastIdleSnapshot)}`,
+    );
+  }
   const run = {
     seed,
     enemySeed: bridge.engine.state.enemySeed,
@@ -367,6 +462,7 @@ const playRun = (seed) => {
     autopilotTickMs,
     autopilotTickCount,
     maximumAutopilotTickMs,
+    slowTicks: profileEnabled ? slowTicks : undefined,
     rounds,
   };
   run.finalAssetValue = rounds.at(-1)?.assetValue || bridge.engine.state.gold + rosterAssetValue(bridge.engine);

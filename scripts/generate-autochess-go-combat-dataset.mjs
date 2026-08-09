@@ -31,6 +31,14 @@ const candidatesPerContext = Math.max(
 );
 const seedBase = Math.max(1, Number(option("--seed", "160000")) || 160000);
 const maximumRound = Math.max(1, Math.min(60, Number(option("--rounds", "60")) || 60));
+const minimumRound = Math.max(
+  1,
+  Math.min(maximumRound, Number(option("--minimum-round", "1")) || 1),
+);
+const futureHorizon = Math.max(
+  0,
+  Math.min(8, Number(option("--future-horizon", "0")) || 0),
+);
 const enemySeeds = [...new Set(option("--enemy-seeds", "152100,152102")
   .split(",")
   .map((value) => Math.max(1, Math.trunc(Number(value))))
@@ -41,7 +49,8 @@ const combatHz = Math.max(20, Math.min(60, Number(option("--combat-hz", "20")) |
 const campaignLabel = enemySeeds.join("-");
 const outputPath = path.resolve(option(
   "--output",
-  `artifacts/autochess-go-combat-enemy-${campaignLabel}-r${maximumRound}-hz${combatHz}.json`,
+  `artifacts/autochess-go-combat-enemy-${campaignLabel}`
+    + `-r${minimumRound}-${maximumRound}-h${futureHorizon}-hz${combatHz}.json`,
 ));
 const progress = process.argv.includes("--progress");
 
@@ -178,9 +187,10 @@ const mutateLineup = (source, round, rng, uidBase) => {
 
 const startedAt = performance.now();
 let completedContexts = 0;
-const totalContexts = enemySeeds.length * maximumRound;
+const totalContexts = enemySeeds.length * (maximumRound - minimumRound + 1);
+const campaignEntries = [];
 for (const [enemyIndex, enemySeed] of enemySeeds.entries()) {
-  for (let round = 1; round <= maximumRound; round += 1) {
+  for (let round = minimumRound; round <= maximumRound; round += 1) {
     const seed = seedBase + enemyIndex * 10000 + round;
     const rng = makeRng((seed * 2654435761) ^ enemySeed ^ (round * 104729));
     const starter = STARTERS[(round + enemyIndex) % STARTERS.length];
@@ -220,7 +230,31 @@ for (const [enemyIndex, enemySeed] of enemySeeds.entries()) {
     }
 
     for (const lineup of lineups.values()) {
-      autopilot.rolloutLineupScore(lineup, FORMATION, true, combatHz);
+      const currentScore = autopilot.rolloutLineupScore(
+        lineup,
+        FORMATION,
+        true,
+        combatHz,
+      );
+      if (futureHorizon > 0) {
+        const currentEntry = snapshotAutopilotRolloutCache().at(-1);
+        if (!currentEntry || !currentEntry[0].includes(`/round:${round}/`)) {
+          throw new Error(`Could not resolve current-round cache key for round ${round}`);
+        }
+        const futureScores = Array.from(
+          { length: Math.min(futureHorizon, 60 - round) },
+          (_, offset) => autopilot.rolloutLineupScoreAtRound(
+            lineup,
+            round + offset + 1,
+            FORMATION,
+            combatHz,
+          ),
+        );
+        campaignEntries.push([
+          currentEntry[0],
+          Math.min(currentScore, ...futureScores),
+        ]);
+      }
     }
     completedContexts += 1;
     if (progress && (completedContexts % 4 === 0 || completedContexts === totalContexts)) {
@@ -245,7 +279,10 @@ const payload = {
   generatedAt: new Date().toISOString(),
   seedBase,
   enemySeeds,
+  minimumRound,
   maximumRound,
+  futureHorizon,
+  labelMode: futureHorizon > 0 ? "future-window-minimum" : "current-combat",
   contexts: totalContexts,
   candidatesPerContext,
   formation: FORMATION,
@@ -254,12 +291,14 @@ const payload = {
   elapsedSeconds: (performance.now() - startedAt) / 1000,
   unitFeatureNames: UNIT_FEATURE_NAMES,
   unitFeatures: UNIT_FEATURES,
-  entries,
+  exactCombatEntries: entries.length,
+  entries: futureHorizon > 0 ? campaignEntries : entries,
 };
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, JSON.stringify(payload), "utf8");
 console.log(JSON.stringify({
   outputPath,
-  entries: entries.length,
+  entries: payload.entries.length,
+  exactCombatEntries: entries.length,
   elapsedSeconds: payload.elapsedSeconds,
 }, null, 2));

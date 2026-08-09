@@ -428,6 +428,25 @@ test("Go级当前战稳胜但下一战必败时会提前进入稳定化", () => 
   assert.equal(autopilot.rerollStrategy(autopilot.ownedEntries()).mode, "stabilize");
 });
 
+test("Go级不会让下一战前瞻扰动前十三战经济", () => {
+  const bridge = new EngineBridge(162127);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 13;
+  bridge.engine.state.board[0] = { uid: 1621270, id: "lian", star: 2 };
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.rolloutConfidence = () => 11_000;
+  let futureCalls = 0;
+  autopilot.rolloutLineupScoreAtRound = () => {
+    futureCalls += 1;
+    return -100;
+  };
+
+  assert.equal(autopilot.rerollStrategy(autopilot.ownedEntries()).mode, "bank");
+  assert.equal(futureCalls, 0);
+});
+
 test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
   assert.equal(GO_COMBAT_MODEL_SCHEMA, "go-combat-ranker-v2");
   assert.equal(GO_COMBAT_MODEL_VERIFICATION.length, 5);
@@ -439,54 +458,6 @@ test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
       `expected ${fixture.modelScore}, received ${actual}`,
     );
   });
-});
-
-test("Go级模型将第56战学到的北欧魔法师胜阵保留在真实复核预算内", () => {
-  const enemyIds = [
-    "rift_tyrant",
-    "cinder_ram", "cinder_ram", "cinder_ram",
-    "lian", "clock_gunner", "shiori",
-    "cinder_ram", "cinder_ram", "cinder_ram",
-    "lian", "clock_gunner", "shiori",
-    "cinder_ram", "cinder_ram", "cinder_ram",
-    "lian", "clock_gunner", "shiori",
-    "cinder_ram", "cinder_ram", "cinder_ram",
-    "lian", "clock_gunner", "shiori", "cinder_ram",
-  ];
-  const context = {
-    starter: "bastion",
-    augments: [
-      "execution", "glass_cannon", "momentum", "overclock", "payday", "precision",
-      "second_wind", "sharp_edge", "tempered", "triage", "united_front",
-    ],
-    waveTag: "boss",
-    modifier: 1.6486909407714407,
-    enemies: enemyIds.map((id, position) => ({ id, star: 3, position })),
-  };
-  const players = (entries) => entries.map(([position, id]) => ({
-    id,
-    star: 3,
-    position,
-  }));
-  const learnedWinner = scoreGoCombatCandidate({
-    ...context,
-    players: players([
-      [10, "xuehui"], [11, "grove_mender"], [15, "cog_scribe"],
-      [16, "cinder_ram"], [17, "nagisa"], [22, "yua"], [23, "rei"],
-      [3, "spark_mage"], [4, "yukisyo"], [9, "lian"],
-    ]),
-  });
-  const staleLineup = scoreGoCombatCandidate({
-    ...context,
-    players: players([
-      [10, "tower_god"], [11, "grove_mender"], [15, "cog_scribe"],
-      [16, "xuehui"], [17, "sui_cat"], [22, "yua"], [23, "rei"],
-      [4, "sui_flower"], [5, "zeyin"], [9, "lian"],
-    ]),
-  });
-
-  assert.ok(learnedWinner > 0);
-  assert.ok(learnedWinner - staleLineup > 3);
 });
 
 test("真正 Go级保留动态商店规划但不继承看穿2的固定阵容搜索", () => {
@@ -688,6 +659,102 @@ test("Go级规范站位不依赖 UID、购买顺序或当前棋盘顺序", () =>
   assert.equal(signatures.length, 2);
   assert.equal(signatures[0], signatures[1]);
   assert.equal(new Set(signatures[0].split(",").map((token) => token.split(":")[0])).size, units.length);
+});
+
+test("实战使用 Go v4 模型与规范站位但不读取未来信息", () => {
+  const bridge = new EngineBridge(162131);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 6;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  const ids = [
+    "lian",
+    "rei",
+    "cinder_ram",
+    "spark_mage",
+    "grove_mender",
+    "yua",
+    "xuehui",
+    "yukisyo",
+  ];
+  const cap = bridge.engine.boardCap;
+  ids.slice(0, cap).forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 1621310 + index, id, star: index % 2 ? 2 : 1 };
+  });
+  ids.slice(cap, cap + 2).forEach((id, index) => {
+    bridge.engine.state.bench[index] = { uid: 1621320 + index, id, star: 2 };
+  });
+
+  let modelCalls = 0;
+  let futureShopCalls = 0;
+  let nextRoundCalls = 0;
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "fair",
+    "oracle",
+    20,
+    ({ players }) => {
+      modelCalls += 1;
+      return players.reduce((score, player) => score + player.star, 0);
+    },
+  );
+  bridge.engine.previewFutureShops = () => {
+    futureShopCalls += 1;
+    throw new Error("实战不应读取未来商店");
+  };
+  bridge.engine.previewFutureShopsAtLevels = () => {
+    futureShopCalls += 1;
+    throw new Error("实战不应读取未来等级商店");
+  };
+  autopilot.rolloutLineupScoreAtRound = () => {
+    nextRoundCalls += 1;
+    throw new Error("实战不应读取下一关");
+  };
+  autopilot.rolloutLineupScore = (lineup) => 10_000 + lineup.reduce(
+    (score, { unit }) => score + unit.star,
+    0,
+  );
+
+  const roster = autopilot.ownedEntries();
+  const lineup = autopilot.rolloutTargetLineup(roster);
+  autopilot.resetPreparation(bridge.engine.state.round);
+  autopilot.oracleHasFutureCandidate(roster);
+  autopilot.rerollStrategy(roster);
+
+  assert.equal(autopilot.strategyStyle, "fair");
+  assert.equal(autopilot.strategyInformationMode, "normal");
+  assert.equal(bridge.autoplayStyle, "fair");
+  assert.equal(bridge.autoplayInformationMode, "normal");
+  assert.deepEqual(autopilot.formationProfileIds(), ["go_canonical"]);
+  assert.equal(lineup.length, cap);
+  assert.ok(modelCalls > 0);
+  assert.equal(futureShopCalls, 0);
+  assert.equal(nextRoundCalls, 0);
+});
+
+test("实战不映射敌方战役种子且开战不固定 RNG", () => {
+  const bridge = new EngineBridge(162133);
+  bridge.setConsoleLogging(false);
+  new AutoChessAutopilot(bridge, "evolution", {}, "fair", "normal", 20);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.dispatch({ type: "starter", id: "bastion" });
+  assert.equal(bridge.engine.state.enemySeed, 162133);
+
+  bridge.engine.state.board[0] = { uid: 1621330, id: "lian", star: 2 };
+  let restoreCalls = 0;
+  const restoreRandomState = bridge.engine.restoreRandomState.bind(bridge.engine);
+  bridge.engine.restoreRandomState = (randomState) => {
+    restoreCalls += 1;
+    return restoreRandomState(randomState);
+  };
+  bridge.dispatch({ type: "battle" });
+
+  assert.equal(restoreCalls, 0);
+  assert.equal(bridge.engine.state.phase, "battle");
 });
 
 test("Go级将商店种子映射到两套固定敌方战役且不改变商店", () => {

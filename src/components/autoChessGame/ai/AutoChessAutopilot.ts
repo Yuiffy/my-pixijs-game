@@ -179,9 +179,11 @@ const ECONOMY_ACTION_LIMIT = 72;
 const FORMATION_ACTION_LIMIT = 88;
 const PREPARATION_ACTION_LIMIT = 96;
 const GO_PREPARATION_ACTION_LIMIT = 176;
+const NORMAL_REPEATED_STATE_LIMIT = 8;
 const REPLACEMENT_PREVIEW_LIMIT = 5;
 const REPLACEMENT_ROLLOUT_MIN_GAIN = 12;
 const RESCUE_HEURISTIC_CANDIDATE_LIMIT = 24;
+const NORMAL_RESCUE_DIRECT_SHORTLIST_LIMIT = 24;
 const GO_RESCUE_DIRECT_SWAP_SCREEN_LIMIT = 12;
 const RESCUE_TWO_SWAP_CANDIDATE_LIMIT = 32;
 const RESCUE_MIN_WIN_SCORE = 10000 - 26;
@@ -203,6 +205,7 @@ const SEER_ENDGAME_TARGET_LOOKAHEAD = 48;
 const SEER_ENDGAME_MAX_EXTRA_REROLLS = 48;
 const GO_OPPORTUNITY_SHOP_LOOKAHEAD = 128;
 const GO_OPPORTUNITY_MAX_REROLLS = 64;
+const GO_FUTURE_THREAT_MIN_ROUND = 14;
 // Keep a broad terminal project cover so a late reroll cannot sell a unit
 // that is needed by a different future composition. Bench capacity and the
 // exact combat planner still decide which projects are actually deployed.
@@ -383,6 +386,7 @@ export class AutoChessAutopilot {
     lineup: Array<{ id: UnitId; star: OwnedUnit["star"] }>;
     formation: FormationProfile;
     score: number;
+    round: number;
     waveTag: "normal" | "elite" | "boss";
   } | null = null;
 
@@ -509,14 +513,14 @@ export class AutoChessAutopilot {
     this.policyOverrides = { ...policy };
     const canonicalStyle = canonicalAutopilotStyle(style);
     this.style = canonicalStyle;
-    this.informationMode = informationMode;
+    this.informationMode = canonicalStyle === "fair" ? "normal" : informationMode;
     this.rolloutCombatHz = Math.max(20, Math.min(
       EXACT_COMBAT_HZ,
       Math.round(rolloutCombatHz),
     ));
     this.liveBattleAuditEnabled = liveBattleAudit;
     this.policy = resolveAutopilotStylePolicy(canonicalStyle, this.policyOverrides);
-    this.bridge.setAutopilotStrategy(canonicalStyle, informationMode);
+    this.bridge.setAutopilotStrategy(canonicalStyle, this.informationMode);
   }
 
   public get isEnabled() {
@@ -537,9 +541,9 @@ export class AutoChessAutopilot {
   ) {
     const canonicalStyle = canonicalAutopilotStyle(style);
     this.style = canonicalStyle;
-    this.informationMode = informationMode;
+    this.informationMode = canonicalStyle === "fair" ? "normal" : informationMode;
     this.policy = resolveAutopilotStylePolicy(canonicalStyle, this.policyOverrides);
-    this.bridge.setAutopilotStrategy(canonicalStyle, informationMode);
+    this.bridge.setAutopilotStrategy(canonicalStyle, this.informationMode);
     this.invalidateFinalLineup();
     this.seerRouteAbandoned = false;
     this.seerExtendedPlanningUnlocked = false;
@@ -555,6 +559,14 @@ export class AutoChessAutopilot {
 
   private usesSeer2Economy() {
     return this.style === "seer" || this.style === "go";
+  }
+
+  private usesLearnedCombatPlanner() {
+    return this.style === "fair" || this.style === "go";
+  }
+
+  private usesBalancedEconomy() {
+    return this.style === "fair" || this.style === "balanced";
   }
 
   private seerPlanningTargetRound() {
@@ -626,7 +638,7 @@ export class AutoChessAutopilot {
   }
 
   private formationProfileIds() {
-    if (this.style === "go") return GO_FORMATION_PROFILE_IDS;
+    if (this.usesLearnedCombatPlanner()) return GO_FORMATION_PROFILE_IDS;
     // 真人记录站位是看穿2的终局资产；开局单位少、商店过渡频繁时，
     // 把它和三套稳定站位一起竞争只会放大单战随机差异。
     const useRecordedFormation = this.usesSeer2Foundation()
@@ -637,7 +649,8 @@ export class AutoChessAutopilot {
   }
 
   private formationBudgetAvailable() {
-    return this.style === "go" || this.preparationActions < FORMATION_ACTION_LIMIT;
+    return this.usesLearnedCombatPlanner()
+      || this.preparationActions < FORMATION_ACTION_LIMIT;
   }
 
   public setEnabled(enabled: boolean) {
@@ -2094,6 +2107,7 @@ export class AutoChessAutopilot {
       && previous
       && previous.rosterShapeKey === rosterShapeKey
       && previous.waveTag === waveTag
+      && previous.round === this.bridge.engine.state.round
       && previous.lineup.length === expectedLineupLength
       && this.bridge.engine.state.round >= 28
       && previous.lineup.every(({ star }) => star === 3)
@@ -2130,6 +2144,7 @@ export class AutoChessAutopilot {
             ...previous,
             lineup: reused.map(({ unit }) => ({ id: unit.id, star: unit.star })),
             score,
+            round: this.bridge.engine.state.round,
             waveTag,
           };
           return reused;
@@ -2138,6 +2153,91 @@ export class AutoChessAutopilot {
     }
 
     const heuristic = this.targetLineup(roster);
+
+    // Normal styles do not know future shops, but a safe late-game lineup is
+    // still reusable after buying a weaker bench filler. Re-score that known
+    // composition once for the current wave instead of enumerating every
+    // formation and replacement again. A genuinely stronger new unit, a
+    // wounded player, or an unsafe previous score still takes the full search.
+    if (
+      (
+        this.style === "survival"
+        || this.style === "balanced"
+        || this.style === "highroll"
+        || this.style === "fair"
+      )
+      && this.planningMode === "evolution"
+      && previous
+      && previous.score >= this.policy.safeWinRolloutScore
+      && this.bridge.engine.state.hp > this.policy.woundedHpThreshold
+      && this.bridge.engine.state.round >= 18
+      && previous.lineup.length === expectedLineupLength
+      && previous.waveTag === waveTag
+      && previous.round <= this.bridge.engine.state.round
+    ) {
+      const available = [...roster];
+      const reused = previous.lineup.flatMap((plannedUnit) => {
+        const choices = available
+          .map((entry, index) => ({ entry, index }))
+          .filter(({ entry }) => (
+            entry.unit.id === plannedUnit.id && entry.unit.star === plannedUnit.star
+          ))
+          .sort((left, right) => (
+            Number(right.entry.location.zone === "board")
+              - Number(left.entry.location.zone === "board")
+            || this.unitScore(right.entry.unit, roster) - this.unitScore(left.entry.unit, roster)
+            || left.entry.unit.uid - right.entry.unit.uid
+          ));
+        const choice = choices[0];
+        if (!choice) return [];
+        available.splice(choice.index, 1);
+        return [choice.entry];
+      });
+      const weakestScore = Math.min(
+        ...reused.map(({ unit }) => this.unitScore(unit, roster)),
+      );
+      const strongerReplacement = available.some(({ unit }) => (
+        this.unitScore(unit, roster) >= weakestScore + 18
+      ));
+      const score = this.rolloutLineupScore(reused, previous.formation);
+      const heuristicScore = previous.round < this.bridge.engine.state.round
+        ? this.rolloutLineupScore(heuristic, previous.formation)
+        : score;
+      if (
+        reused.length === expectedLineupLength
+        && Number.isFinite(weakestScore)
+        && !strongerReplacement
+        && heuristicScore < score + REPLACEMENT_ROLLOUT_MIN_GAIN
+      ) {
+        if (score >= this.policy.safeWinRolloutScore) {
+          this.plannedLineupKey = key;
+          this.plannedLineupUids = reused.map(({ unit }) => unit.uid);
+          this.plannedLineupUnits = new Map(reused.map(({ unit }) => [
+            unit.uid,
+            { id: unit.id, star: unit.star },
+          ]));
+          this.plannedLineupScore = score;
+          this.plannedLineupRandomState = this.bridge.engine.getRandomState();
+          this.plannedFormation = previous.formation;
+          this.plannedBoardSlots = new Map(
+            formationPlacements(reused, previous.formation)
+              .map(({ entry, slot }) => [entry.unit.uid, slot] as [number, number]),
+          );
+          this.lineageUnitIds = reused.map(({ unit }) => unit.id);
+          this.lineageFormation = previous.formation;
+          this.previousLineupSnapshot = {
+            ...previous,
+            rosterShapeKey,
+            lineup: reused.map(({ unit }) => ({ id: unit.id, star: unit.star })),
+            score,
+            round: this.bridge.engine.state.round,
+            waveTag,
+          };
+          return reused;
+        }
+      }
+    }
+
     if (this.planningMode === "heuristic" || this.planningMode === "training") {
       this.plannedLineupKey = key;
       this.plannedLineupUids = heuristic.map(({ unit }) => unit.uid);
@@ -2145,7 +2245,7 @@ export class AutoChessAutopilot {
         unit.uid,
         { id: unit.id, star: unit.star },
       ]));
-      const heuristicFormation = this.style === "go"
+      const heuristicFormation = this.usesLearnedCombatPlanner()
         ? "go_canonical"
         : this.bridge.engine.state.round >= 18
           ? "center_wedge"
@@ -2190,7 +2290,7 @@ export class AutoChessAutopilot {
       lineup: OwnedEntry[],
       formation: FormationProfile,
       generation: number,
-    ) => (this.style === "go"
+    ) => (this.usesLearnedCombatPlanner()
       ? scoreGenome(lineup, formation, generation, true, EXACT_COMBAT_HZ)
       : scoreGenome(lineup, formation, generation));
     const compareGenome = (
@@ -2219,6 +2319,7 @@ export class AutoChessAutopilot {
         lineup: genome.lineup.map(({ unit }) => ({ id: unit.id, star: unit.star })),
         formation: genome.formation,
         score: genome.rollout,
+        round: this.bridge.engine.state.round,
         waveTag,
       };
       return genome.lineup;
@@ -2266,16 +2367,16 @@ export class AutoChessAutopilot {
     const candidates = new Map<string, OwnedEntry[]>();
     const addCandidate = (lineup: OwnedEntry[]) => {
       if (lineup.length !== cap) return;
-      const lineupKey = this.style === "go"
+      const lineupKey = this.usesLearnedCombatPlanner()
         ? rosterShapeSignature(lineup)
         : lineup.map(({ unit }) => unit.uid).sort((left, right) => left - right).join(",");
-      if (this.style === "go" && candidates.has(lineupKey)) return;
+      if (this.usesLearnedCombatPlanner() && candidates.has(lineupKey)) return;
       candidates.set(lineupKey, lineup);
     };
     const currentBoardLineup = roster.filter(({ location }) => location.zone === "board");
-    if (this.style === "go") addCandidate(currentBoardLineup);
+    if (this.usesLearnedCombatPlanner()) addCandidate(currentBoardLineup);
     addCandidate(heuristic);
-    if (this.style !== "go") addCandidate(currentBoardLineup);
+    if (!this.usesLearnedCombatPlanner()) addCandidate(currentBoardLineup);
 
     const remaining = [...roster];
     const inherited = this.lineageUnitIds.flatMap((id) => {
@@ -2324,7 +2425,7 @@ export class AutoChessAutopilot {
     const seer2PrincipalLineups = this.seer2PrincipalLineups(roster, cap);
     seer2PrincipalLineups.forEach(addCandidate);
 
-    if (this.style === "go") {
+    if (this.usesLearnedCombatPlanner()) {
       const modelGenomeKey = (lineup: OwnedEntry[], formation: FormationProfile) => (
         `${rosterShapeSignature(lineup)}/${formation}`
       );
@@ -2716,12 +2817,11 @@ export class AutoChessAutopilot {
         const previous = this.plannedLineupUnits.get(unit.uid);
         return previous?.id === unit.id && previous.star === unit.star;
       });
-    const latePlanRequiresFreshRandom = this.style === "seer"
-      && this.informationMode === "oracle"
-      && this.bridge.engine.state.round >= 48;
+    const plannedRandomStateMatches = this.plannedLineupRandomState === null
+      || this.plannedLineupRandomState === randomState;
     this.confidenceKey = key;
     this.confidenceScore = plannedMatches
-      && (!latePlanRequiresFreshRandom || this.plannedLineupRandomState === randomState)
+      && plannedRandomStateMatches
       ? this.plannedLineupScore
       : this.rolloutLineupScore(lineup);
     return this.confidenceScore;
@@ -2871,10 +2971,21 @@ export class AutoChessAutopilot {
 
   private terminalDevelopmentWindowOpen(roster: OwnedEntry[], rolloutScore: number) {
     const { state } = this.bridge.engine;
+    const woundedDevelopmentAllowed = this.usesBalancedEconomy()
+      || this.style === "highroll";
+    const surplusWithoutFinance = this.informationMode === "normal"
+      && (
+        (this.usesBalancedEconomy()
+          && this.preparationStartGold >= this.policy.terminalRollDownActivationGold + 40)
+        || (this.style === "highroll"
+          && this.preparationStartGold >= this.policy.terminalRollDownActivationGold + 16)
+      );
     return state.playerLevel >= 10
       && state.round >= this.policy.terminalRollDownMinimumRound
-      && state.hp > this.policy.woundedHpThreshold
-      && this.financeInterestActive()
+      && state.hp > (woundedDevelopmentAllowed
+        ? this.policy.criticalHpThreshold
+        : this.policy.woundedHpThreshold)
+      && (this.financeInterestActive() || surplusWithoutFinance)
       && rolloutScore >= this.policy.safeWinRolloutScore
       && this.lateGameDevelopmentIncomplete(roster);
   }
@@ -2967,6 +3078,7 @@ export class AutoChessAutopilot {
       ? this.criticalExactRolloutConfidence(roster, this.rolloutConfidence(roster))
       : this.rolloutConfidence(roster);
     const rolloutScore = this.style === "go"
+      && this.bridge.engine.state.round >= GO_FUTURE_THREAT_MIN_ROUND
       && currentRolloutScore >= this.policy.stabilizeRolloutScore
       ? Math.min(
         currentRolloutScore,
@@ -4572,7 +4684,7 @@ export class AutoChessAutopilot {
     // coarse rollout can both bless a losing board and reject a one-swap win.
     // Use the battle timestep for this bounded rescue search; ordinary
     // planning remains on the cheaper rollout timestep.
-    const exactRescueSearch = this.style !== "go"
+    const exactRescueSearch = !this.usesLearnedCombatPlanner()
       && (lateRescueSearch || woundedRescueSearch);
     const boardForRescueCheck = this.bridge.engine.state.board.map((unit) => (
       unit ? roster.find(({ unit: owned }) => owned.uid === unit.uid) || null : null
@@ -4580,7 +4692,7 @@ export class AutoChessAutopilot {
     const currentBoardLineup = boardForRescueCheck.flatMap((entry) => (entry ? [entry] : []));
     const currentBoardScore = !expandedRescueSearch
       ? Number.POSITIVE_INFINITY
-      : this.style === "go"
+      : this.usesLearnedCombatPlanner()
         ? this.rolloutLineupScore(currentBoardLineup, "go_canonical")
         : this.rolloutBoardScore(
           boardForRescueCheck,
@@ -4611,7 +4723,7 @@ export class AutoChessAutopilot {
 
     const current = this.rolloutTargetLineup(roster);
     const currentUids = new Set(current.map(({ unit }) => unit.uid));
-    const committedGoWin = this.style === "go"
+    const committedGoWin = this.usesLearnedCombatPlanner()
       && current.length === cap
       && this.plannedLineupScore >= RESCUE_MIN_WIN_SCORE
       && this.plannedLineupUids.length === cap
@@ -4625,7 +4737,7 @@ export class AutoChessAutopilot {
       return true;
     }
     const lineupKey = (lineup: OwnedEntry[]) => (
-      this.style === "go"
+      this.usesLearnedCombatPlanner()
         ? rosterShapeSignature(lineup)
         : lineup
           .map(({ unit }) => unit.uid)
@@ -4653,7 +4765,7 @@ export class AutoChessAutopilot {
     };
     let goGroupedRoster: OwnedEntry[][] = [];
     let goGroupedSuffixCounts: number[] = [];
-    if (this.style === "go") {
+    if (this.usesLearnedCombatPlanner()) {
       const groups = new Map<string, OwnedEntry[]>();
       roster.forEach((entry) => {
         const key = `${entry.unit.id}:${entry.unit.star}`;
@@ -4765,7 +4877,7 @@ export class AutoChessAutopilot {
     }
 
     const goModelFinalistKeys = new Set<string>();
-    if (this.style === "go") {
+    if (this.usesLearnedCombatPlanner()) {
       type ModelBeamNode = {
         lineup: OwnedEntry[];
         lastGroupIndex: number;
@@ -4905,6 +5017,43 @@ export class AutoChessAutopilot {
         ...ranked.slice(0, INTERACTIVE_SEER_RESCUE_DIRECT_BOARD_LIMIT - 1),
       ];
     })();
+    const rescueDirectBoardCandidates = (() => {
+      const fullExactCoverage = this.style === "survival"
+        || state.hp <= this.policy.criticalHpThreshold;
+      if (
+        !exactRescueSearch
+        || fullExactCoverage
+        || directBoardCandidates.length <= NORMAL_RESCUE_DIRECT_SHORTLIST_LIMIT
+      ) return directBoardCandidates;
+      const currentKey = directBoardKey(currentBoard);
+      const ranked = directBoardCandidates.map((board) => ({
+        board,
+        key: directBoardKey(board),
+        heuristic: this.lineupHeuristicScore(board.flatMap((entry) => (
+          entry ? [entry] : []
+        ))),
+        coarse: directBoardKey(board) === currentKey
+          ? currentBoardScore
+          : this.rolloutBoardScore(board, false, this.rolloutCombatHz),
+      }));
+      const shortlistedBoards = new Map<string, Array<OwnedEntry | null>>();
+      const add = (board: Array<OwnedEntry | null>) => {
+        const key = directBoardKey(board);
+        if (!shortlistedBoards.has(key)) shortlistedBoards.set(key, board);
+      };
+      const coarseLimit = Math.floor((NORMAL_RESCUE_DIRECT_SHORTLIST_LIMIT - 1) / 2);
+      const heuristicLimit = NORMAL_RESCUE_DIRECT_SHORTLIST_LIMIT - 1 - coarseLimit;
+      add(currentBoard);
+      [...ranked]
+        .sort((left, right) => right.coarse - left.coarse || right.heuristic - left.heuristic)
+        .slice(0, coarseLimit)
+        .forEach(({ board }) => add(board));
+      [...ranked]
+        .sort((left, right) => right.heuristic - left.heuristic || right.coarse - left.coarse)
+        .slice(0, heuristicLimit)
+        .forEach(({ board }) => add(board));
+      return Array.from(shortlistedBoards.values());
+    })();
 
     const previousVariantLimit = this.rolloutVariantLimit;
     this.rolloutVariantLimit = 1;
@@ -4920,7 +5069,7 @@ export class AutoChessAutopilot {
     const goScreened: RescueCandidate[] = [];
     let exactRescueWinFound = false;
     const consider = (candidate: RescueCandidate) => {
-      if (this.style === "go") goScreened.push(candidate);
+      if (this.usesLearnedCombatPlanner()) goScreened.push(candidate);
       if (
         !best
         || candidate.rollout > best.rollout
@@ -4928,7 +5077,7 @@ export class AutoChessAutopilot {
       ) best = candidate;
     };
     try {
-      if (this.style !== "go") for (const board of directBoardCandidates) {
+      if (!this.usesLearnedCombatPlanner()) for (const board of rescueDirectBoardCandidates) {
         const lineup = board.flatMap((entry) => (entry ? [entry] : []));
         const rollout = this.rolloutBoardScore(board, false, rescueCombatHz);
         const heuristic = this.lineupHeuristicScore(lineup);
@@ -4962,7 +5111,7 @@ export class AutoChessAutopilot {
             false,
             rescueCombatHz,
           );
-          const model = this.style === "go"
+          const model = this.usesLearnedCombatPlanner()
             ? this.goModelScore(lineup, formation)
             : Number.NEGATIVE_INFINITY;
           consider({ lineup, formation, rollout, heuristic, model, board: null });
@@ -4976,7 +5125,7 @@ export class AutoChessAutopilot {
     } finally {
       this.rolloutVariantLimit = previousVariantLimit;
     }
-    if (this.style === "go") {
+    if (this.usesLearnedCombatPlanner()) {
       const robustCandidates = new Map<string, RescueCandidate>();
       const addRobustCandidate = (candidate: RescueCandidate) => {
         robustCandidates.set(
@@ -5048,7 +5197,7 @@ export class AutoChessAutopilot {
     this.rescueSearchCompleted = true;
     this.lineageUnitIds = best.lineup.map(({ unit }) => unit.id);
     this.lineageFormation = best.formation;
-    this.plannedLineupScore = best.board || this.style === "go"
+    this.plannedLineupScore = best.board || this.usesLearnedCombatPlanner()
       ? best.rollout
       : this.rolloutLineupScore(best.lineup, best.formation);
     this.plannedLineupRandomState = this.bridge.engine.getRandomState();
@@ -5063,6 +5212,7 @@ export class AutoChessAutopilot {
     this.preparationActions += 1;
 
     const roster = this.ownedEntries();
+    let rescuePlanPreserved = false;
     if (this.rescueLineupLocked) {
       const rescueAction = this.formationAction(roster);
       if (rescueAction) return rescueAction;
@@ -5086,9 +5236,22 @@ export class AutoChessAutopilot {
         // cached lineup so the next pass re-scores the upgraded roster.
         const lateForge = this.style === "go" ? null : this.starForgeAction(roster);
         if (lateForge) return lateForge;
-        return engine.boardCount > 0 ? { type: "battle" } : null;
+        const rescueScore = this.rolloutConfidence(roster);
+        const canContinueFundedDevelopment = (
+          this.usesBalancedEconomy()
+          || this.style === "highroll"
+        )
+          && this.terminalDevelopmentWindowOpen(roster, rescueScore);
+        if (!canContinueFundedDevelopment) {
+          return engine.boardCount > 0 ? { type: "battle" } : null;
+        }
+        // A wounded rescue board is a verified floor, not a reason to stop
+        // investing. Balanced and highroll can keep the guaranteed board on
+        // the field while spending only the late-game reserve on upgrades.
+        this.rescueLineupLocked = false;
+        rescuePlanPreserved = true;
       }
-      this.invalidateFinalLineup();
+      if (!rescuePlanPreserved) this.invalidateFinalLineup();
       if (this.style === "seer") this.invalidateSeerPlan(false);
     }
 
@@ -5110,7 +5273,22 @@ export class AutoChessAutopilot {
     const preparationActionLimit = this.style === "go"
       ? GO_PREPARATION_ACTION_LIMIT
       : PREPARATION_ACTION_LIMIT;
-    if ((this.preparationActions >= preparationActionLimit || visits >= 3) && engine.boardCount > 0) {
+    const lateDevelopmentPressure = (
+      this.style === "survival"
+      || this.style === "balanced"
+      || this.style === "highroll"
+      || this.style === "fair"
+    )
+      && state.playerLevel >= 10
+      && state.round >= 18
+      && state.gold > this.goldReserve(false, 0) + 10
+      && this.lateGameDevelopmentIncomplete(roster);
+    const repeatedStateLimit = this.style === "go"
+      ? 3
+      : NORMAL_REPEATED_STATE_LIMIT;
+    const repeatedStateExhausted = visits >= repeatedStateLimit
+      && (!lateDevelopmentPressure || this.preparationActions >= ECONOMY_ACTION_LIMIT);
+    if ((this.preparationActions >= preparationActionLimit || repeatedStateExhausted) && engine.boardCount > 0) {
       // The action/visit guard is a last-resort battle fallback, but a funded
       // late-game forge is still a deterministic power increase. Spend that
       // one action before giving up, otherwise a long reroll session can make

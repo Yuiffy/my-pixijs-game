@@ -6,6 +6,7 @@ import {
   type CSSProperties, useEffect, useMemo, useRef, useState,
 } from "react";
 import styles from "./Codex.module.css";
+import { resolveUnitPortrait, useCharacterStyle } from "./core/characterStyle";
 import type { AugmentSelection, StarterSelection } from "./core/gameEngine";
 import {
   ABILITY_CAST_TIMING_LABELS,
@@ -63,17 +64,19 @@ interface UnitPortraitProps {
 
 function UnitPortrait({ id, className }: UnitPortraitProps) {
   const definition = UNIT_DEFS[id];
-  if (!definition.portrait) return <span className={className} aria-hidden="true" />;
+  const characterStyle = useCharacterStyle();
+  const portrait = resolveUnitPortrait(id, characterStyle);
+  if (!portrait.portrait) return <span className={className} aria-hidden="true" />;
   return (
     <Image
-      src={definition.portrait}
+      src={portrait.portrait}
       alt={definition.name}
       width={160}
       height={120}
       className={className}
       style={{
-        objectFit: definition.portraitStyle === "sprite" ? "contain" : "cover",
-        objectPosition: definition.portraitFocus === "top" ? "center 16%" : "center",
+        objectFit: portrait.portraitStyle === "sprite" ? "contain" : "cover",
+        objectPosition: portrait.portraitFocus === "top" ? "center 16%" : "center",
       }}
     />
   );
@@ -90,6 +93,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
   const [tier, setTier] = useState<number | "all">("all");
   const [traitFamily, setTraitFamily] = useState<TraitFamilyFilter>("all");
   const [selectedUnit, setSelectedUnit] = useState<UnitId>(SHOP_UNITS[0]);
+  const characterStyle = useCharacterStyle();
   const unitDetailsRef = useRef<HTMLElement>(null);
   const units = useMemo(
     () => SHOP_UNITS
@@ -110,6 +114,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
   if (!open) return null;
 
   const unit = UNIT_DEFS[selectedUnit];
+  const unitPortrait = resolveUnitPortrait(selectedUnit, characterStyle);
   const showUnitDetails = (id: UnitId) => {
     setSelectedUnit(id);
     setTier("all");
@@ -272,15 +277,15 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
               </div>
             </section>
             <aside data-codex-unit-details ref={unitDetailsRef} className={styles.unitDetails} style={{ padding: 18, border: `1px solid ${unit.accent}`, borderRadius: 14, background: "#091824" }}>
-              {unit.portrait && (
+              {unitPortrait.portrait && (
                 <span className={styles.detailPortraitPreview}>
                   <AntImage
-                    src={unit.portrait}
+                    src={unitPortrait.portrait}
                     alt={unit.name}
-                    width={unit.portraitStyle === "sprite" ? 112 : 120}
-                    height={unit.portraitStyle === "sprite" ? 112 : 86}
+                    width={unitPortrait.portraitStyle === "sprite" ? 112 : 120}
+                    height={unitPortrait.portraitStyle === "sprite" ? 112 : 86}
                     preview={{ rootClassName: styles.detailImagePreviewRoot }}
-                    style={unit.portraitStyle === "sprite"
+                    style={unitPortrait.portraitStyle === "sprite"
                       ? {
                         width: 112,
                         height: 112,
@@ -290,7 +295,7 @@ export default function Codex({ open, augmentHistory, starterHistory, onClose }:
                         width: 120,
                         height: 86,
                         objectFit: "cover",
-                        objectPosition: unit.portraitFocus === "top" ? "center 16%" : "center",
+                        objectPosition: unitPortrait.portraitFocus === "top" ? "center 16%" : "center",
                       }}
                   />
                 </span>

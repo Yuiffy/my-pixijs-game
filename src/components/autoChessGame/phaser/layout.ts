@@ -130,12 +130,15 @@ export const occupiedSlotLayout = (
   isBench: boolean,
   compact: boolean,
 ) => ({
-  portraitRadius: compact ? (isBench ? 17 : 15) : isBench ? 18 : 16,
-  portraitY: rect.y + (compact ? (isBench ? 27 : 26) : 28),
-  starY: rect.y + 2,
-  starHeight: compact ? 9 : 10,
-  nameY: rect.y + rect.height - (compact ? 5 : isBench ? 8 : 6),
-  nameWidth: rect.width - 12,
+  portraitRadius: compact ? (isBench ? 22 : 21) : isBench ? 24 : 22,
+  portraitY: rect.y + rect.height / 2,
+  starX: rect.x + 6,
+  starY: rect.y + 7,
+  nameX: rect.x + 6,
+  nameY: rect.y + rect.height - 7,
+  valueX: rect.x + rect.width - 6,
+  valueY: rect.y + rect.height - 7,
+  nameWidth: isBench ? rect.width - (compact ? 43 : 46) : rect.width - 12,
 });
 
 export type ResultLayout = {

@@ -4,12 +4,34 @@ This document defines the production style for dedicated autochess character art
 The sprites are read at roughly 42-64 px across the shop and combat views, so
 silhouette and color blocks take priority over illustration detail.
 
+## In-game Character Styles
+
+The settings panel exposes one global character-style choice. The same choice must
+be used in the shop, formation, bench, battle, codex, enemy previews, and results so
+that a unit never changes identity between surfaces.
+
+- `minimal` / 极简 is the default and the production target for new artwork. Assets
+  live under `public/images/autochess/portraits/minimal/`.
+- `detail` / 细节 preserves the previous full-body dedicated sprite set. Its frozen
+  snapshot lives under `public/images/autochess/portraits/detail/`.
+- `classic` / 棋子 preserves the older mix of dedicated chess-piece art, liver art,
+  and large-head material art. Dedicated historical assets live under
+  `public/images/autochess/portraits/classic/`; liver and material paths are mapped
+  centrally in `core/characterStyle.ts`.
+
+The selection is persisted in `localStorage` under
+`rift-line-character-style`. Missing or invalid values must resolve to `minimal`.
+All portrait consumers must go through `resolveUnitPortrait()` rather than reading
+`UNIT_DEFS[id].portrait` directly.
+
 ## Approved Anchors
 
-- `public/images/autochess/portraits/nightin.png`: large visor, twin-tail silhouette,
-  one oversized gameplay prop, broad mint/white/charcoal color blocks.
-- `public/images/autochess/portraits/guangyi.png`: high ponytail silhouette, low action
-  pose, broad ivory/black/cyan color blocks.
+- `public/images/autochess/portraits/clock-gunner.png`: oversized head, extremely
+  simple humanoid geometry, thick contour, and separated black/lilac outfit blocks.
+- `public/images/autochess/portraits/biscuit_sui.png`: identity reduced to one dominant
+  body shape, four chunky limbs, and one oversized gameplay prop.
+- `spark-mage.png`, `dawn_duelist.png`, and `grove_mender.png`: production examples
+  for ranged caster, mobile melee, and heavy melee silhouettes at 42 px.
 
 New full-body character sprites should use both anchors as the style reference.
 Original liver/material art is an identity reference only.
@@ -17,7 +39,7 @@ Original liver/material art is an identity reference only.
 ## Shape Language
 
 - Use a complete full-body silhouette with all hair, props, and feet visible.
-- Keep the character below two heads tall. The head should occupy 72-78% of the
+- Keep the character below two heads tall. The head should occupy 80-83% of the
   total character height; compress the torso and limbs into short, chunky shapes.
 - Default every new sprite to face screen-right. The face, torso, gaze, leading
   foot, and any aimed weapon or projectile should all read toward the right.
@@ -57,9 +79,10 @@ Original liver/material art is an identity reference only.
 ## Output Contract
 
 - Final asset: `512x512` RGBA PNG under
-  `public/images/autochess/portraits/<unit-id>.png`.
-- Keep transparent corners and 4-6% visual padding. The complete opaque subject
-  should occupy roughly 88-92% of the canvas height without touching an edge.
+  `public/images/autochess/portraits/minimal/<unit-id>.png`. Keep the root portrait
+  path only as the current detail source and compatibility reference.
+- Keep transparent corners and 4-6% visual padding. The complete opaque subject's
+  longest dimension should occupy roughly 90% of the canvas without touching an edge.
 - Validate `42x42`, `56x56`, and `72x72` previews before integration. At 42 px,
   the face, main silhouette, pose, and single gameplay prop must remain
   distinguishable without zooming.
@@ -70,9 +93,9 @@ Original liver/material art is an identity reference only.
 
 Use the original character art as the identity reference and the approved anchors as
 style references. Request a tiny autochess full-body game sprite facing screen-right,
-a 72-82% head ratio, below-two-head-tall proportions, a 36-44 px near-black outer
+an 80-83% head ratio, below-two-head-tall proportions, a 40-46 px near-black outer
 contour, 24-32 px internal lines, 3-5 almost-flat color masses, one oversized gameplay
-prop, complete feet/hair, 88-94% subject occupancy, and 3-6% padding. Explicitly
+prop, complete feet/hair, 90% subject occupancy, and 4-6% padding. Explicitly
 require readability at 42 px and forbid
 left-facing poses, text, logos, circular frames, scenery, shadows, thin linework,
 realistic anatomy, and busy effects.

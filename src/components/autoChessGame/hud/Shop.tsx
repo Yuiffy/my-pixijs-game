@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { AutoChessEngine } from "../core/gameEngine";
+import { resolveUnitPortrait, useCharacterStyle } from "../core/characterStyle";
 import {
   FINANCE_INTEREST_CAP,
   TRAITS,
@@ -22,8 +23,10 @@ import { Sheet } from "./MobileSheets";
 
 export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | null; engine: AutoChessEngine; owned: OwnedStars; onBuy: () => void }) {
   const [showDetail, setShowDetail] = useState(false);
+  const characterStyle = useCharacterStyle();
   if (!unitId) return <div className="rift-dom-shop-card empty">已征募</div>;
   const def = UNIT_DEFS[unitId as keyof typeof UNIT_DEFS];
+  const portrait = resolveUnitPortrait(def.id, characterStyle);
   const totalOwned = owned[1] + owned[2] + owned[3];
   const canStore = engine.canStoreUnit(def.id);
   const affordable = engine.state.gold >= def.cost && canStore;
@@ -57,7 +60,7 @@ export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | nu
         aria-label={`${def.name}，${def.abilityName}`}
       >
         <div className="rift-shop-card-accent" />
-        <div className={`rift-dom-portrait ${def.portraitStyle === "sprite" ? "is-sprite" : ""}`} style={{ borderColor: def.accent, backgroundColor: def.color }}><UnitPortrait unitId={unitId as keyof typeof UNIT_DEFS} size={def.portraitStyle === "sprite" ? 50 : 42} /></div>
+        <div className={`rift-dom-portrait ${portrait.portraitStyle === "sprite" ? "is-sprite" : ""}`} style={{ borderColor: def.accent, backgroundColor: def.color }}><UnitPortrait unitId={unitId as keyof typeof UNIT_DEFS} size={portrait.portraitStyle === "sprite" ? 60 : 46} /></div>
         <div className="rift-dom-shop-copy"><strong>{def.name}</strong><span>{role} · {def.abilityName}</span><div>{traitTags.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties} title={willActivate ? `再买 1 个单位将激活${trait.name}` : trait.description}>{trait.name}</i>)}</div></div>
         <div className="rift-shop-card-meta">{totalOwned > 0 && <small className="rift-shop-owned">{ownedLabel(owned)}</small>}<b className="rift-dom-cost">{def.cost}</b></div>
       </button>

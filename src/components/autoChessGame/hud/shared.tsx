@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { resolveUnitPortrait, useCharacterStyle } from "../core/characterStyle";
 import type { AutoChessEngine } from "../core/gameEngine";
 import {
   CAMPAIGN_ROUNDS,
@@ -34,21 +35,25 @@ export function ownedLabel(stars: OwnedStars) {
 
 export function UnitPortrait({ unitId, size = 42 }: { unitId: keyof typeof UNIT_DEFS; size?: number }) {
   const definition = UNIT_DEFS[unitId];
+  const characterStyle = useCharacterStyle();
+  const portrait = resolveUnitPortrait(unitId, characterStyle);
   const [failed, setFailed] = useState(false);
 
-  if (!definition.portrait || failed) {
+  useEffect(() => setFailed(false), [portrait.portrait]);
+
+  if (!portrait.portrait || failed) {
     return <span className="rift-dom-portrait-glyph">{definition.glyph}</span>;
   }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={definition.portrait}
+      src={portrait.portrait}
       alt={definition.name}
       onError={() => setFailed(true)}
-      style={definition.portraitStyle === "sprite"
+      style={portrait.portraitStyle === "sprite"
         ? { width: size, height: size, objectFit: "contain" }
-        : { width: size, height: size, objectFit: "cover", objectPosition: definition.portraitFocus === "top" ? "center 16%" : "center" }}
+        : { width: size, height: size, objectFit: "cover", objectPosition: portrait.portraitFocus === "top" ? "center 16%" : "center" }}
     />
   );
 }

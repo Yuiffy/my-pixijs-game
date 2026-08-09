@@ -43,7 +43,7 @@ export interface AutopilotPolicy {
   skipMaxStarDuplicatePurchases: number;
 }
 
-export type CanonicalAutopilotStyle = "survival" | "balanced" | "highroll" | "seer" | "go";
+export type CanonicalAutopilotStyle = "survival" | "balanced" | "highroll" | "fair" | "seer" | "go";
 /** `seer2` is accepted only to migrate old settings and benchmark commands. */
 export type AutopilotStyle = CanonicalAutopilotStyle | "seer2";
 export type AutopilotInformationMode = "normal" | "oracle";
@@ -114,6 +114,22 @@ export const AUTOPILOT_STYLE_POLICIES: Record<CanonicalAutopilotStyle, Partial<A
     benchPressureEmptySlots: 2,
   },
   balanced: {
+    reserveCap: 10,
+    reserveRoundScale: 0.85,
+    safeWinRolloutScore: 10010,
+    lateGamePurchaseStartRound: 10,
+    lateGamePurchaseStartLevel: 7,
+    minimumWinningLineupMaxPrunes: 0,
+    benchPressureEmptySlots: 2,
+    maximumDryPaidRerolls: 10,
+    financeActivationMaxRolloutDeficit: 40,
+    terminalRollDownActivationGold: 120,
+    terminalRollDownReserveGold: 44,
+    terminalRollDownMaximumDryRerolls: 40,
+    terminalCompletionActivationGold: 100,
+    terminalCompletionReserveGold: 12,
+  },
+  fair: {
     reserveCap: 10,
     reserveRoundScale: 0.85,
     safeWinRolloutScore: 10010,
