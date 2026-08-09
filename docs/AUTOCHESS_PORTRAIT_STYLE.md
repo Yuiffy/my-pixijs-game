@@ -124,6 +124,11 @@ Original liver/material art is an identity reference only.
   eyes at gameplay scale; gray, black, or desaturated hair is not acceptable.
 - Rebuilt the default minimal sprites for Kioi, Nightin, Guangyi, Seki, Yukisyo, and
   Zeyin; Nightin's detail sprite was also corrected to remove the launcher.
+- Rebuilt the minimal sprites for Liko and Izayoi from their original standing art:
+  Liko keeps her orange beanie, black-orange hair, white-orange jacket, and bunny
+  pouch; Izayoi keeps her pale blond-green hair, maid headpiece, green-white dress,
+  red bows, tea service, and oversized striped tail. Their unit roles must never
+  turn either character into a generic rabbit or raccoon body.
 - Every replaced asset was chroma-key extracted, normalized to `512x512` RGBA with
   90% maximum subject occupancy, and checked at `42x42`, `56x56`, and `72x72`.
 
