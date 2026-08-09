@@ -18,8 +18,12 @@ import {
 } from "../ai/goCombatScenario";
 import {
   canonicalAutopilotStyle,
+  legacyThinkingLevelForAutopilotStyle,
+  preferenceStyleForAutopilotStyle,
   type AutopilotInformationMode,
+  type AutopilotPreferenceStyle,
   type AutopilotStyle,
+  type AutopilotThinkingLevel,
   type CanonicalAutopilotStyle,
 } from "../ai/autopilotPolicy";
 
@@ -124,6 +128,10 @@ export class EngineBridge {
   public autoplayEnabled = false;
 
   public autoplayStyle: CanonicalAutopilotStyle = "survival";
+
+  public autoplayPreferenceStyle: AutopilotPreferenceStyle = "balanced";
+
+  public autoplayThinkingLevel: AutopilotThinkingLevel = "veteran";
 
   public autoplayInformationMode: AutopilotInformationMode = "normal";
 
@@ -423,8 +431,12 @@ export class EngineBridge {
   public setAutopilotStrategy(
     style: AutopilotStyle,
     informationMode: AutopilotInformationMode,
+    preferenceStyle = preferenceStyleForAutopilotStyle(style),
+    thinkingLevel = legacyThinkingLevelForAutopilotStyle(style),
   ) {
     this.autoplayStyle = canonicalAutopilotStyle(style);
+    this.autoplayPreferenceStyle = preferenceStyle;
+    this.autoplayThinkingLevel = thinkingLevel;
     this.autoplayInformationMode = informationMode;
     this.applyAutoplayEnemySeed();
   }
@@ -467,6 +479,9 @@ export class EngineBridge {
       interface: {
         enemyFormationOpen: this.enemyFormationOpen,
         autoplayEnabled: this.autoplayEnabled,
+        autoplayPreferenceStyle: this.autoplayPreferenceStyle,
+        autoplayThinkingLevel: this.autoplayThinkingLevel,
+        autoplayEffectiveStyle: this.autoplayStyle,
         autoplayStyle: this.autoplayStyle,
         autoplayInformationMode: this.autoplayInformationMode,
         backgroundBattleEnabled: this.backgroundBattleEnabled,

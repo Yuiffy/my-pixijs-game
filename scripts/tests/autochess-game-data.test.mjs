@@ -668,8 +668,16 @@ test("战斗身份数据完整且覆盖不同能量与站位节奏", () => {
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /闪现到最远敌人身后/);
   assert.match(data.UNIT_DEFS.sui_cat.abilityDescription, /击晕/);
   assert.equal(data.UNIT_DEFS.rutice.abilityName, "咕咕诊所");
-  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /施法距离内友军回复.*生命值/);
-  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /生命比例最低的两名友军.*护盾/);
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /3\/4\/5 名受伤队友.*发射针筒/);
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /随机治疗或提供.*24%\/30%\/36%.*12%.*2\.6 倍/);
+  assert.deepEqual(
+    data.UNIT_DEFS.rutice.abilityLevels.map(({ stats }) => stats),
+    [
+      { targetCount: 3, effectRatio: 0.24, knockbackMin: 48, knockbackMax: 100, powerChance: 0.12, powerMultiplier: 2.6 },
+      { targetCount: 4, effectRatio: 0.3, knockbackMin: 56, knockbackMax: 112, powerChance: 0.12, powerMultiplier: 2.6 },
+      { targetCount: 5, effectRatio: 0.36, knockbackMin: 64, knockbackMax: 124, powerChance: 0.12, powerMultiplier: 2.6 },
+    ],
+  );
   assert.ok(data.UNIT_DEFS.rutice.traits.includes("mystic"));
   assert.ok(data.UNIT_DEFS.sui_cat.hp >= 250);
   assert.ok(data.UNIT_DEFS.sui_cat.armor >= 18);
@@ -1097,7 +1105,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
     },
     { tier: 3, cost: 3, hp: 380, attack: 32, armor: 31 },
   );
-  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /15%.*12%/);
+  assert.match(data.UNIT_DEFS.rutice.abilityDescription, /24%\/30%\/36%.*12%.*2\.6 倍/);
 
   await Promise.all([
     "public/images/autochess/portraits/komichi.png",

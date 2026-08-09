@@ -49,7 +49,9 @@ export interface BattleEffect {
     | "harei_pine"
     | "harei_badge"
     | "komichi_sign"
-    | "mumu_whip";
+    | "mumu_whip"
+    | "mind_control"
+    | "neural_link";
   x: number;
   y: number;
   x2?: number;
@@ -80,7 +82,7 @@ export interface Projectile {
   color: string;
   size: number;
   /** 弹幕视觉样式：默认光点，或指定 emoji */
-  style?: "default" | "shark" | "carrot" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe" | "cigarette";
+  style?: "default" | "shark" | "carrot" | "coin" | "lollipop" | "fireball" | "aoe_orb" | "finale_star" | "sumi_dragon" | "laugh" | "pickaxe" | "cigarette" | "syringe";
   /** 命中后对附近敌人造成伤害与灼烧的半径。 */
   splashRadius?: number;
   /** 有值时以 emoji 绘制弹幕（优先于默认光点） */

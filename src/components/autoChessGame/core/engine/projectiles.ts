@@ -48,6 +48,7 @@ const PAKO_ANGEL_FISH_ZONE_DURATION = 3.2;
 export const PAKO_ANGEL_FISH_PULSE_INTERVAL = 0.7;
 const PAKO_ANGEL_FISH_FIELD_COLOR = "#6ff0b5";
 const PAKO_ANGEL_FISH_HIGHLIGHT_COLOR = "#d9fff0";
+const RUTICE_SYRINGE_SPEED = 660;
 const LIAN_FINALE_RADIUS = 140;
 const LIAN_FINALE_STAGE_LIFETIME = 0.58;
 const REMOTE_AOE_DELIVERIES: Partial<
@@ -70,6 +71,7 @@ const REMOTE_AOE_PROJECTILE_MAX_DURATION = 0.58;
 
 export interface CombatProjectileHost {
   state(): GameState;
+  random(): number;
   living(team: Team): Fighter[];
   damage(
     source: Fighter,
@@ -92,12 +94,26 @@ export interface CombatProjectileHost {
     amount: number,
     showEffect?: boolean,
   ): number;
+  grantShield(
+    source: Fighter,
+    target: Fighter,
+    amount: number,
+    capRatio?: number,
+    battle?: BattleState | null,
+  ): number;
   addEnergy(fighter: Fighter, amount: number): void;
   nearestTarget(source: Fighter, targets: Fighter[]): Fighter | null;
   faceTowardX(fighter: Fighter, targetX: number): void;
   retreatFrom(
     source: Fighter,
     target: Fighter,
+    distance: number,
+    duration: number,
+  ): boolean;
+  pushFighterAwayFrom(
+    target: Fighter,
+    originX: number,
+    originY: number,
     distance: number,
     duration: number,
   ): boolean;
@@ -167,6 +183,41 @@ export class CombatProjectileSystem {
       style: source.unitId === "lian" ? "finale_star" : "aoe_orb",
       emoji: delivery.glyph,
       impactAbilityId: source.unitId,
+    });
+  }
+
+  public fireRuticeSyringes(
+    source: Fighter,
+    targets: Fighter[],
+    effectRatio: number,
+  ) {
+    const { battle } = this.host.state();
+    if (!battle) return;
+    source.attackPulse = 0.24;
+    targets.forEach((target, index) => {
+      const deltaX = target.x - source.x;
+      const deltaY = target.y - source.y;
+      const distance = Math.max(1, Math.hypot(deltaX, deltaY));
+      const spread = (index - (targets.length - 1) / 2) * 5;
+      battle.projectiles.push({
+        sourceFid: source.fid,
+        team: source.team,
+        x: source.x,
+        y: source.y + spread,
+        velocityX: (deltaX / distance) * RUTICE_SYRINGE_SPEED,
+        velocityY: (deltaY / distance) * RUTICE_SYRINGE_SPEED,
+        radius: 8,
+        remainingRange: distance,
+        damage: 0,
+        burnPower: 0,
+        color: UNIT_DEFS.rutice.accent,
+        size: 24,
+        style: "syringe",
+        emoji: "💉",
+        impactAbilityId: "rutice",
+        impactTargetFid: target.fid,
+        impactMultiplier: effectRatio,
+      });
     });
   }
 
@@ -379,6 +430,58 @@ export class CombatProjectileSystem {
           text: `+${energyGranted} 能量`,
           life: 0.46,
           size: Math.max(42, target.radius * 2.5),
+        });
+        break;
+      }
+      case "rutice": {
+        const target = support?.targetFid
+          ? allies.find((ally) => ally.fid === support.targetFid)
+          : undefined;
+        if (!target) break;
+        const effectRatio = support?.multiplier
+          ?? abilityStatForStar(def, source.star, "effectRatio", 0.24);
+        const knockbackMin = abilityStatForStar(def, source.star, "knockbackMin", 48);
+        const knockbackMax = abilityStatForStar(def, source.star, "knockbackMax", 100);
+        const powerChance = abilityStatForStar(def, source.star, "powerChance", 0.12);
+        const powerMultiplier = abilityStatForStar(def, source.star, "powerMultiplier", 2.6);
+        const heals = this.host.random() < 0.5;
+        const baseKnockback = knockbackMin + this.host.random() * (knockbackMax - knockbackMin);
+        const powerShot = this.host.random() < powerChance;
+        const knockback = baseKnockback * (powerShot ? powerMultiplier : 1);
+        if (heals) {
+          this.host.heal(source, target, target.maxHp * effectRatio);
+        } else {
+          this.host.grantShield(source, target, target.maxHp * effectRatio, 0.55);
+        }
+        this.host.pushFighterAwayFrom(target, source.x, source.y, knockback, 0.3);
+        this.addEffect({
+          kind: heals ? "healing_pulse" : "ring",
+          x: target.x,
+          y: target.y,
+          color: heals ? def.accent : "#b9a8ff",
+          life: 0.48,
+          size: Math.max(46, target.radius * 2.4),
+        });
+        this.addEffect({
+          kind: "text",
+          x: target.x,
+          y: target.y - target.radius - 34,
+          color: heals ? "#a9ffe2" : "#ded2ff",
+          text: powerShot
+            ? `${heals ? "治疗" : "护盾"} · 大力针！`
+            : `${heals ? "治疗" : "护盾"}针`,
+          life: 0.72,
+          size: powerShot ? 13 : 11,
+        });
+        this.addEffect({
+          kind: "emoji_burst",
+          x: target.x,
+          y: target.y - target.radius - 10,
+          color: def.accent,
+          text: "💉",
+          emoji: true,
+          life: 0.6,
+          size: 24,
         });
         break;
       }
@@ -746,6 +849,37 @@ export class CombatProjectileSystem {
       );
       if (projectile.impactAbilityId) {
         if (!source) return false;
+        if (projectile.style === "syringe" && projectile.impactTargetFid) {
+          const target = this.host
+            .living(source.team)
+            .find((ally) => ally.fid === projectile.impactTargetFid);
+          if (!target) return false;
+          const deltaX = target.x - projectile.x;
+          const deltaY = target.y - projectile.y;
+          const distance = Math.hypot(deltaX, deltaY);
+          const travel = RUTICE_SYRINGE_SPEED * dt;
+          if (distance <= travel) {
+            projectile.x = target.x;
+            projectile.y = target.y;
+            this.resolveRemoteAoeImpact(
+              source,
+              projectile.impactAbilityId,
+              projectile,
+              {
+                targetFid: projectile.impactTargetFid,
+                multiplier: projectile.impactMultiplier,
+              },
+              this.projectileTrace(projectile),
+            );
+            return false;
+          }
+          projectile.velocityX = (deltaX / Math.max(distance, 0.001)) * RUTICE_SYRINGE_SPEED;
+          projectile.velocityY = (deltaY / Math.max(distance, 0.001)) * RUTICE_SYRINGE_SPEED;
+          projectile.x += projectile.velocityX * dt;
+          projectile.y += projectile.velocityY * dt;
+          projectile.remainingRange = Math.max(0, distance - travel);
+          return true;
+        }
         const startX = projectile.x;
         const startY = projectile.y;
         const stepX = projectile.velocityX * dt;

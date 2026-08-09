@@ -242,6 +242,15 @@ export class FighterViewRenderer {
     if (portraitImage.texture.key !== portraitKey && this.host.scene.textures.exists(portraitKey)) {
       portraitImage.setTexture(portraitKey);
     }
+    const manquActive = portraitKey === HAZEL_MANQU_TEXTURE_KEY;
+    if (manquActive || resolvedPortrait.portraitStyle === "sprite") {
+      const spriteDiameter = radius * 2.45;
+      portraitImage
+        .setScale(Math.min(spriteDiameter / portraitImage.frame.width, spriteDiameter / portraitImage.frame.height))
+        .setY(-radius * 0.06);
+    } else {
+      portraitImage.setDisplaySize(radius * 2, radius * 2).setY(0);
+    }
     portraitImage.setFlipX(fighter.facingX < 0);
     if (clockGunnerEars) {
       const rabbitEarsLaunched = this.host.bridge.engine.state.battle?.pets.some(

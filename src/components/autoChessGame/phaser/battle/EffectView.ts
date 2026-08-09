@@ -254,6 +254,67 @@ export class EffectViewRenderer {
           .lineBetween(target.x - spark, target.y, target.x + spark, target.y)
           .lineBetween(target.x, target.y - spark, target.x, target.y + spark);
       }
+    } else if (effect.kind === "neural_link") {
+      const targetX = (effect.x2 ?? effect.x) - effect.x;
+      const targetY = (effect.y2 ?? effect.y) - effect.y;
+      const distance = Math.hypot(targetX, targetY) || 1;
+      const segments = Math.max(5, Math.ceil(distance / 24));
+      const phase = Math.floor(progress * segments * 2);
+      graphics.setBlendMode(Phaser.BlendModes.SCREEN);
+      for (let index = 0; index < segments; index += 1) {
+        if ((index + phase) % 3 === 2) continue;
+        const start = index / segments;
+        const end = Math.min(1, (index + 0.72) / segments);
+        graphics
+          .lineStyle((effect.size || 4) + 5, color, 0.12)
+          .lineBetween(targetX * start, targetY * start, targetX * end, targetY * end)
+          .lineStyle(effect.size || 4, index % 2 ? color : 0xf2ffff, 0.88)
+          .lineBetween(targetX * start, targetY * start, targetX * end, targetY * end);
+      }
+      const pulse = 5 + Math.sin(progress * Math.PI * 8) * 2;
+      graphics
+        .fillStyle(color, 0.28)
+        .fillCircle(0, 0, pulse + 5)
+        .fillCircle(targetX, targetY, pulse + 5)
+        .lineStyle(2, 0xf2ffff, 0.94)
+        .strokeCircle(0, 0, pulse)
+        .strokeCircle(targetX, targetY, pulse);
+    } else if (effect.kind === "mind_control") {
+      const radius = effect.size || 64;
+      const arrival = 1 - (1 - Math.min(1, progress * 1.8)) ** 3;
+      const pulse = 0.94 + Math.sin(progress * Math.PI * 7) * 0.06;
+      const fieldRadius = radius * (0.48 + arrival * 0.52) * pulse;
+      graphics
+        .setBlendMode(Phaser.BlendModes.SCREEN)
+        .fillStyle(color, 0.07 + (1 - progress) * 0.08)
+        .fillCircle(0, 0, fieldRadius)
+        .lineStyle(Math.max(2, 6 * (1 - progress)), color, 0.92)
+        .strokeCircle(0, 0, fieldRadius)
+        .lineStyle(1.5, 0xf2ffff, 0.76)
+        .strokeCircle(0, 0, fieldRadius * 0.68);
+      for (let index = 0; index < 8; index += 1) {
+        const angle = progress * 2.4 + (Math.PI * 2 * index) / 8;
+        const inner = fieldRadius * 0.7;
+        const outer = fieldRadius * (index % 2 ? 0.88 : 1.04);
+        graphics
+          .lineStyle(index % 2 ? 1.5 : 2.5, index % 2 ? color : 0xf2ffff, 0.82)
+          .lineBetween(
+            Math.cos(angle) * inner,
+            Math.sin(angle) * inner,
+            Math.cos(angle) * outer,
+            Math.sin(angle) * outer,
+          )
+          .fillStyle(index % 2 ? color : 0xf2ffff, 0.94)
+          .fillCircle(Math.cos(angle) * outer, Math.sin(angle) * outer, index % 2 ? 2.5 : 3.5);
+      }
+      label
+        .setText(effect.text || "🧠")
+        .setFontFamily(effect.emoji ? PROJECTILE_EMOJI_FONT : FONT_FAMILY)
+        .setFontSize(effect.emoji ? 30 : 11)
+        .setColor(effect.emoji ? "#ffffff" : effect.color)
+        .setPosition(0, -Math.min(62, radius * 0.58))
+        .setScale(0.88 + Math.sin(progress * Math.PI) * 0.18)
+        .setVisible(true);
     } else if (effect.kind === "switch_on") {
       const radius = effect.size || 42;
       const pulse = 0.9 + Math.sin(progress * Math.PI * 4) * 0.08;

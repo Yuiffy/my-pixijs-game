@@ -1176,7 +1176,6 @@ test("所有可重复护盾角色在三人持续集火下都能被击破", async
     "guangyi",
     "nagisa",
     "biscuit_sui",
-    "rutice",
   ];
 
   for (const [index, unitId] of shieldUnitIds.entries()) {
@@ -1512,7 +1511,14 @@ test("支援技能只影响技能距离内的友军", () => {
   far.hp = far.maxHp * 0.4;
   const nearHp = near.hp;
   const farHp = far.hp;
+  const rangeRolls = [0.1, 0.5, 0.9];
+  engine["rng"] = { next: () => rangeRolls.shift() ?? 0.9 };
   engine["castAbility"](source, battle.enemy, true);
+  assert.equal(near.hp, nearHp, "针筒命中前不应提前治疗");
+  assert.equal(battle.projectiles.filter(({ style }) => style === "syringe").length, 1);
+  for (let tick = 0; tick < 20 && battle.projectiles.length; tick += 1) {
+    engine["updateProjectiles"](battle, 0.05);
+  }
   assert.ok(near.hp > nearHp);
   assert.equal(far.hp, farHp);
 
@@ -4403,36 +4409,114 @@ test("蛙梓终场歌唱持续治疗施法距离内友军，并将单体激光�
   assert.equal(cinder.range, cinder.baseRange);
 });
 
-test("露蒂丝咕咕诊所治疗施法距离内友军并只保护其中生命比例最低的两名友军", () => {
-  const engine = createEngine(205);
+test("米米脑控展示脑波、神经连线与敌方受控标记", () => {
+  const engine = createEngine(204);
   engine.state.starter = "blaze";
   engine.state.playerLevel = 4;
+  engine.state.board.fill(null);
+  engine.state.board[0] = { uid: 1, id: "nagisa", star: 1 };
+  engine.state.board[1] = { uid: 2, id: "sui", star: 1 };
+  engine.startBattle();
+  const battle = engine.state.battle;
+  const nagisa = battle?.player.find((fighter) => fighter.unitId === "nagisa");
+  const ally = battle?.player.find((fighter) => fighter.unitId === "sui");
+  const enemy = battle?.enemy[0];
+  assert.ok(battle && nagisa && ally && enemy);
+  nagisa.x = 480;
+  nagisa.y = 360;
+  ally.x = 400;
+  ally.y = 310;
+  enemy.x = 560;
+  enemy.y = 360;
+
+  engine["castAbility"](nagisa, battle.enemy);
+
+  assert.ok(battle.effects.some(({ kind, text }) => kind === "mind_control" && text === "🧠"));
+  assert.ok(battle.effects.some(({ kind }) => kind === "neural_link"));
+  assert.ok(battle.effects.some(({ kind, text }) => kind === "mind_control" && text === "失控"));
+  assert.ok(nagisa.shield > 0 && ally.shield > 0);
+  assert.ok(enemy.stun >= 0.85);
+});
+
+test("露蒂丝咕咕诊所向最低血队友发射随机治疗、护盾与大力针", () => {
+  const engine = createEngine(205);
+  engine.state.starter = "blaze";
+  engine.state.playerLevel = 5;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "rutice", star: 1 };
   engine.state.board[1] = { uid: 2, id: "sui", star: 1 };
   engine.state.board[2] = { uid: 3, id: "ember_blade", star: 1 };
+  engine.state.board[3] = { uid: 4, id: "sun_guard", star: 1 };
+  engine.state.board[4] = { uid: 5, id: "mossback", star: 1 };
   engine.startBattle();
   const battle = engine.state.battle;
   const rutice = battle?.player.find((fighter) => fighter.unitId === "rutice");
-  const ally = battle?.player.find((fighter) => fighter.unitId === "sui");
-  const healthiest = battle?.player.find((fighter) => fighter.unitId === "ember_blade");
+  const injuredAllies = ["sui", "ember_blade", "sun_guard"]
+    .map((unitId) => battle?.player.find((fighter) => fighter.unitId === unitId));
+  const healthiest = battle?.player.find((fighter) => fighter.unitId === "mossback");
   const enemy = battle?.enemy[0];
-  assert.ok(battle && rutice && ally && healthiest && enemy);
+  assert.ok(battle && rutice && injuredAllies.every(Boolean) && healthiest && enemy);
+  const ruticeRolls = [
+    0.1, 0.5, 0.9,
+    0.9, 0.5, 0.9,
+    0.1, 1, 0.01,
+  ];
+  engine["rng"] = { next: () => ruticeRolls.shift() ?? 0.9 };
 
-  const allies = [rutice, ally, healthiest];
-  allies.forEach((fighter) => {
-    fighter.hp = fighter.maxHp * (fighter === rutice ? 0.4 : fighter === ally ? 0.25 : 0.75);
+  rutice.x = 380;
+  rutice.y = 360;
+  rutice.hp = rutice.maxHp * 0.4;
+  rutice.shield = 0;
+  injuredAllies.forEach((fighter, index) => {
+    fighter.x = 500 + index * 45;
+    fighter.y = 300 + index * 60;
+    fighter.hp = fighter.maxHp * (0.2 + index * 0.14);
     fighter.shield = 0;
   });
-  const hpBefore = allies.map((fighter) => fighter.hp);
+  healthiest.x = 690;
+  healthiest.y = 360;
+  healthiest.hp = healthiest.maxHp * 0.72;
+  healthiest.shield = 0;
+  const hpBefore = injuredAllies.map((fighter) => fighter.hp);
+  const sourceHpBefore = rutice.hp;
+  const healthiestHpBefore = healthiest.hp;
   const enemyHpBefore = enemy.hp;
   engine["castAbility"](rutice, battle.enemy);
 
-  allies.forEach((fighter, index) => assert.ok(fighter.hp > hpBefore[index]));
-  allies.forEach((fighter, index) => assert.equal(fighter.hp, hpBefore[index] + fighter.maxHp * 0.15));
-  assert.equal(rutice.shield, rutice.maxHp * 0.12);
-  assert.equal(ally.shield, ally.maxHp * 0.12);
+  const syringes = battle.projectiles.filter(({ style }) => style === "syringe");
+  assert.equal(syringes.length, 3);
+  assert.ok(syringes.every(({ emoji, impactAbilityId }) => emoji === "💉" && impactAbilityId === "rutice"));
+  injuredAllies.forEach((fighter, index) => assert.equal(fighter.hp, hpBefore[index]));
+  assert.equal(rutice.hp, sourceHpBefore, "露蒂丝不会给自己注射");
+  assert.equal(healthiest.hp, healthiestHpBefore);
   assert.equal(healthiest.shield, 0);
+
+  for (let tick = 0; tick < 20 && battle.projectiles.length; tick += 1) {
+    engine["updateProjectiles"](battle, 0.05);
+  }
+  assert.equal(battle.projectiles.filter(({ style }) => style === "syringe").length, 0);
+  assert.equal(injuredAllies[0].hp, hpBefore[0] + injuredAllies[0].maxHp * 0.24);
+  assert.equal(injuredAllies[0].shield, 0);
+  assert.equal(injuredAllies[1].hp, hpBefore[1]);
+  assert.equal(injuredAllies[1].shield, injuredAllies[1].maxHp * 0.24);
+  assert.equal(injuredAllies[2].hp, hpBefore[2] + injuredAllies[2].maxHp * 0.24);
+  assert.equal(injuredAllies[2].shield, 0);
+  const pushDistances = injuredAllies.map((fighter) => {
+    assert.equal(fighter.abilityMotion?.kind, "push");
+    const beforeDistance = Math.hypot(fighter.x - rutice.x, fighter.y - rutice.y);
+    const afterDistance = Math.hypot(
+      fighter.abilityMotion.toX - rutice.x,
+      fighter.abilityMotion.toY - rutice.y,
+    );
+    assert.ok(afterDistance > beforeDistance + 45, "针筒应把队友随机推离露蒂丝");
+    return afterDistance - beforeDistance;
+  });
+  assert.ok(pushDistances[2] > 240, "大力针应产生特别远的击退");
+  assert.ok(pushDistances[2] > Math.max(pushDistances[0], pushDistances[1]) * 2.5);
+  assert.ok(battle.effects.some(({ kind, text }) => kind === "text" && text === "治疗针"));
+  assert.ok(battle.effects.some(({ kind, text }) => kind === "text" && text === "护盾针"));
+  assert.ok(battle.effects.some(({ kind, text }) => kind === "text" && text === "治疗 · 大力针！"));
+  assert.equal(rutice.shield, 0);
   assert.equal(enemy.hp, enemyHpBefore);
   assert.equal(enemy.stun, 0);
 });

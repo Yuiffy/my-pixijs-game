@@ -46,6 +46,8 @@ export interface AutopilotPolicy {
 export type CanonicalAutopilotStyle = "survival" | "balanced" | "highroll" | "fair" | "seer" | "go";
 /** `seer2` is accepted only to migrate old settings and benchmark commands. */
 export type AutopilotStyle = CanonicalAutopilotStyle | "seer2";
+export type AutopilotPreferenceStyle = "survival" | "balanced" | "highroll";
+export type AutopilotThinkingLevel = "novice" | "veteran" | "deep" | "oracle" | "go";
 export type AutopilotInformationMode = "normal" | "oracle";
 
 export const canonicalAutopilotStyle = (
@@ -58,6 +60,38 @@ export const informationModeForAutopilotStyle = (
   style: AutopilotStyle,
 ): AutopilotInformationMode => (
   style === "seer" || style === "seer2" || style === "go" ? "oracle" : "normal"
+);
+
+export const preferenceStyleForAutopilotStyle = (
+  style: AutopilotStyle,
+): AutopilotPreferenceStyle => {
+  const canonicalStyle = canonicalAutopilotStyle(style);
+  if (canonicalStyle === "survival" || canonicalStyle === "highroll") return canonicalStyle;
+  return "balanced";
+};
+
+export const legacyThinkingLevelForAutopilotStyle = (
+  style: AutopilotStyle,
+): AutopilotThinkingLevel => {
+  const canonicalStyle = canonicalAutopilotStyle(style);
+  if (canonicalStyle === "seer") return "oracle";
+  if (canonicalStyle === "go") return "go";
+  return "deep";
+};
+
+export const effectiveStyleForAutopilotConfiguration = (
+  style: AutopilotPreferenceStyle,
+  level: AutopilotThinkingLevel,
+): CanonicalAutopilotStyle => {
+  if (level === "oracle") return "seer";
+  if (level === "go") return "go";
+  return style;
+};
+
+export const informationModeForAutopilotThinkingLevel = (
+  level: AutopilotThinkingLevel,
+): AutopilotInformationMode => (
+  level === "oracle" || level === "go" ? "oracle" : "normal"
 );
 
 export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {

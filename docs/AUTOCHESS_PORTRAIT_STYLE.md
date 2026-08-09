@@ -120,10 +120,18 @@ Original liver/material art is an identity reference only.
 - Corrected Nana7mi to use one pickaxe; rebuilt SUI's flower form from the angel-girl
   reference without dinosaur parts or a hotpot.
 - Rebuilt both styles for Joi, Azi, Lian, and Yua from local identity references.
-- Corrected Azi's minimal sprite to preserve her saturated violet hair and golden
-  eyes at gameplay scale; gray, black, or desaturated hair is not acceptable.
+- Corrected Azi's minimal and detail sprites to preserve her saturated violet hair
+  and golden eyes at gameplay scale; gray, black, or desaturated hair is not
+  acceptable. The detail sprite reuses its original magenta-key generation with a
+  hard tolerance of `64`, a `2px` edge contract, and no magenta despill, because
+  soft dominance matting or despill also damages the violet hair.
 - Rebuilt the default minimal sprites for Kioi, Nightin, Guangyi, Seki, Yukisyo, and
   Zeyin; Nightin's detail sprite was also corrected to remove the launcher.
+- Seki's minimal sprite must follow her classic Project SP model rather than a generic
+  boar fighter: explosive cyan twin-tails with pink streaks, purple eyes, bear hair
+  clip, oversized charcoal jacket, black-white crop top, pink shorts, asymmetric
+  stockings, and dark sneakers. A boar may appear only as a tiny charm so it cannot
+  obscure her identity at gameplay scale.
 - Rebuilt the minimal sprites for Liko and Izayoi from their original standing art:
   Liko keeps her orange beanie, black-orange hair, white-orange jacket, and bunny
   pouch; Izayoi keeps her pale blond-green hair, maid headpiece, green-white dress,

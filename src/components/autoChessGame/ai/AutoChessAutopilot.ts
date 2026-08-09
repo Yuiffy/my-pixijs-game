@@ -20,13 +20,19 @@ import type {
 } from "../core/gameTypes";
 import { EngineBridge, type GameAction } from "../phaser/EngineBridge";
 import {
+  effectiveStyleForAutopilotConfiguration,
   informationModeForAutopilotStyle,
+  informationModeForAutopilotThinkingLevel,
+  legacyThinkingLevelForAutopilotStyle,
   canonicalAutopilotStyle,
+  preferenceStyleForAutopilotStyle,
   resolveAutopilotStylePolicy,
   type CanonicalAutopilotStyle,
   type AutopilotInformationMode,
   type AutopilotPolicy,
+  type AutopilotPreferenceStyle,
   type AutopilotStyle,
+  type AutopilotThinkingLevel,
 } from "./autopilotPolicy";
 import {
   AUTOPILOT_LATE_GAME_TARGET_IDS,
@@ -213,7 +219,8 @@ const GO_FUTURE_THREAT_MIN_ROUND = 14;
 const GO_OPPORTUNITY_TARGET_LIMIT = 8;
 const STAR_FORGE_MIN_ROUND = 32;
 const STAR_FORGE_MIN_SURPLUS = 200;
-const SHARED_ROLLOUT_CACHE_LIMIT = 200000;
+const SHARED_ROLLOUT_CACHE_LIMIT = typeof window === "undefined" ? 200000 : 7500;
+const LOCAL_ROLLOUT_CACHE_LIMIT = typeof window === "undefined" ? 50000 : 2500;
 const EXACT_COMBAT_HZ = 60;
 const DEFAULT_ROLLOUT_COMBAT_HZ = 30;
 /** Browser planning uses a cheap CPU timestep; it is never the live battle timestep. */
@@ -242,7 +249,21 @@ export const hydrateAutopilotRolloutCache = (entries: Array<[string, number]>) =
   });
 };
 
-export const snapshotAutopilotRolloutCache = () => Array.from(sharedRolloutScoreCache.entries());
+export const snapshotAutopilotRolloutCache = ({
+  prefix,
+  limit = Number.POSITIVE_INFINITY,
+}: {
+  prefix?: string;
+  limit?: number;
+} = {}) => {
+  const entries: Array<[string, number]> = [];
+  sharedRolloutScoreCache.forEach((score, key) => {
+    if (!prefix || key.startsWith(prefix)) entries.push([key, score]);
+  });
+  return Number.isFinite(limit)
+    ? entries.slice(-Math.max(0, Math.floor(limit)))
+    : entries;
+};
 
 type OwnedEntry = {
   unit: OwnedUnit;
@@ -407,6 +428,13 @@ export class AutoChessAutopilot {
 
   private rolloutScoreCache = new Map<string, number>();
 
+  private rememberRolloutScore(key: string, score: number) {
+    this.rolloutScoreCache.set(key, score);
+    if (this.rolloutScoreCache.size <= LOCAL_ROLLOUT_CACHE_LIMIT) return;
+    const oldest = this.rolloutScoreCache.keys().next().value;
+    if (oldest !== undefined) this.rolloutScoreCache.delete(oldest);
+  }
+
   private rolloutVariantLimit = ROLLOUT_SEED_VARIANTS;
 
   private confidenceKey = "";
@@ -488,6 +516,12 @@ export class AutoChessAutopilot {
 
   private style: CanonicalAutopilotStyle;
 
+  private preferenceStyle: AutopilotPreferenceStyle;
+
+  private thinkingLevel: AutopilotThinkingLevel;
+
+  private modernConfiguration = false;
+
   private informationMode: AutopilotInformationMode;
 
   private rolloutCombatHz: number;
@@ -509,21 +543,37 @@ export class AutoChessAutopilot {
       : LIVE_AUTOPILOT_ROLLOUT_HZ,
     private readonly goCombatScorer: GoCombatScorer = scoreGoCombatCandidate,
     liveBattleAudit = typeof window !== "undefined",
+    thinkingLevel?: AutopilotThinkingLevel,
   ) {
     if (planningMode === "training") this.rolloutVariantLimit = 1;
     this.policyOverrides = { ...policy };
-    const canonicalStyle = canonicalAutopilotStyle(style);
+    this.modernConfiguration = thinkingLevel !== undefined;
+    this.preferenceStyle = preferenceStyleForAutopilotStyle(style);
+    this.thinkingLevel = thinkingLevel ?? legacyThinkingLevelForAutopilotStyle(style);
+    const canonicalStyle = this.modernConfiguration
+      ? effectiveStyleForAutopilotConfiguration(this.preferenceStyle, this.thinkingLevel)
+      : canonicalAutopilotStyle(style);
     this.style = canonicalStyle;
-    this.informationMode = informationModeForAutopilotStyle(canonicalStyle) === "normal"
-      ? "normal"
-      : informationMode;
+    this.informationMode = this.modernConfiguration
+      ? informationModeForAutopilotThinkingLevel(this.thinkingLevel)
+      : informationModeForAutopilotStyle(canonicalStyle) === "normal"
+        ? "normal"
+        : informationMode;
     this.rolloutCombatHz = Math.max(20, Math.min(
       EXACT_COMBAT_HZ,
       Math.round(rolloutCombatHz),
     ));
     this.liveBattleAuditEnabled = liveBattleAudit;
-    this.policy = resolveAutopilotStylePolicy(canonicalStyle, this.policyOverrides);
-    this.bridge.setAutopilotStrategy(canonicalStyle, this.informationMode);
+    this.policy = resolveAutopilotStylePolicy(
+      this.modernConfiguration ? this.preferenceStyle : canonicalStyle,
+      this.policyOverrides,
+    );
+    this.bridge.setAutopilotStrategy(
+      canonicalStyle,
+      this.informationMode,
+      this.preferenceStyle,
+      this.thinkingLevel,
+    );
   }
 
   public get isEnabled() {
@@ -538,17 +588,56 @@ export class AutoChessAutopilot {
     return this.informationMode;
   }
 
+  public get strategyPreferenceStyle() {
+    return this.preferenceStyle;
+  }
+
+  public get strategyThinkingLevel() {
+    return this.thinkingLevel;
+  }
+
   public setStrategy(
     style: AutopilotStyle,
     informationMode: AutopilotInformationMode = informationModeForAutopilotStyle(style),
   ) {
+    this.modernConfiguration = false;
     const canonicalStyle = canonicalAutopilotStyle(style);
     this.style = canonicalStyle;
+    this.preferenceStyle = preferenceStyleForAutopilotStyle(canonicalStyle);
+    this.thinkingLevel = legacyThinkingLevelForAutopilotStyle(canonicalStyle);
     this.informationMode = informationModeForAutopilotStyle(canonicalStyle) === "normal"
       ? "normal"
       : informationMode;
     this.policy = resolveAutopilotStylePolicy(canonicalStyle, this.policyOverrides);
-    this.bridge.setAutopilotStrategy(canonicalStyle, this.informationMode);
+    this.bridge.setAutopilotStrategy(
+      canonicalStyle,
+      this.informationMode,
+      this.preferenceStyle,
+      this.thinkingLevel,
+    );
+    this.resetStrategyState();
+  }
+
+  public setConfiguration(
+    preferenceStyle: AutopilotPreferenceStyle,
+    thinkingLevel: AutopilotThinkingLevel,
+  ) {
+    this.modernConfiguration = true;
+    this.preferenceStyle = preferenceStyle;
+    this.thinkingLevel = thinkingLevel;
+    this.style = effectiveStyleForAutopilotConfiguration(preferenceStyle, thinkingLevel);
+    this.informationMode = informationModeForAutopilotThinkingLevel(thinkingLevel);
+    this.policy = resolveAutopilotStylePolicy(preferenceStyle, this.policyOverrides);
+    this.bridge.setAutopilotStrategy(
+      this.style,
+      this.informationMode,
+      this.preferenceStyle,
+      this.thinkingLevel,
+    );
+    this.resetStrategyState();
+  }
+
+  private resetStrategyState() {
     this.invalidateFinalLineup();
     this.seerRouteAbandoned = false;
     this.seerExtendedPlanningUnlocked = false;
@@ -567,14 +656,30 @@ export class AutoChessAutopilot {
   }
 
   private usesLearnedCombatPlanner() {
+    if (this.modernConfiguration) {
+      return this.thinkingLevel === "deep" || this.thinkingLevel === "go";
+    }
     return this.style === "survival"
       || this.style === "highroll"
       || this.style === "fair"
       || this.style === "go";
   }
 
+  private usesModelScoring() {
+    return this.modernConfiguration
+      ? this.thinkingLevel === "veteran"
+        || this.thinkingLevel === "deep"
+        || this.thinkingLevel === "go"
+      : this.usesLearnedCombatPlanner();
+  }
+
+  private usesFastEvaluation() {
+    return this.modernConfiguration
+      && (this.thinkingLevel === "novice" || this.thinkingLevel === "veteran");
+  }
+
   private usesBalancedEconomy() {
-    return this.style === "fair" || this.style === "balanced";
+    return this.preferenceStyle === "balanced";
   }
 
   private seerPlanningTargetRound() {
@@ -646,7 +751,7 @@ export class AutoChessAutopilot {
   }
 
   private formationProfileIds() {
-    if (this.usesLearnedCombatPlanner()) return GO_FORMATION_PROFILE_IDS;
+    if (this.usesModelScoring()) return GO_FORMATION_PROFILE_IDS;
     // 真人记录站位是看穿2的终局资产；开局单位少、商店过渡频繁时，
     // 把它和三套稳定站位一起竞争只会放大单战随机差异。
     const useRecordedFormation = this.usesSeer2Foundation()
@@ -657,7 +762,7 @@ export class AutoChessAutopilot {
   }
 
   private formationBudgetAvailable() {
-    return this.usesLearnedCombatPlanner()
+    return this.usesModelScoring()
       || this.preparationActions < FORMATION_ACTION_LIMIT;
   }
 
@@ -673,6 +778,9 @@ export class AutoChessAutopilot {
       const index = STARTER_PREFERENCE.indexOf(id);
       return index < 0 ? STARTER_PREFERENCE.length : index;
     };
+    if (this.usesFastEvaluation()) {
+      return [...choices].sort((left, right) => preference(left) - preference(right))[0] || null;
+    }
     return choices
       .map((id) => ({ id, score: this.starterRolloutScore(id), preference: preference(id) }))
       .sort((left, right) => right.score - left.score || left.preference - right.preference)[0]?.id
@@ -1825,6 +1933,12 @@ export class AutoChessAutopilot {
     lineup: OwnedEntry[],
     formation: FormationProfile = "go_canonical",
   ) {
+    return this.goModelPlacementsScore(formationPlacements(lineup, formation));
+  }
+
+  private goModelPlacementsScore(
+    placements: Array<{ entry: OwnedEntry; slot: number }>,
+  ) {
     const { state } = this.bridge.engine;
     const wave = this.bridge.engine.currentWave;
     return this.goCombatScorer({
@@ -1832,7 +1946,7 @@ export class AutoChessAutopilot {
       augments: state.augments,
       waveTag: wave.tag,
       modifier: wave.modifier,
-      players: formationPlacements(lineup, formation).map(({ entry, slot }) => ({
+      players: placements.map(({ entry, slot }) => ({
         id: entry.unit.id,
         star: entry.unit.star,
         position: slot,
@@ -1843,6 +1957,10 @@ export class AutoChessAutopilot {
         position: index,
       })),
     });
+  }
+
+  private modelCombatConfidence(modelScore: number) {
+    return 10000 + Math.max(-20, Math.min(20, modelScore)) * 100;
   }
 
   private trainingLineupScore(lineup: OwnedEntry[]) {
@@ -1867,8 +1985,11 @@ export class AutoChessAutopilot {
     stableOnly = false,
     combatHz = this.rolloutCombatHz,
   ) {
-    if (this.planningMode === "training") {
+    if (this.planningMode === "training" || this.thinkingLevel === "novice") {
       return this.trainingLineupScore(placementsForLineup.map(({ entry }) => entry));
+    }
+    if (this.modernConfiguration && this.thinkingLevel === "veteran") {
+      return this.modelCombatConfidence(this.goModelPlacementsScore(placementsForLineup));
     }
     const sourceState = this.bridge.engine.state;
     const wave = this.bridge.engine.currentWave;
@@ -1927,7 +2048,7 @@ export class AutoChessAutopilot {
         sharedRolloutCacheStats.hits += 1;
         sharedRolloutScoreCache.delete(cacheKey);
         sharedRolloutScoreCache.set(cacheKey, shared);
-        this.rolloutScoreCache.set(cacheKey, shared);
+        this.rememberRolloutScore(cacheKey, shared);
         return shared;
       }
       const simulation = new AutoChessEngine(
@@ -1958,7 +2079,7 @@ export class AutoChessAutopilot {
       if (!battle) return Number.NEGATIVE_INFINITY;
       sharedRolloutCacheStats.misses += 1;
       const score = scorePreparedAutoChessCombat(simulation, requestedCombatHz);
-      this.rolloutScoreCache.set(cacheKey, score);
+      this.rememberRolloutScore(cacheKey, score);
       sharedRolloutScoreCache.set(cacheKey, score);
       if (sharedRolloutScoreCache.size > SHARED_ROLLOUT_CACHE_LIMIT) {
         const oldest = sharedRolloutScoreCache.keys().next().value;
@@ -1971,7 +2092,7 @@ export class AutoChessAutopilot {
     if (this.usesSeer2Foundation()) return Math.min(...scores);
     const robust = scores.slice(1).sort((left, right) => left - right);
     if (robust.length > 0) {
-      if (this.style === "survival" || this.style === "seer") {
+      if (this.preferenceStyle === "survival") {
         return robust[0];
       }
       return robust[Math.floor(robust.length / 2)];
@@ -2103,6 +2224,29 @@ export class AutoChessAutopilot {
           return previous?.id === unit.id && previous.star === unit.star;
         });
       if (plannedUnchanged) return planned;
+    }
+
+    if (this.modernConfiguration && this.thinkingLevel === "novice") {
+      const heuristic = this.targetLineup(roster);
+      const formation = this.bridge.engine.state.round >= 18
+        ? "center_wedge"
+        : "human_midline";
+      this.plannedLineupKey = key;
+      this.plannedLineupUids = heuristic.map(({ unit }) => unit.uid);
+      this.plannedLineupUnits = new Map(heuristic.map(({ unit }) => [
+        unit.uid,
+        { id: unit.id, star: unit.star },
+      ]));
+      this.plannedLineupScore = this.trainingLineupScore(heuristic);
+      this.plannedLineupRandomState = null;
+      this.plannedFormation = formation;
+      this.plannedBoardSlots = new Map(
+        formationPlacements(heuristic, formation)
+          .map(({ entry, slot }) => [entry.unit.uid, slot] as [number, number]),
+      );
+      this.lineageUnitIds = heuristic.map(({ unit }) => unit.id);
+      this.lineageFormation = formation;
+      return heuristic;
     }
 
     const previous = this.previousLineupSnapshot;
@@ -2253,7 +2397,7 @@ export class AutoChessAutopilot {
         unit.uid,
         { id: unit.id, star: unit.star },
       ]));
-      const heuristicFormation = this.usesLearnedCombatPlanner()
+      const heuristicFormation = this.usesModelScoring()
         ? "go_canonical"
         : this.bridge.engine.state.round >= 18
           ? "center_wedge"
@@ -2375,16 +2519,16 @@ export class AutoChessAutopilot {
     const candidates = new Map<string, OwnedEntry[]>();
     const addCandidate = (lineup: OwnedEntry[]) => {
       if (lineup.length !== cap) return;
-      const lineupKey = this.usesLearnedCombatPlanner()
+      const lineupKey = this.usesModelScoring()
         ? rosterShapeSignature(lineup)
         : lineup.map(({ unit }) => unit.uid).sort((left, right) => left - right).join(",");
-      if (this.usesLearnedCombatPlanner() && candidates.has(lineupKey)) return;
+      if (this.usesModelScoring() && candidates.has(lineupKey)) return;
       candidates.set(lineupKey, lineup);
     };
     const currentBoardLineup = roster.filter(({ location }) => location.zone === "board");
-    if (this.usesLearnedCombatPlanner()) addCandidate(currentBoardLineup);
+    if (this.usesModelScoring()) addCandidate(currentBoardLineup);
     addCandidate(heuristic);
-    if (!this.usesLearnedCombatPlanner()) addCandidate(currentBoardLineup);
+    if (!this.usesModelScoring()) addCandidate(currentBoardLineup);
 
     const remaining = [...roster];
     const inherited = this.lineageUnitIds.flatMap((id) => {
@@ -2433,7 +2577,7 @@ export class AutoChessAutopilot {
     const seer2PrincipalLineups = this.seer2PrincipalLineups(roster, cap);
     seer2PrincipalLineups.forEach(addCandidate);
 
-    if (this.usesLearnedCombatPlanner()) {
+    if (this.usesModelScoring()) {
       const modelGenomeKey = (lineup: OwnedEntry[], formation: FormationProfile) => (
         `${rosterShapeSignature(lineup)}/${formation}`
       );
@@ -2470,6 +2614,18 @@ export class AutoChessAutopilot {
       const rankedByModel = Array.from(candidates.values())
         .flatMap((lineup) => profileOrder.map((formation) => modelScore(lineup, formation)))
         .sort(compareModel);
+      if (this.modernConfiguration && this.thinkingLevel === "veteran") {
+        const champion = rankedByModel[0];
+        if (champion) {
+          return commitGenome({
+            lineup: champion.lineup,
+            formation: champion.formation,
+            generation: 0,
+            rollout: this.modelCombatConfidence(champion.value),
+            heuristic: champion.heuristic,
+          });
+        }
+      }
       const rankedByHeuristic = Array.from(candidates.values())
         .flatMap((lineup) => profileOrder.map((formation) => modelScore(lineup, formation)))
         .sort((left, right) => right.heuristic - left.heuristic || right.value - left.value);
@@ -2867,6 +3023,7 @@ export class AutoChessAutopilot {
 
   private shouldAuditLiveBattle() {
     return this.liveBattleAuditEnabled
+      && !this.usesFastEvaluation()
       && this.rolloutCombatHz < EXACT_COMBAT_HZ;
   }
 
@@ -2982,12 +3139,12 @@ export class AutoChessAutopilot {
   private terminalDevelopmentWindowOpen(roster: OwnedEntry[], rolloutScore: number) {
     const { state } = this.bridge.engine;
     const woundedDevelopmentAllowed = this.usesBalancedEconomy()
-      || this.style === "highroll";
+      || this.preferenceStyle === "highroll";
     const surplusWithoutFinance = this.informationMode === "normal"
       && (
         (this.usesBalancedEconomy()
           && this.preparationStartGold >= this.policy.terminalRollDownActivationGold + 40)
-        || (this.style === "highroll"
+        || (this.preferenceStyle === "highroll"
           && this.preparationStartGold >= this.policy.terminalRollDownActivationGold + 16)
       );
     return state.playerLevel >= 10
@@ -4659,6 +4816,7 @@ export class AutoChessAutopilot {
 
   private searchRescueLineup(roster: OwnedEntry[]) {
     if (this.rescueLineupLocked) return false;
+    if (this.usesFastEvaluation()) return false;
     const { engine } = this.bridge;
     const { state } = engine;
     const rescueStateKey = JSON.stringify({
@@ -5028,7 +5186,7 @@ export class AutoChessAutopilot {
       ];
     })();
     const rescueDirectBoardCandidates = (() => {
-      const fullExactCoverage = this.style === "survival"
+      const fullExactCoverage = this.preferenceStyle === "survival"
         || state.hp <= this.policy.criticalHpThreshold;
       if (
         !exactRescueSearch
@@ -5249,7 +5407,7 @@ export class AutoChessAutopilot {
         const rescueScore = this.rolloutConfidence(roster);
         const canContinueFundedDevelopment = (
           this.usesBalancedEconomy()
-          || this.style === "highroll"
+          || this.preferenceStyle === "highroll"
         )
           && this.terminalDevelopmentWindowOpen(roster, rescueScore);
         if (!canContinueFundedDevelopment) {
@@ -5283,13 +5441,7 @@ export class AutoChessAutopilot {
     const preparationActionLimit = this.style === "go"
       ? GO_PREPARATION_ACTION_LIMIT
       : PREPARATION_ACTION_LIMIT;
-    const lateDevelopmentPressure = (
-      this.style === "survival"
-      || this.style === "balanced"
-      || this.style === "highroll"
-      || this.style === "fair"
-    )
-      && state.playerLevel >= 10
+    const lateDevelopmentPressure = state.playerLevel >= 10
       && state.round >= 18
       && state.gold > this.goldReserve(false, 0) + 10
       && this.lateGameDevelopmentIncomplete(roster);
@@ -5546,7 +5698,7 @@ export class AutoChessAutopilot {
       const rank = AUGMENT_PREFERENCE.indexOf(id as (typeof AUGMENT_PREFERENCE)[number]);
       return rank < 0 ? AUGMENT_PREFERENCE.length : rank;
     };
-    if (this.planningMode === "training") {
+    if (this.planningMode === "training" || this.usesFastEvaluation()) {
       const index = augmentChoices
         .map((id, choiceIndex) => ({ choiceIndex, preference: preferenceRank(id) }))
         .sort((left, right) => left.preference - right.preference)[0]?.choiceIndex ?? 0;

@@ -304,6 +304,7 @@ export class AutoChessEngine {
     });
     this.projectiles = new CombatProjectileSystem({
       state: () => this.state,
+      random: () => this.rng.next(),
       living: (team) => this.living(team),
       damage: (source, target, amount, inactive, damageKind, trace) =>
         this.damage(source, target, amount, inactive, damageKind, trace),
@@ -312,11 +313,15 @@ export class AutoChessEngine {
         this.applyBurn(source, target, totalDamage, damageKind),
       heal: (source, target, amount, showEffect) =>
         this.heal(source, target, amount, showEffect),
+      grantShield: (source, target, amount, capRatio, battle) =>
+        this.grantShield(source, target, amount, capRatio, battle),
       addEnergy: (fighter, amount) => this.addEnergy(fighter, amount),
       nearestTarget: (source, targets) => this.nearestTarget(source, targets),
       faceTowardX: (fighter, targetX) => this.faceTowardX(fighter, targetX),
       retreatFrom: (source, target, distance, duration) =>
         this.retreatFrom(source, target, distance, duration),
+      pushFighterAwayFrom: (target, originX, originY, distance, duration) =>
+        Boolean(this.pushFighterAwayFrom(target, originX, originY, distance, duration)),
       addEffect: (effect) => this.addEffect(effect),
     });
     this.abilities = new AbilitySystem({
@@ -334,6 +339,8 @@ export class AutoChessEngine {
       faceTowardX: (fighter, targetX) => this.faceTowardX(fighter, targetX),
       fireFixedProjectile: (source, target, shot) =>
         this.fireFixedProjectile(source, target, shot),
+      fireRuticeSyringes: (source, targets, effectRatio) =>
+        this.fireRuticeSyringes(source, targets, effectRatio),
       grantAbilityShield: (source, target, amount, duration, battle) =>
         this.grantAbilityShield(source, target, amount, duration, battle),
       grantShield: (source, target, amount, capRatio, battle) =>
@@ -2721,6 +2728,14 @@ export class AutoChessEngine {
     this.projectiles.fireFixedProjectile(source, target, shot);
   }
 
+  private fireRuticeSyringes(
+    source: Fighter,
+    targets: Fighter[],
+    effectRatio: number,
+  ) {
+    this.projectiles.fireRuticeSyringes(source, targets, effectRatio);
+  }
+
   private summonClockGunnerRabbits(source: Fighter) {
     this.projectiles.summonClockGunnerRabbits(source);
   }
@@ -3346,7 +3361,7 @@ export class AutoChessEngine {
             break;
           case "supportHeal": {
             // 支援治疗：能量满且最虚弱友军生命比例降到阈值
-            const healCandidates = fighter.unitId === "cog_scribe"
+            const healCandidates = fighter.unitId === "cog_scribe" || fighter.unitId === "rutice"
               ? abilityAllies.filter((ally) => ally.fid !== fighter.fid)
               : [...abilityAllies, fighter];
             const weakestAlly = healCandidates

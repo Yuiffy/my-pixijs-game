@@ -20,7 +20,10 @@ import {
   LIVE_AUTOPILOT_ROLLOUT_HZ,
   snapshotAutopilotRolloutCache,
 } from "./ai/AutoChessAutopilot";
-import type { AutopilotStyle } from "./ai/autopilotPolicy";
+import type {
+  AutopilotPreferenceStyle,
+  AutopilotThinkingLevel,
+} from "./ai/autopilotPolicy";
 import {
   setCharacterStyle,
   useCharacterStyle,
@@ -84,7 +87,7 @@ declare global {
 const FONT = '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", sans-serif';
 const BACKGROUND_BATTLE_KEY = "rift-line-background-battle";
 const AUTOPILOT_STRATEGY_KEY = "rift-line-autopilot-strategy";
-const AUTOPILOT_STRATEGY_VERSION = 5;
+const AUTOPILOT_STRATEGY_VERSION = 6;
 const LAST_RUN_TRACE_KEY = "rift-line-last-run-trace";
 const LAST_RUN_DATABASE = "rift-line-run-traces";
 const LAST_RUN_STORE = "traces";
@@ -92,14 +95,27 @@ const GO_ROLLOUT_DATABASE = "rift-line-go-rollout-cache";
 const GO_ROLLOUT_STORE = "cache";
 const GO_ROLLOUT_RECORD_KEY = "latest";
 const GO_ROLLOUT_PERSIST_INTERVAL_MS = 15_000;
-const GO_ROLLOUT_PERSIST_LIMIT = 25_000;
+const GO_ROLLOUT_PERSIST_LIMIT = 5_000;
 const SESSION_TRACE_EVENT_LIMIT = 5_000;
+type AutopilotConfiguration = {
+  style: AutopilotPreferenceStyle;
+  level: AutopilotThinkingLevel;
+};
 const AUTOPILOT_STYLE_OPTIONS = [
   ["survival", "稳健"],
+  ["balanced", "平衡"],
   ["highroll", "搏上限"],
-  ["seer", "看穿2"],
-  ["go", "Go测试"],
-] as const;
+] as const satisfies ReadonlyArray<readonly [AutopilotPreferenceStyle, string]>;
+const AUTOPILOT_LEVEL_OPTIONS = [
+  ["novice", "新手"],
+  ["veteran", "老手"],
+  ["deep", "长考"],
+  ["oracle", "看穿"],
+] as const satisfies ReadonlyArray<readonly [AutopilotThinkingLevel, string]>;
+const AUTOPILOT_DEFAULT_CONFIGURATION = {
+  style: "balanced",
+  level: "veteran",
+} as const satisfies AutopilotConfiguration;
 
 type PersistedGoRolloutCache = {
   schema: string;
@@ -218,16 +234,37 @@ const loadBackgroundBattlePreference = () => {
   }
 };
 
-const loadAutopilotStrategy = (): AutopilotStyle => {
+const loadAutopilotConfiguration = (): AutopilotConfiguration => {
   try {
     const stored = JSON.parse(window.localStorage.getItem(AUTOPILOT_STRATEGY_KEY) || "null");
-    if (stored?.style === "seer2") return "seer";
-    if (stored?.style === "go") return stored?.version >= 3 ? "go" : "seer";
-    if (["survival", "highroll", "seer"].includes(stored?.style)) return stored.style;
-    if (stored?.style === "fair" || stored?.style === "balanced") return "survival";
-    return stored?.informationMode === "oracle" ? "seer" : "survival";
+    if (
+      stored?.version >= AUTOPILOT_STRATEGY_VERSION
+      && ["survival", "balanced", "highroll"].includes(stored?.style)
+      && ["novice", "veteran", "deep", "oracle", "go"].includes(stored?.level)
+    ) {
+      return { style: stored.style, level: stored.level } as AutopilotConfiguration;
+    }
+    if (stored?.style === "seer" || stored?.style === "seer2") {
+      return { style: "balanced", level: "oracle" };
+    }
+    if (stored?.style === "go") {
+      return {
+        style: "balanced",
+        level: stored?.version >= 3 ? "go" : "oracle",
+      };
+    }
+    if (stored?.style === "survival" || stored?.style === "highroll") {
+      return { style: stored.style, level: "deep" };
+    }
+    if (stored?.style === "fair" || stored?.style === "balanced") {
+      return { style: "balanced", level: "deep" };
+    }
+    if (stored?.informationMode === "oracle") {
+      return { style: "balanced", level: "oracle" };
+    }
+    return AUTOPILOT_DEFAULT_CONFIGURATION;
   } catch {
-    return "survival";
+    return AUTOPILOT_DEFAULT_CONFIGURATION;
   }
 };
 
@@ -245,7 +282,12 @@ export default function AutoChessGame() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const characterStyle = useCharacterStyle();
   const [autoplayEnabled, setAutoplayEnabled] = useState(false);
-  const [autopilotStyle, setAutopilotStyle] = useState<AutopilotStyle>("survival");
+  const [autopilotStyle, setAutopilotStyle] = useState<AutopilotPreferenceStyle>(
+    AUTOPILOT_DEFAULT_CONFIGURATION.style,
+  );
+  const [autopilotLevel, setAutopilotLevel] = useState<AutopilotThinkingLevel>(
+    AUTOPILOT_DEFAULT_CONFIGURATION.level,
+  );
   const [backgroundBattleEnabled, setBackgroundBattleEnabled] = useState(false);
   const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(DEFAULT_AUDIO_PREFERENCES);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
@@ -256,29 +298,35 @@ export default function AutoChessGame() {
 
   useEffect(() => {
     let disposed = false;
-    let persistedEntryCount = 0;
+    let persistedSignature = "";
     let writeInFlight = false;
     const goKeyPrefix = `${GO_ROLLOUT_CACHE_SCHEMA}/`;
+    const cacheSignature = (entries: Array<[string, number]>) => {
+      const first = entries[0]?.[0] || "";
+      const last = entries.at(-1)?.[0] || "";
+      return `${entries.length}/${first}/${last}`;
+    };
 
     loadGoRolloutCache().then((payload) => {
       if (disposed || payload?.schema !== GO_ROLLOUT_CACHE_SCHEMA) return;
-      const entries = payload.entries.filter(([key, score]) => (
-        key.startsWith(goKeyPrefix) && Number.isFinite(score)
-      ));
+      const entries = payload.entries
+        .filter(([key, score]) => key.startsWith(goKeyPrefix) && Number.isFinite(score))
+        .slice(-GO_ROLLOUT_PERSIST_LIMIT);
       hydrateAutopilotRolloutCache(entries);
-      persistedEntryCount = entries.length;
+      persistedSignature = cacheSignature(entries);
     }).catch(() => {});
 
     const persist = () => {
       if (disposed || writeInFlight) return;
-      const allEntries = snapshotAutopilotRolloutCache();
-      if (allEntries.length === persistedEntryCount) return;
-      const entries = allEntries
-        .filter(([key]) => key.startsWith(goKeyPrefix))
-        .slice(-GO_ROLLOUT_PERSIST_LIMIT);
+      const entries = snapshotAutopilotRolloutCache({
+        prefix: goKeyPrefix,
+        limit: GO_ROLLOUT_PERSIST_LIMIT,
+      });
+      const signature = cacheSignature(entries);
+      if (signature === persistedSignature) return;
       writeInFlight = true;
       persistGoRolloutCache(entries).then(() => {
-        persistedEntryCount = allEntries.length;
+        persistedSignature = signature;
       }).catch(() => {}).finally(() => {
         writeInFlight = false;
       });
@@ -337,21 +385,47 @@ export default function AutoChessGame() {
     setRevision((value) => value + 1);
   }, []);
 
-  const updateAutopilotStrategy = useCallback((style: AutopilotStyle) => {
+  const updateAutopilotStyle = useCallback((style: AutopilotPreferenceStyle) => {
     setAutopilotStyle(style);
-    autopilotRef.current?.setStrategy(style);
+    autopilotRef.current?.setConfiguration(style, autopilotLevel);
     try {
       window.localStorage.setItem(
         AUTOPILOT_STRATEGY_KEY,
-        JSON.stringify({ style, version: AUTOPILOT_STRATEGY_VERSION }),
+        JSON.stringify({
+          style,
+          level: autopilotLevel,
+          version: AUTOPILOT_STRATEGY_VERSION,
+        }),
       );
     } catch {
       // The strategy still applies for this session when storage is unavailable.
     }
     const label = AUTOPILOT_STYLE_OPTIONS.find(([option]) => option === style)?.[1] || style;
-    setMessage(`${label}托管策略已更新。`);
+    setMessage(`托管风格已切换为${label}。`);
     setRevision((value) => value + 1);
-  }, []);
+  }, [autopilotLevel]);
+
+  const updateAutopilotLevel = useCallback((level: AutopilotThinkingLevel) => {
+    setAutopilotLevel(level);
+    autopilotRef.current?.setConfiguration(autopilotStyle, level);
+    try {
+      window.localStorage.setItem(
+        AUTOPILOT_STRATEGY_KEY,
+        JSON.stringify({
+          style: autopilotStyle,
+          level,
+          version: AUTOPILOT_STRATEGY_VERSION,
+        }),
+      );
+    } catch {
+      // The strategy still applies for this session when storage is unavailable.
+    }
+    const label = level === "go"
+      ? "Go测试"
+      : AUTOPILOT_LEVEL_OPTIONS.find(([option]) => option === level)?.[1] || level;
+    setMessage(`AI 等级已切换为${label}。`);
+    setRevision((value) => value + 1);
+  }, [autopilotStyle]);
 
   const startAiRun = useCallback(() => {
     const started = autopilotRef.current?.startFromTitle() || false;
@@ -401,8 +475,9 @@ export default function AutoChessGame() {
     const storedBackgroundBattle = loadBackgroundBattlePreference();
     bridge.setBackgroundBattleEnabled(storedBackgroundBattle);
     setBackgroundBattleEnabled(storedBackgroundBattle);
-    const storedAutopilotStrategy = loadAutopilotStrategy();
-    setAutopilotStyle(storedAutopilotStrategy);
+    const storedAutopilotConfiguration = loadAutopilotConfiguration();
+    setAutopilotStyle(storedAutopilotConfiguration.style);
+    setAutopilotLevel(storedAutopilotConfiguration.level);
     const audio = new AutoChessAudio(loadAudioPreferences());
     audioRef.current = audio;
     setAudioPreferences(loadAudioPreferences());
@@ -591,9 +666,12 @@ export default function AutoChessGame() {
       bridge,
       "evolution",
       {},
-      storedAutopilotStrategy,
+      storedAutopilotConfiguration.style,
       undefined,
       LIVE_AUTOPILOT_ROLLOUT_HZ,
+      undefined,
+      true,
+      storedAutopilotConfiguration.level,
     );
     autopilotRef.current = autopilot;
     console.info(`[RiftLine][AI] v${AUTOCHESS_VERSION} ready. Use autoChessAI.help()`, ai.help());
@@ -885,9 +963,34 @@ export default function AutoChessGame() {
                       type="button"
                       role="radio"
                       aria-checked={autopilotStyle === style}
-                      onClick={() => updateAutopilotStrategy(style)}
+                      onClick={() => updateAutopilotStyle(style)}
                     >{label}</button>
                   ))}
+                </div>
+              </div>
+              <div className="rift-setting-strategy rift-setting-autopilot-level">
+                <span>AI 等级</span>
+                <div role="radiogroup" aria-label="AI 等级">
+                  {AUTOPILOT_LEVEL_OPTIONS.map(([level, label]) => (
+                    <button
+                      key={level}
+                      type="button"
+                      role="radio"
+                      aria-checked={autopilotLevel === level}
+                      onClick={() => updateAutopilotLevel(level)}
+                    >{label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="rift-setting-strategy rift-setting-autopilot-research">
+                <span>研究模式</span>
+                <div role="radiogroup" aria-label="研究模式">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={autopilotLevel === "go"}
+                    onClick={() => updateAutopilotLevel("go")}
+                  >Go测试</button>
                 </div>
               </div>
               <div className="rift-setting-row"><span>后台继续战斗</span><button type="button" className="rift-switch" role="switch" aria-label="后台继续战斗" aria-checked={backgroundBattleEnabled} onClick={() => updateBackgroundBattle(!backgroundBattleEnabled)}><i /></button></div>

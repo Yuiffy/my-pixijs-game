@@ -57,9 +57,6 @@ const RIFT_BRAWLER_SELF_BURN = 0.85;
 const RIFT_STALKER_LAUGH_SPEED = 1200;
 const MOSSBACK_BISCUIT_HEAL_RATIO = 0.12;
 const MOSSBACK_BISCUIT_SHIELD_RATIO = 0.15;
-const RUTICE_GROUP_HEAL_RATIO = 0.15;
-const RUTICE_LOWEST_SHIELD_RATIO = 0.12;
-const RUTICE_LOWEST_SHIELD_TARGET_COUNT = 2;
 export const SHIORI_OTTER_RADIUS = 122;
 const SUI_BARRAGE_ATTACK_BONUS = 0.15;
 const SUI_BARRAGE_ATTACK_SPEED = 0.75;
@@ -120,6 +117,11 @@ interface AbilityHost {
     source: Fighter,
     target: Fighter,
     shot: ProjectileVolleyShot,
+  ) => void;
+  fireRuticeSyringes: (
+    source: Fighter,
+    targets: Fighter[],
+    effectRatio: number,
   ) => void;
   grantAbilityShield: (
     source: Fighter | null,
@@ -757,14 +759,46 @@ export class AbilitySystem {
         break;
       }
       case "nagisa": {
-        allies.forEach((target) => addShield(target, target.maxHp * 0.1, 0.42));
+        allies.forEach((target) => {
+          addShield(target, target.maxHp * 0.1, 0.42);
+          if (target.fid !== source.fid) {
+            this.host.addEffect({
+              kind: "neural_link",
+              x: source.x,
+              y: source.y,
+              x2: target.x,
+              y2: target.y,
+              color: def.accent,
+              life: 0.92,
+              size: 4,
+            });
+          }
+          this.host.addEffect({
+            kind: "mind_control",
+            x: target.x,
+            y: target.y,
+            color: def.accent,
+            text: target.fid === source.fid ? "🧠" : "同步",
+            emoji: target.fid === source.fid,
+            life: 0.92,
+            size: target.fid === source.fid ? 165 : target.radius + 22,
+          });
+        });
         targets
           .filter((target) => Math.hypot(target.x - source.x, target.y - source.y) < 150)
           .forEach((target) => {
             deal(target, 0.8);
             target.stun = Math.max(target.stun, 0.85);
+            this.host.addEffect({
+              kind: "mind_control",
+              x: target.x,
+              y: target.y,
+              color: "#d6a4ff",
+              text: "失控",
+              life: 0.92,
+              size: target.radius + 28,
+            });
           });
-        this.host.addEffect({ kind: "ring", x: source.x, y: source.y, color: def.accent, life: 0.9, size: 165 });
         break;
       }
       case "tower_god": {
@@ -1063,11 +1097,31 @@ export class AbilitySystem {
         break;
       }
       case "rutice": {
-        allies.forEach((target) => this.host.heal(source, target, target.maxHp * RUTICE_GROUP_HEAL_RATIO));
-        [...allies]
+        const targetCount = abilityStatForStar(def, source.star, "targetCount", 3);
+        const effectRatio = abilityStatForStar(def, source.star, "effectRatio", 0.24);
+        const syringeTargets = [...allies]
+          .filter((target) => target.fid !== source.fid && target.hp < target.maxHp)
           .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)
-          .slice(0, RUTICE_LOWEST_SHIELD_TARGET_COUNT)
-          .forEach((target) => addShield(target, target.maxHp * RUTICE_LOWEST_SHIELD_RATIO, 0.5));
+          .slice(0, targetCount);
+        this.host.fireRuticeSyringes(source, syringeTargets, effectRatio);
+        this.host.addEffect({
+          kind: "burst",
+          x: source.x,
+          y: source.y,
+          color: def.accent,
+          life: 0.42,
+          size: 62,
+        });
+        this.host.addEffect({
+          kind: "emoji_burst",
+          x: source.x,
+          y: source.y - 28,
+          color: def.accent,
+          text: "💉",
+          emoji: true,
+          life: 0.58,
+          size: 28,
+        });
         break;
       }
       case "rift_tyrant": {

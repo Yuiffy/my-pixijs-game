@@ -175,6 +175,28 @@ export class ProjectileViewRenderer {
       return;
     }
 
+    if (projectile.style === "syringe") {
+      const directionX = projectile.velocityX / speed;
+      const directionY = projectile.velocityY / speed;
+      const tailX = -directionX * 34;
+      const tailY = -directionY * 34;
+      trail.setVisible(true).setBlendMode(Phaser.BlendModes.SCREEN);
+      this.drawProjectileTrail(trail, tailX, tailY, 7, projectileColor);
+      this.drawProjectileTrail(trail, tailX * 0.72, tailY * 0.72, 2.5, 0xffffff);
+      [12, 23, 34].forEach((distance, index) => {
+        trail
+          .fillStyle(index % 2 ? 0xb9fff5 : projectileColor, 0.5 - index * 0.1)
+          .fillCircle(-directionX * distance, -directionY * distance, 4 - index * 0.6);
+      });
+      icon
+        .setText(emoji || "💉")
+        .setFontFamily(PROJECTILE_EMOJI_FONT)
+        .setFontSize(Math.max(22, projectile.size))
+        .setRotation(angle + Math.PI * 0.75)
+        .setVisible(true);
+      return;
+    }
+
     if (projectile.style === "lollipop" && projectile.grounded) {
       trail.setVisible(true);
       trail.lineStyle(2, projectileColor, 0.72).strokeCircle(0, 0, projectile.radius + 7);
