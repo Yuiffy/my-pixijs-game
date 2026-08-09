@@ -701,7 +701,7 @@ test("北欧魔法师升为三费并提供能量驱动的三档时停", () => {
     [1, 2, 3, 4, 5].map(
       (tier) => data.SHOP_UNITS.filter((id) => data.UNIT_DEFS[id].tier === tier).length,
     ),
-    [7, 8, 10, 11, 6],
+    [7, 8, 11, 10, 6],
   );
   assert.equal(data.abilityDescriptionForStar(data.UNIT_DEFS.gale_archer, 3), data.UNIT_DEFS.gale_archer.abilityDescription);
 });
@@ -1095,7 +1095,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
       attack: data.UNIT_DEFS.rutice.attack,
       armor: data.UNIT_DEFS.rutice.armor,
     },
-    { tier: 4, cost: 4, hp: 380, attack: 32, armor: 31 },
+    { tier: 3, cost: 3, hp: 380, attack: 32, armor: 31 },
   );
   assert.match(data.UNIT_DEFS.rutice.abilityDescription, /15%.*12%/);
 
