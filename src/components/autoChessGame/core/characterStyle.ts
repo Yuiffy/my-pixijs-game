@@ -19,7 +19,7 @@ const CLASSIC_OVERRIDES: Partial<Record<UnitId, ResolvedUnitPortrait>> = {
   sun_guard: { portrait: "/images/livers/hazel.png", portraitFocus: "top", portraitStyle: "round" },
   ember_blade: { portrait: "/images/livers/liko.png", portraitFocus: "top", portraitStyle: "round" },
   gale_archer: { portrait: "/images/livers/izayoi.png", portraitFocus: "top", portraitStyle: "round" },
-  cog_scribe: { portrait: "/images/livers/joi.png", portraitFocus: "top", portraitStyle: "round" },
+  cog_scribe: { portrait: "/images/autochess/portraits/classic/cog-scribe.png", portraitFocus: "top", portraitStyle: "round" },
   mossback: { portrait: "/images/livers/mofu.jpg", portraitFocus: "top", portraitStyle: "round" },
   sui: { portrait: "/images/materials/red/1d5ad005aff0b4b648a0f1ef6b8d0cd71954091502.png", portraitFocus: "top", portraitStyle: "round" },
   spark_mage: { portrait: "/images/livers/rhea.png", portraitFocus: "top", portraitStyle: "round" },

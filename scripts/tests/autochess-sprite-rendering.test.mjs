@@ -408,7 +408,7 @@ test("角色样式以极简为默认并在所有界面共用三档资源解析",
   assert.match(characterStyle, /sun_guard: \{ portrait: "\/images\/livers\/hazel\.png"/);
   assert.match(characterStyle, /clock_gunner: \{ portrait: "\/images\/livers\/mizuki\.png"/);
   assert.match(characterStyle, /spark_mage: \{ portrait: "\/images\/livers\/rhea\.png"/);
-  assert.match(characterStyle, /cog_scribe: \{ portrait: "\/images\/livers\/joi\.png"/);
+  assert.match(characterStyle, /cog_scribe: \{ portrait: "\/images\/autochess\/portraits\/classic\/cog-scribe\.png"/);
   assert.match(characterStyle, /portraits\/\$\{style\}\/\$\{filename\}/);
   assert.match(characterStyle, /unitId === "rift_tyrant"/);
   assert.doesNotMatch(characterStyle, /unitId === "rift_stalker" \|\| unitId === "rift_brawler"/);

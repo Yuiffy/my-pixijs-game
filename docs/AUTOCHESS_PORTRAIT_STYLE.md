@@ -44,8 +44,9 @@ round/sprite treatment declared by its explicit source mapping.
 - When a small prop is essential, keep it subordinate to the character: Joi may show
   one orange, Kioi one plush, Seki one compact boar motif, and Zeyin one small flame.
 - The classic mappings for Liko, Izayoi, Mofu, SUI's red-hood form, Hazel, Mizuki,
-  Rhea, and Joi point directly to their local original art rather than generated
-  portrait snapshots.
+  and Rhea point directly to their local original art rather than generated portrait
+  snapshots. Joi uses the approved single-character 3D standing image at
+  `portraits/classic/cog-scribe.png`, never a multi-pose character sheet.
 
 ## Approved Anchors
 
@@ -119,6 +120,8 @@ Original liver/material art is an identity reference only.
 - Corrected Nana7mi to use one pickaxe; rebuilt SUI's flower form from the angel-girl
   reference without dinosaur parts or a hotpot.
 - Rebuilt both styles for Joi, Azi, Lian, and Yua from local identity references.
+- Corrected Azi's minimal sprite to preserve her saturated violet hair and golden
+  eyes at gameplay scale; gray, black, or desaturated hair is not acceptable.
 - Rebuilt the default minimal sprites for Kioi, Nightin, Guangyi, Seki, Yukisyo, and
   Zeyin; Nightin's detail sprite was also corrected to remove the launcher.
 - Every replaced asset was chroma-key extracted, normalized to `512x512` RGBA with
