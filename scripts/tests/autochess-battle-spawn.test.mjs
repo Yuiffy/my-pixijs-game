@@ -4369,7 +4369,7 @@ test("七海凿凿冲击、恬豆地面棒棒糖与三理理恐惧试管均按�
   const fearZone = fearBattle.controlZones.find((zone) => zone.kind === "fear");
   assert.ok(fearZone);
   assert.equal(fearZone.radius, 118);
-  assert.equal(fearZone.maxLife, 4.2);
+  assert.equal(fearZone.maxLife, 1);
   assert.ok(fearBattle.effects.some((effect) => effect.kind === "fear_field"));
   fearedEnemy.x = fearZone.x;
   fearedEnemy.y = fearZone.y;
@@ -4387,6 +4387,12 @@ test("七海凿凿冲击、恬豆地面棒棒糖与三理理恐惧试管均按�
   assert.equal(fearedEnemy.targetFid, null);
   const fearTextState = JSON.parse(fearEngine.renderTextState());
   assert.ok(fearTextState.battle.visualEffects.controlZones.some((zone) => zone.kind === "fear"));
+  for (let tick = 0; tick < 24; tick += 1) fearEngine.update(0.05);
+  assert.equal(fearBattle.controlZones.length, 0);
+  assert.equal(fearedEnemy.fearTime, 0);
+  assert.notEqual(fearedEnemy.targetFid, null);
+  for (let tick = 0; tick < 8; tick += 1) fearEngine.update(0.05);
+  assert.equal(fearedEnemy.fearTime, 0);
 });
 
 test("蛙梓终场歌唱持续治疗施法距离内友军，并将单体激光切换为范围灼烧火焰弹", () => {

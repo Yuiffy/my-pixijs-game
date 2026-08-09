@@ -564,7 +564,7 @@ test("岁己形态拆分到不同关系构筑", () => {
   assert.equal(data.UNIT_DEFS.tiandou.abilityName, "棒棒糖刘海");
   assert.match(data.UNIT_DEFS.tiandou.abilityDescription, /友军.*回复生命.*敌人.*减速/);
   assert.equal(data.UNIT_DEFS.mitsuri.abilityName, "脚臭试管");
-  assert.match(data.UNIT_DEFS.mitsuri.abilityDescription, /🧪.*持续区域.*恐惧.*停止攻击.*远离/);
+  assert.match(data.UNIT_DEFS.mitsuri.abilityDescription, /🧪.*持续 1 秒.*恐惧.*停止攻击.*远离/);
   assert.equal(data.UNIT_DEFS.mitsuri.attackType, "melee");
   assert.ok(data.UNIT_DEFS.mitsuri.range <= 60);
   assert.equal(data.UNIT_DEFS.mitsuri.abilityCastTiming, "offenseReady");
@@ -574,7 +574,7 @@ test("岁己形态拆分到不同关系构筑", () => {
       level.stats.radius,
       level.stats.duration,
     ]),
-    [[118, 4.2], [134, 4.8], [152, 5.4]],
+    [[118, 1], [134, 1], [152, 1]],
   );
   assert.equal(data.UNIT_DEFS.lovely.abilityCastTiming, "offenseInRange");
   assert.match(data.UNIT_DEFS.lovely.abilityDescription, /需要接近敌人才能发动/);
@@ -950,7 +950,7 @@ test("所有羁绊的最高档都能由可购买成员达到", () => {
 
   assert.deepEqual(
     Object.fromEntries(["ember", "assassin", "gen27", "mature"].map((traitId) => [traitId, memberCounts[traitId]])),
-    { ember: 4, assassin: 4, gen27: 5, mature: 5 },
+    { ember: 4, assassin: 5, gen27: 5, mature: 5 },
   );
   ["ember", "assassin", "gen27", "mature"].forEach((traitId) => {
     assert.deepEqual(data.TRAITS[traitId].thresholds, [2, 4]);
@@ -1064,7 +1064,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
     {
       tier: 5,
       cost: 5,
-      traits: ["traffic", "aggression"],
+      traits: ["traffic", "mystic", "assassin"],
       hp: 360,
       attack: 48,
       armor: 24,

@@ -427,7 +427,7 @@ mkdirSync(artifactDirectory, { recursive: true });
       };
     }, testTubeFlight);
     assert.equal(fearResult.radius, 118);
-    assert.equal(fearResult.duration, 4.2);
+    assert.equal(fearResult.duration, 1);
     assert.ok(fearResult.fearTime > 0);
     assert.ok(fearResult.distanceAfter > fearResult.distanceBefore);
     const fearText = JSON.parse(
