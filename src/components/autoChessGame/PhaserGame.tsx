@@ -94,6 +94,11 @@ const GO_ROLLOUT_RECORD_KEY = "latest";
 const GO_ROLLOUT_PERSIST_INTERVAL_MS = 15_000;
 const GO_ROLLOUT_PERSIST_LIMIT = 25_000;
 const SESSION_TRACE_EVENT_LIMIT = 5_000;
+const AUTOPILOT_STYLE_OPTIONS = [
+  ["fair", "实战"],
+  ["seer", "看穿2"],
+  ["go", "Go测试"],
+] as const;
 
 type PersistedGoRolloutCache = {
   schema: string;
@@ -342,11 +347,8 @@ export default function AutoChessGame() {
     } catch {
       // The strategy still applies for this session when storage is unavailable.
     }
-    setMessage(style === "go"
-      ? "Go测试托管策略已更新。"
-      : style === "seer"
-        ? "看穿2托管策略已更新。"
-        : "实战托管策略已更新。");
+    const label = AUTOPILOT_STYLE_OPTIONS.find(([option]) => option === style)?.[1] || style;
+    setMessage(`${label}托管策略已更新。`);
     setRevision((value) => value + 1);
   }, []);
 
@@ -876,11 +878,7 @@ export default function AutoChessGame() {
               <div className="rift-setting-strategy">
                 <span>托管风格</span>
                 <div role="radiogroup" aria-label="托管风格">
-                  {([
-                    ["fair", "实战"],
-                    ["seer", "看穿2"],
-                    ["go", "Go测试"],
-                  ] as const).map(([style, label]) => (
+                  {AUTOPILOT_STYLE_OPTIONS.map(([style, label]) => (
                     <button
                       key={style}
                       type="button"

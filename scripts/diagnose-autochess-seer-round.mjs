@@ -27,7 +27,7 @@ const informationMode = option(
   style === "seer" || style === "go" ? "oracle" : "normal",
 );
 const liveBattleAudit = process.argv.includes("--live-audit");
-if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
+if (!["survival", "balanced", "highroll", "fair", "seer", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
 const outputPath = option(

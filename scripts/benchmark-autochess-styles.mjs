@@ -9,7 +9,7 @@ const option = (name, fallback) => {
   const inline = process.argv.find((argument) => argument.startsWith(`${name}=`));
   return inline ? inline.slice(name.length + 1) : fallback;
 };
-const ALL_STYLES = ["survival", "balanced", "highroll", "seer", "go"];
+const ALL_STYLES = ["survival", "balanced", "highroll", "fair", "seer", "go"];
 const requestedStyles = option("--styles", "")
   .split(",")
   .map((style) => style.trim())

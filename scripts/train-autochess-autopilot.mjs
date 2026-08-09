@@ -24,7 +24,7 @@ const baseSeed = Math.max(1, Number(option("--seed", "74000")) || 74000);
 const battles = Math.max(4, Math.min(70, Number(option("--battles", "60")) || 60));
 const requestedStyle = option("--style", "survival");
 const style = requestedStyle === "seer2" ? "seer" : requestedStyle;
-if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
+if (!["survival", "balanced", "highroll", "fair", "seer", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
 const informationMode = style === "seer" || style === "go" ? "oracle" : "normal";

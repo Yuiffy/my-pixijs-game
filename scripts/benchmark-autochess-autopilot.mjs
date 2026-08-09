@@ -78,7 +78,7 @@ const reportProgress = process.argv.includes("--progress");
 const diagnosticsEnabled = process.argv.includes("--diagnostics");
 const diagnosticRound = Math.max(0, Number(option("--diagnostic-round", "0")) || 0);
 const profileEnabled = process.argv.includes("--profile");
-if (!["survival", "balanced", "highroll", "seer", "go"].includes(style)) {
+if (!["survival", "balanced", "highroll", "fair", "seer", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
 }
 if (!["normal", "oracle"].includes(informationMode)) {

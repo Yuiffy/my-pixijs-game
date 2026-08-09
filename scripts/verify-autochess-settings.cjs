@@ -63,15 +63,19 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.screenshot({ path: screenshotPath });
   const state = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
   assert.equal(exportType, "function");
-  assert.equal(strategies.length, 5);
-  assert.equal(strategies.some(({ label }) => label === "看穿2"), false);
-  assert.ok(strategies.some(({ label }) => label === "看穿"));
+  assert.equal(strategies.length, 3);
+  assert.deepEqual(
+    strategies.map(({ label }) => label),
+    ["实战", "看穿2", "Go测试"],
+  );
+  assert.ok(strategies.some(({ label }) => label === "看穿2"));
+  assert.equal(strategies.some(({ label }) => label === "看穿"), false);
   assert.ok(strategies.some(({ label }) => label === "Go测试"));
   assert.ok(strategies.every(({ clientWidth, scrollWidth }) => scrollWidth <= clientWidth));
   assert.ok(strategyLayout.leadingInset <= 5);
   assert.ok(strategyLayout.trailingInset <= 5);
   assert.ok(Math.max(...strategyLayout.buttonWidths) - Math.min(...strategyLayout.buttonWidths) < 1);
-  assert.equal(state.interface.autoplayStyle, "survival");
+  assert.equal(state.interface.autoplayStyle, "fair");
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ exportType, strategies, strategyLayout, phase: state.phase, screenshotPath, errors }, null, 2));
   await browser.close();
