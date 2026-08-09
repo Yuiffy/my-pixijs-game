@@ -127,6 +127,11 @@ Original liver/material art is an identity reference only.
   soft dominance matting or despill also damages the violet hair.
 - Rebuilt the default minimal sprites for Kioi, Nightin, Guangyi, Seki, Yukisyo, and
   Zeyin; Nightin's detail sprite was also corrected to remove the launcher.
+- Guangyi's minimal sprite follows the common wide-brim-hat standing model from the
+  user-approved Moegirl reference: short gray-brown hair, pale hat and long coat,
+  black scarf, black trousers, and boots. He faces screen-right in a neutral standing
+  pose; his football-style knee slide remains gameplay motion rather than a required
+  baked pose.
 - Seki's minimal sprite must follow her classic Project SP model rather than a generic
   boar fighter: explosive cyan twin-tails with pink streaks, purple eyes, bear hair
   clip, oversized charcoal jacket, black-white crop top, pink shorts, asymmetric
