@@ -174,6 +174,7 @@ interface AbilityHost {
     },
   ) => AbilityMotion | null;
   startSuiBirdElbowDash: (source: Fighter, targets: Fighter[]) => boolean;
+  startKomichiDebutImpact: (source: Fighter, targets: Fighter[]) => boolean;
   summonClockGunnerRabbits: (source: Fighter) => void;
   targetsWithinAbilityRange: (
     source: Fighter,
@@ -939,15 +940,19 @@ export class AbilitySystem {
       }
       case "komichi": {
         const duration = abilityStatForStar(def, source.star, "duration", 5.5);
+        source.energy = source.maxEnergy;
         source.komichiSignTime = duration;
         this.host.addEffect({
           kind: "komichi_sign",
           x: source.x,
           y: source.y,
           color: def.accent,
+          text: "summon",
           life: 0.68,
           size: 118,
         });
+        this.host.addEffect({ kind: "text", x: source.x, y: source.y - 48, color: def.accent, text: "都市传说降临", life: 0.72, size: 12 });
+        this.host.startKomichiDebutImpact(source, targets);
         break;
       }
       case "mumu": {

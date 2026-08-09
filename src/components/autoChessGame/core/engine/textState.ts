@@ -282,6 +282,7 @@ export const renderTextState = (context: TextStateContext) => {
               x3: effect.x3 === undefined ? undefined : Math.round(effect.x3),
               y3: effect.y3 === undefined ? undefined : Math.round(effect.y3),
               size: effect.size,
+              variant: effect.kind === "komichi_sign" ? effect.text : undefined,
             })),
           projectiles: battle.projectiles.map((projectile) => ({
             x: Math.round(projectile.x),

@@ -172,6 +172,18 @@ export const HAREI_TRICK_ENERGY_PROFILE: EnergyProfile = {
   color: "#9ee8ff",
 };
 
+export const KOMICHI_URBAN_ENERGY_PROFILE: EnergyProfile = {
+  id: "flow",
+  name: "都市回能",
+  max: 100,
+  start: 25,
+  perSecond: 8,
+  onAttack: 12,
+  onHit: 7,
+  castRefund: 0,
+  color: "#ffd257",
+};
+
 export const REI_SLOW_ENERGY_PROFILE: EnergyProfile = {
   id: "automatic",
   name: "幽灵回能",

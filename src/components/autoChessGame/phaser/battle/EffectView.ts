@@ -163,14 +163,26 @@ export class EffectViewRenderer {
       return;
     }
     if (effect.kind === "komichi_sign") {
+      const smash = effect.text === "smash";
       const arrival = 1 - (1 - Math.min(1, progress * 2.8)) ** 3;
       const size = effect.size || 118;
-      const scale = 0.48 + arrival * 0.52;
+      const scale = smash
+        ? 0.72 + Math.sin(Math.min(1, progress) * Math.PI) * 0.32
+        : 0.48 + arrival * 0.52;
       komichiSignpost
         .setVisible(true)
         .setDisplaySize(size * scale, size * scale)
-        .setPosition(0, -30 - Math.sin(arrival * Math.PI) * 24)
-        .setRotation((1 - arrival) * -0.5 + Math.sin(progress * Math.PI * 2) * 0.04);
+        .setPosition(
+          0,
+          smash
+            ? -72 + arrival * 48
+            : -30 - Math.sin(arrival * Math.PI) * 24,
+        )
+        .setRotation(
+          smash
+            ? -1.05 + arrival * 1.28
+            : (1 - arrival) * -0.5 + Math.sin(progress * Math.PI * 2) * 0.04,
+        );
       return;
     }
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);

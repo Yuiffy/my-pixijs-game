@@ -152,11 +152,32 @@ const komichiState = async (page) => page.evaluate(() => {
     phase: engine.state.phase,
     elapsed: battle?.elapsed ?? null,
     signTime: komichi?.komichiSignTime ?? null,
+    energy: komichi?.energy ?? null,
+    maxEnergy: komichi?.maxEnergy ?? null,
+    hp: komichi?.hp ?? null,
     range: komichi?.range ?? null,
     baseRange: komichi?.baseRange ?? null,
+    moveSpeed: komichi?.moveSpeed ?? null,
+    baseMoveSpeed: komichi?.baseMoveSpeed ?? null,
+    moveBuffTime: komichi?.abilityMoveSpeedTime ?? null,
     x: komichi?.x ?? null,
     y: komichi?.y ?? null,
-    effects: battle?.effects.map((effect) => effect.kind) ?? [],
+    motion: komichi?.abilityMotion
+      ? {
+        kind: komichi.abilityMotion.kind,
+        targetFid: komichi.abilityMotion.targetFid,
+        progress: komichi.abilityMotion.time / Math.max(komichi.abilityMotion.duration, 0.001),
+      }
+      : null,
+    effects: battle?.effects.map((effect) => ({ kind: effect.kind, variant: effect.text })) ?? [],
+    enemies: battle?.enemy.map((fighter) => ({
+      fid: fighter.fid,
+      x: fighter.x,
+      y: fighter.y,
+      hp: fighter.hp,
+      stun: fighter.stun,
+      motion: fighter.abilityMotion?.kind || null,
+    })) ?? [],
     portraitTexture: portrait?.texture?.key ?? null,
     signpostVisible,
     textFighter: textFighter
@@ -164,8 +185,10 @@ const komichiState = async (page) => page.evaluate(() => {
         unitId: textFighter.unitId,
         signTime: textFighter.komichiSignTime,
         range: textFighter.range,
+        energy: textFighter.energy,
       }
       : null,
+    textEffects: textState.battle?.visualEffects?.effects ?? [],
   };
 });
 
@@ -188,6 +211,7 @@ const komichiState = async (page) => page.evaluate(() => {
 
   const capture = async (filename) => {
     const path = `${artifactDirectory}/${filename}`;
+    await page.waitForTimeout(50);
     const buffer = await page.screenshot({ path, fullPage: true });
     const result = { path, bytes: buffer.length, metrics: inspectPng(buffer) };
     screenshots.push(result);
@@ -208,23 +232,25 @@ const komichiState = async (page) => page.evaluate(() => {
 
   await page.evaluate(() => {
     const engine = window.__komichiEngine;
-    engine.state.round = 1;
-    engine.state.playerLevel = 3;
+    engine.state.round = 8;
+    engine.state.playerLevel = 4;
     engine.state.board.fill(null);
     engine.state.board[0] = { uid: 40101, id: "komichi", star: 1 };
     engine.startBattle();
     const battle = engine.state.battle;
     const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
-    komichi.x = 430;
+    komichi.x = 260;
     komichi.y = 360;
     komichi.energy = 0;
     komichi.cooldown = 99;
+    komichi.armor = 0;
+    komichi.shield = 0;
     komichi.hp = komichi.maxHp = 99_999;
-    battle.enemy.splice(1);
-    battle.enemy.forEach((fighter, index) => {
-      fighter.x = 540 + index * 90;
-      fighter.y = 360 + (index % 2) * 100;
+    battle.enemy.forEach((fighter) => {
+      fighter.x = 900;
+      fighter.y = 540;
       fighter.attack = 0;
+      fighter.armor = 0;
       fighter.cooldown = 99;
       fighter.energy = 0;
       fighter.maxEnergy = 99_999;
@@ -244,36 +270,201 @@ const komichiState = async (page) => page.evaluate(() => {
   assert.equal(idle.signpostVisible, false);
   await capture("komichi-idle-empty-handed.png");
 
+  const passiveBlockDamage = await page.evaluate(() => {
+    const engine = window.__komichiEngine;
+    const battle = engine.state.battle;
+    const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
+    const rangedAttacker = battle.enemy[2];
+    rangedAttacker.x = komichi.x + 90;
+    rangedAttacker.y = komichi.y;
+    rangedAttacker.attackType = "ranged";
+    rangedAttacker.attack = 100;
+    rangedAttacker.range = 500;
+    rangedAttacker.cooldown = 0;
+    engine.rng.next = () => 0;
+    const hpBefore = komichi.hp;
+    engine.basicAttack(rangedAttacker, komichi);
+    return hpBefore - komichi.hp;
+  });
+  assert.ok(Math.abs(passiveBlockDamage - 64) < 0.001);
+  await page.evaluate(() => window.advanceTime(1));
+  const passiveBlock = await komichiState(page);
+  assert.equal(passiveBlock.signTime, 0);
+  assert.ok(passiveBlock.energy >= 19 && passiveBlock.energy < 20);
+  assert.ok(passiveBlock.moveSpeed > passiveBlock.baseMoveSpeed);
+  assert.ok(passiveBlock.moveBuffTime > 1);
+  assert.ok(passiveBlock.effects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "block"));
+  assert.ok(passiveBlock.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "block"));
+  assert.equal(passiveBlock.portraitTexture, "rift-unit:minimal:komichi");
+  assert.equal(passiveBlock.signpostVisible, true);
+  await capture("komichi-passive-block.png");
+
   await page.evaluate(() => {
     const engine = window.__komichiEngine;
     const battle = engine.state.battle;
     const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
-    const target = battle.enemy.find((fighter) => fighter.alive);
-    target.x = komichi.x + 45;
-    target.y = komichi.y;
-    komichi.cooldown = 0;
+    const target = battle.enemy[0];
+    const pathTarget = battle.enemy[1];
+    const rangedAttacker = battle.enemy[2];
+    battle.effects.length = 0;
+    komichi.x = 260;
+    komichi.y = 360;
+    komichi.targetFid = target.fid;
+    komichi.targetLock = 99;
     komichi.energy = komichi.maxEnergy;
+    komichi.cooldown = 0;
+    target.x = 610;
+    target.y = 360;
+    target.stun = 0;
+    target.abilityMotion = null;
+    pathTarget.x = 450;
+    pathTarget.y = 360;
+    pathTarget.abilityMotion = null;
+    rangedAttacker.x = 900;
+    rangedAttacker.y = 540;
+    rangedAttacker.attack = 0;
+    rangedAttacker.cooldown = 99;
   });
   await page.evaluate(() => window.advanceTime(20));
   const cast = await komichiState(page);
-  assert.ok(cast.signTime > 5.4 && cast.signTime <= 5.5);
+  assert.ok(cast.signTime > 3.7 && cast.signTime < 3.9);
+  assert.ok(cast.energy > 69 && cast.energy <= 70);
   assert.ok(cast.range >= cast.baseRange + 105);
-  assert.ok(cast.effects.includes("komichi_sign"));
+  assert.equal(cast.motion?.kind, "dash");
+  assert.equal(cast.motion?.targetFid, cast.enemies[0].fid);
+  assert.ok(cast.effects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "summon"));
   assert.equal(cast.portraitTexture, "rift-unit-ability:minimal:komichi");
   assert.equal(cast.signpostVisible, true);
-  await capture("komichi-cast-signpost-effect.png");
+  await capture("komichi-urban-legend-cast.png");
 
-  await page.evaluate(() => window.advanceTime(760));
-  const active = await komichiState(page);
-  assert.ok(active.signTime > 4.5);
-  assert.ok(active.range >= active.baseRange + 105);
-  assert.ok(!active.effects.includes("komichi_sign"));
-  assert.ok(active.textFighter?.signTime > 0);
-  assert.equal(active.portraitTexture, "rift-unit-ability:minimal:komichi");
-  assert.equal(active.signpostVisible, false);
-  await capture("komichi-active-holding-sign.png");
+  const pathStart = cast.enemies[1];
+  await page.evaluate(() => window.advanceTime(180));
+  const dash = await komichiState(page);
+  assert.equal(dash.motion?.kind, "dash");
+  assert.ok(Math.hypot(dash.enemies[1].x - pathStart.x, dash.enemies[1].y - pathStart.y) > 10);
+  assert.ok(dash.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "smash"));
+  assert.equal(dash.portraitTexture, "rift-unit-ability:minimal:komichi");
+  assert.equal(dash.signpostVisible, true);
+  await capture("komichi-debut-dash-path-hit.png");
 
-  await page.evaluate(() => window.advanceTime(5000));
+  await page.evaluate(() => window.advanceTime(120));
+  const impact = await komichiState(page);
+  assert.equal(impact.motion, null);
+  assert.ok(impact.enemies[0].hp < 99_999);
+  assert.ok(impact.enemies[0].stun > 0.4);
+  assert.ok(impact.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "smash"));
+  assert.equal(impact.portraitTexture, "rift-unit-ability:minimal:komichi");
+  await capture("komichi-debut-target-impact.png");
+
+  await page.evaluate(() => {
+    const engine = window.__komichiEngine;
+    const battle = engine.state.battle;
+    const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
+    const target = battle.enemy[0];
+    battle.effects.length = 0;
+    target.x = komichi.x + 100;
+    target.y = komichi.y;
+    target.stun = 0;
+    target.abilityMotion = null;
+    komichi.energy = 40;
+    komichi.cooldown = 0;
+    engine.basicAttack(komichi, target);
+  });
+  await page.evaluate(() => window.advanceTime(1));
+  const smashAttack = await komichiState(page);
+  assert.ok(smashAttack.energy > 51 && smashAttack.energy <= 52);
+  assert.equal(smashAttack.enemies[0].stun, 0);
+  assert.ok(smashAttack.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "smash"));
+  assert.equal(smashAttack.signpostVisible, true);
+  await capture("komichi-active-sign-smash.png");
+
+  const activeBlockDamage = await page.evaluate(() => {
+    const engine = window.__komichiEngine;
+    const battle = engine.state.battle;
+    const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
+    const rangedAttacker = battle.enemy[2];
+    battle.effects.length = 0;
+    rangedAttacker.x = komichi.x + 90;
+    rangedAttacker.y = komichi.y;
+    rangedAttacker.attackType = "ranged";
+    rangedAttacker.attack = 100;
+    rangedAttacker.range = 500;
+    rangedAttacker.cooldown = 0;
+    komichi.energy = 40;
+    engine.rng.next = () => 0.6;
+    const hpBefore = komichi.hp;
+    engine.basicAttack(rangedAttacker, komichi);
+    return hpBefore - komichi.hp;
+  });
+  assert.ok(Math.abs(activeBlockDamage - 64) < 0.001);
+  await page.evaluate(() => window.advanceTime(1));
+  const activeBlock = await komichiState(page);
+  assert.ok(activeBlock.energy > 58 && activeBlock.energy <= 59);
+  assert.ok(activeBlock.moveSpeed > activeBlock.baseMoveSpeed);
+  assert.ok(activeBlock.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "block"));
+  assert.equal(activeBlock.signpostVisible, true);
+  await capture("komichi-active-block.png");
+
+  const repeatTrigger = await page.evaluate(() => {
+    const engine = window.__komichiEngine;
+    const battle = engine.state.battle;
+    const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
+    const target = battle.enemy[0];
+    const attackTarget = battle.enemy[1];
+    const rangedAttacker = battle.enemy[2];
+    battle.effects.length = 0;
+    target.x = komichi.x + 320;
+    target.y = komichi.y;
+    target.abilityMotion = null;
+    attackTarget.x = komichi.x + 100;
+    attackTarget.y = komichi.y;
+    attackTarget.abilityMotion = null;
+    rangedAttacker.x = 900;
+    rangedAttacker.y = 540;
+    rangedAttacker.attack = 0;
+    rangedAttacker.cooldown = 99;
+    komichi.targetFid = target.fid;
+    komichi.targetLock = 99;
+    komichi.energy = 95;
+    komichi.cooldown = 0;
+    engine.basicAttack(komichi, attackTarget);
+    return {
+      energy: komichi.energy,
+      motion: komichi.abilityMotion?.kind || null,
+      targetFid: komichi.abilityMotion?.targetFid || null,
+      expectedTargetFid: target.fid,
+    };
+  });
+  assert.equal(repeatTrigger.energy, 70);
+  assert.equal(repeatTrigger.motion, "dash");
+  assert.equal(repeatTrigger.targetFid, repeatTrigger.expectedTargetFid);
+  await page.evaluate(() => window.advanceTime(20));
+  const repeatDash = await komichiState(page);
+  assert.equal(repeatDash.motion?.kind, "dash");
+  assert.ok(repeatDash.textEffects.some((effect) => effect.kind === "line"));
+  assert.equal(repeatDash.portraitTexture, "rift-unit-ability:minimal:komichi");
+  await capture("komichi-refill-repeat-dash.png");
+
+  await page.evaluate(() => {
+    const engine = window.__komichiEngine;
+    const battle = engine.state.battle;
+    const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
+    komichi.abilityMotion = null;
+    komichi.energy = 10;
+    komichi.komichiSignTime = 0.55;
+    komichi.energyPerSecond = 0;
+    komichi.energyOnAttack = 0;
+    komichi.energyOnHit = 0;
+    komichi.cooldown = 99;
+    battle.effects.length = 0;
+    battle.enemy.forEach((fighter) => {
+      fighter.x = 900;
+      fighter.y = 540;
+      fighter.attack = 0;
+      fighter.cooldown = 99;
+    });
+  });
+  await page.evaluate(() => window.advanceTime(700));
   const ended = await komichiState(page);
   assert.equal(ended.signTime, 0);
   assert.equal(ended.range, ended.baseRange);
@@ -299,8 +490,14 @@ const komichiState = async (page) => page.evaluate(() => {
 
   console.log(JSON.stringify({
     idle,
+    passiveBlock,
     cast,
-    active,
+    dash,
+    impact,
+    smashAttack,
+    activeBlock,
+    repeatTrigger,
+    repeatDash,
     ended,
     requestedAssets: [...requestedAssets],
     canvas: canvasState,

@@ -493,6 +493,11 @@ test("战斗同步覆盖投射物、技能效果与机械兔召唤物", () => {
   assert.match(assets, /KOMICHI_SIGNPOST_TEXTURE_KEY/);
   assert.match(assets, /effects\/komichi-signpost\.png/);
   assert.match(effectView, /effect\.kind === "komichi_sign"/);
+  assert.match(effectView, /effect\.text === "smash"/);
+  assert.match(effectView, /-1\.05 \+ arrival \* 1\.28/);
+  assert.match(engine, /text: "smash"/);
+  assert.match(engine, /text: "block"/);
+  assert.match(engineTextState, /variant: effect\.kind === "komichi_sign" \? effect\.text : undefined/);
   assert.match(effectView, /setDisplaySize\(size \* scale, size \* scale\)/);
   assert.match(fighterView, /fighter\.unitId === "komichi" && fighter\.komichiSignTime > 0/);
   assert.match(fighterView, /abilityTextureKeyForUnit/);

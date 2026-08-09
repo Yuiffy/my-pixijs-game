@@ -185,6 +185,11 @@ const MUMU_RESCUE_SHIELD_RATIO = 0.12;
 const SUI_BIRD_ELBOW_DAMAGE = 0.58;
 const SUI_BIRD_ELBOW_STUN = 0.22;
 const SUI_BIRD_ELBOW_PUSH = 46;
+/** 四时小路「出道冲击」：满能触发并消耗一部分能量，避免连续逐帧冲锋。 */
+const KOMICHI_DEBUT_ENERGY_COST = 30;
+const KOMICHI_DEBUT_SPEED = 1_180;
+const KOMICHI_DEBUT_PATH_PUSH = 66;
+const KOMICHI_DEBUT_SIDE_PUSH = 28;
 /** 七海大鲨鱼：中短时长的冲阵控场。 */
 const NANA_PICKAXE_DURATION = 2.8;
 const NANA_PICKAXE_ARMOR_BONUS = 42;
@@ -366,6 +371,8 @@ export class AutoChessEngine {
         this.startAbilityMotion(source, kind, preferred, options),
       startSuiBirdElbowDash: (source, targets) =>
         this.startSuiBirdElbowDash(source, targets),
+      startKomichiDebutImpact: (source, targets) =>
+        this.startKomichiDebutImpact(source, targets),
       summonClockGunnerRabbits: (source) =>
         this.summonClockGunnerRabbits(source),
       targetsWithinAbilityRange: (source, targets) =>
@@ -385,6 +392,8 @@ export class AutoChessEngine {
       transferTowerHack: (source) => this.transferTowerHack(source),
       addGluttonyStack: (fighter, label) =>
         this.addGluttonyStack(fighter, label),
+      onKomichiSignBlock: (fighter) =>
+        this.onKomichiSignBlock(fighter),
     });
     this.combatSetup = new CombatSetupSystem({
       state: () => this.state,
@@ -423,12 +432,66 @@ export class AutoChessEngine {
       fighter.barrageActive ||
       fighter.sekiChargeActive ||
       fighter.lovelyControlTime > 0 ||
-      fighter.komichiSignTime > 0 ||
       (fighter.unitId === "sumi" && fighter.stealthTime > 0) ||
       this.chronosphereEnergyLocks.has(fighter.fid) ||
       this.hasChronosphereInFlightOrActive(fighter)
     ) return;
     fighter.energy = Math.max(0, Math.min(fighter.maxEnergy, fighter.energy + amount));
+    if (fighter.unitId === "komichi" && fighter.komichiSignTime > 0) {
+      this.syncKomichiSignTime(fighter);
+      if (fighter.energy >= fighter.maxEnergy && !fighter.abilityMotion) {
+        const battle = this.state.battle;
+        const targets = battle
+          ? this.living(fighter.team === "player" ? "enemy" : "player")
+          : [];
+        this.startKomichiDebutImpact(fighter, targets);
+      }
+    }
+  }
+
+  private komichiEnergyDrainPerSecond(fighter: Fighter) {
+    const duration = abilityStatForStar(
+      UNIT_DEFS.komichi,
+      fighter.star,
+      "duration",
+      5.5,
+    );
+    return duration > 0 ? fighter.maxEnergy / duration : fighter.maxEnergy;
+  }
+
+  private syncKomichiSignTime(fighter: Fighter) {
+    const drainPerSecond = this.komichiEnergyDrainPerSecond(fighter);
+    fighter.komichiSignTime = drainPerSecond > 0
+      ? fighter.energy / drainPerSecond
+      : 0;
+  }
+
+  private onKomichiSignBlock(fighter: Fighter) {
+    const def = UNIT_DEFS.komichi;
+    const energy = abilityStatForStar(def, fighter.star, "blockEnergy", 12);
+    const moveSpeed = abilityStatForStar(def, fighter.star, "moveSpeedBonus", 46);
+    const moveDuration = abilityStatForStar(def, fighter.star, "moveSpeedDuration", 1.1);
+    fighter.abilityMoveSpeed = Math.max(fighter.abilityMoveSpeed, moveSpeed);
+    fighter.abilityMoveSpeedTime = Math.max(fighter.abilityMoveSpeedTime, moveDuration);
+    this.addEnergy(fighter, energy);
+    this.addEffect({
+      kind: "komichi_sign",
+      x: fighter.x,
+      y: fighter.y,
+      color: def.accent,
+      text: "block",
+      life: 0.52,
+      size: 92,
+    });
+    this.addEffect({
+      kind: "text",
+      x: fighter.x,
+      y: fighter.y - 46,
+      color: def.accent,
+      text: "路牌格挡 · 加速",
+      life: 0.52,
+      size: 10,
+    });
   }
 
   private hasChronosphereInFlightOrActive(
@@ -1699,6 +1762,105 @@ export class AutoChessEngine {
     return dealt;
   }
 
+  private startKomichiDebutImpact(source: Fighter, targets: Fighter[]) {
+    if (
+      source.unitId !== "komichi" ||
+      source.komichiSignTime <= 0 ||
+      source.energy < source.maxEnergy ||
+      source.abilityMotion
+    ) return false;
+    const availableTargets = targets.filter((target) => target.alive && target.hp > 0);
+    const target = availableTargets.find((candidate) => candidate.fid === source.targetFid)
+      || this.nearestTarget(source, availableTargets);
+    if (!target) return false;
+    const deltaX = target.x - source.x;
+    const deltaY = target.y - source.y;
+    const distance = Math.hypot(deltaX, deltaY) || 1;
+    const directionX = deltaX / distance;
+    const directionY = deltaY / distance;
+    const contactGap = source.radius + target.radius + CONTACT_SKIN;
+    const travel = Math.max(0, distance - contactGap);
+    const motion = this.startAbilityMotion(
+      source,
+      "dash",
+      {
+        x: source.x + directionX * travel,
+        y: source.y + directionY * travel,
+      },
+      {
+        targetFid: target.fid,
+        duration: Math.max(0.12, Math.min(0.36, travel / KOMICHI_DEBUT_SPEED)),
+        avoidOccupied: false,
+      },
+    );
+    if (!motion) return false;
+    motion.forceThrough = true;
+    source.targetFid = target.fid;
+    source.energy = Math.max(0, source.energy - KOMICHI_DEBUT_ENERGY_COST);
+    this.syncKomichiSignTime(source);
+    this.addEffect({
+      kind: "line",
+      x: motion.fromX,
+      y: motion.fromY,
+      x2: motion.toX,
+      y2: motion.toY,
+      color: UNIT_DEFS.komichi.accent,
+      life: motion.duration,
+      size: 9,
+    });
+    this.addEffect({
+      kind: "text",
+      x: source.x,
+      y: source.y - 48,
+      color: UNIT_DEFS.komichi.accent,
+      text: "出道冲击",
+      life: 0.58,
+      size: 12,
+    });
+    return true;
+  }
+
+  private sweepKomichiDebutImpact(source: Fighter, motion: AbilityMotion, fromX: number, fromY: number) {
+    const battle = this.state.battle;
+    if (!battle) return;
+    const opponents = source.team === "player" ? battle.enemy : battle.player;
+    const pathX = motion.toX - motion.fromX;
+    const pathY = motion.toY - motion.fromY;
+    const pathLength = Math.hypot(pathX, pathY) || 1;
+    const forwardX = pathX / pathLength;
+    const forwardY = pathY / pathLength;
+    opponents.forEach((target) => {
+      if (
+        !target.alive ||
+        target.fid === motion.targetFid ||
+        motion.hitFids.includes(target.fid)
+      ) return;
+      const collisionDistance = source.radius + target.radius + 10;
+      if (this.distanceToSegment(target.x, target.y, fromX, fromY, source.x, source.y) > collisionDistance) return;
+      motion.hitFids.push(target.fid);
+      const cross = forwardX * (target.y - source.y) - forwardY * (target.x - source.x);
+      const side = Math.abs(cross) > 0.01 ? (cross < 0 ? -1 : 1) : target.avoidSide;
+      this.startAbilityMotion(
+        target,
+        "push",
+        {
+          x: target.x + forwardX * KOMICHI_DEBUT_PATH_PUSH - forwardY * side * KOMICHI_DEBUT_SIDE_PUSH,
+          y: target.y + forwardY * KOMICHI_DEBUT_PATH_PUSH + forwardX * side * KOMICHI_DEBUT_SIDE_PUSH,
+        },
+        { abilityId: null, duration: 0.22, avoidOccupied: false },
+      );
+      this.addEffect({
+        kind: "komichi_sign",
+        x: target.x,
+        y: target.y,
+        color: UNIT_DEFS.komichi.accent,
+        text: "smash",
+        life: 0.38,
+        size: 72,
+      });
+    });
+  }
+
   private sweepGuangyiDash(source: Fighter, motion: AbilityMotion, fromX: number, fromY: number) {
     const battle = this.state.battle;
     if (!battle) return;
@@ -1937,6 +2099,28 @@ export class AutoChessEngine {
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "暖男回复", life: 0.68, size: 12 });
         break;
       }
+      case "komichi": {
+        if (target) {
+          this.dealAbilityDamage(source, target, 1);
+          if (target.alive) {
+            target.stun = Math.max(
+              target.stun,
+              abilityStatForStar(UNIT_DEFS.komichi, source.star, "impactStun", 0.65),
+            );
+          }
+          this.addEffect({
+            kind: "komichi_sign",
+            x: target.x,
+            y: target.y,
+            color: accent,
+            text: "smash",
+            life: 0.48,
+            size: 88,
+          });
+          this.addEffect({ kind: "text", x: target.x, y: target.y - 48, color: accent, text: "出道冲击", life: 0.62, size: 11 });
+        }
+        break;
+      }
       case "grove_mender": {
         const duration = abilityStatForStar(
           UNIT_DEFS.grove_mender,
@@ -2067,6 +2251,7 @@ export class AutoChessEngine {
     if (motion.abilityId === "guangyi") this.sweepGuangyiDash(fighter, motion, previousX, previousY);
     if (motion.abilityId === "biscuit_sui") this.sweepBiscuitRescueDash(fighter, motion, previousX, previousY);
     if (motion.abilityId === "sui_bird") this.sweepSuiBirdElbowDash(fighter, motion, previousX, previousY);
+    if (motion.abilityId === "komichi") this.sweepKomichiDebutImpact(fighter, motion, previousX, previousY);
     if (progress >= 1) {
       fighter.x = motion.toX;
       fighter.y = motion.toY;
@@ -3153,7 +3338,25 @@ export class AutoChessEngine {
       fighter.gluttonyKillCooldown = Math.max(0, fighter.gluttonyKillCooldown - dt);
       fighter.rebirthRecoilTime = Math.max(0, fighter.rebirthRecoilTime - dt);
       fighter.lovelyControlTime = Math.max(0, fighter.lovelyControlTime - dt);
-      fighter.komichiSignTime = Math.max(0, fighter.komichiSignTime - dt);
+      if (fighter.unitId === "komichi" && fighter.komichiSignTime > 0) {
+        const drainPerSecond = this.komichiEnergyDrainPerSecond(fighter);
+        fighter.energy = Math.max(0, fighter.energy - drainPerSecond * dt);
+        this.syncKomichiSignTime(fighter);
+        if (fighter.energy <= 0) {
+          fighter.komichiSignTime = 0;
+          this.addEffect({
+            kind: "text",
+            x: fighter.x,
+            y: fighter.y - 44,
+            color: UNIT_DEFS.komichi.accent,
+            text: "都市传说退场",
+            life: 0.55,
+            size: 10,
+          });
+        }
+      } else {
+        fighter.komichiSignTime = Math.max(0, fighter.komichiSignTime - dt);
+      }
       const switchWasActive = fighter.raccoonSwitchTime > 0;
       fighter.raccoonSwitchTime = Math.max(0, fighter.raccoonSwitchTime - dt);
       if (switchWasActive && fighter.raccoonSwitchTime <= 0) {
@@ -3409,6 +3612,7 @@ export class AutoChessEngine {
       const abilityTiming = UNIT_DEFS[fighter.unitId].abilityCastTiming;
       const energyReady =
         !fighter.barrageActive &&
+        fighter.komichiSignTime <= 0 &&
         !(fighter.unitId === "gale_archer" && fighter.raccoonSwitchTime > 0) &&
         !this.hasChronosphereInFlightOrActive(fighter, battle) &&
         fighter.energy >= fighter.maxEnergy;
@@ -3770,6 +3974,17 @@ export class AutoChessEngine {
       life: source.attackType === "ranged" ? 0.16 : 0.24,
       size: source.attackType === "ranged" ? 3 : 22,
     });
+    if (source.unitId === "komichi" && source.komichiSignTime > 0) {
+      this.addEffect({
+        kind: "komichi_sign",
+        x: target.x,
+        y: target.y,
+        color: UNIT_DEFS.komichi.accent,
+        text: "smash",
+        life: 0.4,
+        size: 76,
+      });
+    }
     this.tryZeyinRebirthRecoil(source, target);
     this.trySumiSocialRecoil(source, target);
     if (source.unitId === "lovely" && source.lovelyControlTime > 0 && target.alive) {

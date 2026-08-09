@@ -700,8 +700,9 @@ test("狍子偶像只能近距离发动控场，获得护盾后普攻短晕并�
   assert.equal(source.lovelyControlTime, 0);
 });
 
-test("四时小路持牌时增加射程、击退且格挡远程伤害，结束后恢复空手状态", () => {
+test("四时小路常驻路牌格挡，都市传说期间持续回能并反复发动出道冲击", () => {
   const engine = createEngine(152);
+  engine.state.round = 8;
   engine.state.playerLevel = 4;
   engine.state.board.fill(null);
   engine.state.board[0] = { uid: 1, id: "komichi", star: 1 };
@@ -709,54 +710,136 @@ test("四时小路持牌时增加射程、击退且格挡远程伤害，结束�
   const battle = engine.state.battle;
   const source = battle?.player[0];
   const target = battle?.enemy[0];
-  assert.ok(battle && source && target);
-  battle.enemy.forEach((fighter, index) => {
-    fighter.x = index === 0 ? 310 : 900;
-    fighter.y = 360;
+  const pathTarget = battle?.enemy[1];
+  const rangedAttacker = battle?.enemy[2];
+  assert.ok(battle && source && target && pathTarget && rangedAttacker);
+  battle.enemy.forEach((fighter) => {
+    fighter.x = 900;
+    fighter.y = 540;
     fighter.attack = 0;
     fighter.armor = 0;
     fighter.cooldown = 99;
     fighter.hp = fighter.maxHp = 9999;
+    fighter.energy = 0;
+    fighter.energyPerSecond = 0;
+    fighter.energyOnAttack = 0;
+    fighter.energyOnHit = 0;
+    fighter.dodgeChance = 0;
   });
   source.x = 260;
   source.y = 360;
+  source.armor = 0;
+  source.shield = 0;
+  source.energy = 0;
+  rangedAttacker.x = source.x + 90;
+  rangedAttacker.y = source.y;
+  rangedAttacker.attackType = "ranged";
+  rangedAttacker.attack = 100;
+  rangedAttacker.range = 500;
+  rangedAttacker.cooldown = 0;
+  engine["rng"].next = () => 0;
+  const hpBeforeBlock = source.hp;
+  engine["basicAttack"](rangedAttacker, source);
+  assert.ok(Math.abs((hpBeforeBlock - source.hp) - 64) < 0.001);
+  assert.equal(source.energy, 19, "未持牌时格挡与受击应分别回复 12 / 7 能量");
+  assert.equal(source.abilityMoveSpeed, 46);
+  assert.ok(source.abilityMoveSpeedTime > 1);
+  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign" && effect.text === "block"));
+
+  rangedAttacker.x = 900;
+  rangedAttacker.attack = 0;
+  rangedAttacker.cooldown = 99;
+  target.x = 610;
+  target.y = 360;
+  pathTarget.x = 450;
+  pathTarget.y = 360;
+  source.targetFid = target.fid;
+  source.targetLock = 99;
   source.energy = source.maxEnergy;
   source.cooldown = 0;
   engine.update(0.05);
-  assert.ok(source.komichiSignTime > 5.4);
-  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign"));
+  assert.equal(source.energy, 70, "首次出道冲击应消耗 30 能量");
+  assert.ok(source.komichiSignTime > 3.8 && source.komichiSignTime < 3.9);
+  assert.equal(source.abilityMotion?.kind, "dash");
+  assert.equal(source.abilityMotion?.targetFid, target.fid);
+  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign" && effect.text === "summon"));
+
+  const pathTargetStart = { x: pathTarget.x, y: pathTarget.y };
+  const targetHpBeforeImpact = target.hp;
   engine.update(0.05);
   assert.equal(source.range, source.baseRange + 105);
+  for (let tick = 0; tick < 10 && source.abilityMotion; tick += 1) engine.update(0.05);
+  assert.equal(source.abilityMotion, null);
+  assert.ok(
+    Math.hypot(pathTarget.x - pathTargetStart.x, pathTarget.y - pathTargetStart.y) > 20,
+    "沿途敌人应被撞离原位",
+  );
+  assert.ok(
+    battle.effects.filter((effect) => effect.kind === "komichi_sign" && effect.text === "smash").length >= 2,
+    "沿途撞击与主目标命中都应出现路牌效果",
+  );
+  assert.ok(target.hp < targetHpBeforeImpact);
+  assert.ok(target.stun > 0.5, "出道冲击应击晕主目标");
 
-  source.armor = 0;
-  source.shield = 0;
-  target.attackType = "ranged";
-  target.attack = 100;
-  target.range = 500;
-  target.cooldown = 0;
-  const hpBeforeBlock = source.hp;
-  engine["basicAttack"](target, source);
-  assert.ok(Math.abs((hpBeforeBlock - source.hp) - 72) < 0.001);
-
-  target.attack = 0;
+  battle.effects.length = 0;
   target.stun = 0;
   target.abilityMotion = null;
   target.x = source.x + 100;
-  source.attack = 1;
-  source.range = 200;
+  target.y = source.y;
+  source.energy = 40;
   source.cooldown = 0;
-  const targetX = target.x;
   engine["basicAttack"](source, target);
-  assert.equal(target.stun, 0, "四时小路的路牌普攻不应附带眩晕");
+  assert.equal(source.energy, 52, "持牌普攻应回复 12 能量");
+  assert.equal(target.stun, 0, "持牌普攻不应附带眩晕");
   assert.equal(target.abilityMotion?.kind, "push");
-  engine.update(0.2);
-  assert.ok(target.x > targetX);
+  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign" && effect.text === "smash"));
 
+  battle.effects.length = 0;
+  rangedAttacker.x = source.x + 90;
+  rangedAttacker.y = source.y;
+  rangedAttacker.attackType = "ranged";
+  rangedAttacker.attack = 100;
+  rangedAttacker.range = 500;
+  rangedAttacker.cooldown = 0;
+  source.energy = 40;
+  engine["rng"].next = () => 0.6;
+  const activeHpBeforeBlock = source.hp;
+  engine["basicAttack"](rangedAttacker, source);
+  assert.ok(Math.abs((activeHpBeforeBlock - source.hp) - 64) < 0.001);
+  assert.equal(source.energy, 59, "持牌格挡与受击仍应同时回复能量");
+  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign" && effect.text === "block"));
+
+  rangedAttacker.attack = 0;
+  rangedAttacker.cooldown = 99;
+  target.abilityMotion = null;
+  target.x = source.x + 320;
+  target.y = source.y;
+  pathTarget.abilityMotion = null;
+  pathTarget.x = source.x + 100;
+  pathTarget.y = source.y;
+  source.targetFid = target.fid;
+  source.energy = 95;
+  battle.effects.length = 0;
+  engine["basicAttack"](source, pathTarget);
+  assert.equal(source.energy, 70, "攻击回满后应立即再次冲击并消耗 30 能量");
+  assert.equal(source.abilityMotion?.kind, "dash");
+  assert.equal(source.abilityMotion?.targetFid, target.fid);
+  assert.ok(battle.effects.some((effect) => effect.kind === "line"));
+
+  for (let tick = 0; tick < 10 && source.abilityMotion; tick += 1) engine.update(0.05);
+  source.energyPerSecond = 0;
+  source.energyOnAttack = 0;
+  source.energyOnHit = 0;
   source.cooldown = 99;
-  for (let tick = 0; tick < 120; tick += 1) engine.update(0.05);
+  battle.enemy.forEach((fighter) => {
+    fighter.attack = 0;
+    fighter.cooldown = 99;
+  });
+  for (let tick = 0; tick < 200; tick += 1) engine.update(0.05);
   engine.update(0.05);
   assert.equal(source.komichiSignTime, 0);
   assert.equal(source.range, source.baseRange);
+  assert.equal(source.abilityMoveSpeedTime, 0);
   const state = JSON.parse(engine.renderTextState());
   assert.equal(state.battle.playerUnits[0].komichiSignTime, 0);
 });

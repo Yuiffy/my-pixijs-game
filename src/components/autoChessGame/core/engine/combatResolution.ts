@@ -45,6 +45,7 @@ interface CombatResolutionHost {
   ) => void;
   transferTowerHack: (source: Fighter) => void;
   addGluttonyStack: (fighter: Fighter, label: string) => boolean;
+  onKomichiSignBlock: (fighter: Fighter) => void;
 }
 
 export class CombatResolutionSystem {
@@ -106,27 +107,24 @@ export class CombatResolutionSystem {
       return -1;
     }
     let amount = rawAmount * (source.weakenTime > 0 ? 0.72 : 1);
-    if (
-      target.unitId === "komichi" &&
-      target.komichiSignTime > 0 &&
-      source.attackType === "ranged"
-    ) {
-      const reduction = abilityStatForStar(
+    if (target.unitId === "komichi" && source.attackType === "ranged") {
+      const blockChance = abilityStatForStar(
         UNIT_DEFS.komichi,
         target.star,
-        "rangedReduction",
-        0.28,
+        target.komichiSignTime > 0 ? "activeBlockChance" : "blockChance",
+        target.komichiSignTime > 0 ? 0.72 : 0.42,
       );
-      amount *= 1 - reduction;
-      this.host.addEffect({
-        kind: "text",
-        x: target.x,
-        y: target.y - 42,
-        color: UNIT_DEFS.komichi.accent,
-        text: "路牌格挡",
-        life: 0.42,
-        size: 10,
-      });
+      const blocked = this.host.rng().next() < blockChance;
+      if (blocked) {
+        const reduction = abilityStatForStar(
+          UNIT_DEFS.komichi,
+          target.star,
+          "rangedReduction",
+          0.36,
+        );
+        amount *= 1 - reduction;
+        this.host.onKomichiSignBlock(target);
+      }
     }
     if (
       source.team === "player" &&
