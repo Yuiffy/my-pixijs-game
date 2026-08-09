@@ -844,7 +844,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   assert.equal(data.TRAITS.assassin.name, "偷袭");
   assert.match(data.TRAITS.assassin.description, /集中跃向敌方最后排中最虚弱的目标/);
   assert.equal(data.UNIT_DEFS.dawn_duelist.traits.includes("assassin"), false);
-  assert.equal(data.UNIT_DEFS.lovely.traits.includes("assassin"), false);
+  assert.equal(data.UNIT_DEFS.lovely.traits.includes("assassin"), true);
   assert.equal(data.UNIT_DEFS.biscuit_sui.tier, 4);
   assert.equal(data.UNIT_DEFS.biscuit_sui.cost, 4);
   assert.equal(data.UNIT_DEFS.biscuit_sui.abilityRange, 360);
@@ -951,7 +951,7 @@ test("所有羁绊的最高档都能由可购买成员达到", () => {
 
   assert.deepEqual(
     Object.fromEntries(["ember", "assassin", "gen27", "mature"].map((traitId) => [traitId, memberCounts[traitId]])),
-    { ember: 4, assassin: 5, gen27: 5, mature: 5 },
+    { ember: 4, assassin: 6, gen27: 5, mature: 5 },
   );
   ["ember", "assassin", "gen27", "mature"].forEach((traitId) => {
     assert.deepEqual(data.TRAITS[traitId].thresholds, [2, 4]);
@@ -1121,7 +1121,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
   const lovely = data.UNIT_DEFS.lovely;
   assert.deepEqual(
     { tier: lovely.tier, cost: lovely.cost, traits: lovely.traits, hp: lovely.hp, attack: lovely.attack, armor: lovely.armor },
-    { tier: 5, cost: 5, traits: ["vanguard", "host", "dance"], hp: 430, attack: 42, armor: 36 },
+    { tier: 5, cost: 5, traits: ["host", "dance", "assassin"], hp: 430, attack: 42, armor: 36 },
   );
   assert.deepEqual(
     lovely.abilityLevels.map((level) => [
