@@ -55,10 +55,11 @@ export const selectGoOpportunityTargets = ({
 
   return candidates.flatMap((target) => {
     const owned = ownership.get(target.id);
-    const copies = Math.max(0, Math.min(9, Math.floor(owned?.copies || 0)));
-    if (copies >= 9) return [];
+    const desiredCopies = target.desiredStar === 3 ? 9 : 3;
+    const copies = Math.max(0, Math.min(desiredCopies, Math.floor(owned?.copies || 0)));
+    if (copies >= desiredCopies) return [];
 
-    const needed = 9 - copies;
+    const needed = desiredCopies - copies;
     let forecastHits = 0;
     let completionShopIndex: number | null = null;
     shops.forEach((shop, shopIndex) => {
@@ -69,7 +70,11 @@ export const selectGoOpportunityTargets = ({
     });
     const currentShopHits = currentShop.filter((id) => id === target.id).length;
     const remainingAfterForecast = Math.max(0, needed - forecastHits);
-    if (completionShopIndex === null && copies < 3 && currentShopHits === 0) return [];
+    if (
+      completionShopIndex === null
+      && copies < Math.min(3, desiredCopies)
+      && currentShopHits === 0
+    ) return [];
 
     const progressTier = copies >= 6 ? 3 : copies >= 3 ? 2 : copies > 0 ? 1 : 0;
     const completionValue = completionShopIndex === null

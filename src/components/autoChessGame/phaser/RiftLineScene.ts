@@ -2070,7 +2070,10 @@ export class RiftLineScene extends Phaser.Scene {
 
     if (def.portraitStyle === "sprite") {
       const { frame } = portrait;
-      portrait.setScale(Math.min((radius * 2) / frame.width, (radius * 2) / frame.height));
+      const spriteDiameter = radius * 2.45;
+      portrait
+        .setScale(Math.min(spriteDiameter / frame.width, spriteDiameter / frame.height))
+        .setY(-radius * 0.06);
       if (!hasTexture) layers.push(this.add.circle(0, 0, radius, unitColor, 0.72));
     } else {
       layers.push(

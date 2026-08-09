@@ -377,7 +377,10 @@ test("头像生成圆形缓存纹理并保留精灵分支与朝向翻转", () =>
   assert.match(assets, /context\.clip/);
   assert.match(scene, /circularTextureKeyForUnit/);
   assert.match(scene, /portraitStyle === "sprite"/);
+  assert.match(scene, /const spriteDiameter = radius \* 2\.45/);
   assert.match(scene, /portraitImage\.setFlipX/);
+  assert.match(hudShop, /portraitStyle === "sprite" \? "is-sprite"/);
+  assert.match(hudCss, /\.rift-dom-portrait\.is-sprite \{ width: 50px; height: 50px;/);
 });
 
 test("全身精灵寻路时使用轻量弹跳摆动并避开技能运动", () => {
@@ -528,6 +531,14 @@ test("技能盾与普通护盾使用独立资源和紫色战场环", () => {
 });
 
 test("机械兔耳浮游炮以原版分层轮廓绘制，并与共享炮口对齐", () => {
+  assert.match(summonView, /CLOCK_GUNNER_EAR_REST_Y_RATIO = 1\.5/);
+  assert.match(fighterView, /createClockGunnerEarRig/);
+  assert.match(fighterView, /pet\.ownerFid === fighter\.fid/);
+  assert.match(fighterView, /setVisible\(!rabbitEarsLaunched\)/);
+  assert.match(fighterView, /setScale\(fighter\.facingX, 1\)/);
+  assert.match(summonView, /createMechanicalRabbitVisual/);
+  assert.match(summonView, /clockGunnerLeftEar/);
+  assert.match(summonView, /clockGunnerRightEar/);
   assert.match(scene, /drawRabbitBody\(/);
   assert.match(scene, /drawRabbitCannon\(/);
   assert.match(

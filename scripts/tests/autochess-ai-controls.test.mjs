@@ -34,7 +34,7 @@ const hostSource = await readFile("src/components/autoChessGame/PhaserGame.tsx",
 const hudSource = await readFile("src/components/autoChessGame/RiftHud.tsx", "utf8");
 const hudStyles = await readFile("src/components/autoChessGame/RiftHud.css", "utf8");
 
-const makeLateSeerCase = (shop, bench = [], round = 20) => {
+const makeLateSeerCase = (shop, bench = [], round = 20, style = "seer") => {
   const bridge = new EngineBridge(13161, 1, { simulation: true, battleStepHz: 20 });
   bridge.setConsoleLogging(false);
   bridge.engine.state.starterChoices = ["bastion"];
@@ -58,8 +58,8 @@ const makeLateSeerCase = (shop, bench = [], round = 20) => {
     bridge,
     "heuristic",
     {},
-    "seer",
-    "oracle",
+    style,
+    style === "seer" ? "oracle" : "normal",
     20,
   );
   autopilot.plannedRound = state.round;
@@ -738,6 +738,94 @@ test("后期托管资金尚未溢出时不会启用工坊", () => {
   bridge.engine.state.board[0] = { uid: 771301, id: "grove_mender", star: 2 };
 
   assert.equal(autopilot.starForgeAction(autopilot.ownedEntries()), null);
+});
+
+test("满候补或余额不足时不会因商店目标牌跳过工坊", () => {
+  const { bridge, autopilot } = makeLateSeerCase(["grove_mender", null, null, null, null], [], 32);
+  const state = bridge.engine.state;
+  state.playerLevel = 10;
+  state.gold = 500;
+  state.board.fill(null);
+  state.bench.fill(null);
+  state.board[0] = { uid: 771302, id: "grove_mender", star: 2 };
+  ["lian", "rei", "yua", "cinder_ram", "spark_mage", "sui_flower", "xuehui", "sui_bird", "yukisyo"]
+    .forEach((id, index) => {
+      state.board[index + 1] = { uid: 771310 + index, id, star: 2 };
+    });
+  ["zeyin", "meme", "mossback", "pako", "sun_guard", "rift_brawler", "sui_blue", "shiori"]
+    .forEach((id, index) => {
+      state.bench[index] = { uid: 771330 + index, id, star: 1 };
+    });
+
+  assert.deepEqual(autopilot.starForgeAction(autopilot.ownedEntries()), {
+    type: "starForge",
+    location: { zone: "board", index: 0 },
+  });
+});
+
+test("四种托管风格在后期高金币时都能优先使用工坊", () => {
+  for (const [style, index] of [
+    ["survival", 0],
+    ["balanced", 1],
+    ["highroll", 2],
+    ["seer", 3],
+  ]) {
+    const { bridge, autopilot } = makeLateSeerCase(
+      [null, null, null, null, null],
+      [],
+      32,
+      style,
+    );
+    bridge.engine.state.gold = 500;
+    bridge.engine.state.board[0] = {
+      uid: 771305 + index,
+      id: "grove_mender",
+      star: 2,
+    };
+
+    assert.deepEqual(
+      autopilot.nextPreparationAction(),
+      { type: "starForge", location: { zone: "board", index: 0 } },
+      `${style} should use the late-game forge`,
+    );
+  }
+});
+
+test("锁定可战阵容后仍会在开战前完成有余量的工坊直升", () => {
+  for (const style of ["survival", "balanced", "highroll", "seer"]) {
+    const { bridge, autopilot } = makeLateSeerCase(
+      [null, null, null, null, null],
+      [],
+      32,
+      style,
+    );
+    const state = bridge.engine.state;
+    state.gold = 500;
+    state.board[0] = { uid: 771350, id: "grove_mender", star: 2 };
+    autopilot.plannedLineupUids = state.board.filter(Boolean).map((unit) => unit.uid);
+    autopilot.plannedBoardSlots = new Map(
+      state.board.flatMap((unit, slot) => unit ? [[unit.uid, slot]] : []),
+    );
+    autopilot.rescueLineupLocked = true;
+
+    assert.deepEqual(
+      autopilot.nextPreparationAction(),
+      { type: "starForge", location: { zone: "board", index: 0 } },
+      `${style} should forge before battling a locked lineup`,
+    );
+  }
+});
+
+test("整备动作达到保险上限时仍优先使用已负担得起的工坊升级", () => {
+  const { bridge, autopilot } = makeLateSeerCase([null, null, null, null, null], [], 32);
+  bridge.engine.state.gold = 500;
+  bridge.engine.state.board[0] = { uid: 771302, id: "grove_mender", star: 2 };
+  autopilot.preparationActions = 95;
+
+  assert.deepEqual(autopilot.nextPreparationAction(), {
+    type: "starForge",
+    location: { zone: "board", index: 0 },
+  });
 });
 
 test("AI 控制台公开指定棋子工坊调用", () => {

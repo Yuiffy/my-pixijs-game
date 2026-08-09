@@ -81,17 +81,17 @@ test("跨场上与备战席合成时保留场上棋子的位置", () => {
   const engine = createEngine(8);
   engine.state.board.fill(null);
   engine.state.bench.fill(null);
-  engine.state.board[11] = { uid: 101, id: "sun_guard", star: 1 };
-  engine.state.bench[0] = { uid: 102, id: "sun_guard", star: 1 };
-  engine.state.bench[1] = { uid: 103, id: "sun_guard", star: 1 };
+  engine.state.board[11] = { uid: 103, id: "sun_guard", star: 1 };
+  engine.state.bench[0] = { uid: 101, id: "sun_guard", star: 1 };
+  engine.state.bench[1] = { uid: 102, id: "sun_guard", star: 1 };
 
   assert.equal(engine.checkMerges(), true);
-  assert.deepEqual(engine.state.board[11], { uid: 101, id: "sun_guard", star: 2 });
+  assert.deepEqual(engine.state.board[11], { uid: 103, id: "sun_guard", star: 2 });
   assert.equal(engine.state.bench[0], null);
   assert.equal(engine.state.bench[1], null);
 });
 
-test("新购棋子出现在左上角时合成保留最老棋子站位", () => {
+test("新购棋子出现在左上角时合成保留原有场上棋子站位", () => {
   const engine = createEngine(81);
   engine.state.board.fill(null);
   engine.state.bench.fill(null);
@@ -114,10 +114,10 @@ test("场上和备战席全满时仍可购买能立即合成的棋子", () => {
   const engine = createEngine(82);
   engine.state.board.fill(null);
   engine.state.bench.fill(null);
-  engine.state.board[11] = { uid: 101, id: "sun_guard", star: 1 };
+  engine.state.board[11] = { uid: 200, id: "sun_guard", star: 1 };
   engine.state.board[12] = { uid: 201, id: "ember_blade", star: 1 };
   engine.state.board[13] = { uid: 202, id: "rift_brawler", star: 1 };
-  engine.state.bench[0] = { uid: 102, id: "sun_guard", star: 1 };
+  engine.state.bench[0] = { uid: 101, id: "sun_guard", star: 1 };
   const fillerIds = [
     "clock_gunner",
     "shiori",
@@ -141,7 +141,7 @@ test("场上和备战席全满时仍可购买能立即合成的棋子", () => {
   assert.equal(engine.canStoreUnit("sun_guard"), true);
   engine.buyShopUnit(0);
 
-  assert.deepEqual(engine.state.board[11], { uid: 101, id: "sun_guard", star: 2 });
+  assert.deepEqual(engine.state.board[11], { uid: 200, id: "sun_guard", star: 2 });
   assert.equal(engine.state.bench[0], null);
   assert.equal(engine.state.shop[0], null);
   assert.equal(engine.state.gold, goldBefore - gameData.UNIT_DEFS.sun_guard.cost);
@@ -182,19 +182,33 @@ test("场上和备战席全满且无法合成时仍拒绝购买", () => {
   assert.match(engine.state.toast.text, /备战席已满/);
 });
 
-test("连锁合成三星时保留最老的二星棋子", () => {
+test("连锁合成三星时优先保留场上的二星棋子", () => {
   const engine = createEngine(9);
   engine.state.board.fill(null);
   engine.state.bench.fill(null);
-  engine.state.board[11] = { uid: 201, id: "sun_guard", star: 2 };
-  engine.state.bench[0] = { uid: 202, id: "sun_guard", star: 2 };
-  engine.state.bench[1] = { uid: 203, id: "sun_guard", star: 1 };
-  engine.state.bench[2] = { uid: 204, id: "sun_guard", star: 1 };
-  engine.state.bench[3] = { uid: 205, id: "sun_guard", star: 1 };
+  engine.state.board[11] = { uid: 300, id: "sun_guard", star: 2 };
+  engine.state.bench[0] = { uid: 100, id: "sun_guard", star: 2 };
+  engine.state.bench[1] = { uid: 200, id: "sun_guard", star: 1 };
+  engine.state.bench[2] = { uid: 201, id: "sun_guard", star: 1 };
+  engine.state.bench[3] = { uid: 202, id: "sun_guard", star: 1 };
 
   assert.equal(engine.checkMerges(), true);
-  assert.deepEqual(engine.state.board[11], { uid: 201, id: "sun_guard", star: 3 });
+  assert.deepEqual(engine.state.board[11], { uid: 300, id: "sun_guard", star: 3 });
   assert.ok(engine.state.bench.every((unit) => !unit));
+});
+
+test("只有备战席棋子参与合成时保留其中最老的棋子", () => {
+  const engine = createEngine(91);
+  engine.state.board.fill(null);
+  engine.state.bench.fill(null);
+  engine.state.bench[0] = { uid: 303, id: "sun_guard", star: 1 };
+  engine.state.bench[1] = { uid: 301, id: "sun_guard", star: 1 };
+  engine.state.bench[2] = { uid: 302, id: "sun_guard", star: 1 };
+
+  assert.equal(engine.checkMerges(), true);
+  assert.equal(engine.state.bench[0], null);
+  assert.deepEqual(engine.state.bench[1], { uid: 301, id: "sun_guard", star: 2 });
+  assert.equal(engine.state.bench[2], null);
 });
 
 test("已选择的天赋会按回合记入历史", () => {

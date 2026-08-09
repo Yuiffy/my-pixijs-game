@@ -20,6 +20,9 @@ const {
 const { STARTING_PLAYER_LEVEL, upgradeCostForLevel } = await loadTypescriptModule(
   "src/components/autoChessGame/core/gameData.ts",
 );
+const { createGoCombatScorer } = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/goValueModel.ts",
+);
 
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
@@ -51,9 +54,18 @@ const resumeOutputPath = requestedResumeOutputPath
   : null;
 const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "60")) || 60));
 const forcedStarter = option("--starter", "");
+const requestedEnemySeed = Number(option("--enemy-seed", ""));
+const forcedEnemySeed = Number.isFinite(requestedEnemySeed) && requestedEnemySeed > 0
+  ? Math.trunc(requestedEnemySeed)
+  : null;
 const policyPath = option("--policy", "");
 const policyReport = policyPath ? JSON.parse(await readFile(policyPath, "utf8")) : null;
 const policy = policyReport?.bestPolicy || policyReport?.policy || policyReport || {};
+const requestedGoModelPath = option("--go-model", option("--model", ""));
+const goModelPath = requestedGoModelPath ? path.resolve(requestedGoModelPath) : null;
+const goCombatScorer = goModelPath
+  ? createGoCombatScorer(JSON.parse(await readFile(goModelPath, "utf8")))
+  : undefined;
 const requestedStyle = option("--style", "survival");
 const style = requestedStyle === "seer2" ? "seer" : requestedStyle;
 const informationMode = option(
@@ -165,7 +177,7 @@ const playRun = (seed) => {
     style,
     informationMode,
     rolloutHz,
-    undefined,
+    goCombatScorer,
     true,
   );
   const goPreBattleVerification = new Map();
@@ -203,6 +215,7 @@ const playRun = (seed) => {
     throw new Error(`Autopilot could not start seed ${seed}`);
   }
   if (inputSnapshot) autopilot.setEnabled(true);
+  if (forcedEnemySeed !== null) bridge.engine.state.enemySeed = forcedEnemySeed;
 
   let now = 1000;
   let safety = 0;
@@ -425,6 +438,7 @@ const aggregate = {
   maximumBattles,
   forcedStarter: forcedStarter || null,
   policyPath: policyPath || null,
+  goModelPath,
   style,
   informationMode,
   rolloutHz,

@@ -1071,6 +1071,12 @@ test("棋子图鉴按费用从低到高稳定排序并展示技能距离", async
     new URL("../../src/components/autoChessGame/Codex.tsx", import.meta.url),
     "utf8",
   );
+  const sharedPortraitSource = await readFile(
+    new URL("../../src/components/autoChessGame/hud/shared.tsx", import.meta.url),
+    "utf8",
+  );
   assert.match(source, /\.sort\(\(left, right\) => UNIT_DEFS\[left\]\.cost - UNIT_DEFS\[right\]\.cost\)/);
   assert.match(source, /技能距离.*unit\.abilityRange/);
+  assert.doesNotMatch(source, /imageRendering:\s*["']pixelated["']/);
+  assert.doesNotMatch(sharedPortraitSource, /imageRendering:\s*["']pixelated["']/);
 });

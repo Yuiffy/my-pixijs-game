@@ -20,6 +20,9 @@ const {
 const { createGoCombatScorer } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/goValueModel.ts",
 );
+const { SHOP_UNIT_IDS } = await loadTypescriptModule(
+  "src/components/autoChessGame/core/gameData.ts",
+);
 
 const option = (name, fallback) => {
   const index = process.argv.indexOf(name);
@@ -37,6 +40,21 @@ const modelLimit = Math.max(1, Number(option("--model-limit", "512")) || 512);
 const heuristicLimit = Math.max(1, Number(option("--heuristic-limit", "128")) || 128);
 const exactLimit = Math.max(1, Number(option("--exact-limit", "32")) || 32);
 const exactOffset = Math.max(0, Number(option("--exact-offset", "0")) || 0);
+const requestedCatalogStar = Number(option("--catalog-star", "0"));
+if (![0, 1, 2, 3].includes(requestedCatalogStar)) {
+  throw new Error("--catalog-star must be 1, 2, or 3");
+}
+const catalogStar = hasFlag("--catalog-star3") ? 3 : requestedCatalogStar || null;
+const skipExploratory = hasFlag("--skip-exploratory");
+const catalogBeamWidth = Math.max(16, Number(option("--catalog-beam-width", "256")) || 256);
+const catalogNeighborSeeds = Math.max(
+  1,
+  Number(option("--catalog-neighbor-seeds", "64")) || 64,
+);
+const catalogRandomCandidates = Math.max(
+  0,
+  Number(option("--catalog-random", "10000")) || 0,
+);
 const replaySafetyLimit = Math.max(100, Number(option("--replay-safety", "10000")) || 10000);
 const requestedModelPath = option("--model", "");
 const modelPath = requestedModelPath ? path.resolve(requestedModelPath) : null;
@@ -210,8 +228,13 @@ if (snapshotOnly) {
   process.exit(0);
 }
 
-const roster = autopilot.ownedEntries();
 const cap = bridge.engine.boardCap;
+const roster = catalogStar !== null
+  ? SHOP_UNIT_IDS.map((id, index) => ({
+    unit: { uid: 900000 + index, id, star: catalogStar },
+    location: { zone: "bench", index },
+  }))
+  : autopilot.ownedEntries();
 if (roster.length < cap) throw new Error(`Roster ${roster.length} is smaller than cap ${cap}`);
 const rankingAutopilot = goCombatScorer
   ? new AutoChessAutopilot(
@@ -258,8 +281,90 @@ const collect = (start) => {
   }
 };
 
+const choose = (total, count) => {
+  let result = 1;
+  for (let index = 1; index <= count; index += 1) {
+    result = result * (total - count + index) / index;
+  }
+  return Math.round(result);
+};
+const addCatalogCandidate = (lineup) => {
+  const key = lineupKey(lineup);
+  if (combinationsByKey.has(key)) return;
+  combinationsByKey.set(key, {
+    key,
+    lineup,
+    model: rankingAutopilot.goModelScore(lineup, "go_canonical"),
+    heuristic: autopilot.lineupHeuristicScore(lineup),
+  });
+};
+const catalogBeam = (score) => {
+  let beam = [{ lineup: [], nextIndex: 0, score: 0 }];
+  for (let depth = 0; depth < cap; depth += 1) {
+    const expanded = [];
+    const remainingAfterPick = cap - depth - 1;
+    beam.forEach((parent) => {
+      const maximumIndex = roster.length - remainingAfterPick - 1;
+      for (let index = parent.nextIndex; index <= maximumIndex; index += 1) {
+        const lineup = [...parent.lineup, roster[index]];
+        expanded.push({
+          lineup,
+          nextIndex: index + 1,
+          score: score(lineup),
+        });
+      }
+    });
+    beam = expanded
+      .sort((left, right) => right.score - left.score
+        || lineupKey(left.lineup).localeCompare(lineupKey(right.lineup)))
+      .slice(0, catalogBeamWidth);
+  }
+  return beam;
+};
+const makeRng = (initialSeed) => {
+  let state = initialSeed >>> 0 || 1;
+  return () => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return state >>> 0;
+  };
+};
+const collectCatalogCandidates = () => {
+  combinationCount = choose(roster.length, cap);
+  const modelBeam = catalogBeam((lineup) => (
+    rankingAutopilot.goModelScore(lineup, "go_canonical")
+  ));
+  const heuristicBeam = catalogBeam((lineup) => autopilot.lineupHeuristicScore(lineup));
+  const seedLineups = [
+    ...modelBeam.slice(0, catalogNeighborSeeds),
+    ...heuristicBeam.slice(0, catalogNeighborSeeds),
+  ]
+    .map(({ lineup }) => lineup);
+  [...modelBeam, ...heuristicBeam].forEach(({ lineup }) => addCatalogCandidate(lineup));
+  seedLineups.forEach((lineup) => {
+    const selectedUids = new Set(lineup.map(({ unit }) => unit.uid));
+    const reserves = roster.filter(({ unit }) => !selectedUids.has(unit.uid));
+    lineup.forEach((_, replaceIndex) => reserves.forEach((reserve) => {
+      const neighbor = [...lineup];
+      neighbor[replaceIndex] = reserve;
+      addCatalogCandidate(neighbor);
+    }));
+  });
+  const nextRandom = makeRng(seed ^ bridge.engine.state.enemySeed ^ (targetRound * 104729));
+  for (let sample = 0; sample < catalogRandomCandidates; sample += 1) {
+    const pool = [...roster];
+    for (let index = 0; index < cap; index += 1) {
+      const swapIndex = index + nextRandom() % (pool.length - index);
+      [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]];
+    }
+    addCatalogCandidate(pool.slice(0, cap));
+  }
+};
+
 const startedAt = performance.now();
-collect(0);
+if (catalogStar !== null) collectCatalogCandidates();
+else collect(0);
 const combinations = Array.from(combinationsByKey.values());
 const modelRanked = [...combinations].sort((left, right) => (
   right.model - left.model || right.heuristic - left.heuristic
@@ -268,13 +373,27 @@ const heuristicRanked = [...combinations].sort((left, right) => (
   right.heuristic - left.heuristic || right.model - left.model
 ));
 const rosterByUid = new Map(roster.map((entry) => [entry.unit.uid, entry]));
+const catalogById = new Map(roster.map((entry) => [entry.unit.id, entry]));
+const capturedUnitsByUid = new Map([
+  ...captured.state.board.filter(Boolean),
+  ...captured.state.bench.filter(Boolean),
+].map((unit) => [unit.uid, unit]));
+const rosterEntryForCapturedUnit = (unit) => {
+  if (!unit) return null;
+  return catalogStar !== null ? catalogById.get(unit.id) || null : rosterByUid.get(unit.uid) || null;
+};
 const plannedLineup = captured.plannedLineupUids.flatMap((uid) => {
-  const entry = rosterByUid.get(uid);
+  const entry = rosterEntryForCapturedUnit(capturedUnitsByUid.get(uid));
   return entry ? [entry] : [];
 });
 const plannedUidKey = [...captured.plannedLineupUids].sort((left, right) => left - right).join(",");
 const plannedKey = lineupKey(plannedLineup);
-const currentLineup = roster.filter(({ location }) => location.zone === "board");
+const currentLineup = catalogStar !== null
+  ? captured.state.board.flatMap((unit) => {
+    const entry = rosterEntryForCapturedUnit(unit);
+    return entry ? [entry] : [];
+  })
+  : roster.filter(({ location }) => location.zone === "board");
 const currentKey = lineupKey(currentLineup);
 const screened = new Map();
 const addScreened = (candidate) => {
@@ -288,16 +407,18 @@ forcedLineupKeys.forEach((key) => addScreened(combinations.find((candidate) => c
 
 const exploratory = Array.from(screened.values()).map((candidate, index, all) => {
   if (index > 0 && index % 50 === 0) {
-    console.error(`20Hz screened ${index}/${all.length}`);
+    console.error(`${skipExploratory ? "model" : `${rolloutHz}Hz`} screened ${index}/${all.length}`);
   }
   return {
     ...candidate,
-    exploratory: autopilot.rolloutLineupScore(
-      candidate.lineup,
-      "go_canonical",
-      false,
-      rolloutHz,
-    ),
+    exploratory: skipExploratory
+      ? candidate.model
+      : autopilot.rolloutLineupScore(
+        candidate.lineup,
+        "go_canonical",
+        false,
+        rolloutHz,
+      ),
   };
 }).sort((left, right) => (
   right.exploratory - left.exploratory || right.model - left.model
@@ -355,6 +476,12 @@ const report = {
   enemySeed: bridge.engine.state.enemySeed,
   targetRound,
   rolloutHz,
+  catalogStar,
+  catalogStar3: catalogStar === 3,
+  skipExploratory,
+  catalogBeamWidth,
+  catalogNeighborSeeds,
+  catalogRandomCandidates,
   modelPath,
   snapshotInputPath: snapshotPath,
   snapshotOutputPath: inputSnapshot ? null : snapshotOutputPath,

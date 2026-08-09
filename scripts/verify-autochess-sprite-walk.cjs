@@ -128,7 +128,7 @@ const snapshotFighters = (page) => page.evaluate(() => {
   const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
   const battle = window.__codexAutoChessBridge.engine.state.battle;
   return battle.player
-    .filter((fighter) => fighter.unitId === "spark_mage" || fighter.unitId === "clock_gunner")
+    .filter((fighter) => ["spark_mage", "clock_gunner", "biscuit_sui"].includes(fighter.unitId))
     .map((fighter) => {
       const view = scene.fighterViews.get(fighter.fid);
       const portrait = view?.getByName("portrait");
@@ -147,6 +147,21 @@ const snapshotFighters = (page) => page.evaluate(() => {
         texture: portraitImage?.texture?.key,
       };
     });
+});
+
+const clockGunnerEarState = (page) => page.evaluate(() => {
+  const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
+  const battle = window.__codexAutoChessBridge.engine.state.battle;
+  const fighter = battle.player.find((entry) => entry.unitId === "clock_gunner");
+  const view = scene.fighterViews.get(fighter.fid);
+  const portrait = view?.getByName("portrait");
+  const rig = portrait?.getByName("clockGunnerEarRig");
+  return {
+    visible: rig?.visible ?? false,
+    leftAttached: Boolean(rig?.getByName("clockGunnerLeftEar")),
+    rightAttached: Boolean(rig?.getByName("clockGunnerRightEar")),
+    petCount: battle.pets.filter((pet) => pet.ownerFid === fighter.fid).length,
+  };
 });
 
 const capture = async (page, name, screenshots) => {
@@ -175,10 +190,12 @@ const capture = async (page, name, screenshots) => {
   const assetStatuses = await page.evaluate(async () => Object.fromEntries(await Promise.all([
     "/images/autochess/portraits/spark-mage.png",
     "/images/autochess/portraits/clock-gunner.png",
+    "/images/autochess/portraits/biscuit_sui.png",
   ].map(async (url) => [url, (await fetch(url)).status]))));
   assert.deepEqual(assetStatuses, {
     "/images/autochess/portraits/spark-mage.png": 200,
     "/images/autochess/portraits/clock-gunner.png": 200,
+    "/images/autochess/portraits/biscuit_sui.png": 200,
   });
 
   await page.evaluate(() => {
@@ -190,6 +207,7 @@ const capture = async (page, name, screenshots) => {
     engine.state.bench.fill(null);
     engine.state.board[6] = { uid: 8801, id: "spark_mage", star: 1 };
     engine.state.board[7] = { uid: 8802, id: "clock_gunner", star: 1 };
+    engine.state.board[8] = { uid: 8803, id: "biscuit_sui", star: 1 };
     bridge.dispatch({ type: "clearSelection" });
   });
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === "preparation");
@@ -197,6 +215,7 @@ const capture = async (page, name, screenshots) => {
   const preparationText = await page.evaluate(() => JSON.parse(window.render_game_to_text()));
   assert.ok(JSON.stringify(preparationText).includes("北欧魔法师"), "Preparation state is missing 北欧魔法师");
   assert.ok(JSON.stringify(preparationText).includes("老弥"), "Preparation state is missing 老弥");
+  assert.ok(JSON.stringify(preparationText).includes("饼干岁"), "Preparation state is missing 饼干岁");
   const screenshots = {};
   await capture(page, "preparation-fullbody-sprites", screenshots);
 
@@ -207,7 +226,7 @@ const capture = async (page, name, screenshots) => {
     battle.limit = 30;
     battle.player.forEach((fighter, index) => {
       fighter.x = 120;
-      fighter.y = 250 + index * 230;
+      fighter.y = 180 + index * 190;
       fighter.range = 20;
       fighter.moveSpeed = 68;
       fighter.maxHp *= 20;
@@ -231,6 +250,60 @@ const capture = async (page, name, screenshots) => {
     return scene.fighterViews?.size >= 3;
   });
 
+  const earsAtRest = await clockGunnerEarState(page);
+  assert.deepEqual(earsAtRest, {
+    visible: true,
+    leftAttached: true,
+    rightAttached: true,
+    petCount: 0,
+  });
+  await capture(page, "clock-gunner-ears-resting", screenshots);
+
+  await page.evaluate(() => {
+    const bridge = window.__codexAutoChessBridge;
+    const battle = bridge.engine.state.battle;
+    const fighter = battle.player.find((entry) => entry.unitId === "clock_gunner");
+    bridge.engine.projectiles.summonClockGunnerRabbits(fighter);
+  });
+  await page.waitForFunction(() => {
+    const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const fighter = battle.player.find((entry) => entry.unitId === "clock_gunner");
+    const portrait = scene.fighterViews.get(fighter.fid)?.getByName("portrait");
+    return battle.pets.filter((pet) => pet.ownerFid === fighter.fid).length === 2
+      && portrait?.getByName("clockGunnerEarRig")?.visible === false;
+  });
+  const earsLaunched = await clockGunnerEarState(page);
+  assert.equal(earsLaunched.visible, false);
+  assert.equal(earsLaunched.petCount, 2);
+  await capture(page, "clock-gunner-ears-launched", screenshots);
+
+  await page.evaluate(() => {
+    const bridge = window.__codexAutoChessBridge;
+    const battle = bridge.engine.state.battle;
+    const fighter = battle.player.find((entry) => entry.unitId === "clock_gunner");
+    battle.pets
+      .filter((pet) => pet.ownerFid === fighter.fid)
+      .forEach((pet) => {
+        pet.life = 0;
+        pet.x = fighter.x;
+        pet.y = fighter.y - fighter.radius - pet.radius;
+      });
+    bridge.engine.projectiles.updateMechanicalRabbitPets(battle, 0.05);
+  });
+  await page.waitForFunction(() => {
+    const scene = window.__codexAutoChessGame.scene.getScene("RiftLineScene");
+    const battle = window.__codexAutoChessBridge.engine.state.battle;
+    const fighter = battle.player.find((entry) => entry.unitId === "clock_gunner");
+    const portrait = scene.fighterViews.get(fighter.fid)?.getByName("portrait");
+    return battle.pets.every((pet) => pet.ownerFid !== fighter.fid)
+      && portrait?.getByName("clockGunnerEarRig")?.visible === true;
+  });
+  const earsRestored = await clockGunnerEarState(page);
+  assert.equal(earsRestored.visible, true);
+  assert.equal(earsRestored.petCount, 0);
+  await capture(page, "clock-gunner-ears-restored", screenshots);
+
   const samples = [];
   for (let index = 0; index < 18; index += 1) {
     await page.waitForTimeout(45);
@@ -239,7 +312,7 @@ const capture = async (page, name, screenshots) => {
     if (index === 12) await capture(page, "walking-phase-b", screenshots);
   }
 
-  const byUnit = Object.fromEntries(["spark_mage", "clock_gunner"].map((unitId) => {
+  const byUnit = Object.fromEntries(["spark_mage", "clock_gunner", "biscuit_sui"].map((unitId) => {
     const unitSamples = samples.filter((sample) => sample.unitId === unitId);
     assert.equal(unitSamples.length, 18, `${unitId} sample count`);
     const span = (field) => Math.max(...unitSamples.map((sample) => sample[field]))
@@ -277,7 +350,16 @@ const capture = async (page, name, screenshots) => {
   assert.deepEqual(errors, []);
   assert.deepEqual(failedResponses, []);
 
-  console.log(JSON.stringify({ assetStatuses, byUnit, textState: { phase: textState.phase }, canvas, screenshots, errors, failedResponses }, null, 2));
+  console.log(JSON.stringify({
+    assetStatuses,
+    earLifecycle: { earsAtRest, earsLaunched, earsRestored },
+    byUnit,
+    textState: { phase: textState.phase },
+    canvas,
+    screenshots,
+    errors,
+    failedResponses,
+  }, null, 2));
   await context.close();
   await browser.close();
 })().catch((error) => {

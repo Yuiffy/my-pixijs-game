@@ -564,22 +564,6 @@ export class CombatProjectileSystem {
         pet.repositionY = owner.y - owner.radius - pet.radius;
       }
 
-      const targetTeam: Team = pet.team === "player" ? "enemy" : "player";
-      const targets = this.host.living(targetTeam);
-      let target =
-        targets.find((fighter) => fighter.fid === pet.targetFid) || null;
-      if (!target) {
-        target = targets.reduce<Fighter | null>((best, candidate) => {
-          if (!best) return candidate;
-          return Math.hypot(candidate.x - pet.x, candidate.y - pet.y) <
-            Math.hypot(best.x - pet.x, best.y - pet.y)
-            ? candidate
-            : best;
-        }, null);
-        pet.targetFid = target?.fid || null;
-      }
-      if (!target) return true;
-
       if (pet.repositionX !== null && pet.repositionY !== null) {
         const moveDeltaX = pet.repositionX - pet.x;
         const moveDeltaY = pet.repositionY - pet.y;
@@ -598,6 +582,22 @@ export class CombatProjectileSystem {
         }
         return true;
       }
+
+      const targetTeam: Team = pet.team === "player" ? "enemy" : "player";
+      const targets = this.host.living(targetTeam);
+      let target =
+        targets.find((fighter) => fighter.fid === pet.targetFid) || null;
+      if (!target) {
+        target = targets.reduce<Fighter | null>((best, candidate) => {
+          if (!best) return candidate;
+          return Math.hypot(candidate.x - pet.x, candidate.y - pet.y) <
+            Math.hypot(best.x - pet.x, best.y - pet.y)
+            ? candidate
+            : best;
+        }, null);
+        pet.targetFid = target?.fid || null;
+      }
+      if (!target) return true;
 
       const deltaX = target.x - pet.x;
       const deltaY = target.y - pet.y;

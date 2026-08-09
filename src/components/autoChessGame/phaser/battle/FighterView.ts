@@ -18,6 +18,10 @@ import {
   textureKeyForUnit,
 } from "../assets";
 import { DEPTH } from "../theme";
+import {
+  CLOCK_GUNNER_EAR_REST_Y_RATIO,
+  createClockGunnerEarRig,
+} from "./SummonView";
 
 const PROJECTILE_EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", sans-serif';
 
@@ -26,6 +30,7 @@ type FighterViewParts = {
   energy: Phaser.GameObjects.Rectangle;
   portrait: Phaser.GameObjects.Container;
   portraitImage: Phaser.GameObjects.Image;
+  clockGunnerEars: Phaser.GameObjects.Container | null;
   hitFlash: Phaser.GameObjects.Arc;
   shield: Phaser.GameObjects.Arc;
   abilityShield: Phaser.GameObjects.Arc;
@@ -90,6 +95,10 @@ export class FighterViewRenderer {
     const status = this.host.text(0, -radius - 8, "", 13, "#ffd95e", { fontFamily: PROJECTILE_EMOJI_FONT, fontStyle: "bold" }).setOrigin(0.5).setName("status");
     const portrait = this.host.createPortrait(fighter.unitId, 0, 0, radius, fighter.team === "enemy");
     portrait.setName("portrait");
+    const clockGunnerEars = fighter.unitId === "clock_gunner"
+      ? createClockGunnerEarRig(this.host.scene, radius)
+      : null;
+    if (clockGunnerEars) portrait.add(clockGunnerEars);
     const hpBack = this.host.scene.add.rectangle(0, radius + 10, radius * 2.25, 7, 0x152430).setName("hpBack");
     const hp = this.host.scene.add.rectangle(-radius * 1.125, radius + 10, radius * 2.25, 7, fighter.team === "player" ? 0x52de9b : 0xff668a).setOrigin(0, 0.5).setName("hp");
     const energyBack = this.host.scene.add.rectangle(0, radius + 20, radius * 2.25, 4, 0x14222d).setName("energyBack");
@@ -109,6 +118,7 @@ export class FighterViewRenderer {
       energy,
       portrait,
       portraitImage: portrait.getByName("portraitImage") as Phaser.GameObjects.Image,
+      clockGunnerEars,
       hitFlash,
       shield,
       abilityShield,
@@ -162,6 +172,7 @@ export class FighterViewRenderer {
       energy,
       portrait,
       portraitImage,
+      clockGunnerEars,
       hitFlash,
       shield,
       abilityShield,
@@ -226,6 +237,18 @@ export class FighterViewRenderer {
       portraitImage.setTexture(portraitKey);
     }
     portraitImage.setFlipX(fighter.facingX < 0);
+    if (clockGunnerEars) {
+      const rabbitEarsLaunched = this.host.bridge.engine.state.battle?.pets.some(
+        (pet) => pet.ownerFid === fighter.fid,
+      ) ?? false;
+      clockGunnerEars
+        .setVisible(!rabbitEarsLaunched)
+        .setY(
+          -radius * CLOCK_GUNNER_EAR_REST_Y_RATIO
+            + Math.sin(this.host.bridge.engine.state.visualTime * 5 + walkPhaseOffset) * 1.1,
+        )
+        .setScale(fighter.facingX, 1);
+    }
     const walkShadowScale = spriteWalking ? 1 - walkBounce / 30 : 1;
     shadow
       .setPosition(-attackOffsetX, radius * 0.8 + jumpArc - attackOffsetY)

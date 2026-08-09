@@ -352,8 +352,9 @@ public getUnitSellValue(unit: OwnedUnit) {
     return locations;
   }
 
-  private locationsByAge(locations: UnitLocation[]) {
+  private locationsByMergePriority(locations: UnitLocation[]) {
     return [...locations].sort((left, right) => {
+      if (left.zone !== right.zone) return left.zone === "board" ? -1 : 1;
       const leftUnit = this.getAt(left);
       const rightUnit = this.getAt(right);
       return (leftUnit?.uid ?? Number.MAX_SAFE_INTEGER)
@@ -374,14 +375,14 @@ public getUnitSellValue(unit: OwnedUnit) {
     this.state.selected = null;
     this.state.score += 80 * star;
     this.setToast(
-      `聚合完成：${UNIT_DEFS[id].name}升至 ${star + 1} 星，并保留最老棋子的站位！`,
+      `聚合完成：${UNIT_DEFS[id].name}升至 ${star + 1} 星，并优先保留场上棋子的站位！`,
       "good",
     );
     return true;
   }
 
   private mergeOverflowPurchase(owned: OwnedUnit) {
-    const matches = this.locationsByAge(
+    const matches = this.locationsByMergePriority(
       this.allLocations().filter((location) => {
         const unit = this.getAt(location);
         return unit?.id === owned.id && unit.star === 1;
@@ -401,7 +402,7 @@ public checkMerges() {
       found = false;
       for (const id of SHOP_UNITS) {
         for (const star of [1, 2] as const) {
-          const matches = this.locationsByAge(
+          const matches = this.locationsByMergePriority(
             this.allLocations().filter((location) => {
               const unit = this.getAt(location);
               return unit?.id === id && unit.star === star;

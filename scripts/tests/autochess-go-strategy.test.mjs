@@ -64,6 +64,27 @@ test("Go级机会项目允许密集来牌压过旧固定目标", () => {
   assert.equal(targets[0].completionShopIndex, 1);
 });
 
+test("Go级二星项目按三份完成并可由密集来牌动态接管", () => {
+  const shop = (...ids) => [...ids, ...Array(Math.max(0, 5 - ids.length)).fill(null)];
+  const targets = selectGoOpportunityTargets({
+    candidates: [{
+      id: "zeyin",
+      priority: 72,
+      desiredStar: 2,
+      role: "transition",
+      learnedValue: 2,
+    }],
+    ownedTargets: [{ id: "zeyin", copies: 0, benchSlots: 0 }],
+    currentShop: shop("zeyin", "zeyin"),
+    futureShops: [shop("zeyin")],
+  });
+
+  assert.equal(targets[0].id, "zeyin");
+  assert.equal(targets[0].desiredStar, 2);
+  assert.equal(targets[0].completionShopIndex, 1);
+  assert.equal(targets[0].remainingAfterForecast, 0);
+});
+
 test("Go级会提前追逐九十次刷新后才能完成的机会项目", () => {
   const bridge = new EngineBridge(162119);
   bridge.setConsoleLogging(false);
@@ -150,6 +171,73 @@ test("Go级残血高金币时用升星工坊完成模型高价值项目", () => 
   assert.equal(bridge.engine.state.bench[0].star, 3);
   assert.equal(bridge.engine.state.gold, 1_000 - 40 - 48);
   assert.equal(rolloutCalls, 0);
+});
+
+test("Go级健康状态的连续投资只计算一次安全储备", () => {
+  const bridge = new EngineBridge(162124);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 54;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.gold = 1_000;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.board[0] = { uid: 1621240, id: "lian", star: 3 };
+  bridge.engine.state.bench[0] = { uid: 1621241, id: "youyi", star: 2 };
+  bridge.engine.state.shop = [null, null, null, null, null];
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.seerFutureShopForecast = () => [];
+  autopilot.goCompletedUnitModelGain = (_roster, id) => (id === "youyi" ? 3 : -3);
+  let rolloutCalls = 0;
+  autopilot.rolloutConfidence = () => {
+    rolloutCalls += 1;
+    return 1_000_000;
+  };
+
+  assert.deepEqual(
+    autopilot.continueGoOpportunityInvestment(autopilot.ownedEntries()),
+    { type: "starForge" },
+  );
+  bridge.dispatch({ type: "starForge" });
+  assert.deepEqual(
+    autopilot.continueGoOpportunityInvestment(autopilot.ownedEntries()),
+    { type: "starForge", location: { zone: "bench", index: 0 } },
+  );
+  assert.equal(rolloutCalls, 1);
+});
+
+test("Go级投资尚未安全时继续复核并在转安全后恢复储备", () => {
+  const bridge = new EngineBridge(162125);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 54;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.gold = 1_000;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.board[0] = { uid: 1621250, id: "lian", star: 3 };
+  bridge.engine.state.bench[0] = { uid: 1621251, id: "youyi", star: 2 };
+  bridge.engine.state.shop = [null, null, null, null, null];
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.seerFutureShopForecast = () => [];
+  autopilot.goCompletedUnitModelGain = (_roster, id) => (id === "youyi" ? 3 : -3);
+  const rolloutScores = [-100, 1_000_000];
+  let rolloutCalls = 0;
+  autopilot.rolloutConfidence = () => rolloutScores[rolloutCalls++];
+
+  assert.deepEqual(
+    autopilot.continueGoOpportunityInvestment(autopilot.ownedEntries()),
+    { type: "starForge" },
+  );
+  bridge.dispatch({ type: "starForge" });
+  assert.deepEqual(
+    autopilot.continueGoOpportunityInvestment(autopilot.ownedEntries()),
+    { type: "starForge", location: { zone: "bench", index: 0 } },
+  );
+  assert.equal(rolloutCalls, 2);
+  assert.equal(autopilot.goOpportunitySafeInvestment, true);
 });
 
 test("Go级当前商店有可购买目标时先买牌再使用工坊", () => {
@@ -251,6 +339,45 @@ test("Go级满候补席会释放低进度旧项目并买入新机会项目", () 
   assert.deepEqual(autopilot.pendingPurchaseAction(), { type: "shop", index: 0 });
 });
 
+test("Go级会同时保留多个未来终局项目，避免后段卖掉关键替补", () => {
+  const bridge = new EngineBridge(1621172);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 20;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.upgradeRemaining = 0;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  [
+    "grove_mender",
+    "lian",
+    "rei",
+    "yua",
+    "cinder_ram",
+    "spark_mage",
+    "sui_flower",
+    "xuehui",
+    "sui_bird",
+    "yukisyo",
+  ].forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 16211720 + index, id, star: 2 };
+  });
+  bridge.engine.state.shop = ["spark_mage", "yukisyo", null, null, null];
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.goUnitModelGain = () => 0;
+  autopilot.seerFutureShopForecast = () => Array.from({ length: 16 }, () => (
+    ["spark_mage", "yukisyo", "xuehui", "sui_bird", "cog_scribe"]
+  ));
+
+  const targets = autopilot.goPlanningTargets(autopilot.ownedEntries(), autopilot.seerFutureShopForecast());
+
+  assert.ok(targets.length >= 6, `expected broad target cover, got ${targets.length}`);
+  assert.ok(autopilot.seer2FocusIds.size >= 6);
+  assert.equal(autopilot.targetDesiredCopies("spark_mage"), 9);
+  assert.equal(autopilot.targetDesiredCopies("yukisyo"), 9);
+});
+
 test("Go级在核心阵容成熟前不拆阵追全棋池机会", () => {
   const bridge = new EngineBridge(162118);
   bridge.setConsoleLogging(false);
@@ -287,6 +414,20 @@ test("Go级在核心阵容成熟前不拆阵追全棋池机会", () => {
   assert.equal(autopilot.goOpportunityWindowOpen(autopilot.ownedEntries()), true);
 });
 
+test("Go级当前战稳胜但下一战必败时会提前进入稳定化", () => {
+  const bridge = new EngineBridge(162126);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 15;
+  bridge.engine.state.board[0] = { uid: 1621260, id: "lian", star: 2 };
+  const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
+  autopilot.rolloutConfidence = () => 11_000;
+  autopilot.rolloutLineupScoreAtRound = () => -100;
+
+  assert.equal(autopilot.rerollStrategy(autopilot.ownedEntries()).mode, "stabilize");
+});
+
 test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
   assert.equal(GO_COMBAT_MODEL_SCHEMA, "go-combat-ranker-v2");
   assert.equal(GO_COMBAT_MODEL_VERIFICATION.length, 5);
@@ -298,6 +439,54 @@ test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
       `expected ${fixture.modelScore}, received ${actual}`,
     );
   });
+});
+
+test("Go级模型将第56战学到的北欧魔法师胜阵保留在真实复核预算内", () => {
+  const enemyIds = [
+    "rift_tyrant",
+    "cinder_ram", "cinder_ram", "cinder_ram",
+    "lian", "clock_gunner", "shiori",
+    "cinder_ram", "cinder_ram", "cinder_ram",
+    "lian", "clock_gunner", "shiori",
+    "cinder_ram", "cinder_ram", "cinder_ram",
+    "lian", "clock_gunner", "shiori",
+    "cinder_ram", "cinder_ram", "cinder_ram",
+    "lian", "clock_gunner", "shiori", "cinder_ram",
+  ];
+  const context = {
+    starter: "bastion",
+    augments: [
+      "execution", "glass_cannon", "momentum", "overclock", "payday", "precision",
+      "second_wind", "sharp_edge", "tempered", "triage", "united_front",
+    ],
+    waveTag: "boss",
+    modifier: 1.6486909407714407,
+    enemies: enemyIds.map((id, position) => ({ id, star: 3, position })),
+  };
+  const players = (entries) => entries.map(([position, id]) => ({
+    id,
+    star: 3,
+    position,
+  }));
+  const learnedWinner = scoreGoCombatCandidate({
+    ...context,
+    players: players([
+      [10, "xuehui"], [11, "grove_mender"], [15, "cog_scribe"],
+      [16, "cinder_ram"], [17, "nagisa"], [22, "yua"], [23, "rei"],
+      [3, "spark_mage"], [4, "yukisyo"], [9, "lian"],
+    ]),
+  });
+  const staleLineup = scoreGoCombatCandidate({
+    ...context,
+    players: players([
+      [10, "tower_god"], [11, "grove_mender"], [15, "cog_scribe"],
+      [16, "xuehui"], [17, "sui_cat"], [22, "yua"], [23, "rei"],
+      [4, "sui_flower"], [5, "zeyin"], [9, "lian"],
+    ]),
+  });
+
+  assert.ok(learnedWinner > 0);
+  assert.ok(learnedWinner - staleLineup > 3);
 });
 
 test("真正 Go级保留动态商店规划但不继承看穿2的固定阵容搜索", () => {

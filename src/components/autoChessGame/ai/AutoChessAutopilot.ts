@@ -203,6 +203,10 @@ const SEER_ENDGAME_TARGET_LOOKAHEAD = 48;
 const SEER_ENDGAME_MAX_EXTRA_REROLLS = 48;
 const GO_OPPORTUNITY_SHOP_LOOKAHEAD = 128;
 const GO_OPPORTUNITY_MAX_REROLLS = 64;
+// Keep a broad terminal project cover so a late reroll cannot sell a unit
+// that is needed by a different future composition. Bench capacity and the
+// exact combat planner still decide which projects are actually deployed.
+const GO_OPPORTUNITY_TARGET_LIMIT = 8;
 const STAR_FORGE_MIN_ROUND = 32;
 const STAR_FORGE_MIN_SURPLUS = 200;
 const SHARED_ROLLOUT_CACHE_LIMIT = 200000;
@@ -462,6 +466,8 @@ export class AutoChessAutopilot {
   private goOpportunityRerolls = 0;
 
   private goOpportunityInvestmentInProgress = false;
+
+  private goOpportunitySafeInvestment: boolean | null = null;
 
   private seerPurchaseOffsets: number[] = [];
 
@@ -817,6 +823,7 @@ export class AutoChessAutopilot {
     this.seerExtraRerolls = 0;
     this.goOpportunityRerolls = 0;
     this.goOpportunityInvestmentInProgress = false;
+    this.goOpportunitySafeInvestment = null;
     this.seerFutureShopPreviewKey = "";
     this.seerFutureShopPreview = [];
     this.seerPlan = this.createSeerPlan();
@@ -887,28 +894,28 @@ export class AutoChessAutopilot {
     );
   }
 
-  private goCompletedUnitModelGain(roster: OwnedEntry[], id: UnitId) {
+  private goUnitModelGain(roster: OwnedEntry[], id: UnitId, star: 2 | 3) {
     const cap = this.bridge.engine.boardCap;
     const baseLineup = this.targetLineup(roster);
     const baseScore = baseLineup.length > 0
       ? this.goModelScore(baseLineup, "go_canonical")
       : 0;
-    const completed: OwnedEntry = {
-      unit: { uid: -10_000 - SHOP_UNITS.findIndex((shopId) => shopId === id), id, star: 3 },
+    const developed: OwnedEntry = {
+      unit: { uid: -10_000 - SHOP_UNITS.findIndex((shopId) => shopId === id), id, star },
       location: { zone: "bench", index: -1 },
     };
     const existingIndex = baseLineup.findIndex(({ unit }) => unit.id === id);
     const variants: OwnedEntry[][] = [];
     if (existingIndex >= 0) {
       variants.push(baseLineup.map((entry, index) => (
-        index === existingIndex ? completed : entry
+        index === existingIndex ? developed : entry
       )));
     } else if (baseLineup.length < cap) {
-      variants.push([...baseLineup, completed]);
+      variants.push([...baseLineup, developed]);
     } else {
       baseLineup.forEach((_, index) => {
         variants.push(baseLineup.map((entry, entryIndex) => (
-          entryIndex === index ? completed : entry
+          entryIndex === index ? developed : entry
         )));
       });
     }
@@ -916,6 +923,10 @@ export class AutoChessAutopilot {
       ? Math.max(...variants.map((lineup) => this.goModelScore(lineup, "go_canonical")))
       : baseScore;
     return Number.isFinite(completedScore - baseScore) ? completedScore - baseScore : 0;
+  }
+
+  private goCompletedUnitModelGain(roster: OwnedEntry[], id: UnitId) {
+    return this.goUnitModelGain(roster, id, 3);
   }
 
   private goPlanningTargets(
@@ -948,6 +959,7 @@ export class AutoChessAutopilot {
       currentShop: this.bridge.engine.state.shop,
       futureShops: futureShops.slice(0, GO_OPPORTUNITY_SHOP_LOOKAHEAD),
       previousFocusIds: this.seer2FocusIds,
+      limit: GO_OPPORTUNITY_TARGET_LIMIT,
     });
     this.seer2FocusIds = new Set(targets.map(({ id }) => id));
     this.goOpportunityPriorities = new Map(targets.map(({ id, priority }) => [id, priority]));
@@ -1959,6 +1971,22 @@ export class AutoChessAutopilot {
     );
   }
 
+  private rolloutLineupScoreAtRound(
+    lineup: OwnedEntry[],
+    round: number,
+    formation: FormationProfile = this.lineageFormation,
+    combatHz = this.rolloutCombatHz,
+  ) {
+    const { state } = this.bridge.engine;
+    const currentRound = state.round;
+    state.round = Math.max(1, Math.floor(round));
+    try {
+      return this.rolloutLineupScore(lineup, formation, true, combatHz);
+    } finally {
+      state.round = currentRound;
+    }
+  }
+
   private rolloutBoardScore(
     board: Array<OwnedEntry | null>,
     stableOnly = false,
@@ -2935,9 +2963,20 @@ export class AutoChessAutopilot {
   }
 
   private rerollStrategy(roster: OwnedEntry[], confirmCritical = false) {
-    const rolloutScore = confirmCritical
+    const currentRolloutScore = confirmCritical
       ? this.criticalExactRolloutConfidence(roster, this.rolloutConfidence(roster))
       : this.rolloutConfidence(roster);
+    const rolloutScore = this.style === "go"
+      && currentRolloutScore >= this.policy.stabilizeRolloutScore
+      ? Math.min(
+        currentRolloutScore,
+        this.rolloutLineupScoreAtRound(
+          this.rolloutTargetLineup(roster),
+          this.bridge.engine.state.round + 1,
+          "go_canonical",
+        ),
+      )
+      : currentRolloutScore;
     const upgradeChaseIds = this.oneCopyFromMergeIds(roster);
     if (rolloutScore < this.policy.stabilizeRolloutScore) {
       this.rerollMode = "stabilize";
@@ -3231,16 +3270,21 @@ export class AutoChessAutopilot {
       copies[unit.id] = (copies[unit.id] || 0) + unitCopyValue(unit);
       return copies;
     }, {});
+    const reserve = this.goldReserve(false, 0);
     const immediateShopProject = state.shop.some((id) => {
       if (!id) return false;
       const copies = copiesById[id] || 0;
       const oneStarCopies = roster.filter(({ unit }) => (
         unit.id === id && unit.star === 1
       )).length;
-      return (
+      const isProject = (
         (this.targetDesiredCopies(id) > 0 && copies < this.targetDesiredCopies(id))
         || oneStarCopies >= 2
       );
+      return isProject
+        && state.gold >= UNIT_DEFS[id].cost
+        && state.gold - UNIT_DEFS[id].cost >= reserve
+        && engine.canStoreUnit(id);
     });
     if (immediateShopProject) return null;
     const candidates = roster.flatMap((entry) => {
@@ -3286,7 +3330,6 @@ export class AutoChessAutopilot {
     if (!candidate) return null;
 
     const unlockCost = engine.isStarForgeUnlocked ? 0 : engine.starForgeUnlockCost;
-    const reserve = this.goldReserve(false, 0);
     if (
       state.gold < unlockCost + candidate.cost
       || state.gold - unlockCost - candidate.cost < reserve + STAR_FORGE_MIN_SURPLUS
@@ -3634,7 +3677,7 @@ export class AutoChessAutopilot {
       const { cost } = UNIT_DEFS[id];
       if (
         !target
-        || target.copies >= 9
+        || target.copies >= (target.desiredStar === 3 ? 9 : 3)
         || target.completionShopIndex === null
         || state.gold < cost
         || state.gold - cost < reserve
@@ -3714,12 +3757,13 @@ export class AutoChessAutopilot {
 
     const targetById = new Map(reachableTargets.map((target) => [target.id, target]));
     const wounded = state.hp <= this.policy.woundedHpThreshold;
-    const currentScore = wounded
-      ? Number.NEGATIVE_INFINITY
-      : this.rolloutConfidence(roster);
-    const reserve = wounded || currentScore < this.policy.safeWinRolloutScore
-      ? 0
-      : this.goldReserve(false, 0);
+    if (wounded) {
+      this.goOpportunitySafeInvestment = false;
+    } else if (this.goOpportunitySafeInvestment !== true) {
+      const currentScore = this.rolloutConfidence(roster);
+      this.goOpportunitySafeInvestment = currentScore >= this.policy.safeWinRolloutScore;
+    }
+    const reserve = this.goOpportunitySafeInvestment ? this.goldReserve(false, 0) : 0;
     const starForge = this.goOpportunityStarForgeAction(roster, targets, reserve);
     if (starForge) return starForge;
     if (reachableTargets.length === 0) return null;
@@ -3728,7 +3772,7 @@ export class AutoChessAutopilot {
       const target = targetById.get(id);
       if (
         !target
-        || target.copies >= 9
+        || target.copies >= (target.desiredStar === 3 ? 9 : 3)
         || state.gold < UNIT_DEFS[id].cost
         || state.gold - UNIT_DEFS[id].cost < reserve
       ) return [];
@@ -3761,7 +3805,7 @@ export class AutoChessAutopilot {
 
     if (this.goOpportunityRerolls >= GO_OPPORTUNITY_MAX_REROLLS) return null;
     const incompleteIds = new Set(reachableTargets
-      .filter(({ copies }) => copies < 9)
+      .filter(({ copies, desiredStar }) => copies < (desiredStar === 3 ? 9 : 3))
       .map(({ id }) => id));
     const futureHit = futureShops.find((shop) => shop.some((id) => (
       Boolean(id && incompleteIds.has(id))
@@ -3795,6 +3839,7 @@ export class AutoChessAutopilot {
     }
     const investment = this.goOpportunityInvestmentAction(roster);
     this.goOpportunityInvestmentInProgress = Boolean(investment);
+    if (!investment) this.goOpportunitySafeInvestment = null;
     return investment;
   }
 
@@ -5035,6 +5080,12 @@ export class AutoChessAutopilot {
             if (finalFormation) return finalFormation;
           }
         }
+        // A locked rescue lineup is already battle-ready, but it may still
+        // contain a funded one-star/two-star project. Give the late-game
+        // forge a chance before opening combat; the forge invalidates the
+        // cached lineup so the next pass re-scores the upgraded roster.
+        const lateForge = this.style === "go" ? null : this.starForgeAction(roster);
+        if (lateForge) return lateForge;
         return engine.boardCount > 0 ? { type: "battle" } : null;
       }
       this.invalidateFinalLineup();
@@ -5060,6 +5111,12 @@ export class AutoChessAutopilot {
       ? GO_PREPARATION_ACTION_LIMIT
       : PREPARATION_ACTION_LIMIT;
     if ((this.preparationActions >= preparationActionLimit || visits >= 3) && engine.boardCount > 0) {
+      // The action/visit guard is a last-resort battle fallback, but a funded
+      // late-game forge is still a deterministic power increase. Spend that
+      // one action before giving up, otherwise a long reroll session can make
+      // the AI open combat with an unused upgrade already in its roster.
+      const lateForge = this.style === "go" ? null : this.starForgeAction(roster);
+      if (lateForge) return lateForge;
       const formation = this.formationAction(roster);
       if (formation) return formation;
       if (
