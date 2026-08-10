@@ -47,12 +47,6 @@
   font-weight: 700;
 }
 
-.topbarActions {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-}
-
 .easterEgg {
   display: inline-flex;
   align-items: center;
@@ -64,7 +58,8 @@
   font-size: 10px;
   line-height: 1;
   text-decoration: none;
-  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+  white-space: nowrap;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .easterEgg:hover,
@@ -73,6 +68,17 @@
   background: rgba(231, 183, 95, 0.1);
   color: #f6d48d;
   outline: none;
+}
+
+.titleEasterEgg {
+  margin-top: 5px;
+  transform: rotate(-3deg);
+  transform-origin: center;
+}
+
+.titleEasterEgg:hover,
+.titleEasterEgg:focus-visible {
+  transform: rotate(-1deg) translateY(-1px);
 }
 
 .topbarMeta {
@@ -90,22 +96,13 @@
 }
 
 .shell {
-  display: grid;
-  grid-template-columns: 166px minmax(0, 1fr);
-  gap: clamp(24px, 4vw, 58px);
+  display: block;
   max-width: 1500px;
   min-height: calc(100svh - 64px);
   margin: 0 auto;
   padding: 28px clamp(18px, 3vw, 44px) 30px;
 }
 
-.sidebar {
-  align-self: start;
-  position: sticky;
-  top: 24px;
-}
-
-.sidebarEyebrow,
 .introEyebrow {
   margin: 0;
   color: #728397;
@@ -115,66 +112,11 @@
   text-transform: uppercase;
 }
 
-.sidebarTitle {
-  margin: 8px 0 18px;
-  color: #eff5f8;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.sidebarNav {
-  display: grid;
-  gap: 5px;
-}
-
-.sidebarLink {
-  display: grid;
-  grid-template-columns: 18px 1fr auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 9px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  color: #8391a2;
-  font-size: 12px;
-  text-decoration: none;
-  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
-}
-
-.sidebarLink:hover,
-.sidebarLink:focus-visible {
-  border-color: var(--line);
-  background: rgba(255, 255, 255, 0.04);
-  color: #f1f6f8;
-  outline: none;
-}
-
-.sidebarLink:nth-child(1) .sidebarIcon { color: #7de0d0; }
-.sidebarLink:nth-child(2) .sidebarIcon { color: #e7b75f; }
-.sidebarLink:nth-child(3) .sidebarIcon { color: #aab4c2; }
-.sidebarLink:nth-child(4) .sidebarIcon { color: #c0a0f2; }
-
-.sidebarIcon {
-  display: grid;
-  place-items: center;
-  font-size: 14px;
-}
-
-.sidebarCount {
-  color: #536273;
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-}
-
-.sidebarNote {
-  margin: 28px 8px 0;
-  color: #536273;
-  font-size: 11px;
-  line-height: 1.6;
-}
-
 .content {
+  min-width: 0;
+}
+
+.introLead {
   min-width: 0;
 }
 
@@ -188,12 +130,19 @@
   border-bottom: 1px solid var(--line-soft);
 }
 
+.introTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
 .introTitle {
   margin: 8px 0 5px;
   color: #f3f7f8;
   font-size: clamp(28px, 3vw, 40px);
   font-weight: 750;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1;
 }
 
@@ -392,11 +341,6 @@
 }
 
 @media (max-width: 1160px) {
-  .shell {
-    grid-template-columns: 142px minmax(0, 1fr);
-    gap: 24px;
-  }
-
   .memberGrid,
   .memberGridDense {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -409,37 +353,8 @@
   }
 
   .shell {
-    display: block;
     min-height: 0;
     padding-top: 20px;
-  }
-
-  .sidebar {
-    position: static;
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-bottom: 22px;
-    overflow-x: auto;
-  }
-
-  .sidebarEyebrow,
-  .sidebarTitle,
-  .sidebarNote {
-    display: none;
-  }
-
-  .sidebarNav {
-    display: flex;
-    gap: 6px;
-    min-width: max-content;
-  }
-
-  .sidebarLink {
-    grid-template-columns: 18px auto auto;
-    min-height: 32px;
-    padding: 0 10px;
-    background: rgba(255, 255, 255, 0.025);
   }
 
   .groupGrid {
@@ -456,12 +371,9 @@
     display: none;
   }
 
-  .topbarActions {
-    gap: 8px;
-  }
-
-  .easterEgg {
+  .titleEasterEgg {
     padding: 4px 6px;
+    font-size: 9px;
   }
 
   .shell {

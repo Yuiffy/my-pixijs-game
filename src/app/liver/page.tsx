@@ -2,11 +2,7 @@
 
 import Link from 'next/link';
 import {
-  AppstoreOutlined,
   ArrowRightOutlined,
-  HistoryOutlined,
-  NumberOutlined,
-  TeamOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { CSSProperties } from 'react';
@@ -17,19 +13,6 @@ import {
   type LiverDirectoryMember,
 } from '@/data/livers/directory';
 import styles from './LiverDirectory.module.css';
-
-function renderGroupIcon(groupId: string) {
-  switch (groupId) {
-    case 'gen28':
-      return <NumberOutlined />;
-    case 'vrpsp':
-      return <HistoryOutlined />;
-    case 'gen27':
-      return <TeamOutlined />;
-    default:
-      return <AppstoreOutlined />;
-  }
-}
 
 export default function LiverIndexPage() {
   const directoryGroups = LIVER_DIRECTORY_GROUPS.map((group) => ({
@@ -47,46 +30,29 @@ export default function LiverIndexPage() {
           <span className={styles.brandMark}>S</span>
           <span className={styles.brandLabel}>鹿饼AI直播总结</span>
         </Link>
-        <div className={styles.topbarActions}>
-          <Link
-            href="/game/autochess"
-            className={styles.easterEgg}
-            title="打开自走棋"
-            aria-label="让她们打架，打开自走棋"
-          >
-            <ThunderboltOutlined />
-            <span>让她们打架</span>
-          </Link>
-          <div className={styles.topbarMeta}>
-            <span>LIVE ARCHIVE</span>
-            <strong>{totalMembers} 位成员</strong>
-          </div>
+        <div className={styles.topbarMeta}>
+          <span>LIVE ARCHIVE</span>
+          <strong>{totalMembers} 位成员</strong>
         </div>
       </header>
 
       <div className={styles.shell}>
-        <aside className={styles.sidebar} aria-label="主播分类导航">
-          <div>
-            <p className={styles.sidebarEyebrow}>BROWSE BY</p>
-            <p className={styles.sidebarTitle}>快速定位</p>
-          </div>
-          <nav className={styles.sidebarNav}>
-            {directoryGroups.map((group) => (
-              <a key={group.id} href={`#${group.id}`} className={styles.sidebarLink}>
-                <span className={styles.sidebarIcon}>{renderGroupIcon(group.id)}</span>
-                <span>{group.name}</span>
-                <span className={styles.sidebarCount}>{group.members.length}</span>
-              </a>
-            ))}
-          </nav>
-          <p className={styles.sidebarNote}>选择成员后进入对应的直播记录页。</p>
-        </aside>
-
         <section className={styles.content} aria-labelledby="liver-directory-title">
           <div className={styles.intro}>
-            <div>
+            <div className={styles.introLead}>
               <p className={styles.introEyebrow}>LIVER DIRECTORY / 2026</p>
-              <h1 id="liver-directory-title" className={styles.introTitle}>鹿饼AI直播总结</h1>
+              <div className={styles.introTitleRow}>
+                <h1 id="liver-directory-title" className={styles.introTitle}>鹿饼AI直播总结</h1>
+                <Link
+                  href="/game/autochess"
+                  className={`${styles.easterEgg} ${styles.titleEasterEgg}`}
+                  title="打开自走棋"
+                  aria-label="让她们打架，打开自走棋"
+                >
+                  <ThunderboltOutlined />
+                  <span>让她们打架</span>
+                </Link>
+              </div>
               <p className={styles.introDescription}>按圈层与期数整理，直接选择要查看的成员。</p>
             </div>
             <div className={styles.introStats} aria-label="目录统计">
