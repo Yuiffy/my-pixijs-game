@@ -26,7 +26,7 @@ from torch import Tensor, nn
 import torch.nn.functional as F
 
 
-MODEL_SCHEMA = "go-combat-ranker-v2"
+MODEL_SCHEMA = "go-combat-ranker-v3"
 UNKNOWN_TOKEN = "<unk>"
 
 
@@ -141,7 +141,7 @@ def parse_entry(cache_key: str, score: float, source: str) -> CombatExample | No
         enemy_seed = 0
         round_number = 0
         context_parts = (schema, hz, starter, augments, wave_tag, modifier, enemies, branch)
-    elif schema in {"combat-go-v2", "combat-go-v3", "combat-go-v4"} and len(parts) == 11:
+    elif schema in {"combat-go-v2", "combat-go-v3", "combat-go-v4", "combat-go-v5"} and len(parts) == 11:
         (
             _,
             hz,

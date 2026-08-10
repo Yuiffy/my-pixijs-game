@@ -13,10 +13,6 @@ import type {
 import { UNIT_DEFS, type StarterId } from "../core/gameData";
 import { AUTOCHESS_VERSION } from "../version";
 import {
-  goCombatScenarioSeed,
-  goCombatScenarioSignature,
-} from "../ai/goCombatScenario";
-import {
   canonicalAutopilotStyle,
   legacyThinkingLevelForAutopilotStyle,
   preferenceStyleForAutopilotStyle,
@@ -234,22 +230,6 @@ export class EngineBridge {
         if (engine.state.gold < beforeGold) this.emitAudio("reroll");
         break;
       case "battle":
-        if (this.autoplayStyle === "go") {
-          const { state } = engine;
-          const signature = goCombatScenarioSignature({
-            enemySeed: state.enemySeed,
-            round: state.round,
-            starter: state.starter,
-            augments: state.augments,
-            wave: engine.currentWave,
-            placements: state.board.flatMap((unit, slot) => (unit ? [{
-              slot,
-              id: unit.id,
-              star: unit.star,
-            }] : [])),
-          });
-          engine.restoreRandomState(goCombatScenarioSeed(signature, 0));
-        }
         engine.startBattle();
         break;
       case "skipBattle":

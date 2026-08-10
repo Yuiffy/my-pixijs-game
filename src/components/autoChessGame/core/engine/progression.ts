@@ -317,11 +317,15 @@ private endGame(won: boolean) {
     this.state.finalWon = won;
     if (won && !this.state.endlessUnlocked) this.state.score += this.state.hp * 45 + this.state.gold * 10 + 500;
     this.state.bestScore = Math.max(this.state.bestScore, this.state.score);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(
-        "rift-line-best-score",
-        String(this.state.bestScore),
-      );
+    try {
+      if ("localStorage" in globalThis) {
+        globalThis.localStorage.setItem(
+          "rift-line-best-score",
+          String(this.state.bestScore),
+        );
+      }
+    } catch {
+      // Storage can be unavailable in Workers and privacy-restricted contexts.
     }
     this.state.phase = "gameover";
     this.state.battle = null;

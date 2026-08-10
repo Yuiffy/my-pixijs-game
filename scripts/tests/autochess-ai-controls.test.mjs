@@ -10,6 +10,7 @@ const { AutoChessAIController } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/AutoChessAI.ts",
 );
 const {
+  aggregateAutopilotRolloutScores,
   AutoChessAutopilot,
   getAutopilotRolloutCacheStats,
   hydrateAutopilotRolloutCache,
@@ -18,12 +19,17 @@ const {
   "src/components/autoChessGame/ai/AutoChessAutopilot.ts",
 );
 const {
+  AUTOPILOT_THINKING_BUDGETS,
   effectiveStyleForAutopilotConfiguration,
   informationModeForAutopilotStyle,
   informationModeForAutopilotThinkingLevel,
+  oraclePlanningWindowForRound,
   resolveAutopilotStylePolicy,
 } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/autopilotPolicy.ts",
+);
+const { AutopilotWorkerRuntime } = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/autopilotWorkerRuntime.ts",
 );
 const { planSeerEconomy, forecastSeerWaves } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/seerPlanner.ts",
@@ -41,6 +47,14 @@ const { SHOP_UNITS, UNIT_DEFS } = await loadTypescriptModule(
   "src/components/autoChessGame/core/gameData.ts",
 );
 const hostSource = await readFile("src/components/autoChessGame/PhaserGame.tsx", "utf8");
+const workerClientSource = await readFile(
+  "src/components/autoChessGame/ai/AutoChessAutopilotWorkerClient.ts",
+  "utf8",
+);
+const workerSource = await readFile(
+  "src/components/autoChessGame/ai/autopilot.worker.ts",
+  "utf8",
+);
 const hudSource = await readFile("src/components/autoChessGame/RiftHud.tsx", "utf8");
 const hudStyles = await readFile("src/components/autoChessGame/RiftHud.css", "utf8");
 
@@ -124,9 +138,18 @@ test("非看穿风格前期不把未拥有的终局一星牌塞满候补", () =>
   bridge.engine.startRun("bastion");
   bridge.engine.state.round = 5;
   bridge.engine.state.playerLevel = 5;
-  const transitionIds = SHOP_UNITS.filter((id) => (
-    !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id) && UNIT_DEFS[id].cost >= 4
-  )).slice(0, 4);
+  const traitPartner = SHOP_UNITS.find((id) => (
+    id !== "xuehui"
+    && !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id)
+    && UNIT_DEFS[id].cost >= 4
+    && UNIT_DEFS[id].traits.some((trait) => UNIT_DEFS.xuehui.traits.includes(trait))
+  ));
+  assert.ok(traitPartner);
+  const transitionIds = [traitPartner, ...SHOP_UNITS.filter((id) => (
+    id !== traitPartner
+    && !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id)
+    && UNIT_DEFS[id].cost >= 4
+  ))].slice(0, 4);
   assert.equal(transitionIds.length, 4);
   bridge.engine.state.board.fill(null);
   bridge.engine.state.bench.fill(null);
@@ -134,7 +157,7 @@ test("非看穿风格前期不把未拥有的终局一星牌塞满候补", () =>
     bridge.engine.state.board[index] = { uid: 130690 + index, id, star: 1 };
   });
   bridge.engine.state.shop = ["xuehui", null, null, null, null];
-  bridge.engine.state.gold = 20;
+  bridge.engine.state.gold = 30;
   const autopilot = new AutoChessAutopilot(bridge, "heuristic", {}, "balanced", "normal");
   const candidate = autopilot.shopCandidates(autopilot.ownedEntries(), false);
   const targetCandidate = candidate.find(({ id }) => id === "xuehui");
@@ -1007,6 +1030,7 @@ test("学习型托管以规范站位为种子并让优胜阵容逐代变异", ()
   ];
   autopilot.targetLineup = () => roster.slice(0, 3);
   autopilot.lineupHeuristicScore = (lineup) => lineup.reduce((sum, entry) => sum + entry.unit.uid, 0);
+  autopilot.goModelScore = (lineup) => lineup.reduce((sum, entry) => sum + entry.unit.uid, 0);
   autopilot.rolloutLineupScore = (lineup, formation) => (
     lineup.filter((entry) => entry.unit.uid >= 4).length * 100
       + (formation === "split_flanks" ? 10 : 0)
@@ -1079,15 +1103,15 @@ test("相同战局会复用稳健预演，精确分支会区分当前随机状�
   assert.equal(secondScore, firstScore);
   assert.equal(
     afterFirst.hits + afterFirst.misses,
-    before.hits + before.misses + 4,
+    before.hits + before.misses + 3,
   );
-  assert.equal(afterSecond.hits, afterFirst.hits + 4);
-  assert.equal(afterDifferentAugment.misses, afterSecond.misses + 4);
-  assert.equal(afterOrdered.misses, afterDifferentAugment.misses + 4);
-  assert.equal(afterReordered.hits, afterOrdered.hits + 4);
-  assert.equal(afterCrossSeedSecond.hits, afterCrossSeedFirst.hits + 3);
+  assert.equal(afterSecond.hits, afterFirst.hits + 3);
+  assert.equal(afterDifferentAugment.misses, afterSecond.misses + 3);
+  assert.equal(afterOrdered.misses, afterDifferentAugment.misses + 3);
+  assert.equal(afterReordered.hits, afterOrdered.hits + 3);
+  assert.equal(afterCrossSeedSecond.hits, afterCrossSeedFirst.hits + 2);
   assert.equal(afterCrossSeedSecond.misses, afterCrossSeedFirst.misses + 1);
-  assert.equal(afterDifferentBoard.misses, afterCrossSeedSecond.misses + 4);
+  assert.equal(afterDifferentBoard.misses, afterCrossSeedSecond.misses + 3);
 });
 
 test("看穿计划分数在战斗随机状态变化后会重新精确复核", () => {
@@ -1881,7 +1905,8 @@ test("托管在棋盘与候选席全满时会出售低价值候选并买入目�
   bridge.engine.startRun("bastion");
   const expensiveIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].cost === 5);
   const cheapIds = SHOP_UNITS.filter((id) => UNIT_DEFS[id].cost === 1);
-  const candidateId = expensiveIds[3];
+  const candidateId = "grove_mender";
+  const boardIds = expensiveIds.filter((id) => id !== candidateId);
   let uid = 130280;
 
   bridge.engine.state.playerLevel = 10;
@@ -1939,6 +1964,7 @@ test("候补未满但缺钱且预演失败时会卖闲棋为强牌腾出预算",
   const candidateId = "sui_bird";
   assert.ok(expensiveIds.length > 0);
   assert.ok(cheapId);
+  const boardIds = expensiveIds;
   let uid = 13028010;
 
   bridge.engine.state.playerLevel = 10;
@@ -1950,7 +1976,7 @@ test("候补未满但缺钱且预演失败时会卖闲棋为强牌腾出预算",
   for (let index = 0; index < bridge.engine.boardCap; index += 1) {
     bridge.engine.state.board[index] = {
       uid: uid += 1,
-      id: expensiveIds[index % expensiveIds.length],
+      id: boardIds[index % boardIds.length],
       star: 2,
     };
   }
@@ -2827,6 +2853,52 @@ test("救援方案锁定期间先完成换位，不继续买牌或刷新", () =>
   assert.equal(action?.from.zone, "bench");
 });
 
+test("锁定的精确救援阵容不会被后续置信度查询覆盖", () => {
+  const bridge = new EngineBridge(1305820, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.board.fill(null);
+  state.bench.fill(null);
+  SHOP_UNITS.slice(0, bridge.engine.boardCap).forEach((id, index) => {
+    state.board[index] = { uid: 13058200 + index, id, star: 1 };
+  });
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    () => 0,
+    true,
+    "oracle",
+  );
+  const boardUnits = state.board.filter(Boolean);
+  autopilot.plannedLineupKey = "stale-key-from-rescue-search";
+  autopilot.plannedLineupUids = boardUnits.map(({ uid }) => uid);
+  autopilot.plannedLineupUnits = new Map(boardUnits.map(({ uid, id, star }) => [
+    uid,
+    { id, star },
+  ]));
+  autopilot.plannedBoardSlots = new Map(boardUnits.map(({ uid }, index) => [uid, index]));
+  autopilot.plannedLineupScore = 10137;
+  autopilot.plannedLineupRandomState = bridge.engine.getRandomState();
+  autopilot.rescueLineupLocked = true;
+  autopilot.rolloutLineupScore = () => {
+    throw new Error("locked rescue confidence must not launch another lineup search");
+  };
+
+  const roster = autopilot.ownedEntries();
+  assert.deepEqual(
+    autopilot.rolloutTargetLineup(roster).map(({ unit }) => unit.uid),
+    boardUnits.map(({ uid }) => uid),
+  );
+  assert.equal(autopilot.rolloutConfidence(roster), 10137);
+  assert.equal(autopilot.rescueLineupLocked, true);
+});
+
 test("均衡残血已有安全救援阵容时仍会用终局余钱搜牌", () => {
   const bridge = new EngineBridge(1305821);
   bridge.setConsoleLogging(false);
@@ -3682,13 +3754,16 @@ test("新手和老手不运行隐藏战斗，只有长考产生 rollout miss", (
 
   const deep = makePilot(991003, "deep", () => 2.5);
   const beforeDeep = getAutopilotRolloutCacheStats().misses;
-  deep.pilot.rolloutLineupScore(deep.pilot.ownedEntries(), "go_canonical");
+  deep.pilot.rolloutTargetLineup(deep.pilot.ownedEntries());
+  assert.equal(getAutopilotRolloutCacheStats().misses, beforeDeep);
+  deep.pilot.exactLineupSearchRequested = true;
+  deep.pilot.rolloutTargetLineup(deep.pilot.ownedEntries());
   assert.ok(getAutopilotRolloutCacheStats().misses > beforeDeep);
 });
 
 test("风格独立控制经济策略，等级独立控制信息和有效算法", () => {
   assert.equal(effectiveStyleForAutopilotConfiguration("survival", "veteran"), "survival");
-  assert.equal(effectiveStyleForAutopilotConfiguration("highroll", "oracle"), "seer");
+  assert.equal(effectiveStyleForAutopilotConfiguration("highroll", "oracle"), "highroll");
   assert.equal(informationModeForAutopilotThinkingLevel("veteran"), "normal");
   assert.equal(informationModeForAutopilotThinkingLevel("oracle"), "oracle");
 
@@ -3708,13 +3783,270 @@ test("风格独立控制经济策略，等级独立控制信息和有效算法",
   pilot.setConfiguration("survival", "oracle");
   assert.equal(pilot.strategyPreferenceStyle, "survival");
   assert.equal(pilot.strategyThinkingLevel, "oracle");
-  assert.equal(pilot.strategyStyle, "seer");
+  assert.equal(pilot.strategyStyle, "survival");
   assert.equal(pilot.strategyInformationMode, "oracle");
   assert.equal(pilot.policy.safeWinRolloutScore, 10050);
   pilot.setConfiguration("highroll", "novice");
   assert.equal(pilot.strategyStyle, "highroll");
   assert.equal(pilot.strategyInformationMode, "normal");
   assert.equal(pilot.policy.reserveCap, resolveAutopilotStylePolicy("highroll").reserveCap);
+});
+
+test("四档能力预算严格递增且只有看穿读取未来", () => {
+  const novice = AUTOPILOT_THINKING_BUDGETS.novice;
+  const veteran = AUTOPILOT_THINKING_BUDGETS.veteran;
+  const deep = AUTOPILOT_THINKING_BUDGETS.deep;
+  const oracle = AUTOPILOT_THINKING_BUDGETS.oracle;
+  assert.deepEqual([novice.rank, veteran.rank, deep.rank, oracle.rank], [0, 1, 2, 3]);
+  assert.equal(novice.modelEnabled, false);
+  assert.equal(novice.rolloutVariants, 0);
+  assert.equal(novice.coarseRolloutCandidates, 0);
+  assert.equal(veteran.modelEnabled, true);
+  assert.equal(veteran.rolloutVariants, 0);
+  assert.equal(veteran.coarseRolloutCandidates, 0);
+  assert.equal(deep.rolloutVariants, 1);
+  assert.ok(deep.coarseRolloutCandidates > 0);
+  assert.ok(deep.exactRolloutCandidates > 0);
+  assert.equal(deep.futureShopLookahead, 0);
+  assert.equal(deep.futureCombatHorizon, 0);
+  assert.equal(oracle.rolloutVariants, deep.rolloutVariants);
+  assert.ok(oracle.coarseRolloutCandidates > deep.coarseRolloutCandidates);
+  assert.ok(oracle.exactRolloutCandidates > deep.exactRolloutCandidates);
+  assert.ok(oracle.futureShopLookahead > 0);
+  assert.equal(oracle.futureCombatHorizon, 6);
+});
+
+test("现代看穿按回合逐步扩展商店与敌人窗口", () => {
+  assert.deepEqual(oraclePlanningWindowForRound(1), {
+    futureShopLookahead: 16,
+    futureCombatHorizon: 1,
+  });
+  assert.deepEqual(oraclePlanningWindowForRound(4), {
+    futureShopLookahead: 32,
+    futureCombatHorizon: 2,
+  });
+  assert.deepEqual(oraclePlanningWindowForRound(7), {
+    futureShopLookahead: 64,
+    futureCombatHorizon: 3,
+  });
+  assert.deepEqual(oraclePlanningWindowForRound(10), {
+    futureShopLookahead: 96,
+    futureCombatHorizon: 4,
+  });
+  assert.deepEqual(oraclePlanningWindowForRound(13), {
+    futureShopLookahead: 128,
+    futureCombatHorizon: 6,
+  });
+});
+
+test("现代看穿退出旧宏路线并在启用首轮扩大当前战预算", () => {
+  const bridge = new EngineBridge(9910041, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 7;
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    () => 0,
+    true,
+    "oracle",
+  );
+  const observedLookaheads = [];
+  pilot.goPlanningTargets = (_roster, futureShops) => {
+    observedLookaheads.push(futureShops.length);
+    return [];
+  };
+
+  assert.equal(pilot.usesOraclePlanner(), false);
+  pilot.setEnabled(true);
+  assert.equal(pilot.thinkingBudget().exactRolloutCandidates, 6);
+  assert.equal(pilot.rescueThinkingBudget().exactRolloutCandidates, 6);
+  pilot.resetPreparation(7);
+  assert.equal(pilot.seerPlan, null);
+  assert.deepEqual(observedLookaheads, [64]);
+  bridge.engine.state.round = 8;
+  assert.equal(pilot.thinkingBudget().exactRolloutCandidates, 4);
+  assert.equal(pilot.rescueThinkingBudget().exactRolloutCandidates, 2);
+  bridge.engine.state.round = 18;
+  assert.equal(pilot.oracleExpandedSearchActive(), true);
+  assert.equal(pilot.oracleWideSearchActive(), false);
+  assert.equal(pilot.rescueThinkingBudget().exactRolloutCandidates, 2);
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.gold = 100;
+  assert.equal(pilot.oracleWideSearchActive(), true);
+  assert.equal(pilot.rescueThinkingBudget().exactRolloutCandidates, 4);
+});
+
+test("现代看穿用小模型批量查看渐进敌人窗口", () => {
+  const bridge = new EngineBridge(9910042, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 7;
+  bridge.engine.state.board[0] = { uid: 99100420, id: SHOP_UNITS[0], star: 1 };
+  let modelCalls = 0;
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    () => {
+      modelCalls += 1;
+      return modelCalls;
+    },
+    true,
+    "oracle",
+  );
+  pilot.oracleFutureModelScore(pilot.ownedEntries(), "go_canonical");
+  assert.equal(modelCalls, 3);
+});
+
+test("浏览器托管通过 Worker 推演并显示非阻塞思考状态", () => {
+  assert.match(hostSource, /AutoChessAutopilotWorkerClient/);
+  assert.doesNotMatch(hostSource, /new AutoChessAutopilot\s*\(/);
+  assert.match(workerClientSource, /new Worker\s*\(/);
+  assert.match(workerClientSource, /autopilot\.worker\.ts/);
+  assert.match(workerClientSource, /type: "prewarm"/);
+  assert.match(workerClientSource, /snapshot: initial \?/);
+  assert.match(workerClientSource, /"prewarm"/);
+  assert.match(workerSource, /AutopilotWorkerRuntime/);
+  assert.match(workerSource, /runtime\.prewarm/);
+  assert.match(hostSource, /rift-autopilot-thinking/);
+  assert.match(hostSource, /下一回合预演中/);
+  assert.match(hudStyles, /rift-autopilot-spin/);
+});
+
+test("战斗中首次开启看穿把扩大预算留给下一次整备", () => {
+  const bridge = new EngineBridge(9910043, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.round = 7;
+  bridge.engine.state.phase = "battle";
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    undefined,
+    true,
+    "oracle",
+  );
+  pilot.setEnabled(true);
+  assert.equal(pilot.oracleActivationRound, 8);
+
+  pilot.setEnabled(false);
+  bridge.engine.state.phase = "preparation";
+  pilot.setEnabled(true);
+  assert.equal(pilot.oracleActivationRound, 7);
+});
+
+test("Worker 战斗预热按续片运行且不向真实对局派发操作", () => {
+  const bridge = new EngineBridge(9910044, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.dispatch({ type: "starter", id: "bastion" });
+  bridge.dispatch({ type: "battle" });
+  assert.equal(bridge.engine.state.phase, "battle");
+  const liveSnapshot = bridge.engine.getSimulationSnapshot();
+  const liveElapsed = bridge.engine.state.battle?.elapsed;
+  const runtime = new AutopilotWorkerRuntime();
+  const baseRequest = {
+    type: "prewarm",
+    now: 1000,
+    enabled: true,
+    configuration: { style: "balanced", level: "deep" },
+    prewarmKey: "9910044/round-1/deep",
+    expandOracleOnTargetRound: false,
+  };
+  const first = runtime.prewarm({
+    ...baseRequest,
+    id: 1,
+    snapshot: liveSnapshot,
+  });
+  assert.equal(first.type, "prewarmed");
+  assert.equal(first.targetRound, 2);
+  assert.equal(first.error, undefined);
+  assert.equal("action" in first, false);
+  assert.equal(bridge.engine.state.phase, "battle");
+  assert.equal(bridge.engine.state.battle?.elapsed, liveElapsed);
+
+  let continuation = runtime.prewarm({
+    ...baseRequest,
+    id: 2,
+    now: 3400,
+    snapshot: null,
+  });
+  assert.equal(continuation.type, "prewarmed");
+  assert.equal(continuation.error, undefined);
+  assert.equal("action" in continuation, false);
+  assert.equal(bridge.engine.state.phase, "battle");
+
+  let chunks = 2;
+  while (!continuation.complete && chunks < 130) {
+    chunks += 1;
+    continuation = runtime.prewarm({
+      ...baseRequest,
+      id: chunks,
+      now: 1000 + chunks * 2400,
+      snapshot: null,
+    });
+    assert.equal(continuation.error, undefined);
+    assert.equal("action" in continuation, false);
+  }
+  assert.equal(continuation.complete, true);
+  assert.ok(continuation.simulatedActions > 0);
+  assert.ok(chunks < 130);
+  assert.equal(bridge.engine.state.phase, "battle");
+});
+
+test("三种风格用不同风险分位且不改变看穿能力", () => {
+  const samples = [300, 100, 200];
+  assert.equal(aggregateAutopilotRolloutScores(samples, "survival"), 100);
+  assert.equal(aggregateAutopilotRolloutScores(samples, "balanced"), 200);
+  assert.equal(aggregateAutopilotRolloutScores(samples, "highroll"), 300);
+});
+
+test("现代看穿从全棋池选择项目并能追四时小路", () => {
+  const bridge = new EngineBridge(991005, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 18;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.gold = 100;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  bridge.engine.state.shop = Array(5).fill("komichi");
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "highroll",
+    "normal",
+    20,
+    () => 0,
+    true,
+    "oracle",
+  );
+  pilot.goCompletedUnitModelGain = (_roster, id) => (id === "komichi" ? 5 : -5);
+  const futureShops = [["komichi", "komichi", "komichi", "komichi", null]];
+  const targets = pilot.seer2PlanningTargets(pilot.ownedEntries(), futureShops);
+  assert.equal(pilot.usesLearnedCombatPlanner(), true);
+  assert.equal(pilot.usesSeer2Foundation(), false);
+  assert.equal(targets[0]?.id, "komichi");
+  assert.equal(pilot.targetDesiredCopies("komichi"), 3);
+  bridge.engine.state.round = 20;
+  assert.equal(pilot.targetDesiredCopies("komichi"), 9);
+  assert.equal(pilot.strategyPreferenceStyle, "highroll");
+  assert.equal(pilot.policy.woundedHpThreshold, 10);
 });
 
 test("rollout 缓存快照支持按前缀限量读取", () => {

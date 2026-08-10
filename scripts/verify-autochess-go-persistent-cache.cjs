@@ -31,7 +31,7 @@ mkdirSync(outputDirectory, { recursive: true });
 const databaseName = 'rift-line-go-rollout-cache';
 const storeName = 'cache';
 const recordKey = 'latest';
-const cacheSchema = 'combat-go-v4';
+const cacheSchema = 'combat-go-v5';
 const requestedBase = process.argv[2] || process.env.AUTOCHESS_BASE_URL;
 const baseUrl = /^\d+$/.test(requestedBase || '')
   ? `http://127.0.0.1:${requestedBase}`

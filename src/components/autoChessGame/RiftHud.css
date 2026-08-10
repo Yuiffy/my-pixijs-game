@@ -33,6 +33,14 @@
 .rift-dom-shop-desktop { pointer-events: auto; }
 
 .rift-toolbar button.is-autoplay { border-color: #65d8a8 !important; background: #174b3b !important; color: #d9fff0 !important; }
+.rift-toolbar button.is-thinking svg,
+.rift-autopilot-thinking svg { animation: rift-autopilot-spin 1s linear infinite; }
+.rift-autopilot-thinking { position: absolute; top: 51px; right: 12px; z-index: 70; display: flex; min-height: 28px; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid rgba(120, 216, 255, .54); border-radius: 6px; background: rgba(7, 23, 34, .9); color: #dff6ff; box-shadow: 0 8px 20px rgba(0, 0, 0, .28); font-size: 11px; font-weight: 700; pointer-events: none; }
+@keyframes rift-autopilot-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .rift-toolbar button.is-thinking svg,
+  .rift-autopilot-thinking svg { animation: none; }
+}
 .rift-toolbar-audio { display: flex; flex: 0 0 auto; align-items: center; gap: 7px; }
 .rift-audio-range { display: grid; grid-template-columns: auto 74px; align-items: center; gap: 5px; color: #9db8c7; font-size: 10px; white-space: nowrap; }
 .rift-audio-range input { width: 74px; margin: 0; accent-color: #67d6ad; cursor: pointer; }
@@ -758,6 +766,7 @@
 
 @media (max-width: 700px), (pointer: coarse) and (max-width: 1200px) {
   .rift-game-shell .rift-toolbar { display: none !important; }
+  .rift-autopilot-thinking { top: 64px; right: 8px; min-height: 25px; padding-inline: 8px; }
   .rift-setting-audio-mobile { display: flex; }
   .rift-dom-layer { inset: 0; overflow: hidden; }
   .rift-dom-header { gap: 9px; height: 58px; padding: 0 11px; }

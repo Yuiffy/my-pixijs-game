@@ -7,19 +7,22 @@ import {
   AudioMutedOutlined,
   CloseOutlined,
   HistoryOutlined,
+  LoadingOutlined,
   RobotOutlined,
   SettingOutlined,
   SoundOutlined,
 } from "@ant-design/icons";
 import { AutoChessAIController } from "./ai/AutoChessAI";
 import {
-  AutoChessAutopilot,
   getAutopilotRolloutCacheStats,
   hydrateAutopilotRolloutCache,
   LIVE_AUTOPILOT_BATTLE_STEP_HZ,
-  LIVE_AUTOPILOT_ROLLOUT_HZ,
   snapshotAutopilotRolloutCache,
 } from "./ai/AutoChessAutopilot";
+import {
+  AutoChessAutopilotWorkerClient,
+  type AutopilotWorkerStatus,
+} from "./ai/AutoChessAutopilotWorkerClient";
 import type {
   AutopilotPreferenceStyle,
   AutopilotThinkingLevel,
@@ -273,7 +276,7 @@ export default function AutoChessGame() {
   const containerRef = useRef<HTMLDivElement>(null);
   const uiScaleRef = useRef(1);
   const bridgeRef = useRef<EngineBridge | null>(null);
-  const autopilotRef = useRef<AutoChessAutopilot | null>(null);
+  const autopilotRef = useRef<AutoChessAutopilotWorkerClient | null>(null);
   const gameRef = useRef<import("phaser").Game | null>(null);
   const audioRef = useRef<AutoChessAudio | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -282,6 +285,10 @@ export default function AutoChessGame() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const characterStyle = useCharacterStyle();
   const [autoplayEnabled, setAutoplayEnabled] = useState(false);
+  const [autopilotActivity, setAutopilotActivity] = useState<
+    AutopilotWorkerStatus["activity"]
+  >(null);
+  const autopilotThinking = autopilotActivity !== null;
   const [autopilotStyle, setAutopilotStyle] = useState<AutopilotPreferenceStyle>(
     AUTOPILOT_DEFAULT_CONFIGURATION.style,
   );
@@ -660,16 +667,16 @@ export default function AutoChessGame() {
     const ai = new AutoChessAIController(bridge);
     window.autoChessAI = ai;
     window.getAutoChessRolloutCacheStats = getAutopilotRolloutCacheStats;
-    const autopilot = new AutoChessAutopilot(
+    const autopilot = new AutoChessAutopilotWorkerClient(
       bridge,
-      "evolution",
-      {},
       storedAutopilotConfiguration.style,
-      undefined,
-      LIVE_AUTOPILOT_ROLLOUT_HZ,
-      undefined,
-      true,
       storedAutopilotConfiguration.level,
+      ({ thinking, activity }) => {
+        if (!disposed) setAutopilotActivity(thinking ? activity : null);
+      },
+      (errorMessage) => {
+        if (!disposed) setMessage(errorMessage);
+      },
     );
     autopilotRef.current = autopilot;
     console.info(`[RiftLine][AI] v${AUTOCHESS_VERSION} ready. Use autoChessAI.help()`, ai.help());
@@ -716,6 +723,7 @@ export default function AutoChessGame() {
       gameRef.current?.destroy(true);
       gameRef.current = null;
       bridgeRef.current = null;
+      autopilot.dispose();
       autopilotRef.current = null;
       audio.destroy();
       audioRef.current = null;
@@ -895,7 +903,7 @@ export default function AutoChessGame() {
         <div className="rift-toolbar" style={{ width: "100%", height: TOOLBAR_HEIGHT, flex: "0 0 auto", display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
           <span className="rift-toolbar-status" aria-live="polite" style={{ flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#82a8bd" }}>{message}</span>
           <button type="button" onClick={() => setCodexOpen(true)} style={toolbarButtonStyle}>图鉴 / 本局天赋</button>
-          <button type="button" className={autoplayEnabled ? "is-autoplay" : ""} aria-pressed={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)} style={toolbarButtonStyle} title={autoplayEnabled ? "关闭托管并接管" : "让 AI 托管当前对局"}><RobotOutlined aria-hidden="true" /><span className="rift-toolbar-button-label">{autoplayEnabled ? "AI 托管中" : "手动指挥"}</span></button>
+          <button type="button" className={`${autoplayEnabled ? "is-autoplay" : ""}${autopilotThinking ? " is-thinking" : ""}`} aria-pressed={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)} style={toolbarButtonStyle} title={autoplayEnabled ? "关闭托管并接管" : "让 AI 托管当前对局"}><RobotOutlined aria-hidden="true" /><span className="rift-toolbar-button-label">{autopilotThinking ? "后台推演中" : autoplayEnabled ? "AI 托管中" : "手动指挥"}</span></button>
           <div className="rift-toolbar-audio" aria-label="音量控制">
             <button type="button" aria-label={audioPreferences.muted ? "开启游戏声音" : "静音游戏声音"} aria-pressed={audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })} style={toolbarIconButtonStyle} title={audioPreferences.muted ? "开启游戏声音" : "静音游戏声音"}>{audioPreferences.muted ? <AudioMutedOutlined aria-hidden="true" /> : <SoundOutlined aria-hidden="true" />}</button>
             <label className="rift-audio-range" htmlFor="rift-toolbar-music-volume"><span>音乐</span><input id="rift-toolbar-music-volume" aria-label="音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} /></label>
@@ -914,6 +922,16 @@ export default function AutoChessGame() {
             touchAction: "none",
           }}
         />
+        {autoplayEnabled && autopilotThinking && (
+          <div className="rift-autopilot-thinking" role="status" aria-live="polite">
+            <LoadingOutlined aria-hidden="true" />
+            <span>
+              {autopilotActivity === "prewarm"
+                ? "下一回合预演中"
+                : autopilotLevel === "oracle" ? "看穿推演中" : "长考中"}
+            </span>
+          </div>
+        )}
         <RiftHud
           engine={engine || null}
           enemyFormationOpen={enemyFormationOpen}

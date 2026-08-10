@@ -14,10 +14,14 @@ const {
 const {
   AUGMENTS,
   SHOP_UNIT_IDS,
-  TRAIT_IDS,
-  UNIT_DEFS,
 } = await loadTypescriptModule(
   "src/components/autoChessGame/core/gameData.ts",
+);
+const {
+  UNIT_COMBAT_FEATURE_NAMES,
+  currentUnitCombatFeatures,
+} = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/unitCombatFeatures.ts",
 );
 
 const option = (name, fallback) => {
@@ -64,58 +68,8 @@ const STARTERS = [
 ];
 const FORMATION = "go_canonical";
 const AUGMENT_IDS = AUGMENTS.map(({ id }) => id);
-const ABILITY_TIMINGS = [
-  "selfOnHit",
-  "supportShield",
-  "supportHeal",
-  "supportRescue",
-  "selfBuff",
-  "engage",
-  "offenseInRange",
-  "offenseReady",
-  "passive",
-];
-const UNIT_FEATURE_NAMES = [
-  "cost",
-  "hp",
-  "attack",
-  "armor",
-  "range",
-  "abilityRange",
-  "attackInterval",
-  "moveSpeed",
-  "ranged",
-  "energyMax",
-  "energyStart",
-  "energyPerSecond",
-  "energyOnAttack",
-  "energyOnHit",
-  "castRefund",
-  ...TRAIT_IDS.map((id) => `trait:${id}`),
-  ...ABILITY_TIMINGS.map((id) => `cast:${id}`),
-];
-const UNIT_FEATURES = Object.fromEntries(Object.values(UNIT_DEFS).map((definition) => [
-  definition.id,
-  [
-    definition.cost / 5,
-    definition.hp / 500,
-    definition.attack / 60,
-    definition.armor / 60,
-    definition.range / 320,
-    definition.abilityRange / 520,
-    definition.attackInterval / 2,
-    definition.moveSpeed / 120,
-    definition.attackType === "ranged" ? 1 : 0,
-    definition.energyProfile.max / 120,
-    definition.energyProfile.start / 120,
-    definition.energyProfile.perSecond / 20,
-    definition.energyProfile.onAttack / 24,
-    definition.energyProfile.onHit / 20,
-    definition.energyProfile.castRefund / 20,
-    ...TRAIT_IDS.map((id) => definition.traits.includes(id) ? 1 : 0),
-    ...ABILITY_TIMINGS.map((id) => definition.abilityCastTiming === id ? 1 : 0),
-  ],
-]));
+const UNIT_FEATURE_NAMES = [...UNIT_COMBAT_FEATURE_NAMES];
+const UNIT_FEATURES = currentUnitCombatFeatures();
 
 const makeRng = (initialSeed) => {
   let state = initialSeed >>> 0 || 1;

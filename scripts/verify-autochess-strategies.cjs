@@ -199,7 +199,7 @@ let browser;
   await selectLevel("新手", "novice", "highroll", "normal");
   await selectLevel("老手", "veteran", "highroll", "normal");
   await selectLevel("长考", "deep", "highroll", "normal");
-  await selectLevel("看穿", "oracle", "seer", "oracle");
+  await selectLevel("看穿", "oracle", "highroll", "oracle");
   await selectStyle("平衡", "balanced");
   await selectLevel("老手", "veteran", "balanced", "normal");
 

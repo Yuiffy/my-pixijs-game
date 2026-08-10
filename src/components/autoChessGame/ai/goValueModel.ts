@@ -1,5 +1,9 @@
 import modelJson from "./goCombatModel.json";
 import type { AugmentId, StarterId, UnitId } from "../core/gameData";
+import {
+  UNIT_COMBAT_FEATURE_NAMES,
+  unitCombatFeatureVector,
+} from "./unitCombatFeatures";
 
 type Vector = Float64Array;
 type Matrix = Float64Array[];
@@ -7,7 +11,7 @@ type JsonVector = number[];
 type JsonMatrix = number[][];
 
 export type GoModelData = {
-  schema: "go-combat-ranker-v2";
+  schema: "go-combat-ranker-v2" | "go-combat-ranker-v3";
   vocab: {
     units: string[];
     starters: string[];
@@ -18,6 +22,7 @@ export type GoModelData = {
     modifierMean: number;
     modifierStd: number;
   };
+  unitFeatureNames: string[];
   metrics: unknown;
   verification: Array<GoCombatEvaluation & {
     combatScore: number;
@@ -81,8 +86,14 @@ const relu = (values: Vector) => {
 };
 
 export const createGoCombatScorer = (model: GoModelData): GoCombatScorer => {
-  if (model.schema !== "go-combat-ranker-v2") {
+  if (model.schema !== "go-combat-ranker-v2" && model.schema !== "go-combat-ranker-v3") {
     throw new Error(`Unsupported Go combat model schema: ${model.schema}`);
+  }
+  if (
+    model.unitFeatureNames.length !== UNIT_COMBAT_FEATURE_NAMES.length
+    || model.unitFeatureNames.some((name, index) => name !== UNIT_COMBAT_FEATURE_NAMES[index])
+  ) {
+    throw new Error("Go combat model unit feature schema does not match current game data");
   }
   const unitIndex = indexOf(model.vocab.units);
   const starterIndex = indexOf(model.vocab.starters);
@@ -109,28 +120,41 @@ export const createGoCombatScorer = (model: GoModelData): GoCombatScorer => {
     matrix(`${prefix}.weight`),
     vector(`${prefix}.bias`),
   ));
-  const unitFeatures = matrix("unit_features");
   const unitEmbedding = matrix("unit_embedding.weight");
+  const legacyUnitFeatures = model.schema === "go-combat-ranker-v2"
+    ? matrix("unit_features")
+    : null;
   const starEmbedding = matrix("star_embedding.weight");
   const playerPositionEmbedding = matrix("player_position_embedding.weight");
   const enemyPositionEmbedding = matrix("enemy_position_embedding.weight");
   const starterEmbedding = matrix("starter_embedding.weight");
   const tagEmbedding = matrix("tag_embedding.weight");
-  const baseUnitEmbedding = model.vocab.units.map((_, index) => add(
-    unitEmbedding[index],
-    linear(unitFeatures[index], matrix("unit_feature_projection.weight")),
-  ));
+  const baseUnitEmbeddingCache = new Map<string, Vector>();
+  const baseUnitEmbedding = (id: string, embeddingIndex: number) => {
+    const cached = baseUnitEmbeddingCache.get(id);
+    if (cached) return cached;
+    const encoded = add(
+      unitEmbedding[embeddingIndex],
+      linear(
+        legacyUnitFeatures?.[embeddingIndex]
+          ?? Float64Array.from(unitCombatFeatureVector(id)),
+        matrix("unit_feature_projection.weight"),
+      ),
+    );
+    baseUnitEmbeddingCache.set(id, encoded);
+    return encoded;
+  };
   const tokenCache = new Map<string, Vector>();
   const encodeToken = (token: GoCombatToken, team: "player" | "enemy") => {
     const tokenUnitIndex = unitIndex.get(token.id) || 0;
     const positions = team === "player" ? playerPositionEmbedding : enemyPositionEmbedding;
     const position = Math.max(0, Math.min(positions.length - 1, Math.floor(token.position)));
-    const key = `${team}/${tokenUnitIndex}/${token.star}/${position}`;
+    const key = `${team}/${token.id}/${tokenUnitIndex}/${token.star}/${position}`;
     const cached = tokenCache.get(key);
     if (cached) return cached;
     const encoded = denseRelu(
       add(
-        baseUnitEmbedding[tokenUnitIndex],
+        baseUnitEmbedding(token.id, tokenUnitIndex),
         starEmbedding[token.star],
         positions[position],
       ),

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
@@ -16,11 +17,19 @@ const {
   "src/components/autoChessGame/ai/AutoChessAutopilot.ts",
 );
 const {
+  createGoCombatScorer,
   GO_COMBAT_MODEL_SCHEMA,
   GO_COMBAT_MODEL_VERIFICATION,
   scoreGoCombatCandidate,
 } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/goValueModel.ts",
+);
+const {
+  goCombatRandomPanelSignature,
+  goCombatScenarioSeed,
+  goCombatScenarioSignature,
+} = await loadTypescriptModule(
+  "src/components/autoChessGame/ai/goCombatScenario.ts",
 );
 const {
   selectGoOpportunityTargets,
@@ -448,7 +457,7 @@ test("Go级不会让下一战前瞻扰动前十三战经济", () => {
 });
 
 test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
-  assert.equal(GO_COMBAT_MODEL_SCHEMA, "go-combat-ranker-v2");
+  assert.equal(GO_COMBAT_MODEL_SCHEMA, "go-combat-ranker-v3");
   assert.equal(GO_COMBAT_MODEL_VERIFICATION.length, 5);
   GO_COMBAT_MODEL_VERIFICATION.forEach((fixture) => {
     const actual = scoreGoCombatCandidate(fixture);
@@ -458,6 +467,35 @@ test("Go级浏览器推理与 CUDA 导出的留出样本一致", () => {
       `expected ${fixture.modelScore}, received ${actual}`,
     );
   });
+});
+
+test("未知棋子 ID 仍通过实时属性投影与纯 unk 区分", async () => {
+  const model = JSON.parse(await readFile(
+    "src/components/autoChessGame/ai/goCombatModel.json",
+    "utf8",
+  ));
+  const komichiIndex = model.vocab.units.indexOf("komichi");
+  assert.ok(komichiIndex > 0);
+  model.vocab.units.splice(komichiIndex, 1);
+  model.state["unit_embedding.weight"].splice(komichiIndex, 1);
+  model.state.unit_features.splice(komichiIndex, 1);
+  const scorer = createGoCombatScorer(model);
+  const base = {
+    starter: "bastion",
+    augments: [],
+    waveTag: "normal",
+    modifier: 1,
+    enemies: [{ id: "rift_tyrant", star: 1, position: 0 }],
+  };
+  const komichiScore = scorer({
+    ...base,
+    players: [{ id: "komichi", star: 1, position: 0 }],
+  });
+  const zeroFeatureUnknownScore = scorer({
+    ...base,
+    players: [{ id: "future_unknown_unit", star: 1, position: 0 }],
+  });
+  assert.notEqual(komichiScore, zeroFeatureUnknownScore);
 });
 
 test("真正 Go级保留动态商店规划但不继承看穿2的固定阵容搜索", () => {
@@ -808,7 +846,7 @@ test("Go级将商店种子映射到两套固定敌方战役且不改变商店", 
   assert.ok(differingRound, "expected the two fixed enemy campaigns to diverge");
 });
 
-test("Go级战斗缓存只使用实际固定分支并跨实际 RNG 状态命中", () => {
+test("Go级缓存保留完整阵容键，并把公共随机分支与实际 RNG 分开", () => {
   const bridge = new EngineBridge(162104);
   bridge.setConsoleLogging(false);
   const autopilot = new AutoChessAutopilot(bridge, "evolution", {}, "go", "oracle", 20);
@@ -829,16 +867,44 @@ test("Go级战斗缓存只使用实际固定分支并跨实际 RNG 状态命中"
   const added = snapshotAutopilotRolloutCache()
     .map(([key]) => key)
     .filter((key) => !before.has(key));
-  assert.equal(added.length, 1);
-  assert.equal(added.every((key) => key.startsWith("combat-go-v4/hz:20/")), true);
+  assert.equal(added.length, 2);
+  assert.equal(added.every((key) => key.startsWith("combat-go-v5/hz:20/")), true);
   assert.equal(added.every((key) => key.includes(`/enemy:${bridge.engine.state.enemySeed}/round:37/`)), true);
-  assert.deepEqual(added.map((key) => key.split("/").at(-1)), ["rollout:0"]);
-  assert.equal(added.some((key) => key.includes("actual:")), false);
+  assert.match(added[0].split("/").at(-1), /^actual:/);
+  assert.equal(added[1].split("/").at(-1), "rollout:0");
 
   const entryCount = snapshotAutopilotRolloutCache().length;
   bridge.engine.restoreRandomState(987654321);
   autopilot.rolloutLineupScore(lineup, "go_canonical", false, 20);
-  assert.equal(snapshotAutopilotRolloutCache().length, entryCount);
+  assert.equal(snapshotAutopilotRolloutCache().length, entryCount + 1);
+});
+
+test("不同候选共享同一随机面板种子但保留不同缓存签名", () => {
+  const bridge = new EngineBridge(162107);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 24;
+  const base = {
+    enemySeed: bridge.engine.state.enemySeed,
+    round: 24,
+    starter: bridge.engine.state.starter,
+    augments: bridge.engine.state.augments,
+    wave: bridge.engine.currentWave,
+  };
+  const first = {
+    ...base,
+    placements: [{ slot: 0, id: "komichi", star: 2 }],
+  };
+  const second = {
+    ...base,
+    placements: [{ slot: 0, id: "lian", star: 2 }],
+  };
+  assert.notEqual(goCombatScenarioSignature(first), goCombatScenarioSignature(second));
+  assert.equal(goCombatRandomPanelSignature(first), goCombatRandomPanelSignature(second));
+  assert.equal(
+    goCombatScenarioSeed(goCombatRandomPanelSignature(first), 1),
+    goCombatScenarioSeed(goCombatRandomPanelSignature(second), 1),
+  );
 });
 
 test("Go级第18战后优先存钱升到10人口", () => {
@@ -855,17 +921,9 @@ test("Go级第18战后优先存钱升到10人口", () => {
   assert.deepEqual(autopilot.upgradeAction(), { type: "buyXp" });
 });
 
-test("Go级实际战斗固定到与缓存一致的公共 rollout:0 分支", () => {
+test("Go级真实开战保留本局 RNG，不为缓存强行固定", () => {
   const source = new EngineBridge(162108, 1, { simulation: true, battleStepHz: 60 });
   source.setConsoleLogging(false);
-  const sourceAutopilot = new AutoChessAutopilot(
-    source,
-    "evolution",
-    {},
-    "go",
-    "oracle",
-    20,
-  );
   source.engine.state.starterChoices = ["bastion"];
   source.dispatch({ type: "starter", id: "bastion" });
   source.engine.state.round = 24;
@@ -891,23 +949,10 @@ test("Go级实际战斗固定到与缓存一致的公共 rollout:0 分支", () =
 
   const first = createBattle(123456);
   const second = createBattle(987654321);
-  assert.equal(first.engine.getRandomState(), second.engine.getRandomState());
-  assert.deepEqual(
-    first.engine.state.battle.player.map(({ unitId, x, y }) => ({ unitId, x, y })),
-    second.engine.state.battle.player.map(({ unitId, x, y }) => ({ unitId, x, y })),
-  );
-  const ownedByUid = new Map(sourceAutopilot.ownedEntries().map((entry) => [entry.unit.uid, entry]));
-  const board = source.engine.state.board.map((unit) => (
-    unit ? ownedByUid.get(unit.uid) || null : null
-  ));
-  const predictedScore = sourceAutopilot.rolloutBoardScore(board, false, 60);
-  const actualScore = scorePreparedAutoChessCombat(first.engine, 60);
-  assert.equal(predictedScore, actualScore);
-  second.skipBattle();
-  assert.deepEqual(first.engine.state.result, second.engine.state.result);
+  assert.notEqual(first.engine.getRandomState(), second.engine.getRandomState());
 });
 
-test("Go级预演显式恢复公共 RNG，分数与实际开战一致", () => {
+test("Go级预演显式恢复当前实际 RNG，分数与实际开战一致", () => {
   const bridge = new EngineBridge(162112, 1, { simulation: true, battleStepHz: 60 });
   bridge.setConsoleLogging(false);
   const autopilot = new AutoChessAutopilot(

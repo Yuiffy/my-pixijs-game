@@ -18,7 +18,7 @@ test("rollout cache rejects legacy files without a source fingerprint", () => {
 
 test("rollout cache rejects entries produced by different combat sources", () => {
   const payload = createAutoChessRolloutCachePayload(
-    [["combat-go-v4/example", 1]],
+    [["combat-go-v5/example", 1]],
     "old-source",
   );
   const inspection = inspectAutoChessRolloutCachePayload(payload, "current-source");
@@ -27,7 +27,7 @@ test("rollout cache rejects entries produced by different combat sources", () =>
 });
 
 test("rollout cache accepts matching source fingerprints", () => {
-  const entries = [["combat-go-v4/example", 1]];
+  const entries = [["combat-go-v5/example", 1]];
   const payload = createAutoChessRolloutCachePayload(entries, "current-source");
   assert.equal(payload.schema, AUTOCHESS_ROLLOUT_CACHE_FILE_SCHEMA);
   const inspection = inspectAutoChessRolloutCachePayload(payload, "current-source");

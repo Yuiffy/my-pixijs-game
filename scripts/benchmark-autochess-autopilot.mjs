@@ -72,13 +72,19 @@ const requestedThinkingLevel = option("--level", "");
 const thinkingLevel = requestedThinkingLevel || undefined;
 const informationMode = option(
   "--information",
-  style === "seer" || style === "go" ? "oracle" : "normal",
+  style === "seer"
+    || style === "go"
+    || thinkingLevel === "oracle"
+    || thinkingLevel === "go"
+    ? "oracle"
+    : "normal",
 );
 const rolloutHz = Math.max(20, Math.min(60, Number(option("--rollout-hz", "60")) || 60));
 const battleStepHz = Math.max(20, Math.min(60, Number(option("--battle-hz", "60")) || 60));
 const reportProgress = process.argv.includes("--progress");
 const diagnosticsEnabled = process.argv.includes("--diagnostics");
 const diagnosticRound = Math.max(0, Number(option("--diagnostic-round", "0")) || 0);
+const traceRound = Math.max(0, Number(option("--trace-round", "0")) || 0);
 const profileEnabled = process.argv.includes("--profile");
 if (!["survival", "balanced", "highroll", "fair", "seer", "go"].includes(style)) {
   throw new Error(`Unknown autopilot style: ${style}`);
@@ -242,8 +248,26 @@ const playRun = (seed) => {
   let autopilotTickCount = 0;
   let maximumAutopilotTickMs = 0;
   const slowTicks = [];
+  const tickTrace = [];
   let consecutiveIdleTicks = 0;
   let lastIdleSnapshot = null;
+  const traceAutopilotState = () => ({
+    phase: bridge.engine.state.phase,
+    gold: bridge.engine.state.gold,
+    shop: [...bridge.engine.state.shop],
+    preparationActions: autopilot.preparationActions,
+    rerolls: autopilot.rerolls,
+    paidRerolls: autopilot.paidRerolls,
+    dryPaidRerolls: autopilot.dryPaidRerolls,
+    interestTiersAtRisk: autopilot.stabilizationInterestTiersAtRisk,
+    rerollMode: autopilot.rerollMode,
+    finalizingEconomy: autopilot.finalizingEconomy,
+    exactLineupSearchRequested: autopilot.exactLineupSearchRequested,
+    rescueLineupLocked: autopilot.rescueLineupLocked,
+    plannedScore: autopilot.plannedLineupScore,
+    plannedLineupUids: [...autopilot.plannedLineupUids],
+    preparationStateVisits: Array.from(autopilot.preparationStateVisits.values()),
+  });
 
   const battleLimitReached = () => inputSnapshot
     ? (rounds.at(-1)?.round || 0) >= maximumBattles
@@ -375,9 +399,19 @@ const playRun = (seed) => {
     }
 
     const actionRound = bridge.engine.state.round;
+    const traceBefore = traceRound === actionRound ? traceAutopilotState() : null;
     const tickStartedAt = performance.now();
     const action = autopilot.tick(now);
     const tickElapsedMs = performance.now() - tickStartedAt;
+    if (traceBefore) {
+      tickTrace.push({
+        tick: autopilotTickCount + 1,
+        elapsedMs: Number(tickElapsedMs.toFixed(2)),
+        action: action?.type || null,
+        before: traceBefore,
+        after: traceAutopilotState(),
+      });
+    }
     autopilotTickMs += tickElapsedMs;
     autopilotTickCount += 1;
     maximumAutopilotTickMs = Math.max(maximumAutopilotTickMs, tickElapsedMs);
@@ -472,6 +506,7 @@ const playRun = (seed) => {
     autopilotTickCount,
     maximumAutopilotTickMs,
     slowTicks: profileEnabled ? slowTicks : undefined,
+    tickTrace: traceRound ? tickTrace : undefined,
     rounds,
   };
   run.finalAssetValue = rounds.at(-1)?.assetValue || bridge.engine.state.gold + rosterAssetValue(bridge.engine);

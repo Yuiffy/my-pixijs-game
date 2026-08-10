@@ -13,11 +13,15 @@ export const SHOP_SIZE = 5;
 const emptySlots = <T>(size: number): Array<T | null> => Array.from({ length: size }, () => null);
 
 export const loadBestScore = () => {
-  if (typeof window === "undefined") return 0;
-  const value = Number(
-    window.localStorage.getItem("rift-line-best-score") || 0,
-  );
-  return Number.isFinite(value) ? value : 0;
+  try {
+    if (!("localStorage" in globalThis)) return 0;
+    const value = Number(
+      globalThis.localStorage.getItem("rift-line-best-score") || 0,
+    );
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
 };
 
 export const createInitialState = (

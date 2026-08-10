@@ -20,7 +20,7 @@ export type GoCombatScenario = {
   placements: readonly GoCombatScenarioPlacement[];
 };
 
-export const goCombatScenarioSignature = (scenario: GoCombatScenario) => [
+export const goCombatRandomPanelSignature = (scenario: GoCombatScenario) => [
   `enemy:${scenario.enemySeed}`,
   `round:${scenario.round}`,
   scenario.starter,
@@ -28,14 +28,18 @@ export const goCombatScenarioSignature = (scenario: GoCombatScenario) => [
   scenario.wave.tag,
   scenario.wave.modifier,
   scenario.wave.units.map((unit) => `${unit.id}:${unit.star || 1}`).join(","),
+].join("/");
+
+export const goCombatScenarioSignature = (scenario: GoCombatScenario) => [
+  goCombatRandomPanelSignature(scenario),
   scenario.placements
     .map(({ slot, id, star }) => `${slot}:${id}:${star}`)
     .sort()
     .join(","),
 ].join("/");
 
-export const goCombatScenarioSeed = (signature: string, variant = 0) => {
-  const branchSignature = `${signature}/rollout:${variant}`;
+export const goCombatScenarioSeed = (randomPanelSignature: string, variant = 0) => {
+  const branchSignature = `combat-panel-v2/${randomPanelSignature}/rollout:${variant}`;
   let hash = 5381;
   for (let index = 0; index < branchSignature.length; index += 1) {
     hash = (hash * 33 + branchSignature.charCodeAt(index)) % 2147483647;

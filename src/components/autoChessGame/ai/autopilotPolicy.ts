@@ -50,6 +50,116 @@ export type AutopilotPreferenceStyle = "survival" | "balanced" | "highroll";
 export type AutopilotThinkingLevel = "novice" | "veteran" | "deep" | "oracle" | "go";
 export type AutopilotInformationMode = "normal" | "oracle";
 
+export type AutopilotThinkingBudget = {
+  rank: number;
+  modelEnabled: boolean;
+  rolloutVariants: number;
+  modelShortlistLimit: number;
+  coarseRolloutCandidates: number;
+  exactRolloutCandidates: number;
+  rescueModelCandidates: number;
+  rescueExactCandidates: number;
+  futureShopLookahead: number;
+  futureCombatHorizon: number;
+};
+
+export type OraclePlanningWindow = Pick<
+  AutopilotThinkingBudget,
+  "futureShopLookahead" | "futureCombatHorizon"
+>;
+
+/** Explicit capability budgets keep level and economic preference orthogonal. */
+export const AUTOPILOT_THINKING_BUDGETS: Record<
+  AutopilotThinkingLevel,
+  AutopilotThinkingBudget
+> = {
+  novice: {
+    rank: 0,
+    modelEnabled: false,
+    rolloutVariants: 0,
+    modelShortlistLimit: 0,
+    coarseRolloutCandidates: 0,
+    exactRolloutCandidates: 0,
+    rescueModelCandidates: 0,
+    rescueExactCandidates: 0,
+    futureShopLookahead: 0,
+    futureCombatHorizon: 0,
+  },
+  veteran: {
+    rank: 1,
+    modelEnabled: true,
+    rolloutVariants: 0,
+    modelShortlistLimit: 4,
+    coarseRolloutCandidates: 0,
+    exactRolloutCandidates: 0,
+    rescueModelCandidates: 0,
+    rescueExactCandidates: 0,
+    futureShopLookahead: 0,
+    futureCombatHorizon: 0,
+  },
+  deep: {
+    rank: 2,
+    modelEnabled: true,
+    rolloutVariants: 1,
+    modelShortlistLimit: 8,
+    coarseRolloutCandidates: 6,
+    exactRolloutCandidates: 2,
+    rescueModelCandidates: 8,
+    rescueExactCandidates: 2,
+    futureShopLookahead: 0,
+    futureCombatHorizon: 0,
+  },
+  oracle: {
+    rank: 3,
+    modelEnabled: true,
+    rolloutVariants: 1,
+    modelShortlistLimit: 12,
+    coarseRolloutCandidates: 8,
+    exactRolloutCandidates: 4,
+    rescueModelCandidates: 12,
+    rescueExactCandidates: 4,
+    futureShopLookahead: 128,
+    futureCombatHorizon: 6,
+  },
+  go: {
+    rank: 4,
+    modelEnabled: true,
+    rolloutVariants: 3,
+    modelShortlistLimit: 24,
+    coarseRolloutCandidates: 24,
+    exactRolloutCandidates: 12,
+    rescueModelCandidates: 24,
+    rescueExactCandidates: 12,
+    futureShopLookahead: 2048,
+    futureCombatHorizon: 70,
+  },
+};
+
+/**
+ * Live oracle search grows with the run instead of rebuilding the full future
+ * on every preparation. The current battle is always included in the combat
+ * horizon; the remaining slots are future enemies.
+ */
+export const oraclePlanningWindowForRound = (
+  round: number,
+  maximum = AUTOPILOT_THINKING_BUDGETS.oracle,
+): OraclePlanningWindow => {
+  const normalizedRound = Math.max(1, Math.floor(round));
+  const staged = normalizedRound <= 3
+    ? { futureShopLookahead: 16, futureCombatHorizon: 1 }
+    : normalizedRound <= 6
+      ? { futureShopLookahead: 32, futureCombatHorizon: 2 }
+      : normalizedRound <= 9
+        ? { futureShopLookahead: 64, futureCombatHorizon: 3 }
+        : normalizedRound <= 12
+          ? { futureShopLookahead: 96, futureCombatHorizon: 4 }
+          : { futureShopLookahead: 128, futureCombatHorizon: 6 };
+  return {
+    futureShopLookahead: Math.min(maximum.futureShopLookahead, staged.futureShopLookahead),
+    futureCombatHorizon: Math.min(maximum.futureCombatHorizon, staged.futureCombatHorizon),
+  };
+};
+
 export const canonicalAutopilotStyle = (
   style: AutopilotStyle,
 ): CanonicalAutopilotStyle => (
@@ -83,7 +193,6 @@ export const effectiveStyleForAutopilotConfiguration = (
   style: AutopilotPreferenceStyle,
   level: AutopilotThinkingLevel,
 ): CanonicalAutopilotStyle => {
-  if (level === "oracle") return "seer";
   if (level === "go") return "go";
   return style;
 };
