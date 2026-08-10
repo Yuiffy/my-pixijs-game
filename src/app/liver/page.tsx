@@ -1,104 +1,160 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
-import { getAllLiverConfigs } from '@/data/livers';
-import LiverAvatar from '@/components/LiverAvatar';
-import { ConfigProvider, Typography, Card, theme } from 'antd';
+import {
+  AppstoreOutlined,
+  ArrowRightOutlined,
+  HistoryOutlined,
+  NumberOutlined,
+  TeamOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
+import type { CSSProperties } from 'react';
+import LiverPortrait from '@/components/LiverPortrait';
+import {
+  getLiverDirectoryMember,
+  LIVER_DIRECTORY_GROUPS,
+  type LiverDirectoryMember,
+} from '@/data/livers/directory';
+import styles from './LiverDirectory.module.css';
 
-const { Title, Text } = Typography;
+function renderGroupIcon(groupId: string) {
+  switch (groupId) {
+    case 'gen28':
+      return <NumberOutlined />;
+    case 'vrpsp':
+      return <HistoryOutlined />;
+    case 'gen27':
+      return <TeamOutlined />;
+    default:
+      return <AppstoreOutlined />;
+  }
+}
 
 export default function LiverIndexPage() {
-  const livers = getAllLiverConfigs();
+  const directoryGroups = LIVER_DIRECTORY_GROUPS.map((group) => ({
+    ...group,
+    members: group.members
+      .map(getLiverDirectoryMember)
+      .filter((member): member is LiverDirectoryMember => member !== null),
+  }));
+  const totalMembers = directoryGroups.reduce((total, group) => total + group.members.length, 0);
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: '#87EAFF',
-          borderRadius: 20,
-          fontFamily: "'Inter', 'Noto Sans SC', sans-serif",
-        },
-      }}
-    >
-      <main className="min-h-screen bg-[#0A0D14] text-slate-200 overflow-x-hidden">
-        {/* Hero Background Elements */}
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-[40vw] h-[40vw] bg-cyan-600/5 blur-[120px] rounded-full animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] bg-pink-600/5 blur-[120px] rounded-full" />
-        </div>
-
-        <div className="max-w-6xl mx-auto px-6 pt-24 pb-24 relative z-10">
-          <div className="text-center mb-12">
-            <Title level={1} className="!text-white !mb-4 text-4xl md:text-5xl">
-              主播列表
-            </Title>
-            <Text className="text-slate-400 text-lg">
-              选择一个主播查看直播记录
-            </Text>
+    <main className={styles.page}>
+      <header className={styles.topbar}>
+        <Link href="/" className={styles.brand} aria-label="返回首页">
+          <span className={styles.brandMark}>S</span>
+          <span className={styles.brandLabel}>鹿饼AI直播总结</span>
+        </Link>
+        <div className={styles.topbarActions}>
+          <Link
+            href="/game/autochess"
+            className={styles.easterEgg}
+            title="打开自走棋"
+            aria-label="让她们打架，打开自走棋"
+          >
+            <ThunderboltOutlined />
+            <span>让她们打架</span>
+          </Link>
+          <div className={styles.topbarMeta}>
+            <span>LIVE ARCHIVE</span>
+            <strong>{totalMembers} 位成员</strong>
           </div>
+        </div>
+      </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {livers.map((liver) => (
-              <Link key={liver.id} href={`/liver/${liver.id}`}>
-                <Card
-                  hoverable
-                  className="!bg-slate-900/50 !border-white/10 !border-2 transition-all hover:!border-cyan-400/50 hover:scale-105"
-                  style={{
-                    background: `linear-gradient(135deg, ${liver.colorMain}10, ${liver.colorSub}10)`,
-                  }}
-                  bodyStyle={{ padding: '24px' }}
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-white text-2xl font-bold mb-2">{liver.name}</h3>
-                        <p className="text-slate-400 text-sm mb-3">{liver.group}</p>
-                      </div>
-                      <LiverAvatar
-                        avatarSrc={liver.avatarSrc}
-                        name={liver.name}
-                        color={liver.colorMain}
-                        size={48}
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {liver.tags.slice(0, 3).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 rounded-full text-xs font-medium text-white"
-                          style={{ background: `${liver.colorMain}40`, border: `1px solid ${liver.colorMain}60` }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {liver.tags.length > 3 && (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium text-slate-400">
-                          +{liver.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                      <span className="px-2 py-1 rounded bg-white/5 font-mono text-xs">
-                        /liver/{liver.id}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
+      <div className={styles.shell}>
+        <aside className={styles.sidebar} aria-label="主播分类导航">
+          <div>
+            <p className={styles.sidebarEyebrow}>BROWSE BY</p>
+            <p className={styles.sidebarTitle}>快速定位</p>
+          </div>
+          <nav className={styles.sidebarNav}>
+            {directoryGroups.map((group) => (
+              <a key={group.id} href={`#${group.id}`} className={styles.sidebarLink}>
+                <span className={styles.sidebarIcon}>{renderGroupIcon(group.id)}</span>
+                <span>{group.name}</span>
+                <span className={styles.sidebarCount}>{group.members.length}</span>
+              </a>
             ))}
+          </nav>
+          <p className={styles.sidebarNote}>选择成员后进入对应的直播记录页。</p>
+        </aside>
+
+        <section className={styles.content} aria-labelledby="liver-directory-title">
+          <div className={styles.intro}>
+            <div>
+              <p className={styles.introEyebrow}>LIVER DIRECTORY / 2026</p>
+              <h1 id="liver-directory-title" className={styles.introTitle}>鹿饼AI直播总结</h1>
+              <p className={styles.introDescription}>按圈层与期数整理，直接选择要查看的成员。</p>
+            </div>
+            <div className={styles.introStats} aria-label="目录统计">
+              <div className={styles.introStat}>
+                <span>分类</span>
+                <strong>{directoryGroups.length}</strong>
+              </div>
+              <div className={styles.introStat}>
+                <span>成员</span>
+                <strong>{totalMembers}</strong>
+              </div>
+            </div>
           </div>
 
-          <footer className="mt-16 pt-12 border-t border-white/5 text-center opacity-40 hover:opacity-100 transition-opacity">
-            <Text className="text-slate-500 text-xs italic">
-              &ldquo;每一个主播都有属于自己的故事&rdquo;
-            </Text>
-          </footer>
-        </div>
-      </main>
-    </ConfigProvider>
+          <div className={styles.groupGrid}>
+            {directoryGroups.map((group, groupIndex) => {
+              const groupStyle = { '--group-accent': group.accent } as CSSProperties;
+
+              return (
+                <section
+                  key={group.id}
+                  id={group.id}
+                  className={styles.groupSection}
+                  style={groupStyle}
+                  aria-labelledby={`${group.id}-title`}
+                >
+                  <div className={styles.groupHeading}>
+                    <div>
+                      <div className={styles.groupHeadingMain}>
+                        <span className={styles.groupIndex}>{String(groupIndex + 1).padStart(2, '0')}</span>
+                        <h2 id={`${group.id}-title`} className={styles.groupName}>{group.name}</h2>
+                      </div>
+                      <p className={styles.groupNote}>{group.note}</p>
+                    </div>
+                    <span className={styles.groupCount}>{group.members.length} 位</span>
+                  </div>
+
+                  <div className={`${styles.memberGrid} ${group.id === 'vrpsp' ? styles.memberGridDense : ''}`}>
+                    {group.members.map((member) => (
+                      <Link
+                        key={member.liver.id}
+                        href={`/liver/${member.liver.id}`}
+                        className={styles.memberCard}
+                        style={groupStyle}
+                        aria-label={`查看${member.displayName}的直播记录`}
+                      >
+                        <div className={styles.portraitStage}>
+                          <LiverPortrait
+                            name={member.displayName}
+                            primarySrc={member.portraitSrc}
+                            fallbackSrc={member.fallbackSrc}
+                            accent={group.accent}
+                          />
+                        </div>
+                        <span className={styles.memberCopy}>
+                          <span className={styles.memberName}>{member.displayName}</span>
+                          <span className={styles.memberFullName}>{member.liver.name}</span>
+                        </span>
+                        <ArrowRightOutlined className={styles.memberArrow} />
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }

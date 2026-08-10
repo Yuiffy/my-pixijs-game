@@ -1,0 +1,42 @@
+.portrait {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-left: 2px solid color-mix(in srgb, var(--portrait-accent) 72%, transparent);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.portrait::after {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  left: 2px;
+  height: 1px;
+  background: var(--portrait-accent);
+  content: '';
+  opacity: 0.35;
+}
+
+.image {
+  object-fit: contain;
+  object-position: center bottom;
+  padding: 2px;
+  transition: transform 180ms ease;
+}
+
+.imageFallback {
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
+}
+
+.fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--portrait-accent);
+  font-size: 20px;
+  font-weight: 800;
+}
