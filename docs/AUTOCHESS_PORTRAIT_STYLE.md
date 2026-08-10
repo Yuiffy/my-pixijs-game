@@ -38,9 +38,11 @@ round/sprite treatment declared by its explicit source mapping.
   eyes, face, signature headwear, and palette.
 - Do not invent a generic class costume, weapon, mascot, or species when it is absent
   from the reference. Ability props are optional recognition anchors, not a default.
-- Bare-handed characters remain bare-handed. In particular, Lian reads through her
-  dance pose, Yua through her glasses and blue-white technical jacket, and Nightin
-  through her racing outfit and visor rather than a large launcher.
+- Bare-handed characters remain bare-handed. In particular, Lian reads through a
+  grounded K-pop girl-group dance pose with both feet planted, never ballet,
+  pointe work, or a bridal costume; Yua reads through her glasses and blue-white
+  technical jacket, and Nightin through her racing outfit and visor rather than a
+  large launcher.
 - When a small prop is essential, keep it subordinate to the character: Joi may show
   one orange, Kioi one plush, Seki one compact boar motif, and Zeyin one small flame.
 - The classic mappings for Liko, Izayoi, Mofu, SUI's red-hood form, Hazel, Mizuki,
@@ -132,6 +134,11 @@ Original liver/material art is an identity reference only.
   black scarf, black trousers, and boots. He faces screen-right in a neutral standing
   pose; his football-style knee slide remains gameplay motion rather than a required
   baked pose.
+- Lian's minimal sprite preserves her lavender-gray hair, heart hair clips, pink-purple
+  eyes, and white-lilac palette while presenting her as a K-pop girl-group dancer. Use
+  a modern cropped stage outfit, compact hand choreography, bent knees, and a stable
+  two-foot stance; do not use a raised rear leg, pointe shoes, tutu, veil, or bridal
+  silhouette.
 - Seki's minimal sprite must follow her classic Project SP model rather than a generic
   boar fighter: explosive cyan twin-tails with pink streaks, purple eyes, bear hair
   clip, oversized charcoal jacket, black-white crop top, pink shorts, asymmetric
