@@ -148,6 +148,12 @@ const komichiState = async (page) => page.evaluate(() => {
   const signpostVisible = [...(scene.effectViews?.values() || [])].some(
     (view) => view.getByName("komichiSignpost")?.visible,
   );
+  const plusVisible = [...(scene.effectViews?.values() || [])].some(
+    (view) => view.getByName("label")?.visible && view.getByName("label")?.text === "+",
+  );
+  const sweepShapeVisible = [...(scene.effectViews?.values() || [])].some(
+    (view) => view.getByName("shape")?.visible,
+  );
   return {
     phase: engine.state.phase,
     elapsed: battle?.elapsed ?? null,
@@ -180,6 +186,8 @@ const komichiState = async (page) => page.evaluate(() => {
     })) ?? [],
     portraitTexture: portrait?.texture?.key ?? null,
     signpostVisible,
+    plusVisible,
+    sweepShapeVisible,
     textFighter: textFighter
       ? {
         unitId: textFighter.unitId,
@@ -287,16 +295,17 @@ const komichiState = async (page) => page.evaluate(() => {
     return hpBefore - komichi.hp;
   });
   assert.ok(Math.abs(passiveBlockDamage - 64) < 0.001);
-  await page.evaluate(() => window.advanceTime(1));
+  await page.evaluate(() => window.advanceTime(180));
   const passiveBlock = await komichiState(page);
   assert.equal(passiveBlock.signTime, 0);
-  assert.ok(passiveBlock.energy >= 19 && passiveBlock.energy < 20);
+  assert.ok(passiveBlock.energy > 20 && passiveBlock.energy < 21);
   assert.ok(passiveBlock.moveSpeed > passiveBlock.baseMoveSpeed);
-  assert.ok(passiveBlock.moveBuffTime > 1);
+  assert.ok(passiveBlock.moveBuffTime > 0.9);
   assert.ok(passiveBlock.effects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "block"));
   assert.ok(passiveBlock.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "block"));
   assert.equal(passiveBlock.portraitTexture, "rift-unit:minimal:komichi");
   assert.equal(passiveBlock.signpostVisible, true);
+  assert.equal(passiveBlock.plusVisible, true);
   await capture("komichi-passive-block.png");
 
   await page.evaluate(() => {
@@ -356,27 +365,43 @@ const komichiState = async (page) => page.evaluate(() => {
   assert.equal(impact.portraitTexture, "rift-unit-ability:minimal:komichi");
   await capture("komichi-debut-target-impact.png");
 
-  await page.evaluate(() => {
+  const sweepDamage = await page.evaluate(() => {
     const engine = window.__komichiEngine;
     const battle = engine.state.battle;
     const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
     const target = battle.enemy[0];
+    const coneTarget = battle.enemy[1];
+    const outsideTarget = battle.enemy[2];
     battle.effects.length = 0;
     target.x = komichi.x + 100;
     target.y = komichi.y;
     target.stun = 0;
     target.abilityMotion = null;
-    komichi.energy = 40;
+    coneTarget.x = komichi.x + 100;
+    coneTarget.y = komichi.y + 50;
+    coneTarget.abilityMotion = null;
+    outsideTarget.x = komichi.x - 70;
+    outsideTarget.y = komichi.y;
+    outsideTarget.abilityMotion = null;
+    const hpBefore = battle.enemy.map((fighter) => fighter.hp);
+    komichi.energy = 95;
     komichi.cooldown = 0;
     engine.basicAttack(komichi, target);
+    return battle.enemy.map((fighter, index) => hpBefore[index] - fighter.hp);
   });
-  await page.evaluate(() => window.advanceTime(1));
-  const smashAttack = await komichiState(page);
-  assert.ok(smashAttack.energy > 51 && smashAttack.energy <= 52);
-  assert.equal(smashAttack.enemies[0].stun, 0);
-  assert.ok(smashAttack.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "smash"));
-  assert.equal(smashAttack.signpostVisible, true);
-  await capture("komichi-active-sign-smash.png");
+  assert.ok(sweepDamage[0] > sweepDamage[1]);
+  assert.ok(sweepDamage[1] > 0);
+  assert.equal(sweepDamage[2], 0);
+  await page.evaluate(() => window.advanceTime(200));
+  const sweepAttack = await komichiState(page);
+  assert.ok(sweepAttack.energy > 91 && sweepAttack.energy < 92);
+  assert.equal(sweepAttack.motion, null);
+  assert.equal(sweepAttack.enemies[0].stun, 0);
+  assert.ok(sweepAttack.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "sweep"));
+  assert.equal(sweepAttack.signpostVisible, true);
+  assert.equal(sweepAttack.plusVisible, true);
+  assert.equal(sweepAttack.sweepShapeVisible, true);
+  await capture("komichi-active-sign-sweep.png");
 
   const activeBlockDamage = await page.evaluate(() => {
     const engine = window.__komichiEngine;
@@ -397,12 +422,13 @@ const komichiState = async (page) => page.evaluate(() => {
     return hpBefore - komichi.hp;
   });
   assert.ok(Math.abs(activeBlockDamage - 64) < 0.001);
-  await page.evaluate(() => window.advanceTime(1));
+  await page.evaluate(() => window.advanceTime(180));
   const activeBlock = await komichiState(page);
-  assert.ok(activeBlock.energy > 58 && activeBlock.energy <= 59);
+  assert.ok(activeBlock.energy > 55 && activeBlock.energy < 56);
   assert.ok(activeBlock.moveSpeed > activeBlock.baseMoveSpeed);
   assert.ok(activeBlock.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "block"));
   assert.equal(activeBlock.signpostVisible, true);
+  assert.equal(activeBlock.plusVisible, true);
   await capture("komichi-active-block.png");
 
   const repeatTrigger = await page.evaluate(() => {
@@ -410,24 +436,23 @@ const komichiState = async (page) => page.evaluate(() => {
     const battle = engine.state.battle;
     const komichi = battle.player.find((fighter) => fighter.unitId === "komichi");
     const target = battle.enemy[0];
-    const attackTarget = battle.enemy[1];
     const rangedAttacker = battle.enemy[2];
     battle.effects.length = 0;
     target.x = komichi.x + 320;
     target.y = komichi.y;
     target.abilityMotion = null;
-    attackTarget.x = komichi.x + 100;
-    attackTarget.y = komichi.y;
-    attackTarget.abilityMotion = null;
-    rangedAttacker.x = 900;
-    rangedAttacker.y = 540;
-    rangedAttacker.attack = 0;
-    rangedAttacker.cooldown = 99;
+    rangedAttacker.x = komichi.x + 90;
+    rangedAttacker.y = komichi.y;
+    rangedAttacker.attackType = "ranged";
+    rangedAttacker.attack = 100;
+    rangedAttacker.range = 500;
+    rangedAttacker.cooldown = 0;
     komichi.targetFid = target.fid;
     komichi.targetLock = 99;
-    komichi.energy = 95;
+    komichi.energy = 81;
     komichi.cooldown = 0;
-    engine.basicAttack(komichi, attackTarget);
+    engine.rng.next = () => 0.6;
+    engine.basicAttack(rangedAttacker, komichi);
     return {
       energy: komichi.energy,
       motion: komichi.abilityMotion?.kind || null,
@@ -494,7 +519,8 @@ const komichiState = async (page) => page.evaluate(() => {
     cast,
     dash,
     impact,
-    smashAttack,
+    sweepAttack,
+    sweepDamage,
     activeBlock,
     repeatTrigger,
     repeatDash,

@@ -700,7 +700,7 @@ test("狍子偶像只能近距离发动控场，获得护盾后普攻短晕并�
   assert.equal(source.lovelyControlTime, 0);
 });
 
-test("四时小路常驻路牌格挡，都市传说期间持续回能并反复发动出道冲击", () => {
+test("四时小路常驻路牌格挡，都市传说期间仅受击回能并用路牌横扫", () => {
   const engine = createEngine(152);
   engine.state.round = 8;
   engine.state.playerLevel = 4;
@@ -781,18 +781,43 @@ test("四时小路常驻路牌格挡，都市传说期间持续回能并反复�
   assert.ok(target.hp < targetHpBeforeImpact);
   assert.ok(target.stun > 0.5, "出道冲击应击晕主目标");
 
+  battle.enemy.forEach((fighter) => {
+    fighter.x = 900;
+    fighter.y = 540;
+  });
+  source.energy = 40;
+  source.komichiSignTime = 2.2;
+  source.cooldown = 99;
+  const expectedAfterDrain = source.energy - (source.maxEnergy / 5.5) * 0.05;
+  engine.update(0.05);
+  assert.ok(Math.abs(source.energy - expectedAfterDrain) < 0.001, "持牌期间不应自动回能");
+
   battle.effects.length = 0;
   target.stun = 0;
   target.abilityMotion = null;
   target.x = source.x + 100;
   target.y = source.y;
-  source.energy = 40;
+  pathTarget.x = source.x + 100;
+  pathTarget.y = source.y + 50;
+  pathTarget.abilityMotion = null;
+  rangedAttacker.x = source.x - 70;
+  rangedAttacker.y = source.y;
+  rangedAttacker.abilityMotion = null;
+  const targetHpBeforeSweep = target.hp;
+  const coneHpBeforeSweep = pathTarget.hp;
+  const outsideHpBeforeSweep = rangedAttacker.hp;
+  const sweepAttack = source.attack;
+  source.energy = 95;
   source.cooldown = 0;
   engine["basicAttack"](source, target);
-  assert.equal(source.energy, 52, "持牌普攻应回复 12 能量");
+  assert.equal(source.energy, 95, "持牌普攻不应回复能量或触发出道冲击");
+  assert.equal(source.abilityMotion, null);
+  assert.ok(Math.abs((targetHpBeforeSweep - target.hp) - sweepAttack) < 0.001);
+  assert.ok(Math.abs((coneHpBeforeSweep - pathTarget.hp) - sweepAttack * 0.55) < 0.001);
+  assert.equal(rangedAttacker.hp, outsideHpBeforeSweep, "扇形背后的敌人不应受到伤害");
   assert.equal(target.stun, 0, "持牌普攻不应附带眩晕");
   assert.equal(target.abilityMotion?.kind, "push");
-  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign" && effect.text === "smash"));
+  assert.ok(battle.effects.some((effect) => effect.kind === "komichi_sign" && effect.text === "sweep"));
 
   battle.effects.length = 0;
   rangedAttacker.x = source.x + 90;
@@ -818,10 +843,16 @@ test("四时小路常驻路牌格挡，都市传说期间持续回能并反复�
   pathTarget.x = source.x + 100;
   pathTarget.y = source.y;
   source.targetFid = target.fid;
-  source.energy = 95;
+  source.energy = 81;
   battle.effects.length = 0;
-  engine["basicAttack"](source, pathTarget);
-  assert.equal(source.energy, 70, "攻击回满后应立即再次冲击并消耗 30 能量");
+  rangedAttacker.x = source.x + 90;
+  rangedAttacker.y = source.y;
+  rangedAttacker.attack = 100;
+  rangedAttacker.range = 500;
+  rangedAttacker.cooldown = 0;
+  engine["rng"].next = () => 0.6;
+  engine["basicAttack"](rangedAttacker, source);
+  assert.equal(source.energy, 70, "受击与格挡补满后应立即再次冲击并消耗 30 能量");
   assert.equal(source.abilityMotion?.kind, "dash");
   assert.equal(source.abilityMotion?.targetFid, target.fid);
   assert.ok(battle.effects.some((effect) => effect.kind === "line"));

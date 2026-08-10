@@ -190,6 +190,9 @@ const KOMICHI_DEBUT_ENERGY_COST = 30;
 const KOMICHI_DEBUT_SPEED = 1_180;
 const KOMICHI_DEBUT_PATH_PUSH = 66;
 const KOMICHI_DEBUT_SIDE_PUSH = 28;
+const KOMICHI_SWEEP_DEFAULT_RADIUS = 145;
+const KOMICHI_SWEEP_DEFAULT_ANGLE = 110;
+const KOMICHI_SWEEP_DEFAULT_DAMAGE_RATIO = 0.55;
 /** 七海大鲨鱼：中短时长的冲阵控场。 */
 const NANA_PICKAXE_DURATION = 2.8;
 const NANA_PICKAXE_ARMOR_BONUS = 42;
@@ -3585,7 +3588,12 @@ export class AutoChessEngine {
         );
         return;
       }
-      if (!fighter.barrageActive && fighter.energyPerSecond > 0 && !(fighter.unitId === "sumi" && wasStealthed)) {
+      if (
+        !fighter.barrageActive &&
+        fighter.energyPerSecond > 0 &&
+        !(fighter.unitId === "sumi" && wasStealthed) &&
+        !(fighter.unitId === "komichi" && fighter.komichiSignTime > 0)
+      ) {
         this.addEnergy(fighter, fighter.energyPerSecond * dt);
       }
       if (this.updateNoriApplePie(fighter, dt)) return;
@@ -3937,6 +3945,7 @@ export class AutoChessEngine {
     source.attackPulse = 0.22;
     source.attackTargetX = target.x;
     source.attackTargetY = target.y;
+    const komichiSweep = source.unitId === "komichi" && source.komichiSignTime > 0;
     const dealt = this.damage(source, target, source.attack);
     const nextAttackLifesteal = source.nextAttackLifesteal;
     if (nextAttackLifesteal > 0) {
@@ -3949,7 +3958,7 @@ export class AutoChessEngine {
       }
     }
     if (dealt >= 0) {
-      this.addEnergy(source, source.energyOnAttack);
+      if (!komichiSweep) this.addEnergy(source, source.energyOnAttack);
       this.addEnergy(target, target.energyOnHit);
     }
     if (source.burnOnHitPower > 0 && target.alive) {
@@ -3974,15 +3983,56 @@ export class AutoChessEngine {
       life: source.attackType === "ranged" ? 0.16 : 0.24,
       size: source.attackType === "ranged" ? 3 : 22,
     });
-    if (source.unitId === "komichi" && source.komichiSignTime > 0) {
+    if (komichiSweep) {
+      const sweepRadius = abilityStatForStar(
+        UNIT_DEFS.komichi,
+        source.star,
+        "sweepRadius",
+        KOMICHI_SWEEP_DEFAULT_RADIUS,
+      );
       this.addEffect({
         kind: "komichi_sign",
-        x: target.x,
-        y: target.y,
+        x: source.x,
+        y: source.y,
+        x2: target.x,
+        y2: target.y,
         color: UNIT_DEFS.komichi.accent,
-        text: "smash",
-        life: 0.4,
-        size: 76,
+        text: "sweep",
+        life: 0.54,
+        size: sweepRadius,
+      });
+      const directionX = target.x - source.x;
+      const directionY = target.y - source.y;
+      const directionLength = Math.hypot(directionX, directionY) || 1;
+      const sweepAngle = abilityStatForStar(
+        UNIT_DEFS.komichi,
+        source.star,
+        "sweepAngle",
+        KOMICHI_SWEEP_DEFAULT_ANGLE,
+      );
+      const sweepThreshold = Math.cos((sweepAngle * Math.PI) / 360);
+      const sweepDamageRatio = abilityStatForStar(
+        UNIT_DEFS.komichi,
+        source.star,
+        "sweepDamageRatio",
+        KOMICHI_SWEEP_DEFAULT_DAMAGE_RATIO,
+      );
+      const battle = this.state.battle;
+      const opponents = battle
+        ? battle[source.team === "player" ? "enemy" : "player"]
+        : [];
+      opponents.forEach((candidate) => {
+        if (!candidate.alive || candidate.fid === target.fid) return;
+        const offsetX = candidate.x - source.x;
+        const offsetY = candidate.y - source.y;
+        const distance = Math.hypot(offsetX, offsetY);
+        if (distance <= 0.01 || distance > sweepRadius) return;
+        const alignment = (offsetX * directionX + offsetY * directionY) /
+          (distance * directionLength);
+        if (alignment < sweepThreshold) return;
+        const splashDealt = this.damage(source, candidate, source.attack * sweepDamageRatio);
+        if (splashDealt >= 0) this.addEnergy(candidate, candidate.energyOnHit);
+        if (splashDealt > 0) this.addDamageText(candidate, splashDealt);
       });
     }
     this.tryZeyinRebirthRecoil(source, target);
@@ -4017,7 +4067,7 @@ export class AutoChessEngine {
       }
       this.addEffect({ kind: "text", x: target.x, y: target.y - 42, color: UNIT_DEFS.lovely.accent, text: "拉近", life: 0.4, size: 10 });
     }
-    if (source.unitId === "komichi" && source.komichiSignTime > 0 && target.alive) {
+    if (komichiSweep && target.alive) {
       const distance = Math.hypot(target.x - source.x, target.y - source.y);
       const knockback = abilityStatForStar(UNIT_DEFS.komichi, source.star, "knockback", 28);
       if (distance > 0.01 && knockback >= 4 && !target.abilityMotion) {

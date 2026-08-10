@@ -202,12 +202,12 @@ let browser;
   };
 
   const help = await callAI("help");
-  assert.equal(help.version, "0.2.3");
+  assert.equal(help.version, "0.3.0");
   assert.ok(help.flow.includes("skipBattle()"));
   assert.ok(help.testing.includes("consoleLogging(enabled)"));
   assert.ok(help.read.includes("window.autoChessLastRun"));
   assert.ok(help.read.includes("battles()"));
-  assert.equal((await state()).version, "0.2.3");
+  assert.equal((await state()).version, "0.3.0");
   console.log("[ai-verify] API ready");
 
   await page.keyboard.press("v");
@@ -400,7 +400,7 @@ let browser;
   await callAI("next");
   await page.waitForFunction(() => window.autoChessAI.state().phase === "gameover");
   const terminalTrace = await page.evaluate(() => window.autoChessLastRun);
-  assert.equal(terminalTrace.version, "0.2.3");
+  assert.equal(terminalTrace.version, "0.3.0");
   assert.equal(terminalTrace.state.phase, "gameover");
   assert.ok(terminalTrace.actions.some((entry) => entry.action.type === "skipBattle"));
   assert.ok(terminalTrace.battles.length > 0);

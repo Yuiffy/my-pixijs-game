@@ -816,7 +816,7 @@ test("关系羁绊覆盖收敛后的主播组合且商店定义完整", () => {
   });
   assert.equal(data.UNIT_DEFS.tiandou.traits.includes("vanguard"), false);
   assert.equal(data.UNIT_DEFS.tiandou.traits.includes("mystic"), false);
-  assert.equal(data.UNIT_DEFS.lovely.traits.includes("vanguard"), true);
+  assert.equal(data.UNIT_DEFS.lovely.traits.includes("vanguard"), false);
   assert.equal(data.TRAITS.rift, undefined);
   assert.equal(data.TRAITS.clockwork, undefined);
   assert.equal(data.TRAITS.brawler, undefined);
@@ -1067,7 +1067,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
       cost: 5,
       traits: ["traffic", "mystic", "assassin"],
       hp: 360,
-      attack: 48,
+      attack: 44,
       armor: 24,
       attackType: "melee",
       abilityCastTiming: "offenseReady",
@@ -1076,7 +1076,7 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
   assert.equal(komichi.abilityRange, 420);
   assert.equal(komichi.abilityName, "都市传说降临");
   assert.equal(komichi.passiveName, "路牌格挡");
-  assert.match(komichi.abilityDescription, /出道冲击.*高速贴近.*撞飞.*击晕.*能量持续下降.*再次回满.*再次冲击/);
+  assert.match(komichi.abilityDescription, /出道冲击.*高速贴近.*撞飞.*击晕.*扇形范围.*仅受击与格挡.*回满后再次冲击/);
   assert.match(komichi.passiveDescription, /远程来源伤害.*格挡.*回复能量.*短暂加速.*触发概率提高/);
   assert.deepEqual(
     {
@@ -1103,6 +1103,9 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
       level.stats.duration,
       level.stats.rangeBonus,
       level.stats.knockback,
+      level.stats.sweepRadius,
+      level.stats.sweepAngle,
+      level.stats.sweepDamageRatio,
       level.stats.rangedReduction,
       level.stats.blockChance,
       level.stats.activeBlockChance,
@@ -1112,9 +1115,9 @@ test("五费四时小路使用双形象路牌技能，降费角色同步削弱",
       level.stats.impactStun,
     ]),
     [
-      [5.5, 105, 20, 0.36, 0.42, 0.72, 12, 46, 1.1, 0.65],
-      [6.25, 120, 26, 0.42, 0.46, 0.78, 15, 54, 1.1, 0.8],
-      [7, 140, 34, 0.48, 0.5, 0.84, 18, 62, 1.1, 0.95],
+      [5.5, 105, 20, 145, 110, 0.55, 0.36, 0.42, 0.72, 12, 46, 1.1, 0.65],
+      [6.25, 120, 26, 160, 110, 0.6, 0.42, 0.46, 0.78, 15, 54, 1.1, 0.8],
+      [7, 140, 34, 180, 110, 0.65, 0.48, 0.5, 0.84, 18, 62, 1.1, 0.95],
     ],
   );
 

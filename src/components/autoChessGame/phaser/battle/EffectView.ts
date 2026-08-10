@@ -108,7 +108,12 @@ export class EffectViewRenderer {
       .setRotation(0)
       .setScale(1)
       .clearTint();
-    label.setVisible(false).setAlpha(1).setRotation(0).setScale(1);
+    label
+      .setVisible(false)
+      .setAlpha(1)
+      .setPosition(0, 0)
+      .setRotation(0)
+      .setScale(1);
   }
 
   public update(view: Phaser.GameObjects.Container, effect: BattleEffect) {
@@ -163,26 +168,90 @@ export class EffectViewRenderer {
       return;
     }
     if (effect.kind === "komichi_sign") {
+      const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
+      const sweep = effect.text === "sweep";
       const smash = effect.text === "smash";
-      const arrival = 1 - (1 - Math.min(1, progress * 2.8)) ** 3;
+      const block = effect.text === "block";
       const size = effect.size || 118;
-      const scale = smash
-        ? 0.72 + Math.sin(Math.min(1, progress) * Math.PI) * 0.32
-        : 0.48 + arrival * 0.52;
+      label
+        .setText("+")
+        .setFontFamily(FONT_FAMILY)
+        .setFontSize(sweep ? 24 : 20)
+        .setVisible(true);
+      if (label.style.color !== effect.color) label.setColor(effect.color);
+      if (sweep) {
+        const directionX = (effect.x2 ?? effect.x + 1) - effect.x;
+        const directionY = (effect.y2 ?? effect.y) - effect.y;
+        const heading = Math.atan2(directionY, directionX);
+        const halfAngle = Phaser.Math.DegToRad(55);
+        const swingProgress = Math.min(1, progress / 0.62);
+        const easedSwing = 1 - (1 - swingProgress) ** 3;
+        const currentAngle = heading - halfAngle + halfAngle * 2 * easedSwing;
+        const fanRadius = size * (0.84 + easedSwing * 0.16);
+        const fanPoints = [new Phaser.Math.Vector2(0, 0)];
+        for (let index = 0; index <= 14; index += 1) {
+          const angle = heading - halfAngle +
+            halfAngle * 2 * easedSwing * (index / 14);
+          fanPoints.push(new Phaser.Math.Vector2(
+            Math.cos(angle) * fanRadius,
+            Math.sin(angle) * fanRadius,
+          ));
+        }
+        graphics
+          .clear()
+          .setVisible(true)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .fillStyle(color, 0.08 + (1 - progress) * 0.12)
+          .fillPoints(fanPoints, true)
+          .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.78)
+          .strokePoints(fanPoints, true);
+        const bounceProgress = Math.max(0, (progress - 0.62) / 0.38);
+        const bounce = Math.sin(bounceProgress * Math.PI) * 38;
+        const signDistance = size * 0.68;
+        const signX = Math.cos(currentAngle) * signDistance + bounceProgress * 18;
+        const signY = Math.sin(currentAngle) * signDistance - bounce - bounceProgress * 8;
+        const signSize = Math.min(96, Math.max(74, size * 0.6));
+        komichiSignpost
+          .setVisible(true)
+          .setDisplaySize(signSize, signSize)
+          .setPosition(signX, signY)
+          .setRotation(currentAngle + Math.PI / 2 + bounceProgress * 2.8);
+        label
+          .setPosition(
+            Math.cos(heading) * size * 0.82,
+            Math.sin(heading) * size * 0.82,
+          )
+          .setScale(0.72 + Math.sin(progress * Math.PI) * 0.5)
+          .setRotation(progress * 1.4);
+        return;
+      }
+      if (smash || block) {
+        const bounce = Math.sin(progress * Math.PI) * (smash ? 46 : 38);
+        const kickDirection = block ? 1 : -1;
+        const signX = kickDirection * progress * 28;
+        const signY = -18 - bounce - progress * 10;
+        const signSize = size * (0.78 + Math.sin(progress * Math.PI) * 0.28);
+        komichiSignpost
+          .setVisible(true)
+          .setDisplaySize(signSize, signSize)
+          .setPosition(signX, signY)
+          .setRotation((block ? -0.86 : -0.72) + progress * 2.8);
+        label
+          .setPosition(-kickDirection * 12, -12 - Math.sin(progress * Math.PI) * 14)
+          .setScale(0.7 + Math.sin(progress * Math.PI) * 0.62)
+          .setRotation(-progress * 1.6);
+        return;
+      }
+      const arrival = 1 - (1 - Math.min(1, progress * 2.8)) ** 3;
       komichiSignpost
         .setVisible(true)
-        .setDisplaySize(size * scale, size * scale)
-        .setPosition(
-          0,
-          smash
-            ? -72 + arrival * 48
-            : -30 - Math.sin(arrival * Math.PI) * 24,
-        )
-        .setRotation(
-          smash
-            ? -1.05 + arrival * 1.28
-            : (1 - arrival) * -0.5 + Math.sin(progress * Math.PI * 2) * 0.04,
-        );
+        .setDisplaySize(size * (0.48 + arrival * 0.52), size * (0.48 + arrival * 0.52))
+        .setPosition(0, -30 - Math.sin(arrival * Math.PI) * 24)
+        .setRotation((1 - arrival) * -0.5 + Math.sin(progress * Math.PI * 2) * 0.04);
+      label
+        .setPosition(0, -8)
+        .setScale(0.62 + arrival * 0.46)
+        .setRotation(0);
       return;
     }
     const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
