@@ -20,9 +20,9 @@ export const LIVER_DIRECTORY_GROUPS: readonly LiverDirectoryGroup[] = [
   {
     id: 'circle',
     name: '环岁圈',
-    note: '岁己、栞栞、米米、弥月、瑞娅等',
+    note: '岁己、栞栞、米米、弥月、瑞娅、悠亚等',
     accent: '#7de0d0',
-    members: ['sui', 'shiori', 'nagisa', 'mizuki', 'rhea'],
+    members: ['sui', 'shiori', 'nagisa', 'mizuki', 'rhea', 'yua'],
   },
   {
     id: 'gen28',
@@ -40,7 +40,6 @@ export const LIVER_DIRECTORY_GROUPS: readonly LiverDirectoryGroup[] = [
       'azi',
       'nana7mi',
       'joi',
-      'yua',
       'nightin',
       'mingqian-nailv',
       'michiya',
