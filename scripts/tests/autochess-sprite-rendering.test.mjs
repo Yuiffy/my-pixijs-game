@@ -501,7 +501,8 @@ test("战斗同步覆盖投射物、技能效果与机械兔召唤物", () => {
   assert.match(engine, /text: "block"/);
   assert.match(engine, /text: "sweep"/);
   assert.match(engineTextState, /variant: effect\.kind === "komichi_sign" \? effect\.text : undefined/);
-  assert.match(effectView, /\.fillPoints\(fanPoints, true\)/);
+  assert.match(effectView, /currentAngle = heading - halfAngle/);
+  assert.doesNotMatch(effectView, /fanPoints/);
   assert.match(fighterView, /fighter\.unitId === "komichi" && fighter\.komichiSignTime > 0/);
   assert.match(fighterView, /abilityTextureKeyForUnit/);
   assert.match(scene, /mechanicalRabbitMuzzle/);

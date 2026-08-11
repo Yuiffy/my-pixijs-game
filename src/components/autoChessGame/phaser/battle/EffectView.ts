@@ -168,7 +168,6 @@ export class EffectViewRenderer {
       return;
     }
     if (effect.kind === "komichi_sign") {
-      const { color } = Phaser.Display.Color.HexStringToColor(effect.color);
       const sweep = effect.text === "sweep";
       const smash = effect.text === "smash";
       const block = effect.text === "block";
@@ -187,24 +186,6 @@ export class EffectViewRenderer {
         const swingProgress = Math.min(1, progress / 0.62);
         const easedSwing = 1 - (1 - swingProgress) ** 3;
         const currentAngle = heading - halfAngle + halfAngle * 2 * easedSwing;
-        const fanRadius = size * (0.84 + easedSwing * 0.16);
-        const fanPoints = [new Phaser.Math.Vector2(0, 0)];
-        for (let index = 0; index <= 14; index += 1) {
-          const angle = heading - halfAngle +
-            halfAngle * 2 * easedSwing * (index / 14);
-          fanPoints.push(new Phaser.Math.Vector2(
-            Math.cos(angle) * fanRadius,
-            Math.sin(angle) * fanRadius,
-          ));
-        }
-        graphics
-          .clear()
-          .setVisible(true)
-          .setBlendMode(Phaser.BlendModes.ADD)
-          .fillStyle(color, 0.08 + (1 - progress) * 0.12)
-          .fillPoints(fanPoints, true)
-          .lineStyle(Math.max(1.5, 4 * (1 - progress)), color, 0.78)
-          .strokePoints(fanPoints, true);
         const bounceProgress = Math.max(0, (progress - 0.62) / 0.38);
         const bounce = Math.sin(bounceProgress * Math.PI) * 38;
         const signDistance = size * 0.68;

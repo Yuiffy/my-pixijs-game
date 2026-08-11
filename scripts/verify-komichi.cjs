@@ -151,8 +151,11 @@ const komichiState = async (page) => page.evaluate(() => {
   const plusVisible = [...(scene.effectViews?.values() || [])].some(
     (view) => view.getByName("label")?.visible && view.getByName("label")?.text === "+",
   );
-  const sweepShapeVisible = [...(scene.effectViews?.values() || [])].some(
-    (view) => view.getByName("shape")?.visible,
+  const sweepEffect = battle?.effects.find(
+    (effect) => effect.kind === "komichi_sign" && effect.text === "sweep",
+  );
+  const sweepOutlineVisible = Boolean(
+    sweepEffect && scene.effectViews?.get(sweepEffect)?.getByName("shape")?.visible,
   );
   return {
     phase: engine.state.phase,
@@ -187,7 +190,7 @@ const komichiState = async (page) => page.evaluate(() => {
     portraitTexture: portrait?.texture?.key ?? null,
     signpostVisible,
     plusVisible,
-    sweepShapeVisible,
+    sweepOutlineVisible,
     textFighter: textFighter
       ? {
         unitId: textFighter.unitId,
@@ -400,7 +403,7 @@ const komichiState = async (page) => page.evaluate(() => {
   assert.ok(sweepAttack.textEffects.some((effect) => effect.kind === "komichi_sign" && effect.variant === "sweep"));
   assert.equal(sweepAttack.signpostVisible, true);
   assert.equal(sweepAttack.plusVisible, true);
-  assert.equal(sweepAttack.sweepShapeVisible, true);
+  assert.equal(sweepAttack.sweepOutlineVisible, false);
   await capture("komichi-active-sign-sweep.png");
 
   const activeBlockDamage = await page.evaluate(() => {
