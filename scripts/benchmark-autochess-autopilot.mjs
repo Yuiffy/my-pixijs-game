@@ -150,10 +150,14 @@ if (persistentCacheEnabled) {
   }
 }
 
-const rosterAssetValue = (engine) => [
-  ...engine.state.board,
-  ...engine.state.bench,
-].reduce((sum, unit) => sum + (unit ? engine.getUnitSellValue(unit) : 0), 0);
+const unitCollectionAssetValue = (engine, units) => units.reduce(
+  (sum, unit) => sum + (unit ? engine.getUnitSellValue(unit) : 0),
+  0,
+);
+
+const boardAssetValue = (engine) => unitCollectionAssetValue(engine, engine.state.board);
+const benchAssetValue = (engine) => unitCollectionAssetValue(engine, engine.state.bench);
+const rosterAssetValue = (engine) => boardAssetValue(engine) + benchAssetValue(engine);
 
 const developmentValue = (engine) => {
   let value = 0;
@@ -418,7 +422,9 @@ const playRun = (seed) => {
       const won = bridge.engine.state.result?.won || false;
       const hpAfter = bridge.engine.state.hp;
       const goldAfter = bridge.engine.state.gold;
-      const assetValue = goldAfter + rosterAssetValue(bridge.engine);
+      const boardValue = boardAssetValue(bridge.engine);
+      const benchValue = benchAssetValue(bridge.engine);
+      const totalAssetValue = goldAfter + boardValue + benchValue;
       const invested = developmentValue(bridge.engine);
       const margin = combatMargin(bridge.engine.state.battle);
       rounds.push({
@@ -426,13 +432,17 @@ const playRun = (seed) => {
         won,
         hpAfter,
         goldAfter,
-        assetValue,
+        cashAfter: goldAfter,
+        boardValue,
+        benchValue,
+        totalAssetValue,
+        assetValue: totalAssetValue,
         developmentValue: invested,
-        netWorth: assetValue + invested,
+        netWorth: totalAssetValue + invested,
         combatMargin: margin,
         roundStrength: (won ? 100_000 : 0)
           + hpAfter * 1_000
-          + assetValue * 100
+          + totalAssetValue * 100
           + margin * 250,
       });
       if (reportProgress) {
@@ -577,9 +587,16 @@ const playRun = (seed) => {
     tickTrace: traceRound ? tickTrace : undefined,
     rounds,
   };
-  run.finalAssetValue = rounds.at(-1)?.assetValue || bridge.engine.state.gold + rosterAssetValue(bridge.engine);
-  run.finalDevelopmentValue = rounds.at(-1)?.developmentValue || developmentValue(bridge.engine);
-  run.finalNetWorth = rounds.at(-1)?.netWorth || run.finalAssetValue + run.finalDevelopmentValue;
+  const finalRoundState = rounds.at(-1);
+  run.finalCash = finalRoundState?.cashAfter ?? bridge.engine.state.gold;
+  run.finalBoardValue = finalRoundState?.boardValue ?? boardAssetValue(bridge.engine);
+  run.finalBenchValue = finalRoundState?.benchValue ?? benchAssetValue(bridge.engine);
+  run.finalTotalAssetValue = finalRoundState?.totalAssetValue
+    ?? run.finalCash + run.finalBoardValue + run.finalBenchValue;
+  run.finalAssetValue = run.finalTotalAssetValue;
+  run.finalDevelopmentValue = finalRoundState?.developmentValue ?? developmentValue(bridge.engine);
+  run.finalNetWorth = finalRoundState?.netWorth
+    ?? run.finalTotalAssetValue + run.finalDevelopmentValue;
   run.fitness = runFitness(run);
   if (latestPreparationSnapshot) completedSnapshots.push(latestPreparationSnapshot);
   if (bridge.engine.state.phase === "result") {
@@ -636,6 +653,18 @@ const survivalAt = (round) => ({
     entry.round === round && entry.won
   ))).length / runs,
 });
+const summarizeBattleAssets = (rows) => ({
+  remainingHp: summarizeDistribution(rows.map((round) => round.hpAfter)),
+  boardValue: summarizeDistribution(rows.map((round) => round.boardValue)),
+  benchValue: summarizeDistribution(rows.map((round) => round.benchValue)),
+  cash: summarizeDistribution(rows.map((round) => round.cashAfter)),
+  totalAssetValue: summarizeDistribution(rows.map((round) => round.totalAssetValue)),
+});
+const targetBattleRows = results.flatMap((run) => {
+  const round = run.rounds.find((entry) => entry.round === maximumBattles);
+  return round ? [round] : [];
+});
+const survivingTargetBattleRows = targetBattleRows.filter((round) => round.hpAfter > 0);
 const totalAutopilotMs = results.reduce((sum, run) => sum + run.autopilotTickMs, 0);
 const totalAutopilotTicks = results.reduce((sum, run) => sum + run.autopilotTickCount, 0);
 const aggregate = {
@@ -663,13 +692,40 @@ const aggregate = {
   campaignClearRate: results.filter((run) => run.campaignCleared).length / runs,
   finalRoundDistribution: summarizeDistribution(results.map((run) => run.finalRound)),
   winDistribution: summarizeDistribution(results.map((run) => run.wins)),
+  finalHpDistribution: summarizeDistribution(results.map((run) => run.finalHp)),
+  finalBoardValueDistribution: summarizeDistribution(results.map((run) => run.finalBoardValue)),
+  finalBenchValueDistribution: summarizeDistribution(results.map((run) => run.finalBenchValue)),
+  finalCashDistribution: summarizeDistribution(results.map((run) => run.finalCash)),
+  finalTotalAssetValueDistribution: summarizeDistribution(
+    results.map((run) => run.finalTotalAssetValue),
+  ),
   netWorthDistribution: summarizeDistribution(results.map((run) => run.finalNetWorth)),
+  targetBattle: {
+    round: maximumBattles,
+    reachedRuns: targetBattleRows.length,
+    reachedRate: targetBattleRows.length / runs,
+    survivedRuns: survivingTargetBattleRows.length,
+    survivedRate: survivingTargetBattleRows.length / runs,
+    diedBeforeRuns: runs - targetBattleRows.length,
+    lostAtTargetRuns: targetBattleRows.length - survivingTargetBattleRows.length,
+    wonRuns: targetBattleRows.filter((round) => round.won).length,
+    winRate: targetBattleRows.filter((round) => round.won).length / runs,
+    reached: summarizeBattleAssets(targetBattleRows),
+    survived: summarizeBattleAssets(survivingTargetBattleRows),
+  },
   survivalByRound: Object.fromEntries([12, 16, 20, 24, 28, 32, 40, 50, 60, 70]
     .filter((round) => round <= maximumBattles)
     .map((round) => [round, survivalAt(round)])),
   averageFinalRound: results.reduce((sum, run) => sum + run.finalRound, 0) / runs,
   averageWins: results.reduce((sum, run) => sum + run.wins, 0) / runs,
   averageFinalHp: results.reduce((sum, run) => sum + run.finalHp, 0) / runs,
+  averageFinalBoardValue: results.reduce((sum, run) => sum + run.finalBoardValue, 0) / runs,
+  averageFinalBenchValue: results.reduce((sum, run) => sum + run.finalBenchValue, 0) / runs,
+  averageFinalCash: results.reduce((sum, run) => sum + run.finalCash, 0) / runs,
+  averageFinalTotalAssetValue: results.reduce(
+    (sum, run) => sum + run.finalTotalAssetValue,
+    0,
+  ) / runs,
   averageFinalAssetValue: results.reduce((sum, run) => sum + run.finalAssetValue, 0) / runs,
   averageFinalDevelopmentValue: results.reduce(
     (sum, run) => sum + run.finalDevelopmentValue,

@@ -16,8 +16,10 @@ export interface AutopilotPolicy {
   financeActivationMaxRolloutDeficit: number;
   maximumExcessPaidRerolls: number;
   maximumDryPaidRerolls: number;
+  healthyStabilizeMaximumDryPaidRerolls: number;
   upgradeChaseRerollInterestTiersAtRisk: number;
   stabilizeRerollInterestTiersAtRisk: number;
+  healthyStabilizeRerollInterestTiersAtRisk: number;
   bankPurchaseInterestTiersAtRisk: number;
   upgradeChasePurchaseInterestTiersAtRisk: number;
   stabilizePurchaseInterestTiersAtRisk: number;
@@ -221,8 +223,10 @@ export const DEFAULT_AUTOPILOT_POLICY: AutopilotPolicy = {
   financeActivationMaxRolloutDeficit: 0,
   maximumExcessPaidRerolls: 62,
   maximumDryPaidRerolls: 9,
+  healthyStabilizeMaximumDryPaidRerolls: 9,
   upgradeChaseRerollInterestTiersAtRisk: 20,
   stabilizeRerollInterestTiersAtRisk: 14,
+  healthyStabilizeRerollInterestTiersAtRisk: 14,
   bankPurchaseInterestTiersAtRisk: 3,
   upgradeChasePurchaseInterestTiersAtRisk: 2,
   stabilizePurchaseInterestTiersAtRisk: 20,
@@ -300,6 +304,8 @@ export const AUTOPILOT_STYLE_POLICIES: Record<CanonicalAutopilotStyle, Partial<A
     lateGamePurchaseStartRound: 8,
     lateGamePurchaseStartLevel: 6,
     maximumDryPaidRerolls: 16,
+    healthyStabilizeMaximumDryPaidRerolls: 6,
+    healthyStabilizeRerollInterestTiersAtRisk: 2,
     financeActivationMaxRolloutDeficit: 100,
     financePurchaseInterestTiersAtRisk: 2,
     bankPurchaseInterestTiersAtRisk: 1,
@@ -361,6 +367,13 @@ export const resolveAutopilotPolicy = (
     ),
     maximumExcessPaidRerolls: Math.max(0, Math.floor(policy.maximumExcessPaidRerolls)),
     maximumDryPaidRerolls: Math.max(0, Math.floor(policy.maximumDryPaidRerolls)),
+    healthyStabilizeMaximumDryPaidRerolls: Math.max(
+      0,
+      Math.min(
+        Math.floor(policy.maximumDryPaidRerolls),
+        Math.floor(policy.healthyStabilizeMaximumDryPaidRerolls),
+      ),
+    ),
     upgradeChaseRerollInterestTiersAtRisk: Math.max(
       0,
       Math.floor(policy.upgradeChaseRerollInterestTiersAtRisk),
@@ -368,6 +381,13 @@ export const resolveAutopilotPolicy = (
     stabilizeRerollInterestTiersAtRisk: Math.max(
       0,
       Math.floor(policy.stabilizeRerollInterestTiersAtRisk),
+    ),
+    healthyStabilizeRerollInterestTiersAtRisk: Math.max(
+      0,
+      Math.min(
+        Math.floor(policy.stabilizeRerollInterestTiersAtRisk),
+        Math.floor(policy.healthyStabilizeRerollInterestTiersAtRisk),
+      ),
     ),
     bankPurchaseInterestTiersAtRisk: Math.max(
       0,

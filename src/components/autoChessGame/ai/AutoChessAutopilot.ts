@@ -765,24 +765,17 @@ export class AutoChessAutopilot {
     return this.preferenceStyle === "balanced";
   }
 
-  private priorBattleLosses() {
-    const { round, victories } = this.bridge.engine.state;
-    return Math.max(0, Math.max(0, round - 1) - victories);
-  }
-
   private recoveryPressureActive() {
     const { hp } = this.bridge.engine.state;
-    return hp <= this.policy.woundedHpThreshold
-      || (this.preferenceStyle === "highroll" && this.priorBattleLosses() > 0);
+    return hp <= this.policy.woundedHpThreshold;
   }
 
   private rolloutPreferenceStyle(): AutopilotPreferenceStyle {
-    if (this.preferenceStyle !== "highroll" || this.priorBattleLosses() === 0) {
-      return this.preferenceStyle;
-    }
-    return this.bridge.engine.state.hp <= this.policy.criticalHpThreshold
-      ? "survival"
-      : "balanced";
+    if (this.preferenceStyle !== "highroll") return this.preferenceStyle;
+    const { hp } = this.bridge.engine.state;
+    if (hp <= this.policy.criticalHpThreshold) return "survival";
+    if (hp <= this.policy.woundedHpThreshold) return "balanced";
+    return "highroll";
   }
 
   private thinkingBudget() {
@@ -3518,11 +3511,14 @@ export class AutoChessAutopilot {
 
   private criticalExactRolloutConfidence(roster: OwnedEntry[], score: number) {
     const { state } = this.bridge.engine;
+    const confirmHealthyHighroll = this.preferenceStyle === "highroll"
+      && state.hp > this.policy.woundedHpThreshold
+      && score < this.policy.safeWinRolloutScore;
     if (
       this.planningMode === "training"
       || this.informationMode !== "oracle"
       || this.rolloutCombatHz >= EXACT_COMBAT_HZ
-      || state.hp > this.policy.criticalHpThreshold
+      || (state.hp > this.policy.criticalHpThreshold && !confirmHealthyHighroll)
     ) return score;
 
     const lineup = this.rolloutTargetLineup(roster);
@@ -3540,7 +3536,9 @@ export class AutoChessAutopilot {
         EXACT_COMBAT_HZ,
       );
     }
-    return Math.min(score, this.criticalExactConfidenceScore);
+    return confirmHealthyHighroll
+      ? this.criticalExactConfidenceScore
+      : Math.min(score, this.criticalExactConfidenceScore);
   }
 
   private oneCopyFromMergeIds(roster: OwnedEntry[]) {
@@ -6532,9 +6530,17 @@ export class AutoChessAutopilot {
       ? null
       : this.terminalRollDownReserve(roster, rerollStrategy.rolloutScore);
     const terminalRollDown = terminalReserve !== null;
-    const maximumInterestTiersAtRisk = rerollStrategy.mode === "upgrade_chase"
+    const configuredMaximumInterestTiersAtRisk = rerollStrategy.mode === "upgrade_chase"
       ? this.policy.upgradeChaseRerollInterestTiersAtRisk
       : this.policy.stabilizeRerollInterestTiersAtRisk;
+    const healthyHighroll = this.preferenceStyle === "highroll"
+      && state.hp > this.policy.woundedHpThreshold;
+    const maximumInterestTiersAtRisk = healthyHighroll
+      ? Math.min(
+        configuredMaximumInterestTiersAtRisk,
+        this.policy.healthyStabilizeRerollInterestTiersAtRisk,
+      )
+      : configuredMaximumInterestTiersAtRisk;
     const interestTiersAtRisk = needsStabilization
       ? this.stabilizationInterestTiersAtRisk
       : 0;
@@ -6553,7 +6559,9 @@ export class AutoChessAutopilot {
       ? ECONOMY_ACTION_LIMIT
       : state.hp <= this.policy.woundedHpThreshold
         ? Math.min(ECONOMY_ACTION_LIMIT, this.policy.maximumDryPaidRerolls * 2)
-        : this.policy.maximumDryPaidRerolls;
+        : healthyHighroll
+          ? this.policy.healthyStabilizeMaximumDryPaidRerolls
+          : this.policy.maximumDryPaidRerolls;
     const activeDryRerollLimit = needsStabilization
       ? stabilizationDryRerollLimit
       : terminalRollDown

@@ -130,6 +130,13 @@ test("稳健与搏上限保持普通信息并使用不同的生存经济目标",
   assert.ok(highroll.goodPurchaseInterestTiersAtRisk < balanced.goodPurchaseInterestTiersAtRisk);
   assert.ok(highroll.mergePurchaseInterestTiersAtRisk < balanced.mergePurchaseInterestTiersAtRisk);
   assert.ok(highroll.levelInterestTiersAtRisk < balanced.levelInterestTiersAtRisk);
+  assert.ok(
+    highroll.healthyStabilizeMaximumDryPaidRerolls < highroll.maximumDryPaidRerolls,
+  );
+  assert.ok(
+    highroll.healthyStabilizeRerollInterestTiersAtRisk
+      < highroll.stabilizeRerollInterestTiersAtRisk,
+  );
   assert.equal(resolveAutopilotStylePolicy("seer").safeWinRolloutScore, 10050);
   assert.equal(informationModeForAutopilotStyle("survival"), "normal");
   assert.equal(informationModeForAutopilotStyle("highroll"), "normal");
@@ -3812,7 +3819,7 @@ test("搏上限在残血满场时会完成规范站位并换入候补胜解", ()
   assert.equal(actions.some((action) => action.type === "move" && action.from.zone === "bench"), true);
 });
 
-test("搏上限在首次实际败局后及时转入恢复压力", () => {
+test("搏上限按当前血线动态止损，历史败局不会永久降档", () => {
   const bridge = new EngineBridge(1305831, 1, { simulation: true, battleStepHz: 60 });
   bridge.setConsoleLogging(false);
   bridge.engine.state.starterChoices = ["bastion"];
@@ -3839,10 +3846,13 @@ test("搏上限在首次实际败局后及时转入恢复压力", () => {
   );
   autopilot.setEnabled(true);
   assert.equal(autopilot.tick(1000), null);
-  assert.equal(autopilot.recoveryPressureActive(), true);
-  assert.equal(autopilot.rolloutPreferenceStyle(), "balanced");
+  assert.equal(autopilot.recoveryPressureActive(), false);
+  assert.equal(autopilot.rolloutPreferenceStyle(), "highroll");
 
   let exactAudits = 0;
+  state.hp = 10;
+  assert.equal(autopilot.recoveryPressureActive(), true);
+  assert.equal(autopilot.rolloutPreferenceStyle(), "balanced");
   autopilot.exactLineupSearchRequested = true;
   autopilot.nextPreparationAction = () => ({ type: "battle" });
   autopilot.battleConfidence = () => -100;
@@ -3861,9 +3871,68 @@ test("搏上限在首次实际败局后及时转入恢复压力", () => {
   assert.equal(autopilot.rolloutPreferenceStyle(), "survival");
   state.hp = 13;
   state.round = 13;
-  state.victories = 12;
+  state.victories = 8;
   assert.equal(autopilot.recoveryPressureActive(), false);
   assert.equal(autopilot.rolloutPreferenceStyle(), "highroll");
+});
+
+test("健康搏上限只小额止血，受伤后才放开完整稳定预算", () => {
+  const bridge = new EngineBridge(1305833);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 12;
+  bridge.engine.state.gold = 40;
+  bridge.engine.state.hp = 20;
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "highroll",
+    "normal",
+    20,
+  );
+  autopilot.rolloutConfidence = () => 9900;
+  autopilot.purchaseAction = () => null;
+  autopilot.replacementAction = () => null;
+  autopilot.upgradeAction = () => null;
+  autopilot.benchCleanupAction = () => null;
+  autopilot.interestSaleAction = () => null;
+  autopilot.finalReinvestmentAction = () => null;
+  autopilot.formationAction = () => null;
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+  const healthyActions = [];
+  for (let step = 0; step < 24 && bridge.engine.state.phase === "preparation"; step += 1) {
+    const action = autopilot.tick(2000 + step * 500);
+    if (action) healthyActions.push(action);
+  }
+  assert.equal(
+    healthyActions.filter((action) => action.type === "reroll").length,
+    autopilot.policy.healthyStabilizeMaximumDryPaidRerolls,
+  );
+  assert.ok(
+    autopilot.stabilizationInterestTiersAtRisk
+      <= autopilot.policy.healthyStabilizeRerollInterestTiersAtRisk,
+  );
+
+  bridge.engine.state.phase = "preparation";
+  bridge.engine.state.hp = 10;
+  bridge.engine.state.gold = 40;
+  autopilot.resetPreparation(12);
+  const woundedActions = [];
+  for (let step = 0; step < 48 && bridge.engine.state.phase === "preparation"; step += 1) {
+    const action = autopilot.tick(20_000 + step * 500);
+    if (action) woundedActions.push(action);
+  }
+  assert.ok(
+    woundedActions.filter((action) => action.type === "reroll").length
+      > healthyActions.filter((action) => action.type === "reroll").length,
+  );
+  assert.ok(
+    autopilot.stabilizationInterestTiersAtRisk
+      > autopilot.policy.healthyStabilizeRerollInterestTiersAtRisk,
+  );
 });
 
 test("搏上限四理财银行期优先保息，并为优质购买适度兑现战力", () => {
