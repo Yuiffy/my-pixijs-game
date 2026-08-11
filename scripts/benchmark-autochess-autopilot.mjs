@@ -197,6 +197,7 @@ const playRun = (seed) => {
     goCombatScorer,
     true,
     thinkingLevel,
+    true,
   );
   const goPreBattleVerification = new Map();
   let latestPreparationSnapshot = null;
@@ -251,23 +252,70 @@ const playRun = (seed) => {
   const tickTrace = [];
   let consecutiveIdleTicks = 0;
   let lastIdleSnapshot = null;
-  const traceAutopilotState = () => ({
-    phase: bridge.engine.state.phase,
-    gold: bridge.engine.state.gold,
-    shop: [...bridge.engine.state.shop],
-    preparationActions: autopilot.preparationActions,
-    rerolls: autopilot.rerolls,
-    paidRerolls: autopilot.paidRerolls,
-    dryPaidRerolls: autopilot.dryPaidRerolls,
-    interestTiersAtRisk: autopilot.stabilizationInterestTiersAtRisk,
-    rerollMode: autopilot.rerollMode,
-    finalizingEconomy: autopilot.finalizingEconomy,
-    exactLineupSearchRequested: autopilot.exactLineupSearchRequested,
-    rescueLineupLocked: autopilot.rescueLineupLocked,
-    plannedScore: autopilot.plannedLineupScore,
-    plannedLineupUids: [...autopilot.plannedLineupUids],
-    preparationStateVisits: Array.from(autopilot.preparationStateVisits.values()),
-  });
+  const traceRoster = (units) => units.flatMap((unit, index) => unit ? [{
+    index,
+    uid: unit.uid,
+    id: unit.id,
+    star: unit.star,
+  }] : []);
+  const traceAutopilotState = () => {
+    const roster = autopilot.ownedEntries();
+    const forgeCandidate = autopilot.starForgeCandidate(roster);
+    const forgeUnlockCost = bridge.engine.isStarForgeUnlocked
+      ? 0
+      : bridge.engine.starForgeUnlockCost;
+    const forgeNormalReserve = autopilot.goldReserve(false, 0);
+    const forgeStabilizationReserve = autopilot.stabilizationGoldReserve(
+      autopilot.policy.stabilizeRerollInterestTiersAtRisk,
+    );
+    return {
+      phase: bridge.engine.state.phase,
+      gold: bridge.engine.state.gold,
+      playerLevel: bridge.engine.state.playerLevel,
+      upgradeRemaining: bridge.engine.upgradeCost,
+      interestIncome: bridge.engine.interestIncome,
+      boardCap: bridge.engine.boardCap,
+      starForgeUnlocked: bridge.engine.state.starForgeUnlocked,
+      starForgeCandidate: forgeCandidate ? {
+        uid: forgeCandidate.entry.unit.uid,
+        id: forgeCandidate.entry.unit.id,
+        star: forgeCandidate.entry.unit.star,
+        location: forgeCandidate.entry.location,
+        upgradeCost: forgeCandidate.cost,
+        unlockCost: forgeUnlockCost,
+        normalReserve: forgeNormalReserve,
+        normalMinimumSurplus: 20,
+        stabilizationReserve: forgeStabilizationReserve,
+        affordableWithNormalReserve: bridge.engine.state.gold
+          - forgeUnlockCost
+          - forgeCandidate.cost
+          >= forgeNormalReserve + 20,
+        affordableWithStabilizationReserve: bridge.engine.state.gold
+          - forgeUnlockCost
+          - forgeCandidate.cost
+          >= forgeStabilizationReserve,
+      } : null,
+      shop: [...bridge.engine.state.shop],
+      board: traceRoster(bridge.engine.state.board),
+      bench: traceRoster(bridge.engine.state.bench),
+      preparationActions: autopilot.preparationActions,
+      rerolls: autopilot.rerolls,
+      paidRerolls: autopilot.paidRerolls,
+      dryPaidRerolls: autopilot.dryPaidRerolls,
+      interestTiersAtRisk: autopilot.stabilizationInterestTiersAtRisk,
+      rerollMode: autopilot.rerollMode,
+      finalizingEconomy: autopilot.finalizingEconomy,
+      formationStartedThisPreparation: autopilot.formationStartedThisPreparation,
+      exactLineupSearchRequested: autopilot.exactLineupSearchRequested,
+      exactAuditPaidRerollBaseline: autopilot.exactAuditPaidRerollBaseline,
+      rescueLineupLocked: autopilot.rescueLineupLocked,
+      plannedScore: autopilot.plannedLineupScore,
+      plannedLineupUids: [...autopilot.plannedLineupUids],
+      improvedUnitUidsThisPreparation: [...autopilot.improvedUnitUidsThisPreparation],
+      soldUnitIds: [...autopilot.soldUnitIds],
+      preparationStateVisits: Array.from(autopilot.preparationStateVisits.values()),
+    };
+  };
 
   const battleLimitReached = () => inputSnapshot
     ? (rounds.at(-1)?.round || 0) >= maximumBattles
@@ -322,6 +370,8 @@ const playRun = (seed) => {
         gold: bridge.engine.state.gold,
         interest: bridge.engine.interestIncome,
         level: bridge.engine.state.playerLevel,
+        upgradeRemaining: bridge.engine.upgradeCost,
+        starForgeUnlocked: bridge.engine.state.starForgeUnlocked,
         boardCount: bridge.engine.boardCount,
         boardCap: bridge.engine.boardCap,
         benchCount: bridge.engine.state.bench.filter(Boolean).length,
@@ -408,6 +458,7 @@ const playRun = (seed) => {
         tick: autopilotTickCount + 1,
         elapsedMs: Number(tickElapsedMs.toFixed(2)),
         action: action?.type || null,
+        actionDetail: action || null,
         before: traceBefore,
         after: traceAutopilotState(),
       });
@@ -568,6 +619,8 @@ const survivalAt = (round) => ({
     entry.round === round && entry.won
   ))).length / runs,
 });
+const totalAutopilotMs = results.reduce((sum, run) => sum + run.autopilotTickMs, 0);
+const totalAutopilotTicks = results.reduce((sum, run) => sum + run.autopilotTickCount, 0);
 const aggregate = {
   runs,
   baseSeed,
@@ -647,7 +700,9 @@ const aggregate = {
     });
     return totals;
   }, {}),
-  averageAutopilotTickMs: results.reduce((sum, run) => sum + run.autopilotTickMs, 0) / runs,
+  averageAutopilotRunMs: totalAutopilotMs / runs,
+  averageAutopilotTickMs: totalAutopilotMs / Math.max(1, totalAutopilotTicks),
+  totalAutopilotTicks,
   maximumAutopilotTickMs: Math.max(...results.map((run) => run.maximumAutopilotTickMs)),
   rolloutCache: {
     ...getAutopilotRolloutCacheStats(),
