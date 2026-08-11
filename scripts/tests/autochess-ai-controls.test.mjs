@@ -13,6 +13,7 @@ const {
   aggregateAutopilotRolloutScores,
   AutoChessAutopilot,
   getAutopilotRolloutCacheStats,
+  goCanonicalFormationPlacements,
   hydrateAutopilotRolloutCache,
   snapshotAutopilotRolloutCache,
 } = await loadTypescriptModule(
@@ -4414,6 +4415,102 @@ test("现代看穿退出旧宏路线并在启用首轮扩大当前战预算", ()
   bridge.engine.state.gold = 100;
   assert.equal(pilot.oracleWideSearchActive(), true);
   assert.equal(pilot.rescueThinkingBudget().exactRolloutCandidates, 4);
+});
+
+test("现代看穿的首轮精确候选全败时会扩大到看穿预算", () => {
+  const bridge = new EngineBridge(99100412, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 7;
+  bridge.engine.state.playerLevel = 3;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  SHOP_UNITS.slice(0, 7).forEach((id, index) => {
+    const unit = { uid: 991004120 + index, id, star: index < 2 ? 2 : 1 };
+    if (index < 3) bridge.engine.state.board[index] = unit;
+    else bridge.engine.state.bench[index - 3] = unit;
+  });
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    () => 0,
+    true,
+    "oracle",
+  );
+  let exactCalls = 0;
+  pilot.exactLineupSearchRequested = true;
+  pilot.rolloutLineupScore = (_lineup, _formation, stableOnly, combatHz) => {
+    if (stableOnly && combatHz === 60) exactCalls += 1;
+    return -100;
+  };
+
+  const lineup = pilot.rolloutTargetLineup(pilot.ownedEntries());
+
+  assert.equal(lineup.length, 3);
+  assert.ok(
+    exactCalls >= AUTOPILOT_THINKING_BUDGETS.deep.exactRolloutCandidates
+      + AUTOPILOT_THINKING_BUDGETS.oracle.exactRolloutCandidates,
+  );
+});
+
+test("现代看穿精算全败后会从完整阵容池救回非局部胜解", () => {
+  const bridge = new EngineBridge(99100413, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 17;
+  bridge.engine.state.hp = 5;
+  bridge.engine.state.playerLevel = 4;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  Array.from({ length: 8 }, (_, index) => SHOP_UNITS[index % 4]).forEach((id, index) => {
+    const unit = { uid: 991004130 + index, id, star: index < 4 ? 3 : 1 };
+    if (index < 4) bridge.engine.state.board[index] = unit;
+    else bridge.engine.state.bench[index - 4] = unit;
+  });
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "balanced",
+    "normal",
+    20,
+    () => 0,
+    true,
+    "oracle",
+  );
+  const initialBoard = pilot.ownedEntries().filter(({ location }) => location.zone === "board");
+  bridge.engine.state.board.fill(null);
+  goCanonicalFormationPlacements(initialBoard).forEach(({ entry, slot }) => {
+    bridge.engine.state.board[slot] = entry.unit;
+  });
+  const current = pilot.ownedEntries().filter(({ location }) => location.zone === "board");
+  const winningUids = new Set(
+    pilot.ownedEntries()
+      .filter(({ location }) => location.zone === "bench")
+      .map(({ unit }) => unit.uid),
+  );
+  const winningCount = (lineup) => lineup
+    .filter(({ unit }) => winningUids.has(unit.uid)).length;
+  pilot.exactLineupSearchRequested = true;
+  pilot.plannedLineupScore = -100;
+  pilot.rolloutTargetLineup = () => current;
+  pilot.rolloutConfidence = () => -100;
+  pilot.goModelScore = (lineup) => (
+    winningCount(lineup) === 4 ? 1000 : 100 - winningCount(lineup) * 100
+  );
+  pilot.rolloutLineupScore = (lineup) => (
+    winningCount(lineup) === 4 ? 10100 : -100
+  );
+
+  assert.equal(pilot.searchRescueLineup(pilot.ownedEntries()), true);
+  assert.deepEqual(new Set(pilot.plannedLineupUids), winningUids);
+  assert.equal(pilot.plannedLineupScore, 10100);
 });
 
 test("长考和看穿不会为未成三星的新项目卖掉唯一三星成品", () => {

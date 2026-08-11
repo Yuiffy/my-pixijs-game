@@ -203,7 +203,7 @@ const playRun = (seed) => {
   let latestPreparationSnapshot = null;
   const originalDispatch = bridge.dispatch.bind(bridge);
   bridge.dispatch = (action) => {
-    if (style === "go" && action.type === "battle") {
+    if ((style === "go" || snapshotOutputPath) && action.type === "battle") {
       latestPreparationSnapshot = {
         schema: "go-loss-snapshot-v1",
         capturedAt: new Date().toISOString(),

@@ -170,6 +170,7 @@ const SEER2_ROLLOUT_SURVIVOR_LIMIT = 3;
 const GO_MODEL_PARENT_LIMIT = 8;
 const GO_RESCUE_MODEL_BEAM_WIDTH = 24;
 const GO_RESCUE_MODEL_CANDIDATE_LIMIT = 24;
+const ORACLE_EXHAUSTIVE_RESCUE_MODEL_CANDIDATE_LIMIT = 64;
 /**
  * Cheap rollouts can reject a real win in critical Go positions. Once the
  * normal shortlist is still unsafe, exact-check a bounded heuristic cover;
@@ -2939,11 +2940,11 @@ export class AutoChessAutopilot {
     seer2PrincipalLineups.forEach(addCandidate);
 
     if (this.usesModelScoring()) {
-      const maximumThinkingBudget = this.modernConfiguration
-        && this.thinkingLevel === "oracle"
-        && !this.oracleWideSearchActive()
-        ? AUTOPILOT_THINKING_BUDGETS.deep
-        : this.thinkingBudget();
+      // Keep the ordinary oracle pass at the deep budget, but retain the full
+      // oracle budget as a second-stage ceiling. Previously this ceiling was
+      // also reduced to deep before round 18, so a losing Top-2 result could
+      // never inspect the oracle level's additional exact candidates.
+      const maximumThinkingBudget = this.thinkingBudget();
       const thinkingBudget = this.modernConfiguration && this.thinkingLevel === "oracle"
         ? AUTOPILOT_THINKING_BUDGETS.deep
         : maximumThinkingBudget;
@@ -3113,7 +3114,6 @@ export class AutoChessAutopilot {
       if (
         this.modernConfiguration
         && this.thinkingLevel === "oracle"
-        && this.oracleWideSearchActive()
         && !deferExactLineupSearch
         && (!primaryChampion || primaryChampion.rollout < 10000)
       ) {
@@ -5514,6 +5514,10 @@ export class AutoChessAutopilot {
 
     const current = this.rolloutTargetLineup(roster);
     const currentUids = new Set(current.map(({ unit }) => unit.uid));
+    const exhaustiveOracleRescue = this.modernConfiguration
+      && this.thinkingLevel === "oracle"
+      && this.exactLineupSearchRequested
+      && this.plannedLineupScore < RESCUE_MIN_WIN_SCORE;
     const committedGoWin = this.usesLearnedCombatPlanner()
       && current.length === cap
       && this.plannedLineupScore >= RESCUE_MIN_WIN_SCORE
@@ -5717,6 +5721,28 @@ export class AutoChessAutopilot {
         goModelFinalistKeys.add(key);
         addTargeted(lineup);
       });
+      if (exhaustiveOracleRescue) {
+        // The partial-lineup beam is fast, but it can discard a composition
+        // whose synergy appears only when all slots are filled. Once the final
+        // 60Hz selector has proved its local pool loses, rank the already
+        // deduplicated full composition pool and let the coarse rollout screen
+        // a wider emergency shortlist. This runs once at the battle boundary
+        // in the Worker, so normal economy ticks keep their small budget.
+        Array.from(combinations.values())
+          .map((lineup) => ({
+            lineup,
+            model: this.goModelScore(lineup, "go_canonical"),
+            heuristic: this.lineupHeuristicScore(lineup),
+          }))
+          .sort((left, right) => right.model - left.model
+            || right.heuristic - left.heuristic)
+          .slice(0, ORACLE_EXHAUSTIVE_RESCUE_MODEL_CANDIDATE_LIMIT)
+          .forEach(({ lineup }) => {
+            const key = lineupKey(lineup);
+            goModelFinalistKeys.add(key);
+            addTargeted(lineup);
+          });
+      }
     }
 
     const heuristicFinalists = Array.from(combinations.values())
@@ -5728,7 +5754,15 @@ export class AutoChessAutopilot {
       if (!targeted.has(key)) targeted.set(key, { lineup, heuristic });
     });
     const finalists = Array.from(targeted.values());
-    const rescueThinkingBudget = this.rescueThinkingBudget();
+    const rescueThinkingBudget = exhaustiveOracleRescue
+      ? this.thinkingBudget()
+      : this.rescueThinkingBudget();
+    const rescueModelCandidateLimit = exhaustiveOracleRescue
+      ? Math.max(
+        rescueThinkingBudget.rescueModelCandidates,
+        ORACLE_EXHAUSTIVE_RESCUE_MODEL_CANDIDATE_LIMIT,
+      )
+      : rescueThinkingBudget.rescueModelCandidates;
     const screenedFinalists = (() => {
       if (!this.usesLearnedCombatPlanner()) return finalists;
       const scored = finalists.map((candidate) => ({
@@ -5741,7 +5775,7 @@ export class AutoChessAutopilot {
       const add = (candidate: ScoredRescueCandidate | undefined) => {
         if (
           !candidate
-          || modelScreen.size >= rescueThinkingBudget.rescueModelCandidates
+          || modelScreen.size >= rescueModelCandidateLimit
           || modelScreen.has(candidate.key)
         ) return;
         modelScreen.set(candidate.key, candidate);
@@ -5751,7 +5785,7 @@ export class AutoChessAutopilot {
       [...scored]
         .sort((left, right) => right.model - left.model
           || right.heuristic - left.heuristic)
-        .slice(0, Math.max(1, rescueThinkingBudget.rescueModelCandidates - 4))
+        .slice(0, Math.max(1, rescueModelCandidateLimit - 4))
         .forEach(add);
       [...scored]
         .sort((left, right) => right.heuristic - left.heuristic
