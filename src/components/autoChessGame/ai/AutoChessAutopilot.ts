@@ -3644,12 +3644,17 @@ export class AutoChessAutopilot {
     const { state } = this.bridge.engine;
     const woundedDevelopmentAllowed = this.usesBalancedEconomy()
       || this.preferenceStyle === "highroll";
-    const surplusWithoutFinance = this.informationMode === "normal"
+    const surplusWithoutFinance = (
+      this.informationMode === "normal"
+      || this.preferenceStyle === "survival"
+    )
       && (
         (this.usesBalancedEconomy()
           && this.preparationStartGold >= this.policy.terminalRollDownActivationGold + 40)
         || (this.preferenceStyle === "highroll"
           && this.preparationStartGold >= this.policy.terminalRollDownActivationGold + 16)
+        || (this.preferenceStyle === "survival"
+          && this.preparationStartGold >= this.policy.terminalRollDownActivationGold + 32)
       );
     return state.playerLevel >= 10
       && state.round >= this.policy.terminalRollDownMinimumRound

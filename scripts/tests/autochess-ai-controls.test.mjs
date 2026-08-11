@@ -112,9 +112,10 @@ const makeLateSeerCase = (shop, bench = [], round = 20, style = "seer") => {
 
 test("稳健与搏上限保持普通信息并使用不同的生存经济目标", () => {
   const survival = resolveAutopilotStylePolicy("survival");
+  const balanced = resolveAutopilotStylePolicy("balanced");
   const highroll = resolveAutopilotStylePolicy("highroll");
   assert.equal(survival.safeWinRolloutScore, 10050);
-  assert.equal(resolveAutopilotStylePolicy("balanced").safeWinRolloutScore, 10010);
+  assert.equal(balanced.safeWinRolloutScore, 10010);
   assert.equal(highroll.safeWinRolloutScore, 10010);
   assert.deepEqual(
     resolveAutopilotStylePolicy("fair"),
@@ -125,6 +126,10 @@ test("稳健与搏上限保持普通信息并使用不同的生存经济目标",
   assert.ok(survival.lateGamePurchaseStartRound > highroll.lateGamePurchaseStartRound);
   assert.ok(survival.financePurchaseInterestTiersAtRisk > highroll.financePurchaseInterestTiersAtRisk);
   assert.ok(survival.upgradeProjectLimit < highroll.upgradeProjectLimit);
+  assert.ok(highroll.bankPurchaseInterestTiersAtRisk < balanced.bankPurchaseInterestTiersAtRisk);
+  assert.ok(highroll.goodPurchaseInterestTiersAtRisk < balanced.goodPurchaseInterestTiersAtRisk);
+  assert.ok(highroll.mergePurchaseInterestTiersAtRisk < balanced.mergePurchaseInterestTiersAtRisk);
+  assert.ok(highroll.levelInterestTiersAtRisk < balanced.levelInterestTiersAtRisk);
   assert.equal(resolveAutopilotStylePolicy("seer").safeWinRolloutScore, 10050);
   assert.equal(informationModeForAutopilotStyle("survival"), "normal");
   assert.equal(informationModeForAutopilotStyle("highroll"), "normal");
@@ -3807,7 +3812,7 @@ test("搏上限在残血满场时会完成规范站位并换入候补胜解", ()
   assert.equal(actions.some((action) => action.type === "move" && action.from.zone === "bench"), true);
 });
 
-test("搏上限已有败局后会转入恢复压力并精确审计预测败局", () => {
+test("搏上限在首次实际败局后及时转入恢复压力", () => {
   const bridge = new EngineBridge(1305831, 1, { simulation: true, battleStepHz: 60 });
   bridge.setConsoleLogging(false);
   bridge.engine.state.starterChoices = ["bastion"];
@@ -3855,9 +3860,42 @@ test("搏上限已有败局后会转入恢复压力并精确审计预测败局",
   state.hp = 5;
   assert.equal(autopilot.rolloutPreferenceStyle(), "survival");
   state.hp = 13;
+  state.round = 13;
   state.victories = 12;
   assert.equal(autopilot.recoveryPressureActive(), false);
   assert.equal(autopilot.rolloutPreferenceStyle(), "highroll");
+});
+
+test("搏上限四理财银行期优先保息，并为优质购买适度兑现战力", () => {
+  const financeIds = SHOP_UNITS
+    .filter((id) => UNIT_DEFS[id].traits.includes("finance"))
+    .slice(0, 4);
+  const bridge = new EngineBridge(1305832);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.playerLevel = 4;
+  bridge.engine.state.round = 10;
+  bridge.engine.state.gold = 40;
+  bridge.engine.state.board.fill(null);
+  financeIds.forEach((id, index) => {
+    bridge.engine.state.board[index] = { uid: 13058320 + index, id, star: 1 };
+  });
+  const highroll = new AutoChessAutopilot(bridge, "evolution", {}, "highroll", "normal");
+  highroll.resetPreparation(10);
+  assert.equal(highroll.financeInterestActive(), true);
+  assert.equal(
+    highroll.goldReserve(false, highroll.policy.bankPurchaseInterestTiersAtRisk),
+    36,
+  );
+  assert.equal(
+    highroll.goldReserve(false, highroll.policy.goodPurchaseInterestTiersAtRisk),
+    28,
+  );
+  assert.equal(
+    highroll.goldReserve(false, highroll.policy.mergePurchaseInterestTiersAtRisk),
+    20,
+  );
 });
 
 test("残血救援不会被20Hz假阴性挡住，候补胜解用60Hz确认", () => {
@@ -4437,7 +4475,7 @@ test("终局集中搜牌只在高额存款安全窗口开启", () => {
   assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 9900), false);
 });
 
-test("均衡和搏上限在未成四理财但现金明显溢出时也会追当前三星项目", () => {
+test("三种风格在安全高额存款时都会正常转向终局项目", () => {
   for (const [style, gold] of [["balanced", 165], ["highroll", 125]]) {
     const { bridge, autopilot } = makeLateSeerCase(
       [null, null, null, null, null],
@@ -4462,15 +4500,18 @@ test("均衡和搏上限在未成四理财但现金明显溢出时也会追当�
     24,
     "survival",
   );
-  bridge.engine.state.hp = 13;
+  bridge.engine.state.hp = 20;
   bridge.engine.state.gold = 220;
   autopilot.rolloutConfidence = () => 10400;
   autopilot.resetPreparation(24);
   assert.equal(
     autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400),
-    false,
-    "survival should keep the four-finance and wounded-health guard",
+    true,
+    "survival should transition once the current board is safe and cash is abundant",
   );
+  bridge.engine.state.hp = 16;
+  autopilot.resetPreparation(24);
+  assert.equal(autopilot.terminalRollDownActive(autopilot.ownedEntries(), 10400), false);
 });
 
 test("多个六份终局项目会在较低存款触发冲刺并在下一回合停搜", () => {
