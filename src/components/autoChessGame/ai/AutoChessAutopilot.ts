@@ -171,6 +171,7 @@ const GO_MODEL_PARENT_LIMIT = 8;
 const GO_RESCUE_MODEL_BEAM_WIDTH = 24;
 const GO_RESCUE_MODEL_CANDIDATE_LIMIT = 24;
 const ORACLE_EXHAUSTIVE_RESCUE_MODEL_CANDIDATE_LIMIT = 64;
+const INTERACTIVE_ORACLE_EXHAUSTIVE_LINEUP_LIMIT = 8_000;
 /**
  * Cheap rollouts can reject a real win in critical Go positions. Once the
  * normal shortlist is still unsafe, exact-check a bounded heuristic cover;
@@ -333,6 +334,21 @@ type StarForgeOptions = {
 type RerollMode = "bank" | "stabilize" | "upgrade_chase";
 export type AutopilotPlanningMode = "evolution" | "heuristic" | "training";
 
+const canonicalizeFormationDuplicates = (lineup: OwnedEntry[]) => {
+  const groups = new Map<string, OwnedEntry[]>();
+  lineup.forEach((entry) => {
+    const key = `${entry.unit.id}:${entry.unit.star}`;
+    const group = groups.get(key) || [];
+    group.push(entry);
+    groups.set(key, group);
+  });
+  groups.forEach((group) => group.sort((left, right) => left.unit.uid - right.unit.uid));
+  return lineup.map((entry) => {
+    const key = `${entry.unit.id}:${entry.unit.star}`;
+    return groups.get(key)?.shift() || entry;
+  });
+};
+
 const formationPlacements = (
   lineup: OwnedEntry[],
   profileId: FormationProfile = "human_midline",
@@ -341,8 +357,9 @@ const formationPlacements = (
   const unitSlots = ("units" in profile ? profile.units : {}) as Partial<
     Record<UnitId, readonly number[]>
   >;
+  const canonicalLineup = canonicalizeFormationDuplicates(lineup);
   const orderedLineup = profileId === "go_canonical"
-    ? [...lineup].sort((left, right) => {
+    ? [...canonicalLineup].sort((left, right) => {
       const leftDefinition = UNIT_DEFS[left.unit.id];
       const rightDefinition = UNIT_DEFS[right.unit.id];
       const leftDurability = (leftDefinition.hp + leftDefinition.armor * 7)
@@ -355,9 +372,10 @@ const formationPlacements = (
         || rightDurability - leftDurability
         || rightDefinition.range - leftDefinition.range
         || rightDefinition.attack - leftDefinition.attack
-        || left.unit.id.localeCompare(right.unit.id);
-    })
-    : lineup;
+        || left.unit.id.localeCompare(right.unit.id)
+        || left.unit.uid - right.unit.uid;
+      })
+    : canonicalLineup;
   const frontline = orderedLineup.filter(({ unit }) => (
     unit.id === "rei" || UNIT_DEFS[unit.id].attackType === "melee"
   ));
@@ -747,6 +765,26 @@ export class AutoChessAutopilot {
     return this.preferenceStyle === "balanced";
   }
 
+  private priorBattleLosses() {
+    const { round, victories } = this.bridge.engine.state;
+    return Math.max(0, Math.max(0, round - 1) - victories);
+  }
+
+  private recoveryPressureActive() {
+    const { hp } = this.bridge.engine.state;
+    return hp <= this.policy.woundedHpThreshold
+      || (this.preferenceStyle === "highroll" && this.priorBattleLosses() > 0);
+  }
+
+  private rolloutPreferenceStyle(): AutopilotPreferenceStyle {
+    if (this.preferenceStyle !== "highroll" || this.priorBattleLosses() === 0) {
+      return this.preferenceStyle;
+    }
+    return this.bridge.engine.state.hp <= this.policy.criticalHpThreshold
+      ? "survival"
+      : "balanced";
+  }
+
   private thinkingBudget() {
     const budget = AUTOPILOT_THINKING_BUDGETS[this.thinkingLevel];
     if (
@@ -1045,17 +1083,18 @@ export class AutoChessAutopilot {
       const roster = this.ownedEntries();
       const coarseScore = this.battleConfidence(roster);
       this.lastBattlePredictionScore = coarseScore;
-      const auditEligible = this.style === "seer" || coarseScore > 0;
+      const recoveryAudit = this.recoveryPressureActive();
+      const auditEligible = this.style === "seer" || coarseScore > 0 || recoveryAudit;
       if (this.shouldAuditLiveBattle() && auditEligible) {
         const audit = this.exactBattleAudit(roster);
         this.lastBattlePredictionScore = audit.score;
         const expectsWin = this.style === "seer"
           ? this.seerPlan?.steps?.[0]?.expectedBattleWon !== false
-          : coarseScore > 0;
+          : coarseScore > 0 || recoveryAudit;
         if (
           expectsWin
           && audit.score < 10000
-          && this.exactBattleAuditRejectedKey !== audit.key
+          && !this.exactBattleAuditRejectedKey
         ) {
           // Reopen the decision window once. If no legal improvement exists,
           // the next pass may still accept this unavoidable loss.
@@ -1976,13 +2015,14 @@ export class AutoChessAutopilot {
       ), 0);
       return [{ candidate, prefix, losses, finalHp, minimumHp, marginTotal }];
     }).sort((left, right) => {
-      if (this.preferenceStyle === "survival") {
+      const preferenceStyle = this.rolloutPreferenceStyle();
+      if (preferenceStyle === "survival") {
         return right.minimumHp - left.minimumHp
           || right.finalHp - left.finalHp
           || left.losses - right.losses
           || right.marginTotal - left.marginTotal;
       }
-      if (this.preferenceStyle === "highroll") {
+      if (preferenceStyle === "highroll") {
         return right.finalHp - left.finalHp
           || right.marginTotal - left.marginTotal
           || right.minimumHp - left.minimumHp
@@ -2056,7 +2096,7 @@ export class AutoChessAutopilot {
     if (needsPopulation) return openingInterestFloor;
     const regularReserve = hp <= this.policy.criticalHpThreshold
       ? this.policy.criticalReserve
-      : hp <= this.policy.woundedHpThreshold
+      : this.recoveryPressureActive()
         ? this.policy.woundedReserve
         : Math.round(Math.min(
           this.policy.reserveCap,
@@ -2088,7 +2128,7 @@ export class AutoChessAutopilot {
     );
     const emergencyFloor = hp <= this.policy.criticalHpThreshold
       ? 0
-      : hp <= this.policy.woundedHpThreshold
+      : this.recoveryPressureActive()
         ? 1
         : 2;
     const openingInterestFloor = round === 1 && hp > this.policy.criticalHpThreshold
@@ -2269,7 +2309,7 @@ export class AutoChessAutopilot {
       { length: Math.max(1, futureCombatHorizon) },
       (_, offset) => this.goModelPlacementsScoreAtRound(placements, currentRound + offset),
     );
-    return aggregateAutopilotRolloutScores(scores, this.preferenceStyle);
+    return aggregateAutopilotRolloutScores(scores, this.rolloutPreferenceStyle());
   }
 
   private modelCombatConfidence(modelScore: number) {
@@ -2401,7 +2441,7 @@ export class AutoChessAutopilot {
       return score;
     });
     if (!stableOnly) return scores[0];
-    return aggregateAutopilotRolloutScores(scores, this.preferenceStyle);
+    return aggregateAutopilotRolloutScores(scores, this.rolloutPreferenceStyle());
   }
 
   private rolloutLineupScore(
@@ -3535,6 +3575,21 @@ export class AutoChessAutopilot {
     );
   }
 
+  private financeReserveUids(roster: OwnedEntry[]) {
+    const projectIds = this.financeProjectIds(roster);
+    const reserves = new Set<number>();
+    projectIds.forEach((id) => {
+      const strongest = roster
+        .filter(({ unit }) => unit.id === id)
+        .sort((left, right) => right.unit.star - left.unit.star
+          || this.unitScore(right.unit, roster) - this.unitScore(left.unit, roster)
+          || Number(right.location.zone === "board") - Number(left.location.zone === "board")
+          || left.unit.uid - right.unit.uid)[0];
+      if (strongest) reserves.add(strongest.unit.uid);
+    });
+    return reserves;
+  }
+
   private upgradeProjectIds(roster: OwnedEntry[], lineup = this.rolloutTargetLineup(roster)) {
     const lineupIds = new Set(lineup.map(({ unit }) => unit.id));
     const projects = new Map<UnitId, { copies: number; score: number }>();
@@ -3628,7 +3683,6 @@ export class AutoChessAutopilot {
   }
 
   private seerProjectFocusIds(roster: OwnedEntry[]) {
-    if (!this.usesOraclePlanner()) return new Set<UnitId>(this.terminalTargetIds());
     if (this.seer2EndgameOpen() && this.seer2FocusIds.size > 0) {
       return new Set(this.seer2FocusIds);
     }
@@ -3658,7 +3712,10 @@ export class AutoChessAutopilot {
       ? inProgress
       : incomplete.filter(({ shopHits }) => shopHits > 0))
       .sort((left, right) => right.score - left.score || right.copies - left.copies);
-    return new Set(candidates.slice(0, 3).map(({ id }) => id));
+    const projectLimit = this.usesOraclePlanner()
+      ? 3
+      : Math.max(1, this.policy.upgradeProjectLimit);
+    return new Set(candidates.slice(0, projectLimit).map(({ id }) => id));
   }
 
   private lateGameReserveUids(roster: OwnedEntry[]) {
@@ -3668,9 +3725,12 @@ export class AutoChessAutopilot {
     this.lateGameTargetIds().forEach((id) => {
       let reservedCopies = 0;
       const desiredCopies = this.targetDesiredCopies(id);
-      const reserveGoal = this.usesOraclePlanner() && !focusedIds.has(id)
-        ? this.seer2EndgameOpen() ? 0 : Math.min(desiredCopies, 1)
-        : lateGamePurchaseWindowOpen ? desiredCopies : Math.min(desiredCopies, 3);
+      const focused = focusedIds.has(id);
+      const reserveGoal = focused
+        ? lateGamePurchaseWindowOpen ? desiredCopies : Math.min(desiredCopies, 3)
+        : this.usesOraclePlanner() && !this.seer2EndgameOpen()
+          ? Math.min(desiredCopies, 1)
+          : 0;
       roster
         .filter(({ unit }) => unit.id === id)
         .sort((left, right) => right.unit.star - left.unit.star
@@ -3870,14 +3930,16 @@ export class AutoChessAutopilot {
         || completesMerge
         || definition.cost >= weakestLineupCost + 2;
       const targetNeedsCopies = ownedCopies < targetDesiredCopies;
-      const goProjectAvailable = !this.seer2EndgameOpen()
+      const focusedProjectAvailable = targetDesiredCopies <= 0
         || seerFocusIds.has(id)
         || completesMerge;
-      const longTermPriority = targetNeedsCopies && canStartTerminalProject && goProjectAvailable
+      const longTermPriority = targetNeedsCopies
+        && canStartTerminalProject
+        && focusedProjectAvailable
         ? targetPlanPriority
         : 0;
       const targetDuplicate = (targetDesiredCopies > 0
-        ? targetNeedsCopies && goProjectAvailable
+        ? targetNeedsCopies && focusedProjectAvailable
         : lineupIds.has(id) || upgradeProjectIds.has(id))
         && canStartTerminalProject
         && !skipMaxStarDuplicate;
@@ -3939,7 +4001,14 @@ export class AutoChessAutopilot {
         : targetDuplicate || completesTrait || clearUpgrade
           ? this.policy.goodPurchaseInterestTiersAtRisk
           : 0;
-      const purchaseInterestRisk = longTermPriority > 0
+      const safeProjectBanking = this.preferenceStyle === "survival"
+        && rerollMode === "bank"
+        && state.round >= 10
+        && !needsPopulation
+        && (longTermPriority > 0 || advancesFinance);
+      const purchaseInterestRisk = safeProjectBanking
+        ? 0
+        : longTermPriority > 0
         ? this.policy.lateGameTargetPurchaseInterestTiersAtRisk
         : advancesFinance
           ? this.policy.financePurchaseInterestTiersAtRisk
@@ -4796,7 +4865,7 @@ export class AutoChessAutopilot {
     const currentScore = this.rolloutConfidence(roster);
     const unsafe = currentScore < this.policy.safeWinRolloutScore;
     const desiredUids = new Set(this.rolloutTargetLineup(roster).map(({ unit }) => unit.uid));
-    const financeProjectIds = this.financeProjectIds(roster);
+    const financeReserveUids = this.financeReserveUids(roster);
     const upgradeProjectIds = this.upgradeProjectIds(roster);
     const lateGameReserveUids = this.lateGameReserveUids(roster);
     const plans = candidates.flatMap((candidate) => roster.flatMap((sacrifice) => {
@@ -4804,7 +4873,7 @@ export class AutoChessAutopilot {
       if (this.improvedUnitUidsThisPreparation.has(unit.uid)) return [];
       const completesThreeStar = this.shopCandidateCompletesThreeStar(roster, candidate);
       if (this.uniqueCompletedAlternative(unit, roster) && !completesThreeStar) return [];
-      const protectedProject = financeProjectIds.has(unit.id)
+      const protectedProject = financeReserveUids.has(unit.uid)
         || upgradeProjectIds.has(unit.id)
         || lateGameReserveUids.has(unit.uid);
       if (unit.id === candidate.id) return [];
@@ -4952,7 +5021,8 @@ export class AutoChessAutopilot {
 
   private expendableInterestEntries(roster: OwnedEntry[], desired = this.rolloutTargetLineup(roster)) {
     const desiredUids = new Set(desired.map(({ unit }) => unit.uid));
-    const financeProjectIds = this.financeProjectIds(roster);
+    const desiredIds = new Set(desired.map(({ unit }) => unit.id));
+    const financeReserveUids = this.financeReserveUids(roster);
     const upgradeProjectIds = this.upgradeProjectIds(roster, desired);
     const mergeProjectIds = this.oneCopyFromMergeIds(roster);
     const lateGameReserveUids = this.lateGameReserveUids(roster);
@@ -4960,9 +5030,11 @@ export class AutoChessAutopilot {
       .filter(({ unit }) => {
         if (this.improvedUnitUidsThisPreparation.has(unit.uid)) return false;
         if (this.uniqueCompletedAlternative(unit, roster)) return false;
-        const futureReserve = financeProjectIds.has(unit.id)
+        const activeMergeProject = mergeProjectIds.has(unit.id)
+          && (desiredIds.has(unit.id) || upgradeProjectIds.has(unit.id));
+        const futureReserve = financeReserveUids.has(unit.uid)
           || upgradeProjectIds.has(unit.id)
-          || mergeProjectIds.has(unit.id)
+          || activeMergeProject
           || lateGameReserveUids.has(unit.uid);
         return (!futureReserve || this.speculativeUnitIds.has(unit.id))
           && !desiredUids.has(unit.uid);
@@ -5170,8 +5242,13 @@ export class AutoChessAutopilot {
     const desired = this.rolloutTargetLineup(roster);
     if (engine.boardCount < desired.length) return null;
     const expendable = this.expendableInterestEntries(roster, desired);
+    const benchUnderPressure = state.bench.filter((unit) => !unit).length
+      <= this.policy.benchPressureEmptySlots;
     const strategicSaleAllowed = state.hp > 8
-      && state.streak >= 2
+      && (
+        state.streak >= 2
+        || (this.preferenceStyle === "survival" && benchUnderPressure)
+      )
       && Math.max(0, roster.length - desired.length) >= this.policy.interestSaleMinimumBench
       && this.rolloutConfidence(roster) >= this.policy.safeWinRolloutScore;
     const speculative = expendable.filter(({ unit }) => this.speculativeUnitIds.has(unit.id));
@@ -5367,7 +5444,10 @@ export class AutoChessAutopilot {
       this.rescueLineupLocked = false;
       this.plannedBoardSlots.clear();
     }
-    const desired = this.rolloutTargetLineup(roster);
+    const frozenLineup = this.formationStartedThisPreparation
+      ? this.currentPlannedLineup(roster)
+      : null;
+    const desired = frozenLineup || this.rolloutTargetLineup(roster);
     const desiredIds = new Set(desired.map(({ unit }) => unit.uid));
     const emptyBench = this.bridge.engine.state.bench.findIndex((unit) => !unit);
     const surplusBoard = roster.find(
@@ -5456,16 +5536,47 @@ export class AutoChessAutopilot {
       return false;
     }
     const lateRescueSearch = this.bridge.engine.state.round >= 48;
-    const woundedRescueSearch = state.hp <= this.policy.woundedHpThreshold;
+    const woundedRescueSearch = this.recoveryPressureActive();
+    const exhaustiveLineupCount = (() => {
+      if (!this.usesLearnedCombatPlanner()) return 0;
+      const groupSizes = new Map<string, number>();
+      roster.forEach(({ unit }) => {
+        const key = `${unit.id}:${unit.star}`;
+        groupSizes.set(key, (groupSizes.get(key) || 0) + 1);
+      });
+      let counts = Array(cap + 1).fill(0) as number[];
+      counts[0] = 1;
+      groupSizes.forEach((groupSize) => {
+        const next = Array(cap + 1).fill(0) as number[];
+        counts.forEach((count, selectedCount) => {
+          if (count === 0) return;
+          for (
+            let take = 0;
+            take <= Math.min(groupSize, cap - selectedCount);
+            take += 1
+          ) {
+            const total = next[selectedCount + take] + count;
+            next[selectedCount + take] = Math.min(
+              INTERACTIVE_ORACLE_EXHAUSTIVE_LINEUP_LIMIT + 1,
+              total,
+            );
+          }
+        });
+        counts = next;
+      });
+      return counts[cap];
+    })();
+    const exhaustivePoolTooWide = exhaustiveLineupCount
+      > INTERACTIVE_ORACLE_EXHAUSTIVE_LINEUP_LIMIT;
     if (
       this.interactiveRuntime
-      && lateRescueSearch
+      && (lateRescueSearch || exhaustivePoolTooWide)
       && this.modernConfiguration
       && (this.thinkingLevel === "deep" || this.thinkingLevel === "oracle")
     ) {
       // The staged learned selector has already completed its bounded 60Hz pass.
-      // Re-enumerating every ten-of-eighteen rescue composition can take minutes
-      // in a Worker without adding a new source of combat information.
+      // Re-enumerating a terminal full-lineup pool can take tens of seconds in a
+      // Worker without adding a new source of combat information.
       this.rescueSearchCompleted = true;
       return false;
     }
@@ -5888,7 +5999,7 @@ export class AutoChessAutopilot {
       ];
     })();
     const rescueDirectBoardCandidates = (() => {
-      const fullExactCoverage = this.preferenceStyle === "survival"
+      const fullExactCoverage = this.rolloutPreferenceStyle() === "survival"
         || state.hp <= this.policy.criticalHpThreshold;
       if (
         !exactRescueSearch
@@ -6179,7 +6290,7 @@ export class AutoChessAutopilot {
       // the AI open combat with an unused upgrade already in its roster.
       const lateForge = this.style === "go" ? null : this.starForgeAction(roster);
       if (lateForge) return lateForge;
-      const formation = this.formationAction(roster);
+      const formation = repeatedStateExhausted ? null : this.formationAction(roster);
       if (formation) return formation;
       if (
         this.plannedLineupUids.length > 0
@@ -6215,7 +6326,9 @@ export class AutoChessAutopilot {
           return null;
         }
       }
-      this.searchRescueLineup(this.ownedEntries());
+      if (!this.formationStartedThisPreparation) {
+        this.searchRescueLineup(this.ownedEntries());
+      }
       if (!this.formationStartedThisPreparation) {
         const selectedLineupForge = this.style === "go"
           ? null
@@ -6242,7 +6355,7 @@ export class AutoChessAutopilot {
     // intentional economy loss.
     const seerPlanExpectedWin = this.seerPlan?.steps?.[0]?.expectedBattleWon !== false;
     const seerPlanNeedsRescue = seerPlanExpectedWin
-      || state.hp <= this.policy.woundedHpThreshold;
+      || this.recoveryPressureActive();
     const seerPlanFailureScore = seerPlanExpectedWin ? 0 : -500;
     const exactSeerPlanFailure = Boolean(
       this.style === "seer"
@@ -6257,7 +6370,7 @@ export class AutoChessAutopilot {
       // mismatch is not evidence that the whole 60/70-round route is doomed.
       this.invalidateSeerPlan(false);
     }
-    const woundedRescueWindow = state.hp <= this.policy.woundedHpThreshold;
+    const woundedRescueWindow = this.recoveryPressureActive();
     const oracleRescueWindow = this.style === "seer" && state.round >= 48;
     if (
       engine.boardCount >= engine.boardCap

@@ -166,6 +166,196 @@ test("非看穿风格前期不把未拥有的终局一星牌塞满候补", () =>
   assert.equal(targetCandidate.lateGamePriority, 0);
 });
 
+test("稳健长考只保留两个明确终局项目并在满席清理其余单卡", () => {
+  const bridge = new EngineBridge(130691, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.round = 13;
+  state.hp = 13;
+  state.playerLevel = 7;
+  state.gold = 15;
+  state.board.fill(null);
+  state.bench.fill(null);
+  SHOP_UNITS.filter((id) => !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id))
+    .slice(0, 7)
+    .forEach((id, index) => {
+      state.board[index] = { uid: 1306910 + index, id, star: 2 };
+    });
+  AUTOPILOT_TERMINAL_TARGET_IDS.slice(0, 8).forEach((id, index) => {
+    state.bench[index] = { uid: 1306930 + index, id, star: 1 };
+  });
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "survival",
+    "normal",
+    20,
+    undefined,
+    true,
+    "deep",
+  );
+  autopilot.rolloutTargetLineup = (roster) => roster.filter(
+    ({ location }) => location.zone === "board",
+  );
+  autopilot.rolloutConfidence = () => 10400;
+
+  const focused = autopilot.seerProjectFocusIds(autopilot.ownedEntries());
+  const reserves = autopilot.lateGameReserveUids(autopilot.ownedEntries());
+  assert.equal(focused.size, 2);
+  assert.deepEqual(
+    new Set(autopilot.ownedEntries()
+      .filter(({ unit, location }) => location.zone === "bench" && reserves.has(unit.uid))
+      .map(({ unit }) => unit.id)),
+    focused,
+  );
+
+  let sales = 0;
+  for (let step = 0; step < 8; step += 1) {
+    const sale = autopilot.benchCleanupAction(autopilot.ownedEntries());
+    if (!sale) break;
+    bridge.dispatch(sale);
+    sales += 1;
+  }
+  assert.ok(sales >= 3);
+  assert.ok(state.bench.filter(Boolean).length <= 5);
+  assert.equal(Array.from(focused).every(
+    (id) => state.bench.some((unit) => unit?.id === id),
+  ), true);
+});
+
+test("稳健安全局不会为新一星长期项目跌破当前利息档", () => {
+  const bridge = new EngineBridge(130692, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.round = 13;
+  state.hp = 20;
+  state.playerLevel = 7;
+  state.gold = 20;
+  state.board.fill(null);
+  state.bench.fill(null);
+  SHOP_UNITS.filter((id) => !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id))
+    .slice(0, 7)
+    .forEach((id, index) => {
+      state.board[index] = { uid: 1306920 + index, id, star: 2 };
+    });
+  state.shop = ["yukisyo", null, null, null, null];
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "survival",
+    "normal",
+    20,
+    undefined,
+    true,
+    "deep",
+  );
+  autopilot.rolloutTargetLineup = (roster) => roster.filter(
+    ({ location }) => location.zone === "board",
+  );
+  autopilot.rolloutConfidence = () => 10400;
+  autopilot.rerollStrategy = () => ({ mode: "bank", rolloutScore: 10400 });
+
+  assert.equal(autopilot.purchaseAction(autopilot.ownedEntries(), false), null);
+  state.gold = 23;
+  assert.deepEqual(autopilot.purchaseAction(autopilot.ownedEntries(), false), {
+    type: "shop",
+    index: 0,
+  });
+});
+
+test("理财候选只保护每个棋种最强的一枚而非整组候补", () => {
+  const bridge = new EngineBridge(130693, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.round = 13;
+  state.playerLevel = 7;
+  state.board.fill(null);
+  state.bench.fill(null);
+  SHOP_UNITS.filter((id) => (
+    !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id)
+    && !UNIT_DEFS[id].traits.includes("finance")
+  )).slice(0, 7).forEach((id, index) => {
+    state.board[index] = { uid: 1306930 + index, id, star: 2 };
+  });
+  state.bench[0] = { uid: 1306941, id: "mitsuri", star: 1 };
+  state.bench[1] = { uid: 1306940, id: "mitsuri", star: 1 };
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "survival",
+    "normal",
+    20,
+    undefined,
+    true,
+    "deep",
+  );
+  autopilot.rolloutTargetLineup = (roster) => roster.filter(
+    ({ location }) => location.zone === "board",
+  );
+
+  const reserves = autopilot.financeReserveUids(autopilot.ownedEntries());
+  const expendable = autopilot.expendableInterestEntries(autopilot.ownedEntries());
+  assert.deepEqual([...reserves], [1306940]);
+  assert.deepEqual(
+    expendable.filter(({ unit }) => unit.id === "mitsuri").map(({ unit }) => unit.uid),
+    [1306941],
+  );
+});
+
+test("稳健安全局满候补时无需连胜也会清理闲棋凑下一档利息", () => {
+  const bridge = new EngineBridge(130694, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.round = 13;
+  state.hp = 20;
+  state.streak = 0;
+  state.playerLevel = 7;
+  state.gold = 17;
+  state.board.fill(null);
+  state.bench.fill(null);
+  const ordinary = SHOP_UNITS.filter((id) => (
+    !AUTOPILOT_LATE_GAME_TARGET_IDS.includes(id)
+    && !UNIT_DEFS[id].traits.includes("finance")
+  ));
+  ordinary.slice(0, 7).forEach((id, index) => {
+    state.board[index] = { uid: 1306950 + index, id, star: 2 };
+  });
+  ordinary.slice(7, 15).forEach((id, index) => {
+    state.bench[index] = { uid: 1306970 + index, id, star: 1 };
+  });
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "survival",
+    "normal",
+    20,
+    undefined,
+    true,
+    "deep",
+  );
+  autopilot.rolloutTargetLineup = (roster) => roster.filter(
+    ({ location }) => location.zone === "board",
+  );
+  autopilot.rolloutConfidence = () => 10400;
+
+  assert.deepEqual(autopilot.interestSaleAction(autopilot.ownedEntries()), {
+    type: "sell",
+    location: { zone: "bench", index: 0 },
+  });
+});
+
 test("后期目标采用真人长期连胜十人阵容并全部追三星", () => {
   assert.deepEqual(AUTOPILOT_LATE_GAME_TARGET_IDS, [
     "grove_mender",
@@ -982,11 +1172,15 @@ test("同回合卖出的棋子不会回购，除非当前购买会立即合成",
 test("经济收尾开始后只完成工坊、清理和落位，不再重新购物", () => {
   const { bridge, autopilot } = makeLateSeerCase(["grove_mender", null, null, null, null], [], 20, "highroll");
   let purchaseCalls = 0;
+  let rescueSearchCalls = 0;
   autopilot.finalizingEconomy = true;
   autopilot.starForgeAction = () => null;
   autopilot.benchCleanupAction = () => null;
   autopilot.interestSaleAction = () => null;
-  autopilot.searchRescueLineup = () => false;
+  autopilot.searchRescueLineup = () => {
+    rescueSearchCalls += 1;
+    return false;
+  };
   autopilot.purchaseAction = () => {
     purchaseCalls += 1;
     return { type: "shop", index: 0 };
@@ -1003,6 +1197,7 @@ test("经济收尾开始后只完成工坊、清理和落位，不再重新购�
   autopilot.formationAction = () => null;
   assert.equal(autopilot.nextPreparationAction()?.type, "battle");
   assert.equal(purchaseCalls, 0);
+  assert.equal(rescueSearchCalls, 1);
   assert.equal(bridge.engine.state.phase, "preparation");
 });
 
@@ -2147,6 +2342,77 @@ test("看穿达到整备动作上限时仍先完成满板满候补换位", () =>
   const battleAction = autopilot.nextPreparationAction();
   assert.deepEqual(battleAction, { type: "battle" });
   assert.equal(bridge.engine.state.board[0]?.uid, benchTarget.uid);
+});
+
+test("相同棋种的规范落位按稳定身份完成且不会来回交换", () => {
+  const bridge = new EngineBridge(131497, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.playerLevel = 10;
+  state.board.fill(null);
+  state.bench.fill(null);
+  state.board[3] = { uid: 1314972, id: "cinder_ram", star: 1 };
+  state.board[22] = { uid: 1314971, id: "cinder_ram", star: 1 };
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "highroll",
+    "oracle",
+    20,
+  );
+  autopilot.rolloutTargetLineup = () => autopilot.ownedEntries();
+  autopilot.plannedFormation = "human_midline";
+
+  const actions = [];
+  for (let step = 0; step < 6; step += 1) {
+    const action = autopilot.formationAction(autopilot.ownedEntries());
+    if (!action) break;
+    actions.push(action);
+    bridge.dispatch(action);
+  }
+
+  assert.equal(actions.length, 2);
+  assert.equal(state.board[10]?.uid, 1314971);
+  assert.equal(state.board[16]?.uid, 1314972);
+  assert.equal(autopilot.formationAction(autopilot.ownedEntries()), null);
+});
+
+test("落位开始后沿用已选阵容而不按中间棋盘重新选人", () => {
+  const bridge = new EngineBridge(131498, 1, { simulation: true, battleStepHz: 20 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.board.fill(null);
+  state.bench.fill(null);
+  state.board[0] = { uid: 1314981, id: "cinder_ram", star: 1 };
+  state.board[1] = { uid: 1314982, id: "cinder_ram", star: 1 };
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "survival",
+    "normal",
+    20,
+    undefined,
+    true,
+    "deep",
+  );
+  const planned = state.board.filter(Boolean);
+  autopilot.plannedLineupUids = planned.map(({ uid }) => uid);
+  autopilot.plannedLineupUnits = new Map(planned.map(({ uid, id, star }) => [
+    uid,
+    { id, star },
+  ]));
+  autopilot.formationStartedThisPreparation = true;
+  autopilot.rolloutTargetLineup = () => {
+    throw new Error("formation must not reselect after its first move");
+  };
+
+  assert.equal(autopilot.formationAction(autopilot.ownedEntries())?.type, "move");
 });
 
 test("看穿规划会把普通过渡棋纳入人口和战力", () => {
@@ -3541,6 +3807,59 @@ test("搏上限在残血满场时会完成规范站位并换入候补胜解", ()
   assert.equal(actions.some((action) => action.type === "move" && action.from.zone === "bench"), true);
 });
 
+test("搏上限已有败局后会转入恢复压力并精确审计预测败局", () => {
+  const bridge = new EngineBridge(1305831, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  const state = bridge.engine.state;
+  state.round = 13;
+  state.victories = 11;
+  state.hp = 13;
+  state.playerLevel = 7;
+  state.board.fill(null);
+  SHOP_UNITS.slice(0, 7).forEach((id, index) => {
+    state.board[index] = { uid: 13058310 + index, id, star: 1 };
+  });
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "highroll",
+    "oracle",
+    20,
+    undefined,
+    true,
+    "oracle",
+  );
+  autopilot.setEnabled(true);
+  assert.equal(autopilot.tick(1000), null);
+  assert.equal(autopilot.recoveryPressureActive(), true);
+  assert.equal(autopilot.rolloutPreferenceStyle(), "balanced");
+
+  let exactAudits = 0;
+  autopilot.exactLineupSearchRequested = true;
+  autopilot.nextPreparationAction = () => ({ type: "battle" });
+  autopilot.battleConfidence = () => -100;
+  autopilot.exactBattleAudit = () => {
+    exactAudits += 1;
+    return { key: `known-loss-${exactAudits}`, score: -100 };
+  };
+  assert.equal(autopilot.tick(2000), null);
+  assert.equal(exactAudits, 1);
+  assert.equal(state.phase, "preparation");
+  assert.equal(autopilot.tick(3000)?.type, "battle");
+  assert.equal(exactAudits, 2);
+  assert.equal(state.phase, "battle");
+
+  state.hp = 5;
+  assert.equal(autopilot.rolloutPreferenceStyle(), "survival");
+  state.hp = 13;
+  state.victories = 12;
+  assert.equal(autopilot.recoveryPressureActive(), false);
+  assert.equal(autopilot.rolloutPreferenceStyle(), "highroll");
+});
+
 test("残血救援不会被20Hz假阴性挡住，候补胜解用60Hz确认", () => {
   const bridge = new EngineBridge(130584);
   bridge.setConsoleLogging(false);
@@ -4511,6 +4830,42 @@ test("现代看穿精算全败后会从完整阵容池救回非局部胜解", ()
   assert.equal(pilot.searchRescueLineup(pilot.ownedEntries()), true);
   assert.deepEqual(new Set(pilot.plannedLineupUids), winningUids);
   assert.equal(pilot.plannedLineupScore, 10100);
+});
+
+test("现代看穿在线终局候选池过宽时不会重新穷举完整阵容", () => {
+  const bridge = new EngineBridge(99100414, 1, { simulation: true, battleStepHz: 60 });
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 47;
+  bridge.engine.state.playerLevel = 10;
+  bridge.engine.state.board.fill(null);
+  bridge.engine.state.bench.fill(null);
+  SHOP_UNITS.slice(0, 18).forEach((id, index) => {
+    const unit = { uid: 991004140 + index, id, star: 3 };
+    if (index < 10) bridge.engine.state.board[index] = unit;
+    else bridge.engine.state.bench[index - 10] = unit;
+  });
+  const pilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "highroll",
+    "normal",
+    20,
+    () => 0,
+    true,
+    "oracle",
+    true,
+  );
+  pilot.exactLineupSearchRequested = true;
+  pilot.plannedLineupScore = -100;
+  pilot.rolloutLineupScore = () => {
+    throw new Error("oversized interactive rescue pool must remain bounded");
+  };
+
+  assert.equal(pilot.searchRescueLineup(pilot.ownedEntries()), false);
+  assert.equal(pilot.rescueSearchCompleted, true);
 });
 
 test("长考和看穿不会为未成三星的新项目卖掉唯一三星成品", () => {

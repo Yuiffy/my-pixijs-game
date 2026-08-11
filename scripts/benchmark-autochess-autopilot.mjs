@@ -53,6 +53,7 @@ const resumeOutputPath = requestedResumeOutputPath
   ? path.resolve(requestedResumeOutputPath)
   : null;
 const maximumBattles = Math.max(1, Math.min(100, Number(option("--battles", "60")) || 60));
+const safetyLimit = Math.max(100, Math.min(20_000, Number(option("--safety-limit", "5000")) || 5000));
 const forcedStarter = option("--starter", "");
 const requestedEnemySeed = Number(option("--enemy-seed", ""));
 const forcedEnemySeed = Number.isFinite(requestedEnemySeed) && requestedEnemySeed > 0
@@ -250,6 +251,7 @@ const playRun = (seed) => {
   let maximumAutopilotTickMs = 0;
   const slowTicks = [];
   const tickTrace = [];
+  const recentActions = [];
   let consecutiveIdleTicks = 0;
   let lastIdleSnapshot = null;
   const traceRoster = (units) => units.flatMap((unit, index) => unit ? [{
@@ -320,7 +322,7 @@ const playRun = (seed) => {
   const battleLimitReached = () => inputSnapshot
     ? (rounds.at(-1)?.round || 0) >= maximumBattles
     : rounds.length >= maximumBattles;
-  while (!battleLimitReached() && bridge.engine.state.phase !== "gameover" && safety < 5000) {
+  while (!battleLimitReached() && bridge.engine.state.phase !== "gameover" && safety < safetyLimit) {
     safety += 1;
     now += 1000;
     if (bridge.engine.state.phase === "battle") {
@@ -483,6 +485,16 @@ const playRun = (seed) => {
     }
     if (action) {
       consecutiveIdleTicks = 0;
+      recentActions.push({
+        round: actionRound,
+        type: action.type,
+        detail: action,
+        gold: bridge.engine.state.gold,
+        boardCount: bridge.engine.boardCount,
+        benchCount: bridge.engine.state.bench.filter(Boolean).length,
+        preparationActions: autopilot.preparationActions,
+      });
+      if (recentActions.length > 24) recentActions.shift();
       actions[action.type] = (actions[action.type] || 0) + 1;
       const roundActions = actionsByRound.get(actionRound) || {};
       roundActions[action.type] = (roundActions[action.type] || 0) + 1;
@@ -527,9 +539,14 @@ const playRun = (seed) => {
     previousSelection = selectionKey;
   }
 
-  if (safety >= 5000) {
+  if (safety >= safetyLimit) {
     throw new Error(
-      `Autopilot safety limit reached for seed ${seed}: ${JSON.stringify(lastIdleSnapshot)}`,
+      `Autopilot safety limit reached for seed ${seed}: ${JSON.stringify({
+        safetyLimit,
+        idle: lastIdleSnapshot,
+        current: traceAutopilotState(),
+        recentActions,
+      })}`,
     );
   }
   const run = {
