@@ -3935,6 +3935,34 @@ test("健康搏上限只小额止血，受伤后才放开完整稳定预算", ()
   );
 });
 
+test("健康搏上限看穿用60Hz复核20Hz假阴性后再决定是否止血", () => {
+  const bridge = new EngineBridge(1305834);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.state.round = 12;
+  bridge.engine.state.hp = 20;
+  const autopilot = new AutoChessAutopilot(
+    bridge,
+    "evolution",
+    {},
+    "highroll",
+    "oracle",
+    20,
+    undefined,
+    true,
+    "oracle",
+  );
+  autopilot.rolloutLineupScore = (_lineup, _formation, _stableOnly, combatHz) => (
+    combatHz === 60 ? 10100 : 9900
+  );
+  const roster = autopilot.ownedEntries();
+  assert.equal(autopilot.criticalExactRolloutConfidence(roster, 9900), 10100);
+
+  bridge.engine.state.hp = 5;
+  assert.equal(autopilot.criticalExactRolloutConfidence(roster, 9900), 9900);
+});
+
 test("搏上限四理财银行期优先保息，并为优质购买适度兑现战力", () => {
   const financeIds = SHOP_UNITS
     .filter((id) => UNIT_DEFS[id].traits.includes("finance"))

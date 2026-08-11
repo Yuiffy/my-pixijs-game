@@ -78,8 +78,10 @@ const dimensions = [
   { key: "financeActivationMaxRolloutDeficit", min: 0, max: 300, step: 25, sigma: 50 },
   { key: "maximumExcessPaidRerolls", min: 0, max: 64, step: 1, sigma: 8 },
   { key: "maximumDryPaidRerolls", min: 2, max: 20, step: 1, sigma: 3 },
+  { key: "healthyStabilizeMaximumDryPaidRerolls", min: 2, max: 12, step: 1, sigma: 2 },
   { key: "upgradeChaseRerollInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "stabilizeRerollInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 4 },
+  { key: "healthyStabilizeRerollInterestTiersAtRisk", min: 0, max: 8, step: 1, sigma: 2 },
   { key: "bankPurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 2 },
   { key: "upgradeChasePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 3 },
   { key: "stabilizePurchaseInterestTiersAtRisk", min: 0, max: 20, step: 1, sigma: 4 },
@@ -126,6 +128,14 @@ const clampPolicy = (policy) => {
   clamped.financeActivationRolloutScore = Math.min(
     clamped.safeWinRolloutScore,
     clamped.financeActivationRolloutScore,
+  );
+  clamped.healthyStabilizeMaximumDryPaidRerolls = Math.min(
+    clamped.maximumDryPaidRerolls,
+    clamped.healthyStabilizeMaximumDryPaidRerolls,
+  );
+  clamped.healthyStabilizeRerollInterestTiersAtRisk = Math.min(
+    clamped.stabilizeRerollInterestTiersAtRisk,
+    clamped.healthyStabilizeRerollInterestTiersAtRisk,
   );
   clamped.terminalRollDownReserveGold = Math.min(
     clamped.terminalRollDownActivationGold,
