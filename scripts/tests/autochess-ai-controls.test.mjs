@@ -808,7 +808,7 @@ test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
   bridge.engine.state.starterChoices = ["bastion", "blaze", "mature_start"];
   const ai = new AutoChessAIController(bridge);
 
-  assert.equal(ai.version, "0.4.0");
+  assert.equal(ai.version, "0.4.1");
   assert.match(ai.help().indexing, /1-based/);
   assert.ok(ai.help().read.includes("actions(count = 200)"));
   assert.ok(ai.help().read.includes("battles()"));
@@ -840,7 +840,7 @@ test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
   assert.equal(restartedTrace.at(-1).after.phase, "title");
   assert.ok(restartedTrace.some((entry) => entry.action.type === "starter"));
   const textState = JSON.parse(bridge.renderTextState());
-  assert.equal(textState.version, "0.4.0");
+  assert.equal(textState.version, "0.4.1");
   assert.deepEqual(textState.recentActions, restartedTrace.slice(-12));
 });
 

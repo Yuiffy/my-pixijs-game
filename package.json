@@ -1,6 +1,6 @@
 {
   "name": "my-pixijs-game",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -34,6 +34,7 @@
     "autochess:benchmark:waves": "node scripts/benchmark-autochess-waves.mjs",
     "autochess:verify:ai": "node scripts/verify-autochess-ai.cjs",
     "autochess:verify:autoplay": "node scripts/verify-autochess-autoplay.cjs",
+    "autochess:verify:release-notes": "node scripts/verify-autochess-release-notes.cjs",
     "autochess:release:check": "node scripts/verify-autochess-release.mjs",
     "autochess:portrait:generate": "node scripts/autochess-portrait-generate.mjs",
     "autochess:portrait:process": "node scripts/autochess-portrait-process.mjs",

@@ -2,6 +2,9 @@ const assert = require("node:assert/strict");
 const { existsSync, mkdirSync } = require("node:fs");
 const { createRequire } = require("node:module");
 const { inflateSync } = require("node:zlib");
+const { version: autoChessVersion } = require("../package.json");
+
+const escapedVersion = autoChessVersion.replaceAll(".", "\\.");
 
 const localRequire = createRequire(__filename);
 const playwrightCandidates = [
@@ -238,8 +241,8 @@ let browser;
   assert.equal(await settings.getByRole("slider", { name: "设置中的音效音量" }).isVisible(), false);
   await page.waitForTimeout(180);
   await capture("desktop-settings");
-  await settings.getByRole("button", { name: /版本与更新.*v0\.3\.0/ }).click();
-  const releaseNotes = page.getByRole("dialog", { name: /v0\.3\.0/ });
+  await settings.getByRole("button", { name: new RegExp(`版本与更新.*v${escapedVersion}`) }).click();
+  const releaseNotes = page.getByRole("dialog", { name: new RegExp(`v${escapedVersion}`) });
   await releaseNotes.waitFor({ state: "visible" });
   assert.equal(await settings.isVisible(), false);
   await capture("desktop-release-from-settings");
@@ -293,7 +296,7 @@ let browser;
   assert.equal(await settings.getByRole("switch", { name: "天眼商店" }).count(), 0);
   assert.ok(await settings.getByRole("slider", { name: "设置中的音乐音量" }).isVisible());
   assert.ok(await settings.getByRole("slider", { name: "设置中的音效音量" }).isVisible());
-  assert.ok(await settings.getByRole("button", { name: /版本与更新.*v0\.3\.0/ }).isVisible());
+  assert.ok(await settings.getByRole("button", { name: new RegExp(`版本与更新.*v${escapedVersion}`) }).isVisible());
   await capture("mobile-settings");
   await settings.getByRole("button", { name: "关闭设置" }).click();
   await setSyntheticHidden(false);
