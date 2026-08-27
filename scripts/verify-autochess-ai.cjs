@@ -1,7 +1,8 @@
 const assert = require("node:assert/strict");
 const { existsSync, mkdirSync } = require("node:fs");
 const { createRequire } = require("node:module");
-const { inflateSync } = require("node:zlib");
+const { inspectPng } = require("./lib/autochess-screenshot.cjs");
+const { version: autoChessVersion } = require("../package.json");
 
 const localRequire = createRequire(__filename);
 const playwrightCandidates = [
@@ -22,98 +23,10 @@ const loadPlaywright = () => {
   throw new Error("Unable to load Playwright");
 };
 
-const inspectPng = (buffer) => {
-  assert.equal(buffer.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", "Screenshot is not a PNG");
-  let offset = 8;
-  let width = 0;
-  let height = 0;
-  let channels = 0;
-  const idat = [];
-  while (offset < buffer.length) {
-    const length = buffer.readUInt32BE(offset);
-    const type = buffer.subarray(offset + 4, offset + 8).toString("ascii");
-    const chunk = buffer.subarray(offset + 8, offset + 8 + length);
-    if (type === "IHDR") {
-      width = chunk.readUInt32BE(0);
-      height = chunk.readUInt32BE(4);
-      channels = chunk[9] === 6 ? 4 : chunk[9] === 2 ? 3 : 0;
-      assert.equal(chunk[8], 8, "Unsupported PNG bit depth");
-      assert.equal(chunk[12], 0, "Interlaced PNG screenshots are unsupported");
-      assert.ok(channels, "Unsupported PNG color type");
-    }
-    if (type === "IDAT") idat.push(chunk);
-    if (type === "IEND") break;
-    offset += length + 12;
-  }
-
-  const rows = inflateSync(Buffer.concat(idat));
-  const stride = width * channels;
-  let rowOffset = 0;
-  let previous = Buffer.alloc(stride);
-  let nearBlack = 0;
-  let dark = 0;
-  let transparent = 0;
-  const colors = new Set();
-  for (let y = 0; y < height; y += 1) {
-    const filter = rows[rowOffset];
-    const row = Buffer.from(rows.subarray(rowOffset + 1, rowOffset + 1 + stride));
-    assert.ok(filter <= 4, `Unsupported PNG filter ${filter}`);
-    for (let index = 0; index < stride; index += 1) {
-      const left = index >= channels ? row[index - channels] : 0;
-      const up = previous[index];
-      const upperLeft = index >= channels ? previous[index - channels] : 0;
-      if (filter === 1) row[index] = (row[index] + left) & 255;
-      if (filter === 2) row[index] = (row[index] + up) & 255;
-      if (filter === 3) row[index] = (row[index] + Math.floor((left + up) / 2)) & 255;
-      if (filter === 4) {
-        const prediction = left + up - upperLeft;
-        const leftDistance = Math.abs(prediction - left);
-        const upDistance = Math.abs(prediction - up);
-        const upperLeftDistance = Math.abs(prediction - upperLeft);
-        const nearest = leftDistance <= upDistance && leftDistance <= upperLeftDistance
-          ? left
-          : upDistance <= upperLeftDistance ? up : upperLeft;
-        row[index] = (row[index] + nearest) & 255;
-      }
-    }
-    for (let x = 0; x < width; x += 1) {
-      const pixel = x * channels;
-      const red = row[pixel];
-      const green = row[pixel + 1];
-      const blue = row[pixel + 2];
-      const alpha = channels === 4 ? row[pixel + 3] : 255;
-      if (red <= 12 && green <= 12 && blue <= 12) nearBlack += 1;
-      if (red * 0.2126 + green * 0.7152 + blue * 0.0722 <= 28) dark += 1;
-      if (alpha === 0) transparent += 1;
-      if (colors.size < 4096) colors.add(`${red},${green},${blue},${alpha}`);
-    }
-    previous = row;
-    rowOffset += stride + 1;
-  }
-
-  const pixels = width * height;
-  const metrics = {
-    width,
-    height,
-    colors: colors.size,
-    nearBlackRatio: Number((nearBlack / pixels).toFixed(4)),
-    darkRatio: Number((dark / pixels).toFixed(4)),
-    transparentRatio: Number((transparent / pixels).toFixed(4)),
-  };
-  assert.ok(
-    metrics.colors > 1
-      && metrics.nearBlackRatio < 0.97
-      && metrics.darkRatio < 0.99
-      && metrics.transparentRatio < 0.97,
-    `Invalid screenshot: ${JSON.stringify(metrics)}`,
-  );
-  return metrics;
-};
-
 const { chromium } = loadPlaywright();
 const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
 const pageUrl = `${baseUrl}/game/autochess?seed=1`;
-const artifactDirectory = ".tmp/autochess/ai-v023";
+const artifactDirectory = `.tmp/autochess/ai-v${autoChessVersion.replaceAll(".", "")}`;
 mkdirSync(artifactDirectory, { recursive: true });
 
 const finitePoint = (point) => point
@@ -202,19 +115,22 @@ let browser;
   };
 
   const help = await callAI("help");
-  assert.equal(help.version, "0.3.0");
+  assert.equal(help.version, autoChessVersion);
+  assert.ok(help.flow.includes("pause()"));
+  assert.ok(help.flow.includes("resume()"));
   assert.ok(help.flow.includes("skipBattle()"));
   assert.ok(help.testing.includes("consoleLogging(enabled)"));
   assert.ok(help.read.includes("window.autoChessLastRun"));
   assert.ok(help.read.includes("battles()"));
-  assert.equal((await state()).version, "0.3.0");
+  assert.equal((await state()).version, autoChessVersion);
   console.log("[ai-verify] API ready");
 
   await page.keyboard.press("v");
-  const releaseDialog = page.getByRole("dialog", { name: /v0\.2\.3/ });
+  const escapedVersion = autoChessVersion.replaceAll(".", "\\.");
+  const releaseDialog = page.getByRole("dialog", { name: new RegExp(`v${escapedVersion}`) });
   await releaseDialog.waitFor({ state: "visible" });
-  assert.match(await releaseDialog.innerText(), /日志与复盘/);
-  assert.match(await releaseDialog.innerText(), /持久化/);
+  assert.match(await releaseDialog.innerText(), /战术暂停/);
+  assert.match(await releaseDialog.innerText(), /按 P/);
   await capture("release-notes");
   await page.keyboard.press("Escape");
   await releaseDialog.waitFor({ state: "hidden" });
@@ -222,7 +138,7 @@ let browser;
 
   await page.getByRole("button", { name: "游戏设置" }).click();
   await page.getByRole("dialog", { name: "游戏设置" })
-    .getByRole("button", { name: /版本与更新.*v0\.2\.3/ })
+    .getByRole("button", { name: new RegExp(`版本与更新.*v${escapedVersion}`) })
     .click();
   await releaseDialog.waitFor({ state: "visible" });
   await page.locator(".rift-release-dismiss").click({ position: { x: 12, y: 54 } });
@@ -340,6 +256,15 @@ let browser;
   const started = await callAI("battle");
   assert.equal(started.ok, true);
   assert.equal((await state()).phase, "battle");
+  const paused = await callAI("pause");
+  assert.equal(paused.ok, true);
+  assert.equal(paused.state.interface.battlePaused, true);
+  const pausedAt = paused.state.battle.elapsed;
+  await page.waitForTimeout(350);
+  assert.equal((await state()).battle.elapsed, pausedAt);
+  const resumed = await callAI("resume");
+  assert.equal(resumed.ok, true);
+  assert.equal(resumed.state.interface.battlePaused, false);
   await callAI("advance", 1400);
   const battleState = await state();
   assert.equal(battleState.phase, "battle");
@@ -400,7 +325,7 @@ let browser;
   await callAI("next");
   await page.waitForFunction(() => window.autoChessAI.state().phase === "gameover");
   const terminalTrace = await page.evaluate(() => window.autoChessLastRun);
-  assert.equal(terminalTrace.version, "0.3.0");
+  assert.equal(terminalTrace.version, autoChessVersion);
   assert.equal(terminalTrace.state.phase, "gameover");
   assert.ok(terminalTrace.actions.some((entry) => entry.action.type === "skipBattle"));
   assert.ok(terminalTrace.battles.length > 0);

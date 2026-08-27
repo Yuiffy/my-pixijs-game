@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import {
+  BarChartOutlined,
+  CaretRightOutlined,
   FastForwardOutlined,
+  PauseOutlined,
   ReloadOutlined,
   RobotOutlined,
   SettingOutlined,
@@ -51,6 +54,8 @@ type Props = {
   onAutoplayChange: (enabled: boolean) => void;
   onAutoplayStart: () => void;
   onSettingsOpen: () => void;
+  battlePaused: boolean;
+  onBattlePauseChange: (paused: boolean) => void;
 };
 
 export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
@@ -123,6 +128,8 @@ export default function RiftHud({
   onAutoplayChange,
   onAutoplayStart,
   onSettingsOpen,
+  battlePaused,
+  onBattlePauseChange,
 }: Props) {
   const [sheet, setSheet] = useState<SheetName>(null);
   const [starterPage, setStarterPage] = useState(0);
@@ -316,9 +323,26 @@ export default function RiftHud({
           <button type="button" onClick={() => onBattleViewAction("reset")} aria-label="复位战场视图" title="复位战场视图">⌖</button>
           <button type="button" onClick={() => onBattleViewAction("zoomIn")} aria-label="放大战场" title="放大战场">+</button>
         </div>
-        <ActionButton className="rift-skip-battle-button" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗"><FastForwardOutlined aria-hidden="true" />快速结算<span>S</span></ActionButton>
-        <ActionButton className="rift-ranking-button" onClick={() => dispatch({ type: "rankingToggle" })}>{state.battle.rankingOpen ? "收起统计" : "查看统计"}<span>D</span></ActionButton>
+        <button
+          type="button"
+          className={`rift-pause-battle-button ${battlePaused ? "is-paused" : ""}`}
+          aria-label={battlePaused ? "继续战斗" : "暂停战斗"}
+          aria-pressed={battlePaused}
+          aria-keyshortcuts="P"
+          title={battlePaused ? "继续战斗 (P)" : "暂停战斗 (P)"}
+          onClick={() => onBattlePauseChange(!battlePaused)}
+        >
+          {battlePaused ? <CaretRightOutlined aria-hidden="true" /> : <PauseOutlined aria-hidden="true" />}
+        </button>
+        <ActionButton className="rift-skip-battle-button" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗"><FastForwardOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">快速结算</span><kbd>S</kbd></ActionButton>
+        <ActionButton className="rift-ranking-button" aria-expanded={state.battle.rankingOpen} onClick={() => dispatch({ type: "rankingToggle" })}><BarChartOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">{state.battle.rankingOpen ? "收起统计" : "查看统计"}</span><kbd>D</kbd></ActionButton>
       </div>
+      {battlePaused && (
+        <div className="rift-battle-paused-status" role="status" aria-live="polite">
+          <PauseOutlined aria-hidden="true" />
+          <strong>战斗已暂停</strong>
+        </div>
+      )}
     </div>
   );
 

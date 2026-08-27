@@ -452,6 +452,13 @@ export default function AutoChessGame() {
     setRevision((value) => value + 1);
   }, []);
 
+  const updateBattlePaused = useCallback((paused: boolean) => {
+    const bridge = bridgeRef.current;
+    if (!bridge || bridge.engine.state.phase !== "battle") return;
+    const next = bridge.setBattlePaused(paused);
+    setMessage(next ? "战斗已暂停，可继续查看羁绊与统计。" : "战斗继续。");
+  }, []);
+
   const toggleFullscreen = useCallback(async () => {
     const container = containerRef.current;
     if (!container) return;
@@ -781,11 +788,17 @@ export default function AutoChessGame() {
       }
       if (codexOpen || releaseOpen || settingsOpen || enemyFormationOpen || event.repeat) return;
       const active = document.activeElement;
-      if (active instanceof HTMLInputElement || active instanceof HTMLButtonElement || active instanceof HTMLSelectElement || active instanceof HTMLTextAreaElement || active?.getAttribute("contenteditable") === "true") return;
       const bridge = bridgeRef.current;
       if (!bridge) return;
       const { state } = bridge.engine;
       const key = event.key.toLowerCase();
+      if (
+        active instanceof HTMLInputElement
+        || active instanceof HTMLSelectElement
+        || active instanceof HTMLTextAreaElement
+        || active?.getAttribute("contenteditable") === "true"
+        || (active instanceof HTMLButtonElement && !(state.phase === "battle" && key === "p"))
+      ) return;
       const number = /^[1-5]$/.test(event.key) ? Number(event.key) : 0;
       let action: import("./phaser/EngineBridge").GameAction | null = null;
 
@@ -828,6 +841,10 @@ export default function AutoChessGame() {
         action = { type: "battle" };
       } else if (state.phase === "battle" && key === "s") {
         action = { type: "skipBattle" };
+      } else if (state.phase === "battle" && key === "p") {
+        event.preventDefault();
+        updateBattlePaused(!bridge.battlePaused);
+        return;
       } else if (state.phase === "battle" && key === "d") {
         action = { type: "rankingToggle" };
       } else if (state.phase === "result" && event.key === "Enter") {
@@ -845,7 +862,7 @@ export default function AutoChessGame() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [codexOpen, enemyFormationOpen, releaseOpen, settingsOpen, toggleFullscreen]);
+  }, [codexOpen, enemyFormationOpen, releaseOpen, settingsOpen, toggleFullscreen, updateBattlePaused]);
 
   const engine = bridgeRef.current?.engine;
   const dispatch = useCallback((action: import("./phaser/EngineBridge").GameAction) => {
@@ -942,6 +959,8 @@ export default function AutoChessGame() {
           onAutoplayChange={updateAutoplay}
           onAutoplayStart={startAiRun}
           onSettingsOpen={() => setSettingsOpen(true)}
+          battlePaused={Boolean(bridgeRef.current?.battlePaused)}
+          onBattlePauseChange={updateBattlePaused}
         />
         <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
         <ReleaseNotes open={releaseOpen} onClose={() => setReleaseOpen(false)} />

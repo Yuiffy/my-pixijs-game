@@ -808,7 +808,7 @@ test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
   bridge.engine.state.starterChoices = ["bastion", "blaze", "mature_start"];
   const ai = new AutoChessAIController(bridge);
 
-  assert.equal(ai.version, "0.3.0");
+  assert.equal(ai.version, "0.4.0");
   assert.match(ai.help().indexing, /1-based/);
   assert.ok(ai.help().read.includes("actions(count = 200)"));
   assert.ok(ai.help().read.includes("battles()"));
@@ -840,7 +840,7 @@ test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
   assert.equal(restartedTrace.at(-1).after.phase, "title");
   assert.ok(restartedTrace.some((entry) => entry.action.type === "starter"));
   const textState = JSON.parse(bridge.renderTextState());
-  assert.equal(textState.version, "0.3.0");
+  assert.equal(textState.version, "0.4.0");
   assert.deepEqual(textState.recentActions, restartedTrace.slice(-12));
 });
 
@@ -1542,8 +1542,10 @@ test("宿主公开 AI API、阶段快捷键和快速结算键", () => {
   assert.match(hostSource, /state\.phase === "preparation" && key === "l"/);
   assert.match(hostSource, /state\.phase === "preparation" && key === "u"/);
   assert.match(hostSource, /state\.phase === "battle" && key === "s"/);
+  assert.match(hostSource, /state\.phase === "battle" && key === "p"/);
   assert.match(hostSource, /state\.phase === "result" && event\.key === "Enter"/);
   assert.match(hostSource, /state\.phase === "gameover" && event\.key === "Enter"/);
+  assert.match(hudSource, /aria-label=\{battlePaused \? "继续战斗" : "暂停战斗"\}/);
 });
 
 test("后台战斗为可选设置，开启后按隐藏期间的墙钟时间推进", () => {
@@ -1572,12 +1574,50 @@ test("后台战斗为可选设置，开启后按隐藏期间的墙钟时间推�
     autoplayStyle: "survival",
     autoplayInformationMode: "normal",
     backgroundBattleEnabled: true,
+    battlePaused: false,
     pageHidden: true,
   });
 
   bridge.setHidden(false, 6500);
   assert.equal(bridge.hidden, false);
   assert.ok(battle.elapsed >= 2.49);
+});
+
+test("暂停会冻结前台与后台战斗，继续后恢复并在结算时清理", () => {
+  const bridge = new EngineBridge(80210);
+  bridge.setConsoleLogging(false);
+  bridge.engine.state.starterChoices = ["bastion"];
+  bridge.engine.startRun("bastion");
+  bridge.engine.startBattle();
+  const battle = bridge.engine.state.battle;
+  assert.ok(battle);
+  bridge.update(1 / 30);
+  const elapsedBeforePause = battle.elapsed;
+  const ai = new AutoChessAIController(bridge);
+
+  assert.equal(ai.pause().ok, true);
+  assert.equal(bridge.battlePaused, true);
+  for (let frame = 0; frame < 120; frame += 1) bridge.update(1 / 60);
+  assert.equal(battle.elapsed, elapsedBeforePause);
+
+  bridge.setBackgroundBattleEnabled(true, 1000);
+  bridge.setHidden(true, 1000);
+  assert.equal(bridge.updateBackground(4000), 0);
+  assert.equal(battle.elapsed, elapsedBeforePause);
+  const pausedState = JSON.parse(bridge.renderTextState());
+  assert.equal(pausedState.interface.battlePaused, true);
+  assert.ok(pausedState.availableActions.includes("P 暂停/继续"));
+
+  bridge.setHidden(false, 4000);
+  assert.equal(ai.resume().ok, true);
+  bridge.update(1 / 30);
+  assert.ok(battle.elapsed > elapsedBeforePause);
+
+  assert.equal(ai.pause().ok, true);
+  bridge.skipBattle();
+  assert.notEqual(bridge.engine.state.phase, "battle");
+  assert.equal(bridge.battlePaused, false);
+  assert.equal(ai.pause().ok, false);
 });
 
 test("浏览器战斗用固定60Hz子步进，低帧和高帧结果一致", () => {

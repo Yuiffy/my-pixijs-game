@@ -133,6 +133,8 @@ export class EngineBridge {
 
   public backgroundBattleEnabled = false;
 
+  public battlePaused = false;
+
   public onEvent: ((event: BridgeEvent) => void) | null = null;
 
   private testSpeed: number;
@@ -373,7 +375,7 @@ export class EngineBridge {
   }
 
   public update(deltaSeconds: number) {
-    if (this.codexOpen || this.hidden) return;
+    if (this.codexOpen || this.hidden || this.battlePaused) return;
     if (this.engine.state.phase === "battle") {
       this.liveBattleTimeRemainder += Math.min(0.05, Math.max(0, deltaSeconds));
       while (
@@ -402,6 +404,15 @@ export class EngineBridge {
 
   public setCodexOpen(open: boolean) {
     this.codexOpen = open;
+  }
+
+  public setBattlePaused(paused: boolean) {
+    const next = paused && this.engine.state.phase === "battle";
+    if (next === this.battlePaused) return this.battlePaused;
+    this.battlePaused = next;
+    this.liveBattleTimeRemainder = 0;
+    this.onEvent?.({ type: "state" });
+    return this.battlePaused;
   }
 
   public setAutoplayEnabled(enabled: boolean) {
@@ -434,7 +445,7 @@ export class EngineBridge {
   }
 
   public updateBackground(now = Date.now()) {
-    if (!this.hidden || !this.backgroundBattleEnabled || this.codexOpen) {
+    if (!this.hidden || !this.backgroundBattleEnabled || this.codexOpen || this.battlePaused) {
       if (this.hidden) this.backgroundUpdatedAt = now;
       return 0;
     }
@@ -465,6 +476,7 @@ export class EngineBridge {
         autoplayStyle: this.autoplayStyle,
         autoplayInformationMode: this.autoplayInformationMode,
         backgroundBattleEnabled: this.backgroundBattleEnabled,
+        battlePaused: this.battlePaused,
         pageHidden: this.hidden,
       },
       trace: this.getTraceStats(),
@@ -632,6 +644,7 @@ export class EngineBridge {
       }
     }
     if (phase !== "preparation") this.enemyFormationOpen = false;
+    if (phase !== "battle") this.battlePaused = false;
     if (phase !== this.previousPhase) {
       if (phase === "battle") this.emitAudio("battle");
       if (phase === "result") this.emitAudio(this.engine.state.result?.won ? "win" : "loss");

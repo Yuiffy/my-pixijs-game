@@ -26,7 +26,7 @@ export class AutoChessAIController {
       version: this.version,
       indexing: "starter/buy/choose/select/move/sell use 1-based slots; act() uses raw GameAction indexes",
       read: ["state()", "logs(count = 80)", "battles()", "actions(count = 200)", "window.autoChessLastRun", "help()"],
-      flow: ["starter(choice)", "battle()", "skipBattle()", "next()", "choose(choice)", "restart()"],
+      flow: ["starter(choice)", "battle()", "pause()", "resume()", "skipBattle()", "next()", "choose(choice)", "restart()"],
       economy: ["buy(shopSlot)", "reroll()", "lock()", "level()", "starForge(zone?, slot?)"],
       formation: ["select(zone, slot)", "move(fromZone, fromSlot, toZone, toSlot)", "sell(zone?, slot?)"],
       testing: ["advance(milliseconds)", "consoleLogging(enabled)", "act(rawGameAction)"],
@@ -118,6 +118,22 @@ export class AutoChessAIController {
 
   public skipBattle() {
     return this.bridge.skipBattle();
+  }
+
+  public pause() {
+    if (this.bridge.engine.state.phase !== "battle") {
+      return this.failure("pause is only available during battle");
+    }
+    this.bridge.setBattlePaused(true);
+    return this.success("paused battle");
+  }
+
+  public resume() {
+    if (this.bridge.engine.state.phase !== "battle") {
+      return this.failure("resume is only available during battle");
+    }
+    this.bridge.setBattlePaused(false);
+    return this.success("resumed battle");
   }
 
   public choose(choice: number) {

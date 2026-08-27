@@ -389,7 +389,7 @@ export const renderTextState = (context: TextStateContext) => {
               : context.state.phase === "gameover"
                 ? ["点击再来一局或按 Enter"]
                 : context.state.phase === "battle"
-                  ? ["自动战斗中", "S 快速结算", "点击战斗统计或按 D 展开/收起", "F 全屏"]
+                  ? ["自动战斗中", "P 暂停/继续", "S 快速结算", "点击战斗统计或按 D 展开/收起", "F 全屏"]
                   : ["查看双方战斗统计", "点击继续或按 Enter 进入下一阶段", "F 全屏"],
       toast: context.state.toast?.text || null,
     });
