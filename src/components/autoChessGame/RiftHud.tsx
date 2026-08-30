@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import {
+  AppstoreOutlined,
   BarChartOutlined,
   CaretRightOutlined,
   FastForwardOutlined,
@@ -60,7 +61,7 @@ type Props = {
 
 export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
 type SheetName = "shop" | "bench" | "traits" | null;
-const MOBILE_VIEW_QUERY = "(max-width: 700px), (pointer: coarse) and (max-width: 1200px)";
+const MOBILE_VIEW_QUERY = "(max-width: 700px), (max-aspect-ratio: 25/28) and (max-width: 1200px), (pointer: coarse) and (max-width: 1200px)";
 
 const compactStat = (value: number) => {
   const rounded = Math.round(value);
@@ -334,8 +335,8 @@ export default function RiftHud({
         >
           {battlePaused ? <CaretRightOutlined aria-hidden="true" /> : <PauseOutlined aria-hidden="true" />}
         </button>
-        <ActionButton className="rift-skip-battle-button" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗"><FastForwardOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">快速结算</span><kbd>S</kbd></ActionButton>
-        <ActionButton className="rift-ranking-button" aria-expanded={state.battle.rankingOpen} onClick={() => dispatch({ type: "rankingToggle" })}><BarChartOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">{state.battle.rankingOpen ? "收起统计" : "查看统计"}</span><kbd>D</kbd></ActionButton>
+        <ActionButton className="rift-skip-battle-button" aria-label="快速结算当前战斗" aria-keyshortcuts="S" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗 (S)"><FastForwardOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">快速结算</span><kbd>S</kbd></ActionButton>
+        <ActionButton className="rift-ranking-button" aria-label={state.battle.rankingOpen ? "收起统计" : "查看统计"} aria-expanded={state.battle.rankingOpen} aria-keyshortcuts="D" onClick={() => dispatch({ type: "rankingToggle" })} title={state.battle.rankingOpen ? "收起统计 (D)" : "查看统计 (D)"}><BarChartOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">{state.battle.rankingOpen ? "收起统计" : "查看统计"}</span><kbd>D</kbd></ActionButton>
       </div>
       {battlePaused && (
         <div className="rift-battle-paused-status" role="status" aria-live="polite">
@@ -357,7 +358,7 @@ export default function RiftHud({
               <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>结算金 <b>{engine.potentialBounty}</b></span><InterestInfo engine={engine} /><span>连胜 <b>{state.streak || "—"}</b></span></div>
               <div className="rift-tier-odds">{odds.map((chance, index) => <span key={index} className={`tier-${index + 1} ${chance ? "" : "is-muted"}`}><i>{index + 1}</i><b>{chance}%</b></span>)}</div>
               <div className="rift-shop-list">{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} />)}</div>
-              <div className="rift-dom-shop-actions"><StarForgeAction engine={engine} selected={selected} onAction={dispatch} /><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></div>
+              <div className="rift-dom-shop-actions"><StarForgeAction engine={engine} selected={selected} onAction={dispatch} /><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton className="rift-auto-arrange-button" aria-label="推荐站位" aria-keyshortcuts="A" title="推荐站位 (A)" onClick={() => dispatch({ type: "autoArrange" })} disabled={!engine.boardCount}><AppstoreOutlined aria-hidden="true" /><span>推荐站位</span><b>A</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></div>
               <footer>{activeTraits.length ? <><span className="rift-status-dot" />已激活 {activeTraits.map((trait) => `${trait.name}${STAR_LABEL[trait.level]}`).join(" · ")}</> : "上阵两名同名羁绊单位，开始构筑你的第一套答案"}</footer>
             </aside>
           </div>
@@ -366,7 +367,7 @@ export default function RiftHud({
             <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。` : `人口已满。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。`} 无论胜负都会发放结算金。敌方羁绊：{enemyTraits || "未成型"}。</p>
             <button onClick={() => setSheet("traits")}>查看羁绊 <b>↗</b></button>
           </section>
-          <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton tone="danger" onClick={() => dispatch({ type: "sell" })} disabled={!selected}><span className="rift-mobile-action-icon">¥</span><span>出售</span><b>{selected ? `+${engine.getUnitSellValue(selected)}` : "—"}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开战</span><b>SPACE</b></ActionButton></nav>
+          <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton className="rift-auto-arrange-button" aria-label="推荐站位" aria-keyshortcuts="A" title="推荐站位 (A)" onClick={() => dispatch({ type: "autoArrange" })} disabled={!engine.boardCount}><AppstoreOutlined className="rift-mobile-action-icon" aria-hidden="true" /><span>推荐站位</span><b>A</b></ActionButton><ActionButton tone="danger" onClick={() => dispatch({ type: "sell" })} disabled={!selected}><span className="rift-mobile-action-icon">¥</span><span>出售</span><b>{selected ? `+${engine.getUnitSellValue(selected)}` : "—"}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开战</span><b>SPACE</b></ActionButton></nav>
         </>
       )}
       {battleOverlay}

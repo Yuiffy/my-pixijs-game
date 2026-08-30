@@ -26,7 +26,7 @@ export class AutoChessAIController {
       version: this.version,
       indexing: "starter/buy/choose/select/move/sell use 1-based slots; act() uses raw GameAction indexes",
       read: ["state()", "logs(count = 80)", "battles()", "actions(count = 200)", "window.autoChessLastRun", "help()"],
-      flow: ["starter(choice)", "battle()", "pause()", "resume()", "skipBattle()", "next()", "choose(choice)", "restart()"],
+      flow: ["starter(choice)", "battle()", "pause()", "resume()", "skipBattle()", "next()", "finishCampaign()", "continueEndless()", "choose(choice)", "restart()"],
       economy: ["buy(shopSlot)", "reroll()", "lock()", "level()", "starForge(zone?, slot?)"],
       formation: ["select(zone, slot)", "move(fromZone, fromSlot, toZone, toSlot)", "sell(zone?, slot?)"],
       testing: ["advance(milliseconds)", "consoleLogging(enabled)", "act(rawGameAction)"],
@@ -143,6 +143,20 @@ export class AutoChessAIController {
 
   public next() {
     return this.perform({ type: "resultContinue" }, "continued after result");
+  }
+
+  public finishCampaign() {
+    if (!this.bridge.engine.canFinishCampaign) {
+      return this.failure("finishCampaign is only available after winning wave 16");
+    }
+    return this.perform({ type: "finishCampaign" }, "finished the 16-wave campaign");
+  }
+
+  public continueEndless() {
+    if (!this.bridge.engine.canFinishCampaign) {
+      return this.failure("continueEndless is only available after winning wave 16");
+    }
+    return this.perform({ type: "continueEndless" }, "continued into endless mode");
   }
 
   public restart() {

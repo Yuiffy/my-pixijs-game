@@ -48,6 +48,7 @@ import { SummonViewRenderer } from "./battle/SummonView";
 import {
   COMPACT_RESULT_LAYOUT,
   COMPACT_TRAIT_STRIP,
+  MOBILE_BATTLE_PRESENTATION,
   MOBILE_BENCH_PANEL,
   MOBILE_BOARD_PANEL,
   MOBILE_TRAIT_STRIP,
@@ -66,13 +67,14 @@ import {
   boardSlot,
   compactBenchSlot,
   compactBoardSlot,
-  logicalSizeFor,
   mobileBenchSlot,
   mobileBoardSlot,
   occupiedSlotLayout,
   profileFor,
+  logicalSizeForPhase,
   tooltipLayoutFor,
   viewportScaleFor,
+  isPortraitViewport,
   type LayoutProfile,
 } from "./layout";
 import { BUTTONS, COLORS, DEPTH, FONT_FAMILY, TITLE, type ButtonTone } from "./theme";
@@ -135,7 +137,7 @@ type BattleViewPointer = {
 
 export type BattleViewAction = "zoomOut" | "reset" | "zoomIn";
 
-const RESULT_VISIBLE_ROWS = 6;
+const RESULT_VISIBLE_ROWS = 5;
 const RESULT_ROW_GAP = 5;
 const RESULT_ROW_LAYOUT: ResultRowLayout = {
   height: 48,
@@ -245,6 +247,11 @@ export class RiftLineScene extends Phaser.Scene {
   private battleViewPinchDistance = 0;
 
   private battleViewCustomized = false;
+
+  /** Portrait battle maps the authored arena into a phone-sized frame. */
+  private portraitBattlePresentation = false;
+
+  private battleTimerRect: { x: number; y: number; width: number; height: number } | null = null;
 
   private traitContent: Phaser.GameObjects.Container | null = null;
 
@@ -382,32 +389,82 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private logicalSize() {
-    // Portrait preparation uses the authored mobile composition instead of
-    // shrinking the 1120×720 desktop board into a postage stamp.
-    if (this.isMobile() && this.bridge.engine.state.phase === "preparation") {
-      return { width: 480, height: 1000 };
-    }
-    return logicalSizeFor();
+    const { width, height } = this.scale.parentSize;
+    return logicalSizeForPhase(
+      width || this.scale.displaySize.width,
+      height || this.scale.displaySize.height,
+      this.bridge.engine.state.phase,
+    );
+  }
+
+  private isPortraitBattle() {
+    const { width, height } = this.scale.parentSize;
+    return this.bridge.engine.state.phase === "battle"
+      && isPortraitViewport(width, height);
+  }
+
+  private applyBattleWorldPresentation() {
+    this.portraitBattlePresentation = this.isPortraitBattle();
+    if (!this.phaseLayer || !this.entityLayer || !this.effectsLayer) return;
+    const logical = this.logicalSize();
+    const battle = this.bridge.engine.state.phase === "battle";
+    const viewZoom = battle ? this.battleViewZoom : 1;
+    const center = battle
+      ? this.battleViewCenter
+      : new Phaser.Math.Vector2(logical.width / 2, logical.height / 2);
+    const presentation = this.portraitBattlePresentation
+      ? MOBILE_BATTLE_PRESENTATION
+      : { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 };
+    const positionX = logical.width / 2 + viewZoom * (presentation.offsetX - center.x);
+    const positionY = logical.height / 2 + viewZoom * (presentation.offsetY - center.y);
+    [this.phaseLayer, this.entityLayer, this.effectsLayer].forEach((layer) => {
+      layer
+        .setPosition(positionX, positionY)
+        .setScale(presentation.scaleX * viewZoom, presentation.scaleY * viewZoom);
+    });
+  }
+
+  private keepPortraitBattleVisualReadable(view: Phaser.GameObjects.Container) {
+    if (!this.portraitBattlePresentation) return;
+    view.setScale(1 / MOBILE_BATTLE_PRESENTATION.scaleX, 1 / MOBILE_BATTLE_PRESENTATION.scaleY);
+  }
+
+  private keepPortraitBattleTextReadable() {
+    if (!this.portraitBattlePresentation) return;
+    const scaleX = 1 / MOBILE_BATTLE_PRESENTATION.scaleX;
+    const scaleY = 1 / MOBILE_BATTLE_PRESENTATION.scaleY;
+    this.phaseLayer.list.forEach((child) => {
+      if (child.type === "Text") (child as Phaser.GameObjects.Text).setScale(scaleX, scaleY);
+    });
   }
 
   private syncLogicalCamera() {
     const { width, height } = this.scale.baseSize;
+    // Resolve the presentation before publishing layout metadata or clamping
+    // the battle camera. `rebuild()` syncs the camera before drawing the phase.
+    this.portraitBattlePresentation = this.isPortraitBattle();
     const logical = this.logicalSize();
     const fitScale = logical.width === WORLD_WIDTH && logical.height === WORLD_HEIGHT
       ? viewportScaleFor(width, height).fitScale
       : Math.max(0.01, Math.min(width / logical.width, height / logical.height));
     const battle = this.bridge.engine.state.phase === "battle";
-    const zoom = fitScale * (battle ? this.battleViewZoom : 1);
-    const center = battle ? this.clampBattleViewCenter(this.battleViewCenter.x, this.battleViewCenter.y, zoom) : new Phaser.Math.Vector2(logical.width / 2, logical.height / 2);
+    const battleZoom = battle ? this.battleViewZoom : 1;
+    const center = battle
+      ? this.clampBattleViewCenter(this.battleViewCenter.x, this.battleViewCenter.y, fitScale * battleZoom)
+      : new Phaser.Math.Vector2(logical.width / 2, logical.height / 2);
     if (battle) this.battleViewCenter.copy(center);
     this.cameras.main
       .setViewport(0, 0, width, height)
-      .setZoom(zoom)
-      .centerOn(center.x, center.y);
+      .setZoom(fitScale)
+      .centerOn(logical.width / 2, logical.height / 2);
+    this.applyBattleWorldPresentation();
     this.game.canvas.dataset.battleViewZoom = battle ? this.battleViewZoom.toFixed(3) : "1.000";
     this.game.canvas.dataset.battleViewCenter = battle
       ? `${this.battleViewCenter.x.toFixed(1)},${this.battleViewCenter.y.toFixed(1)}`
       : `${center.x.toFixed(1)},${center.y.toFixed(1)}`;
+    this.game.canvas.dataset.logicalWidth = String(logical.width);
+    this.game.canvas.dataset.logicalHeight = String(logical.height);
+    this.game.canvas.dataset.battleLayout = this.portraitBattlePresentation ? "portrait" : "wide";
   }
 
   private profileForViewport() {
@@ -421,7 +478,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private isMobile() {
     const { width, height } = this.scale.parentSize;
-    return Boolean(width && height && height > width * 1.12);
+    return isPortraitViewport(width, height);
   }
 
   private isLandscapePhone() {
@@ -441,19 +498,21 @@ export class RiftLineScene extends Phaser.Scene {
   private resetBattleView() {
     this.battleViewCustomized = false;
     this.battleViewZoom = this.defaultBattleViewZoom();
-    this.battleViewCenter.set(WORLD_WIDTH / 2, 392);
+    const logical = this.logicalSize();
+    this.battleViewCenter.set(logical.width / 2, logical.height / 2);
     this.battleViewPointers.clear();
     this.battleViewPinchDistance = 0;
   }
 
-  private clampBattleViewCenter(x: number, y: number, zoom = this.cameras.main.zoom) {
+  private clampBattleViewCenter(x: number, y: number, zoom = this.cameras.main.zoom * this.battleViewZoom) {
     const { width, height } = this.scale.baseSize;
+    const logical = this.logicalSize();
     const halfWidth = width / Math.max(zoom, 0.01) / 2;
     const halfHeight = height / Math.max(zoom, 0.01) / 2;
-    const minX = halfWidth >= WORLD_WIDTH / 2 ? WORLD_WIDTH / 2 : halfWidth;
-    const maxX = halfWidth >= WORLD_WIDTH / 2 ? WORLD_WIDTH / 2 : WORLD_WIDTH - halfWidth;
-    const minY = halfHeight >= WORLD_HEIGHT / 2 ? WORLD_HEIGHT / 2 : halfHeight;
-    const maxY = halfHeight >= WORLD_HEIGHT / 2 ? WORLD_HEIGHT / 2 : WORLD_HEIGHT - halfHeight;
+    const minX = halfWidth >= logical.width / 2 ? logical.width / 2 : halfWidth;
+    const maxX = halfWidth >= logical.width / 2 ? logical.width / 2 : logical.width - halfWidth;
+    const minY = halfHeight >= logical.height / 2 ? logical.height / 2 : halfHeight;
+    const maxY = halfHeight >= logical.height / 2 ? logical.height / 2 : logical.height - halfHeight;
     return new Phaser.Math.Vector2(
       Phaser.Math.Clamp(x, minX, maxX),
       Phaser.Math.Clamp(y, minY, maxY),
@@ -490,6 +549,7 @@ export class RiftLineScene extends Phaser.Scene {
     this.battleTimerPanel = null;
     this.battleTimerUrgent = null;
     this.battleBannerText = null;
+    this.battleTimerRect = null;
     this.rankingLayer = null;
     this.rankingStateKey = "";
     this.rankingRefreshAccum = 0;
@@ -1172,8 +1232,8 @@ export class RiftLineScene extends Phaser.Scene {
     if (Math.abs(deltaX) + Math.abs(deltaY) < 0.5) return true;
     this.battleViewCustomized = true;
     const nextCenter = this.clampBattleViewCenter(
-      this.battleViewCenter.x - deltaX / Math.max(this.cameras.main.zoom, 0.01),
-      this.battleViewCenter.y - deltaY / Math.max(this.cameras.main.zoom, 0.01),
+      this.battleViewCenter.x - deltaX / Math.max(this.cameras.main.zoom * this.battleViewZoom, 0.01),
+      this.battleViewCenter.y - deltaY / Math.max(this.cameras.main.zoom * this.battleViewZoom, 0.01),
     );
     this.battleViewCenter.copy(nextCenter);
     this.syncLogicalCamera();
@@ -1480,6 +1540,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private drawBattle() {
+    this.applyBattleWorldPresentation();
     const field = this.add.graphics();
     field.fillStyle(0x101e2a, 0.98).fillRoundedRect(24, 94, 1072, 596, 18);
     field.fillStyle(0x0f4053, 0.55).fillRoundedRect(28, 98, 512, 588, 14);
@@ -1499,6 +1560,7 @@ export class RiftLineScene extends Phaser.Scene {
     const augmentSummary = this.bridge.engine.state.augments.map((id) => AUGMENTS.find((augment) => augment.id === id)?.name ?? id).join(" · ") || "无天赋";
     this.phaseLayer.add(this.text(48, 670, this.truncateText(`羁绊：${traitSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#8ce8bd", { fontStyle: "bold" }));
     this.phaseLayer.add(this.text(1072, 670, this.truncateText(`天赋：${augmentSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#d5b7ff", { fontStyle: "bold" }).setOrigin(1));
+    this.keepPortraitBattleTextReadable();
     this.syncBattleEntities();
     this.syncCombatEffects();
     if (this.phase === "battle") this.buildBattleOverlay();
@@ -1517,6 +1579,7 @@ export class RiftLineScene extends Phaser.Scene {
         this.entityLayer.add(view);
       }
       this.updateFighter(view, fighter);
+      this.keepPortraitBattleVisualReadable(view);
     });
     this.fighterViews.forEach((view, id) => {
       if (!active.has(id)) {
@@ -1562,6 +1625,9 @@ export class RiftLineScene extends Phaser.Scene {
       visualTime,
       this.effectsLayer,
     );
+    this.effectsLayer.list.forEach((item) => {
+      if (item.type === "Container") this.keepPortraitBattleVisualReadable(item as Phaser.GameObjects.Container);
+    });
     this.syncChronospheres(battle.chronospheres, visualTime);
   }
 
@@ -1605,6 +1671,7 @@ export class RiftLineScene extends Phaser.Scene {
         this.effectsLayer.add(view);
       }
       update(view, item);
+      this.keepPortraitBattleVisualReadable(view);
     });
     views.forEach((view, key) => {
       if (!active.has(key)) {
@@ -1622,7 +1689,16 @@ export class RiftLineScene extends Phaser.Scene {
     view: Phaser.GameObjects.Container,
     projectile: Projectile,
   ) {
-    this.projectileRenderer.update(view, projectile);
+    this.projectileRenderer.update(view, this.projectileForBattlePresentation(projectile));
+  }
+
+  private projectileForBattlePresentation(projectile: Projectile): Projectile {
+    if (!this.portraitBattlePresentation) return projectile;
+    return {
+      ...projectile,
+      velocityX: projectile.velocityX * MOBILE_BATTLE_PRESENTATION.scaleX,
+      velocityY: projectile.velocityY * MOBILE_BATTLE_PRESENTATION.scaleY,
+    };
   }
 
   private createTitleGlowTexture() {
@@ -1662,7 +1738,19 @@ export class RiftLineScene extends Phaser.Scene {
     view: Phaser.GameObjects.Container,
     effect: BattleEffect,
   ) {
-    this.effectRenderer.update(view, effect);
+    this.effectRenderer.update(view, this.effectForBattlePresentation(effect));
+  }
+
+  private effectForBattlePresentation(effect: BattleEffect): BattleEffect {
+    if (!this.portraitBattlePresentation || (effect.x2 === undefined && effect.x3 === undefined)) return effect;
+    const { scaleX, scaleY } = MOBILE_BATTLE_PRESENTATION;
+    return {
+      ...effect,
+      x2: effect.x2 === undefined ? undefined : effect.x + (effect.x2 - effect.x) * scaleX,
+      y2: effect.y2 === undefined ? undefined : effect.y + (effect.y2 - effect.y) * scaleY,
+      x3: effect.x3 === undefined ? undefined : effect.x + (effect.x3 - effect.x) * scaleX,
+      y3: effect.y3 === undefined ? undefined : effect.y + (effect.y3 - effect.y) * scaleY,
+    };
   }
 
   private syncChronospheres(
@@ -1690,16 +1778,54 @@ export class RiftLineScene extends Phaser.Scene {
       graphics.fillStyle(0x783cb4, 0.2 + Math.max(0, zone.life / zone.maxLife) * 0.22).fillCircle(0, 0, zone.radius * pulse);
       graphics.lineStyle(3, Phaser.Display.Color.HexStringToColor(zone.color).color, 0.92).strokeCircle(0, 0, zone.radius * pulse);
       view.setPosition(zone.x, zone.y).setDepth(DEPTH.effects - 2);
+      this.keepPortraitBattleVisualReadable(view);
     });
+  }
+
+  private battleOverlayLayout() {
+    if (this.portraitBattlePresentation) {
+      return {
+        timer: { x: 24, y: 68, width: 120, height: 34 },
+        banner: { x: 240, y: 122, width: 360 },
+      };
+    }
+    return {
+      timer: { x: 508, y: 104, width: 104, height: 28 },
+      banner: { x: 560, y: 155, width: 310 },
+    };
   }
 
   private buildBattleOverlay() {
     const { battle } = this.bridge.engine.state;
     if (!battle || this.battleTimerText) return;
-    this.battleTimerPanel = this.panel(508, 104, 104, 28, 0x09131d, 0.88, 0x8edfff);
+    const layout = this.battleOverlayLayout();
+    this.battleTimerRect = layout.timer;
+    this.battleTimerPanel = this.panel(
+      layout.timer.x,
+      layout.timer.y,
+      layout.timer.width,
+      layout.timer.height,
+      0x09131d,
+      0.88,
+      0x8edfff,
+    );
     this.battleTimerUrgent = false;
-    this.battleTimerText = this.text(560, 118, "", 14, "#dcefff", { fontStyle: "bold" }).setOrigin(0.5);
-    this.battleBannerText = this.text(560, 155, "", 14, "#f5fbff", { backgroundColor: "#09131ddd", padding: { x: 18, y: 10 }, wordWrap: { width: 310 }, align: "center" }).setOrigin(0.5);
+    this.battleTimerText = this.text(
+      layout.timer.x + layout.timer.width / 2,
+      layout.timer.y + layout.timer.height / 2,
+      "",
+      this.portraitBattlePresentation ? 16 : 14,
+      "#dcefff",
+      { fontStyle: "bold" },
+    ).setOrigin(0.5);
+    this.battleBannerText = this.text(
+      layout.banner.x,
+      layout.banner.y,
+      "",
+      14,
+      "#f5fbff",
+      { backgroundColor: "#09131ddd", padding: { x: 18, y: 10 }, wordWrap: { width: layout.banner.width }, align: "center" },
+    ).setOrigin(0.5);
     this.overlayLayer.add([this.battleTimerPanel, this.battleTimerText, this.battleBannerText]);
     if (battle.rankingOpen) this.drawRanking();
     this.syncBattleOverlay();
@@ -1712,9 +1838,10 @@ export class RiftLineScene extends Phaser.Scene {
     const urgent = remaining < 6;
     if (urgent !== this.battleTimerUrgent) {
       this.battleTimerUrgent = urgent;
+      const rect = this.battleTimerRect || this.battleOverlayLayout().timer;
       this.battleTimerPanel.clear();
-      this.battleTimerPanel.fillStyle(0x09131d, 0.88).fillRoundedRect(508, 104, 104, 28, 8);
-      this.battleTimerPanel.lineStyle(1, urgent ? 0xff718e : 0x8edfff, 0.8).strokeRoundedRect(508, 104, 104, 28, 8);
+      this.battleTimerPanel.fillStyle(0x09131d, 0.88).fillRoundedRect(rect.x, rect.y, rect.width, rect.height, 8);
+      this.battleTimerPanel.lineStyle(1, urgent ? 0xff718e : 0x8edfff, 0.8).strokeRoundedRect(rect.x, rect.y, rect.width, rect.height, 8);
     }
     const timerColor = urgent ? "#ff718e" : "#dcefff";
     this.battleTimerText.setText(`⏱ ${remaining.toFixed(1)}s`);
@@ -1761,28 +1888,54 @@ export class RiftLineScene extends Phaser.Scene {
     this.clearRankingPanel();
     const layer = this.add.container(0, 0).setDepth(DEPTH.overlay + 1);
     this.rankingLayer = layer;
-    layer.add(this.panel(802, 142, 270, 344, 0x07111b, 0.96));
-    layer.add(this.text(816, 154, "本场战斗", 12, "#eff8ff", { fontStyle: "bold" }));
-    layer.add(this.createInputBlocker(802, 142, 270, 344, DEPTH.overlay + 1));
-    (["damage", "support", "taken"] as RankingMetric[]).forEach((metric, index) => {
+    const portrait = this.portraitBattlePresentation;
+    const panelX = portrait ? 28 : 802;
+    const panelY = portrait ? 188 : 142;
+    const panelWidth = portrait ? 424 : 270;
+    const panelHeight = portrait ? 540 : 344;
+    const rowX = portrait ? panelX + 12 : 812;
+    const rowWidth = portrait ? panelWidth - 24 : 250;
+    const rowStart = portrait ? panelY + 112 : 218;
+    const rowGap = portrait ? 49 : 32;
+    layer.add(this.panel(panelX, panelY, panelWidth, panelHeight, 0x07111b, 0.96));
+    layer.add(this.text(panelX + 14, panelY + 12, "本场战斗", portrait ? 15 : 12, "#eff8ff", { fontStyle: "bold" }));
+    layer.add(this.createInputBlocker(panelX, panelY, panelWidth, panelHeight, DEPTH.overlay + 1));
+    const metrics: RankingMetric[] = ["damage", "support", "taken"];
+    const portraitTabWidths: Record<RankingMetric, number> = { damage: 116, support: 126, taken: 116 };
+    const portraitTabGap = 6;
+    const portraitTabsWidth = metrics.reduce((total, metric) => total + portraitTabWidths[metric], 0)
+      + portraitTabGap * (metrics.length - 1);
+    let portraitTabX = panelX + (panelWidth - portraitTabsWidth) / 2;
+    metrics.forEach((metric, index) => {
       const tone: ButtonTone = metric === "damage" ? "metricDamage" : metric === "support" ? "metricSupport" : "metricTaken";
       // 页签挂到统计层，随面板一起销毁，避免定时刷新泄漏按钮
-      layer.add(this.button(814 + index * 84, 178, metric === "support" ? 88 : 76, 24, resultMetricLabel[metric], { type: "metric", metric }, { tone, selected: battle.rankingMetric === metric }, DEPTH.overlay + 3));
+      const tabWidth = portrait ? portraitTabWidths[metric] : metric === "support" ? 88 : 76;
+      const tabX = portrait ? portraitTabX : 814 + index * 84;
+      layer.add(this.button(tabX, portrait ? panelY + 48 : 178, tabWidth, portrait ? 30 : 24, resultMetricLabel[metric], { type: "metric", metric }, { tone, selected: battle.rankingMetric === metric }, DEPTH.overlay + 3));
+      if (portrait) portraitTabX += tabWidth + portraitTabGap;
     });
     const ranking = this.bridge.engine.getBattleRanking();
     const maximum = Math.max(1, ...ranking.map(({ value }) => value));
     ranking.slice(0, 8).forEach(({ fighter, value }, index) => {
-      const y = 218 + index * 32;
+      const y = rowStart + index * rowGap;
+      const rowHeight = portrait ? 42 : 27;
+      const rowPortraitRadius = portrait ? 16 : 10;
       const row = this.add.graphics();
-      row.fillStyle(0x102330, fighter.alive ? 0.9 : 0.48).fillRoundedRect(812, y - 13, 250, 27, 7);
-      row.fillStyle(Phaser.Display.Color.HexStringToColor(UNIT_DEFS[fighter.unitId].accent).color, 0.65).fillRoundedRect(876, y + 7, 130 * (value / maximum), 3, 2);
+      row.fillStyle(0x102330, fighter.alive ? 0.9 : 0.48).fillRoundedRect(rowX, y - rowHeight / 2, rowWidth, rowHeight, 7);
+      const barX = portrait ? rowX + 138 : 876;
+      const barWidth = portrait ? 190 : 130;
+      row.fillStyle(Phaser.Display.Color.HexStringToColor(UNIT_DEFS[fighter.unitId].accent).color, 0.65).fillRoundedRect(barX, y + rowHeight / 2 - 8, barWidth * (value / maximum), 3, 2);
       layer.add(row);
-      layer.add(this.createPortrait(fighter.unitId, 834, y, 10, fighter.team === "enemy").setAlpha(fighter.alive ? 1 : 0.45));
-      layer.add(this.text(850, y, `${index + 1}`, 10, "#98b1c2").setOrigin(0, 0.5));
-      layer.add(this.text(868, y - 5, `${UNIT_DEFS[fighter.unitId].name}${"★".repeat(fighter.star)}`, 9, UNIT_DEFS[fighter.unitId].accent, { fontStyle: "bold" }).setOrigin(0, 0.5).setAlpha(fighter.alive ? 1 : 0.52));
+      const portraitX = portrait ? rowX + 22 : 834;
+      const rankX = portrait ? rowX + 43 : 850;
+      const nameX = portrait ? rowX + 62 : 868;
+      const valueX = portrait ? rowX + rowWidth - 12 : 1056;
+      layer.add(this.createPortrait(fighter.unitId, portraitX, y, rowPortraitRadius, fighter.team === "enemy").setAlpha(fighter.alive ? 1 : 0.45));
+      layer.add(this.text(rankX, y, `${index + 1}`, portrait ? 12 : 10, "#98b1c2").setOrigin(0, 0.5));
+      layer.add(this.text(nameX, y - (portrait ? 7 : 5), `${UNIT_DEFS[fighter.unitId].name}${"★".repeat(fighter.star)}`, portrait ? 11 : 9, UNIT_DEFS[fighter.unitId].accent, { fontStyle: "bold" }).setOrigin(0, 0.5).setAlpha(fighter.alive ? 1 : 0.52));
       const support = battle.rankingMetric === "support" ? `治${short(fighter.healingDone)} 盾${short(fighter.shieldingDone)}` : short(value);
-      layer.add(this.text(1056, y, support, 9, "#effaff").setOrigin(1, 0.5));
-      const zone = this.add.zone(937, y, 250, 27).setDepth(DEPTH.overlay + 4).setInteractive({ useHandCursor: true });
+      layer.add(this.text(valueX, y, support, portrait ? 10 : 9, "#effaff").setOrigin(1, 0.5));
+      const zone = this.add.zone(rowX + rowWidth / 2, y, rowWidth, rowHeight).setDepth(DEPTH.overlay + 4).setInteractive({ useHandCursor: true });
       zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
       zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
       zone.on(Phaser.Input.Events.POINTER_OUT, () => { if (!this.isCompact()) this.clearTooltip(); });
@@ -1948,6 +2101,7 @@ export class RiftLineScene extends Phaser.Scene {
   private drawResult() {
     const { result, battle } = this.bridge.engine.state;
     if (!result || !battle) return;
+    const debrief = this.bridge.engine.getBattleDebrief();
     const layout = this.isCompact() ? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT;
     const { panel } = layout;
     const dim = this.add.rectangle(560, 399, 1120, 642, 0x02070d, 0.76);
@@ -1964,6 +2118,23 @@ export class RiftLineScene extends Phaser.Scene {
       ? `+${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`
       : `核心 -${result.damage} · +${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`;
     this.overlayLayer.add(this.text(560, layout.rewardY, reward, 13, result.won ? COLORS.resultReward : "#ff9caf", { fontStyle: "bold" }).setOrigin(0.5));
+    if (debrief) {
+      const debriefColor = debrief.tone === "positive"
+        ? "#8de6bc"
+        : debrief.tone === "warning"
+          ? "#ffd27a"
+          : "#ff9caf";
+      const debriefText = this.boundedText(
+        `${debrief.title} · ${debrief.detail}`,
+        880,
+        2,
+        10,
+        debriefColor,
+        { align: "center", fontStyle: "bold" },
+      ).setOrigin(0.5, 0);
+      debriefText.setPosition(560, layout.debriefY);
+      this.overlayLayer.add(debriefText);
+    }
     const metricWidths: Record<RankingMetric, number> = { damage: 78, support: 96, taken: 76 };
     const metrics: RankingMetric[] = ["damage", "support", "taken"];
     const totalMetricWidth = metrics.reduce((total, metric) => total + metricWidths[metric], 0) + 16;
@@ -2010,7 +2181,18 @@ export class RiftLineScene extends Phaser.Scene {
       });
       this.drawResultScrollbar(layout, team, rows.length);
     });
-    this.button(410, layout.continueY, 300, 38, this.resultContinueLabel(), { type: "resultContinue" }, { tone: result.won ? "confirm" : "danger" }, DEPTH.overlay + 3);
+    if (this.bridge.engine.canFinishCampaign) {
+      this.button(325, layout.continueY, 220, 42, "完成远征", { type: "finishCampaign" }, {
+        tone: "confirm",
+        secondary: "ENTER · 查看总结",
+      }, DEPTH.overlay + 3).setName("campaign-finish-button");
+      this.button(575, layout.continueY, 220, 42, "继续无限", { type: "continueEndless" }, {
+        tone: "neutral",
+        secondary: "进入第 17 战",
+      }, DEPTH.overlay + 3).setName("campaign-endless-button");
+    } else {
+      this.button(410, layout.continueY, 300, 38, this.resultContinueLabel(), { type: "resultContinue" }, { tone: result.won ? "confirm" : "danger" }, DEPTH.overlay + 3);
+    }
   }
 
   private drawAugments() {
@@ -2066,7 +2248,15 @@ export class RiftLineScene extends Phaser.Scene {
     // the canvas toast for combat-only feedback.
     if (!toast || !this.tooltipLayer || this.bridge.engine.state.phase === "preparation") return;
     const color = toast.tone === "good" ? "#68e3aa" : toast.tone === "bad" ? "#ff7890" : "#79d8ff";
-    const text = this.text(560, 90, toast.text, 12, color, { backgroundColor: "#07111bee", padding: { x: 22, y: 10 }, wordWrap: { width: 560 }, align: "center" }).setOrigin(0.5, 0);
+    const logical = this.logicalSize();
+    const text = this.text(
+      logical.width / 2,
+      this.portraitBattlePresentation ? 34 : 90,
+      toast.text,
+      12,
+      color,
+      { backgroundColor: "#07111bee", padding: { x: 22, y: 10 }, wordWrap: { width: Math.min(560, logical.width - 40) }, align: "center" },
+    ).setOrigin(0.5, 0);
     text.setName("toast");
     this.tooltipLayer.add(text);
   }
@@ -2130,16 +2320,17 @@ export class RiftLineScene extends Phaser.Scene {
     scale: number,
   ) {
     const inset = TOOLTIP_TYPOGRAPHY.edgeInset * scale;
-    const xMin = Math.min(inset, Math.max(0, WORLD_WIDTH - width));
-    const xMax = Math.max(xMin, WORLD_WIDTH - width - inset);
-    const yMin = Math.min(86 * scale, Math.max(0, WORLD_HEIGHT - height));
-    const yMax = Math.max(yMin, WORLD_HEIGHT - height - inset);
+    const logical = this.logicalSize();
+    const xMin = Math.min(inset, Math.max(0, logical.width - width));
+    const xMax = Math.max(xMin, logical.width - width - inset);
+    const yMin = Math.min(86 * scale, Math.max(0, logical.height - height));
+    const yMax = Math.max(yMin, logical.height - height - inset);
     const preferred = this.isCompact() || !pointer
       ? { x: 28 * scale, y: compactY * scale }
       : (() => {
-        const logical = this.logicalPointer(pointer);
+        const pointerLogical = this.logicalPointer(pointer);
         const offset = TOOLTIP_TYPOGRAPHY.pointerOffset * scale;
-        return { x: logical.x + offset, y: logical.y + offset };
+        return { x: pointerLogical.x + offset, y: pointerLogical.y + offset };
       })();
     let x = Phaser.Math.Clamp(preferred.x, xMin, xMax);
     const y = Phaser.Math.Clamp(preferred.y, yMin, yMax);

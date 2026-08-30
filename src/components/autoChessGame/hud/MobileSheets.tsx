@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { AutoChessEngine } from "../core/gameEngine";
 import {
+  CAMPAIGN_ROUNDS,
   TRAITS,
   UNIT_DEFS,
   augmentTierForRound,
@@ -58,6 +59,10 @@ export function MobileResult({ engine, onAction }: { engine: AutoChessEngine; on
   const reward = result.won
     ? `+${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`
     : `核心 -${result.damage} · +${result.income} 金币${result.upgradeDiscount ? ` · 升本费用 -${result.upgradeDiscount}` : ""}`;
+  const debrief = engine.getBattleDebrief();
+  const campaignVictory = result.won
+    && state.round === CAMPAIGN_ROUNDS
+    && !state.endlessUnlocked;
   return (
     <div className="rift-dom-layer rift-phase-result" style={{ fontFamily: FONT }}>
       <main className={`rift-mobile-result ${result.won ? "is-win" : "is-loss"}`}>
@@ -66,6 +71,13 @@ export function MobileResult({ engine, onAction }: { engine: AutoChessEngine; on
           <h1>{result.headline}</h1>
           <p>{result.detail}</p>
           <strong>{reward}</strong>
+          {debrief && (
+            <aside className={`rift-mobile-result-debrief is-${debrief.tone}`} data-debrief-kind={debrief.kind}>
+              <span>战术复盘</span>
+              <strong>{debrief.title}</strong>
+              <p>{debrief.detail}</p>
+            </aside>
+          )}
           <div className="rift-mobile-result-metrics" role="tablist" aria-label="统计指标">
             {(["damage", "support", "taken"] as RankingMetric[]).map((nextMetric) => (
               <button key={nextMetric} type="button" role="tab" aria-selected={metric === nextMetric} onClick={() => onAction({ type: "metric", metric: nextMetric })}>
@@ -93,9 +105,22 @@ export function MobileResult({ engine, onAction }: { engine: AutoChessEngine; on
             ))}
           </div>
         </section>
-        <ActionButton tone={result.won ? "confirm" : "danger"} className="rift-mobile-result-continue" onClick={() => onAction({ type: "resultContinue" })}>
-          {state.hp <= 0 ? "继续 · 查看结局" : augmentTierForRound(state.round) ? `继续 · 选择${augmentTierForRound(state.round) === "minor" ? "小" : "大"}天赋` : "继续 · 进入整备"}
-        </ActionButton>
+        <div className={`rift-mobile-result-actions ${campaignVictory ? "is-campaign-clear" : ""}`}>
+          {campaignVictory ? (
+            <>
+              <ActionButton tone="confirm" className="rift-mobile-result-finish" onClick={() => onAction({ type: "finishCampaign" })}>
+                <span>完成远征</span><b>ENTER</b>
+              </ActionButton>
+              <ActionButton className="rift-mobile-result-endless" onClick={() => onAction({ type: "continueEndless" })}>
+                <span>继续无限</span><b>第 17 战</b>
+              </ActionButton>
+            </>
+          ) : (
+            <ActionButton tone={result.won ? "confirm" : "danger"} className="rift-mobile-result-continue" onClick={() => onAction({ type: "resultContinue" })}>
+              {state.hp <= 0 ? "继续 · 查看结局" : augmentTierForRound(state.round) ? `继续 · 选择${augmentTierForRound(state.round) === "minor" ? "小" : "大"}天赋` : "继续 · 进入整备"}
+            </ActionButton>
+          )}
+        </div>
       </main>
     </div>
   );

@@ -1,4 +1,4 @@
-import { SECT_NAMES } from "../logic/constants";
+import { SECTS_DATA } from "../logic/constants";
 import type { LocationInfo, Person, Sect } from "../logic/types";
 import { StoryStage } from "../logic/types";
 import {
@@ -16,7 +16,11 @@ export interface WuxiaWorld {
   heroId: string;
   stage: StoryStage;
   turnInStage: number;
+  turn: number;
   party: string[];
+  companionId?: string;
+  flags: Record<string, any>;
+  ended?: boolean;
 }
 
 export interface CreatedWuxiaWorld {
@@ -26,25 +30,24 @@ export interface CreatedWuxiaWorld {
 
 export function createWuxiaWorld(): CreatedWuxiaWorld {
   const locations = generateWorldMap();
-  const sects: Sect[] = SECT_NAMES.map((name, index) => {
-    const sectLocation = locations.find(
-      (location) => location.id === `sect_${index}`,
-    );
-    return {
-      id: `sect_${index}`,
-      name,
-      type: Math.random() > 0.7 ? "evil" : "good",
-      locationId: sectLocation?.id || locations[0].id,
-      relations: {},
-    };
-  });
+  // Clone canonical records so IDs, restrictions and descriptions stay in
+  // sync with the map and with snippets that reference SECTS_DATA directly.
+  const sects: Sect[] = SECTS_DATA.map((sect) => ({
+    ...sect,
+    relations: { ...(sect.relations || {}) },
+    members: [],
+    leader: undefined,
+    locationId: locations.some((location) => location.id === sect.locationId)
+      ? sect.locationId
+      : locations.find((location) => location.type === "sect")?.id || locations[0].id,
+  }));
 
   initSectRelations(sects);
 
   const npcs: Person[] = [];
   sects.forEach((sect) => {
     const leader: Person = {
-      id: `npc_${npcs.length}`,
+      id: `npc_leader_${sect.id}`,
       name: genName("male"),
       sectId: sect.id,
       role: "leader",
@@ -57,8 +60,12 @@ export function createWuxiaWorld(): CreatedWuxiaWorld {
       flags: {},
       arts: [],
       knowledge: [],
+      exp: 0,
+      maxHp: 100,
     };
     npcs.push(leader);
+    sect.leader = leader.id;
+    sect.members?.push(leader.id);
 
     for (let index = 0; index < 2; index += 1) {
       const gender = Math.random() > 0.5 ? "male" : "female";
@@ -76,13 +83,20 @@ export function createWuxiaWorld(): CreatedWuxiaWorld {
         flags: {},
         arts: [],
         knowledge: [],
+        exp: 0,
+        maxHp: 100,
       });
+      sect.members?.push(npcs[npcs.length - 1].id);
     }
   });
 
   const hiddenMasterCount = 1 + Math.floor(Math.random() * 3);
   for (let index = 0; index < hiddenMasterCount; index += 1) {
-    npcs.push(generateHiddenMaster(npcs, sects, locations));
+    const hiddenMaster = generateHiddenMaster(npcs, sects, locations);
+    // The legacy helper used Date.now() for IDs. Normalize here so rapid
+    // generations cannot create duplicate NPC references.
+    hiddenMaster.id = `npc_hidden_master_${index}`;
+    npcs.push(hiddenMaster);
   }
 
   const heroSect = rand(sects);
@@ -91,7 +105,7 @@ export function createWuxiaWorld(): CreatedWuxiaWorld {
   );
   const heroLocation =
     locations.find(
-      (location) => location.id === `sect_${sects.indexOf(heroSect)}`,
+      (location) => location.id === heroSect.locationId,
     ) || locations.find((location) => location.type === "sect");
   const hero: Person = {
     id: "hero",
@@ -110,7 +124,11 @@ export function createWuxiaWorld(): CreatedWuxiaWorld {
     flags: {},
     arts: [],
     knowledge: ["rumor_duel"],
+    exp: 0,
+    maxHp: 100,
   };
+
+  heroSect.members?.push(hero.id);
 
   if (master) {
     master.relations.push({
@@ -128,7 +146,9 @@ export function createWuxiaWorld(): CreatedWuxiaWorld {
       heroId: hero.id,
       stage: StoryStage.BEGINNING,
       turnInStage: 0,
+      turn: 0,
       party: [],
+      flags: {},
     },
     introduction: `【世界生成完毕】 你出生在 ${heroSect.name}，师承掌门【${master?.name}】。`,
   };

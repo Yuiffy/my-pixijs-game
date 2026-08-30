@@ -35,6 +35,7 @@ const TIANDOU_LOLLIPOP_GROUND_LIFETIME = 10;
 const TIANDOU_LOLLIPOP_HEAL_RATIO = 0.14;
 const TIANDOU_LOLLIPOP_MOVE_SPEED = 16;
 const TIANDOU_LOLLIPOP_MOVE_DURATION = 3;
+const TIANDOU_LOLLIPOP_PICKUP_PADDING = 28;
 const TIANDOU_LOLLIPOP_SLOW_DURATION = 2.4;
 const SUMI_SEAL_RADIUS = 128;
 const SUMI_SEAL_ARMOR_PENALTY = 9;
@@ -968,11 +969,17 @@ export class CombatProjectileSystem {
           : this.host.living(targetTeam)
       ).sort((left, right) => left.fid.localeCompare(right.fid));
       if (projectile.style === "lollipop" && projectile.grounded) {
-        const steppedOn = targets.find(
-          (target) =>
-            Math.hypot(target.x - projectile.x, target.y - projectile.y) <=
-            target.radius + projectile.radius,
-        );
+        const steppedOn = targets
+          .map((target) => ({
+            target,
+            distance: Math.hypot(target.x - projectile.x, target.y - projectile.y),
+          }))
+          .filter(({ target, distance }) => (
+            distance <= target.radius + projectile.radius + TIANDOU_LOLLIPOP_PICKUP_PADDING
+          ))
+          .sort((left, right) => (
+            left.distance - right.distance || left.target.fid.localeCompare(right.target.fid)
+          ))[0]?.target;
         projectile.remainingRange -= dt;
         if (!steppedOn) return projectile.remainingRange > 0;
         if (source) {

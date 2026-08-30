@@ -31,6 +31,7 @@ import {
   STAR_FORGE_UNLOCK_COST,
   starForgeUpgradeCost,
 } from "./roster";
+import type { BattleDebrief } from "../battleDebrief";
 
 interface ActiveTraitSummary {
   id: TraitId;
@@ -59,6 +60,7 @@ export interface TextStateContext {
   getBattleRanking: (
     team: Team,
   ) => Array<{ fighter: Fighter; value: number }>;
+  getBattleDebrief: () => BattleDebrief | null;
 }
 
 export const renderTextState = (context: TextStateContext) => {
@@ -85,6 +87,10 @@ export const renderTextState = (context: TextStateContext) => {
           ? context.state.board[context.state.selected.index]
           : context.state.bench[context.state.selected.index])
       : null;
+    const campaignVictoryPending = context.state.phase === "result"
+      && Boolean(context.state.result?.won)
+      && context.state.round === CAMPAIGN_ROUNDS
+      && !context.state.endlessUnlocked;
     return JSON.stringify({
       version: AUTOCHESS_VERSION,
       coordinateSystem: "画布 1120x720；原点在左上，x 向右、y 向下。",
@@ -92,7 +98,8 @@ export const renderTextState = (context: TextStateContext) => {
       phaseLabel: phaseLabels[context.state.phase],
       round: context.state.round,
       maxRounds: context.state.maxRounds,
-      campaignCleared: context.state.endlessUnlocked,
+      campaignCleared: context.state.endlessUnlocked || context.state.finalWon,
+      campaignVictoryPending,
       endlessRound: Math.max(0, context.state.round - CAMPAIGN_ROUNDS),
       progressionMode: progressionModeForRound(context.state.round),
       wave: currentWave
@@ -225,6 +232,7 @@ export const renderTextState = (context: TextStateContext) => {
         timeRemaining: Number(
           Math.max(0, battle.limit - battle.elapsed).toFixed(1),
         ),
+        debrief: context.getBattleDebrief(),
         log: battle.eventLog.slice(-80),
         playerUnits: battle.player
           .filter((unit) => unit.alive)
@@ -362,7 +370,10 @@ export const renderTextState = (context: TextStateContext) => {
         allPlayerUnits: battle.player.map((unit) => context.summarizeBattleFighter(unit)),
         allEnemyUnits: battle.enemy.map((unit) => context.summarizeBattleFighter(unit)),
       },
-      result: context.state.result,
+      result: context.state.result && {
+        ...context.state.result,
+        debrief: context.getBattleDebrief(),
+      },
       availableActions:
         context.state.phase === "preparation"
           ? [
@@ -377,6 +388,7 @@ export const renderTextState = (context: TextStateContext) => {
               "点击回收出售选中单位",
               "R 刷新商店",
               "L 锁定/解锁商店",
+              "A 推荐站位（只整理场上单位）",
               context.isMaxPlayerLevel ? "U 使用升星工坊" : "U 升本",
               "数字 1-5 购买对应商店棋子",
               "Space 开始战斗",
@@ -390,7 +402,9 @@ export const renderTextState = (context: TextStateContext) => {
                 ? ["点击再来一局或按 Enter"]
                 : context.state.phase === "battle"
                   ? ["自动战斗中", "P 暂停/继续", "S 快速结算", "点击战斗统计或按 D 展开/收起", "F 全屏"]
-                  : ["查看双方战斗统计", "点击继续或按 Enter 进入下一阶段", "F 全屏"],
+                  : campaignVictoryPending
+                    ? ["查看双方战斗统计", "点击完成远征或按 Enter 查看总结", "点击继续无限模式进入第 17 战", "F 全屏"]
+                    : ["查看双方战斗统计", "点击继续或按 Enter 进入下一阶段", "F 全屏"],
       toast: context.state.toast?.text || null,
     });
   }

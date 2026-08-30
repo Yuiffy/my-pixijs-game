@@ -119,6 +119,8 @@ let browser;
   assert.ok(help.flow.includes("pause()"));
   assert.ok(help.flow.includes("resume()"));
   assert.ok(help.flow.includes("skipBattle()"));
+  assert.ok(help.flow.includes("finishCampaign()"));
+  assert.ok(help.flow.includes("continueEndless()"));
   assert.ok(help.testing.includes("consoleLogging(enabled)"));
   assert.ok(help.read.includes("window.autoChessLastRun"));
   assert.ok(help.read.includes("battles()"));

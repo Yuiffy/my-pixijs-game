@@ -21,6 +21,7 @@ import {
   GLUTTONY_RADIUS_PER_STACK,
   GLUTTONY_STACK_CAP,
 } from "../battleGeometry";
+import { createBattleDebrief } from "../battleDebrief";
 import type {
   AbilityMotion,
   BattleLogEvent,
@@ -409,8 +410,7 @@ export class AutoChessEngine {
     this.state.starterChoices = this.rollStarterChoices();
   }
 
-  public resetToTitle() {
-    const seed = freshSeed();
+  public resetToTitle(seed = freshSeed()) {
     const best = Math.max(this.state.bestScore, loadBestScore());
     this.rng = createSeededRandom(seed);
     this.shopRng = createSeededRandom(seed);
@@ -809,6 +809,10 @@ export class AutoChessEngine {
     this.roster.clearSelection();
   }
 
+  public autoArrangeBoard() {
+    return this.roster.autoArrangeBoard();
+  }
+
   public moveUnit(
     from: UnitLocation,
     zone: UnitLocation["zone"],
@@ -866,6 +870,14 @@ export class AutoChessEngine {
     this.progression.continueAfterResult();
   }
 
+  public get canFinishCampaign() {
+    return this.progression.canFinishCampaign;
+  }
+
+  public finishCampaign() {
+    return this.progression.finishCampaign();
+  }
+
   public chooseAugment(index: number) {
     this.progression.chooseAugment(index);
   }
@@ -906,6 +918,21 @@ export class AutoChessEngine {
         valueFor(right) - valueFor(left) || left.fid.localeCompare(right.fid),
       )
       .map((fighter) => ({ fighter, value: valueFor(fighter) }));
+  }
+
+  public getBattleDebrief() {
+    const { battle, result } = this.state;
+    if (!battle || !result) return null;
+    return createBattleDebrief({
+      won: result.won,
+      elapsed: battle.elapsed,
+      limit: battle.limit,
+      boardCount: this.boardCount,
+      boardCap: this.boardCap,
+      activeTraitCount: this.getActiveTraits().length,
+      player: battle.player,
+      enemy: battle.enemy,
+    });
   }
 
   public getBattleFighter(fid: string) {
@@ -2150,13 +2177,27 @@ export class AutoChessEngine {
         this.addEffect({ kind: "text", x: source.x, y: source.y - 44, color: accent, text: "护甲提升 · 全员看我", life: 0.8, size: 11 });
         break;
       }
-      case "youyi":
+      case "youyi": {
         if (target) {
-          this.dealAbilityDamage(source, target, 0.78);
-          if (target.alive) this.dealAbilityDamage(source, target, 0.78);
-          if (target.alive) target.stun = Math.max(target.stun, 0.45);
+          const definition = UNIT_DEFS.youyi;
+          const damageMultiplier = abilityStatForStar(
+            definition,
+            source.star,
+            "damageMultiplier",
+            0.78,
+          );
+          const stunDuration = abilityStatForStar(
+            definition,
+            source.star,
+            "stunDuration",
+            0.45,
+          );
+          this.dealAbilityDamage(source, target, damageMultiplier);
+          if (target.alive) this.dealAbilityDamage(source, target, damageMultiplier);
+          if (target.alive) target.stun = Math.max(target.stun, stunDuration);
         }
         break;
+      }
       case "akirinco":
         if (target) {
           let total = 0;
@@ -4377,6 +4418,7 @@ export class AutoChessEngine {
       summarizeBattleFighter: (fighter, value) =>
         this.summarizeBattleFighter(fighter, value),
       getBattleRanking: (team) => this.getBattleRanking(team),
+      getBattleDebrief: () => this.getBattleDebrief(),
     });
   }
 }

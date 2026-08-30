@@ -15,6 +15,7 @@ import type {
   ToastState,
   UnitLocation,
 } from "../gameTypes";
+import { canonicalFormationPlacements } from "../formation";
 import type { RandomSource } from "./random";
 import { SHOP_SIZE } from "./state";
 
@@ -268,6 +269,47 @@ private sameLocation(a: UnitLocation, b: UnitLocation) {
 
 public clearSelection() {
     this.state.selected = null;
+  }
+
+public autoArrangeBoard() {
+    if (this.state.phase !== "preparation") return false;
+    const lineup = this.state.board.flatMap((unit, index) => {
+      if (!unit) return [];
+      return [{ unit, location: { zone: "board" as const, index } }];
+    });
+    if (lineup.length === 0) {
+      this.setToast("场上没有可整理的单位。", "info");
+      return false;
+    }
+
+    const selectedBoard = this.state.selected?.zone === "board"
+      ? this.state.selected
+      : null;
+    const selectedBoardUid = selectedBoard
+      ? this.state.board[selectedBoard.index]?.uid
+      : null;
+    const nextBoard = Array<OwnedUnit | null>(this.state.board.length).fill(null);
+    canonicalFormationPlacements(lineup).forEach(({ entry, slot }) => {
+      nextBoard[slot] = entry.unit;
+    });
+    const changed = this.state.board.some((unit, index) => (
+      unit?.uid !== nextBoard[index]?.uid
+    ));
+    this.state.board = nextBoard;
+
+    if (selectedBoard) {
+      const selectedIndex = nextBoard.findIndex((unit) => unit?.uid === selectedBoardUid);
+      this.state.selected = selectedIndex >= 0
+        ? { zone: "board", index: selectedIndex }
+        : null;
+    }
+    this.setToast(
+      changed
+        ? "推荐站位已完成：前排承伤，后排输出。"
+        : "当前场上单位已经处于推荐站位。",
+      changed ? "good" : "info",
+    );
+    return changed;
   }
 
 public moveUnit(from: UnitLocation, zone: UnitLocation["zone"], index: number) {

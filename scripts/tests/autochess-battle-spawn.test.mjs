@@ -3065,6 +3065,66 @@ test("结算继续会保留契印与失败结局分支", () => {
   assert.ok(JSON.parse(lossEngine.renderTextState()).runStats.length > 0);
 });
 
+test("十六战胜利可以完成远征并保留继续无限分支", () => {
+  const finishEngine = createEngine(7401);
+  finishEngine.state.round = gameData.CAMPAIGN_ROUNDS;
+  finishEngine.state.phase = "result";
+  finishEngine.state.result = {
+    won: true,
+    headline: "裂隙封闭",
+    detail: "终局首领已击败",
+    income: 0,
+    bounty: 0,
+    defeatedEnemies: 1,
+    defeatedByStar: { 1: 0, 2: 0, 3: 1 },
+    upgradeDiscount: 0,
+    damage: 0,
+  };
+  const scoreBefore = finishEngine.state.score;
+  const completionBonus = finishEngine.state.hp * 45 + finishEngine.state.gold * 10 + 500;
+  const pendingText = JSON.parse(finishEngine.renderTextState());
+
+  assert.equal(finishEngine.canFinishCampaign, true);
+  assert.equal(pendingText.campaignVictoryPending, true);
+  assert.equal(pendingText.campaignCleared, false);
+  assert.ok(pendingText.availableActions.includes("点击完成远征或按 Enter 查看总结"));
+  assert.ok(pendingText.availableActions.includes("点击继续无限模式进入第 17 战"));
+  assert.equal(finishEngine.finishCampaign(), true);
+  assert.equal(finishEngine.state.phase, "gameover");
+  assert.equal(finishEngine.state.finalWon, true);
+  assert.equal(finishEngine.state.endlessUnlocked, false);
+  assert.equal(finishEngine.state.score, scoreBefore + completionBonus);
+  assert.equal(finishEngine.canFinishCampaign, false);
+  assert.equal(finishEngine.finishCampaign(), false);
+
+  const finishedText = JSON.parse(finishEngine.renderTextState());
+  assert.equal(finishedText.campaignVictoryPending, false);
+  assert.equal(finishedText.campaignCleared, true);
+
+  const endlessEngine = createEngine(7402);
+  endlessEngine.state.round = gameData.CAMPAIGN_ROUNDS;
+  endlessEngine.state.phase = "result";
+  endlessEngine.state.result = structuredClone(finishEngine.state.result) || {
+    won: true,
+    headline: "裂隙封闭",
+    detail: "终局首领已击败",
+    income: 0,
+    bounty: 0,
+    defeatedEnemies: 1,
+    defeatedByStar: { 1: 0, 2: 0, 3: 1 },
+    upgradeDiscount: 0,
+    damage: 0,
+  };
+  endlessEngine.state.result.won = true;
+  assert.equal(endlessEngine.canFinishCampaign, true);
+  endlessEngine.continueAfterResult();
+  assert.equal(endlessEngine.state.endlessUnlocked, true);
+  assert.equal(endlessEngine.state.phase, "augment");
+  endlessEngine.chooseAugment(0);
+  assert.equal(endlessEngine.state.round, gameData.CAMPAIGN_ROUNDS + 1);
+  assert.equal(endlessEngine.state.phase, "preparation");
+});
+
 test("精英关、主线通关与地狱入口会在备战前发出预警", () => {
   const engine = createEngine(74);
   const completeWonRound = (round) => {
@@ -4451,6 +4511,44 @@ test("七海凿凿冲击、恬豆地面棒棒糖与三理理恐惧试管均按�
   assert.ok(candyTarget.hp < enemyHpBefore);
   assert.ok(candyTarget.slowTime >= 2.4);
 
+  candyBattle.projectiles = [];
+  ally.hp = ally.maxHp * 0.5;
+  ally.x = 260;
+  ally.y = 550;
+  candyTarget.x = 480;
+  candyTarget.y = 360;
+  candyEngine["castAbility"](tiandou, candyBattle.enemy);
+  candyEngine["updateProjectiles"](candyBattle, 0.5);
+  const pickupCandy = candyBattle.projectiles.find(
+    (projectile) => projectile.style === "lollipop" && projectile.grounded,
+  );
+  assert.ok(pickupCandy);
+  candyBattle.projectiles = [pickupCandy];
+  candyBattle.enemy.forEach((fighter) => {
+    fighter.x = 700;
+    fighter.y = 550;
+  });
+  ally.x = pickupCandy.x + ally.radius + pickupCandy.radius + 20;
+  ally.y = pickupCandy.y;
+  const nearPickupHp = ally.hp;
+  candyEngine["updateProjectiles"](candyBattle, 0.05);
+  assert.ok(ally.hp > nearPickupHp, "友军与糖果擦肩时仍应在拾取容差内获得治疗");
+  assert.equal(candyBattle.projectiles.length, 0);
+
+  candyEngine["castAbility"](tiandou, candyBattle.enemy);
+  candyEngine["updateProjectiles"](candyBattle, 0.5);
+  const missedCandy = candyBattle.projectiles.find(
+    (projectile) => projectile.style === "lollipop" && projectile.grounded,
+  );
+  assert.ok(missedCandy);
+  candyBattle.projectiles = [missedCandy];
+  ally.x = missedCandy.x + ally.radius + missedCandy.radius + 40;
+  ally.y = missedCandy.y;
+  const outsidePickupHp = ally.hp;
+  candyEngine["updateProjectiles"](candyBattle, 0.05);
+  assert.equal(ally.hp, outsidePickupHp, "拾取容差外的单位不应隔空吃到糖果");
+  assert.equal(candyBattle.projectiles.length, 1);
+
   const fearEngine = createEngine(204);
   fearEngine.state.playerLevel = 4;
   fearEngine.state.board.fill(null);
@@ -4951,48 +5049,75 @@ test("滑跪会沿直线路径移动并逐个撞开沿途敌人", () => {
   assertInsideBattleBounds(far);
 });
 
-test("跃击技能会经过空中过程并在落地后结算伤害", () => {
-  const engine = createEngine(74);
-  engine.state.playerLevel = 4;
-  engine.state.board.fill(null);
-  engine.state.board[0] = { uid: 1, id: "youyi", star: 1 };
-  engine.startBattle();
-  const battle = engine.state.battle;
-  const source = battle?.player[0];
-  assert.ok(battle && source);
-  battle.enemy.forEach((fighter, index) => {
-    fighter.x = 500 + index * 24;
-    fighter.y = 360 + index * 90;
-    fighter.attack = 0;
-    fighter.armor = 0;
-    fighter.dodgeChance = 0;
-    fighter.moveSpeed = 0;
-    fighter.cooldown = 99;
-    fighter.energy = 0;
-    fighter.hp = 99_999;
-    fighter.maxHp = 99_999;
-  });
-  source.x = 220;
-  source.y = 360;
-  source.energy = source.maxEnergy;
-  engine.update(0.05);
-  assert.equal(source.abilityMotion?.kind, "jump");
-  assert.equal(source.abilityMotion?.abilityId, "youyi");
-  const target = battle.enemy.find((fighter) => fighter.fid === source.abilityMotion?.targetFid);
-  assert.ok(target);
-  const startHp = target.hp;
-  assert.equal(target.hp, startHp, "起跳时不应提前结算落地伤害");
-  engine.update(0.05);
-  assert.ok(source.x > 220 && source.x < (source.abilityMotion?.toX || Infinity));
-  assert.equal(target.hp, startHp, "空中阶段不应提前结算伤害");
+test("又一升星强化双踢伤害与眩晕，但不改变跃击空中时长", () => {
+  const expectations = [
+    { star: 1, damageMultiplier: 0.78, stunDuration: 0.45 },
+    { star: 2, damageMultiplier: 0.96, stunDuration: 0.7 },
+    { star: 3, damageMultiplier: 1.16, stunDuration: 1 },
+  ];
+  assert.deepEqual(
+    gameData.UNIT_DEFS.youyi.abilityLevels?.map(({ stats }) => stats),
+    expectations.map(({ damageMultiplier, stunDuration }) => ({ damageMultiplier, stunDuration })),
+  );
 
-  source.cooldown = 99;
-  source.energy = 0;
-  stepBattle(engine, 11);
-  assert.equal(source.abilityMotion, null);
-  assert.ok(target.hp < startHp);
-  assert.ok(target.stun > 0);
-  assertInsideBattleBounds(source);
+  expectations.forEach(({ star, damageMultiplier, stunDuration }) => {
+    const engine = createEngine(74 + star);
+    engine.state.playerLevel = 4;
+    engine.state.board.fill(null);
+    engine.state.board[0] = { uid: 1, id: "youyi", star };
+    engine.startBattle();
+    const battle = engine.state.battle;
+    const source = battle?.player[0];
+    assert.ok(battle && source);
+    battle.enemy.forEach((fighter, index) => {
+      fighter.x = 500 + index * 24;
+      fighter.y = 360 + index * 90;
+      fighter.attack = 0;
+      fighter.armor = 0;
+      fighter.dodgeChance = 0;
+      fighter.moveSpeed = 0;
+      fighter.cooldown = 99;
+      fighter.energy = 0;
+      fighter.hp = 99_999;
+      fighter.maxHp = 99_999;
+      fighter.shield = 0;
+      fighter.abilityShield = 0;
+    });
+    source.x = 220;
+    source.y = 360;
+    source.energy = source.maxEnergy;
+    engine.update(0.05);
+    assert.equal(source.abilityMotion?.kind, "jump");
+    assert.equal(source.abilityMotion?.abilityId, "youyi");
+    assert.equal(source.abilityMotion?.duration, 0.52, `${star} 星不应改变跃击时长`);
+    const target = battle.enemy.find(
+      (fighter) => fighter.fid === source.abilityMotion?.targetFid,
+    );
+    assert.ok(target);
+    const startHp = target.hp;
+    source.cooldown = 99;
+    source.energy = 0;
+
+    stepBattle(engine, 10);
+    assert.ok(source.abilityMotion, `${star} 星在 0.5 秒时仍应处于空中`);
+    assert.ok(Math.abs(source.abilityMotion.time - 0.5) < 1e-9);
+    assert.equal(target.hp, startHp, `${star} 星空中阶段不应提前结算伤害`);
+
+    const landingStep = 0.021;
+    engine.update(landingStep);
+    assert.equal(source.abilityMotion, null);
+    const damage = startHp - target.hp;
+    const expectedDamage = source.attack * damageMultiplier * 2;
+    assert.ok(
+      Math.abs(damage - expectedDamage) < 1e-8,
+      `${star} 星双踢伤害应为 ${expectedDamage}，实际为 ${damage}`,
+    );
+    assert.ok(
+      Math.abs(target.stun + landingStep - stunDuration) < 1e-9,
+      `${star} 星眩晕应为 ${stunDuration} 秒，实际为 ${target.stun + landingStep}`,
+    );
+    assertInsideBattleBounds(source);
+  });
 });
 
 test("小猫拳会先闪现到最远敌人身后，再与目标同步推进并击晕", () => {

@@ -1,6 +1,7 @@
 const { createRequire } = require('node:module');
-const { existsSync } = require('node:fs');
-const { mkdirSync } = require('node:fs');
+const { existsSync, mkdirSync, mkdtempSync, rmSync } = require('node:fs');
+const { join } = require('node:path');
+const { tmpdir } = require('node:os');
 const { inspectPng } = require('./scripts/lib/autochess-screenshot.cjs');
 
 const localRequire = createRequire(__filename);
@@ -31,9 +32,32 @@ const { chromium } = loadPlaywright();
 const artifactDirectory = '.tmp/autochess';
 mkdirSync(artifactDirectory, { recursive: true });
 
+let browserContext = null;
+let browserProfile = null;
+
+const closeBrowser = async () => {
+  if (browserContext) {
+    await browserContext.close().catch(() => {});
+    browserContext = null;
+  }
+  if (browserProfile) {
+    try {
+      rmSync(browserProfile, { recursive: true, force: true });
+    } catch {
+      // Chrome can briefly retain a profile lock after shutdown.
+    }
+    browserProfile = null;
+  }
+};
+
 (async () => {
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  browserProfile = mkdtempSync(join(tmpdir(), 'autochess-verify-'));
+  browserContext = await chromium.launchPersistentContext(browserProfile, {
+    channel: 'chrome',
+    headless: process.env.AUTOCHESS_HEADED !== '1',
+    viewport: { width: 1440, height: 900 },
+  });
+  const page = browserContext.pages()[0] || await browserContext.newPage();
   const errors = [];
   const failedResponses = [];
   page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
@@ -43,7 +67,12 @@ mkdirSync(artifactDirectory, { recursive: true });
   });
   await page.goto(`${process.env.AUTOCHESS_BASE_URL || 'http://127.0.0.1:3100'}/game/autochess?seed=1`);
   const canvas = page.locator('[data-game-canvas="rift-line"]');
-  await canvas.waitFor();
+  await canvas.waitFor({ state: 'attached' });
+  await page.waitForFunction(() => {
+    const element = document.querySelector('[data-game-canvas="rift-line"]');
+    const rect = element?.getBoundingClientRect();
+    return Boolean(element && rect && rect.width > 0 && rect.height > 0 && element.width > 0 && element.height > 0);
+  }, { timeout: 60000 });
   const pageLayout = await page.evaluate(() => {
     const root = document.querySelector('[data-game-canvas="rift-line"]')?.parentElement?.parentElement?.getBoundingClientRect();
     const toolbar = document.querySelector('.rift-toolbar')?.getBoundingClientRect();
@@ -75,6 +104,21 @@ mkdirSync(artifactDirectory, { recursive: true });
     await page.mouse.move(point.x, point.y);
   };
   const state = async () => JSON.parse(await page.evaluate(() => window.render_game_to_text()));
+  const debriefKinds = new Set(['standout', 'population', 'timeout', 'synergy', 'pressure', 'backline', 'frontline']);
+  const assertResultDebrief = (snapshot, label) => {
+    const battleDebrief = snapshot.battle?.debrief;
+    const resultDebrief = snapshot.result?.debrief;
+    if (!battleDebrief || !resultDebrief || !debriefKinds.has(resultDebrief.kind)) {
+      throw new Error(`${label} 缺少有效战术复盘: ${JSON.stringify({ battleDebrief, resultDebrief })}`);
+    }
+    if (JSON.stringify(battleDebrief) !== JSON.stringify(resultDebrief)) {
+      throw new Error(`${label} 的 battle/result 复盘不一致: ${JSON.stringify({ battleDebrief, resultDebrief })}`);
+    }
+    if (snapshot.result.won ? resultDebrief.tone !== 'positive' : resultDebrief.tone === 'positive') {
+      throw new Error(`${label} 的复盘语气与胜负不一致: ${JSON.stringify({ won: snapshot.result.won, resultDebrief })}`);
+    }
+    return resultDebrief;
+  };
   const advance = async (ms) => page.evaluate((value) => window.advanceTime(value), ms);
   const minClearance = (units) => {
     let minimum = Infinity;
@@ -86,8 +130,23 @@ mkdirSync(artifactDirectory, { recursive: true });
   };
   const screenshots = {};
   const capture = async (name) => {
-    const buffer = await page.screenshot({ path: `${artifactDirectory}/${name}.png` });
-    screenshots[name] = inspectPng(buffer);
+    let lastError = null;
+    const attempts = [
+      { fullPage: false, delay: 0 },
+      { fullPage: false, delay: 260 },
+      { fullPage: true, delay: 420 },
+    ];
+    for (const { fullPage, delay } of attempts) {
+      if (delay) await page.waitForTimeout(delay);
+      try {
+        const buffer = await page.screenshot({ path: `${artifactDirectory}/${name}.png`, fullPage });
+        screenshots[name] = inspectPng(buffer);
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw new Error(`截图 ${name} 连续失败: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
   };
 
   await page.waitForFunction(() => {
@@ -171,7 +230,64 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.waitForTimeout(300);
   const pausedMobileOverflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   if (pausedMobileOverflow > 1) throw new Error(`移动暂停界面横向溢出 ${pausedMobileOverflow}px`);
+  const portraitBattleLayout = await canvas.evaluate((element) => ({
+    logicalWidth: element.dataset.logicalWidth,
+    logicalHeight: element.dataset.logicalHeight,
+    battleLayout: element.dataset.battleLayout,
+    battleViewZoom: element.dataset.battleViewZoom,
+    battleViewCenter: element.dataset.battleViewCenter,
+  }));
+  if (portraitBattleLayout.logicalWidth !== '480' || portraitBattleLayout.logicalHeight !== '900' || portraitBattleLayout.battleLayout !== 'portrait') {
+    throw new Error(`移动战斗未进入竖屏逻辑布局: ${JSON.stringify(portraitBattleLayout)}`);
+  }
+  await page.getByRole('button', { name: '查看统计' }).click();
+  const portraitRanking = await state();
+  if (!portraitRanking.battle?.ranking?.open) throw new Error('移动战斗统计面板未打开');
+  await capture('autochess-battle-ranking-mobile');
+  await page.getByRole('button', { name: '收起统计' }).click();
+  if ((await state()).battle?.ranking?.open) throw new Error('移动战斗统计面板未关闭');
+  const zoomBefore = Number(portraitBattleLayout.battleViewZoom);
+  await page.getByRole('button', { name: '放大战场' }).click();
+  const zoomedBattleView = await canvas.evaluate((element) => ({ zoom: Number(element.dataset.battleViewZoom), center: element.dataset.battleViewCenter }));
+  if (!(zoomedBattleView.zoom > zoomBefore)) throw new Error(`移动战斗放大未生效: ${JSON.stringify({ zoomBefore, zoomedBattleView })}`);
+  await page.getByRole('button', { name: '复位战场视图' }).click();
+  const resetBattleView = await canvas.evaluate((element) => ({ zoom: Number(element.dataset.battleViewZoom), center: element.dataset.battleViewCenter }));
+  if (resetBattleView.zoom !== zoomBefore || resetBattleView.center !== portraitBattleLayout.battleViewCenter) throw new Error(`移动战斗视图复位失败: ${JSON.stringify({ portraitBattleLayout, resetBattleView })}`);
+  await page.getByRole('button', { name: '放大战场' }).click();
+  const panStartBattleView = await canvas.evaluate((element) => ({ zoom: Number(element.dataset.battleViewZoom), center: element.dataset.battleViewCenter }));
+  const mobileCanvasBox = await canvas.boundingBox();
+  if (!mobileCanvasBox) throw new Error('移动战斗 Canvas 未提供拖动区域');
+  await page.mouse.move(mobileCanvasBox.x + 120, mobileCanvasBox.y + 430);
+  await page.mouse.down();
+  await page.mouse.move(mobileCanvasBox.x + 170, mobileCanvasBox.y + 430, { steps: 5 });
+  await page.mouse.up();
+  const draggedBattleView = await canvas.evaluate((element) => element.dataset.battleViewCenter);
+  if (draggedBattleView === panStartBattleView.center) throw new Error(`移动战斗拖动未改变镜头: ${draggedBattleView}`);
+  await capture('autochess-battle-panned-mobile');
+  await page.getByRole('button', { name: '复位战场视图' }).click();
+  const finalResetBattleView = await canvas.evaluate((element) => ({ zoom: Number(element.dataset.battleViewZoom), center: element.dataset.battleViewCenter }));
+  if (finalResetBattleView.zoom !== zoomBefore || finalResetBattleView.center !== portraitBattleLayout.battleViewCenter) {
+    throw new Error(`移动战斗拖动后复位失败: ${JSON.stringify({ portraitBattleLayout, finalResetBattleView })}`);
+  }
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
   await capture('autochess-battle-paused-mobile');
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await page.waitForTimeout(300);
+  const tabletBattleLayout = await canvas.evaluate((element) => ({
+    logicalWidth: element.dataset.logicalWidth,
+    logicalHeight: element.dataset.logicalHeight,
+    battleLayout: element.dataset.battleLayout,
+  }));
+  const tabletOverflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+  const tabletWorldFrame = await page.locator('.rift-dom-world-frame').boundingBox();
+  if (tabletBattleLayout.logicalWidth !== '480' || tabletBattleLayout.logicalHeight !== '900' || tabletBattleLayout.battleLayout !== 'portrait') {
+    throw new Error(`竖屏平板未进入移动战斗布局: ${JSON.stringify(tabletBattleLayout)}`);
+  }
+  if (tabletOverflow > 1) throw new Error(`竖屏平板战斗界面横向溢出 ${tabletOverflow}px`);
+  if (!tabletWorldFrame || Math.abs(tabletWorldFrame.width / tabletWorldFrame.height - 480 / 900) > 0.01) {
+    throw new Error(`竖屏平板 DOM 工具层未对齐 480×900 画布: ${JSON.stringify(tabletWorldFrame)}`);
+  }
+  await capture('autochess-battle-tablet');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(300);
   await page.getByRole('button', { name: '继续战斗' }).click();
@@ -207,9 +323,10 @@ mkdirSync(artifactDirectory, { recursive: true });
   };
   const resultRound1Elapsed = await advanceUntilPhase('result');
   const resultRound1 = await state();
+  const resultRound1Debrief = assertResultDebrief(resultRound1, '第 1 战结算');
   await advance(150);
   await capture('autochess-result-round1');
-  await clickLogical(560, 232);
+  await clickLogical(560, 266);
   await page.waitForTimeout(100);
   const resultRound1Support = await state();
   if (resultRound1Support.battle?.ranking?.metric !== 'support') throw new Error(`结算指标切换未生效: ${JSON.stringify(resultRound1Support.battle?.ranking?.metric)}`);
@@ -218,6 +335,14 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.waitForTimeout(300);
   const resultMobileBox = await canvas.boundingBox();
   if (!resultMobileBox || resultMobileBox.width < 380 || resultMobileBox.height < 700) throw new Error('结算移动端画布未填满竖屏游戏宿主');
+  const resultMobileDebrief = await page.locator('.rift-mobile-result-debrief').evaluate((element) => ({
+    kind: element.getAttribute('data-debrief-kind'),
+    text: element.textContent,
+    overflow: element.scrollWidth - element.clientWidth,
+  }));
+  if (resultMobileDebrief.kind !== resultRound1Debrief.kind || !resultMobileDebrief.text?.includes('战术复盘') || resultMobileDebrief.overflow > 1) {
+    throw new Error(`移动结算复盘未正确渲染: ${JSON.stringify({ resultRound1Debrief, resultMobileDebrief })}`);
+  }
   await capture('autochess-result-mobile');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(300);
@@ -230,6 +355,7 @@ mkdirSync(artifactDirectory, { recursive: true });
   await page.getByRole('button', { name: /开始战斗/ }).click();
   const resultRound2Elapsed = await advanceUntilPhase('result');
   const resultRound2 = await state();
+  const resultRound2Debrief = assertResultDebrief(resultRound2, '第 2 战结算');
   await advance(150);
   await capture('autochess-result-round2');
   await clickLogical(560, 665);
@@ -300,11 +426,16 @@ mkdirSync(artifactDirectory, { recursive: true });
   }));
   if (!mobileBox || mobileBox.width < 380 || mobileBox.height < 700) throw new Error('移动端画布未填满工具栏下方宿主');
   const displayAspect = mobileBox.width / mobileBox.height;
-  if (canvasResolution.layoutProfile !== 'compact' || canvasResolution.logicalWidth !== '1120' || canvasResolution.logicalHeight !== '720') throw new Error(`移动端未进入固定世界紧凑布局: ${JSON.stringify(canvasResolution)}`);
+  if (canvasResolution.layoutProfile !== 'compact' || canvasResolution.logicalWidth !== '480' || canvasResolution.logicalHeight !== '1000') throw new Error(`移动端备战未进入竖屏逻辑布局: ${JSON.stringify(canvasResolution)}`);
   await capture('autochess-mobile');
 
-  if (errors.length) throw new Error(`浏览器控制台存在错误: ${JSON.stringify(errors)}`);
-  if (failedResponses.length) throw new Error(`页面请求失败: ${JSON.stringify(failedResponses)}`);
-  console.log(JSON.stringify({ initial, locked: { locked: locked.shopLocked, unlocked: unlocked.shopLocked }, purchasedCards, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, pause: { before: pauseBefore.battle.elapsed, paused: paused.battle.elapsed, afterWait: pausedAfterWait.battle.elapsed, resumed: resumed.interface?.battlePaused, mobileOverflow: pausedMobileOverflow }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won }, resultRound1SupportMetric: resultRound1Support.battle?.ranking?.metric, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { titleMobileBox, resultMobileBox, beforeFullscreen, afterFullscreen, fullscreenResolution, mobileBox, canvasResolution, displayAspect }, screenshots, errors, failedResponses }, null, 2));
-  await browser.close();
-})().catch((error) => { console.error(error); process.exit(1); });
+  if (errors.length || failedResponses.length) {
+    throw new Error(`浏览器存在运行时问题: ${JSON.stringify({ errors, failedResponses })}`);
+  }
+  console.log(JSON.stringify({ initial, locked: { locked: locked.shopLocked, unlocked: unlocked.shopLocked }, purchasedCards, afterUpgrade, purchased: { board: prep.board.length, bench: prep.bench.length }, drag: { before: prep.board, after: afterDrag.board }, pause: { before: pauseBefore.battle.elapsed, paused: paused.battle.elapsed, afterWait: pausedAfterWait.battle.elapsed, resumed: resumed.interface?.battlePaused, mobileOverflow: pausedMobileOverflow, portraitBattleLayout, portraitRanking: { open: portraitRanking.battle?.ranking?.open }, zoom: { before: zoomBefore, zoomed: zoomedBattleView.zoom, reset: resetBattleView.zoom, panStart: panStartBattleView.zoom, finalReset: finalResetBattleView.zoom }, draggedBattleView, tablet: { layout: tabletBattleLayout, overflow: tabletOverflow, frame: tabletWorldFrame } }, continuation: { resultRound1Elapsed, resultRound1: { round: resultRound1.round, won: resultRound1.result?.won, debrief: resultRound1Debrief }, resultRound1SupportMetric: resultRound1Support.battle?.ranking?.metric, resultMobileDebrief, preparationRound2: { round: preparationRound2.round, phase: preparationRound2.phase }, resultRound2Elapsed, resultRound2: { round: resultRound2.round, won: resultRound2.result?.won, debrief: resultRound2Debrief }, augmentRound2: { round: augmentRound2.round, choices: augmentRound2.augmentChoices?.length }, preparationRound3: { round: preparationRound3.round, augments: preparationRound3.augments?.length } }, assassinFrames, clearances, feedbackSeen, fullscreen, sizes: { titleMobileBox, resultMobileBox, beforeFullscreen, afterFullscreen, fullscreenResolution, mobileBox, canvasResolution, displayAspect }, screenshots, errors, failedResponses }, null, 2));
+  await closeBrowser();
+})().catch(async (error) => {
+  await closeBrowser();
+  console.error(error);
+  process.exit(1);
+});

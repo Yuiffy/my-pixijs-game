@@ -36,7 +36,7 @@ export type GameAction =
   | { type: "move"; from: UnitLocation; to: UnitLocation }
   | { type: "sell"; location?: UnitLocation }
   | { type: "starForge"; location?: UnitLocation }
-  | { type: "buyXp" | "lock" | "reroll" | "battle" | "skipBattle" | "rankingToggle" | "resultContinue" | "restart" | "clearSelection" }
+  | { type: "buyXp" | "lock" | "reroll" | "autoArrange" | "battle" | "skipBattle" | "rankingToggle" | "finishCampaign" | "continueEndless" | "resultContinue" | "restart" | "clearSelection" }
   | { type: "metric"; metric: RankingMetric }
   | { type: "augment"; index: number };
 
@@ -104,6 +104,7 @@ const LIVE_BATTLE_STEP_SECONDS = 1 / 60;
 export type EngineBridgeOptions = {
   simulation?: boolean;
   battleStepHz?: number;
+  restartSeed?: number;
 };
 
 export const GO_ENEMY_SEEDS = [152100, 152102] as const;
@@ -172,9 +173,12 @@ export class EngineBridge {
 
   private readonly battleStepHz: number;
 
+  private readonly restartSeed: number | undefined;
+
   constructor(seed?: number, testSpeed = 1, options: EngineBridgeOptions = {}) {
     this.simulationMode = options.simulation === true;
     this.battleStepHz = Math.max(20, Math.min(60, Math.round(options.battleStepHz || 60)));
+    this.restartSeed = Number.isFinite(options.restartSeed) ? options.restartSeed : undefined;
     this.engine = new AutoChessEngine(seed, this.simulationMode
       ? { telemetry: false, visualEffects: false }
       : undefined);
@@ -231,6 +235,9 @@ export class EngineBridge {
         engine.rerollShop();
         if (engine.state.gold < beforeGold) this.emitAudio("reroll");
         break;
+      case "autoArrange":
+        if (engine.autoArrangeBoard()) this.emitAudio("click");
+        break;
       case "battle":
         engine.startBattle();
         break;
@@ -243,8 +250,14 @@ export class EngineBridge {
       case "resultContinue":
         engine.continueAfterResult();
         break;
+      case "finishCampaign":
+        engine.finishCampaign();
+        break;
+      case "continueEndless":
+        if (engine.canFinishCampaign) engine.continueAfterResult();
+        break;
       case "restart":
-        engine.resetToTitle();
+        engine.resetToTitle(this.restartSeed);
         this.applyAutoplayEnemySeed();
         break;
       case "clearSelection":
@@ -686,6 +699,7 @@ export class EngineBridge {
     if (
       action.type === "reroll" ||
       action.type === "starter" ||
+      action.type === "continueEndless" ||
       action.type === "resultContinue"
     ) {
       console.info("[RiftLine][shop]", state.shop.map((unitId, index) => ({

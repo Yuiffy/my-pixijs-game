@@ -53,7 +53,7 @@ import {
 import { createGameConfig } from "./phaser/gameConfig";
 import {
   TOOLBAR_HEIGHT,
-  logicalSizeFor,
+  logicalSizeForPhase,
   profileFor,
   renderSizeFor,
   uiScaleFor,
@@ -478,10 +478,16 @@ export default function AutoChessGame() {
     const query = new URLSearchParams(window.location.search);
     const requestedSeed = Number(query.get("seed"));
     const requestedSpeed = Number(query.get("testSpeed"));
+    const initialSeed = Number.isFinite(requestedSeed) && requestedSeed > 0
+      ? requestedSeed
+      : undefined;
     const bridge = new EngineBridge(
-      Number.isFinite(requestedSeed) && requestedSeed > 0 ? requestedSeed : undefined,
+      initialSeed,
       Number.isFinite(requestedSpeed) ? requestedSpeed : 1,
-      { battleStepHz: LIVE_AUTOPILOT_BATTLE_STEP_HZ },
+      {
+        battleStepHz: LIVE_AUTOPILOT_BATTLE_STEP_HZ,
+        restartSeed: initialSeed,
+      },
     );
     bridgeRef.current = bridge;
     const storedBackgroundBattle = loadBackgroundBattlePreference();
@@ -636,7 +642,11 @@ export default function AutoChessGame() {
         displayWidth,
         displayHeight,
       );
-      const logical = logicalSizeFor();
+      const logical = logicalSizeForPhase(
+        displayWidth,
+        displayHeight,
+        bridge.engine.state.phase,
+      );
       game.canvas.dataset.layoutProfile = profile;
       game.canvas.dataset.logicalWidth = String(logical.width);
       game.canvas.dataset.logicalHeight = String(logical.height);
@@ -827,6 +837,8 @@ export default function AutoChessGame() {
         action = { type: "reroll" };
       } else if (state.phase === "preparation" && key === "l") {
         action = { type: "lock" };
+      } else if (state.phase === "preparation" && key === "a") {
+        action = { type: "autoArrange" };
       } else if (state.phase === "preparation" && key === "u") {
         action = bridge.engine.isMaxPlayerLevel
           ? { type: "starForge" }
@@ -848,7 +860,9 @@ export default function AutoChessGame() {
       } else if (state.phase === "battle" && key === "d") {
         action = { type: "rankingToggle" };
       } else if (state.phase === "result" && event.key === "Enter") {
-        action = { type: "resultContinue" };
+        action = bridge.engine.canFinishCampaign
+          ? { type: "finishCampaign" }
+          : { type: "resultContinue" };
       } else if (state.phase === "gameover" && event.key === "Enter") {
         action = { type: "restart" };
       } else if (event.key === "Escape") {

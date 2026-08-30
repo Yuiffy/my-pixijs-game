@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { CSSProperties } from "react";
+import { InfoCircleOutlined } from "@ant-design/icons";
 import type { AutoChessEngine } from "../core/gameEngine";
 import { resolveUnitPortrait, useCharacterStyle } from "../core/characterStyle";
 import {
@@ -21,8 +22,20 @@ import {
 } from "./shared";
 import { Sheet } from "./MobileSheets";
 
-export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | null; engine: AutoChessEngine; owned: OwnedStars; onBuy: () => void }) {
-  const [showDetail, setShowDetail] = useState(false);
+type ShopCardProps = {
+  unitId: string | null;
+  engine: AutoChessEngine;
+  owned: OwnedStars;
+  onBuy: () => void;
+  detailDisclosure?: {
+    expanded: boolean;
+    onToggle: () => void;
+  };
+};
+
+export function ShopCard({ unitId, engine, owned, onBuy, detailDisclosure }: ShopCardProps) {
+  const [showDesktopDetail, setShowDesktopDetail] = useState(false);
+  const detailId = useId();
   const characterStyle = useCharacterStyle();
   if (!unitId) return <div className="rift-dom-shop-card empty">已征募</div>;
   const def = UNIT_DEFS[unitId as keyof typeof UNIT_DEFS];
@@ -32,6 +45,7 @@ export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | nu
   const affordable = engine.state.gold >= def.cost && canStore;
   const role = def.title.split(" · ").at(-1) || def.title;
   const abilityGrowth = describeAbilityStarGrowth(def);
+  const showDetail = detailDisclosure ? detailDisclosure.expanded : showDesktopDetail;
   const traitTags = def.traits.map((id) => {
     const trait = TRAITS[id];
     const status = engine.getTraitStatus(id);
@@ -47,25 +61,40 @@ export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | nu
   });
   return (
     <div
-      className={`rift-shop-card-wrap ${showDetail ? "is-detail-open" : ""}`}
-      onMouseEnter={() => setShowDetail(true)}
-      onMouseLeave={() => setShowDetail(false)}
+      className={`rift-shop-card-wrap ${detailDisclosure ? "is-inspectable" : ""} ${showDetail ? "is-detail-open" : ""}`}
+      onMouseEnter={detailDisclosure ? undefined : () => setShowDesktopDetail(true)}
+      onMouseLeave={detailDisclosure ? undefined : () => setShowDesktopDetail(false)}
     >
       <button
+        type="button"
         className={`rift-dom-shop-card ${totalOwned > 0 ? "has-owned" : ""} ${affordable ? "" : "disabled"} tier-card-${def.tier}`}
         onClick={onBuy}
-        onFocus={() => setShowDetail(true)}
-        onBlur={() => setShowDetail(false)}
+        onFocus={detailDisclosure ? undefined : () => setShowDesktopDetail(true)}
+        onBlur={detailDisclosure ? undefined : () => setShowDesktopDetail(false)}
         disabled={!affordable}
-        aria-label={`${def.name}，${def.abilityName}`}
+        aria-label={`购买${def.name}，${def.cost}金币，${def.abilityName}`}
+        aria-describedby={!detailDisclosure && showDetail ? detailId : undefined}
       >
         <div className="rift-shop-card-accent" />
         <div className={`rift-dom-portrait ${portrait.portraitStyle === "sprite" ? "is-sprite" : ""}`} style={{ borderColor: def.accent, backgroundColor: def.color }}><UnitPortrait unitId={unitId as keyof typeof UNIT_DEFS} size={portrait.portraitStyle === "sprite" ? 60 : 46} /></div>
         <div className="rift-dom-shop-copy"><strong>{def.name}</strong><span>{role} · {def.abilityName}</span><div>{traitTags.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties} title={willActivate ? `再买 1 个单位将激活${trait.name}` : trait.description}>{trait.name}</i>)}</div></div>
         <div className="rift-shop-card-meta">{totalOwned > 0 && <small className="rift-shop-owned">{ownedLabel(owned)}</small>}<b className="rift-dom-cost">{def.cost}</b></div>
       </button>
+      {detailDisclosure && (
+        <button
+          type="button"
+          className="rift-shop-card-info"
+          aria-label={`${showDetail ? "收起" : "查看"}${def.name}详情`}
+          aria-controls={detailId}
+          aria-expanded={showDetail}
+          title={`${showDetail ? "收起" : "查看"}${def.name}详情`}
+          onClick={detailDisclosure.onToggle}
+        >
+          <InfoCircleOutlined aria-hidden="true" />
+        </button>
+      )}
       {showDetail && (
-        <div className="rift-shop-card-detail" role="tooltip">
+        <div id={detailId} className="rift-shop-card-detail" role={detailDisclosure ? "region" : "tooltip"} aria-label={detailDisclosure ? `${def.name}详情` : undefined}>
           <div className="rift-detail-head"><span className="rift-eyebrow">UNIT BRIEF / TIER {def.tier}</span><strong>{def.name}</strong><small>{def.title}</small></div>
           <div className="rift-detail-tags">{traitTags.map(({ id, trait, status, willActivate }) => <i key={id} className={`rift-trait-tag ${status.active ? "is-active" : ""} ${willActivate ? "is-next" : ""}`} style={{ "--tag-color": trait.color } as CSSProperties}>{trait.name}</i>)}</div>
           <div className="rift-detail-stats"><span>生命 <b>{def.hp}</b></span><span>攻击 <b>{def.attack}</b></span><span>护甲 <b>{def.armor}</b></span><span>射程 <b>{def.range}</b></span></div>
@@ -79,17 +108,22 @@ export function ShopCard({ unitId, engine, owned, onBuy }: { unitId: string | nu
 }
 
 export function ShopSheet({ engine, onClose, onAction }: { engine: AutoChessEngine; onClose: () => void; onAction: (action: GameAction) => void }) {
+  const [detailIndex, setDetailIndex] = useState<number | null>(null);
   const ownedStars = (unitId: string) => countOwnedStars([...engine.state.board, ...engine.state.bench], unitId);
   const selected = engine.state.selected
     ? (engine.state.selected.zone === "board"
         ? engine.state.board[engine.state.selected.index]
         : engine.state.bench[engine.state.selected.index])
     : null;
+  const dispatch = (action: GameAction) => {
+    if (action.type === "shop" || action.type === "reroll") setDetailIndex(null);
+    onAction(action);
+  };
   return (
     <Sheet title="战术商店" eyebrow="SHOP / 五张随机单位" className="rift-dom-sheet-shop" onClose={onClose}>
       <div className="rift-sheet-summary"><span>金币 <b>{engine.state.gold}</b></span><InterestInfo engine={engine} compact />{engine.state.upgradeDiscountCarry > 0 && <span>减费结转 <b>{engine.state.upgradeDiscountCarry}</b></span>}<span>概率 <b>{tierOddsForLevel(engine.state.playerLevel).filter(Boolean).map((chance, index) => `${index + 1}费 ${chance}%`).join(" · ")}</b></span></div>
-      <div className="rift-sheet-shop-list">{engine.state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => onAction({ type: "shop", index })} />)}</div>
-      <div className="rift-dom-sheet-grid"><StarForgeAction engine={engine} selected={selected} onAction={onAction} /><ActionButton tone="lock" className={engine.state.shopLocked ? "is-selected" : ""} onClick={() => onAction({ type: "lock" })}>{engine.state.shopLocked ? "已锁定" : "锁定商店"}</ActionButton><ActionButton tone="economic" onClick={() => onAction({ type: "reroll" })} disabled={!engine.state.freeRerollCharges && engine.state.gold < 1}>刷新 · {engine.state.freeRerollCharges ? `免费 ${engine.state.freeRerollCharges}` : 1}</ActionButton></div>
+      <div className="rift-sheet-shop-list">{engine.state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} detailDisclosure={{ expanded: detailIndex === index, onToggle: () => setDetailIndex((current) => (current === index ? null : index)) }} />)}</div>
+      <div className="rift-dom-sheet-grid"><StarForgeAction engine={engine} selected={selected} onAction={dispatch} /><ActionButton tone="lock" className={engine.state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}>{engine.state.shopLocked ? "已锁定" : "锁定商店"}</ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!engine.state.freeRerollCharges && engine.state.gold < 1}>刷新 · {engine.state.freeRerollCharges ? `免费 ${engine.state.freeRerollCharges}` : 1}</ActionButton></div>
     </Sheet>
   );
 }

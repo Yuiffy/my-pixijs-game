@@ -1,7 +1,29 @@
 /** Stable authored coordinates for every card, slot, panel, and hit area. */
+import type { GamePhase } from "../core/gameTypes";
+
 export const WORLD_WIDTH = 1120;
 export const WORLD_HEIGHT = 720;
 export const TOOLBAR_HEIGHT = 42;
+export const MAX_PORTRAIT_VIEWPORT_WIDTH = 1200;
+/**
+ * Portrait battle uses a dedicated logical frame. The simulation still runs
+ * in the authored 1120×720 arena; the scene maps that arena into this frame
+ * so a phone can show the whole encounter without shrinking it to a strip.
+ */
+export const MOBILE_BATTLE_LOGICAL_WIDTH = 480;
+export const MOBILE_BATTLE_LOGICAL_HEIGHT = 900;
+export const MOBILE_BATTLE_FIELD_FRAME = {
+  x: 16,
+  y: 132,
+  width: 448,
+  height: 680,
+} as const;
+export const MOBILE_BATTLE_PRESENTATION = {
+  scaleX: MOBILE_BATTLE_FIELD_FRAME.width / 1072,
+  scaleY: MOBILE_BATTLE_FIELD_FRAME.height / 596,
+  offsetX: MOBILE_BATTLE_FIELD_FRAME.x - 24 * (MOBILE_BATTLE_FIELD_FRAME.width / 1072),
+  offsetY: MOBILE_BATTLE_FIELD_FRAME.y - 94 * (MOBILE_BATTLE_FIELD_FRAME.height / 596),
+} as const;
 export const MIN_UI_SCALE = 1;
 export const MAX_UI_SCALE = 1.25;
 export const UI_SCALE_BASE_WIDTH = 1280;
@@ -61,6 +83,22 @@ export const renderSizeFor = (displayWidth: number, displayHeight: number, devic
 
 export type LayoutProfile = "wide" | "compact";
 
+export const isPortraitViewport = (width: number, height: number) => (
+  width > 0
+  && width <= MAX_PORTRAIT_VIEWPORT_WIDTH
+  && height > width * 1.12
+);
+
+export const logicalSizeForPhase = (width: number, height: number, phase: GamePhase) => {
+  if (isPortraitViewport(width, height) && phase === "preparation") {
+    return { width: 480, height: 1000 };
+  }
+  if (isPortraitViewport(width, height) && phase === "battle") {
+    return { width: MOBILE_BATTLE_LOGICAL_WIDTH, height: MOBILE_BATTLE_LOGICAL_HEIGHT };
+  }
+  return { width: WORLD_WIDTH, height: WORLD_HEIGHT };
+};
+
 export type ViewportScale = {
   fitScale: number;
   cardScale: number;
@@ -80,8 +118,6 @@ export const viewportScaleFor = (usableWidth: number, usableHeight: number): Vie
     compact: fitScale < MIN_CARD_SCALE,
   };
 };
-
-export const logicalSizeFor = () => ({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
 
 /**
  * Tooltip typography is expressed in CSS-sized visual units. Its container
@@ -147,6 +183,7 @@ export type ResultLayout = {
   headlineY: number;
   detailY: number;
   rewardY: number;
+  debriefY: number;
   metricsY: number;
   rosterHeadingY: number;
   rosterY: number;
@@ -164,9 +201,10 @@ export const WIDE_RESULT_LAYOUT: ResultLayout = {
   headlineY: 141,
   detailY: 164,
   rewardY: 198,
-  metricsY: 220,
-  rosterHeadingY: 256,
-  rosterY: 276,
+  debriefY: 219,
+  metricsY: 254,
+  rosterHeadingY: 290,
+  rosterY: 310,
   rosterBottom: 628,
   columnX: [64, 564],
   columnWidth: 468,
@@ -181,9 +219,10 @@ export const COMPACT_RESULT_LAYOUT: ResultLayout = {
   headlineY: 132,
   detailY: 154,
   rewardY: 190,
-  metricsY: 212,
-  rosterHeadingY: 248,
-  rosterY: 268,
+  debriefY: 211,
+  metricsY: 246,
+  rosterHeadingY: 282,
+  rosterY: 302,
   rosterBottom: 626,
   columnX: [46, 566],
   columnWidth: 496,

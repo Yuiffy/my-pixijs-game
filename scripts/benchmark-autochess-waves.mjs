@@ -25,6 +25,9 @@ const meleeSlots = [5, 11, 17, 23, 4, 10, 16, 22, 3, 9];
 const rangedSlots = [0, 6, 12, 18, 1, 7, 13, 19, 2, 8];
 const levelForRound = (round) => round <= 2 ? 3 : round <= 4 ? 4 : 5;
 const capForRound = (round) => levelForRound(round);
+const average = (values) => values.length
+  ? values.reduce((total, value) => total + value, 0) / values.length
+  : 0;
 
 const combinations = (values, size) => {
   const result = [];
@@ -104,6 +107,30 @@ const reports = rounds.map((round) => {
     left.averageEnemySurvivors - right.averageEnemySurvivors ||
     left.cost - right.cost);
   const viable = lineups.filter((lineup) => lineup.winRate >= 2 / 3);
+  const unitStats = candidateIds.map((id) => {
+    const included = lineups.filter((lineup) => lineup.ids.includes(id));
+    const excluded = lineups.filter((lineup) => !lineup.ids.includes(id));
+    const includedViable = included.filter((lineup) => lineup.winRate >= 2 / 3);
+    return {
+      id,
+      name: UNIT_DEFS[id].name,
+      cost: UNIT_DEFS[id].cost,
+      lineupCount: included.length,
+      lineupShare: included.length / lineups.length,
+      averageWinRate: average(included.map((lineup) => lineup.winRate)),
+      averageWinRateWithout: average(excluded.map((lineup) => lineup.winRate)),
+      winRateDelta: average(included.map((lineup) => lineup.winRate))
+        - average(excluded.map((lineup) => lineup.winRate)),
+      viableLineups: includedViable.length,
+      viableRate: includedViable.length / included.length,
+      averageEnemySurvivors: average(included.map((lineup) => lineup.averageEnemySurvivors)),
+      averagePlayerSurvivors: average(included.map((lineup) => lineup.averagePlayerSurvivors)),
+    };
+  }).sort((left, right) =>
+    right.winRateDelta - left.winRateDelta ||
+    right.viableRate - left.viableRate ||
+    right.averagePlayerSurvivors - left.averagePlayerSurvivors ||
+    left.id.localeCompare(right.id));
   return {
     round,
     cap,
@@ -112,6 +139,7 @@ const reports = rounds.map((round) => {
     lineupCount: lineups.length,
     viableLineups: viable.length,
     viableRate: viable.length / lineups.length,
+    unitStats,
     top: lineups.slice(0, 12),
   };
 });

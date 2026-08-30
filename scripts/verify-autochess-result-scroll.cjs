@@ -108,8 +108,10 @@ const baseUrl = process.env.AUTOCHESS_BASE_URL || "http://127.0.0.1:3100";
 const artifactDirectory = ".tmp/autochess/result-scroll";
 mkdirSync(artifactDirectory, { recursive: true });
 
+let browser = null;
+
 (async () => {
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   const failedResponses = [];
@@ -233,14 +235,14 @@ mkdirSync(artifactDirectory, { recursive: true });
     throw new Error(`Text ranking lost rows: ${JSON.stringify(state.battle.ranking)}`);
   }
   const initial = await inspectScene();
-  if (initial.playerRange !== "1\u20136 / 10" || initial.enemyRange !== "1\u20136 / 8") {
+  if (initial.playerRange !== "1\u20135 / 10" || initial.enemyRange !== "1\u20135 / 8") {
     throw new Error(`Initial ranges are wrong: ${JSON.stringify(initial)}`);
   }
-  if (initial.rowNames.length !== 12 || !initial.playerScrollbar || !initial.enemyScrollbar) {
+  if (initial.rowNames.length !== 10 || !initial.playerScrollbar || !initial.enemyScrollbar) {
     throw new Error(`Initial viewport is wrong: ${JSON.stringify(initial)}`);
   }
 
-  const playerRow = await pointForLogical(260, 300);
+  const playerRow = await pointForLogical(260, 334);
   await page.mouse.move(playerRow.x, playerRow.y);
   await page.waitForTimeout(100);
   const hoverInitial = await inspectScene();
@@ -255,52 +257,52 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (afterWheel.offsets.player !== 1 || afterWheel.offsets.enemy !== 0) {
     throw new Error(`Player wheel scroll was not independent: ${JSON.stringify(afterWheel)}`);
   }
-  if (afterWheel.playerRange !== "2\u20137 / 10" || !afterWheel.rowNames.includes("resultRow-player-7")) {
+  if (afterWheel.playerRange !== "2\u20136 / 10" || !afterWheel.rowNames.includes("resultRow-player-6")) {
     throw new Error(`Player visible range did not advance: ${JSON.stringify(afterWheel)}`);
   }
   await capture("result-player-scrolled");
 
   const enemyThumb = await pointForLogical(1041, 393);
-  const enemyThumbBottom = await pointForLogical(1041, 471);
+  const enemyThumbBottom = await pointForLogical(1041, 520);
   await page.mouse.move(enemyThumb.x, enemyThumb.y);
   await page.mouse.down();
   await page.mouse.move(enemyThumbBottom.x, enemyThumbBottom.y, { steps: 8 });
   await page.mouse.up();
   await page.waitForTimeout(120);
   const afterDrag = await inspectScene();
-  if (afterDrag.offsets.player !== 1 || afterDrag.offsets.enemy !== 2) {
+  if (afterDrag.offsets.player !== 1 || afterDrag.offsets.enemy !== 3) {
     throw new Error(`Enemy thumb drag was not independent: ${JSON.stringify(afterDrag)}`);
   }
-  if (afterDrag.enemyRange !== "3\u20138 / 8" || !afterDrag.rowNames.includes("resultRow-enemy-8")) {
+  if (afterDrag.enemyRange !== "4\u20138 / 8" || !afterDrag.rowNames.includes("resultRow-enemy-8")) {
     throw new Error(`Enemy visible range did not reach the final row: ${JSON.stringify(afterDrag)}`);
   }
 
-  const enemyRow = await pointForLogical(760, 300);
+  const enemyRow = await pointForLogical(760, 334);
   await page.mouse.move(enemyRow.x, enemyRow.y);
   await page.waitForTimeout(100);
   const hoverScrolled = await inspectScene();
   if (!hoverScrolled.tooltipObjects) throw new Error("Scrolled result row lost its unit tooltip");
   await capture("result-both-scrolled-hover");
 
-  const supportTab = await pointForLogical(560, 232);
+  const supportTab = await pointForLogical(560, 266);
   await page.mouse.click(supportTab.x, supportTab.y);
   await page.waitForTimeout(120);
   const afterMetric = await inspectScene();
   const metricState = JSON.parse(await page.evaluate(() => window.render_game_to_text()));
   if (metricState.battle.ranking.metric !== "support") throw new Error("Metric switch did not reach the engine");
-  if (afterMetric.offsets.player !== 1 || afterMetric.offsets.enemy !== 2) {
+  if (afterMetric.offsets.player !== 1 || afterMetric.offsets.enemy !== 3) {
     throw new Error(`Metric switch reset scroll positions: ${JSON.stringify(afterMetric)}`);
   }
   await capture("result-support-preserves-scroll");
 
-  const playerTrackBottom = await pointForLogical(541, 580);
+  const playerTrackBottom = await pointForLogical(541, 560);
   await page.mouse.click(playerTrackBottom.x, playerTrackBottom.y);
   await page.waitForTimeout(120);
   const afterTrackClick = await inspectScene();
-  if (afterTrackClick.offsets.player !== 4 || afterTrackClick.offsets.enemy !== 2) {
+  if (afterTrackClick.offsets.player !== 5 || afterTrackClick.offsets.enemy !== 3) {
     throw new Error(`Scrollbar track click did not jump independently: ${JSON.stringify(afterTrackClick)}`);
   }
-  if (afterTrackClick.playerRange !== "5\u201310 / 10") {
+  if (afterTrackClick.playerRange !== "6\u201310 / 10") {
     throw new Error(`Track click did not reveal the final player row: ${JSON.stringify(afterTrackClick)}`);
   }
 
@@ -320,13 +322,54 @@ mkdirSync(artifactDirectory, { recursive: true });
     scrollWidth: document.documentElement.scrollWidth,
     canvasProfile: document.querySelector('[data-game-canvas="rift-line"]')?.dataset.layoutProfile,
   }));
-  if (compact.offsets.player !== 4 || compact.offsets.enemy !== 2 || compact.rowNames.length !== 12) {
+  if (compact.offsets.player !== 5 || compact.offsets.enemy !== 3 || compact.rowNames.length !== 10) {
     throw new Error(`Compact result lost scroll state or visible rows: ${JSON.stringify(compact)}`);
   }
   if (mobileLayout.canvasProfile !== "compact" || mobileLayout.scrollWidth > mobileLayout.innerWidth) {
     throw new Error(`Compact result overflowed the viewport: ${JSON.stringify(mobileLayout)}`);
   }
   await capture("result-mobile-scrolled");
+  const mobileRosterTop = await page.locator(".rift-mobile-result-list").evaluate((element) => ({
+    rowCount: element.querySelectorAll("article").length,
+    scrollTop: element.scrollTop,
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight,
+  }));
+  if (mobileRosterTop.rowCount !== 10 || mobileRosterTop.scrollHeight <= mobileRosterTop.clientHeight) {
+    throw new Error(`Mobile result roster is not independently scrollable: ${JSON.stringify(mobileRosterTop)}`);
+  }
+  await page.locator(".rift-mobile-result-list").evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await page.waitForTimeout(120);
+  const mobileRosterBottom = await page.evaluate(() => {
+    const list = document.querySelector(".rift-mobile-result-list");
+    const lastRow = list?.querySelector("article:last-child");
+    const continueButton = document.querySelector(".rift-mobile-result-continue");
+    const listRect = list?.getBoundingClientRect();
+    const lastRect = lastRow?.getBoundingClientRect();
+    const continueRect = continueButton?.getBoundingClientRect();
+    return {
+      scrollTop: list?.scrollTop,
+      maximumScroll: list ? list.scrollHeight - list.clientHeight : null,
+      lastRank: lastRow?.querySelector(".rift-mobile-result-rank")?.textContent,
+      listBottom: listRect?.bottom,
+      lastTop: lastRect?.top,
+      lastBottom: lastRect?.bottom,
+      continueTop: continueRect?.top,
+    };
+  });
+  if (
+    mobileRosterBottom.lastRank !== "10"
+    || mobileRosterBottom.maximumScroll === null
+    || Math.abs((mobileRosterBottom.scrollTop ?? 0) - mobileRosterBottom.maximumScroll) > 2
+    || (mobileRosterBottom.lastBottom ?? Infinity) > (mobileRosterBottom.listBottom ?? -Infinity) + 1
+    || (mobileRosterBottom.lastTop ?? -Infinity) < 0
+    || (mobileRosterBottom.listBottom ?? Infinity) > (mobileRosterBottom.continueTop ?? -Infinity)
+  ) {
+    throw new Error(`Mobile result roster cannot reveal its final row: ${JSON.stringify(mobileRosterBottom)}`);
+  }
+  await capture("result-mobile-bottom");
 
   if (errors.length || failedResponses.length) {
     throw new Error(`Browser errors: ${JSON.stringify({ errors, failedResponses })}`);
@@ -345,11 +388,15 @@ mkdirSync(artifactDirectory, { recursive: true });
     wideCanvas: wideCanvasState,
     compact,
     mobileLayout,
+    mobileRosterTop,
+    mobileRosterBottom,
     screenshots,
     errors,
   }, null, 2));
   await browser.close();
-})().catch((error) => {
+  browser = null;
+})().catch(async (error) => {
+  await browser?.close().catch(() => {});
   console.error(error);
   process.exitCode = 1;
 });

@@ -44,8 +44,11 @@ const {
 } = await loadTypescriptModule(
   "src/components/autoChessGame/ai/lateGamePlan.ts",
 );
-const { SHOP_UNITS, UNIT_DEFS } = await loadTypescriptModule(
+const { CAMPAIGN_ROUNDS, SHOP_UNITS, UNIT_DEFS } = await loadTypescriptModule(
   "src/components/autoChessGame/core/gameData.ts",
+);
+const { AUTOCHESS_VERSION } = await loadTypescriptModule(
+  "src/components/autoChessGame/version.ts",
 );
 const hostSource = await readFile("src/components/autoChessGame/PhaserGame.tsx", "utf8");
 const workerClientSource = await readFile(
@@ -808,10 +811,12 @@ test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
   bridge.engine.state.starterChoices = ["bastion", "blaze", "mature_start"];
   const ai = new AutoChessAIController(bridge);
 
-  assert.equal(ai.version, "0.4.1");
+  assert.equal(ai.version, AUTOCHESS_VERSION);
   assert.match(ai.help().indexing, /1-based/);
   assert.ok(ai.help().read.includes("actions(count = 200)"));
   assert.ok(ai.help().read.includes("battles()"));
+  assert.ok(ai.help().flow.includes("finishCampaign()"));
+  assert.ok(ai.help().flow.includes("continueEndless()"));
   assert.equal(ai.starter(1).ok, true);
   assert.equal(bridge.engine.state.phase, "preparation");
   assert.ok(bridge.engine.state.board.some(Boolean));
@@ -840,8 +845,69 @@ test("AI 控制台对象覆盖完整流程并使用 1 起始槽位", () => {
   assert.equal(restartedTrace.at(-1).after.phase, "title");
   assert.ok(restartedTrace.some((entry) => entry.action.type === "starter"));
   const textState = JSON.parse(bridge.renderTextState());
-  assert.equal(textState.version, "0.4.1");
+  assert.equal(textState.version, AUTOCHESS_VERSION);
   assert.deepEqual(textState.recentActions, restartedTrace.slice(-12));
+});
+
+test("重开仅在显式固定时复用种子", () => {
+  const unpinnedSeed = 4_294_967_296;
+  const unpinned = new EngineBridge(unpinnedSeed, 1, { simulation: true });
+  unpinned.dispatch({ type: "restart" });
+  assert.notEqual(unpinned.engine.state.seed, unpinnedSeed);
+  assert.ok(unpinned.engine.state.seed >= 0 && unpinned.engine.state.seed < unpinnedSeed);
+  assert.equal(unpinned.engine.state.enemySeed, unpinned.engine.state.seed);
+
+  const pinnedSeed = 907_101;
+  const pinned = new EngineBridge(pinnedSeed, 1, {
+    simulation: true,
+    restartSeed: pinnedSeed,
+  });
+  const initialChoices = [...pinned.engine.state.starterChoices];
+  pinned.engine.state.phase = "gameover";
+  pinned.dispatch({ type: "restart" });
+  assert.equal(pinned.engine.state.phase, "title");
+  assert.equal(pinned.engine.state.seed, pinnedSeed);
+  assert.equal(pinned.engine.state.enemySeed, pinnedSeed);
+  assert.deepEqual(pinned.engine.state.starterChoices, initialChoices);
+});
+
+test("AI 控制台显式区分完成远征与继续无限", () => {
+  const setupVictory = (bridge) => {
+    bridge.engine.state.starterChoices = ["bastion", "blaze", "mature_start"];
+    bridge.engine.startRun("bastion");
+    bridge.engine.state.round = CAMPAIGN_ROUNDS;
+    bridge.engine.state.phase = "result";
+    bridge.engine.state.result = {
+      won: true,
+      headline: "裂隙封闭",
+      detail: "终局首领已击败",
+      income: 0,
+      bounty: 0,
+      defeatedEnemies: 1,
+      defeatedByStar: { 1: 0, 2: 0, 3: 1 },
+      upgradeDiscount: 0,
+      damage: 0,
+    };
+  };
+
+  const finishBridge = new EngineBridge(7403);
+  finishBridge.setConsoleLogging(false);
+  const finishAi = new AutoChessAIController(finishBridge);
+  assert.equal(finishAi.finishCampaign().ok, false);
+  setupVictory(finishBridge);
+  assert.equal(finishAi.finishCampaign().ok, true);
+  assert.equal(finishBridge.engine.state.phase, "gameover");
+  assert.equal(finishBridge.engine.state.finalWon, true);
+  assert.equal(finishAi.continueEndless().ok, false);
+
+  const endlessBridge = new EngineBridge(7404);
+  endlessBridge.setConsoleLogging(false);
+  setupVictory(endlessBridge);
+  const endlessAi = new AutoChessAIController(endlessBridge);
+  assert.equal(endlessAi.continueEndless().ok, true);
+  assert.equal(endlessBridge.engine.state.endlessUnlocked, true);
+  assert.equal(endlessBridge.engine.state.phase, "augment");
+  assert.equal(endlessBridge.getActionHistory().at(-1).action.type, "continueEndless");
 });
 
 test("长局日志跨战保留超过旧 320/500 上限并记录开战站位", () => {

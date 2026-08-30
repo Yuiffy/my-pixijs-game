@@ -228,6 +228,19 @@ public finishBattle(won: boolean) {
     this.state.phase = "result";
   }
 
+public get canFinishCampaign() {
+    return this.state.phase === "result"
+      && Boolean(this.state.result?.won)
+      && this.state.round === CAMPAIGN_ROUNDS
+      && !this.state.endlessUnlocked;
+  }
+
+public finishCampaign() {
+    if (!this.canFinishCampaign) return false;
+    this.endGame(true);
+    return true;
+  }
+
 public continueAfterResult() {
     const { result } = this.state;
     if (this.state.phase !== "result" || !result) return;

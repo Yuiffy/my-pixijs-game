@@ -273,9 +273,18 @@ test("游戏配置保持 1120×720 逻辑世界并由宿主管理高 DPI 缩放"
   assert.match(scene, /viewportScaleFor\(width, height\)/);
   assert.match(
     scene,
-    /const zoom = fitScale \* \(battle \? this\.battleViewZoom : 1\)/,
+    /const battleZoom = battle \? this\.battleViewZoom : 1/,
   );
-  assert.match(scene, /setZoom\(zoom\)/);
+  assert.match(scene, /setZoom\(fitScale\)/);
+  assert.match(scene, /applyBattleWorldPresentation/);
+  assert.match(scene, /presentation\.scaleX \* viewZoom/);
+  assert.match(scene, /this\.cameras\.main\.zoom \* this\.battleViewZoom/);
+  assert.match(scene, /effectForBattlePresentation/);
+  assert.match(scene, /effect\.x \+ \(effect\.x2 - effect\.x\) \* scaleX/);
+  assert.match(scene, /effect\.y \+ \(effect\.y3 - effect\.y\) \* scaleY/);
+  assert.match(scene, /projectileForBattlePresentation/);
+  assert.match(scene, /velocityX: projectile\.velocityX \* MOBILE_BATTLE_PRESENTATION\.scaleX/);
+  assert.match(scene, /velocityY: projectile\.velocityY \* MOBILE_BATTLE_PRESENTATION\.scaleY/);
   assert.match(layout, /MAX_TEXT_RESOLUTION = 2/);
 });
 
@@ -729,7 +738,11 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(layout, /MAX_MOBILE_DEVICE_PIXEL_RATIO = 1\.5/);
   assert.match(layout, /MAX_MOBILE_TEXT_RESOLUTION = 1\.5/);
   assert.match(layout, /mobileSized/);
-  assert.match(layout, /logicalSizeFor/);
+  assert.match(layout, /logicalSizeForPhase/);
+  assert.match(layout, /MAX_PORTRAIT_VIEWPORT_WIDTH = 1200/);
+  assert.doesNotMatch(layout, /export const logicalSizeFor =/);
+  assert.match(hud, /max-aspect-ratio: 25\/28/);
+  assert.match(hudCss, /max-aspect-ratio: 25\/28/);
   assert.match(layout, /renderSizeFor/);
   assert.match(layout, /uiScaleFor/);
   assert.match(layout, /MAX_UI_SCALE = 1\.25/);
@@ -754,10 +767,10 @@ test("文字、圆形头像和宿主 Canvas 根据真实视口同步高 DPI 渲�
   assert.match(host, /dataset\.layoutProfile/);
   assert.match(host, /document\.fonts\?\.load/);
   assert.match(scene, /scale\.parentSize/);
-  assert.match(scene, /logicalSizeFor\(\)/);
+  assert.match(scene, /logicalSizeForPhase\(/);
   assert.match(scene, /setViewport/);
-  assert.match(scene, /setZoom\(zoom\)/);
-  assert.match(scene, /centerOn\(center\.x, center\.y\)/);
+  assert.match(scene, /setZoom\(fitScale\)/);
+  assert.match(scene, /centerOn\(logical\.width \/ 2, logical\.height \/ 2\)/);
   assert.match(scene, /adjustBattleView/);
   assert.match(scene, /battleViewPointers/);
   assert.match(scene, /positionToCamera\(this\.cameras\.main\)/);
@@ -815,11 +828,11 @@ test("整备页用逻辑坐标羁绊视口、分区面板和受限文本还原 C
   assert.match(scene, /const inset = TOOLTIP_TYPOGRAPHY\.edgeInset \* scale/);
   assert.match(
     scene,
-    /const xMin = Math\.min\(inset, Math\.max\(0, WORLD_WIDTH - width\)\)/,
+    /const logical = this\.logicalSize\(\);[\s\S]*?const xMin = Math\.min\(inset, Math\.max\(0, logical\.width - width\)\)/,
   );
   assert.match(
     scene,
-    /const yMax = Math\.max\(yMin, WORLD_HEIGHT - height - inset\)/,
+    /const yMax = Math\.max\(yMin, logical\.height - height - inset\)/,
   );
   assert.match(scene, /truncateText\(/);
   assert.match(scene, /occupiedSlotLayout/);
@@ -942,6 +955,23 @@ test("桌面商店下半区详情向上展开并保持箭头贴近卡片", () =>
   );
 });
 
+test("移动商店用独立按钮查看买不起棋子的详情", () => {
+  assert.match(hudShop, /detailDisclosure\?: \{/);
+  assert.match(hudShop, /className="rift-shop-card-info"/);
+  assert.match(hudShop, /aria-controls=\{detailId\}/);
+  assert.match(hudShop, /aria-expanded=\{showDetail\}/);
+  assert.match(hudShop, /role=\{detailDisclosure \? "region" : "tooltip"\}/);
+  assert.match(hudShop, /detailIndex === index/);
+  assert.match(
+    hudCss,
+    /\.rift-shop-card-wrap\.is-inspectable \.rift-shop-card-detail \{ position: relative;/,
+  );
+  assert.doesNotMatch(
+    hudCss,
+    /\.rift-dom-sheet-shop \.rift-shop-card-detail \{ display: none;/,
+  );
+});
+
 test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示", () => {
   assert.match(scene, /buildBattleOverlay/);
   assert.match(scene, /rankingStateKey/);
@@ -957,6 +987,17 @@ test("战斗统计和结算层保留稳定交互、模态拦截与阵容提示",
   assert.match(scene, /damageTaken/);
   assert.match(scene, /resultContinueLabel/);
   assert.match(scene, /继续 · 进入整备/);
+  assert.match(scene, /campaign-finish-button/);
+  assert.match(scene, /campaign-endless-button/);
+  assert.match(scene, /type: "finishCampaign"/);
+  assert.match(scene, /type: "continueEndless"/);
+  assert.match(host, /bridge\.engine\.canFinishCampaign/);
+  assert.match(hudMobileSheets, /rift-mobile-result-actions/);
+  assert.match(hudMobileSheets, /完成远征/);
+  assert.match(hudMobileSheets, /继续无限/);
+  assert.match(bridge, /finishCampaign/);
+  assert.match(bridge, /continueEndless/);
+  assert.match(engineTextState, /campaignVictoryPending/);
   assert.match(scene, /DEPTH\.overlay \+ 3/);
   assert.match(scene, /this\.overlayLayer\.add\(\[graphics, label, zone\]\)/);
   assert.match(scene, /this\.overlayLayer\.add\(zone\)/);
@@ -1001,7 +1042,7 @@ test("战斗顶部展示双方羁绊、完整说明并支持小屏收起", () =>
   assert.match(hudCss, /\.rift-battle-traits/);
   assert.match(hudCss, /\.rift-battle-trait-detail/);
   assert.match(hudCss, /\.rift-battle-traits\.is-collapsed/);
-  assert.match(hudCss, /orientation: portrait/);
+  assert.match(hudCss, /max-aspect-ratio: 25\/28/);
   assert.match(hudCss, /orientation: landscape/);
 });
 
@@ -1015,7 +1056,7 @@ test("结算报告保持固定可读行高并让完整阵容独立滚动", () =>
     scene,
     /this\.isCompact\(\) \? COMPACT_RESULT_LAYOUT : WIDE_RESULT_LAYOUT/,
   );
-  assert.match(scene, /const RESULT_VISIBLE_ROWS = 6/);
+  assert.match(scene, /const RESULT_VISIBLE_ROWS = 5/);
   assert.match(scene, /height: 48/);
   assert.match(scene, /rows\.slice\(offset, offset \+ RESULT_VISIBLE_ROWS\)/);
   assert.match(scene, /drawResultScrollbar/);

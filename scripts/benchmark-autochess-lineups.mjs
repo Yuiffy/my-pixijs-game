@@ -284,10 +284,13 @@ const replacementNeighbors = (lineup) => uniqueLineups(lineup.flatMap((removed, 
 
 const baseStarsFor = (lineup) => normalizeStars(lineup);
 if (compareOnly) {
-  const comparison = evaluateBestFormation(initialLineup, baseStarsFor(initialLineup));
+  const comparisons = formationIds
+    .map((formation) => evaluateLineup(initialLineup, baseStarsFor(initialLineup), formation))
+    .sort(compareReports);
+  const comparison = comparisons[0];
   const report = {
     generatedAt: new Date().toISOString(),
-    method: "Focused fixed-lineup comparison across the requested late-game rounds and formations.",
+    method: "Focused fixed-lineup comparison across the requested late-game rounds and formations, retaining every formation result.",
     configuration: {
       rounds,
       seedCount,
@@ -298,6 +301,7 @@ if (compareOnly) {
       augmentsByRound: Object.fromEntries(rounds.map((round) => [round, augmentsForRound(round)])),
     },
     comparison,
+    comparisons,
     evaluations: evaluationCache.size,
   };
   const serialized = `${JSON.stringify(report, null, 2)}\n`;
@@ -309,14 +313,17 @@ if (compareOnly) {
   console.log(JSON.stringify({
     ids: comparison.ids,
     names: comparison.names,
-    formation: comparison.formation,
-    wins: comparison.wins,
-    battles: comparison.battles,
-    winRate: comparison.winRate,
-    worstRoundWins: comparison.worstRoundWins,
-    averageMargin: comparison.averageMargin,
-    worstMargin: comparison.worstMargin,
-    averageElapsed: comparison.averageElapsed,
+    bestFormation: comparison.formation,
+    formations: comparisons.map((candidate) => ({
+      formation: candidate.formation,
+      wins: candidate.wins,
+      battles: candidate.battles,
+      winRate: candidate.winRate,
+      worstRoundWins: candidate.worstRoundWins,
+      averageMargin: candidate.averageMargin,
+      worstMargin: candidate.worstMargin,
+      averageElapsed: candidate.averageElapsed,
+    })),
     evaluations: evaluationCache.size,
   }, null, 2));
   process.exit(0);

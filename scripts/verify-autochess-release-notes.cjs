@@ -27,7 +27,6 @@ const loadPlaywright = () => {
 
 const { chromium } = loadPlaywright();
 const artifactDirectory = ".tmp/autochess";
-const expectedVersions = ["0.4.1", "0.4.0", "0.3.0", "0.2.3", "0.2.2", "0.2.1", "0.2.0", "0.1.0"];
 
 const getScrollerMetrics = (element) => {
   const rect = element.getBoundingClientRect();
@@ -52,6 +51,12 @@ const isEntryVisibleInScroller = (entry) => {
 mkdirSync(artifactDirectory, { recursive: true });
 
 (async () => {
+  const { loadTypescriptModule } = await import("./tests/helpers/load-typescript-module.mjs");
+  const { AUTOCHESS_RELEASE_HISTORY } = await loadTypescriptModule(
+    "src/components/autoChessGame/version.ts",
+  );
+  const expectedVersions = AUTOCHESS_RELEASE_HISTORY.map((release) => release.version);
+
   const browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];

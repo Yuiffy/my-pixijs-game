@@ -12,6 +12,7 @@ import {
   type UnitId,
 } from "../core/gameData";
 import { AutoChessEngine } from "../core/gameEngine";
+import { canonicalFormationPlacements } from "../core/formation";
 import type {
   BattleState,
   GamePhase,
@@ -353,29 +354,13 @@ const formationPlacements = (
   lineup: OwnedEntry[],
   profileId: FormationProfile = "human_midline",
 ) => {
+  if (profileId === "go_canonical") return canonicalFormationPlacements(lineup);
   const profile = FORMATION_PROFILES[profileId];
   const unitSlots = ("units" in profile ? profile.units : {}) as Partial<
     Record<UnitId, readonly number[]>
   >;
   const canonicalLineup = canonicalizeFormationDuplicates(lineup);
-  const orderedLineup = profileId === "go_canonical"
-    ? [...canonicalLineup].sort((left, right) => {
-      const leftDefinition = UNIT_DEFS[left.unit.id];
-      const rightDefinition = UNIT_DEFS[right.unit.id];
-      const leftDurability = (leftDefinition.hp + leftDefinition.armor * 7)
-        * STAR_POWER[left.unit.star];
-      const rightDurability = (rightDefinition.hp + rightDefinition.armor * 7)
-        * STAR_POWER[right.unit.star];
-      return Number(rightDefinition.attackType === "melee")
-        - Number(leftDefinition.attackType === "melee")
-        || right.unit.star - left.unit.star
-        || rightDurability - leftDurability
-        || rightDefinition.range - leftDefinition.range
-        || rightDefinition.attack - leftDefinition.attack
-        || left.unit.id.localeCompare(right.unit.id)
-        || left.unit.uid - right.unit.uid;
-      })
-    : canonicalLineup;
+  const orderedLineup = canonicalLineup;
   const frontline = orderedLineup.filter(({ unit }) => (
     unit.id === "rei" || UNIT_DEFS[unit.id].attackType === "melee"
   ));
@@ -411,7 +396,7 @@ const formationPlacements = (
 };
 
 export const goCanonicalFormationPlacements = (lineup: OwnedEntry[]) => (
-  formationPlacements(lineup, "go_canonical")
+  canonicalFormationPlacements(lineup)
 );
 
 export class AutoChessAutopilot {

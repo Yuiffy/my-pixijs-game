@@ -46,6 +46,9 @@ export interface Person {
   flags: Record<string, any>;
   arts: string[];
   knowledge: string[];
+  /** Legacy progression fields used by the snippet adapter. */
+  exp?: number;
+  maxHp?: number;
   personality?: Personality;
   appearance?: Appearance;
   identity?: {
@@ -135,6 +138,11 @@ export interface SnippetResult {
   addMaxHp?: number;
   endGame?: boolean;
   choices?: StoryChoice[];
+  /** Deprecated aliases kept for snippets written before the batch fields. */
+  addRelation?: Relation;
+  addFlag?: string;
+  setCompanion?: string;
+  removeCompanion?: boolean;
 }
 
 export interface StorySnippet {
