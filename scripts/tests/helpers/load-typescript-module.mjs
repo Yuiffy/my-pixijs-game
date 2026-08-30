@@ -23,6 +23,8 @@ const dependencySpecifiers = (sourcePath, sourceText) => {
     sourcePath.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
   );
   return source.statements.flatMap((statement) => {
+    if (ts.isImportDeclaration(statement) && statement.importClause?.isTypeOnly) return [];
+    if (ts.isExportDeclaration(statement) && statement.isTypeOnly) return [];
     if (
       (ts.isImportDeclaration(statement) ||
         ts.isExportDeclaration(statement)) &&

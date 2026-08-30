@@ -3,22 +3,39 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   chooseNovelAction,
+  choosePlayerActivity,
+  concludeNovelAction,
   continueNovelAction,
   createNovelState,
+  pausePlayerLead,
   sanitizeSetup,
+  selectPlayerAgenda,
+  setPlayerLeadIntent,
   type NovelSetup,
   type NovelState,
 } from "./novelEngine";
+import type { PlayerIntent } from "./wuxiaCampaign";
 
-const STORAGE_KEY = "wuxia-novel-save-v1";
+const STORAGE_KEY = "wuxia-novel-save-v6";
 
 const isNovelState = (value: unknown): value is NovelState => {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<NovelState>;
-  return candidate.version === 1
+  return candidate.version === 6
     && typeof candidate.turn === "number"
-    && typeof candidate.maxTurns === "number"
     && !!candidate.hero
+    && !!candidate.content
+    && !!candidate.campaign
+    && candidate.campaign.version === 1
+    && Array.isArray(candidate.campaign.leads)
+    && Array.isArray(candidate.campaign.opportunities)
+    && Array.isArray(candidate.campaign.availableActivities)
+    && !!candidate.narrative
+    && candidate.narrative.mode === "emergent_sandbox"
+    && !!candidate.world
+    && Array.isArray(candidate.world.actors)
+    && Array.isArray(candidate.world.relations)
+    && Array.isArray(candidate.narrative.chapters)
     && Array.isArray(candidate.log)
     && Array.isArray(candidate.locations);
 };
@@ -73,10 +90,55 @@ export function useWuxiaGame() {
     });
   }, []);
 
+  const chooseAgenda = useCallback((agendaId: string) => {
+    setGame((current) => {
+      if (!current) return current;
+      const next = selectPlayerAgenda(current, agendaId);
+      persistGame(next);
+      return next;
+    });
+  }, []);
+
+  const chooseActivity = useCallback((activityId: string) => {
+    setGame((current) => {
+      if (!current) return current;
+      const next = choosePlayerActivity(current, activityId);
+      persistGame(next);
+      return next;
+    });
+  }, []);
+
+  const setLeadIntent = useCallback((leadId: string, intent: PlayerIntent) => {
+    setGame((current) => {
+      if (!current) return current;
+      const next = setPlayerLeadIntent(current, leadId, intent);
+      persistGame(next);
+      return next;
+    });
+  }, []);
+
+  const pauseLead = useCallback((leadId: string) => {
+    setGame((current) => {
+      if (!current) return current;
+      const next = pausePlayerLead(current, leadId);
+      persistGame(next);
+      return next;
+    });
+  }, []);
+
   const continueAction = useCallback(() => {
     setGame((current) => {
       if (!current) return current;
       const next = continueNovelAction(current);
+      persistGame(next);
+      return next;
+    });
+  }, []);
+
+  const concludeGame = useCallback(() => {
+    setGame((current) => {
+      if (!current) return current;
+      const next = concludeNovelAction(current);
       persistGame(next);
       return next;
     });
@@ -109,8 +171,13 @@ export function useWuxiaGame() {
     startGame,
     generateWorld: startGame,
     continueGame,
+    chooseAgenda,
+    chooseActivity,
+    setLeadIntent,
+    pauseLead,
     chooseAction,
     continueAction,
+    concludeGame,
     abandonGame,
     newRun,
   };
