@@ -70,16 +70,36 @@ const runFingerprint = (state) => ({
   history: state.history,
   world: state.world,
   narrative: state.narrative,
+  life: state.life,
+  chronicle: state.chronicle,
   chapters: state.manuscript.chapters,
   ending: state.ending,
 });
 
+const assertLifeState = (state, label = "开放江湖") => {
+  assert.equal(state.version, 7, `${label} 存档版本不是 v7`);
+  assert.ok(typeof state.worldId === "string" && state.worldId.length > 0, `${label} 缺少 worldId`);
+  assert.ok(typeof state.protagonistId === "string" && state.protagonistId.length > 0, `${label} 缺少 protagonistId`);
+  assert.ok(typeof state.date === "string" && state.date.length > 0, `${label} 缺少年月日文案`);
+  assert.ok(Number.isInteger(state.age) && state.age >= 1, `${label} 缺少主角年龄`);
+  assert.ok(state.household && Array.isArray(state.household.partners) && Array.isArray(state.household.children), `${label} 缺少家门状态`);
+  assert.ok(Array.isArray(state.projects), `${label} 缺少天下大事`);
+  assert.ok(state.ranking && typeof state.ranking === "object", `${label} 缺少武林排名`);
+  assert.ok(Array.isArray(state.endingCandidates), `${label} 缺少可选结局`);
+  assert.ok(Array.isArray(state.archivedProtagonists), `${label} 缺少历代人物档案`);
+  assert.equal(state.worldId, state.chronicle.worldId, `${label} 顶层 worldId 与年鉴不一致`);
+  assert.equal(state.protagonistId, state.life.protagonistId, `${label} 顶层 protagonistId 与生涯不一致`);
+  assert.equal(state.age, state.life.age, `${label} 顶层年龄与生涯不一致`);
+  assert.ok(state.life.date && Number.isInteger(state.life.date.year) && Number.isInteger(state.life.date.month) && Number.isInteger(state.life.date.day), `${label} 缺少结构化年月日`);
+  assert.equal(state.date, state.life.dateLabel, `${label} 顶层年月日与生涯不一致`);
+};
+
 const assertWorldIntegrity = (state) => {
-  assert.equal(state.version, 6, "存档版本不是玩家主动生涯 v6");
+  assertLifeState(state);
   assert.equal(state.narrative.mode, "emergent_sandbox");
   assert.ok(state.world && Number.isInteger(state.world.day), "缺少可序列化世界状态");
   assert.equal(state.world.locations.length, 12, "江湖地点数量不正确");
-  assert.equal(state.world.actors.length, 9 + state.content.characterCount, "世界人物数量没有包含内容包角色");
+  assert.ok(state.world.actors.length >= 9 + state.content.characterCount, "世界人物数量没有包含内容包角色");
   assert.equal(state.narrative.cast.length, 8 + state.content.characterCount, "叙事人物数量没有包含内容包角色");
   assert.equal(state.world.manuals.length, 3, "每局应有三册真实流转的角色招式抄本");
   assert.ok(state.narrative.cast.every((character) => character.sourceName && character.signatureMove && character.desire), "人物缺少原型、招式或目标");
@@ -198,12 +218,20 @@ const waitForPage = async () => {
     };
     const freshSetup = async () => {
       await page.goto(baseUrl + "/game/wuxia", { waitUntil: "domcontentloaded" });
-      await page.evaluate(() => window.localStorage.clear());
+      await page.evaluate(() => {
+        window.localStorage.removeItem("wuxia-novel-save-v6");
+        window.localStorage.removeItem("wuxia-novel-save-v7");
+      });
       await page.reload({ waitUntil: "domcontentloaded" });
       await page.waitForFunction(() => Boolean(window.render_game_to_text));
       await waitForScreen("edition-select");
       await page.getByRole("button", { name: "进入开放江湖", exact: true }).click();
       await waitForScreen("setup");
+      const clearedSaves = await page.evaluate(() => ({
+        v6: window.localStorage.getItem("wuxia-novel-save-v6"),
+        v7: window.localStorage.getItem("wuxia-novel-save-v7"),
+      }));
+      assert.deepEqual(clearedSaves, { v6: null, v7: null }, "进入 setup 前没有清理 v6/v7 存档");
     };
     const startRun = async ({ seed, name = "顾知微", origin = "无门游侠", ambition = "守义" }) => {
       await freshSetup();
@@ -293,6 +321,207 @@ const waitForPage = async () => {
       return;
     }
 
+    if (process.env.WUXIA_V7_LIFE_SMOKE === "1" || process.env.WUXIA_V7_SUCCESSION === "1") {
+      const settleLifeView = () => page.waitForTimeout(450);
+      const originalHeroName = "顾知微";
+
+      await freshSetup();
+      await setupNameInput.fill(originalHeroName);
+      await setupSeedInput.fill("verify-v7-life-and-world");
+      await page.locator("button").filter({ hasText: "门派弟子" }).first().click();
+      await page.locator("button").filter({ hasText: "求真" }).first().click();
+      await page.getByRole("button", { name: /落笔开卷/ }).click();
+      await waitForScreen("agenda");
+
+      let lifeState = await readState();
+      assertLifeState(lifeState, "新建世界");
+      assert.equal(lifeState.hero.name, originalHeroName);
+      assert.ok(lifeState.projects.length >= 3, "新建世界没有生成可持续推进的天下大事");
+      assert.equal(lifeState.endingCandidates.length, 0, "尚未走过三幕时不应提前提供人生结局");
+      assert.equal(lifeState.archivedProtagonists.length, 0, "第一代开局不应已有旧主角档案");
+      const firstWorld = {
+        worldId: lifeState.worldId,
+        protagonistId: lifeState.protagonistId,
+        age: lifeState.age,
+        year: lifeState.life.date.year,
+      };
+      const persistedAfterCreation = await page.evaluate(() => ({
+        v6: window.localStorage.getItem("wuxia-novel-save-v6"),
+        v7: window.localStorage.getItem("wuxia-novel-save-v7"),
+      }));
+      assert.equal(persistedAfterCreation.v6, null, "新建 v7 世界后仍保留旧 v6 存档");
+      assert.ok(persistedAfterCreation.v7, "新建世界没有写入 v7 江湖册");
+      const createdSaveRoot = JSON.parse(persistedAfterCreation.v7);
+      assert.equal(createdSaveRoot.version, 7, "江湖册根存档版本不正确");
+      assert.equal(createdSaveRoot.worlds.length, 1, "首次开卷没有生成唯一世界槽");
+      assert.equal(createdSaveRoot.worlds[0].id, firstWorld.worldId, "江湖册世界 ID 与运行状态不一致");
+
+      await page.getByRole("region", { name: "选择长期路线" }).locator("button").first().click();
+      await waitForScreen("planning");
+      await page.getByRole("button", { name: "今年就这样吧", exact: true }).click();
+      const yearEndConfirmation = page.getByRole("group", { name: "确认结束今年" });
+      assert.ok(await yearEndConfirmation.isVisible(), "结束今年前没有二次确认");
+      await yearEndConfirmation.getByRole("button", { name: "收住今年", exact: true }).click();
+      await waitForScreen("year_break");
+      lifeState = await readState();
+      assertLifeState(lifeState, "岁末回顾");
+      assert.equal(lifeState.age, firstWorld.age + 1, "主动收年后主角没有增长一岁");
+      assert.equal(lifeState.life.date.year, firstWorld.year + 1, "主动收年后没有进入下一年");
+      assert.equal(lifeState.worldId, firstWorld.worldId, "跨年改变了世界 ID");
+      assert.equal(lifeState.protagonistId, firstWorld.protagonistId, "跨年改变了主角人生 ID");
+      assert.ok(lifeState.life.pendingYearMilestone, "year_break 没有生成流年小记");
+      await settleLifeView();
+      await capture("v7-year-break");
+      await page.getByRole("button", { name: "翻入下一年", exact: true }).click();
+      await waitForScreen("planning");
+
+      const playFirstAvailableScene = async () => {
+        const before = await readState();
+        assert.equal(before.screen, "planning", "短流程选活动前不在 planning");
+        const activity = before.campaign.activities.find((entry) => entry.enabled && entry.kind !== "rite");
+        assert.ok(activity, `第 ${before.turn + 1} 幕没有普通可用活动`);
+        const activityButton = page.getByRole("region", { name: "可安排活动" }).locator("button").filter({ hasText: activity.title }).first();
+        assert.ok(await activityButton.isVisible(), `页面没有显示活动“${activity.title}”`);
+        await activityButton.click();
+        await waitForScreen("story");
+        const scene = await readState();
+        assert.ok(scene.choices.length >= 2, `活动“${activity.title}”没有可选行动`);
+        await page.getByRole("region", { name: "当前选择" }).locator("button").first().click();
+        await waitForTurn(before.turn + 1);
+        await waitForScreen("outcome");
+        const outcome = await readState();
+        const closesChapter = outcome.turn % outcome.chapterLength === 0;
+        await page.getByRole("button", { name: closesChapter ? "查看本章小结" : "回到行程安排", exact: true }).click();
+        await waitForScreen(closesChapter ? "chapter_break" : "planning");
+        if (closesChapter) {
+          await page.getByRole("button", { name: "开启下一章", exact: true }).click();
+          await waitForScreen("planning");
+        }
+      };
+
+      for (let sceneIndex = 0; sceneIndex < 3; sceneIndex += 1) await playFirstAvailableScene();
+      lifeState = await readState();
+      assertLifeState(lifeState, "三幕之后");
+      const wanderingEnding = lifeState.endingCandidates.find((ending) => ending.id === "wandering_volume");
+      assert.ok(wanderingEnding, "走过三幕后仍未解锁基础人生结局");
+      const endingRegion = page.getByRole("region", { name: "可选择的人生结局" });
+      await endingRegion.locator("button").filter({ hasText: wanderingEnding.title }).click();
+      await waitForScreen("ending");
+      lifeState = await readState();
+      assert.equal(lifeState.life.chosenEndingId, wanderingEnding.id, "所选结局没有写入人生状态");
+      assert.ok(lifeState.ending, "选择结局后没有展开尾声预览");
+      await settleLifeView();
+      await capture("v7-ending-preview");
+
+      const resumeLifeButton = page.locator("button").filter({ hasText: "继续游历" }).first();
+      assert.ok(await resumeLifeButton.isVisible(), "结局预览没有提供继续游历入口");
+      await resumeLifeButton.click();
+      await waitForScreen("planning");
+      lifeState = await readState();
+      assertLifeState(lifeState, "继续游历");
+      assert.equal(lifeState.ending, null, "继续游历后尾声预览仍未撤下");
+      assert.equal(lifeState.life.status, "active", "继续游历后人生状态没有恢复 active");
+      assert.equal(lifeState.worldId, firstWorld.worldId, "继续游历后切换了世界");
+      assert.equal(lifeState.protagonistId, firstWorld.protagonistId, "继续游历后切换了主角");
+
+      const returnToWorldLibrary = async () => {
+        await page.locator('button[aria-label="打开设置"]:visible').first().click();
+        const settings = page.getByRole("dialog", { name: "卷外设置" });
+        assert.ok(await settings.isVisible(), "卷外设置没有打开");
+        const worldLibraryButton = settings.locator("button").filter({ hasText: "返回江湖册" }).first();
+        assert.ok(await worldLibraryButton.isVisible(), "卷外设置没有返回江湖册入口");
+        await worldLibraryButton.click();
+        await waitForScreen("world-library");
+        return readState();
+      };
+
+      let libraryState = await returnToWorldLibrary();
+      assert.equal(libraryState.saved, true, "返回江湖册后没有已保存世界");
+      assert.equal(libraryState.worlds.length, 1, "返回江湖册后世界槽数量不正确");
+      assert.equal(libraryState.worlds[0].worldId, firstWorld.worldId, "江湖册没有保留当前世界 ID");
+      assert.equal(libraryState.worlds[0].protagonistId, firstWorld.protagonistId, "江湖册没有保留当前主角 ID");
+      await settleLifeView();
+      await capture("v7-world-library");
+
+      let succession = null;
+      if (process.env.WUXIA_V7_SUCCESSION === "1") {
+        await page.getByRole("button", { name: new RegExp(`续写${originalHeroName}的人生`) }).click();
+        await waitForScreen("planning");
+        lifeState = await readState();
+        const reopenedEnding = lifeState.endingCandidates.find((ending) => ending.id === "wandering_volume");
+        assert.ok(reopenedEnding, "继续旧人生后基础结局不再可选");
+        await page.getByRole("region", { name: "可选择的人生结局" }).locator("button").filter({ hasText: reopenedEnding.title }).click();
+        await waitForScreen("ending");
+        const sameWorldButton = page.locator("button").filter({ hasText: "同一江湖，另启一生" }).first();
+        assert.ok(await sameWorldButton.isVisible(), "结局预览没有同世界继任入口");
+        await sameWorldButton.click();
+        await waitForScreen("successor-setup");
+        const successorSetup = await readState();
+        assert.equal(successorSetup.worldId, firstWorld.worldId, "继任设置页没有承接原世界");
+        assert.equal(successorSetup.protagonistId, firstWorld.protagonistId, "继任设置页丢失上一代人生 ID");
+        await page.getByRole("heading", { name: "谁来接着走这方江湖？", exact: true }).waitFor();
+        await page.locator("#wuxia-hero-name").fill("柳无咎");
+        await page.getByRole("button", { name: /承世入江湖/ }).click();
+        await waitForScreen("agenda");
+        const successorState = await readState();
+        assertLifeState(successorState, "同世界继任");
+        assert.equal(successorState.worldId, firstWorld.worldId, "继任者没有留在同一世界");
+        assert.notEqual(successorState.protagonistId, firstWorld.protagonistId, "继任者复用了上一代人生 ID");
+        assert.equal(successorState.hero.name, "柳无咎", "继任者姓名没有生效");
+        assert.equal(successorState.life.generation, 2, "同世界继任没有进入第二代");
+        assert.ok(successorState.archivedProtagonists.some((life) => life.name === originalHeroName), "上一代没有进入历代人物档案");
+        const retiredActor = successorState.world.actors.find((actor) => actor.name === originalHeroName && actor.id !== "hero");
+        assert.ok(retiredActor, "上一代主角没有作为可相逢人物留在世界中");
+        await settleLifeView();
+        await capture("v7-successor-agenda");
+
+        await page.setViewportSize({ width: 2560, height: 1440 });
+        await settleLifeView();
+        await assertNoHorizontalOverflow("v7 继任路线 2K");
+        await capture("v7-successor-agenda-2560");
+        await page.setViewportSize({ width: 390, height: 844 });
+        await settleLifeView();
+        await assertNoHorizontalOverflow("v7 继任路线 390px");
+        await capture("v7-successor-agenda-mobile-390");
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await settleLifeView();
+
+        libraryState = await returnToWorldLibrary();
+        assert.equal(libraryState.worlds[0].worldId, firstWorld.worldId, "继任后江湖册改变了世界 ID");
+        assert.equal(libraryState.worlds[0].protagonistId, successorState.protagonistId, "江湖册没有指向继任者");
+        assert.ok(libraryState.worlds[0].archivedProtagonists.some((life) => life.name === originalHeroName), "江湖册没有展示上一代档案");
+        await settleLifeView();
+        await capture("v7-successor-library");
+        await page.setViewportSize({ width: 412, height: 915 });
+        await settleLifeView();
+        await assertNoHorizontalOverflow("v7 继任江湖册 412px");
+        await capture("v7-successor-library-mobile-412");
+        succession = {
+          worldId: successorState.worldId,
+          protagonistId: successorState.protagonistId,
+          generation: successorState.life.generation,
+          archived: successorState.archivedProtagonists,
+          retiredActorId: retiredActor.id,
+        };
+      }
+
+      assert.deepEqual(consoleErrors, [], `浏览器控制台错误: ${JSON.stringify(consoleErrors)}`);
+      assert.deepEqual(failedResponses, [], `页面失败请求: ${JSON.stringify(failedResponses)}`);
+      console.log(JSON.stringify({
+        ok: true,
+        lifecycle: {
+          ...firstWorld,
+          nextAge: lifeState.age,
+          nextYear: lifeState.life.date.year,
+          projectCount: lifeState.projects.length,
+          endingId: wanderingEnding.id,
+        },
+        succession,
+        screenshots,
+      }, null, 2));
+      return;
+    }
+
     if (process.env.WUXIA_V6_SMOKE === "1") {
       const settleCampaignView = () => page.waitForTimeout(500);
       await freshSetup();
@@ -303,7 +532,7 @@ const waitForPage = async () => {
       await page.getByRole("button", { name: /落笔开卷/ }).click();
       await waitForScreen("agenda");
       let campaignState = await readState();
-      assert.equal(campaignState.version, 6);
+      assert.equal(campaignState.version, 7);
       assert.equal(campaignState.phase, "choose_agenda");
       assert.ok(campaignState.content.packs.length >= 1, "内容包注册表为空");
       await settleCampaignView();
@@ -446,9 +675,19 @@ const waitForPage = async () => {
         await page.waitForTimeout(450);
         await capture(resolvedCaptureName);
       }
-      await page.getByRole("button", { name: outcome.turn % outcome.chapterLength === 0 ? "查看本章小结" : "回到行程安排", exact: true }).click();
-      await waitForScreen(outcome.turn % outcome.chapterLength === 0 ? "chapter_break" : "planning");
-      if (outcome.turn % outcome.chapterLength === 0) {
+      const closesYear = Boolean(outcome.life.pendingYearMilestone)
+        || outcome.life.scenesThisYear >= outcome.life.maxScenesPerYear;
+      const closesChapter = outcome.turn % outcome.chapterLength === 0;
+      const continueText = closesYear ? "查看岁末回顾" : closesChapter ? "查看本章小结" : "回到行程安排";
+      const expectedScreen = closesYear ? "year_break" : closesChapter ? "chapter_break" : "planning";
+      const continueButton = page.locator("button").filter({ hasText: continueText }).first();
+      assert.ok(await continueButton.isVisible(), `结算页缺少“${continueText}”入口`);
+      await continueButton.click();
+      await waitForScreen(expectedScreen);
+      if (closesYear) {
+        await page.getByRole("button", { name: "翻入下一年", exact: true }).click();
+        await waitForScreen("planning");
+      } else if (closesChapter) {
         await page.getByRole("button", { name: "开启下一章", exact: true }).click();
         await waitForScreen("planning");
       }
@@ -460,18 +699,21 @@ const waitForPage = async () => {
     await waitForScreen("planning");
     current = await readState();
     assert.equal(current.phase, "planning");
-    assert.ok(current.campaign.activities.some((activity) => activity.opportunityStage === "prepare"), "没有可提前抵达的限时机会");
+    const initialOpportunity = current.campaign.activities.find((activity) => activity.kind === "opportunity" && activity.enabled);
+    assert.ok(initialOpportunity, "开局没有可参与或可提前抵达的限时机会");
     await capture("v6-long-planning");
 
-    const preparation = await runScene({
-      activity: (activity) => activity.opportunityStage === "prepare",
-      choose: (choice) => choice.id.startsWith("campaign-opportunity-prepare-rules:"),
-      captureName: "v6-opportunity-preparation",
-    });
-    const opportunityId = preparation.selectedActivity.opportunityId;
-    assert.ok(opportunityId, "提前赴会活动缺少 opportunityId");
-    assert.notEqual(preparation.outcome.campaign.opportunities.find((entry) => entry.id === opportunityId)?.status, "attended", "提前抵达被误算成正式参加");
-    assert.equal(preparation.outcome.campaign.leads.find((lead) => lead.opportunityId === opportunityId)?.status, "active", "提前抵达后机会线索没有保持进行中");
+    const opportunityId = initialOpportunity.opportunityId;
+    assert.ok(opportunityId, "限时机会活动缺少 opportunityId");
+    if (initialOpportunity.opportunityStage === "prepare") {
+      const preparation = await runScene({
+        activity: (activity) => activity.id === initialOpportunity.id,
+        choose: (choice) => choice.id.startsWith("campaign-opportunity-prepare-rules:"),
+        captureName: "v6-opportunity-preparation",
+      });
+      assert.notEqual(preparation.outcome.campaign.opportunities.find((entry) => entry.id === opportunityId)?.status, "attended", "提前抵达被误算成正式参加");
+      assert.equal(preparation.outcome.campaign.leads.find((lead) => lead.opportunityId === opportunityId)?.status, "active", "提前抵达后机会线索没有保持进行中");
+    }
 
     let opportunityResult;
     for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -642,7 +884,9 @@ const waitForPage = async () => {
     assert.ok(foundedSect, "正式开山后没有生成玩家门派");
     assert.equal(current.hero.sectId, foundedSect.id, "创派后主角身份没有切换到新门派");
     assert.ok(current.narrative.factions.some((faction) => faction.id === foundedSect.id), "玩家门派没有进入势力志");
-    assert.equal(current.world.martialArts.find((art) => art.id === "art_hero_authored")?.factionId, foundedSect.id, "自创传承没有归入玩家门派");
+    const authoredArtId = current.world.techniques.find((technique) => technique.id === authoredTechnique.id)?.artId;
+    assert.ok(authoredArtId, "自创招式没有对应的武学传承");
+    assert.equal(current.world.martialArts.find((art) => art.id === authoredArtId)?.factionId, foundedSect.id, "自创传承没有归入玩家门派");
 
     const legacyDialog = await openCast();
     assert.ok(await legacyDialog.getByText(authoredTechnique.name, { exact: true }).first().isVisible(), "武学谱没有展示自创招式");
@@ -659,8 +903,10 @@ const waitForPage = async () => {
 
     const stateBeforeReload = runFingerprint(current);
     await page.reload({ waitUntil: "domcontentloaded" });
-    await waitForScreen("setup");
-    await page.getByRole("button", { name: /继续上一卷/ }).click();
+    await waitForScreen("edition-select");
+    await page.getByRole("button", { name: "进入开放江湖", exact: true }).click();
+    await waitForScreen("world-library");
+    await page.getByRole("button", { name: new RegExp(`续写${current.hero.name}的人生`) }).click();
     await waitForScreen("planning");
     current = await readState();
     assert.deepEqual(runFingerprint(current), stateBeforeReload, "第十三幕以后刷新续卷丢失世界状态");

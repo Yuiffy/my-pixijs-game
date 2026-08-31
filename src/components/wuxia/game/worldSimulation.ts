@@ -17,6 +17,8 @@ export type WorldRelationType =
   | "friend"
   | "companion"
   | "lover"
+  | "spouse"
+  | "concubine"
   | "crush"
   | "rival"
   | "enemy"
@@ -114,7 +116,50 @@ export interface WorldActor {
   traits: string[];
   techniques: ActorTechnique[];
   memories: WorldMemory[];
+  birthDay?: number;
 }
+
+const WORLD_DAYS_PER_YEAR = 360;
+
+const growHouseholdChild = (world: WuxiaWorldState, actor: WorldActor, day: number) => {
+  if (!actor.traits.includes("年幼") || actor.birthDay === undefined) return false;
+  const age = Math.max(0, Math.floor((day - actor.birthDay) / WORLD_DAYS_PER_YEAR));
+  if (age < 6) {
+    actor.title = "家门幼童";
+    actor.activity = "停留";
+    actor.destinationId = undefined;
+    actor.route = [];
+    return true;
+  }
+  if (age < 14) {
+    actor.title = "家门少年";
+    actor.activity = "停留";
+    actor.destinationId = undefined;
+    actor.route = [];
+    return true;
+  }
+  const home = world.locations.find((location) => location.id === actor.homeLocationId);
+  actor.title = "家门后辈";
+  actor.traits = [...actor.traits.filter((trait) => trait !== "年幼"), "初入江湖"];
+  actor.routineLocationIds = Array.from(new Set([
+    actor.homeLocationId,
+    ...(home?.connections.slice(0, 2) || []),
+  ]));
+  actor.goals = [{
+    kind: "访友",
+    targetLocationId: actor.routineLocationIds[1] || actor.homeLocationId,
+    reason: "年岁已长，开始沿父母旧日行路认识这方江湖",
+    priority: 54,
+  }];
+  actor.memories.push({
+    day,
+    kind: "离别",
+    text: `${actor.name}成年后第一次独自离开家门，去走父母曾经走过的路。`,
+    actorIds: [actor.id],
+    locationId: actor.locationId,
+  });
+  return false;
+};
 
 export interface WorldRelation {
   id: string;
@@ -457,7 +502,7 @@ export const createWorldSimulation = (input: WorldSetupInput): WuxiaWorldState =
     version: 2,
     seed: input.seed,
     rngState: rng.snapshot(),
-    day: 0,
+    day: 1,
     heroActorId: "hero",
     locations: input.locations.map((entry) => ({ ...entry, connections: [...entry.connections], tags: [...entry.tags] })),
     actors,
@@ -504,7 +549,7 @@ export const worldDistance = (world: Pick<WuxiaWorldState, "locations">, fromId:
 
 export const focusActorsForEvent = (eventId: string): string[] => eventId
   .split(":")
-  .filter((part) => part.startsWith("actor_character_"));
+  .filter((part) => part.startsWith("actor_") || part.startsWith("legend_") || part.startsWith("child_"));
 
 const cloneWorld = (world: WuxiaWorldState): WuxiaWorldState => ({
   ...world,
@@ -556,6 +601,8 @@ export const advanceWorldToScene = (
     targetLocationId: string;
     companionActorIds: string[];
     focusActorIds?: string[];
+    minimumElapsedDays?: number;
+    suppressEncounter?: boolean;
   },
 ): WuxiaWorldState => {
   const world = cloneWorld(source);
@@ -572,7 +619,7 @@ export const advanceWorldToScene = (
     const distance = worldDistance(world, actor.locationId, input.targetLocationId);
     return distance === 99 ? longest : Math.max(longest, distance);
   }, 0);
-  const elapsedDays = Math.max(1, route.length, focusTravelDays);
+  const elapsedDays = Math.max(1, route.length, focusTravelDays, input.minimumElapsedDays || 0);
   const movementStart = world.movements.length;
 
   for (let offset = 1; offset <= elapsedDays; offset += 1) {
@@ -582,6 +629,7 @@ export const advanceWorldToScene = (
 
     world.actors.forEach((actor) => {
       if (actor.id === "hero" || ["死亡", "失踪"].includes(actor.activity)) return;
+      if (growHouseholdChild(world, actor, day)) return;
       if (input.companionActorIds.includes(actor.id)) {
         moveActor(world, actor, hero.locationId, day, "与主角同行");
         actor.activity = "同行";
@@ -625,7 +673,7 @@ export const advanceWorldToScene = (
   hero.activity = "停留";
   input.companionActorIds.forEach((actorId) => {
     const actor = world.actors.find((entry) => entry.id === actorId);
-    if (actor) {
+    if (actor && !["死亡", "失踪"].includes(actor.activity)) {
       actor.locationId = hero.locationId;
       actor.activity = "同行";
     }
@@ -635,7 +683,7 @@ export const advanceWorldToScene = (
   const focusedPresent = present.filter((actor) => focusIds.includes(actor.id));
   const encounterActors = focusedPresent.length ? focusedPresent : present.filter(() => rng.next() < 0.35).slice(0, 2);
   let encounter: WorldEncounter | undefined;
-  if (encounterActors.length) {
+  if (encounterActors.length && !input.suppressEncounter) {
     const strongest = encounterActors.reduce((best, actor) => {
       const current = strongestRelation(world, "hero", actor.id)?.strength || 0;
       return current > best ? current : best;
@@ -684,6 +732,12 @@ export const advanceWorldToScene = (
       : `你在${pathNames[0]}略作停留。看似没有换地方，江湖里其余人的位置却已经不同。`,
   };
   world.rngState = rng.snapshot();
+  world.movements = world.movements.slice(-360);
+  world.encounters = world.encounters.slice(-80);
+  world.rumors = world.rumors.slice(-80);
+  world.actors.forEach((actor) => {
+    actor.memories = actor.memories.slice(-40);
+  });
   return world;
 };
 
@@ -763,6 +817,54 @@ export const applyWorldChoice = (
   const choiceParts = input.choiceId.split(":");
   const dynamicActorId = choiceParts[1];
   const dynamicActor = world.actors.find((actor) => actor.id === dynamicActorId);
+  if (input.choiceId.startsWith("life-rite:") && !input.choiceId.startsWith("life-rite:defer:")) {
+    const riteKind = choiceParts[1];
+    const partnerActorId = choiceParts[2];
+    const partner = world.actors.find((actor) => actor.id === partnerActorId);
+    if (partner && riteKind === "oath" && input.success) {
+      upsertRelation(world, "hero", partner.id, "sworn_sibling", 78, `你与${partner.name}在${locationName(world, hero.locationId)}正式结义。`, true);
+      upsertRelation(world, partner.id, "hero", "sworn_sibling", 78, `${partner.name}与你从今日起以手足相称。`, true);
+      discoveries.push(`${partner.name}与你结为异姓手足，这层关系已写入家门`);
+    }
+    if (partner && ["marriage", "concubinage"].includes(riteKind) && input.success) {
+      const relationType = riteKind === "marriage" ? "spouse" : "concubine";
+      upsertRelation(world, "hero", partner.id, relationType, 86, `你与${partner.name}在${locationName(world, hero.locationId)}议定家门名分。`, true);
+      upsertRelation(world, partner.id, "hero", relationType, 86, `${partner.name}亲自确认了与你共同生活的约定。`, true);
+      discoveries.push(`${partner.name}与你的名分从情意变成了世界里可追溯的家门事实`);
+    }
+    if (partner && riteKind === "child" && input.success) {
+      const givenNames = ["安", "宁", "望舒", "清和", "知远", "照微", "行舟", "闻笙"];
+      const familyName = input.choiceId.endsWith(":adopt") ? partner.name.slice(0, 1) : hero.name.slice(0, 1);
+      const name = `${familyName}${givenNames[(input.turn + partner.id.length) % givenNames.length]}`;
+      const childId = `child_${world.day}_${input.turn}_${partner.id.replace(/[^a-zA-Z0-9_]/g, "").slice(-18) || "family"}`;
+      if (!world.actors.some((actor) => actor.id === childId)) {
+        world.actors.push({
+          id: childId,
+          name,
+          title: input.choiceId.endsWith(":adopt") ? "养子" : "幼子",
+          role: "在家门中真实成长、可以被后来主角遇见的下一代",
+          factionId: hero.factionId,
+          locationId: hero.locationId,
+          homeLocationId: hero.homeLocationId,
+          route: [],
+          activity: "停留",
+          stayUntilDay: world.day + 30,
+          routineLocationIds: [hero.homeLocationId],
+          goals: [{ kind: "归家", targetLocationId: hero.homeLocationId, reason: "先在家门与亲友身边长大", priority: 90 }],
+          traits: ["年幼", input.choiceId.endsWith(":adopt") ? "收养" : "家传"],
+          techniques: [],
+          memories: [],
+          birthDay: world.day,
+        });
+        const isAdopted = input.choiceId.endsWith(":adopt");
+        upsertRelation(world, "hero", childId, isAdopted ? "adoptive_parent" : "parent", 92, `${name}是你与${partner.name}共同抚养的孩子。`, true);
+        upsertRelation(world, childId, "hero", isAdopted ? "adoptive_child" : "child", 92, `${name}把你记在家门簿的父母一栏。`, true);
+        upsertRelation(world, partner.id, childId, isAdopted ? "adoptive_parent" : "parent", 92, `${name}是${partner.name}与你共同抚养的孩子。`, true);
+        upsertRelation(world, childId, partner.id, isAdopted ? "adoptive_child" : "child", 92, `${name}把${partner.name}记在家门簿的父母一栏。`, true);
+        discoveries.push(`${name}进入家门，也作为有出生年月与父母关系的真实人物进入江湖`);
+      }
+    }
+  }
   if (input.choiceId.startsWith("sandbox-aid:") && dynamicActor) {
     upsertRelation(world, "hero", dynamicActor.id, "protector", input.success ? 62 : 24, `你在${locationName(world, hero.locationId)}介入了${dynamicActor.name}的当前目标。`, true);
     upsertRelation(world, dynamicActor.id, "hero", input.success ? "debtor" : "rival", input.success ? 58 : 22, `${dynamicActor.name}记住了这次援手的结果。`, true);
@@ -1038,6 +1140,8 @@ export const relationLabel: Record<WorldRelationType, string> = {
   friend: "故交",
   companion: "同行",
   lover: "情人",
+  spouse: "夫妻",
+  concubine: "侧室",
   crush: "倾慕",
   rival: "对手",
   enemy: "仇敌",

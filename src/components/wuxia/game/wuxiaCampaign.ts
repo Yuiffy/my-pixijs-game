@@ -1,12 +1,13 @@
 import type { WorldLocation } from "./worldSimulation";
+import { formatWuxiaDate, wuxiaDateFromDay } from "./wuxiaLife";
 
-export type CampaignPhase = "choose_agenda" | "planning" | "scene" | "outcome" | "chapter_break" | "ending";
+export type CampaignPhase = "choose_agenda" | "planning" | "scene" | "outcome" | "chapter_break" | "year_break" | "ending";
 export type AgendaTone = "steel" | "jade" | "gold" | "ink" | "ember";
 export type PlayerIntent = "befriend" | "romance" | "revenge" | "learn" | "observe";
 export type LeadStatus = "active" | "paused" | "resolved" | "expired";
 export type OpportunityStatus = "announced" | "open" | "attended" | "resolved" | "missed";
 export type OpportunityActivityStage = "prepare" | "attend";
-export type ActivityKind = "train" | "bond" | "travel" | "pursue" | "opportunity" | "investigate" | "rest" | "invent" | "found_sect" | "free_event";
+export type ActivityKind = "train" | "bond" | "travel" | "pursue" | "opportunity" | "investigate" | "rest" | "invent" | "found_sect" | "free_event" | "rite" | "world_project";
 
 export interface PlayerAgendaDefinition {
   id: string;
@@ -64,6 +65,8 @@ export interface WorldOpportunityTemplate {
   startDay: number;
   startDaySpread: number;
   durationDays: number;
+  repeatEveryYears?: number;
+  tournamentRounds?: number;
   organizer: string;
   rewardHint: string;
   risk: "低" | "中" | "高";
@@ -86,6 +89,12 @@ export interface WorldOpportunity {
   status: OpportunityStatus;
   participantActorIds: string[];
   sourcePackId: string;
+  year: number;
+  cycle: number;
+  roundsWon?: number;
+  roundsRequired?: number;
+  eliminated?: boolean;
+  championActorId?: string;
 }
 
 export interface PlayerActivityDefinition {
@@ -115,6 +124,8 @@ export interface PlayerActivity {
   leadId?: string;
   opportunityId?: string;
   opportunityStage?: OpportunityActivityStage;
+  riteKind?: "sworn_oath" | "marriage" | "concubinage" | "child";
+  projectId?: string;
   sourcePackId: string;
 }
 
@@ -375,6 +386,8 @@ const BUILTIN_ACTIVITIES: PlayerActivityDefinition[] = [
   { id: "core.rest", kind: "rest", title: "停一日养伤", description: "恢复气血；世界不会因你休息而停住。", tone: "jade", sourcePackId: "core.campaign" },
   { id: "core.invent", kind: "invent", title: "推演自创招式", description: "把已掌握的不同劲路熔成一式，留下自己的武学。", tone: "ember", sourcePackId: "core.campaign" },
   { id: "core.found_sect", kind: "found_sect", title: "择地开宗立派", description: "以名望、追随者和自创武学建立新的门派。", tone: "gold", sourcePackId: "core.campaign" },
+  { id: "core.rite", kind: "rite", title: "把关系写进家门", description: "结义、婚配与添丁都要由当事人亲自作答。", tone: "jade", sourcePackId: "core.campaign" },
+  { id: "core.world_project", kind: "world_project", title: "介入天下大事", description: "追凶、守关与问鼎宗师都要经过数段真实行动。", tone: "ember", sourcePackId: "core.campaign" },
   { id: "core.free_event", kind: "free_event", title: "随处看看今日风声", description: "暂不追长期目标，让世界事实自己浮出一幕。", tone: "ink", sourcePackId: "core.campaign" },
 ];
 
@@ -389,6 +402,7 @@ const BUILTIN_OPPORTUNITIES: WorldOpportunityTemplate[] = [
     startDay: 2,
     startDaySpread: 2,
     durationDays: 6,
+    repeatEveryYears: 1,
     organizer: "洛阳沈氏",
     rewardHint: "人物关系、名望、公开约战",
     risk: "高",
@@ -404,6 +418,8 @@ const BUILTIN_OPPORTUNITIES: WorldOpportunityTemplate[] = [
     startDay: 5,
     startDaySpread: 3,
     durationDays: 9,
+    repeatEveryYears: 1,
+    tournamentRounds: 3,
     organizer: "百艺会馆",
     rewardHint: "门派见识、名望、自创武学灵感",
     risk: "中",
@@ -419,6 +435,7 @@ const BUILTIN_OPPORTUNITIES: WorldOpportunityTemplate[] = [
     startDay: 3,
     startDaySpread: 3,
     durationDays: 5,
+    repeatEveryYears: 2,
     organizer: "白露村耆老",
     rewardHint: "秘籍线索、机缘、地方人情",
     risk: "高",
@@ -434,9 +451,44 @@ const BUILTIN_OPPORTUNITIES: WorldOpportunityTemplate[] = [
     startDay: 1,
     startDaySpread: 3,
     durationDays: 4,
+    repeatEveryYears: 1,
     organizer: "四禧庄",
     rewardHint: "人物关系、门派见识、观摩招式",
     risk: "低",
+    sourcePackId: "core.campaign",
+  },
+  {
+    id: "huashan_sword_summit",
+    title: "华山论剑",
+    shortTitle: "华山论剑",
+    type: "martial_assembly",
+    description: "群雄在华山旧台逐轮问剑。三场皆胜方可题名石壁，上一届胜者也会作为真实守擂人留下。",
+    locationId: "wild_heifeng",
+    startDay: 108,
+    startDaySpread: 8,
+    durationDays: 32,
+    repeatEveryYears: 3,
+    tournamentRounds: 3,
+    organizer: "华山论剑帖主",
+    rewardHint: "逐轮名次、武学见识、江湖声望",
+    risk: "高",
+    sourcePackId: "core.campaign",
+  },
+  {
+    id: "world_first_championship",
+    title: "天下第一武道会",
+    shortTitle: "天下第一武道会",
+    type: "martial_assembly",
+    description: "各派公开推举高手逐轮争胜。夺魁者持有“天下第一”之名，直到后来者在下一届堂堂正正取走。",
+    locationId: "hall_changhe",
+    startDay: 248,
+    startDaySpread: 10,
+    durationDays: 38,
+    repeatEveryYears: 1,
+    tournamentRounds: 3,
+    organizer: "百派公议盟",
+    rewardHint: "天下排名、守擂资格、各派见证",
+    risk: "高",
     sourcePackId: "core.campaign",
   },
 ];
@@ -545,13 +597,17 @@ export const instantiateWorldOpportunities = (
   registry: WuxiaContentRegistry,
   seed: number,
   participantActorIds: string[],
-): WorldOpportunity[] => registry.opportunities.map((template, index) => {
-  const startDay = template.startDay + stableOffset(seed, template.id, template.startDaySpread);
+  year = 1,
+): WorldOpportunity[] => registry.opportunities
+  .filter((template) => (year - 1) % Math.max(1, template.repeatEveryYears || 1) === 0)
+  .map((template, index) => {
+  const cycle = Math.floor((year - 1) / Math.max(1, template.repeatEveryYears || 1)) + 1;
+  const startDay = (year - 1) * 360 + template.startDay + stableOffset(seed + year * 97, template.id, template.startDaySpread);
   const rotatedParticipants = participantActorIds.length
-    ? participantActorIds.map((_, participantIndex) => participantActorIds[(participantIndex + index) % participantActorIds.length]).slice(0, 3)
+    ? participantActorIds.map((_, participantIndex) => participantActorIds[(participantIndex + index + year - 1) % participantActorIds.length]).slice(0, 3)
     : [];
   return {
-    id: `opportunity_${template.id}`,
+    id: year === 1 ? `opportunity_${template.id}` : `opportunity_${template.id}_y${year}`,
     templateId: template.id,
     title: template.title,
     shortTitle: template.shortTitle,
@@ -566,8 +622,27 @@ export const instantiateWorldOpportunities = (
     status: startDay <= 1 ? "open" : "announced",
     participantActorIds: rotatedParticipants,
     sourcePackId: template.sourcePackId,
+    year,
+    cycle,
+    ...(template.tournamentRounds ? { roundsWon: 0, roundsRequired: template.tournamentRounds } : {}),
   };
 });
+
+export const ensureWorldOpportunities = (
+  registry: WuxiaContentRegistry,
+  seed: number,
+  participantActorIds: string[],
+  opportunities: WorldOpportunity[],
+  throughYear: number,
+) => {
+  const next = [...opportunities];
+  for (let year = 1; year <= throughYear; year += 1) {
+    instantiateWorldOpportunities(registry, seed, participantActorIds, year).forEach((opportunity) => {
+      if (!next.some((entry) => entry.id === opportunity.id)) next.push(opportunity);
+    });
+  }
+  return next.sort((left, right) => left.startDay - right.startDay || left.id.localeCompare(right.id));
+};
 
 export const refreshOpportunityStatuses = (opportunities: WorldOpportunity[], day: number) => opportunities.map((opportunity) => {
   if (["attended", "resolved"].includes(opportunity.status)) return opportunity;
@@ -591,7 +666,7 @@ export const createInitialCampaign = (input: {
       id: `lead_${opportunity.id}`,
       kind: "opportunity",
       title: opportunity.title,
-      summary: `${opportunity.description}地点在${opportunity.locationId}，第${opportunity.startDay}日至第${opportunity.endDay}日开放。`,
+      summary: `${opportunity.description}${formatWuxiaDate(wuxiaDateFromDay(opportunity.startDay))}至${formatWuxiaDate(wuxiaDateFromDay(opportunity.endDay))}之间开放。`,
       source: `${opportunity.organizer}公开传出的消息`,
       status: "paused",
       progress: 0,

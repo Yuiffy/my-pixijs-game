@@ -112,10 +112,10 @@ const waitForPage = async () => {
     };
 
     await page.addInitScript(() => {
-      let state = 0x5f3759df;
+      let sequence = 0;
       Math.random = () => {
-        state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
-        return state / 0x100000000;
+        sequence = (sequence + 1) % 999983;
+        return 0.45 + (sequence / 9999830);
       };
     });
     await page.goto(`${baseUrl}/game/wuxia`, { waitUntil: "domcontentloaded" });
@@ -207,8 +207,8 @@ const waitForPage = async () => {
     await waitForScreen("agenda");
     const sandboxOpening = await readState();
     assert.equal(sandboxOpening.edition, "sandbox");
-    assert.equal(sandboxOpening.version, 6);
-    assert.ok(await page.evaluate(() => Boolean(window.localStorage.getItem("wuxia-novel-save-v6"))));
+    assert.equal(sandboxOpening.version, 7);
+    assert.ok(await page.evaluate(() => Boolean(window.localStorage.getItem("wuxia-novel-save-v7"))));
     await capture("sandbox-opening");
 
     await returnToPicker();

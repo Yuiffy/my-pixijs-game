@@ -1,11 +1,17 @@
 "use client";
 
 import {
+  ArrowLeftOutlined,
   BookOutlined,
+  CalendarOutlined,
   CompassOutlined,
   CopyOutlined,
+  CrownOutlined,
   EnvironmentOutlined,
+  GlobalOutlined,
   HeartOutlined,
+  HistoryOutlined,
+  HomeOutlined,
   MenuOutlined,
   ReloadOutlined,
   SafetyOutlined,
@@ -13,6 +19,7 @@ import {
   StarOutlined,
   TeamOutlined,
   ThunderboltOutlined,
+  TrophyOutlined,
   WalletOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
@@ -26,6 +33,7 @@ import {
   AMBITION_OPTIONS,
   ORIGIN_OPTIONS,
   generateName,
+  getLifeEndingOptions,
   getPlayerAgendaOptions,
   type AmbitionId,
   type NovelSetup,
@@ -34,6 +42,12 @@ import {
   type StatKey,
   previewWuxiaWorld,
 } from "./wuxia/game/novelEngine";
+import {
+  formatWuxiaDate,
+  projectStageDescription,
+  wuxiaDateFromDay,
+} from "./wuxia/game/wuxiaLife";
+import type { WuxiaWorldSlotV7 } from "./wuxia/game/wuxiaSave";
 import { intentLabel, type PlayerIntent } from "./wuxia/game/wuxiaCampaign";
 import {
   actorAtLocation,
@@ -51,7 +65,9 @@ declare global {
   }
 }
 
-type Panel = "journal" | "map" | "cast" | "settings" | null;
+type Panel = "journal" | "map" | "cast" | "chronicle" | "settings" | null;
+
+type WuxiaUiController = ReturnType<typeof useWuxiaGame>;
 
 const STAT_META: Array<{ key: StatKey; label: string; short: string; icon: string }> = [
   { key: "martial", label: "武艺", short: "武", icon: "刃" },
@@ -65,6 +81,51 @@ const chapterProgress = (game: NovelState) => {
   const scenes = game.narrative.chapters.find((chapter) => chapter.number === game.chapter)?.scenes.length || 0;
   return Math.min(100, Math.round((scenes / game.campaign.chapterLength) * 100));
 };
+
+const gameDate = (game: NovelState) => wuxiaDateFromDay(game.world.day, game.chronicle.eraName);
+const gameDateLabel = (game: NovelState) => formatWuxiaDate(gameDate(game));
+
+const conditionLabel = (value: number, maximum: number) => {
+  const ratio = maximum > 0 ? value / maximum : 0;
+  if (ratio <= 0.15) return "伤重难支";
+  if (ratio <= 0.42) return "伤势未平";
+  if (ratio <= 0.72) return "气息稍乱";
+  return "气息安稳";
+};
+
+const aptitudeLabel = (value: number) => {
+  if (value >= 82) return "已臻化境";
+  if (value >= 66) return "炉火纯青";
+  if (value >= 48) return "渐入佳境";
+  if (value >= 30) return "略有所成";
+  return "初窥门径";
+};
+
+const techniqueDifficultyLabel = (value: number) => {
+  if (value >= 76) return "极难驾驭";
+  if (value >= 58) return "颇费心力";
+  if (value >= 40) return "须勤加揣摩";
+  return "较易入门";
+};
+
+const martialInsightLabel = (value: number) => {
+  if (value >= 10) return "诸般招意已可自成一路";
+  if (value >= 6) return "练功、辨招与实战正渐渐融会";
+  if (value >= 3) return "数次灵光已经连成脉络";
+  if (value > 0) return "偶有招意留在心头";
+  return "尚待一次真正的触类旁通";
+};
+
+const techniquePowerLabel = (value: number) => (value >= 78 ? "势若奔雷" : value >= 60 ? "劲力雄浑" : value >= 44 ? "刚柔相济" : "轻灵试探");
+const techniqueSpeedLabel = (value: number) => (value >= 78 ? "快若惊鸿" : value >= 60 ? "出手迅疾" : value >= 44 ? "疾徐有度" : "蓄势而发");
+const techniqueAccuracyLabel = (value: number) => (value >= 82 ? "几无虚发" : value >= 68 ? "落点精稳" : value >= 52 ? "招到意到" : "重势取机");
+const techniqueRangeLabel = (value: string) => (value === "远" ? "隔空可及" : value === "中" ? "进退皆宜" : "近身取势");
+const techniqueCostLabel = (value: number) => (value >= 38 ? "耗气甚重" : value >= 24 ? "耗气不轻" : value >= 14 ? "耗气平常" : "气息轻省");
+const techniqueRecoveryLabel = (value: number) => (value >= 4 ? "收势甚久" : value >= 3 ? "须缓一息" : value >= 2 ? "宜先换气" : "可接连招");
+
+const purseLabel = (value: number) => (value >= 80 ? "行囊丰足" : value >= 36 ? "尚有盘缠" : value >= 12 ? "囊中尚可" : "盘缠将尽");
+const clueLabel = (value: number) => (value >= 5 ? "线索将合" : value >= 3 ? "已有眉目" : value > 0 ? "略闻风声" : "尚无头绪");
+const heatLabel = (value: number) => (value >= 70 ? "风声正紧" : value >= 42 ? "有人留意" : value >= 18 ? "略有传闻" : "行迹未显");
 
 const getLocationTone = (type: string) => {
   if (type === "city" || type === "inn") return styles.locationCity;
@@ -97,10 +158,14 @@ function StartScreen({
   hasSavedGame,
   onStart,
   onContinue,
+  inheritedWorld,
+  onBack,
 }: {
   hasSavedGame: boolean;
   onStart: (setup: Partial<NovelSetup>) => void;
   onContinue: () => void;
+  inheritedWorld?: WuxiaWorldSlotV7;
+  onBack?: () => void;
 }) {
   const [heroName, setHeroName] = useState("沈听澜");
   const [origin, setOrigin] = useState<OriginId>("sect_disciple");
@@ -125,7 +190,13 @@ function StartScreen({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onStart({ heroName, origin, ambition, sectId: selectedOrigin.sectId, seed });
+    onStart({
+      heroName,
+      origin,
+      ambition,
+      sectId: selectedOrigin.sectId,
+      ...(inheritedWorld ? {} : { seed }),
+    });
   };
 
   const randomizeSeed = () => {
@@ -161,13 +232,14 @@ function StartScreen({
         </section>
 
         <form className={styles.setupPanel} onSubmit={handleSubmit}>
-          <div className={styles.panelKicker}>开卷设定 <span>01 / 01</span></div>
+          {onBack && <button type="button" className={styles.setupBack} onClick={onBack}><ArrowLeftOutlined /> 返回江湖册</button>}
+          <div className={styles.panelKicker}>{inheritedWorld ? "同世续卷" : "开卷设定"} <span>01 / 01</span></div>
           <div className={styles.setupHeader}>
             <div>
-              <h2>你要以谁的身份入局？</h2>
-              <p>先定下自己；其余人物会依种子获得位置、目标与旧关系。</p>
+              <h2>{inheritedWorld ? "谁来接着走这方江湖？" : "你要以谁的身份入局？"}</h2>
+              <p>{inheritedWorld ? `${inheritedWorld.label}的年月、旧人、门派与恩怨都会保留。` : "先定下自己；其余人物会依种子获得位置、目标与旧关系。"}</p>
             </div>
-            <span className={styles.inkStamp}>起</span>
+            <span className={styles.inkStamp}>{inheritedWorld ? "承" : "起"}</span>
           </div>
 
           <span className={styles.fieldLabel}>姓名</span>
@@ -213,23 +285,35 @@ function StartScreen({
             </div>
           </fieldset>
 
-          <div className={styles.seedRow}>
-            <span className={styles.fieldLabel}>命数种子</span>
-            <button type="button" className={styles.iconButton} onClick={randomizeSeed} title="随机命数与活跃江湖人物" aria-label="随机命数与活跃江湖人物"><ReloadOutlined /></button>
-          </div>
-          <input id="wuxia-seed" className={styles.seedInput} value={seed} onChange={(event) => setSeed(event.target.value)} maxLength={32} />
+          {!inheritedWorld && (
+            <>
+              <div className={styles.seedRow}>
+                <span className={styles.fieldLabel}>命数种子</span>
+                <button type="button" className={styles.iconButton} onClick={randomizeSeed} title="随机命数与活跃江湖人物" aria-label="随机命数与活跃江湖人物"><ReloadOutlined /></button>
+              </div>
+              <input id="wuxia-seed" className={styles.seedInput} value={seed} onChange={(event) => setSeed(event.target.value)} maxLength={32} />
+            </>
+          )}
 
           <div className={styles.setupSummary}>
             <span><strong>{selectedOrigin.label}</strong> · {selectedOrigin.epithet}</span>
             <span><strong>{selectedAmbition.label}</strong> · 偏重 {STAT_META.find((stat) => stat.key === selectedAmbition.stat)?.label}</span>
           </div>
-          <div className={styles.worldPreview}>
-            <span>此卷活跃人物</span>
-            <strong>{worldPreview.cast.slice(0, 5).map((entry) => entry.name).join(" · ")}</strong>
-            <small>{worldPreview.factions.join(" / ")} · 换种子会重抽人物、位置、目标与隐秘</small>
-          </div>
-          <button className={styles.startButton} type="submit"><span>落笔开卷</span><span className={styles.startArrow}>↗</span></button>
-          {hasSavedGame && (
+          {inheritedWorld ? (
+            <div className={styles.worldPreview}>
+              <span>承接旧世</span>
+              <strong>{gameDateLabel(inheritedWorld.game)} · {inheritedWorld.game.hero.name}的旧卷仍在</strong>
+              <small>历代人物仍可相逢，已经发生的家门、武学与天下大事不会重置。</small>
+            </div>
+          ) : (
+            <div className={styles.worldPreview}>
+              <span>此卷活跃人物</span>
+              <strong>{worldPreview.cast.slice(0, 5).map((entry) => entry.name).join(" · ")}</strong>
+              <small>{worldPreview.factions.join(" / ")} · 换种子会重抽人物、位置、目标与隐秘</small>
+            </div>
+          )}
+          <button className={styles.startButton} type="submit"><span>{inheritedWorld ? "承世入江湖" : "落笔开卷"}</span><span className={styles.startArrow}>↗</span></button>
+          {hasSavedGame && !inheritedWorld && (
             <button type="button" className={styles.continueButton} onClick={onContinue}>继续上一卷 <span>→</span></button>
           )}
           <p className={styles.setupFootnote}>角色与招式取材自项目自走棋的主播原型和关系梗 · 同种子、同选择可完整重演</p>
@@ -239,18 +323,93 @@ function StartScreen({
   );
 }
 
+function WorldLibrary({
+  worlds,
+  activeWorldId,
+  onContinue,
+  onNewLife,
+  onNewWorld,
+}: {
+  worlds: WuxiaWorldSlotV7[];
+  activeWorldId?: string;
+  onContinue: (worldId: string) => void;
+  onNewLife?: (worldId: string) => void;
+  onNewWorld: () => void;
+}) {
+  const [selectedId, setSelectedId] = useState(activeWorldId || worlds[0]?.id || "");
+  useEffect(() => {
+    if (!worlds.some((world) => world.id === selectedId)) setSelectedId(activeWorldId || worlds[0]?.id || "");
+  }, [activeWorldId, selectedId, worlds]);
+  const selected = worlds.find((world) => world.id === selectedId) || worlds[0];
+  if (!selected) return null;
+  const activeProjects = selected.game.chronicle.projects.filter((project) => ["announced", "active"].includes(project.status));
+  const archives = [...selected.game.chronicle.protagonists].reverse();
+  const { household } = selected.game.life;
+  const canBeginNewLife = Boolean(selected.game.ending && onNewLife);
+  return (
+    <main className={styles.worldLibraryShell}>
+      <header className={styles.worldLibraryHeader}>
+        <BrandLockup />
+        <span>江湖册 · 世界与人生分别留卷</span>
+      </header>
+      <section className={styles.worldLibraryIntro}>
+        <p className={styles.eyebrow}>WORLD CHRONICLE</p>
+        <h1>翻开哪一方江湖？</h1>
+        <p>旧主角、亲友、门派和天下大事都留在各自的世界里。你可以续写眼前人生，也可以让后来者接着走。</p>
+      </section>
+      <div className={styles.worldLibraryGrid}>
+        <nav className={styles.worldShelf} aria-label="已有江湖">
+          {worlds.map((world) => (
+            <button type="button" className={world.id === selected.id ? styles.worldShelfActive : ""} onClick={() => setSelectedId(world.id)} key={world.id}>
+              <GlobalOutlined />
+              <span><strong>{world.label}</strong><small>{gameDateLabel(world.game)} · {world.game.hero.name}</small></span>
+              <em>{world.game.life.status === "ending_preview" ? "尾声待定" : "仍在行路"}</em>
+            </button>
+          ))}
+          <button type="button" className={styles.newWorldRow} onClick={onNewWorld}><ReloadOutlined /><span><strong>另造一方江湖</strong><small>人物、地点与旧关系重新落子</small></span></button>
+        </nav>
+        <section className={styles.worldLibraryDetail} aria-live="polite">
+          <header>
+            <span>{gameDateLabel(selected.game)} · 第{selected.game.life.generation}代执卷人</span>
+            <h2>{selected.label}</h2>
+            <p>{selected.game.hero.name}，{selected.game.life.age}岁，现居{selected.game.locations.find((location) => location.id === selected.game.currentLocationId)?.name || "江湖途中"}。</p>
+          </header>
+          <div className={styles.worldCurrentLife}>
+            <span className={styles.worldLifeSeal}>{selected.game.hero.name.slice(0, 1)}</span>
+            <div><small>当前人生</small><strong>{selected.game.hero.name} · {selected.game.hero.epithet}</strong><p>{household.partners.length ? `与${household.partners.map((partner) => partner.name).join("、")}共立家门` : "此刻仍独自行路"}{household.children.length ? `，家中有${household.children.map((child) => child.name).join("、")}` : ""}。</p></div>
+          </div>
+          <div className={styles.worldAffairSummary}>
+            <span><TrophyOutlined /><strong>{selected.game.chronicle.ranking.holderName ? `${selected.game.chronicle.ranking.holderName}居天下第一` : "天下第一仍待群雄争定"}</strong></span>
+            <p>{activeProjects.length ? activeProjects.map((project) => `${project.shortTitle} · ${project.stage}`).join("；") : "眼下没有未决的天下大事。"}</p>
+          </div>
+          <section className={styles.previousLives}>
+            <div className={styles.drawerSectionTitle}><span>历代人物</span><small>{archives.length ? "旧人的名字仍在世间" : "尚无前代落款"}</small></div>
+            {archives.slice(0, 4).map((life) => (
+              <article key={life.id}><HistoryOutlined /><div><strong>第{life.generation}代 · {life.name}</strong><small>{life.age}岁落款 · {life.endingTitle}</small><p>{life.endingSummary}</p></div></article>
+            ))}
+          </section>
+          <div className={styles.worldLibraryActions}>
+            <button type="button" className={styles.worldPrimaryAction} onClick={() => onContinue(selected.id)}><BookOutlined /><span><small>回到当前年月</small><strong>续写{selected.game.hero.name}的人生</strong></span></button>
+            <button type="button" disabled={!canBeginNewLife} onClick={() => onNewLife?.(selected.id)} title={canBeginNewLife ? "让旧主角留在世界中，由后来者接卷" : "当前人生落款后，才可由后来者接卷"}><TeamOutlined /> 同一江湖，另启一生</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 function StatStrip({ game }: { game: NovelState }) {
   return (
     <div className={styles.statStrip}>
       <div className={styles.healthStat}>
-        <div className={styles.statTopline}><span><HeartOutlined /> 气血</span><strong>{game.hero.health}<small>/{game.hero.maxHealth}</small></strong></div>
+        <div className={styles.statTopline}><span><HeartOutlined /> 气血</span><strong>{conditionLabel(game.hero.health, game.hero.maxHealth)}</strong></div>
         <div className={styles.progressTrack}><span style={{ width: `${(game.hero.health / game.hero.maxHealth) * 100}%` }} /></div>
       </div>
       {STAT_META.map((stat) => (
         <div className={styles.miniStat} key={stat.key} title={stat.label}>
           <span className={styles.miniStatIcon}>{stat.icon}</span>
           <span>{stat.short}</span>
-          <strong>{game.hero.stats[stat.key]}</strong>
+          <strong>{aptitudeLabel(game.hero.stats[stat.key])}</strong>
         </div>
       ))}
     </div>
@@ -268,7 +427,7 @@ function HeroRail({ game, onOpen }: { game: NovelState; onOpen: (panel: Panel) =
         <div className={styles.heroCardTop}><span className={styles.rankMark}>壹</span><span className={styles.heroOrigin}>{game.hero.epithet}</span></div>
         <div className={styles.avatarFrame}><Image src={origin?.portrait || "/images/autochess/portraits/sui.png"} alt={`${game.hero.name}的角色形象`} width={180} height={180} /></div>
         <h2>{game.hero.name}</h2>
-        <p className={styles.heroSubtitle}>{game.hero.sectName} · {game.hero.art}</p>
+        <p className={styles.heroSubtitle}>{game.life.age}岁 · {game.hero.sectName} · {game.hero.art}</p>
         <div className={styles.ambitionRibbon}><StarOutlined /> 初心 · {ambition?.label} · {ambition?.description}</div>
         <div className={styles.agendaRibbon}>
           <span>当前路线</span>
@@ -282,15 +441,16 @@ function HeroRail({ game, onOpen }: { game: NovelState; onOpen: (panel: Panel) =
           <div className={styles.martialTrack}><span style={{ width: `${game.narrative.martial.mastery}%` }} /></div>
         </div>
         <div className={styles.heroResources}>
-          <div><WalletOutlined /><span>银两</span><strong>{game.hero.silver}</strong></div>
-          <div><CompassOutlined /><span>线索</span><strong>{game.hero.clues}<small>/6</small></strong></div>
-          <div className={game.hero.heat > 55 ? styles.dangerResource : ""}><SafetyOutlined /><span>风声</span><strong>{game.hero.heat}</strong></div>
+          <div><WalletOutlined /><span>银两</span><strong>{purseLabel(game.hero.silver)}</strong></div>
+          <div><CompassOutlined /><span>线索</span><strong>{clueLabel(game.hero.clues)}</strong></div>
+          <div className={game.hero.heat > 55 ? styles.dangerResource : ""}><SafetyOutlined /><span>风声</span><strong>{heatLabel(game.hero.heat)}</strong></div>
         </div>
       </div>
       <div className={styles.railActions}>
         <button type="button" aria-label="打开江湖志" onClick={() => onOpen("journal")}><BookOutlined /><span>本卷正文</span><small>{game.narrative.chapters.reduce((total, chapter) => total + chapter.scenes.length, 0)}</small></button>
         <button type="button" aria-label="打开行路图" onClick={() => onOpen("map")}><CompassOutlined /><span>行路图</span><small>{game.discoveredLocationIds.length}/{game.locations.length}</small></button>
         <button type="button" aria-label="打开同行者" onClick={() => onOpen("cast")}><TeamOutlined /><span>同行者</span><small>{game.companions.length}/2</small></button>
+        <button type="button" aria-label="打开生涯年鉴" onClick={() => onOpen("chronicle")}><HistoryOutlined /><span>生涯年鉴</span><small>{gameDate(game).year}年</small></button>
       </div>
     </aside>
   );
@@ -307,7 +467,7 @@ function RouteMap({ game }: { game: NovelState }) {
   const currentActors = actorAtLocation(game.world, game.currentLocationId);
   return (
     <section className={styles.mapPanel}>
-      <div className={styles.sectionHeading}><span>江湖行路图</span><small>第 {game.world.day} 日 · {game.discoveredLocationIds.length} 处已至</small></div>
+      <div className={styles.sectionHeading}><span>江湖行路图</span><small>{gameDateLabel(game)} · {game.discoveredLocationIds.length} 处已至</small></div>
       <div className={styles.routeMap}>
         <svg className={styles.mapConnections} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           {edges.map(({ from, to }) => {
@@ -358,7 +518,7 @@ function WorldPulse({ game }: { game: NovelState }) {
       <div className={styles.movementFeed}>
         {latestMovements.map((movement) => (
           <p key={`${movement.day}-${movement.actorId}-${movement.toLocationId}`}>
-            <span>第{movement.day}日</span>
+            <span>{formatWuxiaDate(wuxiaDateFromDay(movement.day, game.chronicle.eraName))}</span>
             <strong>{actorName(movement.actorId)}</strong>
             <small>{locationName(movement.fromLocationId)} → {locationName(movement.toLocationId)}</small>
           </p>
@@ -401,12 +561,18 @@ const INTENT_OPTIONS: Array<{ id: PlayerIntent; label: string }> = [
 
 const activityIcon = (kind: NovelState["campaign"]["availableActivities"][number]["kind"]) => {
   if (kind === "train" || kind === "invent") return <ThunderboltOutlined />;
-  if (kind === "bond" || kind === "pursue") return <HeartOutlined />;
+  if (kind === "bond" || kind === "pursue" || kind === "rite") return <HeartOutlined />;
   if (kind === "travel" || kind === "opportunity") return <CompassOutlined />;
+  if (kind === "world_project") return <GlobalOutlined />;
   if (kind === "rest") return <SafetyOutlined />;
   if (kind === "found_sect") return <TeamOutlined />;
   return <BookOutlined />;
 };
+
+const planningActivitiesForDisplay = (game: NovelState) => [
+  ...game.campaign.availableActivities.filter((activity) => activity.kind === "rite"),
+  ...game.campaign.availableActivities.filter((activity) => activity.kind !== "rite"),
+];
 
 function AgendaChooser({ game, onSelect, compact = false, onCancel }: {
   game: NovelState;
@@ -489,19 +655,55 @@ function LeadIntentBoard({ game, onIntent, onPause }: {
   );
 }
 
-function PlanningBoard({ game, onSelectAgenda, onActivity, onIntent, onPause }: {
+function PlanningBoard({ game, onSelectAgenda, onActivity, onIntent, onPause, onCloseYear, onConclude }: {
   game: NovelState;
   onSelectAgenda: (agendaId: string) => void;
   onActivity: (activityId: string) => void;
   onIntent: (leadId: string, intent: PlayerIntent) => void;
   onPause: (leadId: string) => void;
+  onCloseYear?: () => void;
+  onConclude: (endingId: string) => void;
 }) {
   const [changingAgenda, setChangingAgenda] = useState(false);
+  const [confirmYearEnd, setConfirmYearEnd] = useState(false);
   const agenda = game.campaign.agenda!;
   const openOpportunities = game.campaign.opportunities
     .filter((opportunity) => ["announced", "open"].includes(opportunity.status))
     .sort((left, right) => left.endDay - right.endDay)
     .slice(0, 3);
+  const activeProjects = game.chronicle.projects
+    .filter((project) => ["announced", "active"].includes(project.status))
+    .slice(0, 3);
+  const rites = game.campaign.availableActivities.filter((activity) => activity.kind === "rite");
+  const ordinaryActivities = game.campaign.availableActivities.filter((activity) => activity.kind !== "rite");
+  const endingOptions = getLifeEndingOptions(game).filter((option) => option.unlocked);
+  const yearDepth = game.life.scenesThisYear / Math.max(1, game.life.maxScenesPerYear);
+  const yearStage = yearDepth >= 0.72 ? "岁暮渐近" : yearDepth >= 0.38 ? "行至年中" : "岁序初开";
+  const householdLabel = game.life.household.children.length
+    ? "门庭已有后人"
+    : game.life.household.partners.length
+      ? "已有同心之人"
+      : game.life.household.swornSiblingActorIds.length
+        ? "已有结义手足"
+        : "此刻独行";
+  const renderActivity = (activity: NovelState["campaign"]["availableActivities"][number], index: number) => (
+    <button
+      type="button"
+      className={`${styles.activityOption} ${styles[`agendaTone${activity.tone}`]}`}
+      key={activity.id}
+      disabled={!activity.enabled}
+      onClick={() => onActivity(activity.id)}
+    >
+      <span className={styles.activityNumber}>{index + 1}</span>
+      <span className={styles.activityGlyph}>{activityIcon(activity.kind)}</span>
+      <span className={styles.activityBody}>
+        <strong>{activity.title}</strong>
+        <small>{activity.description}</small>
+        <em>{activity.enabled ? activity.preview.join(" · ") : activity.unavailableReason}</em>
+      </span>
+      <span className={styles.choiceArrow}>↗</span>
+    </button>
+  );
   if (changingAgenda) {
     return <AgendaChooser game={game} compact onSelect={(agendaId) => { onSelectAgenda(agendaId); setChangingAgenda(false); }} onCancel={() => setChangingAgenda(false)} />;
   }
@@ -509,7 +711,7 @@ function PlanningBoard({ game, onSelectAgenda, onActivity, onIntent, onPause }: 
     <section className={styles.planningBoard} aria-label="安排今日行程">
       <header className={styles.planningHeader}>
         <div>
-          <span>第 {game.world.day} 日 · {game.locations.find((location) => location.id === game.currentLocationId)?.name}</span>
+          <span>{gameDateLabel(game)} · {game.locations.find((location) => location.id === game.currentLocationId)?.name}</span>
           <h2>{agenda.title}</h2>
           <p>{agenda.description}</p>
         </div>
@@ -518,24 +720,35 @@ function PlanningBoard({ game, onSelectAgenda, onActivity, onIntent, onPause }: 
       <div className={styles.agendaProgress}>
         <span><small>当前所求</small><strong>{agenda.primaryVerb}</strong></span>
         <div><i style={{ width: `${agenda.progress}%` }} /></div>
-        <em>{agenda.completedSteps} 次主动安排</em>
+        <em>{agenda.completedSteps ? "这条路已经留下脚印" : "这条路正要起步"}</em>
       </div>
-      <div className={styles.campaignLedger} aria-label="生涯积累">
-        <span><small>武学领悟</small><strong>{game.campaign.legacy.martialInsights}</strong></span>
-        <span><small>江湖名望</small><strong>{game.hero.stats.fame}</strong></span>
-        <span><small>追随者</small><strong>{game.campaign.legacy.followers}</strong></span>
-        <span><small>自创武学</small><strong>{game.campaign.legacy.authoredTechniques.length}</strong></span>
+      <div className={styles.lifeLedger} aria-label="人生近况">
+        <span><CalendarOutlined /><small>今岁</small><strong>{yearStage}</strong></span>
+        <span><HomeOutlined /><small>家门</small><strong>{householdLabel}</strong></span>
+        <span><TrophyOutlined /><small>武名</small><strong>{game.chronicle.ranking.heroBest}</strong></span>
+        <span><HistoryOutlined /><small>生涯</small><strong>{game.life.age}岁 · 第{game.life.generation}代</strong></span>
       </div>
 
-      {openOpportunities.length > 0 && (
-        <section className={styles.opportunityTicker} aria-label="江湖机会">
-          <div className={styles.planningSectionTitle}><span>正在发生的江湖</span><small>地点与期限都是真实世界状态</small></div>
+      {(openOpportunities.length > 0 || activeProjects.length > 0) && (
+        <section className={styles.opportunityTicker} aria-label="今岁江湖大事">
+          <div className={styles.planningSectionTitle}><span>今岁江湖</span><small>大会会再开，天下大事也会被旁人继续推动</small></div>
+          {activeProjects.length > 0 && (
+            <div className={styles.projectTicker}>
+              {activeProjects.map((project) => (
+                <article key={project.id}>
+                  <span>{project.stage}</span>
+                  <div><strong>{project.shortTitle}</strong><p>{projectStageDescription(project)}</p></div>
+                  <small>{game.locations.find((location) => location.id === project.locationId)?.name || "江湖各处"}</small>
+                </article>
+              ))}
+            </div>
+          )}
           <div>
             {openOpportunities.map((opportunity) => (
               <p key={opportunity.id}>
-                <span>{opportunity.status === "open" ? "进行中" : `第${opportunity.startDay}日开场`}</span>
+                <span>{opportunity.status === "open" ? "正在举行" : formatWuxiaDate(wuxiaDateFromDay(opportunity.startDay, game.chronicle.eraName))}</span>
                 <strong>{opportunity.shortTitle}</strong>
-                <small>{game.locations.find((location) => location.id === opportunity.locationId)?.name} · 第{opportunity.endDay}日收场</small>
+                <small>{game.locations.find((location) => location.id === opportunity.locationId)?.name} · {formatWuxiaDate(wuxiaDateFromDay(opportunity.endDay, game.chronicle.eraName))}收场</small>
               </p>
             ))}
           </div>
@@ -544,29 +757,42 @@ function PlanningBoard({ game, onSelectAgenda, onActivity, onIntent, onPause }: 
 
       <LeadIntentBoard game={game} onIntent={onIntent} onPause={onPause} />
 
+      {rites.length > 0 && (
+        <section className={styles.ritePlanner} aria-label="可举行的关系仪式">
+          <div className={styles.planningSectionTitle}><span>可行之礼</span><small>名分不会凭空出现，要由彼此当面作答</small></div>
+          <div className={styles.activityGrid}>{rites.map((activity, index) => renderActivity(activity, index))}</div>
+        </section>
+      )}
+
       <section className={styles.activityPlanner} aria-label="可安排活动">
         <div className={styles.planningSectionTitle}><span>今日做什么？</span><small>选择行动后，才会生成对应的一幕</small></div>
-        <div className={styles.activityGrid}>
-          {game.campaign.availableActivities.map((activity, index) => (
-            <button
-              type="button"
-              className={`${styles.activityOption} ${styles[`agendaTone${activity.tone}`]}`}
-              key={activity.id}
-              disabled={!activity.enabled}
-              onClick={() => onActivity(activity.id)}
-            >
-              <span className={styles.activityNumber}>{index + 1}</span>
-              <span className={styles.activityGlyph}>{activityIcon(activity.kind)}</span>
-              <span className={styles.activityBody}>
-                <strong>{activity.title}</strong>
-                <small>{activity.description}</small>
-                <em>{activity.enabled ? activity.preview.join(" · ") : activity.unavailableReason}</em>
-              </span>
-              <span className={styles.choiceArrow}>↗</span>
-            </button>
-          ))}
-        </div>
+        <div className={styles.activityGrid}>{ordinaryActivities.map((activity, index) => renderActivity(activity, index + rites.length))}</div>
       </section>
+
+      <section className={styles.yearEndAction} aria-label="岁末安排">
+        <div><CalendarOutlined /><span><small>不必把一年拆成无数琐事</small><strong>愿意时，可以让余下日子安静过去</strong><p>人物仍会赶路，大会会落幕，天下大事也会继续生长；来年你会年长一岁。</p></span></div>
+        {confirmYearEnd ? (
+          <div className={styles.yearEndConfirm} role="group" aria-label="确认结束今年">
+            <button type="button" onClick={() => setConfirmYearEnd(false)}>再走几日</button>
+            <button type="button" disabled={!onCloseYear} onClick={onCloseYear}>收住今年</button>
+          </div>
+        ) : (
+          <button type="button" disabled={!onCloseYear} onClick={() => setConfirmYearEnd(true)}>今年就这样吧 <span aria-hidden="true">↗</span></button>
+        )}
+      </section>
+
+      {endingOptions.length > 0 && (
+        <section className={styles.endingInvitation} aria-label="可选择的人生结局">
+          <div className={styles.planningSectionTitle}><span>这一生已有可落笔处</span><small>先展开尾声看看；若不愿结束，仍可回来继续游历</small></div>
+          <div className={styles.endingOptionList}>
+            {endingOptions.map((option) => (
+              <button type="button" key={option.id} onClick={() => onConclude(option.id)}>
+                <span><small>{option.tag}</small><strong>{option.title}</strong><em>{option.subtitle}</em></span><span className={styles.choiceArrow}>↗</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   );
 }
@@ -574,7 +800,6 @@ function PlanningBoard({ game, onSelectAgenda, onActivity, onIntent, onPause }: 
 function ChapterBreakView({ game, onContinue }: { game: NovelState; onContinue: () => void }) {
   const milestone = game.campaign.chapterMilestone;
   if (!milestone) return null;
-  const unresolved = milestone.unresolvedLeadIds.length;
   return (
     <section className={styles.chapterBreak} aria-label={`第${milestone.chapter}章小结`}>
       <span className={styles.chapterBreakKicker}>第 {milestone.chapter} 章 · 已写成</span>
@@ -585,12 +810,37 @@ function ChapterBreakView({ game, onContinue }: { game: NovelState; onContinue: 
         {milestone.achievements.map((achievement) => <p key={achievement}><StarOutlined /><span>{achievement}</span></p>)}
       </div>
       <div className={styles.chapterCarryover}>
-        <span><strong>{unresolved}</strong><small>条人物、机会或传闻仍可继续</small></span>
-        <span><strong>{game.world.day}</strong><small>日，世界人物照常行路</small></span>
-        <span><strong>{game.campaign.legacy.martialInsights}</strong><small>段武学领悟已保留</small></span>
+        <span><strong>{milestone.unresolvedLeadIds.length ? "旧线未断" : "此章已清"}</strong><small>人物、机会与传闻会如实带进下一章</small></span>
+        <span><strong>{gameDateLabel(game)}</strong><small>世界人物仍按自己的日子行路</small></span>
+        <span><strong>{game.campaign.legacy.martialInsights ? "招意留心" : "武学如常"}</strong><small>所得领悟与所学招式都会保留</small></span>
       </div>
       <button type="button" className={styles.chapterContinue} onClick={onContinue} aria-label="开启下一章">
         <span><small>故事不会在这里结束</small><strong>开启下一章</strong></span><span className={styles.startArrow}>↗</span>
+      </button>
+    </section>
+  );
+}
+
+function YearBreakView({ game, onContinue }: { game: NovelState; onContinue: () => void }) {
+  const milestone = game.life.pendingYearMilestone;
+  if (!milestone) return null;
+  return (
+    <section className={styles.yearBreak} aria-label={`${milestone.title}年终回顾`}>
+      <span className={styles.chapterBreakKicker}><CalendarOutlined /> {milestone.title}</span>
+      <h2>又一岁，写进江湖</h2>
+      <p className={styles.yearBreakAge}>{game.hero.name} · {milestone.age}岁</p>
+      <p className={styles.chapterBreakSummary}>{milestone.summary}</p>
+      <div className={styles.chapterAchievements}>
+        {milestone.highlights.length > 0
+          ? milestone.highlights.map((highlight) => <p key={highlight}><StarOutlined /><span>{highlight}</span></p>)
+          : <p><HistoryOutlined /><span>这一年没有惊天大事，平静本身也被年鉴记下。</span></p>}
+      </div>
+      <div className={styles.yearBreakWorld}>
+        <strong>江湖没有随你停笔</strong>
+        <p>{game.chronicle.projects.filter((project) => ["announced", "active"].includes(project.status)).map((project) => `${project.shortTitle}已至“${project.stage}”`).join("；") || "这一年天下暂得安静。"}</p>
+      </div>
+      <button type="button" className={styles.chapterContinue} onClick={onContinue} aria-label="翻入下一年">
+        <span><small>旧人旧事仍在原处</small><strong>翻入下一年</strong></span><span className={styles.startArrow}>↗</span>
       </button>
     </section>
   );
@@ -696,7 +946,7 @@ function CombatReplay({ combat }: { combat: WuxiaCombatResult }) {
   return (
     <section className={styles.combatReplay} aria-label="交手实录">
       <header>
-        <div><span>交手实录</span><strong>{combat.rounds} 合 · {combat.success ? "得胜" : "失利"}</strong></div>
+        <div><span>交手实录</span><strong>{combat.success ? "数合之后，胜负已定" : "数合之后，暂退一步"}</strong></div>
         <small>步法、换气与招式相克均已在幕后演算</small>
       </header>
       <div className={styles.combatVitals}>
@@ -725,9 +975,11 @@ function OutcomeReveal({ game, onContinue }: { game: NovelState; onContinue: () 
   if (!outcome) return null;
   const status = outcome.check ? (outcome.success ? "success" : "failure") : "resolved";
   const statusLabel = outcome.combat ? (outcome.success ? "实战得胜" : "实战失利") : outcome.check ? (outcome.success ? "此事已成" : "横生波折") : "抉择落定";
-  const continueLabel = outcome.turn > 0 && outcome.turn % game.campaign.chapterLength === 0
-    ? "查看本章小结"
-    : "回到行程安排";
+  const continueLabel = game.life.pendingYearMilestone || game.life.scenesThisYear >= game.life.maxScenesPerYear
+    ? "查看岁末回顾"
+    : outcome.turn > 0 && outcome.turn % game.campaign.chapterLength === 0
+      ? "查看本章小结"
+      : "回到行程安排";
   return (
     <section
       id="wuxia-turn-outcome"
@@ -777,7 +1029,7 @@ function OutcomeReveal({ game, onContinue }: { game: NovelState; onContinue: () 
   );
 }
 
-function StoryColumn({ game, onSelectAgenda, onActivity, onIntent, onPause, onChoose, onContinue }: {
+function StoryColumn({ game, onSelectAgenda, onActivity, onIntent, onPause, onChoose, onContinue, onCloseYear, onConclude }: {
   game: NovelState;
   onSelectAgenda: (agendaId: string) => void;
   onActivity: (activityId: string) => void;
@@ -785,6 +1037,8 @@ function StoryColumn({ game, onSelectAgenda, onActivity, onIntent, onPause, onCh
   onPause: (leadId: string) => void;
   onChoose: (choiceId: string) => void;
   onContinue: () => void;
+  onCloseYear?: () => void;
+  onConclude: (endingId: string) => void;
 }) {
   const location = game.locations.find((item) => item.id === game.currentLocationId) || game.locations[0];
   const outcome = game.pendingOutcome;
@@ -821,9 +1075,14 @@ function StoryColumn({ game, onSelectAgenda, onActivity, onIntent, onPause, onCh
       subtitle: "江湖不会替你排好主线；你先决定眼下最想做的事。",
     };
     if (phase === "planning") return {
-      eyebrow: `第${game.world.day}日 · 安排行程`,
+      eyebrow: `${gameDateLabel(game)} · 安排行程`,
       title: game.campaign.agenda?.title || "今日做什么？",
       subtitle: "人物、地点和机会都在照常变化，这一幕由你的行动开始。",
+    };
+    if (phase === "year_break") return {
+      eyebrow: `${game.life.pendingYearMilestone?.title || gameDateLabel(game)} · 岁序`,
+      title: "又一岁，写进江湖",
+      subtitle: "你长了一岁，旧人和天下也各自走过了这一年。",
     };
     if (phase === "chapter_break") return {
       eyebrow: `第${game.chapter}章 · 章末`,
@@ -846,13 +1105,15 @@ function StoryColumn({ game, onSelectAgenda, onActivity, onIntent, onPause, onCh
         </div>
         <div className={styles.sceneLocation}><EnvironmentOutlined /><strong>{location.name}</strong><small>{location.descriptor}</small></div>
       </div>
-      <div className={`${styles.storyScroll} ${outcome ? styles.outcomeScroll : ""} ${["choose_agenda", "planning", "chapter_break"].includes(phase) ? styles.planningScroll : ""}`}>
+      <div className={`${styles.storyScroll} ${outcome ? styles.outcomeScroll : ""} ${["choose_agenda", "planning", "chapter_break", "year_break"].includes(phase) ? styles.planningScroll : ""}`}>
         {outcome ? <OutcomeReveal game={game} onContinue={onContinue} /> : phase === "choose_agenda" ? (
           <AgendaChooser game={game} onSelect={onSelectAgenda} />
         ) : phase === "planning" ? (
-          <PlanningBoard game={game} onSelectAgenda={onSelectAgenda} onActivity={onActivity} onIntent={onIntent} onPause={onPause} />
+          <PlanningBoard game={game} onSelectAgenda={onSelectAgenda} onActivity={onActivity} onIntent={onIntent} onPause={onPause} onCloseYear={onCloseYear} onConclude={onConclude} />
         ) : phase === "chapter_break" ? (
           <ChapterBreakView game={game} onContinue={onContinue} />
+        ) : phase === "year_break" ? (
+          <YearBreakView game={game} onContinue={onContinue} />
         ) : (
           <>
             <div className={styles.storyRule}><span />{game.chapterTitle}<span /></div>
@@ -889,17 +1150,18 @@ function StoryColumn({ game, onSelectAgenda, onActivity, onIntent, onPause, onCh
 function GameTopbar({ game, onOpen }: { game: NovelState; onOpen: (panel: Panel) => void }) {
   const [copied, setCopied] = useState(false);
   const progress = chapterProgress(game);
-  const chapterScenes = game.narrative.chapters.find((chapter) => chapter.number === game.chapter)?.scenes.length || 0;
   const phaseLabel = game.campaign.phase === "choose_agenda"
     ? "先选路线"
     : game.campaign.phase === "planning"
-      ? `本章 ${chapterScenes}/${game.campaign.chapterLength} 幕`
+      ? "安排行程"
       : game.campaign.phase === "scene"
-        ? `本章第 ${Math.min(chapterScenes + 1, game.campaign.chapterLength)}/${game.campaign.chapterLength} 幕`
+        ? "此幕待决"
         : game.campaign.phase === "outcome"
-          ? `本章第 ${chapterScenes}/${game.campaign.chapterLength} 幕`
+          ? "新正文"
           : game.campaign.phase === "chapter_break"
             ? "本章已成"
+            : game.campaign.phase === "year_break"
+              ? "岁序收笔"
             : "本卷暂结";
   const handleCopy = async () => {
     const ok = await copyText(game.setup.seed);
@@ -910,6 +1172,7 @@ function GameTopbar({ game, onOpen }: { game: NovelState; onOpen: (panel: Panel)
     <header className={styles.gameTopbar}>
       <BrandLockup compact />
       <div className={styles.chapterMeter}>
+        <div className={styles.calendarLine}><span><CalendarOutlined /> {gameDateLabel(game)}</span><strong>{game.life.age}岁</strong></div>
         <div className={styles.chapterMeta}><span>{phaseLabel}</span><strong>第{game.chapter}章 · {game.chapterTitle}</strong></div>
         <div className={styles.chapterTrack}><span style={{ width: `${progress}%` }} /></div>
       </div>
@@ -922,7 +1185,13 @@ function GameTopbar({ game, onOpen }: { game: NovelState; onOpen: (panel: Panel)
   );
 }
 
-function EndingView({ game, onRestart }: { game: NovelState; onRestart: () => void }) {
+function EndingView({ game, onResume, onSameWorld, onNewWorld, onWorldLibrary }: {
+  game: NovelState;
+  onResume?: () => void;
+  onSameWorld?: () => void;
+  onNewWorld: () => void;
+  onWorldLibrary: () => void;
+}) {
   const [activeSection, setActiveSection] = useState<number | "epilogue">("epilogue");
   const [copied, setCopied] = useState(false);
   useEffect(() => {
@@ -943,7 +1212,7 @@ function EndingView({ game, onRestart }: { game: NovelState; onRestart: () => vo
         <div><span>本卷成稿 · {game.ending.rank}</span><strong>{game.narrative.bible.title}</strong></div>
         <div className={styles.endingTopActions}>
           <button type="button" onClick={handleCopy}><CopyOutlined /> {copied ? "已复制" : "复制整卷"}</button>
-          <button type="button" onClick={onRestart}><ReloadOutlined /> 再写一卷</button>
+          <button type="button" disabled={!onResume} onClick={onResume}><CompassOutlined /> 继续游历</button>
         </div>
       </header>
       <div className={styles.endingReader}>
@@ -991,6 +1260,17 @@ function EndingView({ game, onRestart }: { game: NovelState; onRestart: () => vo
               <div className={styles.epilogueProse}>{game.ending.epilogue.map((paragraph, index) => <p key={`epilogue-${index}`}>{paragraph}</p>)}</div>
               <div className={styles.endingTags}>{game.ending.tags.map((tag) => <span key={tag}># {tag}</span>)}</div>
               <p className={styles.endingSeed}>命数种子 · {game.setup.seed}</p>
+              <section className={styles.endingNextSteps} aria-label="尾声之后">
+                <span className={styles.chapterBreakKicker}>尾声之后</span>
+                <h2>这方江湖，不必随一人落幕</h2>
+                <p>你可以撤下尾声继续走，也可以把此人留作旧日侠客，让下一位主角在同一年月和关系网中醒来。</p>
+                <div>
+                  <button type="button" className={styles.endingResumeAction} disabled={!onResume} onClick={onResume}><CompassOutlined /><span><small>暂不落款</small><strong>继续此人的江湖路</strong></span></button>
+                  <button type="button" className={styles.endingLegacyAction} disabled={!onSameWorld} onClick={onSameWorld}><TeamOutlined /><span><small>旧人仍在世间</small><strong>同一江湖，另启一生</strong></span></button>
+                  <button type="button" onClick={onWorldLibrary}><HistoryOutlined /> 回到江湖册</button>
+                  <button type="button" onClick={onNewWorld}><GlobalOutlined /> 另造新江湖</button>
+                </div>
+              </section>
             </>
           )}
         </article>
@@ -999,7 +1279,9 @@ function EndingView({ game, onRestart }: { game: NovelState; onRestart: () => vo
   );
 }
 
-const actorDisplayName = (game: NovelState, actorId: string) => game.world.actors.find((actor) => actor.id === actorId)?.name || actorId;
+const actorDisplayName = (game: NovelState, actorId: string) => game.world.actors.find((actor) => actor.id === actorId)?.name
+  || game.chronicle.protagonists.find((life) => life.actorId === actorId)?.name
+  || "一位未留名的江湖人";
 const actorLocationName = (game: NovelState, actor: WorldActor) => game.locations.find((location) => location.id === actor.locationId)?.name || "行踪不明";
 
 function RelationshipLedger({ game, relations }: { game: NovelState; relations: WorldRelation[] }) {
@@ -1030,6 +1312,79 @@ function RelationshipLedger({ game, relations }: { game: NovelState; relations: 
   );
 }
 
+function HouseholdLedger({ game }: { game: NovelState }) {
+  const { household } = game.life;
+  const swornNames = household.swornSiblingActorIds.map((actorId) => actorDisplayName(game, actorId));
+  return (
+    <div className={styles.householdLedger}>
+      <div className={styles.householdLead}>
+        <HomeOutlined />
+        <span><small>{game.hero.name}的家门簿</small><strong>{household.partners.length || household.children.length || swornNames.length ? "名字已经彼此相连" : "此刻仍是一人一卷"}</strong></span>
+      </div>
+      {swornNames.length > 0 && <section><span>结义手足</span><p>{swornNames.join("、")}</p></section>}
+      {household.partners.map((partner) => (
+        <section key={`${partner.kind}-${partner.actorId}`}>
+          <span>{partner.kind === "spouse" ? "夫妻" : "侧室"}</span>
+          <strong>{partner.name}</strong>
+          <small>{formatWuxiaDate(wuxiaDateFromDay(partner.sinceDay, game.chronicle.eraName))}写入家门簿</small>
+        </section>
+      ))}
+      {household.children.map((child) => (
+        <section key={child.actorId}>
+          <span>子女</span><strong>{child.name}</strong>
+          <small>{formatWuxiaDate(wuxiaDateFromDay(child.birthDay, game.chronicle.eraName))}生于{game.locations.find((location) => location.id === child.homeLocationId)?.name || "家中"}</small>
+        </section>
+      ))}
+      {!household.partners.length && !household.children.length && !swornNames.length && <p className={styles.drawerHint}>真正的结义、婚约与子女会从相处和当面选择中生长，不会因一条数值自动出现。</p>}
+    </div>
+  );
+}
+
+function WorldProjectLedger({ game }: { game: NovelState }) {
+  return (
+    <div className={styles.worldProjectLedger}>
+      {game.chronicle.projects.map((project) => {
+        const latestContribution = project.contributions[project.contributions.length - 1];
+        return (
+          <article key={project.id}>
+            <header><span>{project.stage}</span><strong>{project.title}</strong><small>{game.locations.find((location) => location.id === project.locationId)?.name || "天下各处"}</small></header>
+            <p>{project.description}</p>
+            <div className={styles.projectStageTrack} aria-label={project.stage}><i className={styles[`projectStage${project.stage === "风声初起" ? "Rumor" : project.stage === "群雄会盟" ? "Alliance" : project.stage === "战局正急" ? "Urgent" : project.stage === "最后一役" ? "Final" : "Done"}Core`]} /></div>
+            <small>{projectStageDescription(project)}</small>
+            {latestContribution && <blockquote><strong>{latestContribution.actorName}</strong><span>{latestContribution.description}</span><small>{formatWuxiaDate(wuxiaDateFromDay(latestContribution.day, game.chronicle.eraName))}</small></blockquote>}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function TournamentLedger({ game }: { game: NovelState }) {
+  const { ranking } = game.chronicle;
+  return (
+    <div className={styles.tournamentLedger}>
+      <div className={styles.rankingBanner}><CrownOutlined /><span><small>{ranking.title}</small><strong>{ranking.holderName || "尚待群雄争定"}</strong><p>你此生最好的正式战绩：{ranking.heroBest}</p></span></div>
+      {game.chronicle.tournaments.slice().reverse().map((record) => (
+        <article key={record.opportunityId}><span>{game.chronicle.eraName}{record.year}年</span><strong>{record.title}</strong><em>{record.result}</em><small>{record.championActorId ? `${actorDisplayName(game, record.championActorId)}留名榜首` : "此届榜首未入你的已知记载"}</small></article>
+      ))}
+      {!game.chronicle.tournaments.length && <p className={styles.drawerHint}>大会会按年月重开。错过一届，不会永远失去争名的机会。</p>}
+    </div>
+  );
+}
+
+function ProtagonistLedger({ game }: { game: NovelState }) {
+  const archives = [...game.chronicle.protagonists].reverse();
+  return (
+    <div className={styles.protagonistLedger}>
+      <article className={styles.currentProtagonist}><span>今</span><div><small>第{game.life.generation}代 · 正在行路</small><strong>{game.hero.name}</strong><p>{game.life.age}岁 · {game.hero.epithet} · {game.hero.sectName}</p></div></article>
+      {archives.map((life) => (
+        <article key={life.id}><span>{life.generation}</span><div><small>前代 · {life.age}岁落款</small><strong>{life.name} · {life.endingTitle}</strong><p>{life.endingSummary}</p>{life.foundedSectName && <em>留下门庭 · {life.foundedSectName}</em>}</div></article>
+      ))}
+      {!archives.length && <p className={styles.drawerHint}>当这一生真正落款，旧主角会作为世界人物留在这里，而不是被新存档抹去。</p>}
+    </div>
+  );
+}
+
 function MartialLedger({ game }: { game: NovelState }) {
   const hero = game.world.actors.find((actor) => actor.id === "hero");
   const heroTechniques = hero?.techniques.map((known) => ({
@@ -1050,7 +1405,7 @@ function MartialLedger({ game }: { game: NovelState }) {
   return (
     <div className={styles.martialLedger}>
       <div className={styles.martialDoctrine}>
-        <span>{game.narrative.martial.name} · {game.narrative.martial.mastery}% 总火候</span>
+        <span>{game.narrative.martial.name} · {aptitudeLabel(game.narrative.martial.mastery)}</span>
         <p>{game.narrative.martial.philosophy}</p>
         <small>行功之忌 · {game.narrative.martial.cost}</small>
       </div>
@@ -1060,9 +1415,9 @@ function MartialLedger({ game }: { game: NovelState }) {
             <header><span>{definition.nature}</span><strong>{definition.name}</strong><em>{known.source}</em></header>
             <p>{definition.description}</p>
             <div>
-              <span>威力 <b>{definition.power}</b></span><span>迅捷 <b>{definition.speed}</b></span><span>命中 <b>{definition.accuracy}</b></span><span>距离 <b>{definition.range}</b></span><span>耗气 <b>{definition.qiCost}</b></span><span>冷却 <b>{definition.cooldown}</b></span>
+              <span>劲路 <b>{techniquePowerLabel(definition.power)}</b></span><span>身势 <b>{techniqueSpeedLabel(definition.speed)}</b></span><span>落点 <b>{techniqueAccuracyLabel(definition.accuracy)}</b></span><span>取势 <b>{techniqueRangeLabel(definition.range)}</b></span><span>行气 <b>{techniqueCostLabel(definition.qiCost)}</b></span><span>回转 <b>{techniqueRecoveryLabel(definition.cooldown)}</b></span>
             </div>
-            <footer><i><b style={{ width: `${known.mastery}%` }} /></i><span>熟练 {known.mastery}% · 难度 {definition.difficulty}</span></footer>
+            <footer><i><b style={{ width: `${known.mastery}%` }} /></i><span>火候 {aptitudeLabel(known.mastery)} · {techniqueDifficultyLabel(definition.difficulty)}</span></footer>
           </article>
         ))}
       </div>
@@ -1076,7 +1431,7 @@ function MartialLedger({ game }: { game: NovelState }) {
       </div>
       <div className={styles.legacyLedger}>
         <span>你的传承</span>
-        <p><strong>武学领悟</strong><small>{game.campaign.legacy.martialInsights} 段来自练功、辨招或实战</small></p>
+        <p><strong>武学领悟</strong><small>{martialInsightLabel(game.campaign.legacy.martialInsights)}</small></p>
         <p><strong>自创招式</strong><small>{game.campaign.legacy.authoredTechniques.map((technique) => technique.name).join("、") || "尚未自成一式"}</small></p>
         <p><strong>愿意追随</strong><small>{followerNames.join("、") || "尚无人正式署名"}</small></p>
         {game.campaign.legacy.foundedSect && <p><strong>{game.campaign.legacy.foundedSect.name}</strong><small>{game.campaign.legacy.foundedSect.creed}</small></p>}
@@ -1142,11 +1497,11 @@ function TravelLedger({ game }: { game: NovelState }) {
         </section>
       )}
       <section>
-        <div className={styles.drawerSectionTitle}><span>近十日行踪</span><small>每人每日最多走一段路</small></div>
+        <div className={styles.drawerSectionTitle}><span>近十次行踪</span><small>每人每日最多走一段路</small></div>
         <div className={styles.travelRows}>
           {latestMovements.map((movement) => (
             <p key={`${movement.day}-${movement.actorId}-${movement.fromLocationId}-${movement.toLocationId}`}>
-              <span>第{movement.day}日</span><strong>{actorDisplayName(game, movement.actorId)}</strong><small>{game.locations.find((location) => location.id === movement.fromLocationId)?.name} → {game.locations.find((location) => location.id === movement.toLocationId)?.name}</small><em>{movement.reason}</em>
+              <span>{formatWuxiaDate(wuxiaDateFromDay(movement.day, game.chronicle.eraName))}</span><strong>{actorDisplayName(game, movement.actorId)}</strong><small>{game.locations.find((location) => location.id === movement.fromLocationId)?.name} → {game.locations.find((location) => location.id === movement.toLocationId)?.name}</small><em>{movement.reason}</em>
             </p>
           ))}
         </div>
@@ -1155,15 +1510,15 @@ function TravelLedger({ game }: { game: NovelState }) {
   );
 }
 
-function Drawer({ panel, game, onClose, onConclude, onRestart }: {
+function Drawer({ panel, game, onClose, onConclude, onWorldLibrary }: {
   panel: Panel;
   game: NovelState;
   onClose: () => void;
-  onConclude: () => void;
-  onRestart: () => void;
+  onConclude: (endingId: string) => void;
+  onWorldLibrary: () => void;
 }) {
   if (!panel) return null;
-  const title = panel === "journal" ? "本卷正文" : panel === "map" ? "行路图" : panel === "cast" ? "人物与江湖" : "卷外设置";
+  const title = panel === "journal" ? "本卷正文" : panel === "map" ? "行路图" : panel === "cast" ? "人物与江湖" : panel === "chronicle" ? "生涯年鉴" : "卷外设置";
   const knownCast = game.narrative.cast.filter((character) => character.firstSeenTurn !== undefined);
   const relations = knownRelations(game.world);
   const knownActorIds = new Set(relations.flatMap((relation) => [relation.fromActorId, relation.toActorId]));
@@ -1173,6 +1528,7 @@ function Drawer({ panel, game, onClose, onConclude, onRestart }: {
     || actor.locationId === game.currentLocationId
     || game.companions.some((companion) => actor.characterId === companion.characterId)
   ));
+  const endingOptions = getLifeEndingOptions(game).filter((option) => option.unlocked);
   return (
     <div className={styles.drawerBackdrop} role="presentation">
       <aside className={styles.drawer} role="dialog" aria-modal="true" aria-label={title}>
@@ -1195,10 +1551,20 @@ function Drawer({ panel, game, onClose, onConclude, onRestart }: {
         {panel === "cast" && (
           <div className={styles.drawerWorld}>
             <section><div className={styles.drawerSectionTitle}><span>人物谱</span><small>{knownCast.length} 人入局</small></div>{knownCast.map((character) => <article className={styles.castDossier} key={character.id}><Image src={character.portrait} alt="" width={68} height={68} /><div><h3>{character.name}<small>{character.title} · {character.relationship.label}</small></h3><p><strong>原型</strong>{character.sourceName} · {character.role}</p><p><strong>独门</strong>{character.signatureMove}</p><p><strong>所求</strong>{character.desire}</p>{character.secretRevealed && <p><strong>隐秘</strong>{character.secret}</p>}</div></article>)}</section>
-            <section><div className={styles.drawerSectionTitle}><span>江湖人物行踪</span><small>{knownWorldActors.length} 人可追踪</small></div><div className={styles.actorLedger}>{knownWorldActors.map((actor) => <article key={actor.id}><span>{actor.name.slice(0, 1)}</span><div><h3>{actor.name}<small>{actor.title}</small></h3><p>{actorLocationName(game, actor)} · {actor.activity} · 停至第{actor.stayUntilDay}日</p><small>{actor.goals[0]?.reason || actor.role}</small></div></article>)}</div></section>
+            <section><div className={styles.drawerSectionTitle}><span>江湖人物行踪</span><small>{knownWorldActors.length} 人可追踪</small></div><div className={styles.actorLedger}>{knownWorldActors.map((actor) => <article key={actor.id}><span>{actor.name.slice(0, 1)}</span><div><h3>{actor.name}<small>{actor.title}</small></h3><p>{actorLocationName(game, actor)} · {actor.activity} · 停至{formatWuxiaDate(wuxiaDateFromDay(actor.stayUntilDay, game.chronicle.eraName))}</p><small>{actor.goals[0]?.reason || actor.role}</small></div></article>)}</div></section>
             <section><div className={styles.drawerSectionTitle}><span>关系网</span><small>{relations.length} 条已知牵系</small></div><RelationshipLedger game={game} relations={relations} /></section>
             <section><div className={styles.drawerSectionTitle}><span>势力志</span><small>辨招、交手与态度都会留下账</small></div>{game.narrative.factions.map((faction) => <FactionDossier game={game} faction={faction} key={faction.id} />)}</section>
             <section><div className={styles.drawerSectionTitle}><span>武学谱</span><small>招式、来源与实战熟练</small></div><MartialLedger game={game} /></section>
+          </div>
+        )}
+        {panel === "chronicle" && (
+          <div className={styles.drawerWorld}>
+            <section className={styles.chronicleDate}><CalendarOutlined /><div><small>此刻岁序</small><strong>{gameDateLabel(game)} · {game.life.age}岁</strong><p>第{game.life.generation}代执卷人 · {game.hero.name}</p></div></section>
+            <section><div className={styles.drawerSectionTitle}><span>家门簿</span><small>关系经仪式写入世界</small></div><HouseholdLedger game={game} /></section>
+            <section><div className={styles.drawerSectionTitle}><span>天下大事</span><small>你不在场时，旁人也会继续行动</small></div><WorldProjectLedger game={game} /></section>
+            <section><div className={styles.drawerSectionTitle}><span>武林名次</span><small>大会按年月重开，榜首并非永久</small></div><TournamentLedger game={game} /></section>
+            <section><div className={styles.drawerSectionTitle}><span>历代人物</span><small>落款者仍会留在同一世界</small></div><ProtagonistLedger game={game} /></section>
+            <section><div className={styles.drawerSectionTitle}><span>流年小记</span><small>{game.life.annualMilestones.length ? "走过的每一年都有落点" : "第一年仍在继续"}</small></div><div className={styles.annualLedger}>{game.life.annualMilestones.slice().reverse().map((milestone) => <article key={`${milestone.year}-${milestone.endedDay}`}><span>{milestone.title}</span><strong>{milestone.age}岁</strong><p>{milestone.summary}</p></article>)}</div></section>
           </div>
         )}
         {panel === "settings" && (
@@ -1208,17 +1574,14 @@ function Drawer({ panel, game, onClose, onConclude, onRestart }: {
               <button type="button" onClick={() => copyText(game.setup.seed)}><ShareAltOutlined /> 分享种子</button>
               <button type="button" onClick={() => copyText(manuscriptText(game.narrative, game.ending))}><CopyOutlined /> 复制当前正文</button>
             </div>
-            <button
-              type="button"
-              className={styles.concludeButton}
-              disabled={game.turn === 0 || game.campaign.phase === "scene" || game.campaign.phase === "outcome"}
-              onClick={onConclude}
-            >
-              <BookOutlined /> 暂结此卷，生成收束
-            </button>
-            <p>暂结只为当前经历写下卷尾，不会假装所有人物和恩怨都已结束。</p>
-            <button type="button" className={styles.resetButton} onClick={onRestart}><ReloadOutlined /> 舍弃存档，重新开局</button>
-            <p>重新开局会清除当前自动存档；若想重走同一条命数，请先复制种子。</p>
+            <div className={styles.settingsEndingOptions}>
+              <span>可写成的尾声</span>
+              {endingOptions.map((option) => <button type="button" key={option.id} disabled={["scene", "outcome"].includes(game.campaign.phase)} onClick={() => onConclude(option.id)}><BookOutlined /><span><strong>{option.title}</strong><small>{option.reason}</small></span></button>)}
+              {!endingOptions.length && <p>再走几幕，才有足够经历为这一卷落款。</p>}
+            </div>
+            <p>尾声只会先展开预览。若觉得缘分未尽，可以撤下尾声继续游历。</p>
+            <button type="button" className={styles.resetButton} onClick={onWorldLibrary}><HistoryOutlined /> 返回江湖册</button>
+            <p>返回卷册不会删除当前人物、关系或天下大事。</p>
           </div>
         )}
       </aside>
@@ -1226,7 +1589,7 @@ function Drawer({ panel, game, onClose, onConclude, onRestart }: {
   );
 }
 
-function GameScreen({ game, onSelectAgenda, onActivity, onIntent, onPause, onChoose, onContinue, onConclude, onRestart }: {
+function GameScreen({ game, onSelectAgenda, onActivity, onIntent, onPause, onChoose, onContinue, onCloseYear, onConclude, onResumeAfterEnding, onStartSuccessor, onNewWorld, onWorldLibrary }: {
   game: NovelState;
   onSelectAgenda: (agendaId: string) => void;
   onActivity: (activityId: string) => void;
@@ -1234,8 +1597,12 @@ function GameScreen({ game, onSelectAgenda, onActivity, onIntent, onPause, onCho
   onPause: (leadId: string) => void;
   onChoose: (choiceId: string) => void;
   onContinue: () => void;
-  onConclude: () => void;
-  onRestart: () => void;
+  onCloseYear: () => void;
+  onConclude: (endingId: string) => void;
+  onResumeAfterEnding: () => void;
+  onStartSuccessor: () => void;
+  onNewWorld: () => void;
+  onWorldLibrary: () => void;
 }) {
   const [panel, setPanel] = useState<Panel>(null);
   const openPanel = (next: Panel) => setPanel(next);
@@ -1247,7 +1614,7 @@ function GameScreen({ game, onSelectAgenda, onActivity, onIntent, onPause, onCho
       if (event.key === "Escape") setPanel(null);
       if (panel) return;
       if (["INPUT", "TEXTAREA", "SELECT"].includes((event.target as HTMLElement)?.tagName || "")) return;
-      if (game.campaign.phase === "outcome" || game.campaign.phase === "chapter_break") {
+      if (["outcome", "chapter_break", "year_break"].includes(game.campaign.phase)) {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onContinue();
@@ -1265,7 +1632,7 @@ function GameScreen({ game, onSelectAgenda, onActivity, onIntent, onPause, onCho
         return;
       }
       if (game.campaign.phase === "planning") {
-        const activity = game.campaign.availableActivities[index];
+        const activity = planningActivitiesForDisplay(game)[index];
         if (activity?.enabled) onActivity(activity.id);
         return;
       }
@@ -1284,43 +1651,96 @@ function GameScreen({ game, onSelectAgenda, onActivity, onIntent, onPause, onCho
       <div className={styles.mobileStats}><StatStrip game={game} /></div>
       <div className={styles.gameGrid}>
         <HeroRail game={game} onOpen={openPanel} />
-        <StoryColumn game={game} onSelectAgenda={onSelectAgenda} onActivity={onActivity} onIntent={onIntent} onPause={onPause} onChoose={onChoose} onContinue={onContinue} />
+        <StoryColumn game={game} onSelectAgenda={onSelectAgenda} onActivity={onActivity} onIntent={onIntent} onPause={onPause} onChoose={onChoose} onContinue={onContinue} onCloseYear={onCloseYear} onConclude={onConclude} />
         <aside className={styles.rightRail}><StatStrip game={game} /><RouteMap game={game} /><WorldPulse game={game} /><CompanionPanel game={game} /></aside>
       </div>
-      <div className={styles.mobileDock}><button type="button" aria-label="打开江湖志" onClick={() => openPanel("journal")}><BookOutlined />江湖志</button><button type="button" aria-label="打开行路图" onClick={() => openPanel("map")}><CompassOutlined />行路图</button><button type="button" aria-label="打开人物与江湖" onClick={() => openPanel("cast")}><TeamOutlined />人物谱</button><button type="button" aria-label="打开设置" onClick={() => openPanel("settings")}><MenuOutlined />设置</button></div>
-      <EndingView game={game} onRestart={onRestart} />
-      <Drawer panel={panel} game={game} onClose={() => setPanel(null)} onConclude={() => { setPanel(null); onConclude(); }} onRestart={onRestart} />
+      <div className={styles.mobileDock}><button type="button" aria-label="打开江湖志" onClick={() => openPanel("journal")}><BookOutlined />江湖志</button><button type="button" aria-label="打开行路图" onClick={() => openPanel("map")}><CompassOutlined />行路图</button><button type="button" aria-label="打开人物与江湖" onClick={() => openPanel("cast")}><TeamOutlined />人物谱</button><button type="button" aria-label="打开生涯年鉴" onClick={() => openPanel("chronicle")}><HistoryOutlined />生涯</button></div>
+      <EndingView game={game} onResume={onResumeAfterEnding} onSameWorld={onStartSuccessor} onNewWorld={onNewWorld} onWorldLibrary={onWorldLibrary} />
+      <Drawer panel={panel} game={game} onClose={() => setPanel(null)} onConclude={(endingId) => { setPanel(null); onConclude(endingId); }} onWorldLibrary={onWorldLibrary} />
     </main>
   );
 }
 
 export default function WuxiaGame() {
+  const controller: WuxiaUiController = useWuxiaGame();
   const {
     game,
-    isStarted,
+    saveRoot,
+    worlds,
+    screen: appScreen,
     hasSavedGame,
+    saveError,
     startGame,
     continueGame,
+    selectWorld,
+    openWorldLibrary,
+    openNewWorldSetup,
     chooseAgenda,
     chooseActivity,
     setLeadIntent,
     pauseLead,
     chooseAction,
     continueAction,
+    closeYear,
     concludeGame,
-    abandonGame,
-  } = useWuxiaGame();
-  const [showToast, setShowToast] = useState(false);
+    resumeAfterEnding,
+    startSuccessor,
+  } = controller;
+  const [successorWorldId, setSuccessorWorldId] = useState<string | null>(null);
+  const inheritedWorld = successorWorldId ? worlds.find((world) => world.id === successorWorldId) : undefined;
+
+  const showWorldLibrary = useCallback(() => {
+    setSuccessorWorldId(null);
+    openWorldLibrary();
+  }, [openWorldLibrary]);
+
+  const showNewWorldSetup = useCallback(() => {
+    setSuccessorWorldId(null);
+    openNewWorldSetup();
+  }, [openNewWorldSetup]);
+
+  const showSuccessorSetup = useCallback((worldId: string) => {
+    selectWorld(worldId);
+    setSuccessorWorldId(worldId);
+  }, [selectWorld]);
+
+  const createSuccessor = useCallback((setup: Partial<NovelSetup>) => {
+    startSuccessor(setup);
+    setSuccessorWorldId(null);
+  }, [startSuccessor]);
 
   useEffect(() => {
     window.advanceTime = () => {
       // This game advances only on explicit choices; real time never mutates simulation state.
     };
     window.render_game_to_text = () => {
-      if (!game) return JSON.stringify({ edition: "sandbox", screen: "setup", saved: hasSavedGame });
+      if (inheritedWorld) return JSON.stringify({
+        edition: "sandbox",
+        screen: "successor-setup",
+        worldId: inheritedWorld.id,
+        protagonistId: inheritedWorld.game.life.protagonistId,
+        date: gameDateLabel(inheritedWorld.game),
+        previousHero: inheritedWorld.game.hero.name,
+        generation: inheritedWorld.game.life.generation + 1,
+      });
+      if (!game) return JSON.stringify({
+        edition: "sandbox",
+        screen: appScreen === "library" ? "world-library" : appScreen,
+        saved: hasSavedGame,
+        worlds: worlds.map((world) => ({
+          worldId: world.id,
+          protagonistId: world.game.life.protagonistId,
+          label: world.label,
+          date: gameDateLabel(world.game),
+          activeHero: world.game.hero.name,
+          age: world.game.life.age,
+          generation: world.game.life.generation,
+          archivedProtagonists: world.game.chronicle.protagonists.map((life) => ({ name: life.name, ending: life.endingTitle })),
+        })),
+      });
       const scenes = game.narrative.chapters.flatMap((chapter) => chapter.scenes);
       const currentChapterScenes = game.narrative.chapters.find((chapter) => chapter.number === game.chapter)?.scenes.length || 0;
-      const screen = game.ending
+      const gameScreen = game.ending
         ? "ending"
         : game.campaign.phase === "choose_agenda"
           ? "agenda"
@@ -1328,13 +1748,19 @@ export default function WuxiaGame() {
             ? "planning"
             : game.campaign.phase === "chapter_break"
               ? "chapter_break"
-              : game.campaign.phase === "outcome"
-                ? "outcome"
-                : "story";
+              : game.campaign.phase === "year_break"
+                ? "year_break"
+                : game.campaign.phase === "outcome"
+                  ? "outcome"
+                  : "story";
       return JSON.stringify({
         edition: "sandbox",
         version: game.version,
-        screen,
+        worldId: game.chronicle.worldId,
+        protagonistId: game.life.protagonistId,
+        date: gameDateLabel(game),
+        age: game.life.age,
+        screen: gameScreen,
         phase: game.campaign.phase,
         turn: game.turn,
         chapter: `${game.chapter} · ${game.chapterTitle}`,
@@ -1349,6 +1775,15 @@ export default function WuxiaGame() {
         choices: game.pendingOutcome ? [] : game.currentEvent?.choices.map((choice) => ({ id: choice.id, label: choice.label, risk: choice.risk, odds: choice.check?.odds })) || [],
         outcome: game.pendingOutcome || null,
         companions: game.companions.map((companion) => ({ name: companion.name, affinity: companion.affinity, characterId: companion.characterId })),
+        household: {
+          swornSiblings: game.life.household.swornSiblingActorIds.map((actorId) => actorDisplayName(game, actorId)),
+          partners: game.life.household.partners.map((partner) => ({ name: partner.name, kind: partner.kind })),
+          children: game.life.household.children.map((child) => ({ name: child.name, birthDay: child.birthDay })),
+        },
+        projects: game.chronicle.projects.map((project) => ({ title: project.title, stage: project.stage, status: project.status, outcome: project.outcome })),
+        ranking: game.chronicle.ranking,
+        endingCandidates: getLifeEndingOptions(game).filter((option) => option.unlocked).map((option) => ({ id: option.id, title: option.title })),
+        archivedProtagonists: game.chronicle.protagonists.map((life) => ({ name: life.name, generation: life.generation, ending: life.endingTitle })),
         world: {
           coordinateSystem: "地图左上角为 (0,0)，x 向右、y 向下，单位为地图百分比；人物每天最多沿一条 connection 移动一站。",
           day: game.world.day,
@@ -1387,6 +1822,13 @@ export default function WuxiaGame() {
           milestone: game.campaign.chapterMilestone || null,
           installedPackIds: game.campaign.installedPackIds,
         },
+        life: {
+          ...game.life,
+          date: gameDate(game),
+          dateLabel: gameDateLabel(game),
+          endingOptions: getLifeEndingOptions(game).map((option) => ({ id: option.id, title: option.title, unlocked: option.unlocked, reason: option.reason })),
+        },
+        chronicle: game.chronicle,
         content: {
           packs: game.content.packs,
           agendaCount: game.content.agendas.length,
@@ -1408,16 +1850,30 @@ export default function WuxiaGame() {
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
-  }, [game, hasSavedGame]);
-
-  const handleRestart = useCallback(() => {
-    abandonGame();
-    setShowToast(true);
-    window.setTimeout(() => setShowToast(false), 1800);
-  }, [abandonGame]);
+  }, [appScreen, game, hasSavedGame, inheritedWorld, worlds]);
 
   const content = (() => {
-    if (!isStarted || !game) return <StartScreen hasSavedGame={hasSavedGame} onStart={startGame} onContinue={continueGame} />;
+    if (appScreen === "loading") return <div className={styles.wuxiaLoading} role="status"><span>卷</span><p>正在翻检江湖旧册</p></div>;
+    if (inheritedWorld) return (
+      <StartScreen
+        key={`successor-${inheritedWorld.id}`}
+        hasSavedGame={hasSavedGame}
+        inheritedWorld={inheritedWorld}
+        onStart={createSuccessor}
+        onContinue={continueGame}
+        onBack={showWorldLibrary}
+      />
+    );
+    if (appScreen === "library") return (
+      <WorldLibrary
+        worlds={worlds}
+        activeWorldId={saveRoot?.activeWorldId}
+        onContinue={selectWorld}
+        onNewLife={showSuccessorSetup}
+        onNewWorld={showNewWorldSetup}
+      />
+    );
+    if (appScreen === "setup" || !game) return <StartScreen key="new-world" hasSavedGame={hasSavedGame} onStart={startGame} onContinue={continueGame} onBack={worlds.length ? showWorldLibrary : undefined} />;
     return (
       <GameScreen
         game={game}
@@ -1427,11 +1883,15 @@ export default function WuxiaGame() {
         onPause={pauseLead}
         onChoose={chooseAction}
         onContinue={continueAction}
+        onCloseYear={closeYear}
         onConclude={concludeGame}
-        onRestart={handleRestart}
+        onResumeAfterEnding={resumeAfterEnding}
+        onStartSuccessor={() => showSuccessorSetup(game.chronicle.worldId)}
+        onNewWorld={showNewWorldSetup}
+        onWorldLibrary={showWorldLibrary}
       />
     );
   })();
 
-  return <div className={styles.wuxiaRoot}>{content}{showToast && <div className={styles.toast}>旧卷已收起 · 可重新落笔</div>}</div>;
+  return <div className={styles.wuxiaRoot}>{saveError && <div className={styles.saveError} role="alert">{saveError}</div>}{content}</div>;
 }

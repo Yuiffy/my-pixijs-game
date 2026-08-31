@@ -77,8 +77,9 @@ test("自创武学会写入传承、世界招式与主角习得记录，且不�
   assert.equal(result.pendingOutcome.success, true);
   assert.equal(authored.name, "同路回锋");
   assert.ok(authored.inspirationTechniqueIds.length > 0);
+  assert.match(authored.id, new RegExp(`^authored_${result.life.protagonistId}_`));
   assert.ok(result.world.techniques.some((technique) => technique.id === authored.id && technique.tags.includes("自创")));
-  assert.ok(result.world.martialArts.some((art) => art.id === "art_hero_authored" && art.techniqueIds.includes(authored.id)));
+  assert.ok(result.world.martialArts.some((art) => art.id === `art_authored_${result.life.protagonistId}` && art.techniqueIds.includes(authored.id)));
   assert.ok(result.world.actors.find((actor) => actor.id === "hero").techniques.some((known) => known.techniqueId === authored.id && known.source === "自创"));
   assert.ok(result.narrative.martial.techniques.some((technique) => technique.id === authored.id && technique.status === "初悟"));
   assert.deepEqual(entered.world, beforeWorld, "创招不应回写选择前的世界状态");
@@ -148,7 +149,8 @@ test("正式立派会建立势力、改写主角身份与自创传承归属", ()
     },
   });
   const entered = enterActivity(planning, "found_sect");
-  const previousArt = structuredClone(entered.world.martialArts.find((art) => art.id === "art_hero_authored"));
+  const authoredArtId = `art_authored_${entered.life.protagonistId}`;
+  const previousArt = structuredClone(entered.world.martialArts.find((art) => art.id === authoredArtId));
   const result = chooseNovelAction(entered, "campaign-found-sect:open");
   const founded = result.campaign.legacy.foundedSect;
 
@@ -159,8 +161,9 @@ test("正式立派会建立势力、改写主角身份与自创传承归属", ()
   assert.equal(result.hero.epithet, `${founded.name}开山人`);
   assert.doesNotMatch(founded.name, /驻地|门驻/);
   assert.ok(result.narrative.factions.some((faction) => faction.id === founded.id && faction.sourceLabel === "玩家创立"));
-  assert.equal(result.world.martialArts.find((art) => art.id === "art_hero_authored").factionId, founded.id);
-  assert.deepEqual(entered.world.martialArts.find((art) => art.id === "art_hero_authored"), previousArt, "立派不应回写选择前的传承归属");
+  assert.match(founded.id, new RegExp(`^player_sect_${result.life.protagonistId}_`));
+  assert.equal(result.world.martialArts.find((art) => art.id === authoredArtId).factionId, founded.id);
+  assert.deepEqual(entered.world.martialArts.find((art) => art.id === authoredArtId), previousArt, "立派不应回写选择前的传承归属");
   assert.deepEqual(JSON.parse(JSON.stringify(result)).campaign.legacy.foundedSect, founded);
 });
 

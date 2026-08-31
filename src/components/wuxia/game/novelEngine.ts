@@ -36,6 +36,7 @@ import {
   agendaDefinitionsForOrigin,
   createInitialCampaign,
   createWuxiaContentRegistry,
+  ensureWorldOpportunities,
   intentLabel,
   playerAgendaFromDefinition,
   refreshOpportunityStatuses,
@@ -49,6 +50,24 @@ import {
   type WuxiaContentPack,
   type WuxiaContentRegistry,
 } from "./wuxiaCampaign";
+import {
+  DAYS_PER_YEAR,
+  createLifeState,
+  createWorldChronicle,
+  formatWuxiaDate,
+  lifeEndingDefinitions,
+  projectStageFor,
+  remainingDaysInYear,
+  tournamentResultFor,
+  wuxiaDateFromDay,
+  type AnnualMilestone,
+  type LifeEndingDefinition,
+  type LifeRiteKind,
+  type TournamentRecord,
+  type WorldChronicleState,
+  type WorldProject,
+  type WuxiaLifeState,
+} from "./wuxiaLife";
 
 export type {
   ChapterManuscript,
@@ -243,7 +262,7 @@ export interface EventDirectorDecision {
 }
 
 export interface NovelState {
-  version: 6;
+  version: 7;
   setup: NovelSetup;
   seed: number;
   rngState: number;
@@ -258,6 +277,8 @@ export interface NovelState {
   flags: Record<string, boolean>;
   content: WuxiaContentRegistry;
   campaign: WuxiaCampaignState;
+  life: WuxiaLifeState;
+  chronicle: WorldChronicleState;
   world: WuxiaWorldState;
   narrative: NarrativeArchitecture;
   log: StoryLogEntry[];
@@ -433,6 +454,10 @@ const getChapter = (turn: number, chapterLength = 3, agendaTitle?: string) => (
 );
 
 const currentLocation = (state: NovelState, id = state.currentLocationId) => state.locations.find((location) => location.id === id) || state.locations[0];
+
+const calendarLabel = (state: NovelState, absoluteDay: number) => (
+  formatWuxiaDate(wuxiaDateFromDay(absoluteDay, state.chronicle.eraName))
+);
 
 const homeLocationId = (sectId: string) => (sectId === "none" ? "city_luoyang" : sectId);
 
@@ -1886,7 +1911,10 @@ const opportunityChoiceSet = (state: NovelState, opportunity: WorldOpportunity, 
 const buildCampaignOpportunityEvent = (state: NovelState, activity: PlayerActivity): NovelEvent => {
   const opportunity = state.campaign.opportunities.find((entry) => entry.id === activity.opportunityId)!;
   const location = currentLocation(state, opportunity.locationId);
-  const actor = opportunity.participantActorIds
+  const participantIds = opportunity.participantActorIds.length
+    ? opportunity.participantActorIds.map((_, index) => opportunity.participantActorIds[(index + (opportunity.roundsWon || 0)) % opportunity.participantActorIds.length])
+    : [];
+  const actor = participantIds
     .map((actorId) => state.world.actors.find((entry) => entry.id === actorId))
     .filter((entry): entry is WorldActor => Boolean(entry))
     .find((entry) => worldDistance(state.world, entry.locationId, opportunity.locationId) <= activity.durationDays);
@@ -1894,15 +1922,19 @@ const buildCampaignOpportunityEvent = (state: NovelState, activity: PlayerActivi
   return eventBase(state, {
     id: `campaign-opportunity:${opportunity.id}:${actor?.id || "none"}:${state.turn + 1}`,
     eyebrow: `第${state.turn + 1}回 · 限时江湖`,
-    title: opportunity.title,
-    subtitle: `${location.name} · 第${opportunity.startDay}日至第${opportunity.endDay}日`,
+    title: opportunity.roundsRequired
+      ? `${opportunity.title} · 第${Math.min(opportunity.roundsRequired, (opportunity.roundsWon || 0) + 1)}轮`
+      : opportunity.title,
+    subtitle: `${location.name} · ${calendarLabel(state, opportunity.startDay)}至${calendarLabel(state, opportunity.endDay)}`,
     locationId: location.id,
     mood: opportunity.type === "secret_realm" ? "storm" : opportunity.type === "matchmaking_tournament" ? "ember" : "market",
     lines: [
       line(state.turn, 0, "narrative", `${location.descriptor}${opportunity.organizer}把开始、收场和规矩都贴在明处；你是在期限内主动赶来。`),
       line(state.turn, 1, "action", opportunity.description),
       ...(actor ? [line(state.turn, 2, "narrative", `${actor.name}也按自己的行程来到这里。${character ? `场边已经有人认出其“${character.signatureMove}”的名号。` : ""}`)] : []),
-      line(state.turn, 3, "inner", `此行可能带来${opportunity.rewardHint}，但你只能选择此刻真正要做的一件事。`),
+      line(state.turn, 3, "inner", opportunity.roundsRequired
+        ? `此届须连过${opportunity.roundsRequired}轮方能夺魁；你已胜${opportunity.roundsWon || 0}轮，每一轮都要亲自作答。`
+        : `此行可能带来${opportunity.rewardHint}，但你只能选择此刻真正要做的一件事。`),
     ],
     choices: opportunityChoiceSet(state, opportunity, actor),
   });
@@ -1921,7 +1953,7 @@ const buildCampaignOpportunityPreparationEvent = (state: NovelState, activity: P
     id: `campaign-opportunity-prepare:${opportunity.id}:${actor?.id || "none"}:${state.turn + 1}`,
     eyebrow: `第${state.turn + 1}回 · 提前赴约`,
     title: waitingDays > 0 ? `你先赶到${location.name}，盛会尚未开场` : `${opportunity.shortTitle}开场前的最后一日`,
-    subtitle: `${location.name} · 第${opportunity.startDay}日正式开场`,
+    subtitle: `${location.name} · ${calendarLabel(state, opportunity.startDay)}正式开场`,
     locationId: location.id,
     mood: opportunity.type === "secret_realm" ? "mist" : "market",
     lines: [
@@ -1960,6 +1992,97 @@ const buildCampaignOpportunityPreparationEvent = (state: NovelState, activity: P
         success: { lines: [line(state.turn, 3, "narrative", "收工时，组织者把你的名字补进了帮工名册；正式开场之前，这里已经有人知道你为何而来。")], effects: { stats: { fame: 3, chivalry: 2 } } },
       }),
     ]),
+  });
+};
+
+const buildLifeRiteEvent = (state: NovelState, activity: PlayerActivity): NovelEvent => {
+  const actor = state.world.actors.find((entry) => entry.id === activity.targetActorId)!;
+  const character = characterForActor(state, actor.id);
+  const location = currentLocation(state, activity.targetLocationId);
+  const kind = activity.riteKind || "sworn_oath";
+  const sharedOpening = [
+    line(state.turn, 0, "narrative", `${location.descriptor}这不是关系走到某个数目后自行弹出的结果；你与${actor.name}都要在场，也都要亲口作答。`),
+    line(state.turn, 1, "dialogue", `“我记得我们一起经历过的事，也记得自己还有要走的路：${character?.desire || actor.goals[0]?.reason || "江湖未定"}。”`, actor.name),
+  ];
+  if (kind === "sworn_oath") {
+    return eventBase(state, {
+      id: `life-rite:oath:${actor.id}:${state.turn + 1}`,
+      eyebrow: `第${state.turn + 1}回 · 人生礼仪`,
+      title: `你与${actor.name}把旧日情分摆上香案`,
+      subtitle: `${location.name} · 结义`,
+      locationId: location.id,
+      mood: "ember",
+      lines: [...sharedOpening, line(state.turn, 2, "inner", "结义不会抹掉彼此原有的门派、亲属和目标，只是在往后的选择里多一位真正的手足。")],
+      choices: [
+        choice(state, { id: `life-rite:oath:${actor.id}`, label: "同饮一盏酒，结为异姓手足", description: "从今日起以手足相称；这层关系会留在世界里，也会被后来者看见。", tone: "jade", risk: "低", preview: [effectPreview("家门", "结义", "good"), effectPreview("关系", "手足", "good")], success: { lines: [line(state.turn, 3, "action", `你与${actor.name}没有许下永不相负的空话，只约定有难相告、有错相劝。酒落在土里，称呼从此不同。`)], effects: { stats: { chivalry: 4, fame: 2 } } } }),
+        choice(state, { id: `life-rite:defer:${actor.id}`, label: "把酒收起，等彼此都想清楚", description: "暂不举行仪式；已经建立的信任不会因此清零。", tone: "ink", risk: "低", preview: [effectPreview("关系", "保留", "neutral")], success: { lines: [line(state.turn, 3, "narrative", `${actor.name}把酒封好，说下一次仍可再问。你们没有因一次暂缓退回陌路。`)], effects: { stats: { insight: 2 } } } }),
+      ],
+    });
+  }
+  if (kind === "marriage" || kind === "concubinage") {
+    const isMarriage = kind === "marriage";
+    return eventBase(state, {
+      id: `life-rite:${kind}:${actor.id}:${state.turn + 1}`,
+      eyebrow: `第${state.turn + 1}回 · 家门之议`,
+      title: isMarriage ? `你与${actor.name}商议结为夫妻` : `你与${actor.name}商议侧室名分`,
+      subtitle: `${location.name} · ${isMarriage ? "婚约" : "纳侧"}`,
+      locationId: location.id,
+      mood: "moon",
+      lines: [
+        ...sharedOpening,
+        line(state.turn, 2, "action", isMarriage
+          ? "你们先谈往后住在哪里、谁仍要远行、两边师门如何称呼，而后才把红纸铺开。"
+          : "已有家门之后再添名分，任何含混都会变成往后的旧怨；你把去留、称谓与各自仍能拒绝的事逐条说清。"),
+      ],
+      choices: [
+        choice(state, { id: `life-rite:${kind}:${actor.id}`, label: isMarriage ? "合写婚书，结为夫妻" : "当面立约，迎为侧室", description: "双方都已在此前的相处中表明情意；这次选择确认共同生活的名分。", tone: "jade", risk: isMarriage ? "低" : "中", preview: [effectPreview("家门", isMarriage ? "夫妻" : "侧室", "good"), effectPreview("同行", "长期变化", "good")], success: { lines: [line(state.turn, 3, "action", isMarriage ? `婚书上没有江湖排名，只有你与${actor.name}的名字和各自仍要走的路。两枚指印落下，这一纸便成了世界里的事实。` : `${actor.name}亲自改过约书上一处含混的称谓，而后才按下指印。新名分不是把人收进物件栏，而是多了一段必须共同承担的生活。`)], effects: { stats: { chivalry: 3, fame: 4 } } } }),
+        choice(state, { id: `life-rite:defer:${actor.id}`, label: "今日只说心意，不急着立名分", description: "关系继续保留；以后仍能重新商议。", tone: "ink", risk: "低", preview: [effectPreview("关系", "保留", "neutral")], success: { lines: [line(state.turn, 3, "narrative", `红纸被重新卷起。${actor.name}没有把暂缓当作拒绝，只说等下一次路更明白时再谈。`)], effects: { stats: { insight: 2 } } } }),
+      ],
+    });
+  }
+  return eventBase(state, {
+    id: `life-rite:child:${actor.id}:${state.turn + 1}`,
+    eyebrow: `第${state.turn + 1}回 · 家门新页`,
+    title: `你与${actor.name}谈起家中是否添一个孩子`,
+    subtitle: `${location.name} · 添丁`,
+    locationId: location.id,
+    mood: "moon",
+    lines: [...sharedOpening, line(state.turn, 2, "inner", "孩子会有出生年月、父母与住处，会在这个世界里长大；这不是结局画面里凭空多出的一行字。")],
+    choices: [
+      choice(state, { id: `life-rite:child:${actor.id}:birth`, label: "相约添丁，给孩子留一处真正的家", description: "迎来一名亲生子女；往后的年月会改变其年龄与人生。", tone: "jade", risk: "中", preview: [effectPreview("家门", "添一名子女", "good"), effectPreview("岁月", "会真实成长", "neutral")], check: { stat: "fortune", label: "添丁", difficulty: 43 }, success: { lines: [line(state.turn, 3, "narrative", `数月之后，屋里多了一声啼哭。${actor.name}先把孩子的名字写在家门簿上，而后才让报喜的人出门。`)], effects: { stats: { fortune: 4, chivalry: 3 }, silver: -8 } }, failure: { lines: [line(state.turn, 3, "narrative", "这一年没有等来孩子。你们把备好的小衣收进箱底，却没有把彼此的失落变成责怪。")], effects: { stats: { chivalry: 2 } } } }),
+      choice(state, { id: `life-rite:child:${actor.id}:adopt`, label: "收养一名无家可归的孩子", description: "让一名真实存在于乱世余波中的孩子成为你们的子女。", tone: "gold", risk: "低", preview: [effectPreview("家门", "收养子女", "good"), effectPreview("侠义", "+4", "good")], success: { lines: [line(state.turn, 3, "action", `你与${actor.name}没有改掉孩子原先记得的乳名，只在家门簿上添了父母两栏。从这日起，回家成了一件有具体去处的事。`)], effects: { stats: { chivalry: 4, fame: 2 }, silver: -6 } } }),
+      choice(state, { id: `life-rite:defer:${actor.id}`, label: "今年先不添丁", description: "把决定留到以后，不降低现有关系。", tone: "ink", risk: "低", preview: [effectPreview("家门", "不变", "neutral")], success: { lines: [line(state.turn, 3, "narrative", "你们把这件事认真谈完，也认真决定暂缓。窗外风声仍在，屋内不必为了一个预设结局仓促作答。")], effects: { stats: { insight: 2 } } } }),
+    ],
+  });
+};
+
+const buildWorldProjectEvent = (state: NovelState, activity: PlayerActivity): NovelEvent => {
+  const project = state.chronicle.projects.find((entry) => entry.id === activity.projectId)!;
+  const location = currentLocation(state, project.locationId);
+  const target = project.targetActorId ? state.world.actors.find((actor) => actor.id === project.targetActorId) : undefined;
+  const commonChoices: NovelChoice[] = [
+    choice(state, { id: `life-project:investigate:${project.id}`, label: "先把眼前传闻查到可以核实", description: "查行踪、粮道与证词，让下一步不必靠猜。", tone: "ink", risk: "中", preview: [effectPreview("天下大事", "推进", "good"), effectPreview("洞察", "+5", "good")], check: { stat: "insight", label: "查证", difficulty: project.stage === "最后一役" ? 58 : 48 }, success: { lines: [line(state.turn, 4, "narrative", "几条互相矛盾的说法被逐一排除，余下的路、人与时辰终于能在地图上连成一线。")], effects: { stats: { insight: 5 }, clues: 1 } }, failure: { lines: [line(state.turn, 4, "narrative", "假消息拖慢了脚步，但留下的破绽也让你认出是谁在有意误导众人。")], effects: { stats: { insight: 3 }, heat: 3 } } }),
+    choice(state, { id: `life-project:rally:${project.id}`, label: "联络愿意真正出手的人", description: "名望只能让人听见，旧人情和共同目标才决定谁会留下。", tone: "gold", risk: "中", preview: [effectPreview("会盟", "推进", "good"), effectPreview("名望", "+4", "good")], check: { stat: "fame", label: "会盟", difficulty: 52 }, success: { lines: [line(state.turn, 4, "action", "来者没有齐声喊一句空洞口号，而是各自认领了守路、传信、疗伤与断后的具体差事。")], effects: { stats: { fame: 4, chivalry: 3 }, silver: -5 } }, failure: { lines: [line(state.turn, 4, "narrative", "多数人仍在观望，只有两位旧识留下。人少，却至少知道彼此为何而来。")], effects: { stats: { chivalry: 3 }, silver: -3 } } }),
+  ];
+  if (project.kind === "invasion") {
+    commonChoices.unshift(choice(state, { id: `life-project:defend:${project.id}`, label: project.stage === "最后一役" ? "亲守关门，接下最后一役" : "护送粮药，守住一段关墙", description: "这不是一场擂台；守住伤者、粮道与退路同样会改变战局。", tone: "steel", risk: "高", preview: [effectPreview("边关", "显著推进", "good"), effectPreview("气血", "可能受伤", "bad")], check: { stat: "chivalry", label: "守关", difficulty: project.stage === "最后一役" ? 64 : 55 }, success: { lines: [line(state.turn, 4, "action", "关门最危急时没有人看见漂亮招式，只看见你一次次把倒下的人拖回墙后，又重新站上缺口。")], effects: { stats: { chivalry: 7, martial: 4, fame: 5 }, health: -14, heat: 4 } }, failure: { lines: [line(state.turn, 4, "narrative", "这段关墙终究失守，你却带着伤者退到第二道门内，没有让一次败退变成全线溃散。")], effects: { stats: { chivalry: 5, martial: 2 }, health: -22, heat: 7 } } }));
+  } else if (target) {
+    const combatPrefix = project.kind === "villain_hunt" ? "sandbox-confront" : "sandbox-duel";
+    commonChoices.unshift(choice(state, { id: `${combatPrefix}:${target.id}:project:${project.id}`, label: project.stage === "最后一役" ? `与${target.name}了结最后一战` : `向${target.name}问一场真招`, description: "复用逐招战斗演算；距离、内息、招式来路与平日火候共同决定结果。", tone: "steel", risk: "高", preview: [effectPreview("实战", "逐招交手", "good"), effectPreview("大事", "显著推进", "good")], check: { stat: "martial", label: "决战", difficulty: project.stage === "最后一役" ? 66 : 56 }, success: { lines: [line(state.turn, 4, "action", `你与${target.name}之间再没有可供旁人代传的半招，胜负和双方使过的武学都被在场者记下。`)], effects: { stats: { martial: 6, fame: 5 }, health: -15 } }, failure: { lines: [line(state.turn, 4, "narrative", `你没能越过${target.name}这一关，却逼出一式此前无人见过的收手，也让下一次挑战有了真实依据。`)], effects: { stats: { martial: 3, insight: 4 }, health: -22 } } }));
+  }
+  return eventBase(state, {
+    id: `life-project:${project.id}:${target?.id || "none"}:${state.turn + 1}`,
+    eyebrow: `第${state.turn + 1}回 · 天下大事`,
+    title: `${project.title} · ${project.stage}`,
+    subtitle: `${location.name} · 此事不会因换章而消失`,
+    locationId: location.id,
+    mood: project.stage === "最后一役" ? "storm" : "ember",
+    lines: [
+      line(state.turn, 0, "narrative", `${location.descriptor}${project.description}`),
+      line(state.turn, 1, "action", project.stage === "风声初起" ? "江湖还在互相打听真假，你此刻的选择会决定这件事往哪里长。" : "前人做过的事已经留下后果；你不是从一张空白任务单开始。"),
+      ...(target ? [line(state.turn, 2, "narrative", `${target.name}也被卷进此事。此人仍有自己的地点、目标与武学，不是只在最后一战才凭空出现。`)] : []),
+    ],
+    choices: uniqueChoices(commonChoices),
   });
 };
 
@@ -2096,8 +2219,11 @@ const STORY_BEATS: StoryBeat[] = [
 ];
 
 const companionActorIds = (state: NovelState) => state.companions
-  .map((companion) => (companion.characterId ? `actor_${companion.characterId}` : ""))
-  .filter(Boolean);
+  .map((companion) => (companion.characterId
+    ? state.world.actors.find((actor) => actor.characterId === companion.characterId)
+    : undefined))
+  .filter((actor): actor is WorldActor => actor !== undefined && !["死亡", "失踪"].includes(actor.activity))
+  .map((actor) => actor.id);
 
 const incidentLocation = (state: NovelState, rng: Rng) => {
   const current = state.world.locations.find((location) => location.id === state.currentLocationId) || state.world.locations[0];
@@ -2234,7 +2360,12 @@ const chooseSandboxEvent = (state: NovelState, rng: Rng): DirectedEvent => {
   ));
   const manualDiscoveryTurn = 2 + (state.seed % 4);
   const candidates: EventCandidateScore[] = state.world.actors
-    .filter((actor) => actor.id !== "hero" && !["死亡", "失踪"].includes(actor.activity))
+    .filter((actor) => (
+      actor.id !== "hero"
+      && !["死亡", "失踪"].includes(actor.activity)
+      && !actor.traits.includes("年幼")
+      && Boolean(characterForActor(state, actor.id))
+    ))
     .map((actor) => {
       const targetLocationId = actor.locationId;
       const travelDays = worldDistance(state.world, state.currentLocationId, targetLocationId);
@@ -2435,7 +2566,7 @@ const chooseSandboxEvent = (state: NovelState, rng: Rng): DirectedEvent => {
 
   const eventParts = selected.eventId.split(":");
   const actorId = eventParts[1];
-  const secondActorId = eventParts[2]?.startsWith("actor_") ? eventParts[2] : undefined;
+  const secondActorId = eventParts.length >= 4 ? eventParts[2] : undefined;
   const archetype = selected.archetype as CharacterEventArchetype;
   return decisionFor(buildSandboxCharacterEvent(
     { ...state, currentLocationId: selected.targetLocationId },
@@ -2450,11 +2581,17 @@ const enterEvent = (state: NovelState, directed: DirectedEvent): NovelState => {
   const locationId = state.locations.some((location) => location.id === directed.decision.targetLocationId)
     ? directed.decision.targetLocationId
     : state.currentLocationId;
+  const selectedActivity = state.campaign.availableActivities.find((activity) => activity.id === state.campaign.selectedActivityId);
   const world = advanceWorldToScene(state.world, {
     turn: state.turn + 1,
     eventId: directed.event.id,
     targetLocationId: locationId,
     companionActorIds: companionActorIds(state),
+    focusActorIds: Array.from(new Set([
+      ...focusActorsForEvent(directed.event.id),
+      ...(selectedActivity?.targetActorId ? [selectedActivity.targetActorId] : []),
+    ])),
+    minimumElapsedDays: selectedActivity?.durationDays,
   });
   const heroLocationId = world.actors.find((actor) => actor.id === "hero")?.locationId || locationId;
   const traversed = world.lastTransition?.heroPath || [heroLocationId];
@@ -2510,6 +2647,7 @@ const storyCharacterFromCampaign = (definition: CampaignCharacterDefinition, ind
   signatureDescription: definition.signatureDescription,
   secretRevealed: definition.factionId === "home",
   portrait: definition.portrait,
+  romanceable: definition.romanceable,
   status: definition.factionId === "home" ? "在局中" : "未谋面",
   relationship: {
     trust: definition.factionId === "home" ? 38 + index * 4 : 8,
@@ -2740,7 +2878,7 @@ export const createNovelState = (input: Partial<NovelSetup> = {}, extraPacks: Wu
   });
   campaign = initialCampaignLeads(campaign, campaignCharacters, world);
   const state: NovelState = {
-    version: 6,
+    version: 7,
     setup: { heroName, origin, ambition, sectId, seed: seedText },
     seed,
     rngState: rng.state,
@@ -2771,12 +2909,16 @@ export const createNovelState = (input: Partial<NovelSetup> = {}, extraPacks: Wu
     flags: {},
     content,
     campaign,
+    life: createLifeState(seed, Math.max(1, world.day), 1),
+    chronicle: createWorldChronicle(seed, heroName, world.actors.filter((actor) => actor.id !== "hero").map((actor) => actor.id)),
     world,
     narrative,
     log: [],
     history: [],
     currentEvent: null,
   };
+  const heroActor = state.world.actors.find((actor) => actor.id === "hero");
+  if (heroActor) heroActor.birthDay = Math.max(1, state.world.day) - state.life.age * DAYS_PER_YEAR;
   state.log = introLines(state);
   return { ...state, rngState: rng.state };
 };
@@ -2803,15 +2945,29 @@ const campaignActivity = (
 const activityPriority = (state: NovelState, activity: PlayerActivity) => {
   const favored = state.campaign.agenda?.favoredActivityKinds.includes(activity.kind) ? 80 : 0;
   const activeLead = activity.leadId && state.campaign.leads.find((lead) => lead.id === activity.leadId)?.status === "active" ? 54 : 0;
-  const opportunity = activity.opportunityId
-    ? Math.max(0, 38 - ((state.campaign.opportunities.find((entry) => entry.id === activity.opportunityId)?.endDay || 99) - state.world.day) * 3)
+  const opportunityState = activity.opportunityId
+    ? state.campaign.opportunities.find((entry) => entry.id === activity.opportunityId)
+    : undefined;
+  const opportunity = opportunityState
+    ? Math.max(0, 38 - (opportunityState.endDay - state.world.day) * 3)
+    : 0;
+  const ongoingTournament = opportunityState?.roundsWon && opportunityState.status === "open" && !opportunityState.eliminated
+    ? 240
     : 0;
   const available = activity.enabled ? 18 : -80;
-  const essentials = activity.kind === "free_event" ? 7 : activity.kind === "rest" ? 150 : 0;
+  const essentials = activity.kind === "free_event"
+    ? 7
+    : activity.kind === "rest"
+      ? 150
+      : activity.kind === "rite"
+        ? 132
+        : activity.kind === "world_project"
+          ? 92
+          : 0;
   const unlockedMilestone = activity.enabled
     ? activity.kind === "found_sect" ? 140 : activity.kind === "invent" ? 105 : 0
     : 0;
-  return favored + activeLead + opportunity + available + essentials + unlockedMilestone;
+  return favored + activeLead + opportunity + ongoingTournament + available + essentials + unlockedMilestone;
 };
 
 export const generatePlayerActivities = (state: NovelState): PlayerActivity[] => {
@@ -2826,7 +2982,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
     title: trainingLocationId === current.id ? `在${current.name}温习本门招式` : `回${trainingLocation.name}专心练功`,
     description: trainingLocationId === current.id ? "从最生疏的一式开始拆练。" : `沿真实道路返回师门，再安排一日修习。`,
     risk: "低",
-    durationDays: Math.max(1, worldDistance(state.world, current.id, trainingLocationId)),
+    durationDays: Math.max(8, worldDistance(state.world, current.id, trainingLocationId) * 4),
     targetLocationId: trainingLocationId,
     preview: ["招式熟练", "武学灵感"],
     enabled: true,
@@ -2845,7 +3001,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
       title: distance === 0 ? `去见${actor.name}` : `循行踪去找${actor.name}`,
       description: `${intentLabel[lead.intent || "observe"]} · ${actor.name}此刻在${currentLocation(state, actor.locationId).name}${distance ? `，相隔${distance}站` : "，与你同地"}。`,
       risk: lead.intent === "revenge" ? "高" : lead.intent === "romance" ? "中" : "低",
-      durationDays: Math.max(1, distance),
+      durationDays: Math.max(5, distance * 4),
       targetLocationId: actor.locationId,
       targetActorId: actor.id,
       leadId: lead.id,
@@ -2870,7 +3026,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
         title: `循传闻追查${manual.name}`,
         description: `${lead.source} · 线索指向${location.name}${distance ? `，相隔${distance}站` : "，就在此地"}。`,
         risk: location.danger >= 62 ? "高" : location.danger >= 36 ? "中" : "低",
-        durationDays: Math.max(1, distance),
+        durationDays: Math.max(6, distance * 4),
         targetLocationId: location.id,
         targetManualId: manual.id,
         leadId: lead.id,
@@ -2885,7 +3041,8 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
     .slice(0, 3)
     .forEach((opportunity) => {
       const distance = worldDistance(state.world, current.id, opportunity.locationId);
-      const arrivalDay = state.world.day + Math.max(1, distance);
+      const durationDays = distance === 0 && opportunity.roundsRequired ? 2 : Math.max(4, distance * 4);
+      const arrivalDay = state.world.day + durationDays;
       const arrivesBeforeOpening = arrivalDay < opportunity.startDay;
       const missesDeadline = arrivalDay > opportunity.endDay;
       const location = currentLocation(state, opportunity.locationId);
@@ -2895,16 +3052,16 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
           ? current.id === location.id ? `留在${location.name}等候${opportunity.shortTitle}` : `提前赶往${opportunity.shortTitle}`
           : `赶往${opportunity.shortTitle}`,
         description: arrivesBeforeOpening
-          ? `${location.name} · 预计第${arrivalDay}日抵达，第${opportunity.startDay}日开场`
-          : `${location.name} · 第${opportunity.startDay}日至第${opportunity.endDay}日 · ${opportunity.organizer}`,
+          ? `${location.name} · 预计${calendarLabel(state, arrivalDay)}抵达，${calendarLabel(state, opportunity.startDay)}开场`
+          : `${location.name} · ${calendarLabel(state, opportunity.startDay)}至${calendarLabel(state, opportunity.endDay)} · ${opportunity.organizer}`,
         risk: arrivesBeforeOpening ? "低" : opportunity.risk,
-        durationDays: Math.max(1, distance),
+        durationDays,
         targetLocationId: opportunity.locationId,
         opportunityId: opportunity.id,
         opportunityStage: arrivesBeforeOpening ? "prepare" : "attend",
         leadId: `lead_${opportunity.id}`,
         preview: arrivesBeforeOpening
-          ? ["提前抵达并准备", `第${opportunity.startDay}日开场`]
+          ? ["提前抵达并准备", `${calendarLabel(state, opportunity.startDay)}开场`]
           : [opportunity.rewardHint, `还剩${Math.max(0, opportunity.endDay - state.world.day)}日`],
         enabled: !missesDeadline,
         ...(missesDeadline ? { unavailableReason: "按当前脚程已赶不上" } : {}),
@@ -2926,7 +3083,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
       title: `动身去${location.name}`,
       description: `${location.region} · 相邻一站 · ${location.tags.slice(0, 2).join("、")}`,
       risk: location.danger >= 65 ? "高" : location.danger >= 38 ? "中" : "低",
-      durationDays: 1,
+      durationDays: 4,
       targetLocationId: location.id,
       preview: ["地点见闻", state.discoveredLocationIds.includes(location.id) ? "旧地新事" : "发现新地点"],
       enabled: true,
@@ -2939,7 +3096,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
       title: `在${current.name}停一日养伤`,
       description: "恢复气血；江湖人物、盛事期限和传闻仍会继续推进。",
       risk: "低",
-      durationDays: 1,
+      durationDays: 7,
       targetLocationId: current.id,
       preview: ["恢复气血", "世界继续"],
       enabled: true,
@@ -2958,7 +3115,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
         ? "火候、见闻与名声都已足够，可以真正留下自创招式。"
         : `尚需本门火候、三次武学领悟与足以请人见证的名声。`,
       risk: "高",
-      durationDays: 1,
+      durationDays: 18,
       targetLocationId: current.id,
       preview: ["自创招式", "武学传承"],
       enabled: canInvent,
@@ -2987,7 +3144,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
             ? "先把自己的招式教给一位真实相识，看看这套武学能否成为传承。"
             : "已有自创招式，但还需要先认识愿意试学的人。",
       risk: canFound ? "高" : "中",
-      durationDays: 1,
+      durationDays: 14,
       targetLocationId: current.id,
       preview: canFound ? ["建立门派", "长期势力关系"] : ["真实人物试学", "积累追随者"],
       enabled: canPrepare,
@@ -2997,12 +3154,121 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
     }));
   }
 
+  const existingPartners = new Set(state.life.household.partners.map((partner) => partner.actorId));
+  const swornSiblingIds = new Set(state.life.household.swornSiblingActorIds);
+  const eligibleCharacters = state.narrative.cast
+    .filter((character) => character.firstSeenTurn !== undefined && character.status !== "离去")
+    .map((character) => ({
+      character,
+      actor: state.world.actors.find((actor) => actor.characterId === character.id),
+    }))
+    .filter((entry): entry is { character: StoryCharacter; actor: WorldActor } => (
+      Boolean(entry.actor) && !["死亡", "失踪"].includes(entry.actor!.activity)
+    ));
+
+  eligibleCharacters.forEach(({ character, actor }) => {
+    const distance = worldDistance(state.world, current.id, actor.locationId);
+    const durationDays = Math.max(6, distance * 4);
+    if (!swornSiblingIds.has(actor.id) && !existingPartners.has(actor.id) && character.relationship.trust >= 62 && character.relationship.loyalty >= 36) {
+      activities.push(campaignActivity(state, "rite", {
+        id: `activity-rite:oath:${actor.id}:${state.turn + 1}`,
+        title: `与${actor.name}议一场结义`,
+        description: `你们已经共同经历过足够多的事，可以当面决定是否把彼此写进家门。`,
+        risk: "低",
+        durationDays,
+        targetLocationId: actor.locationId,
+        targetActorId: actor.id,
+        riteKind: "sworn_oath",
+        preview: ["结义之礼", "关系不会自动替双方决定"],
+        enabled: true,
+      }));
+    }
+    const canMarry = !state.life.household.partners.some((partner) => partner.kind === "spouse")
+      && !existingPartners.has(actor.id)
+      && !swornSiblingIds.has(actor.id)
+      && character.romanceable !== false
+      && character.relationship.label === "情愫";
+    if (canMarry) {
+      activities.push(campaignActivity(state, "rite", {
+        id: `activity-rite:marriage:${actor.id}:${state.turn + 1}`,
+        title: `与${actor.name}商议婚事`,
+        description: "情意已经说清，接下来仍要谈各自的去处、门派与愿不愿意结下名分。",
+        risk: "中",
+        durationDays,
+        targetLocationId: actor.locationId,
+        targetActorId: actor.id,
+        riteKind: "marriage",
+        preview: ["婚约", "家门与同行"],
+        enabled: true,
+      }));
+    }
+    const canBecomeConcubine = state.life.household.partners.some((partner) => partner.kind === "spouse")
+      && !existingPartners.has(actor.id)
+      && !swornSiblingIds.has(actor.id)
+      && character.romanceable !== false
+      && character.relationship.label === "情愫";
+    if (canBecomeConcubine) {
+      activities.push(campaignActivity(state, "rite", {
+        id: `activity-rite:concubinage:${actor.id}:${state.turn + 1}`,
+        title: `与${actor.name}议定侧室名分`,
+        description: "已有家门之后再添一人，必须把名分、去留和各自承担的后果当面说清。",
+        risk: "高",
+        durationDays,
+        targetLocationId: actor.locationId,
+        targetActorId: actor.id,
+        riteKind: "concubinage",
+        preview: ["侧室名分", "家门关系会改变"],
+        enabled: true,
+      }));
+    }
+  });
+
+  state.life.household.partners.forEach((partner) => {
+    const actor = state.world.actors.find((entry) => entry.id === partner.actorId);
+    if (!actor || ["死亡", "失踪"].includes(actor.activity) || state.world.day - partner.sinceDay < 30) return;
+    const hasChildThisYear = state.life.household.children.some((child) => wuxiaDateFromDay(child.birthDay).year === wuxiaDateFromDay(state.world.day).year);
+    if (hasChildThisYear) return;
+    const distance = worldDistance(state.world, current.id, actor.locationId);
+    activities.push(campaignActivity(state, "rite", {
+      id: `activity-rite:child:${actor.id}:${state.turn + 1}`,
+      title: `与${actor.name}商议添丁`,
+      description: "成家不等于必然生子；你们可以选择添丁、收养，或把这件事留到以后。",
+      risk: "中",
+      durationDays: Math.max(12, distance * 4),
+      targetLocationId: actor.locationId,
+      targetActorId: actor.id,
+      riteKind: "child",
+      preview: ["子女会成为真实人物", "可在同一世界长大"],
+      enabled: true,
+    }));
+  });
+
+  const currentYear = wuxiaDateFromDay(state.world.day).year;
+  state.chronicle.projects
+    .filter((project) => !["resolved", "failed"].includes(project.status) && project.startYear <= currentYear)
+    .slice(0, 3)
+    .forEach((project) => {
+      const distance = worldDistance(state.world, current.id, project.locationId);
+      activities.push(campaignActivity(state, "world_project", {
+        id: `activity-project:${project.id}:${state.turn + 1}`,
+        title: project.shortTitle,
+        description: `${project.stage} · ${project.description}`,
+        risk: project.stage === "最后一役" ? "高" : project.kind === "invasion" ? "中" : "高",
+        durationDays: Math.max(10, distance * 4),
+        targetLocationId: project.locationId,
+        targetActorId: project.targetActorId,
+        projectId: project.id,
+        preview: [project.stage, "此事会跨章节与主角保留"],
+        enabled: true,
+      }));
+    });
+
   activities.push(campaignActivity(state, "free_event", {
     id: `activity-free:${current.id}:${state.turn + 1}`,
     title: "暂不追目标，看看此地今日发生什么",
     description: "让事件导演从人物位置、关系、余波和地方事实中挑一幕。",
     risk: "中",
-    durationDays: 1,
+    durationDays: 6,
     targetLocationId: current.id,
     preview: ["自由江湖", "可能出现新线索"],
     enabled: true,
@@ -3010,10 +3276,20 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
 
   const sorted = activities.sort((left, right) => activityPriority(state, right) - activityPriority(state, left) || left.id.localeCompare(right.id));
   const limit = Math.max(5, state.content.rules.maxVisibleActivities);
-  const visible = sorted.slice(0, limit);
-  const freeEvent = sorted.find((activity) => activity.kind === "free_event");
-  if (freeEvent && !visible.some((activity) => activity.id === freeEvent.id)) visible[visible.length - 1] = freeEvent;
-  return visible;
+  const guaranteed = [
+    sorted.find((activity) => activity.kind === "opportunity" && activity.enabled),
+    sorted.find((activity) => activity.kind === "world_project" && activity.enabled),
+    sorted.find((activity) => activity.kind === "rite" && activity.enabled)
+      || sorted.find((activity) => ["bond", "pursue"].includes(activity.kind) && activity.enabled),
+    sorted.find((activity) => activity.kind === "train"),
+    sorted.find((activity) => activity.kind === "free_event"),
+  ].filter((activity): activity is PlayerActivity => Boolean(activity));
+  const selectedIds = new Set(guaranteed.map((activity) => activity.id));
+  const visible = [
+    ...guaranteed,
+    ...sorted.filter((activity) => !selectedIds.has(activity.id)),
+  ].slice(0, limit);
+  return visible.sort((left, right) => sorted.indexOf(left) - sorted.indexOf(right));
 };
 
 export const getPlayerAgendaOptions = (state: NovelState) => agendaDefinitionsForOrigin(state.content, state.hero.origin);
@@ -3103,6 +3379,8 @@ export const choosePlayerActivity = (state: NovelState, activityId: string): Nov
   else if (activity.kind === "rest") event = buildRecovery({ ...prepared, currentLocationId: activity.targetLocationId });
   else if (activity.kind === "invent") event = buildCampaignInventEvent(prepared, activity);
   else if (activity.kind === "found_sect") event = buildCampaignFoundSectEvent(prepared, activity);
+  else if (activity.kind === "rite") event = buildLifeRiteEvent(prepared, activity);
+  else if (activity.kind === "world_project") event = buildWorldProjectEvent(prepared, activity);
   else if (activity.kind === "investigate" && activity.targetManualId) {
     event = buildSandboxManual({ ...prepared, currentLocationId: activity.targetLocationId }, activity.targetManualId, activity.targetLocationId);
   } else if (activity.kind === "investigate" && activity.targetActorId) event = buildCampaignPursuitEvent(prepared, activity);
@@ -3872,19 +4150,22 @@ const authoredTechniqueDetails = (state: NovelState, branch: string, turn: numbe
       ? { name: "行云换影", nature: "身" as const, description: "不拘固定三步，把地形、人群与呼吸都化成下一次换位的落点。", tags: ["换位", "行旅"] }
       : { name: "截流一式", nature: "破" as const, description: "舍去繁复变化，只在对手换气未成时截断来势，使强招无从续接。", tags: ["破招", "截气"] };
   return {
-    id: `authored_${branch}_${turn}`,
+    id: `authored_${state.life.protagonistId}_${branch}_${turn}`,
     ...details,
     createdTurn: turn,
     inspirationTechniqueIds: state.world.actors.find((actor) => actor.id === "hero")?.techniques.map((entry) => entry.techniqueId).slice(0, 3) || [],
   };
 };
 
+const authoredArtIdFor = (state: NovelState) => `art_authored_${state.life.protagonistId}`;
+
 const applyAuthoredTechnique = (state: NovelState, branch: string, turn: number): NovelState => {
   const authored = authoredTechniqueDetails(state, branch, turn);
+  const authoredArtId = authoredArtIdFor(state);
   if (state.campaign.legacy.authoredTechniques.some((entry) => entry.id === authored.id)) return state;
   const technique: MartialTechniqueDef = {
     id: authored.id,
-    artId: "art_hero_authored",
+    artId: authoredArtId,
     name: authored.name,
     nature: authored.nature,
     description: authored.description,
@@ -3898,13 +4179,13 @@ const applyAuthoredTechnique = (state: NovelState, branch: string, turn: number)
     tags: [...authored.tags, "自创"],
     counters: authored.nature === "破" ? ["蓄力", "格挡"] : authored.nature === "守" ? ["围攻"] : ["封路"],
   };
-  const authoredArt = state.world.martialArts.find((art) => art.id === "art_hero_authored");
+  const authoredArt = state.world.martialArts.find((art) => art.id === authoredArtId);
   const martialArts: WorldMartialArt[] = authoredArt
     ? state.world.martialArts.map((art) => (
       art.id === authoredArt.id ? { ...art, techniqueIds: [...art.techniqueIds, technique.id] } : art
     ))
     : [...state.world.martialArts, {
-      id: "art_hero_authored",
+      id: authoredArtId,
       name: `${state.hero.name}行路武学`,
       factionId: "hero",
       grade: "上乘",
@@ -3977,7 +4258,7 @@ const applySectFounding = (state: NovelState, turn: number): NovelState => {
   if (!authored) return state;
   const name = foundedSectName(state);
   const founded = {
-    id: `player_sect_${turn}`,
+    id: `player_sect_${state.life.protagonistId}_${turn}`,
     name,
     creed: state.campaign.agenda?.description || "先问为何出手，再论一招胜负。",
     foundedTurn: turn,
@@ -4004,7 +4285,7 @@ const applySectFounding = (state: NovelState, turn: number): NovelState => {
   const world = {
     ...state.world,
     martialArts: state.world.martialArts.map((art) => (
-      art.id === "art_hero_authored" ? { ...art, factionId: founded.id } : art
+      art.id === authoredArtIdFor(state) ? { ...art, factionId: founded.id } : art
     )),
   };
   return {
@@ -4087,6 +4368,165 @@ const factionKnowledgeAfterCombat = (
   };
 };
 
+const lifeAfterRite = (
+  source: NovelState,
+  selected: NovelChoice,
+  success: boolean,
+  turn: number,
+): { state: NovelState; discovery?: string } => {
+  if (!selected.id.startsWith("life-rite:") || selected.id.startsWith("life-rite:defer:") || !success) return { state: source };
+  const [, rawKind, actorId] = selected.id.split(":");
+  const kind = (rawKind === "oath" ? "sworn_oath" : rawKind) as LifeRiteKind;
+  const actor = source.world.actors.find((entry) => entry.id === actorId);
+  if (!actor) return { state: source };
+  const household = {
+    ...source.life.household,
+    swornSiblingActorIds: [...source.life.household.swornSiblingActorIds],
+    partners: source.life.household.partners.map((partner) => ({ ...partner })),
+    children: source.life.household.children.map((child) => ({ ...child, parentActorIds: [...child.parentActorIds] as [string, string] })),
+    rites: source.life.household.rites.map((rite) => ({ ...rite, actorIds: [...rite.actorIds] })),
+  };
+  if (kind === "sworn_oath" && household.partners.some((partner) => partner.actorId === actor.id)) return { state: source };
+  if (["marriage", "concubinage"].includes(kind) && household.swornSiblingActorIds.includes(actor.id)) return { state: source };
+  let description = "";
+  if (kind === "sworn_oath" && !household.swornSiblingActorIds.includes(actor.id)) {
+    household.swornSiblingActorIds.push(actor.id);
+    description = `${source.hero.name}与${actor.name}结为异姓手足。`;
+  }
+  if (["marriage", "concubinage"].includes(kind) && !household.partners.some((partner) => partner.actorId === actor.id)) {
+    household.partners.push({
+      actorId: actor.id,
+      name: actor.name,
+      kind: kind === "marriage" ? "spouse" : "concubine",
+      sinceDay: source.world.day,
+    });
+    description = kind === "marriage"
+      ? `${source.hero.name}与${actor.name}结为夫妻。`
+      : `${actor.name}以双方议定的侧室名分进入家门。`;
+  }
+  if (kind === "child") {
+    const child = [...source.world.actors].reverse().find((entry) => (
+      entry.id.startsWith("child_")
+      && entry.birthDay === source.world.day
+      && !household.children.some((known) => known.actorId === entry.id)
+    ));
+    if (child) {
+      const childCharacterId = `character_${child.id}`;
+      household.children.push({
+        actorId: child.id,
+        name: child.name,
+        parentActorIds: ["hero", actor.id],
+        birthDay: child.birthDay || source.world.day,
+        homeLocationId: child.homeLocationId,
+        adopted: selected.id.endsWith(":adopt"),
+      });
+      description = `${child.name}进入${source.hero.name}与${actor.name}的家门。`;
+      child.characterId = childCharacterId;
+    }
+  }
+  if (!description) return { state: source };
+  household.rites.push({
+    id: `rite_${kind}_${turn}_${actor.id}`,
+    kind,
+    actorIds: kind === "child" ? ["hero", actor.id, household.children.at(-1)?.actorId || ""] : ["hero", actor.id],
+    day: source.world.day,
+    description,
+  });
+  const child = kind === "child" ? household.children.at(-1) : undefined;
+  const childActor = child ? source.world.actors.find((entry) => entry.id === child.actorId) : undefined;
+  const childCharacterId = childActor?.characterId;
+  const hasChildCharacter = childCharacterId && source.narrative.cast.some((entry) => entry.id === childCharacterId);
+  const childCharacter: StoryCharacter | undefined = childActor && childCharacterId && !hasChildCharacter ? {
+    id: childCharacterId,
+    rosterId: childCharacterId,
+    sourcePackId: "open-jianghu-family",
+    name: childActor.name,
+    sourceName: `${source.hero.name}家门后辈`,
+    title: childActor.title,
+    factionId: childActor.factionId,
+    circles: ["家门后辈"],
+    role: "在家门中真实成长，成年后会有自己的行程、关系与选择",
+    desire: "先长成自己，再决定要不要接过长辈的江湖路",
+    fear: "一生只被当作某位侠客的后代",
+    secret: child?.adopted ? "仍记得被收养前的一段乳名与故乡。" : "家中长辈没有替其预先决定门派与志向。",
+    signatureMove: "家门初式",
+    signatureDescription: "把长辈留下的呼吸法练成自己的第一套基本功，尚未定型。",
+    secretRevealed: false,
+    portrait: "/images/autochess/portraits/sui.png",
+    romanceable: false,
+    status: "未谋面",
+    relationship: { trust: 10, affection: 0, debt: 0, grievance: 0, loyalty: 8, label: "陌路" },
+  } : undefined;
+  return {
+    state: {
+      ...source,
+      life: { ...source.life, household },
+      narrative: childCharacter
+        ? { ...source.narrative, cast: [...source.narrative.cast, childCharacter] }
+        : source.narrative,
+    },
+    discovery: description,
+  };
+};
+
+const stateAfterWorldProject = (
+  source: NovelState,
+  selected: NovelChoice,
+  success: boolean,
+  activity: PlayerActivity | undefined,
+): { state: NovelState; discovery?: string } => {
+  if (activity?.kind !== "world_project" || !activity.projectId) return { state: source };
+  const current = source.chronicle.projects.find((project) => project.id === activity.projectId);
+  if (!current || ["resolved", "failed"].includes(current.status)) return { state: source };
+  const decisive = selected.id.includes("project:defend:") || selected.id.startsWith("sandbox-confront:") || selected.id.startsWith("sandbox-duel:");
+  const amount = success ? (decisive ? 34 : 24) : decisive ? 12 : 10;
+  const rawProgress = clamp(current.progress + amount, 0, current.goal);
+  const resolved = success && decisive && rawProgress >= current.goal;
+  const progress = resolved ? current.goal : Math.min(rawProgress, Math.max(0, current.goal - 1));
+  const outcome = resolved
+    ? current.kind === "invasion"
+      ? "朔关重新立起界碑，沿边百姓得以返乡；各派驰援与退缩的名字都留在关志里。"
+      : current.kind === "villain_hunt"
+        ? "血衣楼主及其余党被逐一查清，最后一战没有留下可供替身继续冒名的暗线。"
+        : "守门人尽数认可这场问道，闭门宗师也把自己的败招与所得一并写进武学谱。"
+    : undefined;
+  const nextProject: WorldProject = {
+    ...current,
+    status: resolved ? "resolved" : "active",
+    progress,
+    stage: projectStageFor(progress, resolved ? "resolved" : "active"),
+    contributions: [...current.contributions, {
+      protagonistId: source.life.protagonistId,
+      actorName: source.hero.name,
+      day: source.world.day,
+      amount,
+      success,
+      description: `${selected.label}：${success ? "此举真正改变了局势" : "虽未如愿，仍留下下一步可用的事实"}。`,
+    }].slice(-24),
+    ...(resolved ? { resolvedDay: source.world.day, outcome } : {}),
+  };
+  let { world } = source;
+  if (resolved && current.kind === "villain_hunt" && current.targetActorId && success && selected.id.startsWith("sandbox-confront:")) {
+    world = {
+      ...source.world,
+      actors: source.world.actors.map((actor) => (
+        actor.id === current.targetActorId ? { ...actor, activity: "死亡", goals: [] } : actor
+      )),
+    };
+  }
+  return {
+    state: {
+      ...source,
+      world,
+      chronicle: {
+        ...source.chronicle,
+        projects: source.chronicle.projects.map((project) => (project.id === nextProject.id ? nextProject : project)),
+      },
+    },
+    discovery: resolved ? `${current.title}已经有了结局：${outcome}` : `${current.title}已从“${current.stage}”推进到“${nextProject.stage}”`,
+  };
+};
+
 const campaignAfterChoice = (
   before: NovelState,
   source: NovelState,
@@ -4098,6 +4538,19 @@ const campaignAfterChoice = (
   const activity = before.campaign.availableActivities.find((entry) => entry.id === before.campaign.selectedActivityId);
   const isOpportunityPreparation = activity?.opportunityStage === "prepare";
   const isOpportunityAttendance = Boolean(activity?.opportunityId) && !isOpportunityPreparation;
+  const activeOpportunity = activity?.opportunityId
+    ? source.campaign.opportunities.find((opportunity) => opportunity.id === activity.opportunityId)
+    : undefined;
+  const isTournamentRound = Boolean(
+    isOpportunityAttendance
+    && activeOpportunity?.roundsRequired
+    && combat
+    && selected.id.startsWith("sandbox-duel:"),
+  );
+  const tournamentRoundsWon = (activeOpportunity?.roundsWon || 0) + (isTournamentRound && success ? 1 : 0);
+  const tournamentWon = Boolean(isTournamentRound && success && tournamentRoundsWon >= (activeOpportunity?.roundsRequired || 0));
+  const tournamentEliminated = Boolean(isTournamentRound && !success);
+  const opportunityCompleted = !isTournamentRound || tournamentWon || tournamentEliminated;
   const agendaGain = activity ? (activity.kind === "free_event" ? 6 : before.campaign.agenda?.favoredActivityKinds.includes(activity.kind) ? 22 : 12) : 8;
   const campaign: WuxiaCampaignState = {
     ...source.campaign,
@@ -4110,7 +4563,8 @@ const campaignAfterChoice = (
     opportunities: refreshOpportunityStatuses(source.campaign.opportunities, source.world.day),
     leads: source.campaign.leads.map((lead) => {
       if (activity?.opportunityId && lead.opportunityId === activity.opportunityId) {
-        if (isOpportunityAttendance) return { ...lead, status: "resolved", progress: 100 };
+        if (isOpportunityAttendance && opportunityCompleted) return { ...lead, status: "resolved", progress: 100 };
+        if (isTournamentRound) return { ...lead, status: "active", progress: clamp(24 + tournamentRoundsWon * 24, 0, 92) };
         return {
           ...lead,
           status: "active",
@@ -4144,7 +4598,17 @@ const campaignAfterChoice = (
   };
   if (activity?.opportunityId && isOpportunityAttendance) {
     campaign.opportunities = campaign.opportunities.map((opportunity) => (
-      opportunity.id === activity.opportunityId ? { ...opportunity, status: "attended" } : opportunity
+      opportunity.id === activity.opportunityId
+        ? isTournamentRound
+          ? {
+            ...opportunity,
+            roundsWon: tournamentRoundsWon,
+            eliminated: tournamentEliminated,
+            ...(tournamentWon ? { championActorId: "hero" } : {}),
+            status: tournamentWon ? "resolved" : tournamentEliminated ? "attended" : "open",
+          }
+          : { ...opportunity, status: "attended" }
+        : opportunity
     ));
   }
 
@@ -4194,6 +4658,44 @@ const campaignAfterChoice = (
 
   let state = { ...source, campaign };
   const discoveries: string[] = [];
+  if (isTournamentRound && activeOpportunity) {
+    const record = {
+      opportunityId: activeOpportunity.id,
+      protagonistId: state.life.protagonistId,
+      title: activeOpportunity.title,
+      year: activeOpportunity.year,
+      result: tournamentResultFor(tournamentRoundsWon, tournamentWon),
+      ...(tournamentWon ? { championActorId: "hero" } : {}),
+      roundsWon: tournamentRoundsWon,
+    };
+    const tournaments = state.chronicle.tournaments.some((entry) => entry.opportunityId === activeOpportunity.id)
+      ? state.chronicle.tournaments.map((entry) => (entry.opportunityId === activeOpportunity.id ? record : entry))
+      : [...state.chronicle.tournaments, record];
+    const isWorldFirst = activeOpportunity.templateId === "world_first_championship";
+    state = {
+      ...state,
+      chronicle: {
+        ...state.chronicle,
+        tournaments,
+        ranking: tournamentWon && isWorldFirst
+          ? { title: "天下第一", holderActorId: "hero", holderName: state.hero.name, sinceYear: activeOpportunity.year, heroBest: "夺魁" }
+          : {
+            ...state.chronicle.ranking,
+            heroBest: tournamentResultFor(Math.max(
+              tournamentRoundsWon,
+              state.chronicle.tournaments
+                .filter((entry) => entry.protagonistId === state.life.protagonistId)
+                .reduce((best, entry) => Math.max(best, entry.roundsWon), 0),
+            ), tournamentWon && isWorldFirst),
+          },
+      },
+    };
+    discoveries.push(tournamentWon
+      ? `${state.hero.name}在${activeOpportunity.title}连过${tournamentRoundsWon}轮，正式夺魁`
+      : tournamentEliminated
+        ? `你在${activeOpportunity.title}止步于这一轮；下一届仍会按期举行`
+        : `你在${activeOpportunity.title}再进一步，下一轮仍需亲自应战`);
+  }
   if (selected.id.startsWith("campaign-invent:") && success) {
     state = applyAuthoredTechnique(state, selected.id.split(":")[1], turn);
     discoveries.push(`你自创“${state.campaign.legacy.authoredTechniques.at(-1)?.name}”，并把所借鉴的招式来路一并记入武学谱`);
@@ -4212,6 +4714,12 @@ const campaignAfterChoice = (
     state = { ...state, campaign: recognition.campaign };
     if (recognition.discovery) discoveries.push(recognition.discovery);
   }
+  const riteResult = lifeAfterRite(state, selected, success, turn);
+  state = riteResult.state;
+  if (riteResult.discovery) discoveries.push(riteResult.discovery);
+  const projectResult = stateAfterWorldProject(state, selected, success, activity);
+  state = projectResult.state;
+  if (projectResult.discovery) discoveries.push(projectResult.discovery);
   return { state, discoveries };
 };
 
@@ -4241,7 +4749,264 @@ const chapterMilestoneFor = (state: NovelState): ChapterMilestone => {
   };
 };
 
-const endingFor = (state: NovelState): NovelEnding => {
+const annualMilestoneFor = (state: NovelState, year: number, age: number, scenes: number): AnnualMilestone => {
+  const people = state.life.household.partners.map((partner) => partner.name);
+  const projects = state.chronicle.projects.filter((project) => project.contributions.some((entry) => (
+    entry.protagonistId === state.life.protagonistId && wuxiaDateFromDay(entry.day).year === year
+  )));
+  const tournaments = state.chronicle.tournaments.filter((record) => (
+    record.year === year && record.protagonistId === state.life.protagonistId
+  ));
+  const highlights = [
+    ...(people.length ? [`与${people.join("、")}共同经营家门`] : []),
+    ...(state.life.household.children.length ? [`家中已有${state.life.household.children.map((child) => child.name).join("、")}`] : []),
+    ...projects.map((project) => `亲自介入${project.title}`),
+    ...tournaments.map((record) => `${record.title}止于“${record.result}”`),
+    ...(state.campaign.legacy.authoredTechniques.length ? [`留下${state.campaign.legacy.authoredTechniques.map((entry) => entry.name).join("、")}`] : []),
+    ...(state.campaign.legacy.foundedSect ? [`主持${state.campaign.legacy.foundedSect.name}门中事务`] : []),
+  ];
+  return {
+    year,
+    age,
+    endedDay: state.world.day,
+    scenes,
+    title: `${state.chronicle.eraName}${year}年 · 岁序收笔`,
+    summary: `这一年写下${scenes}幕。你在${currentLocation(state).name}收住岁尾，但人物的行程、尚未了结的天下大事与下一届盛会仍会继续。`,
+    highlights: highlights.length ? Array.from(new Set(highlights)).slice(0, 6) : ["这一年没有被某一条主线包办，你按自己的次序走完了每一程"],
+  };
+};
+
+const opportunityLeadFor = (state: NovelState, opportunity: WorldOpportunity): CampaignLead => ({
+  id: `lead_${opportunity.id}`,
+  kind: "opportunity",
+  title: opportunity.title,
+  summary: `${opportunity.description}${currentLocation(state, opportunity.locationId).name}将在承平${opportunity.year}年迎来此事。`,
+  source: `${opportunity.organizer}传出的新一届名帖`,
+  status: "paused",
+  progress: 0,
+  discoveredTurn: state.turn,
+  discoveredDay: state.world.day,
+  targetLocationId: opportunity.locationId,
+  opportunityId: opportunity.id,
+  deadlineDay: opportunity.endDay,
+});
+
+const tournamentEligibleActors = (state: NovelState) => state.world.actors.filter((actor) => {
+  if (actor.id === "hero" || ["死亡", "失踪"].includes(actor.activity) || actor.traits.includes("年幼")) return false;
+  const age = actor.birthDay === undefined
+    ? 18
+    : Math.floor((state.world.day - actor.birthDay) / DAYS_PER_YEAR);
+  return age >= 16 && actor.techniques.length > 0;
+});
+
+const tournamentScore = (state: NovelState, actor: WorldActor, opportunity: WorldOpportunity) => {
+  const mastery = actor.techniques.reduce((total, known) => total + known.mastery, 0);
+  const stableNoise = Array.from(`${state.seed}:${opportunity.id}:${actor.id}`)
+    .reduce((total, character) => (total * 33 + character.charCodeAt(0)) % 23, 7);
+  const defendingBonus = state.chronicle.ranking.holderActorId === actor.id ? 18 : 0;
+  return mastery + actor.techniques.length * 12 + defendingBonus + stableNoise;
+};
+
+const settleExpiredTournaments = (state: NovelState, source: WorldOpportunity[]) => {
+  let tournaments = state.chronicle.tournaments.map((record) => ({ ...record }));
+  let ranking = { ...state.chronicle.ranking };
+  const eligible = tournamentEligibleActors(state);
+  const orderedEligible = (opportunity: WorldOpportunity) => [...eligible]
+    .sort((left, right) => tournamentScore(state, right, opportunity) - tournamentScore(state, left, opportunity) || left.id.localeCompare(right.id));
+  const opportunities = source.map((opportunity) => {
+    if (!opportunity.roundsRequired) return opportunity;
+    const contenders = orderedEligible(opportunity);
+    const participantActorIds = contenders.slice(0, Math.max(3, opportunity.participantActorIds.length)).map((actor) => actor.id);
+    const prepared = { ...opportunity, participantActorIds };
+    if (state.world.day <= opportunity.endDay || (opportunity.status === "resolved" && opportunity.championActorId)) return prepared;
+    const champion = contenders[0];
+    if (!champion) return prepared;
+    const existing = tournaments.find((record) => record.opportunityId === opportunity.id);
+    const record: TournamentRecord = existing
+      ? { ...existing, championActorId: champion.id }
+      : {
+        opportunityId: opportunity.id,
+        protagonistId: "world",
+        title: opportunity.title,
+        year: opportunity.year,
+        result: "旁观",
+        championActorId: champion.id,
+        roundsWon: 0,
+      };
+    tournaments = tournaments.some((entry) => entry.opportunityId === opportunity.id)
+      ? tournaments.map((entry) => (entry.opportunityId === opportunity.id ? record : entry))
+      : [...tournaments, record];
+    if (opportunity.templateId === "world_first_championship") {
+      ranking = {
+        ...ranking,
+        holderActorId: champion.id,
+        holderName: champion.name,
+        sinceYear: opportunity.year,
+      };
+    }
+    return { ...prepared, status: "resolved" as const, championActorId: champion.id };
+  });
+  return { opportunities, tournaments, ranking };
+};
+
+const ensureCalendarContent = (state: NovelState): NovelState => {
+  const currentYear = wuxiaDateFromDay(state.world.day).year;
+  const participantActorIds = state.world.actors
+    .filter((actor) => actor.id !== "hero" && !["死亡", "失踪"].includes(actor.activity))
+    .map((actor) => actor.id);
+  const ensuredOpportunities = ensureWorldOpportunities(
+    state.content,
+    state.seed,
+    participantActorIds,
+    state.campaign.opportunities,
+    currentYear + 1,
+  );
+  const refreshedOpportunities = refreshOpportunityStatuses(ensuredOpportunities, state.world.day);
+  const settled = settleExpiredTournaments(state, refreshedOpportunities);
+  const { opportunities } = settled;
+  const knownOpportunityIds = new Set(state.campaign.leads.map((lead) => lead.opportunityId).filter(Boolean));
+  const newLeads = opportunities
+    .filter((opportunity) => !knownOpportunityIds.has(opportunity.id))
+    .map((opportunity) => opportunityLeadFor(state, opportunity));
+  const projects = state.chronicle.projects.map((project) => (
+    project.status === "announced" && project.startYear <= currentYear
+      ? { ...project, status: "active" as const }
+      : project
+  ));
+  return {
+    ...state,
+    campaign: {
+      ...state.campaign,
+      opportunities,
+      leads: [...state.campaign.leads, ...newLeads],
+    },
+    chronicle: {
+      ...state.chronicle,
+      projects,
+      tournaments: settled.tournaments,
+      ranking: settled.ranking,
+    },
+  };
+};
+
+const syncLifeAfterScene = (before: NovelState, source: NovelState): NovelState => {
+  const beforeYear = wuxiaDateFromDay(before.world.day).year;
+  const afterYear = wuxiaDateFromDay(source.world.day).year;
+  if (afterYear <= beforeYear) {
+    return {
+      ...source,
+      life: { ...source.life, scenesThisYear: source.life.scenesThisYear + 1 },
+    };
+  }
+  let annualState = source;
+  for (let year = beforeYear; year < afterYear; year += 1) annualState = applyAnnualWorldTick(annualState, year);
+  const milestone = annualMilestoneFor(annualState, beforeYear, source.life.age + (afterYear - beforeYear), source.life.scenesThisYear + 1);
+  return ensureCalendarContent({
+    ...annualState,
+    life: {
+      ...annualState.life,
+      age: annualState.life.age + (afterYear - beforeYear),
+      scenesThisYear: 0,
+      annualMilestones: [...annualState.life.annualMilestones, milestone],
+      pendingYearMilestone: milestone,
+    },
+  });
+};
+
+function applyAnnualWorldTick(state: NovelState, year: number): NovelState {
+  const resolvedTargetActorIds: string[] = [];
+  const projects = state.chronicle.projects.map((project, index) => {
+    if (["resolved", "failed"].includes(project.status) || project.startYear > year + 1) return project;
+    const amount = 7 + ((state.seed + year * 13 + index * 5) % 9);
+    const progress = clamp(project.progress + amount, 0, project.goal);
+    const resolved = progress >= project.goal;
+    const status = resolved ? "resolved" as const : project.startYear <= year + 1 ? "active" as const : project.status;
+    const outcome = resolved
+      ? `${project.title}由江湖中仍在行动的门派与人物合力推到结局；你的缺席也被年鉴如实记下。`
+      : project.outcome;
+    if (resolved && project.kind === "villain_hunt" && project.targetActorId) resolvedTargetActorIds.push(project.targetActorId);
+    return {
+      ...project,
+      status,
+      progress,
+      stage: projectStageFor(progress, status),
+      contributions: [...project.contributions, {
+        protagonistId: "world",
+        actorName: "江湖诸派",
+        day: state.world.day,
+        amount,
+        success: true,
+        description: "岁序流转时，其他人物也在各自推进此事。",
+      }].slice(-24),
+      ...(resolved ? { resolvedDay: state.world.day, outcome } : {}),
+    };
+  });
+  const world = resolvedTargetActorIds.length
+    ? {
+      ...state.world,
+      actors: state.world.actors.map((actor) => (
+        resolvedTargetActorIds.includes(actor.id) ? { ...actor, activity: "死亡" as const, goals: [] } : actor
+      )),
+    }
+    : state.world;
+  return { ...state, world, chronicle: { ...state.chronicle, projects } };
+}
+
+export const closeNovelYearAction = (state: NovelState): NovelState => {
+  if (state.ending || state.pendingOutcome || state.currentEvent || !["planning", "chapter_break"].includes(state.campaign.phase)) return state;
+  const closingDate = wuxiaDateFromDay(state.world.day);
+  const elapsedDays = remainingDaysInYear(state.world.day);
+  const world = advanceWorldToScene(state.world, {
+    turn: state.turn,
+    eventId: `year-end:${closingDate.year}`,
+    targetLocationId: state.currentLocationId,
+    companionActorIds: companionActorIds(state),
+    minimumElapsedDays: elapsedDays,
+    suppressEncounter: true,
+  });
+  let next = ensureCalendarContent(applyAnnualWorldTick({ ...state, world }, closingDate.year));
+  const milestone = annualMilestoneFor(next, closingDate.year, state.life.age + 1, state.life.scenesThisYear);
+  next = {
+    ...next,
+    life: {
+      ...next.life,
+      age: state.life.age + 1,
+      scenesThisYear: 0,
+      annualMilestones: [...state.life.annualMilestones, milestone],
+      pendingYearMilestone: milestone,
+    },
+    campaign: {
+      ...next.campaign,
+      phase: "year_break",
+      selectedActivityId: undefined,
+      availableActivities: [],
+    },
+    log: [...next.log, {
+      id: `year-end-${closingDate.year}`,
+      turn: next.turn,
+      kind: "chapter",
+      title: milestone.title,
+      text: milestone.summary,
+      tone: "warm",
+    }],
+  };
+  return next;
+};
+
+export const getLifeEndingOptions = (state: NovelState): LifeEndingDefinition[] => lifeEndingDefinitions({
+  turn: state.turn,
+  age: state.life.age,
+  partnerCount: state.life.household.partners.length,
+  childCount: state.life.household.children.length,
+  foundedSectName: state.campaign.legacy.foundedSect?.name,
+  rankingHolderActorId: state.chronicle.ranking.holderActorId,
+  resolvedProjects: state.chronicle.projects.filter((project) => (
+    project.status === "resolved"
+    && project.contributions.some((entry) => entry.protagonistId === state.life.protagonistId && entry.success !== false)
+  )),
+});
+
+const endingFor = (state: NovelState, endingId = "wandering_volume"): NovelEnding => {
   const { stats } = state.hero;
   const ambition = AMBITIONS[state.hero.ambition];
   const core = stats[ambition.stat];
@@ -4259,24 +5024,41 @@ const endingFor = (state: NovelState): NovelEnding => {
       .filter((technique) => heroTechniqueIds.includes(technique.id))
       .map((technique) => technique.name);
     const rank = score >= 78 ? "上上签" : score >= 62 ? "上签" : score >= 45 ? "中签" : "未定签";
-    const title = state.hero.ambition === "freedom" ? "《路仍在人间》" : state.hero.ambition === "protect" ? "《同路有名》" : state.hero.ambition === "revenge" ? "《恩仇未封刀》" : "《众人各有真话》";
+    const definition = getLifeEndingOptions(state).find((option) => option.id === endingId && option.unlocked)
+      || getLifeEndingOptions(state).find((option) => option.id === "wandering_volume" && option.unlocked)
+      || getLifeEndingOptions(state)[0];
+    const title = `《${definition.title}》`;
     const relationLine = closest
       ? `${closest.name}与你最终成为“${closest.relationship.label}”。这段关系不是由门楣或传闻定下，而是在几次相逢、失约与援手之间一步步走出来的。`
       : "你没有与任何人走得足够近；这份疏离也被江湖如实留在卷中。";
     const oppositionLine = opposed && opposed.relationship.grievance >= 28
       ? `${opposed.name}仍未放下与你之间的旧怨。下一次同路或狭路相逢，这段关系自会生出新的冲突。`
       : "本卷无人被强推作最后的仇家；尚未化解的目标与人情会继续留在江湖里。";
+    const householdLine = state.life.household.partners.length
+      ? `${state.life.household.partners.map((partner) => partner.name).join("、")}的名字与你并列在家门簿上；${state.life.household.children.length ? `${state.life.household.children.map((child) => child.name).join("、")}仍会在同一片江湖里长大。` : "共同生活没有把任何一人的江湖路抹去。"}`
+      : "你没有为了凑出一种结局而凭空成家；独行同样被如实写进这段人生。";
+    const achievementLine: Record<string, string> = {
+      together_retirement: `你与${state.life.household.partners.map((partner) => partner.name).join("、")}在仍能远行的年纪收起刀剑，不是谁被装进了谁的结局，而是共同选定另一种生活。`,
+      family_legacy: `家门没有随着卷尾消失。${state.life.household.children.map((child) => child.name).join("、")}会按出生年月继续长大，也可能成为下一段人生的执卷人。`,
+      sect_ancestor: `${state.campaign.legacy.foundedSect?.name || "新门派"}把你留下的招式、门规与旧交一并接了过去，后来者会知道这方门庭如何从第一日长成。`,
+      world_number_one: `${state.hero.name}的名字被写在天下第一武道会榜首。这个名号不会永久锁死；下一届仍有人能够堂堂正正前来取走。`,
+      guardian_of_realm: state.chronicle.projects.find((project) => project.kind === "invasion")?.outcome || "关外烽火终于退去。",
+      villain_slayer: state.chronicle.projects.find((project) => project.kind === "villain_hunt")?.outcome || "魔踪终于查到尽头。",
+      elder_retirement: `你在${state.life.age}岁时退居一方，仍保留地点、关系与所学武功；后来者可以拜访、讨教，也可能来挑战。`,
+      wandering_volume: "你只替眼前这一卷收笔。若重新推开门，尚未完成的追寻、下一届大会和天下大事仍在原处继续。",
+    };
     return {
       title,
-      subtitle: "这一卷只是截取江湖的一段时间，不是替所有人物关上余生。",
-      summary: "你走过的地方各自留下伤者、假令、失约与余波；你遇见的人也带着自己的目标继续上路。没有一桩大案替众人统一作结，只有你的选择把若干人生真正牵到了一起。",
+      subtitle: definition.subtitle,
+      summary: definition.description,
       rank,
       score,
-      tags: [ambition.label, closest ? `与${closest.name}有约` : "独行未尽", learnedTechniqueNames.length > 1 ? "百家留痕" : "守住本门", "自由江湖"],
+      tags: [definition.tag, ambition.label, closest ? `与${closest.name}有约` : "独行未尽", learnedTechniqueNames.length > 1 ? "百家留痕" : "守住本门"],
       epilogue: [
+        achievementLine[definition.id] || achievementLine.wandering_volume,
         relationLine,
         oppositionLine,
-        "有人离开旧地，有人在你身后改道，也有人带着尚未说清的人情继续赶路。幻真楼、星游社、四禧庄与散游盟各有立场，没有哪一方被一场大案收作布景。",
+        householdLine,
         learnedTechniqueNames.length > 1
           ? `你的${state.narrative.martial.name}已与${learnedTechniqueNames.slice(1).join("、")}彼此映照；每一门旁学之招仍保留原主、来路与未解之意。`
           : `你仍以${state.narrative.martial.name}行走江湖，招式没有被一串高低评语代替，而是在每次出手与收手之间慢慢变得可靠。`,
@@ -4377,7 +5159,7 @@ export const chooseNovelAction = (state: NovelState, choiceId: string): NovelSta
   const advanced = advanceNarrative(state, next, state.currentEvent, selected, success, completedTurn);
   next = { ...next, narrative: advanced.narrative };
   const campaignResult = campaignAfterChoice(state, next, selected, success, completedTurn, combat);
-  next = campaignResult.state;
+  next = syncLifeAfterScene(state, campaignResult.state);
   const changes = makeOutcomeChanges(state, next);
   const manuscript = composeScene(state, next, state.currentEvent, selected, outcome, success, completedTurn, chapter, combat);
   next = { ...next, narrative: appendScene(next.narrative, manuscript.scene) };
@@ -4412,6 +5194,33 @@ export const chooseNovelAction = (state: NovelState, choiceId: string): NovelSta
 
 export const continueNovelAction = (state: NovelState): NovelState => {
   if (state.ending) return state;
+  if (state.campaign.phase === "year_break" && state.life.pendingYearMilestone) {
+    const shouldOpenNextChapter = Boolean(state.campaign.chapterMilestone)
+      || (state.turn > 0 && state.turn % state.campaign.chapterLength === 0);
+    const nextChapterNumber = shouldOpenNextChapter ? state.chapter + 1 : state.chapter;
+    const chapter = storyChapterFor(nextChapterNumber, state.campaign.agenda?.title);
+    const narrative = shouldOpenNextChapter && !state.narrative.chapters.some((entry) => entry.number === nextChapterNumber)
+      ? { ...state.narrative, chapters: [...state.narrative.chapters, { ...chapter, scenes: [] }] }
+      : state.narrative;
+    const campaign: WuxiaCampaignState = {
+      ...state.campaign,
+      phase: "planning",
+      chapterMilestone: undefined,
+      selectedActivityId: undefined,
+      opportunities: refreshOpportunityStatuses(state.campaign.opportunities, state.world.day),
+      availableActivities: [],
+    };
+    const next: NovelState = {
+      ...state,
+      chapter: nextChapterNumber,
+      chapterTitle: shouldOpenNextChapter ? chapter.title : state.chapterTitle,
+      narrative,
+      life: { ...state.life, pendingYearMilestone: undefined },
+      campaign,
+      currentEvent: null,
+    };
+    return { ...next, campaign: { ...campaign, availableActivities: generatePlayerActivities(next) } };
+  }
   if (state.campaign.phase === "chapter_break" && state.campaign.chapterMilestone) {
     const nextChapterNumber = state.chapter + 1;
     const chapter = storyChapterFor(nextChapterNumber, state.campaign.agenda?.title);
@@ -4449,6 +5258,37 @@ export const continueNovelAction = (state: NovelState): NovelState => {
   }
   if (!state.pendingOutcome || state.campaign.phase !== "outcome") return state;
   const cleared: NovelState = { ...state, pendingOutcome: undefined, currentEvent: null };
+  if (cleared.life.pendingYearMilestone) {
+    const milestone = cleared.turn > 0 && cleared.turn % cleared.campaign.chapterLength === 0
+      ? chapterMilestoneFor(cleared)
+      : undefined;
+    return {
+      ...cleared,
+      campaign: {
+        ...cleared.campaign,
+        phase: "year_break",
+        chapterMilestone: milestone,
+        selectedActivityId: undefined,
+        availableActivities: [],
+      },
+    };
+  }
+  if (cleared.life.scenesThisYear >= cleared.life.maxScenesPerYear) {
+    const milestone = cleared.turn > 0 && cleared.turn % cleared.campaign.chapterLength === 0
+      ? chapterMilestoneFor(cleared)
+      : undefined;
+    const ready: NovelState = {
+      ...cleared,
+      campaign: {
+        ...cleared.campaign,
+        phase: "planning",
+        chapterMilestone: milestone,
+        selectedActivityId: undefined,
+        availableActivities: [],
+      },
+    };
+    return closeNovelYearAction(ready);
+  }
   if (state.turn > 0 && state.turn % state.campaign.chapterLength === 0) {
     const milestone = chapterMilestoneFor(cleared);
     return {
@@ -4481,14 +5321,34 @@ export const continueNovelAction = (state: NovelState): NovelState => {
   return { ...next, campaign: { ...campaign, availableActivities: generatePlayerActivities(next) } };
 };
 
-export const concludeNovelAction = (state: NovelState): NovelState => {
+export const concludeNovelAction = (state: NovelState, endingId = "wandering_volume"): NovelState => {
   if (state.pendingOutcome || state.currentEvent || state.campaign.phase === "scene" || state.ending) return state;
+  const endingChoice = getLifeEndingOptions(state).find((option) => option.id === endingId && option.unlocked);
+  if (!endingChoice) return state;
   return {
     ...state,
     currentEvent: null,
-    ending: endingFor(state),
+    ending: endingFor(state, endingChoice.id),
+    life: { ...state.life, status: "ending_preview", chosenEndingId: endingChoice.id },
     campaign: { ...state.campaign, phase: "ending", availableActivities: [] },
   };
+};
+
+export const resumeNovelAfterEndingAction = (state: NovelState): NovelState => {
+  if (!state.ending || state.life.status !== "ending_preview") return state;
+  const campaign: WuxiaCampaignState = {
+    ...state.campaign,
+    phase: "planning",
+    selectedActivityId: undefined,
+    availableActivities: [],
+  };
+  const next: NovelState = {
+    ...state,
+    ending: undefined,
+    life: { ...state.life, status: "active", chosenEndingId: undefined },
+    campaign,
+  };
+  return { ...next, campaign: { ...campaign, availableActivities: generatePlayerActivities(next) } };
 };
 
 export const getLocation = (state: NovelState) => currentLocation(state);

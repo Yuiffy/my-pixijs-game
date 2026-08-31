@@ -34,6 +34,7 @@ export interface StoryCharacter {
   signatureDescription: string;
   secretRevealed: boolean;
   portrait: string;
+  romanceable?: boolean;
   status: "未谋面" | "在局中" | "同行" | "离去" | "敌对";
   relationship: RelationshipState;
   firstSeenTurn?: number;

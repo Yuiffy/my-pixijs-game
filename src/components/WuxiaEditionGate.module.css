@@ -405,8 +405,23 @@
   }
 
   .switchButton {
-    left: 10px;
-    bottom: 72px;
+    position: static;
+    grid-template-columns: 18px auto 1fr;
+    width: 100%;
+    min-height: 40px;
+    padding: 6px 14px;
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+    text-align: left;
+  }
+
+  .switchButton small {
+    grid-column: 3;
+    justify-self: end;
+    font-size: 11px;
   }
 }
 

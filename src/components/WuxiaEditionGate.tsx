@@ -10,10 +10,20 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import styles from "./WuxiaEditionGate.module.css";
+import {
+  WUXIA_STORAGE_KEY_V6,
+  WUXIA_STORAGE_KEY_V7,
+  parseWuxiaSaveRoot,
+} from "./wuxia/game/wuxiaSave";
 
 type WuxiaEdition = "legacy" | "sandbox";
 
-const SANDBOX_SAVE_KEY = "wuxia-novel-save-v6";
+interface EditionSaveSummary {
+  legacy: boolean;
+  sandbox: boolean;
+  sandboxWorlds: number;
+  sandboxLives: number;
+}
 
 const CurrentWuxiaGame = dynamic(() => import("./WuxiaGame"), {
   ssr: false,
@@ -30,11 +40,20 @@ const editionName: Record<WuxiaEdition, string> = {
   sandbox: "开放江湖",
 };
 
-const hasStoredSave = (key: string) => {
+const readSandboxSaveSummary = () => {
   try {
-    return Boolean(window.localStorage.getItem(key));
+    const root = parseWuxiaSaveRoot(
+      window.localStorage.getItem(WUXIA_STORAGE_KEY_V7),
+      window.localStorage.getItem(WUXIA_STORAGE_KEY_V6),
+    );
+    if (!root) return { saved: false, worlds: 0, lives: 0 };
+    return {
+      saved: root.worlds.length > 0,
+      worlds: root.worlds.length,
+      lives: root.worlds.reduce((total, world) => total + 1 + world.game.chronicle.protagonists.length, 0),
+    };
   } catch {
-    return false;
+    return { saved: false, worlds: 0, lives: 0 };
   }
 };
 
@@ -51,7 +70,7 @@ function EditionPicker({
   saves,
   onSelect,
 }: {
-  saves: Record<WuxiaEdition, boolean>;
+  saves: EditionSaveSummary;
   onSelect: (edition: WuxiaEdition) => void;
 }) {
   return (
@@ -113,10 +132,10 @@ function EditionPicker({
           <span className={styles.cardBody}>
             <span className={styles.cardIcon}><CompassOutlined /></span>
             <span className={styles.cardTitle}>开放江湖</span>
-            <span className={styles.cardMeta}>自由行程 · 人物沙盘 · 无尽章节</span>
-            <span className={styles.cardDescription}>地点、关系、招式与人物意图共同运转；更自由，也仍是一卷尚未写出终章的实验。</span>
+            <span className={styles.cardMeta}>自由行程 · 世代江湖 · 可续可终</span>
+            <span className={styles.cardDescription}>年月、家门、论剑与天下大事共同运转；一段人生可以落款，旧人和旧世界仍由后来者接着走。</span>
             <span className={styles.cardFoot}>
-              <span>{saves.sandbox ? "已有江湖存档" : "进入新江湖"}</span>
+              <span>{saves.sandbox ? `${saves.sandboxWorlds}方江湖 · ${saves.sandboxLives}段人生` : "进入新江湖"}</span>
               <ArrowRightOutlined />
             </span>
           </span>
@@ -124,7 +143,7 @@ function EditionPicker({
       </section>
 
       <footer className={styles.pickerFooter}>
-        开放江湖会保留自己的存档；简陋测试版每次从头演义。
+        开放江湖会分别保留世界与历代人物；简陋测试版每次从头演义。
       </footer>
     </main>
   );
@@ -132,13 +151,16 @@ function EditionPicker({
 
 export default function WuxiaEditionGate() {
   const [edition, setEdition] = useState<WuxiaEdition | null>(null);
-  const [saves, setSaves] = useState<Record<WuxiaEdition, boolean>>({ legacy: false, sandbox: false });
+  const [saves, setSaves] = useState<EditionSaveSummary>({ legacy: false, sandbox: false, sandboxWorlds: 0, sandboxLives: 0 });
 
   useEffect(() => {
     if (edition) return;
+    const sandbox = readSandboxSaveSummary();
     setSaves({
       legacy: false,
-      sandbox: hasStoredSave(SANDBOX_SAVE_KEY),
+      sandbox: sandbox.saved,
+      sandboxWorlds: sandbox.worlds,
+      sandboxLives: sandbox.lives,
     });
   }, [edition]);
 
@@ -148,7 +170,7 @@ export default function WuxiaEditionGate() {
       screen: "edition-select",
       editions: [
         { id: "legacy", name: editionName.legacy, saved: saves.legacy },
-        { id: "sandbox", name: editionName.sandbox, saved: saves.sandbox },
+        { id: "sandbox", name: editionName.sandbox, saved: saves.sandbox, worlds: saves.sandboxWorlds, lives: saves.sandboxLives },
       ],
     });
     window.render_game_to_text = renderPicker;
