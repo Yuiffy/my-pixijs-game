@@ -14,6 +14,14 @@ const NOTES: Record<Cue, [number, number, OscillatorType]> = {
   hurt: [95, 0.14, "sawtooth"],
   win: [784, 0.6, "sine"],
   lose: [196, 0.3, "triangle"],
+  deflect: [520, 0.08, "triangle"],
+  break: [180, 0.38, "sawtooth"],
+  counter: [350, 0.2, "triangle"],
+  riposte: [210, 0.3, 'triangle'],
+  exhausted: [120, 0.09, "sine"],
+  bell: [880, 0.32, 'sine'],
+  return: [660, 0.3, 'triangle'],
+  chapter: [196, 1.3, 'sine'],
 };
 
 export class SparringAudio {
@@ -23,7 +31,13 @@ export class SparringAudio {
   muted = true;
   volume = 0.35;
   get status() {
-    return { muted: this.muted, volume: this.volume, context: this.context?.state ?? 'not-started', activeVoices: this.nodes.size, lastCue: this.lastCue };
+    return {
+      muted: this.muted,
+      volume: this.volume,
+      context: this.context?.state ?? "not-started",
+      activeVoices: this.nodes.size,
+      lastCue: this.lastCue,
+    };
   }
   async unlock() {
     if (this.muted) return;
@@ -38,21 +52,50 @@ export class SparringAudio {
     if (this.muted || !this.context || this.context.state !== "running") return;
     const { context } = this;
     this.lastCue = cue;
-    if (cue === 'parry') {
+    if (cue === 'bell' || cue === 'return') {
+      const base = cue === 'bell' ? 880 : 660;
+      this.tone(context, base, base * 0.97, 0.45, 0.12, 'sine');
+      this.tone(context, base * 2.71, base * 2.68, 0.3, 0.055, 'sine');
+      return;
+    }
+    if (cue === 'chapter') {
+      this.tone(context, 196, 196, 1.5, 0.16, 'sine');
+      this.tone(context, 541, 539, 1.1, 0.07, 'sine');
+      this.tone(context, 1163, 1160, 0.6, 0.04, 'sine');
+      return;
+    }
+    if (cue === "parry") {
       // Inharmonic overtones give the parry its own metal strike and ringing tail.
-      this.tone(context, 1480, 1410, 0.42, 0.19, 'sine');
-      this.tone(context, 2317, 2240, 0.25, 0.1, 'sine');
-      this.tone(context, 3670, 3400, 0.11, 0.055, 'triangle');
-      this.tone(context, 780, 310, 0.045, 0.085, 'square');
+      this.tone(context, 1480, 1410, 0.42, 0.19, "sine");
+      this.tone(context, 2317, 2240, 0.25, 0.1, "sine");
+      this.tone(context, 3670, 3400, 0.11, 0.055, "triangle");
+      this.tone(context, 780, 310, 0.045, 0.085, "square");
       return;
     }
     const [frequency, duration, type] = NOTES[cue];
-    this.tone(context, frequency, cue === 'win' ? 1175 : Math.max(45, frequency * 0.55), duration, 0.09, type);
+    this.tone(
+      context,
+      frequency,
+      cue === "win" ? 1175 : Math.max(45, frequency * 0.55),
+      duration,
+      0.09,
+      type,
+    );
   }
-  private tone(context: AudioContext, frequency: number, end: number, duration: number, peak: number, type: OscillatorType) {
+  private tone(
+    context: AudioContext,
+    frequency: number,
+    end: number,
+    duration: number,
+    peak: number,
+    type: OscillatorType,
+  ) {
     if (this.nodes.size >= 12) {
       const oldest = this.nodes.values().next().value;
-      if (oldest) { oldest.stop(); this.nodes.delete(oldest); }
+      if (oldest) {
+        oldest.stop();
+        this.nodes.delete(oldest);
+      }
     }
     const oscillator = context.createOscillator();
     const gain = context.createGain();

@@ -1,5 +1,7 @@
 # 岁岁过招 · 竹庭篇 P0
 
+本文记录已推送提交 `07a82f4` 中的 P0。当前本地实现和验证入口见 [P1 说明](D:/workspace/myrepo/my-pixijs-game/docs/sui-sparring-p1.md)。
+
 2026-09-06，独立单 Boss 原型。入口 `/game/one-more`，本站 `/demos` 已增加游戏入口。没有部署到公网。
 
 ## 当前可玩内容

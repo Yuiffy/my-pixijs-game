@@ -16,6 +16,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { AUTOCHESS_VERSION } from '@/components/autoChessGame/version';
+import { CONTENT_VERSION as SPARRING_VERSION } from '@/components/oneMoreGame/content';
 
 import styles from './page.module.css';
 
@@ -31,9 +32,9 @@ const gameDemos: ProjectItem[] = [
   {
     title: '岁岁过招',
     href: '/game/one-more',
-    description: '立下一约，接住三招。去竹庭会一会饼师傅。',
+    description: '三庭收钟。接飞铃、截突进，挑战三位不同的对手。',
     image: '/games/one-more/dojo.webp',
-    meta: '单人动作 · 竹庭第一试',
+    meta: `v${SPARRING_VERSION} · 单人动作 · 三 Boss 首章`,
   },
   {
     title: '小鸟一百层',

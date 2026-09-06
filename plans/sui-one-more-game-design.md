@@ -1,6 +1,6 @@
 # 《岁岁过招》游戏策划 v0.1
 
-日期：2026-09-06。状态：P0 单 Boss 已实现并通过技术验收，工作名更新为“岁岁过招”；P1 三 Boss 章节仍为规划，真人试玩待进行。依据：[岁己 SUI 近期游戏偏好调研](D:/workspace/myrepo/my-pixijs-game/plans/sui-game-research-2026-09-06.md)，下文 E01 等编号对应其中证据。实现记录见 [P0 说明](D:/workspace/myrepo/my-pixijs-game/docs/sui-sparring-p0.md)。
+初稿日期：2026-09-06；更新：2026-09-07。P0 已推送，P1 三 Boss 首章及体力、硬直、破架、反击已实现并通过技术验收。本文保留最初策划假设，当前实现以 [P1 说明](D:/workspace/myrepo/my-pixijs-game/docs/sui-sparring-p1.md) 为准。依据：[岁己 SUI 近期游戏偏好调研](D:/workspace/myrepo/my-pixijs-game/plans/sui-game-research-2026-09-06.md)，下文 E01 等编号对应其中证据。
 
 ## 1. 一句话提案
 

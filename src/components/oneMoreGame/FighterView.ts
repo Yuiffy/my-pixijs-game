@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import type { BossId } from "./content";
 
 type Pose =
   | "idle"
@@ -11,6 +12,10 @@ type Pose =
   | "win"
   | "lose"
   | "charge"
+  | "cast"
+  | "rush"
+  | "spin"
+  | "leap"
   | "recover";
 const INK = 0x28363b;
 
@@ -25,9 +30,17 @@ export class FighterView {
   tails: Phaser.GameObjects.Container[] = [];
   shadow: Phaser.GameObjects.Ellipse;
   private boss: boolean;
+  private variant: BossId;
 
-  constructor(scene: Phaser.Scene, boss: boolean) {
+  constructor(scene: Phaser.Scene, boss: boolean, variant: BossId = "coach") {
     this.boss = boss;
+    this.variant = variant;
+    const cloth =
+      variant === "keeper"
+        ? 0x4b6d8f
+        : variant === "master"
+          ? 0xa72f4a
+          : 0x247f74;
     this.shadow = scene.add.ellipse(
       0,
       570,
@@ -44,6 +57,23 @@ export class FighterView {
       parent.add(g);
       return g;
     };
+    if (boss && variant !== "coach") {
+      const cape = shape(this.body);
+      cape
+        .fillStyle(variant === "master" ? 0x7b2844 : 0xd9e5e7)
+        .lineStyle(3, INK);
+      const points = [
+        [-35, -138],
+        [32, -141],
+        [55, -42],
+        [-18, -22],
+        [-48, -38],
+      ].map(([x, y]) => new Phaser.Math.Vector2(x, y));
+      cape.fillPoints(points, true).strokePoints(points, true);
+      cape
+        .lineStyle(3, variant === "master" ? 0xe0b764 : 0xa4bdcb)
+        .lineBetween(-30, -128, -36, -45);
+    }
     this.legs = [-1, 1].map((side) => {
       const limb = scene.add.container(side * 16, -53);
       const g = shape(limb);
@@ -82,11 +112,15 @@ export class FighterView {
           23,
         ];
         g.fillPoints(
-          points.filter((_, i) => i % 2 === 0).map((x, i) => new Phaser.Math.Vector2(x, points[i * 2 + 1])),
+          points
+            .filter((_, i) => i % 2 === 0)
+            .map((x, i) => new Phaser.Math.Vector2(x, points[i * 2 + 1])),
           true,
         );
         g.strokePoints(
-          points.filter((_, i) => i % 2 === 0).map((x, i) => new Phaser.Math.Vector2(x, points[i * 2 + 1])),
+          points
+            .filter((_, i) => i % 2 === 0)
+            .map((x, i) => new Phaser.Math.Vector2(x, points[i * 2 + 1])),
           true,
         );
         g.lineStyle(3, 0xb9c8d4).lineBetween(side * 6, 18, side * 12, 64);
@@ -99,10 +133,18 @@ export class FighterView {
     torso.lineStyle(3.5, INK);
     if (boss) {
       torso
-        .fillStyle(0x247f74)
+        .fillStyle(cloth)
         .fillRoundedRect(-43, -135, 86, 84, 20)
         .strokeRoundedRect(-43, -135, 86, 84, 20);
-      torso.fillStyle(0x7ac3a3).fillTriangle(-22, -133, 33, -130, 0, -75);
+      torso
+        .fillStyle(
+          variant === "master"
+            ? 0xd69e6b
+            : variant === "keeper"
+              ? 0xaabfce
+              : 0x7ac3a3,
+        )
+        .fillTriangle(-22, -133, 33, -130, 0, -75);
       torso.lineStyle(4, 0xf1eee3).lineBetween(-24, -129, 25, -76);
       torso.fillStyle(0xf1eee3).fillRoundedRect(-44, -72, 88, 12, 3);
       torso.fillStyle(0xd9b564).fillCircle(5, -66, 9);
@@ -128,7 +170,7 @@ export class FighterView {
     this.frontArm = scene.add.container(24, -116);
     [this.backArm, this.frontArm].forEach((arm, index) => {
       const g = shape(arm);
-      g.lineStyle(3, INK).fillStyle(boss ? 0x287b71 : 0xfaf5ef);
+      g.lineStyle(3, INK).fillStyle(boss ? cloth : 0xfaf5ef);
       g.fillRoundedRect(-11, -3, 25, 42, 9).strokeRoundedRect(
         -11,
         -3,
@@ -144,11 +186,13 @@ export class FighterView {
         sword.lineStyle(3, INK).fillStyle(boss ? 0xddc891 : 0xd3ece9);
         const points = [
           { x: 6, y: 34 },
-          { x: boss ? 145 : 119, y: 30 },
-          { x: boss ? 160 : 133, y: 40 },
+          { x: boss ? (variant === "keeper" ? 182 : 145) : 119, y: 30 },
+          { x: boss ? (variant === "keeper" ? 196 : 160) : 133, y: 40 },
           { x: 6, y: 46 },
         ];
-        const vertices = points.map(point => new Phaser.Math.Vector2(point.x, point.y));
+        const vertices = points.map(
+          (point) => new Phaser.Math.Vector2(point.x, point.y),
+        );
         sword.fillPoints(vertices, true).strokePoints(vertices, true);
         sword
           .lineStyle(2, boss ? 0x9a784b : 0x55a9a2)
@@ -157,6 +201,14 @@ export class FighterView {
           .lineStyle(7, boss ? 0x34564a : 0xa83145)
           .lineBetween(-8, 41, 15, 41);
         sword.lineStyle(5, 0xd8ad58).lineBetween(16, 24, 16, 55);
+        if (boss && variant === "keeper") {
+          sword
+            .fillStyle(0xdbbd78)
+            .lineStyle(2, INK)
+            .fillEllipse(180, 50, 22, 26)
+            .strokeEllipse(180, 50, 22, 26);
+          sword.lineStyle(2, 0x655c40).lineBetween(180, 40, 180, 62);
+        }
         arm.add(sword);
       }
       this.body.add(arm);
@@ -164,7 +216,50 @@ export class FighterView {
     this.head = scene.add.container(0, boss ? -173 : -167);
     const face = shape(this.head);
     face.lineStyle(3.5, INK);
-    if (boss) {
+    if (boss && variant === "keeper") {
+      face
+        .fillStyle(0xf1ede3)
+        .fillRoundedRect(-34, -41, 72, 86, 23)
+        .strokeRoundedRect(-34, -41, 72, 86, 23);
+      face
+        .fillStyle(0x445c78)
+        .fillRoundedRect(-40, -47, 83, 30, 6)
+        .strokeRoundedRect(-40, -47, 83, 30, 6);
+      face.fillStyle(0xc6ad65).fillCircle(1, -30, 9);
+      face
+        .lineStyle(5, INK)
+        .lineBetween(-22, 2, -7, 5)
+        .lineBetween(10, 5, 25, 2);
+      face
+        .lineStyle(2, 0xa08168)
+        .lineBetween(0, 14, 5, 19)
+        .lineBetween(-4, 28, 12, 28);
+      face
+        .fillStyle(0xdfebee)
+        .fillTriangle(-36, -15, -49, 58, -28, 40)
+        .fillTriangle(35, -15, 49, 58, 27, 40);
+    } else if (boss && variant === "master") {
+      face.fillStyle(0xe4c39a).fillCircle(0, 0, 45).strokeCircle(0, 0, 45);
+      face
+        .fillStyle(0x293941)
+        .fillRoundedRect(-46, -41, 92, 35, 10)
+        .strokeRoundedRect(-46, -41, 92, 35, 10);
+      face.fillStyle(0xb9384f).fillTriangle(-15, -40, 0, -79, 18, -40);
+      face.lineStyle(5, 0xd9bc7d).lineBetween(-40, -13, 40, -13);
+      face
+        .fillStyle(0x91374a)
+        .fillTriangle(-43, -5, -20, 33, -41, 31)
+        .fillTriangle(42, -5, 20, 33, 42, 31);
+      face
+        .lineStyle(5, INK)
+        .lineBetween(-23, 1, -7, 6)
+        .lineBetween(10, 6, 26, 1);
+      face.fillStyle(0x6f3540).fillRoundedRect(-22, 19, 47, 23, 5);
+      face
+        .lineStyle(2, 0xd9bc7d)
+        .lineBetween(-14, 26, 16, 26)
+        .lineBetween(-11, 33, 13, 33);
+    } else if (boss) {
       face.fillStyle(0xeac182).fillCircle(0, 0, 47).strokeCircle(0, 0, 47);
       face
         .fillStyle(0xdba863)
@@ -224,7 +319,9 @@ export class FighterView {
         { x: -27, y: 13 },
         { x: -36, y: 3 },
       ];
-      const vertices = fringe.map(point => new Phaser.Math.Vector2(point.x, point.y));
+      const vertices = fringe.map(
+        (point) => new Phaser.Math.Vector2(point.x, point.y),
+      );
       face.fillPoints(vertices, true).strokePoints(vertices, true);
       face
         .fillStyle(0xba2d49)
@@ -256,12 +353,20 @@ export class FighterView {
     const walk = pose === "walk";
     const beat = Math.sin(time / 90);
     const breathing = Math.sin(time / 430) * 1.7;
+    const scale = this.boss
+      ? this.variant === "master"
+        ? 1.19
+        : this.variant === "keeper"
+          ? 1.14
+          : 1.08
+      : 1;
     this.root
       .setPosition(x, y)
-      .setScale(facing * (this.boss ? 1.08 : 1), this.boss ? 1.08 : 1);
+      .setScale(facing * scale * (this.variant === "keeper" ? 0.94 : 1), scale);
     this.shadow.setX(x).setScale(pose === "dodge" ? 1.3 : 1, 1);
     this.body.y = walk ? -Math.abs(beat) * 6 : breathing;
     this.body.rotation = 0;
+    this.body.scaleX = 1;
     this.head.rotation = Math.sin(time / 600) * 0.02;
     this.frontArm.rotation = -0.5;
     this.backArm.rotation = 0.2;
@@ -275,6 +380,32 @@ export class FighterView {
         -1.65 + Math.sin((Math.min(1, strength) * Math.PI) / 2) * 2.25;
       this.body.rotation = 0.1;
       this.backArm.rotation = -0.4;
+    } else if (pose === 'cast') {
+      this.frontArm.rotation = -1.85 + Math.sin(time / 130) * 0.18;
+      this.backArm.rotation = -1.35;
+      this.body.y = -5 + Math.sin(time / 220) * 4;
+      this.head.rotation = -0.08;
+    } else if (pose === 'rush') {
+      this.body.rotation = 0.42;
+      this.body.y = 21;
+      this.frontArm.rotation = 0.18;
+      this.backArm.rotation = -0.75;
+      this.legs[0].rotation = -0.8;
+      this.legs[1].rotation = 0.85;
+    } else if (pose === 'spin') {
+      const angle = strength * Math.PI * 2;
+      this.body.scaleX = Math.cos(angle) * 0.9;
+      this.frontArm.rotation = angle - 1.1;
+      this.backArm.rotation = angle + 1.8;
+      this.body.y = -10;
+      this.legs[0].rotation = -0.45;
+      this.legs[1].rotation = 0.45;
+    } else if (pose === 'leap') {
+      this.frontArm.rotation = -2.5;
+      this.backArm.rotation = -1.6;
+      this.body.rotation = -0.17;
+      this.legs[0].rotation = -0.85;
+      this.legs[1].rotation = 0.9;
     } else if (pose === "guard" || pose === "parry") {
       this.frontArm.rotation = -1.45;
       this.backArm.rotation = -0.85;
@@ -292,7 +423,9 @@ export class FighterView {
       this.frontArm.rotation = -0.8;
       this.head.rotation = -0.12;
     } else if (pose === "charge") {
-      this.frontArm.rotation = overhead ? -2.1 - strength * 0.25 : -1.3 - strength * 0.25;
+      this.frontArm.rotation = overhead
+        ? -2.1 - strength * 0.25
+        : -1.3 - strength * 0.25;
       this.backArm.rotation = overhead ? -1.8 : 0.2;
       this.body.y = 7;
       this.head.rotation = -0.08;
