@@ -45,3 +45,5 @@ next-env.d.ts
 
 # Stream data lives in the VirtualBeing-Hub shard repositories.
 /public/data/streams/
+.pnpm-store
+.playwright-mcp
