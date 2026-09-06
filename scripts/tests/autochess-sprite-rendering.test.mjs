@@ -710,7 +710,7 @@ test("战斗热路径复用短命视图并缓存棋子子节点", () => {
   assert.match(scene, /private takePooledView\(\)/);
   assert.match(scene, /this\.projectileViewPool\.length >= 48/);
   assert.match(scene, /this\.effectViewPool\.length >= 96/);
-  assert.match(scene, /MOBILE_TEXT_EFFECT_LIMIT = 18/);
+  assert.match(scene, /MOBILE_TEXT_EFFECT_LIMIT = 8/);
   assert.match(scene, /visibleCombatEffects\(battle\.effects\)/);
   assert.match(scene, /this\.suppressedEffectViews\.add\(effect\)/);
   assert.match(scene, /if \(urgent !== this\.battleTimerUrgent\)/);
@@ -940,8 +940,9 @@ test("场上满员时 DOM 商店仍预测待激活羁绊", () => {
   assert.ok(domPrediction);
   assert.doesNotMatch(scene, /private traitActivatesAfterPurchase/);
   assert.doesNotMatch(domPrediction, /boardCount|boardCap/);
-  assert.match(domPrediction, /status\.count \+ 1 >= nextThreshold/);
-  assert.match(domPrediction, /!engine\.state\.board\.some/);
+  assert.match(hud, /previewTraitAddition\(engine\.state\.board, def\.id, engine\.boardCap\)/);
+  assert.match(domPrediction, /preview\.advances/);
+  assert.match(hud, /待上阵，需调整人口或站位/);
 });
 
 test("桌面商店下半区详情向上展开并保持箭头贴近卡片", () => {
@@ -1013,7 +1014,7 @@ test("备战界面可从桌面和移动端查看双方真实部署且详情高�
   );
   assert.match(host, /action = \{ type: "battle" \}/);
   assert.match(bridge, /enemyFormationOpen = false/);
-  assert.match(bridge, /interface:\s*\{\s*enemyFormationOpen:/);
+  assert.match(bridge, /interface:\s*\{[\s\S]*?enemyFormationOpen:/);
   assert.match(hud, /function EnemyFormationOverlay/);
   assert.match(hud, /playerFormationPosition\(index\)/);
   assert.match(hud, /enemyFormationPosition\(index, wave\.units\.length\)/);

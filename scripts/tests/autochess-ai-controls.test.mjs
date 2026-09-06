@@ -1632,6 +1632,8 @@ test("后台战斗为可选设置，开启后按隐藏期间的墙钟时间推�
   assert.ok(battle.elapsed >= 1.49);
   const textState = JSON.parse(bridge.renderTextState());
   assert.deepEqual(textState.interface, {
+    savedRun: null,
+    saveIssue: null,
     enemyFormationOpen: false,
     autoplayEnabled: false,
     autoplayPreferenceStyle: "balanced",
@@ -1641,6 +1643,7 @@ test("后台战斗为可选设置，开启后按隐藏期间的墙钟时间推�
     autoplayInformationMode: "normal",
     backgroundBattleEnabled: true,
     battlePaused: false,
+    inspectedFighterId: null,
     pageHidden: true,
   });
 

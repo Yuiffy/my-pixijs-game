@@ -232,7 +232,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private static readonly RANKING_REFRESH_INTERVAL = 1;
 
-  private static readonly MOBILE_TEXT_EFFECT_LIMIT = 18;
+  private static readonly MOBILE_TEXT_EFFECT_LIMIT = 8;
 
   private resultScrollOffsets: Record<Team, number> = { player: 0, enemy: 0 };
 
@@ -277,6 +277,7 @@ export class RiftLineScene extends Phaser.Scene {
       scene: this,
       bridge,
       isCompact: () => this.isCompact(),
+      isPortrait: () => this.portraitBattlePresentation,
       text: (x, y, value, size, color, style) => this.text(x, y, value, size, color, style),
       createPortrait: (unitId, x, y, radius, enemy) => this.createPortrait(unitId, x, y, radius, enemy),
       showUnitTooltip: (unitId, pointer, star, fighter) => this.showUnitTooltip(unitId, pointer, star, fighter),
@@ -1580,6 +1581,7 @@ export class RiftLineScene extends Phaser.Scene {
       }
       this.updateFighter(view, fighter);
       this.keepPortraitBattleVisualReadable(view);
+      if (this.portraitBattlePresentation) view.setScale(view.scaleX * 0.82, view.scaleY * 0.82);
     });
     this.fighterViews.forEach((view, id) => {
       if (!active.has(id)) {
@@ -1636,14 +1638,26 @@ export class RiftLineScene extends Phaser.Scene {
 
     const isText = (effect: BattleEffect) => effect.kind === "text" || effect.kind === "heal";
     const visibleText = new Set<BattleEffect>();
-    effects.forEach((effect) => {
-      if (isText(effect) && this.effectViews.has(effect)) visibleText.add(effect);
-    });
-
-    for (let index = effects.length - 1; index >= 0 && visibleText.size < RiftLineScene.MOBILE_TEXT_EFFECT_LIMIT; index -= 1) {
-      const effect = effects[index];
-      if (!isText(effect) || visibleText.has(effect) || this.suppressedEffectViews.has(effect)) continue;
+    const occupied: Array<{ x: number; y: number; width: number; height: number }> = [];
+    const projection = this.portraitBattlePresentation ? MOBILE_BATTLE_PRESENTATION : { scaleX: 1, scaleY: 1 };
+    const candidates = [
+      ...effects.filter(effect => isText(effect) && this.effectViews.has(effect)),
+      ...effects.slice().reverse().filter(effect => isText(effect) && !this.effectViews.has(effect)),
+    ];
+    for (const effect of candidates) {
+      if (visibleText.size >= RiftLineScene.MOBILE_TEXT_EFFECT_LIMIT) break;
+      if (this.suppressedEffectViews.has(effect)) continue;
+      const size = effect.size || 14;
+      const bounds = {
+        x: effect.x * projection.scaleX,
+        y: effect.y * projection.scaleY - 26 * (1 - effect.life / effect.maxLife),
+        width: Math.min(160, (effect.text?.length || 1) * size * 0.85 + 8),
+        height: size + 12,
+      };
+      if (occupied.some(other => Math.abs(other.x - bounds.x) < (other.width + bounds.width) / 2
+        && Math.abs(other.y - bounds.y) < (other.height + bounds.height) / 2)) continue;
       visibleText.add(effect);
+      occupied.push(bounds);
     }
 
     effects.forEach((effect) => {
@@ -1946,7 +1960,7 @@ export class RiftLineScene extends Phaser.Scene {
 
   private resultContinueLabel() {
     const { state } = this.bridge.engine;
-    if (state.hp <= 0) return "继续 · 查看结局";
+    if (this.bridge.engine.resultEndsRun) return "结束远征 · 查看总结";
     const tier = augmentTierForRound(state.round);
     return tier
       ? `继续 · 选择${tier === "minor" ? "小" : "大"}天赋`

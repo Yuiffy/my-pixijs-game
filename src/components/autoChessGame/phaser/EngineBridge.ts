@@ -13,6 +13,13 @@ import type {
 import { UNIT_DEFS, type StarterId } from "../core/gameData";
 import { AUTOCHESS_VERSION } from "../version";
 import {
+  RunSaveStore,
+  createRunCheckpoint,
+  runSaveInfo,
+  type RunCheckpoint,
+  type RunStorage,
+} from "../core/engine/runSave";
+import {
   canonicalAutopilotStyle,
   legacyThinkingLevelForAutopilotStyle,
   preferenceStyleForAutopilotStyle,
@@ -36,7 +43,8 @@ export type GameAction =
   | { type: "move"; from: UnitLocation; to: UnitLocation }
   | { type: "sell"; location?: UnitLocation }
   | { type: "starForge"; location?: UnitLocation }
-  | { type: "buyXp" | "lock" | "reroll" | "autoArrange" | "battle" | "skipBattle" | "rankingToggle" | "finishCampaign" | "continueEndless" | "resultContinue" | "restart" | "clearSelection" }
+  | { type: "inspectFighter"; fid: string | null }
+  | { type: "buyXp" | "lock" | "reroll" | "autoArrange" | "battle" | "skipBattle" | "rankingToggle" | "finishCampaign" | "continueEndless" | "resultContinue" | "restart" | "resume" | "clearSelection" }
   | { type: "metric"; metric: RankingMetric }
   | { type: "augment"; index: number };
 
@@ -136,6 +144,16 @@ export class EngineBridge {
 
   public battlePaused = false;
 
+  public inspectedFighterId: string | null = null;
+
+  public inspectFighter(fid: string | null) {
+    const { battle, phase } = this.engine.state;
+    if (fid !== null && (phase !== "battle" || !battle || ![...battle.player, ...battle.enemy].some(fighter => fighter.fid === fid))) return;
+    this.inspectedFighterId = fid;
+    if (fid && battle) battle.rankingOpen = false;
+    this.onEvent?.({ type: "state" });
+  }
+
   public onEvent: ((event: BridgeEvent) => void) | null = null;
 
   private testSpeed: number;
@@ -168,6 +186,36 @@ export class EngineBridge {
   private actionSequence = 0;
 
   private actionHistory: ActionTraceEntry[] = [];
+
+  private saveStore: RunSaveStore | null = null;
+
+  private savedCheckpoint: RunCheckpoint | null = null;
+
+  public attachRunStorage(storage: RunStorage) {
+    if (this.simulationMode) return;
+    this.saveStore = new RunSaveStore(storage);
+    this.savedCheckpoint = this.saveStore.load();
+  }
+
+  public get savedRun() {
+    return runSaveInfo(this.savedCheckpoint);
+  }
+
+  public get saveIssue() {
+    return this.saveStore?.issue ?? null;
+  }
+
+  private persistCheckpoint(resumeBattle = false) {
+    if (!this.saveStore) return;
+    const { phase } = this.engine.state;
+    if (phase === "gameover") {
+      this.savedCheckpoint = null;
+      this.saveStore.clear();
+    } else if (phase === "preparation" || phase === "result" || phase === "augment") {
+      this.savedCheckpoint = createRunCheckpoint(this.engine.getSimulationSnapshot(), resumeBattle);
+      this.saveStore.write(this.savedCheckpoint);
+    }
+  }
 
   private readonly simulationMode: boolean;
 
@@ -239,13 +287,18 @@ export class EngineBridge {
         if (engine.autoArrangeBoard()) this.emitAudio("click");
         break;
       case "battle":
+        if (engine.state.phase === "preparation" && engine.boardCount) this.persistCheckpoint(true);
         engine.startBattle();
         break;
       case "skipBattle":
         this.fastForwardBattle();
         break;
       case "rankingToggle":
+        this.inspectedFighterId = null;
         engine.toggleRanking();
+        break;
+      case "inspectFighter":
+        this.inspectFighter(action.fid);
         break;
       case "resultContinue":
         engine.continueAfterResult();
@@ -257,9 +310,24 @@ export class EngineBridge {
         if (engine.canFinishCampaign) engine.continueAfterResult();
         break;
       case "restart":
+        this.savedCheckpoint = null;
+        this.saveStore?.clear();
         engine.resetToTitle(this.restartSeed);
         this.applyAutoplayEnemySeed();
         break;
+      case "resume": {
+        const save = this.savedCheckpoint;
+        if (engine.state.phase !== "title" || !save) break;
+        this.resetRunTrace();
+        const { bestScore } = engine.state;
+        engine.restoreSimulationSnapshot(save.snapshot);
+        engine.state.bestScore = Math.max(bestScore, engine.state.bestScore);
+        if (save.resumeBattle) {
+          engine.startBattle();
+          this.battlePaused = true;
+        }
+        break;
+      }
       case "clearSelection":
         engine.clearSelection();
         break;
@@ -276,6 +344,7 @@ export class EngineBridge {
 
     if (before) this.reportAction(action, before);
     if (!this.simulationMode) {
+      if (engine.state.phase === this.previousPhase && action.type !== "resume") this.persistCheckpoint();
       this.flushEvents();
       this.onEvent?.({ type: "state" });
       return this.getState();
@@ -478,9 +547,14 @@ export class EngineBridge {
 
   public renderTextState() {
     const state = JSON.parse(this.engine.renderTextState()) as Record<string, unknown>;
+    if (this.engine.state.phase === "title" && this.savedRun) {
+      (state.availableActions as string[]).unshift("点击继续远征或按 Enter 恢复本局");
+    }
     return JSON.stringify({
       ...state,
       interface: {
+        savedRun: this.savedRun,
+        saveIssue: this.saveIssue,
         enemyFormationOpen: this.enemyFormationOpen,
         autoplayEnabled: this.autoplayEnabled,
         autoplayPreferenceStyle: this.autoplayPreferenceStyle,
@@ -490,6 +564,7 @@ export class EngineBridge {
         autoplayInformationMode: this.autoplayInformationMode,
         backgroundBattleEnabled: this.backgroundBattleEnabled,
         battlePaused: this.battlePaused,
+        inspectedFighterId: this.inspectedFighterId,
         pageHidden: this.hidden,
       },
       trace: this.getTraceStats(),
@@ -503,6 +578,10 @@ export class EngineBridge {
       this.engine.state.phase !== "title" ||
       (!this.actionHistory.length && !this.battleHistory.length)
     ) return;
+    this.resetRunTrace();
+  }
+
+  private resetRunTrace() {
     this.actionSequence = 0;
     this.actionHistory = [];
     this.consoleBattle = null;
@@ -657,8 +736,12 @@ export class EngineBridge {
       }
     }
     if (phase !== "preparation") this.enemyFormationOpen = false;
-    if (phase !== "battle") this.battlePaused = false;
+    if (phase !== "battle") {
+      this.battlePaused = false;
+      this.inspectedFighterId = null;
+    }
     if (phase !== this.previousPhase) {
+      this.persistCheckpoint();
       if (phase === "battle") this.emitAudio("battle");
       if (phase === "result") this.emitAudio(this.engine.state.result?.won ? "win" : "loss");
       this.previousPhase = phase;

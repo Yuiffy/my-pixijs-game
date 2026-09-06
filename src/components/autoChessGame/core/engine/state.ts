@@ -9,6 +9,8 @@ import type { GameState, OwnedUnit } from "../gameTypes";
 export const BOARD_SIZE = 24;
 export const BENCH_SIZE = 8;
 export const SHOP_SIZE = 5;
+export const SCORE_VERSION = 2;
+export const BEST_SCORE_KEY = `rift-line-best-score-v${SCORE_VERSION}`;
 
 const emptySlots = <T>(size: number): Array<T | null> => Array.from({ length: size }, () => null);
 
@@ -16,9 +18,9 @@ export const loadBestScore = () => {
   try {
     if (!("localStorage" in globalThis)) return 0;
     const value = Number(
-      globalThis.localStorage.getItem("rift-line-best-score") || 0,
+      globalThis.localStorage.getItem(BEST_SCORE_KEY) || 0,
     );
-    return Number.isFinite(value) ? value : 0;
+    return Number.isFinite(value) && value >= 0 ? value : 0;
   } catch {
     return 0;
   }

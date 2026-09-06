@@ -490,6 +490,11 @@ export default function AutoChessGame() {
       },
     );
     bridgeRef.current = bridge;
+    try {
+      bridge.attachRunStorage(window.localStorage);
+    } catch {
+      setMessage("浏览器存储不可用，本局无法保存。");
+    }
     const storedBackgroundBattle = loadBackgroundBattlePreference();
     bridge.setBackgroundBattleEnabled(storedBackgroundBattle);
     setBackgroundBattleEnabled(storedBackgroundBattle);
@@ -802,6 +807,10 @@ export default function AutoChessGame() {
       if (!bridge) return;
       const { state } = bridge.engine;
       const key = event.key.toLowerCase();
+      if (event.key === "Escape" && bridge.inspectedFighterId) {
+        bridge.inspectFighter(null);
+        return;
+      }
       if (
         active instanceof HTMLInputElement
         || active instanceof HTMLSelectElement
@@ -829,6 +838,8 @@ export default function AutoChessGame() {
       }
       if (state.phase === "title" && number >= 1 && number <= state.starterChoices.length) {
         action = { type: "starter", id: state.starterChoices[number - 1] };
+      } else if (state.phase === "title" && event.key === "Enter" && bridge.savedRun) {
+        action = { type: "resume" };
       } else if (state.phase === "augment" && number >= 1 && number <= state.augmentChoices.length) {
         action = { type: "augment", index: number - 1 };
       } else if (state.phase === "preparation" && number >= 1 && number <= 5) {
@@ -965,6 +976,9 @@ export default function AutoChessGame() {
         )}
         <RiftHud
           engine={engine || null}
+          savedRun={bridgeRef.current?.savedRun || null}
+          saveIssue={bridgeRef.current?.saveIssue || null}
+          inspectedFighterId={bridgeRef.current?.inspectedFighterId || null}
           enemyFormationOpen={enemyFormationOpen}
           onAction={dispatch}
           onBattleViewAction={adjustBattleView}

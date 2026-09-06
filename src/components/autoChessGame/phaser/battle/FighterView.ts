@@ -35,6 +35,7 @@ type FighterViewParts = {
   clockGunnerEars: Phaser.GameObjects.Container | null;
   hitFlash: Phaser.GameObjects.Arc;
   shield: Phaser.GameObjects.Arc;
+  selection: Phaser.GameObjects.Arc;
   abilityShield: Phaser.GameObjects.Arc;
   syncAura: Phaser.GameObjects.Arc;
   burn: Phaser.GameObjects.Arc;
@@ -51,6 +52,7 @@ interface FighterViewHost {
   scene: Phaser.Scene;
   bridge: EngineBridge;
   isCompact: () => boolean;
+  isPortrait: () => boolean;
   text: (
     x: number,
     y: number,
@@ -85,6 +87,8 @@ export class FighterViewRenderer {
     const container = this.host.scene.add.container(fighter.x, fighter.y);
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
     const shadow = this.host.scene.add.ellipse(0, radius * 0.8, radius * 1.8, radius * 0.6, 0x000000, 0.3).setName("shadow");
+    const selection = this.host.scene.add.circle(0, 0, radius + 5, 0xffffff, 0)
+      .setStrokeStyle(2, 0xffe39a, 1).setName("selection");
     const shield = this.host.scene.add.circle(0, 0, radius + 8, 0x6edeff, 0)
       .setStrokeStyle(2, 0xc6f7ff, 0)
       .setName("shield");
@@ -109,12 +113,22 @@ export class FighterViewRenderer {
     const star = this.host.text(0, radius + 30, "★".repeat(fighter.star), 9, "#ffdc68").setOrigin(0, 0.5).setName("star");
     const zone = this.host.scene.add.zone(0, 0, radius * 2.4, radius * 2.4).setInteractive({ useHandCursor: true });
     zone.setData("fighter", fighter.fid);
-    zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => this.host.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
-    zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.host.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter));
+    zone.on(Phaser.Input.Events.POINTER_OVER, (pointer: Phaser.Input.Pointer) => {
+      if (!this.host.isPortrait()) this.host.showUnitTooltip(fighter.unitId, pointer, fighter.star, fighter);
+    });
+    let down: { x: number; y: number } | null = null;
+    zone.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => { down = { x: pointer.x, y: pointer.y }; });
+    zone.on(Phaser.Input.Events.POINTER_UP, (pointer: Phaser.Input.Pointer) => {
+      if (down && Math.hypot(pointer.x - down.x, pointer.y - down.y) < 12) {
+        this.host.clearTooltip();
+        this.host.bridge.inspectFighter(fighter.fid);
+      }
+      down = null;
+    });
     zone.on(Phaser.Input.Events.POINTER_OUT, () => {
       if (!this.host.isCompact()) this.host.clearTooltip();
     });
-    container.add([shadow, syncAura, abilityShield, shield, portrait, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
+    container.add([shadow, syncAura, abilityShield, shield, portrait, selection, hitFlash, burn, hpBack, hp, energyBack, energy, label, star, status, zone]);
     this.fighterViewParts.set(container, {
       hp,
       energy,
@@ -123,6 +137,7 @@ export class FighterViewRenderer {
       clockGunnerEars,
       hitFlash,
       shield,
+      selection,
       abilityShield,
       syncAura,
       burn,
@@ -140,6 +155,9 @@ export class FighterViewRenderer {
   public update(view: Phaser.GameObjects.Container, fighter: Fighter) {
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
     const parts = this.fighterViewParts.get(view)!;
+    const portraitMode = this.host.isPortrait();
+    const selected = this.host.bridge.inspectedFighterId === fighter.fid;
+    parts.selection.setVisible(selected).setRadius(radius + 5);
     const movedDistance = Math.hypot(fighter.x - parts.lastX, fighter.y - parts.lastY);
     parts.lastX = fighter.x;
     parts.lastY = fighter.y;
@@ -329,12 +347,22 @@ export class FighterViewRenderer {
       fighter.gen27Buffed ? "27" : "",
       fighter.enraged ? "!" : "",
     ].filter(Boolean);
-    status.setText(statusBadges.join(" "));
+    const compactStatus = [
+      fighter.stun > 0 ? "✦" : "",
+      fighter.fearTime > 0 ? "惧" : "",
+      fighter.tauntTime > 0 ? "嘲" : "",
+      fighter.stealthTime > 0 ? "隐" : "",
+      fighter.burnTime > 0 ? "燃" : "",
+    ].filter(Boolean).slice(0, 2);
+    status.setText((portraitMode ? compactStatus : statusBadges).join(" "));
     status.setY(-radius - 8);
     const statusColor = switchActive ? "#e3b7ff" : fighter.stealthTime > 0 ? "#a9c8ff" : fighter.enraged ? "#ff4f9a" : fighter.syncAvDirection > 0 ? "#ff9a5c" : fighter.syncAvDirection < 0 ? "#79dcff" : fighter.weakenTime > 0 ? "#f5d56f" : fighter.slowTime > 0 ? "#8fd9ff" : "#ffd95e";
     if (status.style.color !== statusColor) status.setColor(statusColor);
-    label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.manquTime > 0 ? " · 满区" : ""}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}/${GLUTTONY_STACK_CAP}` : ""}${fighter.shield > 0 ? " ◇" : ""}${fighter.abilityShield > 0 ? " ◆" : ""}`);
-    star.setText("★".repeat(fighter.star)).setPosition(label.width / 2 + 6, radius + 30);
+    label.setVisible(!portraitMode);
+    if (!portraitMode) label.setText(`${UNIT_DEFS[fighter.unitId].name}${fighter.manquTime > 0 ? " · 满区" : ""}${fighter.growthStacks ? ` · 饱${fighter.growthStacks}/${GLUTTONY_STACK_CAP}` : ""}${fighter.shield > 0 ? " ◇" : ""}${fighter.abilityShield > 0 ? " ◆" : ""}`);
+    star.setText("★".repeat(fighter.star))
+      .setVisible(!portraitMode || selected)
+      .setPosition(portraitMode ? -radius : label.width / 2 + 6, radius + 30);
   }
 
 }

@@ -32,6 +32,7 @@ import {
   starForgeUpgradeCost,
 } from "./roster";
 import type { BattleDebrief } from "../battleDebrief";
+import { SCORE_VERSION } from "./state";
 
 interface ActiveTraitSummary {
   id: TraitId;
@@ -100,6 +101,11 @@ export const renderTextState = (context: TextStateContext) => {
       maxRounds: context.state.maxRounds,
       campaignCleared: context.state.endlessUnlocked || context.state.finalWon,
       campaignVictoryPending,
+      resultEndsRun: context.state.phase === "result" && (
+        context.state.hp <= 0
+        || (context.state.round === CAMPAIGN_ROUNDS && !context.state.result?.won)
+      ),
+      scoreVersion: SCORE_VERSION,
       endlessRound: Math.max(0, context.state.round - CAMPAIGN_ROUNDS),
       progressionMode: progressionModeForRound(context.state.round),
       wave: currentWave

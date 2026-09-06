@@ -1,6 +1,6 @@
 {
   "name": "my-pixijs-game",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -38,6 +38,8 @@
     "autochess:verify:release-notes": "node scripts/verify-autochess-release-notes.cjs",
     "autochess:verify:campaign-choice": "node scripts/verify-autochess-campaign-choice.cjs",
     "autochess:verify:seed-restart": "node scripts/verify-autochess-seed-restart.cjs",
+    "autochess:verify:system": "node scripts/verify-autochess-system.cjs",
+    "autochess:verify:performance": "node scripts/verify-autochess-performance.cjs",
     "autochess:verify:shop-details": "node scripts/verify-autochess-shop-details.cjs",
     "autochess:verify:auto-arrange": "node scripts/verify-autochess-auto-arrange.cjs",
     "autochess:verify:tiandou": "node scripts/verify-autochess-tiandou.cjs",

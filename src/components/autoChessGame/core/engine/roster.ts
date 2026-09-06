@@ -177,7 +177,6 @@ public useStarForge(location?: UnitLocation) {
     this.state.gold -= cost;
     unit.star = (fromStar + 1) as 2 | 3;
     this.state.selected = null;
-    this.state.score += cost * 3;
     this.setToast(
       `工坊完成：${UNIT_DEFS[unit.id].name}直升 ${unit.star} 星，消耗 ${cost} 金币。`,
       "good",
@@ -242,7 +241,6 @@ public buyShopUnit(index: number) {
     this.state.shop[index] = null;
     if (boardSlot >= 0) this.state.board[boardSlot] = owned;
     else if (benchSlot >= 0) this.state.bench[benchSlot] = owned;
-    this.state.score += def.cost * 5;
     const merged = mergeAtCapacity
       ? this.mergeOverflowPurchase(owned)
       : this.checkMerges();
@@ -415,7 +413,6 @@ public getUnitSellValue(unit: OwnedUnit) {
     keptUnit.star = (star + 1) as 2 | 3;
     removals.forEach((location) => this.setAt(location, null));
     this.state.selected = null;
-    this.state.score += 80 * star;
     this.setToast(
       `聚合完成：${UNIT_DEFS[id].name}升至 ${star + 1} 星，并优先保留场上棋子的站位！`,
       "good",

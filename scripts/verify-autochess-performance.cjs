@@ -126,7 +126,10 @@ const artifactDirectory = ".tmp/autochess/performance";
 mkdirSync(artifactDirectory, { recursive: true });
 
 (async () => {
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const ready = await fetch(`${baseUrl}/game/autochess`);
+  if (!ready.ok) throw new Error(`Autochess URL returned ${ready.status}`);
+  const browser = await chromium.launch({ channel: "chrome", headless: process.env.AUTOCHESS_HEADED !== "1" });
+  try {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 3,
@@ -167,24 +170,28 @@ mkdirSync(artifactDirectory, { recursive: true });
       }
       fiber = fiber.return;
     }
+    window.__codexAutoChessBridge = window.autoChessAI?.bridge || window.__codexAutoChessBridge;
     const scene = window.__codexAutoChessGame?.scene?.getScene("RiftLineScene");
     if (!window.__codexAutoChessBridge || !scene) return false;
     const topLevelMethods = ["syncBattleEntities", "syncCombatEffects", "syncBattleOverlay"];
-    const detailMethods = [
-      "updateFighter",
-      "updateProjectile",
-      "updateEffect",
-      "updateRabbit",
-      "updatePineTree",
-      "syncChronospheres",
+    for (const method of [...topLevelMethods, "update"]) {
+      if (typeof scene[method] !== "function") throw new Error(`Required scene probe missing: ${method}`);
+    }
+    const probes = [
+      ...topLevelMethods.map(method => ({ name: method, owner: scene, method })),
+      { name: "fighters", owner: scene.fighterRenderer, method: "update" },
+      { name: "projectiles", owner: scene.projectileRenderer, method: "update" },
+      { name: "effects", owner: scene.effectRenderer, method: "update" },
+      { name: "summons", owner: scene.summonRenderer, method: "sync" },
+      { name: "chronospheres", owner: scene, method: "syncChronospheres" },
     ];
-    const componentMethods = [...topLevelMethods, ...detailMethods];
+    const availableProbes = probes.filter(({ owner, method }) => typeof owner?.[method] === "function");
+    window.__autochessPerfMissingProbes = probes.filter(probe => !availableProbes.includes(probe)).map(({ name }) => name);
     window.__autochessPerfComponentSamples = Object.fromEntries([
       ["simulation", []],
-      ...componentMethods.map((method) => [method, []]),
+      ...availableProbes.map(({ name }) => [name, []]),
     ]);
     window.__autochessPerfRenderLoad = { effects: [], textEffects: [] };
-    const originalUpdate = scene.update.bind(scene);
     const bridge = window.__codexAutoChessBridge;
     const originalBridgeUpdate = bridge.update.bind(bridge);
     bridge.update = (delta) => {
@@ -194,13 +201,13 @@ mkdirSync(artifactDirectory, { recursive: true });
         window.__autochessPerfComponentSamples.simulation.push(performance.now() - start);
       }
     };
-    componentMethods.forEach((method) => {
-      const original = scene[method].bind(scene);
-      scene[method] = (...args) => {
+    availableProbes.forEach(({ name, owner, method }) => {
+      const original = owner[method].bind(owner);
+      owner[method] = (...args) => {
         const start = performance.now();
         const result = original(...args);
         if (window.__autochessPerfSampling) {
-          window.__autochessPerfComponentSamples[method].push(performance.now() - start);
+          window.__autochessPerfComponentSamples[name].push(performance.now() - start);
           if (method === "syncCombatEffects") {
             const renderedEffects = [...scene.effectViews.keys()].filter((effect) => typeof effect?.kind === "string");
             window.__autochessPerfRenderLoad.effects.push(renderedEffects.length);
@@ -214,13 +221,13 @@ mkdirSync(artifactDirectory, { recursive: true });
     });
     window.__autochessPerfUpdateSamples = [];
     window.__autochessPerfSampling = false;
-    scene.update = (time, delta) => {
-      const start = performance.now();
-      originalUpdate(time, delta);
+    let sceneStartedAt = 0;
+    scene.events.on("preupdate", () => { sceneStartedAt = performance.now(); });
+    scene.events.on("postupdate", () => {
       if (window.__autochessPerfSampling) {
-        window.__autochessPerfUpdateSamples.push(performance.now() - start);
+        window.__autochessPerfUpdateSamples.push(performance.now() - sceneStartedAt);
       }
-    };
+    });
     return true;
   });
   if (!attached) throw new Error("Unable to locate the active game and bridge through the React host");
@@ -327,6 +334,7 @@ mkdirSync(artifactDirectory, { recursive: true });
 
   const updateSamples = await page.evaluate(() => window.__autochessPerfUpdateSamples);
   const componentSamples = await page.evaluate(() => window.__autochessPerfComponentSamples);
+  if (!updateSamples.length || !componentSamples.simulation.length) throw new Error("Required frame probes produced no samples");
   const renderLoad = await page.evaluate(() => window.__autochessPerfRenderLoad);
   const trackedSceneSamples = Array.from(
     { length: Math.max(...["simulation", "syncBattleEntities", "syncCombatEffects", "syncBattleOverlay"].map((name) => componentSamples[name].length)) },
@@ -353,14 +361,15 @@ mkdirSync(artifactDirectory, { recursive: true });
   const frameSummary = summarize(frameSample.deltas.slice(1));
   const result = {
     label,
+    missingOptionalProbes: await page.evaluate(() => window.__autochessPerfMissingProbes),
     setup: {
       viewport: "390x844",
       emulatedDevicePixelRatio: 3,
       cpuThrottlingRate: cpuRate,
       renderDensityOverride: renderDensityOverride || null,
       durationMs: Math.round(frameSample.elapsed),
-      playerUnits: battleState.battle?.allPlayerUnits?.length,
-      enemyUnits: battleState.battle?.allEnemyUnits?.length,
+      playerUnits: battleState.battle?.ranking?.playerRows?.length || 0,
+      enemyUnits: battleState.battle?.ranking?.enemyRows?.length || 0,
     },
     canvas: canvasInfo,
     frames: {
@@ -392,8 +401,8 @@ mkdirSync(artifactDirectory, { recursive: true });
       jsHeapUsedBytes: Math.round(after.JSHeapUsedSize || 0),
     },
     liveEffects: {
-      projectiles: battleState.battle?.projectiles?.length || 0,
-      nonTextEffects: battleState.battle?.effects?.length || 0,
+      projectiles: battleState.battle?.visualEffects?.projectiles?.length || 0,
+      nonTextEffects: battleState.battle?.visualEffects?.effects?.length || 0,
     },
     screenshot: { path: screenshotPath, ...screenshot },
     errors,
@@ -406,7 +415,9 @@ mkdirSync(artifactDirectory, { recursive: true });
   if (errors.length || failedRequests.length || errorResponses.length) {
     throw new Error("Browser errors, failed requests, or error responses were captured");
   }
-  await browser.close();
+  } finally {
+    await browser.close();
+  }
 })().catch((error) => {
   console.error(error);
   process.exit(1);

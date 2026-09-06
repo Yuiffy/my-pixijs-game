@@ -7,13 +7,16 @@ import {
   BarChartOutlined,
   CaretRightOutlined,
   FastForwardOutlined,
+  HistoryOutlined,
   PauseOutlined,
   ReloadOutlined,
   RobotOutlined,
   SettingOutlined,
+  TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import type { AutoChessEngine } from "./core/gameEngine";
+import type { RunSaveInfo, RunSaveIssue } from "./core/engine/runSave";
 import {
   STARTERS,
   TRAITS,
@@ -36,10 +39,12 @@ import {
   countOwnedStars,
 } from "./hud/shared";
 import { BattleTraitBar } from "./hud/BattleTraits";
+import { BattleInspector } from "./hud/BattleInspector";
 import { EnemyFormationOverlay } from "./hud/EnemyFormationOverlay";
 import { InterestInfo, ShopCard, ShopSheet } from "./hud/Shop";
 import {
   BenchSheet,
+  MobileAugments,
   MobileResult,
   Pager,
   TraitSheet,
@@ -47,6 +52,9 @@ import {
 
 type Props = {
   engine: AutoChessEngine | null;
+  savedRun: RunSaveInfo | null;
+  saveIssue: RunSaveIssue;
+  inspectedFighterId: string | null;
   enemyFormationOpen: boolean;
   onAction: (action: GameAction) => void;
   onBattleViewAction: (action: BattleViewAction) => void;
@@ -121,6 +129,9 @@ function FinalRanking({
 
 export default function RiftHud({
   engine,
+  savedRun,
+  saveIssue,
+  inspectedFighterId,
   enemyFormationOpen,
   onAction,
   onBattleViewAction,
@@ -196,6 +207,13 @@ export default function RiftHud({
             <small className="rift-title-seed">战术种子 · {String(state.seed % 100000).padStart(5, "0")}</small>
           </section>
           <section className="rift-title-choice-panel">
+            {savedRun && (
+              <div className="rift-resume-run">
+                <div><strong>未完成的远征</strong><span>第 {savedRun.round} 战 · 核心 {savedRun.hp} · {({ preparation: "整备", result: "结算", augment: "天赋选择", battle: "待重新开战" })[savedRun.phase]}</span></div>
+                <ActionButton tone="confirm" onClick={() => dispatch({ type: "resume" })}><HistoryOutlined aria-hidden="true" />继续远征</ActionButton>
+              </div>
+            )}
+            {saveIssue && <p className="rift-save-issue" role="status">{saveIssue === "incompatible" ? "已有存档与当前版本不兼容" : saveIssue === "invalid" ? "已有存档未通过完整性校验" : "浏览器存储不可用，本局暂未保存"}</p>}
             <div className="rift-play-mode-block">
               <span>01 / 游玩方式</span>
               <div className="rift-play-mode" role="group" aria-label="游玩方式">
@@ -203,7 +221,7 @@ export default function RiftHud({
                 <button type="button" aria-pressed={autoplayEnabled} onClick={() => onAutoplayChange(true)}><RobotOutlined aria-hidden="true" /><span><strong>AI 观战</strong><small>全程托管</small></span></button>
               </div>
             </div>
-            <div className="rift-section-heading"><span>02 / 接入协议</span><strong>{autoplayEnabled ? "为 AI 指定开局优势" : "选择你的第一笔优势"}</strong><small>协议会带来一名初始单位，并改变整局经济或战斗节奏。</small></div>
+            <div className="rift-section-heading"><span>02 / {savedRun ? "另启远征" : "接入协议"}</span><strong>{autoplayEnabled ? "为 AI 指定开局优势" : "选择你的第一笔优势"}</strong><small>协议会带来一名初始单位，并改变整局经济或战斗节奏。</small></div>
             <div className="rift-dom-choice-grid">
               {state.starterChoices.map((id, index) => {
                 const starter = STARTERS.find((item) => item.id === id);
@@ -303,7 +321,7 @@ export default function RiftHud({
     );
   }
 
-  if (state.phase === "augment") return null;
+  if (state.phase === "augment") return isMobile ? <MobileAugments engine={engine} onAction={dispatch} /> : null;
   if (state.phase === "result") {
     return isMobile
       ? <MobileResult engine={engine} onAction={dispatch} />
@@ -338,7 +356,7 @@ export default function RiftHud({
         <ActionButton className="rift-skip-battle-button" aria-label="快速结算当前战斗" aria-keyshortcuts="S" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗 (S)"><FastForwardOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">快速结算</span><kbd>S</kbd></ActionButton>
         <ActionButton className="rift-ranking-button" aria-label={state.battle.rankingOpen ? "收起统计" : "查看统计"} aria-expanded={state.battle.rankingOpen} aria-keyshortcuts="D" onClick={() => dispatch({ type: "rankingToggle" })} title={state.battle.rankingOpen ? "收起统计 (D)" : "查看统计 (D)"}><BarChartOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">{state.battle.rankingOpen ? "收起统计" : "查看统计"}</span><kbd>D</kbd></ActionButton>
       </div>
-      {battlePaused && (
+      {battlePaused && !inspectedFighterId && (
         <div className="rift-battle-paused-status" role="status" aria-live="polite">
           <PauseOutlined aria-hidden="true" />
           <strong>战斗已暂停</strong>
@@ -354,7 +372,7 @@ export default function RiftHud({
         <>
           <div className="rift-dom-stage">
             <aside className="rift-dom-shop-desktop">
-              <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? engine.isStarForgeUnlocked ? "升星工坊已接入" : "满本 · 可解锁工坊" : `下本还需 ${engine.upgradeCost} 金${state.upgradeDiscountCarry ? ` · 结转 ${state.upgradeDiscountCarry}` : ""}`}</small></div></div>
+              <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><button className="rift-trait-planner-trigger" type="button" aria-label="阵容羁绊" title="阵容羁绊" onClick={() => setSheet("traits")}><TeamOutlined /></button><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? engine.isStarForgeUnlocked ? "升星工坊已接入" : "满本 · 可解锁工坊" : `下本还需 ${engine.upgradeCost} 金${state.upgradeDiscountCarry ? ` · 结转 ${state.upgradeDiscountCarry}` : ""}`}</small></div></div>
               <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>结算金 <b>{engine.potentialBounty}</b></span><InterestInfo engine={engine} /><span>连胜 <b>{state.streak || "—"}</b></span></div>
               <div className="rift-tier-odds">{odds.map((chance, index) => <span key={index} className={`tier-${index + 1} ${chance ? "" : "is-muted"}`}><i>{index + 1}</i><b>{chance}%</b></span>)}</div>
               <div className="rift-shop-list">{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} />)}</div>
@@ -371,10 +389,12 @@ export default function RiftHud({
         </>
       )}
       {battleOverlay}
+      {state.phase === "battle" && inspectedFighterId && <BattleInspector engine={engine} fid={inspectedFighterId} onSelect={fid => dispatch({ type: "inspectFighter", fid })} />}
       <div className="rift-mobile-session-controls" aria-label="对局控制">
         <button type="button" aria-pressed={autoplayEnabled} onClick={() => onAutoplayChange(!autoplayEnabled)} title={autoplayEnabled ? "关闭托管并接管" : "开启 AI 托管"}><RobotOutlined aria-hidden="true" /><span>{autoplayEnabled ? "接管" : "托管"}</span></button>
         <button type="button" aria-label="游戏设置" onClick={onSettingsOpen} title="游戏设置"><SettingOutlined aria-hidden="true" /></button>
       </div>
+      {saveIssue === "unavailable" && <div className="rift-save-warning" role="status">本局自动保存失败</div>}
       {enemyFormationOpen && state.phase === "preparation" && (
         <EnemyFormationOverlay
           engine={engine}

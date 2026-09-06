@@ -874,6 +874,10 @@ export class AutoChessEngine {
     return this.progression.canFinishCampaign;
   }
 
+  public get resultEndsRun() {
+    return this.progression.resultEndsRun;
+  }
+
   public finishCampaign() {
     return this.progression.finishCampaign();
   }
@@ -923,6 +927,14 @@ export class AutoChessEngine {
   public getBattleDebrief() {
     const { battle, result } = this.state;
     if (!battle || !result) return null;
+    if (this.resultEndsRun) {
+      return {
+        kind: "pressure" as const,
+        tone: "danger" as const,
+        title: this.state.hp > 0 ? "终关未突破" : "核心失守",
+        detail: `本次远征结束。第 ${this.state.round} 战敌方仍有 ${battle.enemy.filter(fighter => fighter.alive).length} 人存活。`,
+      };
+    }
     return createBattleDebrief({
       won: result.won,
       elapsed: battle.elapsed,

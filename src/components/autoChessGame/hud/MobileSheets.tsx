@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { AutoChessEngine } from "../core/gameEngine";
 import {
   CAMPAIGN_ROUNDS,
+  AUGMENTS,
+  SHOP_UNITS,
   TRAITS,
   UNIT_DEFS,
   augmentTierForRound,
@@ -40,8 +42,53 @@ export function BenchSheet({ engine, selected, onClose, onAction }: { engine: Au
 }
 
 export function TraitSheet({ engine, onClose }: { engine: AutoChessEngine; onClose: () => void }) {
-  const traits = Object.entries(engine.getTraitCounts()).filter(([, count]) => count > 0).map(([id, count]) => ({ trait: TRAITS[id as keyof typeof TRAITS], count, status: engine.getTraitStatus(id as keyof typeof TRAITS) }));
-  return <Sheet title="羁绊网络" eyebrow="SYNERGY / 悬浮棋子查看完整技能" onClose={onClose}><div className="rift-trait-sheet-list">{traits.length ? traits.map(({ trait, count, status }) => <div key={trait.id} className={status.active ? "is-active" : ""} style={{ "--trait-color": trait.color } as CSSProperties}><span className="rift-trait-orb">{status.active ? "✦" : "·"}</span><div><strong>{trait.name} <small>{trait.family}</small></strong><p>{count} 人 · {status.active ? trait.bonuses[status.level - 1] : `还差 ${Math.max(1, (trait.thresholds.find((threshold) => threshold > count) ?? count + 1) - count)} 人激活`}</p></div><b>{status.active ? STAR_LABEL[status.level] : "—"}</b></div>) : <p className="rift-sheet-empty">上阵单位后，羁绊会在这里展开。</p>}</div></Sheet>;
+  const [showAll, setShowAll] = useState(false);
+  const filterId = useId();
+  const traits = Object.values(TRAITS).map(trait => ({ trait, status: engine.getTraitStatus(trait.id) }))
+    .filter(({ status }) => showAll || status.count > 0)
+    .sort((left, right) => right.status.count - left.status.count);
+  const deployed = new Set(engine.state.board.filter(Boolean).map(unit => unit!.id));
+  const benched = new Set(engine.state.bench.filter(Boolean).map(unit => unit!.id));
+  return (
+    <Sheet title="羁绊网络" eyebrow="阵容规划" onClose={onClose}>
+      <label className="rift-trait-filter" htmlFor={filterId}><input id={filterId} type="checkbox" checked={showAll} onChange={event => setShowAll(event.target.checked)} />全部羁绊</label>
+      <div className="rift-trait-planner">
+        {traits.map(({ trait, status }) => {
+          const next = trait.thresholds.find(threshold => threshold > status.count);
+          const members = SHOP_UNITS.filter(id => UNIT_DEFS[id].traits.includes(trait.id))
+            .sort((left, right) => Number(deployed.has(right)) - Number(deployed.has(left))
+              || Number(benched.has(right)) - Number(benched.has(left)) || UNIT_DEFS[left].cost - UNIT_DEFS[right].cost);
+          return (
+            <details key={trait.id} style={{ "--trait-color": trait.color } as CSSProperties}>
+              <summary><strong>{trait.name}</strong><span>{status.count} / {next || status.maxThreshold} 人</span><b>{status.active ? STAR_LABEL[status.level] : "未激活"}</b></summary>
+              <p>{status.active ? trait.bonuses[status.level - 1] : trait.description}</p>
+              {next && <p className="rift-trait-next">再上阵 {next - status.count} 名不同成员：{trait.bonuses[status.level]}</p>}
+              <ul>{members.map(id => <li key={id} className={deployed.has(id) ? "is-deployed" : benched.has(id) ? "is-benched" : "is-missing"}><UnitPortrait unitId={id} size={30} /><span>{UNIT_DEFS[id].name}</span><b>{UNIT_DEFS[id].cost} 费</b><small>{deployed.has(id) ? "已上场" : benched.has(id) ? "替补席" : "未持有"}</small></li>)}</ul>
+            </details>
+          );
+        })}
+      </div>
+    </Sheet>
+  );
+}
+
+export function MobileAugments({ engine, onAction }: { engine: AutoChessEngine; onAction: (action: GameAction) => void }) {
+  const choices = engine.state.augmentChoices.map(id => AUGMENTS.find(augment => augment.id === id)!);
+  return (
+    <section className="rift-mobile-augments" aria-label="局中天赋" style={{ fontFamily: FONT }}>
+      <header><span>第 {engine.state.round} 战</span><h2>局中{choices[0]?.tier === "major" ? "大" : "小"}天赋</h2></header>
+      <div className="rift-mobile-augment-choices">
+        {choices.map((augment, index) => (
+          <button type="button" key={augment.id} className="rift-mobile-augment-option" style={{ "--augment-color": augment.color } as CSSProperties} aria-label={`选择${augment.name}`} onClick={() => onAction({ type: "augment", index })}>
+            <span className="rift-augment-icon" aria-hidden="true">{augment.icon}</span>
+            <div><small>{augment.kicker}</small><strong>{augment.name}</strong></div>
+            <p>{augment.description}</p>
+            <span className="rift-augment-confirm">选择天赋 <b aria-hidden="true">↗</b></span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 export function MobileResult({ engine, onAction }: { engine: AutoChessEngine; onAction: (action: GameAction) => void }) {
@@ -117,7 +164,7 @@ export function MobileResult({ engine, onAction }: { engine: AutoChessEngine; on
             </>
           ) : (
             <ActionButton tone={result.won ? "confirm" : "danger"} className="rift-mobile-result-continue" onClick={() => onAction({ type: "resultContinue" })}>
-              {state.hp <= 0 ? "继续 · 查看结局" : augmentTierForRound(state.round) ? `继续 · 选择${augmentTierForRound(state.round) === "minor" ? "小" : "大"}天赋` : "继续 · 进入整备"}
+              {engine.resultEndsRun ? "结束远征 · 查看总结" : augmentTierForRound(state.round) ? `继续 · 选择${augmentTierForRound(state.round) === "minor" ? "小" : "大"}天赋` : "继续 · 进入整备"}
             </ActionButton>
           )}
         </div>

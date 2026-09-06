@@ -7,7 +7,7 @@ export const WAVES: WaveDefinition[] = [
     round: 1,
     name: "直播间暖场",
     tag: "normal",
-    description: "果冻风纪与兔子射手在前排，适合熟悉站位。",
+    description: "果冻风纪受击后会逃跑回血，兔子射手提供远程火力；前排承伤、远程后置。",
     modifier: Math.sqrt(2 / 3),
     units: [{ id: "sun_guard" }, { id: "ember_blade" }],
   },
@@ -23,7 +23,7 @@ export const WAVES: WaveDefinition[] = [
     round: 3,
     name: "深夜档突入",
     tag: "normal",
-    description: "可爱冲阵会打乱前线，分散站位可降低损失。",
+    description: "蛙梓持续治疗，雅吨近身灼烧；北欧时停会冻结范围内敌我，远程分散可减少同时被控。",
     modifier: Math.sqrt(7 / 12),
     units: [
       { id: "cinder_ram" },
@@ -36,7 +36,7 @@ export const WAVES: WaveDefinition[] = [
     round: 4,
     name: "果冻火力网",
     tag: "elite",
-    description: "精英预警：果冻风纪控制前排，弥月火力锁定远端单位。",
+    description: "精英预警：果冻风纪逃跑回血，大黑鼠沿路减速，老弥与北欧魔法师提供浮游炮和时停；前后排保持间距。",
     modifier: Math.sqrt(11 / 9),
     units: [
       { id: "sun_guard" },
@@ -63,7 +63,7 @@ export const WAVES: WaveDefinition[] = [
     round: 6,
     name: "攻城序列",
     tag: "normal",
-    description: "阿梓的前排冲阵惩罚抱团，浣熊射手持续压制后排。",
+    description: "蛙梓治疗与灼烧并行，好笑姐姐和椰子栞切入后方；保留侧翼保护远程核心。",
     modifier: Math.sqrt(13 / 12),
     units: [
       { id: "cinder_ram" },

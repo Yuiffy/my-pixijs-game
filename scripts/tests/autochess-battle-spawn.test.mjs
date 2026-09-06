@@ -3081,7 +3081,9 @@ test("十六战胜利可以完成远征并保留继续无限分支", () => {
     damage: 0,
   };
   const scoreBefore = finishEngine.state.score;
-  const completionBonus = finishEngine.state.hp * 45 + finishEngine.state.gold * 10 + 500;
+  const finalAssets = [...finishEngine.state.board, ...finishEngine.state.bench]
+    .reduce((total, unit) => total + (unit ? finishEngine.getUnitSellValue(unit) : 0), finishEngine.state.gold);
+  const completionBonus = finishEngine.state.hp * 45 + finalAssets * 10 + 500;
   const pendingText = JSON.parse(finishEngine.renderTextState());
 
   assert.equal(finishEngine.canFinishCampaign, true);

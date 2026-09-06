@@ -13,6 +13,7 @@ import {
   type AugmentTier,
   type TraitId,
   type UnitId,
+  UNIT_DEFS,
   waveForRound,
   augmentTierForRound,
 } from "../gameData";
@@ -24,6 +25,7 @@ import type {
 } from "../gameTypes";
 import type { RandomSource } from "./random";
 import { STARTER_EFFECTS } from "./runRules";
+import { BEST_SCORE_KEY } from "./state";
 
 interface ProgressionHost {
   state: () => GameState;
@@ -211,14 +213,14 @@ public finishBattle(won: boolean) {
       this.state.score += this.state.round * 35;
       this.state.result = {
         won: false,
-        headline: this.state.hp > 0 ? "防线后撤" : "核心失守",
+        headline: this.state.hp <= 0 ? "核心失守" : this.state.round === CAMPAIGN_ROUNDS ? "终关未能突破" : "防线后撤",
         detail: `${bountyDetail} + 利息 ${interest}${financeIncome ? " + 理财 2" : ""}${debtPayment ? " - 花呗还款 1" : ""}`,
         income,
         bounty,
         defeatedEnemies,
         defeatedByStar,
         upgradeDiscount:
-          this.state.hp > 0 && !this.isMaxPlayerLevel
+          this.state.hp > 0 && this.state.round !== CAMPAIGN_ROUNDS && !this.isMaxPlayerLevel
             ? PASSIVE_UPGRADE_DISCOUNT
             : 0,
         damage,
@@ -241,10 +243,17 @@ public finishCampaign() {
     return true;
   }
 
+public get resultEndsRun() {
+    return this.state.phase === "result" && (
+      this.state.hp <= 0
+      || (this.state.round === CAMPAIGN_ROUNDS && !this.state.result?.won)
+    );
+  }
+
 public continueAfterResult() {
     const { result } = this.state;
     if (this.state.phase !== "result" || !result) return;
-    if (this.state.hp <= 0) {
+    if (this.resultEndsRun) {
       this.endGame(false);
       return;
     }
@@ -327,13 +336,19 @@ public prepareNextRound() {
   }
 
 private endGame(won: boolean) {
+    if (this.state.phase === "gameover") return;
     this.state.finalWon = won;
-    if (won && !this.state.endlessUnlocked) this.state.score += this.state.hp * 45 + this.state.gold * 10 + 500;
+    if (won && !this.state.endlessUnlocked) this.state.score += this.state.hp * 45 + 500;
+    const assets = [...this.state.board, ...this.state.bench].reduce(
+      (total, unit) => total + (unit ? UNIT_DEFS[unit.id].cost * 3 ** (unit.star - 1) : 0),
+      this.state.gold,
+    );
+    this.state.score += assets * 10;
     this.state.bestScore = Math.max(this.state.bestScore, this.state.score);
     try {
       if ("localStorage" in globalThis) {
         globalThis.localStorage.setItem(
-          "rift-line-best-score",
+          BEST_SCORE_KEY,
           String(this.state.bestScore),
         );
       }

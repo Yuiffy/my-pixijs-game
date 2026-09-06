@@ -26,7 +26,7 @@ export class AutoChessAIController {
       version: this.version,
       indexing: "starter/buy/choose/select/move/sell use 1-based slots; act() uses raw GameAction indexes",
       read: ["state()", "logs(count = 80)", "battles()", "actions(count = 200)", "window.autoChessLastRun", "help()"],
-      flow: ["starter(choice)", "battle()", "pause()", "resume()", "skipBattle()", "next()", "finishCampaign()", "continueEndless()", "choose(choice)", "restart()"],
+      flow: ["starter(choice)", "continueRun()", "battle()", "pause()", "resume()", "skipBattle()", "next()", "finishCampaign()", "continueEndless()", "choose(choice)", "restart()"],
       economy: ["buy(shopSlot)", "reroll()", "lock()", "level()", "starForge(zone?, slot?)"],
       formation: ["select(zone, slot)", "move(fromZone, fromSlot, toZone, toSlot)", "sell(zone?, slot?)"],
       testing: ["advance(milliseconds)", "consoleLogging(enabled)", "act(rawGameAction)"],
@@ -161,6 +161,13 @@ export class AutoChessAIController {
 
   public restart() {
     return this.perform({ type: "restart" }, "restarted run");
+  }
+
+  public continueRun() {
+    if (this.bridge.engine.state.phase !== "title" || !this.bridge.savedRun) {
+      return this.failure("continueRun requires a saved run on the title screen");
+    }
+    return this.perform({ type: "resume" }, "restored saved run");
   }
 
   public advance(milliseconds: number) {
