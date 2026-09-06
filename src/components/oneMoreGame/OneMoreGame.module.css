@@ -1,0 +1,960 @@
+.game {
+  --ink: #243e3b;
+  --red: #b72f4b;
+  --teal: #2a786e;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  outline: none;
+  isolation: isolate;
+  color: var(--ink);
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  letter-spacing: 0;
+  background: #d7e6df;
+  touch-action: none;
+  user-select: none;
+}
+.game * {
+  box-sizing: border-box;
+}
+.game button,
+.game input {
+  font: inherit;
+}
+.game button {
+  cursor: pointer;
+}
+.game button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.game button:focus-visible,
+.game a:focus-visible,
+.game input:focus-visible {
+  outline: 3px solid #cf485f;
+  outline-offset: 4px;
+}
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: #d7e6df;
+  opacity: 0.35;
+  z-index: -2;
+}
+.world {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.world canvas {
+  display: block;
+}
+.header {
+  position: absolute;
+  inset: 24px 34px auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.identity {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+.identity h1, .identity p, .playerName, .bossHealth, .fightMeta, .footer {
+  text-shadow: 0 1px 3px #f5faf1, 0 0 10px #f5faf1, 0 0 18px #f5faf1;
+}
+.identity h1 {
+  margin: 0;
+  font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.identity h1 span {
+  display: inline-block;
+  margin-left: 18px;
+  font-family: "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  vertical-align: middle;
+}
+.identity p {
+  margin: 9px 0 0;
+  font-size: 12px;
+}
+.tools {
+  display: flex;
+  gap: 7px;
+}
+.iconButton {
+  display: inline-flex;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  justify-content: center;
+  align-items: center;
+  background: #f4f8f0db;
+  border: 1px solid #4a706332;
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 17px;
+  transition: background 0.15s;
+}
+.iconButton:hover {
+  background: #fffefa;
+}
+.tools .helpButton { width: 76px; flex-basis: 76px; gap: 7px; border-radius: 5px; font-size: 14px; }
+.parryFeedback { position: absolute; top: 29%; left: 50%; transform: translateX(-50%); pointer-events: none; text-align: center; white-space: nowrap; animation: parryPop .2s ease-out; }
+.parryFeedback strong { display: block; color: #ffe49a; font: 900 40px/1.15 'Microsoft YaHei', sans-serif; text-shadow: 2px 0 #493d25, -2px 0 #493d25, 0 -2px #493d25, 0 3px #493d25, 0 0 14px #fff7d8; }
+.parryFeedback > span { display: flex; justify-content: center; align-items: center; gap: 14px; color: #493d25; margin-top: 9px; font-weight: 700; font-size: 14px; text-shadow: 0 0 5px white, 0 0 12px white; }
+.parryFeedback i { font-style: normal; font-size: 12px; }
+.parryWindow { color: #89591b; text-shadow: 0 0 4px #ffeb9a, 0 0 14px #ffeb9a; }
+.settingsTabs { display: flex; border-bottom: 1px solid #52736550; margin: 15px 0 18px; }
+.settingsTabs button { width: 50%; padding: 10px 0; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #527365; font-size: 14px; }
+.settingsTabs button[aria-selected="true"] { color: var(--red); border-bottom-color: var(--red); font-weight: 700; }
+.bindingGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; text-align: left; }
+.binding { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.binding select { width: 100%; height: 37px; border: 1px solid #8da59a; border-radius: 4px; background: #fffef8; color: var(--ink); padding: 0 8px; font: 600 16px 'Microsoft YaHei', sans-serif; }
+.binding select:focus-visible { outline: 3px solid #cf485f; outline-offset: 2px; }
+.dialog { max-height: calc(100dvh - 30px); overflow-y: auto; touch-action: pan-y; }
+@keyframes parryPop { from { transform: translateX(-50%) scale(1.18); opacity: .4; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+.health {
+  position: absolute;
+  top: 110px;
+  left: 6%;
+  right: 6%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+}
+.playerName {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.playerName img {
+  object-fit: contain;
+}
+.playerName strong {
+  font-size: 16px;
+}
+.hearts {
+  display: flex;
+  gap: 7px;
+  margin-top: 8px;
+  color: var(--red);
+  font-size: 20px;
+}
+.hearts .emptyHeart {
+  color: #a3b2ac;
+}
+.bossHealth {
+  width: 30%;
+  min-width: 245px;
+  max-width: 360px;
+}
+.bossHealth > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+.bossHealth strong {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 25px;
+}
+.bossHealth span {
+  font-size: 12px;
+}
+.spiritTrack {
+  height: 10px;
+  background: #506d6333;
+  padding: 2px;
+  border: 1px solid #4b75685c;
+}
+.spiritTrack i {
+  display: block;
+  height: 100%;
+  background: var(--teal);
+  transition: width 0.15s;
+}
+.bossSub {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.fightMeta {
+  position: absolute;
+  top: 115px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 12px;
+}
+.fightMeta span:first-child {
+  grid-column: 1 / -1;
+  text-align: center;
+  line-height: 1.1;
+  font-family: "KaiTi", serif;
+  font-size: 23px;
+  color: var(--red);
+  font-weight: 700;
+}
+.fightMeta time {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.moveName {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: "KaiTi", serif;
+  font-size: 30px;
+  font-weight: 700;
+  text-shadow: 0 1px 8px #ffffff;
+}
+.danger {
+  color: #a8223d;
+}
+.preflight {
+  position: absolute;
+  bottom: 58px;
+  left: 6%;
+  right: 6%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 26px;
+  background: #f5f8efe8;
+  border-top: 2px solid #809689;
+  box-shadow: 0 10px 28px #243e3b12;
+}
+.eyebrow {
+  display: block;
+  font-size: 12px;
+  color: #536f61;
+}
+.vowList {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 14px 0 9px;
+}
+.vowList label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "KaiTi", serif;
+  font-size: 23px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.vowList input {
+  accent-color: var(--red);
+  width: 15px;
+  height: 15px;
+}
+.vowList .selectedVow {
+  color: var(--red);
+}
+.vowTarget {
+  margin: 0;
+  font-size: 12px;
+  min-height: 18px;
+}
+.depart {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 12px;
+  cursor: pointer;
+}
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 28px;
+  height: 20px;
+}
+.toggle > span {
+  display: inline-block;
+  width: 29px;
+  height: 17px;
+  padding: 3px;
+  background: #acbdb3;
+  border-radius: 10px;
+}
+.toggle > span::before {
+  content: "";
+  display: block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.15s;
+}
+.toggle input:checked + span {
+  background: var(--teal);
+}
+.toggle input:checked + span::before {
+  transform: translateX(12px);
+}
+.toggle input:focus-visible + span {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+}
+.primary {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 23px;
+  min-width: 157px;
+  height: 52px;
+  padding: 0 24px;
+  background: var(--red);
+  border: 1px solid #9f203c;
+  color: #fff9f0;
+  font-size: 18px !important;
+  border-radius: 3px;
+  box-shadow: 0 4px 0 #79293b;
+  transition:
+    transform 0.1s,
+    background 0.1s;
+}
+.primary:hover {
+  background: #c8435a;
+}
+.primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #79293b;
+}
+.controls {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.movement,
+.combat {
+  display: flex;
+  gap: 12px;
+}
+.actionButton {
+  border: 1px solid #4a706350;
+  color: var(--ink);
+  background: #f3f8efeb;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 22px !important;
+  box-shadow: 0 3px 0 #839f9344;
+  touch-action: none;
+}
+.combat .actionButton {
+  width: 78px;
+  height: 64px;
+  border-radius: 7px;
+  flex-direction: column;
+}
+.actionButton span:last-child:not(:first-child) {
+  font-size: 12px;
+}
+.actionButton:active {
+  transform: translateY(2px);
+  background: #d4e3d9;
+}
+.combat .attackButton {
+  background: #b9304beb;
+  color: #fff9f0;
+}
+.combat .guardButton {
+  background: #267a6fe8;
+  color: #f5ffef;
+}
+.dialogShade {
+  position: absolute;
+  inset: 0;
+  background: #15352a60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 5;
+}
+.dialog {
+  position: relative;
+  width: 370px;
+  max-width: 100%;
+  padding: 32px;
+  color: var(--ink);
+  background: #f3f7ef;
+  border-radius: 6px;
+  box-shadow: 0 20px 90px #10281f33;
+  text-align: center;
+}
+.dialog h2 {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 36px;
+  margin: 12px 0;
+}
+.dialog p {
+  margin: 0 0 24px;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.dialog .primary {
+  width: 100%;
+}
+.textButton {
+  background: transparent;
+  border: 0;
+  padding: 14px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 13px;
+}
+.textButton:hover {
+  color: var(--red);
+}
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.settingRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #81988738;
+  font-size: 14px;
+}
+.settingRow input {
+  accent-color: var(--teal);
+}
+.settingRow input[type="range"] {
+  width: 140px;
+}
+.record {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 22px 0;
+  font-size: 11px;
+}
+.resultPosition {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 22vh;
+  pointer-events: none;
+}
+.result {
+  position: relative;
+  width: 420px;
+  max-width: calc(100% - 28px);
+  text-align: center;
+  padding: 27px 30px 18px;
+  background: #f6f8ef;
+  border-top: 3px solid var(--red);
+  box-shadow: 0 15px 45px #1d372a20;
+  pointer-events: auto;
+  animation: appear 0.24s ease-out;
+}
+.result h2 {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 34px;
+  margin: 12px 0;
+}
+.result p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+.resultStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid #55776135;
+  padding: 15px 0;
+}
+.resultStats div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.resultStats strong {
+  font-size: 25px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.resultStats small {
+  font-size: 12px;
+}
+.resultStats span {
+  font-size: 11px;
+  color: #52735e;
+}
+.resultActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 22px;
+  gap: 12px;
+}
+.resultActions .primary {
+  height: 47px;
+  padding: 0 18px;
+  gap: 10px;
+  min-width: 0;
+}
+.stamp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--red);
+  font-family: "KaiTi", serif;
+  font-size: 20px;
+  margin-top: 15px;
+}
+.stamp span:last-child {
+  font-family: "Microsoft YaHei", sans-serif;
+  font-size: 11px;
+}
+.footer {
+  position: absolute;
+  bottom: 15px;
+  left: 34px;
+  right: 34px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #456355;
+  pointer-events: none;
+}
+.footer i {
+  font-style: normal;
+  padding: 0 5px;
+}
+.loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 22px;
+  font-size: 18px;
+  background: #f6f8ef;
+}
+.loading span {
+  display: block;
+  margin-top: 12px;
+  height: 2px;
+  width: 100%;
+  background: var(--teal);
+  animation: loading 1s ease-in-out infinite alternate;
+}
+@keyframes loading {
+  to {
+    transform: scaleX(0.25);
+  }
+}
+@keyframes appear {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (max-width: 1000px) {
+  .header {
+    inset: 18px 22px auto;
+  }
+  .identity h1 span {
+    display: none;
+  }
+  .preflight {
+    bottom: 40px;
+    padding: 16px 20px;
+  }
+  .depart {
+    gap: 14px;
+  }
+  .vowList {
+    gap: 16px;
+  }
+  .vowList label {
+    font-size: 20px;
+  }
+  .controls {
+    bottom: 40px;
+  }
+}
+@media (max-width: 650px) and (orientation: portrait) {
+  .tools .fullscreenButton { display: none; }
+  .tools .helpButton { width: 66px; flex-basis: 66px; font-size: 13px; gap: 5px; }
+  .parryFeedback { top: 26%; }
+  .parryFeedback strong { font-size: 32px; }
+  .parryFeedback > span { font-size: 12px; margin-top: 5px; }
+  .game[data-phase="won"] .health, .game[data-phase="lost"] .health { visibility: hidden; }
+  .header {
+    inset: 20px 18px auto;
+    gap: 12px;
+  }
+  .identity {
+    gap: 10px;
+  }
+  .identity > a {
+    display: none;
+  }
+  .identity h1 {
+    font-size: 30px;
+  }
+  .identity p {
+    font-size: 10px;
+    margin-top: 5px;
+  }
+  .tools {
+    gap: 4px;
+  }
+  .iconButton {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+    font-size: 14px;
+  }
+  .health {
+    top: 98px;
+    left: 18px;
+    right: 18px;
+    gap: 12px;
+  }
+  .playerName {
+    gap: 3px;
+  }
+  .playerName img {
+    width: 39px;
+    height: 44px;
+  }
+  .playerName strong {
+    font-size: 13px;
+  }
+  .hearts {
+    font-size: 15px;
+    gap: 4px;
+  }
+  .bossHealth {
+    min-width: 138px;
+    width: 43%;
+  }
+  .bossHealth strong {
+    font-size: 21px;
+  }
+  .bossHealth > div:first-child span {
+    display: none;
+  }
+  .bossHealth span {
+    font-size: 10px;
+  }
+  .world {
+    inset: 0;
+  }
+  .moveName {
+    top: 26%;
+    font-size: 24px;
+  }
+  .fightMeta {
+    top: 178px;
+    display: flex;
+    gap: 4px;
+    flex-direction: row;
+    width: calc(100% - 36px);
+    justify-content: space-between;
+    font-size: 10px;
+  }
+  .fightMeta span:first-child {
+    font-size: 18px;
+  }
+  .preflight {
+    left: 18px;
+    right: 18px;
+    bottom: 43px;
+    display: block;
+    padding: 15px 17px;
+  }
+  .vowList {
+    gap: 10px;
+    justify-content: space-between;
+    margin: 12px 0 8px;
+  }
+  .vowList label {
+    font-size: 18px;
+    gap: 5px;
+  }
+  .vowList input {
+    width: 12px;
+    height: 12px;
+  }
+  .vowList label > span:last-child:not(:first-child) {
+    white-space: nowrap;
+  }
+  .vowList label > :last-child.anticon {
+    display: none;
+  }
+  .depart {
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+  .primary {
+    height: 46px;
+    min-width: 135px;
+    padding: 0 15px;
+    font-size: 17px !important;
+  }
+  .controls {
+    left: 18px;
+    right: 18px;
+    bottom: 75px;
+    gap: 14px;
+  }
+  .movement,
+  .combat {
+    gap: 7px;
+  }
+  .actionButton {
+    width: 44px;
+    height: 48px;
+    font-size: 20px !important;
+  }
+  .combat .actionButton {
+    width: 53px;
+    height: 60px;
+  }
+  .resultPosition {
+    padding: 0 0 43px;
+    align-items: flex-end;
+  }
+  .result {
+    padding: 23px 20px 17px;
+  }
+  .result h2 {
+    font-size: 32px;
+  }
+  .footer {
+    bottom: 16px;
+    left: 18px;
+    right: 18px;
+  }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .fightMeta { display: grid; grid-template-columns: repeat(3, max-content); column-gap: 9px; row-gap: 3px; }
+  .fightMeta > span:first-child { grid-column: 1 / -1; text-align: center; }
+  .parryFeedback { top: 27%; }
+  .parryFeedback strong { font-size: 27px; }
+  .parryFeedback > span { margin-top: 3px; font-size: 11px; }
+  .settingsTabs { margin: 7px 0 10px; }
+  .settingsTabs button { padding: 6px 0; }
+  .bindingGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; }
+  .binding { gap: 3px; }
+  .binding select { height: 30px; font-size: 14px; }
+  .header {
+    inset: 12px 20px auto;
+  }
+  .identity h1 {
+    font-size: 25px;
+  }
+  .identity p {
+    display: none;
+  }
+  .identity {
+    gap: 10px;
+  }
+  .iconButton {
+    height: 31px;
+    width: 31px;
+    flex-basis: 31px;
+    font-size: 14px;
+  }
+  .health {
+    top: 56px;
+    left: 5%;
+    right: 5%;
+  }
+  .playerName img {
+    width: 35px;
+    height: 40px;
+  }
+  .playerName strong {
+    font-size: 12px;
+  }
+  .hearts {
+    font-size: 15px;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .bossHealth {
+    min-width: 190px;
+  }
+  .bossHealth strong {
+    font-size: 18px;
+  }
+  .bossHealth > div:first-child {
+    margin-bottom: 5px;
+  }
+  .bossHealth span {
+    font-size: 10px;
+  }
+  .fightMeta {
+    top: 56px;
+    gap: 2px;
+    font-size: 10px;
+  }
+  .fightMeta span:first-child {
+    font-size: 19px;
+  }
+  .moveName {
+    font-size: 23px;
+    top: 27%;
+  }
+  .preflight {
+    left: 5%;
+    right: 5%;
+    bottom: 26px;
+    padding: 10px 16px;
+    align-items: center;
+  }
+  .vowList {
+    margin: 8px 0 4px;
+  }
+  .vowList label {
+    font-size: 18px;
+  }
+  .vowTarget {
+    font-size: 10px;
+  }
+  .eyebrow {
+    font-size: 10px;
+  }
+  .depart {
+    gap: 14px;
+  }
+  .primary {
+    min-width: 110px;
+    height: 41px;
+    padding: 0 14px;
+    font-size: 17px !important;
+    gap: 12px;
+  }
+  .controls {
+    bottom: 26px;
+  }
+  .actionButton {
+    width: 42px;
+    height: 42px;
+    font-size: 18px !important;
+  }
+  .combat .actionButton {
+    width: 58px;
+    height: 47px;
+    gap: 3px;
+  }
+  .combat .actionButton span:last-child {
+    font-size: 10px;
+  }
+  .resultPosition {
+    padding-top: 50px;
+  }
+  .result {
+    padding: 17px 25px 8px;
+    width: 370px;
+  }
+  .result h2 {
+    font-size: 28px;
+    margin: 8px 0;
+  }
+  .result p {
+    margin-bottom: 11px;
+    font-size: 12px;
+  }
+  .resultStats {
+    padding: 9px 0;
+  }
+  .resultStats strong {
+    font-size: 21px;
+  }
+  .resultActions {
+    margin-top: 10px;
+  }
+  .stamp {
+    margin-top: 8px;
+    font-size: 18px;
+  }
+  .dialog {
+    padding: 18px 28px;
+  }
+  .dialog h2 {
+    font-size: 27px;
+    margin: 7px 0;
+  }
+  .settingRow {
+    padding: 10px 0;
+  }
+  .record {
+    padding: 15px 0;
+  }
+  .footer {
+    bottom: 7px;
+    font-size: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 360px) and (orientation: portrait) {
+  .game[data-phase="fight"] .health { top: 80px; }
+  .fightMeta { top: 149px; }
+  .moveName, .parryFeedback { top: 184px; }
+  .parryFeedback strong { font-size: 27px; }
+  .vowList { gap: 6px; }
+  .vowList label { font-size: 16px; gap: 3px; }
+  .vowList input { width: 10px; height: 10px; }
+  .vowList label svg { display: none; }
+  .preflight { padding-inline: 13px; }
+}

@@ -29,6 +29,13 @@ interface ProjectItem {
 
 const gameDemos: ProjectItem[] = [
   {
+    title: '岁岁过招',
+    href: '/game/one-more',
+    description: '立下一约，接住三招。去竹庭会一会饼师傅。',
+    image: '/games/one-more/dojo.webp',
+    meta: '单人动作 · 竹庭第一试',
+  },
+  {
     title: '小鸟一百层',
     href: '/game/jumpone',
     description: '一路向上，在越来越刁钻的平台间刷新高度。',
