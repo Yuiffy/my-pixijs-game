@@ -40,6 +40,7 @@ import {
   intentLabel,
   playerAgendaFromDefinition,
   refreshOpportunityStatuses,
+  type AuthoredTechniqueBranch,
   type CampaignCharacterDefinition,
   type CampaignLead,
   type ChapterMilestone,
@@ -68,6 +69,16 @@ import {
   type WorldProject,
   type WuxiaLifeState,
 } from "./wuxiaLife";
+import {
+  AUTHORED_REFINEMENT_GAIN,
+  AUTHORED_TECHNIQUE_BRANCHES,
+  AUTHORED_TECHNIQUE_DETAILS,
+  authoredMastery,
+  findAuthoredTechnique,
+  inventionUnavailableReason,
+  normalizeAuthoredTechniques,
+  syncHeroMartialNarrative,
+} from "./wuxiaMartial";
 
 export type {
   ChapterManuscript,
@@ -198,6 +209,7 @@ export interface NovelChoice {
   check?: ChoiceCheck;
   success: ChoiceOutcome;
   failure?: ChoiceOutcome;
+  unavailableReason?: string;
 }
 
 export interface NovelEvent {
@@ -2092,23 +2104,60 @@ const buildCampaignInventEvent = (state: NovelState, activity: PlayerActivity): 
     .map((known) => state.world.techniques.find((entry) => entry.id === known.techniqueId))
     .filter((entry): entry is MartialTechniqueDef => Boolean(entry)) || [];
   const names = learned.slice(0, 3).map((entry) => `“${entry.name}”`).join("、");
-  return eventBase(state, {
+  const hasAuthored = state.campaign.legacy.authoredTechniques.length > 0;
+  const resolveChoice = (entry: NovelChoice): NovelChoice => {
+    const branch = entry.id.split(":")[1] as AuthoredTechniqueBranch;
+    const existing = findAuthoredTechnique(state, branch);
+    const unavailableReason = inventionUnavailableReason(state, branch);
+    if (!existing) return { ...entry, ...(unavailableReason ? { unavailableReason } : {}) };
+    const gain = Math.min(AUTHORED_REFINEMENT_GAIN, 100 - authoredMastery(state, existing.id));
+    return {
+      ...entry,
+      label: unavailableReason ? `“${existing.name}”已臻圆熟` : `精进“${existing.name}”`,
+      description: unavailableReason || `沿着已有招路打磨换气、落点与收势，让“${existing.name}”在交手时更稳。`,
+      preview: unavailableReason ? [effectPreview("火候", "圆熟", "neutral")] : [effectPreview("熟练", `+${gain}`, "good"), effectPreview("武学", "原式精进", "good")],
+      success: {
+        lines: [line(state.turn, 2, "action", `你重演“${existing.name}”，将上回略过的一处换气接得更细。招路仍是原来那一式，出手与收势却已比旧稿更稳。`)],
+        effects: { stats: { martial: 2, insight: 2 }, ...(branch === "break" ? { health: -4 } : {}) },
+      },
+      failure: {
+        lines: [line(state.turn, 2, "narrative", `你试着改动“${existing.name}”，几次接续却都不如旧式稳妥。你收回这处改笔，把尚未解开的疑问留在纸边。`)],
+        effects: { stats: { insight: 2 }, ...(branch === "break" ? { health: -6 } : {}) },
+      },
+      ...(unavailableReason ? { unavailableReason, check: undefined } : {}),
+    };
+  };
+  const event = eventBase(state, {
     id: `campaign-invent:${state.turn + 1}`,
     eyebrow: `第${state.turn + 1}回 · 自成一式`,
-    title: "你把一路所学摊开，准备留下自己的招",
+    title: hasAuthored ? "旧稿重开，这一次要把招意推得更深" : "你把一路所学摊开，准备留下自己的招",
     subtitle: `${location.name} · 武学推演`,
     locationId: location.id,
     mood: "moon",
     lines: [
       line(state.turn, 0, "narrative", `${location.descriptor}你把${names || "本门根基"}各自的来路写在纸边，没有抹去原主和门派。`),
-      line(state.turn, 1, "action", "自创不是把三个招名拼在一起；你要先决定这一式究竟为攻、为守，还是为替同伴留路。"),
+      line(state.turn, 1, "action", hasAuthored
+        ? `纸上已有${state.campaign.legacy.authoredTechniques.map((entry) => `“${entry.name}”`).join("、")}。你可以另辟招路，也可以沿旧式细推，把尚未圆融的地方逐一磨透。`
+        : "你先把纸分作三页：截断来锋、护住同伴、借势换位。今日先从其中一条招路落笔。"),
     ],
     choices: [
       choice(state, { id: "campaign-invent:break", label: "以破招为骨", description: "把见过的强攻与格挡都化成一次截断，但失手时更容易露出空门。", tone: "steel", risk: "高", preview: [effectPreview("自创", "破势新招", "good"), effectPreview("武艺", "+5", "good")], check: { stat: "martial", label: "推演", difficulty: 57 }, success: { lines: [line(state.turn, 2, "action", "你删去多余变化，只留下一次能在对手换气前截断来势的短招。")], effects: { stats: { martial: 5, insight: 3, fame: 4 }, health: -6 } }, failure: { lines: [line(state.turn, 2, "narrative", "新招尚不能连贯使出，你却已找出必须舍弃的那一段。")], effects: { stats: { insight: 5, martial: 2 }, health: -8 } } }),
       choice(state, { id: "campaign-invent:guard", label: "以护人为意", description: "让这一式优先替身侧之人挡开来锋，胜负排在第二。", tone: "jade", risk: "中", preview: [effectPreview("自创", "护持新招", "good"), effectPreview("侠义", "+5", "good")], check: { stat: "chivalry", label: "定意", difficulty: 53 }, success: { lines: [line(state.turn, 2, "action", "你把落点从对手要害移到来锋必经之处，这一改让整式终于有了属于你的理由。")], effects: { stats: { chivalry: 5, martial: 3, fame: 3 } } }, failure: { lines: [line(state.turn, 2, "narrative", "招式能挡一人，却还无法在围势中替同伴留出退路。")], effects: { stats: { chivalry: 3, insight: 3 } } } }),
       choice(state, { id: "campaign-invent:flow", label: "以行路为形", description: "把不同门派的身法化成连续换位，让这一式能随地点改变。", tone: "gold", risk: "中", preview: [effectPreview("自创", "行旅新招", "good"), effectPreview("机缘", "+5", "good")], check: { stat: "fortune", label: "融汇", difficulty: 54 }, success: { lines: [line(state.turn, 2, "action", "你不再强求固定三步，而把地形与人群本身纳入招式；这一式终于能带着一路见闻移动。")], effects: { stats: { fortune: 5, insight: 4, fame: 3 } } }, failure: { lines: [line(state.turn, 2, "narrative", "几段步法仍彼此相撞，但你已知道它们不能在同一口气里强接。")], effects: { stats: { fortune: 2, insight: 4 } } } }),
-    ],
+    ].map(resolveChoice),
   });
+  if (event.choices.every((entry) => entry.unavailableReason)) {
+    event.choices.push(choice(state, {
+      id: "campaign-invent-leave",
+      label: "收起旧稿，暂且出关",
+      description: "将现有招式与疑问妥善收好，另寻见闻。",
+      tone: "ink",
+      risk: "低",
+      preview: [effectPreview("武学", "原稿保留", "neutral")],
+      success: { lines: [line(state.turn, 2, "action", "你把武学稿收进行囊。此刻能推的招路已推过，下一步先去江湖中寻找新的见闻。")], effects: {} },
+    }));
+  }
+  return event;
 };
 
 const schoolFollowerCandidates = (
@@ -3093,7 +3142,7 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
   if (state.hero.health < state.hero.maxHealth) {
     activities.push(campaignActivity(state, "rest", {
       id: `activity-rest:${current.id}:${state.turn + 1}`,
-      title: `在${current.name}停一日养伤`,
+      title: `在${current.name}休养七日`,
       description: "恢复气血；江湖人物、盛事期限和传闻仍会继续推进。",
       risk: "低",
       durationDays: 7,
@@ -3103,23 +3152,25 @@ export const generatePlayerActivities = (state: NovelState): PlayerActivity[] =>
     }));
   }
 
-  const inventRules = state.content.rules.inventTechnique;
-  const canInvent = state.narrative.martial.mastery >= inventRules.martialMastery
-    && state.campaign.legacy.martialInsights >= inventRules.martialInsights
-    && state.hero.stats.fame >= inventRules.fame;
+  const canInvent = AUTHORED_TECHNIQUE_BRANCHES.some((branch) => !inventionUnavailableReason(state, branch));
+  const hasAuthored = state.campaign.legacy.authoredTechniques.length > 0;
+  const inventionBlock = AUTHORED_TECHNIQUE_BRANCHES.every((branch) => findAuthoredTechnique(state, branch))
+    ? "三路自创招式均已圆熟"
+    : inventionUnavailableReason(state, AUTHORED_TECHNIQUE_BRANCHES.find((branch) => !findAuthoredTechnique(state, branch))!)
+      || "继续练功、实战或辨招以积累火候";
   if (state.campaign.legacy.martialInsights > 0 || state.turn >= state.campaign.chapterLength) {
     activities.push(campaignActivity(state, "invent", {
       id: `activity-invent:${state.turn + 1}`,
-      title: "闭关推演一式自己的武学",
+      title: hasAuthored ? "闭关推演，另创或精进招式" : "闭关推演一式自己的武学",
       description: canInvent
-        ? "火候、见闻与名声都已足够，可以真正留下自创招式。"
-        : `尚需本门火候、三次武学领悟与足以请人见证的名声。`,
+        ? hasAuthored ? "重开武学旧稿，沿已有招路精进，或推演尚未成形的新式。" : "火候、见闻与名声都已足够，可以真正留下自创招式。"
+        : inventionBlock,
       risk: "高",
       durationDays: 18,
       targetLocationId: current.id,
-      preview: ["自创招式", "武学传承"],
+      preview: [hasAuthored ? "创招与精进" : "自创招式", "武学传承"],
       enabled: canInvent,
-      ...(!canInvent ? { unavailableReason: "继续练功、实战或辨招以积累火候" } : {}),
+      ...(!canInvent ? { unavailableReason: inventionBlock } : {}),
     }));
   }
 
@@ -3710,14 +3761,6 @@ const advanceNarrative = (
             : event.id.startsWith("sandbox") ? (success ? 3 : 2) : 0;
     if (martialGain > 0) {
       narrative.martial.mastery = clamp(narrative.martial.mastery + martialGain, 0, 100);
-      const practicedId = selected.id.startsWith("sandbox-duel:") || martialChoice || selected.id.startsWith("sandbox-manual-learn:") || selected.id.startsWith("campaign-invent:")
-        ? narrative.martial.techniques[1].id
-        : narrative.martial.techniques[0].id;
-      narrative.martial.techniques = narrative.martial.techniques.map((technique) => {
-        if (technique.id !== practicedId) return technique;
-        const mastery = clamp(technique.mastery + martialGain * 2, 0, 100);
-        return { ...technique, mastery, status: mastery >= 75 ? "大成" : mastery >= 20 ? "初悟" : technique.status, unlockedTurn: technique.unlockedTurn ?? turn };
-      });
     }
     after.companions = after.companions.map((companion) => {
       const character = narrative.cast.find((entry) => entry.id === companion.characterId);
@@ -3944,6 +3987,11 @@ const lineAsParagraph = (entry: NovelLine) => {
 };
 
 const revealTitleFor = (eventId: string) => {
+  if (eventId.startsWith("campaign-invent:")) return "推演落笔，招意渐明";
+  if (eventId.startsWith("campaign-train:")) return "收势之后，今日所练留在身上";
+  if (eventId.startsWith("campaign-found-sect:")) return "门庭的去留，由今日这一步落定";
+  if (eventId.startsWith("campaign-")) return "这一段行程，已有了自己的落款";
+  if (eventId.startsWith("life-")) return "这一日，已写入你的生涯";
   if (eventId.startsWith("sandbox")) {
     const archetype = sandboxArchetypeFromEventId(eventId);
     if (archetype === "manual") return "抄本有了去向，新招也有了来历";
@@ -3974,6 +4022,17 @@ const revealTitleFor = (eventId: string) => {
 };
 
 const consequenceFor = (state: NovelState, event: NovelEvent, selected: NovelChoice, success: boolean) => {
+  if (event.id.startsWith("campaign-invent:")) {
+    if (selected.id === "campaign-invent-leave") return "你把武学旧稿妥善收好，留待来日再看";
+    const authored = findAuthoredTechnique(state, selected.id.split(":")[1] as AuthoredTechniqueBranch);
+    return success && authored
+      ? `“${authored.name}”的来路与今日所悟一并留在武学稿中，往后交手便可继续印证`
+      : "你留下了未解的招意，待下一次见闻与练习再来印证";
+  }
+  if (selected.id.startsWith("campaign-train:")) {
+    const name = state.world.techniques.find((entry) => entry.id === selected.id.split(":")[1])?.name || "这一式";
+    return `今日练过的“${name}”已有了落点，下一次出手时仍要靠这份积累`;
+  }
   if (event.id === "sandbox-recovery") {
     return selected.id === "recover"
       ? "你稳住伤势时，其他人物仍按各自目标换了位置"
@@ -4015,6 +4074,11 @@ const consequenceFor = (state: NovelState, event: NovelEvent, selected: NovelCho
     if (investigativeChoice) return `${actor?.name || "对方"}所追之事与关系网被你看见一角，下一次见面会从已经揭开的事实继续`;
     return `${actor?.name || "对方"}的行程、隐秘与关系网被你看见一角；下一次相逢将从这一刻继续，而非重新介绍`;
   }
+  if (state.narrative.mode === "emergent_sandbox") {
+    return success
+      ? `你在${event.locationName}作出的决定已留下结果，往后的行程由此接续`
+      : `你把在${event.locationName}遇到的阻碍记下，尚未做成的事仍待来日`;
+  }
   const rain = state.narrative.cast.find((character) => character.id === "rain_witness");
   const healer = state.narrative.cast.find((character) => character.id === "lantern_healer");
   const rival = state.narrative.cast.find((character) => character.id === "grey_rival");
@@ -4036,15 +4100,15 @@ const consequenceFor = (state: NovelState, event: NovelEvent, selected: NovelCho
 };
 
 const transitionFor = (state: NovelState, eventId: string) => {
-  if (eventId.startsWith("sandbox")) {
+  if (state.narrative.mode === "emergent_sandbox") {
     const recent = state.world.movements.slice(-2).map((movement) => {
       const actor = state.world.actors.find((entry) => entry.id === movement.actorId);
       const location = state.world.locations.find((entry) => entry.id === movement.toLocationId);
       return `${actor?.name || "有人"}去了${location?.name || "下一站"}`;
     });
     return recent.length
-      ? `你作出选择时，江湖并没有停住：${recent.join("，")}。下一回将从这些真实位置继续生长。`
-      : "这一地暂时安静下来，人物各自的目标却还在推动下一段路。";
+      ? `收拾行囊时，又有新的行踪传来：${recent.join("，")}。`
+      : `你收拾好行囊，${currentLocation(state).name}的街巷仍有来往的人声。`;
   }
   const rain = state.narrative.cast.find((character) => character.id === "rain_witness")?.name || "雨夜客";
   const healer = state.narrative.cast.find((character) => character.id === "lantern_healer")?.name || "负灯医者";
@@ -4102,10 +4166,7 @@ const composeScene = (
     })
     .map((faction) => faction.id);
   const narrativeTechniqueIds = after.narrative.martial.techniques
-    .filter((technique, index) => (
-      !before.narrative.martial.techniques[index]
-      || technique.mastery !== before.narrative.martial.techniques[index].mastery
-    ))
+    .filter((technique) => technique.mastery !== before.narrative.martial.techniques.find((entry) => entry.id === technique.id)?.mastery)
     .map((technique) => technique.id);
   const techniqueIds = Array.from(new Set([...narrativeTechniqueIds, ...(combat?.techniqueIds || [])]));
   return {
@@ -4143,15 +4204,11 @@ const appendScene = (narrative: NarrativeArchitecture, scene: SceneManuscript): 
   return { ...narrative, chapters };
 };
 
-const authoredTechniqueDetails = (state: NovelState, branch: string, turn: number) => {
-  const details = branch === "guard"
-    ? { name: "同路回锋", nature: "守" as const, description: "不追敌锋，只在来势越过身侧时回转半步，替同行之人留出退路。", tags: ["护持", "回锋"] }
-    : branch === "flow"
-      ? { name: "行云换影", nature: "身" as const, description: "不拘固定三步，把地形、人群与呼吸都化成下一次换位的落点。", tags: ["换位", "行旅"] }
-      : { name: "截流一式", nature: "破" as const, description: "舍去繁复变化，只在对手换气未成时截断来势，使强招无从续接。", tags: ["破招", "截气"] };
+const authoredTechniqueDetails = (state: NovelState, branch: AuthoredTechniqueBranch, turn: number) => {
   return {
-    id: `authored_${state.life.protagonistId}_${branch}_${turn}`,
-    ...details,
+    id: `authored_${state.life.protagonistId}_${branch}`,
+    branch,
+    ...AUTHORED_TECHNIQUE_DETAILS[branch],
     createdTurn: turn,
     inspirationTechniqueIds: state.world.actors.find((actor) => actor.id === "hero")?.techniques.map((entry) => entry.techniqueId).slice(0, 3) || [],
   };
@@ -4159,7 +4216,22 @@ const authoredTechniqueDetails = (state: NovelState, branch: string, turn: numbe
 
 const authoredArtIdFor = (state: NovelState) => `art_authored_${state.life.protagonistId}`;
 
-const applyAuthoredTechnique = (state: NovelState, branch: string, turn: number): NovelState => {
+const applyAuthoredTechnique = (state: NovelState, branch: AuthoredTechniqueBranch, turn: number): NovelState => {
+  const existing = findAuthoredTechnique(state, branch);
+  if (existing) {
+    return {
+      ...state,
+      world: {
+        ...state.world,
+        actors: state.world.actors.map((actor) => (actor.id === "hero" ? {
+          ...actor,
+          techniques: actor.techniques.map((entry) => (entry.techniqueId === existing.id
+            ? { ...entry, mastery: clamp(entry.mastery + AUTHORED_REFINEMENT_GAIN, 0, 100) }
+            : entry)),
+        } : actor)),
+      },
+    };
+  }
   const authored = authoredTechniqueDetails(state, branch, turn);
   const authoredArtId = authoredArtIdFor(state);
   if (state.campaign.legacy.authoredTechniques.some((entry) => entry.id === authored.id)) return state;
@@ -4697,8 +4769,13 @@ const campaignAfterChoice = (
         : `你在${activeOpportunity.title}再进一步，下一轮仍需亲自应战`);
   }
   if (selected.id.startsWith("campaign-invent:") && success) {
-    state = applyAuthoredTechnique(state, selected.id.split(":")[1], turn);
-    discoveries.push(`你自创“${state.campaign.legacy.authoredTechniques.at(-1)?.name}”，并把所借鉴的招式来路一并记入武学谱`);
+    const branch = selected.id.split(":")[1] as AuthoredTechniqueBranch;
+    const existing = findAuthoredTechnique(state, branch);
+    state = applyAuthoredTechnique(state, branch, turn);
+    const authored = findAuthoredTechnique(state, branch)!;
+    discoveries.push(existing
+      ? `你精进“${authored.name}”，${authoredMastery(state, authored.id) >= 100 ? "此式已臻圆熟" : "旧式的换气与收势又稳了一层"}`
+      : `你自创“${authored.name}”，并把所借鉴的招式来路一并记入武学谱`);
   }
   if (selected.id === "campaign-found-sect:school" && success) {
     discoveries.push(schoolFollowerName
@@ -5101,10 +5178,23 @@ const endingFor = (state: NovelState, endingId = "wandering_volume"): NovelEndin
   return finish({ title: "《雨打旧檐》", subtitle: "这一卷合上了，风声还在窗外。", summary: "有些线索错过了，有些人没有等到，但你仍从废墟里捡起了自己的名字。下一次，你会走得更远。", rank: "下签", score, tags: ["遗憾", "重来", "江湖"] }, "你离开归潮阁时，完整卷宗仍埋在潮线之下。没有人获得想要的答案，但至少有几个名字被你带回了人间；只要名字还在，旧案就不算真正沉没。");
 };
 
+export const restoreNovelProgression = (saved: NovelState): NovelState => {
+  const state = normalizeAuthoredTechniques(saved);
+  if (state.campaign.phase === "planning") {
+    return { ...state, campaign: { ...state.campaign, availableActivities: generatePlayerActivities(state) } };
+  }
+  if (state.currentEvent?.id.startsWith("campaign-invent:") && !state.pendingOutcome) {
+    const activity = state.campaign.availableActivities.find((entry) => entry.id === state.campaign.selectedActivityId);
+    if (activity) return { ...state, currentEvent: buildCampaignInventEvent(state, activity) };
+  }
+  return state;
+};
+
 export const chooseNovelAction = (state: NovelState, choiceId: string): NovelState => {
   if (!state.currentEvent || state.pendingOutcome || state.ending || state.campaign.phase !== "scene") return state;
   const selected = state.currentEvent.choices.find((entry) => entry.id === choiceId);
-  if (!selected) return state;
+  if (!selected || selected.unavailableReason) return state;
+  if (selected.id.startsWith("campaign-invent:") && inventionUnavailableReason(state, selected.id.split(":")[1] as AuthoredTechniqueBranch)) return state;
   const rng = createRng(state.rngState);
   const roll = Math.floor(rng.next() * 100) + 1;
   const completedTurn = state.turn + 1;
@@ -5160,6 +5250,7 @@ export const chooseNovelAction = (state: NovelState, choiceId: string): NovelSta
   next = { ...next, narrative: advanced.narrative };
   const campaignResult = campaignAfterChoice(state, next, selected, success, completedTurn, combat);
   next = syncLifeAfterScene(state, campaignResult.state);
+  next = { ...next, narrative: syncHeroMartialNarrative(next.narrative, next.world, completedTurn) };
   const changes = makeOutcomeChanges(state, next);
   const manuscript = composeScene(state, next, state.currentEvent, selected, outcome, success, completedTurn, chapter, combat);
   next = { ...next, narrative: appendScene(next.narrative, manuscript.scene) };

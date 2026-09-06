@@ -152,8 +152,11 @@ export interface FactionKnowledge {
   encounters?: FactionEncounterRecord[];
 }
 
+export type AuthoredTechniqueBranch = "break" | "guard" | "flow";
+
 export interface AuthoredTechnique {
   id: string;
+  branch?: AuthoredTechniqueBranch;
   name: string;
   description: string;
   createdTurn: number;

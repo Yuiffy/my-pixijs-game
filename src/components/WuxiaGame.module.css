@@ -2245,7 +2245,7 @@
   transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
-.choiceCard:hover,
+.choiceCard:not(:disabled):hover,
 .choiceCard:focus-visible {
   border-color: var(--gold);
   background: rgba(35, 50, 56, 0.86);
@@ -2253,14 +2253,26 @@
   transform: translateX(4px);
 }
 
-.choiceTonejade:hover,
+.choiceTonejade:not(:disabled):hover,
 .choiceTonejade:focus-visible {
   border-color: var(--jade);
 }
 
-.choiceTonesteel:hover,
+.choiceCard:disabled {
+  cursor: not-allowed;
+  border-color: rgba(232, 220, 196, 0.12);
+  color: var(--paper-dim);
+  background: rgba(16, 25, 30, 0.74);
+  transform: none;
+}
+
+.choiceCard:disabled .choiceArrow {
+  transform: none;
+}
+
+.choiceTonesteel:not(:disabled):hover,
 .choiceTonesteel:focus-visible,
-.choiceToneember:hover,
+.choiceToneember:not(:disabled):hover,
 .choiceToneember:focus-visible {
   border-color: var(--verm-bright);
 }
@@ -5474,8 +5486,12 @@
   border-left: 0;
 }
 
+.lifeLedger > span > :first-child {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
 .lifeLedger svg {
-  grid-row: span 2;
   color: var(--jade);
   font-size: 16px;
 }
@@ -5483,6 +5499,7 @@
 .lifeLedger small,
 .lifeLedger strong {
   display: block;
+  grid-column: 2;
 }
 
 .lifeLedger small {

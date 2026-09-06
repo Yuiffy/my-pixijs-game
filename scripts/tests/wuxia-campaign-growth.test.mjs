@@ -5,6 +5,7 @@ import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
 const engine = await loadTypescriptModule("src/components/wuxia/game/novelEngine.ts");
 const exampleModule = await loadTypescriptModule("src/components/wuxia/game/exampleContentPack.ts");
+const saveModule = await loadTypescriptModule("src/components/wuxia/game/wuxiaSave.ts");
 
 const {
   chooseNovelAction,
@@ -84,6 +85,151 @@ test("自创武学会写入传承、世界招式与主角习得记录，且不�
   assert.ok(result.narrative.martial.techniques.some((technique) => technique.id === authored.id && technique.status === "初悟"));
   assert.deepEqual(entered.world, beforeWorld, "创招不应回写选择前的世界状态");
   assert.deepEqual(JSON.parse(JSON.stringify(result)).campaign.legacy.authoredTechniques, result.campaign.legacy.authoredTechniques);
+});
+
+test("跨回合与读档重走创招路径会精进原招，不会重复创招或误报另一式", () => {
+  const first = chooseSuccessfully(enterActivity(growthReadyState(), "invent"), "campaign-invent:break");
+  const authored = first.campaign.legacy.authoredTechniques[0];
+  const second = chooseSuccessfully(enterActivity(continueNovelAction(first), "invent"), "campaign-invent:guard");
+  const saved = saveModule.parseWuxiaSaveRoot(saveModule.serializeWuxiaSaveRoot(saveModule.createSaveRoot(second)));
+  const entered = enterActivity(continueNovelAction(saved.worlds[0].game), "invent");
+  assert.match(entered.currentEvent.choices.find((entry) => entry.id === "campaign-invent:break").label, /精进.*截流一式/);
+  const snapshot = structuredClone(entered);
+  const result = chooseSuccessfully(entered, "campaign-invent:break");
+  const known = result.world.actors.find((actor) => actor.id === "hero").techniques;
+
+  assert.equal(result.campaign.legacy.authoredTechniques.length, 2);
+  assert.deepEqual(result.campaign.legacy.authoredTechniques[0], authored);
+  assert.equal(known.filter((entry) => entry.techniqueId === authored.id).length, 1);
+  assert.equal(known.find((entry) => entry.techniqueId === authored.id).mastery, 40);
+  assert.match(result.pendingOutcome.discovery, /精进.*截流一式/);
+  assert.doesNotMatch(result.pendingOutcome.discovery, /你自创|同路回锋/);
+  assert.ok(result.pendingOutcome.changes.some((entry) => entry.label === "熟练" && entry.value === "截流一式 +12"));
+  assert.ok(!result.pendingOutcome.changes.some((entry) => entry.label === "新招"));
+  assert.deepEqual(entered, snapshot);
+});
+
+test("温习自创招式时，正文武学与战斗熟练度一同增长，其他招式不冒领", () => {
+  const invented = chooseSuccessfully(enterActivity(growthReadyState(), "invent"), "campaign-invent:flow");
+  const authored = invented.campaign.legacy.authoredTechniques[0];
+  const entered = enterActivity(continueNovelAction(invented), "train");
+  const choiceId = `campaign-train:${authored.id}:foundation`;
+  assert.ok(entered.currentEvent.choices.some((entry) => entry.id === choiceId));
+  const result = chooseNovelAction(entered, choiceId);
+  const before = entered.world.actors.find((actor) => actor.id === "hero").techniques;
+  const after = result.world.actors.find((actor) => actor.id === "hero").techniques;
+  assert.equal(after.find((entry) => entry.techniqueId === authored.id).mastery, 36);
+  for (const known of after) {
+    assert.equal(result.narrative.martial.techniques.find((entry) => entry.id === known.techniqueId).mastery, known.mastery);
+    if (known.techniqueId !== authored.id) assert.deepEqual(known, before.find((entry) => entry.techniqueId === known.techniqueId));
+  }
+  assert.deepEqual(result.pendingOutcome.scene.techniqueIds, [authored.id]);
+});
+
+test("创招失败保留原招与火候，不伪造新招或精进成果", () => {
+  const invented = chooseSuccessfully(enterActivity(growthReadyState(), "invent"), "campaign-invent:guard");
+  const entered = enterActivity(continueNovelAction(invented), "invent");
+  const selected = entered.currentEvent.choices.find((entry) => entry.id === "campaign-invent:guard");
+  selected.check.odds = 0;
+  const result = chooseNovelAction(entered, selected.id);
+  assert.equal(result.pendingOutcome.success, false);
+  assert.deepEqual(result.campaign.legacy.authoredTechniques, entered.campaign.legacy.authoredTechniques);
+  assert.deepEqual(result.world.actors.find((actor) => actor.id === "hero").techniques, entered.world.actors.find((actor) => actor.id === "hero").techniques);
+  assert.doesNotMatch(result.pendingOutcome.discovery || "", /你自创|你精进/);
+});
+
+test("圆熟招式不可重复领取推演收益，三路圆熟后停用闭关活动", () => {
+  const invented = chooseSuccessfully(enterActivity(growthReadyState(), "invent"), "campaign-invent:break");
+  const authored = invented.campaign.legacy.authoredTechniques[0];
+  const planning = continueNovelAction(invented);
+  planning.world.actors.find((actor) => actor.id === "hero").techniques.find((entry) => entry.techniqueId === authored.id).mastery = 100;
+  planning.narrative.martial.techniques.find((entry) => entry.id === authored.id).mastery = 100;
+  const entered = enterActivity(withActivities(planning), "invent");
+  assert.match(entered.currentEvent.choices.find((entry) => entry.id === "campaign-invent:break").unavailableReason || "", /圆熟/);
+  assert.equal(chooseNovelAction(entered, "campaign-invent:break"), entered);
+  const guarded = chooseSuccessfully(entered, "campaign-invent:guard");
+  const flowed = chooseSuccessfully(enterActivity(continueNovelAction(guarded), "invent"), "campaign-invent:flow");
+  const all = continueNovelAction(continueNovelAction(flowed));
+  for (const entry of all.world.actors.find((actor) => actor.id === "hero").techniques) {
+    if (all.campaign.legacy.authoredTechniques.some((technique) => technique.id === entry.techniqueId)) entry.mastery = 100;
+  }
+  assert.ok(!generatePlayerActivities(all).some((activity) => activity.kind === "invent" && activity.enabled));
+  all.currentEvent = entered.currentEvent;
+  all.campaign.phase = "scene";
+  all.campaign.availableActivities = entered.campaign.availableActivities;
+  all.campaign.selectedActivityId = entered.campaign.selectedActivityId;
+  const restored = saveModule.parseWuxiaSaveRoot(all).worlds[0].game;
+  const exitChoice = restored.currentEvent.choices.find((entry) => !entry.unavailableReason);
+  assert.equal(exitChoice.id, "campaign-invent-leave");
+  const exited = chooseNovelAction(restored, exitChoice.id);
+  assert.ok(exited.pendingOutcome);
+  assert.deepEqual(exited.campaign.legacy.authoredTechniques, restored.campaign.legacy.authoredTechniques);
+});
+
+test("临近圆熟时只增加剩余火候，名望回落仍可精进旧招但不能另创新路", () => {
+  const invented = chooseSuccessfully(enterActivity(growthReadyState(), "invent"), "campaign-invent:break");
+  const authored = invented.campaign.legacy.authoredTechniques[0];
+  const planning = continueNovelAction(invented);
+  planning.hero.stats.fame = 0;
+  planning.world.actors.find((actor) => actor.id === "hero").techniques.find((entry) => entry.techniqueId === authored.id).mastery = 96;
+  planning.narrative.martial.techniques.find((entry) => entry.id === authored.id).mastery = 96;
+  const entered = enterActivity(withActivities(planning), "invent");
+  assert.ok(entered.currentEvent.choices.find((entry) => entry.id === "campaign-invent:guard").unavailableReason);
+  const result = chooseSuccessfully(entered, "campaign-invent:break");
+  assert.equal(result.world.actors.find((actor) => actor.id === "hero").techniques.find((entry) => entry.techniqueId === authored.id).mastery, 100);
+  assert.match(result.pendingOutcome.discovery, /圆熟/);
+  assert.equal(result.hero.stats.fame, 0);
+  assert.ok(result.pendingOutcome.changes.some((entry) => entry.label === "熟练" && entry.value === "截流一式 +4"));
+});
+
+test("读入旧版待选择的闭关场景时，会按已学招式刷新选项", () => {
+  const invented = chooseSuccessfully(enterActivity(growthReadyState(), "invent"), "campaign-invent:guard");
+  const entered = enterActivity(continueNovelAction(invented), "invent");
+  entered.currentEvent.choices.find((entry) => entry.id === "campaign-invent:guard").label = "以护人为意";
+  const restored = saveModule.parseWuxiaSaveRoot(entered).worlds[0].game;
+  assert.match(restored.currentEvent.choices.find((entry) => entry.id === "campaign-invent:guard").label, /精进.*同路回锋/);
+  assert.equal(restored.world.day, entered.world.day);
+  assert.equal(restored.turn, entered.turn);
+});
+
+test("日常练功与创招结算不再套入旧主线潮声与退路", () => {
+  const state = growthReadyState();
+  const invent = chooseSuccessfully(enterActivity(state, "invent"), "campaign-invent:break");
+  const training = enterActivity(state, "train");
+  const trained = chooseNovelAction(training, training.currentEvent.choices[0].id);
+  for (const result of [invent, trained]) {
+    assert.doesNotMatch(result.pendingOutcome.resultParagraphs.join("\n"), /潮声|少了一条退路|归潮阁|沉星渡/);
+    assert.doesNotMatch(result.pendingOutcome.revealTitle, /这一念落下/);
+  }
+});
+
+test("旧档同源重复招式合并最高火候并修复传承引用，不合并异代同名武学", () => {
+  const original = chooseSuccessfully(enterActivity(growthReadyState(), "invent"), "campaign-invent:break");
+  const game = structuredClone(original);
+  const authored = game.campaign.legacy.authoredTechniques[0];
+  const duplicateId = `authored_${game.life.protagonistId}_break_23`;
+  const definition = game.world.techniques.find((entry) => entry.id === authored.id);
+  const narrativeTechnique = game.narrative.martial.techniques.find((entry) => entry.id === authored.id);
+  const otherId = "authored_previous_life_break_12";
+  game.campaign.legacy.authoredTechniques.push({ ...authored, id: duplicateId, createdTurn: 23 });
+  game.world.techniques.push({ ...definition, id: duplicateId }, { ...definition, id: otherId, artId: "art_authored_previous_life" });
+  game.world.martialArts.find((entry) => entry.id === definition.artId).techniqueIds.push(duplicateId);
+  game.world.actors.find((actor) => actor.id === "hero").techniques.push({ techniqueId: duplicateId, mastery: 64, source: "自创", learnedDay: 30 });
+  game.narrative.martial.techniques.push({ ...narrativeTechnique, id: duplicateId, mastery: 64 });
+  game.campaign.legacy.foundedSect = { id: "saved_sect", name: "照水门", creed: "守约", foundedTurn: 24, headquartersLocationId: game.currentLocationId, founderTechniqueId: duplicateId };
+  game.campaign.legacy.authoredTechniques[0].inspirationTechniqueIds.push(duplicateId);
+  const snapshot = structuredClone(game);
+  const restored = saveModule.parseWuxiaSaveRoot(game).worlds[0].game;
+  assert.equal(restored.campaign.legacy.authoredTechniques.length, 1);
+  assert.equal(restored.campaign.legacy.foundedSect.founderTechniqueId, authored.id);
+  assert.ok(!restored.campaign.legacy.authoredTechniques[0].inspirationTechniqueIds.includes(authored.id));
+  assert.equal(restored.world.techniques.filter((entry) => entry.artId === definition.artId).length, 1);
+  assert.ok(restored.world.techniques.some((entry) => entry.id === otherId));
+  assert.equal(restored.world.actors.find((actor) => actor.id === "hero").techniques.find((entry) => entry.techniqueId === authored.id).mastery, 64);
+  assert.equal(restored.narrative.martial.techniques.find((entry) => entry.id === authored.id).mastery, 64);
+  assert.ok(!JSON.stringify(restored.world).includes(duplicateId));
+  assert.deepEqual(saveModule.parseWuxiaSaveRoot(restored).worlds[0].game, restored);
+  assert.deepEqual(game, snapshot);
 });
 
 test("秘籍传闻会成为可主动安排行程的追查，而不必等待随机事件", () => {

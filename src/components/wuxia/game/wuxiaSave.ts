@@ -1,5 +1,6 @@
 import {
   createNovelState,
+  restoreNovelProgression,
   type NovelSetup,
   type NovelState,
 } from "./novelEngine";
@@ -433,15 +434,15 @@ export const parseWuxiaSaveRoot = (
       const activeWorldId = typeof candidate.activeWorldId === "string" && uniqueWorlds.some((world) => world.id === candidate.activeWorldId)
         ? candidate.activeWorldId
         : uniqueWorlds[0].id;
-      return compactWuxiaSaveRoot({ version: SAVE_VERSION, activeWorldId, worlds: uniqueWorlds });
+      return compactWuxiaSaveRoot({ version: SAVE_VERSION, activeWorldId, worlds: uniqueWorlds.map((world) => ({ ...world, game: restoreNovelProgression(world.game) })) });
     }
   }
-  if (isNovelStateV7(candidate)) return createSaveRoot(candidate);
-  if (isLegacyNovelStateV6(candidate)) return createSaveRoot(migrateLegacyGame(candidate));
+  if (isNovelStateV7(candidate)) return createSaveRoot(restoreNovelProgression(candidate));
+  if (isLegacyNovelStateV6(candidate)) return createSaveRoot(restoreNovelProgression(migrateLegacyGame(candidate)));
 
   const legacyCandidate = decodeJson(legacyRaw);
   if (!isLegacyNovelStateV6(legacyCandidate)) return null;
-  return createSaveRoot(migrateLegacyGame(legacyCandidate));
+  return createSaveRoot(restoreNovelProgression(migrateLegacyGame(legacyCandidate)));
 };
 
 export const upsertWorldGame = (

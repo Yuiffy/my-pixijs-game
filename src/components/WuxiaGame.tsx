@@ -12,6 +12,7 @@ import {
   HeartOutlined,
   HistoryOutlined,
   HomeOutlined,
+  LockOutlined,
   MenuOutlined,
   ReloadOutlined,
   SafetyOutlined,
@@ -905,17 +906,17 @@ function ChoiceDeck({ game, onChoose }: { game: NovelState; onChoose: (choiceId:
       <div className={styles.choiceDeckHeader}><span className={styles.choicePrompt}>你要怎么做？</span><span className={styles.choiceHint}>一念落笔，此后便有回声</span></div>
       <div className={styles.choiceGrid}>
         {game.currentEvent.choices.map((choice, index) => (
-          <button type="button" className={`${styles.choiceCard} ${styles[`choiceTone${choice.tone}`]}`} key={choice.id} onClick={() => onChoose(choice.id)}>
+          <button type="button" className={`${styles.choiceCard} ${styles[`choiceTone${choice.tone}`]}`} key={choice.id} disabled={Boolean(choice.unavailableReason)} onClick={() => onChoose(choice.id)}>
             <span className={styles.choiceIndex}>{index + 1}</span>
             <span className={styles.choiceBody}>
-              <span className={styles.choiceTitleLine}><strong>{choice.label}</strong><small>{choice.risk}风险</small></span>
-              <span className={styles.choiceDescription}>{choice.description}</span>
+              <span className={styles.choiceTitleLine}><strong>{choice.label}</strong><small>{choice.unavailableReason ? "暂不可选" : `${choice.risk}风险`}</small></span>
+              <span className={styles.choiceDescription}>{choice.unavailableReason || choice.description}</span>
               <span className={styles.choiceMeta}>
                 {choice.preview.map((preview) => <em className={styles[`preview${preview.tone}`]} key={`${preview.label}-${preview.value}`}>{preview.label} {qualitativePreviewValue(preview.value)}</em>)}
-                {choice.check && <em className={styles.checkMeta}>{immersiveCheckLabel(choice.check.label)} · {checkConfidence(choice.check.odds)}</em>}
+                {choice.check && !choice.unavailableReason && <em className={styles.checkMeta}>{immersiveCheckLabel(choice.check.label)} · {checkConfidence(choice.check.odds)}</em>}
               </span>
             </span>
-            <span className={styles.choiceArrow}>↗</span>
+            <span className={styles.choiceArrow}>{choice.unavailableReason ? <LockOutlined /> : "↗"}</span>
           </button>
         ))}
       </div>
@@ -1638,7 +1639,7 @@ function GameScreen({ game, onSelectAgenda, onActivity, onIntent, onPause, onCho
       }
       if (game.campaign.phase === "scene") {
         const choice = game.currentEvent?.choices[index];
-        if (choice) onChoose(choice.id);
+        if (choice && !choice.unavailableReason) onChoose(choice.id);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -1772,7 +1773,7 @@ export default function WuxiaGame() {
         eventId: game.pendingOutcome?.eventId || game.currentEvent?.id || null,
         event: game.currentEvent?.title || null,
         eventProse: game.currentEvent?.lines.map((entry) => entry.text) || [],
-        choices: game.pendingOutcome ? [] : game.currentEvent?.choices.map((choice) => ({ id: choice.id, label: choice.label, risk: choice.risk, odds: choice.check?.odds })) || [],
+        choices: game.pendingOutcome ? [] : game.currentEvent?.choices.map((choice) => ({ id: choice.id, label: choice.label, risk: choice.risk, odds: choice.check?.odds, enabled: !choice.unavailableReason, unavailableReason: choice.unavailableReason })) || [],
         outcome: game.pendingOutcome || null,
         companions: game.companions.map((companion) => ({ name: companion.name, affinity: companion.affinity, characterId: companion.characterId })),
         household: {
