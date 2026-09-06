@@ -38,14 +38,21 @@ mkdirSync(directory, { recursive: true });
       const stamina = document.querySelector('[aria-label="体力状态"]');
       const meter = document.querySelector('[role="meter"][aria-label="体力"]');
       const controls = [...document.querySelectorAll('[aria-label="战斗操作"] button')];
-      const boxes = [stamina, ...controls].map(rect);
+      const resources = document.querySelector('[aria-label="岁己状态"]');
+      const blood = document.querySelector('[class*="spiritTrack"] i');
+      const hud = [...document.querySelectorAll('[class*="bossHealth"], [class*="fightMeta"], [class*="moveName"], [class*="parryFeedback"]')];
+      const boxes = [resources, ...hud, ...controls].map(rect);
       const overlap = boxes.some((a, i) => boxes.slice(i + 1).some(b => a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y));
       const canvas = document.querySelector('canvas');
-      return { boxes, overlap, meter: rect(meter), meterValue: Number(meter.getAttribute('aria-valuenow')), stamina: stamina.textContent, overflow: document.documentElement.scrollWidth > innerWidth,
+      return { boxes, overlap, topLeft: resources.contains(stamina) && rect(resources).x < innerWidth / 2 && rect(stamina).bottom < innerHeight / 2,
+        bloodColor: getComputedStyle(blood).backgroundColor, meter: rect(meter), meterValue: Number(meter.getAttribute('aria-valuenow')), stamina: stamina.textContent, overflow: document.documentElement.scrollWidth > innerWidth,
         inside: boxes.every(r => r.x >= 0 && r.right <= innerWidth && r.y >= 0 && r.bottom <= innerHeight), canvas: { ...rect(canvas), backingWidth: canvas.width, backingHeight: canvas.height } };
     });
     const snapshot = await state();
-    assert.equal(geometry.overlap, false, name); assert.equal(geometry.overflow, false, name); assert.equal(geometry.inside, true, name);
+    assert.equal(geometry.overlap, false, JSON.stringify({ name, boxes: geometry.boxes })); assert.equal(geometry.overflow, false, name); assert.equal(geometry.inside, true, name);
+    assert.equal(geometry.topLeft, true, `Player resources stay together: ${name}`);
+    const [red, green, blue] = geometry.bloodColor.match(/\d+/g).map(Number);
+    assert.ok(red > green * 1.5 && red > blue, `Enemy health is red: ${name}`);
     assert.ok(geometry.meter.height >= 12, name); assert.equal(geometry.meterValue, Math.floor(snapshot.player.stamina));
     assert.ok(geometry.canvas.backingWidth > 0 && geometry.canvas.backingHeight > 0);
     captures.push({ name, file, pixels, geometry, state: snapshot });

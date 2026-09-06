@@ -50,7 +50,7 @@ mkdirSync(directory, { recursive: true });
       const canvas = document.querySelector('canvas');
       const hud = rect(document.querySelector('[class*="fightMeta"]'));
       const cue = rect(document.querySelector('[class*="moveName"], [class*="parryFeedback"]'));
-      const resourceOverlap = !!hud && Array.from(document.querySelectorAll('[class*="playerName"], [class*="bossHealth"]')).map(rect).some(r => r && r.right > hud.x && r.x < hud.right && r.bottom > hud.y && r.y < hud.bottom);
+      const resourceOverlap = !!hud && Array.from(document.querySelectorAll('[class*="playerResources"], [class*="bossHealth"]')).map(rect).some(r => r && r.right > hud.x && r.x < hud.right && r.bottom > hud.y && r.y < hud.bottom);
       return { canvas: rect(canvas), backing: { width: canvas.width, height: canvas.height }, viewport: { width: innerWidth, height: innerHeight }, overflow: document.documentElement.scrollWidth > innerWidth,
         resourceOverlap, hudOverlap: !!(hud && cue && cue.width && hud.right > cue.x && hud.x < cue.right && hud.bottom > cue.y && hud.y < cue.bottom) };
     });

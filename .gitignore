@@ -47,3 +47,13 @@ next-env.d.ts
 /public/data/streams/
 .pnpm-store
 .playwright-mcp
+
+# Machine-local agent configuration and independent worktrees
+/.claude/settings.local.json
+/.claude/worktrees/
+
+# Generated diagnostics and language caches
+/screenshots/
+*.stackdump
+__pycache__/
+*.py[cod]

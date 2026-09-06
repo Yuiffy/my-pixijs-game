@@ -232,6 +232,7 @@ export default function ChapterHud({
       </header>
 
       <div className={styles.health}>
+        <div className={styles.playerResources} aria-label="岁己状态">
         <div className={styles.playerName}>
           <Image
             src="/images/autochess/portraits/sui.png"
@@ -253,6 +254,20 @@ export default function ChapterHud({
               ))}
             </div>
           </div>
+        </div>
+        {loaded && (fighting || s.phase === 'paused') && (
+          <div className={styles.stamina} data-level={staminaLevel} data-denied={denial?.reason === 'stamina'} aria-label="体力状态">
+            <div className={styles.staminaHeading}>
+              <strong><ThunderboltOutlined aria-hidden /> 体力</strong>
+              <span><b>{Math.floor(s.player.stamina)}</b> / 100</span>
+            </div>
+            <div className={styles.energyTrack} role="meter" aria-label="体力" aria-valuenow={Math.floor(s.player.stamina)} aria-valuemin={0} aria-valuemax={100}>
+              <i style={{ width: `${s.player.stamina}%` }} />
+              <span style={{ left: `${model.dodgeCost}%` }} />
+            </div>
+            <div className={styles.staminaMessage} role="status" aria-live="polite" key={denial?.visualAt ?? 'rest'}>{staminaMessage}</div>
+          </div>
+        )}
         </div>
         <div className={styles.bossHealth}>
           <div>
@@ -457,17 +472,6 @@ export default function ChapterHud({
             >
               <ArrowRightOutlined />
             </button>
-          </div>
-          <div className={styles.stamina} data-level={staminaLevel} data-denied={denial?.reason === 'stamina'} aria-label="体力状态">
-            <div className={styles.staminaHeading}>
-              <strong><ThunderboltOutlined aria-hidden /> 体力</strong>
-              <span><b>{Math.floor(s.player.stamina)}</b> / 100</span>
-            </div>
-            <div className={styles.energyTrack} role="meter" aria-label="体力" aria-valuenow={Math.floor(s.player.stamina)} aria-valuemin={0} aria-valuemax={100}>
-              <i style={{ width: `${s.player.stamina}%` }} />
-              <span style={{ left: `${model.dodgeCost}%` }} />
-            </div>
-            <div className={styles.staminaMessage} role="status" aria-live="polite" key={denial?.visualAt ?? 'rest'}>{staminaMessage}</div>
           </div>
           <div className={styles.combat}>
             <button

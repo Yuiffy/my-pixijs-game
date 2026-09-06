@@ -33,23 +33,21 @@
 }
 .stamina {
   --energy: #338841;
-  flex: 1;
-  max-width: 300px;
+  width: 100%;
   min-width: 0;
-  padding: 9px 12px 0;
-  background: #f4f8f1f0;
-  border-top: 2px solid #338841;
+  margin-top: 9px;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px #f5faf1, 0 0 10px #f5faf1;
 }
-.stamina[data-level="low"] { --energy: #af720b; border-color: #af720b; }
-.stamina[data-level="critical"], .stamina[data-denied="true"] { --energy: #c33246; border-color: #c33246; }
+.stamina[data-level="low"] { --energy: #af720b; }
+.stamina[data-level="critical"], .stamina[data-denied="true"] { --energy: #c33246; }
 .staminaHeading { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
 .staminaHeading strong { font-size: 15px; }
 .staminaHeading b { color: var(--energy); font-size: 20px; }
 .energyTrack {
   position: relative;
-  height: 15px;
-  margin-top: 5px;
+  height: 18px;
+  margin-top: 4px;
   background: #263d3530;
   border: 1px solid #344f415e;
   padding: 2px;
@@ -61,7 +59,7 @@
 }
 .energyTrack > span { position: absolute; top: 0; bottom: 0; border-left: 2px solid #fffef5b0; }
 .staminaMessage {
-  min-height: 31px;
+  min-height: 32px;
   padding-top: 4px;
   color: #8d263a;
   font-size: 12px;
@@ -460,6 +458,11 @@
   align-items: flex-start;
   gap: 30px;
 }
+.playerResources {
+  width: 240px;
+  max-width: 43%;
+  min-width: 0;
+}
 .playerName {
   display: flex;
   align-items: center;
@@ -501,15 +504,15 @@
   font-size: 12px;
 }
 .spiritTrack {
-  height: 10px;
-  background: #506d6333;
+  height: 14px;
+  background: #b72f4b26;
   padding: 2px;
-  border: 1px solid #4b75685c;
+  border: 1px solid #a92a4266;
 }
 .spiritTrack i {
   display: block;
   height: 100%;
-  background: var(--teal);
+  background: #c83c50;
   transition: width 0.15s;
 }
 .bossSub {
@@ -955,10 +958,13 @@
   }
 }
 @media (max-width: 650px) and (orientation: portrait) {
-  .playArea::before { height: 205px; }
-  .stamina { grid-column: 1 / -1; grid-row: 1; width: 100%; max-width: none; padding: 8px 10px 0; }
-  .staminaMessage { min-height: 22px; }
-  .energyTrack { height: 15px; }
+  .playArea::before { height: 265px; }
+  .stamina { margin-top: 6px; }
+  .staminaHeading { font-size: 11px; }
+  .staminaHeading strong { font-size: 13px; }
+  .staminaHeading b { font-size: 18px; }
+  .staminaMessage { min-height: 30px; font-size: 11px; }
+  .energyTrack { height: 16px; margin-top: 3px; }
   .bossHealth strong {
     line-height: 1;
   }
@@ -1016,7 +1022,7 @@
     gap: 5px;
   }
   .parryFeedback {
-    top: 26%;
+    top: 266px;
   }
   .parryFeedback strong {
     font-size: 32px;
@@ -1092,11 +1098,11 @@
     inset: 0;
   }
   .moveName {
-    top: 26%;
+    top: 266px;
     font-size: 24px;
   }
   .fightMeta {
-    top: 178px;
+    top: 231px;
     display: flex;
     gap: 4px;
     flex-direction: row;
@@ -1147,8 +1153,7 @@
     left: 18px;
     right: 18px;
     bottom: 46px;
-    display: grid;
-    grid-template-columns: max-content max-content;
+    display: flex;
     justify-content: space-between;
     gap: 10px 14px;
   }
@@ -1182,13 +1187,14 @@
   }
 }
 @media (max-height: 560px) and (orientation: landscape) {
-  .playArea::before { height: 145px; }
-  .stamina { padding: 4px 9px 0; max-width: 260px; }
+  .playArea::before { height: 185px; }
+  .playerResources { width: 205px; }
+  .stamina { margin-top: 4px; }
   .staminaHeading { font-size: 11px; }
   .staminaHeading strong { font-size: 13px; }
   .staminaHeading b { font-size: 16px; }
-  .staminaMessage { min-height: 19px; font-size: 11px; }
-  .energyTrack { height: 12px; margin-top: 3px; }
+  .staminaMessage { min-height: 27px; font-size: 11px; }
+  .energyTrack { height: 14px; margin-top: 3px; }
   .poiseTrack {
     height: 4px;
     margin-top: 4px;
@@ -1455,12 +1461,19 @@
   .game[data-phase="fight"] .health {
     top: 80px;
   }
+  .game[data-phase="paused"] .health { top: 80px; }
+  .playerName img { width: 30px; height: 38px; }
+  .playerName strong { font-size: 12px; }
+  .hearts { font-size: 13px; }
+  .staminaHeading b { font-size: 16px; }
+  .staminaHeading strong { font-size: 12px; }
+  .staminaMessage { min-height: 26px; }
   .fightMeta {
-    top: 149px;
+    top: 202px;
   }
   .moveName,
   .parryFeedback {
-    top: 184px;
+    top: 234px;
   }
   .parryFeedback strong {
     font-size: 27px;

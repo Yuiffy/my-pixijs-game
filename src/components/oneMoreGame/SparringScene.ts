@@ -131,12 +131,14 @@ export class SparringScene extends Phaser.Scene {
       ? screenWidth / Math.max(750, Math.abs(p.x - b.x) + 380)
       : Math.min(screenWidth / WIDTH, screenHeight / HEIGHT);
     const cameraX = portrait ? (p.x + b.x) / 2 : WIDTH / 2;
-    let cameraY = portrait ? FLOOR - (screenHeight < 700 ? 130 : 90) : HEIGHT / 2 + (screenHeight < 560 ? 50 : 0);
+    const inCombat = s.phase === 'fight' || s.phase === 'paused';
+    const portraitInset = inCombat ? screenHeight < 700 ? 330 : 170 : screenHeight < 700 ? 130 : 90;
+    let cameraY = portrait ? FLOOR - portraitInset : HEIGHT / 2 + (screenHeight < 560 ? 50 : 0);
     // On short screens the leap needs room above the fighters without entering the HUD.
     if (bossIndex === 2 && ((portrait && screenHeight < 700) || (!portrait && screenHeight < 560))) {
       const floorScreenY = screenHeight / 2 + (FLOOR - cameraY) * zoom;
       const leapFraming = this.reducedMotion ? 1 : attack.kind !== 'leap' ? 0 : b.mode === 'windup' ? Math.min(1, b.clock / 650) : b.mode === 'recover' ? Math.max(0, 1 - b.clock / 350) : 0;
-      const fittedZoom = Math.min(zoom, (floorScreenY - (portrait ? 180 : 140)) / 510);
+      const fittedZoom = Math.min(zoom, (floorScreenY - (portrait ? 245 : 160)) / 510);
       zoom += (fittedZoom - zoom) * leapFraming;
       cameraY = FLOOR + (screenHeight / 2 - floorScreenY) / zoom;
     }
@@ -225,10 +227,6 @@ export class SparringScene extends Phaser.Scene {
     this.floorMarks.clear();
     this.effects.clear();
     if (s.phase === "fight" || s.phase === "paused") {
-      const staminaColor = p.stamina < this.model.attackCost ? 0xc33246 : p.stamina < this.model.dodgeCost ? 0xbb8019 : 0x408f46;
-      this.effects.fillStyle(0xf7fff5, 0.95).fillRoundedRect(p.x - 49, FLOOR + 26, 98, 13, 3);
-      this.effects.fillStyle(0x334a40, 0.35).fillRect(p.x - 46, FLOOR + 29, 92, 7);
-      this.effects.fillStyle(staminaColor).fillRect(p.x - 46, FLOOR + 29, (92 * p.stamina) / 100, 7);
       for (const bell of s.projectiles) {
         const y = FLOOR - 104;
         const direction = Math.sign(bell.vx);
@@ -297,7 +295,7 @@ export class SparringScene extends Phaser.Scene {
           if (b.elevation > 20) this.effects.lineStyle(2, 0xbc4059, 0.5).lineBetween(b.x, FLOOR - b.elevation + 10, b.targetX, FLOOR);
         }
       }
-      if (b.mode === "windup") {
+      if (b.mode === "windup" && b.elevation < 25) {
         const remaining = nextHit - b.clock;
         const urgency = 1 - Math.min(1, Math.max(0, remaining) / 1050);
         const color = attack.heavy
