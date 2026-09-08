@@ -30,6 +30,13 @@ interface ProjectItem {
 
 const gameDemos: ProjectItem[] = [
   {
+    title: '这个按钮，你按吗？',
+    href: '/game/button',
+    description: '一个心动的理由，一个纠结的代价。虚拟主播们的平行人生。',
+    image: '/games/button/press.svg',
+    meta: '按钮假说 · 虚拟主播 · 38 道题',
+  },
+  {
     title: '岁岁过招',
     href: '/game/one-more',
     description: '三庭收钟。接飞铃、截突进，挑战三位不同的对手。',

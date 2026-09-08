@@ -23,6 +23,8 @@
     "streams:publish": "node scripts/sync-and-push.mjs",
     "streams:verify": "node scripts/verify-stream-data.mjs --local --references-only",
     "streams:test": "node --test scripts/tests/stream-shards.test.mjs scripts/tests/sync-failures.test.mjs",
+    "button:test": "node --test scripts/tests/button-game.test.mjs",
+    "button:verify": "node scripts/verify-button-game.cjs",
     "autochess:test": "node --test scripts/tests/autochess-*.test.mjs",
     "autochess:simulate": "node scripts/simulate-autochess-runs.mjs",
     "autochess:benchmark:autopilot": "node scripts/benchmark-autochess-autopilot.mjs",
@@ -81,6 +83,7 @@
     "react-markdown": "^10.1.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/typography": "^0.5.19",
     "@types/matter-js": "^0.19.6",
     "@types/node": "^20",

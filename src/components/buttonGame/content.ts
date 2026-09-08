@@ -1,0 +1,406 @@
+export type Choice = "press" | "pass";
+export type ThemeId = "vtuber" | "everyday";
+export type Perspective = "streamer" | "viewer" | "anyone";
+
+export interface Question {
+  id: string;
+  version: number;
+  theme: ThemeId;
+  perspective: Perspective;
+  tags: string[];
+  gain: string;
+  cost: string;
+  source?: { date: string; time: string; note: string };
+}
+
+export const THEMES = [
+  { id: "vtuber", name: "虚拟主播", subtitle: "直播间里的另一种可能" },
+  { id: "everyday", name: "日常脑洞", subtitle: "生活偶尔也有隐藏选项" },
+] as const;
+
+export const TAGS: Record<string, string> = {
+  inspiration: "直播原梗",
+  daily: "直播日常",
+  persona: "模型人设",
+  collab: "联动关系",
+  stage: "舞台梦想",
+  fans: "观众关系",
+  life: "生活交换",
+};
+
+export const QUESTIONS: Question[] = [
+  {
+    id: "vt-fame-and-essays",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["inspiration", "fans"],
+    gain: "你成为了超受欢迎的虚拟主播。",
+    cost: "你的粉丝每天都会写负面小作文，而且每一篇你都必须读完。",
+    source: {
+      date: "2026-09-07",
+      time: "03:45:07",
+      note: "岁己与犬绒联动中的即兴设问，整理改写。",
+    },
+  },
+  {
+    id: "vt-fifty-million",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["inspiration", "daily"],
+    gain: "你立刻得到五千万元。",
+    cost: "从此再也不能直播，包括换账号或换一个身份。",
+    source: {
+      date: "2026-09-07",
+      time: "01:43:27",
+      note: "联动介绍按钮玩法时的例题，补充换身份的边界。",
+    },
+  },
+  {
+    id: "vt-perfect-model",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["persona"],
+    gain: "你免费拥有心目中最完美的 Live2D 模型。",
+    cost: "它会实时显示你的真实表情，营业微笑和装作不在意都藏不住。",
+  },
+  {
+    id: "vt-never-lag",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["daily"],
+    gain: "你的直播永远不会掉帧、断流或设备故障。",
+    cost: "每次开播的前十分钟，麦克风都会自动变成小学生变声器。",
+  },
+  {
+    id: "vt-song-memory",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["stage"],
+    gain: "任何歌听一遍，你就能完整唱下来，永远不会跑调。",
+    cost: "唱到最动情的那句时，模型都会自动切成豆豆眼。",
+  },
+  {
+    id: "vt-best-clip",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["daily", "fans"],
+    gain: "你的每场直播都会诞生一个百万播放的切片。",
+    cost: "爆火的永远是你最想剪掉的那一段。",
+  },
+  {
+    id: "vt-collab-telepathy",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["collab"],
+    gain: "你和联动搭档拥有完美默契，每个梗都能接住。",
+    cost: "只要你们同时开口，两个人的声音就会互换一分钟。",
+  },
+  {
+    id: "vt-offline-concert",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["stage"],
+    gain: "你的个人线下演唱会座无虚席，所有观众都会唱你的歌。",
+    cost: "返场曲必须是你出道时最想忘掉的那首黑历史原创。",
+  },
+  {
+    id: "vt-new-outfit",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["persona"],
+    gain: "每个月都有一套顶级画师设计的新衣装。",
+    cost: "衣装主题只能由观众投票，你没有否决权。",
+  },
+  {
+    id: "vt-game-master",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["daily"],
+    gain: "任何游戏你都能一次通关，再难的 Boss 也不例外。",
+    cost: "你的直播间从此只剩技术讨论，再也没有人陪你闲聊。",
+  },
+  {
+    id: "vt-small-room",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["fans"],
+    gain: "直播间的每个人都真心喜欢你，你也记得每个人。",
+    cost: "这个直播间永远只能有一百名观众。",
+  },
+  {
+    id: "vt-auto-reply",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["fans", "daily"],
+    gain: "你能看清并回应每一条弹幕，不会再漏掉任何人。",
+    cost: "每天的直播时长固定增加一小时，不能提前下播。",
+  },
+  {
+    id: "vt-dream-duet",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["collab", "stage"],
+    gain: "你可以和最憧憬的前辈合唱一首歌。",
+    cost: "必须先在对方面前完整播放你三年前模仿 TA 的视频。",
+  },
+  {
+    id: "vt-scheduled",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["daily"],
+    gain: "无论多累，只要开播你就立刻恢复精神和好心情。",
+    cost: "今后一年，所有直播都必须在早上六点开始。",
+  },
+  {
+    id: "vt-poker-face",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["persona", "collab"],
+    gain: "你在所有社交推理游戏里都能完美隐藏身份。",
+    cost: "游戏以外只要说一句小谎，模型鼻子就会变长十秒。",
+  },
+  {
+    id: "vt-brand-freedom",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["daily", "persona"],
+    gain: "你每月都有稳定商单，收入足够支持全职创作。",
+    cost: "每场直播都必须用广告腔说出固定的三句开场白。",
+  },
+  {
+    id: "vt-same-day-debut",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["collab", "stage"],
+    gain: "你和最好的朋友可以一起重新出道，所有筹备都有人负责。",
+    cost: "原来账号的作品可以保留，但你们都不能告诉老观众新账号是谁。",
+  },
+  {
+    id: "vt-3d-magic",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["stage", "persona"],
+    gain: "你在家就能做电影级的 3D 演出，不用设备也不用排练。",
+    cost: "演出里你只能以十厘米高的形象出现。",
+  },
+  {
+    id: "vt-archive-safe",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["daily"],
+    gain: "你的所有直播都有完美录播、字幕和时间轴。",
+    cost: "你永远不能删除其中任何一次口误。",
+  },
+  {
+    id: "vt-friend-success",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["collab"],
+    gain: "你最好的联动搭档会实现 TA 所有的舞台梦想。",
+    cost: "未来一年，你们的档期再也凑不出一场公开联动。",
+  },
+  {
+    id: "vt-change-voice",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["persona"],
+    gain: "你能随心切换任何喜欢的声线，唱歌也一样。",
+    cost: "观众最喜欢的永远是你原本的声音，换声线时大家都会想念它。",
+  },
+  {
+    id: "vt-live-translation",
+    version: 1,
+    theme: "vtuber",
+    perspective: "streamer",
+    tags: ["collab", "fans"],
+    gain: "全世界的人都能无障碍听懂你的直播。",
+    cost: "你说的所有谐音梗都会被一本正经地直译。",
+  },
+  {
+    id: "vt-recognised",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["fans"],
+    gain: "你最喜欢的主播会记住你的昵称和每一次到场。",
+    cost: "TA 也会记住你每次说“去睡了”之后还在别的直播间出现。",
+  },
+  {
+    id: "vt-forever-live",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["fans", "daily"],
+    gain: "你推的主播永远不会停播，每周都有新直播。",
+    cost: "每场直播都恰好在你睡着后一小时开始。",
+  },
+  {
+    id: "vt-front-row",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["stage", "fans"],
+    gain: "你永远能抢到你推的演出第一排。",
+    cost: "现场镜头每次都会拍到你最陶醉的表情。",
+  },
+  {
+    id: "vt-your-song",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["stage", "fans"],
+    gain: "你推的主播会为你唱一次你最想听的歌。",
+    cost: "这首歌必须由你先开麦唱一遍，不能放伴奏。",
+  },
+  {
+    id: "vt-perfect-merch",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["persona", "fans"],
+    gain: "你想要的周边永远不会缺货，也不会有质量问题。",
+    cost: "每件周边上都会印着你第一次进入直播间时的昵称。",
+  },
+  {
+    id: "vt-no-missed-live",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["daily", "fans"],
+    gain: "你每天都能多出两小时，专门用来看喜欢的直播。",
+    cost: "这两小时你只能看直播，不能发弹幕，也不能一心二用。",
+  },
+  {
+    id: "vt-favourite-famous",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["fans"],
+    gain: "你推的主播终于成为百万粉的大主播。",
+    cost: "直播间太热闹，TA 几乎再也看不到你的弹幕。",
+  },
+  {
+    id: "vt-meet-as-peer",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["collab"],
+    gain: "你可以作为平等的创作搭档，和你推共同完成一部作品。",
+    cost: "之后再看 TA 的直播，你很难找回最初那种单纯追星的心情。",
+  },
+  {
+    id: "vt-spoiler-clip",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["daily", "fans"],
+    gain: "你永远不会错过你推的任何名场面。",
+    cost: "每次直播开始前，你都会被提前剧透这场最精彩的瞬间。",
+  },
+  {
+    id: "vt-anniversary-letter",
+    version: 1,
+    theme: "vtuber",
+    perspective: "viewer",
+    tags: ["fans", "stage"],
+    gain: "你推会在周年直播里，认真读完你写的祝福。",
+    cost: "署名必须是你小时候用过的、最中二的网名。",
+  },
+  {
+    id: "life-perfect-rest",
+    version: 1,
+    theme: "everyday",
+    perspective: "anyone",
+    tags: ["life"],
+    gain: "你每天睡四小时就能精神饱满。",
+    cost: "你再也不会做梦，包括那些舍不得醒来的好梦。",
+  },
+  {
+    id: "life-travel",
+    version: 1,
+    theme: "everyday",
+    perspective: "anyone",
+    tags: ["life"],
+    gain: "你可以免费去世界上任何地方旅行。",
+    cost: "不能拍照、录像或直播，只能用自己的记忆留下风景。",
+  },
+  {
+    id: "life-good-food",
+    version: 1,
+    theme: "everyday",
+    perspective: "anyone",
+    tags: ["life"],
+    gain: "每一餐都有人做好你最想吃的菜。",
+    cost: "每次都得当着厨师的面写一百字的真实食评。",
+  },
+  {
+    id: "life-pause-time",
+    version: 1,
+    theme: "everyday",
+    perspective: "anyone",
+    tags: ["life"],
+    gain: "你每天都能暂停世界一小时，自由支配这段时间。",
+    cost: "暂停时所有电子设备都不能用。",
+  },
+  {
+    id: "life-find-things",
+    version: 1,
+    theme: "everyday",
+    perspective: "anyone",
+    tags: ["life"],
+    gain: "所有丢失的东西都能立刻回到你手里。",
+    cost: "每次取回时，都要向身边的人坦白一件自己的小糗事。",
+  },
+  {
+    id: "life-sunday",
+    version: 1,
+    theme: "everyday",
+    perspective: "anyone",
+    tags: ["life"],
+    gain: "每周都多一个完全不用工作的休息日。",
+    cost: "这一天所有商店和外卖也都休息。",
+  },
+];
+
+export function questionKey(question: Pick<Question, "id" | "version">) {
+  return `${question.id}@${question.version}`;
+}
+
+export function findQuestion(id: unknown, version: unknown) {
+  return QUESTIONS.find(
+    (question) => question.id === id && question.version === version,
+  );
+}
+
+export function filterQuestions(
+  theme: ThemeId,
+  tag: string,
+  perspective: string,
+) {
+  return QUESTIONS.filter(
+    (question) => question.theme === theme &&
+      (tag === "all" || question.tags.includes(tag)) &&
+      (perspective === "all" || question.perspective === perspective),
+  );
+}
