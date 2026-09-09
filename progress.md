@@ -1,5 +1,16 @@
 Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基本玩不了（能操作，但是没啥玩头，兵种、技能、平衡、游戏进程，都不太精心调整过，纯demo）。你来检查、完善这个游戏，让它变得是一个不用太完善但能让人总想开几把挑战一下的游戏。
 
+## 2026-09-09 · 按钮游戏交互与统计故障修复
+
+- `git pull --ff-only` 确认 master 已与 origin/master 同步，开始时工作区干净。503 回归先在旧版真实浏览器中失败：统计读取失败把两个选项一起禁用，导致 hover 和点击都失效。
+- 统计读取遇到服务端故障、断网或超时时明确降级为本机作答，保留选择、历史、下一题和重连入口，不显示虚构百分比、不自动补投；请求校验与限流错误仍阻止提交。投票响应丢失仍先重新读取服务端确认，不当作成功或自动重投。
+- 两个选择补齐 hover、键盘焦点、按下和选中提交反馈；只有实际选择的按钮显示确认中，手机按钮宽高固定，状态文字不再改变布局。
+- Chrome 检查 Vercel 发现已有 DATABASE_URL，但缺少 BUTTON_GAME_VOTE_SECRET；现有 Neon 库最初只有 visits。已通过 Vercel Query 新增 button_game_votes 和 button_game_rate_limits，并以只读查询核对全部 8 个字段，未改动 visits 或写入测试投票。
+- Vercel Query 不接受多条 prepared statement，迁移脚本改为单条原子 DO 块，线上执行成功，PGlite 再次验证重复执行与并发去重。
+- 验证通过：8/8 逻辑与实际 SQL/API 测试、系统 Chrome 完整浏览器回归（503、断网、超时、400/429、刷新、重连不补投、真实路由双身份 50/50、重复点击、丢失响应恢复、键盘/触屏和固定按钮尺寸）。15 张截图均通过像素与布局检查并逐张目检，意外控制台错误为空，产物在 tmp/button-game-verify/。
+- 通用 web-game 客户端真实点击后为 answered/press/local，截图通过像素检查并目检，无错误日志。目标 ESLint、pnpm run check 和随后隔离 .next-button-fix-build 的 pnpm run build 通过，构建保留 ESLint 并生成 42 页；仅回收本次构建自动添加的类型目录。
+- 用户已确认推送、部署与保存生产密钥。已生成 32 字节随机签名密钥并保存为此 Vercel 项目的 Production 专用 Secret（BUTTON_GAME_VOTE_SECRET），未写入代码或日志；发布前再次顺序执行 check/build，随后推送触发生产部署。本地继续使用 http://127.0.0.1:3838/game/button。
+
 ## 2026-09-07 · HUD 发布与仓库临时文件清理
 
 - 按用户要求检查整个主工作区，业务改动为资源区归位这一轮；保留已有 `1341b27` 忽略依赖缓存与浏览器产物的提交。

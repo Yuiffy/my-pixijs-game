@@ -34,7 +34,8 @@ content, UI, API and table names make a later extraction straightforward.
 1. Use the existing Next.js Vercel deployment. Configure `DATABASE_URL` for Neon,
    as for the existing visits endpoint.
 2. Run `scripts/sql/button-game.sql` once in that database's SQL console. The
-   migration is additive and repeatable; it does not touch visits or other games.
+   migration is a single atomic `DO` statement compatible with Vercel's Query
+   panel. It is additive and repeatable; it does not touch visits or other games.
 3. Set `BUTTON_GAME_VOTE_SECRET` to a stable random secret of at least 32 characters
    in the server environment. Generate it locally with
    `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
@@ -68,7 +69,12 @@ in a CDN. The API is deliberately POST-only to remain excluded from static expor
 - `local`: database configuration is absent; choice stays on the device and there
   are no community counts. Local answers are never automatically submitted later.
 - Database or signing-configuration failures: explicit errors, no invented
-  percentages or optimistic successful votes. Retrying first reads the stored vote,
+  percentages or optimistic successful votes. An unavailable status read (server
+  error, offline connection or timeout) leaves both choices playable in explicitly
+  labeled local mode. These answers are not submitted automatically on recovery.
+  Validation, identity and rate-limit errors are not downgraded to local mode.
+  A failed vote still requires confirmation rather than pretending it succeeded.
+  Retrying first reads the stored vote,
   handling the case where the response was lost after an insert committed.
 - Uniqueness is enforced by `(question_id, question_version, voter_hash)` in
   PostgreSQL, not an in-memory counter. The first answer wins, including concurrent

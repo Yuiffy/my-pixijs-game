@@ -336,6 +336,8 @@
   margin: 20px 0 12px;
   background: transparent;
   border: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: filter 160ms;
 }
 .pressButton img {
@@ -356,16 +358,27 @@
   text-shadow: 0 2px 1px #b9273970;
   transition: transform 150ms;
 }
+.pressButton:hover:enabled,
+.pressButton:focus-visible:enabled {
+  filter: brightness(1.08) drop-shadow(0 8px 10px #dc405d30);
+}
 .pressButton:hover:enabled img,
-.pressButton:hover:enabled > span {
-  transform: translateY(3px);
+.pressButton:hover:enabled > span,
+.pressButton:focus-visible:enabled img,
+.pressButton:focus-visible:enabled > span {
+  transform: translateY(-4px);
 }
 .pressButton:active:enabled img,
-.pressButton:active:enabled > span {
+.pressButton:active:enabled > span,
+.pressButton[data-pending="true"] img,
+.pressButton[data-pending="true"] > span {
   transform: translateY(10px);
 }
 .pressButton:disabled {
   filter: saturate(0.62);
+}
+.pressButton[data-pending="true"] {
+  filter: none;
 }
 .passButton {
   display: inline-flex;
@@ -373,20 +386,36 @@
   justify-content: center;
   gap: 9px;
   height: 44px;
-  min-width: 142px;
+  width: 142px;
+  max-width: 100%;
   border: 1px solid #bdc6c4;
   border-radius: 5px;
   background: #fff;
   font-size: 14px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition:
+    transform 150ms,
+    box-shadow 150ms,
     border-color 150ms,
     background 150ms;
 }
-.passButton:hover:enabled {
+.passButton:hover:enabled,
+.passButton:focus-visible:enabled {
   background: #edf2f0;
   border-color: #526d64;
+  box-shadow: 0 4px 0 #526d6424;
+  transform: translateY(-2px);
 }
-.passButton:disabled {
+.passButton:active:enabled,
+.passButton[data-pending="true"] {
+  color: #365648;
+  background: #e1ebe5;
+  border-color: #526d64;
+  box-shadow: none;
+  transform: translateY(1px);
+}
+.passButton:disabled:not([data-pending="true"]) {
   color: #9da5a3;
 }
 .connectionState {
@@ -608,7 +637,7 @@
   margin: 0;
   font-size: 16px;
 }
-.localResult > span:last-child {
+.localResult > span:not(:first-child) {
   font-size: 12px;
   color: var(--muted);
 }
@@ -935,8 +964,9 @@
   }
   .passButton {
     height: 42px;
+    width: 112px;
     min-width: 100px;
-    padding: 0 12px;
+    padding: 0 8px;
   }
   .connectionState {
     grid-column: 1 / -1;

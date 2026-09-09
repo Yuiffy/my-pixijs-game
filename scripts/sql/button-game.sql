@@ -1,4 +1,5 @@
-BEGIN;
+DO $migration$
+BEGIN
 
 CREATE TABLE IF NOT EXISTS button_game_votes (
   question_id text NOT NULL CHECK (length(question_id) BETWEEN 1 AND 80),
@@ -15,4 +16,5 @@ CREATE TABLE IF NOT EXISTS button_game_rate_limits (
   attempts integer NOT NULL CHECK (attempts > 0)
 );
 
-COMMIT;
+END
+$migration$;

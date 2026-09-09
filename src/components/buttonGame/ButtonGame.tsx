@@ -41,6 +41,8 @@ type DebugWindow = Window & {
   advanceTime?: (ms: number) => void;
 };
 
+class StatisticsUnavailableError extends Error {}
+
 async function requestResult(
   question: Question,
   action: "status" | "vote",
@@ -63,12 +65,15 @@ async function requestResult(
       body: JSON.stringify({ action, id: question.id, version: question.version, ...(choice ? { choice } : {}) }),
     });
     const body = await response.json();
-    if (!response.ok) throw new Error(typeof body.error === 'string' ? body.error : '统计暂不可用，请重试');
+    if (!response.ok) {
+      const message = typeof body.error === 'string' ? body.error : '统计暂不可用，请重试';
+      throw response.status >= 500 ? new StatisticsUnavailableError(message) : new Error(message);
+    }
     return parseResult(body);
   } catch (reason) {
-    if (controller.signal.aborted && !signal?.aborted) throw new Error('连接超时，选择尚未确认，请重新载入本题');
-    if (reason instanceof TypeError) throw new Error('网络连接失败，请重新载入本题');
-    if (reason instanceof SyntaxError) throw new Error('统计响应无效，请重新载入本题');
+    if (controller.signal.aborted && !signal?.aborted) throw new StatisticsUnavailableError('连接超时，选择尚未确认，请重新载入本题');
+    if (reason instanceof TypeError) throw new StatisticsUnavailableError('网络连接失败，请重新载入本题');
+    if (reason instanceof SyntaxError) throw new StatisticsUnavailableError('统计响应无效，请重新载入本题');
     throw reason;
   } finally {
     window.clearTimeout(timer);
@@ -84,6 +89,7 @@ export default function ButtonGame() {
   const [answers, setAnswers] = useState<Answers>({});
   const [hydrated, setHydrated] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
+  const [pendingChoice, setPendingChoice] = useState<Choice | null>(null);
   const [result, setResult] = useState<VoteResult | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -191,6 +197,14 @@ export default function ButtonGame() {
       })
       .catch((reason) => {
         if (controller.signal.aborted) return;
+        // Only failed status reads can fall back; a failed vote may already be committed.
+        if (reason instanceof StatisticsUnavailableError) {
+          const choice = answersRef.current[questionKey(question)]?.choice || null;
+          setResult({ mode: "local", choice, totals: null });
+          setError("全站统计暂不可用，当前仅记录本机选择。");
+          setPhase(choice ? "answered" : "ready");
+          return;
+        }
         setError(
           reason instanceof Error ? reason.message : "网络连接失败，请重试",
         );
@@ -226,6 +240,7 @@ export default function ButtonGame() {
   const vote = async (choice: Choice) => {
     if (!question || phase !== "ready" || savingRef.current) return;
     savingRef.current = true;
+    setPendingChoice(choice);
     setPhase("saving");
     playClick();
     try {
@@ -254,6 +269,7 @@ export default function ButtonGame() {
       setPhase("error");
     } finally {
       savingRef.current = false;
+      setPendingChoice(null);
     }
   };
 
@@ -335,6 +351,7 @@ export default function ButtonGame() {
     target.render_game_to_text = () => JSON.stringify({
         mode: view,
         phase,
+        pendingChoice,
         theme,
         tag,
         perspective,
@@ -355,6 +372,7 @@ export default function ButtonGame() {
   }, [
     view,
     phase,
+    pendingChoice,
     theme,
     tag,
     perspective,
@@ -677,7 +695,17 @@ export default function ButtonGame() {
                         <div className={styles.localResult}>
                           <CheckOutlined aria-hidden />
                           <p>本机选择已记录</p>
-                          <span>全站统计未连接</span>
+                          <span>{error ? "全站统计暂不可用" : "全站统计未连接"}</span>
+                          {error && (
+                            <button
+                              type="button"
+                              className={styles.textButton}
+                              onClick={() => setRetry((value) => value + 1)}
+                            >
+                              <ReloadOutlined aria-hidden />
+                              重新连接统计
+                            </button>
+                          )}
                         </div>
                       )}
                       <button
@@ -701,6 +729,8 @@ export default function ButtonGame() {
                         id="press-button"
                         className={styles.pressButton}
                         aria-label="按下按钮"
+                        aria-busy={pendingChoice === "press"}
+                        data-pending={pendingChoice === "press"}
                         disabled={phase !== "ready"}
                         onClick={() => vote("press")}
                       >
@@ -712,22 +742,26 @@ export default function ButtonGame() {
                           priority
                           draggable={false}
                         />
-                        <span>{phase === "saving" ? "确认中" : "按下"}</span>
+                        <span>{pendingChoice === "press" ? "确认中" : "按下"}</span>
                       </button>
                       <button
                         type="button"
                         className={styles.passButton}
+                        aria-label="我不按"
+                        aria-busy={pendingChoice === "pass"}
+                        data-pending={pendingChoice === "pass"}
                         disabled={phase !== "ready"}
                         onClick={() => vote("pass")}
                       >
                         <CloseOutlined aria-hidden />
-                        我不按
+                        {pendingChoice === "pass" ? "确认中..." : "我不按"}
                       </button>
-                      {phase === "error" ? (
-                        <div className={styles.error} role="alert">
+                      {error ? (
+                        <div className={styles.error} role={phase === "error" ? "alert" : "status"}>
                           <p>{error}</p>
                           <button
                             type="button"
+                            disabled={isBusy}
                             onClick={() => setRetry((value) => value + 1)}
                           >
                             <ReloadOutlined aria-hidden />

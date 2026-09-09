@@ -76,6 +76,76 @@ const compile = (relative, dependencies = {}) => {
     page.on('console', message => { if (message.type() === 'error' && !allowNetworkErrors) errors.push(message.text()); });
   };
   try {
+    const unavailable = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+    const unavailablePage = await unavailable.newPage(); observe(unavailablePage);
+    let unavailableVotes = 0;
+    await unavailablePage.route('**/api/button-game', async route => {
+      if (route.request().postDataJSON().action === 'vote') unavailableVotes++;
+      await route.fulfill({ status: 503, json: { error: 'Statistics unavailable' } });
+    });
+    allowNetworkErrors = true;
+    await goto(unavailablePage);
+    assert.equal((await state(unavailablePage)).statisticsMode, 'local');
+    const pressButton = unavailablePage.getByRole('button', { name: '按下按钮', exact: true });
+    const passButton = unavailablePage.getByRole('button', { name: '我不按', exact: true });
+    assert.equal(await pressButton.isEnabled(), true, 'A statistics outage must not disable the game');
+    assert.equal(await passButton.isEnabled(), true);
+    await pressButton.hover();
+    assert.equal(await pressButton.evaluate(element => getComputedStyle(element).cursor), 'pointer');
+    await unavailablePage.waitForFunction(() => getComputedStyle(document.querySelector('#press-button img')).transform !== 'none');
+    await capture(unavailablePage, 'statistics-outage-hover');
+    await unavailablePage.mouse.down();
+    assert.equal((await state(unavailablePage)).phase, 'ready');
+    await capture(unavailablePage, 'statistics-outage-pressed');
+    await unavailablePage.mouse.up();
+    await phase(unavailablePage, 'answered');
+    assert.equal((await state(unavailablePage)).choice, 'press');
+    assert.equal((await state(unavailablePage)).statistics, null);
+    await capture(unavailablePage, 'statistics-outage-result');
+    await unavailablePage.reload({ waitUntil: 'networkidle' });
+    await phase(unavailablePage, 'answered');
+    assert.equal((await state(unavailablePage)).choice, 'press');
+    await unavailablePage.getByRole('button', { name: '下一道问题', exact: true }).click();
+    await phase(unavailablePage, 'ready');
+    await passButton.hover();
+    assert.equal(await passButton.evaluate(element => getComputedStyle(element).cursor), 'pointer');
+    await capture(unavailablePage, 'statistics-outage-pass-hover');
+    await passButton.click();
+    await phase(unavailablePage, 'answered');
+    assert.equal((await state(unavailablePage)).choice, 'pass');
+    assert.equal((await state(unavailablePage)).answered, 2);
+    assert.equal(unavailableVotes, 0, 'Local fallback must not submit votes');
+    allowNetworkErrors = false;
+
+    for (const failure of ['offline', 'timeout', 400, 429]) {
+      const failedContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+      const failedPage = await failedContext.newPage(); observe(failedPage);
+      if (failure === 'timeout') await failedPage.clock.install();
+      await failedPage.route('**/api/button-game', async route => {
+        if (failure === 'offline') await route.abort('internetdisconnected');
+        else if (failure !== 'timeout') await route.fulfill({ status: failure, json: { error: `Expected ${failure}` } });
+      });
+      allowNetworkErrors = true;
+      const requested = failedPage.waitForRequest(request => request.url().endsWith('/api/button-game'));
+      await failedPage.goto(`${base}/game/button`, { waitUntil: 'domcontentloaded' });
+      await requested;
+      if (failure === 'timeout') await failedPage.clock.fastForward(16000);
+      if (typeof failure === 'number') {
+        await phase(failedPage, 'error');
+        assert.equal(await failedPage.getByRole('button', { name: '按下按钮', exact: true }).isEnabled(), false);
+        assert.equal((await state(failedPage)).statisticsMode, 'pending', 'Validation and throttling must not bypass the server');
+      } else {
+        await phase(failedPage, 'ready');
+        await failedPage.getByRole('button', { name: '我不按', exact: true }).tap();
+        await phase(failedPage, 'answered');
+        assert.equal((await state(failedPage)).choice, 'pass');
+        assert.equal((await state(failedPage)).statistics, null);
+        if (failure === 'offline') await capture(failedPage, 'offline-mobile-result');
+      }
+      await failedContext.close();
+      allowNetworkErrors = false;
+    }
+
     const context = await browser.newContext({ viewport: { width: 1440, height: 960 }, permissions: ['clipboard-read', 'clipboard-write'] });
     const page = await context.newPage(); observe(page);
     await goto(page);
@@ -169,12 +239,18 @@ const compile = (relative, dependencies = {}) => {
       '@/components/buttonGame/model': model, '@/lib/buttonGame/store': store, '@/lib/buttonGame/identity': identity,
     });
     let loseNextVote = false;
+    let holdNextVote = false;
+    let releaseHeldVote;
     let voteRequests = 0;
     const attachApi = async target => {
       await target.route('**/api/button-game', async route => {
         const request = route.request();
         const body = request.postDataJSON();
         if (body.action === 'vote') voteRequests++;
+        if (holdNextVote && body.action === 'vote') {
+          holdNextVote = false;
+          await new Promise(resolve => { releaseHeldVote = resolve; });
+        }
         const headers = { ...await request.allHeaders(), host: new URL(request.url()).host };
         const result = await api.POST(new NextRequest(request.url(), { method: 'POST', headers, body: request.postData() }));
         if (loseNextVote && body.action === 'vote' && result.status === 200) {
@@ -185,6 +261,15 @@ const compile = (relative, dependencies = {}) => {
         await route.fulfill({ status: result.status, headers: Object.fromEntries(result.headers), body: await result.text() });
       });
     };
+    await unavailablePage.unroute('**/api/button-game');
+    await attachApi(unavailablePage);
+    await unavailablePage.getByRole('button', { name: '重新连接统计', exact: true }).click();
+    await phase(unavailablePage, 'ready');
+    assert.equal((await state(unavailablePage)).statisticsMode, 'global');
+    assert.equal((await state(unavailablePage)).choice, null);
+    assert.equal(voteRequests, 0, 'Recovering from an outage must never auto-submit local choices');
+    await unavailable.close();
+
     const global = await browser.newContext({ viewport: { width: 1440, height: 960 } });
     const globalPage = await global.newPage(); observe(globalPage); await attachApi(globalPage);
     await goto(globalPage);
@@ -197,7 +282,19 @@ const compile = (relative, dependencies = {}) => {
     const other = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const otherPage = await other.newPage(); observe(otherPage); await attachApi(otherPage);
     await goto(otherPage);
+    const passSize = await otherPage.getByRole('button', { name: '我不按', exact: true }).boundingBox();
+    holdNextVote = true;
     await otherPage.getByRole('button', { name: '我不按', exact: true }).tap();
+    await phase(otherPage, 'saving');
+    await otherPage.waitForFunction(() => document.querySelector('[aria-label="我不按"]').textContent.includes('确认中'));
+    assert.equal((await state(otherPage)).pendingChoice, 'pass');
+    assert.equal(await otherPage.getByRole('button', { name: '按下按钮', exact: true }).innerText(), '按下');
+    assert.equal(await otherPage.getByRole('button', { name: '我不按', exact: true }).isEnabled(), false);
+    const savingSize = await otherPage.getByRole('button', { name: '我不按', exact: true }).boundingBox();
+    assert.equal(savingSize.width, passSize.width, 'The saving label must not resize the control');
+    assert.equal(savingSize.height, passSize.height);
+    await capture(otherPage, 'global-saving-pass-mobile');
+    releaseHeldVote();
     await phase(otherPage, 'answered');
     assert.deepEqual((await state(otherPage)).statistics, { press: 1, pass: 1, total: 2 });
     await capture(otherPage, 'global-result-mobile');
