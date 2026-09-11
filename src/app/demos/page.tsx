@@ -28,6 +28,30 @@ interface ProjectItem {
   meta: string;
 }
 
+const miniGames: ProjectItem[] = [
+  {
+    title: '智能纪元',
+    href: '/game/agi',
+    description: '训练、蒸馏、发布，与三家实验室竞速 AGI。下一个时代由你定义。',
+    image: '/games/mini/agi.png',
+    meta: '策略经营 · AI 竞赛 · 四种结局',
+  },
+  {
+    title: '晶圆周期',
+    href: '/game/fab',
+    description: '低谷囤货，还是逆势扩产？在六年产业周期中积累最多财富。',
+    image: '/games/mini/fab.png',
+    meta: '模拟经营 · 半导体市场 · 24 季',
+  },
+  {
+    title: '主播，别嚼了！',
+    href: '/game/snack',
+    description: '一边聊天，一边偷偷吃光零食。小心麦克风，还有敏锐的观众。',
+    image: '/games/mini/snack.png',
+    meta: '实时操作 · 直播偷吃 · 五关挑战',
+  },
+];
+
 const gameDemos: ProjectItem[] = [
   {
     title: '这个按钮，你按吗？',
@@ -232,6 +256,15 @@ export default function DemosPage() {
             </div>
             <p>规则简单，打开就能玩一局。</p>
           </div>
+          <nav className={styles.miniGameLinks} aria-label="新游戏快捷入口">
+            {miniGames.map(game => (
+              <Link key={game.href} href={game.href} className={styles.miniGameLink} title={game.description}>
+                <Image src={game.image} alt="" width={72} height={52} className={styles.miniGameThumb} />
+                <span className={styles.miniGameCopy}><strong>{game.title}</strong><small>{game.meta}</small></span>
+                <ArrowRightOutlined aria-hidden />
+              </Link>
+            ))}
+          </nav>
           <div className={styles.projectGrid}>
             {gameDemos.map((project, index) => (
               <ProjectCard key={project.href} project={project} index={index} />
