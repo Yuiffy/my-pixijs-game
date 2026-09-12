@@ -1,0 +1,384 @@
+.caption {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+  margin: 10px 0 !important;
+}
+.picker {
+  margin-bottom: 16px;
+}
+.companyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.companyGrid button {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  min-height: 62px;
+  text-align: left;
+  padding: 8px !important;
+}
+.companyGrid button > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.companyGrid strong {
+  font-size: 13px;
+}
+.companyGrid small {
+  font-size: 10px;
+  opacity: 0.8;
+}
+.companyGrid button[aria-pressed='true'], .operations button[aria-pressed='true'] {
+  background: var(--accent) !important;
+  color: #fff9ee !important;
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  color: white;
+  font-weight: 700;
+}
+.profile {
+  margin-top: 18px;
+  padding-left: 13px;
+  border-left: 3px solid;
+}
+.profile > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.profile h3 {
+  margin: 8px 0;
+  font-size: 17px;
+}
+.profile p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 8px 0 !important;
+}
+.sources {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.sources summary,
+.league summary,
+.routeActions summary,
+.routing summary {
+  cursor: pointer;
+  min-height: 34px;
+  padding: 8px 0;
+}
+.sources p {
+  margin-top: 8px !important;
+}
+.sources ul {
+  padding: 8px 0 0 17px;
+  list-style: disc;
+}
+.sources li {
+  padding: 5px 0;
+}
+.sources a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sources small {
+  display: block;
+  opacity: 0.75;
+}
+.industry {
+  margin: 22px 0 0;
+}
+.companyTitle {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+}
+.companyTitle .mark {
+  width: 43px;
+  height: 43px;
+  font-size: 22px;
+}
+.companyTitle h2 {
+  font-size: 20px;
+}
+.companyTitle h2 small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 12px;
+}
+.companyTitle p {
+  color: var(--muted);
+  font-size: 12px;
+  padding-top: 7px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px;
+  margin-top: 22px;
+}
+.stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stats span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.stats strong {
+  font-size: 22px;
+}
+.stats small {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.stats meter {
+  width: 100%;
+  height: 7px;
+  accent-color: var(--accent);
+}
+.event {
+  margin-top: 20px;
+  padding: 22px;
+  background: #e7ede06b;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  animation: arrive 0.25s ease-out;
+}
+.eventLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.event h3 {
+  font-size: 21px;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.event > p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+.eventChoices {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+.eventChoices button {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 7px;
+  text-align: left;
+  background: var(--paper) !important;
+  padding: 12px !important;
+}
+.eventChoices strong {
+  font-size: 13px;
+}
+.eventChoices span {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.resolved {
+  padding: 15px 0 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+.league {
+  border-bottom: 1px solid var(--line);
+  margin-top: 18px;
+}
+.league summary {
+  font-size: 13px;
+}
+.rival {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.rival strong {
+  font-size: 13px;
+}
+.rival small {
+  font-size: 10px;
+  font-weight: 400;
+  margin-left: 10px;
+  color: var(--muted);
+}
+.rival p {
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 6px 0;
+}
+.rival > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.operations {
+  margin: 20px 0;
+}
+.service {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 5px;
+}
+.service legend {
+  font-size: 12px;
+  padding-bottom: 9px;
+}
+.service button {
+  flex: 1;
+  font-size: 11px !important;
+  padding: 8px 2px !important;
+}
+.special {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  margin: 12px 0;
+  border-color: var(--accent) !important;
+}
+.special strong {
+  font-size: 14px;
+}
+.special span {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.routeActions,
+.routing {
+  border-bottom: 1px solid var(--line);
+}
+.routeActions summary,
+.routing summary {
+  font-size: 13px;
+  font-weight: 700;
+}
+.routeActions button {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  text-align: left;
+  padding: 12px 3px !important;
+}
+.routeActions button > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.routeActions strong {
+  font-size: 13px;
+}
+.routeActions small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.routeActions button > span:last-child {
+  flex-shrink: 0;
+  max-width: 86px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.routing summary small {
+  color: var(--muted);
+  font-weight: 400;
+}
+.routing label {
+  display: block;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.routing select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  background: var(--paper);
+  padding: 12px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  margin-top: 8px;
+  color: var(--ink);
+}
+.routing p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 9px 0 !important;
+}
+.routing .consent {
+  display: flex;
+  gap: 8px;
+  align-items: start;
+  line-height: 1.8;
+}
+.consent input {
+  margin-top: 4px;
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 760px) {
+  .industry {
+    width: 100%;
+    margin: 0;
+  }
+  .stats {
+    gap: 10px;
+  }
+  .stats strong {
+    font-size: 20px;
+  }
+  .event {
+    padding: 16px;
+  }
+  .event h3 {
+    font-size: 18px;
+  }
+  .companyTitle h2 small {
+    display: block;
+    margin: 5px 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .event {
+    animation: none;
+  }
+}

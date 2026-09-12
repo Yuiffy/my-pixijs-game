@@ -1,4 +1,5 @@
 import { AiState } from "./agiEngine";
+import { aiCompany } from './agiIndustry';
 import { FabState } from "./fabEngine";
 import { SnackState, snackCover, SNACKS } from "./snackEngine";
 import { SnackSkin } from "./snackSkins";
@@ -139,6 +140,12 @@ function business(c: Ctx, s: AiState | FabState, time: number) {
   ellipse(c, 495, 419, 360, 49, "#38595116");
   isoBox(c, 440, 142, 355, 290, 22, "#f7f8ed");
   if (ai) {
+    const company = aiCompany(s.industry.company);
+    box(c, 32, 28, 235, 59, '#f7f7ee', 8);
+    box(c, 42, 38, 38, 38, company.color, 8);
+    label(c, company.mark, 52, 64, 23, '#ffffff');
+    label(c, company.name, 93, 54, 19);
+    label(c, s.industry.service === 'research' ? '研究优先 · 网页仍开' : s.industry.service === 'consumer' ? 'TO C · 服务扩张' : '研究 / 服务均衡', 93, 74, 11);
     box(c, 373, 45, 250, 117, "#254d47", 12);
     label(c, "NEURAL / RESEARCH", 392, 70, 12, "#9bd8bf");
     const nodes = [

@@ -6,6 +6,12 @@ import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 const ai = await loadTypescriptModule('src/components/miniGames/agiEngine.ts');
 const fab = await loadTypescriptModule('src/components/miniGames/fabEngine.ts');
 const snack = await loadTypescriptModule('src/components/miniGames/snackEngine.ts');
+const { industryEvent } = await loadTypescriptModule('src/components/miniGames/agiIndustry.ts');
+const nextAi = state => {
+  let s = state;
+  if (!s.industry.eventResolved) { const c = industryEvent(s.industry.eventId).choices.find(c => s.cash + (c.deltas.cash || 0) >= 0); s = ai.decideAiEvent(s, c.id); }
+  return ai.endAiTurn(s);
+};
 const { readGameSave } = await loadTypescriptModule('src/components/miniGames/save.ts');
 
 test('AI full games reach four distinct AGI endings through legal decisions', () => {
@@ -23,16 +29,16 @@ test('AI constraints, releases, distillation, recursion and competitor progress 
   assert.match(ai.aiBlocked(s, 'self'), /55/);
   s = ai.actAi(s, 'train');
   assert.equal(ai.actAi(s, 'train'), s, 'One training run per quarter');
-  s = ai.endAiTurn(s); s = ai.actAi(s, 'train'); s = ai.actAi(s, 'release');
+  s = nextAi(s); s = ai.actAi(s, 'train'); s = ai.actAi(s, 'release');
   assert.ok(ai.aiIncome(s) > 0);
-  s = ai.endAiTurn(s); s = ai.actAi(s, 'distill');
+  s = nextAi(s); s = ai.actAi(s, 'distill');
   assert.equal(s.efficiency, 2);
   assert.ok(ai.aiCost(s, 'train') < 25);
   s = { ...s, cash: 500, capability: 60, safety: 70, actions: 3, used: [] };
-  s = ai.actAi(s, 'self'); const before = structuredClone(s); s = ai.endAiTurn(s);
+  s = ai.actAi(s, 'self'); const before = structuredClone(s); s = nextAi(s);
   assert.equal(s.capability - before.capability, 9); assert.equal(before.safety - s.safety, 6);
   assert.ok(s.rivals.every((r, i) => r.capability > before.rivals[i].capability));
-  assert.equal(s.cash, Math.round((before.cash + ai.aiIncome(before) - (4 + before.compute * 2)) * 10) / 10);
+  assert.equal(s.industry.lastCosts, ai.aiUpkeep(before)); assert.ok(s.industry.lastIncome > 0);
 });
 test('all AI specialties can complete a reliable AGI route across seeds, and idling loses', () => {
   for (const style of ai.AI_STYLES) for (const seed of [1, 42, 2026, 7788]) {
@@ -41,10 +47,10 @@ test('all AI specialties can complete a reliable AGI route across seeds, and idl
     assert.deepEqual(result, aiPilot(seed, style.id, 'shared'));
   }
   let s = { ...ai.createAi(), cash: 1000 };
-  while (!s.ending) s = ai.endAiTurn(s);
+  while (!s.ending) s = nextAi(s);
   assert.match(s.ending.title, /率先抵达/);
   assert.equal(ai.endAiTurn(s), s);
-  let poor = ai.createAi(); while (!poor.ending) poor = ai.endAiTurn(poor);
+  let poor = ai.createAi(); while (!poor.ending) poor = nextAi(poor);
   assert.equal(poor.ending.title, '现金流断裂');
 });
 test('fab competition clears a finite market and pricing changes demand allocation', () => {

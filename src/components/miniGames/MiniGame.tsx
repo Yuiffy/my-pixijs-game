@@ -6,14 +6,13 @@ import {
   actAi,
   AI_ACTIONS,
   AI_EVENTS,
-  AI_STYLES,
   aiBlocked,
   aiCost,
   aiIncome,
   aiTrainGain,
+  aiUpkeep,
   createAi,
   endAiTurn,
-  AiStyle,
 } from "./agiEngine";
 import {
   actFab,
@@ -43,6 +42,8 @@ import {
 } from "./snackEngine";
 import { money, round, seedValue } from "./core";
 import { drawScene, GameState } from "./scene";
+import { aiCompany } from "./agiIndustry";
+import { AgiCompanyPicker, AgiIndustryScene, AgiIndustryControls } from "./AgiIndustryPanel";
 import { readGameSave } from "./save";
 import { SNACK_SKINS, SNACK_SKIN_STORAGE_KEY, SnackSkin } from "./snackSkins";
 import styles from "./miniGames.module.css";
@@ -110,13 +111,13 @@ function Rules({ kind }: { kind: GameState["kind"] }) {
   if (kind === "agi") return (
       <ol>
         <li>
-          每季 3 次行动，同一行动每季一次。训练提升能力，发布模型获得每季收入。
+          每季处理一次行业事件，再分配 3 次行动。训练提升能力，后训练提升可靠性；发布模型获得持续收入。
         </li>
         <li>
           能力 30 解锁蒸馏；55 解锁自我提升。扩建算力更快，但会增加维护费。
         </li>
         <li>
-          能力 100、算力 5 后，抢在对手之前启动 AGI。安全低于 40
+          自研能力 100、算力 5、可靠性 70 后，抢在对手之前启动 AGI。安全低于 40
           会失控；开源且安全 75 可实现共同富裕。
         </li>
         <li>
@@ -387,7 +388,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       ? state.current.seed
       : Math.floor(Math.random() * 999999) + 1;
     const records = state.current.kind === "snack" ? [...state.current.best] : null;
-    state.current = fresh(kind, nextSeed);
+    const previousCompany = state.current.kind === "agi" ? state.current.industry.company : null;
+    state.current = same && previousCompany ? createAi(nextSeed, aiCompany(previousCompany).style, previousCompany) : fresh(kind, nextSeed);
     if (state.current.kind === "snack" && records) state.current.best = records;
     setSeed(String(nextSeed));
     startedRef.current = false;
@@ -482,7 +484,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       <div className={styles.workspace}>
         <div className={styles.heading}>
           <div>
-            <span className={styles.eyebrow}>{ENGLISH[kind]}</span>
+            <span className={styles.eyebrow}>{kind === 'agi' ? 'V2 · 11 家厂商 · 18 个行业事件' : ENGLISH[kind]}</span>
             <h1>{TITLES[kind]}</h1>
             <p>{DESCRIPTIONS[kind]}</p>
           </div>
@@ -544,12 +546,12 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
             <Metric
               label="可用资金"
               value={money(game.cash)}
-              detail={`每季维护 ${4 + game.compute * 2} M`}
+              detail={`每季运营 ${aiUpkeep(game)} M`}
             />
             <Metric
               label="模型能力"
               value={`${game.capability}`}
-              detail="100 能力 + 5 算力 → AGI"
+              detail={`可靠性 ${game.industry.reliability} / AGI 需 70`}
             />
             <Metric
               label="对齐安全"
@@ -696,7 +698,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
             )}
             {game.kind === "agi" && (
               <div className={styles.event}>
-                <span>本季简报</span>
+                <span>机房与市场简报</span>
                 <h2>{AI_EVENTS[game.event].title}</h2>
                 <p>{AI_EVENTS[game.event].text}</p>
                 <div className={styles.chips}>
@@ -709,6 +711,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                 </div>
               </div>
             )}
+            {game.kind === "agi" && started && <AgiIndustryScene game={game} change={commit} />}
             {game.kind === "fab" && (
               <div className={styles.event}>
                 <span>
@@ -764,7 +767,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                 {game.kind === "agi"
                   ? [
                       {
-                        name: "你的实验室",
+                        name: aiCompany(game.industry.company).name,
                         capability: game.capability,
                         focus: "你",
                       },
@@ -817,20 +820,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                     ? SNACK_LEVELS[snackGame!.level].subtitle
                     : "选择你的起点"}
                 </h2>
-                {game.kind === "agi" && (
-                  <div className={styles.choices}>
-                    {AI_STYLES.map((style) => (
-                      <button
-                        key={style.id}
-                        aria-pressed={game.style === style.id}
-                        onClick={() => commit(createAi(seedValue(seed), style.id as AiStyle))}
-                      >
-                        <strong>{style.name}</strong>
-                        <span>{style.perk}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {game.kind === "agi" && <AgiCompanyPicker game={game} choose={id => commit(createAi(seedValue(seed), aiCompany(id).style, id))} />}
                 {game.kind === "fab" && (
                   <div className={styles.choices}>
                     {FAB_STYLES.map((style) => (
@@ -975,8 +965,9 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                     <p className={styles.policyHint}>
                       政策影响当前产品收入与 AGI 结局；发布当季锁定。
                     </p>
+                    <AgiIndustryControls game={game} change={commit} />
                     <div className={styles.actions}>
-                      {AI_ACTIONS.map((action) => {
+                      {AI_ACTIONS.filter(a => !["posttrain", "video", "openvideo", "learn", "special"].includes(a.id)).map((action) => {
                         const reason = aiBlocked(game, action.id);
                         return (
                           <button
@@ -1003,13 +994,15 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                     </div>
                     <button
                       className={styles.primary}
+                      disabled={!game.industry.eventResolved}
+                      title={game.industry.eventResolved ? "结算本季" : "请先处理本季行业事件"}
                       onClick={() => commit(endAiTurn(game))}
                     >
                       结束季度 →
                     </button>
                     <p className={styles.footnote}>
-                      预计收入 {money(aiIncome(game))} · 维护{" "}
-                      {money(4 + game.compute * 2)}，市场事件另行调整。
+                      预计收入 {money(aiIncome(game))} · 运营{" "}
+                      {money(aiUpkeep(game))}，市场事件另行调整。
                     </p>
                   </>
                 )}

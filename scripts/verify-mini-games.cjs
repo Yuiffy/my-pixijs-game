@@ -12,6 +12,8 @@ const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text(
 const advance = (page, ms) => page.evaluate(value => window.advanceTime(value), ms);
 const button = (page, name) => page.getByRole('button', { name, exact: true });
 const observed = [];
+const resolveAiEvent = async page => { if (!(await state(page)).industry.eventResolved) await page.locator('[data-event-choice]:not(:disabled)').first().click(); };
+const endAi = async page => { await resolveAiEvent(page); await button(page, '结束季度 →').click(); };
 async function capture(page, name) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(200);
@@ -54,7 +56,7 @@ async function resetRoute(page, kind) {
       if (kind === 'agi') {
         await page.locator('[data-action="train"]').click();
         await page.locator('[data-action="compute"]').click();
-        await button(page, '结束季度 →').click();
+        await endAi(page);
       } else if (kind === 'fab') {
         await button(page, '全部囤货').click();
         await page.locator('[data-action="expand"]').click();
@@ -76,12 +78,13 @@ async function resetRoute(page, kind) {
     for (const route of ['shared', 'commerce', 'safe', 'doom']) {
       await resetRoute(page, 'agi');
       const style = route === 'commerce' ? 'product' : 'efficient';
-      if (style === 'product') await page.getByRole('button', { name: /应用工坊/ }).click();
+      await page.locator(`[data-company="${style === 'product' ? 'openai' : 'deepseek'}"]`).click();
       await page.locator('#start-game').click();
       await button(page, route === 'shared' ? '开源共享' : '闭源商业').click();
       const trace = []; const expected = aiPilot(2026, style, route, trace);
       for (const step of trace) {
-        if (step.type === 'end') await button(page, '结束季度 →').click();
+        if (step.type === 'event') await page.locator(`[data-event-choice="${step.id}"]`).click();
+        else if (step.type === 'end') await endAi(page);
         else await page.locator(`[data-action="${step.id}"]`).click();
       }
       const actual = await state(page);
@@ -103,12 +106,12 @@ async function resetRoute(page, kind) {
     assert.equal((await state(page)).cash, savedAi.cash);
     await resetRoute(page, 'agi'); await page.locator('#start-game').click();
     for (const action of ['train', 'compute', 'fund']) await page.locator(`[data-action="${action}"]`).click();
-    await button(page, '结束季度 →').click();
+    await endAi(page);
     for (const action of ['train', 'distill', 'release']) await page.locator(`[data-action="${action}"]`).click();
-    await button(page, '结束季度 →').click();
+    await endAi(page);
     await page.locator('[data-action="train"]').click(); await page.locator('[data-action="self"]').click();
     await page.locator('[data-action="fund"]').click();
-    const recursive = await state(page); await button(page, '结束季度 →').click();
+    await resolveAiEvent(page); const recursive = await state(page); await endAi(page);
     const grown = await state(page); assert.equal(grown.recursive, true);
     assert.equal(grown.capability - recursive.capability, 9); assert.equal(recursive.safety - grown.safety, 6);
     await page.evaluate(() => scrollTo(0, 0)); await capture(page, 'agi-recursive-research');

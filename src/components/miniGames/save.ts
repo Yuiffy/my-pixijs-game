@@ -1,5 +1,6 @@
 import { GameState } from "./scene";
 import { createAi, AI_STYLES } from "./agiEngine";
+import { AI_COMPANIES, AI_INDUSTRY_EVENTS, AiCompanyId } from "./agiIndustry";
 import { createFab, FAB_STYLES } from "./fabEngine";
 import { createSnack, SNACK_LEVELS } from "./snackEngine";
 
@@ -38,18 +39,43 @@ export function readGameSave(
 ): GameState | null {
   if (!raw) return null;
   try {
-    const value = JSON.parse(raw);
+    let value = JSON.parse(raw);
+    if (
+      kind === "agi" &&
+      value?.kind === "agi" &&
+      value.version === 1 &&
+      AI_STYLES.some((s) => s.id === value.style)
+    ) {
+      if (!Array.isArray(value.rivals) || value.rivals.length !== 3) return null;
+      const defaults = createAi(value.seed, value.style);
+      value = {
+        ...defaults,
+        ...value,
+        version: 2,
+        industry: defaults.industry,
+        rivals: defaults.rivals.map((r, index) => ({
+          ...r,
+          capability: value.rivals[index % 3].capability,
+          product: value.rivals[index % 3].product,
+          safety: value.rivals[index % 3].safety,
+        })),
+      };
+    }
     const reference =
       kind === "agi"
         ? createAi()
         : kind === "fab"
           ? createFab()
           : createSnack();
-    if (value.kind !== kind || value.version !== 1 || !shape(value, reference)) return null;
+    if (
+      value.kind !== kind ||
+      value.version !== reference.version ||
+      !shape(value, reference)
+    ) return null;
     if (kind === "agi") {
       if (
         !AI_STYLES.some((s) => s.id === value.style) ||
-        value.rivals.length !== 3 ||
+        value.rivals.length !== AI_COMPANIES.length - 1 ||
         value.turn < 1 ||
         value.turn > 20 ||
         value.event < 0 ||
@@ -57,6 +83,28 @@ export function readGameSave(
         !Number.isInteger(value.event) ||
         value.compute < 1 ||
         value.compute > 8
+      ) return null;
+      const i = value.industry;
+      if (
+        !AI_COMPANIES.some((c) => c.id === i.company) ||
+        !["research", "balanced", "consumer"].includes(i.service) ||
+        !AI_INDUSTRY_EVENTS.some((e) => e.id === i.eventId) ||
+        !value.rivals.some(
+          (r: { company: AiCompanyId }) => r.company === i.teacher,
+        ) ||
+        value.rivals.some(
+          (r: { company: AiCompanyId }) => r.company === i.company ||
+            !AI_COMPANIES.some((c) => c.id === r.company),
+        ) ||
+        new Set(value.rivals.map((r: { company: AiCompanyId }) => r.company))
+          .size !== value.rivals.length ||
+        ["reliability", "video", "ecosystem", "hype", "samples"].some(
+          (key) => i[key] < 0 || i[key] > 100,
+        ) ||
+        i.defense < 0 ||
+        i.defense > 5 ||
+        i.scrutiny < 0 ||
+        i.scrutiny > 2
       ) return null;
     } else if (kind === "fab") {
       if (

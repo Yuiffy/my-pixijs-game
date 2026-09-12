@@ -1,17 +1,24 @@
 import { loadTypescriptModule } from './load-typescript-module.mjs';
 const ai = await loadTypescriptModule('src/components/miniGames/agiEngine.ts');
+const { industryEvent: awaitIndustryEvent } = await loadTypescriptModule('src/components/miniGames/agiIndustry.ts');
 const fab = await loadTypescriptModule('src/components/miniGames/fabEngine.ts');
 const snack = await loadTypescriptModule('src/components/miniGames/snackEngine.ts');
-function aiPilot(seed, style, ending, trace = []) {
-  let s = ai.createAi(seed, style);
+function aiPilot(seed, style, ending, trace = [], company) {
+  let s = ai.createAi(seed, style, company);
   s.openness = ending === 'shared';
   const targetSafety = ending === 'shared' ? 81 : ending === 'doom' ? 0 : 46;
   for (let guard = 0; guard < 100 && !s.ending; guard++) {
+    if (!s.industry.eventResolved) {
+      const industry = awaitIndustryEvent(s.industry.eventId);
+      const preference = industry.choices.find(c => s.cash + (c.deltas.cash || 0) >= 15 && (c.deltas.reliability || 0) >= 0 && (c.deltas.safety || 0) >= 0) || industry.choices.find(c => s.cash + (c.deltas.cash || 0) >= 0);
+      if (preference) { trace.push({type: 'event', id: preference.id}); s = ai.decideAiEvent(s, preference.id); }
+    }
     const choices = [];
-    if (s.capability >= 100 && s.compute >= 5 && (ending === 'doom' || s.safety >= targetSafety)
+    if (s.industry.reliability < 70 && s.capability > 50) choices.push('posttrain');
+    if (s.capability >= 100 && s.compute >= 5 && s.industry.reliability >= 70 && (ending === 'doom' || s.safety >= targetSafety)
       && (ending !== 'commerce' || s.community >= 35)) choices.push('agi');
-    if (s.cash < 28 && (ending !== 'commerce' || s.funding < 2)) choices.push('fund');
-    if (s.product && s.capability - s.product >= 18) choices.push('release');
+    if (s.cash < 45 && (ending !== 'commerce' || s.funding < 2)) choices.push('fund');
+    if (s.product && s.capability - s.product >= 15) choices.push('release');
     if (s.capability >= 100 && s.safety < targetSafety) choices.push('safety');
     if (!s.product && s.capability >= 25) choices.push('release');
     if (ending === 'commerce' && s.community < 35) choices.push('market');
