@@ -69,7 +69,10 @@ export default function AgiTurnPanel({ game, change }: { game: AiState; change: 
         <p className={styles.caption}>{game.industry.service === 'research' ? '训练 +2、产品收入 ×0.8，仍保留网页服务。' : game.industry.service === 'consumer' ? '训练 −2、产品收入 ×1.2，服务成本更高。' : '研发与服务兼顾。'} 预计运营 {money(aiUpkeep(game))} / 季。</p>
         <fieldset className={styles.service}><legend>发布政策（发布当季锁定）</legend>{[{ value: true, label: '开源共享' }, { value: false, label: '闭源商业' }].map(policy => <button key={policy.label} aria-pressed={game.openness === policy.value} disabled={game.used.includes('release')} onClick={() => change({ ...game, openness: policy.value })}>{policy.label}</button>)}</fieldset>
       </details>
-      <div role="tablist" aria-label="行动分类" className={styles.decisionTabs}>{TABS.map(t => <button role="tab" id={`agi-tab-${t.id}`} aria-controls="agi-action-panel" key={t.id} data-decision-tab={t.id} aria-selected={tab === t.id} onClick={() => switchTab(t.id)}>{t.label}</button>)}</div>
+      <div className={styles.tabNavigation}>
+        <div className={styles.tabNavigationLabel}><span>操作页面</span><small>点击页签切换下方列表</small></div>
+        <div role="tablist" aria-label="行动分类" className={styles.decisionTabs}>{TABS.map(t => <button role="tab" id={`agi-tab-${t.id}`} aria-controls="agi-action-panel" key={t.id} data-decision-tab={t.id} aria-selected={tab === t.id} onClick={() => switchTab(t.id)}>{t.label}</button>)}</div>
+      </div>
       <div id="agi-action-panel" role="tabpanel" aria-labelledby={`agi-tab-${tab}`} className={styles.actionPanel}>
         {TABS.find(t => t.id === tab)!.actions.map(actionButton)}
         {tab === 'research' && (
