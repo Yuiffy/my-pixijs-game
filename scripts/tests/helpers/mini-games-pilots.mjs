@@ -22,7 +22,7 @@ function aiPilot(seed, style, ending, trace = [], company) {
     if (s.capability >= 100 && s.safety < targetSafety) choices.push('safety');
     if (!s.product && s.capability >= 25) choices.push('release');
     if (ending === 'commerce' && s.community < 35) choices.push('market');
-    if (s.capability >= 30 && s.efficiency < 4) choices.push('distill');
+    if (s.capability >= 30 && s.efficiency < 4) choices.push('optimize');
     if (s.compute < 5) choices.push('compute');
     if (s.capability < 100) choices.push('train');
     if (!s.recursive && s.capability >= 55 && s.capability < 85) choices.push('self');

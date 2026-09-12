@@ -34,6 +34,7 @@
     "mini:test": "node --test scripts/tests/mini-games.test.mjs scripts/tests/agi-industry.test.mjs",
     "mini:verify": "node scripts/verify-mini-games.cjs",
     "agi:verify:industry": "node scripts/verify-agi-industry.cjs",
+    "agi:verify:ux": "node scripts/verify-agi-ux.cjs",
     "mini:simulate": "node scripts/simulate-mini-games.mjs",
     "autochess:test": "node --test scripts/tests/autochess-*.test.mjs",
     "autochess:simulate": "node scripts/simulate-autochess-runs.mjs",

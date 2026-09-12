@@ -1,6 +1,6 @@
 import { GameState } from "./scene";
-import { createAi, AI_STYLES } from "./agiEngine";
-import { AI_COMPANIES, AI_INDUSTRY_EVENTS, AiCompanyId } from "./agiIndustry";
+import { createAi, AI_STYLES, AiRival } from "./agiEngine";
+import { AI_COMPANIES, AI_INDUSTRY_EVENTS, AiCompanyId, aiCompany, normalizeAiDisplayText } from "./agiIndustry";
 import { createFab, FAB_STYLES } from "./fabEngine";
 import { createSnack, SNACK_LEVELS } from "./snackEngine";
 
@@ -61,6 +61,9 @@ export function readGameSave(
         })),
       };
     }
+    if (kind === 'agi' && value?.version === 2 && value.industry && value.industry.distillTeacher === undefined) {
+      value.industry.distillTeacher = value.industry.teacher;
+    }
     const reference =
       kind === "agi"
         ? createAi()
@@ -92,6 +95,7 @@ export function readGameSave(
         !value.rivals.some(
           (r: { company: AiCompanyId }) => r.company === i.teacher,
         ) ||
+        !value.rivals.some((r: { company: AiCompanyId }) => r.company === i.distillTeacher) ||
         value.rivals.some(
           (r: { company: AiCompanyId }) => r.company === i.company ||
             !AI_COMPANIES.some((c) => c.id === r.company),
@@ -106,6 +110,11 @@ export function readGameSave(
         i.scrutiny < 0 ||
         i.scrutiny > 2
       ) return null;
+      value.rivals = value.rivals.map((r: AiRival) => ({ ...r, name: aiCompany(r.company).name, focus: aiCompany(r.company).playstyle, latest: normalizeAiDisplayText(r.latest) }));
+      value.logs = value.logs.map((entry: { turn: number; text: string }) => ({ ...entry, text: normalizeAiDisplayText(entry.text) }));
+      value.industry.statement = normalizeAiDisplayText(value.industry.statement);
+      value.industry.eventChoice = normalizeAiDisplayText(value.industry.eventChoice);
+      if (value.ending) value.ending = { ...value.ending, title: normalizeAiDisplayText(value.ending.title), text: normalizeAiDisplayText(value.ending.text) };
     } else if (kind === "fab") {
       if (
         !FAB_STYLES.some((s) => s.id === value.player.style) ||

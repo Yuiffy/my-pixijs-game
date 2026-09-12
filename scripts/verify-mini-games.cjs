@@ -11,6 +11,7 @@ mkdirSync(output, { recursive: true });
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 const advance = (page, ms) => page.evaluate(value => window.advanceTime(value), ms);
 const button = (page, name) => page.getByRole('button', { name, exact: true });
+const { aiAction, aiPolicy } = require('./tests/helpers/agi-ui.cjs');
 const observed = [];
 const resolveAiEvent = async page => { if (!(await state(page)).industry.eventResolved) await page.locator('[data-event-choice]:not(:disabled)').first().click(); };
 const endAi = async page => { await resolveAiEvent(page); await button(page, '结束季度 →').click(); };
@@ -54,8 +55,8 @@ async function resetRoute(page, kind) {
       await page.locator('#start-game').click();
       await advance(page, 0);
       if (kind === 'agi') {
-        await page.locator('[data-action="train"]').click();
-        await page.locator('[data-action="compute"]').click();
+        await aiAction(page, 'train');
+        await aiAction(page, 'compute');
         await endAi(page);
       } else if (kind === 'fab') {
         await button(page, '全部囤货').click();
@@ -80,12 +81,12 @@ async function resetRoute(page, kind) {
       const style = route === 'commerce' ? 'product' : 'efficient';
       await page.locator(`[data-company="${style === 'product' ? 'openai' : 'deepseek'}"]`).click();
       await page.locator('#start-game').click();
-      await button(page, route === 'shared' ? '开源共享' : '闭源商业').click();
+
       const trace = []; const expected = aiPilot(2026, style, route, trace);
       for (const step of trace) {
-        if (step.type === 'event') await page.locator(`[data-event-choice="${step.id}"]`).click();
+        if (step.type === 'event') { await page.locator(`[data-event-choice="${step.id}"]`).click(); await aiPolicy(page, route === 'shared' ? '开源共享' : '闭源商业'); }
         else if (step.type === 'end') await endAi(page);
-        else await page.locator(`[data-action="${step.id}"]`).click();
+        else await aiAction(page, step.id);
       }
       const actual = await state(page);
       for (const key of Object.keys(expected)) assert.deepEqual(actual[key], expected[key], `AI ${route} ${key}`);
@@ -99,18 +100,18 @@ async function resetRoute(page, kind) {
     await button(page, '同种子再战').click();
     assert.equal((await state(page)).started, false); assert.equal((await state(page)).seed, 2026);
     await page.locator('#start-game').click();
-    await page.locator('[data-action="train"]').click();
+    await aiAction(page, 'train');
     const savedAi = await state(page);
     await page.reload({ waitUntil: 'networkidle' });
     assert.deepEqual((await state(page)).used, savedAi.used);
     assert.equal((await state(page)).cash, savedAi.cash);
     await resetRoute(page, 'agi'); await page.locator('#start-game').click();
-    for (const action of ['train', 'compute', 'fund']) await page.locator(`[data-action="${action}"]`).click();
+    for (const action of ['train', 'compute', 'fund']) await aiAction(page, action);
     await endAi(page);
-    for (const action of ['train', 'distill', 'release']) await page.locator(`[data-action="${action}"]`).click();
+    for (const action of ['train', 'optimize', 'release']) await aiAction(page, action);
     await endAi(page);
-    await page.locator('[data-action="train"]').click(); await page.locator('[data-action="self"]').click();
-    await page.locator('[data-action="fund"]').click();
+    await aiAction(page, 'train'); await aiAction(page, 'fund');
+    await aiAction(page, 'self');
     await resolveAiEvent(page); const recursive = await state(page); await endAi(page);
     const grown = await state(page); assert.equal(grown.recursive, true);
     assert.equal(grown.capability - recursive.capability, 9); assert.equal(recursive.safety - grown.safety, 6);
@@ -203,7 +204,7 @@ async function resetRoute(page, kind) {
     const denied = await browser.newContext();
     await denied.addInitScript(() => { Storage.prototype.setItem = () => { throw new Error('Test: storage unavailable'); }; });
     const offline = await denied.newPage(); await open(offline, 'agi'); await offline.locator('#start-game').click();
-    await offline.locator('[data-action="train"]').click(); assert.equal((await state(offline)).capability, 24);
+    await aiAction(offline, 'train'); assert.equal((await state(offline)).capability, 24);
     assert.ok((await offline.locator('main').innerText()).includes('本局仍可玩')); await denied.close();
     await page.setViewportSize({ width: 1440, height: 960 });
     await open(page, 'agi'); await page.keyboard.press('f');

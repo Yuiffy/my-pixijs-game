@@ -107,6 +107,7 @@ export type AiCompany = {
   id: AiCompanyId;
   name: string;
   prototype: string;
+  playstyle: string;
   models: string;
   mark: string;
   color: string;
@@ -122,9 +123,10 @@ export type AiCompany = {
 export const AI_COMPANIES: AiCompany[] = [
   {
     id: "deepseek",
-    name: "深海求索",
+    name: "蓝湾研究所",
     prototype: "DeepSeek",
-    models: "V 系列 / R1 / Harness",
+    playstyle: "开源研究 · 精打细算",
+    models: "潮汐 / 深蓝推理",
     mark: "鲸",
     color: "#4b80bc",
     style: "efficient",
@@ -139,9 +141,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "anthropic",
-    name: "宪章智能",
+    name: "灯塔实验室",
     prototype: "Anthropic / Claude",
-    models: "Claude / Claude Code",
+    playstyle: "企业客户 · 访问防线",
+    models: "守灯 / 工程助手",
     mark: "章",
     color: "#b7876b",
     style: "frontier",
@@ -155,9 +158,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "openai",
-    name: "明日智能",
+    name: "晴空智能",
     prototype: "OpenAI",
-    models: "GPT / ChatGPT / Codex",
+    playstyle: "订阅经营 · 新手推荐",
+    models: "晨星 / 云端工坊",
     mark: "明",
     color: "#42917a",
     style: "product",
@@ -174,7 +178,8 @@ export const AI_COMPANIES: AiCompany[] = [
     id: "xai",
     name: "野火实验室",
     prototype: "xAI / Grok",
-    models: "Grok / Imagine",
+    playstyle: "话题冒险 · 高风险回报",
+    models: "火花 / 幻想画室",
     mark: "野",
     color: "#796897",
     style: "product",
@@ -188,9 +193,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "zai",
-    name: "智序科技",
+    name: "星序科技",
     prototype: "智谱 / Z.ai",
-    models: "GLM-5.2 → GLM-5.3",
+    playstyle: "后训练 · 交付质量",
+    models: "星序二代 → 星序三代",
     mark: "序",
     color: "#657db1",
     style: "efficient",
@@ -205,9 +211,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "minimax",
-    name: "海螺映像",
+    name: "流光影业",
     prototype: "MiniMax",
-    models: "Hailuo / H3 / M 系列",
+    playstyle: "视频创作 · 多线赚钱",
+    models: "流光 / 音画引擎",
     mark: "螺",
     color: "#aa7465",
     style: "product",
@@ -222,9 +229,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "google",
-    name: "双子云图",
+    name: "天穹计算",
     prototype: "Google DeepMind",
-    models: "Gemini / Gemma / TPU",
+    playstyle: "算力投入 · 多模态",
+    models: "穹顶 / 自研计算阵列",
     mark: "双",
     color: "#5e85a2",
     style: "frontier",
@@ -238,9 +246,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "qwen",
-    name: "千问工坊",
+    name: "积木工坊",
     prototype: "阿里 / Qwen / Wan",
-    models: "Qwen3 / Wan2.1",
+    playstyle: "开源生态 · 规模经营",
+    models: "积木语言 / 动画积木",
     mark: "千",
     color: "#826fad",
     style: "efficient",
@@ -255,9 +264,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "kimi",
-    name: "月面工作室",
+    name: "远帆工作室",
     prototype: "月之暗面 / Kimi",
-    models: "Kimi / K2 Agent",
+    playstyle: "长程任务 · 自我提升",
+    models: "远帆 / 任务航线",
     mark: "月",
     color: "#698ba0",
     style: "efficient",
@@ -271,9 +281,10 @@ export const AI_COMPANIES: AiCompany[] = [
   },
   {
     id: "meta",
-    name: "羊驼联盟",
+    name: "原野联盟",
     prototype: "Meta / Llama",
-    models: "Llama / 社区权重",
+    playstyle: "社区协作 · 许可经营",
+    models: "原野 / 社区权重",
     mark: "驼",
     color: "#5987b1",
     style: "frontier",
@@ -289,7 +300,8 @@ export const AI_COMPANIES: AiCompany[] = [
     id: "router",
     name: "百模中转站",
     prototype: "多模型聚合平台",
-    models: "路由 / 回退 / 授权样本",
+    playstyle: "模型调度 · 数据学习",
+    models: "转接台 / 回退调度",
     mark: "路",
     color: "#8a8472",
     style: "product",
@@ -303,6 +315,20 @@ export const AI_COMPANIES: AiCompany[] = [
     lane: "ecosystem",
   },
 ];
+export const AI_STARTER_COMPANIES: AiCompanyId[] = ['openai', 'deepseek', 'minimax', 'xai'];
+const LEGACY_COMPANY_NAMES: Record<string, string> = {
+  深海求索: '蓝湾研究所',
+宪章智能: '灯塔实验室',
+明日智能: '晴空智能',
+  智序科技: '星序科技',
+海螺映像: '流光影业',
+双子云图: '天穹计算',
+  千问工坊: '积木工坊',
+月面工作室: '远帆工作室',
+羊驼联盟: '原野联盟',
+  海螺把视频权重端上来了: '流光把视频权重端上来了',
+};
+export const normalizeAiDisplayText = (text: string) => Object.entries(LEGACY_COMPANY_NAMES).reduce((result, [before, after]) => result.split(before).join(after), text);
 export const aiCompany = (id: AiCompanyId) => AI_COMPANIES.find((c) => c.id === id)!;
 export type AiIndustry = {
   company: AiCompanyId;
@@ -315,6 +341,7 @@ export type AiIndustry = {
   scrutiny: number;
   defense: number;
   teacher: AiCompanyId;
+  distillTeacher: AiCompanyId;
   route: boolean;
   licensedData: boolean;
   samples: number;
@@ -576,7 +603,7 @@ export const AI_INDUSTRY_EVENTS: AiIndustryEvent[] = [
   {
     id: "video-open",
     company: "minimax",
-    title: "海螺把视频权重端上来了",
+    title: "流光把视频权重端上来了",
     basis: "现实路线改编",
     sourceIds: ["minimax", "wan"],
     text: "开源权重让创作者自己部署和改造，托管工作流仍有商业价值。世界上已经存在其他开放视频模型。",
@@ -760,6 +787,7 @@ export const initialIndustry = (company: AiCompanyId): AiIndustry => ({
   scrutiny: 0,
   defense: company === "anthropic" ? 2 : 0,
   teacher: company === "qwen" ? "meta" : "qwen",
+  distillTeacher: company === "qwen" ? "meta" : "qwen",
   route: false,
   licensedData: false,
   samples: 0,

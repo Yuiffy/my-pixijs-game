@@ -7,6 +7,45 @@
 .picker {
   margin-bottom: 16px;
 }
+.turnPanel { min-width: 0; }
+.turnHeading { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin: 3px 0 16px; }
+.turnHeading > div > span { display: block; margin-bottom: 5px; font-size: 11px; color: var(--muted); }
+.turnHeading > strong { font-size: 25px; font-variant-numeric: tabular-nums; }
+.turnHeading > strong > small { font-size: 11px; font-weight: 400; color: var(--muted); }
+.decisionEvent h3 { margin: 10px 0; font-size: 22px; line-height: 1.5; }
+.decisionEvent > p { color: var(--muted); font-size: 13px; line-height: 1.85; }
+.eventRecap { margin-bottom: 8px; color: var(--muted); font-size: 11px; line-height: 1.8; }
+.eventRecap summary { cursor: pointer; padding: 8px 0; }
+.eventRecap > p { padding: 10px 0; }
+.quarterSettings { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.quarterSettings > summary { cursor: pointer; padding: 12px 0 7px; font-size: 12px; line-height: 1.6; }
+.quarterSettings > summary small { margin-left: 8px; color: var(--muted); }
+.quarterSettings .service { margin: 15px 0 10px; }
+.decisionTabs { display: flex; gap: 6px; margin: 16px 0 5px; }
+.decisionTabs button { flex: 1; font-weight: 700; }
+.decisionTabs button[aria-selected='true'] { background: var(--accent) !important; color: #fff9ee !important; border-color: var(--accent); }
+.actionPanel { min-height: 180px; }
+.decisionAction { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; min-height: 69px !important; padding: 12px 4px !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; }
+.decisionAction > span:first-child { display: flex; flex-direction: column; gap: 5px; }
+.decisionAction strong { font-size: 14px; }
+.decisionAction small { font-size: 11px; line-height: 1.6; color: var(--muted); }
+.decisionAction > span:last-child { flex-shrink: 0; max-width: 88px; font-size: 11px; color: var(--muted); text-align: right; }
+.distillSection { border-bottom: 1px solid var(--line); }
+.distillSection > summary { cursor: pointer; font-size: 14px; font-weight: 700; padding: 16px 0; }
+.distillSection > summary small { font-size: 11px; font-weight: 400; margin-left: 8px; color: var(--muted); }
+.distillSection label { display: block; font-size: 12px; }
+.distillSection select { display: block; width: 100%; padding: 12px 6px; background: var(--paper); border: 1px solid var(--line); color: var(--ink); border-radius: 5px; margin: 8px 0; }
+.distillSection > p { font-size: 12px; line-height: 1.7; margin-top: 10px !important; }
+.distillButton { width: 100%; margin: 8px 0 16px; line-height: 1.6; font-size: 12px !important; }
+.turnFooter { position: sticky; bottom: 0; z-index: 5; padding: 13px 2px 5px; margin-top: 18px; border-top: 1px solid var(--line); background: var(--paper); box-shadow: 0 -8px 12px #253e3508; }
+.turnFooter > div:first-child { display: flex; flex-direction: column; gap: 5px; padding-bottom: 10px; font-size: 13px; }
+.turnFooter > div > small, .turnFooter > small { color: var(--muted); font-size: 10px; line-height: 1.6; }
+.turnFooter > div:nth-child(2) { display: flex; gap: 8px; margin-bottom: 8px; }
+.turnFooter > div:nth-child(2) > button:first-child { flex: 1; min-width: 95px; font-size: 12px; }
+.turnFooter .endTurn { flex: 2; background: var(--accent) !important; color: #fff9ee; border-color: var(--accent); font-weight: 700; }
+.moreCompanies { margin-top: 10px; }
+.moreCompanies > summary { cursor: pointer; min-height: 44px; padding: 12px 0; color: var(--muted); font-size: 12px; }
+.moreCompanies > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .companyGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -33,7 +72,7 @@
   font-size: 10px;
   opacity: 0.8;
 }
-.companyGrid button[aria-pressed='true'], .operations button[aria-pressed='true'] {
+.companyGrid button[aria-pressed='true'], .operations button[aria-pressed='true'], .turnPanel button[aria-pressed='true'] {
   background: var(--accent) !important;
   color: #fff9ee !important;
 }
@@ -381,4 +420,19 @@
   .event {
     animation: none;
   }
+}
+
+@media (max-width:760px) {
+  .turnFooter { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; margin: 0; padding: 10px 18px max(8px, env(safe-area-inset-bottom)); }
+  .turnFooter > div:first-child { flex-direction: row; justify-content: space-between; gap: 10px; font-size: 12px; }
+  .decisionTabs { position: sticky; top: var(--agi-resource-height); z-index: 10; padding: 8px 0; background: var(--paper); }
+  .turnHeading h2 { font-size: 19px; }
+}
+
+@media (max-height:600px) and (min-width:761px) {
+  .turnFooter { padding-top: 7px; }
+  .turnFooter > small, .turnFooter > div:first-child > small { display: none; }
+  .turnFooter > div:first-child { padding-bottom: 5px; }
+  .turnHeading { margin-bottom: 9px; }
+  .turnHeading h2 { font-size: 17px; }
 }

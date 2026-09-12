@@ -3,16 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  actAi,
-  AI_ACTIONS,
   AI_EVENTS,
-  aiBlocked,
-  aiCost,
   aiIncome,
-  aiTrainGain,
   aiUpkeep,
   createAi,
-  endAiTurn,
 } from "./agiEngine";
 import {
   actFab,
@@ -45,7 +39,8 @@ import {
 import { money, round, seedValue } from "./core";
 import { drawScene, GameState } from "./scene";
 import { aiCompany } from "./agiIndustry";
-import { AgiCompanyPicker, AgiIndustryScene, AgiIndustryControls } from "./AgiIndustryPanel";
+import { AgiCompanyPicker, AgiIndustryScene } from "./AgiIndustryPanel";
+import AgiTurnPanel from "./AgiTurnPanel";
 import { readGameSave } from "./save";
 import { SNACK_SKINS, SNACK_SKIN_STORAGE_KEY, SnackSkin } from "./snackSkins";
 import styles from "./miniGames.module.css";
@@ -63,7 +58,7 @@ const DESCRIPTIONS = {
 };
 function fresh(kind: GameState["kind"], seed = 2026): GameState {
   return kind === "agi"
-    ? createAi(seed)
+    ? createAi(seed, 'product', 'openai')
     : kind === "fab"
       ? createFab(seed)
       : createSnack(seed);
@@ -177,6 +172,24 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
   const state = useRef(game);
   const canvas = useRef<HTMLCanvasElement>(null);
   const root = useRef<HTMLElement>(null);
+  const resources = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (kind !== "agi" || !resources.current) return undefined;
+    const element = resources.current;
+    const measure = () => {
+      const { height } = element.getBoundingClientRect();
+      root.current?.style.setProperty('--agi-resource-height', `${height}px`);
+      const slot = root.current?.querySelector('[data-controls-slot]')?.getBoundingClientRect();
+      root.current?.style.setProperty('--agi-dock-top', `${Math.max(height, element.getBoundingClientRect().bottom) + 12}px`);
+      if (slot) { root.current?.style.setProperty('--agi-dock-left', `${slot.left}px`); root.current?.style.setProperty('--agi-dock-width', `${slot.width}px`); }
+    };
+    measure(); const observer = new ResizeObserver(measure); observer.observe(element);
+    window.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    const gameRoot = root.current;
+    gameRoot?.addEventListener('scroll', measure, { passive: true });
+    return () => { observer.disconnect(); window.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); gameRoot?.removeEventListener('scroll', measure); };
+  }, [kind]);
   const [started, setStarted] = useState(false);
   const startedRef = useRef(false);
   const [ready, setReady] = useState(false);
@@ -470,7 +483,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
   return (
     <main
       ref={root}
-      className={`${styles.root} ${kind === "snack" ? styles.pink : ""} ${kind === "snack" && skin === "sui" ? styles.sui : ""} ${kind === "snack" && started && !startPanel ? styles.live : ""}`}
+      className={`${styles.root} ${kind === "agi" ? styles.agi : ""} ${kind === "agi" && started ? styles.agiStarted : ""} ${kind === "snack" ? styles.pink : ""} ${kind === "snack" && skin === "sui" ? styles.sui : ""} ${kind === "snack" && started && !startPanel ? styles.live : ""}`}
     >
       <header className={styles.topbar}>
         <Link href="/demos" className={styles.back}>
@@ -499,7 +512,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       <div className={styles.workspace}>
         <div className={styles.heading}>
           <div>
-            <span className={styles.eyebrow}>{kind === 'agi' ? 'V2 · 11 家厂商 · 18 个行业事件' : ENGLISH[kind]}</span>
+            <span className={styles.eyebrow}>{kind === 'agi' ? 'V2.2 · 厂商经营' : ENGLISH[kind]}</span>
             <h1>{TITLES[kind]}</h1>
             <p>{DESCRIPTIONS[kind]}</p>
           </div>
@@ -557,7 +570,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
           </section>
         )}
         {game.kind === "agi" && (
-          <section className={styles.metrics} aria-label="公司资源">
+          <section ref={resources} className={styles.metrics} aria-label="公司资源">
             <Metric
               label="可用资金"
               value={money(game.cash)}
@@ -740,7 +753,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               </fieldset>
             )}
             {game.kind === "agi" && (
-              <div className={styles.event}>
+              <details className={styles.agiMarketDetails}><summary>机房简报 · {AI_EVENTS[game.event].title}</summary><div className={styles.event}>
                 <span>机房与市场简报</span>
                 <h2>{AI_EVENTS[game.event].title}</h2>
                 <p>{AI_EVENTS[game.event].text}</p>
@@ -752,9 +765,9 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                   </span>
                   <span>融资 {game.funding} / 3</span>
                 </div>
-              </div>
+              </div></details>
             )}
-            {game.kind === "agi" && started && <AgiIndustryScene game={game} change={commit} />}
+            {game.kind === "agi" && started && <div className={styles.agiContext}><AgiIndustryScene game={game} /></div>}
             {game.kind === "fab" && (
               <div className={styles.event}>
                 <span>
@@ -804,55 +817,14 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                 </p>
               </div>
             )}
-            {game.kind !== "snack" && started && (
-              <section className={styles.standings}>
-                <h2>{game.kind === "agi" ? "AGI 竞速" : "清算资金排名"}</h2>
-                {game.kind === "agi"
-                  ? [
-                      {
-                        name: aiCompany(game.industry.company).name,
-                        capability: game.capability,
-                        focus: "你",
-                      },
-                      ...game.rivals,
-                    ]
-                      .sort((a, b) => b.capability - a.capability)
-                      .map((r) => (
-                        <div key={r.name} className={styles.rankRow}>
-                          <span>
-                            {r.name}
-                            <small>{r.focus}</small>
-                          </span>
-                          <div className={styles.track}>
-                            <span style={{ width: `${r.capability}%` }} />
-                          </div>
-                          <strong>{r.capability}</strong>
-                        </div>
-                      ))
-                  : [game.player, ...game.rivals]
-                      .sort(
-                        (a, b) => liquidation(b, game.price) -
-                          liquidation(a, game.price),
-                      )
-                      .map((f, i) => (
-                        <div key={f.name} className={styles.rankRow}>
-                          <span>
-                            {i + 1}. {f.name}
-                            <small>
-                              {f === game.player
-                                ? "你"
-                                : f.bankrupt
-                                  ? "已停机"
-                                  : `${f.fabs} 座工厂`}
-                            </small>
-                          </span>
-                          <strong>{money(liquidation(f, game.price))}</strong>
-                        </div>
-                      ))}
-              </section>
-            )}
+            {game.kind === "fab" && started && (
+<section className={styles.standings}>
+              <h2>清算资金排名</h2>
+              {[game.player, ...game.rivals].sort((a, b) => liquidation(b, game.price) - liquidation(a, game.price)).map((firm, index) => <div key={firm.name} className={styles.rankRow}><span>{index + 1}. {firm.name}<small>{firm === game.player ? '你' : firm.bankrupt ? '已停机' : `${firm.fabs} 座工厂`}</small></span><strong>{money(liquidation(firm, game.price))}</strong></div>)}
+            </section>
+)}
           </section>
-          <aside className={styles.controls}>
+          <div className={styles.controlSlot} data-controls-slot><aside className={styles.controls}>
             {startPanel ? (
               <div className={styles.intro}>
                 <span className={styles.eyebrow}>
@@ -880,7 +852,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                     ))}
                   </div>
                 )}
-                <Rules kind={kind} />
+                {kind === "agi" ? <details className={styles.agiIntroRules}><summary>第一次玩？查看简明规则</summary><Rules kind={kind} /></details> : <Rules kind={kind} />}
                 {kind !== "snack" && (
                   <label htmlFor="world-seed" className={styles.seed}>
                     世界种子
@@ -983,72 +955,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               </section>
             ) : (
               <>
-                {game.kind === "agi" && (
-                  <>
-                    <div className={styles.controlHeading}>
-                      <h2>季度决策</h2>
-                      <span>剩余 {game.actions} / 3 行动</span>
-                    </div>
-                    <fieldset className={styles.policy}>
-                      <legend>发布政策</legend>
-                      {[
-                        { value: true, label: "开源共享" },
-                        { value: false, label: "闭源商业" },
-                      ].map((p) => (
-                        <button
-                          key={p.label}
-                          aria-pressed={game.openness === p.value}
-                          disabled={game.used.includes("release")}
-                          onClick={() => commit({ ...game, openness: p.value })}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </fieldset>
-                    <p className={styles.policyHint}>
-                      政策影响当前产品收入与 AGI 结局；发布当季锁定。
-                    </p>
-                    <AgiIndustryControls game={game} change={commit} />
-                    <div className={styles.actions}>
-                      {AI_ACTIONS.filter(a => !["posttrain", "video", "openvideo", "learn", "special"].includes(a.id)).map((action) => {
-                        const reason = aiBlocked(game, action.id);
-                        return (
-                          <button
-                            key={action.id}
-                            data-action={action.id}
-                            disabled={!!reason}
-                            title={reason || action.hint}
-                            onClick={() => commit(actAi(game, action.id))}
-                          >
-                            <span>
-                              <strong>{action.name}</strong>
-                              <small>
-                                {action.id === "train"
-                                  ? `能力 +${aiTrainGain(game)} / 安全 −7`
-                                  : action.hint}
-                              </small>
-                            </span>
-                            <span className={styles.cost}>
-                              {reason || `${aiCost(game, action.id)} M`}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <button
-                      className={styles.primary}
-                      disabled={!game.industry.eventResolved}
-                      title={game.industry.eventResolved ? "结算本季" : "请先处理本季行业事件"}
-                      onClick={() => commit(endAiTurn(game))}
-                    >
-                      结束季度 →
-                    </button>
-                    <p className={styles.footnote}>
-                      预计收入 {money(aiIncome(game))} · 运营{" "}
-                      {money(aiUpkeep(game))}，市场事件另行调整。
-                    </p>
-                  </>
-                )}
+                {game.kind === "agi" && <AgiTurnPanel game={game} change={commit} />}
                 {game.kind === "fab" && forecast && (
                   <>
                     <div className={styles.controlHeading}>
@@ -1288,7 +1195,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                 )}
               </>
             )}
-          </aside>
+          </aside></div>
         </div>
         {game.kind !== "snack" && started && (
           <section className={styles.logs}>

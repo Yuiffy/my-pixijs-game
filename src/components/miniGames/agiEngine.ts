@@ -20,7 +20,7 @@ export const AI_STYLES = [
   {
     id: "efficient",
     name: "高效开源社",
-    perk: "蒸馏额外获得效率，初始社区 20。",
+    perk: "架构优化额外获得效率，初始社区 20。",
   },
   { id: "product", name: "应用工坊", perk: "初始资金 +30 M，发布收入 +25%。" },
 ] as const;
@@ -29,6 +29,7 @@ export type AiAction =
   | "train"
   | "compute"
   | "distill"
+  | "optimize"
   | "self"
   | "safety"
   | "market"
@@ -122,7 +123,12 @@ export const AI_ACTIONS: { id: AiAction; name: string; hint: string }[] = [
   {
     id: "distill",
     name: "模型蒸馏",
-    hint: "效率提升，训练更便宜，收入与能力小幅增加。",
+    hint: "选择已发布的更强同行模型，获得授权样本，追近约 60% 能力差距。",
+  },
+  {
+    id: "optimize",
+    name: "架构优化",
+    hint: "压缩自己的模型，效率提升、能力 +4；降低训练费用，提高收入。",
   },
   {
     id: "self",
@@ -211,7 +217,7 @@ export function createAi(
       capability: 10 + (i % 3) * 2,
       safety: c.id === "anthropic" ? 72 : 48,
       product: 0,
-      focus: c.prototype,
+      focus: c.playstyle,
       reliability: 65,
       video: c.lane === "creative" ? 15 : 0,
       ecosystem: c.open ? 12 : 0,
@@ -230,11 +236,13 @@ export function createAi(
   };
 }
 export function aiCost(s: AiState, action: AiAction) {
+  const distillTeacher = aiDistillTarget(s);
   const costs: Record<AiAction, number> = {
     train: Math.max(10, 25 - s.efficiency * 3),
     compute:
       27 + (s.event === 1 ? 10 : 0) - (s.industry.company === "google" ? 5 : 0),
-    distill: 17,
+    distill: 17 + (distillTeacher && !aiCompany(distillTeacher.company).open ? 6 : 0),
+    optimize: 17,
     self: 32 - (s.industry.company === "kimi" ? 6 : 0),
     safety: 14,
     market: 12,
@@ -279,6 +287,34 @@ export function aiTrainGain(s: AiState) {
 export function aiEffectiveProduct(s: AiState) {
   const teacher = s.rivals.find((r) => r.company === s.industry.teacher);
   return Math.max(s.product, s.industry.route && teacher && teacher.defense < 4 ? teacher.product : 0);
+}
+export function aiDistillTarget(s: AiState): AiRival | undefined {
+  return s.rivals.find((r) => r.company === s.industry.distillTeacher);
+}
+function aiDistillBlock(s: AiState): string {
+  const teacher = aiDistillTarget(s);
+  if (!teacher) return "请选择其他厂商的模型作为蒸馏目标";
+  if (!teacher.product) return "目标尚未发布模型，请选择已发布的同行模型";
+  if (teacher.defense >= 4) return "目标防线已关闭调用，无法获取蒸馏样本";
+  if (!aiCompany(teacher.company).open && teacher.defense >= 2) return "目标仅允许调用，不授予蒸馏训练许可";
+  if (teacher.product <= s.capability) return `目标已发布能力 ${teacher.product}，未领先自研能力 ${s.capability}`;
+  return "";
+}
+export function aiDistillGain(s: AiState): number {
+  if (aiDistillBlock(s)) return 0;
+  const gap = aiDistillTarget(s)!.product - s.capability;
+  return Math.min(gap, round(gap * 0.6));
+}
+export function setAiDistillTarget(state: AiState, target: AiCompanyId): AiState {
+  if (
+    state.ending || target === state.industry.distillTeacher ||
+    target === state.industry.company ||
+    !state.rivals.some((r) => r.company === target)
+  ) return state;
+  return {
+    ...state,
+    industry: { ...state.industry, distillTeacher: target },
+  };
 }
 export const aiValuation = (s: AiState) => round(80 + s.capability * 2 + s.industry.hype * 3 + s.reputation + aiIncome(s) * 8);
 export function aiIncome(s: AiState) {
@@ -327,11 +363,13 @@ export const aiUpkeep = (s: AiState) => 4 +
   (s.industry.scrutiny > 0 ? 6 : 0);
 export function aiBlocked(s: AiState, action: AiAction): string {
   if (s.ending) return "本局已结束";
+  if (!AI_ACTIONS.some((a) => a.id === action)) return "未知经营行动";
   if (!s.actions) return "本季行动已用完";
   if (s.used.includes(action)) return "本季已执行";
+  if (action === "distill" && aiDistillBlock(s)) return aiDistillBlock(s);
   if (s.cash < aiCost(s, action)) return "资金不足";
-  if (action === "distill" && s.capability < 30) return "需要能力 30";
-  if (action === "distill" && s.efficiency >= 5) return "效率已满";
+  if (action === "optimize" && s.capability < 30) return "需要能力 30";
+  if (action === "optimize" && s.efficiency >= 5) return "效率已满";
   if (action === "compute" && s.compute >= 8) return "算力已满";
   if (action === "self" && s.capability < 55) return "需要能力 55";
   if (action === "self" && s.recursive) return "递归研究已运行";
@@ -364,6 +402,12 @@ export function actAi(state: AiState, action: AiAction): AiState {
   }
   if (action === "compute") s.compute++;
   if (action === "distill") {
+    const teacher = aiDistillTarget(s)!;
+    const gain = aiDistillGain(s);
+    s.capability = Math.min(teacher.product, clamp(round(s.capability + gain)));
+    log(s, `蒸馏 ${teacher.name} 的已发布模型（能力 ${teacher.product}）：自研能力 +${round(gain)} → ${s.capability}；需再次发布才能升级自家产品。`);
+  }
+  if (action === "optimize") {
     s.efficiency = Math.min(
       5,
       s.efficiency + (s.style === "efficient" ? 2 : 1),

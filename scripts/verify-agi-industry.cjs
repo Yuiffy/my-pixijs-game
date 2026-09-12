@@ -8,7 +8,7 @@ const output = process.env.AGI_QA_DIR || 'tmp/agi-industry-verify';
 const report = { scenarios: [], screenshots: [], errors: [] };
 const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 const exact = (page, name) => page.getByRole('button', { name, exact: true });
-const action = (page, id) => page.locator(`[data-action="${id}"]`).click();
+const { aiAction: action, aiPolicy, aiTab, chooseAiCompany } = require('./tests/helpers/agi-ui.cjs');
 async function event(page) {
   if (!(await state(page)).industry.eventResolved) await page.locator('[data-event-choice]:not(:disabled)').first().click();
 }
@@ -39,7 +39,7 @@ async function capture(page, name) {
     page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
     await page.goto(`${base}/game/agi`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => !!window.render_game_to_text);
-    await page.locator(`[data-company="${company}"]`).click();
+    await chooseAiCompany(page, company);
     return { context, page };
   };
   try {
@@ -57,8 +57,8 @@ async function capture(page, name) {
       await page.reload({ waitUntil: 'networkidle' }); assert.deepEqual((await state(page)).industry, after.industry);
       if (company.id === 'deepseek') {
         await next(page);
-        await exact(page, '研究优先').click(); const research = await state(page);
-        await exact(page, 'To C 扩张').click(); assert.ok(ai.aiTrainGain(research) > ai.aiTrainGain(await state(page)));
+        await aiPolicy(page, '研究优先'); const research = await state(page);
+        await aiPolicy(page, 'To C 扩张'); assert.ok(ai.aiTrainGain(research) > ai.aiTrainGain(await state(page)));
         await capture(page, 'deepseek-consumer-conflict');
       }
       if (company.id === 'minimax') {
@@ -66,7 +66,7 @@ async function capture(page, name) {
         assert.equal((await state(page)).industry.videoOpen, true); await capture(page, 'minimax-open-video');
       }
       if (company.id === 'anthropic') {
-        await page.getByText(/观察同行动态/).click();
+        await page.getByText(/同行动态与排名/).click();
         await capture(page, 'anthropic-access-defense');
       }
       report.scenarios.push({ company: company.id, specialty: company.specialty, passed: true });
@@ -75,10 +75,10 @@ async function capture(page, name) {
     for (const route of ['shared', 'commerce', 'safe', 'doom']) {
       const company = route === 'commerce' ? 'openai' : 'deepseek';
       const { context, page } = await create(company);
-      await page.locator('#start-game').click(); await exact(page, route === 'shared' ? '开源共享' : '闭源商业').click();
+      await page.locator('#start-game').click();
       const trace = []; const expected = aiPilot(2026, content.aiCompany(company).style, route, trace, company);
       for (const step of trace) {
-        if (step.type === 'event') await page.locator(`[data-event-choice="${step.id}"]`).click();
+        if (step.type === 'event') { await page.locator(`[data-event-choice="${step.id}"]`).click(); await aiPolicy(page, route === 'shared' ? '开源共享' : '闭源商业'); }
         else if (step.type === 'end') await exact(page, '结束季度 →').click();
         else await action(page, step.id);
       }
@@ -89,15 +89,21 @@ async function capture(page, name) {
     }
     const { context, page } = await create('router');
     await page.locator('#start-game').click();
+    await aiTab(page, 'ecosystem');
     await page.locator('summary').filter({ hasText: '模型合作与路由' }).click();
     assert.equal(await exact(page, '启用合作调用').isEnabled(), false);
     await next(page); await next(page); await next(page);
+    await aiTab(page, 'ecosystem');
+    if (!await page.locator('#agi-teacher').isVisible()) await page.locator('summary').filter({ hasText: '模型合作与路由' }).click();
     await event(page); const before = await state(page);
     await exact(page, '启用合作调用').click(); await page.locator('#agi-sample-license').check();
     await next(page); const collected = await state(page);
     assert.equal(collected.industry.samples - before.industry.samples, 8); assert.equal(collected.capability, before.capability);
-    await action(page, 'learn'); assert.equal((await state(page)).capability, before.capability + 6);
-    assert.equal((await state(page)).industry.samples, collected.industry.samples - 8);
+    await event(page); const beforeLearn = await state(page);
+    await action(page, 'learn'); assert.equal((await state(page)).capability, beforeLearn.capability + 6);
+    assert.equal((await state(page)).industry.samples, beforeLearn.industry.samples - 8);
+    await aiTab(page, 'ecosystem');
+    if (!await page.locator('#agi-teacher').isVisible()) await page.locator('summary').filter({ hasText: '模型合作与路由' }).click();
     await page.locator('#agi-teacher').selectOption('anthropic');
     assert.equal(await page.locator('#agi-sample-license').isEnabled(), false);
     await capture(page, 'router-licensed-learning');

@@ -24,14 +24,14 @@ test('AI full games reach four distinct AGI endings through legal decisions', ()
     assert.deepEqual(readGameSave(JSON.stringify(s), 'agi'), s, 'Completed game with full-width RNG must reload');
   }
 });
-test('AI constraints, releases, distillation, recursion and competitor progress have economic consequences', () => {
+test('AI constraints, releases, architecture optimization, recursion and competitor progress have economic consequences', () => {
   let s = ai.createAi();
   assert.match(ai.aiBlocked(s, 'self'), /55/);
   s = ai.actAi(s, 'train');
   assert.equal(ai.actAi(s, 'train'), s, 'One training run per quarter');
   s = nextAi(s); s = ai.actAi(s, 'train'); s = ai.actAi(s, 'release');
   assert.ok(ai.aiIncome(s) > 0);
-  s = nextAi(s); s = ai.actAi(s, 'distill');
+  s = nextAi(s); s = ai.actAi(s, 'optimize');
   assert.equal(s.efficiency, 2);
   assert.ok(ai.aiCost(s, 'train') < 25);
   s = { ...s, cash: 500, capability: 60, safety: 70, actions: 3, used: [] };

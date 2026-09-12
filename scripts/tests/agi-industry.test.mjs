@@ -107,6 +107,79 @@ test('anti-distillation and restrictive access block data export and eventually 
   const a = ai.endAiTurn(skipEvent(open)), b = ai.endAiTurn(skipEvent(shielded));
   assert.ok(a.rivals.some((r, i) => r.capability > b.rivals[i].capability));
 });
+test('distillation catches up to the selected released competitor, independently of the routing upstream', () => {
+  const s = fresh('router'); s.capability = 30; s.product = 25;
+  s.rivals.find(r => r.company === 'qwen').product = 80;
+  s.rivals.find(r => r.company === 'qwen').capability = 95;
+  s.rivals.find(r => r.company === 'meta').product = 50;
+  const strong = ai.setAiDistillTarget(s, 'qwen'), modest = ai.setAiDistillTarget(s, 'meta');
+  assert.equal(ai.aiDistillTarget(strong).company, 'qwen');
+  assert.equal(ai.aiDistillTarget(modest).company, 'meta');
+  assert.equal(ai.aiDistillGain(strong), 30, 'Learn from released ability 80, not unpublished lab ability 95');
+  assert.equal(ai.aiDistillGain(modest), 12);
+  assert.ok(ai.aiDistillGain(strong) > ai.aiDistillGain(modest), 'A wider knowledge gap gives a larger catch-up gain');
+  assert.equal(modest.industry.teacher, s.industry.teacher, 'A distillation target does not change the service router');
+  const learned = ai.actAi(strong, 'distill');
+  assert.equal(learned.capability, 60); assert.equal(learned.product, 25, 'Training does not silently release a model');
+  assert.equal(learned.cash, strong.cash - 17); assert.equal(learned.actions, strong.actions - 1);
+  assert.equal(learned.efficiency, strong.efficiency, 'Distillation is no longer personal-model compression');
+  assert.equal(ai.actAi(learned, 'distill'), learned, 'Switching teachers does not grant another distillation action');
+  assert.deepEqual(readGameSave(JSON.stringify(modest), 'agi'), modest, 'The chosen teacher survives reload');
+  let repeated = { ...strong, cash: 1000 };
+  for (let n = 0; n < 16; n++) {
+    repeated = ai.actAi({ ...repeated, used: [], actions: 3 }, 'distill');
+    assert.ok(repeated.capability <= 80, 'A student never exceeds its teacher through distillation');
+  }
+  assert.equal(repeated.capability, 80); assert.equal(ai.aiDistillGain(repeated), 0);
+});
+test('distillation requires a published superior teacher and rejects invalid or self targets without spending', () => {
+  let s = fresh('router');
+  assert.match(ai.aiBlocked(s, 'distill'), /尚未发布/);
+  assert.equal(ai.aiDistillGain(s), 0); assert.equal(ai.actAi(s, 'distill'), s);
+  for (const target of ['router', 'missing', '', undefined, null, {}]) assert.equal(ai.setAiDistillTarget(s, target), s);
+  assert.equal(ai.actAi(s, 'missing'), s);
+  s.rivals.forEach(r => { r.product = s.capability; r.capability = 99; });
+  for (const rival of s.rivals) {
+    s = ai.setAiDistillTarget(s, rival.company);
+    assert.equal(ai.aiDistillGain(s), 0); assert.ok(ai.aiBlocked(s, 'distill'));
+    assert.equal(ai.actAi(s, 'distill'), s, 'All equal or weaker teachers must not give free ability');
+  }
+  s = ai.setAiDistillTarget(s, 'qwen'); s.rivals.find(r => r.company === 'qwen').product = 5;
+  assert.match(ai.aiBlocked(s, 'distill'), /未领先/);
+  s.rivals.find(r => r.company === 'qwen').product = 50;
+  assert.equal(ai.aiBlocked(s, 'distill'), '', 'Early laboratories can distill a genuinely stronger released model');
+  const poor = { ...s, cash: ai.aiCost(s, 'distill') - 1 };
+  assert.match(ai.aiBlocked(poor, 'distill'), /资金不足/); assert.equal(ai.actAi(poor, 'distill'), poor);
+  const finished = { ...s, ending: { title: '结束', text: '', won: true } };
+  assert.equal(ai.setAiDistillTarget(finished, 'meta'), finished);
+});
+test('distillation pays for the selected license and respects both training restrictions and access closure', () => {
+  let s = fresh('router');
+  const open = s.rivals.find(r => r.company === 'qwen'); open.product = 70; open.defense = 3;
+  assert.equal(ai.aiCost(s, 'distill'), 17); assert.equal(ai.aiBlocked(s, 'distill'), '');
+  open.defense = 4;
+  assert.match(ai.aiBlocked(s, 'distill'), /关闭调用/); assert.equal(ai.aiDistillGain(s), 0);
+  assert.equal(ai.actAi(s, 'distill'), s);
+  const closed = s.rivals.find(r => r.company === 'anthropic'); closed.product = 70; closed.defense = 1;
+  s = ai.setAiDistillTarget(s, 'anthropic');
+  assert.equal(ai.aiCost(s, 'distill'), 23);
+  const learned = ai.actAi(s, 'distill'); assert.equal(s.cash - learned.cash, 23); assert.ok(learned.capability > s.capability);
+  closed.defense = 2;
+  assert.match(ai.aiBlocked(s, 'distill'), /不授予蒸馏训练许可/);
+  assert.equal(ai.aiDistillGain(s), 0); assert.equal(ai.actAi(s, 'distill'), s);
+  closed.defense = 4;
+  assert.match(ai.aiBlocked(s, 'distill'), /关闭调用/);
+});
+test('architecture optimization remains a separate efficiency action with its own limits', () => {
+  let s = fresh('deepseek'); assert.match(ai.aiBlocked(s, 'optimize'), /30/);
+  s.capability = 30;
+  const optimized = ai.actAi(s, 'optimize');
+  assert.equal(optimized.efficiency, 2); assert.equal(optimized.capability, 34);
+  assert.equal(s.cash - optimized.cash, 17); assert.ok(ai.aiCost(optimized, 'train') < ai.aiCost(s, 'train'));
+  assert.match(ai.aiBlocked({ ...s, efficiency: 5 }, 'optimize'), /效率已满/);
+  const conventional = fresh('openai'); conventional.capability = 30;
+  assert.equal(ai.actAi(conventional, 'optimize').efficiency, 1);
+});
 test('each rival grows along its identity and records real, divergent behavior', () => {
   let s = fresh('router'); s.cash = 2000;
   for (let n = 0; n < 6; n++) s = ai.endAiTurn(skipEvent(s));

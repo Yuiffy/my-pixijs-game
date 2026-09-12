@@ -77,6 +77,25 @@
 .root:fullscreen {
   overflow: auto;
 }
+.agi { --agi-resource-height: 110px; }
+.agi .metrics { position: sticky; top: 0; z-index: 15; background: var(--paper); box-shadow: 0 8px 12px #253e3508; }
+.agi .controls { padding-right: 2px; }
+.agiStarted .heading { margin-bottom: 16px; }
+.agiStarted .heading h1 { font-size: 30px; }
+.agiStarted .heading p { display: none; }
+.agiStarted .workspace { padding-top: 20px; }
+.agiStarted .metrics { padding-top: 13px; padding-bottom: 13px; margin-bottom: 18px; }
+.agiStarted .metric > strong { font-size: 25px; }
+.controlSlot { min-width: 0; }
+.agiStarted .controlSlot { min-height: calc(100svh - 300px); }
+.agiStarted .controls { position: fixed; top: var(--agi-dock-top, 296px); left: var(--agi-dock-left); width: var(--agi-dock-width); max-height: calc(100svh - var(--agi-dock-top, 296px) - 12px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; z-index: 12; background: var(--paper); }
+.agiStarted .logs { max-width: 60%; }
+.agiMarketDetails { margin-top: 16px; border-bottom: 1px solid var(--line); }
+.agiMarketDetails summary, .agiIntroRules summary, .agi .standings summary { cursor: pointer; padding: 12px 0; min-height: 44px; color: var(--muted); font-size: 13px; }
+.agiMarketDetails .event { border: 0; padding-top: 8px; }
+.agiContext { width: 100%; }
+.agiIntroRules { margin-top: 10px; }
+.agi .standings { padding-top: 10px; }
 .root * {
   box-sizing: border-box;
 }
@@ -1201,4 +1220,25 @@
   .live .footer {
     display: none;
   }
+}
+
+@media (max-width: 760px) {
+  .agiStarted .workspace { padding-bottom: 170px; }
+  .agiStarted .controls { order: 1; position: static; max-height: none; overflow: visible; padding: 0; }
+  .agiStarted .agiContext, .agiStarted .agiMarketDetails { order: 2; }
+  .agiStarted .standings { order: 3; }
+  .agiStarted .metrics { gap: 10px 20px; padding: 10px 0; }
+  .agiStarted .metric > strong { font-size: 20px; }
+  .agiStarted .metric > span, .agiStarted .metric > small { font-size: 10px; }
+  .agiStarted .heading { margin-bottom: 14px; }
+  .agiStarted .scene canvas { height: 150px; object-fit: contain; }
+  .agiStarted .scene { aspect-ratio: auto; }
+}
+
+@media (max-width:760px) { .controlSlot { width: 100%; order: 3; } .agiStarted .controlSlot { order: 1; min-height: 0; } .agiStarted .controls { position: static; width: 100%; } .agiStarted .logs { max-width: none; } }
+
+@media (max-height:600px) and (min-width:761px) {
+  .agiStarted .metrics { padding: 7px 0; }
+  .agiStarted .metric > strong { font-size: 20px; }
+  .agiStarted .metric > small { font-size: 10px; }
 }
