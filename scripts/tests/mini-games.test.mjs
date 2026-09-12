@@ -92,32 +92,130 @@ test('fab full six-year games are winnable across specialties and seeds; excessi
   while (!s.ending) s = fab.endFabTurn(s);
   assert.equal(s.ending.title, '停机清算');
 });
-test('all five snack menus can be completed through controls alone with persistent records', () => {
-  let best = [0, 0, 0, 0, 0];
-  for (let level = 0; level < 5; level++) {
-    const s = playSnack(snack.createSnack(2026, level, best));
-    assert.equal(s.phase, level === 4 ? 'ending' : 'won', JSON.stringify(s));
-    assert.ok(s.remaining.every(n => n === 0)); assert.ok(s.score > 1000);
-    best = s.best;
-    const before = structuredClone(s); snack.advanceSnack(s, 10000); assert.deepEqual(s, before);
+test('all five snack menus across four music offsets can be completed through taps with persistent records', () => {
+  for (const seed of [0, 1, 42, 2027]) {
+    let best = [0, 0, 0, 0, 0];
+    for (let level = 0; level < 5; level++) {
+      const s = playSnack(snack.createSnack(seed, level, best));
+      assert.equal(s.phase, level === 4 ? 'ending' : 'won', JSON.stringify(s));
+      assert.ok(s.remaining.every(n => n === 0)); assert.ok(s.score > 1000);
+      best = s.best;
+      const before = structuredClone(s); snack.advanceSnack(s, 10000); assert.deepEqual(s, before);
+      assert.deepEqual(readGameSave(JSON.stringify(s), 'snack'), s);
+    }
+    assert.ok(best.every(score => score > 1000));
   }
-  assert.ok(best.every(score => score > 1000));
 });
-test('snack talking with a full mouth, noise, silence and timeout all matter', () => {
-  const s = snack.createSnack(); s.phase = 'playing'; snack.snackInput(s, 'eat', true); snack.advanceSnack(s, 500);
-  assert.ok(s.chewing > 0);
-  const selected = s.selected; snack.selectSnack(s, 1); assert.equal(s.selected, selected);
-  snack.snackInput(s, 'eat', false); snack.snackInput(s, 'talk', true); snack.advanceSnack(s, 5000);
-  assert.equal(s.phase, 'lost'); assert.match(s.message, /偷吃声/);
+test('snack taps finish one serving automatically, while holding or repeated down cannot start another', () => {
+  const tap = snack.createSnack(); tap.phase = 'playing';
+  snack.snackInput(tap, 'eat', true); snack.snackInput(tap, 'eat', false);
+  assert.ok(tap.chewing > 0, 'A tap between animation frames must still take a serving');
+  snack.advanceSnack(tap, 1800);
+  assert.equal(tap.eaten, 1); assert.equal(tap.chewing, 0); assert.equal(tap.remaining[0], 2);
+  snack.advanceSnack(tap, 1800); assert.equal(tap.eaten, 1);
+
+  const hold = snack.createSnack(); hold.phase = 'playing';
+  snack.snackInput(hold, 'eat', true); snack.advanceSnack(hold, 1420);
+  assert.equal(hold.eaten, 1); assert.equal(hold.chewing, 0); assert.ok(hold.cooldown > 0);
+  snack.snackInput(hold, 'eat', true); snack.advanceSnack(hold, 1800);
+  assert.equal(hold.eaten, 1, 'Held-key repeats cannot eat a second serving');
+  snack.snackInput(hold, 'eat', false); snack.snackInput(hold, 'eat', true);
+  assert.ok(hold.chewing > 0);
+
+  const immediate = snack.createSnack(); immediate.phase = 'playing';
+  snack.snackInput(immediate, 'eat', true); snack.snackInput(immediate, 'eat', false);
+  snack.advanceSnack(immediate, 1420); assert.ok(immediate.cooldown > 0);
+  snack.snackInput(immediate, 'eat', true); snack.snackInput(immediate, 'eat', false);
+  assert.ok(immediate.chewing > 0, 'A deliberate next tap is accepted immediately after swallowing');
+  snack.advanceSnack(immediate, 1420); assert.equal(immediate.eaten, 2);
+});
+test('snack presses while chewing never queue a serving, including automatic food selection', () => {
+  const s = snack.createSnack(0, 1); s.phase = 'playing';
+  snack.snackInput(s, 'eat', true); snack.advanceSnack(s, 400);
+  const progress = s.chewing;
+  snack.selectSnack(s, 2); assert.equal(s.selected, 0, 'Food cannot change while it is in the mouth');
+  for (let i = 0; i < 4; i++) {
+    snack.snackInput(s, 'eat', false); snack.snackInput(s, 'eat', true);
+  }
+  assert.equal(s.chewing, progress, 'Extra presses must not reset chewing');
+  snack.advanceSnack(s, 1800);
+  assert.equal(s.eaten, 1); assert.equal(s.chewing, 0);
+  assert.equal(s.selected, 1); assert.equal(s.remaining[1], 3);
+  snack.snackInput(s, 'eat', true); snack.advanceSnack(s, 500);
+  assert.equal(s.eaten, 1); assert.equal(s.chewing, 0);
+  snack.snackInput(s, 'eat', false); snack.snackInput(s, 'eat', true); snack.snackInput(s, 'eat', false);
+  snack.advanceSnack(s, 2100); assert.equal(s.eaten, 2); assert.equal(s.remaining[1], 2);
+});
+test('snack muffled replies restore atmosphere while chewing slowly, then clear speech becomes effective again', () => {
+  const s = snack.createSnack(0, 2); s.phase = 'playing'; s.energy = 25; s.suspicion = 5;
+  snack.selectSnack(s, 3);
+  snack.snackInput(s, 'eat', true); snack.snackInput(s, 'eat', false);
+  snack.snackInput(s, 'talk', true);
+  assert.equal(snack.snackSpeech(s), 'muffled');
+  const automatic = structuredClone(s); snack.snackInput(automatic, 'talk', false);
+  const clear = structuredClone(s); clear.chewing = 0;
+  snack.advanceSnack(s, 1000); snack.advanceSnack(automatic, 1000); snack.advanceSnack(clear, 1000);
+  assert.ok(s.energy > 25, 'A mouthful reply must make net progress against the atmosphere drain');
+  assert.ok(s.energy < clear.energy, 'Swallowing before speaking should recover atmosphere faster');
+  assert.ok(s.suspicion > 5); assert.ok(clear.suspicion < 5);
+  assert.ok(s.chewing > 0 && s.chewing < automatic.chewing, 'Replying slows chewing without stopping it');
+  snack.snackInput(s, 'talk', false);
+  const before = s.chewing; snack.advanceSnack(s, 500);
+  assert.ok(s.chewing - before > 0.49, 'Releasing talk returns to normal chewing speed');
+  snack.snackInput(s, 'talk', true); snack.advanceSnack(s, 5000);
+  assert.equal(s.phase, 'playing'); assert.equal(s.eaten, 1); assert.equal(s.chewing, 0);
+  assert.equal(snack.snackSpeech(s), 'clear');
+  const afterBite = s.suspicion; const energy = s.energy;
+  snack.advanceSnack(s, 800);
+  assert.equal(s.eaten, 1, 'Continuing a reply after swallowing cannot pick up another serving');
+  assert.ok(s.suspicion < afterBite); assert.ok(s.energy > energy);
+});
+test('snack music and mute reduce each food noise, and mute prevents even a muffled reply', () => {
+  for (let index = 0; index < snack.SNACKS.length; index++) {
+    const noise = snack.createSnack(0, 4); noise.phase = 'playing'; snack.selectSnack(noise, index);
+    const music = structuredClone(noise); music.time = 9;
+    const quiet = structuredClone(noise);
+    for (const state of [noise, music, quiet]) {
+      snack.snackInput(state, 'eat', true); snack.snackInput(state, 'eat', false);
+    }
+    snack.snackInput(quiet, 'mute', true); snack.snackInput(quiet, 'talk', true);
+    for (const state of [noise, music, quiet]) snack.advanceSnack(state, 700);
+    assert.ok(noise.suspicion > music.suspicion, snack.SNACKS[index].name);
+    assert.ok(music.suspicion > quiet.suspicion); assert.equal(quiet.suspicion, 0);
+    assert.ok(noise.energy > quiet.energy, 'Muted chewing drains atmosphere faster');
+    assert.equal(snack.snackSpeech(quiet), 'silent'); assert.equal(quiet.chewing, noise.chewing);
+
+    const reply = structuredClone(noise); const coveredReply = structuredClone(music);
+    const beforeNoise = reply.suspicion; const beforeMusic = coveredReply.suspicion;
+    snack.snackInput(reply, 'talk', true); snack.snackInput(coveredReply, 'talk', true);
+    snack.advanceSnack(reply, 300); snack.advanceSnack(coveredReply, 300);
+    assert.ok(reply.suspicion - beforeNoise > coveredReply.suspicion - beforeMusic, 'Music still helps during a muffled reply');
+  }
+});
+test('snack exposed crunching and nonstop muffled chatter can still be caught through legal inputs', () => {
+  for (const talking of [false, true]) {
+    const s = snack.createSnack(0, 4); s.phase = 'playing';
+    snack.selectSnack(s, 2);
+    snack.snackInput(s, 'talk', talking);
+    for (let i = 0; i < 3600 && s.phase === 'playing'; i++) {
+      if (!s.chewing) {
+        snack.snackInput(s, 'eat', true); snack.snackInput(s, 'eat', false);
+      }
+      snack.advanceSnack(s, 1000 / 60);
+    }
+    assert.equal(s.phase, 'lost', `Unmasked ${talking ? 'muffled replies' : 'crunching'} must still carry risk`);
+    assert.equal(s.suspicion, 100); assert.match(s.message, /偷吃声/);
+    assert.ok(s.energy > 0 && s.time < snack.SNACK_LEVELS[s.level].limit, 'Noise, not atmosphere or time, caused this loss');
+    assert.ok(s.eaten >= 1 && s.remaining.some(n => n > 0), 'Suspicion accumulates naturally over actual servings');
+  }
+});
+test('snack holding one bite cannot clear the menu or prevent silence, and timeouts still matter', () => {
+  const held = snack.createSnack(); held.phase = 'playing'; snack.snackInput(held, 'eat', true); snack.advanceSnack(held, 20000);
+  assert.equal(held.phase, 'lost'); assert.equal(held.eaten, 1); assert.match(held.message, /冷场/);
   const silent = snack.createSnack(); silent.phase = 'playing'; snack.advanceSnack(silent, 20000);
   assert.equal(silent.phase, 'lost'); assert.match(silent.message, /冷场/);
   const timeout = snack.createSnack(); timeout.phase = 'playing'; snack.snackInput(timeout, 'talk', true); snack.advanceSnack(timeout, 70000);
   assert.equal(timeout.phase, 'lost'); assert.match(timeout.message, /时间/);
-  const noise = snack.createSnack(0, 1); noise.phase = 'playing'; noise.selected = 2; snack.snackInput(noise, 'eat', true); snack.advanceSnack(noise, 1000);
-  const quiet = snack.createSnack(0, 1); quiet.phase = 'playing'; quiet.selected = 2; snack.snackInput(quiet, 'eat', true); snack.snackInput(quiet, 'mute', true); snack.advanceSnack(quiet, 1000);
-  assert.ok(noise.suspicion > quiet.suspicion); assert.ok(noise.energy > quiet.energy);
-  const music = snack.createSnack(0, 1); music.phase = 'playing'; music.selected = 2; music.time = 8; snack.snackInput(music, 'eat', true); snack.advanceSnack(music, 1000);
-  assert.ok(music.suspicion < noise.suspicion);
 });
 test('pause clears held controls, persists a safe resume point, and invalid storage is rejected', () => {
   const s = snack.createSnack(); s.phase = 'playing'; snack.snackInput(s, 'eat', true); snack.advanceSnack(s, 300);
@@ -125,6 +223,15 @@ test('pause clears held controls, persists a safe resume point, and invalid stor
   const before = structuredClone(s); snack.advanceSnack(s, 10000); assert.deepEqual(s, before);
   snack.pauseSnack(s); assert.equal(s.phase, 'playing');
   const loaded = readGameSave(JSON.stringify(s), 'snack'); assert.equal(loaded.phase, 'paused');
+  assert.equal(loaded.chewing, s.chewing); assert.ok(Object.values(loaded.inputs).every(v => !v));
+  const pausedSave = structuredClone(loaded); snack.advanceSnack(loaded, 10000); assert.deepEqual(loaded, pausedSave);
+  snack.pauseSnack(loaded); snack.advanceSnack(loaded, 2000);
+  assert.equal(loaded.eaten, 1); assert.equal(loaded.chewing, 0, 'A version-1 partial bite resumes automatically');
+  const loadedBites = loaded.eaten; snack.advanceSnack(loaded, 1000); assert.equal(loaded.eaten, loadedBites);
+  snack.snackInput(loaded, 'eat', true); snack.snackInput(loaded, 'eat', false);
+  const immediateSave = readGameSave(JSON.stringify(loaded), 'snack');
+  assert.ok(immediateSave.chewing > 0, 'A just-accepted tap is preserved even before the next tick');
+  snack.pauseSnack(immediateSave); snack.advanceSnack(immediateSave, 1500); assert.equal(immediateSave.eaten, 2);
   for (const game of [ai.createAi(), fab.createFab(), snack.createSnack()]) {
     assert.deepEqual(readGameSave(JSON.stringify(game), game.kind), game);
     assert.equal(readGameSave('{broken', game.kind), null);

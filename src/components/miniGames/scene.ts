@@ -1,7 +1,7 @@
 import { AiState } from "./agiEngine";
 import { aiCompany } from './agiIndustry';
 import { FabState } from "./fabEngine";
-import { SnackState, snackCover, SNACKS } from "./snackEngine";
+import { SnackState, snackCover, snackSpeech, SNACKS } from "./snackEngine";
 import { SnackSkin } from "./snackSkins";
 
 export type GameState = AiState | FabState | SnackState;
@@ -348,8 +348,9 @@ function heart(c: Ctx, x: number, y: number, size: number, color: string) {
 }
 
 function suiStreamer(c: Ctx, s: SnackState, time: number) {
-  const eating = s.inputs.eat && s.phase === "playing";
-  const talking = s.inputs.talk && !s.inputs.mute && !s.chewing;
+  const eating = s.chewing > 0 && s.phase === "playing";
+  const speech = snackSpeech(s);
+  const talking = speech === "clear";
   const blink = time % 5 > 4.8 || s.phase === "won" || s.phase === "ending";
   const bob = s.phase === "playing" ? Math.sin(time * 3) * 2 : 0;
   c.save();
@@ -477,7 +478,7 @@ function suiStreamer(c: Ctx, s: SnackState, time: number) {
   }
   line(c, [[482, 269], [479, 273], [483, 273]], "#e8bcb0", 1.5);
   if (eating || s.chewing > 0) {
-    ellipse(c, 484, 287, 6, 4, "#bb7884");
+    ellipse(c, 484, 287, speech === "muffled" ? 9 : 6, speech === "muffled" ? 5 + Math.sin(time * 18) * 2 : 4, "#bb7884");
     ellipse(c, 551, 278, 15 + Math.sin(time * 14) * 2, 13, "#f5cfc6");
   } else if (talking) {
     ellipse(c, 484, 288, 10, 6 + (Math.sin(time * 18) + 1) * 5, "#b66f7c");
@@ -608,8 +609,9 @@ function cookieCompanion(c: Ctx, time: number) {
 
 function snack(c: Ctx, s: SnackState, time: number, skin: SnackSkin) {
   const sui = skin === "sui";
-  const eating = s.inputs.eat && s.phase === "playing";
-  const talking = s.inputs.talk && !s.inputs.mute && !s.chewing;
+  const eating = s.chewing > 0 && s.phase === "playing";
+  const speech = snackSpeech(s);
+  const talking = speech === "clear";
   box(c, 0, 0, 960, 520, sui ? "#e9e0ed" : "#eee0d7");
   box(c, 35, 32, 255, 290, sui ? "#cec1dc" : "#d8c4c0", 120);
   box(c, 49, 46, 227, 263, sui ? "#6e718e" : "#657a83", 110);
@@ -739,7 +741,7 @@ function snack(c: Ctx, s: SnackState, time: number, skin: SnackSkin) {
       ellipse(c, x, 276, 22, 8, "#f0b39d70");
     }
     if (eating || s.chewing > 0) {
-      ellipse(c, 484, 287, 6, 4, "#c38275");
+      ellipse(c, 484, 287, speech === "muffled" ? 9 : 6, speech === "muffled" ? 5 + Math.sin(time * 18) * 2 : 4, "#c38275");
       ellipse(c, 551, 278, 15 + Math.sin(time * 14) * 2, 13, "#f8c9a9");
     } else if (talking) ellipse(c, 484, 288, 10, 6 + (Math.sin(time * 18) + 1) * 5, "#b6746c");
     else line(
@@ -855,8 +857,18 @@ function snack(c: Ctx, s: SnackState, time: number, skin: SnackSkin) {
       );
   }
   if (snackCover(s).active && s.phase === "playing") {
-    label(c, "♪", 303, 191, 36, "#98715b");
-    label(c, "♫", 660, 218, 30, "#98715b");
+    c.strokeStyle = "#a083c3";
+    c.lineWidth = 8;
+    c.strokeRect(4, 4, 952, 512);
+    for (const [x, y, size] of [[302, 178, 48], [700, 244, 45], [266, 338, 34]]) {
+      label(c, "♪", x, y + Math.sin(time * 3 + x) * 7, size, "#69458c");
+    }
+    box(c, 71, 270, 184, 38, "#5f4581", 12);
+    label(c, "♫ 音乐正在掩护", 85, 296, 19, "#fff8e9");
+  }
+  if (speech === "muffled") {
+    box(c, 693, 261, 190, 56, "#fff7eb", 20);
+    label(c, "嗯嗯…然后呢？", 708, 296, 20, "#6a557a");
   }
   label(c, sui ? "03 / SUI · MIDNIGHT MUNCH" : "03 / MIDNIGHT MUNCH", 34, 490, 12, "#745b4c");
   if (eating) label(c, SNACKS[s.selected].name, 716, 391, 15, "#806252");

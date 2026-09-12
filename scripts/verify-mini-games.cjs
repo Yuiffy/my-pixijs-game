@@ -153,7 +153,8 @@ async function resetRoute(page, kind) {
     assert.equal((await state(page)).phase, 'paused');
     assert.equal((await state(page)).chewing, paused.chewing);
     await advance(page, 0); await button(page, '继续直播').click();
-    await page.keyboard.down('Space'); await advance(page, 5000); await page.keyboard.up('Space');
+    // Speaking mid-bite is recoverable; explicitly exercise the time-limit loss.
+    await page.keyboard.down('Space'); await advance(page, 70000); await page.keyboard.up('Space');
     assert.equal((await state(page)).phase, 'lost'); await capture(page, 'snack-caught');
     await button(page, '重试本关').click(); assert.equal((await state(page)).phase, 'ready');
     for (let level = 0; level < 5; level++) {
@@ -180,13 +181,13 @@ async function resetRoute(page, kind) {
     await button(page, '再挑战五关').click();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('#start-game').click(); await advance(page, 0);
-    const visible = await page.evaluate(() => [...document.querySelectorAll('button[aria-label^="按住"]')].every(el => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }));
+    const visible = await page.evaluate(() => [...document.querySelectorAll('button[aria-label^="按住"], button[aria-label="吃一口"]')].every(el => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }));
     assert.equal(visible, true, 'Touch controls must be visible together with meters');
     const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const touch = await mobile.newPage(); touch.on('pageerror', error => errors.push(error.message));
     await open(touch, 'snack'); await touch.locator('#start-game').tap(); await advance(touch, 0);
     const cdp = await mobile.newCDPSession(touch);
-    const eatBox = await button(touch, '按住吃零食').boundingBox(); const muteBox = await button(touch, '按住静音').boundingBox();
+    const eatBox = await button(touch, '吃一口').boundingBox(); const muteBox = await button(touch, '按住静音').boundingBox();
     const points = [eatBox, muteBox].map((r, id) => ({ id, x: r.x + r.width / 2, y: r.y + r.height / 2 }));
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points });
     await advance(touch, 600); assert.equal((await state(touch)).inputs.eat, true); assert.equal((await state(touch)).inputs.mute, true);

@@ -186,7 +186,8 @@ async function winLevel(page) {
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('mini-snack-v1')));
     assert.equal('skin' in saved, false, 'Skin preference must stay independent of gameplay saves');
     await button(page, '继续直播').click();
-    await hold(page, ['Space'], 5000);
+    // Keep chatting until the clock expires; speaking mid-bite is now supported.
+    await hold(page, ['Space'], 70000);
     assert.equal((await state(page)).phase, 'lost');
     await choose(page, 'original');
     await choose(page, 'sui');
@@ -255,7 +256,7 @@ async function winLevel(page) {
     await touch.locator('#start-game').tap();
     await advance(touch, 0);
     const cdp = await mobile.newCDPSession(touch);
-    const boxes = await Promise.all(['按住吃零食', '按住静音'].map(name => button(touch, name).boundingBox()));
+    const boxes = await Promise.all(['吃一口', '按住静音'].map(name => button(touch, name).boundingBox()));
     assert.ok(boxes.every(rect => rect && rect.y >= 0 && rect.y + rect.height <= 844));
     const points = boxes.map((rect, id) => ({ id, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }));
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points });

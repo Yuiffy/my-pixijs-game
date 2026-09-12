@@ -51,13 +51,15 @@ function fabPilot(seed, style, trace = []) {
 function playSnack(s) {
   s.phase = 'playing';
   for (let i = 0; i < 12000 && s.phase === 'playing'; i++) {
-    const busy = s.chewing > 0 || s.inputs.eat;
-    const eat = busy && s.remaining[s.selected] > 0 || s.energy > 93 && s.suspicion < 15;
-    snack.snackInput(s, 'talk', !eat);
-    snack.snackInput(s, 'eat', eat);
-    snack.snackInput(s, 'mute', eat);
+    if (!s.chewing && s.energy > 93 && s.suspicion < 15) {
+      snack.snackInput(s, 'eat', true);
+      snack.snackInput(s, 'eat', false);
+    }
+    const busy = s.chewing > 0;
+    const reply = busy && s.energy < 24 && s.suspicion < 65;
+    snack.snackInput(s, 'talk', !busy || reply);
+    snack.snackInput(s, 'mute', busy && !reply && snack.SNACKS[s.selected].noise > 6 && !snack.snackCover(s).active);
     snack.advanceSnack(s, 1000 / 60);
-    if (!s.chewing && s.cooldown > 0) { snack.snackInput(s, 'eat', false); snack.snackInput(s, 'mute', false); }
   }
   return s;
 }

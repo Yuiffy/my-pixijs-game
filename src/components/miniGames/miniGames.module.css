@@ -121,7 +121,8 @@
   color: #fff9ee;
   border-color: var(--accent);
 }
-.skinPicker button[aria-pressed="true"]:hover:not(:disabled) {
+.skinPicker button[aria-pressed="true"]:hover:not(:disabled),
+.holdControls button[aria-pressed="true"]:hover:not(:disabled) {
   background: var(--accent);
 }
 .root h1,
@@ -277,6 +278,82 @@
   width: 100%;
   height: auto;
   aspect-ratio: 960 / 520;
+}
+.musicCue {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 66px;
+  padding: 12px 15px 15px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #ede7ed;
+  color: #665b70;
+  transition: background 0.18s, color 0.18s;
+}
+.musicCue > div {
+  flex: 1;
+  min-width: 0;
+}
+.musicCue strong,
+.musicCue small {
+  display: block;
+}
+.musicCue strong {
+  font-size: 14px;
+}
+.musicCue small {
+  margin-top: 3px;
+  font-size: 11px;
+}
+.musicCue[data-active="true"] {
+  background: #5f4581;
+  color: #fff8e9;
+}
+.musicCue[data-ending="true"] {
+  background: #875226;
+}
+.musicTime {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.musicProgress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: #b4a5c8;
+}
+.musicCue[data-active="true"] .musicProgress {
+  background: #e9cd8f;
+}
+.equalizer {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 27px;
+}
+.equalizer i {
+  width: 4px;
+  height: 8px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.musicCue[data-active="true"] .equalizer i {
+  height: 23px;
+  animation: musicBeat 0.7s ease-in-out infinite alternate;
+}
+.equalizer i:nth-child(2) { animation-delay: -0.2s; }
+.equalizer i:nth-child(3) { animation-delay: -0.5s; }
+.equalizer i:nth-child(4) { animation-delay: -0.35s; }
+@keyframes musicBeat {
+  from { transform: scaleY(0.3); }
+  to { transform: scaleY(1); }
 }
 .event {
   padding: 22px 0;
@@ -703,11 +780,20 @@
   font-size: 12px;
 }
 .bite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 8px;
   margin: 23px 0;
   font-size: 12px;
   color: var(--muted);
 }
+.biteTime {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .bite .track {
+  grid-column: 1 / -1;
   margin-top: 11px;
   height: 8px;
 }
@@ -1043,6 +1129,25 @@
   }
   .live .scene {
     max-height: 220px;
+  }
+  .pink .musicCue {
+    min-height: 58px;
+    gap: 8px;
+    padding: 9px 10px 12px;
+    margin-bottom: 0;
+  }
+  .musicCue strong,
+  .musicTime {
+    font-size: 12px;
+  }
+  .musicCue small {
+    font-size: 10px;
+  }
+  .equalizer {
+    gap: 2px;
+  }
+  .equalizer i {
+    width: 3px;
   }
   .live .chat > span {
     display: none;

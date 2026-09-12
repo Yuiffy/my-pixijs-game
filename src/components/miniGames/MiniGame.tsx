@@ -36,7 +36,9 @@ import {
   selectSnack,
   snackCover,
   snackInput,
+  snackSpeech,
   SNACK_LEVELS,
+  SNACK_MUFFLED_CHEW_RATE,
   SNACKS,
   SnackInput,
 } from "./snackEngine";
@@ -147,16 +149,20 @@ function Rules({ kind }: { kind: GameState["kind"] }) {
   return (
     <ol>
       <li>
-        按住空格说话，提升气氛、降低怀疑。按住 J
-        吃零食，松开会停嚼；这一口没嚼完就说话会露馅。
+        按一下 J 吃一份，松手后自动嚼完；长按不会连吃下一份。
+        按住空格说话，提升气氛、降低怀疑。
       </li>
       <li>
         按住 K 静音，吃东西不会发出声音，但冷场消耗会加快。音乐响起时噪声只剩
         12%。
       </li>
       <li>
-        用 1–4 选择零食。气氛降到 0、怀疑达到 100
-        或超时即失败。手机直接按住下方按钮，可同时静音与吃。
+        嘴里有食物也能按住空格含糊接话，少量恢复气氛；但会嚼得更慢、增加怀疑。
+        静音时观众听不到接话。
+      </li>
+      <li>
+        用 1–4 选择零食。气氛降到 0、怀疑达到 100 或超时即失败。
+        手机点一下「吃一口」，说话和静音仍需按住。
       </li>
       <li>
         清空本关零食即可通关。更快、怀疑峰值更低、连续吃完更多份可获得高分。P /
@@ -345,6 +351,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               cover: snackCover(state.current),
               snack: SNACKS[state.current.selected].name,
               skin: skinRef.current,
+              speech: snackSpeech(state.current),
             }
           : {}),
       });
@@ -451,6 +458,14 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
   const startPanel =
     !started || (game.kind === "snack" && game.phase === "ready");
   const skinName = SNACK_SKINS.find((option) => option.id === skin)!.name;
+  const speech = snackGame ? snackSpeech(snackGame) : "silent";
+  const cover = snackGame ? snackCover(snackGame) : null;
+  const musicActive = snackGame?.phase === "playing" && !!cover?.active;
+  const musicEnding = musicActive && cover!.next <= 1;
+  const biteLeft = snackGame && snackGame.chewing > 0
+    ? Math.max(0, SNACKS[snackGame.selected].time - snackGame.chewing) /
+      (speech === "muffled" ? SNACK_MUFFLED_CHEW_RATE : 1)
+    : 0;
 
   return (
     <main
@@ -626,12 +641,40 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               </span>
               <span>
                 {game.kind === "snack"
-                  ? snackCover(game).active
-                    ? "♫ 音乐掩护中"
-                    : `音乐掩护倒计时 ${snackCover(game).next}s`
+                  ? game.inputs.mute ? "麦克风已静音" : "麦克风开启"
                   : `种子 ${game.seed}`}
               </span>
             </div>
+            {snackGame && cover && (
+              <div
+                className={styles.musicCue}
+                data-testid="snack-music"
+                data-active={musicActive}
+                data-ending={musicEnding}
+              >
+                <span className={styles.equalizer} aria-hidden="true">
+                  <i /><i /><i /><i />
+                </span>
+                <div>
+                  <strong aria-live="polite">
+                    {snackGame.phase !== "playing"
+                      ? snackGame.phase === "paused" ? "音乐计时已暂停" : "音乐掩护"
+                      : musicEnding ? "音乐快结束了" : musicActive ? "音乐掩护中" : "等待下一段音乐"}
+                  </strong>
+                  <small>
+                    {musicActive ? "咀嚼声降低 88% · 抓紧这一口" : "按住 K 静音，也能掩护偷吃"}
+                  </small>
+                </div>
+                <span className={styles.musicTime}>
+                  {musicActive ? "还剩 " : "还有 "}{cover.next.toFixed(1)}s
+                </span>
+                <span
+                  className={styles.musicProgress}
+                  aria-hidden="true"
+                  style={{ width: `${(100 * cover.next) / (cover.active ? SNACK_LEVELS[snackGame.level].cover : 12 - SNACK_LEVELS[snackGame.level].cover)}%` }}
+                />
+              </div>
+            )}
             <div className={styles.scene}>
               <canvas
                 ref={canvas}
@@ -1159,10 +1202,13 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                       ))}
                     </div>
                     <div className={styles.bite}>
-                      <span>
+                      <span aria-live="polite">
                         {snackGame.chewing > 0
-                          ? `正在嚼${SNACKS[snackGame.selected].name}，先吃完这口`
-                          : "准备好，再吃一口"}
+                          ? speech === "muffled" ? "含糊接话中 · 气氛缓慢回升，嚼得更慢" : `自动嚼${SNACKS[snackGame.selected].name} · 可以松手`
+                          : snackGame.inputs.eat ? "这份吃完了 · 松开后再按，才会拿下一份" : "准备好了 · 点一下吃一口"}
+                      </span>
+                      <span className={styles.biteTime}>
+                        {biteLeft > 0 ? `还需 ${biteLeft.toFixed(1)}s` : ""}
                       </span>
                       <div className={styles.track}>
                         <span
@@ -1179,13 +1225,13 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                             id: "talk",
                             key: "空格",
                             title: "说话",
-                            hint: "回气氛 · 降怀疑",
+                            hint: snackGame.chewing > 0 ? "少量回气氛 · 嚼慢些" : "回气氛 · 降怀疑",
                           },
                           {
                             id: "eat",
                             key: "J",
-                            title: "吃零食",
-                            hint: "不要边吃边说",
+                            title: "吃一口",
+                            hint: snackGame.chewing > 0 ? "正在自动嚼 · 无需按住" : "点一次一份 · 自动嚼完",
                           },
                           {
                             id: "mute",
@@ -1199,8 +1245,34 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                           key={control.id}
                           {...hold(control.id)}
                           disabled={snackGame.phase !== "playing"}
-                          aria-pressed={snackGame.inputs[control.id]}
-                          aria-label={`按住${control.title}`}
+                          aria-pressed={control.id === "eat" ? snackGame.chewing > 0 : snackGame.inputs[control.id]}
+                          aria-label={control.id === "eat" ? "吃一口" : `按住${control.title}`}
+                          onKeyDown={control.id === "eat" ? (e) => {
+                            if (!["Space", "Enter"].includes(e.code)) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!e.repeat && state.current.kind === "snack") {
+                              snackInput(state.current, "eat", true);
+                              sync();
+                            }
+                          } : undefined}
+                          onKeyUp={control.id === "eat" ? (e) => {
+                            if (!["Space", "Enter"].includes(e.code)) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (state.current.kind === "snack") {
+                              snackInput(state.current, "eat", keys.current.has("eat") || Array.from(pointers.current.values()).includes("eat"));
+                              sync();
+                            }
+                          } : undefined}
+                          onClick={control.id === "eat" ? (e) => {
+                            // Assistive/keyboard activation has no pointer-down event.
+                            if (e.detail === 0 && state.current.kind === "snack") {
+                              snackInput(state.current, "eat", true);
+                              snackInput(state.current, "eat", false);
+                              sync();
+                            }
+                          } : undefined}
                         >
                           <kbd>{control.key}</kbd>
                           <strong>{control.title}</strong>
@@ -1209,8 +1281,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                       ))}
                     </div>
                     <p className={styles.footnote}>
-                      按住操作，松开停止。1–4
-                      选零食。手机可同时按住「静音」和「吃零食」。
+                      点一下吃一份；说话、静音需按住。嘴里有食物也能接话，但会增加怀疑。
+                      1–4 选零食。
                     </p>
                   </>
                 )}

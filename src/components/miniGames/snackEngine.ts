@@ -80,6 +80,8 @@ export type SnackPhase =
   | "lost"
   | "ending";
 export type SnackInput = "talk" | "eat" | "mute";
+export type SnackSpeech = "silent" | "clear" | "muffled";
+export const SNACK_MUFFLED_CHEW_RATE = 0.6;
 export type SnackState = {
   version: 1;
   kind: "snack";
@@ -149,7 +151,26 @@ export function selectSnack(s: SnackState, index: number) {
   s.selected = index;
 }
 export function snackInput(s: SnackState, input: SnackInput, down: boolean) {
+  const pressed = s.phase === "playing" && down && !s.inputs[input];
   s.inputs[input] = s.phase === "playing" && down;
+  if (
+    pressed &&
+    input === "eat" &&
+    s.chewing === 0 &&
+    s.remaining[s.selected] > 0
+  ) {
+    // An accepted press starts exactly one serving, including taps between frames.
+    // Keep chewing as elapsed chew time so existing version-1 saves still resume.
+    s.chewing = Number.EPSILON;
+    snackMessage(s, `拿起一份${SNACKS[s.selected].name}，松手也会自动嚼完。`);
+  }
+  if (pressed && input === "talk" && snackSpeech(s) === "muffled") {
+    snackMessage(s, "唔嗯……先接两句！气氛缓慢恢复，嚼得也慢一点。");
+  }
+}
+export function snackSpeech(s: SnackState): SnackSpeech {
+  if (s.phase !== "playing" || !s.inputs.talk || s.inputs.mute) return "silent";
+  return s.chewing > 0 ? "muffled" : "clear";
 }
 export function clearSnackInput(s: SnackState) {
   s.inputs = { talk: false, eat: false, mute: false };
@@ -169,17 +190,16 @@ export function tickSnack(s: SnackState, dt: number) {
   const snack = SNACKS[s.selected];
   s.time += dt;
   s.cooldown = Math.max(0, s.cooldown - dt);
-  const eating = s.inputs.eat && s.remaining[s.selected] > 0 && s.cooldown <= 0;
-  const talking = s.inputs.talk && !s.inputs.mute;
+  const eating = s.chewing > 0 && s.remaining[s.selected] > 0;
+  const speech = snackSpeech(s);
   const cover = snackCover(s).active;
   if (eating) {
-    s.chewing += dt;
-    if (talking) {
-      s.suspicion += dt * 31;
-      s.combo = 0;
-      snackMessage(s, "弹幕：你怎么含含糊糊的……嘴里有东西？");
+    const muffled = speech === "muffled";
+    s.chewing += dt * (muffled ? SNACK_MUFFLED_CHEW_RATE : 1);
+    const noise = s.inputs.mute ? 0 : snack.noise * (cover ? 0.12 : 1);
+    if (muffled) {
+      s.suspicion += dt * (5.5 + noise * 0.35);
     } else {
-      const noise = s.inputs.mute ? 0 : snack.noise * (cover ? 0.12 : 1);
       s.suspicion += dt * noise;
     }
     if (s.chewing >= snack.time) {
@@ -198,17 +218,12 @@ export function tickSnack(s: SnackState, dt: number) {
         if (next >= 0) s.selected = next;
       }
     }
-  } else if (s.chewing > 0) {
-    // Releasing a bite does not erase mouth occupancy; swallowing needs the eat control.
-    if (talking) {
-      s.suspicion += dt * 24;
-      snackMessage(s, "先嚼完这一口！说话会露馅。");
-    }
-  } else if (talking) {
-    s.energy += dt * 26;
+  } else if (speech === "clear") {
     s.suspicion -= dt * 9;
   } else s.suspicion -= dt * (cover ? 3 : 1.5);
-  if (!talking || eating || s.chewing > 0) s.energy -= dt * level.drain * (s.inputs.mute ? 1.2 : 1);
+  if (speech === "clear") s.energy += dt * 26;
+  else if (speech === "muffled") s.energy += dt * 8;
+  else s.energy -= dt * level.drain * (s.inputs.mute ? 1.2 : 1);
   s.energy = clamp(s.energy);
   s.suspicion = clamp(s.suspicion);
   s.peak = Math.max(s.peak, s.suspicion);
