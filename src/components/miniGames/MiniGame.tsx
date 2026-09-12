@@ -44,6 +44,7 @@ import {
 import { money, round, seedValue } from "./core";
 import { drawScene, GameState } from "./scene";
 import { readGameSave } from "./save";
+import { SNACK_SKINS, SNACK_SKIN_STORAGE_KEY, SnackSkin } from "./snackSkins";
 import styles from "./miniGames.module.css";
 
 const TITLES = { agi: "智能纪元", fab: "晶圆周期", snack: "主播，别嚼了！" };
@@ -176,11 +177,23 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
   const [reset, setReset] = useState(false);
   const [seed, setSeed] = useState("2026");
   const [storage, setStorage] = useState("本机自动存档");
+  const [skin, setSkin] = useState<SnackSkin>("original");
+  const skinRef = useRef<SnackSkin>("original");
   const manual = useRef(false);
   const reduced = useRef(false);
   const pointers = useRef(new Map<number, SnackInput>());
   const keys = useRef(new Set<SnackInput>());
   const sync = useCallback(() => setGame(structuredClone(state.current)), []);
+  const chooseSkin = (next: SnackSkin) => {
+    skinRef.current = next;
+    setSkin(next);
+    if (canvas.current) drawScene(canvas.current, state.current, 0, next);
+    try {
+      localStorage.setItem(SNACK_SKIN_STORAGE_KEY, next);
+    } catch {
+      setStorage("浏览器未允许存档，本局仍可玩");
+    }
+  };
   const persist = useCallback(() => {
     if (!startedRef.current) return;
     try {
@@ -210,6 +223,15 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     reduced.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    if (kind === "snack") {
+      try {
+        const savedSkin = localStorage.getItem(SNACK_SKIN_STORAGE_KEY);
+        skinRef.current = savedSkin === "sui" ? "sui" : "original";
+        setSkin(skinRef.current);
+      } catch {
+        setStorage("浏览器未允许存档，本局仍可玩");
+      }
+    }
     try {
       const raw = localStorage.getItem(`mini-${kind}-v1`);
       const loaded = readGameSave(raw, kind);
@@ -242,6 +264,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               : state.current.kind === "snack"
                 ? state.current.time
                 : now / 1000,
+            skinRef.current,
           );
         if (state.current.kind === "snack" && state.current.phase === "playing") sync();
         else if (state.current.kind === "snack" && state.current.phase !== previousPhase) sync();
@@ -320,6 +343,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
           ? {
               cover: snackCover(state.current),
               snack: SNACKS[state.current.selected].name,
+              skin: skinRef.current,
             }
           : {}),
       });
@@ -330,6 +354,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
           canvas.current,
           state.current,
           state.current.kind === "snack" ? state.current.time : 0,
+          skinRef.current,
         );
       sync();
       persist();
@@ -423,11 +448,12 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
   const forecast = game.kind === "fab" ? fabForecast(game) : null;
   const startPanel =
     !started || (game.kind === "snack" && game.phase === "ready");
+  const skinName = SNACK_SKINS.find((option) => option.id === skin)!.name;
 
   return (
     <main
       ref={root}
-      className={`${styles.root} ${kind === "snack" ? styles.pink : ""} ${kind === "snack" && started && !startPanel ? styles.live : ""}`}
+      className={`${styles.root} ${kind === "snack" ? styles.pink : ""} ${kind === "snack" && skin === "sui" ? styles.sui : ""} ${kind === "snack" && started && !startPanel ? styles.live : ""}`}
     >
       <header className={styles.topbar}>
         <Link href="/demos" className={styles.back}>
@@ -593,7 +619,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
             <div className={styles.sceneTop}>
               <span>
                 {game.kind === "snack"
-                  ? "● LIVE · 深夜零食台"
+                  ? `● LIVE · ${skin === "sui" ? skinName : "深夜零食台"}`
                   : `第 ${game.turn} / ${game.kind === "agi" ? 20 : 24} 季度`}
               </span>
               <span>
@@ -614,29 +640,60 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                     ? "随算力扩建变化的实验室沙盘"
                     : kind === "fab"
                       ? "显示工厂建设和库存的晶圆基地"
-                      : "主播在直播间吃零食，嘴巴与麦克风跟随操作变化"
+                      : `${skinName}在直播间吃零食，嘴巴与麦克风跟随操作变化`
                 }
               />
-              {snackGame?.phase === "paused" && (
-                <div className={styles.pause}>
-                  <span>直播已暂停</span>
-                  <p>进度已保存，准备好再继续。</p>
-                  <button
-                    className={styles.primary}
-                    onClick={() => {
-                      if (state.current.kind === "snack") {
-                        pauseSnack(state.current);
-                        releaseAll();
-                        sync();
-                        persist();
-                      }
-                    }}
-                  >
-                    继续直播
-                  </button>
-                </div>
-              )}
             </div>
+            {snackGame?.phase === "paused" && (
+              <div className={styles.pause}>
+                <div>
+                  <strong>直播已暂停</strong>
+                  <p>可以换个皮肤，准备好再继续。</p>
+                </div>
+                <button
+                  className={styles.primary}
+                  onClick={() => {
+                    if (state.current.kind === "snack") {
+                      pauseSnack(state.current);
+                      releaseAll();
+                      sync();
+                      persist();
+                    }
+                  }}
+                >
+                  继续直播
+                </button>
+              </div>
+            )}
+            {snackGame && snackGame.phase !== "playing" && (
+              <fieldset className={styles.skinPicker}>
+                <legend>主播皮肤</legend>
+                <div>
+                  {SNACK_SKINS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-label={option.name}
+                      aria-pressed={skin === option.id}
+                      disabled={!ready}
+                      onClick={() => chooseSkin(option.id)}
+                    >
+                      <span
+                        className={styles.skinSwatch}
+                        data-skin={option.id}
+                        aria-hidden="true"
+                      >
+                        {skin === option.id ? "✓" : ""}
+                      </span>
+                      <span>
+                        <strong>{option.name}</strong>
+                        <small>{option.detail}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
             {game.kind === "agi" && (
               <div className={styles.event}>
                 <span>本季简报</span>
@@ -1183,7 +1240,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
           <span>三种人生 · 三种冒险</span>
           <span>
             {kind === "snack"
-              ? "原创虚拟主播 · 五关挑战"
+              ? `${skinName} · 五关挑战`
               : "虚构公司与简化市场 · 策略模拟"}
           </span>
         </footer>
