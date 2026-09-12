@@ -17,6 +17,7 @@ import Link from 'next/link';
 
 import { AUTOCHESS_VERSION } from '@/components/autoChessGame/version';
 import { CONTENT_VERSION as SPARRING_VERSION } from '@/components/oneMoreGame/content';
+import { QUESTIONS as BUTTON_QUESTIONS } from '@/components/buttonGame/content';
 
 import styles from './page.module.css';
 
@@ -29,6 +30,27 @@ interface ProjectItem {
 }
 
 const miniGames: ProjectItem[] = [
+  {
+    title: '岁己：马上就播',
+    href: '/game/pre-stream',
+    description: '接水、喂猫、调声卡。把七件小事做好，挑战最短开播时间。',
+    image: '/games/pre-stream/preview.png',
+    meta: '动作小游戏合集 · 三晚闯关 · 计时摘星',
+  },
+  {
+    title: '虚境归途',
+    href: '/game/rpg',
+    description: '醒来成了一块饼干。结识岁己与栞栞，在山河间寻找通往现实的路。',
+    image: '/images/autochess/portraits/biscuit_sui.png',
+    meta: 'v0.1 · 俯视开放探索 · 组队自动战斗',
+  },
+  {
+    title: '饼干岁，听我说',
+    href: '/game/streamer',
+    description: '扮演岁己，打出话题、挑选弹幕、救场转场。三幕直播，每一句都由你控场。',
+    image: '/images/materials/岁己SUI小猫帽短发小揪揪半身金瞳.png',
+    meta: '直播控场肉鸽 · 18 个话题 · 七种结局',
+  },
   {
     title: '智能纪元',
     href: '/game/agi',
@@ -58,7 +80,7 @@ const gameDemos: ProjectItem[] = [
     href: '/game/button',
     description: '一个心动的理由，一个纠结的代价。虚拟主播们的平行人生。',
     image: '/games/button/press.svg',
-    meta: '按钮假说 · 虚拟主播 · 38 道题',
+    meta: `按钮假说 · 虚拟主播 · ${BUTTON_QUESTIONS.length} 道题`,
   },
   {
     title: '岁岁过招',
