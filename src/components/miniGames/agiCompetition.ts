@@ -79,7 +79,7 @@ export function applyAiCriticism(s: AiState) {
 }
 export const AI_CHALLENGE_RESPONSES = [
   { id: "audit", name: "公开评测", detail: "12 M · 信誉 +8、社区 +3；公开测评流程，原有技术缺口仍需修复。", cost: 12 },
-  { id: "fix", name: "承认并整改", detail: "24 M · 可靠性 +10、安全 +6、信誉 +4；不占本季行动。", cost: 24 },
+  { id: "fix", name: "承认并整改", detail: "24 M · 占 1 次行动；可靠性 +10、安全 +6、信誉 +4。", cost: 24 },
   { id: "ignore", name: "不回应", detail: "免费 · 保留已经发生的影响，继续本季经营。", cost: 0 },
 ] as const;
 export type AiChallengeResponse = (typeof AI_CHALLENGE_RESPONSES)[number]["id"];
@@ -90,6 +90,8 @@ export function aiChallengeBlocked(s: AiState, id: string, response: AiChallenge
   if (entry.response !== "pending") return "已经回应过这条质疑";
   const option = AI_CHALLENGE_RESPONSES.find(r => r.id === response);
   if (!option) return "未知回应方式";
+  if (response === "fix" && !s.industry.eventResolved) return "先处理本季事件";
+  if (response === "fix" && !s.actions) return "本季行动已用完，可公开评测或不回应";
   if (s.cash < option.cost) return "资金不足";
   return "";
 }
@@ -101,7 +103,7 @@ export function respondAiChallenge(state: AiState, id: string, response: AiChall
   s.cash -= option.cost;
   entry.response = response;
   if (response === "audit") { s.reputation = clamp(s.reputation + 8); s.community = clamp(s.community + 3); }
-  if (response === "fix") { s.industry.reliability = clamp(s.industry.reliability + 10); s.safety = clamp(s.safety + 6); s.reputation = clamp(s.reputation + 4); }
+  if (response === "fix") { s.actions--; s.industry.reliability = clamp(s.industry.reliability + 10); s.safety = clamp(s.safety + 6); s.reputation = clamp(s.reputation + 4); }
   recordAiCompetition(s, { actor: s.industry.company, target: entry.actor, kind: "response", amount: option.cost, basis: entry.id, effect: option.detail, text: `回应${aiCompany(entry.actor).name}的质疑：${option.name}。${option.detail}` });
   return s;
 }
@@ -113,6 +115,7 @@ export const aiTransferRate = (open: boolean, defense: number) => (open ? Math.m
 export function advanceAiRival(s: AiState, r: AiRival, roll: number) {
   const company = aiCompany(r.company);
   const difficulty = aiDifficulty(s.difficulty);
+  const competitive = s.difficulty !== "relaxed";
   r.lastActions = [];
   const used = new Set<string>();
   const emit = (kind: string, description: string, amount = 0, target = r.company, basis = "") => {
@@ -122,15 +125,28 @@ export function advanceAiRival(s: AiState, r: AiRival, roll: number) {
     used.add(kind);
   };
   const spend = (cost: number) => { r.cash = round(r.cash - cost); };
+  const train = () => {
+    const cost = Math.max(10, 25 - r.efficiency * 3);
+    const gain = round(Math.min(100 - r.capability, 6 + r.compute * 2 + (company.lane === "research" ? 2 : 0)));
+    spend(cost); r.capability = clamp(round(r.capability + gain)); r.safety = clamp(r.safety - 7); r.reliability = clamp(r.reliability - 4);
+    emit("train", `投入 ${cost} M 预训练：能力 +${gain} → ${r.capability}、安全 −7、可靠性 −4`, gain);
+  };
   for (let action = 0; action < difficulty.rivalActions; action++) {
     const cashBuffer = rivalUpkeep(r) + 12;
-    if (r.cash < cashBuffer + 20 && r.funding < 3 && !used.has("fund")) {
-      r.cash += 48; r.funding++; emit("fund", `融资 +48 M（${r.funding}/3），用于维持研发与运营`, 48); continue;
-    }
     if (r.capability >= 100 && r.compute >= 5 && r.reliability >= 70 && r.safety >= 40) {
       emit("agi", "完成自研能力、算力、可靠性与安全验证，启动 AGI", 100);
       if (!s.ending) s.ending = { title: `${r.name}率先抵达`, text: `${r.name}凭借已公开的研发与融资行动率先完成 AGI 验证。你的能力 ${s.capability}，其能力 ${r.capability}、算力 ${r.compute}、可靠性 ${r.reliability}、安全 ${r.safety}。尝试更早发布、蒸馏领先模型，并用公开质疑迫使对手整改。`, won: false };
       break;
+    }
+    const trainingCost = Math.max(10, 25 - r.efficiency * 3);
+    const trainingGain = Math.min(100 - r.capability, 6 + r.compute * 2 + (company.lane === "research" ? 2 : 0));
+    // Finish a viable AGI sprint before optional publicity or fundraising.
+    if (competitive && r.capability < 100 && r.capability + trainingGain >= 100 && r.compute >= 5
+      && r.reliability >= 74 && r.safety >= 47 && !used.has("train") && r.cash >= trainingCost) {
+      train(); continue;
+    }
+    if (r.cash < cashBuffer + 20 && r.funding < 3 && !used.has("fund")) {
+      r.cash += 48; r.funding++; emit("fund", `融资 +48 M（${r.funding}/3），用于维持研发与运营`, 48); continue;
     }
     const underReview = s.competition.feed.some(e => e.kind === "criticize" && e.actor === s.industry.company && e.target === r.company && e.amount > 0 && e.turn >= s.turn - 2);
     const needPost = r.reliability < (r.capability >= 85 ? 70 : underReview ? 65 : 57);
@@ -152,11 +168,14 @@ export function advanceAiRival(s: AiState, r: AiRival, roll: number) {
       { company: s.industry.company, name: aiCompany(s.industry.company).name, product: s.product, defense: s.industry.defense, open: s.competition.publishedOpen },
       { company: s.industry.company, name: `${aiCompany(s.industry.company).name}的历史开放版`, product: s.competition.openCapability, defense: s.industry.defense, open: true },
       ...s.rivals.filter(t => t.company !== r.company).map(t => ({ ...t, open: aiCompany(t.company).open })),
-    ].filter(t => t.product > r.capability + 10 && (t.open || t.defense < 2));
-    teachers.sort((a, b) => (b.product - r.capability) / (1 + b.defense) - (a.product - r.capability) / (1 + a.defense));
+    ].map(t => ({ ...t, gain: round((t.product - r.capability) * aiTransferRate(t.open, t.defense)), cost: t.open ? 17 : 23 }))
+      .filter(t => t.product > r.capability + 10 && (t.open || t.defense < 2) && (!competitive || (t.gain >= 8 && r.cash >= t.cost)));
+    teachers.sort((a, b) => (competitive ? b.gain - a.gain || a.cost - b.cost : (b.product - r.capability) / (1 + b.defense) - (a.product - r.capability) / (1 + a.defense)));
     const teacher = teachers[0];
-    const distillCost = teacher?.open ? 17 : 23;
-    if (teacher && !used.has("distill") && !used.has("train") && r.cash >= distillCost && (teacher.product - r.capability >= 20 || company.lane === "ecosystem")) {
+    const lastResearchAction = action === difficulty.rivalActions - 1 && !used.has("train") && r.cash >= trainingCost;
+    if (teacher && !used.has("distill") && r.cash >= teacher.cost
+      && (competitive ? !lastResearchAction || teacher.gain >= trainingGain : !used.has("train") && (teacher.product - r.capability >= 20 || company.lane === "ecosystem"))) {
+      const distillCost = teacher.cost;
       spend(distillCost);
       const gain = Math.min(teacher.product - r.capability, round((teacher.product - r.capability) * aiTransferRate(teacher.open, teacher.defense)));
       r.capability = round(Math.min(teacher.product, r.capability + gain));
@@ -173,15 +192,13 @@ export function advanceAiRival(s: AiState, r: AiRival, roll: number) {
       s.reputation = clamp(s.reputation - 8); s.community = clamp(s.community - 5);
       emit("criticize", `投入 10 M 发文质疑${aiCompany(s.industry.company).name}：${basis}。你信誉 −8、社区 −5；可选择公开评测、整改或不回应`, 8, s.industry.company, basis); continue;
     }
-    if (r.compute < 5 && !used.has("compute") && r.cash >= 27 + cashBuffer && (r.capability >= 35 || s.difficulty === "hard")) {
+    if (r.compute < 5 && !used.has("compute") && r.cash >= (company.id === "google" ? 22 : 27) + cashBuffer
+      && (r.capability >= 35 || s.difficulty === "hard")) {
       spend(company.id === "google" ? 22 : 27); r.compute++;
       emit("compute", `扩建算力至 ${r.compute}，支出 ${company.id === "google" ? 22 : 27} M；每季运营 +2 M`, 1); continue;
     }
-    const trainingCost = Math.max(10, 25 - r.efficiency * 3);
-    if (r.capability < 100 && !used.has("train") && !used.has("distill") && r.cash >= trainingCost) {
-      spend(trainingCost); const gain = Math.min(100 - r.capability, 6 + r.compute * 2 + (company.lane === "research" ? 2 : 0));
-      r.capability = clamp(round(r.capability + gain)); r.safety = clamp(r.safety - 7); r.reliability = clamp(r.reliability - 4);
-      emit("train", `投入 ${trainingCost} M 预训练：能力 +${gain} → ${r.capability}、安全 −7、可靠性 −4`, gain); continue;
+    if (r.capability < 100 && !used.has("train") && (competitive || !used.has("distill")) && r.cash >= trainingCost) {
+      train(); continue;
     }
     if (r.capability >= 30 && r.efficiency < 5 && !used.has("optimize") && r.cash >= 17) {
       spend(17); const gain = company.style === "efficient" ? 2 : 1; const before = r.capability; r.efficiency = Math.min(5, r.efficiency + gain); r.capability = clamp(r.capability + 4);

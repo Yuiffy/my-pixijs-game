@@ -9,7 +9,7 @@ const content = await loadTypescriptModule('src/components/miniGames/agiIndustry
 const next = s => ai.endAiTurn(ai.decideAiEvent(s, 'defer'));
 const fresh = (difficulty = 'standard', company = 'deepseek') => ai.createAi(42, content.aiCompany(company).style, company, difficulty);
 const published = (open = true) => {
-  let s = fresh(); s.capability = 80; s.cash = 180; s.openness = open;
+  let s = ai.decideAiEvent(fresh(), 'defer'); s.capability = 80; s.cash = 180; s.openness = open;
   s = ai.actAi(s, 'release'); s.used = []; s.actions = 3;
   return s;
 };
@@ -57,6 +57,48 @@ test('rivals explicitly distill the player or a peer using only released capabil
   competition.advanceAiRival(peer, peer.rivals[0], 0.99);
   const learned = peer.competition.feed.find(e => e.kind === 'distill');
   assert.equal(learned.target, 'qwen'); assert.match(learned.text, /模型 75/); assert.doesNotMatch(learned.text, /模型 99/);
+});
+
+test('rivals can pay for both training and distillation in one quarter, just like the player', () => {
+  const s = published(); const r = s.rivals.find(r => r.company === 'anthropic');
+  Object.assign(r, { capability: 20, product: 20, compute: 5, reliability: 80, safety: 70, cash: 200 });
+  competition.advanceAiRival(s, r, 0.99);
+  const actions = s.competition.feed.filter(e => e.actor === r.company && e.kind !== 'settlement');
+  assert.equal(actions.filter(e => e.kind === 'distill').length, 1);
+  assert.equal(actions.filter(e => e.kind === 'train').length, 1);
+  assert.equal(actions.length, 3);
+  assert.equal(r.cash, Math.round((200 - 17 - 25 - 8 + r.lastIncome - r.lastCosts) * 10) / 10);
+});
+
+test('rivals select the highest real transferable gain, including defense and license costs', () => {
+  const s = fresh(); const r = s.rivals.find(r => r.company === 'anthropic');
+  Object.assign(r, { capability: 20, product: 20, compute: 5, reliability: 80, safety: 70, cash: 200 });
+  Object.assign(s.rivals.find(r => r.company === 'qwen'), { product: 100, capability: 100, defense: 5 });
+  Object.assign(s.rivals.find(r => r.company === 'meta'), { product: 51, capability: 51, defense: 0 });
+  competition.advanceAiRival(s, r, 0.99);
+  const learned = s.competition.feed.find(e => e.actor === r.company && e.kind === 'distill');
+  assert.equal(learned.target, 'qwen'); assert.equal(learned.amount, 20);
+});
+
+test('rivals finish viable AGI sprints before fundraising, model releases or public criticism', () => {
+  const s = published(); s.turn = 4; s.industry.reliability = 50;
+  const r = s.rivals.find(r => r.company === 'anthropic');
+  Object.assign(r, { capability: 97, compute: 5, reliability: 80, safety: 50, cash: 30, product: 60 });
+  competition.advanceAiRival(s, r, 0);
+  assert.equal(s.ending?.won, false); assert.match(r.lastActions[0], /预训练/);
+  assert.match(r.lastActions[1], /启动 AGI/); assert.equal(r.funding, 0);
+  const ready = fresh(); const winner = ready.rivals[0];
+  Object.assign(winner, { capability: 100, compute: 5, reliability: 70, safety: 40, cash: 0 });
+  competition.advanceAiRival(ready, winner, 0);
+  assert.match(winner.lastActions[0], /启动 AGI/); assert.equal(winner.funding, 0);
+});
+
+test('relaxed rivals retain a single core research window for slower exploratory games', () => {
+  const s = published(); s.difficulty = 'relaxed'; const r = s.rivals[0];
+  Object.assign(r, { capability: 20, product: 20, compute: 5, reliability: 80, safety: 70, cash: 200 });
+  competition.advanceAiRival(s, r, 0.99);
+  const research = s.competition.feed.filter(e => e.actor === r.company && ['train', 'distill'].includes(e.kind));
+  assert.equal(research.length, 1);
 });
 
 test('universal defense costs an action, upkeep and community, and changes rival sampling', () => {
@@ -128,10 +170,19 @@ test('rival criticism has observable grounds, one challenge per quarter, and an 
   assert.equal(s.community, 55); assert.equal(s.reputation, 32); assert.equal(entries[0].response, 'pending');
   const before = structuredClone(s);
   s = ai.respondAiChallenge(s, entries[0].id, 'fix');
-  assert.equal(s.cash, before.cash - 24); assert.equal(s.actions, before.actions);
+  assert.equal(s.cash, before.cash - 24); assert.equal(s.actions, before.actions - 1);
   assert.equal(s.industry.reliability, 60); assert.equal(s.safety, 38);
+  assert.equal(ai.setAiOperating(s, { service: 'consumer' }).industry.service, before.industry.service, 'Remediation spends an action and locks the quarter allocation');
   assert.equal(s.revenue, ai.aiIncome(s), 'Remediation updates the displayed product-income forecast immediately');
   assert.equal(ai.respondAiChallenge(s, entries[0].id, 'fix'), s);
+  const exhausted = { ...before, actions: 0 };
+  assert.match(ai.aiChallengeBlocked(exhausted, entries[0].id, 'fix'), /行动已用完/);
+  assert.equal(ai.respondAiChallenge(exhausted, entries[0].id, 'fix'), exhausted);
+  const awaitingEvent = { ...before, industry: { ...before.industry, eventResolved: false } };
+  assert.match(ai.aiChallengeBlocked(awaitingEvent, entries[0].id, 'fix'), /先处理/);
+  assert.equal(ai.respondAiChallenge(awaitingEvent, entries[0].id, 'fix'), awaitingEvent);
+  const audited = ai.respondAiChallenge(exhausted, entries[0].id, 'audit');
+  assert.equal(audited.actions, 0); assert.equal(audited.cash, exhausted.cash - 12);
   const broke = { ...before, cash: 0 };
   assert.match(ai.aiChallengeBlocked(broke, entries[0].id, 'fix'), /资金不足/);
   assert.equal(ai.respondAiChallenge(broke, entries[0].id, 'fix'), broke);
@@ -153,15 +204,22 @@ test('three difficulty levels are deterministic, routine play is contested and a
     counts[difficulty] = wins;
   }
   assert.ok(counts.relaxed > counts.standard + 25, JSON.stringify(counts));
-  assert.ok(counts.standard > counts.hard + 25, JSON.stringify(counts));
-  assert.ok(counts.standard > 60 && counts.standard < 185, JSON.stringify(counts));
-  let advanced = 0;
-  for (const company of content.AI_COMPANIES) {
-    for (const seed of [2, 5, 11, 15]) {
-      const s = aiCompetitivePilot(seed, company.id, 'hard');
-      assert.ok(s.ending); advanced += !!s.ending.won;
-      if (seed === 5) assert.deepEqual(aiCompetitivePilot(seed, company.id, 'hard'), s);
+  assert.ok(counts.standard > counts.hard, JSON.stringify(counts));
+  assert.ok(counts.standard > 0 && counts.standard < counts.relaxed * 0.75, JSON.stringify(counts));
+  const advanced = {};
+  for (const difficulty of ['standard', 'hard']) {
+    advanced[difficulty] = 0;
+    for (const company of content.AI_STARTER_COMPANIES) {
+      let wins = 0;
+      for (let seed = 1; seed <= 50; seed++) {
+        const s = aiCompetitivePilot(seed, company, difficulty);
+        assert.ok(s.ending); wins += !!s.ending.won;
+        if (seed === 5) assert.deepEqual(aiCompetitivePilot(seed, company, difficulty), s);
+      }
+      assert.ok(wins > 0 && wins < 50, `${difficulty}/${company} needs both wins and losses: ${wins}/50`);
+      advanced[difficulty] += wins;
     }
   }
-  assert.ok(advanced >= 20, `Hard retains multiple-company winning routes: ${advanced}/44`);
+  assert.ok(advanced.standard >= 80 && advanced.standard < 180, JSON.stringify(advanced));
+  assert.ok(advanced.hard >= 20 && advanced.hard < advanced.standard, JSON.stringify(advanced));
 });

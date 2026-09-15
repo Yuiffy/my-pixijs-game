@@ -504,7 +504,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       <div className={styles.workspace}>
         <div className={styles.heading}>
           <div>
-            <span className={styles.eyebrow}>{kind === 'agi' ? `V3 · ${game.kind === 'agi' ? AI_DIFFICULTIES.find(d => d.id === game.difficulty)?.name : ''}` : ENGLISH[kind]}</span>
+            <span className={styles.eyebrow}>{kind === 'agi' ? `V3.1 · ${game.kind === 'agi' ? AI_DIFFICULTIES.find(d => d.id === game.difficulty)?.name : ''}` : ENGLISH[kind]}</span>
             <h1>{TITLES[kind]}</h1>
             <p>{DESCRIPTIONS[kind]}</p>
           </div>

@@ -675,7 +675,7 @@ export function setAiOperating(
   if (state.ending) return state;
   const s: AiState = structuredClone(state);
   if (
-    !s.used.length && patch.service &&
+    s.actions === 3 && patch.service &&
     ["research", "balanced", "consumer"].includes(patch.service)
   ) s.industry.service = patch.service as AiService;
   if (patch.teacher && s.rivals.some((r) => r.company === patch.teacher)) {

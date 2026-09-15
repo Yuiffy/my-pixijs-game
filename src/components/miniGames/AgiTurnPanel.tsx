@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AiAction, AiState, AI_ACTIONS, actAi, aiBlocked, aiCost, aiDistillGain, aiDistillTarget, aiEffectiveProduct, aiIncome, aiTeacherBlock, aiTrainGain, aiUpkeep, decideAiEvent, endAiTurn, setAiDistillTarget, setAiOperating } from './agiEngine';
 import { aiCompany, AiCompanyId, AiService, industryEvent } from './agiIndustry';
 import { money } from './core';
-import { AgiCompetitionControls, pendingAiChallenges } from './AgiCompetitionPanel';
+import { AgiCompetitionControls, AgiQuarterBrief } from './AgiCompetitionPanel';
 import { Sources } from './AgiIndustryPanel';
 import styles from './agiIndustry.module.css';
 
@@ -21,7 +21,6 @@ export default function AgiTurnPanel({ game, change }: { game: AiState; change: 
   const company = aiCompany(game.industry.company);
   const event = industryEvent(game.industry.eventId);
   const ready = game.industry.eventResolved;
-  const pending = pendingAiChallenges(game);
   useEffect(() => {
     const slot = panel.current?.closest('aside');
     const focusDecision = () => {
@@ -36,6 +35,14 @@ export default function AgiTurnPanel({ game, change }: { game: AiState; change: 
     return () => window.removeEventListener('resize', focusDecision);
   }, [game.turn, ready]);
   const switchTab = (id: Tab) => { setTab(id); panel.current?.closest('aside')?.scrollTo({ top: 0 }); };
+  const showChallenges = () => {
+    setTab('business');
+    window.requestAnimationFrame(() => {
+      const challenge = panel.current?.querySelector<HTMLElement>('[data-challenge]');
+      challenge?.scrollIntoView({ block: 'nearest' });
+      challenge?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true });
+    });
+  };
   const distillTarget = aiDistillTarget(game);
   const distillReason = aiBlocked(game, 'distill');
   const agiReason = aiBlocked(game, 'agi');
@@ -53,6 +60,7 @@ export default function AgiTurnPanel({ game, change }: { game: AiState; change: 
   return (
 <div ref={panel} className={styles.turnPanel} data-decision-stage={ready ? 'actions' : 'event'}>
     <div className={styles.turnHeading}><div><span>第 {game.turn} 季</span><h2>{ready ? '安排本季行动' : '先处理本季事件'}</h2></div><strong>{game.actions}<small> / 3 行动</small></strong></div>
+    <AgiQuarterBrief game={game} showChallenges={showChallenges} />
     {!ready ? (
 <article className={styles.decisionEvent}>
       <span className={styles.caption}>{event.basis} · 不消耗行动</span>
@@ -67,11 +75,10 @@ export default function AgiTurnPanel({ game, change }: { game: AiState; change: 
 <>
       <details className={styles.eventRecap}><summary>✓ {game.industry.eventChoice} · 查看本季事件</summary><p>{event.title}：{event.text}</p><Sources ids={event.sourceIds} /></details>
       <details className={styles.quarterSettings}><summary>本季方针：{({ research: '研究优先', balanced: '兼顾服务', consumer: 'To C 扩张' })[game.industry.service]} · {game.openness ? '开放权重' : '闭源商业'} <small>调整</small></summary>
-        <fieldset className={styles.service}><legend>算力分配（首个行动后锁定）</legend>{([{ id: 'research', label: '研究优先' }, { id: 'balanced', label: '兼顾服务' }, { id: 'consumer', label: 'To C 扩张' }] as const).map(mode => <button key={mode.id} disabled={game.used.length > 0} aria-pressed={game.industry.service === mode.id} onClick={() => change(setAiOperating(game, { service: mode.id as AiService }))}>{mode.label}</button>)}</fieldset>
+        <fieldset className={styles.service}><legend>算力分配（首个行动后锁定）</legend>{([{ id: 'research', label: '研究优先' }, { id: 'balanced', label: '兼顾服务' }, { id: 'consumer', label: 'To C 扩张' }] as const).map(mode => <button key={mode.id} disabled={game.actions < 3} aria-pressed={game.industry.service === mode.id} onClick={() => change(setAiOperating(game, { service: mode.id as AiService }))}>{mode.label}</button>)}</fieldset>
         <p className={styles.caption}>{game.industry.service === 'research' ? '训练 +2、产品收入 ×0.8，仍保留网页服务。' : game.industry.service === 'consumer' ? '训练 −2、产品收入 ×1.2，服务成本更高。' : '研发与服务兼顾。'} 预计运营 {money(aiUpkeep(game))} / 季。</p>
         <fieldset className={styles.service}><legend>发布政策（发布当季锁定）</legend>{[{ value: true, label: '开源共享' }, { value: false, label: '闭源商业' }].map(policy => <button key={policy.label} aria-pressed={game.openness === policy.value} disabled={game.used.includes('release')} onClick={() => change({ ...game, openness: policy.value })}>{policy.label}</button>)}</fieldset>
       </details>
-      {pending.length > 0 && <button className={styles.challengeNotice} onClick={() => switchTab("business")}>有 {pending.length} 条公开质疑待回应 → 前往经营页</button>}
       <div className={styles.tabNavigation}>
         <div className={styles.tabNavigationLabel}><span>操作页面</span><small>点击页签切换下方列表</small></div>
         <div role="tablist" aria-label="行动分类" className={styles.decisionTabs}>{TABS.map(t => <button role="tab" id={`agi-tab-${t.id}`} aria-controls="agi-action-panel" key={t.id} data-decision-tab={t.id} aria-selected={tab === t.id} onClick={() => switchTab(t.id)}>{t.label}</button>)}</div>
