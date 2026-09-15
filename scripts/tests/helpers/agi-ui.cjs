@@ -1,6 +1,6 @@
 const categories = {
   train: 'research', posttrain: 'research', optimize: 'research', compute: 'research', self: 'research', safety: 'research', distill: 'research',
-  release: 'business', market: 'business', fund: 'business', special: 'business',
+  release: 'business', market: 'business', fund: 'business', special: 'business', criticize: 'business', protect: 'business',
   video: 'ecosystem', openvideo: 'ecosystem', learn: 'ecosystem',
 };
 const readAi = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
@@ -15,6 +15,7 @@ async function aiAction(page, id) {
   await resolveAiEvent(page);
   if (categories[id]) await aiTab(page, categories[id]);
   if (id === 'distill' && !await page.locator('#agi-distill-target').isVisible()) await page.getByText('向同行蒸馏模型', { exact: false }).click();
+  if (id === 'criticize' && !await page.locator('#agi-competition-target').isVisible()) await page.locator('summary').filter({hasText:'向同行发文质疑'}).click();
   await page.locator(`[data-action="${id}"]`).click();
 }
 async function aiPolicy(page, name) {

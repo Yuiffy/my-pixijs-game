@@ -10,6 +10,10 @@ import {
   AiService,
   AiDeltas,
 } from "./agiIndustry";
+import { advanceAiRival, aiTransferRate, applyAiCriticism, initialCompetition, recordAiCompetition, respondAiChallenge as respondAiChallengeState, rivalCompetitionDefaults, AiChallengeResponse, AiCompetition, AiDifficulty } from "./agiCompetition";
+
+export { AI_DIFFICULTIES, AI_CHALLENGE_RESPONSES, aiCriticismPreview, setAiCompetitionTarget, aiChallengeBlocked } from "./agiCompetition";
+export type { AiDifficulty } from "./agiCompetition";
 
 export const AI_STYLES = [
   {
@@ -40,6 +44,8 @@ export type AiAction =
   | "openvideo"
   | "learn"
   | "special"
+  | "criticize"
+  | "protect"
   | "agi";
 export type AiRival = {
   name: string;
@@ -53,9 +59,20 @@ export type AiRival = {
   ecosystem: number;
   defense: number;
   latest: string;
+  cash: number;
+  compute: number;
+  efficiency: number;
+  funding: number;
+  reputation: number;
+  lastIncome: number;
+  lastCosts: number;
+  lastActions: string[];
+  lastChallengeTurn: number;
 };
 export type AiState = {
-  version: 2;
+  version: 3;
+  difficulty: AiDifficulty;
+  competition: AiCompetition;
   kind: "agi";
   seed: number;
   rng: number;
@@ -177,11 +194,14 @@ export const AI_ACTIONS: { id: AiAction; name: string; hint: string }[] = [
     hint: "消耗 8 份授权样本，能力 +6、可靠性 +10。",
   },
   { id: "special", name: "厂商专长", hint: "执行当前厂商的独有经营行动。" },
+  { id: "criticize", name: "点名质疑", hint: "基于交付或安全缺口公开批评；迫使对手支出复核，无据指控会反噬。" },
+  { id: "protect", name: "反蒸馏防线", hint: "防线 +2、社区 −3；维护每级 +1 M。闭源 2 级封闭训练许可，开放权重仍可被学习。" },
 ];
 export function createAi(
   seed = 2026,
   style: AiStyle = "efficient",
   company?: AiCompanyId,
+  difficulty: AiDifficulty = "standard",
 ): AiState {
   const selected =
     company ||
@@ -191,7 +211,9 @@ export function createAi(
         ? "anthropic"
         : "openai");
   return {
-    version: 2,
+    version: 3,
+    difficulty,
+    competition: initialCompetition(selected),
     kind: "agi",
     seed,
     rng: seed,
@@ -212,6 +234,7 @@ export function createAi(
     recursive: false,
     funding: 0,
     rivals: AI_COMPANIES.filter((c) => c.id !== selected).map((c, i) => ({
+      ...rivalCompetitionDefaults(difficulty, c.id),
       name: c.name,
       company: c.id,
       capability: 10 + (i % 3) * 2,
@@ -248,6 +271,8 @@ export function aiCost(s: AiState, action: AiAction) {
     market: 12,
     release: 8,
     fund: 0,
+    criticize: 10,
+    protect: 18,
     agi: 0,
     posttrain: 15,
     video: 20,
@@ -295,7 +320,7 @@ function aiDistillBlock(s: AiState): string {
   const teacher = aiDistillTarget(s);
   if (!teacher) return "请选择其他厂商的模型作为蒸馏目标";
   if (!teacher.product) return "目标尚未发布模型，请选择已发布的同行模型";
-  if (teacher.defense >= 4) return "目标防线已关闭调用，无法获取蒸馏样本";
+  if (!aiCompany(teacher.company).open && teacher.defense >= 4) return "目标防线已关闭调用，无法获取蒸馏样本";
   if (!aiCompany(teacher.company).open && teacher.defense >= 2) return "目标仅允许调用，不授予蒸馏训练许可";
   if (teacher.product <= s.capability) return `目标已发布能力 ${teacher.product}，未领先自研能力 ${s.capability}`;
   return "";
@@ -303,7 +328,8 @@ function aiDistillBlock(s: AiState): string {
 export function aiDistillGain(s: AiState): number {
   if (aiDistillBlock(s)) return 0;
   const gap = aiDistillTarget(s)!.product - s.capability;
-  return Math.min(gap, round(gap * 0.6));
+  const teacher = aiDistillTarget(s)!;
+  return Math.min(gap, round(gap * aiTransferRate(aiCompany(teacher.company).open, teacher.defense)));
 }
 export function setAiDistillTarget(state: AiState, target: AiCompanyId): AiState {
   if (
@@ -317,6 +343,11 @@ export function setAiDistillTarget(state: AiState, target: AiCompanyId): AiState
   };
 }
 export const aiValuation = (s: AiState) => round(80 + s.capability * 2 + s.industry.hype * 3 + s.reputation + aiIncome(s) * 8);
+export function respondAiChallenge(state: AiState, id: string, response: AiChallengeResponse): AiState {
+  const s = respondAiChallengeState(state, id, response);
+  if (s !== state) s.revenue = aiIncome(s);
+  return s;
+}
 export function aiIncome(s: AiState) {
   const product = aiEffectiveProduct(s);
   if (!product && !s.industry.video) return 0;
@@ -360,7 +391,7 @@ export const aiUpkeep = (s: AiState) => 4 +
     ? (s.industry.company === "router" ? 4 : 8) +
       (s.industry.licensedData ? 4 : 0)
     : 0) +
-  (s.industry.scrutiny > 0 ? 6 : 0);
+  (s.industry.scrutiny > 0 ? 6 : 0) + s.industry.defense;
 export function aiBlocked(s: AiState, action: AiAction): string {
   if (s.ending) return "本局已结束";
   if (!AI_ACTIONS.some((a) => a.id === action)) return "未知经营行动";
@@ -371,6 +402,8 @@ export function aiBlocked(s: AiState, action: AiAction): string {
   if (action === "optimize" && s.capability < 30) return "需要能力 30";
   if (action === "optimize" && s.efficiency >= 5) return "效率已满";
   if (action === "compute" && s.compute >= 8) return "算力已满";
+  if (action === "protect" && s.industry.defense >= 5) return "防线已满";
+  if (action === "criticize" && !s.rivals.some(r => r.company === s.competition.target)) return "请选择质疑对象";
   if (action === "self" && s.capability < 55) return "需要能力 55";
   if (action === "self" && s.recursive) return "递归研究已运行";
   if (action === "release" && s.capability < 25) return "需要能力 25";
@@ -405,6 +438,8 @@ export function actAi(state: AiState, action: AiAction): AiState {
     const teacher = aiDistillTarget(s)!;
     const gain = aiDistillGain(s);
     s.capability = Math.min(teacher.product, clamp(round(s.capability + gain)));
+    if (!aiCompany(teacher.company).open) teacher.cash = round(teacher.cash + 6);
+    recordAiCompetition(s, { actor: s.industry.company, target: teacher.company, kind: "distill", amount: gain, basis: "licensed", effect: `自研能力 +${gain}；${aiCompany(teacher.company).open ? "开放许可" : "老师获得 6 M 许可费"}`, text: `${aiCompany(s.industry.company).name}依许可蒸馏${teacher.name}的已发布模型 ${teacher.product}，能力 +${gain}。` });
     log(s, `蒸馏 ${teacher.name} 的已发布模型（能力 ${teacher.product}）：自研能力 +${round(gain)} → ${s.capability}；需再次发布才能升级自家产品。`);
   }
   if (action === "optimize") {
@@ -428,6 +463,8 @@ export function actAi(state: AiState, action: AiAction): AiState {
   }
   if (action === "release") {
     s.product = s.capability;
+    s.competition.publishedOpen = s.openness;
+    if (s.openness) s.competition.openCapability = Math.max(s.competition.openCapability, s.product);
     if (s.openness) {
       s.community = clamp(s.community + 12);
       s.safety = clamp(s.safety + 6);
@@ -474,6 +511,12 @@ export function actAi(state: AiState, action: AiAction): AiState {
     s.industry.reliability = clamp(s.industry.reliability + 10);
   }
   if (action === "special") applySpecialty(s);
+  if (action === "criticize") applyAiCriticism(s);
+  if (action === "protect") {
+    s.industry.defense = Math.min(5, s.industry.defense + 2);
+    s.community = clamp(s.community - 3);
+    recordAiCompetition(s, { actor: s.industry.company, target: s.industry.company, kind: "protect", amount: 2, basis: "", effect: "防线 +2、社区 −3，维护每级 +1 M", text: `投入 18 M 部署反蒸馏防线至 ${s.industry.defense}：${s.competition.publishedOpen ? "已开放权重无法收回，但额外采样受到限制" : "闭源模型不再授予新训练许可"}。` });
+  }
   if (action === "agi") {
     if (s.safety < 40) s.ending = {
         title: "失控的黎明",
@@ -507,6 +550,9 @@ export function endAiTurn(state: AiState): AiState {
   if (state.ending) return state;
   if (!state.industry.eventResolved) return state;
   const s: AiState = structuredClone(state);
+  for (const entry of s.competition.feed) {
+    if (entry.response === "pending" && entry.turn < s.turn) entry.response = "expired";
+  }
   const revenue = round(
     aiIncome(s) *
       AI_EVENTS[s.event].revenue *
@@ -526,12 +572,7 @@ export function endAiTurn(state: AiState): AiState {
   s.rivals.forEach((r) => {
     let roll: number;
     [s.rng, roll] = random(s.rng);
-    advanceRival(s, r, roll);
-    if (r.capability >= 100 && r.reliability >= 70 && !s.ending) s.ending = {
-        title: `${r.name}率先抵达`,
-        text: `${r.name}完成了 AGI 验证。你的模型能力为 ${s.capability}。下一局可以提早发布维持现金流，利用蒸馏和递归研究缩短研发周期。`,
-        won: false,
-      };
+    advanceAiRival(s, r, roll);
   });
   log(
     s,
@@ -700,65 +741,4 @@ function settleIndustry(s: AiState) {
   }
   i.promotion = false;
   i.scrutiny = Math.max(0, i.scrutiny - 1);
-}
-function advanceRival(s: AiState, r: AiRival, roll: number) {
-  const company = aiCompany(r.company);
-  const openTeacher = Math.max(
-    s.openness ? s.product : 0,
-    ...s.rivals
-      .filter((peer) => aiCompany(peer.company).open)
-      .map((peer) => peer.product),
-  );
-  const transfer = Math.max(0, openTeacher - r.capability) * 0.018;
-  const leak =
-    (Math.max(0, s.product - r.capability) * (s.openness ? 0.018 : 0.006)) /
-    (1 + s.industry.defense);
-  r.capability = clamp(
-    round(
-      r.capability +
-        3.7 +
-        roll * 2.6 +
-        transfer +
-        leak +
-        (company.lane === "research" ? 0.6 : 0),
-    ),
-  );
-  r.reliability = clamp(r.reliability + (r.company === "zai" ? 5 : 2));
-  if (company.lane === "creative") r.video = clamp(
-      r.video +
-        (r.company === "minimax" ? 8 : 5) +
-        (s.industry.videoOpen ? 2 : 0),
-    );
-  if (company.open) r.ecosystem = clamp(r.ecosystem + 3 + (s.industry.videoOpen ? 2 : 0));
-  if (r.company === "anthropic" && s.turn % 4 === 0) {
-    r.defense = Math.min(5, r.defense + 1);
-    r.safety = clamp(r.safety + 5);
-  }
-  const cadence = company.lane === "coding" ? 2 : 3;
-  if (s.turn % cadence === 0) r.product = r.capability;
-  const statements: Record<AiCompanyId, string> = {
-    deepseek:
-      s.turn % 2
-        ? "网页继续排队，研究主线继续跑"
-        : "鲸鱼娘摸鱼图出圈，开源模型继续更新",
-    anthropic:
-      r.defense >= 4
-        ? "收紧机构准入，训练数据合作关闭"
-        : "企业编码合同增长，部署反蒸馏监测",
-    openai:
-      s.turn % 3 ? "编码订阅扩容，开发者持续回流" : "社区负责人赠送额度重置",
-    xai: s.turn % 3 ? "创意频道吸引用户" : "热搜带来流量，也带来内容审核开销",
-    zai:
-      s.turn % 2
-        ? "新版本预热，提高市场预期"
-        : "同基座后训练完成，交付可靠性提高",
-    minimax:
-      r.video >= 35 ? "音画工作流升级，视频生态扩散" : "投入视频与音频联合研发",
-    google: "自有芯片支持长上下文和多模态服务",
-    qwen: "多尺寸模型上架，下游适配增加",
-    kimi: "扩展长程任务环境与工具调用",
-    meta: "开放权重与社区许可带动部署",
-    router: "按价格与可靠性调整上游路由",
-  };
-  r.latest = statements[r.company];
 }

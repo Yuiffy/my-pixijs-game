@@ -1,5 +1,6 @@
 import { GameState } from "./scene";
 import { createAi, AI_STYLES, AiRival } from "./agiEngine";
+import { AI_DIFFICULTIES, initialCompetition, rivalCompetitionDefaults, AiCompetitionEntry } from './agiCompetition';
 import { AI_COMPANIES, AI_INDUSTRY_EVENTS, AiCompanyId, aiCompany, normalizeAiDisplayText } from "./agiIndustry";
 import { createFab, FAB_STYLES } from "./fabEngine";
 import { createSnack, SNACK_LEVELS } from "./snackEngine";
@@ -23,7 +24,7 @@ function shape(value: unknown, reference: unknown): boolean {
     );
   if (Array.isArray(reference)) return (
       Array.isArray(value) &&
-      value.length <= 100 &&
+      value.length <= 200 &&
       (!reference.length || value.every((item) => shape(item, reference[0])))
     );
   if (typeof reference === "object") return (
@@ -47,7 +48,7 @@ export function readGameSave(
       AI_STYLES.some((s) => s.id === value.style)
     ) {
       if (!Array.isArray(value.rivals) || value.rivals.length !== 3) return null;
-      const defaults = createAi(value.seed, value.style);
+      const defaults = createAi(value.seed, value.style, undefined, 'relaxed');
       value = {
         ...defaults,
         ...value,
@@ -63,6 +64,16 @@ export function readGameSave(
     }
     if (kind === 'agi' && value?.version === 2 && value.industry && value.industry.distillTeacher === undefined) {
       value.industry.distillTeacher = value.industry.teacher;
+    }
+    if (kind === 'agi' && value?.kind === 'agi' && value.version === 2) {
+      if (!value.industry || !AI_COMPANIES.some(c => c.id === value.industry.company) || !Array.isArray(value.rivals)
+        || !value.rivals.every((r: AiRival) => AI_COMPANIES.some(c => c.id === r.company))) return null;
+      value = { ...value,
+version: 3,
+difficulty: 'relaxed',
+        competition: { ...initialCompetition(value.industry.company), publishedOpen: value.openness, openCapability: value.openness ? value.product : 0 },
+        rivals: value.rivals.map((r: AiRival) => ({ ...r, ...rivalCompetitionDefaults('relaxed', r.company) })),
+      };
     }
     const reference =
       kind === "agi"
@@ -110,10 +121,24 @@ export function readGameSave(
         i.scrutiny < 0 ||
         i.scrutiny > 2
       ) return null;
+      const { competition } = value;
+      if (!AI_DIFFICULTIES.some(d => d.id === value.difficulty)
+        || !value.rivals.some((r: AiRival) => r.company === competition.target)
+        || !Number.isInteger(competition.sequence) || competition.sequence < 0
+        || competition.openCapability < 0 || competition.openCapability > 100
+        || competition.feed.length > 160
+        || new Set(competition.feed.map((entry: AiCompetitionEntry) => entry.id)).size !== competition.feed.length
+        || competition.feed.some((entry: AiCompetitionEntry) => !entry || typeof entry.id !== 'string' || !entry.id
+          || !Number.isInteger(entry.turn) || entry.turn < 1 || entry.turn > value.turn
+          || !AI_COMPANIES.some(c => c.id === entry.actor) || !AI_COMPANIES.some(c => c.id === entry.target)
+          || !['kind', 'text', 'effect', 'response', 'basis'].every(field => typeof entry[field as keyof AiCompetitionEntry] === 'string')
+          || typeof entry.amount !== 'number' || !Number.isFinite(entry.amount))
+        || value.rivals.some((r: AiRival) => r.cash < 0 || r.compute < 1 || r.compute > 8 || r.efficiency < 0 || r.efficiency > 5 || r.funding < 0 || r.funding > 3 || r.reputation < 0 || r.reputation > 100)) return null;
       value.rivals = value.rivals.map((r: AiRival) => ({ ...r, name: aiCompany(r.company).name, focus: aiCompany(r.company).playstyle, latest: normalizeAiDisplayText(r.latest) }));
       value.logs = value.logs.map((entry: { turn: number; text: string }) => ({ ...entry, text: normalizeAiDisplayText(entry.text) }));
       value.industry.statement = normalizeAiDisplayText(value.industry.statement);
       value.industry.eventChoice = normalizeAiDisplayText(value.industry.eventChoice);
+      value.competition.feed = value.competition.feed.map((entry: AiCompetitionEntry) => ({ ...entry, text: normalizeAiDisplayText(entry.text), effect: normalizeAiDisplayText(entry.effect), basis: normalizeAiDisplayText(entry.basis) }));
       if (value.ending) value.ending = { ...value.ending, title: normalizeAiDisplayText(value.ending.title), text: normalizeAiDisplayText(value.ending.text) };
     } else if (kind === "fab") {
       if (

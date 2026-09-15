@@ -25,7 +25,7 @@ test('AI full games reach four distinct AGI endings through legal decisions', ()
   }
 });
 test('AI constraints, releases, architecture optimization, recursion and competitor progress have economic consequences', () => {
-  let s = ai.createAi();
+  let s = ai.createAi(2026, 'efficient', undefined, 'relaxed');
   assert.match(ai.aiBlocked(s, 'self'), /55/);
   s = ai.actAi(s, 'train');
   assert.equal(ai.actAi(s, 'train'), s, 'One training run per quarter');
@@ -37,7 +37,8 @@ test('AI constraints, releases, architecture optimization, recursion and competi
   s = { ...s, cash: 500, capability: 60, safety: 70, actions: 3, used: [] };
   s = ai.actAi(s, 'self'); const before = structuredClone(s); s = nextAi(s);
   assert.equal(s.capability - before.capability, 9); assert.equal(before.safety - s.safety, 6);
-  assert.ok(s.rivals.every((r, i) => r.capability > before.rivals[i].capability));
+  assert.ok(s.rivals.some((r, i) => r.capability > before.rivals[i].capability));
+  assert.ok(s.rivals.every(r => r.lastActions.length > 0), 'Competitors take budgeted actions; not every decision gives capability');
   assert.equal(s.industry.lastCosts, ai.aiUpkeep(before)); assert.ok(s.industry.lastIncome > 0);
 });
 test('all AI specialties can complete a reliable AGI route across seeds, and idling loses', () => {

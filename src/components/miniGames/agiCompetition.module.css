@@ -1,0 +1,31 @@
+.difficulty { margin: 0 0 18px; padding: 13px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.difficulty label { display: flex; justify-content: space-between; align-items: center; gap: 14px; font-size: 13px; }
+.difficulty select, .criticism select { color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 5px; min-height: 42px; padding: 8px 10px; font: inherit; }
+.difficulty p { margin-top: 9px !important; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.summary { margin-top: 16px; }
+.race { display: flex; flex-direction: column; gap: 6px; padding: 13px 0; border-top: 1px solid var(--line); }
+.race > span, .race > small { color: var(--muted); font-size: 11px; }
+.race > strong { font-size: 14px; }
+.race[data-urgent='true'] > strong { color: #a64e34; }
+.warning { color: #a64e34; font-size: 12px; line-height: 1.6; }
+.feed summary, .criticism summary { cursor: pointer; min-height: 44px; padding: 12px 0; font-size: 13px; }
+.feed article { padding: 12px 0; border-top: 1px solid var(--line); }
+.feed article > span { color: var(--muted); font-size: 10px; }
+.feed article p { margin: 6px 0 !important; font-size: 13px; line-height: 1.7; }
+.feed article > small { display: block; color: var(--muted); line-height: 1.7; font-size: 11px; }
+.feed article > b { display: block; margin-top: 6px; font-size: 11px; color: #a64e34; }
+.controls { margin: 12px 0; }
+.challenge { padding: 14px; border-left: 3px solid #b8845f; background: #ead6b62e; margin-bottom: 12px; }
+.challenge > strong { font-size: 14px; }
+.challenge > p { font-size: 12px; line-height: 1.75; margin: 10px 0 !important; }
+.challenge > small { display: block; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.challenge > div { display: grid; gap: 7px; margin-top: 12px; }
+.challenge button { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; width: 100%; }
+.challenge button strong { font-size: 12px; }
+.challenge button span { font-size: 11px; line-height: 1.6; color: var(--muted); }
+.criticism { border-bottom: 1px solid var(--line); }
+.criticism label { display: block; font-size: 12px; }
+.criticism select { width: 100%; margin: 8px 0; }
+.criticism p { font-size: 12px; line-height: 1.7; margin: 8px 0 !important; }
+.criticism > small { display: block; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.criticism > button { width: 100%; margin: 12px 0; font-size: 12px; }

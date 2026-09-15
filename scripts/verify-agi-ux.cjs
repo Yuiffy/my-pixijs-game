@@ -72,7 +72,7 @@ async function pinned(p) {
     await p.getByRole('button', { name: '结束季度 →', exact: true }).click();
     await p.locator('[data-event-choice="defer"]').click();
     await pinned(p); await screen(p, 'landscape-actions');
-    const old = createAi(); delete old.industry.distillTeacher; old.cash = 89; old.capability = 61;
+    const old = createAi(); old.version = 2; delete old.difficulty; delete old.competition; delete old.industry.distillTeacher; old.cash = 89; old.capability = 61;
     old.rivals.find(r => r.company === 'anthropic').name = '宪章智能'; old.rivals.find(r => r.company === 'anthropic').focus = 'Anthropic / Claude';
     old.rivals.find(r => r.company === 'minimax').name = '海螺映像';
     old.logs = [{ turn: 1, text: '行业事件「海螺把视频权重端上来了」完成。' }];

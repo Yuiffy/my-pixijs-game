@@ -39,6 +39,8 @@ import {
 import { money, round, seedValue } from "./core";
 import { drawScene, GameState } from "./scene";
 import { aiCompany } from "./agiIndustry";
+import { AgiDifficultyPicker } from "./AgiCompetitionPanel";
+import { AI_DIFFICULTIES } from "./agiCompetition";
 import { AgiCompanyPicker, AgiIndustryScene } from "./AgiIndustryPanel";
 import AgiTurnPanel from "./AgiTurnPanel";
 import { readGameSave } from "./save";
@@ -108,10 +110,10 @@ function Rules({ kind }: { kind: GameState["kind"] }) {
   if (kind === "agi") return (
       <ol>
         <li>
-          每季处理一次行业事件，再分配 3 次行动。训练提升能力，后训练提升可靠性；发布模型获得持续收入。
+          每季处理一次行业事件，再分配 3 次行动。对手也会研发、发布、蒸馏和发文交锋。训练提升能力，后训练提升可靠性；发布模型获得持续收入。
         </li>
         <li>
-          能力 30 解锁蒸馏；55 解锁自我提升。扩建算力更快，但会增加维护费。
+          架构优化需要能力 30，自我提升需要 55。领先的已发布模型可以被同行蒸馏；防线能减缓或阻止追赶。经营页可点名质疑，也能回应对方的批判。
         </li>
         <li>
           自研能力 100、算力 5、可靠性 70 后，抢在对手之前启动 AGI。安全低于 40
@@ -409,7 +411,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       : Math.floor(Math.random() * 999999) + 1;
     const records = state.current.kind === "snack" ? [...state.current.best] : null;
     const previousCompany = state.current.kind === "agi" ? state.current.industry.company : null;
-    state.current = same && previousCompany ? createAi(nextSeed, aiCompany(previousCompany).style, previousCompany) : fresh(kind, nextSeed);
+    const previousDifficulty = state.current.kind === "agi" ? state.current.difficulty : undefined;
+    state.current = same && previousCompany ? createAi(nextSeed, aiCompany(previousCompany).style, previousCompany, previousDifficulty) : kind === "agi" ? createAi(nextSeed, "product", "openai", previousDifficulty) : fresh(kind, nextSeed);
     if (state.current.kind === "snack" && records) state.current.best = records;
     setSeed(String(nextSeed));
     startedRef.current = false;
@@ -487,19 +490,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     >
       <header className={styles.topbar}>
         <Link href="/demos" className={styles.back}>
-          ← 实验室
+          ← 游戏列表
         </Link>
-        <nav aria-label="选择游戏">
-          {(["agi", "fab", "snack"] as const).map((id) => (
-            <Link
-              key={id}
-              href={`/game/${id}`}
-              aria-current={id === kind ? "page" : undefined}
-            >
-              {TITLES[id]}
-            </Link>
-          ))}
-        </nav>
         <button
           onClick={fullScreen}
           className={styles.iconButton}
@@ -512,7 +504,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       <div className={styles.workspace}>
         <div className={styles.heading}>
           <div>
-            <span className={styles.eyebrow}>{kind === 'agi' ? 'V2.2 · 厂商经营' : ENGLISH[kind]}</span>
+            <span className={styles.eyebrow}>{kind === 'agi' ? `V3 · ${game.kind === 'agi' ? AI_DIFFICULTIES.find(d => d.id === game.difficulty)?.name : ''}` : ENGLISH[kind]}</span>
             <h1>{TITLES[kind]}</h1>
             <p>{DESCRIPTIONS[kind]}</p>
           </div>
@@ -835,7 +827,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                     ? SNACK_LEVELS[snackGame!.level].subtitle
                     : "选择你的起点"}
                 </h2>
-                {game.kind === "agi" && <AgiCompanyPicker game={game} choose={id => commit(createAi(seedValue(seed), aiCompany(id).style, id))} />}
+                {game.kind === "agi" && <><AgiDifficultyPicker value={game.difficulty} change={id => commit(createAi(seedValue(seed), game.style, game.industry.company, id))} /><AgiCompanyPicker game={game} choose={id => commit(createAi(seedValue(seed), aiCompany(id).style, id, game.difficulty))} /></>}
                 {game.kind === "fab" && (
                   <div className={styles.choices}>
                     {FAB_STYLES.map((style) => (

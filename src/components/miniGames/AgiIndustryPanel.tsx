@@ -8,6 +8,7 @@ import {
   aiCompany,
   AiCompanyId,
 } from "./agiIndustry";
+import { AgiCompetitionSummary } from "./AgiCompetitionPanel";
 import { AiState, aiValuation } from "./agiEngine";
 import { money } from "./core";
 import styles from "./agiIndustry.module.css";
@@ -87,7 +88,8 @@ export function AgiIndustryScene({ game }: { game: AiState }) {
       ['可靠性', game.industry.reliability], ['视频能力', game.industry.video], ['开源生态', game.industry.ecosystem], ['市场预期', game.industry.hype],
     ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}<small> / 100</small></strong><meter min={0} max={100} value={value} aria-label={String(label)} /></div>)}</div>
     <p className={styles.caption}>模拟估值 {money(aiValuation(game))}。AGI 需要自研能力 100、算力 5、可靠性 70。</p>
-    <details className={styles.league}><summary>同行动态与排名 · 当前第 {1 + game.rivals.filter(r => r.capability > game.capability).length} / {game.rivals.length + 1} 名</summary>{[...game.rivals].sort((a, b) => b.capability - a.capability).map(r => <div className={styles.rival} key={r.company}><strong>{aiCompany(r.company).name}<small>{aiCompany(r.company).playstyle}</small></strong><p>{r.latest}</p><span>自研 {r.capability} · 发布 {r.product} · 视频 {r.video} · 防线 {r.defense}</span></div>)}</details>
+    <AgiCompetitionSummary game={game} />
+    <details className={styles.league}><summary>同行动态与排名 · 当前第 {1 + game.rivals.filter(r => r.capability > game.capability).length} / {game.rivals.length + 1} 名</summary>{[...game.rivals].sort((a, b) => b.capability - a.capability).map(r => <div className={styles.rival} key={r.company}><strong>{aiCompany(r.company).name}<small>{aiCompany(r.company).playstyle}</small></strong><p>{r.latest}</p><span>自研 {r.capability} · 发布 {r.product} · 视频 {r.video} · 防线 {r.defense} · 资金 {money(r.cash)} · 算力 {r.compute}</span></div>)}</details>
     <Sources ids={company.sourceIds} inspiration={company.prototype} />
   </section>
 );

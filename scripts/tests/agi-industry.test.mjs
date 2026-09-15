@@ -5,7 +5,7 @@ import { aiPilot } from './helpers/mini-games-pilots.mjs';
 const ai = await loadTypescriptModule('src/components/miniGames/agiEngine.ts');
 const content = await loadTypescriptModule('src/components/miniGames/agiIndustry.ts');
 const { readGameSave } = await loadTypescriptModule('src/components/miniGames/save.ts');
-const fresh = id => ai.createAi(2026, content.aiCompany(id).style, id);
+const fresh = id => ai.createAi(2026, content.aiCompany(id).style, id, 'relaxed');
 const skipEvent = s => ({ ...s, industry: { ...s.industry, eventResolved: true } });
 
 test('all eleven companies have source-grounded identities, distinct specialties and playable AGI paths', () => {
@@ -105,7 +105,8 @@ test('anti-distillation and restrictive access block data export and eventually 
   const open = fresh('openai'); open.product = 90;
   const shielded = structuredClone(open); shielded.industry.defense = 5;
   const a = ai.endAiTurn(skipEvent(open)), b = ai.endAiTurn(skipEvent(shielded));
-  assert.ok(a.rivals.some((r, i) => r.capability > b.rivals[i].capability));
+  assert.ok(a.competition.feed.some(e => e.kind === 'distill' && e.target === open.industry.company));
+  assert.ok(!b.competition.feed.some(e => e.kind === 'distill' && e.target === open.industry.company));
 });
 test('distillation catches up to the selected released competitor, independently of the routing upstream', () => {
   const s = fresh('router'); s.capability = 30; s.product = 25;
@@ -157,9 +158,10 @@ test('distillation pays for the selected license and respects both training rest
   let s = fresh('router');
   const open = s.rivals.find(r => r.company === 'qwen'); open.product = 70; open.defense = 3;
   assert.equal(ai.aiCost(s, 'distill'), 17); assert.equal(ai.aiBlocked(s, 'distill'), '');
+  const beforeDefense = ai.aiDistillGain(s);
   open.defense = 4;
-  assert.match(ai.aiBlocked(s, 'distill'), /关闭调用/); assert.equal(ai.aiDistillGain(s), 0);
-  assert.equal(ai.actAi(s, 'distill'), s);
+  assert.equal(ai.aiBlocked(s, 'distill'), '');
+  assert.ok(ai.aiDistillGain(s) > 0); assert.ok(ai.aiDistillGain(s) <= beforeDefense, 'Historical open weights remain learnable even after API sampling is restricted');
   const closed = s.rivals.find(r => r.company === 'anthropic'); closed.product = 70; closed.defense = 1;
   s = ai.setAiDistillTarget(s, 'anthropic');
   assert.equal(ai.aiCost(s, 'distill'), 23);
@@ -193,7 +195,7 @@ test('legacy v1 saves migrate financial progress and v2 rejects invalid identity
   const old = fresh('deepseek'); old.version = 1; old.cash = 87; old.turn = 5; delete old.industry;
   old.rivals = old.rivals.slice(0, 3).map(({ name, capability, safety, product, focus }) => ({ name, capability, safety, product, focus }));
   const migrated = readGameSave(JSON.stringify(old), 'agi');
-  assert.equal(migrated.version, 2); assert.equal(migrated.cash, 87); assert.equal(migrated.turn, 5); assert.equal(migrated.rivals.length, 10);
+  assert.equal(migrated.version, 3); assert.equal(migrated.cash, 87); assert.equal(migrated.turn, 5); assert.equal(migrated.rivals.length, 10);
   const invalid = fresh('zai'); invalid.industry.eventId = 'made-up'; assert.equal(readGameSave(JSON.stringify(invalid), 'agi'), null);
   invalid.industry.eventId = 'same-base'; invalid.industry.teacher = 'zai'; assert.equal(readGameSave(JSON.stringify(invalid), 'agi'), null);
 });

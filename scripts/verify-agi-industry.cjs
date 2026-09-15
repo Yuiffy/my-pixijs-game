@@ -39,6 +39,7 @@ async function capture(page, name) {
     page.on('console', m => { if (m.type() === 'error') report.errors.push(m.text()); });
     await page.goto(`${base}/game/agi`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => !!window.render_game_to_text);
+    await page.locator("#agi-difficulty").selectOption("relaxed");
     await chooseAiCompany(page, company);
     return { context, page };
   };
@@ -114,7 +115,7 @@ async function capture(page, name) {
     const legacyContext = await browser.newContext();
     await legacyContext.addInitScript(save => localStorage.setItem('mini-agi-v1', save), JSON.stringify(legacy));
     const legacyPage = await legacyContext.newPage(); await legacyPage.goto(`${base}/game/agi`, { waitUntil: 'networkidle' });
-    assert.equal((await state(legacyPage)).cash, 77); assert.equal((await state(legacyPage)).version, 2);
+    assert.equal((await state(legacyPage)).cash, 77); assert.equal((await state(legacyPage)).version, 3);
     await legacyContext.close();
     assert.deepEqual(report.errors, []);
     writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));

@@ -40,6 +40,7 @@ async function resetRoute(page, kind) {
     await button(page, '新开一局').click();
     await button(page, '同种子重开').click();
   }
+  if (kind === 'agi') await page.locator('#agi-difficulty').selectOption('relaxed');
 }
 (async () => {
   assert.equal((await fetch(`${base}/game/agi`)).status, 200);
