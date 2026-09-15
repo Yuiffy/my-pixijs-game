@@ -5,7 +5,10 @@
   --red: #f04f67;
   --mint: #7de0c3;
   min-height: 100vh;
-  overflow-x: hidden;
+  /* Clip horizontal decoration without turning this page shell into a second
+     vertical scroll container. `hidden` would make the implicit y overflow
+     compute to `auto`, resulting in nested scrollbars alongside the body. */
+  overflow-x: clip;
   color: var(--ink);
   background: #090a0b;
   font-family: Inter, "Noto Sans SC", sans-serif;
