@@ -1,5 +1,6 @@
 import { GameState } from "./scene";
 import { createAi, AI_STYLES, AiRival } from "./agiEngine";
+import { selectAiRivalEnding } from './agiEndings';
 import { AI_DIFFICULTIES, initialCompetition, rivalCompetitionDefaults, AiCompetitionEntry } from './agiCompetition';
 import { AI_COMPANIES, AI_INDUSTRY_EVENTS, AiCompanyId, aiCompany, normalizeAiDisplayText } from "./agiIndustry";
 import { createFab, FAB_STYLES } from "./fabEngine";
@@ -139,7 +140,22 @@ difficulty: 'relaxed',
       value.industry.statement = normalizeAiDisplayText(value.industry.statement);
       value.industry.eventChoice = normalizeAiDisplayText(value.industry.eventChoice);
       value.competition.feed = value.competition.feed.map((entry: AiCompetitionEntry) => ({ ...entry, text: normalizeAiDisplayText(entry.text), effect: normalizeAiDisplayText(entry.effect), basis: normalizeAiDisplayText(entry.basis) }));
-      if (value.ending) value.ending = { ...value.ending, title: normalizeAiDisplayText(value.ending.title), text: normalizeAiDisplayText(value.ending.text) };
+      if (value.ending) {
+        value.ending = { ...value.ending, title: normalizeAiDisplayText(value.ending.title), text: normalizeAiDisplayText(value.ending.text) };
+        const outcome = value.ending.rivalOutcome;
+        if (outcome) {
+          const winner = value.rivals.find((r: AiRival) => r.company === outcome.winnerId);
+          if (value.ending.won || !winner || outcome.turn !== value.turn
+            || winner.capability < 100 || winner.compute < 5 || winner.reliability < 70 || winner.safety < 40) return null;
+          // Rebuild derived prose and metrics instead of trusting arbitrary saved outcome metadata.
+          value.ending = selectAiRivalEnding(winner, value.turn);
+        } else if (!value.ending.won) {
+          const winner = value.rivals.find((r: AiRival) => value.ending.title === `${r.name}率先抵达`
+            && r.capability >= 100 && r.compute >= 5 && r.reliability >= 70 && r.safety >= 40
+            && competition.feed.some((entry: AiCompetitionEntry) => entry.kind === 'agi' && entry.actor === r.company && entry.turn === value.turn));
+          if (winner) value.ending = selectAiRivalEnding(winner, value.turn);
+        }
+      }
     } else if (kind === "fab") {
       if (
         !FAB_STYLES.some((s) => s.id === value.player.style) ||

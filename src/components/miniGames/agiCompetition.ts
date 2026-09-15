@@ -1,6 +1,7 @@
 import { clamp, log, round } from "./core";
 import { aiCompany, AiCompanyId } from "./agiIndustry";
 import type { AiRival, AiState } from "./agiEngine";
+import { selectAiRivalEnding } from "./agiEndings";
 
 export const AI_DIFFICULTIES = [
   { id: "relaxed", name: "悠闲研究", description: "对手每季 2 次行动，研发节奏较慢。适合熟悉经营与结局。", rivalCash: 100, rivalCompute: 2, rivalActions: 2, aggression: 0.15 },
@@ -113,6 +114,7 @@ export function rivalIncome(r: AiRival) {
 export const rivalUpkeep = (r: AiRival) => 4 + r.compute * 2 + 3 + r.defense;
 export const aiTransferRate = (open: boolean, defense: number) => (open ? Math.max(0.25, 0.6 / (1 + defense * 0.5)) : defense >= 2 ? 0 : 0.6 / (1 + defense * 0.5));
 export function advanceAiRival(s: AiState, r: AiRival, roll: number) {
+  if (s.ending) return;
   const company = aiCompany(r.company);
   const difficulty = aiDifficulty(s.difficulty);
   const competitive = s.difficulty !== "relaxed";
@@ -135,7 +137,8 @@ export function advanceAiRival(s: AiState, r: AiRival, roll: number) {
     const cashBuffer = rivalUpkeep(r) + 12;
     if (r.capability >= 100 && r.compute >= 5 && r.reliability >= 70 && r.safety >= 40) {
       emit("agi", "完成自研能力、算力、可靠性与安全验证，启动 AGI", 100);
-      if (!s.ending) s.ending = { title: `${r.name}率先抵达`, text: `${r.name}凭借已公开的研发与融资行动率先完成 AGI 验证。你的能力 ${s.capability}，其能力 ${r.capability}、算力 ${r.compute}、可靠性 ${r.reliability}、安全 ${r.safety}。尝试更早发布、蒸馏领先模型，并用公开质疑迫使对手整改。`, won: false };
+      s.ending = selectAiRivalEnding(r, s.turn);
+      log(s, `${r.name}选择世界结局「${s.ending.title}」：${s.ending.rivalOutcome!.decision}。`);
       break;
     }
     const trainingCost = Math.max(10, 25 - r.efficiency * 3);
@@ -216,9 +219,13 @@ export function advanceAiRival(s: AiState, r: AiRival, roll: number) {
   }
   r.lastIncome = rivalIncome(r); r.lastCosts = rivalUpkeep(r);
   r.cash = round(r.cash + r.lastIncome - r.lastCosts);
+  const closingShortfall = s.ending && r.cash < 0 ? -r.cash : 0;
   if (r.cash < 0) {
-    const oldCompute = r.compute; r.compute = Math.max(1, r.compute - 1); r.cash = 0;
-    emit("restructure", `现金流不足，暂停研发并${oldCompute > r.compute ? `缩减算力 ${oldCompute} → ${r.compute}` : "维持最低算力 1"}`, r.compute - oldCompute);
+    r.cash = 0;
+    if (!s.ending) {
+      const oldCompute = r.compute; r.compute = Math.max(1, r.compute - 1);
+      emit("restructure", `现金流不足，暂停研发并${oldCompute > r.compute ? `缩减算力 ${oldCompute} → ${r.compute}` : "维持最低算力 1"}`, r.compute - oldCompute);
+    }
   }
-  recordAiCompetition(s, { actor: r.company, target: r.company, kind: "settlement", text: `${r.name}本季收入 ${r.lastIncome} M、运营 ${r.lastCosts} M，现金 ${r.cash} M`, amount: round(r.lastIncome - r.lastCosts), effect: `现金 ${r.cash} M`, basis: "" });
+  recordAiCompetition(s, { actor: r.company, target: r.company, kind: "settlement", text: `${r.name}本季收入 ${r.lastIncome} M、运营 ${r.lastCosts} M，现金 ${r.cash} M${closingShortfall ? `；终局账面缺口 ${closingShortfall} M，不再执行后续经营行动` : ""}`, amount: round(r.lastIncome - r.lastCosts), effect: `现金 ${r.cash} M`, basis: "" });
 }

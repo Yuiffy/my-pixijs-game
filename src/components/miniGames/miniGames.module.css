@@ -78,7 +78,7 @@
   overflow: auto;
 }
 .agi { --agi-resource-height: 110px; }
-.agi .metrics { position: sticky; top: 0; z-index: 15; background: var(--paper); box-shadow: 0 8px 12px #253e3508; }
+.agi .metrics { position: sticky; top: 0; z-index: 15; background: var(--paper); box-shadow: 0 8px 12px #253e3508; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px 18px; }
 .agi .controls { padding-right: 2px; }
 .agiStarted .heading { margin-bottom: 16px; }
 .agiStarted .heading h1 { font-size: 30px; }
@@ -681,6 +681,7 @@
   margin: 10px 0;
   line-height: 1.4;
 }
+.resultSymbol[hidden] { display: none; }
 .chart {
   width: 100%;
   height: 75px;
@@ -1227,7 +1228,9 @@
   .agiStarted .controls { order: 1; position: static; max-height: none; overflow: visible; padding: 0; }
   .agiStarted .agiContext, .agiStarted .agiMarketDetails { order: 2; }
   .agiStarted .standings { order: 3; }
-  .agiStarted .metrics { gap: 10px 20px; padding: 10px 0; }
+  .agi .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px 10px; }
+  .agiStarted .metrics { padding: 8px 0; }
+  .agiStarted .metric { gap: 3px; }
   .agiStarted .metric > strong { font-size: 20px; }
   .agiStarted .metric > span, .agiStarted .metric > small { font-size: 10px; }
   .agiStarted .heading { margin-bottom: 14px; }

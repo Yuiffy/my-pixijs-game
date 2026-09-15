@@ -49,9 +49,9 @@ test('all AI specialties can complete a reliable AGI route across seeds, and idl
   }
   let s = { ...ai.createAi(), cash: 1000 };
   while (!s.ending) s = nextAi(s);
-  assert.match(s.ending.title, /率先抵达/);
+  assert.ok(s.ending.rivalOutcome, 'An idle player sees the winning rival choose a world ending');
   assert.equal(ai.endAiTurn(s), s);
-  let poor = ai.createAi(); while (!poor.ending) poor = nextAi(poor);
+  const poor = ai.endAiTurn(ai.decideAiEvent({ ...ai.createAi(), cash: 0 }, 'defer'));
   assert.equal(poor.ending.title, '现金流断裂');
 });
 test('fab competition clears a finite market and pricing changes demand allocation', () => {

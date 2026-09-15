@@ -5,6 +5,8 @@ import { AI_CHALLENGE_RESPONSES, AI_DIFFICULTIES, AiCompetitionEntry, AiDifficul
 import { aiCompany, AiCompanyId } from './agiIndustry';
 import { money } from './core';
 import styles from './agiCompetition.module.css';
+import raceStyles from './agiRace.module.css';
+import { getAiRaceReport } from './agiRace';
 
 export function AgiDifficultyPicker({ value, change }: { value: AiDifficulty; change: (id: AiDifficulty) => void }) {
   const selected = AI_DIFFICULTIES.find(d => d.id === value)!;
@@ -41,10 +43,11 @@ const entryOutcome = (entry: AiCompetitionEntry) => {
 };
 
 function CompetitionEntry({ entry, game }: { entry: AiCompetitionEntry; game: AiState }) {
-  return <article data-competition-entry={entry.id}><span>Q{entry.turn} · {entryHeadline(entry, game)}</span><p>{entry.effect || entry.text}</p>{entry.response === 'pending' && entry.target === game.industry.company && <b>待回应 · 本季内在经营页处理</b>}</article>;
+  return <article data-competition-entry={entry.id}><span>Q{entry.turn} · {entryHeadline(entry, game)}</span><p>{entry.effect || entry.text}</p>{entry.response === 'pending' && entry.target === game.industry.company && <b>{game.ending ? '终局前未回应' : '待回应 · 本季内在经营页处理'}</b>}</article>;
 }
 
 export function AgiQuarterBrief({ game, showChallenges }: { game: AiState; showChallenges: () => void }) {
+  const race = getAiRaceReport(game);
   const leader = [...game.rivals].sort((a, b) => b.capability - a.capability)[0];
   const recent = chronologicalFeed(game).filter(entry => entry.turn >= game.turn - 1 && entry.kind !== 'settlement');
   const interactions = recent.filter(isInteraction);
@@ -52,11 +55,10 @@ export function AgiQuarterBrief({ game, showChallenges }: { game: AiState; showC
   const highlights = interactions.length ? interactions : leadProgress;
   const [headline] = highlights;
   const pending = pendingAiChallenges(game);
-  const gap = Math.round((leader.capability - game.capability) * 10) / 10;
-  const threat = gap > 0 ? `领先你 ${gap}` : gap < 0 ? `落后你 ${Math.abs(gap)}` : '与你持平';
   return (
 <section className={styles.quarterBrief} aria-label="本季竞争速报" data-urgent={pending.length > 0 || leader.capability >= 80}>
-    <div className={styles.briefHeading}><strong>{headline ? `${headline.turn < game.turn ? '上季' : '本季'}${interactions.length ? '交锋' : '同行动向'}` : '同行动向'}</strong><small>{leader.name} · 能力 {leader.capability} · {threat}</small></div>
+    <div className={raceStyles.quarterStanding} data-urgent={!!race.threat && race.threat.stage !== 'building'} aria-live="polite"><span>Q{game.turn} 竞速报告 · 你排第 {race.player.rank} / {race.rows.length}</span><strong>{race.headline}</strong><p>{race.detail}</p></div>
+    <div className={styles.briefHeading}><strong>{headline ? `${headline.turn < game.turn ? '上季' : '本季'}${interactions.length ? '交锋' : '同行动向'}` : '同行动向'}</strong></div>
     {headline ? <details className={styles.briefEntry} key={headline.id}><summary><span>{entryHeadline(headline, game)}</span><small>{entryOutcome(headline)}</small></summary><p>{headline.effect || headline.text}</p></details> : <p className={styles.briefQuiet}>{game.turn === 1 ? '对手会在季度结算时研发、发布与寻找蒸馏对象。' : '本季暂无新的直接交锋；留意对手的发布与研发进度。'}</p>}
     {pending.length > 0 && !game.ending && (game.industry.eventResolved ? <button className={styles.briefRespond} onClick={showChallenges}>回应 {pending.length} 条质疑 → 经营页</button> : <p className={styles.briefPending}>有 {pending.length} 条质疑待回应 · 处理本季事件后，在经营页回应。</p>)}
     {highlights.length > 1 && <details className={styles.briefMore}><summary>其他 {highlights.length - 1} 条{interactions.length ? '交锋' : '进展'}</summary>{highlights.slice(1).map(entry => <CompetitionEntry key={entry.id} entry={entry} game={game} />)}</details>}
@@ -66,6 +68,8 @@ export function AgiQuarterBrief({ game, showChallenges }: { game: AiState; showC
 }
 
 export function AgiCompetitionSummary({ game }: { game: AiState }) {
+  const race = getAiRaceReport(game);
+  const urgent = !game.ending && !!race.threat && race.threat.stage !== 'building';
   const leader = [...game.rivals].sort((a, b) => b.capability - a.capability)[0];
   const difficulty = AI_DIFFICULTIES.find(d => d.id === game.difficulty)!;
   const feed = chronologicalFeed(game);
@@ -74,8 +78,8 @@ export function AgiCompetitionSummary({ game }: { game: AiState }) {
   const history = feed.filter(entry => entry.turn !== latestTurn || entry.kind === 'settlement');
   return (
 <section className={styles.summary} aria-label="竞争态势">
-    <div className={styles.race} data-urgent={leader.capability >= 80}><span>{difficulty.name}难度</span><strong>领跑对手：{leader.name} · 能力 {leader.capability}</strong><small>算力 {leader.compute} · 可靠性 {leader.reliability} · 已发布 {leader.product}</small></div>
-    {leader.capability >= 80 && !game.ending && <p className={styles.warning}>对手已进入冲线阶段。检查自己的发布、可靠性和安全投入。</p>}
+    <div className={styles.race} data-urgent={urgent}><span>{difficulty.name}难度</span><strong>能力领跑对手：{leader.name} · {leader.capability}</strong><small>算力 {leader.compute} · 可靠性 {leader.reliability} · 安全 {leader.safety} · 已发布 {leader.product}</small></div>
+    {urgent && <p className={styles.warning}>{race.detail}</p>}
     {latest.length > 0 && <details className={styles.feed} open><summary>最新动态 · Q{latestTurn}</summary>{latest.slice(0, 2).map(entry => <CompetitionEntry key={entry.id} entry={entry} game={game} />)}{latest.length > 2 && <details><summary>本季其他动态（{latest.length - 2}）</summary>{latest.slice(2).map(entry => <CompetitionEntry key={entry.id} entry={entry} game={game} />)}</details>}</details>}
     {history.length > 0 && <details className={styles.feed}><summary>历史交锋与季度账目（{history.length}）</summary>{history.map(entry => <CompetitionEntry key={entry.id} entry={entry} game={game} />)}</details>}
   </section>

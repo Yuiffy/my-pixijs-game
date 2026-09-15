@@ -40,6 +40,7 @@ import { money, round, seedValue } from "./core";
 import { drawScene, GameState } from "./scene";
 import { aiCompany } from "./agiIndustry";
 import { AgiDifficultyPicker } from "./AgiCompetitionPanel";
+import { AgiRaceHud, AgiRivalEpilogue } from "./AgiRacePanel";
 import { AI_DIFFICULTIES } from "./agiCompetition";
 import { AgiCompanyPicker, AgiIndustryScene } from "./AgiIndustryPanel";
 import AgiTurnPanel from "./AgiTurnPanel";
@@ -99,7 +100,7 @@ function Metric({
   detail: string;
 }) {
   return (
-    <div className={styles.metric}>
+    <div className={styles.metric} data-metric={label}>
       <span>{label}</span>
       <strong>{value}</strong>
       <small>{detail}</small>
@@ -470,6 +471,15 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
     game.kind === "snack"
       ? ["won", "lost", "ending"].includes(game.phase)
       : !!game.ending;
+  useEffect(() => {
+    if (kind !== 'agi' || !ended) return;
+    const slot = root.current?.querySelector<HTMLElement>('[data-controls-slot]');
+    slot?.querySelector('aside')?.scrollTo({ top: 0 });
+    if (slot && window.matchMedia('(max-width: 760px), (max-height: 600px)').matches) {
+      const resourceHeight = resources.current?.getBoundingClientRect().height || 0;
+      window.scrollTo({ top: window.scrollY + slot.getBoundingClientRect().top - resourceHeight - 12, behavior: 'instant' });
+    }
+  }, [ended, kind]);
   const forecast = game.kind === "fab" ? fabForecast(game) : null;
   const startPanel =
     !started || (game.kind === "snack" && game.phase === "ready");
@@ -504,7 +514,7 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
       <div className={styles.workspace}>
         <div className={styles.heading}>
           <div>
-            <span className={styles.eyebrow}>{kind === 'agi' ? `V3.1 · ${game.kind === 'agi' ? AI_DIFFICULTIES.find(d => d.id === game.difficulty)?.name : ''}` : ENGLISH[kind]}</span>
+            <span className={styles.eyebrow}>{kind === 'agi' ? `V3.2 · ${game.kind === 'agi' ? AI_DIFFICULTIES.find(d => d.id === game.difficulty)?.name : ''}` : ENGLISH[kind]}</span>
             <h1>{TITLES[kind]}</h1>
             <p>{DESCRIPTIONS[kind]}</p>
           </div>
@@ -583,6 +593,9 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               value={money(aiIncome(game))}
               detail={`算力 ${game.compute} / 效率 ${game.efficiency}`}
             />
+            <Metric label="社区" value={`${game.community}`} detail="用户与开发者生态" />
+            <Metric label="信誉" value={`${game.reputation}`} detail="市场信任与口碑" />
+            {started && <AgiRaceHud game={game} />}
           </section>
         )}
         {game.kind === "fab" && (
@@ -874,8 +887,8 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
               </div>
             ) : ended ? (
               <section className={styles.result} aria-live="polite">
-                <span className={styles.eyebrow}>本局结算</span>
-                <span className={styles.resultSymbol}>
+                <span className={styles.eyebrow}>{game.kind === 'agi' && game.ending?.rivalOutcome ? '对手率先抵达 · 世界结局' : '本局结算'}</span>
+                <span className={styles.resultSymbol} hidden={game.kind === 'agi' && !!game.ending?.rivalOutcome}>
                   {game.kind === "snack"
                     ? game.phase === "lost"
                       ? "…"
@@ -893,9 +906,12 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
                         : "这一桌，吃光了"
                     : game.ending?.title}
                 </h2>
-                <p>
+                {!(game.kind === 'agi' && game.ending?.rivalOutcome) && (
+<p>
                   {game.kind === "snack" ? game.message : game.ending?.text}
                 </p>
+)}
+                {game.kind === 'agi' && <AgiRivalEpilogue game={game} />}
                 {snackGame && (
                   <>
                     <Metric

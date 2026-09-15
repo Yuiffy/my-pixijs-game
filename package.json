@@ -31,7 +31,7 @@
     "streamer:verify": "node scripts/verify-streamer-game.cjs",
     "pre-stream:test": "node --test scripts/tests/pre-stream-game.test.mjs",
     "pre-stream:verify": "node scripts/verify-pre-stream-game.cjs",
-    "mini:test": "node --test scripts/tests/mini-games.test.mjs scripts/tests/agi-industry.test.mjs scripts/tests/agi-competition.test.mjs",
+    "mini:test": "node --test scripts/tests/mini-games.test.mjs scripts/tests/agi-industry.test.mjs scripts/tests/agi-competition.test.mjs scripts/tests/agi-race.test.mjs scripts/tests/agi-endings.test.mjs",
     "mini:verify": "node scripts/verify-mini-games.cjs",
     "agi:verify:industry": "node scripts/verify-agi-industry.cjs",
     "agi:verify:ux": "node scripts/verify-agi-ux.cjs",

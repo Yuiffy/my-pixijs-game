@@ -1,4 +1,5 @@
-import { clamp, round, random, log, Ending, Log } from "./core";
+import { clamp, round, random, log, Log } from "./core";
+import type { AiEnding } from "./agiEndings";
 import {
   AI_COMPANIES,
   AI_INDUSTRY_EVENTS,
@@ -95,7 +96,7 @@ export type AiState = {
   rivals: AiRival[];
   event: number;
   logs: Log[];
-  ending: Ending | null;
+  ending: AiEnding | null;
   industry: AiIndustry;
 };
 export const AI_EVENTS = [
@@ -569,16 +570,17 @@ export function endAiTurn(state: AiState): AiState {
     s.safety = clamp(s.safety - 6);
   }
   settleIndustry(s);
-  s.rivals.forEach((r) => {
+  for (const r of s.rivals) {
+    if (s.ending) break;
     let roll: number;
     [s.rng, roll] = random(s.rng);
     advanceAiRival(s, r, roll);
-  });
+  }
   log(
     s,
     `季度结算：产品收入 ${revenue} M，运营 ${upkeep} M${s.recursive ? "；递归研究提升能力并消耗 6 安全" : ""}。`,
   );
-  if (s.cash < 0) s.ending = {
+  if (!s.ending && s.cash < 0) s.ending = {
       title: "现金流断裂",
       text: "资金不足以支付维护费用，实验室停止运营。及早发布模型、控制算力规模或预留融资，可以延长跑道。",
       won: false,

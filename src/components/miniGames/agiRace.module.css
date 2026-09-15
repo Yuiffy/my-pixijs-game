@@ -1,0 +1,56 @@
+.hud { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding-top: 10px; border-top: 1px solid var(--line); }
+.position { display: flex; align-items: baseline; gap: 9px; white-space: nowrap; color: var(--muted); font-size: 11px; }
+.position strong { color: var(--accent); font-size: 21px; font-variant-numeric: tabular-nums; }
+.position strong small { font-size: 11px; font-weight: 400; color: var(--muted); }
+.hudStatus { flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; font-weight: 700; }
+.hud[data-urgent='true'] .hudStatus { color: #a3432c; }
+.hud .rankingButton { min-height: 36px; padding: 5px 10px; font-size: 12px; flex-shrink: 0; }
+.rankingDialog { width: min(760px, calc(100vw - 28px)); max-height: calc(100svh - 28px); margin: auto; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); overflow-y: auto; overscroll-behavior: contain; }
+.rankingDialog::backdrop { background: #172d26aa; }
+.dialogHeading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.dialogHeading > div > span { font-size: 11px; color: var(--muted); }
+.dialogHeading h2 { margin-top: 5px; font-size: 24px; }
+.dialogHeading > button { flex-shrink: 0; }
+.rankingDialog .rankingNote { margin-top: 14px; font-size: 12px; line-height: 1.65; color: var(--muted); }
+.rankingDialog .rankingAlert { margin-top: 8px; font-size: 12px; line-height: 1.65; }
+.rankingTable { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.rankingTable caption { text-align: left; padding-bottom: 9px; font-size: 11px; color: var(--muted); }
+.rankingTable thead th { color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap; }
+.rankingTable td, .rankingTable th { padding: 11px 7px; border-bottom: 1px solid var(--line); text-align: right; }
+.rankingTable th:first-child { text-align: left; }
+.rankingTable tbody th { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.rankingTable tbody th small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 400; }
+.rankingTable tbody th b { margin-left: 6px; font-size: 10px; color: var(--accent); }
+.rankNumber { color: var(--muted); min-width: 15px; font-weight: 500; }
+.rankingTable tr[data-player='true'] { background: #28654f10; }
+.rankingTable td[data-met='true'] { color: var(--accent); font-weight: 700; }
+.quarterStanding { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.quarterStanding > span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; }
+.quarterStanding > strong { display: block; font-size: 16px; line-height: 1.55; }
+.quarterStanding > p { margin-top: 4px !important; font-size: 11px; line-height: 1.6; color: var(--muted); }
+.quarterStanding[data-urgent='true'] { border-left: 3px solid #b45c3d; padding-left: 10px; }
+.quarterStanding[data-urgent='true'] > strong, .quarterStanding[data-urgent='true'] > p { color: #a3432c; }
+.epilogue { margin: 20px 0 25px; text-align: left; }
+.winner { display: flex; align-items: center; gap: 10px; }
+.winner > span { display: grid; place-items: center; width: 38px; height: 38px; color: white; font-size: 20px; border-radius: 6px; }
+.winner strong { display: block; font-size: 14px; }
+.winner small { display: block; margin-top: 4px; font-size: 10px; color: var(--muted); }
+.epilogue .decision { font-size: 16px; font-weight: 700; line-height: 1.7; margin-top: 16px; }
+.epilogue .reason { font-size: 12px; line-height: 1.8; margin-top: 7px; color: var(--muted); }
+.epilogue ul { margin: 16px 0; padding-left: 18px; }
+.epilogue li { margin-top: 8px; font-size: 13px; line-height: 1.8; }
+.epilogue .tradeoff { border-left: 2px solid #b8845f; padding-left: 10px; font-size: 12px; line-height: 1.8; }
+.tradeoff strong { display: block; color: #985b35; }
+.epilogue details { margin-top: 14px; font-size: 11px; color: var(--muted); line-height: 1.7; }
+.epilogue summary { cursor: pointer; padding: 9px 0; }
+@media (max-width: 760px) {
+  .hud { gap: 7px; padding-top: 6px; }
+  .position { font-size: 10px; gap: 5px; }
+  .position strong { font-size: 18px; }
+  .hudStatus { font-size: 10px; }
+  .hud .rankingButton { min-height: 36px; padding: 5px 7px; font-size: 11px; }
+  .rankingDialog { padding: 15px 10px; }
+  .rankingTable td, .rankingTable th { padding: 9px 3px; font-size: 11px; }
+  .rankingTable tbody th { gap: 5px; font-size: 11px; }
+  .rankingTable tbody th small { font-size: 9px; }
+}
