@@ -141,6 +141,25 @@ npm run streams:publish
 索引、结束后才生成的合并 XML、字幕、摘要和图片能在下一次定时任务补齐，同时不会每天扫描全部历史。
 超过 14 天的历史补录仍需显式使用 `--full`。
 
+### 图片筛选
+
+图片画廊只收集日期目录顶层的图片，不再递归进入切片、封面审核、临时文件等子目录。
+顶层的切片封面、`EVIDENCE_FRAME` / `EVIDENCE_REQUEST`、单张 screenshot、
+`pause-*` / `qa-*` / `variant-*`、抽帧和预览等过程图也会排除。
+正式 `_COMIC_FACTORY` 漫画、`_SCREENSHOTS` 汇总拼图，以及旧版 Gemini / 手工总结图保留；
+录播 `.cover.jpg` 继续通过独立的直播封面字段同步。未知名称的顶层图片仍保留，以免误删历史手工图。
+
+所有图片兜底分配路径均限制每场最多五张，避免剩余图片分配绕过上限。
+每次增量同步也会从旧索引中移除可明确识别的过程图片引用，即使直播已超出回看窗口。
+此操作不会删除录播源文件或资源仓库中已存在的图片，也不会回收 Git 历史占用；
+已被扁平化、无法从名称识别的历史图片仍需单独核查。
+
+图片与增量同步回归测试：
+
+```powershell
+node --test scripts/tests/sync-streams.test.mjs scripts/tests/sync-images.test.mjs
+```
+
 只有明确需要重新生成全部历史数据时才使用：
 
 ```powershell

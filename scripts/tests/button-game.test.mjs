@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { createHash } from "node:crypto";
 import ts from "typescript";
 import { PGlite } from "@electric-sql/pglite";
 import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
@@ -45,18 +46,47 @@ const identity = await compile("src/lib/buttonGame/identity.ts");
 const voter = (number) => number.toString(16).padStart(64, "0");
 
 test("catalog has stable IDs, real themes/tags and explicit attribution only on adaptations", () => {
-  assert.equal(QUESTIONS.length, 38);
+  assert.equal(QUESTIONS.length, 80);
   assert.equal(new Set(QUESTIONS.map((q) => q.id)).size, QUESTIONS.length);
-  assert.equal(QUESTIONS.filter((q) => q.theme === "vtuber").length, 32);
+  assert.equal(QUESTIONS.filter((q) => q.theme === "vtuber").length, 60);
+  assert.equal(QUESTIONS.filter((q) => q.theme === "everyday").length, 20);
   for (const q of QUESTIONS) {
     assert.match(q.id, /^[a-z][a-z0-9-]{1,79}$/);
     assert.ok(Number.isInteger(q.version) && q.version > 0);
     assert.ok(THEMES.some((theme) => theme.id === q.theme));
+    assert.ok(["streamer", "viewer", "anyone"].includes(q.perspective));
     assert.ok(q.tags.length && q.tags.every((tag) => TAGS[tag]));
+    assert.equal(new Set(q.tags).size, q.tags.length);
     assert.ok(q.gain.length >= 10 && q.cost.length >= 10 && q.gain !== q.cost);
+    assert.ok(q.gain.length <= 100 && q.cost.length <= 100, q.id);
     assert.equal(q.tags.includes("inspiration"), Boolean(q.source));
   }
   assert.equal(QUESTIONS.filter((q) => q.source).length, 2);
+  assert.equal(new Set(QUESTIONS.map((q) => `${q.gain}\n${q.cost}`)).size, QUESTIONS.length);
+  for (const tag of Object.keys(TAGS)) {
+    assert.ok(QUESTIONS.some((q) => q.tags.includes(tag)), `Empty tag: ${tag}`);
+  }
+});
+
+test("expanding the catalog preserves the published voting questions and existing saves", () => {
+  // Released wording and versions must not change underneath existing public votes.
+  const published = QUESTIONS.slice(0, 38).map(({ id, version, gain, cost }) => ({ id, version, gain, cost }));
+  assert.equal(createHash('sha256').update(JSON.stringify(published)).digest('hex'), 'f0927709869139d947981bc10f103ef18191fdb92ec0f2ee69bd2a8643543fe7');
+  const oldAnswers = Object.fromEntries(QUESTIONS.slice(0, 38).map((q) => [questionKey(q), {
+    id: q.id, version: q.version, choice: 'press', mode: 'global', at: '2026-09-09T00:00:00.000Z',
+  }]));
+  const restored = model.readAnswers(JSON.stringify(oldAnswers));
+  assert.deepEqual(restored, oldAnswers);
+  assert.equal(model.nextUnanswered(filterQuestions('vtuber', 'all', 'all'), restored, QUESTIONS[0].id).id, 'vt-shadow-ensemble');
+  assert.equal(model.nextUnanswered(filterQuestions('everyday', 'all', 'all'), restored, 'life-perfect-rest').id, 'life-one-pot');
+  for (const q of QUESTIONS.slice(38)) {
+    assert.equal(q.version, 1);
+    assert.equal(q.source, undefined, 'New scenarios are original, not attributed live quotations');
+    assert.equal(content.findQuestion(q.id, q.version), q);
+    for (const tag of q.tags) {
+      assert.ok(filterQuestions(q.theme, tag, q.perspective).includes(q));
+    }
+  }
 });
 
 test("filters compose and empty groups are valid; skipping does not mark an answer", () => {

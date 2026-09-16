@@ -15,14 +15,19 @@ content, UI, API and table names make a later extraction straightforward.
 ## Content
 
 - `src/components/buttonGame/content.ts` owns themes, tags, perspectives and
-  questions. The first edition has 32 VTuber questions and six everyday questions.
+  questions. The current catalog has 60 VTuber questions and 20 everyday questions.
+  The 2026-09-09 expansion adds 42 original questions without changing the first
+  38 published questions, their order, wording, IDs or versions. Research evidence
+  and editorial choices are recorded in `docs/button-game-research-2026-09-09.md`.
 - A question is a benefit and an unavoidable cost, not two unrelated options.
 - Two questions are explicitly labeled adaptations from the Sui/Mofu livestream
   on 2026-09-07: the retirement example around 01:43:27 and the fame/negative-essay
   example around 03:45:07. Times refer to the merged recording's subtitle timeline.
   These are edited scenarios, not verbatim quotes or certified speaker attribution.
 - Other questions are original. Do not imply they were said or endorsed by either
-  creator. No scraped third-party question bank is included.
+  creator or any other streamer. Livestream topics can inform an original dilemma
+  without making its invented benefit and cost a quotation. No scraped third-party
+  question bank is included.
 - IDs are permanent. Increment `version` for substantive wording/condition changes
   so new answers cannot be pooled with votes on a different dilemma.
 - New themes/tags must have actual questions; empty filter combinations are valid.
@@ -114,7 +119,9 @@ With a local dev server (no `DATABASE_URL`) running, set `BUTTON_BASE_URL` and
 `PLAYWRIGHT_MODULE` if Playwright is not resolvable locally, then run
 `pnpm button:verify`. The browser suite uses installed Chrome and checks local
 play, persisted history, filters, completion, keyboard/touch input, share links,
-fullscreen, mobile layout, images, and unavailable storage. Its second phase
+fullscreen, mobile layout, images, and unavailable storage. Every question added
+after the first edition is also opened by direct link, answered and layout-checked,
+including the new topic filters and the catalog count on the demos page. Its second phase
 passes browser requests through the actual API route backed by isolated PGlite,
 including two identities and a lost post-commit response. It never writes to Neon.
 Screenshots and the report go in ignored `tmp/button-game-verify/`.

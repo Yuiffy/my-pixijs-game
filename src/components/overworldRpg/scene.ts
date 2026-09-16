@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import { BUILDINGS, CHARACTERS, ENTITIES, REGIONS, TILE, WORLD_HEIGHT, WORLD_WIDTH, tileAt } from './content';
+import { BUILDINGS, CHARACTERS, ENTITIES, INTERIORS, REGIONS, TILE, WORLD_HEIGHT, WORLD_WIDTH, tileAt } from './content';
+import { currentEntities } from './engine';
+import { buildInterior } from './roomScene';
 import type { BattleUnit, Point, RpgState, SceneBridge, WorldEntity } from './types';
 
 const FONT = '"Microsoft YaHei", "PingFang SC", sans-serif';
@@ -26,7 +28,16 @@ interface EntityView {
   entity: WorldEntity;
   root: Phaser.GameObjects.Container;
   marker: Phaser.GameObjects.Text;
+  markerY: number;
+  label: Phaser.GameObjects.Text;
   actor?: ActorView;
+}
+interface AreaView {
+  layer: Phaser.GameObjects.Layer;
+  entities: EntityView[];
+  props: Phaser.GameObjects.Image[];
+  atmosphere: Phaser.GameObjects.Graphics;
+  glows: (Point & { kind: 'lamp' | 'fire' | 'crystal' })[];
 }
 
 /** Phaser owns only disposable pictures. All rules and movement live in the engine. */
@@ -48,6 +59,9 @@ export default class RpgScene extends Phaser.Scene {
   private entities: EntityView[] = [];
   private effectLabels = new Map<number, Phaser.GameObjects.Text>();
   private worldProps: Phaser.GameObjects.Image[] = [];
+  private areaViews = new Map<string, AreaView>();
+  private lastArea = 'world';
+  private roomGlows: AreaView['glows'] = [];
   private lastMode = '';
   private destinationPoint: Point | null = null;
   private destinationTime = 0;
@@ -70,6 +84,10 @@ export default class RpgScene extends Phaser.Scene {
     }));
   }
 
+  public areaViewSnapshot() {
+    return { area: this.lastArea, visible: this.worldLayer?.visible ?? false, entities: this.entities.filter(view => view.root.visible).map(view => ({ id: view.entity.id, name: view.label.text, x: view.root.x, y: view.root.y })) };
+  }
+
   preload() {
     Object.values(CHARACTERS).forEach(character => {
       const portrait = character.id === 'rift-tyrant' ? character.portrait : character.portrait.replace('/portraits/', '/portraits/minimal/');
@@ -84,6 +102,7 @@ export default class RpgScene extends Phaser.Scene {
     this.makeTerrain();
     this.makePropTextures();
     this.makeWorld();
+    this.areaViews.set('world', { layer: this.worldLayer, entities: this.entities, props: this.worldProps, atmosphere: this.atmosphere, glows: [] });
     this.makeArena();
     this.player = this.createActor('biscuit_sui', 70, this.worldLayer, 0xf6d286);
     this.player.ring.setStrokeStyle(2, 0xf6d286, 0.8);
@@ -101,6 +120,7 @@ export default class RpgScene extends Phaser.Scene {
       this.followers.clear();
       this.fighters.clear();
       this.effectLabels.clear();
+      this.areaViews.clear();
     });
     this.resizeView();
   }
@@ -282,7 +302,7 @@ ruins: '#7d8375',
         if (hash(tx, ty, 77) >= density) continue;
         const x = (tx + 0.25 + hash(tx, ty, 3) * 0.5) * TILE;
         const y = (ty + 0.3 + hash(tx, ty, 5) * 0.4) * TILE;
-        if (ENTITIES.some(entity => Math.hypot(entity.x - x, entity.y - y) < 85)) continue;
+        if (ENTITIES.some(entity => !entity.area && Math.hypot(entity.x - x, entity.y - y) < 85)) continue;
         if (BUILDINGS.some(b => x > b.x - 70 && x < b.x + b.w + 70 && y > b.y - 70 && y < b.y + b.h + 95)) continue;
         const texture = tile === 'mountain' ? 'rpg:rock' : `rpg:tree:${ty > 23 ? 'gold' : tx > 29 ? 'pine' : 'round'}`;
         const image = this.add.image(x, y, texture).setOrigin(0.5, 0.87).setScale(0.65 + hash(tx, ty, 10) * 0.28).setDepth(y);
@@ -308,7 +328,7 @@ strokeThickness: 3,
       const subtitle = this.add.text(region.x, region.y - 124, region.subtitle, { fontFamily: FONT, fontSize: '10px', color: '#e6e3bb', letterSpacing: 3 }).setOrigin(0.5).setAlpha(0.75).setDepth(-5);
       this.worldLayer.add([label, subtitle]);
     });
-    ENTITIES.forEach(entity => this.makeEntity(entity));
+    ENTITIES.filter(entity => !entity.area || entity.area === 'world').forEach(entity => this.makeEntity(entity));
     this.atmosphere = this.add.graphics().setDepth(5000);
     this.worldLayer.add(this.atmosphere);
   }
@@ -321,6 +341,10 @@ strokeThickness: 3,
     if (characterId && CHARACTERS[characterId]) {
       actor = this.createActor(characterId, entity.id === 'rift_tyrant' ? 104 : 73, this.worldLayer, color);
       root = actor.root;
+    } else if (entity.kind === 'npc') {
+      this.makeLocalNpc(entity.id);
+      actor = this.createActor(entity.id, 75, this.worldLayer, color);
+      root = actor.root;
     } else {
       root = this.add.container(entity.x, entity.y);
       if (entity.kind === 'camp') root.add(this.add.image(-23, -8, 'rpg:camp').setOrigin(0.5, 0.8).setScale(0.75));
@@ -329,14 +353,61 @@ strokeThickness: 3,
         root.add(this.add.ellipse(0, -34, 66, 82, 0x8cb1ae, 0.18).setStrokeStyle(4, 0xc7dfca, 0.8));
         root.add(this.add.ellipse(0, -34, 46, 66, 0xdce9bd, 0.12).setStrokeStyle(1, 0xf3e2a9, 0.7));
       }
+      if (entity.kind === 'door' || entity.kind === 'exit') {
+        const gate = this.add.graphics();
+        gate.fillStyle(0xf3dc98, 0.15).fillEllipse(0, 2, 63, 23);
+        gate.lineStyle(2, 0xe6d49c, 0.8).lineBetween(-17, -1, 0, 11).lineBetween(0, 11, 17, -1);
+        gate.lineStyle(1, 0xc2d6ae, 0.6).lineBetween(-24, 5, 0, 21).lineBetween(0, 21, 24, 5);
+        root.add(gate);
+      }
+      if (entity.kind === 'lore') {
+        const lore = this.add.graphics();
+        lore.fillStyle(0x203c32, 0.22).fillEllipse(2, 3, 46, 15);
+        if (entity.id === 'grove_lantern') {
+          lore.fillStyle(0x6f6247).fillRect(-3, -60, 6, 68).fillRect(-17, -57, 34, 5);
+          lore.fillStyle(0xc8b481).fillRoundedRect(-12, -51, 24, 29, 5);
+          lore.lineStyle(2, 0x79613e).lineBetween(0, -51, 0, -22);
+        } else if (entity.id === 'memory_passage') {
+          lore.lineStyle(3, 0x82b3ad, 0.8).strokeEllipse(0, -26, 52, 70);
+          lore.lineStyle(1, 0xb8d7bb, 0.6).strokeEllipse(0, -26, 39, 59);
+          lore.fillStyle(0x568c8f, 0.1).fillEllipse(0, -26, 39, 59);
+        } else {
+          lore.fillStyle(0x796947).fillRect(-5, -26, 10, 33);
+          lore.fillStyle(0x65563c).fillRect(-24, -32, 48, 27);
+          lore.fillStyle(0xe4d5a7).fillRect(-21, -36, 42, 27);
+          lore.lineStyle(1, 0x9e936e).lineBetween(0, -35, 0, -10);
+          for (let line = 0; line < 3; line++) lore.lineBetween(-16, -29 + line * 6, -5, -29 + line * 6).lineBetween(5, -29 + line * 6, 16, -29 + line * 6);
+        }
+        root.add(lore);
+      }
       this.worldLayer.add(root);
     }
-    root.setPosition(entity.x, entity.y).setDepth(entity.y + 1);
+    root.setPosition(entity.x, entity.y).setDepth(entity.y + 1).setName(`rpg-entity:${entity.id}`).setData('entityId', entity.id);
     const label = this.add.text(0, -91, entity.name, { fontFamily: FONT, fontSize: '12px', color: cssColor(color), backgroundColor: '#273c34b8', padding: { x: 7, y: 4 } }).setOrigin(0.5);
     const marker = this.add.text(0, -115, entity.kind === 'encounter' ? '◆' : entity.kind === 'npc' ? '!' : entity.kind === 'camp' ? '♧' : '✧', { fontFamily: FONT, fontSize: '18px', color: cssColor(color), stroke: '#304a3a', strokeThickness: 3 }).setOrigin(0.5);
     if (entity.kind === 'chest' || entity.kind === 'camp') { label.y = -72; marker.y = -94; }
+    if (entity.kind === 'door' || entity.kind === 'exit') { label.y = -28; marker.y = -53; marker.setText(entity.kind === 'exit' ? '↓' : '↳'); }
+    if (entity.kind === 'lore') { label.y = -69; marker.y = -91; marker.setText('✧'); }
     root.add([label, marker]);
-    this.entities.push({ entity, root, marker, actor });
+    this.entities.push({ entity, root, marker, markerY: marker.y, label, actor });
+  }
+
+  private makeLocalNpc(id: string) {
+    this.canvasTexture(keyFor(id), 90, 104, c => {
+      const robe = id.includes('smith') ? '#a5754d' : id.includes('curator') ? '#7d9b8a' : '#a39164';
+      c.fillStyle = '#343e34'; c.fillRect(24, 80, 15, 14); c.fillRect(48, 80, 16, 14);
+      c.fillStyle = '#33463b'; c.beginPath(); c.moveTo(31, 39); c.lineTo(62, 39); c.lineTo(73, 83); c.lineTo(20, 83); c.closePath(); c.fill();
+      c.fillStyle = robe; c.beginPath(); c.moveTo(33, 42); c.lineTo(60, 42); c.lineTo(68, 79); c.lineTo(26, 79); c.closePath(); c.fill();
+      c.fillStyle = '#d1be91'; c.fillRect(42, 45, 7, 39); c.fillRect(28, 63, 39, 5);
+      c.fillStyle = '#d7b895'; c.beginPath(); c.ellipse(46, 28, 19, 22, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = id.includes('smith') ? '#4d4c3e' : '#bfc8b2'; c.beginPath(); c.ellipse(45, 12, 23, 11, 0, 0, Math.PI * 2); c.fill();
+      c.fillRect(23, 15, 8, 22); c.fillRect(61, 15, 8, 22);
+      c.fillStyle = '#3f4336'; c.fillRect(37, 27, 3, 4); c.fillRect(52, 27, 3, 4);
+      c.fillStyle = '#a07d61'; c.fillRect(43, 37, 7, 2);
+      c.fillStyle = '#dec9a4'; c.beginPath(); c.ellipse(24, 61, 7, 8, 0, 0, Math.PI * 2); c.ellipse(66, 61, 7, 8, 0, 0, Math.PI * 2); c.fill();
+      if (id.includes('curator')) { c.fillStyle = '#6a7a62'; c.fillRect(50, 54, 23, 24); c.fillStyle = '#dbd6af'; c.fillRect(54, 58, 16, 3); }
+      if (id.includes('smith')) { c.fillStyle = '#6a5340'; c.fillRect(16, 51, 6, 28); c.fillStyle = '#9da99c'; c.fillRect(8, 47, 22, 12); }
+    });
   }
 
   private createActor(id: string, size: number, layer: Phaser.GameObjects.Layer, color: number): ActorView {

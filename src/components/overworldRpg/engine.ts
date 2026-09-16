@@ -1,5 +1,8 @@
-import { CHARACTERS, ENTITIES, REGIONS, TILE, WORLD_HEIGHT, WORLD_WIDTH, isWalkable } from './content';
+import { CHARACTERS, ENTITIES, INTERIORS, REGIONS, TILE, WORLD_HEIGHT, WORLD_WIDTH, isWalkable } from './content';
+import { JOURNAL_TEXT, QUEST_IDS, STORY_FLAGS, chooseStory, createStory, questEntries, recordEvent, setStoryFlag, storyBonuses, storyDialogue } from './story';
 import type { BattleUnit, Point, RpgInput, RpgState, WorldEntity } from './types';
+
+export { questEntries, storyBonuses, storyEpilogue } from './story';
 
 const HOME = { x: 10.5 * TILE, y: 10.5 * TILE };
 const PLAYABLE = ['biscuit_sui', 'sui', 'shiori', 'pako', 'seki_boar_king'];
@@ -11,7 +14,10 @@ export const upgradeCost = (weapon: number) => 65 + weapon * 55;
 
 export function createGame(): RpgState {
   return {
-    version: 1,
+    version: 2,
+    area: 'world',
+    worldReturn: null,
+    story: createStory(),
 mode: 'title',
 player: { ...HOME },
 party: [{ id: 'biscuit_sui', hp: CHARACTERS.biscuit_sui.hp }],
@@ -39,20 +45,25 @@ facing: 1,
 export function startGame(state: RpgState): void {
   if (state.mode !== 'title') return;
   state.mode = 'explore';
+  recordEvent(state, 'arrival');
 }
 
 export function maxHp(state: RpgState, id: string): number {
-  return Math.round((CHARACTERS[id]?.hp ?? 1) * (1 + (state.level - 1) * 0.16));
+  return Math.round((CHARACTERS[id]?.hp ?? 1) * (1 + (state.level - 1) * 0.16)) + storyBonuses(state).hp;
 }
+
+export function currentEntities(state: RpgState): WorldEntity[] { return ENTITIES.filter((e) => (e.area ?? 'world') === state.area); }
 
 export function nearestEntity(state: RpgState): WorldEntity | undefined {
   if (state.mode !== 'explore') return undefined;
-  return ENTITIES.filter((e) => distance(state.player, e) <= 100)
+  return currentEntities(state).filter((e) => distance(state.player, e) <= 100)
     .sort((a, b) => distance(state.player, a) - distance(state.player, b))[0];
 }
 
 export function objective(state: RpgState): string {
   if (state.mode === 'ending') return '归途已至 · 感谢这一路的同行';
+  const tracked = questEntries(state).find((q) => q.id === state.story.tracked && q.status !== 'complete');
+  if (tracked) return `${tracked.title} · ${tracked.text}`;
   if (state.completed.includes('rift_tyrant')) return '走向断线之门东侧的光，回到现实';
   if (!state.party.some((p) => p.id === 'sui')) return '在回音镇与岁己交谈，邀请她同行';
   if (!state.completed.includes('bamboo_echo')) return '前往东南的青笺林，找回栞栞的书页';
@@ -80,9 +91,14 @@ speaker: entity.name,
 export function interact(state: RpgState, id?: string): void {
   if (state.mode !== 'explore' || state.paused) return;
   const entity = id ? entityById(id) : nearestEntity(state);
-  if (!entity || distance(state.player, entity) > 100) return;
+  if (!entity || (entity.area ?? 'world') !== state.area || distance(state.player, entity) > 100) return;
   state.mode = 'dialogue';
   const leave = { id: 'leave', label: '再走走' };
+  if (entity.kind === 'door' || entity.kind === 'exit') {
+    state.dialogue = { entityId: entity.id, speaker: entity.name, text: entity.description, choices: [{ id: entity.kind === 'door' ? 'enter' : 'exit', label: entity.kind === 'door' ? `走进${INTERIORS[entity.destination ?? '']?.name ?? '屋内'}` : '推门出去' }, leave] };
+    return;
+  }
+  if (storyDialogue(state, entity)) return;
   if (entity.kind === 'camp') { campDialogue(state, entity); return; }
   if (entity.kind === 'npc') {
     const recruited = state.party.some((p) => p.id === entity.characterId);
@@ -105,11 +121,11 @@ speaker: entity.name,
     return;
   }
   const complete = state.completed.includes(entity.id);
-  const locked = entity.requires === 'shards' ? state.shards < 3 : !!entity.requires && !state.completed.includes(entity.requires);
+  const locked = (entity.requires === 'shards' ? state.shards < 3 : !!entity.requires && !state.completed.includes(entity.requires)) || !!entity.requiresFlag && !state.story.flags.includes(entity.requiresFlag);
   state.dialogue = {
     entityId: entity.id,
 speaker: entity.name,
-    text: complete ? '这里的噪声已经散去，道路重新安静下来。' : locked ? `还需收集三枚归途碎片（${state.shards}/3）。它们在晚风泽、鸣钟岭和星陨旧城。` : `${entity.description}\n对手：${(entity.enemies ?? []).map((enemy) => CHARACTERS[enemy].name).join('、')}。战后气血会保留，驿站可以免费恢复。`,
+    text: complete ? '这里的噪声已经散去，道路重新安静下来。' : locked ? entity.requiresFlag ? '守望者不愿与你交谈。先与栞栞接下书院的委托，再读观星台碑记，了解它为何守着那封信。' : `还需收集三枚归途碎片（${state.shards}/3）。它们在晚风泽、鸣钟岭和星陨旧城。` : `${entity.description}\n对手：${(entity.enemies ?? []).map((enemy) => CHARACTERS[enemy].name).join('、')}。战后气血会保留，驿站可以免费恢复。`,
     choices: complete || locked ? [leave] : [{ id: 'fight', label: '整队迎战' }, { id: 'leave', label: '先准备一下' }],
   };
 }
@@ -121,17 +137,27 @@ export function chooseDialogue(state: RpgState, choiceId: string): void {
   if (state.mode !== 'dialogue' || !state.dialogue || state.paused) return;
   const choice = state.dialogue.choices.find((c) => c.id === choiceId);
   const entity = entityById(state.dialogue.entityId);
-  if (!entity || !choice || choice.disabled) return;
+  if (!entity || !choice || choice.disabled || (entity.area ?? 'world') !== state.area || distance(state.player, entity) > 100) return;
   if (choiceId === 'leave') { closeDialogue(state); return; }
+  if (choiceId === 'enter' && entity.kind === 'door' && entity.destination && INTERIORS[entity.destination]) {
+    state.worldReturn = { x: entity.x, y: entity.y }; state.area = entity.destination; state.player = { ...INTERIORS[entity.destination].spawn };
+    if (!state.visited.includes(state.area)) state.visited.push(state.area);
+    recordEvent(state, `visit_${state.area}`); state.message = `${INTERIORS[state.area].name} · ${INTERIORS[state.area].subtitle}`; closeDialogue(state); return;
+  }
+  if (choiceId === 'exit' && entity.kind === 'exit') {
+    state.player = state.worldReturn ? { ...state.worldReturn } : { ...HOME }; state.area = 'world'; state.worldReturn = null; closeDialogue(state); return;
+  }
+  if (chooseStory(state, entity, choiceId)) return;
   if (choiceId === 'recruit' && entity.kind === 'npc' && entity.characterId && !state.party.some((p) => p.id === entity.characterId) && (!entity.requires || state.completed.includes(entity.requires))) {
     state.party.push({ id: entity.characterId, hp: maxHp(state, entity.characterId) });
     if (state.active.length < 4) state.active.push(entity.characterId);
+    state.story.bonds[entity.characterId] = 1; recordEvent(state, `recruit_${entity.id}`);
     state.message = `${entity.name}加入队伍！${state.active.includes(entity.characterId) ? '已自动上阵。' : '在队伍页调整上阵伙伴（最多四人）。'}`;
     closeDialogue(state);
   } else if (choiceId === 'open' && entity.kind === 'chest' && !state.opened.includes(entity.id)) {
     state.opened.push(entity.id); state.gold += entity.gold ?? 0; state.potions = Math.min(99, state.potions + 2);
     state.message = `收获 ${entity.gold} 金与恢复药 ×2。`; closeDialogue(state);
-  } else if (choiceId === 'fight' && entity.kind === 'encounter' && !state.completed.includes(entity.id) && (entity.requires !== 'shards' || state.shards >= 3)) {
+  } else if (choiceId === 'fight' && entity.kind === 'encounter' && !state.completed.includes(entity.id) && (entity.requires !== 'shards' || state.shards >= 3) && (!entity.requiresFlag || state.story.flags.includes(entity.requiresFlag))) {
     beginBattle(state, entity);
   } else if (choiceId === 'return' && entity.kind === 'portal' && state.completed.includes('rift_tyrant')) {
     state.completed.push('home'); state.mode = 'ending'; state.dialogue = null;
@@ -157,7 +183,7 @@ function beginBattle(state: RpgState, entity: WorldEntity): void {
   const allies = state.active.map((id, i): BattleUnit => {
     const def = CHARACTERS[id];
     const member = state.party.find((p) => p.id === id)!;
-    return { ...def, uid: `ally-${id}`, characterId: id, side: 'ally', x: def.range > 100 ? 195 : 320, y: 160 + i * 92, hp: member.hp, maxHp: maxHp(state, id), attack: Math.round(def.attack * (1 + (state.level - 1) * 0.14 + state.weapon * 0.13)), defense: Math.round(def.defense * (1 + (state.level - 1) * 0.12)), cooldown: 0.3 + i * 0.13, skillCooldown: 2.5 + i * 0.4, flash: 0, damage: 0 };
+    return { ...def, uid: `ally-${id}`, characterId: id, side: 'ally', x: def.range > 100 ? 195 : 320, y: 160 + i * 92, hp: member.hp, maxHp: maxHp(state, id), attack: Math.round(def.attack * (1 + (state.level - 1) * 0.14 + state.weapon * 0.13)) + storyBonuses(state).attack, defense: Math.round(def.defense * (1 + (state.level - 1) * 0.12)) + storyBonuses(state).defense, cooldown: 0.3 + i * 0.13, skillCooldown: 2.5 + i * 0.4, flash: 0, damage: 0 };
   });
   if (!allies.some((unit) => unit.hp > 0)) { state.message = '队伍已无力作战。先在驿站免费休息。'; closeDialogue(state); return; }
   const enemies = (entity.enemies ?? []).map((id, i): BattleUnit => {
@@ -185,7 +211,7 @@ function hit(state: RpgState, unit: BattleUnit, target: BattleUnit, multiplier =
 
 function heal(state: RpgState, unit: BattleUnit, amount: number): void {
   if (unit.hp <= 0) return;
-  const gained = Math.min(unit.maxHp - unit.hp, Math.round(amount));
+  const gained = Math.min(unit.maxHp - unit.hp, Math.round(amount * (1 + (unit.side === 'ally' ? storyBonuses(state).healing : 0))));
   if (gained <= 0) return;
   unit.hp += gained; effect(state, unit, 'heal', `+${gained}`, 0xa7e8b0);
 }
@@ -222,7 +248,7 @@ export function usePotion(state: RpgState): void {
   } else {
     const member = [...state.party].filter((p) => p.hp < maxHp(state, p.id)).sort((a, b) => a.hp / maxHp(state, a.id) - b.hp / maxHp(state, b.id))[0];
     if (!member) { state.message = '全队气血充足，先把药留着。'; return; }
-    state.potions -= 1; member.hp = Math.min(maxHp(state, member.id), member.hp + Math.round(maxHp(state, member.id) * 0.6)); state.message = `${CHARACTERS[member.id].name}恢复了气血。`;
+    state.potions -= 1; member.hp = Math.min(maxHp(state, member.id), member.hp + Math.round(maxHp(state, member.id) * 0.6 * (1 + storyBonuses(state).healing))); state.message = `${CHARACTERS[member.id].name}恢复了气血。`;
   }
 }
 
@@ -234,7 +260,9 @@ function finishBattle(state: RpgState, won: boolean): void {
   let gold = 0; let xp = 0; let shard = false;
   let text = '队伍撤回最近的驿站，掌柜已经备好了热茶。全队免费恢复，没有损失金币或碎片。调整伙伴、锻造武器后再来。';
   if (won && !state.completed.includes(entity.id)) {
-    state.completed.push(entity.id); gold = entity.gold ?? 0; xp = entity.xp ?? 0; shard = !!entity.shard;
+    state.completed.push(entity.id); recordEvent(state, "win_" + entity.id);
+    if (entity.id === 'memory_warden') setStoryFlag(state, 'memory_shortcut_open');
+    gold = entity.gold ?? 0; xp = entity.xp ?? 0; shard = !!entity.shard;
     state.gold += gold; state.xp += xp; if (shard) state.shards += 1;
     const before = state.level;
     while (state.level < 10 && state.xp >= xpToNextLevel(state.level)) { state.xp -= xpToNextLevel(state.level); state.level += 1; }
@@ -242,8 +270,8 @@ function finishBattle(state: RpgState, won: boolean): void {
     if (state.level > before) { healParty(state); text += `\n队伍升至 ${state.level} 级！全队气血恢复，属性提升。`; }
   }
   if (!won) {
-    const camp = ENTITIES.filter((e) => e.kind === 'camp' && state.visited.includes(e.id)).sort((a, b) => distance(a, state.player) - distance(b, state.player))[0]!;
-    state.player = { x: camp.x, y: camp.y + 30 }; healParty(state);
+    const camp = ENTITIES.filter((e) => e.kind === 'camp' && state.visited.includes(e.id)).sort((a, b) => distance(a, state.worldReturn ?? state.player) - distance(b, state.worldReturn ?? state.player))[0]!;
+    state.player = { x: camp.x, y: camp.y + 30 }; state.area = 'world'; state.worldReturn = null; healParty(state);
   }
   state.result = { won, title: won ? `${entity.name} · 已平息` : '暂时撤退', text, gold, xp, shard };
   state.mode = 'result'; state.message = won ? '胜利！查看战报后继续旅程。' : '失败没有带走你的旅程。整队后再来。';
@@ -261,9 +289,10 @@ function moveWorld(state: RpgState, dt: number, input: RpgInput): void {
   if (!Number.isFinite(length) || length < 1) return;
   const amount = Math.min(190 * dt, input.target && !input.x && !input.y ? length : Infinity);
   dx = (dx / length) * amount; dy = (dy / length) * amount;
-  if (isWalkable(state.player.x + dx, state.player.y)) state.player.x += dx;
-  if (isWalkable(state.player.x, state.player.y + dy)) state.player.y += dy;
+  if (isWalkable(state.player.x + dx, state.player.y, state.area)) state.player.x += dx;
+  if (isWalkable(state.player.x, state.player.y + dy, state.area)) state.player.y += dy;
   if (Math.abs(dx) > 0.01) state.facing = dx > 0 ? 1 : -1;
+  if (state.area !== 'world') return;
   for (const region of REGIONS) if (distance(state.player, region) < 240 && !state.visited.includes(region.id)) state.visited.push(region.id);
   for (const entity of ENTITIES) if (entity.kind === 'camp' && distance(state.player, entity) <= 100 && !state.visited.includes(entity.id)) { state.visited.push(entity.id); state.message = `发现${entity.name}。可免费休息，并与其他驿站往返。`; }
 }
@@ -319,9 +348,9 @@ export function stepGame(state: RpgState, ms: number, input: RpgInput): void {
   }
 }
 
-export function findPath(from: Point, to: Point): Point[] {
-  if (!isWalkable(to.x, to.y) || !isWalkable(from.x, from.y)) return [];
-  const columns = WORLD_WIDTH / TILE; const rows = WORLD_HEIGHT / TILE;
+export function findPath(from: Point, to: Point, area = 'world'): Point[] {
+  if (!isWalkable(to.x, to.y, area) || !isWalkable(from.x, from.y, area)) return [];
+  const columns = (area === 'world' ? WORLD_WIDTH : INTERIORS[area].width) / TILE; const rows = (area === 'world' ? WORLD_HEIGHT : INTERIORS[area].height) / TILE;
   const sx = Math.floor(from.x / TILE); const sy = Math.floor(from.y / TILE); const tx = Math.floor(to.x / TILE); const ty = Math.floor(to.y / TILE);
   const start = sy * columns + sx; const goal = ty * columns + tx;
   if (start === goal) return [{ ...to }];
@@ -330,8 +359,8 @@ export function findPath(from: Point, to: Point): Point[] {
     const current = queue[i]; const x = current % columns; const y = Math.floor(current / columns);
     for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
       const nx = x + dx; const ny = y + dy; const next = ny * columns + nx;
-      if (nx < 0 || ny < 0 || nx >= columns || ny >= rows || parent[next] !== -1 || !isWalkable((nx + 0.5) * TILE, (ny + 0.5) * TILE)) continue;
-      if (dx && dy && (!isWalkable((x + dx + 0.5) * TILE, (y + 0.5) * TILE) || !isWalkable((x + 0.5) * TILE, (y + dy + 0.5) * TILE))) continue;
+      if (nx < 0 || ny < 0 || nx >= columns || ny >= rows || parent[next] !== -1 || !isWalkable((nx + 0.5) * TILE, (ny + 0.5) * TILE, area)) continue;
+      if (dx && dy && (!isWalkable((x + dx + 0.5) * TILE, (y + 0.5) * TILE, area) || !isWalkable((x + 0.5) * TILE, (y + dy + 0.5) * TILE, area))) continue;
       parent[next] = current; queue.push(next);
     }
   }

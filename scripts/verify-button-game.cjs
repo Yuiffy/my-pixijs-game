@@ -65,6 +65,7 @@ const compile = (relative, dependencies = {}) => {
   Function('module', 'exports', 'require', compiled)(module, module.exports, name => dependencies[name] || require(name));
   return module.exports;
 };
+const catalog = compile('src/components/buttonGame/content.ts');
 
 (async () => {
   assert.equal((await fetch(`${base}/game/button`)).status, 200, 'Start the local Next server first');
@@ -150,7 +151,7 @@ const compile = (relative, dependencies = {}) => {
     const page = await context.newPage(); observe(page);
     await goto(page);
     assert.equal((await state(page)).statisticsMode, 'local', 'Local server must have no database configured for the local-mode scenario');
-    assert.equal((await state(page)).count, 32);
+    assert.equal((await state(page)).count, catalog.filterQuestions('vtuber', 'all', 'all').length);
     await capture(page, 'desktop-question');
     await page.getByRole('button', { name: '复制本题链接', exact: true }).click();
     assert.match(await page.evaluate(() => navigator.clipboard.readText()), /q=vt-fame-and-essays/);
@@ -192,7 +193,7 @@ const compile = (relative, dependencies = {}) => {
     await page.getByRole('button', { name: '退出直播模式', exact: true }).click();
     await page.getByLabel('选择主题').selectOption('everyday');
     await phase(page, 'ready');
-    assert.equal((await state(page)).count, 6);
+    assert.equal((await state(page)).count, catalog.filterQuestions('everyday', 'all', 'all').length);
     await page.getByRole('button', { name: '切换全屏', exact: true }).click();
     assert.equal(await page.evaluate(() => Boolean(document.fullscreenElement)), true);
     await page.keyboard.press('f');
@@ -223,6 +224,46 @@ const compile = (relative, dependencies = {}) => {
     await phase(blockedPage, 'answered');
     assert.equal((await state(blockedPage)).answered, 1);
     await blocked.close();
+
+    const expanded = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'reduce' });
+    const expandedPage = await expanded.newPage(); observe(expandedPage);
+    await goto(expandedPage);
+    for (const tag of ['games', 'creation', 'food', 'memory']) {
+      await expandedPage.getByLabel('筛选话题').selectOption(tag);
+      await phase(expandedPage, 'ready');
+      assert.equal((await state(expandedPage)).count, catalog.filterQuestions('vtuber', tag, 'all').length);
+      assert.ok((await state(expandedPage)).question.tags.includes(tag));
+    }
+    const sampleViews = {
+      'vt-shadow-ensemble': { width: 1440, height: 960 },
+      'vt-five-minute-retake': { width: 320, height: 780 },
+      'vt-silent-kitchen': { width: 390, height: 844 },
+      'vt-fan-project-vote': { width: 390, height: 844 },
+      'life-lost-message': { width: 320, height: 780 },
+    };
+    const newQuestions = catalog.QUESTIONS.slice(38);
+    const answeredByTheme = { vtuber: 0, everyday: 0 };
+    for (const [index, question] of newQuestions.entries()) {
+      await expandedPage.setViewportSize(sampleViews[question.id] || { width: 390, height: 844 });
+      await expandedPage.goto(`${base}/game/button?q=${question.id}`, { waitUntil: 'domcontentloaded' });
+      await phase(expandedPage, 'ready');
+      assert.equal((await state(expandedPage)).question.id, question.id, 'Every new question must have a working direct link');
+      await checkLayout(expandedPage);
+      if (sampleViews[question.id]) await capture(expandedPage, `catalog-${question.id}`);
+      const choice = index % 2 ? 'pass' : 'press';
+      await expandedPage.getByRole('button', { name: choice === 'pass' ? '我不按' : '按下按钮', exact: true }).tap();
+      await phase(expandedPage, 'answered');
+      assert.equal((await state(expandedPage)).choice, choice);
+      assert.equal((await state(expandedPage)).answered, ++answeredByTheme[question.theme]);
+      assert.equal((await state(expandedPage)).statistics, null);
+      await checkLayout(expandedPage);
+    }
+    assert.equal(await expandedPage.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('button-game.answers.v1'))).length), newQuestions.length);
+    await expandedPage.reload({ waitUntil: 'networkidle' });
+    await phase(expandedPage, 'answered');
+    await expandedPage.goto(`${base}/demos`, { waitUntil: 'networkidle' });
+    await expandedPage.getByText(`按钮假说 · 虚拟主播 · ${catalog.QUESTIONS.length} 道题`, { exact: true }).waitFor();
+    await expanded.close();
 
     // Exercise the production route against real PostgreSQL SQL, without credentials or public writes.
     const { loadTypescriptModule } = await import('./tests/helpers/load-typescript-module.mjs');
@@ -291,8 +332,8 @@ const compile = (relative, dependencies = {}) => {
     assert.equal(await otherPage.getByRole('button', { name: '按下按钮', exact: true }).innerText(), '按下');
     assert.equal(await otherPage.getByRole('button', { name: '我不按', exact: true }).isEnabled(), false);
     const savingSize = await otherPage.getByRole('button', { name: '我不按', exact: true }).boundingBox();
-    assert.equal(savingSize.width, passSize.width, 'The saving label must not resize the control');
-    assert.equal(savingSize.height, passSize.height);
+    assert.ok(Math.abs(savingSize.width - passSize.width) < 0.01, 'The saving label must not resize the control');
+    assert.ok(Math.abs(savingSize.height - passSize.height) < 0.01, 'Allow subpixel rounding, not a visible layout shift');
     await capture(otherPage, 'global-saving-pass-mobile');
     releaseHeldVote();
     await phase(otherPage, 'answered');
@@ -325,8 +366,8 @@ const compile = (relative, dependencies = {}) => {
     assert.equal((await state(page)).choice, null, 'Local practice answers must not be submitted automatically');
     assert.equal(voteRequests, requestsAfterLoss);
     assert.deepEqual(errors, []);
-    writeFileSync(path.join(output, 'report.json'), JSON.stringify({ passed: true, screenshots, errors, voteRequests, sql: 'PGlite + actual Next API route' }, null, 2));
-    console.log(JSON.stringify({ passed: true, screenshots: screenshots.map(item => item.file), errors, voteRequests }, null, 2));
+    writeFileSync(path.join(output, 'report.json'), JSON.stringify({ passed: true, screenshots, errors, voteRequests, newQuestionsVerified: newQuestions.length, sql: 'PGlite + actual Next API route' }, null, 2));
+    console.log(JSON.stringify({ passed: true, screenshots: screenshots.map(item => item.file), errors, voteRequests, newQuestionsVerified: newQuestions.length }, null, 2));
   } finally {
     await browser.close();
     await db.close();

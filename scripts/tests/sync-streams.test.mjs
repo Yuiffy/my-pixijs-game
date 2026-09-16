@@ -9,7 +9,9 @@ import {
   choosePreferredArtifact,
   choosePreferredSrt,
   copyFileIfChanged,
+  filterStreamImageReferences,
   getIncrementalRefreshStart,
+  getStreamImageExclusionReason,
   imageBelongsToStream,
   isImageFallbackCandidate,
   mergeRefreshedStream,
@@ -20,6 +22,42 @@ import {
 
 const TARGET_ID = '2026_07_17_19_59_07';
 const PREFIX = '录制-25788785-20260717-195907-920-陪你这个猪过周⑤';
+
+test('gallery filtering rejects clip and QA artifacts but preserves published recaps', () => {
+  const rejected = [
+    `${PREFIX}_merged_EVIDENCE_FRAME_01_005940s.jpg`,
+    `${PREFIX}_merged_EVIDENCE_REQUEST_E2.jpg`,
+    `${PREFIX}_merged_fun_05_002718_cover.jpg`,
+    'own_stream_fun_clips/temp/pause-0-0.jpg',
+    `reviewed_covers\\${PREFIX}_COMIC_FACTORY.png`,
+    'manual_requested_clips/final.png',
+    'qa-0-0.jpg', 'QA_FRAME_120s_scene.jpg', 'pause-1-2.jpg', 'variant-1.jpg',
+    'frame_002.jpg', 'preview_01.jpg', 'inset_halfsec_contact.jpg',
+    'sui_封面.png', 'CLIP_COVER.JPG', '截图_20260914.png', '截图20260914.png',
+    `${PREFIX}_screenshot.jpg`, `${PREFIX}.cover.jpg`,
+  ];
+  for (const file of rejected) assert.notEqual(getStreamImageExclusionReason(file), null, file);
+  const accepted = [
+    `${PREFIX}_merged_COMIC_FACTORY.png`, `${PREFIX}_merged_SCREENSHOTS.jpg`,
+    `${PREFIX}聊聊切片封面截图_COMIC_FACTORY.png`,
+    'Gemini_Generated_Image_kdxlsokdxlsokdxl_晚台.png',
+    '12月6日午台总结.png', '20251208晚安总结插画.png',
+    '2026_01_12_20_03_10_找你有事！速来_DDTV5_fix.png',
+    '317A60CAD4CE210E154E0DDE21907BE6.png',
+  ];
+  for (const file of accepted) assert.equal(getStreamImageExclusionReason(file), null, file);
+});
+
+test('historical index filtering preserves order and handles escaped filenames', () => {
+  const base = '/data/streams/sui/2026_07_17_19_59_07/';
+  const comic = `${base}${PREFIX}_COMIC_FACTORY.png`;
+  const sheet = `${base}${PREFIX}_SCREENSHOTS.jpg`;
+  const legacy = `${base}图片文字替换.png`;
+  assert.deepEqual(filterStreamImageReferences([
+    comic, `${base}qa-0-0.jpg`, `${base}${encodeURIComponent('切片封面.jpg')}`, sheet, legacy,
+  ]), [comic, sheet, legacy]);
+  assert.deepEqual(filterStreamImageReferences(), []);
+});
 
 test('parses late SRT and generated images without corrupting the stream title', () => {
   const plain = parseStreamArtifact(`${PREFIX}_merged.srt`);

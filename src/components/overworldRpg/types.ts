@@ -6,9 +6,22 @@ export interface CharacterDef {
   skill: string; skillDescription: string;
 }
 export interface WorldEntity extends Point {
-  id: string; name: string; kind: 'npc' | 'encounter' | 'camp' | 'chest' | 'portal';
+  id: string; name: string; kind: 'npc' | 'encounter' | 'camp' | 'chest' | 'portal' | 'door' | 'exit' | 'lore';
   description: string; characterId?: string; requires?: string;
   enemies?: string[]; power?: number; gold?: number; xp?: number; shard?: boolean;
+  area?: string; destination?: string; storyId?: string; requiresFlag?: string;
+}
+export interface InteriorProp extends Point { w: number; h: number; kind: 'table' | 'shelf' | 'bed' | 'forge' | 'crystal' }
+export interface InteriorDef {
+  id: string; name: string; subtitle: string; width: number; height: number;
+  style: 'inn' | 'archive' | 'forge' | 'ruin'; spawn: Point; props: InteriorProp[];
+}
+export interface StoryState {
+  flags: string[]; choices: Record<string, string>; bonds: Record<string, number>; journal: string[]; tracked: string | null;
+}
+export interface QuestEntry {
+  id: string; title: string; companion: string; status: 'unknown' | 'available' | 'active' | 'complete';
+  text: string; location: string; targetId?: string;
 }
 export interface Region extends Point { id: string; name: string; subtitle: string; color: number }
 export interface PartyMember { id: string; hp: number }
@@ -24,11 +37,12 @@ export interface BattleState {
 export interface Dialogue { entityId: string; speaker: string; text: string; choices: { id: string; label: string; disabled?: boolean }[] }
 export interface BattleResult { won: boolean; title: string; text: string; gold: number; xp: number; shard: boolean }
 export interface RpgState {
-  version: 1; mode: RpgMode; player: Point; party: PartyMember[]; active: string[];
+  version: 2; mode: RpgMode; player: Point; party: PartyMember[]; active: string[];
   level: number; xp: number; gold: number; potions: number; weapon: number;
   completed: string[]; opened: string[]; visited: string[]; shards: number;
   dialogue: Dialogue | null; battle: BattleState | null; result: BattleResult | null;
   manual: boolean; paused: boolean; playTime: number; message: string; facing: number;
+  area: string; worldReturn: Point | null; story: StoryState;
 }
 export interface RpgInput { x: number; y: number; skill?: boolean; target?: Point | null }
 export interface SceneBridge {

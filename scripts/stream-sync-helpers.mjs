@@ -8,6 +8,36 @@ export const IMAGE_FALLBACK_MAX_HOURS = 12;
 const RECORDER_PREFIX = /^录制-\d+-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-\d+-(.+)$/i;
 const DDTV5_PREFIX = /^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.+?)_DDTV5/i;
 
+// Gallery inputs must be date-folder siblings of the recording. Nested folders
+// contain clip exports, QA frames and intermediate renders, not stream recaps.
+// Keep unknown top-level names for historical hand-made / Gemini recap images.
+export function getStreamImageExclusionReason(relativePath) {
+  const normalized = relativePath.replaceAll('\\', '/');
+  if (!/\.(png|jpe?g)$/i.test(normalized)) return 'not-image';
+  if (normalized.includes('/')) return 'nested-directory';
+  // Match the final artifact suffix before keywords that may be in stream titles.
+  // SCREENSHOTS is the published contact sheet, not an individual screenshot.
+  if (/_(?:COMIC_FACTORY|SCREENSHOTS)\.(png|jpe?g)$/i.test(normalized)) return null;
+  if (/(?:^|[_. -])cover(?:[_. -]|$)|封面/i.test(normalized)) return 'cover';
+  if (/(?:^|_)EVIDENCE_(?:FRAME|REQUEST)_/i.test(normalized)) return 'evidence';
+  if (/(?:^|[_. -])(?:clips?|fun_\d+)(?:[_. -]|$)|切片/i.test(normalized)) return 'clip';
+  if (/(?:^|[_. -])(?:screenshots?|截图)(?:[_. -]|\d|$)/i.test(normalized)) return 'screenshot';
+  if (/^(?:_?reframe|pause|qa|variant|preview|retry|frame|hit|start|end|full|inset|transition|wincheck|after|early|evergaol|explore|peninsula|post_evergaol)[_-]/i.test(normalized)
+    || /(?:_frame(?:_\d+)?|_contact)\.(png|jpe?g)$/i.test(normalized)) return 'working-image';
+  return null;
+}
+
+export function filterStreamImageReferences(images = []) {
+  return images.filter((reference) => {
+    // Index paths are flattened during copying; only known filename exclusions
+    // can be applied retrospectively without guessing what an old image depicts.
+    const name = reference.replaceAll('\\', '/').split('/').at(-1);
+    let decodedName;
+    try { decodedName = decodeURIComponent(name); } catch { decodedName = name; }
+    return getStreamImageExclusionReason(decodedName) === null;
+  });
+}
+
 export function streamIdToDate(streamId) {
   const parts = streamId?.split('_').map(Number);
   if (!parts || parts.length !== 6 || parts.some(Number.isNaN)) return null;

@@ -7,7 +7,9 @@ import {
   choosePreferredArtifact,
   choosePreferredSrt,
   copyFileIfChanged,
+  filterStreamImageReferences,
   getIncrementalRefreshStart,
+  getStreamImageExclusionReason,
   imageBelongsToStream,
   isImageFallbackCandidate,
   mergeRefreshedStream,
@@ -237,17 +239,16 @@ async function syncStreams() {
 
       // Done collecting titles for this folder
 
-      // Collect all images in this folder
+      // Collect only gallery images in the date folder. Never descend into clip
+      // or working directories, even when their files look like final recaps.
       const collectImages = (dir) => {
         const files = fs.readdirSync(dir);
         files.forEach(file => {
           const fullPath = path.join(dir, file);
           try {
             const stats = fs.statSync(fullPath);
-            if (stats.isDirectory()) {
-              collectImages(fullPath);
-            } else if (file.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
-              if (!file.includes('cover')) {
+            if (stats.isFile() && /\.(png|jpe?g)$/i.test(file)) {
+              if (getStreamImageExclusionReason(file) === null) {
                 const artifact = parseStreamArtifact(file);
                 const imageDateMatch = fullSourcePath.match(/(\d{4}_\d{2}_\d{2})/);
                 const imageDate = imageDateMatch ? imageDateMatch[1].replace(/_/g, '-') : null;
@@ -287,6 +288,8 @@ async function syncStreams() {
         const stats = fs.statSync(fullPath);
 
         const artifact = parseStreamArtifact(file);
+        if (!stats.isFile()) return;
+        if (artifact?.kind === 'image' && getStreamImageExclusionReason(file) !== null) return;
         const dateTimeStr = artifact?.streamId || null;
         const titlePart = artifact?.title || null;
         const startTime = artifact?.startTime || null;
@@ -645,6 +648,7 @@ async function syncStreams() {
 
     // Assign keyword images with priority - ensure at least one keyword image per stream if available
     keywordImages.forEach(img => {
+      if (streamData.images.length >= maxImagesForThisStream) return;
       // Check if this image is already in the target directory (may have been copied earlier)
       const targetPath = path.join(targetDir, img.name);
 
@@ -739,7 +743,7 @@ async function syncStreams() {
     }
 
     // Take images from time window, respecting the limit
-    const neededImages = Math.max(1, Math.min(maxImagesForThisStream, maxImagesPerStream - streamData.images.length));
+    const neededImages = Math.max(0, Math.min(maxImagesForThisStream, maxImagesPerStream) - streamData.images.length);
     const imagesToAdd = timeWindowImages.slice(0, neededImages);
     imagesToAdd.forEach(img => {
       img.assigned = true;
@@ -863,6 +867,8 @@ async function syncStreams() {
 
     validStreamIds.forEach(id => {
       const stream = finalStreamGroups[id];
+      const streamData = allStreams.find(s => s.id === id);
+      if (!streamData || streamData.images.length >= 5) return;
       if (!isImageFallbackCandidate(img, stream)) return;
       const streamHour = parseInt(stream.time.split(':')[0]);
 
@@ -996,6 +1002,15 @@ async function syncStreams() {
   });
 
   finalStreams = deduplicatedStreams;
+  // Also remove recognizable working-image references from older entries that
+  // were outside this run's refresh window. Source/asset files are not deleted.
+  let excludedImageReferences = 0;
+  finalStreams.forEach(stream => {
+    const filtered = filterStreamImageReferences(stream.images);
+    excludedImageReferences += (stream.images || []).length - filtered.length;
+    stream.images = filtered;
+  });
+  console.log(`已排除 ${excludedImageReferences} 条旧过程图片引用（保留源文件）`);
   console.log(`最终去重后: ${finalStreams.length} 个直播数据`);
 
   finalStreams.sort((a, b) => b.id.localeCompare(a.id));
