@@ -125,16 +125,19 @@ export function chooseStory(state: RpgState, entity: WorldEntity, choiceId: stri
       if (choiceId === 'restore_lamp') { finish('sui_lamp', 'restore', 'sui_done', 'sui', 'sui_restore'); setStoryFlag(state, 'town_lamp_lit'); }
       if (choiceId === 'carry_lamp') { finish('sui_lamp', 'carry', 'sui_done', 'sui', 'sui_carry'); state.party.forEach((p) => { p.hp += 32; }); }
     }
-  } else if (entity.storyId === 'sui_lantern' && choiceId === 'collect' && has(state, 'sui_started')) { setStoryFlag(state, 'sui_lantern_found'); state.message = '找回了旧灯的灯芯。回到客栈，与岁己决定它的去处。'; }
-  else if (entity.storyId === 'shiori_quest') {
+  } else if (entity.storyId === 'sui_lantern' && choiceId === 'collect' && has(state, 'sui_started')) {
+    setStoryFlag(state, 'sui_lantern_found'); state.message = '找回了旧灯的灯芯。回到客栈，与岁己决定它的去处。';
+  } else if (entity.storyId === 'shiori_quest') {
     if (choiceId === 'accept' && recruited(state, 'shiori') && !has(state, 'shiori_started')) { setStoryFlag(state, 'shiori_started'); state.story.bonds.shiori = Math.max(1, state.story.bonds.shiori ?? 0); state.story.tracked = 'shiori_letter'; state.message = '已记下「未写完的信」：前往星陨旧城观星台调查。'; }
     if (has(state, 'shiori_letter_found') && !state.story.choices.shiori_letter) {
       if (choiceId === 'preserve_archive') finish('shiori_letter', 'preserve', 'shiori_done', 'shiori', 'shiori_preserve');
       if (choiceId === 'deliver_letter') finish('shiori_letter', 'deliver', 'shiori_done', 'shiori', 'shiori_deliver');
     }
-  } else if (entity.storyId === 'shiori_inscription' && choiceId === 'read' && has(state, 'shiori_started')) { setStoryFlag(state, 'shiori_inscription_read'); state.message = '读懂了守望者的执念。它愿意接受你们的挑战了。'; }
-  else if (entity.storyId === 'shiori_letter' && choiceId === 'collect' && state.completed.includes('memory_warden')) { setStoryFlag(state, 'shiori_letter_found'); state.message = '栞栞收好了信。可循记忆旧道返回青笺书院。'; }
-  else if (entity.storyId === 'memory_passage' && choiceId === 'passage' && state.completed.includes('memory_warden')) {
+  } else if (entity.storyId === 'shiori_inscription' && choiceId === 'read' && has(state, 'shiori_started')) {
+    setStoryFlag(state, 'shiori_inscription_read'); state.message = '读懂了守望者的执念。它愿意接受你们的挑战了。';
+  } else if (entity.storyId === 'shiori_letter' && choiceId === 'collect' && state.completed.includes('memory_warden')) {
+    setStoryFlag(state, 'shiori_letter_found'); state.message = '栞栞收好了信。可循记忆旧道返回青笺书院。';
+  } else if (entity.storyId === 'memory_passage' && choiceId === 'passage' && state.completed.includes('memory_warden')) {
     state.area = 'archive'; state.player = { ...INTERIORS.archive.spawn };
     const door = ENTITIES.find((e) => e.id === 'archive_door')!; state.worldReturn = { x: door.x, y: door.y };
     if (!state.visited.includes('archive')) state.visited.push('archive'); recordEvent(state, 'visit_archive'); recordEvent(state, 'passage_used'); state.message = '旧道的另一端，是青笺书院熟悉的书香。';

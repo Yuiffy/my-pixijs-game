@@ -50,7 +50,7 @@ export function heightAt(x: number, z: number): number | null {
   let result: number | null = null;
   for (const s of SURFACES) {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) continue;
-    const y = s.y + ((s.endY ?? s.y) - s.y) * (z - s.z1) / (s.z2 - s.z1);
+    const y = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
     if (result === null || y > result) result = y;
   }
   return result;
@@ -71,7 +71,7 @@ export function regionAt(x: number, z: number): string {
 
 export function lineClear(a: Vec3, b: Vec3, shortcut = false): boolean {
   const count = Math.max(1, Math.ceil(Math.hypot(a.x - b.x, a.z - b.z) / 0.35));
-  let y = a.y;
+  let { y } = a;
   for (let i = 1; i <= count; i += 1) {
     const t = i / count; const x = a.x + (b.x - a.x) * t; const z = a.z + (b.z - a.z) * t;
     if (!canOccupy(x, z, y, shortcut, 0.05)) return false;

@@ -121,7 +121,7 @@ speaker: entity.name,
     return;
   }
   const complete = state.completed.includes(entity.id);
-  const locked = (entity.requires === 'shards' ? state.shards < 3 : !!entity.requires && !state.completed.includes(entity.requires)) || !!entity.requiresFlag && !state.story.flags.includes(entity.requiresFlag);
+  const locked = (entity.requires === 'shards' ? state.shards < 3 : !!entity.requires && !state.completed.includes(entity.requires)) || (!!entity.requiresFlag && !state.story.flags.includes(entity.requiresFlag));
   state.dialogue = {
     entityId: entity.id,
 speaker: entity.name,
@@ -260,7 +260,7 @@ function finishBattle(state: RpgState, won: boolean): void {
   let gold = 0; let xp = 0; let shard = false;
   let text = '队伍撤回最近的驿站，掌柜已经备好了热茶。全队免费恢复，没有损失金币或碎片。调整伙伴、锻造武器后再来。';
   if (won && !state.completed.includes(entity.id)) {
-    state.completed.push(entity.id); recordEvent(state, "win_" + entity.id);
+    state.completed.push(entity.id); recordEvent(state, `win_${entity.id}`);
     if (entity.id === 'memory_warden') setStoryFlag(state, 'memory_shortcut_open');
     gold = entity.gold ?? 0; xp = entity.xp ?? 0; shard = !!entity.shard;
     state.gold += gold; state.xp += xp; if (shard) state.shards += 1;

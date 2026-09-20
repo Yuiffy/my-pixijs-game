@@ -81,28 +81,52 @@ export const ENTITIES: WorldEntity[] = [
 
 export const INTERIORS: Record<string, InteriorDef> = {
   inn: {
-    id: 'inn', name: '回音客栈', subtitle: '给晚归的人留一盏灯', width: 960, height: 672, style: 'inn', spawn: { x: 480, y: 552 },
+    id: 'inn',
+    name: '回音客栈',
+    subtitle: '给晚归的人留一盏灯',
+    width: 960,
+    height: 672,
+    style: 'inn',
+    spawn: { x: 480, y: 552 },
     props: [
       { x: 144, y: 96, w: 240, h: 96, kind: 'table' }, { x: 576, y: 96, w: 192, h: 96, kind: 'bed' },
       { x: 192, y: 336, w: 144, h: 96, kind: 'table' }, { x: 672, y: 336, w: 144, h: 48, kind: 'table' },
     ],
   },
   archive: {
-    id: 'archive', name: '青笺书院', subtitle: '谁来替故事写下最后一句', width: 960, height: 672, style: 'archive', spawn: { x: 480, y: 552 },
+    id: 'archive',
+    name: '青笺书院',
+    subtitle: '谁来替故事写下最后一句',
+    width: 960,
+    height: 672,
+    style: 'archive',
+    spawn: { x: 480, y: 552 },
     props: [
       { x: 96, y: 96, w: 96, h: 240, kind: 'shelf' }, { x: 768, y: 96, w: 96, h: 240, kind: 'shelf' },
       { x: 384, y: 144, w: 192, h: 48, kind: 'table' }, { x: 336, y: 384, w: 288, h: 48, kind: 'table' },
     ],
   },
   forge: {
-    id: 'forge', name: '听钟铁铺', subtitle: '炉火记得每一个归来的人', width: 960, height: 672, style: 'forge', spawn: { x: 480, y: 552 },
+    id: 'forge',
+    name: '听钟铁铺',
+    subtitle: '炉火记得每一个归来的人',
+    width: 960,
+    height: 672,
+    style: 'forge',
+    spawn: { x: 480, y: 552 },
     props: [
       { x: 144, y: 96, w: 240, h: 96, kind: 'forge' }, { x: 672, y: 96, w: 144, h: 192, kind: 'shelf' },
       { x: 192, y: 384, w: 192, h: 48, kind: 'table' }, { x: 672, y: 336, w: 144, h: 48, kind: 'table' },
     ],
   },
   ruin: {
-    id: 'ruin', name: '旧城观星台', subtitle: '一封被守住太久的信', width: 960, height: 672, style: 'ruin', spawn: { x: 480, y: 552 },
+    id: 'ruin',
+    name: '旧城观星台',
+    subtitle: '一封被守住太久的信',
+    width: 960,
+    height: 672,
+    style: 'ruin',
+    spawn: { x: 480, y: 552 },
     props: [
       { x: 96, y: 96, w: 192, h: 96, kind: 'shelf' }, { x: 624, y: 96, w: 144, h: 96, kind: 'crystal' },
       { x: 384, y: 192, w: 96, h: 192, kind: 'crystal' }, { x: 192, y: 384, w: 96, h: 96, kind: 'table' },

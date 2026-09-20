@@ -49,7 +49,7 @@ function backdrop(scene: Phaser.Scene, room: InteriorDef) {
       c.strokeStyle = 'rgba(177,220,210,.35)'; c.lineWidth = 2;
       [135, 151, 216].forEach(r => { c.beginPath(); c.ellipse(485, 342, r, r * 0.72, 0, 0, Math.PI * 2); c.stroke(); });
       for (let i = 0; i < 12; i++) {
-        const angle = i * Math.PI / 6;
+        const angle = (i * Math.PI) / 6;
         const x = 485 + Math.cos(angle) * 189;
         const y = 342 + Math.sin(angle) * 136;
         c.fillStyle = '#a2c7bf'; c.fillRect(x - 2, y - 2, 4, 4);
