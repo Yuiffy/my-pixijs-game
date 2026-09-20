@@ -1,0 +1,194 @@
+import type {
+  ActionDefinition,
+  Candidate,
+  ChildActionId,
+  Difficulty,
+  EconomyEvent,
+  ParentActionId,
+  RelationshipStage,
+} from "./types";
+
+export const GAME_TITLE = "年关牌局";
+
+export const DIFFICULTIES: Record<
+  Difficulty,
+  { title: string; description: string; pressure: number; economy: number }
+> = {
+  gentle: {
+    title: "还能商量",
+    description: "家长偶尔会听，经济波动较轻，适合第一局。",
+    pressure: 0.75,
+    economy: 0.75,
+  },
+  realistic: {
+    title: "现实饭桌",
+    description: "期待、房租和工作一起压来，默认规则。",
+    pressure: 1,
+    economy: 1,
+  },
+  holiday: {
+    title: "年关地狱",
+    description: "亲戚轮番上桌，坏消息更疼，双方更难退让。",
+    pressure: 1.3,
+    economy: 1.25,
+  },
+};
+
+export const STAGE_LABELS: Record<RelationshipStage, string> = {
+  single: "刚被介绍",
+  chatting: "开始接触",
+  dating: "确认恋爱",
+  married: "已经结婚",
+  parenthood: "进入育儿",
+};
+
+export const CANDIDATES: Candidate[] = [
+  {
+    id: "sui",
+    name: "岁己",
+    subtitle: "川渝直球 · 创意职业",
+    image: "/reference_images/岁己小红帽立绘.png",
+    resume: 66,
+    compatibility: 84,
+    initialIntent: 48,
+    cityCost: 6,
+    tags: ["嘴硬心软", "异地", "事业优先"],
+    boundary: "不接受替我做决定，也不想把结婚当 KPI。",
+    opening: "先聊得来，再谈下一步。别让双方家长替我们冲刺。",
+  },
+  {
+    id: "shiori",
+    name: "栞栞",
+    subtitle: "元气打工人 · 小城生活",
+    image: "/reference_images/栞栞新衣_舰长礼物长图里截图.png",
+    resume: 58,
+    compatibility: 78,
+    initialIntent: 62,
+    cityCost: 4,
+    tags: ["行动派", "烟火气", "慢热"],
+    boundary: "可以认真相处，但不能因为年龄就跳过了解。",
+    opening: "见面可以，催进度不行。先看看两个人怎么过日子。",
+  },
+  {
+    id: "kloa",
+    name: "克罗雅",
+    subtitle: "英伦留学归来 · 跨城发展",
+    image: "/reference_images/Kloa_克罗雅_立绘.png",
+    resume: 92,
+    compatibility: 64,
+    initialIntent: 34,
+    cityCost: 9,
+    tags: ["高学历", "高流动", "边界明确"],
+    boundary: "履历不是婚恋通行证，未来城市必须共同决定。",
+    opening: "我愿意认识新朋友，但不会为了匹配条件牺牲计划。",
+  },
+  {
+    id: "liko",
+    name: "莉蔻",
+    subtitle: "产品经理 · 一线城市",
+    image: "/reference_images/Liko_莉蔻_立绘.png",
+    resume: 86,
+    compatibility: 71,
+    initialIntent: 42,
+    cityCost: 10,
+    tags: ["高压工作", "目标清晰", "丁克开放"],
+    boundary: "家庭分工要写进现实，不接受默认由一方牺牲。",
+    opening: "婚姻可以讨论，但家务、财务和生育都要说清楚。",
+  },
+  {
+    id: "izayoi",
+    name: "十六萤",
+    subtitle: "研究所夜猫 · 学术路线",
+    image: "/reference_images/十六萤Izayoi.png",
+    resume: 88,
+    compatibility: 69,
+    initialIntent: 39,
+    cityCost: 7,
+    tags: ["高学历", "作息错位", "理性沟通"],
+    boundary: "论文和关系都不能赶工，拒绝用沉默代替沟通。",
+    opening: "可以先约一次安静的见面，别安排亲戚旁听。",
+  },
+  {
+    id: "xuehui",
+    name: "雪绘",
+    subtitle: "自由插画师 · 收入波动",
+    image: "/reference_images/雪绘.png",
+    resume: 54,
+    compatibility: 90,
+    initialIntent: 56,
+    cityCost: 5,
+    tags: ["自由职业", "高契合", "收入波动"],
+    boundary: "别把稳定只理解成编制，也别替我计算人生价值。",
+    opening: "我更在意一起生活时能不能尊重彼此的节奏。",
+  },
+  {
+    id: "hazel",
+    name: "灰泽满",
+    subtitle: "咨询顾问 · 长期出差",
+    image: "/reference_images/Hazel_灰泽满_立绘.png",
+    resume: 90,
+    compatibility: 61,
+    initialIntent: 31,
+    cityCost: 11,
+    tags: ["高收入", "常出差", "低意愿"],
+    boundary: "条件合适不代表时间合适，我不会被简历推着走。",
+    opening: "如果只是家长觉得般配，我们最好先别浪费彼此时间。",
+  },
+  {
+    id: "jiajia",
+    name: "嘉嘉",
+    subtitle: "小店合伙人 · 扎根本地",
+    image: "/images/materials/jiajia/嘉嘉立绘张嘴伸手闭眼.png",
+    resume: 63,
+    compatibility: 75,
+    initialIntent: 68,
+    cityCost: 3,
+    tags: ["本地生活", "家庭参与", "务实"],
+    boundary: "愿意成家，但不想把两个人变成两家人的项目。",
+    opening: "可以认真谈，先看遇到具体问题时能不能站在一起。",
+  },
+];
+
+export const ECONOMY_EVENTS: EconomyEvent[] = [
+  { id: "rent", title: "房东发来续租通知", detail: "租金又涨了一截。成家的想象先变成一张现金流表。", savings: -7, career: 0, stress: 6 },
+  { id: "overtime", title: "项目临时上线", detail: "周末见面和绩效只能保一个，主管说年轻人要多扛事。", savings: 4, career: 7, stress: 8 },
+  { id: "layoff-rumor", title: "群里开始传优化名单", detail: "没人确定下个月还有没有工位，未来计划突然失去刻度。", savings: -2, career: -8, stress: 11 },
+  { id: "bonus", title: "到账一笔项目奖金", detail: "终于有一点余量。是留作失业缓冲，还是投入共同生活？", savings: 12, career: 5, stress: -3 },
+  { id: "wedding", title: "同学群又发来婚礼请柬", detail: "红包、比较和祝福一起抵达，饭桌话题也有了新弹药。", savings: -5, career: 0, stress: 7 },
+  { id: "childcare", title: "朋友晒出托育账单", detail: "养育不再是抽象愿望，而是时间、住房和照护的总和。", savings: -3, career: 0, stress: 9 },
+  { id: "remote", title: "争取到两天远程办公", detail: "通勤少了一点，生活终于挤出可以认真说话的晚上。", savings: 3, career: 3, stress: -7 },
+  { id: "hospital", title: "家里有人去了一趟医院", detail: "照护责任突然落地，所有人都开始重新计算所谓稳定。", savings: -9, career: -2, stress: 9 },
+  { id: "promotion", title: "出现一个外地晋升机会", detail: "事业向前一步，关系却要回答谁为谁换城市。", savings: 8, career: 10, stress: 5 },
+  { id: "holiday-table", title: "亲戚围满年夜饭桌", detail: "每个人都说只是关心，问题却从工资一路问到二胎。", savings: -2, career: 0, stress: 13 },
+];
+
+export const CHILD_ACTIONS: ActionDefinition<ChildActionId>[] = [
+  { id: "meet", title: "我去见一面", detail: "先见到真人，再决定要不要继续，而不是替简历谈恋爱。", hint: "关系与意愿上升，花钱并承受当前压力" },
+  { id: "invest", title: "我主动约一次", detail: "我愿意投入一次真实约会，但也要看对方有没有回应。", hint: "高契合时收益大；对方意愿低时会受伤" },
+  { id: "next", title: "我不想再聊了", detail: "这位不合适，我明确拒绝，不把关系拖成消耗。", hint: "恢复自主和压力，亲情会短暂受损" },
+  { id: "boundary", title: "我把边界说清楚", detail: "我会听建议，但我的人生不能由家长替我决定。", hint: "降低压力，提高自主；高压家庭可能争吵" },
+  { id: "work", title: "我先把班上完", detail: "这回合先保住工作和现金流，不为饭桌进度打乱生活。", hint: "事业和存款上升，关系可能降温" },
+  { id: "marry", title: "我们认真谈结婚", detail: "住房、财务和分工都谈清楚后，再决定要不要登记。", hint: "准备不足会制造债务和高压" },
+  { id: "delay", title: "我想晚点再谈", detail: "我承认现在还没准备好，先给未来留下选择。", hint: "降低压力并保留关系，家长期待下降" },
+  { id: "baby", title: "我们认真计划生育", detail: "只有双方意愿、照护和现金流都够时，我才愿意前进。", hint: "条件成熟可达成幸福；不足时风险极高" },
+  { id: "childfree", title: "我决定不生", detail: "我不再用“以后再说”拖延，愿意承担观念冲突。", hint: "自主大增；亲情取决于此前是否建立尊重" },
+  { id: "build-home", title: "我们把日子过好", detail: "我和伴侣重新谈钱、家务、照护与边界，让婚姻不只剩一张证。", hint: "花费存款，修复关系、意愿和婚育债务" },
+  { id: "protect-child", title: "我不拿孩子交卷", detail: "我停掉层层加码，先听孩子说累不累、想要什么。", hint: "下一代压力大降，但我要付出时间和职业成本" },
+];
+
+export const PARENT_ACTIONS: ActionDefinition<ParentActionId>[] = [
+  { id: "push-meet", title: "我来催见面", detail: "“见一面又不会少块肉，今晚把时间空出来。”", hint: "推动接触，也会增加压力" },
+  { id: "compare", title: "我拿同龄人比较", detail: "“你看人家孩子，二胎都快上幼儿园了。”", hint: "面子快速上升，亲情与压力恶化" },
+  { id: "encourage", title: "我劝孩子多主动", detail: "无论对方是否热情，我都要求孩子继续发消息。", hint: "高意愿时推进；低意愿时压力暴涨" },
+  { id: "next", title: "我换下一个", detail: "这份简历我不满意，重新从候选人里挑。", hint: "重置关系，继续消耗孩子耐心" },
+  { id: "push-marriage", title: "我来催结婚", detail: "“谈这么久还不结，是不是根本没诚意？”", hint: "准备充分才可能成功，过早施压会反噬" },
+  { id: "push-baby", title: "我来催生子", detail: "“我们还能帮你带，再晚就来不及了。”", hint: "支持不足时只是把成本推给下一代" },
+  { id: "push-education", title: "我给孩子排满课", detail: "“大城市竞争这么激烈，怎么能输在起跑线上？”", hint: "面子和成绩焦虑上升，下一代压力暴涨" },
+  { id: "support", title: "我拿出真金白银", detail: "我承担住房、婚礼或照护的一部分，不只提供意见。", hint: "存款、亲情与安全感上升，面子收益慢" },
+  { id: "listen", title: "我先听孩子说", detail: "我暂时放下任务表，问清对方到底害怕什么。", hint: "压力下降、亲情修复，推进速度变慢" },
+];
+
+export const ACTION_BY_ID = {
+  child: Object.fromEntries(CHILD_ACTIONS.map(action => [action.id, action])),
+  parent: Object.fromEntries(PARENT_ACTIONS.map(action => [action.id, action])),
+};

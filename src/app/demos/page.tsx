@@ -31,6 +31,13 @@ interface ProjectItem {
 
 const miniGames: ProjectItem[] = [
   {
+    title: '年关牌局：这婚，你催吗？',
+    href: '/game/family-pressure',
+    description: '当催婚变成家庭策略战：从相亲饭桌走到婚后多年，在十四个回合里保住关系与人生。',
+    image: '/reference_images/岁己小红帽立绘.png',
+    meta: '双阵营策略 · 本地双人 · 十一种结局',
+  },
+  {
     title: '岁己：马上就播',
     href: '/game/pre-stream',
     description: '接水、喂猫、调声卡。把七件小事做好，挑战最短开播时间。',
