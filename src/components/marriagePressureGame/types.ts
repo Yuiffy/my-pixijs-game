@@ -17,7 +17,8 @@ export type CandidateId =
   | "izayoi"
   | "xuehui"
   | "hazel"
-  | "jiajia";
+  | "nana7mi"
+  | "azi";
 
 export type ChildActionId =
   | "meet"
@@ -88,7 +89,7 @@ export interface Ending {
 }
 
 export interface MarriageGameState {
-  version: 2;
+  version: 3;
   phase: GamePhase;
   mode: GameMode;
   difficulty: Difficulty;
@@ -96,6 +97,9 @@ export interface MarriageGameState {
   rng: number;
   turn: number;
   maxTurns: number;
+  startAge: number;
+  marriedAtTurn: number | null;
+  parenthoodAtTurn: number | null;
   activeActor: Actor;
   selectionKind: "opening" | "replace";
   candidateId: CandidateId | null;

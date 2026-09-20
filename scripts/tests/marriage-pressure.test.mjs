@@ -14,6 +14,7 @@ const {
   gameReducer,
   getAvailableChildActions,
   getAvailableParentActions,
+  getAgeAtTurn,
   getEnding,
   getScores,
   validateSave,
@@ -77,8 +78,11 @@ function playParent(seed) {
 }
 
 test("candidate catalog has varied incentives and fictional boundary text", () => {
-  assert.equal(CANDIDATES.length, 8);
-  assert.equal(new Set(CANDIDATES.map(candidate => candidate.id)).size, 8);
+  assert.equal(CANDIDATES.length, 9);
+  assert.equal(new Set(CANDIDATES.map(candidate => candidate.id)).size, 9);
+  assert.ok(CANDIDATES.some(candidate => candidate.id === "nana7mi"));
+  assert.ok(CANDIDATES.some(candidate => candidate.id === "azi"));
+  assert.ok(!CANDIDATES.some(candidate => candidate.id === "jiajia"));
   assert.ok(CANDIDATES.some(candidate => candidate.resume >= 90));
   assert.ok(CANDIDATES.some(candidate => candidate.compatibility >= 88));
   assert.ok(CANDIDATES.some(candidate => candidate.initialIntent <= 35));
@@ -210,6 +214,8 @@ test("marriage continues into a later-life phase instead of reopening matchmakin
   };
   lateMarriage = gameReducer(lateMarriage, { type: "child-action", id: "marry" });
   assert.equal(lateMarriage.stage, "married");
+  assert.equal(lateMarriage.marriedAtTurn, 14);
+  assert.equal(getAgeAtTurn(lateMarriage, lateMarriage.marriedAtTurn), lateMarriage.startAge + 13);
   assert.equal(lateMarriage.phase, "turn");
   assert.equal(lateMarriage.turn, 15);
   assert.equal(lateMarriage.maxTurns, 18);
@@ -268,7 +274,7 @@ test("invalid actions are inert and saves round-trip without shared arrays", () 
   assert.deepEqual(restored, selected);
   assert.notEqual(restored, selected);
   assert.notEqual(restored.log, selected.log);
-  assert.equal(validateSave({ ...selected, version: 3 }), null);
+  assert.equal(validateSave({ ...selected, version: 4 }), null);
   assert.equal(validateSave({ ...selected, candidateId: "missing" }), null);
   assert.equal(validateSave({ ...selected, stress: Number.NaN }), null);
   assert.equal(validateSave({ ...selected, extra: true }), null);
@@ -310,12 +316,29 @@ test("v1 saves migrate without preserving the old ending meaning", () => {
   const current = chooseBestCandidate(start("parent", "realistic", 15));
   const legacy = { ...current, version: 1 };
   delete legacy.nextGenStress;
+  delete legacy.startAge;
+  delete legacy.marriedAtTurn;
+  delete legacy.parenthoodAtTurn;
   legacy.phase = "ended";
   legacy.ending = "depressed";
   const restored = validateSave(legacy);
-  assert.equal(restored.version, 2);
+  assert.equal(restored.version, 3);
   assert.equal(restored.nextGenStress, 0);
   assert.equal(restored.ending, "burnout");
+  assert.equal(restored.startAge, 26);
+  assert.equal(restored.marriedAtTurn, null);
+});
+
+test("v2 saves replace the cat candidate and gain age fields", () => {
+  const current = chooseBestCandidate(start("parent", "realistic", 21));
+  const legacy = { ...current, version: 2, candidateId: "jiajia" };
+  delete legacy.startAge;
+  delete legacy.marriedAtTurn;
+  delete legacy.parenthoodAtTurn;
+  const restored = validateSave(legacy);
+  assert.equal(restored.version, 3);
+  assert.equal(restored.candidateId, "nana7mi");
+  assert.equal(restored.startAge, 26);
 });
 
 test("in-progress ten-round saves extend to the later-life rules", () => {

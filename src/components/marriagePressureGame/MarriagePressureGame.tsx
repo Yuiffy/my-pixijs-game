@@ -39,6 +39,7 @@ import {
   getActionPreview,
   getAvailableChildActions,
   getAvailableParentActions,
+  getAgeAtTurn,
   getCandidate,
   getEnding,
   validateSave,
@@ -55,6 +56,7 @@ import styles from "./marriage.module.css";
 
 const SAVE_KEY = "marriage-pressure-save-v1";
 const PROFILE_KEY = "marriage-pressure-player-name";
+const SHARE_URL = "my-pixijs-game.vercel.app/game/family-pressure";
 const MODE_COPY: Record<GameMode, { title: string; subtitle: string }> = {
   child: { title: "我就是当事人", subtitle: "替自己做决定，也决定要不要靠近谁" },
   parent: { title: "我是家长", subtitle: "挑人、催进度，或真正提供支持" },
@@ -105,6 +107,21 @@ function CandidatePortrait({ id, priority = false }: { id: string; priority?: bo
       className={styles.portraitImage}
     />
   );
+}
+
+function getEconomySummary(state: MarriageGameState) {
+  const net = state.savings - state.weddingDebt;
+  if (net >= 68 && state.career >= 68) return { title: "宽裕上升", detail: `净余量 ${net} · 事业 ${state.career}` };
+  if (net >= 28) return { title: "基本稳住", detail: `净余量 ${net} · 事业 ${state.career}` };
+  if (net >= 0) return { title: "收支紧绷", detail: `存款 ${state.savings} · 债务 ${state.weddingDebt}` };
+  return { title: "债务压顶", detail: `存款 ${state.savings} · 债务 ${state.weddingDebt}` };
+}
+
+function getRelationshipSummary(state: MarriageGameState) {
+  if (state.relation >= 76 && state.mutualIntent >= 66) return "仍然相爱";
+  if (state.relation >= 52 && state.mutualIntent >= 45) return "还在磨合";
+  if (state.stage === "single") return "已经翻篇";
+  return "关系破裂";
 }
 
 export default function MarriagePressureGame() {
@@ -341,7 +358,7 @@ export default function MarriagePressureGame() {
         <div className={`${styles.lobbyPortrait} ${styles.lobbyPortraitRight}`}>
           <CandidatePortrait id="kloa" />
         </div>
-        <div className={styles.redEnvelope}>相亲简历<br /><b>8</b> 份</div>
+        <div className={styles.redEnvelope}>相亲简历<br /><b>{CANDIDATES.length}</b> 份</div>
       </div>
       <div className={styles.lobbyCopy}>
         <span className={styles.eyebrow}>A FAMILY STRATEGY GAME</span>
@@ -616,43 +633,88 @@ export default function MarriagePressureGame() {
     </>
   );
 
-  const renderEnding = () => ending && (
-    <section className={styles.ending} style={{ "--ending": ending.color } as React.CSSProperties}>
-      <div className={styles.endingCopy}>
-        <span className={styles.eyebrow}>FAMILY REPORT / 家庭结算</span>
-        <p>{ending.kicker}</p>
-        <h1>{ending.id === "depressed"
-          ? state.mode === "parent" ? "孙辈玉玉了" : `我的孩子玉玉了`
-          : ending.id === "burnout" && state.mode !== "child" ? `${playerName}先撑不住了` : ending.title}</h1>
-        <blockquote>{ending.description}</blockquote>
-        <div className={styles.scoreRow}>
-          <span><small>{state.mode === "child" ? "我的分数" : `${playerName}的分数`}</small><b>{state.scores.child}</b></span>
-          <span><small>家长分</small><b>{state.scores.parent}</b></span>
-          <span><small>家庭分</small><b>{state.scores.family}</b></span>
+  const renderEnding = () => {
+    if (!ending) return null;
+    const endingTitle = ending.id === "depressed"
+      ? state.mode === "parent" ? "孙辈玉玉了" : "我的孩子玉玉了"
+      : ending.id === "burnout" && state.mode !== "child" ? `${playerName}先撑不住了` : ending.title;
+    const endingAge = getAgeAtTurn(state);
+    const marriedAge = state.marriedAtTurn === null
+      ? null
+      : getAgeAtTurn(state, state.marriedAtTurn);
+    const parenthoodAge = state.parenthoodAtTurn === null
+      ? null
+      : getAgeAtTurn(state, state.parenthoodAtTurn);
+    const childSummary = state.stage === "parenthood"
+      ? { title: "已经生子", detail: parenthoodAge ? `${parenthoodAge} 岁进入育儿` : "旧档未记录年龄" }
+      : state.childPlan === "childfree"
+        ? { title: "决定不生", detail: "两个人明确选择丁克" }
+        : { title: "没有孩子", detail: state.stage === "married" ? "生育仍未达成共识" : "尚未进入婚育" };
+    const economy = getEconomySummary(state);
+    const relationship = getRelationshipSummary(state);
+
+    return (
+      <section className={styles.ending} style={{ "--ending": ending.color } as React.CSSProperties}>
+        <div className={styles.endingPoster} data-testid="ending-poster">
+          <div className={styles.endingPortrait}>
+            {candidate ? <CandidatePortrait id={candidate.id} priority /> : <span className={styles.noPartner}>这一局没有留下对象</span>}
+            <div className={styles.endingPartner}>
+              <small>这段人生的对象</small>
+              <strong>{candidate?.name ?? "没有对象"}</strong>
+              <span>{candidate?.subtitle ?? "选择权回到自己手里"}</span>
+            </div>
+          </div>
+          <div className={styles.endingCopy}>
+            <div className={styles.endingBrand}>
+              <span>{GAME_TITLE} · 这婚，你催吗？</span>
+              <b>{SHARE_URL}</b>
+            </div>
+            <span className={styles.eyebrow}>FAMILY REPORT / {playerName} 的人生结算</span>
+            <p>{ending.kicker}</p>
+            <h1>{endingTitle}</h1>
+            <blockquote>{ending.description}</blockquote>
+            <div className={styles.endingFacts}>
+              <span><small>对象</small><strong>{candidate?.name ?? "没有对象"}</strong><i>{relationship} · 关系 {state.relation}</i></span>
+              <span><small>结婚年龄</small><strong>{marriedAge ? `${marriedAge} 岁` : state.stage === "married" || state.stage === "parenthood" ? "旧档未记录" : "没有结婚"}</strong><i>{STAGE_LABELS[state.stage]}</i></span>
+              <span><small>走到结局</small><strong>{endingAge} 岁</strong><i>经历 {state.turn} 个家庭回合</i></span>
+              <span><small>生育选择</small><strong>{childSummary.title}</strong><i>{childSummary.detail}</i></span>
+              <span><small>家庭经济</small><strong>{economy.title}</strong><i>{economy.detail}</i></span>
+              <span><small>家庭关系</small><strong>{state.familyBond >= 68 ? "彼此支持" : state.familyBond >= 38 ? "勉强维系" : "已经决裂"}</strong><i>亲情 {state.familyBond} · 支持 {state.support}</i></span>
+            </div>
+            <div className={styles.scoreRow}>
+              <span><small>{state.mode === "child" ? "我的分数" : `${playerName}的分数`}</small><b>{state.scores.child}</b></span>
+              <span><small>家长分</small><b>{state.scores.parent}</b></span>
+              <span><small>家庭分</small><b>{state.scores.family}</b></span>
+            </div>
+          </div>
         </div>
-        <div className={styles.resultActions}>
-          <button className={styles.primaryButton} data-testid="play-again" onClick={start}><ReloadOutlined /> 同身份再来一局</button>
-          <button className={styles.secondaryButton} data-testid="back-lobby" onClick={restart}>换身份 / 难度</button>
+        <div className={styles.endingDetails}>
+          <div className={styles.resultPanel}>
+            <span className={styles.eyebrow}>这局人生已经写完</span>
+            <h2>{endingTitle}</h2>
+            <p>{playerName} 从 {state.startAge} 岁走到 {endingAge} 岁。下一局，换一种回应，也许会走向完全不同的家。</p>
+            <div className={styles.resultActions}>
+              <button className={styles.primaryButton} data-testid="play-again" onClick={start}><ReloadOutlined /> 同身份再来一局</button>
+              <button className={styles.secondaryButton} data-testid="back-lobby" onClick={restart}>换身份 / 难度</button>
+            </div>
+          </div>
+          <div className={styles.endingLedger}>
+            <span className={styles.ledgerTitle}><SafetyCertificateOutlined /> 最终账本</span>
+            <dl>
+              <div><dt>压力 / 自主</dt><dd>{state.stress} / {state.autonomy}</dd></div>
+              <div><dt>存款 / 债务</dt><dd>{state.savings} / {state.weddingDebt}</dd></div>
+              <div><dt>下一代压力</dt><dd>{state.nextGenStress}</dd></div>
+              <div><dt>强压 / 倾听</dt><dd>{state.coerciveMoves} / {state.supportiveMoves}</dd></div>
+            </dl>
+            <details>
+              <summary>展开本局家庭记录</summary>
+              {[...state.log].reverse().map((line, index) => <p key={`${line}-${index}`}>{personalizeNarrative(line)}</p>)}
+            </details>
+          </div>
         </div>
-      </div>
-      <div className={styles.endingLedger}>
-        <span className={styles.ledgerTitle}><SafetyCertificateOutlined /> 最终账本</span>
-        <dl>
-          <div><dt>人生阶段</dt><dd>{STAGE_LABELS[state.stage]}</dd></div>
-          <div><dt>压力 / 自主</dt><dd>{state.stress} / {state.autonomy}</dd></div>
-          <div><dt>存款 / 债务</dt><dd>{state.savings} / {state.weddingDebt}</dd></div>
-          <div><dt>真实支持</dt><dd>{state.support}</dd></div>
-          <div><dt>下一代压力</dt><dd>{state.nextGenStress}</dd></div>
-          <div><dt>强压行动</dt><dd>{state.coerciveMoves}</dd></div>
-          <div><dt>倾听支持</dt><dd>{state.supportiveMoves}</dd></div>
-        </dl>
-        <details>
-          <summary>展开本局家庭记录</summary>
-          {[...state.log].reverse().map((line, index) => <p key={`${line}-${index}`}>{personalizeNarrative(line)}</p>)}
-        </details>
-      </div>
-    </section>
-  );
+      </section>
+    );
+  };
 
   return (
     <main ref={rootRef} className={styles.game} data-phase={state.phase}>

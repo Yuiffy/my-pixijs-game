@@ -108,6 +108,13 @@ export const ENDINGS: Record<string, Ending> = {
 
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, Math.round(value)));
 
+export function getAgeAtTurn(
+  state: Pick<MarriageGameState, "startAge" | "turn">,
+  turn = state.turn,
+) {
+  return state.startAge + Math.max(0, turn - 1);
+}
+
 export function getCandidate(id: CandidateId | null): Candidate | null {
   return CANDIDATES.find(candidate => candidate.id === id) || null;
 }
@@ -265,7 +272,7 @@ function checkTerminal(state: MarriageGameState) {
 
 export function createInitialState(): MarriageGameState {
   return {
-    version: 2,
+    version: 3,
     phase: "lobby",
     mode: "child",
     difficulty: "realistic",
@@ -273,6 +280,9 @@ export function createInitialState(): MarriageGameState {
     rng: 1,
     turn: 0,
     maxTurns: 14,
+    startAge: 26,
+    marriedAtTurn: null,
+    parenthoodAtTurn: null,
     activeActor: "child",
     selectionKind: "opening",
     candidateId: null,
@@ -488,6 +498,7 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId) {
     state.mutualIntent -= 2;
     record(state, "子女先把手上的班上完，为失业、搬家和生活保留现金缓冲。");
   } else if (id === "marry") {
+    if (state.marriedAtTurn === null) state.marriedAtTurn = state.turn;
     if (readyForMarriage(state)) {
       state.stage = "married";
       state.savings -= Math.max(8, 26 - state.support * 0.25);
@@ -518,6 +529,7 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId) {
     record(state, "子女提出婚育晚点谈：先把工作、住房和彼此意愿稳定下来。");
   } else if (id === "baby") {
     state.childPlan = "ready";
+    if (state.parenthoodAtTurn === null) state.parenthoodAtTurn = state.turn;
     if (readyForChild(state)) {
       state.stage = "parenthood";
       state.nextGenStress += 8;
@@ -763,6 +775,7 @@ function startGame(
   state.difficulty = difficulty;
   state.seed = Number.isSafeInteger(inputSeed) && inputSeed > 0 ? inputSeed : 1;
   state.rng = state.seed;
+  state.startAge = 25 + (state.seed % 5);
   state.turn = 1;
   state.log = [state.lastEvent];
   draftCandidates(state);
@@ -867,21 +880,36 @@ export function getActionPreview(
 
 export function validateSave(value: unknown): MarriageGameState | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const legacy = value as Omit<Partial<MarriageGameState>, "version"> & {
-    version?: number;
-  };
-  const migrated = legacy.version === 1
-    ? {
-        ...legacy,
-        version: 2,
-        nextGenStress: 0,
-        ending: legacy.ending === "depressed" ? "burnout" : legacy.ending,
-      }
-    : legacy;
-  const state = migrated as MarriageGameState;
+  let migrated: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+  if (migrated.version === 1) {
+    migrated = {
+      ...migrated,
+      version: 2,
+      nextGenStress: 0,
+      ending: migrated.ending === "depressed" ? "burnout" : migrated.ending,
+    };
+  }
+  if (migrated.version === 2) {
+    const replaceCat = (id: unknown) => (id === "jiajia" ? "nana7mi" : id);
+    migrated = {
+      ...migrated,
+      version: 3,
+      startAge: 26,
+      marriedAtTurn: null,
+      parenthoodAtTurn: null,
+      candidateId: replaceCat(migrated.candidateId),
+      candidateOptions: Array.isArray(migrated.candidateOptions)
+        ? migrated.candidateOptions.map(replaceCat)
+        : migrated.candidateOptions,
+      rejectedCandidates: Array.isArray(migrated.rejectedCandidates)
+        ? migrated.rejectedCandidates.map(replaceCat)
+        : migrated.rejectedCandidates,
+    };
+  }
+  const state = migrated as unknown as MarriageGameState;
   const templateKeys = Object.keys(createInitialState()).sort();
   if (Object.keys(state).sort().join("|") !== templateKeys.join("|")) return null;
-  if (state.version !== 2) return null;
+  if (state.version !== 3) return null;
   if (state.phase !== "ended" && state.maxTurns === 10) state.maxTurns = 14;
   if (!(["lobby", "candidate", "turn", "ended"] as string[]).includes(state.phase)) return null;
   if (!(["child", "parent", "duel"] as string[]).includes(state.mode)) return null;
@@ -894,6 +922,7 @@ export function validateSave(value: unknown): MarriageGameState | null {
     state.rng,
     state.turn,
     state.maxTurns,
+    state.startAge,
     state.stress,
     state.autonomy,
     state.familyBond,
@@ -915,6 +944,12 @@ export function validateSave(value: unknown): MarriageGameState | null {
     state.scores.family,
   ];
   if (numeric.some(number => !Number.isFinite(number))) return null;
+  if (!Number.isInteger(state.startAge) || state.startAge < 18 || state.startAge > 60) return null;
+  if (
+    [state.marriedAtTurn, state.parenthoodAtTurn].some(
+      turn => turn !== null && (!Number.isInteger(turn) || turn < 1),
+    )
+  ) return null;
   const candidateIds = new Set(CANDIDATES.map(candidate => candidate.id));
   if (state.candidateId !== null && !candidateIds.has(state.candidateId)) return null;
   if (

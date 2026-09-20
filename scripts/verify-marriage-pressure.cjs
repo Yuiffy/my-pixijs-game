@@ -72,6 +72,18 @@ async function capture(page, name) {
   screenshots.push({ file, pixels, dom, state: await readState(page) });
 }
 
+async function verifyEndingPoster(page, expectedChildText) {
+  const poster = control(page, "ending-poster");
+  assert.ok(await poster.isVisible(), "Ending poster must be visible");
+  const text = await poster.innerText();
+  assert.match(text, /my-pixijs-game\.vercel\.app\/game\/family-pressure/);
+  assert.match(text, /对象/);
+  assert.match(text, /走到结局/);
+  assert.match(text, /家庭经济/);
+  if (expectedChildText) assert.match(text, expectedChildText);
+  assert.ok(await poster.locator("img").count(), "Ending poster must include the candidate portrait");
+}
+
 async function chooseFirstCandidate(page) {
   const state = await readState(page);
   assert.equal(state.phase, "candidate");
@@ -139,6 +151,7 @@ async function finishChildRun(page) {
     await finishChildRun(page);
     state = await readState(page);
     assert.ok(state.ending);
+    await verifyEndingPoster(page);
     await capture(page, "03-child-ending-desktop");
     observed.push({ scenario: "child-campaign", ending: state.ending, scores: state.scores });
 
@@ -188,12 +201,15 @@ async function finishChildRun(page) {
 
     await page.evaluate(() => {
       const saved = JSON.parse(localStorage.getItem("marriage-pressure-save-v1") || "null");
-      if (!saved) throw new Error("Expected a valid v2 save before injecting the parenting scenario");
+      if (!saved) throw new Error("Expected a valid v3 save before injecting the parenting scenario");
       Object.assign(saved, {
         phase: "turn",
         mode: "parent",
         difficulty: "realistic",
         turn: 7,
+        startAge: 27,
+        marriedAtTurn: 4,
+        parenthoodAtTurn: 6,
         activeActor: "parent",
         selectionKind: "opening",
         candidateOptions: [],
@@ -227,6 +243,7 @@ async function finishChildRun(page) {
     assert.equal(state.phase, "ended");
     assert.equal(state.ending, "depressed");
     assert.match(await page.locator("main").innerText(), /孙辈玉玉了/);
+    await verifyEndingPoster(page, /已经生子/);
     await capture(page, "06b-next-generation-pressure-ending");
     observed.push({
       scenario: "next-generation-pressure-ending",
@@ -244,6 +261,9 @@ async function finishChildRun(page) {
         rng: 20260920,
         turn: 14,
         maxTurns: 14,
+        startAge: 26,
+        marriedAtTurn: 7,
+        parenthoodAtTurn: null,
         activeActor: "child",
         stage: "married",
         stress: 10,
@@ -289,6 +309,7 @@ async function finishChildRun(page) {
     state = await readState(page);
     assert.equal(state.ending, "happy", JSON.stringify(state));
     assert.match(await page.locator("main").innerText(), /真的幸福终老/);
+    await verifyEndingPoster(page, /决定不生/);
     await capture(page, "06c-later-life-happy-ending");
     observed.push({ scenario: "later-life-happy-ending", ending: state.ending, turn: state.turn });
 
@@ -301,6 +322,9 @@ async function finishChildRun(page) {
         rng: 20260920,
         turn: 14,
         maxTurns: 14,
+        startAge: 28,
+        marriedAtTurn: 6,
+        parenthoodAtTurn: null,
         activeActor: "child",
         stage: "married",
         stress: 52,
@@ -332,8 +356,14 @@ async function finishChildRun(page) {
     state = await readState(page);
     assert.equal(state.ending, "runaway");
     assert.match(await page.locator("main").innerText(), /彩礼卷走，人也走了/);
+    await verifyEndingPoster(page, /决定不生/);
     await capture(page, "06d-bride-price-runaway-ending");
     observed.push({ scenario: "bride-price-runaway-ending", ending: state.ending, turn: state.turn });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await layout(page);
+    await verifyEndingPoster(page, /决定不生/);
+    await capture(page, "06e-ending-mobile-390");
 
     const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
     const phone = await mobileContext.newPage();
