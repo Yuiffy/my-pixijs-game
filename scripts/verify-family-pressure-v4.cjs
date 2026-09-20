@@ -164,7 +164,7 @@ async function capture(page, name) {
     assert.equal((await read(page)).help, false);
     assert.deepEqual(errors, []);
     writeFileSync(path.join(output, "report.json"), JSON.stringify({ passed: true, errors, observations, shots }, null, 2));
-    console.log(`Verified ${shots.length} screenshots, 46 assets, full campaign, crisis recovery, divorce, all roles and 390/320px layouts.`);
+    console.log(`Verified ${shots.length} screenshots, ${CANDIDATES.length} assets, full campaign, crisis recovery, divorce, all roles and 390/320px layouts.`);
   } catch (err) { writeFileSync(path.join(output, "failure.json"), JSON.stringify({ error: String(err.stack), errors, shots }, null, 2)); throw err; }
   finally { await browser.close(); }
 })().catch(err => { console.error(err); process.exitCode = 1; });

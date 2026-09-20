@@ -162,12 +162,6 @@ export const CANDIDATES: Candidate[] = [
     boundary: "物质宽松不等于自动长大，我需要的是能一起承担生活的人。",
     opening: "可以先快乐相处，但真正成家时，不能永远让家里替我们收拾残局。",
   },
-  { id: "lin", name: "林知夏", subtitle: "社区医生 · 轮班工作", image: "/reference_images/雪绘.png", resume: 72, compatibility: 76, initialIntent: 36, cityCost: 5, tags: ["父母介绍", "轮班", "先做朋友"], boundary: "我可以来认识一下，但不保证见了就要交往。", opening: "是家里催我来的，最近排班有点满。" },
-  { id: "qiao", name: "乔安", subtitle: "建筑设计师 · 周末徒步", image: "/reference_images/Liko_莉蔻_立绘.png", resume: 80, compatibility: 67, initialIntent: 44, cityCost: 7, tags: ["独立生活", "户外", "慢热"], boundary: "不要把沉默当成默认同意，也别替我安排未来。", opening: "微信先聊聊吧，至少知道对方周末怎么过。" },
-  { id: "chen", name: "陈雨宁", subtitle: "小学教师 · 本地生活", image: "/reference_images/栞栞新衣_舰长礼物长图里截图.png", resume: 65, compatibility: 82, initialIntent: 58, cityCost: 4, tags: ["小城", "AA习惯", "稳定节奏"], boundary: "我习惯AA，不想让谁觉得一顿饭就欠下什么。", opening: "先从普通朋友认识，别一见面就谈婚期。" },
-  { id: "zhou", name: "周可", subtitle: "电商运营 · 跨城通勤", image: "/images/livers/nana7mi.png", resume: 70, compatibility: 62, initialIntent: 25, cityCost: 8, tags: ["被家里催", "通勤远", "暂不急婚"], boundary: "我答应来见面，不等于答应谈恋爱。", opening: "妈妈给我排了这次见面，我自己还没想好。" },
-  { id: "xu", name: "许青", subtitle: "软件工程师 · 安静慢热", image: "/reference_images/十六萤Izayoi.png", resume: 85, compatibility: 74, initialIntent: 46, cityCost: 6, tags: ["慢热", "分享日常", "需要空间"], boundary: "不用每条消息秒回，但希望聊天是双向的。", opening: "我不太擅长破冰，可以先聊聊最近在做的事。" },
-  { id: "tang", name: "唐悦", subtitle: "烘焙店主 · 自主创业", image: "/reference_images/岁己小红帽立绘.png", resume: 62, compatibility: 86, initialIntent: 52, cityCost: 5, tags: ["创业", "作息早", "量入为出"], boundary: "见几面才能知道合不合适，不喜欢也可以直接说。", opening: "店里忙的时候回得慢，休息日可以一起喝咖啡。" },
 ];
 
 export const ECONOMY_EVENTS: EconomyEvent[] = [

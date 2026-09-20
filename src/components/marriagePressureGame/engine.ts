@@ -1191,6 +1191,23 @@ recoveryGranted: false,
       partnerNote: "旧档已接入生活预算，接下来可以一起商量。",
     };
   }
+  if (migrated.version === 4) {
+    const originalIds: Record<string, CandidateId> = { lin: "xuehui", qiao: "liko", chen: "shiori", zhou: "nana7mi", xu: "izayoi", tang: "sui" };
+    const migrateId = (id: unknown) => (typeof id === "string" && Object.prototype.hasOwnProperty.call(originalIds, id) ? originalIds[id] : id);
+    const migrateList = (ids: unknown) => (Array.isArray(ids) && ids.some(id => migrateId(id) !== id) ? Array.from(new Set(ids.map(migrateId))) : ids);
+    const originalNames = [["林知夏", "雪绘"], ["乔安", "莉蔻"], ["陈雨宁", "栞栞"], ["周可", "七海"], ["许青", "十六萤"], ["唐悦", "岁己"]];
+    const migrateText = (text: unknown) => (typeof text === "string" ? originalNames.reduce((line, [before, after]) => line.replaceAll(before, after), text) : text);
+    migrated = {
+      ...migrated,
+      candidateId: migrateId(migrated.candidateId),
+      candidateOptions: migrateList(migrated.candidateOptions),
+      rejectedCandidates: migrateList(migrated.rejectedCandidates),
+      lastEvent: migrateText(migrated.lastEvent),
+      datingFeedback: migrateText(migrated.datingFeedback),
+      partnerNote: migrateText(migrated.partnerNote),
+      log: Array.isArray(migrated.log) ? migrated.log.map(migrateText) : migrated.log,
+    };
+  }
   const state = migrated as unknown as MarriageGameState;
   const templateKeys = Object.keys(createInitialState()).sort();
   if (Object.keys(state).sort().join("|") !== templateKeys.join("|")) return null;

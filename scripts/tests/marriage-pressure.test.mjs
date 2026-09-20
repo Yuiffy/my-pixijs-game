@@ -85,8 +85,8 @@ function playParent(seed) {
 }
 
 test("candidate catalog has varied incentives and fictional boundary text", () => {
-  assert.equal(CANDIDATES.length, 46);
-  assert.equal(new Set(CANDIDATES.map(candidate => candidate.id)).size, 46);
+  assert.equal(CANDIDATES.length, 40);
+  assert.equal(new Set(CANDIDATES.map(candidate => candidate.id)).size, 40);
   assert.ok(CANDIDATES.some(candidate => candidate.id === "nana7mi"));
   assert.ok(CANDIDATES.some(candidate => candidate.id === "azi"));
   assert.ok(!CANDIDATES.some(candidate => candidate.id === "jiajia"));
@@ -704,4 +704,31 @@ test("guidance respects refusal and optional parenting rather than endless advan
   const parenting = situation({ stage: "married", childPlan: "delay", relation: 50, mutualIntent: 60 });
   assert.ok(progression.getProgressionGuide(parenting).requirements.every(r => r.met));
   assert.ok(getAvailableChildActions(parenting).includes("baby"));
+});
+
+test("removed original candidates migrate without losing an active or completed life", () => {
+  const aliases = { lin: "xuehui", qiao: "liko", chen: "shiori", zhou: "nana7mi", xu: "izayoi", tang: "sui" };
+  assert.ok(CANDIDATES.every(c => !(c.id in aliases)));
+  for (const [oldId, replacement] of Object.entries(aliases)) {
+    const before = situation({ candidateId: oldId, turn: 8, relation: 73, mutualIntent: 67, savings: 19, weddingDebt: 12, meetings: 3 });
+    const after = validateSave(JSON.parse(JSON.stringify(before)));
+    assert.equal(after.candidateId, replacement);
+    for (const key of ["turn", "stage", "relation", "mutualIntent", "savings", "weddingDebt", "meetings", "rng"]) assert.equal(after[key], before[key]);
+    assert.deepEqual(validateSave(after), after);
+    const completed = validateSave({ ...before, stage: "married", phase: "ended", ending: "happy", marriedAtTurn: 4 });
+    assert.equal(completed.ending, "happy");
+    assert.equal(completed.marriedAtTurn, 4);
+  }
+});
+
+test("legacy draft aliases deduplicate and narrative names follow the real portraits", () => {
+  const save = { ...start("parent"), candidateOptions: ["xu", "izayoi", "lin"], rejectedCandidates: ["qiao", "liko"], lastEvent: "许青愿意见面", datingFeedback: "许青想先了解", log: ["许青来到饭桌", "乔安已经翻篇"] };
+  const restored = validateSave(save);
+  assert.deepEqual(restored.candidateOptions, ["izayoi", "xuehui"]);
+  assert.deepEqual(restored.rejectedCandidates, ["liko"]);
+  assert.equal(restored.lastEvent, "十六萤愿意见面");
+  assert.equal(restored.datingFeedback, "十六萤想先了解");
+  assert.deepEqual(restored.log, ["十六萤来到饭桌", "莉蔻已经翻篇"]);
+  assert.equal(gameReducer(restored, { type: "candidate", id: "izayoi" }).candidateId, "izayoi");
+  assert.equal(validateSave({ ...restored, candidateOptions: ["izayoi", "izayoi"] }), null);
 });

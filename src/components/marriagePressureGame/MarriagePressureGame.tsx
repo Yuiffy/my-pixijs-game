@@ -58,6 +58,7 @@ import type {
 } from "./types";
 import { getCandidateProfile, getHouseholdBudget, getLifeWarnings, getPartnerProfile, isHousehold } from "./household";
 import { getProgressionGuide } from "./progression";
+import CandidateCatalog from "./CandidateCatalog";
 import styles from "./marriage.module.css";
 
 const SAVE_KEY = "marriage-pressure-save-v1";
@@ -531,11 +532,7 @@ export default function MarriagePressureGame() {
             继续第 {saved.turn} 回合 · {MODE_COPY[saved.mode].title} <ArrowRightOutlined />
           </button>
         )}
-        <details className={styles.castList} data-testid="candidate-catalog">
-          <summary>看看相亲名册 · {CANDIDATES.length} 位</summary>
-          <p>自走棋人物全员与两位客串已加入，同一人的不同形态合并。人物生活观固定，每次相遇的缘分不同。</p>
-          <div>{CANDIDATES.map(item => <span key={item.id}>{item.name}</span>)}</div>
-        </details>
+        <CandidateCatalog />
         <p className={styles.disclaimer}>虚构策略游戏。人物资料与对话均为玩法改编，不代表立绘角色或主播本人的真实经历、学历、婚恋观与言行。</p>
       </div>
     </section>
