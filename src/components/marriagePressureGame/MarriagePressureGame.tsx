@@ -42,6 +42,7 @@ import {
   getAgeAtTurn,
   getCandidate,
   getEnding,
+  resolveGameAction,
   validateSave,
 } from "./engine";
 import type {
@@ -51,12 +52,20 @@ import type {
   MarriageGameState,
   MarriageGameAction,
   ParentActionId,
+  ResolutionChange,
+  ResolutionStep,
 } from "./types";
 import styles from "./marriage.module.css";
 
 const SAVE_KEY = "marriage-pressure-save-v1";
 const PROFILE_KEY = "marriage-pressure-player-name";
 const SHARE_URL = "my-pixijs-game.vercel.app/game/family-pressure";
+const LOWER_IS_BETTER_METRICS = new Set<ResolutionChange["key"]>([
+  "stress",
+  "pressure",
+  "weddingDebt",
+  "nextGenStress",
+]);
 const MODE_COPY: Record<GameMode, { title: string; subtitle: string }> = {
   child: { title: "我就是当事人", subtitle: "替自己做决定，也决定要不要靠近谁" },
   parent: { title: "我是家长", subtitle: "挑人、催进度，或真正提供支持" },
@@ -67,6 +76,11 @@ interface EventNotice {
   title: string;
   detail: string;
   kind: "event" | "match" | "action" | "ending";
+}
+
+interface ResolutionSequence {
+  steps: ResolutionStep[];
+  index: number;
 }
 
 type GameWindow = Window & {
@@ -124,6 +138,12 @@ function getRelationshipSummary(state: MarriageGameState) {
   return "关系破裂";
 }
 
+function getChangeTone(change: ResolutionChange) {
+  if (change.key === "parentFace") return "neutral";
+  const improved = LOWER_IS_BETTER_METRICS.has(change.key) ? change.delta < 0 : change.delta > 0;
+  return improved ? "better" : "worse";
+}
+
 export default function MarriagePressureGame() {
   const [state, setState] = useState<MarriageGameState>(createInitialState);
   const [saved, setSaved] = useState<MarriageGameState | null>(null);
@@ -132,11 +152,13 @@ export default function MarriagePressureGame() {
   const [seedInput, setSeedInput] = useState("");
   const [playerName, setPlayerName] = useState("小满");
   const [eventNotice, setEventNotice] = useState<EventNotice | null>(null);
+  const [resolution, setResolution] = useState<ResolutionSequence | null>(null);
   const [help, setHelp] = useState(false);
   const [ready, setReady] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
   const rootRef = useRef<HTMLElement>(null);
   const modalRef = useRef<HTMLElement>(null);
+  const resolutionModalRef = useRef<HTMLElement>(null);
   const candidate = getCandidate(state.candidateId);
   const event = ECONOMY_EVENTS.find(item => item.id === state.currentEventId);
   const ending = state.phase === "ended" ? getEnding(state) : null;
@@ -189,6 +211,13 @@ export default function MarriagePressureGame() {
         state.activeActor === "parent" ? parentActions : childActions,
       playerName,
       eventNotice,
+      resolution: resolution
+        ? {
+            index: resolution.index,
+            total: resolution.steps.length,
+            current: resolution.steps[resolution.index],
+          }
+        : null,
       help,
       coordinateSystem: "DOM board; origin top-left; x right, y down",
     });
@@ -197,13 +226,18 @@ export default function MarriagePressureGame() {
       delete target.render_game_to_text;
       delete target.advanceTime;
     };
-  }, [state, candidate, event, parentActions, childActions, playerName, eventNotice, help]);
+  }, [state, candidate, event, parentActions, childActions, playerName, eventNotice, resolution, help]);
 
   const personalizeNarrative = useCallback((line: string) => {
     if (state.mode === "child") return line.replaceAll("子女", "我");
     if (state.mode === "parent") return line.replaceAll("子女", playerName).replace(/^家长/, "我");
     return line.replaceAll("子女", playerName).replace(/^家长/, "家长玩家");
   }, [state.mode, playerName]);
+
+  const personalizeResolution = useCallback((line: string) => {
+    const subject = state.mode === "child" ? "我" : playerName;
+    return personalizeNarrative(line).replaceAll("当事人", subject);
+  }, [personalizeNarrative, playerName, state.mode]);
 
   const makeNotice = useCallback((
     previous: MarriageGameState,
@@ -260,11 +294,20 @@ export default function MarriagePressureGame() {
   }, [personalizeNarrative, playerName]);
 
   const commitAction = useCallback((action: MarriageGameAction) => {
-    const next = gameReducer(state, action);
+    const result = resolveGameAction(state, action);
+    const next = result.state;
     if (next === state) return;
     setEventNotice(makeNotice(state, next, action));
+    setResolution(result.steps.length ? { steps: result.steps, index: 0 } : null);
     setState(next);
   }, [state, makeNotice]);
+
+  const advanceResolution = useCallback(() => {
+    setResolution(current => {
+      if (!current || current.index >= current.steps.length - 1) return null;
+      return { ...current, index: current.index + 1 };
+    });
+  }, []);
 
   const fullscreen = useCallback(() => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
@@ -305,6 +348,11 @@ export default function MarriagePressureGame() {
     };
   }, [help]);
 
+  useEffect(() => {
+    if (!resolution) return;
+    resolutionModalRef.current?.querySelector("button")?.focus();
+  }, [resolution]);
+
   const start = () => {
     const typed = Number(seedInput);
     const seed = Number.isSafeInteger(typed) && typed > 0
@@ -324,6 +372,7 @@ export default function MarriagePressureGame() {
       setStorageAvailable(false);
     }
     setState(next);
+    setResolution(null);
     const firstEvent = ECONOMY_EVENTS.find(item => item.id === next.currentEventId);
     setEventNotice(next.phase === "candidate"
       ? { kind: "match", title: "先替这局选一个相亲对象", detail: "当前版本一次只发展一段关系；换人后会重新建立关系进度。" }
@@ -344,6 +393,7 @@ export default function MarriagePressureGame() {
     setSaved(state);
     setState(createInitialState());
     setEventNotice(null);
+    setResolution(null);
   };
 
   const renderLobby = () => (
@@ -425,6 +475,7 @@ export default function MarriagePressureGame() {
             onClick={() => {
               setState(saved);
               setSaved(null);
+              setResolution(null);
               setEventNotice({ kind: "event", title: `回到第 ${saved.turn} 回合`, detail: "存档已恢复。先看清刚才发生了什么，再继续出牌。" });
             }}
           >
@@ -459,6 +510,62 @@ export default function MarriagePressureGame() {
       <button onClick={() => setEventNotice(null)} aria-label="收起事件提示" title="收起事件提示"><CloseOutlined /></button>
     </section>
   );
+
+  const renderResolutionDialog = () => {
+    if (!resolution) return null;
+    const step = resolution.steps[resolution.index];
+    const isLast = resolution.index === resolution.steps.length - 1;
+    const kindLabel = {
+      choice: "我的行动",
+      reality: "现实事件",
+      family: "家长回应",
+      response: "当事人回应",
+      match: "对象变化",
+    }[step.kind];
+    return (
+      <div className={styles.resolutionOverlay}>
+        <section
+          ref={resolutionModalRef}
+          className={styles.resolutionModal}
+          data-kind={step.kind}
+          data-testid="resolution-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-label="本回合数值结算"
+        >
+          <header>
+            <span>{kindLabel}</span>
+            <b>{resolution.index + 1} / {resolution.steps.length}</b>
+          </header>
+          <div className={styles.resolutionLead}>
+            <span>{step.kind === "reality" ? <ThunderboltOutlined /> : step.kind === "family" ? <MessageOutlined /> : step.kind === "match" ? <ReloadOutlined /> : <UserOutlined />}</span>
+            <div>
+              <small>这一步单独结算</small>
+              <h2>{personalizeResolution(step.title)}</h2>
+            </div>
+          </div>
+          <p>{personalizeResolution(step.detail)}</p>
+          {step.changes.length ? (
+            <div className={styles.resolutionChanges}>
+              {step.changes.map(change => (
+                <span key={change.key} data-tone={getChangeTone(change)} data-testid={`resolution-change-${change.key}`}>
+                  <small>{change.label}</small>
+                  <strong>{change.before} → {change.after}</strong>
+                  <i>{change.delta > 0 ? "+" : ""}{change.delta}</i>
+                </span>
+              ))}
+            </div>
+          ) : <p className={styles.noResolutionChange}>这一步没有直接改数字，但改变了关系阶段或接下来轮到谁。</p>}
+          <div className={styles.resolutionFooter}>
+            <small>这里只显示当前这一步的影响，不把后续事件混在一起。</small>
+            <button className={styles.primaryButton} data-testid="resolution-next" onClick={advanceResolution}>
+              {isLast ? "知道了，继续" : "继续看下一项"} <ArrowRightOutlined />
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  };
 
   const renderCandidateDraft = () => (
     <section className={styles.draftSection}>
@@ -750,6 +857,7 @@ export default function MarriagePressureGame() {
           </section>
         </div>
       )}
+      {renderResolutionDialog()}
       <footer className={styles.footer}>
         <span>虚构家庭策略游戏 · 角色设定不代表真人经历与立场</span>
         <span><FireOutlined /> 压力不是推进条，支持也不是一句“为你好”</span>

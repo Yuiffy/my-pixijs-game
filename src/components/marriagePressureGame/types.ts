@@ -88,6 +88,42 @@ export interface Ending {
   color: string;
 }
 
+export type ResolutionKind = "choice" | "reality" | "family" | "response" | "match";
+
+export type ResolutionMetric =
+  | "stress"
+  | "autonomy"
+  | "familyBond"
+  | "savings"
+  | "career"
+  | "relation"
+  | "mutualIntent"
+  | "pressure"
+  | "parentFace"
+  | "support"
+  | "weddingDebt"
+  | "nextGenStress";
+
+export interface ResolutionChange {
+  key: ResolutionMetric;
+  label: string;
+  before: number;
+  after: number;
+  delta: number;
+}
+
+export interface ResolutionStep {
+  kind: ResolutionKind;
+  title: string;
+  detail: string;
+  changes: ResolutionChange[];
+}
+
+export interface GameResolution {
+  state: MarriageGameState;
+  steps: ResolutionStep[];
+}
+
 export interface MarriageGameState {
   version: 3;
   phase: GamePhase;

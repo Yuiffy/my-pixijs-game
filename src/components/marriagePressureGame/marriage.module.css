@@ -417,12 +417,50 @@
 .helpModal li { margin: 11px 0; color: #5c554e; font-size: 12px; line-height: 1.7; }
 .helpModal li b { color: var(--ink); }
 .helpModal > p { margin: 20px 0; padding: 12px; color: #765a42; border-left: 3px solid var(--gold); background: #ede4d8; font-size: 10px; line-height: 1.7; }
+.resolutionOverlay { position: fixed; z-index: 70; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(23, 20, 19, 0.82); backdrop-filter: blur(3px); }
+.resolutionModal { width: min(100%, 680px); max-height: calc(100svh - 40px); overflow: auto; color: var(--ink); border: 1px solid #b9aa98; border-top: 7px solid var(--red); border-radius: 6px; background: #f8f2e8; box-shadow: 0 26px 90px rgba(0, 0, 0, 0.48); animation: resolutionPop 220ms ease-out; }
+.resolutionModal[data-kind="reality"] { border-top-color: #a36d2e; }
+.resolutionModal[data-kind="family"] { border-top-color: #8d3038; }
+.resolutionModal[data-kind="response"] { border-top-color: #2d6562; }
+.resolutionModal[data-kind="match"] { border-top-color: #5f6576; }
+.resolutionModal > header { display: flex; align-items: center; justify-content: space-between; padding: 13px 22px; color: #756c62; border-bottom: 1px solid var(--line); background: #eee6da; font-size: 10px; font-weight: 900; }
+.resolutionModal > header b { color: var(--red); font-family: Georgia, serif; font-size: 15px; }
+.resolutionLead { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 14px; padding: 24px 26px 10px; }
+.resolutionLead > span { display: grid; width: 50px; height: 50px; place-items: center; color: #fff; border-radius: 50%; background: var(--red); font-size: 21px; }
+.resolutionModal[data-kind="reality"] .resolutionLead > span { background: #8d622d; }
+.resolutionModal[data-kind="family"] .resolutionLead > span { background: #8d3038; }
+.resolutionModal[data-kind="response"] .resolutionLead > span { background: #2d6562; }
+.resolutionModal[data-kind="match"] .resolutionLead > span { background: #5f6576; }
+.resolutionLead small { color: var(--red); font-size: 9px; font-weight: 900; }
+.resolutionLead h2 { margin: 3px 0 0; font-family: Georgia, "Noto Serif SC", serif; font-size: 29px; line-height: 1.25; }
+.resolutionModal > p { margin: 10px 26px 0; color: #625a52; font-size: 13px; line-height: 1.75; }
+.resolutionChanges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 22px 26px 0; }
+.resolutionChanges > span { position: relative; min-width: 0; padding: 12px 13px; border: 1px solid #d2c7b8; background: #fffdf8; animation: impactReveal 280ms ease-out both; }
+.resolutionChanges > span:nth-child(2) { animation-delay: 45ms; }
+.resolutionChanges > span:nth-child(3) { animation-delay: 90ms; }
+.resolutionChanges > span:nth-child(4) { animation-delay: 135ms; }
+.resolutionChanges small, .resolutionChanges strong, .resolutionChanges i { display: block; }
+.resolutionChanges small { color: #756d64; font-size: 9px; font-weight: 800; }
+.resolutionChanges strong { margin-top: 5px; font-family: Georgia, serif; font-size: 18px; white-space: nowrap; }
+.resolutionChanges i { position: absolute; top: 11px; right: 11px; font-size: 12px; font-style: normal; font-weight: 900; }
+.resolutionChanges > span[data-tone="better"] { border-left: 4px solid #2f7d68; }
+.resolutionChanges > span[data-tone="better"] i { color: #1b745e; }
+.resolutionChanges > span[data-tone="worse"] { border-left: 4px solid #bc3f49; }
+.resolutionChanges > span[data-tone="worse"] i { color: #b82f3b; }
+.resolutionChanges > span[data-tone="neutral"] { border-left: 4px solid #aa7a31; }
+.resolutionChanges > span[data-tone="neutral"] i { color: #946720; }
+.noResolutionChange { padding: 12px 14px; border-left: 3px solid #8a8177; background: #eee7dc; }
+.resolutionFooter { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 24px; padding: 18px 26px 24px; border-top: 1px solid var(--line); }
+.resolutionFooter > small { max-width: 310px; color: #7c7369; font-size: 10px; line-height: 1.55; }
+.resolutionFooter .primaryButton { flex: none; }
 .footer { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 20px; padding: 8px 24px; color: #a49b91; background: #252321; font-size: 9px; }
 .footer span:last-child { display: flex; align-items: center; gap: 7px; color: #d6b66f; }
 .storageNotice { position: fixed; z-index: 40; right: 15px; bottom: 52px; margin: 0; padding: 10px 13px; color: #fff; background: #8a3438; font-size: 10px; }
 
 @keyframes pressurePulse { from { transform: scale(1); } to { transform: scale(1.012); } }
 @keyframes eventReveal { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes resolutionPop { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes impactReveal { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 1100px) {
   .lobby { grid-template-columns: minmax(350px, 0.78fr) minmax(480px, 1.22fr); }
@@ -515,6 +553,19 @@
   .endingDetails { display: block; padding: 38px 18px 46px; }
   .resultPanel h2 { font-size: 31px; }
   .endingLedger { margin-top: 34px; }
+  .resolutionOverlay { align-items: end; padding: 10px; }
+  .resolutionModal { width: 100%; max-height: calc(100svh - 20px); }
+  .resolutionModal > header { padding: 11px 16px; }
+  .resolutionLead { grid-template-columns: 44px minmax(0, 1fr); gap: 11px; padding: 18px 16px 8px; }
+  .resolutionLead > span { width: 42px; height: 42px; font-size: 18px; }
+  .resolutionLead h2 { font-size: 23px; }
+  .resolutionModal > p { margin-right: 16px; margin-left: 16px; font-size: 12px; }
+  .resolutionChanges { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 18px 16px 0; }
+  .resolutionChanges > span { padding: 11px 10px; }
+  .resolutionChanges strong { font-size: 16px; }
+  .resolutionChanges i { top: 10px; right: 9px; }
+  .resolutionFooter { align-items: stretch; flex-direction: column; gap: 12px; padding: 16px; }
+  .resolutionFooter .primaryButton { width: 100%; }
   .footer { align-items: flex-start; flex-direction: column; gap: 5px; padding: 10px 14px; line-height: 1.5; }
 }
 

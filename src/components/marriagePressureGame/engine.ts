@@ -13,8 +13,12 @@ import type {
   Ending,
   GameMode,
   MarriageGameAction,
+  GameResolution,
   MarriageGameState,
   ParentActionId,
+  ResolutionKind,
+  ResolutionMetric,
+  ResolutionStep,
   Scores,
 } from "./types";
 
@@ -127,6 +131,65 @@ function clone(state: MarriageGameState): MarriageGameState {
     log: [...state.log],
     scores: { ...state.scores },
   };
+}
+
+const RESOLUTION_METRICS: Array<[ResolutionMetric, string]> = [
+  ["stress", "压力"],
+  ["autonomy", "自主"],
+  ["familyBond", "亲情"],
+  ["savings", "存款"],
+  ["career", "事业"],
+  ["relation", "关系"],
+  ["mutualIntent", "对方意愿"],
+  ["pressure", "家庭催促"],
+  ["parentFace", "家长面子"],
+  ["support", "实际支持"],
+  ["weddingDebt", "婚育债务"],
+  ["nextGenStress", "下一代压力"],
+];
+
+function resolutionSnapshot(state: MarriageGameState) {
+  return Object.fromEntries(
+    RESOLUTION_METRICS.map(([key]) => [key, state[key]]),
+  ) as Record<ResolutionMetric, number>;
+}
+
+function addResolutionStep(
+  steps: ResolutionStep[] | undefined,
+  kind: ResolutionKind,
+  title: string,
+  detail: string,
+  before: Record<ResolutionMetric, number>,
+  state: MarriageGameState,
+) {
+  if (!steps) return;
+  const changes = RESOLUTION_METRICS
+    .map(([key, label]) => ({
+      key,
+      label,
+      before: before[key],
+      after: state[key],
+      delta: state[key] - before[key],
+    }))
+    .filter(change => change.delta !== 0);
+  steps.push({ kind, title, detail, changes });
+}
+
+function applyResolvedStep(
+  state: MarriageGameState,
+  steps: ResolutionStep[] | undefined,
+  kind: ResolutionKind,
+  title: string,
+  apply: () => boolean,
+) {
+  const before = resolutionSnapshot(state);
+  const logLength = state.log.length;
+  if (!apply()) return false;
+  const detail = state.log.length > logLength
+    ? state.log[state.log.length - 1]
+    : state.lastEvent;
+  addResolutionStep(steps, kind, title, detail, before, state);
+  return true;
 }
 
 function random(state: MarriageGameState) {
@@ -723,46 +786,82 @@ function chooseChildAiAction(state: MarriageGameState): ChildActionId {
   return "boundary";
 }
 
-function applyParentAi(state: MarriageGameState) {
+function applyParentAi(state: MarriageGameState, steps?: ResolutionStep[]) {
   const action = chooseParentAiAction(state);
-  applyParentAction(state, action);
+  const definition = PARENT_ACTIONS.find(item => item.id === action);
+  applyResolvedStep(
+    state,
+    steps,
+    "family",
+    `家长回应：${definition?.title || "家庭群又发来消息"}`,
+    () => applyParentAction(state, action),
+  );
   if (state.phase === "candidate") {
+    const before = resolutionSnapshot(state);
     const selected = chooseAiCandidate(state);
     if (selected) assignCandidate(state, selected.id);
     state.phase = "turn";
     state.activeActor = "child";
+    if (selected) {
+      addResolutionStep(
+        steps,
+        "match",
+        `家长换成了 ${selected.name}`,
+        state.lastEvent,
+        before,
+        state,
+      );
+    }
   }
 }
 
-function applyChildAi(state: MarriageGameState) {
-  applyChildAction(state, chooseChildAiAction(state));
+function applyChildAi(state: MarriageGameState, steps?: ResolutionStep[]) {
+  const action = chooseChildAiAction(state);
+  const definition = CHILD_ACTIONS.find(item => item.id === action);
+  applyResolvedStep(
+    state,
+    steps,
+    "response",
+    `当事人回应：${definition?.title || "说出了自己的决定"}`,
+    () => applyChildAction(state, action),
+  );
 }
 
-function beginRound(state: MarriageGameState) {
+function beginRound(state: MarriageGameState, steps?: ResolutionStep[]) {
   if (state.turn > state.maxTurns) {
     endGame(state);
     return;
   }
   state.phase = "turn";
+  const beforeEvent = resolutionSnapshot(state);
   applyEconomyEvent(state);
+  const event = ECONOMY_EVENTS.find(item => item.id === state.currentEventId);
+  addResolutionStep(
+    steps,
+    "reality",
+    `现实事件：${event?.title || "生活突然插手"}`,
+    event?.detail || state.lastEvent,
+    beforeEvent,
+    state,
+  );
   if (checkTerminal(state)) return;
   if (state.mode === "child") {
     state.activeActor = "child";
-    applyParentAi(state);
+    applyParentAi(state, steps);
     checkTerminal(state);
   } else {
     state.activeActor = "parent";
   }
 }
 
-function finishRound(state: MarriageGameState) {
+function finishRound(state: MarriageGameState, steps?: ResolutionStep[]) {
   if (checkTerminal(state)) return;
   if (state.turn >= state.maxTurns) {
     endGame(state);
     return;
   }
   state.turn += 1;
-  beginRound(state);
+  beginRound(state, steps);
 }
 
 function startGame(
@@ -791,59 +890,92 @@ export function gameReducer(
   previous: MarriageGameState,
   action: MarriageGameAction,
 ): MarriageGameState {
-  if (action.type === "start") return startGame(action.mode, action.difficulty, action.seed);
-  if (action.type === "restart") return createInitialState();
-  if (previous.phase === "lobby" || previous.phase === "ended") return previous;
+  return resolveGameAction(previous, action).state;
+}
+
+export function resolveGameAction(
+  previous: MarriageGameState,
+  action: MarriageGameAction,
+): GameResolution {
+  if (action.type === "start") return { state: startGame(action.mode, action.difficulty, action.seed), steps: [] };
+  if (action.type === "restart") return { state: createInitialState(), steps: [] };
+  if (previous.phase === "lobby" || previous.phase === "ended") return { state: previous, steps: [] };
   const state = clone(previous);
+  const steps: ResolutionStep[] = [];
   if (action.type === "candidate") {
     if (
       state.phase !== "candidate" ||
       state.activeActor !== "parent" ||
       !state.candidateOptions.includes(action.id)
-    ) return previous;
+    ) return { state: previous, steps: [] };
     const replacing = state.selectionKind === "replace";
-    if (!assignCandidate(state, action.id)) return previous;
+    const candidate = getCandidate(action.id);
+    if (!candidate) return { state: previous, steps: [] };
+    const beforeCandidate = resolutionSnapshot(state);
+    if (!assignCandidate(state, action.id)) return { state: previous, steps: [] };
+    addResolutionStep(
+      steps,
+      "match",
+      `确定介绍 ${candidate.name}`,
+      state.lastEvent,
+      beforeCandidate,
+      state,
+    );
     state.phase = "turn";
     state.selectionKind = "opening";
     if (!replacing) {
-      beginRound(state);
-      return state;
+      beginRound(state, steps);
+      return { state, steps };
     }
     if (state.mode === "parent") {
-      applyChildAi(state);
-      finishRound(state);
+      applyChildAi(state, steps);
+      finishRound(state, steps);
     } else if (state.mode === "duel") {
       state.activeActor = "child";
     }
-    return state;
+    return { state, steps };
   }
   if (action.type === "parent-action") {
+    const definition = PARENT_ACTIONS.find(item => item.id === action.id);
     if (
       state.phase !== "turn" ||
       state.activeActor !== "parent" ||
-      !applyParentAction(state, action.id)
-    ) return previous;
-    if (checkTerminal(state)) return state;
-    if (!state.candidateId) return state;
+      !applyResolvedStep(
+        state,
+        steps,
+        "choice",
+        `我的选择：${definition?.title || "家长出牌"}`,
+        () => applyParentAction(state, action.id),
+      )
+    ) return { state: previous, steps: [] };
+    if (checkTerminal(state)) return { state, steps };
+    if (!state.candidateId) return { state, steps };
     if (state.mode === "parent") {
-      applyChildAi(state);
-      finishRound(state);
+      applyChildAi(state, steps);
+      finishRound(state, steps);
     } else if (state.mode === "duel") {
       state.activeActor = "child";
     }
-    return state;
+    return { state, steps };
   }
   if (action.type === "child-action") {
+    const definition = CHILD_ACTIONS.find(item => item.id === action.id);
     if (
       state.phase !== "turn" ||
       state.activeActor !== "child" ||
-      !applyChildAction(state, action.id)
-    ) return previous;
-    if (!state.candidateId || checkTerminal(state)) return state;
-    finishRound(state);
-    return state;
+      !applyResolvedStep(
+        state,
+        steps,
+        "choice",
+        `我的选择：${definition?.title || "当事人回应"}`,
+        () => applyChildAction(state, action.id),
+      )
+    ) return { state: previous, steps: [] };
+    if (!state.candidateId || checkTerminal(state)) return { state, steps };
+    finishRound(state, steps);
+    return { state, steps };
   }
-  return previous;
+  return { state: previous, steps: [] };
 }
 
 export function getActionPreview(

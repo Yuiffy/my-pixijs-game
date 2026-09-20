@@ -84,11 +84,37 @@ async function verifyEndingPoster(page, expectedChildText) {
   assert.ok(await poster.locator("img").count(), "Ending poster must include the candidate portrait");
 }
 
+async function drainResolution(page) {
+  const seen = [];
+  for (let guard = 0; guard < 10; guard += 1) {
+    const state = await readState(page);
+    if (!state.resolution) break;
+    const dialog = control(page, "resolution-dialog");
+    await dialog.waitFor();
+    const text = await dialog.innerText();
+    assert.match(text, /这一步单独结算/);
+    assert.match(text, /这里只显示当前这一步的影响/);
+    seen.push({ kind: state.resolution.current.kind, text });
+    const previousIndex = state.resolution.index;
+    await control(page, "resolution-next").click();
+    await page.waitForFunction(
+      index => {
+        const current = JSON.parse(window.render_game_to_text()).resolution;
+        return current === null || current.index !== index;
+      },
+      previousIndex,
+    );
+  }
+  assert.equal((await readState(page)).resolution, null, "Resolution dialog queue must fully drain");
+  return seen;
+}
+
 async function chooseFirstCandidate(page) {
   const state = await readState(page);
   assert.equal(state.phase, "candidate");
   assert.equal(state.candidateOptions.length, 3);
   await control(page, `candidate-${state.candidateOptions[0]}`).click();
+  await drainResolution(page);
 }
 
 async function finishChildRun(page) {
@@ -101,6 +127,7 @@ async function finishChildRun(page) {
     else if (options.includes("invest") && state.mutualIntent >= 35) action = "invest";
     else if (!options.includes(action)) action = options.includes("work") ? "work" : options[0];
     await control(page, `child-action-${action}`).click();
+    await drainResolution(page);
   }
   assert.equal((await readState(page)).phase, "ended");
 }
@@ -134,6 +161,14 @@ async function finishChildRun(page) {
     assert.match(await page.locator("main").innerText(), /轮到我回应/);
     await capture(page, "02-child-turn-desktop");
     await control(page, "child-action-meet").click();
+    await control(page, "resolution-dialog").waitFor();
+    assert.match(await control(page, "resolution-dialog").innerText(), /我的选择/);
+    await capture(page, "02b-resolution-dialog-desktop");
+    const childResolution = await drainResolution(page);
+    assert.deepEqual(childResolution.map(step => step.kind), ["choice", "reality", "family"]);
+    assert.match(childResolution[0].text, /压力|存款|关系/);
+    assert.match(childResolution[1].text, /现实事件/);
+    assert.match(childResolution[2].text, /家长回应/);
     const afterMeet = await readState(page);
     assert.ok(afterMeet.turn >= 2 || afterMeet.phase === "ended");
     assert.ok(afterMeet.relation > state.relation);
@@ -165,6 +200,7 @@ async function finishChildRun(page) {
     assert.equal(state.activeActor, "parent");
     const beforeSupport = state;
     await control(page, "parent-action-support").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.ok(state.support > beforeSupport.support);
     assert.ok(
@@ -176,6 +212,7 @@ async function finishChildRun(page) {
 
     const replacedCandidate = state.candidate.name;
     await control(page, "parent-action-next").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.equal(state.phase, "candidate");
     const replacementNotice = await control(page, "event-notice").innerText();
@@ -191,8 +228,10 @@ async function finishChildRun(page) {
     await control(page, "start-game").click();
     await chooseFirstCandidate(page);
     await control(page, "parent-action-support").click();
+    await drainResolution(page);
     assert.equal((await readState(page)).activeActor, "child");
     await control(page, "child-action-meet").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.equal(state.turn, 2);
     assert.equal(state.activeActor, "parent");
@@ -239,6 +278,7 @@ async function finishChildRun(page) {
     assert.equal(state.stage, "parenthood");
     assert.equal(state.nextGenStress, 78);
     await control(page, "parent-action-push-education").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.equal(state.phase, "ended");
     assert.equal(state.ending, "depressed");
@@ -297,15 +337,18 @@ async function finishChildRun(page) {
     assert.ok(!state.availableActions.includes("meet"));
     assert.ok(!state.availableActions.includes("next"));
     await control(page, "child-action-childfree").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.equal(state.turn, 15);
     assert.equal(state.maxTurns, 16);
     assert.equal(state.childPlan, "childfree");
     await control(page, "child-action-build-home").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.equal(state.turn, 16);
     assert.equal(state.phase, "turn");
     await control(page, "child-action-build-home").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.equal(state.ending, "happy", JSON.stringify(state));
     assert.match(await page.locator("main").innerText(), /真的幸福终老/);
@@ -353,6 +396,7 @@ async function finishChildRun(page) {
     await page.reload({ waitUntil: "networkidle" });
     await control(page, "resume-game").click();
     await control(page, "child-action-work").click();
+    await drainResolution(page);
     state = await readState(page);
     assert.equal(state.ending, "runaway");
     assert.match(await page.locator("main").innerText(), /彩礼卷走，人也走了/);
@@ -374,6 +418,12 @@ async function finishChildRun(page) {
     await control(phone, "difficulty-realistic").tap();
     await control(phone, "start-game").tap();
     await capture(phone, "08-child-turn-mobile-390");
+    await control(phone, "child-action-boundary").tap();
+    await control(phone, "resolution-dialog").waitFor();
+    assert.match(await control(phone, "resolution-dialog").innerText(), /压力/);
+    await capture(phone, "08b-resolution-dialog-mobile-390");
+    const mobileResolution = await drainResolution(phone);
+    assert.deepEqual(mobileResolution.map(step => step.kind), ["choice", "reality", "family"]);
     await phone.setViewportSize({ width: 320, height: 740 });
     await layout(phone);
     await capture(phone, "09-child-turn-mobile-320");

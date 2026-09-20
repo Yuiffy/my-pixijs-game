@@ -17,6 +17,7 @@ const {
   getAgeAtTurn,
   getEnding,
   getScores,
+  resolveGameAction,
   validateSave,
 } = engine;
 const { CANDIDATES, ECONOMY_EVENTS } = content;
@@ -137,6 +138,41 @@ test("pressure tactics and material support produce meaningfully different house
   assert.ok(harsh.parentFace > support.parentFace);
   assert.ok(support.savings > harsh.savings);
   assert.ok(support.support > harsh.support);
+});
+
+test("round resolution separates my choice, reality event, and family response", () => {
+  let explained = null;
+  for (let seed = 1; seed <= 120 && !explained; seed += 1) {
+    const before = start("child", "realistic", seed);
+    const result = resolveGameAction(before, { type: "child-action", id: "boundary" });
+    const choice = result.steps.find(step => step.kind === "choice");
+    const laterStress = result.steps
+      .filter(step => step.kind !== "choice")
+      .flatMap(step => step.changes)
+      .filter(change => change.key === "stress")
+      .reduce((total, change) => total + change.delta, 0);
+    const choiceStress = choice?.changes.find(change => change.key === "stress")?.delta || 0;
+    if (choiceStress < 0 && laterStress > 0) explained = { before, result, choiceStress, laterStress };
+  }
+  assert.ok(explained, "Expected a seed where later events visibly offset a pressure-reducing choice");
+  const { before, result, choiceStress, laterStress } = explained;
+  assert.deepEqual(result.state, gameReducer(before, { type: "child-action", id: "boundary" }));
+  assert.deepEqual(result.steps.map(step => step.kind), ["choice", "reality", "family"]);
+  assert.ok(choiceStress < 0);
+  assert.ok(laterStress > 0);
+  assert.match(result.steps[1].title, /^现实事件：/);
+  assert.match(result.steps[2].title, /^家长回应：/);
+  for (const step of result.steps) {
+    for (const change of step.changes) {
+      assert.equal(change.after - change.before, change.delta);
+    }
+  }
+  assert.equal(
+    result.state.stress - before.stress,
+    result.steps.flatMap(step => step.changes)
+      .filter(change => change.key === "stress")
+      .reduce((total, change) => total + change.delta, 0),
+  );
 });
 
 test("low intent punishes forced initiative while compatible mutual interest can grow", () => {
