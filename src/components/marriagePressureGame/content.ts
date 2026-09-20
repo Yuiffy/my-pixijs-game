@@ -173,6 +173,10 @@ export const ECONOMY_EVENTS: EconomyEvent[] = [
   { id: "hospital", title: "家里有人去了一趟医院", detail: "照护责任突然落地，所有人都开始重新计算所谓稳定。", savings: -9, career: -2, stress: 9 },
   { id: "promotion", title: "出现一个外地晋升机会", detail: "事业向前一步，关系却要回答谁为谁换城市。", savings: 8, career: 10, stress: 5 },
   { id: "holiday-table", title: "亲戚围满年夜饭桌", detail: "每个人都说只是关心，问题却从工资一路问到二胎。", savings: -2, career: 0, stress: 13 },
+  { id: "quiet-week", title: "这一周终于准点下班", detail: "没有临时会议，也没有新的家庭任务。普通的一晚让人重新睡了个整觉。", savings: 1, career: 0, stress: -8 },
+  { id: "paid-leave", title: "攒下的调休终于批了", detail: "手机静音半天，工作和家庭群都没有因此塌下来。", savings: -1, career: 1, stress: -6 },
+  { id: "refund", title: "退回一笔旧押金", detail: "金额不算巨大，但久违的余量让这个月不用再处处绷紧。", savings: 6, career: 0, stress: -4 },
+  { id: "checkup-clear", title: "复查结果没有大碍", detail: "悬着的心终于落下，家里也暂时停止替未来预演最坏结果。", savings: -2, career: 0, stress: -5 },
 ];
 
 export const CHILD_ACTIONS: ActionDefinition<ChildActionId>[] = [

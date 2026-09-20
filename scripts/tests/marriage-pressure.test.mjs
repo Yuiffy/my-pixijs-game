@@ -71,7 +71,7 @@ function playParent(seed) {
     else if (state.stage === "married" && available.includes("push-baby")) id = "push-baby";
     else if (state.stage === "dating" && available.includes("push-marriage")) id = "push-marriage";
     else if (available.includes("encourage")) id = "encourage";
-    else id = "push-meet";
+    else id = available[0];
     state = gameReducer(state, { type: "parent-action", id });
   }
   assert.equal(state.phase, "ended");
@@ -92,7 +92,53 @@ test("candidate catalog has varied incentives and fictional boundary text", () =
     assert.ok(candidate.boundary.length >= 15);
     assert.equal(candidate.tags.length, 3);
   }
-  assert.equal(ECONOMY_EVENTS.length, 10);
+  assert.equal(ECONOMY_EVENTS.length, 14);
+  assert.ok(ECONOMY_EVENTS.filter(event => event.stress <= 0).length >= 6);
+});
+
+test("stressful reality events are always followed by a breather", () => {
+  let transitions = 0;
+  for (let seed = 1; seed <= 80; seed += 1) {
+    let state = start("child", "realistic", seed);
+    let previous = ECONOMY_EVENTS.find(event => event.id === state.currentEventId);
+    for (let turn = 0; turn < 8 && state.phase !== "ended"; turn += 1) {
+      const available = getAvailableChildActions(state);
+      const action = available.includes("boundary") ? "boundary" : available[0];
+      state = gameReducer(state, { type: "child-action", id: action });
+      if (state.phase === "ended") break;
+      const current = ECONOMY_EVENTS.find(event => event.id === state.currentEventId);
+      assert.ok(current);
+      if (previous?.stress > 0) assert.ok(current.stress <= 0, `${previous.id} was followed by ${current.id}`);
+      assert.notEqual(current.id, previous?.id);
+      previous = current;
+      transitions += 1;
+    }
+  }
+  assert.ok(transitions >= 250);
+});
+
+test("high pressure makes the parent AI de-escalate instead of comparing again", () => {
+  const base = start("child", "realistic", 33);
+  const result = resolveGameAction(
+    {
+      ...base,
+      turn: 4,
+      stress: 78,
+      pressure: 58,
+      familyBond: 70,
+      currentEventId: "rent",
+      lastParentAction: "compare",
+    },
+    { type: "child-action", id: "work" },
+  );
+  const reality = result.steps.find(step => step.kind === "reality");
+  const family = result.steps.find(step => step.kind === "family");
+  assert.ok(reality);
+  assert.ok(family);
+  assert.match(family.title, /我先听孩子说|我拿出真金白银/);
+  assert.doesNotMatch(family.title, /比较/);
+  assert.ok(family.changes.find(change => change.key === "stress")?.delta < 0);
+  assert.ok(result.state.stress < 78, JSON.stringify(result.steps));
 });
 
 test("all modes start deterministically with a legal actor and candidate draft", () => {

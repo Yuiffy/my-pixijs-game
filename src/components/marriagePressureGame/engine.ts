@@ -425,7 +425,18 @@ function assignCandidate(state: MarriageGameState, id: CandidateId) {
 }
 
 function applyEconomyEvent(state: MarriageGameState) {
-  const event = ECONOMY_EVENTS[Math.floor(random(state) * ECONOMY_EVENTS.length)];
+  const previous = ECONOMY_EVENTS.find(event => event.id === state.currentEventId);
+  const recoveryThreshold = state.difficulty === "gentle"
+    ? 62
+    : state.difficulty === "realistic"
+      ? 70
+      : 84;
+  const needsBreather = (previous?.stress ?? 0) > 0 || state.stress >= recoveryThreshold;
+  const eligible = ECONOMY_EVENTS.filter(event => (
+    event.id !== state.currentEventId && (!needsBreather || event.stress <= 0)
+  ));
+  const pool = eligible.length ? eligible : ECONOMY_EVENTS;
+  const event = pool[Math.floor(random(state) * pool.length)];
   const scale = DIFFICULTIES[state.difficulty].economy;
   state.currentEventId = event.id;
   state.savings += event.savings < 0 ? event.savings * scale : event.savings;
@@ -741,7 +752,18 @@ function applyParentAction(state: MarriageGameState, id: ParentActionId) {
 }
 
 function chooseParentAiAction(state: MarriageGameState): ParentActionId {
-  if (state.stress >= 82 && state.difficulty !== "holiday") return random(state) < 0.55 ? "listen" : "support";
+  const careThreshold = state.difficulty === "gentle"
+    ? 62
+    : state.difficulty === "realistic"
+      ? 70
+      : 84;
+  if (state.stress >= careThreshold) return random(state) < 0.62 ? "listen" : "support";
+  if (
+    state.lastChildAction === "boundary" &&
+    state.difficulty !== "holiday" &&
+    (state.stress >= 55 || random(state) < 0.45)
+  ) return random(state) < 0.68 ? "listen" : "support";
+  if (state.lastParentAction === "compare" && state.difficulty !== "holiday") return "listen";
   if (state.stage === "parenthood") {
     if (state.nextGenStress >= 78 && state.difficulty !== "holiday") return random(state) < 0.58 ? "listen" : "support";
     return random(state) < (state.difficulty === "holiday" ? 0.82 : 0.62) ? "push-education" : "support";
@@ -825,6 +847,7 @@ function applyChildAi(state: MarriageGameState, steps?: ResolutionStep[]) {
     `当事人回应：${definition?.title || "说出了自己的决定"}`,
     () => applyChildAction(state, action),
   );
+  return state.phase === "candidate";
 }
 
 function beginRound(state: MarriageGameState, steps?: ResolutionStep[]) {
@@ -928,7 +951,8 @@ export function resolveGameAction(
       return { state, steps };
     }
     if (state.mode === "parent") {
-      applyChildAi(state, steps);
+      const replacingCandidate = applyChildAi(state, steps);
+      if (!state.candidateId || replacingCandidate) return { state, steps };
       finishRound(state, steps);
     } else if (state.mode === "duel") {
       state.activeActor = "child";
@@ -951,7 +975,8 @@ export function resolveGameAction(
     if (checkTerminal(state)) return { state, steps };
     if (!state.candidateId) return { state, steps };
     if (state.mode === "parent") {
-      applyChildAi(state, steps);
+      const replacingCandidate = applyChildAi(state, steps);
+      if (!state.candidateId || replacingCandidate) return { state, steps };
       finishRound(state, steps);
     } else if (state.mode === "duel") {
       state.activeActor = "child";

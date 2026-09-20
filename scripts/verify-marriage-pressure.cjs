@@ -221,6 +221,66 @@ async function finishChildRun(page) {
     await capture(page, "05b-parent-replacement-notice");
     observed.push({ scenario: "visible-candidate-replacement", previous: replacedCandidate, notice: replacementNotice });
 
+    await page.evaluate(() => {
+      const saved = JSON.parse(localStorage.getItem("marriage-pressure-save-v1") || "null");
+      if (!saved) throw new Error("Expected a save before injecting the pressure recovery scenario");
+      Object.assign(saved, {
+        phase: "turn",
+        mode: "child",
+        difficulty: "realistic",
+        turn: 4,
+        activeActor: "child",
+        selectionKind: "opening",
+        candidateId: "sui",
+        candidateOptions: [],
+        stage: "chatting",
+        stress: 78,
+        autonomy: 62,
+        familyBond: 70,
+        pressure: 58,
+        relation: 35,
+        mutualIntent: 45,
+        currentEventId: "rent",
+        lastParentAction: "compare",
+        lastChildAction: null,
+        ending: null,
+        scores: { child: 0, parent: 0, family: 0 },
+      });
+      localStorage.setItem("marriage-pressure-save-v1", JSON.stringify(saved));
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await control(page, "resume-game").click();
+    const pressureBeforeRecovery = (await readState(page)).stress;
+    await control(page, "child-action-boundary").click();
+    state = await readState(page);
+    assert.equal(state.resolution.current.kind, "choice");
+    await control(page, "resolution-next").click();
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).resolution?.current.kind === "reality");
+    state = await readState(page);
+    const realityStress = state.resolution.current.changes.find(change => change.key === "stress");
+    assert.ok(realityStress?.delta <= 0, JSON.stringify(state.resolution.current));
+    assert.match(await control(page, "resolution-dialog").innerText(), /准点下班|调休|押金|复查|奖金|远程办公/);
+    await capture(page, "05c-pressure-breather-event");
+    await control(page, "resolution-next").click();
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).resolution?.current.kind === "family");
+    state = await readState(page);
+    const familyStress = state.resolution.current.changes.find(change => change.key === "stress");
+    assert.ok(familyStress?.delta < 0, JSON.stringify(state.resolution.current));
+    assert.match(state.resolution.current.title, /我先听孩子说|我拿出真金白银/);
+    assert.doesNotMatch(state.resolution.current.title, /比较/);
+    await capture(page, "05d-high-pressure-parent-deescalation");
+    await control(page, "resolution-next").click();
+    state = await readState(page);
+    assert.equal(state.resolution, null);
+    assert.ok(state.stress < pressureBeforeRecovery, JSON.stringify(state));
+    observed.push({
+      scenario: "pressure-recovery-window",
+      before: pressureBeforeRecovery,
+      after: state.stress,
+      realityEvent: state.event.id,
+      parentAction: state.lastParentAction,
+    });
+
     await page.evaluate(() => localStorage.removeItem("marriage-pressure-save-v1"));
     await page.reload({ waitUntil: "networkidle" });
     await control(page, "mode-duel").click();
