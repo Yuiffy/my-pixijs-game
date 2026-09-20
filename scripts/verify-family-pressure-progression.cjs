@@ -1,0 +1,67 @@
+const assert = require("node:assert/strict");
+const { mkdirSync, writeFileSync } = require("node:fs");
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
+const { inspectPng } = require("./lib/autochess-screenshot.cjs");
+const base = "http://127.0.0.1:3910/game/family-pressure", out = "tmp/family-progression";
+const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
+(async () => {
+  assert.equal((await fetch(base)).status, 200);
+  const { loadTypescriptModule } = await import("./tests/helpers/load-typescript-module.mjs");
+  const e = await loadTypescriptModule("src/components/marriagePressureGame/engine.ts");
+  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  mkdirSync(out, { recursive: true });
+  const errors = [], shots = [];
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, reducedMotion: "reduce" });
+    page.on("pageerror", err => errors.push(String(err)));
+    page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
+    await page.goto(base, { waitUntil: "networkidle" });
+    const fixture = async patch => {
+      const state = { ...e.createInitialState(), phase: "turn", mode: "child", turn: 2, seed: 3, rng: 18, candidateId: "sui", stage: "chatting", meetings: 1, relation: 30, mutualIntent: 60, chemistry: 80, stress: 30, savings: 32, datingFeedback: "对方愿意再见一面，继续了解。", ...patch };
+      await page.evaluate(s => localStorage.setItem("marriage-pressure-save-v1", JSON.stringify(s)), state);
+      await page.reload({ waitUntil: "networkidle" });
+      await page.getByTestId("resume-game").click();
+    };
+    const shot = async name => {
+      await page.waitForFunction(() => [...document.querySelectorAll("main img")].every(img => img.complete && img.naturalWidth));
+      const pixels = inspectPng(await page.screenshot({ path: `${out}/${name}.png`, animations: "disabled" }));
+      assert.ok(pixels.colors > 64 && pixels.transparentRatio < .02 && pixels.nearBlackRatio < .8);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      shots.push({ name, pixels, state: await read(page) });
+    };
+    await fixture({});
+    assert.match(await page.getByTestId("progression-guide").innerText(), /还需至少见 1 次/);
+    await shot("01-next-step-desktop");
+    await page.setViewportSize({ width: 320, height: 780 });
+    await page.getByTestId("open-progression").click();
+    assert.match(await page.getByTestId("progression-details").innerText(), /还差 12/);
+    assert.match(await page.getByTestId("progression-details").innerText(), /1 \/ 2/);
+    await shot("02-dating-requirements-mobile");
+    await page.keyboard.press("Escape");
+    assert.equal(await page.getByTestId("open-progression").evaluate(el => el === document.activeElement), true);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.getByTestId("child-action-meet").click();
+    await page.getByTestId("meeting-everyday").click();
+    for (let i = 0; i < 10 && (await read(page)).resolution; i++) await page.getByTestId("resolution-next").click();
+    assert.equal((await read(page)).stage, "dating");
+    assert.equal((await read(page)).progression.unlocked, true);
+    await page.getByTestId("show-marriage-options").click();
+    await page.getByTestId("child-action-simple-wedding").waitFor();
+    await shot("03-marriage-options-unlocked");
+    await fixture({ stage: "dating", meetings: 3, relation: 46, mutualIntent: 53, savings: 10, stress: 82 });
+    await page.getByTestId("open-progression").click();
+    const guide = (await read(page)).progression;
+    assert.ok(guide.unlocked && guide.requirements.every(r => r.met));
+    assert.ok(guide.preparation.some(r => !r.met));
+    assert.match(await page.getByTestId("progression-details").innerText(), /需降低 7/);
+    await shot("04-unlocked-but-needs-preparation");
+    await fixture({ stage: "married", childPlan: "childfree" });
+    assert.equal((await read(page)).progression.requirements.length, 0);
+    assert.match(await page.getByTestId("progression-guide").innerText(), /经营共同生活/);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await shot("05-life-after-marriage");
+    assert.deepEqual(errors, []);
+    writeFileSync(`${out}/report.json`, JSON.stringify({ passed: true, errors, shots }, null, 2));
+    console.log("Progression flow, unlock shortcut, preparation gaps and five screenshots passed.");
+  } finally { await browser.close(); }
+})().catch(err => { console.error(err); process.exitCode = 1; });

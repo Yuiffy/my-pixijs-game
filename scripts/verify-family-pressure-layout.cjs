@@ -1,0 +1,77 @@
+const assert = require("node:assert/strict");
+const { mkdirSync, writeFileSync } = require("node:fs");
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
+const { inspectPng } = require("./lib/autochess-screenshot.cjs");
+const base = process.env.MARRIAGE_BASE_URL || "http://127.0.0.1:3910";
+const out = "tmp/family-v41-layout";
+const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
+(async () => {
+  assert.equal((await fetch(`${base}/game/family-pressure`)).status, 200);
+  const { loadTypescriptModule } = await import("./tests/helpers/load-typescript-module.mjs");
+  const e = await loadTypescriptModule("src/components/marriagePressureGame/engine.ts");
+  const s = { ...e.createInitialState(), phase: "turn", mode: "child", turn: 2, seed: 728, rng: 18, candidateId: "komichi", stage: "chatting", meetings: 1, understanding: 30, relation: 5, mutualIntent: 53, chemistry: 65, stress: 39, savings: 32, lastChildAction: "invest", datingFeedback: "对方很客气，但没有表现出继续靠近的兴趣。", currentEventId: "checkup-clear" };
+  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  mkdirSync(out, { recursive: true });
+  const errors = [], shots = [];
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, reducedMotion: "reduce" });
+    page.on("pageerror", err => errors.push(String(err)));
+    page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
+    await page.goto(`${base}/game/family-pressure`, { waitUntil: "networkidle" });
+    await page.evaluate(state => localStorage.setItem("marriage-pressure-save-v1", JSON.stringify(state)), s);
+    await page.reload({ waitUntil: "networkidle" });
+    await page.getByTestId("resume-game").click();
+    const shot = async name => {
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForFunction(() => [...document.querySelectorAll("main img")].every(img => img.complete && img.naturalWidth));
+      const pixels = inspectPng(await page.screenshot({ path: `${out}/${name}.png`, animations: "disabled" }));
+      assert.ok(pixels.colors > 64 && pixels.transparentRatio < .02 && pixels.nearBlackRatio < .8);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      shots.push({ name, pixels, state: await read(page) });
+    };
+    for (const [width, height] of [[1280, 720], [1920, 1080], [390, 844], [320, 780]]) {
+      await page.setViewportSize({ width, height });
+      await page.evaluate(() => scrollTo(0, 0));
+      assert.equal(await page.getByTestId("child-action-invest").count(), 0);
+      assert.equal(await page.getByTestId("child-action-meet-aa").count(), 0);
+      assert.equal(await page.getByTestId("child-action-meet").count(), 1);
+      assert.equal(await page.getByTestId("meter-family").count(), 0);
+      assert.equal(await page.getByTestId("meter-career").count(), 0);
+      const boxes = await page.locator('[data-testid="turn-actions"] button[data-testid^="child-action-"]').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return { id: el.dataset.testid, top: r.top, bottom: r.bottom, visible: r.top >= Math.max(0, el.parentElement.getBoundingClientRect().top) && r.bottom <= Math.min(innerHeight, el.parentElement.getBoundingClientRect().bottom) }; }));
+      assert.equal(boxes.length, 4);
+      assert.ok(boxes.every(b => b.visible), `${width}: ${JSON.stringify(boxes)}`);
+      await shot(`choices-${width}`);
+    }
+    await page.getByTestId("open-profile").click();
+    assert.match(await page.getByTestId("partner-profile").innerText(), /艰苦/);
+    await shot("komichi-profile-mobile");
+    await page.keyboard.press("Escape");
+    assert.equal(await page.getByTestId("open-profile").evaluate(el => el === document.activeElement), true);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.getByTestId("open-household").click();
+    assert.equal((await read(page)).inspector, "household");
+    assert.match(await page.getByTestId("inspector-dialog").innerText(), /与父母的亲情|家里可支援|婚育债务/);
+    await shot("secondary-household");
+    await page.getByTestId("close-inspector").click();
+    await page.getByTestId("toggle-action-numbers").click();
+    assert.match(await page.getByTestId("turn-actions").innerText(), /相互了解\+20/);
+    await page.getByTestId("toggle-action-numbers").click();
+    assert.doesNotMatch(await page.getByTestId("turn-actions").innerText(), /相互了解\+20/);
+    await page.getByTestId("child-action-meet").click();
+    await page.getByTestId("payment-treat").click();
+    assert.equal((await read(page)).pendingMeeting, "meet");
+    await page.getByTestId("payment-aa").click();
+    assert.equal((await read(page)).pendingMeeting, "meet-aa");
+    await shot("single-meeting-entry");
+    await page.getByTestId("meeting-everyday").click();
+    const after = await read(page);
+    assert.equal(after.resolution.current.changes.find(c => c.key === "savings").delta, -5);
+    assert.equal(after.meetings, 2);
+    for (let i = 0; i < 10 && (await read(page)).resolution; i++) await page.getByTestId("resolution-next").click();
+    const bounds = await page.getByTestId("turn-actions").boundingBox();
+    assert.ok(bounds.y >= 0 && bounds.y < 720);
+    assert.deepEqual(errors, []);
+    writeFileSync(`${out}/report.json`, JSON.stringify({ passed: true, errors, shots }, null, 2));
+    console.log(`First-screen choices passed at four viewports; ${shots.length} screenshots; details, focus, numeric toggle, AA and legacy save passed.`);
+  } finally { await browser.close(); }
+})().catch(err => { console.error(err); process.exitCode = 1; });

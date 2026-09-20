@@ -1,3 +1,5 @@
+import { RELATIONSHIP_RULES, canConfirmDating, canMarry, canHaveChild, readyForMarriage, readyForChild } from "./progression";
+import { getHouseholdBudget, getPartnerProfile, isHousehold, willAgreeBudget } from "./household";
 import {
   CANDIDATES,
   CHILD_ACTIONS,
@@ -16,6 +18,7 @@ import type {
   GameResolution,
   MarriageGameState,
   ParentActionId,
+  MeetingTopic,
   ResolutionKind,
   ResolutionMetric,
   ResolutionStep,
@@ -31,16 +34,22 @@ const STAGE_VALUE = {
 } as const;
 
 export const ENDINGS: Record<string, Ending> = {
+  modest: {
+    id: "modest", title: "日子紧一点，彼此近一点", kicker: "旅行改期了，晚饭还是两个人一起做", description: "两个人一起缩减开支、分担工作，慢慢处理债务。生活没有一下子宽裕，但彼此仍然愿意同行。", color: "#55776b",
+  },
+  rebuilding: {
+    id: "rebuilding", title: "还在修复的日常", kicker: "这几年走完了，生活还在继续", description: "有过冲突，也有过重新商量。关系与预算还需要时间，暂时没有完美答案，也不必急着替一生盖章。", color: "#68766c",
+  },
   happy: {
     id: "happy",
-    title: "真的幸福终老",
+    title: "平凡日子，一起走下去",
     kicker: "婚礼早就散场了，两个人仍然站在一起",
     description: "多年以后，催婚饭桌只剩一段旧事。两个人没有靠忍耐维持体面，而是把钱、照护、边界和每一次选择都认真过成了共同生活。",
     color: "#4f8a66",
   },
   depressed: {
     id: "depressed",
-    title: "下一代玉玉了",
+    title: "孩子需要被接住",
     kicker: "婚育交了卷，鸡娃又成了下一张任务表",
     description: "仓促进入育儿后，补习、排名和精英焦虑层层加码。大人都说是为了孩子，孩子却先被压得失去了生活感。",
     color: "#705b87",
@@ -54,14 +63,14 @@ export const ENDINGS: Record<string, Ending> = {
   },
   exploited: {
     id: "exploited",
-    title: "被爆金币",
-    kicker: "所有承诺最后都落到年轻人的账单",
-    description: "婚礼、住房和照护成本层层叠加，口头支持没有兑现。家庭进度向前，现金流却彻底断裂。",
+    title: "长期困顿，重新起步",
+    kicker: "账单连续多年无解，生活需要重新安排",
+    description: "多次缩减和周转仍没有补上缺口，债务持续挤压生活。接下来要搬家、重排工作与还款计划。婚姻是否继续，仍是另一件事。",
     color: "#9b643f",
   },
   ruin: {
     id: "ruin",
-    title: "家破人亡",
+    title: "与原生家庭暂时断联",
     kicker: "谁都说为了这个家，最后家却不在了",
     description: "比较、威胁和拒绝沟通耗光最后的亲情。没有赢家，只剩互相拉黑后的安静。",
     color: "#993f43",
@@ -75,9 +84,9 @@ export const ENDINGS: Record<string, Ending> = {
   },
   runaway: {
     id: "runaway",
-    title: "彩礼卷走，人也走了",
-    kicker: "催出来的婚礼，留不住没有共识的伴侣",
-    description: "关系和意愿本来就没站稳，彩礼、婚礼与债务却先一步落地。一次争吵后，对方带走能带走的东西离开，只剩两家人在群里互相追账。",
+    title: "我们决定离婚",
+    kicker: "钱的难处背后，是日子已经无法一起商量",
+    description: "双方决定结束婚姻，重新安排住处、财务和各自的生活。有孩子就仍需共同承担照护。离婚结束的是这段关系，不是任何人的人生。",
     color: "#925642",
   },
   love: {
@@ -113,10 +122,10 @@ export const ENDINGS: Record<string, Ending> = {
 const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, Math.round(value)));
 
 export function getAgeAtTurn(
-  state: Pick<MarriageGameState, "startAge" | "turn">,
+  state: Pick<MarriageGameState, "startAge" | "turn" | "monthsPerTurn">,
   turn = state.turn,
 ) {
-  return state.startAge + Math.max(0, turn - 1);
+  return state.startAge + Math.floor((Math.max(0, turn - 1) * state.monthsPerTurn) / 12);
 }
 
 export function getCandidate(id: CandidateId | null): Candidate | null {
@@ -134,16 +143,18 @@ function clone(state: MarriageGameState): MarriageGameState {
 }
 
 const RESOLUTION_METRICS: Array<[ResolutionMetric, string]> = [
+  ["understanding", "相互了解"],
   ["stress", "压力"],
   ["autonomy", "自主"],
-  ["familyBond", "亲情"],
+  ["familyBond", "与父母的亲情"],
   ["savings", "存款"],
   ["career", "事业"],
-  ["relation", "关系"],
+  ["relation", "伴侣感情"],
   ["mutualIntent", "对方意愿"],
   ["pressure", "家庭催促"],
   ["parentFace", "家长面子"],
-  ["support", "实际支持"],
+  ["support", "累计家里支援"],
+  ["familyReserve", "家里可支援"],
   ["weddingDebt", "婚育债务"],
   ["nextGenStress", "下一代压力"],
 ];
@@ -224,6 +235,7 @@ function normalize(state: MarriageGameState) {
   state.support = clamp(state.support, 0, 120);
   state.weddingDebt = clamp(state.weddingDebt, 0, 160);
   state.nextGenStress = clamp(state.nextGenStress);
+  state.familyReserve = clamp(state.familyReserve, 0, 42);
 }
 
 export function getScores(state: MarriageGameState): Scores {
@@ -268,45 +280,36 @@ export function getScores(state: MarriageGameState): Scores {
 
 export function getEnding(state: MarriageGameState): Ending {
   if (state.ending && ENDINGS[state.ending]) return ENDINGS[state.ending];
-  if (state.familyBond <= 5 || (state.stress >= 100 && state.familyBond <= 28)) return ENDINGS.ruin;
+  if (state.familyBond <= 5) return ENDINGS.ruin;
   if (state.nextGenStress >= 100) return ENDINGS.depressed;
-  if (state.stress >= 100) return ENDINGS.burnout;
-  if (
-    state.savings <= 0 &&
-    (state.weddingDebt >= 28 || state.stage === "parenthood")
-  ) return ENDINGS.exploited;
-  if (
-    state.stage === "parenthood" &&
-    state.relation >= 68 &&
-    state.mutualIntent >= 62 &&
-    state.stress <= 52 &&
-    state.savings >= 28 &&
-    state.familyBond >= 45 &&
-    state.nextGenStress <= 45
-  ) return ENDINGS.happy;
-  if (
-    state.stage === "married" &&
-    state.childPlan === "childfree" &&
-    state.relation >= 70 &&
-    state.mutualIntent >= 62 &&
-    state.stress <= 65 &&
-    state.savings >= 28 &&
-    state.familyBond >= 42 &&
-    state.weddingDebt <= 28
-  ) return ENDINGS.happy;
-  if (
-    state.stage === "married" &&
-    (state.relation < 45 || state.mutualIntent < 38) &&
-    (state.coerciveMoves >= 3 || state.weddingDebt >= 32)
-  ) return ENDINGS.runaway;
-  if (
-    state.stage === "married" &&
-    (state.relation < 58 || state.stress > 68 || state.weddingDebt > 38)
-  ) return ENDINGS.hollow;
+  if (state.burnoutTurns >= 2) return ENDINGS.burnout;
+  if (isHousehold(state) && state.conflictTurns >= 3) return ENDINGS.runaway;
+  if (state.moneyStrainTurns >= 3 && state.weddingDebt >= 45) return ENDINGS.exploited;
+  if (isHousehold(state)) {
+    const connected = state.relation >= 65 && state.mutualIntent >= 55;
+    if (connected && state.stress < 80 && state.nextGenStress < 60) {
+      if (state.lifestyle === "lean" && state.budgetAgreed && getHouseholdBudget(state).net >= 0) return ENDINGS.modest;
+      if (state.savings >= 24 && state.weddingDebt <= 28 && getHouseholdBudget(state).net >= 0) return ENDINGS.happy;
+    }
+    if (state.relation < 50 || state.mutualIntent < 40 || state.stress >= 85) return ENDINGS.hollow;
+    return ENDINGS.rebuilding;
+  }
   if (state.stage === "dating" && state.relation >= 58 && state.mutualIntent >= 50) return ENDINGS.love;
   if (state.autonomy >= 72 && state.stress <= 68 && state.stage !== "married") return ENDINGS.independent;
   if (state.familyBond >= 62 && state.pressure <= 42) return ENDINGS.ceasefire;
   return ENDINGS.stalemate;
+}
+
+export function getEndingReason(state: MarriageGameState) {
+  if (state.monthsPerTurn === 12 && state.phase === "ended" && ["burnout", "exploited", "runaway"].includes(state.ending || "") && state.burnoutTurns + state.moneyStrainTurns + state.conflictTurns === 0) return "这是旧版保存的阶段记录，保留当时的结果；新局会先提供困难恢复窗口。";
+  if (state.ending === "runaway") return state.lastChildAction === "separate"
+    ? "双方主动选择结束婚姻；财务与照护仍需协商。"
+    : `伴侣感情与对方意愿均低于 35，已经持续 ${state.conflictTurns} 个回合。`;
+  if (state.ending === "burnout") return `回合结算时压力连续 ${state.burnoutTurns} 次达到 95 以上。不是因存款见底而结束。`;
+  if (state.ending === "exploited") return `连续 ${state.moneyStrainTurns} 回合出现实际收支缺口，债务累积到 ${state.weddingDebt}。这不等于自动离婚。`;
+  if (state.ending === "ruin") return `与父母的亲情降至 ${state.familyBond}，暂时停止家庭往来；不代表伴侣关系结束。`;
+  if (state.ending === "depressed") return `下一代压力达到 ${state.nextGenStress}，需要停下过度安排。`;
+  return `走完 ${state.turn} 个家庭回合：伴侣感情 ${state.relation}，对方意愿 ${state.mutualIntent}；存款 ${state.savings}，债务 ${state.weddingDebt}。记录当前生活，不预言一生。`;
 }
 
 function endGame(state: MarriageGameState) {
@@ -320,29 +323,37 @@ function endGame(state: MarriageGameState) {
 
 function checkTerminal(state: MarriageGameState) {
   normalize(state);
-  if (
-    state.stress >= 100 ||
-    state.nextGenStress >= 100 ||
-    state.familyBond <= 5 ||
-    (state.savings <= 0 &&
-      (state.weddingDebt >= 28 || state.stage === "parenthood"))
-  ) {
+  // Money and adult stress are evaluated after a complete year, with a recovery window.
+  if (state.familyBond <= 5 || state.nextGenStress >= 100) {
     endGame(state);
     return true;
   }
-  return false;
+  return state.phase === "ended";
 }
 
 export function createInitialState(): MarriageGameState {
   return {
-    version: 3,
+    version: 4,
+    familyReserve: 42,
+    monthsPerTurn: 3,
+    understanding: 0,
+    chemistry: 50,
+    matchClosed: false,
+    datingFeedback: "先聊一聊，看看对方是否也想认识你。",
+    lifestyle: "usual",
+    budgetAgreed: false,
+    moneyStrainTurns: 0,
+    burnoutTurns: 0,
+    conflictTurns: 0,
+    recoveryGranted: false,
+    partnerNote: "还没有一起谈过生活预算。",
     phase: "lobby",
     mode: "child",
     difficulty: "realistic",
     seed: 1,
     rng: 1,
     turn: 0,
-    maxTurns: 14,
+    maxTurns: 24,
     startAge: 26,
     marriedAtTurn: null,
     parenthoodAtTurn: null,
@@ -385,7 +396,7 @@ function draftCandidates(state: MarriageGameState) {
     ...(state.candidateId ? [state.candidateId] : []),
   ]);
   let available = CANDIDATES.filter(candidate => !blocked.has(candidate.id));
-  if (available.length < 3) {
+  if (available.length === 0) {
     state.rejectedCandidates = [];
     available = CANDIDATES.filter(candidate => candidate.id !== state.candidateId);
   }
@@ -417,6 +428,14 @@ function assignCandidate(state: MarriageGameState, id: CandidateId) {
   state.candidateOptions = [];
   state.stage = "single";
   state.relation = 4;
+  state.meetings = 0;
+  state.understanding = 0;
+  state.matchClosed = false;
+  state.chemistry = Math.floor(random(state) * 85) + 10;
+  state.datingFeedback = candidate.initialIntent < 40 ? "这次主要是家里安排，对方暂时没有急着交往的打算。" : "愿意先认识一下，还没有决定是否交往。";
+  state.budgetAgreed = false;
+  state.conflictTurns = 0;
+  state.partnerNote = getPartnerProfile(state).wish;
   state.mutualIntent = clamp(
     candidate.initialIntent + (random(state) - 0.5) * 14,
   );
@@ -446,40 +465,27 @@ function applyEconomyEvent(state: MarriageGameState) {
   normalize(state);
 }
 
-function readyForMarriage(state: MarriageGameState) {
-  return (
-    state.stage === "dating" &&
-    state.relation >= 58 &&
-    state.mutualIntent >= 52 &&
-    state.savings + state.support >= 55 &&
-    state.stress < 76
-  );
-}
-
-function readyForChild(state: MarriageGameState) {
-  return (
-    state.stage === "married" &&
-    state.childPlan !== "childfree" &&
-    state.relation >= 66 &&
-    state.mutualIntent >= 60 &&
-    state.savings + state.support >= 72 &&
-    state.stress < 66
-  );
-}
-
 export function getAvailableChildActions(
   state: MarriageGameState,
 ): ChildActionId[] {
   if (state.phase !== "turn" || !state.candidateId) return [];
-  if (state.stage === "parenthood") return ["protect-child", "build-home", "boundary", "work"];
-  if (state.stage === "married") {
-    const actions: ChildActionId[] = ["build-home", "boundary", "work"];
-    if (state.childPlan !== "childfree") actions.push("delay", "baby", "childfree");
+  const relief: ChildActionId[] = [];
+  if (state.stress >= 65) relief.push("rest");
+  if (state.savings <= 20 && state.familyReserve > 0 && state.familyBond > 15) relief.push("ask-help");
+  if (state.lifestyle !== "lean" || !state.budgetAgreed) relief.push("budget");
+  if (isHousehold(state)) {
+    const actions: ChildActionId[] = ["build-home", "boundary", "work", ...relief];
+    if (state.stage === "parenthood") actions.unshift("protect-child");
+    else if (state.childPlan !== "childfree") {
+      actions.push("delay", "childfree");
+      if (canHaveChild(state)) actions.push("baby");
+    }
+    if (state.relation < 45 || state.mutualIntent < 38 || state.conflictTurns > 0) actions.push("separate");
     return actions;
   }
-  const actions: ChildActionId[] = ["meet", "next", "boundary", "work", "delay"];
-  if (state.stage === "chatting" || state.stage === "dating") actions.splice(1, 0, "invest");
-  if (state.stage === "dating") actions.push("marry");
+  if (state.matchClosed) return ["next", "boundary", "work", ...relief];
+  const actions: ChildActionId[] = ["chat-listen", "chat-share", "chat-checklist", "meet", "meet-aa", "next", "boundary", "work", "delay", ...relief];
+  if (canMarry(state)) actions.push("marry", "simple-wedding");
   return actions;
 }
 
@@ -487,13 +493,13 @@ export function getAvailableParentActions(
   state: MarriageGameState,
 ): ParentActionId[] {
   if (state.phase !== "turn" || !state.candidateId) return [];
-  if (state.stage === "parenthood") return ["push-education", "compare", "support", "listen"];
-  if (state.stage === "married") return ["push-baby", "compare", "support", "listen"];
+  if (state.stage === "parenthood") return ["push-education", "compare", ...(state.familyReserve > 0 ? ["support" as const] : []), "listen"];
+  if (state.stage === "married") return ["push-baby", "compare", ...(state.familyReserve > 0 ? ["support" as const] : []), "listen"];
   const actions: ParentActionId[] = [
     "push-meet",
     "compare",
     "next",
-    "support",
+    ...(state.familyReserve > 0 ? ["support" as const] : []),
     "listen",
   ];
   if (state.stage === "chatting" || state.stage === "dating") actions.splice(2, 0, "encourage");
@@ -501,45 +507,59 @@ export function getAvailableParentActions(
   return actions;
 }
 
-function applyChildAction(state: MarriageGameState, id: ChildActionId) {
+function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: MeetingTopic = "everyday") {
+  if (!["everyday", "listen", "plans"].includes(topic)) return false;
   if (!getAvailableChildActions(state).includes(id)) return false;
   const candidate = getCandidate(state.candidateId);
   if (!candidate) return false;
   state.lastChildAction = id;
   const { compatibility } = candidate;
-  if (id === "meet") {
-    state.meetings += 1;
-    state.savings -= candidate.cityCost;
-    state.stress += 3 + state.pressure * 0.08;
-    state.relation += 8 + compatibility * 0.11;
-    state.mutualIntent += 5 + candidate.initialIntent * 0.09;
+  if (id === "chat-listen" || id === "chat-share" || id === "chat-checklist") {
+    const checklist = id === "chat-checklist";
+    const rushed = checklist && state.understanding < 35;
+    state.understanding = clamp(state.understanding + (checklist ? 28 : id === "chat-share" ? 12 : 20));
+    state.relation += rushed ? -3 : id === "chat-share" ? 8 : 5;
+    state.mutualIntent += rushed ? -6 : state.chemistry >= RELATIONSHIP_RULES.dating.chemistry ? 5 : 0;
+    state.stress += rushed ? 4 : -3;
     if (state.stage === "single") state.stage = "chatting";
-    if (state.relation >= 42 && state.mutualIntent >= 42) state.stage = "dating";
-    record(state, `子女去见了 ${candidate.name}。真人相处终于取代了家庭群里的简历。`);
-  } else if (id === "invest") {
-    const welcomed = state.mutualIntent >= 42;
-    state.savings -= candidate.cityCost + 2;
-    state.relation += welcomed ? 12 + compatibility * 0.08 : 4;
-    state.mutualIntent += welcomed ? 9 : -5;
-    state.stress += welcomed ? 2 : 13;
-    if (state.relation >= 42 && state.mutualIntent >= 42) state.stage = "dating";
-    record(
-      state,
-      welcomed
-        ? `双方认真安排了一次约会，${candidate.name} 也给出了明确回应。`
-        : `子女继续主动，但 ${candidate.name} 的回应依旧冷淡。`,
-    );
+    state.datingFeedback = rushed
+      ? "对方：可以谈计划，但我们刚认识，这样连着问有点像面试。"
+      : state.chemistry < 45 && state.understanding >= 35
+        ? "回复很礼貌，但很少主动问起你。也许没有同样的兴趣，不必硬聊。"
+        : id === "chat-share" ? "对方也分享了最近的生活，话题终于不是只剩条件。" : "对方把话说完了。愿意聊天是了解的开始，还不是交往承诺。";
+    record(state, state.datingFeedback);
+  } else if (id === "meet" || id === "meet-aa" || id === "invest") {
+    const premature = topic === "plans" && state.understanding < 40;
+    state.meetings += 1;
+    state.understanding = clamp(state.understanding + (topic === "plans" ? 35 : topic === "listen" ? 30 : 22));
+    const cost = id === "meet-aa" ? Math.ceil(candidate.cityCost / 2) : candidate.cityCost;
+    state.savings -= cost;
+    state.stress += 3 + state.pressure * 0.04;
+    const welcomed = state.chemistry >= RELATIONSHIP_RULES.dating.chemistry;
+    state.relation = Math.min(30 + state.chemistry, state.relation + (welcomed ? 12 + compatibility * 0.08 : 4));
+    state.mutualIntent = Math.min(25 + state.chemistry, state.mutualIntent + (welcomed ? 10 : -3));
+    if (topic === "listen") { state.relation -= 3; state.stress -= 3; }
+    if (topic === "plans") { state.relation -= premature ? 6 : 2; state.mutualIntent += premature ? -7 : 4; state.stress += premature ? 5 : 0; }
+    if (state.stage === "single") state.stage = "chatting";
+    if (canConfirmDating(state)) state.stage = "dating";
+    if (state.meetings >= RELATIONSHIP_RULES.dating.meetings && !welcomed) {
+      state.matchClosed = true;
+      state.datingFeedback = "对方：见过几次，我觉得我们不太有恋爱的感觉，就到这里吧。";
+    } else if (state.stage === "dating") state.datingFeedback = "双方明确愿意继续交往，这次终于不是替父母完成任务。";
+    else state.datingFeedback = welcomed ? "见面聊得还不错，对方愿意再约一次，但还需要时间了解。" : "对方很客气，但没有表现出继续靠近的兴趣。";
+    if (premature && !state.matchClosed) state.datingFeedback = `对方觉得婚育问题问得太急，想先认识你本人。${state.datingFeedback}`;
+    record(state, `第 ${state.meetings} 次见面，${id === "meet-aa" ? "提前说好 AA" : "这次由我请客"}，花费 ${cost}。${topic === "listen" ? "先听对方讲最近的生活。" : topic === "plans" ? "谈了城市与婚育预期。" : "互相分享平时的生活。"}${state.datingFeedback}`);
   } else if (id === "next") {
-    state.rejectedCandidates.push(candidate.id);
+    if (!state.rejectedCandidates.includes(candidate.id)) state.rejectedCandidates.push(candidate.id);
     state.autonomy += 10;
     state.stress -= 10;
-    state.familyBond -= 7 + state.pressure * 0.04;
-    state.pressure += 5;
+    state.familyBond -= state.matchClosed ? 2 : 7 + state.pressure * 0.04;
+    state.pressure += state.matchClosed ? 0 : 5;
     state.candidateId = null;
     state.stage = "single";
     state.relation = 0;
     state.mutualIntent = 0;
-    record(state, `子女拒绝继续消耗：${candidate.name} 不合适，换下一个。`);
+    record(state, state.matchClosed ? `与 ${candidate.name} 没有达成双向好感，双方结束了解，继续认识其他人。` : `子女拒绝继续消耗：${candidate.name} 不合适，换下一个。`);
     if (state.mode === "child") {
       draftCandidates(state);
       const next = chooseAiCandidate(state);
@@ -571,12 +591,22 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId) {
     state.relation -= state.stage === "dating" ? 5 : 2;
     state.mutualIntent -= 2;
     record(state, "子女先把手上的班上完，为失业、搬家和生活保留现金缓冲。");
+  } else if (id === "simple-wedding") {
+    state.marriedAtTurn = state.turn;
+    state.stage = "married";
+    state.savings -= 6;
+    state.stress += 3;
+    state.parentFace -= 8;
+    state.pressure += 5;
+    state.childPlan = "delay";
+    state.maxTurns = Math.max(state.maxTurns, state.turn + 4);
+    record(state, "双方同意先领证、请亲近的人吃饭。现金支出 6，不借婚礼债；家里对排场仍有意见。");
   } else if (id === "marry") {
     if (state.marriedAtTurn === null) state.marriedAtTurn = state.turn;
     if (readyForMarriage(state)) {
       state.stage = "married";
-      state.savings -= Math.max(8, 26 - state.support * 0.25);
-      state.weddingDebt += Math.max(0, 24 - state.support * 0.35);
+      state.savings -= 26;
+      state.weddingDebt += 12;
       state.stress += 7;
       state.parentFace += 25;
       state.familyBond += 8;
@@ -584,8 +614,8 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId) {
       record(state, "双方把住房、分工和债务谈清后，自主决定登记结婚。");
     } else {
       state.stage = "married";
-      state.savings -= 28;
-      state.weddingDebt += 42;
+      state.savings -= 26;
+      state.weddingDebt += 12;
       state.stress += 24;
       state.relation -= 13;
       state.mutualIntent -= 12;
@@ -607,7 +637,7 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId) {
     if (readyForChild(state)) {
       state.stage = "parenthood";
       state.nextGenStress += 8;
-      state.savings -= Math.max(12, 32 - state.support * 0.28);
+      state.savings -= 32;
       state.stress += 12;
       state.parentFace += 32;
       state.familyBond += 8;
@@ -641,8 +671,37 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId) {
     state.mutualIntent += 8;
     state.stress -= 6;
     state.familyBond += 3;
-    state.weddingDebt -= 5;
+    const paid = Math.min(5, state.weddingDebt, Math.max(0, state.savings));
+    state.savings -= paid;
+    state.weddingDebt -= paid;
+    if (state.lifestyle === "lean" && willAgreeBudget(state)) state.budgetAgreed = true;
     record(state, "两个人关掉家庭群，重新把钱、家务、照护和边界一项项谈清，开始真正经营共同生活。");
+  } else if (id === "budget") {
+    state.lifestyle = "lean";
+    state.budgetAgreed = !isHousehold(state) || willAgreeBudget(state);
+    state.stress -= 5;
+    state.relation += state.budgetAgreed ? 4 : -5;
+    state.partnerNote = state.budgetAgreed
+      ? "我们同意先过简单一点：旅行改期，非必要消费降到每回合 2。"
+      : "这次先削减开支，但伴侣并未认同，仍需要谈清楚对生活的期待。";
+    record(state, state.partnerNote);
+  } else if (id === "ask-help") {
+    const grant = Math.min(14, state.familyReserve);
+    state.familyReserve -= grant;
+    state.savings += grant;
+    state.support += grant;
+    state.stress -= 10;
+    state.familyBond += 5;
+    record(state, `子女说明具体缺口，家里支援 ${grant}。长辈的积蓄也有限，还能支援 ${state.familyReserve}。`);
+  } else if (id === "rest") {
+    state.stress -= 26;
+    state.career -= 4;
+    state.savings -= 2;
+    record(state, "子女推掉额外任务，休整并寻求支持。工作放慢一点，先让自己睡好、吃好。");
+  } else if (id === "separate") {
+    state.ending = "runaway";
+    record(state, "双方结束婚姻，开始协商住处、共同债务与照护安排。");
+    endGame(state);
   } else if (id === "protect-child") {
     state.nextGenStress -= 24;
     state.stress -= 8;
@@ -652,6 +711,9 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId) {
     state.savings -= 4;
     state.career -= 3;
     record(state, "子女停掉层层加码的安排，先接住孩子的情绪，也承担起照护所需的时间。");
+  }
+  if (id === "marry" || id === "simple-wedding") {
+    state.budgetAgreed = state.lifestyle === "lean" && willAgreeBudget(state);
   }
   normalize(state);
   return true;
@@ -668,7 +730,7 @@ function applyParentAction(state: MarriageGameState, id: ParentActionId) {
     state.stress += 10 * pressureScale;
     state.parentFace += 5;
     if (state.stage === "single") state.stage = "chatting";
-    state.relation += state.mutualIntent >= 48 ? 7 : 2;
+    // A parent can arrange a meeting, but cannot create attraction.
     state.coerciveMoves += 1;
     record(state, `家长催着今晚见 ${candidate.name}：“见一面又不会少块肉。”`);
   } else if (id === "compare") {
@@ -683,8 +745,8 @@ function applyParentAction(state: MarriageGameState, id: ParentActionId) {
     const welcomed = state.mutualIntent >= 50;
     state.pressure += 9 * pressureScale;
     state.stress += (welcomed ? 7 : 16) * pressureScale;
-    state.relation += welcomed ? 9 : -4;
-    state.mutualIntent += welcomed ? 4 : -7;
+    state.relation += welcomed ? 0 : -4;
+    state.mutualIntent += welcomed ? 0 : -7;
     state.parentFace += welcomed ? 8 : 3;
     state.coerciveMoves += 1;
     record(
@@ -694,7 +756,7 @@ function applyParentAction(state: MarriageGameState, id: ParentActionId) {
         : `对方意愿已经很低，家长仍要求继续发消息，尴尬变成了压力。`,
     );
   } else if (id === "next") {
-    state.rejectedCandidates.push(candidate.id);
+    if (!state.rejectedCandidates.includes(candidate.id)) state.rejectedCandidates.push(candidate.id);
     state.candidateId = null;
     state.stage = "single";
     state.relation = 0;
@@ -728,15 +790,17 @@ function applyParentAction(state: MarriageGameState, id: ParentActionId) {
     state.coerciveMoves += 1;
     record(state, "家长给下一代排满补习和竞赛：大城市竞争激烈，不能输在起跑线上。");
   } else if (id === "support") {
-    state.savings += 14;
-    state.support += 18;
+    const grant = Math.min(14, state.familyReserve);
+    state.familyReserve -= grant;
+    state.savings += grant;
+    state.support += grant;
     state.stress -= 10;
     state.pressure -= 6;
     state.familyBond += 8;
     state.parentFace -= 2;
     if (state.stage === "parenthood") state.nextGenStress -= 8;
     state.supportiveMoves += 1;
-    record(state, "家长拿出真实预算，愿意承担住房、婚礼或照护的一部分。");
+    record(state, `家长支援 ${grant}，用于住房、婚礼或照护。家里可支援的积蓄还剩 ${state.familyReserve}。`);
   } else if (id === "listen") {
     state.stress -= 14;
     state.pressure -= 17;
@@ -757,6 +821,7 @@ function chooseParentAiAction(state: MarriageGameState): ParentActionId {
     : state.difficulty === "realistic"
       ? 70
       : 84;
+  if (state.savings <= 8 && state.familyReserve > 0) return "support";
   if (state.stress >= careThreshold) return random(state) < 0.62 ? "listen" : "support";
   if (
     state.lastChildAction === "boundary" &&
@@ -768,6 +833,7 @@ function chooseParentAiAction(state: MarriageGameState): ParentActionId {
     if (state.nextGenStress >= 78 && state.difficulty !== "holiday") return random(state) < 0.58 ? "listen" : "support";
     return random(state) < (state.difficulty === "holiday" ? 0.82 : 0.62) ? "push-education" : "support";
   }
+  if (state.stage === "married" && state.childPlan === "childfree" && state.difficulty !== "holiday") return random(state) < 0.7 ? "listen" : "support";
   if (state.stage === "married") return state.support < 25 && random(state) < 0.42 ? "support" : "push-baby";
   if (state.stage === "dating") {
     if (state.relation >= 58 && random(state) < 0.68) return "push-marriage";
@@ -784,7 +850,10 @@ function chooseParentAiAction(state: MarriageGameState): ParentActionId {
 function chooseChildAiAction(state: MarriageGameState): ChildActionId {
   const candidate = getCandidate(state.candidateId);
   if (!candidate) return "boundary";
-  if (state.stress >= 86) return state.relation < 34 ? "next" : "boundary";
+  if (state.matchClosed) return "next";
+  if (state.stress >= 85) return "rest";
+  if (state.savings <= 12 && state.lifestyle !== "lean") return "budget";
+  if (state.savings <= 12) return "work";
   if (state.lastParentAction === "push-baby") {
     if (state.childPlan === "childfree") return "boundary";
     if (readyForChild(state)) return "baby";
@@ -797,19 +866,20 @@ function chooseChildAiAction(state: MarriageGameState): ChildActionId {
   if (state.lastParentAction === "compare") return state.autonomy >= 58 ? "boundary" : "work";
   if (state.lastParentAction === "support" || state.lastParentAction === "listen") {
     if (state.stage === "dating" && readyForMarriage(state)) return "marry";
-    if (state.stage === "chatting" || state.stage === "dating") return "invest";
+    if (state.stage === "chatting" || state.stage === "dating") return "meet-aa";
     if (state.stage === "married") return "build-home";
     return "meet";
   }
   if (state.mutualIntent < 28 && state.meetings > 0) return "next";
   if (state.stage === "single") return "meet";
-  if (state.stage === "chatting" || state.stage === "dating") return candidate.compatibility >= 70 ? "invest" : "boundary";
+  if (state.stage === "chatting" || state.stage === "dating") return "meet-aa";
   if (state.stage === "married") return state.childPlan === "childfree" ? "build-home" : "delay";
   return "boundary";
 }
 
 function applyParentAi(state: MarriageGameState, steps?: ResolutionStep[]) {
-  const action = chooseParentAiAction(state);
+  const preferred = chooseParentAiAction(state);
+  const action = getAvailableParentActions(state).includes(preferred) ? preferred : "listen";
   const definition = PARENT_ACTIONS.find(item => item.id === action);
   applyResolvedStep(
     state,
@@ -838,7 +908,8 @@ function applyParentAi(state: MarriageGameState, steps?: ResolutionStep[]) {
 }
 
 function applyChildAi(state: MarriageGameState, steps?: ResolutionStep[]) {
-  const action = chooseChildAiAction(state);
+  const preferred = chooseChildAiAction(state);
+  const action = getAvailableChildActions(state).includes(preferred) ? preferred : "boundary";
   const definition = CHILD_ACTIONS.find(item => item.id === action);
   applyResolvedStep(
     state,
@@ -877,8 +948,55 @@ function beginRound(state: MarriageGameState, steps?: ResolutionStep[]) {
   }
 }
 
+function settleHousehold(state: MarriageGameState, steps?: ResolutionStep[]) {
+  const before = resolutionSnapshot(state);
+  const budget = getHouseholdBudget(state);
+  state.savings += budget.net;
+  state.weddingDebt -= budget.repayment;
+  const shortfall = Math.max(0, -state.savings);
+  state.weddingDebt += shortfall;
+  state.savings = Math.max(0, state.savings);
+  state.moneyStrainTurns = shortfall > 0 ? state.moneyStrainTurns + 1 : 0;
+  let response = "";
+  if (isHousehold(state)) {
+    if (state.lifestyle === "lean" && !state.budgetAgreed) {
+      state.relation -= 6;
+      state.mutualIntent -= 4;
+      state.stress += 4;
+      response = "伴侣：开支降了，但生活期待还没谈拢，分歧在累积。";
+    } else if (shortfall > 0 || state.savings <= 8) {
+      if (willAgreeBudget(state)) {
+        state.relation += 3;
+        state.stress -= 4;
+        response = "伴侣：先别一个人扛，我们可以一起缩减开支。";
+      } else {
+        state.relation -= 7;
+        state.mutualIntent -= 5;
+        state.stress += 5;
+        response = "伴侣：钱一直不够，我也不想再这样过。生活期待的落差还没有解决。";
+      }
+    } else response = "伴侣按约定承担了共同开支。";
+    state.partnerNote = response;
+  }
+  normalize(state);
+  const detail = `这一季：工作结余 +${budget.income}，伴侣投入 +${budget.partnerIncome}；基本生活 −${budget.essentials}，弹性消费 −${budget.extras}，偿还债务 −${budget.repayment}。${shortfall > 0 ? `缺口 ${shortfall} 转为待还账单。` : ""}${response}`;
+  record(state, detail);
+  addResolutionStep(steps, "household", "这一季的生活账本", detail, before, state);
+  state.burnoutTurns = state.stress >= 95 ? state.burnoutTurns + 1 : 0;
+  state.conflictTurns = isHousehold(state) && state.relation < 35 && state.mutualIntent < 35 ? state.conflictTurns + 1 : 0;
+  if (!state.recoveryGranted && (state.moneyStrainTurns > 0 || state.burnoutTurns > 0 || state.conflictTurns > 0)) {
+    state.recoveryGranted = true;
+    state.maxTurns = Math.max(state.maxTurns, state.turn + 3);
+  }
+}
+
 function finishRound(state: MarriageGameState, steps?: ResolutionStep[]) {
   if (checkTerminal(state)) return;
+  settleHousehold(state, steps);
+  if (state.burnoutTurns >= 2 || state.conflictTurns >= 3 || (state.moneyStrainTurns >= 3 && state.weddingDebt >= 45)) {
+    endGame(state);
+    return;
+  }
   if (state.turn >= state.maxTurns) {
     endGame(state);
     return;
@@ -993,7 +1111,7 @@ export function resolveGameAction(
         steps,
         "choice",
         `我的选择：${definition?.title || "当事人回应"}`,
-        () => applyChildAction(state, action.id),
+        () => applyChildAction(state, action.id, action.topic),
       )
     ) return { state: previous, steps: [] };
     if (!state.candidateId || checkTerminal(state)) return { state, steps };
@@ -1007,32 +1125,22 @@ export function getActionPreview(
   state: MarriageGameState,
   actor: "child" | "parent",
   id: ChildActionId | ParentActionId,
+  topic?: MeetingTopic,
 ) {
   const copy = clone(state);
-  const before = {
-    stress: copy.stress,
-    autonomy: copy.autonomy,
-    familyBond: copy.familyBond,
-    savings: copy.savings,
-    relation: copy.relation,
-    pressure: copy.pressure,
-    nextGenStress: copy.nextGenStress,
-  };
-  if (actor === "child") applyChildAction(copy, id as ChildActionId);
+  const before = resolutionSnapshot(copy);
+  if (actor === "child") applyChildAction(copy, id as ChildActionId, topic);
   else applyParentAction(copy, id as ParentActionId);
-  const changes = [
-    ["压力", copy.stress - before.stress],
-    ["自主", copy.autonomy - before.autonomy],
-    ["亲情", copy.familyBond - before.familyBond],
-    ["存款", copy.savings - before.savings],
-    ["关系", copy.relation - before.relation],
-    ["催促", copy.pressure - before.pressure],
-    ["下一代压力", copy.nextGenStress - before.nextGenStress],
-  ] as const;
-  return changes
-    .filter(([, value]) => value !== 0)
-    .map(([label, value]) => `${label}${value > 0 ? "+" : ""}${value}`)
+  const meeting = ["meet", "meet-aa", "invest"].includes(id);
+  const uncertainResponse = actor === "child" && !isHousehold(state) && (meeting || id.startsWith("chat-"));
+  const preview = RESOLUTION_METRICS
+    .map(([key, label]) => ({ label, delta: copy[key] - before[key] }))
+    .filter(({ label }) => !(id === "next" && ["相互了解", "伴侣感情", "对方意愿"].includes(label)))
+    .filter(({ label }) => !(uncertainResponse && ["伴侣感情", "对方意愿"].includes(label)))
+    .filter(change => change.delta !== 0)
+    .map(({ label, delta }) => `${label}${delta > 0 ? "+" : ""}${delta}`)
     .join(" · ");
+  return [preview, uncertainResponse ? "感情与意愿看双方回应" : id === "next" ? "结束本次了解，再认识下一位" : ""].filter(Boolean).join(" · ");
 }
 
 export function validateSave(value: unknown): MarriageGameState | null {
@@ -1063,10 +1171,30 @@ export function validateSave(value: unknown): MarriageGameState | null {
         : migrated.rejectedCandidates,
     };
   }
+  if (migrated.version === 3) {
+    const defaults = createInitialState();
+    migrated = {
+      ...migrated,
+version: 4,
+      familyReserve: Math.max(0, 42 - Math.min(42, Number(migrated.support) || 0)),
+      monthsPerTurn: 12,
+understanding: 0,
+chemistry: 65,
+matchClosed: false,
+datingFeedback: "沿用旧档的相处进度。",
+      lifestyle: defaults.lifestyle,
+budgetAgreed: false,
+      moneyStrainTurns: 0,
+burnoutTurns: 0,
+conflictTurns: 0,
+recoveryGranted: false,
+      partnerNote: "旧档已接入生活预算，接下来可以一起商量。",
+    };
+  }
   const state = migrated as unknown as MarriageGameState;
   const templateKeys = Object.keys(createInitialState()).sort();
   if (Object.keys(state).sort().join("|") !== templateKeys.join("|")) return null;
-  if (state.version !== 3) return null;
+  if (state.version !== 4) return null;
   if (state.phase !== "ended" && state.maxTurns === 10) state.maxTurns = 14;
   if (!(["lobby", "candidate", "turn", "ended"] as string[]).includes(state.phase)) return null;
   if (!(["child", "parent", "duel"] as string[]).includes(state.mode)) return null;
@@ -1074,6 +1202,12 @@ export function validateSave(value: unknown): MarriageGameState | null {
   if (!(["child", "parent"] as string[]).includes(state.activeActor)) return null;
   if (!(["opening", "replace"] as string[]).includes(state.selectionKind)) return null;
   if (!Object.prototype.hasOwnProperty.call(STAGE_VALUE, state.stage)) return null;
+  if (!state.scores || typeof state.scores !== "object") return null;
+  if (![3, 12].includes(state.monthsPerTurn) || typeof state.matchClosed !== "boolean" || typeof state.datingFeedback !== "string" || !Number.isFinite(state.understanding) || state.understanding < 0 || state.understanding > 100 || !Number.isFinite(state.chemistry) || state.chemistry < 0 || state.chemistry > 100) return null;
+  if (!["usual", "lean"].includes(state.lifestyle) || typeof state.budgetAgreed !== "boolean" || typeof state.recoveryGranted !== "boolean" || typeof state.partnerNote !== "string") return null;
+  if (!["unknown", "delay", "childfree", "ready"].includes(state.childPlan)) return null;
+  if ([state.moneyStrainTurns, state.burnoutTurns, state.conflictTurns].some(n => !Number.isInteger(n) || n < 0 || n > 100)) return null;
+  if (!Number.isFinite(state.familyReserve) || state.familyReserve < 0 || state.familyReserve > 42) return null;
   const numeric = [
     state.seed,
     state.rng,
@@ -1101,6 +1235,7 @@ export function validateSave(value: unknown): MarriageGameState | null {
     state.scores.family,
   ];
   if (numeric.some(number => !Number.isFinite(number))) return null;
+  if (!Number.isSafeInteger(state.seed) || state.seed < 1 || !Number.isInteger(state.turn) || state.turn < 0 || !Number.isInteger(state.maxTurns) || state.maxTurns < 1 || state.maxTurns > 100 || state.turn > state.maxTurns) return null;
   if (!Number.isInteger(state.startAge) || state.startAge < 18 || state.startAge > 60) return null;
   if (
     [state.marriedAtTurn, state.parenthoodAtTurn].some(

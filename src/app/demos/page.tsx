@@ -33,9 +33,9 @@ const miniGames: ProjectItem[] = [
   {
     title: '年关牌局：这婚，你催吗？',
     href: '/game/family-pressure',
-    description: '当催婚变成家庭策略战：从相亲饭桌走到婚后多年，在十四个回合里保住关系与人生。',
+    description: '从微信破冰、AA见面到共同生活。在24个季度里认识不同的人，决定靠近、换人或一起渡过难关。',
     image: '/reference_images/岁己小红帽立绘.png',
-    meta: '双阵营策略 · 本地双人 · 十一种结局',
+    meta: '46位候选 · 真实相处 · 本地双人',
   },
   {
     title: '岁己：马上就播',

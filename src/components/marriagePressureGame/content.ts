@@ -1,3 +1,4 @@
+import { ROSTER_CANDIDATES } from "./roster";
 import type {
   ActionDefinition,
   Candidate,
@@ -43,6 +44,7 @@ export const STAGE_LABELS: Record<RelationshipStage, string> = {
 };
 
 export const CANDIDATES: Candidate[] = [
+  ...ROSTER_CANDIDATES,
   {
     id: "sui",
     name: "岁己",
@@ -160,6 +162,12 @@ export const CANDIDATES: Candidate[] = [
     boundary: "物质宽松不等于自动长大，我需要的是能一起承担生活的人。",
     opening: "可以先快乐相处，但真正成家时，不能永远让家里替我们收拾残局。",
   },
+  { id: "lin", name: "林知夏", subtitle: "社区医生 · 轮班工作", image: "/reference_images/雪绘.png", resume: 72, compatibility: 76, initialIntent: 36, cityCost: 5, tags: ["父母介绍", "轮班", "先做朋友"], boundary: "我可以来认识一下，但不保证见了就要交往。", opening: "是家里催我来的，最近排班有点满。" },
+  { id: "qiao", name: "乔安", subtitle: "建筑设计师 · 周末徒步", image: "/reference_images/Liko_莉蔻_立绘.png", resume: 80, compatibility: 67, initialIntent: 44, cityCost: 7, tags: ["独立生活", "户外", "慢热"], boundary: "不要把沉默当成默认同意，也别替我安排未来。", opening: "微信先聊聊吧，至少知道对方周末怎么过。" },
+  { id: "chen", name: "陈雨宁", subtitle: "小学教师 · 本地生活", image: "/reference_images/栞栞新衣_舰长礼物长图里截图.png", resume: 65, compatibility: 82, initialIntent: 58, cityCost: 4, tags: ["小城", "AA习惯", "稳定节奏"], boundary: "我习惯AA，不想让谁觉得一顿饭就欠下什么。", opening: "先从普通朋友认识，别一见面就谈婚期。" },
+  { id: "zhou", name: "周可", subtitle: "电商运营 · 跨城通勤", image: "/images/livers/nana7mi.png", resume: 70, compatibility: 62, initialIntent: 25, cityCost: 8, tags: ["被家里催", "通勤远", "暂不急婚"], boundary: "我答应来见面，不等于答应谈恋爱。", opening: "妈妈给我排了这次见面，我自己还没想好。" },
+  { id: "xu", name: "许青", subtitle: "软件工程师 · 安静慢热", image: "/reference_images/十六萤Izayoi.png", resume: 85, compatibility: 74, initialIntent: 46, cityCost: 6, tags: ["慢热", "分享日常", "需要空间"], boundary: "不用每条消息秒回，但希望聊天是双向的。", opening: "我不太擅长破冰，可以先聊聊最近在做的事。" },
+  { id: "tang", name: "唐悦", subtitle: "烘焙店主 · 自主创业", image: "/reference_images/岁己小红帽立绘.png", resume: 62, compatibility: 86, initialIntent: 52, cityCost: 5, tags: ["创业", "作息早", "量入为出"], boundary: "见几面才能知道合不合适，不喜欢也可以直接说。", opening: "店里忙的时候回得慢，休息日可以一起喝咖啡。" },
 ];
 
 export const ECONOMY_EVENTS: EconomyEvent[] = [
@@ -168,7 +176,7 @@ export const ECONOMY_EVENTS: EconomyEvent[] = [
   { id: "layoff-rumor", title: "群里开始传优化名单", detail: "没人确定下个月还有没有工位，未来计划突然失去刻度。", savings: -2, career: -8, stress: 11 },
   { id: "bonus", title: "到账一笔项目奖金", detail: "终于有一点余量。是留作失业缓冲，还是投入共同生活？", savings: 12, career: 5, stress: -3 },
   { id: "wedding", title: "同学群又发来婚礼请柬", detail: "红包、比较和祝福一起抵达，饭桌话题也有了新弹药。", savings: -5, career: 0, stress: 7 },
-  { id: "childcare", title: "朋友晒出托育账单", detail: "养育不再是抽象愿望，而是时间、住房和照护的总和。", savings: -3, career: 0, stress: 9 },
+  { id: "childcare", title: "朋友晒出托育账单", detail: "养育不再是抽象愿望，而是时间、住房和照护的总和。", savings: 0, career: 0, stress: 9 },
   { id: "remote", title: "争取到两天远程办公", detail: "通勤少了一点，生活终于挤出可以认真说话的晚上。", savings: 3, career: 3, stress: -7 },
   { id: "hospital", title: "家里有人去了一趟医院", detail: "照护责任突然落地，所有人都开始重新计算所谓稳定。", savings: -9, career: -2, stress: 9 },
   { id: "promotion", title: "出现一个外地晋升机会", detail: "事业向前一步，关系却要回答谁为谁换城市。", savings: 8, career: 10, stress: 5 },
@@ -180,16 +188,25 @@ export const ECONOMY_EVENTS: EconomyEvent[] = [
 ];
 
 export const CHILD_ACTIONS: ActionDefinition<ChildActionId>[] = [
-  { id: "meet", title: "我去见一面", detail: "先见到真人，再决定要不要继续，而不是替简历谈恋爱。", hint: "关系与意愿上升，花钱并承受当前压力" },
+  { id: "chat-listen", title: "微信 · 接着对方的话聊", detail: "见面前后都可以：认真回应最近的日常，留空间让对方表达。", hint: "增加了解；没有回应时不反复追问" },
+  { id: "chat-share", title: "微信 · 分享我的日常", detail: "说说自己的爱好、生活和打算，也给对方了解我的机会。", hint: "认识真实的彼此；更容易看清有没有兴趣" },
+  { id: "chat-checklist", title: "见面前把条件问清", detail: "直接问城市、收入与婚育时间表，快速确认重要分歧。", hint: "了解更快；刚认识就连环追问可能让人退缩" },
+  { id: "meet-aa", title: "见一面 · 提前说好 AA", detail: "约之前说明各付各的，聊聊生活，不用一顿饭交换好感。", hint: "双方各付一半；相处效果和请客一样" },
+  { id: "simple-wedding", title: "简单领证，小范围庆祝", detail: "双方同意成家，把排场缩小，保留生活缓冲。", hint: "花费 6，不新增婚礼债；家里面子下降" },
+  { id: "budget", title: "商量先过简单一点", detail: "旅行改期，少买非必需品；是否接受，要听对方怎么说。", hint: "长期减少弹性支出，未达共识会有摩擦" },
+  { id: "ask-help", title: "向家里说明缺口", detail: "把账单摊开，请家里在能力范围内支援一次。", hint: "最多支援 14；长辈积蓄有限" },
+  { id: "rest", title: "我先休整一下", detail: "推掉额外任务并寻求支持，给身心一个恢复窗口。", hint: "压力 −26，事业 −4，存款 −2" },
+  { id: "separate", title: "我们决定分开", detail: "结束婚姻，协商财务与照护安排。这会收束本局。", hint: "离婚结局；不是一笔账单自动决定" },
+  { id: "meet", title: "见一面 · 这次我请", detail: "选一次轻松的咖啡或便饭，我承担这次花费。见面不代表承诺交往。", hint: "请客不额外增加好感；看双方有没有继续的意愿" },
   { id: "invest", title: "我主动约一次", detail: "我愿意投入一次真实约会，但也要看对方有没有回应。", hint: "高契合时收益大；对方意愿低时会受伤" },
   { id: "next", title: "我不想再聊了", detail: "这位不合适，我明确拒绝，不把关系拖成消耗。", hint: "恢复自主和压力，亲情会短暂受损" },
   { id: "boundary", title: "我把边界说清楚", detail: "我会听建议，但我的人生不能由家长替我决定。", hint: "降低压力，提高自主；高压家庭可能争吵" },
   { id: "work", title: "我先把班上完", detail: "这回合先保住工作和现金流，不为饭桌进度打乱生活。", hint: "事业和存款上升，关系可能降温" },
-  { id: "marry", title: "我们认真谈结婚", detail: "住房、财务和分工都谈清楚后，再决定要不要登记。", hint: "准备不足会制造债务和高压" },
+  { id: "marry", title: "办婚礼并登记", detail: "正式结婚：现金支出 26、分期 12。关系或身心没准备好，婚后磨合会更辛苦。", hint: "准备不足会制造债务和高压" },
   { id: "delay", title: "我想晚点再谈", detail: "我承认现在还没准备好，先给未来留下选择。", hint: "降低压力并保留关系，家长期待下降" },
-  { id: "baby", title: "我们认真计划生育", detail: "只有双方意愿、照护和现金流都够时，我才愿意前进。", hint: "条件成熟可达成幸福；不足时风险极高" },
+  { id: "baby", title: "共同决定进入育儿", detail: "只有双方意愿、照护和现金流都够时，我才愿意前进。", hint: "条件成熟可达成幸福；不足时风险极高" },
   { id: "childfree", title: "我决定不生", detail: "我不再用“以后再说”拖延，愿意承担观念冲突。", hint: "自主大增；亲情取决于此前是否建立尊重" },
-  { id: "build-home", title: "我们把日子过好", detail: "我和伴侣重新谈钱、家务、照护与边界，让婚姻不只剩一张证。", hint: "花费存款，修复关系、意愿和婚育债务" },
+  { id: "build-home", title: "我们把日子过好", detail: "我和伴侣重新谈钱、家务、照护与边界，让婚姻不只剩一张证。", hint: "修复感情与分工；偿还债务会实际扣款" },
   { id: "protect-child", title: "我不拿孩子交卷", detail: "我停掉层层加码，先听孩子说累不累、想要什么。", hint: "下一代压力大降，但我要付出时间和职业成本" },
 ];
 

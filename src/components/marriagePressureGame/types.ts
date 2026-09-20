@@ -1,6 +1,7 @@
 export type GameMode = "child" | "parent" | "duel";
 export type Difficulty = "gentle" | "realistic" | "holiday";
 export type Actor = "child" | "parent";
+export type MeetingTopic = "everyday" | "listen" | "plans";
 export type GamePhase = "lobby" | "candidate" | "turn" | "ended";
 export type RelationshipStage =
   | "single"
@@ -18,9 +19,50 @@ export type CandidateId =
   | "xuehui"
   | "hazel"
   | "nana7mi"
-  | "azi";
+  | "azi"
+  | "lin"
+  | "qiao"
+  | "chen"
+  | "zhou"
+  | "xu"
+  | "tang"
+  | "rift_stalker"
+  | "cog_scribe"
+  | "mossback"
+  | "spark_mage"
+  | "clock_gunner"
+  | "dawn_duelist"
+  | "yua"
+  | "seki_boar_king"
+  | "sumi"
+  | "mitsuri"
+  | "guangyi"
+  | "nagisa"
+  | "tower_god"
+  | "nori"
+  | "meme"
+  | "zeyin"
+  | "kioi"
+  | "nightin"
+  | "tiandou"
+  | "youyi"
+  | "akirinco"
+  | "lovely"
+  | "komichi"
+  | "mumu"
+  | "yukisyo"
+  | "rei"
+  | "rutice"
+  | "lian"
+  | "pako"
+  | "miki_guest"
+  | "hatsuse_guest";
 
 export type ChildActionId =
+  | "chat-listen"
+  | "chat-share"
+  | "chat-checklist"
+  | "meet-aa"
   | "meet"
   | "invest"
   | "next"
@@ -31,6 +73,11 @@ export type ChildActionId =
   | "baby"
   | "childfree"
   | "build-home"
+  | "simple-wedding"
+  | "budget"
+  | "ask-help"
+  | "rest"
+  | "separate"
   | "protect-child";
 
 export type ParentActionId =
@@ -88,9 +135,11 @@ export interface Ending {
   color: string;
 }
 
-export type ResolutionKind = "choice" | "reality" | "family" | "response" | "match";
+export type ResolutionKind = "choice" | "reality" | "family" | "response" | "match" | "household";
 
 export type ResolutionMetric =
+  | "understanding"
+  | "familyReserve"
   | "stress"
   | "autonomy"
   | "familyBond"
@@ -125,7 +174,20 @@ export interface GameResolution {
 }
 
 export interface MarriageGameState {
-  version: 3;
+  version: 4;
+  familyReserve: number;
+  monthsPerTurn: 3 | 12;
+  understanding: number;
+  chemistry: number;
+  matchClosed: boolean;
+  datingFeedback: string;
+  lifestyle: "usual" | "lean";
+  budgetAgreed: boolean;
+  moneyStrainTurns: number;
+  burnoutTurns: number;
+  conflictTurns: number;
+  recoveryGranted: boolean;
+  partnerNote: string;
   phase: GamePhase;
   mode: GameMode;
   difficulty: Difficulty;
@@ -177,5 +239,5 @@ export type MarriageGameAction =
     }
   | { type: "candidate"; id: CandidateId }
   | { type: "parent-action"; id: ParentActionId }
-  | { type: "child-action"; id: ChildActionId }
+  | { type: "child-action"; id: ChildActionId; topic?: MeetingTopic }
   | { type: "restart" };
