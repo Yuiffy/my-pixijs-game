@@ -374,3 +374,46 @@ test('loud reports trade fewer clicks for noise and door or music really reduces
   assert.equal(quiet.delta.hits,1);assert.equal(loud.delta.hits,2);
   assert.ok(loud.peak>quiet.peak*2);assert.ok(loud.peak>closed.peak*3);assert.ok(loud.peak>music.peak*5);
 });
+
+
+test('closing the door on a player in the threshold must not trap the body',()=>{
+  const s=createGame();s.phase='playing';s.player={x:520,y:411};
+  assert.ok(nav.walkable(s.player,false));
+  advance(s,.4,{...emptyInput(),act:true,focus:'door'});advance(s,.02);
+  assert.ok(nav.walkable(s.player,s.doorClosed),'door collision must never appear around the player');
+  const before={...s.player};advance(s,.5,{...emptyInput(),x:1});assert.ok(s.player.x>before.x+15);
+});
+
+
+test('opening a door also refuses to place the open panel around a player',()=>{
+  const s=createGame();s.phase='playing';s.doorClosed=true;s.player={x:558,y:378};
+  assert.ok(nav.walkable(s.player,true));assert.ok(!nav.walkable(s.player,false));
+  advance(s,.4,{...emptyInput(),act:true,focus:'door'});advance(s,.02);
+  assert.equal(s.doorClosed,true);assert.ok(nav.walkable(s.player,true));assert.match(s.message,/退一点/);
+  advance(s,.4,{...emptyInput(),y:1});hold(s);assert.equal(s.doorClosed,false);assert.ok(nav.walkable(s.player,false));
+});
+test('safe door operations from either side allow walking away and returning through the opened doorway',()=>{
+  for(const x of [474,566]){
+    const s=createGame();s.phase='playing';s.player={x,y:410};
+    for(let n=0;n<3;n++){hold(s);assert.equal(s.doorClosed,true);assert.ok(nav.walkable(s.player,true));hold(s);assert.equal(s.doorClosed,false);assert.ok(nav.walkable(s.player,false));}
+    advance(s,.9,{...emptyInput(),x:x<520?1:-1});assert.ok(x<520?s.player.x>534:s.player.x<506);
+  }
+});
+test('every reachable nearby position stays walkable after opening or closing, including edges',()=>{
+  for(const closed of [false,true])for(let x=480;x<=600;x+=3)for(let y=360;y<=455;y+=3){
+    const p={x,y};if(!nav.walkable(p,closed)||e.distance(p,SPOTS.door)>=75)continue;
+    const s=createGame();s.phase='playing';s.player=p;s.doorClosed=closed;
+    advance(s,.4,{...emptyInput(),act:true,focus:'door'});
+    assert.ok(nav.walkable(s.player,s.doorClosed),JSON.stringify({p,closed,after:s.doorClosed}));
+  }
+});
+test('a previously trapped player can move out of a door overlap but cannot tunnel through walls',()=>{
+  for(const from of [{x:501,y:411},{x:533,y:411}]){
+    const to={x:from.x<520?from.x-2:from.x+2,y:from.y};
+    assert.deepEqual(nav.moveBody(from,to,true),to);
+    const wrong={x:from.x<520?550:480,y:411};assert.notDeepEqual(nav.moveBody(from,wrong,true),wrong);
+  }
+  const open={x:552,y:380};assert.deepEqual(nav.moveBody(open,{x:552,y:383},false),{x:552,y:383});
+  const wall={x:515,y:355};assert.deepEqual(nav.moveBody(wall,{x:480,y:355},true),wall);
+  assert.deepEqual(nav.moveBody({x:490,y:410},{x:550,y:410},true),{x:490,y:410});
+});

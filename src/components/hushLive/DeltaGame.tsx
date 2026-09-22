@@ -49,7 +49,7 @@ export default function DeltaGame({
         className={styles.deltaArena}
         aria-label="报点场地"
         onPointerDown={(event) => {
-          if (event.target === event.currentTarget) {
+          if (event.button === 0 && event.isPrimary && event.target === event.currentTarget) {
             missDelta(game);
             onChange();
           }
@@ -68,8 +68,17 @@ export default function DeltaGame({
               "--life": `${Math.max(0, 1 - d.age / 2.1) * 360}deg`,
             } as React.CSSProperties
           }
+          onPointerDown={(event) => {
+            if (event.button !== 0 || !event.isPrimary) return;
+            event.preventDefault();
+            event.stopPropagation();
+            hitDelta(game, id);
+            onChange();
+          }}
           onClick={(event) => {
             event.stopPropagation();
+            // Mouse/touch already scored on pointerdown. Preserve native keyboard/AT activation.
+            if (event.detail !== 0) return;
             hitDelta(game, id);
             onChange();
           }}

@@ -27,6 +27,7 @@ export const AIM_POINTS: Record<
   door: { x: 520, y: 410, height: 1.27 },
 };
 export type Runtime3D = {
+  tracking: { yaw: number; pitch: number; roll: number; mouth: number; blink: number; stand: number; chairYaw: number; avatarYaw: number; avatarMouth: number; avatarBlink: number; avatarUpdates: number };
   game: Game;
   save: Save;
   yaw: number;
@@ -53,6 +54,7 @@ export type Runtime3D = {
   };
 };
 export const createRuntime = (save: Save): Runtime3D => ({
+  tracking: { yaw: Math.PI, pitch: 0, roll: 0, mouth: 0, blink: 1, stand: 0, chairYaw: Math.PI, avatarYaw: 0, avatarMouth: 0, avatarBlink: 1, avatarUpdates: 0 },
   game: createGame(),
   save,
   yaw: -1.25,
@@ -190,5 +192,6 @@ export function text3D(r: Runtime3D) {
     fps: Math.round(r.fps),
     progression: r.save,
     partner: { ...partnerPose(r.game), ...partnerBehavior(r.game) },
+    tracking: { ...r.tracking },
   };
 }

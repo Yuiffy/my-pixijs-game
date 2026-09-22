@@ -70,11 +70,31 @@ export function moveBody(
   to: Position,
   closed: boolean,
 ): Position {
-  if (clearSegment(from, to, closed)) return to;
+  const allowed = (a: Position, b: Position) => clearSegment(a, b, closed) || escapesDoor(a, b, closed);
+  if (allowed(from, to)) return to;
   const horizontal = { x: to.x, y: from.y };
-  const moved = clearSegment(from, horizontal, closed) ? horizontal : from;
+  const moved = allowed(from, horizontal) ? horizontal : from;
   const vertical = { x: moved.x, y: to.y };
-  return clearSegment(moved, vertical, closed) ? vertical : moved;
+  return allowed(moved, vertical) ? vertical : moved;
+}
+/** Recover an existing overlap by walking out, never by crossing through a door or wall. */
+function escapesDoor(from: Position, to: Position, closed: boolean): boolean {
+  const depth = (p: Position, o: Obstacle) => Math.max(0, Math.min(p.x - o.x + BODY_RADIUS, o.x + o.w + BODY_RADIUS - p.x, p.y - o.y + BODY_RADIUS, o.y + o.h + BODY_RADIUS - p.y));
+  const all = obstacles(closed);
+  const initial = all.filter(o => depth(from, o) > 0);
+  if (!initial.length || initial.some(o => o.name !== 'door' && o.name !== 'openDoor')) return false;
+  let previous = initial.reduce((sum, o) => sum + depth(from, o), 0);
+  const start = previous;
+  const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 2);
+  for (let i = 1; i <= steps; i++) {
+    const p = { x: from.x + (to.x - from.x) * (i / steps), y: from.y + (to.y - from.y) * (i / steps) };
+    if (p.x < 64 || p.x > 895 || p.y < 125 || p.y > 516) return false;
+    if (all.some(o => !initial.includes(o) && depth(p, o) > 0)) return false;
+    const next = initial.reduce((sum, o) => sum + depth(p, o), 0);
+    if (next > previous + 0.000001) return false;
+    previous = next;
+  }
+  return previous < start;
 }
 export function route(
   from: Position,

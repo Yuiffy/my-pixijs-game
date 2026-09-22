@@ -86,59 +86,54 @@ export function paintTactical(texture: THREE.Texture, time: number, progress: nu
   texture.needsUpdate = true;
 }
 
-export function avatarTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 320;
-  const c = canvas.getContext("2d");
-  if (c) {
-    c.fillStyle = "#626d88";
-    c.fillRect(0, 0, 512, 320);
-    for (let i = 0; i < 25; i++) {
-      c.fillStyle = "#ddd5ee55";
-      c.beginPath();
-      c.arc((i * 93) % 512, (i * 67) % 320, 2 + (i % 3), 0, Math.PI * 2);
-      c.fill();
+export type AvatarPose = { yaw: number; pitch: number; roll: number; mouth: number; blink: number; stand: number };
+
+/** Paint the virtual character from the very pose currently displayed on the physical partner. */
+export function paintAvatar(texture: THREE.Texture, pose: AvatarPose, offAir = false) {
+  const canvas = texture.image as HTMLCanvasElement;
+  const c = canvas.getContext('2d');
+  if (!c) return;
+  const yaw = Math.atan2(Math.sin(pose.yaw - Math.PI), Math.cos(pose.yaw - Math.PI));
+  const facing = Math.cos(yaw); const turn = Math.sin(yaw);
+  const front = facing > -0.12;
+  c.clearRect(0, 0, 512, 320);
+  c.fillStyle = '#626d88'; c.fillRect(0, 0, 512, 320);
+  for (let i = 0; i < 25; i++) { c.fillStyle = '#ddd5ee55'; c.beginPath(); c.arc((i * 93) % 512, (i * 67) % 320, 2 + (i % 3), 0, Math.PI * 2); c.fill(); }
+  c.save();
+  c.translate(208, 178 - pose.stand * 13);
+  c.fillStyle = '#cfb5cf'; c.beginPath(); c.ellipse(0, 136, 90 + Math.abs(facing) * 25, 90, 0, 0, Math.PI * 2); c.fill();
+  c.rotate(-pose.roll);
+  const ellipse = (x: number, y: number, rx: number, ry: number, color: string) => { c.fillStyle = color; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.fill(); };
+  ellipse(-turn * 9, -5, 66 + Math.abs(facing) * 9, 100, '#e7dbef');
+  if (front) {
+    const width = Math.max(0.16, facing);
+    c.save(); c.translate(turn * 23, pose.pitch * 42); c.scale(0.45 + width * 0.55, 1 - Math.min(0.22, Math.abs(pose.pitch)));
+    ellipse(0, 0, 57, 65, '#f9d6c0');
+    ellipse(-2 - turn * 15, -56, 71, 34, '#e7dbef');
+    for (const side of [-1, 1]) {
+      const far = side * turn < 0; const eye = far ? Math.max(0.2, width) : 1;
+      ellipse(side * 22 + turn * 6, 0, 7 * eye, Math.max(1.5, 11 * pose.blink), '#865a74');
+      if (pose.blink > 0.4) ellipse(side * 22 + turn * 6 - 2, -3, 2 * eye, 3, '#fff8ec');
+      ellipse(side * 36, 18, 8, 3, '#e8a6a3');
     }
-    c.fillStyle = "#e7dbef";
-    c.beginPath();
-    c.ellipse(208, 169, 75, 104, 0, 0, Math.PI * 2);
-    c.fill();
-    c.fillStyle = "#cfb5cf";
-    c.beginPath();
-    c.ellipse(208, 310, 115, 89, 0, 0, Math.PI * 2);
-    c.fill();
-    c.fillStyle = "#f9d6c0";
-    c.beginPath();
-    c.ellipse(208, 177, 57, 65, 0, 0, Math.PI * 2);
-    c.fill();
-    c.fillStyle = "#e7dbef";
-    c.beginPath();
-    c.ellipse(206, 118, 72, 39, -0.12, 0, Math.PI * 2);
-    c.fill();
-    c.fillStyle = "#865a74";
-    for (const x of [188, 229]) {
-      c.beginPath();
-      c.ellipse(x, 177, 7, 11, 0, 0, Math.PI * 2);
-      c.fill();
-    }
-    c.strokeStyle = "#ad7378";
-    c.lineWidth = 3;
-    c.beginPath();
-    c.arc(209, 198, 11, 0.2, Math.PI - 0.2);
-    c.stroke();
-    c.fillStyle = "#f1b1af";
-    c.font = "bold 19px sans-serif";
-    c.fillText("● LIVE", 24, 32);
-    c.font = '15px "Microsoft YaHei",sans-serif';
-    c.fillStyle = "#f9f0e2";
-    c.fillText("小夏的晚安电台", 328, 68);
-    for (let i = 0; i < 6; i++) {
-      c.fillStyle = i % 2 ? "#bbb6ca" : "#d6c8d3";
-      c.fillRect(336, 100 + i * 28, 117 - (i % 3) * 15, 5);
-    }
+    if (pose.mouth > 0) { ellipse(turn * 7, 27, 10, 3 + pose.mouth * 11, '#995f70'); ellipse(turn * 7, 30 + pose.mouth * 3, 6, 2, '#dfa4ac'); } else { c.strokeStyle = '#ad7378'; c.lineWidth = 3; c.beginPath(); c.arc(turn * 7, 19, 11, 0.2, Math.PI - 0.2); c.stroke(); }
+    c.restore();
+  } else {
+    // Turning away from the webcam exposes the avatar's hair rather than a fixed smiling face.
+    c.strokeStyle = '#cbbbdc'; c.lineWidth = 2;
+    for (const offset of [-34, -12, 12, 34]) { c.beginPath(); c.moveTo(offset, -67); c.quadraticCurveTo(offset + turn * 13, 0, offset * 0.9, 76); c.stroke(); }
+    ellipse(-turn * 24, -25, 20, 10, '#f1d2e0');
   }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  c.restore();
+  c.fillStyle = offAir ? '#cce3cb' : '#f1b1af'; c.textAlign = 'left'; c.font = 'bold 19px sans-serif'; c.fillText(offAir ? 'OFF AIR' : '● LIVE', 24, 32);
+  c.font = '15px "Microsoft YaHei",sans-serif'; c.fillStyle = '#f9f0e2'; c.fillText('小夏的晚安电台', 328, 68);
+  for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? '#bbb6ca' : '#d6c8d3'; c.fillRect(336, 100 + i * 28, 117 - (i % 3) * 15, 5); }
+  texture.needsUpdate = true;
+}
+
+export function avatarTexture() {
+  const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 320;
+  const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
+  paintAvatar(texture, { yaw: Math.PI, pitch: 0, roll: 0, mouth: 0, blink: 1, stand: 0 });
   return texture;
 }

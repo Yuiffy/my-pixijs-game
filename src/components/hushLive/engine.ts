@@ -1,4 +1,4 @@
-import { moveBody, route } from "./navigation";
+import { BODY_RADIUS, moveBody, route, walkable } from "./navigation";
 
 export type Point = { x: number; y: number };
 export type Task = "charger" | "food" | "delta" | "hug" | "kiss";
@@ -386,6 +386,10 @@ export function action(s: Game, focus: Spot | null = nearest(s)) {
 }
 function completeAction(s: Game, key: string) {
   if (key === "door") {
+    if (!walkable(s.player, !s.doorClosed, BODY_RADIUS + 2)) {
+      s.message = s.doorClosed ? '你挡住门打开的位置了，往旁边退一点再开门。' : '你还站在门缝里。先走到门的一侧，再轻轻关门。';
+      return;
+    }
     s.doorClosed = !s.doorClosed;
     s.message = s.doorClosed
       ? "门轻轻合上了。隔墙报点更安全。"

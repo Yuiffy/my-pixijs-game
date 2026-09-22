@@ -19,6 +19,7 @@ import {
   labelTexture,
   woodTexture,
   paintTactical,
+  paintAvatar,
 } from "./textures3d";
 
 type Vec = [number, number, number];
@@ -242,7 +243,7 @@ function Partner({
   const hair = player ? "#63513f" : "#64464a";
   useFrame((_, dt) => {
     if (!rig.current) return;
-    const motionDt =
+    const motionDt = r.game.phase === 'paused' ? 0 :
       r.manual && r.game.phase !== "ready"
         ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
         : dt;
@@ -310,6 +311,14 @@ function Partner({
           ((hugging ? -1.45 : invitation ? -0.8 : -0.3) - arm.rotation.x) *
           Math.min(1, motionDt * 6);
     if (eyes.current) eyes.current.scale.y = Math.sin(r.game.pulse * 0.37) > 0.99 ? 0.15 : 1;
+    if (!player) {
+      r.tracking.yaw = rig.current.rotation.y;
+      r.tracking.pitch = head.current?.rotation.x ?? 0;
+      r.tracking.roll = head.current?.rotation.z ?? 0;
+      r.tracking.mouth = mouth.current?.visible ? 0.2 + behavior.mouth : 0;
+      r.tracking.blink = eyes.current?.scale.y ?? 1;
+      r.tracking.stand = stand;
+    }
   });
   return (
     <group
@@ -550,6 +559,8 @@ function Room({
   const delivered = useRef<THREE.Group>(null);
   const onSofa = useRef<THREE.Group>(null);
   const led = useRef<THREE.MeshStandardMaterial>(null);
+  const chair = useRef<THREE.Group>(null);
+  const avatarSignature = useRef('');
   const lastAnimationTime = useRef(r.elapsedFrame);
   const lastMonitorFrame = useRef(-1);
   useEffect(
@@ -557,7 +568,22 @@ function Room({
     [textures],
   );
   useFrame((_, dt) => {
-    const motionDt =
+    const { tracking } = r;
+    // The swivel seat follows the seated body. It stays behind when the partner stands up.
+    if (chair.current && tracking.stand < 0.1 && !r.game.won) {
+      chair.current.rotation.y = tracking.yaw;
+      tracking.chairYaw = tracking.yaw;
+    }
+    const signature = [tracking.yaw, tracking.pitch, tracking.roll, tracking.mouth, tracking.blink, tracking.stand, r.game.won].join('|');
+    if (signature !== avatarSignature.current) {
+      paintAvatar(textures.avatar, tracking, r.game.won);
+      avatarSignature.current = signature;
+      tracking.avatarYaw = Math.atan2(Math.sin(tracking.yaw - Math.PI), Math.cos(tracking.yaw - Math.PI));
+      tracking.avatarMouth = tracking.mouth;
+      tracking.avatarBlink = tracking.blink;
+      tracking.avatarUpdates++;
+    }
+    const motionDt = r.game.phase === 'paused' ? 0 :
       r.manual && r.game.phase !== "ready"
         ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
         : dt;
@@ -945,7 +971,7 @@ function Room({
           color={i % 2 ? "#b69c96" : "#c6ada3"}
         />
       ))}
-      <group position={[3.77, 0, -0.43]}>
+      <group ref={chair} position={[3.7714285714, 0, -0.4714285714]} rotation={[0, Math.PI, 0]}>
         <Box at={[0, 0.49, 0]} size={[0.61, 0.13, 0.53]} color="#a08b95" />
         <Box at={[0, 0.88, -0.21]} size={[0.57, 0.7, 0.12]} color="#b8a2aa" />
         <Rod
