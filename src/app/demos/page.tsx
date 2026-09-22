@@ -31,6 +31,13 @@ interface ProjectItem {
 
 const miniGames: ProjectItem[] = [
   {
+    title: '嘘，TA还在播',
+    href: '/game/hush-live',
+    description: '做虚拟主播的秘密恋人。递外卖、隔墙报点、偷一个吻，守住两个人的小秘密。',
+    image: '/games/hush-live/preview.png',
+    meta: '同居潜行 · 五晚闯关 · 随机加班夜',
+  },
+  {
     title: '年关牌局：这婚，你催吗？',
     href: '/game/family-pressure',
     description: '从微信破冰、AA见面到共同生活。在24个季度里认识不同的人，决定靠近、换人或一起渡过难关。',
