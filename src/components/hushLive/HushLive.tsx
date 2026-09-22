@@ -1,704 +1,803 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   action,
   broadcast,
   createGame,
-  emptyInput,
   ending,
   freshSave,
-  Game,
   LEVELS,
-  nearest,
   parseSave,
   record,
   Save,
   signal,
-  SPOTS,
-  Spot,
   stars,
-  step,
   TASK_NAMES,
-  togglePause,
-  travel,
 } from "./engine";
-import { draw, hitSpot } from "./scene";
-import styles from "./hush.module.css";
+import { FIRST_STEPS, objective } from "./guide";
+import {
+  advance3D,
+  clearControls,
+  createRuntime,
+  go3D,
+  lookPoint,
+  pause3D,
+  rotateView,
+  text3D,
+} from "./runtime3d";
+import { worldPoint } from "./navigation";
+import { ApartmentSound } from "./sound3d";
+import styles from "./hush3d.module.css";
 
+const Apartment = dynamic(() => import("./Apartment"), { ssr: false });
 const STORAGE = "hush-live-v1";
 type GameWindow = Window & {
   render_game_to_text?: () => string;
   advanceTime?: (ms: number) => void;
 };
+class SceneBoundary extends React.Component<
+  { children: React.ReactNode; onError: () => void },
+  { failed: boolean }
+> {
+  constructor(props: { children: React.ReactNode; onError: () => void }) {
+    super(props);
+    this.state = { failed: false };
+  }
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch() {
+    const { onError } = this.props;
+    onError();
+  }
+  render() {
+    const { failed } = this.state;
+    const { children } = this.props;
+    return failed ? null : children;
+  }
+}
 
 export default function HushLive() {
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const runtime = useRef(createRuntime(freshSave()));
+  const r = runtime.current;
   const shell = useRef<HTMLElement>(null);
-  const game = useRef<Game>(createGame());
-  const saved = useRef<Save>(freshSave());
-  const input = useRef(emptyInput());
-  const manual = useRef(false);
-  const audio = useRef<AudioContext | null>(null);
-  const soundEnabled = useRef(false);
-  const lastSound = useRef("");
-  const [view, setView] = useState({ ...game.current });
+  const viewport = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState({ ...r.game });
   const [save, setSave] = useState(freshSave());
-  const [ready, setReady] = useState(false);
-  const [storageNote, setStorageNote] = useState("");
+  const [sceneReady, setSceneReady] = useState(false);
+  const [sceneError, setSceneError] = useState(false);
+  const [sceneVersion, setSceneVersion] = useState(0);
+  const [sound, setSound] = useState(true);
+  const soundRef = useRef(true);
+  const audio = useRef<ApartmentSound | null>(null);
+  const [note, setNote] = useState("");
   const [shareText, setShareText] = useState("");
-  const [sound, setSound] = useState(false);
+  const [journal, setJournal] = useState(false);
+  const [knob, setKnob] = useState({ x: 0, y: 0 });
+  const lookDrag = useRef<{ id: number; x: number; y: number } | null>(null);
+  const stickPointer = useRef<number | null>(null);
+  const actionPointer = useRef<number | null>(null);
   const seed = useRef(1);
+  const lastPaint = useRef(0);
 
+  const refresh = useCallback(
+    () => setView({
+        ...runtime.current.game,
+        done: [...runtime.current.game.done],
+      }),
+    [],
+  );
   const persist = useCallback((next: Save) => {
-    saved.current = next;
+    runtime.current.save = next;
     setSave(next);
     try {
       localStorage.setItem(STORAGE, JSON.stringify(next));
     } catch {
-      setStorageNote(
-        "浏览器未允许保存；本次仍可完整游玩，关闭页面后进度会丢失。",
-      );
+      setNote("浏览器未允许保存；本次仍能游玩，关闭页面后进度会丢失。");
     }
   }, []);
-  const refresh = useCallback(() => {
-    const s = game.current;
-    if (canvas.current) {
-      const ctx = canvas.current.getContext("2d");
-      if (ctx) draw(ctx, s, saved.current.partner, saved.current.player);
-    }
-    setView({ ...s, done: [...s.done] });
-  }, []);
+  const unlock = () => {
+    if (document.pointerLockElement) document.exitPointerLock();
+  };
   const tick = useCallback(
-    (seconds: number) => {
-      const s = game.current;
-      const before = s.phase;
-      step(s, seconds, input.current);
-      if (before === "playing" && s.phase === "result") {
-        input.current = emptyInput();
-        persist(record(saved.current, s));
+    (dt: number) => {
+      const { current } = runtime;
+      const before = current.game.phase;
+      advance3D(current, dt);
+      if (before === "playing" && current.game.phase === "result") {
+        clearControls(current);
+        persist(record(current.save, current.game));
+        if (document.pointerLockElement) document.exitPointerLock();
       }
-      const soundKey =
-        s.phase === "playing"
-          ? `${s.done.length}-${Math.floor(s.elapsed / 2)}-${broadcast(s).music}`
-          : s.phase;
+      audio.current?.update(current, soundRef.current);
+      const now = performance.now();
       if (
-        soundEnabled.current &&
-        audio.current &&
-        soundKey !== lastSound.current &&
-        s.phase === "playing"
+        current.manual ||
+        now - lastPaint.current > 70 ||
+        current.game.phase !== before
       ) {
-        const ac = audio.current;
-        const oscillator = ac.createOscillator();
-        const gain = ac.createGain();
-        oscillator.type = "sine";
-        oscillator.frequency.value =
-          s.muted > 0
-            ? 660
-            : broadcast(s).music
-              ? [261.6, 329.6, 392, 523.2][Math.floor(s.elapsed / 2) % 4]
-              : 196;
-        gain.gain.setValueAtTime(0.025, ac.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.25);
-        oscillator.connect(gain);
-        gain.connect(ac.destination);
-        oscillator.start();
-        oscillator.stop(ac.currentTime + 0.3);
-        lastSound.current = soundKey;
+        refresh();
+        lastPaint.current = now;
       }
-      refresh();
     },
     [persist, refresh],
   );
+  const onReady = useCallback(() => {
+    setSceneReady(true);
+    setSceneError(false);
+    refresh();
+  }, [refresh]);
+  const onLost = useCallback(() => {
+    pause3D(runtime.current);
+    setSceneError(true);
+    setSceneReady(false);
+    refresh();
+  }, [refresh]);
+  const pause = useCallback(() => {
+    const { current } = runtime;
+    if (current.game.phase === "playing") {
+      pause3D(current);
+      if (document.pointerLockElement) document.exitPointerLock();
+    } else if (current.game.phase === "paused" && current.webglReady) current.game.phase = "playing";
+    setKnob({ x: 0, y: 0 });
+    setJournal(false);
+    refresh();
+  }, [refresh]);
+  const muteSignal = useCallback(() => {
+    const { current } = runtime;
+    if (current.focus === "partner") signal(current.game);
+    else current.game.message = "走近TA，看着TA的眼睛，再打闭麦暗号。";
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
+    const { current } = runtime;
     try {
-      saved.current = parseSave(localStorage.getItem(STORAGE));
+      current.save = parseSave(localStorage.getItem(STORAGE));
     } catch {
-      setStorageNote("浏览器未允许保存；本次仍可完整游玩。");
+      setNote("浏览器未允许保存；本次仍能完整游玩。");
     }
     const parameter = new URLSearchParams(window.location.search).get("seed");
     seed.current =
       parameter && /^\d{1,10}$/.test(parameter)
         ? Number(parameter) % 4294967296 || 1
         : Date.now() % 4294967296;
-    game.current = createGame(
-      parameter && saved.current.unlocked >= 5
+    current.game = createGame(
+      parameter && current.save.unlocked >= 5
         ? 5
-        : Math.min(4, saved.current.unlocked),
+        : Math.min(4, current.save.unlocked),
       seed.current,
-      saved.current.unlocked,
+      current.save.unlocked,
     );
-    setSave(saved.current);
-    setReady(true);
+    setSave(current.save);
     refresh();
     const target = window as GameWindow;
     target.render_game_to_text = () => JSON.stringify({
-        ...game.current,
-        coordinateSystem:
-          "960x580, origin top-left; x right, y down. Wall x506..534, doorway y375..448.",
-        spots: SPOTS,
-        nearest: nearest(game.current),
-        action: action(game.current),
-        broadcast: broadcast(game.current),
-        progression: saved.current,
+        ...text3D(current),
+        objective: objective(current.game),
+        broadcast: broadcast(current.game),
       });
     target.advanceTime = (ms) => {
-      manual.current = true;
+      current.manual = true;
       if (Number.isFinite(ms) && ms >= 0 && ms <= 300000) tick(ms / 1000);
     };
-    let frame = 0;
-    let last = performance.now();
-    let hud = 0;
-    const loop = (now: number) => {
-      if (!manual.current && now - hud >= 40) {
-        tick((now - last) / 1000);
-        last = now;
-        hud = now;
-      }
-      if (manual.current) last = now;
-      frame = requestAnimationFrame(loop);
-    };
-    frame = requestAnimationFrame(loop);
-    const clear = () => {
-      input.current = emptyInput();
-      if (game.current.phase === "playing") togglePause(game.current);
-      last = performance.now();
+    const blur = () => {
+      pause3D(current);
+      lookDrag.current = null;
+      stickPointer.current = null;
+      actionPointer.current = null;
+      setKnob({ x: 0, y: 0 });
       refresh();
     };
     const visibility = () => {
-      if (document.hidden) clear();
+      if (document.hidden) blur();
+    };
+    const lockChange = () => {
+      const wasLocked = current.pointerLocked;
+      current.pointerLocked = !!document.pointerLockElement;
+      if (wasLocked && !current.pointerLocked) {
+        pause3D(current);
+        refresh();
+      }
+    };
+    const mouseMove = (event: MouseEvent) => {
+      if (current.pointerLocked) rotateView(current, event.movementX, event.movementY);
     };
     const keyDown = (event: KeyboardEvent) => {
       if (
         event.target instanceof HTMLElement &&
-        ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)
+        ["SELECT", "INPUT", "TEXTAREA"].includes(event.target.tagName)
       ) return;
-      const k = event.key.toLowerCase();
+      const key = event.key.toLowerCase();
       if (
-        ["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k) &&
-        !(event.target instanceof HTMLButtonElement)
+        ["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key) &&
+        current.game.phase === "playing"
       ) event.preventDefault();
-      if (event.repeat && ["q", "m", "p", "escape", "f"].includes(k)) return;
-      if (k === "p" || k === "escape") {
-        togglePause(game.current);
-        input.current = emptyInput();
+      if (event.repeat && ["q", "m", "p", "escape", "f", "tab"].includes(key)) return;
+      if (key === "escape") {
+        if (current.game.phase === "playing") pause();
+        return;
       }
-      if (k === "q" && game.current.phase === "playing") game.current.quiet = !game.current.quiet;
-      if (k === "m") signal(game.current);
-      if (k === "f") {
+      if (key === "p") {
+        pause();
+        return;
+      }
+      if (key === "f") {
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
         else shell.current?.requestFullscreen().catch(() => {});
+        return;
       }
-      if (k === "e") input.current.act = true;
-      if (["arrowleft", "a"].includes(k)) input.current.x = -1;
-      if (["arrowright", "d"].includes(k)) input.current.x = 1;
-      if (["arrowup", "w"].includes(k)) input.current.y = -1;
-      if (["arrowdown", "s"].includes(k)) input.current.y = 1;
-      if (k === "shift") input.current.sprint = true;
-      refresh();
+      if (current.game.phase !== "playing") return;
+      if (key === "q") current.game.quiet = !current.game.quiet;
+      if (key === "m") muteSignal();
+      current.keys.add(key);
     };
     const keyUp = (event: KeyboardEvent) => {
-      const k = event.key.toLowerCase();
-      if (k === "e") {
-        input.current.act = false;
-        game.current.requireRelease = false;
-      }
-      if (["arrowleft", "a", "arrowright", "d"].includes(k)) input.current.x = 0;
-      if (["arrowup", "w", "arrowdown", "s"].includes(k)) input.current.y = 0;
-      if (k === "shift") input.current.sprint = false;
+      current.keys.delete(event.key.toLowerCase());
+      if (event.key.toLowerCase() === "e") current.game.requireRelease = false;
     };
+    const release = (event: PointerEvent) => {
+      if (actionPointer.current === event.pointerId) {
+        current.held = false;
+        current.game.requireRelease = false;
+        actionPointer.current = null;
+      }
+      if (stickPointer.current === event.pointerId) {
+        current.stick = { x: 0, y: 0 };
+        stickPointer.current = null;
+        setKnob({ x: 0, y: 0 });
+      }
+      if (lookDrag.current?.id === event.pointerId) lookDrag.current = null;
+    };
+    window.addEventListener("blur", blur);
+    document.addEventListener("visibilitychange", visibility);
+    document.addEventListener("pointerlockchange", lockChange);
+    document.addEventListener("mousemove", mouseMove);
     window.addEventListener("keydown", keyDown);
     window.addEventListener("keyup", keyUp);
-    window.addEventListener("blur", clear);
-    document.addEventListener("visibilitychange", visibility);
+    window.addEventListener("pointerup", release, true);
+    window.addEventListener("pointercancel", release, true);
     return () => {
-      cancelAnimationFrame(frame);
+      window.removeEventListener("blur", blur);
+      document.removeEventListener("visibilitychange", visibility);
+      document.removeEventListener("pointerlockchange", lockChange);
+      document.removeEventListener("mousemove", mouseMove);
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
-      window.removeEventListener("blur", clear);
-      document.removeEventListener("visibilitychange", visibility);
+      window.removeEventListener("pointerup", release, true);
+      window.removeEventListener("pointercancel", release, true);
       delete target.render_game_to_text;
       delete target.advanceTime;
-      audio.current?.close().catch(() => {});
+      audio.current?.close();
     };
-  }, [refresh, tick]);
+  }, [refresh, tick, pause, muteSignal]);
 
-  const select = (level: number) => {
-    game.current = createGame(level, seed.current, saved.current.unlocked);
-    input.current = emptyInput();
-    setShareText("");
-    refresh();
-  };
   const start = () => {
-    game.current.phase = "playing";
-    input.current = emptyInput();
+    if (!r.webglReady) return;
+    clearControls(r);
+    r.game.phase = "playing";
+    setJournal(false);
+    if (!audio.current) audio.current = new ApartmentSound();
+    audio.current.resume().catch(() => {});
     refresh();
   };
-  const go = (spot: Spot) => {
-    travel(game.current, spot);
+  const selectNight = (level: number, nextSeed = seed.current) => {
+    clearControls(r);
+    unlock();
+    r.game = createGame(level, nextSeed, r.save.unlocked);
+    r.yaw = -1.25;
+    r.pitch = -0.04;
+    r.focus = null;
+    seed.current = nextSeed;
+    setShareText("");
+    setJournal(false);
     refresh();
   };
-  const pause = () => {
-    togglePause(game.current);
-    input.current = emptyInput();
+  const goGoal = () => {
+    go3D(r, objective(r.game).spot);
     refresh();
   };
-  const b = broadcast(view);
-  const a = action(view);
-  const isPlaying = view.phase === "playing";
   const share = async () => {
-    const url = `${window.location.origin}/game/hush-live${view.level === 5 ? `?seed=${view.seed}` : ""}`;
-    const text = `《嘘，TA还在播》${view.level === 5 ? `加班夜 #${view.seed}` : `第${view.level + 1}晚`} · ${ending(view)}\n${view.totalScore}分 / ${stars(view)}星 / 甜蜜${view.love} / 最高怀疑${Math.round(view.peak)}%\n${url}`;
+    const g = r.game;
+    const url = `${window.location.origin}/game/hush-live${g.level === 5 ? `?seed=${g.seed}` : ""}`;
+    const text = `《嘘，TA还在播 · 3D》${g.level === 5 ? `加班夜 #${g.seed}` : `第${g.level + 1}晚`}\n${ending(g)} · ${g.totalScore}分 / ${stars(g)}星 / 甜蜜${g.love}\n${url}`;
     setShareText(text);
     try {
       await navigator.clipboard.writeText(text);
-      setStorageNote("挑战文案已复制，可以发给朋友啦。");
+      setNote("成绩已复制，可以和朋友分享这个夜晚。");
     } catch {
-      setStorageNote("可以从下方文本框选择并复制挑战文案。");
+      setNote("可在文本框中选择并复制成绩。");
     }
   };
+  const g = view;
+  const goal = objective(g);
+  const a = action(g, r.focus);
+  const b = broadcast(g);
+  const [px, pz] = worldPoint(g.player);
+  const target = lookPoint(r, goal.spot);
+  const metres = Math.hypot(target.x - px, target.z - pz);
+  const angle = Math.atan2(-(target.x - px), -(target.z - pz)) - r.yaw;
+  const direction = Math.atan2(Math.sin(angle), Math.cos(angle));
+  const marker =
+    Math.abs(direction) < 0.35 ? "前方" : direction > 0 ? "← 左侧" : "右侧 →";
+  const playing = g.phase === "playing";
+  const ready = g.phase === "ready";
+  const result = g.phase === "result";
+  const minutes = `${Math.floor(Math.max(0, g.limit - g.elapsed) / 60)}:${String(Math.floor(Math.max(0, g.limit - g.elapsed) % 60)).padStart(2, "0")}`;
 
   return (
-    <main
-      className={`${styles.root} ${view.phase !== "ready" ? styles.inGame : ""}`}
-      ref={shell}
-    >
-      <div className={styles.wrap}>
-        <nav className={styles.nav}>
-          <Link href="/demos">← 小游戏实验室</Link>
-          <span>A LITTLE LOVE, OFF THE RECORD.</span>
+    <main ref={shell} className={styles.root} data-phase={g.phase}>
+      <div
+        ref={viewport}
+        data-world3d="true"
+        className={styles.world}
+        onContextMenu={(e) => e.preventDefault()}
+        onPointerDown={(event) => {
+          if (!playing) return;
+          lookDrag.current = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+          };
+          event.currentTarget.setPointerCapture(event.pointerId);
+          if (
+            event.pointerType === "mouse" &&
+            event.button === 0 &&
+            !document.pointerLockElement
+          ) {
+            const promise = viewport.current
+              ?.querySelector("canvas")
+              ?.requestPointerLock();
+            promise?.catch(() => setNote("也可以按住鼠标右键拖动视角，或使用方向键转头。"),);
+          }
+        }}
+        onPointerMove={(event) => {
+          if (
+            !playing ||
+            r.pointerLocked ||
+            lookDrag.current?.id !== event.pointerId
+          ) return;
+          rotateView(
+            r,
+            event.clientX - lookDrag.current.x,
+            event.clientY - lookDrag.current.y,
+          );
+          lookDrag.current = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+          };
+        }}
+      >
+        <SceneBoundary key={sceneVersion} onError={onLost}>
+          <Apartment
+            runtime={r}
+            appearance={save}
+            onTick={tick}
+            onReady={onReady}
+            onLost={onLost}
+          />
+        </SceneBoundary>
+      </div>
+      {(ready || result || g.phase === "paused" || sceneError) && (
+        <div className={styles.veil} />
+      )}
+      <nav className={styles.nav}>
+        <Link href="/demos">← 实验室</Link>
+        <span>
+          嘘，TA还在播 <b>3D</b>
+        </span>
+        <div>
           <button
-            type="button"
             onClick={() => {
               const enabled = !sound;
+              soundRef.current = enabled;
               setSound(enabled);
-              soundEnabled.current = enabled;
-              if (enabled) {
-                audio.current ??= new AudioContext();
-                audio.current.resume().catch(() => {});
-              }
             }}
           >
             声音 {sound ? "开" : "关"}
           </button>
-        </nav>
-        <header className={styles.header}>
-          <div>
-            <p className={styles.eyebrow}>CO-OP LOVE / SOLO STEALTH</p>
-            <h1>
-              嘘，TA还在播<span>。</span>
-            </h1>
-            <p>全世界在听TA说话。只有你，听得见那句悄悄话。</p>
-          </div>
-          <div className={styles.live}>
-            <i /> {view.won ? 'OFF AIR' : 'ON AIR'}<small>恋爱不必全网可见</small>
-          </div>
-        </header>
-        <div className={styles.layout}>
-          <section className={styles.stage} aria-label="同居小公寓">
-            <div className={styles.stageBar}>
-              <span>
-                {view.level === 5
-                  ? `加班夜 #${view.seed}`
-                  : `NIGHT 0${view.level + 1} / ${LEVELS[view.level].title}`}
-              </span>
-              <span>
-                {view.phase === "ready"
-                  ? "今晚，也请多关照。"
-                  : `剩余 ${Math.max(0, Math.ceil(view.limit - view.elapsed))}s`}
-              </span>
-            </div>
-            {view.phase !== "ready" && view.phase !== "result" && (
-              <div className={styles.mobileStatus}>
-                <span>
-                  怀疑 <strong>{Math.round(view.suspicion)}%</strong>
-                </span>
-                <span>♡ {view.love}</span>
-                <span>
-                  任务 {view.done.length}/{view.tasks.length}
-                </span>
-                <button onClick={pause}>
-                  {view.phase === "paused" ? "继续" : "暂停"}
-                </button>
-              </div>
-            )}
-            <canvas
-              ref={canvas}
-              width={960}
-              height={580}
-              aria-label="点击房间地点走过去，或使用下方地点按钮"
-              onPointerDown={(event) => {
-                if (!isPlaying) return;
-                const rect = event.currentTarget.getBoundingClientRect();
-                const spot = hitSpot(
-                  ((event.clientX - rect.left) / rect.width) * 960,
-                  ((event.clientY - rect.top) / rect.height) * 580,
-                );
-                if (spot) go(spot);
-              }}
-            />
-            <div
-              className={`${styles.broadcast} ${b.music || view.muted > 0 ? styles.covered : ""}`}
-            >
-              <strong>
-                {view.phase === "result"
-                  ? view.won
-                    ? "下播了 · 今晚的声音只留给你"
-                    : "直播间的小秘密，差点藏不住"
-                  : view.muted > 0
-                    ? `闭麦掩护 · ${view.muted.toFixed(1)}秒`
-                    : b.music
-                      ? `♫ 唱歌掩护 · 还剩 ${Math.ceil(b.remaining)}秒`
-                      : b.sensitive
-                        ? "耳语互动 · 麦克风特别敏感"
-                        : `正常聊天 · ${Math.ceil(b.remaining)}秒后唱歌`}
-              </strong>
-              <span>
-                {view.phase === "result"
-                  ? "明晚，也一起回家。"
-                  : view.muted > 0
-                    ? "现在可以靠近一点。"
-                    : b.music
-                      ? "这是做响亮事情的好机会。"
-                      : "放轻脚步，也放轻喜欢。"}
-              </span>
-            </div>
-            <div className={styles.dialogue} aria-live="polite">
-              {view.message}
-            </div>
-            {isPlaying && (
-              <section className={styles.controls} aria-label="游戏操作">
-                <div className={styles.places}>
-                  {(Object.keys(SPOTS) as Spot[]).map((spot) => (
-                    <button
-                      key={spot}
-                      data-spot={spot}
-                      aria-pressed={view.target === spot}
-                      onClick={() => go(spot)}
-                    >
-                      {SPOTS[spot].name}
-                    </button>
-                  ))}
-                </div>
-                <div className={styles.actions}>
-                  <button
-                    aria-pressed={view.quiet}
-                    onClick={() => {
-                      game.current.quiet = !game.current.quiet;
-                      refresh();
-                    }}
-                  >
-                    {view.quiet ? "♧ 轻步中" : "快走 / 放开语音"} · Q
-                  </button>
-                  <button
-                    disabled={nearest(view) !== "partner" || view.cooldown > 0}
-                    onClick={() => {
-                      signal(game.current);
-                      refresh();
-                    }}
-                  >
-                    {view.cooldown > 0
-                      ? `暗号冷却 ${Math.ceil(view.cooldown)}s`
-                      : "眼神暗号 · 闭麦7s"}{" "}
-                    · M
-                  </button>
-                  <button
-                    data-act="hold"
-                    className={styles.hold}
-                    disabled={!a.key}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      input.current.act = true;
-                    }}
-                    onPointerUp={() => {
-                      input.current.act = false;
-                      game.current.requireRelease = false;
-                    }}
-                    onPointerCancel={() => {
-                      input.current.act = false;
-                      game.current.requireRelease = false;
-                    }}
-                    onLostPointerCapture={() => {
-                      input.current.act = false;
-                      game.current.requireRelease = false;
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === " " || e.key === "Enter") {
-                        e.preventDefault();
-                        input.current.act = true;
-                      }
-                    }}
-                    onKeyUp={() => {
-                      input.current.act = false;
-                      game.current.requireRelease = false;
-                    }}
-                    onBlur={() => {
-                      input.current.act = false;
-                    }}
-                  >
-                    <span style={{ width: `${view.actionProgress * 100}%` }} />
-                    <b>按住 · {a.label}</b>
-                  </button>
-                </div>
-              </section>
-            )}
-          </section>
-          <aside className={styles.sidebar}>
-            {view.phase === "ready" ? (
-              <>
-                <p className={styles.eyebrow}>今晚的秘密计划</p>
-                <h2>
-                  {view.level === 5 ? "再陪你一晚" : LEVELS[view.level].title}
-                </h2>
-                <p className={styles.description}>
-                  {view.level === 5
-                    ? "随机直播节奏与时间预算。相同种子，相同挑战。完成后分享你的秘密夜晚。"
-                    : LEVELS[view.level].subtitle}
-                </p>
-                <div className={styles.identities}>
-                  <label htmlFor="hush-player">
-                    你是
-                    <select
-                      id="hush-player"
-                      aria-label="玩家身份"
-                      value={save.player}
-                      onChange={(e) => {
-                        persist({
-                          ...save,
-                          player: e.target.value as Save["player"],
-                        });
-                        refresh();
-                      }}
-                    >
-                      <option>男友</option>
-                      <option>女友</option>
-                    </select>
-                  </label>
-                  <label htmlFor="hush-partner">
-                    恋人是
-                    <select
-                      id="hush-partner"
-                      aria-label="恋人称呼"
-                      value={save.partner}
-                      onChange={(e) => {
-                        persist({
-                          ...save,
-                          partner: e.target.value as Save["partner"],
-                        });
-                        refresh();
-                      }}
-                    >
-                      <option value="她">她 · 小夏</option>
-                      <option value="他">他 · 小夏</option>
-                    </select>
-                  </label>
-                </div>
-                <ol className={styles.tasks}>
-                  {view.tasks.map((t) => (
-                    <li key={t}>
-                      <span>○</span>
-                      {TASK_NAMES[t]}
-                    </li>
-                  ))}
-                  <li>
-                    <span>⌂</span>回沙发收工
-                  </li>
-                </ol>
-                <button
-                  id="hush-start"
-                  className={styles.primary}
-                  disabled={!ready}
-                  onClick={start}
-                >
-                  轻轻推开门 <span>→</span>
-                </button>
-                <p className={styles.hint}>
-                  点击地点移动，靠近后按住 E 做事。
-                  <br />Q 轻步 · M 闭麦暗号 · P 暂停 · F 全屏
-                  <br />
-                  WASD / 方向键移动，Shift 奔跑。
-                  <br />
-                  手机用下方地点与长按按钮。
-                </p>
-              </>
-            ) : view.phase === "result" ? (
-              <>
-                <p className={styles.eyebrow}>
-                  {view.won ? "OFF AIR / 属于我们的时间" : "今晚的小插曲"}
-                </p>
-                <h2>{ending(view)}</h2>
-                <div className={styles.score}>
-                  {view.totalScore}
-                  <small> 分</small>
-                </div>
-                <p className={styles.star}>
-                  {"★".repeat(stars(view))}
-                  {"☆".repeat(3 - stars(view))}
-                </p>
-                <p className={styles.description}>
-                  {view.won
-                    ? `下播后，${save.partner}把头靠在你的肩上：“辛苦啦，我的${save.player}。”`
-                    : view.reason === "timeout"
-                      ? "直播结束了，事情还没做完。少绕一点路，下次一定赶得上。"
-                      : "弹幕瞬间刷满问号。TA红着脸说：“是……家里那只猫。”试试等音乐，或先闭麦。"}
-                </p>
-                <p>
-                  甜蜜 {view.love} · 最高怀疑 {Math.round(view.peak)}%
-                </p>
-                <p className={styles.hint}>三星：最高怀疑低于25%，甜蜜至少25。<br />多一个抱抱，可能就是更好的结局。</p>
-                {view.won && view.level === 1 && (
-                  <p className={styles.reward}>解锁棉拖鞋：轻步更安静。</p>
-                )}
-                {view.won && view.level === 3 && (
-                  <p className={styles.reward}>
-                    解锁隔音门条：关门后隔音更好。
-                  </p>
-                )}
-                {view.won && view.level === 4 && (
-                  <p className={styles.reward}>
-                    解锁随机加班夜：新的秘密，新的纪录。
-                  </p>
-                )}
-                <button
-                  className={styles.primary}
-                  onClick={() => {
-                    if (view.won) {
-                      if (view.level === 5) seed.current = (seed.current + 7919) % 4294967296;
-                      select(Math.min(5, view.level + 1));
-                    } else {
-                      select(view.level);
-                      start();
-                    }
-                  }}
-                >
-                  {view.won
-                    ? view.level >= 4
-                      ? "再开一个加班夜 →"
-                      : "下一个夜晚 →"
-                    : "再试一次 →"}
-                </button>
-                <div className={styles.resultButtons}>
-                  <button onClick={() => select(view.level)}>重玩本晚</button>
-                  <button
-                    onClick={() => {
-                      share().catch(() => {});
-                    }}
-                  >
-                    复制成绩分享
-                  </button>
-                </div>
-                {shareText && (
-                  <textarea
-                    aria-label="成绩分享文案"
-                    readOnly
-                    value={shareText}
-                    onFocus={(e) => e.target.select()}
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                <p className={styles.eyebrow}>保守秘密，也别冷落TA</p>
-                <div className={styles.meterTitle}>
-                  <span>观众怀疑</span>
-                  <strong>
-                    {Math.round(view.suspicion)}
-                    <small> / 100</small>
-                  </strong>
-                </div>
-                <div className={styles.meter}>
-                  <i style={{ width: `${view.suspicion}%` }} />
-                </div>
-                <div className={styles.stats}>
-                  <span>♡ 甜蜜 {view.love}</span>
-                  <span>传入麦克风 {view.noise.toFixed(1)}</span>
-                </div>
-                <ol className={styles.tasks}>
-                  {view.tasks.map((t) => (
-                    <li
-                      key={t}
-                      className={view.done.includes(t) ? styles.done : ""}
-                    >
-                      <span>{view.done.includes(t) ? "✓" : "○"}</span>
-                      {TASK_NAMES[t]}
-                    </li>
-                  ))}
-                  <li>
-                    <span>⌂</span>做好后回沙发收工
-                  </li>
-                </ol>
-                <div className={styles.chat}>
-                  <span>直播弹幕</span>
-                  <p>{view.chat}</p>
-                </div>
-                {view.phase === "paused" ? (
-                  <div className={styles.pause}>
-                    <h2>先歇一会儿。</h2>
-                    <p>时间和声音都停在这里。</p>
-                    <button className={styles.primary} onClick={pause}>
-                      继续今晚 →
-                    </button>
-                    <button onClick={() => select(view.level)}>
-                      放弃本晚，返回准备
-                    </button>
-                  </div>
-                ) : (
-                  <button className={styles.pauseButton} onClick={pause}>
-                    Ⅱ 暂停 / P
-                  </button>
-                )}
-              </>
-            )}
-          </aside>
+          {playing && <button onClick={pause}>暂停 Ⅱ</button>}
         </div>
-
-        {view.phase === "ready" && (
-          <section className={styles.chapters} aria-label="夜晚选择">
-            {[...LEVELS.map((l) => l.title), "随机加班夜"].map((title, i) => (
-              <button
-                key={title}
-                disabled={i > save.unlocked}
-                aria-pressed={view.level === i}
-                onClick={() => select(i)}
-              >
-                <small>
-                  {i > save.unlocked
-                    ? "尚未解锁"
-                    : i === 5
-                      ? "ENDLESS"
-                      : `NIGHT 0${i + 1}`}
-                </small>
-                <strong>{title}</strong>
-                <span>
-                  {i < 5
-                    ? save.best[i]
-                      ? `${"★".repeat(save.stars[i])} ${save.best[i]}分`
-                      : "等待一个晚安"
-                    : save.endlessBest
-                      ? `最佳 ${save.endlessBest}分`
-                      : "每晚都有新秘密"}
-                </span>
-              </button>
-            ))}
-          </section>
-        )}
-        <footer className={styles.footer}>
-          <span>
-            {save.unlocked >= 2 ? "✓ 棉拖鞋" : "第二晚解锁棉拖鞋"} ·{" "}
-            {save.unlocked >= 4 ? "✓ 隔音门条" : "第四晚解锁隔音门条"} ·
-            进度自动保存在本机
-          </span>
-          <span>原创成年角色 / 一屋，两人，无数句悄悄话。</span>
-        </footer>
-        {storageNote && (
-          <p className={styles.storage} role="status">
-            {storageNote}
+      </nav>
+      {sceneError ? (
+        <section className={styles.menu}>
+          <p className={styles.eyebrow}>稍等一下</p>
+          <h1>
+            房间的灯
+            <br />
+            需要重新亮起。
+          </h1>
+          <p>3D画面暂时中断，游戏已暂停。进度仍在这里。</p>
+          <button
+            className={styles.primary}
+            onClick={() => {
+              setSceneError(false);
+              setSceneReady(false);
+              setSceneVersion((v) => v + 1);
+            }}
+          >
+            重新载入3D画面 →
+          </button>
+        </section>
+      ) : ready ? (
+        <section className={styles.menu}>
+          <p className={styles.eyebrow}>A LITTLE LOVE, OFF THE RECORD.</p>
+          <h1>
+            嘘，TA
+            <br />
+            还在播<span>。</span>
+          </h1>
+          <p className={styles.tagline}>屏幕里的偶像，生活里的恋人。</p>
+          <div className={styles.brief}>
+            <small>
+              {g.level === 5 ? `加班夜 #${g.seed}` : `NIGHT 0${g.level + 1}`}
+            </small>
+            <h2>
+              {g.level === 0
+                ? "今晚，只拿一个充电器"
+                : g.level === 5
+                  ? "再陪你一个夜晚"
+                  : LEVELS[g.level].title}
+            </h2>
+            <p>
+              {g.level === 0
+                ? "走进直播间，拿回床尾的充电器，再回到沙发。别让麦克风听见你。"
+                : g.level === 5
+                  ? "熟悉的家，不同的音乐时机。把这一晚的秘密留到下播以后。"
+                  : LEVELS[g.level].subtitle}
+            </p>
+          </div>
+          <button
+            id="hush-start"
+            disabled={!sceneReady}
+            className={styles.primary}
+            onClick={start}
+          >
+            {sceneReady ? "轻轻走进家门 →" : "正在点亮小公寓…"}
+          </button>
+          <p className={`${styles.instructions} ${styles.desktopOnly}`}>
+            WASD 走动 · 鼠标转头 · 看向物品，按住 E 互动
+            <br />
+            点击画面锁定鼠标；Esc 暂停。也可右键拖动转头。
           </p>
-        )}
-      </div>
+          <p className={`${styles.instructions} ${styles.touchOnly}`}>
+            左侧摇杆走动，滑动画面转头。
+            <br />
+            靠近并看向物品，再长按互动按钮。
+          </p>
+          <details className={styles.settings}>
+            <summary>选择夜晚与角色</summary>
+            <div className={styles.identities}>
+              <label htmlFor="hush-player">
+                你是
+                <select
+                  id="hush-player"
+                  aria-label="玩家身份"
+                  value={save.player}
+                  onChange={(e) => persist({
+                      ...save,
+                      player: e.target.value as Save["player"],
+                    })}
+                >
+                  <option>男友</option>
+                  <option>女友</option>
+                </select>
+              </label>
+              <label htmlFor="hush-partner">
+                恋人是
+                <select
+                  id="hush-partner"
+                  aria-label="恋人称呼"
+                  value={save.partner}
+                  onChange={(e) => persist({
+                      ...save,
+                      partner: e.target.value as Save["partner"],
+                    })}
+                >
+                  <option value="她">她 · 小夏</option>
+                  <option value="他">他 · 小夏</option>
+                </select>
+              </label>
+            </div>
+            <div className={styles.chapters}>
+              {[...LEVELS.map((l) => l.title), "随机加班夜"].map((name, i) => (
+                <button
+                  key={name}
+                  disabled={i > save.unlocked}
+                  aria-pressed={i === g.level}
+                  onClick={() => selectNight(i)}
+                >
+                  <span>
+                    {i > save.unlocked ? "未解锁" : i === 5 ? "∞" : `0${i + 1}`}
+                  </span>
+                  {name}
+                  <small>
+                    {i < 5 && save.best[i]
+                      ? `${save.best[i]}分`
+                      : i === 5 && save.endlessBest
+                        ? `${save.endlessBest}分`
+                        : ""}
+                  </small>
+                </button>
+              ))}
+            </div>
+          </details>
+          <p className={styles.saveNote}>
+            本机自动保存解锁与纪录 · 原创成年角色
+          </p>
+        </section>
+      ) : result ? (
+        <section className={styles.menu}>
+          <p className={styles.eyebrow}>
+            {g.won ? "OFF AIR / 现在，只属于我们" : "今晚的小插曲"}
+          </p>
+          <h1 className={styles.resultTitle}>{ending(g)}</h1>
+          <div className={styles.score}>
+            {g.totalScore}
+            <small>分</small>
+          </div>
+          <p className={styles.stars}>
+            {"★".repeat(stars(g))}
+            {"☆".repeat(3 - stars(g))}
+          </p>
+          <p className={styles.resultStory}>
+            {g.won
+              ? `${save.partner}把头靠在你的肩上：“谢谢你，我的${save.player}。现在可以放心抱了。”`
+              : g.reason === "timeout"
+                ? "直播结束了，事情还没有做完。先跟着金色目标标记走，下次一定赶得上。"
+                : "弹幕刷满了问号。TA红着脸说：“是……家里那只猫。”试试慢走、关门，或等唱歌时再动手。"}
+          </p>
+          <p className={styles.resultStats}>
+            甜蜜 {g.love} · 最高怀疑 {Math.round(g.peak)}% · 用时{" "}
+            {Math.ceil(g.elapsed)}秒
+          </p>
+          <p className={styles.instructions}>
+            {g.level === 0
+              ? "第一晚三星：最高怀疑低于25%。"
+              : "三星：最高怀疑低于25%，甜蜜至少25。"}
+          </p>
+          {g.won && [1, 3, 4].includes(g.level) && (
+            <p className={styles.reward}>
+              {g.level === 1
+                ? "解锁棉拖鞋 · 轻步更安静"
+                : g.level === 3
+                  ? "解锁隔音门条 · 关门更隔音"
+                  : "解锁随机加班夜 · 再陪TA一晚"}
+            </p>
+          )}
+          <button
+            className={styles.primary}
+            onClick={() => {
+              if (g.won) selectNight(
+                  Math.min(5, g.level + 1),
+                  g.level === 5 ? (g.seed + 7919) % 4294967296 : g.seed,
+                );
+              else {
+                selectNight(g.level, g.seed);
+                start();
+              }
+            }}
+          >
+            {g.won
+              ? g.level >= 4
+                ? "再开一个加班夜 →"
+                : "下一个夜晚 →"
+              : "再试一次 →"}
+          </button>
+          <div className={styles.resultButtons}>
+            <button onClick={() => selectNight(g.level, g.seed)}>
+              重玩本晚
+            </button>
+            <button
+              onClick={() => {
+                share().catch(() => {});
+              }}
+            >
+              复制成绩分享
+            </button>
+          </div>
+          {shareText && (
+            <textarea
+              aria-label="成绩分享文案"
+              value={shareText}
+              readOnly
+              onFocus={(e) => e.target.select()}
+            />
+          )}
+        </section>
+      ) : g.phase === "paused" ? (
+        <section className={styles.menu}>
+          <p className={styles.eyebrow}>时间停在这里</p>
+          <h1>
+            先歇<br />一会儿<span>。</span>
+          </h1>
+          <p>事情做到哪一步，回来就接着做。</p>
+          <button className={styles.primary} onClick={pause}>
+            继续今晚 →
+          </button>
+          <button
+            className={styles.textButton}
+            onClick={() => selectNight(g.level, g.seed)}
+          >
+            放弃本晚，返回准备
+          </button>
+        </section>
+      ) : null}
+      {playing && !sceneError && (
+        <>
+          <section className={styles.objective} data-objective={goal.key}>
+            <small>
+              {g.level === 0
+                ? `第 ${goal.step} / 3 步`
+                : `第 ${g.level + 1} 晚 · 当前目标`}
+            </small>
+            <h2>{goal.title}</h2>
+            <div>
+              <span>
+                {metres.toFixed(1)}m · {marker}
+              </span>
+              <button data-assist="goal" onClick={goGoal}>
+                {g.path.length ? "正在带路…" : "跟随目标 →"}
+              </button>
+            </div>
+          </section>
+          <section className={styles.liveStatus} aria-label="直播状态">
+            <p className={b.music || g.muted > 0 ? styles.safe : ""}>
+              {g.muted > 0
+                ? `● 已闭麦 ${g.muted.toFixed(1)}s`
+                : b.music
+                  ? `♫ 唱歌掩护 ${Math.ceil(b.remaining)}s`
+                  : b.sensitive
+                    ? "● 耳语时段 · 小心声音"
+                    : `● LIVE · ${Math.ceil(b.remaining)}s后唱歌`}
+            </p>
+            <div>
+              <span>观众怀疑</span>
+              <b>{Math.round(g.suspicion)}%</b>
+            </div>
+            <div className={styles.meter}>
+              <i style={{ width: `${g.suspicion}%` }} />
+            </div>
+            <footer>
+              <span>♡ {g.love}</span>
+              <span>{minutes}</span>
+            </footer>
+          </section>
+          <div
+            className={`${styles.crosshair} ${a.key ? styles.active : ""}`}
+            style={
+              {
+                "--progress": `${g.actionProgress * 360}deg`,
+              } as React.CSSProperties
+            }
+          >
+            <i />
+          </div>
+          <div className={`${styles.interaction} ${r.focus === 'partner' ? styles.partnerInteraction : ''}`}>
+            <span>
+              {a.key
+                ? `${a.label} · ${a.seconds}s`
+                : r.focus
+                  ? "这里暂时没有要做的事"
+                  : `靠近并看向${goal.spot === "shelf" ? "充电器" : goal.spot === "partner" ? "恋人" : goal.spot === "door" ? "门" : goal.spot === "sofa" ? "沙发" : goal.spot === "desk" ? "电脑" : "外卖袋"}`}
+            </span>
+            <small className={styles.desktopOnly}>
+              {a.key ? "按住 E 互动，松开可停" : "金色菱形标记着当前目标"}
+            </small>
+          </div>
+          <div className={styles.dialogue}>
+            <span>{g.message}</span>
+          </div>
+          <div className={styles.bottomTools}>
+            <button
+              aria-pressed={g.quiet}
+              onClick={() => {
+                r.game.quiet = !r.game.quiet;
+                refresh();
+              }}
+            >
+              {g.quiet ? "轻步" : "快走"} <kbd>Q</kbd>
+            </button>
+            <button onClick={() => setJournal((v) => !v)}>
+              {journal ? "收起" : "计划"} {g.done.length}/{g.tasks.length}
+            </button>
+            {r.focus === "partner" && (
+              <button disabled={g.cooldown > 0} onClick={muteSignal}>
+                {g.cooldown > 0 ? `暗号 ${Math.ceil(g.cooldown)}s` : "请TA闭麦"}{" "}
+                <kbd>M</kbd>
+              </button>
+            )}
+          </div>
+          {journal && (
+            <aside className={styles.journal}>
+              <strong>今晚的小计划</strong>
+              <ol>
+                {g.level === 0
+                  ? FIRST_STEPS.map((t, i) => (
+                      <li
+                        key={t}
+                        className={goal.step > i + 1 ? styles.done : ""}
+                      >
+                        {goal.step > i + 1 ? "✓" : i + 1} {t}
+                      </li>
+                    ))
+                  : g.tasks.map((t) => (
+                      <li
+                        key={t}
+                        className={g.done.includes(t) ? styles.done : ""}
+                      >
+                        {g.done.includes(t) ? "✓" : "○"} {TASK_NAMES[t]}
+                      </li>
+                    ))}
+              </ol>
+              <p>{g.chat}</p>
+              <small>
+                棉拖鞋{g.slippers ? "已穿上" : "第二晚解锁"} · 门条
+                {g.seal ? "已安装" : "第四晚解锁"}
+              </small>
+              <p className={styles.instructions}>
+                方向键可前后走、左右转头。Shift快跑；F全屏；P暂停。跟随目标会步行带路，不会自动替你做事。
+              </p>
+            </aside>
+          )}
+          <button
+            className={`${styles.joystick} ${styles.touchOnly}`}
+            aria-label="移动摇杆"
+            onPointerDown={(event) => {
+              event.preventDefault();
+              event.currentTarget.setPointerCapture(event.pointerId);
+              stickPointer.current = event.pointerId;
+              r.assist = null;
+              r.autoLook = false;
+              r.game.path = [];
+            }}
+            onPointerMove={(event) => {
+              if (stickPointer.current !== event.pointerId) return;
+              const box = event.currentTarget.getBoundingClientRect();
+              const dx = event.clientX - box.x - box.width / 2;
+              const dy = event.clientY - box.y - box.height / 2;
+              const length = Math.max(34, Math.hypot(dx, dy));
+              r.stick = { x: dx / length, y: -dy / length };
+              setKnob({ x: (dx / length) * 28, y: (dy / length) * 28 });
+            }}
+          >
+            <span style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }}>
+              走
+            </span>
+          </button>
+          <button
+            data-act="hold"
+            className={styles.touchAction}
+            disabled={!a.key}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              event.currentTarget.setPointerCapture(event.pointerId);
+              actionPointer.current = event.pointerId;
+              r.held = true;
+            }}
+            onKeyDown={(event) => {
+              if (event.key === " " || event.key === "Enter") {
+                event.preventDefault();
+                r.held = true;
+              }
+            }}
+            onKeyUp={() => {
+              r.held = false;
+              r.game.requireRelease = false;
+            }}
+            onBlur={() => {
+              r.held = false;
+            }}
+          >
+            <span className={styles.desktopOnly}>按住 E 互动</span><span className={styles.touchOnly}>按住互动</span><small>{a.key ? a.label : "先看向物品"}</small>
+          </button>
+        </>
+      )}
+      {note && <div className={styles.notice} role="status">{note}<button aria-label="关闭提示" onClick={() => setNote('')}> × </button></div>}
     </main>
   );
 }

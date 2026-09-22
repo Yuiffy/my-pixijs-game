@@ -1,7 +1,9 @@
+import { moveBody, route } from './navigation';
+
 export type Point = { x: number; y: number };
 export type Task = "charger" | "food" | "delta" | "hug" | "kiss";
 export type Spot = "sofa" | "shelf" | "entry" | "partner" | "desk" | "door";
-export type Input = { x: number; y: number; act: boolean; sprint: boolean };
+export type Input = { x: number; y: number; act: boolean; sprint: boolean; focus?: Spot | null };
 export const emptyInput = (): Input => ({
   x: 0,
   y: 0,
@@ -10,10 +12,10 @@ export const emptyInput = (): Input => ({
 });
 export const SPOTS: Record<Spot, Point & { name: string }> = {
   sofa: { x: 220, y: 380, name: "沙发 · 回家收工" },
-  shelf: { x: 826, y: 460, name: "充电器" },
-  entry: { x: 104, y: 493, name: "门口 · 外卖" },
+  shelf: { x: 826, y: 505, name: "充电器" },
+  entry: { x: 127, y: 500, name: "门口 · 外卖" },
   partner: { x: 744, y: 339, name: "恋人" },
-  desk: { x: 230, y: 182, name: "电脑 · 三角洲" },
+  desk: { x: 230, y: 215, name: "电脑 · 三角洲" },
   door: { x: 516, y: 406, name: "隔音门" },
 };
 export const LEVELS: {
@@ -26,31 +28,31 @@ export const LEVELS: {
     title: "借过一下，宝贝",
     subtitle: "充电器落在直播间了。拿回来，再悄悄回到沙发。",
     tasks: ["charger"],
-    seconds: 110,
+    seconds: 180,
   },
   {
     title: "外卖要趁热",
     subtitle: "门口的晚饭到了。袋子沙沙响，等唱歌时再递过去。",
     tasks: ["food", "charger"],
-    seconds: 140,
+    seconds: 210,
   },
   {
     title: "隔墙有耳",
     subtitle: "三角洲队友等你报点。关门，再开语音。",
     tasks: ["delta", "food"],
-    seconds: 150,
+    seconds: 230,
   },
   {
     title: "再抱五秒就好",
     subtitle: "TA伸出手，指了指麦克风。先用眼神暗号闭麦。",
     tasks: ["hug", "charger", "kiss"],
-    seconds: 155,
+    seconds: 230,
   },
   {
     title: "不公开的纪念日",
     subtitle: "晚饭、队友和一个吻。把普通夜晚过成两人的秘密。",
     tasks: ["food", "delta", "charger", "kiss"],
-    seconds: 190,
+    seconds: 300,
   },
 ];
 export const TASK_NAMES: Record<Task, string> = {
@@ -162,13 +164,13 @@ export function createGame(level = 0, seed = 1, unlocked = 0): Game {
     tasks,
     done: [],
     carry: null,
-    player: { x: 220, y: 410 },
+    player: { x: 220, y: 430 },
     path: [],
     target: null,
     quiet: true,
     doorClosed: false,
     elapsed: 0,
-    limit: safeLevel < 5 ? LEVELS[safeLevel].seconds : 130 + (safeSeed % 31),
+    limit: safeLevel < 5 ? LEVELS[safeLevel].seconds : 210 + (safeSeed % 51),
     suspicion: 0,
     peak: 0,
     love: 0,
@@ -213,14 +215,9 @@ export function travel(s: Game, spot: Spot) {
   s.target = spot;
   const dest =
     spot === "door" ? { x: s.player.x < 520 ? 474 : 566, y: 410 } : SPOTS[spot];
-  s.path = [];
-  if (spot !== "door" && s.player.x < 520 !== dest.x < 520) {
-    s.path.push(
-      { x: s.player.x < 520 ? 462 : 578, y: 415 },
-      { x: dest.x < 520 ? 462 : 578, y: 415 },
-    );
-  }
-  s.path.push({ x: dest.x, y: dest.y });
+  const blockedByDoor = spot !== 'door' && s.doorClosed && (s.player.x < 520) !== (dest.x < 520);
+  s.path = route(s.player, blockedByDoor ? { x: s.player.x < 520 ? 474 : 566, y: 410 } : dest, s.doorClosed);
+  if (blockedByDoor) s.message = '门关着。先轻轻打开它，再继续过去。';
   s.actionProgress = 0;
   if (
     spot === "partner" &&
@@ -241,13 +238,13 @@ export function signal(s: Game) {
   s.cooldown = 24;
   s.message = "TA按下闭麦键：七秒，够不够抱一下？";
 }
-export function action(s: Game): {
+export function action(s: Game, focus: Spot | null = nearest(s)): {
   key: string;
   label: string;
   seconds: number;
   noise: number;
 } {
-  const spot = nearest(s);
+  const spot = focus && distance(s.player, SPOTS[focus]) < (focus === 'door' ? 75 : 70) ? focus : null;
   const pending = (id: Task) => s.tasks.includes(id) && !s.done.includes(id);
   if (spot === "door") return {
       key: "door",
@@ -278,7 +275,7 @@ export function action(s: Game): {
       seconds: 5,
       noise: 16,
     };
-  if (spot === "sofa" && s.tasks.every((t) => s.done.includes(t))) return { key: "finish", label: "窝进沙发，等TA下播", seconds: 1, noise: 0 };
+  if (spot === "sofa" && s.tasks.every((t) => s.done.includes(t))) return { key: "finish", label: "收工，等TA下播", seconds: 1, noise: 0 };
   return {
     key: "",
     label: spot ? "这里暂时没有要做的事" : "点击地点走过去",
@@ -308,7 +305,7 @@ export function end(s: Game, won: boolean, reason: string) {
       )
     : Math.round(s.done.length * 150 + s.love * 5);
 }
-export const stars = (s: Game) => (!s.won ? 0 : s.peak < 25 && s.love >= 25 ? 3 : s.peak < 65 ? 2 : 1);
+export const stars = (s: Game) => (!s.won ? 0 : s.peak < 25 && (s.level === 0 || s.love >= 25) ? 3 : s.peak < 65 ? 2 : 1);
 export const ending = (s: Game) => (!s.won
     ? s.reason === "timeout"
       ? "再等我一下"
@@ -347,7 +344,7 @@ export function step(s: Game, dt: number, input: Input) {
     const dest = s.path[0];
     dx = dest.x - s.player.x;
     dy = dest.y - s.player.y;
-    if (Math.hypot(dx, dy) < 4) {
+    if (Math.hypot(dx, dy) < 0.5) {
       s.path.shift();
       dx = 0;
       dy = 0;
@@ -367,19 +364,12 @@ export function step(s: Game, dt: number, input: Input) {
       125,
       Math.min(516, s.player.y + (dy / length) * movement),
     );
-    const crossing =
-      Math.min(x, s.player.x) < 534 && Math.max(x, s.player.x) > 506;
-    if (crossing && (y < 375 || y > 448 || s.doorClosed)) {
-      if (s.doorClosed && y >= 375 && y <= 448) {
-        s.message = "门关着。靠近隔音门，按住 E 开门。";
-        s.path = [];
-      }
-    } else s.player.x = x;
-    s.player.y = y;
+    const moved = moveBody(s.player, { x, y }, s.doorClosed);
+    s.player = moved;
     noise = input.sprint ? 18 : s.quiet ? (s.slippers ? 0.8 : 2) : 8;
     if (s.player.x > 575 && s.player.x < 640 && s.player.y > 375) noise *= 2.2;
   }
-  const a = action(s);
+  const a = action(s, input.focus === undefined ? nearest(s) : input.focus);
   if (a.key !== s.actionKey) {
     s.actionKey = a.key;
     s.actionProgress = 0;

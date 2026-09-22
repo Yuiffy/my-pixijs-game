@@ -35,7 +35,7 @@ const miniGames: ProjectItem[] = [
     href: '/game/hush-live',
     description: '做虚拟主播的秘密恋人。递外卖、隔墙报点、偷一个吻，守住两个人的小秘密。',
     image: '/games/hush-live/preview.png',
-    meta: '同居潜行 · 五晚闯关 · 随机加班夜',
+    meta: '第一人称3D · 同居潜行 · 五晚与随机夜',
   },
   {
     title: '年关牌局：这婚，你催吗？',
