@@ -36,9 +36,22 @@ async function follow(page) {
 async function hold(page, photograph) {
   const a = (await state(page)).action;
   assert.ok(a.key, JSON.stringify(await state(page)));
-  await page.keyboard.down('e'); await advance(page, a.seconds * 500);
-  if (photograph) await capture(page, photograph);
-  await advance(page, a.seconds * 500 + 100); await page.keyboard.up('e'); await advance(page, 50);
+  if (a.mode === 'minigame') {
+    await page.keyboard.press('e'); await advance(page,60);
+    if (photograph) await capture(page,photograph);
+    for(let i=0;i<10&&(await state(page)).delta?.active;i++) {
+      await page.locator('[data-delta-target]').click(); await advance(page,120);
+    }
+    assert.ok((await state(page)).done.includes('delta'));
+  } else if (a.mode === 'tap') {
+    await page.keyboard.press('e'); await advance(page,a.seconds*500);
+    if(photograph) await capture(page,photograph);
+    await advance(page,a.seconds*500+100);
+  } else {
+    await page.keyboard.down('e');await advance(page,a.seconds*500);
+    if(photograph) await capture(page,photograph);
+    await advance(page,a.seconds*500+100);await page.keyboard.up('e');await advance(page,50);
+  }
 }
 async function cover(page) {
   const s = await state(page);

@@ -1,5 +1,7 @@
 import {
   action,
+  partnerPose,
+  partnerBehavior,
   createGame,
   emptyInput,
   Game,
@@ -20,6 +22,7 @@ export const AIM_POINTS: Record<
   shelf: { x: 826, y: 477, height: 0.66 },
   entry: { x: 97, y: 465, height: 0.82 },
   partner: { x: 744, y: 287, height: 1.31 },
+  table: { x: 665, y: 235, height: 0.85 },
   desk: { x: 230, y: 150, height: 1.05 },
   door: { x: 520, y: 410, height: 1.27 },
 };
@@ -32,6 +35,7 @@ export type Runtime3D = {
   keys: Set<string>;
   stick: { x: number; y: number };
   held: boolean;
+  pressed: boolean;
   pointerLocked: boolean;
   manual: boolean;
   assist: Spot | null;
@@ -57,6 +61,7 @@ export const createRuntime = (save: Save): Runtime3D => ({
   keys: new Set(),
   stick: { x: 0, y: 0 },
   held: false,
+  pressed: false,
   pointerLocked: false,
   manual: false,
   assist: null,
@@ -68,9 +73,14 @@ export const createRuntime = (save: Save): Runtime3D => ({
 });
 export function lookPoint(r: Runtime3D, spot: Spot) {
   const point =
-    spot === "door" && !r.game.doorClosed
-      ? { x: 555, y: 371, height: 1.27 }
-      : AIM_POINTS[spot];
+    spot === "partner"
+      ? {
+          ...partnerPose(r.game),
+          height: 1.31 + partnerPose(r.game).stand * 0.22,
+        }
+      : spot === "door" && !r.game.doorClosed
+        ? { x: 555, y: 371, height: 1.27 }
+        : AIM_POINTS[spot];
   const [x, z] = worldPoint(point);
   return { x, y: point.height, z };
 }
@@ -78,6 +88,7 @@ export function clearControls(r: Runtime3D) {
   r.keys.clear();
   r.stick = { x: 0, y: 0 };
   r.held = false;
+  r.pressed = false;
   r.assist = null;
   r.autoLook = false;
   r.game.path = [];
@@ -87,8 +98,9 @@ export function pause3D(r: Runtime3D) {
   clearControls(r);
 }
 export function go3D(r: Runtime3D, spot: Spot) {
-  if (r.game.phase !== "playing") return;
+  if (r.game.phase !== "playing" || r.game.delta?.active || r.game.busy) return;
   r.held = false;
+  r.pressed = false;
   r.keys.clear();
   r.stick = { x: 0, y: 0 };
   r.assist = spot;
@@ -96,7 +108,7 @@ export function go3D(r: Runtime3D, spot: Spot) {
   travel(r.game, spot);
 }
 export function rotateView(r: Runtime3D, dx: number, dy: number) {
-  if (r.game.phase !== "playing") return;
+  if (r.game.phase !== "playing" || r.game.delta?.active || r.game.busy) return;
   r.yaw -= dx * 0.0025;
   r.pitch = Math.max(-1.1, Math.min(1.05, r.pitch - dy * 0.0025));
   r.autoLook = false;
@@ -109,6 +121,11 @@ export function advance3D(r: Runtime3D, seconds: number) {
     left -= 0.025
   ) {
     const dt = Math.min(left, 0.025);
+    if (r.game.delta?.active) {
+      step(r.game, dt, emptyInput());
+      r.elapsedFrame += dt;
+      continue;
+    }
     const k = r.keys;
     const forward =
       Number(k.has("w") || k.has("arrowup")) -
@@ -147,10 +164,11 @@ export function advance3D(r: Runtime3D, seconds: number) {
       ...emptyInput(),
       x: -Math.sin(r.yaw) * forward + Math.cos(r.yaw) * strafe,
       y: -Math.cos(r.yaw) * forward - Math.sin(r.yaw) * strafe,
-      act: r.held || k.has("e"),
+      act: r.pressed || r.held || k.has("e"),
       sprint: k.has("shift"),
       focus: r.focus,
     });
+    r.pressed = false;
     r.elapsedFrame += dt;
   }
   r.probe?.();
@@ -171,5 +189,6 @@ export function text3D(r: Runtime3D) {
     webglReady: r.webglReady,
     fps: Math.round(r.fps),
     progression: r.save,
+    partner: { ...partnerPose(r.game), ...partnerBehavior(r.game) },
   };
 }

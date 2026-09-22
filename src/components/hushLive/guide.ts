@@ -19,15 +19,15 @@ export function objective(s: Game): Objective {
       key: "charger",
       title: "把充电器带回沙发",
       destination: "回客厅沙发",
-      detail: "已经拿到了。回到沙发旁，按住按钮把它放好。",
+      detail: "已经拿到了。回到沙发旁，轻按按钮把它放好。",
       step: 2,
     };
   else if (s.carry === "food") next = {
-      spot: "partner",
+      spot: "table",
       key: "food",
-      title: "把热外卖递给TA",
-      destination: "去恋人身旁",
-      detail: "袋子会响。到TA身旁后，可以用眼神暗号请TA闭麦。",
+      title: "把晚饭摆到直播桌左侧",
+      destination: "去桌边餐垫",
+      detail: "看向桌上的餐垫，轻按E。TA继续直播，你把晚饭摆好就行。",
       step: 1,
     };
   else {
@@ -59,10 +59,10 @@ export function objective(s: Game): Objective {
     else if (task === "delta") next = {
         spot: "desk",
         key: s.doorClosed ? "delta" : "",
-        title: s.doorClosed ? "回电脑旁，低声报点" : "先回客厅，再关门报点",
+        title: s.doorClosed ? "回电脑旁，点击小球报点" : "先回客厅，再关门报点",
         destination: "去客厅电脑旁",
         detail: s.doorClosed
-          ? "门已关好。低声语音更安全，放开语音更快但更吵。"
+          ? "门已关好。轻按E开始，点击小球完成8个报点。"
           : "先回到客厅，关上身后的门，避免声音传进直播间。",
         step: 1,
       };
@@ -79,7 +79,7 @@ export function objective(s: Game): Objective {
         key: "finish",
         title: "事情做好啦，回沙发收工",
         destination: "回沙发收工",
-        detail: "在沙发旁按住“收工”，就能结束这一晚。",
+        detail: "在沙发旁轻按“收工”，就能结束这一晚。",
         step: 3,
       };
   }
@@ -94,19 +94,19 @@ export function objective(s: Game): Objective {
       key: "door",
       title: "先轻轻打开隔音门",
       destination: "去隔音门旁",
-      detail: "门挡住了路。靠近后按住按钮开门，再继续刚才的任务。",
+      detail: "门挡住了路。靠近后轻按按钮开门，再继续刚才的任务。",
     };
   }
   if (nearest(s) === next.spot && action(s).key === next.key) {
     return {
       ...next,
       title:
-        next.key === "pickup-charger" ? "找到啦，按住拿起充电器" : next.title,
+        next.key === "pickup-charger" ? "找到啦，轻按拿起充电器" : next.title,
       detail:
         next.key === "pickup-charger"
-          ? "看向充电器，按住E或互动按钮拿起。唱歌时更安静。"
+          ? "看向充电器，轻按E或互动按钮就能拿起。"
           : next.key === "charger"
-            ? "看向沙发，按住E或互动按钮把充电器放好。"
+            ? "看向沙发，轻按E或互动按钮把充电器放好。"
             : next.detail,
     };
   }

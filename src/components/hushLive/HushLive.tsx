@@ -31,6 +31,7 @@ import {
 import { worldPoint } from "./navigation";
 import { ApartmentSound } from "./sound3d";
 import styles from "./hush3d.module.css";
+import DeltaGame from "./DeltaGame";
 
 const Apartment = dynamic(() => import("./Apartment"), { ssr: false });
 const STORAGE = "hush-live-v1";
@@ -111,6 +112,10 @@ export default function HushLive() {
         clearControls(current);
         persist(record(current.save, current.game));
         if (document.pointerLockElement) document.exitPointerLock();
+      }
+      if (current.game.delta?.active && document.pointerLockElement) {
+        clearControls(current);
+        document.exitPointerLock();
       }
       audio.current?.update(current, soundRef.current);
       const now = performance.now();
@@ -198,7 +203,7 @@ export default function HushLive() {
     const lockChange = () => {
       const wasLocked = current.pointerLocked;
       current.pointerLocked = !!document.pointerLockElement;
-      if (wasLocked && !current.pointerLocked) {
+      if (wasLocked && !current.pointerLocked && !current.game.delta?.active) {
         pause3D(current);
         refresh();
       }
@@ -231,6 +236,8 @@ export default function HushLive() {
         return;
       }
       if (current.game.phase !== "playing") return;
+      if (current.game.delta?.active && key !== "q") return;
+      if (key === "e" && !event.repeat) current.pressed = true;
       if (key === "q") current.game.quiet = !current.game.quiet;
       if (key === "m") muteSignal();
       current.keys.add(key);
@@ -336,7 +343,7 @@ export default function HushLive() {
         className={styles.world}
         onContextMenu={(e) => e.preventDefault()}
         onPointerDown={(event) => {
-          if (!playing) return;
+          if (!playing || r.game.delta?.active) return;
           lookDrag.current = {
             id: event.pointerId,
             x: event.clientX,
@@ -460,14 +467,14 @@ export default function HushLive() {
             {sceneReady ? "轻轻走进家门 →" : "正在点亮小公寓…"}
           </button>
           <p className={`${styles.instructions} ${styles.desktopOnly}`}>
-            WASD 走动 · 鼠标转头 · 看向物品，按住 E 互动
+            WASD 走动 · 鼠标转头 · 看向物品，轻按 E 拿取
             <br />
             点击画面锁定鼠标；Esc 暂停。也可右键拖动转头。
           </p>
           <p className={`${styles.instructions} ${styles.touchOnly}`}>
             左侧摇杆走动，滑动画面转头。
             <br />
-            靠近并看向物品，再长按互动按钮。
+            靠近并看向物品，再轻点互动按钮。
           </p>
           <details className={styles.settings}>
             <summary>选择夜晚与角色</summary>
@@ -613,7 +620,9 @@ export default function HushLive() {
         <section className={styles.menu}>
           <p className={styles.eyebrow}>时间停在这里</p>
           <h1>
-            先歇<br />一会儿<span>。</span>
+            先歇
+            <br />
+            一会儿<span>。</span>
           </h1>
           <p>事情做到哪一步，回来就接着做。</p>
           <button className={styles.primary} onClick={pause}>
@@ -640,7 +649,11 @@ export default function HushLive() {
               <span>
                 {metres.toFixed(1)}m · {marker}
               </span>
-              <button data-assist="goal" onClick={goGoal}>
+              <button
+                data-assist="goal"
+                disabled={!!g.busy || !!g.delta?.active}
+                onClick={goGoal}
+              >
                 {g.path.length ? "正在带路…" : "跟随目标 →"}
               </button>
             </div>
@@ -668,31 +681,49 @@ export default function HushLive() {
             </footer>
           </section>
           <div
-            className={`${styles.crosshair} ${a.key ? styles.active : ""}`}
+            className={`${styles.crosshair} ${a.key ? styles.active : ""} ${a.mode === "hold" && g.actionProgress > 0 ? styles.holding : ""} ${g.delta?.active ? styles.hidden : ""}`}
             style={
               {
-                "--progress": `${g.actionProgress * 360}deg`,
+                "--progress": `${a.mode === "hold" ? g.actionProgress * 360 : 0}deg`,
               } as React.CSSProperties
             }
           >
-            <i />
+            <i>
+              {a.mode === "hold" && g.actionProgress > 0 && (
+                <span>{Math.round(g.actionProgress * 100)}%</span>
+              )}
+            </i>
           </div>
-          <div className={`${styles.interaction} ${r.focus === 'partner' ? styles.partnerInteraction : ''}`}>
+          <div
+            className={`${styles.interaction} ${r.focus === "partner" || g.delta?.active ? styles.partnerInteraction : ""}`}
+          >
             <span>
-              {a.key
-                ? `${a.label} · ${a.seconds}s`
-                : r.focus
-                  ? "这里暂时没有要做的事"
-                  : `靠近并看向${goal.spot === "shelf" ? "充电器" : goal.spot === "partner" ? "恋人" : goal.spot === "door" ? "门" : goal.spot === "sofa" ? "沙发" : goal.spot === "desk" ? "电脑" : "外卖袋"}`}
+              {g.busy
+                ? g.busy.key === "food"
+                  ? "正在把晚饭摆好…"
+                  : "正在拿放物品…"
+                : a.key
+                  ? `${a.label}${a.mode === "hold" ? ` · ${a.seconds}s` : ""}`
+                  : r.focus
+                    ? "这里暂时没有要做的事"
+                    : `靠近并看向${goal.spot === "shelf" ? "充电器" : goal.spot === "partner" ? "恋人" : goal.spot === "door" ? "门" : goal.spot === "sofa" ? "沙发" : goal.spot === "desk" ? "电脑" : goal.spot === "table" ? "桌上餐垫" : "外卖袋"}`}
             </span>
             <small className={styles.desktopOnly}>
-              {a.key ? "按住 E 互动，松开可停" : "金色菱形标记着当前目标"}
+              {a.key
+                ? a.mode === "hold"
+                  ? "按住 E，松开可停"
+                  : a.mode === "minigame"
+                    ? "轻按 E 开始"
+                    : "轻按 E，动作会自动完成"
+                : "金色菱形标记着当前目标"}
             </small>
           </div>
           <div className={styles.dialogue}>
             <span>{g.message}</span>
           </div>
-          <div className={styles.bottomTools}>
+          <div
+            className={`${styles.bottomTools} ${g.delta?.active ? styles.hidden : ""}`}
+          >
             <button
               aria-pressed={g.quiet}
               onClick={() => {
@@ -745,7 +776,7 @@ export default function HushLive() {
             </aside>
           )}
           <button
-            className={`${styles.joystick} ${styles.touchOnly}`}
+            className={`${styles.joystick} ${styles.touchOnly} ${g.delta?.active ? styles.hidden : ""}`}
             aria-label="移动摇杆"
             onPointerDown={(event) => {
               event.preventDefault();
@@ -771,18 +802,20 @@ export default function HushLive() {
           </button>
           <button
             data-act="hold"
-            className={styles.touchAction}
-            disabled={!a.key}
+            className={`${styles.touchAction} ${g.delta?.active ? styles.hidden : ""}`}
+            disabled={!a.key || !!g.busy}
             onPointerDown={(event) => {
               event.preventDefault();
               event.currentTarget.setPointerCapture(event.pointerId);
               actionPointer.current = event.pointerId;
-              r.held = true;
+              r.pressed = true;
+              r.held = a.mode === "hold";
             }}
             onKeyDown={(event) => {
               if (event.key === " " || event.key === "Enter") {
                 event.preventDefault();
-                r.held = true;
+                r.pressed = true;
+                r.held = a.mode === "hold";
               }
             }}
             onKeyUp={() => {
@@ -793,11 +826,34 @@ export default function HushLive() {
               r.held = false;
             }}
           >
-            <span className={styles.desktopOnly}>按住 E 互动</span><span className={styles.touchOnly}>按住互动</span><small>{a.key ? a.label : "先看向物品"}</small>
+            <span className={styles.desktopOnly}>
+              {g.busy
+                ? "正在完成动作…"
+                : a.mode === "hold"
+                  ? "按住 E 互动"
+                  : "轻按 E 互动"}
+            </span>
+            <span className={styles.touchOnly}>
+              {g.busy
+                ? "正在完成动作…"
+                : a.mode === "hold"
+                  ? "按住互动"
+                  : "轻点互动"}
+            </span>
+            <small>{a.key ? a.label : "先看向物品"}</small>
           </button>
+          {g.delta?.active && <DeltaGame game={r.game} onChange={refresh} />}
         </>
       )}
-      {note && <div className={styles.notice} role="status">{note}<button aria-label="关闭提示" onClick={() => setNote('')}> × </button></div>}
+      {note && (
+        <div className={styles.notice} role="status">
+          {note}
+          <button aria-label="关闭提示" onClick={() => setNote("")}>
+            {" "}
+            ×{" "}
+          </button>
+        </div>
+      )}
     </main>
   );
 }

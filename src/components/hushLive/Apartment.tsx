@@ -3,11 +3,23 @@
 import { memo, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { distance, Save, Spot } from "./engine";
+import {
+  distance,
+  Save,
+  Spot,
+  partnerPose,
+  partnerBehavior,
+  interactionPoint,
+} from "./engine";
 import { FURNITURE, SCALE, worldPoint } from "./navigation";
 import { objective } from "./guide";
-import { AIM_POINTS, lookPoint, Runtime3D } from "./runtime3d";
-import { avatarTexture, labelTexture, woodTexture, paintTactical } from "./textures3d";
+import { lookPoint, Runtime3D } from "./runtime3d";
+import {
+  avatarTexture,
+  labelTexture,
+  woodTexture,
+  paintTactical,
+} from "./textures3d";
 
 type Vec = [number, number, number];
 type BoxProps = {
@@ -218,6 +230,10 @@ function Partner({
   const left = useRef<THREE.Group>(null);
   const right = useRef<THREE.Group>(null);
   const eyes = useRef<THREE.Group>(null);
+  const smile = useRef<THREE.Mesh>(null);
+  const mouth = useRef<THREE.Mesh>(null);
+  const seatedLegs = useRef<THREE.Group>(null);
+  const standingLegs = useRef<THREE.Group>(null);
   const lastAnimationTime = useRef(r.elapsedFrame);
   const longHair = player
     ? appearance.player === "女友"
@@ -226,26 +242,59 @@ function Partner({
   const hair = player ? "#63513f" : "#64464a";
   useFrame((_, dt) => {
     if (!rig.current) return;
-    const motionDt = r.manual && r.game.phase !== 'ready' ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current)) : dt;
+    const motionDt =
+      r.manual && r.game.phase !== "ready"
+        ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
+        : dt;
     lastAnimationTime.current = r.elapsedFrame;
     rig.current.visible = !player || r.game.won;
     const pos = r.game.won
       ? { x: player ? 209 : 259, y: 327 }
-      : AIM_POINTS.partner;
+      : partnerPose(r.game);
     const [x, z] = worldPoint(pos);
-    rig.current.position.set(x, 0, z);
+    const stand = player || r.game.won ? 0 : partnerPose(r.game).stand;
+    rig.current.position.set(x, stand * 0.24, z);
+    if (seatedLegs.current) seatedLegs.current.visible = stand < 0.1;
+    if (standingLegs.current) {
+      standingLegs.current.visible = stand >= 0.1;
+      standingLegs.current.position.y = -stand * 0.24;
+      standingLegs.current.scale.y = (0.61 + stand * 0.24) / 0.85;
+      standingLegs.current.children.forEach((leg, i) => {
+        leg.rotation.x =
+          stand > 0.1 && stand < 0.95
+            ? Math.sin(r.game.elapsed * 9 + i * Math.PI) * 0.12
+            : 0;
+      });
+    }
     const [px, pz] = worldPoint(r.game.player);
     const near = Math.hypot(px - x, pz - z) < 2.2;
-    const wanted = r.game.won ? Math.atan2(-2.7 - x, 1.74 - z) : near ? Math.atan2(px - x, pz - z) : Math.PI;
+    const behavior = partnerBehavior(r.game);
+    const romantic =
+      ["hug", "kiss", "bonus"].includes(r.game.actionKey) &&
+      r.game.actionProgress > 0 &&
+      !r.game.busy;
+    const wanted = r.game.won
+      ? Math.atan2(-2.7 - x, 1.74 - z)
+      : near && (behavior.peek || romantic)
+        ? Math.atan2(px - x, pz - z)
+        : Math.PI;
+    if (mouth.current && smile.current) {
+      mouth.current.visible = !player && behavior.speaking && !romantic;
+      mouth.current.scale.set(1, 0.2 + behavior.mouth, 0.14);
+      smile.current.visible = !mouth.current.visible;
+    }
     rig.current.rotation.y +=
       Math.atan2(
         Math.sin(wanted - rig.current.rotation.y),
         Math.cos(wanted - rig.current.rotation.y),
       ) * Math.min(1, motionDt * 4);
     if (head.current) {
-      head.current.rotation.z = r.game.won && !player ? 0.14 : near
-        ? Math.sin(r.game.pulse * 0.25) * 0.055
-        : 0.02;
+      head.current.rotation.z =
+        r.game.won && !player
+          ? 0.14
+          : near
+            ? Math.sin(r.game.pulse * 0.25) * 0.055
+            : 0.02;
       head.current.rotation.x = near ? -0.08 : 0.04;
     }
     const hugging =
@@ -275,28 +324,54 @@ function Partner({
         color={sweater}
       />
       <Box at={[0, 0.61, 0.02]} size={[0.34, 0.15, 0.3]} color="#6a625e" />
-      {[-1, 1].map((sign) => (
-        <group key={sign}>
-          <Rod
-            from={[sign * 0.11, 0.6, 0.07]}
-            to={[sign * 0.11, 0.47, 0.44]}
-            radius={0.08}
-            color="#6a625e"
-          />
-          <Rod
-            from={[sign * 0.11, 0.47, 0.44]}
-            to={[sign * 0.11, 0.13, 0.49]}
-            radius={0.065}
-            color="#756d63"
-          />
-          <Ball
-            at={[sign * 0.11, 0.1, 0.56]}
-            scale={[0.85, 0.52, 1.45]}
-            color="#e5d5bd"
-            radius={0.1}
-          />
-        </group>
-      ))}
+      <group ref={seatedLegs}>
+        {[-1, 1].map((sign) => (
+          <group key={sign}>
+            <Rod
+              from={[sign * 0.11, 0.6, 0.07]}
+              to={[sign * 0.11, 0.47, 0.44]}
+              radius={0.08}
+              color="#6a625e"
+            />
+            <Rod
+              from={[sign * 0.11, 0.47, 0.44]}
+              to={[sign * 0.11, 0.13, 0.49]}
+              radius={0.065}
+              color="#756d63"
+            />
+            <Ball
+              at={[sign * 0.11, 0.1, 0.56]}
+              scale={[0.85, 0.52, 1.45]}
+              color="#e5d5bd"
+              radius={0.1}
+            />
+          </group>
+        ))}
+      </group>
+      <group ref={standingLegs}>
+        {[-1, 1].map((sign) => (
+          <group key={sign}>
+            <Rod
+              from={[sign * 0.11, 0.85, 0.03]}
+              to={[sign * 0.11, 0.44, 0.07]}
+              radius={0.073}
+              color="#6a625e"
+            />
+            <Rod
+              from={[sign * 0.11, 0.44, 0.07]}
+              to={[sign * 0.11, 0.1, 0.08]}
+              radius={0.065}
+              color="#756d63"
+            />
+            <Ball
+              at={[sign * 0.11, 0.065, 0.14]}
+              radius={0.1}
+              scale={[0.85, 0.52, 1.4]}
+              color="#e5d5bd"
+            />
+          </group>
+        ))}
+      </group>
       <Rod
         from={[0, 1.01, 0]}
         to={[0, 1.18, 0]}
@@ -367,9 +442,17 @@ function Partner({
           scale={[0.7, 0.8, 0.7]}
           color="#e8b597"
         />
-        <mesh position={[0, -0.088, 0.188]} rotation={[0, 0, Math.PI]}>
+        <mesh
+          ref={smile}
+          position={[0, -0.088, 0.188]}
+          rotation={[0, 0, Math.PI]}
+        >
           <torusGeometry args={[0.022, 0.0035, 5, 12, Math.PI]} />
           <meshStandardMaterial color="#a96965" />
+        </mesh>
+        <mesh ref={mouth} position={[0, -0.09, 0.19]}>
+          <sphereGeometry args={[0.021, 12, 10]} />
+          <meshStandardMaterial color="#713e3d" roughness={1} />
         </mesh>
         {[-1, 1].map((sign) => (
           <Ball
@@ -474,7 +557,10 @@ function Room({
     [textures],
   );
   useFrame((_, dt) => {
-    const motionDt = r.manual && r.game.phase !== 'ready' ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current)) : dt;
+    const motionDt =
+      r.manual && r.game.phase !== "ready"
+        ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
+        : dt;
     lastAnimationTime.current = r.elapsedFrame;
     if (door.current) door.current.rotation.y = THREE.MathUtils.damp(
         door.current.rotation.y,
@@ -485,13 +571,33 @@ function Room({
     const monitorFrame = Math.floor(r.game.elapsed * 8);
     if (monitorFrame !== lastMonitorFrame.current) {
       lastMonitorFrame.current = monitorFrame;
-      paintTactical(textures.game, r.game.elapsed, r.game.actionKey === 'delta' ? r.game.actionProgress : 0, r.game.quiet);
+      paintTactical(
+        textures.game,
+        r.game.elapsed,
+        r.game.delta?.active ? r.game.delta.hits / 8 : 0,
+        r.game.quiet,
+      );
     }
     if (bag.current) bag.current.visible =
-        r.game.carry !== "food" && !r.game.done.includes("food");
+        r.game.carry !== "food" &&
+        !r.game.done.includes("food") &&
+        r.game.busy?.key !== "pickup-food";
     if (charger.current) charger.current.visible =
-        r.game.carry !== "charger" && !r.game.done.includes("charger");
-    if (delivered.current) delivered.current.visible = r.game.done.includes("food");
+        r.game.carry !== "charger" &&
+        !r.game.done.includes("charger") &&
+        r.game.busy?.key !== "pickup-charger";
+    if (delivered.current) {
+      const p =
+        r.game.busy?.key === "food"
+          ? r.game.busy.elapsed / r.game.busy.duration
+          : 0;
+      const growth = r.game.done.includes("food")
+        ? 1
+        : Math.max(0, Math.min(1, (p - 0.45) / 0.5));
+      delivered.current.visible = growth > 0;
+      delivered.current.scale.setScalar(Math.max(0.01, growth));
+      delivered.current.position.y = 0.825 + (1 - growth) * 0.12;
+    }
     if (onSofa.current) onSofa.current.visible = r.game.done.includes("charger");
     if (led.current) {
       led.current.color.set(
@@ -553,7 +659,12 @@ function Room({
       <Box at={[0, 1.4, 2.97]} size={[12.3, 2.8, 0.15]} color="#e9dec7" />
       <Box at={[-6.08, 1.4, 0]} size={[0.16, 2.8, 6]} color="#d8ddcb" />
       <Box at={[6.02, 1.4, 0]} size={[0.16, 2.8, 6]} color="#e1c9bb" />
-      <Box at={[0, 2.88, 0]} size={[12.3, 0.12, 6]} color="#efe7d4" shadow={false} />
+      <Box
+        at={[0, 2.88, 0]}
+        size={[12.3, 0.12, 6]}
+        color="#efe7d4"
+        shadow={false}
+      />
       {[-2.81, 2.82].map((z) => (
         <Box key={z} at={[0, 0.1, z]} size={[12, 0.18, 0.08]} color="#bdab8b" />
       ))}
@@ -732,7 +843,7 @@ function Room({
         <meshStandardMaterial map={textures.poster} />
       </mesh>
       {/* Stream setup, acoustic panels and equipment. */}
-      <group position={studio.at}>
+      <group position={studio.at} userData={{ spot: "table" }}>
         <Box
           at={[0, 0.76, 0]}
           size={[studio.w, 0.095, studio.d]}
@@ -783,7 +894,34 @@ function Room({
             emissiveIntensity={1.2}
           />
         </mesh>
+        <Box
+          at={[-1.2, 0.818, 0.3]}
+          size={[0.62, 0.008, 0.42]}
+          color="#dcd9bb"
+        />
         <group ref={delivered} position={[-1.2, 0.825, 0.3]}>
+          <mesh position={[0.25, 0.1, -0.02]} castShadow>
+            <cylinderGeometry args={[0.05, 0.045, 0.2, 14]} />
+            <meshStandardMaterial color="#bbd3b8" />
+          </mesh>
+          <Rod
+            from={[0.25, 0.17, -0.02]}
+            to={[0.27, 0.28, -0.02]}
+            radius={0.006}
+            color="#f3e5ce"
+          />
+          <Rod
+            from={[-0.13, 0.07, 0.18]}
+            to={[0.18, 0.07, 0.18]}
+            radius={0.006}
+            color="#8c7350"
+          />
+          <Rod
+            from={[-0.13, 0.07, 0.2]}
+            to={[0.18, 0.07, 0.2]}
+            radius={0.006}
+            color="#8c7350"
+          />
           <Box at={[0, 0.025, 0]} size={[0.4, 0.055, 0.28]} color="#eee6d3" />
           <Ball
             at={[-0.09, 0.08, 0]}
@@ -894,34 +1032,83 @@ function Hands({
   const group = useRef<THREE.Group>(null);
   const food = useRef<THREE.Group>(null);
   const charger = useRef<THREE.Group>(null);
+  const arm = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
   useFrame(() => {
-    if (!group.current) return;
-    group.current.visible = r.game.phase === "playing" && r.game.carry !== null;
-    const offset = new THREE.Vector3(
+    if (!group.current || !arm.current) return;
+    const { busy } = r.game;
+    const pickup =
+      busy?.key === "pickup-food" || busy?.key === "pickup-charger";
+    const placing = busy?.key === "food" || busy?.key === "charger";
+    const item = pickup
+      ? busy.key === "pickup-food"
+        ? "food"
+        : "charger"
+      : r.game.carry;
+    const p = busy ? Math.min(1, busy.elapsed / busy.duration) : 0;
+    group.current.visible =
+      r.game.phase === "playing" &&
+      !!item &&
+      !(busy?.key === "food" && p > 0.58);
+    arm.current.visible = group.current.visible;
+    const hold = new THREE.Vector3(
       0.28,
       -0.43 + Math.sin(r.game.pulse) * 0.009,
       -0.49,
-    ).applyQuaternion(camera.quaternion);
-    group.current.position.copy(camera.position).add(offset);
-    group.current.quaternion.copy(camera.quaternion);
-    if (food.current) food.current.visible = r.game.carry === "food";
-    if (charger.current) charger.current.visible = r.game.carry === "charger";
+    )
+      .applyQuaternion(camera.quaternion)
+      .add(camera.position);
+    const position = hold.clone();
+    const rotation = camera.quaternion.clone();
+    if (pickup) {
+      const spot = busy.key === "pickup-food" ? "entry" : "shelf";
+      const point = lookPoint(r, spot);
+      const source = new THREE.Vector3(
+        point.x,
+        spot === "entry" ? 0.58 : 0.55,
+        point.z,
+      );
+      const t = p * p * (3 - 2 * p);
+      position.copy(source).lerp(hold, t);
+      position.y += Math.sin(p * Math.PI) * 0.09;
+      rotation.copy(new THREE.Quaternion()).slerp(camera.quaternion, t);
+    } else if (placing) {
+      const point = lookPoint(r, busy.key === "food" ? "table" : "sofa");
+      const target = new THREE.Vector3(point.x, point.y, point.z);
+      const t = Math.min(1, p / (busy.key === "food" ? 0.58 : 1));
+      position.lerp(target, t * t * (3 - 2 * t));
+      rotation.slerp(new THREE.Quaternion(), t);
+    }
+    group.current.position.copy(position);
+    group.current.quaternion.copy(rotation);
+    if (food.current) food.current.visible = item === "food";
+    if (charger.current) charger.current.visible = item === "charger";
+    const origin = new THREE.Vector3(0.38, -0.57, -0.07)
+      .applyQuaternion(camera.quaternion)
+      .add(camera.position);
+    const target = position.clone().add(new THREE.Vector3(0, 0.025, 0));
+    const direction = target.clone().sub(origin);
+    arm.current.position.copy(origin).add(target).multiplyScalar(0.5);
+    arm.current.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      direction.clone().normalize(),
+    );
+    arm.current.scale.set(1, direction.length(), 1);
   });
   return (
-    <group ref={group} userData={{ ignoreRay: true }}>
-      <Rod
-        from={[0.02, -0.1, 0.13]}
-        to={[0, 0.04, -0.01]}
-        radius={0.055}
-        color="#769484"
-      />
-      <Ball at={[0, 0.045, -0.01]} radius={0.06} color="#efc7a7" />
-      <group ref={food} position={[0, 0.01, -0.03]} scale={0.75}>
-        <FoodBag texture={texture} />
-      </group>
-      <group ref={charger} position={[-0.035, 0.08, -0.07]}>
-        <Charger />
+    <group userData={{ ignoreRay: true }}>
+      <mesh ref={arm}>
+        <cylinderGeometry args={[0.043, 0.056, 1, 12]} />
+        <meshStandardMaterial color="#779484" />
+      </mesh>
+      <group ref={group}>
+        <Ball at={[0, 0.025, 0]} radius={0.06} color="#efc7a7" />
+        <group ref={food}>
+          <FoodBag texture={texture} />
+        </group>
+        <group ref={charger}>
+          <Charger />
+        </group>
       </group>
     </group>
   );
@@ -967,7 +1154,10 @@ function CameraRig({
   const ray = useMemo(() => new THREE.Raycaster(), []);
   const center = useMemo(() => new THREE.Vector2(), []);
   useEffect(() => {
-    if (camera instanceof THREE.PerspectiveCamera) { camera.fov = size.width < size.height ? 78 : 68; camera.updateProjectionMatrix(); }
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = size.width < size.height ? 78 : 68;
+      camera.updateProjectionMatrix();
+    }
   }, [camera, size.width, size.height]);
   const probe = () => {
     const [x, z] = worldPoint(r.game.player);
@@ -1012,7 +1202,7 @@ function CameraRig({
       if (ignore || !hit.object.visible) continue;
       if (
         spot &&
-        distance(r.game.player, { ...AIM_POINTS[spot] }) <
+        distance(r.game.player, interactionPoint(r.game, spot)) <
           (spot === "door" ? 110 : 135)
       ) r.focus = spot;
       break;

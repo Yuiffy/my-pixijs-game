@@ -54,7 +54,7 @@ async function main() {
     const sharedSeed = (await state(page)).seed;
     await page.goto(`${base}/game/hush-live?seed=${sharedSeed}`, { waitUntil: 'networkidle' }); await advance(page, 0);
     assert.equal((await state(page)).level, 5); assert.equal((await state(page)).seed, sharedSeed);
-    await choose(page, '再抱五秒就好');
+    await choose(page, '再抱一会儿就好');
     if (!await page.getByLabel('玩家身份', { exact: true }).isVisible()) await page.getByText('选择夜晚与角色', { exact: true }).click();
     await page.getByLabel('玩家身份', { exact: true }).selectOption('女友'); await page.getByLabel('恋人称呼', { exact: true }).selectOption('他');
     await page.locator('#hush-start').click(); await follow(page); await page.keyboard.press('m'); await advance(page, 700); await capture(page, 'male-partner');
@@ -93,18 +93,18 @@ async function main() {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await advance(phone, 60);
     }
     assert.equal((await state(phone)).won, true); await capture(phone, 'mobile-result');
-    await phone.setViewportSize({ width: 320, height: 740 }); await choose(phone, '再抱五秒就好'); await phone.locator('#hush-start').tap(); await follow(phone); await capture(phone, 'mobile-320-partner');
+    await phone.setViewportSize({ width: 320, height: 740 }); await choose(phone, '再抱一会儿就好'); await phone.locator('#hush-start').tap(); await follow(phone); await capture(phone, 'mobile-320-partner');
     await mobile.close(); checks.push('simultaneous mobile joystick and look, touch release, touch interaction, 390/320 layout');
     // Explicit fail/retry and unavailable storage.
     await choose(page, '隔墙有耳'); await page.locator('#hush-start').click();
     await advance(page, (await state(page)).limit * 1000 + 100); assert.equal((await state(page)).reason, 'timeout'); await page.getByRole('button', { name: '再试一次 →' }).click(); assert.equal((await state(page)).phase, 'playing');
     // Make genuine loud footsteps at the microphone until the audience notices.
-    await choose(page, '再抱五秒就好'); await page.locator('#hush-start').click(); await follow(page); await page.keyboard.down('Shift'); await page.keyboard.down('w'); await advance(page, 25000); await page.keyboard.up('w'); await page.keyboard.up('Shift'); assert.equal((await state(page)).reason, 'caught'); await capture(page, 'caught-3d');
+    await choose(page, '再抱一会儿就好'); await page.locator('#hush-start').click(); await follow(page); await page.keyboard.down('Shift'); await page.keyboard.down('w'); await advance(page, 25000); await page.keyboard.up('w'); await page.keyboard.up('Shift'); assert.equal((await state(page)).reason, 'caught'); await capture(page, 'caught-3d');
     const blocked = await browser.newContext(); await blocked.addInitScript(() => { Storage.prototype.getItem = () => { throw Error('blocked'); }; Storage.prototype.setItem = () => { throw Error('blocked'); }; });
     const blockedPage = await blocked.newPage(); await open(blockedPage); await blockedPage.locator('#hush-start').click(); await solve(blockedPage); assert.equal((await state(blockedPage)).won, true); await blocked.close();
     checks.push('timeout, exposure, retry, storage-unavailable full playthrough');
     // Save an actual full-page WebGL photograph for the game catalogue.
-    await choose(page, '再抱五秒就好');
+    await choose(page, '再抱一会儿就好');
     if (!await page.getByLabel('恋人称呼', { exact: true }).isVisible()) await page.getByText('选择夜晚与角色', { exact: true }).click();
     await page.getByLabel('恋人称呼', { exact: true }).selectOption('她'); await page.locator('#hush-start').click(); await follow(page); await advance(page, 700);
     const style = await page.addStyleTag({ content: 'main > :not([data-world3d]) { visibility: hidden !important; }' });

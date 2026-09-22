@@ -10,6 +10,8 @@ export class ApartmentSound {
   private lastBeat = -1;
   private lastStep = -1;
   private done = 0;
+  private reportHits = 0;
+  private reportMisses = 0;
   constructor() {
     this.context = new AudioContext();
     this.master = this.context.createGain();
@@ -70,6 +72,11 @@ export class ApartmentSound {
       0.08,
     );
     if (!enabled || s.phase !== "playing") return;
+    if (s.delta) {
+      if (s.delta.hits > this.reportHits) this.tone(760, 0.065, 0.14, false);
+      if (s.delta.misses > this.reportMisses) this.tone(140, 0.04, 0.18, false, 'triangle');
+      this.reportHits = s.delta.hits; this.reportMisses = s.delta.misses;
+    }
     const [x, z] = worldPoint(s.player);
     const { listener } = this.context;
     listener.positionX.value = x;

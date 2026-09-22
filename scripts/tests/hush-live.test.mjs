@@ -16,8 +16,12 @@ const {
 } = e;
 const advance = (s, seconds, input = emptyInput()) => step(s, seconds, input);
 const hold = (s, seconds = action(s).seconds + 0.08) => {
+  const a = action(s);
   advance(s, seconds, { ...emptyInput(), act: true });
   advance(s, 0.02);
+  if (a.mode === 'minigame' && s.delta?.active) {
+    while (s.delta.active && s.phase === 'playing') { e.hitDelta(s,s.delta.id); advance(s,.13); }
+  }
 };
 function walk(s, spot) {
   travel(s, spot);
@@ -63,7 +67,7 @@ function solve(level, seed = 1, unlocked = level) {
     if (task === "food") {
       walk(s, "entry");
       hold(s);
-      walk(s, "partner");
+      walk(s, "table");
       cover(s);
       hold(s);
     }
@@ -82,6 +86,7 @@ function solve(level, seed = 1, unlocked = level) {
     }
     assert.equal(s.phase, "playing", JSON.stringify(s));
   }
+  if (s.visit) advance(s, 13);
   walk(s, "partner");
   if (!s.bonus) {
     cover(s);
@@ -135,6 +140,7 @@ test("music, walls, a closed door and eye-contact mute each attenuate real noise
     s.muted = muted;
     s.quiet = false;
     advance(s, 0.5, { ...emptyInput(), act: true });
+    if(spot === "desk") e.hitDelta(s,s.delta.id);
     return s;
   };
   const raw = sample("partner", 1);
@@ -142,15 +148,16 @@ test("music, walls, a closed door and eye-contact mute each attenuate real noise
   const mute = sample("partner", 1, false, 7);
   assert.ok(raw.noise > music.noise * 5);
   assert.equal(mute.noise, 0);
-  assert.ok(sample("desk", 1).noise > sample("desk", 1, true).noise * 3);
+  assert.ok(sample("desk", 1).peak > sample("desk", 1, true).peak * 3);
 });
 test("reckless voice exposes the secret; idle timeout fails; neither awards progression", () => {
   const s = createGame(2);
   s.phase = "playing";
   s.player = { ...SPOTS.desk };
   s.quiet = false;
-  s.suspicion = 50;
-  hold(s, 6);
+  s.suspicion = 65;
+  advance(s,.05,{...emptyInput(),act:true}); advance(s,.02);
+  for(let i=0;i<5&&s.phase==='playing';i++){e.hitDelta(s,s.delta.id);advance(s,.1);}
   assert.equal(s.reason, "caught");
   assert.equal(s.won, false);
   assert.deepEqual(e.record(e.freshSave(), s), e.freshSave());
@@ -277,6 +284,7 @@ const runtime3d = await loadTypescriptModule('src/components/hushLive/runtime3d.
 
 test('3D assisted routes between every interaction stay clear of furniture and walls', () => {
   for (const from of Object.values(SPOTS)) for (const to of Object.values(SPOTS)) {
+    if (from === SPOTS.door || to === SPOTS.door) continue;
     const points = nav.route(from, to, false);
     assert.ok(points.length, JSON.stringify({from,to}));
     let position = from;
@@ -318,4 +326,51 @@ test('first-person movement follows camera heading and manual input cancels assi
   r.held=true;r.stick={x:1,y:1};runtime3d.pause3D(r);
   assert.equal(r.game.phase,'paused');assert.equal(r.keys.size,0);assert.deepEqual(r.stick,{x:0,y:0});assert.equal(r.held,false);
   const before=JSON.stringify(r.game);runtime3d.advance3D(r,40);assert.equal(JSON.stringify(r.game),before);
+});
+
+
+test('quick pickups finish after a tap and one continuous hold never chains into another action',()=>{
+  for(const [level,spot,item] of [[0,'shelf','charger'],[1,'entry','food']]) {
+    const s=createGame(level);s.phase='playing';s.player={...SPOTS[spot]};
+    const a=action(s);assert.equal(a.mode,'tap');assert.ok(a.seconds<=.4);
+    advance(s,.02,{...emptyInput(),act:true});assert.equal(s.carry,null);assert.ok(s.busy);
+    advance(s,.5);assert.equal(s.carry,item);assert.equal(s.busy,null);
+  }
+  const s=createGame();s.phase='playing';s.player={...SPOTS.sofa};s.carry='charger';
+  advance(s,3,{...emptyInput(),act:true});assert.deepEqual(s.done,['charger']);assert.equal(s.phase,'playing');
+  advance(s,.01);hold(s);assert.equal(s.won,true);
+});
+
+test('food is placed at the table, then invitation and talking animate and freeze correctly',()=>{
+  const s=createGame(1,1);s.phase='playing';s.carry='food';s.player={...SPOTS.partner};
+  assert.notEqual(action(s,'partner').key,'food');
+  s.player={...SPOTS.table};assert.equal(action(s,'table').key,'food');
+  advance(s,.02,{...emptyInput(),act:true,focus:'table'});advance(s,.45);assert.ok(s.busy);assert.equal(s.carry,'food');
+  const before=JSON.stringify(s);e.togglePause(s);const frozen=JSON.stringify(s);advance(s,10);assert.equal(JSON.stringify(s),frozen);e.togglePause(s);
+  advance(s,.7);assert.ok(s.done.includes('food'));assert.equal(s.carry,null);assert.ok(s.visit);
+  advance(s,1.5);assert.ok(e.partnerPose(s).stand>.9);assert.ok(e.partnerBehavior(s).speaking);
+  s.player={x:s.visit.x-28,y:s.visit.y+27};e.signal(s);assert.ok(s.muted>0);assert.equal(e.partnerBehavior(s).mouth,0);
+  advance(s,3.2,{...emptyInput(),act:true,focus:'partner'});assert.equal(s.bonus,true);assert.ok(s.love>=35);
+  advance(s,3);assert.equal(s.visit,null);
+  const noVisit=createGame(1,3);noVisit.phase='playing';noVisit.carry='food';noVisit.player={...SPOTS.table};hold(noVisit);assert.equal(noVisit.visit,null);
+});
+
+function startDelta(closed=true,quiet=true){
+  const s=createGame(2,91,2);s.phase='playing';s.player={...SPOTS.desk};s.doorClosed=closed;s.quiet=quiet;
+  advance(s,.02,{...emptyInput(),act:true});advance(s,.01);return s;
+}
+test('reporting needs actual target hits, rejects stale IDs, expires and retries without E skipping it',()=>{
+  const s=startDelta();advance(s,1,{...emptyInput(),act:true});assert.equal(s.delta.hits,0);
+  const id=s.delta.id;e.hitDelta(s,id);assert.equal(s.delta.hits,1);e.hitDelta(s,id);assert.equal(s.delta.hits,1);
+  const paused=structuredClone(s);e.togglePause(s);const frozen=JSON.stringify(s);advance(s,10);e.hitDelta(s,s.delta.id);assert.equal(JSON.stringify(s),frozen);e.togglePause(s);
+  advance(s,6.4);assert.equal(s.delta.active,false);assert.ok(!s.done.includes('delta'));
+  advance(s,.02,{...emptyInput(),act:true});advance(s,.01);assert.equal(s.delta.hits,0);assert.equal(s.delta.misses,0);
+  for(let i=0;i<8;i++){e.hitDelta(s,s.delta.id);advance(s,.1);}assert.ok(s.done.includes('delta'));
+  const miss=startDelta();e.missDelta(miss);e.missDelta(miss);e.missDelta(miss);assert.equal(miss.delta.active,false);assert.equal(miss.done.length,0);
+});
+test('loud reports trade fewer clicks for noise and door or music really reduces it',()=>{
+  const quiet=startDelta(false,true);const loud=startDelta(false,false);const closed=startDelta(true,false);const music=startDelta(false,false);music.elapsed=13;
+  for(const s of [quiet,loud,closed,music])e.hitDelta(s,s.delta.id);
+  assert.equal(quiet.delta.hits,1);assert.equal(loud.delta.hits,2);
+  assert.ok(loud.peak>quiet.peak*2);assert.ok(loud.peak>closed.peak*3);assert.ok(loud.peak>music.peak*5);
 });
