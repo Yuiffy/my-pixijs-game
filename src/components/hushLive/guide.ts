@@ -25,7 +25,7 @@ step: 4,
     destination: "轻声走过去",
 detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
   };
-  else if (s.daily?.panel === "lock") next = { spot: "entry", key: "unlock", title: `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "指针到金色区域时点一下。", step: 1 };
+  else if (s.daily?.panel === "lock") next = { spot: "entry", key: "unlock", title: `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "观察门锁，按锁芯的提示慢慢解开。", step: 1 };
   else if (s.carry === "charger") next = {
       spot: "charging",
       key: "charger",
@@ -107,7 +107,7 @@ step: 2,
         detail: "先靠近TA，用眼神暗号闭麦，再按住按钮亲近。",
         step: 1,
       };
-    else if (noodlesWaiting(s) || onBreak(s)) next = { spot: "sofa", key: "leisure", title: householdStatus(s), destination: "可以先坐一会儿", detail: "不用一直按住按钮。时间会自然推进，也可以四处走走、摸摸猫。", step: 2 };
+    else if (noodlesWaiting(s) || (onBreak(s) && !s.tasks.every(t => s.done.includes(t)))) next = { spot: "sofa", key: "leisure", title: householdStatus(s), destination: "可以先坐一会儿", detail: "不用一直按住按钮。时间会自然推进，也可以四处走走、摸摸猫。", step: 2 };
     else if (s.daily) next = { spot: "sofa", key: "sleep", title: "忙完了，在沙发上等TA下播", destination: "回客厅沙发", detail: "看向沙发坐垫，轻按E，裹着毯子小睡一会儿。", step: 4 };
     else next = {
         spot: "sofa",

@@ -20,10 +20,7 @@ async function run() {
         const s=await state(page);
         if(s.phase==='result') { assert.ok(s.won); break; }
         if(s.daily?.panel==='lock') {
-          for(let beat=0;beat<3;beat++) {
-            await page.waitForFunction(()=>{const d=JSON.parse(window.render_game_to_text()).daily; const p=(Math.sin(d.clock*2.2-Math.PI/2)+1)/2; return p>.4 && p<.6 && d.cooldown<=0;});
-            await page.locator('[data-daily-timing]').click();
-          }
+          await require('./lib/hush-minigame-browser.cjs').activity(page,false,undefined,true);
           continue;
         }
         if(s.daily?.stage==='sleep') {

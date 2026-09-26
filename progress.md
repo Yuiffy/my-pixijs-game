@@ -3055,3 +3055,9 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 28/28 规则测试、270 局完整模拟通过，模拟中实际选择 12 次黑料。隐藏静音系统 Chrome 全流程通过，21 张整页截图全部像素检查与逐张目检，覆盖认知、切片、正负投流、反向应对、0/15 边界、存档、完整人机／四人同机和 390/320 手机；tmp/hype-harbor-traffic/report.json errors=[]。文本说明专项 3 图与通用客户端静音系统 Chrome 冒烟图也已检查。
 - 发布在复用的 hype-harbor-check 托管工作树进行，分支 codex/hype-harbor 已接入 origin/master a350aad（含目录日期与弹棋新提交），仅带入本游戏及目录／脚本／本进度段，保留主共享目录并行改动。完整 pnpm run check → pnpm run build 顺序通过，54/54 页生成，Next ESLint／类型检查启用，仅既有 RPG 警告。9 份游戏文件与成功构建源码逐一 SHA256 一致，12 名角色素材均在发布工作树存在；证据 tmp/hype-harbor-source-validation.json。
 - 试玩继续使用 http://127.0.0.1:3886/game/hype-harbor。用户已授权本版 commit/push；不包含联机，后续按真人反馈微调收益与对抗节奏。
+
+### 2026-09-26 · Hush Live minigame variety
+
+- Replace the shared timing track with three seeded locks (dial, wire pick, pins), two cooking games (physically toss/catch a dice-shaped rice cube or catch eggs), and optional 24-round recoil practice at the computer or sofa. Mouse, keyboard and touch inputs share the simulation clock; the kitchen pan and rice cube follow the minigame. Pause/blur/release clears held input.
+- Completed household tasks now allow sofa sleep during the streamer bathroom break, followed by the existing after-stream story; unfinished tasks remain required.
+- Validation: 49 rule tests; desktop and 320px touch completion of every variant, actual upward toss, recoil and pause release, bathroom-break sleep through the ending, short/landscape overflow checks, and real-RAF first-two-chapter progression. All browser tests muted; inspected screenshots and no console/page errors. Full check then production build passed with Next ESLint/type checking enabled.

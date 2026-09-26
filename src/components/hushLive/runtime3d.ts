@@ -99,6 +99,7 @@ export function lookPoint(r: Runtime3D, spot: Spot) {
   return { x, y: point.height, z };
 }
 export function clearControls(r: Runtime3D) {
+  if (r.game.daily) r.game.daily.mini.held = false;
   r.keys.clear();
   r.stick = { x: 0, y: 0 };
   r.held = false;
