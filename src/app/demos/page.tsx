@@ -31,6 +31,13 @@ interface ProjectItem {
 
 const miniGames: ProjectItem[] = [
   {
+    title: 'RESET / 开蹬！',
+    href: '/game/reset-rush',
+    description: 'tibo 又说要 reset 了。经营多账号、押注银行券，把额度变成下一款碉游。',
+    image: '/games/reset-rush/preview.svg',
+    meta: '开发者桌游 · 1 人 + 3 AI · 额度管理与项目竞赛',
+  },
+  {
     title: '岁己 · 雨夜寻味',
     href: '/game/night-rain',
     description: '下播后穿过雨中的旧城，打开近路、挑战铁伞，和饼干岁一起找一顿热饭。',
