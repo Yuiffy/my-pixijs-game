@@ -26,6 +26,9 @@ export function stick(x = 0, y = 0, deadzone = 0.18) {
 export class ActionControls {
   movement = { x: 0, forward: 0, sprint: false };
   source: 'mouse' | 'gamepad' | 'touch' = 'mouse';
+  heavyHeld = false;
+  dashHeld = false;
+  guardHeld = false;
   locked = false;
   altHeld = false;
   gamepadConnected = false;
@@ -39,6 +42,7 @@ export class ActionControls {
   private captureAfterRelease = false;
   private padKey = '';
   private previous: boolean[] = [];
+  private heldBlocked: boolean[] = [];
   private navigation = 0;
   private nextNavigation = 0;
   private listeners: (() => void)[] = [];
@@ -77,9 +81,10 @@ export class ActionControls {
       if (!this.locked || this.altHeld || !this.playing()) return;
       event.preventDefault();
       if (event.button === 0) host.queue({ light: true });
-      if (event.button === 2) host.queue({ heavy: true });
+      if (event.button === 2) { this.heavyHeld = true; host.queue({ heavy: true }); }
       if (event.button === 1) host.queue({ lock: true });
     });
+    on('mouseup', event => { if (event.button === 2) this.heavyHeld = false; });
     on('contextmenu', event => { if (this.locked) event.preventDefault(); });
     on('wheel', event => { if (this.locked && this.playing()) this.host.camera.current.distance = Math.max(3, Math.min(9, this.host.camera.current.distance + event.deltaY * 0.006)); });
     on('keydown', event => {
@@ -120,7 +125,7 @@ export class ActionControls {
     } catch { this.requesting = false; this.lockMessage = '点击画面重新捕获鼠标'; }
   }
   release() {
-    this.sprinting = false;
+    this.sprinting = false; this.heavyHeld = false; this.dashHeld = false; this.guardHeld = false;
     this.movement = { x: 0, forward: 0, sprint: false };
     if (document.pointerLockElement === this.host.root) { this.intentionalRelease = true; document.exitPointerLock(); }
   }
@@ -137,13 +142,14 @@ export class ActionControls {
     this.gamepadConnected = !!pad;
     if (!pad) {
       if (this.padKey && this.source === 'gamepad' && this.playing()) { this.host.clear(); this.host.showPanel('pause'); }
-      this.padKey = ''; this.previous = []; return;
+      this.padKey = ''; this.previous = []; this.dashHeld = false; this.guardHeld = false; if (this.source === 'gamepad') this.heavyHeld = false; return;
     }
     const pressed = pad.buttons.map(b => b.pressed || b.value > 0.5);
+    this.heldBlocked = this.heldBlocked.map((blocked, index) => blocked && !!pressed[index]);
     const key = `${pad.index}:${pad.id}`;
     // Reconnect/focus regain never replays buttons held in the background.
     if (key !== this.padKey || !this.focused || document.hidden) {
-      this.padKey = key; this.previous = pressed; this.navigation = 0; return;
+      this.padKey = key; this.previous = pressed; this.heldBlocked = pressed.slice(); this.navigation = 0; return;
     }
     const { previous } = this;
     const edge = (index: number) => !!pressed[index] && !previous[index];
@@ -153,10 +159,12 @@ export class ActionControls {
     if (this.host.confirming()) {
       if (edge(1)) { this.host.cancelConfirm(); return; }
     } else if (this.host.state().mode === 'playing' && edge(9)) {
+      this.heldBlocked = pressed.slice();
       this.host.showPanel(this.host.panel() ? null : 'pause'); return;
     }
     const menu = this.host.root.querySelector<HTMLElement>('[role="alertdialog"]') ?? this.host.root.querySelector<HTMLElement>('[role="dialog"]') ?? this.host.root.querySelector<HTMLElement>('[data-game-menu]');
     if (menu) {
+      this.heldBlocked = pressed.slice();
       if (edge(1) && this.host.panel() && !this.host.confirming()) { this.host.showPanel(null); return; }
       const items = Array.from(menu.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], summary')).filter(el => el.getClientRects().length > 0);
       const direction = pressed[12] || pressed[14] || move.y < -0.5 || move.x < -0.5 ? -1 : pressed[13] || pressed[15] || move.y > 0.5 || move.x > 0.5 ? 1 : 0;
@@ -183,13 +191,14 @@ export class ActionControls {
     this.navigation = 0;
     if (!this.playing() || this.altHeld) return;
     if (edge(8)) { this.host.showPanel('map'); return; }
-    if (edge(3)) { this.host.showPanel('companion'); return; }
+    if (edge(6)) { this.host.showPanel('companion'); return; }
     if (edge(12)) this.host.upgrade();
     if (edge(10)) this.sprinting = !this.sprinting;
     if (Math.hypot(move.x, move.y) < 0.1) this.sprinting = false;
+    if (this.source === 'gamepad') { this.guardHeld = !!pressed[4] && !this.heldBlocked[4]; this.dashHeld = !!pressed[1] && !this.heldBlocked[1]; this.heavyHeld = !!pressed[7] && !this.heldBlocked[7]; }
     this.movement = { x: move.x, forward: -move.y, sprint: this.sprinting };
     this.look(look.x * ms * 0.0024 * this.lookSettings.gamepad, look.y * ms * 0.0018 * this.lookSettings.gamepad);
-    const bindings = { interact: 0, dodge: 1, heal: 2, parry: 4, light: 5, heavy: 7, lock: 11 };
+    const bindings = { jump: 0, interact: 3, heal: 2, parry: 4, light: 5, heavy: 7, lock: 11 };
     for (const [action, index] of Object.entries(bindings)) if (edge(index)) this.host.queue({ [action]: true });
   }
 

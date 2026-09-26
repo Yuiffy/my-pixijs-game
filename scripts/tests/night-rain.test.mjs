@@ -92,7 +92,7 @@ test('guard absorbs frontal light blows but a heavy strike threatens both health
 test('stamina exhausts, recovers only after delay, and healing is finite and interruptible', () => {
   const s = fresh();
   for (let i = 0; i < 5; i += 1) advance(s, 520, { ...neutral, light: true });
-  assert.equal(s.player.stamina, 15); const time = s.player.actionTime; advance(s, 20, { ...neutral, heavy: true });
+  assert.equal(s.player.stamina, 11); const time = s.player.actionTime; advance(s, 20, { ...neutral, heavy: true });
   assert.equal(s.player.action, 'idle'); assert.equal(s.player.actionTime, time); advance(s, 3000); assert.ok(s.player.stamina > 80);
   const duel = courtyardDuel(); beforeAttack(duel.s, duel.e, 0.2); duel.s.player.hp = 60;
   advance(duel.s, 800, { ...neutral, heal: true }); assert.equal(duel.s.player.flasks, 2); assert.equal(duel.s.player.hp, 41);
@@ -158,7 +158,7 @@ test('rest respawns ordinary foes, preserves cleared boss and exploration, and r
   for (const target of [{ x: 12, z: -38 }, { x: 12, z: -11 }, { x: 11.3, z: -6.5 }, { x: 11.3, z: -1 }, { x: 7, z: -1 }, { x: 7, z: 7 }, { x: 0, z: 8 }]) walkTo(engine, s, target);
   s.player.hp = 20; s.player.flasks = 0; interact(s);
   assert.equal(s.player.hp, maxHp(s)); assert.equal(s.player.stamina, maxStamina(s)); assert.equal(s.player.flasks, 3);
-  assert.equal(s.enemies.filter(e => e.hp > 0).length, 5); assert.equal(s.enemies.find(e => e.kind === 'boss').action, 'dead');
+  assert.equal(s.enemies.filter(e => e.hp > 0).length, world.ENEMY_SPAWNS.filter(e => e.kind !== 'boss').length); assert.equal(s.enemies.find(e => e.kind === 'boss').action, 'dead');
   assert.equal(s.charm, true); assert.equal(s.shortcut, true); assert.equal(s.level, 1);
 });
 

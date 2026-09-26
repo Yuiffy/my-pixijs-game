@@ -12,7 +12,7 @@ const pathLength = path => path.slice(1).reduce((sum, p, i) => sum + gap(p, path
 
 test('navigation reaches every discovery from spawn with gate shut and with gate open, using player radius', () => {
   for (const open of [false, true]) for (const landmark of world.LANDMARKS) {
-    const path = guide.findPath(world.SPAWN, landmark, open);
+    const path = guide.findPath(world.SPAWN, world.interactionPoint(landmark), open);
     assert.ok(path.length > 1, `${landmark.id}, gate ${open}`);
     for (let i = 1; i < path.length; i++) assert.ok(guide.walkSegment(path[i - 1], path[i], open), landmark.id);
   }
@@ -47,7 +47,7 @@ test('guide leads along a legal path, waits for player, and never changes player
     engine.stepGame(s, 40, input); guide.updateCompanion(c, s, 0.04);
   }
   assert.equal(c.status, 'arrived'); assert.equal(s.mode, 'playing');
-  assert.ok(gap(c.position, world.LANDMARKS.find(l => l.id === 'courtyard')) < 0.2);
+  assert.ok(gap(c.position, world.interactionPoint(world.LANDMARKS.find(l => l.id === 'courtyard'))) < 0.2);
 });
 
 test('exploration hints escalate from nearby to missed to warmer, without repeated chatter or collected hints', () => {

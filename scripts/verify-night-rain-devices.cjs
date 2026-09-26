@@ -56,7 +56,7 @@ async function main() {
       await page.mouse.down({ button: 'left' }); await page.waitForTimeout(100); assert.equal((await state(page)).player.action, 'light');
       await page.waitForTimeout(850); assert.equal((await state(page)).player.action, 'idle'); await page.mouse.up();
       checks.mouseHoldDoesNotRepeat = true;
-      await page.mouse.down({ button: 'right' }); await page.waitForTimeout(100); assert.equal((await state(page)).player.action, 'heavy'); await page.mouse.up({ button: 'right' }); await waitIdle(page);
+      await page.mouse.down({ button: 'right' }); await page.waitForTimeout(100); assert.equal((await state(page)).player.action, 'charge'); await page.mouse.up({ button: 'right' }); await waitIdle(page);
       await page.keyboard.press('f'); await page.waitForTimeout(50); assert.equal((await state(page)).player.action, 'parry'); await waitIdle(page);
       const simultaneous = await state(page); await page.keyboard.down('w'); await page.mouse.move(1000, 460); await page.mouse.click(1000, 460); await page.waitForTimeout(130); await page.keyboard.up('w');
       const attacking = await state(page); assert.equal(attacking.player.action, 'light'); assert.notEqual(attacking.camera.yaw, simultaneous.camera.yaw); assert.ok(Math.hypot(attacking.player.x - simultaneous.player.x, attacking.player.z - simultaneous.player.z) > 0);
@@ -94,25 +94,25 @@ async function main() {
       const { ctx, page } = await open(browser, true);
       await button(page, 0); assert.equal((await state(page)).mode, 'playing');
       assert.equal(await page.evaluate(() => !!document.pointerLockElement), false);
-      await button(page, 0); assert.ok((await state(page)).collected.includes('laptop'));
+      await button(page, 3); assert.ok((await state(page)).collected.includes('laptop'));
       const fullHealth = await button(page, 2); assert.equal(fullHealth.player.hp, 100); assert.equal(fullHealth.player.flasks, 3);
       const idle = await state(page); await axes(page, [0.1, -0.1, 0.1, -0.1]); await page.waitForTimeout(250);
       const deadzone = await state(page); assert.deepEqual(deadzone.player, idle.player); assert.equal(deadzone.camera.yaw, idle.camera.yaw);
       await axes(page, [0.65, 0, 0.5, 0.25]); await page.waitForTimeout(280); const moved = await state(page);
       assert.ok(Math.hypot(moved.player.x - idle.player.x, moved.player.z - idle.player.z) > 0.2); assert.notEqual(moved.camera.yaw, idle.camera.yaw);
       await axes(page, [0, 0, 0, 0]); checks.sticksAndDeadzone = true;
-      for (const [index, action] of [[5, 'light'], [7, 'heavy'], [4, 'parry'], [1, 'dodge']]) {
+      for (const [index, action] of [[5, 'light'], [7, 'charge'], [4, 'parry']]) {
         await waitIdle(page); const pressed = await button(page, index); assert.equal(pressed.player.action, action);
       }
       await waitIdle(page);
       const held = await button(page, 5, 1000); assert.equal(held.player.action, 'idle'); checks.gamepadActionsAndEdges = true;
-      await button(page, 3); assert.equal((await state(page)).panel, 'companion');
+      await button(page, 6); assert.equal((await state(page)).panel, 'companion');
       await button(page, 13); assert.equal(await page.evaluate(() => document.activeElement.id), 'baby-mode');
       await button(page, 0); assert.equal((await state(page)).companion.enabled, false);
       await button(page, 0); assert.equal((await state(page)).companion.enabled, true);
       await button(page, 13); await button(page, 13); await button(page, 0); assert.equal((await state(page)).companion.skin, 'otter');
       await capture(page, '03-gamepad-menu');
-      await button(page, 1); assert.equal((await state(page)).panel, null);
+      await button(page, 1); assert.equal((await state(page)).panel, null); assert.equal((await state(page)).player.action, 'idle', 'B closes menu without rolling');
       await button(page, 8); assert.equal((await state(page)).panel, 'map'); await button(page, 1); assert.equal((await state(page)).panel, null);
       await button(page, 9); assert.equal((await state(page)).panel, 'pause');
       // Navigate all menu controls without mouse, including camera setting selects.
@@ -127,8 +127,17 @@ async function main() {
       await page.evaluate(() => { window.virtualPad.buttons[5] = { pressed: true, value: 1 }; window.padPresent = true; }); await page.waitForTimeout(150);
       await button(page, 9); assert.equal((await state(page)).panel, null); await page.waitForTimeout(150); assert.equal((await state(page)).player.action, 'idle');
       await page.evaluate(() => { window.virtualPad.buttons[5] = { pressed: false, value: 0 }; }); await page.waitForTimeout(50);
-      const resumed = await button(page, 5); assert.equal(resumed.player.action, 'light'); await waitIdle(page);
+      const resumed = await button(page, 5); assert.equal(resumed.player.action, 'light', JSON.stringify(resumed)); await waitIdle(page);
       checks.menuSettingsDisconnect = true;
+      await page.waitForFunction(() => window.nightRain.getState().player.stamina > 90);
+      const jumped = await button(page, 0, 180); assert.ok(jumped.player.jumpHeight > .5);
+      await page.waitForFunction(() => window.nightRain.getState().player.jumpHeight === 0);
+      await button(page, 1, 65); assert.equal((await state(page)).player.action, 'dodge'); await waitIdle(page);
+      await page.waitForFunction(() => window.nightRain.getState().player.stamina > 90);
+      await axes(page, [.5, 0, 0, 0]); const sprinted = await button(page, 1, 400); assert.ok(sprinted.player.sprintTime > .1); await axes(page, [0,0,0,0]); assert.equal((await state(page)).player.action, 'idle');
+      await page.waitForFunction(() => window.nightRain.getState().player.stamina > 90);
+      const charged = await button(page, 7, 850); assert.equal(charged.player.charge, .75); assert.equal((await state(page)).player.attack, 'charged'); await waitIdle(page);
+      checks.gamepadJumpDashCharge = true;
       await capture(page, '04-gamepad-gameplay');
       // Walk using legal movement inputs to a live enemy, then test lock and heal on the device path.
       await page.evaluate(() => {

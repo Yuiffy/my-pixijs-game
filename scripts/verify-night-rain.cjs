@@ -73,7 +73,7 @@ const keyMove = async (page, key, ms = 150) => {
 
 const checkKeyboard = async page => {
   for (const key of ['w', 's', 'a', 'd']) await keyMove(page, key);
-  for (const [key, action] of [['j', 'light'], ['k', 'heavy'], [' ', 'dodge'], ['l', 'parry']]) {
+  for (const [key, action] of [['j', 'light'], ['k', 'heavy'], ['Shift', 'dodge'], ['l', 'parry']]) {
     await advance(page, 1600);
     const before = await state(page);
     await page.keyboard.press(key === ' ' ? 'Space' : key);

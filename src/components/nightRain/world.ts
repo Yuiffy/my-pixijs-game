@@ -1,4 +1,4 @@
-import type { EnemyKind, Landmark, Obstacle, Surface, Vec3 } from './types';
+import type { EnemyKind, Landmark, Obstacle, Surface, Vec3, WorldAccess } from './types';
 
 // Metres. +x east, +z south, +y up. Ramp endY is the height at z2.
 // Solid parapets bound the walkable network; no hidden teleport links.
@@ -16,9 +16,20 @@ export const SURFACES: Surface[] = [
   { id: 'cloister', name: '铃兰回廊', x1: -9, x2: -4, z1: -16, z2: -10, y: 3, color: '#8b8876' },
   { id: 'cloister-stairs', name: '回廊近道', x1: -8, x2: -4, z1: -10, z2: -5, y: 3, endY: 0, color: '#8b8876' },
   { id: 'lookout', name: '金塔望台', x1: -17, x2: -10, z1: -30, z2: -25, y: 6, color: '#b58b67' },
+  // West loop: see the locked water gate below, cross the high bridge, then descend behind it.
+  { id: 'bell-bridge', name: '悬钟桥', x1: -29, x2: -17, z1: -29, z2: -25, y: 6, color: '#8e8270' },
+  { id: 'temple', name: '残钟雨寺', x1: -35, x2: -28, z1: -33, z2: -22, y: 6, color: '#ae9274' },
+  { id: 'temple-stairs', name: '百灯石阶', x1: -35, x2: -29, z1: -22, z2: -12, y: 6, endY: 0, color: '#978976' },
+  { id: 'temple-court', name: '寺前莲池', x1: -35, x2: -26, z1: -14, z2: 0, y: 0, color: '#6a7e77' },
+  { id: 'water-bridge', name: '闭水门', x1: -26, x2: -18, z1: -4, z2: 0, y: 0, color: '#7c8173' },
+  // A quiet pier reached from the far end of the canal; the boss remains across the water.
+  { id: 'canal-refuge', name: '摆渡避雨庵', x1: 14, x2: 21, z1: -33, z2: -27, y: 0, color: '#8b7760' },
 ];
 
 export const OBSTACLES: Obstacle[] = [
+  { x: -1, z: 7, w: 0.9, d: 0.9, y: 0, h: 2.8, kind: 'shrine', landmarkId: 'courtyard' },
+  { x: -32, z: -9.5, w: 0.9, d: 0.9, y: 0, h: 2.8, kind: 'shrine', landmarkId: 'temple-lamp' },
+  { x: 18, z: -30, w: 0.9, d: 0.9, y: 0, h: 2.8, kind: 'shrine', landmarkId: 'canal-lamp' },
   { x: 4, z: 3, w: 2.5, d: 2.5, y: 0, h: 1.3, kind: 'planter' },
   { x: -5, z: -2, w: 1.8, d: 1.6, y: 0, h: 1.6, kind: 'crate' },
   { x: -17, z: 2, w: 1.2, d: 2, y: 0, h: 1.5, kind: 'crate' },
@@ -28,11 +39,15 @@ export const OBSTACLES: Obstacle[] = [
   { x: 12, z: -8, w: 4.1, d: 0.7, y: 0, h: 3.3, kind: 'gate' },
   { x: -6, z: -15.3, w: 0.95, d: 0.65, y: 3, h: 0.65, kind: 'chest' },
   { x: -14, z: -29.3, w: 0.95, d: 0.65, y: 6, h: 0.65, kind: 'chest' },
+  { x: -30.5, z: -6, w: 9, d: 0.7, y: 0, h: 3.3, kind: 'gate', gateId: 'temple' },
+  { x: -31.5, z: -31.7, w: 1.4, d: 0.8, y: 6, h: 1, kind: 'pillar' },
+  { x: -34.4, z: -25, w: 0.7, d: 0.7, y: 6, h: 3.6, kind: 'pillar' },
+  { x: 20.4, z: -31.8, w: 0.4, d: 0.4, y: 0, h: 3.2, kind: 'pillar' },
 ];
 
 export const LANDMARKS: Landmark[] = [
   { id: 'laptop', kind: 'note', label: '合上新笔记本', x: 0, y: 6, z: 15 },
-  { id: 'courtyard', kind: 'rest', label: '雨灯 · 休息 / 整备', x: -1, y: 0, z: 7 },
+  { id: 'courtyard', kind: 'rest', label: '中庭雨灯 · 休息 / 记录', x: -1, y: 0, z: 7 },
   { id: 'alley-cache', kind: 'cache', label: '拾取遗落的夜市钱袋', x: -16, y: 0, z: 1 },
   { id: 'roof-charm', kind: 'charm', label: '收下金铃护符', x: -15, y: 6, z: -23 },
   { id: 'rooftop-note', kind: 'note', label: '查看夜市便签', x: -4, y: 6, z: -23 },
@@ -40,6 +55,12 @@ export const LANDMARKS: Landmark[] = [
   { id: 'food', kind: 'food', label: '来一份热腾腾的打抛饭', x: 4, y: 0, z: -47 },
   { id: 'cloister-cache', kind: 'cache', label: '打开铃兰回廊宝箱', x: -6, y: 3, z: -14.5 },
   { id: 'lookout-cache', kind: 'cache', label: '打开金塔望台宝箱', x: -14, y: 6, z: -28.5 },
+  { id: 'temple-flask', kind: 'flask', label: '收下刻露瓶', x: -31.5, y: 6, z: -30.5 },
+  { id: 'temple-note', kind: 'note', label: '读残钟铭文', x: -28.8, y: 6, z: -24 },
+  { id: 'temple-lamp', kind: 'rest', label: '莲池雨灯 · 休息 / 记录', x: -32, y: 0, z: -9.5 },
+  { id: 'temple-gate', kind: 'shortcut', label: '拨开闭水门闩', x: -30.5, y: 0, z: -7.3 },
+  { id: 'canal-lamp', kind: 'rest', label: '摆渡雨灯 · 休息 / 记录', x: 18, y: 0, z: -30 },
+  { id: 'ferry-note', kind: 'note', label: '读摆渡人的遗签', x: 19.5, y: 0, z: -28.5 },
 ];
 
 export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [
@@ -49,10 +70,27 @@ export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; 
   { id: 'roof-duelist', kind: 'duelist', name: '屋脊刀客', x: -5, y: 6, z: -22.5, facing: -1.57 },
   { id: 'canal-guard', kind: 'guard', name: '侧廊看守', x: 12, y: 0, z: -22, facing: Math.PI },
   { id: 'market-boss', kind: 'boss', name: '封街人 · 铁伞', x: 4, y: 0, z: -41, facing: 0 },
+  { id: 'temple-duelist', kind: 'duelist', name: '守钟客', x: -31.5, y: 6, z: -27, facing: Math.PI / 2 },
+  { id: 'temple-prowler', kind: 'prowler', name: '石阶拾灯人', x: -32, y: 3.6, z: -18, facing: Math.PI },
 ];
 
 export const SPAWN: Vec3 = { x: 1.8, y: 6, z: 15.5 };
 export const CHECKPOINT: Vec3 = { x: -1, y: 0, z: 8.2 };
+
+export const REST_POINTS: Record<string, Vec3> = {
+  room: SPAWN,
+courtyard: CHECKPOINT,
+  'temple-lamp': { x: -32, y: 0, z: -10.8 },
+  'canal-lamp': { x: 17, y: 0, z: -30 },
+};
+// A guide stops beside a solid shrine; interaction itself is allowed from any clear side.
+export function interactionPoint(l: Landmark): Vec3 {
+  return l.kind === 'rest' ? REST_POINTS[l.id] : l;
+}
+
+export function gateOpen(o: Obstacle, access: WorldAccess): boolean {
+  return o.kind === 'gate' && (o.gateId === 'temple' ? typeof access !== 'boolean' && access.templeGate : typeof access === 'boolean' ? access : access.shortcut);
+}
 
 export function heightAt(x: number, z: number): number | null {
   let result: number | null = null;
@@ -64,12 +102,12 @@ export function heightAt(x: number, z: number): number | null {
   return result;
 }
 
-export function canOccupy(x: number, z: number, fromY: number, shortcut = false, radius = 0.32): boolean {
+export function canOccupy(x: number, z: number, fromY: number, shortcut: WorldAccess = false, radius = 0.32, ignoredLandmark?: string): boolean {
   const y = heightAt(x, z);
   if (y === null || Math.abs(y - fromY) > 0.6) return false;
   // Four probes keep feet inside the visible parapets without sealing connected stairs.
   if ([[radius, 0], [-radius, 0], [0, radius], [0, -radius]].some(([dx, dz]) => heightAt(x + dx, z + dz) === null)) return false;
-  return !OBSTACLES.some(o => !(o.kind === 'gate' && shortcut)
+  return !OBSTACLES.some(o => !(ignoredLandmark && o.landmarkId === ignoredLandmark) && !gateOpen(o, shortcut)
     && Math.abs(y - o.y) < 2 && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius);
 }
 
@@ -77,12 +115,12 @@ export function regionAt(x: number, z: number): string {
   return [...SURFACES].reverse().find(s => x >= s.x1 && x <= s.x2 && z >= s.z1 && z <= s.z2)?.name ?? '旧街边缘';
 }
 
-export function lineClear(a: Vec3, b: Vec3, shortcut = false): boolean {
+export function lineClear(a: Vec3, b: Vec3, shortcut: WorldAccess = false, ignoredLandmark?: string): boolean {
   const count = Math.max(1, Math.ceil(Math.hypot(a.x - b.x, a.z - b.z) / 0.35));
   let { y } = a;
   for (let i = 1; i <= count; i += 1) {
     const t = i / count; const x = a.x + (b.x - a.x) * t; const z = a.z + (b.z - a.z) * t;
-    if (!canOccupy(x, z, y, shortcut, 0.05)) return false;
+    if (!canOccupy(x, z, y, shortcut, 0.05, ignoredLandmark)) return false;
     y = heightAt(x, z) ?? y;
   }
   return Math.abs(y - b.y) < 0.8;

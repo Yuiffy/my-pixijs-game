@@ -37,7 +37,7 @@ async function walk(page, target) {
 async function press(page, key) { await page.keyboard.press(key); await page.evaluate(() => window.advanceTime(40)); }
 async function main() {
   assert.equal((await fetch(`${base}/game/night-rain`)).status, 200);
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-speech-api'] });
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } }); await context.addInitScript(installVirtualPointerLock); const page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -82,6 +82,13 @@ async function main() {
         assert.equal((await text(page)).companion.targetId, 'alley-cache');
         await capture(page, 'hint-02-accepted-help');
       }
+      if (target.interact === 'rooftop-note') {
+        await press(page, 'c'); await page.getByLabel('宝宝模式 有人陪你探索与认路').uncheck(); await page.getByRole('button', {name:'关闭',exact:true}).click();
+        await press(page, 'e'); assert.equal((await state(page)).messageKind, 'lore'); assert.match(await page.locator('[data-narrative="lore"]').innerText(), /逐水向东/); assert.doesNotMatch(await page.locator('main').innerText(), /运河侧廊有一扇门|从里面能打开/);
+        await capture(page, '06b-rooftop-lore');
+        await press(page, 'c'); await page.getByLabel('宝宝模式 有人陪你探索与认路').check(); await page.getByRole('button', {name:'关闭',exact:true}).click();
+        await press(page, 'e'); assert.match((await text(page)).companion.subtitle, /运河侧廊/); await capture(page, '06c-rooftop-interpretation');
+      }
       if (target.interact) {
         await capture(page, `route-${i}-${target.interact}`);
         await press(page, 'e');
@@ -89,7 +96,10 @@ async function main() {
       }
       if (i === 12) {
         for (const p of [{ x: -15.5, z: -13 }, { x: -11, z: -13 }, { x: -6, z: -14.5 }]) await walk(page, p);
-        await capture(page, '04-cloister-chest'); await press(page, 'e');
+        await press(page, 'c'); await page.getByLabel('宝宝模式 有人陪你探索与认路').uncheck(); await page.getByRole('button', {name:'关闭',exact:true}).click();
+        await press(page, 'e'); assert.equal((await state(page)).messageKind, 'event'); assert.equal(await page.locator('[data-narrative="event"]').innerText(), '旧铜钱 ×35'); assert.doesNotMatch(await page.locator('main').innerText(), /不用原路返回|矮阶通回/);
+        await capture(page, '04-cloister-chest');
+        await press(page, 'c'); await page.getByLabel('宝宝模式 有人陪你探索与认路').check(); await page.getByRole('button', {name:'关闭',exact:true}).click();
         assert.ok((await state(page)).collected.includes('cloister-cache'));
         // Descend the new inner loop back to courtyard and climb back to the fork.
         for (const p of [{ x: -6, z: -11 }, { x: -6, z: -5.3 }, { x: -8, z: -5 }, { x: -15.5, z: -5 }, { x: -15.5, z: -13 }]) await walk(page, p);
@@ -98,7 +108,7 @@ async function main() {
       if (i === 14) {
         for (const p of [{ x: -14, z: -23 }, { x: -14, z: -28.5 }]) await walk(page, p);
         await capture(page, '06-lookout-chest'); await press(page, 'e');
-        assert.ok((await state(page)).collected.includes('lookout-cache'));
+        assert.ok((await state(page)).collected.includes('lookout-cache')); assert.match((await text(page)).companion.subtitle, /挑战首领前/); await capture(page, '06a-chest-interpretation');
         await walk(page, { x: -14, z: -23 });
       }
       if (target.upgrade) { await page.keyboard.down('Alt'); await page.getByRole('button', { name: /整备 ·/ }).click(); assert.equal((await state(page)).level, 1); await page.keyboard.up('Alt'); }
