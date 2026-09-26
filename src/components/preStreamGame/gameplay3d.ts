@@ -1,12 +1,15 @@
 export const TASK_IDS = ['water', 'toilet', 'food', 'cat', 'audio', 'vts', 'obs'] as const;
 export type TaskId = typeof TASK_IDS[number];
-export const INCIDENT_IDS = ['spill', 'cable', 'catwalk'] as const;
+export const INCIDENT_IDS = ['spill', 'cable', 'catwalk', 'power', 'glass', 'litter', 'bowel'] as const;
 export type IncidentId = typeof INCIDENT_IDS[number];
 export type StationId = 'thermos' | 'dispenser' | 'toilet' | 'food' | 'cat' | 'audio' | 'vts' | 'obs' | IncidentId;
 export type MiniKind = Exclude<TaskId, 'water'> | IncidentId;
-export type MiniStage = 'shoot' | 'flush-ready' | 'flushing' | 'plate' | 'feed' | 'tune' | 'testing' | 'calibrate' | 'sources' | 'confirm' | 'clean' | 'reconnect' | 'lure';
+export type MiniStage = 'shoot' | 'flush-ready' | 'flushing' | 'plate' | 'feed' | 'tune' | 'testing' | 'calibrate' | 'sources' | 'confirm' | 'clean' | 'reconnect' | 'lure' | 'restart' | 'booting' | 'sweep' | 'scoop' | 'dig' | 'flowing';
 export const FOOD_ITEMS = ['bread', 'berry', 'cream', 'mint'] as const;
 export const OBS_SOURCES = ['camera', 'mic', 'chat', 'overlay', 'desktop'] as const;
+export const BOWEL_ROCKS = [1, 3, 6, 8, 11, 14, 16, 17, 19, 21] as const;
+export const BOWEL_START = 2;
+export const BOWEL_END = 22;
 
 export interface PrepStation { id: StationId; x: number; z: number; label: string }
 export interface PrepInput { x: number; z: number; primary: boolean }
@@ -40,6 +43,11 @@ export interface PrepMiniGame {
   lastWipeY: number;
   cablePairs: number[];
   obsEnabled: boolean[];
+  glassShards: boolean[];
+  litterClumps: number[];
+  litterScooped: boolean[];
+  bowelDug: boolean[];
+  flowMs: number;
 }
 export interface PrepState {
   version: 2;
@@ -65,6 +73,7 @@ export const BATHROOM_DOOR = { wallX: -2.4, topZ: -0.45, openingMinZ: -2.15, ope
 export const BEDROOM_DOOR = { wallX: 1.2, openingMinZ: 0.45, openingMaxZ: 1.55 } as const;
 export const INTERACT_RADIUS = 1.3;
 export const LIVE_RADIUS = 1.6;
+export const LIVE_TRANSITION_MS = 2000;
 export const STATIONS: PrepStation[] = [
   { id: 'thermos', x: 2.95, z: 1.65, label: '保温杯' },
   { id: 'dispenser', x: -0.6, z: 2.25, label: '饮水机' },
@@ -77,6 +86,10 @@ export const STATIONS: PrepStation[] = [
   { id: 'spill', x: 0.15, z: 0.25, label: '洒水处' },
   { id: 'cable', x: 3, z: 0.15, label: '松脱线缆' },
   { id: 'catwalk', x: 3.1, z: -1.2, label: '霸占桌面的猫' },
+  { id: 'power', x: 3.95, z: 0.25, label: '嘉嘉踩到的关机键' },
+  { id: 'glass', x: -1.2, z: 1.85, label: '嘉嘉打碎的杯子' },
+  { id: 'litter', x: 3.95, z: -1.95, label: '猫砂盆' },
+  { id: 'bowel', x: -3.7, z: -2.2, label: '上大的' },
 ];
 export const TASK_LABELS: Record<TaskId, string> = {
   water: '接水喝', toilet: '上厕所', food: '准备吃的', cat: '给猫倒粮', audio: '调试声卡', vts: '打开 VTS', obs: '打开 OBS',
@@ -139,6 +152,10 @@ function copyState(state: PrepState): PrepState {
       stains: (state.minigame.stains || []).map(stain => ({ ...stain })),
       cablePairs: [...(state.minigame.cablePairs || [])],
       obsEnabled: [...(state.minigame.obsEnabled || [])],
+      glassShards: [...(state.minigame.glassShards || [])],
+      litterClumps: [...(state.minigame.litterClumps || [])],
+      litterScooped: [...(state.minigame.litterScooped || [])],
+      bowelDug: [...(state.minigame.bowelDug || [])],
     } : null,
     incidents: { active: [...state.incidents.active], resolved: [...state.incidents.resolved], queue: [...state.incidents.queue] },
   };
@@ -240,6 +257,10 @@ export function getPrepAction(state: PrepState): string {
     if (kind === 'spill') return '擦净三处水渍';
     if (kind === 'catwalk') return stage === 'confirm' ? '抱猫离开键盘' : '等猫扑过来时点按逗猫棒';
     if (kind === 'cable') return stage === 'confirm' ? '试音确认线缆' : '匹配插头和接口';
+    if (kind === 'power') return stage === 'booting' ? '电脑正在重新启动' : '重新按下电源键';
+    if (kind === 'glass') return '把玻璃碎片扫进簸箕';
+    if (kind === 'litter') return '找出结块，铲净猫砂盆';
+    if (kind === 'bowel') return stage === 'flowing' ? '正在疏通肠道' : '挖开通路，再按下放水键';
     return stage === 'confirm' ? '确认 OBS 预览' : '选择正确来源并检查预览';
   }
   const obs = STATIONS.find(item => item.id === 'obs')!;
@@ -259,6 +280,7 @@ export function getPrepAction(state: PrepState): string {
     return '';
   }
   if (isIncident(id)) return state.incidents.active.includes(id) ? `处理${station.label}` : '';
+  if ((id === 'vts' || id === 'obs') && state.incidents.active.includes('power')) return '先恢复电脑供电';
   return state.completed.includes(id) ? '' : `开始${TASK_LABELS[id]}`;
 }
 
@@ -302,6 +324,10 @@ obs: 'sources',
     spill: 'clean',
 cable: 'reconnect',
 catwalk: 'lure',
+    power: 'restart',
+    glass: 'sweep',
+    litter: 'scoop',
+    bowel: 'dig',
   };
   const sequence = kind === 'food' ? [...FOOD_ITEMS.slice(0, state.level === 1 ? 3 : 4)] :
     kind === 'vts' ? ['smile', 'blink', 'tilt'] :
@@ -311,6 +337,13 @@ catwalk: 'lure',
     for (let i = sequence.length - 1; i > 0; i--) {
       const j = Math.floor(random(state) * (i + 1));
       [sequence[i], sequence[j]] = [sequence[j], sequence[i]];
+    }
+  }
+  const litterCells = Array.from({ length: 9 }, (_, index) => index);
+  if (kind === 'litter') {
+    for (let i = litterCells.length - 1; i > 0; i--) {
+      const j = Math.floor(random(state) * (i + 1));
+      [litterCells[i], litterCells[j]] = [litterCells[j], litterCells[i]];
     }
   }
   const mini: PrepMiniGame = {
@@ -345,6 +378,11 @@ cooldownMs: 0,
     lastWipeY: -1,
     cablePairs: kind === 'cable' ? [-1, -1, -1] : [],
     obsEnabled: kind === 'obs' ? [false, false, false, false, false] : [],
+    glassShards: kind === 'glass' ? [false, false, false, false] : [],
+    litterClumps: kind === 'litter' ? litterCells.slice(0, 3).sort((a, b) => a - b) : [],
+    litterScooped: kind === 'litter' ? Array(9).fill(false) : [],
+    bowelDug: kind === 'bowel' ? Array.from({ length: 25 }, (_, index) => index === BOWEL_START || index === BOWEL_END) : [],
+    flowMs: 0,
   };
   updateTarget(mini);
   return mini;
@@ -353,10 +391,21 @@ cooldownMs: 0,
 function triggerIncident(state: PrepState) {
   const triggered = state.incidents.active.length + state.incidents.resolved.length;
   if (state.incidents.queue.length === 0 || state.completed.length < (triggered + 1) * 2) return;
+  if (state.incidents.queue[0] === 'power' && (!state.completed.includes('vts') || !state.completed.includes('obs'))) return;
   const incident = state.incidents.queue.shift();
   if (!incident) return;
   state.incidents.active.push(incident);
-  announce(state, incident === 'spill' ? '哎呀，桌面洒水了！' : incident === 'cable' ? '声卡线松了！' : '猫猫占领键盘了！');
+  if (incident === 'power') state.completed = state.completed.filter(id => id !== 'vts' && id !== 'obs');
+  const notices: Record<IncidentId, string> = {
+    spill: '嘉嘉路过碰翻了水杯！快把水擦干。',
+    cable: '嘉嘉把声卡线扯松了！',
+    catwalk: '嘉嘉占领了键盘！',
+    power: '嘉嘉踩中关机键！电脑黑了，VTS 和 OBS 得重新配置。',
+    glass: '啪！嘉嘉打碎了杯子，地上都是碎玻璃。',
+    litter: '嘉嘉刚上完厕所，猫砂盆该铲了。',
+    bowel: '肚子突然咕噜响，得赶快去厕所！',
+  };
+  announce(state, notices[incident], 4800);
 }
 
 function completeTask(state: PrepState, id: TaskId) {
@@ -374,7 +423,7 @@ function completeMini(state: PrepState) {
   if (isIncident(kind)) {
     state.incidents.active = state.incidents.active.filter(id => id !== kind);
     state.incidents.resolved.push(kind);
-    announce(state, '小意外解决了，继续准备！');
+    announce(state, kind === 'power' ? '电脑恢复了，别忘了重新配置 VTS 和 OBS。' : '小意外解决了，继续准备！');
     triggerIncident(state);
   } else completeTask(state, kind);
 }
@@ -409,6 +458,7 @@ export function interactPrep(state: PrepState, id?: StationId): PrepState {
     if (!next.incidents.active.includes(station.id)) return state;
     next.minigame = makeMini(next, station.id);
   } else {
+    if ((station.id === 'vts' || station.id === 'obs') && next.incidents.active.includes('power')) return state;
     if (next.completed.includes(station.id)) return state;
     next.minigame = makeMini(next, station.id);
   }
@@ -557,6 +607,70 @@ export function toggleObsSourcePrep(state: PrepState, sourceIndex: number): Prep
   return next;
 }
 
+export function sweepGlassPrep(state: PrepState, shardIndex: number): PrepState {
+  const mini = state.minigame;
+  if (state.paused || state.phase !== 'minigame' || mini?.kind !== 'glass' || mini.stage !== 'sweep' ||
+    !Number.isInteger(shardIndex) || shardIndex < 0 || shardIndex >= 4 || mini.glassShards[shardIndex]) return state;
+  const next = copyState(state);
+  const glass = next.minigame!;
+  glass.glassShards[shardIndex] = true;
+  glass.hits++;
+  glass.progress = (glass.hits * 100) / glass.glassShards.length;
+  if (glass.hits === glass.glassShards.length) completeMini(next);
+  return next;
+}
+
+export function scoopLitterPrep(state: PrepState, cellIndex: number): PrepState {
+  const mini = state.minigame;
+  if (state.paused || state.phase !== 'minigame' || mini?.kind !== 'litter' || mini.stage !== 'scoop' ||
+    !Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= 9 || mini.litterScooped[cellIndex]) return state;
+  const next = copyState(state);
+  const litter = next.minigame!;
+  if (!litter.litterClumps.includes(cellIndex)) {
+    litter.misses++;
+    announce(next, '这一格是干净的，再找找结块。', 1600);
+    return next;
+  }
+  litter.litterScooped[cellIndex] = true;
+  litter.hits++;
+  litter.progress = (litter.hits * 100) / litter.litterClumps.length;
+  if (litter.hits === litter.litterClumps.length) completeMini(next);
+  return next;
+}
+
+export function digBowelPrep(state: PrepState, cellIndex: number): PrepState {
+  const mini = state.minigame;
+  if (state.paused || state.phase !== 'minigame' || mini?.kind !== 'bowel' || mini.stage !== 'dig' ||
+    !Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex >= 25 || mini.bowelDug[cellIndex]) return state;
+  const next = copyState(state);
+  const bowel = next.minigame!;
+  if ((BOWEL_ROCKS as readonly number[]).includes(cellIndex)) {
+    bowel.misses++;
+    announce(next, '这块太硬，换条路挖。', 1400);
+    return next;
+  }
+  bowel.bowelDug[cellIndex] = true;
+  bowel.hits++;
+  bowel.progress = Math.min(90, ((bowel.hits + 2) * 100) / (25 - BOWEL_ROCKS.length));
+  return next;
+}
+
+function bowelConnected(dug: boolean[]): boolean {
+  const seen = new Set([BOWEL_START]);
+  const queue = [BOWEL_START];
+  for (let index = 0; index < queue.length; index++) {
+    const cell = queue[index];
+    if (cell === BOWEL_END) return true;
+    for (const neighbour of [cell - 5, cell + 5, cell % 5 ? cell - 1 : -1, cell % 5 < 4 ? cell + 1 : -1]) {
+      if (neighbour >= 0 && neighbour < 25 && dug[neighbour] && !seen.has(neighbour)) {
+        seen.add(neighbour);
+        queue.push(neighbour);
+      }
+    }
+  }
+  return false;
+}
+
 export function pressPrep(state: PrepState): PrepState {
   if (state.paused || state.phase !== 'minigame' || !state.minigame || state.minigame.cooldownMs > 0) return state;
   const next = copyState(state);
@@ -590,12 +704,26 @@ export function pressPrep(state: PrepState): PrepState {
       mini.progress = 100;
       announce(next, '预览正常，再确认正式接入。');
     } else { mini.misses++; announce(next, '预览里还有缺失或多余的来源。', 1800); }
+  } else if (mini.kind === 'power' && mini.stage === 'restart') {
+    mini.stage = 'booting';
+    mini.flowMs = 1300;
+    announce(next, '电脑重新启动中。待会儿还得重新配置 VTS 和 OBS。', 2200);
+  } else if (mini.kind === 'bowel' && mini.stage === 'dig') {
+    if (bowelConnected(mini.bowelDug)) {
+      mini.stage = 'flowing';
+      mini.flowMs = 1600;
+      mini.progress = 100;
+      announce(next, '通路挖通了，水流冲下来了！', 1800);
+    } else {
+      mini.misses++;
+      announce(next, '还没有从入口通到出口，再挖开一些。', 1800);
+    }
   } else return state;
   return next;
 }
 
 export function leaveMiniGame(state: PrepState): PrepState {
-  if (state.paused || state.phase !== 'minigame' || !state.minigame || state.minigame.stage === 'flushing') return state;
+  if (state.paused || state.phase !== 'minigame' || !state.minigame || ['flushing', 'flowing', 'booting'].includes(state.minigame.stage)) return state;
   return { ...state, phase: 'explore', minigame: null, notice: '稍后再继续，准备事项还没完成。', noticeMs: 2200 };
 }
 
@@ -650,6 +778,12 @@ function tickMini(state: PrepState, dt: number, primary: boolean) {
   if (mini.stage === 'flushing') {
     mini.flushMs = Math.max(0, mini.flushMs - dt);
     if (mini.flushMs === 0) completeMini(state);
+    return;
+  }
+  if (mini.stage === 'flowing' || mini.stage === 'booting') {
+    mini.flowMs = Math.max(0, mini.flowMs - dt);
+    mini.progress = 100 - (mini.flowMs * 100) / (mini.stage === 'flowing' ? 1600 : 1300);
+    if (mini.flowMs === 0) completeMini(state);
     return;
   }
   if (mini.stage === 'testing') {
@@ -738,7 +872,7 @@ export function togglePausePrep(state: PrepState): PrepState {
 export function goLivePrep(state: PrepState): PrepState {
   const obs = STATIONS.find(station => station.id === 'obs')!;
   if (state.paused || !readyForLive(state) || distance(state.player, obs) > LIVE_RADIUS || blocksBedroom(state.player.x, state.player.z, obs.x, obs.z)) return state;
-  return { ...state, phase: 'countdown', countdownMs: 3000, notice: '全部就绪，三、二、一，正式上播！', noticeMs: 3000 };
+  return { ...state, phase: 'countdown', countdownMs: LIVE_TRANSITION_MS, notice: '直播间接入中……', noticeMs: LIVE_TRANSITION_MS };
 }
 
 function readyForLive(state: PrepState): boolean {
@@ -781,6 +915,7 @@ export function validatePrepGame(raw: unknown): PrepState | null {
   if (!record(raw.incidents) || !uniqueIds(raw.incidents.active, isIncident) || !uniqueIds(raw.incidents.resolved, isIncident) || !uniqueIds(raw.incidents.queue, isIncident)) return null;
   const incidentIds = [...raw.incidents.active, ...raw.incidents.resolved, ...raw.incidents.queue];
   if (incidentIds.length !== raw.level || new Set(incidentIds).size !== incidentIds.length) return null;
+  if (raw.incidents.active.includes('power') && (raw.completed.includes('vts') || raw.completed.includes('obs'))) return null;
   if (raw.phase === 'result' && (raw.completed.length !== TASK_IDS.length || raw.incidents.active.length || raw.incidents.queue.length)) return null;
   if (raw.phase === 'countdown' && (raw.completed.length !== TASK_IDS.length || raw.incidents.active.length || raw.incidents.queue.length)) return null;
   if ((raw.phase === 'minigame') !== (raw.minigame !== null)) return null;
@@ -797,6 +932,10 @@ export function validatePrepGame(raw: unknown): PrepState | null {
       spill: ['clean'],
       cable: ['reconnect', 'confirm'],
       catwalk: legacy ? ['lure'] : ['lure', 'confirm'],
+      power: ['restart', 'booting'],
+      glass: ['sweep'],
+      litter: ['scoop'],
+      bowel: ['dig', 'flowing'],
     };
     if (!stages[mini.kind].includes(mini.stage as MiniStage)) return null;
     if (isIncident(mini.kind) ? !raw.incidents.active.includes(mini.kind) : raw.completed.includes(mini.kind)) return null;
@@ -825,9 +964,24 @@ export function validatePrepGame(raw: unknown): PrepState | null {
       if (!Array.isArray(mini.cablePairs) || mini.cablePairs.length !== (mini.kind === 'cable' ? 3 : 0) || !mini.cablePairs.every((item: unknown, index: number) => item === -1 || item === [1, 2, 0][index])) return null;
       if (!Array.isArray(mini.obsEnabled) || mini.obsEnabled.length !== (mini.kind === 'obs' ? 5 : 0) || !mini.obsEnabled.every((item: unknown) => typeof item === 'boolean')) return null;
     }
+    const extended = ['glassShards', 'litterClumps', 'litterScooped', 'bowelDug', 'flowMs'].some(key => key in mini);
+    if (extended || ['power', 'glass', 'litter', 'bowel'].includes(mini.kind)) {
+      if (!Array.isArray(mini.glassShards) || mini.glassShards.length !== (mini.kind === 'glass' ? 4 : 0) || !mini.glassShards.every((item: unknown) => typeof item === 'boolean')) return null;
+      const { litterClumps } = mini;
+      if (!Array.isArray(litterClumps) || litterClumps.length !== (mini.kind === 'litter' ? 3 : 0) || !litterClumps.every((item: unknown) => Number.isInteger(item) && bounded(item, 0, 8)) || new Set(litterClumps).size !== litterClumps.length) return null;
+      if (!Array.isArray(mini.litterScooped) || mini.litterScooped.length !== (mini.kind === 'litter' ? 9 : 0) || !mini.litterScooped.every((item: unknown, index: number) => typeof item === 'boolean' && (!item || litterClumps.includes(index)))) return null;
+      if (!Array.isArray(mini.bowelDug) || mini.bowelDug.length !== (mini.kind === 'bowel' ? 25 : 0) || !mini.bowelDug.every((item: unknown, index: number) => typeof item === 'boolean' && (mini.kind !== 'bowel' || !(BOWEL_ROCKS as readonly number[]).includes(index) || !item))) return null;
+      if (mini.kind === 'bowel' && (!mini.bowelDug[BOWEL_START] || !mini.bowelDug[BOWEL_END] || (mini.stage === 'flowing' && !bowelConnected(mini.bowelDug as boolean[])))) return null;
+      if (!bounded(mini.flowMs, 0, mini.stage === 'flowing' ? 1600 : mini.stage === 'booting' ? 1300 : 0)) return null;
+      if ((mini.stage === 'flowing' || mini.stage === 'booting') && mini.flowMs === 0) return null;
+      if (mini.kind === 'glass' && mini.hits !== mini.glassShards.filter(Boolean).length) return null;
+      if (mini.kind === 'litter' && mini.hits !== mini.litterScooped.filter(Boolean).length) return null;
+      if (mini.kind === 'bowel' && mini.hits !== mini.bowelDug.filter(Boolean).length - 2) return null;
+    }
   }
   const restored = copyState(raw as unknown as PrepState);
   restored.version = 2;
+  if (restored.phase === 'countdown') restored.countdownMs = Math.min(restored.countdownMs, LIVE_TRANSITION_MS);
   if (legacy) {
     restored.cat = catAt(restored.elapsedMs);
     if (restored.minigame?.kind === 'toilet') {
@@ -843,6 +997,11 @@ export function validatePrepGame(raw: unknown): PrepState | null {
         lastWipeY: -1,
         cablePairs: [],
         obsEnabled: [],
+        glassShards: [],
+        litterClumps: [],
+        litterScooped: [],
+        bowelDug: [],
+        flowMs: 0,
       });
     } else if (restored.minigame) {
       restored.minigame = null;
@@ -853,6 +1012,9 @@ export function validatePrepGame(raw: unknown): PrepState | null {
       (restored.player.z < BEDROOM_DOOR.openingMinZ || restored.player.z > BEDROOM_DOOR.openingMaxZ)) {
       restored.player.x = restored.player.x < BEDROOM_DOOR.wallX ? 0.92 : 1.48;
     }
+  }
+  if (restored.minigame && !('flowMs' in restored.minigame)) {
+    Object.assign(restored.minigame, { glassShards: [], litterClumps: [], litterScooped: [], bowelDug: [], flowMs: 0 });
   }
   restored.paused = restored.phase !== 'title' && restored.phase !== 'result';
   return restored;

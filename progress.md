@@ -3070,6 +3070,16 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - Completed household tasks now allow sofa sleep during the streamer bathroom break, followed by the existing after-stream story; unfinished tasks remain required.
 - Validation: 49 rule tests; desktop and 320px touch completion of every variant, actual upward toss, recoil and pause release, bathroom-break sleep through the ending, short/landscape overflow checks, and real-RAF first-two-chapter progression. All browser tests muted; inspected screenshots and no console/page errors. Full check then production build passed with Next ESLint/type checking enabled.
 
+### 2026-09-26 · 马上就播目标、意外与待机 OP
+
+- 当前用户目标：强化未完成目标和密集站点选择，增加嘉嘉触发的意外；追加指定待机音乐及取消数字倒数的开播反馈。目标清单和场景标签支持直接点击，滚轮/Q 切换附近地点，手机点选或摇杆控制；选择、完成与事故状态分别可辨。小游戏期间隐藏世界地点标签，避免盖住角色脸部。
+- 七种种子意外包含洒水、扯线、占键盘、踩关机键、打碎杯子、猫砂结块和肠道堵塞；关机需重启并重配 VTS/OBS，新增扫玻璃、铲猫砂和挖通水路玩法，场景有相应事故现场。
+- 使用用户提供的 `おねんねたいむは、くまさんと_Loop.mp3`，原样复制为 `public/games/pre-stream/waiting-op.mp3`，169.92秒、3402496字节，源/目标 SHA256 一致。仅此首循环，临时原创候选全部移除；顶部静音/音量可保存，暂停、后台与卸载停止输出，手势解除浏览器自动播放限制。
+- 正式上播由两秒待机→岁己形象画面转场替代可见3/2/1倒数；待机音乐淡出，形象出现时只触发一次电子提示和可用时的中文合成短句。内部 countdown 相位保留兼容旧档。修复快速暂停/恢复的旧 play Promise 干扰新播放，以及自动播放被阻止后的手势重试。
+- 11/11规则测试、目标ESLint、音频无声生命周期专项通过。系统Chrome完整流程通过，`tmp/pre-stream-audio-release/report.json` 31张截图；820/390/320转场9图、标签修复2图与通用客户端移动1图均像素检查和逐张目检，错误为空。首次自动化受开发热更新打断，第二次因脚本固定移动时长而失败；改按实际距离推进后完整通过。浏览器全程静音/禁用TTS，未刷新用户3868页面。
+- 复用 pre-stream-publish 工作树，在 codex/pre-stream-3d-publish 分支提交功能为8f36ff8，并合入最新远端db4b21a；仅progress追加段冲突，保留双方记录。合并前后均顺序通过 pnpm run check → pnpm run build，生成54/54页，保留Next内建ESLint与类型检查，仅既有RPG警告。构建目录 .next-pre-stream-op-release，路由30.9kB/首屏141kB；临时types include已收回。
+- 仅同步10个本游戏文件到主目录，全部SHA256与已验证版本一致，`tmp/pre-stream-op-source-validation.json`；其他并行改动保留。原3868预览及MP3均HTTP200，独立3891测试服务已停止。最终音频/转场、目标选择和事件需求已验收完成，无剩余必要修复。
+
 ### 2026-09-26 · 潮汐港、角色皮肤与真实坠落
 
 - 前轮四项试玩调整已提交 6fe3cfa，工作分支已推送；正在同步远端主线完成本轮发布。参考重捏的饼干岁／獭獭栞此前提交为 9fde57e。
@@ -3118,3 +3128,5 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 15 份 RESET 源码/测试/文档/预览与构建工作树 LF 归一化 SHA256 一致，tmp/reset-rush-v3-verify/source-validation.json；两侧目录入口都描述时间、精力与并行开发。v2 检查点 0905899 保留，v3 本地未提交/未推送。清理了隔离工作树自动生成的 tsconfig include；共享目录其他任务与 HEAD/索引未改动。工作树继续承载试玩，不可归档。本轮必要实现与验收完成。
 
 - 用户授权直接提交远端后，v3 已提交 655fcc8。发布工作树合入 origin/master db4b21a，保留远端游戏目录分类/浏览数/日期与其他项目，只新增 RESET 条目和本游戏日期依据。合并后 30 规则测试、目标 ESLint、完整 pnpm run check → pnpm run build 顺序通过，55 页生成，Next 检查启用，仅既有 RPG 警告。15 份本游戏源/测试/文档与 655fcc8 及共享目录一致，source-publish-validation.json 已记录；相对远端仅 18 个 RESET 相关文件与目录/日期/进度发生变化。3888 继续提供已验收 v3，不中断当前试玩。
+
+- 推送前主线并行更新到 8493b21，已完整合入开播小游戏新提交并再次顺序通过 check/build（55 页）；本游戏实现与已验收 655fcc8 完全一致。最终相对该远端基线仅 18 个 RESET 相关文件与目录/日期/进度变化，未改写其他任务代码。

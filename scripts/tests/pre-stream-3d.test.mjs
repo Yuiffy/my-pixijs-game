@@ -4,10 +4,12 @@ import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 
 const game = await loadTypescriptModule('src/components/preStreamGame/gameplay3d.ts');
 const {
-  TASK_IDS, STATIONS, PREP_LEVELS, FOOD_ITEMS, OBS_SOURCES, createPrepGame, startPrepGame, stepPrepGame,
+  TASK_IDS, INCIDENT_IDS, STATIONS, PREP_LEVELS, FOOD_ITEMS, OBS_SOURCES, BOWEL_ROCKS, BOWEL_START, BOWEL_END, LIVE_TRANSITION_MS,
+  createPrepGame, startPrepGame, stepPrepGame,
   interactPrep, aimPrep, pressPrep, leaveMiniGame, goLivePrep, togglePausePrep, getPrepAction,
   placeFoodPrep, releaseCatPourPrep, setAudioChannelPrep, capturePosePrep, wipeSpillPrep,
-  connectCablePrep, toggleObsSourcePrep, validatePrepGame, getPrepStars, nearestStation,
+  connectCablePrep, toggleObsSourcePrep, sweepGlassPrep, scoopLitterPrep, digBowelPrep,
+  validatePrepGame, getPrepStars, nearestStation,
   getPrepWalkTarget, formatPrepTime,
 } = game;
 const idle = { x: 0, z: 0, primary: false };
@@ -81,6 +83,19 @@ function solveMini(initial) {
         const source = OBS_SOURCES.findIndex((name, index) => mini.sequence.includes(name) && !mini.obsEnabled[index]);
         state = source >= 0 ? toggleObsSourcePrep(state, source) : pressPrep(state);
       }
+    } else if (kind === 'power') {
+      state = mini.stage === 'booting' ? stepPrepGame(state, mini.flowMs, idle) : pressPrep(state);
+    } else if (kind === 'glass') {
+      state = sweepGlassPrep(state, mini.glassShards.indexOf(false));
+    } else if (kind === 'litter') {
+      state = scoopLitterPrep(state, mini.litterClumps.find(index => !mini.litterScooped[index]));
+    } else if (kind === 'bowel') {
+      if (mini.stage === 'flowing') state = stepPrepGame(state, mini.flowMs, idle);
+      else {
+        const path = [7, 12, 13, 18, 23];
+        const cell = path.find(index => !mini.bowelDug[index]);
+        state = cell === undefined ? pressPrep(state) : digBowelPrep(state, cell);
+      }
     }
   }
   return state;
@@ -88,8 +103,36 @@ function solveMini(initial) {
 
 function resolveIncidents(initial) {
   let state = initial;
-  for (const incident of [...state.incidents.active]) state = solveMini(visit(state, incident));
+  let count = 0;
+  while (state.incidents.active.length) {
+    assert.ok(count++ < INCIDENT_IDS.length, 'an incident chain must finish');
+    state = solveMini(visit(state, state.incidents.active[0]));
+  }
   return state;
+}
+
+function finishNight(level, seed) {
+  let state = startPrepGame(createPrepGame(level, seed));
+  state = visit(state, 'thermos');
+  state = visit(state, 'dispenser');
+  for (let pass = 0; pass < 6; pass++) {
+    state = resolveIncidents(state);
+    for (const id of ['toilet', 'cat', 'vts', 'food', 'audio', 'obs']) {
+      state = resolveIncidents(state);
+      if (!state.completed.includes(id)) state = solveMini(visit(state, id));
+    }
+    if (state.water.cup === 'filling') state = stepPrepGame(state, state.water.fillRequiredMs - state.water.fillMs, idle);
+    if (state.water.cup === 'ready') state = visit(state, 'dispenser');
+    if (state.water.cup === 'carried-full') state = visit(state, 'thermos');
+    state = resolveIncidents(state);
+    if (state.completed.length === TASK_IDS.length && state.incidents.queue.length === 0) return state;
+  }
+  assert.fail(`night ${level}, seed ${seed} cannot finish: ${JSON.stringify(state)}`);
+}
+
+function withIncident(id) {
+  const state = startPrepGame(createPrepGame(1, 145));
+  return { ...state, incidents: { active: [id], resolved: [], queue: [] } };
 }
 
 test('room interaction needs proximity, wall collision routes through bathroom door', () => {
@@ -149,36 +192,117 @@ test('slow water fills while aiming at toilet, then requires collection and drin
 });
 
 test('all seven tasks and seeded incidents finish across three nights in free order', () => {
-  const seen = new Set();
   for (let level = 1; level <= 3; level++) {
-    let state = startPrepGame(createPrepGame(level, 81));
-    state = visit(state, 'thermos');
-    state = visit(state, 'dispenser');
-    for (const id of ['toilet', 'cat', 'vts', 'food', 'audio', 'obs']) {
-      state = solveMini(visit(state, id));
-      state = resolveIncidents(state);
-    }
-    if (state.water.cup === 'filling') state = stepPrepGame(state, state.water.fillRequiredMs - state.water.fillMs, idle);
-    state = visit(state, 'dispenser');
-    state = visit(state, 'thermos');
-    state = resolveIncidents(state);
+    let state = finishNight(level, 81);
     assert.deepEqual([...state.completed].sort(), [...TASK_IDS].sort());
     assert.equal(state.incidents.resolved.length, PREP_LEVELS[level - 1].incidentCount);
-    state.incidents.resolved.forEach(id => seen.add(id));
     assert.ok(validatePrepGame(state));
+    state = walkTo(state, 'food');
     assert.equal(goLivePrep(state), state, 'cannot go live across the room');
     state = walkTo(state, 'obs');
     assert.equal(getPrepAction(state), '正式上播');
     const before = state.elapsedMs;
     state = goLivePrep(state);
     assert.equal(state.phase, 'countdown');
-    state = stepPrepGame(state, 4000, idle);
+    assert.equal(state.countdownMs, LIVE_TRANSITION_MS);
+    assert.equal(state.notice, '直播间接入中……');
+    const oldTransition = validatePrepGame({ ...state, countdownMs: 3000, notice: '全部就绪，三、二、一，正式上播！' });
+    assert.ok(oldTransition, 'an old countdown save remains loadable');
+    assert.equal(oldTransition.countdownMs, LIVE_TRANSITION_MS, 'an old save plays at most two seconds of the new transition');
+    state = stepPrepGame(state, LIVE_TRANSITION_MS - 1, idle);
+    assert.equal(state.phase, 'countdown', 'transition remains visible until the final millisecond');
+    state = stepPrepGame(state, 1, idle);
     assert.equal(state.phase, 'result');
-    assert.equal(state.elapsedMs, before + 3000, 'countdown counts exactly three seconds');
+    assert.equal(state.elapsedMs, before + LIVE_TRANSITION_MS, 'transition counts exactly two seconds');
     assert.ok(getPrepStars(state) >= 1 && getPrepStars(state) <= 3);
     assert.ok(validatePrepGame(state));
   }
-  assert.deepEqual([...seen].sort(), ['cable', 'catwalk', 'spill']);
+});
+
+test('all seven incident types occur in seeded third nights and remain completable', () => {
+  const seedFor = new Map();
+  for (let seed = 1; seed <= 512 && seedFor.size < INCIDENT_IDS.length; seed++) {
+    for (const id of createPrepGame(3, seed).incidents.queue) {
+      if (!seedFor.has(id)) seedFor.set(id, seed);
+    }
+  }
+  assert.deepEqual([...seedFor.keys()].sort(), [...INCIDENT_IDS].sort(), 'each accident is reachable from a normal seed');
+  const seen = new Set();
+  for (const seed of new Set(seedFor.values())) {
+    const state = finishNight(3, seed);
+    state.incidents.resolved.forEach(id => seen.add(id));
+    assert.ok(validatePrepGame(state), `seed ${seed} completes with a valid save`);
+  }
+  assert.deepEqual([...seen].sort(), [...INCIDENT_IDS].sort());
+});
+
+test('JiaJia power cut erases completed VTS/OBS and requires a timed reboot before reconfiguration', () => {
+  let seed = 1;
+  while (createPrepGame(1, seed).incidents.queue[0] !== 'power') assert.ok(seed++ < 512);
+  let state = startPrepGame(createPrepGame(1, seed));
+  state = solveMini(visit(state, 'vts'));
+  assert.equal(state.incidents.active.length, 0, 'power waits for both programs');
+  state = solveMini(visit(state, 'obs'));
+  assert.deepEqual(state.incidents.active, ['power']);
+  assert.ok(state.notice.includes('嘉嘉踩中关机键'));
+  assert.equal(state.completed.includes('vts'), false);
+  assert.equal(state.completed.includes('obs'), false);
+  assert.ok(validatePrepGame(state));
+  const atVts = walkTo(state, 'vts');
+  assert.equal(interactPrep(atVts, 'vts'), atVts, 'computer software cannot start without power');
+  state = visit(atVts, 'power');
+  assert.equal(state.minigame.stage, 'restart');
+  state = pressPrep(state);
+  assert.equal(state.minigame.stage, 'booting');
+  state = stepPrepGame(state, 1299, idle);
+  assert.equal(state.phase, 'minigame');
+  assert.ok(validatePrepGame(state));
+  state = stepPrepGame(state, 1, idle);
+  assert.deepEqual(state.incidents.resolved, ['power']);
+  assert.equal(state.phase, 'explore');
+  assert.ok(state.notice.includes('重新配置'));
+  state = solveMini(visit(state, 'vts'));
+  state = solveMini(visit(state, 'obs'));
+  assert.ok(state.completed.includes('vts') && state.completed.includes('obs'));
+  assert.deepEqual(state.incidents.active, [], 'one power incident cannot recur');
+});
+
+test('broken glass, litter and bowel blockage use distinct actions and reject wrong moves', () => {
+  let state = visit(withIncident('glass'), 'glass');
+  assert.ok(validatePrepGame(state));
+  assert.equal(sweepGlassPrep(state, -1), state);
+  state = sweepGlassPrep(state, 0);
+  assert.equal(sweepGlassPrep(state, 0), state, 'a shard cannot be counted twice');
+  state = solveMini(state);
+  assert.deepEqual(state.incidents.resolved, ['glass']);
+
+  state = visit(withIncident('litter'), 'litter');
+  const cleanCell = Array.from({ length: 9 }, (_, index) => index).find(index => !state.minigame.litterClumps.includes(index));
+  state = scoopLitterPrep(state, cleanCell);
+  assert.equal(state.minigame.misses, 1);
+  assert.ok(validatePrepGame(state));
+  state = solveMini(state);
+  assert.deepEqual(state.incidents.resolved, ['litter']);
+
+  state = visit(withIncident('bowel'), 'bowel');
+  assert.equal(BOWEL_START, 2);
+  assert.equal(BOWEL_END, 22);
+  assert.ok(BOWEL_ROCKS.includes(1));
+  state = pressPrep(state);
+  assert.equal(state.minigame.misses, 1, 'water cannot flow through a closed path');
+  state = digBowelPrep(state, BOWEL_ROCKS[0]);
+  assert.equal(state.minigame.misses, 2, 'hard blockage cannot be dug');
+  for (const cell of [7, 12, 13, 18, 23]) state = digBowelPrep(state, cell);
+  assert.ok(validatePrepGame(state));
+  state = pressPrep(state);
+  assert.equal(state.minigame.stage, 'flowing');
+  state = togglePausePrep(state);
+  assert.equal(stepPrepGame(state, 3000, idle), state, 'paused flow does not finish');
+  state = togglePausePrep(state);
+  state = stepPrepGame(state, 1599, idle);
+  assert.equal(state.phase, 'minigame');
+  state = stepPrepGame(state, 1, idle);
+  assert.deepEqual(state.incidents.resolved, ['bowel']);
 });
 
 test('food placement, measured scoops, mixer, poses and OBS each require their own actions', () => {
@@ -303,10 +427,16 @@ test('seeded runs are deterministic and save validation rejects corrupt states',
   assert.equal(validatePrepGame({ ...state, completed: ['water'] }), null);
   assert.equal(validatePrepGame({ ...state, incidents: { active: ['spill'], resolved: ['spill'], queue: ['cable'] } }), null);
   assert.equal(formatPrepTime(65000), '1分钟05秒');
+  const oldV2 = JSON.parse(JSON.stringify(state));
+  for (const key of ['glassShards', 'litterClumps', 'litterScooped', 'bowelDug', 'flowMs']) delete oldV2.minigame[key];
+  const migratedV2 = validatePrepGame(oldV2);
+  assert.ok(migratedV2, 'an in-progress v2 save remains loadable');
+  assert.deepEqual(migratedV2.minigame.glassShards, []);
+  assert.equal(migratedV2.minigame.flowMs, 0);
   const legacyToilet = JSON.parse(JSON.stringify(state));
   legacyToilet.version = 1;
   delete legacyToilet.cat;
-  for (const key of ['poseIndex', 'sweeps', 'foodPlaced', 'fillLevel', 'audioLevels', 'audioTargets', 'stains', 'lastWipeX', 'lastWipeY', 'cablePairs', 'obsEnabled']) delete legacyToilet.minigame[key];
+  for (const key of ['poseIndex', 'sweeps', 'foodPlaced', 'fillLevel', 'audioLevels', 'audioTargets', 'stains', 'lastWipeX', 'lastWipeY', 'cablePairs', 'obsEnabled', 'glassShards', 'litterClumps', 'litterScooped', 'bowelDug', 'flowMs']) delete legacyToilet.minigame[key];
   const migratedToilet = validatePrepGame(legacyToilet);
   assert.equal(migratedToilet.phase, 'minigame');
   assert.equal(migratedToilet.version, 2);
