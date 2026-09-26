@@ -3031,3 +3031,12 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 全程隐藏、静音、虚拟输入，未操作用户标签页或桌面鼠标。本轮未提交／推送／公网部署；night-rain-validation仍承载3871服务，需保留。必要实现及验证已完成。
 
 - 2026-09-26 发布检查：基于origin/master的独立night-rain-companions工作树顺序check/build通过（53页、Next lint/typecheck启用），46项雨夜规则通过；本次仅提交雨夜动作、防御、叙事、雨灯补给与西寺扩图。
+
+### 2026-09-26 · 雨夜发布与旅伴重新塑形
+
+- 用户授权commit/push；基于origin/master的独立night-rain-companions工作树顺序check/build通过（53页）与46项规则通过后，将既有战斗、F防御、翻滚、魂系叙事、雨灯补给和西寺回环提交为687dbfc并成功push origin/master。主目录其他任务改动保留。
+- 按仓库饼干岁原图和栞栞立绘怀抱海獭参考，重做圆饼／皇冠／巧克力斑块／细手脚，以及奶咖身体／奶白圆脸／粉色贝壳／短爪。去除误加猫耳、紫色獭身与菱形饰物。几何可独立复用；补眨眼、说话嘴型、摆手脚、抱贝壳与尾巴轻摆，降低漂浮幅度并平滑转向。
+- 源码ESLint、完整check通过。正面与45度造型棚已目检；静音隐藏系统Chrome专项完成合法带路到雨灯、两皮肤切换、刷新保存、宝宝模式开关与390px布局。5张最终游戏截图像素检查／逐张目检，errors为空。详情docs/night-rain-companions.md。生产build与最终发布收尾中。
+
+- 造型最终顺序完整check／生产build通过（53页、Next lint/typecheck启用）。12份雨夜源码与成功构建逐一归一化SHA256一致，tmp/night-rain-companion-source-validation.json。生产专项5图全部像素检查并逐张目检，errors为空；共享游戏客户端亦使用系统Chrome／静音／虚拟Pointer Lock冒烟通过，1图非黑已目检。
+- 3871已切到night-rain-companions工作树的.next-night-rain-companions-release，PID124896；未刷新用户页面。该工作树仍承载服务，其node_modules引用night-rain-validation，两个工作树均需保留。主共享目录不移动HEAD，避免干扰其他任务；发布提交在codex/night-rain-companions分支。
