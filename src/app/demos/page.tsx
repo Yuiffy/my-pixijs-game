@@ -120,6 +120,15 @@ const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '经营与策略',
     games: [
       {
+        title: 'RESET / 开蹬！',
+        href: '/game/reset-rush',
+        description: 'tibo 又说要 reset 了。经营多账号、押注银行券，把额度变成下一款碉游。',
+        image: '/games/reset-rush/preview.svg',
+        meta: '开发者桌游 · 1 人 + 3 AI · 时间、精力与并行开发',
+        releaseDate: '2026-09-26',
+        updateDate: '2026-09-26',
+      },
+      {
         title: '上船！应援事务所',
         href: '/game/hype-harbor',
         description: '四位主播三条船。应援出圈、押未达标人数，或抢名场面切片，和朋友比比眼光。',

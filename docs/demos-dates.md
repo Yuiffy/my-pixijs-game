@@ -12,6 +12,7 @@ the date a placeholder route was created as a launch date.
 | Night Rain | 2026-09-26 (`78037fb`) | 2026-09-26 (`9fde57e`) |
 | One More | 2026-09-06 (`07a82f4`) | 2026-09-07 (`1b06272`) |
 | Hush Live | 2026-09-22 (`377b186`) | 2026-09-26 (`8ff8fbb`) |
+| RESET / 开蹬！ | 2026-09-26 (`78bde60`), first playable version included in this publication | 2026-09-26 (`655fcc8`), time, energy and parallel queues |
 | Hype Harbor | 2026-09-26, initial playable release in this commit | 2026-09-26, same release |
 | Streamer | 2026-09-12 (`845028c`) | 2026-09-12 (`845028c`) |
 | Pre-stream | 2026-09-12 (`845028c`) | 2026-09-26 (`1a36e2c`) |
