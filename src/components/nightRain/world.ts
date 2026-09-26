@@ -1,3 +1,4 @@
+import { architectureBlocked, architectureSupport, architectureIntervals } from './architecture';
 import type { EnemyKind, Landmark, Obstacle, Surface, Vec3, WorldAccess } from './types';
 
 // Metres. +x east, +z south, +y up. Ramp endY is the height at z2.
@@ -130,7 +131,7 @@ export function gateOpen(o: Obstacle, access: WorldAccess): boolean {
 }
 
 export function heightAt(x: number, z: number): number | null {
-  let result: number | null = null;
+  let result: number | null = architectureSupport(x, z, Infinity);
   for (const s of SURFACES) {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) continue;
     const y = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
@@ -141,7 +142,7 @@ export function heightAt(x: number, z: number): number | null {
 
 export function canOccupy(x: number, z: number, fromY: number, shortcut: WorldAccess = false, radius = 0.32, ignoredLandmark?: string): boolean {
   const y = supportAt(x, z, fromY + 0.6);
-  if (y === null || Math.abs(y - fromY) > 0.6 || deckBlocks(x, z, fromY)) return false;
+  if (y === null || Math.abs(y - fromY) > 0.6 || deckBlocks(x, z, fromY) || architectureBlocked(x, z, fromY, radius)) return false;
   // Four probes keep feet inside the visible parapets without sealing connected stairs.
   if ([[radius, 0], [-radius, 0], [0, radius], [0, -radius]].some(([dx, dz]) => supportAt(x + dx, z + dz, fromY + 0.6) === null)) return false;
   return !OBSTACLES.some(o => !(ignoredLandmark && o.landmarkId === ignoredLandmark) && !gateOpen(o, shortcut)
@@ -188,7 +189,7 @@ inside = heightAt(x - dx, z - dz);
 }
 export const PARAPETS = SURFACES.flatMap(surfaceRails);
 export function supportAt(x:number, z:number, ceiling = Infinity):number | null {
-  let best:number | null = null;
+  let best:number | null = architectureSupport(x, z, ceiling);
   for (const s of SURFACES) {
     if (x < s.x1 || x > s.x2 || z < s.z1 || z > s.z2) continue;
     const y = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
@@ -196,7 +197,8 @@ export function supportAt(x:number, z:number, ceiling = Infinity):number | null 
   }
   return best;
 }
-export function playerBlocked(x:number, z:number, feet:number, access:WorldAccess, radius = 0.24):boolean {
+export function playerBlocked(x:number, z:number, feet:number, access:WorldAccess, radius = 0.24, step = 0.6):boolean {
+  if (architectureBlocked(x, z, feet, radius, step)) return true;
   if (OBSTACLES.some(o => !gateOpen(o, access) && feet < o.y + o.h - 0.02 && feet + 1.65 > o.y && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius)) return true;
   return PARAPETS.some(o => feet < o.y + o.slope * (z - o.z) + 0.73 && feet + 1.65 > o.y && Math.abs(x - o.x) < o.w / 2 + radius && Math.abs(z - o.z) < o.d / 2 + radius);
 }
@@ -208,4 +210,15 @@ export function deckBlocks(x:number, z:number, feet:number):boolean {
     const top = s.y + (((s.endY ?? s.y) - s.y) * (z - s.z1)) / (s.z2 - s.z1);
     return top > feet + 0.6 && feet + 1.65 > top - 0.58;
   });
+}
+
+/** Undersides of decks and buildings arrest ascent, including beneath stacked paths. */
+export function ceilingAt(x:number, z:number, before:number, after:number):number | null {
+ let result:number | null = null;
+ for (const [dx, dz] of [[0, 0], [0.22, 0], [-0.22, 0], [0, 0.22], [0, -0.22]]) {
+  const bottoms = architectureIntervals(x + dx, z + dz).map(h => h.bottom);
+  for (const s of SURFACES) if (x + dx >= s.x1 && x + dx <= s.x2 && z + dz >= s.z1 && z + dz <= s.z2)bottoms.push(s.y + (((s.endY ?? s.y) - s.y) * (z + dz - s.z1)) / (s.z2 - s.z1) - 0.58);
+  for (const y of bottoms) if (y >= before - 0.001 && y <= after && (result === null || y < result))result = y;
+ }
+ return result;
 }

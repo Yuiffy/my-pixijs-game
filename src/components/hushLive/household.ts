@@ -52,12 +52,14 @@ timer: 0,
   };
 }
 export const onBreak = (s: Game) => s.daily?.stage === "home" && ["out", "inside", "back"].includes(s.daily.household.rest.stage);
-export const noodlesWaiting = (s: Game) => s.daily?.meal === "noodles" && ["boiling", "steeping"].includes(s.daily.household.noodles);
+export const noodlesWaiting = (s: Game) => s.daily?.meal === "noodles" && s.daily.household.noodles === "boiling";
 export function householdStatus(s: Game) {
   const h = s.daily?.household;
   if (!h) return "";
   const parts: string[] = [];
-  if (noodlesWaiting(s)) parts.push(`${h.noodles === "boiling" ? "水壶烧水" : "泡面焖熟"} · ${Math.ceil(h.timer)}秒，可以先忙别的`);
+  if (noodlesWaiting(s)) parts.push(`水壶烧水 · ${Math.ceil(h.timer)}秒，可以先忙别的`);
+  if (h.noodles === "steeping") parts.push("泡面已冲好，可以盖着端过去");
+  if (h.noodles === "served" && h.timer > 0) parts.push("泡面在桌上焖着，TA会自己开吃");
   if (h.noodles === "hot") parts.push("水开了，去料理台冲泡");
   if (h.noodles === "ready") parts.push("泡面好了，去料理台端起来");
   if (onBreak(s)) parts.push(h.rest.stage === "inside" ? (h.rest.clock > 8 ? "TA在洗手，很快回来" : "洗手间有人 · TA暂时闭麦") : h.rest.stage === "out" ? "TA去洗手间了，留一点过道" : "TA回直播桌了");
@@ -71,10 +73,10 @@ export function householdAction(s: Game, key: string): boolean {
     s.message = "桶面放到台面，水壶已加水开启。去喂猫或做别的事吧，水开会提醒你。";
   } else if (key === "pour-noodles") {
     h.noodles = "steeping"; h.timer = 10;
-    s.message = "撕开封膜、放入调料，热水加到刻度线，盖上盖子。焖熟还要一小会儿。";
+    s.message = "撕开封膜、放入调料，热水加到刻度线，盖上盖子。现在就能端过去，放在桌上慢慢焖。";
   } else if (key === "take-noodles") {
     h.noodles = "carrying"; s.carry = "food";
-    s.message = "掀开盖子，面香冒出来了。拿好叉子，端到直播桌上的餐垫。";
+    s.message = h.timer > 0 ? "盖好盖子，带上叉子。直接放到直播桌，焖好了TA会自己吃。" : "面已经泡好，带上叉子端到直播桌上的餐垫。";
   } else if (key === "cat-food") {
     h.cat.fed = true; h.cat.mode = "walk"; h.cat.path = route(h.cat, CAT_EATING, false); h.cat.clock = 0;
     if (!s.done.includes("cat-food")) { s.done.push("cat-food"); s.love += 8; }
@@ -103,13 +105,16 @@ function moveAlong(body: Point & { path: Point[]; yaw: number }, dt: number, spe
 }
 export function stepHousehold(s: Game, dt: number) {
   const d = s.daily;
-  if (!d || d.panel === "lock" || d.stage !== "home") return;
+  if (!d || d.arrival !== "done" || d.stage !== "home") return;
   const h = d.household;
-  if (noodlesWaiting(s)) {
+  if (h.timer > 0 && ["boiling", "steeping", "carrying", "served"].includes(h.noodles)) {
     h.timer = Math.max(0, h.timer - dt);
     if (h.timer === 0) {
-      h.noodles = h.noodles === "boiling" ? "hot" : "ready";
-      s.message = h.noodles === "hot" ? "咔嗒，水壶自动跳停了。去料理台给桶面加热水吧。" : "泡面焖好了！趁热端给TA，叉子也别忘了。";
+      if (h.noodles === "boiling") {
+        h.noodles = "hot";
+        s.message = "咔嗒，水壶自动跳停了。去料理台给桶面加热水吧。";
+      } else if (h.noodles === "steeping") h.noodles = "ready";
+      else if (h.noodles === "served") s.message = `${skinOf(s.skin).name}桌上的泡面焖好了，TA可以自己掀盖开吃。`;
     }
   }
   const c = h.cat;

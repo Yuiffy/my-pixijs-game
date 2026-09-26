@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const {state,advance,follow,hold,cover,capture,images}=require('./verify-hush-3d.cjs');
-const {activity,range}=require('./lib/hush-minigame-browser.cjs');
+const {activity}=require('./lib/hush-minigame-browser.cjs');
 const base=process.env.HUSH_BASE_URL||'http://127.0.0.1:3882';
 const out=process.env.HUSH_QA_DIR||'tmp/hush-variety';
 async function aim(page,target){
@@ -22,7 +22,7 @@ async function main(){
     const p=await browser.newPage({viewport:touch?{width:320,height:740}:{width:1280,height:800},hasTouch:touch,isMobile:touch});
     p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
     await p.addInitScript(level=>{localStorage.setItem('hush-live-v1',JSON.stringify({version:1,unlocked:level,best:[0,0,0,0,0],stars:[0,0,0,0,0],endlessBest:0,player:'男友',partner:'她',skin:'sui'}));if(window.speechSynthesis)window.speechSynthesis.speak=()=>{};},level);
-    await p.goto(`${base}/game/hush-live?seed=${seed}`,{waitUntil:'networkidle'});await p.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);
+    await p.goto(`${base}/game/hush-live?seed=${seed}`,{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);
     if(touch)await p.locator('#hush-start').tap();else await p.locator('#hush-start').click();await advance(p,0);return p;
   }
   try{
@@ -41,8 +41,8 @@ async function main(){
         else{await p.mouse.move(x,from);await p.mouse.down();await p.mouse.move(x,to,{steps:6});await p.mouse.up();}
         assert.equal((await state(p)).daily.mini.flight,true,'upwards gesture launches rice');
       }
-      let photo=false;await activity(p,touch,async page=>{const m=(await state(page)).daily.mini;if(!photo&&m.flight&&m.y>12){photo=true;await capture(page,`${touch?'mobile':'desktop'}-${kind}-air`);}});
-      assert.ok(photo);assert.equal((await state(p)).carry,'food');assert.ok((await state(p)).done.includes('cook'));checks.push({kind,touch,completed:true});await p.close();
+      let photo=false;await activity(p,touch,async page=>{const m=(await state(page)).daily.mini;if(!photo&&((m.kind==='toss'&&m.flight&&m.y>12)||(m.kind==='eggs'&&m.clock>1))){photo=true;await capture(page,`${touch?'mobile':'desktop'}-${kind}-air`);}});
+      assert.ok(photo);assert.equal((await state(p)).carry,'food');assert.ok((await state(p)).done.includes('cook'));await follow(p);await hold(p);assert.ok((await state(p)).done.includes('food'));checks.push({kind,touch,completed:true});await p.close();
     }
     const computerSeed=seeds.find(n=>{const s=e.createGame(5,n,5);return s.daily.household.arrival==='computer'&&!s.tasks.includes('delta');});
     const pc=await open(computerSeed,5);await aim(pc,{x:230,y:150,height:1.05});await pc.keyboard.down('w');await advance(pc,200);await pc.keyboard.up('w');await aim(pc,{x:230,y:150,height:1.05});
@@ -54,9 +54,9 @@ async function main(){
       for(let j=0;j<Math.abs(side);j++)await pc.keyboard.press(side>0?'ArrowRight':'ArrowLeft');await advance(pc,175);
     }
     await pc.keyboard.up('Space');let s=await state(pc);assert.equal(s.daily.mini.shots,24);assert.ok(s.daily.mini.score>=20);await capture(pc,'computer-recoil');
-    await pc.getByRole('button',{name:'重新装填，再练一梭'}).click();assert.equal((await state(pc)).daily.mini.shots,0);
+    await pc.locator('details').filter({hasText:'键盘与辅助操作'}).evaluate(el=>el.open=true);await pc.getByRole('button',{name:'重新装填，再练一梭'}).click();assert.equal((await state(pc)).daily.mini.shots,0);
     const b=await screen.boundingBox();await pc.mouse.move(b.x+b.width/2,b.y+b.height/2);await pc.mouse.down();await advance(pc,400);await pc.mouse.up();const shots=(await state(pc)).daily.mini.shots;await advance(pc,1000);assert.equal((await state(pc)).daily.mini.shots,shots);
-    await pc.getByRole('button',{name:'重新装填，再练一梭'}).click();
+    await pc.locator('details').filter({hasText:'键盘与辅助操作'}).evaluate(el=>el.open=true);await pc.getByRole('button',{name:'重新装填，再练一梭'}).click();
     await screen.focus();await pc.keyboard.down('Space');await advance(pc,250);
     await pc.keyboard.press('p');await pc.keyboard.up('Space');const paused=await state(pc);
     assert.equal(paused.daily.mini.held,false);await advance(pc,1000);assert.equal((await state(pc)).daily.mini.shots,paused.daily.mini.shots);

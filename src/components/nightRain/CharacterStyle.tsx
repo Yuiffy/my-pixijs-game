@@ -112,11 +112,16 @@ hair = nana ? '#79544f' : '#7663bb';
 }
 export function GuestWeapon({ kind }:{ kind:'nana' | 'azi' }) {
   return kind === 'nana' ? (
-<group name="tide-anchor">
-    <mesh position={[0, 1.08, 0]}><torusGeometry args={[0.15, 0.038, 6, 16]} /><meshStandardMaterial color="#bad3db" metalness={0.7} roughness={0.3} /></mesh>
-    <Box at={[0, 0.6, 0]} size={[0.08, 0.95, 0.08]} color="#759aa9" />
-    <Box at={[0, 0.83, 0]} size={[0.55, 0.07, 0.07]} color="#c2d8dc" />
-    {[-1, 1].map(n => <group key={n}><Box at={[n * 0.18, 0.17, 0]} size={[0.38, 0.1, 0.09]} color="#95bbc5" angle={n * 0.65} /><mesh position={[n * 0.32, 0.31, 0]} rotation={[0, 0, n * -0.35]}><coneGeometry args={[0.1, 0.28, 4]} /><meshStandardMaterial color="#c4e0e4" /></mesh></group>)}
+<group name="nana-cross-pickaxe">
+    <Box at={[0, 0.53, 0]} size={[0.085, 1.3, 0.085]} color="#745344" />
+    <Box at={[0, 1.01, 0]} size={[0.23, 0.20, 0.17]} color="#b8c7cb" />
+    {[-1, 1].map(n => (
+<group key={n}>
+      <Box at={[n * 0.23, 1.045, 0]} size={[0.4, 0.115, 0.13]} color="#9bb0bb" angle={n * -0.14} />
+      <mesh position={[n * 0.48, 0.96, 0]} rotation={[0, 0, n * -1.98]}><coneGeometry args={[0.078, 0.40, 4]} /><meshStandardMaterial color="#d0dce0" metalness={0.65} roughness={0.3} /></mesh>
+    </group>
+))}
+    {[0.12, 0.2, 0.28].map(y => <Box key={y} at={[0, y, 0]} size={[0.10, 0.035, 0.10]} color="#283747" />)}
   </group>
 ) : (
 <group name="frog-bell-staff">

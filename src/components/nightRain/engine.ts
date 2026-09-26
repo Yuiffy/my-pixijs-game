@@ -1,5 +1,5 @@
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
-import { deckBlocks, playerBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, LANDMARKS, lineClear, regionAt, SPAWN } from './world';
+import { ceilingAt, deckBlocks, playerBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, LANDMARKS, lineClear, regionAt, SPAWN } from './world';
 
 import { enemyAttack, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
@@ -122,7 +122,7 @@ function movePlayer(s:GameState, dx:number, dz:number):void {
     const x = p.x + (axis === 'x' ? dx / count : 0); const z = p.z + (axis === 'z' ? dz / count : 0); const
 feet = p.y + p.jumpHeight;
     const ground = supportAt(x, z, feet + 0.6);
-    if (playerBlocked(x, z, feet, s) || s.enemies.some(e => alive(e) && Math.abs(e.y - feet) < 0.85 && Math.hypot(e.x - x, e.z - z) < 0.64)) continue;
+    if (playerBlocked(x, z, feet, s, 0.24, isAirborne(p) ? 0.03 : 0.6) || s.enemies.some(e => alive(e) && Math.abs(e.y - feet) < 0.85 && Math.hypot(e.x - x, e.z - z) < 0.64)) continue;
     // A deck has a real side; approaching a higher floor does not phase through it.
     if (deckBlocks(x, z, feet)) continue;
     p.x = x; p.z = z;
@@ -134,7 +134,11 @@ feet = p.y + p.jumpHeight;
 function updateFall(s:GameState, dt:number):void {
   const p = s.player; const
 before = p.y + p.jumpHeight;
-  p.jumpVelocity -= 18 * dt; const after = before + p.jumpVelocity * dt;
+  p.jumpVelocity -= 18 * dt; let after = before + p.jumpVelocity * dt;
+  if (p.jumpVelocity > 0) {
+    const ceiling = ceilingAt(p.x, p.z, before + 1.65, after + 1.65);
+    if (ceiling !== null) { after = ceiling - 1.65 - 0.002; p.jumpVelocity = 0; }
+  }
   p.fallPeak = Math.max(p.fallPeak, before);
   const floor = supportAt(p.x, p.z, before + 0.001);
   if (p.jumpVelocity < 0 && floor !== null && after <= floor) {
@@ -505,11 +509,11 @@ export function interact(s: GameState): void {
     say(s, '晨钟一响 · 长夜将明', 9, 'event', '这一段旅程完成了，得到100夜市钱。世界仍然开放，可以找阿梓、收集支路宝箱，或者走长桥回雨灯。');
   } else if (['tide-note', 'drop-note', 'tide-seal'].includes(landmark.id)) {
     if (!s.collected.includes(landmark.id))s.collected.push(landmark.id);
-    const text = landmark.id === 'tide-note' ? ['循暖灯而上，七潮尽处，钟见天光。', '暖色路灯沿着灯市和长阶通往七海的潮门。右侧绿灯是阿梓的支路，左手水巷能开回中庭的近路。'] : landmark.id === 'drop-note' ? ['风收旧网，落处便是来时灯。高者折骨，深者无归。', '破栏下面就是灯市，约四米落差会掉血；再高的落差更危险。先看清落脚地面，水里无法站立。'] : ['七声归海，留半拍予岸。', '七海有快刺、延迟重击和扫浪，抬锚蓄力后才是释放。保持距离可以诱出招式，抓收招反击。'];
+    const text = landmark.id === 'tide-note' ? ['循暖灯而上，七潮尽处，钟见天光。', '暖色路灯沿着灯市和长阶通往七海的潮门。右侧绿灯是阿梓的支路，左手水巷能开回中庭的近路。'] : landmark.id === 'drop-note' ? ['风收旧网，落处便是来时灯。高者折骨，深者无归。', '破栏下面就是灯市，约四米落差会掉血；再高的落差更危险。先看清落脚地面，水里无法站立。'] : ['七声归海，留半拍予岸。', '七海有快刺、延迟重击和扫浪，抬镐蓄力后才是释放。保持距离可以诱出招式，抓收招反击。'];
     say(s, text[0], 8, 'lore', text[1]);
   } else if (landmark.kind === 'note') {
     if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
-    say(s, landmark.id === 'temple-note' ? '钟不为来者鸣。携空瓶过桥，循百灯归水。' : landmark.id === 'ferry-note' ? '渡者不渡伞。此灯守岸，前路留给归人。' : landmark.id === 'laptop' ? '屏光熄去，金塔下还有一盏不眠的火。' : '伞下无归客。逐水向东，归人自解旧闩。', 8, 'lore', landmark.id === 'temple-note' ? '寺里供着能增加药瓶数量的刻露瓶。拿到后沿寺院石阶下去，拉动门后的绞盘，就能走近路回中庭补给。' : landmark.id === 'ferry-note' ? '旧灯已经熄灭；去运河侧廊拉开门后的绞盘，就能直接回中庭雨灯补药。' : landmark.id === 'laptop' ? '这说的是金塔下面的深夜食堂。先从旅馆外梯下去，找到中庭的雨灯。' : '纸条在提醒我们：夜市东边的运河侧廊有一扇门，从里面能打开，通回中庭。');
+    say(s, landmark.id === 'temple-note' ? '钟不为来者鸣。携空瓶过桥，循百灯归水。' : landmark.id === 'ferry-note' ? '空庵不载客，东桥自渡人。潮声深处，七声候钟。' : landmark.id === 'laptop' ? '屏光熄去，金塔下还有一盏不眠的火。' : '伞下无归客。逐水向东，归人自解旧闩。', 8, 'lore', landmark.id === 'temple-note' ? '寺里供着能增加药瓶数量的刻露瓶。拿到后沿寺院石阶下去，拉动门后的绞盘，就能走近路回中庭补给。' : landmark.id === 'ferry-note' ? '这里就是去潮汐港的入口。穿过庵堂东侧敞开的门，再过潮桥就到了，不用跳水。运河另一头的绞盘则通回中庭。' : landmark.id === 'laptop' ? '这说的是金塔下面的深夜食堂。先从旅馆外梯下去，找到中庭的雨灯。' : '纸条在提醒我们：夜市东边的运河侧廊有一扇门，从里面能打开，通回中庭。');
   }
   updatePrompt(s);
 }
@@ -527,7 +531,17 @@ export function upgrade(s: GameState): boolean {
 
 export function continueExploring(s: GameState): void {
   if (s.mode !== 'ending') return;
-  s.mode = 'playing'; s.paused = false; s.messageTime = 0; s.lockedId = null; clearHeldActions(s); updatePrompt(s);
+  s.mode = 'playing'; s.paused = false; s.lockedId = null; clearHeldActions(s); say(s, '炉火身后，潮声在东。穿过无渡人的庵，桥仍等着脚步。', 9, 'lore', '去新区域：从夜市东边进入运河侧廊，在摆渡庵岔口向东穿过庵堂，再过桥就是潮汐港。按 C 可以让我直接带路。'); updatePrompt(s);
+}
+
+/** Explicit rescue changes location only; it is not a free rest or enemy reset. */
+export function escapeStuck(s:GameState):boolean {
+  if (s.mode !== 'playing') return false;
+  const { hp, stamina, flasks, staminaDelay } = s.player;
+  s.player = { ...makePlayer(REST_POINTS[s.checkpoint]), hp, stamina, flasks, staminaDelay };
+  s.lockedId = null; s.hitstop = 0; s.effects = [];
+  say(s, '旧灯牵回迷途之人。', 5, 'event', '已回到记录的落脚点；血量、药瓶和探索进度保留。需要补给时，再与雨灯交互休息。');
+  updatePrompt(s); return true;
 }
 
 export function respawn(s: GameState): void {
@@ -547,7 +561,7 @@ export function getObjective(s: GameState): string {
   if (s.mode === 'ending') return '第一幕完成 · 这顿饭，来之不易';
   if (s.collected.includes('dawn-bell')) return '晨钟已响 · 自由探索旧城与潮汐港';
   if (s.defeatedGuests.includes('nana-tide')) return '登上晨钟台阶，叩响黎明钟';
-  if (s.collected.includes('food')) return '沿运河渡桥，循灯登上七重潮门';
+  if (s.collected.includes('food')) return '夜市东侧 → 运河侧廊 → 摆渡庵 → 潮汐港 · 七重潮门';
   if (s.bossDefeated) return '到夜市炉火旁，吃上今晚的第一顿饭';
   if (s.shortcut) return '挑战封街人 · 铁伞，抵达深夜食堂';
   if (s.charm) return '沿夜市长阶下行，找出回到中庭的近路';

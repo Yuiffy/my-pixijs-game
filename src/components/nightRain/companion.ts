@@ -37,7 +37,7 @@ const labels: Record<string, string> = {
 'temple-gate': '闭水门闩',
 'temple-note': '残钟铭文',
 'ferry-note': '摆渡遗签',
-  'tide-note': '潮桥刻痕',
+  'tide-note': '潮汐港入口',
 'harbor-gate': '归灯长桥绞盘',
 'net-cache': '风铃木匣',
 'drop-note': '风铃残笺',
@@ -58,6 +58,7 @@ boss: '铁伞前的夜市入口',
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
+    if (l.id === 'tide-note') return true;
     if (l.id === 'harbor-gate') return !s.harborGate;
     if (l.id === 'dawn-bell') return s.defeatedGuests.includes('nana-tide') && !s.collected.includes(l.id);
     if (l.id === 'temple-gate') return !s.templeGate;
@@ -70,7 +71,7 @@ export function guideTargets(s: GameState) {
 export function mainTarget(s: GameState): string {
   if (!s.collected.includes('laptop') && s.checkpoint === 'room') return 'laptop';
   if (s.checkpoint === 'room') return 'courtyard';
-  if (s.collected.includes('food') && !s.collected.includes('dawn-bell')) return !s.harborGate ? 'harbor-gate' : !s.defeatedGuests.includes('nana-tide') ? 'tide-seal' : 'dawn-bell';
+  if (s.collected.includes('food') && !s.collected.includes('dawn-bell')) return !s.visited.includes('潮汐港 · 灯市') ? 'tide-note' : !s.defeatedGuests.includes('nana-tide') ? 'tide-seal' : 'dawn-bell';
   if (s.collected.includes('food')) return LANDMARKS.find(l => ['cache', 'charm', 'flask'].includes(l.kind) && !s.collected.includes(l.id))?.id ?? 'courtyard';
   if (s.bossDefeated) return 'food';
   if (!s.charm) return 'roof-charm';
@@ -168,7 +169,7 @@ export function leadTo(c: Companion, s: GameState, id = recommendedTarget(c, s))
   if (!path.length) { speak(c, s, '这条路现在走不通。我们先回到宽一点的地方，再一起找路。'); return false; }
   c.position = { x: s.player.x, y: s.player.y, z: s.player.z };
   c.path = path.slice(1); c.targetId = id; c.status = 'leading'; c.routeAt = s.time;
-  speak(c, s, `好呀，去${targetLabel(id)}！我走前面，你慢慢跟上。`); return true;
+  speak(c, s, id === 'tide-note' ? '去潮汐港！先走夜市东侧的运河，再穿过摆渡庵向东过桥。我在前面等你，不用跳水。' : `好呀，去${targetLabel(id)}！我走前面，你慢慢跟上。`); return true;
 }
 export function stopLeading(c: Companion, s: GameState) {
   c.path = []; c.targetId = null; c.status = 'following'; speak(c, s, '好，我们自己逛。我一直在你身边。');
@@ -208,7 +209,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
         } else if (!walkSegment(p, c.position, s, 0.6) && s.time - c.routeAt > 2) leadTo(c, s, c.targetId);
         else c.status = 'waiting';
       } else {
-        c.status = 'arrived'; speak(c, s, c.targetId === 'boss' ? '前面就是铁伞。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
+        c.status = 'arrived'; speak(c, s, c.targetId === 'tide-note' ? '这就是潮汐港的潮桥！沿桥向东走进灯市，暖灯长阶通往七海。' : c.targetId === 'boss' ? '前面就是铁伞。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
       }
     }
   } else if (!c.targetId) {

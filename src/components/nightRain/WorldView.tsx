@@ -5,6 +5,7 @@ import { memo, useEffect, useMemo, useRef, useState, type MutableRefObject } fro
 import * as THREE from "three";
 import type { CameraControl, EnemyKind, GameState, Surface } from "./types";
 import { enemyAttack, enemyMotion } from "./enemyCombat";
+import { HOUSES, STRUCTURES, houseParts, architectureIntervals, type House } from './architecture';
 import { CharacterStyle, GuestStyle, GuestWeapon, PLAYER_SKINS } from './CharacterStyle';
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
@@ -42,20 +43,6 @@ const pseudoRandom = (n: number) => {
   const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return v - Math.floor(v);
 };
-// Decorative buildings stand outside the walkable graph, but the camera boom
-// can leave that graph. Keep it on the player's side of their solid facades.
-const CAMERA_BUILDINGS = [
-  { x: -24, z: 7, w: 6, d: 9, top: 9 },
-  { x: -22, z: -14, w: 6, d: 10, top: 10.3 },
-  { x: -5, z: -18.4, w: 7, d: 3, top: 5.5 },
-  { x: 3.2, z: -10.4, w: 8, d: 6, top: 8.8 },
-  { x: -10, z: -43, w: 6, d: 9, top: 10.3 },
-  { x: 17.5, z: -44, w: 5, d: 9, top: 9.3 },
-  { x: -3, z: -53, w: 7, d: 6, top: 9.3 },
-  { x: 6, z: -53, w: 10, d: 6, top: 11.3 },
-  { x: -17, z: 11.5, w: 8, d: 6, top: 9 },
-  { x: 18.5, z: 5, w: 7, d: 8, top: 10.3 },
-];
 
 function Block({
   position,
@@ -298,37 +285,11 @@ function Deck({ surface }: { surface: Surface }) {
   );
 }
 
-function ShopHouse({
-  position,
-  width = 5,
-  depth = 5,
-  height = 7,
-  color = "#8b7566",
-  rotation = 0,
-  sign,
-  terrace = false,
-}: {
-  position: Triple;
-  width?: number;
-  depth?: number;
-  height?: number;
-  color?: string;
-  rotation?: number;
-  sign?: string;
-  terrace?: boolean;
-}) {
+function ShopHouse(house: House) {
+  const { position, width, depth, rotation = 0, sign } = house;
   return (
     <group position={position} rotation={[0, rotation, 0]}>
-      <Block
-        position={[0, height / 2 - 0.8, 0]}
-        size={[width, height, depth]}
-        color={color}
-      />
-      <Block
-        position={[0, height - 0.7, 0]}
-        size={[width + 0.2, 0.26, depth + 0.3]}
-        color={COLORS.trim}
-      />
+      {houseParts(house).map(p => <Block key={p.id} position={p.position} size={p.size} rotation={[0, 0, p.tilt ?? 0]} color={p.color} />)}
       <Block
         position={[0, 2.7, depth / 2 + 0.08]}
         size={[width, 0.18, 0.2]}
@@ -380,23 +341,6 @@ function ShopHouse({
           />
         </group>
       ))}
-      {!terrace &&
-        [-1, 1].map((side) => (
-          <Block
-            key={`roof${side}`}
-            position={[side * width * 0.245, height - 0.25, 0]}
-            size={[width * 0.57, 0.22, depth + 0.8]}
-            rotation={[0, 0, -side * 0.32]}
-            color={side === 1 ? "#8e5345" : "#a66b4e"}
-          />
-        ))}
-      {!terrace && (
-        <Block
-          position={[0, height + 0.23, 0]}
-          size={[0.25, 0.2, depth + 0.8]}
-          color="#cea16c"
-        />
-      )}
       {sign && (
         <Sign
           position={[0, 2.5, depth / 2 + 0.3]}
@@ -514,8 +458,7 @@ function TideDistrict() {
 <group name="tide-district">
     {/* Piles stop the raised walkways reading as floating slabs; clear the ground routes. */}
     {[[33, 6, -65], [47, 6, -65], [33, 6, -56], [47, 6, -56], [48, 3, -52], [61, 3, -52], [55, 3, -44], [58, 3, -44], [33, 4, -12], [38, 4, -8], [44, 4, -8], [32, 10, -81], [40, 10, -81]].map(([x, y, z], i) => <Pole key={`pile${i}`} position={[x, (y - 2) / 2, z]} height={y + 2} radius={0.22} color="#516d73" />)}
-    <Block position={[40, -0.05, -61]} size={[19, 11.5, 12]} color="#476773" />
-    <Block position={[36, 3.7, -80]} size={[11, 11.5, 5]} color="#697979" />
+
     <Sign text="潮汐港 →" subtext="WHERE RAIN MEETS THE TIDE" position={[24, 2.2, -31.7]} width={3.6} />
     <Sign text="↑ 七重潮门" position={[40, 2.5, -37]} width={3.8} />
     <Sign text="苔灯戏台 →" position={[48, 3, -37.5]} width={2.8} background="#42563d" />
@@ -526,8 +469,8 @@ function TideDistrict() {
     {[[24, 0, -28.5], [31, 0, -29], [39, 0, -35], [40.5, 1.5, -42], [45.5, 3.5, -47], [40.5, 5.5, -52], [32, 6, -55], [48, 6, -66], [31, 10, -78]].map(([x, y, z], i) => <Lantern key={i} position={[x, y, z]} />)}
     {[48, 53, 60].map(x => <Lantern key={x} position={[x, 3, -53.5]} blue />)}
     {/* The tall copper bell is visible from the entrance; buttresses flank the arena. */}
-    {[30.5, 49.5].map(x => <group key={x}><Block position={[x, 9, -67]} size={[1, 6, 1]} color="#b4b6a0" /><mesh position={[x, 12.6, -67]}><coneGeometry args={[1, 1.8, 6]} /><meshStandardMaterial color="#638b9b" /></mesh></group>)}
-    <Block position={[40, 11.5, -67]} size={[20, 1.1, 1.2]} color="#8aa5ab" />
+    {[30.5, 49.5].map(x => <group key={x}><mesh position={[x, 12.6, -67]}><coneGeometry args={[1, 1.8, 6]} /><meshStandardMaterial color="#638b9b" /></mesh></group>)}
+
     <group position={[36, 10, -81]}>
       {[-2, 2].map(x => <Pole key={x} position={[x, 2, 0]} radius={0.22} height={4} color="#80765b" />)}
       <Block position={[0, 4, 0]} size={[5, 0.35, 0.5]} color="#b19b69" />
@@ -619,20 +562,22 @@ function CityContent() {
         />
       </mesh>
       <TideDistrict />
+      <Sign position={[8, 2.3, -37.8]} rotation={[0, Math.PI, 0]} text="潮汐港 ↗" subtext="运河 · 摆渡庵" width={3.1} />
+      <Sign position={[12.7, 2.6, -31.8]} text="潮汐港 →" subtext="过庵 · 渡桥" width={2.5} />
+      <Sign position={[12.7, 2.6, -28.2]} rotation={[0, Math.PI, 0]} text="← 潮汐港" subtext="过庵 · 渡桥" width={2.5} />
+      <Sign position={[20.7, 3.55, -30]} rotation={[0, -Math.PI / 2, 0]} text="潮汐港" width={2.5} />
+      {[14.6, 20.8, 24.5, 29].map(x => <group key={`tide-lights-${x}`}><Lantern position={[x, 0, -32.5]} /><Lantern position={[x, 0, -27.5]} /></group>)}
+      {STRUCTURES.map(p => <group key={p.id} position={p.position} rotation={[0, p.yaw ?? 0, 0]}><Block position={[0, 0, 0]} size={p.size} rotation={[0, 0, p.tilt ?? 0]} color={p.color} /></group>)}
       {SURFACES.map((s) => (
         <Deck key={s.id} surface={s} />
       ))}
-      <Block position={[4, 2.8, 15.6]} size={[16, 5.6, 4.8]} color="#59706c" />
+
       <Block
         position={[-0.9, 6.01, 15.7]}
         size={[4.8, 0.035, 3.3]}
         color="#ad8071"
       />
-      <Block
-        position={[-3.75, 7.2, 15]}
-        size={[0.25, 2.4, 5.8]}
-        color="#adab92"
-      />
+
       <Sign
         position={[-3.57, 8, 15]}
         rotation={[0, Math.PI / 2, 0]}
@@ -662,107 +607,7 @@ function CityContent() {
         width={6}
         background="#42565d"
       />
-      {[-14.5, -7.5, -0.5].map((x, i) => (
-        <ShopHouse
-          key={`roofbase${x}`}
-          position={[x, -0.05, -23]}
-          width={i === 0 ? 7 : 6.8}
-          depth={4}
-          height={6.2}
-          terrace
-          color={["#648386", "#9a8975", "#657d71"][i]}
-          sign={["旧城裁缝", "泰茶 · 茶", "นวด · 古法"][i]}
-        />
-      ))}
-      <ShopHouse
-        position={[-24, 0, 7]}
-        width={9}
-        depth={6}
-        height={8.7}
-        rotation={Math.PI / 2}
-        color="#9b8b75"
-        sign="ฝน · 雨巷"
-      />
-      <ShopHouse
-        position={[-22, 0, -14]}
-        width={10}
-        depth={6}
-        height={10}
-        rotation={Math.PI / 2}
-        color="#708f8c"
-      />
-      <ShopHouse
-        position={[-5, 0, -18.4]}
-        width={7}
-        depth={3}
-        height={5.2}
-        color="#849892"
-        sign="旧城商行"
-      />
-      <ShopHouse
-        position={[3.2, 0, -10.4]}
-        width={8}
-        depth={6}
-        height={8.5}
-        color="#a69a7d"
-        sign="慢慢来 · SLOW SLOW"
-      />
-      <ShopHouse
-        position={[-10, 0, -43]}
-        width={9}
-        depth={6}
-        height={10}
-        rotation={Math.PI / 2}
-        color="#967b77"
-        sign="夜食"
-      />
-      <ShopHouse
-        position={[17.5, 0, -44]}
-        width={9}
-        depth={5}
-        height={9}
-        rotation={-Math.PI / 2}
-        color="#728b82"
-        sign="ตลาด · MARKET"
-      />
-      <ShopHouse
-        position={[-3, 0, -53]}
-        width={7}
-        depth={6}
-        height={9}
-        color="#a3937b"
-      />
-      <ShopHouse
-        position={[6, 0, -53]}
-        width={10}
-        depth={6}
-        height={11}
-        color="#809089"
-      />
-      <ShopHouse
-        position={[-17, 0, 11.5]}
-        width={8}
-        depth={6}
-        height={8.7}
-        color="#74897e"
-      />
-      <ShopHouse
-        position={[18.5, 0, 5]}
-        width={8}
-        depth={7}
-        height={10}
-        rotation={-Math.PI / 2}
-        color="#738b91"
-      />
-      {Array.from({ length: 13 }, (_, i) => (
-        <ShopHouse
-          key={`distant${i}`}
-          position={[-45 + i * 7, 0, -91 - pseudoRandom(i) * 7]}
-          width={6 + pseudoRandom(i + 1) * 2}
-          height={6 + pseudoRandom(i + 2) * 12}
-          color={["#506e78", "#6f8182", "#597980"][i % 3]}
-        />
-      ))}
+      {HOUSES.map(h => <ShopHouse key={h.id} {...h} />)}
       <group position={[-21, 0, -48]}>
         {[0, 1, 2].map((i) => (
           <Block
@@ -858,8 +703,7 @@ function CityContent() {
       <Palm position={[19, -1, -12]} scale={1.5} />
       <FoodStall />
       <group position={[-31.5, 6, -32.5]}>
-        <Block position={[0, 1.6, -0.3]} size={[6.8, 3.2, 0.35]} color="#8b7462" />
-        <Block position={[0, 3.2, -0.8]} size={[7.8, 0.22, 3.8]} color="#647977" />
+
         {[0, 1].map(tier => (
 <group key={tier} position={[0, 3.65 + tier * 1.05, -1]}>
           <mesh rotation={[0, Math.PI / 4, 0]} scale={[1.5, 1, 0.8]} castShadow><coneGeometry args={[3 - tier * 0.65, 1.25, 4]} /><meshStandardMaterial color={tier ? '#5c716b' : '#536862'} roughness={0.85} /></mesh>
@@ -888,8 +732,7 @@ function CityContent() {
 ))}
       </group>
       <group position={[18, 0, -30]}>
-        <Block position={[0, 4.8, 0]} size={[6.7, 0.25, 5.7]} color="#665547" />
-        <Block position={[2.7, 2.35, 0]} size={[0.18, 4.7, 5.6]} color="#8e7c63" />
+
         <Sign position={[0, 4.15, 2.5]} text="摆渡庵" subtext="灯不渡水 · 人可归岸" width={2.6} />
         <Block position={[0, 0.24, -2.2]} size={[3.3, 0.48, 0.6]} color="#796449" />
       </group>
@@ -1651,12 +1494,14 @@ function Actor({
           {player && <group ref={medicine} visible={false} position={[0, -0.52, 0.09]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[0.09, 0.12, 0.28, 10]} /><meshStandardMaterial color="#76cbb2" metalness={0.2} roughness={0.2} emissive="#255346" /></mesh><mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.045, 0.055, 0.13, 8]} /><meshStandardMaterial color="#dcc698" /></mesh></group>}
           <group ref={heldWeapon} position={[0, -0.46, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
             {player && <mesh ref={chargeGlow} position={[0, 1.05, 0]} visible={false}><sphereGeometry args={[0.14, 12, 8]} /><meshBasicMaterial color="#ffe5a8" transparent opacity={0.6} depthWrite={false} /></mesh>}
-            <Pole
+            {kind !== 'nana' && (
+<Pole
               position={[0, 0.45, 0]}
               radius={player ? 0.035 : 0.045}
               height={boss ? 1.8 : 1.4}
               color={guard ? "#a38a62" : "#b6c3bf"}
             />
+)}
             {(player || (boss && !guest)) && (
               <mesh position={[0, 0.54, 0]} castShadow>
                 <coneGeometry
@@ -1907,11 +1752,7 @@ function CameraRig({
           y > o.y &&
           y < o.y + o.h + 0.3,
       );
-      const wall = CAMERA_BUILDINGS.some(
-        (b) => Math.abs(x - b.x) < b.w / 2 + 0.3 &&
-          Math.abs(z - b.z) < b.d / 2 + 0.3 &&
-          y < b.top,
-      );
+      const wall = architectureIntervals(x, z).some(h => y > h.bottom - 0.2 && y < h.top + 0.2);
       if (deck || obstacle || wall) {
         desired.lerpVectors(target, desired, Math.max(0.1, t - 0.08));
         break;

@@ -1,4 +1,4 @@
-import { lockSignal, Mini } from "./minigames";
+import { dialReady, DIAL_TOLERANCE, lockSignal, Mini } from "./minigames";
 
 /** Canvas coordinates are fixed; CSS handles scaling without changing input or simulation. */
 export function drawMini(c: CanvasRenderingContext2D, m: Mini) {
@@ -60,6 +60,10 @@ export function drawMini(c: CanvasRenderingContext2D, m: Mini) {
         i % 3 ? 2 : 4,
       );
     }
+    if (lockSignal(m) > 0.4 && !m.won) {
+      c.beginPath(); c.arc(350, 190, 116, ((m.targets[m.score] - DIAL_TOLERANCE) * (Math.PI / 180)) - Math.PI / 2, ((m.targets[m.score] + DIAL_TOLERANCE) * (Math.PI / 180)) - Math.PI / 2);
+      c.strokeStyle = "#4b9861"; c.lineWidth = 12; c.stroke();
+    }
     const a = (m.angle * Math.PI) / 180;
     line(
       350,
@@ -77,6 +81,7 @@ export function drawMini(c: CanvasRenderingContext2D, m: Mini) {
       30,
       23,
     );
+    text(`已记住 ${m.score}/3`, 580, 35, 16);
     const signal = lockSignal(m);
     for (let i = 0; i < 9; i++) {
       const h = 8 + signal * (16 + Math.sin(m.clock * 20 + i) * 10);
@@ -85,13 +90,13 @@ export function drawMini(c: CanvasRenderingContext2D, m: Mini) {
         371 - h / 2,
         280 + i * 18,
         371 + h / 2,
-        signal > 0.86 ? "#547f58" : "#b5a688",
+        dialReady(m) ? "#547f58" : "#b5a688",
         5,
       );
     }
     text(
-      signal > 0.86
-        ? "咔哒 · 就在这里"
+      dialReady(m)
+        ? "咔哒 · 松手即可记住"
         : signal > 0.5
           ? "轻轻的摩擦声……"
           : "慢慢转，留意卡点",
@@ -153,73 +158,7 @@ export function drawMini(c: CanvasRenderingContext2D, m: Mini) {
     }
     line(90, 245, 610, 245, "#e9cb6f", 3);
     text("把当前弹子的白色缺口抬到金色剪切线", 350, 35, 21);
-    text("对齐后锁住，再抬下一枚", 350, 390, 17);
-  } else if (m.kind === "toss" || m.kind === "eggs") {
-    const px = m.pan * 6 + 50;
-    const hop = m.kind === "toss" && m.flight ? Math.max(0, 1 - m.spin / 110) * 24 : 0;
-    for (let i = 0; i < 8; i++) line(i * 100, 0, i * 100, 400, "#d9ccb0", 1);
-    ellipse(px, 340, 95, 24, "#b7a582");
-    line(px + 72, 306 - hop, px + 140, 328 - hop, "#986c43", 18);
-    ellipse(px, 308 - hop, 99, 31, "#35483c");
-    ellipse(px, 302 - hop, 83, 23, "#53614b");
-    for (let i = 0; i < 30; i++) ellipse(
-        px + Math.sin(i * 2.4) * 65,
-        300 - hop + Math.cos(i * 2.4) * 15,
-        4,
-        2,
-        i % 3 ? "#e4c96c" : "#7e994b",
-      );
-    if (m.kind === "toss") {
-      const x = m.flight ? 50 + m.x * 6 : px;
-      const y = 274 - m.y * 2.6;
-      ellipse(50 + m.x * 6, 333, 30, 6, "#91846a");
-      c.save();
-      c.translate(x, y);
-      c.scale(1.2, 1.2);
-      c.rotate(m.flight ? (m.spin * Math.PI) / 180 : 0);
-      c.fillStyle = "#e3b953";
-      c.fillRect(-27, -28, 54, 54);
-      c.fillStyle = "#fae2a0";
-      c.beginPath();
-      c.moveTo(-27, -28);
-      c.lineTo(-14, -41);
-      c.lineTo(40, -41);
-      c.lineTo(27, -28);
-      c.fill();
-      c.fillStyle = "#b98d36";
-      c.beginPath();
-      c.moveTo(27, -28);
-      c.lineTo(40, -41);
-      c.lineTo(40, 13);
-      c.lineTo(27, 26);
-      c.fill();
-      [
-        [-13, -14],
-        [12, -14],
-        [0, 0],
-        [-13, 13],
-        [12, 13],
-      ].forEach(([a, b]) => ellipse(a, b, 5, 5, "#617946"));
-      c.restore();
-      text(
-        m.flight
-          ? "看影子！把锅移到饭团下面"
-          : "向上甩锅，把方方的蛋炒饭颠起来",
-        350,
-        32,
-        21,
-      );
-      text(`骰子饭团 · 已翻 ${m.score} / 3 面`, 350, 381, 20);
-    } else {
-      if (m.flight) {
-        const x = 50 + m.x * 6;
-        const y = 280 - m.y * 2.35;
-        ellipse(x, y, 23, 18, "#fffbdf");
-        ellipse(x + 2, y, 10, 10, "#eabb43");
-      }
-      text("饭要粒粒分开，还要粘着蛋", 350, 32, 23);
-      text(`左右移动锅，接住鸡蛋 · ${m.score} / 6`, 350, 379, 20);
-    }
+    text("对齐后松手，再抬下一枚", 350, 390, 17);
   } else {
     for (let i = 0; i < 8; i++) {
       line(i * 100, 0, i * 100, 400, "#456056", 1);

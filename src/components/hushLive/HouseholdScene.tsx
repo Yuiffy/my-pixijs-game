@@ -22,7 +22,7 @@ export function NoodleCup({ runtime: r }: { runtime: Runtime3D }) {
   useEffect(() => () => texture.dispose(), [texture]);
   useFrame(() => {
     const state = r.game.daily?.household.noodles;
-    const opened = state === "ready" || state === "carrying" || state === "served";
+    const opened = state === "ready" || ((state === "carrying" || state === "served") && r.game.daily?.household.timer === 0);
     if (lid.current) { lid.current.visible = !opened; lid.current.rotation.x = r.game.busy?.key === "pour-noodles" ? -0.8 : 0; }
     if (soup.current) soup.current.visible = opened || r.game.busy?.key === "pour-noodles";
   });

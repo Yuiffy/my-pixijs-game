@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { INCIDENT_IDS, STATIONS, TASK_IDS } from "./gameplay3d";
+import { INCIDENT_IDS, STATIONS, TASK_IDS, getPrepStations } from "./gameplay3d";
 import type { IncidentId, PrepState, StationId } from "./gameplay3d";
 
 type Vec3 = [number, number, number];
@@ -788,7 +788,7 @@ function StationMarker({ id, position, label, done, active, near, selected, read
         <sphereGeometry args={[active || selected ? 0.09 : 0.065, 12, 9]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={active || selected || ready ? 0.8 : 0.35} />
       </mesh>
-      {showLabel && <StationLabel spriteRef={labelSprite} title={ready ? "开始直播" : label} tone={tone} onClick={click} onPointerOver={enter} onPointerOut={leave} />}
+      {showLabel && <StationLabel spriteRef={labelSprite} title={ready && id === "obs" ? "开始直播" : label} tone={tone} onClick={click} onPointerOver={enter} onPointerOut={leave} />}
       <mesh position={[0, 0.32, 0]} onClick={click} onPointerOver={enter} onPointerOut={leave}>
         <cylinderGeometry args={[0.18, 0.18, 0.62, 10]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} color="#ffffff" />
@@ -916,13 +916,12 @@ function Room({ state, liveStateRef, selectedStation, onStationClick }: { state:
       <RoamingCat liveStateRef={liveStateRef} />
       <Avatar state={state} liveStateRef={liveStateRef} />
       <IncidentScenes active={incidents} />
-      {state.phase === "explore" && STATIONS.map((station) => {
+      {state.phase === "explore" && getPrepStations(state).map((station) => {
         const waterStation = station.id === "thermos" || station.id === "dispenser";
         const done = state.completed.includes(waterStation ? "water" : station.id as (typeof state.completed)[number]) || state.incidents.resolved.includes(station.id as (typeof state.incidents.resolved)[number]);
         const distance = Math.hypot(station.x - state.player.x, station.z - state.player.z);
         const incidentHasPriority = !incidents.includes(station.id as (typeof incidents)[number]) && activeIncidentStations.some(active => Math.hypot(station.x - active.x, station.z - active.z) < 1.85);
         const active = incidents.includes(station.id as IncidentId);
-        if (INCIDENT_IDS.includes(station.id as IncidentId) && !active) return null;
         return (
           <group key={station.id}>
             <StationMarker
@@ -934,7 +933,7 @@ function Room({ state, liveStateRef, selectedStation, onStationClick }: { state:
               near={distance < 1.45 && !incidentHasPriority}
               selected={selectedStation === station.id}
               suppressed={incidentHasPriority}
-              ready={station.id === "obs" && readyToGoLive}
+              ready={(station.id === "obs" && readyToGoLive) || (station.id === "dispenser" && state.water.cup === "ready")}
               player={state.player}
               onClick={onStationClick}
             />

@@ -37,7 +37,7 @@ export const MEALS = [
   {
     id: "noodles",
     name: "桶装方便面",
-    note: "面刚泡好，趁它还没坨。",
+    note: "盖着放一会儿，焖好了自己开吃。",
     color: "#d7b476",
   },
   {
@@ -46,9 +46,12 @@ export const MEALS = [
     note: "一碗热饭，配你最喜欢的小菜。",
     color: "#f1e6ca",
   },
+  { id: "beef", name: "骰子牛", note: "六面都煎熟了，趁热吃。", color: "#895036" },
 ] as const;
 export type Meal = (typeof MEALS)[number]["id"];
 export type Daily = {
+  arrival: "intro" | "locked" | "unlocked" | "open" | "entering" | "inside" | "done";
+  arrivalTime: number;
   household: Household;
   mini: Mini;
   leisurePlace: "sofa" | "computer";
@@ -73,21 +76,23 @@ export type Daily = {
 };
 export const mealOf = (s: Game) => MEALS.find((m) => m.id === s.daily?.meal) ?? MEALS[3];
 export const offAir = (s: Game) => !!s.daily && s.daily.stage !== "home";
-export const dailyModal = (s: Game) => !!s.daily?.panel || s.daily?.stage === "sleep";
+export const dailyModal = (s: Game) => !!s.daily && (s.daily.arrival !== "done" || !!s.daily.panel || s.daily.stage === "sleep");
 export function beginDaily(s: Game) {
   const homemade = s.tasks.includes("cook");
   const meal = MEALS[s.level === 5 ? Math.floor(nightRoll(s.seed, 3) * MEALS.length) : (s.seed + s.level - 2) % MEALS.length].id;
   const household = createHousehold(s);
   const outside = household.arrival === "outside";
-  s.player = outside ? { x: 139, y: 500 } : household.arrival === "sofa" ? { x: 220, y: 405 } : { x: 230, y: 220 };
+  s.player = outside ? { x: 139, y: 585 } : household.arrival === "sofa" ? { x: 220, y: 405 } : { x: 230, y: 220 };
   s.daily = {
+    arrival: outside ? "intro" : "done",
+    arrivalTime: 0,
     household,
     mini: createMini(lockKind(s.seed), s.seed),
     leisurePlace: "sofa",
-    meal: homemade ? "rice" : meal,
+    meal: homemade ? cookKind(s.seed) === "toss" ? "beef" : "rice" : meal,
     homemade,
     stage: "home",
-    panel: outside ? "lock" : null,
+    panel: null,
     clock: 0,
     beats: 0,
     mistakes: 0,
@@ -103,7 +108,7 @@ export function beginDaily(s: Game) {
       {
         from: "partner",
         text: homemade
-          ? "今天想吃你炒的蛋炒饭，可以嘛？鸡蛋和米饭在料理台。"
+          ? cookKind(s.seed) === "toss" ? "今晚想吃你煎的骰子牛～记得把六个面都煎熟呀。" : "今天想吃你炒的蛋炒饭，可以嘛？鸡蛋和米饭在料理台。"
           : meal === "noodles" ? "超市送来的桶面放在门口啦。帮我烧壶水泡一下，好不好？" : `${outside ? "回来啦？" : "你在家真好。"}今晚想吃${MEALS.find((m) => m.id === meal)?.name}，放桌上就好～`,
       },
     ],
@@ -131,13 +136,19 @@ function syncActivity(s: Game, previousMisses: number) {
   }
   if (!d.mini.won || d.panel === "leisure") return;
   if (d.panel === "lock") {
-    s.message = `门轻轻合上。${skinOf(s.skin).name}抬眼笑了一下，手指悄悄比了颗心。`;
+    d.arrival = "unlocked";
+    s.message = "咔哒，锁开了。你还站在门外，扶住门把轻轻推开。";
     s.love += d.mini.misses === 0 ? 12 : 5;
   } else if (d.panel === "cook" && !s.done.includes("cook")) {
     s.done.push("cook"); s.carry = "food"; s.love += 15;
-    s.message = "蛋炒饭装好了。把这碗热乎的晚饭端到直播桌吧。";
+    s.message = `${mealOf(s).name}装好了。把这份热乎的晚饭端到直播桌吧。`;
   }
   d.panel = null; s.requireRelease = true;
+}
+export function arrivalAction(s: Game) {
+  const d = s.daily;
+  if (!d || s.phase !== "playing") return;
+  if (d.arrival === "intro") { d.arrival = "locked"; d.panel = "lock"; } else if (d.arrival === "unlocked") { d.arrival = "open"; s.message = "门开了一道缝。扶着门，悄悄走进去。"; } else if (d.arrival === "open") { d.arrival = "entering"; d.arrivalTime = 0; } else if (d.arrival === "inside") { d.arrival = "done"; s.requireRelease = true; s.message = `大门轻轻合上，终于到家了。${skinOf(s.skin).name}还在和观众说话。`; }
 }
 export function openDailyPanel(s: Game, panel: "cook" | "leisure", computer = false) {
   const d = s.daily;
@@ -215,7 +226,13 @@ export function stepDaily(s: Game, dt: number): boolean {
   const d = s.daily;
   if (!d) return false;
   d.clock += dt;
-  stepHousehold(s, dt);
+  if (d.arrival === "entering") {
+    d.arrivalTime = Math.min(1.4, d.arrivalTime + dt);
+    const t = d.arrivalTime / 1.4;
+    s.player = { x: 139, y: 585 - 85 * (t * t * (3 - 2 * t)) };
+    if (t >= 1) d.arrival = "inside";
+  }
+  if (d.arrival === "done") stepHousehold(s, dt);
   d.cooldown = Math.max(0, d.cooldown - dt);
   if (d.panel === "lock" || d.panel === "cook" || (d.panel === "leisure" && d.entertainment === "game")) {
     const { misses } = d.mini;

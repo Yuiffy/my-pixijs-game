@@ -25,7 +25,7 @@ step: 4,
     destination: "轻声走过去",
 detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
   };
-  else if (s.daily?.panel === "lock") next = { spot: "entry", key: "unlock", title: `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "观察门锁，按锁芯的提示慢慢解开。", step: 1 };
+  else if (s.daily && s.daily.arrival !== "done") next = { spot: "entry", key: "unlock", title: `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "观察门锁，按锁芯的提示慢慢解开。", step: 1 };
   else if (s.carry === "charger") next = {
       spot: "charging",
       key: "charger",
@@ -45,9 +45,17 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
       detail: "看向桌上的餐垫，轻按E。TA继续直播，你把晚饭摆好就行。",
       step: 1,
     };
+  else if (s.daily?.meal === "noodles" && ["hot", "steeping", "ready"].includes(s.daily.household.noodles)) next = {
+      spot: "kitchen",
+key: s.daily.household.noodles === "hot" ? "pour-noodles" : "take-noodles",
+      title: s.daily.household.noodles === "hot" ? "水开了，给桶面加热水" : "泡面冲好了，直接端过去",
+      destination: "回料理台",
+detail: s.daily.household.noodles === "hot" ? "轻按E撕盖、放调料、加水到刻度线并盖好。" : "轻按E拿起盖好的泡面和叉子，放到直播桌。焖好了TA会自己吃，不用等。",
+step: 2,
+    };
   else {
     const task = s.tasks.find((t) => !s.done.includes(t) && !(t === "food" && noodlesWaiting(s)) && !(["hug", "kiss"].includes(t) && onBreak(s)));
-    if (task === "cook") next = { spot: "kitchen", key: "cook", title: `${skinOf(s.skin).name}想吃你炒的蛋炒饭`, destination: "去料理台", detail: "鸡蛋和米饭都准备好了，轻按E开始做饭。", step: 2 };
+    if (task === "cook") next = { spot: "kitchen", key: "cook", title: `${skinOf(s.skin).name}想吃你做的${mealOf(s).name}`, destination: "去料理台", detail: "食材都准备好了，轻按E开始做饭。", step: 2 };
     else if (task === "leisure") next = { spot: "sofa", key: "leisure", title: "回客厅放松一会儿", destination: "回沙发", detail: "可以看视频或玩游戏，烧水和泡面会继续进行，留意消息提醒。", step: 3 };
     else if (task === "cat-food" || task === "cat-litter") next = {
       spot: task === "cat-food" ? "cat-bowl" : "cat-litter",
@@ -65,14 +73,6 @@ step: 2,
         detail: "在直播间的床尾抽屉。沿金色目标标记走过去。",
         step: 1,
       };
-    else if (task === "food" && s.daily?.meal === "noodles" && ["hot", "ready"].includes(s.daily.household.noodles)) next = {
-      spot: "kitchen",
-key: s.daily.household.noodles === "hot" ? "pour-noodles" : "take-noodles",
-      title: s.daily.household.noodles === "hot" ? "水开了，给桶面加热水" : "面泡好了，趁热端过去",
-      destination: "回料理台",
-detail: s.daily.household.noodles === "hot" ? "轻按E撕盖、放调料、加水到刻度线并盖好。" : "轻按E拿起泡面和叉子，放到直播桌。",
-step: 2,
-    };
     else if (task === "food") next = {
         spot: "entry",
         key: "pickup-food",
