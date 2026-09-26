@@ -1,3 +1,4 @@
+import { dailyModal } from "./daily";
 import {
   action,
   partnerPose,
@@ -18,6 +19,8 @@ export const AIM_POINTS: Record<
   Spot,
   { x: number; y: number; height: number }
 > = {
+  kitchen: { x: 420, y: 155, height: 1.0 },
+  bed: { x: 710, y: 425, height: 0.7 },
   sofa: { x: 220, y: 325, height: 0.66 },
   shelf: { x: 826, y: 477, height: 0.66 },
   entry: { x: 97, y: 465, height: 0.82 },
@@ -100,7 +103,7 @@ export function pause3D(r: Runtime3D) {
   clearControls(r);
 }
 export function go3D(r: Runtime3D, spot: Spot) {
-  if (r.game.phase !== "playing" || r.game.delta?.active || r.game.busy) return;
+  if (r.game.phase !== "playing" || r.game.delta?.active || dailyModal(r.game) || r.game.busy) return;
   r.held = false;
   r.pressed = false;
   r.keys.clear();
@@ -110,7 +113,7 @@ export function go3D(r: Runtime3D, spot: Spot) {
   travel(r.game, spot);
 }
 export function rotateView(r: Runtime3D, dx: number, dy: number) {
-  if (r.game.phase !== "playing" || r.game.delta?.active || r.game.busy) return;
+  if (r.game.phase !== "playing" || r.game.delta?.active || dailyModal(r.game) || r.game.busy) return;
   r.yaw -= dx * 0.0025;
   r.pitch = Math.max(-1.1, Math.min(1.05, r.pitch - dy * 0.0025));
   r.autoLook = false;
@@ -123,7 +126,7 @@ export function advance3D(r: Runtime3D, seconds: number) {
     left -= 0.025
   ) {
     const dt = Math.min(left, 0.025);
-    if (r.game.delta?.active) {
+    if (r.game.delta?.active || dailyModal(r.game)) {
       step(r.game, dt, emptyInput());
       r.elapsedFrame += dt;
       continue;

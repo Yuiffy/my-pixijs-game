@@ -1,3 +1,4 @@
+import { offAir } from "./daily";
 import { broadcast } from "./engine";
 import { worldPoint } from "./navigation";
 import type { Runtime3D } from "./runtime3d";
@@ -10,6 +11,8 @@ export class ApartmentSound {
   private lastBeat = -1;
   private lastStep = -1;
   private done = 0;
+  private lastMessages = 0;
+  private mediaBeat = -1;
   private reportHits = 0;
   private reportMisses = 0;
   constructor() {
@@ -72,6 +75,16 @@ export class ApartmentSound {
       0.08,
     );
     if (!enabled || s.phase !== "playing") return;
+    if (s.daily) {
+      const count = s.daily.messages.length;
+      if (count > this.lastMessages && s.daily.unread) { this.tone(880, 0.06, 0.12, false); this.tone(1174, 0.035, 0.22, false); }
+      this.lastMessages = count;
+      const mediaBeat = Math.floor(s.daily.clock * 3);
+      if (s.daily.panel === "leisure" && mediaBeat !== this.mediaBeat) {
+        this.mediaBeat = mediaBeat;
+        this.tone([330, 440, 523, 392][mediaBeat % 4], s.daily.volume * 0.0006, 0.17, false, "triangle");
+      }
+    } else this.lastMessages = 0;
     if (s.delta) {
       if (s.delta.hits > this.reportHits) this.tone(760, 0.065, 0.14, false);
       if (s.delta.misses > this.reportMisses) this.tone(140, 0.04, 0.18, false, 'triangle');
@@ -97,7 +110,7 @@ export class ApartmentSound {
     if (beat !== this.lastBeat) {
       this.lastBeat = beat;
       const { music } = broadcast(s);
-      if (s.muted <= 0) this.tone(
+      if (s.muted <= 0 && !offAir(s)) this.tone(
           music
             ? [261.6, 329.6, 392, 440, 392, 329.6, 293.7, 329.6][beat % 8]
             : [174, 207, 196, 220][beat % 4],

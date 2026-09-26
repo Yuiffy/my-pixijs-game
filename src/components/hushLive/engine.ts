@@ -1,7 +1,8 @@
+import { Daily, dailyModal, discoverDaily, mealOf, offAir, openDailyPanel, sleepDaily, stepDaily } from "./daily";
 import { BODY_RADIUS, moveBody, route, walkable } from "./navigation";
 
 export type Point = { x: number; y: number };
-export type Task = "charger" | "food" | "delta" | "hug" | "kiss";
+export type Task = "charger" | "food" | "delta" | "hug" | "kiss" | "cook" | "leisure";
 export type Spot =
   | "sofa"
   | "shelf"
@@ -9,7 +10,9 @@ export type Spot =
   | "partner"
   | "desk"
   | "door"
-  | "table";
+  | "table"
+  | "kitchen"
+  | "bed";
 export type Input = {
   x: number;
   y: number;
@@ -24,6 +27,8 @@ export const emptyInput = (): Input => ({
   sprint: false,
 });
 export const SPOTS: Record<Spot, Point & { name: string }> = {
+  kitchen: { x: 416, y: 207, name: "料理台" },
+  bed: { x: 666, y: 429, name: "床边" },
   sofa: { x: 220, y: 380, name: "沙发 · 回家收工" },
   shelf: { x: 826, y: 505, name: "充电器" },
   entry: { x: 127, y: 500, name: "门口 · 外卖" },
@@ -70,6 +75,8 @@ export const LEVELS: {
   },
 ];
 export const TASK_NAMES: Record<Task, string> = {
+  cook: "给岁己炒一碗蛋炒饭",
+  leisure: "在客厅放松一会儿",
   charger: "拿回充电器",
   food: "把晚饭摆到直播桌上",
   delta: "三角洲语音报点",
@@ -145,6 +152,7 @@ export type Delta = {
   feedback: string;
 };
 export type Game = {
+  daily: Daily | null;
   phase: "ready" | "playing" | "paused" | "result";
   level: number;
   seed: number;
@@ -192,6 +200,7 @@ export function createGame(level = 0, seed = 1, unlocked = 0): Game {
           ? ["charger", "food", "delta", "hug"]
           : ["food", "delta", "charger", "kiss"]) as Task[]);
   return {
+    daily: null,
     phase: "ready",
     level: safeLevel,
     seed: safeSeed,
@@ -241,6 +250,8 @@ export function broadcast(s: Game) {
   };
 }
 export function partnerPose(s: Game) {
+  if (offAir(s)) return s.daily?.after === "rice"
+    ? { x: 447, y: 204, stand: 1 } : { x: 691, y: 427, stand: 1 };
   const v = s.visit;
   const amount = v
     ? Math.max(0, Math.min(1, (12 - v.remaining) / 1.4, v.remaining / 1.4))
@@ -253,21 +264,23 @@ export function partnerPose(s: Game) {
   };
 }
 export function interactionPoint(s: Game, spot: Spot): Point {
-  return spot === "partner" && s.visit ? partnerPose(s) : SPOTS[spot];
+  return spot === "partner" && (s.visit || offAir(s)) ? partnerPose(s) : SPOTS[spot];
 }
 export function partnerBehavior(s: Game) {
+  const speaking = s.phase === "playing" && ((!offAir(s) && s.muted <= 0) || s.daily?.stage === "goodnight");
+  const speechTime = offAir(s) ? s.daily?.clock ?? 0 : s.elapsed;
   const near = distance(s.player, partnerPose(s)) < 170;
   return {
-    speaking: s.phase === "playing" && s.muted <= 0,
+    speaking,
     peek:
       near &&
       (!!s.visit ||
         s.busy?.key === "food" ||
         (s.elapsed + (s.seed % 3)) % 6 < 1.3),
     mouth:
-      s.phase === "playing" && s.muted <= 0
+      speaking
         ? 0.22 +
-          0.78 * Math.abs(Math.sin(s.elapsed * 9) * Math.cos(s.elapsed * 3.1))
+          0.78 * Math.abs(Math.sin(speechTime * 9) * Math.cos(speechTime * 3.1))
         : 0,
   };
 }
@@ -280,10 +293,12 @@ export function nearest(s: Game): Spot | null {
   );
 }
 export function travel(s: Game, spot: Spot) {
-  if (s.phase !== "playing" || s.busy || s.delta?.active) return;
+  if (s.phase !== "playing" || s.busy || s.delta?.active || dailyModal(s)) return;
   s.target = spot;
   const dest =
-    spot === "partner" && s.visit
+    spot === "partner" && offAir(s)
+      ? s.daily?.after === "rice" ? { x: 396, y: 238 } : { x: 641, y: 447 }
+      : spot === "partner" && s.visit
       ? { x: s.visit.x - 28, y: s.visit.y + 27 }
       : spot === "door"
         ? { x: s.player.x < 520 ? 474 : 566, y: 410 }
@@ -303,7 +318,7 @@ export function travel(s: Game, spot: Spot) {
   ) s.message = "TA趁切换画面，偷偷向你张开手：过来，想抱你。";
 }
 export function signal(s: Game) {
-  if (s.phase !== "playing") return;
+  if (s.phase !== "playing" || offAir(s)) return;
   if (distance(s.player, interactionPoint(s, "partner")) >= 75) {
     s.message = "要走到TA身旁，才能交换眼神暗号。";
     return;
@@ -331,7 +346,12 @@ function availableAction(
       (focus === "door" ? 75 : 70)
       ? focus
       : null;
+  if (dailyModal(s)) return { key: "", label: "完成眼前的小事", seconds: 0, noise: 0 };
+  if (s.daily?.stage === "after" && (spot === "partner" || spot === (s.daily.after === "rice" ? "kitchen" : "bed"))) return { key: "discover", label: "轻声叫岁己", seconds: 0.3, noise: 0 };
   const pending = (id: Task) => s.tasks.includes(id) && !s.done.includes(id);
+  if (spot === "kitchen" && pending("cook") && !s.carry) return { key: "cook", label: "开始炒蛋炒饭", seconds: 0.2, noise: 0 };
+  if (spot === "sofa" && pending("leisure") && s.done.includes("food")) return { key: "leisure", label: "坐下看视频 / 玩游戏", seconds: 0.2, noise: 0 };
+  if (spot === "bed" && s.daily && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: "先睡一会儿，等岁己下播", seconds: 0.3, noise: 0 };
   if (spot === "door") return {
       key: "door",
       label: s.doorClosed ? "轻轻开门" : "轻轻关门",
@@ -344,11 +364,11 @@ function availableAction(
       seconds: 0.4,
       noise: 13,
     };
-  if (spot === "entry" && pending("food") && !s.carry) return { key: "pickup-food", label: "拿起外卖袋", seconds: 0.35, noise: 8 };
+  if (spot === "entry" && pending("food") && !s.carry && !s.daily?.homemade) return { key: "pickup-food", label: s.daily ? `拿起${mealOf(s).name}` : "拿起外卖袋", seconds: 0.35, noise: 8 };
   if (spot === "sofa" && s.carry === "charger") return { key: "charger", label: "把充电器放好", seconds: 0.45, noise: 1 };
   if (spot === "table" && s.carry === "food") return {
       key: "food",
-      label: "把饭盒和饮料摆到桌上",
+      label: s.daily ? `把${s.daily.homemade ? "亲手炒的蛋炒饭" : mealOf(s).name}摆好` : "把饭盒和饮料摆到桌上",
       seconds: 1.0,
       noise: 19,
     };
@@ -366,7 +386,7 @@ function availableAction(
       seconds: 3,
       noise: 16,
     };
-  if (spot === "sofa" && s.tasks.every((t) => s.done.includes(t))) return { key: "finish", label: "收工，等TA下播", seconds: 0.25, noise: 0 };
+  if (spot === "sofa" && !s.daily && s.tasks.every((t) => s.done.includes(t))) return { key: "finish", label: "收工，等TA下播", seconds: 0.25, noise: 0 };
   return {
     key: "",
     label: spot ? "这里暂时没有要做的事" : "点击地点走过去",
@@ -385,6 +405,9 @@ export function action(s: Game, focus: Spot | null = nearest(s)) {
   return { ...a, mode };
 }
 function completeAction(s: Game, key: string) {
+  if (key === "cook" || key === "leisure") { openDailyPanel(s, key); return; }
+  if (key === "sleep") { sleepDaily(s); return; }
+  if (key === "discover") { discoverDaily(s); return; }
   if (key === "door") {
     if (!walkable(s.player, !s.doorClosed, BODY_RADIUS + 2)) {
       s.message = s.doorClosed ? '你挡住门打开的位置了，往旁边退一点再开门。' : '你还站在门缝里。先走到门的一侧，再轻轻关门。';
@@ -422,10 +445,12 @@ function completeAction(s: Game, key: string) {
       s.visit = { x: 694, y: 329, remaining: 12 };
       s.message = "TA边讲话边起身，悄悄朝你张开手。要抱一下吗？也可以继续忙。";
     }
+    if (key === "food" && s.daily) s.message = `你把${mealOf(s).name}摆好：${mealOf(s).note} 岁己笑着在桌下勾了勾你的手。`;
     if ((key === "hug" || key === "kiss") && s.visit) s.visit.remaining = 2;
   }
 }
 function heardNoise(s: Game, noise: number) {
+  if (offAir(s)) return 0;
   const b = broadcast(s);
   const wall =
     s.player.x < 506 ? (s.doorClosed ? (s.seal ? 0.07 : 0.15) : 0.48) : 1;
@@ -535,7 +560,7 @@ export const ending = (s: Game) => (!s.won
         ? "全弹幕都在磕"
         : "只属于我们的晚安");
 export function record(save: Save, s: Game): Save {
-  if (!s.won) return save;
+  if (!s.won || s.daily) return save;
   const next = { ...save, best: [...save.best], stars: [...save.stars] };
   if (s.level === 5) next.endlessBest = Math.max(next.endlessBest, s.totalScore);
   else {
@@ -552,7 +577,11 @@ export function step(s: Game, dt: number, input: Input) {
     for (let left = dt; left > 0.00001 && s.phase === "playing"; left -= 0.05) step(s, Math.min(left, 0.05), input);
     return;
   }
-  s.elapsed += dt;
+  if (s.daily?.stage === "complete") { end(s, true, "daily"); return; }
+  if (!offAir(s)) s.elapsed += dt;
+  const modal = stepDaily(s, dt);
+  if (s.elapsed >= s.limit && !offAir(s)) { end(s, false, "timeout"); return; }
+  if (modal) return;
   s.muted = Math.max(0, s.muted - dt);
   s.cooldown = Math.max(0, s.cooldown - dt);
   s.affection = Math.max(0, s.affection - dt);

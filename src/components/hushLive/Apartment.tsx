@@ -22,6 +22,9 @@ import {
   paintAvatar,
 } from "./textures3d";
 
+import DailyScene, { MealModels } from "./DailyScene";
+import { offAir } from "./daily";
+
 type Vec = [number, number, number];
 type BoxProps = {
   at: Vec;
@@ -231,6 +234,8 @@ function Partner({
   const left = useRef<THREE.Group>(null);
   const right = useRef<THREE.Group>(null);
   const eyes = useRef<THREE.Group>(null);
+  const headphones = useRef<THREE.Group>(null);
+  const towel = useRef<THREE.Group>(null);
   const smile = useRef<THREE.Mesh>(null);
   const mouth = useRef<THREE.Mesh>(null);
   const seatedLegs = useRef<THREE.Group>(null);
@@ -248,6 +253,8 @@ function Partner({
         ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
         : dt;
     lastAnimationTime.current = r.elapsedFrame;
+    if (headphones.current) headphones.current.visible = !offAir(r.game);
+    if (towel.current) towel.current.visible = !player && offAir(r.game) && r.game.daily?.after === "shower";
     rig.current.visible = !player || r.game.won;
     const pos = r.game.won
       ? { x: player ? 209 : 259, y: 327 }
@@ -276,7 +283,7 @@ function Partner({
       !r.game.busy;
     const wanted = r.game.won
       ? Math.atan2(-2.7 - x, 1.74 - z)
-      : near && (behavior.peek || romantic)
+      : near && (behavior.peek || romantic || offAir(r.game))
         ? Math.atan2(px - x, pz - z)
         : Math.PI;
     if (mouth.current && smile.current) {
@@ -308,7 +315,7 @@ function Partner({
       ) ||
         r.game.affection > 0);
     for (const arm of [left.current, right.current]) if (arm) arm.rotation.x +=
-          ((hugging ? -1.45 : invitation ? -0.8 : -0.3) - arm.rotation.x) *
+          ((offAir(r.game) && r.game.daily?.after === "rice" ? -0.6 + Math.sin(r.game.daily.clock * 4) * 0.2 : hugging ? -1.45 : invitation ? -0.8 : -0.3) - arm.rotation.x) *
           Math.min(1, motionDt * 6);
     if (eyes.current) eyes.current.scale.y = Math.sin(r.game.pulse * 0.37) > 0.99 ? 0.15 : 1;
     if (!player) {
@@ -387,6 +394,11 @@ function Partner({
         radius={0.065}
         color="#eec3a5"
       />
+      <group ref={towel}>
+        <Box at={[0, 1.03, -0.045]} size={[0.47, 0.085, 0.18]} color="#d3ddd0" />
+        <Box at={[-0.15, 0.91, 0.15]} size={[0.1, 0.3, 0.035]} color="#d3ddd0" />
+        <Box at={[0.15, 0.91, 0.15]} size={[0.1, 0.3, 0.035]} color="#d3ddd0" />
+      </group>
       <group ref={head} position={[0, 1.29, 0]}>
         <Ball
           at={[0, 0, -0.025]}
@@ -473,7 +485,7 @@ function Partner({
           />
         ))}
         {!player && (
-          <>
+          <group ref={headphones}>
             <mesh rotation={[0, 0, 0]}>
               <torusGeometry args={[0.222, 0.018, 8, 22, Math.PI]} />
               <meshStandardMaterial color="#e0ccb5" />
@@ -490,7 +502,7 @@ function Partner({
               scale={[0.44, 1.3, 0.8]}
               color="#e0ccb5"
             />
-          </>
+          </group>
         )}
       </group>
       {[-1, 1].map((sign) => (
@@ -560,6 +572,8 @@ function Room({
   const onSofa = useRef<THREE.Group>(null);
   const led = useRef<THREE.MeshStandardMaterial>(null);
   const chair = useRef<THREE.Group>(null);
+  const roomLight = useRef<THREE.HemisphereLight>(null);
+  const lastOffAir = useRef<boolean | null>(null);
   const avatarSignature = useRef('');
   const lastAnimationTime = useRef(r.elapsedFrame);
   const lastMonitorFrame = useRef(-1);
@@ -569,14 +583,21 @@ function Room({
   );
   useFrame((_, dt) => {
     const { tracking } = r;
+    const offline = offAir(r.game);
+    if (roomLight.current) roomLight.current.intensity = offline ? 0.72 : 1.15;
+    if (lastOffAir.current !== offline) {
+      lastOffAir.current = offline;
+      const c = (textures.door.image as HTMLCanvasElement).getContext("2d");
+      if (c) { c.fillStyle = offline ? "#567564" : "#a26a67"; c.fillRect(0, 0, 512, 320); c.fillStyle = "#f5e8cc"; c.textAlign = "center"; c.font = "bold 44px sans-serif"; c.fillText(offline ? "OFF AIR" : "ON AIR", 256, 155); textures.door.needsUpdate = true; }
+    }
     // The swivel seat follows the seated body. It stays behind when the partner stands up.
     if (chair.current && tracking.stand < 0.1 && !r.game.won) {
       chair.current.rotation.y = tracking.yaw;
       tracking.chairYaw = tracking.yaw;
     }
-    const signature = [tracking.yaw, tracking.pitch, tracking.roll, tracking.mouth, tracking.blink, tracking.stand, r.game.won].join('|');
+    const signature = [tracking.yaw, tracking.pitch, tracking.roll, tracking.mouth, tracking.blink, tracking.stand, r.game.won, offline].join('|');
     if (signature !== avatarSignature.current) {
-      paintAvatar(textures.avatar, tracking, r.game.won);
+      paintAvatar(textures.avatar, tracking, r.game.won || offline);
       avatarSignature.current = signature;
       tracking.avatarYaw = Math.atan2(Math.sin(tracking.yaw - Math.PI), Math.cos(tracking.yaw - Math.PI));
       tracking.avatarMouth = tracking.mouth;
@@ -605,7 +626,7 @@ function Room({
       );
     }
     if (bag.current) bag.current.visible =
-        r.game.carry !== "food" &&
+        !r.game.daily?.homemade && r.game.carry !== "food" &&
         !r.game.done.includes("food") &&
         r.game.busy?.key !== "pickup-food";
     if (charger.current) charger.current.visible =
@@ -627,7 +648,7 @@ function Room({
     if (onSofa.current) onSofa.current.visible = r.game.done.includes("charger");
     if (led.current) {
       led.current.color.set(
-        r.game.muted > 0 || r.game.won ? "#80b18a" : "#d87067",
+        r.game.muted > 0 || r.game.won || offAir(r.game) ? "#80b18a" : "#d87067",
       );
       led.current.emissive.copy(led.current.color);
     }
@@ -647,7 +668,7 @@ function Room({
   return (
     <>
       <color attach="background" args={["#b9c3bd"]} />
-      <hemisphereLight args={["#fff4dc", "#b6b5a0", 1.15]} />
+      <hemisphereLight ref={roomLight} args={["#fff4dc", "#b6b5a0", 1.15]} />
       <ambientLight intensity={0.5} />
       <directionalLight
         position={[-4, 7, 2]}
@@ -926,41 +947,7 @@ function Room({
           color="#dcd9bb"
         />
         <group ref={delivered} position={[-1.2, 0.825, 0.3]}>
-          <mesh position={[0.25, 0.1, -0.02]} castShadow>
-            <cylinderGeometry args={[0.05, 0.045, 0.2, 14]} />
-            <meshStandardMaterial color="#bbd3b8" />
-          </mesh>
-          <Rod
-            from={[0.25, 0.17, -0.02]}
-            to={[0.27, 0.28, -0.02]}
-            radius={0.006}
-            color="#f3e5ce"
-          />
-          <Rod
-            from={[-0.13, 0.07, 0.18]}
-            to={[0.18, 0.07, 0.18]}
-            radius={0.006}
-            color="#8c7350"
-          />
-          <Rod
-            from={[-0.13, 0.07, 0.2]}
-            to={[0.18, 0.07, 0.2]}
-            radius={0.006}
-            color="#8c7350"
-          />
-          <Box at={[0, 0.025, 0]} size={[0.4, 0.055, 0.28]} color="#eee6d3" />
-          <Ball
-            at={[-0.09, 0.08, 0]}
-            radius={0.06}
-            scale={[1.4, 0.6, 1]}
-            color="#b87951"
-          />
-          <Ball
-            at={[0.08, 0.08, 0]}
-            radius={0.065}
-            scale={[1.3, 0.6, 1]}
-            color="#88a06c"
-          />
+          <MealModels runtime={r} />
         </group>
       </group>
       {Array.from({ length: 9 }, (_, i) => (
@@ -993,7 +980,7 @@ function Room({
       <Partner runtime={r} appearance={appearance} />
       <Partner runtime={r} appearance={appearance} player />
       {/* Bed and the charger drawer at its foot. */}
-      <group position={bed.at}>
+      <group position={bed.at} userData={{ spot: "bed" }}>
         <Box at={[0, 0.22, 0]} size={[bed.w, 0.4, bed.d]} color="#b59d85" />
         <Box
           at={[0, 0.46, 0]}
@@ -1043,17 +1030,16 @@ function Room({
         color="#9a8b73"
       />
       <Ball at={[-5.89, 1.0, 1.64]} radius={0.045} color="#c5b085" />
-      <Hands runtime={r} texture={textures.food} />
+      <DailyScene runtime={r} />
+      <Hands runtime={r} />
       <GoalMarker runtime={r} />
     </>
   );
 }
 function Hands({
   runtime: r,
-  texture,
 }: {
   runtime: Runtime3D;
-  texture: THREE.Texture;
 }) {
   const group = useRef<THREE.Group>(null);
   const food = useRef<THREE.Group>(null);
@@ -1130,7 +1116,7 @@ function Hands({
       <group ref={group}>
         <Ball at={[0, 0.025, 0]} radius={0.06} color="#efc7a7" />
         <group ref={food}>
-          <FoodBag texture={texture} />
+          <MealModels runtime={r} />
         </group>
         <group ref={charger}>
           <Charger />

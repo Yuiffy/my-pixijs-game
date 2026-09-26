@@ -417,3 +417,55 @@ test('a previously trapped player can move out of a door overlap but cannot tunn
   const wall={x:515,y:355};assert.deepEqual(nav.moveBody(wall,{x:480,y:355},true),wall);
   assert.deepEqual(nav.moveBody({x:490,y:410},{x:550,y:410},true),{x:490,y:410});
 });
+
+
+const daily = await loadTypescriptModule('src/components/hushLive/daily.ts');
+function dailyStart(homemade = false, seed = 1, meal = 'tea') {
+  const s = createGame(0, seed);
+  daily.beginDaily(s, homemade, meal); s.phase = 'playing'; return s;
+}
+function timingWin(s) {
+  for (let i = 0; i < 3; i++) {
+    for (let n = 0; n < 100 && (daily.timingPosition(s) < .4 || daily.timingPosition(s) > .6 || s.daily.cooldown > 0); n++) advance(s, .025);
+    daily.timingTap(s);
+  }
+  assert.equal(s.daily.panel, null);
+}
+test('daily arrival requires three timed actions; mistakes retry, pause freezes and movement stays blocked', () => {
+  const s = dailyStart(); const start = {...s.player};
+  daily.timingTap(s); assert.equal(s.daily.beats, 0); assert.equal(s.daily.mistakes, 1);
+  advance(s, .4, {...emptyInput(), x: 1, act: true}); assert.deepEqual(s.player, start);
+  e.togglePause(s); const clock = s.daily.clock; advance(s, 5); daily.timingTap(s); assert.equal(s.daily.clock, clock); assert.equal(s.daily.beats, 0);
+  e.togglePause(s); timingWin(s); assert.equal(s.phase, 'playing');
+});
+test('all seven meals and homemade rice run from entry to after-stream choices using real routes', () => {
+  const endings = new Set();
+  for (const homemade of [false, true]) for (const [index, meal] of daily.MEALS.entries()) {
+    const s = dailyStart(homemade, index + 1, meal.id); timingWin(s);
+    if (homemade) { walk(s, 'kitchen'); hold(s); assert.equal(s.daily.panel, 'cook'); timingWin(s); assert.ok(s.done.includes('cook')); }
+    else { walk(s, 'entry'); hold(s); }
+    assert.equal(s.carry, 'food'); walk(s, 'table'); hold(s); assert.ok(s.done.includes('food'));
+    walk(s, 'sofa'); hold(s); assert.equal(s.daily.panel, 'leisure');
+    s.daily.entertainment = homemade ? 'game' : 'video'; advance(s, 3);
+    assert.ok(s.daily.unread); assert.match(s.daily.messages.at(-1).text, homemade ? /游戏的声音/ : /视频的声音/);
+    daily.replyQuietly(s); const love = s.love; daily.replyQuietly(s); assert.equal(s.love, love); assert.equal(s.daily.volume, 15);
+    advance(s, 6); daily.finishLeisure(s); assert.ok(s.done.includes('leisure'));
+    walk(s, 'bed'); hold(s); assert.equal(s.daily.stage, 'sleep'); advance(s, 3.1); assert.equal(s.daily.stage, 'after'); assert.equal(objective(s).spot, 'partner');
+    const elapsed = s.elapsed; advance(s, 1); assert.equal(s.elapsed, elapsed); assert.equal(e.partnerBehavior(s).speaking, false);
+    walk(s, s.daily.after === 'rice' ? 'kitchen' : 'bed'); hold(s); assert.equal(s.daily.panel, 'story');
+    const choice = homemade ? 'care' : 'together';
+    e.togglePause(s); daily.chooseGoodnight(s, choice); assert.equal(s.daily.stage, 'goodnight'); e.togglePause(s);
+    const beforeChoice = s.love;
+    daily.chooseGoodnight(s, choice); daily.chooseGoodnight(s, choice); assert.equal(s.love, beforeChoice + 25);
+    advance(s, .05); assert.ok(s.won); assert.ok(s.daily.memory.length > 20); endings.add(s.daily.memory);
+    assert.deepEqual(e.record(e.freshSave(), s), e.freshSave());
+  }
+  assert.equal(endings.size, 4, 'both choices in each after-stream scene must have a reachable distinct ending');
+});
+test('quiet leisure causes no complaint, short visits do not complete, loud reminders do not spam', () => {
+  const s = dailyStart(); timingWin(s); daily.openDailyPanel(s, 'leisure'); s.daily.volume = 0;
+  advance(s, 2); daily.finishLeisure(s); assert.ok(!s.done.includes('leisure'));
+  daily.openDailyPanel(s, 'leisure'); advance(s, 9); assert.equal(s.daily.messages.length, 1);
+  s.daily.volume = 80; advance(s, 30); assert.equal(s.daily.messages.length, 2); assert.ok(s.suspicion < 100);
+  daily.finishLeisure(s); assert.ok(s.done.includes('leisure'));
+});

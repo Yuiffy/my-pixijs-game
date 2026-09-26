@@ -12,6 +12,7 @@ export type Obstacle = {
 export const SCALE = 70;
 export const BODY_RADIUS = 10;
 export const FURNITURE: Obstacle[] = [
+  { name: "kitchen", x: 365, y: 133, w: 110, h: 50 },
   { name: "sofa", x: 109, y: 270, w: 211, h: 82 },
   { name: "coffee", x: 335, y: 351, w: 63, h: 54 },
   { name: "desk", x: 108, y: 125, w: 195, h: 54 },
