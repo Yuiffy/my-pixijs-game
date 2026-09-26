@@ -120,6 +120,15 @@ const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
     title: '经营与策略',
     games: [
       {
+        title: '上船！应援事务所',
+        href: '/game/hype-harbor',
+        description: '四位主播三条船。应援出圈、押未达标人数，或抢名场面切片，和朋友比比眼光。',
+        image: '/games/hype-harbor/preview.png',
+        meta: '投资桌游 · 2–4 人 · AI / 本地多人',
+        releaseDate: '2026-09-26',
+        updateDate: '2026-09-26',
+      },
+      {
         title: '智能纪元',
         href: '/game/agi',
         description: '训练、蒸馏、发布大模型，与三家实验室竞速 AGI。',
