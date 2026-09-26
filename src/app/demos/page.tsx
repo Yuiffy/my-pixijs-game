@@ -155,9 +155,9 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
       {
         title: '维阿发掘局',
         href: '/game/brick-excavation',
-        description: '敲落连成一片的彩色砖块，挖出藏在下面的维阿主播。',
-        image: '/images/autochess/portraits/minimal/sui.png',
-        meta: '连色解谜 · 三份人物档案 · 步数挑战',
+        description: '敲落连成一片的彩色砖块，找齐一盘中埋藏的维阿主播。',
+        image: '/games/brick-excavation/sui-excavation.png',
+        meta: '连色解谜 · 多件出土 · 两次洗牌',
       },
       {
         title: '维阿弹棋',
