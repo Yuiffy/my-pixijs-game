@@ -5,9 +5,10 @@ import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost } from './engine';
 import { companionName, createCompanion, guideTargets, leadTo, mainTarget, recommendedTarget, speak, stopLeading, targetLabel, updateCompanion } from './companion';
-import type { CameraControl, GameInput, GameState } from './types';
+import type { CameraControl, GameInput, GameState, PlayerSkin } from './types';
 import { LANDMARKS, SURFACES, regionAt } from './world';
 import { ActionControls } from './controls';
+import { PLAYER_SKINS } from './CharacterStyle';
 import styles from './nightRain.module.css';
 
 const WorldView = dynamic(() => import('./WorldView'), { ssr: false });
@@ -48,7 +49,7 @@ export default function NightRain() {
     try {
       if (stateRef.current.mode !== 'title') localStorage.setItem(STORAGE, saveGame(stateRef.current));
       const cc = companionRef.current;
-      localStorage.setItem(`${STORAGE}-settings`, JSON.stringify({ enabled: cc.enabled, skin: cc.skin, voice: cc.voice }));
+      localStorage.setItem(`${STORAGE}-settings`, JSON.stringify({ enabled: cc.enabled, skin: cc.skin, voice: cc.voice, playerSkin: stateRef.current.playerSkin }));
       return true;
     } catch { setStorageError(true); return false; }
   }, []);
@@ -81,10 +82,10 @@ sprint: pad?.sprint,
       heavyHeld: held.has('k') || controls.current?.heavyHeld,
       aim: Math.atan2(-Math.sin(yaw), -Math.cos(yaw)),
     };
-    const previousLamps = s.litLamps.length; const previousRest = s.restCount; const previousCollected = s.collected.length; const previousDoors = Number(s.shortcut) + Number(s.templeGate);
+    const previousLamps = s.litLamps.length; const previousRest = s.restCount; const previousCollected = s.collected.length; const previousDoors = Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate);
     const before = s.time; const previousMessage = s.messageSerial;
     stepGame(s, ms, action); updateCompanion(cc, s, s.time - before);
-    if ((s.litLamps.length !== previousLamps || s.restCount !== previousRest || s.collected.length !== previousCollected || previousDoors !== Number(s.shortcut) + Number(s.templeGate)) && save() && (s.restCount !== previousRest || s.litLamps.length !== previousLamps)) setRecordedAt(s.time);
+    if ((s.litLamps.length !== previousLamps || s.restCount !== previousRest || s.collected.length !== previousCollected || previousDoors !== Number(s.shortcut) + Number(s.templeGate) + Number(s.harborGate)) && save() && (s.restCount !== previousRest || s.litLamps.length !== previousLamps)) setRecordedAt(s.time);
     if (cc.enabled && s.messageSerial !== previousMessage && (s.interpretation || s.messageKind === 'hint')) speak(cc, s, s.interpretation || s.message, 8);
     pending.current = { x: 0, z: 0 };
     // Public input is one action per advance, never a mutation hook.
@@ -96,6 +97,7 @@ sprint: pad?.sprint,
       saved.current = loadGame(localStorage.getItem(STORAGE)); setCanResume(!!saved.current && saved.current.mode !== 'title');
       const options = JSON.parse(localStorage.getItem(`${STORAGE}-settings`) ?? '{}');
       if (options && typeof options === 'object') {
+        if (Object.hasOwn(PLAYER_SKINS, options.playerSkin ?? ''))stateRef.current.playerSkin = options.playerSkin;
         if (typeof options.enabled === 'boolean') companionRef.current.enabled = options.enabled;
         if (options.skin === 'biscuit' || options.skin === 'otter') companionRef.current.skin = options.skin;
         if (typeof options.voice === 'boolean') companionRef.current.voice = options.voice;
@@ -179,8 +181,9 @@ sprint: pad?.sprint,
     window.speechSynthesis.cancel(); window.speechSynthesis.speak(utterance);
   }, [view]);
   const begin = (resume = false) => {
-    const old = companionRef.current;
+    const old = companionRef.current; const chosenSkin = stateRef.current.playerSkin;
     stateRef.current = resume && saved.current ? saved.current : createGame();
+    stateRef.current.playerSkin = chosenSkin;
     startGame(stateRef.current); stateRef.current.paused = false;
     companionRef.current = { ...createCompanion(stateRef.current), enabled: old.enabled, skin: old.skin, voice: old.voice };
     lastVoice.current = 0; resetCamera(); confirmRef.current = false; setRestartConfirm(false); showPanel(null);
@@ -193,6 +196,7 @@ sprint: pad?.sprint,
   const guideTo = (id?: string) => { if (leadTo(c, g, id)) focusGuide(); showPanel(null); };
   const settings = (
     <div className={styles.settings}>
+      <div className={styles.skins} aria-label="旅人皮肤">{(Object.keys(PLAYER_SKINS) as PlayerSkin[]).map(id => <button key={id} aria-pressed={g.playerSkin === id} onClick={() => { g.playerSkin = id; save(); redraw(); }}>{PLAYER_SKINS[id].name}</button>)}</div>
       <label className={styles.toggle} htmlFor="baby-mode"><input id="baby-mode" type="checkbox" checked={c.enabled} onChange={e => { c.enabled = e.target.checked; c.path = []; c.targetId = null; c.status = 'following'; c.position = { ...g.player }; cancelVoice(); save(); redraw(); }} />宝宝模式 <span>有人陪你探索与认路</span></label>
       {c.enabled && (
 <>
@@ -208,7 +212,7 @@ sprint: pad?.sprint,
   );
   const error = useCallback(() => { setSceneError(true); showPanel('pause'); }, [showPanel]);
   const sceneReady = useCallback(() => setReady(true), []);
-  const boss = g.enemies.find(e => e.kind === 'boss' && e.aggro && e.hp > 0);
+  const boss = g.enemies.find(e => ['boss', 'nana', 'azi'].includes(e.kind) && e.aggro && e.hp > 0);
   const locked = g.enemies.find(e => e.id === g.lockedId);
   const usingPad = controls.current?.source === 'gamepad';
   const threat = c.enabled ? g.enemies.find(e => e.action === 'windup' && e.timer < 0.3 && Math.abs(e.y - g.player.y) < 1 && Math.hypot(e.x - g.player.x, e.z - g.player.z) < 4) : undefined;
@@ -249,7 +253,7 @@ onPointerCancel={() => { drag.current = null; }}
       {g.mode !== 'title' && (
 <>
         <div className={styles.hud}>
-          <p>岁己 <span>行装 +{g.level}</span></p>
+          <p>{PLAYER_SKINS[g.playerSkin].name} <span>行装 +{g.level}</span></p>
           <div className={styles.meter} aria-label={`生命 ${Math.ceil(g.player.hp)} / ${maxHp(g)}`}><i style={{ width: `${(100 * g.player.hp) / maxHp(g)}%` }} /></div>
           <div className={`${styles.meter} ${styles.stamina}`} aria-label={`体力 ${Math.ceil(g.player.stamina)}`}><i style={{ width: `${(100 * g.player.stamina) / maxStamina(g)}%` }} /></div>
           <small>◈ {g.rice} 夜市钱 <span>归灯 · {g.checkpoint === "room" ? "旅馆" : targetLabel(g.checkpoint)}</span></small>
@@ -276,7 +280,7 @@ onPointerCancel={() => { drag.current = null; }}
           {c.enabled && <div className={styles.keyHelp}>{usingPad ? '左摇杆移动 · 右摇杆视角 · RB / RT 攻击 · LB 轻按弹反 / 按住防御 · A 跳跃 · B 轻按闪避 / 按住跑 · R3 锁定 · Menu 暂停' : `${controls.current?.locked ? '鼠标转视角 · 按住 Alt 显示光标' : controls.current?.altHeld ? '松开 Alt 返回视角控制' : controls.current?.lockMessage || '点击画面捕获鼠标'} · WASD 移动 · 左 / 右键攻击 · 空格跳跃 · Shift 轻按闪避 / 按住跑`}</div>}
         </>
 )}
-        {boss && !panel && <div className={styles.boss}><p>{boss.name}<span>{boss.phase === 2 ? '第二式 · 铁伞破裂' : '守街第一式'}</span></p><div className={styles.meter}><i style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }} /></div><div className={`${styles.meter} ${styles.posture}`}><i style={{ width: `${(boss.posture / boss.maxPosture) * 100}%` }} /></div></div>}
+        {boss && !panel && <div className={styles.boss}><p>{boss.name}<span>{boss.kind === 'nana' ? boss.phase === 2 ? '七潮叠浪' : '潮声初起' : boss.kind === 'azi' ? boss.phase === 2 ? '夜曲 · 变奏' : '夜曲 · 序拍' : boss.phase === 2 ? '第二式 · 铁伞破裂' : '守街第一式'}</span></p><div className={styles.meter}><i style={{ width: `${(boss.hp / boss.maxHp) * 100}%` }} /></div><div className={`${styles.meter} ${styles.posture}`}><i style={{ width: `${(boss.posture / boss.maxPosture) * 100}%` }} /></div></div>}
       </>
 )}
       {panel && g.mode === 'playing' && (
@@ -287,10 +291,10 @@ onPointerCancel={() => { drag.current = null; }}
         {panel === 'map' ? (
 <>
           {c.enabled && <p>{getObjective(g)}</p>}
-          <svg viewBox="-40 -56 68 80" className={styles.map} role="img" aria-label={c.enabled ? "旧城回环：中庭向西登高，经屋脊与夜市沿东侧返回；铃兰回廊连接中庭与高阶。" : "旧城地图"}>
+          <svg viewBox="-40 -88 108 112" className={styles.map} role="img" aria-label={c.enabled ? "旧城回环：中庭向西登高，经屋脊与夜市沿东侧返回；铃兰回廊连接中庭与高阶。" : "旧城地图"}>
             {SURFACES.map(s => <rect key={s.id} x={s.x1} y={s.z1} width={s.x2 - s.x1} height={s.z2 - s.z1} fill={g.visited.includes(s.name) ? '#857455' : '#394b50'} stroke="#b6a783" strokeWidth=".2" />)}
             {[
-              { x: 4, z: -51, label: '封街夜市' }, { x: -31, z: -36, label: '残钟雨寺' },
+              { x: 36, z: -85, label: '黎明钟' }, { x: 40, z: -71, label: '七重潮门' }, { x: 58, z: -57, label: '苔灯戏台' }, { x: 39, z: -25, label: '潮汐港' }, { x: 4, z: -51, label: '封街夜市' }, { x: -31, z: -36, label: '残钟雨寺' },
               { x: -8, z: -18, label: '金塔屋脊' }, { x: 20, z: -24, label: '摆渡庵' },
               { x: 1, z: 3, label: '雨灯中庭' }, { x: 4, z: 21, label: '旅馆' },
             ].map(l => <text key={l.label} x={l.x} y={l.z} textAnchor="middle" fontSize="2.4" fill="#e3d6b8">{l.label}</text>)}
@@ -302,8 +306,8 @@ onPointerCancel={() => { drag.current = null; }}
 ))}
             <line x1="10" y1="-8" x2="14" y2="-8" stroke={g.shortcut ? '#8bd6b3' : '#ed8176'} strokeWidth=".8" />
             <line x1="-35" y1="-6" x2="-26" y2="-6" stroke={g.templeGate ? "#8bd6b3" : "#ed8176"} strokeWidth=".8" />
-            <circle cx={g.player.x} cy={g.player.z} r="1" fill="#fff" stroke="#d9a254" strokeWidth=".4" />
-          </svg><small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate)} / 2</small>
+            <line x1="27" y1="-8" x2="31" y2="-8" stroke={g.harborGate ? "#8bd6b3" : "#ed8176"} strokeWidth=".8" /><circle cx={g.player.x} cy={g.player.z} r="1" fill="#fff" stroke="#d9a254" strokeWidth=".4" />
+          </svg><small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate)} / 3</small>
         </>
 ) : panel === 'companion' ? (
 <>
@@ -339,7 +343,7 @@ onPointerCancel={() => { drag.current = null; }}
         <p className={styles.eyebrow}>{g.mode === 'dead' ? '雨灯未熄' : '岁己的旅居手记 · 第一幕完成'}</p>
         <h2>{g.mode === 'dead' ? '再走一次就好' : '终于，吃上饭了'}</h2>
         <p>{g.mode === 'dead' ? (c.enabled ? '夜市钱留在倒下的地方。记住那一下起手，下次我们一起过去。' : '雨收走余温，灯替归人守夜。') : '热气模糊了眼镜。明天还要直播，今晚先好好吃饭。'}</p>
-        <p>发现 {g.collected.filter(id => id !== 'laptop').length} 处 · 弹反 {g.parries} 次 · 开启近道 {Number(g.shortcut) + Number(g.templeGate)} / 2 · 归灯 {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</p>
+        <p>发现 {g.collected.filter(id => id !== 'laptop').length} 处 · 弹反 {g.parries} 次 · 开启近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate)} / 3 · 归灯 {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</p>
         {g.mode === 'dead' ? <button data-game-primary className={styles.primary} onClick={() => { respawn(g); c.position = { ...g.player }; c.path = []; c.targetId = null; c.status = 'following'; showPanel(null); resetCamera(); save(); }}>回到雨灯</button> : <><button data-game-primary className={styles.primary} onClick={() => { continueExploring(g); showPanel(null); save(); }}>继续探索旧城</button><button onClick={() => setRestartConfirm(true)}>再走一场雨夜</button><Link href="/demos">回到游戏实验室</Link></>}
       </section></div>
 )}

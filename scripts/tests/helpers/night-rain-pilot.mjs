@@ -32,7 +32,7 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
   const d = gap(enemy, p); const dx = (enemy.x - p.x) / Math.max(d, 0.01); const dz = (enemy.z - p.z) / Math.max(d, 0.01);
   const input = { x: 0, z: 0 };
   if (!s.lockedId) input.lock = true;
-  const sweep = enemy.kind === 'boss' && enemy.phase === 2 && enemy.attackIndex % 3 === 2;
+  const sweep = ((enemy.kind === 'boss' && enemy.phase === 2) || enemy.kind === 'nana' || enemy.kind === 'azi') && enemy.attackIndex % 3 === 2;
   if (p.action !== 'idle') return input;
   if (enemy.action === 'stagger') {
     if (d < 2.35) input.light = true;

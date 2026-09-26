@@ -3069,3 +3069,15 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - Replace the shared timing track with three seeded locks (dial, wire pick, pins), two cooking games (physically toss/catch a dice-shaped rice cube or catch eggs), and optional 24-round recoil practice at the computer or sofa. Mouse, keyboard and touch inputs share the simulation clock; the kitchen pan and rice cube follow the minigame. Pause/blur/release clears held input.
 - Completed household tasks now allow sofa sleep during the streamer bathroom break, followed by the existing after-stream story; unfinished tasks remain required.
 - Validation: 49 rule tests; desktop and 320px touch completion of every variant, actual upward toss, recoil and pause release, bathroom-break sleep through the ending, short/landscape overflow checks, and real-RAF first-two-chapter progression. All browser tests muted; inspected screenshots and no console/page errors. Full check then production build passed with Next ESLint/type checking enabled.
+
+### 2026-09-26 · 潮汐港、角色皮肤与真实坠落
+
+- 前轮四项试玩调整已提交 6fe3cfa，工作分支已推送；正在同步远端主线完成本轮发布。参考重捏的饼干岁／獭獭栞此前提交为 9fde57e。
+- 新增栞栞／米汀可操作角色皮肤，帽子、发型、服饰、眼睛与配色分别参考仓库图片，标题／暂停可切换，设置与存档保留；与宝宝模式精灵独立。
+- 连续地图延伸潮汐港：0–6–10米主线通向七海潮门与黎明钟；3米阿梓戏台和4米晒网高廊两条支路可跳落回主路，港内绞盘开归灯长桥缩短重试。高廊下水巷可通行，寻路与角色使用一致的楼板侧面判定。移走侵入新战场的背景房屋并修正桥下相机。
+- 可跳过实际矮栏，走出断栏按重力落下；3.5米以内无伤，之后递增，10米致命。坠水钱袋留在最后安全落脚处；空中存档保留下降状态。滚动模型同时跟随坠落高度。
+- 七海持锚、阿梓持蛙铃杖，各三套独立前摇／收招与半血变化；红色环扫可跳，破架处决按首领伤害而非秒杀。两名客串战胜后休息不重生，敲钟奖励不重复，v3旧档保留原资源与敌人状态后扩入v4；未知未来版本拒绝加载。
+- 后台静音系统Chrome完整流程通过：tmp/night-rain-tide/report.json，14张整页图均像素检查与逐张目检，errors=[]。包含两皮肤／刷新、旧城第一幕、新区双首领与敲钟、双支路实际跳落伤害、低埠走回港口、雨灯休息与390px设置。共享技能客户端同样使用静音系统Chrome＋虚拟Pointer Lock，1张非黑截图与文本状态已检查；不操作用户鼠标／窗口。
+- 最新规则测试与发布check→build在隔离companions工作树继续，主共享目录其他任务改动和HEAD保留。
+
+- 发布验收：59/59规则通过，完整pnpm run check→pnpm run build依次成功，54页，Next ESLint/类型检查启用，仅既有RPG警告。生产构建tmp/night-rain-tide-production（14图）与tmp/night-rain-tide-production-companions（5图）全部像素检查并逐张目检，errors=[]；两精灵切换、跟随、宝宝开关与刷新也通过。19份源码／测试／文档与发布工作树LF归一化SHA256一致；构建期间行尾空格清理经TypeScript转译比较确认输出完全相同。当前无剩余必要修复。

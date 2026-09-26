@@ -54,13 +54,10 @@ test('aerial heavy connects on landing, not at takeoff, and jump is not universa
   step(s, 400); assert.equal(e.hp, e.maxHp - 46); assert.equal(s.player.jumpHeight, 0);
   const body = duel(); Object.assign(body.e, { action: 'attack', timer: .2, hitDone: false, facing: 0 }); step(body.s, 100, { jump: true }); assert.ok(body.s.player.hp < 100);
 });
-test('jump/attack motion cannot cross closed gate, wall or unsupported ledge', () => {
-  for (const start of [{ x: 12, y: 0, z: -7 }, { x: 8.2, y: 3, z: 6 }]) {
-    const s = fresh(); Object.assign(s.player, start); const input = start.x === 12 ? { x: 0, z: -1 } : { x: -1, z: 0 };
-    step(s, 150, { ...input, jump: true }); step(s, 600, { ...input, heavy: true });
-    assert.ok(world.canOccupy(s.player.x, s.player.z, s.player.y, false));
-    if (start.x === 12) assert.ok(s.player.z > -7.5); else assert.ok(s.player.x >= 8);
-  }
+test('jump cannot cross a tall locked gate, but clears a low corridor parapet', () => {
+  const gate=fresh();Object.assign(gate.player,{x:12,y:0,z:-7});step(gate,150,{z:-1,jump:true});step(gate,600,{z:-1,heavy:true});assert.ok(gate.player.z>-7.5);
+  const ledge=fresh();Object.assign(ledge.player,{x:9,y:3,z:6,lastGround:{x:9,y:3,z:6},fallPeak:3});
+  step(ledge,350,{x:-1,jump:true});step(ledge,800,{x:-1});assert.ok(ledge.player.x<8);assert.equal(ledge.player.y,0);assert.ok(ledge.player.hp<100);assert.equal(ledge.player.jumpHeight,0);
 });
 test('pause/Alt cancel charge and buffered inputs without releasing an unsolicited strike', () => {
   for (const cancel of [engine.clearHeldActions, s => engine.setPaused(s, true)]) {

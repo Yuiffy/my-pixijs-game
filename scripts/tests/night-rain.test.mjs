@@ -181,7 +181,7 @@ test('save restores exact combat and kills, rejects malformed data and cannot cr
 
 test('dinner continues into the same world and survives save/reload, rest and further combat',()=>{
  const {state:s}=playFirstLevel(engine);const before={player:structuredClone(s.player),enemies:structuredClone(s.enemies),rice:s.rice,collected:[...s.collected]};
- engine.continueExploring(s);assert.equal(s.mode,'playing');assert.deepEqual(s.player,before.player);assert.deepEqual(s.enemies,before.enemies);assert.equal(s.rice,before.rice);assert.deepEqual(s.collected,before.collected);assert.match(engine.getObjective(s),/自由探索/);
+ engine.continueExploring(s);assert.equal(s.mode,'playing');assert.deepEqual(s.player,before.player);assert.deepEqual(s.enemies,before.enemies);assert.equal(s.rice,before.rice);assert.deepEqual(s.collected,before.collected);assert.match(engine.getObjective(s),/潮门/);
  interact(s);assert.equal(s.mode,'playing');assert.equal(s.collected.filter(id=>id==='food').length,1);
  const loaded=loadGame(saveGame(s));assert.ok(loaded);assert.equal(loaded.mode,'playing');assert.equal(loaded.bossDefeated,true);
  const legacy=JSON.parse(saveGame(s));legacy.worldVersion=2;legacy.mode='ending';legacy.collected=legacy.collected.filter(id=>id!=='food');const restored=loadGame(JSON.stringify(legacy));assert.ok(restored);engine.continueExploring(restored);interact(restored);assert.equal(restored.mode,'playing');

@@ -15,6 +15,16 @@ function mix(a: EnemyPose, b: EnemyPose, amount: number): EnemyPose {
 }
 
 function keys(e: Enemy): [EnemyPose, EnemyPose] {
+  if (e.kind === 'nana') return e.attackIndex % 3 === 1 ? [
+    key({ ax: -3, az: -0.4, lx: -2.6, lean: -0.2, crouch: -0.15, legL: -0.4, legR: 0.4 }),
+    key({ ax: -0.7, weaponPitch: 2.5, lx: -0.8, lean: 0.4, crouch: -0.12, legL: -0.5, legR: 0.2 }),
+  ] : e.attackIndex % 3 === 2 ? [
+    key({ ax: -1.3, ay: -1.4, az: -0.9, twist: -0.8, crouch: -0.1, lx: -0.5 }),
+    key({ ax: -1.1, ay: 1.5, az: -0.2, weaponPitch: 2.5, twist: 1.3, lean: 0.15, lx: 0.7, legL: -0.4 }),
+  ] : [key({ ax: -0.8, ay: -0.3, az: -0.55, twist: -0.35, lean: -0.08, legR: -0.25 }), key({ ax: -1.6, weaponPitch: 3.05, twist: 0.3, lean: 0.22, legL: -0.4, lx: 0.5 })];
+  if (e.kind === 'azi') return e.attackIndex % 3 === 1 ? [
+    key({ ax: -2.8, az: -0.4, lx: -2.4, lean: -0.15, crouch: -0.2, legL: -0.4, legR: 0.4 }), key({ ax: -0.8, weaponPitch: 2.5, lean: 0.32, crouch: -0.12, lx: -0.9, legL: -0.5 }),
+  ] : [key({ ax: -1.2, ay: -1.2, az: -1, twist: -0.6, lx: -0.9, crouch: -0.15 }), key({ ax: -1.15, ay: 1.1, az: -0.2, weaponPitch: 2.45, twist: 0.8, lean: 0.14, lx: 0.55, legL: -0.35 })];
   if (e.kind === 'guard' || (e.kind === 'boss' && e.attackIndex % 3 === 1)) return [
     key({ ax: -2.9, az: -0.2, lx: -2.5, lz: 0.55, lean: -0.13, crouch: -0.08, legL: -0.25, legR: 0.3 }),
     key({ weaponPitch: 2.3, ax: -0.85, az: 0.05, lx: -0.85, lz: 0.5, lean: 0.27, crouch: -0.1, legL: -0.4, legR: 0.3 }),
@@ -56,6 +66,16 @@ export function enemyMotion(e: Enemy): EnemyPose | null {
 
 export function enemyAttack(e: Enemy) {
   const index = e.attackIndex % 3;
+  if (e.kind === 'nana') {
+    if (index === 1) return { name: '沉锚 · 延迟落潮', windup: 1.65, range: 3.5, arc: 0.75, damage: 43, recovery: 1.4, parryable: true, lunge: 1.2 };
+    if (index === 2) return { name: '危 · 七重返潮', windup: e.phase === 2 ? 0.92 : 1.25, range: 4.0, arc: Math.PI, damage: 34, recovery: 1.35, parryable: false, lunge: 0 };
+    return { name: '破浪锚刺', windup: e.phase === 2 ? 0.68 : 0.94, range: 3.1, arc: 0.6, damage: 31, recovery: e.phase === 2 ? 0.55 : 0.9, parryable: true, lunge: 1.7 };
+  }
+  if (e.kind === 'azi') {
+    if (index === 1) return { name: '休止符 · 迟落拍', windup: e.phase === 2 ? 1.8 : 1.4, range: 2.9, arc: 0.8, damage: 34, recovery: 1.35, parryable: true, lunge: 0.8 };
+    if (index === 2) return { name: '危 · 蛙鸣圆舞', windup: 1.12, range: 3.3, arc: Math.PI, damage: 27, recovery: 1.1, parryable: false, lunge: 0 };
+    return { name: '青杖切分', windup: 0.75, range: 2.65, arc: 1.3, damage: 25, recovery: 0.7, parryable: true, lunge: 0.7 };
+  }
   if (e.kind === 'boss') {
     if (index === 1) return { name: '拖伞重砸', windup: 1.38, range: 3.1, arc: 0.85, damage: 40, recovery: 1.16, parryable: true, lunge: 1.1 };
     if (index === 2 && e.phase === 2) return { name: '危 · 回旋扫街', windup: 1.1, range: 3.65, arc: Math.PI, damage: 36, recovery: 1.25, parryable: false, lunge: 0 };

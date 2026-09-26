@@ -15,7 +15,7 @@ const interact = (s,id) => {travel(s,id);engine.interact(s);};
 const distance = path => path.slice(1).reduce((sum,p,i)=>sum+Math.hypot(p.x-path[i].x,p.z-path[i].z,p.y-path[i].y),0);
 
 test('every expansion destination and all lamp spawn points have a legal walking route with both gates shut',()=>{
- const s=fresh();for(const l of world.LANDMARKS){assert.equal(world.heightAt(l.x,l.z),l.y);assert.ok(guide.findPath(s.player,world.interactionPoint(l),s).length,l.id);}
+ const s=fresh();for(const l of world.LANDMARKS){assert.equal(world.supportAt(l.x,l.z,l.y+.1),l.y);assert.ok(guide.findPath(s.player,world.interactionPoint(l),s).length,l.id);}
  for(const [id,p] of Object.entries(world.REST_POINTS))assert.ok(world.canOccupy(p.x,p.z,p.y,s),id);
  const p={x:-22,y:0,z:-2};const destination=world.interactionPoint(world.LANDMARKS.find(l=>l.id==='temple-lamp'));const closed=distance(guide.findPath(p,destination,s));s.templeGate=true;const open=distance(guide.findPath(p,destination,s));assert.ok(closed>open*3,`${closed} -> ${open}`);
  assert.equal(world.canOccupy(-30.5,-6,0,{shortcut:true,templeGate:false}),false);assert.equal(world.canOccupy(-30.5,-6,0,{shortcut:false,templeGate:true}),true);assert.equal(world.canOccupy(12,-8,0,{shortcut:false,templeGate:true}),false);
@@ -35,7 +35,7 @@ test('ordinary inputs traverse the temple loop, earn a fourth flask, open return
 
 test('six-enemy saves migrate without healing or resetting defeated enemies; malformed new progression rejects',()=>{
  const s=fresh();s.player.hp=52;s.player.flasks=1;s.enemies[0].hp=0;s.enemies[0].action='dead';const raw=JSON.parse(engine.saveGame(s));delete raw.worldVersion;delete raw.templeGate;delete raw.flaskUpgrade;delete raw.litLamps;raw.enemies=raw.enemies.slice(0,6);
- const loaded=engine.loadGame(JSON.stringify(raw));assert.ok(loaded);assert.equal(loaded.player.hp,52);assert.equal(loaded.player.flasks,1);assert.equal(loaded.enemies[0].hp,0);assert.equal(loaded.enemies.length,8);assert.equal(loaded.templeGate,false);
+ const loaded=engine.loadGame(JSON.stringify(raw));assert.ok(loaded);assert.equal(loaded.player.hp,52);assert.equal(loaded.player.flasks,1);assert.equal(loaded.enemies[0].hp,0);assert.equal(loaded.enemies.length,world.ENEMY_SPAWNS.length);assert.equal(loaded.templeGate,false);
  for(const corrupt of [s=>s.litLamps.push('missing'),s=>s.checkpoint='temple-lamp',s=>s.flaskUpgrade=true,s=>s.player.flasks=4,s=>s.templeGate='true']){const bad=fresh();corrupt(bad);assert.equal(engine.loadGame(engine.saveGame(bad)),null);}
 });
 
@@ -77,7 +77,7 @@ test('first ignition only registers; subsequent rest is free, refills and resets
 test('v2 retired checkpoint migrates without moving, healing, restocking or reviving enemies',()=>{
  for(const oldLamp of ['temple-lamp','canal-lamp']){
   const s=fresh();Object.assign(s.player,{...world.interactionPoint(world.LANDMARKS.find(l=>l.id===oldLamp)),hp:31,flasks:1});s.enemies[0].hp=0;s.enemies[0].action='dead';
-  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,3);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
+  s.worldVersion=2;s.checkpoint=oldLamp;s.litLamps=[oldLamp];const loaded=engine.loadGame(engine.saveGame(s));assert.ok(loaded);assert.equal(loaded.worldVersion,4);assert.equal(loaded.checkpoint,'courtyard');assert.deepEqual(loaded.litLamps,['courtyard']);assert.deepEqual(loaded.player,s.player);assert.deepEqual(loaded.enemies,s.enemies);assert.equal(loaded.restCount,s.restCount);
   s.litLamps=[];assert.equal(engine.loadGame(engine.saveGame(s)),null);
  }
 });

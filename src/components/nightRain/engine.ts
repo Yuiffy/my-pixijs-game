@@ -1,5 +1,5 @@
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
-import { canOccupy, REST_POINTS, ENEMY_SPAWNS, heightAt, LANDMARKS, lineClear, regionAt, SPAWN } from './world';
+import { deckBlocks, playerBlocked, supportAt, canOccupy, REST_POINTS, ENEMY_SPAWNS, LANDMARKS, lineClear, regionAt, SPAWN } from './world';
 
 import { enemyAttack, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
 
@@ -13,6 +13,8 @@ const STATS: Record<EnemyKind, { hp: number; posture: number; damage: number; sp
   prowler: { hp: 68, posture: 64, damage: 19, speed: 2.1, reward: 18 },
   guard: { hp: 112, posture: 94, damage: 25, speed: 1.65, reward: 30 },
   duelist: { hp: 144, posture: 100, damage: 24, speed: 2.65, reward: 45 },
+  nana: { hp: 440, posture: 165, damage: 36, speed: 2.4, reward: 180 },
+  azi: { hp: 260, posture: 130, damage: 27, speed: 2.8, reward: 110 },
   boss: { hp: 360, posture: 150, damage: 32, speed: 2.15, reward: 130 },
 };
 const DURATIONS: Record<Action, number> = { idle: 0, charge: 2, light: 0.5, heavy: 0.86, dodge: 0.64, parry: 0.52, guard: Infinity, guardRelease: 0.16, guardBreak: 0.9, hurt: 0.42, heal: 1.12, execute: 0.95, dead: Infinity };
@@ -29,15 +31,15 @@ export function maxHp(s: GameState): number { return 100 + s.level * 12; }
 export function maxStamina(s: GameState): number { return 100 + s.level * 5; }
 export function upgradeCost(s: GameState): number { return 40 + s.level * 30; }
 
-function makeEnemies(bossDefeated = false): Enemy[] {
+function makeEnemies(bossDefeated = false, defeatedGuests: string[] = []): Enemy[] {
   return ENEMY_SPAWNS.map(spawn => ({
     ...spawn,
 spawn: { x: spawn.x, y: spawn.y, z: spawn.z },
-hp: spawn.kind === 'boss' && bossDefeated ? 0 : STATS[spawn.kind].hp,
+hp: ((spawn.kind === 'boss' && bossDefeated) || defeatedGuests.includes(spawn.id)) ? 0 : STATS[spawn.kind].hp,
     maxHp: STATS[spawn.kind].hp,
 posture: 0,
 maxPosture: STATS[spawn.kind].posture,
-    action: spawn.kind === 'boss' && bossDefeated ? 'dead' : 'idle',
+    action: ((spawn.kind === 'boss' && bossDefeated) || defeatedGuests.includes(spawn.id)) ? 'dead' : 'idle',
 timer: 0.65,
     attackIndex: 0,
 hitDone: false,
@@ -52,7 +54,7 @@ function combatDefaults() {
 }
 
 function makePlayer(position: Vec3): Player {
-  return { ...position, facing: -Math.PI / 2, hp: 100, stamina: 100, action: 'idle', actionTime: 0, hitDone: false, invulnerable: 0, staminaDelay: 0, flasks: 3, dodgeX: 0, dodgeZ: 0, ...combatDefaults() };
+  return { ...position, facing: -Math.PI / 2, hp: 100, stamina: 100, action: 'idle', actionTime: 0, hitDone: false, invulnerable: 0, staminaDelay: 0, flasks: 3, fallPeak: position.y, lastGround: { ...position }, dodgeX: 0, dodgeZ: 0, ...combatDefaults() };
 }
 
 export function createGame(): GameState {
@@ -78,7 +80,10 @@ bankedRice: 0,
 level: 0,
 charm: false,
 shortcut: false,
-    worldVersion: 3,
+    worldVersion: 4,
+harborGate: false,
+defeatedGuests: [],
+playerSkin: 'sui',
 templeGate: false,
 flaskUpgrade: false,
 litLamps: [],
@@ -109,7 +114,38 @@ function effect(s: GameState, at: Vec3, kind: Effect['kind'], text?: string): vo
   if (s.effects.length > 30) s.effects.shift();
 }
 
+export const isAirborne = (p: Player) => p.jumpHeight !== 0 || p.jumpVelocity !== 0;
+export function fallDamage(drop:number):number { return drop <= 3.5 ? 0 : drop >= 10 ? 10000 : Math.ceil((drop - 3.5) * 14); }
+function movePlayer(s:GameState, dx:number, dz:number):void {
+  const p = s.player; const count = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.08));
+  for (let i = 0; i < count; i++) for (const axis of ['x', 'z'] as const) {
+    const x = p.x + (axis === 'x' ? dx / count : 0); const z = p.z + (axis === 'z' ? dz / count : 0); const
+feet = p.y + p.jumpHeight;
+    const ground = supportAt(x, z, feet + 0.6);
+    if (playerBlocked(x, z, feet, s) || s.enemies.some(e => alive(e) && Math.abs(e.y - feet) < 0.85 && Math.hypot(e.x - x, e.z - z) < 0.64)) continue;
+    // A deck has a real side; approaching a higher floor does not phase through it.
+    if (deckBlocks(x, z, feet)) continue;
+    p.x = x; p.z = z;
+    if (!isAirborne(p)) {
+      if (ground !== null && Math.abs(ground - p.y) <= 0.6) { p.y = ground; p.lastGround = { x, y: ground, z }; p.fallPeak = ground; } else { p.jumpVelocity = -0.001; p.fallPeak = p.y; p.airX = 0; p.airZ = 0; p.airAttackUsed = false; }
+    }
+  }
+}
+function updateFall(s:GameState, dt:number):void {
+  const p = s.player; const
+before = p.y + p.jumpHeight;
+  p.jumpVelocity -= 18 * dt; const after = before + p.jumpVelocity * dt;
+  p.fallPeak = Math.max(p.fallPeak, before);
+  const floor = supportAt(p.x, p.z, before + 0.001);
+  if (p.jumpVelocity < 0 && floor !== null && after <= floor) {
+    const damage = fallDamage(p.fallPeak - floor);
+    p.y = floor; p.jumpHeight = 0; p.jumpVelocity = 0; p.landing = 0.18;
+    p.lastGround = { x: p.x, y: floor, z: p.z }; p.fallPeak = floor;
+    if (damage) { p.hp = Math.max(0, p.hp - damage); p.action = 'hurt'; p.actionTime = 0; p.attack = null; p.buffer = null; effect(s, p, 'hit', `−${damage}`); if (p.hp === 0)die(s); } else effect(s, p, 'dodge');
+  } else { p.jumpHeight = after - p.y; if (after < -8) { die(s); } }
+}
 function move(s: GameState, entity: Vec3, dx: number, dz: number, radius = 0.33): void {
+  if (entity === s.player) { movePlayer(s, dx, dz); return; }
   // Resolve each axis separately so a diagonal stick slides along a wall.
   const blockedByBody = (x: number, z: number) => {
     if (entity === s.player) return s.enemies.some(e => alive(e) && Math.abs(e.y - entity.y) < 0.85 && Math.hypot(e.x - x, e.z - z) < 0.64);
@@ -118,9 +154,9 @@ function move(s: GameState, entity: Vec3, dx: number, dz: number, radius = 0.33)
   const steps = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.1));
   for (let i = 0; i < steps; i += 1) {
     const nx = entity.x + dx / steps;
-    if (canOccupy(nx, entity.z, entity.y, s, radius) && !blockedByBody(nx, entity.z)) { entity.x = nx; entity.y = heightAt(nx, entity.z) ?? entity.y; }
+    if (canOccupy(nx, entity.z, entity.y, s, radius) && !blockedByBody(nx, entity.z)) { entity.x = nx; entity.y = supportAt(nx, entity.z, entity.y + 0.6) ?? entity.y; }
     const nz = entity.z + dz / steps;
-    if (canOccupy(entity.x, nz, entity.y, s, radius) && !blockedByBody(entity.x, nz)) { entity.z = nz; entity.y = heightAt(entity.x, nz) ?? entity.y; }
+    if (canOccupy(entity.x, nz, entity.y, s, radius) && !blockedByBody(entity.x, nz)) { entity.z = nz; entity.y = supportAt(entity.x, nz, entity.y + 0.6) ?? entity.y; }
   }
 }
 
@@ -135,6 +171,7 @@ function killEnemy(s: GameState, e: Enemy): void {
   s.kills += 1; s.rice += STATS[e.kind].reward;
   effect(s, e, 'reward', `+${STATS[e.kind].reward} 夜市钱`);
   if (s.lockedId === e.id) s.lockedId = null;
+  if (e.kind === 'nana' || e.kind === 'azi') { s.defeatedGuests.push(e.id); say(s, e.kind === 'nana' ? '七潮归寂 · 晨钟有路' : '苔灯谢幕 · 余音仍在', 6, 'event', e.kind === 'nana' ? '潮门安静了。登上后面的石阶，可以敲响黎明钟，也可以继续探索。' : '阿梓留下了戏匣。戏台南边落雨檐可以跳到低码头，再走回灯市。'); }
   if (e.kind === 'boss') { s.bossDefeated = true; say(s, '铁伞已折', 5, 'event', '打赢啦！往夜市最里面的炉火走，找摊主点餐。'); }
 }
 
@@ -148,7 +185,8 @@ function damageEnemy(s: GameState, e: Enemy, hp: number, posture: number): void 
 
 function die(s: GameState): void {
   s.mode = 'dead'; s.player.hp = 0; s.player.action = 'dead'; s.deaths += 1;
-  s.bloodstain = { x: s.player.x, y: s.player.y, z: s.player.z, rice: s.rice }; s.rice = 0; s.lockedId = null;
+  s.bloodstain = { ...(isAirborne(s.player) ? s.player.lastGround : { x: s.player.x, y: s.player.y, z: s.player.z }), rice: s.rice };
+  if (isAirborne(s.player)) { Object.assign(s.player, s.player.lastGround); s.player.jumpHeight = 0; s.player.jumpVelocity = 0; } s.rice = 0; s.lockedId = null;
   effect(s, s.player, 'death'); say(s, '雨夜失足。夜市钱留在原地，回到雨灯后还能取回。', 99); s.prompt = ''; s.nearbyId = null;
 }
 
@@ -186,7 +224,7 @@ function execute(s: GameState): boolean {
   p.facing = facingToward(p, e); p.action = 'execute'; p.attack = null; p.buffer = null; p.combo = 0; p.actionTime = 0; p.hitDone = true; p.invulnerable = 1.05;
   p.stamina = Math.min(maxStamina(s), p.stamina + 30); s.executions += 1;
   e.posture = 0; e.action = 'recover'; e.timer = 1.5;
-  damageEnemy(s, e, e.kind === 'boss' ? 102 + s.level * 5 : e.hp, 0);
+  damageEnemy(s, e, ['boss', 'nana', 'azi'].includes(e.kind) ? 102 + s.level * 5 : e.hp, 0);
   effect(s, e, 'parry', '破架处决'); return true;
 }
 
@@ -222,7 +260,7 @@ function actionInput(s: GameState, input: GameInput): void {
   const requested = dodge ? 'dodge' : input.parry ? 'parry' : input.jump ? 'jump' : input.heavy ? 'heavy' : input.light ? 'light' : null;
   const spec = attackSpec(p);
   const canCancel = !!spec && p.actionTime >= spec.cancel;
-  const airborne = p.jumpHeight > 0 || p.jumpVelocity > 0;
+  const airborne = isAirborne(p);
   const leaveGuard = p.action === 'guardRelease' || (p.action === 'guard' && p.guardImpact <= 0.12);
   if (p.action !== 'idle' && !leaveGuard && !(canCancel && requested) && !(p.action === 'charge' && (dodge || input.parry))) {
     if (requested && spec && spec.cancel - p.actionTime <= BUFFER_TIME) p.buffer = { action: requested, until: s.time + BUFFER_TIME };
@@ -232,7 +270,7 @@ function actionInput(s: GameState, input: GameInput): void {
   if (input.light && !airborne && p.action === 'idle' && execute(s)) return;
   if (requested === 'jump') {
     if (!airborne && spend(s, 10)) {
-      p.action = 'idle'; p.attack = null; p.buffer = null; p.jumpVelocity = 6.3; p.airAttackUsed = false;
+      p.action = 'idle'; p.attack = null; p.buffer = null; p.jumpVelocity = 6.3; p.fallPeak = p.y; p.lastGround = { x: p.x, y: p.y, z: p.z }; p.airAttackUsed = false;
       const length = Math.max(1, Math.hypot(input.x, input.z)); const speed = p.sprintTime > 0.1 ? 5.4 : 3.55;
       p.airX = (input.x / length) * speed; p.airZ = (input.z / length) * speed;
     }
@@ -270,7 +308,7 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
   if (!target || distance(p, target) > 15 || Math.abs(p.y - target.y) > 3) s.lockedId = null;
   else if (p.action === 'idle' || p.action === 'parry' || p.action === 'guard' || p.action === 'heal') p.facing = facingToward(p, target);
   const length = Math.hypot(input.x, input.z); const x = length > 0 ? input.x / Math.max(1, length) : 0; const z = length > 0 ? input.z / Math.max(1, length) : 0;
-  const airborne = p.jumpHeight > 0 || p.jumpVelocity > 0;
+  const airborne = isAirborne(p);
   const sprint = (input.sprint || (p.dashDown && p.dashTime >= DASH_HOLD_TIME)) && p.stamina > 4;
   if (p.action === 'idle' && length > 0.01 && !airborne) {
     if (!s.lockedId) p.facing = Math.atan2(x, z);
@@ -282,12 +320,12 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
     if (!s.lockedId && finite(input.aim, -100000, 100000)) p.facing += Math.max(-3.5 * dt, Math.min(3.5 * dt, angleDiff(input.aim, p.facing)));
     if (p.guardImpact <= 0.12) move(s, p, x * 1.45 * dt, z * 1.45 * dt);
   }
-  if (airborne) {
-    // Limited air steering, shared collision path: walls, locked doors and void stay solid.
+  if (isAirborne(p)) {
+    // Air steering retains horizontal momentum while real parapets/doors remain solid.
     p.airX += (x * 3.55 - p.airX) * Math.min(1, dt * 1.8); p.airZ += (z * 3.55 - p.airZ) * Math.min(1, dt * 1.8);
     move(s, p, p.airX * dt, p.airZ * dt);
-    p.jumpVelocity -= 18 * dt; p.jumpHeight = Math.max(0, p.jumpHeight + p.jumpVelocity * dt);
-    if (!p.jumpHeight && p.jumpVelocity < 0) { p.jumpVelocity = 0; p.landing = 0.18; effect(s, p, 'dodge'); }
+    updateFall(s, dt);
+    if (s.mode !== 'playing') return;
   }
   const spec = attackSpec(p);
   if (spec || p.action === 'charge') {
@@ -313,7 +351,7 @@ function updatePlayer(s: GameState, dt: number, input: GameInput): void {
       const from = Math.max(previousTime, spec.impact - 0.1); const to = Math.min(p.actionTime, spec.impact + spec.active);
       if (to > from && !airborne) move(s, p, Math.sin(p.facing) * spec.advance * ((to - from) / (0.1 + spec.active)), Math.cos(p.facing) * spec.advance * ((to - from) / (0.1 + spec.active)));
       // Plunges strike on landing. Air cuts can reach torsos, never a different floor.
-      const canHit = p.attack !== 'airHeavy' || p.jumpHeight <= 0.12;
+      const canHit = p.attack !== 'airHeavy' || !isAirborne(p);
       if (!p.hitDone && p.actionTime >= spec.impact && canHit) {
         p.hitDone = true;
         let hits = 0;
@@ -344,7 +382,7 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
   if (!alive(e)) return;
   const p = s.player; const dist = distance(e, p); const homeDistance = distance(e, e.spawn);
   const sameLevel = Math.abs(e.y - p.y) < 1.8; const sees = sameLevel && lineClear(e, p, s);
-  if (e.kind === 'boss' && e.hp <= e.maxHp * 0.5 && e.phase === 1) { e.phase = 2; say(s, '铁伞破裂 · 第二式。红色回旋不能弹反，向外闪开！', 5); }
+  if (['boss', 'nana', 'azi'].includes(e.kind) && e.hp <= e.maxHp * 0.5 && e.phase === 1) { e.phase = 2; say(s, e.kind === 'nana' ? '七潮叠浪' : e.kind === 'azi' ? '夜曲 · 变奏' : '铁伞破裂 · 第二式', 5, 'event', e.kind === 'nana' ? '七海的返潮变快了，连段后的长收招仍是机会。红色扫浪可以跳过。' : e.kind === 'azi' ? '阿梓开始延迟落拍。等她真正挥杖再反应，红色环扫需要跳跃或远离。' : '红色回旋不能弹反，向外闪开。'); }
   const inArena = e.kind !== 'boss' || (p.z < -36 && p.y < 0.2);
   if (!e.aggro && inArena && dist < (e.kind === 'boss' ? 8 : 6.3) && sees) { e.aggro = true; e.timer = 0.45; }
   // Enemies return to their posts rather than pursuing through floors or the entire level.
@@ -381,7 +419,7 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
 }
 
 function updatePrompt(s: GameState): void {
-  s.region = regionAt(s.player.x, s.player.z);
+  s.region = regionAt(s.player.x, s.player.z, s.player.y + s.player.jumpHeight);
   if (!s.visited.includes(s.region)) s.visited.push(s.region);
   s.prompt = ''; s.nearbyId = null;
   if (s.mode !== 'playing') return;
@@ -389,7 +427,7 @@ function updatePrompt(s: GameState): void {
   const broken = s.enemies.find(e => e.action === 'stagger' && inCone(s, s.player, e, 2.55, 1.65));
   if (broken) { s.prompt = '破架处决'; s.nearbyId = broken.id; return; }
   const landmark = LANDMARKS.filter(l => !s.collected.includes(l.id) || l.kind === 'note')
-    .filter(l => !(l.kind === 'shortcut' && (l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8 && lineClear(s.player, l, s, l.id))
+    .filter(l => !(l.kind === 'shortcut' && (l.id === 'harbor-gate' ? s.harborGate : l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8 && lineClear(s.player, l, s, l.id))
     .sort((a, b) => distance(a, s.player) - distance(b, s.player))[0];
   if (landmark) { s.nearbyId = landmark.id; s.prompt = landmark.kind === 'rest' ? (s.litLamps.includes(landmark.id) ? '中庭雨灯 · 免费休息' : '点燃中庭雨灯') : landmark.label; }
 }
@@ -417,7 +455,7 @@ function safeToRest(s: GameState): boolean {
 }
 
 export function interact(s: GameState): void {
-  if (s.mode !== 'playing' || s.paused || s.player.action !== 'idle' || s.player.jumpHeight > 0) return;
+  if (s.mode !== 'playing' || s.paused || s.player.action !== 'idle' || isAirborne(s.player)) return;
   if (execute(s)) return;
   updatePrompt(s);
   const { nearbyId } = s;
@@ -433,7 +471,7 @@ export function interact(s: GameState): void {
     if (!safeToRest(s)) { say(s, '敌人还在附近，先脱离战斗才能休息。'); return; }
     s.checkpoint = 'courtyard';
     s.player.hp = maxHp(s); s.player.stamina = maxStamina(s); s.player.flasks = maxFlasks(s); s.restCount += 1;
-    s.enemies = makeEnemies(s.bossDefeated); s.lockedId = null;
+    s.enemies = makeEnemies(s.bossDefeated, s.defeatedGuests); s.lockedId = null;
     effect(s, landmark, 'heal');
     say(s, '歇息片刻 · 雨仍未停', 4, 'event', '免费休息，生命、体力和药瓶已补满；普通敌人会重生。旁边花钱的是强化装备，不是休息。');
   } else if (landmark.kind === 'cache' && !s.collected.includes(landmark.id)) {
@@ -444,6 +482,9 @@ export function interact(s: GameState): void {
   } else if (landmark.kind === 'flask' && !s.flaskUpgrade) {
     s.flaskUpgrade = true; s.collected.push(landmark.id); s.player.flasks = Math.min(maxFlasks(s), s.player.flasks + 1);
     effect(s, landmark, 'reward'); say(s, '刻露瓶 · 药瓶上限 +1', 5, 'event', '现在可以带四瓶回血药了。回中庭雨灯免费休息就能补满，R／手柄X喝药。');
+  } else if (landmark.id === 'harbor-gate') {
+    if (s.player.z > -8.8) return;
+    s.harborGate = true; effect(s, landmark, 'reward'); say(s, '归灯长桥已开', 4, 'event', '长桥直通中庭，重试潮门不用绕夜市了。');
   } else if (landmark.id === 'temple-gate') {
     if (s.player.z > -6.7) { say(s, '水向低处流，门向归人开。', 5, 'lore', '门闩在寺院一侧。先从高处的悬钟桥进雨寺，再沿石阶下到门后。'); return; }
     s.templeGate = true; effect(s, landmark, 'reward'); say(s, '闭水门已开', 4, 'event', '门外就是晾衣暗巷！雨寺和中庭连起来了，补给后可以直接回去。');
@@ -458,6 +499,14 @@ export function interact(s: GameState): void {
   } else if (landmark.id === 'temple-lamp' || landmark.id === 'canal-lamp') {
     if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
     say(s, '芯冷，灯空。归火尚在中庭。', 6, 'lore', '这只是旧灯，没有复活和补给功能。开好近路就能回中庭的雨灯，不必重绕整张地图。');
+  } else if (landmark.id === 'dawn-bell') {
+    if (!s.defeatedGuests.includes('nana-tide')) { say(s, '七潮未息，钟心无声。', 5, 'lore', '先让七海守着的潮门平静下来，再来敲钟。'); return; }
+    if (!s.collected.includes(landmark.id)) { s.collected.push(landmark.id); s.rice += 100; effect(s, landmark, 'reward'); }
+    say(s, '晨钟一响 · 长夜将明', 9, 'event', '这一段旅程完成了，得到100夜市钱。世界仍然开放，可以找阿梓、收集支路宝箱，或者走长桥回雨灯。');
+  } else if (['tide-note', 'drop-note', 'tide-seal'].includes(landmark.id)) {
+    if (!s.collected.includes(landmark.id))s.collected.push(landmark.id);
+    const text = landmark.id === 'tide-note' ? ['循暖灯而上，七潮尽处，钟见天光。', '暖色路灯沿着灯市和长阶通往七海的潮门。右侧绿灯是阿梓的支路，左手水巷能开回中庭的近路。'] : landmark.id === 'drop-note' ? ['风收旧网，落处便是来时灯。高者折骨，深者无归。', '破栏下面就是灯市，约四米落差会掉血；再高的落差更危险。先看清落脚地面，水里无法站立。'] : ['七声归海，留半拍予岸。', '七海有快刺、延迟重击和扫浪，抬锚蓄力后才是释放。保持距离可以诱出招式，抓收招反击。'];
+    say(s, text[0], 8, 'lore', text[1]);
   } else if (landmark.kind === 'note') {
     if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
     say(s, landmark.id === 'temple-note' ? '钟不为来者鸣。携空瓶过桥，循百灯归水。' : landmark.id === 'ferry-note' ? '渡者不渡伞。此灯守岸，前路留给归人。' : landmark.id === 'laptop' ? '屏光熄去，金塔下还有一盏不眠的火。' : '伞下无归客。逐水向东，归人自解旧闩。', 8, 'lore', landmark.id === 'temple-note' ? '寺里供着能增加药瓶数量的刻露瓶。拿到后沿寺院石阶下去，拉动门后的绞盘，就能走近路回中庭补给。' : landmark.id === 'ferry-note' ? '旧灯已经熄灭；去运河侧廊拉开门后的绞盘，就能直接回中庭雨灯补药。' : landmark.id === 'laptop' ? '这说的是金塔下面的深夜食堂。先从旅馆外梯下去，找到中庭的雨灯。' : '纸条在提醒我们：夜市东边的运河侧廊有一扇门，从里面能打开，通回中庭。');
@@ -484,7 +533,7 @@ export function continueExploring(s: GameState): void {
 export function respawn(s: GameState): void {
   if (s.mode !== 'dead') return;
   s.player = makePlayer(REST_POINTS[s.checkpoint]); s.player.hp = maxHp(s); s.player.stamina = maxStamina(s); s.player.flasks = maxFlasks(s);
-  s.enemies = makeEnemies(s.bossDefeated); s.mode = 'playing'; s.paused = false; s.effects = []; s.lockedId = null;
+  s.enemies = makeEnemies(s.bossDefeated, s.defeatedGuests); s.mode = 'playing'; s.paused = false; s.effects = []; s.lockedId = null;
   say(s, '雨灯仍亮着。观察起手，留一点体力；丢下的钱就在倒下的地方。', 5); updatePrompt(s);
 }
 
@@ -496,7 +545,9 @@ export function setPaused(s: GameState, paused: boolean): void { if (s.mode === 
 
 export function getObjective(s: GameState): string {
   if (s.mode === 'ending') return '第一幕完成 · 这顿饭，来之不易';
-  if (s.collected.includes('food')) return '雨夜未尽 · 自由探索旧城';
+  if (s.collected.includes('dawn-bell')) return '晨钟已响 · 自由探索旧城与潮汐港';
+  if (s.defeatedGuests.includes('nana-tide')) return '登上晨钟台阶，叩响黎明钟';
+  if (s.collected.includes('food')) return '沿运河渡桥，循灯登上七重潮门';
   if (s.bossDefeated) return '到夜市炉火旁，吃上今晚的第一顿饭';
   if (s.shortcut) return '挑战封街人 · 铁伞，抵达深夜食堂';
   if (s.charm) return '沿夜市长阶下行，找出回到中庭的近路';
@@ -509,8 +560,8 @@ export function saveGame(s: GameState): string { return JSON.stringify(s); }
 function validPosition(p: unknown, shortcut: WorldAccess): p is Vec3 {
   if (!p || typeof p !== 'object') return false;
   const v = p as Vec3;
-  return finite(v.x, -40, 30) && finite(v.y, -1, 10) && finite(v.z, -60, 25)
-    && canOccupy(v.x, v.z, v.y, shortcut, 0.05) && Math.abs((heightAt(v.x, v.z) ?? -100) - v.y) < 0.08;
+  return finite(v.x, -40, 80) && finite(v.y, -1, 15) && finite(v.z, -90, 25)
+    && canOccupy(v.x, v.z, v.y, shortcut, 0.05) && Math.abs((supportAt(v.x, v.z, v.y + 0.1) ?? -100) - v.y) < 0.08;
 }
 
 // Only old saves may overlap the previously non-solid courtyard lamp.
@@ -530,24 +581,29 @@ export function loadGame(raw: string | null): GameState | null {
   try {
     const s = JSON.parse(raw) as GameState;
     if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
-    const oldWorld = s.worldVersion === undefined;
-    if (oldWorld) { s.worldVersion = 3; s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
+    if (s.worldVersion !== undefined && ![2, 3, 4].includes(s.worldVersion)) return null;
+    const oldWorld = s.worldVersion === undefined; const oldDistrict = (s.worldVersion as number | undefined) !== 4;
+    if (oldWorld) { s.worldVersion = 4; s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
     if ((s.worldVersion as number) === 2) {
       if (!Array.isArray(s.litLamps) || s.litLamps.some(id => !['courtyard', 'temple-lamp', 'canal-lamp'].includes(id)) || new Set(s.litLamps).size !== s.litLamps.length) return null;
       if (s.checkpoint !== 'room' && !s.litLamps.includes(s.checkpoint)) return null;
       if (['temple-lamp', 'canal-lamp'].includes(s.checkpoint)) s.checkpoint = 'courtyard';
       s.litLamps = s.checkpoint === 'courtyard' || s.litLamps.includes('courtyard') ? ['courtyard'] : [];
-      s.worldVersion = 3;
+      s.worldVersion = 4;
     }
     if (s.mode === 'ending' && Array.isArray(s.collected) && !s.collected.includes('food')) s.collected.push('food');
-    if (s.worldVersion !== 3 || typeof s.templeGate !== 'boolean' || typeof s.flaskUpgrade !== 'boolean') return null;
+    if (oldDistrict) { s.worldVersion = 4; s.harborGate = false; s.defeatedGuests = []; }
+    if (typeof s.harborGate !== 'boolean' || !Array.isArray(s.defeatedGuests) || s.defeatedGuests.some(id => !['nana-tide', 'azi-stage'].includes(id)) || new Set(s.defeatedGuests).size !== s.defeatedGuests.length) return null;
+    if (s.playerSkin === undefined)s.playerSkin = 'sui';
+    if (!['sui', 'shiori', 'nagisa'].includes(s.playerSkin)) return null;
+    if (s.worldVersion !== 4 || typeof s.templeGate !== 'boolean' || typeof s.flaskUpgrade !== 'boolean') return null;
     if (!Array.isArray(s.litLamps) || new Set(s.litLamps).size !== s.litLamps.length || s.litLamps.some(id => !LANDMARKS.some(l => l.id === id && l.kind === 'rest'))) return null;
     if (s.checkpoint !== 'room' && !s.litLamps.includes(s.checkpoint)) return null;
     if (!Object.hasOwn(REST_POINTS, s.checkpoint) || !['charm', 'shortcut', 'bossDefeated'].every(k => typeof s[k as keyof GameState] === 'boolean')) return null;
     for (const k of ['deaths', 'kills', 'parries', 'executions', 'rice', 'bankedRice', 'restCount', 'nextEffectId'] as const) if (!finite(s[k], 0, 1000000) || !Number.isInteger(s[k])) return null;
     if (!finite(s.level, 0, 5) || !Number.isInteger(s.level) || !finite(s.time, 0, 10000000)) return null;
     if (!Array.isArray(s.collected) || s.collected.length > LANDMARKS.length || new Set(s.collected).size !== s.collected.length || s.collected.some(id => !LANDMARKS.some(l => l.id === id))) return null;
-    if (!Array.isArray(s.visited) || s.visited.length > 30 || s.visited.some(v => typeof v !== 'string' || v.length > 100)) return null;
+    if (!Array.isArray(s.visited) || s.visited.length > 70 || s.visited.some(v => typeof v !== 'string' || v.length > 100)) return null;
     const p = s.player;
     if (!p) return null;
     if (oldWorld) migrateLampPosition(p, s);
@@ -561,15 +617,19 @@ export function loadGame(raw: string | null): GameState | null {
     if (s.interpretation === undefined) s.interpretation = '';
     if (!['hint', 'lore', 'event'].includes(s.messageKind) || typeof s.interpretation !== 'string' || s.interpretation.length > 500) return null;
     if (!finite(s.hitstop, 0, 0.1) || (p.attack !== null && !Object.hasOwn(ATTACKS, p.attack))) return null;
-    for (const key of ['charge', 'jumpHeight', 'landing', 'sprintTime', 'guardImpact', 'parryFlash'] as const) if (!finite(p[key], 0, 2)) return null;
-    if (!finite(p.jumpVelocity, -15, 7) || !finite(p.airX, -6, 6) || !finite(p.airZ, -6, 6) || !finite(p.attackFacing, -100, 100) || !finite(p.combo, 0, 3) || !Number.isInteger(p.combo) || !finite(p.comboUntil, 0, 10000010) || !finite(p.dashTime, 0, 10)) return null;
+    if (p.fallPeak === undefined)p.fallPeak = p.y + p.jumpHeight;
+    if (p.lastGround === undefined)p.lastGround = { x: p.x, y: p.y, z: p.z };
+    if (!finite(p.fallPeak, -1, 25) || !validPosition(p.lastGround, s) || !finite(p.jumpHeight, -30, 2)) return null;
+    for (const key of ['charge', 'landing', 'sprintTime', 'guardImpact', 'parryFlash'] as const) if (!finite(p[key], 0, 2)) return null;
+    if (!finite(p.jumpVelocity, -40, 7) || !finite(p.airX, -6, 6) || !finite(p.airZ, -6, 6) || !finite(p.attackFacing, -100, 100) || !finite(p.combo, 0, 3) || !Number.isInteger(p.combo) || !finite(p.comboUntil, 0, 10000010) || !finite(p.dashTime, 0, 10)) return null;
     if (typeof p.dashDown !== 'boolean' || typeof p.dashUsed !== 'boolean' || typeof p.airAttackUsed !== 'boolean') return null;
     if (p.buffer !== null && (!['light', 'heavy', 'dodge', 'parry', 'jump'].includes(p.buffer.action) || !finite(p.buffer.until, 0, 10000010))) return null;
-    if (!validPosition(p, s) || !finite(p.hp, 0, maxHp(s)) || !finite(p.stamina, 0, maxStamina(s)) || !finite(p.facing, -100, 100)) return null;
+    if (!(isAirborne(p) ? finite(p.x, -40, 80) && finite(p.z, -90, 25) && finite(p.y, -1, 15) && p.y + p.jumpHeight >= -9 : validPosition(p, s)) || !finite(p.hp, 0, maxHp(s)) || !finite(p.stamina, 0, maxStamina(s)) || !finite(p.facing, -100, 100)) return null;
     if (!Object.hasOwn(DURATIONS, p.action) || !finite(p.actionTime, 0, 5) || !finite(p.invulnerable, 0, 1.1) || !finite(p.staminaDelay, 0, 1)) return null;
     if (!finite(p.flasks, 0, maxFlasks(s)) || !Number.isInteger(p.flasks) || !finite(p.dodgeX, -1, 1) || !finite(p.dodgeZ, -1, 1) || typeof p.hitDone !== 'boolean') return null;
     if ((s.mode === 'dead') !== (p.hp === 0) || (s.mode === 'dead') !== (p.action === 'dead')) return null;
     if (oldWorld && Array.isArray(s.enemies) && s.enemies.length === 6) s.enemies.push(...makeEnemies().filter(e => e.id.startsWith('temple-')));
+    if (oldDistrict && Array.isArray(s.enemies) && s.enemies.length === 8)s.enemies.push(...makeEnemies().slice(8));
     if (!Array.isArray(s.enemies) || s.enemies.length !== ENEMY_SPAWNS.length) return null;
     for (let i = 0; i < s.enemies.length; i += 1) {
       const e = s.enemies[i]; const spawn = ENEMY_SPAWNS[i];
@@ -581,6 +641,7 @@ export function loadGame(raw: string | null): GameState | null {
       if (!finite(e.timer, -0.02, 5) || !finite(e.attackIndex, 0, 1000000) || !Number.isInteger(e.attackIndex) || ![1, 2].includes(e.phase) || !finite(e.facing, -100, 100) || !finite(e.flash, 0, 1)) return null;
       if (typeof e.hitDone !== 'boolean' || typeof e.aggro !== 'boolean') return null;
     }
+    if (s.enemies.some(e => (e.kind === 'nana' || e.kind === 'azi') && ((e.hp === 0) !== s.defeatedGuests.includes(e.id)))) return null;
     if (s.bossDefeated !== (s.enemies.find(e => e.kind === 'boss')?.hp === 0) || (s.mode === 'ending' && !s.bossDefeated)) return null;
     if (s.flaskUpgrade !== s.collected.includes('temple-flask')) return null;
     if (s.charm !== s.collected.includes('roof-charm')) return null;
