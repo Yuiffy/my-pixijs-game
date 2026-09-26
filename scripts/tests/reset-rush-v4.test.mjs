@@ -76,7 +76,7 @@ test('unfunded attention leaves queued work visible and starts it on the next mo
   assert.equal(E.laneStatus(g, human(g), human(g).lanes[3]), '开发中');
 });
 
-test('five account policies route paid work by their published rule', () => {
+test('six account policies route paid work by their published rule', () => {
   const base = E.createGame(403);
   let g = E.act(base, { type: 'buy', tier: 20 });
   g = E.act(g, { type: 'buy', tier: 20 });
@@ -86,12 +86,57 @@ test('five account policies route paid work by their published rule', () => {
   c.quota = 1; c.nextReset = 8; c.paidUntil = 50;
   for (const [policy, expected] of [
     ['preferred', a.id], ['soon-reset', b.id], ['drain', c.id],
-    ['late-expiry', c.id], ['balanced', a.id],
+    ['most-quota', a.id], ['late-expiry', c.id], ['balanced', a.id],
   ]) {
     const out = studio(g, 1, policy, a.id);
     assert.equal(human(out).lanes[0].account, expected, policy);
     assert.equal(out.minute, 0);
   }
+});
+
+test('most-quota compares absolute balances, excludes inactive accounts and survives save reload', () => {
+  let g = E.createGame(409, 21);
+  g = E.act(g, { type: 'buy', tier: 200 });
+  g = E.act(g, { type: 'buy', tier: 200 });
+  const [small, large, expired] = human(g).accounts;
+  large.quota = 80;
+  expired.paidUntil = 0;
+  const balanced = studio(g, 1, 'balanced');
+  assert.equal(human(balanced).lanes[0].account, small.id);
+  g = studio(g, 1, 'most-quota');
+  assert.equal(human(g).lanes[0].account, large.id);
+  assert.deepEqual(E.restoreGame(JSON.stringify(g)), g);
+  const originalEnergy = human(g).energy;
+  const after = E.advanceMinutes(g, 60);
+  near(human(after).accounts[0].quota, 24);
+  near(human(after).accounts[1].quota, 80 - 10.8 * 0.16);
+  near(human(after).accounts[2].quota, 180);
+  assert.equal(human(after).energy, originalEnergy);
+});
+
+test('most-quota converges multiple account balances and does not depend on advance size', () => {
+  let g = E.createGame(410, 21);
+  g = E.act(g, { type: 'buy', tier: 20 });
+  g = E.act(g, { type: 'claim', project: g.market[0].id });
+  for (const job of human(g).projects) { job.need = 500; job.difficulty = 1; }
+  human(g).accounts[0].quota = 20;
+  human(g).accounts[1].quota = 18;
+  g = studio(g, 2, 'most-quota');
+  const before = structuredClone(human(g).accounts);
+  const once = E.advanceMinutes(g, 120);
+  const split = [1, 29, 60, 30].reduce((state, minutes) => E.advanceMinutes(state, minutes), g);
+  assert.deepEqual(once, split);
+  const [first, second] = human(once).accounts;
+  assert.ok(first.quota < before[0].quota && second.quota < before[1].quota);
+  assert.ok(Math.abs(first.quota - second.quota) <= 2 * 0.18 * 0.16 + 1e-7);
+  near(first.quota + second.quota, 38 - 2 * 120 * 0.18 * 0.16);
+
+  let tied = structuredClone(g);
+  human(tied).accounts[1].quota = human(tied).accounts[0].quota;
+  tied = studio(tied, 2, 'most-quota');
+  assert.equal(new Set(human(tied).lanes.map(lane => lane.account)).size, 2);
+  const resumed = E.advanceMinutes(E.restoreGame(JSON.stringify(once)), 1);
+  assert.deepEqual(resumed, E.advanceMinutes(once, 1));
 });
 
 test('parallel balance spreads accounts, while preferred switches at fractional exhaustion', () => {

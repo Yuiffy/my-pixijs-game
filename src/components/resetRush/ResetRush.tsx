@@ -43,10 +43,11 @@ import s from "./resetRush.module.css";
 const STRATEGIES = ["独立开发者", "开源效率流", "极限冲刺流", "多号银行流"];
 const ACCOUNT_POLICIES: { id: AccountPolicy; name: string; detail: string }[] = [
   { id: "soon-reset", name: "快重置优先", detail: "先花快自然补满的账号" },
+  { id: "most-quota", name: "更多额度优先", detail: "先花剩余额度最多的账号，持续拉平余额" },
   { id: "preferred", name: "指定账号优先", detail: "这个号用完再换下一个" },
   { id: "drain", name: "快耗尽优先", detail: "先清掉小额余额" },
   { id: "late-expiry", name: "晚到期优先", detail: "先花订阅期限更长的账号" },
-  { id: "balanced", name: "均衡使用", detail: "按剩余额度分散线程" },
+  { id: "balanced", name: "按比例均衡", detail: "按套餐剩余比例分散线程" },
 ];
 type ModalKind = "rules" | "shop" | "restart" | "portfolio" | null;
 
@@ -213,7 +214,7 @@ function Rules() {
         </li>
         <li>
           <strong>选策略，收工揭牌。</strong>
-          账号可指定优先、快重置、快耗尽、晚到期或均衡使用；用完会自动换号。
+          账号可指定优先、快重置、更多额度、快耗尽、晚到期或按比例均衡；用完会自动换号。
           项目完成自动接下一项，按实际进度扣额。每天收工只需点一次；想在缺额时用银行券，可以点“到关键时刻”。
           跨天继续托管的每条线程占 2 精力。
         </li>

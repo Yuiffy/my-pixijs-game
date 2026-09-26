@@ -155,6 +155,26 @@ async function main() {
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v3')).version), 3);
     report.checks.push('v3 save migrates to v4 while the original save remains');
 
+    let quotaPolicy = E.createGame(809, 21);
+    quotaPolicy = E.act(quotaPolicy, { type: 'buy', tier: 200 });
+    quotaPolicy.players[0].accounts[1].quota = 80;
+    await inject(page, quotaPolicy);
+    await page.locator('#studio-policy').selectOption('most-quota');
+    game = await saved(page);
+    assert.equal(game.players[0].lanes[0].account, game.players[0].accounts[1].id);
+    assert.equal(game.minute, 0);
+    await page.evaluate(() => window.advanceTime(60000 * 60));
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).minute === 60);
+    game = await saved(page);
+    assert.equal(game.players[0].accounts[0].quota, 24);
+    assert.ok(game.players[0].accounts[1].quota < 80);
+    await load(page);
+    assert.deepEqual(await saved(page), game);
+    assert.equal(await page.locator('#studio-policy').inputValue(), 'most-quota');
+    await page.locator('#reset-command').scrollIntoViewIfNeeded();
+    await shot(page, '05-most-quota-policy', false);
+    report.checks.push('most-quota selects by absolute balance, runs without manual switching and persists on reload');
+
     await inject(page, E.createGame(807, 21));
     for (let day = 1; day <= 21; day += 1) {
       game = await saved(page);
@@ -180,7 +200,7 @@ async function main() {
       await touch.getByRole('button', { name: '关闭弹窗' }).tap();
       game = await saved(touch);
       await touch.locator(`[data-project="${game.market[0].id}"]`).tap();
-      await touch.locator('#studio-policy').selectOption('balanced');
+      await touch.locator('#studio-policy').selectOption('most-quota');
       await touch.locator('#studio-threads').focus();
       await touch.locator('#studio-threads').press('ArrowRight');
       await shot(touch, `06-mobile-${width}-studio`);

@@ -15,7 +15,7 @@ export const DEFAULT_DEVELOPMENT: Development = {
   turbo: false,
 };
 export type Strategy = "balanced" | "builder" | "sprinter" | "banker";
-export type AccountPolicy = "preferred" | "soon-reset" | "drain" | "late-expiry" | "balanced";
+export type AccountPolicy = "preferred" | "soon-reset" | "drain" | "most-quota" | "late-expiry" | "balanced";
 export interface Studio {
   mode: "auto" | "manual";
   threads: number;
@@ -762,6 +762,8 @@ function routeStudioAccounts(g: Game) {
       if (policy === "preferred") return (a.id === g.studio.preferredAccount ? -1 : b.id === g.studio.preferredAccount ? 1 : a.id - b.id);
       if (policy === "soon-reset") return a.nextReset - b.nextReset || a.id - b.id;
       if (policy === "drain") return a.quota - b.quota || a.id - b.id;
+      if (policy === "most-quota") return b.quota - a.quota ||
+        (loads.get(a.id) ?? 0) - (loads.get(b.id) ?? 0) || a.id - b.id;
       if (policy === "late-expiry") return b.paidUntil - a.paidUntil || a.id - b.id;
       const available = (x: Account) => (x.quota / PLANS[x.tier].capacity) /
         (1 + (loads.get(x.id) ?? 0));
@@ -806,7 +808,7 @@ export function actionError(g: Game, id: number, a: Action): string | null {
   if (p.energy < energyCost(g, p, a)) return "真人精力不足。可休息一次，后台线程仍会继续工作。";
   if (a.type === "studio") {
     if (!Number.isInteger(a.threads) || a.threads < 0 || a.threads > MAX_LANES ||
-      !["preferred", "soon-reset", "drain", "late-expiry", "balanced"].includes(a.accountPolicy) ||
+      !["preferred", "soon-reset", "drain", "most-quota", "late-expiry", "balanced"].includes(a.accountPolicy) ||
       !p.accounts.some((acc) => acc.id === a.preferredAccount)) return "工作室策略无效。";
     return null;
   }
@@ -1486,7 +1488,7 @@ export function restoreGame(raw: string | null): Game | null {
       !Number.isInteger(g.studio.threads) ||
       g.studio.threads < 0 ||
       g.studio.threads > MAX_LANES ||
-      !["preferred", "soon-reset", "drain", "late-expiry", "balanced"].includes(g.studio.accountPolicy) ||
+      !["preferred", "soon-reset", "drain", "most-quota", "late-expiry", "balanced"].includes(g.studio.accountPolicy) ||
       !g.players[0].accounts.some((a) => a.id === g.studio.preferredAccount) ||
       !Number.isInteger(g.minute) ||
       g.minute < 0 ||
