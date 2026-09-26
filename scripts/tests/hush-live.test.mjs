@@ -468,3 +468,34 @@ test('charger tray is reachable from the sofa side without returning to the walk
   }
   assert.deepEqual(runtime3d.AIM_POINTS.charging,e.CHARGER_TRAY);
 });
+
+
+test('skin migration preserves old scores and defaults unknown costumes to host', () => {
+  const old = { ...e.freshSave(), unlocked: 3, best: [70, 80, 90, 0, 0] };
+  delete old.skin;
+  const migrated = e.parseSave(JSON.stringify(old));
+  assert.equal(migrated.skin, 'host');
+  assert.equal(migrated.unlocked, 3);
+  assert.deepEqual(migrated.best, old.best);
+  assert.equal(e.parseSave(JSON.stringify({...old, skin:'missing'})).skin, 'host');
+  for(const skin of ['host','sui','nana7mi']) assert.equal(e.parseSave(JSON.stringify({...old,skin})).skin,skin);
+});
+
+test('each costume names the same partner throughout objectives and all aftermath choices', () => {
+  for(const [skin,name] of [['host','主播酱'],['sui','岁己'],['nana7mi','七海']]) {
+    for(const after of ['rice','shower']) for(const choice of ['care','together']) {
+      const s=e.createGame(1,1,1,skin);s.phase='playing';
+      assert.ok(s.message.includes(name));assert.ok(objective(s).title.includes(name));
+      assert.equal(s.daily.messages[0].from,'partner');
+      s.daily.stage='after';s.daily.after=after;s.daily.panel=null;
+      s.player={...e.partnerPose(s)};
+      assert.ok(e.action(s,'partner').label.includes(name));
+      daily.discoverDaily(s);
+      daily.chooseGoodnight(s,choice);
+      assert.ok(s.daily.memory.includes(name));
+      for(const other of ['主播酱','岁己','七海'].filter(n=>n!==name))assert.ok(!s.daily.memory.includes(other));
+      const saved=e.record({...e.freshSave(),skin},s);
+      assert.equal(saved.skin,skin);
+    }
+  }
+});

@@ -1,3 +1,4 @@
+import { skinOf } from "./skins";
 import { mealOf } from "./daily";
 import { action, Game, nearest, interactionPoint, Spot } from "./engine";
 
@@ -19,11 +20,11 @@ export function objective(s: Game): Objective {
     spot: "partner",
 key: "discover",
 step: 4,
-    title: s.daily.stage === "sleep" ? "你睡着了，等一盏灯熄灭" : s.daily.after === "rice" ? "下播了，去看看厨房的岁己" : "岁己洗完澡，来沙发旁找你了",
+    title: s.daily.stage === "sleep" ? "你睡着了，等一盏灯熄灭" : s.daily.after === "rice" ? `下播了，去看看厨房的${skinOf(s.skin).name}` : `${skinOf(s.skin).name}洗完澡，来沙发旁找你了`,
     destination: "轻声走过去",
 detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
   };
-  else if (s.daily?.panel === "lock") next = { spot: "entry", key: "unlock", title: "岁己在直播，轻轻开门", destination: "玄关", detail: "指针到金色区域时点一下。", step: 1 };
+  else if (s.daily?.panel === "lock") next = { spot: "entry", key: "unlock", title: `${skinOf(s.skin).name}在直播，轻轻开门`, destination: "玄关", detail: "指针到金色区域时点一下。", step: 1 };
   else if (s.carry === "charger") next = {
       spot: "charging",
       key: "charger",
@@ -42,7 +43,7 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
     };
   else {
     const task = s.tasks.find((t) => !s.done.includes(t));
-    if (task === "cook") next = { spot: "kitchen", key: "cook", title: "岁己想吃你炒的蛋炒饭", destination: "去料理台", detail: "鸡蛋和米饭都准备好了，轻按E开始做饭。", step: 2 };
+    if (task === "cook") next = { spot: "kitchen", key: "cook", title: `${skinOf(s.skin).name}想吃你炒的蛋炒饭`, destination: "去料理台", detail: "鸡蛋和米饭都准备好了，轻按E开始做饭。", step: 2 };
     else if (task === "leisure") next = { spot: "sofa", key: "leisure", title: "忙完啦，回客厅放松一会儿", destination: "回沙发", detail: "可以看视频或玩游戏，记得留意手机消息。", step: 3 };
     else if (task === "charger") next = {
         spot: "shelf",

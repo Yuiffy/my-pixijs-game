@@ -1,3 +1,4 @@
+import { skinOf, SkinId } from "./skins";
 import { beginDaily, Daily, dailyModal, discoverDaily, mealOf, offAir, openDailyPanel, sleepDaily, stepDaily } from "./daily";
 import { BODY_RADIUS, moveBody, route, walkable } from "./navigation";
 
@@ -60,7 +61,7 @@ export const LEVELS: {
   },
   {
     title: "隔墙有耳",
-    subtitle: "先送晚饭，再关门报点。回沙发看视频，别忘了留意岁己的微信。",
+    subtitle: "先送晚饭，再关门报点。回沙发看视频，别忘了留意恋人的微信。",
     tasks: ["food", "delta", "leisure"],
     seconds: 420,
   },
@@ -78,7 +79,7 @@ export const LEVELS: {
   },
 ];
 export const TASK_NAMES: Record<Task, string> = {
-  cook: "给岁己炒一碗蛋炒饭",
+  cook: "给恋人炒一碗蛋炒饭",
   leisure: "在客厅放松一会儿",
   charger: "拿回充电器",
   food: "把晚饭摆到直播桌上",
@@ -87,6 +88,7 @@ export const TASK_NAMES: Record<Task, string> = {
   kiss: "交换一个晚安吻",
 };
 export type Save = {
+  skin: SkinId;
   version: 1;
   unlocked: number;
   best: number[];
@@ -96,6 +98,7 @@ export type Save = {
   partner: "她" | "他";
 };
 export const freshSave = (): Save => ({
+  skin: "host",
   version: 1,
   unlocked: 0,
   best: [0, 0, 0, 0, 0],
@@ -126,6 +129,7 @@ export function parseSave(raw: string | null): Save {
       s.endlessBest < 0
     ) return freshSave();
     return {
+      skin: skinOf(s.skin).id,
       version: 1,
       unlocked: s.unlocked,
       best: s.best,
@@ -155,6 +159,7 @@ export type Delta = {
   feedback: string;
 };
 export type Game = {
+  skin: SkinId;
   daily: Daily | null;
   phase: "ready" | "playing" | "paused" | "result";
   level: number;
@@ -193,7 +198,7 @@ export type Game = {
   visit: { x: number; y: number; remaining: number } | null;
   noiseFlash: number;
 };
-export function createGame(level = 0, seed = 1, unlocked = 0): Game {
+export function createGame(level = 0, seed = 1, unlocked = 0, skin: SkinId = "host"): Game {
   const safeLevel = Math.max(0, Math.min(5, Math.floor(level)));
   const safeSeed = Math.abs(Math.floor(seed)) % 4294967296 || 1;
   const tasks =
@@ -203,6 +208,7 @@ export function createGame(level = 0, seed = 1, unlocked = 0): Game {
           ? ["cook", "food", "delta", "hug", "leisure"]
           : ["food", "charger", "delta", "kiss", "leisure"]) as Task[]);
   const game: Game = {
+    skin: skinOf(skin).id,
     daily: null,
     phase: "ready",
     level: safeLevel,
@@ -353,11 +359,11 @@ function availableAction(
       ? focus
       : null;
   if (dailyModal(s)) return { key: "", label: "完成眼前的小事", seconds: 0, noise: 0 };
-  if (s.daily?.stage === "after" && (spot === "partner" || spot === (s.daily.after === "rice" ? "kitchen" : "sofa"))) return { key: "discover", label: "轻声叫岁己", seconds: 0.3, noise: 0 };
+  if (s.daily?.stage === "after" && (spot === "partner" || spot === (s.daily.after === "rice" ? "kitchen" : "sofa"))) return { key: "discover", label: `轻声叫${skinOf(s.skin).name}`, seconds: 0.3, noise: 0 };
   const pending = (id: Task) => s.tasks.includes(id) && !s.done.includes(id);
   if (spot === "kitchen" && pending("cook") && !s.carry) return { key: "cook", label: "开始炒蛋炒饭", seconds: 0.2, noise: 0 };
   if (spot === "sofa" && pending("leisure") && !s.carry && s.tasks.filter(t => t !== "leisure").every(t => s.done.includes(t))) return { key: "leisure", label: "坐下看视频 / 玩游戏", seconds: 0.2, noise: 0 };
-  if (spot === "sofa" && s.daily?.stage === "home" && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: "在沙发上小睡，等岁己下播", seconds: 0.3, noise: 0 };
+  if (spot === "sofa" && s.daily?.stage === "home" && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: `在沙发上小睡，等${skinOf(s.skin).name}下播`, seconds: 0.3, noise: 0 };
   if (spot === "door") return {
       key: "door",
       label: s.doorClosed ? "轻轻开门" : "轻轻关门",
@@ -451,7 +457,7 @@ function completeAction(s: Game, key: string) {
       s.visit = { x: 694, y: 329, remaining: 12 };
       s.message = "TA边讲话边起身，悄悄朝你张开手。要抱一下吗？也可以继续忙。";
     }
-    if (key === "food" && s.daily) s.message = `你把${mealOf(s).name}摆好：${mealOf(s).note} 岁己笑着在桌下勾了勾你的手。`;
+    if (key === "food" && s.daily) s.message = `你把${mealOf(s).name}摆好：${mealOf(s).note} ${skinOf(s.skin).name}笑着在桌下勾了勾你的手。`;
     if ((key === "hug" || key === "kiss") && s.visit) s.visit.remaining = 2;
   }
 }

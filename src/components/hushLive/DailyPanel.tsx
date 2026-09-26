@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { skinOf } from "./skins";
 import type { Game } from "./engine";
 import {
   chooseGoodnight,
@@ -67,8 +68,8 @@ export default function DailyPanel({
         </h2>
         <p>
           {d.after === "rice"
-            ? "岁己穿着睡衣站在料理台前，锅里只放了一人份的米饭。看到你，手里的锅铲停住了：“怎么醒了？我马上就来。”"
-            : "水声刚停，岁己披着毛巾，踮脚走到沙发旁。“本来想轻一点的。”你伸手碰了碰还湿着的发梢。"}
+            ? `${skinOf(s.skin).name}穿着睡衣站在料理台前，锅里只放了一人份的米饭。看到你，手里的锅铲停住了：“怎么醒了？我马上就来。”`
+            : `水声刚停，${skinOf(s.skin).name}披着毛巾，踮脚走到沙发旁。“本来想轻一点的。”你伸手碰了碰还湿着的发梢。`}
         </p>
         <div className={styles.choices}>
           <button onClick={() => change(() => chooseGoodnight(s, "together"))}>
@@ -94,7 +95,7 @@ export default function DailyPanel({
         <small>
           {cooking
             ? "HOME KITCHEN / 为你做一顿饭"
-            : "WELCOME HOME / 岁己已经开播了"}
+            : `WELCOME HOME / ${skinOf(s.skin).name}已经开播了`}
         </small>
         <h2>{cooking ? "一碗热乎乎的蛋炒饭" : "把今天的疲惫留在门外"}</h2>
         <div
@@ -225,10 +226,10 @@ export default function DailyPanel({
         />
       </label>
       <aside className={styles.phone} aria-label="微信消息">
-        <strong>微信 · 岁己 {d.unread ? "● 新消息" : ""}</strong>
+        <strong>微信 · {skinOf(s.skin).name} {d.unread ? "● 新消息" : ""}</strong>
         {d.messages.slice(-3).map((m, i) => (
           <p key={`${i}-${m.from}`} data-mine={m.from === "我"}>
-            <small>{m.from}</small>
+            <small>{m.from === "我" ? "我" : skinOf(s.skin).name}</small>
             {m.text}
           </p>
         ))}

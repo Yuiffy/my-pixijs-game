@@ -22,6 +22,8 @@ import {
   paintAvatar,
 } from "./textures3d";
 
+import { skinOf } from "./skins";
+import { SkinDetails } from "./SkinDetails";
 import DailyScene, { MealModels } from "./DailyScene";
 import { offAir } from "./daily";
 
@@ -241,11 +243,12 @@ function Partner({
   const seatedLegs = useRef<THREE.Group>(null);
   const standingLegs = useRef<THREE.Group>(null);
   const lastAnimationTime = useRef(r.elapsedFrame);
+  const skin = skinOf(appearance.skin);
   const longHair = player
     ? appearance.player === "女友"
-    : appearance.partner === "她";
-  const sweater = player ? "#6f9283" : "#bf8e91";
-  const hair = player ? "#63513f" : "#64464a";
+    : skin.id === "host" && appearance.partner === "她";
+  const sweater = player ? "#6f9283" : skin.outfit;
+  const hair = player ? "#63513f" : skin.hair;
   useFrame((_, dt) => {
     if (!rig.current) return;
     const motionDt = r.game.phase === 'paused' ? 0 :
@@ -339,6 +342,7 @@ function Partner({
         scale={[0.82, 1.03, 0.62]}
         color={sweater}
       />
+      {!player && <SkinDetails id={skin.id} part="body" />}
       <Box at={[0, 0.61, 0.02]} size={[0.34, 0.15, 0.3]} color="#6a625e" />
       <group ref={seatedLegs}>
         {[-1, 1].map((sign) => (
@@ -400,6 +404,7 @@ function Partner({
         <Box at={[0.15, 0.91, 0.15]} size={[0.1, 0.3, 0.035]} color="#d3ddd0" />
       </group>
       <group ref={head} position={[0, 1.29, 0]}>
+        {!player && <SkinDetails id={skin.id} part="head" />}
         <Ball
           at={[0, 0, -0.025]}
           radius={0.205}
@@ -443,14 +448,16 @@ function Partner({
         <group ref={eyes} position={[0, -0.01, 0.192]}>
           {[-1, 1].map((sign) => (
             <group key={sign}>
+              {!player && skin.id !== "host" && <Ball at={[sign * 0.064, 0, -0.003]} radius={0.023} scale={[1, 1.28, 0.3]} color="#fff2e7" />}
               <Ball
                 at={[sign * 0.064, 0, 0]}
-                radius={0.019}
+                radius={!player && skin.id !== "host" ? 0.015 : 0.019}
                 scale={[1, 1.25, 0.3]}
-                color="#4f4344"
+                color={player ? "#4f4344" : skin.eyes}
               />
+              {!player && skin.id !== "host" && <Ball at={[sign * 0.064, 0, 0.005]} radius={0.008} scale={[0.8, 1.3, 0.22]} color="#392a39" />}
               <Ball
-                at={[sign * 0.064 - 0.004, 0.006, 0.006]}
+                at={[sign * 0.064 - 0.004, 0.006, 0.011]}
                 radius={0.005}
                 color="#fff9e8"
               />
@@ -488,19 +495,19 @@ function Partner({
           <group ref={headphones}>
             <mesh rotation={[0, 0, 0]}>
               <torusGeometry args={[0.222, 0.018, 8, 22, Math.PI]} />
-              <meshStandardMaterial color="#e0ccb5" />
+              <meshStandardMaterial color={skin.id === "host" ? skin.accent : skin.dark} />
             </mesh>
             <Ball
               at={[-0.216, 0, 0]}
               radius={0.067}
               scale={[0.44, 1.3, 0.8]}
-              color="#e0ccb5"
+              color={skin.id === "host" ? skin.accent : skin.dark}
             />
             <Ball
               at={[0.216, 0, 0]}
               radius={0.067}
               scale={[0.44, 1.3, 0.8]}
-              color="#e0ccb5"
+              color={skin.id === "host" ? skin.accent : skin.dark}
             />
           </group>
         )}
@@ -595,9 +602,9 @@ function Room({
       chair.current.rotation.y = tracking.yaw;
       tracking.chairYaw = tracking.yaw;
     }
-    const signature = [tracking.yaw, tracking.pitch, tracking.roll, tracking.mouth, tracking.blink, tracking.stand, r.game.won, offline].join('|');
+    const signature = [tracking.yaw, tracking.pitch, tracking.roll, tracking.mouth, tracking.blink, tracking.stand, r.game.won, offline, appearance.skin].join('|');
     if (signature !== avatarSignature.current) {
-      paintAvatar(textures.avatar, tracking, r.game.won || offline);
+      paintAvatar(textures.avatar, tracking, r.game.won || offline, appearance.skin);
       avatarSignature.current = signature;
       tracking.avatarYaw = Math.atan2(Math.sin(tracking.yaw - Math.PI), Math.cos(tracking.yaw - Math.PI));
       tracking.avatarMouth = tracking.mouth;

@@ -1,3 +1,4 @@
+import { skinOf } from "./skins";
 import { dailyModal } from "./daily";
 import {
   action,
@@ -60,7 +61,7 @@ export type Runtime3D = {
 };
 export const createRuntime = (save: Save): Runtime3D => ({
   tracking: { yaw: Math.PI, pitch: 0, roll: 0, mouth: 0, blink: 1, stand: 0, chairYaw: Math.PI, avatarYaw: 0, avatarMouth: 0, avatarBlink: 1, avatarUpdates: 0 },
-  game: createGame(),
+  game: createGame(0, 1, save.unlocked, save.skin),
   save,
   yaw: -1.25,
   pitch: -0.04,
@@ -196,7 +197,7 @@ export function text3D(r: Runtime3D) {
     webglReady: r.webglReady,
     fps: Math.round(r.fps),
     progression: r.save,
-    partner: { ...partnerPose(r.game), ...partnerBehavior(r.game) },
+    partner: { name: skinOf(r.game.skin).name, skin: r.game.skin, ...partnerPose(r.game), ...partnerBehavior(r.game) },
     tracking: { ...r.tracking },
   };
 }

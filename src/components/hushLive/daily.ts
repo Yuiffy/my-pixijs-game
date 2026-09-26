@@ -1,3 +1,4 @@
+import { skinOf } from "./skins";
 import type { Game } from "./engine";
 
 export const MEALS = [
@@ -61,7 +62,7 @@ export type Daily = {
   loudTime: number;
   replied: boolean;
   unread: boolean;
-  messages: { from: "岁己" | "我"; text: string }[];
+  messages: { from: "partner" | "我"; text: string }[];
   after: "rice" | "shower";
   memory: string;
 };
@@ -90,7 +91,7 @@ export function beginDaily(s: Game) {
     unread: false,
     messages: [
       {
-        from: "岁己",
+        from: "partner",
         text: homemade
           ? "今天想吃你炒的蛋炒饭，可以嘛？鸡蛋和米饭在料理台。"
           : `回来啦？今晚想吃${MEALS.find((m) => m.id === meal)?.name}，放桌上就好～`,
@@ -99,7 +100,7 @@ export function beginDaily(s: Game) {
     after: (s.seed + s.level) % 2 ? "rice" : "shower",
     memory: "",
   };
-  s.message = "下班到家，门里传来岁己和观众聊天的声音。先轻轻开门。";
+  s.message = `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。先轻轻开门。`;
 }
 export const timingPosition = (s: Game) => (Math.sin((s.daily?.clock ?? 0) * 2.2 - Math.PI / 2) + 1) / 2;
 export const timingSteps = (s: Game) => (s.daily?.panel === "lock"
@@ -130,7 +131,7 @@ export function timingTap(s: Game) {
   d.feedback = d.panel === "lock" ? "很好，几乎没声音。" : "香味出来了！";
   if (d.beats < 3) return;
   if (d.panel === "lock") {
-    s.message = "门轻轻合上。岁己抬眼笑了一下，手指悄悄比了颗心。";
+    s.message = `门轻轻合上。${skinOf(s.skin).name}抬眼笑了一下，手指悄悄比了颗心。`;
     s.love += d.mistakes === 0 ? 12 : 5;
   } else {
     s.done.push("cook");
@@ -160,7 +161,7 @@ export function replyQuietly(s: Game) {
   d.replied = true;
   d.messages.push(
     { from: "我", text: "收到，戴耳机啦。你安心播。" },
-    { from: "岁己", text: "乖。等我下播，给你一个抱抱。" },
+    { from: "partner", text: "乖。等我下播，给你一个抱抱。" },
   );
   s.love += 10;
 }
@@ -170,7 +171,7 @@ export function finishLeisure(s: Game) {
   if (d.leisureTime >= 8 && !s.done.includes("leisure")) {
     s.done.push("leisure");
     s.love += d.replied || d.volume <= 25 ? 10 : 0;
-    s.message = "眼皮开始打架了。就在沙发上躺一会儿，等岁己下播。";
+    s.message = `眼皮开始打架了。就在沙发上躺一会儿，等${skinOf(s.skin).name}下播。`;
   }
   d.panel = null;
   s.requireRelease = true;
@@ -197,11 +198,11 @@ export function chooseGoodnight(s: Game, choice: "together" | "care") {
   d.memory =
     d.after === "rice"
       ? choice === "together"
-        ? "凌晨两点，一碗蛋炒饭，两把勺子。岁己把第一口递给你：“明天也一起吃饭吧。”"
-        : "你接过锅铲，让岁己去坐着。背后忽然贴过来一个拥抱：“今天最开心的事，就是你在家。”"
+        ? `凌晨两点，一碗蛋炒饭，两把勺子。${skinOf(s.skin).name}把第一口递给你：“明天也一起吃饭吧。”`
+        : `你接过锅铲，让${skinOf(s.skin).name}去坐着。背后忽然贴过来一个拥抱：“今天最开心的事，就是你在家。”`
       : choice === "together"
-        ? "你把温水递过去，岁己靠在你肩上擦头发：“直播说了好多话，还是最想和你说晚安。”"
-        : "你把干毛巾轻轻盖在岁己头上。岁己握住你的手：“头发擦干了，再抱着你睡。”";
+        ? `你把温水递过去，${skinOf(s.skin).name}靠在你肩上擦头发：“直播说了好多话，还是最想和你说晚安。”`
+        : `你把干毛巾轻轻盖在${skinOf(s.skin).name}头上。${skinOf(s.skin).name}握住你的手：“头发擦干了，再抱着你睡。”`;
   d.panel = null;
   d.stage = "complete";
   s.love += 25;
@@ -218,8 +219,8 @@ export function stepDaily(s: Game, dt: number): boolean {
     d.clock = 0;
     s.message =
       d.after === "rice"
-        ? "02:13 · 锅铲轻轻碰响。你醒了：岁己怎么还在给自己炒饭？去料理台看看。"
-        : "02:13 · 浴室水声停了。岁己抱着毛巾走出来，看到你醒了：“吵醒你啦？”就在沙发旁，抬头看看TA。";
+        ? `02:13 · 锅铲轻轻碰响。你醒了：${skinOf(s.skin).name}怎么还在给自己炒饭？去料理台看看。`
+        : `02:13 · 浴室水声停了。${skinOf(s.skin).name}抱着毛巾走出来，看到你醒了：“吵醒你啦？”就在沙发旁，抬头看看TA。`;
   }
   if (d.panel === "leisure") {
     d.leisureTime += dt;
@@ -235,7 +236,7 @@ export function stepDaily(s: Game, dt: number): boolean {
         !d.messages.some((m) => m.text.includes("听见"))
       ) {
         d.messages.push({
-          from: "岁己",
+          from: "partner",
           text: `宝贝，${d.entertainment === "video" ? "视频" : "游戏"}的声音麦里都听见啦。帮我小声一点，好不好？`,
         });
         d.unread = true;

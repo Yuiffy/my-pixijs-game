@@ -32,6 +32,8 @@ import { worldPoint } from "./navigation";
 import { ApartmentSound } from "./sound3d";
 import styles from "./hush3d.module.css";
 import DeltaGame from "./DeltaGame";
+import { SkinPortrait } from "./SkinDetails";
+import { SKINS, skinOf, SkinId } from "./skins";
 import DailyPanel from "./DailyPanel";
 import { dailyModal, mealOf, offAir } from "./daily";
 
@@ -178,6 +180,7 @@ export default function HushLive() {
         : Math.min(4, current.save.unlocked),
       seed.current,
       current.save.unlocked,
+      current.save.skin,
     );
     setSave(current.save);
     refresh();
@@ -297,7 +300,7 @@ export default function HushLive() {
   const selectNight = (level: number, nextSeed = seed.current) => {
     clearControls(r);
     unlock();
-    r.game = createGame(level, nextSeed, r.save.unlocked);
+    r.game = createGame(level, nextSeed, r.save.unlocked, r.save.skin);
     r.yaw = -1.25;
     r.pitch = -0.04;
     r.focus = null;
@@ -308,6 +311,12 @@ export default function HushLive() {
   };
   const goGoal = () => {
     go3D(r, objective(r.game).spot);
+    refresh();
+  };
+  const selectSkin = (skin: SkinId) => {
+    const next = { ...save, skin, partner: skin === "host" ? save.partner : "她" as const };
+    persist(next);
+    r.game = createGame(r.game.level, r.game.seed, next.unlocked, skin);
     refresh();
   };
   const share = async () => {
@@ -462,6 +471,18 @@ export default function HushLive() {
             </p>
             {g.daily && <small>今晚的晚饭：{g.daily.homemade ? "亲手炒的蛋炒饭" : mealOf(g).name} · 忙完回沙发，故事会继续。</small>}
           </div>
+          <fieldset className={styles.skinPicker}>
+            <legend>今晚和谁一起？</legend>
+            <div>
+              {SKINS.map((skin) => (
+<button key={skin.id} data-skin={skin.id} aria-pressed={save.skin === skin.id} onClick={() => selectSkin(skin.id)}>
+                <SkinPortrait id={skin.id} />
+                <span>{skin.name}</span>
+              </button>
+))}
+            </div>
+            <small>{skinOf(save.skin).description}</small>
+          </fieldset>
           <button
             id="hush-start"
             disabled={!sceneReady}
@@ -503,14 +524,15 @@ export default function HushLive() {
                 <select
                   id="hush-partner"
                   aria-label="恋人称呼"
+                  disabled={save.skin !== "host"}
                   value={save.partner}
                   onChange={(e) => persist({
                       ...save,
                       partner: e.target.value as Save["partner"],
                     })}
                 >
-                  <option value="她">她 · 岁己</option>
-                  <option value="他">他 · 岁己</option>
+                  <option value="她">她</option>
+                  <option value="他">他</option>
                 </select>
               </label>
             </div>
