@@ -1,7 +1,11 @@
 import type { Action, AttackId, Effect, Enemy, EnemyKind, GameInput, GameState, Player, Vec3, WorldAccess } from './types';
 import { canOccupy, REST_POINTS, ENEMY_SPAWNS, heightAt, LANDMARKS, lineClear, regionAt, SPAWN } from './world';
 
+import { enemyAttack, ENEMY_STRIKE_TIME, ENEMY_CONTACT_TIME } from './enemyCombat';
+
 import { ATTACKS, attackSpec, BUFFER_TIME, CHARGE_TIME, DASH_HOLD_TIME, PARRY_WINDOW } from './combat';
+
+export { enemyAttack } from './enemyCombat';
 
 // The simulation contains no browser, rendering, wall-clock or random state.
 // All times are seconds, except the public stepGame argument (milliseconds).
@@ -24,18 +28,6 @@ export function healAmount(s: GameState): number { return s.charm ? 80 : 60; }
 export function maxHp(s: GameState): number { return 100 + s.level * 12; }
 export function maxStamina(s: GameState): number { return 100 + s.level * 5; }
 export function upgradeCost(s: GameState): number { return 40 + s.level * 30; }
-
-export function enemyAttack(e: Enemy) {
-  const index = e.attackIndex % 3;
-  if (e.kind === 'boss') {
-    if (index === 1) return { name: '拖伞重砸', windup: 1.38, range: 3.1, arc: 0.85, damage: 40, recovery: 1.16, parryable: true, lunge: 1.1 };
-    if (index === 2 && e.phase === 2) return { name: '危 · 回旋扫街', windup: 1.1, range: 3.65, arc: Math.PI, damage: 36, recovery: 1.25, parryable: false, lunge: 0 };
-    return { name: e.phase === 2 ? '疾伞突刺' : '铁伞突刺', windup: e.phase === 2 ? 0.67 : 0.88, range: 2.85, arc: 0.66, damage: 32, recovery: 0.95, parryable: true, lunge: 1.7 };
-  }
-  if (e.kind === 'duelist') return { name: index === 1 ? '居合蓄斩' : '快刀横斩', windup: index === 1 ? 1.15 : 0.65, range: 2.35, arc: 1.13, damage: 24, recovery: 0.85, parryable: true, lunge: 0.6 };
-  if (e.kind === 'guard') return { name: '举棍重击', windup: 1.06, range: 2.3, arc: 0.9, damage: 25, recovery: 1.2, parryable: true, lunge: 0.25 };
-  return { name: '短棍挥打', windup: 0.88, range: 1.95, arc: 1.15, damage: 19, recovery: 1.05, parryable: true, lunge: 0.3 };
-}
 
 function makeEnemies(bossDefeated = false): Enemy[] {
   return ENEMY_SPAWNS.map(spawn => ({
@@ -86,7 +78,7 @@ bankedRice: 0,
 level: 0,
 charm: false,
 shortcut: false,
-    worldVersion: 2,
+    worldVersion: 3,
 templeGate: false,
 flaskUpgrade: false,
 litLamps: [],
@@ -370,13 +362,13 @@ function updateEnemy(s: GameState, e: Enemy, dt: number): void {
     // Commit to direction during the final quarter-second: circling and spacing work.
     if (e.timer > 0.25) e.facing = facingToward(e, p);
     e.timer -= dt;
-    if (e.timer <= 0) { e.action = 'attack'; e.timer = 0.24; e.hitDone = false; }
+    if (e.timer <= 0) { e.action = 'attack'; e.timer = ENEMY_STRIKE_TIME; e.hitDone = false; }
     return;
   }
   if (e.action === 'attack') {
     if (e.timer > 0.12) move(s, e, Math.sin(e.facing) * attack.lunge * dt * 5, Math.cos(e.facing) * attack.lunge * dt * 5);
     e.timer -= dt;
-    if (!e.hitDone && e.timer <= 0.16) { e.hitDone = true; damagePlayer(s, e); }
+    if (!e.hitDone && e.timer <= ENEMY_STRIKE_TIME - ENEMY_CONTACT_TIME) { e.hitDone = true; damagePlayer(s, e); }
     if (e.action === 'attack' && e.timer <= 0) { e.action = 'recover'; e.timer = attack.recovery; }
     return;
   }
@@ -399,7 +391,7 @@ function updatePrompt(s: GameState): void {
   const landmark = LANDMARKS.filter(l => !s.collected.includes(l.id) || l.kind === 'note')
     .filter(l => !(l.kind === 'shortcut' && (l.id === 'temple-gate' ? s.templeGate : s.shortcut)) && distance(l, s.player) < 2.05 && Math.abs(l.y - s.player.y) < 0.8 && lineClear(s.player, l, s, l.id))
     .sort((a, b) => distance(a, s.player) - distance(b, s.player))[0];
-  if (landmark) { s.nearbyId = landmark.id; s.prompt = landmark.label; }
+  if (landmark) { s.nearbyId = landmark.id; s.prompt = landmark.kind === 'rest' ? (s.litLamps.includes(landmark.id) ? '中庭雨灯 · 免费休息' : '点燃中庭雨灯') : landmark.label; }
 }
 
 export function stepGame(s: GameState, dtMs: number, input: GameInput = NEUTRAL): void {
@@ -433,12 +425,17 @@ export function interact(s: GameState): void {
   const landmark = LANDMARKS.find(l => l.id === nearbyId);
   if (!landmark) return;
   if (landmark.kind === 'rest') {
+    if (!s.litLamps.includes(landmark.id)) {
+      s.litLamps.push(landmark.id); s.checkpoint = 'courtyard';
+      effect(s, landmark, 'reward'); say(s, '雨灯初燃 · 归途已铭记', 4, 'event', '复活点记好了。点火不会回血、补药或刷新敌人；再交互才是免费休息。');
+      updatePrompt(s); return;
+    }
     if (!safeToRest(s)) { say(s, '敌人还在附近，先脱离战斗才能休息。'); return; }
-    s.checkpoint = landmark.id as GameState['checkpoint']; if (!s.litLamps.includes(landmark.id)) s.litLamps.push(landmark.id);
+    s.checkpoint = 'courtyard';
     s.player.hp = maxHp(s); s.player.stamina = maxStamina(s); s.player.flasks = maxFlasks(s); s.restCount += 1;
     s.enemies = makeEnemies(s.bossDefeated); s.lockedId = null;
     effect(s, landmark, 'heal');
-    say(s, '雨灯重燃 · 归途已铭记', 4, 'event', '这里是新的复活点。生命、体力和药瓶已补满，普通敌人会重生；旅程已记录在本机。');
+    say(s, '歇息片刻 · 雨仍未停', 4, 'event', '免费休息，生命、体力和药瓶已补满；普通敌人会重生。旁边花钱的是强化装备，不是休息。');
   } else if (landmark.kind === 'cache' && !s.collected.includes(landmark.id)) {
     s.collected.push(landmark.id); s.rice += 35; effect(s, landmark, 'reward', '+35 夜市钱');
     say(s, '旧铜钱 ×35', 3, 'event', landmark.id === 'cloister-cache' ? '拿到了！回廊的矮阶通回中庭雨灯，不用原路返回。' : landmark.id === 'lookout-cache' ? '望台上能看到夜市和东侧运河，挑战首领前可以先绕去开近路。' : '这笔钱可以拿回雨灯整备，提高生命、体力和伤害。');
@@ -446,33 +443,42 @@ export function interact(s: GameState): void {
     s.charm = true; s.collected.push(landmark.id); effect(s, landmark, 'reward', '金铃护符'); say(s, '拾得 · 金铃护符', 4, 'event', '金铃会让椰子水恢复更多生命：现在一瓶恢复 80 点。绕路值得吧！');
   } else if (landmark.kind === 'flask' && !s.flaskUpgrade) {
     s.flaskUpgrade = true; s.collected.push(landmark.id); s.player.flasks = Math.min(maxFlasks(s), s.player.flasks + 1);
-    effect(s, landmark, 'reward'); say(s, '刻露瓶 · 药瓶上限 +1', 5, 'event', '现在可以带四瓶回血药了。每座雨灯休息都能补满，R／手柄X喝药。');
+    effect(s, landmark, 'reward'); say(s, '刻露瓶 · 药瓶上限 +1', 5, 'event', '现在可以带四瓶回血药了。回中庭雨灯免费休息就能补满，R／手柄X喝药。');
   } else if (landmark.id === 'temple-gate') {
     if (s.player.z > -6.7) { say(s, '水向低处流，门向归人开。', 5, 'lore', '门闩在寺院一侧。先从高处的悬钟桥进雨寺，再沿石阶下到门后。'); return; }
     s.templeGate = true; effect(s, landmark, 'reward'); say(s, '闭水门已开', 4, 'event', '门外就是晾衣暗巷！雨寺和中庭连起来了，补给后可以直接回去。');
   } else if (landmark.kind === 'shortcut') {
     if (s.player.z > -8.8) { say(s, '门的另一面，铁仍记得手的温度。', 5, 'lore', '门闩在另一侧，我们得先走西边的高阶绕到夜市，再从里面开门。'); return; }
-    s.shortcut = true; effect(s, landmark, 'reward', '捷径开启'); say(s, '门闩落下', 4, 'event', '近路通啦！沿运河回中庭就能补给，重试铁伞不用再爬屋脊。');
+    s.shortcut = true; effect(s, landmark, 'reward', '捷径开启'); say(s, '侧门升起', 4, 'event', '近路通啦！沿运河回中庭就能补给，重试铁伞不用再爬屋脊。');
   } else if (landmark.kind === 'food') {
     if (!s.bossDefeated) { say(s, '伞不收，炉不迎客。', 5, 'lore', '摊主要我们先打败封街的铁伞，赢了再来点餐。'); return; }
-    s.mode = 'ending'; s.lockedId = null; s.prompt = ''; s.nearbyId = null;
+    if (s.collected.includes('food')) return;
+    s.collected.push('food'); s.mode = 'ending'; s.lockedId = null; s.prompt = ''; s.nearbyId = null;
     say(s, '下播后的第一份打抛饭。明天还要直播，今晚先好好吃饭。', 99);
+  } else if (landmark.id === 'temple-lamp' || landmark.id === 'canal-lamp') {
+    if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
+    say(s, '芯冷，灯空。归火尚在中庭。', 6, 'lore', '这只是旧灯，没有复活和补给功能。开好近路就能回中庭的雨灯，不必重绕整张地图。');
   } else if (landmark.kind === 'note') {
     if (!s.collected.includes(landmark.id)) s.collected.push(landmark.id);
-    say(s, landmark.id === 'temple-note' ? '钟不为来者鸣。携空瓶过桥，循百灯归水。' : landmark.id === 'ferry-note' ? '渡者不渡伞。此灯守岸，前路留给归人。' : landmark.id === 'laptop' ? '屏光熄去，金塔下还有一盏不眠的火。' : '伞下无归客。逐水向东，归人自解旧闩。', 8, 'lore', landmark.id === 'temple-note' ? '寺里供着能增加药瓶数量的刻露瓶。拿到后沿寺院石阶下去，能点灯补给、开门回暗巷。' : landmark.id === 'ferry-note' ? '这里的雨灯离铁伞更近，休息后死亡会回到这里。药瓶喝完就回来补满，不用重新绕屋顶。' : landmark.id === 'laptop' ? '这说的是金塔下面的深夜食堂。先从旅馆外梯下去，找到中庭的雨灯。' : '纸条在提醒我们：夜市东边的运河侧廊有一扇门，从里面能打开，通回中庭。');
+    say(s, landmark.id === 'temple-note' ? '钟不为来者鸣。携空瓶过桥，循百灯归水。' : landmark.id === 'ferry-note' ? '渡者不渡伞。此灯守岸，前路留给归人。' : landmark.id === 'laptop' ? '屏光熄去，金塔下还有一盏不眠的火。' : '伞下无归客。逐水向东，归人自解旧闩。', 8, 'lore', landmark.id === 'temple-note' ? '寺里供着能增加药瓶数量的刻露瓶。拿到后沿寺院石阶下去，拉动门后的绞盘，就能走近路回中庭补给。' : landmark.id === 'ferry-note' ? '旧灯已经熄灭；去运河侧廊拉开门后的绞盘，就能直接回中庭雨灯补药。' : landmark.id === 'laptop' ? '这说的是金塔下面的深夜食堂。先从旅馆外梯下去，找到中庭的雨灯。' : '纸条在提醒我们：夜市东边的运河侧廊有一扇门，从里面能打开，通回中庭。');
   }
   updatePrompt(s);
 }
 
 export function upgrade(s: GameState): boolean {
   const lamp = LANDMARKS.find(l => l.kind === 'rest' && distance(s.player, l) <= 2.05 && Math.abs(s.player.y - l.y) <= 0.8);
-  if (!lamp) return false;
+  if (!lamp || !s.litLamps.includes(lamp.id)) return false;
   if (s.mode !== 'playing' || s.player.action !== 'idle' || distance(s.player, lamp) > 2.05 || Math.abs(s.player.y - lamp.y) > 0.8 || !safeToRest(s)) return false;
   if (s.level >= 5) { say(s, '这身行装已经整备完毕。'); return false; }
   const cost = upgradeCost(s);
   if (s.rice < cost) { say(s, `整备需要 ${cost} 夜市钱。沿暗巷和屋脊找找。`); return false; }
   s.rice -= cost; s.bankedRice += cost; s.level += 1; s.player.hp = Math.min(maxHp(s), s.player.hp + 12); s.player.stamina = Math.min(maxStamina(s), s.player.stamina + 5);
   effect(s, s.player, 'reward', `行装 +${s.level}`); say(s, '整备完成 · 最大生命、体力和武器伤害提升。'); return true;
+}
+
+export function continueExploring(s: GameState): void {
+  if (s.mode !== 'ending') return;
+  s.mode = 'playing'; s.paused = false; s.messageTime = 0; s.lockedId = null; clearHeldActions(s); updatePrompt(s);
 }
 
 export function respawn(s: GameState): void {
@@ -490,6 +496,7 @@ export function setPaused(s: GameState, paused: boolean): void { if (s.mode === 
 
 export function getObjective(s: GameState): string {
   if (s.mode === 'ending') return '第一幕完成 · 这顿饭，来之不易';
+  if (s.collected.includes('food')) return '雨夜未尽 · 自由探索旧城';
   if (s.bossDefeated) return '到夜市炉火旁，吃上今晚的第一顿饭';
   if (s.shortcut) return '挑战封街人 · 铁伞，抵达深夜食堂';
   if (s.charm) return '沿夜市长阶下行，找出回到中庭的近路';
@@ -524,8 +531,16 @@ export function loadGame(raw: string | null): GameState | null {
     const s = JSON.parse(raw) as GameState;
     if (!s || s.version !== 1 || !['title', 'playing', 'dead', 'ending'].includes(s.mode) || typeof s.paused !== 'boolean') return null;
     const oldWorld = s.worldVersion === undefined;
-    if (oldWorld) { s.worldVersion = 2; s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
-    if (s.worldVersion !== 2 || typeof s.templeGate !== 'boolean' || typeof s.flaskUpgrade !== 'boolean') return null;
+    if (oldWorld) { s.worldVersion = 3; s.templeGate = false; s.flaskUpgrade = false; s.litLamps = s.checkpoint === 'courtyard' ? ['courtyard'] : []; }
+    if ((s.worldVersion as number) === 2) {
+      if (!Array.isArray(s.litLamps) || s.litLamps.some(id => !['courtyard', 'temple-lamp', 'canal-lamp'].includes(id)) || new Set(s.litLamps).size !== s.litLamps.length) return null;
+      if (s.checkpoint !== 'room' && !s.litLamps.includes(s.checkpoint)) return null;
+      if (['temple-lamp', 'canal-lamp'].includes(s.checkpoint)) s.checkpoint = 'courtyard';
+      s.litLamps = s.checkpoint === 'courtyard' || s.litLamps.includes('courtyard') ? ['courtyard'] : [];
+      s.worldVersion = 3;
+    }
+    if (s.mode === 'ending' && Array.isArray(s.collected) && !s.collected.includes('food')) s.collected.push('food');
+    if (s.worldVersion !== 3 || typeof s.templeGate !== 'boolean' || typeof s.flaskUpgrade !== 'boolean') return null;
     if (!Array.isArray(s.litLamps) || new Set(s.litLamps).size !== s.litLamps.length || s.litLamps.some(id => !LANDMARKS.some(l => l.id === id && l.kind === 'rest'))) return null;
     if (s.checkpoint !== 'room' && !s.litLamps.includes(s.checkpoint)) return null;
     if (!Object.hasOwn(REST_POINTS, s.checkpoint) || !['charm', 'shortcut', 'bossDefeated'].every(k => typeof s[k as keyof GameState] === 'boolean')) return null;

@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { CameraControl, EnemyKind, GameState, Surface } from "./types";
-import { enemyAttack } from "./engine";
+import { enemyAttack, enemyMotion } from "./enemyCombat";
 import CompanionView from './CompanionView';
 import CombatTrail from './CombatTrail';
 import { combatPose, rollPose, CHARGE_TIME } from './combat';
@@ -938,9 +938,46 @@ function TreasureChest({ stateRef, id, position }: { stateRef: StateRef; id: str
   );
 }
 
+function GateWinch({ stateRef, temple, height, width }: { stateRef: StateRef; temple: boolean; height: number; width: number }) {
+  const wheel = useRef<THREE.Group>(null); const pawl = useRef<THREE.Group>(null);
+  useFrame((_, dt) => {
+    if (stateRef.current.paused) return;
+    const open = temple ? stateRef.current.templeGate : stateRef.current.shortcut;
+    if (wheel.current) wheel.current.rotation.z = THREE.MathUtils.damp(wheel.current.rotation.z, open ? Math.PI * 2.3 : 0, 4, dt);
+    if (pawl.current) pawl.current.rotation.z = THREE.MathUtils.damp(pawl.current.rotation.z, open ? -1.2 : 0.2, 7, dt);
+  });
+  return (
+    <group name={temple ? 'temple-gate-winch' : 'canal-gate-winch'} position={[width / 2, 0, 0]}>
+      <Block position={[0, height / 2, 0]} size={[0.8, height + 0.2, 0.8]} color="#7e8980" />
+      {/* Gearbox and handle face north, the same side as the interaction point. */}
+      <Block position={[0, 1.02, -0.45]} size={[0.72, 0.72, 0.18]} color="#544a38" />
+      <group ref={wheel} position={[0, 1.07, -0.69]}>
+        <mesh><torusGeometry args={[0.36, 0.046, 8, 24]} /><meshStandardMaterial color="#d5aa60" metalness={0.6} roughness={0.45} /></mesh>
+        {[0, Math.PI / 3, (Math.PI * 2) / 3].map(angle => <Block key={angle} position={[0, 0, 0]} size={[0.67, 0.045, 0.05]} rotation={[0, 0, angle]} color="#b48a4d" />)}
+        <Block position={[0.32, 0, -0.14]} size={[0.08, 0.1, 0.29]} color="#e5c381" />
+      </group>
+      <group ref={pawl} position={[0.38, 1.43, -0.54]}><Block position={[-0.11, -0.09, 0]} size={[0.31, 0.085, 0.09]} rotation={[0, 0, 0.6]} color="#e3b569" /></group>
+      {[-0.2, 0.2].map(side => (
+<group key={side}>
+        {Array.from({ length: 14 }, (_, i) => (
+<mesh key={i} position={[side, 1.5 + i * ((height - 1.3) / 14), -0.51]} rotation={[0, i % 2 ? Math.PI / 2 : 0, 0]}>
+          <torusGeometry args={[0.055, 0.014, 5, 8]} /><meshStandardMaterial color="#b9a477" metalness={0.7} roughness={0.55} />
+        </mesh>
+))}
+      </group>
+))}
+      <mesh position={[0, height + 0.08, -0.52]}><torusGeometry args={[0.28, 0.04, 8, 20]} /><meshStandardMaterial color="#9c895b" /></mesh>
+      {/* Outside has only a riveted backplate: no magical handle through the bars. */}
+      <Block position={[0, 1.03, 0.42]} size={[0.74, 0.74, 0.055]} color="#405153" />
+      {[-1, 1].map(x => [-1, 1].map(y => <mesh key={`${x}-${y}`} position={[x * 0.28, 1.03 + y * 0.28, 0.47]}><sphereGeometry args={[0.035, 8, 8]} /><meshStandardMaterial color="#8f9588" /></mesh>))}
+    </group>
+  );
+}
+
 function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
   const gates = useRef<(THREE.Group | null)[]>([]);
   useFrame((_, dt) => {
+    if (stateRef.current.paused) return;
     OBSTACLES.forEach((o, i) => { const gate = gates.current[i]; if (gate) gate.position.y = THREE.MathUtils.damp(gate.position.y, gateOpen(o, stateRef.current) ? 3.5 : 0, 5, dt); });
   });
   return (
@@ -962,6 +999,7 @@ function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
                 size={[o.w + 0.7, 0.3, 1]}
                 color="#aa9d80"
               />
+              <GateWinch stateRef={stateRef} temple={o.gateId === "temple"} height={o.h} width={o.w} />
               <group ref={el => { gates.current[i] = el; }}>
                 <Block
                   position={[0, 1.5, 0]}
@@ -1062,14 +1100,17 @@ function RainShrine({ stateRef, id, position }: { stateRef: StateRef; id: string
   useFrame(() => {
     const s = stateRef.current; const lit = s.litLamps.includes(id); const current = s.checkpoint === id;
     if (glow.current) { glow.current.rotation.z = s.time * 0.12; const mat = glow.current.material as THREE.MeshBasicMaterial; mat.color.set(current ? '#ffda89' : lit ? '#86dacc' : '#6f9caa'); mat.opacity = (lit ? 0.45 : 0.2) + Math.sin(s.time * 2) * 0.08; }
-    if (flame.current) { flame.current.scale.setScalar((lit ? 1 : 0.65) + Math.sin(s.time * 4) * 0.08); (flame.current.material as THREE.MeshBasicMaterial).color.set(lit ? '#ffe4a0' : '#83c4d5'); }
-    if (light.current) { light.current.intensity = lit ? 8 : 3; light.current.color.set(lit ? '#ffce82' : '#8cd5e5'); }
+    if (flame.current) { flame.current.visible = lit; flame.current.scale.setScalar((lit ? 1 : 0.65) + Math.sin(s.time * 4) * 0.08); (flame.current.material as THREE.MeshBasicMaterial).color.set(lit ? '#ffe4a0' : '#83c4d5'); }
+    if (light.current) { light.current.intensity = lit ? 8 : 0; light.current.color.set(lit ? '#ffce82' : '#8cd5e5'); }
   });
   return (
 <group position={position}>
     <mesh ref={glow} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]}><ringGeometry args={[0.7, 1, 48]} /><meshBasicMaterial transparent opacity={0.4} depthWrite={false} /></mesh>
     <Block position={[0, 0.15, 0]} size={[0.8, 0.3, 0.8]} color="#827d69" />
-    <Lantern position={[0, 0.3, 0]} />
+    <Pole position={[0, 0.85, 0]} height={1.4} radius={0.045} />
+    <Block position={[0, 1.42, 0]} size={[0.42, 0.07, 0.42]} color="#514f42" />
+    {[-1, 1].map(side => <Pole key={side} position={[side * 0.19, 1.66, 0]} height={0.5} radius={0.022} />)}
+    <mesh position={[0, 1.99, 0]} rotation={[0, Math.PI / 4, 0]}><coneGeometry args={[0.35, 0.22, 4]} /><meshStandardMaterial color="#4b5c58" /></mesh>
     <mesh ref={flame} position={[0, 1.65, 0]}><octahedronGeometry args={[0.17]} /><meshBasicMaterial color="#ffe4a0" /></mesh>
     <Pole position={[-0.6, 1.4, 0]} height={2.8} radius={0.045} color="#ba9c65" />
     <Block position={[-0.35, 2.3, 0]} size={[0.5, 0.85, 0.04]} color="#ac714f" />
@@ -1109,6 +1150,13 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
     <group>
       {LANDMARKS.filter(l => l.id === 'cloister-cache' || l.id === 'lookout-cache').map(l => <TreasureChest key={l.id} stateRef={stateRef} id={l.id} position={[l.x, l.y, l.z - 0.8]} />)}
       {LANDMARKS.map((l, i) => {
+        if (l.id === 'temple-lamp' || l.id === 'canal-lamp') return (
+          <group key={l.id} position={[l.x, l.y, l.z]} name={`spent-lamp-${l.id}`}>
+            <Block position={[0, 0.14, 0]} size={[0.8, 0.28, 0.8]} color="#737267" />
+            <Pole position={[0, 0.55, 0]} height={0.65} radius={0.065} color="#655d50" />
+            <Block position={[0.1, 0.84, 0]} size={[0.45, 0.08, 0.38]} rotation={[0, 0, 0.24]} color="#5a5c56" />
+          </group>
+        );
         if (l.kind === "rest") return <RainShrine key={l.id} stateRef={stateRef} id={l.id} position={[l.x, l.y, l.z]} />;
         if (l.id === "laptop") return (
             <group key={l.id} position={[l.x, l.y + 0.83, l.z]}>
@@ -1342,15 +1390,16 @@ function Actor({
         if (rightLeg.current) rightLeg.current.rotation.x = -1.1 * roll.tuck;
       }
     } else if (enemy) {
-      if (enemy.action === "windup") {
-        armX = -2.3;
-        armZ = -0.3;
-        body.current.rotation.x = -0.09;
-      }
-      if (enemy.action === "attack") {
-        armX = 0.75;
-        armZ = 0.25;
-        body.current.rotation.x = 0.18;
+      if (heldWeapon.current) heldWeapon.current.rotation.x = Math.PI / 2;
+      const pose = enemyMotion(enemy);
+      if (pose) {
+        if (heldWeapon.current) heldWeapon.current.rotation.x = pose.weaponPitch;
+        armX = pose.ax; armZ = pose.az;
+        if (arm.current) arm.current.rotation.y = pose.ay;
+        body.current.rotation.x = pose.lean; body.current.rotation.y += pose.twist; body.current.position.y += pose.crouch;
+        if (leftArm.current) leftArm.current.rotation.set(pose.lx, 0, pose.lz);
+        if (leftLeg.current) leftLeg.current.rotation.x = pose.legL;
+        if (rightLeg.current) rightLeg.current.rotation.x = pose.legR;
       }
       if (enemy.action === "stagger") {
         armX = 0.6;
@@ -1413,7 +1462,7 @@ function Actor({
     }
   });
   return (
-    <group ref={root}>
+    <group ref={root} name={enemyId ? `enemy-${enemyId}` : "player-rig"}>
       <group ref={body} scale={size}>
         <group ref={leftLeg} position={[-0.14, 0.8, 0]}>
           <Pole
@@ -1805,14 +1854,16 @@ function CameraRig({
     let { distance } = controls;
     let { pitch } = controls;
     if (locked) {
-      const desiredYaw = Math.atan2(p.x - locked.x, p.z - locked.z);
+      const desiredYaw = Math.atan2(p.x - locked.x, p.z - locked.z) + 0.32;
       const difference = Math.atan2(
         Math.sin(desiredYaw - yaw),
         Math.cos(desiredYaw - yaw),
       );
       controls.yaw += difference * Math.min(1, dt * 5);
       yaw = controls.yaw;
-      distance += 0.6;
+      // A raised shoulder view keeps the enemy windup clear of the player silhouette.
+      distance = Math.max(5.6, distance + 0.6);
+      pitch = Math.max(0.54, pitch);
     }
     if (state.mode === "title") {
       yaw = 0.08;
@@ -1820,6 +1871,7 @@ function CameraRig({
       pitch = 0.3;
     }
     target.set(p.x, p.y + 1.3 + p.jumpHeight * 0.35, p.z);
+    if (locked) { target.x += (locked.x - p.x) * 0.24; target.z += (locked.z - p.z) * 0.24; }
     desired.set(
       p.x + Math.sin(yaw) * Math.cos(pitch) * distance,
       p.y + 1.3 + p.jumpHeight * 0.35 + Math.sin(pitch) * distance,

@@ -126,3 +126,19 @@ test('parry has authored preparation, deflection and settle; roll tucks and sett
   assert.equal(rollPose(0).angle,0); assert.equal(rollPose(0).tuck,0); assert.equal(rollPose(.64).angle,Math.PI*2); assert.equal(rollPose(.64).tuck,0);
   assert.ok(rollPose(.2).tuck>.99); for(let t=.001;t<.64;t+=.001)assert.ok(Math.abs(rollPose(t).angle-rollPose(t-.001).angle)<.025);
 });
+
+
+test('enemy windups move through raise, gather, release and continuous contact/recovery for every pattern',async()=>{
+ const {enemyMotion,enemyAttack,ENEMY_STRIKE_TIME,ENEMY_CONTACT_TIME}=await loadTypescriptModule('src/components/nightRain/enemyCombat.ts');
+ const neutral={lean:0,twist:0,crouch:0,ax:0,ay:0,az:-.08,lx:0,lz:0,legL:0,legR:0,weaponPitch:Math.PI/2};
+ const delta=(a,b)=>Math.max(...Object.keys(a).map(k=>Math.abs(a[k]-b[k])));
+ for(const kind of ['prowler','guard','duelist','boss'])for(const phase of [1,2])for(const attackIndex of [0,1,2]){
+  const e={kind,phase,attackIndex,action:'windup'};const spec=enemyAttack(e);const pose=(action,timer)=>enemyMotion({...e,action,timer});
+  const samples=[1,.82,.58,.3,.1,0].map(r=>pose('windup',spec.windup*r));assert.ok(delta(samples[0],neutral)<1e-8);
+  for(let i=1;i<samples.length;i++)assert.ok(delta(samples[i],samples[i-1])>.005,`${kind} phase ${phase} pattern ${attackIndex} step ${i} moves`);
+  for(const p of samples)assert.ok(Object.values(p).every(Number.isFinite));
+  assert.ok(delta(samples.at(-1),pose('attack',ENEMY_STRIKE_TIME))<1e-8);
+  assert.ok(delta(pose('attack',ENEMY_STRIKE_TIME-ENEMY_CONTACT_TIME+1e-5),pose('attack',ENEMY_STRIKE_TIME-ENEMY_CONTACT_TIME-1e-5))<1e-4);
+  assert.ok(delta(pose('attack',0),pose('recover',spec.recovery))<1e-8);assert.ok(delta(pose('recover',0),neutral)<1e-8);
+ }
+});

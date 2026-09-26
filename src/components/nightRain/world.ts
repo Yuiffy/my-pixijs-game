@@ -28,8 +28,8 @@ export const SURFACES: Surface[] = [
 
 export const OBSTACLES: Obstacle[] = [
   { x: -1, z: 7, w: 0.9, d: 0.9, y: 0, h: 2.8, kind: 'shrine', landmarkId: 'courtyard' },
-  { x: -32, z: -9.5, w: 0.9, d: 0.9, y: 0, h: 2.8, kind: 'shrine', landmarkId: 'temple-lamp' },
-  { x: 18, z: -30, w: 0.9, d: 0.9, y: 0, h: 2.8, kind: 'shrine', landmarkId: 'canal-lamp' },
+  { x: -32, z: -9.5, w: 0.9, d: 0.9, y: 0, h: 0.95, kind: 'shrine', landmarkId: 'temple-lamp' },
+  { x: 18, z: -30, w: 0.9, d: 0.9, y: 0, h: 0.95, kind: 'shrine', landmarkId: 'canal-lamp' },
   { x: 4, z: 3, w: 2.5, d: 2.5, y: 0, h: 1.3, kind: 'planter' },
   { x: -5, z: -2, w: 1.8, d: 1.6, y: 0, h: 1.6, kind: 'crate' },
   { x: -17, z: 2, w: 1.2, d: 2, y: 0, h: 1.5, kind: 'crate' },
@@ -47,19 +47,19 @@ export const OBSTACLES: Obstacle[] = [
 
 export const LANDMARKS: Landmark[] = [
   { id: 'laptop', kind: 'note', label: '合上新笔记本', x: 0, y: 6, z: 15 },
-  { id: 'courtyard', kind: 'rest', label: '中庭雨灯 · 休息 / 记录', x: -1, y: 0, z: 7 },
+  { id: 'courtyard', kind: 'rest', label: '中庭雨灯', x: -1, y: 0, z: 7 },
   { id: 'alley-cache', kind: 'cache', label: '拾取遗落的夜市钱袋', x: -16, y: 0, z: 1 },
   { id: 'roof-charm', kind: 'charm', label: '收下金铃护符', x: -15, y: 6, z: -23 },
   { id: 'rooftop-note', kind: 'note', label: '查看夜市便签', x: -4, y: 6, z: -23 },
-  { id: 'shortcut', kind: 'shortcut', label: '拉开中庭侧门', x: 12, y: 0, z: -10 },
+  { id: 'shortcut', kind: 'shortcut', label: '转动侧门绞盘', x: 13.3, y: 0, z: -9.5 },
   { id: 'food', kind: 'food', label: '来一份热腾腾的打抛饭', x: 4, y: 0, z: -47 },
   { id: 'cloister-cache', kind: 'cache', label: '打开铃兰回廊宝箱', x: -6, y: 3, z: -14.5 },
   { id: 'lookout-cache', kind: 'cache', label: '打开金塔望台宝箱', x: -14, y: 6, z: -28.5 },
   { id: 'temple-flask', kind: 'flask', label: '收下刻露瓶', x: -31.5, y: 6, z: -30.5 },
   { id: 'temple-note', kind: 'note', label: '读残钟铭文', x: -28.8, y: 6, z: -24 },
-  { id: 'temple-lamp', kind: 'rest', label: '莲池雨灯 · 休息 / 记录', x: -32, y: 0, z: -9.5 },
-  { id: 'temple-gate', kind: 'shortcut', label: '拨开闭水门闩', x: -30.5, y: 0, z: -7.3 },
-  { id: 'canal-lamp', kind: 'rest', label: '摆渡雨灯 · 休息 / 记录', x: 18, y: 0, z: -30 },
+  { id: 'temple-lamp', kind: 'note', label: '端详莲池旧灯', x: -32, y: 0, z: -9.5 },
+  { id: 'temple-gate', kind: 'shortcut', label: '转动水门绞盘', x: -26.7, y: 0, z: -7.3 },
+  { id: 'canal-lamp', kind: 'note', label: '端详摆渡旧灯', x: 18, y: 0, z: -30 },
   { id: 'ferry-note', kind: 'note', label: '读摆渡人的遗签', x: 19.5, y: 0, z: -28.5 },
 ];
 
@@ -79,12 +79,12 @@ export const CHECKPOINT: Vec3 = { x: -1, y: 0, z: 8.2 };
 
 export const REST_POINTS: Record<string, Vec3> = {
   room: SPAWN,
-courtyard: CHECKPOINT,
-  'temple-lamp': { x: -32, y: 0, z: -10.8 },
-  'canal-lamp': { x: 17, y: 0, z: -30 },
+  courtyard: CHECKPOINT,
 };
 // A guide stops beside a solid shrine; interaction itself is allowed from any clear side.
 export function interactionPoint(l: Landmark): Vec3 {
+  if (l.id === 'temple-lamp') return { x: -32, y: 0, z: -10.8 };
+  if (l.id === 'canal-lamp') return { x: 17, y: 0, z: -30 };
   return l.kind === 'rest' ? REST_POINTS[l.id] : l;
 }
 

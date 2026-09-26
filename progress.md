@@ -3040,3 +3040,12 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 
 - 造型最终顺序完整check／生产build通过（53页、Next lint/typecheck启用）。12份雨夜源码与成功构建逐一归一化SHA256一致，tmp/night-rain-companion-source-validation.json。生产专项5图全部像素检查并逐张目检，errors为空；共享游戏客户端亦使用系统Chrome／静音／虚拟Pointer Lock冒烟通过，1图非黑已目检。
 - 3871已切到night-rain-companions工作树的.next-night-rain-companions-release，PID124896；未刷新用户页面。该工作树仍承载服务，其node_modules引用night-rain-validation，两个工作树均需保留。主共享目录不移动HEAD，避免干扰其他任务；发布提交在codex/night-rain-companions分支。
+
+### 2026-09-26 · 雨夜旧城四项试玩反馈验收完成
+
+- 中庭首次点灯只记录复活点并立即保存，不补血、不补药、不重置敌人；之后再次交互免费休息，装备强化仍单独收费。只保留中庭雨灯，寺前/运河旧灯改为残灯碑记；v2 旧复活点迁移到中庭并保留资源、位置与敌人状态。
+- 敌人全身抬手、蓄力、挥出、接触与收招使用模拟时钟连续姿态，保留原攻击判定时间；守卫高举、快刀侧切、铁伞突刺/重击/横扫各有轮廓，修正突刺伞尖与锁定视角遮挡。两扇近路门增加内侧绞盘、门柱、棘爪、链条与升门动作，外侧背板不可操作。
+- 第一幕完成后可继续探索，敌人、钱、收集和近路进度保留；晚饭不可重复领取，继续后保存/刷新仍在探索。桌面和 390px 手机结局按钮均验证。
+- 最终 51/51 NightRain 规则测试通过；修改源码 ESLint、完整 pnpm run check → pnpm run build 顺序通过，Next ESLint/类型检查启用，53 页生成，仅既有 overworldRpg 未使用导入警告。13 份 NightRain 源码与成功构建 LF 归一化 SHA256 一致：tmp/night-rain-refinements-source-validation.json。
+- 静音后台系统 Chrome 正式构建验收：tmp/night-rain-refinements-production-world/report.json（22 图），tmp/night-rain-refinements-production-journey/report.json（6 图），errors=[]；全部逐张打开检查且通过像素检查。敌人逐阶段 15 图、开发完整流程 20 图及共享客户端 1 图也已目检。桥上截图等待相机稳定后重拍正常。虚拟 Pointer Lock/手柄、正常战斗和移动输入，无桌面鼠标/焦点操作。
+- 本地 3871 已切到 companions 工作树 .next-night-rain-refinements-release，PID 158724，HTTP 200；自有 3885 开发服务已停止。保留 companions 与提供 node_modules 的 validation 工作树。主目录其他任务改动未覆盖。此前 687dbfc/9fde57e 已推送；本轮四项调整保留为本地未提交改动，未公网部署。当前无剩余必要修复；地图扩建留待用户下一步讨论。

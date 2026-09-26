@@ -31,8 +31,8 @@ export type GameState = {
   player: Player; enemies: Enemy[]; effects: Effect[]; nextEffectId: number;
   time: number; deaths: number; kills: number; parries: number; executions: number;
   rice: number; bankedRice: number; level: number; charm: boolean; shortcut: boolean;
-  worldVersion: 2; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
-  checkpoint: 'courtyard' | 'room' | 'temple-lamp' | 'canal-lamp'; bossDefeated: boolean; collected: string[];
+  worldVersion: 3; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
+  checkpoint: 'courtyard' | 'room'; bossDefeated: boolean; collected: string[];
   visited: string[]; lockedId: string | null; message: string; messageTime: number;
   prompt: string; nearbyId: string | null; region: string;
   bloodstain: (Vec3 & { rice: number }) | null; restCount: number;

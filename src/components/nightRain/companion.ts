@@ -31,8 +31,8 @@ routeAt: -100,
 });
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z, a.y - b.y);
 const labels: Record<string, string> = {
-  'temple-lamp': '莲池雨灯',
-'canal-lamp': '摆渡雨灯',
+  'temple-lamp': '莲池旧灯',
+'canal-lamp': '摆渡旧灯',
 'temple-flask': '刻露瓶',
 'temple-gate': '闭水门闩',
 'temple-note': '残钟铭文',
@@ -53,7 +53,7 @@ export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
     if (l.id === 'temple-gate') return !s.templeGate;
     if (l.id === 'shortcut') return !s.shortcut;
-    if (l.id === 'food') return s.bossDefeated;
+    if (l.id === 'food') return s.bossDefeated && !s.collected.includes('food');
     if (l.kind === 'rest') return true;
     return !s.collected.includes(l.id);
   });
@@ -61,6 +61,7 @@ export function guideTargets(s: GameState) {
 export function mainTarget(s: GameState): string {
   if (!s.collected.includes('laptop') && s.checkpoint === 'room') return 'laptop';
   if (s.checkpoint === 'room') return 'courtyard';
+  if (s.collected.includes('food')) return LANDMARKS.find(l => ['cache', 'charm', 'flask'].includes(l.kind) && !s.collected.includes(l.id))?.id ?? 'courtyard';
   if (s.bossDefeated) return 'food';
   if (!s.charm) return 'roof-charm';
   if (!s.shortcut) return 'shortcut';

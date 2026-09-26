@@ -11,6 +11,7 @@ const evidence = []; const errors = []; const stages = [];
 const state = page => page.evaluate(() => window.nightRain.getState());
 const text = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
 async function capture(page, name) {
+  if(process.env.NIGHT_RAIN_CAPTURE_ONLY && !new RegExp(process.env.NIGHT_RAIN_CAPTURE_ONLY).test(name))return;
   await page.waitForTimeout(400);
   await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   const snapshot = await text(page);
@@ -111,7 +112,7 @@ async function main() {
         assert.ok((await state(page)).collected.includes('lookout-cache')); assert.match((await text(page)).companion.subtitle, /挑战首领前/); await capture(page, '06a-chest-interpretation');
         await walk(page, { x: -14, z: -23 });
       }
-      if (target.upgrade) { await page.keyboard.down('Alt'); await page.getByRole('button', { name: /整备 ·/ }).click(); assert.equal((await state(page)).level, 1); await page.keyboard.up('Alt'); }
+      if (target.upgrade) { await page.keyboard.down('Alt'); await page.getByRole('button', { name: /强化装备 ·/ }).click(); assert.equal((await state(page)).level, 1); await page.keyboard.up('Alt'); }
       if (i === 36) await capture(page, '07-market-approach');
     }
     assert.equal((await state(page)).mode, 'ending'); await capture(page, '08-dinner-ending');
@@ -119,6 +120,14 @@ async function main() {
     await page.evaluate(() => window.nightRain.save()); await page.reload({ waitUntil: 'networkidle' });
     await page.getByRole('button', { name: '继续雨夜旅程 →', exact: true }).click();
     const restored = await state(page); assert.equal(restored.mode, 'ending'); assert.deepEqual(restored.collected, ended.collected);
+    await page.setViewportSize({width:390,height:844});await capture(page,'08b-mobile-ending');await page.getByRole('button',{name:'继续探索旧城',exact:true}).click();await page.evaluate(()=>window.advanceTime(0));
+    await capture(page,'08c-mobile-continued');await page.setViewportSize({width:1440,height:900});const continued=await state(page);assert.equal(continued.mode,'playing');assert.equal(continued.bossDefeated,true);assert.deepEqual(continued.enemies,restored.enemies);assert.equal(continued.rice,restored.rice);assert.deepEqual(continued.collected,restored.collected);
+    await press(page,'e');assert.equal((await state(page)).mode,'playing');
+    await page.addScriptTag({content:pilot+';window.nightRainPilot={chooseInput,NIGHT_ROUTE};'});
+    for(const target of [{x:5,z:-41},{x:12,z:-38},{x:12,z:-28}])await walk(page,target);
+    await capture(page,'09-continue-exploring');await page.evaluate(()=>window.nightRain.save());const continuedSaved=await state(page);
+    await page.reload({waitUntil:'networkidle'});await page.getByRole('button',{name:'继续雨夜旅程 →',exact:true}).click();await page.evaluate(()=>window.advanceTime(0));assert.equal((await state(page)).mode,'playing');assert.deepEqual((await state(page)).collected,continuedSaved.collected);assert.equal((await state(page)).bossDefeated,true);
+    await capture(page,'10-continue-reloaded');
     assert.deepEqual(errors, []);
     fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ base, evidence, errors, stages, following, final: ended, restored: restored.mode }, null, 2));
     console.log('First act completed through legal input, both optional loops, guide following, boss, dinner and ending reload.');
