@@ -1,5 +1,6 @@
 import { skinOf } from "./skins";
 import { mealOf } from "./daily";
+import { householdStatus, noodlesWaiting, onBreak } from "./household";
 import { action, Game, nearest, interactionPoint, Spot } from "./engine";
 
 export const FIRST_STEPS = ["拿到充电器", "放到扶手托盘", "收工，等TA下播"];
@@ -33,6 +34,9 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
       detail: "看向右侧扶手上的木托盘，轻按E放下，不用走到沙发中间。",
       step: 2,
     };
+  else if (s.carry === "food" && s.daily?.meal === "noodles" && s.daily.household.noodles === "sealed") next = {
+    spot: "kitchen", key: "boil-water", title: "桶面还没泡，先烧一壶热水", destination: "去料理台", detail: "轻按E放下未开封桶面，给水壶加水。烧水时可以自由走动。", step: 1,
+  };
   else if (s.carry === "food") next = {
       spot: "table",
       key: "food",
@@ -42,9 +46,17 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
       step: 1,
     };
   else {
-    const task = s.tasks.find((t) => !s.done.includes(t));
+    const task = s.tasks.find((t) => !s.done.includes(t) && !(t === "food" && noodlesWaiting(s)) && !(["hug", "kiss"].includes(t) && onBreak(s)));
     if (task === "cook") next = { spot: "kitchen", key: "cook", title: `${skinOf(s.skin).name}想吃你炒的蛋炒饭`, destination: "去料理台", detail: "鸡蛋和米饭都准备好了，轻按E开始做饭。", step: 2 };
-    else if (task === "leisure") next = { spot: "sofa", key: "leisure", title: "忙完啦，回客厅放松一会儿", destination: "回沙发", detail: "可以看视频或玩游戏，记得留意手机消息。", step: 3 };
+    else if (task === "leisure") next = { spot: "sofa", key: "leisure", title: "回客厅放松一会儿", destination: "回沙发", detail: "可以看视频或玩游戏，烧水和泡面会继续进行，留意消息提醒。", step: 3 };
+    else if (task === "cat-food" || task === "cat-litter") next = {
+      spot: task === "cat-food" ? "cat-bowl" : "cat-litter",
+key: task,
+      title: task === "cat-food" ? "小猫的饭碗空了" : `清理猫砂盆 · ${s.daily?.household.cat.scoops ?? 0}/3`,
+      destination: task === "cat-food" ? "去客厅猫碗旁" : "去墙边猫砂盆",
+      detail: task === "cat-food" ? "轻按E量一勺猫粮倒进碗，小猫会过来吃饭。" : "轻点E铲起一处结团，筛砂装袋，共三次。",
+step: 2,
+    };
     else if (task === "charger") next = {
         spot: "shelf",
         key: "pickup-charger",
@@ -53,12 +65,20 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
         detail: "在直播间的床尾抽屉。沿金色目标标记走过去。",
         step: 1,
       };
+    else if (task === "food" && s.daily?.meal === "noodles" && ["hot", "ready"].includes(s.daily.household.noodles)) next = {
+      spot: "kitchen",
+key: s.daily.household.noodles === "hot" ? "pour-noodles" : "take-noodles",
+      title: s.daily.household.noodles === "hot" ? "水开了，给桶面加热水" : "面泡好了，趁热端过去",
+      destination: "回料理台",
+detail: s.daily.household.noodles === "hot" ? "轻按E撕盖、放调料、加水到刻度线并盖好。" : "轻按E拿起泡面和叉子，放到直播桌。",
+step: 2,
+    };
     else if (task === "food") next = {
         spot: "entry",
         key: "pickup-food",
         title: s.daily ? `门口的${mealOf(s).name}到了` : "先去门口取外卖",
         destination: "去玄关取餐",
-        detail: "先提起外卖袋，再送到直播间。",
+        detail: s.daily?.meal === "noodles" ? "超市送来的是桶装干面，需要先去厨房烧水冲泡。" : "先提起外卖袋，再送到直播间。",
         step: 1,
       };
     else if (task === "delta" && !s.doorClosed && s.player.x < 506) next = {
@@ -87,6 +107,7 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
         detail: "先靠近TA，用眼神暗号闭麦，再按住按钮亲近。",
         step: 1,
       };
+    else if (noodlesWaiting(s) || onBreak(s)) next = { spot: "sofa", key: "leisure", title: householdStatus(s), destination: "可以先坐一会儿", detail: "不用一直按住按钮。时间会自然推进，也可以四处走走、摸摸猫。", step: 2 };
     else if (s.daily) next = { spot: "sofa", key: "sleep", title: "忙完了，在沙发上等TA下播", destination: "回客厅沙发", detail: "看向沙发坐垫，轻按E，裹着毯子小睡一会儿。", step: 4 };
     else next = {
         spot: "sofa",

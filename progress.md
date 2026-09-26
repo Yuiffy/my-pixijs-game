@@ -3040,3 +3040,9 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 
 - 造型最终顺序完整check／生产build通过（53页、Next lint/typecheck启用）。12份雨夜源码与成功构建逐一归一化SHA256一致，tmp/night-rain-companion-source-validation.json。生产专项5图全部像素检查并逐张目检，errors为空；共享游戏客户端亦使用系统Chrome／静音／虚拟Pointer Lock冒烟通过，1图非黑已目检。
 - 3871已切到night-rain-companions工作树的.next-night-rain-companions-release，PID124896；未刷新用户页面。该工作树仍承载服务，其node_modules引用night-rain-validation，两个工作树均需保留。主共享目录不移动HEAD，避免干扰其他任务；发布提交在codex/night-rain-companions分支。
+
+### 2026-09-26 · 加班夜生活扩展发布与锁定鼠标视角防跳
+
+- 用户授权把生活扩展commit/push，并反馈锁定鼠标后慢慢转头会突然跳到另一个角度。代码检查发现movementX/Y不经校验直接进入相机；注入720px异常位移在旧3879复现103.13度瞬转。现只在Pointer Lock路径丢弃单轴超过256px的异常样本，拒绝非有限值；正常多次快速采样可累计转过180度，右键/触屏绝对坐标拖动不受此阈值限制。锁定状态仅认当前canvas，切换时清掉旧拖拽坐标。未在用户设备上采集原始鼠标事件，防护机制已通过定向注入验证。
+- 连同此前随机开场/七餐品/完整桶面准备/猫咪与家务/主播洗手间往返、时机轨道滚动条修复一起发布。原38项规则加新增相机回归共39/39通过；全量生活浏览器20图已在上一轮目检。当前生产相机专项验证慢转/异常/快速转头/暂停重入/右键/自动行走手动接管/真触屏，3图均像素检查并逐张目检，errors=[]，tmp/hush-camera-after/report.json。共享客户端静音系统Chrome额外冒烟1图非黑已目检。
+- 复用空闲hush-skins-publish工作树，基于origin/master新建codex/hush-household-camera，保护主共享目录全部并行改动。本地离线依赖安装，顺序完整pnpm run check与pnpm run build通过，保留Next ESLint/类型检查，仅既有RPG警告。19份Hush源文件与构建逐一LF归一化SHA256一致，tmp/hush-camera-source-validation.json。测试全程静音/禁用TTS/虚拟Pointer Lock，未控制用户鼠标。

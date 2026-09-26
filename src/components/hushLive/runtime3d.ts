@@ -1,5 +1,6 @@
 import { skinOf } from "./skins";
 import { dailyModal } from "./daily";
+import { BATHROOM, CAT_BOWL, CAT_LITTER, householdStatus } from "./household";
 import {
   action,
   CHARGER_TRAY,
@@ -21,6 +22,10 @@ export const AIM_POINTS: Record<
   Spot,
   { x: number; y: number; height: number }
 > = {
+  cat: { x: 180, y: 422, height: 0.25 },
+  "cat-bowl": { ...CAT_BOWL, height: 0.13 },
+  "cat-litter": { ...CAT_LITTER, height: 0.15 },
+  bathroom: { ...BATHROOM, height: 1.1 },
   charging: CHARGER_TRAY,
   kitchen: { x: 420, y: 155, height: 1.0 },
   bed: { x: 710, y: 425, height: 0.7 },
@@ -81,7 +86,8 @@ export const createRuntime = (save: Save): Runtime3D => ({
 });
 export function lookPoint(r: Runtime3D, spot: Spot) {
   const point =
-    spot === "partner"
+    spot === "cat" && r.game.daily ? { ...r.game.daily.household.cat, height: 0.25 }
+      : spot === "partner"
       ? {
           ...partnerPose(r.game),
           height: 1.31 + partnerPose(r.game).stand * 0.22,
@@ -116,10 +122,17 @@ export function go3D(r: Runtime3D, spot: Spot) {
   travel(r.game, spot);
 }
 export function rotateView(r: Runtime3D, dx: number, dy: number) {
+  if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
   if (r.game.phase !== "playing" || r.game.delta?.active || dailyModal(r.game) || r.game.busy) return;
   r.yaw -= dx * 0.0025;
   r.pitch = Math.max(-1.1, Math.min(1.05, r.pitch - dy * 0.0025));
   r.autoLook = false;
+}
+export function rotateLockedView(r: Runtime3D, dx: number, dy: number) {
+  // Pointer-lock cursor warps can surface as a single screen-sized movement.
+  // Discard that sample, not the accumulated motion of a fast turn.
+  if (!r.pointerLocked || Math.abs(dx) > 256 || Math.abs(dy) > 256) return;
+  rotateView(r, dx, dy);
 }
 export function advance3D(r: Runtime3D, seconds: number) {
   if (r.game.phase !== "playing" || !Number.isFinite(seconds) || seconds < 0) return;
@@ -185,6 +198,7 @@ export function text3D(r: Runtime3D) {
   const [x, z] = worldPoint(r.game.player);
   return {
     ...r.game,
+    householdStatus: householdStatus(r.game),
     view: "first-person-3d",
     world: { x, y: 1.55, z, units: "metres; +Y up, +X east, +Z south" },
     camera: { yaw: r.yaw, pitch: r.pitch },

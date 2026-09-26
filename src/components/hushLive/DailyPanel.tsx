@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { skinOf } from "./skins";
+import { householdStatus } from "./household";
 import type { Game } from "./engine";
 import {
   chooseGoodnight,
@@ -226,6 +227,7 @@ export default function DailyPanel({
         />
       </label>
       <aside className={styles.phone} aria-label="微信消息">
+        {householdStatus(s) && <p>{householdStatus(s)}</p>}
         <strong>微信 · {skinOf(s.skin).name} {d.unread ? "● 新消息" : ""}</strong>
         {d.messages.slice(-3).map((m, i) => (
           <p key={`${i}-${m.from}`} data-mine={m.from === "我"}>
@@ -243,7 +245,7 @@ export default function DailyPanel({
         className={styles.primary}
         onClick={() => change(() => finishLeisure(s))}
       >
-        {d.leisureTime >= 8 ? "收起手机，在沙发上小睡 →" : "先起来走走"}
+        {d.leisureTime >= 8 ? s.tasks.filter(t => t !== "leisure").every(t => s.done.includes(t)) ? "收起手机，在沙发上小睡 →" : "收起手机，继续忙家里的事 →" : "先起来走走"}
       </button>
       {d.leisureTime < 8 && (
         <small>

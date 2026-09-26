@@ -1,5 +1,6 @@
 import { skinOf } from "./skins";
 import type { Game } from "./engine";
+import { createHousehold, Household, nightRoll, onBreak, stepHousehold } from "./household";
 
 export const MEALS = [
   {
@@ -34,7 +35,7 @@ export const MEALS = [
   },
   {
     id: "noodles",
-    name: "方便面",
+    name: "桶装方便面",
     note: "面刚泡好，趁它还没坨。",
     color: "#d7b476",
   },
@@ -47,6 +48,7 @@ export const MEALS = [
 ] as const;
 export type Meal = (typeof MEALS)[number]["id"];
 export type Daily = {
+  household: Household;
   meal: Meal;
   homemade: boolean;
   stage: "home" | "sleep" | "after" | "goodnight" | "complete";
@@ -71,13 +73,16 @@ export const offAir = (s: Game) => !!s.daily && s.daily.stage !== "home";
 export const dailyModal = (s: Game) => !!s.daily?.panel || s.daily?.stage === "sleep";
 export function beginDaily(s: Game) {
   const homemade = s.tasks.includes("cook");
-  const meal = MEALS[(s.seed + s.level - 2) % MEALS.length].id;
-  s.player = { x: 139, y: 500 };
+  const meal = MEALS[s.level === 5 ? Math.floor(nightRoll(s.seed, 3) * MEALS.length) : (s.seed + s.level - 2) % MEALS.length].id;
+  const household = createHousehold(s);
+  const outside = household.arrival === "outside";
+  s.player = outside ? { x: 139, y: 500 } : household.arrival === "sofa" ? { x: 220, y: 405 } : { x: 230, y: 220 };
   s.daily = {
+    household,
     meal: homemade ? "rice" : meal,
     homemade,
     stage: "home",
-    panel: "lock",
+    panel: outside ? "lock" : null,
     clock: 0,
     beats: 0,
     mistakes: 0,
@@ -94,13 +99,13 @@ export function beginDaily(s: Game) {
         from: "partner",
         text: homemade
           ? "今天想吃你炒的蛋炒饭，可以嘛？鸡蛋和米饭在料理台。"
-          : `回来啦？今晚想吃${MEALS.find((m) => m.id === meal)?.name}，放桌上就好～`,
+          : meal === "noodles" ? "超市送来的桶面放在门口啦。帮我烧壶水泡一下，好不好？" : `${outside ? "回来啦？" : "你在家真好。"}今晚想吃${MEALS.find((m) => m.id === meal)?.name}，放桌上就好～`,
       },
     ],
-    after: (s.seed + s.level) % 2 ? "rice" : "shower",
+    after: s.level === 5 ? nightRoll(s.seed, 16) < 0.5 ? "rice" : "shower" : (s.seed + s.level) % 2 ? "rice" : "shower",
     memory: "",
   };
-  s.message = `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。先轻轻开门。`;
+  s.message = outside ? `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。先轻轻开门。` : household.arrival === "sofa" ? `今晚一直在家。你从沙发上伸个懒腰，${skinOf(s.skin).name}还在隔壁直播，小猫在脚边打盹。` : `你刚结束一局游戏，摘下耳机。${skinOf(s.skin).name}在直播，先看看家里有什么需要帮忙的。`;
 }
 export const timingPosition = (s: Game) => (Math.sin((s.daily?.clock ?? 0) * 2.2 - Math.PI / 2) + 1) / 2;
 export const timingSteps = (s: Game) => (s.daily?.panel === "lock"
@@ -168,17 +173,19 @@ export function replyQuietly(s: Game) {
 export function finishLeisure(s: Game) {
   const d = s.daily;
   if (s.phase !== "playing" || !d || d.panel !== "leisure") return;
-  if (d.leisureTime >= 8 && !s.done.includes("leisure")) {
+  if (d.leisureTime >= 8 && s.tasks.includes("leisure") && !s.done.includes("leisure")) {
     s.done.push("leisure");
     s.love += d.replied || d.volume <= 25 ? 10 : 0;
-    s.message = `眼皮开始打架了。就在沙发上躺一会儿，等${skinOf(s.skin).name}下播。`;
+    s.message = s.tasks.every(t => s.done.includes(t))
+      ? `眼皮开始打架了。就在沙发上躺一会儿，等${skinOf(s.skin).name}下播。`
+      : "休息一会儿舒服多了。先收起手机，继续把家里的小事做完。";
   }
   d.panel = null;
   s.requireRelease = true;
 }
 export function sleepDaily(s: Game) {
   if (!s.daily) return;
-  if (s.phase !== "playing" || s.daily.stage !== "home" || !s.tasks.every(t => s.done.includes(t))) return;
+  if (s.phase !== "playing" || s.daily.stage !== "home" || onBreak(s) || !s.tasks.every(t => s.done.includes(t))) return;
   s.daily.stage = "sleep";
   s.daily.clock = 0;
   s.daily.panel = null;
@@ -213,6 +220,7 @@ export function stepDaily(s: Game, dt: number): boolean {
   const d = s.daily;
   if (!d) return false;
   d.clock += dt;
+  stepHousehold(s, dt);
   d.cooldown = Math.max(0, d.cooldown - dt);
   if (d.stage === "sleep" && d.clock >= 3) {
     d.stage = "after";
@@ -224,7 +232,7 @@ export function stepDaily(s: Game, dt: number): boolean {
   }
   if (d.panel === "leisure") {
     d.leisureTime += dt;
-    if (d.volume > 35) {
+    if (d.volume > 35 && !onBreak(s)) {
       d.loudTime += dt;
       s.suspicion = Math.min(
         90,
