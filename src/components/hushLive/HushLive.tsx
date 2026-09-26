@@ -33,7 +33,7 @@ import { ApartmentSound } from "./sound3d";
 import styles from "./hush3d.module.css";
 import DeltaGame from "./DeltaGame";
 import DailyPanel from "./DailyPanel";
-import { beginDaily, dailyModal, Meal, MEALS, offAir } from "./daily";
+import { dailyModal, mealOf, offAir } from "./daily";
 
 const Apartment = dynamic(() => import("./Apartment"), { ssr: false });
 const STORAGE = "hush-live-v1";
@@ -73,8 +73,6 @@ export default function HushLive() {
   const [sceneReady, setSceneReady] = useState(false);
   const [sceneError, setSceneError] = useState(false);
   const [sceneVersion, setSceneVersion] = useState(0);
-  const [dailyMeal, setDailyMeal] = useState<Meal>("tea");
-  const [homemade, setHomemade] = useState(false);
   const [sound, setSound] = useState(true);
   const soundRef = useRef(true);
   const audio = useRef<ApartmentSound | null>(null);
@@ -308,11 +306,6 @@ export default function HushLive() {
     setJournal(false);
     refresh();
   };
-  const selectDaily = (nextSeed = seed.current) => {
-    selectNight(0, nextSeed);
-    beginDaily(r.game, homemade, dailyMeal);
-    refresh();
-  };
   const goGoal = () => {
     go3D(r, objective(r.game).spot);
     refresh();
@@ -320,7 +313,7 @@ export default function HushLive() {
   const share = async () => {
     const g = r.game;
     const url = `${window.location.origin}/game/hush-live${g.level === 5 ? `?seed=${g.seed}` : ""}`;
-    const text = `《嘘，TA还在播 · 3D》${g.daily ? "同居日常" : g.level === 5 ? `加班夜 #${g.seed}` : `第${g.level + 1}晚`}\n${ending(g)} · ${g.totalScore}分 / ${stars(g)}星 / 甜蜜${g.love}\n${url}`;
+    const text = `《嘘，TA还在播 · 3D》${g.level === 5 ? `加班夜 #${g.seed}` : `第${g.level + 1}晚`}\n${ending(g)} · ${g.totalScore}分 / ${stars(g)}星 / 甜蜜${g.love}\n${url}`;
     setShareText(text);
     try {
       await navigator.clipboard.writeText(text);
@@ -451,22 +444,23 @@ export default function HushLive() {
           <p className={styles.tagline}>屏幕里的偶像，生活里的恋人。</p>
           <div className={styles.brief}>
             <small>
-              {g.daily ? "日常番 / 回家以后" : g.level === 5 ? `加班夜 #${g.seed}` : `NIGHT 0${g.level + 1}`}
+              {g.level === 5 ? `加班夜 #${g.seed}` : `NIGHT 0${g.level + 1}`}
             </small>
             <h2>
-              {g.daily ? "岁己，今天也一起吃饭吧。" : g.level === 0
+              {g.level === 0
                 ? "今晚，只拿一个充电器"
                 : g.level === 5
                   ? "再陪你一个夜晚"
                   : LEVELS[g.level].title}
             </h2>
             <p>
-              {g.daily ? `轻声开门 → ${g.daily.homemade ? "亲手炒蛋炒饭" : MEALS.find(m => m.id === g.daily?.meal)?.name} → 客厅休息 → 下播后的秘密。今晚不用赶，每一步都有目标指引。` : g.level === 0
+              {g.level === 0
                 ? "走进直播间，拿回床尾的充电器，再回到沙发。别让麦克风听见你。"
                 : g.level === 5
                   ? "熟悉的家，不同的音乐时机。把这一晚的秘密留到下播以后。"
                   : LEVELS[g.level].subtitle}
             </p>
+            {g.daily && <small>今晚的晚饭：{g.daily.homemade ? "亲手炒的蛋炒饭" : mealOf(g).name} · 忙完回沙发，故事会继续。</small>}
           </div>
           <button
             id="hush-start"
@@ -486,18 +480,6 @@ export default function HushLive() {
             <br />
             靠近并看向物品，再轻点互动按钮。
           </p>
-          <div className={styles.dailySelect}>
-            <strong>NEW · 同居日常</strong>
-            <div><select
-aria-label="今晚吃什么"
-value={homemade ? "homemade" : dailyMeal}
-onChange={e => {
-              setHomemade(e.target.value === "homemade");
-              if (e.target.value !== "homemade") setDailyMeal(e.target.value as Meal);
-            }}><option value="homemade">岁己想吃我炒的蛋炒饭</option>{MEALS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
-            <button onClick={() => selectDaily()}>体验同居日常 →</button></div>
-            <small>轻声回家 · 外卖和做饭 · 微信悄悄话 · 下播以后</small>
-          </div>
           <details className={styles.settings}>
             <summary>选择夜晚与角色</summary>
             <div className={styles.identities}>
@@ -556,7 +538,7 @@ onChange={e => {
             </div>
           </details>
           <p className={styles.saveNote}>
-            本机自动保存挑战解锁与纪录 · 同居日常为虚构剧情
+            每晚结束自动保存星级与解锁 · 日常与下播故事随关卡展开
           </p>
         </section>
       ) : result ? (
@@ -566,10 +548,10 @@ onChange={e => {
           </p>
           <h1 className={styles.resultTitle}>{g.daily && g.won ? "普通的夜晚，也想和你一起。" : ending(g)}</h1>
           <div className={styles.score}>
-            {g.daily ? g.love : g.totalScore}
-            <small>{g.daily ? "份甜蜜" : "分"}</small>
+            {g.totalScore}
+            <small>分</small>
           </div>
-          <p className={g.daily ? styles.hidden : styles.stars}>
+          <p className={styles.stars}>
             {"★".repeat(stars(g))}
             {"☆".repeat(3 - stars(g))}
           </p>
@@ -584,12 +566,12 @@ onChange={e => {
             甜蜜 {g.love} · 最高怀疑 {Math.round(g.peak)}% · 用时{" "}
             {Math.ceil(g.elapsed)}秒
           </p>
-          <p className={g.daily ? styles.hidden : styles.instructions}>
+          <p className={styles.instructions}>
             {g.level === 0
               ? "第一晚三星：最高怀疑低于25%。"
               : "三星：最高怀疑低于25%，甜蜜至少25。"}
           </p>
-          {!g.daily && g.won && [1, 3, 4].includes(g.level) && (
+          {g.won && [1, 3, 4].includes(g.level) && (
             <p className={styles.reward}>
               {g.level === 1
                 ? "解锁棉拖鞋 · 轻步更安静"
@@ -601,7 +583,6 @@ onChange={e => {
           <button
             className={styles.primary}
             onClick={() => {
-              if (g.daily) { selectDaily(g.won ? g.seed + 1 : g.seed); return; }
               if (g.won) selectNight(
                   Math.min(5, g.level + 1),
                   g.level === 5 ? (g.seed + 7919) % 4294967296 : g.seed,
@@ -612,14 +593,14 @@ onChange={e => {
               }
             }}
           >
-            {g.daily ? "再过一个日常夜晚 →" : g.won
+            {g.won
               ? g.level >= 4
                 ? "再开一个加班夜 →"
                 : "下一个夜晚 →"
               : "再试一次 →"}
           </button>
           <div className={styles.resultButtons}>
-            <button onClick={() => (g.daily ? selectDaily(g.seed) : selectNight(g.level, g.seed))}>
+            <button onClick={() => selectNight(g.level, g.seed)}>
               重玩本晚
             </button>
             <button
@@ -653,7 +634,7 @@ onChange={e => {
           </button>
           <button
             className={styles.textButton}
-            onClick={() => (g.daily ? selectDaily(g.seed) : selectNight(g.level, g.seed))}
+            onClick={() => selectNight(g.level, g.seed)}
           >
             放弃本晚，返回准备
           </button>
@@ -663,7 +644,7 @@ onChange={e => {
         <>
           <section className={styles.objective} data-objective={goal.key}>
             <small>
-              {g.daily ? (offAir(g) ? "下播以后 · 只属于我们" : "同居日常 · 当前目标") : g.level === 0
+              {offAir(g) ? "下播以后 · 只属于我们" : g.level === 0
                 ? `第 ${goal.step} / 3 步`
                 : `第 ${g.level + 1} 晚 · 当前目标`}
             </small>

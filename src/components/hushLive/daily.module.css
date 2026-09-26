@@ -85,6 +85,7 @@
 }
 .timing i {
   position: absolute;
+  left: 0;
   top: -5px;
   bottom: -5px;
   width: 5px;
@@ -92,6 +93,12 @@
   border: 1px solid #fff;
   border-radius: 4px;
   transform: translateX(-50%);
+}
+.needleTrack {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
 }
 .feedback {
   min-height: 24px;

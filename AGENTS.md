@@ -48,3 +48,8 @@
   listening Node processes may be stale even though their port still appears
   open.
 - Open and visually inspect every screenshot used as test evidence.
+
+## Quiet browser self-tests
+
+- Automated self-tests must not play audible TTS (for example, “下播啦”) or other test audio on the user's computer. Launch test browsers with `--mute-audio` and disable the speech API, or stub `speechSynthesis.speak` when testing speech behavior.
+- Keep these changes in the test environment; preserve the user's normal gameplay audio settings.

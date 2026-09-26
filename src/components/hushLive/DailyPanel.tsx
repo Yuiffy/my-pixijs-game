@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { Game } from "./engine";
 import {
   chooseGoodnight,
@@ -20,7 +20,33 @@ export default function DailyPanel({
   onChange: () => void;
 }) {
   const [hits, setHits] = useState(0);
+  const needle = useRef<HTMLDivElement>(null);
+  const prop = useRef<HTMLElement>(null);
+  const cat = useRef<HTMLDivElement>(null);
   const d = s.daily;
+  const panel = d?.panel;
+  const stage = d?.stage;
+  const entertainment = d?.entertainment;
+  useLayoutEffect(() => {
+    if (!panel || stage === "sleep") return;
+    let frame = 0;
+    let lastClock = -1;
+    const paint = () => {
+      const { daily } = s;
+      if (daily && daily.clock !== lastClock) {
+        lastClock = daily.clock;
+        // Read the simulation clock, including pause/reset/advanceTime. Never run a second animation clock.
+        if (needle.current) needle.current.style.transform = `translate3d(${timingPosition(s) * 100}%, 0, 0)`;
+        if (prop.current) prop.current.style.transform = daily.panel === "cook"
+            ? `translateY(${Math.sin(daily.clock * 4) * 5}px)`
+            : `rotate(${daily.beats * 35 + timingPosition(s) * 15}deg)`;
+        if (cat.current) cat.current.style.transform = `translateX(${Math.sin(daily.clock) * 42}px) rotate(${Math.sin(daily.clock * 2) * 8}deg)`;
+      }
+      frame = requestAnimationFrame(paint);
+    };
+    paint();
+    return () => cancelAnimationFrame(frame);
+  }, [s, panel, stage, entertainment]);
   if (!d) return null;
   const change = (fn: () => void) => {
     fn();
@@ -30,7 +56,7 @@ export default function DailyPanel({
       <div className={styles.sleep} role="status">
         <small>00:48 — 02:13</small>
         <h2>你先睡，我一会儿就来。</h2>
-        <p>意识朦胧间，最后一声“大家晚安”从隔壁传来。</p>
+        <p>你裹着毯子窝在客厅沙发上。意识朦胧间，最后一声“大家晚安”从隔壁传来。</p>
       </div>
     );
   if (d.panel === "story") return (
@@ -42,7 +68,7 @@ export default function DailyPanel({
         <p>
           {d.after === "rice"
             ? "岁己穿着睡衣站在料理台前，锅里只放了一人份的米饭。看到你，手里的锅铲停住了：“怎么醒了？我马上就来。”"
-            : "水声刚停，岁己披着毛巾，踮脚走到床边。“本来想轻一点的。”你伸手碰了碰还湿着的发梢。"}
+            : "水声刚停，岁己披着毛巾，踮脚走到沙发旁。“本来想轻一点的。”你伸手碰了碰还湿着的发梢。"}
         </p>
         <div className={styles.choices}>
           <button onClick={() => change(() => chooseGoodnight(s, "together"))}>
@@ -77,22 +103,14 @@ export default function DailyPanel({
         >
           {cooking ? (
             <div className={styles.pan}>
-              <i
-                style={{
-                  transform: `translateY(${Math.sin(d.clock * 4) * 5}px)`,
-                }}
-              >
+              <i ref={prop}>
                 {["🥚", "🍚", "🍳"][d.beats]}
               </i>
               <span />
             </div>
           ) : (
             <div className={styles.keyhole}>
-              <i
-                style={{
-                  transform: `rotate(${d.beats * 35 + timingPosition(s) * 15}deg)`,
-                }}
-              >
+              <i ref={prop}>
                 ⌕
               </i>
             </div>
@@ -115,12 +133,20 @@ export default function DailyPanel({
           aria-valuemax={100}
         >
           <span />
-          <i style={{ left: `${timingPosition(s) * 100}%` }} />
+          <div ref={needle} className={styles.needleTrack} aria-hidden="true"><i /></div>
         </div>
         <button
           className={styles.primary}
           data-daily-timing
-          onClick={() => change(() => timingTap(s))}
+          onPointerDown={(event) => {
+            if (event.button !== 0 || !event.isPrimary) return;
+            event.preventDefault();
+            change(() => timingTap(s));
+          }}
+          onClick={(event) => {
+            // Pointer input scores immediately; keyboard and assistive technology still use click.
+            if (event.detail === 0) change(() => timingTap(s));
+          }}
         >
           {timingSteps(s)[d.beats]}
         </button>
@@ -161,9 +187,7 @@ export default function DailyPanel({
           <>
             <div
               className={styles.cat}
-              style={{
-                transform: `translateX(${Math.sin(d.clock) * 42}px) rotate(${Math.sin(d.clock * 2) * 8}deg)`,
-              }}
+              ref={cat}
             >
               ฅ^•ﻌ•^ฅ
             </div>
@@ -218,7 +242,7 @@ export default function DailyPanel({
         className={styles.primary}
         onClick={() => change(() => finishLeisure(s))}
       >
-        {d.leisureTime >= 8 ? "有点困了，去睡一会儿 →" : "先起来走走"}
+        {d.leisureTime >= 8 ? "收起手机，在沙发上小睡 →" : "先起来走走"}
       </button>
       {d.leisureTime < 8 && (
         <small>

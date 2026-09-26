@@ -1,6 +1,7 @@
 import { dailyModal } from "./daily";
 import {
   action,
+  CHARGER_TRAY,
   partnerPose,
   partnerBehavior,
   createGame,
@@ -19,6 +20,7 @@ export const AIM_POINTS: Record<
   Spot,
   { x: number; y: number; height: number }
 > = {
+  charging: CHARGER_TRAY,
   kitchen: { x: 420, y: 155, height: 1.0 },
   bed: { x: 710, y: 425, height: 0.7 },
   sofa: { x: 220, y: 325, height: 0.66 },

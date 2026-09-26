@@ -1,7 +1,7 @@
 import { mealOf } from "./daily";
 import { action, Game, nearest, interactionPoint, Spot } from "./engine";
 
-export const FIRST_STEPS = ["拿到充电器", "带回沙发放好", "收工，等TA下播"];
+export const FIRST_STEPS = ["拿到充电器", "放到扶手托盘", "收工，等TA下播"];
 
 export type Objective = {
   spot: Spot;
@@ -19,17 +19,17 @@ export function objective(s: Game): Objective {
     spot: "partner",
 key: "discover",
 step: 4,
-    title: s.daily.stage === "sleep" ? "你睡着了，等一盏灯熄灭" : s.daily.after === "rice" ? "下播了，去看看厨房的岁己" : "岁己洗完澡了，去床边看看",
+    title: s.daily.stage === "sleep" ? "你睡着了，等一盏灯熄灭" : s.daily.after === "rice" ? "下播了，去看看厨房的岁己" : "岁己洗完澡，来沙发旁找你了",
     destination: "轻声走过去",
 detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
   };
   else if (s.daily?.panel === "lock") next = { spot: "entry", key: "unlock", title: "岁己在直播，轻轻开门", destination: "玄关", detail: "指针到金色区域时点一下。", step: 1 };
   else if (s.carry === "charger") next = {
-      spot: "sofa",
+      spot: "charging",
       key: "charger",
-      title: "把充电器带回沙发",
-      destination: "回客厅沙发",
-      detail: "已经拿到了。回到沙发旁，轻按按钮把它放好。",
+      title: "把充电器放到沙发右侧托盘",
+      destination: "去沙发右侧扶手",
+      detail: "看向右侧扶手上的木托盘，轻按E放下，不用走到沙发中间。",
       step: 2,
     };
   else if (s.carry === "food") next = {
@@ -86,7 +86,7 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
         detail: "先靠近TA，用眼神暗号闭麦，再按住按钮亲近。",
         step: 1,
       };
-    else if (s.daily) next = { spot: "bed", key: "sleep", title: "困了，先去床边睡一会儿", destination: "去床边", detail: "轻按E躺下。岁己下播后还会发生什么呢？", step: 4 };
+    else if (s.daily) next = { spot: "sofa", key: "sleep", title: "忙完了，在沙发上等TA下播", destination: "回客厅沙发", detail: "看向沙发坐垫，轻按E，裹着毯子小睡一会儿。", step: 4 };
     else next = {
         spot: "sofa",
         key: "finish",
@@ -119,7 +119,7 @@ detail: "直播结束了，现在可以自在说话。靠近后轻按E。",
         next.key === "pickup-charger"
           ? "看向充电器，轻按E或互动按钮就能拿起。"
           : next.key === "charger"
-            ? "看向沙发，轻按E或互动按钮把充电器放好。"
+            ? "看向扶手上的木托盘，轻按E把充电器放好。"
             : next.detail,
     };
   }

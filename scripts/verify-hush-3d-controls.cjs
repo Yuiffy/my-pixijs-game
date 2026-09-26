@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const { state, advance, follow, hold, solve, capture, images } = require('./verify-hush-3d.cjs');
+const { state, advance, follow, hold, solve, reachAction, virtualPointerLock, capture, images } = require('./verify-hush-3d.cjs');
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 const base = process.env.HUSH_BASE_URL || 'http://127.0.0.1:3877';
 const out = process.env.HUSH_QA_DIR || 'tmp/hush-3d';
@@ -23,9 +23,10 @@ async function choose(page, name) {
 }
 async function main() {
   fs.mkdirSync(out, { recursive: true }); assert.equal((await fetch(base + '/game/hush-live')).status, 200);
-  const browser = await chromium.launch({ channel: 'chrome', headless: process.env.HEADED !== '1' });
+  const browser = await chromium.launch({ args: ['--mute-audio', '--disable-speech-api'], channel: 'chrome', headless: process.env.HEADED !== '1' });
   try {
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    await virtualPointerLock(context);
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     const page = await context.newPage(); await open(page); await page.locator('#hush-start').click();
     let s = await state(page); const from = s.world;
@@ -54,10 +55,10 @@ async function main() {
     const sharedSeed = (await state(page)).seed;
     await page.goto(`${base}/game/hush-live?seed=${sharedSeed}`, { waitUntil: 'networkidle' }); await advance(page, 0);
     assert.equal((await state(page)).level, 5); assert.equal((await state(page)).seed, sharedSeed);
-    await choose(page, '再抱一会儿就好');
+    await choose(page, '想吃你做的饭');
     if (!await page.getByLabel('玩家身份', { exact: true }).isVisible()) await page.getByText('选择夜晚与角色', { exact: true }).click();
     await page.getByLabel('玩家身份', { exact: true }).selectOption('女友'); await page.getByLabel('恋人称呼', { exact: true }).selectOption('他');
-    await page.locator('#hush-start').click(); await follow(page); await page.keyboard.press('m'); await advance(page, 700); await capture(page, 'male-partner');
+    await page.locator('#hush-start').click(); await reachAction(page, 'hug'); await page.keyboard.press('m'); await advance(page, 700); await capture(page, 'male-partner');
     await hold(page, 'male-hug'); await solve(page); await capture(page, 'male-ending');
     const saved = await page.evaluate(() => localStorage.getItem('hush-live-v1'));
     await page.reload({ waitUntil: 'networkidle' }); await advance(page, 0); assert.equal((await state(page)).progression.partner, '他'); assert.equal((await state(page)).progression.player, '女友'); assert.equal((await state(page)).progression.unlocked, 5);
@@ -93,22 +94,22 @@ async function main() {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await advance(phone, 60);
     }
     assert.equal((await state(phone)).won, true); await capture(phone, 'mobile-result');
-    await phone.setViewportSize({ width: 320, height: 740 }); await choose(phone, '再抱一会儿就好'); await phone.locator('#hush-start').tap(); await follow(phone); await capture(phone, 'mobile-320-partner');
+    await phone.setViewportSize({ width: 320, height: 740 }); await choose(phone, '想吃你做的饭'); await phone.locator('#hush-start').tap(); await reachAction(phone, 'hug'); await capture(phone, 'mobile-320-partner');
     await mobile.close(); checks.push('simultaneous mobile joystick and look, touch release, touch interaction, 390/320 layout');
     // Explicit fail/retry and unavailable storage.
     await choose(page, '隔墙有耳'); await page.locator('#hush-start').click();
-    await advance(page, (await state(page)).limit * 1000 + 100); assert.equal((await state(page)).reason, 'timeout'); await page.getByRole('button', { name: '再试一次 →' }).click(); assert.equal((await state(page)).phase, 'playing');
+    for (let i=0; i<3; i++) await advance(page, (await state(page)).limit * 1000 / 3 + 100); assert.equal((await state(page)).reason, 'timeout'); await page.getByRole('button', { name: '再试一次 →' }).click(); assert.equal((await state(page)).phase, 'playing');
     // Make genuine loud footsteps at the microphone until the audience notices.
-    await choose(page, '再抱一会儿就好'); await page.locator('#hush-start').click(); await follow(page); await page.keyboard.down('Shift'); await page.keyboard.down('w'); await advance(page, 25000); await page.keyboard.up('w'); await page.keyboard.up('Shift'); assert.equal((await state(page)).reason, 'caught'); await capture(page, 'caught-3d');
+    await choose(page, '想吃你做的饭'); await page.locator('#hush-start').click(); await reachAction(page, 'hug'); await page.keyboard.down('Shift'); await page.keyboard.down('w'); await advance(page, 25000); await page.keyboard.up('w'); await page.keyboard.up('Shift'); assert.equal((await state(page)).reason, 'caught'); await capture(page, 'caught-3d');
     const blocked = await browser.newContext(); await blocked.addInitScript(() => { Storage.prototype.getItem = () => { throw Error('blocked'); }; Storage.prototype.setItem = () => { throw Error('blocked'); }; });
     const blockedPage = await blocked.newPage(); await open(blockedPage); await blockedPage.locator('#hush-start').click(); await solve(blockedPage); assert.equal((await state(blockedPage)).won, true); await blocked.close();
     checks.push('timeout, exposure, retry, storage-unavailable full playthrough');
     // Save an actual full-page WebGL photograph for the game catalogue.
-    await choose(page, '再抱一会儿就好');
+    await choose(page, '想吃你做的饭');
     if (!await page.getByLabel('恋人称呼', { exact: true }).isVisible()) await page.getByText('选择夜晚与角色', { exact: true }).click();
-    await page.getByLabel('恋人称呼', { exact: true }).selectOption('她'); await page.locator('#hush-start').click(); await follow(page); await advance(page, 700);
+    await page.getByLabel('恋人称呼', { exact: true }).selectOption('她'); await page.locator('#hush-start').click(); await reachAction(page, 'hug'); await advance(page, 700);
     const style = await page.addStyleTag({ content: 'main > :not([data-world3d]) { visibility: hidden !important; }' });
-    inspectPng(await page.screenshot({ path: 'public/games/hush-live/preview.png', fullPage: true })); await style.evaluate(el => el.remove());
+    inspectPng(await page.screenshot({ path: out + '/preview.png', fullPage: true })); await style.evaluate(el => el.remove());
     assert.deepEqual(errors, []);
     fs.writeFileSync(`${out}/controls-report.json`, JSON.stringify({ checks, images, errors }, null, 2)); console.log(JSON.stringify({ checks, screenshots: images.map(i => i.file), errors }, null, 2));
   } finally { await browser.close(); }

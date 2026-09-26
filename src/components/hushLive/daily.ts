@@ -68,10 +68,10 @@ export type Daily = {
 export const mealOf = (s: Game) => MEALS.find((m) => m.id === s.daily?.meal) ?? MEALS[3];
 export const offAir = (s: Game) => !!s.daily && s.daily.stage !== "home";
 export const dailyModal = (s: Game) => !!s.daily?.panel || s.daily?.stage === "sleep";
-export function beginDaily(s: Game, homemade: boolean, meal: Meal) {
-  s.tasks = homemade ? ["cook", "food", "leisure"] : ["food", "leisure"];
+export function beginDaily(s: Game) {
+  const homemade = s.tasks.includes("cook");
+  const meal = MEALS[(s.seed + s.level - 2) % MEALS.length].id;
   s.player = { x: 139, y: 500 };
-  s.limit = 600;
   s.daily = {
     meal: homemade ? "rice" : meal,
     homemade,
@@ -96,7 +96,7 @@ export function beginDaily(s: Game, homemade: boolean, meal: Meal) {
           : `回来啦？今晚想吃${MEALS.find((m) => m.id === meal)?.name}，放桌上就好～`,
       },
     ],
-    after: s.seed % 2 ? "rice" : "shower",
+    after: (s.seed + s.level) % 2 ? "rice" : "shower",
     memory: "",
   };
   s.message = "下班到家，门里传来岁己和观众聊天的声音。先轻轻开门。";
@@ -170,20 +170,21 @@ export function finishLeisure(s: Game) {
   if (d.leisureTime >= 8 && !s.done.includes("leisure")) {
     s.done.push("leisure");
     s.love += d.replied || d.volume <= 25 ? 10 : 0;
-    s.message = "眼皮开始打架了。去床边躺一会儿，等岁己下播。";
+    s.message = "眼皮开始打架了。就在沙发上躺一会儿，等岁己下播。";
   }
   d.panel = null;
   s.requireRelease = true;
 }
 export function sleepDaily(s: Game) {
   if (!s.daily) return;
+  if (s.phase !== "playing" || s.daily.stage !== "home" || !s.tasks.every(t => s.done.includes(t))) return;
   s.daily.stage = "sleep";
   s.daily.clock = 0;
   s.daily.panel = null;
   s.visit = null;
   s.path = [];
   s.doorClosed = false;
-  s.message = "你睡着后，直播间的灯终于暗下来。";
+  s.message = "你裹着毯子在客厅沙发睡着了。隔壁最后一声晚安落下，直播间的灯终于暗下来。";
 }
 export function discoverDaily(s: Game) {
   if (!s.daily || s.daily.stage !== "after") return;
@@ -218,7 +219,7 @@ export function stepDaily(s: Game, dt: number): boolean {
     s.message =
       d.after === "rice"
         ? "02:13 · 锅铲轻轻碰响。你醒了：岁己怎么还在给自己炒饭？去料理台看看。"
-        : "02:13 · 浴室水声停了。岁己抱着毛巾走出来，看到你醒了：“吵醒你啦？”去床边看看。";
+        : "02:13 · 浴室水声停了。岁己抱着毛巾走出来，看到你醒了：“吵醒你啦？”就在沙发旁，抬头看看TA。";
   }
   if (d.panel === "leisure") {
     d.leisureTime += dt;

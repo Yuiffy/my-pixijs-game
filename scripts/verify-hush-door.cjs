@@ -18,7 +18,7 @@ async function aimDoor(page){
 async function move(page,yaw,ms){await aim(page,yaw);await page.keyboard.down('w');await advance(page,ms);await page.keyboard.up('w');await advance(page,0);}
 async function main(){
   fs.mkdirSync(out,{recursive:true});assert.equal((await fetch(base+'/game/hush-live')).status,200);
-  const browser=await chromium.launch({channel:'chrome',headless:true});const errors=[];
+  const browser=await chromium.launch({ args: ['--mute-audio', '--disable-speech-api'],channel:'chrome',headless:true});const errors=[];
   try{
     const page=await browser.newPage({viewport:{width:1280,height:800}});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
     await page.goto(base+'/game/hush-live',{waitUntil:'networkidle'});await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);await advance(page,0);await page.locator('#hush-start').click();

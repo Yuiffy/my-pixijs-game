@@ -4,8 +4,8 @@ import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
 const e = await loadTypescriptModule("src/components/hushLive/engine.ts");
 const { objective } = await loadTypescriptModule('src/components/hushLive/guide.ts');
+const daily = await loadTypescriptModule('src/components/hushLive/daily.ts');
 const {
-  createGame,
   step,
   emptyInput,
   travel,
@@ -14,10 +14,12 @@ const {
   broadcast,
   SPOTS,
 } = e;
+// Unit regressions below start just after arrival; full journey tests use the real factory.
+const createGame = (...args) => { const s = e.createGame(...args); if (s.daily) s.daily.panel = null; return s; };
 const advance = (s, seconds, input = emptyInput()) => step(s, seconds, input);
-const hold = (s, seconds = action(s).seconds + 0.08) => {
-  const a = action(s);
-  advance(s, seconds, { ...emptyInput(), act: true });
+const hold = (s, seconds = action(s, s.target ?? e.nearest(s)).seconds + 0.08) => {
+  const a = action(s, s.target ?? e.nearest(s));
+  advance(s, seconds, { ...emptyInput(), act: true, focus: s.target ?? e.nearest(s) });
   advance(s, 0.02);
   if (a.mode === 'minigame' && s.delta?.active) {
     while (s.delta.active && s.phase === 'playing') { e.hitDelta(s,s.delta.id); advance(s,.13); }
@@ -29,14 +31,15 @@ function walk(s, spot) {
     advance(s, 0.05);
   if (
     s.doorClosed &&
-    e.distance(s.player, SPOTS[spot]) >= 65 &&
+    e.distance(s.player, e.interactionPoint(s, spot)) >= 65 &&
     e.nearest(s) === "door"
   ) {
-    hold(s);
+    s.target = "door"; hold(s);
     return walk(s, spot);
   }
+  if (spot === "partner" && s.visit) advance(s, .8);
   assert.ok(
-    e.distance(s.player, SPOTS[spot]) < 65,
+    e.distance(s.player, e.interactionPoint(s, spot)) < 65,
     `walk ${spot}: ${JSON.stringify(s)}`,
   );
 }
@@ -53,48 +56,27 @@ function cover(s) {
   )
     advance(s, 0.05);
 }
-function solve(level, seed = 1, unlocked = level) {
-  const s = createGame(level, seed, unlocked);
-  s.phase = "playing";
-  for (const task of s.tasks) {
-    if (task === "charger") {
-      walk(s, "shelf");
-      cover(s);
-      hold(s);
-      walk(s, "sofa");
-      hold(s);
-    }
-    if (task === "food") {
-      walk(s, "entry");
-      hold(s);
-      walk(s, "table");
-      cover(s);
-      hold(s);
-    }
-    if (task === "delta") {
-      walk(s, "desk");
-      walk(s, "door");
-      if (!s.doorClosed) hold(s);
-      walk(s, "desk");
-      assert.equal(s.doorClosed, true);
-      hold(s);
-    }
-    if (task === "hug" || task === "kiss") {
-      walk(s, "partner");
-      cover(s);
-      hold(s);
-    }
-    assert.equal(s.phase, "playing", JSON.stringify(s));
+function completeNight(s, choice = 'together') {
+  for (let i = 0; i < 60 && s.phase === 'playing'; i++) {
+    if (s.daily?.panel === 'lock' || s.daily?.panel === 'cook') { timingWin(s); continue; }
+    if (s.daily?.panel === 'leisure') { s.daily.volume = 15; advance(s, 9); daily.finishLeisure(s); continue; }
+    if (s.daily?.stage === 'sleep') { advance(s, 3.1); continue; }
+    if (s.daily?.panel === 'story') { daily.chooseGoodnight(s, choice); advance(s, .1); continue; }
+    const next = objective(s);
+    walk(s, next.spot);
+    if (objective(s).spot !== next.spot) continue;
+    assert.equal(action(s, next.spot).key, next.key, JSON.stringify({next,s}));
+    if (['food', 'hug', 'kiss', 'pickup-charger'].includes(next.key)) cover(s);
+    const a = action(s, next.spot);
+    advance(s, a.seconds + .08, {...emptyInput(), act: true, focus: next.spot});
+    advance(s, .02);
+    if (s.delta?.active) while (s.delta.active && s.phase === 'playing') { e.hitDelta(s,s.delta.id); advance(s,.13); }
   }
-  if (s.visit) advance(s, 13);
-  walk(s, "partner");
-  if (!s.bonus) {
-    cover(s);
-    hold(s);
-  }
-  walk(s, "sofa");
-  hold(s);
   return s;
+}
+function solve(level, seed = 1, unlocked = level) {
+  const s = e.createGame(level, seed, unlocked); s.phase = 'playing';
+  return completeNight(s);
 }
 
 test("five designed nights and seeded encore can be completed with only legal movement/actions", () => {
@@ -252,30 +234,25 @@ test('the first-night guide alone leads from charger pickup to home and finish',
   assert.equal(e.stars(s), 3, 'tutorial stars must not require unrelated romantic actions');
 });
 
-test('following current objectives completes every night without opening optional controls', () => {
-  for (let level = 1; level <= 5; level++) for (const seed of [1, 42, 99]) {
-    const s = createGame(level, seed, level); s.phase = 'playing';
-    for (let i = 0; i < 50 && s.phase === 'playing'; i++) {
-      const next = objective(s);
-      if (e.nearest(s) !== next.spot) walk(s, next.spot);
-      else {
-        assert.equal(action(s).key, next.key, JSON.stringify({next,s}));
-        if (['food', 'hug', 'kiss', 'pickup-charger'].includes(next.key)) cover(s);
-        hold(s);
-      }
-    }
-    assert.equal(s.won, true, JSON.stringify(s));
+test('following current objectives completes every integrated night and all after-stream choices', () => {
+  const memories = new Set();
+  for (let level = 1; level <= 5; level++) for (const seed of [1, 42, 99]) for (const choice of ['care', 'together']) {
+    const s = e.createGame(level, seed, level); s.phase = 'playing';
+    assert.equal(s.daily.panel, 'lock'); completeNight(s, choice);
+    assert.equal(s.won, true, JSON.stringify(s)); memories.add(s.daily.memory);
+    assert.ok(e.record(e.freshSave(), s).unlocked >= (level < 5 ? level + 1 : 0));
   }
+  assert.equal(memories.size, 4);
 });
 
 test('the guide prioritizes what is in your hands, and explains a blocking closed door', () => {
   const s = createGame(4); s.phase = 'playing';
   walk(s, 'shelf'); cover(s); hold(s);
-  assert.equal(objective(s).spot, 'sofa', 'deliver the charger even when food was listed first');
+  assert.equal(objective(s).spot, 'charging', 'deliver the charger even when food was listed first');
   walk(s, 'door'); hold(s);
   assert.equal(objective(s).spot, 'door');
   assert.match(objective(s).title, /打开/);
-  hold(s); assert.equal(objective(s).spot, 'sofa');
+  hold(s); assert.equal(objective(s).spot, 'charging');
 });
 
 
@@ -336,9 +313,9 @@ test('quick pickups finish after a tap and one continuous hold never chains into
     advance(s,.02,{...emptyInput(),act:true});assert.equal(s.carry,null);assert.ok(s.busy);
     advance(s,.5);assert.equal(s.carry,item);assert.equal(s.busy,null);
   }
-  const s=createGame();s.phase='playing';s.player={...SPOTS.sofa};s.carry='charger';
+  const s=createGame();s.phase='playing';s.player={...SPOTS.charging};s.carry='charger';
   advance(s,3,{...emptyInput(),act:true});assert.deepEqual(s.done,['charger']);assert.equal(s.phase,'playing');
-  advance(s,.01);hold(s);assert.equal(s.won,true);
+  advance(s,.01);walk(s,'sofa');hold(s);assert.equal(s.won,true);
 });
 
 test('food is placed at the table, then invitation and talking animate and freeze correctly',()=>{
@@ -419,10 +396,8 @@ test('a previously trapped player can move out of a door overlap but cannot tunn
 });
 
 
-const daily = await loadTypescriptModule('src/components/hushLive/daily.ts');
-function dailyStart(homemade = false, seed = 1, meal = 'tea') {
-  const s = createGame(0, seed);
-  daily.beginDaily(s, homemade, meal); s.phase = 'playing'; return s;
+function dailyStart(homemade = false, seed = 1) {
+  const s = e.createGame(homemade ? 3 : 2, seed); s.phase = 'playing'; return s;
 }
 function timingWin(s) {
   for (let i = 0; i < 3; i++) {
@@ -441,24 +416,29 @@ test('daily arrival requires three timed actions; mistakes retry, pause freezes 
 test('all seven meals and homemade rice run from entry to after-stream choices using real routes', () => {
   const endings = new Set();
   for (const homemade of [false, true]) for (const [index, meal] of daily.MEALS.entries()) {
-    const s = dailyStart(homemade, index + 1, meal.id); timingWin(s);
+    const s = dailyStart(homemade, index || 7); timingWin(s);
     if (homemade) { walk(s, 'kitchen'); hold(s); assert.equal(s.daily.panel, 'cook'); timingWin(s); assert.ok(s.done.includes('cook')); }
     else { walk(s, 'entry'); hold(s); }
     assert.equal(s.carry, 'food'); walk(s, 'table'); hold(s); assert.ok(s.done.includes('food'));
+    // Complete each chapter's actual middle activity before resting.
+    if (s.tasks.includes('delta')) { walk(s, 'door'); if (!s.doorClosed) hold(s); walk(s, 'desk'); hold(s); }
+    if (s.tasks.includes('hug')) { walk(s, 'partner'); cover(s); hold(s); }
     walk(s, 'sofa'); hold(s); assert.equal(s.daily.panel, 'leisure');
     s.daily.entertainment = homemade ? 'game' : 'video'; advance(s, 3);
     assert.ok(s.daily.unread); assert.match(s.daily.messages.at(-1).text, homemade ? /游戏的声音/ : /视频的声音/);
     daily.replyQuietly(s); const love = s.love; daily.replyQuietly(s); assert.equal(s.love, love); assert.equal(s.daily.volume, 15);
     advance(s, 6); daily.finishLeisure(s); assert.ok(s.done.includes('leisure'));
-    walk(s, 'bed'); hold(s); assert.equal(s.daily.stage, 'sleep'); advance(s, 3.1); assert.equal(s.daily.stage, 'after'); assert.equal(objective(s).spot, 'partner');
+    walk(s, 'bed'); assert.notEqual(action(s, 'bed').key, 'sleep');
+    walk(s, 'sofa'); hold(s); assert.equal(s.daily.stage, 'sleep'); assert.ok(s.player.x < 506); advance(s, 3.1); assert.equal(s.daily.stage, 'after'); assert.equal(objective(s).spot, 'partner');
     const elapsed = s.elapsed; advance(s, 1); assert.equal(s.elapsed, elapsed); assert.equal(e.partnerBehavior(s).speaking, false);
-    walk(s, s.daily.after === 'rice' ? 'kitchen' : 'bed'); hold(s); assert.equal(s.daily.panel, 'story');
+    walk(s, s.daily.after === 'rice' ? 'kitchen' : 'sofa'); hold(s); assert.equal(s.daily.panel, 'story');
     const choice = homemade ? 'care' : 'together';
     e.togglePause(s); daily.chooseGoodnight(s, choice); assert.equal(s.daily.stage, 'goodnight'); e.togglePause(s);
     const beforeChoice = s.love;
     daily.chooseGoodnight(s, choice); daily.chooseGoodnight(s, choice); assert.equal(s.love, beforeChoice + 25);
     advance(s, .05); assert.ok(s.won); assert.ok(s.daily.memory.length > 20); endings.add(s.daily.memory);
-    assert.deepEqual(e.record(e.freshSave(), s), e.freshSave());
+    assert.equal(e.record(e.freshSave(), s).unlocked, s.level + 1);
+    assert.equal(s.daily.meal, homemade ? 'rice' : meal.id);
   }
   assert.equal(endings.size, 4, 'both choices in each after-stream scene must have a reachable distinct ending');
 });
@@ -468,4 +448,23 @@ test('quiet leisure causes no complaint, short visits do not complete, loud remi
   daily.openDailyPanel(s, 'leisure'); advance(s, 9); assert.equal(s.daily.messages.length, 1);
   s.daily.volume = 80; advance(s, 30); assert.equal(s.daily.messages.length, 2); assert.ok(s.suspicion < 100);
   daily.finishLeisure(s); assert.ok(s.done.includes('leisure'));
+});
+
+test('charger drop uses its own armrest target; sofa center is only for resting', () => {
+  const s = createGame(); s.phase = 'playing'; s.carry = 'charger';
+  s.player = {...SPOTS.sofa}; assert.equal(action(s, 'sofa').key, '');
+  walk(s, 'charging'); assert.equal(action(s, 'charging').key, 'charger'); hold(s);
+  assert.ok(s.done.includes('charger')); assert.equal(s.carry, null);
+  assert.ok(e.distance(SPOTS.charging, runtime3d.AIM_POINTS.charging) < 65);
+  assert.ok(e.distance(SPOTS.sofa, runtime3d.AIM_POINTS.charging) > 90);
+});
+
+test('charger tray is reachable from the sofa side without returning to the walk-assist endpoint', () => {
+  const s=createGame(); s.phase='playing'; s.carry='charger';
+  for (const p of [{x:348,y:320},{x:303,y:380}]) {
+    assert.ok(nav.walkable(p,false)); s.player=p;
+    assert.equal(action(s,'charging').key,'charger');
+    assert.equal(action(s,'sofa').key,'');
+  }
+  assert.deepEqual(runtime3d.AIM_POINTS.charging,e.CHARGER_TRAY);
 });

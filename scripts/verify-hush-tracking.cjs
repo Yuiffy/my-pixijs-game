@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const { state, advance, follow, hold, solve, capture, images } = require('./verify-hush-3d.cjs');
+const { state, advance, follow, hold, solve, reachAction, capture, images } = require('./verify-hush-3d.cjs');
 const base = process.env.HUSH_BASE_URL || 'http://127.0.0.1:3877';
 const out = process.env.HUSH_QA_DIR || 'tmp/hush-tracking';
 const errors = []; const samples = [];
@@ -25,12 +25,12 @@ async function sample(page,label) {
 }
 async function main() {
   fs.mkdirSync(out,{recursive:true});assert.equal((await fetch(base+'/game/hush-live')).status,200);
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await chromium.launch({ args: ['--mute-audio', '--disable-speech-api'],channel:'chrome',headless:true});
   try {
     const page=await browser.newPage({viewport:{width:1280,height:800}});
     page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
     await page.goto(base+'/game/hush-live?seed=1',{waitUntil:'networkidle'});await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);await frame(page);
-    await page.locator('#hush-start').click();await solve(page);await page.getByRole('button',{name:'下一个夜晚 →'}).click();await page.locator('#hush-start').click();await follow(page);await hold(page);await follow(page);
+    await page.locator('#hush-start').click();await solve(page);await page.getByRole('button',{name:'下一个夜晚 →'}).click();await page.locator('#hush-start').click();await reachAction(page,'food');
     // Back away using ordinary movement so the complete chair orientation is reviewable.
     await aim(page,{x:665,y:125,height:1.55});await page.keyboard.down('s');await frame(page,650);await page.keyboard.up('s');await aim(page,{x:735,y:245,height:1.0});
     for(let i=0;i<45;i++){await frame(page,100);const s=await state(page);if(!s.partner.peek&&Math.abs(s.tracking.avatarYaw)<.1)break;}
@@ -57,7 +57,7 @@ async function main() {
     await frame(page,13500);await sample(page,'back-in-seat');await capture(page,'returned-chair-and-avatar');
     await solve(page);
     // Existing male appearance uses the same tracking path, not a second unsynchronised animation.
-    await page.getByRole('button',{name:'重玩本晚'}).click();await page.getByText('选择夜晚与角色',{exact:true}).click();await page.getByLabel('恋人称呼',{exact:true}).selectOption('他');await page.locator('#hush-start').click();await follow(page);await hold(page);await follow(page);await aim(page,{x:736,y:247,height:1.27});await frame(page,2000);await sample(page,'male');await capture(page,'male-chair-and-avatar');
+    await page.getByRole('button',{name:'重玩本晚'}).click();await page.getByText('选择夜晚与角色',{exact:true}).click();await page.getByLabel('恋人称呼',{exact:true}).selectOption('他');await page.locator('#hush-start').click();await reachAction(page,'food');await aim(page,{x:736,y:247,height:1.27});await frame(page,2000);await sample(page,'male');await capture(page,'male-chair-and-avatar');
     assert.deepEqual(errors,[]);fs.writeFileSync(out+'/tracking-report.json',JSON.stringify({samples,images,errors},null,2));console.log(JSON.stringify({samples:samples.length,images:images.map(i=>i.file),errors}));
   } finally {await browser.close();}
 }

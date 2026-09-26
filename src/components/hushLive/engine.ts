@@ -1,9 +1,10 @@
-import { Daily, dailyModal, discoverDaily, mealOf, offAir, openDailyPanel, sleepDaily, stepDaily } from "./daily";
+import { beginDaily, Daily, dailyModal, discoverDaily, mealOf, offAir, openDailyPanel, sleepDaily, stepDaily } from "./daily";
 import { BODY_RADIUS, moveBody, route, walkable } from "./navigation";
 
 export type Point = { x: number; y: number };
 export type Task = "charger" | "food" | "delta" | "hug" | "kiss" | "cook" | "leisure";
 export type Spot =
+  | "charging"
   | "sofa"
   | "shelf"
   | "entry"
@@ -26,10 +27,12 @@ export const emptyInput = (): Input => ({
   act: false,
   sprint: false,
 });
+export const CHARGER_TRAY = { x: 303, y: 319.4, height: 0.79 };
 export const SPOTS: Record<Spot, Point & { name: string }> = {
+  charging: { x: 303, y: 380, name: "沙发扶手 · 充电托盘" },
   kitchen: { x: 416, y: 207, name: "料理台" },
   bed: { x: 666, y: 429, name: "床边" },
-  sofa: { x: 220, y: 380, name: "沙发 · 回家收工" },
+  sofa: { x: 220, y: 380, name: "沙发 · 休息" },
   shelf: { x: 826, y: 505, name: "充电器" },
   entry: { x: 127, y: 500, name: "门口 · 外卖" },
   partner: { x: 744, y: 339, name: "恋人" },
@@ -51,27 +54,27 @@ export const LEVELS: {
   },
   {
     title: "外卖要趁热",
-    subtitle: "门口的晚饭到了。把晚饭摆到直播桌上。TA还在讲话，动作轻一点。",
+    subtitle: "下班轻轻开门，把晚饭放上餐垫。拿回充电器后，在沙发小睡，等TA下播。",
     tasks: ["food", "charger"],
-    seconds: 210,
+    seconds: 330,
   },
   {
     title: "隔墙有耳",
-    subtitle: "三角洲队友等你报点。关门，再开语音。",
-    tasks: ["delta", "food"],
-    seconds: 230,
+    subtitle: "先送晚饭，再关门报点。回沙发看视频，别忘了留意岁己的微信。",
+    tasks: ["food", "delta", "leisure"],
+    seconds: 420,
   },
   {
-    title: "再抱一会儿就好",
-    subtitle: "TA伸出手，指了指麦克风。先用眼神暗号闭麦。",
-    tasks: ["hug", "charger", "kiss"],
-    seconds: 230,
+    title: "想吃你做的饭",
+    subtitle: "鸡蛋和米饭都备好了。炒一碗热饭，换一个偷偷的拥抱，然后回沙发等下播。",
+    tasks: ["cook", "food", "hug", "leisure"],
+    seconds: 420,
   },
   {
     title: "不公开的纪念日",
     subtitle: "晚饭、队友和一个吻。把普通夜晚过成两人的秘密。",
-    tasks: ["food", "delta", "charger", "kiss"],
-    seconds: 300,
+    tasks: ["food", "charger", "delta", "kiss", "leisure"],
+    seconds: 480,
   },
 ];
 export const TASK_NAMES: Record<Task, string> = {
@@ -197,9 +200,9 @@ export function createGame(level = 0, seed = 1, unlocked = 0): Game {
     safeLevel < 5
       ? [...LEVELS[safeLevel].tasks]
       : ((safeSeed % 2
-          ? ["charger", "food", "delta", "hug"]
-          : ["food", "delta", "charger", "kiss"]) as Task[]);
-  return {
+          ? ["cook", "food", "delta", "hug", "leisure"]
+          : ["food", "charger", "delta", "kiss", "leisure"]) as Task[]);
+  const game: Game = {
     daily: null,
     phase: "ready",
     level: safeLevel,
@@ -213,7 +216,7 @@ export function createGame(level = 0, seed = 1, unlocked = 0): Game {
     quiet: true,
     doorClosed: false,
     elapsed: 0,
-    limit: safeLevel < 5 ? LEVELS[safeLevel].seconds : 210 + (safeSeed % 51),
+    limit: safeLevel < 5 ? LEVELS[safeLevel].seconds : 480 + (safeSeed % 51),
     suspicion: 0,
     peak: 0,
     love: 0,
@@ -238,6 +241,8 @@ export function createGame(level = 0, seed = 1, unlocked = 0): Game {
     visit: null,
     noiseFlash: 0,
   };
+  if (safeLevel > 0) beginDaily(game);
+  return game;
 }
 export const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 export function broadcast(s: Game) {
@@ -251,7 +256,7 @@ export function broadcast(s: Game) {
 }
 export function partnerPose(s: Game) {
   if (offAir(s)) return s.daily?.after === "rice"
-    ? { x: 447, y: 204, stand: 1 } : { x: 691, y: 427, stand: 1 };
+    ? { x: 447, y: 204, stand: 1 } : { x: 280, y: 395, stand: 1 };
   const v = s.visit;
   const amount = v
     ? Math.max(0, Math.min(1, (12 - v.remaining) / 1.4, v.remaining / 1.4))
@@ -264,6 +269,7 @@ export function partnerPose(s: Game) {
   };
 }
 export function interactionPoint(s: Game, spot: Spot): Point {
+  if (spot === "charging") return CHARGER_TRAY;
   return spot === "partner" && (s.visit || offAir(s)) ? partnerPose(s) : SPOTS[spot];
 }
 export function partnerBehavior(s: Game) {
@@ -297,7 +303,7 @@ export function travel(s: Game, spot: Spot) {
   s.target = spot;
   const dest =
     spot === "partner" && offAir(s)
-      ? s.daily?.after === "rice" ? { x: 396, y: 238 } : { x: 641, y: 447 }
+      ? s.daily?.after === "rice" ? { x: 396, y: 238 } : { x: 242, y: 428 }
       : spot === "partner" && s.visit
       ? { x: s.visit.x - 28, y: s.visit.y + 27 }
       : spot === "door"
@@ -347,11 +353,11 @@ function availableAction(
       ? focus
       : null;
   if (dailyModal(s)) return { key: "", label: "完成眼前的小事", seconds: 0, noise: 0 };
-  if (s.daily?.stage === "after" && (spot === "partner" || spot === (s.daily.after === "rice" ? "kitchen" : "bed"))) return { key: "discover", label: "轻声叫岁己", seconds: 0.3, noise: 0 };
+  if (s.daily?.stage === "after" && (spot === "partner" || spot === (s.daily.after === "rice" ? "kitchen" : "sofa"))) return { key: "discover", label: "轻声叫岁己", seconds: 0.3, noise: 0 };
   const pending = (id: Task) => s.tasks.includes(id) && !s.done.includes(id);
   if (spot === "kitchen" && pending("cook") && !s.carry) return { key: "cook", label: "开始炒蛋炒饭", seconds: 0.2, noise: 0 };
-  if (spot === "sofa" && pending("leisure") && s.done.includes("food")) return { key: "leisure", label: "坐下看视频 / 玩游戏", seconds: 0.2, noise: 0 };
-  if (spot === "bed" && s.daily && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: "先睡一会儿，等岁己下播", seconds: 0.3, noise: 0 };
+  if (spot === "sofa" && pending("leisure") && !s.carry && s.tasks.filter(t => t !== "leisure").every(t => s.done.includes(t))) return { key: "leisure", label: "坐下看视频 / 玩游戏", seconds: 0.2, noise: 0 };
+  if (spot === "sofa" && s.daily?.stage === "home" && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: "在沙发上小睡，等岁己下播", seconds: 0.3, noise: 0 };
   if (spot === "door") return {
       key: "door",
       label: s.doorClosed ? "轻轻开门" : "轻轻关门",
@@ -365,7 +371,7 @@ function availableAction(
       noise: 13,
     };
   if (spot === "entry" && pending("food") && !s.carry && !s.daily?.homemade) return { key: "pickup-food", label: s.daily ? `拿起${mealOf(s).name}` : "拿起外卖袋", seconds: 0.35, noise: 8 };
-  if (spot === "sofa" && s.carry === "charger") return { key: "charger", label: "把充电器放好", seconds: 0.45, noise: 1 };
+  if (spot === "charging" && s.carry === "charger") return { key: "charger", label: "放到扶手充电托盘", seconds: 0.45, noise: 1 };
   if (spot === "table" && s.carry === "food") return {
       key: "food",
       label: s.daily ? `把${s.daily.homemade ? "亲手炒的蛋炒饭" : mealOf(s).name}摆好` : "把饭盒和饮料摆到桌上",
@@ -560,7 +566,7 @@ export const ending = (s: Game) => (!s.won
         ? "全弹幕都在磕"
         : "只属于我们的晚安");
 export function record(save: Save, s: Game): Save {
-  if (!s.won || s.daily) return save;
+  if (!s.won) return save;
   const next = { ...save, best: [...save.best], stars: [...save.stars] };
   if (s.level === 5) next.endlessBest = Math.max(next.endlessBest, s.totalScore);
   else {

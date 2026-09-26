@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const { state, advance, follow, hold, solve, capture, images } = require('./verify-hush-3d.cjs');
+const { state, advance, follow, hold, solve, timing, reachAction, virtualPointerLock, capture, images } = require('./verify-hush-3d.cjs');
 const base = process.env.HUSH_BASE_URL || 'http://127.0.0.1:3877';
 const out = process.env.HUSH_QA_DIR || 'tmp/hush-interactions-special';
 const errors = [];
@@ -27,13 +27,13 @@ async function tap(page, duration, photo) {
 }
 async function main() {
   fs.mkdirSync(out,{recursive:true});assert.equal((await fetch(base+'/game/hush-live')).status,200);
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await chromium.launch({ args: ['--mute-audio', '--disable-speech-api'],channel:'chrome',headless:true});
   try {
-    const context=await browser.newContext({viewport:{width:1280,height:800}});const page=await context.newPage();await open(page);
+    const context=await browser.newContext({viewport:{width:1280,height:800}});await virtualPointerLock(context);const page=await context.newPage();await open(page);
     await page.locator('#hush-start').click();await follow(page);
     await tap(page,400,'charger-short-tap');assert.equal((await state(page)).carry,'charger');assert.equal((await state(page)).busy,null);
     await solve(page);await page.getByRole('button',{name:'下一个夜晚 →'}).click();await page.locator('#hush-start').click();
-    await follow(page);await tap(page,350,'food-short-tap');assert.equal((await state(page)).carry,'food');
+    await timing(page);await follow(page);await tap(page,350,'food-short-tap');assert.equal((await state(page)).carry,'food');
     assert.equal((await state(page)).objective.spot,'table');await follow(page);assert.equal((await state(page)).focus,'table');
     await page.keyboard.press('e');await advance(page,790);await capture(page,'unpacking-table');await advance(page,400);
     assert.equal((await state(page)).carry,null);assert.ok((await state(page)).done.includes('food'));await capture(page,'meal-on-table');
@@ -46,7 +46,7 @@ async function main() {
     await page.keyboard.press('p');const frozen=await state(page);await advance(page,3000);assert.equal((await state(page)).elapsed,frozen.elapsed);await page.getByRole('button',{name:'继续今晚 →'}).click();await turnToPartner(page);
     await page.keyboard.down('e');await advance(page,2200);await page.keyboard.up('e');await advance(page,50);assert.equal((await state(page)).bonus,true);assert.ok(progress>0);
     await solve(page);await page.getByRole('button',{name:'下一个夜晚 →'}).click();await page.locator('#hush-start').click();
-    await follow(page);await hold(page);await follow(page);assert.equal((await state(page)).focus,'desk');
+    await reachAction(page,'delta');assert.equal((await state(page)).focus,'desk');
     // Start from locked mouse: entering the clicking game must unlock without pausing.
     await page.mouse.click(640,400);await page.waitForFunction(()=>!!document.pointerLockElement);await page.keyboard.press('e');await advance(page,70);
     await page.waitForFunction(()=>!document.pointerLockElement);assert.equal((await state(page)).phase,'playing');assert.ok((await state(page)).delta.active);
@@ -63,12 +63,12 @@ async function main() {
     // Mobile tap pickup, table serving, then touch targets and visible hold progress at 320px.
     const mobile=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});await mobile.addInitScript(value=>localStorage.setItem('hush-live-v1',value),saved);
     const phone=await mobile.newPage();await open(phone);await phone.getByText('选择夜晚与角色',{exact:true}).tap();await phone.getByRole('button',{name:/外卖要趁热/}).tap();await phone.locator('#hush-start').tap();
-    await follow(phone);await phone.locator('[data-act="hold"]').tap();await advance(phone,550);assert.equal((await state(phone)).carry,'food');await follow(phone);await phone.locator('[data-act="hold"]').tap();await advance(phone,1200);assert.ok((await state(phone)).done.includes('food'));await capture(phone,'mobile-table');await solve(phone);
-    await phone.getByRole('button',{name:'下一个夜晚 →'}).tap();await phone.locator('#hush-start').tap();await follow(phone);await phone.locator('[data-act="hold"]').tap();await advance(phone,550);await follow(phone);await phone.locator('[data-act="hold"]').tap();await advance(phone,80);
+    await timing(phone,true);await follow(phone);await phone.locator('[data-act="hold"]').tap();await advance(phone,550);assert.equal((await state(phone)).carry,'food');await follow(phone);await phone.locator('[data-act="hold"]').tap();await advance(phone,1200);assert.ok((await state(phone)).done.includes('food'));await capture(phone,'mobile-table');await solve(phone);
+    await phone.getByRole('button',{name:'下一个夜晚 →'}).tap();await phone.locator('#hush-start').tap();await reachAction(phone,'delta');await phone.locator('[data-act="hold"]').tap();await advance(phone,80);
     await phone.setViewportSize({width:320,height:740});await capture(phone,'mobile-320-delta');
     const rect=await phone.getByLabel('三角洲报点小游戏',{exact:true}).boundingBox();assert.ok(rect.x>=0&&rect.x+rect.width<=320&&rect.y+rect.height<=740);
     for(let i=0;i<8;i++){await phone.locator('[data-delta-target]').tap();await advance(phone,150);}assert.ok((await state(phone)).done.includes('delta'));
-    await solve(phone);await phone.getByRole('button',{name:'下一个夜晚 →'}).tap();await phone.locator('#hush-start').tap();await follow(phone);
+    await solve(phone);await phone.getByRole('button',{name:'下一个夜晚 →'}).tap();await phone.locator('#hush-start').tap();await reachAction(phone,'hug');
     const button=await phone.locator('[data-act="hold"]').boundingBox();const cdp=await mobile.newCDPSession(phone);
     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:button.x+button.width/2,y:button.y+button.height/2}]});await advance(phone,1450);await capture(phone,'mobile-320-hold');await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await advance(phone,100);assert.ok(!(await state(phone)).done.includes('hug'));
     await mobile.close();assert.deepEqual(errors,[]);

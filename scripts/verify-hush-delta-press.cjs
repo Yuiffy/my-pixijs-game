@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const { state, advance, follow, hold, solve, capture, images } = require('./verify-hush-3d.cjs');
+const { state, advance, follow, hold, solve, reachAction, capture, images } = require('./verify-hush-3d.cjs');
 const base = process.env.HUSH_BASE_URL || 'http://127.0.0.1:3877';
 const out = process.env.HUSH_QA_DIR || 'tmp/hush-delta-press';
 const errors = [];
@@ -10,12 +10,12 @@ async function startDelta(page) {
   await page.goto(base+'/game/hush-live?seed=1',{waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);await advance(page,0);
   for(let i=0;i<2;i++){await page.locator('#hush-start').click();await solve(page);await page.getByRole('button',{name:'下一个夜晚 →'}).click();}
-  await page.locator('#hush-start').click();await follow(page);await hold(page);await follow(page);await page.keyboard.press('e');await advance(page,50);
+  await page.locator('#hush-start').click();await reachAction(page,'delta');await page.keyboard.press('e');await advance(page,50);
   assert.ok((await state(page)).delta.active);
 }
 async function main(){
   fs.mkdirSync(out,{recursive:true});assert.equal((await fetch(base+'/game/hush-live')).status,200);
-  const browser=await chromium.launch({channel:'chrome',headless:true});
+  const browser=await chromium.launch({ args: ['--mute-audio', '--disable-speech-api'],channel:'chrome',headless:true});
   try{
     const page=await browser.newPage({viewport:{width:1280,height:800}});page.on('pageerror',e=>errors.push(e.message));
     await startDelta(page);
@@ -54,7 +54,7 @@ async function main(){
     const save=await page.evaluate(()=>localStorage.getItem('hush-live-v1'));
     const mobile=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});await mobile.addInitScript(value=>localStorage.setItem('hush-live-v1',value),save);
     const phone=await mobile.newPage();phone.on('pageerror',e=>errors.push(e.message));await phone.goto(base+'/game/hush-live?seed=1',{waitUntil:'networkidle'});await phone.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);await advance(phone,0);
-    assert.equal((await state(phone)).level,2);await phone.locator('#hush-start').tap();await follow(phone);await hold(phone);await follow(phone);await phone.locator('[data-act="hold"]').tap();await advance(phone,60);
+    assert.equal((await state(phone)).level,2);await phone.locator('#hush-start').tap();await reachAction(phone,'delta');await phone.locator('[data-act="hold"]').tap();await advance(phone,60);
     const cdp=await mobile.newCDPSession(phone);
     for(let i=0;i<8;i++){
       const targetRect=await phone.locator('[data-delta-target]').boundingBox();
@@ -67,10 +67,23 @@ async function main(){
     checks.push('real CDP touch contact scores immediately, 8 held touches complete with no misses/double-score');
     await page.reload({waitUntil:'domcontentloaded'});await page.bringToFront();
     await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);
-    await page.locator('#hush-start').click();await page.locator('[data-assist="goal"]').click();
-    await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).focus==='door',{},{timeout:15000});
-    await page.keyboard.press('e');await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).doorClosed);
-    await page.locator('[data-assist="goal"]').click();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).focus==='desk',{},{timeout:15000});
+    await page.locator('#hush-start').click();
+    // Resolve the chapter's arrival and meal with real RAF time before reporting.
+    for(let beat=0;beat<3;beat++) {
+      await page.waitForFunction(()=>{const d=JSON.parse(window.render_game_to_text()).daily;const p=(Math.sin(d.clock*2.2-Math.PI/2)+1)/2;return p>.4&&p<.6&&d.cooldown<=0;});
+      await page.locator('[data-daily-timing]').click();
+    }
+    for(let n=0;n<12;n++) {
+      await page.locator('[data-assist="goal"]').click();
+      await page.waitForFunction(()=>!JSON.parse(window.render_game_to_text()).path.length,{},{timeout:25000});
+      await page.waitForTimeout(350);
+      const arrived=await state(page);
+      // Crossing rooms can change the guide to closing the door. Follow that new goal.
+      if(arrived.focus!==arrived.objective.spot||arrived.action.key!==arrived.objective.key)continue;
+      if(arrived.action.key==='delta')break;
+      await page.keyboard.press('e');await page.waitForFunction(()=>!!JSON.parse(window.render_game_to_text()).busy);await page.waitForFunction(()=>!JSON.parse(window.render_game_to_text()).busy);
+    }
+    assert.equal((await state(page)).action.key,'delta');
     await page.keyboard.press('e');await page.locator('[data-delta-target]').waitFor();
     for(let i=0;i<8;i++){
       const box=await page.locator('[data-delta-target]').boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.waitForTimeout(250);await page.mouse.up();

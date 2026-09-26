@@ -13,7 +13,7 @@ import {
 } from "./engine";
 import { FURNITURE, SCALE, worldPoint } from "./navigation";
 import { objective } from "./guide";
-import { lookPoint, Runtime3D } from "./runtime3d";
+import { AIM_POINTS, lookPoint, Runtime3D } from "./runtime3d";
 import {
   avatarTexture,
   labelTexture,
@@ -841,9 +841,12 @@ function Room({
             />
           </group>
         ))}
-        <group ref={onSofa} position={[1.26, 0.79, 0.12]}>
-          <Charger />
-        </group>
+
+      </group>
+      <group position={[worldPoint(AIM_POINTS.charging)[0], AIM_POINTS.charging.height, worldPoint(AIM_POINTS.charging)[1]]} userData={{ spot: "charging" }}>
+        <Box at={[0, -0.005, 0]} size={[0.46, 0.045, 0.6]} color="#b98b60" />
+        <Box at={[0, 0.023, 0.24]} size={[0.39, 0.015, 0.035]} color="#ead6ad" />
+        <group ref={onSofa} position={[0, 0.04, 0]}><Charger /></group>
       </group>
       <mesh
         position={[-3, 0.006, 0.88]}
@@ -890,7 +893,7 @@ function Room({
         <meshStandardMaterial map={textures.poster} />
       </mesh>
       {/* Stream setup, acoustic panels and equipment. */}
-      <group position={studio.at} userData={{ spot: "table" }}>
+      <group position={studio.at}>
         <Box
           at={[0, 0.76, 0]}
           size={[studio.w, 0.095, studio.d]}
@@ -941,6 +944,7 @@ function Room({
             emissiveIntensity={1.2}
           />
         </mesh>
+        <group userData={{ spot: "table" }}>
         <Box
           at={[-1.2, 0.818, 0.3]}
           size={[0.62, 0.008, 0.42]}
@@ -948,6 +952,7 @@ function Room({
         />
         <group ref={delivered} position={[-1.2, 0.825, 0.3]}>
           <MealModels runtime={r} />
+        </group>
         </group>
       </group>
       {Array.from({ length: 9 }, (_, i) => (
@@ -1085,7 +1090,7 @@ function Hands({
       position.y += Math.sin(p * Math.PI) * 0.09;
       rotation.copy(new THREE.Quaternion()).slerp(camera.quaternion, t);
     } else if (placing) {
-      const point = lookPoint(r, busy.key === "food" ? "table" : "sofa");
+      const point = lookPoint(r, busy.key === "food" ? "table" : "charging");
       const target = new THREE.Vector3(point.x, point.y, point.z);
       const t = Math.min(1, p / (busy.key === "food" ? 0.58 : 1));
       position.lerp(target, t * t * (3 - 2 * t));
@@ -1208,7 +1213,7 @@ function CameraRig({
       let spot: Spot | null = null;
       while (cursor) {
         if (cursor.userData.ignoreRay || !cursor.visible) ignore = true;
-        if (cursor.userData.spot) spot = cursor.userData.spot as Spot;
+        if (!spot && cursor.userData.spot) spot = cursor.userData.spot as Spot;
         cursor = cursor.parent;
       }
       if (ignore || !hit.object.visible) continue;
