@@ -1,24 +1,30 @@
 'use client';
 
 import {
-  ArrowLeftOutlined, CaretRightOutlined, CheckOutlined, CloseOutlined,
-  FullscreenOutlined, PauseOutlined, QuestionCircleOutlined, ReloadOutlined,
+  ArrowLeftOutlined, ArrowRightOutlined, AudioMutedOutlined, CaretRightOutlined, CheckOutlined, CloseOutlined,
+  FullscreenOutlined, PauseOutlined, PoweroffOutlined, QuestionCircleOutlined, ReloadOutlined, SoundOutlined,
 } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  LIVE_RADIUS, STATIONS, aimPrep, createPrepGame, formatPrepTime, getPrepAction, getPrepStars, getPrepWalkTarget, goLivePrep,
+  BOWEL_END, BOWEL_ROCKS, BOWEL_START, INCIDENT_IDS, INTERACT_RADIUS, LIVE_RADIUS, LIVE_TRANSITION_MS, STATIONS, aimPrep, createPrepGame, formatPrepTime, getPrepAction, getPrepStars, getPrepWalkTarget, goLivePrep,
   interactPrep, leaveMiniGame, pressPrep, startPrepGame, stepPrepGame, placeFoodPrep, releaseCatPourPrep,
-  setAudioChannelPrep, capturePosePrep, wipeSpillPrep, connectCablePrep, toggleObsSourcePrep,
+  nearestStation, setAudioChannelPrep, capturePosePrep, wipeSpillPrep, connectCablePrep, toggleObsSourcePrep,
+  sweepGlassPrep, scoopLitterPrep, digBowelPrep,
   togglePausePrep, validatePrepGame,
 } from './gameplay3d';
 import type { PrepState, StationId, TaskId } from './gameplay3d';
+import { createPreStreamAudio } from './sound3d';
+import type { PreStreamAudio } from './sound3d';
 import styles from './preStream3D.module.css';
 
 const World3D = dynamic(() => import('./World3D'), { ssr: false });
 const SAVE_KEY = 'sui-pre-stream-run-v2';
 const RECORD_KEY = 'sui-pre-stream-records-v2';
+const AUDIO_KEY = 'sui-pre-stream-audio-v1';
+const LIVE_PORTRAIT = '/images/materials/岁己SUI小猫帽短发小揪揪半身金瞳.png';
 const TASKS: { id: TaskId; label: string; station: StationId }[] = [
   { id: 'water', label: '接水喝水', station: 'thermos' },
   { id: 'toilet', label: '上厕所', station: 'toilet' },
@@ -28,6 +34,27 @@ const TASKS: { id: TaskId; label: string; station: StationId }[] = [
   { id: 'vts', label: '校准 VTS', station: 'vts' },
   { id: 'obs', label: '布置 OBS', station: 'obs' },
 ];
+const SHORT_TASKS: Record<TaskId, string> = {
+  water: '接水', toilet: '厕所', food: '点心', cat: '喂猫', audio: '声卡', vts: 'VTS', obs: 'OBS',
+};
+const incidentStation = (id: StationId) => (INCIDENT_IDS as readonly string[]).includes(id);
+const readyToBroadcast = (state: PrepState) => state.completed.length === TASKS.length &&
+  state.incidents.active.length === 0 && state.incidents.queue.length === 0 &&
+  state.incidents.resolved.length === state.level;
+function stationAvailable(state: PrepState, id: StationId): boolean {
+  if (incidentStation(id)) return state.incidents.active.includes(id as PrepState['incidents']['active'][number]);
+  if ((id === 'vts' || id === 'obs') && state.incidents.active.includes('power')) return false;
+  if (id === 'thermos') return state.water.cup === 'table' || state.water.cup === 'carried-full';
+  if (id === 'dispenser') return state.water.cup === 'carried-empty' || state.water.cup === 'ready';
+  if (id === 'obs' && readyToBroadcast(state)) return true;
+  return !state.completed.includes(id as TaskId);
+}
+function nearbyStations(state: PrepState): StationId[] {
+  return STATIONS.filter(station => stationAvailable(state, station.id) &&
+    Math.hypot(station.x - state.player.x, station.z - state.player.z) <= INTERACT_RADIUS)
+    .sort((a, b) => Math.hypot(a.x - state.player.x, a.z - state.player.z) - Math.hypot(b.x - state.player.x, b.z - state.player.z))
+    .map(station => station.id);
+}
 const NIGHTS = [
   { id: 1, title: '第一夜', mood: '先把房间跑熟' },
   { id: 2, title: '第二夜', mood: '猫和意外都来凑热闹' },
@@ -43,6 +70,10 @@ obs: '直播来源',
 spill: '桌面抢救',
 cable: '线路抢修',
 catwalk: '键盘争夺战',
+power: '被踩掉的电源',
+glass: '碎杯搜救',
+litter: '猫砂盆考古',
+bowel: '通畅大作战',
 };
 const MINI_NOTES: Record<string, string> = {
   toilet: '瞄准靶心按住发射，最后按下冲水按钮。',
@@ -54,6 +85,10 @@ const MINI_NOTES: Record<string, string> = {
   spill: '拖着抹布逐处擦掉水渍。',
   cable: '选插头，再接到对应接口。',
   catwalk: '等猫咪走到桌边，再点逗猫棒。',
+  power: '嘉嘉踩到电源键了！重启电脑，再检查 VTS 和 OBS。',
+  glass: '把四片玻璃碎片逐片扫进簸箕。',
+  litter: '找出三处结块，轻点铲走。',
+  bowel: '从入口挖到出口；避开硬块，连通后放水。',
 };
 const FOOD_ITEMS = [
   { id: 'bread', label: '小面包' },
@@ -70,12 +105,24 @@ const AUDIO_CHANNELS = ['麦克风', '伴奏', '监听'] as const;
 const OBS_SOURCES = ['摄像头', '麦克风', '弹幕', '挂件', '桌面'] as const;
 type RecordEntry = { elapsedMs: number; stars: number };
 type Records = { version: 2; unlocked: number; best: Record<string, RecordEntry> };
+type AudioPreferences = { muted: boolean; volume: number };
 type GameWindow = Window & {
   render_game_to_text?: () => string;
   advanceTime?: (ms: number) => void;
 };
 
 const freshRecords = (): Records => ({ version: 2, unlocked: 1, best: {} });
+const defaultAudioPreferences = (): AudioPreferences => ({ muted: false, volume: 0.45 });
+function readAudioPreferences(raw: string | null): AudioPreferences {
+  try {
+    const value = JSON.parse(raw || 'null');
+    if (typeof value?.muted === 'boolean' && Number.isFinite(value.volume) && value.volume >= 0 && value.volume <= 1) {
+      return { muted: value.muted, volume: value.volume };
+    }
+  } catch { /* Invalid preferences fall back to the default volume. */ }
+  return defaultAudioPreferences();
+}
+
 function readRecords(raw: string | null): Records {
   try {
     const value = JSON.parse(raw || 'null');
@@ -125,6 +172,8 @@ function minigameAction(state: PrepState): string {
   if (mini.kind === 'catwalk') return '抓准时机，点击逗猫';
   if (mini.kind === 'obs') return mini.stage === 'confirm' ? '确认接入直播' : '检查直播预览';
   if (mini.kind === 'cable') return '试音确认';
+  if (mini.kind === 'power') return mini.stage === 'booting' ? '重新启动中' : '按下电源键';
+  if (mini.kind === 'bowel') return mini.stage === 'flowing' ? '放水疏通中' : '放水试通';
   return '操作';
 }
 
@@ -135,13 +184,16 @@ export default function PreStream3D() {
   const [worldReady, setWorldReady] = useState(false);
   const [storageOk, setStorageOk] = useState(true);
   const [target, setTarget] = useState<StationId | null>(null);
+  const [selectedStation, setSelectedStation] = useState<StationId | null>(null);
   const [help, setHelp] = useState(false);
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [knob, setKnob] = useState({ x: 0, z: 0 });
   const [held, setHeld] = useState(false);
   const [selectedFood, setSelectedFood] = useState<number | null>(null);
   const [selectedPlug, setSelectedPlug] = useState<number | null>(null);
+  const [audioPreferences, setAudioPreferences] = useState<AudioPreferences>(defaultAudioPreferences);
   const rootRef = useRef<HTMLElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
   const recordsRef = useRef(records);
   const keysRef = useRef(new Set<string>());
@@ -149,11 +201,91 @@ export default function PreStream3D() {
   const stickIdRef = useRef<number | null>(null);
   const primaryRef = useRef(false);
   const destinationRef = useRef<StationId | null>(null);
+  const selectedRef = useRef<StationId | null>(null);
+  const wheelAtRef = useRef(0);
+  const stationRailRef = useRef<HTMLDivElement>(null);
   const manualRef = useRef(false);
   const initializedRef = useRef(false);
   const saveAtRef = useRef(0);
   const paintAtRef = useRef(0);
+  const audioRef = useRef<PreStreamAudio | null>(null);
+  const audioPreferencesRef = useRef(audioPreferences);
+  const audioUnlockedRef = useRef(false);
+  const audioSyncRef = useRef<{ muted: boolean; volume: number; waiting: boolean } | null>(null);
+  const pageSuspendedRef = useRef(false);
+  const liveVoiceStartedRef = useRef(false);
   const worldOnReady = useCallback(() => setWorldReady(true), []);
+  const selectStation = useCallback((id: StationId | null) => {
+    selectedRef.current = id;
+    setSelectedStation(id);
+  }, []);
+
+  const syncAudio = useCallback((next: PrepState) => {
+    if (!audioUnlockedRef.current) return;
+    const audio = audioRef.current || (audioRef.current = createPreStreamAudio());
+    const preferences = audioPreferencesRef.current;
+    const muted = preferences.muted || next.paused || pageSuspendedRef.current || document.hidden;
+    const waiting = next.phase === 'explore' || next.phase === 'minigame';
+    const previous = audioSyncRef.current;
+    if (!previous || previous.volume !== preferences.volume) audio.setVolume(preferences.volume);
+    if (!previous || previous.muted !== muted) audio.setMuted(muted);
+    if (!previous || previous.waiting !== waiting) {
+      if (waiting) audio.playWaiting();
+      else audio.stopWaiting();
+    }
+    audioSyncRef.current = { muted, volume: preferences.volume, waiting };
+    if (next.phase !== 'countdown' && next.phase !== 'result') liveVoiceStartedRef.current = false;
+    if (next.phase === 'countdown' && !next.paused && !pageSuspendedRef.current && !document.hidden &&
+      next.countdownMs <= LIVE_TRANSITION_MS / 2 && !liveVoiceStartedRef.current) {
+      liveVoiceStartedRef.current = true;
+      audio.speakLiveStart();
+    }
+  }, []);
+
+  const unlockAudio = useCallback(() => {
+    audioUnlockedRef.current = true;
+    if (!document.hidden) pageSuspendedRef.current = false;
+    syncAudio(stateRef.current);
+    const { current } = stateRef;
+    if (!current.paused && !document.hidden && !audioPreferencesRef.current.muted && (current.phase === 'explore' || current.phase === 'minigame') &&
+      audioRef.current?.getState().blocked) audioRef.current.playWaiting();
+  }, [syncAudio]);
+
+  const updateAudio = useCallback((patch: Partial<AudioPreferences>) => {
+    const next = { ...audioPreferencesRef.current, ...patch };
+    audioPreferencesRef.current = next;
+    setAudioPreferences(next);
+    audioUnlockedRef.current = true;
+    syncAudio(stateRef.current);
+    try { localStorage.setItem(AUDIO_KEY, JSON.stringify(next)); } catch { setStorageOk(false); }
+  }, [syncAudio]);
+
+  const readAudioState = useCallback(() => {
+    const { current } = stateRef;
+    const preferences = audioPreferencesRef.current;
+    const suspended = current.paused || pageSuspendedRef.current || (typeof document !== 'undefined' && document.hidden);
+    const runtime = audioRef.current?.getState() || null;
+    const enabled = !preferences.muted;
+    return {
+      enabled,
+      active: enabled && preferences.volume > 0 && !suspended && Boolean(runtime?.playing) &&
+        (current.phase === 'explore' || current.phase === 'minigame'),
+      suspended,
+      unlocked: audioUnlockedRef.current,
+      volume: preferences.volume,
+      runtime,
+    };
+  }, []);
+
+  useEffect(() => {
+    const portrait = new window.Image();
+    portrait.src = LIVE_PORTRAIT;
+    return () => {
+      audioRef.current?.dispose();
+      audioRef.current = null;
+      audioSyncRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     setSelectedFood(null);
@@ -178,10 +310,11 @@ export default function PreStream3D() {
     primaryRef.current = false;
     stickIdRef.current = null;
     destinationRef.current = null;
+    selectStation(null);
     setKnob({ x: 0, z: 0 });
     setHeld(false);
     setTarget(null);
-  }, []);
+  }, [selectStation]);
 
   const commit = useCallback((next: PrepState, force = true) => {
     const previous = stateRef.current;
@@ -206,16 +339,23 @@ export default function PreStream3D() {
       setRecords(updated);
       destinationRef.current = null;
       setTarget(null);
+      selectStation(null);
     }
     stateRef.current = next;
+    syncAudio(next);
+    if (selectedRef.current && next.phase === 'explore' && !stationAvailable(next, selectedRef.current)) {
+      selectStation(null);
+    }
     if (force || performance.now() - paintAtRef.current > 45 || next.phase !== previous.phase || next.minigame?.stage !== previous.minigame?.stage) {
       paintAtRef.current = performance.now();
       setState(next);
     }
     persist(next, force);
-  }, [persist]);
+  }, [persist, selectStation, syncAudio]);
 
   const selectNight = useCallback((level: number, begin = false) => {
+    audioRef.current?.setMuted(true);
+    audioSyncRef.current = null;
     clearControls();
     setHelp(false);
     setConfirmRestart(false);
@@ -248,29 +388,65 @@ export default function PreStream3D() {
   const interact = useCallback((station?: StationId) => {
     const { current } = stateRef;
     if (current.phase !== 'explore' || current.paused) return;
-    if (!station) {
-      const desk = STATIONS.find(item => item.id === 'obs');
-      if (current.completed.length === TASKS.length && desk && Math.hypot(desk.x - current.player.x, desk.z - current.player.z) <= LIVE_RADIUS) {
-        requestGoLive();
-      } else commit(interactPrep(current));
-      return;
-    }
-    const found = STATIONS.find(item => item.id === station);
+    if (station) selectStation(station);
+    const chosen = station || (selectedRef.current && stationAvailable(current, selectedRef.current) ? selectedRef.current : null) ||
+      (readyToBroadcast(current) && STATIONS.some(item => item.id === 'obs' && Math.hypot(item.x - current.player.x, item.z - current.player.z) <= LIVE_RADIUS) ? 'obs' : nearestStation(current)?.id);
+    if (!chosen) return;
+    const found = STATIONS.find(item => item.id === chosen);
     if (!found) return;
     const distance = Math.hypot(found.x - current.player.x, found.z - current.player.z);
-    if (station === 'obs' && current.completed.length === TASKS.length && distance <= LIVE_RADIUS) {
+    if (chosen === 'obs' && readyToBroadcast(current) && distance <= LIVE_RADIUS) {
       requestGoLive();
       return;
     }
     if (distance <= 1.15) {
+      const next = interactPrep(current, chosen);
+      if (next === current && stationAvailable(current, chosen)) {
+        destinationRef.current = chosen;
+        setTarget(chosen);
+        return;
+      }
       destinationRef.current = null;
       setTarget(null);
-      commit(interactPrep(current, station));
+      commit(next);
     } else {
-      destinationRef.current = station;
-      setTarget(station);
+      destinationRef.current = chosen;
+      setTarget(chosen);
     }
-  }, [commit, requestGoLive]);
+  }, [commit, requestGoLive, selectStation]);
+
+  const cycleNearby = useCallback((direction: number) => {
+    const candidates = nearbyStations(stateRef.current);
+    if (candidates.length < 2) return;
+    const index = candidates.indexOf(selectedRef.current as StationId);
+    const next = candidates[index < 0 ? (direction > 0 ? 0 : candidates.length - 1) :
+      (index + direction + candidates.length) % candidates.length];
+    destinationRef.current = null;
+    setTarget(null);
+    selectStation(next);
+  }, [selectStation]);
+
+  useEffect(() => {
+    if (!selectedStation) return;
+    stationRailRef.current?.querySelector(`[data-station="${selectedStation}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [selectedStation]);
+
+  useEffect(() => {
+    const world = worldRef.current;
+    if (!world) return;
+    const onWheel = (event: WheelEvent) => {
+      const { current } = stateRef;
+      if (current.phase !== 'explore' || current.paused || nearbyStations(current).length < 2) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const now = performance.now();
+      if (now - wheelAtRef.current < 125) return;
+      wheelAtRef.current = now;
+      cycleNearby(event.deltaY >= 0 ? 1 : -1);
+    };
+    world.addEventListener('wheel', onWheel, { capture: true, passive: false });
+    return () => world.removeEventListener('wheel', onWheel, true);
+  }, [cycleNearby]);
 
   const act = useCallback(() => {
     const { current } = stateRef;
@@ -285,6 +461,9 @@ export default function PreStream3D() {
 
   useEffect(() => {
     try {
+      const storedAudio = readAudioPreferences(localStorage.getItem(AUDIO_KEY));
+      audioPreferencesRef.current = storedAudio;
+      setAudioPreferences(storedAudio);
       const storedRecords = readRecords(localStorage.getItem(RECORD_KEY));
       recordsRef.current = storedRecords;
       setRecords(storedRecords);
@@ -322,10 +501,24 @@ export default function PreStream3D() {
         if (station && current.phase === 'explore' && !current.paused) {
           const dx = station.x - current.player.x;
           const dz = station.z - current.player.z;
-          if (Math.hypot(dx, dz) < 1.12) {
+          if (!stationAvailable(current, station.id)) {
             destinationRef.current = null;
             setTarget(null);
-            if (station.id !== 'obs' || !current.completed.includes('obs')) commit(interactPrep(current, station.id));
+          } else if (Math.hypot(dx, dz) < 1.12) {
+            if (station.id === 'obs' && readyToBroadcast(current)) {
+              destinationRef.current = null;
+              setTarget(null);
+            } else {
+              const next = interactPrep(current, station.id);
+              if (next !== current) {
+                destinationRef.current = null;
+                setTarget(null);
+                commit(next);
+              } else {
+                const waypoint = getPrepWalkTarget(current, station.id);
+                if (waypoint) { x = waypoint.x - current.player.x; z = waypoint.z - current.player.z; }
+              }
+            }
           } else {
             const waypoint = getPrepWalkTarget(current, station.id);
             if (waypoint) {
@@ -347,7 +540,9 @@ export default function PreStream3D() {
 coordinateSystem: 'world: x right, z down; aim: x/y 0..1',
       ...stateRef.current,
 target: destinationRef.current,
+selectedStation: selectedRef.current,
       records: recordsRef.current,
+      audio: readAudioState(),
 formattedTime: formatPrepTime(stateRef.current.elapsedMs),
     });
     const advance = (ms: number) => { manualRef.current = true; tick(ms); setState({ ...stateRef.current }); };
@@ -367,7 +562,7 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
       if (api.render_game_to_text === textState) delete api.render_game_to_text;
       if (api.advanceTime === advance) delete api.advanceTime;
     };
-  }, [commit]);
+  }, [commit, readAudioState]);
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
@@ -390,6 +585,11 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
       const focusedControl = event.target instanceof HTMLElement && Boolean(event.target.closest('button, a, input, select'));
       const { current } = stateRef;
       if (current.paused || current.phase === 'title' || current.phase === 'result') return;
+      if (event.code === 'KeyQ' && current.phase === 'explore' && !focusedControl) {
+        event.preventDefault();
+        if (!event.repeat) cycleNearby(event.shiftKey ? -1 : 1);
+        return;
+      }
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(event.code)) {
         if (focusedControl && event.target instanceof HTMLInputElement) return;
         if (current.phase === 'minigame' && current.minigame?.kind === 'toilet') {
@@ -419,33 +619,48 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
       }
     };
     const freeze = () => {
+      pageSuspendedRef.current = true;
       keysRef.current.clear(); primaryRef.current = false; stickRef.current = { x: 0, z: 0 };
       setKnob({ x: 0, z: 0 }); setHeld(false);
       const { current } = stateRef;
       if (!current.paused && ['explore', 'minigame', 'countdown'].includes(current.phase)) commit(togglePausePrep(current));
+      syncAudio(stateRef.current);
+      setState({ ...stateRef.current });
       persist(stateRef.current, true);
     };
-    const visibility = () => { if (document.hidden) freeze(); };
+    const focus = () => {
+      if (document.hidden) return;
+      pageSuspendedRef.current = false;
+      syncAudio(stateRef.current);
+      setState({ ...stateRef.current });
+    };
+    const visibility = () => { if (document.hidden) freeze(); else focus(); };
     window.addEventListener('keydown', keydown);
     window.addEventListener('keyup', keyup);
     window.addEventListener('blur', freeze);
+    window.addEventListener('focus', focus);
     window.addEventListener('pagehide', freeze);
     document.addEventListener('visibilitychange', visibility);
     return () => {
       window.removeEventListener('keydown', keydown);
       window.removeEventListener('keyup', keyup);
       window.removeEventListener('blur', freeze);
+      window.removeEventListener('focus', focus);
       window.removeEventListener('pagehide', freeze);
       document.removeEventListener('visibilitychange', visibility);
     };
-  }, [act, aim, commit, confirmRestart, fullscreen, help, pause, persist]);
+  }, [act, aim, commit, confirmRestart, cycleNearby, fullscreen, help, pause, persist, syncAudio]);
 
   const stationAction = (id: StationId) => {
+    if (incidentStation(id)) return state.incidents.active.includes(id as PrepState['incidents']['active'][number]) ? '突发' : '完成';
+    if ((id === 'vts' || id === 'obs') && state.incidents.active.includes('power')) return '待重启';
     if ((id === 'thermos' || id === 'dispenser') && state.water.cup === 'drank') return '完成';
     if (id === 'dispenser' && state.water.cup === 'filling') return '接水中';
-    if (id === 'obs' && state.completed.includes('obs')) return '开播台';
+    if (id === 'thermos' && !stationAvailable(state, id)) return '等水';
+    if (id === 'dispenser' && !stationAvailable(state, id)) return '先拿杯';
+    if (id === 'obs' && state.completed.includes('obs')) return readyToBroadcast(state) ? '待上播' : '开播台';
     if (TASKS.some(task => task.station === id && state.completed.includes(task.id))) return '完成';
-    return '';
+    return '待完成';
   };
   const waterPercent = state.water.cup === 'filling'
     ? Math.min(100, (state.water.fillMs / state.water.fillRequiredMs) * 100)
@@ -454,13 +669,19 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
   const holdMode = mini && (mini.kind === 'cat' || (mini.kind === 'toilet' && mini.stage === 'shoot'));
   const currentNight = NIGHTS[state.level - 1] || NIGHTS[0];
   const gameActive = state.phase !== 'title' && state.phase !== 'result';
+  const audioState = readAudioState();
+  const liveAvatar = state.countdownMs <= LIVE_TRANSITION_MS / 2;
   const percent = Math.max(0, Math.min(100, mini?.progress || 0));
   const obsStation = STATIONS.find(station => station.id === 'obs');
-  const readyForLive = state.completed.length === TASKS.length &&
-    state.incidents.active.length === 0 && state.incidents.queue.length === 0 &&
-    state.incidents.resolved.length === state.level;
+  const readyForLive = readyToBroadcast(state);
   const atComputer = Boolean(obsStation && Math.hypot(obsStation.x - state.player.x, obsStation.z - state.player.z) <= LIVE_RADIUS);
   const nearbyAction = readyForLive && atComputer ? '正式上播' : getPrepAction(state);
+  const nearby = nearbyStations(state);
+  const selected = selectedStation && stationAvailable(state, selectedStation) ? STATIONS.find(item => item.id === selectedStation) : null;
+  const selectedIndex = nearby.indexOf(selectedStation as StationId);
+  const pendingTasks = TASKS.filter(task => !state.completed.includes(task.id));
+  const selectionText = selected?.id === 'obs' && readyForLive && atComputer ? 'OBS 就绪 · 正式上播' : selected ? `${selected.label}${target === selected.id ? ' · 前往中' : ''}` :
+    state.incidents.active.length > 0 ? '突发状况待处理' : readyForLive ? atComputer ? '电脑前就绪' : '去电脑前开播' : nearbyAction || '走近物品并交互';
 
   const pointAim = (event: React.PointerEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -505,8 +726,8 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
   };
 
   return (
-<main ref={rootRef} className={styles.root} data-phase={state.phase}>
-    <div className={styles.world}><World3D state={state} liveStateRef={stateRef} onStationClick={interact} onReady={worldOnReady} /></div>
+<main ref={rootRef} className={styles.root} data-phase={state.phase} data-audio-enabled={audioState.enabled} data-audio-active={audioState.active} onPointerDownCapture={unlockAudio} onKeyDownCapture={unlockAudio}>
+    <div ref={worldRef} className={styles.world}><World3D state={state} liveStateRef={stateRef} selectedStation={selectedStation} onStationClick={interact} onReady={worldOnReady} /></div>
     {!worldReady && <div className={styles.loading} role="status">房间准备中…</div>}
 
     <header className={styles.topbar}>
@@ -520,6 +741,10 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
         <span className={styles.doneCount}>{state.completed.length}<b>/ 7</b></span>
       </div>
       <div className={styles.topTools}>
+        <div className={styles.audioControls}>
+          <button type="button" className={styles.iconButton} data-testid="audio-toggle" aria-pressed={!audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferencesRef.current.muted })} title={audioPreferences.muted ? '开启声音' : '静音'} aria-label={audioPreferences.muted ? '开启声音' : '静音'}>{audioPreferences.muted ? <AudioMutedOutlined /> : <SoundOutlined />}</button>
+          <label htmlFor="game-audio-volume" className={styles.volumeControl} title="游戏音量"><input id="game-audio-volume" type="range" data-testid="audio-volume" min="0" max="100" step="1" value={Math.round(audioPreferences.volume * 100)} onChange={event => updateAudio({ volume: Number(event.target.value) / 100 })} aria-label="游戏音量" aria-valuetext={`${Math.round(audioPreferences.volume * 100)}%`} /><output>{Math.round(audioPreferences.volume * 100)}</output></label>
+        </div>
         <button type="button" className={styles.iconButton} onClick={() => { if (gameActive && !state.paused) pause(); setHelp(true); }} title="玩法" aria-label="玩法"><QuestionCircleOutlined /></button>
         <button type="button" className={styles.iconButton} onClick={fullscreen} title="F 全屏" aria-label="切换全屏"><FullscreenOutlined /></button>
         {gameActive && <button type="button" id="pause-game" className={styles.iconButton} onClick={pause} title={state.paused ? '继续' : '暂停'} aria-label={state.paused ? '继续' : '暂停'}>{state.paused ? <CaretRightOutlined /> : <PauseOutlined />}</button>}
@@ -561,8 +786,15 @@ disabled={!ready || !worldReady}
 <>
       <div className={styles.objectives} aria-label="开播准备">
         <span className={styles.objectiveHeading}>今晚的准备</span>
-        <div className={styles.taskDots}>{TASKS.map(task => <span key={task.id} data-done={state.completed.includes(task.id)} title={task.label} aria-label={`${task.label}${state.completed.includes(task.id) ? '完成' : '未完成'}`} />)}</div>
-        <span className={styles.objectiveText}>{state.incidents.active.length > 0 ? '临时加戏，先处理突发状况' : target ? `正在前往${STATIONS.find(item => item.id === target)?.label || '目标'}` : readyForLive ? atComputer ? '电脑前就绪，按 E 正式上播' : '准备好了，去电脑前开播' : nearbyAction || '走近物品并交互'}</span>
+        <span className={styles.objectiveCount}>{pendingTasks.length > 0 ? `${pendingTasks.length} 项待办` : '准备完成'}</span>
+        <span className={styles.objectiveText}>当前：{selectionText}</span>
+        <div className={styles.taskChecklist} aria-label="准备事项">
+          {TASKS.map(task => {
+            const done = state.completed.includes(task.id);
+            const station = task.id === 'water' && ['carried-empty', 'filling', 'ready'].includes(state.water.cup) ? 'dispenser' : task.station;
+            return <button key={task.id} type="button" data-objective-task={task.id} data-done={done} data-current={selectedStation === station} aria-pressed={selectedStation === station} disabled={done || state.phase !== 'explore' || !stationAvailable(state, station)} title={task.label} aria-label={`${task.label}${done ? '已完成' : '未完成，点击前往'}`} onClick={() => interact(station)}>{done ? <CheckOutlined aria-hidden /> : <span className={styles.taskPendingDot} />}{SHORT_TASKS[task.id]}</button>;
+          })}
+        </div>
       </div>
       <div className={styles.waterHud} data-water={state.water.cup}>
         <div><strong>保温杯</strong><span>{waterStatus(state)}</span></div>
@@ -574,26 +806,26 @@ disabled={!ready || !worldReady}
 
     {state.phase === 'explore' && !state.paused && (
 <>
-      <div className={styles.stationRail} aria-label="房间里的准备地点">
-        {STATIONS.filter(station => !['spill', 'cable', 'catwalk'].includes(station.id) || state.incidents.active.includes(station.id as 'spill' | 'cable' | 'catwalk')).map(station => (
+      <div ref={stationRailRef} className={styles.stationRail} aria-label="房间里的准备地点">
+        {STATIONS.filter(station => !incidentStation(station.id) || state.incidents.active.includes(station.id as PrepState['incidents']['active'][number])).map(station => (
           <button
 key={station.id}
 type="button"
 data-station={station.id}
-data-current={target === station.id}
-            data-done={stationAction(station.id) === '完成' || (station.id === 'obs' && state.completed.includes('obs'))}
+data-current={selectedStation === station.id}
+            data-status={stationAction(station.id) === '突发' ? 'urgent' : stationAction(station.id) === '完成' ? 'done' : stationAvailable(state, station.id) ? 'pending' : 'waiting'}
 onClick={() => interact(station.id)}
             disabled={stationAction(station.id) === '完成'}
-title={`${station.label} · 点击前往`}>
+title={`${station.label} · ${stationAction(station.id)} · 点击选择或前往`}>
             <span className={styles.stationMark}>{stationAction(station.id) === '完成' || (station.id === 'obs' && state.completed.includes('obs')) ? <CheckOutlined /> : '·'}</span>
             <span>{station.label}</span>
-            {stationAction(station.id) && <small>{stationAction(station.id)}</small>}
+            <small>{stationAction(station.id)}</small>
           </button>
         ))}
       </div>
       <div className={styles.explorePrompt}>
-        <span>{target ? '正在前往目标' : 'WASD / 方向键移动'}</span>
-        <button id="interact" type="button" onClick={() => interact()}><span>E</span> {nearbyAction || '交互'}</button>
+        <span>{selected ? `已选 ${selected.label}${nearby.length > 1 ? ` · 滚轮/Q 切换附近 ${selectedIndex >= 0 ? selectedIndex + 1 : '–'}/${nearby.length}` : ''}` : nearby.length > 1 ? '滚轮 / Q 切换附近目标' : 'WASD / 方向键移动'}</span>
+        <button id="interact" type="button" onClick={() => interact()}><span>E</span> {selected?.id === 'obs' && readyForLive && atComputer ? '正式上播' : selected ? target ? `前往${selected.label}` : `交互${selected.label}` : nearbyAction || '交互'}</button>
       </div>
       <div className={styles.mobileControls}>
         <div
@@ -607,6 +839,7 @@ onPointerCancel={stickUp}
 onLostPointerCapture={stickUp}>
           <span style={{ transform: `translate(${knob.x * 29}px, ${knob.z * 29}px)` }} />
         </div>
+        {nearby.length > 1 && <button type="button" className={styles.mobileCycle} onClick={() => cycleNearby(1)} title="切换附近目标" aria-label={`切换附近目标，当前${selected?.label || '未选择'}，共${nearby.length}个`}><span>{selectedIndex >= 0 ? selectedIndex + 1 : '·'}/{nearby.length}</span><strong>{selected?.label || '选目标'}</strong><ArrowRightOutlined aria-hidden /></button>}
         <button type="button" className={styles.mobileInteract} aria-label={readyForLive && atComputer ? '正式上播' : '交互'} onClick={() => interact()}>{readyForLive && atComputer ? '上播' : '交互'}</button>
       </div>
     </>
@@ -614,7 +847,7 @@ onLostPointerCapture={stickUp}>
 
     {state.phase === 'minigame' && mini && !state.paused && (
 <section className={styles.miniPanel} aria-label={`${MINI_NAMES[mini.kind]}小游戏`}>
-      <div className={styles.miniHead}><div><span>NOW PLAYING</span><h2>{MINI_NAMES[mini.kind]}</h2></div><button type="button" onClick={() => { clearControls(); commit(leaveMiniGame(stateRef.current)); }} title="返回房间" aria-label="返回房间"><CloseOutlined /></button></div>
+      <div className={styles.miniHead}><div><span>NOW PLAYING</span><h2>{MINI_NAMES[mini.kind]}</h2></div><button type="button" disabled={['flushing', 'flowing', 'booting'].includes(mini.stage)} onClick={() => { clearControls(); commit(leaveMiniGame(stateRef.current)); }} title="返回房间" aria-label="返回房间"><CloseOutlined /></button></div>
       <p className={styles.miniNote}>{MINI_NOTES[mini.kind]}</p>
       {mini.kind === 'toilet' && (
         <div
@@ -718,14 +951,53 @@ aria-label={`水渍 ${index + 1}，已擦 ${Math.min(3, stain.clean)} 次`}
             <div><span>接口</span>{['麦克风', '电源', 'USB'].map((label, index) => <button key={label} type="button" data-cable-socket={index} data-connected={mini.cablePairs.includes(index)} disabled={mini.cablePairs.includes(index) || selectedPlug === null} onClick={() => { if (selectedPlug !== null) { commit(connectCablePrep(stateRef.current, selectedPlug, index)); setSelectedPlug(null); } }}><i />{label}</button>)}</div></div>
         </div>
       )}
+      {mini.kind === 'power' && (
+        <div className={styles.powerGame} data-booting={mini.stage === 'booting'}>
+          <div className={styles.powerMonitor}><PoweroffOutlined aria-hidden /><strong>{mini.stage === 'booting' ? '系统启动中' : '直播间突然黑屏'}</strong><span>{mini.stage === 'booting' ? '恢复桌面后还要重新连接 VTS / OBS' : '嘉嘉踩到了电源键'}</span></div>
+          <div className={styles.powerTimeline}><span>关机</span><i><b style={{ width: `${mini.progress}%` }} /></i><span>恢复</span></div>
+        </div>
+      )}
+      {mini.kind === 'glass' && (
+        <div className={styles.glassGame}>
+          <div className={styles.glassFloor} aria-label="散落的玻璃碎片">
+            {mini.glassShards.map((swept, index) => <button key={index} type="button" data-glass-shard={index} data-swept={swept} disabled={swept} aria-label={`第 ${index + 1} 片玻璃${swept ? '已清扫' : '，点击清扫'}`} onClick={() => commit(sweepGlassPrep(stateRef.current, index))}><i />{swept && <CheckOutlined aria-hidden />}</button>)}
+            <span className={styles.glassDustpan}>簸箕 · {mini.glassShards.filter(Boolean).length}/4</span>
+          </div>
+        </div>
+      )}
+      {mini.kind === 'litter' && (
+        <div className={styles.litterGame}>
+          <div className={styles.litterGrid} aria-label="九格猫砂盆">
+            {mini.litterScooped.map((scooped, index) => {
+              const dirty = mini.litterClumps.includes(index);
+              return <button key={index} type="button" data-litter-cell={index} data-dirty={dirty} data-scooped={scooped} disabled={scooped} aria-label={`猫砂第 ${index + 1} 格${scooped ? '已铲净' : dirty ? '有结块，点击铲除' : '看起来干净'}`} onClick={() => commit(scoopLitterPrep(stateRef.current, index))}>{dirty && !scooped && <i />}{scooped && <CheckOutlined aria-hidden />}</button>;
+            })}
+          </div>
+          <div className={styles.litterScoop}><span>猫砂铲</span><strong>{mini.litterScooped.filter(Boolean).length} / 3</strong></div>
+        </div>
+      )}
+      {mini.kind === 'bowel' && (
+        <div className={styles.bowelGame} data-flowing={mini.stage === 'flowing'}>
+          <div className={styles.bowelHeader}><span>入口</span><strong>挖通一条水路</strong><span>出口</span></div>
+          <div className={styles.bowelGrid} aria-label="五乘五疏通棋盘">
+            {mini.bowelDug.map((dug, index) => {
+              const rock = (BOWEL_ROCKS as readonly number[]).includes(index);
+              const terminal = index === BOWEL_START ? 'start' : index === BOWEL_END ? 'end' : undefined;
+              return <button key={index} type="button" data-bowel-cell={index} data-rock={rock} data-dug={dug} data-terminal={terminal} disabled={dug || mini.stage === 'flowing'} aria-label={terminal === 'start' ? '水流入口' : terminal === 'end' ? '水流出口' : `第 ${index + 1} 格${rock ? '硬块' : dug ? '已挖开' : '可挖开'}`} onClick={() => commit(digBowelPrep(stateRef.current, index))}>{terminal === 'start' ? '入' : terminal === 'end' ? '出' : rock ? <i /> : dug ? <span /> : null}</button>;
+            })}
+          </div>
+          <span className={styles.bowelCaption}>{mini.stage === 'flowing' ? '水流冲通中' : `已挖 ${mini.bowelDug.filter(Boolean).length - 2} 格 · 连通后放水`}</span>
+        </div>
+      )}
       {mini.kind === 'obs' && (
         <div className={styles.obsGame}><div className={styles.obsPreview}><strong>直播预览</strong><span>{mini.obsEnabled[0] ? '画面在线' : '等待摄像头'}</span><i data-on={mini.obsEnabled[1]} /></div>
           <div className={styles.obsSources}>{OBS_SOURCES.map((label, index) => <button key={label} type="button" data-obs-source={index} aria-pressed={mini.obsEnabled[index]} disabled={mini.stage === 'confirm'} onClick={() => commit(toggleObsSourcePrep(stateRef.current, index))}><span>{label}</span><i data-on={mini.obsEnabled[index]} /></button>)}</div>
         </div>
       )}
-      <div className={styles.miniProgress}><span>{mini.kind === 'toilet' && mini.stage === 'flush-ready' ? '瞄准完成，最后一步' : mini.kind === 'catwalk' && mini.stage === 'confirm' ? '猫咪已离开，抱走它' : '完成进度'}</span><strong>{mini.kind === 'food' ? `${mini.hits}/${mini.foodPlaced.length}` : mini.kind === 'cat' ? `${mini.hits}/${state.level === 1 ? 2 : 3} 勺` : mini.kind === 'vts' ? `${mini.poseIndex}/3` : mini.kind === 'cable' ? `${mini.cablePairs.filter(pair => pair >= 0).length}/3` : `${Math.round(percent)}%`}</strong></div>
+      {['power', 'glass', 'litter', 'bowel'].includes(mini.kind) && state.noticeMs > 0 && <p className={styles.miniFeedback} role="status">{state.notice}</p>}
+      <div className={styles.miniProgress}><span>{mini.kind === 'toilet' && mini.stage === 'flush-ready' ? '瞄准完成，最后一步' : mini.kind === 'catwalk' && mini.stage === 'confirm' ? '猫咪已离开，抱走它' : '完成进度'}</span><strong>{mini.kind === 'food' ? `${mini.hits}/${mini.foodPlaced.length}` : mini.kind === 'cat' ? `${mini.hits}/${state.level === 1 ? 2 : 3} 勺` : mini.kind === 'vts' ? `${mini.poseIndex}/3` : mini.kind === 'cable' ? `${mini.cablePairs.filter(pair => pair >= 0).length}/3` : mini.kind === 'glass' ? `${mini.glassShards.filter(Boolean).length}/4` : mini.kind === 'litter' ? `${mini.litterScooped.filter(Boolean).length}/3` : mini.kind === 'bowel' ? `${mini.bowelDug.filter(Boolean).length - 2} 格` : `${Math.round(percent)}%`}</strong></div>
       <div className={styles.progressTrack}><i style={{ width: `${percent}%` }} /></div>
-      {(['toilet', 'cat', 'audio', 'catwalk', 'obs'].includes(mini.kind) || (mini.kind === 'cable' && mini.stage === 'confirm')) && (
+      {(['toilet', 'cat', 'audio', 'catwalk', 'obs', 'power', 'bowel'].includes(mini.kind) || (mini.kind === 'cable' && mini.stage === 'confirm')) && (
         <button
 type="button"
 className={styles.miniAction}
@@ -734,7 +1006,7 @@ data-minigame-action
 data-catwalk-action={mini.kind === 'catwalk' ? '' : undefined}
           data-flush={mini.kind === 'toilet' && mini.stage === 'flush-ready' ? '' : undefined}
 data-held={held}
-          disabled={mini.stage === 'flushing' || mini.stage === 'testing'}
+          disabled={mini.stage === 'flushing' || mini.stage === 'testing' || mini.stage === 'booting' || mini.stage === 'flowing'}
           onPointerDown={actionDown}
 onPointerUp={actionUp}
 onPointerCancel={actionUp}
@@ -748,7 +1020,20 @@ onLostPointerCapture={actionUp}
     </section>
 )}
 
-    {state.phase === 'countdown' && <div className={styles.centerVeil}><span>直播间连接中</span><strong>{Math.max(1, Math.ceil(state.countdownMs / 1000))}</strong><p>“来了来了，饼干岁！”</p></div>}
+    {state.phase === 'countdown' && (
+      <section className={styles.liveTransition} data-testid="live-transition" data-scene={liveAvatar ? 'avatar' : 'standby'} data-paused={state.paused} aria-label="直播间开播转场">
+        <div className={styles.liveStandby} data-testid="live-standby" hidden={liveAvatar}>
+          <div className={styles.broadcastTopline}><span>SUI / LIVE ROOM</span><span><i /> 待机中</span></div>
+          <div className={styles.standbyCopy}><span>岁己 SUI</span><h2>马上就播</h2><p>稍等一下，马上就来。</p><div className={styles.waitingWave} aria-hidden>{[0, 1, 2, 3, 4].map(bar => <i key={bar} />)}</div></div>
+          <div className={styles.broadcastFooter}>直播间接入中</div>
+        </div>
+        <div className={styles.liveAvatar} data-testid="live-avatar" hidden={!liveAvatar}>
+          <div className={styles.livePortrait}><Image src={LIVE_PORTRAIT} alt="岁己直播形象" fill sizes="(max-width: 760px) 100vw, 480px" priority unoptimized /></div>
+          <div className={styles.liveCopy}><span className={styles.liveIndicator}><i /> LIVE</span><h2>直播开始</h2><p>“开播啦！”</p></div>
+          <div className={styles.liveName}>岁己 <span>SUI</span></div>
+        </div>
+      </section>
+    )}
 
     {state.paused && gameActive && !help && <div className={styles.centerVeil}><span>时间暂停</span><h2>等一下，马上回来。</h2><button id="resume-game" type="button" className={styles.mainButton} onClick={pause}><CaretRightOutlined /> 继续准备</button><button type="button" className={styles.underButton} onClick={() => setConfirmRestart(true)}><ReloadOutlined /> 重开本晚</button></div>}
 
