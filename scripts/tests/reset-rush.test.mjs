@@ -14,7 +14,7 @@ function add(g, need = 100, difficulty = 1) {
   human(g).projects.push(j);return j;
 }
 test('a day is 480 paused minutes and 12 human energy; all players start equally', () => {
-  const g=fresh();assert.equal(g.version,3);assert.equal(g.minute,0);
+  const g=fresh();assert.equal(g.version,4);assert.equal(g.minute,0);assert.deepEqual(g.studio,{mode:'auto',threads:1,accountPolicy:'soon-reset',preferredAccount:account(g).id});
   for(const p of g.players){assert.equal(p.energy,12);assert.equal(p.cash,480);assert.equal(p.accounts[0].tier,20);assert.equal(p.lanes.length,0);}
   assert.equal(E.createGame(84,21).length,21);assert.deepEqual(E.restoreGame(JSON.stringify(g)),g);
 });
@@ -26,8 +26,10 @@ test('account operations cost only cash, never time, attention or an opponent tu
 });
 test('claiming many projects costs one attention each without advancing time or enforcing two slots', () => {
   let g=fresh();for(let i=0;i<6;i++)g=E.act(g,{type:'claim',project:g.market[0].id});
-  assert.equal(human(g).projects.length,7);assert.equal(human(g).energy,6);assert.equal(g.minute,0);
-  const before=human(g).used;g=dispatch(g,human(g).projects.map(j=>j.id));assert.equal(human(g).energy,4);assert.equal(human(g).used,before);assert.equal(g.minute,0);
+  assert.equal(human(g).projects.length,7);assert.equal(human(g).energy,4);assert.equal(g.minute,0);
+  assert.equal(human(g).lanes.length,1);assert.equal(human(g).lanes[0].projects.length,7);
+  const before=human(g).used;const a={type:'dispatch',lane:null,projects:human(g).projects.map(j=>j.id),account:account(g).id,...config()};
+  assert.match(E.actionError(g,0,a),/另一条/);g=E.act(g,a);assert.equal(human(g).energy,4);assert.equal(human(g).used,before);assert.equal(g.minute,0);
 });
 test('separate threads truly run concurrently, sharing an account fairly at exhaustion', () => {
   let g=fresh();job(g).need=100;const b=add(g);account(g).quota=1;

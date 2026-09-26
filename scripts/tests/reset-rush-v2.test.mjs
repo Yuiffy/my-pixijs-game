@@ -8,7 +8,7 @@ const fresh=()=>E.createGame(84);
 const morning=(g,day)=>{const f=structuredClone(g);f.day=day-1;f.phase='reveal';f.minute=480;f.events=['quiet'];return E.nextDay(f);};
 test('v1 and v2 save migrations preserve assets, projects, random state and original storage contents',()=>{
   for(const version of [1,2]){
-    const raw=readFileSync(new URL(`./fixtures/reset-rush-v${version}.json`,import.meta.url),'utf8');const old=JSON.parse(raw);const g=E.restoreGame(raw);assert.ok(g);assert.equal(g.version,3);assert.equal(g.rng,old.rng);assert.equal(g.day,old.day);
+    const raw=readFileSync(new URL(`./fixtures/reset-rush-v${version}.json`,import.meta.url),'utf8');const old=JSON.parse(raw);const g=E.restoreGame(raw);assert.ok(g);assert.equal(g.version,4);assert.equal(g.studio.mode,'auto');assert.equal(g.rng,old.rng);assert.equal(g.day,old.day);
     for(let i=0;i<4;i++){assert.equal(g.players[i].cash,old.players[i].cash);assert.equal(g.players[i].used,old.players[i].used);assert.equal(g.players[i].projects[0]?.work,old.players[i].projects[0]?.work);assert.deepEqual(g.players[i].accounts.map(a=>a.banks),old.players[i].accounts.map(a=>a.banks));assert.equal(g.players[i].lanes.length,0);}
     if(version===1)assert.equal(account(g).renewal,null);
     assert.deepEqual(E.restoreGame(JSON.stringify(g)),g);assert.equal(JSON.parse(raw).version,version);

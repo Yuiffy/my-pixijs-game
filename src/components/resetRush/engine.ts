@@ -15,7 +15,15 @@ export const DEFAULT_DEVELOPMENT: Development = {
   turbo: false,
 };
 export type Strategy = "balanced" | "builder" | "sprinter" | "banker";
-export const SAVE_KEY = "reset-rush-v3";
+export type AccountPolicy = "preferred" | "soon-reset" | "drain" | "late-expiry" | "balanced";
+export interface Studio {
+  mode: "auto" | "manual";
+  threads: number;
+  accountPolicy: AccountPolicy;
+  preferredAccount: number;
+}
+export const SAVE_KEY = "reset-rush-v4";
+export const V3_SAVE_KEY = "reset-rush-v3";
 export const V2_SAVE_KEY = "reset-rush-v2";
 export const LEGACY_SAVE_KEY = "reset-rush-v1";
 export const DAY_MINUTES = 480;
@@ -181,8 +189,9 @@ export interface Receipt {
   }[];
 }
 export interface Game {
-  version: 3;
+  version: 4;
   development: Development;
+  studio: Studio;
   seed: number;
   rng: number;
   day: number;
@@ -201,6 +210,7 @@ export interface Game {
   message: string;
 }
 export type Action =
+  | { type: "studio"; threads: number; accountPolicy: AccountPolicy; preferredAccount: number }
   | ({
       type: "dispatch";
       lane: number | null;
@@ -608,13 +618,14 @@ function beginDay(g: Game) {
   if (g.event.effect === "bank") g.receipt = reset(g, "bank");
   g.message =
     g.day === 1
-      ? "先管理账号，再选项目安排线程；按“推进时间”让所有任务一起跑。"
-      : `第 ${g.day} 天。继续托管 ${g.players[0].lanes.filter((l) => l.enabled).length} 条线程，剩 ${g.players[0].energy} 精力。${g.event.detail}`;
+      ? "先管理账号，接下想做的项目；工作室会自动排队，收工时一起结算。"
+      : `第 ${g.day} 天。工作室自动托管，剩 ${g.players[0].energy} 精力。${g.event.detail}`;
 }
 export function createGame(seed = 260926, length = 42): Game {
   const g: Game = {
-    version: 3,
+    version: 4,
     development: { ...DEFAULT_DEVELOPMENT },
+    studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0 },
     seed: Math.trunc(Math.abs(seed)) % 4294967296,
     rng: Math.trunc(Math.abs(seed)) % 4294967296,
     day: 1,
@@ -669,6 +680,7 @@ export function createGame(seed = 260926, length = 42): Game {
       lanes: [],
     });
   });
+  g.studio.preferredAccount = g.players[0].accounts[0].id;
   g.market = [project(g, 0), project(g, 8), project(g, 12), project(g, 4)];
   g.resetDeck = shuffle(g, [
     "normal",
@@ -687,9 +699,82 @@ function cleanLanes(p: Player) {
     if (!lane.projects.length) lane.enabled = false;
   }
 }
+function organizeStudio(g: Game) {
+  if (g.studio.mode !== "auto" || g.phase !== "plan") return;
+  const p = g.players[0];
+  cleanLanes(p);
+  const count = Math.min(g.studio.threads, p.projects.length);
+  while (p.lanes.length < count) p.lanes.push({
+    id: ++g.serial,
+    account: g.studio.preferredAccount,
+    development: { ...g.development },
+    projects: [],
+    enabled: false,
+    paidDay: 0,
+  });
+  const activeLanes = p.lanes.slice(0, count);
+  for (const lane of p.lanes.slice(count)) {
+    lane.projects = [];
+    lane.enabled = false;
+  }
+
+  // Keep work already underway at the front; spread the rest by queued workload.
+  const heads = new Set(activeLanes.map((l) => l.projects[0]).filter(Boolean));
+  for (const lane of activeLanes) lane.projects = lane.projects.length ? [lane.projects[0]] : [];
+  const waiting = p.projects
+    .filter((j) => !heads.has(j.id))
+    .sort((a, b) => (a.deadline ?? 999) - (b.deadline ?? 999) || a.id - b.id);
+  for (const job of waiting) {
+    const lane = [...activeLanes].sort((a, b) => {
+      const load = (l: Lane) => l.projects.reduce((n, id) => {
+        const j = p.projects.find((x) => x.id === id)!;
+        return n + Math.max(0, j.need - j.work) + j.bugs * BUG_WORK - j.repair;
+      }, 0);
+      return load(a) - load(b) || a.id - b.id;
+    })[0];
+    if (lane) lane.projects.push(job.id);
+  }
+  for (const lane of activeLanes) {
+    lane.development = { ...g.development };
+    if (!lane.projects.length) {
+      lane.enabled = false;
+    } else if (!lane.enabled && lane.paidDay === g.day) {
+      lane.enabled = true;
+    } else if (!lane.enabled && p.energy >= 2) {
+      p.energy -= 2;
+      lane.enabled = true;
+      lane.paidDay = g.day;
+      log(g, `${p.name} 托管线程，−2 精力。`, p.id);
+    }
+  }
+}
+function routeStudioAccounts(g: Game) {
+  if (g.studio.mode !== "auto") return;
+  const p = g.players[0];
+  const eligible = p.accounts.filter((a) => activeAccount(g, a) && a.quota > EPS);
+  const loads = new Map<number, number>();
+  for (const lane of p.lanes) {
+    if (!lane.enabled || !lane.projects.length) continue;
+    if (developmentStats(g, p, lane.development).cost <= 0) continue;
+    if (!eligible.length) continue;
+    const policy = g.studio.accountPolicy;
+    const ranked = [...eligible].sort((a, b) => {
+      if (policy === "preferred") return (a.id === g.studio.preferredAccount ? -1 : b.id === g.studio.preferredAccount ? 1 : a.id - b.id);
+      if (policy === "soon-reset") return a.nextReset - b.nextReset || a.id - b.id;
+      if (policy === "drain") return a.quota - b.quota || a.id - b.id;
+      if (policy === "late-expiry") return b.paidUntil - a.paidUntil || a.id - b.id;
+      const available = (x: Account) => (x.quota / PLANS[x.tier].capacity) /
+        (1 + (loads.get(x.id) ?? 0));
+      return available(b) - available(a) || a.id - b.id;
+    });
+    lane.account = ranked[0].id;
+    loads.set(lane.account, (loads.get(lane.account) ?? 0) + 1);
+  }
+}
 export function laneStatus(g: Game, p: Player, lane: Lane): string {
   if (!lane.projects.length) return "队列完成";
-  if (!lane.enabled) return "已暂停";
+  if (!lane.enabled) return g.studio.mode === "auto" && p.id === 0 &&
+    lane.paidDay !== g.day && p.energy < 2 ? "等待精力" : "已暂停";
   if (g.phase !== "plan") return "收工待续";
   const job = p.projects.find((j) => j.id === lane.projects[0]);
   if (!job) return "等待项目";
@@ -719,6 +804,12 @@ export function actionError(g: Game, id: number, a: Action): string | null {
   ].includes(a.type);
   if (!administrative && g.phase !== "plan") return "先进入下一天。";
   if (p.energy < energyCost(g, p, a)) return "真人精力不足。可休息一次，后台线程仍会继续工作。";
+  if (a.type === "studio") {
+    if (!Number.isInteger(a.threads) || a.threads < 0 || a.threads > MAX_LANES ||
+      !["preferred", "soon-reset", "drain", "late-expiry", "balanced"].includes(a.accountPolicy) ||
+      !p.accounts.some((acc) => acc.id === a.preferredAccount)) return "工作室策略无效。";
+    return null;
+  }
   if (a.type === "configure") return validDevelopment(a.development) ? null : "开发配置无效。";
   if (a.type === "dispatch") {
     if (g.minute >= DAY_MINUTES) return "今天的时间用完了，先揭牌。";
@@ -797,7 +888,10 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   const p = g.players[id];
   const energy = energyCost(g, p, a);
   p.energy -= energy;
-  if (a.type === "dispatch") {
+  if (a.type === "studio") {
+    g.studio = { mode: "auto", threads: a.threads, accountPolicy: a.accountPolicy, preferredAccount: a.preferredAccount };
+  } else if (a.type === "dispatch") {
+    if (id === 0) g.studio.mode = "manual";
     let lane = p.lanes.find((l) => l.id === a.lane);
     if (!lane) {
       lane = p.lanes.find((l) => !l.projects.length);
@@ -917,6 +1011,11 @@ function applyAction(g: Game, id: number, a: Action): boolean {
       advanceMutable(g, 1);
     } while (g.phase === "plan" && humanNode(g) === before);
   }
+  if (id === 0 && g.phase === "plan" && g.studio.mode === "auto") {
+    if (a.type === "studio" || a.type === "claim") organizeStudio(g);
+    if (a.type === "configure") for (const lane of p.lanes) lane.development = { ...g.development };
+    routeStudioAccounts(g);
+  }
   if (id === 0 && a.type !== "configure") g.message =
       g.phase === "reveal"
         ? g.receipt!.title
@@ -929,6 +1028,10 @@ function runPlayer(g: Game, p: Player) {
   let time = 1;
   let guard = 0;
   while (time > EPS && guard++ < 1000) {
+    if (p.id === 0) {
+      organizeStudio(g);
+      routeStudioAccounts(g);
+    }
     cleanLanes(p);
     const running = p.lanes.flatMap((lane) => {
       if (!lane.enabled || !lane.projects.length) return [];
@@ -1168,6 +1271,14 @@ function runBots(g: Game) {
 }
 function humanNode(g: Game) {
   const p = g.players[0];
+  if (g.studio.mode === "auto") {
+    const active = p.lanes.filter((l) => l.enabled && l.projects.length);
+    return JSON.stringify([
+      p.shipped.length,
+      p.projects.length === 0,
+      active.length > 0 && active.every((l) => laneStatus(g, p, l) === "等待额度"),
+    ]);
+  }
   return JSON.stringify([
     p.shipped.length,
     p.lanes.map((l) => [l.projects[0], laneStatus(g, p, l)]),
@@ -1249,6 +1360,7 @@ export function textState(g: Game) {
     title: "RESET / 开蹬！",
     version: g.version,
     development: g.development,
+    studio: g.studio,
     phase: g.phase,
     day: g.day,
     length: g.length,
@@ -1286,7 +1398,7 @@ export function restoreGame(raw: string | null): Game | null {
     };
     const oldVersion = legacy.version;
     if (
-      ![1, 2, 3].includes(oldVersion) ||
+      ![1, 2, 3, 4].includes(oldVersion) ||
       !["plan", "reveal", "over"].includes(g.phase) ||
       ![21, 42].includes(g.length) ||
       !Number.isInteger(g.day) ||
@@ -1347,13 +1459,35 @@ export function restoreGame(raw: string | null): Game | null {
       for (const l of g.logs) l.minute = 0;
       delete legacy.order;
       delete legacy.cursor;
-      g.version = 3;
+      g.version = 4;
       g.event = { ...EVENTS.find((e) => e.id === g.event.id)! };
       g.message =
         "旧牌局已迁移：现金、账号、券和项目进度全部保留；今天剩余时间按旧行动折算。请选择项目，安排新的并行队列。";
     }
+    if (oldVersion < 4) {
+      const player = g.players[0];
+      const oldLanes = player.lanes.filter((l) => l.projects.length);
+      const running = oldLanes.filter((l) => l.enabled);
+      player.lanes = [...running, ...player.lanes.filter((l) => !running.includes(l))];
+      if (running.length) g.development = { ...running[0].development };
+      g.studio = {
+        mode: "auto",
+        threads: oldLanes.length ? running.length : 1,
+        accountPolicy: "soon-reset",
+        preferredAccount: running[0]?.account ?? oldLanes[0]?.account ?? player.accounts[0].id,
+      };
+      g.version = 4;
+      g.message = "牌局已迁移：账号、项目和进度保留；工作室现在会自动排队和切换账号。";
+    }
     if (
       !validDevelopment(g.development) ||
+      !g.studio ||
+      !["auto", "manual"].includes(g.studio.mode) ||
+      !Number.isInteger(g.studio.threads) ||
+      g.studio.threads < 0 ||
+      g.studio.threads > MAX_LANES ||
+      !["preferred", "soon-reset", "drain", "late-expiry", "balanced"].includes(g.studio.accountPolicy) ||
+      !g.players[0].accounts.some((a) => a.id === g.studio.preferredAccount) ||
       !Number.isInteger(g.minute) ||
       g.minute < 0 ||
       g.minute > DAY_MINUTES ||

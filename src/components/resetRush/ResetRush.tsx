@@ -8,10 +8,10 @@ import {
   advanceMinutes,
   DAY_MINUTES,
   DAILY_ENERGY,
-  energyCost,
   laneStatus,
   fmt,
   timeLabel,
+  V3_SAVE_KEY,
   V2_SAVE_KEY,
   activeAccount,
   CATEGORIES,
@@ -30,6 +30,7 @@ import {
   score,
   textState,
   type Action,
+  type AccountPolicy,
   type Category,
   type Game,
   type Model,
@@ -40,6 +41,13 @@ import {
 import s from "./resetRush.module.css";
 
 const STRATEGIES = ["独立开发者", "开源效率流", "极限冲刺流", "多号银行流"];
+const ACCOUNT_POLICIES: { id: AccountPolicy; name: string; detail: string }[] = [
+  { id: "soon-reset", name: "快重置优先", detail: "先花快自然补满的账号" },
+  { id: "preferred", name: "指定账号优先", detail: "这个号用完再换下一个" },
+  { id: "drain", name: "快耗尽优先", detail: "先清掉小额余额" },
+  { id: "late-expiry", name: "晚到期优先", detail: "先花订阅期限更长的账号" },
+  { id: "balanced", name: "均衡使用", detail: "按剩余额度分散线程" },
+];
 type ModalKind = "rules" | "shop" | "restart" | "portfolio" | null;
 
 function Art({ kind }: { kind: Category }) {
@@ -196,17 +204,18 @@ function Rules() {
       <ol>
         <li>
           <strong>每天 480 分钟、12 精力。</strong>09:00 开工，17:00
-          揭牌。思考和操作界面不走时钟；点“推进”后，你和电脑的所有线程一起工作。
+          揭牌。思考和操作界面不走时钟；收工时你和电脑的所有线程一起工作。
         </li>
         <li>
           <strong>接单 1 精力，开线程 2 精力。</strong>
-          可以接很多项目、勾选多个组成队列。每条队列串行，不同线程并行；最多 6
-          条，可共用一个账号。买号、升级、续订和银行券不花时间或精力。
+          接下的项目会自动排队。你只选同时托管几条线程，最多 6 条；它们可以共用账号。
+          买号、升级、续订和银行券不花时间或精力。
         </li>
         <li>
-          <strong>持续托管，自动续跑。</strong>
-          项目完成自动发布并接下一项；额度按实际进度扣除。缺额时暂停，补满后续跑。未完队列跨天保留，每条继续托管的线程每天占
-          2 精力。当日调整或恢复线程用 1 精力，暂停和解散免费。
+          <strong>选策略，收工揭牌。</strong>
+          账号可指定优先、快重置、快耗尽、晚到期或均衡使用；用完会自动换号。
+          项目完成自动接下一项，按实际进度扣额。每天收工只需点一次；想在缺额时用银行券，可以点“到关键时刻”。
+          跨天继续托管的每条线程占 2 精力。
         </li>
         <li>
           <strong>用额度换时间。</strong>Turbo 速度 ×2、每进度额度 ×2.5，不增加
@@ -326,8 +335,8 @@ function ProjectCard({
           : job.bugs
             ? `${job.bugs} 个 bug · 完工后自动返工`
             : selected
-              ? "✓ 已选入队列"
-              : (assigned ?? "＋ 选入队列")}
+              ? `正在查看 · ${assigned ?? "待托管"}`
+              : (assigned ?? "待托管")}
       </span>
     </button>
   );
@@ -342,7 +351,6 @@ export default function ResetRush() {
   const [modal, setModal] = useState<ModalKind>(null);
   const [inspect, setInspect] = useState(0);
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
-  const [selectedLane, setSelectedLane] = useState<number | null>(null);
   const [selectedAccount, setSelectedAccount] = useState(0);
   const [onboarding, setOnboarding] = useState(false);
   const root = useRef<HTMLElement>(null);
@@ -351,17 +359,11 @@ export default function ResetRush() {
     try {
       const restored =
         restoreGame(localStorage.getItem(SAVE_KEY)) ??
+        restoreGame(localStorage.getItem(V3_SAVE_KEY)) ??
         restoreGame(localStorage.getItem(V2_SAVE_KEY)) ??
         restoreGame(localStorage.getItem(LEGACY_SAVE_KEY));
       setGame(restored);
-      if (restored) setSelectedProjects(
-          restored.players[0].projects
-            .filter(
-              (j) => !restored.players[0].lanes.some((l) => l.projects.includes(j.id),),
-            )
-            .slice(0, 1)
-            .map((j) => j.id),
-        );
+      if (restored) setSelectedProjects(restored.players[0].projects.slice(0, 1).map((j) => j.id));
     } catch {
       setSaved(false);
     }
@@ -417,7 +419,6 @@ export default function ResetRush() {
     const fresh = createGame(Number(seed) || 260926, length);
     setGame(fresh);
     setSelectedProjects([fresh.players[0].projects[0].id]);
-    setSelectedLane(null);
     setOnboarding(true);
     setModal("shop");
     setSelectedAccount(0);
@@ -425,7 +426,7 @@ export default function ResetRush() {
   const send = (a: Action) => setGame((g) => (g ? act(g, a) : g));
   const human = game?.players[0];
   const chosen = selectedProjects.filter((id) => human?.projects.some((j) => j.id === id),);
-  const job = human?.projects.find((j) => j.id === chosen[0]);
+  const job = human?.projects.find((j) => j.id === chosen[0]) ?? human?.projects[0];
   const account =
     human?.accounts.find((a) => a.id === selectedAccount) ?? human?.accounts[0];
   const playable = !!game && game.phase === "plan";
@@ -433,38 +434,16 @@ export default function ResetRush() {
   const model =
     game && human
       ? developmentStats(game, human, config, job)
-      : { cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0 };
-  const devAction: Action = {
-    type: "dispatch",
-    lane: selectedLane,
-    projects: chosen,
-    account: account?.id ?? -1,
-    ...config,
-  };
-  const error = game ? actionError(game, 0, devAction) : null;
-  const planningCost = game && human ? energyCost(game, human, devAction) : 2;
-  const estimate =
-    game && human
-      ? chosen.reduce(
-          (n, id) => {
-            const j = human.projects.find((x) => x.id === id)!;
-            const stats = developmentStats(game, human, config, j);
-            return {
-              minutes: n.minutes + stats.minutes,
-              quota: n.quota + stats.quota,
-            };
-          },
-          { minutes: 0, quota: 0 },
-        )
-      : { minutes: 0, quota: 0 };
-  const editLane = (id: number | null) => {
-    const lane = human?.lanes.find((l) => l.id === id);
-    setSelectedLane(lane?.id ?? null);
-    setSelectedProjects(lane?.projects ?? []);
-    if (lane) {
-      setSelectedAccount(lane.account);
-      send({ type: "configure", development: { ...lane.development } });
-    }
+      : { name: "Sol · Medium", cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0, minutes: 0, quota: 0 };
+  const studio = game?.studio;
+  const setStudio = (changes: Partial<Pick<NonNullable<typeof studio>, "threads" | "accountPolicy" | "preferredAccount">>) => {
+    if (!studio || !human) return;
+    send({
+      type: "studio",
+      threads: changes.threads ?? studio.threads,
+      accountPolicy: changes.accountPolicy ?? studio.accountPolicy,
+      preferredAccount: changes.preferredAccount ?? studio.preferredAccount,
+    });
   };
   const bankAction: Action = { type: "bank", account: account?.id ?? -1 };
   const bankError = game ? actionError(game, 0, bankAction) : null;
@@ -608,7 +587,7 @@ export default function ResetRush() {
             <p>
               <b>02</b>
               <span>
-                排好队列，并行开蹬<small>真人管精力，模型跑时间。</small>
+                选好策略，并行开蹬<small>接单后自动排队，真人管精力。</small>
               </span>
             </p>
             <p>
@@ -690,27 +669,15 @@ export default function ResetRush() {
                 <span>17:00 揭牌</span>
               </div>
               <div className={s.timeButtons}>
-                <button
-                  id="advance-30"
-                  onClick={() => send({ type: "advance", minutes: 30 })}
-                >
-                  推进 30 分钟
-                </button>
-                <button
-                  id="advance-120"
-                  onClick={() => send({ type: "advance", minutes: 120 })}
-                >
-                  推进 2 小时
-                </button>
-                <button id="next-node" onClick={() => send({ type: "next" })}>
-                  到下个节点 ↗
+                <button id="next-node" onClick={() => send({ type: "next" })} title="在项目做完或所有线程缺额时停下">
+                  到关键时刻 ↗
                 </button>
                 <button
                   id="end-day"
                   onClick={reveal}
                   title="先让所有后台线程跑完剩余时间，再揭晓今晚赠礼"
                 >
-                  托管到收工 →
+                  收工并揭牌 →
                 </button>
               </div>
             </section>
@@ -926,26 +893,18 @@ export default function ResetRush() {
                 </div>
                 <div className={s.threadBoard}>
                   <div className={s.threadTitle}>
-                    <h2>让它们一起跑。</h2>
-                    <button
-                      onClick={() => {
-                        editLane(null);
-                        document
-                          .getElementById("reset-command")
-                          ?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
-                      }}
-                    >
-                      ＋ 新线程
-                    </button>
+                    <h2>工作室任务</h2>
+                    <a href="#reset-command">调整策略 ↓</a>
                   </div>
                   {!human?.lanes.some((l) => l.projects.length) && (
                     <p className={s.threadEmpty}>
-                      选好下面的项目，安排一个队列。
+                      {human?.projects.length
+                        ? studio?.threads === 0
+                          ? "已暂停托管；调高并行线程即可续跑。"
+                          : "已接项目待托管，收工时会自动开工。"
+                        : "从公共项目池接单，工作室会自动排队。"}
                       <br />
-                      <span>多项串行，多条并行；同一个账号也可以并行。</span>
+                      <span>线程数量和账号顺序都在下方统一设置。</span>
                     </p>
                   )}
                   {human?.lanes
@@ -961,13 +920,6 @@ export default function ResetRush() {
                         head,
                       );
                       const status = laneStatus(game, human, lane);
-                      const resume: Action = {
-                        type: "dispatch",
-                        lane: lane.id,
-                        projects: lane.projects,
-                        account: lane.account,
-                        ...lane.development,
-                      };
                       return (
                         <article
                           className={s.thread}
@@ -1018,46 +970,6 @@ export default function ResetRush() {
                               </li>
                             ))}
                           </ol>
-                          {playable && (
-                            <div className={s.threadActions}>
-                              <button
-                                onClick={() => {
-                                  editLane(lane.id);
-                                  document
-                                    .getElementById("reset-command")
-                                    ?.scrollIntoView({
-                                      behavior: "smooth",
-                                      block: "center",
-                                    });
-                                }}
-                              >
-                                调整 / 追加
-                              </button>
-                              <button
-                                disabled={
-                                  !lane.enabled &&
-                                  !!actionError(game, 0, resume)
-                                }
-                                onClick={() => send(
-                                    lane.enabled
-                                      ? { type: "pause", lane: lane.id }
-                                      : resume,
-                                  )}
-                              >
-                                {lane.enabled
-                                  ? "暂停"
-                                  : `恢复 · ${energyCost(game, human, resume)} 精力`}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  send({ type: "remove-lane", lane: lane.id });
-                                  if (selectedLane === lane.id) editLane(null);
-                                }}
-                              >
-                                解散
-                              </button>
-                            </div>
-                          )}
                         </article>
                       );
                     })}
@@ -1065,42 +977,22 @@ export default function ResetRush() {
                 <div className={s.backlogHead}>
                   <h3>
                     我的项目{" "}
-                    <small>{human?.projects.length} 项 · 可多选排队</small>
+                    <small>{human?.projects.length} 项 · 自动分配</small>
                   </h3>
-                  <button
-                    onClick={() => setSelectedProjects(
-                        human?.projects
-                          .filter(
-                            (j) => !human.lanes.some(
-                                (l) => l.id !== selectedLane &&
-                                  l.projects.includes(j.id),
-                              ),
-                          )
-                          .map((j) => j.id) ?? [],
-                      )}
-                  >
-                    全选可安排项目
-                  </button>
                 </div>
                 <div
                   className={`${s.activeProjects} ${human?.projects.length === 0 ? s.noProjects : ""}`}
                 >
                   {human?.projects.map((j) => {
                     const lane = human.lanes.find((l) => l.projects.includes(j.id),);
-                    const locked = !!lane && lane.id !== selectedLane;
                     return (
                       <ProjectCard
                         key={j.id}
                         job={j}
                         day={game.day}
                         selected={chosen.includes(j.id)}
-                        assigned={lane ? "已在线程中 · 点击调整" : undefined}
-                        onChoose={() => {
-                          if (locked) editLane(lane.id);
-                          else setSelectedProjects((ids) => (ids.includes(j.id)
-                                ? ids.filter((id) => id !== j.id)
-                                : [...ids, j.id]),);
-                        }}
+                        assigned={lane ? `线程 ${human.lanes.indexOf(lane) + 1} · 自动排队` : "待托管"}
+                        onChoose={() => setSelectedProjects([j.id])}
                       />
                     );
                   })}
@@ -1133,7 +1025,7 @@ export default function ResetRush() {
                       disabled={!playable || !human?.energy}
                       onChoose={() => {
                         send({ type: "claim", project: j.id });
-                        setSelectedProjects((ids) => [...ids, j.id]);
+                        setSelectedProjects([j.id]);
                       }}
                     />
                   ))}
@@ -1264,73 +1156,71 @@ export default function ResetRush() {
               aria-label="队列调度"
             >
               <div className={s.commandTitle}>
-                <span>把工作安排好。</span>
-                <span>已有线程继续使用自己的配置，确认调整才会改变。</span>
+                <span>工作室策略</span>
+                <span>改一次，所有线程自动照办。</span>
               </div>
-              <div className={s.queuePlanner}>
-                <label htmlFor="reset-lane">
-                  安排到
-                  <select
-                    id="reset-lane"
-                    value={selectedLane ?? "new"}
-                    onChange={(e) => editLane(
-                        e.target.value === "new"
-                          ? null
-                          : Number(e.target.value),
-                      )}
-                  >
-                    <option value="new">＋ 新开并行线程</option>
-                    {human.lanes
-                      .filter((l) => l.projects.length)
-                      .map((l, i) => (
-                        <option key={l.id} value={l.id}>
-                          线程 {i + 1} · {l.projects.length} 项排队
-                        </option>
-                      ))}
-                  </select>
+              <div className={s.studioSettings}>
+                <label className={s.threadCount} htmlFor="studio-threads">
+                  <span>并行线程 <b>{studio?.threads ?? 1}</b></span>
+                  <input
+                    id="studio-threads"
+                    type="range"
+                    min="0"
+                    max="6"
+                    step="1"
+                    value={studio?.threads ?? 1}
+                    onChange={(e) => setStudio({ threads: Number(e.target.value) })}
+                  />
+                  <small>每条有任务的线程每天占 2 精力；同日调低再调高不重复收取。0 条暂停全部。</small>
                 </label>
-                <label htmlFor="reset-account">
-                  使用账号
+                <label className={s.policySelect} htmlFor="studio-policy">
+                  <span>账号使用顺序</span>
                   <select
-                    id="reset-account"
-                    value={account?.id}
-                    onChange={(e) => setSelectedAccount(Number(e.target.value))}
+                    id="studio-policy"
+                    value={studio?.accountPolicy ?? "soon-reset"}
+                    onChange={(e) => setStudio({ accountPolicy: e.target.value as AccountPolicy })}
                   >
-                    {human.accounts.map((a, i) => (
-                      <option key={a.id} value={a.id}>
-                        账号 {i + 1} · ${a.tier} · {fmt(a.quota)} 额度
-                      </option>
+                    {ACCOUNT_POLICIES.map((policy) => (
+                      <option key={policy.id} value={policy.id}>{policy.name}</option>
                     ))}
                   </select>
+                  <small>{ACCOUNT_POLICIES.find((policy) => policy.id === studio?.accountPolicy)?.detail}</small>
                 </label>
-                <span>
-                  已选 <b>{chosen.length}</b> 项 · 按勾选顺序连做
-                </span>
+                {studio?.accountPolicy === "preferred" && (
+                  <label className={s.policySelect} htmlFor="studio-account">
+                    <span>优先账号</span>
+                    <select
+                      id="studio-account"
+                      value={studio.preferredAccount}
+                      onChange={(e) => setStudio({ preferredAccount: Number(e.target.value) })}
+                    >
+                      {human.accounts.map((a, index) => (
+                        <option key={a.id} value={a.id}>账号 {index + 1} · ${a.tier}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
-              {chosen.length > 0 && (
-                <ol className={s.plannedQueue}>
-                  {chosen.map((id, i) => (
-                    <li key={id}>
-                      <span>
-                        {i + 1}. {human.projects.find((j) => j.id === id)?.name}
-                      </span>
-                      {i > 0 && (
-                        <button
-                          aria-label={`优先处理${human.projects.find((j) => j.id === id)?.name}`}
-                          onClick={() => setSelectedProjects((ids) => [
-                              id,
-                              ...ids.filter((x) => x !== id),
-                            ])}
-                        >
-                          移到最前
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              )}
-              <div className={s.commandRow}>
-                <div className={s.developmentControls}>
+              <div className={s.studioModes} role="group" aria-label="开发节奏">
+                {([
+                  { label: "慢跑省额", development: { model: "luna", effort: "medium", turbo: false } },
+                  { label: "均衡开发", development: { model: "sol", effort: "medium", turbo: false } },
+                  { label: "重置冲刺", development: { model: "astra", effort: "ultra", turbo: true } },
+                ] as const).map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    aria-pressed={config.model === preset.development.model && config.effort === preset.development.effort && config.turbo === preset.development.turbo}
+                    onClick={() => send({ type: "configure", development: { ...preset.development } })}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <details className={s.advancedSettings}>
+                <summary>自定义模型、思考强度与 Turbo</summary>
+                <div className={s.commandRow}>
+                  <div className={s.developmentControls}>
                   <div className={s.modes} role="group" aria-label="开发模型">
                     {(Object.keys(MODELS) as Model[]).map((m) => (
                       <button
@@ -1402,11 +1292,7 @@ export default function ResetRush() {
                     <span className={model.risk > 0 ? s.risk : ""}>
                       首项风险 <b>{job ? `${model.risk}% / 20 进度` : "—"}</b>
                     </span>
-                    <small>
-                      {chosen.length
-                        ? `队列基准约 ${Math.ceil(estimate.minutes)} 分钟 · ${fmt(estimate.quota)} 额度（不含新 bug 返工）`
-                        : "勾选项目查看队列预估"}
-                    </small>
+                    <small>{job ? `所选项目约 ${Math.ceil(model.minutes)} 分钟 · ${fmt(model.quota)} 额度` : "接单后显示项目预估"}</small>
                   </div>
                   <p className={s.configHint}>
                     {config.effort === "ultra"
@@ -1414,28 +1300,15 @@ export default function ResetRush() {
                       : config.model === "luna"
                         ? "Luna Medium 关闭 Turbo 可免费慢蹬，简单大项目也能交付。"
                         : "思考加深提升解题能力；High 到 Max 会多花时间。"}{" "}
-                    仅按实际工作扣额，同号多线程共享余额。
+                    所有线程使用同一配置，按实际工作扣额。
                   </p>
+                  </div>
                 </div>
-                <button
-                  id="develop"
-                  className={s.develop}
-                  disabled={!!error}
-                  onClick={() => {
-                    send(devAction);
-                    setSelectedLane(null);
-                    setSelectedProjects([]);
-                  }}
-                >
-                  <span>
-                    {selectedLane === null
-                      ? "安排并行线程 ↗"
-                      : "确认调整队列 ↗"}
-                  </span>
-                  <small>{planningCost} 精力 · 不走时间</small>
-                </button>
-              </div>
-              {error && <p className={s.actionHint}>{error}</p>}
+              </details>
+              <p className={s.studioSummary}>
+                当前 {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.quotaPerHour ? `${fmt(model.quotaPerHour)} 额度 / 时` : "免费"}
+                {job ? ` ·《${job.name}》风险 ${model.risk}%` : ""}
+              </p>
               <div className={s.secondaryActions}>
                 <div>
                   <button
@@ -1566,7 +1439,7 @@ export default function ResetRush() {
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.3 · 并行工作室</i>
+          RESET / 开蹬！ <i>v0.4 · 自动工作室</i>
         </span>
         <span>
           {game
@@ -1598,6 +1471,7 @@ export default function ResetRush() {
                 setSeed(String((Number(seed) || 260926) + 1));
                 try {
                   localStorage.removeItem(SAVE_KEY);
+                  localStorage.removeItem(V3_SAVE_KEY);
                   localStorage.removeItem(LEGACY_SAVE_KEY);
                   localStorage.removeItem(V2_SAVE_KEY);
                 } catch {
