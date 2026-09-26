@@ -4,13 +4,13 @@
 
 ## 当前概览
 
-| 项目 | 截至 2026-09-26 | 详情 |
+| 项目 | 截至 2026-09-27 | 详情 |
 | --- | --- | --- |
 | 自走棋 | 从简陋 Demo 扩展为可续局的 v0.8.0 远征、自由布阵、羁绊、经济、托管和战术复盘。 | [版本与发布](docs/autochess-release-guide.md)、[7 月记录](docs/progress/2026-07-17-24.md)、[8 月记录](docs/progress/2026-08-01-09.md) |
 | 雨夜寻味 | 第三人称箱庭、动作战斗、旅伴提示、潮汐港和脱困机制已实现。 | [世界与机制](docs/night-rain-world.md)、[战斗](docs/night-rain-combat.md) |
 | 嘘，TA还在播 | 第一人称 3D 同居日常、独立小游戏、料理和门外回家流程已实现。 | [日常玩法](docs/hush-daily-life.md)、[家庭扩展](docs/hush-household.md) |
 | 岁己：马上就播 | 3D 公寓准备任务、专属小游戏、待机音乐和开播转场已实现。 | [设计与验收](docs/pre-stream-game.md) |
-| RESET / 开蹬！ | v0.3 包含时间、精力、账号生命周期与并行开发队列。 | [规则](docs/reset-rush.md) |
+| RESET / 开蹬！ | v0.4 改为自动排队、全局账号策略与线程数量管理；37 项规则测试、完整赛季和移动端验收通过。 | [规则与验收](docs/reset-rush.md) |
 | 上船！应援事务所 | 2–4 人同机或 AI 对局，包含应援、认知民、切片佬和投流。 | [规则](docs/hype-harbor.md) |
 | 维阿发掘局、维阿弹棋 | 已分别实现多藏品连色发掘，以及 Rapier 物理弹棋与 AI。 | [发掘局](docs/brick-excavation.md)、[弹棋开发记录](docs/progress/2026-09-20-26.md) |
 | 其他游戏 | 年关牌局、岁岁过招、武侠、直播控场、按钮游戏及三款独立小游戏均有独立实现和记录。 | [9 月记录](docs/progress/2026-09-01-15.md)、[年关牌局](docs/marriage-pressure-game.md) |
