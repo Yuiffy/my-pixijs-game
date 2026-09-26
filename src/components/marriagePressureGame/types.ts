@@ -53,6 +53,12 @@ export type CandidateId =
   | "hatsuse_guest";
 
 export type ChildActionId =
+  | "exercise"
+  | "groom"
+  | "hobby"
+  | "study"
+  | "overgive"
+  | "relationship-boundary"
   | "chat-listen"
   | "chat-share"
   | "chat-checklist"
@@ -132,6 +138,10 @@ export interface Ending {
 export type ResolutionKind = "choice" | "reality" | "family" | "response" | "match" | "household";
 
 export type ResolutionMetric =
+  | "fitness"
+  | "grooming"
+  | "interests"
+  | "relationshipBalance"
   | "understanding"
   | "familyReserve"
   | "stress"
@@ -168,7 +178,12 @@ export interface GameResolution {
 }
 
 export interface MarriageGameState {
-  version: 4;
+  version: 5;
+  fitness: number;
+  grooming: number;
+  interests: number;
+  relationshipBalance: number;
+  growthNote: string;
   familyReserve: number;
   monthsPerTurn: 3 | 12;
   understanding: number;

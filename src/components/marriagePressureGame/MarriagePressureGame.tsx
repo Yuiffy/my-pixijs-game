@@ -58,6 +58,7 @@ import type {
 } from "./types";
 import { getCandidateProfile, getHouseholdBudget, getLifeWarnings, getPartnerProfile, isHousehold } from "./household";
 import { getProgressionGuide } from "./progression";
+import { GROWTH_COSTS, getBalanceLabel, getGrowthAdvice, getRelationshipSituation, isGrowthAction } from "./growth";
 import CandidateCatalog from "./CandidateCatalog";
 import styles from "./marriage.module.css";
 
@@ -65,8 +66,9 @@ const SAVE_KEY = "marriage-pressure-save-v1";
 const PROFILE_KEY = "marriage-pressure-player-name";
 const INITIAL_NAMES = ["小禾", "阿宁", "小北", "阿川", "小秋", "木木", "小舟", "阿言", "小林", "安安", "小饼", "阿夏"];
 
-function pickInitialName() {
-  return INITIAL_NAMES[Math.floor(Math.random() * INITIAL_NAMES.length)];
+function pickInitialName(previous = "") {
+  const names = INITIAL_NAMES.filter(name => name !== previous);
+  return names[Math.floor(Math.random() * names.length)];
 }
 
 const SHARE_URL = "my-pixijs-game.vercel.app/game/family-pressure";
@@ -161,6 +163,7 @@ function getChangeTone(change: ResolutionChange) {
 export default function MarriagePressureGame() {
   const [state, setState] = useState<MarriageGameState>(createInitialState);
   const [saved, setSaved] = useState<MarriageGameState | null>(null);
+  const [savedName, setSavedName] = useState("");
   const [mode, setMode] = useState<GameMode>("child");
   const [difficulty, setDifficulty] = useState<Difficulty>("realistic");
   const [seedInput, setSeedInput] = useState("");
@@ -170,7 +173,7 @@ export default function MarriagePressureGame() {
   const [actionTab, setActionTab] = useState("connection");
   const [pendingMeeting, setPendingMeeting] = useState<ChildActionId | null>(null);
   const [pendingDecision, setPendingDecision] = useState<ChildActionId | null>(null);
-  const [inspector, setInspector] = useState<"profile" | "household" | "history" | "progression" | null>(null);
+  const [inspector, setInspector] = useState<"profile" | "household" | "history" | "progression" | "growth" | null>(null);
   const [showActionNumbers, setShowActionNumbers] = useState(false);
   const [help, setHelp] = useState(false);
   const [ready, setReady] = useState(false);
@@ -200,7 +203,10 @@ export default function MarriagePressureGame() {
       const restored = validateSave(JSON.parse(localStorage.getItem(SAVE_KEY) || "null"));
       if (restored && restored.phase !== "lobby") setSaved(restored);
       const restoredName = localStorage.getItem(PROFILE_KEY)?.trim();
-      if (restored && restored.phase !== "lobby" && restoredName) setPlayerName(restoredName.slice(0, 8));
+      if (restored && restored.phase !== "lobby" && restoredName) {
+        setSavedName(restoredName.slice(0, 8));
+        setPlayerName(pickInitialName(restoredName));
+      }
       localStorage.setItem("marriage-pressure-probe", "1");
       localStorage.removeItem("marriage-pressure-probe");
     } catch {
@@ -232,6 +238,7 @@ export default function MarriagePressureGame() {
         : null,
       event: event ? { id: event.id, title: event.title } : null,
       progression: getProgressionGuide(state),
+      growthAdvice: getGrowthAdvice(state),
       householdBudget: getHouseholdBudget(state),
       partnerProfile: getPartnerProfile(state),
       warnings: getLifeWarnings(state),
@@ -445,6 +452,8 @@ export default function MarriagePressureGame() {
       setStorageAvailable(false);
     }
     setSaved(state);
+    setSavedName(playerName);
+    setPlayerName(pickInitialName(playerName));
     setState(createInitialState());
     setEventNotice(null);
     setResolution(null);
@@ -465,9 +474,9 @@ export default function MarriagePressureGame() {
         <div className={styles.redEnvelope}>相亲简历<br /><b>{CANDIDATES.length}</b> 份</div>
       </div>
       <div className={styles.lobbyCopy}>
-        <span className={styles.eyebrow}>V4.1 · 相亲与共同生活</span>
+        <span className={styles.eyebrow}>V5 · 先过好自己的生活</span>
         <h1>{GAME_TITLE}<small>这婚，你催吗？</small></h1>
-        <p>从微信破冰，到见面、恋爱和共同生活。24 个季度里，找到愿意互相靠近的人，也学会在不合适时说再见。</p>
+        <p>健身、理发、学点东西，再去认识喜欢的人。24 个季度里，经营自己的生活，也找到愿意双向靠近的人。</p>
         <div className={styles.modePicker} aria-label="选择扮演身份">
           {(Object.keys(MODE_COPY) as GameMode[]).map(id => (
             <button
@@ -482,8 +491,9 @@ export default function MarriagePressureGame() {
             </button>
           ))}
         </div>
-        <label className={styles.nameField} htmlFor="marriage-player-name">
-          <span>{mode === "child" ? "这局里，我叫" : mode === "parent" ? "孩子的昵称" : "当事人的昵称"}</span>
+        <div className={styles.nameField}>
+          <label htmlFor="marriage-player-name">{mode === "child" ? "这局里，我叫" : mode === "parent" ? "孩子的昵称" : "当事人的昵称"}</label>
+          <div className={styles.nameControls}>
           <input
             id="marriage-player-name"
             data-testid="player-name"
@@ -492,8 +502,10 @@ export default function MarriagePressureGame() {
             placeholder="留空会随机取一个昵称"
             onChange={input => setPlayerName(input.target.value.slice(0, 8))}
           />
-          <small>昵称会进入回合提示和结算文案，不会上传。</small>
-        </label>
+          <button type="button" data-testid="random-player-name" disabled={!ready} onClick={() => setPlayerName(pickInitialName(playerName.trim()))}><ReloadOutlined /> 随机名字</button>
+          </div>
+          <small>可自己填写，也可随机换一个；续玩沿用存档昵称。</small>
+        </div>
         <div className={styles.difficultyPicker} aria-label="选择压力档位">
           {(Object.keys(DIFFICULTIES) as Difficulty[]).map(id => (
             <button
@@ -527,6 +539,7 @@ export default function MarriagePressureGame() {
             className={styles.resumeButton}
             data-testid="resume-game"
             onClick={() => {
+              setPlayerName(savedName || playerName.trim() || pickInitialName());
               setState(saved);
               setMode(saved.mode);
               setDifficulty(saved.difficulty);
@@ -655,13 +668,15 @@ export default function MarriagePressureGame() {
     const definitions = (actor === "parent" ? PARENT_ACTIONS : CHILD_ACTIONS).filter(item => item.id !== "invest" && item.id !== "meet-aa");
     const available = new Set(actor === "parent" ? parentActions : childActions);
     const groupFor = (id: string) => {
+      if (isGrowthAction(id as ChildActionId)) return "growth";
       if (["chat-listen", "chat-share", "chat-checklist", "meet", "meet-aa", "invest", "build-home", "protect-child"].includes(id)) return "connection";
       if (["work", "rest", "budget", "ask-help", "boundary", "support", "listen"].includes(id)) return "life";
       return "decision";
     };
-    const tabs = [{ id: "connection", title: isHousehold(state) ? "一起生活" : "聊天与见面" }, { id: "life", title: "生活与边界" }, { id: "decision", title: "关系决定" }];
+    const tabs = [{ id: "connection", title: isHousehold(state) ? "一起生活" : "聊天见面" }, ...(actor === "child" ? [{ id: "growth", title: "经营自己" }] : []), { id: "life", title: "生活边界" }, { id: "decision", title: "关系决定" }];
     const shownTab = definitions.some(item => available.has(item.id as never) && groupFor(item.id) === actionTab)
       ? actionTab : tabs.find(tab => definitions.some(item => available.has(item.id as never) && groupFor(item.id) === tab.id))?.id;
+    const relationshipSituation = shownTab === "decision" && available.has("relationship-boundary" as never) ? getRelationshipSituation(state) : null;
     return (
       <section className={styles.actionSection} data-actor={actor} data-testid="turn-actions">
         <div className={styles.actionHeading}>
@@ -681,13 +696,21 @@ export default function MarriagePressureGame() {
             </button>
           ))}
         </nav>
-        <div className={styles.progressionGuide} data-testid="progression-guide">
+        {shownTab === "growth" ? (
+<div className={styles.progressionGuide} data-testid="growth-guide">
+          <div><strong>自己的生活，也值得经营</strong><button data-testid="open-growth" onClick={() => setInspector("growth")}>成长记录</button></div>
+          <p>{getGrowthAdvice(state)}</p>
+        </div>
+) : (
+<div className={styles.progressionGuide} data-testid="progression-guide">
           <div><strong>下一步 · {guide.title}</strong><button data-testid="open-progression" onClick={() => setInspector("progression")}>查看条件</button></div>
           <p>{guide.advice} {actor === "child" && guide.unlocked && shownTab !== "decision" && <button data-testid="show-marriage-options" onClick={() => setActionTab("decision")}>去看结婚选择 <ArrowRightOutlined /></button>}</p>
         </div>
+)}
         <div className={styles.actionTools}><span>每回合选一项</span><button data-testid="toggle-action-numbers" aria-pressed={showActionNumbers} onClick={() => setShowActionNumbers(!showActionNumbers)}>{showActionNumbers ? "收起数值预览" : "查看数值影响"}</button></div>
         <div className={styles.actionGrid} data-action-grid>
-          {definitions.filter(item => available.has(item.id as never) && groupFor(item.id) === shownTab).map(definition => {
+          {relationshipSituation && <p className={styles.relationshipSituation} data-testid="relationship-situation"><strong>{relationshipSituation.title}</strong>{relationshipSituation.detail}</p>}
+          {definitions.filter(item => (available.has(item.id as never) || groupFor(item.id) === "growth") && groupFor(item.id) === shownTab).map(definition => {
             const enabled = available.has(definition.id as never);
             const preview = enabled
               ? getActionPreview(
@@ -721,7 +744,7 @@ export default function MarriagePressureGame() {
                             : definition.id.includes("compare") ? <ThunderboltOutlined />
                               : <ArrowRightOutlined />}
                 </span>
-                <span><strong>{definition.id === "meet" ? state.meetings > 0 ? "再约一次见面" : "约一次见面" : definition.title}</strong><small>{definition.id === "meet" ? "先选请客或 AA，再聊聊彼此的生活。" : definition.detail}</small>{showActionNumbers && <i>{preview || definition.hint}</i>}</span>
+                <span><strong>{definition.id === "meet" ? state.meetings > 0 ? "再约一次见面" : "约一次见面" : definition.title}</strong><small>{definition.id === "meet" ? "先选请客或 AA，再聊聊彼此的生活。" : definition.detail}</small>{isGrowthAction(definition.id as ChildActionId) && <em className={styles.growthCost}>{GROWTH_COSTS[definition.id as keyof typeof GROWTH_COSTS] === 0 ? "免费" : `预算 ${GROWTH_COSTS[definition.id as keyof typeof GROWTH_COSTS]}`} · {enabled ? "占用本季行动" : "存款不足，先稳住生活"}</em>}{definition.id === "overgive" && <em className={styles.growthCost}>额外花费 8 · 相处更失衡，不增加爱意</em>}{showActionNumbers && <i>{preview || definition.hint}</i>}</span>
               </button>
             );
           })}
@@ -735,8 +758,17 @@ export default function MarriagePressureGame() {
       <section className={`${styles.helpModal} ${styles.inspector}`} role="dialog" aria-modal="true" aria-label="人物与家庭详情" data-testid="inspector-dialog">
         <header><h2>人物与家庭</h2><button aria-label="关闭详情" data-testid="close-inspector" onClick={() => setInspector(null)}><CloseOutlined /></button></header>
         <nav className={styles.inspectorTabs} aria-label="详情分类">
-          {([{ id: "profile", title: "人物" }, { id: "household", title: "家庭账本" }, { id: "history", title: "记录" }, { id: "progression", title: "下一步" }] as const).map(tab => <button key={tab.id} aria-pressed={inspector === tab.id} onClick={() => setInspector(tab.id)}>{tab.title}</button>)}
+          {([{ id: "profile", title: "人物" }, { id: "growth", title: "自己" }, { id: "household", title: "账本" }, { id: "history", title: "记录" }, { id: "progression", title: "下一步" }] as const).map(tab => <button key={tab.id} aria-pressed={inspector === tab.id} onClick={() => setInspector(tab.id)}>{tab.title}</button>)}
         </nav>
+        {inspector === "growth" && (
+<div data-testid="growth-details">
+          <h3>留给自己的时间</h3><p>{state.growthNote}</p>
+          <dl><div><dt>体能 · 60 后每季减压</dt><dd>{state.fitness}</dd></div><div><dt>仪容 · 额外状态需维护</dt><dd>{state.grooming}</dd></div><div><dt>生活内容 · 60 后更会分享</dt><dd>{state.interests}</dd></div><div><dt>事业 · 影响每季收入</dt><dd>{state.career}</dd></div><div><dt>相处平衡 · {getBalanceLabel(state)}</dt><dd>{state.relationshipBalance}</dd></div></dl>
+          <p>运动、仪容、兴趣和技能能有限改善初见印象；见面与双向回应仍不可省略。明确拒绝之后，成长不会改变对方已经作出的决定。</p>
+          <p>请客、AA 和关心不会降低相处平衡。反复取消自己的安排、包下额外开销才会消耗自主与平衡；低于 35 时，恋爱或婚姻每季都会积累压力与疏远。低于 40 时先处理分工，再考虑结婚。</p>
+          <p>体能、兴趣和事业随换对象保留。仪容额外状态每季回落 6，最低回到 40；本季刚打理则不回落。所有数值都是游戏抽象。</p>
+        </div>
+)}
         {inspector === "progression" && (
 <div data-testid="progression-details">
           <h3>{guide.title}</h3><p>{guide.explanation}</p>
@@ -752,6 +784,7 @@ export default function MarriagePressureGame() {
           <blockquote>{candidate.boundary}</blockquote>
           <h3>{partnerProfile.title}</h3><p>{partnerProfile.wish}</p>
           <p>人物生活观采用固定游戏设定；双向好感仍随这次相处变化。</p>
+          <p>目前相处：{getBalanceLabel(state)}。这描述本局的互动，不是人物的固定品性。</p>
           <dl><div><dt>本人意愿</dt><dd>{state.mutualIntent}</dd></div><div><dt>相互了解</dt><dd>{state.understanding}</dd></div><div><dt>生活契合</dt><dd>{candidate.compatibility}</dd></div><div><dt>履历分</dt><dd>{candidate.resume}</dd></div></dl>
         </div>
 )}
@@ -868,6 +901,8 @@ export default function MarriagePressureGame() {
             <dl>
               <div><dt>压力 / 自主</dt><dd>{state.stress} / {state.autonomy}</dd></div>
               <div><dt>存款 / 债务</dt><dd>{state.savings} / {state.weddingDebt}</dd></div>
+              <div><dt>体能 / 生活内容</dt><dd>{state.fitness} / {state.interests}</dd></div>
+              <div><dt>相处平衡</dt><dd>{getBalanceLabel(state)}</dd></div>
               <div><dt>下一代压力</dt><dd>{state.nextGenStress}</dd></div>
               <div><dt>强压 / 倾听</dt><dd>{state.coerciveMoves} / {state.supportiveMoves}</dd></div>
             </dl>
@@ -885,7 +920,7 @@ export default function MarriagePressureGame() {
     <main ref={rootRef} className={styles.game} data-phase={state.phase}>
       <header className={styles.topbar}>
         <Link href="/demos#games" aria-label="返回小游戏列表" title="返回小游戏列表"><ArrowLeftOutlined /></Link>
-        <div><strong>{GAME_TITLE}</strong><small>V4.1 · 相亲与共同生活</small></div>
+        <div><strong>{GAME_TITLE}</strong><small>V5 · 先过好自己的生活</small></div>
         <nav>
           {state.phase !== "lobby" && <span>{state.mode === "child" ? `我 · ${playerName}` : MODE_COPY[state.mode].title} · {DIFFICULTIES[state.difficulty].title}</span>}
           <button onClick={() => setHelp(true)} title="玩法说明" aria-label="玩法说明"><QuestionCircleOutlined /></button>
@@ -904,6 +939,8 @@ export default function MarriagePressureGame() {
             <ol>
               <li><b>先认识，再决定。</b>微信倾听、分享日常或直接问条件；见面可请客或提前说好 AA，花钱不会额外买到好感。见过几次仍没感觉，就换下一个。</li>
               <li><b>每回合选一项。</b>新局一回合是一季，24 回合后记录阶段结果；晚婚和首次困境会留出后续时间。相互了解、伴侣感情、对方意愿各不相同。</li>
+              <li><b>经营自己。</b>运动、理发、爱好与技能需要时间，有些还需要预算。自己的积累换对象也保留；良好状态有助于初见，不能保证对方喜欢。</li>
+              <li><b>相处需要双向。</b>正常请客不会吃亏。回避分歧、反复取消自己安排才会积累失衡；可以谈清边界与分工，也可以离开。</li>
               <li><b>现实事件会插手。</b>房租、裁员、加班和照护成本每回合结算，存款与事业不是装饰数字。</li>
               <li><b>双人模式轮流操作。</b>家长先出牌，当事人再回应。双方都有分数，但家庭分低时谁的个人高分都很难看。</li>
               <li><b>育儿不是终点。</b>随意生育后继续鸡娃会累积“下一代压力”；到达 100 时，我的孩子会在高压教育中先撑不住。</li>

@@ -25,6 +25,7 @@ const { CANDIDATES, ECONOMY_EVENTS } = content;
 const household = await loadTypescriptModule("src/components/marriagePressureGame/household.ts");
 const roster = await loadTypescriptModule("src/components/marriagePressureGame/roster.ts");
 const progression = await loadTypescriptModule("src/components/marriagePressureGame/progression.ts");
+const growth = await loadTypescriptModule("src/components/marriagePressureGame/growth.ts");
 
 function start(mode = "child", difficulty = "realistic", seed = 20260920) {
   return gameReducer(createInitialState(), {
@@ -411,7 +412,7 @@ test("v1 saves migrate without preserving the old ending meaning", () => {
   legacy.phase = "ended";
   legacy.ending = "depressed";
   const restored = validateSave(legacy);
-  assert.equal(restored.version, 4);
+  assert.equal(restored.version, 5);
   assert.equal(restored.nextGenStress, 0);
   assert.equal(restored.ending, "burnout");
   assert.equal(restored.startAge, 26);
@@ -425,7 +426,7 @@ test("v2 saves replace the cat candidate and gain age fields", () => {
   delete legacy.marriedAtTurn;
   delete legacy.parenthoodAtTurn;
   const restored = validateSave(legacy);
-  assert.equal(restored.version, 4);
+  assert.equal(restored.version, 5);
   assert.equal(restored.candidateId, "nana7mi");
   assert.equal(restored.startAge, 26);
 });
@@ -581,7 +582,7 @@ test("new quarterly age and genuine v3 saves retain separate time scales", () =>
   const old = { ...state, version: 3 };
   for (const key of ["familyReserve", "monthsPerTurn", "understanding", "chemistry", "matchClosed", "datingFeedback", "lifestyle", "budgetAgreed", "moneyStrainTurns", "burnoutTurns", "conflictTurns", "recoveryGranted", "partnerNote"]) delete old[key];
   const migrated = validateSave(old);
-  assert.equal(migrated.version, 4);
+  assert.equal(migrated.version, 5);
   assert.equal(getAgeAtTurn(migrated), state.startAge + 8);
   assert.equal(migrated.burnoutTurns, 0);
   assert.deepEqual(validateSave(migrated), migrated);
@@ -731,4 +732,159 @@ test("legacy draft aliases deduplicate and narrative names follow the real portr
   assert.deepEqual(restored.log, ["十六萤来到饭桌", "莉蔻已经翻篇"]);
   assert.equal(gameReducer(restored, { type: "candidate", id: "izayoi" }).candidateId, "izayoi");
   assert.equal(validateSave({ ...restored, candidateOptions: ["izayoi", "izayoi"] }), null);
+});
+
+
+test("growth is affordable, persistent across matches and independent of affection", () => {
+  const poor = situation({ savings: 0, meetings: 2 });
+  assert.ok(getAvailableChildActions(poor).includes("exercise"));
+  for (const id of ["groom", "hobby", "study", "overgive"]) {
+    assert.ok(!getAvailableChildActions(poor).includes(id));
+    assert.equal(gameReducer(poor, { type: "child-action", id }), poor);
+  }
+  const trained = childYear(situation({ stage: "single", meetings: 0, relation: 4 }), "exercise");
+  assert.equal(trained.fitness, 50);
+  assert.equal(trained.relation, 4);
+  const groomed = childYear(trained, "groom");
+  assert.equal(groomed.grooming, 64);
+  const again = childYear(groomed, "hobby");
+  assert.equal(again.grooming, 58);
+  const draft = childYear(again, "next");
+  const replaced = gameReducer(draft, { type: "candidate", id: draft.candidateOptions[0] });
+  assert.equal(replaced.fitness, again.fitness);
+  assert.equal(replaced.interests, again.interests);
+  assert.equal(replaced.relationshipBalance, 65);
+  assert.ok(validateSave(replaced));
+});
+
+test("fitness buffers subsequent quarters and interests improve actual sharing", () => {
+  const low = childYear(situation({ fitness: 50 }), "boundary");
+  const high = childYear(situation({ fitness: 60 }), "boundary");
+  assert.equal(high.stress, low.stress - 2);
+  const plain = childYear(situation({ interests: 40, relation: 40 }), "chat-share");
+  const rich = childYear(situation({ interests: 60, relation: 40 }), "chat-share");
+  assert.equal(rich.relation, plain.relation + 3);
+  const before = situation({ career: 58 });
+  const learned = childYear(before, "study");
+  assert.ok(household.getHouseholdBudget(learned).income > household.getHouseholdBudget(before).income);
+});
+
+test("self improvement affects borderline attraction but never overrides refusal", () => {
+  const base = situation({ stage: "chatting", meetings: 1, relation: 42, mutualIntent: 55, chemistry: 44 });
+  assert.equal(childYear(base, "meet-aa").matchClosed, true);
+  const prepared = { ...base, grooming: 80 };
+  assert.equal(childYear(prepared, "meet-aa").stage, "dating");
+  const poorFit = { ...prepared, chemistry: 20, fitness: 100, interests: 100, career: 100 };
+  assert.equal(childYear(poorFit, "meet-aa").matchClosed, true);
+  const refused = childYear({ ...poorFit, matchClosed: true }, "exercise");
+  assert.ok(refused.matchClosed);
+  assert.ok(!getAvailableChildActions(refused).includes("meet-aa"));
+  assert.equal(progression.canConfirmDating({ ...refused, chemistry: 100, meetings: 8, relation: 100, mutualIntent: 100 }), false);
+  assert.equal(growth.getAttractionBonus({ ...base, fitness: 100, grooming: 100, interests: 100, career: 100 }), 10);
+});
+
+test("treating is not overgiving; repeated self abandonment has an explicit cost", () => {
+  const before = situation({ meetings: 2 });
+  const aa = childYear(before, "meet-aa");
+  const treat = childYear(before, "meet");
+  assert.equal(aa.relationshipBalance, 65);
+  assert.equal(treat.relationshipBalance, 65);
+  let s = childYear(before, "overgive");
+  assert.equal(s.relationshipBalance, 49);
+  assert.equal(s.relation, before.relation);
+  assert.ok(s.autonomy < before.autonomy);
+  s = childYear(s, "overgive");
+  assert.equal(s.relationshipBalance, 33);
+  assert.ok(s.relation < before.relation);
+  assert.ok(!getAvailableChildActions(s).includes("simple-wedding"));
+  assert.equal(progression.getProgressionGuide(s).suggested, "relationship-boundary");
+  assert.ok(s.log.some(line => line.includes("长期落在一方")));
+});
+
+test("boundary repair needs reciprocal engagement and preserves an exit", () => {
+  const s = situation({ meetings: 3, understanding: 50, relationshipBalance: 25 });
+  const repaired = childYear(s, "relationship-boundary");
+  assert.equal(repaired.relationshipBalance, 49);
+  assert.ok(repaired.autonomy > s.autonomy);
+  assert.ok(getAvailableChildActions(repaired).includes("simple-wedding"));
+  const disconnected = childYear({ ...s, relation: 20, mutualIntent: 20, stage: "married" }, "relationship-boundary");
+  assert.equal(disconnected.relationshipBalance, 31);
+  assert.match(disconnected.growthNote, /还没有答应/);
+  assert.ok(getAvailableChildActions(disconnected).includes("separate"));
+  const ended = childYear(disconnected, "separate");
+  assert.equal(ended.phase, "ended");
+  assert.equal(ended.ending, "runaway");
+});
+
+test("wealth cannot cancel imbalance and caring partners respect time for growth", () => {
+  const strained = situation({ stage: "married", savings: 120, relationshipBalance: 20, relation: 70, mutualIntent: 70 });
+  const neglect = childYear(strained, "work");
+  const stable = childYear({ ...strained, relationshipBalance: 65 }, "work");
+  assert.ok(neglect.relation < stable.relation);
+  assert.ok(neglect.mutualIntent < stable.mutualIntent);
+  const supported = childYear({ ...strained, relationshipBalance: 65 }, "exercise");
+  assert.equal(supported.relation, strained.relation + 2);
+  const repaired = childYear({ ...strained, understanding: 50 }, "build-home");
+  assert.ok(repaired.relationshipBalance > strained.relationshipBalance);
+});
+
+test("growth caps, snapshots and v4 migration survive save/load without resets", () => {
+  for (const id of ["exercise", "groom", "hobby", "study"]) {
+    const state = situation({ fitness: 99, grooming: 99, interests: 99, career: 99 });
+    const result = resolveGameAction(state, { type: "child-action", id });
+    assert.ok(validateSave(result.state));
+    assert.deepEqual(validateSave(JSON.parse(JSON.stringify(result.state))), result.state);
+    assert.ok(result.steps[0].changes.some(c => ["fitness", "grooming", "interests", "career"].includes(c.key)));
+  }
+  const old = { ...situation({ stage: "married", turn: 9, savings: 23 }), version: 4 };
+  for (const key of Object.keys(growth.GROWTH_DEFAULTS)) delete old[key];
+  const migrated = validateSave(old);
+  assert.equal(migrated.version, 5);
+  for (const key of ["turn", "stage", "savings", "relation", "rng"]) assert.equal(migrated[key], old[key]);
+  assert.equal(migrated.fitness, 40);
+  for (const patch of [{ fitness: 101 }, { grooming: -1 }, { interests: NaN }, { relationshipBalance: 2.5 }, { growthNote: null }]) assert.equal(validateSave({ ...migrated, ...patch }), null);
+  const missing = { ...migrated }; delete missing.fitness;
+  assert.equal(validateSave(missing), null);
+});
+
+
+test("unresolved imbalance cannot receive a happy household ending", () => {
+  const s = situation({ stage: "married", savings: 100, stress: 10, relation: 95, mutualIntent: 95, relationshipBalance: 20 });
+  assert.equal(getEnding(s).id, "hollow");
+  assert.equal(getEnding({ ...s, relationshipBalance: 65 }).id, "happy");
+});
+
+test("mixed growth and relationship choices complete deterministic legal campaigns", () => {
+  for (const mode of ["child", "parent", "duel"]) for (const difficulty of ["gentle", "realistic", "holiday"]) for (let seed = 1; seed <= 30; seed++) {
+    const run = () => {
+      let s = start(mode, difficulty, seed);
+      let r = seed;
+      for (let n = 0; n < 160 && s.phase !== "ended"; n++) {
+        r = (r * 1664525 + 1013904223) >>> 0;
+        const actions = s.phase === "candidate" ? s.candidateOptions : s.activeActor === "parent" ? getAvailableParentActions(s) : getAvailableChildActions(s);
+        const action = { type: s.phase === "candidate" ? "candidate" : `${s.activeActor}-action`, id: actions[r % actions.length] };
+        const next = gameReducer(s, action);
+        assert.notEqual(next, s);
+        assert.ok(validateSave(next), `${mode}/${difficulty}/${seed}/${n}`);
+        s = next;
+      }
+      assert.equal(s.phase, "ended");
+      return s;
+    };
+    assert.deepEqual(run(), run());
+  }
+});
+
+
+test("established relationships do not lose consent when a haircut wears off", () => {
+  const borderline = situation({ stage: "chatting", meetings: 1, relation: 42, mutualIntent: 55, chemistry: 44, grooming: 64 });
+  const dating = childYear(borderline, "meet-aa");
+  assert.equal(dating.stage, "dating");
+  const later = { ...dating, grooming: 40, fitness: 40, interests: 40, career: 40, relation: 78, mutualIntent: 80, stress: 20 };
+  const continuing = childYear(later, "meet-aa");
+  assert.equal(continuing.matchClosed, false);
+  assert.equal(continuing.stage, "dating");
+  assert.ok(continuing.relation >= later.relation);
+  assert.ok(continuing.mutualIntent >= later.mutualIntent);
+  assert.ok(progression.canMarry(continuing));
 });

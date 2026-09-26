@@ -269,7 +269,7 @@
 
 .nameField {
   display: grid;
-  grid-template-columns: auto minmax(150px, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   margin-top: 16px;
@@ -277,9 +277,12 @@
   border: 1px solid var(--line);
   background: #ebe5da;
 }
-.nameField > span { font-size: 13px; font-weight: 900; }
+.nameField > label { font-size: 13px; font-weight: 900; }
+.nameControls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.nameControls button { min-height: 42px; padding: 0 10px; color: var(--teal); border: 1px solid #b7c5ba; border-radius: 4px; background: #fffdf8; font-size: 12px; white-space: nowrap; }
+.nameControls button:hover { background: #e0ece5; }
 .nameField input { min-width: 0; height: 42px; padding: 0 12px; color: var(--ink); border: 1px solid #c8bdae; border-radius: 4px; background: #fffdf8; font-size: 15px; font-weight: 800; }
-.nameField small { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.nameField small { grid-column: 1 / -1; color: var(--muted); font-size: 10px; line-height: 1.45; }
 
 .startRow { display: flex; align-items: flex-end; gap: 12px; margin-top: 20px; }
 .startRow label { display: flex; min-width: 170px; flex: 1; flex-direction: column; gap: 7px; color: var(--muted); font-size: 10px; font-weight: 800; }
@@ -688,7 +691,10 @@
   .game *, .game *::before, .game *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-.actionTabs { display: flex; gap: 22px; border-bottom: 1px solid #60716b; }
+.actionTabs { display: flex; gap: clamp(8px, 2vw, 22px); border-bottom: 1px solid #60716b; }
+.growthCost { margin-top: 6px; color: #f0d496; font-size: 11px; font-style: normal; }
+.relationshipSituation { grid-column: 1 / -1; margin: 0; padding: 8px 0; color: #d0dcd4; font-size: 12px; line-height: 1.6; }
+.relationshipSituation strong { display: block; margin-bottom: 3px; color: #f0d496; }
 .playArea { display: contents; }
 .profileMore { margin-top: 16px; }
 .profileMore summary, .eventDetails summary { padding: 10px 0; color: var(--teal); cursor: pointer; font-size: 13px; font-weight: 700; }
@@ -743,7 +749,8 @@
   .profileCopy h2 { font-size: 24px; }
   .profileCopy { padding: 14px; }
   .logList { min-height: 0; max-height: 130px; }
-  .actionTabs { gap: 18px; }
+  .actionTabs { gap: 10px; }
+  .actionTabs small { display: none; }
   .actionTabs button { font-size: 13px; }
   .profilePanel { align-items: start; }
   .profilePortrait { height: 100%; }

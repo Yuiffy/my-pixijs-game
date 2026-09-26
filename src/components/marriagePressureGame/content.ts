@@ -182,6 +182,12 @@ export const ECONOMY_EVENTS: EconomyEvent[] = [
 ];
 
 export const CHILD_ACTIONS: ActionDefinition<ChildActionId>[] = [
+  { id: "exercise", title: "规律运动", detail: "坚持散步或训练，积累体能、缓解压力。", hint: "免费；体能积累，减压；达到 60 后每季再减压 2" },
+  { id: "groom", title: "理发，整理仪容", detail: "发型合适、衣服整洁，见面更从容。", hint: "花费 2；改善初见印象，额外状态每季回落" },
+  { id: "hobby", title: "爱好与朋友", detail: "丰富日常，让聊天有自己的故事。", hint: "花费 1；生活内容积累，减压；达到 60 后分享更自然" },
+  { id: "study", title: "学技能，找机会", detail: "投入学习，争取更好的工作与收入。", hint: "花费 4；事业提升，压力略增" },
+  { id: "relationship-boundary", title: "谈清彼此的边界", detail: "说清预算、各自的时间和分工，观察对方是否愿意调整。", hint: "恢复自主；修复效果取决于双方相处，不能单方面保证" },
+  { id: "overgive", title: "算了，这次都依对方", detail: "取消自己的安排，再包下额外开销，暂时不必争执。", hint: "压力 −8、花费 8；自主 −10、相处平衡 −16；不会买到爱意" },
   { id: "chat-listen", title: "微信 · 接着对方的话聊", detail: "见面前后都可以：认真回应最近的日常，留空间让对方表达。", hint: "增加了解；没有回应时不反复追问" },
   { id: "chat-share", title: "微信 · 分享我的日常", detail: "说说自己的爱好、生活和打算，也给对方了解我的机会。", hint: "认识真实的彼此；更容易看清有没有兴趣" },
   { id: "chat-checklist", title: "见面前把条件问清", detail: "直接问城市、收入与婚育时间表，快速确认重要分歧。", hint: "了解更快；刚认识就连环追问可能让人退缩" },
