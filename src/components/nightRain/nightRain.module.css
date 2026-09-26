@@ -82,3 +82,20 @@
 @media (prefers-reduced-motion: reduce) { .root *, .root *::before { animation: none !important; transition: none !important; } }
 
 .lookSettings { display: grid; gap: 14px; margin-top: 16px; font-size: 13px; }.lookSettings label { display: flex; justify-content: space-between; align-items: center; gap: 12px; }.lookSettings select { font: inherit; background: #1b3037; color: #f6eedb; border: 1px solid #d9c49888; padding: 7px 14px; }.lookSettings select:focus-visible { outline: 2px solid #ebc184; outline-offset: 3px; }
+
+/* World text is sparse; clear explanations belong to the companion. */
+.message { top: auto; bottom: 27%; left: 50%; right: auto; transform: translateX(-50%); width: min(680px, 86%); max-width: none; padding: 12px 22px; border: 0; background: linear-gradient(90deg, transparent, #12242ae8 20%, #12242ae8 80%, transparent); text-align: center; font-size: clamp(14px, 1.3vw, 18px); line-height: 1.8; text-shadow: 0 2px 5px #000; }
+.inscription { font-family: Georgia, "Noto Serif SC", serif; letter-spacing: .12em; color: #eeddbd; }
+.discovery { bottom: 35%; font-size: 20px; letter-spacing: .2em; }
+.subtitle { left: 50%; right: auto; transform: translateX(-50%); bottom: 90px; width: min(660px, 88%); max-width: none; text-align: center; border: 0; background: linear-gradient(90deg, transparent, #132930ed 15%, #132930ed 85%, transparent); animation: none; }
+.subtitle p { font-size: 15px; line-height: 1.8; }
+@media (max-width: 700px) { .message { bottom: 47%; font-size: 13px; padding: 8px 12px; } .subtitle { bottom: 250px; padding: 8px 12px; } .subtitle p { font-size: 12px; } .interact { bottom: 300px; } .actions { grid-template-columns: repeat(2, 66px); } .guideStatus { bottom: 180px; } }
+@media (max-height: 520px) { .subtitle { bottom: 72px; width: 70%; max-width: 580px; } .subtitle p { font-size: 12px; } .message { bottom: 40%; } .mobile .actions { display: grid; grid-template-columns: repeat(4, 52px); } .mobile button { padding: 8px 4px; font-size: 10px; } }
+
+.flask { position: absolute; left: 28px; bottom: 70px; display: flex; align-items: center; gap: 12px; min-width: 148px; text-align: left; background: linear-gradient(100deg, #15292cf5, #15292c44) !important; color: #bce4cf !important; border-color: #97b6a255 !important; }
+.flask svg { width: 32px; height: 48px; }.flask span { display: grid; gap: 3px; }.flask b { font-size: 11px; font-weight: 400; color: #dbdcc7; }.flask strong { font-size: 23px; font-weight: 400; }.flask small { font-size: 12px; }.flask em { font-size: 10px; font-style: normal; }.root .flask:disabled { opacity: .8; cursor: default; }
+.recorded { position: absolute; right: 28px; bottom: 72px; font-size: 12px; color: #e8d5a2; background: #162d32cc; padding: 8px 12px; pointer-events: none; }
+@media (max-width: 700px) { .flask { left: 12px; bottom: 155px; min-width: 115px; padding: 8px !important; gap: 8px; } .flask svg { width: 25px; height: 38px; } .flask strong { font-size: 18px; } .flask em { display: none; } .recorded { right: 12px; bottom: 240px; } }
+@media (max-height: 520px) { .flask { bottom: 95px; left: 14px; min-width: 110px; padding: 6px !important; } .flask svg { width: 22px; height: 30px; } .flask strong { font-size: 16px; } .flask em { display: none; } }
+
+.mapLegend { display: block; color: #d4c8ab; font-size: 12px; line-height: 1.9; }

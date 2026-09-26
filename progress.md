@@ -3008,6 +3008,79 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 最终隔离check和生产build顺序通过（51页，保持lint/typecheck，仅既有RPG警告）。17个Hush源文件／路由与成功构建逐一SHA256一致，tmp/hush-skins-source-validation.json。3879已切换.next-hush-skins-release，保留服务与验证工作树。
 - 生产静音专项再次通过三皮肤切换／存档／跟踪／整晚／重玩及手机，并完成七海第三晚到微信来信，UI发送者正确且无partner原始角色标记泄漏。11张生产图全部像素检查及目检，errors为空；通用客户端静音系统Chrome1图非黑并目检。当前必要实现完成；皮肤是低多边形Q版改编，后续可据真人反馈细化造型。本轮皮肤未提交/push。
 
+### 2026-09-26 · 雨夜弹反／防御与翻滚修订完成
+
+- 用户要求F动作更自然，轻按弹反／长按防御，并修复翻滚钻地。F／L、手柄LB、触屏统一：按下立即0.25秒弹反，继续按住架伞，松手失去保护并收伞。全身准备、拨伞、架势、格挡后压和破防失衡使用独立关键姿势。正面格挡扣体力与15%血量，体力不足破防0.9秒并承受60%伤害；背击与红扫绕过防御。举伞慢走／慢回体，暂停Alt清除持有态，触屏首帧前取消也不延迟出招。
+- 翻滚改腰腹枢轴、收腿抱伞、缩身翻越和展开落脚；可见模型包围盒贴地修正，隐藏特效不参与。原0.64秒位移／无敌规则保留。手机精灵字幕上移避让新增防御按钮。
+- 41项规则测试通过；隐藏静音系统Chrome+虚拟Pointer Lock／标准手柄／CDP触屏验证键盘轻重按、释放、Alt暂停、真实敌人格挡到破防再弹反、触屏长按与取消。开发和生产各12图像素检查，生产12图全部逐图目检，errors为空，tmp/night-rain-defense-production/report.json。全程不抢鼠标、不打开前台窗口、不刷新用户标签页。
+- 主目录check被并行hypeHarbor源文件lint错误挡住，未修改他人文件。既有night-rain-validation隔离目录同步雨夜源码后顺序check／build通过，保留Next内ESLint和类型检查。12个源码／路由文件与构建LF归一化SHA256一致，tmp/night-rain-defense-source-validation.json；只收回本轮验证目录临时types include。
+- 本地3871已更新.next-night-rain-defense-build，服务PID150908，生产全专项通过。验证工作树仍运行服务，不可归档。本轮未提交或部署公网；实体手柄／主观手感由真人试玩确认。
+
+
+### 2026-09-26 · 雨夜雨灯、药瓶与西寺回环
+
+- 当前 goal：补全存档点与喝药回血，允许扩图，仔细设计魂系式空间回环。三处雨灯（中庭、莲池、摆渡）记录复活位置、即时本机保存、恢复生命／体力／有限药瓶，普通敌人重生且首领／奖励／门状态保留。R／手柄 X／触屏喝药，左下常驻瓶形HUD，实际抬瓶对准嘴；满血与空瓶不浪费，恢复有前摇且能打断。所有雨灯支持整备，含手柄十字键上。
+- 西侧先在暗巷见闭水门，再从望台过悬钟桥进入残钟雨寺，击败守钟客获得第四瓶容量；百灯石阶降到莲池雨灯，从内侧开门返回暗巷。两扇门独立即时保存，西环返程约54.4米缩至13.9米。东侧运河摆渡庵提供首领外补给。扩充寺院叠檐、桥钟、灯列与莲池，抬高避雨庵屋顶留镜头空间。设计详见docs/night-rain-world.md。
+- 雨灯基座新增实体碰撞，导航／复活点在旁边，交互视线只忽略目标自身，不绕过其他墙。旧版六敌人档迁移追加两敌人并保留血量药瓶与击杀；原先站在无碰撞中庭灯中的旧档仅移到灯旁。修复精灵过楼梯拐角后把玩家隔在栏杆另一侧，加入转角等待和台阶边缘导航余量。细雨灯不再以整块高墙挤压相机。
+- 地图改主要区域标签、已遇见的雨灯与两门状态；普通模式不提前显示未拾取物，保留克制铭文，只有宝宝精灵解释。HUD、地图、死亡界面统一归灯与近道计数。
+- 46项规则测试通过；后台静音系统Chrome、虚拟Pointer Lock、正常输入跑通新西环／三灯／喝药／刷新／首领实际造成死亡／摆渡复活，以及原主线、两个旧支路、精灵引导、双模式叙事、首领与结尾。新地图16图、原旅程18图均像素检查并逐张目检，errors为空。证据tmp/night-rain-world和tmp/night-rain-world-journey。未操作用户标签页和桌面鼠标。
+- 复用night-rain-validation检验工作树，只同步雨夜源码；源文件ESLint已通过，顺序完整check已通过，生产build进行中（保持Next lint/typecheck）。主工作区其他游戏的未提交改动保留。尚未更新3871，未提交或公网部署。
+
+- 最终隔离完整check与生产build顺序通过，生成51页，保留Next ESLint／类型检查，仅既有RPG警告。12个雨夜源码／入口文件与成功构建逐一LF归一化SHA256一致，证据tmp/night-rain-world-source-validation.json。
+- 本地3871已切换.next-night-rain-world-build（PID156712）。最终生产新地图16图与防御／翻滚12图全部像素检查并逐张目检，两个报告errors为空：tmp/night-rain-world-production/report.json、tmp/night-rain-world-defense/report.json。验证新雨灯手柄整备、保存／加载、真实死亡复活、药瓶、西寺回环，以及F轻按弹反／长按防御、虚拟LB和触屏取消；翻滚五阶段完成下蹲、过肩、翻转、展开、落脚且模型保持地面以上。
+- 全程隐藏、静音、虚拟输入，未操作用户标签页或桌面鼠标。本轮未提交／推送／公网部署；night-rain-validation仍承载3871服务，需保留。必要实现及验证已完成。
+
+- 2026-09-26 发布检查：基于origin/master的独立night-rain-companions工作树顺序check/build通过（53页、Next lint/typecheck启用），46项雨夜规则通过；本次仅提交雨夜动作、防御、叙事、雨灯补给与西寺扩图。
+
+### 2026-09-26 · 雨夜发布与旅伴重新塑形
+
+- 用户授权commit/push；基于origin/master的独立night-rain-companions工作树顺序check/build通过（53页）与46项规则通过后，将既有战斗、F防御、翻滚、魂系叙事、雨灯补给和西寺回环提交为687dbfc并成功push origin/master。主目录其他任务改动保留。
+- 按仓库饼干岁原图和栞栞立绘怀抱海獭参考，重做圆饼／皇冠／巧克力斑块／细手脚，以及奶咖身体／奶白圆脸／粉色贝壳／短爪。去除误加猫耳、紫色獭身与菱形饰物。几何可独立复用；补眨眼、说话嘴型、摆手脚、抱贝壳与尾巴轻摆，降低漂浮幅度并平滑转向。
+- 源码ESLint、完整check通过。正面与45度造型棚已目检；静音隐藏系统Chrome专项完成合法带路到雨灯、两皮肤切换、刷新保存、宝宝模式开关与390px布局。5张最终游戏截图像素检查／逐张目检，errors为空。详情docs/night-rain-companions.md。生产build与最终发布收尾中。
+
+- 造型最终顺序完整check／生产build通过（53页、Next lint/typecheck启用）。12份雨夜源码与成功构建逐一归一化SHA256一致，tmp/night-rain-companion-source-validation.json。生产专项5图全部像素检查并逐张目检，errors为空；共享游戏客户端亦使用系统Chrome／静音／虚拟Pointer Lock冒烟通过，1图非黑已目检。
+- 3871已切到night-rain-companions工作树的.next-night-rain-companions-release，PID124896；未刷新用户页面。该工作树仍承载服务，其node_modules引用night-rain-validation，两个工作树均需保留。主共享目录不移动HEAD，避免干扰其他任务；发布提交在codex/night-rain-companions分支。
+
+### 2026-09-26 · 雨夜旧城四项试玩反馈验收完成
+
+- 中庭首次点灯只记录复活点并立即保存，不补血、不补药、不重置敌人；之后再次交互免费休息，装备强化仍单独收费。只保留中庭雨灯，寺前/运河旧灯改为残灯碑记；v2 旧复活点迁移到中庭并保留资源、位置与敌人状态。
+- 敌人全身抬手、蓄力、挥出、接触与收招使用模拟时钟连续姿态，保留原攻击判定时间；守卫高举、快刀侧切、铁伞突刺/重击/横扫各有轮廓，修正突刺伞尖与锁定视角遮挡。两扇近路门增加内侧绞盘、门柱、棘爪、链条与升门动作，外侧背板不可操作。
+- 第一幕完成后可继续探索，敌人、钱、收集和近路进度保留；晚饭不可重复领取，继续后保存/刷新仍在探索。桌面和 390px 手机结局按钮均验证。
+- 最终 51/51 NightRain 规则测试通过；修改源码 ESLint、完整 pnpm run check → pnpm run build 顺序通过，Next ESLint/类型检查启用，53 页生成，仅既有 overworldRpg 未使用导入警告。13 份 NightRain 源码与成功构建 LF 归一化 SHA256 一致：tmp/night-rain-refinements-source-validation.json。
+- 静音后台系统 Chrome 正式构建验收：tmp/night-rain-refinements-production-world/report.json（22 图），tmp/night-rain-refinements-production-journey/report.json（6 图），errors=[]；全部逐张打开检查且通过像素检查。敌人逐阶段 15 图、开发完整流程 20 图及共享客户端 1 图也已目检。桥上截图等待相机稳定后重拍正常。虚拟 Pointer Lock/手柄、正常战斗和移动输入，无桌面鼠标/焦点操作。
+- 本地 3871 已切到 companions 工作树 .next-night-rain-refinements-release，PID 158724，HTTP 200；自有 3885 开发服务已停止。保留 companions 与提供 node_modules 的 validation 工作树。主目录其他任务改动未覆盖。此前 687dbfc/9fde57e 已推送；本轮四项调整保留为本地未提交改动，未公网部署。当前无剩余必要修复；地图扩建留待用户下一步讨论。
+### 2026-09-26 · 加班夜生活扩展发布与锁定鼠标视角防跳
+
+- 用户授权把生活扩展commit/push，并反馈锁定鼠标后慢慢转头会突然跳到另一个角度。代码检查发现movementX/Y不经校验直接进入相机；注入720px异常位移在旧3879复现103.13度瞬转。现只在Pointer Lock路径丢弃单轴超过256px的异常样本，拒绝非有限值；正常多次快速采样可累计转过180度，右键/触屏绝对坐标拖动不受此阈值限制。锁定状态仅认当前canvas，切换时清掉旧拖拽坐标。未在用户设备上采集原始鼠标事件，防护机制已通过定向注入验证。
+- 连同此前随机开场/七餐品/完整桶面准备/猫咪与家务/主播洗手间往返、时机轨道滚动条修复一起发布。原38项规则加新增相机回归共39/39通过；全量生活浏览器20图已在上一轮目检。当前生产相机专项验证慢转/异常/快速转头/暂停重入/右键/自动行走手动接管/真触屏，3图均像素检查并逐张目检，errors=[]，tmp/hush-camera-after/report.json。共享客户端静音系统Chrome额外冒烟1图非黑已目检。
+- 复用空闲hush-skins-publish工作树，基于origin/master新建codex/hush-household-camera，保护主共享目录全部并行改动。本地离线依赖安装，顺序完整pnpm run check与pnpm run build通过，保留Next ESLint/类型检查，仅既有RPG警告。19份Hush源文件与构建逐一LF归一化SHA256一致，tmp/hush-camera-source-validation.json。测试全程静音/禁用TTS/虚拟Pointer Lock，未控制用户鼠标。
+
+### 2026-09-26 · 上船！应援事务所首版发布
+
+- 新增 /game/hype-harbor：Manila 改编虚拟主播投资桌游，四位主播选三位、三次骰子推进、2–4 人 AI／同机多人、三组阵容、股份／应援／保本险、自动存档及手机快捷操作。认知民取代重复的单船救场与后援站；切片佬保留第二次停 13 免费上船或留守、第三次停 13 分固定 8 币池的取舍，五种行动同一入口。
+- 按本轮反馈把认知条件写成「至少 1 位主播未达标／至少 2 位主播未达标／3 位主播都未达标」，解释结算时未到 15 格即未达标；选项、概率、记录和账单统一直述条件，不再使用「小场」。首轮费用 3／2／1，命中到账 5／6／8。
+- 投流入口内新增助推／黑料选择，均为 2 币与一次行动，分别前进／后退 2 格；低端截到 0，0 格禁止继续黑料，已达标船不允许拖回。显示操作后的格数和概率；助推／黑料不直接触发切片。AI 综合自己的应援／股份／认知／切片回报及黑料对对手投资的影响；旧档可直接继续。
+- 28/28 规则测试、270 局完整模拟通过，模拟中实际选择 12 次黑料。隐藏静音系统 Chrome 全流程通过，21 张整页截图全部像素检查与逐张目检，覆盖认知、切片、正负投流、反向应对、0/15 边界、存档、完整人机／四人同机和 390/320 手机；tmp/hype-harbor-traffic/report.json errors=[]。文本说明专项 3 图与通用客户端静音系统 Chrome 冒烟图也已检查。
+- 发布在复用的 hype-harbor-check 托管工作树进行，分支 codex/hype-harbor 已接入 origin/master a350aad（含目录日期与弹棋新提交），仅带入本游戏及目录／脚本／本进度段，保留主共享目录并行改动。完整 pnpm run check → pnpm run build 顺序通过，54/54 页生成，Next ESLint／类型检查启用，仅既有 RPG 警告。9 份游戏文件与成功构建源码逐一 SHA256 一致，12 名角色素材均在发布工作树存在；证据 tmp/hype-harbor-source-validation.json。
+- 试玩继续使用 http://127.0.0.1:3886/game/hype-harbor。用户已授权本版 commit/push；不包含联机，后续按真人反馈微调收益与对抗节奏。
+
+### 2026-09-26 · Hush Live minigame variety
+
+- Replace the shared timing track with three seeded locks (dial, wire pick, pins), two cooking games (physically toss/catch a dice-shaped rice cube or catch eggs), and optional 24-round recoil practice at the computer or sofa. Mouse, keyboard and touch inputs share the simulation clock; the kitchen pan and rice cube follow the minigame. Pause/blur/release clears held input.
+- Completed household tasks now allow sofa sleep during the streamer bathroom break, followed by the existing after-stream story; unfinished tasks remain required.
+- Validation: 49 rule tests; desktop and 320px touch completion of every variant, actual upward toss, recoil and pause release, bathroom-break sleep through the ending, short/landscape overflow checks, and real-RAF first-two-chapter progression. All browser tests muted; inspected screenshots and no console/page errors. Full check then production build passed with Next ESLint/type checking enabled.
+
+### 2026-09-26 · 潮汐港、角色皮肤与真实坠落
+
+- 前轮四项试玩调整已提交 6fe3cfa，工作分支已推送；正在同步远端主线完成本轮发布。参考重捏的饼干岁／獭獭栞此前提交为 9fde57e。
+- 新增栞栞／米汀可操作角色皮肤，帽子、发型、服饰、眼睛与配色分别参考仓库图片，标题／暂停可切换，设置与存档保留；与宝宝模式精灵独立。
+- 连续地图延伸潮汐港：0–6–10米主线通向七海潮门与黎明钟；3米阿梓戏台和4米晒网高廊两条支路可跳落回主路，港内绞盘开归灯长桥缩短重试。高廊下水巷可通行，寻路与角色使用一致的楼板侧面判定。移走侵入新战场的背景房屋并修正桥下相机。
+- 可跳过实际矮栏，走出断栏按重力落下；3.5米以内无伤，之后递增，10米致命。坠水钱袋留在最后安全落脚处；空中存档保留下降状态。滚动模型同时跟随坠落高度。
+- 七海持锚、阿梓持蛙铃杖，各三套独立前摇／收招与半血变化；红色环扫可跳，破架处决按首领伤害而非秒杀。两名客串战胜后休息不重生，敲钟奖励不重复，v3旧档保留原资源与敌人状态后扩入v4；未知未来版本拒绝加载。
+- 后台静音系统Chrome完整流程通过：tmp/night-rain-tide/report.json，14张整页图均像素检查与逐张目检，errors=[]。包含两皮肤／刷新、旧城第一幕、新区双首领与敲钟、双支路实际跳落伤害、低埠走回港口、雨灯休息与390px设置。共享技能客户端同样使用静音系统Chrome＋虚拟Pointer Lock，1张非黑截图与文本状态已检查；不操作用户鼠标／窗口。
+- 最新规则测试与发布check→build在隔离companions工作树继续，主共享目录其他任务改动和HEAD保留。
+
+- 发布验收：59/59规则通过，完整pnpm run check→pnpm run build依次成功，54页，Next ESLint/类型检查启用，仅既有RPG警告。生产构建tmp/night-rain-tide-production（14图）与tmp/night-rain-tide-production-companions（5图）全部像素检查并逐张目检，errors=[]；两精灵切换、跟随、宝宝开关与刷新也通过。19份源码／测试／文档与发布工作树LF归一化SHA256一致；构建期间行尾空格清理经TypeScript转译比较确认输出完全相同。当前无剩余必要修复。
 
 ### 2026-09-26 · RESET / 开蹬！v1 checkpoint
 
@@ -3043,3 +3116,5 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - v0.3 最终验收：完整 pnpm run check → pnpm run build 顺序通过，Next lint/typecheck 开启，52 页成功生成（游戏 26.9kB/首载 124kB），仅既有 RPG 警告。原 3888 已切至 reset-rush-check/.next-reset-rush-v3-release，生产 PID 131464，HTTP 200、v0.3 标记确认；旧 v2 PID145500 与临时 3898/PID156956、159996 已停止。
 - 正式构建专项 tmp/reset-rush-v3-production/report.json 全部通过，覆盖账号免费管理、连续扣额/完工续队列、银行券恢复、36 配置、v2 迁移、节点推进/人工排障/弃单/调整解散、390/320 触屏、全屏与确认重开；errors=[]，10 张生产截图像素检查并逐张目检。此前 21 天 UI 整局、30 规则测试和共享技能客户端已通过，无新增失败。
 - 15 份 RESET 源码/测试/文档/预览与构建工作树 LF 归一化 SHA256 一致，tmp/reset-rush-v3-verify/source-validation.json；两侧目录入口都描述时间、精力与并行开发。v2 检查点 0905899 保留，v3 本地未提交/未推送。清理了隔离工作树自动生成的 tsconfig include；共享目录其他任务与 HEAD/索引未改动。工作树继续承载试玩，不可归档。本轮必要实现与验收完成。
+
+- 用户授权直接提交远端后，v3 已提交 655fcc8。发布工作树合入 origin/master db4b21a，保留远端游戏目录分类/浏览数/日期与其他项目，只新增 RESET 条目和本游戏日期依据。合并后 30 规则测试、目标 ESLint、完整 pnpm run check → pnpm run build 顺序通过，55 页生成，Next 检查启用，仅既有 RPG 警告。15 份本游戏源/测试/文档与 655fcc8 及共享目录一致，source-publish-validation.json 已记录；相对远端仅 18 个 RESET 相关文件与目录/日期/进度发生变化。3888 继续提供已验收 v3，不中断当前试玩。

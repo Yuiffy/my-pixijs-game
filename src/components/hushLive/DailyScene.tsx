@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MEALS, offAir } from "./daily";
 import type { Runtime3D } from "./runtime3d";
+import { NoodleCup } from "./HouseholdScene";
 
 function Cube({
   p,
@@ -33,7 +34,7 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
     <group ref={group}>
       {MEALS.map((m) => (
         <group name={m.id} key={m.id}>
-          {m.id === "tea" || m.id === "dq" ? (
+          {m.id === "noodles" ? <NoodleCup runtime={r} /> : m.id === "tea" || m.id === "dq" ? (
             <>
               <mesh position={[0, 0.14, 0]} castShadow>
                 <cylinderGeometry args={[0.095, 0.065, 0.27, 20]} />
@@ -81,10 +82,10 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
             <>
               <mesh position={[0, 0.04, 0]} castShadow>
                 <cylinderGeometry
-                  args={[0.23, 0.18, m.id === "noodles" ? 0.14 : 0.07, 24]}
+                  args={[0.23, 0.18, 0.07, 24]}
                 />
                 <meshStandardMaterial
-                  color={m.id === "noodles" ? "#cf785b" : "#e9e0c9"}
+                  color="#e9e0c9"
                 />
               </mesh>
               {(m.id === "rice" || m.id === "plain") && (
@@ -190,36 +191,6 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
                     ))}
                   </group>
                 ))}
-              {m.id === "noodles" && (
-                <>
-                  <mesh position={[0, 0.115, 0]}>
-                    <cylinderGeometry args={[0.2, 0.2, 0.009, 24]} />
-                    <meshStandardMaterial color="#ae7547" />
-                  </mesh>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <mesh
-                      key={i}
-                      position={[
-                        Math.sin(i) * 0.065,
-                        0.128 + (i % 3) * 0.006,
-                        Math.cos(i) * 0.065,
-                      ]}
-                      rotation={[Math.PI / 2, 0, i]}
-                    >
-                      <torusGeometry
-                        args={[
-                          0.065 + (i % 3) * 0.012,
-                          0.006,
-                          5,
-                          16,
-                          Math.PI * 1.8,
-                        ]}
-                      />
-                      <meshStandardMaterial color="#edc77b" />
-                    </mesh>
-                  ))}
-                </>
-              )}
               <Cube
                 p={[0.29, 0.07, 0]}
                 size={[0.015, 0.012, 0.34]}
@@ -239,6 +210,8 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
 }
 export default function DailyScene({ runtime: r }: { runtime: Runtime3D }) {
   const spatula = useRef<THREE.Group>(null);
+  const wok = useRef<THREE.Group>(null);
+  const diceRice = useRef<THREE.Group>(null);
   const lamp = useRef<THREE.PointLight>(null);
   const steam = useRef<THREE.Group>(null);
   useFrame(() => {
@@ -246,6 +219,18 @@ export default function DailyScene({ runtime: r }: { runtime: Runtime3D }) {
       r.game.daily?.panel === "cook" ||
       (offAir(r.game) && r.game.daily?.after === "rice");
     const t = r.game.daily?.clock ?? 0;
+    const mini = r.game.daily?.panel === "cook" ? r.game.daily.mini : null;
+    if (wok.current) {
+      wok.current.position.x = mini ? (mini.pan - 50) * 0.006 : 0;
+      wok.current.position.y = mini?.kind === "toss" && mini.flight ? Math.max(0, 1 - mini.spin / 110) * 0.08 : 0;
+    }
+    if (diceRice.current) {
+      diceRice.current.visible = mini?.kind === "toss";
+      if (mini) {
+        diceRice.current.position.set(0.2 + ((mini.flight ? mini.x : mini.pan) - 50) * 0.006, 1.02 + mini.y * 0.006, 0);
+        diceRice.current.rotation.set(mini.spin * 0.017, mini.spin * 0.01, mini.spin * 0.014);
+      }
+    }
     if (spatula.current) spatula.current.rotation.z = cooking ? Math.sin(t * 4) * 0.3 : 0.3;
     if (steam.current) {
       steam.current.visible = cooking;
@@ -261,11 +246,22 @@ export default function DailyScene({ runtime: r }: { runtime: Runtime3D }) {
       <Cube p={[0, 0.4, 0]} size={[1.57, 0.8, 0.71]} color="#9aab94" />
       <Cube p={[0, 0.83, 0]} size={[1.63, 0.06, 0.76]} color="#d3bd9b" />
       <Cube p={[0.2, 0.87, 0]} size={[0.64, 0.035, 0.53]} color="#454d47" />
+      <group ref={wok}>
       <mesh position={[0.2, 0.915, 0]} castShadow>
         <cylinderGeometry args={[0.23, 0.19, 0.06, 24]} />
         <meshStandardMaterial color="#343d36" />
       </mesh>
       <Cube p={[0.56, 0.93, 0]} size={[0.32, 0.03, 0.045]} color="#92714e" />
+      </group>
+      <group ref={diceRice} visible={false}>
+        <Cube p={[0, 0, 0]} size={[0.16, 0.16, 0.16]} color="#e4bd60" />
+        {[-1, 0, 1].map(i => (
+<group key={i}>
+          <Cube p={[i * 0.044, 0.081, i * 0.044]} size={[0.02, 0.004, 0.02]} color="#647e45" />
+          <Cube p={[i * 0.044, -i * 0.044, 0.081]} size={[0.02, 0.02, 0.004]} color="#647e45" />
+        </group>
+))}
+      </group>
       <group ref={spatula} position={[0.23, 0.95, 0]}>
         <Cube p={[0, 0.12, 0]} size={[0.03, 0.28, 0.025]} color="#c69e6e" />
         <Cube p={[0, -0.01, 0]} size={[0.09, 0.075, 0.02]} color="#c69e6e" />

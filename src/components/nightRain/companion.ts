@@ -1,5 +1,5 @@
-import type { GameState, Vec3 } from './types';
-import { canOccupy, heightAt, LANDMARKS } from './world';
+import type { GameState, Vec3, WorldAccess } from './types';
+import { canOccupy, supportAt, interactionPoint, LANDMARKS } from './world';
 
 export type CompanionSkin = 'biscuit' | 'otter';
 export type Companion = {
@@ -31,6 +31,19 @@ routeAt: -100,
 });
 const distance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z, a.y - b.y);
 const labels: Record<string, string> = {
+  'temple-lamp': '莲池旧灯',
+'canal-lamp': '摆渡旧灯',
+'temple-flask': '刻露瓶',
+'temple-gate': '闭水门闩',
+'temple-note': '残钟铭文',
+'ferry-note': '摆渡遗签',
+  'tide-note': '潮桥刻痕',
+'harbor-gate': '归灯长桥绞盘',
+'net-cache': '风铃木匣',
+'drop-note': '风铃残笺',
+'frog-cache': '苔灯戏匣',
+'tide-seal': '七重潮门',
+'dawn-bell': '黎明钟',
   laptop: '旅馆的笔记本',
 courtyard: '中庭雨灯',
 'alley-cache': '晾衣巷的钱袋',
@@ -45,15 +58,20 @@ boss: '铁伞前的夜市入口',
 export const targetLabel = (id: string | null) => (id ? labels[id] ?? id : '下一处发现');
 export function guideTargets(s: GameState) {
   return LANDMARKS.filter(l => {
+    if (l.id === 'harbor-gate') return !s.harborGate;
+    if (l.id === 'dawn-bell') return s.defeatedGuests.includes('nana-tide') && !s.collected.includes(l.id);
+    if (l.id === 'temple-gate') return !s.templeGate;
     if (l.id === 'shortcut') return !s.shortcut;
-    if (l.id === 'food') return s.bossDefeated;
-    if (l.id === 'courtyard') return true;
+    if (l.id === 'food') return s.bossDefeated && !s.collected.includes('food');
+    if (l.kind === 'rest') return true;
     return !s.collected.includes(l.id);
   });
 }
 export function mainTarget(s: GameState): string {
   if (!s.collected.includes('laptop') && s.checkpoint === 'room') return 'laptop';
   if (s.checkpoint === 'room') return 'courtyard';
+  if (s.collected.includes('food') && !s.collected.includes('dawn-bell')) return !s.harborGate ? 'harbor-gate' : !s.defeatedGuests.includes('nana-tide') ? 'tide-seal' : 'dawn-bell';
+  if (s.collected.includes('food')) return LANDMARKS.find(l => ['cache', 'charm', 'flask'].includes(l.kind) && !s.collected.includes(l.id))?.id ?? 'courtyard';
   if (s.bossDefeated) return 'food';
   if (!s.charm) return 'roof-charm';
   if (!s.shortcut) return 'shortcut';
@@ -65,19 +83,23 @@ export function speak(c: Companion, s: GameState, text: string, seconds = 7) {
 
 // Navigation uses the same radii, ramp heights and closed gate as the player.
 // The guide never cuts across a wall or takes an aerial shortcut over a courtyard.
-export function walkSegment(a: Vec3, b: Vec3, shortcut: boolean): boolean {
+export function walkSegment(a: Vec3, b: Vec3, shortcut: WorldAccess, maxStep = 0.25): boolean {
   const count = Math.max(1, Math.ceil(distance(a, b) / 0.15));
   let { y } = a;
   for (let i = 1; i <= count; i += 1) {
     const t = i / count; const x = a.x + (b.x - a.x) * t; const z = a.z + (b.z - a.z) * t;
     if (!canOccupy(x, z, y, shortcut, 0.36)) return false;
-    y = heightAt(x, z) ?? y;
+    const nextY = supportAt(x, z, y + 0.6) ?? y;
+    // Navigation leaves clearance at stair edges; followers do not hit exact
+    // mathematical waypoints and must not be sent over the step-height limit.
+    if (Math.abs(nextY - y) > maxStep) return false;
+    y = nextY;
   }
   return Math.abs(y - b.y) < 0.6;
 }
-export function findPath(start: Vec3, destination: Vec3, shortcut: boolean): Vec3[] {
+export function findPath(start: Vec3, destination: Vec3, shortcut: WorldAccess): Vec3[] {
   const step = 0.5;
-  const key = (x: number, z: number) => `${x},${z}`;
+  const key = (x: number, z: number, y: number) => `${x},${z},${Math.round(y * 10)}`;
   const points = new Map<string, Vec3>(); const previous = new Map<string, string>();
   const costs = new Map<string, number>();
   const heap: { id: string; priority: number }[] = [];
@@ -100,10 +122,10 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: boolean): Vec
   };
   for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
     const x = Math.round(start.x / step) * step + dx * step;
-    const z = Math.round(start.z / step) * step + dz * step; const y = heightAt(x, z);
+    const z = Math.round(start.z / step) * step + dz * step; const y = supportAt(x, z, start.y + 0.6);
     if (y === null) continue;
     const p = { x, y, z }; if (!walkSegment(start, p, shortcut)) continue;
-    const id = key(x, z); points.set(id, p); costs.set(id, distance(start, p)); push(id, distance(start, p) + distance(p, destination));
+    const id = key(x, z, y); points.set(id, p); costs.set(id, distance(start, p)); push(id, distance(start, p) + distance(p, destination));
   }
   const closed = new Set<string>();
   while (heap.length && closed.size < 24000) {
@@ -120,9 +142,9 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: boolean): Vec
       return simple;
     }
     for (const [dx, dz] of [[step, 0], [-step, 0], [0, step], [0, -step]]) {
-      const x = p.x + dx; const z = p.z + dz; const next = key(x, z);
+      const x = p.x + dx; const z = p.z + dz; const y = supportAt(x, z, p.y + 0.6); if (y === null) continue; const next = key(x, z, y);
       if (closed.has(next)) continue;
-      const y = heightAt(x, z); if (y === null) continue;
+
       const q = { x, y, z }; if (!walkSegment(p, q, shortcut)) continue;
       const cost = costs.get(id)! + distance(p, q);
       if (cost >= (costs.get(next) ?? Infinity)) continue;
@@ -132,7 +154,9 @@ export function findPath(start: Vec3, destination: Vec3, shortcut: boolean): Vec
   return [];
 }
 function destinationFor(id: string): Vec3 | undefined {
-  return id === 'boss' ? { x: 4, y: 0, z: -37 } : LANDMARKS.find(l => l.id === id);
+  if (id === 'boss') return { x: 4, y: 0, z: -37 };
+  const landmark = LANDMARKS.find(l => l.id === id);
+  return landmark ? interactionPoint(landmark) : undefined;
 }
 export function recommendedTarget(c: Companion, s: GameState): string {
   return c.suggestedId && guideTargets(s).some(l => l.id === c.suggestedId) ? c.suggestedId : mainTarget(s);
@@ -140,7 +164,7 @@ export function recommendedTarget(c: Companion, s: GameState): string {
 export function leadTo(c: Companion, s: GameState, id = recommendedTarget(c, s)): boolean {
   if (!c.enabled) return false;
   const destination = destinationFor(id); if (!destination) return false;
-  const path = findPath(s.player, destination, s.shortcut);
+  const path = findPath(s.player, destination, s);
   if (!path.length) { speak(c, s, '这条路现在走不通。我们先回到宽一点的地方，再一起找路。'); return false; }
   c.position = { x: s.player.x, y: s.player.y, z: s.player.z };
   c.path = path.slice(1); c.targetId = id; c.status = 'leading'; c.routeAt = s.time;
@@ -154,7 +178,7 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
   const p = s.player;
   const moved = distance(p, c.lastPlayer); c.still = moved < 0.025 ? c.still + dt : 0; c.lastPlayer = { ...p };
   const danger = s.enemies.find(e => e.hp > 0 && e.aggro && distance(e, p) < 8);
-  const discoveries = guideTargets(s).filter(v => ['cache', 'charm'].includes(v.kind)).sort((a, b) => distance(p, a) - distance(p, b));
+  const discoveries = guideTargets(s).filter(v => ['cache', 'charm', 'flask'].includes(v.kind)).sort((a, b) => distance(p, a) - distance(p, b));
   for (const l of discoveries) {
     const seen = c.seen[l.id] ?? { nearest: Infinity, stage: 0 };
     seen.nearest = Math.min(seen.nearest, distance(p, l)); c.seen[l.id] = seen;
@@ -173,15 +197,22 @@ export function updateCompanion(c: Companion, s: GameState, dt: number) {
       c.status = 'leading'; const next = c.path[0];
       if (next) {
         const d = distance(c.position, next); const amount = Math.min(1, (dt * 2.8) / Math.max(0.001, d));
-        c.position.x += (next.x - c.position.x) * amount; c.position.z += (next.z - c.position.z) * amount;
-        c.position.y = heightAt(c.position.x, c.position.z) ?? next.y;
-        if (d < 0.15) c.path.shift();
+        const x = c.position.x + (next.x - c.position.x) * amount;
+        const z = c.position.z + (next.z - c.position.z) * amount;
+        const candidate = { x, y: supportAt(x, z, c.position.y + 0.6) ?? next.y, z };
+        // Wait at bends until the player has rounded them too. A visible guide
+        // across a railing is not a usable direction to follow.
+        if (walkSegment(p, candidate, s, 0.6)) {
+          c.position = candidate;
+          if (d < 0.15) c.path.shift();
+        } else if (!walkSegment(p, c.position, s, 0.6) && s.time - c.routeAt > 2) leadTo(c, s, c.targetId);
+        else c.status = 'waiting';
       } else {
         c.status = 'arrived'; speak(c, s, c.targetId === 'boss' ? '前面就是铁伞。留一点体力，我陪你慢慢试。' : `到了，${targetLabel(c.targetId)}就在这里。靠近后按 E 试试。`, 9);
       }
     }
   } else if (!c.targetId) {
-    const desired = { x: p.x + Math.cos(p.facing) * 1.1, y: p.y, z: p.z - Math.sin(p.facing) * 1.1 };
+    const desired = { x: p.x + Math.cos(p.facing) * 1.1, y: p.y + p.jumpHeight, z: p.z - Math.sin(p.facing) * 1.1 };
     const amount = Math.min(1, dt * 5);
     c.position.x += (desired.x - c.position.x) * amount; c.position.y += (desired.y - c.position.y) * amount; c.position.z += (desired.z - c.position.z) * amount;
   }

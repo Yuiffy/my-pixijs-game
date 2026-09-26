@@ -26,6 +26,8 @@ import { skinOf } from "./skins";
 import { SkinDetails } from "./SkinDetails";
 import DailyScene, { MealModels } from "./DailyScene";
 import { offAir } from "./daily";
+import { onBreak } from "./household";
+import HouseholdScene from "./HouseholdScene";
 
 type Vec = [number, number, number];
 type BoxProps = {
@@ -256,9 +258,9 @@ function Partner({
         ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
         : dt;
     lastAnimationTime.current = r.elapsedFrame;
-    if (headphones.current) headphones.current.visible = !offAir(r.game);
+    if (headphones.current) headphones.current.visible = !offAir(r.game) && !onBreak(r.game);
     if (towel.current) towel.current.visible = !player && offAir(r.game) && r.game.daily?.after === "shower";
-    rig.current.visible = !player || r.game.won;
+    rig.current.visible = (!player || r.game.won) && (r.game.won || !onBreak(r.game) || r.game.daily?.household.rest.stage !== "inside");
     const pos = r.game.won
       ? { x: player ? 209 : 259, y: 327 }
       : partnerPose(r.game);
@@ -272,7 +274,7 @@ function Partner({
       standingLegs.current.scale.y = (0.61 + stand * 0.24) / 0.85;
       standingLegs.current.children.forEach((leg, i) => {
         leg.rotation.x =
-          stand > 0.1 && stand < 0.95
+          (stand > 0.1 && stand < 0.95) || onBreak(r.game)
             ? Math.sin(r.game.elapsed * 9 + i * Math.PI) * 0.12
             : 0;
       });
@@ -286,6 +288,7 @@ function Partner({
       !r.game.busy;
     const wanted = r.game.won
       ? Math.atan2(-2.7 - x, 1.74 - z)
+      : onBreak(r.game) && r.game.daily ? r.game.daily.household.rest.yaw
       : near && (behavior.peek || romantic || offAir(r.game))
         ? Math.atan2(px - x, pz - z)
         : Math.PI;
@@ -633,7 +636,7 @@ function Room({
       );
     }
     if (bag.current) bag.current.visible =
-        !r.game.daily?.homemade && r.game.carry !== "food" &&
+        !r.game.daily?.homemade && (r.game.daily?.meal !== "noodles" || r.game.daily.household.noodles === "delivery") && r.game.carry !== "food" &&
         !r.game.done.includes("food") &&
         r.game.busy?.key !== "pickup-food";
     if (charger.current) charger.current.visible =
@@ -1043,6 +1046,7 @@ function Room({
       />
       <Ball at={[-5.89, 1.0, 1.64]} radius={0.045} color="#c5b085" />
       <DailyScene runtime={r} />
+      <HouseholdScene runtime={r} />
       <Hands runtime={r} />
       <GoalMarker runtime={r} />
     </>
@@ -1062,13 +1066,14 @@ function Hands({
     if (!group.current || !arm.current) return;
     const { busy } = r.game;
     const pickup =
-      busy?.key === "pickup-food" || busy?.key === "pickup-charger";
-    const placing = busy?.key === "food" || busy?.key === "charger";
+      busy?.key === "pickup-food" || busy?.key === "pickup-charger" || busy?.key === "take-noodles";
+    const placing = busy?.key === "food" || busy?.key === "charger" || busy?.key === "boil-water";
+    const chore = busy && ["cat-food", "cat-litter", "pet-cat", "pour-noodles"].includes(busy.key);
     const item = pickup
-      ? busy.key === "pickup-food"
+      ? busy.key === "pickup-food" || busy.key === "take-noodles"
         ? "food"
         : "charger"
-      : r.game.carry;
+      : chore ? "chore" : r.game.carry;
     const p = busy ? Math.min(1, busy.elapsed / busy.duration) : 0;
     group.current.visible =
       r.game.phase === "playing" &&
@@ -1085,20 +1090,26 @@ function Hands({
     const position = hold.clone();
     const rotation = camera.quaternion.clone();
     if (pickup) {
-      const spot = busy.key === "pickup-food" ? "entry" : "shelf";
+      const spot = busy.key === "take-noodles" ? "kitchen" : busy.key === "pickup-food" ? "entry" : "shelf";
       const point = lookPoint(r, spot);
       const source = new THREE.Vector3(
-        point.x,
-        spot === "entry" ? 0.58 : 0.55,
-        point.z,
+        spot === "kitchen" ? -1.02 : point.x,
+        spot === "kitchen" ? 0.865 : spot === "entry" ? 0.58 : 0.55,
+        spot === "kitchen" ? -2.08 : point.z,
       );
       const t = p * p * (3 - 2 * p);
       position.copy(source).lerp(hold, t);
       position.y += Math.sin(p * Math.PI) * 0.09;
       rotation.copy(new THREE.Quaternion()).slerp(camera.quaternion, t);
+    } else if (chore) {
+      const spot = busy.key === "cat-food" ? "cat-bowl" : busy.key === "cat-litter" ? "cat-litter" : busy.key === "pet-cat" ? "cat" : "kitchen";
+      const point = lookPoint(r, spot);
+      const target = new THREE.Vector3(point.x + 0.13, point.y + 0.16, point.z);
+      position.lerp(target, Math.sin(p * Math.PI) * 0.95);
     } else if (placing) {
-      const point = lookPoint(r, busy.key === "food" ? "table" : "charging");
+      const point = lookPoint(r, busy.key === "boil-water" ? "kitchen" : busy.key === "food" ? "table" : "charging");
       const target = new THREE.Vector3(point.x, point.y, point.z);
+      if (busy.key === "boil-water") target.set(-1.02, 0.865, -2.08);
       const t = Math.min(1, p / (busy.key === "food" ? 0.58 : 1));
       position.lerp(target, t * t * (3 - 2 * t));
       rotation.slerp(new THREE.Quaternion(), t);

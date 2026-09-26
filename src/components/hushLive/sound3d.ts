@@ -1,4 +1,6 @@
 import { offAir } from "./daily";
+import { lockSignal, Mini } from "./minigames";
+import { onBreak } from "./household";
 import { broadcast } from "./engine";
 import { worldPoint } from "./navigation";
 import type { Runtime3D } from "./runtime3d";
@@ -15,6 +17,11 @@ export class ApartmentSound {
   private mediaBeat = -1;
   private reportHits = 0;
   private reportMisses = 0;
+  private mini: Mini | null = null;
+  private miniCue = false;
+  private miniHits = 0;
+  private miniMisses = 0;
+  private miniShots = 0;
   constructor() {
     this.context = new AudioContext();
     this.master = this.context.createGain();
@@ -44,6 +51,7 @@ export class ApartmentSound {
     spatial: boolean,
     type: OscillatorType = "sine",
   ) {
+    if (gain <= 0) return;
     const ctx = this.context;
     const oscillator = ctx.createOscillator();
     const envelope = ctx.createGain();
@@ -76,6 +84,16 @@ export class ApartmentSound {
     );
     if (!enabled || s.phase !== "playing") return;
     if (s.daily) {
+      const m = s.daily.mini;
+      if (m !== this.mini) {
+        this.mini = m; this.miniCue = false; this.miniHits = 0; this.miniMisses = 0; this.miniShots = 0;
+      }
+      const cue = s.daily.panel === "lock" && lockSignal(m) > 0.87;
+      if (cue && !this.miniCue) this.tone(1300, 0.05, 0.07, false, "triangle");
+      if (m.score > this.miniHits && m.kind !== "recoil") this.tone(740, 0.05, 0.12, false);
+      if (m.misses > this.miniMisses) this.tone(140, 0.035, 0.12, false, "triangle");
+      if (m.shots > this.miniShots) this.tone(95, s.daily.volume * 0.0007, 0.06, false, "triangle");
+      this.miniCue = cue; this.miniHits = m.score; this.miniMisses = m.misses; this.miniShots = m.shots;
       const count = s.daily.messages.length;
       if (count > this.lastMessages && s.daily.unread) { this.tone(880, 0.06, 0.12, false); this.tone(1174, 0.035, 0.22, false); }
       this.lastMessages = count;
@@ -110,7 +128,7 @@ export class ApartmentSound {
     if (beat !== this.lastBeat) {
       this.lastBeat = beat;
       const { music } = broadcast(s);
-      if (s.muted <= 0 && !offAir(s)) this.tone(
+      if (s.muted <= 0 && !offAir(s) && !onBreak(s)) this.tone(
           music
             ? [261.6, 329.6, 392, 440, 392, 329.6, 293.7, 329.6][beat % 8]
             : [174, 207, 196, 220][beat % 4],

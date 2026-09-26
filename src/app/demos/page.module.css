@@ -85,8 +85,8 @@
 
 .hero {
   position: relative;
-  height: 88svh;
-  min-height: 610px;
+  height: 78svh;
+  min-height: 560px;
   max-height: 940px;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
@@ -174,11 +174,29 @@
   line-height: 1.8;
 }
 
+.heroHistory {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  color: #b8b7b1;
+}
+
+.heroHistory > svg { font-size: 13px; }
+.dateDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.dateDetails time { color: #e0ded7; font-variant-numeric: tabular-nums; }
+
 .heroActions {
   display: flex;
   align-items: center;
   gap: 22px;
-  margin-top: 34px;
+  margin-top: 24px;
 }
 
 .primaryAction,
@@ -554,6 +572,142 @@
 .projectCard:hover .textLink { color: var(--mint); }
 .trialList { border-top: 1px solid var(--line); }
 
+.groupNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--line);
+}
+
+.groupNav a {
+  padding: 8px 0;
+  color: #c8c5bf;
+  border-bottom: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.groupNav a:hover, .groupNav a:focus-visible {
+  color: var(--mint);
+  border-color: var(--mint);
+}
+
+.gameGroup {
+  scroll-margin-top: 24px;
+  padding-top: 48px;
+}
+
+.groupHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.groupHeading h3 {
+  margin: 0;
+  color: #eeeae4;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.groupHeading span { color: #797a75; font-size: 12px; }
+.gameList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.gameRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 18px;
+  min-height: 145px;
+  padding: 16px 8px 16px 0;
+  color: inherit;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  transition: background 180ms ease, padding 180ms ease;
+}
+
+.gameRow:hover, .gameRow:focus-visible {
+  z-index: 2;
+  padding-left: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.gameThumb {
+  position: relative;
+  display: grid;
+  width: 112px;
+  height: 90px;
+  place-items: center;
+  overflow: hidden;
+  color: #d9b971;
+  border-radius: 4px;
+  background: #1b2423;
+}
+
+.gameThumb > svg { font-size: 34px; }
+.gameImage { object-fit: cover; transition: transform 300ms ease; }
+.gameRow:hover .gameImage { transform: scale(1.04); }
+.gameCopy { min-width: 0; }
+.gameMeta { color: var(--mint); font-size: 11px; font-weight: 800; }
+.gameCopy h3 { margin: 6px 0; color: #f4f2ee; font-size: 19px; line-height: 1.25; }
+.gameCopy p { margin: 0; color: #a5a39e; font-size: 13px; line-height: 1.7; }
+
+.gameEnd {
+  position: relative;
+  display: flex;
+  min-height: 34px;
+  grid-column: 2;
+  align-items: center;
+  gap: 20px;
+  color: #777a76;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.gameEnd > :last-child {
+  margin-left: auto;
+  color: #aaa9a4;
+  transition: color 180ms ease, transform 180ms ease;
+}
+.gameRow:hover .gameEnd > :last-child { color: var(--mint); transform: translateX(4px); }
+.viewCount { color: #bbd8cc; font-variant-numeric: tabular-nums; }
+.viewUnavailable { color: #777a76; }
+.viewCount, .viewUnavailable { transition: opacity 160ms ease; }
+.gameHistory { display: inline-flex; align-items: center; }
+.dateIcon { font-size: 14px; }
+.gameHistory .dateDetails {
+  position: absolute;
+  top: 50%;
+  right: 28px;
+  font-size: 10px;
+  gap: 2px 12px;
+  color: #b8c0b9;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+}
+.gameRow:hover .viewUnavailable,
+.gameRow:hover .dateIcon,
+.gameRow:focus-visible .viewUnavailable,
+.gameRow:focus-visible .dateIcon { opacity: 0; }
+.gameRow:hover .dateDetails,
+.gameRow:focus-visible .dateDetails {
+  opacity: 1;
+  visibility: visible;
+}
+
 .trialRow {
   display: grid;
   grid-template-columns: 42px 160px minmax(0, 1fr) 34px;
@@ -697,6 +851,8 @@
   .projectCard { grid-template-columns: 1fr; }
   .projectImage { min-height: 230px; }
   .projectCopy { min-height: 230px; }
+  .gameRow { grid-template-columns: 104px minmax(0, 1fr); gap: 8px 14px; }
+  .gameThumb { width: 104px; height: 86px; }
 }
 
 @media (max-width: 760px) {
@@ -710,9 +866,9 @@
   .nav { gap: 14px; }
   .nav a:not(:last-child) { display: none; }
   .hero {
-    height: calc(100svh - 34px);
-    min-height: 520px;
-    max-height: 820px;
+    height: 78svh;
+    min-height: 440px;
+    max-height: 720px;
   }
   .heroImage { object-position: 65% center; }
   .heroShade {
@@ -775,6 +931,43 @@
   .archiveLinks { display: grid; gap: 0; }
   .archiveLinks a { width: 100%; border-bottom-color: rgba(255, 255, 255, 0.08); }
   .archive footer { align-items: flex-start; line-height: 1.6; }
+  .gameList { grid-template-columns: 1fr; }
+  .gameGroup { padding-top: 38px; }
+  .gameRow {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 14px;
+    min-height: 126px;
+    padding: 14px 0;
+  }
+  .gameRow:hover, .gameRow:focus-visible { padding-left: 0; }
+  .gameThumb { width: 92px; height: 92px; }
+  .gameCopy h3 { font-size: 17px; }
+  .gameCopy p { font-size: 12px; line-height: 1.5; }
+  .gameMeta { display: block; font-size: 10px; line-height: 1.5; }
+  .gameEnd { grid-column: 2; flex-wrap: wrap; gap: 4px 8px; margin-top: -4px; }
+  .heroFacts { flex-wrap: wrap; gap: 6px 14px; }
+  .heroFacts span + span::before { margin-right: 14px; }
+}
+
+@media (max-width: 760px), (hover: none) {
+  .gameEnd { flex-wrap: wrap; gap: 4px 8px; }
+  .gameHistory { order: 3; flex-basis: 100%; min-width: 0; }
+  .dateIcon { display: none; }
+  .gameHistory .dateDetails {
+    position: static;
+    width: auto;
+    gap: 2px 10px;
+    color: #858f88;
+    font-size: 10px;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  .gameRow:hover .viewCount,
+  .gameRow:hover .viewUnavailable,
+  .gameRow:focus-visible .viewCount,
+  .gameRow:focus-visible .viewUnavailable { opacity: 1; }
+  .gameHistory .dateDetails time { color: #b0b9b1; }
 }
 
 @media (max-width: 430px) {
@@ -787,6 +980,9 @@
   .projectCopy p { display: none; }
   .trialRow { grid-template-columns: 26px 82px minmax(0, 1fr) 18px; gap: 10px; }
   .trialThumb { width: 82px; height: 66px; }
+  .gameRow { min-height: 106px; }
+  .gameThumb { height: 78px; }
+  .gameEnd { font-size: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -6,14 +6,16 @@
 
 | 动作 | 键鼠 | 标准手柄（Xbox 名称／对应位置） |
 | --- | --- | --- |
-| 移动／奔跑 | WASD／按住 Shift | 左摇杆／L3 切换奔跑，停下结束 |
+| 移动／奔跑 | WASD／按住 Shift | 左摇杆／按住 B；L3 切换奔跑，停下结束 |
 | 镜头 | 鼠标直接移动；滚轮缩放 | 右摇杆 |
-| 轻击／重击 | 左键／右键；J/K 为备用 | RB／RT |
-| 弹反／闪避 | F（L 备用）／空格 | LB／B |
+| 轻击／重击 | 左键／右键（按住蓄力）；J/K 为备用 | RB／RT（按住蓄力） |
+| 弹反／防御 | F 轻按／持续按住（L 备用） | LB 轻按／持续按住 |
+| 闪避 | 轻按松开 Shift | 轻按松开 B |
+| 跳跃 | 空格 | A |
 | 锁定 | 中键或 Q | R3 |
-| 交互／喝水 | E／R | A／X |
-| 精灵／地图 | C／M | Y／View |
-| 雨灯整备 | Alt 显示光标后点击整备 | 雨灯旁十字键↑ |
+| 交互／喝水 | E／R | Y／X |
+| 精灵／地图 | C／M | LT／View |
+| 雨灯强化 | Alt 显示光标后点击强化装备 | 雨灯旁十字键↑ |
 | 暂停 | Esc 或 P | Menu |
 | 菜单 | 鼠标或 Tab、Enter、Space | 十字键或左摇杆选择，A 确认、B 返回 |
 | 全屏 | F10 或暂停菜单按钮 | 暂停菜单按钮 |
@@ -38,3 +40,9 @@
 22 项规则测试通过。专项最终报告：`tmp/night-rain-devices/report.json`；原键盘／触屏回归：`tmp/night-rain-input-controls/report.json`；精灵、双指触屏与异常恢复：`tmp/night-rain-input-assistance/report.json`。三组共 16 张截图通过像素检查并逐张目检。虚拟测试证明应用处理逻辑，不代表所有浏览器的原生 Pointer Lock 行为或实体手柄驱动均已验证。
 
 最终顺序全仓 check／生产 build 通过，Next 内 ESLint 与类型检查保持开启。成功构建与主目录源码哈希一致。生产地址 http://127.0.0.1:3871/game/night-rain 已更新，完整虚拟设备专项再次通过且无错误，4 张生产截图已逐张目检；报告为 tmp/night-rain-input-production/report.json。
+
+本轮动作扩展、设计资料与叙事规则见 [night-rain-combat.md](night-rain-combat.md)。手柄 B 关闭菜单不触发闪避，连接／恢复期间按住的键须松开后重新按；触屏短按闪避和长按蓄力均使用相同战斗规则。
+
+F／LB 按下立即弹反，前 0.25 秒之后仍按住则架伞防御；松开即解除保护。触屏“弹反 / 防御”同样支持点按与长按。测试必须保持静音（`--mute-audio`、`--disable-speech-api`），不改变玩家声音设置。
+
+雨灯存档、有限药瓶和扩展地图说明见 [night-rain-world.md](night-rain-world.md)。R／手柄 X 喝药；E／Y 首次点燃中庭雨灯并记录复活点，不刷新敌人；再次交互免费休息。强化装备单独花费夜市钱。

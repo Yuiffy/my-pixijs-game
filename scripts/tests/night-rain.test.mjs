@@ -92,7 +92,7 @@ test('guard absorbs frontal light blows but a heavy strike threatens both health
 test('stamina exhausts, recovers only after delay, and healing is finite and interruptible', () => {
   const s = fresh();
   for (let i = 0; i < 5; i += 1) advance(s, 520, { ...neutral, light: true });
-  assert.equal(s.player.stamina, 15); const time = s.player.actionTime; advance(s, 20, { ...neutral, heavy: true });
+  assert.equal(s.player.stamina, 11); const time = s.player.actionTime; advance(s, 20, { ...neutral, heavy: true });
   assert.equal(s.player.action, 'idle'); assert.equal(s.player.actionTime, time); advance(s, 3000); assert.ok(s.player.stamina > 80);
   const duel = courtyardDuel(); beforeAttack(duel.s, duel.e, 0.2); duel.s.player.hp = 60;
   advance(duel.s, 800, { ...neutral, heal: true }); assert.equal(duel.s.player.flasks, 2); assert.equal(duel.s.player.hp, 41);
@@ -158,7 +158,7 @@ test('rest respawns ordinary foes, preserves cleared boss and exploration, and r
   for (const target of [{ x: 12, z: -38 }, { x: 12, z: -11 }, { x: 11.3, z: -6.5 }, { x: 11.3, z: -1 }, { x: 7, z: -1 }, { x: 7, z: 7 }, { x: 0, z: 8 }]) walkTo(engine, s, target);
   s.player.hp = 20; s.player.flasks = 0; interact(s);
   assert.equal(s.player.hp, maxHp(s)); assert.equal(s.player.stamina, maxStamina(s)); assert.equal(s.player.flasks, 3);
-  assert.equal(s.enemies.filter(e => e.hp > 0).length, 5); assert.equal(s.enemies.find(e => e.kind === 'boss').action, 'dead');
+  assert.equal(s.enemies.filter(e => e.hp > 0).length, world.ENEMY_SPAWNS.filter(e => e.kind !== 'boss').length); assert.equal(s.enemies.find(e => e.kind === 'boss').action, 'dead');
   assert.equal(s.charm, true); assert.equal(s.shortcut, true); assert.equal(s.level, 1);
 });
 
@@ -176,4 +176,17 @@ test('save restores exact combat and kills, rejects malformed data and cannot cr
     x => { x.shortcut = 'true'; }, x => { x.collected = ['not-real']; }, x => { x.bloodstain = { x: 0, y: 999, z: 0, rice: 99 }; },
   ];
   for (const corrupt of corruptions) { const value = JSON.parse(raw); corrupt(value); assert.equal(loadGame(JSON.stringify(value)), null); }
+});
+
+
+test('dinner continues into the same world and survives save/reload, rest and further combat',()=>{
+ const {state:s}=playFirstLevel(engine);const before={player:structuredClone(s.player),enemies:structuredClone(s.enemies),rice:s.rice,collected:[...s.collected]};
+ engine.continueExploring(s);assert.equal(s.mode,'playing');assert.deepEqual(s.player,before.player);assert.deepEqual(s.enemies,before.enemies);assert.equal(s.rice,before.rice);assert.deepEqual(s.collected,before.collected);assert.match(engine.getObjective(s),/潮门/);
+ interact(s);assert.equal(s.mode,'playing');assert.equal(s.collected.filter(id=>id==='food').length,1);
+ const loaded=loadGame(saveGame(s));assert.ok(loaded);assert.equal(loaded.mode,'playing');assert.equal(loaded.bossDefeated,true);
+ const legacy=JSON.parse(saveGame(s));legacy.worldVersion=2;legacy.mode='ending';legacy.collected=legacy.collected.filter(id=>id!=='food');const restored=loadGame(JSON.stringify(legacy));assert.ok(restored);engine.continueExploring(restored);interact(restored);assert.equal(restored.mode,'playing');
+ for(const p of [...NIGHT_ROUTE.slice(30,38)].reverse())walkTo(engine,s,p,90000);
+ interact(s);assert.equal(s.restCount,1);assert.equal(s.bossDefeated,true);assert.equal(s.enemies.find(e=>e.kind==='boss').hp,0);assert.ok(s.enemies[0].hp>0);
+ walkTo(engine,s,{x:-4,z:3.5},90000); // regular combat still runs
+ assert.ok(s.kills>before.enemies.filter(e=>!e.hp).length);
 });
