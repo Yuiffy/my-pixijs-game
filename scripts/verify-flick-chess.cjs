@@ -29,7 +29,7 @@ const state = page => page.evaluate(() => JSON.parse(window.render_game_to_text(
 
 function project(piece, canvasBox, viewport, board) {
   const aspect = viewport.width / viewport.height;
-  const viewHeight = Math.max(board.length * (aspect >= 1 ? 1.23 : 1.08), (board.width + 1.85) / aspect);
+  const viewHeight = Math.max(board.length * (aspect >= 1 ? 1.31 : 1.08), (board.width + 4.3) / aspect);
   const camera = new THREE.OrthographicCamera(
     -(viewHeight * aspect) / 2,
     (viewHeight * aspect) / 2,

@@ -4,6 +4,7 @@ import { Canvas, type ThreeEvent, useThree } from "@react-three/fiber";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { FlickSnapshot } from "./engine";
+import FlickCleanup, { type CleanupStatus } from "./FlickCleanup";
 
 type FlickPiece = FlickSnapshot["pieces"][number];
 type AimChange = { pieceId: string; power: number } | null;
@@ -11,6 +12,7 @@ type BoardProps = {
   snapshot: FlickSnapshot;
   onShot: (pieceId: string, angleRadians: number, power: number) => void;
   onAimChange: (aim: AimChange) => void;
+  onCleanupStatus: (status: CleanupStatus) => void;
   disabled?: boolean;
 };
 type Aim = {
@@ -284,7 +286,7 @@ function CameraRig({ width, length }: { width: number; length: number }) {
   useLayoutEffect(() => {
     if (!(camera instanceof THREE.OrthographicCamera)) return;
     const aspect = size.width / Math.max(1, size.height);
-    const viewHeight = Math.max(length * (aspect >= 1 ? 1.23 : 1.08), (width + 1.85) / aspect);
+    const viewHeight = Math.max(length * (aspect >= 1 ? 1.31 : 1.08), (width + 4.3) / aspect);
     camera.left = -(viewHeight * aspect) / 2;
     camera.right = (viewHeight * aspect) / 2;
     camera.top = viewHeight / 2;
@@ -296,7 +298,7 @@ function CameraRig({ width, length }: { width: number; length: number }) {
   return null;
 }
 
-function Scene({ snapshot, onShot, onAimChange, disabled = false }: BoardProps) {
+function Scene({ snapshot, onShot, onAimChange, onCleanupStatus, disabled = false }: BoardProps) {
   const { gl } = useThree();
   const [aim, setAim] = useState<Aim | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -382,6 +384,7 @@ function Scene({ snapshot, onShot, onAimChange, disabled = false }: BoardProps) 
         <meshStandardMaterial color="#303337" roughness={0.91} />
       </mesh>
       <BoardSurface width={snapshot.board.width} length={snapshot.board.length} />
+      <FlickCleanup snapshot={snapshot} onStatus={onCleanupStatus} />
       {visiblePieces.map((piece) => {
         const selectable = !inputLocked && piece.side === snapshot.turn;
         return (

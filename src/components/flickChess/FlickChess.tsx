@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import FlickBoard from './FlickBoard';
+import type { CleanupStatus } from './FlickCleanup';
 import {
   chooseAiShot, createFlickGame, type FlickGame, type FlickKind, type FlickSnapshot,
 } from './engine';
@@ -15,6 +16,7 @@ import styles from './flickChess.module.css';
 
 type Mode = 'ai' | 'local';
 type Aim = { pieceId: string; power: number } | null;
+const INITIAL_CLEANUP: CleanupStatus = { phase: 'idle', pieceId: null, collected: 0, pending: 0 };
 
 const sideName = (side: 'red' | 'blue') => (side === 'red' ? '绯方' : '青方');
 const kindName: Record<FlickKind, string> = {
@@ -35,6 +37,8 @@ export default function FlickChess() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cleanup, setCleanup] = useState<CleanupStatus>(INITIAL_CLEANUP);
+  const [round, setRound] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -86,6 +90,7 @@ export default function FlickChess() {
     diagnosticWindow.render_game_to_text = () => JSON.stringify({
       coordinates: 'board center is (0,0); +x right, +z toward red side; y is height',
       mode,
+      cleanup,
       ...game.snapshot(),
     });
     diagnosticWindow.advanceTime = (ms: number) => {
@@ -97,7 +102,7 @@ export default function FlickChess() {
       delete diagnosticWindow.render_game_to_text;
       delete diagnosticWindow.advanceTime;
     };
-  }, [snapshot?.phase, mode]);
+  }, [snapshot?.phase, mode, cleanup]);
 
   useEffect(() => {
     if (mode !== 'ai' || snapshot?.phase !== 'aiming' || snapshot.turn !== 'blue') return undefined;
@@ -142,6 +147,8 @@ export default function FlickChess() {
     gameRef.current?.reset();
     setMode(nextMode);
     setAim(null);
+    setCleanup(INITIAL_CLEANUP);
+    setRound(value => value + 1);
     if (gameRef.current) setSnapshot(gameRef.current.snapshot());
   }, [mode]);
 
@@ -163,9 +170,11 @@ export default function FlickChess() {
       <div className={styles.boardHost}>
         {snapshot && (
 <FlickBoard
+key={round}
 snapshot={snapshot}
 onShot={shoot}
 onAimChange={setAim}
+onCleanupStatus={setCleanup}
           disabled={helpOpen || Boolean(winner) || isAiThinking} />
 )}
       </div>
@@ -248,7 +257,7 @@ aria-label="规则"><QuestionCircleOutlined aria-hidden /></button>
         </div>
       )}
 
-      {winner && (
+      {snapshot && winner && (
         <div className={styles.resultBackdrop}>
           <div className={styles.resultPanel}>
             <span className={styles.resultKicker}>MATCH COMPLETE</span>

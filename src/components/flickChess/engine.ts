@@ -68,12 +68,19 @@ interface PieceRuntime extends FlickPieceSnapshot {
   body: RAPIER.RigidBody | null;
 }
 
+interface AiCandidate {
+  shot: FlickShot;
+  priority: number;
+}
+
 const STEP_SECONDS = 1 / 60;
 const SETTLED_SPEED = 0.14;
 const SETTLED_ANGULAR_SPEED = 0.35;
 const SETTLED_SECONDS = 0.45;
 const MAX_SHOT_SECONDS = 16;
 const FILE_SPACING = 1.1725;
+const AI_PAIR_LIMIT = 4;
+const AI_ROLLOUT_LIMIT = 24;
 const RED_BACK: FlickKind[] = ["rook", "horse", "elephant", "advisor", "general", "advisor", "elephant", "horse", "rook"];
 const SPEC: Record<FlickKind, PieceSpec> = {
   general: { radius: 0.51, height: 0.28, mass: 2.1 },
@@ -126,6 +133,10 @@ const CHARACTERS: Record<FlickSide, readonly Character[]> = {
 
 const opposite = (side: FlickSide): FlickSide => (side === "red" ? "blue" : "red");
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+const edgePressure = (x: number, z: number) => Math.max(
+  Math.abs(x) / (FLICK_BOARD.width / 2),
+  Math.abs(z) / (FLICK_BOARD.length / 2),
+);
 
 export class FlickGame {
   private world: RAPIER.World;
@@ -289,6 +300,13 @@ export class FlickGame {
       this.world.step();
       this.removeOutOfBounds();
       this.accumulator -= STEP_SECONDS;
+      if (this.phase === "moving") {
+        const counts = this.remaining();
+        if (counts.red === 0 || counts.blue === 0) {
+          this.finishTurn();
+          break;
+        }
+      }
       if (this.phase !== "moving") continue;
       this.shotElapsed += STEP_SECONDS;
       const moving = this.pieces.some((piece) => {
@@ -308,6 +326,7 @@ export class FlickGame {
       }
       if (this.settledFor >= SETTLED_SECONDS || this.shotElapsed >= MAX_SHOT_SECONDS) {
         this.finishTurn();
+        break;
       }
     }
     return this.snapshot();
@@ -349,53 +368,158 @@ export class FlickGame {
     this.pieces = [];
     this.destroyed = true;
   }
+
+  static chooseAiShot(snapshot: FlickSnapshot): FlickShot | null {
+    if (snapshot.phase !== "aiming" || snapshot.winner) return null;
+    const own = snapshot.pieces.filter((piece) => piece.inPlay && piece.side === snapshot.turn);
+    const enemies = snapshot.pieces.filter((piece) => piece.inPlay && piece.side !== snapshot.turn);
+    if (!own.length || !enemies.length) return null;
+
+    const pairs = own.flatMap((piece) => enemies.map((target) => {
+      const dx = target.x - piece.x;
+      const dz = target.z - piece.z;
+      const distance = Math.hypot(dx, dz);
+      if (distance < 0.001) return null;
+      const directionX = dx / distance;
+      const directionZ = dz / distance;
+      let friendlyBlockers = 0;
+      let enemyBlockers = 0;
+      snapshot.pieces.forEach((other) => {
+        if (!other.inPlay || other.id === piece.id || other.id === target.id) return;
+        const along = (other.x - piece.x) * directionX + (other.z - piece.z) * directionZ;
+        const across = Math.abs((other.x - piece.x) * directionZ - (other.z - piece.z) * directionX);
+        if (along > piece.radius && along < distance - target.radius
+          && across < piece.radius + other.radius + 0.06) {
+          if (other.side === piece.side) friendlyBlockers++;
+          else enemyBlockers++;
+        }
+      });
+      const edge = edgePressure(target.x, target.z);
+      const outward = (target.x * directionX) / (FLICK_BOARD.width / 2)
+        + (target.z * directionZ) / (FLICK_BOARD.length / 2);
+      return {
+        piece,
+        target,
+        distance,
+        angle: Math.atan2(dz, dx),
+        priority: 5 / (1 + distance) + edge * 1.1 + outward * 0.45
+          + (piece.mass / target.mass) * 0.3 - friendlyBlockers * 1.8 - enemyBlockers * 0.35,
+      };
+    }).filter((pair): pair is NonNullable<typeof pair> => pair !== null));
+    pairs.sort((a, b) => b.priority - a.priority);
+
+    const candidates: AiCandidate[] = [];
+    pairs.slice(0, AI_PAIR_LIMIT).forEach(({ piece, target, distance, angle, priority }) => {
+      const travel = Math.max(0, distance - piece.radius - target.radius);
+      const basePower = clamp((Math.sqrt(2 * 2.7 * travel) + 1.4 - 1) / 10, 0.2, 1);
+      const powerChoices = [basePower, clamp(basePower + 0.22, 0.2, 1)];
+      const angleOffset = Math.atan2(target.radius * 0.62, distance);
+      [0, -angleOffset, angleOffset].forEach((offset) => {
+        powerChoices.forEach((power) => {
+          if (candidates.length >= AI_ROLLOUT_LIMIT) return;
+          candidates.push({ shot: { pieceId: piece.id, angle: angle + offset, power }, priority });
+        });
+      });
+    });
+
+    const preview = new FlickGame();
+    const handles = new Map<string, number>();
+    preview.pieces.forEach((piece) => {
+      const source = snapshot.pieces.find((candidate) => candidate.id === piece.id);
+      if (!source || !source.inPlay) {
+        if (piece.body) preview.world.removeRigidBody(piece.body);
+        piece.body = null;
+        return;
+      }
+      if (!piece.body) return;
+      piece.body.setTranslation({ x: source.x, y: source.y, z: source.z }, true);
+      piece.body.setRotation({ x: 0, y: Math.sin(source.angle / 2), z: 0, w: Math.cos(source.angle / 2) }, true);
+      piece.body.sleep();
+      handles.set(piece.id, piece.body.handle);
+    });
+    const worldSnapshot = preview.world.takeSnapshot();
+    preview.destroy();
+
+    let best: { shot: FlickShot; score: number } | null = null;
+    for (let index = 0; index < candidates.length; index++) {
+      const { shot, priority } = candidates[index];
+      const world = RAPIER.World.restoreSnapshot(worldSnapshot);
+      try {
+        const shooter = snapshot.pieces.find((piece) => piece.id === shot.pieceId);
+        const shooterHandle = handles.get(shot.pieceId);
+        if (!shooter || shooterHandle === undefined) continue;
+        const shooterBody = world.getRigidBody(shooterHandle);
+        const impulse = (1 + 10 * shot.power) * shooter.mass;
+        shooterBody.applyImpulse({
+          x: Math.cos(shot.angle) * impulse,
+          y: 0,
+          z: Math.sin(shot.angle) * impulse,
+        }, true);
+        const active = snapshot.pieces.filter((piece) => piece.inPlay).map((piece) => ({
+          piece,
+          body: world.getRigidBody(handles.get(piece.id)!),
+          out: false,
+        }));
+        const remaining = { ...snapshot.remaining };
+        let settledFor = 0;
+        for (let step = 0; step < MAX_SHOT_SECONDS / STEP_SECONDS; step++) {
+          world.step();
+          let moving = false;
+          active.forEach((entry) => {
+            if (entry.out) return;
+            const position = entry.body.translation();
+            if (Math.abs(position.x) > FLICK_BOARD.width / 2 + entry.piece.radius * 0.35
+              || Math.abs(position.z) > FLICK_BOARD.length / 2 + entry.piece.radius * 0.35
+              || position.y < -0.36) {
+              world.removeRigidBody(entry.body);
+              entry.out = true;
+              remaining[entry.piece.side]--;
+              return;
+            }
+            const velocity = entry.body.linvel();
+            const angular = entry.body.angvel();
+            if (Math.hypot(velocity.x, velocity.y, velocity.z) > SETTLED_SPEED
+              || Math.abs(angular.y) > SETTLED_ANGULAR_SPEED) moving = true;
+          });
+          if (remaining.red === 0 || remaining.blue === 0) break;
+          settledFor = moving ? 0 : settledFor + STEP_SECONDS;
+          if (settledFor >= SETTLED_SECONDS) break;
+        }
+
+        let score = priority * 0.02;
+        active.forEach(({ piece, body, out }) => {
+          const sign = piece.side === snapshot.turn ? -1 : 1;
+          if (out) {
+            score += sign * (piece.kind === "general" ? 21 : 17);
+            return;
+          }
+          const position = body.translation();
+          const movement = Math.hypot(position.x - piece.x, position.z - piece.z);
+          score += sign * (3.2 * (edgePressure(position.x, position.z)
+            - edgePressure(piece.x, piece.z)) + 0.09 * Math.min(movement, 6));
+        });
+        if (!best || score > best.score) best = { shot, score };
+      } finally {
+        world.free();
+      }
+    }
+    return best?.shot ?? null;
+  }
 }
 
+let rapierReady: Promise<void> | null = null;
+
 export async function createFlickGame(): Promise<FlickGame> {
-  await RAPIER.init();
+  if (!rapierReady) {
+    rapierReady = RAPIER.init().catch((error: unknown) => {
+      rapierReady = null;
+      throw error;
+    });
+  }
+  await rapierReady;
   return new FlickGame();
 }
 
 export function chooseAiShot(snapshot: FlickSnapshot): FlickShot | null {
-  if (snapshot.phase !== "aiming" || snapshot.winner) return null;
-  const own = snapshot.pieces.filter((piece) => piece.inPlay && piece.side === snapshot.turn);
-  const enemies = snapshot.pieces.filter((piece) => piece.inPlay && piece.side !== snapshot.turn);
-  if (!own.length || !enemies.length) return null;
-
-  let best: { shot: FlickShot; score: number } | null = null;
-  own.forEach((piece) => enemies.forEach((target) => {
-    const dx = target.x - piece.x;
-    const dz = target.z - piece.z;
-    const distance = Math.hypot(dx, dz);
-    if (distance < 0.001) return;
-    const directionX = dx / distance;
-    const directionZ = dz / distance;
-    const blockers = snapshot.pieces.filter((other) => {
-      if (!other.inPlay || other.id === piece.id || other.id === target.id) return false;
-      const along = (other.x - piece.x) * directionX + (other.z - piece.z) * directionZ;
-      const across = Math.abs((other.x - piece.x) * directionZ - (other.z - piece.z) * directionX);
-      return along > piece.radius && along < distance - target.radius
-        && across < piece.radius + other.radius + 0.08;
-    });
-    const friendlyBlockers = blockers.filter((other) => other.side === piece.side).length;
-    const edgeX = (FLICK_BOARD.width / 2 - Math.abs(target.x)) / (FLICK_BOARD.width / 2);
-    const edgeZ = (FLICK_BOARD.length / 2 - Math.abs(target.z)) / (FLICK_BOARD.length / 2);
-    const edgeBonus = 1 - Math.min(edgeX, edgeZ);
-    const outward = ((target.x * directionX) / (FLICK_BOARD.width / 2))
-      + ((target.z * directionZ) / (FLICK_BOARD.length / 2));
-    const score = 4 / (1 + distance) + edgeBonus + outward * 0.45
-      + ((piece.mass / (target.mass + 1)) * 0.4) - friendlyBlockers * 1.8 - blockers.length * 0.35;
-    if (!best || score > best.score) {
-      const neededSpeed = Math.sqrt(2 * 2.7 * Math.max(0, distance - piece.radius - target.radius));
-      best = {
-        shot: {
-          pieceId: piece.id,
-          angle: Math.atan2(dz, dx),
-          power: clamp((neededSpeed + 2.1 - 1) / 10, 0.23, 1),
-        },
-        score,
-      };
-    }
-  }));
-  return best ? (best as { shot: FlickShot }).shot : null;
+  return FlickGame.chooseAiShot(snapshot);
 }

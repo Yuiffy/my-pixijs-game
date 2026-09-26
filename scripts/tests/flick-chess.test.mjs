@@ -37,12 +37,65 @@ function moveOutside(game, predicate) {
   });
 }
 
+function placeScenario(game, positions) {
+  game.pieces.forEach((piece, index) => {
+    const position = positions[piece.id] ?? { x: 12 + index * 2, z: 0 };
+    piece.body.setTranslation({ x: position.x, y: piece.height / 2 + 0.01, z: position.z }, true);
+    piece.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  });
+  game.step(1 / 60);
+  return game.snapshot();
+}
+
 function assertCoordinates(actual, expected) {
   assert.equal(actual.length, expected.length);
   actual.forEach((value, index) => {
     assert.ok(Math.abs(value - expected[index]) < 0.00001, `${value} differs from ${expected[index]}`);
   });
 }
+
+test("concurrent games initialize one WASM instance and release worlds on repeated resets", async () => {
+  const instantiate = WebAssembly.instantiate;
+  let instantiations = 0;
+  WebAssembly.instantiate = function countInstantiations(...args) {
+    instantiations++;
+    return instantiate.apply(WebAssembly, args);
+  };
+  const games = [];
+  try {
+    games.push(...await Promise.all(Array.from({ length: 8 }, () => createFlickGame())));
+    assert.equal(instantiations, 1, "concurrent creation must not replace the WASM instance");
+    for (const game of games) {
+      for (let index = 0; index < 5; index++) {
+        const oldWorld = game.world;
+        const free = oldWorld.free.bind(oldWorld);
+        let freeCount = 0;
+        oldWorld.free = () => {
+          freeCount++;
+          free();
+        };
+        const snapshot = game.reset();
+        assert.equal(freeCount, 1);
+        assert.notEqual(game.world, oldWorld);
+        assert.equal(snapshot.pieces.length, 32);
+        game.step(1 / 60);
+      }
+      const lastWorld = game.world;
+      const free = lastWorld.free.bind(lastWorld);
+      let freeCount = 0;
+      lastWorld.free = () => {
+        freeCount++;
+        free();
+      };
+      game.destroy();
+      game.destroy();
+      assert.equal(freeCount, 1, "destroy must release the final world only once");
+    }
+  } finally {
+    WebAssembly.instantiate = instantiate;
+    games.forEach((game) => game.destroy());
+  }
+});
 
 test("opening has both sixteen-piece armies with complete character portraits", async (t) => {
   const game = await createFlickGame();
@@ -140,7 +193,7 @@ test("the last opposing piece leaving ends the game for the surviving side", asy
   t.after(() => game.destroy());
   assert.equal(game.launch("red-15", 0, 1), true);
   moveOutside(game, (piece) => piece.side === "blue");
-  const result = settle(game);
+  const result = game.step(1 / 60);
   assert.equal(result.phase, "finished");
   assert.equal(result.winner, "red");
   assert.equal(result.remaining.blue, 0);
@@ -153,8 +206,8 @@ test("simultaneous elimination is a draw and reset starts a fresh match", async 
   const game = await createFlickGame();
   t.after(() => game.destroy());
   assert.equal(game.launch("red-15", 0, 1), true);
-  moveOutside(game, (piece) => piece.id !== "red-15");
-  const result = settle(game);
+  moveOutside(game, () => true);
+  const result = game.step(1 / 60);
   assert.equal(result.phase, "finished");
   assert.equal(result.winner, "draw");
   assert.deepEqual(result.remaining, { red: 0, blue: 0 });
@@ -181,4 +234,41 @@ test("AI plays consecutive legal turns without a stuck moving phase", async (t) 
   }
   assert.ok(snapshot.shotCount >= 1);
   assert.ok(snapshot.remaining.red <= 16 && snapshot.remaining.blue <= 16);
+});
+
+test("AI converts a clear edge attack into a winning elimination", async (t) => {
+  const game = await createFlickGame();
+  t.after(() => game.destroy());
+  const position = placeScenario(game, {
+    "red-15": { x: 3.9, z: 0 },
+    "blue-15": { x: 5.18, z: 0 },
+  });
+  assert.deepEqual(position.remaining, { red: 1, blue: 1 });
+  const shot = chooseAiShot(position);
+  assert.ok(shot);
+  assert.equal(shot.pieceId, "red-15");
+  assert.deepEqual(game.snapshot(), position, "AI search must not advance the real game");
+  assert.deepEqual(chooseAiShot(position), shot, "AI search should be deterministic for a settled position");
+  assert.equal(game.launch(shot.pieceId, shot.angle, shot.power), true);
+  const result = settle(game);
+  assert.equal(result.winner, "red");
+  assert.deepEqual(result.remaining, { red: 1, blue: 0 });
+});
+
+test("AI rejects an edge attack that sacrifices its own piece", async (t) => {
+  const game = await createFlickGame();
+  t.after(() => game.destroy());
+  const position = placeScenario(game, {
+    "red-15": { x: 3.95, z: 0 },
+    "red-14": { x: -2, z: 0 },
+    "blue-15": { x: 5.14, z: 0 },
+    "blue-14": { x: -3.15, z: 0 },
+  });
+  assert.deepEqual(position.remaining, { red: 2, blue: 2 });
+  const shot = chooseAiShot(position);
+  assert.ok(shot);
+  assert.equal(game.launch(shot.pieceId, shot.angle, shot.power), true);
+  const result = settle(game);
+  assert.ok(result.remaining.blue < position.remaining.blue, "the AI should still apply tactical pressure");
+  assert.equal(result.remaining.red, position.remaining.red, "the AI should preserve its own pieces");
 });
