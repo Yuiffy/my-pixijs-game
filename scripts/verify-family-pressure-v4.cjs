@@ -75,7 +75,7 @@ async function capture(page, name) {
     const seed = Array.from({ length: 80 }, (_, i) => i + 1).find(n => { const run = runCampaign(n); return run.history.some(h => h.id === "next") && ["happy", "modest"].includes(run.state.ending); });
     assert.ok(seed);
     await page.getByLabel("同局种子").fill(String(seed));
-    await button(page, "player-name").fill("小满");
+    await button(page, "player-name").fill("小禾");
     await button(page, "start-game").click();
     await button(page, "open-household").click();
     assert.match(await button(page, "meter-family").innerText(), /与父母的亲情/);

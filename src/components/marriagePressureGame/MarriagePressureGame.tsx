@@ -63,6 +63,12 @@ import styles from "./marriage.module.css";
 
 const SAVE_KEY = "marriage-pressure-save-v1";
 const PROFILE_KEY = "marriage-pressure-player-name";
+const INITIAL_NAMES = ["小禾", "阿宁", "小北", "阿川", "小秋", "木木", "小舟", "阿言", "小林", "安安", "小饼", "阿夏"];
+
+function pickInitialName() {
+  return INITIAL_NAMES[Math.floor(Math.random() * INITIAL_NAMES.length)];
+}
+
 const SHARE_URL = "my-pixijs-game.vercel.app/game/family-pressure";
 const LOWER_IS_BETTER_METRICS = new Set<ResolutionChange["key"]>([
   "stress",
@@ -158,7 +164,7 @@ export default function MarriagePressureGame() {
   const [mode, setMode] = useState<GameMode>("child");
   const [difficulty, setDifficulty] = useState<Difficulty>("realistic");
   const [seedInput, setSeedInput] = useState("");
-  const [playerName, setPlayerName] = useState("小满");
+  const [playerName, setPlayerName] = useState("");
   const [eventNotice, setEventNotice] = useState<EventNotice | null>(null);
   const [resolution, setResolution] = useState<ResolutionSequence | null>(null);
   const [actionTab, setActionTab] = useState("connection");
@@ -189,11 +195,12 @@ export default function MarriagePressureGame() {
   );
 
   useEffect(() => {
+    setPlayerName(pickInitialName());
     try {
       const restored = validateSave(JSON.parse(localStorage.getItem(SAVE_KEY) || "null"));
       if (restored && restored.phase !== "lobby") setSaved(restored);
       const restoredName = localStorage.getItem(PROFILE_KEY)?.trim();
-      if (restoredName) setPlayerName(restoredName.slice(0, 8));
+      if (restored && restored.phase !== "lobby" && restoredName) setPlayerName(restoredName.slice(0, 8));
       localStorage.setItem("marriage-pressure-probe", "1");
       localStorage.removeItem("marriage-pressure-probe");
     } catch {
@@ -409,7 +416,7 @@ export default function MarriagePressureGame() {
       difficulty,
       seed,
     });
-    const cleanName = playerName.trim().slice(0, 8) || "小满";
+    const cleanName = playerName.trim().slice(0, 8) || pickInitialName();
     setPlayerName(cleanName);
     try {
       localStorage.setItem(PROFILE_KEY, cleanName);
@@ -482,7 +489,7 @@ export default function MarriagePressureGame() {
             data-testid="player-name"
             value={playerName}
             maxLength={8}
-            placeholder="例如：小满"
+            placeholder="留空会随机取一个昵称"
             onChange={input => setPlayerName(input.target.value.slice(0, 8))}
           />
           <small>昵称会进入回合提示和结算文案，不会上传。</small>
