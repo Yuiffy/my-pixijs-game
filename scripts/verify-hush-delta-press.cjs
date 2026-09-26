@@ -69,10 +69,7 @@ async function main(){
     await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).webglReady);
     await page.locator('#hush-start').click();
     // Resolve the chapter's arrival and meal with real RAF time before reporting.
-    for(let beat=0;beat<3;beat++) {
-      await page.waitForFunction(()=>{const d=JSON.parse(window.render_game_to_text()).daily;const p=(Math.sin(d.clock*2.2-Math.PI/2)+1)/2;return p>.4&&p<.6&&d.cooldown<=0;});
-      await page.locator('[data-daily-timing]').click();
-    }
+    await require('./lib/hush-minigame-browser.cjs').activity(page,false,undefined,true);
     for(let n=0;n<12;n++) {
       await page.locator('[data-assist="goal"]').click();
       await page.waitForFunction(()=>!JSON.parse(window.render_game_to_text()).path.length,{},{timeout:25000});

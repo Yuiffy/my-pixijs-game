@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { solveActivity } from "./helpers/hush-minigame-pilot.mjs";
 import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
 const e = await loadTypescriptModule("src/components/hushLive/engine.ts");
@@ -417,18 +418,13 @@ test('a previously trapped player can move out of a door overlap but cannot tunn
 function dailyStart(homemade = false, seed = 1) {
   const s = e.createGame(homemade ? 3 : 2, seed); s.phase = 'playing'; return s;
 }
-function timingWin(s) {
-  for (let i = 0; i < 3; i++) {
-    for (let n = 0; n < 100 && (daily.timingPosition(s) < .4 || daily.timingPosition(s) > .6 || s.daily.cooldown > 0); n++) advance(s, .025);
-    daily.timingTap(s);
-  }
-  assert.equal(s.daily.panel, null);
-}
-test('daily arrival requires three timed actions; mistakes retry, pause freezes and movement stays blocked', () => {
+function timingWin(s) { solveActivity(s,daily,advance); }
+
+test('arrival minigames block movement, survive mistakes and freeze while paused', () => {
   const s = dailyStart(); const start = {...s.player};
-  daily.timingTap(s); assert.equal(s.daily.beats, 0); assert.equal(s.daily.mistakes, 1);
+  daily.activityInput(s,'press');
   advance(s, .4, {...emptyInput(), x: 1, act: true}); assert.deepEqual(s.player, start);
-  e.togglePause(s); const clock = s.daily.clock; advance(s, 5); daily.timingTap(s); assert.equal(s.daily.clock, clock); assert.equal(s.daily.beats, 0);
+  e.togglePause(s); const mini = structuredClone(s.daily.mini); advance(s, 5); daily.activityInput(s,'turn',40); assert.deepEqual(s.daily.mini,mini);
   e.togglePause(s); timingWin(s); assert.equal(s.phase, 'playing');
 });
 test('all seven meals and homemade rice run from entry to after-stream choices using real routes', () => {
@@ -594,4 +590,31 @@ test('random nights with changing food, cat chores and bathroom events can all b
     if(s.daily.meal==='noodles')assert.equal(s.daily.household.noodles,'served');
   }
   assert.equal(meals.size,7);assert.equal(starts.size,3);
+});
+
+
+test('all completed chores allow sofa sleep during every bathroom phase, without inventing task completion', () => {
+  for(const stage of ['pending','out','inside','back','done']){
+    const s=e.createGame(5,7,5);s.phase='playing';s.daily.panel=null;s.done=[...s.tasks];s.daily.household.rest.stage=stage;
+    s.player={...SPOTS.sofa};s.doorClosed=false;
+    assert.equal(objective(s).key,'sleep',stage);assert.equal(action(s,'sofa').key,'sleep',stage);
+    daily.sleepDaily(s);assert.equal(s.daily.stage,'sleep');assert.equal(s.daily.household.rest.stage,'done');
+    advance(s,3.1);assert.equal(s.daily.stage,'after');assert.deepEqual(s.done,s.tasks);
+  }
+  const s=e.createGame(5,7,5);s.phase='playing';s.daily.panel=null;s.daily.household.rest.stage='inside';
+  daily.sleepDaily(s);assert.equal(s.daily.stage,'home');assert.notEqual(objective(s).key,'sleep');
+});
+
+test('computer opens recoil practice and can complete the leisure task', () => {
+  const s=e.createGame(5,7,5);s.phase='playing';s.daily.panel=null;s.done.push('delta');s.player={...SPOTS.desk};
+  assert.equal(action(s,'desk').key,'computer');hold(s);assert.equal(s.daily.panel,'leisure');assert.equal(s.daily.leisurePlace,'computer');assert.equal(s.daily.mini.kind,'recoil');
+  s.daily.volume=0;advance(s,9);daily.finishLeisure(s);assert.ok(s.done.includes('leisure'));
+});
+
+test('pause releases held minigame inputs and resume never fires by itself', () => {
+  const r=runtime3d.createRuntime(e.freshSave());r.game=e.createGame(5,7,5);r.game.phase='playing';
+  daily.openDailyPanel(r.game,'leisure',true);daily.activityInput(r.game,'press');advance(r.game,.1);
+  runtime3d.pause3D(r);const shots=r.game.daily.mini.shots;assert.equal(r.game.daily.mini.held,false);
+  e.togglePause(r.game);advance(r.game,1);assert.equal(r.game.daily.mini.shots,shots);
+  daily.activityInput(r.game,'press');e.togglePause(r.game);daily.activityInput(r.game,'release');assert.equal(r.game.daily.mini.held,false);
 });

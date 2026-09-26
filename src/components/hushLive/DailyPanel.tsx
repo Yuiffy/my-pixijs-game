@@ -1,17 +1,11 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { skinOf } from "./skins";
 import { householdStatus } from "./household";
 import type { Game } from "./engine";
-import {
-  chooseGoodnight,
-  finishLeisure,
-  replyQuietly,
-  timingPosition,
-  timingSteps,
-  timingTap,
-} from "./daily";
+import { chooseGoodnight, finishLeisure, replyQuietly } from "./daily";
+import MiniGame from "./MiniGame";
 import styles from "./daily.module.css";
 
 export default function DailyPanel({
@@ -21,9 +15,6 @@ export default function DailyPanel({
   game: Game;
   onChange: () => void;
 }) {
-  const [hits, setHits] = useState(0);
-  const needle = useRef<HTMLDivElement>(null);
-  const prop = useRef<HTMLElement>(null);
   const cat = useRef<HTMLDivElement>(null);
   const d = s.daily;
   const panel = d?.panel;
@@ -38,10 +29,6 @@ export default function DailyPanel({
       if (daily && daily.clock !== lastClock) {
         lastClock = daily.clock;
         // Read the simulation clock, including pause/reset/advanceTime. Never run a second animation clock.
-        if (needle.current) needle.current.style.transform = `translate3d(${timingPosition(s) * 100}%, 0, 0)`;
-        if (prop.current) prop.current.style.transform = daily.panel === "cook"
-            ? `translateY(${Math.sin(daily.clock * 4) * 5}px)`
-            : `rotate(${daily.beats * 35 + timingPosition(s) * 15}deg)`;
         if (cat.current) cat.current.style.transform = `translateX(${Math.sin(daily.clock) * 42}px) rotate(${Math.sin(daily.clock * 2) * 8}deg)`;
       }
       frame = requestAnimationFrame(paint);
@@ -58,7 +45,9 @@ export default function DailyPanel({
       <div className={styles.sleep} role="status">
         <small>00:48 — 02:13</small>
         <h2>你先睡，我一会儿就来。</h2>
-        <p>你裹着毯子窝在客厅沙发上。意识朦胧间，最后一声“大家晚安”从隔壁传来。</p>
+        <p>
+          你裹着毯子窝在客厅沙发上。意识朦胧间，最后一声“大家晚安”从隔壁传来。
+        </p>
       </div>
     );
   if (d.panel === "story") return (
@@ -86,90 +75,40 @@ export default function DailyPanel({
         </div>
       </section>
     );
-  if (d.panel === "lock" || d.panel === "cook") {
-    const cooking = d.panel === "cook";
-    return (
+  if (d.panel === "lock" || d.panel === "cook") return (
       <section
         className={styles.panel}
-        aria-label={cooking ? "蛋炒饭小游戏" : "轻声开门小游戏"}
+        aria-label={d.panel === "cook" ? "蛋炒饭小游戏" : "轻声开门小游戏"}
       >
         <small>
-          {cooking
+          {d.panel === "cook"
             ? "HOME KITCHEN / 为你做一顿饭"
             : `WELCOME HOME / ${skinOf(s.skin).name}已经开播了`}
         </small>
-        <h2>{cooking ? "一碗热乎乎的蛋炒饭" : "把今天的疲惫留在门外"}</h2>
-        <div
-          className={cooking ? styles.panScene : styles.lockScene}
-          aria-hidden="true"
-        >
-          {cooking ? (
-            <div className={styles.pan}>
-              <i ref={prop}>
-                {["🥚", "🍚", "🍳"][d.beats]}
-              </i>
-              <span />
-            </div>
-          ) : (
-            <div className={styles.keyhole}>
-              <i ref={prop}>
-                ⌕
-              </i>
-            </div>
-          )}
-        </div>
-        <div className={styles.steps}>
-          {timingSteps(s).map((label, i) => (
-            <span key={label} data-current={d.beats === i}>
-              {i < d.beats ? "✓" : i + 1} {label}
-            </span>
-          ))}
-        </div>
-        <p>指针进入金色区域时，轻点下方按钮。失误可以重试。</p>
-        <div
-          className={styles.timing}
-          role="meter"
-          aria-label="动作时机"
-          aria-valuenow={Math.round(timingPosition(s) * 100)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <span />
-          <div ref={needle} className={styles.needleTrack} aria-hidden="true"><i /></div>
-        </div>
-        <button
-          className={styles.primary}
-          data-daily-timing
-          onPointerDown={(event) => {
-            if (event.button !== 0 || !event.isPrimary) return;
-            event.preventDefault();
-            change(() => timingTap(s));
-          }}
-          onClick={(event) => {
-            // Pointer input scores immediately; keyboard and assistive technology still use click.
-            if (event.detail === 0) change(() => timingTap(s));
-          }}
-        >
-          {timingSteps(s)[d.beats]}
-        </button>
-        <p className={styles.feedback} role="status">
-          {d.feedback}
-        </p>
+        <MiniGame game={s} onChange={onChange} />
       </section>
     );
-  }
   if (d.panel !== "leisure") return null;
   return (
     <section
       className={`${styles.panel} ${styles.leisure}`}
-      aria-label="客厅休闲"
+      aria-label={d.leisurePlace === "computer" ? "电脑休闲" : "客厅休闲"}
     >
-      <small>SOFA TIME / 你的下班时间</small>
-      <h2>先窝在沙发里一会儿。</h2>
+      <small>
+        {d.leisurePlace === "computer"
+          ? "DESKTOP / 下班打一会儿"
+          : "SOFA TIME / 你的下班时间"}
+      </small>
+      <h2>
+        {d.leisurePlace === "computer"
+          ? "戴上耳机，来一梭。"
+          : "先窝在沙发里一会儿。"}
+      </h2>
       <div className={styles.tabs}>
         <button
           aria-pressed={d.entertainment === "video"}
           onClick={() => change(() => {
+              d.mini.held = false;
               d.entertainment = "video";
             })}
         >
@@ -181,37 +120,19 @@ export default function DailyPanel({
               d.entertainment = "game";
             })}
         >
-          玩接星星
+          玩压枪训练
         </button>
       </div>
-      <div className={styles.screen}>
-        {d.entertainment === "video" ? (
-          <>
-            <div
-              className={styles.cat}
-              ref={cat}
-            >
-              ฅ^•ﻌ•^ฅ
-            </div>
-            <p>猫猫频道 · 今天也要好好休息</p>
-          </>
-        ) : (
-          <>
-            <small>接住亮星星 · {hits} 颗</small>
-            <button
-              aria-label="接星星"
-              className={styles.star}
-              style={{
-                left: `${15 + ((hits * 31) % 65)}%`,
-                top: `${28 + ((hits * 19) % 42)}%`,
-              }}
-              onClick={() => setHits((h) => h + 1)}
-            >
-              ✦
-            </button>
-          </>
-        )}
-      </div>
+      {d.entertainment === "video" ? (
+        <div className={styles.screen}>
+          <div className={styles.cat} ref={cat}>
+            ฅ^•ﻌ•^ฅ
+          </div>
+          <p>猫猫频道 · 今天也要好好休息</p>
+        </div>
+      ) : (
+        <MiniGame game={s} onChange={onChange} />
+      )}
       <label htmlFor="daily-volume" className={styles.volume}>
         外放音量 {d.volume}%
         <input
@@ -228,7 +149,9 @@ export default function DailyPanel({
       </label>
       <aside className={styles.phone} aria-label="微信消息">
         {householdStatus(s) && <p>{householdStatus(s)}</p>}
-        <strong>微信 · {skinOf(s.skin).name} {d.unread ? "● 新消息" : ""}</strong>
+        <strong>
+          微信 · {skinOf(s.skin).name} {d.unread ? "● 新消息" : ""}
+        </strong>
         {d.messages.slice(-3).map((m, i) => (
           <p key={`${i}-${m.from}`} data-mine={m.from === "我"}>
             <small>{m.from === "我" ? "我" : skinOf(s.skin).name}</small>
@@ -245,7 +168,15 @@ export default function DailyPanel({
         className={styles.primary}
         onClick={() => change(() => finishLeisure(s))}
       >
-        {d.leisureTime >= 8 ? s.tasks.filter(t => t !== "leisure").every(t => s.done.includes(t)) ? "收起手机，在沙发上小睡 →" : "收起手机，继续忙家里的事 →" : "先起来走走"}
+        {d.leisureTime >= 8
+          ? s.tasks
+              .filter((t) => t !== "leisure")
+              .every((t) => s.done.includes(t))
+            ? d.leisurePlace === "computer"
+              ? "离开电脑，去沙发小睡 →"
+              : "收起手机，在沙发上小睡 →"
+            : "收起手机，继续忙家里的事 →"
+          : "先起来走走"}
       </button>
       {d.leisureTime < 8 && (
         <small>

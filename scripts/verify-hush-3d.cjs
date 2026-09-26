@@ -61,19 +61,7 @@ async function cover(page) {
   await advance(page, ((s.broadcast.music ? s.broadcast.remaining + 15 : s.broadcast.remaining) + .1) * 1000);
 }
 async function timing(page, touch = false) {
-  for (let i = 0; i < 3; i++) {
-    await page.evaluate(() => {
-      for (let n = 0; n < 150; n++) {
-        const d = JSON.parse(window.render_game_to_text()).daily;
-        const p = (Math.sin(d.clock * 2.2 - Math.PI / 2) + 1) / 2;
-        if (p > .42 && p < .58 && d.cooldown <= 0) break;
-        window.advanceTime(25);
-      }
-    });
-    const button = page.locator('[data-daily-timing]');
-    if (touch) await button.tap(); else await button.click();
-  }
-  assert.equal((await state(page)).daily.panel, null);
+  await require('./lib/hush-minigame-browser.cjs').activity(page,touch);
 }
 async function activity(page, photos = false) {
   const s = await state(page), d = s.daily;

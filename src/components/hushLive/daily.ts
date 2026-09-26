@@ -1,3 +1,4 @@
+import { createMini, cookKind, lockKind, miniInput, stepMini, Mini, MiniInput } from "./minigames";
 import { skinOf } from "./skins";
 import type { Game } from "./engine";
 import { createHousehold, Household, nightRoll, onBreak, stepHousehold } from "./household";
@@ -49,6 +50,8 @@ export const MEALS = [
 export type Meal = (typeof MEALS)[number]["id"];
 export type Daily = {
   household: Household;
+  mini: Mini;
+  leisurePlace: "sofa" | "computer";
   meal: Meal;
   homemade: boolean;
   stage: "home" | "sleep" | "after" | "goodnight" | "complete";
@@ -79,6 +82,8 @@ export function beginDaily(s: Game) {
   s.player = outside ? { x: 139, y: 500 } : household.arrival === "sofa" ? { x: 220, y: 405 } : { x: 230, y: 220 };
   s.daily = {
     household,
+    mini: createMini(lockKind(s.seed), s.seed),
+    leisurePlace: "sofa",
     meal: homemade ? "rice" : meal,
     homemade,
     stage: "home",
@@ -86,7 +91,7 @@ export function beginDaily(s: Game) {
     clock: 0,
     beats: 0,
     mistakes: 0,
-    feedback: "等指针进入金色区域，再轻点一次。",
+    feedback: "找到锁芯的卡点，轻轻转开门锁。",
     cooldown: 0,
     volume: 70,
     entertainment: "video",
@@ -107,56 +112,44 @@ export function beginDaily(s: Game) {
   };
   s.message = outside ? `下班到家，门里传来${skinOf(s.skin).name}和观众聊天的声音。先轻轻开门。` : household.arrival === "sofa" ? `今晚一直在家。你从沙发上伸个懒腰，${skinOf(s.skin).name}还在隔壁直播，小猫在脚边打盹。` : `你刚结束一局游戏，摘下耳机。${skinOf(s.skin).name}在直播，先看看家里有什么需要帮忙的。`;
 }
-export const timingPosition = (s: Game) => (Math.sin((s.daily?.clock ?? 0) * 2.2 - Math.PI / 2) + 1) / 2;
-export const timingSteps = (s: Game) => (s.daily?.panel === "lock"
-    ? ["转动钥匙", "压下门把", "扶住门轻轻合上"]
-    : ["打散鸡蛋", "倒入米饭", "翻炒收锅"]);
-export function timingTap(s: Game) {
+export function activityInput(s: Game, input: MiniInput, x = 0, y = 0) {
   const d = s.daily;
-  if (
-    s.phase !== "playing" ||
-    !d ||
-    !["lock", "cook"].includes(d.panel ?? "") ||
-    d.cooldown > 0
-  ) return;
-  const good = timingPosition(s) >= 0.32 && timingPosition(s) <= 0.68;
-  d.cooldown = 0.28;
-  if (!good) {
-    d.mistakes++;
-    s.suspicion = Math.min(85, s.suspicion + (d.panel === "lock" ? 6 : 4));
-    s.peak = Math.max(s.peak, s.suspicion);
-    d.feedback =
-      d.panel === "lock"
-        ? "咔哒…放慢一点，再试这个动作。"
-        : "锅铲碰响了。别急，再试一次。";
-    return;
-  }
-  d.beats++;
-  d.clock = 0;
-  d.feedback = d.panel === "lock" ? "很好，几乎没声音。" : "香味出来了！";
-  if (d.beats < 3) return;
-  if (d.panel === "lock") {
-    s.message = `门轻轻合上。${skinOf(s.skin).name}抬眼笑了一下，手指悄悄比了颗心。`;
-    s.love += d.mistakes === 0 ? 12 : 5;
-  } else {
-    s.done.push("cook");
-    s.carry = "food";
-    s.love += 15;
-    s.message = "蛋炒饭装好了。把这碗热乎的晚饭端到直播桌吧。";
-  }
-  d.panel = null;
-  s.requireRelease = true;
+  if (input === "release" && d) { d.mini.held = false; return; }
+  if (s.phase !== "playing" || !d || !["lock", "cook", "leisure"].includes(d.panel ?? "")) return;
+  if (d.panel === "leisure" && d.entertainment !== "game") return;
+  const before = d.mini.misses;
+  miniInput(d.mini, input, x, y);
+  syncActivity(s, before);
 }
-export function openDailyPanel(s: Game, panel: "cook" | "leisure") {
+function syncActivity(s: Game, previousMisses: number) {
   const d = s.daily;
   if (!d) return;
-  d.panel = panel;
-  d.clock = 0;
-  d.beats = 0;
-  d.mistakes = 0;
-  d.cooldown = 0;
-  d.feedback = "指针到金色区域时点一下；每次只做一个动作。";
-  s.path = [];
+  d.feedback = d.mini.feedback; d.beats = d.mini.score; d.mistakes = d.mini.misses;
+  if (d.mini.misses > previousMisses) {
+    s.suspicion = Math.min(85, s.suspicion + (d.panel === "lock" ? 6 : 4));
+    s.peak = Math.max(s.peak, s.suspicion);
+  }
+  if (!d.mini.won || d.panel === "leisure") return;
+  if (d.panel === "lock") {
+    s.message = `门轻轻合上。${skinOf(s.skin).name}抬眼笑了一下，手指悄悄比了颗心。`;
+    s.love += d.mini.misses === 0 ? 12 : 5;
+  } else if (d.panel === "cook" && !s.done.includes("cook")) {
+    s.done.push("cook"); s.carry = "food"; s.love += 15;
+    s.message = "蛋炒饭装好了。把这碗热乎的晚饭端到直播桌吧。";
+  }
+  d.panel = null; s.requireRelease = true;
+}
+export function openDailyPanel(s: Game, panel: "cook" | "leisure", computer = false) {
+  const d = s.daily;
+  if (!d) return;
+  d.panel = panel; d.clock = 0; d.beats = 0; d.mistakes = 0; d.cooldown = 0;
+  d.mini = createMini(panel === "cook" ? cookKind(s.seed) : "recoil", s.seed);
+  d.leisurePlace = computer ? "computer" : "sofa";
+  d.entertainment = computer ? "game" : "video";
+  d.feedback = ""; s.path = [];
+}
+export function restartPractice(s: Game) {
+  if (s.phase === "playing" && s.daily?.panel === "leisure") s.daily.mini = createMini("recoil", s.seed);
 }
 export function replyQuietly(s: Game) {
   const d = s.daily;
@@ -185,7 +178,9 @@ export function finishLeisure(s: Game) {
 }
 export function sleepDaily(s: Game) {
   if (!s.daily) return;
-  if (s.phase !== "playing" || s.daily.stage !== "home" || onBreak(s) || !s.tasks.every(t => s.done.includes(t))) return;
+  if (s.phase !== "playing" || s.daily.stage !== "home" || !s.tasks.every(t => s.done.includes(t))) return;
+  s.daily.household.rest.stage = "done";
+  s.daily.household.rest.path = [];
   s.daily.stage = "sleep";
   s.daily.clock = 0;
   s.daily.panel = null;
@@ -222,6 +217,11 @@ export function stepDaily(s: Game, dt: number): boolean {
   d.clock += dt;
   stepHousehold(s, dt);
   d.cooldown = Math.max(0, d.cooldown - dt);
+  if (d.panel === "lock" || d.panel === "cook" || (d.panel === "leisure" && d.entertainment === "game")) {
+    const { misses } = d.mini;
+    stepMini(d.mini, dt);
+    syncActivity(s, misses);
+  }
   if (d.stage === "sleep" && d.clock >= 3) {
     d.stage = "after";
     d.clock = 0;

@@ -33,7 +33,7 @@
     "streamer:verify": "node scripts/verify-streamer-game.cjs",
     "pre-stream:test": "node --test scripts/tests/pre-stream-game.test.mjs",
     "pre-stream:verify": "node scripts/verify-pre-stream-game.cjs",
-    "hush:test": "node --test scripts/tests/hush-live.test.mjs",
+    "hush:test": "node --test scripts/tests/hush-live.test.mjs scripts/tests/hush-minigames.test.mjs",
     "hush:verify": "node scripts/verify-hush-3d.cjs && node scripts/verify-hush-3d-controls.cjs && node scripts/verify-hush-interactions.cjs",
     "marriage:test": "node --test scripts/tests/marriage-pressure.test.mjs",
     "marriage:verify": "node scripts/verify-marriage-pressure.cjs",

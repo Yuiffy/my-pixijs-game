@@ -387,8 +387,9 @@ function availableAction(
     if (h.noodles === "ready" && !s.carry) return { key: "take-noodles", label: "掀盖搅拌，拿起泡好的面", seconds: 0.5, noise: 1 };
   }
   if (spot === "kitchen" && pending("cook") && !s.carry) return { key: "cook", label: "开始炒蛋炒饭", seconds: 0.2, noise: 0 };
+  if (spot === "sofa" && s.daily?.stage === "home" && !s.carry && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: `在沙发上小睡，等${skinOf(s.skin).name}下播`, seconds: 0.3, noise: 0 };
   if (spot === "sofa" && (pending("leisure") || noodlesWaiting(s) || onBreak(s)) && !s.carry) return { key: "leisure", label: "坐下看视频 / 玩游戏", seconds: 0.2, noise: 0 };
-  if (spot === "sofa" && s.daily?.stage === "home" && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: `在沙发上小睡，等${skinOf(s.skin).name}下播`, seconds: 0.3, noise: 0 };
+
   if (spot === "door") return {
       key: "door",
       label: s.doorClosed ? "轻轻开门" : "轻轻关门",
@@ -415,6 +416,7 @@ function availableAction(
       seconds: 0,
       noise: s.quiet ? 16 : 48,
     };
+  if (spot === "desk" && s.daily?.stage === "home" && !s.carry) return { key: "computer", label: "坐到电脑前，练练压枪", seconds: 0.2, noise: 0 };
   if (spot === "partner" && pending("hug")) return { key: "hug", label: "拥抱TA", seconds: 3, noise: 16 };
   if (spot === "partner" && pending("kiss")) return { key: "kiss", label: "轻轻吻一下", seconds: 1.4, noise: 22 };
   if (spot === "partner" && !s.bonus) return {
@@ -443,6 +445,7 @@ export function action(s: Game, focus: Spot | null = nearest(s)) {
 }
 function completeAction(s: Game, key: string) {
   if (householdAction(s, key)) return;
+  if (key === "computer") { openDailyPanel(s, "leisure", true); return; }
   if (key === "cook" || key === "leisure") { openDailyPanel(s, key); return; }
   if (key === "sleep") { sleepDaily(s); return; }
   if (key === "discover") { discoverDaily(s); return; }

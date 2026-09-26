@@ -30,12 +30,12 @@ async function run() {
       await page.close();
     }
     const page = await open(context,3,2);
-    await page.locator('[data-daily-timing]').click(); assert.equal((await state(page)).daily.mistakes,1);
+    await page.locator('[data-mini-surface]').focus(); await page.keyboard.down('Space'); await advance(page,800); await page.keyboard.up('Space'); assert.ok((await state(page)).daily.mistakes>=1);
     await page.keyboard.press('p'); const frozen=(await state(page)).daily.clock; await advance(page,3000); assert.equal((await state(page)).daily.clock,frozen);
     await page.getByRole('button',{name:'继续今晚 →'}).click(); await timing(page);
     await reachAction(page,'cook'); await hold(page); await capture(page,'chapter-cooking'); await timing(page);
     await reachAction(page,'leisure'); await hold(page);
-    await page.getByRole('button',{name:'玩接星星'}).click(); await page.getByRole('button',{name:'接星星',exact:true}).click();
+    await page.getByRole('button',{name:'玩压枪训练'}).click(); await page.locator('[data-mini-surface]').focus(); await page.keyboard.down('Space'); await advance(page,400); await page.keyboard.up('Space');
     await advance(page,3100); assert.match((await state(page)).daily.messages.at(-1).text,/游戏的声音/);
     await page.getByRole('button',{name:'回复：收到，戴耳机啦'}).click();
     await advance(page,5100); await page.getByRole('button',{name:'收起手机，在沙发上小睡 →'}).click();
