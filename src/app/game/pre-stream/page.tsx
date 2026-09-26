@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import PreStreamGame from '@/components/preStreamGame/PreStreamGame';
+import PreStream3D from '@/components/preStreamGame/PreStream3D';
 
 export const metadata: Metadata = {
-  title: '岁己：马上就播 | 开播前的动作小游戏',
-  description: '接水、备餐、喂猫、调好声卡与直播软件。扮演岁己挑战开播前三晚，用你的操作刷新“马上就播”的纪录。',
+  title: '岁己：马上就播 | 3D 开播前冒险',
+  description: '在 3D 公寓里跑遍厨房、洗手间和直播间。接水等待时完成其他准备，处理意外，争取早点正式上播。',
 };
 
 export default function PreStreamPage() {
-  return <PreStreamGame />;
+  return <PreStream3D />;
 }
