@@ -33,6 +33,6 @@ export type Surface = {
   id: string; name: string; x1: number; x2: number; z1: number; z2: number;
   y: number; endY?: number; color: string;
 };
-export type Obstacle = { x: number; z: number; w: number; d: number; y: number; h: number; kind: 'pillar' | 'crate' | 'planter' | 'gate' };
+export type Obstacle = { x: number; z: number; w: number; d: number; y: number; h: number; kind: 'pillar' | 'crate' | 'planter' | 'gate' | 'chest' };
 export type Landmark = Vec3 & { id: string; label: string; kind: 'rest' | 'cache' | 'charm' | 'shortcut' | 'food' | 'note' };
 export type CameraControl = { yaw: number; pitch: number; distance: number; reset: number };

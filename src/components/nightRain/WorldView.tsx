@@ -5,6 +5,8 @@ import { memo, useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { CameraControl, EnemyKind, GameState, Surface } from "./types";
 import { enemyAttack } from "./engine";
+import CompanionView from './CompanionView';
+import type { Companion } from './companion';
 import {
   ENEMY_SPAWNS,
   LANDMARKS,
@@ -20,6 +22,7 @@ type WorldProps = {
   cameraControl: MutableRefObject<CameraControl>;
   onReady?: () => void;
   onError?: (message: string) => void;
+  companionRef?: MutableRefObject<Companion>;
 };
 
 const COLORS = {
@@ -39,7 +42,7 @@ const pseudoRandom = (n: number) => {
 const CAMERA_BUILDINGS = [
   { x: -22, z: -1.5, w: 6, d: 9, top: 9 },
   { x: -22, z: -14, w: 6, d: 10, top: 10.3 },
-  { x: -6, z: -10.4, w: 7, d: 6, top: 10.1 },
+  { x: -5, z: -18.4, w: 7, d: 3, top: 5.5 },
   { x: 3.2, z: -10.4, w: 8, d: 6, top: 8.8 },
   { x: -10, z: -43, w: 6, d: 9, top: 10.3 },
   { x: 17.5, z: -44, w: 5, d: 9, top: 9.3 },
@@ -147,7 +150,7 @@ function Sign({
         size={[width + 0.14, width / 3 + 0.14, 0.15]}
         color={COLORS.dark}
       />
-      <mesh>
+      <mesh position={[0, 0, 0.04]}>
         <planeGeometry args={[width, width / 3]} />
         <meshBasicMaterial map={texture} toneMapped={false} />
       </mesh>
@@ -593,7 +596,7 @@ function FoodStall() {
 
 function CityContent() {
   return (
-    <group>
+    <group name="night-city">
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -1.25, -12]}
@@ -679,10 +682,10 @@ function CityContent() {
         color="#708f8c"
       />
       <ShopHouse
-        position={[-6, 0, -10.4]}
+        position={[-5, 0, -18.4]}
         width={7}
-        depth={6}
-        height={9.8}
+        depth={3}
+        height={5.2}
         color="#849892"
         sign="旧城商行"
       />
@@ -844,6 +847,10 @@ function CityContent() {
       <Palm position={[-24, 0, -30]} scale={1.8} />
       <Palm position={[19, -1, -12]} scale={1.5} />
       <FoodStall />
+      <Sign position={[-12.5, 4.4, -12.5]} text="铃兰回廊 →" subtext="雨灯近道" width={2.3} />
+      <Sign position={[-16.85, 7.3, -26]} rotation={[0, Math.PI / 2, 0]} text="望台 · 夜市灯火" width={2.6} />
+      <Lantern position={[-8.6, 3, -15.4]} />
+      <Lantern position={[-16.2, 6, -29]} />
       <Sign
         position={[10.8, 3.7, -36.1]}
         text="夜市 →"
@@ -876,6 +883,22 @@ function CityContent() {
 
 const City = memo(CityContent);
 
+function TreasureChest({ stateRef, id, position }: { stateRef: StateRef; id: string; position: Triple }) {
+  const lid = useRef<THREE.Group>(null);
+  useFrame(() => { if (lid.current) lid.current.rotation.x = stateRef.current.collected.includes(id) ? -1.1 : 0; });
+  return (
+    <group position={position}>
+      <Block position={[0, 0.23, 0]} size={[0.95, 0.46, 0.65]} color="#5c4240" />
+      {[-0.33, 0.33].map(x => <Block key={x} position={[x, 0.25, 0.01]} size={[0.07, 0.5, 0.68]} color="#b99b5c" />)}
+      <group ref={lid} position={[0, 0.48, -0.32]}>
+        <Block position={[0, 0.08, 0.32]} size={[1.01, 0.18, 0.71]} color="#875b47" />
+        {[-0.33, 0.33].map(x => <Block key={x} position={[x, 0.12, 0.32]} size={[0.09, 0.18, 0.73]} color="#d3b16f" />)}
+        <Block position={[0, -0.01, 0.69]} size={[0.12, 0.23, 0.04]} color="#ebc57d" />
+      </group>
+    </group>
+  );
+}
+
 function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
   const gate = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
@@ -889,6 +912,7 @@ function ObstacleArt({ stateRef }: { stateRef: StateRef }) {
   return (
     <group>
       {OBSTACLES.map((o, i) => {
+        if (o.kind === 'chest') return null;
         if (o.kind === "gate") return (
             <group key={i} position={[o.x, o.y, o.z]}>
               {[-1, 1].map((s) => (
@@ -1028,6 +1052,7 @@ function Landmarks({ stateRef }: { stateRef: StateRef }) {
   });
   return (
     <group>
+      {LANDMARKS.filter(l => l.id === 'cloister-cache' || l.id === 'lookout-cache').map(l => <TreasureChest key={l.id} stateRef={stateRef} id={l.id} position={[l.x, l.y, l.z - 0.8]} />)}
       {LANDMARKS.map((l, i) => {
         if (l.kind === "rest") return (
             <group key={l.id} position={[l.x, l.y, l.z]}>
@@ -1669,7 +1694,9 @@ function CameraRig({
   stateRef,
   cameraControl,
 }: Pick<WorldProps, "stateRef" | "cameraControl">) {
-  const { camera } = useThree();
+  const { camera, scene } = useThree();
+  const ray = useMemo(() => new THREE.Raycaster(), []);
+  const direction = useMemo(() => new THREE.Vector3(), []);
   const target = useMemo(() => new THREE.Vector3(), []);
   const desired = useMemo(() => new THREE.Vector3(), []);
   const first = useRef(true);
@@ -1728,9 +1755,19 @@ function CameraRig({
         break;
       }
     }
+    // Also test actual static artwork: parapets, awnings and roof edges must not
+    // slice through the camera when the player turns beside a ledge.
+    const city = scene.getObjectByName('night-city');
+    let obstructed = false;
+    if (city) {
+      direction.subVectors(desired, target); const length = direction.length();
+      ray.set(target, direction.normalize()); ray.near = 0.15; ray.far = length;
+      const hit = ray.intersectObject(city, true)[0];
+      if (hit) { desired.copy(target).addScaledVector(direction, Math.max(0.65, hit.distance - 0.2)); obstructed = true; }
+    }
     const reset = controls.reset !== lastReset.current;
     lastReset.current = controls.reset;
-    if (first.current || reset) {
+    if (first.current || reset || obstructed) {
       camera.position.copy(desired);
       first.current = false;
     } else camera.position.lerp(desired, 1 - Math.exp(-dt * 10));
@@ -1739,7 +1776,7 @@ function CameraRig({
   return null;
 }
 
-function Scene({ stateRef, cameraControl, onReady, onError }: WorldProps) {
+function Scene({ stateRef, cameraControl, onReady, onError, companionRef }: WorldProps) {
   const { gl } = useThree();
   useEffect(() => {
     const canvas = gl.domElement;
@@ -1776,6 +1813,7 @@ function Scene({ stateRef, cameraControl, onReady, onError }: WorldProps) {
       <ObstacleArt stateRef={stateRef} />
       <Landmarks stateRef={stateRef} />
       <Actor stateRef={stateRef} />
+      {companionRef && <CompanionView stateRef={stateRef} companionRef={companionRef} />}
       {ENEMY_SPAWNS.map((e) => (
         <Actor key={e.id} stateRef={stateRef} enemyId={e.id} />
       ))}

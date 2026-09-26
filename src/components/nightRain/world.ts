@@ -12,6 +12,10 @@ export const SURFACES: Surface[] = [
   { id: 'market-stairs', name: '夜市长阶', x1: 0, x2: 5, z1: -37, z2: -25, y: 0, endY: 6, color: '#827b68' },
   { id: 'market', name: '封街夜市', x1: -6, x2: 14, z1: -49, z2: -36, y: 0, color: '#665e59' },
   { id: 'return', name: '运河侧廊', x1: 10, x2: 14, z1: -37, z2: -6, y: 0, color: '#65726e' },
+  { id: 'cloister-bridge', name: '雨檐岔路', x1: -15.5, x2: -7, z1: -14, z2: -12, y: 3, color: '#938c79' },
+  { id: 'cloister', name: '铃兰回廊', x1: -9, x2: -4, z1: -16, z2: -10, y: 3, color: '#8b8876' },
+  { id: 'cloister-stairs', name: '回廊近道', x1: -8, x2: -4, z1: -10, z2: -5, y: 3, endY: 0, color: '#8b8876' },
+  { id: 'lookout', name: '金塔望台', x1: -17, x2: -10, z1: -30, z2: -25, y: 6, color: '#b58b67' },
 ];
 
 export const OBSTACLES: Obstacle[] = [
@@ -22,6 +26,8 @@ export const OBSTACLES: Obstacle[] = [
   { x: -3, z: -43, w: 1.6, d: 1.6, y: 0, h: 2.4, kind: 'pillar' },
   { x: 11, z: -44, w: 1.6, d: 1.6, y: 0, h: 2.4, kind: 'pillar' },
   { x: 12, z: -8, w: 4.1, d: 0.7, y: 0, h: 3.3, kind: 'gate' },
+  { x: -6, z: -15.3, w: 0.95, d: 0.65, y: 3, h: 0.65, kind: 'chest' },
+  { x: -14, z: -29.3, w: 0.95, d: 0.65, y: 6, h: 0.65, kind: 'chest' },
 ];
 
 export const LANDMARKS: Landmark[] = [
@@ -32,6 +38,8 @@ export const LANDMARKS: Landmark[] = [
   { id: 'rooftop-note', kind: 'note', label: '查看夜市便签', x: -4, y: 6, z: -23 },
   { id: 'shortcut', kind: 'shortcut', label: '拉开中庭侧门', x: 12, y: 0, z: -10 },
   { id: 'food', kind: 'food', label: '来一份热腾腾的打抛饭', x: 4, y: 0, z: -47 },
+  { id: 'cloister-cache', kind: 'cache', label: '打开铃兰回廊宝箱', x: -6, y: 3, z: -14.5 },
+  { id: 'lookout-cache', kind: 'cache', label: '打开金塔望台宝箱', x: -14, y: 6, z: -28.5 },
 ];
 
 export const ENEMY_SPAWNS: (Vec3 & { id: string; kind: EnemyKind; name: string; facing: number })[] = [

@@ -31,6 +31,13 @@ interface ProjectItem {
 
 const miniGames: ProjectItem[] = [
   {
+    title: '岁己 · 雨夜寻味',
+    href: '/game/night-rain',
+    description: '下播后穿过雨中的旧城，打开近路、挑战铁伞，和饼干岁一起找一顿热饭。',
+    image: '/games/night-rain/preview.png',
+    meta: '3D动作探索 · 箱庭第一幕 · 精灵宝宝模式',
+  },
+  {
     title: '嘘，TA还在播',
     href: '/game/hush-live',
     description: '做虚拟主播的秘密恋人。递外卖、隔墙报点、偷一个吻，守住两个人的小秘密。',

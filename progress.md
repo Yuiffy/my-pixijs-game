@@ -2936,3 +2936,36 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 用户明确要求提交Git并push。提交范围为相亲成长/相处规则、随机昵称修复、存档迁移、界面、测试与资料文档；共享progress只暂存相亲记录，雨夜任务修改保留。
 - 提交前52项规则测试和全仓check通过，生产构建使用独立.next-family-release-build并保持ESLint/类型检查。验收日志tmp/family-release-tests.log、tmp/family-release-check.log、tmp/family-release-build.log。
 - 本轮最终生产build通过（51/51页），已移除自动生成的临时类型目录；相亲提交不包含其他游戏未提交文件。
+
+## 2026-09-26 · 雨夜寻味箱庭与宝宝模式（进行中）
+
+- 原始目标：开发完善第三人称雨夜魂游第一箱庭；宝宝模式提供漂浮饼干岁或獭獭栞，遗漏／接近分级字幕、可选TTS、主动交谈请求直接带路。地图强调魂系高差、可观察的地标、可选奖励、短环和解锁大回环。
+- 已接 `/game/night-rain`，完成桌面与手机输入、HUD、暂停地图、存档、死亡/结尾、精灵设置；保持独立模拟和WebGL。新增铃兰回廊小环与金塔望台、两座真实宝箱，保留原主线大环和两阶段首领。
+- 精灵有独立提示冷却、接近/遗漏/越来越近、迷路求助、战斗建议；导航基于实际地表与障碍，带路时等待玩家和遇敌停留，不改玩家位置。两种3D造型及可选中文系统TTS。正在完善最近建议目的地与输入异常处理。
+- 20项规则通过；系统Chrome输入专项7张图已逐张目检；完整第一幕13张图已逐张目检，合法动作收集两新宝箱、走小环/开大环、升级、首领、点餐和刷新结尾均通过。截图审查发现原招牌贴图被底板遮挡，已将贴图前移；宝箱补上实体碰撞并移到交互点前方。需要修正后复验与最终门禁。
+- 共用主目录有其他游戏并行修改，创建隔离验证worktree `C:/Users/yuiffy/.codex/worktrees/night-rain-validation/my-pixijs-game` 用于本次源码check/build。未提交或推送。当前开发服务3870，独立构建目录.next-night-rain-dev。
+
+### 2026-09-26 · 雨夜寻味第一幕完成核验
+
+- 完成第一箱庭与宝宝模式：0/3/6米高差、回廊短环、望台与两宝箱、夜市侧门大环、原敌人与两阶段首领、主动点餐结尾。可选饼干岁／獭獭栞、遗漏和接近分级字幕、中文系统TTS、实际路径带路／等候／遇敌停留、战斗提示；桌面与双指手机输入、地图、暂停和本机存档。
+- 最终21项规则／精灵测试通过；Chrome controls 7图、journey 15图、assistance 5图均通过像素检测且逐张目检，错误为空。journey通过合法输入实际跟随精灵到雨灯、响应错过钱袋提示、收集两宝箱、走短环／开启大环、整备、首领与结尾刷新；TTS记录真实start事件，触屏双指、设置持久化、坏档／存储拒绝、失焦、模态焦点、全屏与渲染恢复通过。
+- 相机对静态城市做遮挡回缩，招牌贴图前移，宝箱实体碰撞与开箱外观对应。已更新真实预览图，修正验收表与截图名称07-market-approach，区分自动通关与人工手感验证。
+- 隔离worktree顺序check/build通过（51页，保留lint/typecheck，仅既有overworldRpg警告）。其所有nightRain源码、路由、demos、package与主工作区逐文件SHA256一致，记录tmp/night-rain-source-validation.json；最终目标源码ESLint与diff check通过。字体仅在构建环境复用已核验真实缓存，未改变全局字体配置。
+- 生产3871 HTTP200，经demos卡片进入，真实RAF移动、选择獭獭栞、请求中庭带路、等待、暂停停表与存档刷新通过；无错误，gameplay.png通过像素检查并目检。证据tmp/night-rain-production/report.json。已向Codex提交打开本地试玩的请求。
+- 仅移除本轮.next-night-rain-dev临时类型目录；保留其他任务目录及hushLive、marriagePressureGame所有改动。当前未提交或部署，生产服务保留供试玩，验证worktree仍在使用。后续依据真人初见反馈迭代手感与美术密度，本轮必要实现无遗留。
+
+### 2026-09-26 · 雨夜动作键鼠与手柄（最终门禁中）
+
+- 用户要求鼠标直接转视角，Alt 临时释放，支持手柄；补充指出JK让右手无法同时用鼠标，并要求查阅开发设计经验。按MDN Pointer Lock／Gamepad、Xbox XAG107及Game Accessibility Guidelines实现：左／右键轻重击，中键锁定，F弹反，原JKL备用；标准手柄双摇杆、RB/RT/LB/B/A/X/R3/Y/View/Menu，完整菜单、设置选择、L3切换冲刺、死区与断连暂停。镜头速度和反转本地持久化。
+- 实测发现快速Alt会在锁定获得事件送达前释放，造成requesting残留，已修正异步事件状态。Esc兼容浏览器发送按键或只发送锁变化两条路径。
+- 用户明确需要同时用电脑：后续不可真实抢鼠标、不可启动可见测试窗口。已结束实际捕获测试，所有雨夜浏览器脚本改为隐藏系统Chrome并注入测试专用虚拟Pointer Lock；手柄也在Gamepad API边界虚拟。不得把虚拟设备证据说成实体硬件验证。测试模拟器不进入生产代码。
+- 22项规则通过；devices 4图、controls 7图、assistance 5图全部像素检查与逐图目检，无错误；键鼠组合输入、Alt／Esc／菜单／失焦、镜头设置持久化、虚拟手柄战斗／交互／锁实敌／受伤喝水／菜单／断连重连，以及触屏回归通过。最终源码已同步原验证worktree，顺序check/build进行中；生产3871更新后再追加结果。
+
+- 最终顺序check和.next-night-rain-input-build生产build通过（51页、保留lint/typecheck，仅既有RPG警告），源码ESLint/diff check通过。主目录与成功构建目录12个源码／入口／package文件哈希一致，tmp/night-rain-input-source-validation.json。已移除本轮临时类型目录，其他任务改动保留。
+- 本地3871已切换新版生产构建，HTTP200；隐藏Chrome加虚拟Pointer Lock／Gamepad重复整个设备专项通过，errors为空，4张生产图像素检查与逐图目检通过（tmp/night-rain-input-production/report.json）。没有使用原生指针捕获、实体手柄或可见窗口。当前浏览器由用户自行刷新即可使用新版；不主动操作用户页面。未提交或推送。
+
+### 2026-09-26 · 雨夜寻味发布门禁
+
+- 用户明确要求在 demos 增加入口并提交上线；实验室首位展示游戏预览与入口，随第一幕、精灵模式、动作键鼠和手柄支持一起提交。沿用现有 origin/master → Vercel Production 集成。
+- 主工作区最终 22 项测试、pnpm run check、随后 pnpm run build 全部通过（51/51 页，保留 ESLint/类型检查，仅既有 RPG unused 警告），构建目录 .next-night-rain-release-build。已收回本轮临时类型目录。
+- 设备与浏览器验证使用隐藏系统 Chrome、虚拟 Pointer Lock 和虚拟 Gamepad，不抢占系统鼠标；完整关卡、设备与移动端证据见前述记录。保留 3871 本地试玩服务及其验证 worktree。

@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const { mkdirSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
+const { installVirtualPointerLock } = require('./lib/night-rain-virtual-pointer.cjs');
 
 const candidates = [
   process.env.PLAYWRIGHT_MODULE,
@@ -54,8 +55,8 @@ const capture = async (page, name) => {
   assert.deepEqual(layout.badImages, []);
   const path = join(output, `${name}.png`);
   // This is a full-page capture through installed Chrome, never canvas.toDataURL.
-  // If this rejects a GPU capture, rerun with NIGHT_RAIN_HEADED=1 and inspect state/errors.
-  const pixels = inspectPng(await page.screenshot({ path, fullPage: true }));
+  // Pointer Lock is virtualized so tests never capture the user’s physical mouse.
+  const pixels = inspectPng(await page.screenshot({ path, fullPage: true, animations: "disabled" }));
   evidence.push({ name, path, pixels, layout, mode: snapshot.mode, region: snapshot.region, player: snapshot.player });
   writeFileSync(join(output, `${name}.json`), JSON.stringify({ state: snapshot, text, layout, pixels }, null, 2));
   console.log(`capture ${name}: ${snapshot.mode}, ${snapshot.region}, ${pixels.width}x${pixels.height}`);
@@ -139,7 +140,7 @@ const touchHold = async (page, cdp, locator, ms) => {
 
 const checkMobile = async browser => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
-  const page = await context.newPage();
+  await context.addInitScript(installVirtualPointerLock); const page = await context.newPage();
   observe(page);
   await open(page);
   await page.getByRole('button', { name: '出门找夜宵', exact: true }).tap();
@@ -180,10 +181,10 @@ const checkRefresh = async page => {
 const main = async () => {
   const response = await fetch(`${base}/game/night-rain`);
   assert.equal(response.status, 200, 'The actual game URL must respond before Chrome launches');
-  const browser = await chromium.launch({ channel: 'chrome', headless: process.env.NIGHT_RAIN_HEADED !== '1' });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    const page = await context.newPage();
+    await context.addInitScript(installVirtualPointerLock); const page = await context.newPage();
     observe(page);
     await open(page);
     await capture(page, '01-title');

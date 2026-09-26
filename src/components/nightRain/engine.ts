@@ -314,7 +314,8 @@ export function interact(s: GameState): void {
     s.enemies = makeEnemies(s.bossDefeated); s.lockedId = null;
     say(s, '雨灯已点亮。体力、生命与椰子水补满；巷中的敌人也回到了岗位。', 5);
   } else if (landmark.kind === 'cache' && !s.collected.includes(landmark.id)) {
-    s.collected.push(landmark.id); s.rice += 35; effect(s, landmark, 'reward', '+35 夜市钱'); say(s, '遗落的钱袋 · 35 夜市钱。回雨灯可用来整备。');
+    s.collected.push(landmark.id); s.rice += 35; effect(s, landmark, 'reward', '+35 夜市钱');
+    say(s, landmark.id === 'cloister-cache' ? '回廊宝箱 · 35 夜市钱。顺着矮阶下去，原来又回到了熟悉的雨灯。' : landmark.id === 'lookout-cache' ? '望台宝箱 · 35 夜市钱。从这里能看见铁伞和运河侧廊，先观察，再选路。' : '遗落的钱袋 · 35 夜市钱。回雨灯可用来整备。');
   } else if (landmark.kind === 'charm' && !s.charm) {
     s.charm = true; s.collected.push(landmark.id); effect(s, landmark, 'reward', '金铃护符'); say(s, '金铃护符 · 椰子水恢复量提升至 80。屋脊的远路没有白走。');
   } else if (landmark.kind === 'shortcut') {
