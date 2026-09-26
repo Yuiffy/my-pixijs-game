@@ -10,7 +10,7 @@ const {
   placeFoodPrep, releaseCatPourPrep, setAudioChannelPrep, capturePosePrep, wipeSpillPrep,
   connectCablePrep, toggleObsSourcePrep, sweepGlassPrep, scoopLitterPrep, digBowelPrep,
   validatePrepGame, getPrepStars, nearestStation,
-  getPrepWalkTarget, formatPrepTime,
+  getPrepWalkTarget, formatPrepTime, getPrepStations,
 } = game;
 const idle = { x: 0, z: 0, primary: false };
 const station = id => STATIONS.find(item => item.id === id);
@@ -162,8 +162,16 @@ test('room interaction needs proximity, wall collision routes through bathroom d
 
 test('slow water fills while aiming at toilet, then requires collection and drinking', () => {
   let state = startPrepGame(createPrepGame(1, 123));
+  const waterHints = () => getPrepStations(state)
+    .filter(item => item.id === 'thermos' || item.id === 'dispenser')
+    .map(({ id, label }) => ({ id, label }));
+  assert.deepEqual(waterHints(), [{ id: 'thermos', label: '保温杯' }]);
+  assert.notEqual(nearestStation({ ...state, player: { ...state.player, ...station('dispenser') } })?.id, 'dispenser', 'E must ignore the dispenser before picking up the cup');
   state = visit(state, 'thermos');
+  assert.deepEqual(waterHints(), [{ id: 'dispenser', label: '饮水机' }]);
+  assert.notEqual(nearestStation(state)?.id, 'thermos', 'the empty cup must not leave a stale target at the desk');
   state = visit(state, 'dispenser');
+  assert.deepEqual(waterHints(), [{ id: 'dispenser', label: '接水中' }]);
   state = visit(state, 'toilet');
   assert.equal(state.water.cup, 'filling');
   let shots = 0;
@@ -177,6 +185,7 @@ test('slow water fills while aiming at toilet, then requires collection and drin
   assert.equal(state.completed.includes('toilet'), false, 'shooting does not bypass flush');
   state = stepPrepGame(state, 21000, idle);
   assert.equal(state.water.cup, 'ready', 'water keeps filling during an unrelated activity');
+  assert.deepEqual(waterHints(), [{ id: 'dispenser', label: '取满水杯' }]);
   assert.equal(state.minigame.stage, 'flush-ready');
   state = pressPrep(state);
   assert.equal(state.minigame.stage, 'flushing');
@@ -186,8 +195,11 @@ test('slow water fills while aiming at toilet, then requires collection and drin
   assert.ok(state.completed.includes('toilet'));
   state = visit(state, 'dispenser');
   assert.equal(state.water.cup, 'carried-full');
+  assert.deepEqual(waterHints(), [{ id: 'thermos', label: '桌边喝水' }]);
+  assert.notEqual(nearestStation(state)?.id, 'dispenser', 'the collected cup must not leave a stale target at the dispenser');
   state = visit(state, 'thermos');
   assert.equal(state.water.cup, 'drank');
+  assert.deepEqual(waterHints(), [], 'water targets disappear after drinking');
   assert.ok(state.completed.includes('water'));
 });
 

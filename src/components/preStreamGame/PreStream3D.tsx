@@ -13,7 +13,7 @@ import {
   interactPrep, leaveMiniGame, pressPrep, startPrepGame, stepPrepGame, placeFoodPrep, releaseCatPourPrep,
   nearestStation, setAudioChannelPrep, capturePosePrep, wipeSpillPrep, connectCablePrep, toggleObsSourcePrep,
   sweepGlassPrep, scoopLitterPrep, digBowelPrep,
-  togglePausePrep, validatePrepGame,
+  togglePausePrep, validatePrepGame, getPrepStations,
 } from './gameplay3d';
 import type { PrepState, StationId, TaskId } from './gameplay3d';
 import { createPreStreamAudio } from './sound3d';
@@ -541,6 +541,7 @@ coordinateSystem: 'world: x right, z down; aim: x/y 0..1',
       ...stateRef.current,
 target: destinationRef.current,
 selectedStation: selectedRef.current,
+      stations: getPrepStations(stateRef.current),
       records: recordsRef.current,
       audio: readAudioState(),
 formattedTime: formatPrepTime(stateRef.current.elapsedMs),
@@ -654,10 +655,8 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
   const stationAction = (id: StationId) => {
     if (incidentStation(id)) return state.incidents.active.includes(id as PrepState['incidents']['active'][number]) ? '突发' : '完成';
     if ((id === 'vts' || id === 'obs') && state.incidents.active.includes('power')) return '待重启';
-    if ((id === 'thermos' || id === 'dispenser') && state.water.cup === 'drank') return '完成';
-    if (id === 'dispenser' && state.water.cup === 'filling') return '接水中';
-    if (id === 'thermos' && !stationAvailable(state, id)) return '等水';
-    if (id === 'dispenser' && !stationAvailable(state, id)) return '先拿杯';
+    if (id === 'thermos') return state.water.cup === 'carried-full' ? '喝水' : '拿杯';
+    if (id === 'dispenser') return state.water.cup === 'filling' ? '接水中' : state.water.cup === 'ready' ? '取杯' : '接水';
     if (id === 'obs' && state.completed.includes('obs')) return readyToBroadcast(state) ? '待上播' : '开播台';
     if (TASKS.some(task => task.station === id && state.completed.includes(task.id))) return '完成';
     return '待完成';
@@ -677,7 +676,9 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
   const atComputer = Boolean(obsStation && Math.hypot(obsStation.x - state.player.x, obsStation.z - state.player.z) <= LIVE_RADIUS);
   const nearbyAction = readyForLive && atComputer ? '正式上播' : getPrepAction(state);
   const nearby = nearbyStations(state);
-  const selected = selectedStation && stationAvailable(state, selectedStation) ? STATIONS.find(item => item.id === selectedStation) : null;
+  const stations = getPrepStations(state);
+  const waterStation = stations.find(station => station.id === 'thermos' || station.id === 'dispenser')?.id;
+  const selected = selectedStation && stationAvailable(state, selectedStation) ? stations.find(item => item.id === selectedStation) : null;
   const selectedIndex = nearby.indexOf(selectedStation as StationId);
   const pendingTasks = TASKS.filter(task => !state.completed.includes(task.id));
   const selectionText = selected?.id === 'obs' && readyForLive && atComputer ? 'OBS 就绪 · 正式上播' : selected ? `${selected.label}${target === selected.id ? ' · 前往中' : ''}` :
@@ -791,7 +792,7 @@ disabled={!ready || !worldReady}
         <div className={styles.taskChecklist} aria-label="准备事项">
           {TASKS.map(task => {
             const done = state.completed.includes(task.id);
-            const station = task.id === 'water' && ['carried-empty', 'filling', 'ready'].includes(state.water.cup) ? 'dispenser' : task.station;
+            const station = task.id === 'water' ? waterStation || task.station : task.station;
             return <button key={task.id} type="button" data-objective-task={task.id} data-done={done} data-current={selectedStation === station} aria-pressed={selectedStation === station} disabled={done || state.phase !== 'explore' || !stationAvailable(state, station)} title={task.label} aria-label={`${task.label}${done ? '已完成' : '未完成，点击前往'}`} onClick={() => interact(station)}>{done ? <CheckOutlined aria-hidden /> : <span className={styles.taskPendingDot} />}{SHORT_TASKS[task.id]}</button>;
           })}
         </div>
@@ -807,7 +808,7 @@ disabled={!ready || !worldReady}
     {state.phase === 'explore' && !state.paused && (
 <>
       <div ref={stationRailRef} className={styles.stationRail} aria-label="房间里的准备地点">
-        {STATIONS.filter(station => !incidentStation(station.id) || state.incidents.active.includes(station.id as PrepState['incidents']['active'][number])).map(station => (
+        {stations.map(station => (
           <button
 key={station.id}
 type="button"
@@ -815,8 +816,8 @@ data-station={station.id}
 data-current={selectedStation === station.id}
             data-status={stationAction(station.id) === '突发' ? 'urgent' : stationAction(station.id) === '完成' ? 'done' : stationAvailable(state, station.id) ? 'pending' : 'waiting'}
 onClick={() => interact(station.id)}
-            disabled={stationAction(station.id) === '完成'}
-title={`${station.label} · ${stationAction(station.id)} · 点击选择或前往`}>
+            disabled={stationAction(station.id) === '完成' || (station.id === 'dispenser' && state.water.cup === 'filling')}
+title={`${station.label} · ${stationAction(station.id)}`}>
             <span className={styles.stationMark}>{stationAction(station.id) === '完成' || (station.id === 'obs' && state.completed.includes('obs')) ? <CheckOutlined /> : '·'}</span>
             <span>{station.label}</span>
             <small>{stationAction(station.id)}</small>

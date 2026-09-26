@@ -206,12 +206,24 @@ export function startPrepGame(state: PrepState): PrepState {
   return { ...state, phase: 'explore', noticeMs: 4000 };
 }
 
+export function getPrepStations(state: PrepState): PrepStation[] {
+  return STATIONS.filter(station => {
+    if (station.id === 'thermos') return state.water.cup === 'table' || state.water.cup === 'carried-full';
+    if (station.id === 'dispenser') return ['carried-empty', 'filling', 'ready'].includes(state.water.cup);
+    return !isIncident(station.id) || state.incidents.active.includes(station.id);
+  }).map(station => {
+    if (station.id === 'thermos' && state.water.cup === 'carried-full') return { ...station, label: '桌边喝水' };
+    if (station.id === 'dispenser' && state.water.cup === 'filling') return { ...station, label: '接水中' };
+    if (station.id === 'dispenser' && state.water.cup === 'ready') return { ...station, label: '取满水杯' };
+    return station;
+  });
+}
+
 export function nearestStation(state: PrepState): PrepStation | null {
   if (state.phase !== 'explore') return null;
   let nearest: PrepStation | null = null;
   let nearestDistance = INTERACT_RADIUS;
-  for (const station of STATIONS) {
-    if (isIncident(station.id) && !state.incidents.active.includes(station.id)) continue;
+  for (const station of getPrepStations(state)) {
     const d = distance(state.player, station);
     if (d <= nearestDistance && !blocksBathroom(state.player.x, state.player.z, station.x, station.z) && !blocksBedroom(state.player.x, state.player.z, station.x, station.z)) {
       nearest = station;
