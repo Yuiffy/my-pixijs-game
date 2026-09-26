@@ -11,7 +11,7 @@
 | 嘘，TA还在播 | 第一人称 3D 同居日常、独立小游戏、料理和门外回家流程已实现。 | [日常玩法](docs/hush-daily-life.md)、[家庭扩展](docs/hush-household.md) |
 | 岁己：马上就播 | 3D 公寓准备任务、专属小游戏、待机音乐和开播转场已实现。 | [设计与验收](docs/pre-stream-game.md) |
 | RESET / 开蹬！ | v0.4 自动排队与线程数量管理；新增“更多额度优先”，与按套餐比例均衡区分。39 项规则测试、完整赛季和移动端验收通过。 | [规则与验收](docs/reset-rush.md) |
-| 上船！应援事务所 | 2–4 人同机或 AI 对局，包含应援、认知民、切片佬和投流。 | [规则](docs/hype-harbor.md) |
+| 上船！应援事务所 | 2–4 人同机、AI 或房间码在线对战；Neon 服务端裁决，双浏览器完整对局已验收。 | [规则与联机](docs/hype-harbor.md) |
 | 维阿发掘局、维阿弹棋 | 已分别实现多藏品连色发掘，以及 Rapier 物理弹棋与 AI。 | [发掘局](docs/brick-excavation.md)、[弹棋开发记录](docs/progress/2026-09-20-26.md) |
 | 其他游戏 | 年关牌局、岁岁过招、武侠、直播控场、按钮游戏及三款独立小游戏均有独立实现和记录。 | [9 月记录](docs/progress/2026-09-01-15.md)、[年关牌局](docs/marriage-pressure-game.md) |
 

@@ -346,3 +346,18 @@
 .boardingOptions { display: grid; gap: 10px; margin-top: 22px; }
 .actionTabs button { font-size: 11px; }
 @media (max-width: 800px) { .roleStatus { gap: 7px; } .roleStatus > div { width: 100%; justify-content: space-between; gap: 7px; } .actionTabs button { font-size: 11px; } }
+
+.onlineBanner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0 14px; color: #4b6c58; font-size: 12px; }
+.onlineBanner button, .roomCode button { color: #28687a; background: none; border: 0; text-decoration: underline; cursor: pointer; }
+.onlineError { color: #a14437; font-size: 12px; margin: 0 0 12px; }
+.roomCode { display: grid; gap: 4px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.roomCode span, .roomField { color: #627b6a; font-size: 12px; }
+.roomCode strong { font-size: 28px; color: #28687a; letter-spacing: 2px; }
+.roomCode button { justify-self: start; padding: 5px 0; font-size: 12px; }
+.roomSeats { margin: 18px 0; }
+.roomSeats > div { display: flex; align-items: center; gap: 9px; min-height: 42px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.roomSeats small { margin-left: auto; color: #7c8c73; }
+.roomField { display: grid; gap: 7px; margin: 18px 0; }
+.roomField input { width: 100%; padding: 11px; border: 1px solid #cdd6c8; border-radius: 4px; background: #fffdf7; color: #315346; font: inherit; }
+.roomWaiting { color: #627b6a; font-size: 12px; }
+@media (max-width: 600px) { .onlineBanner { flex-wrap: wrap; } .roomCode strong { font-size: 23px; } }

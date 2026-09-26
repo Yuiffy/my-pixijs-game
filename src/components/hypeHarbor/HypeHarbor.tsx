@@ -53,8 +53,10 @@ import {
   recognitionChance,
 } from "./engine";
 import styles from "./harbor.module.css";
+import type { RoomCommand, RoomView } from "@/lib/hypeHarbor/room";
 
 const SAVE_KEY = "hype-harbor-v1";
+const ROOM_KEY = "hype-harbor-room";
 const DEFAULT_PLAYERS: PlayerConfig[] = [
   { name: "你", ai: false },
   { name: "阿策", ai: true },
@@ -137,8 +139,24 @@ function Dialog({
 }
 
 export default function HypeHarbor() {
+  const [mode, setMode] = useState<"local" | "online">("local");
+  const [room, setRoom] = useState<RoomView | null>(null);
+  const [roomCode, setRoomCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [roomToken, setRoomToken] = useState("");
+  const [onlineName, setOnlineName] = useState("");
+  const [onlineError, setOnlineError] = useState("");
+  const [onlineBusy, setOnlineBusy] = useState(false);
+  const roomRef = useRef<RoomView | null>(null);
+  roomRef.current = room;
   const [rawState, setState] = useState<GameState | null>(null);
-  const state = useMemo(() => (rawState && rawState.version !== SAVE_VERSION ? restoreGame(JSON.stringify(rawState)) : rawState), [rawState]);
+  const localState = useMemo(
+    () => (rawState && rawState.version !== SAVE_VERSION
+        ? restoreGame(JSON.stringify(rawState))
+        : rawState),
+    [rawState],
+  );
+  const state = mode === "online" ? room?.state || null : localState;
   const [saved, setSaved] = useState<GameState | null>(null);
   const [storageMessage, setStorageMessage] = useState("");
   const [configs, setConfigs] = useState(DEFAULT_PLAYERS);
@@ -165,6 +183,7 @@ export default function HypeHarbor() {
     : "";
   const needHandoff = Boolean(
     state &&
+    mode === "local" &&
     humanCount > 1 &&
     current &&
     !current.ai &&
@@ -172,8 +191,112 @@ export default function HypeHarbor() {
     acknowledged !== turnKey,
   );
   const canPlay = Boolean(
-    state?.phase === "placing" && !current?.ai && !needHandoff && !modal,
+    state?.phase === "placing" &&
+    !current?.ai &&
+    !needHandoff &&
+    !modal &&
+    !onlineBusy &&
+    (mode === "local" || room?.seat === state.turn),
   );
+
+  const updateRoom = useCallback((next: RoomView) => {
+    setRoom((previous) => (previous &&
+      previous.code === next.code &&
+      previous.revision > next.revision
+        ? previous
+        : next),);
+  }, []);
+  const roomRequest = useCallback(
+    async (payload: Record<string, unknown>) => {
+      const response = await fetch("/api/hype-harbor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (data.room) updateRoom(data.room as RoomView);
+      if (!response.ok) throw new Error(data.error || "房间请求失败");
+      return data as { room: RoomView; token?: string };
+    },
+    [updateRoom],
+  );
+  const sendCommand = useCallback(
+    async (command: RoomCommand) => {
+      const latest = roomRef.current;
+      if (!latest || onlineBusy) return;
+      setOnlineBusy(true);
+      setOnlineError("");
+      try {
+        await roomRequest({
+          operation: "command",
+          code: latest.code,
+          token: roomToken,
+          revision: latest.revision,
+          command,
+        });
+      } catch (error) {
+        setOnlineError(error instanceof Error ? error.message : "房间请求失败");
+      } finally {
+        setOnlineBusy(false);
+      }
+    },
+    [onlineBusy, roomRequest, roomToken],
+  );
+  const transition = (
+    command: RoomCommand,
+    local: (previous: GameState) => GameState,
+  ) => {
+    if (mode === "online") sendCommand(command);
+    else setState((previous) => (previous ? local(previous) : previous));
+  };
+
+  useEffect(() => {
+    const code =
+      new URLSearchParams(window.location.search).get("room")?.toUpperCase() ||
+      "";
+    const stored = sessionStorage.getItem(ROOM_KEY);
+    if (code) {
+      setMode("online");
+      setRoomCode(code);
+      setJoining(true);
+    }
+    if (stored) {
+      try {
+        const session = JSON.parse(stored) as { code: string; token: string };
+        if (!code || code === session.code) {
+          setMode("online");
+          setRoomCode(session.code);
+          setRoomToken(session.token);
+        }
+      } catch {
+        sessionStorage.removeItem(ROOM_KEY);
+      }
+    }
+  }, []);
+  useEffect(() => {
+    if (mode !== "online" || !roomCode || !roomToken) return undefined;
+    let active = true;
+    const poll = async () => {
+      try {
+        await roomRequest({
+          operation: "status",
+          code: roomCode,
+          token: roomToken,
+        });
+        if (active) setOnlineError("");
+      } catch (error) {
+        if (active) setOnlineError(error instanceof Error ? error.message : "同步失败");
+      }
+    };
+    poll();
+    const timer = window.setInterval(() => {
+      if (!onlineBusy) poll();
+    }, 1800);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [mode, roomCode, roomToken, roomRequest, onlineBusy]);
 
   useEffect(() => {
     try {
@@ -189,21 +312,21 @@ export default function HypeHarbor() {
   }, []);
 
   useEffect(() => {
-    if (rawState && rawState.version !== SAVE_VERSION && state) setState(state);
-  }, [rawState, state]);
+    if (rawState && rawState.version !== SAVE_VERSION && localState) setState(localState);
+  }, [rawState, localState]);
 
   useEffect(() => {
-    if (!state) return;
+    if (mode !== "local" || !state) return;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state));
       setSaved(state);
     } catch {
       setStorageMessage("自动保存不可用；关闭页面前请完成本局。");
     }
-  }, [state]);
+  }, [state, mode]);
 
   const runAi = useCallback(() => {
-    if (latestRef.current.modal) return;
+    if (mode === "online" || latestRef.current.modal) return;
     setState((previous) => {
       if (!previous || !previous.players[previous.turn].ai) return previous;
       if (previous.phase === "preparing") return prepareAi(previous);
@@ -211,10 +334,11 @@ export default function HypeHarbor() {
       if (previous.phase === "spotlight") return resolveClip(previous, chooseAiClip(previous));
       return previous;
     });
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     if (
+      mode === "online" ||
       !state ||
       !current?.ai ||
       modal ||
@@ -222,7 +346,7 @@ export default function HypeHarbor() {
     ) return undefined;
     const timer = window.setTimeout(runAi, 1000);
     return () => window.clearTimeout(timer);
-  }, [state, current?.ai, modal, runAi]);
+  }, [state, current?.ai, modal, runAi, mode]);
 
   useEffect(() => {
     setKind("support");
@@ -243,6 +367,16 @@ export default function HypeHarbor() {
         handoff: needHandoff,
         modal,
         storageMessage,
+        online:
+          mode === "online"
+            ? {
+                code: roomCode,
+                seat: room?.seat,
+                revision: room?.revision,
+                players: room?.players,
+                error: onlineError,
+              }
+            : null,
       });
     diagnosticWindow.advanceTime = (ms: number) => {
       if (!Number.isFinite(ms) || ms < 0 || modal) return;
@@ -252,7 +386,19 @@ export default function HypeHarbor() {
       delete diagnosticWindow.render_game_to_text;
       delete diagnosticWindow.advanceTime;
     };
-  }, [state, selected, kind, recognitionIndex, needHandoff, modal, storageMessage]);
+  }, [
+    state,
+    selected,
+    kind,
+    recognitionIndex,
+    needHandoff,
+    modal,
+    storageMessage,
+    mode,
+    roomCode,
+    room,
+    onlineError,
+  ]);
   useEffect(() => {
     if (aiElapsed >= 1000) {
       setAiElapsed(0);
@@ -283,6 +429,74 @@ export default function HypeHarbor() {
       createGame(roster, rounds, Date.now(), ROSTERS[rosterIndex].members),
     );
   };
+  const createOnline = async () => {
+    setOnlineBusy(true);
+    setOnlineError("");
+    try {
+      const players = configs.slice(0, playerCount).map((player, i) => ({
+        name: player.name.trim() || `玩家 ${i + 1}`,
+        ai: i === 0 ? false : player.ai,
+      }));
+      const result = await roomRequest({
+        operation: "create",
+        players,
+        rounds,
+        rosterIndex,
+      });
+      const token = result.token || "";
+      sessionStorage.setItem(
+        ROOM_KEY,
+        JSON.stringify({ code: result.room.code, token }),
+      );
+      setRoomCode(result.room.code);
+      setRoomToken(token);
+      setJoining(false);
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}?room=${result.room.code}`,
+      );
+    } catch (error) {
+      setOnlineError(error instanceof Error ? error.message : "创建房间失败");
+    } finally {
+      setOnlineBusy(false);
+    }
+  };
+  const joinOnline = async () => {
+    setOnlineBusy(true);
+    setOnlineError("");
+    try {
+      const code = roomCode.trim().toUpperCase();
+      const result = await roomRequest({
+        operation: "join",
+        code,
+        name: onlineName.trim(),
+      });
+      const token = result.token || "";
+      sessionStorage.setItem(ROOM_KEY, JSON.stringify({ code, token }));
+      setRoomCode(code);
+      setRoomToken(token);
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}?room=${code}`,
+      );
+    } catch (error) {
+      setOnlineError(error instanceof Error ? error.message : "加入房间失败");
+    } finally {
+      setOnlineBusy(false);
+    }
+  };
+  const leaveOnline = () => {
+    sessionStorage.removeItem(ROOM_KEY);
+    window.history.replaceState(null, "", window.location.pathname);
+    setRoom(null);
+    setRoomCode("");
+    setRoomToken("");
+    setOnlineError("");
+    setJoining(false);
+    setMode("local");
+  };
   const chooseBoat = (index: number) => {
     setSelected(index);
     if (kind === "recognition") setKind("support");
@@ -290,21 +504,157 @@ export default function HypeHarbor() {
 
   const act = (action: Action) => {
     if (!canPlay) return;
-    setState((previous) => (previous && previous.revision === state?.revision
+    transition({ kind: "action", action }, (previous) => (previous.revision === state?.revision
         ? takeAction(previous, action)
         : previous),);
   };
   const boat = state?.boats[selected];
   const streamer = streamerById(boat?.streamer || "sui");
-  const action: Action = { kind, boat: selected, insured, recognition: recognitionIndex };
+  const action: Action = {
+    kind,
+    boat: selected,
+    insured,
+    recognition: recognitionIndex,
+  };
   const cost = state ? actionCost(state, action) : 0;
   const problem = state ? actionProblem(state, action) : null;
   const chance = state ? Math.round(successChance(state, selected) * 100) : 0;
   const result = state?.results.at(-1);
 
   function renderMenu() {
+    if (mode === "online" && room && !room.state) {
+      const ready = room.players.every((player) => player.joined);
+      return (
+        <div className={styles.setup}>
+          <span className={styles.eyebrow}>在线对战 · 等待入座</span>
+          <h1>
+            同一张桌，
+            <br />
+            各自在家。
+          </h1>
+          <div className={styles.roomCode}>
+            <span>房间号</span>
+            <strong>{room.code}</strong>
+            <button
+              onClick={() => navigator.clipboard.writeText(
+                  `${window.location.origin}/game/hype-harbor?room=${room.code}`,
+                )}
+            >
+              复制邀请链接
+            </button>
+          </div>
+          <div className={styles.roomSeats}>
+            {room.players.map((player, i) => (
+              <div key={i}>
+                <span
+                  className={styles.playerDot}
+                  style={{ background: PLAYER_COLORS[i] }}
+                >
+                  {i + 1}
+                </span>
+                <b>{player.name}</b>
+                <small>
+                  {player.ai ? "AI" : player.joined ? "已入座" : "等待加入"}
+                </small>
+              </div>
+            ))}
+          </div>
+          {room.seat === 0 ? (
+            <button
+              className={styles.primary}
+              disabled={!ready || onlineBusy}
+              onClick={() => sendCommand({ kind: "start" })}
+              data-testid="online-start"
+            >
+              {ready ? "开始对战" : "等待朋友入座"} →
+            </button>
+          ) : (
+            <p className={styles.roomWaiting}>等待房主开始…</p>
+          )}
+          <button className={styles.resume} onClick={leaveOnline}>
+            返回单机模式
+          </button>
+        </div>
+      );
+    }
+    if (mode === "online" && !roomToken && joining) return (
+        <div className={styles.setup}>
+          <span className={styles.eyebrow}>在线对战</span>
+          <h1>加入这张桌。</h1>
+          <label htmlFor="online-room-code" className={styles.roomField}>
+            房间号
+            <input
+              id="online-room-code"
+              aria-label="房间号"
+              maxLength={8}
+              value={roomCode}
+              onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
+              placeholder="8 位房间号"
+            />
+          </label>
+          <label htmlFor="online-player-name" className={styles.roomField}>
+            你的名字
+            <input
+              id="online-player-name"
+              aria-label="你的名字"
+              maxLength={12}
+              value={onlineName}
+              onChange={(event) => setOnlineName(event.target.value)}
+              placeholder="怎么称呼你"
+            />
+          </label>
+          <button
+            className={styles.primary}
+            disabled={onlineBusy || roomCode.length !== 8 || !onlineName.trim()}
+            onClick={() => joinOnline()}
+            data-testid="online-join"
+          >
+            加入房间 →
+          </button>
+          <button
+            className={styles.resume}
+            onClick={() => {
+              setRoomCode("");
+              setJoining(false);
+            }}
+          >
+            创建新房间
+          </button>
+        </div>
+      );
+    if (mode === "online" && roomToken && !room) return (
+        <div className={styles.setup}>
+          <span className={styles.eyebrow}>在线对战</span>
+          <h2>正在连接房间…</h2>
+          <button className={styles.resume} onClick={leaveOnline}>
+            返回单机模式
+          </button>
+        </div>
+      );
     return (
       <div className={styles.setup}>
+        <div className={styles.segment} aria-label="对战方式">
+          <button
+            aria-pressed={mode === "local"}
+            onClick={() => setMode("local")}
+          >
+            同机 / AI
+          </button>
+          <button
+            aria-pressed={mode === "online"}
+            onClick={() => {
+              setMode("online");
+              setConfigs((previous) => previous.map((player, i) => {
+                  if (i === 0 && player.name === "你") return { ...player, name: "房主" };
+                  if (i === 1) return { ...player, ai: false };
+                  return player;
+                }),);
+            }}
+            data-testid="online-mode"
+          >
+            在线对战
+          </button>
+        </div>
         <span className={styles.eyebrow}>今晚的应援，由你做主</span>
         <h1>
           看好的，
@@ -398,10 +748,20 @@ export default function HypeHarbor() {
             ))}
           </div>
         </div>
-        <button className={styles.primary} onClick={start} data-testid="start">
-          开一桌 <span>↗</span>
+        <button
+          className={styles.primary}
+          onClick={mode === "online" ? () => createOnline() : start}
+          disabled={onlineBusy}
+          data-testid={mode === "online" ? "online-create" : "start"}
+        >
+          {mode === "online" ? "创建在线房间" : "开一桌"} <span>↗</span>
         </button>
-        {saved && saved.phase !== "finished" && (
+        {mode === "online" && (
+          <button className={styles.resume} onClick={() => setJoining(true)}>
+            输入房间号加入
+          </button>
+        )}
+        {mode === "local" && saved && saved.phase !== "finished" && (
           <button
             className={styles.resume}
             onClick={() => {
@@ -416,10 +776,12 @@ export default function HypeHarbor() {
         <p className={styles.tiny}>
           不用先读规则，第一场边玩边学。
           <br />
-          {playerCount > 1 &&
-          configs.slice(0, playerCount).filter((p) => !p.ai).length > 1
-            ? "本地多人在同一设备轮流操作。"
-            : "AI 会买股，也会和你抢名场面。"}
+          {mode === "online"
+            ? "创建后把邀请链接发给朋友。"
+            : playerCount > 1 &&
+                configs.slice(0, playerCount).filter((p) => !p.ai).length > 1
+              ? "本地多人在同一设备轮流操作。"
+              : "AI 会买股，也会和你抢名场面。"}
         </p>
       </div>
     );
@@ -451,10 +813,20 @@ export default function HypeHarbor() {
                 id={`harbor-project-${index}`}
                 value={b.streamer}
                 aria-label={`${PROJECTS[index].name}主播`}
-                disabled={current.ai || needHandoff}
-                onChange={(e) => setState((previous) => (previous
-                      ? setRoster(previous, index, e.target.value as StreamerId)
-                      : previous),)}
+                disabled={
+                  current.ai ||
+                  needHandoff ||
+                  onlineBusy ||
+                  (mode === "online" && room?.seat !== state.turn)
+                }
+                onChange={(e) => transition(
+                    {
+                      kind: "roster",
+                      boat: index,
+                      streamer: e.target.value as StreamerId,
+                    },
+                    (previous) => setRoster(previous, index, e.target.value as StreamerId),
+                  )}
               >
                 {state.roster.map(streamerById).map((s) => (
                   <option key={s.id} value={s.id}>
@@ -466,20 +838,34 @@ export default function HypeHarbor() {
             <div className={styles.stepper}>
               <button
                 aria-label={`${PROJECTS[index].name}减少预热`}
-                disabled={current.ai || needHandoff || b.warmup === 0}
-                onClick={() => setState((previous) => (previous
-                      ? setWarmup(previous, index, b.warmup - 1)
-                      : previous),)}
+                disabled={
+                  current.ai ||
+                  needHandoff ||
+                  onlineBusy ||
+                  (mode === "online" && room?.seat !== state.turn) ||
+                  b.warmup === 0
+                }
+                onClick={() => transition(
+                    { kind: "warmup", boat: index, amount: b.warmup - 1 },
+                    (previous) => setWarmup(previous, index, b.warmup - 1),
+                  )}
               >
                 −
               </button>
               <b>{b.warmup}</b>
               <button
                 aria-label={`${PROJECTS[index].name}增加预热`}
-                disabled={current.ai || needHandoff || remaining === 0}
-                onClick={() => setState((previous) => (previous
-                      ? setWarmup(previous, index, b.warmup + 1)
-                      : previous),)}
+                disabled={
+                  current.ai ||
+                  needHandoff ||
+                  onlineBusy ||
+                  (mode === "online" && room?.seat !== state.turn) ||
+                  remaining === 0
+                }
+                onClick={() => transition(
+                    { kind: "warmup", boat: index, amount: b.warmup + 1 },
+                    (previous) => setWarmup(previous, index, b.warmup + 1),
+                  )}
               >
                 +
               </button>
@@ -502,8 +888,13 @@ export default function HypeHarbor() {
         </p>
         <button
           className={styles.primary}
-          disabled={current.ai || needHandoff}
-          onClick={() => setState((previous) => (previous ? launch(previous) : previous))}
+          disabled={
+            current.ai ||
+            needHandoff ||
+            onlineBusy ||
+            (mode === "online" && room?.seat !== state.turn)
+          }
+          onClick={() => transition({ kind: "launch" }, launch)}
           data-testid="launch"
         >
           {current.ai ? `${current.name}正在安排…` : "就这样，出航！"}{" "}
@@ -523,109 +914,326 @@ export default function HypeHarbor() {
     const recognition = kind === "recognition";
     const clipping = kind === "clip";
     const traffic = kind === "boost" || kind === "smear";
-    const trafficPosition = boat.position >= TARGET ? TARGET : Math.max(0, Math.min(TARGET, boat.position + (kind === "smear" ? -2 : 2)));
+    const trafficPosition =
+      boat.position >= TARGET
+        ? TARGET
+        : Math.max(
+            0,
+            Math.min(TARGET, boat.position + (kind === "smear" ? -2 : 2)),
+          );
     const forecast = clipForecast(state);
-    const payout = recognition ? RECOGNITION_SPACES[recognitionIndex].payout : 12;
-    const failure = kind === "support" && insured ? cost - 2 : kind === "insure" ? ownedSeat?.cost || 0 : 0;
+    const payout = recognition
+      ? RECOGNITION_SPACES[recognitionIndex].payout
+      : 12;
+    const failure =
+      kind === "support" && insured
+        ? cost - 2
+        : kind === "insure"
+          ? ownedSeat?.cost || 0
+          : 0;
     const detail = {
       support: "盼她出圈，就一起应援。越早上船越便宜，每船限 3 席。",
-      recognition: "想被她记住，又怕她太火。押本场有几位主播未达标，猜中就有回报。",
+      recognition:
+        "想被她记住，又怕她太火。押本场有几位主播未达标，猜中就有回报。",
       clip: "提前蹲名场面。第 2 次恰停 13 格可免费蹭船；留到第 3 次，抢爆梗切片的分成。",
       share: "买 1 股，跨活动持有。最后按股价计入总资产。",
       boost: "助推让这艘船前进 2 格，提高达标机会。你和船上的其他人都会受益。",
-      smear: "黑料让这艘船后退 2 格，降低达标机会。最远退到 0 格，已达标的船不能拖回。",
+      smear:
+        "黑料让这艘船后退 2 格，降低达标机会。最远退到 0 格，已达标的船不能拖回。",
       insure: "给你已经买下的应援席加保。保费不退。",
       work: "",
     }[kind];
     return (
       <div className={styles.inspector}>
         <div className={styles.turnHeading}>
-          <span className={styles.playerDot} style={{ background: PLAYER_COLORS[current.id] }}>{current.id + 1}</span>
-          <div><span className={styles.eyebrow}>{current.ai ? "AI 正在考虑" : "轮到你安排"}</span><h2>{current.name}</h2></div>
-          <div className={styles.cash}><strong>{current.cash}</strong><small>可用币</small></div>
+          <span
+            className={styles.playerDot}
+            style={{ background: PLAYER_COLORS[current.id] }}
+          >
+            {current.id + 1}
+          </span>
+          <div>
+            <span className={styles.eyebrow}>
+              {current.ai
+                ? "AI 正在考虑"
+                : mode === "online" && room?.seat !== state.turn
+                  ? "等待对方安排"
+                  : "轮到你安排"}
+            </span>
+            <h2>{current.name}</h2>
+          </div>
+          <div className={styles.cash}>
+            <strong>{current.cash}</strong>
+            <small>可用币</small>
+          </div>
         </div>
-        {current.ai && <div className={styles.thinking}>••• {chooseAiAction(state).reason}</div>}
+        {current.ai && (
+          <div className={styles.thinking}>
+            ••• {chooseAiAction(state).reason}
+          </div>
+        )}
         <div className={styles.actionTabs} aria-label="选择行动">
-          {(["support", "recognition", "clip", "share", "boost"] as ActionKind[]).map((a, i) => (
-            <button key={a} onClick={() => setKind(a)} aria-pressed={kind === a || (a === "boost" && kind === "smear")} data-testid={`action-${a}`}>
-              <span>{["⚑", "♡", "✂", "▥", "↗"][i]}</span>{ACTION_LABELS[a]}
+          {(
+            ["support", "recognition", "clip", "share", "boost"] as ActionKind[]
+          ).map((a, i) => (
+            <button
+              key={a}
+              onClick={() => setKind(a)}
+              aria-pressed={kind === a || (a === "boost" && kind === "smear")}
+              data-testid={`action-${a}`}
+            >
+              <span>{["⚑", "♡", "✂", "▥", "↗"][i]}</span>
+              {ACTION_LABELS[a]}
             </button>
           ))}
         </div>
         <div className={styles.selectedBoat}>
-          {recognition || clipping ? <span className={styles.roleIcon} aria-hidden="true">{recognition ? "♡" : "✂"}</span> : <Image src={streamer.portrait} alt="" width={52} height={52} unoptimized />}
+          {recognition || clipping ? (
+            <span className={styles.roleIcon} aria-hidden="true">
+              {recognition ? "♡" : "✂"}
+            </span>
+          ) : (
+            <Image
+              src={streamer.portrait}
+              alt=""
+              width={52}
+              height={52}
+              unoptimized
+            />
+          )}
           <div>
-            <strong>{recognition ? "认知民 · 想被你记住" : clipping ? "切片佬 · 蹲名场面" : streamer.name}</strong>
-            <small>{recognition ? "结算时未到 15 格即未达标" : clipping ? "两位抢机会 · 先来先选" : `${PROJECTS[selected].name} · 还差 ${Math.max(0, TARGET - boat.position)} 格`}</small>
+            <strong>
+              {recognition
+                ? "认知民 · 想被你记住"
+                : clipping
+                  ? "切片佬 · 蹲名场面"
+                  : streamer.name}
+            </strong>
+            <small>
+              {recognition
+                ? "结算时未到 15 格即未达标"
+                : clipping
+                  ? "两位抢机会 · 先来先选"
+                  : `${PROJECTS[selected].name} · 还差 ${Math.max(0, TARGET - boat.position)} 格`}
+            </small>
           </div>
           {!clipping && (
-<div className={styles.odds}>
-            <b>{recognition ? Math.round(recognitionChance(state, recognitionIndex) * 100) : chance}%</b>
-            <small>{recognition ? "猜中机会" : "达标机会"}</small>
-          </div>
-)}
+            <div className={styles.odds}>
+              <b>
+                {recognition
+                  ? Math.round(recognitionChance(state, recognitionIndex) * 100)
+                  : chance}
+                %
+              </b>
+              <small>{recognition ? "猜中机会" : "达标机会"}</small>
+            </div>
+          )}
         </div>
         <div className={styles.actionDetail}>
           {traffic && (
-            <div className={`${styles.roleChoices} ${styles.trafficChoices}`} aria-label="选择投流方式">
-              <button onClick={() => setKind("boost")} aria-pressed={kind === "boost"} data-testid="traffic-boost"><b>助推</b><small>2 币 · 前进 2 格</small></button>
-              <button onClick={() => setKind("smear")} aria-pressed={kind === "smear"} data-testid="traffic-smear"><b>黑料</b><small>2 币 · 后退 2 格</small></button>
+            <div
+              className={`${styles.roleChoices} ${styles.trafficChoices}`}
+              aria-label="选择投流方式"
+            >
+              <button
+                onClick={() => setKind("boost")}
+                aria-pressed={kind === "boost"}
+                data-testid="traffic-boost"
+              >
+                <b>助推</b>
+                <small>2 币 · 前进 2 格</small>
+              </button>
+              <button
+                onClick={() => setKind("smear")}
+                aria-pressed={kind === "smear"}
+                data-testid="traffic-smear"
+              >
+                <b>黑料</b>
+                <small>2 币 · 后退 2 格</small>
+              </button>
             </div>
           )}
           <p>{detail}</p>
           {recognition && (
-<div className={styles.roleChoices} aria-label="选择认知席">
-            {RECOGNITION_SPACES.map((space, i) => {
-              const owner = state.recognition[i];
-              return (
-<button key={space.threshold} onClick={() => setRecognitionIndex(i)} aria-pressed={recognitionIndex === i} data-testid={`recognition-choice-${i}`}>
-                <b>{space.threshold === 3 ? "3 位主播都" : `至少 ${space.threshold} 位主播`}<br />未达标</b><small>{owner ? `${state.players[owner.player].name}已占` : `花 ${actionCost(state, { kind: "recognition", boat: 0, recognition: i })} · 收 ${space.payout}`}</small>
-              </button>
-);
-            })}
-          </div>
-)}
+            <div className={styles.roleChoices} aria-label="选择认知席">
+              {RECOGNITION_SPACES.map((space, i) => {
+                const owner = state.recognition[i];
+                return (
+                  <button
+                    key={space.threshold}
+                    onClick={() => setRecognitionIndex(i)}
+                    aria-pressed={recognitionIndex === i}
+                    data-testid={`recognition-choice-${i}`}
+                  >
+                    <b>
+                      {space.threshold === 3
+                        ? "3 位主播都"
+                        : `至少 ${space.threshold} 位主播`}
+                      <br />
+                      未达标
+                    </b>
+                    <small>
+                      {owner
+                        ? `${state.players[owner.player].name}已占`
+                        : `花 ${actionCost(state, { kind: "recognition", boat: 0, recognition: i })} · 收 ${space.payout}`}
+                    </small>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {kind === "support" && (
-<label htmlFor="harbor-insurance" className={styles.insurance}>
-            <input id="harbor-insurance" type="checkbox" checked={insured} onChange={(e) => setInsured(e.target.checked)} />
-            带上保本险 <b>+2 币</b><small>未达标退应援本金</small>
-          </label>
-)}
+            <label htmlFor="harbor-insurance" className={styles.insurance}>
+              <input
+                id="harbor-insurance"
+                type="checkbox"
+                checked={insured}
+                onChange={(e) => setInsured(e.target.checked)}
+              />
+              带上保本险 <b>+2 币</b>
+              <small>未达标退应援本金</small>
+            </label>
+          )}
           {clipping ? (
-<div className={styles.clipGuide}>
-            <div><b>第 2 次 · 停 13</b><span>先到者先选空席，免费上船后达标收 12 币。</span><small>当前可蹭船机会 {Math.round(forecast.boarding * 100)}%</small></div>
-            <div><b>第 3 次 · 停 13</b><span>每艘产生 {CLIP_PAYOUT} 币切片池，留守者平分；没人停就收 0。</span><small>当前爆梗机会 {Math.round(forecast.jackpot * 100)}%</small></div>
-            <div className={styles.clipOwners}>{state.clippers.map((slot, i) => <span key={i}>{i === 0 ? "①" : "②"} {slot ? state.players[slot.player].name : "空位"}</span>)}</div>
-          </div>
-) : kind === "share" ? (
-<div className={styles.outcomes}>
-            <div><small>达标后股价</small><strong>{state.prices[boat.streamer] + 3}<em> / 股</em></strong></div>
-            <div><small>未达标后股价</small><strong>{Math.max(3, state.prices[boat.streamer] - 1)}<em> / 股</em></strong></div>
-          </div>
-) : traffic ? (
-<div className={styles.boostPreview}>
-            <b>{boat.position}</b><span>→</span><b>{trafficPosition}</b>
-            <small>达标机会 {chance}% → {Math.round(successChance(state, selected, trafficPosition - boat.position) * 100)}%</small>
-          </div>
-) : (
-<div className={styles.outcomes}>
-            <div><small>{recognition ? "条件满足 · 收到" : "达标 · 收到"}</small><strong>{payout}<em> 币</em></strong></div>
-            <div><small>{recognition ? "条件不满足 · 收到" : "未达标 · 收到"}</small><strong>{failure}<em> 币</em></strong></div>
-          </div>
-)}
-          <button className={styles.primary} disabled={!canPlay || Boolean(problem)} onClick={() => act(action)} data-testid="confirm-action">
-            {problem || `花 ${cost} 币 · ${clipping ? "提前蹲切片" : recognition ? "确认认知席" : kind === "boost" ? "助推" : ACTION_LABELS[kind]}`}{!problem && <span>→</span>}
+            <div className={styles.clipGuide}>
+              <div>
+                <b>第 2 次 · 停 13</b>
+                <span>先到者先选空席，免费上船后达标收 12 币。</span>
+                <small>
+                  当前可蹭船机会 {Math.round(forecast.boarding * 100)}%
+                </small>
+              </div>
+              <div>
+                <b>第 3 次 · 停 13</b>
+                <span>
+                  每艘产生 {CLIP_PAYOUT} 币切片池，留守者平分；没人停就收 0。
+                </span>
+                <small>
+                  当前爆梗机会 {Math.round(forecast.jackpot * 100)}%
+                </small>
+              </div>
+              <div className={styles.clipOwners}>
+                {state.clippers.map((slot, i) => (
+                  <span key={i}>
+                    {i === 0 ? "①" : "②"}{" "}
+                    {slot ? state.players[slot.player].name : "空位"}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : kind === "share" ? (
+            <div className={styles.outcomes}>
+              <div>
+                <small>达标后股价</small>
+                <strong>
+                  {state.prices[boat.streamer] + 3}
+                  <em> / 股</em>
+                </strong>
+              </div>
+              <div>
+                <small>未达标后股价</small>
+                <strong>
+                  {Math.max(3, state.prices[boat.streamer] - 1)}
+                  <em> / 股</em>
+                </strong>
+              </div>
+            </div>
+          ) : traffic ? (
+            <div className={styles.boostPreview}>
+              <b>{boat.position}</b>
+              <span>→</span>
+              <b>{trafficPosition}</b>
+              <small>
+                达标机会 {chance}% →{" "}
+                {Math.round(
+                  successChance(
+                    state,
+                    selected,
+                    trafficPosition - boat.position,
+                  ) * 100,
+                )}
+                %
+              </small>
+            </div>
+          ) : (
+            <div className={styles.outcomes}>
+              <div>
+                <small>{recognition ? "条件满足 · 收到" : "达标 · 收到"}</small>
+                <strong>
+                  {payout}
+                  <em> 币</em>
+                </strong>
+              </div>
+              <div>
+                <small>
+                  {recognition ? "条件不满足 · 收到" : "未达标 · 收到"}
+                </small>
+                <strong>
+                  {failure}
+                  <em> 币</em>
+                </strong>
+              </div>
+            </div>
+          )}
+          <button
+            className={styles.primary}
+            disabled={!canPlay || Boolean(problem)}
+            onClick={() => act(action)}
+            data-testid="confirm-action"
+          >
+            {problem ||
+              `花 ${cost} 币 · ${clipping ? "提前蹲切片" : recognition ? "确认认知席" : kind === "boost" ? "助推" : ACTION_LABELS[kind]}`}
+            {!problem && <span>→</span>}
           </button>
-          {kind === "support" && !problem && <small className={styles.netProfit}>达标净赚 {12 - cost} 币{insured ? " · 未达标只损失 2 币保费" : ` · 未达标损失 ${cost} 币`}</small>}
-          {recognition && !problem && <small className={styles.netProfit}>猜中净赚 {payout - cost} 币 · 猜错损失 {cost} 币</small>}
-          {clipping && <small className={styles.netProfit}>蹭船后退出切片位 · 每人每场限蹲一次</small>}
-          {traffic && <small className={styles.netProfit}>助推／黑料各耗一次行动 · 移到 13 格不触发切片</small>}
+          {kind === "support" && !problem && (
+            <small className={styles.netProfit}>
+              达标净赚 {12 - cost} 币
+              {insured
+                ? " · 未达标只损失 2 币保费"
+                : ` · 未达标损失 ${cost} 币`}
+            </small>
+          )}
+          {recognition && !problem && (
+            <small className={styles.netProfit}>
+              猜中净赚 {payout - cost} 币 · 猜错损失 {cost} 币
+            </small>
+          )}
+          {clipping && (
+            <small className={styles.netProfit}>
+              蹭船后退出切片位 · 每人每场限蹲一次
+            </small>
+          )}
+          {traffic && (
+            <small className={styles.netProfit}>
+              助推／黑料各耗一次行动 · 移到 13 格不触发切片
+            </small>
+          )}
         </div>
         <div className={styles.alternatives}>
-          {!recognition && !clipping && ownedSeat && !ownedSeat.insured && ownedSeat.cost > 0 && <button disabled={!canPlay} onClick={() => setKind("insure")} aria-pressed={kind === "insure"}>给已有席位补保险 · 2 币</button>}
-          <button disabled={!canPlay} onClick={() => act({ kind: "work", boat: 0 })} data-testid="work">暂不投资，接个小单 <b>+{WORK_PAYOUT} 币</b></button>
+          {!recognition &&
+            !clipping &&
+            ownedSeat &&
+            !ownedSeat.insured &&
+            ownedSeat.cost > 0 && (
+              <button
+                disabled={!canPlay}
+                onClick={() => setKind("insure")}
+                aria-pressed={kind === "insure"}
+              >
+                给已有席位补保险 · 2 币
+              </button>
+            )}
+          <button
+            disabled={!canPlay}
+            onClick={() => act({ kind: "work", boat: 0 })}
+            data-testid="work"
+          >
+            暂不投资，接个小单 <b>+{WORK_PAYOUT} 币</b>
+          </button>
         </div>
-        <small className={styles.probabilityNote}>概率按剩余骰子计算，不含后续投流与他人抢位。</small>
+        <small className={styles.probabilityNote}>
+          概率按剩余骰子计算，不含后续投流与他人抢位。
+        </small>
       </div>
     );
   }
@@ -633,24 +1241,52 @@ export default function HypeHarbor() {
   function renderSpotlight() {
     if (!state || !current) return null;
     const options = clipBoardingOptions(state);
-    const disabled = current.ai || needHandoff || Boolean(modal);
+    const disabled =
+      current.ai ||
+      needHandoff ||
+      Boolean(modal) ||
+      onlineBusy ||
+      (mode === "online" && room?.seat !== state.turn);
     const decide = (index: number | null) => {
-      if (!disabled) setState((previous) => (previous ? resolveClip(previous, index) : previous));
+      if (!disabled) transition({ kind: "clip", boat: index }, (previous) => resolveClip(previous, index),);
     };
     return (
-<div className={styles.spotlight}>
-      <span className={styles.eyebrow}>第 2 次开播 · 名场面来了</span>
-      <div className={styles.spotlightIcon}>✂</div>
-      <h2>{current.name}，上船还是再等等？</h2>
-      <p>恰好停在 13 格！你的切片蹭到了热度，可以免费占一个空席；也可以留守，赌最后一次爆梗。</p>
-      <small>按切片位先后选。这次机会不消耗下轮行动。</small>
-      <div className={styles.boardingOptions}>
-        {options.map((index) => <button className={styles.primary} key={index} disabled={disabled} onClick={() => decide(index)} data-testid={`clip-board-${index}`}>蹭上{streamerById(state.boats[index].streamer).name}的船 <span>→</span></button>)}
+      <div className={styles.spotlight}>
+        <span className={styles.eyebrow}>第 2 次开播 · 名场面来了</span>
+        <div className={styles.spotlightIcon}>✂</div>
+        <h2>{current.name}，上船还是再等等？</h2>
+        <p>
+          恰好停在 13
+          格！你的切片蹭到了热度，可以免费占一个空席；也可以留守，赌最后一次爆梗。
+        </p>
+        <small>按切片位先后选。这次机会不消耗下轮行动。</small>
+        <div className={styles.boardingOptions}>
+          {options.map((index) => (
+            <button
+              className={styles.primary}
+              key={index}
+              disabled={disabled}
+              onClick={() => decide(index)}
+              data-testid={`clip-board-${index}`}
+            >
+              蹭上{streamerById(state.boats[index].streamer).name}的船{" "}
+              <span>→</span>
+            </button>
+          ))}
+        </div>
+        <p className={styles.tip}>
+          免费席达标收 12 币；未达标收 0。上船就退出切片位。
+        </p>
+        <button
+          className={styles.resume}
+          disabled={disabled}
+          onClick={() => decide(null)}
+          data-testid="clip-hold"
+        >
+          继续蹲最后一剪
+        </button>
       </div>
-      <p className={styles.tip}>免费席达标收 12 币；未达标收 0。上船就退出切片位。</p>
-      <button className={styles.resume} disabled={disabled} onClick={() => decide(null)} data-testid="clip-hold">继续蹲最后一剪</button>
-    </div>
-);
+    );
   }
 
   function renderSailing() {
@@ -676,7 +1312,16 @@ export default function HypeHarbor() {
               : "看清新局势，再做一次选择。"
             : "每艘船各掷一枚六面骰。\n走到 15 格，这场企划就达标。"}
         </p>
-        {revealed && state.beat >= 2 && state.boats.some((b) => b.position === CLIP_SPOT) && <p className={styles.clipAlert}>✂ 停在 13 格！{state.beat === 2 ? "名场面出现，切片佬可抢空席。" : "爆梗出现，留守切片佬收分成。"}</p>}
+        {revealed &&
+          state.beat >= 2 &&
+          state.boats.some((b) => b.position === CLIP_SPOT) && (
+            <p className={styles.clipAlert}>
+              ✂ 停在 13 格！
+              {state.beat === 2
+                ? "名场面出现，切片佬可抢空席。"
+                : "爆梗出现，留守切片佬收分成。"}
+            </p>
+          )}
         {revealed && (
           <div className={styles.rollResults}>
             {state.boats.map((b, i) => (
@@ -698,11 +1343,11 @@ export default function HypeHarbor() {
         <button
           className={styles.primary}
           data-testid={revealed ? "continue" : "roll"}
-          onClick={() => setState((previous) => (previous
-                ? revealed
-                  ? continueGame(previous)
-                  : roll(previous)
-                : previous),)}
+          disabled={onlineBusy}
+          onClick={() => transition(
+              { kind: revealed ? "continue" : "roll" },
+              revealed ? continueGame : roll,
+            )}
         >
           {revealed
             ? state.beat === 3
@@ -777,12 +1422,15 @@ export default function HypeHarbor() {
         <button
           className={styles.primary}
           data-testid="next-round"
-          onClick={() => setState((previous) => (previous ? continueGame(previous) : previous),)}
+          disabled={onlineBusy}
+          onClick={() => transition({ kind: "continue" }, continueGame)}
         >
           {state.round === state.rounds ? "查看最终排名" : "下一场活动"}{" "}
           <span>→</span>
         </button>
-        <p className={styles.tiny}>应援席、认知席与切片位收回，股份继续保留。</p>
+        <p className={styles.tiny}>
+          应援席、认知席与切片位收回，股份继续保留。
+        </p>
       </div>
     );
   }
@@ -820,25 +1468,30 @@ export default function HypeHarbor() {
             </li>
           ))}
         </ol>
+        {mode === "local" && (
+          <button
+            className={styles.primary}
+            data-testid="play-again"
+            onClick={() => {
+              setState(
+                createGame(
+                  state.players.map((p) => ({ name: p.name, ai: p.ai })),
+                  state.rounds,
+                  Date.now(),
+                  state.roster,
+                ),
+              );
+              setAcknowledged("");
+            }}
+          >
+            原班人马，再来一局 <span>↗</span>
+          </button>
+        )}
         <button
-          className={styles.primary}
-          data-testid="play-again"
-          onClick={() => {
-            setState(
-              createGame(
-                state.players.map((p) => ({ name: p.name, ai: p.ai })),
-                state.rounds,
-                Date.now(),
-                state.roster,
-              ),
-            );
-            setAcknowledged("");
-          }}
+          className={styles.resume}
+          onClick={mode === "online" ? leaveOnline : () => setState(null)}
         >
-          原班人马，再来一局 <span>↗</span>
-        </button>
-        <button className={styles.resume} onClick={() => setState(null)}>
-          换个阵容
+          {mode === "online" ? "离开房间" : "换个阵容"}
         </button>
       </div>
     );
@@ -870,7 +1523,7 @@ export default function HypeHarbor() {
           <button onClick={() => setModal("help")}>
             怎么玩 <span>?</span>
           </button>
-          {state && (
+          {state && mode === "local" && (
             <button onClick={() => setModal("restart")} aria-label="重新开局">
               ↻
             </button>
@@ -878,6 +1531,25 @@ export default function HypeHarbor() {
         </nav>
       </header>
       <div className={styles.shell}>
+        {mode === "online" && room && (
+          <div className={styles.onlineBanner}>
+            <span>
+              在线房间 <b>{room.code}</b> · 你是 {room.players[room.seat]?.name}
+            </span>
+            <button
+              onClick={() => navigator.clipboard.writeText(
+                  `${window.location.origin}/game/hype-harbor?room=${room.code}`,
+                )}
+            >
+              复制邀请链接
+            </button>
+          </div>
+        )}
+        {mode === "online" && onlineError && (
+          <p className={styles.onlineError} role="alert">
+            {onlineError}
+          </p>
+        )}
         <div className={styles.tableHeading}>
           <div>
             <span className={styles.eyebrow}>
@@ -909,7 +1581,11 @@ export default function HypeHarbor() {
           )}
         </div>
         <div className={styles.gameLayout}>
-          <section ref={boardRef} className={styles.playfield} aria-label="企划港湾棋盘">
+          <section
+            ref={boardRef}
+            className={styles.playfield}
+            aria-label="企划港湾棋盘"
+          >
             <div className={styles.boardTop}>
               <span>↗ {state ? "到 15 格即达标" : "主播上船 · 应援开局"}</span>
               <span>
@@ -935,14 +1611,28 @@ export default function HypeHarbor() {
               </span>
             </div>
             {state && (
-<div className={styles.roleStatus} aria-label="全场角色席位">
-              <div><b>♡ 认知民 · 未达标</b><span>{RECOGNITION_SPACES.map((space, i) => {
-                const slot = state.recognition[i];
-                return `${space.threshold < 3 ? "≥" : ""}${space.threshold}人：${slot ? state.players[slot.player].name : "空席"}`;
-              }).join(" · ")}</span></div>
-              <div><b>✂ 切片佬</b><span>{state.clippers.map((slot, i) => `${i + 1}号：${slot ? state.players[slot.player].name : "空位"}`).join(" · ")}</span></div>
-            </div>
-)}
+              <div className={styles.roleStatus} aria-label="全场角色席位">
+                <div>
+                  <b>♡ 认知民 · 未达标</b>
+                  <span>
+                    {RECOGNITION_SPACES.map((space, i) => {
+                      const slot = state.recognition[i];
+                      return `${space.threshold < 3 ? "≥" : ""}${space.threshold}人：${slot ? state.players[slot.player].name : "空席"}`;
+                    }).join(" · ")}
+                  </span>
+                </div>
+                <div>
+                  <b>✂ 切片佬</b>
+                  <span>
+                    {state.clippers
+                      .map(
+                        (slot, i) => `${i + 1}号：${slot ? state.players[slot.player].name : "空位"}`,
+                      )
+                      .join(" · ")}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className={styles.marketStrip} aria-label="四位主播行情">
               {(state?.roster || ROSTERS[rosterIndex].members).map((id, i) => {
                 const s = streamerById(id);
@@ -1085,19 +1775,37 @@ export default function HypeHarbor() {
           <span>灵感来自桌游 MANILA · 同人企划</span>
           <span>
             {storageMessage ||
-              (state
-                ? "✓ 每步自动保存 · F 全屏"
-                : "所有币值与企划表现均为虚构游戏设定")}
+              (mode === "online"
+                ? "在线房间自动同步"
+                : state
+                  ? "✓ 每步自动保存 · F 全屏"
+                  : "所有币值与企划表现均为虚构游戏设定")}
           </span>
         </footer>
       </div>
-      {!modal && !needHandoff && (
-<nav className={styles.mobileNav} aria-label="游戏快捷导航">
-        <span>{state ? (state.phase === 'placing' ? `轮到${current?.name} · ${current?.cash} 币` : `第 ${state.round} 场 · ${state.beat}/3 次推进`) : '四位主播，三条船'}</span>
-        <button onClick={() => boardRef.current?.scrollIntoView({ block: 'start' })} data-testid="jump-board">棋盘 ↑</button>
-        <button onClick={() => panelRef.current?.scrollIntoView({ block: 'start' })} data-testid="jump-action">{state ? '操作 ↓' : '开一桌 ↓'}</button>
-      </nav>
-)}
+      {!modal && !needHandoff && state?.phase !== "finished" && (
+        <nav className={styles.mobileNav} aria-label="游戏快捷导航">
+          <span>
+            {state
+              ? state.phase === "placing"
+                ? `轮到${current?.name} · ${current?.cash} 币`
+                : `第 ${state.round} 场 · ${state.beat}/3 次推进`
+              : "四位主播，三条船"}
+          </span>
+          <button
+            onClick={() => boardRef.current?.scrollIntoView({ block: "start" })}
+            data-testid="jump-board"
+          >
+            棋盘 ↑
+          </button>
+          <button
+            onClick={() => panelRef.current?.scrollIntoView({ block: "start" })}
+            data-testid="jump-action"
+          >
+            {state ? "操作 ↓" : "开一桌 ↓"}
+          </button>
+        </nav>
+      )}
       {modal === "help" && (
         <Dialog title="怎么玩" onClose={closeModal}>
           <span className={styles.eyebrow}>一分钟就明白</span>
@@ -1111,14 +1819,27 @@ export default function HypeHarbor() {
               <b>⚑ 看好就上船</b>花币占席，船走到 15 格就收 12 币。怕失手可多花
               2 币买保本险。
             </p>
-            <p><b>♡ 认知民，想被你记住</b>押本场至少 1 位、至少 2 位，或 3 位主播都未达标，猜中分别收 5／6／8 币，否则收 0。三次掷骰结束时，船未到 15 格就算该主播未达标。每个认知席限一人。</p>
-            <p><b>✂ 切片佬，蹲一个名场面</b>花 2 币占切片位，全场限两位。第 2 次掷骰后停在 13 格，可按先来后到免费上空席，或继续等。第 3 次停在 13 格，每艘产生 8 币切片池，留守者平分；没有名场面就没收入。投流直接移到 13 格不触发。</p>
+            <p>
+              <b>♡ 认知民，想被你记住</b>押本场至少 1 位、至少 2 位，或 3
+              位主播都未达标，猜中分别收 5／6／8 币，否则收
+              0。三次掷骰结束时，船未到 15
+              格就算该主播未达标。每个认知席限一人。
+            </p>
+            <p>
+              <b>✂ 切片佬，蹲一个名场面</b>花 2 币占切片位，全场限两位。第 2
+              次掷骰后停在 13 格，可按先来后到免费上空席，或继续等。第 3 次停在
+              13 格，每艘产生 8
+              币切片池，留守者平分；没有名场面就没收入。投流直接移到 13
+              格不触发。
+            </p>
             <p>
               <b>▥ 长期看好就买股</b>每场最多买一股。达标股价 +3，未达标
               −1（最低 3）。股份一直保留。
             </p>
             <p>
-              <b>↗ 想改变结果就投流</b>花 2 币选助推（前进 2 格）或黑料（后退 2 格，最低 0 格）。已达标的船不能拖回，移到 13 格不触发切片。每次耗一个行动，接小单可稳定赚 1 币。
+              <b>↗ 想改变结果就投流</b>花 2 币选助推（前进 2 格）或黑料（后退 2
+              格，最低 0 格）。已达标的船不能拖回，移到 13
+              格不触发切片。每次耗一个行动，接小单可稳定赚 1 币。
             </p>
           </div>
           <p className={styles.helpBottom}>
@@ -1164,7 +1885,9 @@ export default function HypeHarbor() {
           <p>
             {state?.phase === "preparing"
               ? "这场你是主理人，选择主播并分配预热。"
-              : state?.phase === "spotlight" ? "名场面来了，选择免费上船或继续蹲切片。" : "先看看新局势，再选一个行动。"}
+              : state?.phase === "spotlight"
+                ? "名场面来了，选择免费上船或继续蹲切片。"
+                : "先看看新局势，再选一个行动。"}
             <br />
             所有投资公开，可以一起商量。
           </p>
