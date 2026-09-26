@@ -3028,3 +3028,18 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - v0.2 最终验收：24项规则测试通过（72局/3024夜），迁移用真实v1 JSON固定样本；已验证全部36开发配置和额度边界。隔离工作树目标ESLint→完整check→生产build顺序通过，Next构建检查开启，52页生成成功（游戏22.6kB/首载120kB），只有既有RPG未使用变量警告。
 - 原3888已切到.next-reset-rush-v2-release，生产PID145500，HTTP200且页面标记v0.2；停止旧生产PID161416及临时3898开发服务。正式版本Chrome实点42天、普通/银行reset、完整计分/重开、390/320触屏；独立配置/降档/停订/另档续开/旧档迁移专项复验通过，14张生产截图全部像素检查并逐张目检，errors=[]。开发17图与共享客户端1图也已目检。报告tmp/reset-rush-v2-production/report.json与tmp/reset-rush-v2-production-lifecycle/report.json。
 - 13份本游戏源/测试/文档/预览与验证工作树LF归一化SHA256一致，tmp/reset-rush-v2-verify/source-validation.json。v1提交仍为78bde60，v2改动留在工作区供继续试玩；未推送。reset-rush-check工作树仍承载3888服务，不能归档。主目录其他任务的源码、索引与HEAD均保留。
+
+
+### 2026-09-26 · RESET v0.3 · 时间、真人精力与并行队列
+
+- 用户反馈账号/接单混入三次行动、Ultra+Turbo浪费尾段、无法并行。已先在既有验证工作树顺序check/build，通过后将v2提交为0905899（codex/reset-rush）；主共享checkout与其他任务HEAD/索引保留。
+- 官方调研已读取learn.chatgpt.com的Speed、Models、Worktrees正文。游戏明确区分产品关系和自定数值，保留用户要求的36种独立组合；调研引用和设计取舍记录在docs/reset-rush.md。
+- 新核心：每日480模拟分钟/12精力、接单1精力不限持有数、开线程2精力、同日改/恢复1精力、最多6线程，同号多线程共享额度。账号购买/升级/续订和银行券不耗时不耗精力。多项目队列自动连做、精确分摊尾段时间和额度，缺额暂停/补额续跑，暂停解散保留项目，跨天持续托管每线程占2精力；休息60分钟+3精力和手写外包均后台照跑。
+- Turbo速度2倍/每进度额度2.5倍，High–Max更慢但能力更强，Ultra以协作攻坚提高能力与吞吐；bug按20工作量累计模型/难度风险、按12工作量自动返工，不因点击推进次数或Turbo增伤。亲自排障2精力30分钟。项目规模拉开，开源速度加成8%/上限24%，公共奖励与两种reset/自然周期/券过期均保留，AI按同一时钟管理。
+- v1/v2保存迁移到v3，现金账号券与项目规模/进度、RNG保持，旧行动折算已用分钟/精力，原存档键保留。实际v2 JSON固化为fixtures/reset-rush-v2.json。render_game_to_text包含clock/energy/lanes状态，advanceTime(60000)推进一模拟分钟，无真实时间后台漂移。
+- 30项规则测试（24个种子的21/42天整季共630天）通过；Chrome实点21天完整竞赛32作品/721VP，覆盖4普通reset、3银行reset、14平静，全部36配置、迁移、390/320触屏、全屏重开。追加节点/人工排障/弃单/改队列顺序/解散/时间钩子专项也通过。报告tmp/reset-rush-v3-full/report.json、tmp/reset-rush-v3-final-dev/report.json errors=[]；31张开发截图全部像素检查并逐张目检。
+- 实际共享技能客户端采用静音系统Chrome包装并完成开局关弹窗→安排线程→推进120分钟，图与text状态一致，tmp/reset-rush-v3-shared/report.json。隔离worktree完整check已通过，生产build进行中；3888暂仍是v2，3898临时v3开发PID156956。下一步完成构建→原端口切换→生产专项/源文件一致性核对。
+
+- v0.3 最终验收：完整 pnpm run check → pnpm run build 顺序通过，Next lint/typecheck 开启，52 页成功生成（游戏 26.9kB/首载 124kB），仅既有 RPG 警告。原 3888 已切至 reset-rush-check/.next-reset-rush-v3-release，生产 PID 131464，HTTP 200、v0.3 标记确认；旧 v2 PID145500 与临时 3898/PID156956、159996 已停止。
+- 正式构建专项 tmp/reset-rush-v3-production/report.json 全部通过，覆盖账号免费管理、连续扣额/完工续队列、银行券恢复、36 配置、v2 迁移、节点推进/人工排障/弃单/调整解散、390/320 触屏、全屏与确认重开；errors=[]，10 张生产截图像素检查并逐张目检。此前 21 天 UI 整局、30 规则测试和共享技能客户端已通过，无新增失败。
+- 15 份 RESET 源码/测试/文档/预览与构建工作树 LF 归一化 SHA256 一致，tmp/reset-rush-v3-verify/source-validation.json；两侧目录入口都描述时间、精力与并行开发。v2 检查点 0905899 保留，v3 本地未提交/未推送。清理了隔离工作树自动生成的 tsconfig include；共享目录其他任务与 HEAD/索引未改动。工作树继续承载试玩，不可归档。本轮必要实现与验收完成。

@@ -14,6 +14,17 @@ chromium.launch = async options => {
   browser.newPage = async pageOptions => {
     const page = await newPage(pageOptions);
     await page.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    const click = page.click.bind(page);
+    page.click = async (selector, ...args) => {
+      const result = await click(selector, ...args);
+      if (selector === '#start-game') {
+        await page.getByRole('button', { name: '关闭弹窗' }).click();
+        await page.locator('#develop').click();
+        await page.locator('#advance-120').click();
+        await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      }
+      return result;
+    };
     return page;
   };
   return browser;

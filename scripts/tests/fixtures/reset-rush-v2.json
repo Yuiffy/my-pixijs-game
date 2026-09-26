@@ -1,0 +1,422 @@
+{
+  "version": 2,
+  "development": {
+    "model": "sol",
+    "effort": "medium",
+    "turbo": false
+  },
+  "seed": 9632,
+  "rng": 108935496,
+  "day": 1,
+  "length": 42,
+  "phase": "plan",
+  "players": [
+    {
+      "id": 0,
+      "name": "你",
+      "strategy": "balanced",
+      "cash": 300,
+      "vp": 0,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 1,
+          "tier": 200,
+          "quota": 180,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "renewal": 200,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [
+        {
+          "id": 2,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "difficulty": 1,
+          "vp": 6,
+          "cash": 25,
+          "work": 3,
+          "bugs": 0,
+          "deadline": null
+        },
+        {
+          "id": 9,
+          "name": "只有一条命",
+          "category": "game",
+          "need": 42,
+          "difficulty": 2,
+          "vp": 23,
+          "cash": 35,
+          "work": 0,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "shipped": [],
+      "used": 0,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    },
+    {
+      "id": 1,
+      "name": "林工",
+      "strategy": "builder",
+      "cash": 425,
+      "vp": 6,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 3,
+          "tier": 100,
+          "quota": 78,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "renewal": 100,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [
+        {
+          "id": 13,
+          "name": "本地模型路由",
+          "category": "open",
+          "need": 34,
+          "difficulty": 3,
+          "vp": 20,
+          "cash": 25,
+          "work": 0,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "shipped": [
+        {
+          "id": 4,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "difficulty": 1,
+          "vp": 6,
+          "cash": 25,
+          "work": 14,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "used": 12,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    },
+    {
+      "id": 2,
+      "name": "阿卷",
+      "strategy": "sprinter",
+      "cash": 325,
+      "vp": 6,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 5,
+          "tier": 200,
+          "quota": 168,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "renewal": 200,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [
+        {
+          "id": 15,
+          "name": "猫猫自走棋",
+          "category": "game",
+          "need": 56,
+          "difficulty": 3,
+          "vp": 34,
+          "cash": 45,
+          "work": 0,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "shipped": [
+        {
+          "id": 6,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "difficulty": 1,
+          "vp": 6,
+          "cash": 25,
+          "work": 14,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "used": 12,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    },
+    {
+      "id": 3,
+      "name": "老周",
+      "strategy": "banker",
+      "cash": 125,
+      "vp": 6,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 7,
+          "tier": 200,
+          "quota": 168,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "renewal": 200,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        },
+        {
+          "id": 14,
+          "tier": 200,
+          "quota": 180,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "renewal": 200,
+          "banks": [],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [],
+      "shipped": [
+        {
+          "id": 8,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "difficulty": 1,
+          "vp": 6,
+          "cash": 25,
+          "work": 14,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "used": 12,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    }
+  ],
+  "market": [
+    {
+      "id": 16,
+      "name": "只有一条命",
+      "category": "game",
+      "need": 42,
+      "difficulty": 2,
+      "vp": 23,
+      "cash": 35,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    },
+    {
+      "id": 10,
+      "name": "tiny-agent",
+      "category": "open",
+      "need": 24,
+      "difficulty": 3,
+      "vp": 14,
+      "cash": 15,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    },
+    {
+      "id": 11,
+      "name": "老板的新后台",
+      "category": "company",
+      "need": 26,
+      "difficulty": 2,
+      "vp": 8,
+      "cash": 125,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    },
+    {
+      "id": 12,
+      "name": "我的第二大脑",
+      "category": "personal",
+      "need": 18,
+      "difficulty": 2,
+      "vp": 8,
+      "cash": 30,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    }
+  ],
+  "serial": 16,
+  "event": {
+    "id": "riddle",
+    "title": "他又开始说谜语了",
+    "quote": "“something is cooking 👀”",
+    "detail": "今晚 45% 触发赠礼。先蹬为敬，还是当没看见？",
+    "chance": 45,
+    "effect": "signal"
+  },
+  "events": [],
+  "resetDeck": [
+    "normal",
+    "normal",
+    "normal",
+    "normal",
+    "bank",
+    "bank"
+  ],
+  "order": [
+    0,
+    1,
+    2,
+    3,
+    0,
+    1,
+    2,
+    3,
+    0,
+    1,
+    2,
+    3
+  ],
+  "cursor": 12,
+  "logs": [
+    {
+      "day": 1,
+      "text": "老周 发布《极简记账本》！+6 声望，+$25",
+      "player": 3
+    },
+    {
+      "day": 1,
+      "text": "老周 用 Sol · High + Turbo 开发《极简记账本》：+14 进度，−12 额度。",
+      "player": 3
+    },
+    {
+      "day": 1,
+      "text": "阿卷 接下《猫猫自走棋》。",
+      "player": 2
+    },
+    {
+      "day": 1,
+      "text": "林工 接下《本地模型路由》。",
+      "player": 1
+    },
+    {
+      "day": 1,
+      "text": "你 用 Luna · Medium 开发《极简记账本》：+3 进度，−0 额度。",
+      "player": 0
+    },
+    {
+      "day": 1,
+      "text": "老周 开通 PRO 200 新账号，−$200。",
+      "player": 3
+    },
+    {
+      "day": 1,
+      "text": "阿卷 发布《极简记账本》！+6 声望，+$25",
+      "player": 2
+    },
+    {
+      "day": 1,
+      "text": "阿卷 用 Sol · High + Turbo 开发《极简记账本》：+14 进度，−12 额度。",
+      "player": 2
+    },
+    {
+      "day": 1,
+      "text": "林工 发布《极简记账本》！+6 声望，+$25",
+      "player": 1
+    },
+    {
+      "day": 1,
+      "text": "林工 用 Sol · High + Turbo 开发《极简记账本》：+14 进度，−12 额度。",
+      "player": 1
+    },
+    {
+      "day": 1,
+      "text": "你 接下《只有一条命》。",
+      "player": 0
+    },
+    {
+      "day": 1,
+      "text": "老周 补差价 $180 升级 PRO 200，订阅期限不变。",
+      "player": 3
+    },
+    {
+      "day": 1,
+      "text": "阿卷 补差价 $180 升级 PRO 200，订阅期限不变。",
+      "player": 2
+    },
+    {
+      "day": 1,
+      "text": "林工 补差价 $80 升级 PRO 100，订阅期限不变。",
+      "player": 1
+    },
+    {
+      "day": 1,
+      "text": "你 补差价 $180 升级 PRO 200，订阅期限不变。",
+      "player": 0
+    },
+    {
+      "day": 1,
+      "text": "早间消息：他又开始说谜语了",
+      "player": null
+    }
+  ],
+  "receipt": null,
+  "message": "你 用 Luna · Medium 开发《极简记账本》：+3 进度，−0 额度。",
+  "awards": [
+    {
+      "id": "first-game",
+      "name": "碉游首发",
+      "vp": 5,
+      "owner": null
+    },
+    {
+      "id": "diversity",
+      "name": "三栖开发者",
+      "vp": 6,
+      "owner": null
+    },
+    {
+      "id": "pedal",
+      "name": "500 额度俱乐部",
+      "vp": 5,
+      "owner": null
+    }
+  ]
+}

@@ -4,11 +4,27 @@ export type Tier = 20 | 100 | 200;
 export type Model = "luna" | "sol" | "astra";
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
 export type Difficulty = 1 | 2 | 3 | 4;
-export interface Development { model: Model; effort: Effort; turbo: boolean }
-export const DEFAULT_DEVELOPMENT: Development = { model: "sol", effort: "medium", turbo: false };
+export interface Development {
+  model: Model;
+  effort: Effort;
+  turbo: boolean;
+}
+export const DEFAULT_DEVELOPMENT: Development = {
+  model: "sol",
+  effort: "medium",
+  turbo: false,
+};
 export type Strategy = "balanced" | "builder" | "sprinter" | "banker";
-export const SAVE_KEY = "reset-rush-v2";
+export const SAVE_KEY = "reset-rush-v3";
+export const V2_SAVE_KEY = "reset-rush-v2";
 export const LEGACY_SAVE_KEY = "reset-rush-v1";
+export const DAY_MINUTES = 480;
+export const DAILY_ENERGY = 12;
+export const MAX_LANES = 6;
+export const BUG_WORK = 12;
+const EPS = 1e-8;
+export const fmt = (n: number) => Number(n.toFixed(1)).toString();
+export const timeLabel = (minute: number) => `${String(9 + Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 export const PLANS: Record<Tier, { name: string; capacity: number }> = {
   20: { name: "PLUS", capacity: 24 },
   100: { name: "PRO 100", capacity: 90 },
@@ -16,21 +32,59 @@ export const PLANS: Record<Tier, { name: string; capacity: number }> = {
 };
 export const MODELS: Record<
   Model,
-  { name: string; cost: number; work: number; ability: number; description: string }
+  {
+    name: string;
+    cost: number;
+    speed: number;
+    ability: number;
+    description: string;
+  }
 > = {
-  luna: { name: "Luna", cost: 0, work: 3, ability: 1, description: "基础免费 · 擅长简单任务" },
-  sol: { name: "Sol", cost: 4, work: 6, ability: 2, description: "均衡开发 · 日常主力" },
-  astra: { name: "Astra", cost: 9, work: 11, ability: 3, description: "复杂工程 · 高能力" },
+  luna: {
+    name: "Luna",
+    cost: 0,
+    speed: 0.075,
+    ability: 1,
+    description: "简单任务 · 慢慢免费跑",
+  },
+  sol: {
+    name: "Sol",
+    cost: 0.16,
+    speed: 0.18,
+    ability: 2,
+    description: "日常主力 · 均衡消耗",
+  },
+  astra: {
+    name: "Astra",
+    cost: 0.4,
+    speed: 0.3,
+    ability: 3,
+    description: "复杂工程 · 更强能力",
+  },
 };
-export const EFFORTS: Record<Effort, { name: string; cost: number; work: number; ability: number; lunaCost: number }> = {
-  low: { name: "Low", cost: 0.75, work: 1.15, ability: -0.5, lunaCost: 0 },
-  medium: { name: "Medium", cost: 1, work: 1, ability: 0, lunaCost: 0 },
-  high: { name: "High", cost: 1.5, work: 1.25, ability: 0.5, lunaCost: 1 },
-  xhigh: { name: "XHigh", cost: 2, work: 1.4, ability: 1, lunaCost: 2 },
-  max: { name: "Max", cost: 2.5, work: 1.6, ability: 1.25, lunaCost: 3 },
-  ultra: { name: "Ultra", cost: 3, work: 1.8, ability: 1.5, lunaCost: 4 },
+export const EFFORTS: Record<
+  Effort,
+  {
+    name: string;
+    cost: number;
+    speed: number;
+    ability: number;
+    lunaCost: number;
+  }
+> = {
+  low: { name: "Low", cost: 0.75, speed: 1.2, ability: -0.5, lunaCost: 0 },
+  medium: { name: "Medium", cost: 1, speed: 1, ability: 0, lunaCost: 0 },
+  high: { name: "High", cost: 1.5, speed: 0.9, ability: 0.5, lunaCost: 0.035 },
+  xhigh: { name: "XHigh", cost: 2, speed: 0.8, ability: 1, lunaCost: 0.06 },
+  max: { name: "Max", cost: 2.6, speed: 0.65, ability: 1.25, lunaCost: 0.1 },
+  ultra: { name: "Ultra", cost: 3, speed: 1.5, ability: 1.5, lunaCost: 0.16 },
 };
-export const DIFFICULTIES: Record<Difficulty, string> = { 1: "简单", 2: "常规", 3: "复杂", 4: "攻坚" };
+export const DIFFICULTIES: Record<Difficulty, string> = {
+  1: "简单",
+  2: "常规",
+  3: "复杂",
+  4: "攻坚",
+};
 export const CATEGORIES: Record<
   Category,
   { name: string; short: string; perk: string }
@@ -40,7 +94,7 @@ export const CATEGORIES: Record<
   open: {
     name: "开源项目",
     short: "OPEN SOURCE",
-    perk: "付费模型产出永久 +1，最多 +3",
+    perk: "研发速度永久 +8%，最多 +24%",
   },
   company: {
     name: "公司项目",
@@ -59,6 +113,17 @@ export interface Project {
   work: number;
   bugs: number;
   deadline: number | null;
+  checked: number;
+  riskLoad: number;
+  repair: number;
+}
+export interface Lane {
+  id: number;
+  account: number;
+  development: Development;
+  projects: number[];
+  enabled: boolean;
+  paidDay: number;
 }
 export interface Account {
   id: number;
@@ -86,6 +151,9 @@ export interface Player {
   expired: number;
   banksUsed: number;
   collisions: number;
+  energy: number;
+  rested: boolean;
+  lanes: Lane[];
 }
 export interface EventCard {
   id: string;
@@ -97,6 +165,7 @@ export interface EventCard {
 }
 export interface Log {
   day: number;
+  minute: number;
   text: string;
   player: number | null;
 }
@@ -112,7 +181,7 @@ export interface Receipt {
   }[];
 }
 export interface Game {
-  version: 2;
+  version: 3;
   development: Development;
   seed: number;
   rng: number;
@@ -125,15 +194,24 @@ export interface Game {
   event: EventCard;
   events: string[];
   resetDeck: ("normal" | "bank")[];
-  order: number[];
-  cursor: number;
+  minute: number;
   logs: Log[];
   awards: { id: string; name: string; vp: number; owner: number | null }[];
   receipt: Receipt | null;
   message: string;
 }
 export type Action =
-  | ({ type: "develop"; project: number; account: number } & Development)
+  | ({
+      type: "dispatch";
+      lane: number | null;
+      projects: number[];
+      account: number;
+    } & Development)
+  | { type: "pause"; lane: number }
+  | { type: "remove-lane"; lane: number }
+  | { type: "advance"; minutes: number }
+  | { type: "next" }
+  | { type: "rest" }
   | { type: "configure"; development: Development }
   | { type: "test"; project: number }
   | { type: "claim"; project: number }
@@ -207,7 +285,7 @@ export const EVENTS: EventCard[] = [
     id: "sale",
     title: "Turbo 快乐日",
     quote: "“let’s make it go faster.”",
-    detail: "今天 Turbo 总消耗打 75 折。加速增加产出，不改变 bug 概率。",
+    detail: "今天 Turbo 额度消耗打 75 折。加速缩短时间，不改变解题能力。",
     chance: 0,
     effect: "sale",
   },
@@ -223,7 +301,7 @@ export const EVENTS: EventCard[] = [
     id: "maybe",
     title: "这条推文有点东西",
     quote: "“builders deserve more.”",
-    detail: "今晚 60% 触发赠礼。银行券可以留着，今天的行动不行。",
+    detail: "今晚 60% 触发赠礼。银行券可以留着，今天的时间不行。",
     chance: 60,
     effect: "signal",
   },
@@ -245,24 +323,24 @@ export const EVENTS: EventCard[] = [
   },
 ];
 const TEMPLATES: [string, Category, number, number, number, Difficulty][] = [
-  ["只有一条命", "game", 42, 23, 35, 2],
-  ["猫猫自走棋", "game", 56, 34, 45, 3],
-  ["下班后勇者", "game", 36, 19, 30, 2],
-  ["像素宇宙", "game", 68, 44, 50, 4],
-  ["我的第二大脑", "personal", 18, 8, 30, 2],
-  ["极简记账本", "personal", 14, 6, 25, 1],
-  ["今天吃什么", "personal", 22, 10, 35, 1],
-  ["专注白噪音", "personal", 26, 12, 40, 1],
-  ["tiny-agent", "open", 24, 14, 15, 3],
-  ["一键部署工具", "open", 30, 15, 20, 2],
-  ["开源 UI 积木", "open", 20, 9, 10, 1],
-  ["本地模型路由", "open", 34, 20, 25, 3],
-  ["老板的新后台", "company", 26, 8, 125, 2],
-  ["周五紧急需求", "company", 20, 5, 95, 1],
-  ["客户说很简单", "company", 38, 16, 180, 4],
-  ["再改最后一版", "company", 32, 10, 145, 2],
-  ["一百关推箱子", "game", 64, 30, 40, 1],
-  ["百页文档站", "open", 50, 20, 20, 1],
+  ["只有一条命", "game", 221, 23, 35, 2],
+  ["猫猫自走棋", "game", 343, 34, 45, 3],
+  ["下班后勇者", "game", 189, 19, 30, 2],
+  ["像素宇宙", "game", 525, 44, 50, 4],
+  ["我的第二大脑", "personal", 126, 8, 30, 2],
+  ["极简记账本", "personal", 42, 6, 25, 1],
+  ["今天吃什么", "personal", 116, 10, 35, 1],
+  ["专注白噪音", "personal", 137, 12, 40, 1],
+  ["tiny-agent", "open", 168, 14, 15, 3],
+  ["一键部署工具", "open", 158, 15, 20, 2],
+  ["开源 UI 积木", "open", 105, 9, 10, 1],
+  ["本地模型路由", "open", 238, 20, 25, 3],
+  ["老板的新后台", "company", 182, 8, 125, 2],
+  ["周五紧急需求", "company", 140, 5, 95, 1],
+  ["客户说很简单", "company", 266, 16, 180, 4],
+  ["再改最后一版", "company", 224, 10, 145, 2],
+  ["一百关推箱子", "game", 560, 40, 55, 1],
+  ["百页文档站", "open", 420, 28, 30, 1],
 ];
 const copy = (g: Game): Game => JSON.parse(JSON.stringify(g)) as Game;
 function random(g: Game): number {
@@ -278,13 +356,17 @@ function shuffle<T>(g: Game, values: T[]): T[] {
   return a;
 }
 function log(g: Game, text: string, player: number | null = null) {
-  g.logs.unshift({ day: g.day, text, player });
+  g.logs.unshift({ day: g.day, minute: g.minute, text, player });
   g.logs = g.logs.slice(0, 100);
 }
 function project(g: Game, template?: number): Project {
-  const available = TEMPLATES.filter(([name]) => !g.market.some(j => j.name === name));
-  const [name, category, need, vp, cash, difficulty] = template === undefined
-    ? available[Math.floor(random(g) * available.length)] : TEMPLATES[template];
+  const available = TEMPLATES.filter(
+    ([name]) => !g.market.some((j) => j.name === name),
+  );
+  const [name, category, need, vp, cash, difficulty] =
+    template === undefined
+      ? available[Math.floor(random(g) * available.length)]
+      : TEMPLATES[template];
   g.serial++;
   return {
     id: g.serial,
@@ -297,6 +379,9 @@ function project(g: Game, template?: number): Project {
     work: 0,
     bugs: 0,
     deadline: null,
+    checked: 0,
+    riskLoad: 0,
+    repair: 0,
   };
 }
 function account(g: Game, tier: Tier): Account {
@@ -313,7 +398,6 @@ function account(g: Game, tier: Tier): Account {
   };
 }
 export const activeAccount = (g: Game, a: Account) => a.paidUntil >= g.day;
-export const actionsLeft = (g: Game, id = 0) => g.order.slice(g.cursor).filter((p) => p === id).length;
 export function score(p: Player) {
   const variety = new Set(p.shipped.map((x) => x.category)).size;
   return {
@@ -328,22 +412,42 @@ export function score(p: Player) {
       Math.min(10, Math.floor(p.used / 120)),
   };
 }
-export function developmentStats(g: Game, p: Player, config: Development, job?: Project) {
+export function developmentStats(
+  g: Game,
+  p: Player,
+  config: Development,
+  job?: Project,
+) {
   const m = MODELS[config.model];
   const e = EFFORTS[config.effort];
-  const baseCost = config.model === "luna" ? e.lunaCost : Math.ceil(m.cost * e.cost);
-  const cost = config.turbo ? Math.ceil(Math.max(2, baseCost * 2) * (g.event.effect === "sale" ? 0.75 : 1)) : baseCost;
+  const baseCost = config.model === "luna" ? e.lunaCost : m.cost * e.cost;
+  const cost = config.turbo
+    ? Math.max(0.025, baseCost) * 2.5 * (g.event.effect === "sale" ? 0.75 : 1)
+    : baseCost;
   const ability = m.ability + e.ability;
-  const work = Math.max(1, Math.round((m.work * e.work + (config.model === "luna" ? 0 : p.knowledge)) * (config.turbo ? 1.8 : 1)));
+  const speed =
+    m.speed * e.speed * (1 + p.knowledge * 0.08) * (config.turbo ? 2 : 1);
+  const remaining = job
+    ? Math.max(0, job.need - job.work) + job.bugs * BUG_WORK - job.repair
+    : 0;
   return {
     name: `${m.name} · ${e.name}${config.turbo ? " + Turbo" : ""}`,
     cost,
-    work,
+    speed,
+    perHour: speed * 60,
+    quotaPerHour: cost * speed * 60,
+    minutes: remaining / speed,
+    quota: remaining * cost,
     ability,
-    risk: job ? Math.min(80, Math.max(0, Math.round((job.difficulty - ability) * 30))) : 0,
+    risk: job
+      ? Math.min(80, Math.max(0, Math.round((job.difficulty - ability) * 30)))
+      : 0,
   };
 }
-const validDevelopment = (d: Development) => !!d && !!MODELS[d.model] && !!EFFORTS[d.effort] && typeof d.turbo === "boolean";
+const validDevelopment = (d: Development) => !!d &&
+  !!MODELS[d.model] &&
+  !!EFFORTS[d.effort] &&
+  typeof d.turbo === "boolean";
 
 function renew(g: Game, p: Player, a: Account, tier: Tier) {
   p.cash -= tier;
@@ -351,7 +455,11 @@ function renew(g: Game, p: Player, a: Account, tier: Tier) {
   a.quota = PLANS[tier].capacity;
   a.paidUntil = g.day + 29;
   a.nextReset = g.day + 7;
-  log(g, `${p.name} 的账号按 $${tier} 续订至 D${a.paidUntil}，恢复满额，自然重置改为 D${a.nextReset}。`, p.id);
+  log(
+    g,
+    `${p.name} 的账号按 $${tier} 续订至 D${a.paidUntil}，恢复满额，自然重置改为 D${a.nextReset}。`,
+    p.id,
+  );
 }
 function award(g: Game, p: Player) {
   const earned = [
@@ -374,10 +482,11 @@ function release(g: Game, p: Player, job: Project) {
   p.cash += job.cash;
   if (job.category === "open") p.knowledge = Math.min(3, p.knowledge + 1);
   p.projects = p.projects.filter((x) => x.id !== job.id);
+  cleanLanes(p);
   p.shipped.push(job);
   log(
     g,
-    `${p.name} 发布《${job.name}》！+${job.vp + jam} 声望，+$${job.cash}${job.category === "open" ? "，研发效率 +1（上限 3）" : ""}`,
+    `${p.name} 发布《${job.name}》！+${job.vp + jam} 声望，+$${job.cash}${job.category === "open" ? "，研发速度 +8%（上限 24%）" : ""}`,
     p.id,
   );
   award(g, p);
@@ -422,7 +531,7 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
   };
   log(
     g,
-    `${r.title} ${kind === "normal" ? `你补回 ${gains[0].gained} 额度，${gains[0].unused} 余额无法叠加。` : `你获得 ${gains[0].gained} 张银行券。`}`,
+    `${r.title} ${kind === "normal" ? `你补回 ${fmt(gains[0].gained)} 额度，${fmt(gains[0].unused)} 余额无法叠加。` : `你获得 ${gains[0].gained} 张银行券。`}`,
   );
   return r;
 }
@@ -437,15 +546,15 @@ function drawEvent(g: Game): EventCard {
 }
 function beginDay(g: Game) {
   g.phase = "plan";
-  g.cursor = 0;
+  g.minute = 0;
   g.receipt = null;
-  const first = (g.day - 1) % 4;
-  g.order = Array.from({ length: 12 }, (_, i) => (first + i) % 4);
   if (g.day > 1) {
     const oldest = g.market.reduce((a, b) => (a.id < b.id ? a : b));
     g.market[g.market.indexOf(oldest)] = project(g);
   }
   g.players.forEach((p) => {
+    p.energy = DAILY_ENERGY;
+    p.rested = false;
     p.accounts.forEach((a) => {
       const before = a.banks.length;
       a.banks = a.banks.filter((d) => d > g.day);
@@ -460,7 +569,11 @@ function beginDay(g: Game) {
       if (a.paidUntil === g.day - 1) {
         a.quota = 0;
         if (a.renewal !== null && p.cash >= a.renewal) renew(g, p, a, a.renewal);
-        else log(g, `${p.name} 的 ${PLANS[a.tier].name} ${a.renewal === null ? "按计划停订" : "续费余额不足，已暂停"}。可在账号管理中重新开通，银行券仍按原日到期。`, p.id);
+        else log(
+            g,
+            `${p.name} 的 ${PLANS[a.tier].name} ${a.renewal === null ? "按计划停订" : "续费余额不足，已暂停"}。可在账号管理中重新开通，银行券仍按原日到期。`,
+            p.id,
+          );
       }
       while (a.nextReset <= g.day) {
         if (activeAccount(g, a)) {
@@ -469,7 +582,7 @@ function beginDay(g: Game) {
           p.resetGain += gained;
           log(
             g,
-            `${p.name} 的 ${PLANS[a.tier].name} 自然重置，补回 ${gained}。`,
+            `${p.name} 的 ${PLANS[a.tier].name} 自然重置，补回 ${fmt(gained)}。`,
             p.id,
           );
         }
@@ -483,6 +596,11 @@ function beginDay(g: Game) {
         p.projects = p.projects.filter((x) => x.id !== j.id);
         log(g, `${p.name} 的《${j.name}》超期撤单，扣 3 声望。`, p.id);
       });
+    cleanLanes(p);
+    for (const lane of p.lanes) if (lane.enabled && lane.projects.length) {
+        p.energy -= 2;
+        lane.paidDay = g.day;
+      }
   });
   g.event = drawEvent(g);
   log(g, `早间消息：${g.event.title}`);
@@ -490,16 +608,12 @@ function beginDay(g: Game) {
   if (g.event.effect === "bank") g.receipt = reset(g, "bank");
   g.message =
     g.day === 1
-      ? "从 $20 账号起步。可先管理订阅，也可直接开始开发。"
-      : `第 ${g.day} 天。${g.event.detail}`;
-  runBots(g);
+      ? "先管理账号，再选项目安排线程；按“推进时间”让所有任务一起跑。"
+      : `第 ${g.day} 天。继续托管 ${g.players[0].lanes.filter((l) => l.enabled).length} 条线程，剩 ${g.players[0].energy} 精力。${g.event.detail}`;
 }
-export function createGame(
-  seed = 260926,
-  length = 42,
-): Game {
+export function createGame(seed = 260926, length = 42): Game {
   const g: Game = {
-    version: 2,
+    version: 3,
     development: { ...DEFAULT_DEVELOPMENT },
     seed: Math.trunc(Math.abs(seed)) % 4294967296,
     rng: Math.trunc(Math.abs(seed)) % 4294967296,
@@ -512,8 +626,7 @@ export function createGame(
     event: EVENTS[0],
     events: [],
     resetDeck: [],
-    order: [],
-    cursor: 0,
+    minute: 0,
     logs: [],
     receipt: null,
     message: "",
@@ -551,6 +664,9 @@ export function createGame(
       expired: 0,
       banksUsed: 0,
       collisions: 0,
+      energy: DAILY_ENERGY,
+      rested: false,
+      lanes: [],
     });
   });
   g.market = [project(g, 0), project(g, 8), project(g, 12), project(g, 4)];
@@ -565,91 +681,154 @@ export function createGame(
   beginDay(g);
   return g;
 }
+function cleanLanes(p: Player) {
+  for (const lane of p.lanes) {
+    lane.projects = lane.projects.filter((id) => p.projects.some((j) => j.id === id),);
+    if (!lane.projects.length) lane.enabled = false;
+  }
+}
+export function laneStatus(g: Game, p: Player, lane: Lane): string {
+  if (!lane.projects.length) return "队列完成";
+  if (!lane.enabled) return "已暂停";
+  if (g.phase !== "plan") return "收工待续";
+  const job = p.projects.find((j) => j.id === lane.projects[0]);
+  if (!job) return "等待项目";
+  const acc = p.accounts.find((a) => a.id === lane.account);
+  if (
+    developmentStats(g, p, lane.development, job).cost > 0 &&
+    (!acc || !activeAccount(g, acc) || acc.quota < EPS)
+  ) return "等待额度";
+  return job.work >= job.need - EPS ? "自动返工" : "开发中";
+}
+export function energyCost(g: Game, p: Player, a: Action): number {
+  if (a.type === "claim" || a.type === "freelance") return 1;
+  if (a.type === "test") return 2;
+  if (a.type === "dispatch") return p.lanes.find((l) => l.id === a.lane)?.paidDay === g.day ? 1 : 2;
+  return 0;
+}
 export function actionError(g: Game, id: number, a: Action): string | null {
   const p = g.players[id];
   if (!p) return "开发者不存在。";
-  if (a.type === "configure" || a.type === "renewal") {
-    if (g.phase === "over") return "牌局已结束。";
-    if (a.type === "configure") return validDevelopment(a.development) ? null : "开发配置无效。";
-    if (!p.accounts.some(x => x.id === a.account)) return "账号不存在。";
-    return a.tier === null || PLANS[a.tier] ? null : "无效续订套餐。";
+  if (g.phase === "over") return "牌局已结束。";
+  const administrative = [
+    "configure",
+    "renewal",
+    "buy",
+    "renew",
+    "upgrade",
+  ].includes(a.type);
+  if (!administrative && g.phase !== "plan") return "先进入下一天。";
+  if (p.energy < energyCost(g, p, a)) return "真人精力不足。可休息一次，后台线程仍会继续工作。";
+  if (a.type === "configure") return validDevelopment(a.development) ? null : "开发配置无效。";
+  if (a.type === "dispatch") {
+    if (g.minute >= DAY_MINUTES) return "今天的时间用完了，先揭牌。";
+    if (!validDevelopment(a)) return "请选择有效的开发配置。";
+    if (!p.accounts.some((acc) => acc.id === a.account)) return "先选择账号。";
+    if (!a.projects.length) return "先在工作台勾选项目，可多选组成队列。";
+    if (
+      new Set(a.projects).size !== a.projects.length ||
+      !a.projects.every((j) => p.projects.some((x) => x.id === j))
+    ) return "队列中有无效项目。";
+    if (a.lane !== null && !p.lanes.some((l) => l.id === a.lane)) return "线程不存在。";
+    if (
+      a.lane === null &&
+      p.lanes.filter((l) => l.projects.length).length >= MAX_LANES
+    ) return "最多同时托管 6 条线程；可向已有队列追加项目。";
+    if (
+      p.lanes.some(
+        (l) => l.id !== a.lane && l.projects.some((j) => a.projects.includes(j)),
+      )
+    ) return "项目已在另一条线程中。先调整原队列，避免重复开发。";
   }
-  if (g.phase !== "plan" || g.order[g.cursor] !== id) return "现在不是你的行动时间。";
-  if (a.type === "develop") {
-    const j = p.projects.find((x) => x.id === a.project);
-    const acc = p.accounts.find((x) => x.id === a.account);
-    if (!j) return "先选择一个进行中的项目。";
-    if (j.work >= j.need) return "代码写完了，先测试清除 bug 就能发布。";
-    if (!validDevelopment(a)) return "请选择有效的模型、思考强度与加速配置。";
-    const { cost } = developmentStats(g, p, a, j);
-    if (cost > 0 && (!acc || !activeAccount(g, acc))) return "付费配置需要有效订阅。也可用 Luna + Medium，关闭 Turbo 免费开发。";
-    if (cost > 0 && acc && acc.quota < cost) return "额度不足。换账号、使用银行券，或用 Luna + Medium 并关闭 Turbo。";
+  if (a.type === "pause" || a.type === "remove-lane") {
+    if (!p.lanes.some((l) => l.id === a.lane)) return "线程不存在。";
   }
+  if (a.type === "claim" && !g.market.some((j) => j.id === a.project)) return "项目已被别人接走。";
   if (a.type === "test") {
-    const j = p.projects.find((x) => x.id === a.project);
-    if (!j || !j.bugs) return "当前项目没有需要修复的 bug。";
+    if (!p.projects.find((j) => j.id === a.project)?.bugs) return "当前项目没有 bug。";
+    if (g.minute + 30 > DAY_MINUTES) return "亲自排障需要完整的 30 分钟。";
   }
-  if (a.type === "claim") {
-    if (p.projects.length >= 2) return "最多同时开发 2 个项目。先发布，或放弃一个。";
-    if (!g.market.some((x) => x.id === a.project)) return "这个项目已经被别人接走了。";
+  if (a.type === "rest") {
+    if (p.rested) return "今天已经休息过了。";
+    if (p.energy >= DAILY_ENERGY) return "精力已经充足。";
+    if (g.minute + 60 > DAY_MINUTES) return "今天已没有 60 分钟休息时间。";
   }
+  if (a.type === "freelance" && g.minute + 60 > DAY_MINUTES) return "手写外包需要完整的 60 分钟。";
+  if (
+    a.type === "advance" &&
+    (!Number.isInteger(a.minutes) || a.minutes <= 0 || a.minutes > DAY_MINUTES)
+  ) return "推进时间应为 1–480 分钟。";
   if (a.type === "bank") {
     const acc = p.accounts.find((x) => x.id === a.account);
     if (!acc || !activeAccount(g, acc)) return "银行券需要有效订阅。";
     if (!acc.banks.some((d) => d > g.day)) return "这个账号没有有效银行券。";
-    if (acc.quota === PLANS[acc.tier].capacity) return "额度已经满了，留着这张券。";
+    if (acc.quota >= PLANS[acc.tier].capacity - EPS) return "额度已经满了，留着这张券。";
     if (acc.lastBankDay === g.day) return "每个账号每天最多使用 1 张银行券。";
   }
   if (a.type === "buy") {
     if (!PLANS[a.tier]) return "无效套餐。";
-    if (p.accounts.length >= 3) return "最多持有 3 个账号。";
+    if (p.accounts.length >= 3) return "最多持有 3 个账号，每号都可以带多条线程。";
     if (p.cash < a.tier) return "现金不够，接点外包吧。";
   }
-  if (a.type === "renew" || a.type === "upgrade") {
+  if (a.type === "renew" || a.type === "upgrade" || a.type === "renewal") {
     const acc = p.accounts.find((x) => x.id === a.account);
     if (!acc) return "账号不存在。";
+    if (a.type === "renewal") return a.tier === null || PLANS[a.tier] ? null : "无效续订套餐。";
+    if (!PLANS[a.tier]) return "无效套餐。";
     if (a.type === "renew") {
       if (activeAccount(g, acc)) return "订阅到期后才能续费。";
-      if (!PLANS[a.tier]) return "无效套餐。";
       if (p.cash < a.tier) return "续费资金不足。";
     } else {
-      if (!PLANS[a.tier] || a.tier <= acc.tier || !activeAccount(g, acc)) return "只能升级有效订阅。";
+      if (a.tier <= acc.tier || !activeAccount(g, acc)) return "只能升级有效订阅。";
       if (p.cash < a.tier - acc.tier) return "升级资金不足。";
     }
   }
   if (a.type === "abandon" && !p.projects.some((j) => j.id === a.project)) return "项目不存在。";
   return null;
 }
+
+/** Administrative actions never advance the world or trigger a bot turn. */
 function applyAction(g: Game, id: number, a: Action): boolean {
   const error = actionError(g, id, a);
   if (error) {
-    if (!id) g.message = error;
+    if (id === 0) g.message = error;
     return false;
   }
   const p = g.players[id];
-  if (a.type === "develop") {
-    const j = p.projects.find((x) => x.id === a.project)!;
-    const acc = p.accounts.find((x) => x.id === a.account);
-    const m = developmentStats(g, p, a, j);
-    const bugs = m.risk > 0 && random(g) * 100 < m.risk ? 1 : 0;
-    const progress = Math.min(j.need - j.work, m.work);
-    if (acc && m.cost) acc.quota -= m.cost;
-    p.used += m.cost;
-    j.work = Math.min(j.need, j.work + m.work);
-    j.bugs += bugs;
+  const energy = energyCost(g, p, a);
+  p.energy -= energy;
+  if (a.type === "dispatch") {
+    let lane = p.lanes.find((l) => l.id === a.lane);
+    if (!lane) {
+      lane = p.lanes.find((l) => !l.projects.length);
+      if (!lane) {
+        lane = {
+          id: ++g.serial,
+          account: a.account,
+          development: { ...DEFAULT_DEVELOPMENT },
+          projects: [],
+          enabled: false,
+          paidDay: 0,
+        };
+        p.lanes.push(lane);
+      }
+    }
+    lane.account = a.account;
+    lane.development = { model: a.model, effort: a.effort, turbo: a.turbo };
+    lane.projects = [...a.projects];
+    lane.enabled = true;
+    lane.paidDay = g.day;
     log(
       g,
-      `${p.name} 用 ${m.name} 开发《${j.name}》：+${progress} 进度，−${m.cost} 额度${bugs ? `，难度未完全胜任（风险 ${m.risk}%），+1 bug` : ""}。`,
+      `${p.name} 安排 ${a.projects.length} 个项目：${developmentStats(g, p, a).name}，−${energy} 精力。推进时间后自动连做。`,
       id,
     );
-    release(g, p, j);
-    award(g, p);
-  } else if (a.type === "test") {
-    const j = p.projects.find((x) => x.id === a.project)!;
-    j.bugs = Math.max(0, j.bugs - 2);
-    j.work = Math.min(j.need, j.work + 2);
-    log(g, `${p.name} 测试《${j.name}》：修复 2 个 bug，+2 进度。`, id);
-    release(g, p, j);
+  } else if (a.type === "pause") {
+    p.lanes.find((l) => l.id === a.lane)!.enabled = false;
+    log(g, `${p.name} 暂停一条线程；项目、进度与剩余额度保留。`, id);
+  } else if (a.type === "remove-lane") {
+    p.lanes = p.lanes.filter((l) => l.id !== a.lane);
+    log(g, `${p.name} 解散一条线程，项目回到待安排列表。`, id);
   } else if (a.type === "claim") {
     const index = g.market.findIndex((x) => x.id === a.project);
     const j = g.market[index];
@@ -658,7 +837,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     g.market[index] = project(g);
     log(
       g,
-      `${p.name} 接下《${j.name}》${j.deadline ? `，D${j.deadline} 前交付` : ""}。`,
+      `${p.name} 接下《${j.name}》，−1 精力${j.deadline ? `，D${j.deadline} 收工前交付` : ""}。`,
       id,
     );
   } else if (a.type === "bank") {
@@ -670,21 +849,28 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     p.banksUsed++;
     log(
       g,
-      `${p.name} 用掉 1 张银行券，补回 ${gain} 额度。自然重置仍在 D${acc.nextReset}。`,
+      `${p.name} 用掉银行券，补回 ${fmt(gain)} 额度。等待额度的线程可继续跑，自然重置仍在 D${acc.nextReset}。`,
       id,
     );
   } else if (a.type === "buy") {
     p.cash -= a.tier;
     p.accounts.push(account(g, a.tier));
-    log(g, `${p.name} 开通 ${PLANS[a.tier].name} 新账号，−$${a.tier}。`, id);
+    log(
+      g,
+      `${p.name} 开通 ${PLANS[a.tier].name} 新账号，−$${a.tier}；不花精力或时间。`,
+      id,
+    );
   } else if (a.type === "renew") {
     const acc = p.accounts.find((x) => x.id === a.account)!;
     renew(g, p, acc, a.tier);
     acc.renewal = a.tier;
   } else if (a.type === "renewal") {
-    const acc = p.accounts.find(x => x.id === a.account)!;
-    acc.renewal = a.tier;
-    log(g, `${p.name} 设置账号到期后${a.tier === null ? "不再续订" : `按 $${a.tier} 续订`}。不花行动，当前订阅不变。`, id);
+    p.accounts.find((x) => x.id === a.account)!.renewal = a.tier;
+    log(
+      g,
+      `${p.name} 设置到期后${a.tier === null ? "不再续订" : `按 $${a.tier} 续订`}。`,
+      id,
+    );
   } else if (a.type === "configure") {
     g.development = { ...a.development };
   } else if (a.type === "upgrade") {
@@ -696,113 +882,300 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     acc.tier = a.tier;
     log(
       g,
-      `${p.name} 补差价 $${price} 升级 ${PLANS[a.tier].name}，订阅期限不变。`,
+      `${p.name} 补差价 $${price} 升级 ${PLANS[a.tier].name}，期限不变，不花精力或时间。`,
       id,
     );
   } else if (a.type === "abandon") {
-    p.projects = p.projects.filter((x) => x.id !== a.project);
+    p.projects = p.projects.filter((j) => j.id !== a.project);
+    cleanLanes(p);
     p.vp -= 2;
     log(g, `${p.name} 放弃项目，−2 声望。`, id);
+  } else if (a.type === "test") {
+    const j = p.projects.find((x) => x.id === a.project)!;
+    j.bugs = Math.max(0, j.bugs - 2);
+    if (!j.bugs) j.repair = 0;
+    log(
+      g,
+      `${p.name} 亲自排障，修复最多 2 个 bug，−2 精力；其他线程继续运行 30 分钟。`,
+      id,
+    );
+    release(g, p, j);
+    advanceMutable(g, 30);
   } else if (a.type === "freelance") {
+    advanceMutable(g, 60);
     p.cash += 25;
-    log(g, `${p.name} 手写外包，+$25。`, id);
+    log(g, `${p.name} 手写外包 60 分钟，−1 精力，+$25；后台线程照常工作。`, id);
+  } else if (a.type === "rest") {
+    p.rested = true;
+    advanceMutable(g, 60);
+    p.energy = Math.min(DAILY_ENERGY, p.energy + 3);
+    log(g, `${p.name} 休息 60 分钟，恢复 3 精力；后台任务没有停。`, id);
+  } else if (a.type === "advance") advanceMutable(g, a.minutes);
+  else if (a.type === "next") {
+    const before = humanNode(g);
+    do {
+      advanceMutable(g, 1);
+    } while (g.phase === "plan" && humanNode(g) === before);
   }
-  if (!["bank", "renewal", "configure"].includes(a.type)) g.cursor++;
-  if (a.type === "configure") return true;
-  if (!id) g.message =
-      a.type === "pass"
-        ? "留出一点生活。"
-        : (g.logs.find((l) => l.player === 0)?.text ?? "行动完成。");
+  if (id === 0 && a.type !== "configure") g.message =
+      g.phase === "reveal"
+        ? g.receipt!.title
+        : `${timeLabel(g.minute)} · ${g.logs.find((l) => l.player === 0)?.text ?? "安排妥当后推进时间。"}`;
   return true;
 }
-/** AI reads only public information: never the PRNG, future event, or deck order. */
+
+/** Integrate all lanes simultaneously, splitting at completions, risk checkpoints and shared-account exhaustion. */
+function runPlayer(g: Game, p: Player) {
+  let time = 1;
+  let guard = 0;
+  while (time > EPS && guard++ < 1000) {
+    cleanLanes(p);
+    const running = p.lanes.flatMap((lane) => {
+      if (!lane.enabled || !lane.projects.length) return [];
+      const job = p.projects.find((j) => j.id === lane.projects[0])!;
+      const acc = p.accounts.find((a) => a.id === lane.account)!;
+      const stats = developmentStats(g, p, lane.development, job);
+      if (stats.cost > 0 && (!activeAccount(g, acc) || acc.quota <= EPS)) return [];
+      const repair = job.work >= job.need - EPS;
+      if (repair && !job.bugs) {
+        release(g, p, job);
+        return [];
+      }
+      const boundary = repair
+        ? BUG_WORK - job.repair
+        : Math.min(job.need, job.checked + 20) - job.work;
+      return [{ lane, job, acc, stats, repair, boundary }];
+    });
+    if (!running.length) break;
+    let dt = Math.min(time, ...running.map((r) => r.boundary / r.stats.speed));
+    for (const acc of p.accounts) {
+      const rate = running
+        .filter((r) => r.acc.id === acc.id)
+        .reduce((n, r) => n + r.stats.cost * r.stats.speed, 0);
+      if (rate > 0) dt = Math.min(dt, acc.quota / rate);
+    }
+    if (dt < EPS) break;
+    for (const r of running) {
+      const work = Math.min(r.boundary, r.stats.speed * dt);
+      const cost = work * r.stats.cost;
+      r.acc.quota = Math.max(0, r.acc.quota - cost);
+      if (r.acc.quota < EPS) r.acc.quota = 0;
+      p.used += cost;
+      if (r.repair) {
+        r.job.repair += work;
+        if (r.job.repair >= BUG_WORK - EPS) {
+          r.job.bugs--;
+          r.job.repair = 0;
+        }
+      } else {
+        r.job.work = Math.min(r.job.need, r.job.work + work);
+        r.job.riskLoad += (work * r.stats.risk) / 2000;
+        const checkpoint = Math.min(r.job.need, r.job.checked + 20);
+        if (r.job.work >= checkpoint - EPS) {
+          r.job.work = checkpoint;
+          if (r.job.riskLoad > 0 && random(g) < r.job.riskLoad) {
+            r.job.bugs++;
+            log(
+              g,
+              `${p.name} 的《${r.job.name}》发现 1 个 bug，完工后会自动返工；可换更强配置。`,
+              p.id,
+            );
+          }
+          r.job.riskLoad = 0;
+          r.job.checked = checkpoint;
+        }
+      }
+    }
+    // Resolve rewards only after all simultaneous work has used the same pre-completion rates.
+    for (const r of running) release(g, p, r.job);
+    award(g, p);
+    time -= dt;
+  }
+}
+
+function sameConfig(a: Development, b: Development) {
+  return a.model === b.model && a.effort === b.effort && a.turbo === b.turbo;
+}
+function botConfig(
+  g: Game,
+  p: Player,
+  acc: Account,
+  j: Project,
+  style: Strategy,
+): Development {
+  const free = { model: "luna", effort: "medium", turbo: false } as Development;
+  if (!activeAccount(g, acc) || acc.quota < 0.5) return free;
+  const urgency =
+    g.event.chance >= 60 ||
+    acc.nextReset <= g.day + 1 ||
+    g.length - g.day < 2 ||
+    (j.deadline !== null && j.deadline <= g.day + 1);
+  let best = free;
+  let bestValue = -Infinity;
+  for (const model of Object.keys(MODELS) as Model[]) for (const effort of Object.keys(EFFORTS) as Effort[]) for (const turbo of [false, true]) {
+        const config = { model, effort, turbo };
+        const s = developmentStats(g, p, config, j);
+        const sustainable = s.cost
+          ? Math.min(DAY_MINUTES - g.minute, acc.quota / (s.speed * s.cost))
+          : DAY_MINUTES - g.minute;
+        const work = Math.min(
+          j.need - j.work + j.bugs * BUG_WORK,
+          (sustainable * s.speed) / (1 + ((s.risk / 100) * BUG_WORK) / 20),
+        );
+        const price = urgency
+          ? 0.07
+          : style === "sprinter"
+            ? 0.25
+            : style === "builder"
+              ? 1.6
+              : 0.7;
+        const value =
+          work - s.cost * work * price + (urgency ? s.speed * 30 : 0);
+        if (value > bestValue) {
+          bestValue = value;
+          best = config;
+        }
+      }
+  return best;
+}
+/** Bots read public state only; they schedule against the same clock, quota and energy rules. */
 export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
   const p = g.players[id];
   const style = strategy ?? p.strategy;
-  const accounts = p.accounts.filter((a) => activeAccount(g, a));
-  const capacity = accounts.reduce((n, a) => n + a.quota, 0);
+  if (g.phase !== "plan") return { type: "pass" };
   const remaining = g.length - g.day;
-  const target: Tier = style === "builder" || style === "balanced" ? 100 : 200;
-  const starter = accounts.find(a => a.tier < target);
-  if (starter && remaining > 9 && p.cash >= target - starter.tier + 60) return { type: "upgrade", account: starter.id, tier: target };
-  if (!accounts.length) {
-    const expired = [...p.accounts]
-      .sort((a, b) => a.tier - b.tier)
-      .find((a) => p.cash >= (a.renewal ?? a.tier));
-    if (expired && remaining > 2) return { type: "renew", account: expired.id, tier: expired.renewal ?? expired.tier };
-    if (p.cash >= 20 && remaining > 2) return { type: "renew", account: p.accounts[0].id, tier: 20 };
-    if (p.cash < 20 && remaining > 3) return { type: "freelance" };
-  }
-  const bank = accounts.find(
-    (a) => a.quota < 24 &&
-      a.banks.length &&
-      a.lastBankDay !== g.day &&
-      (a.nextReset > g.day + 1 || a.banks[0] <= g.day + 1) &&
-      (g.event.chance < 100 || !capacity),
+  const target: Tier = style === "builder" ? 100 : 200;
+  const upgrade = p.accounts.find(
+    (a) => activeAccount(g, a) && a.tier < target,
   );
-  if (bank) return { type: "bank", account: bank.id };
+  if (upgrade && remaining > 9 && p.cash >= target - upgrade.tier + 70) return { type: "upgrade", account: upgrade.id, tier: target };
+  const active = p.accounts.filter((a) => activeAccount(g, a));
+  if (!active.length && p.cash >= 20 && remaining > 1) return {
+      type: "renew",
+      account: p.accounts[0].id,
+      tier: p.cash > 180 ? 100 : 20,
+    };
   if (
     style === "banker" &&
     p.accounts.length < 2 &&
-    p.cash >= 280 &&
+    p.cash >= 270 &&
     remaining > 12
   ) return { type: "buy", tier: 200 };
-  const unfinished = [...p.projects].sort(
-    (a, b) => (a.deadline ?? 999) - (b.deadline ?? 999) ||
-      a.need - a.work - (b.need - b.work),
+  if (p.accounts.length < 2 && remaining > 10 && (
+    (style === "builder" && p.knowledge > 0 && p.cash >= 240) ||
+    (style === "sprinter" && g.day > 5 && p.cash >= 280) ||
+    (style === "balanced" && g.day > 3 && p.cash >= 260)
+  )) return { type: "buy", tier: style === "sprinter" ? 200 : 100 };
+  const bank = active.find(
+    (a) => a.quota < PLANS[a.tier].capacity * 0.08 &&
+      a.banks.length &&
+      a.lastBankDay !== g.day &&
+      (a.nextReset > g.day + 1 || a.banks[0] <= g.day + 1) &&
+      (g.event.chance < 75 || g.minute < 240),
   );
-  const j = unfinished[0];
-  if (j?.bugs && (j.work >= j.need || j.bugs >= 2)) return { type: "test", project: j.id };
-  if (j) {
-    const choices: { action: Action; value: number }[] = [];
-    for (const acc of p.accounts) for (const model of Object.keys(MODELS) as Model[]) for (const effort of Object.keys(EFFORTS) as Effort[]) for (const turbo of [false, true]) {
-      const action: Action = { type: "develop", project: j.id, account: acc.id, model, effort, turbo };
-      if (actionError(g, id, action)) continue;
-      const stats = developmentStats(g, p, action, j);
-      const left = j.need - j.work;
-      const urgency = g.event.chance >= 60 || acc.nextReset <= g.day + 1 || remaining <= 2 || (j.deadline !== null && j.deadline <= g.day + 1);
-      const quotaPrice = urgency ? 0.10 : style === "sprinter" ? 0.16 : style === "builder" ? 0.38 : 0.27;
-      const value = Math.min(left, stats.work) - stats.cost * quotaPrice - stats.risk * 0.09 + (stats.work >= left && !j.bugs ? 9 * (1 - stats.risk / 100) : 0);
-      choices.push({ action, value });
+  if (bank) return { type: "bank", account: bank.id };
+  const chooseAccount = () => [...p.accounts].sort((a, b) => {
+      const value = (x: Account) => ((activeAccount(g, x) ? x.quota : 0) /
+          (1 + p.lanes.filter((l) => l.enabled && l.account === x.id).length)) *
+        (x.nextReset <= g.day + 1 ? 1.3 : 1);
+      return value(b) - value(a);
+    })[0];
+  for (const lane of p.lanes.filter((l) => l.projects.length)) {
+    const j = p.projects.find((x) => x.id === lane.projects[0])!;
+    const oldAcc = p.accounts.find((a) => a.id === lane.account)!;
+    const acc =
+      activeAccount(g, oldAcc) && oldAcc.quota > 0.5 ? oldAcc : chooseAccount();
+    const config = botConfig(g, p, acc, j, style);
+    if (
+      (g.minute === 0 ||
+        laneStatus(g, p, lane) === "等待额度" ||
+        !lane.enabled) &&
+      (acc.id !== lane.account ||
+        !sameConfig(lane.development, config) ||
+        !lane.enabled)
+    ) {
+      const a: Action = {
+        type: "dispatch",
+        lane: lane.id,
+        account: acc.id,
+        projects: lane.projects,
+        ...config,
+      };
+      if (!actionError(g, id, a)) return a;
     }
-    choices.sort((a, b) => b.value - a.value);
-    if (choices[0]) return choices[0].action;
-    return { type: "test", project: j.id };
   }
-  const ranked = g.market
-    .map((m) => {
-      let value = m.vp / (Math.ceil(m.need / 18) + 1) - Math.max(0, m.difficulty - 2) * 0.5;
-      if (m.category === "open" && p.knowledge < 3 && remaining > 12) value += style === "builder" ? 7 : 3;
-      if (m.category === "company" && p.cash < 200) value += 6;
-      if (m.category === "personal" && g.day < 14) value += 2;
-      if (m.category === "game" && style === "sprinter") value += 2;
-      if (!p.shipped.some((x) => x.category === m.category)) value += 2;
-      if (remaining < 3 && m.need > Math.max(2, capacity)) value -= 10;
-      return { project: m, value };
-    })
-    .sort((a, b) => b.value - a.value);
-  if (ranked[0] && remaining >= 1) return { type: "claim", project: ranked[0].project.id };
-  return { type: "freelance" };
+  const waiting = p.projects
+    .filter((j) => !p.lanes.some((l) => l.projects.includes(j.id)))
+    .sort((a, b) => (a.deadline ?? 999) - (b.deadline ?? 999));
+  const desired = style === "builder" ? 4 : 3;
+  if (waiting.length && p.energy >= 2) {
+    const lane =
+      p.lanes.filter((l) => l.projects.length).length < desired
+        ? null
+        : [...p.lanes]
+            .filter((l) => l.projects.length)
+            .sort((a, b) => a.projects.length - b.projects.length)[0];
+    const acc = lane
+      ? p.accounts.find((a) => a.id === lane.account)!
+      : chooseAccount();
+    const config = lane
+      ? lane.development
+      : botConfig(g, p, acc, waiting[0], style);
+    return {
+      type: "dispatch",
+      lane: lane?.id ?? null,
+      account: acc.id,
+      projects: [...(lane?.projects ?? []), ...waiting.map((j) => j.id)],
+      ...config,
+    };
+  }
+  const pending = p.projects.reduce(
+    (n, j) => n + j.need - j.work + j.bugs * BUG_WORK,
+    0,
+  );
+  if (
+    p.energy >= (waiting.length ? 3 : 2) &&
+    g.minute < 420 &&
+    p.projects.length < desired + 2 &&
+    pending < desired * 260 &&
+    remaining >= 1
+  ) {
+    const ranked = [...g.market].sort((a, b) => {
+      const value = (j: Project) => (j.vp / (j.need + (j.difficulty - 1) * 30)) * 100 +
+        (j.category === "open" && p.knowledge < 3 && remaining > 10
+          ? style === "builder"
+            ? 12
+            : 4
+          : 0) +
+        (j.category === "company" && p.cash < 220 ? 9 : 0) +
+        (!p.shipped.some((x) => x.category === j.category) ? 2 : 0) +
+        (style === "sprinter" && j.category === "game" ? 4 : 0);
+      return value(b) - value(a);
+    });
+    if (ranked[0]) return { type: "claim", project: ranked[0].id };
+  }
+  return { type: "pass" };
 }
 function runBots(g: Game) {
-  let guard = 0;
-  while (g.cursor < g.order.length && g.order[g.cursor] !== 0 && guard++ < 50) {
-    const id = g.order[g.cursor];
-    if (!applyAction(g, id, chooseAction(g, id))) applyAction(g, id, { type: "pass" });
+  for (let i = 0; i < 4; i++) {
+    const id = (i + g.day) % 4;
+    if (id === 0) continue;
+    for (let n = 0; n < 16; n++) {
+      const action = chooseAction(g, id);
+      if (action.type === "pass" || !applyAction(g, id, action)) break;
+    }
   }
 }
-export function act(state: Game, action: Action): Game {
-  const g = copy(state);
-  if (applyAction(g, 0, action)) runBots(g);
-  return g;
+function humanNode(g: Game) {
+  const p = g.players[0];
+  return JSON.stringify([
+    p.shipped.length,
+    p.lanes.map((l) => [l.projects[0], laneStatus(g, p, l)]),
+    p.accounts.map((a) => a.quota <= EPS),
+  ]);
 }
-export function endDay(state: Game): Game {
-  if (state.phase !== "plan") return state;
-  const g = copy(state);
-  while (g.cursor < g.order.length) {
-    if (g.order[g.cursor] === 0) applyAction(g, 0, { type: "pass" });
-    runBots(g);
-  }
+function finishNight(g: Game) {
+  if (g.phase !== "plan") return;
   const trigger = g.event.chance > 0 && random(g) * 100 < g.event.chance;
   if (trigger) {
     if (!g.resetDeck.length) g.resetDeck = shuffle(g, [
@@ -818,21 +1191,46 @@ export function endDay(state: Game): Game {
     g.receipt = {
       kind: "quiet",
       title: g.event.chance ? "今晚没有 reset。" : "今天，收工。",
-      text: g.event.chance
-        ? "谜语没有兑现。用剩下的额度继续生活，或者让 Luna 顶一顶。"
-        : "没有夜间赠礼。自然重置会在各账号标注的早晨发生。",
+      text: "队列与进度会保留到明天。自然重置在各账号标注的早晨发生。",
       gains: [],
     };
     log(g, g.receipt.title);
   }
-  if (g.day % 7 === 0) g.players.forEach((p) => {
+  if (g.day % 7 === 0) for (const p of g.players) {
       const income =
         35 + p.shipped.filter((j) => j.category === "personal").length * 15;
       p.cash += income;
       log(g, `${p.name} 领取周薪与个人项目收入：+$${income}。`, p.id);
-    });
+    }
   g.phase = "reveal";
   g.message = g.receipt.title;
+}
+function advanceMutable(g: Game, minutes: number) {
+  const end = Math.min(DAY_MINUTES, g.minute + minutes);
+  while (g.phase === "plan" && g.minute < end) {
+    if (g.minute % 30 === 0) runBots(g);
+    g.minute++;
+    // Rotating settlement order avoids granting every simultaneous first-publication award to player 0.
+    for (let i = 0; i < 4; i++) runPlayer(g, g.players[(i + g.day) % 4]);
+  }
+  if (g.minute >= DAY_MINUTES) finishNight(g);
+}
+export function advanceMinutes(state: Game, minutes: number): Game {
+  if (state.phase !== "plan" || !Number.isInteger(minutes) || minutes < 1) return state;
+  const g = copy(state);
+  advanceMutable(g, Math.min(DAY_MINUTES, minutes));
+  if (g.phase === "plan") g.message = `${timeLabel(g.minute)} · 所有线程已同步推进。完成会自动接下一单，缺额线程等待补给。`;
+  return g;
+}
+export function act(state: Game, action: Action): Game {
+  const g = copy(state);
+  applyAction(g, 0, action);
+  return g;
+}
+export function endDay(state: Game): Game {
+  if (state.phase !== "plan") return state;
+  const g = copy(state);
+  advanceMutable(g, DAY_MINUTES - g.minute);
   return g;
 }
 export function nextDay(state: Game): Game {
@@ -847,7 +1245,6 @@ export function nextDay(state: Game): Game {
   return g;
 }
 export function textState(g: Game) {
-  // Do not expose deck order, future draws or PRNG state to the player / browser diagnostics.
   return {
     title: "RESET / 开蹬！",
     version: g.version,
@@ -855,11 +1252,17 @@ export function textState(g: Game) {
     phase: g.phase,
     day: g.day,
     length: g.length,
-    actions: actionsLeft(g),
-    turn: g.order[g.cursor] ?? null,
+    minute: g.minute,
+    clock: timeLabel(g.minute),
+    minutesLeft: DAY_MINUTES - g.minute,
+    energy: g.players[0].energy,
     event: g.event,
     market: g.market,
-    players: g.players.map((p) => ({ ...p, score: score(p) })),
+    players: g.players.map((p) => ({
+      ...p,
+      score: score(p),
+      lanes: p.lanes.map((l) => ({ ...l, status: laneStatus(g, p, l) })),
+    })),
     resetDeck: {
       normal: g.resetDeck.filter((c) => c === "normal").length,
       bank: g.resetDeck.filter((c) => c === "bank").length,
@@ -867,32 +1270,37 @@ export function textState(g: Game) {
     awards: g.awards,
     receipt: g.receipt,
     message: g.message,
-    logs: g.logs.slice(0, 10),
+    logs: g.logs.slice(0, 12),
     coordinateSystem:
-      "DOM tabletop; origin top-left; no spatial simulation or real-time deadline.",
+      "DOM tabletop, top-left origin. Paused simulated clock: 09:00–17:00. advanceTime(60000) advances one game minute; wall time never runs tasks.",
   };
 }
 export function restoreGame(raw: string | null): Game | null {
   if (!raw) return null;
   try {
     const g = JSON.parse(raw) as Game;
+    const legacy = g as unknown as {
+      version: number;
+      order?: number[];
+      cursor?: number;
+    };
+    const oldVersion = legacy.version;
     if (
-      ![1, 2].includes(g.version) ||
+      ![1, 2, 3].includes(oldVersion) ||
       !["plan", "reveal", "over"].includes(g.phase) ||
       ![21, 42].includes(g.length) ||
       !Number.isInteger(g.day) ||
       g.day < 1 ||
       g.day > g.length ||
       !Number.isInteger(g.rng) ||
+      g.rng < 0 ||
+      g.rng >= 4294967296 ||
+      !Number.isInteger(g.seed) ||
+      !Number.isInteger(g.serial) ||
       !Array.isArray(g.players) ||
       g.players.length !== 4 ||
       !Array.isArray(g.market) ||
       g.market.length !== 4 ||
-      !Array.isArray(g.order) ||
-      g.order.length !== 12 ||
-      !Number.isInteger(g.cursor) ||
-      g.cursor < 0 ||
-      g.cursor > 12 ||
       !Array.isArray(g.logs) ||
       !Array.isArray(g.awards) ||
       g.awards.length !== 3 ||
@@ -900,47 +1308,109 @@ export function restoreGame(raw: string | null): Game | null {
       !Array.isArray(g.resetDeck) ||
       !EVENTS.some((e) => e.id === g.event?.id)
     ) return null;
-    if ((g as { version: number }).version === 1) {
-      g.version = 2;
-      g.development = { ...DEFAULT_DEVELOPMENT };
+    if (oldVersion < 3) {
+      if (
+        !Array.isArray(legacy.order) ||
+        legacy.order.length !== 12 ||
+        !Number.isInteger(legacy.cursor) ||
+        legacy.cursor! < 0 ||
+        legacy.cursor! > 12
+      ) return null;
+      const used = legacy.order
+        .slice(0, legacy.cursor)
+        .filter((id) => id === 0).length;
+      g.minute =
+        g.phase === "plan" ? Math.min(DAY_MINUTES, used * 160) : DAY_MINUTES;
+      g.development =
+        oldVersion === 1 ? { ...DEFAULT_DEVELOPMENT } : g.development;
       for (const p of g.players) {
-        if (!Array.isArray(p?.accounts) || !Array.isArray(p?.projects) || !Array.isArray(p?.shipped)) return null;
-        for (const a of p.accounts) a.renewal = null;
-        for (const j of [...p.projects, ...p.shipped]) j.difficulty = TEMPLATES.find(t => t[0] === j.name)?.[5] ?? 2;
+        if (
+          !Array.isArray(p?.projects) ||
+          !Array.isArray(p?.shipped) ||
+          !Array.isArray(p?.accounts)
+        ) return null;
+        p.energy =
+          g.phase === "plan" ? Math.max(0, DAILY_ENERGY - used * 4) : 0;
+        p.rested = false;
+        p.lanes = [];
+        if (oldVersion === 1) for (const a of p.accounts) a.renewal = null;
       }
-      for (const j of g.market) j.difficulty = TEMPLATES.find(t => t[0] === j.name)?.[5] ?? 2;
-      g.event = { ...EVENTS.find(e => e.id === g.event.id)! };
-      g.message = "旧牌局已升级：账号与作品进度保留。到期默认停订，可在账号管理里设置；模型、思考强度与 Turbo 现在独立选择。";
+      for (const j of [
+        ...g.market,
+        ...g.players.flatMap((p) => [...p.projects, ...p.shipped]),
+      ]) {
+        if (oldVersion === 1) j.difficulty = TEMPLATES.find((t) => t[0] === j.name)?.[5] ?? 2;
+        j.checked = j.work >= j.need ? j.need : Math.floor(j.work / 20) * 20;
+        j.riskLoad = 0;
+        j.repair = 0;
+      }
+      for (const l of g.logs) l.minute = 0;
+      delete legacy.order;
+      delete legacy.cursor;
+      g.version = 3;
+      g.event = { ...EVENTS.find((e) => e.id === g.event.id)! };
+      g.message =
+        "旧牌局已迁移：现金、账号、券和项目进度全部保留；今天剩余时间按旧行动折算。请选择项目，安排新的并行队列。";
     }
-    if (!validDevelopment(g.development)) return null;
+    if (
+      !validDevelopment(g.development) ||
+      !Number.isInteger(g.minute) ||
+      g.minute < 0 ||
+      g.minute > DAY_MINUTES ||
+      !g.resetDeck.every((c) => c === "normal" || c === "bank") ||
+      !g.events.every((id) => EVENTS.some((e) => e.id === id))
+    ) return null;
+    const finite = (xs: number[]) => xs.every(Number.isFinite);
     const validProject = (j: Project) => j &&
       Number.isInteger(j.id) &&
       typeof j.name === "string" &&
       !!CATEGORIES[j.category] &&
       [1, 2, 3, 4].includes(j.difficulty) &&
-      [j.need, j.vp, j.cash, j.work, j.bugs].every(Number.isFinite) &&
+      finite([
+        j.need,
+        j.vp,
+        j.cash,
+        j.work,
+        j.bugs,
+        j.checked,
+        j.riskLoad,
+        j.repair,
+      ]) &&
       j.need > 0 &&
       j.work >= 0 &&
-      j.work <= j.need &&
-      j.bugs >= 0;
-    if (
-      !g.market.every(validProject) ||
-      !g.order.every((id) => Number.isInteger(id) && id >= 0 && id < 4) ||
-      !g.resetDeck.every((c) => c === "normal" || c === "bank")
-    ) return null;
-    for (const p of g.players) {
+      j.work <= j.need + EPS &&
+      Number.isInteger(j.bugs) &&
+      j.bugs >= 0 &&
+      j.checked >= 0 &&
+      j.checked <= j.work + EPS &&
+      j.work - j.checked <= 20 + EPS &&
+      j.riskLoad >= 0 &&
+      j.riskLoad <= 1 &&
+      j.repair >= 0 &&
+      j.repair < BUG_WORK &&
+      (j.deadline === null || Number.isInteger(j.deadline));
+    if (!g.market.every(validProject)) return null;
+    for (let index = 0; index < g.players.length; index++) {
+      const p = g.players[index];
       if (
         !p ||
+        p.id !== index ||
         typeof p.name !== "string" ||
+        !["balanced", "builder", "sprinter", "banker"].includes(p.strategy) ||
         !Array.isArray(p.accounts) ||
         p.accounts.length < 1 ||
         p.accounts.length > 3 ||
         !Array.isArray(p.projects) ||
-        p.projects.length > 2 ||
         !p.projects.every(validProject) ||
         !Array.isArray(p.shipped) ||
         !p.shipped.every(validProject) ||
-        ![
+        !Array.isArray(p.lanes) ||
+        p.lanes.length > MAX_LANES ||
+        !Number.isInteger(p.energy) ||
+        p.energy < 0 ||
+        p.energy > DAILY_ENERGY ||
+        typeof p.rested !== "boolean" ||
+        !finite([
           p.cash,
           p.vp,
           p.knowledge,
@@ -950,8 +1420,9 @@ export function restoreGame(raw: string | null): Game | null {
           p.expired,
           p.banksUsed,
           p.collisions,
-        ].every(Number.isFinite) ||
+        ]) ||
         p.cash < 0 ||
+        !Number.isInteger(p.knowledge) ||
         p.knowledge < 0 ||
         p.knowledge > 3
       ) return null;
@@ -961,7 +1432,7 @@ export function restoreGame(raw: string | null): Game | null {
           !(a.renewal === null || PLANS[a.renewal]) ||
           !Number.isFinite(a.quota) ||
           a.quota < 0 ||
-          a.quota > PLANS[a.tier].capacity ||
+          a.quota > PLANS[a.tier].capacity + EPS ||
           ![a.id, a.nextReset, a.paidUntil, a.lastBankDay].every(
             Number.isInteger,
           ) ||
@@ -969,7 +1440,58 @@ export function restoreGame(raw: string | null): Game | null {
           a.banks.length > 3 ||
           !a.banks.every(Number.isInteger)
         ) return null;
+      const assigned = new Set<number>();
+      for (const l of p.lanes) {
+        if (
+          !l ||
+          !Number.isInteger(l.id) ||
+          !p.accounts.some((a) => a.id === l.account) ||
+          !validDevelopment(l.development) ||
+          typeof l.enabled !== "boolean" ||
+          !Number.isInteger(l.paidDay) ||
+          !Array.isArray(l.projects) ||
+          !l.projects.every(
+            (id) => p.projects.some((j) => j.id === id) &&
+              !assigned.has(id) &&
+              !!assigned.add(id),
+          )
+        ) return null;
+      }
     }
+    const ids = [
+      ...g.market.map((j) => j.id),
+      ...g.players.flatMap((p) => [...p.accounts, ...p.projects, ...p.shipped, ...p.lanes].map(
+          (x) => x.id,
+        ),),
+    ];
+    if (
+      new Set(ids).size !== ids.length ||
+      ids.some((id) => id < 1 || id > g.serial)
+    ) return null;
+    if (
+      !g.awards.every(
+        (a) => a &&
+          typeof a.name === "string" &&
+          Number.isFinite(a.vp) &&
+          (a.owner === null ||
+            (Number.isInteger(a.owner) && a.owner >= 0 && a.owner < 4)),
+      )
+    ) return null;
+    if (
+      !g.logs.every(
+        (l) => l &&
+          typeof l.text === "string" &&
+          Number.isInteger(l.day) &&
+          Number.isInteger(l.minute),
+      )
+    ) return null;
+    if (g.phase === "reveal" && !g.receipt) return null;
+    if (g.receipt && (
+      !["normal", "bank", "quiet"].includes(g.receipt.kind) ||
+      typeof g.receipt.title !== "string" || typeof g.receipt.text !== "string" ||
+      !Array.isArray(g.receipt.gains) ||
+      !g.receipt.gains.every(r => r && Number.isInteger(r.player) && r.player >= 0 && r.player < 4 && finite([r.gained, r.unused]) && typeof r.collision === "boolean")
+    )) return null;
     return g;
   } catch {
     return null;

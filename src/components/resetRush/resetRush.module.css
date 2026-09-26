@@ -405,6 +405,95 @@
 
 /* Keep the action surface close to the tabletop; small screens get explicit navigation. */
 .quickNav { display: none; }
+.timeConsole { display: flex; gap: 24px; align-items: center; padding: 15px 18px; margin: 0 0 18px; border: 1px solid #bed29540; border-radius: 4px; background: #112a25; position: sticky; top: 0; z-index: 5; box-shadow: 0 6px 15px #11241f30; }
+.clockFace { flex-shrink: 0; }
+.clockFace strong { font: 32px ui-monospace, monospace; color: var(--mint); letter-spacing: -1px; }
+.clockFace span { display: block; font-size: 9px; color: #aebfa8; margin-top: 4px; }
+.clockTrack { flex: 1; min-width: 80px; height: 6px; background: #a2bb8430; display: flex; justify-content: space-between; position: relative; border-radius: 2px; margin-bottom: 14px; }
+.clockTrack i { position: absolute; height: 6px; background: var(--mint); border-radius: 2px; transition: width .3s ease-out; }
+.clockTrack span { font: 9px ui-monospace, monospace; padding-top: 14px; white-space: nowrap; color: #9dad95; }
+.timeButtons { display: grid; grid-template-columns: repeat(4, auto); gap: 7px; }
+.timeButtons button { color: #d8e5c7; background: #294332; border: 1px solid #94ac724f; border-radius: 3px; font-size: 11px; min-height: 40px; padding: 8px 11px; }
+.timeButtons button:nth-child(3) { background: var(--mint); color: var(--ink); font-weight: 600; }
+.timeButtons button:last-child { background: transparent; }
+.turnCounter strong { font: 31px ui-monospace, monospace; color: var(--mint); }
+.turnCounter strong small { font-size: 14px; color: #aabb9b; }
+.turnCounter > small { display: block; font-size: 8px; color: #91a989; margin-top: 5px; }
+.threadTitle, .backlogHead { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 8px 0 14px; }
+.threadTitle h2 { font-size: 23px; letter-spacing: -.5px; font-weight: 600; color: #e6edcf; }
+.threadTitle button, .backlogHead button { background: none; border: 0; color: #bed891; padding: 9px 0 9px 8px; font-size: 10px; }
+.threadEmpty { border-top: 1px dashed #b2c39050; border-bottom: 1px dashed #b2c39050; color: #c3d2b7; font-size: 13px; line-height: 2; padding: 23px 0; }
+.threadEmpty span { color: #95ad87; font-size: 10px; }
+.thread { padding: 13px 16px 0; background: #102c2566; border: 1px solid #adbf8b35; border-left: 3px solid #c4f177; border-radius: 3px; margin-bottom: 10px; }
+.thread[data-state="等待额度"] { border-left-color: #eac28b; }
+.thread[data-state="已暂停"] { border-left-color: #779581; }
+.threadHeader { display: flex; gap: 9px; align-items: center; margin-bottom: 8px; color: #b6c9a5; font-size: 10px; }
+.threadHeader b { font-weight: 500; }
+.threadHeader i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--mint); margin-right: 5px; }
+.threadHeader > span { color: var(--mint); font-size: 9px; }
+.thread[data-state="等待额度"] .threadHeader > span { color: #eac28b; }
+.threadHeader small { margin-left: auto; font-size: 9px; color: #849f7d; }
+.thread > strong { font-size: 15px; font-weight: 600; color: #e4ead1; }
+.thread > p { font-size: 10px; color: #b9caaa; margin: 6px 0 10px; }
+.thread > p > span { color: #869f7a; }
+.threadProgress { height: 4px; background: #a6bc8830; border-radius: 2px; }
+.threadProgress > i { display: block; height: 4px; background: #bdda87; transition: width .3s ease-out; border-radius: 2px; }
+.threadMetrics { display: flex; justify-content: space-between; gap: 8px; color: #a7bc99; font: 9px ui-monospace, 'Microsoft YaHei', monospace; margin-top: 8px; line-height: 1.6; flex-wrap: wrap; }
+.queueList { display: flex; flex-wrap: wrap; list-style: none; gap: 5px; padding: 9px 0 0; margin: 0; font-size: 9px; color: #8eaa80; }
+.queueList li + li::before { content: '→'; margin-right: 5px; }
+.queueList li:first-child { color: #b9cfa1; }
+.threadActions { display: flex; gap: 17px; border-top: 1px solid #b1c48f20; margin-top: 10px; }
+.threadActions button { background: none; border: 0; font-size: 10px; color: #bcd39c; padding: 10px 0; min-height: 36px; }
+.threadActions button:last-child { margin-left: auto; color: #8fa780; }
+.backlogHead { margin: 24px 0 12px; }
+.backlogHead h3 { font-size: 13px; font-weight: 500; }
+.backlogHead small { font-size: 9px; color: #91aa84; font-weight: 400; margin-left: 9px; }
+.activeProjects .project { padding: 10px 12px 0; }
+.activeProjects .art { display: none; }
+.activeProjects .projectName { font-size: 14px; margin-top: 7px; }
+.activeProjects .projectTop strong { font-size: 19px; }
+.activeProjects .projectPerk { min-height: 0; margin: 3px 0; font-size: 8px; }
+.activeProjects .cardFooter { font-size: 9px; margin-top: 5px; }
+.queuePlanner { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin: 16px 0; font-size: 11px; color: #c3d4af; }
+.queuePlanner label { display: flex; align-items: center; gap: 10px; }
+.queuePlanner select { background: #213c2d; border: 1px solid #91aa734d; border-radius: 3px; color: #dce9c5; padding: 9px; max-width: 100%; }
+.queuePlanner > span { margin-left: auto; font-size: 10px; color: #acc498; }
+.plannedQueue { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 0 16px; margin: 0; list-style: none; color: #cbdabb; font-size: 11px; }
+.plannedQueue li { display: flex; align-items: center; gap: 8px; }
+.plannedQueue button { border: 1px solid #a5be8230; border-radius: 2px; background: none; color: #96b078; font-size: 9px; padding: 5px; }
+.secondaryActions > a { color: #b1c597; font-size: 11px; text-decoration: none; white-space: nowrap; margin: 12px 0; display: inline-block; }
+.ruleCategories b, .ruleCategories span { display: block; }
+.ruleNote { color: #798466; font-size: 10px; }
+.workbench, .accounts, .commandArea { scroll-margin-top: 115px; }
+@media (max-width: 1100px) {
+  .timeConsole { gap: 15px; flex-wrap: wrap; }
+  .clockTrack { max-width: none; }
+  .timeButtons { width: 100%; grid-template-columns: repeat(4, 1fr); }
+  .timeConsole { position: relative; }
+  .workbench, .accounts, .commandArea { scroll-margin-top: 15px; }
+}
+@media (max-width: 680px) {
+  .timeConsole { padding: 13px; gap: 15px; }
+  .clockFace strong { font-size: 30px; }
+  .clockFace span { font-size: 8px; }
+  .clockTrack { min-width: 65px; }
+  .timeButtons { grid-template-columns: repeat(2, 1fr); }
+  .timeButtons button { font-size: 11px; padding: 10px 5px; min-height: 42px; }
+  .threadTitle h2 { font-size: 22px; }
+  .thread { padding: 12px 12px 0; }
+  .threadMetrics { font-size: 9px; }
+  .threadActions button { min-height: 42px; font-size: 11px; }
+  .backlogHead small { display: block; margin: 5px 0 0; }
+  .queuePlanner { gap: 12px; }
+  .queuePlanner label { width: 100%; justify-content: space-between; min-width: 0; font-size: 11px; }
+  .queuePlanner select { max-width: calc(100% - 56px); font-size: 10px; }
+  .queuePlanner > span { margin-left: 0; }
+  .plannedQueue { display: block; line-height: 1.8; }
+  .plannedQueue li { margin: 5px 0; justify-content: space-between; }
+  .plannedQueue button { min-height: 36px; }
+  .turboToggle { flex-wrap: wrap; }
+  .secondaryActions button { min-height: 42px; }
+}
 .noProjects .emptyProject { grid-column: 1 / -1; min-height: 145px; }
 .event .morningGift { color: #3f663e; background: #b9cf9a40; padding: 8px; border-radius: 3px; font-size: 10px; margin: 12px 0 0; }
 @media (min-width: 981px) {

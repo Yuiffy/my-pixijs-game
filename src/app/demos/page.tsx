@@ -35,7 +35,7 @@ const miniGames: ProjectItem[] = [
     href: '/game/reset-rush',
     description: 'tibo 又说要 reset 了。经营多账号、押注银行券，把额度变成下一款碉游。',
     image: '/games/reset-rush/preview.svg',
-    meta: '开发者桌游 · 1 人 + 3 AI · 额度管理与项目竞赛',
+    meta: '开发者桌游 · 1 人 + 3 AI · 时间、精力与并行开发',
   },
   {
     title: '岁己 · 雨夜寻味',

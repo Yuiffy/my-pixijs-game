@@ -5,7 +5,14 @@ import Link from "next/link";
 import {
   act,
   actionError,
-  actionsLeft,
+  advanceMinutes,
+  DAY_MINUTES,
+  DAILY_ENERGY,
+  energyCost,
+  laneStatus,
+  fmt,
+  timeLabel,
+  V2_SAVE_KEY,
   activeAccount,
   CATEGORIES,
   createGame,
@@ -33,7 +40,7 @@ import {
 import s from "./resetRush.module.css";
 
 const STRATEGIES = ["独立开发者", "开源效率流", "极限冲刺流", "多号银行流"];
-type ModalKind = "rules" | "shop" | "restart" | "early" | "portfolio" | null;
+type ModalKind = "rules" | "shop" | "restart" | "portfolio" | null;
 
 function Art({ kind }: { kind: Category }) {
   return (
@@ -182,67 +189,75 @@ function Rules() {
   return (
     <div className={s.rules}>
       <p className={s.lead}>
-        先看消息，再把额度变成作品。
+        人负责安排，模型负责跑。
         <br />
-        每天只有 3 个行动，别浪费那次 reset。
+        把重置前的每一分钟变成作品。
       </p>
       <ol>
         <li>
-          <strong>早晨看风向。</strong>
-          消息可能立即重置、发银行券，或给出今晚赠礼概率。概率是准确的；谜语并不是承诺。
+          <strong>每天 480 分钟、12 精力。</strong>09:00 开工，17:00
+          揭牌。思考和操作界面不走时钟；点“推进”后，你和电脑的所有线程一起工作。
         </li>
         <li>
-          <strong>轮流做 3 个行动。</strong>你和 3 位 AI
-          逐次行动，每日轮换先手。开发、测试、接项目、购买/升级/续费、外包，各用
-          1 行动。切换账号、调整开发配置与到期方案免费；用银行券免费，每号每天最多用 1 张。
+          <strong>接单 1 精力，开线程 2 精力。</strong>
+          可以接很多项目、勾选多个组成队列。每条队列串行，不同线程并行；最多 6
+          条，可共用一个账号。买号、升级、续订和银行券不花时间或精力。
         </li>
         <li>
-          <strong>夜里翻牌。</strong>先按消息概率决定是否送礼，再抽重置牌：初始
-          4 张直接 reset、2 张 banked reset，用完洗回。赠礼影响所有有效账号。
+          <strong>持续托管，自动续跑。</strong>
+          项目完成自动发布并接下一项；额度按实际进度扣除。缺额时暂停，补满后续跑。未完队列跨天保留，每条继续托管的线程每天占
+          2 精力。当日调整或恢复线程用 1 精力，暂停和解散免费。
+        </li>
+        <li>
+          <strong>用额度换时间。</strong>Turbo 速度 ×2、每进度额度 ×2.5，不增加
+          bug 风险。High 到 Max 思考更深、耗时更久；Ultra
+          抽象成协作攻坚，提高吞吐与能力。Luna Medium 不开 Turbo
+          免费，适合大而简单的任务。
+        </li>
+        <li>
+          <strong>难题别硬莽。</strong>能力低于项目难度才有 bug 风险，按每 20
+          进度判定。配置中途改变会按各自工作量累计风险。完成后每个 bug 自动返工
+          12 进度；也可花 2 精力与 30 分钟亲自排障，清除最多 2 个 bug。
+        </li>
+        <li>
+          <strong>真人也要休息。</strong>每天可休息一次：60 分钟恢复 3
+          精力，后台照跑。手写外包花 1 精力与 60 分钟赚
+          $25。直接收工会先跑完剩余时间，再翻夜间牌。
         </li>
       </ol>
-      <h3>两个时钟，才是这局的核心</h3>
+      <h3>七天时钟，三十天银行券</h3>
       <p>
-        每个账号从开通日起，每 7 天自然补满。直接 reset
-        与银行券都不改变这个日期，余额不叠加。银行券绑定账号、30 天有效、最多存
-        3 张，优先用最早到期的。刚用券又撞上直接
-        reset，不会扣分，但白白浪费了补满空间。
+        每号开通日起每 7 天自然补满；直接
+        reset、银行券不叠加余额，也不改变自然重置日。券绑定账号、30
+        天有效、最多存 3 张；每号每天最多用 1
+        张。自然重置前烧这个号，另一个号留券等待，是一门手艺。
       </p>
       <p>
-        每人都从 $20 账号和 $480 现金起步。订阅有效 30 天，可随时安排到期续订某档或停订。
-        自动续订不花行动，按所选档位扣费、补满并重新计时；余额不足则暂停，之后需手动续开。
-        升级只收差价、增加容量差额，保留两个日期。停订后的银行券仍按原日期过期。
-      </p>
-      <h3>模型 × 思考强度 × Turbo</h3>
-      <p>
-        三种模型都能选择 Low 到 Ultra，并独立勾选 Turbo。思考越深越能胜任难题，但额度更贵。
-        Turbo 把速度折算成单次行动约 1.8 倍产出、双倍额度，不改变 bug 概率。
-        Luna + Medium、不勾 Turbo 永远免费，每次 3 进度；Luna 的 High 以上和 Turbo 仍需额度。
+        早晨公开消息，夜里按概率判定是否赠礼；再抽 4 张普通 reset、2 张 banked
+        reset
+        的牌堆，抽完重洗。谜语不是承诺，今天刚用券、今晚又强制补满，就可能撞车。
       </p>
       <h3>作品才是胜利点</h3>
-      <p>
-        项目分简单、常规、复杂、攻坚四档。规模与难度是两回事：大而简单的项目可用 Luna 慢慢做。
-        能力不足时，每次开发按面板所示概率产生 1 个 bug；更强模型与更深思考能降低风险。
-        进度完成且无 bug 自动发布。测试一次修复 2 个 bug、+2 进度。最多同时做 2 个项目。公司项目有 8 天交付，超期撤单扣
-        3 声望；主动放弃用 1 行动、扣 2 声望。
-      </p>
       <div className={s.ruleCategories}>
         {(Object.keys(CATEGORIES) as Category[]).map((k) => (
-          <p key={k}>
-            <strong>{CATEGORIES[k].name}</strong>
-            {CATEGORIES[k].perk}
-          </p>
+          <div key={k}>
+            <b>{CATEGORIES[k].name}</b>
+            <span>{CATEGORIES[k].perk}</span>
+          </div>
         ))}
       </div>
       <p>
-        每 7 天发 $35 周薪，每个已发布个人项目再
-        +$15。公共里程碑先到先得。结束时：声望（含首发奖）+ 四类作品 12 分 /
-        三类 5 分 + 每 $100 现金 1 分（最多 10）+ 每消耗 120 额度 1 分（最多
-        10）。未发布项目不计分；同分共享名次。
+        公司项目须在接单后第 8 天收工前交付，超期 −3 VP；主动放弃 −2
+        VP。所有人每周领 $35，个人项目每款再
+        +$15。项目发布得声望，先达成公共奖项可抢额外分。
       </p>
-      <p className={s.muted}>
-        本作是开发者文化主题的虚构桌游。套餐、模型、概率与 tibo
-        台词均为游戏设定；没有真实充值、账号或服务调用。
+      <p>
+        终局加分：发布 4 类作品 +12 VP，3 类 +5 VP；每 $100 现金与每 120
+        已用额度各 +1 VP，两项分别封顶 10。不能只靠烧额度获胜。
+      </p>
+      <p className={s.ruleNote}>
+        数值为桌游平衡而设。模型、Low–Ultra 与 Turbo
+        独立选择；游戏中的套餐、免费 Luna 和倍率不代表实际产品用量。
       </p>
     </div>
   );
@@ -255,6 +270,7 @@ function ProjectCard({
   day,
   onChoose,
   disabled,
+  assigned,
 }: {
   job: Project;
   selected?: boolean;
@@ -262,6 +278,7 @@ function ProjectCard({
   day: number;
   onChoose: () => void;
   disabled?: boolean;
+  assigned?: string;
 }) {
   return (
     <button
@@ -282,7 +299,9 @@ function ProjectCard({
       </span>
       <Art kind={job.category} />
       <span className={s.projectName}>{job.name}</span>
-      <span className={s.difficulty} data-difficulty={job.difficulty}>{"◆".repeat(job.difficulty)} {DIFFICULTIES[job.difficulty]}</span>
+      <span className={s.difficulty} data-difficulty={job.difficulty}>
+        {"◆".repeat(job.difficulty)} {DIFFICULTIES[job.difficulty]}
+      </span>
       <span className={s.projectPerk}>
         {market
           ? CATEGORIES[job.category].perk
@@ -292,7 +311,7 @@ function ProjectCard({
       </span>
       <span className={s.projectReward}>
         <span>
-          {market ? `${job.need} 进度` : `${job.work} / ${job.need} 进度`}
+          {market ? `${job.need} 进度` : `${fmt(job.work)} / ${job.need} 进度`}
         </span>
         <span>+${job.cash}</span>
       </span>
@@ -303,12 +322,12 @@ function ProjectCard({
       )}
       <span className={s.cardFooter}>
         {market
-          ? "接下项目 ↗ · 1 行动"
+          ? "接下项目 ↗ · 1 精力"
           : job.bugs
-            ? `${job.bugs} 个 bug 待测试`
+            ? `${job.bugs} 个 bug · 完工后自动返工`
             : selected
-              ? "● 当前开发目标"
-              : "选择这个项目"}
+              ? "✓ 已选入队列"
+              : (assigned ?? "＋ 选入队列")}
       </span>
     </button>
   );
@@ -322,14 +341,27 @@ export default function ResetRush() {
   const [seed, setSeed] = useState("260926");
   const [modal, setModal] = useState<ModalKind>(null);
   const [inspect, setInspect] = useState(0);
-  const [selectedProject, setSelectedProject] = useState(0);
+  const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
+  const [selectedLane, setSelectedLane] = useState<number | null>(null);
   const [selectedAccount, setSelectedAccount] = useState(0);
   const [onboarding, setOnboarding] = useState(false);
   const root = useRef<HTMLElement>(null);
 
   useEffect(() => {
     try {
-      setGame(restoreGame(localStorage.getItem(SAVE_KEY)) ?? restoreGame(localStorage.getItem(LEGACY_SAVE_KEY)));
+      const restored =
+        restoreGame(localStorage.getItem(SAVE_KEY)) ??
+        restoreGame(localStorage.getItem(V2_SAVE_KEY)) ??
+        restoreGame(localStorage.getItem(LEGACY_SAVE_KEY));
+      setGame(restored);
+      if (restored) setSelectedProjects(
+          restored.players[0].projects
+            .filter(
+              (j) => !restored.players[0].lanes.some((l) => l.projects.includes(j.id),),
+            )
+            .slice(0, 1)
+            .map((j) => j.id),
+        );
     } catch {
       setSaved(false);
     }
@@ -354,8 +386,10 @@ export default function ResetRush() {
           ? textState(game)
           : { title: "RESET / 开蹬！", phase: "intro", ready },
       );
-    w.advanceTime = () => {
-      /* Turn-based: elapsed time never spends a player's actions. */
+    w.advanceTime = (ms: number) => {
+      // Explicit test hook: one simulated minute per 60,000 ms, never a wall-clock timer.
+      const minutes = Math.floor(ms / 60000);
+      if (minutes > 0) setGame((g) => (g ? advanceMinutes(g, minutes) : g));
     };
     return () => {
       delete w.render_game_to_text;
@@ -380,35 +414,67 @@ export default function ResetRush() {
   }, [modal]);
 
   const start = () => {
-    setGame(createGame(Number(seed) || 260926, length));
+    const fresh = createGame(Number(seed) || 260926, length);
+    setGame(fresh);
+    setSelectedProjects([fresh.players[0].projects[0].id]);
+    setSelectedLane(null);
     setOnboarding(true);
     setModal("shop");
-    setSelectedProject(0);
     setSelectedAccount(0);
   };
   const send = (a: Action) => setGame((g) => (g ? act(g, a) : g));
   const human = game?.players[0];
-  const job =
-    human?.projects.find((j) => j.id === selectedProject) ?? human?.projects[0];
+  const chosen = selectedProjects.filter((id) => human?.projects.some((j) => j.id === id),);
+  const job = human?.projects.find((j) => j.id === chosen[0]);
   const account =
     human?.accounts.find((a) => a.id === selectedAccount) ?? human?.accounts[0];
-  const playable =
-    !!game && game.phase === "plan" && game.order[game.cursor] === 0;
+  const playable = !!game && game.phase === "plan";
   const config = game?.development ?? DEFAULT_DEVELOPMENT;
-  const model = game && human ? developmentStats(game, human, config, job) : { work: 0, cost: 0, risk: 0, ability: 0 };
+  const model =
+    game && human
+      ? developmentStats(game, human, config, job)
+      : { cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0 };
   const devAction: Action = {
-    type: "develop",
-    project: job?.id ?? -1,
+    type: "dispatch",
+    lane: selectedLane,
+    projects: chosen,
     account: account?.id ?? -1,
     ...config,
   };
   const error = game ? actionError(game, 0, devAction) : null;
+  const planningCost = game && human ? energyCost(game, human, devAction) : 2;
+  const estimate =
+    game && human
+      ? chosen.reduce(
+          (n, id) => {
+            const j = human.projects.find((x) => x.id === id)!;
+            const stats = developmentStats(game, human, config, j);
+            return {
+              minutes: n.minutes + stats.minutes,
+              quota: n.quota + stats.quota,
+            };
+          },
+          { minutes: 0, quota: 0 },
+        )
+      : { minutes: 0, quota: 0 };
+  const editLane = (id: number | null) => {
+    const lane = human?.lanes.find((l) => l.id === id);
+    setSelectedLane(lane?.id ?? null);
+    setSelectedProjects(lane?.projects ?? []);
+    if (lane) {
+      setSelectedAccount(lane.account);
+      send({ type: "configure", development: { ...lane.development } });
+    }
+  };
   const bankAction: Action = { type: "bank", account: account?.id ?? -1 };
   const bankError = game ? actionError(game, 0, bankAction) : null;
   const normalCards = game?.resetDeck.filter((c) => c === "normal").length ?? 4;
   const bankCards = game?.resetDeck.filter((c) => c === "bank").length ?? 2;
   const totalCards = normalCards + bankCards;
-  const close = () => { setModal(null); setOnboarding(false); };
+  const close = () => {
+    setModal(null);
+    setOnboarding(false);
+  };
   const advance = () => {
     setGame((g) => (g ? nextDay(g) : g));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -430,7 +496,9 @@ export default function ResetRush() {
           <small>A DEVELOPER’S BOARD GAME</small>
         </div>
         <div className={s.headerActions}>
-          {game && game.phase !== "over" && <button onClick={() => setModal("shop")}>账号管理</button>}
+          {game && game.phase !== "over" && (
+            <button onClick={() => setModal("shop")}>账号管理</button>
+          )}
           <button onClick={() => setModal("rules")}>
             玩法说明 <span>?</span>
           </button>
@@ -454,12 +522,15 @@ export default function ResetRush() {
               <em>已经重置了。</em>
             </h1>
             <p>
-              tibo 发了一条谜语。你有三个行动、两个账号，
+              tibo 发了一条谜语。你把几条线程同时挂上，
               <br className={s.desktopOnly} />
-              和一个还没写完的碉游。现在，蹬不蹬？
+              时间有限，额度快重置了。现在，加不加速？
             </p>
             <div className={s.setup}>
-              <p className={s.startingKit}><strong>一个 $20 账号，$480 现金。</strong><span>先入座，再决定升档、加号，还是小步慢蹬。</span></p>
+              <p className={s.startingKit}>
+                <strong>一个 $20 账号，$480 现金。</strong>
+                <span>先入座，再决定升档、加号，还是小步慢蹬。</span>
+              </p>
               <div className={s.setupRow}>
                 <label htmlFor="reset-length">
                   赛程{" "}
@@ -509,7 +580,7 @@ export default function ResetRush() {
               <h2>只有一条命</h2>
               <p>写一个让人想再开一局的游戏。</p>
               <div>
-                42 进度 <span>+$35</span>
+                221 进度 <span>+$35</span>
               </div>
             </div>
             <div className={s.teaserEvent}>
@@ -537,7 +608,7 @@ export default function ResetRush() {
             <p>
               <b>02</b>
               <span>
-                选一个号，开蹬<small>七天时钟，三十天银行券。</small>
+                排好队列，并行开蹬<small>真人管精力，模型跑时间。</small>
               </span>
             </p>
             <p>
@@ -593,27 +664,57 @@ export default function ResetRush() {
             <div className={s.turnCounter}>
               <span>
                 {game.phase === "plan"
-                  ? "你的剩余行动"
+                  ? "真人精力"
                   : game.phase === "reveal"
                     ? "夜间结算"
                     : "开发季结束"}
               </span>
               <strong>
-                {game.phase === "plan" ? (
-                  <>
-                    {Array.from({ length: 3 }, (_, i) => (
-                      <i
-                        key={i}
-                        className={i < actionsLeft(game) ? s.actionOn : ""}
-                      />
-                    ))}
-                  </>
-                ) : (
-                  "✦"
-                )}
+                {human?.energy}
+                <small> / {DAILY_ENERGY}</small>
               </strong>
+              <small>托管线程跨天每天占 2 点</small>
             </div>
           </div>
+          {game.phase === "plan" && (
+            <section className={s.timeConsole} aria-label="模拟时钟">
+              <div className={s.clockFace}>
+                <strong data-testid="clock">{timeLabel(game.minute)}</strong>
+                <span>
+                  剩 {DAY_MINUTES - game.minute} 分钟 · 现实时间不走钟
+                </span>
+              </div>
+              <div className={s.clockTrack}>
+                <i style={{ width: `${(game.minute / DAY_MINUTES) * 100}%` }} />
+                <span>09:00</span>
+                <span>17:00 揭牌</span>
+              </div>
+              <div className={s.timeButtons}>
+                <button
+                  id="advance-30"
+                  onClick={() => send({ type: "advance", minutes: 30 })}
+                >
+                  推进 30 分钟
+                </button>
+                <button
+                  id="advance-120"
+                  onClick={() => send({ type: "advance", minutes: 120 })}
+                >
+                  推进 2 小时
+                </button>
+                <button id="next-node" onClick={() => send({ type: "next" })}>
+                  到下个节点 ↗
+                </button>
+                <button
+                  id="end-day"
+                  onClick={reveal}
+                  title="先让所有后台线程跑完剩余时间，再揭晓今晚赠礼"
+                >
+                  托管到收工 →
+                </button>
+              </div>
+            </section>
+          )}
 
           <div className={s.players}>
             {game.players.map((p) => (
@@ -656,8 +757,8 @@ export default function ResetRush() {
                   : "额度归零，作品留下。"}
               </h1>
               <p>
-                {game.length} 天，{human?.shipped.length} 个作品，{human?.used}{" "}
-                额度。下一局，读懂另一种风向。
+                {game.length} 天，{human?.shipped.length} 个作品，
+                {fmt(human?.used ?? 0)} 额度。下一局，读懂另一种风向。
               </p>
               <div className={s.scoreTable}>
                 <table>
@@ -693,7 +794,7 @@ export default function ResetRush() {
                 </table>
               </div>
               <p className={s.endDetail}>
-                免费重置共补回 {human?.resetGain} 额度 · 用掉{" "}
+                免费重置共补回 {fmt(human?.resetGain ?? 0)} 额度 · 用掉{" "}
                 {human?.banksUsed} 张银行券 · {human?.expired} 张过期 ·{" "}
                 {human?.collisions} 次同日撞车
               </p>
@@ -762,7 +863,16 @@ export default function ResetRush() {
                       今晚触发赠礼<small>先判定，再翻重置牌</small>
                     </span>
                   </div>
-                  {game.phase === 'plan' && game.receipt?.gains[0] && <p className={s.morningGift}>早晨已到账：+{game.receipt.gains[0].gained} {game.receipt.kind === 'normal' ? '额度' : '张银行券'}{game.receipt.kind === 'bank' && game.receipt.gains[0].unused > 0 ? `（${game.receipt.gains[0].unused} 张超出仓位）` : ''}</p>}
+                  {game.phase === "plan" && game.receipt?.gains[0] && (
+                    <p className={s.morningGift}>
+                      早晨已到账：+{fmt(game.receipt.gains[0].gained)}{" "}
+                      {game.receipt.kind === "normal" ? "额度" : "张银行券"}
+                      {game.receipt.kind === "bank" &&
+                      game.receipt.gains[0].unused > 0
+                        ? `（${game.receipt.gains[0].unused} 张超出仓位）`
+                        : ""}
+                    </p>
+                  )}
                 </article>
                 <div className={s.deck}>
                   <span className={s.deckIcon}>↻</span>
@@ -805,28 +915,200 @@ export default function ResetRush() {
 
               <section className={s.workbench} id="reset-workbench">
                 <div className={s.sectionLabel}>
-                  <span>02 / 我的工作台</span>
-                  <span>{human?.projects.length} / 2 项目</span>
+                  <span>02 / 我的工作室</span>
+                  <span>
+                    {
+                      human?.lanes.filter((l) => l.enabled && l.projects.length)
+                        .length
+                    }{" "}
+                    条托管线程
+                  </span>
                 </div>
-                <div className={`${s.activeProjects} ${human?.projects.length === 0 ? s.noProjects : ''}`}>
-                  {human?.projects.map((j) => (
-                    <ProjectCard
-                      key={j.id}
-                      job={j}
-                      day={game.day}
-                      selected={job?.id === j.id}
-                      onChoose={() => setSelectedProject(j.id)}
-                    />
-                  ))}
-                  {(human?.projects.length ?? 0) < 2 && (
+                <div className={s.threadBoard}>
+                  <div className={s.threadTitle}>
+                    <h2>让它们一起跑。</h2>
+                    <button
+                      onClick={() => {
+                        editLane(null);
+                        document
+                          .getElementById("reset-command")
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                      }}
+                    >
+                      ＋ 新线程
+                    </button>
+                  </div>
+                  {!human?.lanes.some((l) => l.projects.length) && (
+                    <p className={s.threadEmpty}>
+                      选好下面的项目，安排一个队列。
+                      <br />
+                      <span>多项串行，多条并行；同一个账号也可以并行。</span>
+                    </p>
+                  )}
+                  {human?.lanes
+                    .filter((l) => l.projects.length)
+                    .map((lane, index) => {
+                      const head = human.projects.find(
+                        (j) => j.id === lane.projects[0],
+                      )!;
+                      const stats = developmentStats(
+                        game,
+                        human,
+                        lane.development,
+                        head,
+                      );
+                      const status = laneStatus(game, human, lane);
+                      const resume: Action = {
+                        type: "dispatch",
+                        lane: lane.id,
+                        projects: lane.projects,
+                        account: lane.account,
+                        ...lane.development,
+                      };
+                      return (
+                        <article
+                          className={s.thread}
+                          key={lane.id}
+                          data-lane={lane.id}
+                          data-state={status}
+                        >
+                          <div className={s.threadHeader}>
+                            <b>
+                              <i />
+                              线程 {index + 1}
+                            </b>
+                            <span>{status}</span>
+                            <small>
+                              账号{" "}
+                              {human.accounts.findIndex(
+                                (a) => a.id === lane.account,
+                              ) + 1}
+                            </small>
+                          </div>
+                          <strong>{head.name}</strong>
+                          <p>
+                            {stats.name}{" "}
+                            <span>· {fmt(stats.perHour)} 进度 / 时 · 风险 {stats.risk}% / 20 进度</span>
+                          </p>
+                          <div className={s.threadProgress}>
+                            <i
+                              style={{
+                                width: `${(head.work / head.need) * 100}%`,
+                              }}
+                            />
+                          </div>
+                          <div className={s.threadMetrics}>
+                            <span>
+                              {fmt(head.work)} / {head.need}
+                              {head.bugs ? ` · ${head.bugs} bug` : ""}
+                            </span>
+                            <span>
+                              {status === "等待额度"
+                                ? "补额即续跑，进度保留"
+                                : `当前项约 ${Math.ceil(stats.minutes)} 分钟 · ${fmt(stats.quota)} 额度`}
+                            </span>
+                          </div>
+                          <ol className={s.queueList}>
+                            {lane.projects.map((id) => (
+                              <li key={id}>
+                                {human.projects.find((j) => j.id === id)?.name}
+                              </li>
+                            ))}
+                          </ol>
+                          {playable && (
+                            <div className={s.threadActions}>
+                              <button
+                                onClick={() => {
+                                  editLane(lane.id);
+                                  document
+                                    .getElementById("reset-command")
+                                    ?.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "center",
+                                    });
+                                }}
+                              >
+                                调整 / 追加
+                              </button>
+                              <button
+                                disabled={
+                                  !lane.enabled &&
+                                  !!actionError(game, 0, resume)
+                                }
+                                onClick={() => send(
+                                    lane.enabled
+                                      ? { type: "pause", lane: lane.id }
+                                      : resume,
+                                  )}
+                              >
+                                {lane.enabled
+                                  ? "暂停"
+                                  : `恢复 · ${energyCost(game, human, resume)} 精力`}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  send({ type: "remove-lane", lane: lane.id });
+                                  if (selectedLane === lane.id) editLane(null);
+                                }}
+                              >
+                                解散
+                              </button>
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
+                </div>
+                <div className={s.backlogHead}>
+                  <h3>
+                    我的项目{" "}
+                    <small>{human?.projects.length} 项 · 可多选排队</small>
+                  </h3>
+                  <button
+                    onClick={() => setSelectedProjects(
+                        human?.projects
+                          .filter(
+                            (j) => !human.lanes.some(
+                                (l) => l.id !== selectedLane &&
+                                  l.projects.includes(j.id),
+                              ),
+                          )
+                          .map((j) => j.id) ?? [],
+                      )}
+                  >
+                    全选可安排项目
+                  </button>
+                </div>
+                <div
+                  className={`${s.activeProjects} ${human?.projects.length === 0 ? s.noProjects : ""}`}
+                >
+                  {human?.projects.map((j) => {
+                    const lane = human.lanes.find((l) => l.projects.includes(j.id),);
+                    const locked = !!lane && lane.id !== selectedLane;
+                    return (
+                      <ProjectCard
+                        key={j.id}
+                        job={j}
+                        day={game.day}
+                        selected={chosen.includes(j.id)}
+                        assigned={lane ? "已在线程中 · 点击调整" : undefined}
+                        onChoose={() => {
+                          if (locked) editLane(lane.id);
+                          else setSelectedProjects((ids) => (ids.includes(j.id)
+                                ? ids.filter((id) => id !== j.id)
+                                : [...ids, j.id]),);
+                        }}
+                      />
+                    );
+                  })}
+                  {!human?.projects.length && (
                     <div className={s.emptyProject}>
                       <span>＋</span>
                       <p>下一个好点子</p>
-                      <small>
-                        从下面的公共项目池接单
-                        <br />
-                        需要 1 个行动
-                      </small>
+                      <small>从公共项目池接单 · 1 精力</small>
                     </div>
                   )}
                 </div>
@@ -835,7 +1117,9 @@ export default function ResetRush() {
                     <h2>
                       公共项目池 <span>THE NEXT BIG THING</span>
                     </h2>
-                    <p>每天最旧项目换新。每次行动后，电脑也会出手。</p>
+                    <p>
+                      接单花 1 精力，不走时间。推进时钟时，电脑也会接单开发。
+                    </p>
                   </div>
                   <span>↓ 接单</span>
                 </div>
@@ -846,10 +1130,10 @@ export default function ResetRush() {
                       job={j}
                       day={game.day}
                       market
-                      disabled={!playable || (human?.projects.length ?? 0) >= 2}
+                      disabled={!playable || !human?.energy}
                       onChoose={() => {
                         send({ type: "claim", project: j.id });
-                        setSelectedProject(j.id);
+                        setSelectedProjects((ids) => [...ids, j.id]);
                       }}
                     />
                   ))}
@@ -859,7 +1143,7 @@ export default function ResetRush() {
                     已发布 <b>{human?.shipped.length}</b> 款作品
                   </span>
                   <span>
-                    开源加成 <b>+{human?.knowledge}</b> / 次开发
+                    开源加成 <b>+{(human?.knowledge ?? 0) * 8}%</b> 研发速度
                   </span>
                   <span>
                     每周收入{" "}
@@ -877,9 +1161,7 @@ export default function ResetRush() {
               <aside className={s.accounts} id="reset-accounts">
                 <div className={s.sectionLabel}>
                   <span>03 / 我的账号</span>
-                  <button onClick={() => setModal("shop")}>
-                    ＋ 管理
-                  </button>
+                  <button onClick={() => setModal("shop")}>＋ 管理</button>
                 </div>
                 {human?.accounts.map((a, i) => (
                   <div
@@ -900,7 +1182,7 @@ export default function ResetRush() {
                     </button>
                     <div className={s.quota}>
                       <strong>
-                        {a.quota}
+                        {fmt(a.quota)}
                         <small> / {PLANS[a.tier].capacity}</small>
                       </strong>
                       <span>
@@ -940,15 +1222,27 @@ export default function ResetRush() {
                         ? `还有 ${a.paidUntil - game.day + 1} 天`
                         : "需续费"}
                     </small>
-                    <small className={s.subscription}>{a.renewal === null ? "到期不续订" : `到期按 $${a.renewal} 自动续订`}</small>
-                    {!activeAccount(game, a) && <button className={s.renew} onClick={() => setModal("shop")}>选择套餐重新开通 →</button>}
+                    <small className={s.subscription}>
+                      {a.renewal === null
+                        ? "到期不续订"
+                        : `到期按 $${a.renewal} 自动续订`}
+                    </small>
+                    {!activeAccount(game, a) && (
+                      <button
+                        className={s.renew}
+                        onClick={() => setModal("shop")}
+                      >
+                        选择套餐重新开通 →
+                      </button>
+                    )}
                   </div>
                 ))}
                 <button
                   className={s.bankButton}
                   disabled={!!bankError}
                   title={
-                    bankError ?? "补满当前账号，不花行动，不改变自然重置日"
+                    bankError ??
+                    "补满当前账号，不花时间或精力，不改变自然重置日"
                   }
                   onClick={() => send(bankAction)}
                 >
@@ -963,95 +1257,232 @@ export default function ResetRush() {
             </div>
           )}
 
-          {game.phase === "plan" && (
-            <section className={s.commandArea} id="reset-command" aria-label="开发操作">
+          {game.phase === "plan" && human && (
+            <section
+              className={s.commandArea}
+              id="reset-command"
+              aria-label="队列调度"
+            >
               <div className={s.commandTitle}>
-                <span>现在，怎么蹬？</span>
+                <span>把工作安排好。</span>
+                <span>已有线程继续使用自己的配置，确认调整才会改变。</span>
+              </div>
+              <div className={s.queuePlanner}>
+                <label htmlFor="reset-lane">
+                  安排到
+                  <select
+                    id="reset-lane"
+                    value={selectedLane ?? "new"}
+                    onChange={(e) => editLane(
+                        e.target.value === "new"
+                          ? null
+                          : Number(e.target.value),
+                      )}
+                  >
+                    <option value="new">＋ 新开并行线程</option>
+                    {human.lanes
+                      .filter((l) => l.projects.length)
+                      .map((l, i) => (
+                        <option key={l.id} value={l.id}>
+                          线程 {i + 1} · {l.projects.length} 项排队
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label htmlFor="reset-account">
+                  使用账号
+                  <select
+                    id="reset-account"
+                    value={account?.id}
+                    onChange={(e) => setSelectedAccount(Number(e.target.value))}
+                  >
+                    {human.accounts.map((a, i) => (
+                      <option key={a.id} value={a.id}>
+                        账号 {i + 1} · ${a.tier} · {fmt(a.quota)} 额度
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <span>
-                  目标：{job?.name ?? "先从项目池接一个项目"}
-                  <i> / </i>账号{" "}
-                  {Math.max(
-                    1,
-                    (human?.accounts.findIndex((a) => a.id === account?.id) ??
-                      0) + 1,
-                  )}
+                  已选 <b>{chosen.length}</b> 项 · 按勾选顺序连做
                 </span>
               </div>
+              {chosen.length > 0 && (
+                <ol className={s.plannedQueue}>
+                  {chosen.map((id, i) => (
+                    <li key={id}>
+                      <span>
+                        {i + 1}. {human.projects.find((j) => j.id === id)?.name}
+                      </span>
+                      {i > 0 && (
+                        <button
+                          aria-label={`优先处理${human.projects.find((j) => j.id === id)?.name}`}
+                          onClick={() => setSelectedProjects((ids) => [
+                              id,
+                              ...ids.filter((x) => x !== id),
+                            ])}
+                        >
+                          移到最前
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
               <div className={s.commandRow}>
                 <div className={s.developmentControls}>
-                <div className={s.modes} role="group" aria-label="开发模型">
-                  {(Object.keys(MODELS) as Model[]).map((m) => {
-                    const stats = MODELS[m];
-                    return (
+                  <div className={s.modes} role="group" aria-label="开发模型">
+                    {(Object.keys(MODELS) as Model[]).map((m) => (
                       <button
                         key={m}
                         data-model={m}
                         aria-pressed={config.model === m}
                         className={config.model === m ? s.chosenMode : ""}
-                        onClick={() => send({ type: "configure", development: { ...config, model: m } })}
+                        onClick={() => send({
+                            type: "configure",
+                            development: { ...config, model: m },
+                          })}
                       >
-                        <b>{stats.name}</b>
-                        <span>{stats.description}</span>
+                        <b>{MODELS[m].name}</b>
+                        <span>{MODELS[m].description}</span>
                       </button>
-                    );
-                  })}
-                </div>
-                <div className={s.configRow}>
-                  <label htmlFor="reset-effort">思考强度<select id="reset-effort" value={config.effort} onChange={e => send({ type: "configure", development: { ...config, effort: e.target.value as Effort } })}>{(Object.keys(EFFORTS) as Effort[]).map(e => <option key={e} value={e}>{EFFORTS[e].name}</option>)}</select></label>
-                  <label htmlFor="reset-turbo" className={s.turboToggle}><input id="reset-turbo" type="checkbox" checked={config.turbo} onChange={e => send({ type: "configure", development: { ...config, turbo: e.target.checked } })} /><b>Turbo</b><span>更快 · 更多额度</span></label>
-                </div>
-                <div className={s.devPreview} aria-live="polite" data-testid="development-preview">
-                  <span>消耗 <b>{model.cost ? `${model.cost} 额度` : "免费"}</b></span>
-                  <span>进度 <b>+{job ? Math.min(model.work, job.need - job.work) : model.work}</b></span>
-                  <span className={model.risk > 0 ? s.risk : ""}>bug 风险 <b>{job ? `${model.risk}%` : "—"}</b></span>
-                  <small>{job ? `${DIFFICULTIES[job.difficulty]}任务 · 能力 ${model.ability.toFixed(1)} / 难度 ${job.difficulty}` : "选一个项目查看风险"}</small>
-                </div>
-                {config.model === "luna" && <p className={s.configHint}>Medium、不勾 Turbo 可免费慢蹬；High 以上与加速会消耗额度。</p>}
+                    ))}
+                  </div>
+                  <div className={s.configRow}>
+                    <label htmlFor="reset-effort">
+                      思考强度
+                      <select
+                        id="reset-effort"
+                        value={config.effort}
+                        onChange={(e) => send({
+                            type: "configure",
+                            development: {
+                              ...config,
+                              effort: e.target.value as Effort,
+                            },
+                          })}
+                      >
+                        {(Object.keys(EFFORTS) as Effort[]).map((e) => (
+                          <option key={e} value={e}>
+                            {EFFORTS[e].name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label htmlFor="reset-turbo" className={s.turboToggle}>
+                      <input
+                        id="reset-turbo"
+                        type="checkbox"
+                        checked={config.turbo}
+                        onChange={(e) => send({
+                            type: "configure",
+                            development: { ...config, turbo: e.target.checked },
+                          })}
+                      />
+                      <b>Turbo</b>
+                      <span>速度 ×2 · 每进度额度 ×2.5</span>
+                    </label>
+                  </div>
+                  <div
+                    className={s.devPreview}
+                    aria-live="polite"
+                    data-testid="development-preview"
+                  >
+                    <span>
+                      每小时 <b>{fmt(model.perHour)} 进度</b>
+                    </span>
+                    <span>
+                      每小时{" "}
+                      <b>
+                        {model.quotaPerHour
+                          ? `${fmt(model.quotaPerHour)} 额度`
+                          : "免费"}
+                      </b>
+                    </span>
+                    <span className={model.risk > 0 ? s.risk : ""}>
+                      首项风险 <b>{job ? `${model.risk}% / 20 进度` : "—"}</b>
+                    </span>
+                    <small>
+                      {chosen.length
+                        ? `队列基准约 ${Math.ceil(estimate.minutes)} 分钟 · ${fmt(estimate.quota)} 额度（不含新 bug 返工）`
+                        : "勾选项目查看队列预估"}
+                    </small>
+                  </div>
+                  <p className={s.configHint}>
+                    {config.effort === "ultra"
+                      ? "Ultra 协作攻坚：更快完成大型任务，消耗更多额度。"
+                      : config.model === "luna"
+                        ? "Luna Medium 关闭 Turbo 可免费慢蹬，简单大项目也能交付。"
+                        : "思考加深提升解题能力；High 到 Max 会多花时间。"}{" "}
+                    仅按实际工作扣额，同号多线程共享余额。
+                  </p>
                 </div>
                 <button
                   id="develop"
                   className={s.develop}
                   disabled={!!error}
-                  onClick={() => send(devAction)}
+                  onClick={() => {
+                    send(devAction);
+                    setSelectedLane(null);
+                    setSelectedProjects([]);
+                  }}
                 >
-                  <span>立即开蹬 ↗</span>
-                  <small>1 行动 · {model.cost ? `−${model.cost} 额度` : "免费开发"}</small>
+                  <span>
+                    {selectedLane === null
+                      ? "安排并行线程 ↗"
+                      : "确认调整队列 ↗"}
+                  </span>
+                  <small>{planningCost} 精力 · 不走时间</small>
                 </button>
               </div>
+              {error && <p className={s.actionHint}>{error}</p>}
               <div className={s.secondaryActions}>
                 <div>
                   <button
-                    disabled={!playable || !job?.bugs}
-                    onClick={() => job && send({ type: "test", project: job.id })}
+                    id="rest"
+                    disabled={!!actionError(game, 0, { type: "rest" })}
+                    title={
+                      actionError(game, 0, { type: "rest" }) ??
+                      "后台照跑，每天一次"
+                    }
+                    onClick={() => send({ type: "rest" })}
                   >
-                    测试修 bug <small>1 行动</small>
+                    休息 +3 精力 <small>60 分钟 · 每天一次</small>
                   </button>
                   <button
-                    disabled={!playable}
+                    id="freelance"
+                    disabled={!!actionError(game, 0, { type: "freelance" })}
                     onClick={() => send({ type: "freelance" })}
                   >
-                    手写外包 +$25 <small>1 行动</small>
+                    手写外包 +$25 <small>1 精力 / 60 分钟</small>
                   </button>
                   {job && (
                     <button
-                      disabled={!playable}
-                      className={s.abandon}
-                      onClick={() => send({ type: "abandon", project: job.id })}
+                      disabled={
+                        !!actionError(game, 0, {
+                          type: "test",
+                          project: job.id,
+                        })
+                      }
+                      onClick={() => send({ type: "test", project: job.id })}
                     >
-                      放弃项目 <small>−2 VP / 1 行动</small>
+                      亲自排障 <small>2 精力 / 30 分钟</small>
+                    </button>
+                  )}
+                  {job && (
+                    <button
+                      className={s.abandon}
+                      onClick={() => {
+                        send({ type: "abandon", project: job.id });
+                        setSelectedProjects((ids) => ids.filter((id) => id !== job.id),);
+                      }}
+                    >
+                      放弃选中首项 <small>−2 VP</small>
                     </button>
                   )}
                 </div>
-                <button
-                  id="end-day"
-                  className={s.endDay}
-                  onClick={() => (actionsLeft(game) ? setModal("early") : reveal())}
-                >
-                  {actionsLeft(game) ? "提前收工" : "结束今日，揭牌"}{" "}
-                  <span>→</span>
-                </button>
+                <a href="#end-day">回到时钟 ↑</a>
               </div>
-              {error && playable && <p className={s.actionHint}>{error}</p>}
             </section>
           )}
 
@@ -1076,7 +1507,7 @@ export default function ResetRush() {
                     {game.receipt.gains.map((r) => (
                       <span key={r.player}>
                         {game.players[r.player].name}
-                        <b>+{r.gained}</b>
+                        <b>+{fmt(r.gained)}</b>
                         <small>
                           {game.receipt?.kind === "normal" ? "额度" : "银行券"}
                         </small>
@@ -1113,7 +1544,9 @@ export default function ResetRush() {
                   key={`${l.day}-${i}`}
                   className={l.player === 0 ? s.ownLog : ""}
                 >
-                  <span>D{String(l.day).padStart(2, "0")}</span>
+                  <span>
+                    D{String(l.day).padStart(2, "0")} {timeLabel(l.minute)}
+                  </span>
                   {l.text}
                 </p>
               ))}
@@ -1122,10 +1555,18 @@ export default function ResetRush() {
         </>
       )}
 
-      {game && game.phase !== 'over' && <nav className={s.quickNav} aria-label="牌桌快捷跳转"><a href="#reset-workbench">工作台</a><a href="#reset-accounts">账号 / 银行券</a><a href={game.phase === 'plan' ? '#reset-command' : '#next-day'}>{game.phase === 'plan' ? '开蹬 ↓' : '夜间揭晓 ↓'}</a></nav>}
+      {game && game.phase !== "over" && (
+        <nav className={s.quickNav} aria-label="牌桌快捷跳转">
+          <a href="#reset-workbench">工作台</a>
+          <a href="#reset-accounts">账号 / 银行券</a>
+          <a href={game.phase === "plan" ? "#reset-command" : "#next-day"}>
+            {game.phase === "plan" ? "调度 ↓" : "夜间揭晓 ↓"}
+          </a>
+        </nav>
+      )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.2</i>
+          RESET / 开蹬！ <i>v0.3 · 并行工作室</i>
         </span>
         <span>
           {game
@@ -1142,28 +1583,11 @@ export default function ResetRush() {
           <Rules />
         </Modal>
       )}
-      {modal === "early" && (
-        <Modal
-          title={`今天还有 ${game ? actionsLeft(game) : 0} 个行动`}
-          close={close}
-        >
-          <p className={s.modalCopy}>
-            未用行动会消失，电脑仍会完成各自的行动，然后揭晓今晚的消息。
-          </p>
-          <div className={s.modalButtons}>
-            <button className={s.primary} onClick={close}>
-              再蹬一会儿
-            </button>
-            <button className={s.textButton} onClick={reveal}>
-              确认收工并揭牌 →
-            </button>
-          </div>
-        </Modal>
-      )}
       {modal === "restart" && (
         <Modal title="收起这桌，开新一局" close={close}>
           <p className={s.modalCopy}>
-            当前牌局的自动存档会被新局替换。新局从 $20 账号起步，可重新选择赛程和种子。
+            当前牌局的自动存档会被新局替换。新局从 $20
+            账号起步，可重新选择赛程和种子。
           </p>
           <div className={s.modalButtons}>
             <button
@@ -1175,6 +1599,7 @@ export default function ResetRush() {
                 try {
                   localStorage.removeItem(SAVE_KEY);
                   localStorage.removeItem(LEGACY_SAVE_KEY);
+                  localStorage.removeItem(V2_SAVE_KEY);
                 } catch {
                   setSaved(false);
                 }
@@ -1190,31 +1615,109 @@ export default function ResetRush() {
       )}
       {modal === "shop" && game && human && (
         <Modal title="账号管理" close={close}>
-          {onboarding && <div className={s.welcome}><b>先给工作室配好账号。</b><p>你已有一个 $20 账号和 $480 现金。可直接开工，也可先升级或买新号；以后随时回来调整。</p></div>}
+          {onboarding && (
+            <div className={s.welcome}>
+              <b>先给工作室配好账号。</b>
+              <p>
+                你已有一个 $20 账号和 $480
+                现金。可直接开工，也可先升级或买新号；以后随时回来调整。
+              </p>
+            </div>
+          )}
           <p className={s.modalCopy}>
-            现金 <b>${human.cash}</b> · 今日剩 <b>{actionsLeft(game)} 行动</b> · 开通/升级/手动续开各用 1 行动
+            现金 <b>${human.cash}</b> · 账号管理不花精力或时间 ·
+            一个账号可带多条线程
           </p>
           <div className={s.managedAccounts}>
             {human.accounts.map((a, index) => (
-<section className={s.managedAccount} data-managed-account={a.id} key={a.id}>
-              <div className={s.managedHead}><h3>账号 {index + 1} <span>{PLANS[a.tier].name}</span></h3><b>{activeAccount(game, a) ? `${a.quota} / ${PLANS[a.tier].capacity} 额度` : "已暂停"}</b></div>
-              <p>{activeAccount(game, a) ? `订阅至 D${a.paidUntil} · 自然重置 D${a.nextReset}` : "选择任意档位续开，恢复满额"} · {a.banks.length} 张银行券</p>
-              <div className={s.accountOperations}>
-                {([20, 100, 200] as Tier[]).filter(t => !activeAccount(game, a) || t > a.tier).map(t => {
-                  const action: Action = { type: activeAccount(game, a) ? "upgrade" : "renew", account: a.id, tier: t };
-                  const why = actionError(game, 0, action);
-                  return <button key={t} disabled={!!why} title={why ?? "使用 1 行动"} onClick={() => send(action)}>{activeAccount(game, a) ? `补 $${t - a.tier} → ${PLANS[t].name}` : `$${t} 续开 ${PLANS[t].name}`}</button>;
-                })}
-              </div>
-              <label htmlFor={`renewal-${a.id}`} className={s.renewalPolicy}>到期后<select id={`renewal-${a.id}`} aria-label={`账号 ${index + 1} 到期方案`} data-renewal={a.id} value={a.renewal ?? 0} onChange={e => send({ type: "renewal", account: a.id, tier: Number(e.target.value) === 0 ? null : Number(e.target.value) as Tier })}>
-                {([20, 100, 200] as Tier[]).map(t => <option key={t} value={t}>${t} / 30 天{t < a.tier ? " · 到期降档" : t > a.tier ? " · 到期升档" : " · 保持此档"}</option>)}
-                <option value={0}>不续订 · 到期停用</option>
-              </select><small>免费调整</small></label>
-              <p className={s.policyHint}>{a.renewal === null ? "到期清空额度并停用，银行券仍按原日期过期。" : activeAccount(game, a) ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，补满 ${PLANS[a.renewal].capacity} 额度；余额不足则暂停。` : "已暂停的账号需手动续开；仅改到期方案不会扣款。"}</p>
-            </section>
-))}
+              <section
+                className={s.managedAccount}
+                data-managed-account={a.id}
+                key={a.id}
+              >
+                <div className={s.managedHead}>
+                  <h3>
+                    账号 {index + 1} <span>{PLANS[a.tier].name}</span>
+                  </h3>
+                  <b>
+                    {activeAccount(game, a)
+                      ? `${fmt(a.quota)} / ${PLANS[a.tier].capacity} 额度`
+                      : "已暂停"}
+                  </b>
+                </div>
+                <p>
+                  {activeAccount(game, a)
+                    ? `订阅至 D${a.paidUntil} · 自然重置 D${a.nextReset}`
+                    : "选择任意档位续开，恢复满额"}{" "}
+                  · {a.banks.length} 张银行券
+                </p>
+                <div className={s.accountOperations}>
+                  {([20, 100, 200] as Tier[])
+                    .filter((t) => !activeAccount(game, a) || t > a.tier)
+                    .map((t) => {
+                      const action: Action = {
+                        type: activeAccount(game, a) ? "upgrade" : "renew",
+                        account: a.id,
+                        tier: t,
+                      };
+                      const why = actionError(game, 0, action);
+                      return (
+                        <button
+                          key={t}
+                          disabled={!!why}
+                          title={why ?? "只付套餐费用，不花精力或时间"}
+                          onClick={() => send(action)}
+                        >
+                          {activeAccount(game, a)
+                            ? `补 $${t - a.tier} → ${PLANS[t].name}`
+                            : `$${t} 续开 ${PLANS[t].name}`}
+                        </button>
+                      );
+                    })}
+                </div>
+                <label htmlFor={`renewal-${a.id}`} className={s.renewalPolicy}>
+                  到期后
+                  <select
+                    id={`renewal-${a.id}`}
+                    aria-label={`账号 ${index + 1} 到期方案`}
+                    data-renewal={a.id}
+                    value={a.renewal ?? 0}
+                    onChange={(e) => send({
+                        type: "renewal",
+                        account: a.id,
+                        tier:
+                          Number(e.target.value) === 0
+                            ? null
+                            : (Number(e.target.value) as Tier),
+                      })}
+                  >
+                    {([20, 100, 200] as Tier[]).map((t) => (
+                      <option key={t} value={t}>
+                        ${t} / 30 天
+                        {t < a.tier
+                          ? " · 到期降档"
+                          : t > a.tier
+                            ? " · 到期升档"
+                            : " · 保持此档"}
+                      </option>
+                    ))}
+                    <option value={0}>不续订 · 到期停用</option>
+                  </select>
+                  <small>免费调整</small>
+                </label>
+                <p className={s.policyHint}>
+                  {a.renewal === null
+                    ? "到期清空额度并停用，银行券仍按原日期过期。"
+                    : activeAccount(game, a)
+                      ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，补满 ${PLANS[a.renewal].capacity} 额度；余额不足则暂停。`
+                      : "已暂停的账号需手动续开；仅改到期方案不会扣款。"}
+                </p>
+              </section>
+            ))}
           </div>
-          <h3 className={s.shopTitle}>加一个新账号 <small>{human.accounts.length} / 3</small></h3>
+          <h3 className={s.shopTitle}>
+            加一个新账号 <small>{human.accounts.length} / 3</small>
+          </h3>
           <div className={s.shopPlans}>
             {([20, 100, 200] as Tier[]).map((t) => (
               <div key={t}>
@@ -1230,14 +1733,23 @@ export default function ResetRush() {
                     send({ type: "buy", tier: t });
                   }}
                 >
-                  开新号 · 1 行动
+                  开新号 · 只花钱
                 </button>
               </div>
             ))}
           </div>
-          <p className={s.policyHint}>升级只补容量差额、保留到期与重置日。到期续订会重新开始 30 天订阅和 7 天周期；银行券期限始终不变。</p>
-          <p className={s.shopFeedback} role="status">{game.message}</p>
-          <div className={s.modalButtons}><button className={s.primary} onClick={close}>{onboarding ? "就这样，开始开发 →" : "回到牌桌 →"}</button></div>
+          <p className={s.policyHint}>
+            升级只补容量差额、保留到期与重置日。到期续订会重新开始 30 天订阅和 7
+            天周期；银行券期限始终不变。
+          </p>
+          <p className={s.shopFeedback} role="status">
+            {game.message}
+          </p>
+          <div className={s.modalButtons}>
+            <button className={s.primary} onClick={close}>
+              {onboarding ? "就这样，开始开发 →" : "回到牌桌 →"}
+            </button>
+          </div>
         </Modal>
       )}
       {modal === "portfolio" && game && (
@@ -1245,8 +1757,8 @@ export default function ResetRush() {
           <div className={s.portfolio}>
             <p>
               当前总分 <b>{score(game.players[inspect]).total} VP</b> · 消耗额度{" "}
-              {game.players[inspect].used} · 开源效率 +
-              {game.players[inspect].knowledge}
+              {fmt(game.players[inspect].used)} · 开源效率 +
+              {game.players[inspect].knowledge * 8}%
             </p>
             <p className={s.muted}>
               总分含当前现金、多样性与额度分；实际以终局资源结算。
@@ -1268,7 +1780,7 @@ export default function ResetRush() {
                 <span>{CATEGORIES[j.category].name}</span>
                 <b>{j.name}</b>
                 <strong>
-                  {j.work}/{j.need}
+                  {fmt(j.work)}/{j.need}
                 </strong>
               </div>
             ))}
