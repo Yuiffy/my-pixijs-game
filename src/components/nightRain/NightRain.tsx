@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost } from './engine';
+import { escapeStuck, continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost } from './engine';
 import { companionName, createCompanion, guideTargets, leadTo, mainTarget, recommendedTarget, speak, stopLeading, targetLabel, updateCompanion } from './companion';
 import type { CameraControl, GameInput, GameState, PlayerSkin } from './types';
 import { LANDMARKS, SURFACES, regionAt } from './world';
@@ -193,6 +193,7 @@ sprint: pad?.sprint,
     const destination = Math.hypot(c.position.x - g.player.x, c.position.z - g.player.z) > 0.6 ? c.position : c.path[0];
     if (destination) { camera.current.yaw = Math.atan2(g.player.x - destination.x, g.player.z - destination.z); camera.current.pitch = 0.46; camera.current.reset += 1; }
   };
+  const rescue = () => { if (!escapeStuck(g)) return; c.position = { ...g.player }; c.path = []; c.targetId = null; c.status = 'following'; showPanel(null); resetCamera(); save(); };
   const guideTo = (id?: string) => { if (leadTo(c, g, id)) focusGuide(); showPanel(null); };
   const settings = (
     <div className={styles.settings}>
@@ -307,7 +308,11 @@ onPointerCancel={() => { drag.current = null; }}
             <line x1="10" y1="-8" x2="14" y2="-8" stroke={g.shortcut ? '#8bd6b3' : '#ed8176'} strokeWidth=".8" />
             <line x1="-35" y1="-6" x2="-26" y2="-6" stroke={g.templeGate ? "#8bd6b3" : "#ed8176"} strokeWidth=".8" />
             <line x1="27" y1="-8" x2="31" y2="-8" stroke={g.harborGate ? "#8bd6b3" : "#ed8176"} strokeWidth=".8" /><circle cx={g.player.x} cy={g.player.z} r="1" fill="#fff" stroke="#d9a254" strokeWidth=".4" />
-          </svg><small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate)} / 3</small>
+            {c.enabled && <polyline points="7,-38 12,-35 12,-30 24,-30 35,-30" fill="none" stroke="#8de4dd" strokeWidth=".65" strokeDasharray="1.2 .8"><title>夜市东侧，经摆渡庵潮桥进入潮汐港</title></polyline>}
+          </svg>
+          {c.enabled && <><p>潮汐港入口：夜市东侧 → 运河侧廊 → 摆渡庵向东 → 潮桥。</p><button onClick={() => guideTo('tide-note')}>带我去新区域 · 潮汐港</button></>}
+          <button onClick={rescue}>脱离卡死 · 返回{g.checkpoint === 'room' ? '旅馆' : '中庭雨灯'}</button>
+          <small className={styles.mapLegend}>白点 · 你 · 菱灯 · 休息处 · 红线 · 闭门<br />归灯 · {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)} · 近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate)} / 3</small>
         </>
 ) : panel === 'companion' ? (
 <>
@@ -316,7 +321,8 @@ onPointerCancel={() => { drag.current = null; }}
 <>
             <p className={styles.dialogue}>“看不懂岔路也没关系。你想去哪里？我会等你，不会把你丢下。”</p>
             <button className={styles.primary} onClick={() => { guideTo(); }}>直接带我去 · {targetLabel(recommendedTarget(c, g))}</button>
-            <div className={styles.destinations}>{recommendedTarget(c, g) !== mainTarget(g) && <button onClick={() => { guideTo(mainTarget(g)); }}>主线 · {targetLabel(mainTarget(g))} ↗</button>}{guideTargets(g).filter(l => l.id !== recommendedTarget(c, g)).map(l => <button key={l.id} onClick={() => { guideTo(l.id); }}>{targetLabel(l.id)} ↗</button>)}</div>
+            {recommendedTarget(c, g) !== 'tide-note' && <button onClick={() => guideTo('tide-note')}>带我去新区域 · 潮汐港</button>}
+            <div className={styles.destinations}>{recommendedTarget(c, g) !== mainTarget(g) && <button onClick={() => { guideTo(mainTarget(g)); }}>主线 · {targetLabel(mainTarget(g))} ↗</button>}{guideTargets(g).filter(l => l.id !== recommendedTarget(c, g) && l.id !== 'tide-note').map(l => <button key={l.id} onClick={() => { guideTo(l.id); }}>{targetLabel(l.id)} ↗</button>)}</div>
             {c.targetId && <button onClick={() => { stopLeading(c, g); showPanel(null); }}>先不带路，我们随便逛逛</button>}
             <button onClick={() => { speak(c, g, c.subtitle || '别怕，我一直在这里。慢慢走就好。'); showPanel(null); }}>再说一遍</button>
           </>
@@ -326,6 +332,8 @@ onPointerCancel={() => { drag.current = null; }}
 <>
           <p>{getObjective(g)}</p><button className={styles.primary} onClick={() => showPanel(null)}>继续旅程</button>
           {settings}
+          <button onClick={rescue}>脱离卡死 · 返回{g.checkpoint === 'room' ? '旅馆' : '中庭雨灯'}</button>
+          <p className={styles.rescueNote}>回到记录的落脚点，保留当前血量、药瓶与探索进度。</p>
           <details><summary>镜头设置</summary><div className={styles.lookSettings}>
             <label htmlFor="mouse-look-speed">鼠标视角速度<select id="mouse-look-speed" aria-label="鼠标视角速度" value={controls.current?.lookSettings.mouse ?? 1} onChange={e => { controls.current?.setLook({ mouse: Number(e.target.value) }); redraw(); }}>{[[0.6, '慢'], [1, '标准'], [1.5, '快'], [2, '很快']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
             <label htmlFor="pad-look-speed">手柄视角速度<select id="pad-look-speed" aria-label="手柄视角速度" value={controls.current?.lookSettings.gamepad ?? 1} onChange={e => { controls.current?.setLook({ gamepad: Number(e.target.value) }); redraw(); }}>{[[0.6, '慢'], [1, '标准'], [1.5, '快'], [2, '很快']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
@@ -344,7 +352,7 @@ onPointerCancel={() => { drag.current = null; }}
         <h2>{g.mode === 'dead' ? '再走一次就好' : '终于，吃上饭了'}</h2>
         <p>{g.mode === 'dead' ? (c.enabled ? '夜市钱留在倒下的地方。记住那一下起手，下次我们一起过去。' : '雨收走余温，灯替归人守夜。') : '热气模糊了眼镜。明天还要直播，今晚先好好吃饭。'}</p>
         <p>发现 {g.collected.filter(id => id !== 'laptop').length} 处 · 弹反 {g.parries} 次 · 开启近道 {Number(g.shortcut) + Number(g.templeGate) + Number(g.harborGate)} / 3 · 归灯 {g.checkpoint === 'room' ? '旅馆' : targetLabel(g.checkpoint)}</p>
-        {g.mode === 'dead' ? <button data-game-primary className={styles.primary} onClick={() => { respawn(g); c.position = { ...g.player }; c.path = []; c.targetId = null; c.status = 'following'; showPanel(null); resetCamera(); save(); }}>回到雨灯</button> : <><button data-game-primary className={styles.primary} onClick={() => { continueExploring(g); showPanel(null); save(); }}>继续探索旧城</button><button onClick={() => setRestartConfirm(true)}>再走一场雨夜</button><Link href="/demos">回到游戏实验室</Link></>}
+        {g.mode === 'dead' ? <button data-game-primary className={styles.primary} onClick={() => { respawn(g); c.position = { ...g.player }; c.path = []; c.targetId = null; c.status = 'following'; showPanel(null); resetCamera(); save(); }}>回到雨灯</button> : <><button data-game-primary className={styles.primary} onClick={() => { continueExploring(g); showPanel(null); save(); }}>继续探索旧城</button>{c.enabled && <button onClick={() => { continueExploring(g); guideTo('tide-note'); save(); }}>让精灵带我去潮汐港</button>}<button onClick={() => setRestartConfirm(true)}>再走一场雨夜</button><Link href="/demos">回到游戏实验室</Link></>}
       </section></div>
 )}
       {sceneError && <div className={styles.scrim}><section className={styles.panel} role="alertdialog" aria-label="恢复游戏画面"><h2>画面暂时中断</h2><p>旅程已暂停，试试重新载入画面。</p><button className={styles.primary} onClick={() => { setSceneError(false); setReady(false); setSceneVersion(v => v + 1); }}>重新载入 3D 画面</button></section></div>}

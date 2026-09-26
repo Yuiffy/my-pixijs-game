@@ -67,9 +67,9 @@ export function enemyMotion(e: Enemy): EnemyPose | null {
 export function enemyAttack(e: Enemy) {
   const index = e.attackIndex % 3;
   if (e.kind === 'nana') {
-    if (index === 1) return { name: '沉锚 · 延迟落潮', windup: 1.65, range: 3.5, arc: 0.75, damage: 43, recovery: 1.4, parryable: true, lunge: 1.2 };
+    if (index === 1) return { name: '沉镐 · 延迟落潮', windup: 1.65, range: 3.5, arc: 0.75, damage: 43, recovery: 1.4, parryable: true, lunge: 1.2 };
     if (index === 2) return { name: '危 · 七重返潮', windup: e.phase === 2 ? 0.92 : 1.25, range: 4.0, arc: Math.PI, damage: 34, recovery: 1.35, parryable: false, lunge: 0 };
-    return { name: '破浪锚刺', windup: e.phase === 2 ? 0.68 : 0.94, range: 3.1, arc: 0.6, damage: 31, recovery: e.phase === 2 ? 0.55 : 0.9, parryable: true, lunge: 1.7 };
+    return { name: '破浪镐击', windup: e.phase === 2 ? 0.68 : 0.94, range: 3.1, arc: 0.6, damage: 31, recovery: e.phase === 2 ? 0.55 : 0.9, parryable: true, lunge: 1.7 };
   }
   if (e.kind === 'azi') {
     if (index === 1) return { name: '休止符 · 迟落拍', windup: e.phase === 2 ? 1.8 : 1.4, range: 2.9, arc: 0.8, damage: 34, recovery: 1.35, parryable: true, lunge: 0.8 };

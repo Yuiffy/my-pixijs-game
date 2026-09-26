@@ -3091,3 +3091,13 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 最新规则测试与发布check→build在隔离companions工作树继续，主共享目录其他任务改动和HEAD保留。
 
 - 发布验收：59/59规则通过，完整pnpm run check→pnpm run build依次成功，54页，Next ESLint/类型检查启用，仅既有RPG警告。生产构建tmp/night-rain-tide-production（14图）与tmp/night-rain-tide-production-companions（5图）全部像素检查并逐张目检，errors=[]；两精灵切换、跟随、宝宝开关与刷新也通过。19份源码／测试／文档与发布工作树LF归一化SHA256一致；构建期间行尾空格清理经TypeScript转译比较确认输出完全相同。当前无剩余必要修复。
+
+
+### 2026-09-26 · 雨夜旧城入口、屋顶碰撞与脱困
+
+- 摆渡庵东侧实墙造型改为立柱敞口，夜市东侧、运河岔口与庵口补潮汐港路牌和暖灯。地图/精灵菜单可直接带去潮桥入口，第一幕结束也提供带路按钮；普通模式保留诗性指引，宝宝模式才显示路线与解读。
+- 房屋位置、旋转、墙体、坡顶、檐口统一到 architecture.ts，渲染/角色/镜头共用几何；静态空间分桶避免每帧遍历全部房屋。新增落地支持与上跳头顶阻挡，已验证商行屋顶走坡、存档重载、跳到回廊，以及地面/空中撞墙。
+- Esc 暂停和 M 地图都加「脱离卡死」，回当前复活点（未点灯回旅馆），保留生命/药瓶/钱袋/金钱/敌人击败与探索进度，不补给不刷怪，清空坠落/锁定/攻击并保存。七海换成长木柄、银色双尖十字镐，招式文案同步改镐击/沉镐。
+- 64/64 规则测试通过；静音无头系统 Chrome 与虚拟输入完成旧城→新区双首领/黎明钟/支路回归，以及真实走上屋顶→重载→跳至回廊→暂停脱困、地图精灵带路→新区脱困、390/320 菜单与关闭宝宝模式专项。开发24张截图逐张目检且像素检查通过，errors=[]；共享技能客户端冒烟图也已目检。主目录并行任务保持不动，最终全量检查/构建和发布在 night-rain-companions 隔离工作树进行。
+
+- 最终验收：隔离工作树接入 origin/master 8493b21 后，完整 pnpm run check → pnpm run build 顺序通过，54 页成功，Next ESLint/类型检查保留，仅既有 RPG 警告。正式构建两套浏览器回归均通过，tmp/night-rain-collision-production/report.json 和 tmp/night-rain-collision-production-expansion/report.json errors=[]，24 张生产截图全部像素检查并逐张目检；18 份源码/专项测试/文档与主目录 SHA256 一致。3871 已切换 .next-night-rain-collision-release（session37507），HTTP200且静态脚本与通过验收的3885版本一致。旧生产和临时开发已停止，构建工作树仍承载试玩不可归档。
