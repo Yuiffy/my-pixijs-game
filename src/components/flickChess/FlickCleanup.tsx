@@ -16,13 +16,15 @@ type Fallen = {
   phase: FallenPhase;
   elapsed: number;
   slot: number;
-  route: THREE.Vector3[];
 };
 type Collector = {
   phase: Exclude<CleanupPhase, "idle" | "flying"> | "idle";
   position: THREE.Vector3;
   route: THREE.Vector3[];
   targetId: string | null;
+  carriedIds: string[];
+  lastLanding: THREE.Vector3 | null;
+  waitingSeconds: number;
   elapsed: number;
 };
 
@@ -36,6 +38,13 @@ const FLIGHT_SECONDS = 0.8;
 const COLLECT_SECONDS = 0.36;
 const DROP_SECONDS = 0.48;
 const ROBOT_SPEED = 9.5;
+const CARGO_CAPACITY = 8;
+const CARGO_SCALE = 0.34;
+const BATCH_WAIT_SECONDS = 4;
+
+function newCollector(): Collector {
+  return { phase: "idle", position: DOCK.clone(), route: [], targetId: null, carriedIds: [], lastLanding: null, waitingSeconds: 0, elapsed: 0 };
+}
 
 function usePortrait(path: string) {
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
@@ -186,10 +195,71 @@ function routeTo(landing: THREE.Vector3): THREE.Vector3[] {
   }
   const side = landing.x < -5.6 ? -SIDE_LANE : SIDE_LANE;
   const route = [new THREE.Vector3(side, FLOOR, FRONT_LANE)];
-  if (landing.z < -9.2) route.push(new THREE.Vector3(side, FLOOR, landing.z));
-  else route.push(new THREE.Vector3(side, FLOOR, landing.z));
+  route.push(new THREE.Vector3(side, FLOOR, landing.z));
   route.push(landing.clone().setY(FLOOR));
   return route;
+}
+
+function routeBetween(from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] {
+  const sameSide = Math.abs(from.x) > 5.6 && Math.abs(to.x) > 5.6 && Math.sign(from.x) === Math.sign(to.x);
+  const sameEnd = (from.z > 9.2 && to.z > 9.2) || (from.z < -9.2 && to.z < -9.2);
+  if (sameSide || sameEnd) return [to.clone().setY(FLOOR)];
+  // Return to the outer lane before crossing to another edge of the board.
+  return [...routeTo(from).slice(0, -1).reverse().map((point) => point.clone()), ...routeTo(to)];
+}
+
+function cargoPosition(position: THREE.Vector3, index: number): THREE.Vector3 {
+  const angle = (((index % 4) + 0.5) * Math.PI) / 2;
+  return new THREE.Vector3(
+    position.x + Math.cos(angle) * 0.2,
+    FLOOR + 0.82 + Math.floor(index / 4) * 0.15,
+    position.z + 0.56 + Math.sin(angle) * 0.2,
+  );
+}
+
+function basketPosition(slot: number): THREE.Vector3 {
+  const layer = Math.floor(slot / 8);
+  const place = slot % 8;
+  const angle = ((place - 1) / 7) * Math.PI * 2 + layer * 0.35;
+  const radius = place === 0 ? 0 : 0.42;
+  return new THREE.Vector3(BASKET.x + Math.cos(angle) * radius, FLOOR + 0.22 + layer * 0.1, BASKET.z + Math.sin(angle) * radius);
+}
+
+function nearestLanded(items: Fallen[], collector: Collector): Fallen | null {
+  let nearest: Fallen | null = null;
+  let distance = Infinity;
+  items.forEach((item) => {
+    if (item.phase !== "landed") return;
+    const route = collector.lastLanding ? routeBetween(collector.lastLanding, item.landing) : routeTo(item.landing);
+    let nextDistance = 0;
+    let { position } = collector;
+    route.forEach((point) => {
+      nextDistance += position.distanceTo(point);
+      position = point;
+    });
+    if (nextDistance < distance) {
+      nearest = item;
+      distance = nextDistance;
+    }
+  });
+  return nearest;
+}
+
+function seek(collector: Collector, item: Fallen) {
+  collector.phase = "seeking";
+  collector.targetId = item.piece.id;
+  collector.route = collector.lastLanding ? routeBetween(collector.lastLanding, item.landing) : routeTo(item.landing);
+  collector.waitingSeconds = 0;
+}
+
+function carryToBasket(collector: Collector) {
+  collector.phase = "carrying";
+  collector.targetId = null;
+  collector.waitingSeconds = 0;
+  collector.route = [
+    ...(collector.lastLanding ? routeTo(collector.lastLanding).slice(0, -1).reverse().map((point) => point.clone()) : []),
+    DROP_OFF.clone(),
+  ];
 }
 
 function moveAlong(collector: Collector, distance: number) {
@@ -219,7 +289,7 @@ export default function FlickCleanup({ snapshot, onStatus }: {
   const groups = useRef(new Map<string, THREE.Group>());
   const robotGroup = useRef<THREE.Group | null>(null);
   const brushGroup = useRef<THREE.Group | null>(null);
-  const collector = useRef<Collector>({ phase: "idle", position: DOCK.clone(), route: [], targetId: null, elapsed: 0 });
+  const collector = useRef<Collector>(newCollector());
   const lastStatus = useRef("");
 
   useLayoutEffect(() => {
@@ -227,7 +297,7 @@ export default function FlickCleanup({ snapshot, onStatus }: {
       fallen.current = [];
       known.current.clear();
       groups.current.clear();
-      collector.current = { phase: "idle", position: DOCK.clone(), route: [], targetId: null, elapsed: 0 };
+      collector.current = newCollector();
       robotGroup.current?.position.copy(DOCK);
       setRenderItems([]);
       lastStatus.current = "";
@@ -237,7 +307,7 @@ export default function FlickCleanup({ snapshot, onStatus }: {
     if (!added.length) return;
     added.forEach((piece) => {
       known.current.add(piece.id);
-      fallen.current.push({ piece, landing: landingFor(piece, snapshot.board), phase: "flying", elapsed: 0, slot: -1, route: [] });
+      fallen.current.push({ piece, landing: landingFor(piece, snapshot.board), phase: "flying", elapsed: 0, slot: -1 });
     });
     setRenderItems([...fallen.current]);
   }, [snapshot, onStatus]);
@@ -270,74 +340,97 @@ export default function FlickCleanup({ snapshot, onStatus }: {
 
     const current = items.find((item) => item.piece.id === robot.targetId);
     if (robot.phase === "idle") {
-      const next = items.find((item) => item.phase === "landed");
-      if (next) {
-        robot.phase = "seeking";
-        robot.targetId = next.piece.id;
-        next.route = routeTo(next.landing);
-        robot.route = next.route.map((point) => point.clone());
-      }
-    } else if (robot.phase === "seeking" && current) {
-      if (moveAlong(robot, ROBOT_SPEED * delta)) {
-        robot.phase = "collecting";
-        robot.elapsed = 0;
+      const next = nearestLanded(items, robot);
+      if (next) seek(robot, next);
+    } else if (robot.phase === "seeking") {
+      if (current) {
+        if (moveAlong(robot, ROBOT_SPEED * delta)) {
+          robot.phase = "collecting";
+          robot.elapsed = 0;
+        }
+      } else {
+        const next = nearestLanded(items, robot);
+        if (next) seek(robot, next);
+        else if (robot.carriedIds.length && !items.some((item) => item.phase === "flying")) {
+          robot.waitingSeconds += delta;
+          if (snapshot.phase === "finished" || (snapshot.phase !== "moving" && robot.waitingSeconds >= BATCH_WAIT_SECONDS)) {
+            carryToBasket(robot);
+          }
+        }
       }
     } else if (robot.phase === "collecting" && current) {
       robot.elapsed += delta;
       const t = Math.min(1, robot.elapsed / COLLECT_SECONDS);
       const group = groups.current.get(current.piece.id);
       if (group) {
-        group.position.set(
-          THREE.MathUtils.lerp(current.landing.x, robot.position.x, t),
-          THREE.MathUtils.lerp(current.landing.y, FLOOR + 1.4, t) + Math.sin(Math.PI * t) * 0.22,
-          THREE.MathUtils.lerp(current.landing.z, robot.position.z, t),
-        );
-        group.scale.setScalar(1 - t * 0.28);
+        const cargo = cargoPosition(robot.position, robot.carriedIds.length);
+        group.position.lerpVectors(current.landing, cargo, t);
+        group.position.y += Math.sin(Math.PI * t) * 0.22;
+        group.scale.setScalar(THREE.MathUtils.lerp(1, CARGO_SCALE, t));
       }
       if (t >= 1) {
         current.phase = "carried";
-        robot.phase = "carrying";
-        robot.route = [...current.route.slice(0, -1).reverse().map((point) => point.clone()), DROP_OFF.clone()];
+        robot.carriedIds.push(current.piece.id);
+        robot.lastLanding = current.landing;
+        robot.targetId = null;
+        const next = nearestLanded(items, robot);
+        if (robot.carriedIds.length >= CARGO_CAPACITY) carryToBasket(robot);
+        else if (next) seek(robot, next);
+        else {
+          robot.phase = "seeking";
+          robot.route = [];
+          robot.waitingSeconds = 0;
+        }
       }
-    } else if (robot.phase === "carrying" && current) {
-      const arrived = moveAlong(robot, ROBOT_SPEED * delta);
-      const group = groups.current.get(current.piece.id);
-      if (group) group.position.set(robot.position.x, FLOOR + 1.4, robot.position.z);
-      if (arrived) {
+    } else if (robot.phase === "carrying") {
+      if (moveAlong(robot, ROBOT_SPEED * delta)) {
         robot.phase = "dropping";
         robot.elapsed = 0;
       }
-    } else if (robot.phase === "dropping" && current) {
+    } else if (robot.phase === "dropping") {
       robot.elapsed += delta;
       const t = Math.min(1, robot.elapsed / DROP_SECONDS);
-      const group = groups.current.get(current.piece.id);
-      if (group) {
-        group.position.set(
-          THREE.MathUtils.lerp(DROP_OFF.x, BASKET.x, t),
-          FLOOR + 1.4 + Math.sin(Math.PI * t) * 0.55 - t * 1.1,
-          THREE.MathUtils.lerp(DROP_OFF.z, BASKET.z, t),
-        );
-        group.scale.setScalar(0.72 - t * 0.2);
+      const firstSlot = items.filter((item) => item.phase === "basket").length;
+      robot.carriedIds.forEach((pieceId, index) => {
+        const item = items.find((candidate) => candidate.piece.id === pieceId);
+        const group = groups.current.get(pieceId);
+        if (!item || !group) return;
+        const destination = basketPosition(firstSlot + index);
+        group.position.lerpVectors(cargoPosition(DROP_OFF, index), destination, t);
+        group.position.y += Math.sin(Math.PI * t) * 0.55;
+        group.scale.setScalar(THREE.MathUtils.lerp(CARGO_SCALE, 0.43, t));
         group.rotation.y += delta * 6;
-      }
+      });
       if (t >= 1) {
-        current.phase = "basket";
-        current.slot = items.filter((item) => item.phase === "basket").length - 1;
-        if (group) {
-          const layer = Math.floor(current.slot / 8);
-          const place = current.slot % 8;
-          const angle = ((place - 1) / 7) * Math.PI * 2 + layer * 0.35;
-          const radius = place === 0 ? 0 : 0.42;
-          group.position.set(BASKET.x + Math.cos(angle) * radius, FLOOR + 0.22 + layer * 0.1, BASKET.z + Math.sin(angle) * radius);
-          group.rotation.set(0, angle, 0);
-          group.scale.setScalar(0.43);
-        }
+        robot.carriedIds.forEach((pieceId, index) => {
+          const item = items.find((candidate) => candidate.piece.id === pieceId);
+          if (!item) return;
+          item.phase = "basket";
+          item.slot = firstSlot + index;
+          const group = groups.current.get(pieceId);
+          if (group) {
+            group.position.copy(basketPosition(item.slot));
+            group.rotation.set(0, 0, 0);
+            group.scale.setScalar(0.43);
+          }
+        });
+        robot.carriedIds = [];
+        robot.lastLanding = null;
         robot.phase = "returning";
         robot.targetId = null;
         robot.route = [DOCK.clone()];
       }
     } else if (robot.phase === "returning") {
       if (moveAlong(robot, ROBOT_SPEED * delta)) robot.phase = "idle";
+    }
+
+    if (robot.phase !== "dropping") {
+      robot.carriedIds.forEach((pieceId, index) => {
+        const group = groups.current.get(pieceId);
+        if (!group) return;
+        group.position.copy(cargoPosition(robot.position, index));
+        group.scale.setScalar(CARGO_SCALE);
+      });
     }
 
     if (robotGroup.current) {
@@ -347,9 +440,9 @@ export default function FlickCleanup({ snapshot, onStatus }: {
         const angle = Math.atan2(next.x - robot.position.x, next.z - robot.position.z);
         robotGroup.current.rotation.y = THREE.MathUtils.lerp(robotGroup.current.rotation.y, angle, Math.min(1, delta * 8));
       }
-      robotGroup.current.position.y = FLOOR + (robot.phase === "idle" ? 0 : Math.sin(performance.now() * 0.024) * 0.018);
+      robotGroup.current.position.y = FLOOR + (robot.route.length || robot.phase === "collecting" ? Math.sin(performance.now() * 0.024) * 0.018 : 0);
     }
-    if (brushGroup.current && robot.phase !== "idle") brushGroup.current.rotation.y += delta * 14;
+    if (brushGroup.current && (robot.route.length || robot.phase === "collecting")) brushGroup.current.rotation.y += delta * 14;
 
     const pending = items.filter((item) => item.phase !== "basket").length;
     const collected = items.length - pending;
