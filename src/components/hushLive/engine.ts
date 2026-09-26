@@ -90,7 +90,7 @@ export const LEVELS: {
 export const TASK_NAMES: Record<Task, string> = {
   "cat-food": "给猫碗添一勺猫粮",
   "cat-litter": "把猫砂盆铲干净",
-  cook: "给恋人炒一碗蛋炒饭",
+  cook: "给恋人做一份热乎晚饭",
   leisure: "在客厅放松一会儿",
   charger: "拿回充电器",
   food: "把晚饭摆到直播桌上",
@@ -384,9 +384,9 @@ function availableAction(
   if (spot === "kitchen" && h && s.daily?.meal === "noodles") {
     if (h.noodles === "sealed" && s.carry === "food") return { key: "boil-water", label: "放下桶面，加水烧一壶热水", seconds: 0.8, noise: 3 };
     if (h.noodles === "hot" && !s.carry) return { key: "pour-noodles", label: "撕盖放调料，倒热水泡面", seconds: 1.2, noise: 2 };
-    if (h.noodles === "ready" && !s.carry) return { key: "take-noodles", label: "掀盖搅拌，拿起泡好的面", seconds: 0.5, noise: 1 };
+    if (["steeping", "ready"].includes(h.noodles) && !s.carry) return { key: "take-noodles", label: "拿起泡面，端到直播桌", seconds: 0.5, noise: 1 };
   }
-  if (spot === "kitchen" && pending("cook") && !s.carry) return { key: "cook", label: "开始炒蛋炒饭", seconds: 0.2, noise: 0 };
+  if (spot === "kitchen" && pending("cook") && !s.carry) return { key: "cook", label: `开始做${mealOf(s).name}`, seconds: 0.2, noise: 0 };
   if (spot === "sofa" && s.daily?.stage === "home" && !s.carry && s.tasks.every(t => s.done.includes(t))) return { key: "sleep", label: `在沙发上小睡，等${skinOf(s.skin).name}下播`, seconds: 0.3, noise: 0 };
   if (spot === "sofa" && (pending("leisure") || noodlesWaiting(s) || onBreak(s)) && !s.carry) return { key: "leisure", label: "坐下看视频 / 玩游戏", seconds: 0.2, noise: 0 };
 
@@ -406,7 +406,7 @@ function availableAction(
   if (spot === "charging" && s.carry === "charger") return { key: "charger", label: "放到扶手充电托盘", seconds: 0.45, noise: 1 };
   if (spot === "table" && s.carry === "food" && (s.daily?.meal !== "noodles" || h?.noodles === "carrying")) return {
       key: "food",
-      label: s.daily ? `把${s.daily.homemade ? "亲手炒的蛋炒饭" : mealOf(s).name}摆好` : "把饭盒和饮料摆到桌上",
+      label: s.daily ? `把${mealOf(s).name}摆好` : "把饭盒和饮料摆到桌上",
       seconds: 1.0,
       noise: 19,
     };
@@ -493,6 +493,7 @@ function completeAction(s: Game, key: string) {
     if (key === "food" && s.daily) s.message = onBreak(s)
       ? `你把${mealOf(s).name}和餐具摆到餐垫上。${skinOf(s.skin).name}还在离席，等TA回来就能吃。`
       : `你把${mealOf(s).name}摆好：${mealOf(s).note} ${skinOf(s.skin).name}笑着在桌下勾了勾你的手。`;
+    if (key === "food" && s.daily?.meal === "noodles" && s.daily.household.timer > 0) s.message = "泡面和叉子放好，盖子先盖着。TA焖好了自己吃，你可以继续忙或休息。";
     if ((key === "hug" || key === "kiss") && s.visit) s.visit.remaining = 2;
   }
 }

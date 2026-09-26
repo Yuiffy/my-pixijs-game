@@ -4,8 +4,9 @@ import { useLayoutEffect, useRef } from "react";
 import { skinOf } from "./skins";
 import { householdStatus } from "./household";
 import type { Game } from "./engine";
-import { chooseGoodnight, finishLeisure, replyQuietly } from "./daily";
+import { arrivalAction, activityInput, restartPractice, chooseGoodnight, finishLeisure, replyQuietly } from "./daily";
 import MiniGame from "./MiniGame";
+import TapButton from "./TapButton";
 import styles from "./daily.module.css";
 
 export default function DailyPanel({
@@ -41,6 +42,17 @@ export default function DailyPanel({
     fn();
     onChange();
   };
+  if (d.arrival !== "done" && d.arrival !== "locked") {
+    const intro = d.arrival === "intro";
+    return (
+<section className={styles.arrival} aria-label="下班回家">
+      <small>{d.arrival === "inside" ? "21:36 / 家里的玄关" : "21:36 / 门外的走廊"}</small>
+      <h2>{intro ? "刚下班回到家，悄悄进去…" : d.arrival === "unlocked" ? "锁开了，轻轻推开门。" : d.arrival === "open" ? "门开了，回家吧。" : d.arrival === "entering" ? "放轻脚步…" : "进屋了，别忘了轻轻关门。"}</h2>
+      <p>{intro ? `门里传来${skinOf(s.skin).name}和观众聊天的声音。把钥匙拿稳，别惊动正在直播的TA。` : s.message}</p>
+      {d.arrival !== "entering" && <TapButton onActivate={() => change(() => arrivalAction(s))}>{intro ? "拿出钥匙，轻轻开锁" : d.arrival === "unlocked" ? "扶住门把，轻轻开门" : d.arrival === "open" ? "悄悄走进家里" : "轻轻关上大门"}</TapButton>}
+    </section>
+);
+  }
   if (d.stage === "sleep") return (
       <div className={styles.sleep} role="status">
         <small>00:48 — 02:13</small>
@@ -77,15 +89,15 @@ export default function DailyPanel({
     );
   if (d.panel === "lock" || d.panel === "cook") return (
       <section
-        className={styles.panel}
-        aria-label={d.panel === "cook" ? "蛋炒饭小游戏" : "轻声开门小游戏"}
+        className={`${styles.panel} ${d.panel === "cook" ? styles.cookingPanel : ""}`}
+        aria-label={d.panel === "cook" ? "厨房料理小游戏" : "轻声开门小游戏"}
       >
         <small>
           {d.panel === "cook"
             ? "HOME KITCHEN / 为你做一顿饭"
             : `WELCOME HOME / ${skinOf(s.skin).name}已经开播了`}
         </small>
-        <MiniGame game={s} onChange={onChange} />
+        <MiniGame mini={d.mini} onInput={(input, x, y) => change(() => activityInput(s, input, x, y))} onRestart={() => change(() => restartPractice(s))} />
       </section>
     );
   if (d.panel !== "leisure") return null;
@@ -131,7 +143,7 @@ export default function DailyPanel({
           <p>猫猫频道 · 今天也要好好休息</p>
         </div>
       ) : (
-        <MiniGame game={s} onChange={onChange} />
+        <MiniGame mini={d.mini} onInput={(input, x, y) => change(() => activityInput(s, input, x, y))} onRestart={() => change(() => restartPractice(s))} />
       )}
       <label htmlFor="daily-volume" className={styles.volume}>
         外放音量 {d.volume}%

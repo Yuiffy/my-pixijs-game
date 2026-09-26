@@ -16,7 +16,7 @@ const {
   SPOTS,
 } = e;
 // Unit regressions below start just after arrival; full journey tests use the real factory.
-const createGame = (...args) => { const s = e.createGame(...args); if (s.daily) s.daily.panel = null; return s; };
+const createGame = (...args) => { const s = e.createGame(...args); if (s.daily) { s.daily.panel = null; s.daily.arrival = "done"; s.player.y = Math.min(500, s.player.y); } return s; };
 const advance = (s, seconds, input = emptyInput()) => step(s, seconds, input);
 const hold = (s, seconds = action(s, s.target ?? e.nearest(s)).seconds + 0.08) => {
   const a = action(s, s.target ?? e.nearest(s));
@@ -60,7 +60,7 @@ function cover(s) {
 }
 function completeNight(s, choice = 'together') {
   for (let i = 0; i < 120 && s.phase === 'playing'; i++) {
-    if (s.daily?.panel === 'lock' || s.daily?.panel === 'cook') { timingWin(s); continue; }
+    if ((s.daily && s.daily.arrival !== 'done') || s.daily?.panel === 'cook') { timingWin(s); continue; }
     if (s.daily?.panel === 'leisure') { s.daily.volume = 15; advance(s, 9); daily.finishLeisure(s); continue; }
     if (s.daily?.stage === 'sleep') { advance(s, 3.1); continue; }
     if (s.daily?.panel === 'story') { daily.chooseGoodnight(s, choice); advance(s, .1); continue; }
@@ -240,7 +240,7 @@ test('following current objectives completes every integrated night and all afte
   const memories = new Set();
   for (let level = 1; level <= 5; level++) for (const seed of [1, 42, 99]) for (const choice of ['care', 'together']) {
     const s = e.createGame(level, seed, level); s.phase = 'playing';
-    assert.equal(s.daily.panel, s.daily.household.arrival === 'outside' ? 'lock' : null); completeNight(s, choice);
+    assert.equal(s.daily.arrival, s.daily.household.arrival === 'outside' ? 'intro' : 'done'); completeNight(s, choice);
     assert.equal(s.won, true, JSON.stringify(s)); memories.add(s.daily.memory);
     assert.ok(e.record(e.freshSave(), s).unlocked >= (level < 5 ? level + 1 : 0));
   }
@@ -427,10 +427,10 @@ test('arrival minigames block movement, survive mistakes and freeze while paused
   e.togglePause(s); const mini = structuredClone(s.daily.mini); advance(s, 5); daily.activityInput(s,'turn',40); assert.deepEqual(s.daily.mini,mini);
   e.togglePause(s); timingWin(s); assert.equal(s.phase, 'playing');
 });
-test('all seven meals and homemade rice run from entry to after-stream choices using real routes', () => {
+test('all meals and homemade rice run from entry to after-stream choices using real routes', () => {
   const endings = new Set();
   for (const homemade of [false, true]) for (const [index, meal] of daily.MEALS.entries()) {
-    const s = dailyStart(homemade, index || 7); timingWin(s);
+    const s = dailyStart(homemade, index || daily.MEALS.length); timingWin(s);
     if (homemade) { walk(s, 'kitchen'); hold(s); assert.equal(s.daily.panel, 'cook'); timingWin(s); assert.ok(s.done.includes('cook')); }
     else { walk(s, 'entry'); hold(s); }
     assert.equal(s.carry, 'food');
@@ -459,7 +459,7 @@ test('all seven meals and homemade rice run from entry to after-stream choices u
     daily.chooseGoodnight(s, choice); daily.chooseGoodnight(s, choice); assert.equal(s.love, beforeChoice + 25);
     advance(s, .05); assert.ok(s.won); assert.ok(s.daily.memory.length > 20); endings.add(s.daily.memory);
     assert.equal(e.record(e.freshSave(), s).unlocked, s.level + 1);
-    assert.equal(s.daily.meal, homemade ? 'rice' : meal.id);
+    assert.equal(s.daily.meal, homemade ? (s.daily.messages[0].text.includes('骰子牛') ? 'beef' : 'rice') : meal.id);
   }
   assert.equal(endings.size, 4, 'both choices in each after-stream scene must have a reachable distinct ending');
 });
@@ -508,7 +508,7 @@ test('each costume names the same partner throughout objectives and all aftermat
       const s=e.createGame(1,1,1,skin);s.phase='playing';
       assert.ok(s.message.includes(name));assert.ok(objective(s).title.includes(name));
       assert.equal(s.daily.messages[0].from,'partner');
-      s.daily.stage='after';s.daily.after=after;s.daily.panel=null;
+      s.daily.stage='after';s.daily.after=after;s.daily.panel=null;s.daily.arrival='done';
       s.player={...e.partnerPose(s)};
       assert.ok(e.action(s,'partner').label.includes(name));
       daily.discoverDaily(s);
@@ -521,27 +521,27 @@ test('each costume names the same partner throughout objectives and all aftermat
   }
 });
 
-test('encore independently varies home starts, seven deliveries, homemade meals and task order', () => {
+test('encore independently varies home starts, varied deliveries, homemade meals and task order', () => {
   const arrivals = new Map(), meals = new Map(), plans = new Set(); let homemade = 0;
   for (let seed=1; seed<=3000; seed++) {
     const s = e.createGame(5,seed,5), d=s.daily;
     assert.deepEqual(s,e.createGame(5,seed,5));
     arrivals.set(d.household.arrival,(arrivals.get(d.household.arrival)||0)+1);
-    assert.equal(d.panel,d.household.arrival==='outside'?'lock':null);
-    assert.ok(nav.walkable(s.player,false));
+    assert.equal(d.arrival,d.household.arrival==='outside'?'intro':'done');
+    if(d.household.arrival==='outside')assert.ok(s.player.y>532);else assert.ok(nav.walkable(s.player,false));
     if(d.homemade) homemade++; else meals.set(d.meal,(meals.get(d.meal)||0)+1);
     plans.add(s.tasks.join(','));
     assert.equal(new Set(s.tasks).size,s.tasks.length);
     if(d.homemade)assert.ok(s.tasks.indexOf('cook')<s.tasks.indexOf('food'));
   }
-  assert.equal(arrivals.size,3);assert.equal(meals.size,7);assert.ok(plans.size>30);
+  assert.equal(arrivals.size,3);assert.equal(meals.size,daily.MEALS.length);assert.ok(plans.size>30);
   assert.ok([...arrivals.values()].every(n=>n>700));assert.ok([...meals.values()].every(n=>n>200));
   assert.ok(homemade>450&&homemade<750);
 });
 
-test('bucket noodles require boiling and steeping, with hands free for cat chores and paused timers', () => {
+test('bucket noodles can be delivered while steeping, leaving the host to wait without blocking tasks', () => {
   const seed=Array.from({length:1000},(_,i)=>i+1).find(n=>{const s=e.createGame(5,n,5);return s.daily.meal==='noodles'&&s.tasks.includes('cat-food')&&s.tasks.includes('cat-litter');});
-  const s=e.createGame(5,seed,5);s.phase='playing';if(s.daily.panel==='lock')timingWin(s);
+  const s=e.createGame(5,seed,5);s.phase='playing';if(s.daily.arrival!=='done')timingWin(s);
   walk(s,'entry');hold(s);assert.equal(s.daily.household.noodles,'sealed');
   walk(s,'table');assert.equal(action(s,'table').key,'');assert.ok(!s.done.includes('food'));
   walk(s,'kitchen');hold(s);assert.equal(s.daily.household.noodles,'boiling');assert.equal(s.carry,null);
@@ -549,11 +549,15 @@ test('bucket noodles require boiling and steeping, with hands free for cat chore
   walk(s,'cat-bowl');hold(s);assert.ok(s.done.includes('cat-food'));assert.ok(!s.done.includes('food'));
   while(s.daily.household.noodles==='boiling')advance(s,.1);
   walk(s,'kitchen');hold(s);assert.equal(s.daily.household.noodles,'steeping');assert.equal(s.carry,null);
+  assert.equal(objective(s).key,'take-noodles');
+  hold(s);assert.equal(s.daily.household.noodles,'carrying');assert.equal(s.carry,'food');assert.ok(s.daily.household.timer>0);
+  e.togglePause(s);const remaining=s.daily.household.timer;advance(s,30);assert.equal(s.daily.household.timer,remaining);e.togglePause(s);
+  walk(s,'table');assert.equal(action(s,'table').key,'food');assert.ok(s.daily.household.timer>0,'delivery must not wait for steeping');
+  hold(s);assert.equal(s.daily.household.noodles,'served');assert.ok(s.done.includes('food'));assert.ok(s.daily.household.timer>0);
+  assert.match(s.message,/自己吃/);assert.notEqual(objective(s).key,'take-noodles');
+  const love=s.love;advance(s,11);assert.equal(s.daily.household.timer,0);assert.equal(s.daily.household.noodles,'served');assert.equal(s.love,love);
   walk(s,'cat-litter');for(let i=0;i<3;i++)hold(s);assert.equal(s.daily.household.cat.scoops,3);assert.ok(s.done.includes('cat-litter'));
-  while(s.daily.household.noodles==='steeping')advance(s,.1);
-  walk(s,'kitchen');hold(s);assert.equal(s.daily.household.noodles,'carrying');assert.equal(s.carry,'food');
-  walk(s,'table');hold(s);assert.equal(s.daily.household.noodles,'served');assert.ok(s.done.includes('food'));
-  if(['out','inside','back'].includes(s.daily.household.rest.stage))assert.ok(!s.message.includes('勾了勾你的手'));
+
 });
 
 test('cats wander around furniture, sleep, eat after feeding, and cleanup cannot farm rewards', () => {
@@ -589,7 +593,7 @@ test('random nights with changing food, cat chores and bathroom events can all b
     meals.add(s.daily.meal);starts.add(s.daily.household.arrival);
     if(s.daily.meal==='noodles')assert.equal(s.daily.household.noodles,'served');
   }
-  assert.equal(meals.size,7);assert.equal(starts.size,3);
+  assert.equal(meals.size,daily.MEALS.length);assert.equal(starts.size,3);
 });
 
 
@@ -618,3 +622,17 @@ test('pause releases held minigame inputs and resume never fires by itself', () 
   e.togglePause(r.game);advance(r.game,1);assert.equal(r.game.daily.mini.shots,shots);
   daily.activityInput(r.game,'press');e.togglePause(r.game);daily.activityInput(r.game,'release');assert.equal(r.game.daily.mini.held,false);
 });
+
+ test('homecoming stays outside until unlock, open, enter and close, and pause freezes entry',()=>{
+ const s=dailyStart(); assert.equal(s.daily.arrival,'intro');assert.ok(s.player.y>532);
+ daily.arrivalAction(s);assert.equal(s.daily.panel,'lock');daily.arrivalAction(s);assert.equal(s.daily.arrival,'locked');
+ const m=s.daily.mini; for(let n=0;n<1000&&!m.won;n++){
+ if(m.kind==='dial'){if(Math.abs(m.angle-m.targets[m.score])<=10&&m.travel>=10)daily.activityInput(s,'press');else daily.activityInput(s,'turn',m.direction*5);}
+ else if(m.kind==='pick'){daily.activityInput(s,'release');daily.activityInput(s,'set',m.targets[m.score]);daily.activityInput(s,'press');advance(s,.7);}
+ else {daily.activityInput(s,'set',m.targets[m.score]);daily.activityInput(s,'press');}advance(s,.025);
+ }
+ assert.equal(s.daily.arrival,'unlocked');assert.ok(s.player.y>532);advance(s,1,{...emptyInput(),y:-1});assert.ok(s.player.y>532);
+ daily.arrivalAction(s);assert.equal(s.daily.arrival,'open');daily.arrivalAction(s);advance(s,.5);assert.ok(s.player.y<585&&s.player.y>500);
+ e.togglePause(s);const y=s.player.y;advance(s,5);daily.arrivalAction(s);assert.equal(s.player.y,y);e.togglePause(s);
+ advance(s,1);assert.equal(s.daily.arrival,'inside');assert.ok(nav.walkable(s.player,false));daily.arrivalAction(s);assert.equal(s.daily.arrival,'done');
+ });

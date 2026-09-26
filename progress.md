@@ -3148,3 +3148,17 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 扩展既有接水并行测试，11/11 规则通过；目标源码 ESLint 通过。隐藏静音系统 Chrome 实际点击／触屏走过桌面与320px六状态，覆盖接水中上厕所、暂停刷新续接，DOM 与文本状态一致、错误为空。12图像素检查及逐张目检完成；修正水满文案后生产整条流程再次通过，2张最终标签图像素检查及目检通过，tmp/pre-stream-water-label-verify/report.json。一次 networkidle 等待超时后改为等待页面 DOM 与游戏就绪，复跑成功。
 - 复用 pre-stream-publish 工作树，快进合入最新 origin/master 941a8e8；本游戏上一轮 OP 与转场此前已推送。合入主线后顺序完整 check／build 均通过，55页成功生成，保留 Next ESLint／类型检查，仅既有 RPG 警告；构建的临时 tsconfig include 已收回。
 - 五份源码／测试／文档同步主目录，逐份 SHA256 相同，tmp/pre-stream-water-source-validation.json；3868 HTTP200，共享技能客户端静音 Chrome 移动冒烟通过，截图非黑且已目检、文本状态对应，无错误日志。独立3891验证服务已停止，原试玩服务保留；其他游戏及共享目录 HEAD／索引未改动。
+
+### 2026-09-26 · Instant noodle delivery and standalone practice
+
+- Filled noodle cups can be carried and served before steeping completes. Steeping continues in transit/on the desk; delivery completes the task, and the cup opens when ready.
+- Six unrestricted main-menu practice entries share the existing minigame rules, with replay, switching, pause/blur release and return, without affecting chapter/save progress.
+- 49 rules and 18 production browser checks passed; desktop/320px touch, real RAF, pause, saves and noodle delivery verified silently. Full check then build passed.
+
+### 2026-09-26 · Direct 3D cooking and arriving outside the front door
+
+- Mouse movement directly moves/tilts a 3D wok; vertical/diagonal flicks toss beef. Six distinct faces must each cook; beef has meat texture rather than dice pips. Eggs and rice slide inside the wok and coat through contact and motion. Touch and keyboard remain supported.
+- Dial locks accept a visible ±18-degree range and confirm on release; pick and pin puzzles use direct surface gestures. Arrival starts outside with an introductory prompt, followed by unlock, open, enter and close stages with pause-aware door/camera motion.
+- Touch activation ignores orphan clicks when a completed puzzle disappears, while replay and arrival buttons accept normal taps. Prepared noodles can be delivered immediately regardless of task order.
+- Validation: 53 rule tests; six standalone games on desktop/touch, save isolation, noodle delivery and pause; final production daily suite passed 13 checks with no browser errors and 14 inspected screenshots. Prior full check→build passed with Next lint/types enabled. All browser tests were hidden and muted, with speech disabled.
+- Publish gate after syncing origin/master 7b6c6f2: targeted ESLint and sequential full check→build passed (55 pages, Next lint/type checks enabled); all 25 Hush source files match the tested preview.

@@ -576,6 +576,7 @@ function Room({
     [],
   );
   const door = useRef<THREE.Group>(null);
+  const frontDoor = useRef<THREE.Group>(null);
   const bag = useRef<THREE.Group>(null);
   const charger = useRef<THREE.Group>(null);
   const delivered = useRef<THREE.Group>(null);
@@ -619,6 +620,7 @@ function Room({
         ? Math.min(0.5, Math.max(0, r.elapsedFrame - lastAnimationTime.current))
         : dt;
     lastAnimationTime.current = r.elapsedFrame;
+    if (frontDoor.current) frontDoor.current.rotation.y = THREE.MathUtils.damp(frontDoor.current.rotation.y, ["open", "entering", "inside"].includes(r.game.daily?.arrival ?? "") ? -Math.PI / 2 : 0, 7, motionDt);
     if (door.current) door.current.rotation.y = THREE.MathUtils.damp(
         door.current.rotation.y,
         r.game.doorClosed ? 0 : Math.PI / 2,
@@ -713,7 +715,20 @@ function Room({
         map={textures.wood}
       />
       <Box at={[0, 1.4, -2.94]} size={[12.3, 2.8, 0.18]} color="#ebe3cf" />
-      <Box at={[0, 1.4, 2.97]} size={[12.3, 2.8, 0.15]} color="#e9dec7" />
+      <Box at={[-5.82, 1.4, 2.97]} size={[0.66, 2.8, 0.15]} color="#e9dec7" />
+      <Box at={[0.92, 1.4, 2.97]} size={[10.46, 2.8, 0.15]} color="#e9dec7" />
+      <Box at={[-4.87, 2.62, 2.97]} size={[1.24, 0.36, 0.15]} color="#e9dec7" />
+      <Box at={[-4.87, -0.1, 4.15]} size={[3, 0.2, 2.6]} color="#b5b7ac" />
+      <Box at={[-6.35, 1.4, 4.15]} size={[0.12, 2.8, 2.6]} color="#c6cfc3" />
+      <Box at={[-3.39, 1.4, 4.15]} size={[0.12, 2.8, 2.6]} color="#c6cfc3" />
+      <Box at={[-4.87, 0.008, 3.25]} size={[0.94, 0.02, 0.4]} color="#807c5e" />
+      <group ref={frontDoor} position={[-5.46, 0, 2.97]}>
+        <Box at={[0.59, 1.2, 0]} size={[1.18, 2.4, 0.08]} color="#8c7559" />
+        <Box at={[0.59, 1.35, 0.047]} size={[0.92, 1.5, 0.02]} color="#a28a6b" />
+        <Box at={[1, 1.04, 0.09]} size={[0.19, 0.04, 0.04]} color="#c6b98d" />
+        <Box at={[1, 0.93, 0.058]} size={[0.07, 0.14, 0.024]} color="#c6b98d" />
+        <Ball at={[0.6, 1.68, 0.055]} radius={0.025} color="#343d36" />
+      </group>
       <Box at={[-6.08, 1.4, 0]} size={[0.16, 2.8, 6]} color="#d8ddcb" />
       <Box at={[6.02, 1.4, 0]} size={[0.16, 2.8, 6]} color="#e1c9bb" />
       <Box

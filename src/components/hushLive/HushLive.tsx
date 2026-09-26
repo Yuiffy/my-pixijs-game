@@ -37,6 +37,9 @@ import DeltaGame from "./DeltaGame";
 import { SkinPortrait } from "./SkinDetails";
 import { SKINS, skinOf, SkinId } from "./skins";
 import DailyPanel from "./DailyPanel";
+import TapButton from "./TapButton";
+import MiniGame, { MINI_TITLES } from "./MiniGame";
+import { createMini, miniInput, stepMini, Mini, MiniKind } from "./minigames";
 import { dailyModal, mealOf, offAir } from "./daily";
 import { householdStatus, onBreak } from "./household";
 
@@ -90,6 +93,9 @@ export default function HushLive() {
   const actionPointer = useRef<number | null>(null);
   const seed = useRef(1);
   const lastPaint = useRef(0);
+  const practice = useRef<Mini | null>(null);
+  const practicePaused = useRef(false);
+  const practiceSeed = useRef(1);
 
   const refresh = useCallback(
     () => setView({
@@ -113,6 +119,13 @@ export default function HushLive() {
   const tick = useCallback(
     (dt: number) => {
       const { current } = runtime;
+      if (practice.current) {
+        if (!practicePaused.current) stepMini(practice.current, dt);
+        if (current.manual || performance.now() - lastPaint.current > 70) {
+          refresh(); lastPaint.current = performance.now();
+        }
+        return;
+      }
       const before = current.game.phase;
       advance3D(current, dt);
       if (before === "playing" && current.game.phase === "result") {
@@ -143,6 +156,7 @@ export default function HushLive() {
     refresh();
   }, [refresh]);
   const onLost = useCallback(() => {
+    if (practice.current) { practice.current.held = false; practicePaused.current = true; }
     pause3D(runtime.current);
     setSceneError(true);
     setSceneReady(false);
@@ -150,6 +164,12 @@ export default function HushLive() {
   }, [refresh]);
   const pause = useCallback(() => {
     const { current } = runtime;
+    if (practice.current) {
+      practice.current.held = false;
+      practicePaused.current = !practicePaused.current;
+      refresh();
+      return;
+    }
     if (current.game.phase === "playing") {
       pause3D(current);
       if (document.pointerLockElement) document.exitPointerLock();
@@ -185,11 +205,14 @@ export default function HushLive() {
       current.save.unlocked,
       current.save.skin,
     );
+    if (current.game.daily?.arrival !== undefined && current.game.daily.arrival !== "done") current.yaw = 0;
     setSave(current.save);
     refresh();
     const target = window as GameWindow;
     target.render_game_to_text = () => JSON.stringify({
         ...text3D(current),
+        practice: practice.current,
+        practicePaused: practicePaused.current,
         objective: objective(current.game),
         broadcast: broadcast(current.game),
       });
@@ -198,6 +221,7 @@ export default function HushLive() {
       if (Number.isFinite(ms) && ms >= 0 && ms <= 300000) tick(ms / 1000);
     };
     const blur = () => {
+      if (practice.current) { practice.current.held = false; practicePaused.current = true; }
       pause3D(current);
       lookDrag.current = null;
       stickPointer.current = null;
@@ -232,7 +256,7 @@ export default function HushLive() {
       ) event.preventDefault();
       if (event.repeat && ["q", "m", "p", "escape", "f", "tab"].includes(key)) return;
       if (key === "escape") {
-        if (current.game.phase === "playing") pause();
+        if (current.game.phase === "playing" || practice.current) pause();
         return;
       }
       if (key === "p") {
@@ -305,12 +329,27 @@ export default function HushLive() {
     clearControls(r);
     unlock();
     r.game = createGame(level, nextSeed, r.save.unlocked, r.save.skin);
-    r.yaw = -1.25;
+    r.yaw = r.game.daily?.arrival !== undefined && r.game.daily.arrival !== "done" ? 0 : -1.25;
     r.pitch = -0.04;
     r.focus = null;
     seed.current = nextSeed;
     setShareText("");
     setJournal(false);
+    refresh();
+  };
+  const startPractice = (kind: MiniKind) => {
+    clearControls(r);
+    unlock();
+    practiceSeed.current += 1;
+    practice.current = createMini(kind, practiceSeed.current);
+    practicePaused.current = false;
+    refresh();
+  };
+  const closePractice = () => {
+    if (practice.current) practice.current.held = false;
+    practice.current = null;
+    practicePaused.current = false;
+    clearControls(r);
     refresh();
   };
   const goGoal = () => {
@@ -336,6 +375,10 @@ export default function HushLive() {
     }
   };
   const g = view;
+  const mini = practice.current;
+  const practiceChoices = (["toss", "eggs", "dial", "pick", "pins", "recoil"] as MiniKind[]).map(kind => (
+    <button key={kind} data-practice={kind} aria-pressed={mini?.kind === kind} onClick={() => startPractice(kind)}>{MINI_TITLES[kind]}</button>
+  ));
   const goal = objective(g);
   const a = action(g, r.focus);
   const b = broadcast(g);
@@ -423,7 +466,7 @@ export default function HushLive() {
           >
             声音 {sound ? "开" : "关"}
           </button>
-          {playing && <button onClick={pause}>暂停 Ⅱ</button>}
+          {(playing || mini) && <button onClick={pause}>{mini && practicePaused.current ? "继续练习 ▶" : "暂停 Ⅱ"}</button>}
         </div>
       </nav>
       {sceneError ? (
@@ -445,6 +488,25 @@ export default function HushLive() {
           >
             重新载入3D画面 →
           </button>
+        </section>
+      ) : mini ? (
+        <section className={styles.practicePanel} aria-label="小游戏自由练习">
+          <header><small>随手玩一局</small><button onClick={closePractice}>返回主界面</button></header>
+          <p className={styles.practiceNote}>随时重来，按自己的节奏玩。不会改变夜晚进度。</p>
+          {practicePaused.current ? (
+            <div className={styles.practicePaused}><h2>歇一会儿。</h2><button className={styles.primary} onClick={pause}>继续练习 ▶</button></div>
+          ) : (
+<MiniGame
+mini={mini}
+onInput={(input, x, y) => {
+            if (!practicePaused.current || input === "release") miniInput(mini, input, x, y);
+            refresh();
+          }}
+onRestart={() => startPractice(mini.kind)} />
+)}
+          {mini.won && <p role="status" className={styles.practiceResult}>{mini.kind === "recoil" ? `一梭打完 · 命中 ${mini.score}/24` : mini.kind === "toss" ? "六面煎熟，骰子牛出锅！" : mini.kind === "eggs" ? "粒粒裹蛋，蛋炒饭出锅！" : "咔哒，门锁打开了。"}</p>}
+          <div className={styles.practiceActions}><TapButton onActivate={() => startPractice(mini.kind)}>再来一局 ↻</TapButton><button onClick={closePractice}>玩够了，回家 →</button></div>
+          <details className={styles.practiceSwitch}><summary>换个小游戏</summary><div className={styles.arcadeChoices}>{practiceChoices}</div></details>
         </section>
       ) : ready ? (
         <section className={styles.menu}>
@@ -473,7 +535,7 @@ export default function HushLive() {
                   ? `${g.daily?.household.arrival === "outside" ? "今晚下班回家，先轻轻开门。" : g.daily?.household.arrival === "sofa" ? "今晚本来就在家，从沙发旁开始。" : "今晚在家打游戏，从电脑旁开始。"} 猫咪、晚饭和临时离席，每晚有不同的小事。`
                   : LEVELS[g.level].subtitle}
             </p>
-            {g.daily && <small>今晚的晚饭：{g.daily.homemade ? "亲手炒的蛋炒饭" : mealOf(g).name} · 忙完回沙发，故事会继续。</small>}
+            {g.daily && <small>今晚的晚饭：{`${g.daily.homemade ? "亲手做的" : ""}${mealOf(g).name}`} · 忙完回沙发，故事会继续。</small>}
             {g.level === 5 && <button data-reroll-night onClick={() => selectNight(5, (g.seed + 7919) % 4294967296)}>换一个日常夜晚 ↻</button>}
           </div>
           <fieldset className={styles.skinPicker}>
@@ -496,6 +558,11 @@ export default function HushLive() {
           >
             {sceneReady ? g.daily && g.daily.household.arrival !== "outside" ? "开始今晚的日常 →" : "轻轻走进家门 →" : "正在点亮小公寓…"}
           </button>
+          <section className={styles.arcade} aria-label="单独玩小游戏">
+            <h2>想先玩点什么？</h2>
+            <p>不用等随机事件，点一个直接开始。</p>
+            <div className={styles.arcadeChoices}>{practiceChoices}</div>
+          </section>
           <p className={`${styles.instructions} ${styles.desktopOnly}`}>
             WASD 走动 · 鼠标转头 · 看向物品，轻按 E 拿取
             <br />

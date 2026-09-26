@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { turnedRotation } from "./minigames";
 import { MEALS, offAir } from "./daily";
 import type { Runtime3D } from "./runtime3d";
 import { NoodleCup } from "./HouseholdScene";
@@ -124,6 +125,7 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
                   })}
                 </>
               )}
+              {m.id === "beef" && [0, 1, 2, 3, 4].map(i => <Cube key={i} p={[Math.sin(i * 2.4) * 0.12, 0.105, Math.cos(i * 2.4) * 0.12]} size={[0.075, 0.075, 0.075]} color="#895036" />)}
               {m.id === "bbq" &&
                 [0, 1, 2].map((i) => (
                   <group key={i} position={[0, 0.08, -0.11 + i * 0.11]}>
@@ -211,7 +213,7 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
 export default function DailyScene({ runtime: r }: { runtime: Runtime3D }) {
   const spatula = useRef<THREE.Group>(null);
   const wok = useRef<THREE.Group>(null);
-  const diceRice = useRef<THREE.Group>(null);
+  const beef = useRef<THREE.Group>(null);
   const lamp = useRef<THREE.PointLight>(null);
   const steam = useRef<THREE.Group>(null);
   useFrame(() => {
@@ -224,11 +226,11 @@ export default function DailyScene({ runtime: r }: { runtime: Runtime3D }) {
       wok.current.position.x = mini ? (mini.pan - 50) * 0.006 : 0;
       wok.current.position.y = mini?.kind === "toss" && mini.flight ? Math.max(0, 1 - mini.spin / 110) * 0.08 : 0;
     }
-    if (diceRice.current) {
-      diceRice.current.visible = mini?.kind === "toss";
+    if (beef.current) {
+      beef.current.visible = mini?.kind === "toss";
       if (mini) {
-        diceRice.current.position.set(0.2 + ((mini.flight ? mini.x : mini.pan) - 50) * 0.006, 1.02 + mini.y * 0.006, 0);
-        diceRice.current.rotation.set(mini.spin * 0.017, mini.spin * 0.01, mini.spin * 0.014);
+        beef.current.position.set(0.2 + ((mini.flight ? mini.x : mini.pan) - 50) * 0.006, 1.02 + mini.y * 0.006, 0);
+        beef.current.quaternion.fromArray(mini.flight ? turnedRotation(mini.fromRotation, mini.turn, mini.spin * (Math.PI / 180)) : mini.rotation);
       }
     }
     if (spatula.current) spatula.current.rotation.z = cooking ? Math.sin(t * 4) * 0.3 : 0.3;
@@ -253,14 +255,8 @@ export default function DailyScene({ runtime: r }: { runtime: Runtime3D }) {
       </mesh>
       <Cube p={[0.56, 0.93, 0]} size={[0.32, 0.03, 0.045]} color="#92714e" />
       </group>
-      <group ref={diceRice} visible={false}>
-        <Cube p={[0, 0, 0]} size={[0.16, 0.16, 0.16]} color="#e4bd60" />
-        {[-1, 0, 1].map(i => (
-<group key={i}>
-          <Cube p={[i * 0.044, 0.081, i * 0.044]} size={[0.02, 0.004, 0.02]} color="#647e45" />
-          <Cube p={[i * 0.044, -i * 0.044, 0.081]} size={[0.02, 0.02, 0.004]} color="#647e45" />
-        </group>
-))}
+      <group ref={beef} visible={false}>
+        <Cube p={[0, 0, 0]} size={[0.16, 0.16, 0.16]} color="#985438" />
       </group>
       <group ref={spatula} position={[0.23, 0.95, 0]}>
         <Cube p={[0, 0.12, 0]} size={[0.03, 0.28, 0.025]} color="#c69e6e" />

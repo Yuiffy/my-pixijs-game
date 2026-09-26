@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { nextTurn } from './helpers/hush-minigame-pilot.mjs';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
-const {createMini,lockKind,cookKind,miniInput:input,stepMini:step}=await loadTypescriptModule('src/components/hushLive/minigames.ts');
+const {bottomFace,turnedRotation,dialReady,createMini,lockKind,cookKind,miniInput:input,stepMini:step}=await loadTypescriptModule('src/components/hushLive/minigames.ts');
 
 test('seeded nights cover three locks and two cooking modes independently',()=>{
   const locks=new Set(),cook=new Set(),pairs=new Set();
@@ -28,16 +29,44 @@ test('pins need shear-line alignment and retain earlier latched pins',()=>{
   const m=createMini('pins',2);input(m,'set',0);input(m,'press');assert.equal(m.score,0);step(m,.5);
   for(let i=0;i<3;i++){input(m,'set',m.targets[i]);input(m,'press');assert.equal(m.score,i+1);}assert.equal(m.won,true);
 });
-test('toss has flight, rotation and a catch window; extra toss input cannot reset airborne rice',()=>{
-  const m=createMini('toss',7);input(m,'toss',.6);step(m,.2);assert.ok(m.y>0&&m.spin>0);const vy=m.vy;input(m,'toss',1);assert.equal(m.vy,vy);
-  input(m,'pan',m.vx>0?8:92);step(m,2);assert.equal(m.score,0);assert.equal(m.misses,1);
-  step(m,.5);for(let n=0;n<1500&&!m.won;n++){if(!m.flight)input(m,'toss',.6);input(m,'pan',m.x);step(m,.025);}
-  assert.equal(m.won,true);assert.equal(m.score,3);
+test('beef requires six distinct cooked faces; flight and repeat faces do not add heat',()=>{
+  const m=createMini('toss',7);step(m,1.5);assert.equal(m.score,1);
+  const faces=[...m.faces];input(m,'toss',.6,0);step(m,.2);assert.ok(m.y>0&&m.spin>0);assert.deepEqual(m.faces,faces);
+  const vy=m.vy;input(m,'toss',1);assert.equal(m.vy,vy);
+  input(m,'pan',92);step(m,1.1);assert.equal(m.misses,1);assert.equal(m.face,3);assert.deepEqual(m.faces,faces);
+  step(m,.5);assert.equal(m.score,1);
+  for(let n=0;n<1800&&!m.won;n++){
+    if(!m.flight&&m.faces[m.face]>=1)input(m,'toss',.6,nextTurn(m));
+    if(m.flight)input(m,'pan',m.x);step(m,.025);
+  }
+  assert.equal(m.won,true);assert.equal(m.score,6);assert.ok(m.faces.every(x=>x===1));
 });
-test('egg catching needs pan movement, retries misses, and ends after six catches',()=>{
-  const m=createMini('eggs',7);step(m,.1);input(m,'pan',m.x>50?8:92);step(m,2.6);assert.equal(m.score,0);assert.equal(m.misses,1);
-  for(let n=0;n<1500&&!m.won;n++){input(m,'pan',m.x);step(m,.025);}assert.equal(m.score,6);assert.equal(m.won,true);
+test('opposite flips restore orientation and repeated cooking cannot score twice',()=>{
+  const q=[0,0,0,1];assert.equal(bottomFace(q),3);
+  for(const [a,b] of [[0,2],[-1,1]])assert.equal(bottomFace(turnedRotation(turnedRotation(q,a),b)),3);
+  const m=createMini('toss',1);step(m,20);assert.equal(m.score,1);assert.equal(m.won,false);
 });
+test('egg coating needs motion inside the wok, never falling targets',()=>{
+  const m=createMini('eggs',7);step(m,10);assert.equal(m.score,0);assert.equal(m.flight,false);
+  for(let n=0;n<2000&&!m.won;n++){input(m,'tilt',Math.sin(m.clock*2)*.8,Math.cos(m.clock*2)*.8);step(m,.025);}
+  assert.equal(m.score,6);assert.equal(m.won,true);assert.ok(m.grains.every(g=>Math.hypot(g.x,g.z)<=.94));
+});
+test('dial accepts a visible 36-degree detent area, not an exact degree',()=>{
+  for(const offset of [-17,0,17]){const m=createMini('dial',4);m.angle=m.targets[0]+offset;m.travel=20;assert.equal(dialReady(m),true);input(m,'press');assert.equal(m.score,1);}
+  const m=createMini('dial',4);m.angle=m.targets[0]+25;m.travel=20;input(m,'press');assert.equal(m.score,0);
+});
+const {flick}=await loadTypescriptModule('src/components/hushLive/miniGestures.ts');
+test('hover flick requires an intentional fast stroke; horizontal, slow, re-entry and airborne samples do not toss',()=>{
+  const a={x:50,y:60,time:100};
+  assert.equal(flick(null,a,false).toss,null);
+  assert.equal(flick(a,{x:90,y:61,time:150},false).toss,null);
+  assert.equal(flick(a,{x:50,y:35,time:600},false).toss,null);
+  assert.equal(flick(a,{x:50,y:35,time:150},true).toss,null);
+  assert.equal(flick(a,{x:50,y:35,time:150},false).toss.turn,0);
+  assert.equal(flick(a,{x:50,y:85,time:150},false).toss.turn,2);
+  assert.equal(flick(a,{x:75,y:35,time:150},false).toss.turn,1);
+});
+
 test('recoil forces downwards compensation; one clip is finite and release stops fire',()=>{
   const idle=createMini('recoil',7);input(idle,'press');step(idle,5);assert.equal(idle.shots,24);assert.ok(idle.score<10);
   const active=createMini('recoil',7);input(active,'press');step(active,.1);input(active,'release');step(active,1);assert.equal(active.shots,1);
