@@ -147,6 +147,14 @@
   padding-top: 19px;
   margin: 0 0 20px;
 }
+.brief [data-reroll-night] {
+  display: block;
+  margin-top: 12px;
+  padding: 7px 0;
+  color: #48694f;
+  font-size: 12px;
+  border-bottom: 1px solid #9da78d;
+}
 .brief small {
   font-size: 9px;
   color: #9c735e;

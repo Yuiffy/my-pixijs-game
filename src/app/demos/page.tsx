@@ -81,7 +81,7 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         title: '岁己：马上就播',
         href: '/game/pre-stream',
         description: '跑遍公寓准备直播，趁保温杯慢慢接水去喂猫、试音，处理突发状况后赶到 OBS 开播。',
-        image: '/games/pre-stream/preview.png',
+        image: '/games/pre-stream/preview-3d.webp',
         meta: '3D 开播竞速 · 扮演主播岁己 · 三晚计时摘星',
       },
       {
@@ -155,9 +155,9 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
       {
         title: '维阿发掘局',
         href: '/game/brick-excavation',
-        description: '敲落连成一片的彩色砖块，挖出藏在下面的维阿主播。',
-        image: '/images/autochess/portraits/minimal/sui.png',
-        meta: '连色解谜 · 三份人物档案 · 步数挑战',
+        description: '敲落连成一片的彩色砖块，找齐一盘中埋藏的维阿主播。',
+        image: '/games/brick-excavation/sui-excavation.png',
+        meta: '连色解谜 · 多件出土 · 两次洗牌',
       },
       {
         title: '维阿弹棋',

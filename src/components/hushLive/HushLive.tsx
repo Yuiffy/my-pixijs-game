@@ -15,6 +15,7 @@ import {
   Save,
   signal,
   stars,
+  SPOTS,
   TASK_NAMES,
 } from "./engine";
 import { FIRST_STEPS, objective } from "./guide";
@@ -25,6 +26,7 @@ import {
   go3D,
   lookPoint,
   pause3D,
+  rotateLockedView,
   rotateView,
   text3D,
 } from "./runtime3d";
@@ -36,6 +38,7 @@ import { SkinPortrait } from "./SkinDetails";
 import { SKINS, skinOf, SkinId } from "./skins";
 import DailyPanel from "./DailyPanel";
 import { dailyModal, mealOf, offAir } from "./daily";
+import { householdStatus, onBreak } from "./household";
 
 const Apartment = dynamic(() => import("./Apartment"), { ssr: false });
 const STORAGE = "hush-live-v1";
@@ -207,14 +210,15 @@ export default function HushLive() {
     };
     const lockChange = () => {
       const wasLocked = current.pointerLocked;
-      current.pointerLocked = !!document.pointerLockElement;
+      current.pointerLocked = document.pointerLockElement === viewport.current?.querySelector("canvas");
+      lookDrag.current = null;
       if (wasLocked && !current.pointerLocked && !current.game.delta?.active && !dailyModal(current.game)) {
         pause3D(current);
         refresh();
       }
     };
     const mouseMove = (event: MouseEvent) => {
-      if (current.pointerLocked) rotateView(current, event.movementX, event.movementY);
+      rotateLockedView(current, event.movementX, event.movementY);
     };
     const keyDown = (event: KeyboardEvent) => {
       if (
@@ -466,10 +470,11 @@ export default function HushLive() {
               {g.level === 0
                 ? "走进直播间，拿回床尾的充电器，再回到沙发。别让麦克风听见你。"
                 : g.level === 5
-                  ? "熟悉的家，不同的音乐时机。把这一晚的秘密留到下播以后。"
+                  ? `${g.daily?.household.arrival === "outside" ? "今晚下班回家，先轻轻开门。" : g.daily?.household.arrival === "sofa" ? "今晚本来就在家，从沙发旁开始。" : "今晚在家打游戏，从电脑旁开始。"} 猫咪、晚饭和临时离席，每晚有不同的小事。`
                   : LEVELS[g.level].subtitle}
             </p>
             {g.daily && <small>今晚的晚饭：{g.daily.homemade ? "亲手炒的蛋炒饭" : mealOf(g).name} · 忙完回沙发，故事会继续。</small>}
+            {g.level === 5 && <button data-reroll-night onClick={() => selectNight(5, (g.seed + 7919) % 4294967296)}>换一个日常夜晚 ↻</button>}
           </div>
           <fieldset className={styles.skinPicker}>
             <legend>今晚和谁一起？</legend>
@@ -489,7 +494,7 @@ export default function HushLive() {
             className={styles.primary}
             onClick={start}
           >
-            {sceneReady ? "轻轻走进家门 →" : "正在点亮小公寓…"}
+            {sceneReady ? g.daily && g.daily.household.arrival !== "outside" ? "开始今晚的日常 →" : "轻轻走进家门 →" : "正在点亮小公寓…"}
           </button>
           <p className={`${styles.instructions} ${styles.desktopOnly}`}>
             WASD 走动 · 鼠标转头 · 看向物品，轻按 E 拿取
@@ -668,9 +673,10 @@ export default function HushLive() {
             <small>
               {offAir(g) ? "下播以后 · 只属于我们" : g.level === 0
                 ? `第 ${goal.step} / 3 步`
-                : `第 ${g.level + 1} 晚 · 当前目标`}
+                : g.level === 5 ? "加班夜 · 当前目标" : `第 ${g.level + 1} 晚 · 当前目标`}
             </small>
             <h2>{goal.title}</h2>
+            {householdStatus(g) && <small data-household-status>{householdStatus(g)}</small>}
             <div>
               <span>
                 {metres.toFixed(1)}m · {marker}
@@ -686,7 +692,7 @@ export default function HushLive() {
           </section>
           <section className={styles.liveStatus} aria-label="直播状态">
             <p className={b.music || g.muted > 0 ? styles.safe : ""}>
-              {offAir(g) ? "○ OFF AIR · 可以放心说话了" : g.muted > 0
+              {offAir(g) ? "○ OFF AIR · 可以放心说话了" : onBreak(g) ? "○ 暂时离席 · 已闭麦" : g.muted > 0
                 ? `● 已闭麦 ${g.muted.toFixed(1)}s`
                 : b.music
                   ? `♫ 唱歌掩护 ${Math.ceil(b.remaining)}s`
@@ -727,12 +733,12 @@ export default function HushLive() {
               {g.busy
                 ? g.busy.key === "food"
                   ? "正在把晚饭摆好…"
-                  : "正在拿放物品…"
+                  : "正在完成动作…"
                 : a.key
                   ? `${a.label}${a.mode === "hold" ? ` · ${a.seconds}s` : ""}`
                   : r.focus
                     ? "这里暂时没有要做的事"
-                    : `靠近并看向${goal.spot === "kitchen" ? "料理台" : goal.spot === "bed" ? "床边" : goal.spot === "shelf" ? "充电器" : goal.spot === "partner" ? "恋人" : goal.spot === "door" ? "门" : goal.spot === "sofa" ? "沙发" : goal.spot === "desk" ? "电脑" : goal.spot === "table" ? "桌上餐垫" : "外卖袋"}`}
+                    : `靠近并看向${SPOTS[goal.spot].name}`}
             </span>
             <small className={styles.desktopOnly}>
               {a.key

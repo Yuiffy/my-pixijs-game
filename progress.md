@@ -3049,3 +3049,8 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 最终 51/51 NightRain 规则测试通过；修改源码 ESLint、完整 pnpm run check → pnpm run build 顺序通过，Next ESLint/类型检查启用，53 页生成，仅既有 overworldRpg 未使用导入警告。13 份 NightRain 源码与成功构建 LF 归一化 SHA256 一致：tmp/night-rain-refinements-source-validation.json。
 - 静音后台系统 Chrome 正式构建验收：tmp/night-rain-refinements-production-world/report.json（22 图），tmp/night-rain-refinements-production-journey/report.json（6 图），errors=[]；全部逐张打开检查且通过像素检查。敌人逐阶段 15 图、开发完整流程 20 图及共享客户端 1 图也已目检。桥上截图等待相机稳定后重拍正常。虚拟 Pointer Lock/手柄、正常战斗和移动输入，无桌面鼠标/焦点操作。
 - 本地 3871 已切到 companions 工作树 .next-night-rain-refinements-release，PID 158724，HTTP 200；自有 3885 开发服务已停止。保留 companions 与提供 node_modules 的 validation 工作树。主目录其他任务改动未覆盖。此前 687dbfc/9fde57e 已推送；本轮四项调整保留为本地未提交改动，未公网部署。当前无剩余必要修复；地图扩建留待用户下一步讨论。
+### 2026-09-26 · 加班夜生活扩展发布与锁定鼠标视角防跳
+
+- 用户授权把生活扩展commit/push，并反馈锁定鼠标后慢慢转头会突然跳到另一个角度。代码检查发现movementX/Y不经校验直接进入相机；注入720px异常位移在旧3879复现103.13度瞬转。现只在Pointer Lock路径丢弃单轴超过256px的异常样本，拒绝非有限值；正常多次快速采样可累计转过180度，右键/触屏绝对坐标拖动不受此阈值限制。锁定状态仅认当前canvas，切换时清掉旧拖拽坐标。未在用户设备上采集原始鼠标事件，防护机制已通过定向注入验证。
+- 连同此前随机开场/七餐品/完整桶面准备/猫咪与家务/主播洗手间往返、时机轨道滚动条修复一起发布。原38项规则加新增相机回归共39/39通过；全量生活浏览器20图已在上一轮目检。当前生产相机专项验证慢转/异常/快速转头/暂停重入/右键/自动行走手动接管/真触屏，3图均像素检查并逐张目检，errors=[]，tmp/hush-camera-after/report.json。共享客户端静音系统Chrome额外冒烟1图非黑已目检。
+- 复用空闲hush-skins-publish工作树，基于origin/master新建codex/hush-household-camera，保护主共享目录全部并行改动。本地离线依赖安装，顺序完整pnpm run check与pnpm run build通过，保留Next ESLint/类型检查，仅既有RPG警告。19份Hush源文件与构建逐一LF归一化SHA256一致，tmp/hush-camera-source-validation.json。测试全程静音/禁用TTS/虚拟Pointer Lock，未控制用户鼠标。

@@ -1,282 +1,447 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, KeyboardEvent } from 'react';
-import Link from 'next/link';
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   AudioMutedOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  LockOutlined,
   QuestionCircleOutlined,
   ReloadOutlined,
   SoundOutlined,
+  SyncOutlined,
   UndoOutlined,
-} from '@ant-design/icons';
+} from "@ant-design/icons";
+import Link from "next/link";
 import {
-  LEVELS,
-  createGame,
-  getCluster,
-  getGrade,
-  strike,
-} from './engine';
-import type { GameState } from './engine';
-import styles from './brickExcavation.module.css';
+  CSSProperties,
+  KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  canShuffleRemaining, createGame, GameState, getCluster, getGrade,
+  hasLegalMove, hasStrandedTreasure, shuffleRemaining, strike, Treasure,
+} from "./engine";
+import styles from "./brickExcavation.module.css";
 
-const STORAGE_KEY = 'brick-excavation-records-v1';
-const MARKS = ['●', '◆', '▲', '✦'];
-const COLOR_NAMES = ['朱红', '青绿', '琥珀', '紫晶'];
-const GRADE_ORDER = ['S', 'A', 'B', 'C'];
+const BEST_KEY = "brick-excavation-best-v2";
+const MARKS = ["●", "◆", "▲", "✦"];
+const COLOR_NAMES = ["朱红", "青绿", "琥珀", "紫晶"];
+const TREASURE_TINTS = ["#dce7db", "#eadbd2", "#dcd9e8", "#e4e1cf", "#dce5e2"];
 
-interface RecordEntry {
-  grade: string;
-  turns: number;
-}
-
-type Records = Record<string, RecordEntry>;
-type GameDebugWindow = Window & {
+type TextWindow = Window & {
   render_game_to_text?: () => string;
-  advanceTime?: (ms: number) => void;
 };
 
-function loadRecords(): Records {
-  try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-    return Object.fromEntries(
-      Object.entries(parsed).filter(([, entry]) => {
-        if (!entry || typeof entry !== 'object') return false;
-        const value = entry as RecordEntry;
-        return GRADE_ORDER.includes(value.grade) && Number.isInteger(value.turns);
-      }),
-    );
-  } catch {
-    return {};
-  }
-}
-
-function getUnlockedIndex(records: Records) {
-  let unlocked = 0;
-  while (unlocked < LEVELS.length - 1 && records[LEVELS[unlocked].id]) unlocked += 1;
-  return unlocked;
-}
-
-function surrounding(board: GameState['board'], cols: number, group: number[]) {
-  const removed = new Set(group);
-  const adjacent = new Set<number>();
-  group.forEach((index) => {
-    const row = Math.floor(index / cols);
-    const col = index % cols;
-    [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]].forEach(([r, c]) => {
-      if (r < 0 || c < 0 || r >= board.length / cols || c >= cols) return;
-      const next = r * cols + c;
-      if (!removed.has(next) && board[next] !== null) adjacent.add(next);
+function renderTreasure(treasure: Treasure, cols: number, rows: number, tint: string) {
+  const cells: { col: number; row: number; index: number }[] = [];
+  treasure.mask.forEach((line, row) => {
+    line.split('').forEach((mark, col) => {
+      if (mark === '#') {
+        cells.push({ col, row, index: (treasure.y + row) * cols + treasure.x + col });
+      }
     });
   });
-  return adjacent;
+  const badgeCell = cells[cells.length - 1];
+  return (
+    <div
+      className={styles.treasureArt}
+      key={treasure.id}
+      style={{
+        left: `${(treasure.x / cols) * 100}%`,
+        top: `${(treasure.y / rows) * 100}%`,
+        width: `${(treasure.width / cols) * 100}%`,
+        height: `${(treasure.height / rows) * 100}%`,
+      }}
+    >
+      {cells.map((cell) => (
+        <div
+          className={styles.treasureCell}
+          key={cell.index}
+          data-treasure-cell=""
+          data-index={cell.index}
+          style={{
+            left: `${(cell.col / treasure.width) * 100}%`,
+            top: `${(cell.row / treasure.height) * 100}%`,
+            width: `${100 / treasure.width}%`,
+            height: `${100 / treasure.height}%`,
+            backgroundColor: tint,
+          }}
+        />
+      ))}
+      <div
+        className={styles.treasureIllustration}
+        data-treasure-illustration=""
+        style={{ backgroundImage: `url("${treasure.portrait}")` }}
+      />
+      {treasure.found && (
+        <span
+          className={styles.foundBadge}
+          style={{
+            left: `${(badgeCell.col / treasure.width) * 100}%`,
+            top: `${((badgeCell.row + 1) / treasure.height) * 100}%`,
+            width: `${100 / treasure.width}%`,
+          }}
+        >
+          +{treasure.points}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function publicState(game: GameState) {
+  return {
+    coordinateSystem:
+      "origin top-left; x right, y down; board index = y * cols + x",
+    seed: game.seed,
+    cols: game.cols,
+    rows: game.rows,
+    colors: game.colors,
+    board: game.board,
+    treasureTotal: game.treasures.length,
+    foundCount: game.treasures.filter((treasure) => treasure.found).length,
+    treasures: game.treasures
+      .filter((treasure) => treasure.revealed > 0)
+      .map((treasure) => ({
+        id: treasure.found ? treasure.id : null,
+        name: treasure.found ? treasure.name : null,
+        revealed: treasure.revealed,
+        total: treasure.total,
+        found: treasure.found,
+        points: treasure.found ? treasure.points : null,
+      })),
+    score: game.score,
+    movesLeft: game.movesLeft,
+    maxMoves: game.maxMoves,
+    shufflesLeft: game.shufflesLeft,
+    maxShuffles: game.maxShuffles,
+    hasLegalMove: hasLegalMove(game.board, game.cols),
+    canShuffle: canShuffleRemaining(game),
+    turns: game.turns,
+    status: game.status,
+    lastMove: game.lastMove && {
+      index: game.lastMove.index,
+      cleared: game.lastMove.cleared,
+      shifted: game.lastMove.shifted,
+      refunded: game.lastMove.refunded,
+      hitTargets: game.lastMove.hitTargets,
+      discoveredCount: game.lastMove.discoveredIds.length,
+      foundIds: game.lastMove.foundIds,
+      scoreGained: game.lastMove.scoreGained,
+    },
+  };
 }
 
 export default function BrickExcavation() {
   const [game, setGame] = useState<GameState>(() => createGame(0));
   const [history, setHistory] = useState<GameState[]>([]);
-  const [records, setRecords] = useState<Records>({});
-  const [ready, setReady] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const [notice, setNotice] = useState('');
-  const [effectTurn, setEffectTurn] = useState(0);
-  const tileRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const helpButtonRef = useRef<HTMLButtonElement | null>(null);
-  const rulesRef = useRef<HTMLDivElement | null>(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [best, setBest] = useState<number | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const helpRef = useRef<HTMLButtonElement>(null);
+  const rulesRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<AudioContext | null>(null);
-  const keyboardMoveRef = useRef(false);
-  const level = LEVELS[game.levelIndex];
-  const progress = Math.round(((game.targetTotal - game.remainingTargets) / game.targetTotal) * 100);
-  const grade = getGrade(game);
-  const unlockedIndex = getUnlockedIndex(records);
-  const activeRecord = records[level.id];
+
+  useEffect(() => {
+    try {
+      const value = Number(localStorage.getItem(BEST_KEY));
+      if (Number.isFinite(value) && value > 0) setBest(value);
+    } catch {
+      // The game remains playable when local storage is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (game.status === "playing") return;
+    if (best !== null && best >= game.score) return;
+    setBest(game.score);
+    try {
+      localStorage.setItem(BEST_KEY, String(game.score));
+    } catch {
+      // A storage failure only affects the local record.
+    }
+  }, [best, game.score, game.status]);
+
+  useEffect(() => {
+    const target = window as TextWindow;
+    target.render_game_to_text = () => JSON.stringify(publicState(game));
+    return () => {
+      delete target.render_game_to_text;
+    };
+  }, [game]);
+
+  useEffect(() => {
+    if (rulesOpen) rulesRef.current?.focus();
+  }, [rulesOpen]);
+
+  useEffect(() => {
+    if (!rulesOpen) return undefined;
+    function onRulesKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        setRulesOpen(false);
+        requestAnimationFrame(() => helpRef.current?.focus());
+      } else if (event.key === "Tab") {
+        event.preventDefault();
+        rulesRef.current?.querySelector("button")?.focus();
+      }
+    }
+    window.addEventListener("keydown", onRulesKeyDown);
+    return () => window.removeEventListener("keydown", onRulesKeyDown);
+  }, [rulesOpen]);
+
+  useEffect(
+    () => () => {
+      audioRef.current?.close().catch(() => undefined);
+    },
+    [],
+  );
+
+  const foundCount = game.treasures.filter((treasure) => treasure.found).length;
+  const legalMoveAvailable = hasLegalMove(game.board, game.cols);
+  const strandedTreasure = hasStrandedTreasure(game);
+  const seenTreasures = game.treasures.filter(
+    (treasure) => treasure.revealed > 0,
+  );
+  const latestFound = game.treasures.filter((treasure) => {
+    return game.lastMove?.foundIds.includes(treasure.id);
+  });
+
+  const clusterSizes = useMemo(() => {
+    const sizes = Array<number>(game.board.length).fill(0);
+    game.board.forEach((color, index) => {
+      if (color === null || sizes[index] > 0) return;
+      const cells = getCluster(game.board, index, game.cols);
+      cells.forEach((cell) => { sizes[cell] = cells.length; });
+    });
+    return sizes;
+  }, [game.board, game.cols]);
 
   const preview = useMemo(() => {
-    if (hovered === null || game.status !== 'playing' || game.board[hovered] === null) {
-      return { group: new Set<number>(), edge: new Set<number>() };
+    const group = new Set<number>();
+    const edge = new Set<number>();
+    if (hovered === null || game.status !== "playing" || clusterSizes[hovered] < 2) {
+      return { group, edge };
     }
-    const group = getCluster(game.board, hovered, game.cols);
-    return { group: new Set(group), edge: surrounding(game.board, game.cols, group) };
-  }, [game.board, game.cols, game.status, hovered]);
-  const previewTargets = Array.from(preview.group).filter((index) => game.targetMask[index]).length;
+    getCluster(game.board, hovered, game.cols).forEach((index) => {
+      group.add(index);
+    });
+    group.forEach((index) => {
+      const x = index % game.cols;
+      const y = Math.floor(index / game.cols);
+      const neighbors = [
+        y > 0 ? index - game.cols : -1,
+        y < game.rows - 1 ? index + game.cols : -1,
+        x > 0 ? index - 1 : -1,
+        x < game.cols - 1 ? index + 1 : -1,
+      ];
+      neighbors.forEach((neighbor) => {
+        if (
+          neighbor >= 0 &&
+          game.board[neighbor] !== null &&
+          !group.has(neighbor)
+        ) edge.add(neighbor);
+      });
+    });
+    return { group, edge };
+  }, [clusterSizes, game, hovered]);
 
-  useEffect(() => {
-    setRecords(loadRecords());
-    setReady(true);
-    return () => {
-      if (audioRef.current) audioRef.current.close();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!ready || game.status !== 'won' || !grade) return;
-    const previous = records[level.id];
-    const improved = !previous
-      || GRADE_ORDER.indexOf(grade) < GRADE_ORDER.indexOf(previous.grade)
-      || (grade === previous.grade && game.turns < previous.turns);
-    if (!improved) return;
-    const updated = { ...records, [level.id]: { grade, turns: game.turns } };
-    setRecords(updated);
+  function sound(frequency: number, duration = 0.07) {
+    if (muted) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch {
-      setNotice('本机纪录暂时无法保存。');
-    }
-  }, [game.status, game.turns, grade, level.id, ready, records]);
-
-  useEffect(() => {
-    const debugWindow = window as GameDebugWindow;
-    debugWindow.render_game_to_text = () => JSON.stringify({
-      coordinates: 'row and column start at 0 in the top-left; rows increase downward',
-      level: level.id,
-      status: game.status,
-      rows: game.rows,
-      cols: game.cols,
-      board: game.board,
-      targetMask: game.targetMask,
-      movesLeft: game.movesLeft,
-      turns: game.turns,
-      remainingTargets: game.remainingTargets,
-      targetTotal: game.targetTotal,
-      preview: hovered === null ? null : Array.from(preview.group),
-    });
-    debugWindow.advanceTime = () => {};
-    return () => {
-      delete debugWindow.render_game_to_text;
-      delete debugWindow.advanceTime;
-    };
-  }, [game, hovered, level.id, preview.group]);
-
-  useEffect(() => {
-    if (keyboardMoveRef.current) {
-      tileRefs.current[focusedIndex]?.focus();
-      keyboardMoveRef.current = false;
-    }
-  }, [focusedIndex, game.board]);
-
-  useEffect(() => {
-    if (helpOpen) rulesRef.current?.focus();
-  }, [helpOpen]);
-
-  useEffect(() => {
-    if (!helpOpen) return undefined;
-    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      setHelpOpen(false);
-      helpButtonRef.current?.focus();
-    };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [helpOpen]);
-
-  const playTone = useCallback((kind: 'hit' | 'win' | 'undo', size = 1) => {
-    if (!soundOn) return;
-    const context = audioRef.current || new AudioContext();
-    audioRef.current = context;
-    if (context.state === 'suspended') context.resume();
-    const tones = kind === 'win' ? [520, 660, 880] : [kind === 'undo' ? 330 : 180 + Math.min(size, 12) * 22];
-    tones.forEach((frequency, index) => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      const at = context.currentTime + index * 0.085;
-      oscillator.type = kind === 'hit' ? 'triangle' : 'sine';
-      oscillator.frequency.setValueAtTime(frequency, at);
-      gain.gain.setValueAtTime(0.0001, at);
-      gain.gain.exponentialRampToValueAtTime(0.065, at + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+      const audio = audioRef.current || new AudioContext();
+      audioRef.current = audio;
+      audio.resume().catch(() => undefined);
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(frequency, audio.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        frequency * 0.65,
+        audio.currentTime + duration,
+      );
+      gain.gain.setValueAtTime(0.12, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audio.currentTime + duration,
+      );
       oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(at);
-      oscillator.stop(at + 0.17);
-    });
-  }, [soundOn]);
+      gain.connect(audio.destination);
+      oscillator.start();
+      oscillator.stop(audio.currentTime + duration);
+    } catch {
+      // Audio is optional.
+    }
+  }
 
-  const startLevel = useCallback((index: number) => {
-    if (index < 0 || index >= LEVELS.length) return;
-    setGame(createGame(index));
-    setHistory([]);
-    setHovered(null);
-    setFocusedIndex(0);
-    keyboardMoveRef.current = true;
-    setNotice('');
-    setHelpOpen(false);
-  }, []);
-
-  const hitTile = (index: number) => {
-    if (game.status !== 'playing' || game.board[index] === null) return;
+  function hit(index: number) {
     const next = strike(game, index);
     if (next === game) return;
     setHistory((previous) => [...previous, game]);
     setGame(next);
     setHovered(null);
-    setEffectTurn((current) => current + 1);
-    const nextFocus = next.board.findIndex((color) => color !== null);
-    setFocusedIndex(Math.max(0, nextFocus));
-    playTone(next.status === 'won' ? 'win' : 'hit', next.lastMove?.cleared.length || 1);
-    if (next.status === 'won') setNotice(`发掘完成：${level.name}`);
-    else if (next.status === 'lost') setNotice('工具已用尽，可以撤销或重开。');
-    else if (next.lastMove?.refunded) setNotice('共振！这一次落锤返还了 1 步。');
-    else setNotice(`敲落 ${next.lastMove?.cleared.length || 0} 块砖。`);
-  };
+    sound(
+      next.lastMove?.foundIds.length
+        ? 760
+        : 230 + (next.lastMove?.cleared.length || 1) * 35,
+      next.lastMove?.foundIds.length ? 0.22 : 0.07,
+    );
+  }
 
-  const undo = () => {
-    if (!history.length || game.status === 'won') return;
-    const previous = history[history.length - 1];
-    setGame(previous);
+  function undo() {
+    if (history.length === 0) return;
+    setGame(history[history.length - 1]);
     setHistory(history.slice(0, -1));
     setHovered(null);
-    setFocusedIndex(0);
-    setNotice('已撤销上一步。');
-    playTone('undo');
-  };
+  }
 
-  const onTileKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    if (event.key === 'Enter' || event.key === ' ') keyboardMoveRef.current = true;
-    const directions: Record<string, [number, number]> = {
-      ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1],
-    };
-    const direction = directions[event.key];
-    if (!direction) return;
+  function shuffle() {
+    const next = shuffleRemaining(game);
+    if (next === game) return;
+    setHistory((previous) => [...previous, game]);
+    setGame(next);
+    setHovered(null);
+    sound(540, 0.16);
+  }
+
+  function restart() {
+    setGame(createGame(game.seed));
+    setHistory([]);
+    setHovered(null);
+  }
+
+  function newMap() {
+    setGame(createGame(game.seed + 1));
+    setHistory([]);
+    setHovered(null);
+  }
+
+  function closeRules() {
+    setRulesOpen(false);
+    requestAnimationFrame(() => helpRef.current?.focus());
+  }
+
+  function moveFocus(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const delta = {
+      ArrowUp: -game.cols,
+      ArrowDown: game.cols,
+      ArrowLeft: -1,
+      ArrowRight: 1,
+    }[event.key];
+    if (delta === undefined) return;
     event.preventDefault();
-    let row = Math.floor(index / game.cols) + direction[0];
-    let col = (index % game.cols) + direction[1];
-    while (row >= 0 && row < game.rows && col >= 0 && col < game.cols) {
-      const next = row * game.cols + col;
-      if (game.board[next] !== null) {
-        setFocusedIndex(next);
-        tileRefs.current[next]?.focus();
-        return;
+    let candidate = index + delta;
+    while (candidate >= 0 && candidate < game.board.length) {
+      if (delta === 1 && candidate % game.cols === 0) break;
+      if (delta === -1 && candidate % game.cols === game.cols - 1) break;
+      if (clusterSizes[candidate] >= 2) {
+        boardRef.current
+          ?.querySelector<HTMLButtonElement>(
+            `button[data-index="${candidate}"]`,
+          )
+          ?.focus();
+        break;
       }
-      row += direction[0];
-      col += direction[1];
+      candidate += delta;
     }
-  };
+  }
+
+  function renderCell(color: number | null, index: number) {
+    if (color === null) {
+      return <div className={styles.openCell} key={index} aria-hidden="true" />;
+    }
+    let previewKind: string | undefined;
+    if (preview.group.has(index)) previewKind = 'group';
+    else if (preview.edge.has(index)) previewKind = 'edge';
+    const row = Math.floor(index / game.cols) + 1;
+    const col = (index % game.cols) + 1;
+    const dead = clusterSizes[index] < 2;
+    const nextColor = previewKind === 'edge' ? (color + 1) % game.colors : undefined;
+    return (
+      <button
+        type="button"
+        className={styles.tile}
+        key={index}
+        data-index={index}
+        data-color={color}
+        data-dead={dead}
+        data-preview={previewKind}
+        data-preview-color={nextColor}
+        aria-label={`第 ${row} 行第 ${col} 列，${COLOR_NAMES[color]}砖${dead ? '，孤砖，不能敲' : ''}`}
+        title={dead ? '单格砖不能敲' : nextColor !== undefined ? `敲击后变为${COLOR_NAMES[nextColor]}` : undefined}
+        disabled={game.status !== 'playing' || dead}
+        onClick={() => hit(index)}
+        onMouseEnter={() => { if (!dead) setHovered(index); }}
+        onMouseLeave={() => setHovered(null)}
+        onFocus={() => { if (!dead) setHovered(index); }}
+        onBlur={() => setHovered(null)}
+        onKeyDown={(event) => moveFocus(event, index)}
+      >
+        <span className={styles.colorMark} aria-hidden="true">{MARKS[color]}</span>
+        {nextColor !== undefined && (
+          <span className={styles.nextColor} data-color={nextColor} aria-hidden="true">
+            {MARKS[nextColor]}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  let moveMessage = "矿层尚未勘探";
+  if (game.lastMove) {
+    if (latestFound.length > 0) {
+      moveMessage = `${latestFound.map((treasure) => treasure.name).join("、")}出土！+${game.lastMove.scoreGained} 分`;
+    } else if (game.lastMove.discoveredIds.length > 0) {
+      moveMessage = `发现 ${game.lastMove.discoveredIds.length} 处线索 · +${game.lastMove.scoreGained} 分`;
+    } else {
+      moveMessage = `敲落 ${game.lastMove.cleared.length} 块 · +${game.lastMove.scoreGained} 分`;
+    }
+  } else if (game.shufflesLeft < game.maxShuffles) {
+    moveMessage = "剩余砖块已重新洗牌";
+  }
+  if (game.status === "playing" && !legalMoveAvailable) {
+    moveMessage = "没有可敲连片，洗牌后继续";
+  }
 
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
-        <Link href="/demos#quick" className={styles.backLink} aria-label="返回游戏列表" title="返回游戏列表">
-          <ArrowLeftOutlined aria-hidden />
+        <Link
+          className={styles.backLink}
+          href="/demos"
+          aria-label="返回游戏列表"
+          title="返回游戏列表"
+        >
+          <ArrowLeftOutlined />
         </Link>
         <div className={styles.brand}>
-          <span className={styles.brandIndex}>VR / 03</span>
+          <span className={styles.brandIndex}>VIAR / 04</span>
           <h1>维阿发掘局</h1>
         </div>
         <div className={styles.topActions}>
-          <button ref={helpButtonRef} type="button" className={styles.iconButton} onClick={() => setHelpOpen((open) => !open)} aria-label="玩法规则" aria-controls="brick-rules" aria-expanded={helpOpen} title="玩法规则">
-            <QuestionCircleOutlined aria-hidden />
+          <button
+            className={styles.iconButton}
+            type="button"
+            onClick={() => setMuted(!muted)}
+            aria-label={muted ? "开启音效" : "关闭音效"}
+            title={muted ? "开启音效" : "关闭音效"}
+          >
+            {muted ? <AudioMutedOutlined /> : <SoundOutlined />}
           </button>
-          <button type="button" className={styles.iconButton} onClick={() => setSoundOn((on) => !on)} aria-label={soundOn ? '关闭音效' : '开启音效'} title={soundOn ? '关闭音效' : '开启音效'}>
-            {soundOn ? <SoundOutlined aria-hidden /> : <AudioMutedOutlined aria-hidden />}
+          <button
+            ref={helpRef}
+            className={styles.iconButton}
+            type="button"
+            onClick={() => setRulesOpen(true)}
+            aria-label="玩法规则"
+            aria-expanded={rulesOpen}
+            aria-controls="brick-rules"
+            title="玩法规则"
+          >
+            <QuestionCircleOutlined />
           </button>
         </div>
       </header>
@@ -284,158 +449,268 @@ export default function BrickExcavation() {
       <div className={styles.workspace}>
         <section className={styles.boardColumn} aria-label="发掘棋盘">
           <div className={styles.boardHeading}>
-            <span>发掘现场 <b>{String(game.levelIndex + 1).padStart(2, '0')}</b></span>
-            <span>{game.rows} × {game.cols} / {game.colors} 色</span>
+            <span>
+              矿层 <b>{String(game.seed + 1).padStart(3, "0")}</b>
+            </span>
+            <span className={styles.mobileStats}>
+              收获{" "}
+              <b>
+                {foundCount}/{game.treasures.length}
+              </b>{" "}
+              · 落锤 <b>{game.movesLeft}</b>
+            </span>
+            <span className={styles.desktopBoardLabel}>
+              彩砖区 / {game.cols} × {game.rows}
+            </span>
           </div>
           <div className={styles.boardFrame} data-status={game.status}>
-            <div className={styles.boardBase} aria-hidden>
-              <div className={styles.portrait} style={{ backgroundImage: `url("${level.portrait}")` }} />
-              <span className={styles.imageSerial}>VIRTUAL REAL · ARCHIVE {String(game.levelIndex + 1).padStart(2, '0')}</span>
+            <div className={styles.boardBase} aria-hidden="true">
+              {game.treasures.map((treasure, index) => (
+                treasure.revealed > 0
+                  ? renderTreasure(treasure, game.cols, game.rows, TREASURE_TINTS[index % TREASURE_TINTS.length])
+                  : null
+              ))}
             </div>
-            <div className={styles.tileGrid} style={{ '--cols': game.cols } as CSSProperties} role="group" aria-label="彩色砖块矩阵">
-              {game.board.map((color, index) => {
-                const row = Math.floor(index / game.cols);
-                const col = index % game.cols;
-                if (color === null) return <span key={index} className={styles.openCell} aria-hidden />;
-                return (
-                  <button
-                    key={index}
-                    ref={(element) => { tileRefs.current[index] = element; }}
-                    type="button"
-                    className={styles.tile}
-                    data-color={color}
-                    data-preview={preview.group.has(index) ? 'group' : preview.edge.has(index) ? 'edge' : undefined}
-                    data-shifted={game.lastMove?.shifted.includes(index) ? effectTurn : undefined}
-                    tabIndex={focusedIndex === index ? 0 : -1}
-                    disabled={game.status !== 'playing'}
-                    aria-label={`第 ${row + 1} 行第 ${col + 1} 列，${COLOR_NAMES[color]}砖${game.targetMask[index] ? '，有目标印记' : ''}`}
-                    onPointerEnter={() => setHovered(index)}
-                    onPointerLeave={() => setHovered(null)}
-                    onFocus={() => { setFocusedIndex(index); setHovered(index); }}
-                    onBlur={() => setHovered(null)}
-                    onKeyDown={(event) => onTileKeyDown(event, index)}
-                    onClick={() => hitTile(index)}
-                  >
-                    <span className={styles.colorMark} aria-hidden>{MARKS[color]}</span>
-                    {game.targetMask[index] && <span className={styles.targetMark} aria-hidden>◇</span>}
-                  </button>
-                );
-              })}
+            <div
+              ref={boardRef}
+              className={styles.tileGrid}
+              role="group"
+              aria-label="彩色砖块矩阵"
+              style={
+                { "--cols": game.cols, "--rows": game.rows } as CSSProperties
+              }
+            >
+              {game.board.map(renderCell)}
             </div>
-            {game.status === 'won' && <div className={styles.foundSeal} aria-hidden>FOUND · {grade}</div>}
           </div>
           <div className={styles.boardFooter}>
-            <span><i className={styles.legendDiamond}>◇</i> 目标格</span>
-            <span>同色相连，一击敲落</span>
+            <span>
+              {game.status === "playing" && !legalMoveAvailable
+                ? `颜色死局 · 可洗牌 ${game.shufflesLeft} 次`
+                : hovered !== null && preview.group.size > 0
+                ? `连色 ${preview.group.size} 格`
+                : "孤砖不可敲"}
+            </span>
+            <span>
+              {preview.edge.size > 0
+                ? '外圈角标为下一色'
+                : game.lastMove?.refunded ? '本次落锤返还' : '六格以上返还落锤'}
+            </span>
+          </div>
+          <div className={styles.colorGuide} aria-label="颜色变化顺序">
+            <span className={styles.colorGuideTitle}>变色顺序</span>
+            <div className={styles.colorGuideSteps}>
+              {[0, 1, 2, 3, 0].map((color, index) => (
+                <span className={styles.colorGuideStep} key={`${color}-${index}`}>
+                  {index > 0 && <ArrowRightOutlined aria-hidden="true" />}
+                  <span className={styles.colorGuideSwatch} data-color={color}>{COLOR_NAMES[color]}</span>
+                </span>
+              ))}
+            </div>
           </div>
         </section>
 
-        <aside className={styles.sidebar} aria-label="发掘状态">
+        <aside className={styles.sidebar} aria-label="发掘记录">
           <div className={styles.stageHead}>
-            <span className={styles.eyebrow}>ARCHIVE / {String(game.levelIndex + 1).padStart(2, '0')}</span>
-            <h2>{game.status === 'won' ? level.name : '身份待确认'}</h2>
-            <p>{game.status === 'won' ? '角色档案已解锁。' : game.status === 'lost' ? '还差一点。撤销一步，换个颜色试试。' : '彩色砖层下，藏着一位维阿主播。'}</p>
+            <span className={styles.eyebrow}>
+              EXCAVATION / {String(game.seed + 1).padStart(3, "0")}
+            </span>
+            <h2>
+              {game.status === "playing"
+                ? "寻找埋藏的身影"
+                : game.status === "won"
+                  ? "全部出土"
+                  : "勘探结束"}
+            </h2>
+            <p>
+              {game.status === "playing"
+                ? "一张矿层，藏着数位维阿主播。"
+                : `本局找到 ${foundCount} 位主播。`}
+            </p>
           </div>
 
           <div className={styles.metrics}>
             <div className={styles.metric}>
-              <span>剩余落锤</span>
-              <strong data-low={game.movesLeft <= 3}>{game.movesLeft}<small> / {game.maxMoves}</small></strong>
+              <span>得分</span>
+              <strong>{game.score}</strong>
             </div>
             <div className={styles.metric}>
-              <span>显露进度</span>
-              <strong>{progress}<small>%</small></strong>
+              <span>落锤</span>
+              <strong data-low={game.movesLeft <= 4}>
+                {game.movesLeft}
+                <small> / {game.maxMoves}</small>
+              </strong>
+            </div>
+            <div className={styles.metric}>
+              <span>收获</span>
+              <strong>
+                {foundCount}
+                <small> / {game.treasures.length}</small>
+              </strong>
             </div>
           </div>
-          <div className={styles.progressTrack} role="progressbar" aria-label="目标显露进度" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
-            <span style={{ width: `${progress}%` }} />
-          </div>
-          <div className={styles.countLine}>
-            <span>已显露 {game.targetTotal - game.remainingTargets} / {game.targetTotal} 格</span>
-            <span>落锤 {game.turns} 次</span>
+
+          <div className={styles.moveResult} aria-live="polite">
+            <span>
+              {game.lastMove
+                ? `第 ${game.turns} 次敲击`
+                : game.shufflesLeft < game.maxShuffles
+                  ? `第 ${game.maxShuffles - game.shufflesLeft} 次洗牌`
+                  : "当前矿层"}
+            </span>
+            <strong>{moveMessage}</strong>
+            {game.lastMove?.refunded && (
+              <small>连片敲落 6 格以上，返还 1 次落锤</small>
+            )}
           </div>
 
-          <div className={styles.moveResult}>
-            <span>{preview.group.size ? '下一锤预览' : '最近一锤'}</span>
-            <strong>{preview.group.size
-              ? `${preview.group.size} 块砖 · ${previewTargets} 个目标格`
-              : game.lastMove ? `${game.lastMove.cleared.length} 块砖 · ${game.lastMove.hitTargets} 个目标格` : '—'}</strong>
-            <small>{preview.group.size
-              ? `${preview.edge.size} 块邻砖将变色${preview.group.size >= 6 ? ' · 共振返还 1 步' : ''}`
-              : game.lastMove?.refunded ? '大连片共振，返还 1 步' : '一次清除至少 6 块可返还 1 步'}</small>
-          </div>
+          <section className={styles.collection} aria-label="本局收获">
+            <div className={styles.collectionTitle}>
+              <span>本局收获</span>
+              <span>
+                {foundCount} / {game.treasures.length}
+              </span>
+            </div>
+            {seenTreasures.length === 0 ? (
+              <p className={styles.emptyCollection}>尚未发现藏品</p>
+            ) : (
+              <div className={styles.collectionList}>
+                {seenTreasures.map((treasure) => (
+                  <div
+                    className={styles.collectionItem}
+                    key={treasure.id}
+                    data-found={treasure.found}
+                  >
+                    <div
+                      className={styles.collectionImage}
+                      style={
+                        treasure.found
+                          ? {
+                              backgroundImage: `url("${treasure.portrait}")`,
+                            }
+                          : undefined
+                      }
+                      aria-hidden="true"
+                    >
+                      {!treasure.found && "?"}
+                    </div>
+                    <div className={styles.collectionInfo}>
+                      <strong>
+                        {treasure.found ? treasure.name : "未确认的身影"}
+                      </strong>
+                      <span>
+                        {treasure.found
+                          ? "已出土"
+                          : `已显露 ${treasure.revealed} / ${treasure.total} 格`}
+                      </span>
+                    </div>
+                    <b className={styles.collectionPoints}>
+                      {treasure.found ? `+${treasure.points}` : "···"}
+                    </b>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-          {game.status === 'won' && (
+          {game.status !== "playing" && (
             <div className={styles.result} aria-live="polite">
-              <span className={styles.resultGrade}>{grade}</span>
-              <div><strong>发掘成功</strong><p>{level.name}已收入档案。</p></div>
+              <span className={styles.resultGrade}>
+                {game.status === "won" ? getGrade(game) : foundCount}
+              </span>
+              <div>
+                <strong>
+                  {game.status === "won"
+                    ? "全部出土"
+                    : game.movesLeft === 0
+                      ? "落锤用尽"
+                      : strandedTreasure
+                        ? "宝物砖已孤立"
+                        : "无可敲连片"}
+                </strong>
+                <p>
+                  {game.score} 分 · {foundCount} / {game.treasures.length}{" "}
+                  件藏品
+                </p>
+              </div>
             </div>
           )}
-          {game.status === 'lost' && <p className={styles.lossText}>落锤已用尽，撤销或重开本局。</p>}
 
           <div className={styles.commands}>
-            {game.status === 'won' && game.levelIndex < LEVELS.length - 1 ? (
-              <button type="button" className={styles.primaryButton} onClick={() => startLevel(game.levelIndex + 1)}>
-                下一份档案 <ArrowRightOutlined aria-hidden />
-              </button>
-            ) : game.status === 'lost' ? (
-              <button type="button" className={styles.primaryButton} onClick={() => startLevel(game.levelIndex)}>
-                重试本局 <ReloadOutlined aria-hidden />
-              </button>
-            ) : game.status === 'won' ? (
-              <button type="button" className={styles.primaryButton} onClick={() => startLevel(0)}>
-                再探一次 <ReloadOutlined aria-hidden />
-              </button>
-            ) : null}
-            <div className={styles.secondaryButtons}>
-              <button type="button" onClick={undo} disabled={!history.length || game.status === 'won'} title="撤销上一步"><UndoOutlined aria-hidden /> 撤销</button>
-              <button type="button" onClick={() => startLevel(game.levelIndex)} title="重开本局"><ReloadOutlined aria-hidden /> 重开</button>
-            </div>
-          </div>
-
-          {helpOpen && (
-            <div
-              id="brick-rules"
-              ref={rulesRef}
-              className={styles.rules}
-              tabIndex={-1}
+            <button
+              className={styles.primaryButton}
+              type="button"
+              onClick={newMap}
             >
-              <div className={styles.rulesTitle}><strong>发掘规则</strong><button type="button" onClick={() => { setHelpOpen(false); helpButtonRef.current?.focus(); }} aria-label="关闭规则"><CloseOutlined aria-hidden /></button></div>
-              <ol>
-                <li>敲一块砖，四向相连的同色砖一起落下。</li>
-                <li>清除区域周围的砖，每块沿色阶前进一步；不会连续引爆。</li>
-                <li>清空带 ◇ 印记的格子，找到砖层下的主播。</li>
-              </ol>
-              <p>大连片可返还落锤；方向键可在砖块间移动。</p>
+              <span>新地图</span>
+              <ReloadOutlined />
+            </button>
+            <div className={styles.secondaryButtons}>
+              <button
+                type="button"
+                onClick={shuffle}
+                disabled={!canShuffleRemaining(game)}
+                aria-label={`洗牌，剩余 ${game.shufflesLeft} 次`}
+                title="重随机剩余砖块的颜色"
+                data-shuffle=""
+              >
+                <SyncOutlined /> 洗牌 {game.shufflesLeft}/{game.maxShuffles}
+              </button>
+              <button
+                type="button"
+                onClick={undo}
+                disabled={history.length === 0}
+                aria-label="撤销"
+              >
+                <UndoOutlined /> 撤销
+              </button>
+              <button type="button" onClick={restart} aria-label="重开">
+                <ReloadOutlined /> 重开
+              </button>
             </div>
-          )}
-
-          <div className={styles.archiveList}>
-            <div className={styles.archiveTitle}><span>人物档案</span><span>{Object.keys(records).length} / {LEVELS.length}</span></div>
-            {LEVELS.map((entry, index) => {
-              const unlocked = index <= unlockedIndex;
-              const record = records[entry.id];
-              return (
-                <button
-                  key={entry.id}
-                  type="button"
-                  className={styles.archiveItem}
-                  data-active={index === game.levelIndex}
-                  disabled={!unlocked}
-                  onClick={() => startLevel(index)}
-                  aria-label={`档案 ${index + 1}，${record ? entry.name : '未鉴定'}${unlocked ? '' : '，未解锁'}`}
-                >
-                  <span className={styles.archiveNumber}>{String(index + 1).padStart(2, '0')}</span>
-                  <span className={styles.archiveName}>{record ? entry.name : unlocked ? '待发掘' : '尚未解锁'}</span>
-                  <span className={styles.archiveEnd}>{record ? record.grade : unlocked ? <ArrowRightOutlined aria-hidden /> : <LockOutlined aria-hidden />}</span>
-                </button>
-              );
-            })}
           </div>
-          {activeRecord && <div className={styles.personalBest}><CheckOutlined aria-hidden /> 最佳纪录 {activeRecord.grade} · {activeRecord.turns} 锤</div>}
+          <div className={styles.personalBest}>
+            本机最佳 <strong>{best ?? "—"}</strong>
+          </div>
         </aside>
       </div>
-      <span className={styles.srOnly} role="status" aria-live="polite">{notice}</span>
+
+      {rulesOpen && (
+        <div className={styles.rulesScrim}>
+          <button
+            type="button"
+            className={styles.rulesBackdrop}
+            aria-label="关闭规则"
+            onClick={closeRules}
+          />
+          <div
+            ref={rulesRef}
+            id="brick-rules"
+            className={styles.rules}
+            role="dialog"
+            aria-modal="true"
+            aria-label="发掘规则"
+            tabIndex={-1}
+          >
+            <div className={styles.rulesTitle}>
+              <strong>发掘规则</strong>
+              <button type="button" onClick={closeRules} aria-label="关闭规则">
+                ×
+              </button>
+            </div>
+            <ol>
+              <li>至少两块四向相连的同色砖才能敲；单独一格是死棋。</li>
+              <li>周围的砖按朱红、青绿、琥珀、紫晶的顺序循环变色。</li>
+              <li>
+                清开砖层寻找藏品；完整挖出一件，立即得分，继续寻找其他藏品。
+              </li>
+              <li>每次敲击消耗一锤；一次敲落至少六块，返还这一锤。</li>
+              <li>每局可洗牌 {game.maxShuffles} 次，只随机剩余砖的颜色，不补砖或落锤；四周已挖空的孤砖无法靠洗牌补救。</li>
+            </ol>
+            <p>鼠标、触屏可直接敲击；键盘方向键移动焦点，Enter 或空格敲击。</p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

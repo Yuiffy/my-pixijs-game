@@ -74,6 +74,9 @@
   border-radius: 12px;
   position: relative;
   margin: 14px 5px;
+  /* Contain the translated full-width carrier while preserving the needle's overhang. */
+  overflow: clip;
+  overflow-clip-margin: 8px;
 }
 .timing span {
   position: absolute;

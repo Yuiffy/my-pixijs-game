@@ -1,4 +1,5 @@
 import { offAir } from "./daily";
+import { onBreak } from "./household";
 import { broadcast } from "./engine";
 import { worldPoint } from "./navigation";
 import type { Runtime3D } from "./runtime3d";
@@ -44,6 +45,7 @@ export class ApartmentSound {
     spatial: boolean,
     type: OscillatorType = "sine",
   ) {
+    if (gain <= 0) return;
     const ctx = this.context;
     const oscillator = ctx.createOscillator();
     const envelope = ctx.createGain();
@@ -110,7 +112,7 @@ export class ApartmentSound {
     if (beat !== this.lastBeat) {
       this.lastBeat = beat;
       const { music } = broadcast(s);
-      if (s.muted <= 0 && !offAir(s)) this.tone(
+      if (s.muted <= 0 && !offAir(s) && !onBreak(s)) this.tone(
           music
             ? [261.6, 329.6, 392, 440, 392, 329.6, 293.7, 329.6][beat % 8]
             : [174, 207, 196, 220][beat % 4],

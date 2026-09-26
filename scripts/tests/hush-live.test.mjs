@@ -38,6 +38,7 @@ function walk(s, spot) {
     return walk(s, spot);
   }
   if (spot === "partner" && s.visit) advance(s, .8);
+  if (spot === "partner" && s.daily?.stage === 'home' && ['out','inside','back'].includes(s.daily.household.rest.stage)) return;
   assert.ok(
     e.distance(s.player, e.interactionPoint(s, spot)) < 65,
     `walk ${spot}: ${JSON.stringify(s)}`,
@@ -57,14 +58,14 @@ function cover(s) {
     advance(s, 0.05);
 }
 function completeNight(s, choice = 'together') {
-  for (let i = 0; i < 60 && s.phase === 'playing'; i++) {
+  for (let i = 0; i < 120 && s.phase === 'playing'; i++) {
     if (s.daily?.panel === 'lock' || s.daily?.panel === 'cook') { timingWin(s); continue; }
     if (s.daily?.panel === 'leisure') { s.daily.volume = 15; advance(s, 9); daily.finishLeisure(s); continue; }
     if (s.daily?.stage === 'sleep') { advance(s, 3.1); continue; }
     if (s.daily?.panel === 'story') { daily.chooseGoodnight(s, choice); advance(s, .1); continue; }
     const next = objective(s);
     walk(s, next.spot);
-    if (objective(s).spot !== next.spot) continue;
+    if (objective(s).spot !== next.spot || objective(s).key !== next.key) continue;
     assert.equal(action(s, next.spot).key, next.key, JSON.stringify({next,s}));
     if (['food', 'hug', 'kiss', 'pickup-charger'].includes(next.key)) cover(s);
     const a = action(s, next.spot);
@@ -238,7 +239,7 @@ test('following current objectives completes every integrated night and all afte
   const memories = new Set();
   for (let level = 1; level <= 5; level++) for (const seed of [1, 42, 99]) for (const choice of ['care', 'together']) {
     const s = e.createGame(level, seed, level); s.phase = 'playing';
-    assert.equal(s.daily.panel, 'lock'); completeNight(s, choice);
+    assert.equal(s.daily.panel, s.daily.household.arrival === 'outside' ? 'lock' : null); completeNight(s, choice);
     assert.equal(s.won, true, JSON.stringify(s)); memories.add(s.daily.memory);
     assert.ok(e.record(e.freshSave(), s).unlocked >= (level < 5 ? level + 1 : 0));
   }
@@ -293,6 +294,23 @@ test('3D interaction requires a focused object and a nearby body', () => {
   advance(s,2.2,{...emptyInput(),act:true,focus:'shelf'});assert.equal(s.carry,'charger');
   const distant=createGame();distant.phase='playing';
   advance(distant,3,{...emptyInput(),act:true,focus:'shelf'});assert.equal(distant.carry,null);
+});
+
+test('locked mouse rejects warp samples and invalid deltas without limiting continuous fast turns', () => {
+  const r=runtime3d.createRuntime(e.freshSave());r.game.phase='playing';r.pointerLocked=true;
+  const initial=r.yaw;
+  for(let i=0;i<80;i++)runtime3d.rotateLockedView(r,2,0);
+  assert.ok(Math.abs(r.yaw-(initial-.4))<1e-10);
+  const stable={yaw:r.yaw,pitch:r.pitch};
+  for(const [x,y] of [[720,0],[-720,0],[0,800],[Infinity,0],[0,NaN]])runtime3d.rotateLockedView(r,x,y);
+  assert.deepEqual({yaw:r.yaw,pitch:r.pitch},stable);
+  for(let i=0;i<12;i++)runtime3d.rotateLockedView(r,120,0);
+  assert.ok(Math.abs(r.yaw-(stable.yaw-3.6))<1e-10, 'fast motion is not capped per frame');
+  runtime3d.go3D(r,'shelf');runtime3d.rotateLockedView(r,2,0);
+  const manualYaw=r.yaw;runtime3d.advance3D(r,.2);assert.equal(r.yaw,manualYaw);
+  r.pointerLocked=false;runtime3d.rotateLockedView(r,20,0);assert.equal(r.yaw,manualYaw);
+  runtime3d.rotateView(r,400,0);assert.equal(r.yaw,manualYaw-1, 'absolute drag has no pointer-lock warp filter');
+  runtime3d.rotateView(r,NaN,Infinity);assert.ok(Number.isFinite(r.yaw)&&Number.isFinite(r.pitch));
 });
 
 test('first-person movement follows camera heading and manual input cancels assisted walking', () => {
@@ -419,7 +437,14 @@ test('all seven meals and homemade rice run from entry to after-stream choices u
     const s = dailyStart(homemade, index || 7); timingWin(s);
     if (homemade) { walk(s, 'kitchen'); hold(s); assert.equal(s.daily.panel, 'cook'); timingWin(s); assert.ok(s.done.includes('cook')); }
     else { walk(s, 'entry'); hold(s); }
-    assert.equal(s.carry, 'food'); walk(s, 'table'); hold(s); assert.ok(s.done.includes('food'));
+    assert.equal(s.carry, 'food');
+    if (s.daily.meal === 'noodles') {
+      walk(s, 'table'); assert.equal(action(s, 'table').key, '');
+      walk(s, 'kitchen'); hold(s); assert.equal(s.carry, null);
+      advance(s, 12); hold(s); advance(s, 10); hold(s);
+      assert.equal(s.daily.household.noodles, 'carrying');
+    }
+    walk(s, 'table'); hold(s); assert.ok(s.done.includes('food'));
     // Complete each chapter's actual middle activity before resting.
     if (s.tasks.includes('delta')) { walk(s, 'door'); if (!s.doorClosed) hold(s); walk(s, 'desk'); hold(s); }
     if (s.tasks.includes('hug')) { walk(s, 'partner'); cover(s); hold(s); }
@@ -498,4 +523,75 @@ test('each costume names the same partner throughout objectives and all aftermat
       assert.equal(saved.skin,skin);
     }
   }
+});
+
+test('encore independently varies home starts, seven deliveries, homemade meals and task order', () => {
+  const arrivals = new Map(), meals = new Map(), plans = new Set(); let homemade = 0;
+  for (let seed=1; seed<=3000; seed++) {
+    const s = e.createGame(5,seed,5), d=s.daily;
+    assert.deepEqual(s,e.createGame(5,seed,5));
+    arrivals.set(d.household.arrival,(arrivals.get(d.household.arrival)||0)+1);
+    assert.equal(d.panel,d.household.arrival==='outside'?'lock':null);
+    assert.ok(nav.walkable(s.player,false));
+    if(d.homemade) homemade++; else meals.set(d.meal,(meals.get(d.meal)||0)+1);
+    plans.add(s.tasks.join(','));
+    assert.equal(new Set(s.tasks).size,s.tasks.length);
+    if(d.homemade)assert.ok(s.tasks.indexOf('cook')<s.tasks.indexOf('food'));
+  }
+  assert.equal(arrivals.size,3);assert.equal(meals.size,7);assert.ok(plans.size>30);
+  assert.ok([...arrivals.values()].every(n=>n>700));assert.ok([...meals.values()].every(n=>n>200));
+  assert.ok(homemade>450&&homemade<750);
+});
+
+test('bucket noodles require boiling and steeping, with hands free for cat chores and paused timers', () => {
+  const seed=Array.from({length:1000},(_,i)=>i+1).find(n=>{const s=e.createGame(5,n,5);return s.daily.meal==='noodles'&&s.tasks.includes('cat-food')&&s.tasks.includes('cat-litter');});
+  const s=e.createGame(5,seed,5);s.phase='playing';if(s.daily.panel==='lock')timingWin(s);
+  walk(s,'entry');hold(s);assert.equal(s.daily.household.noodles,'sealed');
+  walk(s,'table');assert.equal(action(s,'table').key,'');assert.ok(!s.done.includes('food'));
+  walk(s,'kitchen');hold(s);assert.equal(s.daily.household.noodles,'boiling');assert.equal(s.carry,null);
+  e.togglePause(s);const paused=JSON.stringify(s);advance(s,30);assert.equal(JSON.stringify(s),paused);e.togglePause(s);
+  walk(s,'cat-bowl');hold(s);assert.ok(s.done.includes('cat-food'));assert.ok(!s.done.includes('food'));
+  while(s.daily.household.noodles==='boiling')advance(s,.1);
+  walk(s,'kitchen');hold(s);assert.equal(s.daily.household.noodles,'steeping');assert.equal(s.carry,null);
+  walk(s,'cat-litter');for(let i=0;i<3;i++)hold(s);assert.equal(s.daily.household.cat.scoops,3);assert.ok(s.done.includes('cat-litter'));
+  while(s.daily.household.noodles==='steeping')advance(s,.1);
+  walk(s,'kitchen');hold(s);assert.equal(s.daily.household.noodles,'carrying');assert.equal(s.carry,'food');
+  walk(s,'table');hold(s);assert.equal(s.daily.household.noodles,'served');assert.ok(s.done.includes('food'));
+  if(['out','inside','back'].includes(s.daily.household.rest.stage))assert.ok(!s.message.includes('勾了勾你的手'));
+});
+
+test('cats wander around furniture, sleep, eat after feeding, and cleanup cannot farm rewards', () => {
+  const seed=Array.from({length:100},(_,i)=>i+1).find(n=>e.createGame(5,n,5).tasks.includes('cat-food'));
+  const s=createGame(5,seed,5);s.phase='playing';const modes=new Set();const places=new Set();
+  for(let i=0;i<1600;i++){advance(s,.05);const c=s.daily.household.cat;assert.ok(nav.walkable(c,false));modes.add(c.mode);places.add(`${Math.round(c.x/20)},${Math.round(c.y/20)}`);}
+  assert.ok(modes.has('walk')&&modes.has('sleep'));assert.ok(places.size>8);
+  walk(s,'cat-bowl');hold(s);
+  for(let i=0;i<500&&s.daily.household.cat.mode!=='eat';i++)advance(s,.05);
+  assert.equal(s.daily.household.cat.mode,'eat');const love=s.love;hold(s);assert.equal(s.love,love);
+});
+
+test('partner takes a private bathroom break, walks collision-free both ways, and resumes talking', () => {
+  for(const closed of [false,true]){
+    const s=createGame(5,21,5);s.phase='playing';s.doorClosed=closed;
+    const states=new Set();let muted=false;
+    for(let i=0;i<2600&&s.daily.household.rest.stage!=='done';i++){
+      advance(s,.05);const b=s.daily.household.rest;states.add(b.stage);
+      if(['out','back'].includes(b.stage))assert.ok(nav.walkable(b,s.doorClosed),JSON.stringify(b));
+      if(['out','inside','back'].includes(b.stage)){assert.equal(e.partnerBehavior(s).speaking,false);muted=true;}
+      if(b.stage==='inside'){assert.equal(action(s,'partner').key,'');}
+    }
+    assert.deepEqual([...states].sort(),['pending','out','inside','back','done'].sort());
+    assert.ok(muted);assert.equal(s.daily.household.rest.visits,1);assert.equal(e.partnerBehavior(s).speaking,true);
+    assert.equal(s.doorClosed,closed);
+  }
+});
+
+test('random nights with changing food, cat chores and bathroom events can all be completed', () => {
+  const meals=new Set(),starts=new Set();
+  for(let seed=1;seed<=70;seed++){
+    const s=solve(5,seed,5);assert.ok(s.won,JSON.stringify(s));assert.equal(s.done.length,s.tasks.length);
+    meals.add(s.daily.meal);starts.add(s.daily.household.arrival);
+    if(s.daily.meal==='noodles')assert.equal(s.daily.household.noodles,'served');
+  }
+  assert.equal(meals.size,7);assert.equal(starts.size,3);
 });

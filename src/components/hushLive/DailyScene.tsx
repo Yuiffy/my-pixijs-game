@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MEALS, offAir } from "./daily";
 import type { Runtime3D } from "./runtime3d";
+import { NoodleCup } from "./HouseholdScene";
 
 function Cube({
   p,
@@ -33,7 +34,7 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
     <group ref={group}>
       {MEALS.map((m) => (
         <group name={m.id} key={m.id}>
-          {m.id === "tea" || m.id === "dq" ? (
+          {m.id === "noodles" ? <NoodleCup runtime={r} /> : m.id === "tea" || m.id === "dq" ? (
             <>
               <mesh position={[0, 0.14, 0]} castShadow>
                 <cylinderGeometry args={[0.095, 0.065, 0.27, 20]} />
@@ -81,10 +82,10 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
             <>
               <mesh position={[0, 0.04, 0]} castShadow>
                 <cylinderGeometry
-                  args={[0.23, 0.18, m.id === "noodles" ? 0.14 : 0.07, 24]}
+                  args={[0.23, 0.18, 0.07, 24]}
                 />
                 <meshStandardMaterial
-                  color={m.id === "noodles" ? "#cf785b" : "#e9e0c9"}
+                  color="#e9e0c9"
                 />
               </mesh>
               {(m.id === "rice" || m.id === "plain") && (
@@ -190,36 +191,6 @@ export function MealModels({ runtime: r }: { runtime: Runtime3D }) {
                     ))}
                   </group>
                 ))}
-              {m.id === "noodles" && (
-                <>
-                  <mesh position={[0, 0.115, 0]}>
-                    <cylinderGeometry args={[0.2, 0.2, 0.009, 24]} />
-                    <meshStandardMaterial color="#ae7547" />
-                  </mesh>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <mesh
-                      key={i}
-                      position={[
-                        Math.sin(i) * 0.065,
-                        0.128 + (i % 3) * 0.006,
-                        Math.cos(i) * 0.065,
-                      ]}
-                      rotation={[Math.PI / 2, 0, i]}
-                    >
-                      <torusGeometry
-                        args={[
-                          0.065 + (i % 3) * 0.012,
-                          0.006,
-                          5,
-                          16,
-                          Math.PI * 1.8,
-                        ]}
-                      />
-                      <meshStandardMaterial color="#edc77b" />
-                    </mesh>
-                  ))}
-                </>
-              )}
               <Cube
                 p={[0.29, 0.07, 0]}
                 size={[0.015, 0.012, 0.34]}
