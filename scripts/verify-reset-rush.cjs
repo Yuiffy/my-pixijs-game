@@ -10,7 +10,7 @@ const base = process.env.RESET_BASE_URL || 'http://127.0.0.1:3888';
 const output = path.resolve(process.env.RESET_QA_DIR || 'tmp/reset-rush-verify');
 const report = { screenshots: [], errors: [], assertions: [], actions: {}, reveals: {} };
 const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
-const saved = p => p.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v1')));
+const saved = p => p.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v2')));
 let E;
 async function shot(p, name) {
   await p.evaluate(() => document.fonts.ready);
@@ -33,14 +33,17 @@ async function load(p) {
   await p.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).phase);
 }
 async function perform(p, a) {
-  const before = await saved(p);
+  let before = await saved(p);
   assert.equal(E.actionError(before, 0, a), null, JSON.stringify(a));
   report.actions[a.type] = (report.actions[a.type] || 0) + 1;
   if (a.type === 'develop') {
     await p.locator(`[data-project="${a.project}"]`).click();
     const index = before.players[0].accounts.findIndex(x => x.id === a.account);
     if (index >= 0) await p.getByRole('button', { name: `选择账号 ${index + 1}`, exact: true }).click();
-    await p.locator(`[data-mode="${a.mode}"]`).click();
+    await p.locator(`[data-model="${a.model}"]`).click();
+    await p.locator('#reset-effort').selectOption(a.effort);
+    await p.locator('#reset-turbo').setChecked(a.turbo);
+    before = await saved(p);
     await p.locator('#develop').click();
   } else if (a.type === 'claim') await p.locator(`[data-project="${a.project}"]`).click();
   else if (a.type === 'test') {
@@ -51,16 +54,18 @@ async function perform(p, a) {
     await p.getByRole('button', { name: `选择账号 ${index + 1}`, exact: true }).click();
     await p.getByRole('button', { name: /使用银行券/ }).click();
   } else if (a.type === 'freelance') await p.getByRole('button', { name: /手写外包/ }).click();
-  else if (a.type === 'renew') {
-    const index = before.players[0].accounts.findIndex(x => x.id === a.account);
-    await p.getByRole('button', { name: /^续费/ }).nth(before.players[0].accounts.slice(0, index).filter(x => x.paidUntil < before.day).length).click();
-  } else if (a.type === 'buy' || a.type === 'upgrade') {
-    await p.getByRole('button', { name: /管理/ }).click();
-    if (a.type === 'buy') await p.getByRole('button', { name: /开新号/ }).nth([20, 100, 200].indexOf(a.tier)).click();
-    else await p.getByRole('button', { name: new RegExp(`→ ${E.PLANS[a.tier].name}`) }).click();
+  else if (['renew','buy','upgrade'].includes(a.type)) {
+    await p.getByRole('button', { name: '账号管理', exact: true }).click();
+    if (a.type === 'buy') await p.getByRole('button', { name: /开新号/ }).nth([20,100,200].indexOf(a.tier)).click();
+    else {
+      const row=p.locator(`[data-managed-account="${a.account}"]`);
+      if(a.type==='upgrade') await row.getByRole('button',{name:new RegExp(`→ ${E.PLANS[a.tier].name}`)}).click();
+      else await row.getByRole('button',{name: '$' + a.tier + ' 续开 ' + E.PLANS[a.tier].name,exact:true}).click();
+    }
+    await p.getByRole('button',{name:'关闭弹窗'}).click();
   } else throw new Error(`Unhandled UI action ${a.type}`);
   await p.waitForFunction(({ cursor, banks }) => {
-    const g = JSON.parse(localStorage.getItem('reset-rush-v1'));
+    const g = JSON.parse(localStorage.getItem('reset-rush-v2'));
     return g.cursor !== cursor || g.players[0].banksUsed !== banks;
   }, { cursor: before.cursor, banks: before.players[0].banksUsed });
   const next = await saved(p);
@@ -80,6 +85,9 @@ async function perform(p, a) {
     await shot(p, '01-intro-desktop');
     await p.locator('#reset-seed').fill('84'); await p.locator('#start-game').click();
     await p.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === 'plan');
+    await shot(p, '02-onboarding-desktop');
+    assert.equal((await read(p)).players[0].accounts[0].tier,20);
+    await p.getByRole('button',{name:'就这样，开始开发 →'}).click();
     await shot(p, '02-board-desktop');
     await p.getByRole('button', { name: /玩法说明/ }).click();
     assert.ok(await p.locator('dialog[open]').isVisible());
@@ -89,7 +97,7 @@ async function perform(p, a) {
     await p.keyboard.press('f'); assert.equal(await p.evaluate(() => !!document.fullscreenElement), false);
     report.assertions.push('rules keyboard dismissal restores focus; F toggles fullscreen');
     let g = await saved(p);
-    await perform(p, { type: 'develop', project: g.players[0].projects[0].id, account: g.players[0].accounts[0].id, mode: 'astra' });
+    await perform(p, { type: 'develop', project: g.players[0].projects[0].id, account: g.players[0].accounts[0].id, model: 'astra', effort: 'medium', turbo: false });
     g = await saved(p); await perform(p, { type: 'bank', account: g.players[0].accounts[0].id });
     const preserved = await saved(p); await p.reload({ waitUntil: 'networkidle' });
     await p.waitForFunction(() => JSON.parse(window.render_game_to_text()).day === 1);
@@ -130,14 +138,17 @@ async function perform(p, a) {
 
     const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     await quiet(mobile); const mp = await mobile.newPage(); errors(mp); await load(mp);
-    await mp.getByRole('button', { name: /双号狂蹬/ }).tap(); await mp.locator('#reset-length').selectOption('21');
+    await mp.locator('#reset-length').selectOption('21');
     await mp.locator('#start-game').tap(); await mp.waitForFunction(() => JSON.parse(window.render_game_to_text()).phase === 'plan');
-    assert.equal((await read(mp)).players[0].accounts.length, 2);
+    await mp.getByRole('button',{name:'补 $180 → PRO 200',exact:true}).tap();
+    await mp.getByRole('button',{name:/开新号/}).nth(2).tap();
+    await mp.getByRole('button',{name:'就这样，开始开发 →'}).tap();
+    assert.equal((await read(mp)).players[0].accounts.length,2);
     await mp.getByRole('button', { name: '选择账号 2', exact: true }).tap();
-    await mp.locator('[data-mode="ultra"]').tap(); await mp.locator('#develop').tap();
-    const mstate = await read(mp); assert.equal(mstate.players[0].accounts[0].quota, 180); assert.equal(mstate.players[0].accounts[1].quota, 156);
+    await mp.locator('[data-model="astra"]').tap(); await mp.locator('#reset-effort').selectOption('ultra'); await mp.locator('#develop').tap();
+    const mstate = await read(mp); assert.equal(mstate.players[0].accounts[0].quota, 180); assert.equal(mstate.players[0].accounts[1].quota, 153);
     await shot(mp, '06-mobile390-dual');
-    await mp.getByRole('button', { name: /管理/ }).tap();
+    await mp.getByRole('button', { name: '账号管理', exact: true }).tap();
     assert.equal(await mp.getByRole('button', { name: /开新号/ }).nth(2).isDisabled(), true);
     await shot(mp, '07-mobile-shop');
     await mp.getByRole('button', { name: '关闭弹窗' }).tap();
@@ -146,7 +157,7 @@ async function perform(p, a) {
     report.assertions.push('390/320 touch; independent second account; unaffordable purchase disabled; no horizontal overflow');
 
     const bad = await browser.newContext({ viewport: { width: 1000, height: 800 } }); await quiet(bad);
-    await bad.addInitScript(() => localStorage.setItem('reset-rush-v1', '{"version":1}'));
+    await bad.addInitScript(() => localStorage.setItem('reset-rush-v2', '{"version":1}'));
     const bp = await bad.newPage(); errors(bp); await load(bp); assert.equal((await read(bp)).phase, 'intro');
     report.assertions.push('malformed save recovers to setup');
     const noStore = await browser.newContext({ viewport: { width: 1000, height: 800 } }); await quiet(noStore);

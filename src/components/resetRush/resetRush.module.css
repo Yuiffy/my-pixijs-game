@@ -203,7 +203,7 @@
 .commandTitle > span:last-child { color: #95aa87; font-size: 9px; }
 .commandTitle i { opacity: .4; margin: 0 6px; font-style: normal; }
 .commandRow { display: flex; gap: 15px; }
-.modes { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid #abc28f36; border-radius: 3px; overflow: hidden; }
+.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #abc28f36; border-radius: 3px; overflow: hidden; }
 .modes button { border: 0; border-right: 1px solid #abc28f36; background: #172d23; padding: 11px 14px; text-align: left; color: #c4d5b1; }
 .modes button:last-child { border: 0; }
 .modes button:hover { background: #294232; }
@@ -212,6 +212,41 @@
 .modes small { display: block; font-size: 8px; margin-top: 4px; }
 .modes .chosenMode { background: #cedbb9; color: #20392b; }
 .modes .chosenMode:hover { background: #dae6c6; }
+.startingKit { padding: 0 0 18px; border-bottom: 1px solid #c2ceae35; }
+.startingKit strong { display: block; color: #d7e5b5; font-size: 16px; font-weight: 500; }
+.startingKit span { display: block; margin-top: 8px; font-size: 11px; color: #a4b89a; }
+.difficulty { display: block; margin: 7px 0; font-size: 9px; letter-spacing: .5px; opacity: .75; }
+.developmentControls { flex: 1; min-width: 0; }
+.configRow { display: flex; align-items: center; gap: 24px; margin-top: 13px; flex-wrap: wrap; }
+.configRow label { display: flex; align-items: center; gap: 10px; color: #bfd0ac; font-size: 11px; }
+.configRow select { background: #203c2e; border: 1px solid #90a97c70; border-radius: 3px; color: #e1e9ce; padding: 8px 12px; font: 12px ui-monospace, monospace; min-width: 108px; }
+.turboToggle { cursor: pointer; padding: 5px 0; }
+.turboToggle input { accent-color: var(--mint); width: 17px; height: 17px; }
+.turboToggle b { font: 13px ui-monospace, monospace; }
+.turboToggle span { font-size: 9px; opacity: .7; }
+.devPreview { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 22px; margin-top: 13px; color: #b5c79f; font-size: 11px; }
+.devPreview b { font: 13px ui-monospace, monospace; color: #ddebc7; }
+.devPreview small { margin-left: auto; font-size: 9px; opacity: .7; }
+.devPreview .risk, .devPreview .risk b { color: #e2b381; }
+.configHint { font-size: 10px; color: #a8bb97; line-height: 1.7; margin-top: 9px; }
+.welcome { border-left: 3px solid #7c9960; padding: 0 0 0 14px; margin-bottom: 16px; }
+.welcome b { font-size: 17px; font-weight: 600; }
+.welcome p { font-size: 12px; line-height: 1.8; margin-top: 7px; }
+.managedAccount { padding: 17px 0; border-top: 1px solid #50634030; }
+.managedHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.managedHead h3 { font-size: 14px; font-weight: 650; }
+.managedHead h3 span { font: 11px ui-monospace, monospace; margin-left: 8px; color: #6d8057; }
+.managedHead > b { font: 12px ui-monospace, monospace; }
+.managedAccount > p { font-size: 11px; line-height: 1.8; margin-top: 7px; color: #697657; }
+.accountOperations { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.accountOperations button { background: #dce3d0; color: #3d5733; border: 1px solid #7d956449; border-radius: 3px; padding: 9px 12px; font-size: 11px; }
+.renewalPolicy { display: flex; align-items: center; gap: 12px; font-size: 11px; margin: 12px 0 0; }
+.renewalPolicy select { padding: 8px; background: #f6f7ee; border: 1px solid #899a6e70; border-radius: 3px; color: #354432; font-size: 11px; max-width: 100%; }
+.renewalPolicy small { color: #758b5a; font-size: 10px; white-space: nowrap; }
+.policyHint { font-size: 10px; color: #6a7a57; line-height: 1.8; }
+.shopTitle { font-size: 14px; font-weight: 650; margin-top: 22px; }
+.shopTitle small { font: 11px ui-monospace, monospace; margin-left: 10px; color: #7b8c65; }
+.shopFeedback { color: #5b7345; font-size: 11px; line-height: 1.8; margin-top: 14px; }
 .develop { background: var(--mint); border: 0; color: var(--ink); padding: 15px 36px; border-radius: 3px; min-width: 205px; }
 .develop > span { display: block; font-size: 18px; font-weight: 700; }
 .develop > small { display: block; margin-top: 7px; font-size: 9px; opacity: .7; }
@@ -349,7 +384,12 @@
   .benchFoot { font-size: 8px; } .accounts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .account { margin: 0; } .quota > strong { font-size: 29px; } .accountMeta { font-size: 8px; } .accountMeta small { font-size: 7px; } .expiry { font-size: 7px; }
   .bankButton { grid-column: 1/-1; } .bankHint { grid-column: 1/-1; margin-top: -5px; }
   .commandArea { padding: 15px; margin-top: 21px; } .commandTitle { display: block; } .commandTitle > span:last-child { display: block; margin-top: 8px; font-size: 8px; } .commandRow { display: block; }
-  .modes { grid-template-columns: repeat(3, 1fr); border: 0; gap: 5px; overflow: visible; } .modes button { border: 1px solid #abc28f36 !important; border-radius: 3px; padding: 10px; } .modes button:last-child { grid-column: span 2; } .modes b { font-size: 11px; } .modes span { font-size: 8px; } .modes small { font-size: 7px; }
+  .modes { grid-template-columns: repeat(3, 1fr); border: 0; gap: 5px; overflow: visible; } .modes button { border: 1px solid #abc28f36 !important; border-radius: 3px; padding: 10px; } .modes b { font-size: 12px; } .modes span { font-size: 9px; line-height: 1.6; }
+  .configRow { gap: 10px 16px; } .configRow label { gap: 8px; }
+  .devPreview { gap: 9px 16px; } .devPreview small { flex-basis: 100%; margin-left: 0; }
+  .renewalPolicy { flex-wrap: wrap; gap: 8px; } .renewalPolicy small { font-size: 9px; }
+  .managedHead { flex-wrap: wrap; } .managedAccount > p { font-size: 10px; }
+  .welcome b { font-size: 15px; } .welcome p { font-size: 11px; }
   .develop { width: 100%; margin-top: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; } .develop > small { margin-top: 0; font-size: 9px; }
   .secondaryActions { display: block; margin-top: 8px; } .secondaryActions > div { justify-content: space-between; gap: 5px; flex-wrap: wrap; } .secondaryActions button { font-size: 9px; } .secondaryActions button small { font-size: 7px; margin-left: 5px; } .secondaryActions .abandon { width: 100%; text-align: left; }
   .secondaryActions .endDay { border-top: 1px solid #b1c8952b; width: 100%; text-align: right; padding: 13px 0 0; margin-top: 5px; }

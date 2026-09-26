@@ -1,0 +1,304 @@
+{
+  "version": 1,
+  "seed": 13,
+  "rng": 206754236,
+  "day": 1,
+  "length": 42,
+  "phase": "plan",
+  "players": [
+    {
+      "id": 0,
+      "name": "你",
+      "strategy": "balanced",
+      "cash": 100,
+      "vp": 0,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 1,
+          "tier": 200,
+          "quota": 33,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        },
+        {
+          "id": 2,
+          "tier": 200,
+          "quota": 180,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [
+        {
+          "id": 3,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "vp": 6,
+          "cash": 25,
+          "work": 8,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "shipped": [],
+      "used": 0,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    },
+    {
+      "id": 1,
+      "name": "林工",
+      "strategy": "builder",
+      "cash": 400,
+      "vp": 0,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 4,
+          "tier": 100,
+          "quota": 90,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [
+        {
+          "id": 5,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "vp": 6,
+          "cash": 25,
+          "work": 0,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "shipped": [],
+      "used": 0,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    },
+    {
+      "id": 2,
+      "name": "阿卷",
+      "strategy": "sprinter",
+      "cash": 300,
+      "vp": 0,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 6,
+          "tier": 200,
+          "quota": 180,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [
+        {
+          "id": 7,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "vp": 6,
+          "cash": 25,
+          "work": 0,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "shipped": [],
+      "used": 0,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    },
+    {
+      "id": 3,
+      "name": "老周",
+      "strategy": "banker",
+      "cash": 100,
+      "vp": 0,
+      "knowledge": 0,
+      "accounts": [
+        {
+          "id": 8,
+          "tier": 200,
+          "quota": 180,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        },
+        {
+          "id": 9,
+          "tier": 200,
+          "quota": 180,
+          "nextReset": 8,
+          "paidUntil": 30,
+          "banks": [
+            31
+          ],
+          "lastBankDay": 0
+        }
+      ],
+      "projects": [
+        {
+          "id": 10,
+          "name": "极简记账本",
+          "category": "personal",
+          "need": 14,
+          "vp": 6,
+          "cash": 25,
+          "work": 0,
+          "bugs": 0,
+          "deadline": null
+        }
+      ],
+      "shipped": [],
+      "used": 0,
+      "resetGain": 0,
+      "wasted": 0,
+      "expired": 0,
+      "banksUsed": 0,
+      "collisions": 0
+    }
+  ],
+  "market": [
+    {
+      "id": 11,
+      "name": "只有一条命",
+      "category": "game",
+      "need": 42,
+      "vp": 23,
+      "cash": 35,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    },
+    {
+      "id": 12,
+      "name": "tiny-agent",
+      "category": "open",
+      "need": 24,
+      "vp": 11,
+      "cash": 15,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    },
+    {
+      "id": 13,
+      "name": "老板的新后台",
+      "category": "company",
+      "need": 26,
+      "vp": 8,
+      "cash": 125,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    },
+    {
+      "id": 14,
+      "name": "我的第二大脑",
+      "category": "personal",
+      "need": 18,
+      "vp": 8,
+      "cash": 30,
+      "work": 0,
+      "bugs": 0,
+      "deadline": null
+    }
+  ],
+  "serial": 14,
+  "event": {
+    "id": "riddle",
+    "title": "他又开始说谜语了",
+    "quote": "“something is cooking 👀”",
+    "detail": "今晚 45% 触发赠礼。先蹬为敬，还是当没看见？",
+    "chance": 45,
+    "effect": "signal"
+  },
+  "events": [],
+  "resetDeck": [
+    "bank",
+    "normal",
+    "normal",
+    "bank",
+    "normal",
+    "normal"
+  ],
+  "order": [
+    0,
+    1,
+    2,
+    3,
+    0,
+    1,
+    2,
+    3,
+    0,
+    1,
+    2,
+    3
+  ],
+  "cursor": 0,
+  "logs": [
+    {
+      "day": 1,
+      "text": "早间消息：他又开始说谜语了",
+      "player": null
+    }
+  ],
+  "receipt": null,
+  "message": "先选项目和模型，完成你的第一次开发。",
+  "awards": [
+    {
+      "id": "first-game",
+      "name": "碉游首发",
+      "vp": 5,
+      "owner": null
+    },
+    {
+      "id": "diversity",
+      "name": "三栖开发者",
+      "vp": 6,
+      "owner": null
+    },
+    {
+      "id": "pedal",
+      "name": "500 额度俱乐部",
+      "vp": 5,
+      "owner": null
+    }
+  ]
+}

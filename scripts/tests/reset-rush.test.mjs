@@ -3,18 +3,23 @@ import test from 'node:test';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 
 const E = await loadTypescriptModule('src/components/resetRush/engine.ts');
-const fresh = (setup = 'balanced', seed = 84) => E.createGame(seed, setup);
+// Funded states isolate reset mechanics; real new games always start at $20.
+const fresh = (setup = 'balanced', seed = 84) => {
+  const g=E.createGame(seed); const p=g.players[0]; const tiers=setup==='dual'?[200,200]:setup==='lean'?[20]:[100];
+  p.accounts=tiers.map((tier,i)=>({...structuredClone(p.accounts[0]),id:i?++g.serial:p.accounts[0].id,tier,quota:E.PLANS[tier].capacity,renewal:null}));
+  p.cash=500-tiers.reduce((a,b)=>a+b,0); return g;
+};
 const clone = g => structuredClone(g);
 const human = g => g.players[0];
 const account = g => human(g).accounts[0];
 const job = g => human(g).projects[0];
-const develop = (g, mode = 'sol') => E.act(g, { type: 'develop', project: job(g).id, account: account(g).id, mode });
+const develop = (g, model = 'sol', effort = 'medium', turbo = false) => E.act(g, { type: 'develop', project: job(g).id, account: account(g).id, model, effort, turbo });
 const nextMorning = (g, day) => {
   const fixture = clone(g); fixture.day = day - 1; fixture.phase = 'reveal'; fixture.events = ['quiet'];
   return E.nextDay(fixture);
 };
 
-test('seeded start, affordable presets, bank opening grant and round-trip persistence', () => {
+test('seeded fixtures, opening bank grants and round-trip persistence', () => {
   for (const setup of ['lean', 'balanced', 'dual']) {
     const g = fresh(setup);
     assert.deepEqual(g, fresh(setup));
@@ -28,7 +33,7 @@ test('one human action advances each rival once and spends exactly one action', 
   assert.equal(E.actionsLeft(n), 2);
   assert.equal(account(n).quota, account(g).quota - 4);
   assert.equal(job(n).work, 6);
-  assert.ok(n.players.slice(1).every(p => p.used > 0));
+  assert.ok(n.players.slice(1).every(p => p.accounts[0].tier > 20));
   assert.equal(g.cursor, 0, 'reducers never mutate the previous state');
 });
 test('normal reset refills instead of stacking and preserves every natural reset date', () => {
@@ -81,12 +86,12 @@ test('independent seven-day clocks permit one banked refill while the other natu
 });
 test('subscriptions expire, Luna remains available, renewal restores paid usage', () => {
   const g = fresh(); g.day = 31; account(g).quota = 70;
-  assert.match(E.actionError(g, 0, { type: 'develop', project: job(g).id, account: account(g).id, mode: 'sol' }), /到期/);
-  assert.equal(E.actionError(g, 0, { type: 'develop', project: job(g).id, account: account(g).id, mode: 'luna' }), null);
-  const n = E.act(g, { type: 'renew', account: account(g).id });
+  assert.match(E.actionError(g, 0, { type: 'develop', project: job(g).id, account: account(g).id, model: 'sol', effort: 'medium', turbo: false }), /有效订阅/);
+  assert.equal(E.actionError(g, 0, { type: 'develop', project: job(g).id, account: account(g).id, model: 'luna', effort: 'medium', turbo: false }), null);
+  const n = E.act(g, { type: 'renew', account: account(g).id, tier: 100 });
   assert.equal(account(n).paidUntil, 60); assert.equal(account(n).nextReset, 38);
   assert.equal(account(n).quota, 90); assert.equal(human(n).cash, 300);
-  assert.match(E.actionError(n, 0, { type: 'renew', account: account(n).id }), /到期后/);
+  assert.match(E.actionError(n, 0, { type: 'renew', account: account(n).id, tier: 100 }), /到期后/);
 });
 test('upgrade only grants capacity difference; new accounts start an independent clock', () => {
   const g = fresh('lean'); g.day = 3; account(g).quota = 5;
@@ -97,13 +102,12 @@ test('upgrade only grants capacity difference; new accounts start an independent
   assert.equal(human(bought).accounts[1].nextReset, 10); assert.equal(human(bought).accounts[1].paidUntil, 32);
   assert.deepEqual(human(bought).accounts[1].banks, []);
 });
-test('Turbo can finish code but cannot publish until bugs are tested', () => {
-  const g = fresh(); job(g).need = 36; job(g).category = 'game';
-  const n = develop(g, 'turbo');
-  assert.equal(job(n).work, 36); assert.equal(job(n).bugs, 1); assert.equal(human(n).shipped.length, 0);
-  const done = E.act(n, { type: 'test', project: job(n).id });
-  assert.equal(human(done).projects.length, 0); assert.equal(human(done).shipped.length, 1);
-  assert.equal(done.awards[0].owner, 0); assert.equal(human(done).vp, 11);
+test('capable Ultra + Turbo can publish directly without an invented bug penalty', () => {
+  const g=fresh();job(g).need=36;job(g).category='game';job(g).difficulty=2;
+  const done=develop(g,'astra','ultra',true);
+  assert.equal(human(done).projects.length,0);assert.equal(human(done).shipped.length,1);
+  assert.equal(human(done).shipped[0].bugs,0);assert.equal(done.awards[0].owner,0);
+  assert.equal(account(done).quota,36);
 });
 test('project pool is shared and invalid actions spend neither money nor time', () => {
   const g = fresh(); const id = g.market[0].id;

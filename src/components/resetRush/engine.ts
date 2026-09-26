@@ -1,24 +1,36 @@
 /** RESET / 开蹬! — deterministic, serializable tabletop rules. All currency is fictional. */
 export type Category = "game" | "personal" | "open" | "company";
 export type Tier = 20 | 100 | 200;
-export type Mode = "luna" | "sol" | "astra" | "ultra" | "turbo";
+export type Model = "luna" | "sol" | "astra";
+export type Effort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
+export type Difficulty = 1 | 2 | 3 | 4;
+export interface Development { model: Model; effort: Effort; turbo: boolean }
+export const DEFAULT_DEVELOPMENT: Development = { model: "sol", effort: "medium", turbo: false };
 export type Strategy = "balanced" | "builder" | "sprinter" | "banker";
-export const SAVE_KEY = "reset-rush-v1";
+export const SAVE_KEY = "reset-rush-v2";
+export const LEGACY_SAVE_KEY = "reset-rush-v1";
 export const PLANS: Record<Tier, { name: string; capacity: number }> = {
   20: { name: "PLUS", capacity: 24 },
   100: { name: "PRO 100", capacity: 90 },
   200: { name: "PRO 200", capacity: 180 },
 };
-export const MODES: Record<
-  Mode,
-  { name: string; cost: number; work: number; bugs: number }
+export const MODELS: Record<
+  Model,
+  { name: string; cost: number; work: number; ability: number; description: string }
 > = {
-  luna: { name: "Luna", cost: 0, work: 2, bugs: 0 },
-  sol: { name: "Sol", cost: 4, work: 6, bugs: 0 },
-  astra: { name: "Astra", cost: 9, work: 11, bugs: 0 },
-  ultra: { name: "Ultra", cost: 24, work: 20, bugs: 0 },
-  turbo: { name: "Ultra + Turbo", cost: 48, work: 38, bugs: 1 },
+  luna: { name: "Luna", cost: 0, work: 3, ability: 1, description: "基础免费 · 擅长简单任务" },
+  sol: { name: "Sol", cost: 4, work: 6, ability: 2, description: "均衡开发 · 日常主力" },
+  astra: { name: "Astra", cost: 9, work: 11, ability: 3, description: "复杂工程 · 高能力" },
 };
+export const EFFORTS: Record<Effort, { name: string; cost: number; work: number; ability: number; lunaCost: number }> = {
+  low: { name: "Low", cost: 0.75, work: 1.15, ability: -0.5, lunaCost: 0 },
+  medium: { name: "Medium", cost: 1, work: 1, ability: 0, lunaCost: 0 },
+  high: { name: "High", cost: 1.5, work: 1.25, ability: 0.5, lunaCost: 1 },
+  xhigh: { name: "XHigh", cost: 2, work: 1.4, ability: 1, lunaCost: 2 },
+  max: { name: "Max", cost: 2.5, work: 1.6, ability: 1.25, lunaCost: 3 },
+  ultra: { name: "Ultra", cost: 3, work: 1.8, ability: 1.5, lunaCost: 4 },
+};
+export const DIFFICULTIES: Record<Difficulty, string> = { 1: "简单", 2: "常规", 3: "复杂", 4: "攻坚" };
 export const CATEGORIES: Record<
   Category,
   { name: string; short: string; perk: string }
@@ -41,6 +53,7 @@ export interface Project {
   name: string;
   category: Category;
   need: number;
+  difficulty: Difficulty;
   vp: number;
   cash: number;
   work: number;
@@ -53,6 +66,7 @@ export interface Account {
   quota: number;
   nextReset: number;
   paidUntil: number;
+  renewal: Tier | null;
   banks: number[];
   lastBankDay: number;
 }
@@ -98,7 +112,8 @@ export interface Receipt {
   }[];
 }
 export interface Game {
-  version: 1;
+  version: 2;
+  development: Development;
   seed: number;
   rng: number;
   day: number;
@@ -118,12 +133,14 @@ export interface Game {
   message: string;
 }
 export type Action =
-  | { type: "develop"; project: number; account: number; mode: Mode }
+  | ({ type: "develop"; project: number; account: number } & Development)
+  | { type: "configure"; development: Development }
   | { type: "test"; project: number }
   | { type: "claim"; project: number }
   | { type: "bank"; account: number }
   | { type: "buy"; tier: Tier }
-  | { type: "renew"; account: number }
+  | { type: "renew"; account: number; tier: Tier }
+  | { type: "renewal"; account: number; tier: Tier | null }
   | { type: "upgrade"; account: number; tier: Tier }
   | { type: "abandon"; project: number }
   | { type: "freelance" }
@@ -190,7 +207,7 @@ export const EVENTS: EventCard[] = [
     id: "sale",
     title: "Turbo 快乐日",
     quote: "“let’s make it go faster.”",
-    detail: "今天 Turbo 消耗从 48 降到 36。照样会写出 bug。",
+    detail: "今天 Turbo 总消耗打 75 折。加速增加产出，不改变 bug 概率。",
     chance: 0,
     effect: "sale",
   },
@@ -227,23 +244,25 @@ export const EVENTS: EventCard[] = [
     effect: "quiet",
   },
 ];
-const TEMPLATES: [string, Category, number, number, number][] = [
-  ["只有一条命", "game", 42, 23, 35],
-  ["猫猫自走棋", "game", 56, 31, 45],
-  ["下班后勇者", "game", 36, 19, 30],
-  ["像素宇宙", "game", 68, 39, 50],
-  ["我的第二大脑", "personal", 18, 8, 30],
-  ["极简记账本", "personal", 14, 6, 25],
-  ["今天吃什么", "personal", 22, 10, 35],
-  ["专注白噪音", "personal", 26, 12, 40],
-  ["tiny-agent", "open", 24, 11, 15],
-  ["一键部署工具", "open", 30, 15, 20],
-  ["开源 UI 积木", "open", 20, 9, 10],
-  ["本地模型路由", "open", 34, 17, 25],
-  ["老板的新后台", "company", 26, 8, 125],
-  ["周五紧急需求", "company", 20, 5, 95],
-  ["客户说很简单", "company", 38, 12, 160],
-  ["再改最后一版", "company", 32, 10, 145],
+const TEMPLATES: [string, Category, number, number, number, Difficulty][] = [
+  ["只有一条命", "game", 42, 23, 35, 2],
+  ["猫猫自走棋", "game", 56, 34, 45, 3],
+  ["下班后勇者", "game", 36, 19, 30, 2],
+  ["像素宇宙", "game", 68, 44, 50, 4],
+  ["我的第二大脑", "personal", 18, 8, 30, 2],
+  ["极简记账本", "personal", 14, 6, 25, 1],
+  ["今天吃什么", "personal", 22, 10, 35, 1],
+  ["专注白噪音", "personal", 26, 12, 40, 1],
+  ["tiny-agent", "open", 24, 14, 15, 3],
+  ["一键部署工具", "open", 30, 15, 20, 2],
+  ["开源 UI 积木", "open", 20, 9, 10, 1],
+  ["本地模型路由", "open", 34, 20, 25, 3],
+  ["老板的新后台", "company", 26, 8, 125, 2],
+  ["周五紧急需求", "company", 20, 5, 95, 1],
+  ["客户说很简单", "company", 38, 16, 180, 4],
+  ["再改最后一版", "company", 32, 10, 145, 2],
+  ["一百关推箱子", "game", 64, 30, 40, 1],
+  ["百页文档站", "open", 50, 20, 20, 1],
 ];
 const copy = (g: Game): Game => JSON.parse(JSON.stringify(g)) as Game;
 function random(g: Game): number {
@@ -264,7 +283,7 @@ function log(g: Game, text: string, player: number | null = null) {
 }
 function project(g: Game, template?: number): Project {
   const available = TEMPLATES.filter(([name]) => !g.market.some(j => j.name === name));
-  const [name, category, need, vp, cash] = template === undefined
+  const [name, category, need, vp, cash, difficulty] = template === undefined
     ? available[Math.floor(random(g) * available.length)] : TEMPLATES[template];
   g.serial++;
   return {
@@ -272,6 +291,7 @@ function project(g: Game, template?: number): Project {
     name,
     category,
     need,
+    difficulty,
     vp,
     cash,
     work: 0,
@@ -287,6 +307,7 @@ function account(g: Game, tier: Tier): Account {
     quota: PLANS[tier].capacity,
     nextReset: g.day + 7,
     paidUntil: g.day + 29,
+    renewal: tier,
     banks: [],
     lastBankDay: 0,
   };
@@ -307,13 +328,30 @@ export function score(p: Player) {
       Math.min(10, Math.floor(p.used / 120)),
   };
 }
-export function modeStats(g: Game, p: Player, mode: Mode) {
-  const m = MODES[mode];
+export function developmentStats(g: Game, p: Player, config: Development, job?: Project) {
+  const m = MODELS[config.model];
+  const e = EFFORTS[config.effort];
+  const baseCost = config.model === "luna" ? e.lunaCost : Math.ceil(m.cost * e.cost);
+  const cost = config.turbo ? Math.ceil(Math.max(2, baseCost * 2) * (g.event.effect === "sale" ? 0.75 : 1)) : baseCost;
+  const ability = m.ability + e.ability;
+  const work = Math.max(1, Math.round((m.work * e.work + (config.model === "luna" ? 0 : p.knowledge)) * (config.turbo ? 1.8 : 1)));
   return {
-    ...m,
-    cost: mode === "turbo" && g.event.effect === "sale" ? 36 : m.cost,
-    work: m.work + (mode === "luna" ? 0 : p.knowledge),
+    name: `${m.name} · ${e.name}${config.turbo ? " + Turbo" : ""}`,
+    cost,
+    work,
+    ability,
+    risk: job ? Math.min(80, Math.max(0, Math.round((job.difficulty - ability) * 30))) : 0,
   };
+}
+const validDevelopment = (d: Development) => !!d && !!MODELS[d.model] && !!EFFORTS[d.effort] && typeof d.turbo === "boolean";
+
+function renew(g: Game, p: Player, a: Account, tier: Tier) {
+  p.cash -= tier;
+  a.tier = tier;
+  a.quota = PLANS[tier].capacity;
+  a.paidUntil = g.day + 29;
+  a.nextReset = g.day + 7;
+  log(g, `${p.name} 的账号按 $${tier} 续订至 D${a.paidUntil}，恢复满额，自然重置改为 D${a.nextReset}。`, p.id);
 }
 function award(g: Game, p: Player) {
   const earned = [
@@ -419,6 +457,11 @@ function beginDay(g: Game) {
           p.id,
         );
       }
+      if (a.paidUntil === g.day - 1) {
+        a.quota = 0;
+        if (a.renewal !== null && p.cash >= a.renewal) renew(g, p, a, a.renewal);
+        else log(g, `${p.name} 的 ${PLANS[a.tier].name} ${a.renewal === null ? "按计划停订" : "续费余额不足，已暂停"}。可在账号管理中重新开通，银行券仍按原日到期。`, p.id);
+      }
       while (a.nextReset <= g.day) {
         if (activeAccount(g, a)) {
           const gained = PLANS[a.tier].capacity - a.quota;
@@ -432,11 +475,6 @@ function beginDay(g: Game) {
         }
         a.nextReset += 7;
       }
-      if (a.paidUntil === g.day - 1) log(
-          g,
-          `${p.name} 的 ${PLANS[a.tier].name} 到期，续费后恢复使用。`,
-          p.id,
-        );
     });
     p.projects
       .filter((j) => j.deadline !== null && j.deadline < g.day)
@@ -452,17 +490,17 @@ function beginDay(g: Game) {
   if (g.event.effect === "bank") g.receipt = reset(g, "bank");
   g.message =
     g.day === 1
-      ? "先选项目和模型，完成你的第一次开发。"
+      ? "从 $20 账号起步。可先管理订阅，也可直接开始开发。"
       : `第 ${g.day} 天。${g.event.detail}`;
   runBots(g);
 }
 export function createGame(
   seed = 260926,
-  setup: "balanced" | "dual" | "lean" = "balanced",
   length = 42,
 ): Game {
   const g: Game = {
-    version: 1,
+    version: 2,
+    development: { ...DEFAULT_DEVELOPMENT },
     seed: Math.trunc(Math.abs(seed)) % 4294967296,
     rng: Math.trunc(Math.abs(seed)) % 4294967296,
     day: 1,
@@ -486,14 +524,10 @@ export function createGame(
     ],
   };
   const specs: [string, Strategy, Tier[]][] = [
-    [
-      "你",
-      "balanced",
-      setup === "dual" ? [200, 200] : setup === "lean" ? [20] : [100],
-    ],
-    ["林工", "builder", [100]],
-    ["阿卷", "sprinter", [200]],
-    ["老周", "banker", [200, 200]],
+    ["你", "balanced", [20]],
+    ["林工", "builder", [20]],
+    ["阿卷", "sprinter", [20]],
+    ["老周", "banker", [20]],
   ];
   specs.forEach(([name, strategy, tiers], id) => {
     const accounts = tiers.map((t) => account(g, t));
@@ -533,15 +567,23 @@ export function createGame(
 }
 export function actionError(g: Game, id: number, a: Action): string | null {
   const p = g.players[id];
+  if (!p) return "开发者不存在。";
+  if (a.type === "configure" || a.type === "renewal") {
+    if (g.phase === "over") return "牌局已结束。";
+    if (a.type === "configure") return validDevelopment(a.development) ? null : "开发配置无效。";
+    if (!p.accounts.some(x => x.id === a.account)) return "账号不存在。";
+    return a.tier === null || PLANS[a.tier] ? null : "无效续订套餐。";
+  }
   if (g.phase !== "plan" || g.order[g.cursor] !== id) return "现在不是你的行动时间。";
   if (a.type === "develop") {
     const j = p.projects.find((x) => x.id === a.project);
     const acc = p.accounts.find((x) => x.id === a.account);
     if (!j) return "先选择一个进行中的项目。";
     if (j.work >= j.need) return "代码写完了，先测试清除 bug 就能发布。";
-    if (!MODES[a.mode]) return "请选择有效模型。";
-    if (a.mode !== "luna" && (!acc || !activeAccount(g, acc))) return "这个订阅已到期，请续费或使用 Luna。";
-    if (a.mode !== "luna" && acc && acc.quota < modeStats(g, p, a.mode).cost) return "额度不足。换账号、使用银行券，或切换 Luna。";
+    if (!validDevelopment(a)) return "请选择有效的模型、思考强度与加速配置。";
+    const { cost } = developmentStats(g, p, a, j);
+    if (cost > 0 && (!acc || !activeAccount(g, acc))) return "付费配置需要有效订阅。也可用 Luna + Medium，关闭 Turbo 免费开发。";
+    if (cost > 0 && acc && acc.quota < cost) return "额度不足。换账号、使用银行券，或用 Luna + Medium 并关闭 Turbo。";
   }
   if (a.type === "test") {
     const j = p.projects.find((x) => x.id === a.project);
@@ -568,7 +610,8 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     if (!acc) return "账号不存在。";
     if (a.type === "renew") {
       if (activeAccount(g, acc)) return "订阅到期后才能续费。";
-      if (p.cash < acc.tier) return "续费资金不足。";
+      if (!PLANS[a.tier]) return "无效套餐。";
+      if (p.cash < a.tier) return "续费资金不足。";
     } else {
       if (!PLANS[a.tier] || a.tier <= acc.tier || !activeAccount(g, acc)) return "只能升级有效订阅。";
       if (p.cash < a.tier - acc.tier) return "升级资金不足。";
@@ -587,14 +630,16 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   if (a.type === "develop") {
     const j = p.projects.find((x) => x.id === a.project)!;
     const acc = p.accounts.find((x) => x.id === a.account);
-    const m = modeStats(g, p, a.mode);
+    const m = developmentStats(g, p, a, j);
+    const bugs = m.risk > 0 && random(g) * 100 < m.risk ? 1 : 0;
+    const progress = Math.min(j.need - j.work, m.work);
     if (acc && m.cost) acc.quota -= m.cost;
     p.used += m.cost;
     j.work = Math.min(j.need, j.work + m.work);
-    j.bugs += m.bugs;
+    j.bugs += bugs;
     log(
       g,
-      `${p.name} 用 ${m.name} 开发《${j.name}》：+${m.work} 进度，−${m.cost} 额度${m.bugs ? "，+1 bug" : ""}。`,
+      `${p.name} 用 ${m.name} 开发《${j.name}》：+${progress} 进度，−${m.cost} 额度${bugs ? `，难度未完全胜任（风险 ${m.risk}%），+1 bug` : ""}。`,
       id,
     );
     release(g, p, j);
@@ -634,20 +679,20 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     log(g, `${p.name} 开通 ${PLANS[a.tier].name} 新账号，−$${a.tier}。`, id);
   } else if (a.type === "renew") {
     const acc = p.accounts.find((x) => x.id === a.account)!;
-    p.cash -= acc.tier;
-    acc.paidUntil = g.day + 29;
-    acc.quota = PLANS[acc.tier].capacity;
-    acc.nextReset = g.day + 7;
-    log(
-      g,
-      `${p.name} 续费 ${PLANS[acc.tier].name}，−$${acc.tier}，恢复满额。`,
-      id,
-    );
+    renew(g, p, acc, a.tier);
+    acc.renewal = a.tier;
+  } else if (a.type === "renewal") {
+    const acc = p.accounts.find(x => x.id === a.account)!;
+    acc.renewal = a.tier;
+    log(g, `${p.name} 设置账号到期后${a.tier === null ? "不再续订" : `按 $${a.tier} 续订`}。不花行动，当前订阅不变。`, id);
+  } else if (a.type === "configure") {
+    g.development = { ...a.development };
   } else if (a.type === "upgrade") {
     const acc = p.accounts.find((x) => x.id === a.account)!;
     const price = a.tier - acc.tier;
     acc.quota += PLANS[a.tier].capacity - PLANS[acc.tier].capacity;
     p.cash -= price;
+    if (acc.renewal === acc.tier) acc.renewal = a.tier;
     acc.tier = a.tier;
     log(
       g,
@@ -662,7 +707,8 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     p.cash += 25;
     log(g, `${p.name} 手写外包，+$25。`, id);
   }
-  if (a.type !== "bank") g.cursor++;
+  if (!["bank", "renewal", "configure"].includes(a.type)) g.cursor++;
+  if (a.type === "configure") return true;
   if (!id) g.message =
       a.type === "pass"
         ? "留出一点生活。"
@@ -676,11 +722,15 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
   const accounts = p.accounts.filter((a) => activeAccount(g, a));
   const capacity = accounts.reduce((n, a) => n + a.quota, 0);
   const remaining = g.length - g.day;
+  const target: Tier = style === "builder" || style === "balanced" ? 100 : 200;
+  const starter = accounts.find(a => a.tier < target);
+  if (starter && remaining > 9 && p.cash >= target - starter.tier + 60) return { type: "upgrade", account: starter.id, tier: target };
   if (!accounts.length) {
     const expired = [...p.accounts]
       .sort((a, b) => a.tier - b.tier)
-      .find((a) => p.cash >= a.tier);
-    if (expired && remaining > 2) return { type: "renew", account: expired.id };
+      .find((a) => p.cash >= (a.renewal ?? a.tier));
+    if (expired && remaining > 2) return { type: "renew", account: expired.id, tier: expired.renewal ?? expired.tier };
+    if (p.cash >= 20 && remaining > 2) return { type: "renew", account: p.accounts[0].id, tier: 20 };
     if (p.cash < 20 && remaining > 3) return { type: "freelance" };
   }
   const bank = accounts.find(
@@ -704,47 +754,24 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
   const j = unfinished[0];
   if (j?.bugs && (j.work >= j.need || j.bugs >= 2)) return { type: "test", project: j.id };
   if (j) {
-    const acc = [...accounts]
-      .sort((a, b) => a.nextReset - b.nextReset || a.quota - b.quota)
-      .find((a) => a.quota >= 4);
-    if (acc) {
+    const choices: { action: Action; value: number }[] = [];
+    for (const acc of p.accounts) for (const model of Object.keys(MODELS) as Model[]) for (const effort of Object.keys(EFFORTS) as Effort[]) for (const turbo of [false, true]) {
+      const action: Action = { type: "develop", project: j.id, account: acc.id, model, effort, turbo };
+      if (actionError(g, id, action)) continue;
+      const stats = developmentStats(g, p, action, j);
       const left = j.need - j.work;
-      const urgency =
-        g.event.chance >= 60 || acc.nextReset <= g.day + 1 || remaining <= 2;
-      const modes: Mode[] = ["sol", "astra", "ultra", "turbo"];
-      const usable = modes.filter((m) => modeStats(g, p, m).cost <= acc.quota);
-      const finish = usable.find(
-        (m) => modeStats(g, p, m).work >= left && !MODES[m].bugs,
-      );
-      if (finish) return {
-          type: "develop",
-          project: j.id,
-          account: acc.id,
-          mode: finish,
-        };
-      const preferred: Mode =
-        style === "sprinter" || urgency
-          ? "turbo"
-          : style === "builder"
-            ? "astra"
-            : "ultra";
-      const mode = usable.includes(preferred)
-        ? preferred
-        : usable[usable.length - 1];
-      if (mode) return { type: "develop", project: j.id, account: acc.id, mode };
+      const urgency = g.event.chance >= 60 || acc.nextReset <= g.day + 1 || remaining <= 2 || (j.deadline !== null && j.deadline <= g.day + 1);
+      const quotaPrice = urgency ? 0.10 : style === "sprinter" ? 0.16 : style === "builder" ? 0.38 : 0.27;
+      const value = Math.min(left, stats.work) - stats.cost * quotaPrice - stats.risk * 0.09 + (stats.work >= left && !j.bugs ? 9 * (1 - stats.risk / 100) : 0);
+      choices.push({ action, value });
     }
-    if (j.bugs) return { type: "test", project: j.id };
-    if (p.cash < 80 && remaining > 5 && j.need - j.work > 4) return { type: "freelance" };
-    return {
-      type: "develop",
-      project: j.id,
-      account: p.accounts[0].id,
-      mode: "luna",
-    };
+    choices.sort((a, b) => b.value - a.value);
+    if (choices[0]) return choices[0].action;
+    return { type: "test", project: j.id };
   }
   const ranked = g.market
     .map((m) => {
-      let value = m.vp / (Math.ceil(m.need / 18) + 1);
+      let value = m.vp / (Math.ceil(m.need / 18) + 1) - Math.max(0, m.difficulty - 2) * 0.5;
       if (m.category === "open" && p.knowledge < 3 && remaining > 12) value += style === "builder" ? 7 : 3;
       if (m.category === "company" && p.cash < 200) value += 6;
       if (m.category === "personal" && g.day < 14) value += 2;
@@ -823,6 +850,8 @@ export function textState(g: Game) {
   // Do not expose deck order, future draws or PRNG state to the player / browser diagnostics.
   return {
     title: "RESET / 开蹬！",
+    version: g.version,
+    development: g.development,
     phase: g.phase,
     day: g.day,
     length: g.length,
@@ -848,7 +877,7 @@ export function restoreGame(raw: string | null): Game | null {
   try {
     const g = JSON.parse(raw) as Game;
     if (
-      g.version !== 1 ||
+      ![1, 2].includes(g.version) ||
       !["plan", "reveal", "over"].includes(g.phase) ||
       ![21, 42].includes(g.length) ||
       !Number.isInteger(g.day) ||
@@ -871,10 +900,24 @@ export function restoreGame(raw: string | null): Game | null {
       !Array.isArray(g.resetDeck) ||
       !EVENTS.some((e) => e.id === g.event?.id)
     ) return null;
+    if ((g as { version: number }).version === 1) {
+      g.version = 2;
+      g.development = { ...DEFAULT_DEVELOPMENT };
+      for (const p of g.players) {
+        if (!Array.isArray(p?.accounts) || !Array.isArray(p?.projects) || !Array.isArray(p?.shipped)) return null;
+        for (const a of p.accounts) a.renewal = null;
+        for (const j of [...p.projects, ...p.shipped]) j.difficulty = TEMPLATES.find(t => t[0] === j.name)?.[5] ?? 2;
+      }
+      for (const j of g.market) j.difficulty = TEMPLATES.find(t => t[0] === j.name)?.[5] ?? 2;
+      g.event = { ...EVENTS.find(e => e.id === g.event.id)! };
+      g.message = "旧牌局已升级：账号与作品进度保留。到期默认停订，可在账号管理里设置；模型、思考强度与 Turbo 现在独立选择。";
+    }
+    if (!validDevelopment(g.development)) return null;
     const validProject = (j: Project) => j &&
       Number.isInteger(j.id) &&
       typeof j.name === "string" &&
       !!CATEGORIES[j.category] &&
+      [1, 2, 3, 4].includes(j.difficulty) &&
       [j.need, j.vp, j.cash, j.work, j.bugs].every(Number.isFinite) &&
       j.need > 0 &&
       j.work >= 0 &&
@@ -915,6 +958,7 @@ export function restoreGame(raw: string | null): Game | null {
       for (const a of p.accounts) if (
           !a ||
           !PLANS[a.tier] ||
+          !(a.renewal === null || PLANS[a.renewal]) ||
           !Number.isFinite(a.quota) ||
           a.quota < 0 ||
           a.quota > PLANS[a.tier].capacity ||

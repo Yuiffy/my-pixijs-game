@@ -10,8 +10,12 @@ import {
   CATEGORIES,
   createGame,
   endDay,
-  MODES,
-  modeStats,
+  MODELS,
+  EFFORTS,
+  DIFFICULTIES,
+  DEFAULT_DEVELOPMENT,
+  developmentStats,
+  LEGACY_SAVE_KEY,
   nextDay,
   PLANS,
   restoreGame,
@@ -21,13 +25,14 @@ import {
   type Action,
   type Category,
   type Game,
-  type Mode,
+  type Model,
+  type Effort,
   type Project,
   type Tier,
 } from "./engine";
 import s from "./resetRush.module.css";
 
-const STRATEGIES = ["独立开发者", "开源效率流", "极限冲刺流", "双号银行流"];
+const STRATEGIES = ["独立开发者", "开源效率流", "极限冲刺流", "多号银行流"];
 type ModalKind = "rules" | "shop" | "restart" | "early" | "portfolio" | null;
 
 function Art({ kind }: { kind: Category }) {
@@ -189,7 +194,7 @@ function Rules() {
         <li>
           <strong>轮流做 3 个行动。</strong>你和 3 位 AI
           逐次行动，每日轮换先手。开发、测试、接项目、购买/升级/续费、外包，各用
-          1 行动。切换账号和用银行券免费，每号每天最多用 1 张。
+          1 行动。切换账号、调整开发配置与到期方案免费；用银行券免费，每号每天最多用 1 张。
         </li>
         <li>
           <strong>夜里翻牌。</strong>先按消息概率决定是否送礼，再抽重置牌：初始
@@ -204,14 +209,21 @@ function Rules() {
         reset，不会扣分，但白白浪费了补满空间。
       </p>
       <p>
-        订阅有效 30 天，到期可以花 1
-        行动原价续费并补满；升级只收差价、增加容量差额，不延长订阅。Luna
-        永远免费，只有 2 进度，额度见底也不会卡死。
+        每人都从 $20 账号和 $480 现金起步。订阅有效 30 天，可随时安排到期续订某档或停订。
+        自动续订不花行动，按所选档位扣费、补满并重新计时；余额不足则暂停，之后需手动续开。
+        升级只收差价、增加容量差额，保留两个日期。停订后的银行券仍按原日期过期。
+      </p>
+      <h3>模型 × 思考强度 × Turbo</h3>
+      <p>
+        三种模型都能选择 Low 到 Ultra，并独立勾选 Turbo。思考越深越能胜任难题，但额度更贵。
+        Turbo 把速度折算成单次行动约 1.8 倍产出、双倍额度，不改变 bug 概率。
+        Luna + Medium、不勾 Turbo 永远免费，每次 3 进度；Luna 的 High 以上和 Turbo 仍需额度。
       </p>
       <h3>作品才是胜利点</h3>
       <p>
-        项目达到所需进度且没有 bug 会自动发布。Turbo 每次 +1 bug；测试一次修复 2
-        bug、+2 进度。最多同时做 2 个项目。公司项目接单当天起有 8 天，超期撤单扣
+        项目分简单、常规、复杂、攻坚四档。规模与难度是两回事：大而简单的项目可用 Luna 慢慢做。
+        能力不足时，每次开发按面板所示概率产生 1 个 bug；更强模型与更深思考能降低风险。
+        进度完成且无 bug 自动发布。测试一次修复 2 个 bug、+2 进度。最多同时做 2 个项目。公司项目有 8 天交付，超期撤单扣
         3 声望；主动放弃用 1 行动、扣 2 声望。
       </p>
       <div className={s.ruleCategories}>
@@ -270,6 +282,7 @@ function ProjectCard({
       </span>
       <Art kind={job.category} />
       <span className={s.projectName}>{job.name}</span>
+      <span className={s.difficulty} data-difficulty={job.difficulty}>{"◆".repeat(job.difficulty)} {DIFFICULTIES[job.difficulty]}</span>
       <span className={s.projectPerk}>
         {market
           ? CATEGORIES[job.category].perk
@@ -305,19 +318,18 @@ export default function ResetRush() {
   const [game, setGame] = useState<Game | null>(null);
   const [ready, setReady] = useState(false);
   const [saved, setSaved] = useState(true);
-  const [setup, setSetup] = useState<"balanced" | "dual" | "lean">("balanced");
   const [length, setLength] = useState(42);
   const [seed, setSeed] = useState("260926");
   const [modal, setModal] = useState<ModalKind>(null);
   const [inspect, setInspect] = useState(0);
   const [selectedProject, setSelectedProject] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState(0);
-  const [mode, setMode] = useState<Mode>("astra");
+  const [onboarding, setOnboarding] = useState(false);
   const root = useRef<HTMLElement>(null);
 
   useEffect(() => {
     try {
-      setGame(restoreGame(localStorage.getItem(SAVE_KEY)));
+      setGame(restoreGame(localStorage.getItem(SAVE_KEY)) ?? restoreGame(localStorage.getItem(LEGACY_SAVE_KEY)));
     } catch {
       setSaved(false);
     }
@@ -368,11 +380,11 @@ export default function ResetRush() {
   }, [modal]);
 
   const start = () => {
-    setGame(createGame(Number(seed) || 260926, setup, length));
-    setModal(null);
+    setGame(createGame(Number(seed) || 260926, length));
+    setOnboarding(true);
+    setModal("shop");
     setSelectedProject(0);
     setSelectedAccount(0);
-    setMode("astra");
   };
   const send = (a: Action) => setGame((g) => (g ? act(g, a) : g));
   const human = game?.players[0];
@@ -382,12 +394,13 @@ export default function ResetRush() {
     human?.accounts.find((a) => a.id === selectedAccount) ?? human?.accounts[0];
   const playable =
     !!game && game.phase === "plan" && game.order[game.cursor] === 0;
-  const model = game && human ? modeStats(game, human, mode) : MODES[mode];
+  const config = game?.development ?? DEFAULT_DEVELOPMENT;
+  const model = game && human ? developmentStats(game, human, config, job) : { work: 0, cost: 0, risk: 0, ability: 0 };
   const devAction: Action = {
     type: "develop",
     project: job?.id ?? -1,
     account: account?.id ?? -1,
-    mode,
+    ...config,
   };
   const error = game ? actionError(game, 0, devAction) : null;
   const bankAction: Action = { type: "bank", account: account?.id ?? -1 };
@@ -395,7 +408,7 @@ export default function ResetRush() {
   const normalCards = game?.resetDeck.filter((c) => c === "normal").length ?? 4;
   const bankCards = game?.resetDeck.filter((c) => c === "bank").length ?? 2;
   const totalCards = normalCards + bankCards;
-  const close = () => setModal(null);
+  const close = () => { setModal(null); setOnboarding(false); };
   const advance = () => {
     setGame((g) => (g ? nextDay(g) : g));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -417,6 +430,7 @@ export default function ResetRush() {
           <small>A DEVELOPER’S BOARD GAME</small>
         </div>
         <div className={s.headerActions}>
+          {game && game.phase !== "over" && <button onClick={() => setModal("shop")}>账号管理</button>}
           <button onClick={() => setModal("rules")}>
             玩法说明 <span>?</span>
           </button>
@@ -445,26 +459,7 @@ export default function ResetRush() {
               和一个还没写完的碉游。现在，蹬不蹬？
             </p>
             <div className={s.setup}>
-              <span className={s.smallLabel}>用 $500 启动资金，选你的开局</span>
-              <div className={s.presets}>
-                {(
-                  [
-                    ["balanced", "稳健起步", "$100 单号 · 余 $400"],
-                    ["dual", "双号狂蹬", "$200 × 2 · 余 $100"],
-                    ["lean", "白手起家", "$20 单号 · 余 $480"],
-                  ] as const
-                ).map(([id, title, desc]) => (
-                  <button
-                    key={id}
-                    aria-pressed={setup === id}
-                    className={setup === id ? s.chosen : ""}
-                    onClick={() => setSetup(id)}
-                  >
-                    <strong>{title}</strong>
-                    <small>{desc}</small>
-                  </button>
-                ))}
-              </div>
+              <p className={s.startingKit}><strong>一个 $20 账号，$480 现金。</strong><span>先入座，再决定升档、加号，还是小步慢蹬。</span></p>
               <div className={s.setupRow}>
                 <label htmlFor="reset-length">
                   赛程{" "}
@@ -882,7 +877,7 @@ export default function ResetRush() {
               <aside className={s.accounts} id="reset-accounts">
                 <div className={s.sectionLabel}>
                   <span>03 / 我的账号</span>
-                  <button disabled={!playable} onClick={() => setModal("shop")}>
+                  <button onClick={() => setModal("shop")}>
                     ＋ 管理
                   </button>
                 </div>
@@ -945,15 +940,8 @@ export default function ResetRush() {
                         ? `还有 ${a.paidUntil - game.day + 1} 天`
                         : "需续费"}
                     </small>
-                    {!activeAccount(game, a) && (
-                      <button
-                        className={s.renew}
-                        disabled={!playable || (human?.cash ?? 0) < a.tier}
-                        onClick={() => send({ type: "renew", account: a.id })}
-                      >
-                        续费 ${a.tier} · 1 行动
-                      </button>
-                    )}
+                    <small className={s.subscription}>{a.renewal === null ? "到期不续订" : `到期按 $${a.renewal} 自动续订`}</small>
+                    {!activeAccount(game, a) && <button className={s.renew} onClick={() => setModal("shop")}>选择套餐重新开通 →</button>}
                   </div>
                 ))}
                 <button
@@ -990,27 +978,35 @@ export default function ResetRush() {
                 </span>
               </div>
               <div className={s.commandRow}>
+                <div className={s.developmentControls}>
                 <div className={s.modes} role="group" aria-label="开发模型">
-                  {(Object.keys(MODES) as Mode[]).map((m) => {
-                    const stats = modeStats(game, human!, m);
+                  {(Object.keys(MODELS) as Model[]).map((m) => {
+                    const stats = MODELS[m];
                     return (
                       <button
                         key={m}
-                        data-mode={m}
-                        aria-pressed={mode === m}
-                        className={mode === m ? s.chosenMode : ""}
-                        onClick={() => setMode(m)}
+                        data-model={m}
+                        aria-pressed={config.model === m}
+                        className={config.model === m ? s.chosenMode : ""}
+                        onClick={() => send({ type: "configure", development: { ...config, model: m } })}
                       >
-                        <b>{m === "turbo" ? "Ultra + Turbo" : stats.name}</b>
-                        <span>
-                          {stats.cost ? `−${stats.cost} 额度` : "免费低保"}
-                          <small>
-                            +{stats.work} 进度{stats.bugs ? " / +1 bug" : ""}
-                          </small>
-                        </span>
+                        <b>{stats.name}</b>
+                        <span>{stats.description}</span>
                       </button>
                     );
                   })}
+                </div>
+                <div className={s.configRow}>
+                  <label htmlFor="reset-effort">思考强度<select id="reset-effort" value={config.effort} onChange={e => send({ type: "configure", development: { ...config, effort: e.target.value as Effort } })}>{(Object.keys(EFFORTS) as Effort[]).map(e => <option key={e} value={e}>{EFFORTS[e].name}</option>)}</select></label>
+                  <label htmlFor="reset-turbo" className={s.turboToggle}><input id="reset-turbo" type="checkbox" checked={config.turbo} onChange={e => send({ type: "configure", development: { ...config, turbo: e.target.checked } })} /><b>Turbo</b><span>更快 · 更多额度</span></label>
+                </div>
+                <div className={s.devPreview} aria-live="polite" data-testid="development-preview">
+                  <span>消耗 <b>{model.cost ? `${model.cost} 额度` : "免费"}</b></span>
+                  <span>进度 <b>+{job ? Math.min(model.work, job.need - job.work) : model.work}</b></span>
+                  <span className={model.risk > 0 ? s.risk : ""}>bug 风险 <b>{job ? `${model.risk}%` : "—"}</b></span>
+                  <small>{job ? `${DIFFICULTIES[job.difficulty]}任务 · 能力 ${model.ability.toFixed(1)} / 难度 ${job.difficulty}` : "选一个项目查看风险"}</small>
+                </div>
+                {config.model === "luna" && <p className={s.configHint}>Medium、不勾 Turbo 可免费慢蹬；High 以上与加速会消耗额度。</p>}
                 </div>
                 <button
                   id="develop"
@@ -1019,7 +1015,7 @@ export default function ResetRush() {
                   onClick={() => send(devAction)}
                 >
                   <span>立即开蹬 ↗</span>
-                  <small>1 行动 · +{model.work} 进度</small>
+                  <small>1 行动 · {model.cost ? `−${model.cost} 额度` : "免费开发"}</small>
                 </button>
               </div>
               <div className={s.secondaryActions}>
@@ -1129,7 +1125,7 @@ export default function ResetRush() {
       {game && game.phase !== 'over' && <nav className={s.quickNav} aria-label="牌桌快捷跳转"><a href="#reset-workbench">工作台</a><a href="#reset-accounts">账号 / 银行券</a><a href={game.phase === 'plan' ? '#reset-command' : '#next-day'}>{game.phase === 'plan' ? '开蹬 ↓' : '夜间揭晓 ↓'}</a></nav>}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.1</i>
+          RESET / 开蹬！ <i>v0.2</i>
         </span>
         <span>
           {game
@@ -1167,7 +1163,7 @@ export default function ResetRush() {
       {modal === "restart" && (
         <Modal title="收起这桌，开新一局" close={close}>
           <p className={s.modalCopy}>
-            当前牌局的自动存档会被新局替换。回到准备页后，可重新选择开局方式、赛程和种子。
+            当前牌局的自动存档会被新局替换。新局从 $20 账号起步，可重新选择赛程和种子。
           </p>
           <div className={s.modalButtons}>
             <button
@@ -1178,6 +1174,7 @@ export default function ResetRush() {
                 setSeed(String((Number(seed) || 260926) + 1));
                 try {
                   localStorage.removeItem(SAVE_KEY);
+                  localStorage.removeItem(LEGACY_SAVE_KEY);
                 } catch {
                   setSaved(false);
                 }
@@ -1193,9 +1190,31 @@ export default function ResetRush() {
       )}
       {modal === "shop" && game && human && (
         <Modal title="账号管理" close={close}>
+          {onboarding && <div className={s.welcome}><b>先给工作室配好账号。</b><p>你已有一个 $20 账号和 $480 现金。可直接开工，也可先升级或买新号；以后随时回来调整。</p></div>}
           <p className={s.modalCopy}>
-            现金 <b>${human.cash}</b> · 每次开通或升级用 1 行动 · 最多 3 个账号
+            现金 <b>${human.cash}</b> · 今日剩 <b>{actionsLeft(game)} 行动</b> · 开通/升级/手动续开各用 1 行动
           </p>
+          <div className={s.managedAccounts}>
+            {human.accounts.map((a, index) => (
+<section className={s.managedAccount} data-managed-account={a.id} key={a.id}>
+              <div className={s.managedHead}><h3>账号 {index + 1} <span>{PLANS[a.tier].name}</span></h3><b>{activeAccount(game, a) ? `${a.quota} / ${PLANS[a.tier].capacity} 额度` : "已暂停"}</b></div>
+              <p>{activeAccount(game, a) ? `订阅至 D${a.paidUntil} · 自然重置 D${a.nextReset}` : "选择任意档位续开，恢复满额"} · {a.banks.length} 张银行券</p>
+              <div className={s.accountOperations}>
+                {([20, 100, 200] as Tier[]).filter(t => !activeAccount(game, a) || t > a.tier).map(t => {
+                  const action: Action = { type: activeAccount(game, a) ? "upgrade" : "renew", account: a.id, tier: t };
+                  const why = actionError(game, 0, action);
+                  return <button key={t} disabled={!!why} title={why ?? "使用 1 行动"} onClick={() => send(action)}>{activeAccount(game, a) ? `补 $${t - a.tier} → ${PLANS[t].name}` : `$${t} 续开 ${PLANS[t].name}`}</button>;
+                })}
+              </div>
+              <label htmlFor={`renewal-${a.id}`} className={s.renewalPolicy}>到期后<select id={`renewal-${a.id}`} aria-label={`账号 ${index + 1} 到期方案`} data-renewal={a.id} value={a.renewal ?? 0} onChange={e => send({ type: "renewal", account: a.id, tier: Number(e.target.value) === 0 ? null : Number(e.target.value) as Tier })}>
+                {([20, 100, 200] as Tier[]).map(t => <option key={t} value={t}>${t} / 30 天{t < a.tier ? " · 到期降档" : t > a.tier ? " · 到期升档" : " · 保持此档"}</option>)}
+                <option value={0}>不续订 · 到期停用</option>
+              </select><small>免费调整</small></label>
+              <p className={s.policyHint}>{a.renewal === null ? "到期清空额度并停用，银行券仍按原日期过期。" : activeAccount(game, a) ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，补满 ${PLANS[a.renewal].capacity} 额度；余额不足则暂停。` : "已暂停的账号需手动续开；仅改到期方案不会扣款。"}</p>
+            </section>
+))}
+          </div>
+          <h3 className={s.shopTitle}>加一个新账号 <small>{human.accounts.length} / 3</small></h3>
           <div className={s.shopPlans}>
             {([20, 100, 200] as Tier[]).map((t) => (
               <div key={t}>
@@ -1209,7 +1228,6 @@ export default function ResetRush() {
                   disabled={!!actionError(game, 0, { type: "buy", tier: t })}
                   onClick={() => {
                     send({ type: "buy", tier: t });
-                    close();
                   }}
                 >
                   开新号 · 1 行动
@@ -1217,32 +1235,9 @@ export default function ResetRush() {
               </div>
             ))}
           </div>
-          {account && activeAccount(game, account) && account.tier < 200 && (
-            <div className={s.upgrade}>
-              <h3>升级当前账号</h3>
-              <p>只补容量差额，保留自然重置日和订阅到期日。</p>
-              {([100, 200] as Tier[])
-                .filter((t) => t > account.tier)
-                .map((t) => (
-                  <button
-                    key={t}
-                    disabled={
-                      !!actionError(game, 0, {
-                        type: "upgrade",
-                        tier: t,
-                        account: account.id,
-                      })
-                    }
-                    onClick={() => {
-                      send({ type: "upgrade", tier: t, account: account.id });
-                      close();
-                    }}
-                  >
-                    补 ${t - account.tier} → {PLANS[t].name}
-                  </button>
-                ))}
-            </div>
-          )}
+          <p className={s.policyHint}>升级只补容量差额、保留到期与重置日。到期续订会重新开始 30 天订阅和 7 天周期；银行券期限始终不变。</p>
+          <p className={s.shopFeedback} role="status">{game.message}</p>
+          <div className={s.modalButtons}><button className={s.primary} onClick={close}>{onboarding ? "就这样，开始开发 →" : "回到牌桌 →"}</button></div>
         </Modal>
       )}
       {modal === "portfolio" && game && (
