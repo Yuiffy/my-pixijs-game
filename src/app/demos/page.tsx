@@ -15,7 +15,10 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { AUTOCHESS_VERSION } from '@/components/autoChessGame/version';
+import {
+  AUTOCHESS_VERSION,
+  AUTOCHESS_RELEASE_DATE,
+} from '@/components/autoChessGame/version';
 import { CONTENT_VERSION as SPARRING_VERSION } from '@/components/oneMoreGame/content';
 import { QUESTIONS as BUTTON_QUESTIONS } from '@/components/buttonGame/content';
 
@@ -30,7 +33,13 @@ interface ProjectItem {
   externalStats?: boolean;
 }
 
-const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
+interface GameItem extends ProjectItem {
+  releaseDate: string;
+  updateDate?: string;
+}
+
+// Date sources and update rules are documented in docs/demos-dates.md.
+const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
   {
     id: 'action',
     title: '动作与探索',
@@ -42,6 +51,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
           '穿过雨中的旧城，打开近路、挑战铁伞，和饼干岁一起找一顿热饭。',
         image: '/games/night-rain/preview.png',
         meta: '3D 动作探索 · 扮演岁己 · 箱庭冒险',
+        releaseDate: '2026-09-26',
+        updateDate: '2026-09-26',
       },
       {
         title: '岁岁过招',
@@ -49,6 +60,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '接飞铃、截突进，在三庭收钟的道场中挑战三位对手。',
         image: '/games/one-more/dojo.webp',
         meta: `动作对战 · 扮演挑战者 · 三位首章 Boss · v${SPARRING_VERSION}`,
+        releaseDate: '2026-09-06',
+        updateDate: '2026-09-07',
       },
       {
         title: 'Knight：空洞搜打撤',
@@ -56,6 +69,7 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '深入空洞搜集资源、应对遭遇，在局势失控前带着战利品撤离。',
         meta: '搜打撤 · 扮演探索者 · 搜索、交战、撤离',
         externalStats: true,
+        releaseDate: '2026-07-18',
       },
     ],
   },
@@ -69,6 +83,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '递外卖、隔墙报点、偷一个吻，守住两个人的小秘密。',
         image: '/games/hush-live/preview.png',
         meta: '第一人称潜行 · 扮演主播的秘密恋人 · 五晚同居',
+        releaseDate: '2026-09-22',
+        updateDate: '2026-09-26',
       },
       {
         title: '饼干岁，听我说',
@@ -76,6 +92,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '打出话题、挑选弹幕、救场转场，亲手控住三幕直播。',
         image: '/images/materials/岁己SUI小猫帽短发小揪揪半身金瞳.png',
         meta: '直播策略肉鸽 · 扮演主播岁己 · 七种结局',
+        releaseDate: '2026-09-12',
+        updateDate: '2026-09-12',
       },
       {
         title: '岁己：马上就播',
@@ -83,6 +101,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '跑遍公寓准备直播，趁保温杯慢慢接水去喂猫、试音，处理突发状况后赶到 OBS 开播。',
         image: '/games/pre-stream/preview-3d.webp',
         meta: '3D 开播竞速 · 扮演主播岁己 · 三晚计时摘星',
+        releaseDate: '2026-09-12',
+        updateDate: '2026-09-26',
       },
       {
         title: '主播，别嚼了！',
@@ -90,6 +110,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '一边聊天一边偷偷吃零食，别让麦克风和观众发现。',
         image: '/games/mini/snack.png',
         meta: '实时操作 · 扮演偷吃的主播 · 五关挑战',
+        releaseDate: '2026-09-11',
+        updateDate: '2026-09-12',
       },
     ],
   },
@@ -103,6 +125,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '训练、蒸馏、发布大模型，与三家实验室竞速 AGI。',
         image: '/games/mini/agi.png',
         meta: '策略经营 · 扮演 AI 公司 · 发展大模型',
+        releaseDate: '2026-09-11',
+        updateDate: '2026-09-15',
       },
       {
         title: '晶圆周期',
@@ -110,6 +134,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '决定报价、库存和扩产时机，在六年产业周期中积累财富。',
         image: '/games/mini/fab.png',
         meta: '模拟经营 · 扮演内存颗粒厂商 · 把握行情',
+        releaseDate: '2026-09-11',
+        updateDate: '2026-09-11',
       },
     ],
   },
@@ -123,6 +149,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '醒来成了一块饼干，结识伙伴，在山河间寻找通往现实的路。',
         image: '/images/autochess/portraits/biscuit_sui.png',
         meta: '角色扮演 · 扮演饼干 · 组队探索',
+        releaseDate: '2026-09-12',
+        updateDate: '2026-09-21',
       },
       {
         title: '年关牌局：这婚，你催吗？',
@@ -131,6 +159,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
           '从相识到共同生活，在 24 个季度里决定靠近、分开或一起渡过难关。',
         image: '/reference_images/岁己小红帽立绘.png',
         meta: '人生模拟 · 扮演当事人或家长 · 支持本地双人',
+        releaseDate: '2026-09-20',
+        updateDate: '2026-09-26',
       },
       {
         title: '武侠小说生成器',
@@ -138,6 +168,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '从一次选择开始，让随机事件和你的决定写成自己的江湖。',
         image: '/images/wiki/skill1.jpg',
         meta: '文字冒险 · 扮演江湖人物 · 自由抉择',
+        releaseDate: '2025-11-29',
+        updateDate: '2026-09-06',
       },
       {
         title: '这个按钮，你按吗？',
@@ -145,6 +177,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '面对心动的奖励与纠结的代价，为虚拟主播的平行人生做选择。',
         image: '/games/button/press.svg',
         meta: `互动选择 · 扮演决策者 · ${BUTTON_QUESTIONS.length} 道难题`,
+        releaseDate: '2026-09-08',
+        updateDate: '2026-09-16',
       },
     ],
   },
@@ -158,6 +192,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '敲落连成一片的彩色砖块，找齐一盘中埋藏的维阿主播。',
         image: '/games/brick-excavation/sui-excavation.png',
         meta: '连色解谜 · 多件出土 · 两次洗牌',
+        releaseDate: '2026-09-26',
+        updateDate: '2026-09-26',
       },
       {
         title: '维阿弹棋',
@@ -165,6 +201,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '挑选棋子，拉开角度与力度，用连锁碰撞把对手弹出棋盘。',
         image: '/games/flick-chess/preview.png',
         meta: '3D 物理对战 · 扮演维阿角色 · 本地双人 / AI',
+        releaseDate: '2026-09-26',
+        updateDate: '2026-09-26',
       },
       {
         title: '小鸟一百层',
@@ -172,6 +210,8 @@ const gameGroups: { id: string; title: string; games: ProjectItem[] }[] = [
         description: '控制小鸟一路向上，在越来越刁钻的平台间刷新高度。',
         image: '/images/sui-bird-jump.png',
         meta: '垂直跳跃 · 扮演小鸟 · 挑战高度',
+        releaseDate: '2025-11-27',
+        updateDate: '2026-07-21',
       },
     ],
   },
@@ -225,7 +265,34 @@ function ViewCount({
   );
 }
 
-function GameRow({ game, count }: { game: ProjectItem; count?: number }) {
+function GameDateDetails({
+  releaseDate,
+  updateDate,
+  external = false,
+}: {
+  releaseDate: string;
+  updateDate?: string;
+  external?: boolean;
+}) {
+  return (
+    <span className={styles.dateDetails}>
+      <span>
+        {external ? '本站收录' : '推出'}{' '}
+        <time dateTime={releaseDate}>{releaseDate.replaceAll('-', '.')}</time>
+      </span>
+      <span>
+        更新{' '}
+        {updateDate ? (
+          <time dateTime={updateDate}>{updateDate.replaceAll('-', '.')}</time>
+        ) : (
+          '未记录'
+        )}
+      </span>
+    </span>
+  );
+}
+
+function GameRow({ game, count }: { game: GameItem; count?: number }) {
   return (
     <Link href={game.href} className={styles.gameRow}>
       <div className={styles.gameThumb}>
@@ -248,6 +315,14 @@ function GameRow({ game, count }: { game: ProjectItem; count?: number }) {
       </div>
       <div className={styles.gameEnd}>
         <ViewCount count={count} externalStats={game.externalStats} />
+        <span className={styles.gameHistory}>
+          <CalendarOutlined className={styles.dateIcon} aria-hidden />
+          <GameDateDetails
+            releaseDate={game.releaseDate}
+            updateDate={game.updateDate}
+            external={game.externalStats}
+          />
+        </span>
         <ArrowRightOutlined aria-hidden />
       </div>
     </Link>
@@ -345,6 +420,13 @@ export default function DemosPage() {
               购买 VR 和 PSP
               成员棋子，组建队伍、凑齐羁绊、安排站位，挑战一轮比一轮更强的敌人！
             </p>
+            <div className={styles.heroHistory}>
+              <CalendarOutlined aria-hidden />
+              <GameDateDetails
+                releaseDate="2026-01-10"
+                updateDate={AUTOCHESS_RELEASE_DATE}
+              />
+            </div>
             <div className={styles.heroActions}>
               <Link href="/game/autochess" className={styles.primaryAction}>
                 开始对局 <ArrowRightOutlined aria-hidden />
