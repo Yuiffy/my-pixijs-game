@@ -138,6 +138,15 @@ const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         updateDate: '2026-09-26',
       },
       {
+        title: '平陆运河：通江达海',
+        href: '/game/pinglu-canal',
+        description: '2–4 位承包商共建运河，争抢开挖名额与货单；同机对战、挑战 AI 或独自规划。',
+        image: '/games/pinglu-canal/preview.svg',
+        meta: '多人桌游 · 人机竞赛 · 航道规划',
+        releaseDate: '2026-09-27',
+        updateDate: '2026-09-27',
+      },
+      {
         title: '智能纪元',
         href: '/game/agi',
         description: '训练、蒸馏、发布大模型，与三家实验室竞速 AGI。',

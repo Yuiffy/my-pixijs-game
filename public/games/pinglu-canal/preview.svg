@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="平陆运河承包商竞赛棋盘，从西江切山连接北部湾港">
+  <rect width="1280" height="720" fill="#e9eeed"/>
+  <rect x="58" y="82" width="756" height="516" fill="#fff" stroke="#a9beb8" stroke-width="4"/>
+  <rect x="76" y="100" width="720" height="480" fill="#dce7d3"/>
+  <g fill="#c6e6e9">
+    <rect x="76" y="340" width="160" height="80"/>
+    <rect x="476" y="340" width="320" height="80"/>
+    <rect x="76" y="180" width="160" height="80"/>
+    <rect x="716" y="260" width="80" height="240"/>
+  </g>
+  <g fill="#cbd1cc">
+    <rect x="316" y="100" width="80" height="400"/>
+    <rect x="396" y="180" width="80" height="320"/>
+  </g>
+  <g fill="#b8d5c1">
+    <rect x="476" y="260" width="160" height="80"/>
+    <rect x="476" y="420" width="80" height="80"/>
+  </g>
+  <g fill="#ebd7ad">
+    <rect x="476" y="340" width="80" height="80"/>
+    <rect x="236" y="420" width="80" height="160"/>
+  </g>
+  <g fill="#bac9c0">
+    <rect x="236" y="180" width="80" height="80"/>
+    <rect x="556" y="180" width="80" height="80"/>
+    <rect x="476" y="500" width="80" height="80"/>
+  </g>
+  <path d="M156 100v480m80-480v480m80-480v480m80-480v480m80-480v480m80-480v480m80-480v480m80-480v480M76 180h720M76 260h720M76 340h720M76 420h720M76 500h720" fill="none" stroke="#fff" stroke-width="3"/>
+  <path d="M76 380h720" fill="none" stroke="#5a918b" stroke-width="44" stroke-linecap="round"/>
+  <path d="M76 380h720" fill="none" stroke="#168d9a" stroke-width="29" stroke-linecap="round"/>
+  <g fill="#fff8ed" stroke="#d57d4b" stroke-width="7"><circle cx="116" cy="380" r="18"/><circle cx="756" cy="380" r="18"/></g>
+  <g fill="#34584f" font-family="Arial,'Microsoft YaHei',sans-serif" font-size="23" font-weight="700" text-anchor="middle">
+    <text x="276" y="230">钢厂</text><text x="596" y="230">装备</text><text x="516" y="550">粮厂</text>
+  </g>
+  <g fill="#173b3b" font-family="Arial,'Microsoft YaHei',sans-serif">
+    <text x="875" y="178" font-size="24" font-weight="700">平陆运河</text>
+    <text x="875" y="250" font-size="54" font-weight="800">通江达海</text>
+    <text x="875" y="332" font-size="25">选线 · 调土 · 抢货单</text>
+  </g>
+  <path d="M875 370h320" stroke="#b9cbc5" stroke-width="3"/>
+  <g fill="#52736a" font-family="Arial,'Microsoft YaHei',sans-serif" font-size="21">
+    <text x="875" y="422">2–4 位承包商竞赛</text>
+    <text x="875" y="463">同机对战 · AI 对手</text>
+  </g>
+  <rect x="875" y="515" width="222" height="55" fill="#1d777d"/>
+  <text x="986" y="551" fill="#fff" font-family="Arial,'Microsoft YaHei',sans-serif" font-size="24" font-weight="700" text-anchor="middle">西江 → 北部湾</text>
+</svg>
