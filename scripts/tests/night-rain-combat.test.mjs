@@ -54,13 +54,10 @@ test('aerial heavy connects on landing, not at takeoff, and jump is not universa
   step(s, 400); assert.equal(e.hp, e.maxHp - 46); assert.equal(s.player.jumpHeight, 0);
   const body = duel(); Object.assign(body.e, { action: 'attack', timer: .2, hitDone: false, facing: 0 }); step(body.s, 100, { jump: true }); assert.ok(body.s.player.hp < 100);
 });
-test('jump/attack motion cannot cross closed gate, wall or unsupported ledge', () => {
-  for (const start of [{ x: 12, y: 0, z: -7 }, { x: 8.2, y: 3, z: 6 }]) {
-    const s = fresh(); Object.assign(s.player, start); const input = start.x === 12 ? { x: 0, z: -1 } : { x: -1, z: 0 };
-    step(s, 150, { ...input, jump: true }); step(s, 600, { ...input, heavy: true });
-    assert.ok(world.canOccupy(s.player.x, s.player.z, s.player.y, false));
-    if (start.x === 12) assert.ok(s.player.z > -7.5); else assert.ok(s.player.x >= 8);
-  }
+test('jump cannot cross a tall locked gate, but clears a low corridor parapet', () => {
+  const gate=fresh();Object.assign(gate.player,{x:12,y:0,z:-7});step(gate,150,{z:-1,jump:true});step(gate,600,{z:-1,heavy:true});assert.ok(gate.player.z>-7.5);
+  const ledge=fresh();Object.assign(ledge.player,{x:9,y:3,z:6,lastGround:{x:9,y:3,z:6},fallPeak:3});
+  step(ledge,350,{x:-1,jump:true});step(ledge,800,{x:-1});assert.ok(ledge.player.x<8);assert.equal(ledge.player.y,0);assert.ok(ledge.player.hp<100);assert.equal(ledge.player.jumpHeight,0);
 });
 test('pause/Alt cancel charge and buffered inputs without releasing an unsolicited strike', () => {
   for (const cancel of [engine.clearHeldActions, s => engine.setPaused(s, true)]) {
@@ -125,4 +122,20 @@ test('parry has authored preparation, deflection and settle; roll tucks and sett
   const p=fresh().player; p.action='parry'; const poses=[.08,.18,.25,.52].map(t=>{p.actionTime=t;return combatPose(p);}); assert.equal(new Set(poses.map(JSON.stringify)).size,4); assert.equal(poses[3].lean,0);
   assert.equal(rollPose(0).angle,0); assert.equal(rollPose(0).tuck,0); assert.equal(rollPose(.64).angle,Math.PI*2); assert.equal(rollPose(.64).tuck,0);
   assert.ok(rollPose(.2).tuck>.99); for(let t=.001;t<.64;t+=.001)assert.ok(Math.abs(rollPose(t).angle-rollPose(t-.001).angle)<.025);
+});
+
+
+test('enemy windups move through raise, gather, release and continuous contact/recovery for every pattern',async()=>{
+ const {enemyMotion,enemyAttack,ENEMY_STRIKE_TIME,ENEMY_CONTACT_TIME}=await loadTypescriptModule('src/components/nightRain/enemyCombat.ts');
+ const neutral={lean:0,twist:0,crouch:0,ax:0,ay:0,az:-.08,lx:0,lz:0,legL:0,legR:0,weaponPitch:Math.PI/2};
+ const delta=(a,b)=>Math.max(...Object.keys(a).map(k=>Math.abs(a[k]-b[k])));
+ for(const kind of ['prowler','guard','duelist','boss'])for(const phase of [1,2])for(const attackIndex of [0,1,2]){
+  const e={kind,phase,attackIndex,action:'windup'};const spec=enemyAttack(e);const pose=(action,timer)=>enemyMotion({...e,action,timer});
+  const samples=[1,.82,.58,.3,.1,0].map(r=>pose('windup',spec.windup*r));assert.ok(delta(samples[0],neutral)<1e-8);
+  for(let i=1;i<samples.length;i++)assert.ok(delta(samples[i],samples[i-1])>.005,`${kind} phase ${phase} pattern ${attackIndex} step ${i} moves`);
+  for(const p of samples)assert.ok(Object.values(p).every(Number.isFinite));
+  assert.ok(delta(samples.at(-1),pose('attack',ENEMY_STRIKE_TIME))<1e-8);
+  assert.ok(delta(pose('attack',ENEMY_STRIKE_TIME-ENEMY_CONTACT_TIME+1e-5),pose('attack',ENEMY_STRIKE_TIME-ENEMY_CONTACT_TIME-1e-5))<1e-4);
+  assert.ok(delta(pose('attack',0),pose('recover',spec.recovery))<1e-8);assert.ok(delta(pose('recover',0),neutral)<1e-8);
+ }
 });

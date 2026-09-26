@@ -3041,6 +3041,14 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 造型最终顺序完整check／生产build通过（53页、Next lint/typecheck启用）。12份雨夜源码与成功构建逐一归一化SHA256一致，tmp/night-rain-companion-source-validation.json。生产专项5图全部像素检查并逐张目检，errors为空；共享游戏客户端亦使用系统Chrome／静音／虚拟Pointer Lock冒烟通过，1图非黑已目检。
 - 3871已切到night-rain-companions工作树的.next-night-rain-companions-release，PID124896；未刷新用户页面。该工作树仍承载服务，其node_modules引用night-rain-validation，两个工作树均需保留。主共享目录不移动HEAD，避免干扰其他任务；发布提交在codex/night-rain-companions分支。
 
+### 2026-09-26 · 雨夜旧城四项试玩反馈验收完成
+
+- 中庭首次点灯只记录复活点并立即保存，不补血、不补药、不重置敌人；之后再次交互免费休息，装备强化仍单独收费。只保留中庭雨灯，寺前/运河旧灯改为残灯碑记；v2 旧复活点迁移到中庭并保留资源、位置与敌人状态。
+- 敌人全身抬手、蓄力、挥出、接触与收招使用模拟时钟连续姿态，保留原攻击判定时间；守卫高举、快刀侧切、铁伞突刺/重击/横扫各有轮廓，修正突刺伞尖与锁定视角遮挡。两扇近路门增加内侧绞盘、门柱、棘爪、链条与升门动作，外侧背板不可操作。
+- 第一幕完成后可继续探索，敌人、钱、收集和近路进度保留；晚饭不可重复领取，继续后保存/刷新仍在探索。桌面和 390px 手机结局按钮均验证。
+- 最终 51/51 NightRain 规则测试通过；修改源码 ESLint、完整 pnpm run check → pnpm run build 顺序通过，Next ESLint/类型检查启用，53 页生成，仅既有 overworldRpg 未使用导入警告。13 份 NightRain 源码与成功构建 LF 归一化 SHA256 一致：tmp/night-rain-refinements-source-validation.json。
+- 静音后台系统 Chrome 正式构建验收：tmp/night-rain-refinements-production-world/report.json（22 图），tmp/night-rain-refinements-production-journey/report.json（6 图），errors=[]；全部逐张打开检查且通过像素检查。敌人逐阶段 15 图、开发完整流程 20 图及共享客户端 1 图也已目检。桥上截图等待相机稳定后重拍正常。虚拟 Pointer Lock/手柄、正常战斗和移动输入，无桌面鼠标/焦点操作。
+- 本地 3871 已切到 companions 工作树 .next-night-rain-refinements-release，PID 158724，HTTP 200；自有 3885 开发服务已停止。保留 companions 与提供 node_modules 的 validation 工作树。主目录其他任务改动未覆盖。此前 687dbfc/9fde57e 已推送；本轮四项调整保留为本地未提交改动，未公网部署。当前无剩余必要修复；地图扩建留待用户下一步讨论。
 ### 2026-09-26 · 加班夜生活扩展发布与锁定鼠标视角防跳
 
 - 用户授权把生活扩展commit/push，并反馈锁定鼠标后慢慢转头会突然跳到另一个角度。代码检查发现movementX/Y不经校验直接进入相机；注入720px异常位移在旧3879复现103.13度瞬转。现只在Pointer Lock路径丢弃单轴超过256px的异常样本，拒绝非有限值；正常多次快速采样可累计转过180度，右键/触屏绝对坐标拖动不受此阈值限制。锁定状态仅认当前canvas，切换时清掉旧拖拽坐标。未在用户设备上采集原始鼠标事件，防护机制已通过定向注入验证。
@@ -3069,4 +3077,17 @@ Original prompt: /goal 我们仓库里自走棋游戏demo，非常简陋，基�
 - 使用用户提供的 `おねんねたいむは、くまさんと_Loop.mp3`，原样复制为 `public/games/pre-stream/waiting-op.mp3`，169.92秒、3402496字节，源/目标 SHA256 一致。仅此首循环，临时原创候选全部移除；顶部静音/音量可保存，暂停、后台与卸载停止输出，手势解除浏览器自动播放限制。
 - 正式上播由两秒待机→岁己形象画面转场替代可见3/2/1倒数；待机音乐淡出，形象出现时只触发一次电子提示和可用时的中文合成短句。内部 countdown 相位保留兼容旧档。修复快速暂停/恢复的旧 play Promise 干扰新播放，以及自动播放被阻止后的手势重试。
 - 11/11规则测试、目标ESLint、音频无声生命周期专项通过。系统Chrome完整流程通过，`tmp/pre-stream-audio-release/report.json` 31张截图；820/390/320转场9图、标签修复2图与通用客户端移动1图均像素检查和逐张目检，错误为空。首次自动化受开发热更新打断，第二次因脚本固定移动时长而失败；改按实际距离推进后完整通过。浏览器全程静音/禁用TTS，未刷新用户3868页面。
-- 复用 pre-stream-publish 工作树，快进到 origin/master 后在 codex/pre-stream-3d-publish 分支验证；主共享目录其他游戏改动保留。最终 pnpm run check → pnpm run build 顺序通过，生成54/54页，保留Next内建ESLint与类型检查，仅既有RPG警告。构建目录 .next-pre-stream-op-release，路由30.9kB/首屏141kB；临时types include已收回。提交推送收尾中。
+- 复用 pre-stream-publish 工作树，在 codex/pre-stream-3d-publish 分支提交功能为8f36ff8，并合入最新远端db4b21a；仅progress追加段冲突，保留双方记录。合并前后均顺序通过 pnpm run check → pnpm run build，生成54/54页，保留Next内建ESLint与类型检查，仅既有RPG警告。构建目录 .next-pre-stream-op-release，路由30.9kB/首屏141kB；临时types include已收回。
+- 仅同步10个本游戏文件到主目录，全部SHA256与已验证版本一致，`tmp/pre-stream-op-source-validation.json`；其他并行改动保留。原3868预览及MP3均HTTP200，独立3891测试服务已停止。最终音频/转场、目标选择和事件需求已验收完成，无剩余必要修复。
+
+### 2026-09-26 · 潮汐港、角色皮肤与真实坠落
+
+- 前轮四项试玩调整已提交 6fe3cfa，工作分支已推送；正在同步远端主线完成本轮发布。参考重捏的饼干岁／獭獭栞此前提交为 9fde57e。
+- 新增栞栞／米汀可操作角色皮肤，帽子、发型、服饰、眼睛与配色分别参考仓库图片，标题／暂停可切换，设置与存档保留；与宝宝模式精灵独立。
+- 连续地图延伸潮汐港：0–6–10米主线通向七海潮门与黎明钟；3米阿梓戏台和4米晒网高廊两条支路可跳落回主路，港内绞盘开归灯长桥缩短重试。高廊下水巷可通行，寻路与角色使用一致的楼板侧面判定。移走侵入新战场的背景房屋并修正桥下相机。
+- 可跳过实际矮栏，走出断栏按重力落下；3.5米以内无伤，之后递增，10米致命。坠水钱袋留在最后安全落脚处；空中存档保留下降状态。滚动模型同时跟随坠落高度。
+- 七海持锚、阿梓持蛙铃杖，各三套独立前摇／收招与半血变化；红色环扫可跳，破架处决按首领伤害而非秒杀。两名客串战胜后休息不重生，敲钟奖励不重复，v3旧档保留原资源与敌人状态后扩入v4；未知未来版本拒绝加载。
+- 后台静音系统Chrome完整流程通过：tmp/night-rain-tide/report.json，14张整页图均像素检查与逐张目检，errors=[]。包含两皮肤／刷新、旧城第一幕、新区双首领与敲钟、双支路实际跳落伤害、低埠走回港口、雨灯休息与390px设置。共享技能客户端同样使用静音系统Chrome＋虚拟Pointer Lock，1张非黑截图与文本状态已检查；不操作用户鼠标／窗口。
+- 最新规则测试与发布check→build在隔离companions工作树继续，主共享目录其他任务改动和HEAD保留。
+
+- 发布验收：59/59规则通过，完整pnpm run check→pnpm run build依次成功，54页，Next ESLint/类型检查启用，仅既有RPG警告。生产构建tmp/night-rain-tide-production（14图）与tmp/night-rain-tide-production-companions（5图）全部像素检查并逐张目检，errors=[]；两精灵切换、跟随、宝宝开关与刷新也通过。19份源码／测试／文档与发布工作树LF归一化SHA256一致；构建期间行尾空格清理经TypeScript转译比较确认输出完全相同。当前无剩余必要修复。

@@ -11,7 +11,7 @@ export const NIGHT_ROUTE = [
   { x: -11, z: -22 }, { x: -6, z: -22 }, { x: -3.5, z: -22.5, interact: 'rooftop-note' },
   { x: 2.5, z: -22.5 }, { x: 2.5, z: -29 }, { x: 2.5, z: -35 },
   { x: 4, z: -36.5, ignoreBoss: true }, { x: 12, z: -36.5, ignoreBoss: true }, { x: 12, z: -29, ignoreBoss: true },
-  { x: 12, z: -21 }, { x: 12, z: -11, interact: 'shortcut' },
+  { x: 12, z: -21 }, { x: 13, z: -10.7, interact: 'shortcut' },
   { x: 11.3, z: -6.5 }, { x: 11.3, z: -1 }, { x: 7, z: -1 }, { x: 7, z: 7 },
   { x: 0, z: 8, upgrade: true },
   { x: 7, z: 7 }, { x: 7, z: -1 }, { x: 11.3, z: -1 }, { x: 12, z: -12 },
@@ -32,7 +32,7 @@ export function chooseInput(s, destination, { parryOnly = false } = {}) {
   const d = gap(enemy, p); const dx = (enemy.x - p.x) / Math.max(d, 0.01); const dz = (enemy.z - p.z) / Math.max(d, 0.01);
   const input = { x: 0, z: 0 };
   if (!s.lockedId) input.lock = true;
-  const sweep = enemy.kind === 'boss' && enemy.phase === 2 && enemy.attackIndex % 3 === 2;
+  const sweep = ((enemy.kind === 'boss' && enemy.phase === 2) || enemy.kind === 'nana' || enemy.kind === 'azi') && enemy.attackIndex % 3 === 2;
   if (p.action !== 'idle') return input;
   if (enemy.action === 'stagger') {
     if (d < 2.35) input.light = true;

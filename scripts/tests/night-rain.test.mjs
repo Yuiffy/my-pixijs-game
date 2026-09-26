@@ -177,3 +177,16 @@ test('save restores exact combat and kills, rejects malformed data and cannot cr
   ];
   for (const corrupt of corruptions) { const value = JSON.parse(raw); corrupt(value); assert.equal(loadGame(JSON.stringify(value)), null); }
 });
+
+
+test('dinner continues into the same world and survives save/reload, rest and further combat',()=>{
+ const {state:s}=playFirstLevel(engine);const before={player:structuredClone(s.player),enemies:structuredClone(s.enemies),rice:s.rice,collected:[...s.collected]};
+ engine.continueExploring(s);assert.equal(s.mode,'playing');assert.deepEqual(s.player,before.player);assert.deepEqual(s.enemies,before.enemies);assert.equal(s.rice,before.rice);assert.deepEqual(s.collected,before.collected);assert.match(engine.getObjective(s),/潮门/);
+ interact(s);assert.equal(s.mode,'playing');assert.equal(s.collected.filter(id=>id==='food').length,1);
+ const loaded=loadGame(saveGame(s));assert.ok(loaded);assert.equal(loaded.mode,'playing');assert.equal(loaded.bossDefeated,true);
+ const legacy=JSON.parse(saveGame(s));legacy.worldVersion=2;legacy.mode='ending';legacy.collected=legacy.collected.filter(id=>id!=='food');const restored=loadGame(JSON.stringify(legacy));assert.ok(restored);engine.continueExploring(restored);interact(restored);assert.equal(restored.mode,'playing');
+ for(const p of [...NIGHT_ROUTE.slice(30,38)].reverse())walkTo(engine,s,p,90000);
+ interact(s);assert.equal(s.restCount,1);assert.equal(s.bossDefeated,true);assert.equal(s.enemies.find(e=>e.kind==='boss').hp,0);assert.ok(s.enemies[0].hp>0);
+ walkTo(engine,s,{x:-4,z:3.5},90000); // regular combat still runs
+ assert.ok(s.kills>before.enemies.filter(e=>!e.hp).length);
+});
