@@ -252,9 +252,11 @@ const archiveItems = [
 function ViewCount({
   count,
   externalStats = false,
+  localOnly = false,
 }: {
-  count?: number;
+  count?: number | null;
   externalStats?: boolean;
+  localOnly?: boolean;
 }) {
   if (externalStats) {
     return (
@@ -266,7 +268,16 @@ function ViewCount({
       </span>
     );
   }
-  if (count === undefined) return null;
+  if (count === undefined) {
+    return <span className={styles.viewUnavailable}>浏览数加载中</span>;
+  }
+  if (count === null) {
+    return (
+      <span className={styles.viewUnavailable}>
+        {localOnly ? '浏览数请看线上' : '浏览数暂不可用'}
+      </span>
+    );
+  }
   return (
     <span className={styles.viewCount} title="页面累计浏览次数，包含重复访问">
       {count.toLocaleString('zh-CN')} 次浏览
@@ -301,7 +312,15 @@ function GameDateDetails({
   );
 }
 
-function GameRow({ game, count }: { game: GameItem; count?: number }) {
+function GameRow({
+  game,
+  count,
+  localOnly,
+}: {
+  game: GameItem;
+  count?: number | null;
+  localOnly: boolean;
+}) {
   return (
     <Link href={game.href} className={styles.gameRow}>
       <div className={styles.gameThumb}>
@@ -323,7 +342,11 @@ function GameRow({ game, count }: { game: GameItem; count?: number }) {
         <p>{game.description}</p>
       </div>
       <div className={styles.gameEnd}>
-        <ViewCount count={count} externalStats={game.externalStats} />
+        <ViewCount
+          count={count}
+          externalStats={game.externalStats}
+          localOnly={localOnly}
+        />
         <span className={styles.gameHistory}>
           <CalendarOutlined className={styles.dateIcon} aria-hidden />
           <GameDateDetails
@@ -340,18 +363,22 @@ function GameRow({ game, count }: { game: GameItem; count?: number }) {
 
 export default function DemosPage() {
   const pageRef = useRef<HTMLElement>(null);
-  const [viewCounts, setViewCounts] = useState<Record<string, number> | null>(
-    null,
-  );
+  const [viewCounts, setViewCounts] = useState<
+    Record<string, number> | null | undefined
+  >(undefined);
+  const [localOnly, setLocalOnly] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/demos/visits', { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
-        if (data?.counts) setViewCounts(data.counts);
+        setLocalOnly(data?.localOnly === true);
+        setViewCounts(data?.available && data.counts ? data.counts : null);
       })
-      .catch(() => {});
+      .catch((error) => {
+        if (error.name !== 'AbortError') setViewCounts(null);
+      });
     return () => controller.abort();
   }, []);
 
@@ -451,8 +478,9 @@ export default function DemosPage() {
             <span>可随时托管</span>
             <ViewCount
               count={
-                viewCounts ? (viewCounts['/game/autochess'] ?? 0) : undefined
+                viewCounts ? (viewCounts['/game/autochess'] ?? 0) : viewCounts
               }
+              localOnly={localOnly}
             />
           </div>
         </div>
@@ -488,8 +516,9 @@ export default function DemosPage() {
                     key={game.href}
                     game={game}
                     count={
-                      viewCounts ? (viewCounts[game.href] ?? 0) : undefined
+                      viewCounts ? (viewCounts[game.href] ?? 0) : viewCounts
                     }
+                    localOnly={localOnly}
                   />
                 ))}
               </div>

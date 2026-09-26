@@ -689,7 +689,7 @@
   position: absolute;
   top: 50%;
   right: 28px;
-  left: 0;
+  font-size: 10px;
   gap: 2px 12px;
   color: #b8c0b9;
   opacity: 0;
@@ -698,10 +698,8 @@
   transform: translateY(-50%);
   transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
 }
-.gameRow:hover .viewCount,
 .gameRow:hover .viewUnavailable,
 .gameRow:hover .dateIcon,
-.gameRow:focus-visible .viewCount,
 .gameRow:focus-visible .viewUnavailable,
 .gameRow:focus-visible .dateIcon { opacity: 0; }
 .gameRow:hover .dateDetails,

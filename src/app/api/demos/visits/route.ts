@@ -10,6 +10,7 @@ const visibleGamePaths = [
   '/game/rpg',
   '/game/one-more',
   '/game/flick-chess',
+  '/game/hype-harbor',
   '/game/agi',
   '/game/fab',
   '/game/streamer',
@@ -25,7 +26,10 @@ const visibleGamePaths = [
 
 export async function GET() {
   if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ available: false });
+    return NextResponse.json({
+      available: false,
+      localOnly: process.env.NODE_ENV === 'development',
+    });
   }
 
   try {
