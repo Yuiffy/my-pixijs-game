@@ -552,3 +552,12 @@
 .experienceNotes { margin: 12px 0; border-top: 1px solid #9bb88640; padding: 12px 0; color: #bdcfaa; font-size: 11px; line-height: 1.8; }
 .experienceNotes summary { cursor: pointer; }
 .experienceNotes div { display: flex; flex-wrap: wrap; gap: 8px 24px; color: #d7e6c2; }
+
+.qualityNote {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.qualityNote b { color: #8bbca9; }

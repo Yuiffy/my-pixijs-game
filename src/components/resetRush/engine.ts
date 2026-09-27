@@ -21,7 +21,7 @@ export interface Studio {
   threads: number;
   accountPolicy: AccountPolicy;
   preferredAccount: number;
-  configuration: "fixed" | "adaptive";
+  configuration: "fixed" | "adaptive" | "premium";
   collaboration: 1 | 2 | 3;
 }
 export const SAVE_KEY = "reset-rush-v5";
@@ -131,6 +131,8 @@ export interface Project {
   checked: number;
   riskLoad: number;
   repair: number;
+  qualityWork: number;
+  delivery: { grade: string; cash: number; vp: number } | null;
 }
 export interface Lane {
   id: number;
@@ -139,6 +141,7 @@ export interface Lane {
   projects: number[];
   enabled: boolean;
   paidDay: number;
+  attentionPaid: number;
 }
 export interface Account {
   id: number;
@@ -209,6 +212,7 @@ export interface Game {
   version: 5;
   supplyRules: 1;
   workflowRules: 1;
+  qualityRules: 1;
   platform: Platform;
   development: Development;
   studio: Studio;
@@ -454,6 +458,8 @@ function project(g: Game, template?: number): Project {
     checked: 0,
     riskLoad: 0,
     repair: 0,
+    qualityWork: 0,
+    delivery: null,
   };
 }
 function account(g: Game, tier: Tier): Account {
@@ -552,13 +558,52 @@ max,
 risk: known ? max : null,
     label: known ? `${max}% / 20 进度` : max === 0 ? "摸底中 · 已留安全余量" : "摸底中 · 可能返工" };
 }
+/** Public lower bound: planning never reads an undiscovered complication. */
+export function capabilityMargin(g: Game, p: Player, config: Development, job: Project) {
+  return developmentStats(g, p, config).ability - (modelExperience(g, p, config.model) >= 60 ? 0 : 0.5)
+    - job.difficulty - (job.understood ? job.challenge : 0.5);
+}
+const qualityRate = (margin: number) => Math.min(1, Math.max(0, margin / 2));
+function qualityGrade(fraction: number) {
+  return fraction + EPS >= 0.75 ? { grade: "精品", bonus: 0.4 }
+    : fraction + EPS >= 0.35 ? { grade: "精良", bonus: 0.2 } : { grade: "合格", bonus: 0 };
+}
+export function projectQuality(job: Project) {
+  const quality = qualityGrade(job.qualityWork / job.need);
+  return { ...quality, cash: job.cash + Math.floor(job.cash * quality.bonus + EPS), vp: job.vp + Math.floor(job.vp * quality.bonus + EPS) };
+}
+/** Projected final grade if this configuration finishes the remaining useful work. */
+export function qualityForecast(g: Game, p: Player, config: Development, job: Project) {
+  if (!job.understood) return "品质摸底中";
+  const fraction = (job.qualityWork + Math.max(0, job.need - job.work) * qualityRate(capabilityMargin(g, p, config, job))) / job.need;
+  const q = qualityGrade(fraction);
+  return `预计${q.grade}${q.bonus ? ` · 回款/声望 +${Math.round(q.bonus * 100)}%` : " · 基础收益"}`;
+}
+export function attentionCost(g: Game, p: Player, config: Development, job?: Project) {
+  return job && capabilityMargin(g, p, config, job) >= 1 ? 1 : 2;
+}
+function attentionNeeded(g: Game, p: Player, lane: Lane) {
+  const job = p.projects.find(j => j.id === lane.projects[0]);
+  return Math.max(0, attentionCost(g, p, lane.development, job) - (lane.paidDay === g.day ? lane.attentionPaid : 0));
+}
+function prepareLane(g: Game, p: Player, lane: Lane) {
+  const needed = attentionNeeded(g, p, lane);
+  if (p.energy < needed) return false;
+  if (needed) {
+    p.energy -= needed;
+    lane.attentionPaid = (lane.paidDay === g.day ? lane.attentionPaid : 0) + needed;
+    lane.paidDay = g.day;
+    log(g, `${p.name} 托管线程，−${needed} 精力${lane.attentionPaid === 1 ? "（架构与自测更省心）" : "（含人工跟进）"}。`, p.id);
+  }
+  return true;
+}
 export function projectDevelopment(g: Game, p: Player, job: Project): Development {
-  if (g.studio.configuration !== "adaptive" || p.id !== 0) return { ...g.development };
+  if (g.studio.configuration === "fixed" || p.id !== 0) return { ...g.development };
   const candidates = (Object.keys(MODELS) as Model[]).flatMap(model => (Object.keys(EFFORTS) as Effort[]).map(effort => {
       const config = { model, effort, turbo: g.development.turbo };
       return { config, assessment: riskAssessment(g, p, config, job), stats: developmentStats(g, p, config) };
     }));
-  const safe = candidates.filter(c => c.assessment.max === 0);
+  const safe = candidates.filter(c => (g.studio.configuration === "premium" ? capabilityMargin(g, p, c.config, job) >= 1.5 : c.assessment.max === 0));
   // Minimum quota per useful work; among equally priced choices prefer faster work.
   // If no configuration can guarantee safety, use the strongest and disclose uncertainty.
   const ranked = safe.length ? safe.sort((a, b) => a.stats.nominalCost * modelEdition(g, a.config.model).price - b.stats.nominalCost * modelEdition(g, b.config.model).price || b.stats.speed - a.stats.speed)
@@ -604,17 +649,19 @@ function award(g: Game, p: Player) {
   });
 }
 function release(g: Game, p: Player, job: Project) {
-  if (job.work < job.need || job.bugs > 0) return;
+  if (job.work < job.need || job.bugs > 0 || !p.projects.some(j => j.id === job.id)) return;
   const jam = job.category === "game" && g.event.effect === "jam" ? 4 : 0;
-  p.vp += job.vp + jam;
-  p.cash += job.cash;
+  const reward = projectQuality(job);
+  job.delivery = { grade: reward.grade, cash: reward.cash, vp: reward.vp + jam };
+  p.vp += job.delivery.vp;
+  p.cash += job.delivery.cash;
   if (job.category === "open") p.knowledge = Math.min(3, p.knowledge + 1);
   p.projects = p.projects.filter((x) => x.id !== job.id);
   cleanLanes(p);
   p.shipped.push(job);
   log(
     g,
-    `${p.name} 发布《${job.name}》！+${job.vp + jam} 声望，+$${job.cash}${job.category === "open" ? "，研发速度 +8%（上限 24%）" : ""}`,
+    `${p.name} 发布《${job.name}》【${reward.grade}】！+${job.delivery.vp} 声望，+$${job.delivery.cash}${job.category === "open" ? "，研发速度 +8%（上限 24%）" : ""}`,
     p.id,
   );
   award(g, p);
@@ -736,10 +783,6 @@ function beginDay(g: Game) {
         log(g, `${p.name} 的《${j.name}》超期撤单，扣 3 声望。`, p.id);
       });
     cleanLanes(p);
-    for (const lane of p.lanes) if (lane.enabled && lane.projects.length) {
-        p.energy -= 2;
-        lane.paidDay = g.day;
-      }
   });
   g.event = drawEvent(g);
   if (g.event.effect === "retire" && g.platform.proDeadline === null) g.platform.proDeadline = g.day + 2;
@@ -755,6 +798,10 @@ function beginDay(g: Game) {
   }
   // A new rate invalidates old measurements, without exposing the changed multiplier.
   if (g.event.effect === "technology" || g.event.effect === "limits") for (const p of g.players) for (const a of p.accounts) a.meter = null;
+  for (const p of g.players) for (const lane of p.lanes) if (lane.enabled && lane.projects.length) {
+    if (p.id === 0 && g.studio.mode === "auto") lane.development = projectDevelopment(g, p, p.projects.find(j => j.id === lane.projects[0])!);
+    prepareLane(g, p, lane);
+  }
   log(g, `早间消息：${g.event.title}`);
   if (g.event.effect === "instant") g.receipt = reset(g, "normal");
   if (g.event.effect === "bank") g.receipt = reset(g, "bank");
@@ -768,6 +815,7 @@ export function createGame(seed = 260926, length = 42): Game {
     version: 5,
     supplyRules: 1,
     workflowRules: 1,
+    qualityRules: 1,
     platform: initialPlatform(),
     development: { ...DEFAULT_DEVELOPMENT },
     studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0, configuration: "fixed", collaboration: 2 },
@@ -850,6 +898,7 @@ function organizeStudio(g: Game) {
     projects: [],
     enabled: false,
     paidDay: 0,
+    attentionPaid: 0,
   });
   const activeLanes = p.lanes.slice(0, count);
   for (const lane of p.lanes.slice(count)) {
@@ -889,13 +938,8 @@ function organizeStudio(g: Game) {
     lane.development = head ? projectDevelopment(g, p, head) : { ...g.development };
     if (!lane.projects.length) {
       lane.enabled = false;
-    } else if (!lane.enabled && lane.paidDay === g.day) {
-      lane.enabled = true;
-    } else if (!lane.enabled && p.energy >= 2) {
-      p.energy -= 2;
-      lane.enabled = true;
-      lane.paidDay = g.day;
-      log(g, `${p.name} 托管线程，−2 精力。`, p.id);
+    } else {
+      lane.enabled = prepareLane(g, p, lane);
     }
   }
 }
@@ -926,9 +970,9 @@ function routeStudioAccounts(g: Game) {
 }
 export function laneStatus(g: Game, p: Player, lane: Lane): string {
   if (!lane.projects.length) return "队列完成";
-  if (!lane.enabled) return g.studio.mode === "auto" && p.id === 0 &&
-    lane.paidDay !== g.day && p.energy < 2 ? "等待精力" : "已暂停";
-  if (g.phase !== "plan") return "收工待续";
+  if (g.phase !== "plan") return lane.enabled ? "收工待续" : "已暂停";
+  if ((lane.enabled || (g.studio.mode === "auto" && p.id === 0)) && p.energy < attentionNeeded(g, p, lane)) return "等待精力";
+  if (!lane.enabled) return "已暂停";
   const job = p.projects.find((j) => j.id === lane.projects[0]);
   if (!job) return "等待项目";
   const acc = p.accounts.find((a) => a.id === lane.account);
@@ -941,7 +985,12 @@ export function laneStatus(g: Game, p: Player, lane: Lane): string {
 export function energyCost(g: Game, p: Player, a: Action): number {
   if (a.type === "claim" || a.type === "freelance") return 1;
   if (a.type === "test") return 2;
-  if (a.type === "dispatch") return p.lanes.find((l) => l.id === a.lane)?.paidDay === g.day ? 1 : 2;
+  if (a.type === "dispatch") {
+    if (!validDevelopment(a)) return 2;
+    const lane = a.lane === null ? p.lanes.find(l => !l.projects.length) : p.lanes.find(l => l.id === a.lane);
+    const paid = lane?.paidDay === g.day ? lane.attentionPaid : 0;
+    return Math.max(1, attentionCost(g, p, a, p.projects.find(j => j.id === a.projects[0])) - paid);
+  }
   return 0;
 }
 export function actionError(g: Game, id: number, a: Action): string | null {
@@ -961,7 +1010,7 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     if (!Number.isInteger(a.threads) || a.threads < 0 || a.threads > MAX_LANES ||
       !["preferred", "soon-reset", "drain", "most-quota", "late-expiry", "balanced"].includes(a.accountPolicy) ||
       !p.accounts.some((acc) => acc.id === a.preferredAccount) ||
-      (a.configuration !== undefined && !["fixed", "adaptive"].includes(a.configuration)) ||
+      (a.configuration !== undefined && !["fixed", "adaptive", "premium"].includes(a.configuration)) ||
       (a.collaboration !== undefined && ![1, 2, 3].includes(a.collaboration))) return "工作室策略无效。";
     return null;
   }
@@ -1064,6 +1113,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
           projects: [],
           enabled: false,
           paidDay: 0,
+    attentionPaid: 0,
         };
         p.lanes.push(lane);
       }
@@ -1072,6 +1122,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     lane.development = { model: a.model, effort: a.effort, turbo: a.turbo };
     lane.projects = [...a.projects];
     lane.enabled = true;
+    lane.attentionPaid = Math.max(lane.paidDay === g.day ? lane.attentionPaid : 0, attentionCost(g, p, a, p.projects.find(j => j.id === a.projects[0])));
     lane.paidDay = g.day;
     log(
       g,
@@ -1201,7 +1252,7 @@ function runPlayer(g: Game, p: Player) {
     }
     cleanLanes(p);
     const running = p.lanes.flatMap(lane => {
-      if (!lane.enabled || !lane.projects.length) return [];
+      if (!lane.enabled || !lane.projects.length || !prepareLane(g, p, lane)) return [];
       const job = p.projects.find(j => j.id === lane.projects[0])!;
       const acc = p.accounts.find(a => a.id === lane.account)!;
       const stats = developmentStats(g, p, lane.development, job);
@@ -1243,6 +1294,7 @@ function runPlayer(g: Game, p: Player) {
       if (r.repair) r.job.repair += work;
       else {
         r.job.work += work;
+        r.job.qualityWork += work * qualityRate(r.stats.ability - r.job.difficulty - r.job.challenge);
         r.job.riskLoad += (work * r.stats.risk) / 2000;
       }
     }
@@ -1313,7 +1365,7 @@ function botConfig(
               ? 1.6
               : 0.7;
         const value =
-          work - s.cost * work * price + (urgency ? s.speed * 30 : 0);
+          work * (1 + 0.4 * qualityRate(capabilityMargin(g, p, config, j))) - s.cost * work * price + (urgency ? s.speed * 30 : 0) + (attentionCost(g, p, config, j) === 1 ? 4 : 0);
         if (value > bestValue) {
           bestValue = value;
           best = config;
@@ -1391,7 +1443,7 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
     .filter((j) => !p.lanes.some((l) => l.projects.includes(j.id)))
     .sort((a, b) => (a.deadline ?? 999) - (b.deadline ?? 999));
   const desired = style === "builder" ? 4 : 3;
-  if (waiting.length && p.energy >= 2) {
+  if (waiting.length && p.energy >= 1) {
     const lane =
       p.lanes.filter((l) => l.projects.length).length < desired
         ? null
@@ -1404,13 +1456,14 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
     const config = lane
       ? lane.development
       : botConfig(g, p, acc, waiting[0], style);
-    return {
+    const dispatch: Action = {
       type: "dispatch",
       lane: lane?.id ?? null,
       account: acc.id,
       projects: [...(lane?.projects ?? []), ...waiting.map((j) => j.id)],
       ...config,
     };
+    if (!actionError(g, id, dispatch)) return dispatch;
   }
   const pending = p.projects.reduce(
     (n, j) => n + j.need - j.work + j.bugs * BUG_WORK,
@@ -1457,6 +1510,7 @@ function humanNode(g: Game) {
       p.shipped.length,
       p.projects.length === 0,
       active.length > 0 && active.every((l) => laneStatus(g, p, l) === "等待额度"),
+      p.lanes.some(l => laneStatus(g, p, l) === "等待精力"),
     ]);
   }
   return JSON.stringify([
@@ -1536,8 +1590,8 @@ export function nextDay(state: Game): Game {
 }
 export function textState(g: Game) {
   const publicProject = (j: Project) => {
-    const { challenge, riskLoad: _riskLoad, ...visible } = j;
-    return { ...visible, challenge: j.understood ? challenge : null };
+    const { challenge, riskLoad: _riskLoad, qualityWork, ...visible } = j;
+    return { ...visible, challenge: j.understood ? challenge : null, qualityWork: j.understood ? qualityWork : null };
   };
   return {
     title: "RESET / 开蹬！",
@@ -1570,6 +1624,7 @@ export function textState(g: Game) {
       score: score(g.players[p.id]),
       lanes: p.lanes.map((l) => ({ ...l,
 status: laneStatus(g, g.players[p.id], l),
+        attention: attentionCost(g, g.players[p.id], l.development, p.projects.find(j => j.id === l.projects[0])),
         assessment: p.projects.find(j => j.id === l.projects[0]) ? riskAssessment(g, g.players[p.id], l.development, p.projects.find(j => j.id === l.projects[0])!) : null,
       })),
     })),
@@ -1599,6 +1654,7 @@ export function restoreGame(raw: string | null): Game | null {
       ![1, 2, 3, 4, 5].includes(oldVersion) ||
       !(g.supplyRules === undefined || g.supplyRules === 1) ||
       !(g.workflowRules === undefined || g.workflowRules === 1) ||
+      !(g.qualityRules === undefined || g.qualityRules === 1) ||
       !["plan", "reveal", "over"].includes(g.phase) ||
       ![21, 42].includes(g.length) ||
       !Number.isInteger(g.day) ||
@@ -1710,11 +1766,24 @@ collaboration: 1,
       }
       g.workflowRules = 1;
     }
+    if (g.qualityRules === undefined) {
+      if (!g.players.every(p => p && Array.isArray(p.projects) && Array.isArray(p.shipped) && Array.isArray(p.lanes))) return null;
+      for (const j of [...g.market, ...g.players.flatMap(p => [...p.projects, ...p.shipped])]) {
+        if (!j) return null;
+        j.qualityWork = 0;
+        j.delivery = null;
+      }
+      for (const p of g.players) {
+        for (const j of p.shipped) j.delivery = { grade: "合格", cash: j.cash, vp: j.vp };
+        for (const lane of p.lanes) { if (!lane) return null; lane.attentionPaid = lane.paidDay ? 2 : 0; }
+      }
+      g.qualityRules = 1;
+    }
     if (
       !validDevelopment(g.development) ||
       !g.studio ||
       !["auto", "manual"].includes(g.studio.mode) ||
-      !["fixed", "adaptive"].includes(g.studio.configuration) ||
+      !["fixed", "adaptive", "premium"].includes(g.studio.configuration) ||
       ![1, 2, 3].includes(g.studio.collaboration) ||
       !Number.isInteger(g.studio.threads) ||
       g.studio.threads < 0 ||
@@ -1744,6 +1813,8 @@ collaboration: 1,
         j.repair,
       ]) &&
       [0, 0.5].includes(j.challenge) && typeof j.understood === "boolean" &&
+      Number.isFinite(j.qualityWork) && j.qualityWork >= 0 && j.qualityWork <= j.work + EPS &&
+      (j.delivery === null || (j.delivery && ["合格", "精良", "精品"].includes(j.delivery.grade) && finite([j.delivery.cash, j.delivery.vp]) && j.delivery.cash >= 0 && j.delivery.vp >= 0)) &&
       j.need > 0 &&
       j.work >= 0 &&
       j.work <= j.need + EPS &&
@@ -1824,6 +1895,7 @@ collaboration: 1,
           !validDevelopment(l.development) ||
           typeof l.enabled !== "boolean" ||
           !Number.isInteger(l.paidDay) ||
+          ![0, 1, 2].includes(l.attentionPaid) ||
           !Array.isArray(l.projects) ||
           new Set(l.projects).size !== l.projects.length ||
           !l.projects.every((id, position) => {

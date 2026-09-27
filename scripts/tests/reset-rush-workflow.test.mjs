@@ -78,8 +78,8 @@ test('discovering a bug reveals hidden complexity and does not double-count a sh
 test('collaboration speeds are sublinear, charge each agent once, and do not multiply useful-work cost',()=>{
  for(const count of [1,2,3]) {
   let g=known(longGame());g=studio(g,{threads:count,collaboration:count});
-  assert.equal(player(g).energy,12-count*2);
-  g=studio(g,{threads:0});g=studio(g,{threads:count});assert.equal(player(g).energy,12-count*2);
+  assert.equal(player(g).energy,12-count);
+  g=studio(g,{threads:0});g=studio(g,{threads:count});assert.equal(player(g).energy,12-count);
   const before=acc(g).quota;g=E.advanceMinutes(g,60);
   near(job(g).work,0.18*60*E.collaborationSpeed(count));
   near(before-acc(g).quota,job(g).work*0.16);
@@ -102,7 +102,7 @@ test('joint completion and repair settle once, with fractional work carried into
  g=studio(g,{threads:3,collaboration:3});const initial=structuredClone(g);g=E.advanceMinutes(g,1);
  assert.equal(player(g).shipped.length,1);assert.equal(player(g).projects.length,0);
  near(acc(initial).quota-acc(g).quota,0.2*3);
- assert.equal(player(g).cash,player(initial).cash+job(initial).cash);
+ assert.equal(player(g).cash,player(initial).cash+job(initial).cash+Math.floor(job(initial).cash*0.4));
  assert.equal(player(g).lanes.filter(l=>l.projects.length).length,0);
  let repair=known(longGame());job(repair).work=job(repair).need;job(repair).checked=job(repair).need;job(repair).bugs=1;job(repair).repair=11.9;
  repair=studio(repair,{threads:3,collaboration:3});const prior=acc(repair).quota;repair=E.advanceMinutes(repair,1);

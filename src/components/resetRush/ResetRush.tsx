@@ -30,6 +30,9 @@ import {
   DEFAULT_DEVELOPMENT,
   developmentStats,
   projectDevelopment,
+  projectQuality,
+  qualityForecast,
+  attentionCost,
   riskAssessment,
   modelExperience,
   collaborationSpeed,
@@ -221,7 +224,7 @@ function Rules() {
           揭牌。思考和操作界面不走时钟；收工时你和电脑的所有线程一起工作。
         </li>
         <li>
-          <strong>接单 1 精力，开线程 2 精力。</strong>
+          <strong>接单 1 精力，托管每条 1–2 精力。</strong>
           接下的项目会自动排队。你只选同时托管几条线程，最多 6 条；它们可以共用账号，也可以一起开发一个项目。
           买号、升级、续订和银行券不花时间或精力。
         </li>
@@ -229,7 +232,7 @@ function Rules() {
           <strong>选策略，收工揭牌。</strong>
           账号可指定优先、快重置、更多额度、快耗尽、晚到期或按比例均衡；用完会自动换号。
           项目完成自动接下一项，按实际进度扣额。每天收工只需点一次；想在缺额时用银行券，可以点“到关键时刻”。
-          跨天继续托管的每条线程占 2 精力。
+          强配置能包办更多架构与自测，每条只占 1 精力；需要人工跟进则占 2 精力。
         </li>
         <li>
           <strong>用额度换时间。</strong>Turbo 速度 ×2、每进度额度 ×2.5，不增加
@@ -248,9 +251,12 @@ function Rules() {
           $25。直接收工会先跑完剩余时间，再翻夜间牌。
         </li>
       </ol>
+      <h3>同样做得完，也能做得更好</h3>
+      <p>能力高于任务需求，会自动积累作品品质：精良回款与声望 +20%，精品 +40%（奖励向下取整）。品质按全程有效开发量结算；最后换高档不能补刷，返工与 Turbo 不额外加品质。</p>
+      <p>省心配置每天每条 1 精力，需人工跟进的配置 2 精力。项目摸底、模型经验会影响保守估计；同日按最高需求收取，切换到更费心的配置补差额，精力不足就等待。次日重新计算。</p>
       <h3>让工作室逐渐懂你</h3>
-      <p>项目配置可选“自动稳妥”：逐项选择足够胜任且最省额度的模型与思考强度。Turbo 独立勾选；选旧版预设会切回统一配置。缺额会等待补给，不偷偷降到有风险的免费配置。</p>
-      <p>每项可选最多 1 / 2 / 3 人协作，系统先分头做，再帮大项目。2 人合计 1.7×、3 人 2.2× 速度，每人占 2 精力；进度、bug 与交付统一结算。</p>
+      <p>项目配置可选“自动精品”，优先选能做出精品且省心的最低消耗档位；能力不足时尽力优化，已有低品质进度无法补刷。也可选“自动稳妥”：逐项选择足够胜任且最省额度的模型与思考强度。Turbo 独立勾选；选旧版预设会切回统一配置。缺额会等待补给，不偷偷降到有风险的免费配置。</p>
+      <p>每项可选最多 1 / 2 / 3 人协作，系统先分头做，再帮大项目。2 人合计 1.7×、3 人 2.2× 速度，每人占 1–2 精力；进度、bug 与交付统一结算。</p>
       <p>需求只给难度估计。首段 20 进度或 bug 会揭示项目难点；模型每代累计实测 60 进度后校准。摸底时自动配置留安全余量，熟悉后可降档省钱；能力不足时明确提示可能返工。</p>
       <h3>七天时钟，三十天银行券</h3>
       <p>
@@ -343,7 +349,10 @@ function ProjectCard({
         <span>
           {market ? `${job.need} 进度` : `${fmt(job.work)} / ${job.need} 进度`}
         </span>
-        <span>+${job.cash}</span>
+        <span>基础 +${job.cash}</span>
+      </span>
+      <span className={s.projectPerk}>
+        {market ? "品质加成最高 +40%" : job.understood ? `已积累：${projectQuality(job).grade} · 交付自动结算` : "作品品质 · 开发后逐步揭晓"}
       </span>
       {!market && (
         <span className={s.progress}>
@@ -679,7 +688,7 @@ export default function ResetRush() {
                 {human?.energy}
                 <small> / {DAILY_ENERGY}</small>
               </strong>
-              <small>托管线程跨天每天占 2 点</small>
+              <small>每条每天 1–2 点 · 强配置更省心</small>
             </div>
           </div>
           {game.phase === "plan" && (
@@ -971,6 +980,10 @@ export default function ResetRush() {
                             {stats.name}{" "}
                             <span>· 合计 {fmt(stats.perHour * pace)} 进度 / 时 · {assessed.label}</span>
                           </p>
+                          <p className={s.qualityNote} data-testid="quality-note">
+                            <b>{qualityForecast(game, human, lane.development, head)}</b>
+                            <span>{attentionCost(game, human, lane.development, head) === 1 ? "省心托管" : "人工跟进"} · {attentionCost(game, human, lane.development, head)} 精力 / 人 / 天 · 今日已占 {team.reduce((n, l) => n + (l.paidDay === game.day ? l.attentionPaid : 0), 0)}</span>
+                          </p>
                           <div className={s.threadProgress}>
                             <i
                               style={{
@@ -1212,7 +1225,7 @@ export default function ResetRush() {
                     value={studio?.threads ?? 1}
                     onChange={(e) => setStudio({ threads: Number(e.target.value) })}
                   />
-                  <small>每条有任务的线程每天占 2 精力；同日调低再调高不重复收取。0 条暂停全部。</small>
+                  <small>每条每天 1–2 精力：强配置更省心。同日按最高需求计费，降档可能补 1 点；0 条暂停。</small>
                 </label>
                 <label className={s.policySelect} htmlFor="studio-policy">
                   <span>账号使用顺序</span>
@@ -1235,8 +1248,9 @@ value={studio?.configuration ?? "fixed"}
                     onChange={e => setStudio({ configuration: e.target.value as Studio["configuration"] })}>
                     <option value="fixed">统一配置 · 手动决定</option>
                     <option value="adaptive">自动稳妥 · 按项目省额度</option>
+                    <option value="premium">自动精品 · 品质与省心</option>
                   </select>
-                  <small>{studio?.configuration === "adaptive" ? "熟悉后选 0% 风险的最省额配置；摸底时留余量。能力不足时尽力攻坚，仍会提示风险。" : "所有项目沿用下方配置；切换自动稳妥，可按每项需求分别省额度。"}</small>
+                  <small>{studio?.configuration === "premium" ? "用额度换品质和省心，优先选精品档；能力不足时尽力优化。已做进度的品质不会补刷。" : studio?.configuration === "adaptive" ? "熟悉后选 0% 风险的最省额配置；摸底时留余量。能力不足时尽力攻坚，仍会提示风险。" : "所有项目沿用下方配置；也可自动选档，偏重省额或精品。"}</small>
                 </label>
                 <label className={s.policySelect} htmlFor="studio-collaboration">
                   <span>每个项目最多几人协作</span>
@@ -1248,7 +1262,7 @@ value={studio?.collaboration ?? 1}
                     <option value="2">2 人 · 结对开发</option>
                     <option value="3">3 人 · 集中攻坚</option>
                   </select>
-                  <small>先分头做，空闲 agent 帮大项目。2 人合计 1.7×、3 人 2.2×；每人仍占 2 精力。</small>
+                  <small>先分头做，空闲 agent 帮大项目。2 人合计 1.7×、3 人 2.2×；每人占 1–2 精力。</small>
                 </label>
                 {studio?.accountPolicy === "preferred" && (
                   <label className={s.policySelect} htmlFor="studio-account">
@@ -1265,7 +1279,7 @@ value={studio?.collaboration ?? 1}
                   </label>
                 )}
               </div>
-              {studio?.configuration === "adaptive" && (
+              {studio?.configuration !== "fixed" && (
                 <label className={s.autoTurbo} htmlFor="studio-turbo">
                   <input
 id="studio-turbo"
@@ -1375,14 +1389,14 @@ keepAutomatic: true,
                       : config.model === "luna"
                         ? "Luna Medium 关闭 Turbo 可免费慢蹬，简单大项目也能交付。"
                         : "思考加深提升解题能力；High 到 Max 会多花时间。"}{" "}
-                    {studio?.configuration === "adaptive" ? "自动稳妥会逐项选档，预估显示所选项目的实际配置。" : "统一配置应用于所有线程，按实际工作扣额。"}
+                    {studio?.configuration !== "fixed" ? "自动策略逐项选档，预估显示所选项目的实际配置。" : "统一配置应用于所有线程，按实际工作扣额。"}
                   </p>
                   </div>
                 </div>
               </details>
               <p className={s.studioSummary}>
                 当前 {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.tokensPerHour ? `${fmt(model.tokensPerHour)}k token / 时 · 费率 ${Math.round(modelEdition(game, effectiveConfig.model).price * 100)}%` : "免费"}
-                {job ? ` ·《${job.name}》${assessment?.label}` : ""}
+                {job ? ` ·《${job.name}》${assessment?.label} · ${qualityForecast(game, human, effectiveConfig, job)} · ${attentionCost(game, human, effectiveConfig, job)} 精力/人/天` : ""}
               </p>
               <details className={s.experienceNotes} data-testid="experience-notes">
                 <summary>工作室经验 · 自动积累，无需操作</summary>
@@ -1520,7 +1534,7 @@ keepAutomatic: true,
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.6 · 工作室协作</i>
+          RESET / 开蹬！ <i>v0.7 · 品质与省心</i>
         </span>
         <span>
           {game
@@ -1728,7 +1742,7 @@ keepAutomatic: true,
                 <div key={j.id}>
                   <span>{CATEGORIES[j.category].name}</span>
                   <b>{j.name}</b>
-                  <strong>+{j.vp} VP</strong>
+                  <strong>{j.delivery?.grade ?? "合格"} · +{j.delivery?.vp ?? j.vp} VP · +${j.delivery?.cash ?? j.cash}</strong>
                 </div>
               ))
             ) : (

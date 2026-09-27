@@ -47,10 +47,10 @@ test('requested thread count redistributes work and charges attention only when 
   assert.equal(human(g).energy, 4);
   assert.equal(human(g).lanes.filter(l => l.enabled).length, 3);
   g = E.nextDay(E.endDay(g));
-  assert.equal(human(g).energy, 6);
+  assert.equal(human(g).energy, 8); // Two familiar simple projects now need only 1 attention each.
   g = E.advanceMinutes(g, 1);
   assert.equal(human(g).lanes.filter(l => l.enabled).length, 3);
-  assert.equal(human(g).energy, 6);
+  assert.equal(human(g).energy, 8); // Two familiar simple projects now need only 1 attention each.
 });
 
 test('unfunded attention leaves queued work visible and starts it on the next morning', () => {
