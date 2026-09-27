@@ -32,6 +32,21 @@
   background: rgba(128, 128, 128, .24);
 }
 
+/* Keep header badge styles from shifting or hiding the icon. */
+.shareControl > button.shareButton > span {
+  all: unset;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+}
+
+.shareControl > button.shareButton > span > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .shareControl button:focus-visible,
 .shareControl textarea:focus-visible {
   outline: 2px solid #58b9aa;
