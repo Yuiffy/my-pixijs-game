@@ -1,367 +1,228 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
 import {
-  Boat,
-  GameState,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from "react";
+import Image from "next/image";
+import {
+  type Boat,
+  type GameState,
+  type StreamerId,
   PLAYER_COLORS,
   PROJECTS,
-  STREAMERS,
   TARGET,
   CLIP_SPOT,
+  START_MIN,
+  START_MAX,
+  START_TOTAL,
   streamerById,
   successChance,
+  seatPayout,
+  projectTerms,
+  setStartingPosition,
 } from "./engine";
 import styles from "./harbor.module.css";
 
-const PREVIEW: Boat[] = ["sui", "nagisa", "shiori"].map((id, i) => ({
-  streamer: id as Boat["streamer"],
-  position: 4 + i * 2,
-  warmup: 0,
-  seats: [],
-  die: null,
-  movement: 0,
-}));
+const track = (width: number) => ({
+  start: width < 540 ? 78 : 100,
+  finish: width - (width < 540 ? 78 : 115),
+});
 
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  r: number,
-  fill: string,
-  stroke?: string,
-) {
-  ctx.beginPath();
-  ctx.roundRect(x, y, width, height, r);
-  ctx.fillStyle = fill;
-  ctx.fill();
-  if (stroke) {
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  }
-}
-
-function drawBoat(
-  ctx: CanvasRenderingContext2D,
-  boat: Boat,
-  x: number,
-  y: number,
-  size: number,
-  lane: number,
-  selected: boolean,
-  portrait?: HTMLImageElement,
-) {
-  const project = PROJECTS[lane];
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(size, size);
-  // A paper standee, timber deck, wake, and colored player pegs form one physical piece.
-  ctx.fillStyle = "rgba(43,103,105,.12)";
-  ctx.beginPath();
-  ctx.ellipse(1, 35, 77, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-  if (selected) {
-    ctx.strokeStyle = "#e3694e";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 5]);
-    ctx.beginPath();
-    ctx.ellipse(0, 31, 84, 18, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-  ctx.strokeStyle = "#f2fbf6";
-  ctx.lineWidth = 2;
-  [-62, -82, -98].forEach((wx, i) => {
-    ctx.beginPath();
-    ctx.moveTo(wx, 24 + i * 3);
-    ctx.lineTo(wx - 17, 24 + i * 3);
-    ctx.stroke();
-  });
-  ctx.fillStyle = "#f8f0d7";
-  ctx.strokeStyle = "#426466";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-66, 2);
-  ctx.lineTo(76, 2);
-  ctx.lineTo(52, 33);
-  ctx.quadraticCurveTo(-12, 41, -54, 28);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = project.color;
-  ctx.beginPath();
-  ctx.moveTo(-63, 11);
-  ctx.lineTo(68, 11);
-  ctx.lineTo(60, 22);
-  ctx.lineTo(-59, 20);
-  ctx.fill();
-  roundRect(ctx, -45, -10, 83, 14, 4, "#e3c694", "#64807a");
-  // Flag mast.
-  ctx.strokeStyle = "#4e6864";
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(42, 1);
-  ctx.lineTo(42, -67);
-  ctx.stroke();
-  ctx.fillStyle = project.color;
-  ctx.beginPath();
-  ctx.moveTo(42, -68);
-  ctx.lineTo(74, -62);
-  ctx.lineTo(42, -49);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#fff9ec";
-  ctx.font = "bold 12px sans-serif";
-  ctx.fillText(project.icon, 48, -57);
-  // Original repository character artwork, with a pale backing like a board-game standee.
-  ctx.fillStyle = "#fff8e9";
-  ctx.beginPath();
-  ctx.ellipse(-5, -40, 33, 42, -0.05, 0, Math.PI * 2);
-  ctx.fill();
-  if (portrait?.complete && portrait.naturalWidth) {
-    ctx.save();
-    if (portrait.src.endsWith(".jpg")) {
-      ctx.beginPath();
-      ctx.roundRect(-39, -80, 70, 70, 24);
-      ctx.clip();
-    }
-    ctx.drawImage(portrait, -46, -90, 82, 82);
-    ctx.restore();
-  } else {
-    ctx.fillStyle = "#46615d";
-    ctx.font = "bold 24px sans-serif";
-    ctx.fillText(streamerById(boat.streamer).name[0], -16, -30);
-  }
-  for (let i = 0; i < 3; i++) {
-    const seat = boat.seats[i];
-    const sx = -32 + i * 27;
-    ctx.beginPath();
-    ctx.arc(sx, 9, 8.5, 0, Math.PI * 2);
-    ctx.fillStyle = seat ? PLAYER_COLORS[seat.player] : "#faefd7";
-    ctx.fill();
-    ctx.strokeStyle = seat ? "#fff7e6" : "#b49d77";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = seat ? "#fff" : "#af9c79";
-    ctx.textAlign = "center";
-    ctx.font = "bold 10px sans-serif";
-    ctx.fillText(seat ? String(seat.player + 1) : "·", sx, 12.5);
-    if (seat?.insured) {
-      ctx.fillStyle = "#f8d76c";
-      ctx.beginPath();
-      ctx.arc(sx + 5, 2, 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  ctx.textAlign = "left";
-  if (boat.position >= TARGET) {
-    ctx.fillStyle = "#347d65";
-    ctx.beginPath();
-    ctx.arc(60, -34, 14, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 17px sans-serif";
-    ctx.fillText("✓", 53, -28);
-  }
-  ctx.restore();
-}
-
-function drawScene(
+/** Canvas carries water and the route; readable contracts and interactive pieces live in DOM. */
+function drawWater(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
   boats: Boat[],
-  positions: number[],
   selected: number,
-  portraits: Map<string, HTMLImageElement>,
-  elapsed: number,
+  time: number,
   reduced: boolean,
 ) {
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#d8e8df";
-  ctx.fillRect(0, 0, width, height);
-  const mobile = width < 540;
+  const { start, finish } = track(width);
   const laneHeight = height / 3;
-  const start = mobile ? 47 : 83;
-  const finish = width - (mobile ? 66 : 105);
-  // Wooden finish pier, deliberately independent of boat color.
-  ctx.fillStyle = "#e7d3ab";
-  ctx.fillRect(finish + 17, 0, width - finish, height);
-  for (let y = 0; y < height; y += 24) {
-    ctx.strokeStyle = "#c9b990";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(finish + 18, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-    ctx.fillStyle = "#b4a780";
-    ctx.beginPath();
-    ctx.arc(width - 12, y + 10, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  boats.forEach((boat, i) => {
-    const top = i * laneHeight;
+  ctx.clearRect(0, 0, width, height);
+  boats.forEach((boat, index) => {
+    const top = index * laneHeight;
     ctx.fillStyle =
-      i === selected ? "#c5e0d7" : i === 1 ? "#d4e7e2" : "#d3e4d9";
-    ctx.fillRect(0, top, finish + 16, laneHeight);
-    ctx.fillStyle = `${PROJECTS[i].color}12`;
-    ctx.fillRect(0, top, finish + 16, laneHeight);
-    // Calm water ripples; fixed placement, only a small visual drift.
-    ctx.strokeStyle = "rgba(255,255,244,.55)";
-    ctx.lineWidth = 2;
-    for (let n = 0; n < 11; n++) {
-      const drift = reduced ? 0 : Math.sin(elapsed / 2300 + n) * 3;
-      const rx = 28 + ((n * 97 + i * 41) % Math.max(50, finish - 60));
-      const ry = top + 66 + ((n * 31) % 78);
+      index === selected ? "#c1dcd2" : index === 1 ? "#d1e5e0" : "#d2e3d8";
+    ctx.fillRect(0, top, width, laneHeight);
+    ctx.fillStyle = `${PROJECTS[index].color}12`;
+    ctx.fillRect(0, top, width, laneHeight);
+    ctx.fillStyle = "#e9d9b7";
+    ctx.fillRect(finish + 28, top, width - finish, laneHeight);
+    ctx.strokeStyle = "#d3c19d";
+    for (let y = top + 18; y < top + laneHeight; y += 24) {
       ctx.beginPath();
-      ctx.moveTo(rx + drift, ry);
-      ctx.quadraticCurveTo(rx + 8 + drift, ry + 3, rx + 18 + drift, ry);
+      ctx.moveTo(finish + 28, y);
+      ctx.lineTo(width, y);
       ctx.stroke();
     }
-    const trackY = top + laneHeight - 24;
-    ctx.strokeStyle = "#89afa3";
+    ctx.strokeStyle = "#f6fff399";
+    ctx.lineWidth = 2;
+    for (let n = 0; n < 10; n++) {
+      const x = 15 + ((n * 89 + index * 41) % Math.max(50, finish - 20));
+      const y = top + 95 + ((n * 29) % 95);
+      const drift = reduced ? 0 : Math.sin(time / 2400 + n) * 3;
+      ctx.beginPath();
+      ctx.moveTo(x + drift, y);
+      ctx.quadraticCurveTo(x + 9 + drift, y + 3, x + 20 + drift, y);
+      ctx.stroke();
+    }
+    const y = top + laneHeight - 23;
+    ctx.strokeStyle = "#7ba395";
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 6]);
     ctx.beginPath();
-    ctx.moveTo(start, trackY);
-    ctx.lineTo(finish, trackY);
+    ctx.moveTo(start, y);
+    ctx.lineTo(finish, y);
     ctx.stroke();
     ctx.setLineDash([]);
     for (let tick = 0; tick <= TARGET; tick++) {
-      const tx = start + ((finish - start) * tick) / TARGET;
-      if (mobile && ((tick % 3 !== 0 && tick !== CLIP_SPOT) || tick === 12)) continue;
+      if (width < 540 && tick % 3 && tick !== CLIP_SPOT) continue;
+      if (width < 540 && tick === 12) continue;
+      const x = start + ((finish - start) * tick) / TARGET;
+      ctx.fillStyle = tick <= boat.position ? "#5c8a7b" : "#fff9ea";
       ctx.beginPath();
-      ctx.arc(tx, trackY, tick === TARGET ? 5 : 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = tick <= boat.position ? "#678e80" : "#fbf8e9";
+      ctx.arc(x, y, tick === TARGET ? 4 : 2, 0, Math.PI * 2);
       ctx.fill();
       if (tick % 3 === 0 || tick === CLIP_SPOT) {
-        ctx.fillStyle = tick === CLIP_SPOT ? "#936845" : "#627d72";
-        ctx.font = "10px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(String(tick), tx, trackY + 16);
+        ctx.fillStyle = "#537367";
+        ctx.font = "10px sans-serif";
+        ctx.fillText(String(tick), x, y + 15);
       }
     }
     const clipX = start + ((finish - start) * CLIP_SPOT) / TARGET;
-    ctx.strokeStyle = "#b58455";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = "#b38c5d";
+    ctx.setLineDash([3, 5]);
     ctx.beginPath();
-    ctx.moveTo(clipX, top + 60);
-    ctx.lineTo(clipX, trackY - 7);
+    ctx.moveTo(clipX, top + 71);
+    ctx.lineTo(clipX, y - 8);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = "#a17049";
+    ctx.fillStyle = "#977345";
     ctx.font = "14px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("✂", clipX, top + 55);
-    ctx.textAlign = "left";
-    // The checkered ribbon reads as a finish without requiring a rulebook.
-    for (let square = 0; square < 8; square++) {
-      ctx.fillStyle = square % 2 === 0 ? "#708477" : "#f7f1d8";
-      ctx.fillRect(finish + 11, top + 54 + square * 9, 8, 9);
-      ctx.fillStyle = square % 2 === 1 ? "#708477" : "#f7f1d8";
-      ctx.fillRect(finish + 19, top + 54 + square * 9, 8, 9);
+    ctx.fillText("✂", clipX, top + 66);
+    for (let square = 0; square < 9; square++) {
+      ctx.fillStyle = square % 2 ? "#faf4df" : "#749080";
+      ctx.fillRect(finish + 24, top + 76 + square * 11, 7, 11);
     }
-    const x = start + ((finish - start) * positions[i]) / TARGET;
-    const bob = reduced ? 0 : Math.sin(elapsed / 1100 + i * 2) * 1.7;
-    drawBoat(
-      ctx,
-      boat,
-      x,
-      top + laneHeight - 58 + bob,
-      mobile ? 0.64 : 0.85,
-      i,
-      selected === i,
-      portraits.get(boat.streamer),
-    );
-    if (i < 2) {
-      ctx.strokeStyle = "rgba(71,108,95,.14)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, top + laneHeight);
-      ctx.lineTo(width, top + laneHeight);
-      ctx.stroke();
-    }
+    ctx.strokeStyle = "#59796630";
+    ctx.beginPath();
+    ctx.moveTo(0, top + laneHeight);
+    ctx.lineTo(width, top + laneHeight);
+    ctx.stroke();
   });
 }
+
+type Gesture = {
+  id: number;
+  kind: "character" | "position";
+  index: number;
+  streamer: StreamerId;
+  x: number;
+  y: number;
+  initial: number;
+  value: number;
+  moved: boolean;
+};
 
 export default function HarborBoard({
   state,
   selected,
   onSelect,
   previewRoster,
+  canArrange = false,
+  onArrange,
+  onPosition,
 }: {
   state: GameState | null;
   selected: number;
   onSelect: (index: number) => void;
-  previewRoster: Boat["streamer"][];
+  previewRoster: StreamerId[];
+  canArrange?: boolean;
+  onArrange?: (index: number, streamer: StreamerId) => void;
+  onPosition?: (index: number, position: number) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const previewBoats = PREVIEW.map((b, i) => ({
-    ...b,
-    streamer: previewRoster[i],
-  }));
-  const dataRef = useRef({ state, selected, previewBoats });
-  dataRef.current = { state, selected, previewBoats };
+  const boardRef = useRef<HTMLDivElement>(null);
+  const gesture = useRef<Gesture | null>(null);
+  const suppressClick = useRef(false);
+  const [picked, setPicked] = useState<StreamerId | null>(null);
+  const [drag, setDrag] = useState<{
+    streamer: StreamerId;
+    x: number;
+    y: number;
+    target: number | null;
+  } | null>(null);
+  const [draftPosition, setDraftPosition] = useState<{
+    index: number;
+    value: number;
+  } | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const previewBoats: Boat[] = previewRoster
+    .slice(0, 3)
+    .map((streamer) => ({
+      streamer,
+      position: 4,
+      warmup: 1,
+      seats: [],
+      die: null,
+      movement: 0,
+    }));
+  const displayState =
+    state && draftPosition
+      ? setStartingPosition(state, draftPosition.index, draftPosition.value)
+      : state;
+  const boats = displayState?.boats || previewBoats;
+  const settled = state?.phase === "settlement" || state?.phase === "finished";
+  const resting = (state?.roster || previewRoster).find(
+    (id) => !boats.some((boat) => boat.streamer === id),
+  );
+  const data = useRef({ boats, selected });
+  data.current = { boats, selected };
+
+  useEffect(() => {
+    setPicked(null);
+    setDrag(null);
+    setDraftPosition(null);
+    gesture.current = null;
+  }, [state?.round, state?.phase, canArrange]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return undefined;
-    const portraits = new Map<string, HTMLImageElement>();
-    STREAMERS.forEach((s) => {
-      const img = new Image();
-      img.src = s.portrait;
-      portraits.set(s.id, img);
-    });
-    let width = 800;
-    let height = 480;
+    let width = 900;
+    let height = 720;
     let frame = 0;
-    let previous = 0;
-    let positions = (
-      dataRef.current.state?.boats || dataRef.current.previewBoats
-    ).map((b) => b.position);
-    let previousRound = dataRef.current.state?.round;
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const resize = () => {
       const box = canvas.getBoundingClientRect();
       width = box.width;
       height = box.height;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      boardRef.current?.setAttribute("data-compact", String(width < 540));
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     };
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
     resize();
-    const render = (now: number) => {
-      const dt = Math.min(100, now - previous || 16);
-      previous = now;
-      const { current } = dataRef;
-      const boats = current.state?.boats || current.previewBoats;
-      if (current.state?.round !== previousRound) {
-        positions = boats.map((b) => b.position);
-        previousRound = current.state?.round;
-      }
-      positions = positions.map((p, i) => (reduced
-          ? boats[i].position
-          : p + (boats[i].position - p) * (1 - Math.exp(-dt / 190))),);
-      drawScene(
+    const render = (time: number) => {
+      drawWater(
         ctx,
         width,
         height,
-        boats,
-        positions,
-        current.selected,
-        portraits,
-        now,
-        reduced,
+        data.current.boats,
+        data.current.selected,
+        time,
+        reduced.matches,
       );
       frame = requestAnimationFrame(render);
     };
@@ -372,59 +233,443 @@ export default function HarborBoard({
     };
   }, []);
 
-  const boats = state?.boats || previewBoats;
-  return (
-    <div className={styles.board}>
-      <canvas
-        ref={canvasRef}
-        data-game-canvas="hype-harbor"
-        aria-label="三艘主播企划船，向右航行，到 15 格达标"
-      />
-      {boats.map((boat, index) => {
-        const streamer = streamerById(boat.streamer);
-        const chance = state
-          ? Math.round(successChance(state, index) * 100)
-          : null;
-        return (
-          <button
-            key={PROJECTS[index].name}
-            className={`${styles.lane} ${selected === index ? styles.selectedLane : ""}`}
-            style={
-              {
-                top: `${(index * 100) / 3}%`,
-                "--lane-color": PROJECTS[index].color,
-              } as CSSProperties
-            }
-            onClick={() => onSelect(index)}
-            aria-pressed={selected === index}
-            aria-label={`选择${streamer.name}的船，${boat.position}/15 格，${boat.seats.length}/3 席${chance !== null ? `，达标概率 ${chance}%` : ""}`}
-            data-testid={`boat-${index}`}
-          >
-            <span className={styles.laneName}>
-              <span>{PROJECTS[index].icon}</span>{" "}
-              <strong>{streamer.name}</strong>
-              <small>{PROJECTS[index].name}</small>
-            </span>
-            <span className={styles.laneProgress}>
-              {state?.phase === "reveal" && boat.die !== null && (
-                <b className={styles.die} data-testid={`die-${index}`}>
-                  {["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][boat.die]}
-                </b>
-              )}
-              <strong>
-                {boat.position}
-                <i>/ 15</i>
-              </strong>
-              <small>
-                {boat.position >= TARGET ? "已达标 ✓" : PROJECTS[index].goal}
-              </small>
-            </span>
-            <span className={styles.laneSeats}>
-              {boat.seats.length}/3 席{boat.seats.some((seat) => seat.source === "clip") ? " · 有切片佬蹭船" : ""}
-            </span>
-          </button>
+  const cancel = () => {
+    gesture.current = null;
+    setDrag(null);
+    setDraftPosition(null);
+    setPicked(null);
+    suppressClick.current = true;
+  };
+  const arrange = (target: number, streamer: StreamerId) => {
+    if (!canArrange || !state) return;
+    if (target < 3) onArrange?.(target, streamer);
+    else {
+      const from = state.boats.findIndex((boat) => boat.streamer === streamer);
+      if (from >= 0 && resting) onArrange?.(from, resting);
+    }
+    setPicked(null);
+    setFeedback(
+      target < 3
+        ? `${streamerById(streamer).name}接下${PROJECTS[target].name}，活动的酬金与预热不变。`
+        : `${streamerById(streamer).name}本场去板凳区，暂不接活动。`,
+    );
+  };
+  const select = (index: number, streamer: StreamerId) => {
+    if (suppressClick.current) return;
+    if (!canArrange) {
+      if (index < 3) onSelect(index);
+      return;
+    }
+    if (picked) arrange(index, picked);
+    else setPicked(streamer);
+  };
+  const targetAt = (event: PointerEvent<HTMLButtonElement>) => {
+    const node = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest("[data-roster-target]");
+    return node ? Number(node.getAttribute("data-roster-target")) : null;
+  };
+  const commitPosition = (index: number, value: number) => {
+    if (!canArrange || !state) return;
+    const changed = setStartingPosition(state, index, value);
+    if (changed === state) return;
+    onPosition?.(index, value);
+    setFeedback(
+      `预热 ${changed.boats.map((b) => b.position).join(" / ")} · 其他活动自动平衡，总计 ${START_TOTAL} 格。`,
+    );
+  };
+  const handlers = (
+    kind: Gesture["kind"],
+    index: number,
+    streamer: StreamerId,
+  ) => ({
+    onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
+      suppressClick.current = false;
+      if (!canArrange || !state || !event.isPrimary || event.button !== 0) return;
+      event.preventDefault();
+      event.currentTarget.focus({ preventScroll: true });
+      const initial = state.boats[index]?.position || 4;
+      gesture.current = {
+        id: event.pointerId,
+        kind,
+        index,
+        streamer,
+        x: event.clientX,
+        y: event.clientY,
+        initial,
+        value: initial,
+        moved: false,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    onPointerMove: (event: PointerEvent<HTMLButtonElement>) => {
+      const { current } = gesture;
+      if (!current || current.id !== event.pointerId) return;
+      if (Math.hypot(event.clientX - current.x, event.clientY - current.y) > 6) current.moved = true;
+      if (!current.moved) return;
+      event.preventDefault();
+      if (kind === "character") setDrag({
+          streamer,
+          x: event.clientX,
+          y: event.clientY,
+          target: targetAt(event),
+        });
+      else {
+        const { start, finish } = track(boardRef.current!.clientWidth);
+        current.value = Math.max(
+          START_MIN,
+          Math.min(
+            START_MAX,
+            Math.round(
+              current.initial +
+                ((event.clientX - current.x) * TARGET) / (finish - start),
+            ),
+          ),
         );
-      })}
+        setDraftPosition({ index, value: current.value });
+      }
+    },
+    onPointerUp: (event: PointerEvent<HTMLButtonElement>) => {
+      const { current } = gesture;
+      if (!current || current.id !== event.pointerId) return;
+      gesture.current = null;
+      setDrag(null);
+      setDraftPosition(null);
+      if (kind === "position") {
+        if (current.moved) commitPosition(index, current.value);
+        else if (picked) arrange(index, picked);
+        else onSelect(index);
+      } else if (current.moved) {
+        const target = targetAt(event);
+        if (target !== null) arrange(target, streamer);
+        else setPicked(null);
+      } else select(index, streamer);
+      suppressClick.current = true;
+    },
+    onPointerCancel: cancel,
+    onLostPointerCapture: (event: PointerEvent<HTMLButtonElement>) => {
+      if (gesture.current?.id === event.pointerId) cancel();
+    },
+  });
+
+  return (
+    <div
+      className={styles.harborTable}
+      role="presentation"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          cancel();
+          setFeedback("已取消拖动");
+        }
+        if (event.key === "Enter" || event.key === " ") suppressClick.current = false;
+      }}
+    >
+      {state?.phase === "preparing" && (
+        <div className={styles.arrangeGuide}>
+          <span>
+            <i className={styles.swapCue}>↕</i>
+            <b>抓角色</b> 换活动
+          </span>
+          <span>
+            <i className={styles.slideCue}>↔</i>
+            <b>抓船身</b> 调预热
+          </span>
+          <strong>
+            {boats.map((boat) => boat.position).join(" / ")}{" "}
+            <small>总计 12</small>
+          </strong>
+        </div>
+      )}
+      {state?.phase === "preparing" && (
+        <div className={styles.arrangeStatus} role="status">
+          {!canArrange
+            ? "等主理人排活动"
+            : picked
+              ? `已选${streamerById(picked).name}：点活动船或板凳区交换 · Esc 取消`
+              : draftPosition
+                ? "松手确认 · 其他船已自动让出或接收预热"
+                : feedback ||
+                  "左右拖船，另外两艘自动平衡；不想拖，也能用右侧 − / +。"}
+        </div>
+      )}
+      <div
+        ref={boardRef}
+        className={styles.activityBoard}
+        data-testid="activity-board"
+      >
+        <canvas
+          ref={canvasRef}
+          data-game-canvas="hype-harbor"
+          aria-label="三场主播活动：歌回、见面会、周年场，向右推进到 15 达标"
+        />
+        {boats.map((boat, index) => {
+          const project = projectTerms(state, index);
+          const streamer = streamerById(boat.streamer);
+          const moved = state && boat.position !== state.boats[index].position;
+          const chance = displayState
+            ? Math.round(successChance(displayState, index) * 100)
+            : null;
+          return (
+            <div
+              key={project.name}
+              className={styles.activityLane}
+              data-roster-target={canArrange ? index : undefined}
+              data-drop={drag?.target === index}
+              data-selected={selected === index}
+              style={
+                {
+                  top: `${(index * 100) / 3}%`,
+                  "--lane-color": project.color,
+                } as CSSProperties
+              }
+            >
+              <button
+                className={styles.activityHeading}
+                data-testid={`boat-${index}`}
+                onClick={(event) => {
+                  if (event.detail === 0) suppressClick.current = false;
+                  select(index, boat.streamer);
+                }}
+                {...handlers("character", index, boat.streamer)}
+                aria-pressed={selected === index}
+                aria-label={`选择${project.name}，主播${streamer.name}，${project.seatCosts.length}个协办席`}
+              >
+                <span>{project.icon}</span>
+                <b>{project.name}</b>
+                <small>{project.seatCosts.length} 席</small>
+                <em>{project.brief}</em>
+              </button>
+              <span className={styles.activityProgress}>
+                <b>
+                  {boat.position}
+                  <small> / 15</small>
+                </b>
+                <small>
+                  {boat.position >= TARGET
+                    ? "活动达标 ✓"
+                    : state?.phase === "preparing"
+                      ? "预热起点"
+                      : chance === null
+                        ? "活动进度"
+                        : `达标 ${chance}%`}
+                </small>
+                {state?.phase === "reveal" && boat.die !== null && (
+                  <i data-testid={`die-${index}`}>
+                    {["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][boat.die]}
+                  </i>
+                )}
+              </span>
+              <div
+                className={styles.activityShip}
+                data-preview={Boolean(draftPosition)}
+                data-balanced={Boolean(moved)}
+                style={{
+                  left: `calc(var(--track-start) + (100% - var(--track-start) - var(--track-end)) * ${boat.position / TARGET})`,
+                }}
+              >
+                <button
+                  className={styles.characterGrip}
+                  data-testid={`character-${index}`}
+                  data-draggable={canArrange}
+                  data-picked={picked === boat.streamer}
+                  aria-label={`${streamer.name}，${canArrange ? "拖动换活动，也可点击后选目标" : project.name}`}
+                  {...handlers("character", index, boat.streamer)}
+                  onClick={(event) => {
+                    if (event.detail === 0) suppressClick.current = false;
+                    select(index, boat.streamer);
+                  }}
+                >
+                  <Image
+                    key={boat.streamer}
+                    src={streamer.portrait}
+                    width={58}
+                    height={58}
+                    alt=""
+                    draggable={false}
+                  />
+                  <span>
+                    <b>{streamer.name}</b>
+                    <small>{canArrange ? "⠿ 拖我换活动" : "本场主播"}</small>
+                  </span>
+                </button>
+                <button
+                  className={styles.contractHull}
+                  data-testid={`warmup-${index}`}
+                  data-draggable={canArrange}
+                  role={canArrange ? "slider" : undefined}
+                  aria-label={
+                    canArrange
+                      ? `${project.name}预热位置`
+                      : `${project.name}协办酬金${project.prizePool}币，筹备费${project.seatCosts.join("、")}`
+                  }
+                  aria-valuemin={canArrange ? START_MIN : undefined}
+                  aria-valuemax={canArrange ? START_MAX : undefined}
+                  aria-valuenow={canArrange ? boat.position : undefined}
+                  aria-valuetext={
+                    canArrange
+                      ? `起点${boat.position}格，总预热12格，其他船自动平衡`
+                      : undefined
+                  }
+                  aria-orientation={canArrange ? "horizontal" : undefined}
+                  {...handlers("position", index, boat.streamer)}
+                  onClick={() => {
+                    if (suppressClick.current) return;
+                    if (canArrange && picked) arrange(index, picked);
+                    else onSelect(index);
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      !canArrange ||
+                      !["ArrowLeft", "ArrowRight", "Home", "End"].includes(
+                        event.key,
+                      )
+                    ) return;
+                    event.preventDefault();
+                    const value =
+                      event.key === "Home"
+                        ? START_MIN
+                        : event.key === "End"
+                          ? START_MAX
+                          : boat.position +
+                            (event.key === "ArrowRight" ? 1 : -1);
+                    commitPosition(index, value);
+                  }}
+                >
+                  <span className={styles.contractValue}>
+                    {state?.legacyEconomy ? "旧约每席" : "协办酬金"}
+                    <strong>
+                      {state?.legacyEconomy ? 12 : project.prizePool}
+                    </strong>
+                    <small>币</small>
+                  </span>
+                  <span className={styles.deckCaption}>协办席 · 筹备费</span>
+                  <span
+                    className={styles.deckTickets}
+                    style={{
+                      gridTemplateColumns: `repeat(${project.seatCosts.length}, 1fr)`,
+                    }}
+                  >
+                    {project.seatCosts.map((cost, slot) => {
+                      const seat = boat.seats[slot];
+                      return (
+                        <span
+                          key={slot}
+                          data-occupied={Boolean(seat)}
+                          title={
+                            seat && state
+                              ? `${state.players[seat.player].name}${seat.insured ? " · 已保" : ""}`
+                              : `第${slot + 1}席，筹备费${cost}币`
+                          }
+                        >
+                          <b
+                            style={
+                              seat
+                                ? {
+                                    background: PLAYER_COLORS[seat.player],
+                                    color: "#fff",
+                                  }
+                                : {}
+                            }
+                          >
+                            {seat ? `P${seat.player + 1}` : cost}
+                          </b>
+                          <small>
+                            {seat
+                              ? seat.source === "clip"
+                                ? "切片"
+                                : `${seat.cost}币${seat.insured ? "•保" : ""}`
+                              : "币"}
+                          </small>
+                        </span>
+                      );
+                    })}
+                  </span>
+                  <span className={styles.hullHandle}>
+                    {canArrange ? (
+                      <>
+                        <i>↔</i> 拖船调预热 {boat.position}
+                      </>
+                    ) : settled ? (
+                      boat.position < TARGET ? (
+                        "未达标 · 协办酬金 0"
+                      ) : boat.seats.length && state ? (
+                        `已结算 ${seatPayout(state, index)} 币 / 席`
+                      ) : (
+                        "活动达标 · 无协办席"
+                      )
+                    ) : boat.seats.length && state ? (
+                      `达标暂分 ${seatPayout(state, index)} 币 / 席`
+                    ) : (
+                      "达标后按协办席平分"
+                    )}
+                  </span>
+                </button>
+                {moved && (
+                  <span className={styles.balanceBubble}>
+                    {boat.position > state!.boats[index].position ? "+" : ""}
+                    {boat.position - state!.boats[index].position} 预热
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {resting && (
+        <button
+          className={styles.benchDock}
+          disabled={!canArrange}
+          data-testid="resting-dock"
+          data-roster-target={canArrange ? 3 : undefined}
+          data-drop={drag?.target === 3}
+          data-picked={picked === resting}
+          aria-pressed={picked === resting}
+          {...handlers("character", 3, resting)}
+          onClick={(event) => {
+            if (event.detail === 0) suppressClick.current = false;
+            select(3, resting);
+          }}
+        >
+          <span className={styles.benchPortrait}>
+            <Image
+              src={streamerById(resting).portrait}
+              width={55}
+              height={55}
+              alt=""
+              draggable={false}
+            />
+            <i>z Z</i>
+          </span>
+          <span>
+            <b>☕ 板凳区 · {streamerById(resting).name}摆了</b>
+            <small>本场没活动 · 不推进、不分酬金 · 份额价格不变</small>
+          </span>
+          {canArrange && (
+            <strong>
+              ↕<small>拖上船</small>
+            </strong>
+          )}
+        </button>
+      )}
+      {drag && (
+        <div
+          className={styles.dragCharacter}
+          style={{ left: drag.x, top: drag.y }}
+          aria-hidden="true"
+        >
+          <Image
+            src={streamerById(drag.streamer).portrait}
+            alt=""
+            width={46}
+            height={46}
+            draggable={false}
+          />
+          {streamerById(drag.streamer).name}
+          <small>
+            {drag.target === null ? "移到活动船或板凳区" : "松手换位"}
+          </small>
+        </div>
+      )}
     </div>
   );
 }

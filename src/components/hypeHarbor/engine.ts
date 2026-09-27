@@ -1,6 +1,8 @@
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 4;
+export const START_TOTAL = 12;
+export const START_MIN = 2;
+export const START_MAX = 6;
 export const TARGET = 15;
-export const SEAT_PAYOUT = 12;
 export const CLIP_SPOT = 13;
 export const CLIP_COST = 2;
 export const CLIP_PAYOUT = 8;
@@ -10,6 +12,10 @@ export const RECOGNITION_SPACES = [
   { threshold: 2, label: "至少 2 位主播未达标", cost: 2, payout: 6 },
   { threshold: 3, label: "3 位主播都未达标", cost: 1, payout: 8 },
 ] as const;
+export const recognitionPayout = (index: number, cost: number) => {
+  const space = RECOGNITION_SPACES[index];
+  return space ? space.payout + cost - space.cost : 0;
+};
 export const PLAYER_COLORS = ["#e5694d", "#397c9c", "#9680b3", "#c09a3f"];
 
 export const STREAMERS = [
@@ -95,6 +101,9 @@ export const ROSTERS: { name: string; members: StreamerId[] }[] = [
 export const PROJECTS = [
   {
     name: "满座歌回",
+    brief: "一起搭舞台，办一场满座演出",
+    prizePool: 18,
+    seatCosts: [2, 3, 4],
     goal: "座无虚席",
     color: "#e78365",
     light: "#f6dfcc",
@@ -102,6 +111,9 @@ export const PROJECTS = [
   },
   {
     name: "新友见面会",
+    brief: "一起做宣发，让新朋友认识她",
+    prizePool: 24,
+    seatCosts: [3, 4, 5],
     goal: "涨粉达标",
     color: "#649fac",
     light: "#d7e9e8",
@@ -109,6 +121,9 @@ export const PROJECTS = [
   },
   {
     name: "周年特别场",
+    brief: "一起筹盛典，四个协办席开工",
+    prizePool: 36,
+    seatCosts: [4, 5, 6, 7],
     goal: "企划圆满",
     color: "#9b8bb9",
     light: "#e7deee",
@@ -215,6 +230,10 @@ export interface RoundResult {
 }
 export interface GameState {
   version: number;
+  /** Finish an existing v1/v2 voyage on its promised economy; cleared next voyage. */
+  legacyEconomy?: boolean;
+  /** Keep a v3 voyage's 30-coin, three-seat anniversary contract until it settles. */
+  legacyThreeSeats?: boolean;
   seed: number;
   round: number;
   rounds: number;
@@ -260,8 +279,8 @@ const random = (state: GameState) => {
 };
 const emptyBoats = (roster: StreamerId[]): Boat[] => roster.map((streamer) => ({
     streamer,
-    position: 3,
-    warmup: 0,
+    position: 4,
+    warmup: 1,
     seats: [],
     die: null,
     movement: 0,
@@ -306,7 +325,7 @@ export function createGame(
     clipEntrants: [],
     prices: shareRecord(6),
     event: 0,
-    log: ["开张！每人 30 枚应援币，活动结束时总资产最多的人获胜。"],
+    log: ["应援社团开工！每人 30 币经费。派人协办，活动达标分酬金；最后比社团资产。"],
     roundCash: players.map((p) => p.cash),
     roundWealth: players.map((p) => p.cash),
     results: [],
@@ -337,22 +356,32 @@ export function setWarmup(
   boatIndex: number,
   amount: number,
 ): GameState {
+  return setStartingPosition(state, boatIndex, 3 + amount);
+}
+
+/** Redistribute a fixed preparation budget, using public setup randomness, never the dice seed. */
+export function setStartingPosition(state: GameState, boatIndex: number, position: number): GameState {
   if (
     state.phase !== "preparing" ||
     !state.boats[boatIndex] ||
-    !Number.isInteger(amount) ||
-    amount < 0 ||
-    amount > 3
-  ) return state;
-  if (
-    state.boats.reduce(
-      (sum, b, i) => sum + (i === boatIndex ? amount : b.warmup),
-      0,
-    ) > 3
+    !Number.isInteger(position) ||
+    position < START_MIN ||
+    position > START_MAX ||
+    state.boats[boatIndex].position === position
   ) return state;
   const next = clone(state);
-  next.boats[boatIndex].warmup = amount;
-  next.boats[boatIndex].position = 3 + amount;
+  const direction = position > next.boats[boatIndex].position ? 1 : -1;
+  let setupRandom = ((state.revision + 1) * 2654435761 + state.round * 97 + boatIndex * 17) % 4294967296;
+  while (next.boats[boatIndex].position !== position) {
+    const others = next.boats.flatMap((b, i) => (i !== boatIndex && (direction > 0 ? b.position > START_MIN : b.position < START_MAX) ? [i] : []));
+    if (!others.length) return state;
+    setupRandom = (setupRandom * 1664525 + 1013904223) % 4294967296;
+    const other = others[Math.floor((setupRandom / 4294967296) * others.length)];
+    next.boats[other].position -= direction;
+    next.boats[boatIndex].position += direction;
+  }
+  next.boats.forEach((b) => { b.warmup = b.position - 3; });
+  addLog(next, `预热重新排布：${next.boats.map((b, i) => `${PROJECTS[i].name} ${b.position}`).join(" · ")}，总共 ${START_TOTAL} 格。`);
   next.revision++;
   return next;
 }
@@ -448,7 +477,7 @@ export function clipForecast(state: GameState) {
   const finalRolls = Math.max(0, (afterRoll ? 3 : 4) - state.beat);
   const secondRolls = (afterRoll ? 2 : 3) - state.beat;
   const settled = ["settlement", "finished"].includes(state.phase);
-  const boardingChances = state.boats.map((b, i) => (!settled && secondRolls >= 0 && b.seats.length < 3 && !b.seats.some((seat) => seat.player === state.turn)
+  const boardingChances = state.boats.map((b, i) => (!settled && secondRolls >= 0 && b.seats.length < seatCapacity(state, i) && (!state.legacyEconomy || !b.seats.some((seat) => seat.player === state.turn))
       ? positionChance(state, i, CLIP_SPOT, secondRolls) : 0));
   const finalChances = state.boats.map((_, i) => positionChance(state, i, CLIP_SPOT, finalRolls));
   return {
@@ -459,8 +488,8 @@ export function clipForecast(state: GameState) {
 }
 
 export function clipBoardingOptions(state: GameState, player = state.turn): number[] {
-  return state.boats.flatMap((b, i) => (b.position === CLIP_SPOT && b.seats.length < 3 &&
-    !b.seats.some((seat) => seat.player === player) ? [i] : []));
+  return state.boats.flatMap((b, i) => (b.position === CLIP_SPOT && b.seats.length < seatCapacity(state, i) &&
+    (!state.legacyEconomy || !b.seats.some((seat) => seat.player === player)) ? [i] : []));
 }
 
 function nextClipDecision(state: GameState) {
@@ -490,7 +519,7 @@ export function resolveClip(state: GameState, boatIndex: number | null): GameSta
     const boat = next.boats[boatIndex];
     boat.seats.push({ player: slot.player, cost: 0, insured: false, source: "clip" });
     next.clippers[index] = null;
-    addLog(next, `${name}凭名场面切片蹭上${streamerById(boat.streamer).name}的空席！不再付船票，达标收 12 币。`);
+    addLog(next, `${name}凭名场面切片加入${streamerById(boat.streamer).name}的协办团队！${state.legacyEconomy ? "达标收 12 币。" : `内容贡献抵筹备费，平分 ${projectTerms(state, boatIndex).prizePool} 币协办酬金。`}`);
   } else addLog(next, `${name}放弃免费上船，继续蹲最后一次的爆梗切片。`);
   nextClipDecision(next);
   next.revision++;
@@ -498,10 +527,40 @@ export function resolveClip(state: GameState, boatIndex: number | null): GameSta
 }
 
 export function chooseAiClip(state: GameState): number | null {
-  const options = clipBoardingOptions(state).map((boat) => ({ boat, value: SEAT_PAYOUT * successChance(state, boat) }));
+  const options = clipBoardingOptions(state).map((boat) => ({ boat, value: boardingGain(state, boat) * successChance(state, boat) }));
   const best = options.sort((a, b) => b.value - a.value)[0];
   const holding = clipForecast(state).expectedPayout / Math.max(1, state.clippers.filter(Boolean).length);
   return best && best.value >= holding ? best.boat : null;
+}
+
+export function projectTerms(state: GameState | null, boat: number) {
+  if (state?.legacyEconomy) {
+    return { ...PROJECTS[boat], seatCosts: [0, 1, 2].map((slot) => 4 + (state.beat - 1) * 2 + slot) };
+  }
+  const project = PROJECTS[boat];
+  if (boat === 2 && state && (state.version < 4 || state.legacyEconomy || state.legacyThreeSeats)) {
+    return { ...project, prizePool: 30, seatCosts: [4, 6, 8] };
+  }
+  return project;
+}
+export const seatCapacity = (state: GameState | null, boat: number) => projectTerms(state, boat).seatCosts.length;
+
+/** Every contract is divisible by each of its supported occupancies, without rounding. */
+export function seatPayout(state: GameState, boat: number, count = state.boats[boat].seats.length): number {
+  if (!count) return 0;
+  return state.legacyEconomy ? 12 : projectTerms(state, boat).prizePool / count;
+}
+
+/** Extra income from one more seat, including dilution of this player's existing seats. */
+export function boardingGain(state: GameState, boat: number, count = state.boats[boat].seats.length): number {
+  const owned = state.boats[boat].seats.filter((s) => s.player === state.turn).length;
+  return (owned + 1) * seatPayout(state, boat, count + 1) - owned * seatPayout(state, boat, count);
+}
+
+/** One premium covers one paid seat; automatically protect the largest exposed stake. */
+export function insurableSeat(boat: Boat, player: number): Seat | undefined {
+  return boat.seats.filter((s) => s.player === player && !s.insured && s.cost > 0)
+    .sort((a, b) => b.cost - a.cost)[0];
 }
 
 export function actionCost(state: GameState, action: Action): number {
@@ -515,7 +574,7 @@ export function actionCost(state: GameState, action: Action): number {
   switch (action.kind) {
     case "support":
       return (
-        4 + (state.beat - 1) * 2 + boat.seats.length + (action.insured ? 2 : 0)
+        (state.legacyEconomy ? 4 + (state.beat - 1) * 2 + boat.seats.length : projectTerms(state, action.boat).seatCosts[boat.seats.length] || 0) + (action.insured ? 2 : 0)
       );
     case "share":
       return state.prices[boat.streamer];
@@ -535,8 +594,8 @@ export function actionProblem(state: GameState, action: Action): string | null {
   const player = state.players[state.turn];
   if (action.kind === "recognition") {
     const index = action.recognition ?? -1;
-    if (!Number.isInteger(index) || !RECOGNITION_SPACES[index]) return "先选一种认知席";
-    if (state.recognition?.[index]) return "这个认知席已有人蹲守";
+    if (!Number.isInteger(index) || !RECOGNITION_SPACES[index]) return "先选一种未达标押注";
+    if (state.recognition?.[index]) return "这个押注席已有人了";
     if (recognitionChance(state, index) < 1e-10) return "已不可能有这么多主播未达标";
     if (player.cash < actionCost(state, action)) return "应援币不足，可以接个小单";
     return null;
@@ -554,8 +613,8 @@ export function actionProblem(state: GameState, action: Action): string | null {
   if (boat.position >= TARGET) return "已经达标，不能再入场";
   if (action.kind === "smear" && boat.position <= 0) return "已经在起点，不能再后退";
   if (action.kind === "support") {
-    if (boat.seats.some((s) => s.player === player.id)) return "你已在这艘船上";
-    if (boat.seats.length >= 3) return "三个应援席已满";
+    if (state.legacyEconomy && boat.seats.some((s) => s.player === player.id)) return "旧档本场每人限一席";
+    if (boat.seats.length >= seatCapacity(state, action.boat)) return `${seatCapacity(state, action.boat)} 个协办席已满`;
   }
   if (action.kind === "share") {
     if (player.boughtThisRound) return "每场活动只能买一股";
@@ -564,7 +623,7 @@ export function actionProblem(state: GameState, action: Action): string | null {
   if (
     action.kind === "insure" &&
     !boat.seats.some((s) => s.player === player.id && !s.insured && s.cost > 0)
-  ) return "先拥有一个未投保应援席";
+  ) return "先拥有一个未投保协办席";
   if (player.cash < actionCost(state, action)) return "应援币不足，可以接个小单";
   return null;
 }
@@ -582,7 +641,7 @@ export function takeAction(state: GameState, action: Action): GameState {
       const index = action.recognition!;
       const space = RECOGNITION_SPACES[index];
       next.recognition[index] = { player: player.id, cost };
-      addLog(next, `${player.name}花 ${cost} 币当认知民：押${space.label}，猜中收 ${space.payout} 币。`);
+      addLog(next, `${player.name}花 ${cost} 币当小众粉：押${space.label}，猜中收 ${recognitionPayout(index, cost)} 币。`);
       break;
     }
     case "support":
@@ -593,7 +652,7 @@ export function takeAction(state: GameState, action: Action): GameState {
       });
       addLog(
         next,
-        `${player.name}花 ${cost} 币上了${name}的船${action.insured ? "，附带保本险" : ""}。达标收 12 币。`,
+        `${player.name}垫付 ${cost} 币，派人协办${name}的${PROJECTS[action.boat].name}，占第 ${boat.seats.length} 席${action.insured ? "，附带保本险" : ""}。${next.legacyEconomy ? "达标收 12 币。" : `主办方酬金 ${projectTerms(next, action.boat).prizePool} 币，暂由 ${boat.seats.length} 席平分，每席 ${seatPayout(next, action.boat)} 币。`}`,
       );
       break;
     case "clip": {
@@ -620,9 +679,9 @@ export function takeAction(state: GameState, action: Action): GameState {
       break;
     }
     case "insure": {
-      const seat = boat.seats.find((s) => s.player === player.id);
+      const seat = insurableSeat(boat, player.id);
       if (seat) seat.insured = true;
-      addLog(next, `${player.name}花 2 币给${name}的应援席加了保本险。`);
+      addLog(next, `${player.name}花 2 币给${name}的第 ${boat.seats.indexOf(seat!) + 1} 席加保，未达标退 ${seat!.cost} 币本金。`);
       break;
     }
     case "work":
@@ -670,16 +729,16 @@ function settle(state: GameState) {
     state.players[player].cash += amount;
     payments.push({ player, label, amount });
   };
-  const boats = state.boats.map((boat) => {
+  const boats = state.boats.map((boat, index) => {
     const success = boat.position >= TARGET;
     const { name } = streamerById(boat.streamer);
     const priceBefore = state.prices[boat.streamer];
-    boat.seats.forEach((seat) => {
-      if (success) pay(seat.player, `${name} · 应援回报`, SEAT_PAYOUT);
+    boat.seats.forEach((seat, seatIndex) => {
+      if (success) pay(seat.player, `${name} · 第 ${seatIndex + 1} 席${state.legacyEconomy ? "协办回报" : `酬金（${projectTerms(state, index).prizePool} ÷ ${boat.seats.length}）`}`, seatPayout(state, index));
       else if (seat.insured) pay(seat.player, `${name} · 保险退还本金`, seat.cost);
       else payments.push({
           player: seat.player,
-          label: `${name} · 应援未达标`,
+          label: `${name} · 协办活动未达标`,
           amount: 0,
         });
     });
@@ -696,7 +755,7 @@ function settle(state: GameState) {
   state.recognition.forEach((slot, i) => {
     if (!slot) return;
     const space = RECOGNITION_SPACES[i];
-    pay(slot.player, `认知民 · ${space.label}${failed >= space.threshold ? "，猜中了" : "，未猜中"}`, failed >= space.threshold ? space.payout : 0);
+    pay(slot.player, `小众粉 · ${space.label}${failed >= space.threshold ? "，猜中了" : "，未猜中"}`, failed >= space.threshold ? recognitionPayout(i, slot.cost) : 0);
   });
   const clippers = state.clippers.filter((slot) => slot !== null);
   const featured = state.boats.filter((boat) => boat.position === CLIP_SPOT);
@@ -717,7 +776,7 @@ function settle(state: GameState) {
   state.phase = "settlement";
   addLog(
     state,
-    `第 ${state.round} 场结束，${3 - failed} 艘达标、${failed} 艘未达标。应援、保险、认知与切片均已结算。`,
+    `第 ${state.round} 场结束，${3 - failed} 艘达标、${failed} 艘未达标。协办、保险、小众粉押注与切片均已结算。`,
   );
 }
 
@@ -738,6 +797,8 @@ export function continueGame(state: GameState): GameState {
   } else if (next.round === next.rounds) next.phase = "finished";
   else {
     next.round++;
+    delete next.legacyEconomy;
+    delete next.legacyThreeSeats;
     next.beat = 1;
     next.producer = (next.producer + 1) % next.players.length;
     next.turn = next.producer;
@@ -797,16 +858,18 @@ export function chooseAiAction(state: GameState): {
     let score = WORK_PAYOUT;
     let reason = "补充现金，给后面的机会留余地";
     if (action.kind === "support") {
+      // Early empty seats may attract another investor. Never treat solo income as guaranteed.
+      const expectedOthers = state.beat < 3 && boat.seats.length < seatCapacity(state, action.boat) - 1 ? 1 : 0;
       score =
-        chance * SEAT_PAYOUT -
+        chance * boardingGain(state, action.boat, boat.seats.length + expectedOthers) -
         cost +
         (action.insured ? (1 - chance) * (cost - 2) : 0);
-      reason = `${Math.round(chance * 100)}% 的达标机会，上船${action.insured ? "并保本" : "争取回报"}`;
+      reason = `${Math.round(chance * 100)}% 的达标机会，按席平分协办酬金并预留后来者分成${action.insured ? "，附带保本" : ""}`;
       if (action.insured && player.cash < 14) score += 0.8;
     } else if (action.kind === "recognition") {
       const index = action.recognition!;
       const probability = recognitionChance(state, index);
-      score = probability * RECOGNITION_SPACES[index].payout - cost;
+      score = probability * recognitionPayout(index, cost) - cost;
       reason = `押${RECOGNITION_SPACES[index].label}，猜中机会 ${Math.round(probability * 100)}%`;
     } else if (action.kind === "clip") {
       const forecast = clipForecast(state);
@@ -821,14 +884,13 @@ export function chooseAiAction(state: GameState): {
       const shifted = clone(state);
       shifted.boats[action.boat].position = Math.max(0, Math.min(TARGET, boat.position + (action.kind === "smear" ? -2 : 2)));
       const delta = successChance(shifted, action.boat) - chance;
-      const seat = boat.seats.find((s) => s.player === player.id);
       const exposure =
-        (seat ? SEAT_PAYOUT - (seat.insured ? seat.cost : 0) : 0) +
+        boat.seats.filter((s) => s.player === player.id).reduce((sum, seat) => sum + seatPayout(state, action.boat) - (seat.insured ? seat.cost : 0), 0) +
         4 * player.shares[boat.streamer];
       score = delta * exposure - cost;
       state.recognition?.forEach((slot, i) => {
         if (slot?.player === player.id) {
-          score += (recognitionChance(shifted, i) - recognitionChance(state, i)) * RECOGNITION_SPACES[i].payout;
+          score += (recognitionChance(shifted, i) - recognitionChance(state, i)) * recognitionPayout(i, slot.cost);
         }
       });
       if (state.clippers.some((slot) => slot?.player === player.id)) {
@@ -837,18 +899,17 @@ export function chooseAiAction(state: GameState): {
       }
       if (action.kind === "smear") {
         const rivalExposure = Math.max(0, ...state.players.filter((p) => p.id !== player.id).map((p) => {
-          const rivalSeat = boat.seats.find((s) => s.player === p.id);
-          return (rivalSeat ? SEAT_PAYOUT - (rivalSeat.insured ? rivalSeat.cost : 0) : 0) + 4 * p.shares[boat.streamer];
+          return boat.seats.filter((s) => s.player === p.id).reduce((sum, seat) => sum + seatPayout(state, action.boat) - (seat.insured ? seat.cost : 0), 0) + 4 * p.shares[boat.streamer];
         }));
         score -= delta * rivalExposure * 0.35;
       }
       reason = action.kind === "smear"
-        ? "黑料降低达标机会，兼顾认知回报、切片位置和对手的投资"
-        : "助推提高达标机会，也要考虑自己的认知席与切片位";
+        ? "黑料降低达标机会，兼顾小众粉押注回报、切片位置和对手的投资"
+        : "助推提高达标机会，也要考虑自己的未达标押注与切片位";
     } else if (action.kind === "insure") {
-      const seat = boat.seats.find((s) => s.player === player.id);
+      const seat = insurableSeat(boat, player.id);
       score = (1 - chance) * (seat?.cost || 0) - cost;
-      reason = "形势转弱，先给应援本金加保险";
+      reason = "形势转弱，先给筹备费本金加保险";
     }
     // Small, public-state-only preferences give opponents different personalities.
     if (player.id % 3 === 1 && action.kind === "share") score += 0.35;
@@ -888,6 +949,7 @@ export function gameText(state: GameState | null) {
     coordinates:
       "three horizontal lanes; progress increases left to right from 0 to 15",
     phase: state.phase,
+    legacyEconomy: Boolean(state.legacyEconomy),
     round: state.round,
     rounds: state.rounds,
     beat: state.beat,
@@ -906,11 +968,18 @@ export function gameText(state: GameState | null) {
       name: streamerById(b.streamer).name,
       chance: successChance(state, i),
       target: TARGET,
+      activity: PROJECTS[i].name,
+      prizePool: state.legacyEconomy ? null : projectTerms(state, i).prizePool,
+      seatCosts: projectTerms(state, i).seatCosts,
+      capacity: seatCapacity(state, i),
+      payoutPerSeat: seatPayout(state, i),
+      boardingPayout: b.seats.length < seatCapacity(state, i) ? seatPayout(state, i, b.seats.length + 1) : null,
     })),
     prices: state.prices,
     recognition: RECOGNITION_SPACES.map((space, i) => ({
       ...space,
       cost: actionCost(state, { kind: "recognition", boat: 0, recognition: i }),
+      payout: recognitionPayout(i, actionCost(state, { kind: "recognition", boat: 0, recognition: i })),
       owner: state.recognition?.[i] || null,
       chance: recognitionChance(state, i),
     })),
@@ -935,6 +1004,25 @@ type LegacyState = Omit<GameState, "boats"> & {
 };
 
 function migrateLegacy(state: GameState): GameState {
+  if (state.version === 3) {
+    if (state.phase !== "preparing") state.legacyThreeSeats = true;
+    else {
+      let spare = START_TOTAL - state.boats.reduce((sum, b) => sum + b.position, 0);
+      while (spare-- > 0) {
+        const boat = [...state.boats].sort((a, b) => a.position - b.position)[0];
+        boat.position++;
+      }
+      state.boats.forEach((b) => { b.warmup = b.position - 3; });
+    }
+    state.version = SAVE_VERSION;
+    return state;
+  }
+  if (state.version === 2) {
+    state.version = 3;
+    if (state.phase !== "preparing") state.legacyEconomy = true;
+    addLog(state, `协办合同更新：${state.legacyEconomy ? "本场保留旧筹备费与每席 12 币回报，下场启用协办酬金平分。" : "本场起按筹备费占席，达标平分协办酬金，可重复上船。"}`);
+    return migrateLegacy(state);
+  }
   if (state.version !== 1) return state;
   const legacy = state as LegacyState;
   const unsettled = !["settlement", "finished"].includes(state.phase);
@@ -951,9 +1039,9 @@ function migrateLegacy(state: GameState): GameState {
   state.clippers = [null, null];
   state.clipQueue = [];
   state.clipEntrants = [];
-  state.version = SAVE_VERSION;
-  addLog(state, `玩法更新：认知民与切片佬登场。${refunded ? `旧版未结算的救场／后援站投入 ${refunded} 币已原额退回。` : "原有现金、股份与活动进度保留。"}`);
-  return state;
+  state.version = 2;
+  addLog(state, `玩法更新：小众粉与切片佬登场。${refunded ? `旧版未结算的救场／后援站投入 ${refunded} 币已原额退回。` : "原有现金、股份与活动进度保留。"}`);
+  return migrateLegacy(state);
 }
 
 /** Validate the complete boundary before restored data can reach the renderer or rules. */
@@ -968,7 +1056,9 @@ export function restoreGame(raw: string): GameState | null {
     ) => value && STREAMERS.every((x) => integer(value[x.id], min, max));
     if (
       !s ||
-      ![1, SAVE_VERSION].includes(s.version) ||
+      ![1, 2, 3, SAVE_VERSION].includes(s.version) ||
+      (s.legacyEconomy !== undefined && typeof s.legacyEconomy !== "boolean") ||
+      (s.legacyThreeSeats !== undefined && typeof s.legacyThreeSeats !== "boolean") ||
       !integer(s.seed, 0, 4294967295) ||
       ![3, 5].includes(s.rounds) ||
       !integer(s.round, 1, s.rounds) ||
@@ -1033,21 +1123,25 @@ export function restoreGame(raw: string): GameState | null {
       s.boats.length !== 3 ||
       new Set(s.boats.map((b) => b.streamer)).size !== 3 ||
       !s.boats.every(
-        (b) => s.roster.includes(b.streamer) &&
+        (b, i) => s.roster.includes(b.streamer) &&
           integer(b.position, 0, TARGET) &&
-          integer(b.warmup, 0, 3) &&
+          integer(b.warmup, s.version >= 4 ? -1 : 0, 3) &&
           integer(b.movement, 0, 7) &&
           (b.die === null || integer(b.die, 1, 6)) &&
           Array.isArray(b.seats) &&
-          b.seats.length <= 3 &&
-          new Set(b.seats.map((x) => x.player)).size === b.seats.length &&
+          b.seats.length <= seatCapacity(s, i) &&
+          ((s.version >= 3 && !s.legacyEconomy) || new Set(b.seats.map((x) => x.player)).size === b.seats.length) &&
           b.seats.every(
             (x) => validPlayer(x.player) &&
-              (integer(x.cost, 4, 10) || (s.version === SAVE_VERSION && x.cost === 0 && x.source === "clip" && !x.insured)) &&
+              (integer(x.cost, s.version >= 3 && !s.legacyEconomy ? 2 : 4, 10) || (s.version >= 2 && x.cost === 0 && x.source === "clip" && !x.insured)) &&
               typeof x.insured === "boolean",
           ),
       )
     ) return null;
+    if (s.version >= 4 && s.phase === "preparing" && (
+      s.boats.reduce((sum, b) => sum + b.position, 0) !== START_TOTAL ||
+      s.boats.some((b) => b.position < START_MIN || b.position > START_MAX || b.warmup !== b.position - 3)
+    )) return null;
     if (
       !Array.isArray(s.log) ||
       !s.log.every((x) => typeof x === "string") ||
@@ -1075,7 +1169,7 @@ export function restoreGame(raw: string): GameState | null {
           r.payments.every(
             (p) => validPlayer(p.player) &&
               typeof p.label === "string" &&
-              integer(p.amount, 0, 24),
+              integer(p.amount, 0, 36),
           ) &&
           [r.cashDelta, r.wealthDelta].every(
             (a) => Array.isArray(a) &&

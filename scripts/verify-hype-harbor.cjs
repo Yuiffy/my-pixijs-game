@@ -114,10 +114,10 @@ async function finishMatch(page, limit = 180) {
     await capture(page, '03-roster-28');
     await page.locator('#harbor-roster').selectOption('0');
     await click(page, 'start');
-    await page.getByLabel('满座歌回主播').selectOption('mizuki');
+    await click(page, 'resting-dock'); await click(page, 'boat-0');
     let s = await state(page);
     assert.equal(s.resting, 'sui');
-    await page.getByLabel('满座歌回主播').selectOption('sui');
+    await click(page, 'resting-dock'); await click(page, 'boat-0');
     await page.getByLabel('满座歌回增加预热').click();
     await page.getByLabel('满座歌回增加预热').click();
     await capture(page, '04-preparing');
@@ -135,7 +135,7 @@ async function finishMatch(page, limit = 180) {
     await humanAction(page, 'support', 0, true);
     s = await waitState(page, () => JSON.parse(window.render_game_to_text()).phase === 'sailing');
     assert.equal(s.boats[0].seats[0].insured, true);
-    assert.equal(s.players[0].cash, 24);
+    assert.equal(s.players[0].cash, 26);
     await click(page, 'roll');
     await capture(page, '06-dice');
     s = await state(page);
@@ -238,7 +238,14 @@ async function finishMatch(page, limit = 180) {
     recognitionSave.beat = 3;
     recognitionSave.boats.forEach((b, i) => { b.position = [15, 0, 8][i]; });
     const recognition = await fixture(recognitionSave);
-    await click(recognition.page, 'handoff'); await humanAction(recognition.page, 'recognition', 0, false, 0);
+    await click(recognition.page, 'handoff');
+    await click(recognition.page, 'action-recognition');
+    assert.match(await recognition.page.getByTestId('recognition-choice-0').innerText(), /花 5 · 收 7/);
+    assert.match(await recognition.page.locator('aside').innerText(), /猜中净赚 2 币/);
+    await capture(recognition.page, '22-recognition-late-preview');
+    await recognition.page.setViewportSize({ width: 390, height: 844 });
+    await capture(recognition.page, '23-mobile-recognition-late-preview');
+    await humanAction(recognition.page, 'recognition', 0, false, 0);
     await click(recognition.page, 'handoff'); await humanAction(recognition.page, 'recognition', 0, false, 1);
     await click(recognition.page, 'handoff'); await click(recognition.page, 'action-recognition');
     assert.ok(await recognition.page.getByTestId('confirm-action').isDisabled());
@@ -246,14 +253,14 @@ async function finishMatch(page, limit = 180) {
     assert.match(await recognition.page.getByTestId('confirm-action').innerText(), /不可能/);
     await click(recognition.page, 'work'); await click(recognition.page, 'roll'); await click(recognition.page, 'continue');
     const recognitionResult = await state(recognition.page);
-    assert.deepEqual(recognitionResult.result.payments.filter(p => p.label.startsWith('认知民')).map(p => p.amount), [5, 6]);
-    assert.deepEqual(recognitionResult.players.map(p => p.cash), [30, 32, 31]);
+    assert.deepEqual(recognitionResult.result.payments.filter(p => p.label.startsWith('小众粉')).map(p => p.amount), [7, 8]);
+    assert.deepEqual(recognitionResult.players.map(p => p.cash), [32, 34, 31]);
     await recognition.page.locator('aside details').first().locator('summary').click();
     await capture(recognition.page, '16-recognition-settlement');
     await click(recognition.page, 'next-round');
     assert.ok((await state(recognition.page)).recognition.every(slot => slot.owner === null));
     await recognition.ctx.close();
-    checks.push('unified five-action entry, lower recognition returns, exclusivity, impossible conditions and reset');
+    checks.push('unified five-action entry, positive late recognition returns, exclusivity, impossible conditions and reset');
 
     let clipSave = E.launch(E.createGame(humans, 3, 91));
     clipSave = E.takeAction(clipSave, { kind: 'clip', boat: 0 });
@@ -298,11 +305,11 @@ async function finishMatch(page, limit = 180) {
     legacy.yard = [{ player: 1, cost: 3 }, null, null]; legacy.players[1].cash -= 3;
     const migration = await fixture(legacy);
     assert.deepEqual((await state(migration.page)).players.map(p => p.cash), [30, 30, 30]);
-    assert.equal(await migration.page.evaluate(() => JSON.parse(localStorage.getItem('hype-harbor-v1')).version), 2);
+    assert.equal(await migration.page.evaluate(() => JSON.parse(localStorage.getItem('hype-harbor-v1')).version), 4);
     await migration.page.reload({ waitUntil: 'networkidle' }); await click(migration.page, 'resume');
     assert.deepEqual((await state(migration.page)).players.map(p => p.cash), [30, 30, 30]);
     await migration.ctx.close();
-    checks.push('v1 unresolved rescue and yard stakes refund once, then save as v2');
+    checks.push('v1 unresolved rescue and yard stakes refund once, then save as v4 with legacy voyage economics');
 
     const mobile = await context({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
     await ready(mobile.page);

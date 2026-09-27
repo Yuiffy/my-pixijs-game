@@ -30,17 +30,17 @@
   <path d="M76 380h720" fill="none" stroke="#168d9a" stroke-width="29" stroke-linecap="round"/>
   <g fill="#fff8ed" stroke="#d57d4b" stroke-width="7"><circle cx="116" cy="380" r="18"/><circle cx="756" cy="380" r="18"/></g>
   <g fill="#34584f" font-family="Arial,'Microsoft YaHei',sans-serif" font-size="23" font-weight="700" text-anchor="middle">
-    <text x="276" y="230">钢厂</text><text x="596" y="230">装备</text><text x="516" y="550">粮厂</text>
+    <text x="276" y="230">山岭切方</text><text x="596" y="230">船闸枢纽</text><text x="516" y="550">湿地复垦</text>
   </g>
   <g fill="#173b3b" font-family="Arial,'Microsoft YaHei',sans-serif">
     <text x="875" y="178" font-size="24" font-weight="700">平陆运河</text>
-    <text x="875" y="250" font-size="54" font-weight="800">通江达海</text>
-    <text x="875" y="332" font-size="25">选线 · 调土 · 抢货单</text>
+    <text x="875" y="250" font-size="64" font-weight="800">合 龙</text>
+    <text x="875" y="332" font-size="25">开工 · 调土 · 共建</text>
   </g>
   <path d="M875 370h320" stroke="#b9cbc5" stroke-width="3"/>
   <g fill="#52736a" font-family="Arial,'Microsoft YaHei',sans-serif" font-size="21">
-    <text x="875" y="422">2–4 位承包商竞赛</text>
-    <text x="875" y="463">同机对战 · AI 对手</text>
+    <text x="875" y="422">一条运河，多处开工</text>
+    <text x="875" y="463">1–4 人 · AI · 3D 沙盘</text>
   </g>
   <rect x="875" y="515" width="222" height="55" fill="#1d777d"/>
   <text x="986" y="551" fill="#fff" font-family="Arial,'Microsoft YaHei',sans-serif" font-size="24" font-weight="700" text-anchor="middle">西江 → 北部湾</text>

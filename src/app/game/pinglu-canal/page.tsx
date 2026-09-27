@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import PingluCanal from '@/components/pingluCanal/PingluCanal';
+import ConstructionGame from '@/components/pingluCanal/ConstructionGame';
 
 export const metadata: Metadata = {
-  title: '平陆运河：通江达海',
-  description: '与承包商或 AI 共建运河，争夺施工名额和货运订单；也可独自规划航道。',
+  title: '平陆运河：合龙',
+  description: '在立体工程沙盘上多处开工，转移土方、建造船闸与生态通道。与朋友或 AI 共同承建一条运河，争取承包优势。',
 };
 
 export default function PingluCanalPage() {
-  return <PingluCanal />;
+  return <ConstructionGame />;
 }

@@ -48,25 +48,38 @@ test('producer swaps seats, cannot duplicate streamers or leave the selected poo
   assert.equal(s.boats[0].streamer, 'sui', 'input is immutable');
 });
 
-test('three preparation points are neither duplicated nor lost', () => {
-  let s = E.createGame(players(3));
-  s = E.setWarmup(s, 0, 3);
-  assert.equal(E.setWarmup(s, 1, 1), s);
-  assert.equal(E.setWarmup(s, 0, -1), s);
-  s = E.launch(s);
-  assert.deepEqual(s.boats.map(b => b.position), [6, 3, 3]);
-  assert.equal(s.boats.reduce((sum, b) => sum + b.position, 0), 12);
-  assert.deepEqual(start().boats.map(b => b.position), [4, 4, 4]);
+test('dragging preparation redistributes twelve points without changing future dice', () => {
+  let s = E.createGame(players(3), 3, 71);
+  assert.deepEqual(s.boats.map(b => b.position), [4, 4, 4]);
+  const seed = s.seed;
+  for (let n = 0; n < 100; n++) {
+    const lane = n % 3, position = 2 + (n % 5);
+    const next = E.setStartingPosition(s, lane, position);
+    assert.deepEqual(next, E.setStartingPosition(s, lane, position));
+    assert.equal(next.boats[lane].position, position);
+    assert.equal(next.boats.reduce((sum, b) => sum + b.position, 0), 12);
+    assert.ok(next.boats.every(b => b.position >= 2 && b.position <= 6 && b.warmup === b.position - 3));
+    assert.equal(next.seed, seed);
+    assert.ok(E.restoreGame(JSON.stringify(next)));
+    s = next;
+  }
+  for (const value of [1, 7, 4.5, NaN]) assert.equal(E.setStartingPosition(s, 0, value), s);
+  assert.equal(E.setStartingPosition(s, 3, 4), s);
+  const launched = E.launch(s);
+  assert.equal(E.setStartingPosition(launched, 0, 4), launched);
+  assert.deepEqual(launched.boats.map(b => b.position), s.boats.map(b => b.position));
+  const nextRound = E.continueGame(finishFixture(launched));
+  assert.deepEqual(nextRound.boats.map(b => b.position), [4, 4, 4]);
 });
 
-test('one action per player per beat, late-seat prices and premium accounting', () => {
+test('one action per player per beat, printed ticket prices and premium accounting', () => {
   let s = start();
   s = action(s, 'support', 0, true);
-  assert.equal(s.players[0].cash, 24);
-  assert.deepEqual(s.boats[0].seats[0], { player: 0, cost: 4, insured: true });
+  assert.equal(s.players[0].cash, 26);
+  assert.deepEqual(s.boats[0].seats[0], { player: 0, cost: 2, insured: true });
   assert.equal(s.turn, 1);
   s = action(s, 'support', 0);
-  assert.equal(s.players[1].cash, 25);
+  assert.equal(s.players[1].cash, 27);
   s = action(s, 'work');
   assert.equal(s.phase, 'sailing');
   assert.equal(action(s, 'work'), s);
@@ -75,7 +88,100 @@ test('one action per player per beat, late-seat prices and premium accounting', 
   const next = E.continueGame(revealed);
   assert.equal(next.beat, 2);
   assert.equal(next.turn, 0);
-  assert.equal(E.actionCost(next, { kind: 'support', boat: 2 }), 6);
+  assert.equal(E.actionCost(next, { kind: 'support', boat: 2 }), 4);
+});
+
+test('ticket prices depend on lane and occupied slot, never action beat or activity round', () => {
+  for (const round of [1, 3, 5]) for (const beat of [1, 2, 3]) for (let boat = 0; boat < 3; boat++) {
+    let s = start(); s.round = round; s.rounds = 5; s.beat = beat;
+    for (const ticket of [[2, 3, 4], [3, 4, 5], [4, 5, 6, 7]][boat]) {
+      s = asTurn(s);
+      assert.equal(E.actionCost(s, { kind: 'support', boat }), ticket);
+      s = action(s, 'support', boat);
+    }
+    assert.deepEqual(s.boats[boat].seats.map(seat => seat.player), Array(boat === 2 ? 4 : 3).fill(0));
+    assert.ok(E.actionProblem(asTurn(s), { kind: 'support', boat }));
+    assert.ok(E.restoreGame(JSON.stringify(s)));
+  }
+});
+
+test('successful boats pay exactly one pool, split by seats including repeated ownership', () => {
+  for (let boat = 0; boat < 3; boat++) for (const count of (boat === 2 ? [0, 1, 2, 3, 4] : [0, 1, 2, 3])) {
+    let s = start();
+    for (let seat = 0; seat < count; seat++) s = action(asTurn(s, seat >= 2 ? 1 : 0), 'support', boat);
+    const before = s.players.map(p => p.cash);
+    s.boats[boat].position = 15;
+    s = finishFixture(s);
+    const pool = [18, 24, 36][boat];
+    const payments = s.results[0].payments;
+    assert.equal(payments.reduce((sum, p) => sum + p.amount, 0), count ? pool : 0);
+    assert.ok(payments.every(p => p.amount === pool / count));
+    assert.equal(s.players[0].cash - before[0], count ? Math.min(count, 2) * pool / count : 0);
+    assert.ok(E.restoreGame(JSON.stringify(s)));
+  }
+});
+
+test('anniversary fourth seat supports clip boarding, blocks fifth, and restores', () => {
+  const s = start();
+  s.phase = 'spotlight'; s.beat = 2; s.clipQueue = [0]; s.clipEntrants = [0];
+  s.clippers = [{ player: 0, cost: 2 }, null];
+  s.boats[2].position = 13;
+  s.boats[2].seats = [0, 1, 0].map((player, i) => ({ player, cost: 4 + i, insured: false }));
+  assert.ok(E.clipBoardingOptions(s).includes(2));
+  const joined = E.resolveClip(s, 2);
+  assert.equal(joined.boats[2].seats.length, 4);
+  assert.equal(E.seatPayout(joined, 2), 9);
+  assert.ok(E.actionProblem(asTurn(joined), { kind: 'support', boat: 2 }));
+  assert.ok(E.restoreGame(JSON.stringify(joined)));
+  joined.boats[2].position = 15;
+  const paid = finishFixture(joined);
+  assert.deepEqual(paid.results[0].payments.map(p => p.amount), [9, 9, 9, 9]);
+});
+
+test('v3 voyages keep three-seat contracts until next voyage; preparation migrates', () => {
+  const old = start(); old.version = 3;
+  old.boats[2].seats = [{ player: 0, cost: 4, insured: false }, { player: 1, cost: 6, insured: false }];
+  const migrated = E.restoreGame(JSON.stringify(old));
+  assert.equal(migrated.version, 4);
+  assert.equal(E.seatCapacity(migrated, 2), 3);
+  assert.equal(E.seatPayout(migrated, 2), 15);
+  assert.equal(E.actionCost(migrated, { kind: 'support', boat: 2 }), 8);
+  assert.ok(E.restoreGame(JSON.stringify(migrated)));
+  const next = E.continueGame(finishFixture(migrated));
+  assert.equal(E.seatCapacity(next, 2), 4);
+  assert.equal(E.projectTerms(next, 2).prizePool, 36);
+  assert.deepEqual(next.boats.map(b => b.position), [4, 4, 4]);
+  const prep = E.createGame(players(3)); prep.version = 3;
+  prep.boats.forEach(b => { b.position = 3; b.warmup = 0; });
+  const ready = E.restoreGame(JSON.stringify(prep));
+  assert.deepEqual(ready.boats.map(b => b.position), [4, 4, 4]);
+  assert.equal(E.seatCapacity(ready, 2), 4);
+  assert.ok(E.restoreGame(JSON.stringify(ready)));
+});
+
+test('adding another seat accounts for dilution and AI will not buy its own unchanged income', () => {
+  let s = action(start(), 'support', 2);
+  s = asTurn(s); s.beat = 3; s.boats[2].position = 14;
+  assert.equal(E.seatPayout(s, 2, 2), 18);
+  assert.equal(E.boardingGain(s, 2), 0, 'two solo seats still earn only 36 total');
+  const chosen = E.chooseAiAction(s).action;
+  assert.ok(chosen.kind !== 'support' || chosen.boat !== 2);
+  s.boats[2].seats.push({ player: 1, cost: 6, insured: false });
+  assert.equal(E.boardingGain(s, 2), 6, 'two of three shares earn 24 versus the prior 18');
+});
+
+test('insurance protects exactly one highest-principal unprotected paid seat at a time', () => {
+  let s = action(start(), 'support', 2, true);
+  s = action(asTurn(s), 'support', 2);
+  s = action(asTurn(s), 'support', 2);
+  s = action(asTurn(s), 'insure', 2);
+  assert.deepEqual(s.boats[2].seats.map(seat => seat.insured), [true, false, true]);
+  assert.equal(s.players[0].cash, 11);
+  const failed = finishFixture(s);
+  assert.equal(failed.players[0].cash, 21, 'only 4 + 6 principal refunded; uncovered 5 and premiums lost');
+  s = action(asTurn(s), 'insure', 2);
+  assert.deepEqual(s.boats[2].seats.map(seat => seat.insured), [true, true, true]);
+  assert.ok(E.actionProblem(asTurn(s), { kind: 'insure', boat: 2 }));
 });
 
 test('failed insurance refunds only principal and settlement cannot repeat', () => {
@@ -85,27 +191,27 @@ test('failed insurance refunds only principal and settlement cannot repeat', () 
   s = action(s, 'support', 1);
   s.boats[0].position = 14; s.boats[1].position = 15;
   s = finishFixture(s);
-  assert.deepEqual(s.players.map(p => p.cash), [28, 31, 38]);
+  assert.deepEqual(s.players.map(p => p.cash), [28, 31, 51]);
   assert.equal(s.prices.sui, 5);
   assert.equal(s.prices.nagisa, 9);
   assert.equal(s.prices.mizuki, 6);
-  assert.equal(s.results[0].payments.find(p => p.player === 0).amount, 4);
-  assert.deepEqual(E.continueGame(s).players.map(p => p.cash), [28, 31, 38]);
+  assert.equal(s.results[0].payments.find(p => p.player === 0).amount, 2);
+  assert.deepEqual(E.continueGame(s).players.map(p => p.cash), [28, 31, 51]);
 });
 
 test('successful insured support pays once', () => {
   let s = start(); s = action(s, 'support', 0, true); s = action(s, 'work');
   s.boats[0].position = 15; s = finishFixture(s);
-  assert.equal(s.players[0].cash, 36); assert.equal(s.players[1].cash, 31);
+  assert.equal(s.players[0].cash, 44); assert.equal(s.players[1].cash, 31);
 });
 
 test('later insurance cannot be stacked or bought for someone else', () => {
   let s = action(start(), 'support', 0);
   assert.ok(E.actionProblem(s, { kind: 'insure', boat: 0 }));
   s = action(asTurn(s), 'insure', 0);
-  assert.equal(s.players[0].cash, 24);
+  assert.equal(s.players[0].cash, 26);
   assert.equal(s.boats[0].seats[0].insured, true);
-  assert.equal(action(asTurn(s), 'insure', 0).players[0].cash, 24);
+  assert.equal(action(asTurn(s), 'insure', 0).players[0].cash, 26);
   s.boats[0].position = 14; s = finishFixture(s);
   assert.equal(s.players[0].cash, 28);
 });
@@ -113,7 +219,7 @@ test('later insurance cannot be stacked or bought for someone else', () => {
 test('scarce seats, cash recovery, boost and arrival lock prevent invalid actions', () => {
   let s = start(4);
   s = action(s, 'support'); s = action(s, 'support'); s = action(s, 'support');
-  assert.equal(E.actionProblem(s, { kind: 'support', boat: 0 }), '三个应援席已满');
+  assert.equal(E.actionProblem(s, { kind: 'support', boat: 0 }), '3 个协办席已满');
   s = action(s, 'clip');
   assert.ok(E.actionProblem(asTurn(s, 3), { kind: 'clip', boat: 0 }));
   let empty = start(); empty.players[0].cash = 0;
@@ -190,7 +296,7 @@ test('recognition seats pays every satisfied threshold for zero, one, two or thr
     s.boats.forEach((b, i) => { b.position = i < misses ? 14 : 15; });
     s = finishFixture(s);
     assert.deepEqual(s.players.map(p => p.cash), [27 + (misses >= 1 ? 5 : 0), 28 + (misses >= 2 ? 6 : 0), 29 + (misses >= 3 ? 8 : 0)]);
-    assert.equal(s.results[0].payments.filter(p => p.label.startsWith('认知民')).length, 3);
+    assert.equal(s.results[0].payments.filter(p => p.label.startsWith('小众粉')).length, 3);
     assert.ok(E.restoreGame(JSON.stringify(s)), 'including the new payouts');
     const next = E.continueGame(s);
     assert.deepEqual(next.recognition, [null, null, null]);
@@ -216,6 +322,27 @@ test('recognition seats is independent of boat selection, exclusive, turn-limite
   assert.ok(E.actionProblem(s, a), 'no wasting money on an impossible outcome');
 });
 
+test('recognition keeps a positive win and locks the payout to its purchase beat', () => {
+  const a = { kind: 'recognition', boat: 0, recognition: 0 };
+  for (const beat of [1, 2, 3]) {
+    let s = start(); s.beat = beat;
+    const cost = E.actionCost(s, a);
+    assert.equal(E.recognitionPayout(0, cost) - cost, 2);
+    s = E.takeAction(s, a);
+    s.boats[0].position = 14;
+    s.boats[1].position = 15;
+    s.boats[2].position = 15;
+    s = finishFixture(s);
+    assert.equal(s.results[0].payments.find(p => p.label.startsWith('小众粉')).amount, 5 + beat - 1);
+    assert.equal(s.players[0].cash, 32);
+  }
+  for (let i = 0; i < 3; i++) {
+    const space = E.RECOGNITION_SPACES[i];
+    const cost = space.cost + 2;
+    assert.ok(E.recognitionPayout(i, cost) - cost > E.WORK_PAYOUT);
+  }
+});
+
 test('recognition seats joint probability follows remaining dice and thresholds, including boost', () => {
   const s = start(); s.beat = 3; s.boats.forEach(b => { b.position = 11; });
   [7 / 8, 1 / 2, 1 / 8].forEach((expected, i) => assert.ok(Math.abs(E.recognitionChance(s, i) - expected) < 1e-10));
@@ -234,7 +361,8 @@ test('AI competes for recognition seats positions and accounts for its own recog
   s = start(); s.beat = 3;
   s.boats[0].position = 11; s.boats[1].position = 15; s.boats[2].position = 15;
   s.boats[0].seats = [{ player: 0, cost: 4, insured: false }];
-  s.players[0].shares.sui = 0; s.players[0].boughtThisRound = true;
+  s.players[0].shares.sui = 1; s.players[0].boughtThisRound = true;
+  s.boats[0].seats.push({ player: 1, cost: 3, insured: false });
   assert.equal(E.chooseAiAction(s).action.kind, 'boost');
   s.recognition[0] = { player: 0, cost: 3 };
   assert.equal(E.chooseAiAction(s).action.kind, 'work');
@@ -264,7 +392,7 @@ test('recognition replaces rescue, has modest returns, and simple work cannot do
   assert.equal(E.RECOGNITION_SPACES[0].payout - E.RECOGNITION_SPACES[0].cost, 2);
   assert.equal(E.WORK_PAYOUT, 1);
   assert.ok(E.recognitionChance(s, 0) * 5 - 3 > E.WORK_PAYOUT);
-  assert.ok(E.recognitionChance(s, 0) * 5 - 3 < E.successChance(s, 0) * 12 - 4);
+  assert.ok(E.recognitionChance(s, 0) * 5 - 3 < E.successChance(s, 0) * E.seatPayout(s, 0, 2) - 2);
 });
 
 test('two clip positions are exclusive, one entry per player, with no seed peeking', () => {
@@ -295,7 +423,7 @@ test('second-roll 13 offers boarding in claim order; join uses an empty seat and
   assert.ok(E.actionProblem(s, { kind: 'insure', boat: 0 }), 'zero-principal seats cannot buy pointless insurance');
   assert.ok(E.restoreGame(JSON.stringify(s)));
   s.boats[0].position = 15; s = finishFixture(s);
-  assert.equal(s.players[0].cash, 40); assert.equal(s.players[1].cash, 40);
+  assert.equal(s.players[0].cash, 34); assert.equal(s.players[1].cash, 34);
 });
 
 test('last empty seat goes to first clipper; full boats do not displace their supporters', () => {
@@ -315,7 +443,7 @@ test('holding skips boarding to preserve the final clip opportunity; first roll 
   s = E.resolveClip(s, null); assert.equal(s.turn, 1); assert.equal(s.clippers[0].player, 0);
   s = E.resolveClip(s, 0); assert.equal(s.phase, 'placing');
   s.boats[0].position = 15; s.boats[1].position = 13; s = finishFixture(s);
-  assert.equal(s.players[0].cash, 36); assert.equal(s.players[1].cash, 40);
+  assert.equal(s.players[0].cash, 36); assert.equal(s.players[1].cash, 46);
   let early = start(); early = action(early, 'clip');
   early.phase = 'reveal'; early.boats[0].position = 13;
   early = E.continueGame(early); assert.equal(early.phase, 'placing'); assert.equal(early.beat, 2);
@@ -337,6 +465,43 @@ test('third-roll clips split a fixed pool, miss for zero, and never pay twice', 
   }
   let solo = action(start(), 'clip'); solo.boats.forEach(b => { b.position = 13; });
   solo = finishFixture(solo); assert.equal(solo.players[0].cash, 52); assert.ok(E.restoreGame(JSON.stringify(solo)));
+});
+
+test('clip boarding may join an already-owned boat and dilutes every seat equally', () => {
+  let s = action(start(), 'support', 0);
+  s = action(asTurn(s), 'clip');
+  s = secondSpotlight(s);
+  s.boats[1].position = 8;
+  assert.deepEqual(E.clipBoardingOptions(s), [0]);
+  assert.equal(E.chooseAiClip(s), null, 'own free seat adds no payout; holding preserves clip upside');
+  s = E.resolveClip(s, 0);
+  assert.deepEqual(s.boats[0].seats.map(seat => seat.player), [0, 0]);
+  s = action(asTurn(s, 1), 'support', 0);
+  assert.equal(s.boats[0].seats[2].cost, 4, 'free seat still occupies a printed ticket slot');
+  s.boats[0].position = 15;
+  s = finishFixture(s);
+  assert.deepEqual(s.results[0].payments.map(p => p.amount), [6, 6, 6]);
+  assert.ok(E.restoreGame(JSON.stringify(s)));
+});
+
+test('v2 in-progress economy is honored once and switches only at the next voyage', () => {
+  let old = start(); old.version = 2;
+  old.boats[0].seats = [{ player: 0, cost: 4, insured: true }];
+  old.players[0].cash = 24;
+  let s = E.restoreGame(JSON.stringify(old));
+  assert.equal(s.legacyEconomy, true);
+  assert.equal(s.version, 4);
+  assert.deepEqual(E.restoreGame(JSON.stringify(s)), s);
+  s.beat = 3;
+  assert.equal(E.actionCost(s, { kind: 'support', boat: 1 }), 8);
+  assert.ok(E.actionProblem(s, { kind: 'support', boat: 0 }));
+  s.boats[0].position = 15; s = finishFixture(s);
+  assert.equal(s.players[0].cash, 36);
+  s = E.continueGame(s);
+  assert.equal(s.legacyEconomy, undefined);
+  assert.equal(E.actionCost(s, { kind: 'support', boat: 0 }), 2);
+  old = E.createGame(players(3)); old.version = 2;
+  assert.equal(E.restoreGame(JSON.stringify(old)).legacyEconomy, undefined, 'untouched preparation can use new rules immediately');
 });
 
 test('saved game migration refunds only unresolved old investments and preserves cash, shares and turns', () => {
