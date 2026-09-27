@@ -14,7 +14,7 @@ function add(g, need = 100, difficulty = 1) {
   human(g).projects.push(j);return j;
 }
 test('a day is 480 paused minutes and 12 human energy; all players start equally', () => {
-  const g=fresh();assert.equal(g.version,4);assert.equal(g.minute,0);assert.deepEqual(g.studio,{mode:'auto',threads:1,accountPolicy:'soon-reset',preferredAccount:account(g).id});
+  const g=fresh();assert.equal(g.version,5);assert.equal(g.minute,0);assert.deepEqual(g.studio,{mode:'auto',threads:1,accountPolicy:'soon-reset',preferredAccount:account(g).id});
   for(const p of g.players){assert.equal(p.energy,12);assert.equal(p.cash,480);assert.equal(p.accounts[0].tier,20);assert.equal(p.lanes.length,0);}
   assert.equal(E.createGame(84,21).length,21);assert.deepEqual(E.restoreGame(JSON.stringify(g)),g);
 });

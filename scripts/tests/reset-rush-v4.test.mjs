@@ -110,7 +110,7 @@ test('most-quota compares absolute balances, excludes inactive accounts and surv
   const after = E.advanceMinutes(g, 60);
   near(human(after).accounts[0].quota, 24);
   near(human(after).accounts[1].quota, 80 - 10.8 * 0.16);
-  near(human(after).accounts[2].quota, 180);
+  near(human(after).accounts[2].quota, 480);
   assert.equal(human(after).energy, originalEnergy);
 });
 
@@ -166,10 +166,11 @@ test('v3 live saves move to automatic studio without losing partial work or quot
   g = E.advanceMinutes(g, 37);
   const old = structuredClone(g);
   old.version = 3;
+  for (const p of old.players) for (const a of p.accounts) a.quota *= ({ 20: 24, 100: 90, 200: 180 })[a.tier] / E.PLANS[a.tier].capacity;
   delete old.studio;
   const migrated = E.restoreGame(JSON.stringify(old));
   assert.ok(migrated);
-  assert.equal(migrated.version, 4);
+  assert.equal(migrated.version, 5);
   assert.equal(migrated.studio.mode, 'auto');
   assert.equal(migrated.studio.threads, 1);
   assert.equal(migrated.minute, g.minute);
@@ -185,6 +186,7 @@ test('v3 migration preserves paused work and uses the running lane configuration
   g = E.act(g, { type: 'dispatch', lane: null, projects: [id], account, model: 'astra', effort: 'high', turbo: true });
   const old = structuredClone(g);
   old.version = 3;
+  for (const p of old.players) for (const a of p.accounts) a.quota *= ({ 20: 24, 100: 90, 200: 180 })[a.tier] / E.PLANS[a.tier].capacity;
   delete old.studio;
   old.development = { ...E.DEFAULT_DEVELOPMENT };
   const migrated = E.restoreGame(JSON.stringify(old));

@@ -11,7 +11,7 @@ const base = process.env.RESET_BASE_URL || 'http://127.0.0.1:3888';
 const output = path.resolve(process.env.RESET_QA_DIR || 'tmp/reset-rush-v4-verify');
 const report = { checks: [], screenshots: [], errors: [] };
 const read = page => page.evaluate(() => JSON.parse(window.render_game_to_text()));
-const saved = page => page.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v4')));
+const saved = page => page.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v5')));
 
 async function load(page) {
   await page.goto(`${base}/game/reset-rush`, { waitUntil: 'networkidle' });
@@ -20,7 +20,7 @@ async function load(page) {
 
 async function expectSave(page, expected) {
   await page.waitForFunction(state => {
-    const raw = localStorage.getItem('reset-rush-v4');
+    const raw = localStorage.getItem('reset-rush-v5');
     return raw && JSON.stringify(JSON.parse(raw)) === JSON.stringify(state);
   }, expected);
   assert.deepEqual(await saved(page), expected);
@@ -35,9 +35,9 @@ async function shot(page, name, fullPage = true) {
   report.screenshots.push({ file, pixels, state: await read(page) });
 }
 
-async function inject(page, state, key = 'reset-rush-v4') {
+async function inject(page, state, key = 'reset-rush-v5') {
   await page.evaluate(({ state: value, key: storageKey }) => {
-    for (const version of ['v1', 'v2', 'v3', 'v4']) localStorage.removeItem(`reset-rush-${version}`);
+    for (const version of ['v1', 'v2', 'v3', 'v4', 'v5']) localStorage.removeItem(`reset-rush-${version}`);
     localStorage.setItem(storageKey, JSON.stringify(value));
   }, { state, key });
   await load(page);
@@ -150,10 +150,10 @@ async function main() {
     delete old.studio;
     await inject(page, old, 'reset-rush-v3');
     game = await saved(page);
-    assert.equal(game.version, 4);
+    assert.equal(game.version, 5);
     assert.equal(game.studio.mode, 'auto');
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v3')).version), 3);
-    report.checks.push('v3 save migrates to v4 while the original save remains');
+    report.checks.push('v3 save migrates to v5 while the original save remains');
 
     let quotaPolicy = E.createGame(809, 21);
     quotaPolicy = E.act(quotaPolicy, { type: 'buy', tier: 200 });

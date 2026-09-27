@@ -12,6 +12,12 @@ import {
   fmt,
   timeLabel,
   V3_SAVE_KEY,
+  V4_SAVE_KEY,
+  quotaPercent,
+  quotaObservation,
+  modelEdition,
+  proClosed,
+  canKeepPro,
   V2_SAVE_KEY,
   activeAccount,
   CATEGORIES,
@@ -43,7 +49,7 @@ import s from "./resetRush.module.css";
 const STRATEGIES = ["独立开发者", "开源效率流", "极限冲刺流", "多号银行流"];
 const ACCOUNT_POLICIES: { id: AccountPolicy; name: string; detail: string }[] = [
   { id: "soon-reset", name: "快重置优先", detail: "先花快自然补满的账号" },
-  { id: "most-quota", name: "更多额度优先", detail: "先花剩余额度最多的账号，持续拉平余额" },
+  { id: "most-quota", name: "更多额度优先", detail: "结合套餐倍率与余额选大号，持续拉平剩余量" },
   { id: "preferred", name: "指定账号优先", detail: "这个号用完再换下一个" },
   { id: "drain", name: "快耗尽优先", detail: "先清掉小额余额" },
   { id: "late-expiry", name: "晚到期优先", detail: "先花订阅期限更长的账号" },
@@ -247,6 +253,9 @@ function Rules() {
         reset
         的牌堆，抽完重洗。谜语不是承诺，今天刚用券、今晚又强制补满，就可能撞车。
       </p>
+      <h3>平台风向</h3>
+      <p>$20 / $100 / $200 对应 1× / 5× / 20×。账号只显示剩余百分比，展开“用量观察”可看自动估计。额度口径在基准上下 20% 内波动，不会直接扣掉百分比。</p>
+      <p>$200 停售会提前两天通知；老号连续续费可保留，断订或降档后不能恢复。新模型逐步发布，有时先贵后降价，有时发布即降价；现有线程自动升级，不用重新调度。</p>
       <h3>作品才是胜利点</h3>
       <div className={s.ruleCategories}>
         {(Object.keys(CATEGORIES) as Category[]).map((k) => (
@@ -263,11 +272,11 @@ function Rules() {
       </p>
       <p>
         终局加分：发布 4 类作品 +12 VP，3 类 +5 VP；每 $100 现金与每 120
-        已用额度各 +1 VP，两项分别封顶 10。不能只靠烧额度获胜。
+        算力点各 +1 VP，两项分别封顶 10。算力点按开发工作计量，不受额度口径或降价影响；不能只靠烧额度获胜。
       </p>
       <p className={s.ruleNote}>
         数值为桌游平衡而设。模型、Low–Ultra 与 Turbo
-        独立选择；游戏中的套餐、免费 Luna 和倍率不代表实际产品用量。
+        独立选择；token、具体用量、版本与事件均为虚构游戏设定，不代表现实产品时间线。
       </p>
     </div>
   );
@@ -360,6 +369,7 @@ export default function ResetRush() {
     try {
       const restored =
         restoreGame(localStorage.getItem(SAVE_KEY)) ??
+        restoreGame(localStorage.getItem(V4_SAVE_KEY)) ??
         restoreGame(localStorage.getItem(V3_SAVE_KEY)) ??
         restoreGame(localStorage.getItem(V2_SAVE_KEY)) ??
         restoreGame(localStorage.getItem(LEGACY_SAVE_KEY));
@@ -435,7 +445,7 @@ export default function ResetRush() {
   const model =
     game && human
       ? developmentStats(game, human, config, job)
-      : { name: "Sol · Medium", cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0, minutes: 0, quota: 0 };
+      : { name: "5.0 Sol · Medium", cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0, minutes: 0, quota: 0, tokensPerHour: 0 };
   const studio = game?.studio;
   const setStudio = (changes: Partial<Pick<NonNullable<typeof studio>, "threads" | "accountPolicy" | "preferredAccount">>) => {
     if (!studio || !human) return;
@@ -726,7 +736,7 @@ export default function ResetRush() {
               </h1>
               <p>
                 {game.length} 天，{human?.shipped.length} 个作品，
-                {fmt(human?.used ?? 0)} 额度。下一局，读懂另一种风向。
+                {fmt(human?.used ?? 0)} 算力点。下一局，读懂另一种风向。
               </p>
               <div className={s.scoreTable}>
                 <table>
@@ -736,7 +746,7 @@ export default function ResetRush() {
                       <th>声望与奖项</th>
                       <th>多样性</th>
                       <th>现金</th>
-                      <th>额度</th>
+                      <th>算力</th>
                       <th>总分</th>
                     </tr>
                   </thead>
@@ -762,7 +772,7 @@ export default function ResetRush() {
                 </table>
               </div>
               <p className={s.endDetail}>
-                免费重置共补回 {fmt(human?.resetGain ?? 0)} 额度 · 用掉{" "}
+                用掉{" "}
                 {human?.banksUsed} 张银行券 · {human?.expired} 张过期 ·{" "}
                 {human?.collisions} 次同日撞车
               </p>
@@ -833,8 +843,7 @@ export default function ResetRush() {
                   </div>
                   {game.phase === "plan" && game.receipt?.gains[0] && (
                     <p className={s.morningGift}>
-                      早晨已到账：+{fmt(game.receipt.gains[0].gained)}{" "}
-                      {game.receipt.kind === "normal" ? "额度" : "张银行券"}
+                      {game.receipt.kind === "normal" ? "早晨已到账：有效账号恢复 100%" : `早晨已到账：+${game.receipt.gains[0].gained} 张银行券`}
                       {game.receipt.kind === "bank" &&
                       game.receipt.gains[0].unused > 0
                         ? `（${game.receipt.gains[0].unused} 张超出仓位）`
@@ -961,7 +970,7 @@ export default function ResetRush() {
                             <span>
                               {status === "等待额度"
                                 ? "补额即续跑，进度保留"
-                                : `当前项约 ${Math.ceil(stats.minutes)} 分钟 · ${fmt(stats.quota)} 额度`}
+                                : `当前项约 ${Math.ceil(stats.minutes)} 分钟 · ${stats.tokenCost ? `${fmt(stats.tokenCost * Math.max(0, head.need - head.work + head.bugs * 12 - head.repair))}k token` : "免费慢跑"}`}
                             </span>
                           </div>
                           <ol className={s.queueList}>
@@ -1075,8 +1084,7 @@ export default function ResetRush() {
                     </button>
                     <div className={s.quota}>
                       <strong>
-                        {fmt(a.quota)}
-                        <small> / {PLANS[a.tier].capacity}</small>
+                        {quotaPercent(a)}<small>%</small>
                       </strong>
                       <span>
                         {activeAccount(game, a) ? "剩余额度" : "订阅到期"}
@@ -1085,7 +1093,7 @@ export default function ResetRush() {
                     <div className={s.quotaBar}>
                       <i
                         style={{
-                          width: `${(100 * a.quota) / PLANS[a.tier].capacity}%`,
+                          width: `${quotaPercent(a)}%`,
                         }}
                       />
                     </div>
@@ -1120,6 +1128,14 @@ export default function ResetRush() {
                         ? "到期不续订"
                         : `到期按 $${a.renewal} 自动续订`}
                     </small>
+                    <details className={s.meter} data-testid="quota-observation">
+                      <summary>用量观察 · 自动估算</summary>
+                      <p>套餐 {PLANS[a.tier].capacity / PLANS[20].capacity}× · 只公布百分比，实际容量会波动。</p>
+                      <p>{quotaObservation(a).config ?? "运行付费任务后开始采样"}</p>
+                      <p>本段 {fmt(quotaObservation(a).tokens)}k token · 掉额 {Math.max(0, quotaObservation(a).drop)} 个百分点</p>
+                      <p>{quotaObservation(a).fullLow === null ? "至少观察 2 个百分点后给出范围。" : `按本段配置，满额约 ${fmt(quotaObservation(a).fullLow!)}–${fmt(quotaObservation(a).fullHigh!)}k token。`}</p>
+                      <small>游戏模拟 token；重置、换配置或口径变化会重新采样，估计不保证未来用量。</small>
+                    </details>
                     {!activeAccount(game, a) && (
                       <button
                         className={s.renew}
@@ -1159,6 +1175,10 @@ export default function ResetRush() {
               <div className={s.commandTitle}>
                 <span>工作室策略</span>
                 <span>改一次，所有线程自动照办。</span>
+              </div>
+              <div className={s.platformStrip} data-testid="platform-status">
+                <strong>{(["luna", "sol", "astra"] as Model[]).map(m => modelEdition(game, m).name).join(" / ")}</strong>
+                <span>{proClosed(game) ? "$200 已停售 · 老号连续续费保留" : game.platform.proDeadline ? `$200 新开窗口：D${game.platform.proDeadline} 早晨关闭` : "套餐 1× / 5× / 20× · 新模型自动升级"}</span>
               </div>
               <div className={s.studioSettings}>
                 <label className={s.threadCount} htmlFor="studio-threads">
@@ -1234,8 +1254,8 @@ export default function ResetRush() {
                             development: { ...config, model: m },
                           })}
                       >
-                        <b>{MODELS[m].name}</b>
-                        <span>{MODELS[m].description}</span>
+                        <b>{modelEdition(game, m).name}</b>
+                        <span>{MODELS[m].description} · 费率 {Math.round(modelEdition(game, m).price * 100)}%</span>
                       </button>
                     ))}
                   </div>
@@ -1285,15 +1305,15 @@ export default function ResetRush() {
                     <span>
                       每小时{" "}
                       <b>
-                        {model.quotaPerHour
-                          ? `${fmt(model.quotaPerHour)} 额度`
+                        {model.tokensPerHour
+                          ? `${fmt(model.tokensPerHour)}k token`
                           : "免费"}
                       </b>
                     </span>
                     <span className={model.risk > 0 ? s.risk : ""}>
                       首项风险 <b>{job ? `${model.risk}% / 20 进度` : "—"}</b>
                     </span>
-                    <small>{job ? `所选项目约 ${Math.ceil(model.minutes)} 分钟 · ${fmt(model.quota)} 额度` : "接单后显示项目预估"}</small>
+                    <small>{job ? `所选项目约 ${Math.ceil(model.minutes)} 分钟；掉额参考账号的用量观察` : "接单后显示项目预估"}</small>
                   </div>
                   <p className={s.configHint}>
                     {config.effort === "ultra"
@@ -1307,7 +1327,7 @@ export default function ResetRush() {
                 </div>
               </details>
               <p className={s.studioSummary}>
-                当前 {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.quotaPerHour ? `${fmt(model.quotaPerHour)} 额度 / 时` : "免费"}
+                当前 {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.tokensPerHour ? `${fmt(model.tokensPerHour)}k token / 时 · 费率 ${Math.round(modelEdition(game, config.model).price * 100)}%` : "免费"}
                 {job ? ` ·《${job.name}》风险 ${model.risk}%` : ""}
               </p>
               <div className={s.secondaryActions}>
@@ -1381,9 +1401,9 @@ export default function ResetRush() {
                     {game.receipt.gains.map((r) => (
                       <span key={r.player}>
                         {game.players[r.player].name}
-                        <b>+{fmt(r.gained)}</b>
+                        <b>{game.receipt?.kind === "normal" ? "已补满" : `+${r.gained}`}</b>
                         <small>
-                          {game.receipt?.kind === "normal" ? "额度" : "银行券"}
+                          {game.receipt?.kind === "normal" ? "有效账号" : "银行券"}
                         </small>
                       </span>
                     ))}
@@ -1440,7 +1460,7 @@ export default function ResetRush() {
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.4 · 自动工作室</i>
+          RESET / 开蹬！ <i>v0.5 · 平台风向</i>
         </span>
         <span>
           {game
@@ -1472,6 +1492,7 @@ export default function ResetRush() {
                 setSeed(String((Number(seed) || 260926) + 1));
                 try {
                   localStorage.removeItem(SAVE_KEY);
+                  localStorage.removeItem(V4_SAVE_KEY);
                   localStorage.removeItem(V3_SAVE_KEY);
                   localStorage.removeItem(LEGACY_SAVE_KEY);
                   localStorage.removeItem(V2_SAVE_KEY);
@@ -1503,6 +1524,9 @@ export default function ResetRush() {
             现金 <b>${human.cash}</b> · 账号管理不花精力或时间 ·
             一个账号可带多条线程
           </p>
+          <p className={s.shopNotice} data-testid="subscription-notice">
+            {proClosed(game) ? "$200 已停止新开和升级。仅现有 $200 账号可连续续费；断订或实际降档后失去资格。" : game.platform.proDeadline ? `$200 将于 D${game.platform.proDeadline} 早晨停售；现在仍可开通或升级。` : "$20 = 1×，$100 = 5×，$200 = 20×。界面只显示剩余百分比，真实可用量以运行观察估计。"}
+          </p>
           <div className={s.managedAccounts}>
             {human.accounts.map((a, index) => (
               <section
@@ -1516,7 +1540,7 @@ export default function ResetRush() {
                   </h3>
                   <b>
                     {activeAccount(game, a)
-                      ? `${fmt(a.quota)} / ${PLANS[a.tier].capacity} 额度`
+                      ? `${quotaPercent(a)}% 剩余 · ${PLANS[a.tier].capacity / PLANS[20].capacity}×`
                       : "已暂停"}
                   </b>
                 </div>
@@ -1567,7 +1591,7 @@ export default function ResetRush() {
                       })}
                   >
                     {([20, 100, 200] as Tier[]).map((t) => (
-                      <option key={t} value={t}>
+                      <option key={t} value={t} disabled={t === 200 && proClosed(game) && !canKeepPro(game, a)}>
                         ${t} / 30 天
                         {t < a.tier
                           ? " · 到期降档"
@@ -1584,7 +1608,7 @@ export default function ResetRush() {
                   {a.renewal === null
                     ? "到期清空额度并停用，银行券仍按原日期过期。"
                     : activeAccount(game, a)
-                      ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，补满 ${PLANS[a.renewal].capacity} 额度；余额不足则暂停。`
+                      ? `D${a.paidUntil + 1} 自动扣 $${a.renewal}，恢复 100%；余额不足则暂停。${a.tier === 200 ? "停售后请保持连续续费。" : ""}`
                       : "已暂停的账号需手动续开；仅改到期方案不会扣款。"}
                 </p>
               </section>
@@ -1599,11 +1623,12 @@ export default function ResetRush() {
                 <span>{PLANS[t].name}</span>
                 <strong>${t}</strong>
                 <p>
-                  {PLANS[t].capacity} 额度 / 7 天<br />
+                  {PLANS[t].capacity / PLANS[20].capacity}× 额度 / 7 天<br />
                   订阅有效 30 天
                 </p>
                 <button
                   disabled={!!actionError(game, 0, { type: "buy", tier: t })}
+                  title={actionError(game, 0, { type: "buy", tier: t }) ?? "开通后从 100% 开始"}
                   onClick={() => {
                     send({ type: "buy", tier: t });
                   }}
@@ -1631,12 +1656,12 @@ export default function ResetRush() {
         <Modal title={`${game.players[inspect].name}的开发履历`} close={close}>
           <div className={s.portfolio}>
             <p>
-              当前总分 <b>{score(game.players[inspect]).total} VP</b> · 消耗额度{" "}
+              当前总分 <b>{score(game.players[inspect]).total} VP</b> · 算力点{" "}
               {fmt(game.players[inspect].used)} · 开源效率 +
               {game.players[inspect].knowledge * 8}%
             </p>
             <p className={s.muted}>
-              总分含当前现金、多样性与额度分；实际以终局资源结算。
+              总分含当前现金、多样性与算力分；实际以终局资源结算。
             </p>
             {game.players[inspect].shipped.length ? (
               game.players[inspect].shipped.map((j) => (

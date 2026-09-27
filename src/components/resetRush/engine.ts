@@ -22,7 +22,8 @@ export interface Studio {
   accountPolicy: AccountPolicy;
   preferredAccount: number;
 }
-export const SAVE_KEY = "reset-rush-v4";
+export const SAVE_KEY = "reset-rush-v5";
+export const V4_SAVE_KEY = "reset-rush-v4";
 export const V3_SAVE_KEY = "reset-rush-v3";
 export const V2_SAVE_KEY = "reset-rush-v2";
 export const LEGACY_SAVE_KEY = "reset-rush-v1";
@@ -35,8 +36,8 @@ export const fmt = (n: number) => Number(n.toFixed(1)).toString();
 export const timeLabel = (minute: number) => `${String(9 + Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 export const PLANS: Record<Tier, { name: string; capacity: number }> = {
   20: { name: "PLUS", capacity: 24 },
-  100: { name: "PRO 100", capacity: 90 },
-  200: { name: "PRO 200", capacity: 180 },
+  100: { name: "PRO 100", capacity: 120 },
+  200: { name: "PRO 200", capacity: 480 },
 };
 export const MODELS: Record<
   Model,
@@ -142,6 +143,15 @@ export interface Account {
   renewal: Tier | null;
   banks: number[];
   lastBankDay: number;
+  meter: { tokens: number; startPercent: number; config: string; revision: number } | null;
+}
+export interface Platform {
+  stage: number;
+  nextRelease: number;
+  proDeadline: number | null;
+  // Hidden effective allowance. The UI observes integer percentages and token samples only.
+  allowance: number;
+  revision: number;
 }
 export interface Player {
   id: number;
@@ -169,7 +179,7 @@ export interface EventCard {
   quote: string;
   detail: string;
   chance: number;
-  effect: "signal" | "instant" | "bank" | "sale" | "jam" | "quiet";
+  effect: "signal" | "instant" | "bank" | "sale" | "jam" | "quiet" | "retire" | "limits" | "technology";
 }
 export interface Log {
   day: number;
@@ -189,7 +199,8 @@ export interface Receipt {
   }[];
 }
 export interface Game {
-  version: 4;
+  version: 5;
+  platform: Platform;
   development: Development;
   studio: Studio;
   seed: number;
@@ -235,6 +246,7 @@ export type Action =
   | { type: "pass" };
 
 export const EVENTS: EventCard[] = [
+  // The first four cards are the opening tutorial; platform cards are appended below.
   {
     id: "riddle",
     title: "他又开始说谜语了",
@@ -331,7 +343,45 @@ export const EVENTS: EventCard[] = [
     chance: 0,
     effect: "quiet",
   },
+  { id: "pro-last-call", title: "$200 即将停止新开", quote: "“existing subscribers can keep renewing.”", detail: "还有今天和明天可新开或升级 $200。之后只保留老号连续续费；降档或断订会失去资格。", chance: 0, effect: "retire" },
+  { id: "limit-rumor", title: "社区：这次掉额不太一样？", quote: "“same workload, different percentage?”", detail: "额度口径可能有变化，百分比不变。工作室会重新采样 token 与掉额；先观察，再决定是否冲刺。", chance: 25, effect: "limits" },
+  { id: "tech-1", title: "5.6 Luna 发布", quote: "“small model, bigger ideas.”", detail: "Luna 能力 +0.5、速度 +20%；付费配置暂贵 15%。免费慢跑仍免费，先试新模型还是等降价？", chance: 35, effect: "technology" },
+  { id: "tech-2", title: "5.6 Luna 降价了", quote: "“now cheaper to build.”", detail: "Luna 付费配置费率从初代的 115% 降到 65%。原有线程自动享受，免费路线不变。", chance: 0, effect: "technology" },
+  { id: "tech-3", title: "6 Sol：发布即降价", quote: "“smarter and cheaper, today.”", detail: "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考就能无风险做复杂任务；均衡开发自动升级。", chance: 50, effect: "technology" },
+  { id: "tech-4", title: "6 Luna：小模型追上来了", quote: "“more intelligence for everyone.”", detail: "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 已可无风险做常规任务。", chance: 35, effect: "technology" },
+  { id: "tech-5", title: "6 Astra：攻坚新世代", quote: "“bring your hardest problems.”", detail: "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 就能无风险攻坚，或继续 Ultra + Turbo 抢首发。", chance: 65, effect: "technology" },
 ];
+
+const initialPlatform = (): Platform => ({ stage: 0, nextRelease: 6, proDeadline: null, allowance: 1, revision: 0 });
+export const quotaPercent = (a: Account) => Math.max(0, Math.min(100, Math.ceil((a.quota / PLANS[a.tier].capacity) * 100 - EPS)));
+export const proClosed = (g: Game) => g.platform.proDeadline !== null && g.day >= g.platform.proDeadline;
+export const canKeepPro = (g: Game, a: Account) => a.tier === 200 && activeAccount(g, a);
+export function modelEdition(g: Game, model: Model) {
+  const { stage } = g.platform;
+  if (model === "luna") return stage >= 4
+    ? { name: "6 Luna", ability: 1, speed: 1.5, price: 0.45 }
+    : stage >= 1 ? { name: "5.6 Luna", ability: 0.5, speed: 1.2, price: stage >= 2 ? 0.65 : 1.15 }
+      : { name: "5.0 Luna", ability: 0, speed: 1, price: 1 };
+  const upgraded = stage >= (model === "sol" ? 3 : 5);
+  return {
+    name: `${upgraded ? "6" : "5.0"} ${MODELS[model].name}`,
+    ability: upgraded ? 1 : 0,
+    speed: upgraded ? (model === "sol" ? 1.25 : 1.2) : 1,
+    price: upgraded ? (model === "sol" ? 0.75 : 0.85) : 1,
+  };
+}
+export function quotaObservation(a: Account) {
+  const sample = a.meter;
+  const drop = sample ? sample.startPercent - quotaPercent(a) : 0;
+  // Integer percentages give a range, never the simulator's exact hidden allowance.
+  return {
+    tokens: sample?.tokens ?? 0,
+    drop,
+    config: sample?.config ?? null,
+    fullLow: sample && drop >= 2 ? (sample.tokens * 100) / (drop + 1) : null,
+    fullHigh: sample && drop >= 2 ? (sample.tokens * 100) / (drop - 1) : null,
+  };
+}
 const TEMPLATES: [string, Category, number, number, number, Difficulty][] = [
   ["只有一条命", "game", 221, 23, 35, 2],
   ["猫猫自走棋", "game", 343, 34, 45, 3],
@@ -405,6 +455,7 @@ function account(g: Game, tier: Tier): Account {
     renewal: tier,
     banks: [],
     lastBankDay: 0,
+    meter: null,
   };
 }
 export const activeAccount = (g: Game, a: Account) => a.paidUntil >= g.day;
@@ -429,19 +480,24 @@ export function developmentStats(
   job?: Project,
 ) {
   const m = MODELS[config.model];
+  const edition = modelEdition(g, config.model);
   const e = EFFORTS[config.effort];
   const baseCost = config.model === "luna" ? e.lunaCost : m.cost * e.cost;
-  const cost = config.turbo
+  const nominalCost = config.turbo
     ? Math.max(0.025, baseCost) * 2.5 * (g.event.effect === "sale" ? 0.75 : 1)
     : baseCost;
-  const ability = m.ability + e.ability;
+  const cost = (nominalCost * edition.price) / g.platform.allowance;
+  const ability = m.ability + e.ability + edition.ability;
   const speed =
-    m.speed * e.speed * (1 + p.knowledge * 0.08) * (config.turbo ? 2 : 1);
+    m.speed * edition.speed * e.speed * (1 + p.knowledge * 0.08) * (config.turbo ? 2 : 1);
   const remaining = job
     ? Math.max(0, job.need - job.work) + job.bugs * BUG_WORK - job.repair
     : 0;
   return {
-    name: `${m.name} · ${e.name}${config.turbo ? " + Turbo" : ""}`,
+    name: `${edition.name} · ${e.name}${config.turbo ? " + Turbo" : ""}`,
+    nominalCost,
+    tokenCost: (config.turbo ? Math.max(0.025, baseCost) : baseCost) * 10,
+    tokensPerHour: (config.turbo ? Math.max(0.025, baseCost) : baseCost) * 10 * speed * 60,
     cost,
     speed,
     perHour: speed * 60,
@@ -463,6 +519,7 @@ function renew(g: Game, p: Player, a: Account, tier: Tier) {
   p.cash -= tier;
   a.tier = tier;
   a.quota = PLANS[tier].capacity;
+  a.meter = null;
   a.paidUntil = g.day + 29;
   a.nextReset = g.day + 7;
   log(
@@ -518,6 +575,7 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
           gained += PLANS[a.tier].capacity - a.quota;
           unused += a.quota;
           a.quota = PLANS[a.tier].capacity;
+          a.meter = null;
           if (a.lastBankDay === g.day) {
             collision = true;
             p.collisions++;
@@ -541,17 +599,19 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
   };
   log(
     g,
-    `${r.title} ${kind === "normal" ? `你补回 ${fmt(gains[0].gained)} 额度，${fmt(gains[0].unused)} 余额无法叠加。` : `你获得 ${gains[0].gained} 张银行券。`}`,
+    `${r.title} ${kind === "normal" ? "有效账号回到 100%，旧余额不叠加。" : `你获得 ${gains[0].gained} 张银行券。`}`,
   );
   return r;
 }
 function drawEvent(g: Game): EventCard {
   if (g.day <= 4) return { ...EVENTS[g.day - 1] };
+  if (g.platform.stage < 5 && g.day >= g.platform.nextRelease) return { ...EVENTS.find(e => e.id === `tech-${g.platform.stage + 1}`)! };
   if (!g.events.length) g.events = shuffle(
       g,
-      EVENTS.map((e) => e.id),
+      EVENTS.filter(e => e.effect !== "technology" && (e.effect !== "retire" || g.platform.proDeadline === null)).map((e) => e.id),
     );
   const id = g.events.shift();
+  if (id === "pro-last-call" && g.platform.proDeadline !== null) return { ...EVENTS[2] };
   return { ...(EVENTS.find((e) => e.id === id) ?? EVENTS[2]) };
 }
 function beginDay(g: Game) {
@@ -566,6 +626,10 @@ function beginDay(g: Game) {
     p.energy = DAILY_ENERGY;
     p.rested = false;
     p.accounts.forEach((a) => {
+      if (a.renewal === 200 && proClosed(g) && a.tier !== 200) {
+        a.renewal = a.tier;
+        log(g, `${p.name} 的到期升档已取消：$200 停止新开，保留原档续费。`, p.id);
+      }
       const before = a.banks.length;
       a.banks = a.banks.filter((d) => d > g.day);
       if (before > a.banks.length) {
@@ -578,6 +642,7 @@ function beginDay(g: Game) {
       }
       if (a.paidUntil === g.day - 1) {
         a.quota = 0;
+        a.meter = null;
         if (a.renewal !== null && p.cash >= a.renewal) renew(g, p, a, a.renewal);
         else log(
             g,
@@ -589,10 +654,11 @@ function beginDay(g: Game) {
         if (activeAccount(g, a)) {
           const gained = PLANS[a.tier].capacity - a.quota;
           a.quota = PLANS[a.tier].capacity;
+          a.meter = null;
           p.resetGain += gained;
           log(
             g,
-            `${p.name} 的 ${PLANS[a.tier].name} 自然重置，补回 ${fmt(gained)}。`,
+            `${p.name} 的 ${PLANS[a.tier].name} 自然重置，恢复 100%。`,
             p.id,
           );
         }
@@ -613,6 +679,19 @@ function beginDay(g: Game) {
       }
   });
   g.event = drawEvent(g);
+  if (g.event.effect === "retire" && g.platform.proDeadline === null) g.platform.proDeadline = g.day + 2;
+  if (g.event.effect === "technology") {
+    g.platform.stage = Math.max(g.platform.stage, Number(g.event.id.split("-")[1]));
+    g.platform.nextRelease = g.day + 4 + Math.floor(random(g) * 3);
+    g.platform.revision++;
+  }
+  if (g.event.effect === "limits") {
+    const choices = [0.8, 1, 1.2].filter(x => x !== g.platform.allowance);
+    g.platform.allowance = choices[Math.floor(random(g) * choices.length)];
+    g.platform.revision++;
+  }
+  // A new rate invalidates old measurements, without exposing the changed multiplier.
+  if (g.event.effect === "technology" || g.event.effect === "limits") for (const p of g.players) for (const a of p.accounts) a.meter = null;
   log(g, `早间消息：${g.event.title}`);
   if (g.event.effect === "instant") g.receipt = reset(g, "normal");
   if (g.event.effect === "bank") g.receipt = reset(g, "bank");
@@ -623,7 +702,8 @@ function beginDay(g: Game) {
 }
 export function createGame(seed = 260926, length = 42): Game {
   const g: Game = {
-    version: 4,
+    version: 5,
+    platform: initialPlatform(),
     development: { ...DEFAULT_DEVELOPMENT },
     studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0 },
     seed: Math.trunc(Math.abs(seed)) % 4294967296,
@@ -644,7 +724,7 @@ export function createGame(seed = 260926, length = 42): Game {
     awards: [
       { id: "first-game", name: "碉游首发", vp: 5, owner: null },
       { id: "diversity", name: "三栖开发者", vp: 6, owner: null },
-      { id: "pedal", name: "500 额度俱乐部", vp: 5, owner: null },
+      { id: "pedal", name: "500 算力点俱乐部", vp: 5, owner: null },
     ],
   };
   const specs: [string, Strategy, Tier[]][] = [
@@ -860,12 +940,14 @@ export function actionError(g: Game, id: number, a: Action): string | null {
   }
   if (a.type === "buy") {
     if (!PLANS[a.tier]) return "无效套餐。";
+    if (a.tier === 200 && proClosed(g)) return "$200 已停止新开，仅老号连续续费可保留。";
     if (p.accounts.length >= 3) return "最多持有 3 个账号，每号都可以带多条线程。";
     if (p.cash < a.tier) return "现金不够，接点外包吧。";
   }
   if (a.type === "renew" || a.type === "upgrade" || a.type === "renewal") {
     const acc = p.accounts.find((x) => x.id === a.account);
     if (!acc) return "账号不存在。";
+    if (a.tier === 200 && proClosed(g) && !canKeepPro(g, acc)) return "$200 已停止新开；降档或断订后不能恢复。";
     if (a.type === "renewal") return a.tier === null || PLANS[a.tier] ? null : "无效续订套餐。";
     if (!PLANS[a.tier]) return "无效套餐。";
     if (a.type === "renew") {
@@ -939,13 +1021,13 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   } else if (a.type === "bank") {
     const acc = p.accounts.find((x) => x.id === a.account)!;
     acc.banks.sort((x, y) => x - y).shift();
-    const gain = PLANS[acc.tier].capacity - acc.quota;
     acc.quota = PLANS[acc.tier].capacity;
+    acc.meter = null;
     acc.lastBankDay = g.day;
     p.banksUsed++;
     log(
       g,
-      `${p.name} 用掉银行券，补回 ${fmt(gain)} 额度。等待额度的线程可继续跑，自然重置仍在 D${acc.nextReset}。`,
+      `${p.name} 用掉银行券，恢复 100%。等待额度的线程可继续跑，自然重置仍在 D${acc.nextReset}。`,
       id,
     );
   } else if (a.type === "buy") {
@@ -973,6 +1055,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     const acc = p.accounts.find((x) => x.id === a.account)!;
     const price = a.tier - acc.tier;
     acc.quota += PLANS[a.tier].capacity - PLANS[acc.tier].capacity;
+    acc.meter = null;
     p.cash -= price;
     if (acc.renewal === acc.tier) acc.renewal = a.tier;
     acc.tier = a.tier;
@@ -1063,9 +1146,16 @@ function runPlayer(g: Game, p: Player) {
     for (const r of running) {
       const work = Math.min(r.boundary, r.stats.speed * dt);
       const cost = work * r.stats.cost;
+      if (cost > 0) {
+        const key = `${r.stats.name} · 费率 ${modelEdition(g, r.lane.development.model).price}${g.event.effect === "sale" ? " · Turbo折扣日" : ""}`;
+        if (!r.acc.meter || r.acc.meter.config !== key || r.acc.meter.revision !== g.platform.revision) r.acc.meter = {
+          tokens: 0, startPercent: quotaPercent(r.acc), config: key, revision: g.platform.revision,
+        };
+        r.acc.meter.tokens += work * r.stats.tokenCost;
+      }
       r.acc.quota = Math.max(0, r.acc.quota - cost);
       if (r.acc.quota < EPS) r.acc.quota = 0;
-      p.used += cost;
+      p.used += work * r.stats.nominalCost;
       if (r.repair) {
         r.job.repair += work;
         if (r.job.repair >= BUG_WORK - EPS) {
@@ -1119,7 +1209,8 @@ function botConfig(
   let bestValue = -Infinity;
   for (const model of Object.keys(MODELS) as Model[]) for (const effort of Object.keys(EFFORTS) as Effort[]) for (const turbo of [false, true]) {
         const config = { model, effort, turbo };
-        const s = developmentStats(g, p, config, j);
+        // Bots know published prices, not the hidden effective allowance.
+        const s = developmentStats({ ...g, platform: { ...g.platform, allowance: 1 } }, p, config, j);
         const sustainable = s.cost
           ? Math.min(DAY_MINUTES - g.minute, acc.quota / (s.speed * s.cost))
           : DAY_MINUTES - g.minute;
@@ -1149,7 +1240,7 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
   const style = strategy ?? p.strategy;
   if (g.phase !== "plan") return { type: "pass" };
   const remaining = g.length - g.day;
-  const target: Tier = style === "builder" ? 100 : 200;
+  const target: Tier = style === "builder" || proClosed(g) ? 100 : 200;
   const upgrade = p.accounts.find(
     (a) => activeAccount(g, a) && a.tier < target,
   );
@@ -1165,12 +1256,12 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
     p.accounts.length < 2 &&
     p.cash >= 270 &&
     remaining > 12
-  ) return { type: "buy", tier: 200 };
+  ) return { type: "buy", tier: proClosed(g) ? 100 : 200 };
   if (p.accounts.length < 2 && remaining > 10 && (
     (style === "builder" && p.knowledge > 0 && p.cash >= 240) ||
     (style === "sprinter" && g.day > 5 && p.cash >= 280) ||
     (style === "balanced" && g.day > 3 && p.cash >= 260)
-  )) return { type: "buy", tier: style === "sprinter" ? 200 : 100 };
+  )) return { type: "buy", tier: style === "sprinter" && !proClosed(g) ? 200 : 100 };
   const bank = active.find(
     (a) => a.quota < PLANS[a.tier].capacity * 0.08 &&
       a.banks.length &&
@@ -1371,18 +1462,28 @@ export function textState(g: Game) {
     minutesLeft: DAY_MINUTES - g.minute,
     energy: g.players[0].energy,
     event: g.event,
+    platform: {
+      stage: g.platform.stage,
+      proDeadline: g.platform.proDeadline,
+      proClosed: proClosed(g),
+      models: Object.fromEntries((Object.keys(MODELS) as Model[]).map(m => [m, modelEdition(g, m)])),
+    },
     market: g.market,
-    players: g.players.map((p) => ({
+    players: g.players.map(({ resetGain: _resetGain, wasted: _wasted, ...p }) => ({
       ...p,
-      score: score(p),
-      lanes: p.lanes.map((l) => ({ ...l, status: laneStatus(g, p, l) })),
+      accounts: p.accounts.map((a) => {
+        const { quota: _quota, meter: _meter, ...publicAccount } = a;
+        return { ...publicAccount, percent: quotaPercent(a), observation: quotaObservation(a) };
+      }),
+      score: score(g.players[p.id]),
+      lanes: p.lanes.map((l) => ({ ...l, status: laneStatus(g, g.players[p.id], l) })),
     })),
     resetDeck: {
       normal: g.resetDeck.filter((c) => c === "normal").length,
       bank: g.resetDeck.filter((c) => c === "bank").length,
     },
     awards: g.awards,
-    receipt: g.receipt,
+    receipt: g.receipt?.kind === "normal" ? { ...g.receipt, gains: g.receipt.gains.map(r => ({ player: r.player, collision: r.collision, status: "有效账号已补满" })) } : g.receipt,
     message: g.message,
     logs: g.logs.slice(0, 12),
     coordinateSystem:
@@ -1400,7 +1501,7 @@ export function restoreGame(raw: string | null): Game | null {
     };
     const oldVersion = legacy.version;
     if (
-      ![1, 2, 3, 4].includes(oldVersion) ||
+      ![1, 2, 3, 4, 5].includes(oldVersion) ||
       !["plan", "reveal", "over"].includes(g.phase) ||
       ![21, 42].includes(g.length) ||
       !Number.isInteger(g.day) ||
@@ -1461,7 +1562,7 @@ export function restoreGame(raw: string | null): Game | null {
       for (const l of g.logs) l.minute = 0;
       delete legacy.order;
       delete legacy.cursor;
-      g.version = 4;
+      g.version = 5;
       g.event = { ...EVENTS.find((e) => e.id === g.event.id)! };
       g.message =
         "旧牌局已迁移：现金、账号、券和项目进度全部保留；今天剩余时间按旧行动折算。请选择项目，安排新的并行队列。";
@@ -1478,9 +1579,27 @@ export function restoreGame(raw: string | null): Game | null {
         accountPolicy: "soon-reset",
         preferredAccount: running[0]?.account ?? oldLanes[0]?.account ?? player.accounts[0].id,
       };
-      g.version = 4;
+      g.version = 5;
       g.message = "牌局已迁移：账号、项目和进度保留；工作室现在会自动排队和切换账号。";
     }
+    if (oldVersion < 5) {
+      for (const p of g.players) for (const a of p.accounts) {
+        const oldCapacity = ({ 20: 24, 100: 90, 200: 180 } as Record<Tier, number>)[a.tier];
+        if (!oldCapacity || !Number.isFinite(a.quota) || a.quota < 0 || a.quota > oldCapacity + EPS) return null;
+        a.quota = (a.quota / oldCapacity) * PLANS[a.tier].capacity;
+        a.meter = null;
+      }
+      g.platform = initialPlatform();
+      g.platform.nextRelease = Math.max(6, g.day + 2);
+      g.version = 5;
+      g.awards[2].name = "500 算力点俱乐部";
+      g.logs = [];
+      g.message = "牌局已升级：套餐改为 1× / 5× / 20×，剩余百分比、项目、现金与银行券保留。新模型将逐步发布。";
+    }
+    if (!g.platform || !Number.isInteger(g.platform.stage) || g.platform.stage < 0 || g.platform.stage > 5 ||
+      !Number.isInteger(g.platform.nextRelease) || g.platform.nextRelease < 1 ||
+      !(g.platform.proDeadline === null || (Number.isInteger(g.platform.proDeadline) && g.platform.proDeadline >= 1)) ||
+      ![0.8, 1, 1.2].includes(g.platform.allowance) || !Number.isInteger(g.platform.revision) || g.platform.revision < 0) return null;
     if (
       !validDevelopment(g.development) ||
       !g.studio ||
@@ -1569,6 +1688,9 @@ export function restoreGame(raw: string | null): Game | null {
           !Number.isFinite(a.quota) ||
           a.quota < 0 ||
           a.quota > PLANS[a.tier].capacity + EPS ||
+          !(a.meter === null || (a.meter && Number.isFinite(a.meter.tokens) && a.meter.tokens >= 0 &&
+            Number.isInteger(a.meter.startPercent) && a.meter.startPercent >= 0 && a.meter.startPercent <= 100 &&
+            typeof a.meter.config === "string" && Number.isInteger(a.meter.revision) && a.meter.revision >= 0 && a.meter.revision <= g.platform.revision)) ||
           ![a.id, a.nextReset, a.paidUntil, a.lastBankDay].every(
             Number.isInteger,
           ) ||

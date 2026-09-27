@@ -31,10 +31,10 @@ chromium.launch = async options => {
         await page.locator('#studio-policy').selectOption('most-quota');
         await page.evaluate(() => window.advanceTime(60 * 60000));
         await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).minute === 60);
-        const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v4')));
+        const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v5')));
         assert.equal(saved.studio.accountPolicy, 'most-quota');
         assert.equal(saved.players[0].accounts[0].quota, 24);
-        assert.ok(saved.players[0].accounts[1].quota < 90);
+        assert.ok(saved.players[0].accounts[1].quota < 120);
         await page.locator('#reset-command').scrollIntoViewIfNeeded();
       }
       return result;

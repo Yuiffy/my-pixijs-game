@@ -8,7 +8,7 @@ const fresh=()=>E.createGame(84);
 const morning=(g,day)=>{const f=structuredClone(g);f.day=day-1;f.phase='reveal';f.minute=480;f.events=['quiet'];return E.nextDay(f);};
 test('v1 and v2 save migrations preserve assets, projects, random state and original storage contents',()=>{
   for(const version of [1,2]){
-    const raw=readFileSync(new URL(`./fixtures/reset-rush-v${version}.json`,import.meta.url),'utf8');const old=JSON.parse(raw);const g=E.restoreGame(raw);assert.ok(g);assert.equal(g.version,4);assert.equal(g.studio.mode,'auto');assert.equal(g.rng,old.rng);assert.equal(g.day,old.day);
+    const raw=readFileSync(new URL(`./fixtures/reset-rush-v${version}.json`,import.meta.url),'utf8');const old=JSON.parse(raw);const g=E.restoreGame(raw);assert.ok(g);assert.equal(g.version,5);assert.equal(g.studio.mode,'auto');assert.equal(g.rng,old.rng);assert.equal(g.day,old.day);
     for(let i=0;i<4;i++){assert.equal(g.players[i].cash,old.players[i].cash);assert.equal(g.players[i].used,old.players[i].used);assert.equal(g.players[i].projects[0]?.work,old.players[i].projects[0]?.work);assert.deepEqual(g.players[i].accounts.map(a=>a.banks),old.players[i].accounts.map(a=>a.banks));assert.equal(g.players[i].lanes.length,0);}
     if(version===1)assert.equal(account(g).renewal,null);
     assert.deepEqual(E.restoreGame(JSON.stringify(g)),g);assert.equal(JSON.parse(raw).version,version);
@@ -30,13 +30,13 @@ test('a scheduled downgrade renews once at the lower price with separate quota a
 test('stopping or lacking funds pauses once and does not charge later without an explicit manual renewal',()=>{
   for(const stop of [true,false]){
     let g=fresh();account(g).renewal=stop?null:200;human(g).cash=5;account(g).banks=[35];g=morning(g,31);assert.equal(account(g).quota,0);human(g).cash=300;g=morning(g,32);assert.equal(human(g).cash,300);assert.equal(E.activeAccount(g,account(g)),false);
-    g=E.act(g,{type:'renew',account:account(g).id,tier:100});assert.equal(human(g).cash,200);assert.equal(account(g).quota,90);assert.equal(account(g).paidUntil,61);assert.deepEqual(account(g).banks,[35]);assert.equal(g.minute,0);assert.equal(human(g).energy,12);
+    g=E.act(g,{type:'renew',account:account(g).id,tier:100});assert.equal(human(g).cash,200);assert.equal(account(g).quota,120);assert.equal(account(g).paidUntil,61);assert.deepEqual(account(g).banks,[35]);assert.equal(g.minute,0);assert.equal(human(g).energy,12);
   }
 });
 test('each account keeps independent natural resets; forced resets never shift these clocks',()=>{
   let g=fresh();g=E.act(g,{type:'upgrade',account:account(g).id,tier:200});g=morning(g,3);g=E.act(g,{type:'buy',tier:200});
-  for(const a of human(g).accounts)a.quota=0;g=morning(g,8);assert.equal(human(g).accounts[0].quota,180);assert.equal(human(g).accounts[1].quota,0);assert.deepEqual(human(g).accounts.map(a=>a.nextReset),[15,10]);
-  const dates=human(g).accounts.map(a=>a.nextReset);g.event={...E.EVENTS.find(e=>e.id==='promise')};g.resetDeck=['normal'];g=E.endDay(g);assert.deepEqual(human(g).accounts.map(a=>a.nextReset),dates);assert.ok(human(g).accounts.every(a=>a.quota===180));
+  for(const a of human(g).accounts)a.quota=0;g=morning(g,8);assert.equal(human(g).accounts[0].quota,480);assert.equal(human(g).accounts[1].quota,0);assert.deepEqual(human(g).accounts.map(a=>a.nextReset),[15,10]);
+  const dates=human(g).accounts.map(a=>a.nextReset);g.event={...E.EVENTS.find(e=>e.id==='promise')};g.resetDeck=['normal'];g=E.endDay(g);assert.deepEqual(human(g).accounts.map(a=>a.nextReset),dates);assert.ok(human(g).accounts.every(a=>a.quota===480));
 });
 test('bank expiry, three-token limit, full-quota prevention and daily use limit remain enforced',()=>{
   let g=fresh();account(g).banks=[2,3,31];assert.match(E.actionError(g,0,{type:'bank',account:account(g).id}),/已经满/);

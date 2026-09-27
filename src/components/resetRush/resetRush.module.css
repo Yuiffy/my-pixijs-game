@@ -523,3 +523,25 @@
   .noProjects .emptyProject { min-height: 110px; }
   .noProjects .emptyProject > span { display: none; }
 }
+.platformStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  justify-content: space-between;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #45624c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.meter {
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.meter summary { cursor: pointer; }
+.meter p { margin: 6px 0; }
+.shopNotice { padding: 12px; background: #dce5c9; color: #263f31; font-size: 13px; line-height: 1.7; }
