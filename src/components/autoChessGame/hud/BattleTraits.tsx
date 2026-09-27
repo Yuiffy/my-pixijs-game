@@ -167,11 +167,13 @@ function BattleTraitSide({
 }
 
 export function BattleTraitBar({
+  labels,
   playerTraits,
   enemyTraits,
   collapsed,
   onToggle,
 }: {
+  labels?: { player: string; enemy: string };
   playerTraits: BattleTraitInfo[];
   enemyTraits: BattleTraitInfo[];
   collapsed: boolean;
@@ -185,7 +187,7 @@ export function BattleTraitBar({
     <div className={`rift-battle-traits ${collapsed ? "is-collapsed" : ""}`} aria-label="双方战斗羁绊">
       <BattleTraitSide
         team="player"
-        label="我方"
+        label={labels?.player ?? "我方"}
         traits={playerTraits}
         collapsed={collapsed}
         activeKey={activeKey}
@@ -204,7 +206,7 @@ export function BattleTraitBar({
       </button>
       <BattleTraitSide
         team="enemy"
-        label="敌方"
+        label={labels?.enemy ?? "敌方"}
         traits={enemyTraits}
         collapsed={collapsed}
         activeKey={activeKey}

@@ -153,6 +153,8 @@ export class FighterViewRenderer {
   }
 
   public update(view: Phaser.GameObjects.Container, fighter: Fighter) {
+    const aftermath = this.host.bridge.battleAftermath;
+    const settle = aftermath ? Math.max(0, 1 - aftermath.elapsed / 0.25) : 1;
     const radius = fighter.radius || fighterVisualRadius(fighter.unitId, fighter.star);
     const parts = this.fighterViewParts.get(view)!;
     const portraitMode = this.host.isPortrait();
@@ -175,9 +177,9 @@ export class FighterViewRenderer {
       : mumuPulling
         ? 28
         : fighter.jumpArcHeight || 92;
-    const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * jumpArcHeight : 0;
+    const jumpArc = jumping ? Math.sin(jumpProgress * Math.PI) * jumpArcHeight * settle : 0;
     const attackProgress = !abilityMotion && !fighter.sekiChargeActive && fighter.attackPulse > 0 ? fighter.attackPulse / 0.22 : 0;
-    const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10;
+    const lunge = Math.sin((1 - attackProgress) * Math.PI) * 10 * settle;
     const targetDistance = Math.hypot(fighter.attackTargetX - fighter.x, fighter.attackTargetY - fighter.y) || 1;
     const attackOffsetX = ((fighter.attackTargetX - fighter.x) / targetDistance) * lunge;
     const attackOffsetY = ((fighter.attackTargetY - fighter.y) / targetDistance) * lunge;
@@ -252,7 +254,7 @@ export class FighterViewRenderer {
     const normalPortraitKey = resolvedPortrait.portraitStyle === "sprite"
       ? textureKeyForUnit(fighter.unitId, characterStyle)
       : circularTextureKeyForUnit(fighter.unitId, characterStyle);
-    const portraitKey = fighter.unitId === "sun_guard" && fighter.manquTime > 0
+    const portraitKey = aftermath ? normalPortraitKey : fighter.unitId === "sun_guard" && fighter.manquTime > 0
       ? HAZEL_MANQU_TEXTURE_KEY
       : fighter.unitId === "komichi" && fighter.komichiSignTime > 0
         ? abilityTextureKeyForUnit(fighter.unitId, characterStyle)
@@ -363,6 +365,26 @@ export class FighterViewRenderer {
     star.setText("★".repeat(fighter.star))
       .setVisible(!portraitMode || selected)
       .setPosition(portraitMode ? -radius : label.width / 2 + 6, radius + 30);
+    if (aftermath) {
+      const celebrating = fighter.team === aftermath.winner;
+      const phase = aftermath.elapsed * 5.5 + walkPhaseOffset;
+      const blend = Math.min(1, aftermath.elapsed / 0.25);
+      const hop = celebrating ? Math.max(0, Math.sin(phase)) * Math.min(18, radius * 0.6) * blend : 0;
+      const breathe = Math.sin(phase * 0.55) * 0.018 * blend;
+      // Keep the health bar, selection and pointer target anchored; only the character hops.
+      portrait.setPosition(0, -hop)
+        .setScale(growth * (1 - hop / 200 + breathe), growth * (1 + hop / 180 - breathe))
+        .setAngle(Math.sin(phase * 0.6) * (celebrating ? 4 : 1.5) * blend)
+        .setAlpha(1);
+      view.setAlpha(1);
+      shadow.setScale(growth * (1 - hop / 65), growth * (1 - hop / 100));
+      hitFlash.setAlpha(hitFlash.alpha * settle);
+      shield.setAlpha(shield.alpha * settle);
+      abilityShield.setAlpha(abilityShield.alpha * settle);
+      syncAura.setAlpha(syncAura.alpha * settle);
+      burn.setAlpha(burn.alpha * settle);
+      status.setAlpha(settle);
+    } else status.setAlpha(1);
   }
 
 }

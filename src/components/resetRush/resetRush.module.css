@@ -25,6 +25,9 @@
 .logo b { font-size: 23px; }
 .logo small { display: block; font: 8px ui-monospace, monospace; letter-spacing: 2.6px; margin-top: 8px; opacity: .6; }
 .headerActions { min-width: 120px; display: flex; gap: 12px; justify-content: flex-end; }
+.localeSwitch { display: flex; align-items: center; gap: 2px; border: 1px solid #b9c6b780; border-radius: 4px; padding: 2px; flex-shrink: 0; }
+.localeSwitch button { min-width: 28px; min-height: 26px; padding: 2px 4px; border-radius: 2px; }
+.localeSwitch button[aria-pressed="true"] { background: var(--mint); color: var(--ink); }
 .headerActions button { background: none; color: #d8e0cb; border: 0; font-size: 12px; padding: 9px 0 9px 9px; }
 .headerActions button span { border: 1px solid #b9c6b780; border-radius: 50%; padding: 0 4px; margin-left: 6px; }
 .intro { max-width: 1330px; margin: auto; padding-top: 78px; display: grid; grid-template-columns: 1.1fr 1fr; }
@@ -355,7 +358,9 @@
 }
 @media (max-width: 680px) {
   .root { padding: 0 16px; }
-  .header { height: 76px; gap: 7px; } .back, .headerActions { min-width: 0; } .back span { display: none; }
+  .header { height: auto; min-height: 96px; display: grid; grid-template-columns: 24px minmax(0, 1fr) 24px; gap: 5px; padding: 10px 0; } .back, .headerActions { min-width: 0; } .back { grid-column: 1; grid-row: 1; } .back span { display: none; }
+  .logo { grid-column: 2; grid-row: 1; }
+  .headerActions { grid-column: 1 / -1; grid-row: 2; justify-content: center; align-items: center; }
   .logo { font-size: 22px; } .logo b { font-size: 19px; } .logo small { font-size: 5px; letter-spacing: 2px; }
   .headerActions { gap: 4px; } .headerActions button { font-size: 9px; padding-left: 3px; } .headerActions button span { display: none; }
   .intro { padding-top: 36px; } .eyebrow { font-size: 8px; letter-spacing: 1px; } .intro h1 { margin-top: 22px; font-size: 42px; }
@@ -372,7 +377,7 @@
   .gameTop { grid-template-columns: 90px 1fr; gap: 17px; margin: 18px 0; } .day strong { font-size: 35px; } .calendar { grid-column: 1/-1; grid-row: 2; }
   .turnCounter { grid-column: 2; grid-row: 1; } .turnCounter strong { margin-top: 10px; } .turnCounter i { width: 15px; height: 15px; }
   .calendarHead > span:last-child { display: block; font-size: 7px; } .days > div { display: flex; padding: 9px 3px 0; } .days small { font-size: 7px; margin-top: 0; }
-  .players { margin-bottom: 24px; } .player { gap: 7px; padding: 10px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .playerName b { font-size: 10px; } .playerName small { font-size: 7px; } .playerNumbers strong { font-size: 19px; } .playerNumbers > span { font-size: 7px; } .playerNumbers i { margin: 0 2px; }
+  .players { margin-bottom: 24px; } .player { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 4px 7px; padding: 10px; } .avatar { width: 24px; height: 24px; font-size: 9px; } .playerName { grid-column: 2; } .playerName b { font-size: 10px; } .playerName small { font-size: 7px; white-space: normal; } .playerNumbers { grid-column: 1 / -1; width: 100%; margin-left: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 4px; text-align: left; } .playerNumbers strong { font-size: 19px; } .playerNumbers > span { font-size: 7px; } .playerNumbers i { margin: 0 2px; }
   .board { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .news { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 12px; }
   .news > .sectionLabel { grid-column: 1/-1; margin-bottom: 0; } .event { grid-row: span 2; padding: 14px; }
@@ -402,7 +407,7 @@
   .footer { font-size: 6px; line-height: 1.7; gap: 5px; } .footer i { margin: 0 3px; } .status { font-size: 9px; }
   .ending { margin: 45px auto; } .ending > p { font-size: 11px; } .ending .endDetail { font-size: 9px; }
 }
-@media (max-width: 360px) { .root { padding: 0 12px; } .logo { font-size: 20px; } .logo b { font-size: 16px; } .headerActions button { font-size: 8px; } .avatar { display: none; } .news { grid-template-columns: minmax(0, 1fr) 102px; } .event { padding: 12px; } .event h2 { font-size: 15px; } .event blockquote { font-size: 16px; } .odds > span { font-size: 7px; } .odds > span small { font-size: 6px; } .intro h1 { font-size: 37px; } .setupRow { flex-wrap: wrap; justify-content: flex-start; } .introTable { transform: scale(.9); transform-origin: center top; margin-bottom: -35px; } .teaserGame { left: 28%; } }
+@media (max-width: 360px) { .root { padding: 0 12px; } .logo { font-size: 20px; } .logo b { font-size: 16px; } .headerActions button { font-size: 8px; } .avatar { display: none; } .player { grid-template-columns: minmax(0, 1fr); } .playerName { grid-column: 1; } .news { grid-template-columns: minmax(0, 1fr) 102px; } .event { padding: 12px; } .event h2 { font-size: 15px; } .event blockquote { font-size: 16px; } .odds > span { font-size: 7px; } .odds > span small { font-size: 6px; } .intro h1 { font-size: 37px; } .setupRow { flex-wrap: wrap; justify-content: flex-start; } .introTable { transform: scale(.9); transform-origin: center top; margin-bottom: -35px; } .teaserGame { left: 28%; } }
 @media (prefers-reduced-motion: reduce) { .root *, .root *::before, .root *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
 /* Keep the action surface close to the tabletop; small screens get explicit navigation. */

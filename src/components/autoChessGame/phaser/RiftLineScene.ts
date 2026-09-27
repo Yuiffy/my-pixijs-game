@@ -493,7 +493,7 @@ export class RiftLineScene extends Phaser.Scene {
   }
 
   private defaultBattleViewZoom() {
-    return this.isLandscapePhone() ? 1.18 : 1;
+    return !this.bridge.battleOverview && this.isLandscapePhone() ? 1.18 : 1;
   }
 
   private resetBattleView() {
@@ -744,7 +744,7 @@ export class RiftLineScene extends Phaser.Scene {
     description.setPosition(48, 158);
     this.phaseLayer.add(description);
     if (!compact) {
-      const pressureLabel = `敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`;
+      const pressureLabel = this.bridge.preparationPressure ?? `敌军 ${currentWave.units.length} 人 · 价值约 ${enemyBudgetForRound(state.round)}`;
       this.phaseLayer.add(this.text(536, 124, pressureLabel, 9, currentWave.tag === "normal" ? "#e89aaa" : waveColor, { fontStyle: "bold" }));
       this.button(682, 112, 74, 25, "▦ 站位", undefined, {
         tone: currentWave.tag === "normal" ? "neutral" : "danger",
@@ -826,7 +826,7 @@ export class RiftLineScene extends Phaser.Scene {
     const waveLabel = currentWave.tag === "boss" ? "BOSS WARNING" : currentWave.tag === "elite" ? "ELITE WARNING" : mode === "hell" ? `HELL ${currentWave.round}` : `WAVE ${currentWave.round}`;
     const waveColor = currentWave.tag === "boss" ? "#ff8ba7" : currentWave.tag === "elite" ? "#ffc35b" : "#72d8ff";
     this.phaseLayer.add(this.text(16, 108, `${waveLabel} · ${this.truncateText(currentWave.name, 242, 14, { fontStyle: "bold" })}`, 14, waveColor, { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(338, 108, `敌军 ${currentWave.units.length} · 价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
+    this.phaseLayer.add(this.text(338, 108, this.bridge.preparationPressure ? "" : `敌军 ${currentWave.units.length} · 价值 ${enemyBudgetForRound(state.round)}`, 11, waveColor, { fontStyle: "bold" }).setOrigin(1, 0));
     this.button(354, 96, 110, 26, "▦ 敌方站位", undefined, {
       tone: currentWave.tag === "normal" ? "neutral" : "danger",
     }, DEPTH.ui, () => this.bridge.setEnemyFormationOpen(true)).setName("enemy-formation-trigger-mobile");
@@ -1553,14 +1553,15 @@ export class RiftLineScene extends Phaser.Scene {
     for (let x = 52; x < 1090; x += 54) field.lineStyle(1, 0x7ab4d0, 0.08).lineBetween(x, 112, x, 676);
     for (let y = 122; y < 690; y += 54) field.lineStyle(1, 0x7ab4d0, 0.08).lineBetween(36, y, 1084, y);
     this.phaseLayer.add(field);
-    this.phaseLayer.add(this.text(48, 108, "守备方", 10, "#72d8ff", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(1072, 108, "裂隙军团", 10, "#ff6d9a", { fontStyle: "bold" }).setOrigin(1, 0));
+    const labels = this.bridge.battleLabels;
+    this.phaseLayer.add(this.text(48, 108, labels?.player || "守备方", 10, "#72d8ff", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(1072, 108, labels?.enemy || "裂隙军团", 10, "#ff6d9a", { fontStyle: "bold" }).setOrigin(1, 0));
     this.phaseLayer.add(this.text(560, 108, "裂隙", 12, "#f0d8ff", { fontStyle: "bold" }).setOrigin(0.5));
     const activeTraits = this.bridge.engine.getActiveTraits();
     const traitSummary = activeTraits.length ? activeTraits.map((trait) => `${trait.name}${["", "Ⅰ", "Ⅱ", "Ⅲ"][trait.level] ?? ""}`).join(" · ") : "无激活羁绊";
     const augmentSummary = this.bridge.engine.state.augments.map((id) => AUGMENTS.find((augment) => augment.id === id)?.name ?? id).join(" · ") || "无天赋";
-    this.phaseLayer.add(this.text(48, 670, this.truncateText(`羁绊：${traitSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#8ce8bd", { fontStyle: "bold" }));
-    this.phaseLayer.add(this.text(1072, 670, this.truncateText(`天赋：${augmentSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#d5b7ff", { fontStyle: "bold" }).setOrigin(1));
+    this.phaseLayer.add(this.text(48, 670, this.truncateText(labels?.playerSummary || `羁绊：${traitSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#8ce8bd", { fontStyle: "bold" }));
+    this.phaseLayer.add(this.text(1072, 670, this.truncateText(labels?.enemySummary || `天赋：${augmentSummary}`, 420, 9, { fontStyle: "bold" }), 9, "#d5b7ff", { fontStyle: "bold" }).setOrigin(1));
     this.keepPortraitBattleTextReadable();
     this.syncBattleEntities();
     this.syncCombatEffects();
@@ -1704,6 +1705,8 @@ export class RiftLineScene extends Phaser.Scene {
     projectile: Projectile,
   ) {
     this.projectileRenderer.update(view, this.projectileForBattlePresentation(projectile));
+    const aftermath = this.bridge.battleAftermath;
+    view.setAlpha(aftermath ? Math.max(0, 1 - aftermath.elapsed / 0.35) : 1);
   }
 
   private projectileForBattlePresentation(projectile: Projectile): Projectile {
@@ -1849,7 +1852,8 @@ export class RiftLineScene extends Phaser.Scene {
     const { battle } = this.bridge.engine.state;
     if (!battle || !this.battleTimerText || !this.battleTimerPanel || !this.battleBannerText) return;
     const remaining = Math.max(0, battle.limit - battle.elapsed);
-    const urgent = remaining < 6;
+    const aftermath = this.bridge.battleAftermath;
+    const urgent = !aftermath && remaining < 6;
     if (urgent !== this.battleTimerUrgent) {
       this.battleTimerUrgent = urgent;
       const rect = this.battleTimerRect || this.battleOverlayLayout().timer;
@@ -1858,7 +1862,7 @@ export class RiftLineScene extends Phaser.Scene {
       this.battleTimerPanel.lineStyle(1, urgent ? 0xff718e : 0x8edfff, 0.8).strokeRoundedRect(rect.x, rect.y, rect.width, rect.height, 8);
     }
     const timerColor = urgent ? "#ff718e" : "#dcefff";
-    this.battleTimerText.setText(`⏱ ${remaining.toFixed(1)}s`);
+    this.battleTimerText.setText(aftermath ? `休整 ${aftermath.elapsed.toFixed(1)}s` : `⏱ ${remaining.toFixed(1)}s`);
     if (this.battleTimerText.style.color !== timerColor) this.battleTimerText.setColor(timerColor);
     this.battleBannerText.setText(battle.bannerTimer > 0 ? battle.banner : "").setVisible(battle.bannerTimer > 0);
     const rankingKey = battle.rankingOpen ? battle.rankingMetric : "closed";

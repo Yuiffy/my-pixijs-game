@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import GameShareButton from "@/app/game/GameShareButton";
 import {
@@ -61,6 +61,7 @@ import {
   type Development,
 } from "./engine";
 import s from "./resetRush.module.css";
+import { browserLocale, LOCALE_KEY, ResetLocaleContext, Translated, type ResetLocale } from "./i18n";
 
 const STRATEGIES = ["独立开发者", "开源效率流", "极限冲刺流", "多号银行流"];
 const ACCOUNT_POLICIES: { id: AccountPolicy; name: string; detail: string }[] = [
@@ -195,6 +196,7 @@ function Modal({
     ref.current?.showModal();
   }, []);
   return (
+    <Translated>
     <dialog
       ref={ref}
       className={s.modal}
@@ -213,11 +215,47 @@ function Modal({
       </div>
       <div className={s.modalBody} data-testid="modal-scroll-body">{children}</div>
     </dialog>
+    </Translated>
   );
 }
 
 function Rules() {
+  const locale = useContext(ResetLocaleContext);
+  if (locale === "en") return (
+    <Translated>
+      <div className={s.rules}>
+        <p className={s.lead}>You make the decisions. The models do the work.<br />Turn every minute before the next reset into something you can ship.</p>
+        <ol>
+          <li><strong>480 minutes and 12 energy each day.</strong> The workday runs from 09:00 to 17:00. Reading and planning do not advance time. When you finish the day, your AI sessions and your rivals work through the remaining time.</li>
+          <li><strong>A job costs 1 energy; each managed AI session costs 1–2.</strong> Accepted projects queue automatically. You choose up to six concurrent AI sessions. They may share accounts or collaborate on one project. Accounts, upgrades, renewals, and vouchers cost no time or energy.</li>
+          <li><strong>Set a strategy, then advance work.</strong> Choose how accounts are prioritized; the studio switches when quota runs out. Completed projects lead to the next queued job. Work pauses on delivery or when resources are needed. Vouchers, free Luna, and manual freelance work can keep the day productive.</li>
+          <li><strong>Trade quota for time.</strong> Turbo doubles speed and uses 2.5 times as much quota per unit of progress without increasing bug risk. High through Max think more deeply but work more slowly. Ultra models a focused team effort. Luna Medium without Turbo is free.</li>
+          <li><strong>Respect difficult work.</strong> Bugs are possible when ability falls below project difficulty. Risk is checked per 20 progress. Each bug adds 12 automatic rework progress, or you can spend 2 energy and 30 minutes to fix up to two bugs yourself.</li>
+          <li><strong>Remember to rest.</strong> Once per day, spend 60 minutes to recover 3 energy while AI work continues. Manual freelance work earns $25 for 1 energy and 60 minutes. Finishing the day first uses the remaining work time, then reveals the night card.</li>
+        </ol>
+        <h3>Finish well, then make it excellent</h3>
+        <p>Ability beyond a task&apos;s needs improves quality. Fine work earns 20% more cash and reputation; excellent work earns 40% more, rounded down. Quality accumulates across the whole project. A late model switch cannot make up for earlier work, and rework or Turbo adds no quality directly.</p>
+        <p>Low-touch setups use 1 energy per AI session each day; hands-on setups use 2. You may reclaim reserved energy before work starts. Afterward, each session is charged for its highest energy requirement that day. Insufficient energy makes it wait. Costs reset tomorrow.</p>
+        <h3>A studio that learns</h3>
+        <p>Auto premium selects the cheapest setup expected to deliver excellent quality with low management cost. Auto reliable selects the cheapest setup expected to finish safely. Turbo is separate. Limited quota pauses paid work instead of silently switching to a risky free setup.</p>
+        <p>Up to three AI sessions may collaborate on a project. Two work at 1.7× combined speed, three at 2.2×. Each consumes 1–2 of your daily energy. Progress, bugs, and delivery count only once.</p>
+        <p>Difficulty starts as an estimate. The first 20 progress or a discovered bug reveals a project&apos;s challenge. A model generation is calibrated after 60 measured progress. Experience improves estimates, and insufficient ability shows a rework warning.</p>
+        <h3>Seven-day resets and 30-day vouchers</h3>
+        <p>Each account naturally refills every seven days from its opening date. Instant resets and vouchers refill only to capacity and do not move the natural reset date. Vouchers belong to an account, expire after 30 days, and have no holding or daily-use limit.</p>
+        <p>Morning news is public. At night, a gift chance is checked before drawing from a deck of {RESET_SUPPLY.normal} instant resets and {RESET_SUPPLY.bank} banked reset. Drawn cards stay out until the deck is empty. The opening voucher is a tutorial gift; there are no fixed gift days afterward.</p>
+        <h3>Platform changes</h3>
+        <p>$20 / $100 / $200 plans have 1× / 5× / 20× capacity. Accounts reveal percentages, while usage observations estimate actual token capacity. The rate can vary by 20% around the baseline.</p>
+        <p>The $200 plan gives two days&apos; warning before closing to new buyers. Existing accounts can retain it through uninterrupted renewals. New models arrive over time; existing AI sessions upgrade automatically.</p>
+        <h3>Shipped work wins</h3>
+        <div className={s.ruleCategories}>{(Object.keys(CATEGORIES) as Category[]).map((k) => <div key={k}><b>{CATEGORIES[k].name}</b><span>{CATEGORIES[k].perk}</span></div>)}</div>
+        <p>Contract jobs must ship by the end of their eighth day or lose 3 VP. Abandoning a job loses 2 VP. Everyone earns $35 each week; each shipped personal project adds $15 a week. Shipping earns reputation, and public awards go to the first developer to meet them.</p>
+        <p>Final bonuses: four project categories earn 12 VP; three earn 5 VP. Cash adds 1 VP per $100 and compute adds 1 VP per 120 points, each capped at 10. Compute measures work done, independent of quota rates.</p>
+        <p className={s.ruleNote}>All figures are fictional board-game balance. Models, effort levels, Turbo, token usage, versions, and events do not describe a real product schedule.</p>
+      </div>
+    </Translated>
+  );
   return (
+    <Translated>
     <div className={s.rules}>
       <p className={s.lead}>
         人负责安排，模型负责跑。
@@ -301,6 +339,7 @@ function Rules() {
         独立选择；token、具体用量、版本与事件均为虚构游戏设定，不代表现实产品时间线。
       </p>
     </div>
+    </Translated>
   );
 }
 
@@ -324,6 +363,7 @@ function ProjectCard({
   marketHint?: string;
 }) {
   return (
+    <Translated>
     <button
       type="button"
       data-project={job.id}
@@ -376,6 +416,7 @@ function ProjectCard({
               : (assigned ?? "待托管")}
       </span>
     </button>
+    </Translated>
   );
 }
 
@@ -392,6 +433,7 @@ function ProjectSettings({ game, job, open, onToggle, send }: {
   const change = (patch: Partial<NonNullable<Project["settings"]>>) => send({ type: "project-settings", project: job.id, settings: { ...settings, ...patch } });
   const development = (patch: Partial<Development>) => change({ development: { ...config, ...patch } });
   return (
+    <Translated>
     <details id="reset-project-settings" className={s.projectSettings} open={open} onToggle={e => onToggle(e.currentTarget.open)}>
       <summary>《{job.name}》项目设置 · {custom ? "本项已单独设置" : "跟随全局，可不设置"}</summary>
       <fieldset disabled={game.phase !== "plan"}>
@@ -441,10 +483,12 @@ function ProjectSettings({ game, job, open, onToggle, send }: {
         <button type="button" disabled={!custom} onClick={() => send({ type: "project-settings", project: job.id, settings: null })}>恢复全部跟随全局</button>
       </fieldset>
     </details>
+    </Translated>
   );
 }
 
 export default function ResetRush() {
+  const [locale, setLocale] = useState<ResetLocale>("zh");
   const [game, setGame] = useState<Game | null>(null);
   const [ready, setReady] = useState(false);
   const [saved, setSaved] = useState(true);
@@ -457,6 +501,22 @@ export default function ResetRush() {
   const [selectedAccount, setSelectedAccount] = useState(0);
   const [onboarding, setOnboarding] = useState(false);
   const root = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    let selected: ResetLocale | null = null;
+    try {
+      const stored = localStorage.getItem(LOCALE_KEY);
+      if (stored === "zh" || stored === "en") selected = stored;
+    } catch { /* Browser language remains the fallback. */ }
+    setLocale(selected ?? browserLocale(navigator.languages?.length ? navigator.languages : [navigator.language]));
+  }, []);
+  useEffect(() => {
+    document.title = locale === "zh" ? "RESET / 开蹬！ · 开发者的额度桌游" : "RESET / Build On! · A Developer Board Game";
+  }, [locale]);
+  const chooseLocale = (next: ResetLocale) => {
+    setLocale(next);
+    try { localStorage.setItem(LOCALE_KEY, next); } catch { /* The choice still applies to this session. */ }
+  };
 
   useEffect(() => {
     try {
@@ -574,7 +634,9 @@ export default function ResetRush() {
   };
 
   return (
-    <main ref={root} className={s.root}>
+    <ResetLocaleContext.Provider value={locale}>
+    <Translated>
+    <main ref={root} className={s.root} lang={locale === "zh" ? "zh-CN" : "en"}>
       <header className={s.header}>
         <Link href="/demos" className={s.back} aria-label="返回游戏目录">
           ↖ <span>游戏柜</span>
@@ -585,7 +647,11 @@ export default function ResetRush() {
           <small>A DEVELOPER’S BOARD GAME</small>
         </div>
         <div className={s.headerActions}>
-          <GameShareButton gamePath="/game/reset-rush" />
+          <div className={s.localeSwitch} role="group" aria-label={locale === "zh" ? "语言" : "Language"}>
+            <button type="button" aria-pressed={locale === "zh"} onClick={() => chooseLocale("zh")}>中</button>
+            <button type="button" aria-pressed={locale === "en"} onClick={() => chooseLocale("en")}>EN</button>
+          </div>
+          <GameShareButton key={locale} gamePath="/game/reset-rush" locale={locale} />
           {game && game.phase !== "over" && (
             <button onClick={() => setModal("shop")}>账号管理</button>
           )}
@@ -722,7 +788,7 @@ export default function ResetRush() {
             <div className={s.calendar}>
               <div className={s.calendarHead}>
                 <span>
-                  第 {Math.ceil(game.day / 7)} 周 / 共 {game.length / 7} 周
+                  {locale === "zh" ? `第 ${Math.ceil(game.day / 7)} 周 / 共 ${game.length / 7} 周` : `Week ${Math.ceil(game.day / 7)} of ${game.length / 7}`}
                 </span>
                 <span>每 7 天发薪 · 自然重置按账号计时</span>
               </div>
@@ -1893,5 +1959,7 @@ keepAutomatic: true,
         </Modal>
       )}
     </main>
+    </Translated>
+    </ResetLocaleContext.Provider>
   );
 }

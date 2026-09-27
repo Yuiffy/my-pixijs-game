@@ -33,7 +33,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next-agi-competition-dev/types/**/*.ts",
-    ".next-pinglu-canal-dev/types/**/*.ts"
+    ".next-pinglu-canal-dev/types/**/*.ts",
+    ".next-autochess-multiplayer-dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

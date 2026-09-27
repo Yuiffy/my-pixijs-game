@@ -53,6 +53,9 @@ const nextConfig = isEsaStaticExport
     }
   : {
       ...(distDir ? { distDir } : {}),
+      async redirects() {
+        return [{ source: '/game', destination: '/demos', permanent: true }];
+      },
       async rewrites() {
         return {
           beforeFiles: [...knightGameRewrites(), ...streamRewrites()],

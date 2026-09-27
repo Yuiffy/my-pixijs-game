@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: '维阿自走棋：裂隙阵线',
 };
 
-const AutoChessGame = dynamic(() => import('@/components/autoChessGame/PhaserGame'), { ssr: false });
+const AutoChessGame = dynamic(() => import('@/components/autoChessGame/AutoChessEntry'), { ssr: false });
 
 export default function AutoChessPage() {
   return (

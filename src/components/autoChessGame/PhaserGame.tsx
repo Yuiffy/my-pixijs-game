@@ -2,7 +2,7 @@
 
 /* eslint-disable no-console */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   AudioMutedOutlined,
   CloseOutlined,
@@ -40,6 +40,8 @@ import {
   loadAudioPreferences,
 } from "./audio";
 import Codex from "./Codex";
+import { MultiplayerBridge, type MultiplayerSession } from "./multiplayer/MultiplayerBridge";
+import MultiplayerControls from "./multiplayer/MultiplayerControls";
 import ReleaseNotes from "./ReleaseNotes";
 import RiftHud, { type BattleViewAction } from "./RiftHud";
 import "./RiftHud.css";
@@ -271,7 +273,9 @@ const loadAutopilotConfiguration = (): AutopilotConfiguration => {
   }
 };
 
-export default function AutoChessGame() {
+export default function AutoChessGame({ multiplayer }: { multiplayer?: MultiplayerSession }) {
+  const multiplayerRef = useRef(multiplayer);
+  multiplayerRef.current = multiplayer;
   const gameHostRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const uiScaleRef = useRef(1);
@@ -481,7 +485,7 @@ export default function AutoChessGame() {
     const initialSeed = Number.isFinite(requestedSeed) && requestedSeed > 0
       ? requestedSeed
       : undefined;
-    const bridge = new EngineBridge(
+    const bridge = multiplayerRef.current ? new MultiplayerBridge(multiplayerRef.current) : new EngineBridge(
       initialSeed,
       Number.isFinite(requestedSpeed) ? requestedSpeed : 1,
       {
@@ -491,7 +495,7 @@ export default function AutoChessGame() {
     );
     bridgeRef.current = bridge;
     try {
-      bridge.attachRunStorage(window.localStorage);
+      if (!(bridge instanceof MultiplayerBridge)) bridge.attachRunStorage(window.localStorage);
     } catch {
       setMessage("浏览器存储不可用，本局无法保存。");
     }
@@ -543,6 +547,7 @@ export default function AutoChessGame() {
         trace: traceStats,
       };
       window.autoChessLastRun = trace;
+      if (bridge instanceof MultiplayerBridge) return;
       try {
         if (traceStats.battleEvents <= SESSION_TRACE_EVENT_LIMIT) {
           window.sessionStorage.setItem(LAST_RUN_TRACE_KEY, JSON.stringify(trace));
@@ -602,6 +607,7 @@ export default function AutoChessGame() {
     };
 
     const onBridgeEvent = (event: BridgeEvent) => {
+      if (event.type === "hud") { setRevision(value => value + 1); return; }
       if (event.type === "audio") {
         audio.unlock().catch(() => {});
         audio.play(event.event);
@@ -706,6 +712,7 @@ export default function AutoChessGame() {
     const automationTimer = window.setInterval(() => {
       if (document.hidden) bridge.updateBackground();
       autopilot.tick();
+      if (bridge instanceof MultiplayerBridge) bridge.tickRoundClock();
     }, 250);
     const onVisibility = () => {
       bridge.setHidden(document.hidden);
@@ -765,6 +772,11 @@ export default function AutoChessGame() {
 
   useEffect(() => {
     const bridge = bridgeRef.current;
+    if (multiplayer && bridge instanceof MultiplayerBridge) bridge.syncSession(multiplayer);
+  }, [multiplayer]);
+
+  useEffect(() => {
+    const bridge = bridgeRef.current;
     bridge?.setCodexOpen(codexOpen || releaseOpen || settingsOpen);
     if (!codexOpen && !releaseOpen && !settingsOpen) {
       const scene = gameRef.current?.scene.getScene("RiftLineScene") as { refresh?: () => void } | undefined;
@@ -801,7 +813,7 @@ export default function AutoChessGame() {
         setCodexOpen(false);
         return;
       }
-      if (codexOpen || releaseOpen || settingsOpen || enemyFormationOpen || event.repeat) return;
+      if (codexOpen || releaseOpen || settingsOpen || enemyFormationOpen || (bridgeRef.current instanceof MultiplayerBridge && bridgeRef.current.panelOpen) || event.repeat) return;
       const active = document.activeElement;
       const bridge = bridgeRef.current;
       if (!bridge) return;
@@ -890,6 +902,7 @@ export default function AutoChessGame() {
   }, [codexOpen, enemyFormationOpen, releaseOpen, settingsOpen, toggleFullscreen, updateBattlePaused]);
 
   const engine = bridgeRef.current?.engine;
+  const matchBridge = bridgeRef.current instanceof MultiplayerBridge ? bridgeRef.current : undefined;
   const dispatch = useCallback((action: import("./phaser/EngineBridge").GameAction) => {
     bridgeRef.current?.dispatch(action);
     setRevision((value) => value + 1);
@@ -907,7 +920,7 @@ export default function AutoChessGame() {
   return (
     <div
       ref={containerRef}
-      className={`rift-game-shell rift-shell-${engine?.state.phase || "loading"}`}
+      className={`rift-game-shell rift-shell-${engine?.state.phase || "loading"}${multiplayer ? " rift-multiplayer" : ""}`}
       style={{
         width: fullscreen ? "100vw" : "100%",
         height: fullscreen ? "100dvh" : "100%",
@@ -944,6 +957,7 @@ export default function AutoChessGame() {
         `}</style>
         <div className="rift-toolbar" style={{ width: "100%", height: TOOLBAR_HEIGHT, flex: "0 0 auto", display: "flex", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "5px 10px", boxSizing: "border-box", color: "#7892a5", overflowX: "auto", background: "#08131e", borderBottom: "1px solid rgba(117, 205, 255, 0.16)", font: `600 12px ${FONT}` }}>
           <span className="rift-toolbar-status" aria-live="polite" style={{ flex: 1, minWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#82a8bd" }}>{message}</span>
+          {matchBridge ? <button type="button" onClick={() => matchBridge.openPanel(true)} style={toolbarButtonStyle}>房间 / 战报</button> : <a href="/game/autochess?mode=multiplayer" style={toolbarButtonStyle}>多人模式beta</a>}
           <button type="button" onClick={() => setCodexOpen(true)} style={toolbarButtonStyle}>图鉴 / 本局天赋</button>
           <button type="button" className={`${autoplayEnabled ? "is-autoplay" : ""}${autopilotThinking ? " is-thinking" : ""}`} aria-pressed={autoplayEnabled} onClick={() => updateAutoplay(!autoplayEnabled)} style={toolbarButtonStyle} title={autoplayEnabled ? "关闭托管并接管" : "让 AI 托管当前对局"}><RobotOutlined aria-hidden="true" /><span className="rift-toolbar-button-label">{autopilotThinking ? "后台推演中" : autoplayEnabled ? "AI 托管中" : "手动指挥"}</span></button>
           <div className="rift-toolbar-audio" aria-label="音量控制">
@@ -975,6 +989,7 @@ export default function AutoChessGame() {
           </div>
         )}
         <RiftHud
+          multiplayer={matchBridge}
           engine={engine || null}
           savedRun={bridgeRef.current?.savedRun || null}
           saveIssue={bridgeRef.current?.saveIssue || null}
@@ -990,6 +1005,7 @@ export default function AutoChessGame() {
           battlePaused={Boolean(bridgeRef.current?.battlePaused)}
           onBattlePauseChange={updateBattlePaused}
         />
+        {matchBridge && <MultiplayerControls bridge={matchBridge} />}
         <Codex open={codexOpen} augmentHistory={engine?.state.augmentHistory || []} starterHistory={engine?.state.starterHistory || []} onClose={() => setCodexOpen(false)} />
         <ReleaseNotes open={releaseOpen} onClose={() => setReleaseOpen(false)} />
         {settingsOpen && (
@@ -1045,7 +1061,7 @@ export default function AutoChessGame() {
                   ))}
                 </div>
               </div>
-              <div className="rift-setting-row"><span>后台继续战斗</span><button type="button" className="rift-switch" role="switch" aria-label="后台继续战斗" aria-checked={backgroundBattleEnabled} onClick={() => updateBackgroundBattle(!backgroundBattleEnabled)}><i /></button></div>
+              {!matchBridge && <div className="rift-setting-row"><span>后台继续战斗</span><button type="button" className="rift-switch" role="switch" aria-label="后台继续战斗" aria-checked={backgroundBattleEnabled} onClick={() => updateBackgroundBattle(!backgroundBattleEnabled)}><i /></button></div>}
               <div className="rift-setting-row rift-setting-audio-mobile"><span>游戏声音</span><button type="button" className="rift-switch" role="switch" aria-label="游戏声音" aria-checked={!audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferences.muted })}><i /></button></div>
               <label className="rift-setting-slider rift-setting-audio-mobile" htmlFor="rift-music-volume"><span>音乐</span><input id="rift-music-volume" aria-label="设置中的音乐音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.musicVolume} onChange={(event) => updateAudio({ musicVolume: Number(event.target.value) })} /></label>
               <label className="rift-setting-slider rift-setting-audio-mobile" htmlFor="rift-effects-volume"><span>音效</span><input id="rift-effects-volume" aria-label="设置中的音效音量" type="range" min="0" max="1" step="0.05" value={audioPreferences.effectsVolume} onChange={(event) => updateAudio({ effectsVolume: Number(event.target.value) })} /></label>
@@ -1060,7 +1076,14 @@ export default function AutoChessGame() {
   );
 }
 
-const toolbarButtonStyle = {
+const toolbarButtonStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  flexShrink: 0,
+  textDecoration: "none",
+  whiteSpace: "nowrap",
   height: 30,
   padding: "0 12px",
   border: "1px solid #496579",

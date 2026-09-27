@@ -1,3 +1,4 @@
+import type { OwnedUnit } from "../core/gameTypes";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import type { AutoChessEngine } from "../core/gameEngine";
@@ -14,7 +15,7 @@ import {
 } from "../core/gameData";
 import { UnitPortrait } from "./shared";
 
-export function EnemyFormationOverlay({ engine, onClose }: { engine: AutoChessEngine; onClose: () => void }) {
+export function EnemyFormationOverlay({ engine, onClose, enemyBoard, opponentName }: { engine: AutoChessEngine; onClose: () => void; enemyBoard?: (OwnedUnit | null)[]; opponentName?: string }) {
   const wave = engine.currentWave;
   const playerUnits = engine.state.board.flatMap((owned, index) => (
     owned
@@ -28,7 +29,16 @@ export function EnemyFormationOverlay({ engine, onClose }: { engine: AutoChessEn
         }]
       : []
   ));
-  const enemyUnits = wave.units.map((waveUnit, index) => ({
+  const enemyUnits = enemyBoard ? enemyBoard.flatMap((unit, index) => {
+    if (!unit) return [];
+    const position = playerFormationPosition(index);
+    return [{ key: `enemy-${unit.uid}`,
+team: "enemy" as const,
+unitId: unit.id,
+star: unit.star,
+      position: { x: BATTLE_BOUNDS.left + BATTLE_BOUNDS.right - position.x, y: position.y },
+owned: null }];
+  }) : wave.units.map((waveUnit, index) => ({
     key: `enemy-${waveUnit.id}-${index}`,
     team: "enemy" as const,
     unitId: waveUnit.id,
@@ -64,17 +74,18 @@ export function EnemyFormationOverlay({ engine, onClose }: { engine: AutoChessEn
         <header>
           <div>
             <span className="rift-eyebrow">BATTLE DEPLOYMENT / WAVE {String(wave.round).padStart(2, "0")}</span>
-            <h2 id="enemy-formation-title">双方部署图</h2>
+            <h2 id="enemy-formation-title">{enemyBoard ? `${opponentName || "对手"} · 上一轮部署` : "双方部署图"}</h2>
           </div>
           <div className="rift-enemy-formation-summary">
             <span>我方 <b>{playerUnits.length}</b></span>
-            <span>敌军 <b>{wave.units.length}</b></span>
-            <span>价值 <b>{enemyBudgetForRound(engine.state.round)}</b></span>
+            <span>{enemyBoard ? "上轮阵容" : "敌军"} <b>{enemyUnits.length}</b></span>
+            {!enemyBoard && <span>价值 <b>{enemyBudgetForRound(engine.state.round)}</b></span>}
           </div>
           <button type="button" className="rift-enemy-formation-close" onClick={onClose} aria-label="关闭敌方部署图" title="关闭">
             <span aria-hidden="true">×</span>
           </button>
         </header>
+        {enemyBoard && <p style={{ padding: "0 20px", color: "#9db5c6" }}>{enemyBoard.some(Boolean) ? "仅展示上一轮锁定阵容，本轮调整不会提前公开。" : "尚无上一轮阵容。"}</p>}
         <div className="rift-enemy-formation-layout">
           <div className="rift-enemy-formation-field" aria-label="双方战场站位">
             <span className="rift-formation-side-label is-player">我方后排</span>

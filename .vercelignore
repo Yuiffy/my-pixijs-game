@@ -1,0 +1,32 @@
+# Local dependencies, builds, tests and credentials are not deployment sources.
+.git
+node_modules
+.pnpm-store
+.pnp*
+.yarn
+.next
+.next-*
+out
+build
+coverage
+artifacts
+.tmp
+tmp
+screenshots
+logs
+.playwright-mcp
+.vercel
+.env*
+*.pem
+*.tsbuildinfo
+*.log
+*.stackdump
+__pycache__
+*.py[cod]
+.idea
+.claude
+.codex
+.agents
+.DS_Store
+# Stream shards are hosted separately, as in the existing Git deployment.
+public/data/streams

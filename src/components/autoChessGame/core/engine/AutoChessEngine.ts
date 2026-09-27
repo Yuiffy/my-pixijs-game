@@ -12,6 +12,7 @@ import {
   UNIT_DEFS,
   UnitId,
   type PlayerLevel,
+  type WaveDefinition,
   SUPPORT_HEAL_HP_RATIO,
   abilityStatForStar,
   traitLevelForCount,
@@ -114,6 +115,7 @@ export type AutoChessEngineSnapshot = {
   shopRandomState: number;
   shopSequenceCounts: Record<PlayerLevel, number>;
   uid: number;
+  presentation?: { wave: WaveDefinition | null; bounty: number | null };
 };
 
 const CONTACT_ATTACK_BUFFER = 12;
@@ -687,6 +689,7 @@ export class AutoChessEngine {
       shopRandomState: this.shopRng.snapshot(),
       shopSequenceCounts: { ...this.shopSequenceCounts },
       uid: this.uid,
+      ...(this.previewWave || this.previewBounty !== null ? { presentation: { wave: this.previewWave, bounty: this.previewBounty } } : {}),
     };
   }
 
@@ -696,6 +699,8 @@ export class AutoChessEngine {
     this.shopRng.restore(snapshot.shopRandomState);
     this.shopSequenceCounts = { ...snapshot.shopSequenceCounts };
     this.uid = snapshot.uid;
+    this.previewWave = snapshot.presentation?.wave ?? null;
+    this.previewBounty = snapshot.presentation?.bounty ?? null;
     this.shopPreviewCache.clear();
     this.chronosphereEnergyLocks.clear();
     this.observedTargets.clear();
@@ -853,12 +858,17 @@ export class AutoChessEngine {
     return this.progression.financeIncomeBonus;
   }
 
+  /** UI-only scouting data. Authoritative simulations leave this unset. */
+  public previewWave: WaveDefinition | null = null;
+
+  public previewBounty: number | null = null;
+
   public get currentWave() {
-    return this.progression.currentWave;
+    return this.previewWave ?? this.progression.currentWave;
   }
 
   public get potentialBounty() {
-    return this.progression.potentialBounty;
+    return this.previewBounty ?? this.progression.potentialBounty;
   }
 
   private finishBattle(won: boolean) {
@@ -1173,6 +1183,25 @@ export class AutoChessEngine {
 
   private createBattle(): BattleState {
     return this.combatSetup.createBattle();
+  }
+
+  /** Multiplayer owns round progression; combat still uses the canonical simulator. */
+  public startMatchBattle(player?: Fighter[], enemy?: Fighter[]) {
+    this.state.battle = this.createBattle();
+    if (player) this.state.battle.player = structuredClone(player);
+    if (enemy) this.state.battle.enemy = structuredClone(enemy);
+    this.state.phase = "battle";
+    this.state.result = null;
+    this.state.toast = null;
+    this.observedTargets.clear();
+  }
+
+  public prepareMatchRound() {
+    if (!this.isMaxPlayerLevel) {
+      if (this.state.upgradeRemaining > 0) this.state.upgradeRemaining -= 1;
+      else this.state.upgradeDiscountCarry += 1;
+    }
+    this.progression.prepareNextRound();
   }
 
   private markTeamEngaged(team: Team) {

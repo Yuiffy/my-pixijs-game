@@ -50,7 +50,10 @@ import {
   TraitSheet,
 } from "./hud/MobileSheets";
 
+import type { MultiplayerBridge } from "./multiplayer/MultiplayerBridge";
+
 type Props = {
+  multiplayer?: MultiplayerBridge;
   engine: AutoChessEngine | null;
   savedRun: RunSaveInfo | null;
   saveIssue: RunSaveIssue;
@@ -128,6 +131,7 @@ function FinalRanking({
 }
 
 export default function RiftHud({
+  multiplayer,
   engine,
   savedRun,
   saveIssue,
@@ -182,11 +186,11 @@ export default function RiftHud({
     .map(({ id, level }) => `${TRAITS[id].name}${STAR_LABEL[level]}`)
     .join(" · ");
   const activeTraits = engine.getActiveTraits();
-  const playerBattleTraits = (Object.keys(TRAITS) as TraitId[]).flatMap((id) => {
+  const playerBattleTraits = multiplayer?.battleTraits.player ?? (Object.keys(TRAITS) as TraitId[]).flatMap((id) => {
     const status = engine.getTraitStatus(id);
     return status.level ? [{ ...TRAITS[id], count: status.count, level: status.level }] : [];
   });
-  const enemyBattleTraits = enemyTraitActivations(wave.units).map(({ id, count, level }) => ({
+  const enemyBattleTraits = multiplayer?.battleTraits.enemy ?? enemyTraitActivations(wave.units).map(({ id, count, level }) => ({
     ...TRAITS[id],
     count,
     level,
@@ -197,7 +201,7 @@ export default function RiftHud({
   if (state.phase === "title") {
     return (
       <div className="rift-dom-layer rift-dom-title" style={{ fontFamily: FONT }}>
-        <HudHeader state={state} />
+        <HudHeader state={state} multiplayer={multiplayer} />
         <div className="rift-dom-title-body">
           <section className="rift-title-copy">
             <span className="rift-eyebrow">RIFT LINE // 16 WAVE EXPEDITION</span>
@@ -261,7 +265,7 @@ export default function RiftHud({
     const takenTop = top((stats) => perBattle(stats, stats.damageTaken));
     return (
       <div className="rift-dom-layer rift-dom-modal-phase" style={{ fontFamily: FONT }}>
-        <HudHeader state={state} />
+        <HudHeader state={state} multiplayer={multiplayer} />
         <section className={`rift-dom-phase-card rift-final-report ${state.finalWon ? "is-win" : "is-loss"}`}>
           <header className="rift-final-heading">
             <div>
@@ -331,6 +335,7 @@ export default function RiftHud({
   const battleOverlay = state.phase === "battle" && state.battle && (
     <div className="rift-dom-world-frame">
       <BattleTraitBar
+        labels={multiplayer?.battleLabels ?? undefined}
         playerTraits={playerBattleTraits}
         enemyTraits={enemyBattleTraits}
         collapsed={battleTraitsCollapsed}
@@ -342,7 +347,8 @@ export default function RiftHud({
           <button type="button" onClick={() => onBattleViewAction("reset")} aria-label="复位战场视图" title="复位战场视图">⌖</button>
           <button type="button" onClick={() => onBattleViewAction("zoomIn")} aria-label="放大战场" title="放大战场">+</button>
         </div>
-        <button
+        {!multiplayer && (
+<button
           type="button"
           className={`rift-pause-battle-button ${battlePaused ? "is-paused" : ""}`}
           aria-label={battlePaused ? "继续战斗" : "暂停战斗"}
@@ -353,7 +359,8 @@ export default function RiftHud({
         >
           {battlePaused ? <CaretRightOutlined aria-hidden="true" /> : <PauseOutlined aria-hidden="true" />}
         </button>
-        <ActionButton className="rift-skip-battle-button" aria-label="快速结算当前战斗" aria-keyshortcuts="S" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗 (S)"><FastForwardOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">快速结算</span><kbd>S</kbd></ActionButton>
+)}
+        {!multiplayer && <ActionButton className="rift-skip-battle-button" aria-label="快速结算当前战斗" aria-keyshortcuts="S" onClick={() => dispatch({ type: "skipBattle" })} title="快速结算当前战斗 (S)"><FastForwardOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">快速结算</span><kbd>S</kbd></ActionButton>}
         <ActionButton className="rift-ranking-button" aria-label={state.battle.rankingOpen ? "收起统计" : "查看统计"} aria-expanded={state.battle.rankingOpen} aria-keyshortcuts="D" onClick={() => dispatch({ type: "rankingToggle" })} title={state.battle.rankingOpen ? "收起统计 (D)" : "查看统计 (D)"}><BarChartOutlined aria-hidden="true" /><span className="rift-battle-tool-copy">{state.battle.rankingOpen ? "收起统计" : "查看统计"}</span><kbd>D</kbd></ActionButton>
       </div>
       {battlePaused && !inspectedFighterId && (
@@ -367,30 +374,32 @@ export default function RiftHud({
 
   return (
     <div className={`rift-dom-layer rift-phase-${state.phase}`} style={{ fontFamily: FONT }}>
-      <HudHeader state={state} />
+      <HudHeader state={state} multiplayer={multiplayer} />
       {state.phase === "preparation" && (
         <>
           <div className="rift-dom-stage">
             <aside className="rift-dom-shop-desktop">
               <div className="rift-shop-heading"><div><span className="rift-eyebrow">TACTICAL SHOP</span><strong>战术商店</strong></div><button className="rift-trait-planner-trigger" type="button" aria-label="阵容羁绊" title="阵容羁绊" onClick={() => setSheet("traits")}><TeamOutlined /></button><div className="rift-shop-level"><b>{bookLevelForPlayerLevel(state.playerLevel)} 本</b><small>{engine.isMaxPlayerLevel ? engine.isStarForgeUnlocked ? "升星工坊已接入" : "满本 · 可解锁工坊" : `下本还需 ${engine.upgradeCost} 金${state.upgradeDiscountCarry ? ` · 结转 ${state.upgradeDiscountCarry}` : ""}`}</small></div></div>
+              {multiplayer && <p className="rift-match-prep-status">{multiplayer.me.hp <= 0 ? "已淘汰 · 可从房间面板观战" : multiplayer.me.ready ? "已准备 · 取消准备后可继续调整" : `剩余 ${multiplayer.seconds} 秒 · 全员准备后开战`}</p>}
               <div className="rift-shop-economy"><span>金币 <b>{state.gold}</b></span><span>结算金 <b>{engine.potentialBounty}</b></span><InterestInfo engine={engine} /><span>连胜 <b>{state.streak || "—"}</b></span></div>
               <div className="rift-tier-odds">{odds.map((chance, index) => <span key={index} className={`tier-${index + 1} ${chance ? "" : "is-muted"}`}><i>{index + 1}</i><b>{chance}%</b></span>)}</div>
               <div className="rift-shop-list">{state.shop.map((unitId, index) => <ShopCard key={`${unitId}-${index}`} unitId={unitId} engine={engine} owned={unitId ? ownedStars(unitId) : { 1: 0, 2: 0, 3: 0 }} onBuy={() => dispatch({ type: "shop", index })} />)}</div>
-              <div className="rift-dom-shop-actions"><StarForgeAction engine={engine} selected={selected} onAction={dispatch} /><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton className="rift-auto-arrange-button" aria-label="推荐站位" aria-keyshortcuts="A" title="推荐站位 (A)" onClick={() => dispatch({ type: "autoArrange" })} disabled={!engine.boardCount}><AppstoreOutlined aria-hidden="true" /><span>推荐站位</span><b>A</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开始战斗</span><b>SPACE</b></ActionButton></div>
+              <div className="rift-dom-shop-actions"><StarForgeAction engine={engine} selected={selected} onAction={dispatch} /><ActionButton tone="lock" className={state.shopLocked ? "is-selected" : ""} onClick={() => dispatch({ type: "lock" })}><span>{state.shopLocked ? "已锁定" : "锁定商店"}</span><b>{state.shopLocked ? "ON" : ""}</b></ActionButton><ActionButton tone="economic" onClick={() => dispatch({ type: "reroll" })} disabled={!state.freeRerollCharges && state.gold < 1}><span>刷新</span><b>{state.freeRerollCharges ? `免费 ${state.freeRerollCharges}` : "1"}</b></ActionButton><ActionButton className="rift-auto-arrange-button" aria-label="推荐站位" aria-keyshortcuts="A" title="推荐站位 (A)" onClick={() => dispatch({ type: "autoArrange" })} disabled={!engine.boardCount}><AppstoreOutlined aria-hidden="true" /><span>推荐站位</span><b>A</b></ActionButton><ActionButton tone="confirm" className="rift-start-button" onClick={() => dispatch({ type: "battle" })} disabled={multiplayer ? multiplayer.busy || multiplayer.me.hp <= 0 : !engine.boardCount}><span>{multiplayer ? multiplayer.readyLabel : "开始战斗"}</span><b>SPACE</b></ActionButton></div>
               <footer>{activeTraits.length ? <><span className="rift-status-dot" />已激活 {activeTraits.map((trait) => `${trait.name}${STAR_LABEL[trait.level]}`).join(" · ")}</> : "上阵两名同名羁绊单位，开始构筑你的第一套答案"}</footer>
             </aside>
           </div>
           <section className={`rift-mobile-brief ${wave.tag === "normal" ? "" : `is-${wave.tag}`}`}>
             <div><span className="rift-eyebrow">{wave.tag === "boss" ? "BOSS WARNING" : wave.tag === "elite" ? "ELITE WARNING" : `ROUND ${String(state.round).padStart(2, "0")} / QUICK READ`}</span><strong>{wave.name}</strong></div>
-            <p>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。` : `人口已满。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。`} 无论胜负都会发放结算金。敌方羁绊：{enemyTraits || "未成型"}。</p>
+            <p>{multiplayer ? `${multiplayer.me.ready ? "已准备 · 可取消准备" : `备战剩余 ${multiplayer.seconds} 秒`}。${multiplayer.match.mode === "versus" ? "敌方展示上一轮阵容，可查看部署详情。" : "守住防线后，存活棋子可为漏怪队友救援一轮。"}` : <>{engine.boardCount < engine.boardCap ? `还可上阵 ${engine.boardCap - engine.boardCount} 名单位。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。` : `人口已满。敌军 ${wave.units.length} 人，价值约 ${enemyBudgetForRound(state.round)}，本战结算 ${engine.potentialBounty} 金。`} 无论胜负都会发放结算金。敌方羁绊：{enemyTraits || "未成型"}。</>}</p>
             <button onClick={() => setSheet("traits")}>查看羁绊 <b>↗</b></button>
           </section>
-          <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton className="rift-auto-arrange-button" aria-label="推荐站位" aria-keyshortcuts="A" title="推荐站位 (A)" onClick={() => dispatch({ type: "autoArrange" })} disabled={!engine.boardCount}><AppstoreOutlined className="rift-mobile-action-icon" aria-hidden="true" /><span>推荐站位</span><b>A</b></ActionButton><ActionButton tone="danger" onClick={() => dispatch({ type: "sell" })} disabled={!selected}><span className="rift-mobile-action-icon">¥</span><span>出售</span><b>{selected ? `+${engine.getUnitSellValue(selected)}` : "—"}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={!engine.boardCount}><span>开战</span><b>SPACE</b></ActionButton></nav>
+          <nav className="rift-dom-mobile-actions" aria-label="移动端战术操作"><ActionButton onClick={() => setSheet("shop")}><span className="rift-mobile-action-icon">◈</span><span>商店</span><b>{state.shop.filter(Boolean).length}</b></ActionButton><ActionButton onClick={() => setSheet("bench")}><span className="rift-mobile-action-icon">▦</span><span>备战席</span><b>{state.bench.filter(Boolean).length}/{state.bench.length}</b></ActionButton><ActionButton className="rift-auto-arrange-button" aria-label="推荐站位" aria-keyshortcuts="A" title="推荐站位 (A)" onClick={() => dispatch({ type: "autoArrange" })} disabled={!engine.boardCount}><AppstoreOutlined className="rift-mobile-action-icon" aria-hidden="true" /><span>推荐站位</span><b>A</b></ActionButton><ActionButton tone="danger" onClick={() => dispatch({ type: "sell" })} disabled={!selected}><span className="rift-mobile-action-icon">¥</span><span>出售</span><b>{selected ? `+${engine.getUnitSellValue(selected)}` : "—"}</b></ActionButton><ActionButton tone="confirm" onClick={() => dispatch({ type: "battle" })} disabled={multiplayer ? multiplayer.busy || multiplayer.me.hp <= 0 : !engine.boardCount}><span>{multiplayer ? multiplayer.readyLabel : "开战"}</span><b>SPACE</b></ActionButton></nav>
         </>
       )}
       {battleOverlay}
-      {state.phase === "battle" && inspectedFighterId && <BattleInspector engine={engine} fid={inspectedFighterId} onSelect={fid => dispatch({ type: "inspectFighter", fid })} />}
+      {state.phase === "battle" && inspectedFighterId && <BattleInspector labels={multiplayer?.battleLabels ?? undefined} engine={engine} fid={inspectedFighterId} onSelect={fid => dispatch({ type: "inspectFighter", fid })} />}
       <div className="rift-mobile-session-controls" aria-label="对局控制">
+        {multiplayer ? <button type="button" onClick={() => multiplayer.openPanel(true)}>房间 / 战报</button> : <a href="/game/autochess?mode=multiplayer">多人模式beta</a>}
         <button type="button" aria-pressed={autoplayEnabled} onClick={() => onAutoplayChange(!autoplayEnabled)} title={autoplayEnabled ? "关闭托管并接管" : "开启 AI 托管"}><RobotOutlined aria-hidden="true" /><span>{autoplayEnabled ? "接管" : "托管"}</span></button>
         <button type="button" aria-label="游戏设置" onClick={onSettingsOpen} title="游戏设置"><SettingOutlined aria-hidden="true" /></button>
       </div>
@@ -398,6 +407,8 @@ export default function RiftHud({
       {enemyFormationOpen && state.phase === "preparation" && (
         <EnemyFormationOverlay
           engine={engine}
+          enemyBoard={multiplayer?.match.mode === "versus" ? multiplayer.opponentBoard ?? [] : undefined}
+          opponentName={multiplayer?.match.mode === "versus" ? engine.currentWave.name : undefined}
           onClose={() => onEnemyFormationOpenChange(false)}
         />
       )}

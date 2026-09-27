@@ -41,6 +41,7 @@ let browser;
 
   browser = await chromium.launch({
     channel: "chrome",
+    args: ["--mute-audio", "--disable-speech-api"],
     headless: process.env.AUTOCHESS_HEADED !== "1",
   });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -58,6 +59,7 @@ let browser;
     if (entry.url.includes("/images/autochess/portraits/")) portraitResponses.push(entry);
   });
   await page.addInitScript(() => {
+    if (window.speechSynthesis) window.speechSynthesis.speak = () => {};
     window.__riftCapturedConsole = [];
     const originalInfo = console.info.bind(console);
     console.info = (...args) => {

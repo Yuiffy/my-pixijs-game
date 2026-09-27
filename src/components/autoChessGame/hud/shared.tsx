@@ -1,3 +1,4 @@
+import type { MultiplayerBridge } from "../multiplayer/MultiplayerBridge";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { resolveUnitPortrait, useCharacterStyle } from "../core/characterStyle";
@@ -123,7 +124,7 @@ export function StarForgeAction({
   );
 }
 
-export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state"]> }) {
+export function HudHeader({ state, multiplayer }: { state: NonNullable<AutoChessEngine["state"]>; multiplayer?: MultiplayerBridge }) {
   const mode = progressionModeForRound(state.round);
   const progress =
     state.phase === "title"
@@ -133,14 +134,14 @@ export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state
         : mode === "endless"
           ? Math.min(100, ((state.round - CAMPAIGN_ROUNDS) / (NORMAL_ENDLESS_END_ROUND - CAMPAIGN_ROUNDS)) * 100)
           : 100;
-  const progressLabel = mode === "campaign" ? "远征进度" : mode === "endless" ? "普通无限" : "地狱无限";
-  const progressValue =
+  const progressLabel = multiplayer ? multiplayer.modeName : mode === "campaign" ? "远征进度" : mode === "endless" ? "普通无限" : "地狱无限";
+  const progressValue = multiplayer ? `第 ${multiplayer.match.round} ${multiplayer.match.mode === "coop" ? "/ 16 波" : "轮"}` :
     mode === "campaign"
       ? `${state.round}/${CAMPAIGN_ROUNDS} 战`
       : mode === "endless"
         ? `${state.round}/${NORMAL_ENDLESS_END_ROUND} 战`
         : `第 ${state.round} 战`;
-  const progressHint =
+  const progressHint = multiplayer ? multiplayer.stage === "finished" ? "对局已结束" : `${multiplayer.stageLabel} · ${multiplayer.seconds} 秒` :
     mode === "campaign"
       ? state.round === CAMPAIGN_ROUNDS
         ? "终局首领已抵达"
@@ -149,7 +150,7 @@ export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state
         ? `距离地狱无限还有 ${NORMAL_ENDLESS_END_ROUND - state.round} 战`
         : "敌人会持续变强";
   return (
-    <header className="rift-dom-header" style={{ fontFamily: FONT }}>
+    <header className={`rift-dom-header${multiplayer ? " rift-match-header" : ""}`} style={{ fontFamily: FONT }}>
       <div className="rift-brand">
         <span className="rift-brand-mark">RL</span>
         <div>
@@ -169,10 +170,11 @@ export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state
       ) : (
         <div className="rift-header-metrics">
           <div className="rift-header-metric rift-header-core"><span>核心</span><b>{state.hp}<small>/{state.maxHp}</small></b><i><em style={{ width: `${Math.max(0, (state.hp / state.maxHp) * 100)}%` }} /></i></div>
-          <div className="rift-header-metric rift-header-score"><span>积分</span><b>{state.score.toLocaleString()}</b><small>{state.streak > 0 ? `连胜 ${state.streak}` : "等待首胜"}</small></div>
+          <div className="rift-header-metric rift-header-score"><span>{multiplayer ? "金币" : "积分"}</span><b>{(multiplayer ? state.gold : state.score).toLocaleString()}</b><small>{multiplayer ? `${multiplayer.match.players.filter((_, i) => multiplayer.hpFor(i) > 0).length} 人存活` : state.streak > 0 ? `连胜 ${state.streak}` : "等待首胜"}</small></div>
         </div>
       )}
-      <GameShareButton gamePath="/game/autochess" />
+      {!multiplayer && state.phase === "title" && <a className="rift-mobile-beta-entry" href="/game/autochess?mode=multiplayer">多人模式beta</a>}
+      <GameShareButton gamePath={multiplayer ? multiplayer.session.room.code === "LOCAL" ? "/game/autochess?mode=multiplayer" : `/game/autochess?mode=multiplayer&room=${multiplayer.session.room.code}` : "/game/autochess"} />
     </header>
   );
 }

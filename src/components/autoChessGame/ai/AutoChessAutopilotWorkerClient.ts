@@ -257,7 +257,7 @@ export class AutoChessAutopilotWorkerClient {
       if (this.enabled) this.fallbackTick(Date.now());
       return;
     }
-    if (!this.enabled || decisionStateKey(this.bridge) !== active.stateKey) return;
+    if (!this.enabled || !this.bridge.canAutoplayAct || decisionStateKey(this.bridge) !== active.stateKey) return;
     if (response.action?.type === "starter") this.startRequested = false;
     if (response.action) this.bridge.dispatch(response.action);
   }
@@ -359,7 +359,7 @@ export class AutoChessAutopilotWorkerClient {
   }
 
   public tick(now = Date.now()) {
-    if (!this.enabled || this.bridge.codexOpen || this.busy) return null;
+    if (!this.enabled || !this.bridge.canAutoplayAct || this.bridge.codexOpen || this.busy) return null;
     if (this.bridge.engine.state.phase === "battle") {
       if (!this.shouldPrewarmBattle() || !this.ensureWorker()) return null;
       const prewarmKey = prewarmStateKey(this.bridge, this.configuration);

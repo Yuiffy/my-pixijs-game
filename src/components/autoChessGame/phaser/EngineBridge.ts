@@ -9,6 +9,7 @@ import type {
   GamePhase,
   RankingMetric,
   UnitLocation,
+  Team,
 } from "../core/gameTypes";
 import { UNIT_DEFS, type StarterId } from "../core/gameData";
 import { AUTOCHESS_VERSION } from "../version";
@@ -34,7 +35,7 @@ export type BridgeEvent =
   | { type: "audio"; event: GameAudioEvent }
   | { type: "phase"; phase: GamePhase }
   | { type: "toast"; text: string | null }
-  | { type: "state" };
+  | { type: "state" | "hud" };
 
 export type GameAction =
   | { type: "starter"; id: StarterId }
@@ -143,6 +144,18 @@ export class EngineBridge {
   public backgroundBattleEnabled = false;
 
   public battlePaused = false;
+
+  /** Embedded multiplayer replays show the entire arena at their initial zoom. */
+  public battleOverview = false;
+
+  /** Presentation may continue after combat has resolved, without advancing combat rules. */
+  public get battleAftermath(): { elapsed: number; winner: Team } | null { return null; }
+
+  public preparationPressure: string | null = null;
+
+  public get canAutoplayAct() { return true; }
+
+  public battleLabels: { player: string; enemy: string; playerSummary: string; enemySummary: string } | null = null;
 
   public inspectedFighterId: string | null = null;
 

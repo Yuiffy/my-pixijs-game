@@ -4,7 +4,8 @@ import type { AutoChessEngine } from "../core/gameEngine";
 import { UNIT_DEFS, abilityDescriptionForStar } from "../core/gameData";
 import { STAR_LABEL, UnitPortrait } from "./shared";
 
-export function BattleInspector({ engine, fid, onSelect }: {
+export function BattleInspector({ engine, fid, onSelect, labels }: {
+  labels?: { player: string; enemy: string };
   engine: AutoChessEngine;
   fid: string;
   onSelect: (fid: string | null) => void;
@@ -36,7 +37,7 @@ export function BattleInspector({ engine, fid, onSelect }: {
     <aside className="rift-battle-inspector" aria-label="角色战况" data-fighter-id={fid}>
       <header>
         <UnitPortrait unitId={fighter.unitId} size={38} />
-        <div><strong>{definition.name} <small>{STAR_LABEL[fighter.star]}</small></strong><span>{fighter.team === "player" ? "我方" : "敌方"} · {fighter.alive ? "战斗中" : "已倒下"}</span></div>
+        <div><strong>{definition.name} <small>{STAR_LABEL[fighter.star]}</small></strong><span>{labels?.[fighter.team] ?? (fighter.team === "player" ? "我方" : "敌方")} · {fighter.alive ? "战斗中" : "已倒下"}</span></div>
         <button type="button" aria-label="关闭角色战况" title="关闭角色战况" onClick={() => onSelect(null)}><CloseOutlined /></button>
       </header>
       <div className="rift-fighter-vitals">

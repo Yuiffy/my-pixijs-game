@@ -69,6 +69,7 @@
 .rift-switch[aria-checked="true"] { border-color: #68d4aa; background: #246649; }
 .rift-switch[aria-checked="true"] i { transform: translateX(19px); background: #effff8; }
 .rift-mobile-session-controls { display: none; }
+.rift-mobile-beta-entry { display: none; }
 
 .rift-dom-header {
   position: absolute;
@@ -842,6 +843,7 @@
   .rift-setting-audio-mobile { display: flex; }
   .rift-dom-layer { inset: 0; overflow: hidden; }
   .rift-dom-header { gap: 9px; height: 58px; padding: 0 11px; }
+  .rift-mobile-beta-entry { display: inline-flex; margin-left: auto; padding: 8px; border: 1px solid #345c71; border-radius: 7px; color: #cae9f5; background: #102a3c; font-size: 10px; white-space: nowrap; text-decoration: none; }
   .rift-brand { min-width: 0; gap: 7px; }
   .rift-brand-mark { width: 24px; height: 24px; border-radius: 7px; font-size: 8px; }
   .rift-brand strong { font-size: 15px; letter-spacing: .02em; }.rift-brand small { display: none; }.rift-brand-title { gap: 4px; }.rift-brand-title > span { font-size: 7px; }
@@ -850,7 +852,9 @@
 
   .rift-dom-stage, .rift-dom-shop-desktop { display: none; }
   .rift-mobile-session-controls { position: absolute; top: 66px; left: 10px; z-index: 12; display: flex; gap: 5px; pointer-events: auto; }
-  .rift-mobile-session-controls button { display: inline-flex; min-width: 36px; height: 34px; align-items: center; justify-content: center; gap: 5px; padding: 0 9px; border: 1px solid rgba(86, 153, 181, .62); border-radius: 7px; background: rgba(10, 34, 48, .88); color: #cae9f5; font-family: inherit; font-size: 10px; font-weight: 800; line-height: 1; backdrop-filter: blur(8px); }
+  .rift-mobile-session-controls button, .rift-mobile-session-controls a { display: inline-flex; box-sizing: border-box; text-decoration: none; min-width: 36px; height: 34px; align-items: center; justify-content: center; gap: 5px; padding: 0 9px; border: 1px solid rgba(86, 153, 181, .62); border-radius: 7px; background: rgba(10, 34, 48, .88); color: #cae9f5; font-family: inherit; font-size: 10px; font-weight: 800; line-height: 1; backdrop-filter: blur(8px); }
+  .rift-match-header .rift-run-progress-label { display: grid; gap: 1px; white-space: nowrap; margin-bottom: 2px; }
+  .rift-match-header .rift-run-progress > small { display: block; margin-top: 2px; color: #98cbbb; font-size: 8px; white-space: nowrap; }
   .rift-mobile-session-controls button[aria-pressed="true"] { border-color: #63d6a8; background: rgba(24, 84, 61, .92); color: #dcfff0; }
   .rift-mobile-brief { position: absolute; top: 500px; right: 15px; left: 15px; display: flex; min-height: 80px; align-items: center; gap: 13px; padding: 12px 13px; box-sizing: border-box; border: 1px solid #294e61; border-radius: 10px; background: linear-gradient(135deg, rgba(13, 36, 50, .95), rgba(9, 24, 36, .93)); pointer-events: auto; }
   .rift-mobile-brief.is-elite { border-color: #ad7f30; box-shadow: inset 3px 0 0 #ffc35b; }
