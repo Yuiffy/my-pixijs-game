@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   action,
@@ -457,6 +458,7 @@ export default function HushLive() {
           嘘，TA还在播 <b>3D</b>
         </span>
         <div>
+          <GameShareButton gamePath="/game/hush-live" />
           <button
             onClick={() => {
               const enabled = !sound;

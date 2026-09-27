@@ -270,10 +270,19 @@
   min-height: 100svh;
 }
 
-.switchButton {
+.playingControls {
   position: fixed;
   left: 14px;
   bottom: 14px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f0eadb;
+}
+
+.switchButton {
+  position: static;
   z-index: 25;
   display: grid;
   grid-template-columns: 18px auto;
@@ -416,6 +425,21 @@
     border-radius: 0;
     box-shadow: none;
     text-align: left;
+  }
+
+  .playingControls {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: 100%;
+    gap: 8px;
+    padding-right: 8px;
+    background: rgba(17, 27, 29, 0.94);
+  }
+
+  .playingControls .switchButton {
+    flex: 1;
+    width: auto;
   }
 
   .switchButton small {

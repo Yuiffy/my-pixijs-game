@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import ConstructionGame from '@/components/pingluCanal/ConstructionGame';
+import TerrainGame from '@/components/pingluCanal/TerrainGame';
 
 export const metadata: Metadata = {
-  title: '平陆运河：合龙',
-  description: '在立体工程沙盘上多处开工，转移土方、建造船闸与生态通道。与朋友或 AI 共同承建一条运河，争取承包优势。',
+  title: '平陆运河：造山移海',
+  description: '基于真实高程与河网的平陆运河沙盘：跨分水岭，整治沙坪河、旧州江与钦江，建设三级船闸。逐格爆破、疏浚、运土复垦，仅最终采用工程得分。支持单人、同机多人和 AI。',
 };
 
 export default function PingluCanalPage() {
-  return <ConstructionGame />;
+  return <TerrainGame />;
 }

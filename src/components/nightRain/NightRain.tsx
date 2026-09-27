@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import GameShareButton from '@/app/game/GameShareButton';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { escapeStuck, continueExploring, clearHeldActions, createGame, enemyAttack, getObjective, loadGame, maxFlasks, healAmount, maxHp, maxStamina, respawn, saveGame, setPaused, startGame, stepGame, upgrade, upgradeCost } from './engine';
 import { companionName, createCompanion, guideTargets, leadTo, mainTarget, recommendedTarget, speak, stopLeading, targetLabel, updateCompanion } from './companion';
@@ -241,7 +242,7 @@ onPointerCancel={() => { drag.current = null; }}
       {!ready && !sceneError && <div className={styles.loading}>雨正在落下，旧城即将亮灯……</div>}
       {g.mode === 'title' && (
 <section className={styles.title} data-game-menu aria-label="雨夜寻味开始画面">
-        <Link href="/demos" className={styles.back}>← 返回游戏实验室</Link>
+        <div className={styles.titleNav}><Link href="/demos" className={styles.back}>← 返回游戏实验室</Link><GameShareButton gamePath="/game/night-rain" /></div>
         <p className={styles.eyebrow}>岁己的旅居手记 · 第一夜</p>
         <h1>雨夜<br /><em>寻味</em></h1>
         <p className={styles.intro}>直播结束。穿过雨中的旧城，<br />给自己找一顿热乎的晚饭。</p>
@@ -259,7 +260,7 @@ onPointerCancel={() => { drag.current = null; }}
           <div className={`${styles.meter} ${styles.stamina}`} aria-label={`体力 ${Math.ceil(g.player.stamina)}`}><i style={{ width: `${(100 * g.player.stamina) / maxStamina(g)}%` }} /></div>
           <small>◈ {g.rice} 夜市钱 <span>归灯 · {g.checkpoint === "room" ? "旅馆" : targetLabel(g.checkpoint)}</span></small>
         </div>
-        <nav className={styles.tools} aria-label="旅程工具"><button onClick={() => showPanel(panel ? null : 'map')}>地图 {usingPad ? 'View' : 'M'}</button><button onClick={() => showPanel(panel ? null : 'companion')}>{c.enabled ? companionName(c.skin) : '宝宝模式'} {usingPad ? 'LT' : 'C'}</button><button aria-label="暂停" onClick={() => showPanel('pause')}>Ⅱ</button></nav>
+        <nav className={styles.tools} aria-label="旅程工具"><GameShareButton gamePath="/game/night-rain" /><button onClick={() => showPanel(panel ? null : 'map')}>地图 {usingPad ? 'View' : 'M'}</button><button onClick={() => showPanel(panel ? null : 'companion')}>{c.enabled ? companionName(c.skin) : '宝宝模式'} {usingPad ? 'LT' : 'C'}</button><button aria-label="暂停" onClick={() => showPanel('pause')}>Ⅱ</button></nav>
         <div className={styles.region} key={g.region}><small>雨夜旧城</small><h2>{g.region}</h2></div>
         {!panel && g.mode === 'playing' && (
 <>

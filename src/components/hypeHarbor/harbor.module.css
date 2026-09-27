@@ -319,7 +319,8 @@
   .modal { padding: 29px 25px; }
   .modal h2 { font-size: 27px; }
 }
-@media (max-width: 370px) { .brand > div { display: none; } .tableTagline { display: none; } .laneName small { display: none; } .laneProgress { right: 8px; } .menuLegend b { display: none; } .playerStrip { grid-template-columns: 1fr; } .header nav { gap: 10px; } }
+@media (max-width: 420px) { .brand > b { white-space: nowrap; } .brand > div { display: none; } }
+@media (max-width: 370px) { .tableTagline { display: none; } .laneName small { display: none; } .laneProgress { right: 8px; } .menuLegend b { display: none; } .playerStrip { grid-template-columns: 1fr; } .header nav { gap: 10px; } }
 @media (prefers-reduced-motion: reduce) { .root *, .root *::before, .root *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
 .roleStatus { border-bottom: 1px solid var(--line); padding: 12px 0; display: flex; gap: 16px 24px; flex-wrap: wrap; color: #7b765e; }

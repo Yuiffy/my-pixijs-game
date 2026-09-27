@@ -66,6 +66,12 @@
   text-decoration: none;
   align-self: flex-start;
 }
+.titleNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .titleCopy {
   margin: auto 0;
   max-width: 480px;

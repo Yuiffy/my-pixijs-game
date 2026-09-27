@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import { useEffect, useRef, useState } from "react";
 import {
   CAMPAIGN_VERSION,
@@ -457,9 +458,12 @@ export default function OverworldRpg() {
       )}
       {state.mode === "title" && (
         <div className={styles.titleScreen}>
-          <Link href="/demos" className={styles.back}>
-            ← 返回游戏集
-          </Link>
+          <div className={styles.titleNav}>
+            <Link href="/demos" className={styles.back}>
+              ← 返回游戏集
+            </Link>
+            <GameShareButton gamePath="/game/rpg" />
+          </div>
           <div className={styles.titleCopy}>
             <p className={styles.eyebrow}>主播群侠传 · 第一卷</p>
             <h1>
@@ -539,6 +543,7 @@ export default function OverworldRpg() {
                 行者 <b>Lv.{state.level}</b>
               </span>
             </div>
+            <GameShareButton gamePath="/game/rpg" />
             <button
               className={styles.iconButton}
               onClick={() => openPanel("settings")}

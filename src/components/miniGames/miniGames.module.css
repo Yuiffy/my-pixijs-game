@@ -169,6 +169,12 @@
   font-weight: 600;
   white-space: nowrap;
 }
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
 .topbar nav {
   display: flex;
   gap: 34px;

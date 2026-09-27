@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftOutlined,
@@ -922,6 +923,7 @@ export default function MarriagePressureGame() {
         <Link href="/demos#games" aria-label="返回小游戏列表" title="返回小游戏列表"><ArrowLeftOutlined /></Link>
         <div><strong>{GAME_TITLE}</strong><small>V5 · 先过好自己的生活</small></div>
         <nav>
+          <GameShareButton gamePath="/game/family-pressure" />
           {state.phase !== "lobby" && <span>{state.mode === "child" ? `我 · ${playerName}` : MODE_COPY[state.mode].title} · {DIFFICULTIES[state.difficulty].title}</span>}
           <button onClick={() => setHelp(true)} title="玩法说明" aria-label="玩法说明"><QuestionCircleOutlined /></button>
           <button onClick={fullscreen} title="全屏" aria-label="全屏"><FullscreenOutlined /></button>

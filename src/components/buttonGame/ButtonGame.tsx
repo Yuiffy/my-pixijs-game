@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import GameShareButton from "@/app/game/GameShareButton";
 import Link from "next/link";
 import {
   ArrowLeftOutlined,
@@ -402,6 +403,7 @@ export default function ButtonGame() {
           </Link>
         </div>
         <div className={styles.toolbar}>
+          <GameShareButton gamePath="/game/button" />
           <button
             className={styles.iconButton}
             type="button"

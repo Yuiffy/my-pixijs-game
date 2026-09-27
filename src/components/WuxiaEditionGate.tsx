@@ -8,6 +8,7 @@ import {
 } from "@ant-design/icons";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import GameShareButton from "@/app/game/GameShareButton";
 import { useEffect, useState } from "react";
 import styles from "./WuxiaEditionGate.module.css";
 import {
@@ -85,6 +86,7 @@ function EditionPicker({
         <div className={styles.brand}>
           <span className={styles.brandSeal}>JH</span>
           <span><strong>江湖志</strong><small>DUAL EDITION</small></span>
+          <GameShareButton gamePath="/game/wuxia" />
         </div>
         <div className={styles.headerRule} />
         <p>两套玩法分别保留，各自续卷</p>
@@ -183,17 +185,20 @@ export default function WuxiaEditionGate() {
 
   return (
     <div className={styles.playing} data-wuxia-edition={edition}>
-      <button
-        type="button"
-        className={styles.switchButton}
-        aria-label="切换武侠版本"
-        title="返回版本选择"
-        onClick={() => setEdition(null)}
-      >
-        <SwapOutlined />
-        <span>切换版本</span>
-        <small>{editionName[edition]}</small>
-      </button>
+      <div className={styles.playingControls}>
+        <button
+          type="button"
+          className={styles.switchButton}
+          aria-label="切换武侠版本"
+          title="返回版本选择"
+          onClick={() => setEdition(null)}
+        >
+          <SwapOutlined />
+          <span>切换版本</span>
+          <small>{editionName[edition]}</small>
+        </button>
+        <GameShareButton gamePath="/game/wuxia" />
+      </div>
       {edition === "legacy" ? <LegacyWuxiaGame /> : <CurrentWuxiaGame />}
     </div>
   );

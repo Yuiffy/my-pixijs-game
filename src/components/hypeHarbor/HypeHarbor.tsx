@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import Image from "next/image";
 import HarborBoard from "./HarborBoard";
 import {
@@ -1525,6 +1526,7 @@ export default function HypeHarbor() {
           </div>
         </div>
         <nav>
+          <GameShareButton gamePath="/game/hype-harbor" />
           <button onClick={() => setModal("help")}>
             怎么玩 <span>?</span>
           </button>

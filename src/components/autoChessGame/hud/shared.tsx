@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { resolveUnitPortrait, useCharacterStyle } from "../core/characterStyle";
+import GameShareButton from "@/app/game/GameShareButton";
 import type { AutoChessEngine } from "../core/gameEngine";
 import {
   CAMPAIGN_ROUNDS,
@@ -171,6 +172,7 @@ export function HudHeader({ state }: { state: NonNullable<AutoChessEngine["state
           <div className="rift-header-metric rift-header-score"><span>积分</span><b>{state.score.toLocaleString()}</b><small>{state.streak > 0 ? `连胜 ${state.streak}` : "等待首胜"}</small></div>
         </div>
       )}
+      <GameShareButton gamePath="/game/autochess" />
     </header>
   );
 }

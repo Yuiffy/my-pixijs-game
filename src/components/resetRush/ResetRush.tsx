@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import {
   act,
   actionError,
@@ -486,6 +487,7 @@ export default function ResetRush() {
           <small>A DEVELOPER’S BOARD GAME</small>
         </div>
         <div className={s.headerActions}>
+          <GameShareButton gamePath="/game/reset-rush" />
           {game && game.phase !== "over" && (
             <button onClick={() => setModal("shop")}>账号管理</button>
           )}

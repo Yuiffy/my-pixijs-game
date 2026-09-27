@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import Link from 'next/link';
 import Image from 'next/image';
+import GameShareButton from '@/app/game/GameShareButton';
 import FlickBoard from './FlickBoard';
 import type { CleanupStatus } from './FlickCleanup';
 import {
@@ -185,6 +186,7 @@ onCleanupStatus={setCleanup}
         </Link>
         <div className={styles.brand}><span className={styles.brandMark}>VR</span><span>维阿弹棋</span></div>
         <div className={styles.topActions}>
+          <GameShareButton gamePath="/game/flick-chess" />
           <div className={styles.modeControl} role="group" aria-label="对战模式">
             <button
 type="button"

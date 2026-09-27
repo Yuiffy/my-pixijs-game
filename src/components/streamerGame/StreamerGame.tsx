@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -759,6 +760,7 @@ export default function StreamerGame() {
             <span className={styles.alpha}>试玩版 01</span>
           </div>
           <div className={styles.headerTools}>
+            <GameShareButton gamePath="/game/streamer" />
             <button
               aria-label={muted ? "开启音效" : "关闭音效"}
               title={muted ? "开启音效" : "关闭音效"}

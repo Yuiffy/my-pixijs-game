@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AI_EVENTS,
@@ -502,14 +503,17 @@ export default function MiniGame({ kind }: { kind: GameState["kind"] }) {
         <Link href="/demos" className={styles.back}>
           ← 游戏列表
         </Link>
-        <button
-          onClick={fullScreen}
-          className={styles.iconButton}
-          title="全屏 F"
-          aria-label="全屏"
-        >
-          ⛶
-        </button>
+        <div className={styles.topbarActions}>
+          <GameShareButton gamePath={`/game/${kind}`} />
+          <button
+            onClick={fullScreen}
+            className={styles.iconButton}
+            title="全屏 F"
+            aria-label="全屏"
+          >
+            ⛶
+          </button>
+        </div>
       </header>
       <div className={styles.workspace}>
         <div className={styles.heading}>

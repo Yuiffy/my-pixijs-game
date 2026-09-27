@@ -11,6 +11,7 @@ import {
   UndoOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import {
   CSSProperties,
   KeyboardEvent,
@@ -422,6 +423,7 @@ export default function BrickExcavation() {
           <h1>维阿发掘局</h1>
         </div>
         <div className={styles.topActions}>
+          <GameShareButton gamePath="/game/brick-excavation" />
           <button
             className={styles.iconButton}
             type="button"

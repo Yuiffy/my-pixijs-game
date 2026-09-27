@@ -7,6 +7,7 @@ import {
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
+import GameShareButton from '@/app/game/GameShareButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   BOWEL_END, BOWEL_ROCKS, BOWEL_START, INCIDENT_IDS, INTERACT_RADIUS, LIVE_RADIUS, LIVE_TRANSITION_MS, STATIONS, aimPrep, createPrepGame, formatPrepTime, getPrepAction, getPrepStars, getPrepWalkTarget, goLivePrep,
@@ -742,6 +743,7 @@ formattedTime: formatPrepTime(stateRef.current.elapsedMs),
         <span className={styles.doneCount}>{state.completed.length}<b>/ 7</b></span>
       </div>
       <div className={styles.topTools}>
+        <GameShareButton gamePath="/game/pre-stream" />
         <div className={styles.audioControls}>
           <button type="button" className={styles.iconButton} data-testid="audio-toggle" aria-pressed={!audioPreferences.muted} onClick={() => updateAudio({ muted: !audioPreferencesRef.current.muted })} title={audioPreferences.muted ? '开启声音' : '静音'} aria-label={audioPreferences.muted ? '开启声音' : '静音'}>{audioPreferences.muted ? <AudioMutedOutlined /> : <SoundOutlined />}</button>
           <label htmlFor="game-audio-volume" className={styles.volumeControl} title="游戏音量"><input id="game-audio-volume" type="range" data-testid="audio-volume" min="0" max="100" step="1" value={Math.round(audioPreferences.volume * 100)} onChange={event => updateAudio({ volume: Number(event.target.value) / 100 })} aria-label="游戏音量" aria-valuetext={`${Math.round(audioPreferences.volume * 100)}%`} /><output>{Math.round(audioPreferences.volume * 100)}</output></label>

@@ -14,6 +14,8 @@
 .title { position: absolute; inset: 0; padding: max(32px, 5vh) 7vw; background: linear-gradient(90deg, #14252ef7 0%, #182c34e6 27%, #182c3470 49%, transparent 73%); overflow-y: auto; pointer-events: none; }
 .title > * { pointer-events: auto; max-width: 365px; }
 .back { font-size: 12px; color: var(--muted) !important; display: inline-block; margin-bottom: 5vh; }
+.titleNav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5vh; }
+.titleNav .back { margin-bottom: 0; }
 .eyebrow { color: var(--gold); font-size: 11px; letter-spacing: .24em; margin: 0 0 14px; }
 .title h1 { font-size: clamp(58px, 7.5vw, 104px); line-height: 1.05; font-weight: 400; letter-spacing: .18em; margin: 0; text-shadow: 0 3px 30px #10202a; animation: arrive 1.2s both; }
 .title h1 em { color: var(--gold); font-style: normal; }
@@ -64,9 +66,9 @@
 .mobile { display: none; }
 @keyframes arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 700px) {
-  .title { padding: 25px; background: linear-gradient(90deg, #14252ef7, #14252ed9 56%, #14252e44); }.back { margin-bottom: 24px; }.title h1 { font-size: 68px; }.intro { font-size: 13px; margin: 20px 0; }.settings { margin: 17px 0; gap: 10px; }.title > * { max-width: 310px; }
+  .title { padding: 25px; background: linear-gradient(90deg, #14252ef7, #14252ed9 56%, #14252e44); }.back, .titleNav { margin-bottom: 24px; }.titleNav .back { margin-bottom: 0; }.title h1 { font-size: 68px; }.intro { font-size: 13px; margin: 20px 0; }.settings { margin: 17px 0; gap: 10px; }.title > * { max-width: 310px; }
   .hud { top: 12px; left: 12px; width: 176px; padding: 6px 8px; }.hud p { font-size: 14px; }.hud small { font-size: 9px; }.hud span { font-size: 9px; margin-left: 5px; }
-  .tools { top: 15px; right: 10px; gap: 4px; max-width: 125px; flex-wrap: wrap; justify-content: flex-end; }.tools button { font-size: 10px; padding: 6px 7px; }.region { top: 95px; right: 12px; }.region h2 { font-size: 15px; }.region small { font-size: 9px; }
+  .tools { top: 15px; right: 10px; gap: 4px; max-width: 170px; flex-wrap: wrap; justify-content: flex-end; }.tools button { font-size: 10px; padding: 6px 7px; }.region { top: 95px; right: 12px; }.region h2 { font-size: 15px; }.region small { font-size: 9px; }
   .message { top: 123px; left: 12px; max-width: 205px; font-size: 10px; padding: 7px 10px; }.locked { top: 207px; max-width: 92%; white-space: normal; text-align: center; font-size: 11px; }
   .combatCue { top: 244px; font-size: 12px; }
   .subtitle { bottom: 165px; left: 12px; right: 12px; max-width: none; padding: 8px 12px; }.subtitle p { font-size: 11px; line-height: 1.6; }.subtitle b { font-size: 10px; }

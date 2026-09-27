@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import GameShareButton from "@/app/game/GameShareButton";
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -187,6 +188,7 @@ export default function ChapterHud({
           </div>
         </div>
         <div className={styles.tools}>
+          <GameShareButton gamePath="/game/one-more" />
           <button
             className={styles.iconButton}
             title={audio.muted ? "开启声音" : "静音"}

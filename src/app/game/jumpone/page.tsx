@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import GameShareButton from '@/app/game/GameShareButton';
 
 // 🚀 核心修复：告诉 Next.js "不要在服务器上加载这个组件"
 // 只有加上 { ssr: false }，它才会等到浏览器环境（有 window）时才去加载 Phaser
@@ -12,7 +13,10 @@ const PhaserGame = dynamic(
 export default function JumpOnePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-10">
-      <h1 className="text-3xl font-bold text-white mb-6">Sui 的无尽跳跃</h1>
+      <div className="mb-6 flex w-full max-w-2xl items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-white">Sui 的无尽跳跃</h1>
+        <GameShareButton gamePath="/game/jumpone" />
+      </div>
 
       {/* 这里加载游戏 */}
       <div className="relative">
