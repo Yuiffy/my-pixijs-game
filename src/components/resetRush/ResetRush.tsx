@@ -29,6 +29,10 @@ import {
   DIFFICULTIES,
   DEFAULT_DEVELOPMENT,
   developmentStats,
+  projectDevelopment,
+  riskAssessment,
+  modelExperience,
+  collaborationSpeed,
   LEGACY_SAVE_KEY,
   nextDay,
   PLANS,
@@ -45,6 +49,7 @@ import {
   type Effort,
   type Project,
   type Tier,
+  type Studio,
 } from "./engine";
 import s from "./resetRush.module.css";
 
@@ -217,7 +222,7 @@ function Rules() {
         </li>
         <li>
           <strong>接单 1 精力，开线程 2 精力。</strong>
-          接下的项目会自动排队。你只选同时托管几条线程，最多 6 条；它们可以共用账号。
+          接下的项目会自动排队。你只选同时托管几条线程，最多 6 条；它们可以共用账号，也可以一起开发一个项目。
           买号、升级、续订和银行券不花时间或精力。
         </li>
         <li>
@@ -243,6 +248,10 @@ function Rules() {
           $25。直接收工会先跑完剩余时间，再翻夜间牌。
         </li>
       </ol>
+      <h3>让工作室逐渐懂你</h3>
+      <p>项目配置可选“自动稳妥”：逐项选择足够胜任且最省额度的模型与思考强度。Turbo 独立勾选；选旧版预设会切回统一配置。缺额会等待补给，不偷偷降到有风险的免费配置。</p>
+      <p>每项可选最多 1 / 2 / 3 人协作，系统先分头做，再帮大项目。2 人合计 1.7×、3 人 2.2× 速度，每人占 2 精力；进度、bug 与交付统一结算。</p>
+      <p>需求只给难度估计。首段 20 进度或 bug 会揭示项目难点；模型每代累计实测 60 进度后校准。摸底时自动配置留安全余量，熟悉后可降档省钱；能力不足时明确提示可能返工。</p>
       <h3>七天时钟，三十天银行券</h3>
       <p>
         每号开通日起每 7 天自然补满；直接
@@ -321,7 +330,7 @@ function ProjectCard({
       <Art kind={job.category} />
       <span className={s.projectName}>{job.name}</span>
       <span className={s.difficulty} data-difficulty={job.difficulty}>
-        {"◆".repeat(job.difficulty)} {DIFFICULTIES[job.difficulty]}
+        {"◆".repeat(job.difficulty)} {DIFFICULTIES[job.difficulty]}{job.understood ? (job.challenge ? " · 含集成难点" : " · 已摸清") : " · 需求估计"}
       </span>
       <span className={s.projectPerk}>
         {market
@@ -444,18 +453,22 @@ export default function ResetRush() {
     human?.accounts.find((a) => a.id === selectedAccount) ?? human?.accounts[0];
   const playable = !!game && game.phase === "plan";
   const config = game?.development ?? DEFAULT_DEVELOPMENT;
+  const effectiveConfig = game && human && job ? projectDevelopment(game, human, job) : config;
+  const assessment = game && human && job ? riskAssessment(game, human, effectiveConfig, job) : null;
   const model =
     game && human
-      ? developmentStats(game, human, config, job)
+      ? developmentStats(game, human, effectiveConfig, job)
       : { name: "5.0 Sol · Medium", cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0, minutes: 0, quota: 0, tokensPerHour: 0 };
   const studio = game?.studio;
-  const setStudio = (changes: Partial<Pick<NonNullable<typeof studio>, "threads" | "accountPolicy" | "preferredAccount">>) => {
+  const setStudio = (changes: Partial<Pick<NonNullable<typeof studio>, "threads" | "accountPolicy" | "preferredAccount" | "configuration" | "collaboration">>) => {
     if (!studio || !human) return;
     send({
       type: "studio",
       threads: changes.threads ?? studio.threads,
       accountPolicy: changes.accountPolicy ?? studio.accountPolicy,
       preferredAccount: changes.preferredAccount ?? studio.preferredAccount,
+      configuration: changes.configuration ?? studio.configuration,
+      collaboration: changes.collaboration ?? studio.collaboration,
     });
   };
   const bankAction: Action = { type: "bank", account: account?.id ?? -1 };
@@ -917,8 +930,8 @@ export default function ResetRush() {
                     </p>
                   )}
                   {human?.lanes
-                    .filter((l) => l.projects.length)
-                    .map((lane, index) => {
+                    .filter((l, index, lanes) => l.projects.length && lanes.findIndex(other => other.projects[0] === l.projects[0]) === index)
+                    .map((lane) => {
                       const head = human.projects.find(
                         (j) => j.id === lane.projects[0],
                       )!;
@@ -928,31 +941,35 @@ export default function ResetRush() {
                         lane.development,
                         head,
                       );
-                      const status = laneStatus(game, human, lane);
+                      const team = human.lanes.filter(l => l.projects[0] === head.id);
+                      const working = team.filter(l => ["开发中", "自动返工", "收工待续"].includes(laneStatus(game, human, l)) && l.enabled);
+                      const pace = working.length ? collaborationSpeed(working.length) : 0;
+                      const assessed = riskAssessment(game, human, lane.development, head);
+                      const status = working.length ? laneStatus(game, human, working[0]) : laneStatus(game, human, lane);
                       return (
                         <article
                           className={s.thread}
                           key={lane.id}
                           data-lane={lane.id}
+                          data-team-size={team.length}
+                          data-testid="project-team"
                           data-state={status}
                         >
                           <div className={s.threadHeader}>
                             <b>
                               <i />
-                              线程 {index + 1}
+                              {team.length} 个 agent{team.length > 1 ? " · 协作开发" : " · 独立开发"}
                             </b>
                             <span>{status}</span>
                             <small>
                               账号{" "}
-                              {human.accounts.findIndex(
-                                (a) => a.id === lane.account,
-                              ) + 1}
+                              {Array.from(new Set(team.map(l => human.accounts.findIndex(a => a.id === l.account) + 1))).join(" / ")}
                             </small>
                           </div>
                           <strong>{head.name}</strong>
                           <p>
                             {stats.name}{" "}
-                            <span>· {fmt(stats.perHour)} 进度 / 时 · 风险 {stats.risk}% / 20 进度</span>
+                            <span>· 合计 {fmt(stats.perHour * pace)} 进度 / 时 · {assessed.label}</span>
                           </p>
                           <div className={s.threadProgress}>
                             <i
@@ -969,9 +986,13 @@ export default function ResetRush() {
                             <span>
                               {status === "等待额度"
                                 ? "补额即续跑，进度保留"
-                                : `当前项约 ${Math.ceil(stats.minutes)} 分钟 · ${stats.tokenCost ? `${fmt(stats.tokenCost * Math.max(0, head.need - head.work + head.bugs * 12 - head.repair))}k token` : "免费慢跑"}`}
+                                : `当前项约 ${pace ? Math.ceil(stats.minutes / pace) : "—"} 分钟 · ${stats.tokenCost ? `${fmt(stats.tokenCost * Math.max(0, head.need - head.work + head.bugs * 12 - head.repair))}k token` : "免费慢跑"}`}
                             </span>
                           </div>
+                          <small className={s.learningNote}>
+                            {head.understood ? "项目已摸清" : `摸底 ${fmt(Math.min(20, head.work))} / 20 进度`} · {modelEdition(game, lane.development.model).name} 实测 {fmt(modelExperience(game, human, lane.development.model))} / 60
+                            {team.length > 1 ? ` · ${working.length} 人正在推进，协调后 ${fmt(pace)}× 速度` : ""}
+                          </small>
                           <ol className={s.queueList}>
                             {lane.projects.map((id) => (
                               <li key={id}>
@@ -993,14 +1014,14 @@ export default function ResetRush() {
                   className={`${s.activeProjects} ${human?.projects.length === 0 ? s.noProjects : ""}`}
                 >
                   {human?.projects.map((j) => {
-                    const lane = human.lanes.find((l) => l.projects.includes(j.id),);
+                    const lanes = human.lanes.filter(l => l.projects.includes(j.id));
                     return (
                       <ProjectCard
                         key={j.id}
                         job={j}
                         day={game.day}
                         selected={chosen.includes(j.id)}
-                        assigned={lane ? `线程 ${human.lanes.indexOf(lane) + 1} · 自动排队` : "待托管"}
+                        assigned={lanes.length ? `${lanes.length} 个 agent · 自动排队` : "待托管"}
                         onChoose={() => setSelectedProjects([j.id])}
                       />
                     );
@@ -1206,6 +1227,29 @@ export default function ResetRush() {
                   </select>
                   <small>{ACCOUNT_POLICIES.find((policy) => policy.id === studio?.accountPolicy)?.detail}</small>
                 </label>
+                <label className={s.policySelect} htmlFor="studio-configuration">
+                  <span>项目配置</span>
+                  <select
+id="studio-configuration"
+value={studio?.configuration ?? "fixed"}
+                    onChange={e => setStudio({ configuration: e.target.value as Studio["configuration"] })}>
+                    <option value="fixed">统一配置 · 手动决定</option>
+                    <option value="adaptive">自动稳妥 · 按项目省额度</option>
+                  </select>
+                  <small>{studio?.configuration === "adaptive" ? "熟悉后选 0% 风险的最省额配置；摸底时留余量。能力不足时尽力攻坚，仍会提示风险。" : "所有项目沿用下方配置；切换自动稳妥，可按每项需求分别省额度。"}</small>
+                </label>
+                <label className={s.policySelect} htmlFor="studio-collaboration">
+                  <span>每个项目最多几人协作</span>
+                  <select
+id="studio-collaboration"
+value={studio?.collaboration ?? 1}
+                    onChange={e => setStudio({ collaboration: Number(e.target.value) as Studio["collaboration"] })}>
+                    <option value="1">1 人 · 分头做</option>
+                    <option value="2">2 人 · 结对开发</option>
+                    <option value="3">3 人 · 集中攻坚</option>
+                  </select>
+                  <small>先分头做，空闲 agent 帮大项目。2 人合计 1.7×、3 人 2.2×；每人仍占 2 精力。</small>
+                </label>
                 {studio?.accountPolicy === "preferred" && (
                   <label className={s.policySelect} htmlFor="studio-account">
                     <span>优先账号</span>
@@ -1221,6 +1265,16 @@ export default function ResetRush() {
                   </label>
                 )}
               </div>
+              {studio?.configuration === "adaptive" && (
+                <label className={s.autoTurbo} htmlFor="studio-turbo">
+                  <input
+id="studio-turbo"
+type="checkbox"
+checked={config.turbo}
+                    onChange={e => send({ type: "configure", development: { ...config, turbo: e.target.checked }, keepAutomatic: true })} />
+                  Turbo · 自动选档后额外加速，速度 ×2、每进度额度 ×2.5
+                </label>
+              )}
               <div className={s.studioModes} role="group" aria-label="开发节奏">
                 {([
                   { label: "慢跑省额", development: { model: "luna", effort: "medium", turbo: false } },
@@ -1230,7 +1284,7 @@ export default function ResetRush() {
                   <button
                     key={preset.label}
                     type="button"
-                    aria-pressed={config.model === preset.development.model && config.effort === preset.development.effort && config.turbo === preset.development.turbo}
+                    aria-pressed={studio?.configuration === "fixed" && config.model === preset.development.model && config.effort === preset.development.effort && config.turbo === preset.development.turbo}
                     onClick={() => send({ type: "configure", development: { ...preset.development } })}
                   >
                     {preset.label}
@@ -1238,7 +1292,7 @@ export default function ResetRush() {
                 ))}
               </div>
               <details className={s.advancedSettings}>
-                <summary>自定义模型、思考强度与 Turbo</summary>
+                <summary>手动配置 · 选择模型或强度会切回统一配置</summary>
                 <div className={s.commandRow}>
                   <div className={s.developmentControls}>
                   <div className={s.modes} role="group" aria-label="开发模型">
@@ -1287,6 +1341,7 @@ export default function ResetRush() {
                         onChange={(e) => send({
                             type: "configure",
                             development: { ...config, turbo: e.target.checked },
+keepAutomatic: true,
                           })}
                       />
                       <b>Turbo</b>
@@ -1309,8 +1364,8 @@ export default function ResetRush() {
                           : "免费"}
                       </b>
                     </span>
-                    <span className={model.risk > 0 ? s.risk : ""}>
-                      首项风险 <b>{job ? `${model.risk}% / 20 进度` : "—"}</b>
+                    <span className={assessment && assessment.max > 0 ? s.risk : ""}>
+                      所选项目 <b>{assessment?.label ?? "—"}</b>
                     </span>
                     <small>{job ? `所选项目约 ${Math.ceil(model.minutes)} 分钟；掉额参考账号的用量观察` : "接单后显示项目预估"}</small>
                   </div>
@@ -1320,15 +1375,21 @@ export default function ResetRush() {
                       : config.model === "luna"
                         ? "Luna Medium 关闭 Turbo 可免费慢蹬，简单大项目也能交付。"
                         : "思考加深提升解题能力；High 到 Max 会多花时间。"}{" "}
-                    所有线程使用同一配置，按实际工作扣额。
+                    {studio?.configuration === "adaptive" ? "自动稳妥会逐项选档，预估显示所选项目的实际配置。" : "统一配置应用于所有线程，按实际工作扣额。"}
                   </p>
                   </div>
                 </div>
               </details>
               <p className={s.studioSummary}>
-                当前 {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.tokensPerHour ? `${fmt(model.tokensPerHour)}k token / 时 · 费率 ${Math.round(modelEdition(game, config.model).price * 100)}%` : "免费"}
-                {job ? ` ·《${job.name}》风险 ${model.risk}%` : ""}
+                当前 {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.tokensPerHour ? `${fmt(model.tokensPerHour)}k token / 时 · 费率 ${Math.round(modelEdition(game, effectiveConfig.model).price * 100)}%` : "免费"}
+                {job ? ` ·《${job.name}》${assessment?.label}` : ""}
               </p>
+              <details className={s.experienceNotes} data-testid="experience-notes">
+                <summary>工作室经验 · 自动积累，无需操作</summary>
+                <p>每个项目完成首段 20 进度或发现 bug 后，摸清真实难点；每代模型累计完成 60 进度（含返工）后校准能力。换思考强度、开关 Turbo 不丢经验，模型换代需重新实测。</p>
+                <div>{(["luna", "sol", "astra"] as Model[]).map(m => <span key={m}>{modelEdition(game, m).name} · {fmt(modelExperience(game, human, m))} / 60{modelExperience(game, human, m) >= 60 ? " · 已校准" : " · 摸底中"}</span>)}</div>
+                <p>摸底阶段不会把估计当成 0% 风险；熟悉后显示的 0% 指后续开发，之前埋下的 bug 仍可能暴露。</p>
+              </details>
               <div className={s.secondaryActions}>
                 <div>
                   <button
@@ -1459,7 +1520,7 @@ export default function ResetRush() {
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.5 · 平台风向</i>
+          RESET / 开蹬！ <i>v0.6 · 工作室协作</i>
         </span>
         <span>
           {game

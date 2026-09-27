@@ -545,3 +545,10 @@
 .meter summary { cursor: pointer; }
 .meter p { margin: 6px 0; }
 .shopNotice { padding: 12px; background: #dce5c9; color: #263f31; font-size: 13px; line-height: 1.7; }
+
+.learningNote { display: block; color: #b1c49d; font-size: 10px; line-height: 1.7; margin-top: 8px; }
+.autoTurbo { display: flex; gap: 10px; align-items: center; padding: 12px 0; color: #d5e5bf; font-size: 11px; line-height: 1.7; }
+.autoTurbo input { accent-color: var(--mint); }
+.experienceNotes { margin: 12px 0; border-top: 1px solid #9bb88640; padding: 12px 0; color: #bdcfaa; font-size: 11px; line-height: 1.8; }
+.experienceNotes summary { cursor: pointer; }
+.experienceNotes div { display: flex; flex-wrap: wrap; gap: 8px 24px; color: #d7e6c2; }

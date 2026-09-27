@@ -21,6 +21,8 @@ export interface Studio {
   threads: number;
   accountPolicy: AccountPolicy;
   preferredAccount: number;
+  configuration: "fixed" | "adaptive";
+  collaboration: 1 | 2 | 3;
 }
 export const SAVE_KEY = "reset-rush-v5";
 export const V4_SAVE_KEY = "reset-rush-v4";
@@ -119,6 +121,8 @@ export interface Project {
   category: Category;
   need: number;
   difficulty: Difficulty;
+  challenge: 0 | 0.5;
+  understood: boolean;
   vp: number;
   cash: number;
   work: number;
@@ -162,6 +166,7 @@ export interface Player {
   cash: number;
   vp: number;
   knowledge: number;
+  experience: Record<Model, { edition: string; work: number }>;
   accounts: Account[];
   projects: Project[];
   shipped: Project[];
@@ -203,6 +208,7 @@ export interface Receipt {
 export interface Game {
   version: 5;
   supplyRules: 1;
+  workflowRules: 1;
   platform: Platform;
   development: Development;
   studio: Studio;
@@ -224,7 +230,7 @@ export interface Game {
   message: string;
 }
 export type Action =
-  | { type: "studio"; threads: number; accountPolicy: AccountPolicy; preferredAccount: number }
+  | { type: "studio"; threads: number; accountPolicy: AccountPolicy; preferredAccount: number; configuration?: Studio["configuration"]; collaboration?: Studio["collaboration"] }
   | ({
       type: "dispatch";
       lane: number | null;
@@ -236,7 +242,7 @@ export type Action =
   | { type: "advance"; minutes: number }
   | { type: "next" }
   | { type: "rest" }
-  | { type: "configure"; development: Development }
+  | { type: "configure"; development: Development; keepAutomatic?: boolean }
   | { type: "test"; project: number }
   | { type: "claim"; project: number }
   | { type: "bank"; account: number }
@@ -350,9 +356,9 @@ export const EVENTS: EventCard[] = [
   { id: "limit-rumor", title: "社区：这次掉额不太一样？", quote: "“same workload, different percentage?”", detail: "额度口径可能有变化，百分比不变。工作室会重新采样 token 与掉额；先观察，再决定是否冲刺。", chance: 0, effect: "limits" },
   { id: "tech-1", title: "5.6 Luna 发布", quote: "“small model, bigger ideas.”", detail: "Luna 能力 +0.5、速度 +20%；付费配置暂贵 15%。免费慢跑仍免费，先试新模型还是等降价？", chance: 20, effect: "technology" },
   { id: "tech-2", title: "5.6 Luna 降价了", quote: "“now cheaper to build.”", detail: "Luna 付费配置费率从初代的 115% 降到 65%。原有线程自动享受，免费路线不变。", chance: 0, effect: "technology" },
-  { id: "tech-3", title: "6 Sol：发布即降价", quote: "“smarter and cheaper, today.”", detail: "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考就能无风险做复杂任务；均衡开发自动升级。", chance: 35, effect: "technology" },
-  { id: "tech-4", title: "6 Luna：小模型追上来了", quote: "“more intelligence for everyone.”", detail: "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 已可无风险做常规任务。", chance: 20, effect: "technology" },
-  { id: "tech-5", title: "6 Astra：攻坚新世代", quote: "“bring your hardest problems.”", detail: "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 就能无风险攻坚，或继续 Ultra + Turbo 抢首发。", chance: 50, effect: "technology" },
+  { id: "tech-3", title: "6 Sol：发布即降价", quote: "“smarter and cheaper, today.”", detail: "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考可处理基础复杂任务；隐藏难点仍需摸底，新模型重新实测。", chance: 35, effect: "technology" },
+  { id: "tech-4", title: "6 Luna：小模型追上来了", quote: "“more intelligence for everyone.”", detail: "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 可处理基础常规任务，隐藏难点仍需摸底。", chance: 20, effect: "technology" },
+  { id: "tech-5", title: "6 Astra：攻坚新世代", quote: "“bring your hardest problems.”", detail: "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 可处理基础攻坚任务，隐藏难点仍需摸底；也可 Ultra + Turbo 抢首发。", chance: 50, effect: "technology" },
 ];
 
 const initialPlatform = (): Platform => ({ stage: 0, nextRelease: 6, proDeadline: null, allowance: 1, revision: 0 });
@@ -437,6 +443,9 @@ function project(g: Game, template?: number): Project {
     category,
     need,
     difficulty,
+    // A brief is an estimate. Discover integration complications by doing the work.
+    challenge: template === 5 ? 0 : ((g.seed + g.serial * 17) % 3 === 0 ? 0.5 : 0),
+    understood: false,
     vp,
     cash,
     work: 0,
@@ -509,14 +518,63 @@ export function developmentStats(
     quota: remaining * cost,
     ability,
     risk: job
-      ? Math.min(80, Math.max(0, Math.round((job.difficulty - ability) * 30)))
+      ? Math.min(80, Math.max(0, Math.round((job.difficulty + job.challenge - ability) * 30)))
       : 0,
   };
 }
+const initialExperience = (g: Game, work = 0): Player["experience"] => ({
+  luna: { edition: modelEdition(g, "luna").name, work },
+  sol: { edition: modelEdition(g, "sol").name, work },
+  astra: { edition: modelEdition(g, "astra").name, work },
+});
 const validDevelopment = (d: Development) => !!d &&
   !!MODELS[d.model] &&
   !!EFFORTS[d.effort] &&
   typeof d.turbo === "boolean";
+
+export function modelExperience(g: Game, p: Player, model: Model) {
+  const sample = p.experience[model];
+  return sample.edition === modelEdition(g, model).name ? Math.min(60, sample.work) : 0;
+}
+/** Recommendations only read observed evidence, never a project's hidden complication. */
+export function riskAssessment(g: Game, p: Player, config: Development, job: Project) {
+  const calibrated = modelExperience(g, p, config.model) >= 60;
+  const { ability } = developmentStats(g, p, config);
+  const low = job.difficulty + (job.understood ? job.challenge : 0);
+  const high = job.difficulty + (job.understood ? job.challenge : 0.5);
+  const risk = (difficulty: number, skill: number) => Math.min(80, Math.max(0, Math.round((difficulty - skill) * 30)));
+  const min = risk(low, ability + (calibrated ? 0 : 0.5));
+  const max = risk(high, ability - (calibrated ? 0 : 0.5));
+  const known = job.understood && calibrated;
+  return { known,
+min,
+max,
+risk: known ? max : null,
+    label: known ? `${max}% / 20 进度` : max === 0 ? "摸底中 · 已留安全余量" : "摸底中 · 可能返工" };
+}
+export function projectDevelopment(g: Game, p: Player, job: Project): Development {
+  if (g.studio.configuration !== "adaptive" || p.id !== 0) return { ...g.development };
+  const candidates = (Object.keys(MODELS) as Model[]).flatMap(model => (Object.keys(EFFORTS) as Effort[]).map(effort => {
+      const config = { model, effort, turbo: g.development.turbo };
+      return { config, assessment: riskAssessment(g, p, config, job), stats: developmentStats(g, p, config) };
+    }));
+  const safe = candidates.filter(c => c.assessment.max === 0);
+  // Minimum quota per useful work; among equally priced choices prefer faster work.
+  // If no configuration can guarantee safety, use the strongest and disclose uncertainty.
+  const ranked = safe.length ? safe.sort((a, b) => a.stats.nominalCost * modelEdition(g, a.config.model).price - b.stats.nominalCost * modelEdition(g, b.config.model).price || b.stats.speed - a.stats.speed)
+    : candidates.sort((a, b) => b.stats.ability - a.stats.ability || a.stats.nominalCost - b.stats.nominalCost);
+  return ranked[0].config;
+}
+export const collaborationSpeed = (people: number) => (people <= 1 ? 1 : people === 2 ? 1.7 : 2.2);
+
+function observeWork(g: Game, p: Player, model: Model, work: number) {
+  const edition = modelEdition(g, model).name;
+  if (p.experience[model].edition !== edition) p.experience[model] = { edition, work: 0 };
+  const sample = p.experience[model];
+  const before = sample.work;
+  sample.work = Math.min(60, sample.work + work);
+  if (before < 60 && sample.work >= 60) log(g, `${p.name} 已摸清 ${edition} 的能力；熟悉的项目现在可准确估计风险。`, p.id);
+}
 
 function renew(g: Game, p: Player, a: Account, tier: Tier) {
   p.cash -= tier;
@@ -709,9 +767,10 @@ export function createGame(seed = 260926, length = 42): Game {
   const g: Game = {
     version: 5,
     supplyRules: 1,
+    workflowRules: 1,
     platform: initialPlatform(),
     development: { ...DEFAULT_DEVELOPMENT },
-    studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0 },
+    studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0, configuration: "fixed", collaboration: 2 },
     seed: Math.trunc(Math.abs(seed)) % 4294967296,
     rng: Math.trunc(Math.abs(seed)) % 4294967296,
     day: 1,
@@ -752,6 +811,7 @@ export function createGame(seed = 260926, length = 42): Game {
       cash: 500 - tiers.reduce<number>((n, t) => n + t, 0),
       vp: 0,
       knowledge: 0,
+      experience: initialExperience(g),
       accounts,
       projects: [project(g, 5)],
       shipped: [],
@@ -782,7 +842,7 @@ function organizeStudio(g: Game) {
   if (g.studio.mode !== "auto" || g.phase !== "plan") return;
   const p = g.players[0];
   cleanLanes(p);
-  const count = Math.min(g.studio.threads, p.projects.length);
+  const count = Math.min(g.studio.threads, p.projects.length * g.studio.collaboration);
   while (p.lanes.length < count) p.lanes.push({
     id: ++g.serial,
     account: g.studio.preferredAccount,
@@ -798,8 +858,12 @@ function organizeStudio(g: Game) {
   }
 
   // Keep work already underway at the front; spread the rest by queued workload.
-  const heads = new Set(activeLanes.map((l) => l.projects[0]).filter(Boolean));
-  for (const lane of activeLanes) lane.projects = lane.projects.length ? [lane.projects[0]] : [];
+  const heads = new Set<number>();
+  for (const lane of activeLanes) {
+    const head = lane.projects[0];
+    lane.projects = head && !heads.has(head) ? [head] : [];
+    if (head) heads.add(head);
+  }
   const waiting = p.projects
     .filter((j) => !heads.has(j.id))
     .sort((a, b) => (a.deadline ?? 999) - (b.deadline ?? 999) || a.id - b.id);
@@ -813,8 +877,16 @@ function organizeStudio(g: Game) {
     })[0];
     if (lane) lane.projects.push(job.id);
   }
+  // Once every project has a primary worker, spare agents help the largest remaining job.
+  for (const lane of activeLanes.filter(l => !l.projects.length)) {
+    const helpers = (j: Project) => activeLanes.filter(l => l.projects[0] === j.id).length;
+    const target = p.projects.filter(j => helpers(j) > 0 && helpers(j) < g.studio.collaboration)
+      .sort((a, b) => (b.need - b.work + b.bugs * BUG_WORK) / helpers(b) - (a.need - a.work + a.bugs * BUG_WORK) / helpers(a) || a.id - b.id)[0];
+    if (target) lane.projects = [target.id];
+  }
   for (const lane of activeLanes) {
-    lane.development = { ...g.development };
+    const head = p.projects.find(j => j.id === lane.projects[0]);
+    lane.development = head ? projectDevelopment(g, p, head) : { ...g.development };
     if (!lane.projects.length) {
       lane.enabled = false;
     } else if (!lane.enabled && lane.paidDay === g.day) {
@@ -888,12 +960,18 @@ export function actionError(g: Game, id: number, a: Action): string | null {
   if (a.type === "studio") {
     if (!Number.isInteger(a.threads) || a.threads < 0 || a.threads > MAX_LANES ||
       !["preferred", "soon-reset", "drain", "most-quota", "late-expiry", "balanced"].includes(a.accountPolicy) ||
-      !p.accounts.some((acc) => acc.id === a.preferredAccount)) return "工作室策略无效。";
+      !p.accounts.some((acc) => acc.id === a.preferredAccount) ||
+      (a.configuration !== undefined && !["fixed", "adaptive"].includes(a.configuration)) ||
+      (a.collaboration !== undefined && ![1, 2, 3].includes(a.collaboration))) return "工作室策略无效。";
     return null;
   }
   if (a.type === "configure") return validDevelopment(a.development) ? null : "开发配置无效。";
   if (a.type === "dispatch") {
     if (g.minute >= DAY_MINUTES) return "今天的时间用完了，先揭牌。";
+    if (id === 0 && g.studio.mode === "auto") {
+      const scheduled = p.lanes.flatMap(l => l.projects);
+      if (new Set(scheduled).size !== scheduled.length) return "协作队列请使用工作室策略；先调为每项 1 人，才能逐条手动派工。";
+    }
     if (!validDevelopment(a)) return "请选择有效的开发配置。";
     if (!p.accounts.some((acc) => acc.id === a.account)) return "先选择账号。";
     if (!a.projects.length) return "先在工作台勾选项目，可多选组成队列。";
@@ -972,7 +1050,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   const energy = energyCost(g, p, a);
   p.energy -= energy;
   if (a.type === "studio") {
-    g.studio = { mode: "auto", threads: a.threads, accountPolicy: a.accountPolicy, preferredAccount: a.preferredAccount };
+    g.studio = { ...g.studio, mode: "auto", threads: a.threads, accountPolicy: a.accountPolicy, preferredAccount: a.preferredAccount, configuration: a.configuration ?? g.studio.configuration, collaboration: a.collaboration ?? g.studio.collaboration };
   } else if (a.type === "dispatch") {
     if (id === 0) g.studio.mode = "manual";
     let lane = p.lanes.find((l) => l.id === a.lane);
@@ -1050,6 +1128,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     );
   } else if (a.type === "configure") {
     g.development = { ...a.development };
+    if (!a.keepAutomatic) g.studio.configuration = "fixed";
   } else if (a.type === "upgrade") {
     const acc = p.accounts.find((x) => x.id === a.account)!;
     const price = a.tier - acc.tier;
@@ -1070,6 +1149,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     log(g, `${p.name} 放弃项目，−2 声望。`, id);
   } else if (a.type === "test") {
     const j = p.projects.find((x) => x.id === a.project)!;
+    j.understood = true;
     j.bugs = Math.max(0, j.bugs - 2);
     if (!j.bugs) j.repair = 0;
     log(
@@ -1096,8 +1176,11 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     } while (g.phase === "plan" && humanNode(g) === before);
   }
   if (id === 0 && g.phase === "plan" && g.studio.mode === "auto") {
-    if (a.type === "studio" || a.type === "claim") organizeStudio(g);
-    if (a.type === "configure") for (const lane of p.lanes) lane.development = { ...g.development };
+    if (["studio", "claim", "abandon"].includes(a.type)) organizeStudio(g);
+    if (a.type === "configure") for (const lane of p.lanes) {
+      const head = p.projects.find(j => j.id === lane.projects[0]);
+      lane.development = head ? projectDevelopment(g, p, head) : { ...g.development };
+    }
     routeStudioAccounts(g);
   }
   if (id === 0 && a.type !== "configure") g.message =
@@ -1117,33 +1200,34 @@ function runPlayer(g: Game, p: Player) {
       routeStudioAccounts(g);
     }
     cleanLanes(p);
-    const running = p.lanes.flatMap((lane) => {
+    const running = p.lanes.flatMap(lane => {
       if (!lane.enabled || !lane.projects.length) return [];
-      const job = p.projects.find((j) => j.id === lane.projects[0])!;
-      const acc = p.accounts.find((a) => a.id === lane.account)!;
+      const job = p.projects.find(j => j.id === lane.projects[0])!;
+      const acc = p.accounts.find(a => a.id === lane.account)!;
       const stats = developmentStats(g, p, lane.development, job);
       if (stats.cost > 0 && (!activeAccount(g, acc) || acc.quota <= EPS)) return [];
       const repair = job.work >= job.need - EPS;
-      if (repair && !job.bugs) {
-        release(g, p, job);
-        return [];
-      }
-      const boundary = repair
-        ? BUG_WORK - job.repair
-        : Math.min(job.need, job.checked + 20) - job.work;
-      return [{ lane, job, acc, stats, repair, boundary }];
+      if (repair && !job.bugs) { release(g, p, job); return []; }
+      return [{ lane, job, acc, stats, repair }];
     });
     if (!running.length) break;
-    let dt = Math.min(time, ...running.map((r) => r.boundary / r.stats.speed));
+    const teams = new Map<number, typeof running>();
+    for (const r of running) teams.set(r.job.id, [...(teams.get(r.job.id) ?? []), r]);
+    let dt = time;
+    for (const team of Array.from(teams.values())) {
+      const efficiency = collaborationSpeed(team.length) / team.length;
+      for (const r of team) r.stats.speed *= efficiency;
+      const { job, repair } = team[0];
+      const boundary = repair ? BUG_WORK - job.repair : Math.min(job.need, job.checked + 20) - job.work;
+      dt = Math.min(dt, boundary / team.reduce((n, r) => n + r.stats.speed, 0));
+    }
     for (const acc of p.accounts) {
-      const rate = running
-        .filter((r) => r.acc.id === acc.id)
-        .reduce((n, r) => n + r.stats.cost * r.stats.speed, 0);
+      const rate = running.filter(r => r.acc.id === acc.id).reduce((n, r) => n + r.stats.cost * r.stats.speed, 0);
       if (rate > 0) dt = Math.min(dt, acc.quota / rate);
     }
     if (dt < EPS) break;
     for (const r of running) {
-      const work = Math.min(r.boundary, r.stats.speed * dt);
+      const work = r.stats.speed * dt;
       const cost = work * r.stats.cost;
       if (cost > 0) {
         const key = `${r.stats.name} · 费率 ${modelEdition(g, r.lane.development.model).price}${g.event.effect === "sale" ? " · Turbo折扣日" : ""}`;
@@ -1155,33 +1239,37 @@ function runPlayer(g: Game, p: Player) {
       r.acc.quota = Math.max(0, r.acc.quota - cost);
       if (r.acc.quota < EPS) r.acc.quota = 0;
       p.used += work * r.stats.nominalCost;
-      if (r.repair) {
-        r.job.repair += work;
-        if (r.job.repair >= BUG_WORK - EPS) {
-          r.job.bugs--;
-          r.job.repair = 0;
-        }
-      } else {
-        r.job.work = Math.min(r.job.need, r.job.work + work);
+      observeWork(g, p, r.lane.development.model, work);
+      if (r.repair) r.job.repair += work;
+      else {
+        r.job.work += work;
         r.job.riskLoad += (work * r.stats.risk) / 2000;
-        const checkpoint = Math.min(r.job.need, r.job.checked + 20);
-        if (r.job.work >= checkpoint - EPS) {
-          r.job.work = checkpoint;
-          if (r.job.riskLoad > 0 && random(g) < r.job.riskLoad) {
-            r.job.bugs++;
-            log(
-              g,
-              `${p.name} 的《${r.job.name}》发现 1 个 bug，完工后会自动返工；可换更强配置。`,
-              p.id,
-            );
-          }
-          r.job.riskLoad = 0;
-          r.job.checked = checkpoint;
-        }
       }
     }
-    // Resolve rewards only after all simultaneous work has used the same pre-completion rates.
-    for (const r of running) release(g, p, r.job);
+    // Shared projects get one checkpoint, one repair settlement and one publication.
+    for (const team of Array.from(teams.values())) {
+      const { job, repair } = team[0];
+      if (repair) {
+        if (job.repair >= BUG_WORK - EPS) { job.bugs--; job.repair = 0; }
+      } else {
+        const checkpoint = Math.min(job.need, job.checked + 20);
+        if (job.work >= checkpoint - EPS) {
+          job.work = checkpoint;
+          const bug = job.riskLoad > 0 && random(g) < job.riskLoad;
+          if (bug) {
+            job.bugs++;
+            log(g, `${p.name} 的《${job.name}》发现 1 个 bug，完工后会自动返工；可换更强配置。`, p.id);
+          }
+          if (!job.understood && (checkpoint >= 20 || bug || checkpoint === job.need)) {
+            job.understood = true;
+            log(g, `${p.name} 已摸清《${job.name}》：${job.challenge ? "存在额外集成难点" : "难度与需求说明一致"}，工作室会据此调整配置。`, p.id);
+          }
+          job.riskLoad = 0;
+          job.checked = checkpoint;
+        }
+      }
+      release(g, p, job);
+    }
     award(g, p);
     time -= dt;
   }
@@ -1215,7 +1303,7 @@ function botConfig(
           : DAY_MINUTES - g.minute;
         const work = Math.min(
           j.need - j.work + j.bugs * BUG_WORK,
-          (sustainable * s.speed) / (1 + ((s.risk / 100) * BUG_WORK) / 20),
+          (sustainable * s.speed) / (1 + ((riskAssessment(g, p, config, j).max / 100) * BUG_WORK) / 20),
         );
         const price = urgency
           ? 0.07
@@ -1447,6 +1535,10 @@ export function nextDay(state: Game): Game {
   return g;
 }
 export function textState(g: Game) {
+  const publicProject = (j: Project) => {
+    const { challenge, riskLoad: _riskLoad, ...visible } = j;
+    return { ...visible, challenge: j.understood ? challenge : null };
+  };
   return {
     title: "RESET / 开蹬！",
     version: g.version,
@@ -1466,15 +1558,20 @@ export function textState(g: Game) {
       proClosed: proClosed(g),
       models: Object.fromEntries((Object.keys(MODELS) as Model[]).map(m => [m, modelEdition(g, m)])),
     },
-    market: g.market,
+    market: g.market.map(publicProject),
     players: g.players.map(({ resetGain: _resetGain, wasted: _wasted, ...p }) => ({
       ...p,
+      projects: p.projects.map(publicProject),
+      shipped: p.shipped.map(publicProject),
       accounts: p.accounts.map((a) => {
         const { quota: _quota, meter: _meter, ...publicAccount } = a;
         return { ...publicAccount, percent: quotaPercent(a), observation: quotaObservation(a) };
       }),
       score: score(g.players[p.id]),
-      lanes: p.lanes.map((l) => ({ ...l, status: laneStatus(g, g.players[p.id], l) })),
+      lanes: p.lanes.map((l) => ({ ...l,
+status: laneStatus(g, g.players[p.id], l),
+        assessment: p.projects.find(j => j.id === l.projects[0]) ? riskAssessment(g, g.players[p.id], l.development, p.projects.find(j => j.id === l.projects[0])!) : null,
+      })),
     })),
     resetDeck: {
       normal: g.resetDeck.filter((c) => c === "normal").length,
@@ -1501,6 +1598,7 @@ export function restoreGame(raw: string | null): Game | null {
     if (
       ![1, 2, 3, 4, 5].includes(oldVersion) ||
       !(g.supplyRules === undefined || g.supplyRules === 1) ||
+      !(g.workflowRules === undefined || g.workflowRules === 1) ||
       !["plan", "reveal", "over"].includes(g.phase) ||
       ![21, 42].includes(g.length) ||
       !Number.isInteger(g.day) ||
@@ -1577,6 +1675,8 @@ export function restoreGame(raw: string | null): Game | null {
         threads: oldLanes.length ? running.length : 1,
         accountPolicy: "soon-reset",
         preferredAccount: running[0]?.account ?? oldLanes[0]?.account ?? player.accounts[0].id,
+        configuration: "fixed",
+collaboration: 1,
       };
       g.version = 5;
       g.message = "牌局已迁移：账号、项目和进度保留；工作室现在会自动排队和切换账号。";
@@ -1599,10 +1699,23 @@ export function restoreGame(raw: string | null): Game | null {
       !Number.isInteger(g.platform.nextRelease) || g.platform.nextRelease < 1 ||
       !(g.platform.proDeadline === null || (Number.isInteger(g.platform.proDeadline) && g.platform.proDeadline >= 1)) ||
       ![0.8, 1, 1.2].includes(g.platform.allowance) || !Number.isInteger(g.platform.revision) || g.platform.revision < 0) return null;
+    if (g.workflowRules === undefined) {
+      if (!g.studio || !g.players.every(p => p && Array.isArray(p.projects) && Array.isArray(p.shipped))) return null;
+      g.studio.configuration = "fixed";
+      g.studio.collaboration = 1;
+      for (const p of g.players) p.experience = initialExperience(g, 60);
+      for (const j of [...g.market, ...g.players.flatMap(p => [...p.projects, ...p.shipped])]) {
+        if (!j) return null;
+        j.challenge = 0; j.understood = true;
+      }
+      g.workflowRules = 1;
+    }
     if (
       !validDevelopment(g.development) ||
       !g.studio ||
       !["auto", "manual"].includes(g.studio.mode) ||
+      !["fixed", "adaptive"].includes(g.studio.configuration) ||
+      ![1, 2, 3].includes(g.studio.collaboration) ||
       !Number.isInteger(g.studio.threads) ||
       g.studio.threads < 0 ||
       g.studio.threads > MAX_LANES ||
@@ -1630,6 +1743,7 @@ export function restoreGame(raw: string | null): Game | null {
         j.riskLoad,
         j.repair,
       ]) &&
+      [0, 0.5].includes(j.challenge) && typeof j.understood === "boolean" &&
       j.need > 0 &&
       j.work >= 0 &&
       j.work <= j.need + EPS &&
@@ -1651,6 +1765,10 @@ export function restoreGame(raw: string | null): Game | null {
         p.id !== index ||
         typeof p.name !== "string" ||
         !["balanced", "builder", "sprinter", "banker"].includes(p.strategy) ||
+        !p.experience || !(Object.keys(MODELS) as Model[]).every(m => {
+          const sample = p.experience[m];
+          return sample && typeof sample.edition === "string" && Number.isFinite(sample.work) && sample.work >= 0 && sample.work <= 60;
+        }) ||
         !Array.isArray(p.accounts) ||
         p.accounts.length < 1 ||
         p.accounts.length > 3 ||
@@ -1696,7 +1814,8 @@ export function restoreGame(raw: string | null): Game | null {
           !Array.isArray(a.banks) ||
           !a.banks.every(Number.isInteger)
         ) return null;
-      const assigned = new Set<number>();
+      const assigned = new Map<number, number>();
+      const queued = new Set<number>();
       for (const l of p.lanes) {
         if (
           !l ||
@@ -1706,11 +1825,16 @@ export function restoreGame(raw: string | null): Game | null {
           typeof l.enabled !== "boolean" ||
           !Number.isInteger(l.paidDay) ||
           !Array.isArray(l.projects) ||
-          !l.projects.every(
-            (id) => p.projects.some((j) => j.id === id) &&
-              !assigned.has(id) &&
-              !!assigned.add(id),
-          )
+          new Set(l.projects).size !== l.projects.length ||
+          !l.projects.every((id, position) => {
+            if (!p.projects.some(j => j.id === id)) return false;
+            const count = assigned.get(id) ?? 0;
+            const cap = p.id === 0 && g.studio.mode === "auto" ? g.studio.collaboration : 1;
+            if (count >= cap || (count > 0 && (position > 0 || queued.has(id)))) return false;
+            if (position > 0) queued.add(id);
+            assigned.set(id, count + 1);
+            return true;
+          })
         ) return null;
       }
     }
