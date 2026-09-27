@@ -31,6 +31,8 @@ export const DAY_MINUTES = 480;
 export const DAILY_ENERGY = 12;
 export const MAX_LANES = 6;
 export const BUG_WORK = 12;
+// Fictional balance, not a claim about the frequency of real OpenAI promotions.
+export const RESET_SUPPLY = { normal: 9, bank: 1 } as const;
 const EPS = 1e-8;
 export const fmt = (n: number) => Number(n.toFixed(1)).toString();
 export const timeLabel = (minute: number) => `${String(9 + Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
@@ -200,6 +202,7 @@ export interface Receipt {
 }
 export interface Game {
   version: 5;
+  supplyRules: 1;
   platform: Platform;
   development: Development;
   studio: Studio;
@@ -246,13 +249,13 @@ export type Action =
   | { type: "pass" };
 
 export const EVENTS: EventCard[] = [
-  // The first four cards are the opening tutorial; platform cards are appended below.
+  // Opening order and regular deck weights are defined below the card catalogue.
   {
     id: "riddle",
     title: "他又开始说谜语了",
     quote: "“something is cooking 👀”",
-    detail: "今晚 45% 触发赠礼。先蹬为敬，还是当没看见？",
-    chance: 45,
+    detail: "今晚 30% 触发赠礼。先蹬为敬，还是当没看见？",
+    chance: 30,
     effect: "signal",
   },
   {
@@ -291,16 +294,16 @@ export const EVENTS: EventCard[] = [
     id: "soon",
     title: "Soon™",
     quote: "“very, very soon.”",
-    detail: "今晚 70% 触发赠礼。越像承诺，就越值得赌吗？",
-    chance: 70,
+    detail: "今晚 60% 触发赠礼。越像承诺，就越值得赌吗？",
+    chance: 60,
     effect: "signal",
   },
   {
     id: "ellipsis",
     title: "只有三个点",
     quote: "“...”",
-    detail: "今晚 25% 触发赠礼。今天的阅读理解有点贵。",
-    chance: 25,
+    detail: "今晚 10% 触发赠礼。今天的阅读理解有点贵。",
+    chance: 10,
     effect: "signal",
   },
   {
@@ -315,16 +318,16 @@ export const EVENTS: EventCard[] = [
     id: "jam",
     title: "周末 Game Jam",
     quote: "“show me what you built.”",
-    detail: "今天发布碉游，额外获得 4 声望。今晚 35% 触发赠礼。",
-    chance: 35,
+    detail: "今天发布碉游，额外获得 4 声望。今晚 20% 触发赠礼。",
+    chance: 20,
     effect: "jam",
   },
   {
     id: "maybe",
     title: "这条推文有点东西",
     quote: "“builders deserve more.”",
-    detail: "今晚 60% 触发赠礼。银行券可以留着，今天的时间不行。",
-    chance: 60,
+    detail: "今晚 40% 触发赠礼。银行券可以留着，今天的时间不行。",
+    chance: 40,
     effect: "signal",
   },
   {
@@ -344,12 +347,12 @@ export const EVENTS: EventCard[] = [
     effect: "quiet",
   },
   { id: "pro-last-call", title: "$200 即将停止新开", quote: "“existing subscribers can keep renewing.”", detail: "还有今天和明天可新开或升级 $200。之后只保留老号连续续费；降档或断订会失去资格。", chance: 0, effect: "retire" },
-  { id: "limit-rumor", title: "社区：这次掉额不太一样？", quote: "“same workload, different percentage?”", detail: "额度口径可能有变化，百分比不变。工作室会重新采样 token 与掉额；先观察，再决定是否冲刺。", chance: 25, effect: "limits" },
-  { id: "tech-1", title: "5.6 Luna 发布", quote: "“small model, bigger ideas.”", detail: "Luna 能力 +0.5、速度 +20%；付费配置暂贵 15%。免费慢跑仍免费，先试新模型还是等降价？", chance: 35, effect: "technology" },
+  { id: "limit-rumor", title: "社区：这次掉额不太一样？", quote: "“same workload, different percentage?”", detail: "额度口径可能有变化，百分比不变。工作室会重新采样 token 与掉额；先观察，再决定是否冲刺。", chance: 0, effect: "limits" },
+  { id: "tech-1", title: "5.6 Luna 发布", quote: "“small model, bigger ideas.”", detail: "Luna 能力 +0.5、速度 +20%；付费配置暂贵 15%。免费慢跑仍免费，先试新模型还是等降价？", chance: 20, effect: "technology" },
   { id: "tech-2", title: "5.6 Luna 降价了", quote: "“now cheaper to build.”", detail: "Luna 付费配置费率从初代的 115% 降到 65%。原有线程自动享受，免费路线不变。", chance: 0, effect: "technology" },
-  { id: "tech-3", title: "6 Sol：发布即降价", quote: "“smarter and cheaper, today.”", detail: "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考就能无风险做复杂任务；均衡开发自动升级。", chance: 50, effect: "technology" },
-  { id: "tech-4", title: "6 Luna：小模型追上来了", quote: "“more intelligence for everyone.”", detail: "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 已可无风险做常规任务。", chance: 35, effect: "technology" },
-  { id: "tech-5", title: "6 Astra：攻坚新世代", quote: "“bring your hardest problems.”", detail: "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 就能无风险攻坚，或继续 Ultra + Turbo 抢首发。", chance: 65, effect: "technology" },
+  { id: "tech-3", title: "6 Sol：发布即降价", quote: "“smarter and cheaper, today.”", detail: "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考就能无风险做复杂任务；均衡开发自动升级。", chance: 35, effect: "technology" },
+  { id: "tech-4", title: "6 Luna：小模型追上来了", quote: "“more intelligence for everyone.”", detail: "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 已可无风险做常规任务。", chance: 20, effect: "technology" },
+  { id: "tech-5", title: "6 Astra：攻坚新世代", quote: "“bring your hardest problems.”", detail: "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 就能无风险攻坚，或继续 Ultra + Turbo 抢首发。", chance: 50, effect: "technology" },
 ];
 
 const initialPlatform = (): Platform => ({ stage: 0, nextRelease: 6, proDeadline: null, allowance: 1, revision: 0 });
@@ -567,10 +570,8 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
       .filter((a) => activeAccount(g, a))
       .forEach((a) => {
         if (kind === "bank") {
-          if (a.banks.length < 3) {
-            a.banks.push(g.day + 30);
-            gained++;
-          } else unused++;
+          a.banks.push(g.day + 30);
+          gained++;
         } else {
           gained += PLANS[a.tier].capacity - a.quota;
           unused += a.quota;
@@ -595,7 +596,7 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
     text:
       kind === "normal"
         ? "有效账号额度补满，不叠加余额，不改变自然重置日。"
-        : "每个有效账号 +1 张银行券。绑定账号，30 天有效，最多存 3 张。",
+        : "每个有效账号 +1 张银行券。绑定账号，30 天有效，持有无上限。",
   };
   log(
     g,
@@ -604,11 +605,15 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
   return r;
 }
 function drawEvent(g: Game): EventCard {
-  if (g.day <= 4) return { ...EVENTS[g.day - 1] };
+  if (g.day <= 4) return { ...EVENTS.find(e => e.id === ["riddle", "promise", "quiet", "sale"][g.day - 1])! };
   if (g.platform.stage < 5 && g.day >= g.platform.nextRelease) return { ...EVENTS.find(e => e.id === `tech-${g.platform.stage + 1}`)! };
   if (!g.events.length) g.events = shuffle(
       g,
-      EVENTS.filter(e => e.effect !== "technology" && (e.effect !== "retire" || g.platform.proDeadline === null)).map((e) => e.id),
+      [
+        ...EVENTS.filter(e => e.effect !== "technology" && e.effect !== "bank" && (e.effect !== "retire" || g.platform.proDeadline === null)).map(e => e.id),
+        // Five extra quiet cards: promotions should punctuate normal development days.
+        "quiet", "quiet", "quiet", "offline", "offline",
+      ],
     );
   const id = g.events.shift();
   if (id === "pro-last-call" && g.platform.proDeadline !== null) return { ...EVENTS[2] };
@@ -703,6 +708,7 @@ function beginDay(g: Game) {
 export function createGame(seed = 260926, length = 42): Game {
   const g: Game = {
     version: 5,
+    supplyRules: 1,
     platform: initialPlatform(),
     development: { ...DEFAULT_DEVELOPMENT },
     studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0 },
@@ -762,14 +768,7 @@ export function createGame(seed = 260926, length = 42): Game {
   });
   g.studio.preferredAccount = g.players[0].accounts[0].id;
   g.market = [project(g, 0), project(g, 8), project(g, 12), project(g, 4)];
-  g.resetDeck = shuffle(g, [
-    "normal",
-    "normal",
-    "normal",
-    "normal",
-    "bank",
-    "bank",
-  ]);
+  g.resetDeck = newResetDeck(g);
   beginDay(g);
   return g;
 }
@@ -1378,18 +1377,17 @@ function humanNode(g: Game) {
     p.accounts.map((a) => a.quota <= EPS),
   ]);
 }
+function newResetDeck(g: Game): Game["resetDeck"] {
+  return shuffle(g, [
+    ...Array<"normal">(RESET_SUPPLY.normal).fill("normal"),
+    ...Array<"bank">(RESET_SUPPLY.bank).fill("bank"),
+  ]);
+}
 function finishNight(g: Game) {
   if (g.phase !== "plan") return;
   const trigger = g.event.chance > 0 && random(g) * 100 < g.event.chance;
   if (trigger) {
-    if (!g.resetDeck.length) g.resetDeck = shuffle(g, [
-        "normal",
-        "normal",
-        "normal",
-        "normal",
-        "bank",
-        "bank",
-      ]);
+    if (!g.resetDeck.length) g.resetDeck = newResetDeck(g);
     g.receipt = reset(g, g.resetDeck.shift()!);
   } else {
     g.receipt = {
@@ -1502,6 +1500,7 @@ export function restoreGame(raw: string | null): Game | null {
     const oldVersion = legacy.version;
     if (
       ![1, 2, 3, 4, 5].includes(oldVersion) ||
+      !(g.supplyRules === undefined || g.supplyRules === 1) ||
       !["plan", "reveal", "over"].includes(g.phase) ||
       ![21, 42].includes(g.length) ||
       !Number.isInteger(g.day) ||
@@ -1695,7 +1694,6 @@ export function restoreGame(raw: string | null): Game | null {
             Number.isInteger,
           ) ||
           !Array.isArray(a.banks) ||
-          a.banks.length > 3 ||
           !a.banks.every(Number.isInteger)
         ) return null;
       const assigned = new Set<number>();
@@ -1750,6 +1748,14 @@ export function restoreGame(raw: string | null): Game | null {
       !Array.isArray(g.receipt.gains) ||
       !g.receipt.gains.every(r => r && Number.isInteger(r.player) && r.player >= 0 && r.player < 4 && finite([r.gained, r.unused]) && typeof r.collision === "boolean")
     )) return null;
+    if (g.supplyRules === undefined) {
+      // Preserve already announced events and earned coupons; only future draws change.
+      // Defer shuffling until the next draw so migration never consumes the saved RNG.
+      g.supplyRules = 1;
+      g.events = [];
+      g.resetDeck = [];
+      g.message = "银行券现已无持有上限，已有券与今日消息保留；后续采用低频赠券牌堆。";
+    }
     return g;
   } catch {
     return null;

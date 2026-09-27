@@ -38,11 +38,11 @@ test('each account keeps independent natural resets; forced resets never shift t
   for(const a of human(g).accounts)a.quota=0;g=morning(g,8);assert.equal(human(g).accounts[0].quota,480);assert.equal(human(g).accounts[1].quota,0);assert.deepEqual(human(g).accounts.map(a=>a.nextReset),[15,10]);
   const dates=human(g).accounts.map(a=>a.nextReset);g.event={...E.EVENTS.find(e=>e.id==='promise')};g.resetDeck=['normal'];g=E.endDay(g);assert.deepEqual(human(g).accounts.map(a=>a.nextReset),dates);assert.ok(human(g).accounts.every(a=>a.quota===480));
 });
-test('bank expiry, three-token limit, full-quota prevention and daily use limit remain enforced',()=>{
+test('bank inventory is uncapped while expiry, full-quota prevention and daily use limit remain enforced',()=>{
   let g=fresh();account(g).banks=[2,3,31];assert.match(E.actionError(g,0,{type:'bank',account:account(g).id}),/已经满/);
   g=morning(g,2);assert.deepEqual(account(g).banks,[3,31]);assert.equal(human(g).expired,1);account(g).quota=0;
   g=E.act(g,{type:'bank',account:account(g).id});assert.deepEqual(account(g).banks,[31]);account(g).quota=0;assert.match(E.actionError(g,0,{type:'bank',account:account(g).id}),/最多使用/);
-  account(g).banks=[31,32,33];g.event={...E.EVENTS.find(e=>e.id==='promise')};g.resetDeck=['bank'];g=E.endDay(g);assert.equal(account(g).banks.length,3);assert.equal(g.receipt.gains[0].unused,1);
+  account(g).banks=[31,32,33];g.event={...E.EVENTS.find(e=>e.id==='promise')};g.resetDeck=['bank'];g=E.endDay(g);assert.equal(account(g).banks.length,4);assert.equal(g.receipt.gains[0].unused,0);
 });
 test('renewal management remains available in the night phase without advancing the game',()=>{
   let g=E.endDay(fresh());const before=structuredClone(g);g=E.act(g,{type:'renewal',account:account(g).id,tier:null});assert.equal(account(g).renewal,null);assert.equal(g.minute,480);assert.equal(g.phase,'reveal');assert.equal(g.rng,before.rng);assert.equal(human(g).energy,human(before).energy);

@@ -32,6 +32,7 @@ import {
   LEGACY_SAVE_KEY,
   nextDay,
   PLANS,
+  RESET_SUPPLY,
   restoreGame,
   SAVE_KEY,
   score,
@@ -246,13 +247,13 @@ function Rules() {
       <p>
         每号开通日起每 7 天自然补满；直接
         reset、银行券不叠加余额，也不改变自然重置日。券绑定账号、30
-        天有效、最多存 3 张；每号每天最多用 1
+        天有效、持有无上限；每号每天最多用 1
         张。自然重置前烧这个号，另一个号留券等待，是一门手艺。
       </p>
       <p>
-        早晨公开消息，夜里按概率判定是否赠礼；再抽 4 张普通 reset、2 张 banked
+        早晨公开消息，夜里按概率判定是否赠礼；再抽 {RESET_SUPPLY.normal} 张普通 reset、{RESET_SUPPLY.bank} 张 banked
         reset
-        的牌堆，抽完重洗。谜语不是承诺，今天刚用券、今晚又强制补满，就可能撞车。
+        的牌堆，抽完重洗。开局送 1 张教学券，此后没有固定送券日；日常更多平静消息。谜语不是承诺，今天刚用券、今晚又强制补满，就可能撞车。
       </p>
       <h3>平台风向</h3>
       <p>$20 / $100 / $200 对应 1× / 5× / 20×。账号只显示剩余百分比，展开“用量观察”可看自动估计。额度口径在基准上下 20% 内波动，不会直接扣掉百分比。</p>
@@ -459,8 +460,8 @@ export default function ResetRush() {
   };
   const bankAction: Action = { type: "bank", account: account?.id ?? -1 };
   const bankError = game ? actionError(game, 0, bankAction) : null;
-  const normalCards = game?.resetDeck.filter((c) => c === "normal").length ?? 4;
-  const bankCards = game?.resetDeck.filter((c) => c === "bank").length ?? 2;
+  const normalCards = game?.resetDeck.filter((c) => c === "normal").length ?? RESET_SUPPLY.normal;
+  const bankCards = game?.resetDeck.filter((c) => c === "bank").length ?? RESET_SUPPLY.bank;
   const totalCards = normalCards + bankCards;
   const close = () => {
     setModal(null);
@@ -846,10 +847,6 @@ export default function ResetRush() {
                   {game.phase === "plan" && game.receipt?.gains[0] && (
                     <p className={s.morningGift}>
                       {game.receipt.kind === "normal" ? "早晨已到账：有效账号恢复 100%" : `早晨已到账：+${game.receipt.gains[0].gained} 张银行券`}
-                      {game.receipt.kind === "bank" &&
-                      game.receipt.gains[0].unused > 0
-                        ? `（${game.receipt.gains[0].unused} 张超出仓位）`
-                        : ""}
                     </p>
                   )}
                 </article>
@@ -858,13 +855,13 @@ export default function ResetRush() {
                   <div>
                     <strong>重置牌堆</strong>
                     <p>
-                      直接补满 <b>{totalCards ? normalCards : 4}</b> <i>/</i>{" "}
-                      银行券 <b>{totalCards ? bankCards : 2}</b>
+                      直接补满 <b>{totalCards ? normalCards : RESET_SUPPLY.normal}</b> <i>/</i>{" "}
+                      银行券 <b>{totalCards ? bankCards : RESET_SUPPLY.bank}</b>
                     </p>
                     <small>
                       {totalCards
                         ? "抽过的牌不放回，用完再洗"
-                        : "已抽空，下次重新洗回 6 张"}
+                        : "已抽空，下次重新洗回 10 张"}
                     </small>
                   </div>
                 </div>
@@ -1109,7 +1106,7 @@ export default function ResetRush() {
                     <div className={s.accountMeta}>
                       <span>▱ 银行券</span>
                       <b>
-                        {a.banks.length} <small>/ 3 张</small>
+                        {a.banks.length} <small>张 · 无上限</small>
                       </b>
                     </div>
                     {a.banks.length > 0 && (

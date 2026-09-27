@@ -1,0 +1,63 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), 'C:/Users/yuiffy/.codex/skills/develop-web-game'] }));
+const { inspectPng } = require('./lib/autochess-screenshot.cjs');
+const base = process.env.RESET_BASE_URL || 'http://127.0.0.1:3888';
+const output = path.resolve('tmp/reset-rush-supply-browser');
+async function main() {
+  assert.equal((await fetch(`${base}/game/reset-rush`)).status, 200);
+  fs.mkdirSync(output, { recursive: true });
+  const E = await (await import('./tests/helpers/load-typescript-module.mjs')).loadTypescriptModule('src/components/resetRush/engine.ts');
+  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-features=SpeechSynthesis'] });
+  const errors = [], screenshots = [];
+  try {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
+    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    const page = await context.newPage();
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', e => { if (e.type() === 'error') errors.push(e.text()); });
+    await page.goto(`${base}/game/reset-rush`, { waitUntil: 'networkidle' });
+    const old = E.createGame(901);
+    delete old.supplyRules;
+    old.players[0].accounts[0].banks = Array(20).fill(31);
+    old.players[0].accounts[0].quota = 0;
+    old.resetDeck = ['bank', 'bank']; old.events = ['gift'];
+    await page.evaluate(g => localStorage.setItem('reset-rush-v5', JSON.stringify(g)), old);
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).day === 1);
+    const save = () => page.evaluate(() => JSON.parse(localStorage.getItem('reset-rush-v5')));
+    const migrated = await save();
+    assert.equal(migrated.supplyRules, 1);
+    assert.equal(migrated.players[0].accounts[0].banks.length, 20);
+    assert.deepEqual(migrated.resetDeck, []);
+    assert.match(await page.locator('body').innerText(), /直接补满\s*9\s*\/\s*银行券\s*1/);
+    const shot = async name => {
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      const file = path.join(output, `${name}.png`);
+      inspectPng(await page.screenshot({ path: file, animations: 'disabled' }));
+      screenshots.push({ file, state: await page.evaluate(() => JSON.parse(window.render_game_to_text())) });
+    };
+    await page.getByText('张 · 无上限', { exact: true }).scrollIntoViewIfNeeded();
+    assert.match(await page.locator('body').innerText(), /20\s*张 · 无上限/);
+    await shot('01-uncapped-bank');
+    await page.getByRole('button', { name: /使用银行券|使用 1 张银行券|用一张银行券/ }).click();
+    const spent = await save();
+    assert.equal(spent.players[0].accounts[0].banks.length, 19);
+    assert.equal(spent.players[0].accounts[0].quota, 24);
+    await page.reload({ waitUntil: 'networkidle' });
+    assert.equal((await save()).players[0].accounts[0].banks.length, 19);
+    await page.getByRole('button', { name: /玩法说明/ }).click();
+    assert.match(await page.locator('dialog').innerText(), /9 张普通 reset、1 张 banked/);
+    assert.match(await page.locator('dialog').innerText(), /教学券/);
+    await shot('02-rules');
+    await page.getByRole('button', { name: '关闭弹窗' }).click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByText('张 · 无上限', { exact: true }).scrollIntoViewIfNeeded();
+    await shot('03-mobile-bank');
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
+  fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ screenshots, errors }, null, 2));
+  console.log(JSON.stringify({ screenshots: screenshots.map(x => x.file), errors }));
+}
+main().catch(e => { console.error(e); process.exitCode = 1; });
