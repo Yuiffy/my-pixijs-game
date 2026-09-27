@@ -229,6 +229,7 @@ function Rules() {
           <li><strong>480 minutes and 12 energy each day.</strong> The workday runs from 09:00 to 17:00. Reading and planning do not advance time. When you finish the day, your AI sessions and your rivals work through the remaining time.</li>
           <li><strong>A job costs 1 energy; each managed AI session costs 1–2.</strong> Accepted projects queue automatically. You choose up to six concurrent AI sessions. They may share accounts or collaborate on one project. Accounts, upgrades, renewals, and vouchers cost no time or energy.</li>
           <li><strong>Set a strategy, then advance work.</strong> Choose how accounts are prioritized; the studio switches when quota runs out. Completed projects lead to the next queued job. Work pauses on delivery or when resources are needed. Vouchers, free Luna, and manual freelance work can keep the day productive.</li>
+          <li><strong>Recent models, slower releases.</strong> Start with GPT-5.6 Luna, GPT-5.6 Sol and GPT-6 Astra. Announcements are 14–28 days apart, sometimes bringing two models together. After all slots reach GPT-6, 6.1 is explicitly fictional. Cadence, free Luna and Low–Ultra development effort are game rules, not official schedules or universal API parameters.</li>
           <li><strong>Trade quota for time.</strong> Turbo doubles speed and uses 2.5 times as much quota per unit of progress without increasing bug risk. High through Max think more deeply but work more slowly. Ultra models a focused team effort. Luna Medium without Turbo is free.</li>
           <li><strong>Respect difficult work.</strong> Bugs are possible when ability falls below project difficulty. Risk is checked per 20 progress. Each bug adds 12 automatic rework progress, or you can spend 2 energy and 30 minutes to fix up to two bugs yourself.</li>
           <li><strong>Remember to rest.</strong> Once per day, spend 60 minutes to recover 3 energy while AI work continues. Manual freelance work earns $25 for 1 energy and 60 minutes. Finishing the day first uses the remaining work time, then reveals the night card.</li>
@@ -279,6 +280,9 @@ function Rules() {
           强配置能包办更多架构与自测，每条只占 1 精力；需要人工跟进则占 2 精力。
         </li>
         <li>
+          <strong>近期模型，慢一点换代</strong>21 / 42 天局从近期模型起步，每隔 14–28 天出现一次模型消息，有时两款一起上线。全系到 GPT-6 后，后续 6.1 明确标为虚构推演。发布间隔、免费 Luna、Ultra 协作和配额倍率均为游戏设定，不是官方日程或计费规则。
+        </li>
+        <li>
           <strong>用额度换时间。</strong>Turbo 速度 ×2、每进度额度 ×2.5，不增加
           bug 风险。High 到 Max 思考更深、耗时更久；Ultra
           抽象成协作攻坚，提高吞吐与能力。Luna Medium 不开 Turbo
@@ -299,7 +303,7 @@ function Rules() {
       <p>能力高于任务需求，会自动积累作品品质：精良回款与声望 +20%，精品 +40%（奖励向下取整）。品质按全程有效开发量结算；最后换高档不能补刷，返工与 Turbo 不额外加品质。</p>
       <p>省心配置每天每条 1 精力，需人工跟进的配置 2 精力。项目摸底、模型经验会影响保守估计；开工前调整可退还预留；开工后同日按最高需求收取，切换到更费心的配置补差额，精力不足就等待。次日重新计算。</p>
       <h3>让工作室逐渐懂你</h3>
-      <p>项目配置可选“自动精品”，优先选能做出精品且省心的最低消耗档位；能力不足时尽力优化，已有低品质进度无法补刷。也可选“自动稳妥”：逐项选择足够胜任且最省额度的模型与思考强度。Turbo 独立勾选；选旧版预设会切回统一配置。缺额会等待补给，不偷偷降到有风险的免费配置。</p>
+      <p>项目配置可选“自动精品”，优先选能做出精品且省心的最低消耗档位；能力不足时尽力优化，已有低品质进度无法补刷。也可选“自动稳妥”：逐项选择足够胜任且最省额度的模型与投入强度。Turbo 独立勾选；选旧版预设会切回统一配置。缺额会等待补给，不偷偷降到有风险的免费配置。</p>
       <p>每项可选最多 1 / 2 / 3 个 AI 对话合作，不是真人玩家。先分头做不同项目，有空闲对话再帮大项目。2 个合计 1.7×、3 个 2.2× 速度，每个对话每天占你 1–2 精力；进度、bug 与交付统一结算。</p>
       <p>需求只给难度估计。首段 20 进度或 bug 会揭示项目难点；模型每代累计实测 60 进度后校准。摸底时自动配置留安全余量，熟悉后可降档省钱；能力不足时明确提示可能返工。</p>
       <h3>七天时钟，三十天银行券</h3>
@@ -466,7 +470,7 @@ function ProjectSettings({ game, job, open, onToggle, send }: {
                 {(Object.keys(MODELS) as Model[]).map(m => <option key={m} value={m}>{modelEdition(game, m).name}</option>)}
               </select>
             </label>
-            <label htmlFor="project-effort">思考强度
+            <label htmlFor="project-effort">投入强度
               <select id="project-effort" value={config.effort} onChange={e => development({ effort: e.target.value as Effort })}>
                 {(Object.keys(EFFORTS) as Effort[]).map(e => <option key={e} value={e}>{EFFORTS[e].name}</option>)}
               </select>
@@ -600,7 +604,7 @@ export default function ResetRush() {
   const model =
     game && human
       ? developmentStats(game, human, effectiveConfig, job)
-      : { name: "5.0 Sol · Medium", cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0, minutes: 0, quota: 0, tokensPerHour: 0 };
+      : { name: "GPT-5.6 Sol · Medium", cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0, minutes: 0, quota: 0, tokensPerHour: 0 };
   const energy = game && human ? energyBreakdown(game, human) : null;
   const tomorrowHosting = game && human ? human.lanes.filter(l => l.enabled && l.projects.length).reduce((n, l) => n + attentionCost(game, human, l.development, human.projects.find(j => j.id === l.projects[0])), 0) : 0;
   const studio = game?.studio;
@@ -1485,6 +1489,15 @@ checked={config.turbo}
                 ))}
               </div>
               <p className={s.studioSummary}>慢跑省额 = 免费 Luna · Medium · 不开 Turbo。仍需跟进精力，难题可能返工；单独配置过的项目请在 <a href="#reset-project-settings" onClick={() => setProjectSettingsOpen(true)}>项目设置</a> 中切换或恢复跟随全局。</p>
+              <details className={s.experienceNotes} data-testid="model-roadmap">
+                <summary>近期模型路线 · 两到四周一次</summary>
+                <p>轻量：GPT-5.6 Luna → GPT-6 Luna</p>
+                <p>主力：GPT-5.6 Sol → GPT-6 Sol</p>
+                <p>攻坚：GPT-6 Astra → GPT-6.1 Astra（虚构）</p>
+                <p>21 / 42 天局从近期模型起步，每隔 14–28 天出现一次模型消息，有时两款一起上线。全系到 GPT-6 后，后续 6.1 明确标为虚构推演。发布间隔、免费 Luna、Ultra 协作和配额倍率均为游戏设定，不是官方日程或计费规则。</p>
+                <a href="https://developers.openai.com/api/docs/models/gpt-5.6-luna" target="_blank" rel="noreferrer">OpenAI · GPT-5.6 Luna</a>{" · "}
+                <a href="https://developers.openai.com/api/docs/models/gpt-6-luna" target="_blank" rel="noreferrer">OpenAI · GPT-6 Luna</a>
+              </details>
               <details className={s.advancedSettings}>
                 <summary>手动配置 · 选择模型或强度会切回统一配置</summary>
                 <div className={s.commandRow}>
@@ -1508,7 +1521,7 @@ checked={config.turbo}
                   </div>
                   <div className={s.configRow}>
                     <label htmlFor="reset-effort">
-                      思考强度
+                      投入强度
                       <select
                         id="reset-effort"
                         value={config.effort}
@@ -1580,7 +1593,7 @@ keepAutomatic: true,
               </p>
               <details className={s.experienceNotes} data-testid="experience-notes">
                 <summary>工作室经验 · 自动积累，无需操作</summary>
-                <p>每个项目完成首段 20 进度或发现 bug 后，摸清真实难点；每代模型累计完成 60 进度（含返工）后校准能力。换思考强度、开关 Turbo 不丢经验，模型换代需重新实测。</p>
+                <p>每个项目完成首段 20 进度或发现 bug 后，摸清真实难点；每代模型累计完成 60 进度（含返工）后校准能力。换投入强度、开关 Turbo 不丢经验，模型换代需重新实测。</p>
                 <div>{(["luna", "sol", "astra"] as Model[]).map(m => <span key={m}>{modelEdition(game, m).name} · {fmt(modelExperience(game, human, m))} / 60{modelExperience(game, human, m) >= 60 ? " · 已校准" : " · 摸底中"}</span>)}</div>
                 <p>摸底阶段不会把估计当成 0% 风险；熟悉后显示的 0% 指后续开发，之前埋下的 bug 仍可能暴露。</p>
               </details>
@@ -1714,7 +1727,7 @@ keepAutomatic: true,
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.8 · 从容开蹬</i>
+          RESET / 开蹬！ <i>v0.9 · 近期模型</i>
         </span>
         <span>
           {game

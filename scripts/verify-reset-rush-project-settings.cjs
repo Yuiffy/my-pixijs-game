@@ -12,7 +12,7 @@ async function main(){
  const E=await (await import('./tests/helpers/load-typescript-module.mjs')).loadTypescriptModule('src/components/resetRush/engine.ts');
  const browser=await chromium.launch({channel:'chrome',headless:true,args:['--mute-audio','--disable-features=SpeechSynthesis']});
  try {
-  const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+  const context=await browser.newContext({locale:'zh-CN',viewport:{width:1440,height:1000},reducedMotion:'reduce'});
   await context.addInitScript(()=>{if(window.speechSynthesis)window.speechSynthesis.speak=()=>{};});
   const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));page.on('console',e=>{if(e.type()==='error')report.errors.push(e.text());});
   const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('reset-rush-v5')));

@@ -102,7 +102,7 @@ test('token observation brackets full allowance and starts over after reset or m
   g = E.advanceMinutes(g, 60);
   g = E.act(g, { type: 'configure', development: { model: 'astra', effort: 'medium', turbo: true } });
   g = E.advanceMinutes(g, 1);
-  assert.match(account(g).meter.config, /Astra/);
+  assert.match(account(g).meter.config, /GPT-6 Astra/);
   assert.ok(account(g).meter.tokens < observed.tokens);
   assert.deepEqual(E.restoreGame(JSON.stringify(g)), g);
   assert.deepEqual(E.advanceMinutes(g, 60), E.advanceMinutes(E.advanceMinutes(g, 27), 33));
@@ -113,13 +113,10 @@ test('releases improve capability; price drops change quota per equal work witho
   const config = { model: 'luna', effort: 'high', turbo: false };
   const stats = () => E.developmentStats(g, player(g), config, { ...player(g).projects[0], difficulty: 3 });
   const original = stats();
-  g = morning(g, 6, 'tech-1');
+  g = morning(g, 15, 'tech-4');
   const launch = stats();
-  assert.ok(launch.ability > original.ability && launch.speed > original.speed && launch.cost > original.cost);
-  g = morning(g, 11, 'tech-2');
-  const cheap = stats();
-  near(cheap.speed, launch.speed); near(cheap.tokenCost, launch.tokenCost);
-  assert.ok(cheap.cost < original.cost);
+  assert.ok(launch.ability > original.ability && launch.speed > original.speed && launch.cost < original.cost);
+  near(launch.tokenCost, original.tokenCost);
   g = morning(g, 16, 'tech-3');
   const sol = E.developmentStats(g, player(g), { model: 'sol', effort: 'medium', turbo: false }, { ...player(g).projects[0], difficulty: 3 });
   assert.equal(sol.risk, 0); assert.ok(sol.cost < 0.16);
@@ -155,7 +152,7 @@ test('v4 migration preserves percentages, bank tokens, schedule and projects exa
   }
 });
 
-test('all full seasons reach model 6 and bots obey retired-plan restrictions', () => {
+test('full seasons allow one or two recent-model announcements and bots obey retired-plan restrictions', () => {
   for (const seed of [511, 512, 513]) {
     let g = E.createGame(seed, 42);
     while (g.phase !== 'over') {
@@ -167,7 +164,7 @@ test('all full seasons reach model 6 and bots obey retired-plan restrictions', (
         assert.equal(E.actionError(g, p.id, a), null);
       }
     }
-    assert.equal(g.platform.stage, 5);
+    assert.ok(g.platform.stage >= 3 && g.platform.stage <= 5);
     assert.ok(g.platform.proDeadline !== null);
   }
 });

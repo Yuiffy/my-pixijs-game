@@ -1,6 +1,7 @@
 /** RESET / 开蹬! — deterministic, serializable tabletop rules. All currency is fictional. */
 export type Category = "game" | "personal" | "open" | "company";
 export type Tier = 20 | 100 | 200;
+// Stable save-slot IDs; player-facing names always come from modelEdition.
 export type Model = "luna" | "sol" | "astra";
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
 export type Difficulty = 1 | 2 | 3 | 4;
@@ -54,21 +55,21 @@ export const MODELS: Record<
   }
 > = {
   luna: {
-    name: "Luna",
+    name: "GPT-5.6 Luna",
     cost: 0,
     speed: 0.075,
     ability: 1,
     description: "简单任务 · 慢慢免费跑",
   },
   sol: {
-    name: "Sol",
+    name: "GPT-5.6 Sol",
     cost: 0.16,
     speed: 0.18,
     ability: 2,
     description: "日常主力 · 均衡消耗",
   },
   astra: {
-    name: "Astra",
+    name: "GPT-6 Astra",
     cost: 0.4,
     speed: 0.3,
     ability: 3,
@@ -223,6 +224,7 @@ export interface Game {
   supplyRules: 1;
   workflowRules: 1;
   qualityRules: 1;
+  modelRules: 1;
   platform: Platform;
   development: Development;
   studio: Studio;
@@ -369,29 +371,27 @@ export const EVENTS: EventCard[] = [
   },
   { id: "pro-last-call", title: "$200 即将停止新开", quote: "“existing subscribers can keep renewing.”", detail: "还有今天和明天可新开或升级 $200。之后只保留老号连续续费；降档或断订会失去资格。", chance: 0, effect: "retire" },
   { id: "limit-rumor", title: "社区：这次掉额不太一样？", quote: "“same workload, different percentage?”", detail: "额度口径可能有变化，百分比不变。工作室会重新采样 token 与掉额；先观察，再决定是否冲刺。", chance: 0, effect: "limits" },
-  { id: "tech-1", title: "5.6 Luna 发布", quote: "“small model, bigger ideas.”", detail: "Luna 能力 +0.5、速度 +20%；付费配置暂贵 15%。免费慢跑仍免费，先试新模型还是等降价？", chance: 20, effect: "technology" },
-  { id: "tech-2", title: "5.6 Luna 降价了", quote: "“now cheaper to build.”", detail: "Luna 付费配置费率从初代的 115% 降到 65%。原有 AI 对话自动享受，免费路线不变。", chance: 0, effect: "technology" },
-  { id: "tech-3", title: "6 Sol：发布即降价", quote: "“smarter and cheaper, today.”", detail: "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考可处理基础复杂任务；隐藏难点仍需摸底，新模型重新实测。", chance: 35, effect: "technology" },
-  { id: "tech-4", title: "6 Luna：小模型追上来了", quote: "“more intelligence for everyone.”", detail: "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 可处理基础常规任务，隐藏难点仍需摸底。", chance: 20, effect: "technology" },
-  { id: "tech-5", title: "6 Astra：攻坚新世代", quote: "“bring your hardest problems.”", detail: "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 可处理基础攻坚任务，隐藏难点仍需摸底；也可 Ultra + Turbo 抢首发。", chance: 50, effect: "technology" },
+  { id: "tech-1", title: "近期模型工作室", quote: "从最近的模型时代开始。", detail: "开局已配备 GPT-5.6 Luna、GPT-5.6 Sol 和 GPT-6 Astra；不再从早期型号一路追赶。", chance: 20, effect: "technology" },
+  { id: "tech-2", title: "工作室配额活动", quote: "配置继续沿用。", detail: "配额与速度采用游戏数值，模型名称采用真实型号。", chance: 0, effect: "technology" },
+  { id: "tech-3", title: "GPT-6 Sol 上线", quote: "主力模型换代了。", detail: "主力档从 GPT-5.6 Sol 更新为 GPT-6 Sol：游戏内能力 +1、速度 +25%，配额费率降到起步时的 50%。下一次模型消息至少间隔 14 天。", chance: 35, effect: "technology" },
+  { id: "tech-4", title: "GPT-6 Luna 到来 · Sol 同步就绪", quote: "轻量与主力都进入 GPT-6。", detail: "轻量档更新为 GPT-6 Luna：游戏内能力 +1、速度 +50%，付费配置费率为起步时的 45%，免费慢跑保留。若 Sol 尚未换代，本次同时开放 GPT-6 Sol。", chance: 20, effect: "technology" },
+  { id: "tech-5", title: "虚构推演：GPT-6.1 Astra", quote: "如果下一代攻坚模型提前来了呢？", detail: "这是虚构未来事件，并非真实发布。攻坚档升级为 GPT-6.1 Astra：游戏内能力 +1、速度 +20%，费率 85%；只会在全系进入 GPT-6 且再等待至少 14 天后出现。", chance: 50, effect: "technology" },
 ];
 
-const initialPlatform = (): Platform => ({ stage: 0, nextRelease: 6, proDeadline: null, allowance: 1, revision: 0 });
+export const MODEL_RELEASES = { minDays: 14, maxDays: 28, bundleChance: 0.3 } as const;
+const initialPlatform = (): Platform => ({ stage: 2, nextRelease: 15, proDeadline: null, allowance: 1, revision: 0 });
 export const quotaPercent = (a: Account) => Math.max(0, Math.min(100, Math.ceil((a.quota / PLANS[a.tier].capacity) * 100 - EPS)));
 export const proClosed = (g: Game) => g.platform.proDeadline !== null && g.day >= g.platform.proDeadline;
 export const canKeepPro = (g: Game, a: Account) => a.tier === 200 && activeAccount(g, a);
 export function modelEdition(g: Game, model: Model) {
   const { stage } = g.platform;
-  if (model === "luna") return stage >= 4
-    ? { name: "6 Luna", ability: 1, speed: 1.5, price: 0.45 }
-    : stage >= 1 ? { name: "5.6 Luna", ability: 0.5, speed: 1.2, price: stage >= 2 ? 0.65 : 1.15 }
-      : { name: "5.0 Luna", ability: 0, speed: 1, price: 1 };
-  const upgraded = stage >= (model === "sol" ? 3 : 5);
+  const upgraded = stage >= (model === "luna" ? 4 : model === "sol" ? 3 : 5);
   return {
-    name: `${upgraded ? "6" : "5.0"} ${MODELS[model].name}`,
+    name: upgraded ? ({ luna: "GPT-6 Luna", sol: "GPT-6 Sol", astra: "GPT-6.1 Astra · 虚构推演" })[model] : MODELS[model].name,
+    fictional: model === "astra" && upgraded,
     ability: upgraded ? 1 : 0,
-    speed: upgraded ? (model === "sol" ? 1.25 : 1.2) : 1,
-    price: upgraded ? (model === "sol" ? 0.75 : 0.85) : 1,
+    speed: upgraded ? ({ luna: 1.5, sol: 1.25, astra: 1.2 })[model] : 1,
+    price: upgraded ? ({ luna: 0.45, sol: 0.5, astra: 0.85 })[model] : 1,
   };
 }
 export function quotaObservation(a: Account) {
@@ -802,7 +802,11 @@ function reset(g: Game, kind: "normal" | "bank"): Receipt {
 }
 function drawEvent(g: Game): EventCard {
   if (g.day <= 4) return { ...EVENTS.find(e => e.id === ["riddle", "promise", "quiet", "sale"][g.day - 1])! };
-  if (g.platform.stage < 5 && g.day >= g.platform.nextRelease) return { ...EVENTS.find(e => e.id === `tech-${g.platform.stage + 1}`)! };
+  if (g.platform.stage < 5 && g.day >= g.platform.nextRelease) {
+    // Sometimes two real models arrive together; this is one announcement, not a shorter release interval.
+    const stage = g.platform.stage === 2 && random(g) < MODEL_RELEASES.bundleChance ? 4 : g.platform.stage + 1;
+    return { ...EVENTS.find(e => e.id === `tech-${stage}`)! };
+  }
   if (!g.events.length) g.events = shuffle(
       g,
       [
@@ -880,7 +884,7 @@ function beginDay(g: Game) {
   if (g.event.effect === "retire" && g.platform.proDeadline === null) g.platform.proDeadline = g.day + 2;
   if (g.event.effect === "technology") {
     g.platform.stage = Math.max(g.platform.stage, Number(g.event.id.split("-")[1]));
-    g.platform.nextRelease = g.day + 4 + Math.floor(random(g) * 3);
+    g.platform.nextRelease = g.day + MODEL_RELEASES.minDays + Math.floor(random(g) * (MODEL_RELEASES.maxDays - MODEL_RELEASES.minDays + 1));
     g.platform.revision++;
   }
   if (g.event.effect === "limits") {
@@ -908,6 +912,7 @@ export function createGame(seed = 260926, length = 42): Game {
     supplyRules: 1,
     workflowRules: 1,
     qualityRules: 1,
+    modelRules: 1,
     platform: initialPlatform(),
     development: { ...DEFAULT_DEVELOPMENT },
     studio: { mode: "auto", threads: 1, accountPolicy: "soon-reset", preferredAccount: 0, configuration: "fixed", collaboration: 2 },
@@ -966,6 +971,7 @@ export function createGame(seed = 260926, length = 42): Game {
       lanes: [],
     });
   });
+  g.platform.nextRelease = g.day + MODEL_RELEASES.minDays + Math.floor(random(g) * (MODEL_RELEASES.maxDays - MODEL_RELEASES.minDays + 1));
   g.studio.preferredAccount = g.players[0].accounts[0].id;
   g.market = [project(g, 0), project(g, 8), project(g, 12), project(g, 4)];
   g.resetDeck = newResetDeck(g);
@@ -1880,7 +1886,7 @@ collaboration: 1,
         a.meter = null;
       }
       g.platform = initialPlatform();
-      g.platform.nextRelease = Math.max(6, g.day + 2);
+      g.platform.nextRelease = g.day + MODEL_RELEASES.minDays;
       g.version = 5;
       g.awards[2].name = "500 算力点俱乐部";
       g.logs = [];
@@ -2089,6 +2095,38 @@ collaboration: 1,
       g.events = [];
       g.resetDeck = [];
       g.message = "银行券现已无持有上限，已有券与今日消息保留；后续采用低频赠券牌堆。";
+    }
+    if (g.modelRules !== undefined && g.modelRules !== 1) return null;
+    if (g.modelRules === undefined) {
+      const oldStage = g.platform.stage;
+      const oldCurrent: Record<Model, string> = {
+        luna: oldStage >= 4 ? "6 Luna" : oldStage >= 1 ? "5.6 Luna" : "5.0 Luna",
+        sol: oldStage >= 3 ? "6 Sol" : "5.0 Sol",
+        astra: oldStage >= 5 ? "6 Astra" : "5.0 Astra",
+      };
+      g.platform.stage = Math.min(4, Math.max(2, oldStage));
+      g.platform.nextRelease = g.day + MODEL_RELEASES.minDays;
+      for (const p of g.players) {
+        for (const model of Object.keys(MODELS) as Model[]) {
+          const sample = p.experience[model];
+          // Keep current calibration, but do not resurrect experience from an older generation.
+          if (sample.edition === oldCurrent[model]) sample.edition = modelEdition(g, model).name;
+        }
+        for (const acc of p.accounts) acc.meter = null;
+      }
+      const legacyLabels: Record<string, string> = {
+        "5.0 Luna": "GPT-5.6 Luna",
+        "5.6 Luna": "GPT-5.6 Luna",
+        "6 Luna": "GPT-6 Luna",
+        "5.0 Sol": "GPT-5.6 Sol",
+        "6 Sol": "GPT-6 Sol",
+        "5.0 Astra": "GPT-6 Astra",
+        "6 Astra": "GPT-6 Astra",
+      };
+      g.logs = g.logs.map(entry => ({ ...entry, text: entry.text.replace(/(?<![\w.-])(?:5\.0 Luna|5\.6 Luna|6 Luna|5\.0 Sol|6 Sol|5\.0 Astra|6 Astra)\b/g, name => legacyLabels[name]) }));
+      if (g.event.effect === "technology") g.event = { ...g.event, title: "模型时代已更新", quote: "从近期模型继续开发。", detail: "进度、现金、额度与银行券保留；下一次模型更新至少在 14 天后。" };
+      g.message = "已切换近期模型时代：项目与资产保留，模型消息改为间隔 14–28 天。";
+      g.modelRules = 1;
     }
     return g;
   } catch {

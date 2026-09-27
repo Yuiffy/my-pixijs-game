@@ -59,11 +59,11 @@ test('work reveals project requirements, calibrates models and automatically dro
  assert.equal(E.modelExperience(g,player(g),'luna'),60);
  assert.equal(player(g).lanes[0].development.effort,'medium');
  assert.equal(E.riskAssessment(g,player(g),player(g).lanes[0].development,job(g)).risk,0);
- g.platform.stage=1;
+ g.platform.stage=4;
  assert.equal(E.modelExperience(g,player(g),'luna'),0);
  assert.equal(job(g).understood,true);
  assert.equal(E.riskAssessment(g,player(g),player(g).lanes[0].development,job(g)).known,false);
- g=E.advanceMinutes(g,1);assert.equal(player(g).experience.luna.edition,'5.6 Luna');
+ g=E.advanceMinutes(g,1);assert.equal(player(g).experience.luna.edition,'GPT-6 Luna');
 });
 
 test('discovering a bug reveals hidden complexity and does not double-count a shared checkpoint',()=>{

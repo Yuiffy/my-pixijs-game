@@ -14,7 +14,7 @@ chromium.launch = async options => {
   const browser = await launch({ ...options, channel: 'chrome', args: ['--mute-audio', '--disable-features=SpeechSynthesis'] });
   const newPage = browser.newPage.bind(browser);
   browser.newPage = async pageOptions => {
-    const page = await newPage(pageOptions);
+    const page = await newPage({ ...pageOptions, locale: 'zh-CN' });
     await page.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
     const screenshot = page.screenshot.bind(page);
     page.screenshot = async options => {

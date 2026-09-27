@@ -11,6 +11,35 @@ export function browserLocale(languages: readonly string[]): ResetLocale {
 export const ResetLocaleContext = createContext<ResetLocale>("zh");
 
 const EN: Record<string, string> = {
+  近期模型工作室: "Modern model studio",
+  "从最近的模型时代开始。": "Start in the recent model era.",
+  "开局已配备 GPT-5.6 Luna、GPT-5.6 Sol 和 GPT-6 Astra；不再从早期型号一路追赶。": "Start with GPT-5.6 Luna, GPT-5.6 Sol and GPT-6 Astra, without replaying years of releases.",
+  工作室配额活动: "Studio quota event",
+  "配置继续沿用。": "Keep your current setup.",
+  "配额与速度采用游戏数值，模型名称采用真实型号。": "Quota and speed use game balance values; model names are real.",
+  "GPT-6 Sol 上线": "GPT-6 Sol arrives",
+  "主力模型换代了。": "A new generation for the main model.",
+  "主力档从 GPT-5.6 Sol 更新为 GPT-6 Sol：游戏内能力 +1、速度 +25%，配额费率降到起步时的 50%。下一次模型消息至少间隔 14 天。": "The main slot upgrades from GPT-5.6 Sol to GPT-6 Sol: in-game ability +1, speed +25%, quota rate 50% of the starting rate. The next model announcement is at least 14 days away.",
+  "GPT-6 Luna 到来 · Sol 同步就绪": "GPT-6 Luna arrives · Sol ready too",
+  "轻量与主力都进入 GPT-6。": "Both lightweight and main slots now use GPT-6.",
+  "轻量档更新为 GPT-6 Luna：游戏内能力 +1、速度 +50%，付费配置费率为起步时的 45%，免费慢跑保留。若 Sol 尚未换代，本次同时开放 GPT-6 Sol。": "The lightweight slot upgrades to GPT-6 Luna: in-game ability +1, speed +50%, paid rate 45% of the starting rate, with free work retained. GPT-6 Sol also unlocks if it has not arrived yet.",
+  "虚构推演：GPT-6.1 Astra": "Fictional future: GPT-6.1 Astra",
+  "如果下一代攻坚模型提前来了呢？": "What if the next specialist model arrived early?",
+  "这是虚构未来事件，并非真实发布。攻坚档升级为 GPT-6.1 Astra：游戏内能力 +1、速度 +20%，费率 85%；只会在全系进入 GPT-6 且再等待至少 14 天后出现。": "This is a fictional future event, not a real release. The specialist slot becomes GPT-6.1 Astra: in-game ability +1, speed +20%, quota rate 85%. It can only arrive at least 14 days after every slot reaches GPT-6.",
+  "轻量：GPT-5.6 Luna → GPT-6 Luna": "Lightweight: GPT-5.6 Luna → GPT-6 Luna",
+  "主力：GPT-5.6 Sol → GPT-6 Sol": "Main: GPT-5.6 Sol → GPT-6 Sol",
+  "攻坚：GPT-6 Astra → GPT-6.1 Astra（虚构）": "Specialist: GPT-6 Astra → GPT-6.1 Astra (fictional)",
+  "GPT-6.1 Astra · 虚构推演": "GPT-6.1 Astra · fictional",
+  模型时代已更新: "Model era updated",
+  "从近期模型继续开发。": "Continue with recent models.",
+  "进度、现金、额度与银行券保留；下一次模型更新至少在 14 天后。": "Progress, cash, quota and vouchers are preserved. The next model update is at least 14 days away.",
+  "已切换近期模型时代：项目与资产保留，模型消息改为间隔 14–28 天。": "Switched to the recent model era. Projects and assets are preserved; model announcements are now 14–28 days apart.",
+
+  "近期模型路线 · 两到四周一次": "Recent model roadmap · every 2–4 weeks",
+  "近期模型，慢一点换代": "Recent models, slower releases",
+  "21 / 42 天局从近期模型起步，每隔 14–28 天出现一次模型消息，有时两款一起上线。全系到 GPT-6 后，后续 6.1 明确标为虚构推演。发布间隔、免费 Luna、Ultra 协作和配额倍率均为游戏设定，不是官方日程或计费规则。": "A 21/42-day season starts with recent models. Announcements are 14–28 days apart, sometimes bringing two models together. After all slots reach GPT-6, 6.1 is explicitly fictional. Cadence, free Luna, Ultra collaboration and quota multipliers are game rules, not official schedules or billing.",
+  "v0.9 · 近期模型": "v0.9 · Recent models",
+
   返回游戏目录: "Back to games",
   游戏柜: "Games",
   "开蹬！": "Build On!",
@@ -178,7 +207,7 @@ const EN: Record<string, string> = {
   项目设置: "Project settings",
   "手动配置 · 选择模型或强度会切回统一配置": "Manual setup · changing model or effort switches to one setup",
   开发模型: "Development model",
-  思考强度: "Thinking effort",
+  投入强度: "Development effort",
   每小时: "Per hour",
   进度: "progress",
   免费: "Free",
@@ -305,16 +334,6 @@ const EN: Record<string, string> = {
   "还有今天和明天可新开或升级 $200。之后只保留老号连续续费；降档或断订会失去资格。": "You can open or upgrade to $200 today and tomorrow. Afterward, only uninterrupted renewals qualify.",
   "社区：这次掉额不太一样？": "Community: is quota draining differently?",
   "额度口径可能有变化，百分比不变。工作室会重新采样 token 与掉额；先观察，再决定是否冲刺。": "Quota accounting may have changed, though percentages have not. The studio will sample token usage again before you decide to sprint.",
-  "5.6 Luna 发布": "5.6 Luna released",
-  "Luna 能力 +0.5、速度 +20%；付费配置暂贵 15%。免费慢跑仍免费，先试新模型还是等降价？": "Luna gains 0.5 ability and 20% speed. Paid setups cost 15% more for now; free work remains free.",
-  "5.6 Luna 降价了": "5.6 Luna price drop",
-  "Luna 付费配置费率从初代的 115% 降到 65%。原有 AI 对话自动享受，免费路线不变。": "Paid Luna drops from 115% to 65% of its original rate. Existing AI sessions benefit automatically; free work is unchanged.",
-  "6 Sol：发布即降价": "6 Sol launches at a lower price",
-  "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考可处理基础复杂任务；隐藏难点仍需摸底，新模型重新实测。": "Sol gains 1 ability and 25% speed at a 75% rate. Standard effort can handle basic complex work; hidden challenges still need discovery.",
-  "6 Luna：小模型追上来了": "6 Luna catches up",
-  "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 可处理基础常规任务，隐藏难点仍需摸底。": "Luna gains 1 ability and 50% speed at a 45% paid rate. Free Medium can handle basic standard work, but hidden challenges remain.",
-  "6 Astra：攻坚新世代": "6 Astra takes on harder work",
-  "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 可处理基础攻坚任务，隐藏难点仍需摸底；也可 Ultra + Turbo 抢首发。": "Astra gains 1 ability and 20% speed at an 85% rate. Medium can handle basic challenging work; Ultra and Turbo may help you ship first.",
   猫猫自走棋: "Cat Autochess",
 下班后勇者: "After-Work Hero",
   像素宇宙: "Pixel Universe",
@@ -459,7 +478,7 @@ const EN_DETAILS: Record<string, string> = {
   "思考加深提升解题能力；High 到 Max 会多花时间。": "More effort improves ability; High through Max take longer.",
   "自动策略逐项选档，预估显示所选项目的实际配置。": "Automatic strategy chooses per project; estimates use the selected project's actual setup.",
   "全局配置应用于未单独设置的项目，按实际工作扣额。": "Studio setup applies to projects without custom settings; quota is charged for actual work.",
-  "每个项目完成首段 20 进度或发现 bug 后，摸清真实难点；每代模型累计完成 60 进度（含返工）后校准能力。换思考强度、开关 Turbo 不丢经验，模型换代需重新实测。": "A project's true challenge is revealed after its first 20 progress or a bug. Each model generation calibrates after 60 measured progress, including rework. Effort and Turbo changes retain experience; new generations need fresh measurements.",
+  "每个项目完成首段 20 进度或发现 bug 后，摸清真实难点；每代模型累计完成 60 进度（含返工）后校准能力。换投入强度、开关 Turbo 不丢经验，模型换代需重新实测。": "A project's true challenge is revealed after its first 20 progress or a bug. Each model generation calibrates after 60 measured progress, including rework. Effort and Turbo changes retain experience; new generations need fresh measurements.",
   "摸底阶段不会把估计当成 0% 风险；熟悉后显示的 0% 指后续开发，之前埋下的 bug 仍可能暴露。": "Estimates during discovery are never treated as 0% risk. A later 0% applies only to future work; earlier bugs may still surface.",
   今天还剩: "Today has",
   "精力。确认后，后台任务会运行到 17:00，然后揭牌；中途不再停下让你补给。": "energy left. Confirming runs AI work through 17:00, then reveals the night card without another resource pause.",
@@ -613,6 +632,7 @@ const EN_DYNAMIC: { test: RegExp; render: (match: RegExpMatchArray) => string }[
   { test: /^接单 1 精力 · AI 将等待精力$/, render: () => "Job 1 energy · AI will wait for more" },
   { test: /^接单 (\d+) \+ AI 跟进 (\d+) = (\d+) 精力$/, render: (m) => `Job ${m[1]} + AI management ${m[2]} = ${m[3]} energy` },
   { test: /^账号 (\d+) · \$(\d+)$/, render: (m) => `Account ${m[1]} · $${m[2]}` },
+  { test: /^正在查看 · (.+)$/, render: (m) => `Selected · ${translateResetText(m[1], "en")}` },
   { test: /^(\d+) 个 AI 对话 · 自动排队$/, render: (m) => `${m[1]} AI sessions · auto queued` },
   { test: /^(.+) 个对话正在推进，协调后 (.+)× 速度$/, render: (m) => `${m[1]} sessions working · ${m[2]}× coordinated speed` },
   { test: /^当前项约 (.+) 分钟 · (.+)$/, render: (m) => `Current project: about ${m[1]} minutes · ${translateResetText(m[2], "en")}` },
@@ -677,6 +697,9 @@ const EN_DYNAMIC: { test: RegExp; render: (match: RegExpMatchArray) => string }[
 
 export function translateResetText(value: string, locale: ResetLocale): string {
   if (locale === "zh" || !/[\u3400-\u9fff]/.test(value)) return value;
+  // Edition names also occur inside combined configuration and calibration labels.
+  const editionText = value.replaceAll("GPT-6.1 Astra · 虚构推演", "GPT-6.1 Astra · fictional");
+  if (editionText !== value) return translateResetText(editionText, locale);
   const leading = value.match(/^\s*/)?.[0] ?? "";
   const trailing = value.match(/\s*$/)?.[0] ?? "";
   const core = value.slice(leading.length, value.length - trailing.length);
