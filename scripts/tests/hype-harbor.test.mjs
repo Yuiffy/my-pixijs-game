@@ -22,6 +22,17 @@ const action = (s, kind, boat = 0, insured = false) => E.takeAction(s, { kind, b
 const asTurn = (s, turn = 0) => ({ ...s, phase: 'placing', turn, placed: 0 });
 const finishFixture = s => E.continueGame({ ...s, phase: 'reveal', beat: 3 });
 
+test('event wind can make a boat further back more likely to finish', () => {
+  const s = start(2);
+  s.event = 2; // New visitors give the middle lane +1 on each remaining die.
+  s.boats[1].position = 4;
+  s.boats[2].position = 6;
+  assert.equal(Math.round(E.successChance(s, 1) * 100), 84);
+  assert.equal(Math.round(E.successChance(s, 2) * 100), 74);
+  s.event = 0;
+  assert.ok(E.successChance(s, 1) < E.successChance(s, 2));
+});
+
 test('three four-person presets have complete art and exactly one resting member', () => {
   assert.deepEqual(E.ROSTERS[0].members, ['sui', 'nagisa', 'shiori', 'mizuki']);
   for (const preset of E.ROSTERS) {

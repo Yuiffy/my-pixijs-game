@@ -9,9 +9,9 @@ import {
   newToken,
   parseRoomRow,
   seatFor,
+  summarizeRoom,
   tokenHash,
   validCode,
-  validPlayers,
   validToken,
   viewRoom,
 } from "@/lib/hypeHarbor/room";
@@ -28,11 +28,26 @@ function json(body: unknown, status = 200) {
 
 async function findRoom(code: string): Promise<RoomRow | null> {
   const { rows } = await getPool().query(
-    `SELECT code, revision, rounds, roster, players, tokens, state FROM hype_harbor_rooms
+    `SELECT code, revision, rounds, roster, is_public AS "isPublic", players, tokens, state FROM hype_harbor_rooms
      WHERE code = $1 AND updated_at > now() - interval '7 days'`,
     [code],
   );
   return rows[0] ? parseRoomRow(rows[0]) : null;
+}
+
+export async function GET() {
+  if (!process.env.DATABASE_URL) return json({ error: "在线房间暂未配置" }, 503);
+  try {
+    const { rows } = await getPool().query(
+      `SELECT code, revision, rounds, roster, is_public AS "isPublic", players, tokens, state
+       FROM hype_harbor_rooms WHERE is_public AND (state IS NULL OR state = 'null'::jsonb)
+       AND updated_at > now() - interval '7 days' ORDER BY updated_at DESC LIMIT 50`,
+    );
+    return json({ rooms: rows.map((row) => parseRoomRow(row)).filter((row): row is RoomRow => Boolean(row)).map(summarizeRoom) });
+  } catch (error) {
+    console.error("[hype-harbor] Room listing failed", error);
+    return json({ error: "房间列表暂不可用" }, 503);
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -60,29 +75,24 @@ export async function POST(request: NextRequest) {
   if (!process.env.DATABASE_URL) return json({ error: "在线房间暂未配置" }, 503);
   try {
     if (body.operation === "create") {
-      if (
-        !validPlayers(body.players) ||
-        ![3, 5].includes(Number(body.rounds)) ||
-        !Number.isInteger(body.rosterIndex) ||
-        !ROSTERS[Number(body.rosterIndex)]
-      ) return json({ error: "开局设置有误" }, 400);
-      const players = body.players.map((player) => ({
-        name: player.name.trim(),
-        ai: player.ai,
-      }));
+      if (body.name !== undefined && (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 12)) {
+        return json({ error: "请填写 1–12 字的名字" }, 400);
+      }
+      const players = [{ name: typeof body.name === "string" ? body.name.trim() : "房主", ai: false },
+        { name: "等待玩家", ai: false }];
       const token = newToken();
-      const tokens = players.map((player, index) => (index === 0 ? tokenHash(token) : null),);
+      const tokens = [tokenHash(token), null];
       for (let attempt = 0; attempt < 4; attempt++) {
         const code = newCode();
         // Retry the rare room-code collision.
         // eslint-disable-next-line no-await-in-loop
         const result = await getPool().query(
-          `INSERT INTO hype_harbor_rooms (code, rounds, roster, players, tokens)
-           VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb) ON CONFLICT DO NOTHING RETURNING code`,
+          `INSERT INTO hype_harbor_rooms (code, rounds, roster, is_public, players, tokens)
+           VALUES ($1, $2, $3::jsonb, true, $4::jsonb, $5::jsonb) ON CONFLICT DO NOTHING RETURNING code`,
           [
             code,
-            body.rounds as number,
-            JSON.stringify(ROSTERS[Number(body.rosterIndex)].members),
+            3,
+            JSON.stringify(ROSTERS[0].members),
             JSON.stringify(players),
             JSON.stringify(tokens),
           ],
@@ -93,8 +103,9 @@ export async function POST(request: NextRequest) {
               {
                 code,
                 revision: 0,
-                rounds: body.rounds as number,
-                roster: ROSTERS[Number(body.rosterIndex)].members,
+                rounds: 3,
+                roster: ROSTERS[0].members,
+                isPublic: true,
                 players,
                 tokens,
                 state: null,
@@ -149,10 +160,32 @@ export async function POST(request: NextRequest) {
     }
     if (!validToken(body.token)) return json({ error: "房间身份已失效，请重新加入" }, 401);
     const room = await findRoom(body.code);
-    if (!room) return json({ error: "房间不存在或已过期" }, 404);
+    if (!room) return body.operation === "status"
+      ? json({ room: null, expired: true }) : json({ error: "房间不存在或已过期" }, 404);
     const seat = seatFor(room, body.token);
-    if (seat < 0) return json({ error: "无权操作这个房间" }, 403);
+    if (seat < 0) return body.operation === "status"
+      ? json({ room: null, expired: true }) : json({ error: "无权操作这个房间" }, 403);
     if (body.operation === "status") return json({ room: viewRoom(room, seat) });
+    if (body.operation === "leave") {
+      if (room.state) return json({ error: "对局已开始，可返回大厅后继续" }, 409);
+      if (seat === 0) {
+        const result = await getPool().query(
+          `DELETE FROM hype_harbor_rooms WHERE code = $1 AND revision = $2 RETURNING code`,
+          [room.code, room.revision],
+        );
+        if (result.rows.length) return json({ ok: true });
+      } else {
+        const players = room.players.map((player, i) => (i === seat ? { name: "等待玩家", ai: false } : player));
+        const tokens = room.tokens.map((entry, i) => (i === seat ? null : entry));
+        const result = await getPool().query(
+          `UPDATE hype_harbor_rooms SET players = $1::jsonb, tokens = $2::jsonb,
+           revision = revision + 1, updated_at = now() WHERE code = $3 AND revision = $4 RETURNING revision`,
+          [JSON.stringify(players), JSON.stringify(tokens), room.code, room.revision],
+        );
+        if (result.rows.length) return json({ ok: true });
+      }
+      return json({ error: "房间状态已更新，请重试" }, 409);
+    }
     if (
       body.operation !== "command" ||
       !body.command ||
@@ -167,9 +200,12 @@ export async function POST(request: NextRequest) {
         409,
       );
     const result = await getPool().query(
-      `UPDATE hype_harbor_rooms SET state = $1::jsonb, revision = revision + 1,
-       updated_at = now() WHERE code = $2 AND revision = $3 RETURNING revision`,
-      [JSON.stringify(changed.state), room.code, room.revision],
+      `UPDATE hype_harbor_rooms SET rounds = $1, roster = $2::jsonb, is_public = $3,
+       players = $4::jsonb, tokens = $5::jsonb, state = $6::jsonb, revision = revision + 1,
+       updated_at = now() WHERE code = $7 AND revision = $8 RETURNING revision`,
+      [changed.rounds, JSON.stringify(changed.roster), changed.isPublic,
+        JSON.stringify(changed.players), JSON.stringify(changed.tokens),
+        changed.state === null ? null : JSON.stringify(changed.state), room.code, room.revision],
     );
     if (!result.rows.length) {
       const latest = await findRoom(room.code);

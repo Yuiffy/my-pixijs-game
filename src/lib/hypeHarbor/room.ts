@@ -22,6 +22,8 @@ import {
 
 export type RoomCommand =
   | { kind: "start" }
+  | { kind: "configure"; seats: number; aiCount: number; rounds: number; rosterIndex: number; isPublic: boolean }
+  | { kind: "rename"; name: string }
   | { kind: "roster"; boat: number; streamer: StreamerId }
   | { kind: "warmup"; boat: number; amount: number }
   | { kind: "position"; boat: number; position: number }
@@ -36,6 +38,7 @@ export interface RoomRow {
   revision: number;
   rounds: number;
   roster: StreamerId[];
+  isPublic: boolean;
   players: PlayerConfig[];
   tokens: (string | null)[];
   state: GameState | null;
@@ -45,8 +48,21 @@ export interface RoomView {
   code: string;
   revision: number;
   seat: number;
+  rounds: number;
+  roster: StreamerId[];
+  isPublic: boolean;
   players: (PlayerConfig & { joined: boolean })[];
   state: GameState | null;
+}
+
+export interface RoomSummary {
+  code: string;
+  host: string;
+  seats: number;
+  joined: number;
+  aiCount: number;
+  rounds: number;
+  rosterIndex: number;
 }
 
 export const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
@@ -87,6 +103,9 @@ export function viewRoom(row: RoomRow, seat: number): RoomView {
     code: row.code,
     revision: row.revision,
     seat,
+    rounds: row.rounds,
+    roster: row.roster,
+    isPublic: row.isPublic,
     players: row.players.map((player, i) => ({
       ...player,
       joined: player.ai || Boolean(row.tokens[i]),
@@ -94,6 +113,39 @@ export function viewRoom(row: RoomRow, seat: number): RoomView {
     // Dice are chosen on the server. The client does not need the RNG seed.
     state: row.state ? { ...row.state, seed: 0 } : null,
   };
+}
+
+export function summarizeRoom(row: RoomRow): RoomSummary {
+  return {
+    code: row.code,
+    host: row.players[0].name,
+    seats: row.players.length,
+    joined: row.tokens.filter(Boolean).length,
+    aiCount: row.players.filter((player) => player.ai).length,
+    rounds: row.rounds,
+    rosterIndex: ROSTERS.findIndex((choice) => choice.members.every((id, i) => row.roster[i] === id)),
+  };
+}
+
+export function configureRoom(row: RoomRow, seat: number, command: Extract<RoomCommand, { kind: "configure" }>): RoomRow | null {
+  const { seats, aiCount, rounds, rosterIndex, isPublic } = command;
+  if (seat !== 0 || row.state || !Number.isInteger(seats) || seats < 2 || seats > 4 ||
+      !Number.isInteger(aiCount) || aiCount < 0 || ![3, 5].includes(rounds) ||
+      !Number.isInteger(rosterIndex) || !ROSTERS[rosterIndex] || typeof isPublic !== "boolean") return null;
+  const joinedSeats = row.tokens.flatMap((token, i) => (token ? [i] : []));
+  if (joinedSeats.some((index) => index >= seats) || aiCount > seats - joinedSeats.length) return null;
+  const tokens = Array.from({ length: seats }, (_, i) => row.tokens[i] || null);
+  const players: PlayerConfig[] = Array.from({ length: seats }, (_, i) => (tokens[i]
+    ? row.players[i]
+    : { name: "等待玩家", ai: false }));
+  let remainingAi = aiCount;
+  for (let i = seats - 1; i >= 0 && remainingAi > 0; i--) {
+    if (!tokens[i]) {
+      players[i] = { name: `电脑 ${i + 1}`, ai: true };
+      remainingAi--;
+    }
+  }
+  return { ...row, rounds, roster: ROSTERS[rosterIndex].members, isPublic, players, tokens };
 }
 
 export function advanceAi(input: GameState): GameState {
@@ -117,6 +169,11 @@ export function applyRoomCommand(
   seat: number,
   command: RoomCommand,
 ): RoomRow | null {
+  if (command.kind === "configure") return configureRoom(row, seat, command);
+  if (command.kind === "rename") {
+    if (row.state || typeof command.name !== "string" || !command.name.trim() || command.name.trim().length > 12) return null;
+    return { ...row, players: row.players.map((player, i) => (i === seat ? { ...player, name: command.name.trim() } : player)) };
+  }
   if (command.kind === "start") {
     if (
       seat !== 0 ||
@@ -195,6 +252,7 @@ export function parseRoomRow(value: Record<string, unknown>): RoomRow | null {
     !validCode(value.code) ||
     !Number.isInteger(value.revision) ||
     ![3, 5].includes(Number(value.rounds)) ||
+    typeof value.isPublic !== "boolean" ||
     !ROSTERS.some(
       (choice) => Array.isArray(roster) &&
         choice.members.every((id, i) => roster[i] === id),
@@ -212,6 +270,7 @@ export function parseRoomRow(value: Record<string, unknown>): RoomRow | null {
     revision: value.revision as number,
     rounds: Number(value.rounds),
     roster: value.roster as StreamerId[],
+    isPublic: value.isPublic,
     players: value.players,
     tokens: value.tokens,
     state,

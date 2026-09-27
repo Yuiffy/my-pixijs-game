@@ -14,6 +14,7 @@ import {
   type StreamerId,
   PLAYER_COLORS,
   PROJECTS,
+  EVENTS,
   TARGET,
   CLIP_SPOT,
   START_MIN,
@@ -409,6 +410,7 @@ export default function HarborBoard({
           const chance = displayState
             ? Math.round(successChance(displayState, index) * 100)
             : null;
+          const wind = displayState ? EVENTS[displayState.event].wind[index] : 0;
           return (
             <div
               key={project.name}
@@ -425,6 +427,7 @@ export default function HarborBoard({
             >
               <button
                 className={styles.activityHeading}
+                data-wind={wind !== 0}
                 data-testid={`boat-${index}`}
                 onClick={(event) => {
                   if (event.detail === 0) suppressClick.current = false;
@@ -432,11 +435,16 @@ export default function HarborBoard({
                 }}
                 {...handlers("character", index, boat.streamer)}
                 aria-pressed={selected === index}
-                aria-label={`选择${project.name}，主播${streamer.name}，${project.seatCosts.length}个协办席`}
+                aria-label={`选择${project.name}，主播${streamer.name}，${project.seatCosts.length}个协办席${state && wind !== 0 ? `，本场每骰${wind > 0 ? "+" : ""}${wind}格` : ""}`}
               >
                 <span>{project.icon}</span>
                 <b>{project.name}</b>
                 <small>{project.seatCosts.length} 席</small>
+                {state && wind !== 0 && (
+                  <strong className={styles.laneWind} data-positive={wind > 0}>
+                    {wind > 0 ? "顺风" : "逆风"} · 每骰 {wind > 0 ? "+" : ""}{wind} 格
+                  </strong>
+                )}
                 <em>{project.brief}</em>
               </button>
               <span className={styles.activityProgress}>

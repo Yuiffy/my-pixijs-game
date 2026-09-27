@@ -27,7 +27,7 @@ const makeRoom = () => {
   const host = rooms.newToken();
   const guest = rooms.newToken();
   return { host, guest, row: {
-    code: rooms.newCode(), revision: 0, rounds: 3, roster: engine.ROSTERS[0].members,
+    code: rooms.newCode(), revision: 0, rounds: 3, roster: engine.ROSTERS[0].members, isPublic: true,
     players: [{ name: '房主', ai: false }, { name: '朋友', ai: false }, { name: '电脑', ai: true }],
     tokens: [rooms.tokenHash(host), rooms.tokenHash(guest), null], state: null,
   } };
@@ -76,6 +76,28 @@ test('persisted rows validate complete engine state and room settings', () => {
   assert.equal(rooms.parseRoomRow({ ...row, roster: ['sui'] }), null);
   assert.equal(rooms.parseRoomRow({ ...row, state: {} }), null);
   assert.equal(rooms.parseRoomRow({ ...row, tokens: [] }), null);
+  assert.equal(rooms.parseRoomRow({ ...row, isPublic: null }), null);
+});
+
+test('host adjusts lobby seats and AI without replacing joined players', () => {
+  const { row, guest } = makeRoom();
+  const configure = { kind: 'configure', seats: 4, aiCount: 2, rounds: 5, rosterIndex: 1, isPublic: false };
+  assert.equal(rooms.applyRoomCommand(row, 1, configure), null);
+  const changed = rooms.applyRoomCommand(row, 0, configure);
+  assert.deepEqual(changed.players.slice(0, 2), row.players.slice(0, 2));
+  assert.equal(rooms.seatFor(changed, guest), 1);
+  assert.deepEqual(changed.players.slice(2).map(player => player.ai), [true, true]);
+  assert.equal(changed.rounds, 5);
+  assert.deepEqual(changed.roster, engine.ROSTERS[1].members);
+  assert.equal(changed.isPublic, false);
+  assert.equal(rooms.summarizeRoom(changed).joined, 2);
+  assert.equal(rooms.applyRoomCommand(changed, 0, { ...configure, seats: 2, aiCount: 1 }), null);
+  const waiting = rooms.applyRoomCommand(changed, 0, { ...configure, seats: 4, aiCount: 1 });
+  assert.deepEqual(waiting.players.map(player => player.ai), [false, false, false, true]);
+  const renamed = rooms.applyRoomCommand(waiting, 1, { kind: 'rename', name: '远方朋友' });
+  assert.equal(renamed.players[1].name, '远方朋友');
+  assert.equal(rooms.applyRoomCommand(renamed, 1, { kind: 'rename', name: ' ' }), null);
+  assert.equal(rooms.applyRoomCommand(rooms.applyRoomCommand(changed, 0, { kind: 'start' }), 0, configure), null);
 });
 
 test('only producer can rebalance positions; public preview matches server without dice seed', () => {
@@ -97,6 +119,7 @@ test('room migration and revision guard accept one concurrent turn', async () =>
   try {
     await db.exec(readFileSync(path.join(root, 'scripts/sql/hype-harbor.sql'), 'utf8'));
     await db.exec(readFileSync(path.join(root, 'scripts/sql/hype-harbor.sql'), 'utf8'));
+    assert.equal((await db.query("SELECT column_default FROM information_schema.columns WHERE table_name = 'hype_harbor_rooms' AND column_name = 'is_public'")).rows[0].column_default, 'false');
     const { row } = makeRoom();
     await db.query(
       'INSERT INTO hype_harbor_rooms (code, rounds, roster, players, tokens) VALUES ($1, $2, $3::jsonb, $4::jsonb, $5::jsonb)',
@@ -106,6 +129,9 @@ test('room migration and revision guard accept one concurrent turn', async () =>
     const [first, second] = await Promise.all([db.query(command, [row.code, 0]), db.query(command, [row.code, 0])]);
     assert.equal(first.rows.length + second.rows.length, 1);
     assert.equal((await db.query('SELECT revision FROM hype_harbor_rooms WHERE code = $1', [row.code])).rows[0].revision, 1);
+    assert.equal((await db.query('SELECT count(*)::int AS count FROM hype_harbor_rooms WHERE is_public AND state IS NULL')).rows[0].count, 0);
+    await db.query('UPDATE hype_harbor_rooms SET is_public = true WHERE code = $1', [row.code]);
+    assert.equal((await db.query('SELECT count(*)::int AS count FROM hype_harbor_rooms WHERE is_public AND state IS NULL')).rows[0].count, 1);
   } finally {
     await db.close();
   }

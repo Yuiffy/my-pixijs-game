@@ -59,10 +59,12 @@ import {
   insurableSeat,
 } from "./engine";
 import styles from "./harbor.module.css";
-import type { RoomCommand, RoomView } from "@/lib/hypeHarbor/room";
+import type { RoomCommand, RoomSummary, RoomView } from "@/lib/hypeHarbor/room";
 
 const SAVE_KEY = "hype-harbor-v1";
 const ROOM_KEY = "hype-harbor-room";
+const ROOM_SESSIONS_KEY = "hype-harbor-room-sessions";
+type RoomSession = { code: string; token: string };
 const DEFAULT_PLAYERS: PlayerConfig[] = [
   { name: "你", ai: false },
   { name: "阿策", ai: true },
@@ -148,12 +150,16 @@ export default function HypeHarbor() {
   const [mode, setMode] = useState<"local" | "online">("local");
   const [room, setRoom] = useState<RoomView | null>(null);
   const [roomCode, setRoomCode] = useState("");
-  const [joining, setJoining] = useState(false);
+  const [onlineView, setOnlineView] = useState<"lobby" | "join" | "room">("lobby");
   const [roomToken, setRoomToken] = useState("");
+  const [roomSessions, setRoomSessions] = useState<RoomSession[]>([]);
   const [onlineName, setOnlineName] = useState("");
   const [onlineError, setOnlineError] = useState("");
   const [onlineBusy, setOnlineBusy] = useState(false);
+  const [publicRooms, setPublicRooms] = useState<RoomSummary[]>([]);
+  const [roomsLoading, setRoomsLoading] = useState(false);
   const roomRef = useRef<RoomView | null>(null);
+  const pollAbortRef = useRef<AbortController | null>(null);
   roomRef.current = room;
   const [rawState, setState] = useState<GameState | null>(null);
   const localState = useMemo(
@@ -162,7 +168,7 @@ export default function HypeHarbor() {
         : rawState),
     [rawState],
   );
-  const state = mode === "online" ? room?.state || null : localState;
+  const state = mode === "online" ? (onlineView === "room" ? room?.state || null : null) : localState;
   const [saved, setSaved] = useState<GameState | null>(null);
   const [storageMessage, setStorageMessage] = useState("");
   const [configs, setConfigs] = useState(DEFAULT_PLAYERS);
@@ -206,6 +212,9 @@ export default function HypeHarbor() {
   );
 
   const updateRoom = useCallback((next: RoomView) => {
+    if (roomRef.current?.code !== next.code || roomRef.current?.seat !== next.seat) {
+      setOnlineName(next.players[next.seat]?.name || "");
+    }
     setRoom((previous) => (previous &&
       previous.code === next.code &&
       previous.revision > next.revision
@@ -213,11 +222,12 @@ export default function HypeHarbor() {
         : next),);
   }, []);
   const roomRequest = useCallback(
-    async (payload: Record<string, unknown>) => {
+    async (payload: Record<string, unknown>, signal?: AbortSignal) => {
       const response = await fetch("/api/hype-harbor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal,
       });
       const data = await response.json();
       if (data.room) updateRoom(data.room as RoomView);
@@ -226,6 +236,12 @@ export default function HypeHarbor() {
     },
     [updateRoom],
   );
+  const loadPublicRooms = useCallback(async () => {
+    const response = await fetch("/api/hype-harbor", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "房间列表暂不可用");
+    setPublicRooms(data.rooms as RoomSummary[]);
+  }, []);
   const sendCommand = useCallback(
     async (command: RoomCommand) => {
       const latest = roomRef.current;
@@ -261,37 +277,54 @@ export default function HypeHarbor() {
       new URLSearchParams(window.location.search).get("room")?.toUpperCase() ||
       "";
     const stored = sessionStorage.getItem(ROOM_KEY);
+    let sessions: RoomSession[] = [];
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(ROOM_SESSIONS_KEY) || "[]");
+      if (Array.isArray(parsed)) sessions = parsed.filter((entry) => typeof entry?.code === "string" && typeof entry?.token === "string");
+    } catch { sessionStorage.removeItem(ROOM_SESSIONS_KEY); }
     if (code) {
       setMode("online");
       setRoomCode(code);
-      setJoining(true);
+      setOnlineView("join");
     }
-    if (stored) {
-      try {
-        const session = JSON.parse(stored) as { code: string; token: string };
-        if (!code || code === session.code) {
-          setMode("online");
-          setRoomCode(session.code);
-          setRoomToken(session.token);
-        }
-      } catch {
-        sessionStorage.removeItem(ROOM_KEY);
-      }
+    let active: RoomSession | null = null;
+    try {
+      if (stored) active = JSON.parse(stored) as RoomSession;
+    } catch { sessionStorage.removeItem(ROOM_KEY); }
+    if (active?.code && active.token && !sessions.some((entry) => entry.code === active?.code)) {
+      sessions = [...sessions, active];
+      sessionStorage.setItem(ROOM_SESSIONS_KEY, JSON.stringify(sessions));
+    }
+    setRoomSessions(sessions);
+    const selectedSession = code ? sessions.find((entry) => entry.code === code) : active;
+    if (selectedSession) {
+      setMode("online");
+      setRoomCode(selectedSession.code);
+      setRoomToken(selectedSession.token);
+      setOnlineView("room");
     }
   }, []);
   useEffect(() => {
-    if (mode !== "online" || !roomCode || !roomToken) return undefined;
+    if (mode !== "online" || onlineView !== "room" || !roomCode || !roomToken) return undefined;
     let active = true;
     const poll = async () => {
+      if (pollAbortRef.current) return;
+      const controller = new AbortController();
+      pollAbortRef.current = controller;
       try {
-        await roomRequest({
+        const result = await roomRequest({
           operation: "status",
           code: roomCode,
           token: roomToken,
-        });
-        if (active) setOnlineError("");
+        }, controller.signal);
+        if (active && !result.room) {
+          setRoom(null);
+          setOnlineError("房间已关闭或席位已失效，请返回房间列表");
+        } else if (active) setOnlineError("");
       } catch (error) {
-        if (active) setOnlineError(error instanceof Error ? error.message : "同步失败");
+        if (active && !controller.signal.aborted) setOnlineError(error instanceof Error ? error.message : "同步失败");
+      } finally {
+        if (pollAbortRef.current === controller) pollAbortRef.current = null;
       }
     };
     poll();
@@ -300,9 +333,29 @@ export default function HypeHarbor() {
     }, 1800);
     return () => {
       active = false;
+      pollAbortRef.current?.abort();
+      pollAbortRef.current = null;
       window.clearInterval(timer);
     };
-  }, [mode, roomCode, roomToken, roomRequest, onlineBusy]);
+  }, [mode, onlineView, roomCode, roomToken, roomRequest, onlineBusy]);
+  useEffect(() => {
+    if (mode !== "online" || onlineView !== "lobby") return undefined;
+    let active = true;
+    const refresh = async () => {
+      try {
+        await loadPublicRooms();
+        if (active) setOnlineError("");
+      } catch (error) {
+        if (active) setOnlineError(error instanceof Error ? error.message : "房间列表暂不可用");
+      } finally {
+        if (active) setRoomsLoading(false);
+      }
+    };
+    setRoomsLoading(true);
+    refresh();
+    const timer = window.setInterval(refresh, 6000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [mode, onlineView, loadPublicRooms]);
 
   useEffect(() => {
     try {
@@ -439,24 +492,18 @@ export default function HypeHarbor() {
     setOnlineBusy(true);
     setOnlineError("");
     try {
-      const players = configs.slice(0, playerCount).map((player, i) => ({
-        name: player.name.trim() || `玩家 ${i + 1}`,
-        ai: i === 0 ? false : player.ai,
-      }));
-      const result = await roomRequest({
-        operation: "create",
-        players,
-        rounds,
-        rosterIndex,
-      });
+      const result = await roomRequest({ operation: "create" });
       const token = result.token || "";
-      sessionStorage.setItem(
-        ROOM_KEY,
-        JSON.stringify({ code: result.room.code, token }),
-      );
+      const session = { code: result.room.code, token };
+      sessionStorage.setItem(ROOM_KEY, JSON.stringify(session));
+      setRoomSessions((previous) => {
+        const next = [...previous.filter((entry) => entry.code !== session.code), session];
+        sessionStorage.setItem(ROOM_SESSIONS_KEY, JSON.stringify(next));
+        return next;
+      });
       setRoomCode(result.room.code);
       setRoomToken(token);
-      setJoining(false);
+      setOnlineView("room");
       window.history.replaceState(
         null,
         "",
@@ -479,9 +526,16 @@ export default function HypeHarbor() {
         name: onlineName.trim(),
       });
       const token = result.token || "";
-      sessionStorage.setItem(ROOM_KEY, JSON.stringify({ code, token }));
+      const session = { code, token };
+      sessionStorage.setItem(ROOM_KEY, JSON.stringify(session));
+      setRoomSessions((previous) => {
+        const next = [...previous.filter((entry) => entry.code !== code), session];
+        sessionStorage.setItem(ROOM_SESSIONS_KEY, JSON.stringify(next));
+        return next;
+      });
       setRoomCode(code);
       setRoomToken(token);
+      setOnlineView("room");
       window.history.replaceState(
         null,
         "",
@@ -493,15 +547,61 @@ export default function HypeHarbor() {
       setOnlineBusy(false);
     }
   };
-  const leaveOnline = () => {
+  const clearOnlineRoom = () => {
+    pollAbortRef.current?.abort();
     sessionStorage.removeItem(ROOM_KEY);
+    setRoomSessions((previous) => {
+      const next = previous.filter((entry) => entry.code !== roomCode);
+      sessionStorage.setItem(ROOM_SESSIONS_KEY, JSON.stringify(next));
+      return next;
+    });
     window.history.replaceState(null, "", window.location.pathname);
     setRoom(null);
     setRoomCode("");
     setRoomToken("");
     setOnlineError("");
-    setJoining(false);
-    setMode("local");
+    setOnlineView("lobby");
+  };
+  const resumeOnlineRoom = (session: RoomSession) => {
+    pollAbortRef.current?.abort();
+    sessionStorage.setItem(ROOM_KEY, JSON.stringify(session));
+    setRoom(null);
+    setRoomCode(session.code);
+    setRoomToken(session.token);
+    setOnlineView("room");
+    window.history.replaceState(null, "", `${window.location.pathname}?room=${session.code}`);
+  };
+  const leaveOnline = async () => {
+    if (room && !room.state) {
+      pollAbortRef.current?.abort();
+      setOnlineBusy(true);
+      try {
+        await roomRequest({ operation: "leave", code: room.code, token: roomToken });
+        clearOnlineRoom();
+      } catch (error) {
+        setOnlineError(error instanceof Error ? error.message : "离开房间失败");
+      } finally {
+        setOnlineBusy(false);
+      }
+    } else if (room?.state?.phase === "finished") {
+      clearOnlineRoom();
+    } else {
+      sessionStorage.removeItem(ROOM_KEY);
+      window.history.replaceState(null, "", window.location.pathname);
+      setOnlineView("lobby");
+    }
+  };
+  const configureOnline = (changes: Partial<Extract<RoomCommand, { kind: "configure" }>>) => {
+    if (!room) return;
+    sendCommand({
+      kind: "configure",
+      seats: room.players.length,
+      aiCount: room.players.filter((player) => player.ai).length,
+      rounds: room.rounds,
+      rosterIndex: ROSTERS.findIndex((choice) => choice.members.every((id, i) => room.roster[i] === id)),
+      isPublic: room.isPublic,
+      ...changes,
+    });
   };
   const chooseBoat = (index: number) => {
     setSelected(index);
@@ -528,16 +628,16 @@ export default function HypeHarbor() {
   const result = state?.results.at(-1);
 
   function renderMenu() {
-    if (mode === "online" && room && !room.state) {
+    if (mode === "online" && onlineView === "room" && room && !room.state) {
       const ready = room.players.every((player) => player.joined);
+      const joinedHumans = room.players.filter((player) => !player.ai && player.joined).length;
+      const aiCount = room.players.filter((player) => player.ai).length;
+      const minimumSeats = Math.max(2, ...room.players.flatMap((player, i) => (player.joined && !player.ai ? [i + 1] : [])));
+      const isHost = room.seat === 0;
       return (
         <div className={styles.setup}>
-          <span className={styles.eyebrow}>在线对战 · 等待入座</span>
-          <h1>
-            同一张桌，
-            <br />
-            各自在家。
-          </h1>
+          <span className={styles.eyebrow}>在线房间 · {isHost ? "房主" : "玩家"}</span>
+          <h2>等待开局</h2>
           <div className={styles.roomCode}>
             <span>房间号</span>
             <strong>{room.code}</strong>
@@ -558,14 +658,95 @@ export default function HypeHarbor() {
                 >
                   {i + 1}
                 </span>
-                <b>{player.name}</b>
+                <b>{player.joined ? player.name : "空位"}</b>
                 <small>
-                  {player.ai ? "AI" : player.joined ? "已入座" : "等待加入"}
+                  {player.ai ? "AI" : player.joined ? i === room.seat ? "你" : "已入座" : "等待加入"}
                 </small>
               </div>
             ))}
           </div>
-          {room.seat === 0 ? (
+          <div className={styles.roomIdentity}>
+            <span>你的名字</span>
+            <div>
+              <input
+                id="room-player-name"
+                aria-label="你的名字"
+                maxLength={12}
+                value={onlineName}
+                onChange={(event) => setOnlineName(event.target.value)}
+              />
+              <button
+                disabled={onlineBusy || !onlineName.trim() || onlineName.trim() === room.players[room.seat]?.name}
+                onClick={() => sendCommand({ kind: "rename", name: onlineName.trim() })}
+              >
+                保存
+              </button>
+            </div>
+          </div>
+          {isHost && (
+            <div className={styles.roomSettings}>
+              <div className={styles.settingRow}>
+                <span>围桌人数</span>
+                <div className={styles.segment}>
+                  {[2, 3, 4].map((count) => (
+                    <button
+                      key={count}
+                      data-testid={`online-seats-${count}`}
+                      aria-pressed={room.players.length === count}
+                      disabled={onlineBusy || count < minimumSeats}
+                      onClick={() => configureOnline({ seats: count, aiCount: Math.min(aiCount, count - joinedHumans) })}>
+                      {count} 人
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.settingRow}>
+                <span>AI 人数</span>
+                <div className={styles.segment}>
+                  {[0, 1, 2, 3].map((count) => (
+                    <button
+                      key={count}
+                      data-testid={`online-ai-${count}`}
+                      aria-pressed={aiCount === count}
+                      disabled={onlineBusy || count > room.players.length - joinedHumans}
+                      onClick={() => configureOnline({ aiCount: count })}>{count}</button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.settingRow}>
+                <span>活动场数</span>
+                <div className={styles.segment}>
+                  {[3, 5].map((count) => (
+                    <button
+                      key={count}
+                      data-testid={`online-rounds-${count}`}
+                      aria-pressed={room.rounds === count}
+                      disabled={onlineBusy}
+                      onClick={() => configureOnline({ rounds: count })}>{count} 场</button>
+                  ))}
+                </div>
+              </div>
+              <label className={styles.roomSelect} htmlFor="online-roster">主播组合
+                <select
+                  id="online-roster"
+                  disabled={onlineBusy}
+                  value={ROSTERS.findIndex((choice) => choice.members.every((id, i) => room.roster[i] === id))}
+                  onChange={(event) => configureOnline({ rosterIndex: Number(event.target.value) })}>
+                  {ROSTERS.map((choice, i) => <option key={choice.name} value={i}>{choice.name}</option>)}
+                </select>
+              </label>
+              <label className={styles.roomVisibility} htmlFor="online-public">
+                <input
+                  id="online-public"
+                  type="checkbox"
+                  checked={room.isPublic}
+                  disabled={onlineBusy}
+                  onChange={(event) => configureOnline({ isPublic: event.target.checked })} />
+                <span>显示在公开房间列表</span>
+              </label>
+            </div>
+          )}
+          {isHost ? (
             <button
               className={styles.primary}
               disabled={!ready || onlineBusy}
@@ -577,16 +758,16 @@ export default function HypeHarbor() {
           ) : (
             <p className={styles.roomWaiting}>等待房主开始…</p>
           )}
-          <button className={styles.resume} onClick={leaveOnline}>
-            返回单机模式
+          <button className={styles.resume} disabled={onlineBusy} onClick={() => leaveOnline()}>
+            {isHost ? "关闭房间" : "离开房间"}
           </button>
         </div>
       );
     }
-    if (mode === "online" && !roomToken && joining) return (
+    if (mode === "online" && onlineView === "join") return (
         <div className={styles.setup}>
           <span className={styles.eyebrow}>在线对战</span>
-          <h1>加入这张桌。</h1>
+          <h2>加入房间</h2>
           <label htmlFor="online-room-code" className={styles.roomField}>
             房间号
             <input
@@ -621,41 +802,101 @@ export default function HypeHarbor() {
             className={styles.resume}
             onClick={() => {
               setRoomCode("");
-              setJoining(false);
+              setOnlineView("lobby");
             }}
           >
-            创建新房间
+            返回房间列表
           </button>
         </div>
       );
-    if (mode === "online" && roomToken && !room) return (
+    if (mode === "online" && onlineView === "room" && !room) return (
         <div className={styles.setup}>
           <span className={styles.eyebrow}>在线对战</span>
           <h2>正在连接房间…</h2>
-          <button className={styles.resume} onClick={leaveOnline}>
-            返回单机模式
+          <button className={styles.resume} onClick={clearOnlineRoom}>
+            返回房间列表
           </button>
+        </div>
+      );
+    if (mode === "online") return (
+        <div className={styles.setup}>
+          <div className={styles.segment} aria-label="对战方式">
+            <button onClick={() => setMode("local")}>同机 / AI</button>
+            <button aria-pressed>在线对战</button>
+          </div>
+          <span className={styles.eyebrow}>在线大厅</span>
+          <h2>找一张桌，或开一桌。</h2>
+          <button
+            className={styles.primary}
+            disabled={onlineBusy}
+            onClick={() => createOnline()}
+            data-testid="online-create"
+          >
+            创建公开房间 <span>↗</span>
+          </button>
+          {roomSessions.length > 0 && (
+            <div className={styles.savedRooms}>
+              <strong>我的房间</strong>
+              {roomSessions.map((session) => (
+                <button key={session.code} onClick={() => resumeOnlineRoom(session)}>
+                  {session.code}<span>返回房间 ›</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className={styles.roomListHeading}>
+            <strong>公开房间</strong>
+            <button
+              aria-label="刷新房间列表"
+              title="刷新房间列表"
+              onClick={async () => {
+                setRoomsLoading(true);
+                try {
+                  await loadPublicRooms();
+                  setOnlineError("");
+                } catch (error) {
+                  setOnlineError(error instanceof Error ? error.message : "房间列表暂不可用");
+                } finally {
+                  setRoomsLoading(false);
+                }
+              }}
+            >↻</button>
+          </div>
+          <div className={styles.roomList} data-testid="online-room-list">
+            {publicRooms.map((entry) => {
+              const open = entry.seats - entry.joined - entry.aiCount;
+              return (
+                <button
+                  key={entry.code}
+                  disabled={open <= 0}
+                  onClick={() => { setRoomCode(entry.code); setOnlineName(""); setOnlineView("join"); }}
+                >
+                  <span><b>{entry.host}的房间</b><small>{entry.code} · {entry.rounds} 场 · {entry.aiCount} AI</small></span>
+                  <span>{entry.joined + entry.aiCount}/{entry.seats} 人 <b>{open > 0 ? "加入 ›" : "已满"}</b></span>
+                </button>
+              );
+            })}
+            {!roomsLoading && publicRooms.length === 0 && <p>暂无公开房间</p>}
+            {roomsLoading && publicRooms.length === 0 && <p>正在查找房间…</p>}
+          </div>
+          <button
+            className={styles.resume}
+            onClick={() => {
+              setRoomCode(""); setOnlineName(""); setOnlineView("join");
+            }}
+          >输入房间号加入</button>
         </div>
       );
     return (
       <div className={styles.setup}>
         <div className={styles.segment} aria-label="对战方式">
           <button
-            aria-pressed={mode === "local"}
-            onClick={() => setMode("local")}
+            aria-pressed
           >
             同机 / AI
           </button>
           <button
-            aria-pressed={mode === "online"}
-            onClick={() => {
-              setMode("online");
-              setConfigs((previous) => previous.map((player, i) => {
-                  if (i === 0 && player.name === "你") return { ...player, name: "房主" };
-                  if (i === 1) return { ...player, ai: false };
-                  return player;
-                }),);
-            }}
+            onClick={() => { setMode("online"); setOnlineView("lobby"); }}
             data-testid="online-mode"
           >
             在线对战
@@ -756,18 +997,12 @@ export default function HypeHarbor() {
         </div>
         <button
           className={styles.primary}
-          onClick={mode === "online" ? () => createOnline() : start}
-          disabled={onlineBusy}
-          data-testid={mode === "online" ? "online-create" : "start"}
+          onClick={start}
+          data-testid="start"
         >
-          {mode === "online" ? "创建在线房间" : "开一桌"} <span>↗</span>
+          开一桌 <span>↗</span>
         </button>
-        {mode === "online" && (
-          <button className={styles.resume} onClick={() => setJoining(true)}>
-            输入房间号加入
-          </button>
-        )}
-        {mode === "local" && saved && saved.phase !== "finished" && (
+        {saved && saved.phase !== "finished" && (
           <button
             className={styles.resume}
             onClick={() => {
@@ -782,9 +1017,7 @@ export default function HypeHarbor() {
         <p className={styles.tiny}>
           不用先读规则，第一场边玩边学。
           <br />
-          {mode === "online"
-            ? "创建后把邀请链接发给朋友。"
-            : playerCount > 1 &&
+          {playerCount > 1 &&
                 configs.slice(0, playerCount).filter((p) => !p.ai).length > 1
               ? "本地多人在同一设备轮流操作。"
               : "AI 会买股，也会和你抢名场面。"}
@@ -1538,18 +1771,29 @@ export default function HypeHarbor() {
         </nav>
       </header>
       <div className={styles.shell}>
-        {mode === "online" && room && (
+        {mode === "online" && onlineView === "room" && room && (
           <div className={styles.onlineBanner}>
             <span>
               在线房间 <b>{room.code}</b> · 你是 {room.players[room.seat]?.name}
             </span>
-            <button
-              onClick={() => navigator.clipboard.writeText(
+            <div>
+              <button onClick={() => navigator.clipboard.writeText(
                   `${window.location.origin}/game/hype-harbor?room=${room.code}`,
-                )}
-            >
-              复制邀请链接
-            </button>
+                )}>复制邀请链接</button>
+              <button onClick={() => {
+                pollAbortRef.current?.abort();
+                sessionStorage.removeItem(ROOM_KEY);
+                window.history.replaceState(null, "", window.location.pathname);
+                setOnlineView("lobby");
+              }}>返回大厅</button>
+              <button onClick={() => {
+                pollAbortRef.current?.abort();
+                sessionStorage.removeItem(ROOM_KEY);
+                window.history.replaceState(null, "", window.location.pathname);
+                setOnlineView("lobby");
+                setMode("local");
+              }}>同机 / AI</button>
+            </div>
           </div>
         )}
         {mode === "online" && onlineError && (
