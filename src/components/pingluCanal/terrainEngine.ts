@@ -10,6 +10,7 @@ export const CHANNEL_WIDTH = 3;
 export const TURN_RADIUS = 3;
 export const MAX_CELLS = 16;
 export const PILE_CAPACITY = 240;
+export const AUTO_FILL_RADIUS = 4;
 export const PLAYER_COLORS = ['#d57b3f', '#438eb3', '#9882bb', '#c4a24b'];
 
 export type Tool = 'dig' | 'blast' | 'dredge' | 'haul';
@@ -21,18 +22,22 @@ export interface Plot {
 export interface Contractor {
   id: number; name: string; ai: boolean; cash: number; spent: number;
   piles: Record<number, Soil[]>; style: 'river' | 'shortcut' | 'balanced';
+  haulTarget?: number;
 }
-export interface TerrainAction { tool: Tool | 'fund' | 'dispose' | 'pass' | 'lock'; cells: number[]; source?: number }
+export interface TerrainAction { tool: Tool | 'fund' | 'dispose' | 'pass' | 'lock'; cells: number[]; source?: number; sources?: number[] }
+export interface Delivery { source: number; target: number; units: number }
 export interface WorkEvent {
   id: number; player: number; tool: TerrainAction['tool']; cells: number[]; from?: number;
   units: number; cost: number; message: string;
+  deliveries?: Delivery[];
 }
 export interface TerrainGame {
   version: 3; locks: (number | null)[]; seed: number; round: number; turn: number; moves: number; limit: number;
   finishRound: number | null; finished: boolean; sandbox: boolean;
   plots: Plot[]; players: Contractor[]; events: WorkEvent[];
+  order?: number[];
 }
-export interface Quote { cells: number[]; units: number; cost: number; error: string | null; depths: Record<number, number> }
+export interface Quote { cells: number[]; units: number; cost: number; error: string | null; depths: Record<number, number>; deliveries?: Delivery[] }
 export interface Route { points: Point[]; cells: number[]; length: number; remaining: number; blocked: number[] }
 export interface Survey { route: Route | null; proposal: Route; wet: boolean[] }
 export const tileName = (id: number) => { const [x, z] = xy(id); return `R${z + 1}·C${x + 1}`; };
@@ -41,8 +46,8 @@ const HEADINGS: Point[] = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [
 export const reclamationLevel = (plot: Plot) => plot.fillTarget ?? 1;
 
 export function createTerrain(humans = 1, ais = 0, seed = 1, sandbox = false): TerrainGame {
-  const humanCount = Math.max(1, Math.min(4, Math.floor(humans)));
-  const count = humanCount + Math.max(0, Math.min(4 - humanCount, Math.floor(ais)));
+  const humanCount = Math.max(0, Math.min(4, Math.floor(humans)));
+  const count = Math.max(1, humanCount + Math.max(0, Math.min(4 - humanCount, Math.floor(ais))));
   const elevations = GEOGRAPHY.elevation.map(e => Math.max(-3, Math.round(e / 5)));
   const plots = elevations.map((elevation, id): Plot => {
     const [x, z] = xy(id); const level = waterLevel(id); const river = naturalRivers[id];
@@ -61,15 +66,16 @@ locks: LOCKS.map(() => null),
 seed,
 round: 1,
 turn: 0,
+order: groupedTurnOrder(1, count),
 moves: 0,
 limit: count === 1 ? 100 : 72,
     finishRound: null,
 finished: false,
-sandbox: sandbox && count === 1,
+sandbox: sandbox && count === 1 && humanCount === 1,
 plots,
     players: Array.from({ length: count }, (_, id) => ({
       id,
-name: id < humanCount ? (humanCount === 1 ? '你的工程局' : `工程局 ${id + 1}`) : ['山海建设', '青岚工程', '江湾建设'][id - humanCount],
+name: id < humanCount ? (humanCount === 1 ? '你的工程局' : `工程局 ${id + 1}`) : ['山海建设', '青岚工程', '江湾建设', '南岭工程'][id - humanCount],
       ai: id >= humanCount,
 cash: 360,
 spent: 0,
@@ -83,11 +89,10 @@ events: [],
   findRoute(game, true)?.cells.forEach(id => { game.plots[id].farm = false; });
   return game;
 }
-export function turnOrder(game: TerrainGame) {
-  const seats = game.players.map(p => p.id);
-  if (game.round % 2 === 0) seats.reverse();
-  return [...seats, ...[...seats].reverse(), ...seats];
+function groupedTurnOrder(round: number, count: number) {
+  return Array.from({ length: count }, (_, index) => (index + round - 1) % count).flatMap(id => [id, id, id]);
 }
+export const turnOrder = (game: TerrainGame) => game.order ?? groupedTurnOrder(game.round, game.players.length);
 export const currentPlayer = (game: TerrainGame) => game.players[turnOrder(game)[game.turn] ?? 0];
 export const pileSize = (player: Contractor, source?: number) => (source === undefined ? Object.values(player.piles).flat() : player.piles[source] ?? []).reduce((sum, s) => sum + s.amount, 0);
 
@@ -107,15 +112,14 @@ export function waterMask(plots: Plot[]): boolean[] {
 }
 
 /** Trucks use dry ground, charging for distance and climbs. Stock sits on the nearest bank. */
-export function truckRoute(game: TerrainGame, source: number, destination: number): number[] {
-  const wet = waterMask(game.plots);
+function truckNetwork(game: TerrainGame, source: number, wet: boolean[], destination?: number) {
   const [sx, sz] = xy(source);
   const banks = game.plots.map((p, id) => id).filter(id => !wet[id]);
   banks.sort((a, b) => Math.hypot(xy(a)[0] - sx, xy(a)[1] - sz) - Math.hypot(xy(b)[0] - sx, xy(b)[1] - sz));
   const start = wet[source] ? banks[0] : source;
-  if (start === undefined || wet[destination]) return [];
   const cost = new Float64Array(game.plots.length).fill(Infinity);
   const parents = new Int32Array(game.plots.length).fill(-1);
+  if (start === undefined || (destination !== undefined && wet[destination])) return { start, cost, parents };
   const queue = new MinHeap(); cost[start] = 0; queue.push(start, 0);
   while (queue.values.length) {
     const top = queue.pop(); if (top.cost > cost[top.key]) continue;
@@ -128,10 +132,65 @@ export function truckRoute(game: TerrainGame, source: number, destination: numbe
       if (candidate < cost[next]) { cost[next] = candidate; parents[next] = top.key; queue.push(next, candidate); }
     });
   }
-  if (!Number.isFinite(cost[destination])) return [];
+  return { start, cost, parents };
+}
+export function truckRoute(game: TerrainGame, source: number, destination: number): number[] {
+  const { start, cost, parents } = truckNetwork(game, source, waterMask(game.plots), destination);
+  if (start === undefined || !Number.isFinite(cost[destination])) return [];
   const path = [destination]; let at = destination;
   while (at !== start) { at = parents[at]; path.push(at); }
   return path.reverse();
+}
+
+export interface HaulPlan { action: TerrainAction | null; quote: Quote | null; reason: string }
+/** Pool small piles into one crew action. Range is strict only for a player-pinned destination. */
+export function* planAutoHaulSteps(game: TerrainGame): Generator<void, HaulPlan> {
+  const player = currentPlayer(game);
+  const none = (reason: string): HaulPlan => ({ action: null, quote: null, reason });
+  if (game.finished) return none('工程已结算');
+  if (!pileSize(player)) return none('没有待运土方，先开挖或爆破');
+  const wet = waterMask(game.plots);
+  const target = player.haulTarget;
+  const separation = (a: number, b: number) => Math.hypot(xy(a)[0] - xy(b)[0], xy(a)[1] - xy(b)[1]);
+  const eligible = game.plots.flatMap((p, id) => (p.farm && !Object.keys(p.cuts).length && !isPort(id) && !wet[id] && p.height < reclamationLevel(p)
+    && (target === undefined || separation(id, target) <= AUTO_FILL_RADIUS) ? [id] : []));
+  if (!eligible.length) return none(target === undefined ? '没有可回填洼地' : '指定点附近已填满或无可填洼地，请改选位置');
+  const sources = Object.keys(player.piles).map(Number).filter(id => pileSize(player, id) > 0);
+  const costs = new Map<number, number>();
+  const regions = new Map<number, number>();
+  const regionStock = new Map<number, number>();
+  for (const source of sources) {
+    yield;
+    const network = truckNetwork(game, source, wet);
+    const region = eligible.find(id => Number.isFinite(network.cost[id]));
+    if (region === undefined) continue;
+    regionStock.set(region, (regionStock.get(region) ?? 0) + pileSize(player, source));
+    eligible.forEach(id => {
+      if (!Number.isFinite(network.cost[id])) return;
+      regions.set(id, region); costs.set(id, Math.min(costs.get(id) ?? Infinity, network.cost[id]));
+    });
+  }
+  const reachable = eligible.filter(id => costs.has(id)).sort((a, b) => (target === undefined ? costs.get(a)! - costs.get(b)! : separation(a, target) - separation(b, target)) || a - b);
+  if (!reachable.length) return none('运土陆路不通，请改选填土位置');
+  // Expand beyond the nearest tiny pit until the crew has enough receiving capacity.
+  const cells: number[] = []; let capacity = 0;
+  const reserved = new Map<number, number>();
+  for (const id of reachable) {
+    const region = regions.get(id)!;
+    const amount = Math.min(reclamationLevel(game.plots[id]) - game.plots[id].height, regionStock.get(region)! - (reserved.get(region) ?? 0));
+    if (amount <= 0) continue;
+    cells.push(id); capacity += amount; reserved.set(region, (reserved.get(region) ?? 0) + amount);
+    if (capacity >= 24 || cells.length >= MAX_CELLS) break;
+  }
+  const action: TerrainAction = { tool: 'haul', cells, sources };
+  const search = quoteTerrainSteps(game, action); let result = search.next();
+  while (!result.done) { yield; result = search.next(); }
+  const quote = result.value;
+  const reason = quote.units < 24 ? `本次可运 ${quote.units} / 24 方：受可达库存、可填容量或 16 格施工上限限制` : '';
+  return quote.error ? { action: null, quote, reason: quote.error } : { action, quote, reason };
+}
+export function planAutoHaul(game: TerrainGame): HaulPlan {
+  return completeSteps(planAutoHaulSteps(game));
 }
 
 interface Edge { to: number; points: Point[]; cells: number[]; length: number }
@@ -235,7 +294,7 @@ class MinHeap {
 }
 
 /** Survey each reach at its own level; every passage must use the three lock chambers. */
-export function findRoute(game: TerrainGame, planning = false, style: Contractor['style'] = 'balanced'): Route | null {
+export function* findRouteSteps(game: TerrainGame, planning = false, style: Contractor['style'] = 'balanced'): Generator<void, Route | null> {
   if (!planning && game.locks.some(owner => owner === null)) return null;
   const deficits = game.plots.map((p, id) => Math.max(0, p.height - bedLevel(id)));
   const chosen: Edge[] = [];
@@ -248,6 +307,7 @@ export function findRoute(game: TerrainGame, planning = false, style: Contractor
     const heuristic = (key: number) => { const p = xy(Math.floor(key / 8)); return Math.hypot(p[0] - to[0], p[1] - to[1]); };
     const heap = new MinHeap(); costs[startKey] = 0; heap.push(startKey, heuristic(startKey));
     while (heap.values.length) {
+      yield;
       const top = heap.pop(); if (top.cost > costs[top.key] + heuristic(top.key) + 0.000001) continue;
       if (top.key === endKey) break;
       for (const edge of edges(top.key)) {
@@ -278,6 +338,14 @@ cells,
     remaining: cells.reduce((sum, id) => sum + deficits[id], 0),
 blocked: cells.filter(id => deficits[id] > 0) };
 }
+function completeSteps<T>(steps: Generator<void, T>): T {
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+export function findRoute(game: TerrainGame, planning = false, style: Contractor['style'] = 'balanced'): Route | null {
+  return completeSteps(findRouteSteps(game, planning, style));
+}
 export function surveyTerrain(game: TerrainGame): Survey {
   const route = findRoute(game);
   return { route, proposal: route ?? findRoute(game, true)!, wet: waterMask(game.plots) };
@@ -296,7 +364,7 @@ export function lineSelection(from: number, to: number, wide: boolean): number[]
   }
   return Array.from(selected);
 }
-export function quoteTerrain(game: TerrainGame, action: TerrainAction): Quote {
+export function* quoteTerrainSteps(game: TerrainGame, action: TerrainAction): Generator<void, Quote> {
   const player = currentPlayer(game);
   const q: Quote = { cells: [], units: 0, cost: 0, error: null, depths: {} };
   if (game.finished) return { ...q, error: '工程已结算，可开新地图' };
@@ -320,20 +388,41 @@ export function quoteTerrain(game: TerrainGame, action: TerrainAction): Quote {
   if (selected.length > MAX_CELLS) return { ...q, error: `单队一次最多 ${MAX_CELLS} 格，请缩短施工线` };
   const wet = action.tool === 'haul' ? waterMask(game.plots) : null;
   if (action.tool === 'haul') {
-    let remaining = Math.min(24, pileSize(player, action.source));
-    let distance = 0;
-    if (action.source === undefined || !remaining) return { ...q, error: '先选一个有土的堆土场，再选回填地块' };
-    selected.forEach(id => {
-      const plot = game.plots[id];
-      if (!plot.farm || plot.height >= reclamationLevel(plot) || wet![id]) return;
-      const path = truckRoute(game, action.source!, id);
-      if (!path.length) return;
-      const amount = Math.min(reclamationLevel(plot) - plot.height, remaining);
-      if (!amount) return;
-      q.cells.push(id); q.depths[id] = plot.height + amount; q.units += amount; remaining -= amount; distance = Math.max(distance, path.length);
-    });
+    const sources = Array.from(new Set(action.sources ?? (action.source === undefined ? [] : [action.source])))
+      .filter(id => Number.isInteger(id) && id >= 0 && id < game.plots.length && pileSize(player, id) > 0);
+    if (!sources.length) return { ...q, error: '先选一个有土的堆土场，再选回填地块' };
+    const stock = new Map(sources.map(id => [id, pileSize(player, id)]));
+    const candidates = selected.filter(id => {
+      const p = game.plots[id];
+      return p.farm && p.height < reclamationLevel(p) && !wet![id] && (!action.sources || !Object.keys(p.cuts).length);
+    }).map(id => ({ id, height: game.plots[id].height, target: reclamationLevel(game.plots[id]), routes: [] as { source: number; distance: number; cost: number }[] }));
+    for (const source of sources) {
+      yield;
+      const network = truckNetwork(game, source, wet!);
+      candidates.forEach(c => {
+        if (!Number.isFinite(network.cost[c.id])) return;
+        let distance = 1; let at = c.id;
+        while (at !== network.start) { at = network.parents[at]; distance++; }
+        c.routes.push({ source, distance, cost: network.cost[c.id] });
+      });
+    }
+    candidates.forEach(c => c.routes.sort((a, b) => a.cost - b.cost || a.source - b.source));
+    const distances = new Map<number, number>();
+    q.deliveries = [];
+    while (q.units < 24) {
+      const lowest = candidates.filter(c => c.height < c.target && c.routes.some(r => stock.get(r.source)! > 0))
+        .sort((a, b) => a.height - b.height || a.id - b.id)[0];
+      if (!lowest) break;
+      const route = lowest.routes.find(r => stock.get(r.source)! > 0)!;
+      if (q.depths[lowest.id] === undefined) q.cells.push(lowest.id);
+      lowest.height++; q.depths[lowest.id] = lowest.height; q.units++;
+      stock.set(route.source, stock.get(route.source)! - 1);
+      distances.set(route.source, Math.max(distances.get(route.source) ?? 0, route.distance));
+      const delivery = q.deliveries.find(d => d.source === route.source && d.target === lowest.id);
+      if (delivery) delivery.units++; else q.deliveries.push({ source: route.source, target: lowest.id, units: 1 });
+    }
     if (!q.units) return { ...q, error: '选择有陆路相连的绿色洼地；隔河、淹没或已整平的地块不能回填' };
-    q.cost = Math.ceil(2 + q.units * 0.12 + distance * 0.2);
+    q.cost = Math.ceil(2 + q.units * 0.12 + Array.from(distances.values()).reduce((sum, distance) => sum + distance * 0.2, 0));
   } else {
     selected.forEach(id => {
       const plot = game.plots[id];
@@ -351,6 +440,9 @@ export function quoteTerrain(game: TerrainGame, action: TerrainAction): Quote {
   if (player.cash < q.cost) q.error = `资金不足，还差 ¥${q.cost - player.cash}；可先申请工程拨款`;
   return q;
 }
+export function quoteTerrain(game: TerrainGame, action: TerrainAction): Quote {
+  return completeSteps(quoteTerrainSteps(game, action));
+}
 function takeSoil(player: Contractor, source: number, count: number): Soil[] {
   const batches = player.piles[source] ?? []; const taken: Soil[] = []; let need = count;
   for (const batch of batches) {
@@ -360,8 +452,10 @@ function takeSoil(player: Contractor, source: number, count: number): Soil[] {
   player.piles[source] = batches.filter(s => s.amount > 0);
   return taken;
 }
-export function applyTerrainAction(game: TerrainGame, action: TerrainAction): TerrainGame {
-  const quote = quoteTerrain(game, action);
+export function* applyTerrainActionSteps(game: TerrainGame, action: TerrainAction): Generator<void, TerrainGame> {
+  const quotation = quoteTerrainSteps(game, action); let quoted = quotation.next();
+  while (!quoted.done) { yield; quoted = quotation.next(); }
+  const quote = quoted.value;
   if (quote.error) return game;
   const next: TerrainGame = JSON.parse(JSON.stringify(game));
   const player = currentPlayer(next);
@@ -375,11 +469,11 @@ export function applyTerrainAction(game: TerrainGame, action: TerrainAction): Te
       player.piles[id] = batches; plot.height = quote.depths[id];
     });
   }
-  if (action.tool === 'haul' && action.source !== undefined) {
-    const material = takeSoil(player, action.source, quote.units).flatMap(s => Array.from({ length: s.amount }, () => ({ player: player.id, source: s.source, level: s.level })));
-    quote.cells.forEach(id => {
-      const plot = next.plots[id];
-      while (plot.height < quote.depths[id]) { plot.fill.push(material.shift()!); plot.height++; }
+  if (action.tool === 'haul') {
+    quote.deliveries?.forEach(delivery => {
+      const plot = next.plots[delivery.target];
+      const material = takeSoil(player, delivery.source, delivery.units).flatMap(s => Array.from({ length: s.amount }, () => ({ player: player.id, source: s.source, level: s.level })));
+      plot.fill.push(...material); plot.height += material.length;
     });
   }
   if (action.tool === 'lock' && action.source !== undefined) next.locks[action.source] = player.id;
@@ -388,16 +482,23 @@ export function applyTerrainAction(game: TerrainGame, action: TerrainAction): Te
     Object.keys(player.piles).forEach(key => { const source = Number(key); const amount = Math.min(remaining, pileSize(player, source)); takeSoil(player, source, amount); remaining -= amount; });
   }
   const verbs = { dig: '开挖', blast: '爆破', dredge: '疏浚', haul: '运土复垦', fund: '申请拨款', dispose: '土方外运', pass: '等待施工', lock: '建设分级船闸' };
-  const event: WorkEvent = { id: next.moves + 1, player: player.id, tool: action.tool, cells: quote.cells, from: action.source, units: quote.units, cost: quote.cost, message: `${player.name} · ${verbs[action.tool]}${quote.units ? ` ${quote.units} 方` : ''}` };
+  const event: WorkEvent = { id: next.moves + 1, player: player.id, tool: action.tool, cells: quote.cells, from: quote.deliveries?.[0]?.source ?? action.source, deliveries: quote.deliveries, units: quote.units, cost: quote.cost, message: `${player.name} · ${verbs[action.tool]}${quote.units ? ` ${quote.units} 方` : ''}` };
   next.events = [...next.events.slice(-59), event]; next.moves++;
-  if (!next.sandbox && !next.finishRound && findRoute(next)) next.finishRound = Math.min(next.limit, next.round + 2);
+  if (!next.sandbox && !next.finishRound) {
+    const search = findRouteSteps(next); let result = search.next();
+    while (!result.done) { yield; result = search.next(); }
+    if (result.value) next.finishRound = Math.min(next.limit, next.round + 2);
+  }
   next.turn++;
   if (next.turn >= next.players.length * 3) {
     next.turn = 0;
     if (!next.sandbox && next.round >= (next.finishRound ?? next.limit)) next.finished = true;
-    else { next.round++; next.players.forEach(p => { p.cash += 24; }); }
+    else { next.round++; next.order = groupedTurnOrder(next.round, next.players.length); next.players.forEach(p => { p.cash += 24; }); }
   }
   return next;
+}
+export function applyTerrainAction(game: TerrainGame, action: TerrainAction): TerrainGame {
+  return completeSteps(applyTerrainActionSteps(game, action));
 }
 export function finishTerrain(game: TerrainGame): TerrainGame {
   return game.players.length === 1 && findRoute(game) ? { ...game, finished: true } : game;
@@ -418,24 +519,20 @@ export function scoreTerrain(game: TerrainGame, route: Route | null) {
     return { id: player.id, useful, wasted, reclaimed, locks, total: useful * 3 + reclaimed * 2 + locks * 40, spent: player.spent };
   });
 }
-export function aiTerrainAction(game: TerrainGame): TerrainAction {
+export function* aiTerrainActionSteps(game: TerrainGame): Generator<void, TerrainAction> {
   const player = currentPlayer(game);
   if (player.cash < 24) return { tool: 'fund', cells: [] };
-  const plan = findRoute(game, true, player.style)!;
   const readyLock = LOCKS.find(l => game.locks[l.index] === null && lockCells(l.index).every(id => game.plots[id].height <= bedLevel(id)));
   if (readyLock && player.cash >= 30) return { tool: 'lock', cells: [], source: readyLock.index };
+  const search = findRouteSteps(game, true, player.style); let result = search.next();
+  while (!result.done) { yield; result = search.next(); }
+  const plan = result.value;
+  if (!plan) return { tool: 'pass', cells: [] };
   const sources = Object.keys(player.piles).map(Number).filter(id => pileSize(player, id) > 0).sort((a, b) => pileSize(player, b) - pileSize(player, a));
   if (pileSize(player) > 110 || (!plan.blocked.length && sources.length)) {
-    const wet = waterMask(game.plots);
-    const targets = game.plots.map((p, id) => ({ p, id })).filter(({ p, id }) => p.farm && p.height < reclamationLevel(p) && !wet[id]).map(({ id }) => id);
-    for (const source of sources.slice(0, 8)) {
-      const from = xy(source); targets.sort((a, b) => Math.hypot(xy(a)[0] - from[0], xy(a)[1] - from[1]) - Math.hypot(xy(b)[0] - from[0], xy(b)[1] - from[1]));
-      const reachable = targets.find(id => truckRoute(game, source, id).length > 0);
-      if (reachable !== undefined) {
-        const haul: TerrainAction = { tool: 'haul', cells: [reachable], source };
-        if (!quoteTerrain(game, haul).error) return haul;
-      }
-    }
+    const haulSearch = planAutoHaulSteps(game); let haulResult = haulSearch.next();
+    while (!haulResult.done) { yield; haulResult = haulSearch.next(); }
+    if (haulResult.value.action) return haulResult.value.action;
     return { tool: 'dispose', cells: [] };
   }
   const targets = plan.blocked.filter(id => !isPort(id) && !game.plots[id].fill.length);
@@ -452,6 +549,9 @@ export function aiTerrainAction(game: TerrainGame): TerrainAction {
   if (quote.error) return { tool: pileSize(player) > 100 ? 'dispose' : 'fund', cells: [] };
   return action;
 }
+export function aiTerrainAction(game: TerrainGame): TerrainAction {
+  return completeSteps(aiTerrainActionSteps(game));
+}
 
 export function restoreTerrain(raw: string): TerrainGame | null {
   try {
@@ -461,7 +561,15 @@ export function restoreTerrain(raw: string): TerrainGame | null {
     if (game.plots.some(p => !Number.isInteger(p.height) || p.height < TARGET_BED || p.height > 120 || !p.cuts || !Array.isArray(p.fill))) return null;
     if (game.plots.some(p => p.fillTarget !== undefined && (!Number.isInteger(p.fillTarget) || p.fillTarget < -3 || p.fillTarget > 120))) return null;
     if (game.players.some((p, i) => p.id !== i || !Number.isFinite(p.cash) || !Number.isFinite(p.spent) || !p.piles || Object.values(p.piles).some(b => !Array.isArray(b) || b.some(s => !Number.isInteger(s.amount) || s.amount < 0)))) return null;
+    if (game.players.some(p => p.haulTarget !== undefined && (!Number.isInteger(p.haulTarget) || p.haulTarget < 0 || p.haulTarget >= game.plots.length))) return null;
     if (!Array.isArray(game.locks) || game.locks.length !== 3 || game.locks.some(owner => owner !== null && (!Number.isInteger(owner) || owner < 0 || owner >= game.players.length))) return null;
+    if (game.order !== undefined && (!Array.isArray(game.order) || game.order.length !== game.players.length * 3 || game.order.some(id => !Number.isInteger(id) || id < 0 || id >= game.players.length) || game.players.some(p => game.order!.filter(id => id === p.id).length !== 3))) return null;
+    // Finish a legacy round without reassigning already-used crews; group turns from the next round.
+    if (!game.order) {
+      const seats = game.players.map(p => p.id);
+      if (game.round % 2 === 0) seats.reverse();
+      game.order = game.moves ? [...seats, ...[...seats].reverse(), ...seats] : groupedTurnOrder(game.round, seats.length);
+    }
     return game;
   } catch { return null; }
 }

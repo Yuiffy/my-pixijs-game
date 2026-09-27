@@ -193,7 +193,7 @@ function WorkAnimation({ event, game, reduced }: { event: WorkEvent; game: Terra
   useFrame((_, delta) => {
     elapsed.current += delta; const t = elapsed.current;
     if (event.tool === 'haul' && path.length && vehicle.current) {
-      const progress = Math.min(1, t / (reduced ? 0.1 : 4.5)); const index = progress * (path.length - 1); const first = path[Math.floor(index)]; const second = path[Math.min(path.length - 1, Math.floor(index) + 1)];
+      const progress = Math.min(1, t / (reduced ? 0.1 : 2.1)); const index = progress * (path.length - 1); const first = path[Math.floor(index)]; const second = path[Math.min(path.length - 1, Math.floor(index) + 1)];
       const a = xy(first); const b = xy(second); const f = index % 1;
       vehicle.current.position.set(...position([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f], (game.plots[first].height * (1 - f) + game.plots[second].height * f) * HEIGHT + 0.12));
       if (first !== second) vehicle.current.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
@@ -204,7 +204,7 @@ function WorkAnimation({ event, game, reduced }: { event: WorkEvent; game: Terra
       child.position.set(origin[0] - first[0] + Math.cos(angle) * part, Math.sin(part * Math.PI) * (0.6 + (i % 3) * 0.35), origin[1] - first[1] + Math.sin(angle) * part);
       child.scale.setScalar(Math.max(0, 1 - part)); child.rotation.set(t * 2, t + i, 0);
     });
-    if (!reduced && t < 4.6) invalidate();
+    if (!reduced && t < 2.2) invalidate();
   });
   if (!event.cells.length) return null;
   return (
@@ -278,6 +278,15 @@ function Scene(props: TerrainSceneProps) {
   const { game, route, proposal, showSurvey, wet, reset, topDown, disabled, navigate, quote, focus, showReference } = props;
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const event = game.events[game.events.length - 1];
+  const animatedEvents = useMemo(() => {
+    if (!event) return [];
+    if (!event.deliveries?.length) return [event];
+    return Array.from(new Set(event.deliveries.map(d => d.source))).slice(0, 4).map(source => ({
+      ...event,
+      from: source,
+      cells: event.deliveries!.filter(d => d.source === source).map(d => d.target),
+    }));
+  }, [event]);
   return (
 <>
     <color attach="background" args={['#e7ecdf']} />
@@ -291,7 +300,7 @@ function Scene(props: TerrainSceneProps) {
     {showReference && referenceLines.map((points, i) => <PathLine key={i} points={points} tint="#b86ee8" game={game} floor />)}
     <SoilPiles game={game} players={game.players} />
     {showSurvey && (route ?? proposal) && <PathLine points={(route ?? proposal)!.points} tint={route ? '#caffec' : '#ff5029'} game={game} floor={!route} />}
-    {event && <WorkAnimation key={event.id} event={event} game={game} reduced={reduced} />}
+    {animatedEvents.map(work => <WorkAnimation key={`${work.id}-${work.from ?? 'work'}`} event={work} game={game} reduced={reduced} />)}
     {route && <TrialShip route={route} reduced={reduced} />}
     <Controls reset={reset} topDown={topDown} disabled={disabled} navigate={navigate} focus={focus} />
   </>

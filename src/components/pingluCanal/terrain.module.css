@@ -30,6 +30,14 @@
 .viewControls button[aria-pressed=true] { color:#416848; background:#edf0e0; }
 .coordinates { position:absolute; left:25px; top:113px; font-size:11px; display:flex; gap:13px; color:#52745e; background:#f8f7edbd; padding:7px 10px; border-radius:3px; pointer-events:none; }
 .coordinates b { color:#9d6839; }
+.mapReadout { position:absolute; top:113px; left:25px; right:20px; display:flex; flex-direction:column; align-items:flex-start; gap:7px; pointer-events:none; }
+.mapReadout .coordinates { position:static; flex-wrap:wrap; }
+.inputHints { display:flex; flex-wrap:wrap; gap:6px 15px; max-width:500px; padding:9px 11px; border:1px solid #d3dcc5; border-radius:4px; background:#f8f7ede8; color:#52694f; font-size:10px; line-height:1.6; }
+.inputHints span { display:flex; gap:6px; align-items:baseline; }
+.inputHints b { color:#2e5144; font-weight:600; white-space:nowrap; }
+.inputHints small { flex-basis:100%; font-size:9px; color:#687e60; }
+@media(max-width:1050px) { .mapReadout { top:103px; left:17px; right:13px; }.inputHints { max-width:430px; } }
+@media(max-width:760px) { .mapReadout { top:104px; left:15px; right:15px; gap:5px; }.inputHints { padding:6px 8px; gap:3px 11px; font-size:9px; }.inputHints small { font-size:8px; } }
 .firstHint { position:absolute; left:25px; bottom:86px; background:#faf8eae8; border-left:3px solid #b4844c; padding:14px 17px; max-width:240px; box-shadow:0 8px 30px #405a3010; }
 .firstHint b { font-size:14px; }.firstHint span { display:block; line-height:1.9; color:#718067; font-size:11px; margin:7px 0; }
 .firstHint button { border:0; background:none; padding:5px 0; font-size:11px; color:#98723f; }
@@ -43,6 +51,16 @@
 .resources { display:flex; margin:18px 0; padding:14px 0; border-block:1px solid var(--line); }.resources>div { width:50%; }.resources>div+div { border-left:1px solid var(--line); padding-left:18px; }.resources small { color:var(--muted); font-size:10px; display:block; margin-bottom:6px; }.resources b { font-size:21px; font-weight:500; }.resources em { font-size:10px; color:var(--muted); font-style:normal; padding-left:3px; }
 .tools { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }.tools button { padding:8px 3px; font-size:11px; }.tools button>span { display:block; font-size:23px; margin-bottom:3px; }.tools button[aria-pressed=true] { border-color:#728b5c; background:#e6ecd6; color:#3f623e; }
 .toolDescription { font-size:10px; color:#758069; margin:9px 0 15px; min-height:15px; }
+.autoHaul { border-bottom:1px solid var(--line); padding:0 0 12px; margin-bottom:14px; }
+.autoHaul>label { display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; }
+.autoHaul input { accent-color:var(--green); }
+.autoHaul label small { margin-left:auto; font-size:9px; color:var(--muted); }
+.autoHaul>div { display:flex; gap:5px; margin-top:9px; }
+.autoHaul button { flex:1; font-size:10px; padding:7px 4px; }
+.autoHaul button[aria-pressed=true] { border-color:#829d74; background:#e6ecd6; }
+.autoHaul p { font-size:10px; color:var(--muted); line-height:1.7; margin:8px 0 0; }
+.manage { width:100%; margin-bottom:12px; }
+.viewControls { flex-wrap:wrap; max-width:65%; justify-content:flex-end; }
 .brush { display:flex; gap:4px; }.brush button { flex:1; font-size:10px; padding:7px 4px; }.brush button[aria-pressed=true] { border-color:#9aab87; color:#577345; background:#edf0e2; }
 .selection { margin-top:15px; padding:13px 0; border-bottom:1px solid var(--line); }.selection>div { display:flex; justify-content:space-between; align-items:center; min-height:26px; }.selection strong { font-size:12px; }.selection small { font-size:10px; color:var(--muted); display:block; margin-top:5px; line-height:1.7; }.selection button { border:0; padding:1px 7px; font-size:18px; }
 .quote { padding:13px 0 0; }.quote>p { font-size:11px; color:#92754b; line-height:1.8; margin:0 0 12px; min-height:32px; }.quote>div { display:flex; justify-content:space-between; gap:10px; }.quote>div>span { font-size:10px; color:var(--muted); }.quote b { display:block; font-size:18px; margin-top:5px; color:#546d45; font-weight:500; }.quote>small { display:block; font-size:9px; color:var(--muted); margin:12px 0; }
