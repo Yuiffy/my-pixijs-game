@@ -95,7 +95,7 @@ async function perform(p,a) {
       const s=await saved(p);assert.deepEqual(s.development,{model,effort,turbo});assert.equal(s.minute,configurationBaseline.minute);assert.deepEqual(s.players,configurationBaseline.players);
     }
     await p.locator('#reset-command').scrollIntoViewIfNeeded();await shot(p,'05-model-effort-turbo-planner',false);report.checks.push('36 independent configurations with no time or energy charge');
-    await p.locator('#end-day').click();await shot(p,'06-night-reveal');await p.locator('#next-day').click();assert.equal((await read(p)).day,2);
+    await p.locator('#end-day').click();await p.locator('#confirm-end-day').click();await shot(p,'06-night-reveal');await p.locator('#next-day').click();assert.equal((await read(p)).day,2);
     // Old saves stay present after v3 migration.
     const v2=JSON.parse(fs.readFileSync(path.join(__dirname,'tests/fixtures/reset-rush-v2.json'),'utf8'));v2.cursor=4;
     await inject(p,v2,'reset-rush-v2');assert.equal((await saved(p)).version,3);assert.equal((await saved(p)).minute,160);assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('reset-rush-v2')).version),2);

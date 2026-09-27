@@ -115,7 +115,7 @@ async function main() {
     await slider.press('ArrowRight');
     game = await saved(page);
     assert.equal(game.players[0].energy, 4, 'returning to paid slots must not charge again');
-    await page.locator('#end-day').click();
+    await page.locator('#end-day').click();await page.locator('#confirm-end-day').click();
     game = await saved(page);
     assert.equal(game.phase, 'reveal');
     assert.equal(game.minute, 480);
@@ -139,7 +139,7 @@ async function main() {
     await page.getByRole('button', { name: /使用银行券/ }).click();
     game = await saved(page);
     assert.equal(game.players[0].accounts[0].quota, 24);
-    await page.locator('#end-day').click();
+    await page.locator('#end-day').click();await page.locator('#confirm-end-day').click();
     game = await saved(page);
     assert.ok((game.players[0].projects[0]?.work ?? 0) > beforeBank || game.players[0].shipped.length > 0);
     report.checks.push('critical moment stops on delivery or exhaustion; banked quota resumes work');
@@ -180,7 +180,7 @@ async function main() {
       game = await saved(page);
       assert.equal(game.day, day);
       if (game.players[0].energy >= 3) await page.locator(`[data-project="${game.market[0].id}"]`).click();
-      await page.locator('#end-day').click();
+      await page.locator('#end-day').click();await page.locator('#confirm-end-day').click();
       assert.equal((await saved(page)).phase, 'reveal');
       await page.locator('#next-day').click();
     }
@@ -206,7 +206,7 @@ async function main() {
       await shot(touch, `06-mobile-${width}-studio`);
       await touch.locator('#reset-command').scrollIntoViewIfNeeded();
       await shot(touch, `07-mobile-${width}-strategy`, false);
-      await touch.locator('#end-day').tap();
+      await touch.locator('#end-day').tap();await touch.locator('#confirm-end-day').tap();
       assert.equal((await read(touch)).phase, 'reveal');
       await touch.locator('#next-day').scrollIntoViewIfNeeded();
       await shot(touch, `08-mobile-${width}-reveal`, false);

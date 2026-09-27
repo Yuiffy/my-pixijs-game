@@ -57,16 +57,16 @@ test('Turbo and cooperation only change time and quota, not per-project craftsma
 
 test('same-day attention only tops up; pauses and repeated strong/weak switching never refund or double bill',()=>{
  let g=set(fresh(1000),config('astra'));assert.equal(player(g).energy,11);assert.equal(lane(g).attentionPaid,1);
- g=set(g,config('luna'));assert.equal(player(g).energy,10);assert.equal(lane(g).attentionPaid,2);
+ g=E.advanceMinutes(g,1);g=set(g,config('luna'));assert.equal(player(g).energy,10);assert.equal(lane(g).attentionPaid,2);
  for(let n=0;n<3;n++){g=set(g,config('astra'));g=studio(g,{threads:0});g=studio(g,{threads:1});g=set(g,config('luna'));}
  assert.equal(player(g).energy,10);
  g=set(g,config('astra'));g=E.nextDay(E.endDay(g));assert.equal(player(g).energy,11);assert.equal(lane(g).attentionPaid,1);
 });
 
 test('unaffordable attention top-ups wait without spending quota; strong work can resume with the paid reserve',()=>{
- let g=set(fresh(1000),config('astra'));player(g).energy=0;g=set(g,config('luna'));
+ let g=set(fresh(1000),config('astra'));g=E.advanceMinutes(g,1);player(g).energy=0;g=set(g,config('luna'));
  assert.equal(E.laneStatus(g,player(g),lane(g)),'等待精力');const before=structuredClone(g);
- g=E.advanceMinutes(g,10);near(job(g).work,0);near(player(g).accounts[0].quota,player(before).accounts[0].quota);
+ g=E.advanceMinutes(g,10);near(job(g).work,job(before).work);near(player(g).accounts[0].quota,player(before).accounts[0].quota);
  g=set(g,config('astra'));g=E.advanceMinutes(g,10);assert.ok(job(g).work>0);assert.equal(player(g).energy,0);
 });
 

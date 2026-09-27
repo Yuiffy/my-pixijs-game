@@ -41,7 +41,7 @@ async function main(){
   await advance(250);let g=await saved(page);
   assert.equal(g.players[0].projects[0].understood,true);assert.equal(g.players[0].lanes[0].development.effort,'high');
   assert.ok(g.players[0].experience.luna.work<60);
-  await page.locator('#end-day').click();await page.locator('#next-day').click();
+  await page.locator('#end-day').click();await page.locator('#confirm-end-day').click();await page.locator('#next-day').click();
   g=await saved(page);assert.equal(g.players[0].experience.luna.work,60);
   assert.equal(g.players[0].lanes[0].development.effort,'medium');
   assert.match(await page.getByTestId('project-team').innerText(),/0% \/ 20/);
@@ -68,7 +68,7 @@ async function main(){
    await page.locator('#studio-configuration').selectOption('adaptive');await page.locator('#studio-collaboration').selectOption('3');
    await page.locator('#studio-threads').focus();await page.locator('#studio-threads').press('ArrowRight');await page.locator('#studio-threads').press('ArrowRight');
    await page.locator('#studio-configuration').scrollIntoViewIfNeeded();await shot(`05-mobile-${width}-strategies`);
-   await page.locator('#end-day').click();assert.equal((await saved(page)).phase,'reveal');await page.locator('#next-day').click();
+   await page.locator('#end-day').click();await page.locator('#confirm-end-day').click();assert.equal((await saved(page)).phase,'reveal');await page.locator('#next-day').click();
    assert.equal((await saved(page)).players[0].lanes.filter(l=>l.projects.length).length,3);
   }
   report.checks.push('390px and 320px layouts: configure cooperative auto mode and advance the day without horizontal overflow');
@@ -79,7 +79,7 @@ async function main(){
   for(let day=1;day<=21;day++){
    g=await saved(page);assert.equal(g.day,day);
    if(g.players[0].projects.length<3&&g.players[0].energy>0)await page.locator(`[data-project="${g.market[0].id}"]`).click();
-   await page.locator('#end-day').click();assert.equal((await saved(page)).phase,'reveal');await page.locator('#next-day').click();
+   await page.locator('#end-day').click();await page.locator('#confirm-end-day').click();assert.equal((await saved(page)).phase,'reveal');await page.locator('#next-day').click();
   }
   g=await saved(page);assert.equal(g.phase,'over');assert.ok(g.players[0].shipped.length>=4);
   await page.evaluate(()=>window.scrollTo(0,0));await shot('06-full-season-ranking');

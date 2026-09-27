@@ -133,6 +133,7 @@ export interface Project {
   repair: number;
   qualityWork: number;
   delivery: { grade: string; cash: number; vp: number } | null;
+  settings?: { development: Development | null; collaboration: Studio["collaboration"] | null } | null;
 }
 export interface Lane {
   id: number;
@@ -162,6 +163,14 @@ export interface Platform {
   allowance: number;
   revision: number;
 }
+export interface EnergyLedger {
+  day: number;
+  hosting: number;
+  claims: number;
+  other: number;
+  restored: number;
+  previous: number;
+}
 export interface Player {
   id: number;
   name: string;
@@ -180,6 +189,7 @@ export interface Player {
   banksUsed: number;
   collisions: number;
   energy: number;
+  energyLedger?: EnergyLedger;
   rested: boolean;
   lanes: Lane[];
 }
@@ -234,6 +244,7 @@ export interface Game {
   message: string;
 }
 export type Action =
+  | { type: "project-settings"; project: number; settings: NonNullable<Project["settings"]> | null }
   | { type: "studio"; threads: number; accountPolicy: AccountPolicy; preferredAccount: number; configuration?: Studio["configuration"]; collaboration?: Studio["collaboration"] }
   | ({
       type: "dispatch";
@@ -359,7 +370,7 @@ export const EVENTS: EventCard[] = [
   { id: "pro-last-call", title: "$200 即将停止新开", quote: "“existing subscribers can keep renewing.”", detail: "还有今天和明天可新开或升级 $200。之后只保留老号连续续费；降档或断订会失去资格。", chance: 0, effect: "retire" },
   { id: "limit-rumor", title: "社区：这次掉额不太一样？", quote: "“same workload, different percentage?”", detail: "额度口径可能有变化，百分比不变。工作室会重新采样 token 与掉额；先观察，再决定是否冲刺。", chance: 0, effect: "limits" },
   { id: "tech-1", title: "5.6 Luna 发布", quote: "“small model, bigger ideas.”", detail: "Luna 能力 +0.5、速度 +20%；付费配置暂贵 15%。免费慢跑仍免费，先试新模型还是等降价？", chance: 20, effect: "technology" },
-  { id: "tech-2", title: "5.6 Luna 降价了", quote: "“now cheaper to build.”", detail: "Luna 付费配置费率从初代的 115% 降到 65%。原有线程自动享受，免费路线不变。", chance: 0, effect: "technology" },
+  { id: "tech-2", title: "5.6 Luna 降价了", quote: "“now cheaper to build.”", detail: "Luna 付费配置费率从初代的 115% 降到 65%。原有 AI 对话自动享受，免费路线不变。", chance: 0, effect: "technology" },
   { id: "tech-3", title: "6 Sol：发布即降价", quote: "“smarter and cheaper, today.”", detail: "Sol 比初代能力 +1、速度 +25%，费率降至 75%。常规思考可处理基础复杂任务；隐藏难点仍需摸底，新模型重新实测。", chance: 35, effect: "technology" },
   { id: "tech-4", title: "6 Luna：小模型追上来了", quote: "“more intelligence for everyone.”", detail: "Luna 比初代能力 +1、速度 +50%，付费费率降至 45%。免费 Medium 可处理基础常规任务，隐藏难点仍需摸底。", chance: 20, effect: "technology" },
   { id: "tech-5", title: "6 Astra：攻坚新世代", quote: "“bring your hardest problems.”", detail: "Astra 比初代能力 +1、速度 +20%，费率降至 85%。Medium 可处理基础攻坚任务，隐藏难点仍需摸底；也可 Ultra + Turbo 抢首发。", chance: 50, effect: "technology" },
@@ -395,7 +406,7 @@ export function quotaObservation(a: Account) {
     fullHigh: sample && drop >= 2 ? (sample.tokens * 100) / (drop - 1) : null,
   };
 }
-const TEMPLATES: [string, Category, number, number, number, Difficulty][] = [
+export const TEMPLATES: [string, Category, number, number, number, Difficulty][] = [
   ["只有一条命", "game", 221, 23, 35, 2],
   ["猫猫自走棋", "game", 343, 34, 45, 3],
   ["下班后勇者", "game", 189, 19, 30, 2],
@@ -414,6 +425,48 @@ const TEMPLATES: [string, Category, number, number, number, Difficulty][] = [
   ["再改最后一版", "company", 224, 10, 145, 2],
   ["一百关推箱子", "game", 560, 40, 55, 1],
   ["百页文档站", "open", 420, 28, 30, 1],
+  ["同人自走棋", "game", 360, 35, 45, 3],
+  ["弹幕躲避大作战", "game", 200, 20, 30, 2],
+  ["直播间节奏游戏", "game", 260, 26, 40, 2],
+  ["雨夜寻味", "game", 490, 42, 50, 4],
+  ["下播前五分钟", "game", 175, 18, 30, 2],
+  ["应援社团经营", "game", 315, 31, 45, 3],
+  ["像素钓鱼图鉴", "game", 440, 32, 45, 1],
+  ["迷你塔防编辑器", "game", 285, 28, 40, 3],
+  ["联机派对小游戏", "game", 390, 37, 50, 4],
+  ["每日一局拼图", "game", 240, 21, 35, 1],
+  ["暖心晚安回复 AI", "personal", 155, 13, 45, 2],
+  ["直播回放时间轴", "personal", 130, 11, 35, 2],
+  ["追番补档清单", "personal", 95, 9, 30, 1],
+  ["桌面陪伴小宠物", "personal", 210, 16, 40, 3],
+  ["字幕检索笔记库", "personal", 185, 14, 40, 2],
+  ["多账号额度看板", "personal", 120, 11, 35, 2],
+  ["表情包收藏册", "personal", 160, 13, 40, 1],
+  ["直播日历提醒", "personal", 100, 9, 30, 1],
+  ["个人作品展厅", "personal", 320, 21, 50, 1],
+  ["读书摘录助手", "personal", 180, 15, 45, 2],
+  ["自动整理截图", "personal", 230, 18, 50, 3],
+  ["直播投票插件", "open", 175, 16, 20, 2],
+  ["弹幕关键词组件", "open", 145, 13, 15, 2],
+  ["SRT 字幕校对器", "open", 225, 19, 25, 3],
+  ["视频切片任务队列", "open", 250, 21, 25, 3],
+  ["网页游戏存档 SDK", "open", 215, 18, 20, 2],
+  ["可复用像素 UI 库", "open", 280, 22, 25, 1],
+  ["模型费用观测器", "open", 170, 15, 20, 2],
+  ["轻量联机大厅", "open", 300, 24, 30, 4],
+  ["无障碍键盘导航包", "open", 115, 10, 15, 2],
+  ["开源文档搜索", "open", 205, 18, 20, 2],
+  ["品牌活动投票页", "company", 160, 7, 110, 1],
+  ["直播运营数据台", "company", 240, 12, 160, 3],
+  ["企业知识库问答", "company", 310, 17, 190, 4],
+  ["自动周报生成器", "company", 150, 7, 100, 2],
+  ["电商图片批量工具", "company", 230, 11, 150, 2],
+  ["会议纪要与待办", "company", 175, 8, 120, 2],
+  ["客服话术评测系统", "company", 280, 14, 175, 3],
+  ["人事排班系统", "company", 200, 9, 135, 2],
+  ["内部审批工作流", "company", 265, 13, 165, 3],
+  ["订单对账机器人", "company", 220, 10, 145, 3],
+  ["老后台百页迁移", "company", 400, 18, 210, 1],
 ];
 const copy = (g: Game): Game => JSON.parse(JSON.stringify(g)) as Game;
 function random(g: Game): number {
@@ -436,9 +489,16 @@ function project(g: Game, template?: number): Project {
   const available = TEMPLATES.filter(
     ([name]) => !g.market.some((j) => j.name === name),
   );
+  const busy = new Set(g.players.flatMap(p => p.projects.map(j => j.name)));
+  const unused = available.filter(([name]) => !busy.has(name));
+  const pool = unused.length ? unused : available;
+  const appearances = new Map<string, number>();
+  for (const p of g.players) for (const j of [...p.projects, ...p.shipped]) appearances.set(j.name, (appearances.get(j.name) ?? 0) + 1);
+  const fewest = Math.min(...pool.map(([name]) => appearances.get(name) ?? 0));
+  const varied = pool.filter(([name]) => (appearances.get(name) ?? 0) === fewest);
   const [name, category, need, vp, cash, difficulty] =
     template === undefined
-      ? available[Math.floor(random(g) * available.length)]
+      ? varied[Math.floor(random(g) * varied.length)]
       : TEMPLATES[template];
   g.serial++;
   return {
@@ -586,18 +646,49 @@ function attentionNeeded(g: Game, p: Player, lane: Lane) {
   const job = p.projects.find(j => j.id === lane.projects[0]);
   return Math.max(0, attentionCost(g, p, lane.development, job) - (lane.paidDay === g.day ? lane.attentionPaid : 0));
 }
+export function energyBreakdown(g: Game, p: Player): EnergyLedger {
+  if (p.energyLedger?.day === g.day) return { ...p.energyLedger };
+  const used = DAILY_ENERGY - p.energy;
+  const hosting = g.minute === 0 ? Math.min(used, p.lanes.reduce((n, l) => n + (l.paidDay === g.day ? l.attentionPaid : 0), 0)) : 0;
+  return { day: g.day, hosting, claims: 0, other: 0, restored: 0, previous: used - hosting };
+}
+/** Before the clock starts, follow-up is a refundable reservation, not work already done. */
+function reopenMorningBudget(g: Game, p: Player) {
+  const ledger = energyBreakdown(g, p);
+  const refund = Math.min(DAILY_ENERGY - p.energy, p.lanes.reduce((n, l) => n + (l.paidDay === g.day ? l.attentionPaid : 0), 0));
+  const known = Math.min(refund, ledger.hosting);
+  ledger.hosting -= known;
+  ledger.previous = Math.max(0, ledger.previous - (refund - known));
+  p.energy += refund;
+  if (refund) log(g, `${p.name} 尚未开工，释放 ${refund} 点 AI 跟进预留，按新安排重新计算。`, p.id);
+  p.energyLedger = ledger;
+  for (const lane of p.lanes) if (lane.paidDay === g.day) { lane.paidDay = 0; lane.attentionPaid = 0; }
+}
+function spendEnergy(g: Game, p: Player, amount: number, kind: "hosting" | "claims" | "other") {
+  if (!amount) return;
+  p.energyLedger = energyBreakdown(g, p);
+  p.energyLedger[kind] += amount;
+  p.energy -= amount;
+}
 function prepareLane(g: Game, p: Player, lane: Lane) {
   const needed = attentionNeeded(g, p, lane);
   if (p.energy < needed) return false;
   if (needed) {
-    p.energy -= needed;
+    spendEnergy(g, p, needed, "hosting");
     lane.attentionPaid = (lane.paidDay === g.day ? lane.attentionPaid : 0) + needed;
     lane.paidDay = g.day;
-    log(g, `${p.name} 托管线程，−${needed} 精力${lane.attentionPaid === 1 ? "（架构与自测更省心）" : "（含人工跟进）"}。`, p.id);
+    log(g, `${p.name} 托管 AI 对话，−${needed} 精力${lane.attentionPaid === 1 ? "（架构与自测更省心）" : "（含人工跟进）"}。`, p.id);
   }
   return true;
 }
+export const projectCollaboration = (g: Game, job: Project) => job.settings?.collaboration ?? g.studio.collaboration;
+const validProjectSettings = (settings: Project["settings"]) => settings == null ||
+  (typeof settings === "object" && !Array.isArray(settings) &&
+    (settings.development === null || validDevelopment(settings.development)) &&
+    (settings.collaboration === null || [1, 2, 3].includes(settings.collaboration)));
+
 export function projectDevelopment(g: Game, p: Player, job: Project): Development {
+  if (p.id === 0 && job.settings?.development) return { ...job.settings.development };
   if (g.studio.configuration === "fixed" || p.id !== 0) return { ...g.development };
   const candidates = (Object.keys(MODELS) as Model[]).flatMap(model => (Object.keys(EFFORTS) as Effort[]).map(effort => {
       const config = { model, effort, turbo: g.development.turbo };
@@ -734,6 +825,7 @@ function beginDay(g: Game) {
   }
   g.players.forEach((p) => {
     p.energy = DAILY_ENERGY;
+    p.energyLedger = { day: g.day, hosting: 0, claims: 0, other: 0, restored: 0, previous: 0 };
     p.rested = false;
     p.accounts.forEach((a) => {
       if (a.renewal === 200 && proClosed(g) && a.tier !== 200) {
@@ -890,7 +982,7 @@ function organizeStudio(g: Game) {
   if (g.studio.mode !== "auto" || g.phase !== "plan") return;
   const p = g.players[0];
   cleanLanes(p);
-  const count = Math.min(g.studio.threads, p.projects.length * g.studio.collaboration);
+  const count = Math.min(g.studio.threads, p.projects.reduce((n, j) => n + projectCollaboration(g, j), 0));
   while (p.lanes.length < count) p.lanes.push({
     id: ++g.serial,
     account: g.studio.preferredAccount,
@@ -929,7 +1021,7 @@ function organizeStudio(g: Game) {
   // Once every project has a primary worker, spare agents help the largest remaining job.
   for (const lane of activeLanes.filter(l => !l.projects.length)) {
     const helpers = (j: Project) => activeLanes.filter(l => l.projects[0] === j.id).length;
-    const target = p.projects.filter(j => helpers(j) > 0 && helpers(j) < g.studio.collaboration)
+    const target = p.projects.filter(j => helpers(j) > 0 && helpers(j) < projectCollaboration(g, j))
       .sort((a, b) => (b.need - b.work + b.bugs * BUG_WORK) / helpers(b) - (a.need - a.work + a.bugs * BUG_WORK) / helpers(a) || a.id - b.id)[0];
     if (target) lane.projects = [target.id];
   }
@@ -982,6 +1074,21 @@ export function laneStatus(g: Game, p: Player, lane: Lane): string {
   ) return "等待额度";
   return job.work >= job.need - EPS ? "自动返工" : "开发中";
 }
+export function developmentBlocker(g: Game): string | null {
+  const p = g.players[0];
+  let statuses = p.lanes.map(l => laneStatus(g, p, l));
+  // A new game may have projects but no lanes yet; allow the first advance to start them.
+  if (!statuses.some(status => status === "开发中" || status === "自动返工") && g.studio.mode === "auto" && g.studio.threads > 0 && p.energy > 0) {
+    const preview = copy(g);
+    organizeStudio(preview);
+    routeStudioAccounts(preview);
+    statuses = preview.players[0].lanes.map(l => laneStatus(preview, preview.players[0], l));
+  }
+  if (statuses.some(status => status === "开发中" || status === "自动返工")) return null;
+  if (statuses.includes("等待精力")) return "AI 对话正在等待精力。可休息恢复；尚未开工时也可调少对话释放预留。时间已停下，不会自动收工。";
+  if (statuses.includes("等待额度")) return "付费 AI 正在等待额度。可用银行券、管理账号、切免费 Luna，或花精力手写外包。时间已停下，不会自动收工。";
+  return p.projects.length ? "还没有运行中的 AI 对话。请增加对话数或恢复开发；也可手写外包。时间已停下。" : "手头项目已完成。可以接新项目、手写外包，或主动收工；时间已停下。";
+}
 export function energyCost(g: Game, p: Player, a: Action): number {
   if (a.type === "claim" || a.type === "freelance") return 1;
   if (a.type === "test") return 2;
@@ -1005,7 +1112,13 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     "upgrade",
   ].includes(a.type);
   if (!administrative && g.phase !== "plan") return "先进入下一天。";
-  if (p.energy < energyCost(g, p, a)) return "真人精力不足。可休息一次，后台线程仍会继续工作。";
+  if (id === 0 && a.type === "next") return developmentBlocker(g);
+  if (p.energy < energyCost(g, p, a)) return `精力不足：需要 ${energyCost(g, p, a)} 精力，当前只剩 ${p.energy}。${g.minute === 0 ? "尚未开工，可调少 AI 对话释放预留精力。" : ""}${!p.rested && g.minute + 60 <= DAY_MINUTES ? "可休息 60 分钟恢复 3 点，后台照跑。" : "今天无法再休息，收工后次日恢复 12 点，并重新预留 AI 跟进费用。"}`;
+  if (a.type === "project-settings") {
+    if (id !== 0 || !p.projects.some(j => j.id === a.project)) return "请选择正在开发的自己的项目。";
+    if (a.settings === undefined || !validProjectSettings(a.settings)) return "项目设置无效。";
+    return null;
+  }
   if (a.type === "studio") {
     if (!Number.isInteger(a.threads) || a.threads < 0 || a.threads > MAX_LANES ||
       !["preferred", "soon-reset", "drain", "most-quota", "late-expiry", "balanced"].includes(a.accountPolicy) ||
@@ -1019,7 +1132,7 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     if (g.minute >= DAY_MINUTES) return "今天的时间用完了，先揭牌。";
     if (id === 0 && g.studio.mode === "auto") {
       const scheduled = p.lanes.flatMap(l => l.projects);
-      if (new Set(scheduled).size !== scheduled.length) return "协作队列请使用工作室策略；先调为每项 1 人，才能逐条手动派工。";
+      if (new Set(scheduled).size !== scheduled.length) return "协作队列请使用工作室策略；先调为每项最多 1 个 AI 对话（含项目单独设置），才能逐条手动派工。";
     }
     if (!validDevelopment(a)) return "请选择有效的开发配置。";
     if (!p.accounts.some((acc) => acc.id === a.account)) return "先选择账号。";
@@ -1028,19 +1141,19 @@ export function actionError(g: Game, id: number, a: Action): string | null {
       new Set(a.projects).size !== a.projects.length ||
       !a.projects.every((j) => p.projects.some((x) => x.id === j))
     ) return "队列中有无效项目。";
-    if (a.lane !== null && !p.lanes.some((l) => l.id === a.lane)) return "线程不存在。";
+    if (a.lane !== null && !p.lanes.some((l) => l.id === a.lane)) return "AI 对话不存在。";
     if (
       a.lane === null &&
       p.lanes.filter((l) => l.projects.length).length >= MAX_LANES
-    ) return "最多同时托管 6 条线程；可向已有队列追加项目。";
+    ) return "最多同时托管 6 条 AI 对话；可向已有队列追加项目。";
     if (
       p.lanes.some(
         (l) => l.id !== a.lane && l.projects.some((j) => a.projects.includes(j)),
       )
-    ) return "项目已在另一条线程中。先调整原队列，避免重复开发。";
+    ) return "项目已在另一条 AI 对话中。先调整原队列，避免重复开发。";
   }
   if (a.type === "pause" || a.type === "remove-lane") {
-    if (!p.lanes.some((l) => l.id === a.lane)) return "线程不存在。";
+    if (!p.lanes.some((l) => l.id === a.lane)) return "AI 对话不存在。";
   }
   if (a.type === "claim" && !g.market.some((j) => j.id === a.project)) return "项目已被别人接走。";
   if (a.type === "test") {
@@ -1062,12 +1175,11 @@ export function actionError(g: Game, id: number, a: Action): string | null {
     if (!acc || !activeAccount(g, acc)) return "银行券需要有效订阅。";
     if (!acc.banks.some((d) => d > g.day)) return "这个账号没有有效银行券。";
     if (acc.quota >= PLANS[acc.tier].capacity - EPS) return "额度已经满了，留着这张券。";
-    if (acc.lastBankDay === g.day) return "每个账号每天最多使用 1 张银行券。";
   }
   if (a.type === "buy") {
     if (!PLANS[a.tier]) return "无效套餐。";
     if (a.tier === 200 && proClosed(g)) return "$200 已停止新开，仅老号连续续费可保留。";
-    if (p.accounts.length >= 3) return "最多持有 3 个账号，每号都可以带多条线程。";
+    if (p.accounts.length >= 3) return "最多持有 3 个账号，每号都可以带多条 AI 对话。";
     if (p.cash < a.tier) return "现金不够，接点外包吧。";
   }
   if (a.type === "renew" || a.type === "upgrade" || a.type === "renewal") {
@@ -1096,9 +1208,21 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     return false;
   }
   const p = g.players[id];
+  if (id === 0 && g.minute === 0 && ["studio", "project-settings", "configure"].includes(a.type) &&
+    (g.studio.mode === "auto" || a.type !== "configure")) reopenMorningBudget(g, p);
   const energy = energyCost(g, p, a);
-  p.energy -= energy;
-  if (a.type === "studio") {
+  if (a.type === "dispatch") {
+    const lane = a.lane === null ? p.lanes.find(l => !l.projects.length) : p.lanes.find(l => l.id === a.lane);
+    const needed = Math.max(0, attentionCost(g, p, a, p.projects.find(j => j.id === a.projects[0])) - (lane?.paidDay === g.day ? lane.attentionPaid : 0));
+    spendEnergy(g, p, needed, "hosting");
+    spendEnergy(g, p, energy - needed, "other");
+  } else spendEnergy(g, p, energy, a.type === "claim" ? "claims" : "other");
+  if (a.type === "project-settings") {
+    const job = p.projects.find(j => j.id === a.project)!;
+    job.settings = a.settings ? { ...a.settings, development: a.settings.development ? { ...a.settings.development } : null } : null;
+    g.studio.mode = "auto";
+    log(g, `《${job.name}》${job.settings?.development || job.settings?.collaboration ? "已使用单独设置" : "恢复跟随全局策略"}；不推进时间，开工前可重排预留，开工后按当天最高需求计算。`, id);
+  } else if (a.type === "studio") {
     g.studio = { ...g.studio, mode: "auto", threads: a.threads, accountPolicy: a.accountPolicy, preferredAccount: a.preferredAccount, configuration: a.configuration ?? g.studio.configuration, collaboration: a.collaboration ?? g.studio.collaboration };
   } else if (a.type === "dispatch") {
     if (id === 0) g.studio.mode = "manual";
@@ -1113,7 +1237,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
           projects: [],
           enabled: false,
           paidDay: 0,
-    attentionPaid: 0,
+          attentionPaid: 0,
         };
         p.lanes.push(lane);
       }
@@ -1131,10 +1255,10 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     );
   } else if (a.type === "pause") {
     p.lanes.find((l) => l.id === a.lane)!.enabled = false;
-    log(g, `${p.name} 暂停一条线程；项目、进度与剩余额度保留。`, id);
+    log(g, `${p.name} 暂停一条 AI 对话；项目、进度与剩余额度保留。`, id);
   } else if (a.type === "remove-lane") {
     p.lanes = p.lanes.filter((l) => l.id !== a.lane);
-    log(g, `${p.name} 解散一条线程，项目回到待安排列表。`, id);
+    log(g, `${p.name} 解散一条 AI 对话，项目回到待安排列表。`, id);
   } else if (a.type === "claim") {
     const index = g.market.findIndex((x) => x.id === a.project);
     const j = g.market[index];
@@ -1155,7 +1279,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     p.banksUsed++;
     log(
       g,
-      `${p.name} 用掉银行券，恢复 100%。等待额度的线程可继续跑，自然重置仍在 D${acc.nextReset}。`,
+      `${p.name} 用掉银行券，恢复 100%。等待额度的 AI 对话可继续跑，自然重置仍在 D${acc.nextReset}。`,
       id,
     );
   } else if (a.type === "buy") {
@@ -1205,7 +1329,7 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     if (!j.bugs) j.repair = 0;
     log(
       g,
-      `${p.name} 亲自排障，修复最多 2 个 bug，−2 精力；其他线程继续运行 30 分钟。`,
+      `${p.name} 亲自排障，修复最多 2 个 bug，−2 精力；其他 AI 对话继续运行 30 分钟。`,
       id,
     );
     release(g, p, j);
@@ -1213,10 +1337,12 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   } else if (a.type === "freelance") {
     advanceMutable(g, 60);
     p.cash += 25;
-    log(g, `${p.name} 手写外包 60 分钟，−1 精力，+$25；后台线程照常工作。`, id);
+    log(g, `${p.name} 手写外包 60 分钟，−1 精力，+$25；后台 AI 对话照常工作。`, id);
   } else if (a.type === "rest") {
     p.rested = true;
     advanceMutable(g, 60);
+    p.energyLedger = energyBreakdown(g, p);
+    p.energyLedger.restored += Math.min(3, DAILY_ENERGY - p.energy);
     p.energy = Math.min(DAILY_ENERGY, p.energy + 3);
     log(g, `${p.name} 休息 60 分钟，恢复 3 精力；后台任务没有停。`, id);
   } else if (a.type === "advance") advanceMutable(g, a.minutes);
@@ -1224,10 +1350,10 @@ function applyAction(g: Game, id: number, a: Action): boolean {
     const before = humanNode(g);
     do {
       advanceMutable(g, 1);
-    } while (g.phase === "plan" && humanNode(g) === before);
+    } while (g.phase === "plan" && !developmentBlocker(g) && humanNode(g) === before);
   }
   if (id === 0 && g.phase === "plan" && g.studio.mode === "auto") {
-    if (["studio", "claim", "abandon"].includes(a.type)) organizeStudio(g);
+    if (["studio", "claim", "abandon", "project-settings", "rest"].includes(a.type) || (a.type === "configure" && p.lanes.length > 0)) organizeStudio(g);
     if (a.type === "configure") for (const lane of p.lanes) {
       const head = p.projects.find(j => j.id === lane.projects[0]);
       lane.development = head ? projectDevelopment(g, p, head) : { ...g.development };
@@ -1237,6 +1363,8 @@ function applyAction(g: Game, id: number, a: Action): boolean {
   if (id === 0 && a.type !== "configure") g.message =
       g.phase === "reveal"
         ? g.receipt!.title
+        : a.type === "next"
+          ? `${timeLabel(g.minute)} · ${developmentBlocker(g) ?? "已到开发节点，先查看进度与补给，再继续推进。"}`
         : `${timeLabel(g.minute)} · ${g.logs.find((l) => l.player === 0)?.text ?? "安排妥当后推进时间。"}`;
   return true;
 }
@@ -1404,7 +1532,6 @@ export function chooseAction(g: Game, id: number, strategy?: Strategy): Action {
   const bank = active.find(
     (a) => a.quota < PLANS[a.tier].capacity * 0.08 &&
       a.banks.length &&
-      a.lastBankDay !== g.day &&
       (a.nextReset > g.day + 1 || a.banks[0] <= g.day + 1) &&
       (g.event.chance < 75 || g.minute < 240),
   );
@@ -1509,8 +1636,8 @@ function humanNode(g: Game) {
     return JSON.stringify([
       p.shipped.length,
       p.projects.length === 0,
-      active.length > 0 && active.every((l) => laneStatus(g, p, l) === "等待额度"),
-      p.lanes.some(l => laneStatus(g, p, l) === "等待精力"),
+      active.filter((l) => laneStatus(g, p, l) === "等待额度").length,
+      p.lanes.filter(l => laneStatus(g, p, l) === "等待精力").length,
     ]);
   }
   return JSON.stringify([
@@ -1563,13 +1690,20 @@ export function advanceMinutes(state: Game, minutes: number): Game {
   if (state.phase !== "plan" || !Number.isInteger(minutes) || minutes < 1) return state;
   const g = copy(state);
   advanceMutable(g, Math.min(DAY_MINUTES, minutes));
-  if (g.phase === "plan") g.message = `${timeLabel(g.minute)} · 所有线程已同步推进。完成会自动接下一单，缺额线程等待补给。`;
+  if (g.phase === "plan") g.message = `${timeLabel(g.minute)} · 所有 AI 对话已同步推进。完成会自动接下一单，缺额 AI 对话等待补给。`;
   return g;
 }
 export function act(state: Game, action: Action): Game {
   const g = copy(state);
   applyAction(g, 0, action);
   return g;
+}
+export function claimEnergyPreview(g: Game, projectId: number) {
+  const action: Action = { type: "claim", project: projectId };
+  if (actionError(g, 0, action)) return null;
+  const after = act(g, action);
+  return { hosting: g.players[0].energy - after.players[0].energy - 1,
+    waiting: after.players[0].lanes.some(l => laneStatus(after, after.players[0], l) === "等待精力") };
 }
 export function endDay(state: Game): Game {
   if (state.phase !== "plan") return state;
@@ -1605,6 +1739,7 @@ export function textState(g: Game) {
     clock: timeLabel(g.minute),
     minutesLeft: DAY_MINUTES - g.minute,
     energy: g.players[0].energy,
+    energyBreakdown: energyBreakdown(g, g.players[0]),
     event: g.event,
     platform: {
       stage: g.platform.stage,
@@ -1798,6 +1933,7 @@ collaboration: 1,
     ) return null;
     const finite = (xs: number[]) => xs.every(Number.isFinite);
     const validProject = (j: Project) => j &&
+      validProjectSettings(j.settings) &&
       Number.isInteger(j.id) &&
       typeof j.name === "string" &&
       !!CATEGORIES[j.category] &&
@@ -1849,6 +1985,8 @@ collaboration: 1,
         !p.shipped.every(validProject) ||
         !Array.isArray(p.lanes) ||
         p.lanes.length > MAX_LANES ||
+        (p.energyLedger !== undefined && (!p.energyLedger || !Number.isInteger(p.energyLedger.day) || p.energyLedger.day < 1 || p.energyLedger.day > g.day ||
+          ![p.energyLedger.hosting, p.energyLedger.claims, p.energyLedger.other, p.energyLedger.restored, p.energyLedger.previous].every(n => Number.isInteger(n) && n >= 0) || p.energyLedger.restored > 3)) ||
         !Number.isInteger(p.energy) ||
         p.energy < 0 ||
         p.energy > DAILY_ENERGY ||
@@ -1901,7 +2039,7 @@ collaboration: 1,
           !l.projects.every((id, position) => {
             if (!p.projects.some(j => j.id === id)) return false;
             const count = assigned.get(id) ?? 0;
-            const cap = p.id === 0 && g.studio.mode === "auto" ? g.studio.collaboration : 1;
+            const cap = p.id === 0 && g.studio.mode === "auto" ? projectCollaboration(g, p.projects.find(j => j.id === id)!) : 1;
             if (count >= cap || (count > 0 && (position > 0 || queued.has(id)))) return false;
             if (position > 0) queued.add(id);
             assigned.set(id, count + 1);

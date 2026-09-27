@@ -10,6 +10,7 @@ import {
   DAY_MINUTES,
   DAILY_ENERGY,
   laneStatus,
+  developmentBlocker,
   fmt,
   timeLabel,
   V3_SAVE_KEY,
@@ -30,9 +31,12 @@ import {
   DEFAULT_DEVELOPMENT,
   developmentStats,
   projectDevelopment,
+  projectCollaboration,
   projectQuality,
   qualityForecast,
   attentionCost,
+  energyBreakdown,
+  claimEnergyPreview,
   riskAssessment,
   modelExperience,
   collaborationSpeed,
@@ -40,6 +44,7 @@ import {
   nextDay,
   PLANS,
   RESET_SUPPLY,
+  TEMPLATES,
   restoreGame,
   SAVE_KEY,
   score,
@@ -53,6 +58,7 @@ import {
   type Project,
   type Tier,
   type Studio,
+  type Development,
 } from "./engine";
 import s from "./resetRush.module.css";
 
@@ -63,9 +69,9 @@ const ACCOUNT_POLICIES: { id: AccountPolicy; name: string; detail: string }[] = 
   { id: "preferred", name: "指定账号优先", detail: "这个号用完再换下一个" },
   { id: "drain", name: "快耗尽优先", detail: "先清掉小额余额" },
   { id: "late-expiry", name: "晚到期优先", detail: "先花订阅期限更长的账号" },
-  { id: "balanced", name: "按比例均衡", detail: "按套餐剩余比例分散线程" },
+  { id: "balanced", name: "按比例均衡", detail: "按套餐剩余比例分散 AI 对话" },
 ];
-type ModalKind = "rules" | "shop" | "restart" | "portfolio" | null;
+type ModalKind = "rules" | "shop" | "restart" | "portfolio" | "finish" | null;
 
 function Art({ kind }: { kind: Category }) {
   return (
@@ -205,7 +211,7 @@ function Modal({
           ×
         </button>
       </div>
-      {children}
+      <div className={s.modalBody} data-testid="modal-scroll-body">{children}</div>
     </dialog>
   );
 }
@@ -221,17 +227,17 @@ function Rules() {
       <ol>
         <li>
           <strong>每天 480 分钟、12 精力。</strong>09:00 开工，17:00
-          揭牌。思考和操作界面不走时钟；收工时你和电脑的所有线程一起工作。
+          揭牌。思考和操作界面不走时钟；收工时你和电脑的所有 AI 对话一起工作。
         </li>
         <li>
-          <strong>接单 1 精力，托管每条 1–2 精力。</strong>
-          接下的项目会自动排队。你只选同时托管几条线程，最多 6 条；它们可以共用账号，也可以一起开发一个项目。
+          <strong>接单 1 精力，托管每个 AI 对话 1–2 精力。</strong>
+          接下的项目会自动排队。你只选同时托管几个 AI 对话，最多 6 个；它们可以共用账号，也可以一起开发一个项目。
           买号、升级、续订和银行券不花时间或精力。
         </li>
         <li>
-          <strong>选策略，收工揭牌。</strong>
+          <strong>选策略，推进开发。</strong>
           账号可指定优先、快重置、更多额度、快耗尽、晚到期或按比例均衡；用完会自动换号。
-          项目完成自动接下一项，按实际进度扣额。每天收工只需点一次；想在缺额时用银行券，可以点“到关键时刻”。
+          项目完成自动接下一项，按实际进度扣额。“推进开发”在交付或等待补给时停下；已停工时不跳过时间。用券、切免费 Luna 或手写外包都仍可选，确认收工才会跑完当天并揭牌。
           强配置能包办更多架构与自测，每条只占 1 精力；需要人工跟进则占 2 精力。
         </li>
         <li>
@@ -253,17 +259,16 @@ function Rules() {
       </ol>
       <h3>同样做得完，也能做得更好</h3>
       <p>能力高于任务需求，会自动积累作品品质：精良回款与声望 +20%，精品 +40%（奖励向下取整）。品质按全程有效开发量结算；最后换高档不能补刷，返工与 Turbo 不额外加品质。</p>
-      <p>省心配置每天每条 1 精力，需人工跟进的配置 2 精力。项目摸底、模型经验会影响保守估计；同日按最高需求收取，切换到更费心的配置补差额，精力不足就等待。次日重新计算。</p>
+      <p>省心配置每天每条 1 精力，需人工跟进的配置 2 精力。项目摸底、模型经验会影响保守估计；开工前调整可退还预留；开工后同日按最高需求收取，切换到更费心的配置补差额，精力不足就等待。次日重新计算。</p>
       <h3>让工作室逐渐懂你</h3>
       <p>项目配置可选“自动精品”，优先选能做出精品且省心的最低消耗档位；能力不足时尽力优化，已有低品质进度无法补刷。也可选“自动稳妥”：逐项选择足够胜任且最省额度的模型与思考强度。Turbo 独立勾选；选旧版预设会切回统一配置。缺额会等待补给，不偷偷降到有风险的免费配置。</p>
-      <p>每项可选最多 1 / 2 / 3 人协作，系统先分头做，再帮大项目。2 人合计 1.7×、3 人 2.2× 速度，每人占 1–2 精力；进度、bug 与交付统一结算。</p>
+      <p>每项可选最多 1 / 2 / 3 个 AI 对话合作，不是真人玩家。先分头做不同项目，有空闲对话再帮大项目。2 个合计 1.7×、3 个 2.2× 速度，每个对话每天占你 1–2 精力；进度、bug 与交付统一结算。</p>
       <p>需求只给难度估计。首段 20 进度或 bug 会揭示项目难点；模型每代累计实测 60 进度后校准。摸底时自动配置留安全余量，熟悉后可降档省钱；能力不足时明确提示可能返工。</p>
       <h3>七天时钟，三十天银行券</h3>
       <p>
         每号开通日起每 7 天自然补满；直接
         reset、银行券不叠加余额，也不改变自然重置日。券绑定账号、30
-        天有效、持有无上限；每号每天最多用 1
-        张。自然重置前烧这个号，另一个号留券等待，是一门手艺。
+        天有效、持有与每日使用次数均无上限；用掉额度后可再用下一张。自然重置前烧这个号，另一个号留券等待，是一门手艺。
       </p>
       <p>
         早晨公开消息，夜里按概率判定是否赠礼；再抽 {RESET_SUPPLY.normal} 张普通 reset、{RESET_SUPPLY.bank} 张 banked
@@ -272,7 +277,7 @@ function Rules() {
       </p>
       <h3>平台风向</h3>
       <p>$20 / $100 / $200 对应 1× / 5× / 20×。账号只显示剩余百分比，展开“用量观察”可看自动估计。额度口径在基准上下 20% 内波动，不会直接扣掉百分比。</p>
-      <p>$200 停售会提前两天通知；老号连续续费可保留，断订或降档后不能恢复。新模型逐步发布，有时先贵后降价，有时发布即降价；现有线程自动升级，不用重新调度。</p>
+      <p>$200 停售会提前两天通知；老号连续续费可保留，断订或降档后不能恢复。新模型逐步发布，有时先贵后降价，有时发布即降价；现有 AI 对话自动升级，不用重新调度。</p>
       <h3>作品才是胜利点</h3>
       <div className={s.ruleCategories}>
         {(Object.keys(CATEGORIES) as Category[]).map((k) => (
@@ -307,6 +312,7 @@ function ProjectCard({
   onChoose,
   disabled,
   assigned,
+  marketHint,
 }: {
   job: Project;
   selected?: boolean;
@@ -315,6 +321,7 @@ function ProjectCard({
   onChoose: () => void;
   disabled?: boolean;
   assigned?: string;
+  marketHint?: string;
 }) {
   return (
     <button
@@ -361,7 +368,7 @@ function ProjectCard({
       )}
       <span className={s.cardFooter}>
         {market
-          ? "接下项目 ↗ · 1 精力"
+          ? (marketHint ?? "接下项目 ↗ · 1 精力")
           : job.bugs
             ? `${job.bugs} 个 bug · 完工后自动返工`
             : selected
@@ -369,6 +376,71 @@ function ProjectCard({
               : (assigned ?? "待托管")}
       </span>
     </button>
+  );
+}
+
+function ProjectSettings({ game, job, open, onToggle, send }: {
+  game: Game;
+  job: Project;
+  open: boolean;
+  onToggle: (open: boolean) => void;
+  send: (action: Action) => void;
+}) {
+  const settings = job.settings ?? { development: null, collaboration: null };
+  const config = projectDevelopment(game, game.players[0], job);
+  const custom = !!(settings.development || settings.collaboration);
+  const change = (patch: Partial<NonNullable<Project["settings"]>>) => send({ type: "project-settings", project: job.id, settings: { ...settings, ...patch } });
+  const development = (patch: Partial<Development>) => change({ development: { ...config, ...patch } });
+  return (
+    <details id="reset-project-settings" className={s.projectSettings} open={open} onToggle={e => onToggle(e.currentTarget.open)}>
+      <summary>《{job.name}》项目设置 · {custom ? "本项已单独设置" : "跟随全局，可不设置"}</summary>
+      <fieldset disabled={game.phase !== "plan"}>
+        <legend>只影响这个项目</legend>
+        <div className={s.projectSettingsGrid}>
+          <label htmlFor="project-config-mode">模型配置
+            <select
+              id="project-config-mode"
+              value={settings.development ? "custom" : "global"}
+              onChange={e => change({ development: e.target.value === "global" ? null : { ...config } })}>
+              <option value="global">跟随全局策略</option>
+              <option value="custom">本项目单独指定</option>
+            </select>
+          </label>
+          <label htmlFor="project-collaboration">本项目最多几个 AI 对话合作
+            <select
+              id="project-collaboration"
+              value={settings.collaboration ?? "global"}
+              onChange={e => change({ collaboration: e.target.value === "global" ? null : Number(e.target.value) as Studio["collaboration"] })}>
+              <option value="global">跟随全局 · 最多 {game.studio.collaboration} 个</option>
+              <option value="1">最多 1 个 · 独立完成</option>
+              <option value="2">最多 2 个 · 一起做</option>
+              <option value="3">最多 3 个 · 集中协作</option>
+            </select>
+          </label>
+          {settings.development && (
+            <>
+            <label htmlFor="project-model">模型
+              <select id="project-model" value={config.model} onChange={e => development({ model: e.target.value as Model })}>
+                {(Object.keys(MODELS) as Model[]).map(m => <option key={m} value={m}>{modelEdition(game, m).name}</option>)}
+              </select>
+            </label>
+            <label htmlFor="project-effort">思考强度
+              <select id="project-effort" value={config.effort} onChange={e => development({ effort: e.target.value as Effort })}>
+                {(Object.keys(EFFORTS) as Effort[]).map(e => <option key={e} value={e}>{EFFORTS[e].name}</option>)}
+              </select>
+            </label>
+            <label className={s.projectTurbo} htmlFor="project-turbo">
+              <input id="project-turbo" type="checkbox" checked={config.turbo} onChange={e => development({ turbo: e.target.checked })} />
+              Turbo · 更快，额外耗额
+            </label>
+            </>
+          )}
+        </div>
+        <p>这是协作上限，不是预留数量。全工作室最多同时开 {game.studio.threads} 个 AI 对话，先分头做不同项目，有空闲再来帮忙；本项最多 {projectCollaboration(game, job)} 个。每个工作中的对话每天占你 1–2 点精力。</p>
+        <p>当前：{developmentStats(game, game.players[0], config).name} · {riskAssessment(game, game.players[0], config, job).label} · {qualityForecast(game, game.players[0], config, job)} · {attentionCost(game, game.players[0], config, job)} 精力/对话/天</p>
+        <button type="button" disabled={!custom} onClick={() => send({ type: "project-settings", project: job.id, settings: null })}>恢复全部跟随全局</button>
+      </fieldset>
+    </details>
   );
 }
 
@@ -381,6 +453,7 @@ export default function ResetRush() {
   const [modal, setModal] = useState<ModalKind>(null);
   const [inspect, setInspect] = useState(0);
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
+  const [projectSettingsOpen, setProjectSettingsOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(0);
   const [onboarding, setOnboarding] = useState(false);
   const root = useRef<HTMLElement>(null);
@@ -468,6 +541,8 @@ export default function ResetRush() {
     game && human
       ? developmentStats(game, human, effectiveConfig, job)
       : { name: "5.0 Sol · Medium", cost: 0, risk: 0, ability: 0, perHour: 0, quotaPerHour: 0, minutes: 0, quota: 0, tokensPerHour: 0 };
+  const energy = game && human ? energyBreakdown(game, human) : null;
+  const tomorrowHosting = game && human ? human.lanes.filter(l => l.enabled && l.projects.length).reduce((n, l) => n + attentionCost(game, human, l.development, human.projects.find(j => j.id === l.projects[0])), 0) : 0;
   const studio = game?.studio;
   const setStudio = (changes: Partial<Pick<NonNullable<typeof studio>, "threads" | "accountPolicy" | "preferredAccount" | "configuration" | "collaboration">>) => {
     if (!studio || !human) return;
@@ -537,7 +612,7 @@ export default function ResetRush() {
               <em>已经重置了。</em>
             </h1>
             <p>
-              tibo 发了一条谜语。你把几条线程同时挂上，
+              tibo 发了一条谜语。你把几个 AI 对话同时挂上，
               <br className={s.desktopOnly} />
               时间有限，额度快重置了。现在，加不加速？
             </p>
@@ -578,7 +653,7 @@ export default function ResetRush() {
               {ready ? "开一局，立即开蹬" : "准备牌桌…"} <span>↗</span>
             </button>
             <p className={s.introNote}>
-              1 人 + 3 位性格不同的 AI · 自动保存 · 随时收工再来
+              你 + 3 位性格不同的电脑对手 · 自动保存 · 随时收工再来
             </p>
           </div>
           <div className={s.introTable} aria-hidden="true">
@@ -688,7 +763,8 @@ export default function ResetRush() {
                 {human?.energy}
                 <small> / {DAILY_ENERGY}</small>
               </strong>
-              <small>每条每天 1–2 点 · 强配置更省心</small>
+              <small>{game.minute === 0 ? "预留" : "跟进"} {energy?.hosting ?? 0} · 接单 {energy?.claims ?? 0} · 其他 {(energy?.other ?? 0) + (energy?.previous ?? 0)}</small>
+              {game.phase !== "over" && <a href="#reset-energy">查看精力去向 ↓</a>}
             </div>
           </div>
           {game.phase === "plan" && (
@@ -705,18 +781,28 @@ export default function ResetRush() {
                 <span>17:00 揭牌</span>
               </div>
               <div className={s.timeButtons}>
-                <button id="next-node" onClick={() => send({ type: "next" })} title="在项目做完或所有线程缺额时停下">
-                  到关键时刻 ↗
+                <button id="next-node" onClick={() => send({ type: "next" })} title="项目交付、AI 等待补给时停下；已停工时不再推进时间">
+                  推进开发 ↗
                 </button>
                 <button
                   id="end-day"
-                  onClick={reveal}
-                  title="先让所有后台线程跑完剩余时间，再揭晓今晚赠礼"
+                  onClick={() => setModal("finish")}
+                  title="确认后让后台 AI 对话跑完剩余时间，再揭晓今晚赠礼"
                 >
-                  收工并揭牌 →
+                  准备收工 →
                 </button>
               </div>
             </section>
+          )}
+          {playable && human && (
+            <aside className={s.clockHelp} data-testid="clock-help">
+              <p>{developmentBlocker(game) ?? "推进开发会在交付或等待补给时停下。额度用完不等于收工，免费 Luna 仍可继续开发。"}</p>
+              <div>
+                <button onClick={() => setModal("shop")}>账号与银行券</button>
+                <a href="#development-presets">免费 Luna 配置 ↓</a>
+                <a href="#freelance">手写外包 ↓</a>
+              </div>
+            </aside>
           )}
 
           <div className={s.players}>
@@ -919,7 +1005,7 @@ export default function ResetRush() {
                       human?.lanes.filter((l) => l.enabled && l.projects.length)
                         .length
                     }{" "}
-                    条托管线程
+                    个托管中的 AI 对话
                   </span>
                 </div>
                 <div className={s.threadBoard}>
@@ -931,11 +1017,11 @@ export default function ResetRush() {
                     <p className={s.threadEmpty}>
                       {human?.projects.length
                         ? studio?.threads === 0
-                          ? "已暂停托管；调高并行线程即可续跑。"
+                          ? "已暂停托管；调高全局 AI 对话总数即可续跑。"
                           : "已接项目待托管，收工时会自动开工。"
                         : "从公共项目池接单，工作室会自动排队。"}
                       <br />
-                      <span>线程数量和账号顺序都在下方统一设置。</span>
+                      <span>AI 对话数量和账号顺序都在下方统一设置。</span>
                     </p>
                   )}
                   {human?.lanes
@@ -967,7 +1053,7 @@ export default function ResetRush() {
                           <div className={s.threadHeader}>
                             <b>
                               <i />
-                              {team.length} 个 agent{team.length > 1 ? " · 协作开发" : " · 独立开发"}
+                              {team.length} 个 AI 对话{team.length > 1 ? " · 协作开发" : " · 独立开发"}
                             </b>
                             <span>{status}</span>
                             <small>
@@ -982,7 +1068,7 @@ export default function ResetRush() {
                           </p>
                           <p className={s.qualityNote} data-testid="quality-note">
                             <b>{qualityForecast(game, human, lane.development, head)}</b>
-                            <span>{attentionCost(game, human, lane.development, head) === 1 ? "省心托管" : "人工跟进"} · {attentionCost(game, human, lane.development, head)} 精力 / 人 / 天 · 今日已占 {team.reduce((n, l) => n + (l.paidDay === game.day ? l.attentionPaid : 0), 0)}</span>
+                            <span>{attentionCost(game, human, lane.development, head) === 1 ? "省心托管" : "人工跟进"} · {attentionCost(game, human, lane.development, head)} 精力 / 对话 / 天 · 今日已占 {team.reduce((n, l) => n + (l.paidDay === game.day ? l.attentionPaid : 0), 0)}</span>
                           </p>
                           <div className={s.threadProgress}>
                             <i
@@ -1004,7 +1090,7 @@ export default function ResetRush() {
                           </div>
                           <small className={s.learningNote}>
                             {head.understood ? "项目已摸清" : `摸底 ${fmt(Math.min(20, head.work))} / 20 进度`} · {modelEdition(game, lane.development.model).name} 实测 {fmt(modelExperience(game, human, lane.development.model))} / 60
-                            {team.length > 1 ? ` · ${working.length} 人正在推进，协调后 ${fmt(pace)}× 速度` : ""}
+                            {team.length > 1 ? ` · ${working.length} 个对话正在推进，协调后 ${fmt(pace)}× 速度` : ""}
                           </small>
                           <ol className={s.queueList}>
                             {lane.projects.map((id) => (
@@ -1013,6 +1099,9 @@ export default function ResetRush() {
                               </li>
                             ))}
                           </ol>
+                          <a className={s.projectSettingsLink} href="#reset-project-settings" onClick={() => { setSelectedProjects([head.id]); setProjectSettingsOpen(true); }}>
+                            项目设置 · {head.settings?.development || head.settings?.collaboration ? "已单独设置" : "跟随全局"} ↘
+                          </a>
                         </article>
                       );
                     })}
@@ -1034,7 +1123,7 @@ export default function ResetRush() {
                         job={j}
                         day={game.day}
                         selected={chosen.includes(j.id)}
-                        assigned={lanes.length ? `${lanes.length} 个 agent · 自动排队` : "待托管"}
+                        assigned={lanes.length ? `${lanes.length} 个 AI 对话 · 自动排队` : "待托管"}
                         onChoose={() => setSelectedProjects([j.id])}
                       />
                     );
@@ -1047,31 +1136,55 @@ export default function ResetRush() {
                     </div>
                   )}
                 </div>
+                {job && <ProjectSettings game={game} job={job} open={projectSettingsOpen} onToggle={setProjectSettingsOpen} send={send} />}
                 <div className={s.marketHead}>
                   <div>
                     <h2>
-                      公共项目池 <span>THE NEXT BIG THING</span>
+                      公共项目池 <span>{TEMPLATES.length} 种题材 · 优先补充不同项目</span>
                     </h2>
-                    <p>
-                      接单花 1 精力，不走时间。推进时钟时，电脑也会接单开发。
-                    </p>
+                    <p>接一项花 1 精力；如果同时启用空闲 AI 对话，还会收取跟进费用。卡片显示本次实际花费。</p>
                   </div>
                   <span>↓ 接单</span>
                 </div>
+                {energy && human && (
+<div id="reset-energy" className={s.energyGuide} data-testid="energy-guide" data-empty={human.energy === 0}>
+                  <strong>今日精力：12{energy.restored ? ` + 休息 ${energy.restored}` : ""} − AI {game.minute === 0 ? "预留" : "跟进"} {energy.hosting} − 接单 {energy.claims} − 其他操作 {energy.other}{energy.previous ? ` − 旧记录 ${energy.previous}` : ""} = 剩 {human.energy}</strong>
+                  <p>{game.phase !== "plan" ? "今天已收工，进入下一天后恢复 12 点，再扣当天 AI 跟进费用。" : human.energy === 0
+                    ? `现在不能接新项目：接单需要 1 精力，你只剩 0。${game.minute === 0 ? "还没开工，可调少 AI 对话立即释放预留精力。" : ""}${!actionError(game, 0, { type: "rest" }) ? "可以休息恢复 3 点，后台继续工作。" : human.rested ? "今天已经休息过，收工后次日恢复。" : "剩余时间不足 60 分钟，无法休息；收工后次日恢复。"}`
+                    : `还能支付 ${human.energy} 次接单费；新启用对话另计。已在运行且付过跟进费的 AI 可以继续工作。`}</p>
+                  <details>
+                    <summary>费用怎么算 · 预留与已花精力</summary>
+                    <p>AI 跟进是你安排、检查和沟通的精力，每个工作中的对话每天 1–2 点；同一天换更费心的项目或配置只补差额。接单每项 1 点，仅在接下时收一次；其他操作包括亲自排障、手写外包和手动重新派工。买号、升级和用银行券不花精力。</p>
+                    <p>09:00 尚未推进时间时，减少对话或选更省心配置会退还预留差额；开工后已花掉的精力不退。按当前配置，现有对话明天约需 {tomorrowHosting} 点跟进费，届时约剩 {DAILY_ENERGY - tomorrowHosting} 点接单或处理其他事；模型更新和项目切换会改变实际费用。</p>
+                  </details>
+                  {playable && (
+<div className={s.energyActions}>
+                    {game.minute === 0 && <a href="#studio-threads">调整 AI 对话数，释放预留 ↓</a>}
+                    <button type="button" disabled={!!actionError(game, 0, { type: "rest" })} title={actionError(game, 0, { type: "rest" }) ?? "后台继续工作，60 分钟后恢复 3 点"} onClick={() => send({ type: "rest" })}>休息恢复 3 精力 · 60 分钟</button>
+                    <a href="#end-day">去收工，结算后进入下一天 ↑</a>
+                  </div>
+)}
+                </div>
+)}
                 <div className={s.market}>
-                  {game.market.map((j) => (
-                    <ProjectCard
+                  {game.market.map((j) => {
+                    const preview = claimEnergyPreview(game, j.id);
+                    const hint = !playable ? "已收工 · 明天再接" : !human?.energy ? "精力不足 · 接单需 1 点" : preview?.hosting ? `接单 1 + AI 跟进 ${preview.hosting} = ${1 + preview.hosting} 精力` : preview?.waiting ? "接单 1 精力 · AI 将等待精力" : "接下项目 ↗ · 1 精力";
+                    return (
+<ProjectCard
                       key={j.id}
                       job={j}
                       day={game.day}
                       market
+                      marketHint={hint}
                       disabled={!playable || !human?.energy}
                       onChoose={() => {
                         send({ type: "claim", project: j.id });
                         setSelectedProjects([j.id]);
                       }}
                     />
-                  ))}
+);
+                  })}
                 </div>
                 <div className={s.benchFoot}>
                   <span>
@@ -1207,7 +1320,7 @@ export default function ResetRush() {
             >
               <div className={s.commandTitle}>
                 <span>工作室策略</span>
-                <span>改一次，所有线程自动照办。</span>
+                <span>全局默认；单独设置的项目保留自己的配置。</span>
               </div>
               <div className={s.platformStrip} data-testid="platform-status">
                 <strong>{(["luna", "sol", "astra"] as Model[]).map(m => modelEdition(game, m).name).join(" / ")}</strong>
@@ -1215,7 +1328,7 @@ export default function ResetRush() {
               </div>
               <div className={s.studioSettings}>
                 <label className={s.threadCount} htmlFor="studio-threads">
-                  <span>并行线程 <b>{studio?.threads ?? 1}</b></span>
+                  <span>同时开几个 AI 对话 <b>{studio?.threads ?? 1}</b></span>
                   <input
                     id="studio-threads"
                     type="range"
@@ -1225,7 +1338,7 @@ export default function ResetRush() {
                     value={studio?.threads ?? 1}
                     onChange={(e) => setStudio({ threads: Number(e.target.value) })}
                   />
-                  <small>每条每天 1–2 精力：强配置更省心。同日按最高需求计费，降档可能补 1 点；0 条暂停。</small>
+                  <small>全工作室共用的 AI 对话总数，不是真人数量。每个工作中的对话每天占你 1–2 精力；0 个暂停全部。开工前可调少并退回预留，开工后已花精力不退；接单每项另需 1 点。</small>
                 </label>
                 <label className={s.policySelect} htmlFor="studio-policy">
                   <span>账号使用顺序</span>
@@ -1241,7 +1354,7 @@ export default function ResetRush() {
                   <small>{ACCOUNT_POLICIES.find((policy) => policy.id === studio?.accountPolicy)?.detail}</small>
                 </label>
                 <label className={s.policySelect} htmlFor="studio-configuration">
-                  <span>项目配置</span>
+                  <span>全局模型策略</span>
                   <select
 id="studio-configuration"
 value={studio?.configuration ?? "fixed"}
@@ -1250,19 +1363,19 @@ value={studio?.configuration ?? "fixed"}
                     <option value="adaptive">自动稳妥 · 按项目省额度</option>
                     <option value="premium">自动精品 · 品质与省心</option>
                   </select>
-                  <small>{studio?.configuration === "premium" ? "用额度换品质和省心，优先选精品档；能力不足时尽力优化。已做进度的品质不会补刷。" : studio?.configuration === "adaptive" ? "熟悉后选 0% 风险的最省额配置；摸底时留余量。能力不足时尽力攻坚，仍会提示风险。" : "所有项目沿用下方配置；也可自动选档，偏重省额或精品。"}</small>
+                  <small>{studio?.configuration === "premium" ? "用额度换品质和省心，优先选精品档；能力不足时尽力优化。已做进度的品质不会补刷。" : studio?.configuration === "adaptive" ? "熟悉后选 0% 风险的最省额配置；摸底时留余量。能力不足时尽力攻坚，仍会提示风险。" : "跟随全局的项目沿用下方配置；也可自动选档，偏重省额或精品。"}</small>
                 </label>
                 <label className={s.policySelect} htmlFor="studio-collaboration">
-                  <span>每个项目最多几人协作</span>
+                  <span>单个项目最多几个 AI 对话合作</span>
                   <select
 id="studio-collaboration"
 value={studio?.collaboration ?? 1}
                     onChange={e => setStudio({ collaboration: Number(e.target.value) as Studio["collaboration"] })}>
-                    <option value="1">1 人 · 分头做</option>
-                    <option value="2">2 人 · 结对开发</option>
-                    <option value="3">3 人 · 集中攻坚</option>
+                    <option value="1">最多 1 个 · 独立完成</option>
+                    <option value="2">最多 2 个 · 一起做</option>
+                    <option value="3">最多 3 个 · 集中协作</option>
                   </select>
-                  <small>先分头做，空闲 agent 帮大项目。2 人合计 1.7×、3 人 2.2×；每人占 1–2 精力。</small>
+                  <small>上限，不是额外开对话。先分头做不同项目，空闲对话再帮忙；2 个合计 1.7×、3 个 2.2× 速度。</small>
                 </label>
                 {studio?.accountPolicy === "preferred" && (
                   <label className={s.policySelect} htmlFor="studio-account">
@@ -1289,7 +1402,7 @@ checked={config.turbo}
                   Turbo · 自动选档后额外加速，速度 ×2、每进度额度 ×2.5
                 </label>
               )}
-              <div className={s.studioModes} role="group" aria-label="开发节奏">
+              <div id="development-presets" className={s.studioModes} role="group" aria-label="开发节奏">
                 {([
                   { label: "慢跑省额", development: { model: "luna", effort: "medium", turbo: false } },
                   { label: "均衡开发", development: { model: "sol", effort: "medium", turbo: false } },
@@ -1305,6 +1418,7 @@ checked={config.turbo}
                   </button>
                 ))}
               </div>
+              <p className={s.studioSummary}>慢跑省额 = 免费 Luna · Medium · 不开 Turbo。仍需跟进精力，难题可能返工；单独配置过的项目请在 <a href="#reset-project-settings" onClick={() => setProjectSettingsOpen(true)}>项目设置</a> 中切换或恢复跟随全局。</p>
               <details className={s.advancedSettings}>
                 <summary>手动配置 · 选择模型或强度会切回统一配置</summary>
                 <div className={s.commandRow}>
@@ -1389,14 +1503,14 @@ keepAutomatic: true,
                       : config.model === "luna"
                         ? "Luna Medium 关闭 Turbo 可免费慢蹬，简单大项目也能交付。"
                         : "思考加深提升解题能力；High 到 Max 会多花时间。"}{" "}
-                    {studio?.configuration !== "fixed" ? "自动策略逐项选档，预估显示所选项目的实际配置。" : "统一配置应用于所有线程，按实际工作扣额。"}
+                    {studio?.configuration !== "fixed" ? "自动策略逐项选档，预估显示所选项目的实际配置。" : "全局配置应用于未单独设置的项目，按实际工作扣额。"}
                   </p>
                   </div>
                 </div>
               </details>
               <p className={s.studioSummary}>
-                当前 {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.tokensPerHour ? `${fmt(model.tokensPerHour)}k token / 时 · 费率 ${Math.round(modelEdition(game, effectiveConfig.model).price * 100)}%` : "免费"}
-                {job ? ` ·《${job.name}》${assessment?.label} · ${qualityForecast(game, human, effectiveConfig, job)} · ${attentionCost(game, human, effectiveConfig, job)} 精力/人/天` : ""}
+                {job ? `《${job.name}》当前` : "当前"} {model.name} · 每小时 {fmt(model.perHour)} 进度 · {model.tokensPerHour ? `${fmt(model.tokensPerHour)}k token / 时 · 费率 ${Math.round(modelEdition(game, effectiveConfig.model).price * 100)}%` : "免费"}
+                {job ? ` ·《${job.name}》${assessment?.label} · ${qualityForecast(game, human, effectiveConfig, job)} · ${attentionCost(game, human, effectiveConfig, job)} 精力/对话/天` : ""}
               </p>
               <details className={s.experienceNotes} data-testid="experience-notes">
                 <summary>工作室经验 · 自动积累，无需操作</summary>
@@ -1534,7 +1648,7 @@ keepAutomatic: true,
       )}
       <footer className={s.footer}>
         <span>
-          RESET / 开蹬！ <i>v0.7 · 品质与省心</i>
+          RESET / 开蹬！ <i>v0.8 · 从容开蹬</i>
         </span>
         <span>
           {game
@@ -1549,6 +1663,16 @@ keepAutomatic: true,
       {modal === "rules" && (
         <Modal title="怎样蹬出一局好游戏" close={close}>
           <Rules />
+        </Modal>
+      )}
+      {modal === "finish" && game && human && (
+        <Modal title="今天确定收工吗？" close={close}>
+          <p className={s.modalCopy}>今天还剩 {DAY_MINUTES - game.minute} 分钟、{human.energy} 精力。确认后，后台任务会运行到 17:00，然后揭牌；中途不再停下让你补给。</p>
+          <p className={s.modalCopy}>额度耗尽也能继续：有效账号还有 {human.accounts.filter(a => activeAccount(game, a)).reduce((n, a) => n + a.banks.filter(d => d > game.day).length, 0)} 张可用银行券；也可切免费 Luna，或用 1 精力和 60 分钟手写外包赚 $25。免费 Luna 仍需要跟进精力，难题可能返工。</p>
+          <div className={s.modalButtons}>
+            <button className={s.primary} onClick={close}>继续安排今天</button>
+            <button id="confirm-end-day" className={s.textButton} onClick={reveal}>确认收工并揭牌</button>
+          </div>
         </Modal>
       )}
       {modal === "restart" && (
@@ -1596,7 +1720,7 @@ keepAutomatic: true,
           )}
           <p className={s.modalCopy}>
             现金 <b>${human.cash}</b> · 账号管理不花精力或时间 ·
-            一个账号可带多条线程
+            一个账号可带多个 AI 对话
           </p>
           <p className={s.shopNotice} data-testid="subscription-notice">
             {proClosed(game) ? "$200 已停止新开和升级。仅现有 $200 账号可连续续费；断订或实际降档后失去资格。" : game.platform.proDeadline ? `$200 将于 D${game.platform.proDeadline} 早晨停售；现在仍可开通或升级。` : "$20 = 1×，$100 = 5×，$200 = 20×。界面只显示剩余百分比，真实可用量以运行观察估计。"}
@@ -1625,6 +1749,13 @@ keepAutomatic: true,
                   · {a.banks.length} 张银行券
                 </p>
                 <div className={s.accountOperations}>
+                  <button
+                    disabled={!!actionError(game, 0, { type: "bank", account: a.id })}
+                    title={actionError(game, 0, { type: "bank", account: a.id }) ?? "不花精力或时间；每天不限次数"}
+                    onClick={() => send({ type: "bank", account: a.id })}
+                  >
+                    为此账号补满 · 用 1 张券
+                  </button>
                   {([20, 100, 200] as Tier[])
                     .filter((t) => !activeAccount(game, a) || t > a.tier)
                     .map((t) => {

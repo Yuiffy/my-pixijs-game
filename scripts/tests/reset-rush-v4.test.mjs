@@ -34,6 +34,7 @@ test('requested thread count redistributes work and charges attention only when 
   assert.equal(human(g).energy, 4);
   assert.equal(human(g).lanes.length, 3);
   assert.equal(new Set(human(g).lanes.flatMap(l => l.projects)).size, 3);
+  g = E.advanceMinutes(g, 1); // Once work starts, reservations become spent attention.
   g = studio(g, 1);
   assert.equal(human(g).energy, 4);
   assert.equal(human(g).lanes.filter(l => l.projects.length).length, 1);
@@ -47,10 +48,10 @@ test('requested thread count redistributes work and charges attention only when 
   assert.equal(human(g).energy, 4);
   assert.equal(human(g).lanes.filter(l => l.enabled).length, 3);
   g = E.nextDay(E.endDay(g));
-  assert.equal(human(g).energy, 8); // Two familiar simple projects now need only 1 attention each.
+  assert.equal(human(g).energy, 7); // This catalogue draw has one familiar simple project at 1 attention and two at 2.
   g = E.advanceMinutes(g, 1);
   assert.equal(human(g).lanes.filter(l => l.enabled).length, 3);
-  assert.equal(human(g).energy, 8); // Two familiar simple projects now need only 1 attention each.
+  assert.equal(human(g).energy, 7); // This catalogue draw has one familiar simple project at 1 attention and two at 2.
 });
 
 test('unfunded attention leaves queued work visible and starts it on the next morning', () => {

@@ -52,9 +52,9 @@ async function main(){
   await shot('03-delivered-rewards');await page.getByRole('button',{name:'关闭弹窗'}).click();
   report.checks.push({sameJob:{budget:cheap.delivery,premium:premium.delivery},attention:{budget:2,premium:1},turboAndReload:true});
 
-  let blocked=fresh(1000);blocked.development={model:'astra',effort:'medium',turbo:false};blocked=E.act(blocked,{type:'studio',...blocked.studio});blocked.players[0].energy=0;
+  let blocked=fresh(1000);blocked.development={model:'astra',effort:'medium',turbo:false};blocked=E.act(blocked,{type:'studio',...blocked.studio});blocked=E.advanceMinutes(blocked,1);blocked.players[0].energy=0;
   await inject(blocked);await page.getByRole('button',{name:'慢跑省额',exact:true}).click();
-  assert.match(await page.getByTestId('project-team').innerText(),/等待精力/);await advance(5);assert.equal((await saved()).players[0].projects[0].work,0);
+  assert.match(await page.getByTestId('project-team').innerText(),/等待精力/);await advance(5);assert.equal((await saved()).players[0].projects[0].work,blocked.players[0].projects[0].work);
   await page.getByTestId('project-team').scrollIntoViewIfNeeded();await shot('04-attention-wait');
   await page.getByRole('button',{name:'重置冲刺',exact:true}).click();await advance(5);assert.ok((await saved()).players[0].projects[0].work>0);
   report.checks.push('Unfunded downgrade visibly waits; switching back resumes using existing attention reserve');
@@ -63,7 +63,7 @@ async function main(){
    await page.setViewportSize({width,height:844});await inject(fresh(1000));await page.locator('#studio-configuration').selectOption('premium');
    await page.locator('#studio-turbo').check();await page.locator('#studio-configuration').scrollIntoViewIfNeeded();await shot(`05-mobile-${width}-strategy`);
    await page.getByTestId('project-team').scrollIntoViewIfNeeded();await shot(`06-mobile-${width}-quality`);
-   await page.locator('#end-day').click();await page.locator('#next-day').click();assert.equal((await saved()).day,2);
+   await page.locator('#end-day').click();await page.locator('#confirm-end-day').click();await page.locator('#next-day').click();assert.equal((await saved()).day,2);
   }
   report.checks.push('390/320px: premium strategy, independent Turbo, readable quality/attention, day transitions, no horizontal overflow');
   assert.deepEqual(report.errors,[]);
