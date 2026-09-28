@@ -1,14 +1,33 @@
 import { Children, cloneElement, createContext, isValidElement, useContext, type ReactElement, type ReactNode } from "react";
+import { createInstance } from "i18next";
+import { initReactI18next } from "react-i18next";
+import { resetLanguageNames, resetMessages } from "./messages";
 
-export type ResetLocale = "zh" | "en";
+export type ResetLocale = keyof typeof resetMessages;
 export const LOCALE_KEY = "reset-rush.locale";
 
 export function browserLocale(languages: readonly string[]): ResetLocale {
-  const preferred = languages.find((language) => /^(zh|en)(-|$)/i.test(language));
-  return preferred?.toLowerCase().startsWith("zh") ? "zh" : "en";
+  for (const language of languages) {
+    const primary = language.toLowerCase().split("-")[0];
+    if (primary in resetLanguageNames) return primary as ResetLocale;
+  }
+  return "en";
 }
 
 export const ResetLocaleContext = createContext<ResetLocale>("zh");
+
+export function createResetI18n() {
+  const instance = createInstance();
+  instance.use(initReactI18next).init({
+    lng: "zh",
+    fallbackLng: "en",
+    supportedLngs: Object.keys(resetMessages),
+    resources: resetMessages,
+    initAsync: false,
+    interpolation: { escapeValue: false },
+  });
+  return instance;
+}
 
 const EN: Record<string, string> = {
   近期模型工作室: "Modern model studio",
@@ -395,6 +414,11 @@ const EN: Record<string, string> = {
 };
 
 const EN_DETAILS: Record<string, string> = {
+  "还没开工，可调少 AI 对话立即释放预留精力。": "Reduce AI sessions before work starts to release reserved energy immediately.",
+  "可以休息恢复 3 点，后台继续工作。": "Rest to recover 3 energy while AI work continues.",
+  "今天已经休息过，收工后次日恢复。": "You have already rested today. Energy recovers tomorrow after you finish the day.",
+  "剩余时间不足 60 分钟，无法休息；收工后次日恢复。": "There is not enough time left for a 60-minute rest. Energy recovers tomorrow.",
+  "$200 已停售 · 老号连续续费保留": "$200 plan closed · existing accounts keep it through uninterrupted renewals",
   "基础 +": "Base +",
   本项已单独设置: "Custom settings for this project",
   "跟随全局，可不设置": "Uses studio defaults",

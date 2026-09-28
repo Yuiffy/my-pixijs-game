@@ -6,16 +6,55 @@ import ts from 'typescript';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 
 const require = createRequire(import.meta.url);
+const messageSource = await readFile(new URL('../../src/components/resetRush/messages.ts', import.meta.url), 'utf8');
+const messageModule = { exports: {} };
+Function('module', 'exports', ts.transpileModule(messageSource, {
+  fileName: 'messages.ts',
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText)(messageModule, messageModule.exports);
 const source = await readFile(new URL('../../src/components/resetRush/i18n.tsx', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, {
   fileName: 'i18n.tsx',
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 const module = { exports: {} };
-Function('module', 'exports', 'require', compiled)(module, module.exports, require);
-const { browserLocale, translateResetText } = module.exports;
+Function('module', 'exports', 'require', compiled)(module, module.exports, (name) => name === './messages' ? messageModule.exports : require(name));
+const { browserLocale, createResetI18n, translateResetText } = module.exports;
 const engine = await loadTypescriptModule('src/components/resetRush/engine.ts');
 const hasChinese = (value) => /[\u3400-\u9fff]/.test(value);
+
+test('all named UI catalogs have matching keys and English fallback', () => {
+  const entries = (object, prefix = '') => Object.entries(object).flatMap(([key, value]) =>
+    typeof value === 'string' ? [[`${prefix}${key}`, value]] : entries(value, `${prefix}${key}.`));
+  const catalogs = messageModule.exports.resetMessages;
+  const chinese = entries(catalogs.zh.translation);
+  const english = entries(catalogs.en.translation);
+  for (const [locale, resource] of Object.entries(catalogs)) {
+    assert.deepEqual(entries(resource.translation).map(([key]) => key), english.map(([key]) => key), locale);
+  }
+  for (const [key, value] of chinese) assert.equal(hasChinese(value), true, key);
+  for (const [key, value] of english) assert.equal(hasChinese(value), false, key);
+  const i18n = createResetI18n();
+  assert.equal(i18n.t('restartCopy', { lng: 'en' }), catalogs.en.translation.restartCopy);
+  assert.equal(i18n.t('restartCopy', { lng: 'fr' }), catalogs.en.translation.restartCopy);
+});
+
+test('Chinese UI literals have an English presentation or are language names', async () => {
+  const componentSource = await readFile(new URL('../../src/components/resetRush/ResetRush.tsx', import.meta.url), 'utf8');
+  const tree = ts.createSourceFile('ResetRush.tsx', componentSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const untranslated = [];
+  const inspect = (node) => {
+    let value;
+    if (ts.isJsxText(node)) value = node.getText(tree).replace(/\s+/g, ' ').trim();
+    if (ts.isStringLiteral(node)) value = node.text;
+    if (value && value !== '简体中文' && hasChinese(value) && hasChinese(translateResetText(value, 'en'))) {
+      untranslated.push(`${tree.getLineAndCharacterOfPosition(node.pos).line + 1}: ${value}`);
+    }
+    ts.forEachChild(node, inspect);
+  };
+  inspect(tree);
+  assert.deepEqual(untranslated, []);
+});
 
 test('browser preference resolves Chinese and English while preserving Chinese saves', () => {
   assert.equal(browserLocale(['zh-CN', 'en-US']), 'zh');

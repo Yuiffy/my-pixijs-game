@@ -15,7 +15,7 @@ async function untranslated(page) {
     const walker = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (node.parentElement?.closest('[role="group"][aria-label="Language"]')) continue;
+      if (node.parentElement?.closest('#reset-language')) continue;
       const value = node.textContent.trim();
       if (/[\u3400-\u9fff]/.test(value)) results.push(value);
     }
@@ -102,16 +102,20 @@ async function assertMobileLayout(page) {
     assert.equal(await page.locator('dialog h2').innerText(), 'Your portfolio');
     screenshots.push(await capture(page, 'desktop-portfolio-en'));
     await page.locator('dialog button[aria-label="Close dialog"]').click();
+    await page.locator('header button[aria-label="New game"]').click();
+    assert.match(await page.locator('dialog .modalCopy, dialog [class*="modalCopy"]').first().innerText(), /replace your autosave/);
+    screenshots.push(await capture(page, 'desktop-restart-en'));
+    await page.locator('dialog button[aria-label="Close dialog"]').click();
     await page.getByRole('button', { name: 'Share game' }).click();
     await page.locator('header [role="status"]').filter({ hasText: /Share text copied|Copy failed/ }).waitFor();
     const savedBeforeSwitch = await page.evaluate(() => localStorage.getItem('reset-rush-v5'));
-    await page.getByRole('button', { name: '中', exact: true }).click();
+    await page.locator('#reset-language').selectOption('zh');
     assert.equal(await page.locator('main').getAttribute('lang'), 'zh-CN');
     assert.equal(await page.locator('header [role="status"]').innerText(), '');
     await page.reload({ waitUntil: 'networkidle' });
     assert.equal(await page.locator('main').getAttribute('lang'), 'zh-CN');
     assert.equal(await page.evaluate(() => localStorage.getItem('reset-rush-v5')), savedBeforeSwitch);
-    await page.getByRole('button', { name: 'EN', exact: true }).click();
+    await page.locator('#reset-language').selectOption('en');
     await page.setViewportSize({ width: 390, height: 844 });
     screenshots.push(await capture(page, 'mobile-game-en'));
     await assertMobileLayout(page);
@@ -125,6 +129,8 @@ async function assertMobileLayout(page) {
     await chinesePage.goto(`${base}/game/reset-rush`, { waitUntil: 'networkidle' });
     await chinesePage.locator('main[lang="zh-CN"]').waitFor();
     assert.match(await chinesePage.locator('h1').first().innerText(), /还没用完/);
+    await chinesePage.locator('header').getByRole('button', { name: /玩法说明/ }).click();
+    assert.match(await chinesePage.locator('dialog').innerText(), /近期模型，慢一点换代/);
     console.log(JSON.stringify({ screenshots, errors }, null, 2));
     assert.deepEqual(errors, []);
   } finally {

@@ -25,9 +25,9 @@
 .logo b { font-size: 23px; }
 .logo small { display: block; font: 8px ui-monospace, monospace; letter-spacing: 2.6px; margin-top: 8px; opacity: .6; }
 .headerActions { min-width: 120px; display: flex; gap: 12px; justify-content: flex-end; }
-.localeSwitch { display: flex; align-items: center; gap: 2px; border: 1px solid #b9c6b780; border-radius: 4px; padding: 2px; flex-shrink: 0; }
-.localeSwitch button { min-width: 28px; min-height: 26px; padding: 2px 4px; border-radius: 2px; }
-.localeSwitch button[aria-pressed="true"] { background: var(--mint); color: var(--ink); }
+.localeSwitch { display: flex; align-items: center; gap: 6px; border: 1px solid #b9c6b780; border-radius: 4px; padding: 0 7px; flex-shrink: 0; color: var(--mint); }
+.localeSwitch select { min-height: 32px; max-width: 94px; border: 0; background: transparent; color: var(--paper); font-size: 12px; cursor: pointer; }
+.localeSwitch select option { background: #18312d; color: var(--paper); }
 .headerActions button { background: none; color: #d8e0cb; border: 0; font-size: 12px; padding: 9px 0 9px 9px; }
 .headerActions button span { border: 1px solid #b9c6b780; border-radius: 50%; padding: 0 4px; margin-left: 6px; }
 .intro { max-width: 1330px; margin: auto; padding-top: 78px; display: grid; grid-template-columns: 1.1fr 1fr; }
@@ -362,7 +362,8 @@
   .logo { grid-column: 2; grid-row: 1; }
   .headerActions { grid-column: 1 / -1; grid-row: 2; justify-content: center; align-items: center; }
   .logo { font-size: 22px; } .logo b { font-size: 19px; } .logo small { font-size: 5px; letter-spacing: 2px; }
-  .headerActions { gap: 4px; } .headerActions button { font-size: 9px; padding-left: 3px; } .headerActions button span { display: none; }
+  .headerActions { gap: 6px; flex-wrap: wrap; } .headerActions button { font-size: 9px; padding-left: 3px; } .headerActions button span { display: none; }
+  .localeSwitch { padding: 0 5px; gap: 4px; } .localeSwitch select { max-width: 84px; font-size: 11px; min-height: 29px; }
   .intro { padding-top: 36px; } .eyebrow { font-size: 8px; letter-spacing: 1px; } .intro h1 { margin-top: 22px; font-size: 42px; }
   .introCopy > p { font-size: 11px; } .setup { margin-top: 25px; } .smallLabel { font-size: 9px; }
   .presets button { padding: 12px 9px; } .presets strong { font-size: 11px; } .presets small { font-size: 8px; }
