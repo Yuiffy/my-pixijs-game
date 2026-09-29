@@ -1,4 +1,5 @@
 import { CANDIDATES } from "../content";
+import { INCOMING, previewOf, type MessageSpec } from "./chatScripts";
 import { MESSAGE_KINDS, hashKey } from "../inbox";
 import type { InboxMessage, InboxSender, MarriageGameState } from "../types";
 
@@ -39,23 +40,19 @@ export function senderName(state: Pick<MarriageGameState, "candidateId">, from: 
   return senderProfile(state, from, childName).name;
 }
 
-// 同一种消息的几种说法，按局面哈希挑选，不消耗引擎随机数
-const VARIANTS: Record<string, string[]> = {
-  "mom-meet": ["妈妈推来一张名片：“周六见一面？人家条件不错。”", "妈妈：“王阿姨介绍的，周末抽空见见吧。”", "妈妈发来一张名片，后面跟着三个“看看”。"],
-  "mom-compare": ["家庭群：“你看隔壁王阿姨家的……”", "大姨在群里发了一张满月酒照片，@了你。", "家庭群转发了一篇《三十岁前必须想清楚的事》。"],
-  "mom-encourage": ["妈妈：“多给人家发发消息，主动点！”", "妈妈：“女孩子/男孩子都喜欢主动的，你别端着。”"],
-  "mom-marriage": ["妈妈打来语音电话……", "妈妈的语音电话响了第二遍……"],
-  "mom-listen": ["妈妈：“最近累不累？吃饭了没？”", "妈妈：“天冷了，记得穿厚点。最近还好吗？”", "妈妈发来一段 12 秒的语音：“没事，就是想问问你。”"],
-  "boss-ping": ["领导：“这个需求今天能加一下吗？”", "工作群：“@你 客户那边又改了，今天能出一版吗？”", "领导：“下午有空来会议室一下。”"],
-  "candidate-share": ["对方发来一张午饭的照片。", "对方：“今天地铁上看到一只很胖的猫。”", "对方分享了一首歌：“这首最近单曲循环。”"],
-  "candidate-home": ["对方：“下班了吗？到家说一声。”", "对方：“今天降温，路上小心。”"],
-  "partner-dinner": ["伴侣：“今晚吃什么？谁做饭？”", "伴侣：“冰箱只剩两个鸡蛋了。”"],
-};
-
-export function describeMessage(state: Pick<MarriageGameState, "seed" | "turn">, item: InboxMessage) {
-  const options = VARIANTS[item.kind];
-  if (!options) return MESSAGE_KINDS[item.kind]?.preview ?? "";
+// 这条消息实际发来的气泡序列（按局面哈希挑一种写法）
+export function messageSpecs(state: Pick<MarriageGameState, "seed" | "turn">, item: InboxMessage): MessageSpec[] {
+  const options = INCOMING[item.kind];
+  if (!options?.length) return [{ kind: "text", text: MESSAGE_KINDS[item.kind]?.preview ?? "" }];
   return options[hashKey(state.seed, state.turn, item.id) % options.length];
+}
+
+// 经典模式消息面板用的一行摘要，与手机里的内容一致
+export function describeMessage(state: Pick<MarriageGameState, "seed" | "turn">, item: InboxMessage) {
+  return messageSpecs(state, item).filter(spec => spec.kind !== "system").map(previewOf).join(" ")
+    .replaceAll("{name}", "你")
+.replaceAll("{partner}", "对方")
+.replaceAll("{child}", "孩子");
 }
 
 // 按局面哈希从台词池中挑一句

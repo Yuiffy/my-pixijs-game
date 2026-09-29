@@ -142,6 +142,34 @@ test("会话列表与消息线程", () => {
   assert.equal(dialogues.stripSpeaker("对方：今天好累"), "今天好累");
 });
 
+test("手机消息是真实的聊天内容，而不是旁白", async () => {
+  const chat = await loadTypescriptModule(`${root}/immersive/chatScripts.ts`);
+  const narration = /发来|后面跟着|打来|转来|分享了|更新了|（|\(/;
+  for (const [kind, definition] of Object.entries(MESSAGE_KINDS)) {
+    const variants = chat.INCOMING[kind];
+    assert.ok(variants?.length, `${kind} 缺少聊天剧本`);
+    for (const specs of variants) {
+      for (const spec of specs) {
+        if (spec.kind === "system" || spec.kind === "moment") continue;
+        assert.doesNotMatch(spec.text, narration, `${kind}: “${spec.text}” 像旁白`);
+      }
+    }
+    for (const reply of definition.replies) {
+      const script = chat.OUTGOING[`${kind}.${reply.id}`];
+      assert.ok(script, `${kind}.${reply.id} 缺少我方发出的内容`);
+      for (const spec of script.mine) if (spec.kind === "text") assert.doesNotMatch(spec.text, /^发个|^请半小时|^转发给/, `${kind}.${reply.id}: 发出去的是按钮文案`);
+    }
+  }
+  const message = { id: "t-meet", kind: "mom-meet", from: "mom", slot: "work", urgent: true };
+  const state = { ...child, week: { ...child.week, inbox: [message], handled: { "t-meet": "emoji" } } };
+  const thread = dialogues.buildThread(state, "mom", "阿川");
+  assert.ok(thread.some(bubble => bubble.kind === "card"), "妈妈推名片应是名片气泡");
+  assert.ok(thread.some(bubble => bubble.mine && bubble.kind === "sticker"), "“收到”应该真的发出一个表情");
+  assert.equal(thread.some(bubble => bubble.text.includes("发个")), false);
+  const group = { ...child, week: { ...child.week, inbox: [{ id: "t-cmp", kind: "mom-compare", from: "family-group", slot: "work", urgent: false }], handled: {} } };
+  assert.ok(dialogues.buildThread(group, "family", "阿川").every(bubble => bubble.kind === "system" || bubble.speaker), "群聊消息应带发言人");
+});
+
 test("场馆小互动覆盖所有活动场馆，并随已知信息与性格调整", () => {
   const venues = new Set(Object.values(ACTIVITIES).map(activity => activity.venue));
   for (const venue of venues) {

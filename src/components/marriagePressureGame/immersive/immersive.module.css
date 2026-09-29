@@ -301,3 +301,12 @@
 .timingDots li { width: 12px; height: 12px; border-radius: 50%; background: #d8d0c2; }
 .timingDots li[data-state="hit"] { background: #2f8a6a; }
 .timingDots li[data-state="miss"] { background: #c1913f; }
+
+/* 聊天气泡补充：群聊发言人、动画表情、语音转文字、底部快速回复 */
+.speakerWrap { display: grid; gap: 2px; max-width: 76%; }
+.speakerWrap .bubble { max-width: 100%; }
+.speaker { color: #8a8a8a; font-size: 11px; }
+.sticker { display: inline-grid; min-width: 64px; min-height: 64px; place-items: center; padding: 6px 10px; color: #b8433a; border-radius: 14px; background: #fff3cf; font-size: 15px; font-weight: 700; }
+.voiceText { color: #6f6b65; font-size: 12px; }
+.composer { flex: none; max-height: 34%; padding: 8px 8px 2px; overflow-y: auto; border-top: 1px solid #d9d9d9; background: #f7f7f7; }
+.composer .replyChips { margin: 0 0 6px; }

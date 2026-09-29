@@ -8,6 +8,7 @@ import {
   CloseOutlined,
   EnvironmentOutlined,
   LeftOutlined,
+  LinkOutlined,
   MessageOutlined,
   PhoneOutlined,
   PictureOutlined,
@@ -86,20 +87,36 @@ export function Avatar({ profile, image, size = 40 }: { profile: SenderProfile; 
   return <span className={styles.avatar} style={{ width: size, height: size, background: profile.color }} aria-hidden><b>{profile.initial}</b></span>;
 }
 
+// 群聊里每个发言人用自己的字头像；妈妈在家庭群里仍是荷花头像
+const SPEAKER_COLORS = ["#c0703a", "#4f7a9c", "#8a5a9c", "#4f8a55", "#b8433a", "#7a6a52"];
+
+function speakerProfile(speaker: string): SenderProfile {
+  if (speaker === "妈妈") return { name: speaker, avatar: "lotus", color: "#e98aa0", initial: "妈" };
+  if (speaker === "爸爸") return { name: speaker, avatar: "landscape", color: "#4f7f6a", initial: "爸" };
+  return { name: speaker, avatar: "letter", color: SPEAKER_COLORS[hashKey(speaker) % SPEAKER_COLORS.length], initial: speaker.slice(0, 1) };
+}
+
 function Bubble({ bubble, profile, image }: { bubble: ChatBubble; profile: SenderProfile; image?: string | null }) {
   if (bubble.kind === "system") return <p className={styles.systemLine}>{bubble.text}</p>;
-  return (
-    <div className={styles.bubbleRow} data-mine={bubble.mine}>
-      {!bubble.mine && <Avatar profile={profile} image={image} size={34} />}
+  const sender = bubble.speaker ? speakerProfile(bubble.speaker) : profile;
+  const content = bubble.kind === "sticker"
+    ? <span className={styles.sticker} data-testid="bubble-sticker">{bubble.text}</span>
+    : (
       <div className={styles.bubble} data-kind={bubble.kind}>
         {bubble.kind === "voice" && <span className={styles.voice}><i /><i /><i /> {bubble.meta}</span>}
         {bubble.kind === "transfer" && <span className={styles.transfer}><WalletOutlined /> <b>{bubble.meta}</b></span>}
         {bubble.kind === "card" && <span className={styles.card}><small>个人名片</small><b>{bubble.meta}</b></span>}
+        {bubble.kind === "link" && <span className={styles.card}><small><LinkOutlined /> 链接</small><b>{bubble.meta}</b></span>}
         {bubble.kind === "moment" && <span className={styles.moment}><PictureOutlined /> <small>{bubble.meta}</small></span>}
         {bubble.kind === "image" && <span className={styles.photo}><CameraOutlined /> <small>{bubble.meta}</small></span>}
         {bubble.kind === "call" && <span className={styles.callBubble}><PhoneOutlined /> {bubble.meta}</span>}
-        <span>{bubble.text}</span>
+        {bubble.text && <span className={bubble.kind === "voice" ? styles.voiceText : undefined}>{bubble.text}</span>}
       </div>
+    );
+  return (
+    <div className={styles.bubbleRow} data-mine={bubble.mine}>
+      {!bubble.mine && <Avatar profile={sender} image={bubble.speaker ? null : image} size={34} />}
+      {bubble.speaker && !bubble.mine ? <div className={styles.speakerWrap}><small className={styles.speaker}>{bubble.speaker}</small>{content}</div> : content}
     </div>
   );
 }
@@ -108,7 +125,7 @@ function ReplyChips({ item, onReply }: { item: InboxMessage; onReply: PhoneProps
   const kind = MESSAGE_KINDS[item.kind];
   return (
     <div className={styles.replyChips} data-testid={`inbox-${item.kind}`}>
-      <small>{item.urgent ? "对方在等你回复" : "可以回，也可以先放着"}</small>
+      <small>{item.urgent ? "快速回复 · 对方在等你" : "快速回复 · 也可以先放着"}</small>
       {kind.replies.map(reply => (
         <button key={reply.id} data-testid={`reply-${item.kind}-${reply.id}`} onClick={() => onReply(item, reply.id)}>{reply.label}</button>
       ))}
@@ -133,7 +150,7 @@ function ChatView({ game, chat, reducedMotion, onChoice, onReply, onDebug }: {
   const [nodeId, setNodeId] = useState<string | null>(script?.start ?? null);
   const [sent, setSent] = useState<ChatBubble[]>([]);
   const [typing, setTyping] = useState(false);
-  const thread = buildThread(state, chat);
+  const thread = buildThread(state, chat, playerName);
   const pending = state.week.actor === state.activeActor ? state.week.inbox.filter(item => SENDER_CHAT[item.from] === chat && !state.week.handled[item.id]) : [];
   const node = script && nodeId ? script.nodes[nodeId] : null;
 
@@ -154,7 +171,8 @@ function ChatView({ game, chat, reducedMotion, onChoice, onReply, onDebug }: {
   }, [nodeId, node, typing, onDebug]);
 
   const choose = (choice: DialogueChoice) => {
-    if (choice.reply) setSent(current => [...current, { id: `sent-${current.length}`, mine: true, kind: "text", text: choice.reply! }]);
+    const { reply, replyKind = "text", replyMeta } = choice;
+    if (reply) setSent(current => [...current, { id: `sent-${current.length}`, mine: true, kind: replyKind, text: reply, meta: replyMeta }]);
     if (choice.next && script) {
       const target = script.nodes[choice.next];
       if (target) setSent(current => [...current, ...target.lines.map(line => ({ ...line, id: `${line.id}-${current.length}` }))]);
@@ -169,11 +187,16 @@ function ChatView({ game, chat, reducedMotion, onChoice, onReply, onDebug }: {
       <div className={styles.thread}>
         <p className={styles.threadDate}>{quarterLabel(state)} · {SLOT_LABELS[state.week.slot]}</p>
         {thread.map(bubble => <Bubble key={bubble.id} bubble={bubble} profile={profile} image={image} />)}
-        {pending.map(item => <ReplyChips key={item.id} item={item} onReply={onReply} />)}
-        {script && script.nodes[script.start].lines.map(line => <Bubble key={`start-${line.id}`} bubble={line} profile={profile} image={image} />)}
+        {/* 本周已经有消息往来时，不再重复一句开场白 */}
+        {script && thread.length === 0 && script.nodes[script.start].lines.map(line => <Bubble key={`start-${line.id}`} bubble={line} profile={profile} image={image} />)}
         {sent.map(bubble => <Bubble key={bubble.id} bubble={bubble} profile={profile} image={image} />)}
         {typing && <p className={styles.typing} data-testid="typing">对方正在输入…</p>}
       </div>
+      {pending.length > 0 && (
+        <div className={styles.composer}>
+          {pending.map(item => <ReplyChips key={item.id} item={item} onReply={onReply} />)}
+        </div>
+      )}
       {node && !typing && (
         <div className={styles.choices} data-testid="dialogue-choices">
           {node.choices.map(choice => (
@@ -198,7 +221,7 @@ function MomentsView({ game, onReply }: { game: MarriageGameApi; onReply: PhoneP
       id: "candidate",
       name: candidate.name,
       image: candidate.image,
-      text: revealed ? `周末又去${ACTIVITIES[revealed].title}了，下次想带朋友一起。` : "这周的九宫格。（点开看看能知道对方平时喜欢什么）",
+      text: revealed ? `周末又去${ACTIVITIES[revealed].title}了，下次想带朋友一起。` : pickLine(["今天的晚霞，拍了九张还是觉得不如眼睛看到的好看。", "打卡。", "周末的碎片。", "又是一周，辛苦了自己。"], state.seed, state.turn, candidate.id),
     }] : []),
     { id: "classmate", name: "大学同学小周", image: null, text: pickLine(["婚礼请柬已发，大家一定要来！", "宝宝满月啦，感谢大家的祝福。", "终于上岸了，明天入职。"], state.seed, state.turn, "classmate") },
     { id: "coworker", name: "隔壁组的阿杰", image: null, text: pickLine(["凌晨一点的办公室，灯还亮着。", "周末爬了个山，腿废了。", "裸辞第一天，去看海。"], state.seed, state.turn, "coworker") },
@@ -295,7 +318,7 @@ function BankView({ game, onChoice }: { game: MarriageGameApi; onChoice: PhonePr
   const lines = [
     `【招财银行】您尾号 0612 的账户可用余额约 ${state.savings} 预算点。`,
     `【记账】本季固定：工作结余 +${budget.income}，伴侣投入 +${budget.partnerIncome}，基本生活 −${budget.essentials}，弹性 −${budget.extras}，还款 −${budget.repayment}；合计 ${budget.net >= 0 ? "+" : ""}${budget.net}。`,
-    ...(event ? [`【提醒】${event.title}：${event.detail}（${event.savings >= 0 ? "+" : ""}${event.savings}）`] : []),
+    ...(event ? [`【招财银行】您尾号 0612 的账户${event.savings >= 0 ? "入账" : "支出"} ${Math.abs(event.savings)} 预算点，摘要：${event.title}。`] : []),
     ...(state.weddingDebt > 0 ? [`【分期】婚育相关分期剩余 ${state.weddingDebt}。`] : []),
   ];
   const actions: Array<{ id: ChildActionId; label: string }> = [

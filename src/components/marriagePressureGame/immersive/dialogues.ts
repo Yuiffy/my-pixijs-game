@@ -3,14 +3,16 @@ import { PARENT_ACTIONS } from "../content";
 import { getAvailableChildActions, getAvailableParentActions, getCandidate } from "../engine";
 import { MESSAGE_KINDS } from "../inbox";
 import { nextUnknownLike } from "../interests";
-import type { ChildActionId, InboxMessage, MarriageGameState, ParentActionId } from "../types";
+import type { ChildActionId, MarriageGameState, ParentActionId } from "../types";
 import type { BubbleKind, ChatBubble, DialogueChoice, DialogueNode, DialogueScript } from "./dialogueTypes";
 import { SENDER_CHAT } from "./dialogueTypes";
-import { describeMessage, pickLine, senderProfile, type SenderProfile } from "./lines";
+import {
+  IGNORED_FOLLOWUP, OUTGOING, fillNames, previewOf, type MessageSpec,
+} from "./chatScripts";
+import { messageSpecs, pickLine, senderProfile, type SenderProfile } from "./lines";
 import type { ChatId } from "./sceneRouter";
 
 const them = (id: string, text: string, kind: BubbleKind = "text", meta?: string): ChatBubble => ({ id, mine: false, kind, text, meta });
-const me = (id: string, text: string): ChatBubble => ({ id, mine: true, kind: "text", text });
 
 const child = (id: ChildActionId, extra: Partial<DialogueChoice> & { label: string }): DialogueChoice & { needs: ChildActionId } => ({
   id,
@@ -50,46 +52,36 @@ export function stripSpeaker(text: string) {
   return text.replace(/^(妈妈|对方|伴侣|领导|孩子|房东|工作群)：/, "").replace(/^“(.*)”$/, "$1");
 }
 
-function bubbleFor(state: MarriageGameState, item: InboxMessage): ChatBubble {
-  const text = stripSpeaker(describeMessage(state, item));
+// 把台词规格变成气泡：填入名字；名片气泡填对象资料
+function toBubbles(state: MarriageGameState, id: string, specs: MessageSpec[], mine: boolean, playerName: string): ChatBubble[] {
   const candidate = getCandidate(state.candidateId);
-  switch (item.kind) {
-    case "mom-meet":
-      return them(item.id, text, "card", candidate ? `${candidate.name} · ${candidate.subtitle}` : "个人名片");
-    case "mom-support":
-      return them(item.id, "给你转了一笔钱，别省着。", "transfer", "转账 · 家里的心意");
-    case "mom-marriage":
-      return them(item.id, text, "call", "语音通话");
-    case "mom-listen":
-      return them(item.id, text, "voice", `${8 + (state.turn % 9)}″`);
-    case "mom-compare":
-    case "sisters-brag":
-      return them(item.id, text, "moment", "转发自朋友圈");
-    case "candidate-moments":
-      return them(item.id, text, "moment", "朋友圈更新");
-    case "candidate-share":
-      return them(item.id, text, "image", "照片");
-    default:
-      return them(item.id, text);
-  }
+  const names = { name: playerName, partner: candidate?.name ?? "对方", child: playerName };
+  return specs.map((spec, index) => ({
+    id: `${id}-${index}`,
+    mine: spec.kind === "system" ? false : mine,
+    kind: spec.kind,
+    text: fillNames(spec.text, names),
+    meta: spec.kind === "card" ? (candidate ? `${candidate.name} · ${candidate.subtitle}` : "个人名片") : spec.meta && fillNames(spec.meta, names),
+    speaker: spec.speaker,
+  }));
 }
 
-// 聊天记录：本周这个联系人发来的消息，以及我已经回过的话
-export function buildThread(state: MarriageGameState, chat: ChatId): ChatBubble[] {
+// 聊天记录：本周这个联系人发来的消息、我真正发出去的回复、对方的回应
+export function buildThread(state: MarriageGameState, chat: ChatId, playerName = "我"): ChatBubble[] {
   const bubbles: ChatBubble[] = [];
-  if (state.week.actor === state.activeActor) {
-    for (const item of state.week.inbox) {
-      if (SENDER_CHAT[item.from] !== chat) continue;
-      bubbles.push(bubbleFor(state, item));
-      const handled = state.week.handled[item.id];
-      if (handled === "ignored") bubbles.push({ id: `${item.id}-ignored`, mine: false, kind: "system", text: MESSAGE_KINDS[item.kind]?.ignored?.note ?? "已读未回" });
-      else if (handled) {
-        const reply = MESSAGE_KINDS[item.kind]?.replies.find(option => option.id === handled);
-        if (reply) {
-          bubbles.push(me(`${item.id}-reply`, reply.label));
-          bubbles.push({ id: `${item.id}-note`, mine: false, kind: "system", text: reply.note });
-        }
-      }
+  if (state.week.actor !== state.activeActor) return bubbles;
+  for (const item of state.week.inbox) {
+    if (SENDER_CHAT[item.from] !== chat) continue;
+    bubbles.push(...toBubbles(state, item.id, messageSpecs(state, item), false, playerName));
+    const handled = state.week.handled[item.id];
+    if (handled === "ignored") {
+      bubbles.push(...toBubbles(state, `${item.id}-chase`, IGNORED_FOLLOWUP[item.from] ?? [], false, playerName));
+      bubbles.push({ id: `${item.id}-ignored`, mine: false, kind: "system", text: "你没有回复" });
+    } else if (handled) {
+      const script = OUTGOING[`${item.kind}.${handled}`];
+      const label = MESSAGE_KINDS[item.kind]?.replies.find(option => option.id === handled)?.label ?? "";
+      bubbles.push(...toBubbles(state, `${item.id}-reply`, script?.mine ?? [{ kind: "text", text: label }], true, playerName));
+      bubbles.push(...toBubbles(state, `${item.id}-answer`, script?.answer ?? [], false, playerName));
     }
   }
   return bubbles;
@@ -127,7 +119,7 @@ export function listChats(state: MarriageGameState, childName?: string): ChatEnt
     return {
       id,
       profile: chatProfile(state, id, childName),
-      preview: last ? describeMessage(state, last) : defaultPreview(state, id),
+      preview: last ? threadPreview(state, id, childName) : defaultPreview(state, id),
       unread: pending.length,
       urgent: pending.some(item => item.urgent),
       pinned: id === "candidate" || id === "child",
@@ -136,9 +128,18 @@ export function listChats(state: MarriageGameState, childName?: string): ChatEnt
   return entries.sort((a, b) => Number(b.urgent) - Number(a.urgent) || b.unread - a.unread || Number(b.pinned) - Number(a.pinned));
 }
 
+// 预览取线程里最后一个气泡
+function threadPreview(state: MarriageGameState, chat: ChatId, playerName?: string) {
+  const thread = buildThread(state, chat, playerName);
+  const last = thread[thread.length - 1];
+  if (!last) return "";
+  const text = previewOf({ kind: last.kind, text: last.text, meta: last.meta, speaker: last.speaker });
+  return last.mine ? `我：${text}` : text;
+}
+
 function defaultPreview(state: MarriageGameState, chat: ChatId) {
   switch (chat) {
-    case "candidate": return state.stage === "married" || state.stage === "parenthood" ? state.partnerNote : state.datingFeedback;
+    case "candidate": return candidateOpener(state);
     case "mom": return "[语音] 记得按时吃饭";
     case "dad": return "[链接] 《中老年人养生十大误区》";
     case "family": return "三姑：[表情]";
@@ -149,6 +150,15 @@ function defaultPreview(state: MarriageGameState, chat: ChatId) {
   }
 }
 
+// 对象/伴侣本周的第一句话，会话列表的预览也用它
+function candidateOpener(state: MarriageGameState) {
+  const candidate = getCandidate(state.candidateId);
+  if (state.matchClosed && state.stage !== "married" && state.stage !== "parenthood") return "我想了想，我们可能还是更适合做朋友。";
+  if (state.stage === "married" || state.stage === "parenthood") return pickLine(CANDIDATE_OPENERS.household, state.seed, state.turn, "household");
+  if (state.meetings === 0 && state.understanding < 12 && candidate) return candidate.opening;
+  return pickLine(state.stage === "dating" ? CANDIDATE_OPENERS.dating : CANDIDATE_OPENERS.chatting, state.seed, state.turn, "open");
+}
+
 const CANDIDATE_OPENERS = {
   chatting: ["今天好累，终于下班了。", "刚看到一家新开的店，下次可以去试试。", "你周末一般做什么呀？", "今天被同事拉去喝奶茶了，好甜。"],
   dating: ["想你了。今天过得怎么样？", "下周要不要一起去逛逛？", "今天路过上次那家店，想起你了。", "到家啦？今天有没有好好吃饭。"],
@@ -157,9 +167,7 @@ const CANDIDATE_OPENERS = {
 
 // 与对象/伴侣的聊天：前两步是对话，最后一步提交本季主投入
 export function candidateScript(state: MarriageGameState): DialogueScript {
-  const candidate = getCandidate(state.candidateId);
   const household = state.stage === "married" || state.stage === "parenthood";
-  const key = (tag: string) => [state.seed, state.turn, tag];
   const nodes: Record<string, DialogueNode> = {};
   if (state.matchClosed && !household) {
     nodes.start = {
@@ -172,7 +180,7 @@ export function candidateScript(state: MarriageGameState): DialogueScript {
   if (household) {
     nodes.start = {
       id: "start",
-      lines: [them("open", pickLine(CANDIDATE_OPENERS.household, ...key("household")))],
+      lines: [them("open", candidateOpener(state))],
       choices: gate(state, [
         child("build-home", { label: "今晚一起把钱、家务和分工摊开谈谈", reply: "今晚我们把账和家务都摊开聊聊吧，不吵架。" }),
         child("budget", { label: "商量这阵子先过简单一点", reply: "要不这阵子先过简单一点？旅行往后放放。" }),
@@ -188,9 +196,7 @@ export function candidateScript(state: MarriageGameState): DialogueScript {
     };
     return { chat: "candidate", start: "start", nodes };
   }
-  const opener = state.meetings === 0 && state.understanding < 12 && candidate
-    ? candidate.opening
-    : pickLine(state.stage === "dating" ? CANDIDATE_OPENERS.dating : CANDIDATE_OPENERS.chatting, ...key("open"));
+  const opener = candidateOpener(state);
   const like = state.candidateId ? nextUnknownLike(state.candidateId, state.knownInterests) : null;
   const hobby = state.playerHobbies[state.playerHobbies.length - 1];
   nodes.start = {
@@ -218,7 +224,7 @@ export function candidateScript(state: MarriageGameState): DialogueScript {
   nodes.share = {
     id: "share",
     lines: [them("share", hobby && state.candidateId && like === hobby ? "真的吗！我也一直想试试！" : "哈哈，听起来挺有意思的。")],
-    choices: gate(state, [child("chat-share", { label: "多讲一点自己的生活", reply: "其实我平时……（你认真讲了十分钟自己的日常）" }), { id: "back", label: "换个话题", next: "start" }]),
+    choices: gate(state, [child("chat-share", { label: "多讲一点自己的生活", reply: "其实我平时下班会自己做饭，周末喜欢到处走走。说起来有点无聊，但我挺喜欢这种日子的。" }), { id: "back", label: "换个话题", next: "start" }]),
   };
   nodes.checklist = {
     id: "checklist",
@@ -290,8 +296,8 @@ function childScript(state: MarriageGameState): DialogueScript {
           parent("push-marriage", { label: "催结婚", reply: "谈这么久了还不结，是不是没诚意？" }),
           parent("push-baby", { label: "催生孩子", reply: "我们还能帮你们带，再晚就来不及了。" }),
           parent("push-education", { label: "给孙辈报个班", reply: "我给孩子报了个奥数班，别输在起跑线上。" }),
-          parent("support", { label: "转一笔钱过去", reply: "[转账] 别省着，该花就花。" }),
-          parent("compare", { label: "发一条别人家孩子的朋友圈", reply: "[链接] 你看王阿姨家孙子都会叫奶奶了。" }),
+          parent("support", { label: "转一笔钱过去", reply: "别省着，该花就花。", replyKind: "transfer", replyMeta: "转账给你" }),
+          parent("compare", { label: "发一条别人家孩子的朋友圈", reply: "你看王阿姨家孙子都会叫奶奶了。", replyKind: "moment", replyMeta: "王阿姨的朋友圈" }),
           parent("next", { label: "这个不行，妈再给你找", reply: "那个不行，妈再给你找找。" }),
           CLOSE,
         ]),
@@ -307,8 +313,8 @@ function sistersScript(state: MarriageGameState): DialogueScript {
     nodes: {
       start: {
         id: "start",
-        lines: [them("sisters-open", "李姐：我家闺女下个月办酒，大家都来啊！", "moment", "广场舞姐妹群")],
-        choices: gate(state, [parent("compare", { label: "转给孩子：“你看看人家”", reply: "[转发] 你看看人家。" }), CLOSE]),
+        lines: [{ ...them("sisters-open", "今晚七点老地方，谁带音箱？"), speaker: "李姐" }],
+        choices: gate(state, [parent("compare", { label: "转给孩子：“你看看人家”", reply: "你看看人家。", replyKind: "moment", replyMeta: "转发自广场舞姐妹群" }), CLOSE]),
       },
     },
   };
