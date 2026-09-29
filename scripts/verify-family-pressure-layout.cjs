@@ -15,6 +15,8 @@ const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
   const errors = [], shots = [];
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, reducedMotion: "reduce" });
+    // 沉浸版是默认视图；这些回归脚本覆盖经典卡片模式
+    await page.addInitScript(() => localStorage.setItem("marriage-pressure-view", "classic"));
     page.on("pageerror", err => errors.push(String(err)));
     page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
     await page.goto(`${base}/game/family-pressure`, { waitUntil: "networkidle" });

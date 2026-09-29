@@ -15,10 +15,19 @@ const out = process.env.MARRIAGE_QA_DIR || "tmp/family-catalog";
   const errors = [], shots = [];
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+    // 沉浸版是默认视图；这些回归脚本覆盖经典卡片模式
+    await page.addInitScript(() => localStorage.setItem("marriage-pressure-view", "classic"));
     page.on("pageerror", err => errors.push(String(err)));
     page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
     await page.goto(`${base}/game/family-pressure`, { waitUntil: "networkidle" });
-    const legacy = { ...createInitialState(), phase: "turn", candidateId: "xu", stage: "dating", turn: 7, relation: 73, mutualIntent: 68, savings: 21 };
+    const legacy = { ...createInitialState(), version: 5, phase: "turn", candidateId: "xu", stage: "dating", turn: 7, relation: 73, mutualIntent: 68, savings: 21 };
+    // 去掉 v6 专有字段，让 validateSave 走 v5→v6 迁移（许青 → 十六萤）
+    delete legacy.week;
+    delete legacy.knownInterests;
+    delete legacy.knownDislikes;
+    delete legacy.playerHobbies;
+    delete legacy.lastActivity;
+    delete legacy.dateLog;
     await page.evaluate(s => localStorage.setItem("marriage-pressure-save-v1", JSON.stringify(s)), legacy);
     await page.reload({ waitUntil: "networkidle" });
     const before = await page.evaluate(() => ({ state: window.render_game_to_text(), save: localStorage.getItem("marriage-pressure-save-v1") }));
@@ -76,6 +85,8 @@ const out = process.env.MARRIAGE_QA_DIR || "tmp/family-catalog";
       }
       await page.getByTestId("catalog-close").click();
     }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await catalog.evaluate(el => { el.open = true; });
     await page.getByTestId("catalog-search").fill("许青");
     assert.match(await catalog.innerText(), /没有找到匹配的人物/);
     const after = await page.evaluate(() => ({ state: window.render_game_to_text(), save: localStorage.getItem("marriage-pressure-save-v1") }));

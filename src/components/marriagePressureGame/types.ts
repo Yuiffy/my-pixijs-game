@@ -135,7 +135,79 @@ export interface Ending {
   color: string;
 }
 
-export type ResolutionKind = "choice" | "reality" | "family" | "response" | "match" | "household";
+export type ResolutionKind = "choice" | "reality" | "family" | "response" | "match" | "household" | "message";
+
+export type ActivityId =
+  | "meal"
+  | "hotpot"
+  | "western"
+  | "cafe"
+  | "walk"
+  | "museum"
+  | "shopping"
+  | "boardgame"
+  | "movie"
+  | "nightmarket"
+  | "catcafe"
+  | "hike"
+  | "karting"
+  | "archery"
+  | "comicon"
+  | "livehouse"
+  | "cook"
+  | "trip";
+
+// 当事人的一周：工位 → 下班路上 → 晚上；家长的一周：上午 → 下午
+export type WeekSlot = "work" | "commute" | "evening" | "morning" | "afternoon";
+
+export type InboxSender =
+  | "mom"
+  | "dad"
+  | "family-group"
+  | "matchmaker"
+  | "boss"
+  | "candidate"
+  | "partner"
+  | "child"
+  | "sisters"
+  | "landlord";
+
+export interface InboxMessage {
+  id: string;
+  kind: string;
+  from: InboxSender;
+  slot: WeekSlot;
+  urgent: boolean;
+}
+
+export type MicroMetric =
+  | "familyBond"
+  | "pressure"
+  | "stress"
+  | "autonomy"
+  | "career"
+  | "understanding"
+  | "relation"
+  | "mutualIntent"
+  | "savings"
+  | "parentFace";
+
+export interface WeekState {
+  actor: Actor;
+  slot: WeekSlot;
+  inbox: InboxMessage[];
+  handled: Record<string, string>;
+  micro: Partial<Record<MicroMetric, number>>;
+}
+
+export interface DateRecord {
+  turn: number;
+  activity: ActivityId;
+  candidateId: CandidateId;
+  topic: MeetingTopic;
+  liked: boolean;
+  disliked: boolean;
+}
 
 export type ResolutionMetric =
   | "fitness"
@@ -178,7 +250,13 @@ export interface GameResolution {
 }
 
 export interface MarriageGameState {
-  version: 5;
+  version: 6;
+  week: WeekState;
+  knownInterests: ActivityId[];
+  knownDislikes: ActivityId[];
+  playerHobbies: ActivityId[];
+  lastActivity: ActivityId | null;
+  dateLog: DateRecord[];
   fitness: number;
   grooming: number;
   interests: number;
@@ -248,5 +326,7 @@ export type MarriageGameAction =
     }
   | { type: "candidate"; id: CandidateId }
   | { type: "parent-action"; id: ParentActionId }
-  | { type: "child-action"; id: ChildActionId; topic?: MeetingTopic }
+  | { type: "child-action"; id: ChildActionId; topic?: MeetingTopic; activity?: ActivityId }
+  | { type: "reply"; messageId: string; choice: string }
+  | { type: "advance-slot" }
   | { type: "restart" };

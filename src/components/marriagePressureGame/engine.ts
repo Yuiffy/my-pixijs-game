@@ -1,6 +1,9 @@
 import { RELATIONSHIP_RULES, canConfirmDating, canMarry, canHaveChild, readyForMarriage, readyForChild } from "./progression";
 import { getHouseholdBudget, getPartnerProfile, isHousehold, willAgreeBudget } from "./household";
 import { GROWTH_DEFAULTS, GROWTH_COSTS, applyGrowthAction, getAttractionBonus, hasMutualAttraction, isGrowthAction } from "./growth";
+import { ACTIVITIES, getActivityCost, getActivityFit, isActivityId, isActivityUnlocked, isEarlyForActivity } from "./activities";
+import { HOBBY_OPTIONS, getCandidateInterests, nextUnknownLike } from "./interests";
+import { MESSAGE_KINDS, applyMicroEffects, buildInbox, firstSlot, getReplyOption, getSlots, nextSlot } from "./inbox";
 import {
   CANDIDATES,
   CHILD_ACTIONS,
@@ -9,6 +12,8 @@ import {
   PARENT_ACTIONS,
 } from "./content";
 import type {
+  Actor,
+  ActivityId,
   Candidate,
   CandidateId,
   ChildActionId,
@@ -24,6 +29,8 @@ import type {
   ResolutionMetric,
   ResolutionStep,
   Scores,
+  WeekSlot,
+  WeekState,
 } from "./types";
 
 const STAGE_VALUE = {
@@ -140,7 +147,72 @@ function clone(state: MarriageGameState): MarriageGameState {
     rejectedCandidates: [...state.rejectedCandidates],
     log: [...state.log],
     scores: { ...state.scores },
+    week: {
+      ...state.week,
+      inbox: state.week.inbox.map(item => ({ ...item })),
+      handled: { ...state.week.handled },
+      micro: { ...state.week.micro },
+    },
+    knownInterests: [...state.knownInterests],
+    knownDislikes: [...state.knownDislikes],
+    playerHobbies: [...state.playerHobbies],
+    dateLog: state.dateLog.map(item => ({ ...item })),
   };
+}
+
+function emptyWeek(actor: Actor, slot: WeekSlot = firstSlot(actor)): WeekState {
+  return { actor, slot, inbox: [], handled: {}, micro: {} };
+}
+
+// 进入某一方的一周：生成收件箱，时段回到第一个
+function openWeek(state: MarriageGameState, actor: Actor) {
+  state.week = emptyWeek(actor);
+  state.week.inbox = buildInbox(state, actor);
+}
+
+// 把指定时段里没回的紧急消息按“已读不回”结算
+function settleWeek(state: MarriageGameState, steps: ResolutionStep[] | undefined, slots: WeekSlot[]) {
+  const pending = state.week.inbox.filter(item => item.urgent && slots.includes(item.slot) && !state.week.handled[item.id]);
+  if (!pending.length) return;
+  const before = resolutionSnapshot(state);
+  const notes: string[] = [];
+  for (const item of pending) {
+    const ignored = MESSAGE_KINDS[item.kind]?.ignored;
+    state.week.handled[item.id] = "ignored";
+    if (!ignored) continue;
+    applyMicroEffects(state, ignored.effects);
+    notes.push(ignored.note);
+  }
+  normalize(state);
+  if (!notes.length) return;
+  const detail = notes.join(" ");
+  record(state, detail);
+  addResolutionStep(steps, "message", "没来得及回的消息", detail, before, state);
+}
+
+function revealLike(state: MarriageGameState) {
+  const like = nextUnknownLike(state.candidateId, state.knownInterests);
+  if (like) state.knownInterests.push(like);
+  return like;
+}
+
+function applyReply(state: MarriageGameState, messageId: string, choice: string, steps?: ResolutionStep[]) {
+  if (state.phase !== "turn" || state.week.actor !== state.activeActor) return false;
+  const item = state.week.inbox.find(entry => entry.id === messageId);
+  if (!item || state.week.handled[item.id]) return false;
+  const reply = getReplyOption(item.kind, choice);
+  if (!reply) return false;
+  const before = resolutionSnapshot(state);
+  state.week.handled[item.id] = reply.id;
+  applyMicroEffects(state, reply.effects);
+  let { note } = reply;
+  if (reply.reveal === "like") {
+    const like = revealLike(state);
+    if (like) note += `对方好像很喜欢「${ACTIVITIES[like].title}」。`;
+  }
+  normalize(state);
+  addResolutionStep(steps, "message", reply.label, note, before, state);
+  return true;
 }
 
 const RESOLUTION_METRICS: Array<[ResolutionMetric, string]> = [
@@ -343,7 +415,13 @@ function checkTerminal(state: MarriageGameState) {
 
 export function createInitialState(): MarriageGameState {
   return {
-    version: 5,
+    version: 6,
+    week: emptyWeek("child"),
+    knownInterests: [],
+    knownDislikes: [],
+    playerHobbies: [],
+    lastActivity: null,
+    dateLog: [],
     ...GROWTH_DEFAULTS,
     familyReserve: 42,
     monthsPerTurn: 3,
@@ -444,6 +522,8 @@ function assignCandidate(state: MarriageGameState, id: CandidateId) {
   state.understanding = 0;
   state.matchClosed = false;
   state.chemistry = Math.floor(random(state) * 85) + 10;
+  state.knownInterests = [];
+  state.knownDislikes = [];
   state.datingFeedback = candidate.initialIntent < 40 ? "这次主要是家里安排，对方暂时没有急着交往的打算。" : "愿意先认识一下，还没有决定是否交往。";
   state.budgetAgreed = false;
   state.conflictTurns = 0;
@@ -523,15 +603,27 @@ export function getAvailableParentActions(
   return actions;
 }
 
-function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: MeetingTopic = "everyday") {
+function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: MeetingTopic = "everyday", activityId?: ActivityId) {
   if (!["everyday", "listen", "plans"].includes(topic)) return false;
   if (!getAvailableChildActions(state).includes(id)) return false;
   const candidate = getCandidate(state.candidateId);
   if (!candidate) return false;
+  const meeting = id === "meet" || id === "meet-aa" || id === "invest";
+  if (activityId !== undefined) {
+    if (!isActivityId(activityId)) return false;
+    if (meeting && !isActivityUnlocked(state, activityId)) return false;
+    if (id === "hobby" && !HOBBY_OPTIONS.includes(activityId)) return false;
+    if (!meeting && id !== "hobby") return false;
+  }
   state.lastChildAction = id;
   const { compatibility } = candidate;
   if (isGrowthAction(id)) {
     applyGrowthAction(state, id);
+    if (id === "hobby" && activityId) {
+      // 最多保留三个爱好方向，新方向替换最早的一个
+      state.playerHobbies = [...state.playerHobbies.filter(item => item !== activityId), activityId].slice(-3);
+      state.growthNote = `这一季固定去${ACTIVITIES[activityId].title}，认识了几个同好。${state.growthNote}`;
+    }
     record(state, state.growthNote);
   } else if (id === "overgive") {
     state.savings -= 8;
@@ -559,7 +651,13 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: Me
   } else if (id === "chat-listen" || id === "chat-share" || id === "chat-checklist") {
     const checklist = id === "chat-checklist";
     const rushed = checklist && state.understanding < 35;
-    state.understanding = clamp(state.understanding + (checklist ? 28 : id === "chat-share" ? 12 : 20));
+    const interests = getCandidateInterests(candidate.id);
+    const sharedHobby = id === "chat-share" ? interests?.likes.find(like => state.playerHobbies.includes(like)) : undefined;
+    state.understanding = clamp(state.understanding + (checklist ? 28 : id === "chat-share" ? 12 : 20) + (sharedHobby ? 4 : 0));
+    // 聊天会透露对方的兴趣：倾听得知一个喜好，共同爱好会被聊出来，问条件时会说到不喜欢什么
+    if (id === "chat-listen") revealLike(state);
+    if (sharedHobby && !state.knownInterests.includes(sharedHobby)) state.knownInterests.push(sharedHobby);
+    if (checklist && interests && !state.knownDislikes.includes(interests.dislike)) state.knownDislikes.push(interests.dislike);
     state.relation += rushed ? -3 : id === "chat-share" ? 8 + (state.interests >= 60 ? 3 : 0) : 5;
     state.mutualIntent += rushed ? -6 : hasMutualAttraction(state) ? 5 : 0;
     state.stress += rushed ? 4 : -3;
@@ -568,20 +666,32 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: Me
       ? "对方：可以谈计划，但我们刚认识，这样连着问有点像面试。"
       : !hasMutualAttraction(state) && state.understanding >= 35
         ? "回复很礼貌，但很少主动问起你。也许没有同样的兴趣，不必硬聊。"
-        : id === "chat-share" ? "对方也分享了最近的生活，话题终于不是只剩条件。" : "对方把话说完了。愿意聊天是了解的开始，还不是交往承诺。";
+        : sharedHobby ? `聊到都喜欢${ACTIVITIES[sharedHobby].title}，对方一下子话多了起来。` : id === "chat-share" ? "对方也分享了最近的生活，话题终于不是只剩条件。" : "对方把话说完了。愿意聊天是了解的开始，还不是交往承诺。";
     record(state, state.datingFeedback);
-  } else if (id === "meet" || id === "meet-aa" || id === "invest") {
+  } else if (meeting) {
+    const activity = ACTIVITIES[activityId ?? "meal"];
+    const fit = getActivityFit(state, activity.id);
+    const early = isEarlyForActivity(state, activity.id);
     const premature = topic === "plans" && state.understanding < 40;
     state.meetings += 1;
-    state.understanding = clamp(state.understanding + (topic === "plans" ? 35 : topic === "listen" ? 30 : 22));
-    const cost = id === "meet-aa" ? Math.ceil(candidate.cityCost / 2) : candidate.cityCost;
+    state.understanding = clamp(state.understanding + (topic === "plans" ? 35 : topic === "listen" ? 30 : 22) + activity.talk + (fit.shared ? 4 : 0));
+    const fullCost = getActivityCost(candidate.cityCost, activity.id);
+    const cost = id === "meet-aa" ? Math.ceil(fullCost / 2) : fullCost;
     state.savings -= cost;
-    state.stress += 3 + state.pressure * 0.04;
+    state.stress += 3 + state.pressure * 0.04 - activity.ease - (fit.liked ? 2 : 0) + (fit.disliked ? 3 : 0) + (activity.physical && state.fitness < 40 ? 4 : 0) + (early ? 2 : 0);
     const welcomed = hasMutualAttraction(state);
     const established = state.stage === "dating";
     const impression = established ? 0 : getAttractionBonus(state);
-    state.relation = Math.min(established ? 100 : 30 + state.chemistry + impression, state.relation + (welcomed ? 12 + compatibility * 0.08 + Math.floor(impression / 3) : 4));
-    state.mutualIntent = Math.min(established ? 100 : 25 + state.chemistry + impression, state.mutualIntent + (welcomed ? 10 : -3));
+    // 对方喜欢的活动只在双方有吸引时放大好感，不能凭空制造吸引
+    const spark = welcomed && fit.liked ? activity.spark : 0;
+    state.relation = Math.min(established ? 100 : 30 + state.chemistry + impression, state.relation + (welcomed ? 12 + compatibility * 0.08 + Math.floor(impression / 3) + spark : 4));
+    state.mutualIntent = Math.min(established ? 100 : 25 + state.chemistry + impression, state.mutualIntent + (welcomed ? 10 + (spark ? 2 : 0) : -3));
+    if (fit.disliked) state.relation -= 3;
+    if (early && !established) { state.mutualIntent -= 4; state.relation -= 2; }
+    if (fit.liked && !state.knownInterests.includes(activity.id)) state.knownInterests.push(activity.id);
+    if (fit.disliked && !state.knownDislikes.includes(activity.id)) state.knownDislikes.push(activity.id);
+    state.lastActivity = activity.id;
+    state.dateLog = [...state.dateLog, { turn: state.turn, activity: activity.id, candidateId: candidate.id, topic, liked: fit.liked, disliked: fit.disliked }].slice(-30);
     if (topic === "listen") { state.relation -= 3; state.stress -= 3; }
     if (topic === "plans") { state.relation -= premature ? 6 : 2; state.mutualIntent += premature ? -7 : 4; state.stress += premature ? 5 : 0; }
     if (state.stage === "single") state.stage = "chatting";
@@ -592,7 +702,10 @@ function applyChildAction(state: MarriageGameState, id: ChildActionId, topic: Me
     } else if (state.stage === "dating") state.datingFeedback = "双方明确愿意继续交往，这次终于不是替父母完成任务。";
     else state.datingFeedback = welcomed ? "见面聊得还不错，对方愿意再约一次，但还需要时间了解。" : "对方很客气，但没有表现出继续靠近的兴趣。";
     if (premature && !state.matchClosed) state.datingFeedback = `对方觉得婚育问题问得太急，想先认识你本人。${state.datingFeedback}`;
-    record(state, `第 ${state.meetings} 次见面，${id === "meet-aa" ? "提前说好 AA" : "这次由我请客"}，花费 ${cost}。${topic === "listen" ? "先听对方讲最近的生活。" : topic === "plans" ? "谈了城市与婚育预期。" : "互相分享平时的生活。"}${state.datingFeedback}`);
+    if (early && !state.matchClosed) state.datingFeedback = `刚认识就安排${activity.title}，对方有点拘谨。${state.datingFeedback}`;
+    else if (fit.disliked && !state.matchClosed) state.datingFeedback = `对方对${activity.title}兴趣不大，全程有点勉强。${state.datingFeedback}`;
+    else if (spark && !state.matchClosed) state.datingFeedback = `${activity.title}正是对方喜欢的，整个下午都很开心。${state.datingFeedback}`;
+    record(state, `第 ${state.meetings} 次见面${activity.id === "meal" ? "" : `（${activity.title}）`}，${id === "meet-aa" ? "提前说好 AA" : "这次由我请客"}，花费 ${cost}。${topic === "listen" ? "先听对方讲最近的生活。" : topic === "plans" ? "谈了城市与婚育预期。" : "互相分享平时的生活。"}${state.datingFeedback}`);
   } else if (id === "next") {
     if (!state.rejectedCandidates.includes(candidate.id)) state.rejectedCandidates.push(candidate.id);
     state.autonomy += 10;
@@ -953,16 +1066,41 @@ function applyParentAi(state: MarriageGameState, steps?: ResolutionStep[]) {
   }
 }
 
+// AI 约会：优先选已知对方喜欢、且不算太早的活动，否则吃顿便饭
+export function chooseAiActivity(state: MarriageGameState): ActivityId {
+  const liked = state.knownInterests.find(id => isActivityUnlocked(state, id) && !isEarlyForActivity(state, id));
+  return liked ?? "meal";
+}
+
+// AI 回消息：选每条消息的第一个（温和）回复
+export function chooseAiReplies(state: MarriageGameState) {
+  return state.week.inbox
+    .filter(item => !state.week.handled[item.id])
+    .map(item => ({ messageId: item.id, choice: MESSAGE_KINDS[item.kind]?.replies[0]?.id ?? "" }))
+    .filter(item => item.choice);
+}
+
+function applyAiReplies(state: MarriageGameState, steps?: ResolutionStep[]) {
+  const before = resolutionSnapshot(state);
+  const notes: string[] = [];
+  for (const reply of chooseAiReplies(state)) {
+    const item = state.week.inbox.find(entry => entry.id === reply.messageId);
+    if (item && applyReply(state, reply.messageId, reply.choice)) notes.push(getReplyOption(item.kind, reply.choice)?.note ?? "");
+  }
+  if (notes.length) addResolutionStep(steps, "message", "这一周的消息往来", notes.filter(Boolean).join(" "), before, state);
+}
+
 function applyChildAi(state: MarriageGameState, steps?: ResolutionStep[]) {
   const preferred = chooseChildAiAction(state);
   const action = getAvailableChildActions(state).includes(preferred) ? preferred : "boundary";
   const definition = CHILD_ACTIONS.find(item => item.id === action);
+  const activity = action === "meet" || action === "meet-aa" ? chooseAiActivity(state) : undefined;
   applyResolvedStep(
     state,
     steps,
     "response",
     `当事人回应：${definition?.title || "说出了自己的决定"}`,
-    () => applyChildAction(state, action),
+    () => applyChildAction(state, action, "everyday", activity === "meal" ? undefined : activity),
   );
   return state.phase === "candidate";
 }
@@ -988,9 +1126,10 @@ function beginRound(state: MarriageGameState, steps?: ResolutionStep[]) {
   if (state.mode === "child") {
     state.activeActor = "child";
     applyParentAi(state, steps);
-    checkTerminal(state);
+    if (!checkTerminal(state)) openWeek(state, "child");
   } else {
     state.activeActor = "parent";
+    openWeek(state, "parent");
   }
 }
 
@@ -1144,16 +1283,34 @@ export function resolveGameAction(
       return { state, steps };
     }
     if (state.mode === "parent") {
+      openWeek(state, "child");
+      applyAiReplies(state, steps);
       const replacingCandidate = applyChildAi(state, steps);
       if (!state.candidateId || replacingCandidate) return { state, steps };
       finishRound(state, steps);
     } else if (state.mode === "duel") {
       state.activeActor = "child";
+      if (state.week.actor !== "child") openWeek(state, "child");
     }
+    return { state, steps };
+  }
+  if (action.type === "reply") {
+    if (!applyReply(state, action.messageId, action.choice, steps)) return { state: previous, steps: [] };
+    checkTerminal(state);
+    return { state, steps };
+  }
+  if (action.type === "advance-slot") {
+    if (state.phase !== "turn" || state.week.actor !== state.activeActor) return { state: previous, steps: [] };
+    const upcoming = nextSlot(state.week);
+    if (!upcoming) return { state: previous, steps: [] };
+    settleWeek(state, steps, [state.week.slot]);
+    state.week.slot = upcoming;
+    checkTerminal(state);
     return { state, steps };
   }
   if (action.type === "parent-action") {
     const definition = PARENT_ACTIONS.find(item => item.id === action.id);
+    if (state.phase === "turn" && state.activeActor === "parent" && state.week.actor === "parent") settleWeek(state, steps, getSlots("parent"));
     if (
       state.phase !== "turn" ||
       state.activeActor !== "parent" ||
@@ -1168,16 +1325,20 @@ export function resolveGameAction(
     if (checkTerminal(state)) return { state, steps };
     if (!state.candidateId) return { state, steps };
     if (state.mode === "parent") {
+      openWeek(state, "child");
+      applyAiReplies(state, steps);
       const replacingCandidate = applyChildAi(state, steps);
       if (!state.candidateId || replacingCandidate) return { state, steps };
       finishRound(state, steps);
     } else if (state.mode === "duel") {
       state.activeActor = "child";
+      openWeek(state, "child");
     }
     return { state, steps };
   }
   if (action.type === "child-action") {
     const definition = CHILD_ACTIONS.find(item => item.id === action.id);
+    if (state.phase === "turn" && state.activeActor === "child" && state.week.actor === "child") settleWeek(state, steps, getSlots("child"));
     if (
       state.phase !== "turn" ||
       state.activeActor !== "child" ||
@@ -1186,7 +1347,7 @@ export function resolveGameAction(
         steps,
         "choice",
         `我的选择：${definition?.title || "当事人回应"}`,
-        () => applyChildAction(state, action.id, action.topic),
+        () => applyChildAction(state, action.id, action.topic, action.activity),
       )
     ) return { state: previous, steps: [] };
     if (!state.candidateId || checkTerminal(state)) return { state, steps };
@@ -1201,10 +1362,11 @@ export function getActionPreview(
   actor: "child" | "parent",
   id: ChildActionId | ParentActionId,
   topic?: MeetingTopic,
+  activity?: ActivityId,
 ) {
   const copy = clone(state);
   const before = resolutionSnapshot(copy);
-  if (actor === "child") applyChildAction(copy, id as ChildActionId, topic);
+  if (actor === "child") applyChildAction(copy, id as ChildActionId, topic, activity === "meal" ? undefined : activity);
   else applyParentAction(copy, id as ParentActionId);
   const meeting = ["meet", "meet-aa", "invest"].includes(id);
   const uncertainResponse = actor === "child" && !isHousehold(state) && (meeting || id.startsWith("chat-"));
@@ -1284,10 +1446,33 @@ recoveryGranted: false,
       log: Array.isArray(migrated.log) ? migrated.log.map(migrateText) : migrated.log,
     };
   }
+  if (migrated.version === 5) {
+    // v6：旧档从当季晚上继续，收件箱为空，不补罚没回的消息
+    const actor: Actor = migrated.activeActor === "parent" ? "parent" : "child";
+    migrated = {
+      ...migrated,
+      version: 6,
+      week: emptyWeek(actor, actor === "parent" ? "afternoon" : "evening"),
+      knownInterests: [],
+      knownDislikes: [],
+      playerHobbies: [],
+      lastActivity: null,
+      dateLog: [],
+    };
+  }
   const state = migrated as unknown as MarriageGameState;
   const templateKeys = Object.keys(createInitialState()).sort();
   if (Object.keys(state).sort().join("|") !== templateKeys.join("|")) return null;
-  if (state.version !== 5) return null;
+  if (state.version !== 6) return null;
+  const week = state.week as unknown as Record<string, unknown>;
+  if (!week || typeof week !== "object" || !["child", "parent"].includes(week.actor as string)) return null;
+  if (!getSlots(week.actor as Actor).includes(week.slot as WeekSlot)) return null;
+  if (!Array.isArray(week.inbox) || week.inbox.some(item => !item || typeof item !== "object" || typeof item.id !== "string" || !MESSAGE_KINDS[item.kind] || typeof item.urgent !== "boolean")) return null;
+  if (!week.handled || typeof week.handled !== "object" || Array.isArray(week.handled) || Object.values(week.handled).some(choice => typeof choice !== "string")) return null;
+  if (!week.micro || typeof week.micro !== "object" || Array.isArray(week.micro) || Object.values(week.micro).some(used => !Number.isFinite(used))) return null;
+  if ([state.knownInterests, state.knownDislikes, state.playerHobbies].some(list => !Array.isArray(list) || list.some(id => !isActivityId(id)))) return null;
+  if (state.lastActivity !== null && !isActivityId(state.lastActivity)) return null;
+  if (!Array.isArray(state.dateLog) || state.dateLog.some(item => !item || !isActivityId(item.activity) || !Number.isInteger(item.turn))) return null;
   if ([state.fitness, state.grooming, state.interests, state.relationshipBalance].some(n => !Number.isInteger(n) || n < 0 || n > 100) || typeof state.growthNote !== "string") return null;
   if (state.phase !== "ended" && state.maxTurns === 10) state.maxTurns = 14;
   if (!(["lobby", "candidate", "turn", "ended"] as string[]).includes(state.phase)) return null;

@@ -15,6 +15,8 @@ const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
   mkdirSync(out, { recursive: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, hasTouch: true, reducedMotion: "reduce" });
+    // 沉浸版是默认视图；这些回归脚本覆盖经典卡片模式
+    await page.addInitScript(() => localStorage.setItem("marriage-pressure-view", "classic"));
     page.on("pageerror", err => errors.push(String(err)));
     page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
     await page.goto(base, { waitUntil: "networkidle" });
@@ -45,6 +47,12 @@ const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
     await page.getByTestId("actions-growth").click();
     await shot("01-growth-desktop");
     await page.getByTestId("child-action-exercise").click();
+    // V6 周节奏会先结算未回消息，再展示本次成长行动
+    for (let i = 0; i < 12; i++) {
+      const text = await page.getByTestId("resolution-dialog").innerText();
+      if (/体能/.test(text)) break;
+      await page.getByTestId("resolution-next").click();
+    }
     assert.match(await page.getByTestId("resolution-dialog").innerText(), /体能/);
     await drain();
     assert.equal((await read(page)).fitness, 50);
@@ -74,6 +82,7 @@ const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
       assert.ok(boxes.every(b => b.top >= 0 && b.bottom <= height), `${width}: ${JSON.stringify(boxes)}`);
       await shot(`03-growth-mobile-${width}`);
       await page.getByTestId("child-action-hobby").tap();
+      await page.getByTestId("hobby-general").tap();
       await drain();
       assert.equal((await read(page)).interests, 52);
     }
@@ -138,7 +147,8 @@ const read = p => p.evaluate(() => JSON.parse(window.render_game_to_text()));
     assert.equal((await read(page)).fitness, 50);
     assert.notEqual((await read(page)).candidateId, "sui");
     const legacy = await fixture({ turn: 9, savings: 23 }, true);
-    assert.equal(legacy.version, 5);
+    // v4 存档经 validateSave 迁移后为当前引擎版本 6
+    assert.equal(legacy.version, 6);
     assert.equal(legacy.turn, 9);
     assert.equal(legacy.savings, 23);
     assert.equal(legacy.fitness, 40);

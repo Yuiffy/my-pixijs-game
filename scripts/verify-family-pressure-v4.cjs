@@ -24,13 +24,16 @@ async function drain(page) {
 }
 async function act(page, actor, id) {
   const controlId = id === "meet-aa" || id === "invest" ? "meet" : id;
-  for (const tab of ["connection", "life", "decision"]) {
+  const tabs = actor === "child" ? ["connection", "growth", "life", "decision"] : ["connection", "life", "decision"];
+  for (const tab of tabs) {
     if (await button(page, `${actor}-action-${controlId}`).count()) break;
     await button(page, `actions-${tab}`).click();
   }
   await button(page, `${actor}-action-${controlId}`).click();
   if ((await read(page)).pendingMeeting) { await button(page, id === "meet" ? "payment-treat" : "payment-aa").click(); await button(page, "meeting-everyday").click(); }
   if ((await read(page)).pendingDecision) await button(page, "decision-confirm").click();
+  // 爱好会先弹出方向选择，而不是立刻进入结算
+  if (await button(page, "hobby-dialog").count()) await button(page, "hobby-general").click();
   return drain(page);
 }
 async function fixture(page, value) {
@@ -61,6 +64,8 @@ async function capture(page, name) {
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
     const page = await context.newPage();
+    // 沉浸版是默认视图；这些回归脚本覆盖经典卡片模式
+    await page.addInitScript(() => localStorage.setItem("marriage-pressure-view", "classic"));
     page.on("pageerror", err => errors.push(String(err)));
     page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
     await page.goto(`${base}/game/family-pressure`, { waitUntil: "networkidle" });

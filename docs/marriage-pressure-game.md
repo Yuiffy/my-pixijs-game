@@ -1,9 +1,9 @@
-# 年关牌局 V4.1：相亲与共同生活
+# 年关牌局 V6：沉浸一周的相亲与共同生活
 
-> 当前版本 V5 已加入经营自己与相处平衡，研究依据、规则和迁移说明见 [成长设计与资料](family-pressure-growth-research.md)。下文保留此前相亲/共同生活设计。
+> 当前版本为 V6 沉浸版（R3F 场景 + 仿微信手机 + 引擎周节奏）。V5 的经营自己与相处平衡仍保留，研究依据见 [成长设计与资料](family-pressure-growth-research.md)。下文在 V4/V5 规则之上补充沉浸层说明。
 
 
-入口：`/game/family-pressure`。本次改版覆盖整体规则、相亲过程、婚后经济、结局与信息层级。
+入口：`/game/family-pressure`。默认进入沉浸视图；可用 `?view=classic` 或界面切换回到经典卡片模式。
 
 ## Review：为什么需要改版
 
@@ -85,11 +85,23 @@ V4 保留每回合一个决定和三种身份，增加真正影响下一步的�
 
 结局页保留对象、结婚年龄、当前年龄、生育选择、经济和父母关系，并新增实际触发原因。离婚写明“曾经结婚，现已离婚”；经济困顿不会擅自写“关系破裂”。旧版已完成档案保留原始数值与结果，不虚构连续危机历史。
 
-## 验证与边界
+## V6 沉浸版
 
-- `pnpm marriage:test`：确定性、三身份、候选覆盖/素材、双向选择、请客/AA、沟通时机、换人、账本守恒、有限支援、恢复窗口、婚育与结局、坏档和历史版本迁移。
-- `node scripts/simulate-family-pressure.mjs`：3 身份 × 3 难度 × 100 种子，使用合法行动走完 900 局，检查无卡死、每一步可保存，并留下结局见证路径。
-- `pnpm marriage:verify`：系统 Chrome 完整战役；从没感觉换人到结婚和生活；确认/取消、困难恢复、离婚、三个身份、刷新续局、40 个素材、390/320px 布局；每张截图做像素检查、与文本状态和 DOM 交叉核对，再人工目检。
+V6 把每一季主投入嵌进“代表性的一周”：工位 → 下班路上 → 晚上 → 周末。玩家仍每季只选一项主投入；途中可回消息，小回应有数值影响但带累计上限封顶，紧急未回会按“已读不回”结算。
+
+约会扩展为 18 个场馆与短互动（含卡丁车/射箭的时机小游戏、桌游/爬山/做饭的三步分工选择、饭馆忌口、按性格标签变化的桌游选项；所有小互动只影响台词、气氛和合照，不改数值，都可跳过）。手机里可切聊天、朋友圈、点评地图、来电、银行短信、日历与相册。年夜饭连环问限时 8 秒，开启“减少动态效果”时不计时，且只改台词不改数值判定。七夕/生日等节日提醒只提醒不惩罚。现实事件会切到对应场景（如医院走廊、夜间办公室）。关系推进有官宣、领证、育儿、关系结束等关键过场，双人对弈有交接遮挡页。结局页可回顾相册。
+
+视图切换：`localStorage` 键 `marriage-pressure-view`，URL 参数 `?view=classic|immersive`。节奏相对 V5 更精简；提供静音开关，自动化测试会 stub 掉 `speechSynthesis` 并加 `--mute-audio`。
+
+### 验证方式
+
+- `pnpm marriage:test`：含沉浸规则单测（`scripts/tests/marriage-pressure-immersive.test.mjs`），确定性、周节奏、场馆、过场与存档迁移。
+- `node scripts/simulate-family-pressure.mjs`：3 身份 × 3 难度 × 100 种子共 900 局；默认策略结局 happy 457 / modest 349 / rebuilding 36 / ruin 10（v5 基线 happy 417 / ruin 27）；贪心策略 happy 322，无支配策略。报告 `tmp/family-v6/balance-report.json`。
+- `node scripts/verify-marriage-pressure-immersive.cjs`：系统 Chrome，桌面 / phone390 / phone320；可用 `MARRIAGE_VIEWPORTS=desktop` 只跑桌面。证据目录 `tmp/family-v6-browser`。
+- `pnpm marriage:verify`（`scripts/verify-marriage-pressure.cjs` → v4 回归）：经典视图完整战役与危机路径；另有 growth / layout / catalog / progression 专项脚本。
+
+### 边界
+
 - 游戏仍然是易上手的抽象模型：不模拟完整资产分割、真实医疗诊断、精确生育时间或地域婚恋概率。一次只发展一段关系；每季一个决定，不加入需要背答案的对话考试。
 
 ### V4.1 界面验收
