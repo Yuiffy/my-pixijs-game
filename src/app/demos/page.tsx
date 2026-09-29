@@ -183,11 +183,11 @@ const gameGroups: { id: string; title: string; games: GameItem[] }[] = [
         title: '年关牌局：这婚，你催吗？',
         href: '/game/family-pressure',
         description:
-          '从相识到共同生活，在 24 个季度里决定靠近、分开或一起渡过难关。',
-        image: '/reference_images/岁己小红帽立绘.png',
-        meta: '人生模拟 · 扮演当事人或家长 · 支持本地双人',
+          '从妈妈推来的微信名片开始，在工位、下班路上与出租屋里，慢慢认识一个人。',
+        image: '/images/marriage-pressure/reunion-dinner.jpg',
+        meta: '3D 日常 · 微信与电话 · 相识和共同生活',
         releaseDate: '2026-09-20',
-        updateDate: '2026-09-26',
+        updateDate: '2026-09-29',
       },
       {
         title: '武侠小说生成器',

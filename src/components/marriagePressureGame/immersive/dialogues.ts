@@ -1,7 +1,7 @@
 import { ACTIVITIES } from "../activities";
 import { PARENT_ACTIONS } from "../content";
 import { getAvailableChildActions, getAvailableParentActions, getCandidate } from "../engine";
-import { MESSAGE_KINDS } from "../inbox";
+import { MESSAGE_KINDS, getSlots } from "../inbox";
 import { nextUnknownLike } from "../interests";
 import type { ChildActionId, MarriageGameState, ParentActionId } from "../types";
 import type { BubbleKind, ChatBubble, DialogueChoice, DialogueNode, DialogueScript } from "./dialogueTypes";
@@ -13,6 +13,14 @@ import { messageSpecs, pickLine, senderProfile, type SenderProfile } from "./lin
 import type { ChatId } from "./sceneRouter";
 
 const them = (id: string, text: string, kind: BubbleKind = "text", meta?: string): ChatBubble => ({ id, mine: false, kind, text, meta });
+
+// 日常里消息按时段到达；已读记录始终保留，晚上不会提前出现在工位。
+export function arrivedMessages(state: MarriageGameState) {
+  if (state.week.actor !== state.activeActor) return [];
+  const slots = getSlots(state.week.actor);
+  const current = slots.indexOf(state.week.slot);
+  return state.week.inbox.filter(item => state.week.handled[item.id] || slots.indexOf(item.slot) <= current);
+}
 
 const child = (id: ChildActionId, extra: Partial<DialogueChoice> & { label: string }): DialogueChoice & { needs: ChildActionId } => ({
   id,
@@ -70,7 +78,7 @@ function toBubbles(state: MarriageGameState, id: string, specs: MessageSpec[], m
 export function buildThread(state: MarriageGameState, chat: ChatId, playerName = "我"): ChatBubble[] {
   const bubbles: ChatBubble[] = [];
   if (state.week.actor !== state.activeActor) return bubbles;
-  for (const item of state.week.inbox) {
+  for (const item of arrivedMessages(state)) {
     if (SENDER_CHAT[item.from] !== chat) continue;
     bubbles.push(...toBubbles(state, item.id, messageSpecs(state, item), false, playerName));
     const handled = state.week.handled[item.id];
@@ -110,10 +118,10 @@ export function listChats(state: MarriageGameState, childName?: string): ChatEnt
   const parentView = state.activeActor === "parent";
   const base: ChatId[] = parentView ? ["child", "sisters", "matchmaker"] : ["candidate", "mom", "family", "work", "dad"];
   const ids = new Set<ChatId>(base);
-  if (state.week.actor === state.activeActor) for (const item of state.week.inbox) ids.add(SENDER_CHAT[item.from]);
+  for (const item of arrivedMessages(state)) ids.add(SENDER_CHAT[item.from]);
   if (!state.candidateId || (!parentView && state.stage === "single" && state.matchClosed)) ids.delete("candidate");
   const entries = Array.from(ids).map(id => {
-    const messages = state.week.actor === state.activeActor ? state.week.inbox.filter(item => SENDER_CHAT[item.from] === id) : [];
+    const messages = arrivedMessages(state).filter(item => SENDER_CHAT[item.from] === id);
     const pending = messages.filter(item => !state.week.handled[item.id]);
     const last = messages[messages.length - 1];
     return {

@@ -12,6 +12,7 @@ const scripts = await loadTypescriptModule(`${root}/immersive/activityScripts.ts
 const reunion = await loadTypescriptModule(`${root}/immersive/reunionDinner.ts`);
 const { detectCutscenes } = await loadTypescriptModule(`${root}/immersive/cutscenes.ts`);
 const { getAvailableChildActions, getAvailableParentActions } = engine;
+const { restoreDayPlan } = await loadTypescriptModule(`${root}/immersive/dayPlan.ts`);
 
 function start(mode = "child", seed = 11) {
   let state = engine.gameReducer(engine.createInitialState(), { type: "start", mode, difficulty: "realistic", seed });
@@ -21,6 +22,34 @@ function start(mode = "child", seed = 11) {
 
 const child = start("child");
 const at = (slot, extra = {}) => ({ ...child, ...extra, week: { ...child.week, slot, ...(extra.week ?? {}) } });
+
+test("日常消息随时段到达；旧消息保留，行动方不能串线", () => {
+  const inbox = [
+    { id: "work", kind: "boss-ping", from: "boss", slot: "work", urgent: true },
+    { id: "commute", kind: "mom-marriage", from: "mom", slot: "commute", urgent: true },
+    { id: "evening", kind: "candidate-home", from: "candidate", slot: "evening", urgent: false },
+  ];
+  for (const [slot, count] of [["work", 1], ["commute", 2], ["evening", 3]]) {
+    const state = at(slot, { week: { slot, inbox, handled: {} } });
+    assert.equal(dialogues.arrivedMessages(state).length, count);
+    assert.equal(dialogues.listChats(state).reduce((sum, entry) => sum + entry.unread, 0), count);
+    assert.equal(dialogues.buildThread(state, "candidate").length > 0, slot === "evening");
+  }
+  assert.deepEqual(dialogues.arrivedMessages(at("work", { activeActor: "parent", week: { inbox } })), []);
+});
+
+test("日常安排刷新可恢复，但不能带到下一季或另一个人的回合", () => {
+  const key = "11-1-child";
+  const action = { key, label: "学习", action: { type: "child-action", id: "study" } };
+  assert.equal(restoreDayPlan(JSON.stringify(action), key).action.id, "study");
+  assert.equal(restoreDayPlan(JSON.stringify(action), "11-2-child"), null);
+  assert.equal(restoreDayPlan(JSON.stringify(action), "11-1-parent"), null);
+  assert.equal(restoreDayPlan("bad json", key), null);
+  assert.equal(restoreDayPlan(JSON.stringify({ ...action, action: { type: "start" } }), key), null);
+  const date = { key, label: "散步", date: { activity: "walk", payment: "meet-aa" } };
+  assert.equal(restoreDayPlan(JSON.stringify(date), key).date.activity, "walk");
+  assert.equal(restoreDayPlan(JSON.stringify({ ...date, date: { activity: "missing", payment: "meet-aa" } }), key), null);
+});
 
 test("场景路由：按阶段、行动方、时段与现实事件选场景", () => {
   const draft = engine.gameReducer(engine.createInitialState(), { type: "start", mode: "parent", difficulty: "realistic", seed: 11 });

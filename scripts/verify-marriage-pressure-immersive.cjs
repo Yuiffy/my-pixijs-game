@@ -58,6 +58,7 @@ async function inject(page, save, { reunion = false } = {}) {
   await page.evaluate(([value, playReunion]) => {
     localStorage.setItem("marriage-pressure-save-v1", JSON.stringify(value));
     localStorage.setItem("marriage-pressure-view", "immersive");
+    localStorage.setItem("marriage-pressure-introduction", `${value.seed}-${value.candidateId}`);
     if (playReunion) localStorage.removeItem("marriage-pressure-reunion");
     else localStorage.setItem("marriage-pressure-reunion", `${value.seed}-${value.turn}`);
   }, [save, reunion]);
@@ -86,8 +87,11 @@ async function runViewport(browser, viewport, fixtures) {
   await tid(page, `candidate-${fixtures.draft.candidateOptions[0]}`).click();
   await drain(page);
 
-  // 春节季第一段：先回老家吃年夜饭，三道连环问
+  // 春节返乡由玩家在住处主动发起；不再在开局强制插入。
   await inject(page, fixtures.child, { reunion: true });
+  await tid(page, "journey-next").click();
+  await tid(page, "journey-next").click();
+  await tid(page, "visit-reunion").click();
   state = await capture(page, `${prefix}-02a-reunion`, "reunion");
   assert.equal(state.reunion.total, 3);
   assert.deepEqual(state.hotspots, []);
@@ -103,6 +107,7 @@ async function runViewport(browser, viewport, fixtures) {
   await settle(page);
 
   // 工位：打开手机看会话
+  await inject(page, fixtures.child);
   state = await capture(page, `${prefix}-02-office`, fixtures.child.currentEventId === "layoff-rumor" || fixtures.child.currentEventId === "promotion" ? "meeting-room" : "office");
   assert.equal(state.slot, "work");
   await tid(page, "open-phone").click();
@@ -255,7 +260,7 @@ async function runViewport(browser, viewport, fixtures) {
   const child = start("child", 11);
   assert.equal(child.phase, "turn");
   // 有过几次见面的交往中存档：所有场馆都已解锁
-  const venueSave = { ...child, stage: "dating", meetings: 3, understanding: 55, relation: 55, mutualIntent: 60, savings: 80 };
+  const venueSave = { ...child, stage: "dating", meetings: 3, understanding: 55, relation: 55, mutualIntent: 60, savings: 80, week: { ...child.week, slot: "evening" } };
   const home = { ...child, stage: "married", marriedAtTurn: 1, relation: 60, mutualIntent: 60, week: { ...child.week, slot: "evening" } };
   const parentStart = start("parent", 12);
   const parent = parentStart.phase === "candidate" ? e.gameReducer(parentStart, { type: "candidate", id: parentStart.candidateOptions[0] }) : parentStart;

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Hotspot, SceneRoute } from "../sceneRouter";
@@ -8,6 +8,8 @@ import { HotContext, type Vec3 } from "./kit";
 import { HomeScene, HospitalScene, OfficeScene, ParentHomeScene, ReunionScene, RoomScene } from "./indoor";
 import { CommuteScene, ParkScene } from "./outdoor";
 import { VENUE_LOOKS, VenueScene } from "./venues";
+import ScenePhone, { PHONE_POSITIONS } from "./ScenePhone";
+import styles from "../immersive.module.css";
 
 interface CameraShot {
   position: Vec3;
@@ -28,14 +30,14 @@ interface SceneLook {
 const SHOTS: Record<string, CameraShot> = {
   room: { position: [0.3, 1.75, 3.6], target: [0, 0.9, -0.9], fov: 58 },
   home: { position: [0.2, 1.85, 4.3], target: [0, 0.85, -0.8], fov: 58 },
-  office: { position: [0, 1.5, 1.7], target: [0, 1.05, -1.4], fov: 62 },
+  office: { position: [0.05, 1.24, 0.82], target: [0, 0.96, -0.65], fov: 66 },
   "meeting-room": { position: [0.8, 1.7, 2.2], target: [-0.6, 1.1, -3], fov: 60 },
   commute: { position: [0, 1.9, 6.4], target: [0, 1.2, -0.2], fov: 55 },
   park: { position: [0, 2.0, 6.2], target: [0, 1.1, -1.2], fov: 55 },
   matchmaking: { position: [0, 1.8, 5.2], target: [0, 1.0, -1.2], fov: 55 },
   "parent-home": { position: [1.2, 1.8, 4.2], target: [-0.2, 0.8, -1], fov: 58 },
   venue: { position: [0, 1.55, 3.4], target: [0, 1.0, -0.7], fov: 55 },
-  reunion: { position: [0, 2.0, 2.7], target: [0, 0.9, -1.3], fov: 58 },
+  reunion: { position: [0, 1.38, 1.48], target: [0, 1.05, -1.05], fov: 68 },
   hospital: { position: [0.2, 1.6, 3.4], target: [0.3, 1.1, -3], fov: 58 },
 };
 
@@ -49,7 +51,7 @@ function lookFor(route: SceneRoute): SceneLook {
       return { background: "#1c2130", fog: [9, 22], ambient: 0.5, sun: 0.35, sunColor: "#9fb7ff", sunPosition: [1, 3, -2], lamp: { position: [0, 2.6, 0], color: "#ffe0b0", intensity: 6 } };
     case "office":
       if (route.night) return { background: "#141a26", fog: [9, 22], ambient: 0.32, sun: 0.25, sunColor: "#9fb7ff", sunPosition: [2, 4, -4], lamp: { position: [0, 2.4, -0.3], color: "#dfe8ff", intensity: 4 } };
-      return { background: "#cfdbe6", fog: [10, 26], ambient: 0.72, sun: 1.1, sunColor: "#ffffff", sunPosition: [2, 5, -5], lamp: { position: [0, 3, 0], color: "#f2f6ff", intensity: 4 } };
+      return { background: "#e4ded1", fog: [14, 32], ambient: 0.85, sun: 2.2, sunColor: "#ffe5bb", sunPosition: [-3, 5, -2], lamp: { position: [1, 3, 2], color: "#e5f1f5", intensity: 4 } };
     case "meeting-room":
       return { background: "#cfdbe6", fog: [10, 26], ambient: 0.72, sun: 1.1, sunColor: "#ffffff", sunPosition: [2, 5, -5], lamp: { position: [0, 3, 0], color: "#f2f6ff", intensity: route.id === "meeting-room" ? 2 : 4 } };
     case "commute":
@@ -58,7 +60,7 @@ function lookFor(route: SceneRoute): SceneLook {
     case "matchmaking":
       return { background: winter ? "#cdd8e2" : "#bcd8ea", fog: [12, 34], ambient: 0.75, sun: 1.3, sunColor: "#fff4dc", sunPosition: [4, 8, 4] };
     case "reunion":
-      return { background: "#2a1612", fog: [8, 20], ambient: 0.55, sun: 0.6, sunColor: "#ffd9a8", sunPosition: [2, 5, 3], lamp: { position: [0, 2.3, -0.6], color: "#ffc98a", intensity: 7 } };
+      return { background: "#a57860", fog: [12, 25], ambient: 0.85, sun: 1.4, sunColor: "#ffe1b5", sunPosition: [-3, 5, 2], lamp: { position: [0, 2.6, -0.6], color: "#ffd7a0", intensity: 9 } };
     case "hospital":
       return { background: "#dfe8e6", fog: [7, 16], ambient: 0.8, sun: 0.5, sunColor: "#eaf6ff", sunPosition: [1, 5, 2], lamp: { position: [0, 2.6, -1.5], color: "#eaf6ff", intensity: 4 } };
     case "parent-home":
@@ -86,6 +88,7 @@ function CameraRig({ shot }: { shot: CameraShot }) {
     camera.fov = narrow ? Math.min(78, shot.fov + 14) : shot.fov;
     camera.lookAt(tx, ty, tz);
     camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
     invalidate();
   }, [camera, aspect, shot, invalidate]);
   return null;
@@ -148,12 +151,18 @@ export interface SceneCanvasProps {
   month: number;
   onContextLost: (reason: string) => void;
   speaker?: number;
+  unread: number;
+  clock: string;
+  phonePreview: string;
+  showPhone: boolean;
+  onPhone: () => void;
 }
 /* eslint-enable react/no-unused-prop-types */
 
 function SceneCanvas(props: SceneCanvasProps) {
-  const { route, hotspots, onHotspot, onContextLost } = props;
+  const { route, hotspots, onHotspot, onContextLost, showPhone, unread, phonePreview, onPhone, clock } = props;
   const [hovered, setHovered] = useState<string | null>(null);
+  const phoneAnchor = useRef<HTMLButtonElement>(null);
   const look = lookFor(route);
   const shot = SHOTS[route.id] ?? SHOTS.room;
   const context = useMemo(() => ({
@@ -164,6 +173,7 @@ function SceneCanvas(props: SceneCanvasProps) {
   }), [hotspots, hovered, onHotspot]);
   useEffect(() => () => { document.body.style.cursor = ""; }, []);
   return (
+    <>
     <Canvas
       frameloop="demand"
       shadows
@@ -176,14 +186,21 @@ function SceneCanvas(props: SceneCanvasProps) {
       <fog attach="fog" args={[look.background, look.fog[0], look.fog[1]]} />
       <ambientLight intensity={look.ambient} />
       <hemisphereLight args={["#ffffff", "#6a5a4a", 0.35]} />
-      <directionalLight position={look.sunPosition} intensity={look.sun} color={look.sunColor} castShadow shadow-mapSize={[1024, 1024]} />
+      <directionalLight position={look.sunPosition} intensity={look.sun} color={look.sunColor} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0005} shadow-normalBias={0.025} shadow-camera-left={-7} shadow-camera-right={7} shadow-camera-top={7} shadow-camera-bottom={-7} />
       {look.lamp && <pointLight position={look.lamp.position} intensity={look.lamp.intensity} distance={9} color={look.lamp.color} />}
       <CameraRig shot={shot} />
       <ContextGuard onLost={onContextLost} />
       <HotContext.Provider value={context}>
         <SceneContent {...props} />
+        {showPhone && <ScenePhone scene={route.id} unread={unread} preview={phonePreview} onOpen={onPhone} anchorRef={phoneAnchor} clock={clock} />}
       </HotContext.Provider>
     </Canvas>
+    {showPhone && PHONE_POSITIONS[route.id] && (
+      <button ref={phoneAnchor} className={styles.scenePhone} data-testid="scene-phone" data-unread={unread > 0} onClick={onPhone}>
+        <span>{unread > 0 ? `微信 · ${unread} 条新消息` : "拿起手机"}</span><small>{phonePreview}</small><i />
+      </button>
+    )}
+    </>
   );
 }
 

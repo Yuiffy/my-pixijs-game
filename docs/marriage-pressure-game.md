@@ -89,6 +89,10 @@ V4 保留每回合一个决定和三种身份，增加真正影响下一步的�
 
 V6 把每一季主投入嵌进“代表性的一周”：工位 → 下班路上 → 晚上 → 周末。玩家仍每季只选一项主投入；途中可回消息，小回应有数值影响但带累计上限封顶，紧急未回会按“已读不回”结算。
 
+2026-09-29 日常流程修订：新认识对象时先展示妈妈的介绍与微信名片，由玩家发送好友申请，再进入第一次聊天。日常节奏下，工位和通勤里的主投入先记为晚上的安排；约会也先约好，回家后再出发，避免一条消息直接跳到下一季。安排独立保存，刷新可恢复，不会串到下一季或另一行动方。已读记录保留，新消息按时段出现；各场景都可使用微信或主动打给妈妈、对象。精简节奏仍允许直接行动。
+
+春节不再强制打断开局：在晚上的住处主动选择高铁返乡，吃完年夜饭返回住处，继续当季安排。办公室改为坐在桌前的视角；实体手机有屏幕和跟随其位置的通知。办公室、出租屋、年夜饭统一暖木与柔和色调，补充桌面文具、床边灯、餐具和人物细节。微信的消息区独立滚动，统一回复区限制高度，窗口缩放与新图片出现后仍能看到最后一条。聊天和朋友圈图片使用本地 SVG 插画，后续可按图片主题替换为生成图。
+
 约会扩展为 18 个场馆与短互动（含卡丁车/射箭的时机小游戏、桌游/爬山/做饭的三步分工选择、饭馆忌口、按性格标签变化的桌游选项；所有小互动只影响台词、气氛和合照，不改数值，都可跳过）。手机里可切聊天、朋友圈、点评地图、来电、银行短信、日历与相册。年夜饭连环问限时 8 秒，开启“减少动态效果”时不计时，且只改台词不改数值判定。七夕/生日等节日提醒只提醒不惩罚。现实事件会切到对应场景（如医院走廊、夜间办公室）。关系推进有官宣、领证、育儿、关系结束等关键过场，双人对弈有交接遮挡页。结局页可回顾相册。
 
 视图切换：`localStorage` 键 `marriage-pressure-view`，URL 参数 `?view=classic|immersive`。节奏相对 V5 更精简；提供静音开关，自动化测试会 stub 掉 `speechSynthesis` 并加 `--mute-audio`。
@@ -98,6 +102,7 @@ V6 把每一季主投入嵌进“代表性的一周”：工位 → 下班路上
 - `pnpm marriage:test`：含沉浸规则单测（`scripts/tests/marriage-pressure-immersive.test.mjs`），确定性、周节奏、场馆、过场与存档迁移。
 - `node scripts/simulate-family-pressure.mjs`：3 身份 × 3 难度 × 100 种子共 900 局；默认策略结局 happy 457 / modest 349 / rebuilding 36 / ruin 10（v5 基线 happy 417 / ruin 27）；贪心策略 happy 322，无支配策略。报告 `tmp/family-v6/balance-report.json`。
 - `node scripts/verify-marriage-pressure-immersive.cjs`：系统 Chrome，桌面 / phone390 / phone320；可用 `MARRIAGE_VIEWPORTS=desktop` 只跑桌面。证据目录 `tmp/family-v6-browser`。
+- `node scripts/verify-marriage-pressure-daily.cjs`：静音系统 Chrome，1440 / 390 / 320px，从新开局加微信走过完整日常；验证场景手机、通勤电话、消息滚动、双向图片、晚间结算、主动返乡与存档恢复。证据目录 `tmp/marriage-daily`；`MARRIAGE_UPDATE_COVER=1` 可重拍 demos 使用的年夜饭实景缩略图。
 - `pnpm marriage:verify`（`scripts/verify-marriage-pressure.cjs` → v4 回归）：经典视图完整战役与危机路径；另有 growth / layout / catalog / progression 专项脚本。
 
 ### 边界

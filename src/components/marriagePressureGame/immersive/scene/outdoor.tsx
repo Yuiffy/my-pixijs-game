@@ -107,9 +107,6 @@ export function CommuteScene({ season }: { season: Season }) {
       </Hot>
       <Sign position={[-5.6, 2.3, 0.26]} size={[1.4, 0.5]} text="地铁 2 号线" background="#c24b4b" glow font={52} />
       <Box position={[-5.6, 0.9, 0.2]} size={[1.6, 1.8, 0.1]} color="#3a3d44" />
-      <Hot id="street-phone" marker={[0, 2.05, 1.0]}>
-        <Figure position={[0, 0.12, 1.1]} look={{ shirt: season === "winter" ? "#3f4a5c" : season === "summer" ? "#e8e1d4" : "#7a6a5a", hair: "#221d1b" }} rotation={Math.PI} holding="phone" />
-      </Hot>
       <Figure position={[-1.8, 0.12, 1.9]} look={{ shirt: "#8a5a5a", hairLong: true }} rotation={-1.2} holding="bag" />
       <Figure position={[2.4, 0.12, 2.0]} look={{ shirt: "#4f6a8a" }} rotation={1.4} holding="phone" />
       <Box position={[-4.5, 0.55, -2.4]} size={[3.4, 1.0, 1.5]} color="#c24b4b" />

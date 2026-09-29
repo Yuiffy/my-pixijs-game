@@ -310,3 +310,51 @@
 .voiceText { color: #6f6b65; font-size: 12px; }
 .composer { flex: none; max-height: 34%; padding: 8px 8px 2px; overflow-y: auto; border-top: 1px solid #d9d9d9; background: #f7f7f7; }
 .composer .replyChips { margin: 0 0 6px; }
+
+/* Scene-anchored phone and a quiet, legible daily itinerary. */
+.scenePhone { position: absolute; z-index: 3; width: 188px; padding: 10px 12px; transform: translate(-50%, -100%); color: #26483f; text-align: left; border: 1px solid #d1e5d9; border-radius: 13px; background: rgba(246, 253, 244, .97); box-shadow: 0 8px 28px #203e3933; cursor: pointer; }
+.scenePhone span { display: block; font-size: 13px; font-weight: 700; }
+.scenePhone small { display: block; margin-top: 4px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.scenePhone i { position: absolute; left: 50%; top: 100%; height: 24px; border-left: 1px solid #d5efe0; }
+.scenePhone i::after { content: ''; position: absolute; left: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #65bd8e; box-shadow: 0 0 0 5px #8bf2b733; }
+.scenePhone[data-unread='true'] { border-color: #71af8d; }
+.journey { position: absolute; z-index: 5; right: 18px; bottom: 106px; display: grid; gap: 7px; width: min(310px, 35%); padding: 13px; border: 1px solid #ffffff50; border-radius: 14px; background: rgba(246, 241, 227, .95); box-shadow: 0 8px 25px #18302d22; }
+.journey small { color: #51695e; font-size: 12px; }
+.journey span { color: #737466; font-size: 10px; line-height: 1.5; }
+.journey button { min-height: 40px; padding: 8px 12px; color: #fff6e6; border: 0; border-radius: 9px; background: #3b6e61; font-size: 13px; text-align: left; }
+.journey button[data-testid='visit-reunion'] { background: #ac6151; }
+.thread { min-height: 0; overscroll-behavior: contain; overflow-anchor: none; }
+.replyTray { flex: 0 1 auto; min-height: 0; max-height: 43%; overflow-y: auto; border-top: 1px solid #d9d9d9; background: #f7f7f7; }
+.replyTray .composer, .replyTray .choices { max-height: none; overflow: visible; border-top: 0; }
+.phone[data-app='chat'] .phoneBody, .phone[data-app='call'] .phoneBody { overflow: hidden; }
+.chatPicture { width: 220px; max-width: 100%; margin: 0; }
+.chatPicture svg { display: block; width: 100%; height: auto; border-radius: 6px; }
+.chatPicture figcaption { margin-top: 3px; color: #7d8177; font-size: 10px; line-height: 1.3; }
+.moments .chatPicture { margin: 8px 0; }
+.callHeader { display: flex; flex: none; align-items: center; gap: 5px; padding: 9px; color: #3b6653; background: #dfecdf; font-size: 11px; }
+.callHeader button { margin-left: auto; padding: 6px 10px; color: white; border: 0; border-radius: 8px; background: #ae5550; }
+.callContacts { display: grid; gap: 9px; }
+.callContacts button { min-height: 46px; border: 1px solid #c7dacd; border-radius: 10px; background: #e9f3e8; color: #356548; text-align: left; padding: 10px; }
+.introLayer { position: absolute; z-index: 55; inset: 0; display: grid; place-items: center; padding: 20px; background: #223c3b60; backdrop-filter: blur(5px); }
+.introCard { width: min(420px, 100%); max-height: 100%; overflow-y: auto; border: 1px solid #fff5de; border-radius: 24px; padding: 28px; background: #f5f0e6; box-shadow: 0 24px 80px #172e3b44; }
+.introCard > small { color: #6a8077; font-size: 11px; letter-spacing: .08em; }
+.introCard h2 { margin: 10px 0 20px; font-family: Georgia, 'Noto Serif SC', serif; font-size: 25px; }
+.introMessage { padding: 14px; border-radius: 4px 16px 16px; background: #e0eadc; font-size: 14px; line-height: 1.8; }
+.contactCard { display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid #dcd9ca; border-radius: 12px; background: #fffcf6; }
+.contactPortrait { position: relative; display: block; flex: none; width: 68px; height: 85px; overflow: hidden; border-radius: 9px; background: #e9d7c0; }
+.contactCard strong, .contactCard small { display: block; }
+.contactCard small { margin-top: 3px; color: #8a8071; font-size: 11px; }
+.contactCard p { margin: 6px 0 0; color: #6b7368; font-size: 11px; line-height: 1.5; }
+.introHint { color: #747b70; font-size: 12px; line-height: 1.7; }
+.introCard .primary { width: 100%; background: #3b6e61; border-color: #3b6e61; }
+.reunion { left: auto; right: 18px; bottom: 18px; width: min(390px, calc(100% - 36px)); padding: 18px; transform: none; background: rgba(251, 243, 228, .96); }
+@media (max-width: 760px) {
+  .journey { right: 8px; bottom: 88px; width: min(270px, calc(100% - 16px)); padding: 9px 11px; gap: 4px; }
+  .journey > span { display: none; }
+  .narration { display: none; }
+  .scenePhone { width: 174px; padding: 9px; }
+  .reunion { right: 8px; bottom: 8px; width: calc(100% - 16px); max-height: 48%; padding: 12px; }
+  .introCard { padding: 20px; }
+  .introCard h2 { font-size: 22px; }
+  .replyTray { max-height: 44%; }
+}

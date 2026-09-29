@@ -32,13 +32,14 @@ import { quarterLabel } from "./lines";
 import PhoneOverlay, { type PhoneDebug } from "./PhoneOverlay";
 import { RELATIVES, REUNION_SECONDS, getReunionQuestions, reunionSummary, type ReunionTone } from "./reunionDinner";
 import {
-  VENUE_TITLES, getFestivalReminders, getHotspots, isReunionTurn, routeScene, type ChatId, type PhoneApp,
+  VENUE_TITLES, getFestivalReminders, getHotspots, isReunionTurn, phoneClock, routeScene, type ChatId, type PhoneApp,
 } from "./sceneRouter";
 import SceneCanvas from "./scene/SceneCanvas";
 import StepsMini from "./StepsMini";
 import TimingMini from "./TimingMini";
 import { playCue, type Cue } from "./sound";
 import styles from "./immersive.module.css";
+import { restoreDayPlan, type DayPlan } from "./dayPlan";
 
 const DECISIONS = new Set<ChildActionId>(["marry", "simple-wedding", "baby", "separate"]);
 const MONTHS = [2, 5, 8, 11];
@@ -129,19 +130,39 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
   const [cutscenes, setCutscenes] = useState<Cutscene[]>([]);
   const [reunionDone, setReunionDone] = usePreference("marriage-pressure-reunion", "");
   const [reunion, setReunion] = useState<ReunionState | null>(null);
+  const [reunionVisit, setReunionVisit] = useState(false);
+  const [introductionDone, setIntroductionDone] = usePreference("marriage-pressure-introduction", "");
+  const [friendRequested, setFriendRequested] = useState(false);
+  const weekKey = `${state.seed}-${state.turn}-${state.activeActor}`;
+  const [pendingPlan, setPendingPlan] = useState<DayPlan | null>(() => {
+    try { return restoreDayPlan(localStorage.getItem("marriage-pressure-day-plan"), weekKey); } catch { return null; }
+  });
+  const plan = pendingPlan?.key === weekKey ? pendingPlan : null;
+  useEffect(() => {
+    try {
+      if (plan) localStorage.setItem("marriage-pressure-day-plan", JSON.stringify(plan));
+      else localStorage.removeItem("marriage-pressure-day-plan");
+    } catch { /* 无本地存储时，当前会话的安排仍然可用。 */ }
+  }, [plan]);
+  const introductionKey = `${state.seed}-${state.candidateId}`;
+  const introductionOpen = state.phase === "turn" && state.activeActor === "child" && (state.stage === "single" || state.stage === "chatting") && !state.matchClosed && state.meetings === 0 && candidate && introductionDone !== introductionKey;
   const brief = pacing === "brief";
+  // 精简节奏略过时段，手机仍需呈现这一季全部已安排的消息。
+  const communicationState = useMemo<MarriageGameState>(() => (brief
+    ? { ...state, week: { ...state.week, slot: state.activeActor === "parent" ? "afternoon" : "evening" } }
+    : state), [state, brief]);
   const dateActivity = date?.plan.activity ?? null;
-  // 每年第一季的第一段时间先回老家吃年夜饭；看过就记下，切换视图也不重播
+  // 回乡是玩家在住处主动开启的行程，不再在每轮工位前突然插入。
   const reunionKey = `${state.seed}-${state.turn}`;
-  const reunionDue = state.phase === "turn" && !date && isReunionTurn(state)
-    && state.week.slot === getSlots(state.week.actor)[0] && reunionDone !== reunionKey;
+  const reunionAvailable = state.phase === "turn" && isReunionTurn(state) && reunionDone !== reunionKey;
+  const reunionDue = reunionAvailable && reunionVisit && !date;
   const reunionQuestions = useMemo(() => (reunionDue ? getReunionQuestions(state) : []), [reunionDue, state]);
   const reunionStep = useMemo<ReunionState>(() => (reunion?.key === reunionKey ? reunion : { key: reunionKey, index: 0, tones: [], reply: null }), [reunion, reunionKey]);
   const reunionOpen = reunionDue && !resolution && cutscenes.length === 0;
   const festival = useMemo(() => (state.phase === "turn" ? getFestivalReminders(state) : []), [state]);
   const route = useMemo(() => routeScene(state, dateActivity, brief, reunionDue), [state, dateActivity, brief, reunionDue]);
   const hotspots = useMemo(() => getHotspots(state, route, brief), [state, route, brief]);
-  const unread = useMemo(() => (state.phase === "turn" ? listChats(state, playerName).reduce((sum, entry) => sum + entry.unread, 0) : 0), [state, playerName]);
+  const unread = useMemo(() => (communicationState.phase === "turn" ? listChats(communicationState, playerName).reduce((sum, entry) => sum + entry.unread, 0) : 0), [communicationState, playerName]);
   const portraits = useMemo(() => state.candidateOptions.map(id => getCandidate(id)?.image).filter((image): image is string => Boolean(image)), [state.candidateOptions]);
   const cue = useCallback((name: Cue) => playCue(name, muted === "on"), [muted]);
 
@@ -165,8 +186,10 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
       reunion: reunionDue ? { index: reunionStep.index, total: reunionQuestions.length, tones: reunionStep.tones, answered: reunionStep.reply !== null } : null,
       cutscene: cutscenes[0]?.kind ?? null,
       festival,
+      pendingPlan: plan?.label ?? null,
+      introduction: introductionOpen ? (friendRequested ? "accepted" : "introduction") : null,
     };
-  }, [game.debugRef, route, state.week.slot, pacing, hotspots, phone, phoneDebug, date, confirm, reunionDue, reunionStep, reunionQuestions, cutscenes, festival]);
+  }, [game.debugRef, route, state.week.slot, pacing, hotspots, phone, phoneDebug, date, confirm, reunionDue, reunionStep, reunionQuestions, cutscenes, festival, plan, introductionOpen, friendRequested]);
 
   // 阶段变化与行动方交接都从前后状态差异里找，任何提交路径都不会漏掉
   const previousState = useRef<MarriageGameState>(state);
@@ -212,15 +235,22 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
   }, []);
 
   const commit = useCallback((action: MarriageGameAction) => {
+    if (action.type === "child-action" && !brief && state.week.slot !== "evening") {
+      setPendingPlan({ key: weekKey, action, label: CHILD_ACTIONS.find(item => item.id === action.id)?.title ?? "今晚的安排" });
+      setPhone(null);
+      setToast("记下了。先过完今天：下班路上还能聊聊，回家后再完成这项安排。");
+      return null;
+    }
     const result = game.commitAction(action);
     if (!result) {
       setToast("现在做不了这件事。");
       return null;
     }
     setPhone(null);
+    setPendingPlan(null);
     cue(result.state.turn > result.previous.turn ? "notify" : "tap");
     return result;
-  }, [game, cue]);
+  }, [game, cue, brief, state.week.slot, weekKey]);
 
   const runChoice = useCallback((choice: DialogueChoice) => {
     if (choice.close) { setPhone(null); return; }
@@ -228,6 +258,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
     if (choice.confirm) { setPhone(null); setConfirm(choice.confirm); return; }
     const { action } = choice;
     if (!action) return;
+    if (action.type === "child-action" && (action.id === "meet" || action.id === "meet-aa")) { setPhone({ app: "map", chat: null }); return; }
     if (action.type === "child-action" && action.id === "hobby" && !action.activity) { setPhone(null); setHobbyPick(true); return; }
     if (action.type === "child-action" && DECISIONS.has(action.id)) { setPhone(null); setConfirm(action.id); return; }
     commit(action);
@@ -259,11 +290,17 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
     }
   }, [hotspots, cue, runChoice, commit, game]);
 
-  const startDate = useCallback((plan: DatePlan) => {
+  const startDate = useCallback((datePlan: DatePlan) => {
     setPhone(null);
     cue("step");
-    setDate({ plan, stage: "arrive", mood: null, reaction: "" });
-  }, [cue]);
+    if (!brief && state.week.slot !== "evening") {
+      setPendingPlan({ key: weekKey, date: datePlan, label: `周末 · ${ACTIVITIES[datePlan.activity].title}` });
+      setToast("约好了。下班回家后，就可以出发赴约。");
+      return;
+    }
+    setPendingPlan(null);
+    setDate({ plan: datePlan, stage: "arrive", mood: null, reaction: "" });
+  }, [cue, brief, state.week.slot, weekKey]);
 
   const finishDate = useCallback((topic: MeetingTopic) => {
     if (!date) return;
@@ -283,7 +320,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
     <>
       <header className={styles.hud}>
         <div className={styles.placeCard}>
-          <small>{quarterLabel(state)} · {state.turn}/{state.maxTurns}</small>
+          <small>{quarterLabel(state)} · 本季的生活片段 · {state.turn}/{state.maxTurns}</small>
           <strong data-testid="scene-title">{route.title}</strong>
           {state.phase === "turn" && !date && !reunionDue && (
             <ol className={styles.slotStrip} aria-label="这一周的进度">
@@ -305,14 +342,14 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
           ))}
         </div>
         <div className={styles.hudTools}>
-          <button data-testid="pacing-toggle" aria-pressed={brief} onClick={() => setPacing(brief ? "full" : "brief")} title="切换节奏">{brief ? "精简节奏" : "完整一周"}</button>
+          <button data-testid="pacing-toggle" aria-pressed={brief} onClick={() => setPacing(brief ? "full" : "brief")} title="每季经历工作、通勤、住处，再完成一项主要安排">{brief ? "精简节奏" : "日常节奏"}</button>
           <button data-testid="sound-toggle" aria-pressed={muted === "on"} aria-label={muted === "on" ? "打开音效" : "关闭音效"} onClick={() => setMuted(muted === "on" ? "off" : "on")}>{muted === "on" ? <MutedOutlined /> : <SoundOutlined />}</button>
         </div>
       </header>
       {state.phase === "turn" && !date && !reunionDue && (
         <aside className={styles.narration} data-testid="relationship-feedback">
           <small>{state.activeActor === "parent" ? "家长视角" : `${playerName} · ${STAGE_LABELS[state.stage]}`}{candidate ? ` · ${candidate.name}` : ""}</small>
-          <p>{eventNotice?.detail ? game.personalizeNarrative(eventNotice.detail) : state.stage === "married" || state.stage === "parenthood" ? state.partnerNote : state.datingFeedback}</p>
+          <p>{state.week.slot === "work" ? "手边的手机亮了。忙完这一阵，下班路上再慢慢聊。" : state.week.slot === "commute" ? "走出办公楼，街灯刚亮。回条消息，或给家里打个电话，再回家。" : eventNotice?.detail ? game.personalizeNarrative(eventNotice.detail) : state.stage === "married" || state.stage === "parenthood" ? state.partnerNote : state.datingFeedback}</p>
           <small>{partnerLabel} {state.mutualIntent} · 了解 {state.understanding}</small>
           {festival.map(line => (
             <button key={line} className={styles.festival} data-testid="festival-reminder" onClick={() => { cue("tap"); setPhone({ app: "calendar", chat: null }); }}>{line}</button>
@@ -333,6 +370,20 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
         </button>
       ))}
     </nav>
+  );
+
+  const renderJourney = () => state.phase === "turn" && !date && !reunionDue && !introductionOpen && (
+    <aside className={styles.journey} data-testid="daily-journey">
+      <small>{plan ? `已安排：${plan.label}` : state.week.slot === "work" ? route.night ? "22:47 · 忙完这一阵就回家" : "11:42 · 午休前的一条消息" : state.week.slot === "commute" ? "下班后 · 把工作留在身后" : "回到家 · 今天终于属于自己"}</small>
+      {hotspots.some(spot => spot.id === "advance") ? <button data-testid="journey-next" onClick={() => onHotspot("advance")}>{state.week.slot === "work" ? "收好电脑，出发下班" : state.week.slot === "commute" ? "沿着灯光，回出租屋" : "回家吃午饭"} <ArrowRightOutlined /></button> : (
+<>
+        {plan && <button data-testid="complete-plan" onClick={() => { if (plan.date) startDate(plan.date); else if (plan.action) commit(plan.action); }}> {plan.date ? "周末到了，出发赴约" : `完成安排：${plan.label}`} <ArrowRightOutlined /></button>}
+        {!plan && <button data-testid="plan-evening" onClick={() => setPhone({ app: "calendar", chat: null })}>安排休息、成长或周末约会</button>}
+        {reunionAvailable && <button data-testid="visit-reunion" onClick={() => { setReunionVisit(true); setPhone(null); }}>春节行程 · 坐高铁回家吃年夜饭 →</button>}
+      </>
+)}
+      <span>{reunionAvailable && state.week.slot !== "evening" ? "春节将近 · 晚上回家后可安排返乡" : "微信与电话随时可用 · 完成主要安排后才进入下一季"}</span>
+    </aside>
   );
 
   const renderCandidateDraft = () => state.phase === "candidate" && (
@@ -441,7 +492,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
               <figcaption>{mini.photo}{date.mood ? ` · ${date.mood.label}` : ""}</figcaption>
             </figure>
             <small>合照已存进手机相册。</small>
-            <button className={styles.primary} data-testid="date-finish" onClick={() => setDate(null)}>回家 <ArrowRightOutlined /></button>
+            <button className={styles.primary} data-testid="date-finish" onClick={() => setDate(null)}>收好合照，开始下一季 <ArrowRightOutlined /></button>
           </>
         )}
       </section>
@@ -484,7 +535,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
   const renderReunion = () => {
     if (!reunionOpen) return null;
     const question = reunionQuestions[reunionStep.index];
-    const finish = () => { cue("step"); setReunionDone(reunionKey); setReunion(null); };
+    const finish = () => { cue("step"); setReunionDone(reunionKey); setReunion(null); setReunionVisit(false); setToast("年夜饭结束，返程回到住处。这一季的生活继续。"); };
     return (
       <section className={styles.reunion} data-testid="reunion-panel" aria-label="年夜饭连环问">
         <header>
@@ -522,7 +573,7 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
         ) : (
           <>
             <p className={styles.dateLine} data-testid="reunion-summary">{reunionSummary(reunionStep.tones)}</p>
-            <button className={styles.primary} data-testid="reunion-finish" onClick={finish}>回到这一周 <ArrowRightOutlined /></button>
+            <button className={styles.primary} data-testid="reunion-finish" onClick={finish}>返程，回到住处 <ArrowRightOutlined /></button>
           </>
         )}
       </section>
@@ -596,19 +647,25 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
             parentActive={state.activeActor === "parent"}
             month={MONTHS[(Math.max(1, state.turn) - 1) % 4]}
             onContextLost={onFallback}
+            unread={unread}
+            clock={phoneClock(communicationState)}
+            phonePreview={listChats(communicationState, playerName).find(entry => entry.unread > 0)?.preview ?? "点开微信，聊聊今天"}
+            showPhone={!date && !reunionDue && !introductionOpen && state.phase === "turn"}
+            onPhone={() => { cue("tap"); setPhone({ app: "chats", chat: null }); }}
             speaker={reunionOpen && reunionQuestions[reunionStep.index] ? RELATIVES.indexOf(reunionQuestions[reunionStep.index].asker as typeof RELATIVES[number]) : -1}
           />
         </SceneBoundary>
       </div>
       {renderHud()}
       {renderHotspotBar()}
+      {renderJourney()}
       {renderCandidateDraft()}
       {renderDate()}
       {renderReunion()}
       {toast && !phone && !date && <p className={styles.toast} data-testid="immersive-toast" role="status">{toast}</p>}
       {phone && (
         <PhoneOverlay
-          game={game}
+          game={{ ...game, state: communicationState }}
           app={phone.app}
           chat={phone.chat}
           reducedMotion={reducedMotion}
@@ -624,6 +681,19 @@ export default function ImmersiveGame({ game, onFallback }: { game: MarriageGame
       {renderConfirm()}
       {renderResolution()}
       {renderCutscene()}
+      {introductionOpen && !resolution && (
+        <div className={styles.introLayer}>
+          <section className={styles.introCard} data-testid="introduction" role="dialog" aria-modal="true" aria-label="妈妈介绍的相亲对象">
+            <small>{route.night ? "22:47" : "11:42"} · 工位上的手机振了一下</small>
+            <h2>{friendRequested ? "你们已经是好友了" : "妈妈推来了一张名片"}</h2>
+            <p className={styles.introMessage}>{friendRequested ? `“你好，我是${candidate.name}。听说你今天也在上班？不着急，忙完再回。”` : `“这是朋友介绍的${candidate.name}。我把微信推给你啦，先加上聊聊，合不合适你自己决定。”`}</p>
+            <div className={styles.contactCard}><span className={styles.contactPortrait}><Image src={candidate.image} alt={candidate.name} fill unoptimized sizes="80px" className={styles.avatarImage} /></span><div><strong>{candidate.name}</strong><small>{candidate.subtitle}</small><p>{candidate.boundary}</p></div></div>
+            <p className={styles.introHint}>{friendRequested ? "好友申请已通过。今天从一声招呼开始。" : "每季经历一段生活：办公室 → 下班路上 → 住处 → 周末。回微信、打电话都不会直接跳过一天。"}</p>
+            <button className={styles.primary} data-testid={friendRequested ? "intro-start-chat" : "intro-add-wechat"} onClick={() => { cue("send"); if (!friendRequested) setFriendRequested(true); else { setIntroductionDone(introductionKey); setFriendRequested(false); setPhone({ app: "chat", chat: "candidate" }); } }}>{friendRequested ? "打个招呼" : "添加微信，发送好友申请"} <ArrowRightOutlined /></button>
+            {friendRequested && <button className={styles.textButton} data-testid="intro-later" onClick={() => { setIntroductionDone(introductionKey); setFriendRequested(false); }}>先把手上的工作做完，稍后聊</button>}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

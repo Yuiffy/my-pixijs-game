@@ -206,6 +206,7 @@ export function useMarriageGame() {
     setPlayerName(cleanName);
     try {
       localStorage.setItem(PROFILE_KEY, cleanName);
+      ["marriage-pressure-introduction", "marriage-pressure-day-plan", "marriage-pressure-reunion"].forEach(key => localStorage.removeItem(key));
     } catch {
       setStorageAvailable(false);
     }
@@ -214,7 +215,7 @@ export function useMarriageGame() {
     const firstEvent = ECONOMY_EVENTS.find(item => item.id === next.currentEventId);
     setEventNotice(next.phase === "candidate"
       ? { kind: "match", title: "先替这局选一个相亲对象", detail: "当前版本一次只发展一段关系；换人后会重新建立关系进度。" }
-      : { kind: "event", title: `第 1 回合 · ${firstEvent?.title || "年夜饭开局"}`, detail: `${firstEvent?.detail || "饭桌刚刚坐下。"} ${next.lastEvent.replaceAll("子女", "我")}` });
+      : { kind: "event", title: `第 1 回合 · ${firstEvent?.title || "日常开始"}`, detail: `${firstEvent?.detail || "工位上的手机亮了，妈妈推来一张名片。"} ${next.lastEvent.replaceAll("子女", "我")}` });
     setSaved(null);
     return next;
   }, [seedInput, mode, difficulty, playerName]);

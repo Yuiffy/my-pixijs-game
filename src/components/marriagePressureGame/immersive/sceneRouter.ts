@@ -20,6 +20,13 @@ export type SceneId =
 export type PhoneApp = "home" | "chats" | "chat" | "moments" | "map" | "call" | "bank" | "calendar" | "album";
 export type ChatId = "mom" | "dad" | "family" | "matchmaker" | "work" | "candidate" | "child" | "sisters" | "landlord";
 
+export function phoneClock(state: Pick<MarriageGameState, "week" | "currentEventId">) {
+  const clocks = state.currentEventId === "overtime"
+    ? { work: "22:47", commute: "23:18", evening: "00:08", morning: "09:15", afternoon: "15:20" }
+    : { work: "11:42", commute: "18:36", evening: "22:08", morning: "09:15", afternoon: "15:20" };
+  return clocks[state.week.slot];
+}
+
 export type HotspotTarget =
   | { kind: "child-action"; id: ChildActionId }
   | { kind: "parent-action"; id: ParentActionId }

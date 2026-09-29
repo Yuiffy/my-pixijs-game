@@ -60,9 +60,10 @@ async function capture(page, name) {
   const e = await loadTypescriptModule("src/components/marriagePressureGame/engine.ts");
   const { CANDIDATES } = await loadTypescriptModule("src/components/marriagePressureGame/content.ts");
   const { chooseAction, runCampaign } = await import("./simulate-family-pressure.mjs");
-  const browser = await chromium.launch({ channel: "chrome", headless: !process.env.HEADED });
+  const browser = await chromium.launch({ channel: "chrome", headless: !process.env.HEADED, args: ["--mute-audio"] });
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => undefined; });
     const page = await context.newPage();
     // 沉浸版是默认视图；这些回归脚本覆盖经典卡片模式
     await page.addInitScript(() => localStorage.setItem("marriage-pressure-view", "classic"));

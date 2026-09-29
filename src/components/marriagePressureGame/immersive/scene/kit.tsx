@@ -155,23 +155,29 @@ export function Figure({ position, look, rotation = 0, seated = false, scale = 1
           <Box position={[0.09, legY, 0]} size={[0.13, 0.84, 0.14]} color={pants} />
         </>
       )}
-      <Box position={[0, seated ? 0.82 : 1.12, 0]} size={[0.4, 0.58, 0.24]} color={look.shirt} />
-      <Box position={[-0.25, seated ? 0.8 : 1.1, 0.02]} size={[0.1, 0.52, 0.12]} color={look.shirt} rotation={[holding ? -0.7 : 0, 0, 0.08]} />
-      <Box position={[0.25, seated ? 0.8 : 1.1, 0.02]} size={[0.1, 0.52, 0.12]} color={look.shirt} rotation={[holding ? -0.7 : 0, 0, -0.08]} />
+      <mesh position={[0, seated ? 0.82 : 1.12, 0]} scale={[1, 1, 0.7]} castShadow><capsuleGeometry args={[0.2, 0.22, 6, 16]} /><meshStandardMaterial color={look.shirt} roughness={0.9} /></mesh>
+      {[-1, 1].map(side => (
+<group key={side} position={[side * 0.23, seated ? 0.83 : 1.1, 0.05]} rotation={[seated || holding ? -0.85 : 0, 0, -side * 0.12]}>
+        <mesh castShadow><capsuleGeometry args={[0.067, 0.29, 6, 12]} /><meshStandardMaterial color={look.shirt} /></mesh>
+        <mesh position={[0, -0.22, 0]}><sphereGeometry args={[0.065, 12, 10]} /><meshStandardMaterial color={skin} /></mesh>
+      </group>
+))}
+      <Cyl position={[0, seated ? 1.12 : 1.42, 0]} radius={0.065} height={0.12} color={skin} segments={16} />
       <group position={[0, seated ? 1.26 : 1.56, 0]}>
         <mesh castShadow>
-          <sphereGeometry args={[0.16, 10, 8]} />
-          <meshStandardMaterial color={skin} roughness={0.9} flatShading />
+          <sphereGeometry args={[0.17, 24, 18]} />
+          <meshStandardMaterial color={skin} roughness={0.85} />
         </mesh>
         {/* 头发只盖住头顶和后脑，正面留出脸 */}
         <mesh position={[0, 0.05, -0.025]} scale={[1.08, 0.72, 1.08]} castShadow>
-          <sphereGeometry args={[0.165, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
-          <meshStandardMaterial color={hair} roughness={0.8} flatShading />
+          <sphereGeometry args={[0.175, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+          <meshStandardMaterial color={hair} roughness={0.85} />
         </mesh>
         {look.hairLong && <Box position={[0, -0.1, -0.11]} size={[0.3, 0.32, 0.07]} color={hair} />}
         <Box position={[-0.055, 0.0, 0.15]} size={[0.03, 0.035, 0.02]} color="#2b2522" />
         <Box position={[0.055, 0.0, 0.15]} size={[0.03, 0.035, 0.02]} color="#2b2522" />
         <Box position={[0, -0.07, 0.152]} size={[0.06, 0.012, 0.01]} color="#b0605a" />
+        {[-0.09, 0.09].map(x => <mesh key={x} position={[x, -0.045, 0.143]} scale={[1, 0.5, 0.18]}><sphereGeometry args={[0.037, 12, 8]} /><meshStandardMaterial color="#dfab96" /></mesh>)}
       </group>
       {holding === "phone" && <Box position={[0, seated ? 0.95 : 1.25, 0.3]} size={[0.09, 0.16, 0.02]} color="#1b1c20" emissive="#6fb8ff" />}
       {holding === "cup" && <Cyl position={[0.22, seated ? 0.95 : 1.25, 0.28]} radius={0.05} height={0.1} color="#f2eee6" />}
@@ -249,7 +255,7 @@ export function Hot({ id, children, marker }: { id: string; children: ReactNode;
     >
       {children}
       <mesh position={marker}>
-        <octahedronGeometry args={[active ? 0.09 : 0.065, 0]} />
+        <sphereGeometry args={[active ? 0.028 : 0.016, 12, 8]} />
         <meshStandardMaterial
           color={spot.enabled ? active ? "#ffe08a" : "#f4c35a" : "#8c8780"}
           emissive={spot.enabled ? "#f4a52a" : "#000000"}
