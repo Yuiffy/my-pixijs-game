@@ -31,6 +31,8 @@ export default function LiverIndexPage() {
           <span className={styles.brandLabel}>鹿饼AI直播总结</span>
         </Link>
         <div className={styles.topbarMeta}>
+          <Link href="/liver/sui/songs">岁己歌单 ↗</Link>
+          <Link href="/liver/sui/gifts">舰礼档案 ↗</Link>
           <span>LIVE ARCHIVE</span>
           <strong>{totalMembers} 位成员</strong>
         </div>

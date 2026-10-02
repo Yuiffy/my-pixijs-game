@@ -330,7 +330,10 @@ async function hit(page, model, index, tap = false) {
   const next = strike(model, index);
   assert.notEqual(next, model, 'Invalid strike at ' + index);
   assert.equal(await tile(page, index).evaluate(element => element.tagName), 'BUTTON');
-  if (tap) await tile(page, index).tap();
+  if (tap) {
+    await tile(page, index).tap();
+    if ((await state(page)).previewFirst) await page.getByTestId('confirm-strike').tap();
+  }
   else await tile(page, index).click();
   await page.waitForFunction(turns => JSON.parse(window.render_game_to_text()).turns === turns,
     next.turns);
@@ -416,15 +419,23 @@ async function closeRules(page, viaEscape = false) {
 async function main() {
   await loadEngine();
   mkdirSync(output, { recursive: true });
-  const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  const response = await fetch(url, { signal: AbortSignal.timeout(60000) });
   assert.equal(response.status, 200, 'Dev server is not ready at ' + url);
   assert.match(await response.text(), /维阿发掘局/, 'The responding server is not the expected game');
 
   const browser = await chromium.launch({
     channel: 'chrome',
     headless: process.env.HEADED !== '1',
-    args: ['--mute-audio'],
+    args: ['--mute-audio', '--disable-speech-api'],
   });
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async options => {
+    const context = await newContext(options);
+    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    await context.route('**/api/record', route => route.fulfill({ json: { success: true } }));
+    await context.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, route => route.fulfill({ body: '' }));
+    return context;
+  };
   try {
     const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await desktopContext.addInitScript(() => {

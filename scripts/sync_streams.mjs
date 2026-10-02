@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { liverConfigs, getLiverConfig, getAllLiverIds } from './liver-config.js';
+import { syncSongs } from './sync-songs.mjs';
 import {
   calculateOverlapRatio,
   choosePreferredArtifact,
@@ -1021,6 +1022,8 @@ async function syncStreams() {
   );
 
   console.log(`同步完成: ${finalStreams.length} 个直播数据 (${allStreams.length} 个新处理)`);
+  // Scan all activity records: old streams can receive reviews/uploads later.
+  if (currentLiverId === 'sui') syncSongs({ sourceDirs, output: path.join(targetBaseDir, 'songs.json') });
 }
 
 }

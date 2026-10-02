@@ -59,7 +59,7 @@
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }.row a { font-size: 12px; padding: 8px; }
 .destinations { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0; }.destinations button { text-align: left; font-size: 12px; padding: 10px; }
 .dialogue { color: #d3d4c8 !important; font-size: 13px !important; }
-.mapPanel { max-width: 520px; padding: 25px; }.mapPanel h2 { font-size: 25px; margin-bottom: 5px; }.mapPanel > p:not(.eyebrow) { font-size: 12px; }.map { width: 100%; max-height: 56vh; background: #11272d; margin: 10px 0; }
+.mapPanel { width: min(760px, 100%); max-width: 760px; padding: 25px; }.mapPanel h2 { font-size: 25px; margin-bottom: 5px; }.mapPanel > p:not(.eyebrow) { font-size: 12px; }.map { width: 100%; max-height: 56vh; background: #11272d; margin: 10px 0; }
 .panel > .rescueNote { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
 .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #152a30; padding: 20px; z-index: 8; font-size: 13px; }
 .storage { position: absolute; bottom: 2px; left: 6px; font-size: 10px; background: #283334; padding: 4px; z-index: 8; }
@@ -102,3 +102,9 @@
 @media (max-height: 520px) { .flask { bottom: 95px; left: 14px; min-width: 110px; padding: 6px !important; } .flask svg { width: 22px; height: 30px; } .flask strong { font-size: 16px; } .flask em { display: none; } }
 
 .mapLegend { display: block; color: #d4c8ab; font-size: 12px; line-height: 1.9; }
+.mapTabs { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0 0; }
+.mapTabs button { font-size: 11px; padding: 7px 9px; }
+.mapTabs button[aria-pressed="true"] { background: #c5aa74; color: #172c32; }
+.lampTravel { border-top: 1px solid #c5aa7444; padding-top: 12px; margin: 8px 0; }
+.lampTravel p { color: #d9c69a; font-size: 12px; margin: 0 0 8px; }
+.lampTravel button { font-size: 12px; margin: 3px; padding: 9px 12px; }

@@ -2209,3 +2209,25 @@
     transition: none !important;
   }
 }
+.saveTools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 14px 0;
+}
+
+.saveTools small {
+  color: #746782;
+}
+
+.saveTools button,
+.saveDialog button {
+  min-height: 44px;
+  font-size: 12px !important;
+}
+
+.modal.saveDialog p {
+  font-size: 14px;
+  color: #746782;
+}

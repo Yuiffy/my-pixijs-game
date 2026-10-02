@@ -90,32 +90,32 @@
   .primaryResources > button { font-size: 11px; }
   .primaryResources .meter > span { font-size: 10px; }
   .decisionLayout { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 10px; gap: 10px; }
-  .characterScene { display: grid; grid-template-columns: 72px minmax(0, 1fr); }
-  .characterPortrait { min-height: 96px; }
-  .characterPortrait .portraitImage { padding: 3px; }
+  .characterScene { display: grid; grid-template-columns: 72px minmax(0, 1fr); max-height: 96px; overflow: hidden; }
+  .characterPortrait { min-height: 0; max-height: 96px; height: 96px; }
+  .characterPortrait .portraitImage { padding: 3px; height: 100%; width: 100%; }
   .characterCaption { padding: 8px 12px; border-top: 0; }
   .characterCaption small { display: none; }
   .characterCaption h2 { margin: 0; font-size: 21px; }
   .characterCaption p { margin: 2px 0; font-size: 12px; }
   .characterCaption button { padding: 4px 0; }
-  .turnContext { padding: 0 3px 12px; }
-  .turnContext p { font-size: 14px; line-height: 1.6; }
+  .turnContext { padding: 0 3px 8px; }
+  .turnContext p { font-size: 14px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .turnContext small { font-size: 11px; }
-  .decisionMain .actionSection { padding: 13px 10px; }
+  .decisionMain .actionSection { padding: 10px 8px; }
   .decisionMain .actionHeading { grid-template-columns: minmax(0, 1fr) auto; }
   .decisionMain .actionHeading > span, .decisionMain .actionHeading small { display: none; }
-  .decisionMain .actionHeading h2 { font-size: 22px; }
-  .decisionMain .actionGrid { gap: 7px; }
-  .decisionMain .actionGrid button { grid-template-columns: 1fr; gap: 0; min-height: 110px; padding: 11px; }
+  .decisionMain .actionHeading h2 { font-size: 20px; }
+  .decisionMain .actionGrid { gap: 6px; }
+  .decisionMain .actionGrid button { grid-template-columns: 1fr; gap: 0; min-height: 0; padding: 8px 10px; }
   .decisionMain .actionIcon { display: none; }
   .decisionMain .actionGrid strong { font-size: 14px; }
-  .decisionMain .actionGrid small { font-size: 12px; line-height: 1.5; }
-  .decisionMain .actionHeading h2 { font-size: 20px; }
-  .decisionMain .actionTabs button { min-height: 38px; padding: 6px 0; }
-  .progressionGuide { margin-top: 2px; padding: 7px 0; }
+  .decisionMain .actionGrid small { margin-top: 4px; font-size: 11px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .decisionMain .actionTabs button { min-height: 36px; padding: 6px 0; }
+  .progressionGuide { margin-top: 2px; padding: 6px 0; }
   .progressionGuide strong { font-size: 12px; }
-  .progressionGuide p { font-size: 11px; }
-  .decisionMain .actionGrid button { min-height: 98px; padding: 10px; }
+  .progressionGuide p { font-size: 11px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .weekInbox { margin: 0 2px 8px; }
+  .weekInboxToggle { padding: 8px 10px; font-size: 12px; }
   .inspector { padding: 20px; }
   .inspectorTabs { gap: 14px; }
   .inspectorTabs button { font-size: 12px; }
@@ -171,6 +171,7 @@
 
 .lobbyScene {
   position: relative;
+  pointer-events: none;
   min-height: 720px;
   overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, 0.14);
@@ -809,3 +810,45 @@
   .catalogNavigation span { display: none; }
   .catalogSearch { grid-template-columns: 1fr; gap: 5px; }
 }
+
+/* V6：经典面板外壳、沉浸版加载占位、本周消息与约会活动 */
+.classicBoard { display: contents; }
+.game[data-view="immersive"] .footer { display: none; }
+.immersiveLoading { display: grid; height: calc(100svh - 62px); place-items: center; color: #e6c98d; background: #1c2130; font-size: 15px; }
+.weekInbox { flex: none; margin: 0 4px 12px; border: 1px solid var(--line); background: #f7f1e7; }
+.weekInboxToggle { display: flex; width: 100%; align-items: center; gap: 8px; padding: 10px 12px; text-align: left; color: var(--ink); border: 0; background: transparent; font-size: 13px; font-weight: 700; }
+.weekInboxToggle em { margin-left: auto; color: var(--red); font-size: 12px; font-style: normal; }
+.weekInboxList { display: grid; gap: 8px; max-height: 38svh; padding: 0 12px 12px; overflow-y: auto; }
+.weekInboxList article { padding: 8px 10px; border: 1px solid var(--line); background: #fff; }
+.weekInboxList article[data-handled="true"] { opacity: 0.7; }
+.weekInboxList header { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.weekInboxList header small { color: var(--muted); font-size: 11px; }
+.weekInboxList p { margin: 4px 0 6px; font-size: 13px; line-height: 1.5; }
+.weekInboxList article > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.weekInboxList article button { padding: 5px 9px; color: var(--teal); border: 1px solid var(--line); background: transparent; font-size: 12px; }
+.weekInboxList > small, .weekInboxList article > small { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.weekInboxFeedback { margin: 0; padding: 8px 10px; color: #3d5a4a; background: #e4efe9; font-size: 13px; }
+.activityChoices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-height: 34svh; margin: 12px 0; overflow-y: auto; }
+.activityChoices button { display: grid; padding: 8px; text-align: left; color: var(--ink); border: 1px solid var(--line); background: transparent; font-size: 13px; }
+.activityChoices button small { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.activityChoices button[aria-pressed="true"] { color: #fff; border-color: var(--teal); background: var(--teal); }
+.activityChoices button[aria-pressed="true"] small { color: #d8efe9; }
+@media (max-width: 760px) {
+  .activityChoices { grid-template-columns: 1fr 1fr; }
+  .immersiveLoading { height: calc(100svh - 56px); }
+}
+/* 顶栏多了视图切换按钮，窄屏时收紧间距，避免标题折行 */
+@media (max-width: 370px) {
+  .topbar { gap: 6px; padding: 8px 8px; }
+  .topbar > div strong { font-size: 15px; white-space: nowrap; }
+  .topbar nav { gap: 4px; }
+  .topbar > a, .topbar nav button { width: 30px; height: 30px; }
+}
+/* 结局页相册回顾：每次约会一张小卡片 */
+.endingAlbum { margin-top: 26px; }
+.endingAlbum ol { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; padding: 0; list-style: none; }
+.endingAlbum li { display: grid; width: 132px; padding: 8px 8px 10px; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); transform: rotate(-1.5deg); }
+.endingAlbum li:nth-child(even) { transform: rotate(1.5deg); }
+.endingAlbum li[data-liked="true"] { border-top: 4px solid #e98aa0; }
+.endingAlbum strong { font-size: 13px; }
+.endingAlbum small { color: var(--muted); font-size: 11px; }

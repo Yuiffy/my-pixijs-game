@@ -1,0 +1,391 @@
+.shell {
+  min-height: 100svh;
+  background: #f6f4ec;
+  color: #203d35;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+}
+.shell:fullscreen {
+  overflow: auto;
+}
+.header {
+  max-width: 1200px;
+  margin: auto;
+  padding: 22px 32px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid #d4dbcf;
+}
+.back {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  font-size: 25px;
+}
+.brand {
+  flex: 1;
+}
+.brand > span {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #688074;
+}
+.brand h1 {
+  margin: 3px 0 0;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.tools > button {
+  min-width: 48px;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid #c7d0c4;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.tools > button:disabled {
+  opacity: 0.45;
+}
+.main {
+  width: min(100% - 48px, 1000px);
+  margin: auto;
+  padding: 22px 0;
+}
+.hud {
+  display: flex;
+  gap: 44px;
+  align-items: center;
+  padding-bottom: 20px;
+}
+.hud > div {
+  display: grid;
+  gap: 3px;
+}
+.hud span {
+  font-size: 11px;
+  color: #65786d;
+}
+.hud strong {
+  font-size: 31px;
+  line-height: 1;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.hud small {
+  font-size: 12px;
+  color: #65786d;
+}
+.best {
+  margin-left: auto;
+  text-align: right;
+}
+.stage {
+  position: relative;
+  width: min(100%, calc((100svh - 350px) * 4 / 3));
+  min-width: min(100%, 440px);
+  aspect-ratio: 4 / 3;
+  margin: auto;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e6f0e9;
+  box-shadow: 0 12px 32px #244c3110;
+}
+.canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  outline-offset: -3px;
+}
+.canvas canvas {
+  display: block;
+}
+.canvas:focus-visible { outline: 2px solid #708f74; }
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #edf1e5cf;
+  padding: 22px;
+}
+.menu {
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+.eyebrow {
+  color: #537164;
+  font-size: 11px;
+  letter-spacing: 3px;
+}
+.menu h2 {
+  font-size: clamp(22px, 3vw, 34px);
+  font-weight: 700;
+  margin: 13px 0 10px;
+  letter-spacing: -1px;
+}
+.menu p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #527064;
+  margin: 0 auto 20px;
+  max-width: 330px;
+}
+.primary {
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  width: min(100%, 260px);
+  background: #244d3e;
+  color: #fffdf2;
+  padding: 14px 20px;
+  border-radius: 5px;
+  font-size: 15px;
+  transition: background 120ms;
+}
+.primary:hover {
+  background: #356851;
+}
+.secondary {
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  color: #476655;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.instructions {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #5c7467;
+  line-height: 1.9;
+}
+.instructions span {
+  color: #7b8c7f;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 10px;
+  gap: 15px;
+}
+.directions,
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.controls button {
+  min-width: 64px;
+  height: 58px;
+  background: #e5e9dd;
+  border: 1px solid #cdd6c7;
+  border-radius: 8px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-size: 17px;
+  padding: 8px 16px;
+}
+.directions button {
+  font-size: 26px;
+}
+.controls button:active:not(:disabled) {
+  background: #cad8c2;
+  transform: translateY(1px);
+}
+.controls button:disabled {
+  opacity: 0.4;
+}
+.controls .jump {
+  min-width: 106px;
+  background: #315c48;
+  color: #fffef1;
+  border-color: #315c48;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.controls .jump:active:not(:disabled) {
+  background: #497657;
+}
+.actions small {
+  display: block;
+  font-size: 10px;
+  color: #607761;
+}
+.hint {
+  font-size: 11px;
+  color: #778c7a;
+  text-align: center;
+  line-height: 1.7;
+}
+.footer {
+  padding-top: 10px;
+  border-top: 1px solid #d9dfd1;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+  color: #7a897b;
+}
+.notice {
+  font-size: 12px;
+  text-align: center;
+  margin: 10px 0;
+  color: #7f6340;
+}
+.shell button:focus-visible,
+.back:focus-visible {
+  outline: 2px solid #96743b;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .header {
+    padding: 12px;
+    gap: 8px;
+  }
+  .brand h1 {
+    font-size: 18px;
+  }
+  .brand > span {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .back {
+    width: 28px;
+    min-width: 28px;
+  }
+  .tools {
+    gap: 4px;
+  }
+  .tools > button {
+    min-width: 42px;
+    padding: 5px;
+    font-size: 11px;
+  }
+  .main {
+    width: calc(100% - 24px);
+    padding-top: 20px;
+  }
+  .hud {
+    gap: 25px;
+    padding-bottom: 16px;
+  }
+  .hud strong {
+    font-size: 27px;
+  }
+  .stage {
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 4 / 4.4;
+  }
+  .overlay {
+    padding: 16px;
+  }
+  .menu h2 {
+    font-size: 24px;
+  }
+  .menu p {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .instructions {
+    font-size: 10px;
+    margin-top: 16px;
+  }
+  .controls {
+    gap: 8px;
+  }
+  .controls button {
+    min-width: 52px;
+    padding: 6px 10px;
+  }
+  .controls .jump {
+    min-width: 80px;
+  }
+  .hint {
+    display: none;
+  }
+}
+@media (max-height: 500px) and (min-width: 601px) {
+  .header {
+    padding: 6px 16px;
+  }
+  .main {
+    display: grid;
+    grid-template-columns: 100px 1fr 130px;
+    width: calc(100% - 24px);
+    padding: 10px 0;
+    gap: 12px;
+  }
+  .hud {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    padding: 0;
+  }
+  .best {
+    margin: 0;
+    text-align: left;
+  }
+  .stage {
+    width: min(100%, calc((100svh - 85px) * 4 / 3));
+    min-width: 0;
+  }
+  .controls {
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    padding: 0;
+  }
+  .directions,
+  .actions {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .controls button {
+    min-width: 50px;
+    padding: 8px;
+    height: 48px;
+  }
+  .hint,
+  .footer {
+    display: none;
+  }
+  .menu h2 {
+    font-size: 24px;
+    margin: 5px 0;
+  }
+  .menu p {
+    margin-bottom: 10px;
+  }
+  .instructions {
+    margin-top: 8px;
+    font-size: 10px;
+  }
+  .eyebrow {
+    display: none;
+  }
+  .primary {
+    padding: 10px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .primary {
+    transition: none;
+  }
+}

@@ -1,12 +1,13 @@
 const assert = require('node:assert/strict');
 const { mkdirSync, readFileSync, writeFileSync } = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const ts = require('typescript');
 const { PGlite } = require('@electric-sql/pglite');
 const { NextRequest } = require('next/server');
 const { inspectPng } = require('./lib/autochess-screenshot.cjs');
 
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || require.resolve('playwright', { paths: [process.cwd(), path.join(os.homedir(), '.codex/skills/develop-web-game')] }));
 const base = process.env.BUTTON_BASE_URL || 'http://127.0.0.1:3838';
 const output = process.env.BUTTON_QA_DIR || 'tmp/button-game-verify';
 mkdirSync(output, { recursive: true });
@@ -51,6 +52,7 @@ const checkLayout = async page => {
   assert.deepEqual(problems, []);
 };
 const capture = async (page, name) => {
+  if (process.env.BUTTON_SCREENSHOTS === 'focused' && !['question-320', 'manual-local-mobile', 'global-saving-pass-mobile', 'uncertain-vote-offline', 'uncertain-vote-recovered'].includes(name)) return;
   await page.evaluate(() => document.fonts.ready);
   await checkLayout(page);
   const file = path.join(output, `${name}.png`);
@@ -69,12 +71,26 @@ const catalog = compile('src/components/buttonGame/content.ts');
 
 (async () => {
   assert.equal((await fetch(`${base}/game/button`)).status, 200, 'Start the local Next server first');
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-speech-api'] });
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async options => {
+    const context = await newContext(options);
+    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    // Public databases and analytics must not receive automated practice votes or page views.
+    await context.route('**/api/button-game', route => route.fulfill({ json: { mode: 'local', choice: null, totals: null } }));
+    await context.route('**/api/record', route => route.fulfill({ json: { success: true, skipped: true } }));
+    await context.route(/https:\/\/(pagead2\.googlesyndication\.com|hm\.baidu\.com)\//, route => route.fulfill({ body: '', contentType: 'application/javascript' }));
+    return context;
+  };
   const db = new PGlite();
   let allowNetworkErrors = false;
   const observe = page => {
     page.on('pageerror', error => errors.push(error.message));
-    page.on('console', message => { if (message.type() === 'error' && !allowNetworkErrors) errors.push(message.text()); });
+    page.on('console', message => {
+      if (message.type() !== 'error') return;
+      const expectedOutage = allowNetworkErrors && message.location().url.includes('/api/button-game') && message.text().startsWith('Failed to load resource:');
+      if (!expectedOutage) errors.push(`${message.text()} @ ${message.location().url}`);
+    });
   };
   try {
     const unavailable = await browser.newContext({ viewport: { width: 1440, height: 960 } });
@@ -118,12 +134,17 @@ const catalog = compile('src/components/buttonGame/content.ts');
     assert.equal(unavailableVotes, 0, 'Local fallback must not submit votes');
     allowNetworkErrors = false;
 
-    for (const failure of ['offline', 'timeout', 400, 429]) {
+    for (const failure of ['offline', 'timeout', 'invalid-json', 'invalid-result', 400, 429, '400-invalid-json']) {
       const failedContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
       const failedPage = await failedContext.newPage(); observe(failedPage);
+      let statusReads = 0;
       if (failure === 'timeout') await failedPage.clock.install();
       await failedPage.route('**/api/button-game', async route => {
+        statusReads++;
         if (failure === 'offline') await route.abort('internetdisconnected');
+        else if (failure === 'invalid-json') await route.fulfill({ contentType: 'application/json', body: '{broken' });
+        else if (failure === 'invalid-result') await route.fulfill({ json: { mode: 'global', choice: null, totals: { press: 10, pass: 2, total: 4 } } });
+        else if (failure === '400-invalid-json') await route.fulfill({ status: 400, contentType: 'text/plain', body: 'Invalid request' });
         else if (failure !== 'timeout') await route.fulfill({ status: failure, json: { error: `Expected ${failure}` } });
       });
       allowNetworkErrors = true;
@@ -131,7 +152,7 @@ const catalog = compile('src/components/buttonGame/content.ts');
       await failedPage.goto(`${base}/game/button`, { waitUntil: 'domcontentloaded' });
       await requested;
       if (failure === 'timeout') await failedPage.clock.fastForward(16000);
-      if (typeof failure === 'number') {
+      if (typeof failure === 'number' || failure === '400-invalid-json') {
         await phase(failedPage, 'error');
         assert.equal(await failedPage.getByRole('button', { name: '按下按钮', exact: true }).isEnabled(), false);
         assert.equal((await state(failedPage)).statisticsMode, 'pending', 'Validation and throttling must not bypass the server');
@@ -142,10 +163,36 @@ const catalog = compile('src/components/buttonGame/content.ts');
         assert.equal((await state(failedPage)).choice, 'pass');
         assert.equal((await state(failedPage)).statistics, null);
         if (failure === 'offline') await capture(failedPage, 'offline-mobile-result');
+        const readsAfterFallback = statusReads;
+        await failedPage.getByRole('button', { name: '下一道问题', exact: true }).tap();
+        await phase(failedPage, 'ready');
+        assert.equal(statusReads, readsAfterFallback, 'An outage must not add a network wait to every question');
+        await failedPage.getByRole('button', { name: '按下按钮', exact: true }).tap();
+        await phase(failedPage, 'answered');
+        await failedPage.reload({ waitUntil: 'domcontentloaded' });
+        await phase(failedPage, 'answered');
+        assert.equal(statusReads, readsAfterFallback, 'Local session survives refresh without retrying the failed service');
+        assert.equal((await state(failedPage)).choice, 'press');
       }
       await failedContext.close();
       allowNetworkErrors = false;
     }
+
+    const impatient = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+    const impatientPage = await impatient.newPage(); observe(impatientPage);
+    let waitingRequest;
+    await impatientPage.route('**/api/button-game', route => { waitingRequest = route; });
+    await impatientPage.goto(`${base}/game/button`, { waitUntil: 'domcontentloaded' });
+    await phase(impatientPage, 'loading');
+    await impatientPage.getByRole('button', { name: '先本机游玩', exact: true }).tap();
+    await phase(impatientPage, 'ready');
+    if (waitingRequest) await waitingRequest.fulfill({ json: { mode: 'global', choice: 'press', totals: { press: 1, pass: 0, total: 1 } } }).catch(() => {});
+    await impatientPage.getByRole('button', { name: '我不按', exact: true }).tap();
+    await phase(impatientPage, 'answered');
+    assert.equal((await state(impatientPage)).choice, 'pass', 'A stale status response cannot overwrite local play');
+    assert.equal((await state(impatientPage)).statistics, null);
+    await capture(impatientPage, 'manual-local-mobile');
+    await impatient.close();
 
     const context = await browser.newContext({ viewport: { width: 1440, height: 960 }, permissions: ['clipboard-read', 'clipboard-write'] });
     const page = await context.newPage(); observe(page);
@@ -262,7 +309,7 @@ const catalog = compile('src/components/buttonGame/content.ts');
     await expandedPage.reload({ waitUntil: 'networkidle' });
     await phase(expandedPage, 'answered');
     await expandedPage.goto(`${base}/demos`, { waitUntil: 'networkidle' });
-    await expandedPage.getByText(`按钮假说 · 虚拟主播 · ${catalog.QUESTIONS.length} 道题`, { exact: true }).waitFor();
+    await expandedPage.getByText(`互动选择 · 扮演决策者 · ${catalog.QUESTIONS.length} 道难题`, { exact: true }).waitFor();
     await expanded.close();
 
     // Exercise the production route against real PostgreSQL SQL, without credentials or public writes.
@@ -280,14 +327,25 @@ const catalog = compile('src/components/buttonGame/content.ts');
       '@/components/buttonGame/model': model, '@/lib/buttonGame/store': store, '@/lib/buttonGame/identity': identity,
     });
     let loseNextVote = false;
+    let dropNextVote = false;
     let holdNextVote = false;
     let releaseHeldVote;
     let voteRequests = 0;
+    let unavailableStatus = false;
     const attachApi = async target => {
       await target.route('**/api/button-game', async route => {
         const request = route.request();
         const body = request.postDataJSON();
+        if (body.action === 'status' && unavailableStatus) {
+          await route.fulfill({ status: 503, json: { error: 'Expected statistics outage' } });
+          return;
+        }
         if (body.action === 'vote') voteRequests++;
+        if (body.action === 'vote' && dropNextVote) {
+          dropNextVote = false;
+          await route.abort('failed');
+          return;
+        }
         if (holdNextVote && body.action === 'vote') {
           holdNextVote = false;
           await new Promise(resolve => { releaseHeldVote = resolve; });
@@ -345,22 +403,57 @@ const catalog = compile('src/components/buttonGame/content.ts');
     await capture(globalPage, 'global-result-desktop');
     await globalPage.getByRole('button', { name: '下一道问题', exact: true }).click();
     await phase(globalPage, 'ready');
+    const uncertainQuestion = (await state(globalPage)).question;
     loseNextVote = true; allowNetworkErrors = true;
     await globalPage.getByRole('button', { name: '按下按钮', exact: true }).click();
     await phase(globalPage, 'error');
-    const requestsAfterLoss = voteRequests;
+    let requestsAfterLoss = voteRequests;
+    assert.equal((await state(globalPage)).unconfirmedChoice, 'press');
+    assert.ok(await globalPage.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('button-game.pending.v1'))).length === 1));
+    unavailableStatus = true;
+    await globalPage.getByRole('button', { name: '重新载入本题', exact: true }).click();
+    await globalPage.waitForFunction(() => JSON.parse(window.render_game_to_text()).connectionMode === 'local');
+    await phase(globalPage, 'error');
+    assert.equal(await globalPage.getByRole('button', { name: '我不按', exact: true }).isEnabled(), false);
+    await capture(globalPage, 'uncertain-vote-offline');
+    await globalPage.reload({ waitUntil: 'networkidle' });
+    await phase(globalPage, 'error');
+    assert.equal((await state(globalPage)).unconfirmedChoice, 'press', 'Pending server result survives reload');
+    await globalPage.getByRole('button', { name: '先跳过', exact: true }).click();
+    await phase(globalPage, 'ready');
+    await globalPage.getByRole('button', { name: '我不按', exact: true }).click();
+    await phase(globalPage, 'answered');
+    assert.equal(voteRequests, requestsAfterLoss, 'Other questions remain playable locally without uploading');
+    await globalPage.goto(`${base}/game/button?q=${uncertainQuestion.id}`, { waitUntil: 'networkidle' });
+    await phase(globalPage, 'error');
+    unavailableStatus = false;
     await globalPage.getByRole('button', { name: '重新载入本题', exact: true }).click();
     await phase(globalPage, 'answered');
     allowNetworkErrors = false;
     assert.equal(voteRequests, requestsAfterLoss, 'Recovery must read the committed vote, not re-submit it');
     assert.equal((await state(globalPage)).statistics.total, 1);
     assert.equal((await state(globalPage)).choice, 'press');
+    assert.equal((await state(globalPage)).unconfirmedChoice, null);
+    assert.equal(await globalPage.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('button-game.pending.v1'))).length), 0);
+    await capture(globalPage, 'uncertain-vote-recovered');
+    await globalPage.getByRole('button', { name: '下一道问题', exact: true }).click();
+    await phase(globalPage, 'ready');
+    dropNextVote = true; allowNetworkErrors = true;
+    await globalPage.getByRole('button', { name: '按下按钮', exact: true }).click();
+    await phase(globalPage, 'error');
+    requestsAfterLoss = voteRequests;
+    await globalPage.getByRole('button', { name: '重新载入本题', exact: true }).click();
+    await phase(globalPage, 'ready');
+    allowNetworkErrors = false;
+    assert.equal((await state(globalPage)).unconfirmedChoice, null, 'Confirmed absence clears the pending marker');
+    assert.equal(voteRequests, requestsAfterLoss, 'An uncommitted vote is not automatically sent again');
     await global.clearCookies();
     await globalPage.reload({ waitUntil: 'networkidle' });
     await phase(globalPage, 'ready');
     assert.equal((await state(globalPage)).choice, null, 'A stale device record must not replace the current server identity');
     assert.equal(voteRequests, requestsAfterLoss);
     await attachApi(page);
+    await page.evaluate(() => sessionStorage.removeItem('button-game.session-mode.v1'));
     await goto(page, '?q=vt-fame-and-essays');
     assert.equal((await state(page)).statisticsMode, 'global');
     assert.equal((await state(page)).choice, null, 'Local practice answers must not be submitted automatically');

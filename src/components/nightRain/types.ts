@@ -1,8 +1,10 @@
+import type { HavenState } from './haven';
+
 export type Vec3 = { x: number; y: number; z: number };
 export type PlayerSkin = 'sui' | 'shiori' | 'nagisa';
 export type AttackId = 'light1' | 'light2' | 'light3' | 'heavy' | 'charged' | 'sprintLight' | 'sprintHeavy' | 'airLight' | 'airHeavy';
 export type Action = 'idle' | 'light' | 'heavy' | 'charge' | 'dodge' | 'parry' | 'guard' | 'guardRelease' | 'guardBreak' | 'hurt' | 'heal' | 'execute' | 'dead';
-export type EnemyKind = 'prowler' | 'guard' | 'duelist' | 'boss' | 'nana' | 'azi';
+export type EnemyKind = 'prowler' | 'guard' | 'duelist' | 'boss' | 'nana' | 'azi' | 'lancer' | 'captain' | 'regent' | 'reaver' | 'monk' | 'warden' | 'abbot' | 'serpent' | 'elegist';
 export type EnemyAction = 'idle' | 'chase' | 'windup' | 'attack' | 'recover' | 'stagger' | 'dead';
 export type Player = Vec3 & {
   facing: number; hp: number; stamina: number; action: Action; actionTime: number;
@@ -33,9 +35,10 @@ export type GameState = {
   player: Player; enemies: Enemy[]; effects: Effect[]; nextEffectId: number;
   time: number; deaths: number; kills: number; parries: number; executions: number;
   rice: number; bankedRice: number; level: number; charm: boolean; shortcut: boolean;
-  worldVersion: 4; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
+  worldVersion: 7; haven: HavenState; templeGate: boolean; flaskUpgrade: boolean; litLamps: string[];
+  chapterGates: string[]; chapterComplete: boolean; valleyGates: string[]; valleyComplete: boolean;
   playerSkin: PlayerSkin; harborGate: boolean; defeatedGuests: string[];
-  checkpoint: 'courtyard' | 'room'; bossDefeated: boolean; collected: string[];
+  checkpoint: 'courtyard' | 'room' | 'lower-lamp' | 'archive-lamp' | 'royal-lamp' | 'village-lamp' | 'monastery-lamp' | 'confluence-lamp' | 'haven-lamp'; bossDefeated: boolean; collected: string[];
   visited: string[]; lockedId: string | null; message: string; messageTime: number;
   prompt: string; nearbyId: string | null; region: string;
   bloodstain: (Vec3 & { rice: number }) | null; restCount: number;
@@ -46,7 +49,7 @@ export type Surface = {
   y: number; endY?: number; color: string;
   openEdges?: number[];
 };
-export type WorldAccess = boolean | { shortcut: boolean; templeGate: boolean; harborGate?: boolean };
-export type Obstacle = { gateId?: 'temple' | 'harbor'; landmarkId?: string; x: number; z: number; w: number; d: number; y: number; h: number; kind: 'pillar' | 'crate' | 'planter' | 'gate' | 'chest' | 'shrine' };
-export type Landmark = Vec3 & { id: string; label: string; kind: 'rest' | 'cache' | 'charm' | 'shortcut' | 'food' | 'note' | 'flask' };
+export type WorldAccess = boolean | { shortcut: boolean; templeGate: boolean; harborGate?: boolean; chapterGates?: string[]; valleyGates?: string[]; haven?: HavenState };
+export type Obstacle = { gateId?: string; landmarkId?: string; x: number; z: number; w: number; d: number; y: number; h: number; kind: 'pillar' | 'crate' | 'planter' | 'gate' | 'chest' | 'shrine' };
+export type Landmark = Vec3 & { id: string; label: string; kind: 'rest' | 'cache' | 'charm' | 'shortcut' | 'food' | 'note' | 'flask' | 'ferry' | 'npc' };
 export type CameraControl = { yaw: number; pitch: number; distance: number; reset: number };

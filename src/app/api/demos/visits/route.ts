@@ -1,28 +1,13 @@
 import { NextResponse } from 'next/server';
 
+import { gameGroups } from '@/components/gameLibrary/catalog';
+
 import { getPool } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-const visibleGamePaths = [
-  '/game/autochess',
-  '/game/night-rain',
-  '/game/rpg',
-  '/game/one-more',
-  '/game/flick-chess',
-  '/game/hype-harbor',
-  '/game/agi',
-  '/game/fab',
-  '/game/streamer',
-  '/game/hush-live',
-  '/game/family-pressure',
-  '/game/wuxia',
-  '/game/brick-excavation',
-  '/game/pre-stream',
-  '/game/snack',
-  '/game/button',
-  '/game/jumpone',
-];
+const visibleGamePaths = gameGroups.flatMap(group => group.games)
+  .filter(game => !game.externalStats).map(game => game.href);
 
 export async function GET() {
   if (!process.env.DATABASE_URL) {

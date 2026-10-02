@@ -81,6 +81,22 @@ in a CDN. The API is deliberately POST-only to remain excluded from static expor
   A failed vote still requires confirmation rather than pretending it succeeded.
   Retrying first reads the stored vote,
   handling the case where the response was lost after an insert committed.
+- After an unavailable status read (including malformed data), local mode remains
+  active for the current tab, including refreshes. Changing questions does not
+  repeat a failed connection or a 15-second timeout. The player can also choose
+  “先本机游玩” while a connection is pending; “重新连接统计” explicitly retries.
+  Session storage is optional, so this preference lasts only for the current page
+  when storage is blocked. This is network-independent play after the page has
+  loaded, not an installable offline cache of the website.
+- Before submitting a global vote, the client records a pending marker in the
+  separate `button-game.pending.v1` local storage key. A lost response stays
+  unconfirmed across refreshes. If a subsequent status read also fails or only
+  offers local mode, that question stays unconfirmed; other questions can still
+  be played locally. Only an authoritative global status/vote response clears the
+  marker. A confirmed absence allows a new manual choice; a committed vote restores
+  the original choice. Neither recovery path automatically resends a vote. When
+  device storage is disabled this protection cannot survive page closure, and the
+  UI states that the pending record is only held in the current page.
 - Uniqueness is enforced by `(question_id, question_version, voter_hash)` in
   PostgreSQL, not an in-memory counter. The first answer wins, including concurrent
   submissions with conflicting choices.
@@ -115,15 +131,20 @@ pnpm run build
 (PGlite), including duplicate/concurrent inserts, version isolation, request
 validation, identity signing, rate limiting and the actual Next route.
 
-With a local dev server (no `DATABASE_URL`) running, set `BUTTON_BASE_URL` and
+With a local dev or production server running, set `BUTTON_BASE_URL` and
 `PLAYWRIGHT_MODULE` if Playwright is not resolvable locally, then run
-`pnpm button:verify`. The browser suite uses installed Chrome and checks local
+`pnpm button:verify`. The browser suite uses muted installed Chrome with speech
+disabled, intercepts local practice requests, public analytics, and third-party
+scripts, and checks local
 play, persisted history, filters, completion, keyboard/touch input, share links,
 fullscreen, mobile layout, images, and unavailable storage. Every question added
 after the first edition is also opened by direct link, answered and layout-checked,
 including the new topic filters and the catalog count on the demos page. Its second phase
 passes browser requests through the actual API route backed by isolated PGlite,
-including two identities and a lost post-commit response. It never writes to Neon.
+including two identities, a lost post-commit response, an uncommitted request,
+offline recovery across refreshes, malformed responses, and validation/rate-limit
+errors. It never writes votes or test page visits to Neon. `BUTTON_SCREENSHOTS=focused`
+retains all behavior checks but captures only the five key recovery/mobile states.
 Screenshots and the report go in ignored `tmp/button-game-verify/`.
 
 ## Assets

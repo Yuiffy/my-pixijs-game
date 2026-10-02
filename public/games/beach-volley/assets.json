@@ -1,0 +1,43 @@
+{
+  "title": "晴海双打 · 岁己 × 栞栞",
+  "date": "2026-10-02",
+  "imageMethod": "Built-in ImageGen; reference-based generation; final delivery losslessly preserves alpha with WebP alphaQuality 100",
+  "identityReferences": ["/images/livers/sui.png", "/images/livers/shiori.png"],
+  "assets": [
+    {
+      "path": "beach.webp",
+      "use": "Playable tropical beach background",
+      "prompt": "Create a premium video-game background plate, landscape 16:9 at high resolution. A breathtaking photorealistic tropical beach, soft warm afternoon light, pristine turquoise ocean, pale powder sand, distant lush green limestone islands, gentle white waves, tasteful palm trees entering from upper left and upper right corners, a tiny thatched resort and two cream parasols at far right in the mid-distance. Camera is static from the side of a beach volleyball court at human chest height; horizon around 40% from top; the lower 43% is clean flat softly textured dry sand where gameplay characters and a net will be added by code. Calm readable central sky and ocean; beach extends edge to edge horizontally. Luxurious vacation sports game mood, luminous water, realistic materials, softly cinematic rich teal and sunbleached ivory, subtle lens atmosphere. No people, no volleyball, no net, no court markings, no text, no logos, no UI, no collage. This is an actual background asset for a game."
+    },
+    {
+      "path": "sui-atlas.webp",
+      "use": "Eight poses, Sui; victory pose replaced with dedicated full-body asset",
+      "prompt": "Generate a polished game sprite atlas on genuine transparent background: 4 columns by 2 rows, exactly eight full body poses of the SAME character, each centered within its equal rectangular cell, generous gap, no figure touching neighboring cells. Reference is identity only: preserve SUI's silver white twin ponytails, red eyes, dark sporty cat-ear cap, tiny turquoise heart hairclip. Reimagine as a refined realistic 3D anime sports videogame heroine, clearly adult woman in her mid twenties, natural mature proportions, approximately seven heads tall, tasteful athletic lavender and charcoal two-piece beach volleyball uniform: opaque racerback cropped sports top and fitted high-waisted athletic swim shorts, barefoot, slim fit athletic physique. No wings, no halo, no stockings, no jacket. Attractive detailed face, fine realistic hair and fabric, softly rendered skin, high-end 3D game cinematic quality, clean sunlit lighting from upper left. Nonsexual sporting presentation. All eight figures same scale and identical outfit. Facing three-quarter right. Row1: (1) relaxed standing ready with hands at waist, (2) running right left foot forward, (3) running right right foot forward, (4) knees bent with joined forearms ready to bump volleyball. Row2: (5) airborne jump with one arm reaching overhead, (6) forceful overhead volleyball spike with arm swung forward, (7) celebratory full body fist pump and bright confident smile, (8) disappointed standing with hands on knees and slightly bowed head. No ball, no props, no ground plane, no shadows outside figure, no text, no grid lines. Keep head and BOTH feet completely visible in EVERY cell. Output wide landscape atlas.",
+      "editPrompt": "Remove the background completely from this eight-pose game character sprite atlas. Keep all eight characters exactly unchanged: identity, clothing, color, pose, proportions, locations and sizes. Output a TRUE RGBA PNG cutout with alpha=0 around every character, including between their limbs. NO grey background, NO gradient, NO opaque backdrop, NO painted checkerboard, NO background shadows. Make the background genuinely transparent. Preserve all fine silver hair details and all limbs."
+    },
+    {
+      "path": "shiori-atlas.webp",
+      "use": "Eight poses, Shiori",
+      "prompt": "Production game sprite atlas on a completely TRANSPARENT alpha background, 4 columns x 2 rows, exactly eight full body poses of one beach volleyball athlete. The reference is for character identity: SHIORI, milk-blonde hair with one long side braid, ocean-blue eyes, brown headband, small pink hairclip and white ribbon on braid. Depict a stylish adult woman in her mid twenties with realistic mature proportions, seven heads tall. Refined realistic 3D anime sports videogame rendering: detailed beautiful face, realistic hair, fabric and skin, high-end videogame cinematic quality. Same outfit in every pose: opaque ivory and muted turquoise racerback sports crop top, matching high-waisted fitted athletic swim shorts with small pink side stripes, barefoot. Wholesome athletic presentation. No umbrella, no school uniform, no hosiery. Soft warm sunlight from upper left. ALL eight poses face three-quarter RIGHT, same scale, head and both feet fully visible. Each figure is centered in its own separate equal cell and has adequate empty margin. Row1: 1 relaxed ready stance hands on hips; 2 running right left foot forward; 3 running right right foot forward; 4 low receiving stance with forearms joined for a bump. Row2: 5 jumping with arm reaching overhead; 6 powerful overhead spike arm swung forward; 7 celebrating with both hands raised and joyful smile; 8 disappointed with hands on knees head slightly bowed. No volleyball, no text, no grid lines, no shadows outside figures. TRUE transparent PNG background with alpha=0. Do not draw any solid color, grey, gradient, landscape or checkerboard background."
+    },
+    {
+      "path": "intro.webp",
+      "use": "Opening video keyframe and game catalogue poster",
+      "prompt": "Create one beautiful wide 16:9 cinematic keyframe for a beach volleyball game intro, not a sprite sheet. Use the exact TWO adult athletic women from the first two references as character identity: SUI with silver twin tails, red eyes, dark cat-ear sports cap and charcoal/lavender sports crop top and swim shorts; SHIORI with milk-blonde side braid, blue eyes, brown headband and ivory/turquoise sports crop top and swim shorts. Preserve their outfits and detailed realistic 3D anime videogame rendering. They stand on opposite sides of a beach volleyball net looking at each other with friendly competitive smiles, medium full shot from knees up, SUI left foreground holds a blue white yellow volleyball at hip, SHIORI right midground raises a hand inviting a match. Third reference is the setting: exquisite sunlit turquoise tropical island beach, cream sand and palms, warm cinematic sun. Both characters clearly adults with natural mature athletic proportions. Dynamic elegant sports promotion shot, very detailed faces, hair and fabric. No text, no logos, no UI, no split panels, no extra people. Warm friendship and friendly rivalry."
+    },
+    {
+      "path": "sui-victory.webp",
+      "use": "Complete high-resolution celebration pose",
+      "prompt": "Create a SINGLE full-body victory-pose transparent game character cutout of the SAME SUI adult athletic heroine as this reference. This is NOT a sprite sheet. Preserve face, silver white twin ponytails, red eyes, dark cat ear sports cap, charcoal and lavender sports crop top and fitted high waisted athletic swim shorts. High-end detailed realistic 3D anime videogame style. Happy confident fist-pump celebration, both arms bent upward, one leg slightly bent and raised playfully but other foot firmly planted; natural joyful athletic pose. VERY IMPORTANT: the entire character INCLUDING BOTH COMPLETE LEGS AND BOTH FEET must fit inside the image with at least 8% transparent margin below the feet and above the head. No cut off limbs. Real adult proportions, softly sunlit skin and fine hair. No text, no props, no environment, no background or ground shadow. True transparent alpha background. Tall portrait image."
+    },
+    {
+      "path": "intro.mp4",
+      "method": "Dreamina CLI 1.0.1, seedance_2.0_fast_vip, first_last_frame",
+      "use": "5-second opening, skippable and bypassed for reduced motion",
+      "sourceResourceId": "05f5e47b-b3dd-425d-bc7f-0df457376336",
+      "delivery": "1280x720 H.264, 30 fps, faststart; generated soundtrack removed",
+      "quotedMaxCredits": 30,
+      "prompt": "以参考图为首帧，制作高品质3D写实动漫沙滩排球游戏开场。保持两位成年运动员的人物、服装、发色一致。银发双马尾的岁己轻轻把手中的排球向上抛起后稳稳接住，金发侧辫的栞栞笑着点头，向球网走近一步。镜头缓缓向前推近，微风吹动发梢，海浪和棕榈叶自然活动，阳光温暖，友好的赛前竞争氛围，动作连贯真实。不要增加角色，不要变换服装，不要文字字幕，不要镜头切换，不要语音。"
+    }
+  ]
+}

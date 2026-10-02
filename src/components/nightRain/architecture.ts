@@ -1,3 +1,7 @@
+import { CHAPTER_HOUSES, CHAPTER_STRUCTURES } from './chapter';
+import { HAVEN_HOUSES, HAVEN_STRUCTURES } from './haven';
+import { VALLEY_HOUSES, VALLEY_STRUCTURES } from './valley';
+
 export type Triple = [number, number, number];
 export type Solid = { id:string; position:Triple; size:Triple; color:string; yaw?:number; tilt?:number };
 export type House = { id:string; position:Triple; width:number; depth:number; height:number; color:string; rotation?:number; sign?:string; terrace?:boolean };
@@ -10,11 +14,14 @@ export const HOUSES:House[] = [
   { id: 'slow-house', position: [3.2, 0, -10.4], width: 8, depth: 6, height: 8.5, color: '#a69a7d', sign: '慢慢来 · SLOW SLOW' },
   { id: 'night-food', position: [-10, 0, -43], width: 9, depth: 6, height: 10, rotation: Math.PI / 2, color: '#967b77', sign: '夜食' },
   { id: 'market-house', position: [17.5, 0, -44], width: 9, depth: 5, height: 9, rotation: -Math.PI / 2, color: '#728b82', sign: 'ตลาด · MARKET' },
-  { id: 'north-west', position: [-3, 0, -53], width: 7, depth: 6, height: 9, color: '#a3937b' },
+  { id: 'north-west', position: [-9.5, 0, -53], width: 7, depth: 6, height: 9, color: '#a3937b' },
   { id: 'north-east', position: [6, 0, -53], width: 10, depth: 6, height: 11, color: '#809089' },
   { id: 'south-west', position: [-17, 0, 11.5], width: 8, depth: 6, height: 8.7, color: '#74897e' },
   { id: 'south-east', position: [18.5, 0, 5], width: 8, depth: 7, height: 10, rotation: -Math.PI / 2, color: '#738b91' },
-  ...Array.from({ length: 13 }, (_, i) => ({ id: `distant-${i}`, position: [-45 + i * 7, 0, -91 - random(i) * 7] as Triple, width: 6 + random(i + 1) * 2, depth: 5, height: 6 + random(i + 2) * 12, color: ['#506e78', '#6f8182', '#597980'][i % 3] })),
+  ...Array.from({ length: 13 }, (_, i) => ({ id: `distant-${i}`, position: [-27 + i * 7, 0, -91 - random(i) * 7] as Triple, width: 6 + random(i + 1) * 2, depth: 5, height: 6 + random(i + 2) * 12, color: ['#506e78', '#6f8182', '#597980'][i % 3] })),
+  ...CHAPTER_HOUSES,
+  ...VALLEY_HOUSES,
+  ...HAVEN_HOUSES,
 ];
 /** Local boxes used verbatim by both the visible house and its collision. */
 export function houseParts(h:House):Solid[] {
@@ -42,6 +49,9 @@ export const STRUCTURES:Solid[] = [
   { id: 'bell-foundation', position: [36, 3.7, -80], size: [11, 11.5, 5], color: '#697979' },
   ...[30.5, 49.5].map(x => ({ id: `tide-column-${x}`, position: [x, 9, -67] as Triple, size: [1, 6, 1] as Triple, color: '#b4b6a0' })),
   { id: 'tide-lintel', position: [40, 11.5, -67], size: [20, 1.1, 1.2], color: '#8aa5ab' },
+  ...CHAPTER_STRUCTURES,
+  ...VALLEY_STRUCTURES,
+  ...HAVEN_STRUCTURES,
 ];
 function worldPart(h:House, p:Solid):Solid {
  const yaw = h.rotation ?? 0; const c = Math.cos(yaw); const s = Math.sin(yaw); const [x, y, z] = p.position;

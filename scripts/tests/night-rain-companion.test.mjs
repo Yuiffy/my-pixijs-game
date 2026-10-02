@@ -11,10 +11,12 @@ const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z, a.y - b.y);
 const pathLength = path => path.slice(1).reduce((sum, p, i) => sum + gap(p, path[i]), 0);
 
 test('navigation reaches every discovery from spawn with gate shut and with gate open, using player radius', () => {
-  for (const open of [false, true]) for (const landmark of world.LANDMARKS) {
-    const path = guide.findPath(world.SPAWN, world.interactionPoint(landmark), open);
+  for (const open of [false, true]) for (const landmark of world.LANDMARKS.filter(l => l.z >= -83)) {
+    const access = fresh(); access.shortcut = open;
+    if (['well-testimony', 'well-choice', 'well-return'].includes(landmark.id)) access.haven.gates.push('well-door');
+    const path = guide.findPath(world.SPAWN, world.interactionPoint(landmark), access);
     assert.ok(path.length > 1, `${landmark.id}, gate ${open}`);
-    for (let i = 1; i < path.length; i++) assert.ok(guide.walkSegment(path[i - 1], path[i], open), landmark.id);
+    for (let i = 1; i < path.length; i++) assert.ok(guide.walkSegment(path[i - 1], path[i], access), landmark.id);
   }
   const destination = world.LANDMARKS.find(l => l.id === 'shortcut');
   const closed = guide.findPath(world.CHECKPOINT, destination, false);

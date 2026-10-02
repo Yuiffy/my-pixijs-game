@@ -17,7 +17,7 @@ test('architectural collision heights match rendered rotated roof box triangles'
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(...solid.size),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
   const root=new THREE.Group();root.position.set(...solid.position);root.rotation.y=solid.yaw??0;mesh.rotation.z=solid.tilt??0;root.add(mesh);root.updateMatrixWorld(true);
   for(const local of [[0,0,0],[solid.size[0]*.3,0,0],[-solid.size[0]*.3,0,solid.size[2]*.3]]){
-   const p=mesh.localToWorld(new THREE.Vector3(...local));const ray=new THREE.Raycaster(new THREE.Vector3(p.x,30,p.z),new THREE.Vector3(0,-1,0));const hit=ray.intersectObject(mesh)[0];
+   const p=mesh.localToWorld(new THREE.Vector3(...local));const roofTop=new THREE.Box3().setFromObject(mesh).max.y;const ray=new THREE.Raycaster(new THREE.Vector3(p.x,roofTop+1,p.z),new THREE.Vector3(0,-1,0));const hit=ray.intersectObject(mesh)[0];
    const actual=a.architectureIntervals(p.x,p.z).find(h=>h.id===solid.id);assert.ok(hit&&actual,solid.id);assert.ok(Math.abs(hit.point.y-actual.top)<1e-5,solid.id);checked++;
   }
   mesh.geometry.dispose();mesh.material.dispose();
@@ -36,7 +36,7 @@ test('walls stop grounded and airborne bodies and undersides interrupt upward ju
  place(s,18,2,-30);s.player.jumpVelocity=6.3;step(s,500);assert.ok(s.player.y+s.player.jumpHeight<=4.675-1.65+.001);assert.ok(s.player.jumpVelocity<=0);
 });
 test('ferry passage and old first act remain traversable, with an explicit tide entrance guide',()=>{
- const {state:s}=playFirstLevel(e);e.continueExploring(s);assert.match(s.interpretation,/摆渡庵/);assert.equal(c.mainTarget(s),'tide-note');
+ const {state:s}=playFirstLevel(e);e.continueExploring(s);assert.match(s.interpretation,/织坊下城/);assert.equal(c.mainTarget(s),'lower-lamp');
  const guide=c.createCompanion(s);assert.ok(c.leadTo(guide,s,'tide-note'));assert.match(guide.subtitle,/潮汐港/);
  const dest=w.LANDMARKS.find(l=>l.id==='tide-note');for(const p of c.findPath(s.player,dest,s).slice(1))walkTo(e,s,{...p,ignoreBoss:true},120000);
  assert.ok(s.player.x>21);assert.equal(s.player.y,0);assert.equal(s.mode,'playing');

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeftOutlined, FullscreenExitOutlined, FullscreenOutlined,
-  QuestionCircleOutlined, ReloadOutlined, RobotOutlined, TeamOutlined,
+  QuestionCircleOutlined, ReloadOutlined, RobotOutlined, TeamOutlined, PauseOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -36,6 +36,14 @@ export default function FlickChess() {
   const [mode, setMode] = useState<Mode>('ai');
   const [aim, setAim] = useState<Aim>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [pauseReason, setPauseReason] = useState<'manual' | 'away' | null>(null);
+  const [pendingMode, setPendingMode] = useState<Mode | null>(null);
+  const suspended = helpOpen || pauseReason !== null || pendingMode !== null;
+  const suspendedRef = useRef(suspended);
+  suspendedRef.current = suspended;
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const pauseRef = useRef<HTMLButtonElement>(null);
   const [fullScreen, setFullScreen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cleanup, setCleanup] = useState<CleanupStatus>(INITIAL_CLEANUP);
@@ -53,7 +61,7 @@ export default function FlickChess() {
       if (!game || disposed) return;
       const delta = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 1 / 60;
       lastTime = time;
-      game.step(delta);
+      if (!suspendedRef.current) game.step(delta);
       const next = game.snapshot();
       if (next.phase === 'moving' || next.phase !== lastPhase || next.shotCount !== lastShotCount) {
         if (frame % 2 === 0 || next.phase !== lastPhase) setSnapshot(next);
@@ -92,9 +100,15 @@ export default function FlickChess() {
       coordinates: 'board center is (0,0); +x right, +z toward red side; y is height',
       mode,
       cleanup,
+      suspended,
+pauseReason,
+helpOpen,
+pendingMode,
+aim,
       ...game.snapshot(),
     });
     diagnosticWindow.advanceTime = (ms: number) => {
+      if (suspendedRef.current) return;
       const steps = Math.max(1, Math.min(1800, Math.ceil(ms / (1000 / 60))));
       for (let index = 0; index < steps; index += 1) game.step(1 / 60);
       setSnapshot(game.snapshot());
@@ -103,13 +117,13 @@ export default function FlickChess() {
       delete diagnosticWindow.render_game_to_text;
       delete diagnosticWindow.advanceTime;
     };
-  }, [snapshot?.phase, mode, cleanup]);
+  }, [snapshot?.phase, mode, cleanup, suspended, pauseReason, helpOpen, pendingMode, aim]);
 
   useEffect(() => {
-    if (mode !== 'ai' || snapshot?.phase !== 'aiming' || snapshot.turn !== 'blue') return undefined;
+    if (suspended || mode !== 'ai' || snapshot?.phase !== 'aiming' || snapshot.turn !== 'blue') return undefined;
     const timer = window.setTimeout(() => {
       const game = gameRef.current;
-      if (!game) return;
+      if (!game || suspendedRef.current) return;
       const current = game.snapshot();
       if (current.phase !== 'aiming' || current.turn !== 'blue') return;
       const shot = chooseAiShot(current);
@@ -118,7 +132,7 @@ export default function FlickChess() {
       }
     }, 650);
     return () => window.clearTimeout(timer);
-  }, [mode, snapshot?.phase, snapshot?.shotCount, snapshot?.turn]);
+  }, [mode, snapshot?.phase, snapshot?.shotCount, snapshot?.turn, suspended]);
 
   useEffect(() => {
     const onFullScreen = () => setFullScreen(Boolean(document.fullscreenElement));
@@ -127,17 +141,71 @@ export default function FlickChess() {
   }, []);
 
   useEffect(() => {
-    if (!helpOpen) return undefined;
+    const suspendAway = () => {
+      if (!gameRef.current || gameRef.current.snapshot().winner) return;
+      suspendedRef.current = true;
+      setPauseReason('away');
+      setAim(null);
+    };
+    const onVisibility = () => { if (document.hidden) suspendAway(); };
+    window.addEventListener('blur', suspendAway);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('blur', suspendAway);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setHelpOpen(false);
+      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (pendingMode !== null) setPendingMode(null);
+        else if (helpOpen) setHelpOpen(false);
+        else if (pauseReason) setPauseReason(null);
+        else if (gameRef.current && !gameRef.current.snapshot().winner) {
+          suspendedRef.current = true;
+          setPauseReason('manual');
+        }
+      } else if (event.key.toLowerCase() === 'p' && !helpOpen && pendingMode === null
+        && gameRef.current && !gameRef.current.snapshot().winner) {
+        event.preventDefault();
+        suspendedRef.current = !pauseReason;
+        setPauseReason(pauseReason ? null : 'manual');
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [helpOpen]);
+  }, [helpOpen, pauseReason, pendingMode]);
+
+  useEffect(() => {
+    if (!suspended) return undefined;
+    const previous = document.activeElement as HTMLElement | null;
+    const pauseButton = pauseRef.current;
+    const surface = surfaceRef.current;
+    surface?.setAttribute('inert', '');
+    dialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const buttons = Array.from(dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? []);
+      if (!buttons.length) return;
+      const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+      event.preventDefault();
+      buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+    };
+    window.addEventListener('keydown', trap);
+    return () => {
+      surface?.removeAttribute('inert');
+      window.removeEventListener('keydown', trap);
+      if (previous?.isConnected && previous !== document.body) previous.focus();
+      else pauseButton?.focus();
+    };
+  }, [suspended, helpOpen, pendingMode]);
 
   const shoot = useCallback((pieceId: string, angle: number, power: number) => {
     const game = gameRef.current;
-    if (!game || (mode === 'ai' && game.snapshot().turn === 'blue')) return;
+    if (!game || suspendedRef.current || (mode === 'ai' && game.snapshot().turn === 'blue')) return;
     if (game.launch(pieceId, angle, power)) {
       setAim(null);
       setSnapshot(game.snapshot());
@@ -147,11 +215,22 @@ export default function FlickChess() {
   const newGame = useCallback((nextMode: Mode = mode) => {
     gameRef.current?.reset();
     setMode(nextMode);
+    setPendingMode(null);
+    setPauseReason(null);
+    setHelpOpen(false);
     setAim(null);
     setCleanup(INITIAL_CLEANUP);
     setRound(value => value + 1);
     if (gameRef.current) setSnapshot(gameRef.current.snapshot());
   }, [mode]);
+
+  const requestNewGame = (nextMode: Mode = mode) => {
+    const current = gameRef.current?.snapshot();
+    if (current && current.shotCount > 0 && !current.winner) {
+      suspendedRef.current = true;
+      setPendingMode(nextMode);
+    } else newGame(nextMode);
+  };
 
   const toggleFullScreen = () => {
     if (document.fullscreenElement) {
@@ -168,6 +247,7 @@ export default function FlickChess() {
 
   return (
     <main ref={pageRef} className={styles.page}>
+      <div ref={surfaceRef}>
       <div className={styles.boardHost}>
         {snapshot && (
 <FlickBoard
@@ -176,7 +256,8 @@ snapshot={snapshot}
 onShot={shoot}
 onAimChange={setAim}
 onCleanupStatus={setCleanup}
-          disabled={helpOpen || Boolean(winner) || isAiThinking} />
+          paused={suspended}
+          disabled={suspended || Boolean(winner) || isAiThinking} />
 )}
       </div>
 
@@ -187,18 +268,28 @@ onCleanupStatus={setCleanup}
         <div className={styles.brand}><span className={styles.brandMark}>VR</span><span>维阿弹棋</span></div>
         <div className={styles.topActions}>
           <GameShareButton gamePath="/game/flick-chess" />
+          <button
+ref={pauseRef}
+type="button"
+className={styles.iconButton}
+            aria-label="暂停"
+title="暂停（P / Esc）"
+disabled={!snapshot || Boolean(winner)}
+            onClick={() => { suspendedRef.current = true; setPauseReason('manual'); }}>
+            <PauseOutlined aria-hidden />
+          </button>
           <div className={styles.modeControl} role="group" aria-label="对战模式">
             <button
 type="button"
 className={mode === 'ai' ? styles.modeActive : ''}
-              onClick={() => { if (mode !== 'ai') newGame('ai'); }}
+              onClick={() => { if (mode !== 'ai') requestNewGame('ai'); }}
 title="对战 AI">
               <RobotOutlined aria-hidden /><span className={styles.modeLabel}>对战 AI</span>
             </button>
             <button
 type="button"
 className={mode === 'local' ? styles.modeActive : ''}
-              onClick={() => { if (mode !== 'local') newGame('local'); }}
+              onClick={() => { if (mode !== 'local') requestNewGame('local'); }}
 title="本地双人">
               <TeamOutlined aria-hidden /><span className={styles.modeLabel}>本地双人</span>
             </button>
@@ -206,7 +297,7 @@ title="本地双人">
           <button
 type="button"
 className={styles.iconButton}
-onClick={() => newGame()}
+onClick={() => requestNewGame()}
             title="重新开局"
 aria-label="重新开局"><ReloadOutlined aria-hidden /></button>
           <button
@@ -220,7 +311,7 @@ aria-label={fullScreen ? '退出全屏' : '全屏'}>
           <button
 type="button"
 className={styles.iconButton}
-onClick={() => setHelpOpen(true)}
+onClick={() => { suspendedRef.current = true; setHelpOpen(true); }}
             title="规则"
 aria-label="规则"><QuestionCircleOutlined aria-hidden /></button>
         </div>
@@ -242,7 +333,7 @@ aria-label="规则"><QuestionCircleOutlined aria-hidden /></button>
       </div>
 
       {snapshot?.phase === 'aiming' && !isAiThinking && !winner && !aim && (
-        <div className={styles.actionPrompt}>选择{sideName(turn)}棋子</div>
+        <div className={styles.actionPrompt}>选择{sideName(turn)}棋子 · P / Esc 暂停</div>
       )}
 
       {selectedPiece && (
@@ -270,14 +361,27 @@ aria-label="规则"><QuestionCircleOutlined aria-hidden /></button>
         </div>
       )}
 
-      {helpOpen && (
+      </div>
+
+      {pendingMode !== null ? (
+        <div className={styles.helpBackdrop}>
+          <section ref={dialogRef} className={styles.helpPanel} role="dialog" aria-modal="true" aria-labelledby="flick-reset-title">
+            <h2 id="flick-reset-title">{pendingMode === mode ? '重新开局？' : '切换模式并开新局？'}</h2>
+            <p>当前第 {snapshot?.shotCount ?? 0} 弹，对局已暂停。确认后会清空本局棋盘。</p>
+            <div className={styles.dialogActions}>
+              <button type="button" onClick={() => setPendingMode(null)}>保留本局</button>
+              <button type="button" onClick={() => newGame(pendingMode)}>确认开新局</button>
+            </div>
+          </section>
+        </div>
+      ) : helpOpen ? (
         <div
 className={styles.helpBackdrop}
 role="presentation"
 onMouseDown={event => {
           if (event.target === event.currentTarget) setHelpOpen(false);
         }}>
-          <section className={styles.helpPanel} role="dialog" aria-modal="true" aria-labelledby="flick-help-title">
+          <section ref={dialogRef} className={styles.helpPanel} role="dialog" aria-modal="true" aria-labelledby="flick-help-title">
             <div className={styles.helpHeader}>
               <h2 id="flick-help-title">弹棋规则</h2>
               <button type="button" onClick={() => setHelpOpen(false)} aria-label="关闭规则">×</button>
@@ -288,10 +392,20 @@ onMouseDown={event => {
               <li>棋子滑动、碰撞并可能跌出棋盘；己方棋子也会被撞出。</li>
               <li>全部停稳后换手，先把对手棋子全部弹出者获胜。</li>
             </ol>
-            <p>棋子质量与大小随棋种变化。切换对战模式会开启新局。</p>
+            <p>棋子质量与大小随棋种变化。P / Esc 暂停；打开规则会暂停物理和 AI。离开页面后需主动继续，拖动中的瞄准会取消。切换模式会确认后开启新局。</p>
           </section>
         </div>
-      )}
+      ) : pauseReason ? (
+        <div className={styles.helpBackdrop}>
+          <section ref={dialogRef} className={styles.helpPanel} role="dialog" aria-modal="true" aria-labelledby="flick-pause-title">
+            <h2 id="flick-pause-title">对局已暂停</h2>
+            <p>{pauseReason === 'away' ? '刚才离开了页面，棋盘和 AI 正在等你。' : '棋盘、碰撞和 AI 均已暂停。'}继续后接着当前这一弹。</p>
+            <div className={styles.dialogActions}>
+              <button type="button" onClick={() => setPauseReason(null)}>继续对局</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {error && <div className={styles.error} role="alert">{error}</div>}
     </main>

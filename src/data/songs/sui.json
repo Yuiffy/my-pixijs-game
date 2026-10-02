@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-02T13:39:08.999Z",
+  "sessions": [
+    {
+      "id": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22",
+      "recordedAt": "2026-10-01 20:13:38",
+      "title": "陪你这个猪过周四",
+      "complete": true
+    }
+  ],
+  "performances": [
+    {
+      "id": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22:activity-1",
+      "sessionId": "781977dcd37f5b1b516c738b725db57178ead246759649d2250874c5b57bce22",
+      "name": null,
+      "start": 4302,
+      "end": 4565,
+      "performance": "fragment",
+      "confirmed": false,
+      "boundariesConfirmed": false,
+      "clip": {
+        "bvid": "BV1pvaU6xE6i",
+        "part": 1,
+        "url": "https://www.bilibili.com/video/BV1pvaU6xE6i/?p=1"
+      }
+    }
+  ]
+}

@@ -27,6 +27,14 @@ const roster = await loadTypescriptModule("src/components/marriagePressureGame/r
 const progression = await loadTypescriptModule("src/components/marriagePressureGame/progression.ts");
 const growth = await loadTypescriptModule("src/components/marriagePressureGame/growth.ts");
 
+const V6_KEYS = ["week", "knownInterests", "knownDislikes", "playerHobbies", "lastActivity", "dateLog"];
+function asV5(state) {
+  const copy = JSON.parse(JSON.stringify(state));
+  for (const key of V6_KEYS) delete copy[key];
+  copy.version = 5;
+  return copy;
+}
+
 function start(mode = "child", difficulty = "realistic", seed = 20260920) {
   return gameReducer(createInitialState(), {
     type: "start",
@@ -210,11 +218,12 @@ test("round resolution separates my choice, reality event, and family response",
   assert.ok(explained, "Expected a seed where later events visibly offset a pressure-reducing choice");
   const { before, result, choiceStress, laterStress } = explained;
   assert.deepEqual(result.state, gameReducer(before, { type: "child-action", id: "boundary" }));
-  assert.deepEqual(result.steps.map(step => step.kind), ["choice", "household", "reality", "family"]);
+  const core = result.steps.filter(step => step.kind !== "message");
+  assert.deepEqual(core.map(step => step.kind), ["choice", "household", "reality", "family"]);
   assert.ok(choiceStress < 0);
   assert.ok(laterStress > 0);
-  assert.match(result.steps[2].title, /^现实事件：/);
-  assert.match(result.steps[3].title, /^家长回应：/);
+  assert.match(core[2].title, /^现实事件：/);
+  assert.match(core[3].title, /^家长回应：/);
   for (const step of result.steps) {
     for (const change of step.changes) {
       assert.equal(change.after - change.before, change.delta);
@@ -412,7 +421,7 @@ test("v1 saves migrate without preserving the old ending meaning", () => {
   legacy.phase = "ended";
   legacy.ending = "depressed";
   const restored = validateSave(legacy);
-  assert.equal(restored.version, 5);
+  assert.equal(restored.version, 6);
   assert.equal(restored.nextGenStress, 0);
   assert.equal(restored.ending, "burnout");
   assert.equal(restored.startAge, 26);
@@ -426,7 +435,7 @@ test("v2 saves replace the cat candidate and gain age fields", () => {
   delete legacy.marriedAtTurn;
   delete legacy.parenthoodAtTurn;
   const restored = validateSave(legacy);
-  assert.equal(restored.version, 5);
+  assert.equal(restored.version, 6);
   assert.equal(restored.candidateId, "nana7mi");
   assert.equal(restored.startAge, 26);
 });
@@ -582,7 +591,7 @@ test("new quarterly age and genuine v3 saves retain separate time scales", () =>
   const old = { ...state, version: 3 };
   for (const key of ["familyReserve", "monthsPerTurn", "understanding", "chemistry", "matchClosed", "datingFeedback", "lifestyle", "budgetAgreed", "moneyStrainTurns", "burnoutTurns", "conflictTurns", "recoveryGranted", "partnerNote"]) delete old[key];
   const migrated = validateSave(old);
-  assert.equal(migrated.version, 5);
+  assert.equal(migrated.version, 6);
   assert.equal(getAgeAtTurn(migrated), state.startAge + 8);
   assert.equal(migrated.burnoutTurns, 0);
   assert.deepEqual(validateSave(migrated), migrated);
@@ -711,7 +720,7 @@ test("removed original candidates migrate without losing an active or completed 
   const aliases = { lin: "xuehui", qiao: "liko", chen: "shiori", zhou: "nana7mi", xu: "izayoi", tang: "sui" };
   assert.ok(CANDIDATES.every(c => !(c.id in aliases)));
   for (const [oldId, replacement] of Object.entries(aliases)) {
-    const before = situation({ candidateId: oldId, turn: 8, relation: 73, mutualIntent: 67, savings: 19, weddingDebt: 12, meetings: 3 });
+    const before = asV5(situation({ candidateId: oldId, turn: 8, relation: 73, mutualIntent: 67, savings: 19, weddingDebt: 12, meetings: 3 }));
     const after = validateSave(JSON.parse(JSON.stringify(before)));
     assert.equal(after.candidateId, replacement);
     for (const key of ["turn", "stage", "relation", "mutualIntent", "savings", "weddingDebt", "meetings", "rng"]) assert.equal(after[key], before[key]);
@@ -723,7 +732,7 @@ test("removed original candidates migrate without losing an active or completed 
 });
 
 test("legacy draft aliases deduplicate and narrative names follow the real portraits", () => {
-  const save = { ...start("parent"), candidateOptions: ["xu", "izayoi", "lin"], rejectedCandidates: ["qiao", "liko"], lastEvent: "许青愿意见面", datingFeedback: "许青想先了解", log: ["许青来到饭桌", "乔安已经翻篇"] };
+  const save = { ...asV5(start("parent")), candidateOptions: ["xu", "izayoi", "lin"], rejectedCandidates: ["qiao", "liko"], lastEvent: "许青愿意见面", datingFeedback: "许青想先了解", log: ["许青来到饭桌", "乔安已经翻篇"] };
   const restored = validateSave(save);
   assert.deepEqual(restored.candidateOptions, ["izayoi", "xuehui"]);
   assert.deepEqual(restored.rejectedCandidates, ["liko"]);
@@ -839,7 +848,7 @@ test("growth caps, snapshots and v4 migration survive save/load without resets",
   const old = { ...situation({ stage: "married", turn: 9, savings: 23 }), version: 4 };
   for (const key of Object.keys(growth.GROWTH_DEFAULTS)) delete old[key];
   const migrated = validateSave(old);
-  assert.equal(migrated.version, 5);
+  assert.equal(migrated.version, 6);
   for (const key of ["turn", "stage", "savings", "relation", "rng"]) assert.equal(migrated[key], old[key]);
   assert.equal(migrated.fitness, 40);
   for (const patch of [{ fitness: 101 }, { grooming: -1 }, { interests: NaN }, { relationshipBalance: 2.5 }, { growthNote: null }]) assert.equal(validateSave({ ...migrated, ...patch }), null);

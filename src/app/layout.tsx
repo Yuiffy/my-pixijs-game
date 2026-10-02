@@ -6,6 +6,7 @@ import Script from 'next/script';
 
 import './globals.css';
 import Analytics from '@/components/Analytics';
+import RecentGameTracker from '@/components/gameLibrary/RecentGameTracker';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
         {/* 2. 插入统计组件，它会自动监听路由变化 */}
         <Suspense fallback={null}>
           <Analytics />
+          <RecentGameTracker />
         </Suspense>
         {/* 2. 添加百度统计代码 */}
         {isProduction && (

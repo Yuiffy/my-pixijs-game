@@ -20,6 +20,27 @@ export interface Answer {
 }
 export type Answers = Record<string, Answer>;
 export const STORAGE_KEY = "button-game.answers.v1";
+export const PENDING_STORAGE_KEY = "button-game.pending.v1";
+export const SESSION_MODE_KEY = "button-game.session-mode.v1";
+export type PendingVote = Pick<Answer, "id" | "version" | "choice">;
+export type PendingVotes = Record<string, PendingVote>;
+
+export function readPendingVotes(raw: string | null): PendingVotes {
+  try {
+    const data: unknown = JSON.parse(raw || "{}");
+    if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+    const pending: PendingVotes = {};
+    Object.values(data).forEach((value) => {
+      if (!value || typeof value !== "object") return;
+      const item = value as PendingVote;
+      const question = findQuestion(item.id, item.version);
+      if (question && isChoice(item.choice)) pending[questionKey(question)] = {
+        id: question.id, version: question.version, choice: item.choice,
+      };
+    });
+    return pending;
+  } catch { return {}; }
+}
 
 export function isChoice(value: unknown): value is Choice {
   return value === "press" || value === "pass";

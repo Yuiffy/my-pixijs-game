@@ -1,0 +1,86 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), path.join(os.homedir(), '.codex/skills/develop-web-game')] }));
+const { inspectPng } = require('./lib/autochess-screenshot.cjs');
+const url = process.env.GIFTS_URL || 'http://localhost:3958/liver/sui/gifts';
+const output = path.resolve('tmp/gifts-qa');
+fs.mkdirSync(output, { recursive: true });
+const catalog = JSON.parse(fs.readFileSync('src/data/gifts/sui.json', 'utf8'));
+const populated = catalog.months.filter(month => month.entries.length).length;
+
+(async () => {
+  assert.equal((await fetch(url)).status, 200, 'server must respond before launching Chrome');
+  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--mute-audio', '--disable-speech-api'] });
+  const errors = []; const screenshots = [];
+  try {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1080 }, reducedMotion: 'reduce' });
+    await context.addInitScript(() => { if (window.speechSynthesis) window.speechSynthesis.speak = () => {}; });
+    const page = await context.newPage();
+    await page.route('**/api/record', route => route.fulfill({ json: { success: true } }));
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    async function capture(name, fullPage = true) {
+      await page.locator('img').evaluateAll(images => Promise.all(images.filter(img => img.getBoundingClientRect().top < innerHeight).map(img => img.decode().catch(() => {}))));
+      const png = await page.screenshot({ path: path.join(output, `${name}.png`), fullPage, animations: 'disabled' });
+      const metrics = inspectPng(png);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'no horizontal overflow');
+      screenshots.push({ name, metrics });
+    }
+    await page.goto(url);
+    await page.getByRole('heading', { name: '岁己舰礼档案。' }).waitFor();
+    await page.getByRole('status').filter({ hasText: `${populated} 个月份` }).waitFor();
+    assert.equal(await page.locator('[data-month]').count(), 8);
+    await capture('01-desktop', false);
+    await page.getByRole('button', { name: '下一页' }).click();
+    assert.ok((await page.getByRole('navigation', { name: '月份分页' }).innerText()).includes(`2 / ${Math.ceil(populated / 8)}`));
+    await page.getByLabel('搜索礼物或月份').fill('手写信');
+    await page.getByLabel('身份', { exact: true }).selectOption('governor');
+    await page.getByRole('navigation', { name: '礼物年份' }).getByRole('button', { name: /^2026/ }).click();
+    await page.getByRole('status').filter({ hasText: '1 个月份' }).waitFor();
+    assert.equal(await page.locator('[data-month]').getAttribute('data-month'), '2026-09');
+    assert.equal(await page.getByRole('region', { name: '2026-09 舰长礼物' }).count(), 0);
+    await page.reload();
+    await page.getByRole('status').filter({ hasText: '1 个月份' }).waitFor();
+    assert.equal(await page.getByLabel('搜索礼物或月份').inputValue(), '手写信');
+    assert.equal(await page.getByLabel('身份', { exact: true }).inputValue(), 'governor');
+    await page.getByRole('button', { name: '重置筛选' }).click();
+    await page.getByLabel('搜索礼物或月份').fill('2026-09');
+    await page.locator('[data-month="2026-09"] summary').click();
+    assert.ok(await page.getByText('录制-25788785-20260904-195603-794-岁己四周年3d演出回！.srt', { exact: true }).count() > 0);
+    assert.ok(await page.getByText('达成 25 提督追加', { exact: true }).isVisible());
+    await capture('02-sources-desktop');
+    await page.locator('[data-month="2026-09"] summary').click();
+    const imageButton = page.getByRole('button', { name: '放大：四周年舰长礼单 · 直播展示', exact: true });
+    await imageButton.click();
+    await page.getByRole('dialog').waitFor();
+    await capture('03-image-dialog', false);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.getByRole('dialog').count(), 0);
+    await assert.doesNotReject(() => imageButton.evaluate(element => { if (document.activeElement !== element) throw new Error('dialog did not restore focus'); }));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await capture('04-mobile');
+    await page.getByLabel('搜索礼物或月份').fill('不可能存在的舰礼');
+    await page.getByRole('heading', { name: '没有匹配的舰礼记录' }).waitFor();
+    await page.getByRole('button', { name: '清除筛选' }).click();
+    await page.getByRole('navigation', { name: '礼物年份' }).getByRole('button', { name: /^2022/ }).click();
+    await page.getByRole('heading', { name: '没有匹配的舰礼记录' }).waitFor();
+    await page.getByLabel('也显示无资料月份').check();
+    await page.getByRole('status').filter({ hasText: '4 个月份' }).waitFor();
+    await page.getByRole('button', { name: '重置筛选' }).click();
+    await page.getByLabel('依据', { exact: true }).selectOption('lead');
+    assert.equal(await page.locator('[data-month="2025-10"]').count(), 1);
+    assert.equal(await page.locator('[data-month="2026-09"]').count(), 0);
+    await page.getByLabel('月份', { exact: true }).selectOption('10');
+    await page.getByRole('status').filter({ hasText: '1 个月份' }).waitFor();
+    await page.goto(new URL('/liver', url).href);
+    await page.getByRole('link', { name: '舰礼档案' }).click();
+    await page.waitForURL('**/liver/sui/gifts');
+    assert.deepEqual(errors, []);
+    fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify({ url, screenshots, errors, status: 'passed' }, null, 2));
+    console.log(JSON.stringify({ status: 'passed', screenshots: screenshots.map(item => item.name), errors }));
+  } finally {
+    await browser.close();
+  }
+})().catch(error => { console.error(error); process.exitCode = 1; });
