@@ -31,17 +31,26 @@ export type Appearance = {
   weapon?: string;
 };
 
+// 熟悉度等级
+export type Familiarity = 'stranger' | 'met_once' | 'acquaintance' | 'friend' | 'close_friend' | 'intimate';
+
 export interface Person {
   id: string;
   name: string;
   sectId: string;
-  role: 'leader' | 'disciple' | 'hero' | 'villager' | 'merchant' | 'bandit' | 'mystery' | 'boss';
+  role: 'leader' | 'disciple' | 'hero' | 'villager' | 'merchant' | 'bandit' | 'mystery' | 'boss' | 'npc';
   gender: 'male' | 'female';
   age: number;
   birthYear?: number;
   status: 'alive' | 'dead' | 'missing';
   relations: Relation[];
   locationId: string;
+  // 目标地点ID（用于任务或旅行）
+  targetLocationId?: string;
+  // 人物实力描述（替代数值）
+  powerLevelDesc?: string;
+  // 与玩家的熟悉度
+  familiarity?: Familiarity;
   inventory: string[];
   flags: Record<string, any>;
   arts: string[];
@@ -49,6 +58,8 @@ export interface Person {
   /** Legacy progression fields used by the snippet adapter. */
   exp?: number;
   maxHp?: number;
+  // NPC的意向目的地 (用于判定是否顺路)
+  desiredLocationId?: string;
   personality?: Personality;
   appearance?: Appearance;
   identity?: {
@@ -95,6 +106,21 @@ export interface LocationInfo {
   connections?: string[];
 }
 
+// 🆕 Travel Mode Type
+export type TravelMode = 'road' | 'wild' | 'water';
+
+// 旅行状态接口
+export interface TravelState {
+  isTraveling: boolean;
+  destinationId: string; // 最终目的地ID
+  destinationName: string; // 最终目的地名称
+  route: string[]; // 规划的路径节点ID列表 [current, next, ..., end]
+  daysPerNode: number; // 两个节点间需要走几天
+  daysToNextNode: number;// 距离下一个节点还剩几天
+  mode: 'road' | 'wild';
+  supplies: number;
+}
+
 export enum StoryStage {
   BEGINNING = 0,
   RISING = 1,
@@ -103,7 +129,16 @@ export enum StoryStage {
   ENDING = 4,
 }
 
-export type SnippetTag = 'sect_daily' | 'city_daily' | 'wild_daily' | 'quest' | 'relationship' | 'main_story' | 'game_over';
+export type SnippetTag =
+  | 'sect_daily' | 'city_daily' | 'wild_daily' | 'inn_daily' | 'game_over' | 'battle'
+  | 'sect_join' | 'sect_leave' | 'sect_promote' | 'sect_demote' | 'sect_quest'
+  | 'sect_training' | 'sect_meeting' | 'sect_decision' | 'sect_crisis' | 'sect_attack'
+  | 'sect_defend' | 'sect_ally' | 'sect_enemy' | 'sect_peace' | 'sect_war' | 'sect_tournament'
+  | 'sect_mission' | 'sect_treasure' | 'sect_artifact' | 'sect_technique' | 'sect_elder'
+  | 'sect_disciple' | 'sect_leader' | 'sect_master' | 'sect_apprentice' | 'sect_rival'
+  | 'travel_daily' // 🆕 旅途日常事件
+  | 'travel_arrival' // 🆕 到达目的地事件
+  | 'travel_departure'; // 🆕 出发事件
 
 export interface StoryLine {
   text: string;
@@ -132,6 +167,14 @@ export interface SnippetResult {
   addKnowledge?: string;
   addToParty?: string | string[]; // 🆕 支持单个或批量加入队伍 (ID)
   removeFromParty?: string | string[]; // 🆕 支持单个或批量离开队伍 (ID)
+  // 🆕 新增：开始旅行
+  startTravel?: {
+    targetId: string;
+    days: number;
+    mode: TravelMode;
+  };
+  // 🆕 新增：物资变动
+  addSupplies?: number; // 🆕 支持单个或批量离开队伍 (ID)
   advanceStage?: boolean;
   addTurn?: number;
   addExp?: number;
